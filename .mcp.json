@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "lean-lsp-mcp": {
+      "command": "uvx",
+      "args": [
+        "lean-lsp-mcp"
+      ]
+    },
+    "leanexploreLocal": {
+      "command": "uv",
+      "args": [
+        "run",
+        "leanexplore",
+        "mcp",
+        "serve",
+        "--backend",
+        "local"
+      ]
+    },
+    "leanexploreRemote": {
+      "command": "uv",
+      "args": [
+        "run",
+        "leanexplore",
+        "mcp",
+        "serve",
+        "--backend",
+        "api",
+        "--api-key",
+        "OSodes2YWHnK75qqbrOYBcY6USp__2lemjr94QjdBx8"
+      ]
+    },
+    "LeanTool": {
+      "command": "poetry",
+      "args": [
+        "run",
+        "python",
+        "leanmcp.py"
+      ],
+      "cwd": ".mcp-tools/LeanTool"
+    },
+    "browsermcp": {
+      "command": "npx",
+      "args": ["@browsermcp/mcp@latest"]
+    }
+  }
+}
