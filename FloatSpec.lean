@@ -1,12 +1,31 @@
 /-!
 # FloatSpec
 
-Root of `FloatSpec` project
-Main entry point for the FloatSpec library, providing Float functionality in Lean 4.
+Complete IEEE 754 floating-point formalization in Lean 4
+Transformed from the Flocq floating-point library
+
+This library provides:
+- Core floating-point functionality and generic formats
+- Calculation operations (addition, multiplication, division, square root)
+- Property analysis and error bounds 
+- Full IEEE 754 standard implementation
+- Legacy Pff compatibility layer
 -/
 
--- For now, just mark this as a placeholder module
--- The actual implementations are in the subdirectories
+-- Core floating-point functionality
+import FloatSpec.src.Core
+
+-- Calculation modules  
+import FloatSpec.src.Calc
+
+-- Property analysis and error bounds
+import FloatSpec.src.Prop
+
+-- IEEE 754 standard implementation
+import FloatSpec.src.IEEE754
+
+-- Legacy Pff compatibility
+import FloatSpec.src.Pff
 
 /-- Version string for the FloatSpec library -/
-def FloatSpec.version : String := "0.1.0"
+def FloatSpec.version : String := "0.7.0"
