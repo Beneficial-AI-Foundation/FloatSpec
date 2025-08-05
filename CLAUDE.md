@@ -223,14 +223,72 @@ lake build --verbose
 
 - ✓ **Project Setup**: Basic Lean 4 project structure with lakefile.lean
 - ✓ **Build System**: Lake configuration for Lean 4 development
+- ✓ **Zaux.lean**: Complete formalization of auxiliary integer functions (80 functions from Coq)
 
-### Next Priorities for FloatSpec
+### Flocq to Lean 4 Transformation Order
 
-1. **IEEE 754 Types**: Define bit-accurate floating-point representations
-2. **Basic Operations**: Implement addition, subtraction, multiplication, division
-3. **Rounding Modes**: Support for different IEEE 754 rounding modes
-4. **Special Values**: Proper handling of infinity, NaN, and zero
-5. **Error Analysis**: Formal bounds on numerical errors
+Based on the dependency analysis in `Deps/flocq_dependency_graph.dot`, the proper transformation order is:
+
+#### **Phase 1: Core Foundation (Ready Now)**
+1. ✓ **Zaux.lean** - Integer auxiliary functions (completed)
+2. **Raux.lean** - Real auxiliary functions (169 defs) - **NEXT PRIORITY**
+   - Depends on: Zaux
+   - Required by: Most other Core files
+3. **Defs.lean** - Basic definitions (12 defs)
+   - Depends on: Zaux, Raux
+   - Required by: Almost all other files
+
+#### **Phase 2: Core Data Structures (After Phase 1)**
+4. **Digits.lean** - Digit manipulation (62 defs)
+   - Depends on: Zaux
+   - Required by: Float_prop, Generic_fmt, and higher-level operations
+5. **Float_prop.lean** - Basic float properties (36 defs)  
+   - Depends on: Defs, Digits, Raux, Zaux
+   - Required by: Most formatting and rounding operations
+
+#### **Phase 3: Generic Formatting (After Phase 2)**
+6. **Round_pred.lean** - Rounding predicates (78 defs)
+   - Depends on: Defs, Raux
+   - Required by: Generic_fmt, Ulp, Round_NE, FIX, FLX, FLT, FTZ
+7. **Generic_fmt.lean** - Generic formatting (124 defs) - **MAJOR COMPONENT**
+   - Depends on: Defs, Float_prop, Raux, Round_pred, Zaux
+   - Required by: Ulp, Round_NE, FIX, FLX, FLT, FTZ and all higher-level operations
+
+#### **Phase 4: Precision Systems (After Phase 3)**
+8. **Ulp.lean** - Unit in the last place (116 defs)
+9. **Round_NE.lean** - Nearest-even rounding (99 defs) 
+10. **FIX.lean** - Fixed-point format (7 defs)
+11. **FLX.lean** - Fixed-precision format (23 defs)
+12. **FLT.lean** - Floating-point format (25 defs)
+13. **FTZ.lean** - Flush-to-zero format (11 defs)
+
+#### **Phase 5: IEEE 754 Implementation (After Phase 4)**
+14. **Core.lean** - Top-level Core module (0 defs, imports all Core files)
+
+#### **Phase 6: Calculations (After Core)**
+15. **Calc/Bracket.lean** - Bracketing operations (37 defs)
+16. **Calc/Operations.lean** - Basic operations (16 defs)
+17. **Calc/Div.lean**, **Calc/Sqrt.lean**, **Calc/Round.lean**, **Calc/Plus.lean**
+
+#### **Phase 7: Properties and IEEE754 (Final)**
+18. **Prop/** modules - Error analysis and properties
+19. **IEEE754/** modules - Full IEEE 754 implementation
+20. **Pff/** modules - Legacy compatibility
+
+### Current Next Steps
+
+**Immediate Priority: Raux.lean**
+- 169 definitions covering real number auxiliary functions
+- Critical dependency for almost all other Core files
+- Should be started immediately after Zaux completion
+
+**Key Dependencies Insight:**
+- Zaux → Raux → Defs forms the foundational triangle
+- Generic_fmt is the central heavyweight component (124 defs)
+- Most IEEE754 functionality requires the complete Core foundation
+- Zaux has the widest fan-out (used by 12/13 Core modules)
+- The dependency graph shows clear layering: Core → Calc → Prop → IEEE754
+- Phase approach minimizes rework and enables parallel development within phases
 
 ### Design Principles
 
