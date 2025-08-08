@@ -39,6 +39,25 @@ You can also run underlying tools directly:
 - `lake build` - Build Lean project (use frequently for constant feedback)
 - `uv run -m pytest` - Run Python tests directly
 
+## Commit Logging Process
+
+After making a commit, create a log entry:
+
+1. Create timestamped directory: `.log/YYYYMMDD_HHMMSS/`
+2. Store commit information:
+   - `commit_info.txt` - Basic commit metadata (hash, author, date, subject)
+   - `change_stats.txt` - File change statistics
+   - `summary.md` - Detailed summary of changes and their impact
+
+This provides a searchable history of all significant changes to the codebase.
+
+### Recent Commits
+
+- **2025-08-08 10:29:56** - Replace Float with Real (ℝ) throughout codebase
+  - Major architectural fix replacing Lean's Float with mathematical reals
+  - 54 files changed across entire codebase
+  - See `.log/20250808_102956/` for details
+
 Use `uvx lean-lsp-mcp` to get feedback on your code. Usage:
 
 - `lean_diagnostic_messages`: Get all diagnostic messages for a Lean file. This includes infos, warnings and errors.
