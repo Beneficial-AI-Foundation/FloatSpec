@@ -5,6 +5,9 @@ import FloatSpec.src.Core.Zaux
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Float_prop
+import Mathlib.Data.Real.Basic
+
+open Real
 
 variable (beta : Int)
 
@@ -46,7 +49,7 @@ def Fabs (f1 : FlocqFloat beta) : FlocqFloat beta :=
 
 -- F2R of absolute value theorem
 theorem F2R_abs (f1 : FlocqFloat beta) :
-    F2R (Fabs beta f1) = Float.abs (F2R f1) := by
+    F2R (Fabs beta f1) = |F2R f1| := by
   sorry
 
 -- Float addition

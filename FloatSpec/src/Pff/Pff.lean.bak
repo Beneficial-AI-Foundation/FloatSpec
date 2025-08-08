@@ -2,9 +2,6 @@
 -- Translated from Coq file: flocq/src/Pff/Pff.v
 
 import FloatSpec.src.Core
-import Mathlib.Data.Real.Basic
-
-open Real
 
 -- Compatibility definitions for Pff legacy support
 
@@ -55,23 +52,23 @@ theorem arith_helper (a b c : Int) : a + b = c → a = c - b := by
 end LegacyTactics
 
 -- Power operations compatibility
-theorem pow_inv (r : ℝ) (n : Nat) (h : r ≠ 0) : 
+theorem pow_inv (r : Float) (n : Nat) (h : r ≠ 0) : 
   (r^n)⁻¹ = r⁻¹^n := by
   sorry
 
-theorem pow_neg (r : ℝ) (z : Int) : 
+theorem pow_neg (r : Float) (z : Int) : 
   r^(-z) = (r^z)⁻¹ := by
   sorry
 
 -- Real number compatibility
-theorem abs_inv (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
+theorem abs_inv (r : Float) : Float.abs (r⁻¹) = (Float.abs r)⁻¹ := by
   sorry
 
 -- List operations used in Pff
-def list_sum (l : List Float) : ℝ :=
+def list_sum (l : List Float) : Float :=
   l.foldr (· + ·) 0
 
-def list_prod (l : List Float) : ℝ :=
+def list_prod (l : List Float) : Float :=
   l.foldr (· * ·) 1
 
 -- Legacy floating-point format compatibility
@@ -97,8 +94,8 @@ def pff_mul (x y : PffFloat) : PffFloat := by
   sorry
 
 -- Error bounds compatibility
-def pff_error_bound (prec : Int) : ℝ :=
-  (2 : ℝ)^(-prec)
+def pff_error_bound (prec : Int) : Float :=
+  (2 : Float)^(-prec)
 
 -- Legacy rounding modes
 inductive PffRounding where
@@ -108,5 +105,5 @@ inductive PffRounding where
   | RM : PffRounding  -- Round toward minus infinity
 
 -- Convert Pff rounding to Flocq rounding
-def pff_to_flocq_rnd (mode : PffRounding) : ℝ → Int := by
+def pff_to_flocq_rnd (mode : PffRounding) : Float → Int := by
   sorry

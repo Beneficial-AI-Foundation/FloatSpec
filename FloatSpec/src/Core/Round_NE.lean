@@ -8,17 +8,20 @@ import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Core.Ulp
+import Mathlib.Data.Real.Basic
+
+open Real
 
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [Valid_exp beta fexp]
 
 -- Nearest-even rounding property
-def NE_prop (x : Float) (f : Float) : Prop :=
+def NE_prop (x : ℝ) (f : ℝ) : Prop :=
   ∃ g : FlocqFloat beta, f = F2R g ∧ canonical beta fexp g ∧ g.Fnum % 2 = 0
 
 -- Nearest-even rounding predicate
-def Rnd_NE_pt : Float → Float → Prop :=
+def Rnd_NE_pt : ℝ → ℝ → Prop :=
   Rnd_NG_pt (generic_format beta fexp) NE_prop
 
 -- Down-up parity property for positive numbers
@@ -38,7 +41,7 @@ theorem Rnd_NE_pt_unique_prop : Rnd_NG_pt_unique_prop (generic_format beta fexp)
   sorry
 
 -- Nearest-even rounding is unique
-theorem Rnd_NE_pt_unique (x f1 f2 : Float)
+theorem Rnd_NE_pt_unique (x f1 f2 : ℝ)
     (h1 : Rnd_NE_pt beta fexp x f1) (h2 : Rnd_NE_pt beta fexp x f2) : f1 = f2 := by
   sorry
 
@@ -51,8 +54,8 @@ theorem satisfies_any_imp_NE : satisfies_any (generic_format beta fexp) → roun
   sorry
 
 -- More theorems would be here...
-theorem Rnd_NE_pt_refl (x : Float) (hx : generic_format beta fexp x) : Rnd_NE_pt beta fexp x x := by
+theorem Rnd_NE_pt_refl (x : ℝ) (hx : generic_format beta fexp x) : Rnd_NE_pt beta fexp x x := by
   sorry
 
-theorem Rnd_NE_pt_idempotent (x f : Float) (h : Rnd_NE_pt beta fexp x f) (hx : generic_format beta fexp x) : f = x := by
+theorem Rnd_NE_pt_idempotent (x f : ℝ) (h : Rnd_NE_pt beta fexp x f) (hx : generic_format beta fexp x) : f = x := by
   sorry

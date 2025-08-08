@@ -30,7 +30,7 @@ package FloatSpec where
 
 -- Used for math library
 -- COMMENTED OUT FOR SPEED: mathlib takes too long to build initially
--- require mathlib from git "https://github.com/leanprover-community/mathlib4"
+require mathlib from git "https://github.com/leanprover-community/mathlib4"
 
 /-- Main library -/
 @[default_target]

@@ -5,6 +5,9 @@ import FloatSpec.src.Core.Zaux
 import FloatSpec.src.Core.Raux  
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Digits
+import Mathlib.Data.Real.Basic
+
+open Real
 
 variable (beta : Int)
 
@@ -59,7 +62,7 @@ theorem eq_F2R (e m1 m2 : Int) :
 
 /-- F2R commutes with absolute value -/
 theorem F2R_Zabs (m e : Int) :
-  F2R (FlocqFloat.mk (Int.natAbs m) e : FlocqFloat beta) = Float.abs (F2R (FlocqFloat.mk m e : FlocqFloat beta)) := by
+  F2R (FlocqFloat.mk (Int.natAbs m) e : FlocqFloat beta) = |F2R (FlocqFloat.mk m e : FlocqFloat beta)| := by
   sorry
 
 /-- F2R commutes with negation -/
@@ -143,30 +146,30 @@ theorem Fnum_le_0 (f : FlocqFloat beta) :
 
 /-- F2R of unit mantissa equals power of beta -/
 theorem F2R_bpow (e : Int) :
-  F2R (FlocqFloat.mk 1 e : FlocqFloat beta) = (Int.natAbs beta : Float) ^ (Int.natAbs e : Nat) := by
+  F2R (FlocqFloat.mk 1 e : FlocqFloat beta) = (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) := by
   sorry
 
 /-- Power of beta bounds F2R from below -/
 theorem bpow_le_F2R (m e : Int) (h : 0 < m) :
-  (Int.natAbs beta : Float) ^ (Int.natAbs e : Nat) ≤ F2R (FlocqFloat.mk m e : FlocqFloat beta) := by
+  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ F2R (FlocqFloat.mk m e : FlocqFloat beta) := by
   sorry
 
 /-- Successor bound for powers -/
 theorem F2R_p1_le_bpow (m e1 e2 : Int) (h1 : 0 < m) 
-  (h2 : F2R (FlocqFloat.mk m e1 : FlocqFloat beta) < (Int.natAbs beta : Float) ^ (Int.natAbs e2 : Nat)) :
-  F2R (FlocqFloat.mk (m + 1) e1 : FlocqFloat beta) ≤ (Int.natAbs beta : Float) ^ (Int.natAbs e2 : Nat) := by
+  (h2 : F2R (FlocqFloat.mk m e1 : FlocqFloat beta) < (Int.natAbs beta : ℝ) ^ (Int.natAbs e2 : Nat)) :
+  F2R (FlocqFloat.mk (m + 1) e1 : FlocqFloat beta) ≤ (Int.natAbs beta : ℝ) ^ (Int.natAbs e2 : Nat) := by
   sorry
 
 /-- Predecessor bound for powers -/  
 theorem bpow_le_F2R_m1 (m e1 e2 : Int) (h1 : 1 < m)
-  (h2 : (Int.natAbs beta : Float) ^ (Int.natAbs e2 : Nat) < F2R (FlocqFloat.mk m e1 : FlocqFloat beta)) :
-  (Int.natAbs beta : Float) ^ (Int.natAbs e2 : Nat) ≤ F2R (FlocqFloat.mk (m - 1) e1 : FlocqFloat beta) := by
+  (h2 : (Int.natAbs beta : ℝ) ^ (Int.natAbs e2 : Nat) < F2R (FlocqFloat.mk m e1 : FlocqFloat beta)) :
+  (Int.natAbs beta : ℝ) ^ (Int.natAbs e2 : Nat) ≤ F2R (FlocqFloat.mk (m - 1) e1 : FlocqFloat beta) := by
   sorry
 
 /-- F2R bounded by power -/
 theorem F2R_lt_bpow (f : FlocqFloat beta) (e' : Int)
   (h : Int.natAbs f.Fnum < beta ^ Int.natAbs (e' - f.Fexp)) :
-  Float.abs (F2R f) < (Int.natAbs beta : Float) ^ (Int.natAbs e' : Nat) := by
+  |F2R f| < (Int.natAbs beta : ℝ) ^ (Int.natAbs e' : Nat) := by
   sorry
 
 -- Section: Exponent changes
@@ -180,7 +183,7 @@ theorem F2R_change_exp (e' m e : Int) (h : e' ≤ e) :
 /-- Normalization with precision bound -/
 theorem F2R_prec_normalize (m e e' p : Int) 
   (h1 : Int.natAbs m < beta ^ Int.natAbs p)
-  (h2 : (Int.natAbs beta : Float) ^ (Int.natAbs (e' - 1) : Nat) ≤ Float.abs (F2R (FlocqFloat.mk m e : FlocqFloat beta))) :
+  (h2 : (Int.natAbs beta : ℝ) ^ (Int.natAbs (e' - 1) : Nat) ≤ |F2R (FlocqFloat.mk m e : FlocqFloat beta)|) :
   F2R (FlocqFloat.mk m e : FlocqFloat beta) = 
   F2R (FlocqFloat.mk (m * beta ^ Int.natAbs (e - e' + p)) (e' - p) : FlocqFloat beta) := by
   sorry
@@ -188,7 +191,7 @@ theorem F2R_prec_normalize (m e e' p : Int)
 -- Section: Magnitude properties  
 
 /-- Magnitude bounds for F2R -/
-theorem mag_F2R_bounds (x : Float) (m e : Int) (h1 : 0 < m)
+theorem mag_F2R_bounds (x : ℝ) (m e : Int) (h1 : 0 < m)
   (h2 : F2R (FlocqFloat.mk m e : FlocqFloat beta) ≤ x)
   (h3 : x < F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)) :
   -- Placeholder for magnitude relationship
@@ -214,7 +217,7 @@ theorem mag_F2R_Zdigits (m e : Int) (h : m ≠ 0) :
   sorry
 
 /-- Magnitude bounds with digit count -/
-theorem mag_F2R_bounds_Zdigits (x : Float) (m e : Int) (h1 : 0 < m)
+theorem mag_F2R_bounds_Zdigits (x : ℝ) (m e : Int) (h1 : 0 < m)
   (h2 : F2R (FlocqFloat.mk m e : FlocqFloat beta) ≤ x)
   (h3 : x < F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)) :
   -- Placeholder for magnitude-digits relationship

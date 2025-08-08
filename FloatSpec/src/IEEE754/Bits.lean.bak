@@ -3,9 +3,6 @@
 
 import FloatSpec.src.Core
 import FloatSpec.src.IEEE754.Binary
-import Mathlib.Data.Real.Basic
-
-open Real
 
 -- Number of bits for the fraction and exponent
 variable (mw ew : Int)

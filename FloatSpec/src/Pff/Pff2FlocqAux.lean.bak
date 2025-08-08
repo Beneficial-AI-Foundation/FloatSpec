@@ -2,9 +2,6 @@
 -- Translated from Coq file: flocq/src/Pff/Pff2FlocqAux.v
 
 import FloatSpec.src.Pff.Pff2Flocq
-import Mathlib.Data.Real.Basic
-
-open Real
 
 -- Auxiliary lemmas and functions for Pff/Flocq conversion
 
@@ -36,7 +33,7 @@ theorem pff_normalize_idempotent (f : PffFloat) :
   sorry
 
 theorem pff_abs_correct (f : PffFloat) :
-  pff_to_R beta (pff_abs f) = |pff_to_R beta f| := by
+  pff_to_R beta (pff_abs f) = Float.abs (pff_to_R beta f) := by
   sorry
 
 theorem pff_opp_correct (f : PffFloat) :
@@ -73,7 +70,7 @@ def pff_shift_mant (f : PffFloat) (n : Int) : PffFloat :=
 -- Shifting properties
 theorem pff_shift_exp_correct (f : PffFloat) (n : Int) :
   pff_to_R beta (pff_shift_exp f n) = 
-  pff_to_R beta f * (beta : ℝ)^n := by
+  pff_to_R beta f * (beta : Float)^n := by
   sorry
 
 theorem pff_shift_mant_correct (f : PffFloat) (n : Int) :

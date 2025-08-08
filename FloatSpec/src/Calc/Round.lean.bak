@@ -5,9 +5,6 @@ import FloatSpec.src.Core
 import FloatSpec.src.Core.Digits
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Calc.Bracket
-import Mathlib.Data.Real.Basic
-
-open Real
 
 variable (beta : Int)
 variable (fexp : Int → Int)

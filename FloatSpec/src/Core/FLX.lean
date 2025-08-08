@@ -3,6 +3,9 @@
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import Mathlib.Data.Real.Basic
+
+open Real
 
 variable (prec : Int)
 
@@ -10,14 +13,14 @@ variable (prec : Int)
 def FLX_exp (e : Int) : Int := e - prec
 
 -- Fixed-precision format
-def FLX_format (beta : Int) (x : Float) : Prop :=
+def FLX_format (beta : Int) (x : ℝ) : Prop :=
   generic_format beta FLX_exp x
 
 -- FLX format properties
 theorem FLX_exp_correct : ∀ e, FLX_exp prec e = e - prec := by
   sorry
 
-theorem FLX_format_generic (beta : Int) (x : Float) :
+theorem FLX_format_generic (beta : Int) (x : ℝ) :
     FLX_format beta prec x ↔ generic_format beta FLX_exp x := by
   sorry
 
@@ -25,11 +28,11 @@ theorem FLX_format_generic (beta : Int) (x : Float) :
 theorem FLX_format_0 (beta : Int) : FLX_format beta prec 0 := by
   sorry
 
-theorem FLX_format_opp (beta : Int) (x : Float) (h : FLX_format beta prec x) :
+theorem FLX_format_opp (beta : Int) (x : ℝ) (h : FLX_format beta prec x) :
     FLX_format beta prec (-x) := by
   sorry
 
 -- More FLX properties
-theorem FLX_format_abs (beta : Int) (x : Float) (h : FLX_format beta prec x) :
-    FLX_format beta prec (Float.abs x) := by
+theorem FLX_format_abs (beta : Int) (x : ℝ) (h : FLX_format beta prec x) :
+    FLX_format beta prec |x| := by
   sorry

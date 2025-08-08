@@ -3,9 +3,6 @@
 
 import FloatSpec.src.IEEE754.Binary
 import FloatSpec.src.IEEE754.Bits
-import Mathlib.Data.Real.Basic
-
-open Real
 
 -- Primitive float type (using platform float)
 def PrimFloat := Float
@@ -35,7 +32,7 @@ def prim_nan : PrimFloat := Float.nan
 
 -- Sign operations
 def prim_neg (x : PrimFloat) : PrimFloat := -x
-def prim_abs (x : PrimFloat) : PrimFloat := |x|
+def prim_abs (x : PrimFloat) : PrimFloat := Float.abs x
 def prim_sign (x : PrimFloat) : Bool := x < 0
 
 -- Conversion between Binary754 and PrimFloat

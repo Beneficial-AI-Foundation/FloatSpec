@@ -2,9 +2,6 @@
 -- Translated from Coq file: flocq/src/IEEE754/BinarySingleNaN.v
 
 import FloatSpec.src.IEEE754.Binary
-import Mathlib.Data.Real.Basic
-
-open Real
 
 variable (prec emax : Int)
 variable [Prec_gt_0 prec]
@@ -18,7 +15,7 @@ inductive B754 where
   | B754_finite (s : Bool) (m : Nat) (e : Int) : B754
 
 -- Conversion to real number
-def B754_to_R (x : B754 prec emax) : ℝ :=
+def B754_to_R (x : B754 prec emax) : Float :=
   match x with
   | B754.B754_finite s m e => 
     F2R (FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FlocqFloat 2)

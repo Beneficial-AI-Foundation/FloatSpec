@@ -7,6 +7,9 @@ import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Core.Digits
+import Mathlib.Data.Real.Basic
+
+open Real
 
 variable (beta : Int) (h_beta : beta > 1)
 
@@ -38,7 +41,7 @@ theorem valid_exp_large' (k l : Int) (hk : fexp k < k) (h : l ≤ k) :
 -- Section: Canonical exponent and format
 
 /-- Canonical exponent function -/
-def cexp (x : Float) : Int :=
+noncomputable def cexp (x : ℝ) : Int :=
   fexp (mag beta x)
 
 /-- Canonical float property -/
@@ -46,11 +49,11 @@ def canonical (f : FlocqFloat beta) : Prop :=
   f.Fexp = cexp beta fexp (F2R f)
 
 /-- Scaled mantissa -/
-def scaled_mantissa (x : Float) : Float :=
-  x * (beta : Float) ^ (-(cexp beta fexp x))
+noncomputable def scaled_mantissa (x : ℝ) : ℝ :=
+  x * (beta : ℝ) ^ (-(cexp beta fexp x))
 
 /-- Generic format predicate -/
-def generic_format (x : Float) : Prop :=
+noncomputable def generic_format (x : ℝ) : Prop :=
   x = F2R (FlocqFloat.mk (Ztrunc (scaled_mantissa beta fexp x)) (cexp beta fexp x) : FlocqFloat beta)
 
 -- Section: Basic properties
@@ -60,26 +63,26 @@ theorem generic_format_0 : generic_format beta fexp 0 := by
   sorry
 
 /-- Canonical exponent of opposite -/
-theorem cexp_opp (x : Float) : cexp beta fexp (-x) = cexp beta fexp x := by
+theorem cexp_opp (x : ℝ) : cexp beta fexp (-x) = cexp beta fexp x := by
   sorry
 
 /-- Canonical exponent of absolute value -/
-theorem cexp_abs (x : Float) : cexp beta fexp (abs x) = cexp beta fexp x := by
+theorem cexp_abs (x : ℝ) : cexp beta fexp (abs x) = cexp beta fexp x := by
   sorry
 
 /-- Generic format implies canonical representation -/
-theorem canonical_generic_format (x : Float) (h : generic_format beta fexp x) :
+theorem canonical_generic_format (x : ℝ) (h : generic_format beta fexp x) :
     ∃ f : FlocqFloat beta, x = F2R f ∧ canonical beta fexp f := by
   sorry
 
 /-- Powers of beta in generic format -/
 theorem generic_format_bpow (e : Int) (h : fexp (e + 1) ≤ e) :
-    generic_format beta fexp ((beta : Float) ^ e) := by
+    generic_format beta fexp ((beta : ℝ) ^ e) := by
   sorry
 
 /-- Alternative power condition -/
 theorem generic_format_bpow' (e : Int) (h : fexp e ≤ e) :
-    generic_format beta fexp ((beta : Float) ^ e) := by
+    generic_format beta fexp ((beta : ℝ) ^ e) := by
   sorry
 
 /-- F2R in generic format -/
@@ -89,7 +92,7 @@ theorem generic_format_F2R (m e : Int)
   sorry
 
 /-- Alternative F2R generic format -/
-theorem generic_format_F2R' (x : Float) (f : FlocqFloat beta) (h1 : F2R f = x)
+theorem generic_format_F2R' (x : ℝ) (f : FlocqFloat beta) (h1 : F2R f = x)
     (h2 : x ≠ 0 → cexp beta fexp x ≤ f.Fexp) :
     generic_format beta fexp x := by
   sorry
@@ -118,13 +121,13 @@ theorem canonical_unique (f1 f2 : FlocqFloat beta) (h1 : canonical beta fexp f1)
 -- Section: Scaled mantissa properties
 
 /-- Scaled mantissa for generic format -/
-theorem scaled_mantissa_generic (x : Float) (h : generic_format beta fexp x) :
+theorem scaled_mantissa_generic (x : ℝ) (h : generic_format beta fexp x) :
     scaled_mantissa beta fexp x = Ztrunc (scaled_mantissa beta fexp x) := by
   sorry
 
 /-- Scaled mantissa multiplication -/
-theorem scaled_mantissa_mult_bpow (x : Float) :
-    scaled_mantissa beta fexp x * (beta : Float) ^ (cexp beta fexp x) = x := by
+theorem scaled_mantissa_mult_bpow (x : ℝ) :
+    scaled_mantissa beta fexp x * (beta : ℝ) ^ (cexp beta fexp x) = x := by
   sorry
 
 /-- Scaled mantissa of zero -/
@@ -132,92 +135,92 @@ theorem scaled_mantissa_0 : scaled_mantissa beta fexp 0 = 0 := by
   sorry
 
 /-- Scaled mantissa of opposite -/
-theorem scaled_mantissa_opp (x : Float) :
+theorem scaled_mantissa_opp (x : ℝ) :
     scaled_mantissa beta fexp (-x) = -(scaled_mantissa beta fexp x) := by
   sorry
 
 /-- Scaled mantissa of absolute value -/
-theorem scaled_mantissa_abs (x : Float) :
+theorem scaled_mantissa_abs (x : ℝ) :
     scaled_mantissa beta fexp (abs x) = abs (scaled_mantissa beta fexp x) := by
   sorry
 
 -- Section: Generic format closure properties
 
 /-- Generic format opposite -/
-theorem generic_format_opp (x : Float) (h : generic_format beta fexp x) :
+theorem generic_format_opp (x : ℝ) (h : generic_format beta fexp x) :
     generic_format beta fexp (-x) := by
   sorry
 
 /-- Generic format absolute value -/
-theorem generic_format_abs (x : Float) (h : generic_format beta fexp x) :
+theorem generic_format_abs (x : ℝ) (h : generic_format beta fexp x) :
     generic_format beta fexp (abs x) := by
   sorry
 
 /-- Generic format absolute value inverse -/
-theorem generic_format_abs_inv (x : Float) (h : generic_format beta fexp (abs x)) :
+theorem generic_format_abs_inv (x : ℝ) (h : generic_format beta fexp (abs x)) :
     generic_format beta fexp x := by
   sorry
 
 -- Section: Canonical exponent bounds
 
 /-- Canonical exponent from bounds -/
-theorem cexp_fexp (x : Float) (ex : Int)
-    (h : (beta : Float) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : Float) ^ ex) :
+theorem cexp_fexp (x : ℝ) (ex : Int)
+    (h : (beta : ℝ) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : ℝ) ^ ex) :
     cexp beta fexp x = fexp ex := by
   sorry
 
 /-- Canonical exponent from positive bounds -/
-theorem cexp_fexp_pos (x : Float) (ex : Int)
-    (h : (beta : Float) ^ (ex - 1) ≤ x ∧ x < (beta : Float) ^ ex) :
+theorem cexp_fexp_pos (x : ℝ) (ex : Int)
+    (h : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex) :
     cexp beta fexp x = fexp ex := by
   sorry
 
 -- Section: Small number properties
 
 /-- Mantissa for small positive numbers -/
-theorem mantissa_small_pos (x : Float) (ex : Int)
-    (hx : (beta : Float) ^ (ex - 1) ≤ x ∧ x < (beta : Float) ^ ex)
+theorem mantissa_small_pos (x : ℝ) (ex : Int)
+    (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
     (he : ex ≤ fexp ex) :
-    0 < x * (beta : Float) ^ (-(fexp ex)) ∧ x * (beta : Float) ^ (-(fexp ex)) < 1 := by
+    0 < x * (beta : ℝ) ^ (-(fexp ex)) ∧ x * (beta : ℝ) ^ (-(fexp ex)) < 1 := by
   sorry
 
 /-- Scaled mantissa bound for small numbers -/
-theorem scaled_mantissa_lt_1 (x : Float) (ex : Int) (hx : abs x < (beta : Float) ^ ex)
+theorem scaled_mantissa_lt_1 (x : ℝ) (ex : Int) (hx : abs x < (beta : ℝ) ^ ex)
     (he : ex ≤ fexp ex) : abs (scaled_mantissa beta fexp x) < 1 := by
   sorry
 
 /-- Scaled mantissa general bound -/
-theorem scaled_mantissa_lt_bpow (x : Float) :
-    abs (scaled_mantissa beta fexp x) < (beta : Float) ^ (mag beta x - cexp beta fexp x) := by
+theorem scaled_mantissa_lt_bpow (x : ℝ) :
+    abs (scaled_mantissa beta fexp x) < (beta : ℝ) ^ (mag beta x - cexp beta fexp x) := by
   sorry
 
 -- Section: Advanced properties
 
 /-- Ulp (unit in the last place) preliminary definition -/
-def ulp_prelim (x : Float) : Float :=
-  (beta : Float) ^ (cexp beta fexp x)
+noncomputable def ulp_prelim (x : ℝ) : ℝ :=
+  (beta : ℝ) ^ (cexp beta fexp x)
 
 /-- Round to format property -/
-def round_to_format (F : Float → Prop) : Prop :=
+def round_to_format (F : ℝ → Prop) : Prop :=
   ∀ x, ∃ f, F f ∧ (∀ g, F g → abs (f - x) ≤ abs (g - x))
 
 /-- Format bounded property -/
-def format_bounded (F : Float → Prop) : Prop :=
-  ∃ M : Float, ∀ x, F x → abs x ≤ M
+def format_bounded (F : ℝ → Prop) : Prop :=
+  ∃ M : ℝ, ∀ x, F x → abs x ≤ M
 
 /-- Format discrete property -/
-def format_discrete (F : Float → Prop) : Prop :=
-  ∀ x, F x → x ≠ 0 → ∃ δ : Float, δ > 0 ∧ ∀ y, F y → y ≠ x → abs (y - x) ≥ δ
+def format_discrete (F : ℝ → Prop) : Prop :=
+  ∀ x, F x → x ≠ 0 → ∃ δ : ℝ, δ > 0 ∧ ∀ y, F y → y ≠ x → abs (y - x) ≥ δ
 
 -- Section: Generic format satisfies properties
 
 /-- Generic format is closed under rounding down -/
-theorem generic_format_round_DN (x : Float) :
+theorem generic_format_round_DN (x : ℝ) :
     ∃ f, generic_format beta fexp f ∧ Rnd_DN_pt (generic_format beta fexp) x f := by
   sorry
 
 /-- Generic format is closed under rounding up -/
-theorem generic_format_round_UP (x : Float) :
+theorem generic_format_round_UP (x : ℝ) :
     ∃ f, generic_format beta fexp f ∧ Rnd_UP_pt (generic_format beta fexp) x f := by
   sorry
 
@@ -228,8 +231,8 @@ theorem generic_format_satisfies_any : satisfies_any (generic_format beta fexp) 
 -- Section: Precision and exponent bounds
 
 /-- Precision bounds for generic format -/
-theorem generic_format_precision_bound (x : Float) (h : generic_format beta fexp x) (hx : x ≠ 0) :
-    abs (scaled_mantissa beta fexp x) < (beta : Float) ^ (mag beta x - cexp beta fexp x) := by
+theorem generic_format_precision_bound (x : ℝ) (h : generic_format beta fexp x) (hx : x ≠ 0) :
+    abs (scaled_mantissa beta fexp x) < (beta : ℝ) ^ (mag beta x - cexp beta fexp x) := by
   sorry
 
 /-- Exponent monotonicity -/
@@ -237,7 +240,7 @@ theorem fexp_monotone : ∀ e1 e2 : Int, e1 ≤ e2 → fexp e1 ≤ fexp e2 := by
   sorry
 
 /-- Format equivalence under exponent bounds -/
-theorem generic_format_equiv (x : Float) (e1 e2 : Int) (h : e1 ≤ e2)
+theorem generic_format_equiv (x : ℝ) (e1 e2 : Int) (h : e1 ≤ e2)
     (h1 : generic_format beta (fun _ => e1) x) :
     generic_format beta (fun _ => e2) x := by
   sorry
@@ -245,23 +248,23 @@ theorem generic_format_equiv (x : Float) (e1 e2 : Int) (h : e1 ≤ e2)
 -- Section: Special format constructions
 
 /-- Generic format from rounding -/
-def round_to_generic (mode : Float → Float → Prop) (x : Float) : Float :=
+noncomputable def round_to_generic (mode : ℝ → ℝ → Prop) (x : ℝ) : ℝ :=
   Classical.choose (Classical.choose_spec 
     (generic_format_round_DN beta fexp x).exists)
 
 /-- Round to generic is well-defined -/
-theorem round_to_generic_spec (mode : Float → Float → Prop) (x : Float) :
+theorem round_to_generic_spec (mode : ℝ → ℝ → Prop) (x : ℝ) :
     generic_format beta fexp (round_to_generic beta fexp mode x) := by
   sorry
 
 -- Section: Format intersection and union
 
 /-- Intersection of two generic formats -/
-def generic_format_inter (fexp1 fexp2 : Int → Int) (x : Float) : Prop :=
+def generic_format_inter (fexp1 fexp2 : Int → Int) (x : ℝ) : Prop :=
   generic_format beta fexp1 x ∧ generic_format beta fexp2 x
 
 /-- Union of two generic formats -/
-def generic_format_union (fexp1 fexp2 : Int → Int) (x : Float) : Prop :=
+def generic_format_union (fexp1 fexp2 : Int → Int) (x : ℝ) : Prop :=
   generic_format beta fexp1 x ∨ generic_format beta fexp2 x
 
 /-- Intersection is a generic format -/
@@ -273,12 +276,12 @@ theorem generic_format_inter_valid (fexp1 fexp2 : Int → Int)
 -- Section: Magnitude and precision relationships
 
 /-- Magnitude is compatible with generic format -/
-theorem mag_generic_format (x : Float) (h : generic_format beta fexp x) (hx : x ≠ 0) :
+theorem mag_generic_format (x : ℝ) (h : generic_format beta fexp x) (hx : x ≠ 0) :
     fexp (mag beta x + 1) ≤ mag beta x := by
   sorry
 
 /-- Precision characterization -/
-theorem precision_generic_format (x : Float) (h : generic_format beta fexp x) (hx : x ≠ 0) :
+theorem precision_generic_format (x : ℝ) (h : generic_format beta fexp x) (hx : x ≠ 0) :
     ∃ m : Int, x = F2R (FlocqFloat.mk m (cexp beta fexp x)) ∧ 
     abs m < (beta : Int) ^ (mag beta x - cexp beta fexp x) := by
   sorry
@@ -286,36 +289,36 @@ theorem precision_generic_format (x : Float) (h : generic_format beta fexp x) (h
 -- Section: Error bounds
 
 /-- Generic format error bound -/
-theorem generic_format_error_bound (x : Float) :
+theorem generic_format_error_bound (x : ℝ) :
     ∃ f, generic_format beta fexp f ∧ 
-    abs (f - x) ≤ (1/2) * (beta : Float) ^ (cexp beta fexp x) := by
+    abs (f - x) ≤ (1/2) * (beta : ℝ) ^ (cexp beta fexp x) := by
   sorry
 
 /-- Relative error bound -/
-theorem generic_format_relative_error (x : Float) (hx : x ≠ 0) :
+theorem generic_format_relative_error (x : ℝ) (hx : x ≠ 0) :
     ∃ f, generic_format beta fexp f ∧ f ≠ 0 ∧
-    abs (f - x) / abs x ≤ (1/2) * (beta : Float) ^ (cexp beta fexp x - mag beta x) := by
+    abs (f - x) / abs x ≤ (1/2) * (beta : ℝ) ^ (cexp beta fexp x - mag beta x) := by
   sorry
 
 -- Section: Format-specific rounding modes
 
 /-- Round to nearest in generic format -/
-def round_N_to_format (x : Float) : Float :=
+noncomputable def round_N_to_format (x : ℝ) : ℝ :=
   Classical.choose (Classical.choose_spec 
     (generic_format_round_DN beta fexp x).exists)
 
 /-- Round down to generic format -/
-def round_DN_to_format (x : Float) : Float :=
+noncomputable def round_DN_to_format (x : ℝ) : ℝ :=
   Classical.choose (Classical.choose_spec 
     (generic_format_round_DN beta fexp x).exists)
 
 /-- Round up to generic format -/
-def round_UP_to_format (x : Float) : Float :=
+noncomputable def round_UP_to_format (x : ℝ) : ℝ :=
   Classical.choose (Classical.choose_spec 
     (generic_format_round_UP beta fexp x).exists)
 
 /-- Properties of format-specific rounding -/
-theorem round_to_format_properties (x : Float) :
+theorem round_to_format_properties (x : ℝ) :
     generic_format beta fexp (round_DN_to_format beta fexp x) ∧
     generic_format beta fexp (round_UP_to_format beta fexp x) ∧
     round_DN_to_format beta fexp x ≤ x ∧

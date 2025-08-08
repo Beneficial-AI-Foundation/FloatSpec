@@ -3,6 +3,9 @@
 
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Zaux
+import Mathlib.Data.Real.Basic
+
+open Real
 
 -- Basic float representation
 /-- Floating-point number representation with mantissa and exponent 
@@ -17,7 +20,7 @@ structure FlocqFloat (beta : Int) where
 variable {beta : Int}
 
 /-- Convert FlocqFloat to real number: Fnum * beta^Fexp -/
-def F2R (f : FlocqFloat beta) : Float := 
+noncomputable def F2R (f : FlocqFloat beta) : ℝ := 
   sorry -- Will be properly implemented later
 
 /-- Specification for F2R -/
@@ -28,46 +31,46 @@ theorem F2R_spec (f : FlocqFloat beta) (h : beta > 1) :
 -- Rounding predicates and properties
 
 /-- A rounding predicate is total: for every real, there exists a rounded value -/
-def round_pred_total (P : Float → Float → Prop) : Prop :=
-  ∀ x : Float, ∃ f : Float, P x f
+def round_pred_total (P : ℝ → ℝ → Prop) : Prop :=
+  ∀ x : ℝ, ∃ f : ℝ, P x f
 
 /-- A rounding predicate is monotone: preserves order -/
-def round_pred_monotone (P : Float → Float → Prop) : Prop :=
-  ∀ x y f g : Float, P x f → P y g → x ≤ y → f ≤ g
+def round_pred_monotone (P : ℝ → ℝ → Prop) : Prop :=
+  ∀ x y f g : ℝ, P x f → P y g → x ≤ y → f ≤ g
 
 /-- A proper rounding predicate is both total and monotone -/
-def round_pred (P : Float → Float → Prop) : Prop :=
+def round_pred (P : ℝ → ℝ → Prop) : Prop :=
   round_pred_total P ∧ round_pred_monotone P
 
 -- Rounding modes definitions
 
 /-- Rounding toward negative infinity (down) -/
-def Rnd_DN_pt (F : Float → Prop) (x f : Float) : Prop :=
-  F f ∧ f ≤ x ∧ ∀ g : Float, F g → g ≤ x → g ≤ f
+def Rnd_DN_pt (F : ℝ → Prop) (x f : ℝ) : Prop :=
+  F f ∧ f ≤ x ∧ ∀ g : ℝ, F g → g ≤ x → g ≤ f
 
 /-- Rounding toward positive infinity (up) -/
-def Rnd_UP_pt (F : Float → Prop) (x f : Float) : Prop :=
-  F f ∧ x ≤ f ∧ ∀ g : Float, F g → x ≤ g → f ≤ g
+def Rnd_UP_pt (F : ℝ → Prop) (x f : ℝ) : Prop :=
+  F f ∧ x ≤ f ∧ ∀ g : ℝ, F g → x ≤ g → f ≤ g
 
 /-- Rounding toward zero (truncation) -/
-def Rnd_ZR_pt (F : Float → Prop) (x f : Float) : Prop :=
+def Rnd_ZR_pt (F : ℝ → Prop) (x f : ℝ) : Prop :=
   (0 ≤ x → Rnd_DN_pt F x f) ∧ (x ≤ 0 → Rnd_UP_pt F x f)
 
 /-- Rounding to nearest (any tie-breaking rule) -/
-def Rnd_N_pt (F : Float → Prop) (x f : Float) : Prop :=
-  F f ∧ ∀ g : Float, F g → (f - x).abs ≤ (g - x).abs
+def Rnd_N_pt (F : ℝ → Prop) (x f : ℝ) : Prop :=
+  F f ∧ ∀ g : ℝ, F g → |f - x| ≤ |g - x|
 
 /-- Generic rounding to nearest with custom tie-breaking predicate -/
-def Rnd_NG_pt (F : Float → Prop) (P : Float → Float → Prop) (x f : Float) : Prop :=
-  Rnd_N_pt F x f ∧ (P x f ∨ ∀ f2 : Float, Rnd_N_pt F x f2 → f2 = f)
+def Rnd_NG_pt (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x f : ℝ) : Prop :=
+  Rnd_N_pt F x f ∧ (P x f ∨ ∀ f2 : ℝ, Rnd_N_pt F x f2 → f2 = f)
 
 /-- Rounding to nearest, ties away from zero -/
-def Rnd_NA_pt (F : Float → Prop) (x f : Float) : Prop :=
-  Rnd_N_pt F x f ∧ ∀ f2 : Float, Rnd_N_pt F x f2 → f2.abs ≤ f.abs
+def Rnd_NA_pt (F : ℝ → Prop) (x f : ℝ) : Prop :=
+  Rnd_N_pt F x f ∧ ∀ f2 : ℝ, Rnd_N_pt F x f2 → |f2| ≤ |f|
 
 /-- Rounding to nearest, ties toward zero -/
-def Rnd_N0_pt (F : Float → Prop) (x f : Float) : Prop :=
-  Rnd_N_pt F x f ∧ ∀ f2 : Float, Rnd_N_pt F x f2 → f.abs ≤ f2.abs
+def Rnd_N0_pt (F : ℝ → Prop) (x f : ℝ) : Prop :=
+  Rnd_N_pt F x f ∧ ∀ f2 : ℝ, Rnd_N_pt F x f2 → |f| ≤ |f2|
 
 -- Helper functions for working with the float structure
 
@@ -98,55 +101,55 @@ theorem make_float_spec {beta : Int} (num exp : Int) :
 -- Properties of rounding predicates
 
 /-- Total rounding characterization -/
-theorem round_pred_total_iff (P : Float → Float → Prop) :
-  round_pred_total P ↔ (∀ x : Float, ∃ f : Float, P x f) := by
+theorem round_pred_total_iff (P : ℝ → ℝ → Prop) :
+  round_pred_total P ↔ (∀ x : ℝ, ∃ f : ℝ, P x f) := by
   rfl
 
 /-- Monotone rounding characterization -/
-theorem round_pred_monotone_iff (P : Float → Float → Prop) :
-  round_pred_monotone P ↔ (∀ x y f g : Float, P x f → P y g → x ≤ y → f ≤ g) := by
+theorem round_pred_monotone_iff (P : ℝ → ℝ → Prop) :
+  round_pred_monotone P ↔ (∀ x y f g : ℝ, P x f → P y g → x ≤ y → f ≤ g) := by
   rfl
 
 /-- Round predicate characterization -/
-theorem round_pred_iff (P : Float → Float → Prop) :
+theorem round_pred_iff (P : ℝ → ℝ → Prop) :
   round_pred P ↔ (round_pred_total P ∧ round_pred_monotone P) := by
   rfl
 
 -- Properties of specific rounding modes
 
 /-- Down rounding characterization -/
-theorem Rnd_DN_pt_iff (F : Float → Prop) (x f : Float) :
-  Rnd_DN_pt F x f ↔ (F f ∧ f ≤ x ∧ ∀ g : Float, F g → g ≤ x → g ≤ f) := by
+theorem Rnd_DN_pt_iff (F : ℝ → Prop) (x f : ℝ) :
+  Rnd_DN_pt F x f ↔ (F f ∧ f ≤ x ∧ ∀ g : ℝ, F g → g ≤ x → g ≤ f) := by
   rfl
 
 /-- Up rounding characterization -/
-theorem Rnd_UP_pt_iff (F : Float → Prop) (x f : Float) :
-  Rnd_UP_pt F x f ↔ (F f ∧ x ≤ f ∧ ∀ g : Float, F g → x ≤ g → f ≤ g) := by
+theorem Rnd_UP_pt_iff (F : ℝ → Prop) (x f : ℝ) :
+  Rnd_UP_pt F x f ↔ (F f ∧ x ≤ f ∧ ∀ g : ℝ, F g → x ≤ g → f ≤ g) := by
   rfl
 
 /-- Zero rounding characterization -/
-theorem Rnd_ZR_pt_iff (F : Float → Prop) (x f : Float) :
+theorem Rnd_ZR_pt_iff (F : ℝ → Prop) (x f : ℝ) :
   Rnd_ZR_pt F x f ↔ ((0 ≤ x → Rnd_DN_pt F x f) ∧ (x ≤ 0 → Rnd_UP_pt F x f)) := by
   rfl
 
 /-- Nearest rounding characterization -/
-theorem Rnd_N_pt_iff (F : Float → Prop) (x f : Float) :
-  Rnd_N_pt F x f ↔ (F f ∧ ∀ g : Float, F g → (f - x).abs ≤ (g - x).abs) := by
+theorem Rnd_N_pt_iff (F : ℝ → Prop) (x f : ℝ) :
+  Rnd_N_pt F x f ↔ (F f ∧ ∀ g : ℝ, F g → |f - x| ≤ |g - x|) := by
   rfl
 
 /-- Generic nearest rounding characterization -/
-theorem Rnd_NG_pt_iff (F : Float → Prop) (P : Float → Float → Prop) (x f : Float) :
-  Rnd_NG_pt F P x f ↔ (Rnd_N_pt F x f ∧ (P x f ∨ ∀ f2 : Float, Rnd_N_pt F x f2 → f2 = f)) := by
+theorem Rnd_NG_pt_iff (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x f : ℝ) :
+  Rnd_NG_pt F P x f ↔ (Rnd_N_pt F x f ∧ (P x f ∨ ∀ f2 : ℝ, Rnd_N_pt F x f2 → f2 = f)) := by
   rfl
 
 /-- Away from zero nearest rounding characterization -/
-theorem Rnd_NA_pt_iff (F : Float → Prop) (x f : Float) :
-  Rnd_NA_pt F x f ↔ (Rnd_N_pt F x f ∧ ∀ f2 : Float, Rnd_N_pt F x f2 → f2.abs ≤ f.abs) := by
+theorem Rnd_NA_pt_iff (F : ℝ → Prop) (x f : ℝ) :
+  Rnd_NA_pt F x f ↔ (Rnd_N_pt F x f ∧ ∀ f2 : ℝ, Rnd_N_pt F x f2 → |f2| ≤ |f|) := by
   rfl
 
 /-- Toward zero nearest rounding characterization -/
-theorem Rnd_N0_pt_iff (F : Float → Prop) (x f : Float) :
-  Rnd_N0_pt F x f ↔ (Rnd_N_pt F x f ∧ ∀ f2 : Float, Rnd_N_pt F x f2 → f.abs ≤ f2.abs) := by
+theorem Rnd_N0_pt_iff (F : ℝ → Prop) (x f : ℝ) :
+  Rnd_N0_pt F x f ↔ (Rnd_N_pt F x f ∧ ∀ f2 : ℝ, Rnd_N_pt F x f2 → |f| ≤ |f2|) := by
   rfl
 
 -- Basic properties of the FlocqFloat structure

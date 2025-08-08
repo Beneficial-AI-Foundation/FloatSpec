@@ -3,9 +3,6 @@
 
 import FloatSpec.src.Core
 import FloatSpec.src.Calc
-import Mathlib.Data.Real.Basic
-
-open Real
 
 -- IEEE 754 full float representation
 inductive FullFloat where
@@ -30,14 +27,14 @@ def FF2SF (x : FullFloat) : StandardFloat :=
   | FullFloat.F754_finite s m e => StandardFloat.S754_finite s m e
 
 -- Conversion from FullFloat to real number
-def FF2R (beta : Int) (x : FullFloat) : ℝ :=
+def FF2R (beta : Int) (x : FullFloat) : Float :=
   match x with
   | FullFloat.F754_finite s m e => 
     F2R (FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FlocqFloat beta)
   | _ => 0
 
 -- Conversion from StandardFloat to real number
-def SF2R (beta : Int) (x : StandardFloat) : ℝ :=
+def SF2R (beta : Int) (x : StandardFloat) : Float :=
   match x with
   | StandardFloat.S754_finite s m e => 
     F2R (FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FlocqFloat beta)
@@ -156,7 +153,7 @@ inductive RoundingMode where
   | RTZ : RoundingMode  -- Round toward zero
 
 -- Convert rounding mode to rounding function
-def rnd_of_mode (mode : RoundingMode) : ℝ → Int := by
+def rnd_of_mode (mode : RoundingMode) : Float → Int := by
   sorry
 
 -- Binary format properties
