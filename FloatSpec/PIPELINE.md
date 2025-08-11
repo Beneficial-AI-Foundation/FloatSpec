@@ -724,3 +724,154 @@ For Coq function `coq.function_name`:
 - [ ] File saved with correct naming convention
 - [ ] All functions end with `:= sorry`
 - [ ] All theorems end with `:= by sorry`
+
+## Writing Formal Proofs
+
+### Pre-Proof Verification
+
+Before writing formal proofs, always verify the function implementation:
+
+1. **Test Function Behavior First**
+   - Check that the function itself compiles and works correctly
+   - Use `#eval` to test simple cases
+   - Verify the function logic matches the specification
+   - Fix any implementation issues before attempting proofs
+
+2. **Use MCP Tools for Lean Feedback**
+   - `mcp__lean-lsp-mcp__lean_diagnostic_messages`: Get all diagnostic messages (errors, warnings, infos) for the file
+   - `mcp__lean-lsp-mcp__lean_goal`: Check the proof state at specific locations
+   - `mcp__lean-lsp-mcp__lean_hover_info`: Get documentation about Lean syntax and functions
+   - `mcp__lean-lsp-mcp__lean_leansearch`: Search for relevant theorems using natural language
+   - `mcp__lean-lsp-mcp__lean_loogle`: Search for lemmas by name, type, or pattern
+   - `mcp__lean-lsp-mcp__lean_state_search`: Find theorems based on current proof state
+
+3. **Incremental Proof Development**
+   - Start with `sorry` and gradually fill in proof steps
+   - Use named holes (`?holeName`) to work on parts incrementally
+   - Check compilation after each significant change
+   - Keep proofs simple - let tactics like `simp`, `grind`, and `canonical` do the heavy lifting
+
+### Proof Writing Process
+
+1. **Analyze the Goal**
+   ```lean
+   -- Use lean_goal to see what needs to be proved
+   -- Check at line before and after key positions
+   ```
+
+2. **Search for Relevant Lemmas**
+   ```lean
+   -- Use lean_leansearch with natural language descriptions
+   -- Use lean_loogle for pattern-based searches
+   -- Use lean_state_search when stuck in a proof
+   ```
+
+3. **Write the Proof Incrementally**
+   ```lean
+   theorem my_theorem : ... := by
+     -- Step 1: Unfold definitions
+     unfold my_function
+     -- Check goal state with lean_goal
+     
+     -- Step 2: Apply relevant lemmas
+     apply some_lemma
+     -- Check new goal state
+     
+     -- Step 3: Simplify
+     simp
+     -- Check if solved or what remains
+     
+     sorry  -- For remaining goals
+   ```
+
+4. **Compile and Debug**
+   - After each proof step, run `lake build` to check for errors
+   - Use `lean_diagnostic_messages` to understand any issues
+   - If stuck, use `lean_hover_info` to understand syntax or functions
+
+### Common Proof Patterns in FloatSpec
+
+1. **Hoare Triple Proofs**
+   ```lean
+   theorem spec : ⦃⌜precondition⌝⦄ function ⦃⇓result => postcondition⦄ := by
+     -- Usually start by unfolding the function definition
+     unfold function
+     -- Apply Hoare triple rules
+     -- Prove precondition implies postcondition
+     sorry
+   ```
+
+2. **Integer/Real Properties**
+   ```lean
+   -- For integer division/modulo
+   use Int.emod_add_ediv, Int.ediv_add_emod
+   
+   -- For real number properties
+   use Real.sqrt_sq, Real.sq_sqrt
+   
+   -- For inequalities
+   use linarith, omega
+   ```
+
+3. **Induction Proofs**
+   ```lean
+   -- For natural numbers
+   induction n with
+   | zero => sorry
+   | succ n ih => sorry
+   
+   -- For lists/vectors
+   induction v with
+   | nil => sorry
+   | cons h t ih => sorry
+   ```
+
+### Debugging Tips
+
+1. **When Proofs Don't Compile**
+   - Check exact error with `lean_diagnostic_messages`
+   - Verify all imports are present
+   - Ensure theorem statement matches function signature
+   - Check that preconditions are properly stated
+
+2. **When Stuck in a Proof**
+   - Use `lean_goal` to see current proof state
+   - Try `lean_state_search` to find applicable lemmas
+   - Simplify the goal with `simp` or `grind`
+   - Break complex goals into smaller lemmas
+
+3. **Performance Issues**
+   - Avoid deep recursion in proofs
+   - Use `simp only [specific_lemmas]` instead of bare `simp`
+   - Consider marking functions as `noncomputable` if needed
+
+### Best Practices
+
+1. **Always compile after each change** - Don't accumulate errors
+2. **Use MCP tools liberally** - They provide crucial feedback
+3. **Start simple** - Prove basic properties before complex ones
+4. **Document proof strategies** - Add comments explaining key steps
+5. **Reuse proven lemmas** - Build a library of helper lemmas
+
+### Example Workflow
+
+```bash
+# 1. Check initial compilation
+lake build
+
+# 2. Use MCP to check for errors
+# (Use lean_diagnostic_messages on the file)
+
+# 3. Start with simplest theorem
+# (Add proof steps incrementally)
+
+# 4. After each proof step
+lake build  # Verify it still compiles
+
+# 5. When stuck, use MCP tools to search for help
+# (lean_leansearch, lean_loogle, lean_state_search)
+
+# 6. Complete the proof or leave sorry for later
+```
+
+Remember: **Function correctness comes before proof correctness**. Always ensure the implementation works before proving properties about it.

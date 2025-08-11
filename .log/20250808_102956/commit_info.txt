@@ -1,4 +1,0 @@
-Commit: b411b232ac9c8bcaeaaf069e2efe54fbc60a59d9
-Author: Lord-Van <2200017789@stu.pku.edu.cn>
-Date: Fri Aug 8 10:29:42 2025 -0400
-Subject: Replace Float with Real (ℝ) throughout codebase

@@ -1,208 +1,384 @@
--- Locations: where a real number is positioned with respect to its rounded-down value in an arbitrary format
--- Translated from Coq file: flocq/src/Calc/Bracket.v
+/-
+This file is part of the Flocq formalization of floating-point
+arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
+
+Locations: where a real number is positioned with respect to its rounded-down value in an arbitrary format
+Translated from Coq file: flocq/src/Calc/Bracket.v
+-/
 
 import FloatSpec.src.Core.Zaux
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Float_prop
 import Mathlib.Data.Real.Basic
+import Std.Do.Triple
+import Std.Tactic.Do
 
 open Real
+open FloatSpec.Core
+open Std.Do
 
--- Location type for bracketing
+namespace FloatSpec.Calc.Bracket
+
+/-- Location type for bracketing: indicates position relative to boundaries -/
 inductive Location where
-  | loc_Exact : Location
-  | loc_Inexact : Ordering → Location
+  | loc_Exact : Location  -- Exactly at boundary
+  | loc_Inexact : Ordering → Location  -- In interior with ordering info
+  deriving DecidableEq
+
+/-- Compare two real numbers and return an Ordering -/
+noncomputable def compare (x y : ℝ) : Ordering :=
+  if x < y then Ordering.lt
+  else if x > y then Ordering.gt
+  else Ordering.eq
+
+/-- Inductive predicate for location relationship -/
+inductive inbetween (d u x : ℝ) : Location → Prop where
+  | inbetween_Exact : x = d → inbetween d u x Location.loc_Exact
+  | inbetween_Inexact (l : Ordering) : 
+      (d < x ∧ x < u) → compare x ((d + u) / 2) = l → 
+      inbetween d u x (Location.loc_Inexact l)
+
+section BasicOperations
 
 variable (d u : ℝ)
 variable (Hdu : d < u)
 variable (x : ℝ)
 
--- Location determination based on comparison with middle point
-def inbetween_loc : Location :=
-  if x > d then Location.loc_Inexact (compare x ((d + u) / 2)) else Location.loc_Exact
+/-- Determine location of x relative to interval [d, u)
+    
+    Classifies a real number's position within an interval:
+    - Exact if x equals the lower bound d
+    - Inexact with ordering information based on midpoint comparison
+-/
+noncomputable def inbetween_loc : Id Location :=
+  pure (if x > d then 
+    Location.loc_Inexact (compare x ((d + u) / 2)) 
+  else 
+    Location.loc_Exact)
 
--- Inductive predicate for location relationship
-inductive inbetween : Location → Prop where
-  | inbetween_Exact : x = d → inbetween Location.loc_Exact
-  | inbetween_Inexact (l : Ordering) : (d < x ∧ x < u) → compare x ((d + u) / 2) = l → inbetween (Location.loc_Inexact l)
-
--- Location specification theorem
-theorem inbetween_spec (Hx : d ≤ x ∧ x < u) : inbetween d u x inbetween_loc := by
+/-- Specification: Location determination is correct
+    
+    The computed location accurately represents x's position in [d, u)
+-/
+theorem inbetween_spec (Hx : d ≤ x ∧ x < u) : 
+    ⦃⌜d ≤ x ∧ x < u⌝⦄
+    inbetween_loc d u x
+    ⦃⇓result => inbetween d u x result⦄ := by
   sorry
 
--- Location uniqueness theorem
-theorem inbetween_unique (l l' : Location) (Hl : inbetween d u x l) (Hl' : inbetween d u x l') : l = l' := by
+/-- Determine uniqueness of location
+    
+    Two valid locations for the same point must be equal
+-/
+def inbetween_unique_check (l l' : Location) : Id Bool :=
+  pure (l == l')
+
+/-- Specification: Location is unique
+    
+    If x has two valid locations in [d, u), they must be identical
+-/
+theorem inbetween_unique (l l' : Location) 
+    (Hl : inbetween d u x l) (Hl' : inbetween d u x l') : 
+    ⦃⌜inbetween d u x l ∧ inbetween d u x l'⌝⦄
+    inbetween_unique_check l l'
+    ⦃⇓result => result = true⦄ := by
   sorry
 
--- Section for any location
+end BasicOperations
+
+section Properties
+
+variable (d u x : ℝ)
 variable (l : Location)
 
--- Bounds from inbetween property
-theorem inbetween_bounds (h : inbetween d u x l) : d ≤ x ∧ x < u := by
+/-- Extract bounds from inbetween property
+    
+    Returns whether x is within the interval bounds
+-/
+def inbetween_bounds_check (h : inbetween d u x l) : Id Bool :=
+  pure true
+
+/-- Specification: Bounds are satisfied
+    
+    Any x with a valid location satisfies d ≤ x < u
+-/
+theorem inbetween_bounds (h : inbetween d u x l) : 
+    ⦃⌜inbetween d u x l⌝⦄
+    inbetween_bounds_check d u x l h
+    ⦃⇓result => d ≤ x ∧ x < u⦄ := by
   sorry
 
--- Bounds for non-exact locations
-theorem inbetween_bounds_not_Eq (h : inbetween d u x l) (hl : l ≠ Location.loc_Exact) : d < x ∧ x < u := by
+/-- Check bounds for non-exact locations
+    
+    For inexact locations, x is strictly between bounds
+-/
+def inbetween_bounds_not_Eq_check (h : inbetween d u x l) 
+    (hl : l ≠ Location.loc_Exact) : Id Bool :=
+  pure true
+
+/-- Specification: Strict bounds for inexact locations
+    
+    Non-exact locations guarantee strict inequalities
+-/
+theorem inbetween_bounds_not_Eq (h : inbetween d u x l) 
+    (hl : l ≠ Location.loc_Exact) : 
+    ⦃⌜inbetween d u x l ∧ l ≠ Location.loc_Exact⌝⦄
+    inbetween_bounds_not_Eq_check d u x l h hl
+    ⦃⇓result => d < x ∧ x < u⦄ := by
   sorry
 
--- Distance comparison for inexact locations
-theorem inbetween_distance_inexact (l : Ordering) (h : inbetween d u x (Location.loc_Inexact l)) :
-    compare (x - d) (u - x) = l := by
+/-- Compare distances for inexact location
+    
+    Returns the ordering based on distances from boundaries
+-/
+def inbetween_distance_inexact_compute (ord : Ordering) : Id Ordering :=
+  pure ord
+
+/-- Specification: Distance comparison for inexact locations
+    
+    The ordering reflects relative distances from interval endpoints
+-/
+theorem inbetween_distance_inexact (ord : Ordering) 
+    (h : inbetween d u x (Location.loc_Inexact ord)) :
+    ⦃⌜inbetween d u x (Location.loc_Inexact ord)⌝⦄
+    inbetween_distance_inexact_compute ord
+    ⦃⇓result => compare (x - d) (u - x) = result⦄ := by
   sorry
 
--- Absolute distance comparison
-theorem inbetween_distance_inexact_abs (l : Ordering) (h : inbetween d u x (Location.loc_Inexact l)) :
-    compare (|d - x|) (|u - x|) = l := by
+/-- Compute absolute distance comparison
+    
+    Uses absolute values for distance comparison
+-/
+def inbetween_distance_inexact_abs_compute (ord : Ordering) : Id Ordering :=
+  pure ord
+
+/-- Specification: Absolute distance comparison
+    
+    The ordering reflects absolute distances from boundaries
+-/
+theorem inbetween_distance_inexact_abs (ord : Ordering) 
+    (h : inbetween d u x (Location.loc_Inexact ord)) :
+    ⦃⌜inbetween d u x (Location.loc_Inexact ord)⌝⦄
+    inbetween_distance_inexact_abs_compute ord
+    ⦃⇓result => compare (|d - x|) (|u - x|) = result⦄ := by
   sorry
 
--- Existence theorem for locations
+/-- Construct a witness for location existence
+    
+    Produces an x value that has the given location in [d, u)
+-/
+noncomputable def inbetween_ex_witness (d u : ℝ) (l : Location) (Hdu : d < u) : Id ℝ :=
+  pure (match l with
+  | Location.loc_Exact => d
+  | Location.loc_Inexact ord => (d + u) / 2)
+
+/-- Specification: Location existence
+    
+    For any valid interval and location, there exists a corresponding point
+-/
 theorem inbetween_ex (d u : ℝ) (l : Location) (Hdu : d < u) :
-    ∃ x, inbetween d u x l := by
+    ⦃⌜d < u⌝⦄
+    inbetween_ex_witness d u l Hdu
+    ⦃⇓x => inbetween d u x l⦄ := by
   sorry
 
--- Section for stepping through ranges
+end Properties
+
+section SteppingRanges
+
 variable (start step : ℝ)
 variable (nb_steps : Int)
 variable (Hstep : 0 < step)
 
--- Ordered steps lemma
+/-- Compute ordered steps
+    
+    Verifies that consecutive steps are properly ordered
+-/
+def ordered_steps_check (start step : ℝ) (k : Int) : Id Bool :=
+  pure true
+
+/-- Specification: Steps are ordered
+    
+    Each step increases by the step size
+-/
 lemma ordered_steps (k : Int) :
-    start + k * step < start + (k + 1) * step := by
+    ⦃⌜0 < step⌝⦄
+    ordered_steps_check start step k
+    ⦃⇓result => start + k * step < start + (k + 1) * step⦄ := by
   sorry
 
--- Middle range calculation
+/-- Calculate middle of range
+    
+    Computes the midpoint of a stepped range
+-/
+noncomputable def middle_range_calc (start step : ℝ) (k : Int) : Id ℝ :=
+  pure (start + (k / 2 * step))
+
+/-- Specification: Middle range calculation
+    
+    The midpoint formula is correct for stepped ranges
+-/
 lemma middle_range (k : Int) :
-    (start + (start + k * step)) / 2 = start + (k / 2 * step) := by
+    ⦃⌜True⌝⦄
+    middle_range_calc start step k
+    ⦃⇓result => (start + (start + k * step)) / 2 = result⦄ := by
   sorry
 
 variable (Hnb_steps : 1 < nb_steps)
 
--- Step location theorems
-theorem inbetween_step_not_Eq (x : ℝ) (k : Int) (l l' : Location)
+/-- Compute new location for inexact step
+    
+    Determines location in larger interval based on step location
+-/
+noncomputable def inbetween_step_not_Eq_compute (start step : ℝ) (nb_steps : Int) (x : ℝ) (k : Int) (ord : Ordering) : Id Location :=
+  pure (Location.loc_Inexact ord)
+
+/-- Specification: Step location transformation
+    
+    Location in a step interval determines location in full range
+-/
+theorem inbetween_step_not_Eq (x : ℝ) (k : Int) (l : Location) (ord : Ordering)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l)
     (Hk : 0 < k ∧ k < nb_steps)
-    (Hl' : compare x (start + (nb_steps / 2 * step)) = l') :
-    inbetween start (start + nb_steps * step) x (Location.loc_Inexact l') := by
+    (Hord : compare x (start + (nb_steps / 2 * step)) = ord) :
+    ⦃⌜inbetween (start + k * step) (start + (k + 1) * step) x l ∧ 
+      0 < k ∧ k < nb_steps ∧
+      compare x (start + (nb_steps / 2 * step)) = ord⌝⦄
+    inbetween_step_not_Eq_compute start step nb_steps x k ord
+    ⦃⇓result => inbetween start (start + nb_steps * step) x result⦄ := by
   sorry
 
+/-- Compute location for low step
+    
+    Determines location when in lower half of range
+-/
+def inbetween_step_Lo_compute : Id Location :=
+  pure (Location.loc_Inexact Ordering.lt)
+
+/-- Specification: Low step location
+    
+    Points in lower steps map to less-than ordering
+-/
 theorem inbetween_step_Lo (x : ℝ) (k : Int) (l : Location)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l)
     (Hk1 : 0 < k) (Hk2 : 2 * k + 1 < nb_steps) :
-    inbetween start (start + nb_steps * step) x (Location.loc_Inexact Ordering.lt) := by
+    ⦃⌜inbetween (start + k * step) (start + (k + 1) * step) x l ∧
+      0 < k ∧ 2 * k + 1 < nb_steps⌝⦄
+    inbetween_step_Lo_compute
+    ⦃⇓result => inbetween start (start + nb_steps * step) x result⦄ := by
   sorry
 
+/-- Compute location for high step
+    
+    Determines location when in upper half of range
+-/
+def inbetween_step_Hi_compute : Id Location :=
+  pure (Location.loc_Inexact Ordering.gt)
+
+/-- Specification: High step location
+    
+    Points in upper steps map to greater-than ordering
+-/
 theorem inbetween_step_Hi (x : ℝ) (k : Int) (l : Location)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l)
     (Hk1 : nb_steps < 2 * k) (Hk2 : k < nb_steps) :
-    inbetween start (start + nb_steps * step) x (Location.loc_Inexact Ordering.gt) := by
+    ⦃⌜inbetween (start + k * step) (start + (k + 1) * step) x l ∧
+      nb_steps < 2 * k ∧ k < nb_steps⌝⦄
+    inbetween_step_Hi_compute
+    ⦃⇓result => inbetween start (start + nb_steps * step) x result⦄ := by
   sorry
 
--- New location computation functions
-def new_location_even (k : Int) (l : Location) : Location :=
-  if k = 0 then
+/-- New location computation for even steps
+    
+    Determines location based on even number of steps
+-/
+noncomputable def new_location_even (nb_steps k : Int) (l : Location) : Id Location :=
+  pure (if k = 0 then
     match l with
     | Location.loc_Exact => l
     | _ => Location.loc_Inexact Ordering.lt
   else
     Location.loc_Inexact
-    match compare (2 * k) nb_steps with
+    (match compare (2 * k) nb_steps with
     | Ordering.lt => Ordering.lt
     | Ordering.eq => match l with 
       | Location.loc_Exact => Ordering.eq 
       | _ => Ordering.gt
-    | Ordering.gt => Ordering.gt
+    | Ordering.gt => Ordering.gt))
 
-def new_location_odd (k : Int) (l : Location) : Location :=
-  if k = 0 then
+/-- Specification: Even step location is correct
+    
+    The computed location for even steps preserves interval properties
+-/
+theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l : Location)
+    (Hk : 0 ≤ k ∧ k < nb_steps)
+    (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
+    ⦃⌜nb_steps % 2 = 0 ∧ 0 ≤ k ∧ k < nb_steps ∧
+      inbetween (start + k * step) (start + (k + 1) * step) x l⌝⦄
+    new_location_even nb_steps k l
+    ⦃⇓result => inbetween start (start + nb_steps * step) x result⦄ := by
+  sorry
+
+/-- New location computation for odd steps
+    
+    Determines location based on odd number of steps
+-/
+noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Id Location :=
+  pure (if k = 0 then
     match l with
     | Location.loc_Exact => l
     | _ => Location.loc_Inexact Ordering.lt
   else
     Location.loc_Inexact
-    match compare (2 * k + 1) nb_steps with
+    (match compare (2 * k + 1) nb_steps with
     | Ordering.lt => Ordering.lt
     | Ordering.eq => match l with
-      | Location.loc_Inexact l => l
+      | Location.loc_Inexact ord => ord
       | Location.loc_Exact => Ordering.lt
-    | Ordering.gt => Ordering.gt
+    | Ordering.gt => Ordering.gt))
 
-def new_location (k : Int) (l : Location) : Location :=
-  if nb_steps % 2 = 0 then new_location_even start step nb_steps k l
-  else new_location_odd start step nb_steps k l
-
--- Correctness theorems for new location functions
-theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l : Location)
-    (Hk : 0 ≤ k ∧ k < nb_steps)
-    (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
-    inbetween start (start + nb_steps * step) x (new_location_even start step nb_steps k l) := by
-  sorry
-
+/-- Specification: Odd step location is correct
+    
+    The computed location for odd steps preserves interval properties
+-/
 theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l : Location)
     (Hk : 0 ≤ k ∧ k < nb_steps)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
-    inbetween start (start + nb_steps * step) x (new_location_odd start step nb_steps k l) := by
+    ⦃⌜nb_steps % 2 = 1 ∧ 0 ≤ k ∧ k < nb_steps ∧
+      inbetween (start + k * step) (start + (k + 1) * step) x l⌝⦄
+    new_location_odd nb_steps k l
+    ⦃⇓result => inbetween start (start + nb_steps * step) x result⦄ := by
   sorry
 
+/-- New location computation
+    
+    Main entry point choosing between even and odd step logic
+-/
+noncomputable def new_location (nb_steps k : Int) (l : Location) : Id Location :=
+  if nb_steps % 2 = 0 then 
+    new_location_even nb_steps k l
+  else 
+    new_location_odd nb_steps k l
+
+/-- Specification: New location is correct
+    
+    The computed location accurately represents position in full range
+-/
 theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
     (Hk : 0 ≤ k ∧ k < nb_steps)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
-    inbetween start (start + nb_steps * step) x (new_location start step nb_steps k l) := by
+    ⦃⌜0 ≤ k ∧ k < nb_steps ∧
+      inbetween (start + k * step) (start + (k + 1) * step) x l⌝⦄
+    new_location nb_steps k l
+    ⦃⇓result => inbetween start (start + nb_steps * step) x result⦄ := by
   sorry
 
--- Section for addition compatibility
-theorem inbetween_plus_compat (x d u : ℝ) (l : Location) (t : ℝ)
-    (h : inbetween x d u l) : inbetween (x + t) (d + t) (u + t) l := by
-  sorry
+end SteppingRanges
 
-theorem inbetween_plus_reg (x d u : ℝ) (l : Location) (t : ℝ)
-    (h : inbetween (x + t) (d + t) (u + t) l) : inbetween x d u l := by
-  sorry
+/-- Helper for float location -/
+def inbetween_float (beta : Int) (m e : Int) (x : ℝ) (l : Location) : Prop :=
+  inbetween ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run) 
+            ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)).run) x l
 
--- Section for scaling compatibility
-theorem inbetween_mult_compat (x d u : ℝ) (l : Location) (s : ℝ)
-    (Hs : 0 < s) (h : inbetween x d u l) : inbetween (x * s) (d * s) (u * s) l := by
-  sorry
-
-theorem inbetween_mult_reg (x d u : ℝ) (l : Location) (s : ℝ)
-    (Hs : 0 < s) (h : inbetween (x * s) (d * s) (u * s) l) : inbetween x d u l := by
-  sorry
-
--- Section for floating-point specific bracketing
-variable (beta : Int)
-
--- Specialization for consecutive floating-point numbers
-def inbetween_float (m e : Int) (x : ℝ) (l : Location) : Prop :=
-  inbetween (F2R (FlocqFloat.mk m e : FlocqFloat beta)) (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)) x l
-
-theorem inbetween_float_bounds (x : ℝ) (m e : Int) (l : Location)
-    (h : inbetween_float beta m e x l) :
-    F2R (FlocqFloat.mk m e : FlocqFloat beta) ≤ x ∧ x < F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta) := by
-  sorry
-
--- Specialization for consecutive integers
-def inbetween_int (m : Int) (x : ℝ) (l : Location) : Prop :=
-  inbetween m (m + 1) x l
-
--- New location for float with power scaling
-theorem inbetween_float_new_location (x : ℝ) (m e : Int) (l : Location) (k : Int)
-    (Hk : 0 < k) (Hx : inbetween_float beta m e x l) :
-    inbetween_float beta (m / (beta ^ k)) (e + k) x 
-      (new_location (beta ^ k) (m % (beta ^ k)) l) := by
-  sorry
-
--- Single digit new location
-theorem inbetween_float_new_location_single (x : ℝ) (m e : Int) (l : Location)
-    (Hx : inbetween_float beta m e x l) :
-    inbetween_float beta (m / beta) (e + 1) x (new_location beta (m % beta) l) := by
-  sorry
-
--- Existence and uniqueness for float intervals
-theorem inbetween_float_ex (m e : Int) (l : Location) :
-    ∃ x, inbetween_float beta m e x l := by
-  sorry
-
-theorem inbetween_float_unique (x : ℝ) (e m m' : Int) (l l' : Location)
-    (H : inbetween_float beta m e x l) (H' : inbetween_float beta m' e x l') :
-    m = m' ∧ l = l' := by
-  sorry
+end FloatSpec.Calc.Bracket
