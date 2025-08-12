@@ -222,6 +222,8 @@ lake build --verbose
 - Figure out the parser by interactively building up toy components.
 - [ ] install https://github.com/GasStationManager/LeanTool as mcp tool
 - Spam `lake build` to verify the pieces work and build up FUNCTORIALLY.
+- **IMPORTANT**: Check compilation with `lake build` every time before marking anything as complete
+- **IMPORTANT**: In Lean 4, `Int.emod` always returns a positive value (Euclidean modulo)
 - Use compiler tooling like extensible error messages, `simproc` (pattern guided reductions), and metaprogramming for pit of success
 - If you solve a hard problem, write a tactic or simproc to pave the way
 - Try harder to index without `!` or `?` - name `match`/`if` branches for better inference

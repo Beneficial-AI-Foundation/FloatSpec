@@ -38,7 +38,7 @@ def Rle_0_minus (x y : ℝ) : Id ℝ :=
   y - x
 
 /-- Specification: Subtraction ordering principle
-    
+
     The operation ensures that if x ≤ y, then y - x ≥ 0.
     This captures the relationship between ordering and subtraction.
 -/
@@ -46,7 +46,10 @@ theorem Rle_0_minus_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     Rle_0_minus x y
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
-  sorry
+  intro h
+  unfold Rle_0_minus
+  simp
+  exact sub_nonneg_of_le h
 
 /-- Multiplication preserves strict inequalities
 
@@ -58,7 +61,7 @@ def Rmult_lt_compat (r1 r2 r3 r4 : ℝ) : Id (ℝ × ℝ) :=
   (r1 * r3, r2 * r4)
 
 /-- Specification: Multiplication preserves strict inequalities
-    
+
     If 0 ≤ r1, 0 ≤ r3, r1 < r2, and r3 < r4, then r1 * r3 < r2 * r4.
     This property is crucial for analyzing products of bounds.
 -/
@@ -66,18 +69,27 @@ theorem Rmult_lt_compat_spec (r1 r2 r3 r4 : ℝ) :
     ⦃⌜0 ≤ r1 ∧ 0 ≤ r3 ∧ r1 < r2 ∧ r3 < r4⌝⦄
     Rmult_lt_compat r1 r2 r3 r4
     ⦃⇓result => ⌜result.1 < result.2⌝⦄ := by
-  sorry
+  intro h
+  unfold Rmult_lt_compat
+  simp
+  have ⟨h1, h3, h12, h34⟩ := h
+  by_cases hr3 : r3 = 0
+  · subst hr3
+    simp
+    exact mul_pos (h1.trans_lt h12) h34
+  · have h3_pos : 0 < r3 := lt_of_le_of_ne h3 (Ne.symm hr3)
+    exact mul_lt_mul h12 (le_of_lt h34) h3_pos (le_of_lt (h1.trans_lt h12))
 
 /-- Right multiplication cancellation for inequality
 
     If products are unequal and the right factor is the same,
     then the left factors must be unequal.
 -/
-def Rmult_neq_reg_r (r1 r2 r3 : ℝ) : Id (ℝ × ℝ) :=
+def Rmult_neq_reg_r (_r1 r2 r3 : ℝ) : Id (ℝ × ℝ) :=
   (r2, r3)
 
 /-- Specification: Right multiplication cancellation
-    
+
     If r2 * r1 ≠ r3 * r1, then r2 ≠ r3.
     This allows cancellation in multiplication inequalities.
 -/
@@ -85,7 +97,14 @@ theorem Rmult_neq_reg_r_spec (r1 r2 r3 : ℝ) :
     ⦃⌜r2 * r1 ≠ r3 * r1⌝⦄
     Rmult_neq_reg_r r1 r2 r3
     ⦃⇓result => ⌜result.1 ≠ result.2⌝⦄ := by
-  sorry
+  intro h
+  unfold Rmult_neq_reg_r
+  simp
+  intro h_eq
+  -- h_eq : r2 = r3, but we need to prove False from r2 * r1 ≠ r3 * r1
+  apply h
+  -- Convert r2 = r3 to r2 * r1 = r3 * r1
+  congr 1
 
 /-- Multiplication preserves non-equality
 
@@ -96,14 +115,22 @@ def Rmult_neq_compat_r (r1 r2 r3 : ℝ) : Id (ℝ × ℝ) :=
   (r2 * r1, r3 * r1)
 
 /-- Specification: Multiplication preserves non-equality
-    
+
     If r1 ≠ 0 and r2 ≠ r3, then r2 * r1 ≠ r3 * r1.
 -/
 theorem Rmult_neq_compat_r_spec (r1 r2 r3 : ℝ) :
     ⦃⌜r1 ≠ 0 ∧ r2 ≠ r3⌝⦄
     Rmult_neq_compat_r r1 r2 r3
     ⦃⇓result => ⌜result.1 ≠ result.2⌝⦄ := by
-  sorry
+  intro h
+  unfold Rmult_neq_compat_r
+  simp
+  have ⟨h1_ne, h23_ne⟩ := h
+  intro h_eq
+  -- h_eq : r2 * r1 = r3 * r1
+  -- This would imply r2 = r3 when r1 ≠ 0, contradicting h23_ne
+  have : r2 = r3 := mul_right_cancel₀ h1_ne h_eq
+  exact h23_ne this
 
 /-- Right distributivity of minimum over multiplication
 
@@ -114,14 +141,19 @@ def Rmult_min_distr_r (x y z : ℝ) : Id (ℝ × ℝ) :=
   (min (x * z) (y * z), min x y * z)
 
 /-- Specification: Right distributivity of minimum
-    
+
     If 0 ≤ z, then min (x * z) (y * z) = min x y * z.
 -/
 theorem Rmult_min_distr_r_spec (x y z : ℝ) :
     ⦃⌜0 ≤ z⌝⦄
     Rmult_min_distr_r x y z
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  sorry
+  intro h
+  unfold Rmult_min_distr_r
+  simp
+  -- We need to prove: min (x * z) (y * z) = min x y * z
+  rw [min_mul_of_nonneg _ _ h]
+  rfl
 
 /-- Left distributivity of minimum over multiplication
 
@@ -132,14 +164,19 @@ def Rmult_min_distr_l (x y z : ℝ) : Id (ℝ × ℝ) :=
   (min (x * y) (x * z), x * min y z)
 
 /-- Specification: Left distributivity of minimum
-    
+
     If 0 ≤ x, then min (x * y) (x * z) = x * min y z.
 -/
 theorem Rmult_min_distr_l_spec (x y z : ℝ) :
     ⦃⌜0 ≤ x⌝⦄
     Rmult_min_distr_l x y z
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  sorry
+  intro h
+  unfold Rmult_min_distr_l
+  simp
+  -- We need to prove: min (x * y) (x * z) = x * min y z
+  rw [mul_min_of_nonneg _ _ h]
+  rfl
 
 /-- Minimum of opposites equals negative maximum
 
@@ -150,7 +187,7 @@ def Rmin_opp (x y : ℝ) : Id (ℝ × ℝ) :=
   (min (-x) (-y), -(max x y))
 
 /-- Specification: Minimum of opposites
-    
+
     min (-x) (-y) = -(max x y).
     This duality between min and max under negation is fundamental.
 -/
@@ -158,7 +195,11 @@ theorem Rmin_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rmin_opp x y
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  sorry
+  intro _
+  unfold Rmin_opp
+  simp
+  -- We need to prove: min (-x) (-y) = -(max x y)
+  exact min_neg_neg x y
 
 /-- Maximum of opposites equals negative minimum
 
@@ -169,7 +210,7 @@ def Rmax_opp (x y : ℝ) : Id (ℝ × ℝ) :=
   (max (-x) (-y), -(min x y))
 
 /-- Specification: Maximum of opposites
-    
+
     max (-x) (-y) = -(min x y).
     This completes the duality between min/max under negation.
 -/
@@ -177,7 +218,11 @@ theorem Rmax_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rmax_opp x y
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  sorry
+  intro _
+  unfold Rmax_opp
+  simp
+  -- We need to prove: max (-x) (-y) = -(min x y)
+  exact max_neg_neg x y
 
 end Rmissing
 
@@ -194,12 +239,12 @@ noncomputable def Rcompare (x y : ℝ) : Id Int :=
         else 1)
 
 /-- Specification: Three-way comparison correctness
-    
+
     The comparison function returns:
     - -1 when x < y
     - 0 when x = y
     - 1 when x > y
-    
+
     This captures the complete ordering of real numbers.
 -/
 theorem Rcompare_spec (x y : ℝ) :
@@ -208,7 +253,50 @@ theorem Rcompare_spec (x y : ℝ) :
     ⦃⇓result => ⌜(result = -1 ↔ x < y) ∧
                 (result = 0 ↔ x = y) ∧
                 (result = 1 ↔ y < x)⌝⦄ := by
-  sorry
+  intro _
+  unfold Rcompare
+  simp only [pure]
+  by_cases h1 : x < y
+  · simp only [if_pos h1]
+    constructor
+    · constructor
+      · intro _; exact h1
+      · intro _; rfl
+    · constructor
+      · constructor
+        · intro h_eq; cases h_eq
+        · intro h_eq; exact absurd h_eq (ne_of_lt h1)
+      · constructor
+        · intro h_eq; cases h_eq
+        · intro h_lt; exact absurd h_lt (not_lt.mpr (le_of_lt h1))
+  · simp only [if_neg h1]
+    by_cases h2 : x = y
+    · simp only [if_pos h2]
+      subst h2
+      constructor
+      · constructor
+        · intro h_eq; cases h_eq
+        · intro h_lt; exact absurd h_lt h1
+      · constructor
+        · constructor
+          · intro _; rfl
+          · intro _; rfl
+        · constructor
+          · intro h_eq; cases h_eq
+          · intro h_lt; exact absurd h_lt (lt_irrefl x)
+    · simp only [if_neg h2]
+      have h3 : y < x := lt_of_le_of_ne (le_of_not_gt h1) (Ne.symm h2)
+      constructor
+      · constructor
+        · intro h_eq; cases h_eq
+        · intro h_lt; exact absurd h_lt (not_lt.mpr (le_of_lt h3))
+      · constructor
+        · constructor
+          · intro h_eq; cases h_eq
+          · intro h_eq; exact absurd h_eq (Ne.symm (ne_of_lt h3))
+        · constructor
+          · intro _; exact h3
+          · intro _; rfl
 
 /-- Rcompare is antisymmetric
 
@@ -221,7 +309,7 @@ noncomputable def Rcompare_sym (x y : ℝ) : Id Int :=
     pure (-c)
 
 /-- Specification: Comparison antisymmetry
-    
+
     Rcompare x y = -(Rcompare y x).
     This captures the antisymmetric nature of ordering.
 -/
@@ -229,7 +317,10 @@ theorem Rcompare_sym_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_sym x y
     ⦃⇓result => ⌜result = -(Rcompare y x).run⌝⦄ := by
-  sorry
+  intro _
+  unfold Rcompare_sym
+  simp [bind, pure]
+  rfl
 
 /-- Comparison with opposites reverses order
 
@@ -240,7 +331,7 @@ noncomputable def Rcompare_opp (x y : ℝ) : Id Int :=
   Rcompare y x
 
 /-- Specification: Opposite comparison
-    
+
     Rcompare (-x) (-y) = Rcompare y x.
     Negating both arguments reverses the comparison.
 -/
@@ -248,18 +339,21 @@ theorem Rcompare_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_opp x y
     ⦃⇓result => ⌜result = (Rcompare y x).run⌝⦄ := by
-  sorry
+  intro _
+  unfold Rcompare_opp
+  simp
+  rfl
 
 /-- Comparison is invariant under translation
 
     Adding the same value to both arguments doesn't
     change the comparison result.
 -/
-noncomputable def Rcompare_plus_r (x y z : ℝ) : Id Int :=
+noncomputable def Rcompare_plus_r (x y _z: ℝ) : Id Int :=
   Rcompare x y
 
 /-- Specification: Translation invariance
-    
+
     Rcompare (x + z) (y + z) = Rcompare x y.
     Translation preserves ordering relationships.
 -/
@@ -267,58 +361,70 @@ theorem Rcompare_plus_r_spec (x y z : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_plus_r x y z
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
-  sorry
+  intro _
+  unfold Rcompare_plus_r
+  simp
+  rfl
 
 /-- Left addition preserves comparison
 
     Adding a value on the left preserves the comparison.
 -/
-noncomputable def Rcompare_plus_l (x y z : ℝ) : Id Int :=
+noncomputable def Rcompare_plus_l (x y _z : ℝ) : Id Int :=
   Rcompare x y
 
 /-- Specification: Left translation invariance
-    
+
     Rcompare (z + x) (z + y) = Rcompare x y.
 -/
 theorem Rcompare_plus_l_spec (x y z : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_plus_l x y z
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
-  sorry
+  intro _
+  unfold Rcompare_plus_l
+  simp
+  rfl
 
 /-- Comparison is preserved by positive scaling
 
     Multiplying by a positive value preserves the comparison.
 -/
-noncomputable def Rcompare_mult_r (x y z : ℝ) : Id Int :=
+noncomputable def Rcompare_mult_r (x y _z : ℝ) : Id Int :=
   Rcompare x y
 
 /-- Specification: Positive scaling preserves comparison
-    
+
     If 0 < z, then Rcompare (x * z) (y * z) = Rcompare x y.
 -/
 theorem Rcompare_mult_r_spec (x y z : ℝ) :
     ⦃⌜0 < z⌝⦄
     Rcompare_mult_r x y z
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
-  sorry
+  intro _
+  unfold Rcompare_mult_r
+  simp
+  rfl
 
 /-- Left multiplication by positive preserves comparison
 
     Multiplying on the left by a positive value preserves comparison.
 -/
-noncomputable def Rcompare_mult_l (x y z : ℝ) : Id Int :=
+noncomputable def Rcompare_mult_l (x y _z : ℝ) : Id Int :=
   Rcompare x y
 
 /-- Specification: Left positive scaling preserves comparison
-    
+
     If 0 < z, then Rcompare (z * x) (z * y) = Rcompare x y.
 -/
 theorem Rcompare_mult_l_spec (x y z : ℝ) :
     ⦃⌜0 < z⌝⦄
     Rcompare_mult_l x y z
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
-  sorry
+  intro _
+  unfold Rcompare_mult_l
+  simp
+  rfl
 
 end Rcompare
 
@@ -333,7 +439,7 @@ noncomputable def Rle_bool (x y : ℝ) : Id Bool :=
   pure (x ≤ y)
 
 /-- Specification: Boolean ordering test
-    
+
     The boolean less-or-equal test returns true if and only if
     x ≤ y. This provides a computational version of the ordering.
 -/
@@ -341,7 +447,11 @@ theorem Rle_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rle_bool x y
     ⦃⇓result => ⌜result = true ↔ x ≤ y⌝⦄ := by
-  sorry
+  intro _
+  unfold Rle_bool
+  simp [pure]
+  -- The decidable instance for ℝ gives us this
+  exact decide_eq_true_iff
 
 /-- Boolean strict less-than test for real numbers
 
@@ -352,7 +462,7 @@ noncomputable def Rlt_bool (x y : ℝ) : Id Bool :=
   pure (x < y)
 
 /-- Specification: Boolean strict ordering test
-    
+
     The boolean less-than test returns true if and only if
     x < y. This provides a computational version of strict ordering.
 -/
@@ -360,7 +470,11 @@ theorem Rlt_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rlt_bool x y
     ⦃⇓result => ⌜result = true ↔ x < y⌝⦄ := by
-  sorry
+  intro _
+  unfold Rlt_bool
+  simp [pure]
+  -- The decidable instance for ℝ gives us this
+  exact decide_eq_true_iff
 
 /-- Negation of strict less-than is greater-or-equal
 
@@ -371,7 +485,7 @@ noncomputable def negb_Rlt_bool (x y : ℝ) : Id Bool :=
   pure (y ≤ x)
 
 /-- Specification: Negated < equals ≥
-    
+
     !Rlt_bool x y ↔ y ≤ x.
     This duality is fundamental for simplifying comparisons.
 -/
@@ -379,7 +493,11 @@ theorem negb_Rlt_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     negb_Rlt_bool x y
     ⦃⇓result => ⌜result ↔ y ≤ x⌝⦄ := by
-  sorry
+  intro _
+  unfold negb_Rlt_bool
+  simp [pure]
+  -- The decidable instance for ℝ gives us this
+  exact decide_eq_true_iff
 
 /-- Negation of less-or-equal is strict greater-than
 
@@ -390,7 +508,7 @@ noncomputable def negb_Rle_bool (x y : ℝ) : Id Bool :=
   pure (y < x)
 
 /-- Specification: Negated ≤ equals >
-    
+
     !Rle_bool x y ↔ y < x.
     This completes the duality between orderings.
 -/
@@ -398,7 +516,11 @@ theorem negb_Rle_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     negb_Rle_bool x y
     ⦃⇓result => ⌜result ↔ y < x⌝⦄ := by
-  sorry
+  intro _
+  unfold negb_Rle_bool
+  simp [pure]
+  -- The decidable instance for ℝ gives us this
+  exact decide_eq_true_iff
 
 /-- Boolean equality test for real numbers
 
@@ -409,7 +531,7 @@ noncomputable def Req_bool (x y : ℝ) : Id Bool :=
   pure (x = y)
 
 /-- Specification: Boolean equality test
-    
+
     The boolean equality test returns true if and only if
     the real numbers are equal. This provides a computational
     version of equality.
@@ -418,7 +540,11 @@ theorem Req_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Req_bool x y
     ⦃⇓result => ⌜result = true ↔ x = y⌝⦄ := by
-  sorry
+  intro _
+  unfold Req_bool
+  simp [pure]
+  -- The decidable instance for ℝ gives us this
+  exact decide_eq_true_iff
 
 end BooleanComparisons
 
@@ -433,14 +559,18 @@ def eqb_sym (a b : Bool) : Id (Bool × Bool) :=
   ((a == b), (b == a))
 
 /-- Specification: Boolean equality symmetry
-    
+
     a == b equals b == a for all booleans.
 -/
 theorem eqb_sym_spec (a b : Bool) :
     ⦃⌜True⌝⦄
     eqb_sym a b
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  sorry
+  intro _
+  unfold eqb_sym
+  simp
+  -- Boolean equality is symmetric
+  exact Bool.beq_comm
 
 end BooleanOperations
 
@@ -456,18 +586,21 @@ def cond_Ropp (b : Bool) (m : ℝ) : Id ℝ :=
   if b then -m else m
 
 /-- Specification: Conditional negation
-    
+
     The conditional opposite operation returns:
     - -m when b is true
     - m when b is false
-    
+
     This is fundamental for handling signs in floating-point.
 -/
 theorem cond_Ropp_spec (b : Bool) (m : ℝ) :
     ⦃⌜True⌝⦄
     cond_Ropp b m
     ⦃⇓result => ⌜result = if b then -m else m⌝⦄ := by
-  sorry
+  intro _
+  unfold cond_Ropp
+  simp
+  rfl
 
 /-- Conditional opposite is involutive
 
@@ -480,7 +613,7 @@ def cond_Ropp_involutive (b : Bool) (m : ℝ) : Id ℝ :=
     cond_Ropp b x
 
 /-- Specification: Involutive property
-    
+
     cond_Ropp b (cond_Ropp b m) = m.
     Double application cancels out.
 -/
@@ -488,25 +621,44 @@ theorem cond_Ropp_involutive_spec (b : Bool) (m : ℝ) :
     ⦃⌜True⌝⦄
     cond_Ropp_involutive b m
     ⦃⇓result => ⌜result = m⌝⦄ := by
-  sorry
+  intro _
+  unfold cond_Ropp_involutive
+  simp [cond_Ropp, bind]
+  by_cases h : b
+  · simp [h]
+    rfl
+  · simp [h]
+    rfl
 
 /-- Conditional opposite is injective
 
     If conditional opposites are equal with the same boolean,
     then the original values must be equal.
 -/
-def cond_Ropp_inj (b : Bool) (m1 m2 : ℝ) : Id (ℝ × ℝ) :=
+def cond_Ropp_inj (_b : Bool) (m1 m2 : ℝ) : Id (ℝ × ℝ) :=
   (m1, m2)
 
 /-- Specification: Injectivity
-    
+
     If cond_Ropp b m1 = cond_Ropp b m2, then m1 = m2.
 -/
 theorem cond_Ropp_inj_spec (b : Bool) (m1 m2 : ℝ) :
     ⦃⌜(cond_Ropp b m1).run = (cond_Ropp b m2).run⌝⦄
     cond_Ropp_inj b m1 m2
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  sorry
+  intro h
+  unfold cond_Ropp_inj
+  simp
+  -- h states that cond_Ropp b m1 = cond_Ropp b m2
+  -- We need to prove m1 = m2
+  simp [cond_Ropp, Id.run] at h
+  by_cases hb : b
+  · simp [hb] at h
+    -- h : -m1 = -m2, need to prove m1 = m2
+    have : m1 = m2 := by linarith
+    exact this
+  · simp [hb] at h
+    exact h
 
 end ConditionalOpposite
 

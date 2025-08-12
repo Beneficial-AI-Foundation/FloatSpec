@@ -875,3 +875,115 @@ lake build  # Verify it still compiles
 ```
 
 Remember: **Function correctness comes before proof correctness**. Always ensure the implementation works before proving properties about it.
+
+## Lessons from Hoare Triple Proof Writing in FloatSpec
+
+Based on experience writing proofs for `Zpower_Zpower_nat_spec`, `Zdiv_mod_mult_spec`, and `ZOdiv_plus_spec`, here are critical insights:
+
+### Understanding the Hoare Triple System
+
+1. **The wp⟦...⟧ Predicate**: The Hoare triple system uses a weakest precondition predicate. When you see error messages like `wp⟦expr⟧ ⇓ result => ...`, this indicates the proof system is expecting you to prove properties about the weakest precondition.
+
+2. **Id Monad Handling**: Functions return `Id T` rather than plain `T`. The `Id.run` is implicit in the Hoare triple system, so avoid explicitly calling `.run` in proofs.
+
+### Successful Proof Patterns
+
+#### Pattern 1: Simple Conditional with Matching Postcondition
+```lean
+theorem simple_spec (args) :
+    ⦃⌜precondition⌝⦄
+    function args
+    ⦃⇓result => ⌜result = expected⌝⦄ := by
+  intro h
+  unfold function
+  simp [h]  -- When precondition directly determines the branch
+  rfl       -- When result matches expected exactly
+```
+
+#### Pattern 2: Case Split on If-Then-Else
+```lean
+theorem conditional_spec (args) :
+    ⦃⌜precondition⌝⦄
+    function_with_if args
+    ⦃⇓result => ⌜result = if condition then x else y⌝⦄ := by
+  intro h
+  unfold function_with_if
+  split
+  · -- True case
+    rename_i h_true
+    -- Prove the condition holds and simplify
+    simp [h_true]
+    rfl
+  · -- False case  
+    rename_i h_false
+    -- Prove the condition fails and simplify
+    simp [h_false]
+    rfl
+```
+
+#### Pattern 3: Complex Boolean Conditions
+When dealing with `decide` and boolean conditions in if-statements:
+```lean
+-- Extract boolean conditions from decide
+have h_cond : actual_condition := by
+  simp at h_bool_expr
+  exact h_bool_expr.1  -- or .2 for second component of &&
+```
+
+### Common Pitfalls and Solutions
+
+1. **Unsolved Goals with `simp`**: 
+   - Problem: `simp [h]` doesn't always work, especially with complex conditions
+   - Solution: Use `split` to case-split, then handle each branch explicitly
+
+2. **Boolean Expression Handling**:
+   - Problem: `(decide (a ≠ 0) && decide (b ≠ 0)) = true`
+   - Solution: Use `simp` to convert to logical form, then extract components
+
+3. **Negation of Conjunctions**:
+   - Problem: After `push_neg`, `¬(a ≠ 0 && b ≠ 0)` becomes `a ≠ 0 → b = 0`
+   - Solution: Use `by_cases` to handle the implication:
+   ```lean
+   by_cases ha : a = 0
+   · simp [ha]; rfl
+   · have hb : b = 0 := h_impl ha
+     simp [hb]; rfl
+   ```
+
+4. **Or in Postconditions**:
+   - Problem: Postcondition has `if a = 0 || b = 0 then ...`
+   - Solution: Prove which branch applies based on preconditions, then simplify
+
+### Proof Strategy Checklist
+
+1. **Understand the Function**: 
+   - Check the exact if-conditions
+   - Note whether conditions use `&&`, `||`, or implications
+   - Verify the return values match the specification
+
+2. **Match Patterns**:
+   - Simple functions without conditionals → direct `simp` and `rfl`
+   - Single if-then-else → use `split` tactic
+   - Nested conditions → multiple `split` or `by_cases`
+
+3. **Debug Failed Proofs**:
+   - Check error messages for the exact goal state
+   - Use `#check` to verify types
+   - Add intermediate `have` statements to break down complex goals
+   - When `simp` fails, try manual simplification with specific lemmas
+
+4. **Complete Each Branch**:
+   - Every `split` or `by_cases` branch needs completion
+   - Usually ends with `rfl` after simplification
+   - Don't forget `rfl` after `simp` when goals look identical
+
+### Build Verification Protocol
+
+**CRITICAL**: After EVERY proof modification:
+1. Save the file
+2. Run `lake build` immediately
+3. Check for compilation errors
+4. Fix errors before proceeding to next proof
+5. Never batch multiple proof changes without verification
+
+This incremental approach prevents accumulating errors and makes debugging much easier.
