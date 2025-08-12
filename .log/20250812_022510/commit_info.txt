@@ -1,0 +1,9 @@
+Commit: 2f062fd8d2c486229822f33d61276c7e64161c55
+Author: Lord-Van <2200017789@stu.pku.edu.cn>
+Date: Tue Aug 12 02:25:02 2025 -0400
+Subject: Complete all proofs in Raux.lean with Hoare triple specifications
+
+Files changed: 8
+Insertions: 1133
+Deletions: 644
+Net change: +489 lines

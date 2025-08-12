@@ -45,7 +45,8 @@ After making a commit, create a log entry:
 
 1. Create timestamped directory: `.log/YYYYMMDD_HHMMSS/`
 2. Store commit information:
-   - `commit_info.txt` - Basic commit metadata (hash, author, date, subject)
+   - `change_stats.txt` - Basic change statistics (see `.log/20250808_102956/change_stats.txt` for an example)
+   - `change_stats.txt` - Basic commit metadata (hash, author, date, subject)
    - `full_diff.txt` - Full diff of changes (see `.log/20250808_102956/full_diff.txt` for an example)
    - `detailed_changelog.md` - Detailed summary of changes and their impact (see `.log/20250808_102956/detailed_changelog.md` for an example)
 

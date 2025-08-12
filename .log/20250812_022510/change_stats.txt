@@ -1,0 +1,13 @@
+ CLAUDE.md                           |   2 +
+ FloatSpec/PIPELINE.md               | 114 +++++-
+ FloatSpec/src/Core/Defs.lean        |  94 +++--
+ FloatSpec/src/Core/Generic_fmt.lean | 420 +++++++++++++++-----
+ FloatSpec/src/Core/Raux.lean        | 266 ++++++++++---
+ FloatSpec/src/Core/Zaux.lean        | 771 +++++++++++++++---------------------
+ PIPELINE.md                         | 105 +++++
+ debug_test.lean                     |   5 +
+ 8 files changed, 1133 insertions(+), 644 deletions(-)
+
+Detailed Statistics:
+===================
+ 8 files changed, 1133 insertions(+), 644 deletions(-)
