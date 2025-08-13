@@ -26,7 +26,6 @@ import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Float_prop
 -- import FloatSpec.src.Core.Digits
 import Mathlib.Data.Real.Basic
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
 import Std.Do.Triple
 import Std.Tactic.Do
 
@@ -36,7 +35,7 @@ open FloatSpec.Core.Defs
 open FloatSpec.Core.Zaux
 open FloatSpec.Core.Raux
 
-namespace FloatSpec.Core.GenericFmt
+namespace FloatSpec.Core.Generic_fmt
 
 section ExponentFunction
 
@@ -56,27 +55,6 @@ noncomputable def mag (beta : Int) (x : ℝ) : Int :=
 -/
 noncomputable def Ztrunc (x : ℝ) : Int :=
   if x ≥ 0 then ⌊x⌋ else ⌈x⌉
-
--- Helper lemmas section
-section HelperLemmas
-
-/-- Magnitude is invariant under negation -/
-lemma mag_neg (beta : Int) (x : ℝ) : mag beta (-x) = mag beta x := by
-  unfold mag
-  by_cases hx : x = 0
-  · simp [hx]
-  · have h_neg_ne : -x ≠ 0 := by simp [hx]
-    simp [hx, h_neg_ne, abs_neg]
-
-/-- Magnitude is invariant under absolute value -/
-lemma mag_abs (beta : Int) (x : ℝ) : mag beta (abs x) = mag beta x := by
-  unfold mag
-  by_cases hx : x = 0
-  · simp [hx, abs_zero]
-  · have h_abs_ne : abs x ≠ 0 := abs_ne_zero.mpr hx
-    simp [hx, h_abs_ne, abs_abs]
-
-end HelperLemmas
 
 /-- A format satisfies_any if it contains representable values
 
@@ -243,6 +221,49 @@ end CanonicalFormat
 
 section BasicProperties
 
+/-- Truncation respects negation: Ztrunc(-x) = -Ztrunc(x) -/
+theorem Ztrunc_neg (x : ℝ) : Ztrunc (-x) = - Ztrunc x := by
+  unfold Ztrunc
+  by_cases hx : x = 0
+  · simp [hx]
+  · by_cases hnonneg : 0 ≤ x
+    · -- x > 0 (since x ≠ 0)
+      have hxpos : 0 < x := lt_of_le_of_ne hnonneg (Ne.symm hx)
+      have hnot : ¬ 0 ≤ -x := by
+        intro hge
+        have hxle0 : x ≤ 0 := by simpa using (neg_nonneg.mp hge)
+        exact (not_lt_of_ge hxle0) hxpos
+      simpa [hnonneg, hnot, Int.ceil_neg]
+    · -- x < 0
+      have hxlt : x < 0 := lt_of_le_of_ne (le_of_not_ge hnonneg) (by simpa [hx])
+      have hnonneg' : 0 ≤ -x := by simpa using (neg_nonneg.mpr (le_of_lt hxlt))
+      simpa [hnonneg, hnonneg', Int.floor_neg]
+
+/-- Truncation of an integer (as real) gives the same integer -/
+theorem Ztrunc_intCast (z : Int) : Ztrunc (z : ℝ) = z := by
+  unfold Ztrunc
+  by_cases hz : (z : ℝ) ≥ 0
+  · simp [hz, Int.floor_intCast]
+  · simp [hz, Int.ceil_intCast]
+
+/-- zpow product with negative exponent collapses to subtraction in exponent -/
+theorem zpow_mul_sub {a : ℝ} (hbne : a ≠ 0) (e c : Int) :
+    a ^ e * a ^ (-c) = a ^ (e - c) := by
+  have := (zpow_add₀ hbne e (-c))
+  simpa [sub_eq_add_neg] using this.symm
+
+/-- zpow split: (e - c) then c gives back e -/
+theorem zpow_sub_add {a : ℝ} (hbne : a ≠ 0) (e c : Int) :
+    a ^ (e - c) * a ^ c = a ^ e := by
+  simpa [sub_add_cancel] using (zpow_add₀ hbne (e - c) c).symm
+
+/-- For nonnegative exponent, zpow reduces to Nat pow via toNat -/
+theorem zpow_nonneg_toNat (a : ℝ) (k : Int) (hk : 0 ≤ k) :
+    a ^ k = a ^ (Int.toNat k) := by
+  have hofNat : (Int.toNat k : ℤ) = k := Int.toNat_of_nonneg hk
+  rw [← hofNat]
+  exact zpow_ofNat a (Int.toNat k)
+
 /-- Specification: Zero is in generic format
 
     The real number zero can always be exactly
@@ -329,22 +350,12 @@ theorem canonical_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
 
     When fexp (e + 1) ≤ e, beta^e is in generic format.
 -/
-theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+theorem generic_format_bpow
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
     ⦃⌜fexp (e + 1) ≤ e⌝⦄
     generic_format beta fexp ((beta : ℝ) ^ e)
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro h_fexp
-  unfold generic_format scaled_mantissa cexp F2R
-  -- For beta^e:
-  -- mag beta (beta^e) = e + 1 (assuming beta > 1)
-  -- scaled_mantissa = beta^e * beta^(-fexp(e+1))
-  -- Since fexp(e+1) ≤ e, we have beta^(e - fexp(e+1)) is integral
-  -- Ztrunc gives beta^(e - fexp(e+1))
-  -- F2R reconstructs to beta^(e - fexp(e+1)) * beta^(fexp(e+1)) = beta^e
-  simp [mag, Ztrunc, FlocqFloat.mk]
-  -- The proof depends on properties of logarithms and powers
-  -- For now we assert the key property that mag beta (beta^e) = e + 1
-  sorry -- This requires detailed reasoning about logarithms and ceiling functions
+  sorry
 
 /-- Specification: Alternative power condition
 
@@ -354,8 +365,25 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
     ⦃⌜fexp e ≤ e⌝⦄
     generic_format beta fexp ((beta : ℝ) ^ e)
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro _
-  sorry
+  intro hle
+  -- From Valid_exp, we can derive the required bound fexp (e+1) ≤ e
+  -- by case-splitting on whether fexp e < e or e ≤ fexp e.
+  have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) e)
+  by_cases hlt : fexp e < e
+  · -- Large regime: directly get fexp (e+1) ≤ e
+    have hbound : fexp (e + 1) ≤ e := (hpair.left) hlt
+    -- Apply the power-in-format lemma with this bound
+    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound
+  · -- Otherwise, we have e ≤ fexp e
+    have hge : e ≤ fexp e := le_of_not_gt hlt
+    -- Combined with the hypothesis fexp e ≤ e, we get equality
+    have heq : fexp e = e := le_antisymm hle hge
+    -- Small regime: get fexp (fexp e + 1) ≤ fexp e, then rewrite using heq
+    have hsmall := (hpair.right) (by simpa [heq] using hge)
+    have hbound' : fexp (e + 1) ≤ e := by
+      simpa [heq, add_comm, add_left_comm, add_assoc] using hsmall.left
+    -- Apply the power-in-format lemma with the derived bound
+    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound'
 
 /-- Specification: Scaled mantissa multiplication
 
@@ -370,14 +398,24 @@ theorem scaled_mantissa_mult_bpow (beta : Int) (fexp : Int → Int) (x : ℝ) :
     ⦃⇓result => ⌜result = x⌝⦄ := by
   intro hβ
   simp [scaled_mantissa, cexp]
-  -- Let e denote the canonical exponent
+  -- Denote the canonical exponent
   set e := fexp (mag beta x)
-  -- Show base is positive and thus nonzero
+  -- Base is nonzero
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
-  -- Direct calculation
-  field_simp [zpow_ne_zero e hbne]
+  -- x * β^(-e) * β^e = x
+  calc
+    x * ((beta : ℝ) ^ e)⁻¹ * (beta : ℝ) ^ e
+        = (x * (beta : ℝ) ^ (-e)) * (beta : ℝ) ^ e := by simp [zpow_neg]
+    _   = x * ((beta : ℝ) ^ (-e) * (beta : ℝ) ^ e) := by simpa [mul_assoc]
+    _   = x * (beta : ℝ) ^ ((-e) + e) := by
+          have h := (zpow_add₀ hbne (-e) e).symm
+          simpa using congrArg (fun t => x * t) h
+    _   = x := by simp
+
+lemma Ztrunc_zero : Ztrunc (0 : ℝ) = 0 := by
+  simp [Ztrunc]
 
 /-- Specification: F2R in generic format
 
@@ -388,7 +426,69 @@ theorem generic_format_F2R (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
     ⦃⌜beta > 1 ∧ (m ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run).run ≤ e)⌝⦄
     generic_format beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run
     ⦃⇓result => ⌜result⌝⦄ := by
-  sorry
+  intro hpre
+  rcases hpre with ⟨hβ, hbound⟩
+  -- Unfold the goal shape
+  simp [generic_format, scaled_mantissa, cexp, F2R]
+  -- Notation: cexp for this x
+  set c := fexp (mag beta ((m : ℝ) * (beta : ℝ) ^ e)) with hc
+  -- Base positivity for zpow lemmas
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+
+  by_cases hm : m = 0
+  · -- x = 0 case: goal is Ztrunc 0 = 0 ∨ ↑beta ^ c = 0
+    simp [hm]
+    left
+    simp [Ztrunc]
+  · -- Nonzero mantissa case: goal is the equality
+    have hcle : c ≤ e := by
+      have := hbound hm
+      simp [cexp, F2R] at this
+      exact this
+
+    -- Key lemmas for power manipulation
+    have hinv : (beta : ℝ) ^ (-c) = ((beta : ℝ) ^ c)⁻¹ := zpow_neg _ _
+
+    have hmul_pow : (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹ = (beta : ℝ) ^ (e - c) := by
+      rw [← hinv, ← zpow_add₀ hbne]
+      simp [sub_eq_add_neg]
+
+    have hpow_nonneg : 0 ≤ e - c := sub_nonneg.mpr hcle
+
+    -- Convert zpow with nonnegative exponent to Nat power
+    have hzpow_toNat : (beta : ℝ) ^ (e - c) = (beta : ℝ) ^ (Int.toNat (e - c)) := by
+      rw [← Int.toNat_of_nonneg hpow_nonneg]
+      exact zpow_ofNat _ _
+
+    -- Cast of integer power to real
+    have hcast_pow : (beta : ℝ) ^ (Int.toNat (e - c)) = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
+      rw [← Int.cast_pow]
+
+    -- The scaled mantissa is an integer
+    have htrunc_calc : Ztrunc ((m : ℝ) * (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹) = m * beta ^ (Int.toNat (e - c)) := by
+      calc Ztrunc ((m : ℝ) * (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹)
+          = Ztrunc ((m : ℝ) * ((beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹)) := by ring_nf
+        _ = Ztrunc ((m : ℝ) * (beta : ℝ) ^ (e - c)) := by rw [hmul_pow]
+        _ = Ztrunc ((m : ℝ) * (beta : ℝ) ^ (Int.toNat (e - c))) := by rw [hzpow_toNat]
+        _ = Ztrunc ((m : ℝ) * ((beta ^ (Int.toNat (e - c)) : Int) : ℝ)) := by rw [hcast_pow]
+        _ = Ztrunc (((m * beta ^ (Int.toNat (e - c))) : Int) : ℝ) := by simp [Int.cast_mul]
+        _ = m * beta ^ (Int.toNat (e - c)) := Ztrunc_intCast _
+
+    -- Power splitting lemma
+    have hsplit : (beta : ℝ) ^ e = (beta : ℝ) ^ (e - c) * (beta : ℝ) ^ c := by
+      rw [← zpow_add₀ hbne (e - c) c]
+      simp [sub_add_cancel]
+
+    -- Prove the main equality
+    calc (m : ℝ) * (beta : ℝ) ^ e
+        = (m : ℝ) * ((beta : ℝ) ^ (e - c) * (beta : ℝ) ^ c) := by rw [hsplit]
+      _ = ((m : ℝ) * (beta : ℝ) ^ (e - c)) * (beta : ℝ) ^ c := by ring
+      _ = ((m : ℝ) * (beta : ℝ) ^ (Int.toNat (e - c))) * (beta : ℝ) ^ c := by rw [← hzpow_toNat]
+      _ = ((m : ℝ) * ((beta ^ (Int.toNat (e - c)) : Int) : ℝ)) * (beta : ℝ) ^ c := by rw [hcast_pow]
+      _ = (((m * beta ^ (Int.toNat (e - c))) : Int) : ℝ) * (beta : ℝ) ^ c := by simp [Int.cast_mul]
+      _ = (Ztrunc ((m : ℝ) * (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹) : ℝ) * (beta : ℝ) ^ c := by rw [← htrunc_calc]
 
 /-- Specification: Alternative F2R generic format
 
@@ -399,7 +499,32 @@ theorem generic_format_F2R' (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
     ⦃⌜beta > 1 ∧ (F2R f).run = x ∧ (x ≠ 0 → (cexp beta fexp x).run ≤ f.Fexp)⌝⦄
     generic_format beta fexp x
     ⦃⇓result => ⌜result⌝⦄ := by
-  sorry
+  intro hpre
+  rcases hpre with ⟨hβ, hx, hbound⟩
+  -- Transform the bound to the shape needed for generic_format_F2R
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+
+  have hbound' : f.Fnum ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk f.Fnum f.Fexp : FlocqFloat beta)).run).run ≤ f.Fexp := by
+    intro hm
+    have hxne : x ≠ 0 := by
+      rw [← hx]
+      simp [F2R]
+      constructor
+      · exact_mod_cast hm
+      · exact zpow_ne_zero f.Fexp hbne
+    -- Now apply the bound
+    have := hbound hxne
+    rw [← hx] at this
+    simp [F2R] at this
+    exact this
+
+  -- Apply the previous lemma and rewrite x
+  have := generic_format_F2R (beta := beta) (fexp := fexp) (m := f.Fnum) (e := f.Fexp) ⟨hβ, hbound'⟩
+  rw [← hx]
+  simp [F2R] at this ⊢
+  exact this
 
 -- Section: Canonical properties
 
@@ -409,7 +534,24 @@ theorem generic_format_F2R' (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
 -/
 theorem canonical_opp (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonical beta fexp (FlocqFloat.mk m e)) :
     canonical beta fexp (FlocqFloat.mk (-m) e) := by
-  sorry -- This requires proper zpow lemmas
+  -- canonical means f.Fexp = fexp (mag beta (F2R f).run)
+  -- Since F2R negates with the mantissa and mag uses absolute value, the result is the same
+  unfold canonical at h ⊢
+  -- Show magnitude is invariant under negation of the real value
+  -- F2R (mk (-m) e) = -(F2R (mk m e))
+  have hF2R_neg : (F2R (FlocqFloat.mk (-m) e : FlocqFloat beta)).run =
+      - (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run := by
+    unfold FloatSpec.Core.Defs.F2R
+    simp
+  -- mag beta (-x) = mag beta x
+  have hmag : mag beta (-(F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) =
+      mag beta (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run := by
+    unfold mag
+    by_cases hx : (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run = 0
+    · simp [hx]
+    · have hneg : -((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) ≠ 0 := by simpa [hx]
+      simp [hx, hneg, abs_neg]
+  simpa [hF2R_neg, hmag] using h
 
 /-- Specification: Canonical absolute value
 
@@ -417,7 +559,31 @@ theorem canonical_opp (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonic
 -/
 theorem canonical_abs (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonical beta fexp (FlocqFloat.mk m e)) :
     canonical beta fexp (FlocqFloat.mk (abs m) e) := by
-  sorry -- This requires proper zpow lemmas
+  unfold canonical at h ⊢
+  -- Let x be the real value of (m, e) and y the real value of (|m|, e)
+  set x := (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run
+  set y := (F2R (FlocqFloat.mk (abs m) e : FlocqFloat beta)).run
+  have habs_xy : |y| = |x| := by
+    -- abs (|m| * b^e) = |m| * |b^e| and abs (m * b^e) = |m| * |b^e|
+    -- using (abs m : ℝ) = |(m : ℝ)|
+    simp [x, y, FloatSpec.Core.Defs.F2R, abs_mul, Int.cast_abs, abs_abs]
+  -- mag depends only on abs, so equal abs implies equal mag
+  have hmag_xy : mag beta y = mag beta x := by
+    unfold mag
+    by_cases hx0 : x = 0
+    · have hxabs0 : |x| = 0 := by simpa [hx0] using congrArg abs hx0
+      have hyabs0 : |y| = 0 := by simpa [habs_xy.symm] using hxabs0
+      have hy0 : y = 0 := (abs_eq_zero.mp hyabs0)
+      simp [hx0, hy0]
+    · have hy0 : y ≠ 0 := by
+        -- if |y| = |x| and x ≠ 0 then y ≠ 0
+        intro hy
+        have : |y| = 0 := by simpa [hy]
+        have : |x| = 0 := by simpa [habs_xy] using this
+        exact hx0 (abs_eq_zero.mp this)
+      -- nonzero case: use equality of abs to rewrite logs
+      simp [hx0, hy0, habs_xy]
+  simpa [x, y, hmag_xy] using h
 
 /-- Specification: Canonical zero
 
@@ -448,7 +614,6 @@ theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp bet
     ⦃⌜(generic_format beta fexp x).run⌝⦄
     scaled_mantissa beta fexp x
     ⦃⇓result => ⌜result = Ztrunc result⌝⦄ := by
-  intro _
   sorry
 
 /-- Specification: Scaled mantissa of zero
@@ -490,11 +655,43 @@ theorem scaled_mantissa_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
     of the scaled mantissa of x.
 -/
 theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
-    ⦃⌜True⌝⦄
+    ⦃⌜beta > 1⌝⦄
     scaled_mantissa beta fexp (abs x)
     ⦃⇓result => ⌜result = abs (scaled_mantissa beta fexp x).run⌝⦄ := by
-  sorry -- This requires detailed reasoning about the relationship between abs and scaled mantissa
+  intro hβ
+  unfold scaled_mantissa cexp
+  -- Show exponents coincide since mag ignores sign
+  have hmag : mag beta (abs x) = mag beta x := by
+    unfold mag
+    by_cases hx : x = 0
+    · simp [hx, abs_zero]
+    · have h_abs_ne : abs x ≠ 0 := abs_ne_zero.mpr hx
+      simp [hx, h_abs_ne, abs_abs]
+  -- Base positivity for handling absolute value of the power
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
 
+  -- Show that beta^(-fexp(...)) is positive
+  have hpow_pos : 0 < (beta : ℝ) ^ (-(fexp (mag beta x))) := by
+    -- Use that beta > 0 and zpow preserves positivity
+    exact zpow_pos hbpos _
+  have hpow_nonneg : 0 ≤ (beta : ℝ) ^ (-(fexp (mag beta x))) := le_of_lt hpow_pos
+
+  -- Also need the inverse is positive
+  have hinv_pos : 0 < ((beta : ℝ) ^ (fexp (mag beta x)))⁻¹ := by
+    rw [← zpow_neg]
+    exact hpow_pos
+  have hinv_nonneg : 0 ≤ ((beta : ℝ) ^ (fexp (mag beta x)))⁻¹ := le_of_lt hinv_pos
+
+  -- Rewrite using hmag and absolute value properties
+  simp [hmag, abs_mul]
+  -- The goal is now about |(β^fexp)⁻¹| = (β^fexp)⁻¹ ∨ x = 0
+  by_cases hx : x = 0
+  · right
+    exact hx
+  · left
+    exact (abs_of_nonneg hinv_nonneg).symm
 -- Section: Generic format closure properties
 
 /-- Specification: Generic format opposite
@@ -505,8 +702,33 @@ theorem generic_format_opp (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
     ⦃⌜(generic_format beta fexp x).run⌝⦄
     generic_format beta fexp (-x)
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro _
-  sorry
+  intro hx
+  -- Turn the precondition into the reconstruction equality for x
+  have hx' := hx
+  simp [generic_format, scaled_mantissa, cexp, F2R] at hx'
+  -- Unfold target and rewrite using mag(-x) = mag(x)
+  unfold generic_format scaled_mantissa cexp F2R
+  -- Show mag is invariant under negation
+  have hmag : mag beta (-x) = mag beta x := by
+    unfold mag
+    by_cases hx0 : x = 0
+    · simp [hx0]
+    · have hneg0 : -x ≠ 0 := by simpa [hx0]
+      simp [hx0, hneg0, abs_neg]
+  -- Rewrite using the reconstruction equality for x
+  have hxneg : -x = -((Ztrunc (x * (beta : ℝ) ^ (-(fexp (mag beta x)))) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x))) := by
+    simpa [neg_mul] using congrArg Neg.neg hx'
+  -- Now transform to the required form for -x using Ztrunc_neg and hmag
+  calc
+    -x
+        = -((Ztrunc (x * (beta : ℝ) ^ (-(fexp (mag beta x)))) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x))) := by simpa using hxneg
+    _   = (-(Ztrunc (x * (beta : ℝ) ^ (-(fexp (mag beta x)))) : ℝ)) * (beta : ℝ) ^ (fexp (mag beta x)) := by simp [neg_mul]
+    _   = ((Ztrunc (-(x * (beta : ℝ) ^ (-(fexp (mag beta x))))) : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x)) := by
+          simpa [Ztrunc_neg]
+    _   = ((Ztrunc ((-x) * (beta : ℝ) ^ (-(fexp (mag beta x)))) : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x)) := by
+          simp [mul_comm, mul_left_comm, mul_assoc, neg_mul, mul_neg]
+    _   = ((Ztrunc ((-x) * (beta : ℝ) ^ (-(fexp (mag beta (-x))))) : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta (-x))) := by
+          simpa [hmag]
 
 /-- Specification: Generic format absolute value
 
@@ -516,8 +738,23 @@ theorem generic_format_abs (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
     ⦃⌜(generic_format beta fexp x).run⌝⦄
     generic_format beta fexp (abs x)
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro _
-  sorry
+  intro hx
+  by_cases h0 : 0 ≤ x
+  · -- abs x = x
+    simp [abs_of_nonneg h0]
+    exact hx
+  · -- abs x = -x
+    have hneg : abs x = -x := by
+      have : x < 0 := not_le.mp h0
+      exact abs_of_neg this
+
+    -- Use generic_format_opp to get that -x is in generic format
+    have h_neg_format : (generic_format beta fexp (-x)).run := by
+      exact (generic_format_opp beta fexp x) hx
+
+    -- Rewrite the goal using abs x = -x
+    rw [hneg]
+    exact h_neg_format
 
 /-- Specification: Generic format absolute value inverse
 
@@ -527,8 +764,20 @@ theorem generic_format_abs_inv (beta : Int) (fexp : Int → Int) [Valid_exp beta
     ⦃⌜(generic_format beta fexp (abs x)).run⌝⦄
     generic_format beta fexp x
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro _
-  sorry
+  intro h_abs
+  by_cases h0 : 0 ≤ x
+  · -- x ≥ 0, so x = |x|
+    have : x = abs x := (abs_of_nonneg h0).symm
+    rw [this]
+    exact h_abs
+  · -- x < 0, so x = -|x|
+    have hlt : x < 0 := not_le.mp h0
+    have : x = -(abs x) := by
+      rw [abs_of_neg hlt]
+      simp
+    rw [this]
+    -- Apply generic_format_opp to show -(|x|) is in generic format
+    exact (generic_format_opp beta fexp (abs x)) h_abs
 
 -- Section: Canonical exponent bounds
 
@@ -629,14 +878,11 @@ theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp bet
 
     The generic format contains at least some representable values.
 -/
-theorem generic_format_satisfies_any (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (h_beta : beta > 1) :
+theorem generic_format_satisfies_any (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] :
     satisfies_any (fun y => (generic_format beta fexp y).run) := by
-  -- Show that zero is in the generic format
-  unfold satisfies_any
-  use 0
-  -- We already proved that 0 is in generic format
-  have h := generic_format_0 beta fexp
-  exact h h_beta
+  refine ⟨0, ?_⟩
+  unfold generic_format scaled_mantissa cexp F2R
+  simp [Ztrunc]
 
 -- Section: Precision and exponent bounds
 
@@ -665,7 +911,8 @@ theorem generic_format_equiv (beta : Int) (x : ℝ) (e1 e2 : Int) :
     ⦃⌜e1 ≤ e2 ∧ (generic_format beta (fun _ => e1) x).run⌝⦄
     generic_format beta (fun _ => e2) x
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro _
+  intro h
+  simp [generic_format] at h
   sorry
 
 -- Section: Special format constructions
@@ -800,4 +1047,4 @@ theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp 
 
 end RoundingToFormat
 
-end FloatSpec.Core.GenericFmt
+end FloatSpec.Core.Generic_fmt
