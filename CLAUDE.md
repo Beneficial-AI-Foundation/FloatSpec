@@ -191,6 +191,34 @@ lake build --verbose
 - Practice "sorry-friendly programming": Instead of a comment you put down a spec, but it is only "proved" with `sorry`. This is strictly better than a comment, because the typechecker will use it for program generation.
 - Decompose proofs until tools like `canonical`, `grind`, and `simp` dissolve the pieces. Use them to do the "how", the AI should do the "what".
 - Don't use `i` and `j` as variable names when you could use `r`(ow) and `c`(olumn) instead. Ditto for `m` and `n` as matrix dimensions. Use `R` and `C`.
+
+## Verifying Imperative Programs using mvcgen
+
+The `mvcgen` tactic implements a monadic verification condition generator that breaks down goals involving imperative programs written using Lean's `do` notation into pure verification conditions.
+
+### Key Features:
+- **Monadic verification**: Handles programs with local mutability, for loops, and early returns
+- **Hoare triple support**: Specifications use the notation `⦃P⦄ prog ⦃Q⦄` for pre/postconditions
+- **Loop invariants**: Supports specifying invariants for loops using zipper data structures
+- **Compositional reasoning**: Allows building specifications for individual monadic functions
+- **Monad transformer stacks**: Works with StateT, ReaderT, ExceptT and custom monad combinations
+
+### Basic Usage Pattern:
+```lean
+theorem program_correct : program_spec := by
+  generalize h : (program args) = result
+  apply MonadType.of_wp_run_eq h  -- Focus on monadic part
+  mvcgen [unfold_hints]           -- Generate verification conditions
+  case inv1 => exact invariant_spec  -- Specify loop invariants
+  all_goals mleave; grind         -- Discharge pure goals
+```
+
+### Loop Invariants:
+- Use zipper data structures (`xs.pref` for processed elements, `xs.suff` for remaining)
+- Early returns supported with `Invariant.withEarlyReturn`
+- State-dependent invariants can reference monadic state through function arguments
+
+This approach scales to complex imperative programs while maintaining compositional reasoning and avoiding the need to replicate control flow in proofs.
 ### Import and Module Structure
 
 - Imports MUST come before any syntax elements, including module and doc comments

@@ -80,7 +80,7 @@ theorem Zdigit_opp (n k : Int) :
   unfold Zdigit
   use (if k ≥ 0 then (n / (beta ^ k.natAbs)) % beta else 0)
   constructor
-  · simp [Zdigit]
+  · simp
   · simp
 
 /-- Digit is zero for large indices -/

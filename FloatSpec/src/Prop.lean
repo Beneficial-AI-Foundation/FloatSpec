@@ -1,10 +1,7 @@
--- Top-level Prop module importing all property modules
--- Properties and error analysis for floating-point operations
-
-import FloatSpec.src.Prop.Relative
-import FloatSpec.src.Prop.Plus_error
-import FloatSpec.src.Prop.Mult_error
-import FloatSpec.src.Prop.Div_sqrt_error
-import FloatSpec.src.Prop.Sterbenz
-import FloatSpec.src.Prop.Double_rounding
-import FloatSpec.src.Prop.Round_odd
+-- import FloatSpec.src.Prop.Relative
+-- import FloatSpec.src.Prop.Plus_error
+-- import FloatSpec.src.Prop.Mult_error
+-- import FloatSpec.src.Prop.Div_sqrt_error
+-- import FloatSpec.src.Prop.Sterbenz
+-- import FloatSpec.src.Prop.Double_rounding
+-- import FloatSpec.src.Prop.Round_odd

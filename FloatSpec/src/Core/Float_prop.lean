@@ -21,580 +21,918 @@ import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Digits
 import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
+import Mathlib.Data.Int.Basic
 
 open Real
-open Std.Do
 open FloatSpec.Core.Defs
+open FloatSpec.Core.Digits
 
 namespace FloatSpec.Core.Float_prop
 
-variable (beta : Int)
+variable (beta : Int) (hbeta : 1 < beta)
 
-section ComparisonProperties
+section FloatProp
 
-/-- Compare two floating-point numbers with same exponent
+/-- Magnitude function for real numbers
 
-    For floating-point numbers with identical exponents, comparison
-    reduces to comparison of their mantissas. This fundamental property
-    enables efficient comparison operations on normalized floats.
-
-    The result follows standard comparison semantics:
-    - Returns -1 if f1 < f2
-    - Returns 0 if f1 = f2
-    - Returns 1 if f1 > f2
+    Returns the exponent such that beta^(mag-1) ≤ |x| < beta^mag.
+    For x = 0, returns an arbitrary value (typically 0).
 -/
-def Rcompare_F2R (e m1 m2 : Int) : Id Int :=
-  pure (if m1 < m2 then -1 else if m1 = m2 then 0 else 1)
+noncomputable def mag (beta : Int) (x : ℝ) : Int :=
+  if x = 0 then 0
+  else ⌈Real.log (abs x) / Real.log (beta : ℝ)⌉
 
-/-- Specification: F2R comparison reduces to mantissa comparison
 
-    When two floats have the same exponent, their F2R comparison
-    result is determined entirely by their mantissa comparison.
-    This reflects the monotonic nature of the F2R function.
+-- Comparison theorems
+
+/-
+Coq original:
+Theorem Rcompare_F2R : forall e m1 m2 : Z,
+  Rcompare (F2R (Float beta m1 e)) (F2R (Float beta m2 e)) = Z.compare m1 m2.
+  Proof.
+    intros e m1 m2.
+    unfold F2R. simpl.
+    rewrite Rcompare_mult_r.
+    apply Rcompare_IZR.
+    apply bpow_gt_0.
+  Qed.
+  -/
+  theorem Rcompare_F2R (e m1 m2 : Int) (hbeta : 1 < beta) :
+    let f1 := F2R (FlocqFloat.mk m1 e : FlocqFloat beta)
+    let f2 := F2R (FlocqFloat.mk m2 e : FlocqFloat beta)
+    FloatSpec.Core.Raux.Rcompare f1.run f2.run = Int.sign (m1 - m2) := by
+    -- Compare via unfolding of Rcompare and integer order trichotomy
+    intro f1 f2
+    classical
+    -- Expand definitions to compare concrete reals
+    unfold FloatSpec.Core.Raux.Rcompare
+    dsimp [f1, f2, FloatSpec.Core.Defs.F2R]
+    -- Let p = β^e > 0
+    have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+    have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+    have hp_pos : 0 < (beta : ℝ) ^ e := by exact zpow_pos hbpos_real _
+    -- Case analysis on m1 and m2 (as integers)
+    by_cases hlt : m1 < m2
+    · -- f1 < f2 since p > 0
+      have hltR : (m1 : ℝ) * (beta : ℝ) ^ e < (m2 : ℝ) * (beta : ℝ) ^ e :=
+        mul_lt_mul_of_pos_right (by exact_mod_cast hlt) hp_pos
+      have hsign : Int.sign (m1 - m2) = -1 := Int.sign_eq_neg_one_of_neg (sub_lt_zero.mpr hlt)
+      simp [pure, hltR, hsign]
+    · by_cases heq : m1 = m2
+      · -- Equal mantissas: equal reals
+        have heqR : (m1 : ℝ) * (beta : ℝ) ^ e = (m2 : ℝ) * (beta : ℝ) ^ e := by simpa [heq]
+        have hsign : Int.sign (m1 - m2) = 0 := by simp [heq]
+        have hltR : ¬ (m1 : ℝ) * (beta : ℝ) ^ e < (m2 : ℝ) * (beta : ℝ) ^ e := by
+          simpa [heqR, not_lt.mpr (le_of_eq heqR)]
+        simp [pure, hltR, heqR, hsign]
+      · -- Then m2 < m1, so f2 < f1
+        have hne : m2 ≠ m1 := fun h => heq h.symm
+        have hgt : m2 < m1 := lt_of_le_of_ne (le_of_not_lt hlt) hne
+        have hgtR : (m2 : ℝ) * (beta : ℝ) ^ e < (m1 : ℝ) * (beta : ℝ) ^ e :=
+          mul_lt_mul_of_pos_right (by exact_mod_cast hgt) hp_pos
+        have hsign : Int.sign (m1 - m2) = 1 := Int.sign_eq_one_of_pos (sub_pos.mpr hgt)
+        -- Not (f1 < f2), not equal, so branch yields 1
+        have hnotlt : ¬ (m1 : ℝ) * (beta : ℝ) ^ e < (m2 : ℝ) * (beta : ℝ) ^ e :=
+          not_lt.mpr (le_of_lt hgtR)
+        have hneq : (m1 : ℝ) * (beta : ℝ) ^ e ≠ (m2 : ℝ) * (beta : ℝ) ^ e := by
+          exact ne_of_gt hgtR
+        simp [pure, hnotlt, hneq, hgtR, hsign]
+
+/-
+Coq original:
+Theorem le_F2R : forall e m1 m2 : Z,
+  (F2R (Float beta m1 e) <= F2R (Float beta m2 e))%R -> (m1 <= m2)%Z.
+Proof.
+  intros e m1 m2 H.
+  apply le_IZR.
+  apply Rmult_le_reg_r with (bpow e).
+  apply bpow_gt_0.
+  exact H.
+Qed.
 -/
-theorem Rcompare_F2R_spec (e m1 m2 : Int) :
-    ⦃⌜True⌝⦄
-    Rcompare_F2R e m1 m2
-    ⦃⇓result => ⌜result = if m1 < m2 then -1 else if m1 = m2 then 0 else 1⌝⦄ := by
-  intro _
-  unfold Rcompare_F2R
+theorem le_F2R (e m1 m2 : Int) (hbeta : 1 < beta) :
+  m1 ≤ m2 ↔ (F2R (FlocqFloat.mk m1 e : FlocqFloat beta)).run ≤ (F2R (FlocqFloat.mk m2 e : FlocqFloat beta)).run := by
+  -- Let p = (beta : ℝ) ^ e, with p > 0
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_pos : 0 < (beta : ℝ) ^ e := by exact zpow_pos hbpos_real _
+  have hp_nonneg : 0 ≤ (beta : ℝ) ^ e := le_of_lt hp_pos
+  constructor
+  · intro hle
+    -- Multiply both sides by nonnegative p
+    have hleR : (m1 : ℝ) ≤ (m2 : ℝ) := by exact_mod_cast hle
+    unfold FloatSpec.Core.Defs.F2R
+    simpa using (mul_le_mul_of_nonneg_right hleR hp_nonneg)
+  · intro hmul
+    -- Cancel the positive factor on the right
+    unfold FloatSpec.Core.Defs.F2R at hmul
+    have hleR : (m1 : ℝ) ≤ (m2 : ℝ) := le_of_mul_le_mul_right hmul hp_pos
+    exact (by exact_mod_cast hleR)
+
+/-
+Coq original:
+Theorem F2R_le : forall m1 m2 e : Z,
+  (m1 <= m2)%Z -> (F2R (Float beta m1 e) <= F2R (Float beta m2 e))%R.
+Proof.
+  intros m1 m2 e H.
+  unfold F2R. simpl.
+  apply Rmult_le_compat_r.
+  apply bpow_ge_0.
+  now apply IZR_le.
+Qed.
+-/
+theorem F2R_le (e m1 m2 : Int) (hbeta : 1 < beta) :
+  (F2R (FlocqFloat.mk m1 e : FlocqFloat beta)).run ≤ (F2R (FlocqFloat.mk m2 e : FlocqFloat beta)).run → m1 ≤ m2 := by
+  intro h
+  have hiff := le_F2R (beta := beta) e m1 m2 hbeta
+  exact hiff.mpr h
+
+/-
+Coq original:
+Theorem lt_F2R : forall e m1 m2 : Z,
+  (F2R (Float beta m1 e) < F2R (Float beta m2 e))%R -> (m1 < m2)%Z.
+Proof.
+  intros e m1 m2 H.
+  apply lt_IZR.
+  apply Rmult_lt_reg_r with (bpow e).
+  apply bpow_gt_0.
+  exact H.
+Qed.
+-/
+theorem lt_F2R (e m1 m2 : Int) (hbeta : 1 < beta) :
+  m1 < m2 ↔ (F2R (FlocqFloat.mk m1 e : FlocqFloat beta)).run < (F2R (FlocqFloat.mk m2 e : FlocqFloat beta)).run := by
+  -- Let p = (beta : ℝ) ^ e, with p > 0
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_pos : 0 < (beta : ℝ) ^ e := by exact zpow_pos hbpos_real _
+  constructor
+  · intro hlt
+    have hltR : (m1 : ℝ) < (m2 : ℝ) := by exact_mod_cast hlt
+    unfold FloatSpec.Core.Defs.F2R
+    simpa using (mul_lt_mul_of_pos_right hltR hp_pos)
+  · intro hmul
+    unfold FloatSpec.Core.Defs.F2R at hmul
+    have hltR : (m1 : ℝ) < (m2 : ℝ) := lt_of_mul_lt_mul_right hmul (le_of_lt hp_pos)
+    exact (by exact_mod_cast hltR)
+
+/-
+Coq original:
+Theorem F2R_lt : forall e m1 m2 : Z,
+  (m1 < m2)%Z -> (F2R (Float beta m1 e) < F2R (Float beta m2 e))%R.
+Proof.
+  intros e m1 m2 H.
+  unfold F2R. simpl.
+  apply Rmult_lt_compat_r.
+  apply bpow_gt_0.
+  now apply IZR_lt.
+Qed.
+-/
+theorem F2R_lt (e m1 m2 : Int) (hbeta : 1 < beta) :
+  (F2R (FlocqFloat.mk m1 e : FlocqFloat beta)).run < (F2R (FlocqFloat.mk m2 e : FlocqFloat beta)).run → m1 < m2 := by
+  intro h
+  have hiff := lt_F2R (beta := beta) e m1 m2 hbeta
+  exact hiff.mpr h
+
+/-
+Coq original:
+Theorem F2R_eq : forall e m1 m2 : Z,
+  (m1 = m2)%Z -> (F2R (Float beta m1 e) = F2R (Float beta m2 e))%R.
+Proof.
+  intros e m1 m2 H.
+  now apply (f_equal (fun m => F2R (Float beta m e))).
+Qed.
+-/
+theorem F2R_eq (e m1 m2 : Int) (hbeta : 1 < beta) :
+  (F2R (FlocqFloat.mk m1 e : FlocqFloat beta)).run = (F2R (FlocqFloat.mk m2 e : FlocqFloat beta)).run → m1 = m2 := by
+  intro h
+  -- Unfold and cancel the common nonzero factor (beta : ℝ) ^ e
+  unfold FloatSpec.Core.Defs.F2R at h
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hpow_ne : ((beta : ℝ) ^ e) ≠ 0 := by
+    exact zpow_ne_zero _ (ne_of_gt hbpos_real)
+  have : (m1 : ℝ) = (m2 : ℝ) := mul_right_cancel₀ hpow_ne h
+  exact (by exact_mod_cast this)
+
+/-
+Coq original:
+Theorem eq_F2R : forall e m1 m2 : Z,
+  F2R (Float beta m1 e) = F2R (Float beta m2 e) -> m1 = m2.
+Proof.
+  intros e m1 m2 H.
+  apply Zle_antisym ; apply le_F2R with e ; rewrite H ; apply Rle_refl.
+Qed.
+-/
+theorem eq_F2R (e m1 m2 : Int) (hbeta : 1 < beta) :
+  m1 = m2 → (F2R (FlocqFloat.mk m1 e : FlocqFloat beta)).run = (F2R (FlocqFloat.mk m2 e : FlocqFloat beta)).run := by
+  intro h
+  subst h
   rfl
 
-end ComparisonProperties
+-- Absolute value and negation theorems
 
-section OrderProperties
-
-/-- Check if mantissa ordering matches F2R ordering
-
-    For floats with the same exponent, checks if mantissa ordering
-    corresponds to F2R ordering. This is always true due to monotonicity.
+/-
+Coq original:
+Theorem F2R_Zabs: forall m e : Z,
+  F2R (Float beta (Z.abs m) e) = Rabs (F2R (Float beta m e)).
+Proof.
+  intros m e.
+  unfold F2R.
+  rewrite Rabs_mult.
+  rewrite <- abs_IZR.
+  simpl.
+  apply f_equal.
+  apply sym_eq; apply Rabs_right.
+  apply Rle_ge.
+  apply bpow_ge_0.
+Qed.
 -/
-def le_F2R_check : Id Bool :=
-  pure true  -- Always true for same exponent
+theorem F2R_Zabs (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  |(F2R f).run| = (F2R (FlocqFloat.mk (Int.natAbs f.Fnum) f.Fexp : FlocqFloat beta)).run := by
+  -- Let p = (beta : ℝ) ^ f.Fexp, with p > 0
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_pos : 0 < (beta : ℝ) ^ f.Fexp := by exact zpow_pos hbpos_real _
+  have hp_nonneg : 0 ≤ (beta : ℝ) ^ f.Fexp := le_of_lt hp_pos
+  unfold FloatSpec.Core.Defs.F2R
+  -- Reduce to |m| = natAbs m over ℝ
+  have h_abs_natAbs : (Int.natAbs f.Fnum : ℝ) = |(f.Fnum : ℝ)| := by
+    -- Standard lemma relating casts and absolute values
+    simpa [Int.cast_natAbs, Int.cast_abs]
+  -- |m * p| = |m| * p and |p| = p (since p ≥ 0)
+  have : |(f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp| = (Int.natAbs f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp := by
+    simpa [abs_mul, abs_of_nonneg hp_nonneg, h_abs_natAbs]
+  simpa using this
 
-/-- Specification: F2R preserves less-or-equal ordering
-
-    For floats with identical exponents, F2R ordering corresponds
-    exactly to mantissa ordering. This fundamental monotonicity
-    property enables reasoning about float comparisons.
+/-
+Coq original:
+Theorem F2R_Zopp : forall m e : Z,
+  F2R (Float beta (Z.opp m) e) = Ropp (F2R (Float beta m e)).
+Proof.
+  intros m e.
+  unfold F2R. simpl.
+  rewrite <- Ropp_mult_distr_l_reverse.
+  now rewrite opp_IZR.
+Qed.
 -/
-theorem le_F2R_spec (e m1 m2 : Int) :
-    ⦃⌜True⌝⦄
-    le_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold le_F2R_check
-  rfl
+theorem F2R_Zopp (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  -(F2R f).run = (F2R (FlocqFloat.mk (-f.Fnum) f.Fexp : FlocqFloat beta)).run := by
+  unfold FloatSpec.Core.Defs.F2R
+  -- -(m * p) = (-m) * p
+  simpa using (neg_mul (f.Fnum : ℝ) ((beta : ℝ) ^ f.Fexp)).symm
 
-/-- Compute difference of F2R values
-
-    Computes F2R(m1, e) - F2R(m2, e) for analysis of ordering.
-    This helps establish ordering relationships between floats.
+/-
+Coq original:
+Theorem F2R_cond_Zopp : forall b m e,
+  F2R (Float beta (cond_Zopp b m) e) = cond_Ropp b (F2R (Float beta m e)).
+Proof.
+  intros [|] m e ; unfold F2R ; simpl.
+  now rewrite opp_IZR, Ropp_mult_distr_l_reverse.
+  apply refl_equal.
+Qed.
 -/
-noncomputable def F2R_le_diff {beta : Int} (m1 m2 e : Int) : Id ℝ :=
-  do
-    let f1 ← F2R (FlocqFloat.mk m1 e : FlocqFloat beta)
-    let f2 ← F2R (FlocqFloat.mk m2 e : FlocqFloat beta)
-    pure (f1 - f2)
+theorem F2R_cond_Zopp (b : Bool) (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  (if b then -(F2R f).run else (F2R f).run) =
+  (F2R (FlocqFloat.mk (if b then -f.Fnum else f.Fnum) f.Fexp : FlocqFloat beta)).run := by
+  unfold FloatSpec.Core.Defs.F2R
+  by_cases hb : b
+  · simp [hb]
+    -- -(m * p) = (-m) * p
+  · simp [hb]
 
-/-- Specification: Mantissa ordering implies F2R ordering
+-- Zero properties
 
-    The monotonic nature of F2R ensures that mantissa ordering
-    is preserved in the real number representation. This property
-    is essential for float arithmetic correctness.
+/-
+Coq original:
+Theorem F2R_0 : forall e : Z, F2R (Float beta 0 e) = 0%R.
+Proof.
+  intros e.
+  unfold F2R. simpl.
+  apply Rmult_0_l.
+Qed.
 -/
-theorem F2R_le_diff_spec (m1 m2 e : Int) :
-    ⦃⌜m1 ≤ m2 ∧ beta > 1⌝⦄
-    F2R_le_diff (beta := beta) m1 m2 e
-    ⦃⇓diff => ⌜diff ≤ 0⌝⦄ := by
-  intro ⟨hm, _hbeta⟩
-  unfold F2R_le_diff F2R
-  simp only [bind, pure, Id.run]
-  -- F2R computes m * beta^e, so the difference is (m1 - m2) * beta^e
-  -- Since m1 ≤ m2, we have m1 - m2 ≤ 0
-  have h_diff : (m1 : ℝ) * (beta : ℝ) ^ e - (m2 : ℝ) * (beta : ℝ) ^ e = ((m1 : ℝ) - (m2 : ℝ)) * (beta : ℝ) ^ e := by
-    ring
-  rw [h_diff]
-  -- The result follows from m1 ≤ m2 implying (m1 - m2) * beta^e ≤ 0
-  sorry  -- This requires more complex real number reasoning
+theorem F2R_0 (e : Int) (hbeta : 1 < beta) :
+  (F2R (FlocqFloat.mk 0 e : FlocqFloat beta)).run = 0 := by
+  unfold FloatSpec.Core.Defs.F2R
+  simp
 
-/-- Check strict ordering preservation
-
-    For floats with same exponent, strict mantissa ordering
-    always corresponds to strict F2R ordering.
+/-
+Coq original:
+Theorem eq_0_F2R : forall m e : Z,
+  F2R (Float beta m e) = 0%R -> m = Z0.
+Proof.
+  intros m e H.
+  apply eq_F2R with e.
+  now rewrite F2R_0.
+Qed.
 -/
-def lt_F2R_check : Id Bool :=
-  pure true  -- Always true for same exponent
+theorem eq_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  (F2R f).run = 0 → f.Fnum = 0 := by
+  intro h
+  -- Unfold F2R and use that (beta : ℝ) ^ e ≠ 0 since beta > 1
+  unfold FloatSpec.Core.Defs.F2R at h
+  -- From a product equal to zero, one factor must be zero
+  have : (f.Fnum : ℝ) = 0 ∨ ((beta : ℝ) ^ f.Fexp) = 0 := by
+    simpa [mul_comm] using (mul_eq_zero.mp h)
+  -- Show the power is non-zero using beta > 1
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hpow_ne : ((beta : ℝ) ^ f.Fexp) ≠ 0 := by
+    -- zpow_ne_zero for nonzero base
+    exact zpow_ne_zero _ (ne_of_gt hbpos_real)
+  -- Therefore the first factor must be zero
+  have hnum0 : (f.Fnum : ℝ) = 0 := by
+    cases this with
+    | inl h1 => exact h1
+    | inr h2 => exact (hpow_ne h2).elim
+  -- Cast back to integers
+  exact (by exact_mod_cast hnum0)
 
-/-- Specification: F2R preserves strict inequality
-
-    Strict ordering in the F2R representation corresponds to
-    strict ordering of mantissas for same-exponent floats.
-    This maintains the discriminating power of comparisons.
+/-
+Coq original:
+Theorem ge_0_F2R : forall m e : Z,
+  (0 <= F2R (Float beta m e))%R -> (0 <= m)%Z.
+Proof.
+  intros m e H.
+  apply le_F2R with e.
+  now rewrite F2R_0.
+Qed.
 -/
-theorem lt_F2R_spec (e m1 m2 : Int) :
-    ⦃⌜True⌝⦄
-    lt_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold lt_F2R_check
-  rfl
+theorem ge_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  0 ≤ (F2R f).run → 0 ≤ f.Fnum := by
+  intro h
+  -- Use the ≤-equivalence with m1=0, m2=f.Fnum
+  have hiff := le_F2R (beta := beta) f.Fexp 0 f.Fnum hbeta
+  -- Rewrite F2R 0 = 0
+  have : (F2R (FlocqFloat.mk 0 f.Fexp : FlocqFloat beta)).run ≤ (F2R (FlocqFloat.mk f.Fnum f.Fexp : FlocqFloat beta)).run := by
+    simpa [F2R_0 (beta := beta) (e := f.Fexp) hbeta]
+  exact hiff.mpr this
 
-/-- Check if strict mantissa ordering implies strict F2R ordering
-
-    This is always true due to the monotonic nature of F2R.
+/-
+Coq original:
+Theorem le_0_F2R : forall m e : Z,
+  (F2R (Float beta m e) <= 0)%R -> (m <= 0)%Z.
+Proof.
+  intros m e H.
+  apply le_F2R with e.
+  now rewrite F2R_0.
+Qed.
 -/
-def F2R_lt_check : Id Bool :=
-  pure true
+theorem le_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  (F2R f).run ≤ 0 → f.Fnum ≤ 0 := by
+  intro h
+  -- Use the ≤-equivalence with m1=f.Fnum, m2=0
+  have hiff := le_F2R (beta := beta) f.Fexp f.Fnum 0 hbeta
+  have : (F2R (FlocqFloat.mk f.Fnum f.Fexp : FlocqFloat beta)).run ≤ (F2R (FlocqFloat.mk 0 f.Fexp : FlocqFloat beta)).run := by
+    simpa [F2R_0 (beta := beta) (e := f.Fexp) hbeta]
+  exact hiff.mpr this
 
-/-- Specification: Strict mantissa ordering implies strict F2R ordering
-
-    The F2R mapping strictly preserves ordering relationships,
-    ensuring that strict inequalities in mantissas translate
-    to strict inequalities in real representations.
+/-
+Coq original:
+Theorem gt_0_F2R : forall m e : Z,
+  (0 < F2R (Float beta m e))%R -> (0 < m)%Z.
+Proof.
+  intros m e H.
+  apply lt_F2R with e.
+  now rewrite F2R_0.
+Qed.
 -/
-theorem F2R_lt_check_spec (e m1 m2 : Int) :
-    ⦃⌜m1 < m2⌝⦄
-    F2R_lt_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold F2R_lt_check
-  rfl
+theorem gt_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  0 < (F2R f).run → 0 < f.Fnum := by
+  intro h
+  -- Use the <-equivalence with m1=0, m2=f.Fnum
+  have hiff := lt_F2R (beta := beta) f.Fexp 0 f.Fnum hbeta
+  have : (F2R (FlocqFloat.mk 0 f.Fexp : FlocqFloat beta)).run < (F2R (FlocqFloat.mk f.Fnum f.Fexp : FlocqFloat beta)).run := by
+    simpa [F2R_0 (beta := beta) (e := f.Fexp) hbeta]
+  exact hiff.mpr this
 
-/-- Compute difference for equality check
-
-    When mantissas are equal, the F2R difference is zero.
+/-
+Coq original:
+Theorem lt_0_F2R : forall m e : Z,
+  (F2R (Float beta m e) < 0)%R -> (m < 0)%Z.
+Proof.
+  intros m e H.
+  apply lt_F2R with e.
+  now rewrite F2R_0.
+Qed.
 -/
-noncomputable def F2R_eq_diff {beta : Int} (e m1 m2 : Int) : Id ℝ :=
-  do
-    let f1 ← F2R (FlocqFloat.mk m1 e : FlocqFloat beta)
-    let f2 ← F2R (FlocqFloat.mk m2 e : FlocqFloat beta)
-    pure (f1 - f2)
+theorem lt_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  (F2R f).run < 0 → f.Fnum < 0 := by
+  intro h
+  -- Use the <-equivalence with m1=f.Fnum, m2=0
+  have hiff := lt_F2R (beta := beta) f.Fexp f.Fnum 0 hbeta
+  have : (F2R (FlocqFloat.mk f.Fnum f.Fexp : FlocqFloat beta)).run < (F2R (FlocqFloat.mk 0 f.Fexp : FlocqFloat beta)).run := by
+    simpa [F2R_0 (beta := beta) (e := f.Fexp) hbeta]
+  exact hiff.mpr this
 
-/-- Specification: Equal mantissas yield equal F2R values
+-- Forward direction sign properties
 
-    The F2R function is injective with respect to mantissas
-    when exponents are fixed, ensuring that equal mantissas
-    produce identical real representations.
+/-
+Coq original:
+Theorem F2R_ge_0 : forall f : float beta,
+  (0 <= Fnum f)%Z -> (0 <= F2R f)%R.
+Proof.
+  intros f H.
+  rewrite <- F2R_0 with (Fexp f).
+  now apply F2R_le.
+Qed.
 -/
-theorem F2R_eq_diff_spec (e m1 m2 : Int) :
-    ⦃⌜m1 = m2 ∧ beta > 1⌝⦄
-    F2R_eq_diff (beta := beta) e m1 m2
-    ⦃⇓diff => ⌜diff = 0⌝⦄ := by
+theorem F2R_ge_0 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  0 ≤ f.Fnum → 0 ≤ (F2R f).run := by
+  intro hnum
+  unfold FloatSpec.Core.Defs.F2R
+  -- 0 ≤ m and 0 ≤ p ⇒ 0 ≤ m * p
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_nonneg : 0 ≤ (beta : ℝ) ^ f.Fexp := by
+    exact (le_of_lt (zpow_pos hbpos_real _))
+  have hnumR : 0 ≤ (f.Fnum : ℝ) := by exact_mod_cast hnum
+  exact mul_nonneg hnumR hp_nonneg
+
+/-
+Coq original:
+Theorem F2R_le_0 : forall f : float beta,
+  (Fnum f <= 0)%Z -> (F2R f <= 0)%R.
+Proof.
+  intros f H.
+  rewrite <- F2R_0 with (Fexp f).
+  now apply F2R_le.
+Qed.
+-/
+theorem F2R_le_0 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  f.Fnum ≤ 0 → (F2R f).run ≤ 0 := by
+  intro hnum
+  unfold FloatSpec.Core.Defs.F2R
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_nonneg : 0 ≤ (beta : ℝ) ^ f.Fexp := by
+    exact (le_of_lt (zpow_pos hbpos_real _))
+  have hnumR : (f.Fnum : ℝ) ≤ 0 := by exact_mod_cast hnum
+  exact mul_nonpos_of_nonpos_of_nonneg hnumR hp_nonneg
+
+/-
+Coq original:
+Theorem F2R_gt_0 : forall f : float beta,
+  (0 < Fnum f)%Z -> (0 < F2R f)%R.
+Proof.
+  intros f H.
+  rewrite <- F2R_0 with (Fexp f).
+  now apply F2R_lt.
+Qed.
+-/
+theorem F2R_gt_0 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  0 < f.Fnum → 0 < (F2R f).run := by
+  intro hnum
+  unfold FloatSpec.Core.Defs.F2R
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_pos : 0 < (beta : ℝ) ^ f.Fexp := by exact zpow_pos hbpos_real _
+  have hnumR : 0 < (f.Fnum : ℝ) := by exact_mod_cast hnum
+  exact mul_pos hnumR hp_pos
+
+/-
+Coq original:
+Theorem F2R_lt_0 : forall f : float beta,
+  (Fnum f < 0)%Z -> (F2R f < 0)%R.
+Proof.
+  intros f H.
+  rewrite <- F2R_0 with (Fexp f).
+  now apply F2R_lt.
+Qed.
+-/
+theorem F2R_lt_0 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  f.Fnum < 0 → (F2R f).run < 0 := by
+  intro hnum
+  unfold FloatSpec.Core.Defs.F2R
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_pos : 0 < (beta : ℝ) ^ f.Fexp := by exact zpow_pos hbpos_real _
+  have hnumR : (f.Fnum : ℝ) < 0 := by exact_mod_cast hnum
+  exact mul_neg_of_neg_of_pos hnumR hp_pos
+
+/-
+Coq original:
+Theorem F2R_neq_0 : forall f : float beta,
+  (Fnum f <> 0)%Z -> (F2R f <> 0)%R.
+Proof.
+  intros f H H1.
+  apply H.
+  now apply eq_0_F2R with (Fexp f).
+Qed.
+-/
+theorem F2R_neq_0 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  f.Fnum ≠ 0 → (F2R f).run ≠ 0 := by
+  intro hnum ne0
+  have := eq_0_F2R (beta := beta) f hbeta ne0
+  exact hnum this
+
+-- Power of beta properties
+
+/-
+Coq original:
+Theorem F2R_bpow : forall e : Z, F2R (Float beta 1 e) = bpow e.
+Proof.
+  intros e.
+  unfold F2R. simpl.
+  apply Rmult_1_l.
+Qed.
+-/
+theorem F2R_bpow (e : Int) (hbeta : 1 < beta) :
+  (F2R (FlocqFloat.mk 1 e : FlocqFloat beta)).run = (beta : ℝ) ^ e := by
+  unfold FloatSpec.Core.Defs.F2R
+  simp
+
+/-
+Coq original:
+Theorem bpow_le_F2R : forall m e : Z,
+  (0 < m)%Z -> (bpow e <= F2R (Float beta m e))%R.
+Proof.
+  intros m e H.
+  rewrite <- F2R_bpow.
+  apply F2R_le.
+  now apply (Zlt_le_succ 0).
+Qed.
+-/
+theorem bpow_le_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  0 < f.Fnum → (beta : ℝ) ^ f.Fexp ≤ (F2R f).run := by
+  intro hm_pos
+  -- From 0 < m (integer), deduce 1 ≤ m
+  have hm_one_le : (1 : Int) ≤ f.Fnum := by
+    -- 0 < m ↔ 1 ≤ m for integers
+    have := Int.add_one_le_iff.mpr hm_pos
+    simpa using this
+  have hm_one_leR : (1 : ℝ) ≤ (f.Fnum : ℝ) := by exact_mod_cast hm_one_le
+  -- Let p = (beta : ℝ) ^ e with p ≥ 0
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_nonneg : 0 ≤ (beta : ℝ) ^ f.Fexp := by exact (le_of_lt (zpow_pos hbpos_real _))
+  -- Multiply both sides by p ≥ 0: 1*p ≤ m*p
+  unfold FloatSpec.Core.Defs.F2R
+  simpa using (mul_le_mul_of_nonneg_right hm_one_leR hp_nonneg)
+
+/-
+Coq original:
+Theorem F2R_p1_le_bpow : forall m e1 e2 : Z,
+  (0 < m)%Z -> (F2R (Float beta m e1) < bpow e2)%R ->
+  (F2R (Float beta (m + 1) e1) <= bpow e2)%R.
+Proof.
+  intros m e1 e2 Hm.
+  intros H.
+  assert (He : (e1 <= e2)%Z).
+  (* proof omitted for brevity *)
+  revert H.
+  replace e2 with (e2 - e1 + e1)%Z by ring.
+  rewrite bpow_plus.
+  unfold F2R. simpl.
+  rewrite <- (IZR_Zpower beta (e2 - e1)).
+  intros H.
+  apply Rmult_le_compat_r.
+  apply bpow_ge_0.
+  apply Rmult_lt_reg_r in H.
+  apply IZR_le.
+  apply Zlt_le_succ.
+  now apply lt_IZR.
+  apply bpow_gt_0.
+  now apply Zle_minus_le_0.
+Qed.
+-/
+theorem F2R_p1_le_bpow (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  0 < f.Fnum → (F2R f).run < (beta : ℝ) ^ (f.Fexp + 1) := by
   sorry
 
-/-- Check F2R injectivity for fixed exponent
-
-    F2R is injective with respect to mantissa for fixed exponent.
+/-
+Coq original:
+Theorem bpow_le_F2R_m1 : forall m e1 e2 : Z,
+  (1 < m)%Z -> (bpow e2 < F2R (Float beta m e1))%R ->
+  (bpow e2 <= F2R (Float beta (m - 1) e1))%R.
+Proof.
+  intros m e1 e2 Hm.
+  case (Zle_or_lt e1 e2); intros He.
+  replace e2 with (e2 - e1 + e1)%Z by ring.
+  rewrite bpow_plus.
+  unfold F2R. simpl.
+  rewrite <- (IZR_Zpower beta (e2 - e1)).
+  intros H.
+  apply Rmult_le_compat_r.
+  apply bpow_ge_0.
+  apply Rmult_lt_reg_r in H.
+  apply IZR_le.
+  rewrite (Zpred_succ (Zpower _ _)).
+  apply Zplus_le_compat_r.
+  apply Zlt_le_succ.
+  now apply lt_IZR.
+  apply bpow_gt_0.
+  now apply Zle_minus_le_0.
+  intros H.
+  apply Rle_trans with (1*bpow e1)%R.
+  rewrite Rmult_1_l.
+  apply bpow_le.
+  now apply Zlt_le_weak.
+  unfold F2R. simpl.
+  apply Rmult_le_compat_r.
+  apply bpow_ge_0.
+  apply IZR_le.
+  lia.
+Qed.
 -/
-def eq_F2R_check : Id Bool :=
-  pure true  -- Always true
+theorem bpow_le_F2R_m1 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  f.Fnum < 0 → (F2R f).run ≤ -((beta : ℝ) ^ f.Fexp) := by
+  intro hneg
+  -- From m < 0 over ℤ, deduce (m : ℝ) ≤ -1
+  have h_add_le : (f.Fnum : ℝ) + 1 ≤ 0 := by
+    -- m + 1 ≤ 0 ↔ m < 0 on integers, then cast to ℝ
+    have := (Int.add_one_le_iff.mpr hneg)
+    exact (by exact_mod_cast this)
+  have h_m_le : (f.Fnum : ℝ) ≤ -1 := by linarith
+  -- Multiply by nonnegative p = β^e
+  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hp_nonneg : 0 ≤ (beta : ℝ) ^ f.Fexp := le_of_lt (zpow_pos hbpos_real _)
+  unfold FloatSpec.Core.Defs.F2R
+  have := mul_le_mul_of_nonneg_right h_m_le hp_nonneg
+  simpa using this
 
-/-- Specification: Equal F2R values imply equal mantissas
-
-    The injectivity of F2R for fixed exponents ensures that
-    equal real representations can only arise from equal
-    mantissas, preserving distinctness properties.
+/-
+Coq original:
+Theorem F2R_lt_bpow : forall f : float beta, forall e',
+  (Z.abs (Fnum f) < Zpower beta (e' - Fexp f))%Z ->
+  (Rabs (F2R f) < bpow e')%R.
+Proof.
+  intros (m, e) e' Hm.
+  rewrite <- F2R_Zabs.
+  destruct (Zle_or_lt e e') as [He|He].
+  unfold F2R. simpl.
+  apply Rmult_lt_reg_r with (bpow (-e)).
+  apply bpow_gt_0.
+  rewrite Rmult_assoc, <- 2!bpow_plus, Zplus_opp_r, Rmult_1_r.
+  rewrite <-IZR_Zpower.
+  2: now apply Zle_left.
+  now apply IZR_lt.
+  elim Zlt_not_le with (1 := Hm).
+  simpl.
+  assert (H: (e' - e < 0)%Z) by lia.
+  clear -H.
+  destruct (e' - e)%Z ; try easy.
+  apply Zabs_pos.
+Qed.
 -/
-theorem eq_F2R_check_spec (e m1 m2 : Int) :
-    ⦃⌜(F2R (beta := beta) (FlocqFloat.mk m1 e : FlocqFloat beta)).run =
-        (F2R (beta := beta) (FlocqFloat.mk m2 e : FlocqFloat beta)).run ∧ beta > 1⌝⦄
-    eq_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold eq_F2R_check
-  rfl
-
-end OrderProperties
-
-section AbsoluteValueAndSign
-
-/-- Compute absolute value through mantissa
-
-    The absolute value of F2R(m, e) equals F2R(|m|, e).
-    This commutation property allows absolute value operations
-    to be performed directly on mantissas.
--/
-noncomputable def F2R_Zabs {beta : Int} (m e : Int) : Id ℝ :=
-  F2R (beta := beta) (FlocqFloat.mk (Int.natAbs m) e : FlocqFloat beta)
-
-/-- Specification: F2R commutes with absolute value
-
-    Taking the absolute value commutes with the F2R conversion:
-    |F2R(m, e)| = F2R(|m|, e). This property enables efficient
-    absolute value computation on floating-point representations.
--/
-theorem F2R_Zabs_spec (m e : Int) :
-    ⦃⌜beta > 1⌝⦄
-    F2R_Zabs (beta := beta) m e
-    ⦃⇓result => ⌜result = |(F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run|⌝⦄ := by
+theorem F2R_lt_bpow (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  f.Fnum < 0 → -((beta : ℝ) ^ (f.Fexp + 1)) < (F2R f).run := by
   sorry
 
-/-- Compute negation through mantissa
+-- Exponent change properties
 
-    The negation of F2R(m, e) equals F2R(-m, e).
-    This commutation allows negation to be performed
-    directly on mantissas without exponent changes.
+/-
+Coq original:
+Theorem F2R_change_exp : forall e' m e : Z,
+  (e' <= e)%Z -> F2R (Float beta m e) = F2R (Float beta (m * Zpower beta (e - e')) e').
+Proof.
+  intros e' m e He.
+  unfold F2R. simpl.
+  rewrite mult_IZR, IZR_Zpower, Rmult_assoc.
+  apply f_equal.
+  pattern e at 1 ; replace e with (e - e' + e')%Z by ring.
+  apply bpow_plus.
+  now apply Zle_minus_le_0.
+Qed.
 -/
-noncomputable def F2R_Zopp {beta : Int} (m e : Int) : Id ℝ :=
-  F2R (FlocqFloat.mk (-m) e : FlocqFloat beta)
+theorem F2R_change_exp (f : FlocqFloat beta) (e' : Int) (hbeta : 1 < beta) (he : e' ≤ f.Fexp) :
+  (F2R f).run = (F2R (FlocqFloat.mk (f.Fnum * beta ^ (f.Fexp - e').natAbs) e' : FlocqFloat beta)).run := by
+  sorry
+  -- -- Expand both sides
+  -- unfold FloatSpec.Core.Defs.F2R
+  -- -- Let b be the real base and note it is nonzero since beta > 1
+  -- set b : ℝ := (beta : ℝ)
+  -- have hb0 : b ≠ 0 := by
+  --   have : (0 : ℝ) < b := by exact_mod_cast (lt_trans (by decide) hbeta)
+  --   exact ne_of_gt this
+  -- -- Decompose the exponent: f.Fexp = e' + (f.Fexp - e')
+  -- have hsum : e' + (f.Fexp - e') = f.Fexp := by
+  --   simpa [add_comm, add_left_comm, add_assoc] using (add_sub_cancel e' f.Fexp)
+  -- have hsplit : b ^ f.Fexp = b ^ e' * b ^ (f.Fexp - e') := by
+  --   simpa [hsum] using (zpow_add₀ hb0 e' (f.Fexp - e'))
+  -- -- The difference is nonnegative
+  -- have hd : 0 ≤ f.Fexp - e' := sub_nonneg.mpr he
+  -- -- Convert the nonnegative zpow to a nat pow via toNat
+  -- have hto : Int.ofNat (Int.toNat (f.Fexp - e')) = f.Fexp - e' := Int.toNat_of_nonneg hd
+  -- have hzpow_nat : b ^ (f.Fexp - e') = b ^ (Int.toNat (f.Fexp - e')) := by
+  --   simpa [hto, zpow_ofNat]
+  -- have hnat : (f.Fexp - e').natAbs = Int.toNat (f.Fexp - e') := Int.natAbs_of_nonneg hd
+  -- -- Rearrange and cast the integer product to reals
+  -- calc
+  --   (f.Fnum : ℝ) * b ^ f.Fexp
+  --       = (f.Fnum : ℝ) * (b ^ e' * b ^ (f.Fexp - e')) := by simpa [hsplit]
+  --   _   = ((f.Fnum : ℝ) * b ^ (Int.toNat (f.Fexp - e'))) * b ^ e' := by
+  --             simpa [mul_comm, mul_left_comm, mul_assoc, hzpow_nat]
+  --   _   = (((f.Fnum * beta ^ (Int.toNat (f.Fexp - e')) : Int) : ℝ)) * b ^ e' := by
+  --             simp [Int.cast_mul, Int.cast_pow]
+  --   _   = (((f.Fnum * beta ^ ((f.Fexp - e').natAbs) : Int) : ℝ)) * b ^ e' := by
+  --             simpa [hnat]
 
-/-- Specification: F2R commutes with negation
-
-    Negation commutes with F2R conversion: -F2R(m, e) = F2R(-m, e).
-    This enables efficient sign changes in floating-point operations.
+/-
+Coq original:
+Theorem F2R_prec_normalize : forall m e e' p : Z,
+  (Z.abs m < Zpower beta p)%Z ->
+  (bpow (e' - 1)%Z <= Rabs (F2R (Float beta m e)))%R ->
+  F2R (Float beta m e) = F2R (Float beta (m * Zpower beta (e - e' + p)) (e' - p)).
+Proof.
+  intros m e e' p Hm Hf.
+  assert (Hp: (0 <= p)%Z).
+  destruct p ; try easy.
+  now elim (Zle_not_lt _ _ (Zabs_pos m)).
+  (* . *)
+  replace (e - e' + p)%Z with (e - (e' - p))%Z by ring.
+  apply F2R_change_exp.
+  cut (e' - 1 < e + p)%Z.
+  lia.
+  apply (lt_bpow beta).
+  apply Rle_lt_trans with (1 := Hf).
+  rewrite <- F2R_Zabs, Zplus_comm, bpow_plus.
+  apply Rmult_lt_compat_r.
+  apply bpow_gt_0.
+  rewrite <- IZR_Zpower.
+  now apply IZR_lt.
+  exact Hp.
+Qed.
 -/
-theorem F2R_Zopp_spec (m e : Int) :
-    ⦃⌜beta > 1⌝⦄
-    F2R_Zopp (beta := beta) m e
-    ⦃⇓result => ⌜result = -((F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run)⌝⦄ := by
+theorem F2R_prec_normalize (m e e' p : Int) (hbeta : 1 < beta) :
+  Int.natAbs m < Int.natAbs beta ^ (p.toNat) →
+  (beta : ℝ) ^ (e' - 1) ≤ |(F2R (FlocqFloat.mk m e : FlocqFloat beta)).run| →
+  (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run =
+    (F2R (FlocqFloat.mk (m * beta ^ (e - e' + p).natAbs) (e' - p) : FlocqFloat beta)).run := by
   sorry
 
-/-- Compute conditional negation through mantissa
-
-    Conditional negation F2R(±m, e) based on boolean condition
-    equals conditional negation of F2R(m, e). This extends
-    the negation commutation to conditional operations.
+/-
+Coq original:
+Theorem mag_F2R_bounds : forall x m e,
+  (0 < m)%Z -> (F2R (Float beta m e) <= x < F2R (Float beta (m + 1) e))%R ->
+  mag beta x = mag beta (F2R (Float beta m e)) :> Z.
+Proof.
+  intros x m e Hp (Hx,Hx2).
+  destruct (mag beta (F2R (Float beta m e))) as (ex, He).
+  simpl.
+  apply mag_unique.
+  assert (Hp1: (0 < F2R (Float beta m e))%R).
+  now apply F2R_gt_0.
+  specialize (He (Rgt_not_eq _ _ Hp1)).
+  rewrite Rabs_pos_eq in He.
+  2: now apply Rlt_le.
+  destruct He as (He1, He2).
+  assert (Hx1: (0 < x)%R).
+  now apply Rlt_le_trans with (2 := Hx).
+  rewrite Rabs_pos_eq.
+  2: now apply Rlt_le.
+  split.
+  now apply Rle_trans with (1 := He1).
+  apply Rlt_le_trans with (1 := Hx2).
+  now apply F2R_p1_le_bpow.
+Qed.
 -/
-noncomputable def F2R_cond_Zopp {beta : Int} (b : Bool) (m e : Int) : Id ℝ :=
-  F2R (FlocqFloat.mk (if b then -m else m) e : FlocqFloat beta)
-
-/-- Specification: F2R commutes with conditional negation
-
-    Conditional negation commutes with F2R: applying conditional
-    negation to the mantissa produces the same result as applying
-    it to the F2R value. This generalizes the negation property.
--/
-theorem F2R_cond_Zopp_spec (b : Bool) (m e : Int) :
-    ⦃⌜beta > 1⌝⦄
-    F2R_cond_Zopp (beta := beta) b m e
-    ⦃⇓result => ⌜result = if b then -((F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run)
-                          else (F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run⌝⦄ := by
+theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
+  0 < m →
+  ((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run ≤ x ∧
+    x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)).run) →
+  mag beta x = mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) := by
   sorry
 
-end AbsoluteValueAndSign
-
-section ZeroProperties
-
-/-- Convert zero mantissa to real
-
-    F2R of a float with zero mantissa equals zero, regardless
-    of the exponent value. This captures the fundamental
-    property that zero mantissa represents mathematical zero.
+/-
+Coq original:
+Theorem mag_F2R : forall m e : Z,
+  m <> Z0 -> (mag beta (F2R (Float beta m e)) = mag beta (IZR m) + e :> Z)%Z.
+Proof.
+  intros m e H.
+  unfold F2R ; simpl.
+  apply mag_mult_bpow.
+  now apply IZR_neq.
+Qed.
 -/
-noncomputable def F2R_0 {beta : Int} (e : Int) : Id ℝ :=
-  F2R (FlocqFloat.mk 0 e : FlocqFloat beta)
-
-/-- Specification: Zero mantissa yields zero F2R
-
-    A floating-point number with zero mantissa represents
-    mathematical zero regardless of its exponent. This is
-    the canonical representation of zero in floating-point.
--/
-theorem F2R_0_spec (e : Int) :
-    ⦃⌜beta > 1⌝⦄
-    F2R_0 (beta := beta) e
-    ⦃⇓result => ⌜result = 0⌝⦄ := by
-  intro _
-  unfold F2R_0 F2R
-  -- After unfolding, we have pure ((0 : Int) * (beta : ℝ) ^ e)
-  -- Since 0 * anything = 0, this simplifies to pure 0
-  show (pure ((0 : Int) * (beta : ℝ) ^ e) : Id ℝ) = pure 0
-  simp [Int.cast_zero, zero_mul]
-
-/-- Check if zero F2R implies zero mantissa
-
-    This is always true - zero F2R requires zero mantissa.
--/
-def eq_0_F2R_check : Id Bool :=
-  pure true
-
-/-- Specification: Zero F2R implies zero mantissa
-
-    The zero representation in floating-point is unique:
-    if F2R(m, e) = 0, then m = 0. This ensures canonical
-    zero representation across all exponents.
--/
-theorem eq_0_F2R_check_spec (m e : Int) :
-    ⦃⌜(F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run = 0 ∧ beta > 1⌝⦄
-    eq_0_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold eq_0_F2R_check
-  rfl
-
-/-- Check sign preservation for non-negative values
-
-    Non-negative F2R implies non-negative mantissa.
--/
-def ge_0_F2R_check : Id Bool :=
-  pure true
-
-/-- Specification: Non-negative F2R implies non-negative mantissa
-
-    The F2R mapping preserves non-negativity: if the real
-    representation is non-negative, then the mantissa is
-    non-negative. This maintains sign consistency.
--/
-theorem ge_0_F2R_check_spec (m e : Int) :
-    ⦃⌜0 ≤ (F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run ∧ beta > 1⌝⦄
-    ge_0_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold ge_0_F2R_check
-  rfl
-
-/-- Check sign preservation for non-positive values
-
-    Non-positive F2R implies non-positive mantissa.
--/
-def le_0_F2R_check : Id Bool :=
-  pure true
-
-/-- Specification: Non-positive F2R implies non-positive mantissa
-
-    F2R preserves non-positive signs: if the real representation
-    is non-positive, then the mantissa is non-positive.
-    This completes the sign preservation for both directions.
--/
-theorem le_0_F2R_check_spec (m e : Int) :
-    ⦃⌜(F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run ≤ 0 ∧ beta > 1⌝⦄
-    le_0_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold le_0_F2R_check
-  rfl
-
-/-- Check strict positive sign preservation
-
-    Positive F2R implies positive mantissa.
--/
-def gt_0_F2R_check : Id Bool :=
-  pure true
-
-/-- Specification: Positive F2R implies positive mantissa
-
-    Strict positivity is preserved by F2R: positive real
-    representations correspond exactly to positive mantissas.
-    This enables efficient sign testing on mantissas.
--/
-theorem gt_0_F2R_check_spec (m e : Int) :
-    ⦃⌜0 < (F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run ∧ beta > 1⌝⦄
-    gt_0_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold gt_0_F2R_check
-  rfl
-
-/-- Check strict negative sign preservation
-
-    Negative F2R implies negative mantissa.
--/
-def lt_0_F2R_check : Id Bool :=
-  pure true
-
-/-- Specification: Negative F2R implies negative mantissa
-
-    Strict negativity is preserved: negative real representations
-    correspond exactly to negative mantissas. This enables
-    precise sign determination from mantissa inspection.
--/
-theorem lt_0_F2R_check_spec (m e : Int) :
-    ⦃⌜(F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run < 0 ∧ beta > 1⌝⦄
-    lt_0_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold lt_0_F2R_check
-  rfl
-
-end ZeroProperties
-
-section MantissaToF2RProperties
-
-/-- Check non-negative mantissa to non-negative F2R
-
-    Non-negative mantissas always produce non-negative F2R.
--/
-def F2R_ge_0_check : Id Bool :=
-  pure true
-
-/-- Specification: Non-negative mantissa implies non-negative F2R
-
-    The F2R mapping preserves non-negativity in the forward
-    direction: non-negative mantissas produce non-negative
-    real representations. This confirms sign consistency.
--/
-theorem F2R_ge_0_check_spec (f : FlocqFloat beta) :
-    ⦃⌜0 ≤ f.Fnum ∧ beta > 1⌝⦄
-    F2R_ge_0_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold F2R_ge_0_check
-  rfl
-
-/-- Check non-positive mantissa to non-positive F2R
-
-    Non-positive mantissas always produce non-positive F2R.
--/
-def F2R_le_0_check : Id Bool :=
-  pure true
-
-/-- Specification: Non-positive mantissa implies non-positive F2R
-
-    F2R preserves non-positive signs in the forward direction:
-    non-positive mantissas produce non-positive real values.
-    This completes the bidirectional sign preservation.
--/
-theorem F2R_le_0_check_spec (f : FlocqFloat beta) :
-    ⦃⌜f.Fnum ≤ 0 ∧ beta > 1⌝⦄
-    F2R_le_0_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold F2R_le_0_check
-  rfl
-
-/-- Check positive mantissa to positive F2R
-
-    Positive mantissas always produce positive F2R.
--/
-def F2R_gt_0_check : Id Bool :=
-  pure true
-
-/-- Specification: Positive mantissa implies positive F2R
-
-    Strict positivity is preserved in the forward direction:
-    positive mantissas yield positive real representations.
-    This enables reliable positivity testing via mantissas.
--/
-theorem F2R_gt_0_check_spec (f : FlocqFloat beta) :
-    ⦃⌜0 < f.Fnum ∧ beta > 1⌝⦄
-    F2R_gt_0_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold F2R_gt_0_check
-  rfl
-
-/-- Check negative mantissa to negative F2R
-
-    Negative mantissas always produce negative F2R.
--/
-def F2R_lt_0_check : Id Bool :=
-  pure true
-
-/-- Specification: Negative mantissa implies negative F2R
-
-    Strict negativity is preserved: negative mantissas
-    produce negative real representations. This confirms
-    complete sign correspondence between mantissas and F2R.
--/
-theorem F2R_lt_0_check_spec (f : FlocqFloat beta) :
-    ⦃⌜f.Fnum < 0 ∧ beta > 1⌝⦄
-    F2R_lt_0_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold F2R_lt_0_check
-  rfl
-
-/-- Check non-zero mantissa to non-zero F2R
-
-    Non-zero mantissas always produce non-zero F2R.
--/
-def F2R_neq_0_check : Id Bool :=
-  pure true
-
-/-- Specification: Non-zero mantissa implies non-zero F2R
-
-    The F2R mapping preserves non-zero property: non-zero
-    mantissas produce non-zero real values. This prevents
-    accidental zero generation from non-zero inputs.
--/
-theorem F2R_neq_0_check_spec (f : FlocqFloat beta) :
-    ⦃⌜f.Fnum ≠ 0 ∧ beta > 1⌝⦄
-    F2R_neq_0_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold F2R_neq_0_check
-  rfl
-
-end MantissaToF2RProperties
-
-section PowerOfBetaProperties
-
-/-- Compute power of beta as F2R
-
-    F2R(1, e) equals beta^e, representing the fundamental
-    unit at exponent e. This establishes the relationship
-    between exponents and powers of the radix.
--/
-noncomputable def F2R_bpow {beta : Int} (e : Int) : Id ℝ :=
-  F2R (FlocqFloat.mk 1 e : FlocqFloat beta)
-
-/-- Specification: Unit mantissa yields power of beta
-
-    The fundamental scaling unit F2R(1, e) = beta^e establishes
-    the exponential nature of the floating-point representation.
-    This is the basis for all magnitude relationships.
--/
-theorem F2R_bpow_spec (e : Int) :
-    ⦃⌜beta > 1⌝⦄
-    F2R_bpow (beta := beta) e
-    ⦃⇓result => ⌜result = (beta : ℝ) ^ e⌝⦄ := by
-  intro _
-  unfold F2R_bpow F2R
-  -- After unfolding, we have pure ((1 : Int) * (beta : ℝ) ^ e)
-  -- Since 1 * x = x, this simplifies to pure (beta ^ e)
-  show (pure ((1 : Int) * (beta : ℝ) ^ e) : Id ℝ) = pure ((beta : ℝ) ^ e)
-  simp [Int.cast_one, one_mul]
-
-/-- Check lower bound using powers of beta
-
-    For positive mantissa, F2R(m, e) ≥ beta^e.
--/
-def bpow_le_F2R_check : Id Bool :=
-  pure true
-
-/-- Specification: Power bound for positive mantissa
-
-    Positive mantissas ensure F2R values are at least beta^e.
-    This lower bound is fundamental for magnitude analysis
-    and precision calculations in floating-point systems.
--/
-theorem bpow_le_F2R_check_spec (m e : Int) :
-    ⦃⌜0 < m ∧ beta > 1⌝⦄
-    bpow_le_F2R_check
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
-  unfold bpow_le_F2R_check
-  rfl
-
-end PowerOfBetaProperties
-
-section ExponentChangeProperties
-
-/-- Change exponent with mantissa adjustment
-
-    F2R(m, e) = F2R(m * beta^(e-e'), e') for e' ≤ e.
-    This fundamental property allows exponent normalization
-    by adjusting the mantissa proportionally.
--/
-noncomputable def F2R_change_exp {beta : Int} (e' m e : Int) : Id ℝ :=
-  let adjusted_mantissa := m * beta ^ (e - e').natAbs
-  F2R (FlocqFloat.mk adjusted_mantissa e' : FlocqFloat beta)
-
-/-- Specification: Exponent change preserves F2R value
-
-    Changing the exponent while adjusting the mantissa by
-    the appropriate power of beta preserves the F2R value.
-    This enables flexible representation of the same real number.
--/
-theorem F2R_change_exp_spec (e' m e : Int) :
-    ⦃⌜e' ≤ e ∧ beta > 1⌝⦄
-    F2R_change_exp (beta := beta) e' m e
-    ⦃⇓result => ⌜result = (F2R (beta := beta) (FlocqFloat.mk m e : FlocqFloat beta)).run⌝⦄ := by
+theorem mag_F2R (m e : Int) (hbeta : 1 < beta) :
+  m ≠ 0 →
+  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) = mag beta (m : ℝ) + e := by
   sorry
 
-end ExponentChangeProperties
+/-
+Coq original:
+Theorem Zdigits_mag : forall n,
+  n <> Z0 -> Zdigits beta n = mag beta (IZR n).
+Proof.
+  intros n Hn.
+  destruct (mag beta (IZR n)) as (e, He) ; simpl.
+  specialize (He (IZR_neq _ _ Hn)).
+  rewrite <- abs_IZR in He.
+  assert (Hd := Zdigits_correct beta n).
+  assert (Hd' := Zdigits_gt_0 beta n).
+  apply Zle_antisym ; apply (bpow_lt_bpow beta).
+  apply Rle_lt_trans with (2 := proj2 He).
+  rewrite <- IZR_Zpower by lia.
+  now apply IZR_le.
+  apply Rle_lt_trans with (1 := proj1 He).
+  rewrite <- IZR_Zpower by lia.
+  now apply IZR_lt.
+Qed.
+-/
+theorem Zdigits_mag (n : Int) (hbeta : 1 < beta) :
+  n ≠ 0 → (Zdigits beta n).run = mag beta (n : ℝ) := by
+  sorry
+
+/-
+Coq original:
+Theorem mag_F2R_Zdigits : forall m e,
+  m <> Z0 -> (mag beta (F2R (Float beta m e)) = Zdigits beta m + e :> Z)%Z.
+Proof.
+  intros m e Hm.
+  rewrite mag_F2R with (1 := Hm).
+  apply (f_equal (fun v => Zplus v e)).
+  apply sym_eq.
+  now apply Zdigits_mag.
+Qed.
+-/
+theorem mag_F2R_Zdigits (m e : Int) (hbeta : 1 < beta) :
+  m ≠ 0 →
+  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) = (Zdigits beta m).run + e := by
+  sorry
+
+/-
+Coq original:
+Theorem mag_F2R_bounds_Zdigits : forall x m e,
+  (0 < m)%Z -> (F2R (Float beta m e) <= x < F2R (Float beta (m + 1) e))%R ->
+  mag beta x = (Zdigits beta m + e)%Z :> Z.
+Proof.
+  intros x m e Hm Bx.
+  apply mag_F2R_bounds with (1 := Hm) in Bx.
+  rewrite Bx.
+  apply mag_F2R_Zdigits.
+  now apply Zgt_not_eq.
+Qed.
+-/
+theorem mag_F2R_bounds_Zdigits (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
+  0 < m →
+  ((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run ≤ x ∧
+    x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)).run) →
+  mag beta x = (Zdigits beta m).run + e := by
+  sorry
+
+/-
+Coq original:
+Theorem float_distribution_pos : forall m1 e1 m2 e2 : Z,
+  (0 < m1)%Z -> (F2R (Float beta m1 e1) < F2R (Float beta m2 e2) < F2R (Float beta (m1 + 1) e1))%R ->
+  (e2 < e1)%Z /\ (e1 + mag beta (IZR m1) = e2 + mag beta (IZR m2))%Z.
+Proof.
+  intros m1 e1 m2 e2 Hp1 (H12, H21).
+  assert (He: (e2 < e1)%Z).
+  (* . *)
+  apply Znot_ge_lt.
+  intros H0.
+  elim Rlt_not_le with (1 := H21).
+  apply Z.ge_le in H0.
+  apply (F2R_change_exp e1 m2 e2) in H0.
+  rewrite H0.
+  apply F2R_le.
+  apply Zlt_le_succ.
+  apply (lt_F2R e1).
+  now rewrite <- H0.
+  (* . *)
+  split.
+  exact He.
+  rewrite (Zplus_comm e1), (Zplus_comm e2).
+  assert (Hp2: (0 < m2)%Z).
+  apply (gt_0_F2R m2 e2).
+  apply Rlt_trans with (2 := H12).
+  now apply F2R_gt_0.
+  rewrite <- 2!mag_F2R.
+  destruct (mag beta (F2R (Float beta m1 e1))) as (e1', H1).
+  simpl.
+  apply sym_eq.
+  apply mag_unique.
+  assert (H2 : (bpow (e1' - 1) <= F2R (Float beta m1 e1) < bpow e1')%R).
+  rewrite <- (Z.abs_eq m1), F2R_Zabs.
+  apply H1.
+  apply Rgt_not_eq.
+  apply Rlt_gt.
+  now apply F2R_gt_0.
+  now apply Zlt_le_weak.
+  clear H1.
+  rewrite <- F2R_Zabs, Z.abs_eq.
+  split.
+  apply Rlt_le.
+  apply Rle_lt_trans with (2 := H12).
+  apply H2.
+  apply Rlt_le_trans with (1 := H21).
+  now apply F2R_p1_le_bpow.
+  now apply Zlt_le_weak.
+  apply sym_not_eq.
+  now apply Zlt_not_eq.
+  apply sym_not_eq.
+  now apply Zlt_not_eq.
+Qed.
+-/
+theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
+  0 < m1 →
+  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run < (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run ∧
+    (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run < (F2R (FlocqFloat.mk (m1 + 1) e1 : FlocqFloat beta)).run) →
+  (e2 < e1) ∧ (e1 + mag beta (m1 : ℝ) = e2 + mag beta (m2 : ℝ)) := by
+  sorry
+
+end FloatProp
 
 end FloatSpec.Core.Float_prop
