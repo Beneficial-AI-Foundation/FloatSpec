@@ -21,6 +21,7 @@ Based on flocq/src/Core/Ulp.v
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Float_prop
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
@@ -28,7 +29,8 @@ import Std.Tactic.Do
 
 open Real
 open Std.Do
-open FloatSpec.Core.GenericFmt
+open FloatSpec.Core.Generic_fmt
+open FloatSpec.Core.Round_generic
 
 namespace FloatSpec.Core.Ulp
 
@@ -36,10 +38,10 @@ section UnitInLastPlace
 
 variable (beta : Int)
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Unit in the last place function
-    
+
     The ULP of a real number x is the value of the least significant
     digit in the representation of x in the floating-point format.
     For zero, we use a special convention based on fexp(1).
@@ -48,23 +50,23 @@ noncomputable def ulp (x : ℝ) : Id ℝ :=
   if x = 0 then
     pure ((beta : ℝ) ^ (fexp 1))
   else do
-    let exp ← FloatSpec.Core.GenericFmt.cexp beta fexp x
+    let exp ← FloatSpec.Core.Generic_fmt.cexp beta fexp x
     pure ((beta : ℝ) ^ exp)
 
 /-- Specification: ULP computation
-    
+
     The ULP is computed as beta^(fexp(1)) for zero,
     and beta^(cexp(x)) for non-zero values.
 -/
 theorem ulp_spec (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     ulp beta fexp x
-    ⦃⇓result => ⌜if x = 0 then result = (beta : ℝ) ^ (fexp 1) 
+    ⦃⇓result => ⌜if x = 0 then result = (beta : ℝ) ^ (fexp 1)
                   else result = (beta : ℝ) ^ (fexp (mag beta x))⌝⦄ := by
   sorry
 
 /-- Specification: ULP is non-negative
-    
+
     The ULP is always a positive value since it's a power of beta > 1.
 -/
 theorem ulp_ge_0 (x : ℝ) :
@@ -74,7 +76,7 @@ theorem ulp_ge_0 (x : ℝ) :
   sorry
 
 /-- Specification: ULP of opposite
-    
+
     The ULP is preserved under negation since it depends
     only on the magnitude, not the sign.
 -/
@@ -88,7 +90,7 @@ theorem ulp_opp (x : ℝ) :
   sorry
 
 /-- Specification: ULP of absolute value
-    
+
     The ULP equals the ULP of the absolute value.
 -/
 theorem ulp_abs (x : ℝ) :
@@ -106,10 +108,10 @@ section ULPProperties
 
 variable (beta : Int)
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Specification: ULP and generic format
-    
+
     The ULP of any non-zero number is itself representable
     in the generic format.
 -/
@@ -117,26 +119,26 @@ theorem generic_format_ulp (x : ℝ) (hx : x ≠ 0) :
     ⦃⌜beta > 1 ∧ x ≠ 0⌝⦄
     do
       let ulp_x ← ulp beta fexp x
-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp ulp_x
+      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp ulp_x
       pure true
     ⦃⇓result => ⌜result = true⌝⦄ := by
   sorry
 
 /-- Specification: ULP upper bound
-    
+
     For positive numbers in generic format, the ULP is at most the number itself.
 -/
 theorem ulp_le_id (x : ℝ) (hx : 0 < x) :
     ⦃⌜beta > 1 ∧ 0 < x⌝⦄
     do
-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp x
+      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp x
       let ulp_x ← ulp beta fexp x
       pure (is_generic, ulp_x ≤ x)
     ⦃⇓result => ⌜result.1 → result.2⌝⦄ := by
   sorry
 
 /-- Specification: ULP is never zero
-    
+
     The ULP is always a positive power of beta, so never zero.
 -/
 theorem ulp_neq_0 (x : ℝ) :
@@ -151,10 +153,10 @@ section SuccessorPredecessor
 
 variable (beta : Int)
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Successor in format
-    
+
     The successor of x is x plus its ULP, representing
     the next larger representable value.
 -/
@@ -164,7 +166,7 @@ noncomputable def succ (x : ℝ) : Id ℝ :=
     pure (x + ulp_x)
 
 /-- Predecessor in format
-    
+
     The predecessor of x is x minus its ULP, representing
     the next smaller representable value.
 -/
@@ -174,7 +176,7 @@ noncomputable def pred (x : ℝ) : Id ℝ :=
     pure (x - ulp_x)
 
 /-- Specification: Successor is greater than original
-    
+
     The successor function always produces a value
     greater than or equal to the original.
 -/
@@ -187,15 +189,15 @@ theorem succ_ge_id (beta : Int) (fexp : Int → Int) (x : ℝ) :
   sorry
 
 /-- Specification: Generic format closure under successor
-    
+
     If x is in generic format, then so is its successor.
 -/
 theorem generic_format_succ (beta : Int) (fexp : Int → Int) (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     do
-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp x
+      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp x
       let succ_x ← succ beta fexp x
-      let succ_is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp succ_x
+      let succ_is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp succ_x
       pure (is_generic, succ_is_generic)
     ⦃⇓result => ⌜result.1 → result.2⌝⦄ := by
   sorry
@@ -206,17 +208,17 @@ section ErrorBounds
 
 variable (beta : Int)
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Specification: Error characterization with ULP
-    
+
     If the error between a format value f and x is less than
     half a ULP, then f is the correctly rounded value of x.
 -/
 theorem error_lt_ulp (beta : Int) (fexp : Int → Int) (x : ℝ) (f : ℝ) :
     ⦃⌜beta > 1⌝⦄
     do
-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp f
+      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp f
       let ulp_x ← ulp beta fexp x
       pure (is_generic, |f - x| < ulp_x / 2)
     ⦃⇓result => ⌜result.1 ∧ result.2 → True⌝⦄ := by

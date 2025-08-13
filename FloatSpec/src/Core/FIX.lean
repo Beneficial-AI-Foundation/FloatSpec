@@ -18,13 +18,15 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.Round_generic
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 
 open Real
 open Std.Do
-open FloatSpec.Core.GenericFmt
+open FloatSpec.Core.Generic_fmt
+open FloatSpec.Core.Round_generic
 
 namespace FloatSpec.Core.FIX
 
@@ -67,7 +69,7 @@ theorem FIX_exp_spec (e : Int) :
     This means x = m × β^emin for some integer mantissa m.
 -/
 def FIX_format (beta : Int) (x : ℝ) : Id Prop :=
-  FloatSpec.Core.GenericFmt.generic_format beta (FIX_exp emin) x
+  FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
 
 /-- Specification: FIX format using generic format
 
@@ -78,7 +80,7 @@ def FIX_format (beta : Int) (x : ℝ) : Id Prop :=
 theorem FIX_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
     FIX_format emin beta x
-    ⦃⇓result => ⌜result = (FloatSpec.Core.GenericFmt.generic_format beta (FIX_exp emin) x).run⌝⦄ := by
+    ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄ := by
   sorry
 
 /-- Specification: FIX exponent function correctness

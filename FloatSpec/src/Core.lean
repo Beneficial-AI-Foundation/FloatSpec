@@ -8,6 +8,7 @@ import FloatSpec.src.Core.Digits
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Round_NE
 import FloatSpec.src.Core.FIX
 import FloatSpec.src.Core.FLX
