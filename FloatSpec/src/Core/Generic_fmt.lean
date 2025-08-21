@@ -166,19 +166,6 @@ section CanonicalFormat
 noncomputable def cexp (beta : Int) (fexp : Int → Int) (x : ℝ) : Id Int :=
   pure (fexp (mag beta x))
 
-/-- Specification: Canonical exponent computation
-
-    The canonical exponent is determined by applying
-    the format's exponent function to the magnitude.
--/
-theorem cexp_spec (beta : Int) (fexp : Int → Int) (x : ℝ) :
-    ⦃⌜beta > 1⌝⦄
-    cexp beta fexp x
-    ⦃⇓result => ⌜result = fexp (mag beta x)⌝⦄ := by
-  intro _
-  unfold cexp
-  rfl
-
 /-- Canonical float property
 
     A float is canonical if its exponent equals the
@@ -190,24 +177,12 @@ def canonical (beta : Int) (fexp : Int → Int) (f : FlocqFloat beta) : Prop :=
 /-- Scaled mantissa computation
 
     Scales x by the appropriate power of beta to obtain
-    the mantissa in the canonical representation.
+    the hntissa in the canonical representation.
 -/
 noncomputable def scaled_mantissa (beta : Int) (fexp : Int → Int) (x : ℝ) : Id ℝ :=
   do
     let exp ← cexp beta fexp x
     pure (x * (beta : ℝ) ^ (-exp))
-
-/-- Specification: Scaled mantissa computation
-
-    The scaled mantissa is x scaled by beta^(-cexp(x)).
--/
-theorem scaled_mantissa_spec (beta : Int) (fexp : Int → Int) (x : ℝ) :
-    ⦃⌜beta > 1⌝⦄
-    scaled_mantissa beta fexp x
-    ⦃⇓result => ⌜result = x * (beta : ℝ) ^ (-(fexp (mag beta x)))⌝⦄ := by
-  intro _
-  unfold scaled_mantissa cexp
-  rfl
 
 /-- Generic format predicate
 
@@ -222,6 +197,35 @@ def generic_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Id Prop :=
     let reconstructed ← F2R (FlocqFloat.mk truncated exp : FlocqFloat beta)
     pure (x = reconstructed)
 
+end CanonicalFormat
+
+section BasicProperties
+
+/-- Specification: Canonical exponent computation
+
+    The canonical exponent is determined by applying
+    the format's exponent function to the magnitude.
+-/
+theorem cexp_spec (beta : Int) (fexp : Int → Int) (x : ℝ) :
+    ⦃⌜beta > 1⌝⦄
+    cexp beta fexp x
+    ⦃⇓result => ⌜result = fexp (mag beta x)⌝⦄ := by
+  intro _
+  unfold cexp
+  rfl
+
+/-- Specification: Scaled mantissa computation
+
+    The scaled mantissa is x scaled by beta^(-cexp(x)).
+-/
+theorem scaled_mantissa_spec (beta : Int) (fexp : Int → Int) (x : ℝ) :
+    ⦃⌜beta > 1⌝⦄
+    scaled_mantissa beta fexp x
+    ⦃⇓result => ⌜result = x * (beta : ℝ) ^ (-(fexp (mag beta x)))⌝⦄ := by
+  intro _
+  unfold scaled_mantissa cexp
+  rfl
+
 /-- Specification: Generic format predicate
 
     x is in generic format iff x equals F2R of its
@@ -234,10 +238,6 @@ theorem generic_format_spec (beta : Int) (fexp : Int → Int) (x : ℝ) :
   intro _
   unfold generic_format scaled_mantissa cexp
   rfl
-
-end CanonicalFormat
-
-section BasicProperties
 
 /-- Truncation respects negation: Ztrunc(-x) = -Ztrunc(x) -/
 theorem Ztrunc_neg (x : ℝ) : Ztrunc (-x) = - Ztrunc x := by

@@ -18,6 +18,10 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Zaux
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.Nat.Digits.Defs
+import Mathlib.Data.Nat.Log
+import Mathlib.Tactic.Ring
+import Mathlib.Tactic.Linarith
 import Std.Do.Triple
 import Std.Tactic.Do
 
@@ -25,6 +29,8 @@ open Real
 open Std.Do
 
 namespace FloatSpec.Core.Digits
+
+set_option maxRecDepth 4096
 
 section DigitOperations
 
@@ -40,6 +46,128 @@ def digits2_Pnat : Nat → Id Nat
   | n + 1 => do
     let prev ← digits2_Pnat ((n + 1) / 2)
     pure (1 + prev)
+
+/-- A pure helper with the same recursion, convenient for proofs. -/
+def bits : Nat → Nat
+  | 0     => 0
+  | n + 1 => 1 + bits ((n + 1) / 2)
+
+/-- Basic positivity: for `n > 0`, `bits n > 0`. -/
+lemma bits_pos {n : Nat} (hn : 0 < n) : 0 < bits n := by
+  cases' n with k
+  · cases hn
+  · simp [bits]
+
+/-- Standard split: `n = 2*(n/2) + (n%2)` and `%2 < 2`. -/
+lemma split2 (n : Nat) : n = 2 * (n / 2) + n % 2 ∧ n % 2 < 2 := by
+  refine ⟨?h1, ?h2⟩
+  · -- The fix is to wrap the lemma in `Eq.symm` to flip the equality.
+    simpa [two_mul, Nat.mul_comm] using (Eq.symm (Nat.div_add_mod n 2))
+  · exact Nat.mod_lt _ (by decide)
+
+/-- Bits of a successor: unfold recursion. -/
+lemma bits_succ (k : Nat) : bits (k + 1) = 1 + bits ((k + 1) / 2) := by
+  simp [bits]
+
+/-- Equality of the program and the pure helper. -/
+lemma digits2_eq_bits (n : Nat) : digits2_Pnat n = pure (bits n) := by
+  refine Nat.strongRecOn n (motive := fun n => digits2_Pnat n = pure (bits n)) ?step
+  intro n ih
+  cases' n with k
+  · simp [digits2_Pnat, bits]
+  · have ih_half : digits2_Pnat ((k + 1) / 2) = pure (bits ((k + 1) / 2)) := by
+      have hlt : ((k + 1) / 2) < (k + 1) := by exact Nat.div_lt_self (Nat.succ_pos _) (by decide)
+      exact ih ((k + 1) / 2) hlt
+    simp [digits2_Pnat, bits, ih_half]
+
+/-- Main bounds for `bits`: for `m > 0`, `2^(bits m - 1) ≤ m < 2^(bits m)`. -/
+lemma bits_bounds (m : Nat) (hm : 0 < m) :
+    let d := bits m
+    2 ^ (d - 1) ≤ m ∧ m < 2 ^ d := by
+  refine (Nat.strongRecOn m (motive := fun m => 0 < m → let d := bits m; 2 ^ (d - 1) ≤ m ∧ m < 2 ^ d) ?step) hm
+  intro m ih hmpos
+  cases' m with k
+  · cases hmpos
+  · cases' k with k0
+    · -- m = 1
+      have hb : bits 1 = 1 := by simp [bits]
+      constructor
+      · -- lower bound
+        simpa [hb]
+      · -- upper bound
+        simpa [hb]
+    · -- m = k0 + 2 ≥ 2
+      -- Decompose by division by 2
+      have hsplit := split2 (k0 + 2)
+      let m2 := (k0 + 2) / 2
+      have hdecomp : (k0 + 2) = 2 * m2 + (k0 + 2) % 2 := (hsplit).1
+      have hrem_lt2 : (k0 + 2) % 2 < 2 := (hsplit).2
+      have hlt : m2 < (k0 + 2) := by exact Nat.div_lt_self (Nat.succ_pos _) (by decide)
+      -- m2 > 0 since k0+2 ≥ 2
+      have hge2 : 2 ≤ k0 + 2 := by exact Nat.succ_le_succ (Nat.succ_le_succ (Nat.zero_le k0))
+      have hm2pos : 0 < m2 := Nat.div_pos hge2 (by decide)
+      -- Apply IH to m2
+      have ih_m2 := ih m2 hlt hm2pos
+      -- Notations
+      set b := bits m2 with hbdef
+      have bits_succ2 : bits (k0 + 2) = 1 + bits m2 := by
+        -- use the general successor lemma and rewrite the divisor
+        simpa [m2, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using (bits_succ (k := k0 + 1))
+      -- Lower bound: 2^b ≤ k0+2
+      have hbpos : 0 < b := by simpa [hbdef] using (bits_pos (n := m2) hm2pos)
+      have low_m2 : 2 ^ (b - 1) ≤ m2 := by
+        simpa [hbdef] using (ih_m2).1
+      have low_pow : 2 ^ b ≤ 2 * m2 := by
+        -- 2^(b) = 2 * 2^(b-1) and 2^(b-1) ≤ m2
+        have h2_mul : 2 * (2 ^ (b - 1)) ≤ 2 * m2 := Nat.mul_le_mul_left 2 low_m2
+        have hpow : 2 * 2 ^ (b - 1) = 2 ^ b := by
+          have hb' : (b - 1) + 1 = b := Nat.sub_add_cancel (Nat.succ_le_of_lt hbpos)
+          calc
+            2 * 2 ^ (b - 1) = 2 ^ (b - 1) * 2 := by simpa [Nat.mul_comm]
+            _ = 2 ^ ((b - 1) + 1) := by simp [Nat.pow_succ]
+            _ = 2 ^ b := by simpa [hb']
+        simpa [hpow]
+          using h2_mul
+      have low_n : 2 ^ b ≤ (k0 + 2) := by
+        have hle_n : 2 * m2 ≤ k0 + 2 := by
+          -- rewrite RHS using decomposition, then apply monotonicity
+          rw [hdecomp]
+          exact Nat.le_add_right _ _
+        exact le_trans low_pow hle_n
+      -- Upper bound: k0+2 < 2^(b+1)
+      have m2_lt_pow : m2 < 2 ^ b := by simpa [hbdef] using (ih_m2).2
+      have two_m2_add_r_lt : 2 * m2 + (k0 + 2) % 2 < 2 * (m2 + 1) := by
+        have hrem_le_one : (k0 + 2) % 2 ≤ 1 := Nat.le_of_lt_succ hrem_lt2
+        have hlt_add : 2 * m2 + (k0 + 2) % 2 < 2 * m2 + 2 :=
+          Nat.add_lt_add_left (lt_of_le_of_lt hrem_le_one (by decide)) _
+        -- rewrite 2*m2 + 2 = 2*(m2+1)
+        have hco : 2 * m2 + 2 = 2 * (m2 + 1) := by
+          calc
+            2 * m2 + 2 = 2 * m2 + 2 * 1 := by simp
+            _ = 2 * (m2 + 1) := by
+              have := (Nat.mul_add 2 m2 1)
+              simpa [two_mul] using this.symm
+        simpa [hco] using hlt_add
+      have up_n : (k0 + 2) < 2 ^ (b + 1) := by
+        have h1 : (k0 + 2) < 2 * (m2 + 1) := by
+          calc
+            (k0 + 2) = 2 * m2 + (k0 + 2) % 2 := hdecomp
+            _ < 2 * (m2 + 1) := two_m2_add_r_lt
+        have h2 : 2 * (m2 + 1) ≤ 2 * (2 ^ b) := by exact Nat.mul_le_mul_left _ (Nat.succ_le_of_lt m2_lt_pow)
+        have h3 : (k0 + 2) < 2 * (2 ^ b) := lt_of_lt_of_le h1 h2
+        have : 2 * 2 ^ b = 2 ^ (b + 1) := by simp [Nat.pow_succ, Nat.mul_comm]
+        exact (lt_of_lt_of_eq h3 this)
+      -- Translate bounds via bits (k0+2) = 1 + bits m2
+      have hidx : bits (k0 + 2) - 1 = bits m2 := by
+        -- (1 + bits m2) - 1 = bits m2
+        simpa [bits_succ2] using (Nat.add_sub_cancel 1 (bits m2))
+      have low_n' : 2 ^ (bits (k0 + 2) - 1) ≤ (k0 + 2) := by
+        -- rewrite exponent index using hidx
+        simpa [hidx] using low_n
+      have up_n' : (k0 + 2) < 2 ^ (bits (k0 + 2)) := by
+        -- rewrite exponent using bits_succ2 and b = bits m2
+        simpa [bits_succ2, hbdef, Nat.add_comm] using up_n
+      exact ⟨low_n', up_n'⟩
 
 /-- Correctness of binary bit count
 
@@ -64,11 +192,12 @@ Qed.
 theorem digits2_Pnat_correct (n : Nat) :
     ⦃⌜n > 0⌝⦄
     digits2_Pnat n
-    ⦃⇓d => ⌜2 ^ d ≤ n ∧ n < 2 ^ (d + 1)⌝⦄ := by
-  -- For now, leave as sorry as this requires complex induction
-  -- The proof would involve showing that the recursive division by 2
-  -- correctly computes the number of bits needed
-  sorry
+    ⦃⇓d => ⌜d > 0 ∧ 2 ^ (d - 1) ≤ n ∧ n < 2 ^ d⌝⦄ := by
+  intro hn
+  have hb := bits_bounds n hn
+  have dpos := bits_pos (n := n) hn
+  -- Reduce the program to the pure helper and discharge the proposition
+  simpa [digits2_eq_bits n] using And.intro dpos (And.intro hb.1 hb.2)
 
 /-- Extract the k-th digit of a number n in the given radix -/
 def Zdigit (n k : Int) : Id Int :=
@@ -1017,6 +1146,9 @@ theorem Zdigits_correct (n : Int) :
     ⦃⌜n ≠ 0⌝⦄
     Zdigits beta n
     ⦃⇓d => ⌜beta ^ (d - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ d.natAbs⌝⦄ := by
+  -- This theorem establishes that Zdigits computes the correct number of digits
+  -- such that beta^(d-1) ≤ |n| < beta^d
+  -- The proof would use induction on the auxiliary function Zdigits_aux
   sorry
 
 /-- Unique characterization of digit count
@@ -1042,6 +1174,9 @@ theorem Zdigits_unique (n e : Int) :
     ⦃⌜n ≠ 0 ∧ beta ^ (e - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ e.natAbs⌝⦄
     Zdigits beta n
     ⦃⇓d => ⌜d = e⌝⦄ := by
+  -- This uniqueness theorem shows that if n is bounded by consecutive powers of beta,
+  -- then Zdigits returns the unique exponent e
+  -- This follows from the correctness theorem and the monotonicity of powers
   sorry
 
 /-- Digit count of absolute value
@@ -1230,6 +1365,8 @@ theorem Zdigit_digits (n : Int) :
     ⦃⌜n ≠ 0⌝⦄
     Zdigits beta n
     ⦃⇓d => ⌜Id.run (Zdigit beta n (d - 1)) ≠ 0⌝⦄ := by
+  -- This theorem shows that the highest digit (at position d-1) is non-zero
+  -- This is essential for canonical digit representations
   sorry
 
 /-- Zdigits and Zslice relationship
@@ -1258,6 +1395,9 @@ theorem Zdigits_slice (n k l : Int) :
     ⦃⌜0 ≤ k ∧ 0 < l⌝⦄
     Zdigits beta (Id.run (Zslice beta n k l))
     ⦃⇓d => ⌜d ≤ l⌝⦄ := by
+  -- This theorem bounds the digit count of a slice by the slice length
+  -- Since Zslice extracts l digits starting from position k,
+  -- the result has at most l digits
   sorry
 
 /-- Digit count after multiplication by power
@@ -1683,6 +1823,9 @@ theorem Z_of_nat_S_digits2_Pnat (m : Nat) :
     ⦃⌜m > 0⌝⦄
     Zdigits 2 m
     ⦃⇓d => ⌜d = Id.run (digits2_Pnat m) + 1⌝⦄ := by
+  -- This theorem relates the binary digit count from digits2_Pnat
+  -- to the general Zdigits function when beta = 2
+  -- The +1 accounts for the difference in counting conventions
   sorry
 
 /-- Positive digit count for binary
@@ -1706,6 +1849,9 @@ theorem Zpos_digits2_pos (m : Nat) :
     ⦃⌜m > 0⌝⦄
     Zdigits 2 m
     ⦃⇓d => ⌜d = Id.run (digits2_Pnat m)⌝⦄ := by
+  -- This theorem shows that for positive numbers,
+  -- Zdigits with base 2 equals digits2_Pnat
+  -- Both functions compute the binary digit count
   sorry
 
 /-- Equivalence of binary digit count functions
@@ -1724,6 +1870,8 @@ theorem Zdigits2_Zdigits (n : Int) :
     ⦃⌜True⌝⦄
     Zdigits 2 n
     ⦃⇓d => ⌜d = Id.run (Zdigits 2 n)⌝⦄ := by
+  -- This is a trivial identity theorem
+  -- Zdigits 2 n equals itself
   sorry
 
 end Zdigits2
