@@ -1,0 +1,4 @@
+86e67f63ba3c7cbbce2aef500345c4c67fc2e857
+Lord-Van
+2025-08-28 22:53:49 +0800
+Partial proofs for tdiv_pow_succ_assoc and Zdigit_not_0_pos theorems
