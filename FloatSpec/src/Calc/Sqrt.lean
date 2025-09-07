@@ -45,7 +45,7 @@ def mag_sqrt_F2R_compute (m1 e1 : Int) : Id Int :=
 lemma mag_sqrt_F2R (m1 e1 : Int) (Hm1 : 0 < m1) :
     ⦃⌜0 < m1⌝⦄
     mag_sqrt_F2R_compute beta m1 e1
-    ⦃⇓result => result = mag beta (Real.sqrt ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run))⦄ := by
+    ⦃⇓result => ⌜result = mag beta (Real.sqrt ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run))⌝⦄ := by
   sorry
 
 end MagnitudeBounds
@@ -74,8 +74,8 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) :
     ⦃⌜0 < m1 ∧ 2 * e ≤ e1⌝⦄
     Fsqrt_core beta m1 e1 e
     ⦃⇓result => let (m, l) := result
-                inbetween_float beta m e
-                  (Real.sqrt ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run)) l⦄ := by
+                ⌜inbetween_float beta m e
+                  (Real.sqrt ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run)) l⌝⦄ := by
   sorry
 
 end CoreSquareRoot
@@ -103,8 +103,8 @@ theorem Fsqrt_correct (x : FlocqFloat beta) (Hx : 0 < (F2R x).run) :
     ⦃⌜0 < (F2R x).run⌝⦄
     Fsqrt beta fexp x
     ⦃⇓result => let (m, e, l) := result
-                e ≤ (cexp beta fexp (Real.sqrt ((F2R x).run))).run ∧
-                inbetween_float beta m e (Real.sqrt ((F2R x).run)) l⦄ := by
+                ⌜e ≤ (cexp beta fexp (Real.sqrt ((F2R x).run))).run ∧
+                inbetween_float beta m e (Real.sqrt ((F2R x).run)) l⌝⦄ := by
   sorry
 
 end MainSquareRoot

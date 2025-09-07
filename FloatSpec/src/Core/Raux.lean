@@ -48,7 +48,6 @@ theorem Rle_0_minus_spec (x y : ℝ) :
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
   intro h
   unfold Rle_0_minus
-  simp
   exact sub_nonneg_of_le h
 
 /-- Multiplication preserves strict inequalities
@@ -71,7 +70,6 @@ theorem Rmult_lt_compat_spec (r1 r2 r3 r4 : ℝ) :
     ⦃⇓result => ⌜result.1 < result.2⌝⦄ := by
   intro h
   unfold Rmult_lt_compat
-  simp
   have ⟨h1, h3, h12, h34⟩ := h
   by_cases hr3 : r3 = 0
   · subst hr3
@@ -150,7 +148,6 @@ theorem Rmult_min_distr_r_spec (x y z : ℝ) :
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro h
   unfold Rmult_min_distr_r
-  simp
   -- We need to prove: min (x * z) (y * z) = min x y * z
   rw [min_mul_of_nonneg _ _ h]
   rfl
@@ -173,7 +170,6 @@ theorem Rmult_min_distr_l_spec (x y z : ℝ) :
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro h
   unfold Rmult_min_distr_l
-  simp
   -- We need to prove: min (x * y) (x * z) = x * min y z
   rw [mul_min_of_nonneg _ _ h]
   rfl
@@ -197,7 +193,6 @@ theorem Rmin_opp_spec (x y : ℝ) :
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro _
   unfold Rmin_opp
-  simp
   -- We need to prove: min (-x) (-y) = -(max x y)
   exact min_neg_neg x y
 
@@ -220,7 +215,6 @@ theorem Rmax_opp_spec (x y : ℝ) :
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro _
   unfold Rmax_opp
-  simp
   -- We need to prove: max (-x) (-y) = -(min x y)
   exact max_neg_neg x y
 
@@ -341,7 +335,6 @@ theorem Rcompare_opp_spec (x y : ℝ) :
     ⦃⇓result => ⌜result = (Rcompare y x).run⌝⦄ := by
   intro _
   unfold Rcompare_opp
-  simp
   rfl
 
 /-- Comparison is invariant under translation
@@ -363,7 +356,6 @@ theorem Rcompare_plus_r_spec (x y z : ℝ) :
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
   intro _
   unfold Rcompare_plus_r
-  simp
   rfl
 
 /-- Left addition preserves comparison
@@ -383,7 +375,6 @@ theorem Rcompare_plus_l_spec (x y z : ℝ) :
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
   intro _
   unfold Rcompare_plus_l
-  simp
   rfl
 
 /-- Comparison is preserved by positive scaling
@@ -403,7 +394,6 @@ theorem Rcompare_mult_r_spec (x y z : ℝ) :
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
   intro _
   unfold Rcompare_mult_r
-  simp
   rfl
 
 /-- Left multiplication by positive preserves comparison
@@ -423,7 +413,6 @@ theorem Rcompare_mult_l_spec (x y z : ℝ) :
     ⦃⇓result => ⌜result = (Rcompare x y).run⌝⦄ := by
   intro _
   unfold Rcompare_mult_l
-  simp
   rfl
 
 end Rcompare
@@ -568,7 +557,6 @@ theorem eqb_sym_spec (a b : Bool) :
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro _
   unfold eqb_sym
-  simp
   -- Boolean equality is symmetric
   exact Bool.beq_comm
 
@@ -599,7 +587,6 @@ theorem cond_Ropp_spec (b : Bool) (m : ℝ) :
     ⦃⇓result => ⌜result = if b then -m else m⌝⦄ := by
   intro _
   unfold cond_Ropp
-  simp
   rfl
 
 /-- Conditional opposite is involutive
@@ -648,7 +635,6 @@ theorem cond_Ropp_inj_spec (b : Bool) (m1 m2 : ℝ) :
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro h
   unfold cond_Ropp_inj
-  simp
   -- h states that cond_Ropp b m1 = cond_Ropp b m2
   -- We need to prove m1 = m2
   simp [cond_Ropp, Id.run] at h

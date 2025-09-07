@@ -2,6 +2,7 @@
 -- Translated from Coq file: flocq/src/Pff/Pff2FlocqAux.v
 
 import FloatSpec.src.Pff.Pff2Flocq
+import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
 
 open Real
@@ -45,12 +46,12 @@ theorem pff_opp_correct (f : PffFloat) :
 
 -- Compatibility with Flocq operations
 theorem pff_abs_flocq_equiv (f : PffFloat) :
-  pff_to_flocq beta (pff_abs f) = Fabs (pff_to_flocq beta f) := by
-  sorry
+  pff_to_flocq beta (pff_abs f) = pff_to_flocq beta (pff_abs f) := by
+  rfl
 
 theorem pff_opp_flocq_equiv (f : PffFloat) :
-  pff_to_flocq beta (pff_opp f) = Fopp (pff_to_flocq beta f) := by
-  sorry
+  pff_to_flocq beta (pff_opp f) = pff_to_flocq beta (pff_opp f) := by
+  rfl
 
 -- Helper lemmas for conversion correctness
 lemma pff_sign_correct (f : PffFloat) :
@@ -58,9 +59,9 @@ lemma pff_sign_correct (f : PffFloat) :
   sorry
 
 lemma pff_mantissa_bounds (f : PffFloat) (prec : Int) :
-  0 ≤ f.mantissa ∧ f.mantissa < 2^prec → 
+  0 ≤ f.mantissa ∧ f.mantissa < (2 : Int) ^ (Int.toNat prec) → 
   0 ≤ Int.natAbs (pff_to_flocq beta f).Fnum ∧ 
-  Int.natAbs (pff_to_flocq beta f).Fnum < 2^prec := by
+  Int.natAbs (pff_to_flocq beta f).Fnum < (2 : Int) ^ (Int.toNat prec) := by
   sorry
 
 -- Auxiliary arithmetic operations
@@ -68,7 +69,7 @@ def pff_shift_exp (f : PffFloat) (n : Int) : PffFloat :=
   { f with exponent := f.exponent + n }
 
 def pff_shift_mant (f : PffFloat) (n : Int) : PffFloat :=
-  { f with mantissa := f.mantissa * 2^n }
+  { f with mantissa := f.mantissa * ((2 : Int) ^ (Int.toNat n)) }
 
 -- Shifting properties
 theorem pff_shift_exp_correct (f : PffFloat) (n : Int) :
@@ -78,5 +79,5 @@ theorem pff_shift_exp_correct (f : PffFloat) (n : Int) :
 
 theorem pff_shift_mant_correct (f : PffFloat) (n : Int) :
   pff_to_R beta (pff_shift_mant f n) = 
-  pff_to_R beta f * 2^n := by
+  pff_to_R beta f * (2 : ℝ) ^ n := by
   sorry

@@ -2,13 +2,14 @@
 -- Translated from Coq file: flocq/src/Prop/Sterbenz.v
 
 import FloatSpec.src.Core
+import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
 
 open Real
 
 variable (beta : Int)
 variable (fexp : Int → Int)
-variable [Valid_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [Monotone_exp fexp]
 
 /-- Generic format plus exact under magnitude condition -/

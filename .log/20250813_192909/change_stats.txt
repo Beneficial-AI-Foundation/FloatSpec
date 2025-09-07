@@ -1,0 +1,20 @@
+Commit: fa5c80d7612dbe26f39ce6edfa32e57b92cf42c9
+Author: Lord-Van <2200017789@stu.pku.edu.cn>
+Date: 2025-08-13 19:29:04 -0400
+Subject: Refactor Generic_fmt: extract unverified theorems to Round_generic
+
+Files changed:
+ FloatSpec/src/Calc/Div.lean           |   4 +-
+ FloatSpec/src/Calc/Plus.lean          |  30 +--
+ FloatSpec/src/Calc/Sqrt.lean          |  20 +-
+ FloatSpec/src/Core.lean               |   3 +-
+ FloatSpec/src/Core/FIX.lean           |   8 +-
+ FloatSpec/src/Core/FLT.lean           |  42 +++--
+ FloatSpec/src/Core/FLX.lean           |  41 ++--
+ FloatSpec/src/Core/FTZ.lean           |  40 ++--
+ FloatSpec/src/Core/Generic_fmt.lean   | 340 +++++++---------------------------
+ FloatSpec/src/Core/Round_NE.lean      |  58 +++---
+ FloatSpec/src/Core/Round_generic.lean | 318 +++++++++++++++++++++++++++++++
+ FloatSpec/src/Core/Ulp.lean           |  54 +++---
+ FloatSpec/src/IEEE754/Binary.lean     |  16 +-
+ 13 files changed, 558 insertions(+), 416 deletions(-)

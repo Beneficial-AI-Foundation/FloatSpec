@@ -1,0 +1,10 @@
+90731410b3722ff1f6719b415aa3e51c909e586c Lord-Van <2200017789@stu.pku.edu.cn> 2025-08-13 18:37:17 Add Coq proof documentation and fix namespace in Core modules
+
+Files changed: 2
+Insertions: 1646
+Deletions: 119
+Net change: +1527
+
+Modified files:
+- FloatSpec/src/Core/Digits.lean: Added Coq documentation (+1390, -50 lines)
+- FloatSpec/src/Core/Generic_fmt.lean: Fixed namespace and reorganized (+256, -69 lines)

@@ -2,6 +2,7 @@
 -- Translated from Coq file: flocq/src/IEEE754/Binary.v
 
 import FloatSpec.src.Core
+import FloatSpec.src.Compat
 import FloatSpec.src.Calc
 import Mathlib.Data.Real.Basic
 
@@ -30,17 +31,17 @@ def FF2SF (x : FullFloat) : StandardFloat :=
   | FullFloat.F754_finite s m e => StandardFloat.S754_finite s m e
 
 -- Conversion from FullFloat to real number
-def FF2R (beta : Int) (x : FullFloat) : ℝ :=
+noncomputable def FF2R (beta : Int) (x : FullFloat) : ℝ :=
   match x with
   | FullFloat.F754_finite s m e =>
-    F2R (FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FlocqFloat beta)
+    F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat beta)
   | _ => 0
 
 -- Conversion from StandardFloat to real number
-def SF2R (beta : Int) (x : StandardFloat) : ℝ :=
+noncomputable def SF2R (beta : Int) (x : StandardFloat) : ℝ :=
   match x with
   | StandardFloat.S754_finite s m e =>
-    F2R (FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FlocqFloat beta)
+    F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat beta)
   | _ => 0
 
 -- SF2R and FF2SF consistency
@@ -125,7 +126,7 @@ variable [Prec_gt_0 prec]
 variable [Prec_lt_emax prec emax]
 
 -- IEEE 754 binary format
-structure Binary754 where
+structure Binary754 (prec emax : Int) where
   val : FullFloat
   valid : is_finite_FF val = true →
     -- Valid range and precision constraints
@@ -161,14 +162,14 @@ def rnd_of_mode (mode : RoundingMode) : ℝ → Int := by
 
 -- Binary format properties
 theorem binary_add_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
-  FF2R 2 (binary_add x y).val =
-  round 2 (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+  FF2R 2 ((binary_add (prec:=prec) (emax:=emax) x y).val) =
+  FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
     (FF2R 2 x.val + FF2R 2 y.val) := by
   sorry
 
 theorem binary_mul_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
-  FF2R 2 (binary_mul x y).val =
-  round 2 (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+  FF2R 2 ((binary_mul (prec:=prec) (emax:=emax) x y).val) =
+  FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
     (FF2R 2 x.val * FF2R 2 y.val) := by
   sorry
 

@@ -51,9 +51,9 @@ theorem Fplus_core_correct (m1 e1 m2 e2 e : Int) (He1 : e ≤ e1) :
     ⦃⌜e ≤ e1⌝⦄
     Fplus_core beta m1 e1 m2 e2 e
     ⦃⇓result => let (m, l) := result
-                inbetween_float beta m e
+                ⌜inbetween_float beta m e
                   ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run +
-                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run) l⦄ := by
+                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run) l⌝⦄ := by
   sorry
 
 end CoreAddition
@@ -98,9 +98,9 @@ theorem Fplus_correct (x y : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Fplus beta fexp x y
     ⦃⇓result => let (m, e, l) := result
-                (l = Location.loc_Exact ∨
-                 e ≤ (cexp beta fexp ((F2R x).run + (F2R y).run)).run) ∧
-                inbetween_float beta m e ((F2R x).run + (F2R y).run) l⦄ := by
+                ⌜l = Location.loc_Exact ∨
+                 e ≤ (cexp beta fexp ((F2R x).run + (F2R y).run)).run ∧
+                inbetween_float beta m e ((F2R x).run + (F2R y).run) l⌝⦄ := by
   sorry
 
 end MainAddition

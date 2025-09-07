@@ -272,7 +272,6 @@ theorem Zmod_mod_mult_spec (n a b : Int) :
     ⦃⇓result => ⌜result = n % b⌝⦄ := by
   intro h
   unfold Zmod_mod_mult
-  simp
   rfl
 
 /-- Division and modulo relationship
@@ -295,7 +294,6 @@ theorem ZOmod_eq_spec (a b : Int) :
     ⦃⇓result => ⌜result = a % b⌝⦄ := by
   intro h
   unfold ZOmod_eq
-  simp
   rfl
 
 /-- Division of nested modulo
@@ -373,7 +371,6 @@ theorem ZOmod_mod_mult_spec (n a b : Int) :
     ⦃⇓result => ⌜result = n % b⌝⦄ := by
   intro h
   unfold ZOmod_mod_mult
-  simp
   rfl
 
 /-- Quotient addition with sign consideration
@@ -874,7 +871,6 @@ theorem Zcompare_spec (x y : Int) :
   split
   · -- Case: x < y
     rename_i h_lt
-    simp
     constructor
     · -- Prove: Ordering.lt = Ordering.lt ↔ x < y
       exact ⟨fun _ => h_lt, fun _ => rfl⟩
@@ -902,7 +898,6 @@ theorem Zcompare_spec (x y : Int) :
     split
     · -- Case: x = y
       rename_i h_eq
-      simp
       constructor
       · -- Prove: Ordering.eq = Ordering.lt ↔ x < y
         constructor
@@ -927,7 +922,6 @@ theorem Zcompare_spec (x y : Int) :
 
     · -- Case: ¬(x < y) ∧ ¬(x = y), so y < x
       rename_i h_not_eq
-      simp
       -- In this case, y < x
       have h_gt : y < x := by
         -- Since ¬(x < y) and ¬(x = y), we must have y < x

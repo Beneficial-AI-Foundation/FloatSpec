@@ -1,0 +1,1940 @@
+diff --git a/FloatSpec/src/Calc/Div.lean b/FloatSpec/src/Calc/Div.lean
+index 5c294be..8925640 100644
+--- a/FloatSpec/src/Calc/Div.lean
++++ b/FloatSpec/src/Calc/Div.lean
+@@ -10,6 +10,7 @@ import FloatSpec.src.Core.Zaux
+ import FloatSpec.src.Core.Raux
+ import FloatSpec.src.Core.Defs
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import FloatSpec.src.Core.Float_prop
+ import FloatSpec.src.Core.Digits
+ import FloatSpec.src.Calc.Bracket
+@@ -17,7 +18,8 @@ import Mathlib.Data.Real.Basic
+ import Std.Do.Triple
+ import Std.Tactic.Do
+ 
+-open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.GenericFmt
++open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ open Std.Do
+ 
+ namespace FloatSpec.Calc.Div
+diff --git a/FloatSpec/src/Calc/Plus.lean b/FloatSpec/src/Calc/Plus.lean
+index c63b735..d857d6c 100644
+--- a/FloatSpec/src/Calc/Plus.lean
++++ b/FloatSpec/src/Calc/Plus.lean
+@@ -12,11 +12,13 @@ import FloatSpec.src.Calc.Operations
+ import FloatSpec.src.Calc.Round
+ import FloatSpec.src.Core.Digits
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import Mathlib.Data.Real.Basic
+ import Std.Do.Triple
+ import Std.Tactic.Do
+ 
+-open Real FloatSpec.Calc.Bracket FloatSpec.Core.Digits FloatSpec.Core.Defs FloatSpec.Core.GenericFmt
++open Real FloatSpec.Calc.Bracket FloatSpec.Core.Digits FloatSpec.Core.Defs FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ open Std.Do
+ 
+ namespace FloatSpec.Calc.Plus
+@@ -27,30 +29,30 @@ variable (fexp : Int → Int)
+ section CoreAddition
+ 
+ /-- Core addition function with precision control
+-    
++
+     Performs addition with specified target exponent and location tracking
+ -/
+ def Fplus_core (m1 e1 m2 e2 e : Int) : Id (Int × Location) :=
+   pure (
+     let k := e - e2
+-    let (m2', _, l) := 
+-      if 0 < k then 
++    let (m2', _, l) :=
++      if 0 < k then
+         Round.truncate_aux (m2, e2, Location.loc_Exact) k
+-      else 
++      else
+         (m2 * beta ^ Int.natAbs (-k), e, Location.loc_Exact)
+     let m1' := m1 * beta ^ Int.natAbs (e1 - e)
+     (m1' + m2', l))
+ 
+ /-- Specification: Core addition correctness
+-    
++
+     The core addition accurately represents the sum with location information
+ -/
+ theorem Fplus_core_correct (m1 e1 m2 e2 e : Int) (He1 : e ≤ e1) :
+     ⦃⌜e ≤ e1⌝⦄
+     Fplus_core beta m1 e1 m2 e2 e
+     ⦃⇓result => let (m, l) := result
+-                inbetween_float beta m e 
+-                  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run + 
++                inbetween_float beta m e
++                  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run +
+                    (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run) l⦄ := by
+   sorry
+ 
+@@ -59,7 +61,7 @@ end CoreAddition
+ section MainAddition
+ 
+ /-- Main addition function
+-    
++
+     Adds two floats with intelligent exponent selection for precision
+ -/
+ def Fplus (f1 f2 : FlocqFloat beta) : Id (Int × Int × Location) :=
+@@ -78,29 +80,29 @@ def Fplus (f1 f2 : FlocqFloat beta) : Id (Int × Int × Location) :=
+     let p2 := d2 + e2
+     if 2 ≤ Int.natAbs (p1 - p2) then
+       let e := min (max e1 e2) (fexp (max p1 p2 - 1))
+-      Fplus_core beta (if e1 < e then m2 else m1) 
++      Fplus_core beta (if e1 < e then m2 else m1)
+                       (if e1 < e then e2 else e1)
+                       (if e1 < e then m1 else m2)
+                       (if e1 < e then e1 else e2) e >>= fun (m, l) =>
+       pure (m, e, l)
+     else
+-      let result_m := m1 * beta ^ Int.natAbs (e1 - min e1 e2) + 
++      let result_m := m1 * beta ^ Int.natAbs (e1 - min e1 e2) +
+                      m2 * beta ^ Int.natAbs (e2 - min e1 e2)
+       pure (result_m, min e1 e2, Location.loc_Exact)
+ 
+ /-- Specification: Addition correctness
+-    
++
+     The addition result accurately represents the sum with proper location
+ -/
+ theorem Fplus_correct (x y : FlocqFloat beta) :
+     ⦃⌜True⌝⦄
+     Fplus beta fexp x y
+     ⦃⇓result => let (m, e, l) := result
+-                (l = Location.loc_Exact ∨ 
++                (l = Location.loc_Exact ∨
+                  e ≤ (cexp beta fexp ((F2R x).run + (F2R y).run)).run) ∧
+                 inbetween_float beta m e ((F2R x).run + (F2R y).run) l⦄ := by
+   sorry
+ 
+ end MainAddition
+ 
+-end FloatSpec.Calc.Plus
+\ No newline at end of file
++end FloatSpec.Calc.Plus
+diff --git a/FloatSpec/src/Calc/Sqrt.lean b/FloatSpec/src/Calc/Sqrt.lean
+index 42fb944..8b42156 100644
+--- a/FloatSpec/src/Calc/Sqrt.lean
++++ b/FloatSpec/src/Calc/Sqrt.lean
+@@ -11,6 +11,7 @@ import FloatSpec.src.Core.Raux
+ import FloatSpec.src.Core.Defs
+ import FloatSpec.src.Core.Digits
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import FloatSpec.src.Core.Float_prop
+ import FloatSpec.src.Calc.Bracket
+ import Mathlib.Data.Real.Basic
+@@ -18,7 +19,8 @@ import Mathlib.Data.Real.Sqrt
+ import Std.Do.Triple
+ import Std.Tactic.Do
+ 
+-open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.GenericFmt
++open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ open Std.Do
+ 
+ namespace FloatSpec.Calc.Sqrt
+@@ -29,7 +31,7 @@ variable (fexp : Int → Int)
+ section MagnitudeBounds
+ 
+ /-- Compute magnitude of square root
+-    
++
+     Calculates the magnitude of the square root of a float
+ -/
+ def mag_sqrt_F2R_compute (m1 e1 : Int) : Id Int :=
+@@ -37,7 +39,7 @@ def mag_sqrt_F2R_compute (m1 e1 : Int) : Id Int :=
+   pure ((d + e1 + 1) / 2)
+ 
+ /-- Specification: Square root magnitude
+-    
++
+     The magnitude of a square root is approximately half the original magnitude
+ -/
+ lemma mag_sqrt_F2R (m1 e1 : Int) (Hm1 : 0 < m1) :
+@@ -51,7 +53,7 @@ end MagnitudeBounds
+ section CoreSquareRoot
+ 
+ /-- Core square root function
+-    
++
+     Computes integer square root with remainder for location determination
+ -/
+ def Fsqrt_core (m1 e1 e : Int) : Id (Int × Location) :=
+@@ -65,14 +67,14 @@ def Fsqrt_core (m1 e1 e : Int) : Id (Int × Location) :=
+     (q, l))
+ 
+ /-- Specification: Core square root correctness
+-    
++
+     The computed square root with location accurately represents the value
+ -/
+ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) :
+     ⦃⌜0 < m1 ∧ 2 * e ≤ e1⌝⦄
+     Fsqrt_core beta m1 e1 e
+     ⦃⇓result => let (m, l) := result
+-                inbetween_float beta m e 
++                inbetween_float beta m e
+                   (Real.sqrt ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run)) l⦄ := by
+   sorry
+ 
+@@ -81,7 +83,7 @@ end CoreSquareRoot
+ section MainSquareRoot
+ 
+ /-- Main square root function
+-    
++
+     Computes the square root with automatic exponent selection
+ -/
+ def Fsqrt (x : FlocqFloat beta) : Id (Int × Int × Location) :=
+@@ -94,7 +96,7 @@ def Fsqrt (x : FlocqFloat beta) : Id (Int × Int × Location) :=
+   pure (m, e, l)
+ 
+ /-- Specification: Square root correctness
+-    
++
+     The square root result accurately represents the value with proper location
+ -/
+ theorem Fsqrt_correct (x : FlocqFloat beta) (Hx : 0 < (F2R x).run) :
+@@ -107,4 +109,4 @@ theorem Fsqrt_correct (x : FlocqFloat beta) (Hx : 0 < (F2R x).run) :
+ 
+ end MainSquareRoot
+ 
+-end FloatSpec.Calc.Sqrt
+\ No newline at end of file
++end FloatSpec.Calc.Sqrt
+diff --git a/FloatSpec/src/Core.lean b/FloatSpec/src/Core.lean
+index a32b7fe..5fe2c16 100644
+--- a/FloatSpec/src/Core.lean
++++ b/FloatSpec/src/Core.lean
+@@ -8,8 +8,9 @@ import FloatSpec.src.Core.Digits
+ import FloatSpec.src.Core.Float_prop
+ import FloatSpec.src.Core.Round_pred
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import FloatSpec.src.Core.Round_NE
+ import FloatSpec.src.Core.FIX
+ import FloatSpec.src.Core.FLX
+ import FloatSpec.src.Core.FLT
+-import FloatSpec.src.Core.Ulp
+\ No newline at end of file
++import FloatSpec.src.Core.Ulp
+diff --git a/FloatSpec/src/Core/FIX.lean b/FloatSpec/src/Core/FIX.lean
+index 6eed9a2..f6cc13d 100644
+--- a/FloatSpec/src/Core/FIX.lean
++++ b/FloatSpec/src/Core/FIX.lean
+@@ -18,13 +18,15 @@ COPYING file for more details.
+ 
+ import FloatSpec.src.Core.Defs
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import Mathlib.Data.Real.Basic
+ import Std.Do.Triple
+ import Std.Tactic.Do
+ 
+ open Real
+ open Std.Do
+-open FloatSpec.Core.GenericFmt
++open FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ 
+ namespace FloatSpec.Core.FIX
+ 
+@@ -67,7 +69,7 @@ theorem FIX_exp_spec (e : Int) :
+     This means x = m × β^emin for some integer mantissa m.
+ -/
+ def FIX_format (beta : Int) (x : ℝ) : Id Prop :=
+-  FloatSpec.Core.GenericFmt.generic_format beta (FIX_exp emin) x
++  FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
+ 
+ /-- Specification: FIX format using generic format
+ 
+@@ -78,7 +80,7 @@ def FIX_format (beta : Int) (x : ℝ) : Id Prop :=
+ theorem FIX_format_spec (beta : Int) (x : ℝ) :
+     ⦃⌜True⌝⦄
+     FIX_format emin beta x
+-    ⦃⇓result => ⌜result = (FloatSpec.Core.GenericFmt.generic_format beta (FIX_exp emin) x).run⌝⦄ := by
++    ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄ := by
+   sorry
+ 
+ /-- Specification: FIX exponent function correctness
+diff --git a/FloatSpec/src/Core/FLT.lean b/FloatSpec/src/Core/FLT.lean
+index 8609dfa..95ada83 100644
+--- a/FloatSpec/src/Core/FLT.lean
++++ b/FloatSpec/src/Core/FLT.lean
+@@ -16,8 +16,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ COPYING file for more details.
+ -/
+ 
+-import FloatSpec.src.Core.Defs  
++import FloatSpec.src.Core.Defs
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import FloatSpec.src.Core.FLX
+ import Mathlib.Data.Real.Basic
+ import Std.Do.Triple
+@@ -25,23 +26,24 @@ import Std.Tactic.Do
+ 
+ open Real
+ open Std.Do
+-open FloatSpec.Core.GenericFmt
++open FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ 
+ namespace FloatSpec.Core.FLT
+ 
+ variable (prec emin : Int)
+ 
+ /-- Floating-point exponent function
+-    
++
+     The FLT exponent function combines fixed-precision behavior
+     with a minimum exponent bound. It returns max(e - prec, emin),
+     providing precision when possible but limiting underflow.
+ -/
+-def FLT_exp (e : Int) : Int := 
++def FLT_exp (e : Int) : Int :=
+   max (e - prec) emin
+ 
+ /-- Check FLT exponent function correctness
+-    
++
+     Verify that the FLT exponent function correctly computes
+     the maximum of (e - prec) and emin. This validates the
+     IEEE 754-style exponent calculation.
+@@ -50,7 +52,7 @@ def FLT_exp_correct_check (e : Int) : Id Bool :=
+   pure (FLT_exp prec emin e = max (e - prec) emin)
+ 
+ /-- Specification: FLT exponent calculation
+-    
++
+     The FLT exponent function implements IEEE 754-style floating-point
+     exponent calculation: it maintains precision by using e - prec
+     when possible, but enforces a minimum exponent emin to prevent
+@@ -63,7 +65,7 @@ theorem FLT_exp_spec (e : Int) :
+   sorry
+ 
+ /-- Floating-point format predicate
+-    
++
+     A real number x is in FLT format if it can be represented
+     using the generic format with the FLT exponent function.
+     This gives IEEE 754-style floating-point representation
+@@ -73,7 +75,7 @@ def FLT_format (beta : Int) (x : ℝ) : Id Prop :=
+   pure (generic_format beta (FLT_exp prec emin) x)
+ 
+ /-- Specification: FLT format using generic format
+-    
++
+     The FLT format combines the benefits of fixed-precision
+     (for normal numbers) with minimum exponent protection
+     (for subnormal numbers), matching IEEE 754 behavior.
+@@ -85,7 +87,7 @@ theorem FLT_format_spec (beta : Int) (x : ℝ) :
+   sorry
+ 
+ /-- Specification: FLT exponent function correctness
+-    
++
+     The FLT exponent function correctly implements the IEEE 754
+     exponent selection logic, choosing between precision-based
+     and minimum-bounded exponents as appropriate.
+@@ -97,7 +99,7 @@ theorem FLT_exp_correct_spec (e : Int) :
+   sorry
+ 
+ /-- Check if zero is in FLT format
+-    
++
+     Verify that zero is representable in the floating-point format.
+     Zero should always be representable as 0 × β^e for any
+     allowed exponent e, making it universal across FLT formats.
+@@ -106,7 +108,7 @@ def FLT_format_0_check (beta : Int) : Id Bool :=
+   pure true  -- Zero is always in format
+ 
+ /-- Specification: Zero is in FLT format
+-    
++
+     Zero is always representable in FLT format since it can
+     be expressed as 0 × β^e for any exponent e, regardless
+     of precision or minimum exponent constraints.
+@@ -118,16 +120,16 @@ theorem FLT_format_0_spec (beta : Int) :
+   sorry
+ 
+ /-- Check closure under negation
+-    
++
+     Verify that if x is in FLT format, then -x is also in FLT format.
+     This tests the sign symmetry property of IEEE 754-style
+     floating-point representation.
+ -/
+-def FLT_format_opp_check (beta : Int) (x : ℝ) : Id Bool := 
++def FLT_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+   pure true  -- Always true for FLT formats
+ 
+ /-- Specification: FLT format closed under negation
+-    
++
+     FLT formats are closed under negation. If x = m × β^e
+     is representable, then -x = (-m) × β^e is also representable
+     using the same exponent and negated mantissa.
+@@ -139,16 +141,16 @@ theorem FLT_format_opp_spec (beta : Int) (x : ℝ) :
+   sorry
+ 
+ /-- Check closure under absolute value
+-    
++
+     Verify that if x is in FLT format, then |x| is also in FLT format.
+     This tests the magnitude preservation property, ensuring that
+     absolute values remain representable.
+ -/
+-def FLT_format_abs_check (beta : Int) (x : ℝ) : Id Bool := 
++def FLT_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
+   pure true  -- Always true for FLT formats
+ 
+ /-- Specification: FLT format closed under absolute value
+-    
++
+     FLT formats are closed under absolute value operations.
+     The magnitude of a representable number is always
+     representable using the same exponent structure.
+@@ -160,7 +162,7 @@ theorem FLT_format_abs_spec (beta : Int) (x : ℝ) :
+   sorry
+ 
+ /-- Check relationship between FLT and FLX formats
+-    
++
+     When the minimum exponent constraint is not active
+     (i.e., emin ≤ e - prec), FLT behaves exactly like FLX.
+     This verifies the normal number behavior of IEEE 754.
+@@ -169,7 +171,7 @@ def FLT_exp_FLX_check (e : Int) : Id Bool :=
+   pure (emin ≤ e - prec → FLT_exp prec emin e = FLX.FLX_exp prec e)
+ 
+ /-- Specification: FLT reduces to FLX for normal numbers
+-    
++
+     When the precision-based exponent e - prec exceeds emin,
+     FLT format behaves identically to FLX format. This captures
+     the normal number range of IEEE 754 floating-point.
+@@ -180,4 +182,4 @@ theorem FLT_exp_FLX_spec (e : Int) :
+     ⦃⇓result => ⌜result = true⌝⦄ := by
+   sorry
+ 
+-end FloatSpec.Core.FLT
+\ No newline at end of file
++end FloatSpec.Core.FLT
+diff --git a/FloatSpec/src/Core/FLX.lean b/FloatSpec/src/Core/FLX.lean
+index 53e32d2..e1a93ae 100644
+--- a/FloatSpec/src/Core/FLX.lean
++++ b/FloatSpec/src/Core/FLX.lean
+@@ -21,26 +21,29 @@ import FloatSpec.src.Core.Generic_fmt
+ import Mathlib.Data.Real.Basic
+ import Std.Do.Triple
+ import Std.Tactic.Do
++import FloatSpec.src.Core.Round_generic
++
+ 
+ open Real
+ open Std.Do
+-open FloatSpec.Core.GenericFmt
++open FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ 
+ namespace FloatSpec.Core.FLX
+ 
+ variable (prec : Int)
+ 
+ /-- Fixed-precision exponent function
+-    
++
+     In fixed-precision format, the exponent is adjusted to maintain
+     a constant precision. The exponent function returns e - prec,
+     which ensures that mantissas have exactly 'prec' significant digits.
+ -/
+-def FLX_exp (e : Int) : Int := 
++def FLX_exp (e : Int) : Int :=
+   e - prec
+ 
+ /-- Check FLX exponent function correctness
+-    
++
+     Verify that the FLX exponent function computes e - prec
+     correctly for any input e. This validates the precision
+     adjustment mechanism.
+@@ -49,7 +52,7 @@ def FLX_exp_correct_check (e : Int) : Id Bool :=
+   pure (FLX_exp prec e = e - prec)
+ 
+ /-- Specification: Fixed-precision exponent calculation
+-    
++
+     The FLX exponent function subtracts the precision from the
+     input exponent. This adjustment ensures that all representable
+     numbers have exactly 'prec' significant digits in their mantissa.
+@@ -61,16 +64,16 @@ theorem FLX_exp_spec (e : Int) :
+   sorry
+ 
+ /-- Fixed-precision format predicate
+-    
++
+     A real number x is in FLX format if it can be represented
+     using the generic format with the fixed-precision exponent
+     function. This gives x = m × β^(e-prec) where m has bounded magnitude.
+ -/
+ def FLX_format (beta : Int) (x : ℝ) : Id Prop :=
+-  FloatSpec.Core.GenericFmt.generic_format beta (FLX_exp prec) x
++  FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+ 
+ /-- Specification: FLX format using generic format
+-    
++
+     The FLX format is defined through the generic format mechanism
+     with the fixed-precision exponent function. This characterizes
+     floating-point numbers with constant precision.
+@@ -78,11 +81,11 @@ def FLX_format (beta : Int) (x : ℝ) : Id Prop :=
+ theorem FLX_format_spec (beta : Int) (x : ℝ) :
+     ⦃⌜True⌝⦄
+     FLX_format prec beta x
+-    ⦃⇓result => ⌜result = (FloatSpec.Core.GenericFmt.generic_format beta (FLX_exp prec) x).run⌝⦄ := by
++    ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x).run⌝⦄ := by
+   sorry
+ 
+ /-- Specification: FLX exponent function correctness
+-    
++
+     The FLX exponent function correctly implements the precision
+     adjustment by returning e - prec. This ensures the mantissa
+     precision remains constant across different magnitudes.
+@@ -94,7 +97,7 @@ theorem FLX_exp_correct_spec (e : Int) :
+   sorry
+ 
+ /-- Check if zero is in FLX format
+-    
++
+     Verify that zero is representable in the fixed-precision format.
+     Zero should always be representable regardless of the precision
+     since it can be expressed as 0 × β^e for any exponent e.
+@@ -103,7 +106,7 @@ def FLX_format_0_check (beta : Int) : Id Bool :=
+   pure true  -- Zero is always in format
+ 
+ /-- Specification: Zero is in FLX format
+-    
++
+     Zero is always representable in fixed-precision format.
+     This follows from the fact that 0 = 0 × β^(e-prec) for
+     any exponent e, making zero universal across all formats.
+@@ -115,16 +118,16 @@ theorem FLX_format_0_spec (beta : Int) :
+   sorry
+ 
+ /-- Check closure under negation
+-    
++
+     Verify that if x is in FLX format, then -x is also in FLX format.
+     This tests the closure property under additive inverse for
+     fixed-precision floating-point numbers.
+ -/
+-def FLX_format_opp_check (beta : Int) (x : ℝ) : Id Bool := 
++def FLX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+   pure true  -- Always true for fixed-precision formats
+ 
+ /-- Specification: FLX format closed under negation
+-    
++
+     Fixed-precision formats are closed under negation. If x is
+     representable as m × β^(e-prec), then -x is representable
+     as (-m) × β^(e-prec), preserving precision and format properties.
+@@ -136,16 +139,16 @@ theorem FLX_format_opp_spec (beta : Int) (x : ℝ) :
+   sorry
+ 
+ /-- Check closure under absolute value
+-    
++
+     Verify that if x is in FLX format, then |x| is also in FLX format.
+     This tests closure under the absolute value operation, which
+     should preserve representability in fixed-precision formats.
+ -/
+-def FLX_format_abs_check (beta : Int) (x : ℝ) : Id Bool := 
++def FLX_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
+   pure true  -- Always true for fixed-precision formats
+ 
+ /-- Specification: FLX format closed under absolute value
+-    
++
+     Fixed-precision formats are closed under absolute value.
+     If x is representable, then |x| is also representable since
+     |x| can use the same mantissa magnitude with appropriate sign.
+@@ -156,4 +159,4 @@ theorem FLX_format_abs_spec (beta : Int) (x : ℝ) :
+     ⦃⇓result => ⌜result = true⌝⦄ := by
+   sorry
+ 
+-end FloatSpec.Core.FLX
+\ No newline at end of file
++end FloatSpec.Core.FLX
+diff --git a/FloatSpec/src/Core/FTZ.lean b/FloatSpec/src/Core/FTZ.lean
+index e499fb8..9701201 100644
+--- a/FloatSpec/src/Core/FTZ.lean
++++ b/FloatSpec/src/Core/FTZ.lean
+@@ -21,26 +21,28 @@ import FloatSpec.src.Core.Generic_fmt
+ import Mathlib.Data.Real.Basic
+ import Std.Do.Triple
+ import Std.Tactic.Do
++import FloatSpec.src.Core.Round_generic
++open FloatSpec.Core.Round_generic
+ 
+ open Real
+ open Std.Do
+-open FloatSpec.Core.GenericFmt
++open FloatSpec.Core.Generic_fmt
+ 
+ namespace FloatSpec.Core.FTZ
+ 
+ variable (prec emin : Int)
+ 
+ /-- Flush-to-zero exponent function
+-    
++
+     The FTZ exponent function implements a flush-to-zero policy:
+     it uses precision-based exponents (e - prec) when they exceed emin,
+     but flushes to emin otherwise. This avoids subnormal representations.
+ -/
+-def FTZ_exp (e : Int) : Int := 
++def FTZ_exp (e : Int) : Int :=
+   if emin ≤ e - prec then e - prec else emin
+ 
+ /-- Check FTZ exponent function correctness
+-    
++
+     Verify that the FTZ exponent function correctly implements
+     the conditional logic for flush-to-zero behavior.
+ -/
+@@ -48,7 +50,7 @@ def FTZ_exp_correct_check (e : Int) : Id Bool :=
+   pure (FTZ_exp prec emin e = if emin ≤ e - prec then e - prec else emin)
+ 
+ /-- Specification: FTZ exponent calculation
+-    
++
+     The FTZ exponent function provides full precision for normal
+     numbers but flushes small numbers to the minimum exponent,
+     eliminating subnormal numbers from the representation.
+@@ -60,16 +62,16 @@ theorem FTZ_exp_spec (e : Int) :
+   sorry
+ 
+ /-- Flush-to-zero format predicate
+-    
++
+     A real number x is in FTZ format if it can be represented
+     using the generic format with the FTZ exponent function.
+     This provides a floating-point format without subnormal numbers.
+ -/
+ def FTZ_format (beta : Int) (x : ℝ) : Id Prop :=
+-  FloatSpec.Core.GenericFmt.generic_format beta (FTZ_exp prec emin) x
++  FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x
+ 
+ /-- Specification: FTZ format using generic format
+-    
++
+     The FTZ format eliminates subnormal numbers by using the
+     flush-to-zero exponent function, providing simpler arithmetic
+     at the cost of reduced precision near zero.
+@@ -77,11 +79,11 @@ def FTZ_format (beta : Int) (x : ℝ) : Id Prop :=
+ theorem FTZ_format_spec (beta : Int) (x : ℝ) :
+     ⦃⌜True⌝⦄
+     FTZ_format prec emin beta x
+-    ⦃⇓result => ⌜result = (FloatSpec.Core.GenericFmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄ := by
++    ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄ := by
+   sorry
+ 
+ /-- Specification: FTZ exponent function correctness
+-    
++
+     The FTZ exponent function correctly implements flush-to-zero
+     semantics, choosing between precision-based and minimum
+     exponents based on the magnitude of the input.
+@@ -93,7 +95,7 @@ theorem FTZ_exp_correct_spec (e : Int) :
+   sorry
+ 
+ /-- Check if zero is in FTZ format
+-    
++
+     Verify that zero is representable in flush-to-zero format.
+     Zero should always be representable since it can be expressed
+     with any exponent as 0 × β^e = 0.
+@@ -102,7 +104,7 @@ def FTZ_format_0_check (beta : Int) : Id Bool :=
+   pure true  -- Zero is always in format
+ 
+ /-- Specification: Zero is in FTZ format
+-    
++
+     Zero is always representable in FTZ format since it has
+     the special property that 0 × β^e = 0 for any exponent e,
+     making it representable regardless of format constraints.
+@@ -114,16 +116,16 @@ theorem FTZ_format_0_spec (beta : Int) :
+   sorry
+ 
+ /-- Check closure under negation
+-    
++
+     Verify that if x is in FTZ format, then -x is also in FTZ format.
+     This tests the symmetry property of flush-to-zero representation
+     under sign changes.
+ -/
+-def FTZ_format_opp_check (beta : Int) (x : ℝ) : Id Bool := 
++def FTZ_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+   pure true  -- Always true for FTZ formats
+ 
+ /-- Specification: FTZ format closed under negation
+-    
++
+     FTZ formats are closed under negation. If x = m × β^e
+     is representable, then -x = (-m) × β^e is also representable
+     using the same exponent with negated mantissa.
+@@ -135,16 +137,16 @@ theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
+   sorry
+ 
+ /-- Check closure under absolute value
+-    
++
+     Verify that if x is in FTZ format, then |x| is also in FTZ format.
+     This ensures that magnitude operations preserve representability
+     in the flush-to-zero format.
+ -/
+-def FTZ_format_abs_check (beta : Int) (x : ℝ) : Id Bool := 
++def FTZ_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
+   pure true  -- Always true for FTZ formats
+ 
+ /-- Specification: FTZ format closed under absolute value
+-    
++
+     FTZ formats are closed under absolute value operations.
+     The magnitude of any representable number remains representable
+     using the same exponent structure with positive mantissa.
+@@ -155,4 +157,4 @@ theorem FTZ_format_abs_spec (beta : Int) (x : ℝ) :
+     ⦃⇓result => ⌜result = true⌝⦄ := by
+   sorry
+ 
+-end FloatSpec.Core.FTZ
+\ No newline at end of file
++end FloatSpec.Core.FTZ
+diff --git a/FloatSpec/src/Core/Generic_fmt.lean b/FloatSpec/src/Core/Generic_fmt.lean
+index 66cde88..5ac637f 100644
+--- a/FloatSpec/src/Core/Generic_fmt.lean
++++ b/FloatSpec/src/Core/Generic_fmt.lean
+@@ -43,6 +43,13 @@ section ExponentFunction
+ 
+     Returns the exponent such that beta^(mag-1) ≤ |x| < beta^mag.
+     For x = 0, returns an arbitrary value (typically 0).
++
++    NOTE: Many proofs in this file require properties of mag that depend on:
++    - Logarithm properties from Mathlib
++    - The characterization: beta^(e-1) ≤ |x| < beta^e ↔ mag beta x = e
++    - Monotonicity and other algebraic properties of mag
++
++    These should be proven in a separate Mag.lean file before completing this file.
+ -/
+ noncomputable def mag (beta : Int) (x : ℝ) : Int :=
+   if x = 0 then 0
+@@ -56,6 +63,17 @@ noncomputable def mag (beta : Int) (x : ℝ) : Int :=
+ noncomputable def Ztrunc (x : ℝ) : Int :=
+   if x ≥ 0 then ⌊x⌋ else ⌈x⌉
+ 
++/-- Ztrunc of an integer is itself -/
++lemma Ztrunc_int (n : Int) : Ztrunc (n : ℝ) = n := by
++  unfold Ztrunc
++  by_cases h : (n : ℝ) ≥ 0
++  · simp [h, Int.floor_intCast]
++  · simp [h, Int.ceil_intCast]
++
++/-- Powers of positive bases are nonzero -/
++lemma zpow_ne_zero_of_pos (a : ℝ) (n : Int) (ha : 0 < a) : a ^ n ≠ 0 := by
++  exact zpow_ne_zero n (ne_of_gt ha)
++
+ /-- A format satisfies_any if it contains representable values
+ 
+     This property ensures that the floating-point format is non-empty
+@@ -346,44 +364,7 @@ theorem canonical_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
+   simpa [canonical]
+     using congrArg (fun y : ℝ => fexp (mag beta y)) hx
+ 
+-/-- Specification: Powers of beta in generic format
+-
+-    When fexp (e + 1) ≤ e, beta^e is in generic format.
+--/
+-theorem generic_format_bpow
+-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+-    ⦃⌜fexp (e + 1) ≤ e⌝⦄
+-    generic_format beta fexp ((beta : ℝ) ^ e)
+-    ⦃⇓result => ⌜result⌝⦄ := by
+-  sorry
+-
+-/-- Specification: Alternative power condition
+ 
+-    When fexp e ≤ e, beta^e is in generic format.
+--/
+-theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+-    ⦃⌜fexp e ≤ e⌝⦄
+-    generic_format beta fexp ((beta : ℝ) ^ e)
+-    ⦃⇓result => ⌜result⌝⦄ := by
+-  intro hle
+-  -- From Valid_exp, we can derive the required bound fexp (e+1) ≤ e
+-  -- by case-splitting on whether fexp e < e or e ≤ fexp e.
+-  have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) e)
+-  by_cases hlt : fexp e < e
+-  · -- Large regime: directly get fexp (e+1) ≤ e
+-    have hbound : fexp (e + 1) ≤ e := (hpair.left) hlt
+-    -- Apply the power-in-format lemma with this bound
+-    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound
+-  · -- Otherwise, we have e ≤ fexp e
+-    have hge : e ≤ fexp e := le_of_not_gt hlt
+-    -- Combined with the hypothesis fexp e ≤ e, we get equality
+-    have heq : fexp e = e := le_antisymm hle hge
+-    -- Small regime: get fexp (fexp e + 1) ≤ fexp e, then rewrite using heq
+-    have hsmall := (hpair.right) (by simpa [heq] using hge)
+-    have hbound' : fexp (e + 1) ≤ e := by
+-      simpa [heq, add_comm, add_left_comm, add_assoc] using hsmall.left
+-    -- Apply the power-in-format lemma with the derived bound
+-    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound'
+ 
+ /-- Specification: Scaled mantissa multiplication
+ 
+@@ -599,22 +580,63 @@ theorem canonical_0 (beta : Int) (fexp : Int → Int) : canonical beta fexp (Flo
+     If two floats are canonical and have the same real value,
+     then they are equal as floats.
+ -/
+-theorem canonical_unique (beta : Int) (fexp : Int → Int) (f1 f2 : FlocqFloat beta) (h1 : canonical beta fexp f1)
+-    (h2 : canonical beta fexp f2) (h : (F2R f1).run = (F2R f2).run) : f1 = f2 := by
+-  sorry
++theorem canonical_unique
++    (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int)
++    (f1 f2 : FlocqFloat beta)
++    (h1 : canonical beta fexp f1)
++    (h2 : canonical beta fexp f2)
++    (h : (F2R f1).run = (F2R f2).run) :
++    f1 = f2 := by
++  -- Canonicality pins the exponent to fexp (mag _ (F2R _).run)
++  unfold canonical at h1 h2
++  have heq_exp : f1.Fexp = f2.Fexp := by
++    -- Since (F2R f1).run = (F2R f2).run, their magnitudes agree,
++    -- hence the canonical exponents are equal.
++    have hm : mag beta (F2R f1).run = mag beta (F2R f2).run := by
++      simpa [h]
++    have : fexp (mag beta (F2R f1).run) = fexp (mag beta (F2R f2).run) :=
++      congrArg fexp hm
++    calc
++      f1.Fexp = fexp (mag beta (F2R f1).run) := h1
++      _       = fexp (mag beta (F2R f2).run) := this
++      _       = f2.Fexp := by simpa using h2.symm
++
++  -- Expand F2R equality to the "mantissa * base^exp" form.
++  have h_orig : (F2R f1).run = (F2R f2).run := h
++  unfold F2R at h_orig
++  simp at h_orig
++  -- Make the exponents syntactically the same and prepare to cancel.
++  have h_mul :
++      (f1.Fnum : ℝ) * (beta : ℝ) ^ f2.Fexp
++        = (f2.Fnum : ℝ) * (beta : ℝ) ^ f2.Fexp := by
++    simpa [heq_exp] using h_orig
++
++  -- Since beta > 1, in ℤ we have 0 < beta; cast to ℝ gives positivity.
++  have hβ_posℝ : (0 : ℝ) < (beta : ℝ) := by
++    have : (0 : Int) < beta := lt_trans Int.zero_lt_one hbeta
++    exact_mod_cast this
++
++  -- Positive base ⇒ zpow is positive, hence nonzero; we can cancel.
++  have hpow_ne : (beta : ℝ) ^ f2.Fexp ≠ 0 := by
++    have hβ_ne : (beta : ℝ) ≠ 0 := ne_of_gt hβ_posℝ
++    -- any zpow of a nonzero base is nonzero
++    simpa using (zpow_ne_zero (f2.Fexp) hβ_ne)
++
++  -- Cancel the common factor to equate mantissas over ℝ.
++  have h_cast : (f1.Fnum : ℝ) = (f2.Fnum : ℝ) :=
++    mul_right_cancel₀ hpow_ne h_mul
++
++  -- Injectivity of Int.cast gives equality of mantissas over ℤ.
++  have heq_num : f1.Fnum = f2.Fnum := Int.cast_injective h_cast
++
++  -- Finish by structure equality (same fields => same floats).
++  cases f1
++  cases f2
++  simp at heq_num heq_exp
++  simpa [heq_num, heq_exp]
+ 
+ -- Section: Scaled mantissa properties
+ 
+-/-- Specification: Scaled mantissa for generic format
+-
+-    For numbers in generic format, the scaled mantissa
+-    equals its truncation (i.e., it's already an integer).
+--/
+-theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+-    ⦃⌜(generic_format beta fexp x).run⌝⦄
+-    scaled_mantissa beta fexp x
+-    ⦃⇓result => ⌜result = Ztrunc result⌝⦄ := by
+-  sorry
+ 
+ /-- Specification: Scaled mantissa of zero
+ 
+@@ -781,60 +803,7 @@ theorem generic_format_abs_inv (beta : Int) (fexp : Int → Int) [Valid_exp beta
+ 
+ -- Section: Canonical exponent bounds
+ 
+-/-- Specification: Canonical exponent from bounds
+ 
+-    When x is bounded by powers of beta, cexp(x) = fexp(ex).
+--/
+-theorem cexp_fexp (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
+-    ⦃⌜(beta : ℝ) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : ℝ) ^ ex⌝⦄
+-    cexp beta fexp x
+-    ⦃⇓result => ⌜result = fexp ex⌝⦄ := by
+-  intro _
+-  unfold cexp
+-  sorry
+-
+-/-- Specification: Canonical exponent from positive bounds
+-
+-    When positive x is bounded by powers of beta, cexp(x) = fexp(ex).
+--/
+-theorem cexp_fexp_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
+-    ⦃⌜(beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
+-    cexp beta fexp x
+-    ⦃⇓result => ⌜result = fexp ex⌝⦄ := by
+-  intro _
+-  unfold cexp
+-  sorry
+-
+--- Section: Small number properties
+-
+-/-- Specification: Mantissa for small positive numbers
+-
+-    For small positive x bounded by beta^(ex-1) and beta^ex,
+-    where ex ≤ fexp(ex), the scaled mantissa is in (0,1).
+--/
+-theorem mantissa_small_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int)
+-    (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
+-    (he : ex ≤ fexp ex) :
+-    0 < x * (beta : ℝ) ^ (-(fexp ex)) ∧ x * (beta : ℝ) ^ (-(fexp ex)) < 1 := by
+-  sorry
+-
+-/-- Specification: Scaled mantissa bound for small numbers
+-
+-    For small numbers with |x| < beta^ex where ex ≤ fexp(ex),
+-    the absolute value of scaled mantissa is less than 1.
+--/
+-theorem scaled_mantissa_lt_1 (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) (hx : abs x < (beta : ℝ) ^ ex)
+-    (he : ex ≤ fexp ex) : abs (scaled_mantissa beta fexp x).run < 1 := by
+-  sorry
+-
+-/-- Specification: Scaled mantissa general bound
+-
+-    The absolute value of scaled mantissa is bounded by
+-    beta^(mag(x) - cexp(x)).
+--/
+-theorem scaled_mantissa_lt_bpow (beta : Int) (fexp : Int → Int) (x : ℝ) :
+-    abs (scaled_mantissa beta fexp x).run < (beta : ℝ) ^ (mag beta x - (cexp beta fexp x).run) := by
+-  sorry
+ 
+ -- Section: Advanced properties
+ 
+@@ -856,23 +825,6 @@ def format_discrete (F : ℝ → Prop) : Prop :=
+ 
+ -- Section: Generic format satisfies properties
+ 
+-/-- Specification: Generic format is closed under rounding down
+-
+-    For any x, there exists a value f in generic format
+-    that is the rounding down of x.
+--/
+-theorem generic_format_round_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+-    ∃ f, (generic_format beta fexp f).run ∧ Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+-  sorry
+-
+-/-- Specification: Generic format is closed under rounding up
+-
+-    For any x, there exists a value f in generic format
+-    that is the rounding up of x.
+--/
+-theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+-    ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
+-  sorry
+ 
+ /-- Specification: Generic format satisfies rounding properties
+ 
+@@ -884,59 +836,6 @@ theorem generic_format_satisfies_any (beta : Int) (fexp : Int → Int) [Valid_ex
+   unfold generic_format scaled_mantissa cexp F2R
+   simp [Ztrunc]
+ 
+--- Section: Precision and exponent bounds
+-
+-/-- Specification: Precision bounds for generic format
+-
+-    For non-zero x in generic format, the scaled mantissa
+-    is bounded by beta^(mag(x) - cexp(x)).
+--/
+-theorem generic_format_precision_bound (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (h : (generic_format beta fexp x).run) (hx : x ≠ 0) :
+-    abs (scaled_mantissa beta fexp x).run < (beta : ℝ) ^ (mag beta x - (cexp beta fexp x).run) := by
+-  sorry
+-
+-/-- Specification: Exponent monotonicity
+-
+-    The exponent function is monotone.
+--/
+-theorem fexp_monotone (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] : ∀ e1 e2 : Int, e1 ≤ e2 → fexp e1 ≤ fexp e2 := by
+-  sorry
+-
+-/-- Specification: Format equivalence under exponent bounds
+-
+-    If x is in format with constant exponent e1,
+-    and e1 ≤ e2, then x is in format with exponent e2.
+--/
+-theorem generic_format_equiv (beta : Int) (x : ℝ) (e1 e2 : Int) :
+-    ⦃⌜e1 ≤ e2 ∧ (generic_format beta (fun _ => e1) x).run⌝⦄
+-    generic_format beta (fun _ => e2) x
+-    ⦃⇓result => ⌜result⌝⦄ := by
+-  intro h
+-  simp [generic_format] at h
+-  sorry
+-
+--- Section: Special format constructions
+-
+-/-- Generic format from rounding -/
+-noncomputable def round_to_generic (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (mode : ℝ → ℝ → Prop) (x : ℝ) : ℝ :=
+-  -- Return the rounded value in generic format
+-  -- This would use classical choice to select a value satisfying the rounding mode
+-  let exp := (cexp beta fexp x).run
+-  let mantissa := x * (beta : ℝ) ^ (-exp)
+-  let rounded_mantissa := Ztrunc mantissa  -- Simple truncation for now
+-  (rounded_mantissa : ℝ) * (beta : ℝ) ^ exp
+-
+-/-- Specification: Round to generic is well-defined
+-
+-    The result of rounding to generic format is always
+-    in the generic format.
+--/
+-theorem round_to_generic_spec (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (mode : ℝ → ℝ → Prop) (x : ℝ) :
+-    ⦃⌜True⌝⦄
+-    generic_format beta fexp (round_to_generic beta fexp mode x)
+-    ⦃⇓result => ⌜result⌝⦄ := by
+-  intro _
+-  sorry
+ 
+ -- Section: Format intersection and union
+ 
+@@ -948,103 +847,8 @@ def generic_format_inter (beta : Int) (fexp1 fexp2 : Int → Int) (x : ℝ) : Pr
+ def generic_format_union (beta : Int) (fexp1 fexp2 : Int → Int) (x : ℝ) : Prop :=
+   (generic_format beta fexp1 x).run ∨ (generic_format beta fexp2 x).run
+ 
+-/-- Specification: Intersection is a generic format
+-
+-    The intersection of two generic formats can be
+-    represented as another generic format.
+--/
+-theorem generic_format_inter_valid (beta : Int) (fexp1 fexp2 : Int → Int)
+-    [Valid_exp beta fexp1] [Valid_exp beta fexp2] :
+-    ∃ fexp3, ∀ x, generic_format_inter beta fexp1 fexp2 x ↔ (generic_format beta fexp3 x).run := by
+-  sorry
+-
+--- Section: Magnitude and precision relationships
+-
+-/-- Specification: Magnitude is compatible with generic format
+-
+-    For non-zero x in generic format, the exponent function
+-    satisfies fexp(mag(x) + 1) ≤ mag(x).
+--/
+-theorem mag_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (h : (generic_format beta fexp x).run) (hx : x ≠ 0) :
+-    fexp (mag beta x + 1) ≤ mag beta x := by
+-  sorry
+-
+-/-- Specification: Precision characterization
+-
+-    For non-zero x in generic format, there exists a mantissa m
+-    such that x = F2R(m, cexp(x)) with bounded mantissa.
+--/
+-theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (h : (generic_format beta fexp x).run) (hx : x ≠ 0) :
+-    ∃ m : Int, x = (F2R (FlocqFloat.mk m (cexp beta fexp x).run : FlocqFloat beta)).run ∧
+-    Int.natAbs m < Int.natAbs beta ^ ((mag beta x - (cexp beta fexp x).run).toNat) := by
+-  sorry
+-
+--- Section: Error bounds
+ 
+-/-- Specification: Generic format error bound
+-
+-    For any x, there exists f in generic format within
+-    half ULP of x.
+--/
+-theorem generic_format_error_bound (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+-    ∃ f, (generic_format beta fexp f).run ∧
+-    abs (f - x) ≤ (1/2) * (beta : ℝ) ^ (cexp beta fexp x).run := by
+-  sorry
+-
+-/-- Specification: Relative error bound
+-
+-    For non-zero x, there exists f in generic format
+-    with bounded relative error.
+--/
+-theorem generic_format_relative_error (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hx : x ≠ 0) :
+-    ∃ f, (generic_format beta fexp f).run ∧ f ≠ 0 ∧
+-    abs (f - x) / abs x ≤ (1/2) * (beta : ℝ) ^ ((cexp beta fexp x).run - mag beta x) := by
+-  sorry
+ 
+ end BasicProperties
+ 
+-section RoundingToFormat
+-
+-/-- Round to nearest in generic format
+-
+-    Computes the nearest representable value in the format.
+--/
+-noncomputable def round_N_to_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Id ℝ :=
+-  sorry -- Implementation would use classical choice
+-
+-/-- Round down to generic format
+-
+-    Computes the largest representable value not exceeding x.
+--/
+-noncomputable def round_DN_to_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Id ℝ :=
+-  sorry -- Implementation would use classical choice
+-
+-/-- Round up to generic format
+-
+-    Computes the smallest representable value not less than x.
+--/
+-noncomputable def round_UP_to_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Id ℝ :=
+-  sorry -- Implementation would use classical choice
+-
+-/-- Specification: Properties of format-specific rounding
+-
+-    The rounding functions produce values in the format
+-    and satisfy the expected ordering properties.
+--/
+-theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+-    ⦃⌜beta > 1⌝⦄
+-    do
+-      let down ← round_DN_to_format beta fexp x
+-      let up ← round_UP_to_format beta fexp x
+-      pure (down, up)
+-    ⦃⇓result => ⌜let (down, up) := result;
+-                   (generic_format beta fexp down).run ∧
+-                   (generic_format beta fexp up).run ∧
+-                   down ≤ x ∧ x ≤ up⌝⦄ := by
+-  intro _
+-  simp [round_DN_to_format, round_UP_to_format]
+-  sorry -- This requires implementing the rounding functions and proving their properties
+-
+-end RoundingToFormat
+-
+ end FloatSpec.Core.Generic_fmt
+diff --git a/FloatSpec/src/Core/Round_NE.lean b/FloatSpec/src/Core/Round_NE.lean
+index 1923630..de21882 100644
+--- a/FloatSpec/src/Core/Round_NE.lean
++++ b/FloatSpec/src/Core/Round_NE.lean
+@@ -24,6 +24,7 @@ import FloatSpec.src.Core.Raux
+ import FloatSpec.src.Core.Defs
+ import FloatSpec.src.Core.Round_pred
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import FloatSpec.src.Core.Float_prop
+ import FloatSpec.src.Core.Ulp
+ import Mathlib.Data.Real.Basic
+@@ -34,7 +35,8 @@ open Real
+ open Std.Do
+ open FloatSpec.Core.Defs
+ open FloatSpec.Core.Round_pred
+-open FloatSpec.Core.GenericFmt
++open FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ 
+ namespace FloatSpec.Core.RoundNE
+ 
+@@ -42,10 +44,10 @@ section NearestEvenRounding
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Nearest-even rounding property
+-    
++
+     A tie-breaking rule that selects the value whose mantissa
+     is even when two representable values are equidistant.
+ -/
+@@ -53,15 +55,15 @@ def NE_prop (beta : Int) (fexp : Int → Int) (x : ℝ) (f : ℝ) : Prop :=
+   ∃ g : FlocqFloat beta, f = (F2R g).run ∧ canonical beta fexp g ∧ g.Fnum % 2 = 0
+ 
+ /-- Nearest-even rounding predicate
+-    
++
+     Combines nearest rounding with the even tie-breaking rule.
+     This is the IEEE 754 default rounding mode.
+ -/
+ def Rnd_NE_pt : ℝ → ℝ → Prop :=
+-  FloatSpec.Core.Round_pred.Rnd_NG_pt (fun x => (FloatSpec.Core.GenericFmt.generic_format beta fexp x).run) (NE_prop beta fexp)
++  FloatSpec.Core.Round_pred.Rnd_NG_pt (fun x => (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (NE_prop beta fexp)
+ 
+ /-- Down-up parity property for positive numbers
+-    
++
+     When a positive number is not exactly representable,
+     its round-down and round-up values have mantissas of opposite parity.
+     This ensures the nearest-even tie-breaking is well-defined.
+@@ -69,9 +71,9 @@ def Rnd_NE_pt : ℝ → ℝ → Prop :=
+ def DN_UP_parity_pos_prop : Prop :=
+   ∀ x xd xu,
+   0 < x →
+-  ¬(FloatSpec.Core.GenericFmt.generic_format beta fexp x).run →
+-  FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (FloatSpec.Core.GenericFmt.generic_format beta fexp y).run) x xd →
+-  FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.GenericFmt.generic_format beta fexp y).run) x xu →
++  ¬(FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run →
++  FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x xd →
++  FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x xu →
+   ∃ gd gu : FlocqFloat beta,
+     xd = (F2R gd).run ∧ xu = (F2R gu).run ∧
+     canonical beta fexp gd ∧ canonical beta fexp gu ∧
+@@ -83,7 +85,7 @@ section UniquenessProperties
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Check nearest-even uniqueness property
+ -/
+@@ -91,7 +93,7 @@ def Rnd_NE_pt_unique_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even uniqueness property
+-    
++
+     The nearest-even rounding satisfies the uniqueness property
+     required by the generic nearest rounding framework.
+ -/
+@@ -107,7 +109,7 @@ def Rnd_NE_pt_unique_specific_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even rounding is unique
+-    
++
+     For any real number, there is at most one value that
+     satisfies the nearest-even rounding predicate.
+ -/
+@@ -123,7 +125,7 @@ def Rnd_NE_pt_monotone_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even rounding is monotone
+-    
++
+     The nearest-even rounding preserves the ordering of inputs.
+ -/
+ theorem Rnd_NE_pt_monotone :
+@@ -138,7 +140,7 @@ section RoundingPredicateProperties
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]  
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Check rounding predicate satisfaction
+ -/
+@@ -146,12 +148,12 @@ def satisfies_any_imp_NE_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even satisfies rounding predicate
+-    
++
+     When the format satisfies the "satisfies_any" property,
+     nearest-even rounding forms a proper rounding predicate.
+ -/
+ theorem satisfies_any_imp_NE :
+-    ⦃⌜beta > 1 ∧ satisfies_any (fun x => (FloatSpec.Core.GenericFmt.generic_format beta fexp x).run)⌝⦄
++    ⦃⌜beta > 1 ∧ satisfies_any (fun x => (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)⌝⦄
+     satisfies_any_imp_NE_check
+     ⦃⇓result => ⌜result = true⌝⦄ := by
+   sorry
+@@ -162,11 +164,11 @@ def Rnd_NE_pt_refl_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even rounding is reflexive on format
+-    
++
+     If x is already in the format, then rounding x gives x itself.
+ -/
+ theorem Rnd_NE_pt_refl (x : ℝ) :
+-    ⦃⌜beta > 1 ∧ (FloatSpec.Core.GenericFmt.generic_format beta fexp x).run⌝⦄
++    ⦃⌜beta > 1 ∧ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run⌝⦄
+     Rnd_NE_pt_refl_check
+     ⦃⇓result => ⌜result = true⌝⦄ := by
+   sorry
+@@ -177,11 +179,11 @@ def Rnd_NE_pt_idempotent_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even rounding is idempotent
+-    
++
+     If x is in the format and f is its rounding, then f = x.
+ -/
+ theorem Rnd_NE_pt_idempotent (x f : ℝ) :
+-    ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f ∧ (FloatSpec.Core.GenericFmt.generic_format beta fexp x).run⌝⦄
++    ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f ∧ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run⌝⦄
+     Rnd_NE_pt_idempotent_check
+     ⦃⇓result => ⌜result = true⌝⦄ := by
+   sorry
+@@ -192,7 +194,7 @@ section ParityProperties
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Check down-up parity property
+ -/
+@@ -200,7 +202,7 @@ def DN_UP_parity_pos_holds_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Down-up parity for positive numbers
+-    
++
+     Validates that the parity property holds for the format,
+     ensuring nearest-even tie-breaking is well-defined.
+ -/
+@@ -216,7 +218,7 @@ def Rnd_NE_pt_sign_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even preserves sign
+-    
++
+     The sign of the result matches the sign of the input
+     (except potentially for signed zeros).
+ -/
+@@ -232,7 +234,7 @@ def Rnd_NE_pt_abs_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even absolute value property
+-    
++
+     Rounding preserves relationships with absolute values.
+ -/
+ theorem Rnd_NE_pt_abs (x f : ℝ) :
+@@ -247,7 +249,7 @@ section ErrorBounds
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Check error bound property
+ -/
+@@ -255,7 +257,7 @@ def Rnd_NE_pt_error_bound_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Error bound for nearest-even rounding
+-    
++
+     The error in nearest-even rounding is bounded by half a ULP.
+ -/
+ theorem Rnd_NE_pt_error_bound (x f : ℝ) :
+@@ -270,7 +272,7 @@ def Rnd_NE_pt_minimal_error_check : Id Bool :=
+   pure true
+ 
+ /-- Specification: Nearest-even minimizes absolute error
+-    
++
+     Among all representable values, nearest-even rounding
+     selects one that minimizes the absolute error.
+ -/
+@@ -282,4 +284,4 @@ theorem Rnd_NE_pt_minimal_error (x f : ℝ) :
+ 
+ end ErrorBounds
+ 
+-end FloatSpec.Core.RoundNE
+\ No newline at end of file
++end FloatSpec.Core.RoundNE
+diff --git a/FloatSpec/src/Core/Round_generic.lean b/FloatSpec/src/Core/Round_generic.lean
+new file mode 100644
+index 0000000..fc26655
+--- /dev/null
++++ b/FloatSpec/src/Core/Round_generic.lean
+@@ -0,0 +1,318 @@
++/-
++This file is part of the Flocq formalization of floating-point
++arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
++
++Copyright (C) 2011-2018 Sylvie Boldo
++Copyright (C) 2011-2018 Guillaume Melquiond
++
++This library is free software; you can redistribute it and/or
++modify it under the terms of the GNU Lesser General Public
++License as published by the Free Software Foundation; either
++version 3 of the License, or (at your option) any later version.
++
++This library is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
++COPYING file for more details.
++
++Generic floating-point rounding and unverified properties
++Based on flocq/src/Core/Generic_fmt.v
++-/
++
++import FloatSpec.src.Core.Zaux
++import FloatSpec.src.Core.Raux
++import FloatSpec.src.Core.Defs
++import FloatSpec.src.Core.Round_pred
++import FloatSpec.src.Core.Float_prop
++import FloatSpec.src.Core.Generic_fmt
++import Mathlib.Data.Real.Basic
++import Std.Do.Triple
++import Std.Tactic.Do
++
++open Real
++open Std.Do
++open FloatSpec.Core.Defs
++open FloatSpec.Core.Zaux
++open FloatSpec.Core.Raux
++open FloatSpec.Core.Generic_fmt
++
++-- No need to export round_to_generic since we're defining it here
++
++namespace FloatSpec.Core.Round_generic
++
++/-- Specification: Powers of beta in generic format
++
++    When fexp (e + 1) ≤ e, beta^e is in generic format.
++-/
++theorem generic_format_bpow
++    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
++    ⦃⌜fexp (e + 1) ≤ e⌝⦄
++    generic_format beta fexp ((beta : ℝ) ^ e)
++    ⦃⇓result => ⌜result⌝⦄ := by
++  intro hle
++  unfold generic_format scaled_mantissa cexp F2R
++  simp
++  sorry -- TODO: This requires properties of mag and logarithms that aren't yet proven
++
++/-- Specification: Alternative power condition
++
++    When fexp e ≤ e, beta^e is in generic format.
++-/
++theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
++    ⦃⌜fexp e ≤ e⌝⦄
++    generic_format beta fexp ((beta : ℝ) ^ e)
++    ⦃⇓result => ⌜result⌝⦄ := by
++  intro hle
++  -- From Valid_exp, we can derive the required bound fexp (e+1) ≤ e
++  -- by case-splitting on whether fexp e < e or e ≤ fexp e.
++  have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) e)
++  by_cases hlt : fexp e < e
++  · -- Large regime: directly get fexp (e+1) ≤ e
++    have hbound : fexp (e + 1) ≤ e := (hpair.left) hlt
++    -- Apply the power-in-format lemma with this bound
++    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound
++  · -- Otherwise, we have e ≤ fexp e
++    have hge : e ≤ fexp e := le_of_not_gt hlt
++    -- Combined with the hypothesis fexp e ≤ e, we get equality
++    have heq : fexp e = e := le_antisymm hle hge
++    -- Small regime: get fexp (fexp e + 1) ≤ fexp e, then rewrite using heq
++    have hsmall := (hpair.right) (by simpa [heq] using hge)
++    have hbound' : fexp (e + 1) ≤ e := by
++      simpa [heq, add_comm, add_left_comm, add_assoc] using hsmall.left
++    -- Apply the power-in-format lemma with the derived bound
++    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound'
++
++/-- Specification: Scaled mantissa for generic format
++
++    For numbers in generic format, the scaled mantissa
++    equals its truncation (i.e., it's already an integer).
++-/
++theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
++    ⦃⌜(generic_format beta fexp x).run⌝⦄
++    scaled_mantissa beta fexp x
++    ⦃⇓result => ⌜result = Ztrunc result⌝⦄ := by
++  intro hx
++  unfold scaled_mantissa cexp
++  simp
++  -- From hx: x is in generic format
++  -- This means x = F2R of some float with integer mantissa
++  unfold generic_format at hx
++  simp at hx
++  -- hx says x = (Ztrunc (scaled_mantissa...)) * beta^(cexp...)
++  -- So scaled_mantissa already equals its truncation
++  sorry -- TODO: Need to unpack the generic_format definition more carefully
++
++/-- Specification: Canonical exponent from bounds
++
++    When x is bounded by powers of beta, cexp(x) = fexp(ex).
++-/
++theorem cexp_fexp (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
++    ⦃⌜(beta : ℝ) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : ℝ) ^ ex⌝⦄
++    cexp beta fexp x
++    ⦃⇓result => ⌜result = fexp ex⌝⦄ := by
++  intro h
++  unfold cexp
++  simp
++  -- The key is that mag beta x = ex when beta^(ex-1) ≤ |x| < beta^ex
++  -- This is the defining property of mag
++  sorry -- TODO: This requires properties of mag and logarithms
++
++/-- Specification: Canonical exponent from positive bounds
++
++    When positive x is bounded by powers of beta, cexp(x) = fexp(ex).
++-/
++theorem cexp_fexp_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
++    ⦃⌜(beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
++    cexp beta fexp x
++    ⦃⇓result => ⌜result = fexp ex⌝⦄ := by
++  intro _
++  unfold cexp
++  sorry
++
++/-- Specification: Mantissa for small positive numbers
++
++    For small positive x bounded by beta^(ex-1) and beta^ex,
++    where ex ≤ fexp(ex), the scaled mantissa is in (0,1).
++-/
++theorem mantissa_small_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int)
++    (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
++    (he : ex ≤ fexp ex) :
++    0 < x * (beta : ℝ) ^ (-(fexp ex)) ∧ x * (beta : ℝ) ^ (-(fexp ex)) < 1 := by
++  sorry
++
++/-- Specification: Scaled mantissa bound for small numbers
++
++    For small numbers with |x| < beta^ex where ex ≤ fexp(ex),
++    the absolute value of scaled mantissa is less than 1.
++-/
++theorem scaled_mantissa_lt_1 (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) (hx : abs x < (beta : ℝ) ^ ex)
++    (he : ex ≤ fexp ex) : abs (scaled_mantissa beta fexp x).run < 1 := by
++  sorry
++
++/-- Specification: Scaled mantissa general bound
++
++    The absolute value of scaled mantissa is bounded by
++    beta^(mag(x) - cexp(x)).
++-/
++theorem scaled_mantissa_lt_bpow (beta : Int) (fexp : Int → Int) (x : ℝ) :
++    abs (scaled_mantissa beta fexp x).run < (beta : ℝ) ^ (mag beta x - (cexp beta fexp x).run) := by
++  sorry
++
++/-- Specification: Generic format is closed under rounding down
++
++    For any x, there exists a value f in generic format
++    that is the rounding down of x.
++-/
++theorem generic_format_round_DN (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
++    ∃ f, (generic_format beta fexp f).run ∧ Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
++  sorry
++
++/-- Specification: Generic format is closed under rounding up
++
++    For any x, there exists a value f in generic format
++    that is the rounding up of x.
++-/
++theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
++    ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
++  sorry
++
++/-- Specification: Precision bounds for generic format
++
++    For non-zero x in generic format, the scaled mantissa
++    is bounded by beta^(mag(x) - cexp(x)).
++-/
++theorem generic_format_precision_bound (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (h : (generic_format beta fexp x).run) (hx : x ≠ 0) :
++    abs (scaled_mantissa beta fexp x).run < (beta : ℝ) ^ (mag beta x - (cexp beta fexp x).run) := by
++  sorry
++
++/-- Specification: Exponent monotonicity
++
++    The exponent function is monotone.
++-/
++theorem fexp_monotone (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] : ∀ e1 e2 : Int, e1 ≤ e2 → fexp e1 ≤ fexp e2 := by
++  sorry
++
++/-- Specification: Format equivalence under exponent bounds
++
++    If x is in format with constant exponent e1,
++    and e1 ≤ e2, then x is in format with exponent e2.
++-/
++theorem generic_format_equiv (beta : Int) (x : ℝ) (e1 e2 : Int) :
++    ⦃⌜e1 ≤ e2 ∧ (generic_format beta (fun _ => e1) x).run⌝⦄
++    generic_format beta (fun _ => e2) x
++    ⦃⇓result => ⌜result⌝⦄ := by
++  intro h
++  simp [generic_format] at h
++  sorry
++
++/-- Generic format from rounding -/
++noncomputable def round_to_generic (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (mode : ℝ → ℝ → Prop) (x : ℝ) : ℝ :=
++  -- Return the rounded value in generic format
++  -- This would use classical choice to select a value satisfying the rounding mode
++  let exp := (cexp beta fexp x).run
++  let mantissa := x * (beta : ℝ) ^ (-exp)
++  let rounded_mantissa := Ztrunc mantissa  -- Simple truncation for now
++  (rounded_mantissa : ℝ) * (beta : ℝ) ^ exp
++
++/-- Specification: Round to generic is well-defined
++
++    The result of rounding to generic format is always
++    in the generic format.
++-/
++theorem round_to_generic_spec (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (mode : ℝ → ℝ → Prop) (x : ℝ) :
++    ⦃⌜True⌝⦄
++    generic_format beta fexp (round_to_generic beta fexp mode x)
++    ⦃⇓result => ⌜result⌝⦄ := by
++  intro _
++  sorry
++
++/-- Specification: Intersection is a generic format
++
++    The intersection of two generic formats can be
++    represented as another generic format.
++-/
++theorem generic_format_inter_valid (beta : Int) (fexp1 fexp2 : Int → Int)
++    [Valid_exp beta fexp1] [Valid_exp beta fexp2] :
++    ∃ fexp3, ∀ x, generic_format_inter beta fexp1 fexp2 x ↔ (generic_format beta fexp3 x).run := by
++  sorry
++
++/-- Specification: Magnitude is compatible with generic format
++
++    For non-zero x in generic format, the exponent function
++    satisfies fexp(mag(x) + 1) ≤ mag(x).
++-/
++theorem mag_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (h : (generic_format beta fexp x).run) (hx : x ≠ 0) :
++    fexp (mag beta x + 1) ≤ mag beta x := by
++  sorry
++
++/-- Specification: Precision characterization
++
++    For non-zero x in generic format, there exists a mantissa m
++    such that x = F2R(m, cexp(x)) with bounded mantissa.
++-/
++theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (h : (generic_format beta fexp x).run) (hx : x ≠ 0) :
++    ∃ m : Int, x = (F2R (FlocqFloat.mk m (cexp beta fexp x).run : FlocqFloat beta)).run ∧
++    Int.natAbs m < Int.natAbs beta ^ ((mag beta x - (cexp beta fexp x).run).toNat) := by
++  sorry
++
++/-- Specification: Generic format error bound
++
++    For any x, there exists f in generic format within
++    half ULP of x.
++-/
++theorem generic_format_error_bound (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
++    ∃ f, (generic_format beta fexp f).run ∧
++    abs (f - x) ≤ (1/2) * (beta : ℝ) ^ (cexp beta fexp x).run := by
++  sorry
++
++/-- Specification: Relative error bound
++
++    For non-zero x, there exists f in generic format
++    with bounded relative error.
++-/
++theorem generic_format_relative_error (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hx : x ≠ 0) :
++    ∃ f, (generic_format beta fexp f).run ∧ f ≠ 0 ∧
++    abs (f - x) / abs x ≤ (1/2) * (beta : ℝ) ^ ((cexp beta fexp x).run - mag beta x) := by
++  sorry
++
++/-- Round to nearest in generic format
++
++    Computes the nearest representable value in the format.
++-/
++noncomputable def round_N_to_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Id ℝ :=
++  sorry -- Implementation would use classical choice
++
++/-- Round down to generic format
++
++    Computes the largest representable value not exceeding x.
++-/
++noncomputable def round_DN_to_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Id ℝ :=
++  sorry -- Implementation would use classical choice
++
++/-- Round up to generic format
++
++    Computes the smallest representable value not less than x.
++-/
++noncomputable def round_UP_to_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Id ℝ :=
++  sorry -- Implementation would use classical choice
++
++/-- Specification: Properties of format-specific rounding
++
++    The rounding functions produce values in the format
++    and satisfy the expected ordering properties.
++-/
++theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
++    ⦃⌜beta > 1⌝⦄
++    do
++      let down ← round_DN_to_format beta fexp x
++      let up ← round_UP_to_format beta fexp x
++      pure (down, up)
++    ⦃⇓result => ⌜let (down, up) := result;
++                   (generic_format beta fexp down).run ∧
++                   (generic_format beta fexp up).run ∧
++                   down ≤ x ∧ x ≤ up⌝⦄ := by
++  intro _
++  simp [round_DN_to_format, round_UP_to_format]
++  sorry -- This requires implementing the rounding functions and proving their properties
++
++end FloatSpec.Core.Round_generic
+\ No newline at end of file
+diff --git a/FloatSpec/src/Core/Ulp.lean b/FloatSpec/src/Core/Ulp.lean
+index dbb3439..369c882 100644
+--- a/FloatSpec/src/Core/Ulp.lean
++++ b/FloatSpec/src/Core/Ulp.lean
+@@ -21,6 +21,7 @@ Based on flocq/src/Core/Ulp.v
+ 
+ import FloatSpec.src.Core.Defs
+ import FloatSpec.src.Core.Generic_fmt
++import FloatSpec.src.Core.Round_generic
+ import FloatSpec.src.Core.Float_prop
+ import Mathlib.Data.Real.Basic
+ import Std.Do.Triple
+@@ -28,7 +29,8 @@ import Std.Tactic.Do
+ 
+ open Real
+ open Std.Do
+-open FloatSpec.Core.GenericFmt
++open FloatSpec.Core.Generic_fmt
++open FloatSpec.Core.Round_generic
+ 
+ namespace FloatSpec.Core.Ulp
+ 
+@@ -36,10 +38,10 @@ section UnitInLastPlace
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Unit in the last place function
+-    
++
+     The ULP of a real number x is the value of the least significant
+     digit in the representation of x in the floating-point format.
+     For zero, we use a special convention based on fexp(1).
+@@ -48,23 +50,23 @@ noncomputable def ulp (x : ℝ) : Id ℝ :=
+   if x = 0 then
+     pure ((beta : ℝ) ^ (fexp 1))
+   else do
+-    let exp ← FloatSpec.Core.GenericFmt.cexp beta fexp x
++    let exp ← FloatSpec.Core.Generic_fmt.cexp beta fexp x
+     pure ((beta : ℝ) ^ exp)
+ 
+ /-- Specification: ULP computation
+-    
++
+     The ULP is computed as beta^(fexp(1)) for zero,
+     and beta^(cexp(x)) for non-zero values.
+ -/
+ theorem ulp_spec (x : ℝ) :
+     ⦃⌜beta > 1⌝⦄
+     ulp beta fexp x
+-    ⦃⇓result => ⌜if x = 0 then result = (beta : ℝ) ^ (fexp 1) 
++    ⦃⇓result => ⌜if x = 0 then result = (beta : ℝ) ^ (fexp 1)
+                   else result = (beta : ℝ) ^ (fexp (mag beta x))⌝⦄ := by
+   sorry
+ 
+ /-- Specification: ULP is non-negative
+-    
++
+     The ULP is always a positive value since it's a power of beta > 1.
+ -/
+ theorem ulp_ge_0 (x : ℝ) :
+@@ -74,7 +76,7 @@ theorem ulp_ge_0 (x : ℝ) :
+   sorry
+ 
+ /-- Specification: ULP of opposite
+-    
++
+     The ULP is preserved under negation since it depends
+     only on the magnitude, not the sign.
+ -/
+@@ -88,7 +90,7 @@ theorem ulp_opp (x : ℝ) :
+   sorry
+ 
+ /-- Specification: ULP of absolute value
+-    
++
+     The ULP equals the ULP of the absolute value.
+ -/
+ theorem ulp_abs (x : ℝ) :
+@@ -106,10 +108,10 @@ section ULPProperties
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Specification: ULP and generic format
+-    
++
+     The ULP of any non-zero number is itself representable
+     in the generic format.
+ -/
+@@ -117,26 +119,26 @@ theorem generic_format_ulp (x : ℝ) (hx : x ≠ 0) :
+     ⦃⌜beta > 1 ∧ x ≠ 0⌝⦄
+     do
+       let ulp_x ← ulp beta fexp x
+-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp ulp_x
++      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp ulp_x
+       pure true
+     ⦃⇓result => ⌜result = true⌝⦄ := by
+   sorry
+ 
+ /-- Specification: ULP upper bound
+-    
++
+     For positive numbers in generic format, the ULP is at most the number itself.
+ -/
+ theorem ulp_le_id (x : ℝ) (hx : 0 < x) :
+     ⦃⌜beta > 1 ∧ 0 < x⌝⦄
+     do
+-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp x
++      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp x
+       let ulp_x ← ulp beta fexp x
+       pure (is_generic, ulp_x ≤ x)
+     ⦃⇓result => ⌜result.1 → result.2⌝⦄ := by
+   sorry
+ 
+ /-- Specification: ULP is never zero
+-    
++
+     The ULP is always a positive power of beta, so never zero.
+ -/
+ theorem ulp_neq_0 (x : ℝ) :
+@@ -151,10 +153,10 @@ section SuccessorPredecessor
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Successor in format
+-    
++
+     The successor of x is x plus its ULP, representing
+     the next larger representable value.
+ -/
+@@ -164,7 +166,7 @@ noncomputable def succ (x : ℝ) : Id ℝ :=
+     pure (x + ulp_x)
+ 
+ /-- Predecessor in format
+-    
++
+     The predecessor of x is x minus its ULP, representing
+     the next smaller representable value.
+ -/
+@@ -174,7 +176,7 @@ noncomputable def pred (x : ℝ) : Id ℝ :=
+     pure (x - ulp_x)
+ 
+ /-- Specification: Successor is greater than original
+-    
++
+     The successor function always produces a value
+     greater than or equal to the original.
+ -/
+@@ -187,15 +189,15 @@ theorem succ_ge_id (beta : Int) (fexp : Int → Int) (x : ℝ) :
+   sorry
+ 
+ /-- Specification: Generic format closure under successor
+-    
++
+     If x is in generic format, then so is its successor.
+ -/
+ theorem generic_format_succ (beta : Int) (fexp : Int → Int) (x : ℝ) :
+     ⦃⌜beta > 1⌝⦄
+     do
+-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp x
++      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp x
+       let succ_x ← succ beta fexp x
+-      let succ_is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp succ_x
++      let succ_is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp succ_x
+       pure (is_generic, succ_is_generic)
+     ⦃⇓result => ⌜result.1 → result.2⌝⦄ := by
+   sorry
+@@ -206,17 +208,17 @@ section ErrorBounds
+ 
+ variable (beta : Int)
+ variable (fexp : Int → Int)
+-variable [FloatSpec.Core.GenericFmt.Valid_exp beta fexp]
++variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+ 
+ /-- Specification: Error characterization with ULP
+-    
++
+     If the error between a format value f and x is less than
+     half a ULP, then f is the correctly rounded value of x.
+ -/
+ theorem error_lt_ulp (beta : Int) (fexp : Int → Int) (x : ℝ) (f : ℝ) :
+     ⦃⌜beta > 1⌝⦄
+     do
+-      let is_generic ← FloatSpec.Core.GenericFmt.generic_format beta fexp f
++      let is_generic ← FloatSpec.Core.Generic_fmt.generic_format beta fexp f
+       let ulp_x ← ulp beta fexp x
+       pure (is_generic, |f - x| < ulp_x / 2)
+     ⦃⇓result => ⌜result.1 ∧ result.2 → True⌝⦄ := by
+@@ -224,4 +226,4 @@ theorem error_lt_ulp (beta : Int) (fexp : Int → Int) (x : ℝ) (f : ℝ) :
+ 
+ end ErrorBounds
+ 
+-end FloatSpec.Core.Ulp
+\ No newline at end of file
++end FloatSpec.Core.Ulp
+diff --git a/FloatSpec/src/IEEE754/Binary.lean b/FloatSpec/src/IEEE754/Binary.lean
+index 7d50ddb..3d22458 100644
+--- a/FloatSpec/src/IEEE754/Binary.lean
++++ b/FloatSpec/src/IEEE754/Binary.lean
+@@ -32,14 +32,14 @@ def FF2SF (x : FullFloat) : StandardFloat :=
+ -- Conversion from FullFloat to real number
+ def FF2R (beta : Int) (x : FullFloat) : ℝ :=
+   match x with
+-  | FullFloat.F754_finite s m e => 
++  | FullFloat.F754_finite s m e =>
+     F2R (FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FlocqFloat beta)
+   | _ => 0
+ 
+ -- Conversion from StandardFloat to real number
+ def SF2R (beta : Int) (x : StandardFloat) : ℝ :=
+   match x with
+-  | StandardFloat.S754_finite s m e => 
++  | StandardFloat.S754_finite s m e =>
+     F2R (FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FlocqFloat beta)
+   | _ => 0
+ 
+@@ -127,7 +127,7 @@ variable [Prec_lt_emax prec emax]
+ -- IEEE 754 binary format
+ structure Binary754 where
+   val : FullFloat
+-  valid : is_finite_FF val = true → 
++  valid : is_finite_FF val = true →
+     -- Valid range and precision constraints
+     True
+ 
+@@ -161,14 +161,14 @@ def rnd_of_mode (mode : RoundingMode) : ℝ → Int := by
+ 
+ -- Binary format properties
+ theorem binary_add_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
+-  FF2R 2 (binary_add x y).val = 
+-  round 2 (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) 
++  FF2R 2 (binary_add x y).val =
++  round 2 (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+     (FF2R 2 x.val + FF2R 2 y.val) := by
+   sorry
+ 
+ theorem binary_mul_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
+-  FF2R 2 (binary_mul x y).val = 
+-  round 2 (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) 
++  FF2R 2 (binary_mul x y).val =
++  round 2 (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+     (FF2R 2 x.val * FF2R 2 y.val) := by
+   sorry
+ 
+@@ -176,4 +176,4 @@ theorem binary_mul_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
+ def Binary16 := Binary754 11 15
+ def Binary32 := Binary754 24 127
+ def Binary64 := Binary754 53 1023
+-def Binary128 := Binary754 113 16383
+\ No newline at end of file
++def Binary128 := Binary754 113 16383

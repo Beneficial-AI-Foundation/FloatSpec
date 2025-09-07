@@ -1,0 +1,27 @@
+commit 06287faca48ddfe92fbcfeb343cfff9aef752716
+Author:     Lord-Van <2200017789@stu.pku.edu.cn>
+AuthorDate: Wed Aug 13 18:33:46 2025 -0400
+Commit:     Lord-Van <2200017789@stu.pku.edu.cn>
+CommitDate: Wed Aug 13 18:33:46 2025 -0400
+
+    Refactor Float_prop.lean to remove Hoare triple specifications
+    
+    This commit removes the experimental Hoare triple specification approach
+    from Float_prop.lean and returns to direct Lean theorem formulations.
+    The change simplifies the codebase and aligns better with standard
+    Lean mathematical proof practices.
+    
+    Key changes:
+    - Removed Std.Do.Triple and mvcgen dependencies
+    - Converted Hoare triple specifications back to standard theorems
+    - Began implementation of core float properties including mag function
+    - Started proper Rcompare_F2R theorem implementation
+    - Updated CLAUDE.md with completed module status
+    
+    This refactoring makes the code more maintainable and closer to the
+    original Coq Flocq library structure while leveraging Lean's native
+    proof capabilities.
+    
+    🤖 Generated with [Claude Code](https://claude.ai/code)
+    
+    Co-Authored-By: Claude <noreply@anthropic.com>

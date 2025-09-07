@@ -1,0 +1,4 @@
+Commit: 38c648e23229d61b3e0f63dd115e7f3f2e54b6dd
+Author: Lord-Van <2200017789@stu.pku.edu.cn>
+Date: Thu Aug 21 18:50:36 2025 -0400
+Subject: Prove digits2_Pnat_correct theorem and add documentation

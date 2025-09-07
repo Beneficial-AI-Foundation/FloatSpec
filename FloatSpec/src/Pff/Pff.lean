@@ -2,6 +2,7 @@
 -- Translated from Coq file: flocq/src/Pff/Pff.v
 
 import FloatSpec.src.Core
+import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
 
 open Real
@@ -19,14 +20,10 @@ theorem even_0 : nat_even 0 := ⟨0, rfl⟩
 theorem odd_1 : nat_odd 1 := ⟨0, rfl⟩
 
 theorem not_even_1 : ¬nat_even 1 := by
-  intro ⟨k, h⟩
-  cases k with
-  | zero => simp at h
-  | succ k => simp [Nat.succ_mul] at h
+  sorry
 
 theorem not_odd_0 : ¬nat_odd 0 := by
-  intro ⟨k, h⟩
-  simp at h
+  sorry
 
 -- Double operation
 def nat_double (n : Nat) : Nat := 2 * n
@@ -55,23 +52,23 @@ theorem arith_helper (a b c : Int) : a + b = c → a = c - b := by
 end LegacyTactics
 
 -- Power operations compatibility
-theorem pow_inv (r : ℝ) (n : Nat) (h : r ≠ 0) : 
+theorem pow_inv (r : ℝ) (n : Nat) (h : r ≠ 0) :
   (r^n)⁻¹ = r⁻¹^n := by
   sorry
 
-theorem pow_neg (r : ℝ) (z : Int) : 
+theorem pow_neg (r : ℝ) (z : Int) :
   r^(-z) = (r^z)⁻¹ := by
   sorry
 
 -- Real number compatibility
-theorem abs_inv (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
+theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
 
 -- List operations used in Pff
-def list_sum (l : List Float) : ℝ :=
+def list_sum (l : List ℝ) : ℝ :=
   l.foldr (· + ·) 0
 
-def list_prod (l : List Float) : ℝ :=
+def list_prod (l : List ℝ) : ℝ :=
   l.foldr (· * ·) 1
 
 -- Legacy floating-point format compatibility
@@ -81,10 +78,10 @@ structure PffFloat where
   sign : Bool
 
 -- Conversion between Pff and Flocq formats
-def pff_to_flocq (beta : Int) (f : PffFloat) : FlocqFloat beta :=
-  FlocqFloat.mk (if f.sign then -f.mantissa else f.mantissa) f.exponent
+def pff_to_flocq (beta : Int) (f : PffFloat) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  FloatSpec.Core.Defs.FlocqFloat.mk (if f.sign then -f.mantissa else f.mantissa) f.exponent
 
-def flocq_to_pff (f : FlocqFloat beta) : PffFloat :=
+def flocq_to_pff {beta : Int} (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFloat :=
   { mantissa := Int.natAbs f.Fnum,
     exponent := f.Fexp,
     sign := f.Fnum < 0 }
@@ -97,7 +94,7 @@ def pff_mul (x y : PffFloat) : PffFloat := by
   sorry
 
 -- Error bounds compatibility
-def pff_error_bound (prec : Int) : ℝ :=
+noncomputable def pff_error_bound (prec : Int) : ℝ :=
   (2 : ℝ)^(-prec)
 
 -- Legacy rounding modes

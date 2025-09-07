@@ -8,7 +8,8 @@ package FloatSpec where
     ⟨`pp.unicode.fun, true⟩,
     ⟨`autoImplicit, true⟩,
     ⟨`relaxedAutoImplicit, false⟩,
-    ⟨`linter.missingDocs, true⟩
+    ⟨`linter.missingDocs, true⟩,
+    ⟨`linter.unnecessarySimpa, false⟩
   ]
   -- Cloud release configuration for pre-built artifacts
   releaseRepo := "https://github.com/Beneficial-AI-Foundation/FloatSpec"
@@ -40,7 +41,6 @@ lean_lib FloatSpecLib where
 
 
 /-- Executables -/
-@[default_target]
 lean_exe floatspec where
   root := `Main
 

@@ -1,0 +1,2178 @@
+diff --git a/FloatSpec/src/Core/Digits.lean b/FloatSpec/src/Core/Digits.lean
+index 9fc0d5c..f804d42 100644
+--- a/FloatSpec/src/Core/Digits.lean
++++ b/FloatSpec/src/Core/Digits.lean
+@@ -41,18 +41,53 @@ def digits2_Pnat : Nat → Id Nat
+     let prev ← digits2_Pnat ((n + 1) / 2)
+     pure (1 + prev)
+ 
+-/-- Correctness of binary bit count -/
++/-- Correctness of binary bit count
++
++Coq theorem and proof:
++```coq
++Theorem digits2_Pnat_correct :
++  forall n,
++  let d := digits2_Pnat n in
++  (Zpower_nat 2 d <= Zpos n < Zpower_nat 2 (S d))%Z.
++Proof.
++intros n d. unfold d. clear.
++assert (Hp: forall m, (Zpower_nat 2 (S m) = 2 * Zpower_nat 2 m)%Z) by easy.
++induction n ; simpl digits2_Pnat.
++rewrite Zpos_xI, 2!Hp.
++lia.
++rewrite (Zpos_xO n), 2!Hp.
++lia.
++now split.
++Qed.
++```
++-/
+ theorem digits2_Pnat_correct (n : Nat) :
+     ⦃⌜n > 0⌝⦄
+     digits2_Pnat n
+     ⦃⇓d => ⌜2 ^ d ≤ n ∧ n < 2 ^ (d + 1)⌝⦄ := by
+-  sorry  -- TODO: Requires strong induction on natural numbers with binary representation
++  -- For now, leave as sorry as this requires complex induction
++  -- The proof would involve showing that the recursive division by 2
++  -- correctly computes the number of bits needed
++  sorry
+ 
+ /-- Extract the k-th digit of a number n in the given radix -/
+ def Zdigit (n k : Int) : Id Int :=
+   pure (if k ≥ 0 then (n / (beta ^ k.natAbs)) % beta else 0)
+ 
+-/-- Digits with negative index are zero -/
++/-- Digits with negative index are zero
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_lt :
++  forall n k,
++  (k < 0)%Z ->
++  Zdigit n k = Z0.
++Proof.
++intros n [|k|k] Hk ; try easy.
++now case n.
++Qed.
++```
++-/
+ theorem Zdigit_lt (n k : Int) :
+     ⦃⌜k < 0⌝⦄
+     Zdigit beta n k
+@@ -61,7 +96,20 @@ theorem Zdigit_lt (n k : Int) :
+   unfold Zdigit
+   simp [show ¬(k ≥ 0) from not_le.mpr hk]
+ 
+-/-- Digit of zero is always zero -/
++/-- Digit of zero is always zero
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_0 :
++  forall k, Zdigit 0 k = Z0.
++Proof.
++intros k.
++unfold Zdigit.
++rewrite Zquot_0_l.
++apply Zrem_0_l.
++Qed.
++```
++-/
+ theorem Zdigit_0 (k : Int) :
+     ⦃⌜True⌝⦄
+     Zdigit beta 0 k
+@@ -70,7 +118,21 @@ theorem Zdigit_0 (k : Int) :
+   unfold Zdigit
+   split <;> simp
+ 
+-/-- Digit of opposite number -/
++/-- Digit of opposite number
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_opp :
++  forall n k,
++  Zdigit (-n) k = Z.opp (Zdigit n k).
++Proof.
++intros n k.
++unfold Zdigit.
++rewrite Zquot_opp_l.
++apply Zrem_opp_l.
++Qed.
++```
++-/
+ theorem Zdigit_opp (n k : Int) :
+     ⦃⌜True⌝⦄
+     Zdigit beta (-n) k
+@@ -80,10 +142,41 @@ theorem Zdigit_opp (n k : Int) :
+   unfold Zdigit
+   use (if k ≥ 0 then (n / (beta ^ k.natAbs)) % beta else 0)
+   constructor
+-  · simp
++  · rfl
+   · simp
+ 
+-/-- Digit is zero for large indices -/
++/-- Digit is zero for large indices
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_ge_Zpower_pos :
++  forall e n,
++  (0 <= n < Zpower beta e)%Z ->
++  forall k, (e <= k)%Z -> Zdigit n k = Z0.
++Proof.
++intros e n Hn k Hk.
++unfold Zdigit.
++rewrite Z.quot_small.
++apply Zrem_0_l.
++split.
++apply Hn.
++apply Z.lt_le_trans with (1 := proj2 Hn).
++replace k with (e + (k - e))%Z by ring.
++rewrite Zpower_plus.
++rewrite <- (Zmult_1_r (beta ^ e)) at 1.
++apply Zmult_le_compat_l.
++apply (Zlt_le_succ 0).
++apply Zpower_gt_0.
++now apply Zle_minus_le_0.
++apply Zlt_le_weak.
++now apply Z.le_lt_trans with n.
++generalize (Z.le_lt_trans _ _ _ (proj1 Hn) (proj2 Hn)).
++clear.
++now destruct e as [|e|e].
++now apply Zle_minus_le_0.
++Qed.
++```
++-/
+ theorem Zdigit_ge_Zpower_pos (n e : Int) :
+     ⦃⌜0 ≤ n ∧ n < beta ^ e.natAbs ∧ 0 ≤ e⌝⦄
+     Zdigit beta n e
+@@ -97,52 +190,261 @@ theorem Zdigit_ge_Zpower_pos (n e : Int) :
+     · exact hn_bound
+   simp [this]
+ 
+-/-- Digit is zero for large indices (general case) -/
++/-- Digit is zero for large indices (general case)
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_ge_Zpower :
++  forall e n,
++  (Z.abs n < Zpower beta e)%Z ->
++  forall k, (e <= k)%Z -> Zdigit n k = Z0.
++Proof.
++intros e n Hn k Hk.
++destruct (Zle_or_lt 0 n) as [H|H].
++apply Zdigit_ge_Zpower_pos.
++now split.
++exact Hk.
++destruct (Zle_or_lt 0 k) as [H0|H0].
++unfold Zdigit.
++rewrite Z.quot_small.
++apply Zrem_0_l.
++split.
++apply Z.opp_le_mono in Hn.
++rewrite Z.opp_involutive in Hn.
++apply Zle_trans with (2 := Hn).
++apply Zopp_le_cancel.
++rewrite Z.opp_involutive.
++generalize (Zpower_ge_0 beta e).
++clear -H ; lia.
++apply Z.opp_lt_mono in Hn.
++rewrite Z.opp_involutive in Hn.
++apply Z.lt_le_trans with (1 := Hn).
++apply Zpower_le.
++exact Hk.
++now rewrite Zdigit_lt.
++Qed.
++```
++-/
+ theorem Zdigit_ge_Zpower (n e : Int) :
+     ⦃⌜Int.natAbs n < beta ^ e.natAbs ∧ 0 ≤ e⌝⦄
+     Zdigit beta n e
+-    ⦃⇓result => ⌜Int.natAbs result ≤ Int.natAbs n / beta ^ e.natAbs⌝⦄ := by
+-  sorry  -- This proof requires careful analysis of integer division and modulo
+-
+-/-- Non-zero digit exists for positive numbers -/
++    ⦃⇓result => ⌜result = 0⌝⦄ := by
++  intro ⟨hn_bound, he_pos⟩
++  -- By the bound on |n|, we know the digit at position e is 0
++  -- This is because n is too small to have a non-zero digit at that position
++  sorry  -- Complex proof involving integer division properties
++
++/-- Non-zero digit exists for positive numbers
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_not_0_pos :
++  forall n, (0 < n)%Z ->
++  exists k, (0 <= k)%Z /\ Zdigit n k <> Z0.
++Proof.
++intros n Hn.
++revert Hn.
++pattern n ; apply Zlt_0_ind.
++clear n.
++intros n IHn _.
++case_eq (Zdigit n 0).
++intros H.
++destruct (Zle_lt_or_eq 0 (n / radix_val beta))%Z.
++apply Z_div_pos.
++now apply Zlt_gt.
++apply Zle_refl.
++elim (IHn (n / radix_val beta)%Z).
++intros k Hk.
++exists (Zsucc k).
++split.
++apply Zle_le_succ, proj1 Hk.
++intros H'.
++unfold Zdigit in H'.
++rewrite Zquot_Zquot in H'.
++rewrite Zplus_comm in H'.
++rewrite Zpower_plus in H'.
++change (Zpower beta 1) with (radix_val beta) in H'.
++apply (Zrem_lt (Z.quot n (radix_val beta)) (radix_val beta)) in H'.
++exact H'.
++now apply Zlt_gt.
++apply Zle_refl.
++easy.
++apply Zdiv_lt_upper_bound.
++now apply Zlt_gt.
++pattern n at 1 ; rewrite <- Zrem_Zquot.
++apply Zplus_lt_compat_r.
++rewrite <- H.
++apply Zrem_lt.
++now apply Zlt_gt.
++exact H0.
++intros p Hp.
++exists 0%Z.
++easy.
++intros p Hp.
++exists 0%Z.
++easy.
++Qed.
++```
++-/
+ theorem Zdigit_not_0_pos (n : Int) :
+     ⦃⌜0 < n⌝⦄
+     Zdigit beta n 0
+     ⦃⇓result => ⌜∃ k, 0 ≤ k ∧ Id.run (Zdigit beta n k) ≠ 0⌝⦄ := by
+-  sorry  -- This needs more work to show n itself is non-zero when n > 0
+-
+-/-- Non-zero digit exists for non-zero numbers -/
++  sorry  -- Requires strong induction on positive integers
++
++/-- Non-zero digit exists for non-zero numbers
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_not_0 :
++  forall n, n <> Z0 ->
++  exists k, (0 <= k)%Z /\ Zdigit n k <> Z0.
++Proof.
++intros n Hn.
++destruct (Zle_or_lt 0 n) as [H|H].
++destruct (Zle_lt_or_eq _ _ H) as [H'|H'].
++now apply Zdigit_not_0_pos.
++now elim Hn.
++destruct (Zdigit_not_0_pos (-n)%Z) as [k Hk].
++now apply Zopp_lt_cancel.
++exists k.
++rewrite Zdigit_opp.
++intros H'.
++apply -> Z.opp_eq_0_iff in H'.
++exact (proj2 Hk H').
++Qed.
++```
++-/
+ theorem Zdigit_not_0 (n : Int) :
+     ⦃⌜n ≠ 0⌝⦄
+     Zdigit beta n 0
+     ⦃⇓_ => ⌜∃ k, 0 ≤ k ∧ Id.run (Zdigit beta n k) ≠ 0⌝⦄ := by
+-  intro hn
+-  unfold Zdigit
+-  simp
+-  sorry  -- Similar to above
+-
+-/-- Digit of multiplied number -/
++  sorry  -- Extends Zdigit_not_0_pos to negative numbers using Zdigit_opp
++
++/-- Digit of multiplied number
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_mul_pow :
++  forall n k k', (0 <= k')%Z ->
++  Zdigit (n * Zpower beta k') k = Zdigit n (k - k').
++Proof.
++intros n k k' Hk'.
++destruct (Zle_or_lt k' k) as [H|H].
++revert k H.
++pattern k' ; apply Zlt_0_ind with (2 := Hk').
++clear k' Hk'.
++intros k' IHk' Hk' k H.
++unfold Zdigit.
++apply (f_equal (fun x => Z.rem x beta)).
++pattern k at 1 ; replace k with (k - k' + k')%Z by ring.
++rewrite Zpower_plus with (2 := Hk').
++apply Zquot_mult_cancel_r.
++apply Zgt_not_eq.
++now apply Zpower_gt_0.
++now apply Zle_minus_le_0.
++destruct (Zle_or_lt 0 k) as [H0|H0].
++rewrite (Zdigit_lt n) by lia.
++unfold Zdigit.
++replace k' with (k' - k + k)%Z by ring.
++rewrite Zpower_plus with (2 := H0).
++rewrite Zmult_assoc, Z_quot_mult.
++replace (k' - k)%Z with (k' - k - 1 + 1)%Z by ring.
++rewrite Zpower_exp by lia.
++rewrite Zmult_assoc.
++change (Zpower beta 1) with (beta * 1)%Z.
++rewrite Zmult_1_r.
++apply Z_rem_mult.
++apply Zgt_not_eq.
++now apply Zpower_gt_0.
++apply Zle_minus_le_0.
++now apply Zlt_le_weak.
++rewrite Zdigit_lt with (1 := H0).
++apply sym_eq.
++apply Zdigit_lt.
++lia.
++Qed.
++```
++-/
+ theorem Zdigit_mul_pow (n k l : Int) :
+     ⦃⌜0 ≤ l⌝⦄
+     Zdigit beta (n * beta ^ l.natAbs) k
+     ⦃⇓result => ⌜∃ shifted, Zdigit beta n (k - l) = pure shifted ∧ result = shifted⌝⦄ := by
+   sorry
+ 
+-/-- Digit of divided number -/
++/-- Digit of divided number
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_div_pow :
++  forall n k k', (0 <= k)%Z -> (0 <= k')%Z ->
++  Zdigit (Z.quot n (Zpower beta k')) k = Zdigit n (k + k').
++Proof.
++intros n k k' Hk Hk'.
++unfold Zdigit.
++rewrite Zquot_Zquot.
++rewrite Zplus_comm.
++now rewrite Zpower_plus.
++Qed.
++```
++-/
+ theorem Zdigit_div_pow (n k l : Int) :
+     ⦃⌜0 ≤ l ∧ 0 ≤ k⌝⦄
+     Zdigit beta (n / beta ^ l.natAbs) k
+     ⦃⇓result => ⌜∃ shifted, Zdigit beta n (k + l) = pure shifted ∧ result = shifted⌝⦄ := by
+   sorry
+ 
+-/-- Digit modulo power -/
++/-- Digit modulo power
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_mod_pow :
++  forall n k k', (k < k')%Z ->
++  Zdigit (Z.rem n (Zpower beta k')) k = Zdigit n k.
++Proof.
++intros n k k' Hk.
++destruct (Zle_or_lt 0 k) as [H|H].
++unfold Zdigit.
++rewrite <- 2!ZOdiv_mod_mult.
++apply (f_equal (fun x => Z.quot x (beta ^ k))).
++replace k' with (k + 1 + (k' - (k + 1)))%Z by ring.
++rewrite Zpower_exp by lia.
++rewrite Zmult_comm.
++rewrite Zpower_plus by easy.
++change (Zpower beta 1) with (beta * 1)%Z.
++rewrite Zmult_1_r.
++apply ZOmod_mod_mult.
++now rewrite 2!Zdigit_lt.
++Qed.
++```
++-/
+ theorem Zdigit_mod_pow (n k l : Int) :
+     ⦃⌜0 ≤ k ∧ k < l⌝⦄
+     Zdigit beta (n % beta ^ l.natAbs) k
+     ⦃⇓result => ⌜∃ orig, Zdigit beta n k = pure orig ∧ result = orig⌝⦄ := by
+   sorry
+ 
+-/-- Digit modulo power outside range -/
++/-- Digit modulo power outside range
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_mod_pow_out :
++  forall n k k', (0 <= k' <= k)%Z ->
++  Zdigit (Z.rem n (Zpower beta k')) k = Z0.
++Proof.
++intros n k k' Hk.
++unfold Zdigit.
++rewrite ZOdiv_small_abs.
++apply Zrem_0_l.
++apply Z.lt_le_trans with (Zpower beta k').
++rewrite <- (Z.abs_eq (beta ^ k')) at 2 by apply Zpower_ge_0.
++apply Zrem_lt.
++apply Zgt_not_eq.
++now apply Zpower_gt_0.
++now apply Zpower_le.
++Qed.
++```
++-/
+ theorem Zdigit_mod_pow_out (n k l : Int) :
+     ⦃⌜0 ≤ l ∧ l ≤ k⌝⦄
+     Zdigit beta (n % beta ^ l.natAbs) k
+@@ -156,14 +458,78 @@ def Zsum_digit (f : Int → Int) : Nat → Id Int
+     let prev ← Zsum_digit f n
+     pure (prev + f n * beta ^ n)
+ 
+-/-- Sum reconstructs from digits -/
++/-- Sum reconstructs from digits
++
++Coq theorem and proof:
++```coq
++Theorem Zsum_digit_digit :
++  forall n k,
++  Zsum_digit (Zdigit n) k = Z.rem n (Zpower beta (Z_of_nat k)).
++Proof.
++intros n.
++induction k.
++apply sym_eq.
++apply Z.rem_1_r.
++simpl Zsum_digit.
++rewrite IHk.
++unfold Zdigit.
++rewrite <- ZOdiv_mod_mult.
++rewrite <- (ZOmod_mod_mult n beta).
++rewrite Zmult_comm.
++replace (beta ^ Z_of_nat k * beta)%Z with (Zpower beta (Z_of_nat (S k))).
++rewrite Zplus_comm, Zmult_comm.
++apply sym_eq.
++apply Z.quot_rem'.
++rewrite inj_S.
++rewrite <- (Zmult_1_r beta) at 3.
++apply Zpower_plus.
++apply Zle_0_nat.
++easy.
++Qed.
++```
++-/
+ theorem Zsum_digit_digit (n : Int) (k : Nat) :
+     ⦃⌜True⌝⦄
+     Zsum_digit beta (fun i => Id.run (Zdigit beta n i)) k
+     ⦃⇓result => ⌜result = n % beta ^ k⌝⦄ := by
+   sorry
+ 
+-/-- Extensionality for digit functions -/
++/-- Extensionality for digit functions
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_ext :
++  forall n1 n2,
++  (forall k, (0 <= k)%Z -> Zdigit n1 k = Zdigit n2 k) ->
++  n1 = n2.
++Proof.
++intros n1 n2 H.
++rewrite <- (ZOmod_small_abs n1 (Zpower beta (Z.max (Z.abs n1) (Z.abs n2)))).
++rewrite <- (ZOmod_small_abs n2 (Zpower beta (Z.max (Z.abs n1) (Z.abs n2)))) at 2.
++replace (Z.max (Z.abs n1) (Z.abs n2)) with (Z_of_nat (Z.abs_nat (Z.max (Z.abs n1) (Z.abs n2)))).
++rewrite <- 2!Zsum_digit_digit.
++induction (Z.abs_nat (Z.max (Z.abs n1) (Z.abs n2))).
++easy.
++simpl.
++rewrite H, IHn.
++apply refl_equal.
++apply Zle_0_nat.
++rewrite inj_Zabs_nat.
++apply Z.abs_eq.
++apply Z.le_trans with (Z.abs n1).
++apply Zabs_pos.
++apply Z.le_max_l.
++apply Z.lt_le_trans with (Zpower beta (Z.abs n2)).
++apply Zpower_gt_id.
++apply Zpower_le.
++apply Z.le_max_r.
++apply Z.lt_le_trans with (Zpower beta (Z.abs n1)).
++apply Zpower_gt_id.
++apply Zpower_le.
++apply Z.le_max_l.
++Qed.
++```
++-/
+ theorem Zdigit_ext (n m : Int) :
+     ⦃⌜∀ k, 0 ≤ k → Id.run (Zdigit beta n k) = Id.run (Zdigit beta m k)⌝⦄
+     Zdigit beta n 0
+@@ -201,7 +567,45 @@ theorem Zdigit_plus (n m k : Int) :
+ def Zscale (n k : Int) : Id Int :=
+   pure (if 0 ≤ k then n * beta ^ k.natAbs else n / beta ^ (-k).natAbs)
+ 
+-/-- Scaling zero -/
++/-- Digit of scaled number
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_scale :
++  forall n k k', (0 <= k')%Z ->
++  Zdigit (Zscale n k) k' = Zdigit n (k' - k).
++Proof.
++intros n k k' Hk'.
++unfold Zscale.
++case Zle_bool_spec ; intros Hk.
++now apply Zdigit_mul_pow.
++apply Zdigit_div_pow with (1 := Hk').
++lia.
++Qed.
++```
++-/
++theorem Zdigit_scale (n k k' : Int) :
++    ⦃⌜0 ≤ k'⌝⦄
++    Zdigit beta (Id.run (Zscale beta n k)) k'
++    ⦃⇓result => ⌜∃ orig, Zdigit beta n (k' - k) = pure orig ∧ result = orig⌝⦄ := by
++  sorry
++
++/-- Scaling zero
++
++Coq theorem and proof:
++```coq
++Theorem Zscale_0 :
++  forall k,
++  Zscale 0 k = Z0.
++Proof.
++intros k.
++unfold Zscale.
++case Zle_bool.
++apply Zmult_0_l.
++apply Zquot_0_l.
++Qed.
++```
++-/
+ theorem Zscale_0 (k : Int) :
+     ⦃⌜True⌝⦄
+     Zscale beta 0 k
+@@ -236,7 +640,33 @@ def Zslice (n k1 k2 : Int) : Id Int := do
+   let scaled ← Zscale beta n (-k1)
+   pure (if 0 ≤ k2 then scaled % beta ^ k2.natAbs else 0)
+ 
+-/-- Digit of slice -/
++/-- Digit of slice
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_slice :
++  forall n k l m, (0 <= m)%Z ->
++  Zdigit (Zslice n k l) m =
++  if Zlt_bool m l then Zdigit n (k + m) else Z0.
++Proof.
++intros n k l m Hm.
++unfold Zslice.
++case Zle_bool_spec ; intros Hl.
++rewrite Zdigit_mod_pow.
++case Zlt_bool.
++apply Zdigit_scale.
++exact Hm.
++exact Hm.
++case Zlt_bool_spec ; intros Hl'.
++exact Hm.
++lia.
++rewrite Zdigit_0.
++case Zlt_bool.
++apply refl_equal.
++apply refl_equal.
++Qed.
++```
++-/
+ theorem Zdigit_slice (n k l m : Int) :
+     ⦃⌜0 ≤ m⌝⦄
+     Zdigit beta (Id.run (Zslice beta n k l)) m
+@@ -244,14 +674,49 @@ theorem Zdigit_slice (n k l m : Int) :
+                  else result = 0⌝⦄ := by
+   sorry
+ 
+-/-- Digit of slice outside range -/
++/-- Digit of slice outside range
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_slice_out :
++  forall n k l m, (l <= m)%Z ->
++  Zdigit (Zslice n k l) m = Z0.
++Proof.
++intros n k l m Hm.
++case (Zle_or_lt 0 m) ; intros Hm'.
++rewrite Zdigit_slice.
++rewrite Zlt_bool_false.
++apply refl_equal.
++exact Hm.
++exact Hm'.
++apply Zdigit_lt.
++exact Hm'.
++Qed.
++```
++-/
+ theorem Zdigit_slice_out (n k l m : Int) :
+     ⦃⌜l ≤ m⌝⦄
+     Zdigit beta (Id.run (Zslice beta n k l)) m
+     ⦃⇓result => ⌜result = 0⌝⦄ := by
+   sorry
+ 
+-/-- Zslice of zero is always zero -/
++/-- Zslice of zero is always zero
++
++Coq theorem and proof:
++```coq
++Theorem Zslice_0 :
++  forall k k',
++  Zslice 0 k k' = Z0.
++Proof.
++intros k k'.
++unfold Zslice.
++case Zle_bool.
++rewrite Zscale_0.
++apply Zrem_0_l.
++apply refl_equal.
++Qed.
++```
++-/
+ theorem Zslice_0 (k k' : Int) :
+     ⦃⌜True⌝⦄
+     Zslice beta 0 k k'
+@@ -260,14 +725,67 @@ theorem Zslice_0 (k k' : Int) :
+   unfold Zslice Zscale
+   simp
+ 
+-/-- Slicing preserves sign conditions -/
++/-- Slicing preserves sign conditions
++
++Coq theorem and proof:
++```coq
++Theorem Zsame_sign_slice :
++  forall n k l,
++  (0 <= n)%Z -> (0 <= k)%Z -> (0 <= l)%Z ->
++  (0 <= Zslice n k l)%Z.
++Proof.
++intros n k l Hn Hk Hl.
++unfold Zslice.
++case Zle_bool.
++apply Zrem_ge_0.
++apply Zpower_ge_0.
++apply Zsame_sign_scale.
++lia.
++apply Zsame_sign_scale.
++exact Hn.
++Qed.
++```
++-/
+ theorem Zsame_sign_slice (n k l : Int) :
+     ⦃⌜0 ≤ n ∧ 0 ≤ k ∧ 0 ≤ l⌝⦄
+     Zslice beta n k l
+     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
+   sorry  -- This proof requires analysis of modulo operations on non-negative integers
+ 
+-/-- Composition of Zslice operations -/
++/-- Composition of Zslice operations
++
++Coq theorem and proof:
++```coq
++Theorem Zslice_slice :
++  forall n k1 k2 k1' k2',
++  (0 <= k1')%Z -> (k1' <= k2)%Z ->
++  Zslice (Zslice n k1 k2) k1' k2' = Zslice n (k1 + k1') (Z.min (k2 - k1') k2').
++Proof.
++intros n k1 k2 k1' k2' Hk1' Hk2.
++destruct (Zle_or_lt 0 k2') as [Hk2'|Hk2'].
++2: now rewrite 2!Zslice_0.
++apply Zdigit_ext.
++intros k Hk.
++rewrite Zdigit_slice.
++case Zlt_bool_spec ; intros H.
++rewrite Zdigit_slice.
++rewrite Zdigit_slice.
++case Zlt_bool_spec ; intros H0.
++case Zlt_bool_spec ; intros H1.
++apply f_equal.
++ring.
++now rewrite Zdigit_slice_out.
++now rewrite Zdigit_slice_out with (1 := H0).
++exact Hk1'.
++now apply Zplus_le_0_compat.
++exact Hk.
++rewrite (Zdigit_slice_out n (k1 + k1')) with (2 := H).
++apply Zdigit_slice_out.
++lia.
++exact Hk.
++Qed.
++```
++-/
+ theorem Zslice_slice (n k1 k2 k1' k2' : Int) :
+     ⦃⌜0 ≤ k1' ∧ k1' ≤ k2⌝⦄
+     Zslice beta (Id.run (Zslice beta n k1 k2)) k1' k2'
+@@ -275,7 +793,23 @@ theorem Zslice_slice (n k1 k2 k1' k2' : Int) :
+                   result = inner_slice⌝⦄ := by
+   sorry
+ 
+-/-- Zslice and multiplication by power of beta -/
++/-- Zslice and multiplication by power of beta
++
++Coq theorem and proof:
++```coq
++Theorem Zslice_mul_pow :
++  forall n k k1 k2,
++  (0 <= k)%Z ->
++  Zslice (n * Zpower beta k) k1 k2 = Zslice n (k1 - k) k2.
++Proof.
++intros n k k1 k2 Hk.
++unfold Zslice.
++rewrite Zscale_mul_pow with (1 := Hk).
++ring_simplify (k1 - k + k)%Z.
++apply refl_equal.
++Qed.
++```
++-/
+ theorem Zslice_mul_pow (n k k1 k2 : Int) :
+     ⦃⌜0 ≤ k⌝⦄
+     Zslice beta (n * beta ^ k.natAbs) k1 k2
+@@ -283,7 +817,27 @@ theorem Zslice_mul_pow (n k k1 k2 : Int) :
+                   result = slice_shifted⌝⦄ := by
+   sorry
+ 
+-/-- Zslice and division by power of beta -/
++/-- Zslice and division by power of beta
++
++Coq theorem and proof:
++```coq
++Theorem Zslice_div_pow :
++  forall n k k1 k2,
++  (0 <= k)%Z -> (0 <= k1)%Z ->
++  Zslice (Z.quot n (Zpower beta k)) k1 k2 = Zslice n (k1 + k) k2.
++Proof.
++intros n k k1 k2 Hk Hk1.
++unfold Zslice.
++rewrite Zdigit_div_pow with (1 := Hk1) (2 := Hk).
++ring_simplify (- (k1 + k) + (k1 + k))%Z.
++case Zle_bool.
++apply f_equal.
++rewrite Zscale_0.
++apply Zdigit_0.
++apply refl_equal.
++Qed.
++```
++-/
+ theorem Zslice_div_pow (n k k1 k2 : Int) :
+     ⦃⌜0 ≤ k ∧ 0 ≤ k1⌝⦄
+     Zslice beta (n / beta ^ k.natAbs) k1 k2
+@@ -291,7 +845,23 @@ theorem Zslice_div_pow (n k k1 k2 : Int) :
+                   result = slice_shifted⌝⦄ := by
+   sorry
+ 
+-/-- Zslice and scaling -/
++/-- Zslice and scaling
++
++Coq theorem and proof:
++```coq
++Theorem Zslice_scale :
++  forall n k k1 k2,
++  (0 <= k1)%Z ->
++  Zslice (Zscale n k) k1 k2 = Zslice n (k1 - k) k2.
++Proof.
++intros n k k1 k2 Hk1.
++unfold Zslice.
++rewrite Zscale_scale.
++ring_simplify (- k1 + (k1 - k))%Z.
++apply refl_equal.
++Qed.
++```
++-/
+ theorem Zslice_scale (n k k1 k2 : Int) :
+     ⦃⌜0 ≤ k1⌝⦄
+     Zslice beta (Id.run (Zscale beta n k)) k1 k2
+@@ -299,7 +869,34 @@ theorem Zslice_scale (n k k1 k2 : Int) :
+                   result = slice_unscaled⌝⦄ := by
+   sorry
+ 
+-/-- Combined division and scaling for Zslice -/
++/-- Combined division and scaling for Zslice
++
++Coq theorem and proof:
++```coq
++Theorem Zslice_div_pow_scale :
++  forall n k k' k1 k2,
++  (0 <= k)%Z ->
++  Zslice (Z.quot n (Zpower beta k) * Zpower beta k') k1 k2 = Zslice n (k1 + k - k') k2.
++Proof.
++intros n k k' k1 k2 Hk.
++case (Zle_or_lt 0 k') ; intros Hk'.
++rewrite Zslice_mul_pow with (1 := Hk').
++rewrite Zslice_div_pow with (1 := Hk).
++ring.
++apply Zle_minus_le_0.
++exact Hk'.
++replace k' with (- (- k'))%Z by ring.
++rewrite <- Zpower_Zopp.
++rewrite <- Zquot_Zquot.
++2: apply Zgt_not_eq, Zpower_gt_0 ; lia.
++2: apply Zgt_not_eq, Zpower_gt_0 ; lia.
++rewrite Zslice_div_pow.
++ring.
++now apply Zlt_le_weak.
++lia.
++Qed.
++```
++-/
+ theorem Zslice_div_pow_scale (n k k' k1 k2 : Int) :
+     ⦃⌜0 ≤ k⌝⦄
+     Zslice beta ((n / beta ^ k.natAbs) * beta ^ k'.natAbs) k1 k2
+@@ -307,7 +904,25 @@ theorem Zslice_div_pow_scale (n k k' k1 k2 : Int) :
+                   result = slice_combined⌝⦄ := by
+   sorry
+ 
+-/-- Addition and Zslice interaction -/
++/-- Addition and Zslice interaction
++
++Coq theorem and proof:
++```coq
++Theorem Zplus_slice :
++  forall n m k l,
++  (0 <= k)%Z -> (0 <= l)%Z ->
++  (Zslice (n + m) k l = Zslice n k l + Zslice m k l \/
++   Zslice (n + m) k l = (Zslice n k l + Zslice m k l + 1) %% Zpower beta l)%Z.
++Proof.
++intros n m k l Hk Hl.
++unfold Zslice.
++case Zle_bool_spec ; intros H.
++2: left ; now rewrite 3!Zrem_0_r.
++apply Zplus_slice_aux.
++exact Hl.
++Qed.
++```
++-/
+ theorem Zplus_slice (n m k l : Int) :
+     ⦃⌜0 ≤ k ∧ 0 ≤ l⌝⦄
+     Zslice beta (n + m) k l
+@@ -334,118 +949,783 @@ def Zdigits (n : Int) : Id Int :=
+            let p := (-n).natAbs
+            Zdigits_aux beta (-n) 1 p.succ
+ 
+-/-- Correctness of digit count bounds -/
++/-- Correctness of digit count bounds
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_correct :
++  forall n,
++  (Zpower beta (Zdigits n - 1) <= Z.abs n < Zpower beta (Zdigits n))%Z.
++Proof.
++cut (forall p, Zpower beta (Zdigits (Zpos p) - 1) <= Zpos p < Zpower beta (Zdigits (Zpos p)))%Z.
++intros H [|n|n] ; try exact (H n).
++now split.
++intros n.
++simpl.
++(* Uses auxiliary induction on positive numbers with radix representation *)
++assert (U: (Zpos n < Zpower beta (Z_of_nat (S (digits2_Pnat n))))%Z).
++apply Z.lt_le_trans with (1 := proj2 (digits2_Pnat_correct n)).
++rewrite Zpower_Zpower_nat.
++rewrite Zabs_nat_Z_of_nat.
++induction (S (digits2_Pnat n)).
++easy.
++rewrite 2!(Zpower_nat_S).
++apply Zmult_le_compat with (2 := IHn0).
++apply Zle_bool_imp_le.
++apply beta.
++easy.
++rewrite <- (Zabs_nat_Z_of_nat n0).
++rewrite <- Zpower_Zpower_nat.
++apply (Zpower_ge_0 (Build_radix 2 (refl_equal true))).
++apply Zle_0_nat.
++apply Zle_0_nat.
++(* Further details of induction proof *)
++revert U.
++rewrite inj_S.
++unfold Z.succ.
++generalize (digits2_Pnat n).
++intros u U.
++pattern (radix_val beta) at 2 4 ; replace (radix_val beta) with (Zpower beta 1) by apply Zmult_1_r.
++assert (V: (Zpower beta (1 - 1) <= Zpos n)%Z).
++now apply (Zlt_le_succ 0).
++generalize (conj V U).
++clear.
++generalize (Z.le_refl 1).
++generalize 1%Z at 2 3 5 6 7 9 10.
++(* Induction on auxiliary digits computation *)
++induction u.
++easy.
++rewrite inj_S; unfold Z.succ.
++simpl Zdigits_aux.
++intros v Hv U.
++case Zlt_bool_spec ; intros K.
++now split.
++pattern (radix_val beta) at 2 5 ; replace (radix_val beta) with (Zpower beta 1) by apply Zmult_1_r.
++rewrite <- Zpower_plus.
++rewrite Zplus_comm.
++apply IHu.
++clear -Hv ; lia.
++split.
++now ring_simplify (1 + v - 1)%Z.
++now rewrite Zplus_assoc.
++easy.
++apply Zle_succ_le with (1 := Hv).
++Qed.
++```
++-/
+ theorem Zdigits_correct (n : Int) :
+     ⦃⌜n ≠ 0⌝⦄
+     Zdigits beta n
+     ⦃⇓d => ⌜beta ^ (d - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ d.natAbs⌝⦄ := by
+   sorry
+ 
+-/-- Unique characterization of digit count -/
++/-- Unique characterization of digit count
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_unique :
++  forall n d,
++  (Zpower beta (d - 1) <= Z.abs n < Zpower beta d)%Z ->
++  Zdigits n = d.
++Proof.
++intros n d Hd.
++assert (Hd' := Zdigits_correct n).
++apply Zle_antisym.
++apply (Zpower_lt_Zpower beta).
++now apply Z.le_lt_trans with (Z.abs n).
++apply (Zpower_lt_Zpower beta).
++now apply Z.le_lt_trans with (Z.abs n).
++Qed.
++```
++-/
+ theorem Zdigits_unique (n e : Int) :
+     ⦃⌜n ≠ 0 ∧ beta ^ (e - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ e.natAbs⌝⦄
+     Zdigits beta n
+     ⦃⇓d => ⌜d = e⌝⦄ := by
+   sorry
+ 
+-/-- Digit count of absolute value -/
++/-- Digit count of absolute value
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_abs :
++  forall n, Zdigits (Z.abs n) = Zdigits n.
++Proof.
++intros [|p|p] ; apply refl_equal.
++Qed.
++```
++-/
+ theorem Zdigits_abs (n : Int) :
+     ⦃⌜True⌝⦄
+     Zdigits beta (Int.natAbs n)
+     ⦃⇓d => ⌜∃ dn, Zdigits beta n = pure dn ∧ d = dn⌝⦄ := by
++  -- This proof requires showing that Zdigits ignores the sign of the input
++  -- Since Int.natAbs always returns a non-negative value, we need to show
++  -- that Zdigits beta (Int.natAbs n) = Zdigits beta |n| = Zdigits beta n
+   sorry
+ 
+-/-- Digit count of opposite -/
++/-- Digit count of opposite
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_opp :
++  forall n, Zdigits (-n) = Zdigits n.
++Proof.
++intros n.
++rewrite <- (Zdigits_abs n).
++apply f_equal.
++apply Zabs_opp.
++Qed.
++```
++-/
+ theorem Zdigits_opp (n : Int) :
+     ⦃⌜True⌝⦄
+     Zdigits beta (-n)
+     ⦃⇓d => ⌜∃ dn, Zdigits beta n = pure dn ∧ d = dn⌝⦄ := by
+-  sorry
+-
+-/-- Digit count with conditional opposite -/
++  sorry  -- This proof requires showing Zdigits ignores sign
++
++/-- Digit count with conditional opposite
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_cond_Zopp :
++  forall b n, Zdigits (cond_Zopp b n) = Zdigits n.
++Proof.
++intros [|] n.
++apply Zdigits_opp.
++apply refl_equal.
++Qed.
++```
++-/
+ theorem Zdigits_cond_Zopp (b : Bool) (n : Int) :
+     ⦃⌜True⌝⦄
+     Zdigits beta (if b then -n else n)
+     ⦃⇓d => ⌜∃ dn, Zdigits beta n = pure dn ∧ d = dn⌝⦄ := by
+   sorry
+ 
+-/-- Non-zero numbers have positive digit count -/
++/-- Helper lemma: Zdigits_aux maintains lower bound -/
++private lemma Zdigits_aux_ge (nb pow : Int) (fuel : Nat) :
++    nb ≥ 0 → Id.run (Zdigits_aux beta nb pow fuel) ≥ nb := by
++  intro h_nb_ge
++  induction fuel generalizing nb pow with
++  | zero => simp [Zdigits_aux]
++  | succ n ih =>
++    simp [Zdigits_aux]
++    split
++    · -- Case: nb < pow
++      simp
++    · -- Case: nb ≥ pow
++      have h_next : nb + 1 ≥ 0 := Int.add_nonneg h_nb_ge (by omega)
++      have ih_result := ih (nb + 1) (beta * pow) h_next
++      omega
++
++/-- Non-zero numbers have positive digit count
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_gt_0 :
++  forall n, n <> Z0 -> (0 < Zdigits n)%Z.
++Proof.
++intros n Zn.
++rewrite <- (Zdigits_abs n).
++assert (Hn: (0 < Z.abs n)%Z).
++destruct n ; [|easy|easy].
++now elim Zn.
++destruct (Z.abs n) as [|p|p] ; try easy ; clear.
++simpl.
++generalize 1%Z (radix_val beta) (refl_equal Lt : (0 < 1)%Z).
++induction (digits2_Pnat p).
++easy.
++simpl.
++intros.
++case Zlt_bool.
++exact H.
++apply IHn.
++now apply Zlt_lt_succ.
++Qed.
++```
++-/
+ theorem Zdigits_gt_0 (n : Int) :
+     ⦃⌜n ≠ 0⌝⦄
+     Zdigits beta n
+     ⦃⇓result => ⌜0 < result⌝⦄ := by
+   sorry
+ 
+-/-- Digit count is non-negative -/
++/-- Digit count is non-negative
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_ge_0 :
++  forall n, (0 <= Zdigits n)%Z.
++Proof.
++intros n.
++destruct (Z.eq_dec n 0) as [H|H].
++now rewrite H.
++apply Zlt_le_weak.
++now apply Zdigits_gt_0.
++Qed.
++```
++-/
+ theorem Zdigits_ge_0 (n : Int) :
+     ⦃⌜True⌝⦄
+     Zdigits beta n
+     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
+   sorry
+ 
+-/-- Digits beyond the representation are zero -/
++/-- Digits beyond the representation are zero
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_out :
++  forall n k, (Zdigits n <= k)%Z -> Zdigit n k = Z0.
++Proof.
++intros n k Hk.
++case (Zle_or_lt 0 k) ; intros Hk'.
++apply Zdigit_ge_Zpower.
++now apply Zpower_gt_Zdigits.
++apply Zdigit_lt.
++exact Hk'.
++Qed.
++```
++-/
+ theorem Zdigit_out (n k : Int) :
+     ⦃⌜∃ digits_val, Zdigits beta n = pure digits_val ∧ digits_val ≤ k⌝⦄
+     Zdigit beta n k
+     ⦃⇓result => ⌜result = 0⌝⦄ := by
+   sorry
+ 
+-/-- Highest digit is non-zero -/
++/-- Highest digit is non-zero
++
++Coq theorem and proof:
++```coq
++Theorem Zdigit_digits :
++  forall n, n <> Z0 -> Zdigit n (Zdigits n - 1) <> Z0.
++Proof.
++intros n Zn.
++rewrite <- (Zdigits_abs n).
++rewrite <- Zabs_eq_0 in Zn.
++generalize (Zabs_pos n).
++pattern (Z.abs n) at 1 4 ; replace (Z.abs n) with (Z.abs n + 0)%Z by ring.
++generalize (Z.abs n) (Zdigits_correct (Z.abs n)).
++intros m H Hm.
++pattern m ; apply Zlt_0_ind.
++clear m H Hm.
++intros m Hm IHm (H1, H2).
++rewrite <- (Zdigits_abs m) in H2.
++rewrite <- (Zdigits_abs m).
++unfold Zdigit.
++rewrite ZOdiv_small.
++intros H.
++cut (m = 0)%Z. lia.
++apply <- Zplus_le_0_compat in H1.
++2: apply Zpower_ge_0.
++apply Zle_antisym.
++apply H1.
++apply H.
++apply H1.
++Qed.
++```
++-/
+ theorem Zdigit_digits (n : Int) :
+     ⦃⌜n ≠ 0⌝⦄
+     Zdigits beta n
+     ⦃⇓d => ⌜Id.run (Zdigit beta n (d - 1)) ≠ 0⌝⦄ := by
+   sorry
+ 
+-/-- Zdigits and Zslice relationship -/
++/-- Zdigits and Zslice relationship
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_slice :
++  forall n k l,
++  (0 <= k)%Z -> (0 < l)%Z ->
++  (Zdigits (Zslice n k l) <= l)%Z.
++Proof.
++intros n k l Hk Hl.
++destruct (Zdigits_correct (Zslice n k l)) as (H1,H2).
++apply Zpower_lt_Zpower with beta.
++exact H2.
++apply Z.le_refl.
++rewrite Zpower_Zpower.
++apply Z_mod_lt.
++apply Z.gt_lt.
++apply Zpower_gt_0.
++lia.
++Qed.
++```
++-/
+ theorem Zdigits_slice (n k l : Int) :
+     ⦃⌜0 ≤ k ∧ 0 < l⌝⦄
+     Zdigits beta (Id.run (Zslice beta n k l))
+     ⦃⇓d => ⌜d ≤ l⌝⦄ := by
+   sorry
+ 
+-/-- Digit count after multiplication by power -/
++/-- Digit count after multiplication by power
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_mult_Zpower :
++  forall m e,
++  m <> Z0 -> (0 <= e)%Z ->
++  Zdigits (m * Zpower beta e) = (Zdigits m + e)%Z.
++Proof.
++intros m e Hm He.
++assert (H := Zdigits_correct m).
++apply Zdigits_unique.
++rewrite Z.abs_mul, Z.abs_pow, (Z.abs_eq beta).
++2: now apply Zlt_le_weak, radix_gt_0.
++split.
++replace (Zdigits m + e - 1)%Z with (Zdigits m - 1 + e)%Z by ring.
++rewrite Zpower_plus with (2 := He).
++apply Zmult_le_compat_r.
++apply H.
++apply Zpower_ge_0.
++now apply Zlt_0_le_0_pred, Zdigits_gt_0.
++rewrite Zpower_plus with (2 := He).
++apply Zmult_lt_compat_r.
++now apply Zpower_gt_0.
++apply H.
++now apply Zlt_le_weak, Zdigits_gt_0.
++Qed.
++```
++-/
+ theorem Zdigits_mult_Zpower (n k : Int) :
+     ⦃⌜n ≠ 0 ∧ 0 ≤ k⌝⦄
+     Zdigits beta (n * beta ^ k.natAbs)
+     ⦃⇓d => ⌜∃ dn, Zdigits beta n = pure dn ∧ d = dn + k⌝⦄ := by
+   sorry
+ 
+-/-- Digit count of powers of beta -/
++/-- Digit count of powers of beta
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_Zpower :
++  forall e,
++  (0 <= e)%Z ->
++  Zdigits (Zpower beta e) = (e + 1)%Z.
++Proof.
++intros e He.
++rewrite <- (Zmult_1_l (Zpower beta e)).
++rewrite Zdigits_mult_Zpower ; try easy.
++apply Zplus_comm.
++Qed.
++```
++-/
+ theorem Zdigits_Zpower (k : Int) :
+     ⦃⌜0 ≤ k⌝⦄
+     Zdigits beta (beta ^ k.natAbs)
+     ⦃⇓d => ⌜d = k + 1⌝⦄ := by
+   sorry
+ 
+-/-- Monotonicity of digit count -/
++/-- Monotonicity of digit count
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_le :
++  forall n m,
++  n <> Z0 -> (Z.abs n <= Z.abs m)%Z ->
++  (Zdigits n <= Zdigits m)%Z.
++Proof.
++intros n m Hn Hm.
++rewrite <- Zdigits_abs.
++rewrite <- (Zdigits_abs m).
++apply Zpower_lt_Zpower with beta.
++apply Zdigits_correct.
++apply Z.le_lt_trans with (2 := proj2 (Zdigits_correct _)).
++exact Hm.
++Qed.
++```
++-/
+ theorem Zdigits_le (n m : Int) :
+     ⦃⌜n ≠ 0 ∧ Int.natAbs n ≤ Int.natAbs m⌝⦄
+     Zdigits beta n
+     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = pure dm ∧ dn ≤ dm⌝⦄ := by
+   sorry
+ 
+-/-- Lower bound for digit count -/
++/-- Lower bound for digit count
++
++Coq theorem and proof:
++```coq
++Theorem lt_Zdigits :
++  forall n m,
++  (Z.abs n < Zpower beta m)%Z ->
++  (Zdigits n <= m)%Z.
++Proof.
++intros n m Hn.
++apply Zpower_lt_Zpower with beta.
++now apply Zdigits_correct.
++exact Hn.
++apply Z.le_refl.
++Qed.
++```
++-/
+ theorem lt_Zdigits (n m : Int) :
+     ⦃⌜m ≠ 0 ∧ Int.natAbs n < beta ^ m.natAbs⌝⦄
+     Zdigits beta n
+     ⦃⇓d => ⌜d ≤ m⌝⦄ := by
+   sorry
+ 
+-/-- Power bound for digit count -/
++/-- Power bound for digit count
++
++Coq theorem and proof:
++```coq
++Theorem Zpower_le_Zdigits :
++  forall e n,
++  n <> Z0 ->
++  (Zpower beta e <= Z.abs n)%Z ->
++  (e < Zdigits n)%Z.
++Proof.
++intros e n Zn Hn.
++apply Zpower_lt_Zpower with beta.
++apply Z.le_lt_trans with (1 := Hn).
++apply Zdigits_correct.
++exact Zn.
++apply Zdigits_ge_0.
++Qed.
++```
++-/
+ theorem Zpower_le_Zdigits (n e : Int) :
+     ⦃⌜n ≠ 0 ∧ beta ^ e.natAbs ≤ Int.natAbs n⌝⦄
+     Zdigits beta n
+     ⦃⇓d => ⌜e < d⌝⦄ := by
+   sorry
+ 
+-/-- Alternative digit count bound -/
++/-- Alternative digit count bound
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_le_Zdigits :
++  forall n m,
++  m <> Z0 -> (Z.abs n < Z.abs m)%Z ->
++  (Zdigits n <= Zdigits m)%Z.
++Proof.
++intros n m Hm H.
++apply lt_Zdigits.
++apply Z.lt_le_trans with (2 := proj1 (Zdigits_correct m)).
++exact H.
++exact Hm.
++Qed.
++```
++-/
+ theorem Zdigits_le_Zdigits (n m : Int) :
+     ⦃⌜m ≠ 0 ∧ Int.natAbs n < Int.natAbs m⌝⦄
+     Zdigits beta n
+     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = pure dm ∧ dn ≤ dm⌝⦄ := by
+   sorry
+ 
++/-- Digit count and power relationship
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_le_Zpower :
++  forall e x,
++  (Z.abs x < Zpower beta e)%Z ->
++  (Zdigits x <= e)%Z.
++Proof.
++intros e x.
++generalize (Zpower_le_Zdigits e x).
++lia.
++Qed.
++```
++-/
++theorem Zdigits_le_Zpower (x e : Int) :
++    ⦃⌜Int.natAbs x < beta ^ e.natAbs⌝⦄
++    Zdigits beta x
++    ⦃⇓d => ⌜d ≤ e⌝⦄ := by
++  sorry
++
++/-- Power greater than digit count
++
++Coq theorem and proof:
++```coq
++Theorem Zpower_gt_Zdigits :
++  forall e x,
++  (Zdigits x <= e)%Z ->
++  (Z.abs x < Zpower beta e)%Z.
++Proof.
++intros e x Hex.
++destruct (Zdigits_correct x) as [H1 H2].
++apply Z.lt_le_trans with (1 := H2).
++now apply Zpower_le.
++Qed.
++```
++-/
++theorem Zpower_gt_Zdigits (e x : Int) :
++    ⦃⌜∃ dx, Zdigits beta x = pure dx ∧ dx ≤ e⌝⦄
++    Zdigits beta x
++    ⦃⇓_ => ⌜Int.natAbs x < beta ^ e.natAbs⌝⦄ := by
++  sorry
++
++/-- Digit count greater than power
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_gt_Zpower :
++  forall e x,
++  (Zpower beta e <= Z.abs x)%Z ->
++  (e < Zdigits x)%Z.
++Proof.
++intros e x Hex.
++generalize (Zpower_gt_Zdigits e x).
++lia.
++Qed.
++```
++-/
++theorem Zdigits_gt_Zpower (e x : Int) :
++    ⦃⌜beta ^ e.natAbs ≤ Int.natAbs x⌝⦄
++    Zdigits beta x
++    ⦃⇓d => ⌜e < d⌝⦄ := by
++  sorry
++
++/-- Strong version of digit count for multiplication
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_mult_strong :
++  forall x y,
++  (0 <= x)%Z -> (0 <= y)%Z ->
++  (Zdigits (x + y + x * y) <= Zdigits x + Zdigits y)%Z.
++Proof.
++intros x y Hx Hy.
++apply Zdigits_le_Zpower.
++rewrite Z.abs_eq.
++apply Z.lt_le_trans with ((x + 1) * (y + 1))%Z.
++ring_simplify.
++apply Zle_lt_succ, Z.le_refl.
++rewrite Zpower_plus by apply Zdigits_ge_0.
++apply Zmult_le_compat.
++apply Zlt_le_succ.
++rewrite <- (Z.abs_eq x) at 1 by easy.
++apply Zdigits_correct.
++apply Zlt_le_succ.
++rewrite <- (Z.abs_eq y) at 1 by easy.
++apply Zdigits_correct.
++clear -Hx ; lia.
++clear -Hy ; lia.
++change Z0 with (0 + 0 + 0)%Z.
++apply Zplus_le_compat.
++now apply Zplus_le_compat.
++now apply Zmult_le_0_compat.
++Qed.
++```
++-/
++theorem Zdigits_mult_strong (x y : Int) :
++    ⦃⌜0 ≤ x ∧ 0 ≤ y⌝⦄
++    Zdigits beta (x + y + x * y)
++    ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = pure dx ∧ Zdigits beta y = pure dy ∧ d ≤ dx + dy⌝⦄ := by
++  sorry
++
++/-- Digit count of multiplication
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_mult :
++  forall x y,
++  (Zdigits (x * y) <= Zdigits x + Zdigits y)%Z.
++Proof.
++intros x y.
++rewrite <- Zdigits_abs.
++rewrite <- (Zdigits_abs x).
++rewrite <- (Zdigits_abs y).
++apply Z.le_trans with (Zdigits (Z.abs x + Z.abs y + Z.abs x * Z.abs y)).
++apply Zdigits_le.
++apply Zabs_pos.
++rewrite Zabs_Zmult.
++generalize (Zabs_pos x) (Zabs_pos y).
++lia.
++apply Zdigits_mult_strong ; apply Zabs_pos.
++Qed.
++```
++-/
++theorem Zdigits_mult (x y : Int) :
++    ⦃⌜True⌝⦄
++    Zdigits beta (x * y)
++    ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = pure dx ∧ Zdigits beta y = pure dy ∧ d ≤ dx + dy⌝⦄ := by
++  sorry
++
++/-- Lower bound for digit count of multiplication
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_mult_ge :
++  forall x y,
++  (x <> 0)%Z -> (y <> 0)%Z ->
++  (Zdigits x + Zdigits y - 1 <= Zdigits (x * y))%Z.
++Proof.
++intros x y Zx Zy.
++cut ((Zdigits x - 1) + (Zdigits y - 1) < Zdigits (x * y))%Z. lia.
++apply Zdigits_gt_Zpower.
++rewrite Zabs_Zmult.
++rewrite Zpower_exp.
++apply Zmult_le_compat.
++apply Zpower_le_Zdigits.
++apply Zlt_pred.
++apply Zpower_le_Zdigits.
++apply Zlt_pred.
++apply Zpower_ge_0.
++apply Zpower_ge_0.
++generalize (Zdigits_gt_0 x). lia.
++generalize (Zdigits_gt_0 y). lia.
++Qed.
++```
++-/
++theorem Zdigits_mult_ge (x y : Int) :
++    ⦃⌜x ≠ 0 ∧ y ≠ 0⌝⦄
++    Zdigits beta (x * y)
++    ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = pure dx ∧ Zdigits beta y = pure dy ∧ dx + dy - 1 ≤ d⌝⦄ := by
++  sorry
++
++/-- Digit count of division by power
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_div_Zpower :
++  forall m e,
++  (0 <= m)%Z ->
++  (0 <= e <= Zdigits m)%Z ->
++  Zdigits (m / Zpower beta e) = (Zdigits m - e)%Z.
++Proof.
++intros m e Hm He.
++assert (H := Zdigits_correct m).
++apply Zdigits_unique.
++destruct (Zle_lt_or_eq _ _ (proj2 He)) as [He'|He'].
++  rewrite Z.abs_eq in H by easy.
++  destruct H as [H1 H2].
++  rewrite Z.abs_eq.
++  split.
++  replace (Zdigits m - e - 1)%Z with (Zdigits m - 1 - e)%Z by ring.
++  rewrite Z.pow_sub_r.
++  2: apply Zgt_not_eq, radix_gt_0.
++  2: clear -He He' ; lia.
++  apply Z_div_le with (2 := H1).
++  now apply Z.lt_gt, Zpower_gt_0.
++  apply Zmult_lt_reg_r with (Zpower beta e).
++  now apply Zpower_gt_0.
++  apply Z.le_lt_trans with m.
++  rewrite Zmult_comm.
++  apply Z_mult_div_ge.
++  now apply Z.lt_gt, Zpower_gt_0.
++  rewrite <- Zpower_plus.
++  now replace (Zdigits m - e + e)%Z with (Zdigits m) by ring.
++  now apply Zle_minus_le_0.
++  apply He.
++  apply Z_div_pos with (2 := Hm).
++  now apply Z.lt_gt, Zpower_gt_0.
++rewrite He'.
++rewrite (Zeq_minus _ (Zdigits m)) by reflexivity.
++simpl.
++rewrite Zdiv_small.
++easy.
++split.
++exact Hm.
++now rewrite <- (Z.abs_eq m) at 1.
++Qed.
++```
++-/
++theorem Zdigits_div_Zpower (m e : Int) :
++    ⦃⌜0 ≤ m ∧ 0 ≤ e ∧ ∃ dm, Zdigits beta m = pure dm ∧ e ≤ dm⌝⦄
++    Zdigits beta (m / beta ^ e.natAbs)
++    ⦃⇓d => ⌜∃ dm, Zdigits beta m = pure dm ∧ d = dm - e⌝⦄ := by
++  sorry
++
++/-- Digit count of successor
++
++Coq theorem and proof:
++```coq
++Theorem Zdigits_succ_le :
++  forall x, (0 <= x)%Z ->
++  (Zdigits (x + 1) <= Zdigits x + 1)%Z.
++Proof.
++  intros [|p|p]; try easy.
++  intros _.
++  rewrite <- Zdigits_mult_Zpower by easy.
++  apply Zdigits_le. easy.
++  apply Z.le_trans with (Z.pos p * 2)%Z.
++  lia.
++  apply Zmult_le_compat_l. 2: easy.
++  rewrite Z.pow_1_r.
++  apply (Zlt_le_succ 1), radix_gt_1.
++Qed.
++```
++-/
++theorem Zdigits_succ_le (x : Int) :
++    ⦃⌜0 ≤ x⌝⦄
++    Zdigits beta (x + 1)
++    ⦃⇓d => ⌜∃ dx, Zdigits beta x = pure dx ∧ d ≤ dx + 1⌝⦄ := by
++  sorry
++
+ end DigitOperations
+ 
++section Zdigits2
++
++variable (beta : Int) (h_beta : beta > 1)
++
++/-- Relationship between natural and integer digit count
++
++Coq theorem and proof:
++```coq
++Theorem Z_of_nat_S_digits2_Pnat :
++  forall m : positive,
++  Z_of_nat (S (digits2_Pnat m)) = Zdigits radix2 (Zpos m).
++Proof.
++intros m.
++apply eq_sym, Zdigits_unique.
++rewrite <- Zpower_nat_Z.
++rewrite Nat2Z.inj_succ.
++change (_ - 1)%Z with (Z.pred (Z.succ (Z.of_nat (digits2_Pnat m)))).
++rewrite <- Zpred_succ.
++rewrite <- Zpower_nat_Z.
++apply digits2_Pnat_correct.
++Qed.
++```
++-/
++theorem Z_of_nat_S_digits2_Pnat (m : Nat) :
++    ⦃⌜m > 0⌝⦄
++    Zdigits 2 m
++    ⦃⇓d => ⌜d = Id.run (digits2_Pnat m) + 1⌝⦄ := by
++  sorry
++
++/-- Positive digit count for binary
++
++Coq theorem and proof:
++```coq
++Theorem Zpos_digits2_pos :
++  forall m : positive,
++  Zpos (digits2_pos m) = Zdigits radix2 (Zpos m).
++Proof.
++intros m.
++rewrite <- Z_of_nat_S_digits2_Pnat.
++unfold Z.of_nat.
++apply f_equal.
++induction m ; simpl ; try easy ;
++  apply f_equal, IHm.
++Qed.
++```
++-/
++theorem Zpos_digits2_pos (m : Nat) :
++    ⦃⌜m > 0⌝⦄
++    Zdigits 2 m
++    ⦃⇓d => ⌜d = Id.run (digits2_Pnat m)⌝⦄ := by
++  sorry
++
++/-- Equivalence of binary digit count functions
++
++Coq theorem and proof:
++```coq
++Lemma Zdigits2_Zdigits :
++  forall n, Zdigits2 n = Zdigits radix2 n.
++Proof.
++intros [|p|p] ; try easy ;
++  apply Zpos_digits2_pos.
++Qed.
++```
++-/
++theorem Zdigits2_Zdigits (n : Int) :
++    ⦃⌜True⌝⦄
++    Zdigits 2 n
++    ⦃⇓d => ⌜d = Id.run (Zdigits 2 n)⌝⦄ := by
++  sorry
++
++end Zdigits2
++
+ end FloatSpec.Core.Digits
+diff --git a/FloatSpec/src/Core/Generic_fmt.lean b/FloatSpec/src/Core/Generic_fmt.lean
+index 208bf92..66cde88 100644
+--- a/FloatSpec/src/Core/Generic_fmt.lean
++++ b/FloatSpec/src/Core/Generic_fmt.lean
+@@ -26,7 +26,6 @@ import FloatSpec.src.Core.Round_pred
+ import FloatSpec.src.Core.Float_prop
+ -- import FloatSpec.src.Core.Digits
+ import Mathlib.Data.Real.Basic
+-import Mathlib.Analysis.SpecialFunctions.Pow.Real
+ import Std.Do.Triple
+ import Std.Tactic.Do
+ 
+@@ -36,7 +35,7 @@ open FloatSpec.Core.Defs
+ open FloatSpec.Core.Zaux
+ open FloatSpec.Core.Raux
+ 
+-namespace FloatSpec.Core.GenericFmt
++namespace FloatSpec.Core.Generic_fmt
+ 
+ section ExponentFunction
+ 
+@@ -57,27 +56,6 @@ noncomputable def mag (beta : Int) (x : ℝ) : Int :=
+ noncomputable def Ztrunc (x : ℝ) : Int :=
+   if x ≥ 0 then ⌊x⌋ else ⌈x⌉
+ 
+--- Helper lemmas section
+-section HelperLemmas
+-
+-/-- Magnitude is invariant under negation -/
+-lemma mag_neg (beta : Int) (x : ℝ) : mag beta (-x) = mag beta x := by
+-  unfold mag
+-  by_cases hx : x = 0
+-  · simp [hx]
+-  · have h_neg_ne : -x ≠ 0 := by simp [hx]
+-    simp [hx, h_neg_ne, abs_neg]
+-
+-/-- Magnitude is invariant under absolute value -/
+-lemma mag_abs (beta : Int) (x : ℝ) : mag beta (abs x) = mag beta x := by
+-  unfold mag
+-  by_cases hx : x = 0
+-  · simp [hx, abs_zero]
+-  · have h_abs_ne : abs x ≠ 0 := abs_ne_zero.mpr hx
+-    simp [hx, h_abs_ne, abs_abs]
+-
+-end HelperLemmas
+-
+ /-- A format satisfies_any if it contains representable values
+ 
+     This property ensures that the floating-point format is non-empty
+@@ -243,6 +221,49 @@ end CanonicalFormat
+ 
+ section BasicProperties
+ 
++/-- Truncation respects negation: Ztrunc(-x) = -Ztrunc(x) -/
++theorem Ztrunc_neg (x : ℝ) : Ztrunc (-x) = - Ztrunc x := by
++  unfold Ztrunc
++  by_cases hx : x = 0
++  · simp [hx]
++  · by_cases hnonneg : 0 ≤ x
++    · -- x > 0 (since x ≠ 0)
++      have hxpos : 0 < x := lt_of_le_of_ne hnonneg (Ne.symm hx)
++      have hnot : ¬ 0 ≤ -x := by
++        intro hge
++        have hxle0 : x ≤ 0 := by simpa using (neg_nonneg.mp hge)
++        exact (not_lt_of_ge hxle0) hxpos
++      simpa [hnonneg, hnot, Int.ceil_neg]
++    · -- x < 0
++      have hxlt : x < 0 := lt_of_le_of_ne (le_of_not_ge hnonneg) (by simpa [hx])
++      have hnonneg' : 0 ≤ -x := by simpa using (neg_nonneg.mpr (le_of_lt hxlt))
++      simpa [hnonneg, hnonneg', Int.floor_neg]
++
++/-- Truncation of an integer (as real) gives the same integer -/
++theorem Ztrunc_intCast (z : Int) : Ztrunc (z : ℝ) = z := by
++  unfold Ztrunc
++  by_cases hz : (z : ℝ) ≥ 0
++  · simp [hz, Int.floor_intCast]
++  · simp [hz, Int.ceil_intCast]
++
++/-- zpow product with negative exponent collapses to subtraction in exponent -/
++theorem zpow_mul_sub {a : ℝ} (hbne : a ≠ 0) (e c : Int) :
++    a ^ e * a ^ (-c) = a ^ (e - c) := by
++  have := (zpow_add₀ hbne e (-c))
++  simpa [sub_eq_add_neg] using this.symm
++
++/-- zpow split: (e - c) then c gives back e -/
++theorem zpow_sub_add {a : ℝ} (hbne : a ≠ 0) (e c : Int) :
++    a ^ (e - c) * a ^ c = a ^ e := by
++  simpa [sub_add_cancel] using (zpow_add₀ hbne (e - c) c).symm
++
++/-- For nonnegative exponent, zpow reduces to Nat pow via toNat -/
++theorem zpow_nonneg_toNat (a : ℝ) (k : Int) (hk : 0 ≤ k) :
++    a ^ k = a ^ (Int.toNat k) := by
++  have hofNat : (Int.toNat k : ℤ) = k := Int.toNat_of_nonneg hk
++  rw [← hofNat]
++  exact zpow_ofNat a (Int.toNat k)
++
+ /-- Specification: Zero is in generic format
+ 
+     The real number zero can always be exactly
+@@ -329,22 +350,12 @@ theorem canonical_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
+ 
+     When fexp (e + 1) ≤ e, beta^e is in generic format.
+ -/
+-theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
++theorem generic_format_bpow
++    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+     ⦃⌜fexp (e + 1) ≤ e⌝⦄
+     generic_format beta fexp ((beta : ℝ) ^ e)
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  intro h_fexp
+-  unfold generic_format scaled_mantissa cexp F2R
+-  -- For beta^e:
+-  -- mag beta (beta^e) = e + 1 (assuming beta > 1)
+-  -- scaled_mantissa = beta^e * beta^(-fexp(e+1))
+-  -- Since fexp(e+1) ≤ e, we have beta^(e - fexp(e+1)) is integral
+-  -- Ztrunc gives beta^(e - fexp(e+1))
+-  -- F2R reconstructs to beta^(e - fexp(e+1)) * beta^(fexp(e+1)) = beta^e
+-  simp [mag, Ztrunc, FlocqFloat.mk]
+-  -- The proof depends on properties of logarithms and powers
+-  -- For now we assert the key property that mag beta (beta^e) = e + 1
+-  sorry -- This requires detailed reasoning about logarithms and ceiling functions
++  sorry
+ 
+ /-- Specification: Alternative power condition
+ 
+@@ -354,8 +365,25 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
+     ⦃⌜fexp e ≤ e⌝⦄
+     generic_format beta fexp ((beta : ℝ) ^ e)
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  intro _
+-  sorry
++  intro hle
++  -- From Valid_exp, we can derive the required bound fexp (e+1) ≤ e
++  -- by case-splitting on whether fexp e < e or e ≤ fexp e.
++  have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) e)
++  by_cases hlt : fexp e < e
++  · -- Large regime: directly get fexp (e+1) ≤ e
++    have hbound : fexp (e + 1) ≤ e := (hpair.left) hlt
++    -- Apply the power-in-format lemma with this bound
++    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound
++  · -- Otherwise, we have e ≤ fexp e
++    have hge : e ≤ fexp e := le_of_not_gt hlt
++    -- Combined with the hypothesis fexp e ≤ e, we get equality
++    have heq : fexp e = e := le_antisymm hle hge
++    -- Small regime: get fexp (fexp e + 1) ≤ fexp e, then rewrite using heq
++    have hsmall := (hpair.right) (by simpa [heq] using hge)
++    have hbound' : fexp (e + 1) ≤ e := by
++      simpa [heq, add_comm, add_left_comm, add_assoc] using hsmall.left
++    -- Apply the power-in-format lemma with the derived bound
++    exact (generic_format_bpow (beta := beta) (fexp := fexp) e) hbound'
+ 
+ /-- Specification: Scaled mantissa multiplication
+ 
+@@ -370,14 +398,24 @@ theorem scaled_mantissa_mult_bpow (beta : Int) (fexp : Int → Int) (x : ℝ) :
+     ⦃⇓result => ⌜result = x⌝⦄ := by
+   intro hβ
+   simp [scaled_mantissa, cexp]
+-  -- Let e denote the canonical exponent
++  -- Denote the canonical exponent
+   set e := fexp (mag beta x)
+-  -- Show base is positive and thus nonzero
++  -- Base is nonzero
+   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+-  -- Direct calculation
+-  field_simp [zpow_ne_zero e hbne]
++  -- x * β^(-e) * β^e = x
++  calc
++    x * ((beta : ℝ) ^ e)⁻¹ * (beta : ℝ) ^ e
++        = (x * (beta : ℝ) ^ (-e)) * (beta : ℝ) ^ e := by simp [zpow_neg]
++    _   = x * ((beta : ℝ) ^ (-e) * (beta : ℝ) ^ e) := by simpa [mul_assoc]
++    _   = x * (beta : ℝ) ^ ((-e) + e) := by
++          have h := (zpow_add₀ hbne (-e) e).symm
++          simpa using congrArg (fun t => x * t) h
++    _   = x := by simp
++
++lemma Ztrunc_zero : Ztrunc (0 : ℝ) = 0 := by
++  simp [Ztrunc]
+ 
+ /-- Specification: F2R in generic format
+ 
+@@ -388,7 +426,69 @@ theorem generic_format_F2R (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
+     ⦃⌜beta > 1 ∧ (m ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run).run ≤ e)⌝⦄
+     generic_format beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  sorry
++  intro hpre
++  rcases hpre with ⟨hβ, hbound⟩
++  -- Unfold the goal shape
++  simp [generic_format, scaled_mantissa, cexp, F2R]
++  -- Notation: cexp for this x
++  set c := fexp (mag beta ((m : ℝ) * (beta : ℝ) ^ e)) with hc
++  -- Base positivity for zpow lemmas
++  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
++  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
++  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
++
++  by_cases hm : m = 0
++  · -- x = 0 case: goal is Ztrunc 0 = 0 ∨ ↑beta ^ c = 0
++    simp [hm]
++    left
++    simp [Ztrunc]
++  · -- Nonzero mantissa case: goal is the equality
++    have hcle : c ≤ e := by
++      have := hbound hm
++      simp [cexp, F2R] at this
++      exact this
++
++    -- Key lemmas for power manipulation
++    have hinv : (beta : ℝ) ^ (-c) = ((beta : ℝ) ^ c)⁻¹ := zpow_neg _ _
++
++    have hmul_pow : (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹ = (beta : ℝ) ^ (e - c) := by
++      rw [← hinv, ← zpow_add₀ hbne]
++      simp [sub_eq_add_neg]
++
++    have hpow_nonneg : 0 ≤ e - c := sub_nonneg.mpr hcle
++
++    -- Convert zpow with nonnegative exponent to Nat power
++    have hzpow_toNat : (beta : ℝ) ^ (e - c) = (beta : ℝ) ^ (Int.toNat (e - c)) := by
++      rw [← Int.toNat_of_nonneg hpow_nonneg]
++      exact zpow_ofNat _ _
++
++    -- Cast of integer power to real
++    have hcast_pow : (beta : ℝ) ^ (Int.toNat (e - c)) = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
++      rw [← Int.cast_pow]
++
++    -- The scaled mantissa is an integer
++    have htrunc_calc : Ztrunc ((m : ℝ) * (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹) = m * beta ^ (Int.toNat (e - c)) := by
++      calc Ztrunc ((m : ℝ) * (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹)
++          = Ztrunc ((m : ℝ) * ((beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹)) := by ring_nf
++        _ = Ztrunc ((m : ℝ) * (beta : ℝ) ^ (e - c)) := by rw [hmul_pow]
++        _ = Ztrunc ((m : ℝ) * (beta : ℝ) ^ (Int.toNat (e - c))) := by rw [hzpow_toNat]
++        _ = Ztrunc ((m : ℝ) * ((beta ^ (Int.toNat (e - c)) : Int) : ℝ)) := by rw [hcast_pow]
++        _ = Ztrunc (((m * beta ^ (Int.toNat (e - c))) : Int) : ℝ) := by simp [Int.cast_mul]
++        _ = m * beta ^ (Int.toNat (e - c)) := Ztrunc_intCast _
++
++    -- Power splitting lemma
++    have hsplit : (beta : ℝ) ^ e = (beta : ℝ) ^ (e - c) * (beta : ℝ) ^ c := by
++      rw [← zpow_add₀ hbne (e - c) c]
++      simp [sub_add_cancel]
++
++    -- Prove the main equality
++    calc (m : ℝ) * (beta : ℝ) ^ e
++        = (m : ℝ) * ((beta : ℝ) ^ (e - c) * (beta : ℝ) ^ c) := by rw [hsplit]
++      _ = ((m : ℝ) * (beta : ℝ) ^ (e - c)) * (beta : ℝ) ^ c := by ring
++      _ = ((m : ℝ) * (beta : ℝ) ^ (Int.toNat (e - c))) * (beta : ℝ) ^ c := by rw [← hzpow_toNat]
++      _ = ((m : ℝ) * ((beta ^ (Int.toNat (e - c)) : Int) : ℝ)) * (beta : ℝ) ^ c := by rw [hcast_pow]
++      _ = (((m * beta ^ (Int.toNat (e - c))) : Int) : ℝ) * (beta : ℝ) ^ c := by simp [Int.cast_mul]
++      _ = (Ztrunc ((m : ℝ) * (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹) : ℝ) * (beta : ℝ) ^ c := by rw [← htrunc_calc]
+ 
+ /-- Specification: Alternative F2R generic format
+ 
+@@ -399,7 +499,32 @@ theorem generic_format_F2R' (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
+     ⦃⌜beta > 1 ∧ (F2R f).run = x ∧ (x ≠ 0 → (cexp beta fexp x).run ≤ f.Fexp)⌝⦄
+     generic_format beta fexp x
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  sorry
++  intro hpre
++  rcases hpre with ⟨hβ, hx, hbound⟩
++  -- Transform the bound to the shape needed for generic_format_F2R
++  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
++  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
++  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
++
++  have hbound' : f.Fnum ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk f.Fnum f.Fexp : FlocqFloat beta)).run).run ≤ f.Fexp := by
++    intro hm
++    have hxne : x ≠ 0 := by
++      rw [← hx]
++      simp [F2R]
++      constructor
++      · exact_mod_cast hm
++      · exact zpow_ne_zero f.Fexp hbne
++    -- Now apply the bound
++    have := hbound hxne
++    rw [← hx] at this
++    simp [F2R] at this
++    exact this
++
++  -- Apply the previous lemma and rewrite x
++  have := generic_format_F2R (beta := beta) (fexp := fexp) (m := f.Fnum) (e := f.Fexp) ⟨hβ, hbound'⟩
++  rw [← hx]
++  simp [F2R] at this ⊢
++  exact this
+ 
+ -- Section: Canonical properties
+ 
+@@ -409,7 +534,24 @@ theorem generic_format_F2R' (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
+ -/
+ theorem canonical_opp (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonical beta fexp (FlocqFloat.mk m e)) :
+     canonical beta fexp (FlocqFloat.mk (-m) e) := by
+-  sorry -- This requires proper zpow lemmas
++  -- canonical means f.Fexp = fexp (mag beta (F2R f).run)
++  -- Since F2R negates with the mantissa and mag uses absolute value, the result is the same
++  unfold canonical at h ⊢
++  -- Show magnitude is invariant under negation of the real value
++  -- F2R (mk (-m) e) = -(F2R (mk m e))
++  have hF2R_neg : (F2R (FlocqFloat.mk (-m) e : FlocqFloat beta)).run =
++      - (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run := by
++    unfold FloatSpec.Core.Defs.F2R
++    simp
++  -- mag beta (-x) = mag beta x
++  have hmag : mag beta (-(F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) =
++      mag beta (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run := by
++    unfold mag
++    by_cases hx : (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run = 0
++    · simp [hx]
++    · have hneg : -((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) ≠ 0 := by simpa [hx]
++      simp [hx, hneg, abs_neg]
++  simpa [hF2R_neg, hmag] using h
+ 
+ /-- Specification: Canonical absolute value
+ 
+@@ -417,7 +559,31 @@ theorem canonical_opp (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonic
+ -/
+ theorem canonical_abs (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonical beta fexp (FlocqFloat.mk m e)) :
+     canonical beta fexp (FlocqFloat.mk (abs m) e) := by
+-  sorry -- This requires proper zpow lemmas
++  unfold canonical at h ⊢
++  -- Let x be the real value of (m, e) and y the real value of (|m|, e)
++  set x := (F2R (FlocqFloat.mk m e : FlocqFloat beta)).run
++  set y := (F2R (FlocqFloat.mk (abs m) e : FlocqFloat beta)).run
++  have habs_xy : |y| = |x| := by
++    -- abs (|m| * b^e) = |m| * |b^e| and abs (m * b^e) = |m| * |b^e|
++    -- using (abs m : ℝ) = |(m : ℝ)|
++    simp [x, y, FloatSpec.Core.Defs.F2R, abs_mul, Int.cast_abs, abs_abs]
++  -- mag depends only on abs, so equal abs implies equal mag
++  have hmag_xy : mag beta y = mag beta x := by
++    unfold mag
++    by_cases hx0 : x = 0
++    · have hxabs0 : |x| = 0 := by simpa [hx0] using congrArg abs hx0
++      have hyabs0 : |y| = 0 := by simpa [habs_xy.symm] using hxabs0
++      have hy0 : y = 0 := (abs_eq_zero.mp hyabs0)
++      simp [hx0, hy0]
++    · have hy0 : y ≠ 0 := by
++        -- if |y| = |x| and x ≠ 0 then y ≠ 0
++        intro hy
++        have : |y| = 0 := by simpa [hy]
++        have : |x| = 0 := by simpa [habs_xy] using this
++        exact hx0 (abs_eq_zero.mp this)
++      -- nonzero case: use equality of abs to rewrite logs
++      simp [hx0, hy0, habs_xy]
++  simpa [x, y, hmag_xy] using h
+ 
+ /-- Specification: Canonical zero
+ 
+@@ -448,7 +614,6 @@ theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp bet
+     ⦃⌜(generic_format beta fexp x).run⌝⦄
+     scaled_mantissa beta fexp x
+     ⦃⇓result => ⌜result = Ztrunc result⌝⦄ := by
+-  intro _
+   sorry
+ 
+ /-- Specification: Scaled mantissa of zero
+@@ -490,11 +655,43 @@ theorem scaled_mantissa_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
+     of the scaled mantissa of x.
+ -/
+ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
+-    ⦃⌜True⌝⦄
++    ⦃⌜beta > 1⌝⦄
+     scaled_mantissa beta fexp (abs x)
+     ⦃⇓result => ⌜result = abs (scaled_mantissa beta fexp x).run⌝⦄ := by
+-  sorry -- This requires detailed reasoning about the relationship between abs and scaled mantissa
++  intro hβ
++  unfold scaled_mantissa cexp
++  -- Show exponents coincide since mag ignores sign
++  have hmag : mag beta (abs x) = mag beta x := by
++    unfold mag
++    by_cases hx : x = 0
++    · simp [hx, abs_zero]
++    · have h_abs_ne : abs x ≠ 0 := abs_ne_zero.mpr hx
++      simp [hx, h_abs_ne, abs_abs]
++  -- Base positivity for handling absolute value of the power
++  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
++  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
++  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+ 
++  -- Show that beta^(-fexp(...)) is positive
++  have hpow_pos : 0 < (beta : ℝ) ^ (-(fexp (mag beta x))) := by
++    -- Use that beta > 0 and zpow preserves positivity
++    exact zpow_pos hbpos _
++  have hpow_nonneg : 0 ≤ (beta : ℝ) ^ (-(fexp (mag beta x))) := le_of_lt hpow_pos
++
++  -- Also need the inverse is positive
++  have hinv_pos : 0 < ((beta : ℝ) ^ (fexp (mag beta x)))⁻¹ := by
++    rw [← zpow_neg]
++    exact hpow_pos
++  have hinv_nonneg : 0 ≤ ((beta : ℝ) ^ (fexp (mag beta x)))⁻¹ := le_of_lt hinv_pos
++
++  -- Rewrite using hmag and absolute value properties
++  simp [hmag, abs_mul]
++  -- The goal is now about |(β^fexp)⁻¹| = (β^fexp)⁻¹ ∨ x = 0
++  by_cases hx : x = 0
++  · right
++    exact hx
++  · left
++    exact (abs_of_nonneg hinv_nonneg).symm
+ -- Section: Generic format closure properties
+ 
+ /-- Specification: Generic format opposite
+@@ -505,8 +702,33 @@ theorem generic_format_opp (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
+     ⦃⌜(generic_format beta fexp x).run⌝⦄
+     generic_format beta fexp (-x)
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  intro _
+-  sorry
++  intro hx
++  -- Turn the precondition into the reconstruction equality for x
++  have hx' := hx
++  simp [generic_format, scaled_mantissa, cexp, F2R] at hx'
++  -- Unfold target and rewrite using mag(-x) = mag(x)
++  unfold generic_format scaled_mantissa cexp F2R
++  -- Show mag is invariant under negation
++  have hmag : mag beta (-x) = mag beta x := by
++    unfold mag
++    by_cases hx0 : x = 0
++    · simp [hx0]
++    · have hneg0 : -x ≠ 0 := by simpa [hx0]
++      simp [hx0, hneg0, abs_neg]
++  -- Rewrite using the reconstruction equality for x
++  have hxneg : -x = -((Ztrunc (x * (beta : ℝ) ^ (-(fexp (mag beta x)))) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x))) := by
++    simpa [neg_mul] using congrArg Neg.neg hx'
++  -- Now transform to the required form for -x using Ztrunc_neg and hmag
++  calc
++    -x
++        = -((Ztrunc (x * (beta : ℝ) ^ (-(fexp (mag beta x)))) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x))) := by simpa using hxneg
++    _   = (-(Ztrunc (x * (beta : ℝ) ^ (-(fexp (mag beta x)))) : ℝ)) * (beta : ℝ) ^ (fexp (mag beta x)) := by simp [neg_mul]
++    _   = ((Ztrunc (-(x * (beta : ℝ) ^ (-(fexp (mag beta x))))) : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x)) := by
++          simpa [Ztrunc_neg]
++    _   = ((Ztrunc ((-x) * (beta : ℝ) ^ (-(fexp (mag beta x)))) : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x)) := by
++          simp [mul_comm, mul_left_comm, mul_assoc, neg_mul, mul_neg]
++    _   = ((Ztrunc ((-x) * (beta : ℝ) ^ (-(fexp (mag beta (-x))))) : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta (-x))) := by
++          simpa [hmag]
+ 
+ /-- Specification: Generic format absolute value
+ 
+@@ -516,8 +738,23 @@ theorem generic_format_abs (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
+     ⦃⌜(generic_format beta fexp x).run⌝⦄
+     generic_format beta fexp (abs x)
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  intro _
+-  sorry
++  intro hx
++  by_cases h0 : 0 ≤ x
++  · -- abs x = x
++    simp [abs_of_nonneg h0]
++    exact hx
++  · -- abs x = -x
++    have hneg : abs x = -x := by
++      have : x < 0 := not_le.mp h0
++      exact abs_of_neg this
++
++    -- Use generic_format_opp to get that -x is in generic format
++    have h_neg_format : (generic_format beta fexp (-x)).run := by
++      exact (generic_format_opp beta fexp x) hx
++
++    -- Rewrite the goal using abs x = -x
++    rw [hneg]
++    exact h_neg_format
+ 
+ /-- Specification: Generic format absolute value inverse
+ 
+@@ -527,8 +764,20 @@ theorem generic_format_abs_inv (beta : Int) (fexp : Int → Int) [Valid_exp beta
+     ⦃⌜(generic_format beta fexp (abs x)).run⌝⦄
+     generic_format beta fexp x
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  intro _
+-  sorry
++  intro h_abs
++  by_cases h0 : 0 ≤ x
++  · -- x ≥ 0, so x = |x|
++    have : x = abs x := (abs_of_nonneg h0).symm
++    rw [this]
++    exact h_abs
++  · -- x < 0, so x = -|x|
++    have hlt : x < 0 := not_le.mp h0
++    have : x = -(abs x) := by
++      rw [abs_of_neg hlt]
++      simp
++    rw [this]
++    -- Apply generic_format_opp to show -(|x|) is in generic format
++    exact (generic_format_opp beta fexp (abs x)) h_abs
+ 
+ -- Section: Canonical exponent bounds
+ 
+@@ -629,14 +878,11 @@ theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp bet
+ 
+     The generic format contains at least some representable values.
+ -/
+-theorem generic_format_satisfies_any (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (h_beta : beta > 1) :
++theorem generic_format_satisfies_any (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] :
+     satisfies_any (fun y => (generic_format beta fexp y).run) := by
+-  -- Show that zero is in the generic format
+-  unfold satisfies_any
+-  use 0
+-  -- We already proved that 0 is in generic format
+-  have h := generic_format_0 beta fexp
+-  exact h h_beta
++  refine ⟨0, ?_⟩
++  unfold generic_format scaled_mantissa cexp F2R
++  simp [Ztrunc]
+ 
+ -- Section: Precision and exponent bounds
+ 
+@@ -665,7 +911,8 @@ theorem generic_format_equiv (beta : Int) (x : ℝ) (e1 e2 : Int) :
+     ⦃⌜e1 ≤ e2 ∧ (generic_format beta (fun _ => e1) x).run⌝⦄
+     generic_format beta (fun _ => e2) x
+     ⦃⇓result => ⌜result⌝⦄ := by
+-  intro _
++  intro h
++  simp [generic_format] at h
+   sorry
+ 
+ -- Section: Special format constructions
+@@ -800,4 +1047,4 @@ theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp
+ 
+ end RoundingToFormat
+ 
+-end FloatSpec.Core.GenericFmt
++end FloatSpec.Core.Generic_fmt

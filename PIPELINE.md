@@ -103,3 +103,62 @@ For more complex proofs (like `Zfast_div_eucl_spec`), additional tactics may be 
 - Named hypothesis introduction with `intro h` instead of `intro _`
 
 But start simple - many proofs just need `intro _, unfold, rfl`.
+
+## Digits Proofs Playbook (Core Lessons + Steps)
+
+This section distills what worked when proving theorems in `FloatSpec/src/Core/Digits.lean` (e.g., `digits2_Pnat_correct`) and similar arithmetic specs.
+
+### A. Strategy Patterns That Worked Well
+
+- Pure-helper equality: Prove that the monadic program equals a pure function, then reduce the Hoare triple to a pure proposition.
+  - Example: define a total helper `bits : Nat → Nat` mirroring the recursion and prove `digits2_Pnat n = pure (bits n)` via `Nat.strongRecOn`.
+- Strong induction with divide-by-2: Use `Nat.strongRecOn` + split by `n = 2*(n/2) + n%2`.
+  - Lemma to reuse: `split2 (n) : n = 2 * (n / 2) + n % 2 ∧ n % 2 < 2` (wraps `Nat.div_add_mod`).
+  - Strict decrease: `((k+1)/2) < (k+1)` via `Nat.div_lt_self`.
+- Calc over simp for tricky rewrites: Prefer explicit `calc` chains to avoid `simp` recursion blowups.
+  - Rewrite helpers that avoid loops:
+    - `2^(k+1) = 2 * 2^k` (`Nat.pow_succ`).
+    - If `k > 0`, then `2^k = 2 * 2^(k-1)` (index manipulation via `Nat.sub_add_cancel`).
+    - `2*m + 2 = 2*(m+1)` via a short `calc` using `Nat.mul_add` rather than `simp`.
+- Index translation for recursive definitions: When you have `bits (n) = 1 + bits (n/2)`, translate bounds using an explicit index identity like `(1 + x) - 1 = x`.
+
+### B. Minimal Lemmas To Scaffold Arithmetic Proofs
+
+- `bits_succ`: `bits (k + 1) = 1 + bits ((k + 1) / 2)` (by `simp` on the definition).
+- `digits2_eq_bits`: `digits2_Pnat n = pure (bits n)` (by `Nat.strongRecOn`, apply recursion on `(n+1)/2`).
+- `split2`: `n = 2*(n/2) + n%2 ∧ n%2 < 2` (wrap `Nat.div_add_mod`).
+- `div2_lt_self_succ`: `((k+1)/2) < (k+1)` (via `Nat.div_lt_self`).
+- Power rewrites: `2^(k+1) = 2 * 2^k`, and for `k>0`, `2^k = 2 * 2^(k-1)`.
+
+### C. Hoare Triples: Reducing to Pure Facts
+
+For `⦃P⦄ prog ⦃⇓d => Q d⦄`, if you can show `prog = pure f`, rewrite the triple to prove `Q (f)` under `P`. This keeps executable specs clean and proofs robust.
+
+### D. Common Pitfalls + Fixes
+
+- `simp` recursion depth reached: Replace with explicit `calc` and small helper equalities; avoid heavy `simpa` chains over composite equalities.
+- Nat index off-by-one: Use explicit equalities like `((k-1)+1 = k)` to move between `2^k` and `2^(k-1)` safely.
+- When rewriting `n` via `n = 2*m + r`, make all later rewrites refer back to this named equality to avoid goal drift.
+
+### E. Restart Checklist (Context-Free Boot Sequence)
+
+Use this when picking up proofs without prior context:
+
+1) Read: `PIPELINE.md` (this file) and `CLAUDE.md` (mvcgen + proof notes).
+2) Build once: `lake build` to surface current error locations.
+3) Pick one target theorem only; do not batch.
+4) Verify the function body and spec match (do not change triple syntax unless necessary).
+5) If the proof is complex, sketch helper lemmas first (see B), prove them, build.
+6) Reduce monadic specs to pure goals via a helper equality if applicable.
+7) Prefer `calc` + small rewrites over aggressive `simp/simpa` on composite goals.
+8) After every small step: build. Fix issues immediately.
+9) If stuck on an algebraic step: add a tiny lemma with a direct proof rather than fighting `simp`.
+10) Keep the “one-proof-at-a-time” rhythm until the file compiles cleanly.
+
+### F. Commands / Quick Actions
+
+- Build project: `lake build`
+- Locate diagnostics (LSP): use your editor’s Lean diagnostics pane; keep the loop fast.
+- Search for prior lemmas in the file to avoid duplicate work.
+
+Following this playbook consistently kept proofs small, maintainable, and debuggable.
