@@ -19,7 +19,7 @@ Please ensure your implementation Always Works™ for:
 
 ## Scope
 
-theorems: Fix the first theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the place you need to fix \(the very first incomplete proof within the target file, then think in detail about the mistake, and work really hard to solve it\). You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
+theorems: Fix the first (only the very first, work really hard on it and don't care about others) theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the line number and the error type you need to fix using mcp tool or lake build (the very first incomplete proof within the target file), then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
 
 ### Prerequisites
 
@@ -86,54 +86,9 @@ theorems: Fix the first theorem without a full proof \(sorry and/or error and/or
 ✅ All `sorry` statements eliminated
 ✅ Clean compilation for entire file
 ✅ Each proof verified individually before moving on
-
-.
-
-Follow this systematic approach:
-
-## Core Philosophy
-
-- "Should work" ≠ "does work" - Pattern matching isn't enough
-- I'm not paid to write code, I'm paid to solve problems
-- Untested code is just a guess, not a solution
-
-# The 30-Second Reality Check - Must answer YES to ALL:
-
-- Did I run/build the code?
-- Did I trigger the exact feature I changed?
-- Did I see the expected result with my own observation (including GUI)?
-- Did I check for error messages?
-- Would I bet $100 this works?
-
-# Phrases to Avoid:
-
-- "This should work now"
-- "I've fixed the issue" (especially 2nd+ time)
-- "Try it now" (without trying it myself)
-- "The logic is correct so..."
-
-# Specific Test Requirements:
-
-- UI Changes: Actually click the button/link/form
-- API Changes: Make the actual API call
-- Data Changes: Query the database
-- Logic Changes: Run the specific scenario
-- Config Changes: Restart and verify it loads
-
-# The Embarrassment Test:
-
-"If the user records trying this and it fails, will I feel embarrassed to see his face?"
-
-# Time Reality:
-
-- Time saved skipping tests: 30 seconds
-- Time wasted when it doesn't work: 30 minutes
-- User trust lost: Immeasurable
-
-A user describing a bug for the third time isn't thinking "this AI is trying hard" - they're thinking "why am I wasting time with this incompetent tool?"
 EOF
 
 # Build the CLI command as an array to preserve spaces/newlines
-cmd=(claude -c -p "$msg" --verbose --dangerously-skip-permissions)
+cmd=(claude -p "$msg" --verbose --dangerously-skip-permissions)
 
-end=$(( $(date +%s) + 2*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do claude -c -p "$msg" --verbose --dangerously-skip-permissions || true; done
+end=$(( $(date +%s) + 3*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do claude -p "$msg" --verbose --dangerously-skip-permissions || true; done
