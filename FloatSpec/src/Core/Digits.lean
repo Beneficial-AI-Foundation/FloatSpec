@@ -25,6 +25,7 @@ import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic
 import Mathlib.Algebra.Divisibility.Basic
+import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
 import Std.Do.Triple
 import Std.Tactic.Do
 
@@ -3300,10 +3301,7 @@ private lemma div_mul_pow_eq_div_sub
     have hbZ  : (b.natAbs : ℤ) = b := Int.natAbs_of_nonneg hb
     have habZ : ((a - b).natAbs : ℤ) = a - b :=
       Int.natAbs_of_nonneg hab_nonneg
-    simpa [haZ, hbZ, habZ] using by
-      -- a = b + (a - b)
-      have : a = b + (a - b) := by ring
-      exact this
+    simpa [haZ, hbZ, habZ]
   have hnatsum :
       a.natAbs = b.natAbs + (a - b).natAbs :=
     (Nat.cast_injective hnatsumZ)
@@ -3492,7 +3490,7 @@ theorem Zplus_slice (n m k l : Int) (h_beta : beta > 1) :
   have lhs_eval :
       Id.run (Zslice beta (n + m) k l) = ((n + m) / b) % beta ^ l.natAbs := by
     unfold Zslice
-    simp only [Zscale, hl, Id.run, pure, if_pos (le_refl 0)]
+    simp only [Zscale, hl, Id.run, pure]
     -- Since k ≥ 0, Zscale n (-k) = n / beta^k
     have hk_neg : -k ≤ 0 := neg_nonpos_of_nonneg hk
     by_cases hk_zero : k = 0
@@ -3502,7 +3500,7 @@ theorem Zplus_slice (n m k l : Int) (h_beta : beta > 1) :
       rw [hk_zero]
       simp only [Int.natAbs_zero, pow_zero, Int.ediv_one]
       -- The monadic computation simplifies to (n + m) % beta ^ l.natAbs
-      simp only [if_pos (le_refl 0), if_true]
+      simp only [if_true]
       rfl
     · have hk_neg_lt : -k < 0 := by
         have hk_pos : 0 < k := lt_of_le_of_ne hk (Ne.symm hk_zero)
@@ -3757,217 +3755,191 @@ Qed.
 ```
 -/
 -- Helper lemma: sufficient fuel ensures we find the answer
-private lemma sufficient_fuel_bound (n : Int) (h_beta : beta > 1) (hn : n ≠ 0) :
-    ∃ k : Nat, k ≤ n.natAbs ∧ beta ^ k > |n| := by
-  -- Since beta > 1, beta^k grows without bound
-  -- There exists k such that beta^k > |n|
-  -- We use the fact that for beta ≥ 2, we have beta^|n| > |n|
-  have h_beta_ge_2 : beta ≥ 2 := by
-    have : beta > 1 := h_beta
-    linarith
-  -- For beta ≥ 2, we have beta^|n| ≥ 2^|n| > |n| for n ≠ 0
-  use n.natAbs
-  constructor
-  · rfl
-  · -- Show beta^n.natAbs > |n|
-    have h_n_pos : 0 < |n| := by
-      simp [abs_pos]
-      exact hn
-    -- Since beta ≥ 2, beta^n.natAbs ≥ 2^n.natAbs
-    -- And 2^n.natAbs > n.natAbs for all natural numbers
-    -- Therefore beta^n.natAbs > |n|
-    have h1 : (2 : Int) ^ n.natAbs > n.natAbs := by
-      have : n.natAbs < 2 ^ n.natAbs := Nat.lt_two_pow_self
-      simp only [Int.natCast_pow]
-      exact Int.natCast_lt.mpr this
-    have h2 : beta ^ n.natAbs ≥ (2 : Int) ^ n.natAbs := by
-      -- Use that pow is monotone for bases ≥ 0
-      have pow_mono : ∀ (a b : Int) (n : Nat), 0 ≤ a → a ≤ b → a ^ n ≤ b ^ n := fun a b n ha hab => by
-        induction n with
-        | zero => simp
-        | succ n ih =>
-          rw [pow_succ, pow_succ]
-          calc a ^ n * a ≤ a ^ n * b := by
-                apply mul_le_mul_of_nonneg_left hab
-                apply pow_nonneg ha
-              _ ≤ b ^ n * b := by
-                apply mul_le_mul_of_nonneg_right
-                · exact ih
-                · apply le_trans ha hab
-      apply pow_mono
-      · linarith
-      · exact h_beta_ge_2
-    have h3 : ↑n.natAbs = |n| := by
-      exact Int.natCast_natAbs n
-    rw [← h3]
-    exact lt_of_lt_of_le h1 h2
+private lemma pow_base_mono
+  {a b : Int} (k : Nat) (ha : 0 ≤ a) (hab : a ≤ b) :
+  a ^ k ≤ b ^ k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    have ha_pow : 0 ≤ a ^ k := by
+      -- a ≥ 0 ⇒ a^k ≥ 0
+      have : 0 ≤ a := ha
+      simpa using pow_nonneg this _
+    have hb_nonneg : 0 ≤ b := le_trans ha hab
+    have hb_pow : 0 ≤ b ^ k := by
+      simpa using pow_nonneg hb_nonneg _
+    -- a^k * a ≤ a^k * b ≤ b^k * b
+    calc
+      a ^ (k + 1) = a ^ k * a := by rw [pow_succ]
+      _ ≤ a ^ k * b := by exact mul_le_mul_of_nonneg_left hab ha_pow
+      _ ≤ b ^ k * b := by exact mul_le_mul_of_nonneg_right ih (le_trans ha hab)
+      _ = b ^ (k + 1) := by rw [pow_succ]
 
--- Helper lemma: Zdigits_aux terminates and gives correct bounds when it has at least one fuel
-private theorem Zdigits_aux_correct_one_fuel (beta n d pow : Int) (hn : n ≠ 0) :
-    pow = beta ^ d.natAbs →
-    d > 0 →
-    beta ^ (d - 1).natAbs ≤ |n| →
-    |n| < beta ^ d.natAbs →
-    (wp⟦Zdigits_aux beta n d pow 1⟧
-      (PostCond.noThrow fun result =>
-        ⌜result = d⌝)).down := by
-  intro hpow hd hle hlt
-  unfold Zdigits_aux
-  simp [wp, PostCond.noThrow, Id.instWP]
-  rw [← hpow] at hlt
-  simp [hlt, PredTrans.pure]
+/-- For `beta ≥ 2` and `n ≠ 0`, we have `|n| < beta^(1 + natAbs n)`. -/
+private lemma abs_lt_beta_pow_succ_natAbs (n : Int) (hβ : beta > 1) (hn : n ≠ 0) :
+  |n| < beta ^ (1 + n.natAbs) := by
+  have hβge2 : (2 : Int) ≤ beta := by linarith
+  -- 2^|n| > |n| (as integers)
+  have h_two : (n.natAbs : Int) < (2 : Int) ^ n.natAbs := by
+    -- `Nat.lt_two_pow_self` then cast
+    have : n.natAbs < 2 ^ n.natAbs := n.natAbs.lt_two_pow_self
+    simpa using Int.ofNat_lt.mpr this
+  -- β^|n| ≥ 2^|n|
+  have h_mono : (2 : Int) ^ n.natAbs ≤ beta ^ n.natAbs := by
+    have h2_nonneg : 0 ≤ (2 : Int) := by decide
+    exact pow_base_mono n.natAbs h2_nonneg hβge2
+  -- |n| = ↑|n|_nat
+  have h_abs_nat : (n.natAbs : Int) = |n| := Int.natCast_natAbs n
+  -- chain: |n| < β^|n|
+  have h0 : |n| < beta ^ n.natAbs := by
+    have := lt_of_lt_of_le (by simpa [h_abs_nat] using h_two) h_mono
+    exact this
+  -- multiply once by β (> 1)
+  have hb_pos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
+  have hb_gt1 : 1 < beta := hβ
+  have pow_pos : 0 < beta ^ n.natAbs := pow_pos hb_pos _
+  have step : beta ^ n.natAbs < beta ^ n.natAbs * beta := by
+    -- from 1 < β ⇒ (β^k) < (β^k)*β (since β^k > 0)
+    have := mul_lt_mul_of_pos_left hb_gt1 pow_pos
+    simpa using this
+  have : |n| < beta ^ n.natAbs * beta := lt_trans h0 step
+  -- rewrite β^(|n|+1)
+  simpa [pow_succ, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, mul_comm]
+    using this
 
--- Helper lemma for Zdigits_aux correctness with sufficient fuel
-private theorem Zdigits_aux_correct_sufficient (n d pow : Int) (fuel : Nat) (hn : n ≠ 0) (h_beta : beta > 1) :
-    pow = beta ^ d.natAbs →
-    d > 0 →
-    beta ^ (d - 1).natAbs ≤ |n| →
-    -- Key: Changed condition - we just need fuel > 0 when we know bounds
-    fuel > 0 →
-    (|n| < beta ^ d.natAbs → 
-      (wp⟦Zdigits_aux beta n d pow fuel⟧
-        (PostCond.noThrow fun result =>
-          ⌜result = d⌝)).down) ∧
-    (|n| ≥ beta ^ d.natAbs ∧ fuel > 0 → 
-      (wp⟦Zdigits_aux beta n d pow fuel⟧
-        (PostCond.noThrow fun result =>
-          ⌜beta ^ (result - 1).natAbs ≤ |n| ∧
-           |n| < beta ^ result.natAbs⌝)).down) := by
-  intro hpow hd hle hfuel_pos
-  constructor
-  · -- First part: if |n| < beta^d, we return d immediately
-    intro hlt
-    cases fuel with
-    | zero => contradiction
-    | succ fuel' =>
-      unfold Zdigits_aux
-      simp [wp, PostCond.noThrow, Id.instWP]
-      rw [← hpow] at hlt
-      simp [hlt, PredTrans.pure]
-  
-  · -- Second part: if |n| ≥ beta^d and fuel > 0, we recurse
-    intro ⟨hge, hfuel⟩
-    -- Strong induction on fuel
-    induction fuel generalizing d pow with
-    | zero => contradiction
-    | succ fuel' ih =>
-      unfold Zdigits_aux
-      simp [wp, PostCond.noThrow, Id.instWP]
-      rw [← hpow] at hge
-      have h_not_lt : ¬(|n| < pow) := not_lt.mpr hge
-      simp [h_not_lt]
-      
-      -- We recurse with d+1
-      have hd_pos : d + 1 > 0 := by linarith
-      have hpow_next : beta * pow = beta ^ (d + 1).natAbs := by
-        have : (d + 1).natAbs = d.natAbs + 1 := by
-          have d_nonneg : 0 ≤ d := le_of_lt hd
-          have d1_nonneg : 0 ≤ d + 1 := by linarith
-          suffices h : ((d + 1).natAbs : ℤ) = (d.natAbs : ℤ) + 1 by
-            exact Nat.cast_injective h
-          rw [Int.natAbs_of_nonneg d1_nonneg]
-          rw [Int.natAbs_of_nonneg d_nonneg]
-        rw [this, pow_succ, ← hpow]
-        ring
-      have hle_next : beta ^ ((d + 1) - 1).natAbs ≤ |n| := by
+/-- Main bound-and-termination lemma for `Zdigits_aux`.
+
+If we start at exponent `d > 0` with the correct power `pow = β^d`,
+know the *lower* bound `β^(d-1) ≤ |n|`, and choose a fuel such that
+`|n| < β^(d + fuel)`, then running `Zdigits_aux` returns some `r`
+satisfying the tight digit bounds:
+`β^(r-1) ≤ |n| < β^r`. -/
+private theorem Zdigits_aux_bounds
+  (n : Int) (hβ : beta > 1)
+  (d pow : Int) (fuel : Nat)
+  (hpow : pow = beta ^ d.natAbs)
+  (hd_pos : 0 < d)
+  (hlow : beta ^ ((d - 1).natAbs) ≤ |n|)
+  (hhigh : |n| < beta ^ (d.natAbs + fuel)) :
+  (wp⟦Zdigits_aux beta n d pow fuel⟧
+    (PostCond.noThrow fun r =>
+      ⌜beta ^ ((r - 1).natAbs) ≤ |n| ∧ |n| < beta ^ r.natAbs⌝)).down := by
+  -- strong induction on fuel
+  induction fuel generalizing d pow with
+  | zero =>
+    -- fuel = 0 ⇒ by precondition, |n| < β^d
+    have hlt : |n| < beta ^ d.natAbs := by simpa using hhigh
+    unfold Zdigits_aux
+    simp [wp, PostCond.noThrow]
+    -- return d with the two bounds
+    have hlt' : |n| < pow := by simpa [hpow] using hlt
+    have hlt_natAbs : Int.natAbs n < pow := by
+      -- Convert to the right form: need ↑(Int.natAbs n) < pow
+      -- This is equivalent to |n| < pow since Int.natAbs n = |n| as integers
+      convert hlt'
+      simp
+    -- The termination condition Int.natAbs n < pow is satisfied, so we return d
+    constructor
+    · exact hlow
+    · simpa [hpow] using hlt
+
+  | succ fuel' ih =>
+    -- consider the branch at (fuel' + 1)
+    unfold Zdigits_aux
+    simp [wp, PostCond.noThrow]
+    by_cases hlt : |n| < pow
+    · -- stop now: return d with current bounds
+      simp [hlt]
+      exact And.intro hlow (by simpa [hpow] using hlt)
+    · -- recurse: |n| ≥ pow = β^d
+      have d_nonneg : 0 ≤ d := le_of_lt hd_pos
+      have hge : beta ^ d.natAbs ≤ |n| := by
+        have : |n| ≥ pow := le_of_not_gt hlt
+        simpa [hpow] using this
+      -- prepare the next call at d+1, pow' = β^(d+1)
+      have d1_pos : 0 < d + 1 := by linarith
+      have d1_nonneg : 0 ≤ d + 1 := le_of_lt d1_pos
+      have d1_abs : (d + 1).natAbs = d.natAbs + 1 := by
+        -- both d and d+1 are nonnegative
+        have h1 : ((d + 1).natAbs : ℤ) = d + 1 := Int.natAbs_of_nonneg d1_nonneg
+        have h2 : (d.natAbs : ℤ) = d := Int.natAbs_of_nonneg d_nonneg
+        have : ((d + 1).natAbs : ℤ) = (d.natAbs : ℤ) + 1 := by
+          rw [h1, h2]
+        exact Nat.cast_injective this
+      have pow_next :
+          beta * pow = beta ^ (d + 1).natAbs := by
+        -- β * (β^d) = β^(d+1)
+        calc
+          beta * pow = beta * (beta ^ d.natAbs) := by simpa [hpow]
+          _ = beta ^ (d.natAbs + 1) := by simpa [pow_succ, mul_comm]
+          _ = beta ^ (d + 1).natAbs := by simpa [d1_abs]
+      -- lower bound for next level: β^((d+1)-1) = β^d ≤ |n|
+      have hlow_next : beta ^ ((d + 1 - 1).natAbs) ≤ |n| := by
         have : (d + 1) - 1 = d := by ring
-        rw [this, ← hpow]
-        exact hge
-      
-      -- Check if we'll terminate in the next step
-      by_cases h_term : |n| < beta ^ (d + 1).natAbs
-      · -- We'll terminate in the next recursion
-        cases fuel' with
-        | zero =>
-          -- fuel' = 0, so we can't recurse, but we return d+1
-          simp [Zdigits_aux, PredTrans.pure]
-          constructor
-          · -- Need to convert hle_next : beta ^ ((d + 1) - 1).natAbs ≤ |n|
-            -- to beta ^ (d.natAbs)
-            have h_eq : ((d + 1) - 1).natAbs = d.natAbs := by
-              have : (d + 1) - 1 = d := by ring
-              rw [this]
-            rw [← h_eq]
-            exact hle_next
-          · exact h_term
-        | succ fuel'' =>
-          -- We have fuel to recurse
-          have h_one_fuel := Zdigits_aux_correct_one_fuel beta n (d+1) (beta * pow) hn
-          have := h_one_fuel hpow_next hd_pos hle_next h_term
-          unfold Zdigits_aux at this
-          simp [wp, PostCond.noThrow, Id.instWP] at this
-          rw [← hpow_next] at h_term
-          simp [h_term, PredTrans.pure] at this
-          simp [this]
-          constructor
-          · exact hle_next
-          · exact h_term
-      
-      · -- We won't terminate, need to recurse further
-        push_neg at h_term
-        cases fuel' with
-        | zero =>
-          -- No more fuel, return d+1
-          simp [Zdigits_aux, PredTrans.pure]
-          -- This case is problematic because we don't have the right bounds
-          -- But actually this shouldn't happen if we start with enough fuel
-          -- For now, admit this case
-          sorry
-        | succ fuel'' =>
-          -- Apply IH
-          have : fuel'' + 1 > 0 := Nat.succ_pos _
-          have ih_result := ih (d+1) (beta * pow) hn h_beta hpow_next hd_pos hle_next this
-          have h_and := ih_result.2
-          have := h_and ⟨h_term, this⟩
-          exact this
+        simpa [this] using hge
+      -- upper bound propagates: |n| < β^(d + (fuel'+1)) ⇒ |n| < β^((d+1) + fuel')
+      have hhigh_next : |n| < beta ^ ((d + 1).natAbs + fuel') := by
+        -- rewrite exponent
+        have : d.natAbs + (fuel' + 1) = (d.natAbs + 1) + fuel' := by
+          simp [Nat.add_comm, Nat.add_left_comm]
+        -- use `hhigh` and rewrite the target
+        simpa [d1_abs, this] using hhigh
+      -- unfold the "else" branch and apply IH
+      have h_not_lt : ¬(|n| < pow) := hlt
+      simp [h_not_lt]
+      -- now reduce to IH at (d+1, β*pow, fuel')
+      have : (wp⟦Zdigits_aux beta n (d + 1) (beta * pow) fuel'⟧
+                (PostCond.noThrow fun r =>
+                  ⌜beta ^ ((r - 1).natAbs) ≤ |n| ∧ |n| < beta ^ r.natAbs⌝)).down :=
+        ih (d := d + 1) (pow := beta * pow)
+           (by simpa using pow_next) d1_pos hlow_next hhigh_next
+      simpa using this
 
-theorem Zdigits_correct (n : Int) (h_beta : beta > 1) :
+/-- Final theorem: correctness of the number of digits computed by `Zdigits`. -/
+theorem Zdigits_correct (n : Int) (hβ : beta > 1) :
     ⦃⌜n ≠ 0⌝⦄
     Zdigits beta n
-    ⦃⇓d => ⌜beta ^ (d - 1).natAbs ≤ |n| ∧ |n| < beta ^ d.natAbs⌝⦄ := by
+    ⦃⇓d => ⌜beta ^ ((d - 1).natAbs) ≤ |n| ∧ |n| < beta ^ d.natAbs⌝⦄ := by
   intro hn
   unfold Zdigits
-  -- Split on n = 0 case
   split
-  · -- Case: n = 0, contradicts hn
-    rename_i heq
-    exact absurd heq hn
-  · -- Case: n ≠ 0
-    rename_i n_ne
-    -- We need to show the computation gives the right bounds
-    -- Start with d = 1, pow = beta
-    have h_aux := Zdigits_aux_correct_sufficient n 1 beta (n.natAbs.succ) n_ne h_beta
-    have h_pow : beta = beta ^ (1 : Int).natAbs := by simp
-    have h_one_pos : (1 : Int) > 0 := by norm_num
-    have h_le : beta ^ ((1 : Int) - 1).natAbs ≤ |n| := by
-      simp
-      have : |n| > 0 := by
-        simp only [Int.natAbs_pos]
-        exact hn
-      omega
-    have h_fuel_pos : n.natAbs.succ > 0 := Nat.succ_pos _
-    have ⟨_, h_second⟩ := h_aux h_pow h_one_pos h_le h_fuel_pos
-    
-    -- Now we need to determine which case applies
-    by_cases h_case : |n| < beta ^ (1 : Int).natAbs
-    · -- |n| < beta, so we return 1
-      simp at h_case
-      have h_first := (h_aux h_pow h_one_pos h_le h_fuel_pos).1
-      have := h_first h_case
-      simp [wp, PostCond.noThrow] at this
-      simp [wp, PostCond.noThrow]
-      use 1
-      simp [this]
-      constructor
-      · simp
-        omega
-      · simp
-        exact h_case
-    · -- |n| ≥ beta, we recurse
-      push_neg at h_case
-      simp at h_case
-      have := h_second ⟨h_case, h_fuel_pos⟩
-      exact this
+  · -- Case: n = 0, contradicts precondition n ≠ 0
+    exact (hn ‹n = 0›).elim
+  · -- initial setup: d = 1, pow = β, fuel = |n|_nat + 1
+    -- lower bound at d = 1: β^0 = 1 ≤ |n|
+    have h_abs_pos : 0 < |n| := abs_pos.mpr hn
+    have h1le : (1 : Int) ≤ |n| := by
+      -- `Int.add_one_le_iff.mpr : a+1 ≤ b ↔ a < b`
+      simpa using (Int.add_one_le_iff.mpr h_abs_pos)
+    have hlow : beta ^ ((1 : Int) - 1).natAbs ≤ |n| := by
+      -- (1 - 1).natAbs = 0
+      simpa [pow_zero] using h1le
+    -- strong enough upper bound to guarantee termination
+    have hhigh0 : |n| < beta ^ (1 + n.natAbs) :=
+      abs_lt_beta_pow_succ_natAbs (beta:=beta) n hβ hn
+    -- our call uses `fuel = n.natAbs.succ`, i.e. exponent upper bound `1 + n.natAbs + 1`,
+    -- which is ≥ `1 + n.natAbs`. Strengthen `hhigh0` accordingly.
+    have hb_pos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
+    have step_up : beta ^ (1 + n.natAbs) < beta ^ (1 + n.natAbs) * beta := by
+      -- Use the fact that a < a * b when b > 1 and a > 0
+      have h_pow_pos : 0 < beta ^ (1 + n.natAbs) := pow_pos hb_pos _
+      exact lt_mul_of_one_lt_right h_pow_pos hβ
+    have hhigh :
+        |n| < beta ^ (1 + n.natAbs + 1) := by
+      have := lt_trans hhigh0 step_up
+      simpa [pow_succ, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, mul_comm] using this
+    -- now invoke the general bound lemma with d = 1, pow = β, fuel = n.natAbs.succ
+    have hpow : (beta : Int) = beta ^ ( (1 : Int).natAbs ) := by simp
+    have dpos : 0 < (1 : Int) := by decide
+    have fuel_is : 1 + n.natAbs = (1 : Nat) + n.natAbs := rfl
+    -- rewrite the exponent `d.natAbs + fuel` as `1 + (n.natAbs + 1)`
+    have : (1 : Nat) + n.natAbs = n.natAbs.succ := by simp [Nat.succ_eq_add_one, Nat.add_comm]
+    -- run the lemma
+    exact
+      (Zdigits_aux_bounds (beta:=beta) n hβ
+        (d := 1) (pow := beta) (fuel := n.natAbs.succ)
+        (by simpa using hpow) dpos hlow
+        (by simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, this] using hhigh))
 
 /-- Unique characterization of digit count
 
@@ -3988,230 +3960,200 @@ now apply Z.le_lt_trans with (Z.abs n).
 Qed.
 ```
 -/
+private lemma natAbs_sub_one_gt_of_nonpos (x : Int) (hx : x ≤ 0) :
+  x.natAbs < (x - 1).natAbs := by
+  -- Let y = -x ≥ 0. Then x - 1 = -(y+1), so |x-1| = |y+1| and |x| = |y|.
+  let y : Int := -x
+  have hy  : 0 ≤ y       := neg_nonneg.mpr hx
+  have hy1 : 0 ≤ y + 1   := by linarith
+  -- Cast both natAbs to ℤ to compare as integers, then convert back to ℕ.
+  have hInt :
+      (x.natAbs : Int) < (x - 1).natAbs := by
+    -- (x.natAbs : ℤ) = y, ((x-1).natAbs : ℤ) = y+1
+    have hx_abs  : (x.natAbs : Int) = y := by
+      -- |x| = |-y| = |y| and y ≥ 0 ⇒ (|y| : ℤ) = y
+      have : (Int.natAbs x : Int) = Int.natAbs (-y) := by simp [y]
+      simpa [Int.natAbs_of_nonneg hy] using this
+    have hx1_abs : ((x - 1).natAbs : Int) = y + 1 := by
+      -- x - 1 = -(y+1) ⇒ |x-1| = |y+1|; (y+1) ≥ 0 ⇒ (|y+1| : ℤ) = y+1
+      have : (x - 1) = - (y + 1) := by
+        simp [y]
+        ring
+      rw [this, Int.natAbs_neg]
+      exact Int.natAbs_of_nonneg hy1
+    -- Now it's y < y + 1
+    simpa [hx_abs, hx1_abs]
+  exact Int.ofNat_lt.mp hInt
+
+
+/-- If `1 ≤ β`, then `β^m ≤ β^(m+1)` (monotone in the exponent). -/
+private lemma pow_succ_ge (beta : Int) (hb1 : 1 ≤ beta) (m : Nat) :
+  (beta : Int) ^ m ≤ (beta : Int) ^ (m + 1) := by
+  have hnonneg : 0 ≤ (beta : Int) ^ m := by
+    have : 0 ≤ (1 : Int) := by decide
+    exact pow_nonneg (le_trans this hb1) _
+  have := mul_le_mul_of_nonneg_left hb1 hnonneg
+  simpa [pow_succ, mul_comm] using this
+
+/-- If `1 ≤ β` and `m ≤ n`, then `β^m ≤ β^n`. -/
+private lemma pow_le_pow_exponent (beta : Int) (hb1 : 1 ≤ beta)
+  {m n : Nat} (h : m ≤ n) :
+  (beta : Int) ^ m ≤ (beta : Int) ^ n := by
+  induction h with
+  | refl => simpa
+  | step h ih => exact le_trans ih (pow_succ_ge beta hb1 _)
+
+/-- For `x ≤ 0`, `(x-1).natAbs = x.natAbs + 1`. -/
+private lemma natAbs_sub_one_eq_add_one_of_nonpos (x : Int) (hx : x ≤ 0) :
+  (x - 1).natAbs = x.natAbs + 1 := by
+  have hx_abs  : (x.natAbs : Int) = -x := Int.ofNat_natAbs_of_nonpos hx
+  have hx1_abs : ((x - 1).natAbs : Int) = -(x - 1) :=
+    Int.ofNat_natAbs_of_nonpos (by linarith : x - 1 ≤ 0)
+  -- rewrite the RHS
+  have hx1_int : ((x - 1).natAbs : Int) = (x.natAbs : Int) + 1 := by
+    simpa [hx_abs, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+      using hx1_abs
+  -- cast back to Nat
+  exact Int.natCast_inj.mp hx1_int
+
+/-- Uniqueness of the digit count: if both `(β^(e-1) ≤ |n| < β^e)` and
+the `Zdigits` bounds hold, then `Zdigits β n = e`. -/
 theorem Zdigits_unique (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ (e - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ e.natAbs⌝⦄
     Zdigits beta n
     ⦃⇓d => ⌜d = e⌝⦄ := by
-  intro ⟨hn, he_lower, he_upper⟩
-  -- Get the bounds from Zdigits_correct
-  have hcorrect := Zdigits_correct beta n hβ
-  -- Apply the specification with the precondition
-  have h_spec := hcorrect hn
-  -- Now h_spec gives us the postcondition for Zdigits
-  sorry  -- Need to complete the uniqueness proof
-  -- Now we have:
-  -- beta^(d-1) ≤ |n| < beta^d
-  -- beta^(e-1) ≤ |n| < beta^e
-  -- These bounds uniquely determine d = e
+  intro ⟨hn, he_lower_nat, he_upper_nat⟩
+  -- switch to `|n|`
+  have habs : (n.natAbs : Int) = |n| := Int.natCast_natAbs n
+  have he_lower : beta ^ (e - 1).natAbs ≤ |n| := by simpa [habs] using he_lower_nat
+  have he_upper : |n| < beta ^ e.natAbs := by simpa [habs] using he_upper_nat
 
-  -- Show d ≤ e
-  have hde : (Zdigits beta n).run ≤ e := by
-    by_contra h_not_le
-    push_neg at h_not_le
-    -- If e < d, then e ≤ d - 1
-    have he_lt_d : e.natAbs < ((Zdigits beta n).run - 1 + 1).natAbs := by
-      have : e < (Zdigits beta n).run := h_not_le
-      cases hd : (Zdigits beta n).run with
-      | ofNat d' =>
-        cases he : e with
-        | ofNat e' =>
-          simp only [Int.natAbs_natCast] at *
-          have : e' < d' := by
-            rw [he, hd] at h_not_le
-            simp at h_not_le
-            exact h_not_le
-          simp only [Int.natAbs_natCast]
-          have : d' > 0 := by
-            by_contra h0
-            push_neg at h0
-            simp at h0
-            cases h0 with
-            | inl h => simp [h] at hd_lower; omega
-            | inr h => simp [← h] at hd_lower; omega
-          omega
-        | negSucc e' =>
-          simp at hd_lower
-          omega
-      | negSucc d' =>
-        simp at hd_lower
-        omega
+  -- read the postcondition of `Zdigits_correct` at the concrete `d`
+  have h_spec := (Zdigits_correct (beta:=beta) n hβ) hn
+  let d : Int := Id.run (Zdigits beta n)
+  have hd_bounds :
+      beta ^ ((d - 1).natAbs) ≤ |n| ∧ |n| < beta ^ d.natAbs := by
+    simpa [d, wp, PostCond.noThrow, Id.instWP, Id.run] using h_spec
+  have hd_lower : beta ^ ((d - 1).natAbs) ≤ |n| := hd_bounds.1
+  have hd_upper : |n| < beta ^ d.natAbs := hd_bounds.2
 
-    -- Then beta^e < beta^d, but we have |n| < beta^e and beta^(d-1) ≤ |n|
-    have hpow_lt : beta ^ e.natAbs < beta ^ (Zdigits beta n).run.natAbs := by
-      apply pow_strict_mono_int hβ
-      cases hd2 : (Zdigits beta n).run with
-      | ofNat d' =>
-        cases he2 : e with
-        | ofNat e' =>
-          simp only [Int.natAbs_natCast] at *
-          have : Int.ofNat e' < Int.ofNat d' := by
-            rw [← he2, ← hd2]
-            exact h_not_le
-          omega
-        | negSucc e' =>
-          simp at hd_lower
-          omega
-      | negSucc d' =>
-        simp at hd_lower
-        omega
+  -- show `d > 0` else contradict the two-sided bounds
+  have d_pos : 0 < d := by
+    by_contra hnp
+    have hle0 : d ≤ 0 := le_of_not_gt hnp
+    have stepA : (d - 1).natAbs = d.natAbs + 1 :=
+      natAbs_sub_one_eq_add_one_of_nonpos d hle0
+    have hb0 : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
+    have pow_pos : 0 < beta ^ d.natAbs := pow_pos hb0 _
+    -- β^(d-1) = β^(d.natAbs+1) = β^d * β
+    have gt_step : beta ^ ((d - 1).natAbs) = beta ^ d.natAbs * beta := by
+      simp [stepA, pow_succ, mul_comm]
+    have strict : beta ^ d.natAbs < beta ^ ((d - 1).natAbs) := by
+      have := mul_lt_mul_of_pos_left hβ pow_pos
+      simpa [gt_step] using this
+    -- from the two-sided bounds, β^(d-1) < β^d
+    have lt_d : beta ^ ((d - 1).natAbs) < beta ^ d.natAbs :=
+      lt_of_le_of_lt hd_lower hd_upper
+    exact lt_irrefl _ (lt_trans strict lt_d)
 
-    -- This gives |n| < beta^e < beta^d, but also beta^(d-1) ≤ |n|
-    have : ↑n.natAbs < beta ^ (Zdigits beta n).run.natAbs := by
-      calc ↑n.natAbs < beta ^ e.natAbs := he_upper
-        _ < beta ^ (Zdigits beta n).run.natAbs := hpow_lt
+  -- and `e > 0`
+  have e_pos : 0 < e := by
+    by_contra hnp
+    have hle0 : e ≤ 0 := le_of_not_gt hnp
+    have stepA : (e - 1).natAbs = e.natAbs + 1 :=
+      natAbs_sub_one_eq_add_one_of_nonpos e hle0
+    have hb0 : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
+    have pow_pos : 0 < beta ^ e.natAbs := pow_pos hb0 _
+    have gt_step : beta ^ ((e - 1).natAbs) = beta ^ e.natAbs * beta := by
+      simp [stepA, pow_succ, mul_comm]
+    have strict : beta ^ e.natAbs < beta ^ ((e - 1).natAbs) := by
+      have := mul_lt_mul_of_pos_left hβ pow_pos
+      simpa [gt_step] using this
+    -- but from the given bounds we also have β^(e-1) < β^e
+    have lt_e : beta ^ ((e - 1).natAbs) < beta ^ e.natAbs :=
+      lt_of_le_of_lt he_lower he_upper
+    exact lt_irrefl _ (lt_trans strict lt_e)
 
-    -- We also know that beta^(d-1) ≤ |n| = n.natAbs
-    have habs_eq : |n| = ↑n.natAbs := by simp only [Int.abs_eq_natAbs]
-    rw [habs_eq] at hd_lower
+  -- positivity lets us use `natAbs` as the integer itself in casts
+  have d_nonneg : 0 ≤ d := le_of_lt d_pos
+  have e_nonneg : 0 ≤ e := le_of_lt e_pos
+  have d1_nonneg : 0 ≤ d - 1 := by linarith
+  have e1_nonneg : 0 ≤ e - 1 := by linarith
+  have hb1 : 1 ≤ beta := le_of_lt hβ
 
-    -- Now we need to show this is impossible
-    -- We have: beta^(d-1) ≤ n.natAbs < beta^e < beta^d
-    -- Need to show that d-1 < e, which contradicts e < d
+  -- from β^(d-1) ≤ |n| < β^e ⇒ (d-1).natAbs < e.natAbs
+  have h_lt₁ : (d - 1).natAbs < e.natAbs := by
+    by_contra hnot
+    have step : beta ^ e.natAbs ≤ beta ^ (d - 1).natAbs :=
+      pow_le_pow_exponent beta hb1 (le_of_not_gt hnot)
+    -- then β^e ≤ β^(d-1) ≤ |n| < β^e
+    exact not_lt_of_ge step (lt_of_le_of_lt hd_lower he_upper)
 
-    -- First, let's establish that (Zdigits beta n).run > 0
-    have hd_pos : 0 < (Zdigits beta n).run := by
-      by_contra h_not_pos
-      push_neg at h_not_pos
-      -- If d ≤ 0, then d.natAbs = 0 or ...
-      cases (Zdigits beta n).run with
-      | ofNat d' =>
-        simp at h_not_pos
-        have : d' = 0 := by omega
-        simp [this] at hd_lower
-        have : 1 ≤ ↑n.natAbs := hd_lower
-        have : 0 < n.natAbs := by omega
-        have : 0 < n := by
-          cases n with
-          | ofNat n' => simp at this; omega
-          | negSucc n' => simp at this
-        have : e > 0 := by
-          by_contra he_not_pos
-          push_neg at he_not_pos
-          cases e with
-          | ofNat e' =>
-            simp at he_not_pos
-            have : e' = 0 := by omega
-            simp [this] at he_upper
-            omega
-          | negSucc e' =>
-            simp at he_lower
-            omega
-        omega
-      | negSucc d' =>
-        simp at hd_lower
-        omega
+  -- from β^(e-1) ≤ |n| < β^d ⇒ (e-1).natAbs < d.natAbs
+  have h_lt₂ : (e - 1).natAbs < d.natAbs := by
+    by_contra hnot
+    have step : beta ^ d.natAbs ≤ beta ^ (e - 1).natAbs :=
+      pow_le_pow_exponent beta hb1 (le_of_not_gt hnot)
+    exact not_lt_of_ge step (lt_of_le_of_lt he_lower hd_upper)
 
-    -- Since d > 0, we have (d-1+1).natAbs = d.natAbs
-    have hd_simp : ((Zdigits beta n).run - 1 + 1).natAbs = (Zdigits beta n).run.natAbs := by
-      have : (Zdigits beta n).run - 1 + 1 = (Zdigits beta n).run := by omega
-      simp [this]
+  -- cast Nat inequalities back to `Int`
+  have h₁_int : (d - 1 : Int) < e := by
+    have := (Int.ofNat_lt.mpr h_lt₁)
+    simpa [Int.natAbs_of_nonneg d1_nonneg, Int.natAbs_of_nonneg e_nonneg] using this
+  have h₂_int : (e - 1 : Int) < d := by
+    have := (Int.ofNat_lt.mpr h_lt₂)
+    simpa [Int.natAbs_of_nonneg e1_nonneg, Int.natAbs_of_nonneg d_nonneg] using this
 
-    rw [hd_simp] at he_lt_d
+  -- turn `(d-1) < e` into `d ≤ e` (and similarly for the other side)
+  have d_le_e' : d - 1 + 1 ≤ e := Int.add_one_le_iff.mpr h₁_int
+  have e_le_d' : e - 1 + 1 ≤ d := Int.add_one_le_iff.mpr h₂_int
+  have d_le_e : d ≤ e := by
+    simpa [sub_eq_add_neg, add_assoc, add_left_comm, add_comm] using d_le_e'
+  have e_le_d : e ≤ d := by
+    simpa [sub_eq_add_neg, add_assoc, add_left_comm, add_comm] using e_le_d'
 
-    -- Now we have e < d and beta^(d-1) ≤ n.natAbs < beta^e
-    -- This means beta^(d-1) < beta^e, so d-1 < e
-    have hpow_ineq : beta ^ ((Zdigits beta n).run - 1).natAbs < beta ^ e.natAbs := by
-      calc beta ^ ((Zdigits beta n).run - 1).natAbs ≤ ↑n.natAbs := hd_lower
-        _ < beta ^ e.natAbs := he_upper
+  have deq : d = e := le_antisymm d_le_e e_le_d
 
-    have hd_minus_one_lt_e : ((Zdigits beta n).run - 1).natAbs < e.natAbs := by
-      by_contra h_not
-      push_neg at h_not
-      have : beta ^ e.natAbs ≤ beta ^ ((Zdigits beta n).run - 1).natAbs := by
-        apply pow_mono_int hβ h_not
-      linarith
+  -- Now we need to show that (wp⟦Zdigits beta n⟧ (PostCond.noThrow fun d ↦ ⌜d = e⌝)).down
+  -- We have d = (Zdigits beta n).run and d = e
+  -- The goal simplifies to showing that Zdigits beta n = pure e
+  unfold wp PostCond.noThrow
+  simp only [Id.instWP, PredTrans.pure, Id.run]
+  -- Now the goal should be: Zdigits beta n = pure e
+  -- Since d = (Zdigits beta n).run and d = e, we have (Zdigits beta n).run = e
+  -- For Id monad, if m.run = v then m = pure v
+  have : Zdigits beta n = pure e := by
+    -- In the Id monad, if two computations have the same run result, they are equal
+    ext
+    -- Goal: (Zdigits beta n).run = (pure e).run
+    -- We have d = (Zdigits beta n).run and d = e
+    -- Since (pure e).run = e, we need to show (Zdigits beta n).run = e
+    simp only [Id.run, pure]
+    -- Now the goal is: Zdigits beta n = e (since Id.run (Zdigits beta n) = Zdigits beta n)
+    -- But d = (Zdigits beta n).run = Zdigits beta n (for Id monad)
+    convert deq
+    -- Need to show d = (Zdigits beta n).run, which is how d was defined
+  exact this
 
-    -- But we also have e < d, which means e.natAbs < d.natAbs
-    -- And d-1 < e < d is impossible for integers
-    omega
-
-  -- Show e ≤ d
-  have hed : e ≤ (Zdigits beta n).run := by
-    by_contra h_not_le
-    push_neg at h_not_le
-    -- If d < e, then d ≤ e - 1
-
-    -- Similar reasoning to above
-    have hpow_lt : beta ^ (Zdigits beta n).run.natAbs < beta ^ e.natAbs := by
-      apply pow_strict_mono_int hβ
-      cases hd3 : (Zdigits beta n).run with
-      | ofNat d' =>
-        cases he3 : e with
-        | ofNat e' =>
-          simp only [Int.natAbs_natCast] at *
-          have : Int.ofNat d' < Int.ofNat e' := by
-            rw [← hd3, ← he3]
-            exact h_not_le
-          omega
-        | negSucc e' =>
-          simp at he_lower
-          omega
-      | negSucc d' =>
-        simp at hd_upper
-        have : |n| = ↑n.natAbs := by rfl
-        rw [this] at hd_upper
-        omega
-
-    -- This gives |n| < beta^d < beta^e, but also beta^(e-1) ≤ |n|
-    have : ↑n.natAbs < beta ^ e.natAbs := by
-      calc ↑n.natAbs = |n| := by simp only [Int.abs_eq_natAbs]
-        _ < beta ^ (Zdigits beta n).run.natAbs := hd_upper
-        _ < beta ^ e.natAbs := hpow_lt
-
-    -- But we already have |n| < beta^e
-    -- The contradiction comes from beta^(e-1) ≤ |n| < beta^d < beta^e
-    have hbound : beta ^ (e - 1).natAbs < beta ^ (Zdigits beta n).run.natAbs := by
-      calc beta ^ (e - 1).natAbs ≤ ↑n.natAbs := he_lower
-        _ = |n| := by simp only [Int.abs_eq_natAbs]
-        _ < beta ^ (Zdigits beta n).run.natAbs := hd_upper
-
-    -- This means (e-1) < d by strict monotonicity
-    have : (e - 1).natAbs < (Zdigits beta n).run.natAbs := by
-      by_contra h_not
-      push_neg at h_not
-      have : beta ^ (Zdigits beta n).run.natAbs ≤ beta ^ (e - 1).natAbs := by
-        apply pow_mono_int hβ h_not
-      linarith
-
-    -- But we also have d < e, which means d.natAbs ≤ (e-1).natAbs in many cases
-    -- The issue is handling the interaction of natAbs with subtraction
-    -- Let's use a different approach: since d < e and both are determined by powers
-    cases (Zdigits beta n).run with
-    | ofNat d' =>
-      cases e with
-      | ofNat e' =>
-        simp only [Int.natAbs_natCast] at *
-        have : d' < e' := h_not_le
-        have : e' > 0 := by
-          by_contra h0
-          push_neg at h0
-          interval_cases e'
-          · simp at he_lower
-            omega
-        have he_sub : (e' - 1 : Int).natAbs = e' - 1 := by
-          cases e' with
-          | zero => simp at he_lower; omega
-          | succ e'' => simp [Int.natAbs_ofNat]
-        rw [he_sub] at hbound
-        have : (e' - 1 : Nat) < d' := by
-          by_contra h_not
-          push_neg at h_not
-          have : beta ^ d' ≤ beta ^ (e' - 1) := by
-            apply pow_mono_int hβ h_not
-          linarith
-        omega
-      | negSucc _ =>
-        simp at he_lower
-        omega
-    | negSucc _ =>
-      simp at hd_upper
-      have : |n| = ↑n.natAbs := by rfl
-      rw [this] at hd_upper
-      omega
-
-  -- Therefore d = e
-  have : (Zdigits beta n).run = e := le_antisymm hde hed
-  simp [this]
+/-- Helper lemma: Zdigits_aux only depends on the absolute value of n -/
+private lemma Zdigits_aux_abs_eq (n : Int) (d pow : Int) (fuel : Nat) :
+    Int.natAbs n = Int.natAbs (-n) →
+    Zdigits_aux beta n d pow fuel = Zdigits_aux beta (-n) d pow fuel := by
+  intro h_abs_eq
+  induction fuel generalizing d pow
+  · -- Base case: fuel = 0
+    simp only [Zdigits_aux]
+  · -- Inductive case: fuel = succ fuel'
+    simp only [Zdigits_aux]
+    -- The condition uses Int.natAbs n, which equals Int.natAbs (-n) by h_abs_eq
+    rw [h_abs_eq]
+    -- Now both sides have the same condition
+    split
+    · -- If Int.natAbs (-n) < pow, both return d
+      rfl
+    · -- Otherwise, recurse with updated parameters
+      rename_i fuel' _
+      apply fuel' (d + 1) (beta * pow)
 
 /-- Digit count of absolute value
 
@@ -4229,85 +4171,60 @@ theorem Zdigits_abs (n : Int) :
     Zdigits beta (Int.natAbs n)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = pure dn ∧ d = dn⌝⦄ := by
   intro _
-  -- We need to show Zdigits of |n| equals Zdigits of n
-  unfold Zdigits
-  -- Case split on whether n = 0
-  by_cases hn : n = 0
-  · -- If n = 0, then |n| = 0
-    simp [hn, Int.natAbs_zero]
-    use 0
-    simp [Zdigits]
-  · -- If n ≠ 0, we need to show the computation paths are the same
-    -- Since n ≠ 0, we have n.natAbs ≠ 0
-    have habs_ne : n.natAbs ≠ 0 := by
-      intro h
-      have : n = 0 := by
-        simp only [Int.natAbs_eq_zero] at h
-        exact h
-      exact hn this
+  -- We prove this by showing Zdigits beta (Int.natAbs n) = Zdigits beta n
+  -- Using the Zdigits_abs lemma from Coq which states this equality directly
 
-    -- Now we need to show the auxiliary functions give the same result
-    simp only [Zdigits]
-    split
-    · -- Case: |n| = 0, but we have |n| ≠ 0
-      rename_i h
-      have : (Int.natAbs n : Int) = 0 := h
-      have : n.natAbs = 0 := by
-        simp only [Int.natCast_eq_zero] at this
-        exact this
-      exact absurd this habs_ne
-    · -- Case: |n| ≠ 0
-      -- The key observation: both branches of Zdigits use the same computation
-      -- When n ≠ 0, Zdigits n checks if n > 0 or not
-      -- If n > 0, it uses Zdigits_aux beta n
-      -- If n ≤ 0, it uses Zdigits_aux beta (-n)
-      -- But Zdigits (|n|) always uses Zdigits_aux beta |n|
-      -- Since |n| = n when n > 0 and |n| = -n when n < 0,
-      -- the computations are the same
-      
-      -- Split on whether n > 0
+  -- First, we use the fact from Coq that Zdigits (|n|) = Zdigits n
+  -- This can be proved by case analysis on the sign of n
+  have h_eq : Zdigits beta (Int.natAbs n) = Zdigits beta n := by
+    -- Case split on whether n = 0
+    by_cases hn : n = 0
+    · -- If n = 0, then |n| = 0
+      rw [hn]
+      simp only [Int.natAbs_zero]
+      rfl
+    · -- If n ≠ 0, consider the sign
+      unfold Zdigits
       by_cases hpos : 0 < n
       · -- n > 0, so |n| = n
         have abs_eq : (Int.natAbs n : Int) = n := by
           simp only [Int.natAbs_of_nonneg (le_of_lt hpos)]
-          simp only [Int.natCast_natAbs, abs_of_pos hpos]
-        
-        -- Since |n| = n and n > 0, both Zdigits n and Zdigits |n| use Zdigits_aux beta n
-        simp only [wp, PostCond.noThrow, Id.run, pure]
-        use (Zdigits_aux beta n 1 beta (n.natAbs + 1)).run
-        simp only [Zdigits, hn, hpos, ite_true, if_neg hn]
-        constructor
-        · rfl
-        · -- Need to show Zdigits_aux beta |n| equals Zdigits_aux beta n
-          -- Since |n| = n, they're literally the same
-          rw [abs_eq]
-          rfl
-      
-      · -- n ≤ 0, and since n ≠ 0, we have n < 0
+        simp only [abs_eq]
+      · -- n < 0 (since n ≠ 0 and n ≤ 0)
         have hneg : n < 0 := by
           push_neg at hpos
           cases' lt_or_eq_of_le hpos with h h
           · exact h
           · exact absurd h hn
-        
-        -- When n < 0, |n| = -n
+        -- |n| = -n when n < 0
         have abs_eq : (Int.natAbs n : Int) = -n := by
           simp only [Int.natCast_natAbs, abs_of_neg hneg]
-        
-        -- Zdigits n with n < 0 uses Zdigits_aux beta (-n)
-        -- Zdigits |n| uses Zdigits_aux beta |n| = Zdigits_aux beta (-n)
-        simp only [wp, PostCond.noThrow, Id.run, pure]
-        use (Zdigits_aux beta (-n) 1 beta (n.natAbs + 1)).run
-        simp only [Zdigits, hn, hpos, ite_false, if_neg hn]
-        constructor
-        · -- Show Zdigits n = pure (result)
-          have : Int.natAbs (-n) = n.natAbs := by
-            simp only [Int.natAbs_neg]
-          rw [this]
-          rfl
-        · -- Show Zdigits_aux beta |n| equals result
-          rw [abs_eq]
-          rfl
+        have h_ne : -n ≠ 0 := by
+          intro h
+          have : n = 0 := by linarith
+          exact hn this
+        have h_pos : 0 < -n := by linarith
+        simp only [abs_eq]
+        -- Both sides expand to Zdigits_aux with the same parameters
+        -- Since n < 0, we have |n| = -n, and Zdigits (-n) = Zdigits n for negative n
+        rw [dif_neg h_ne, dif_neg hn]
+        -- The natAbs of n and -n are the same
+        have h_abs_eq : Int.natAbs (-n) = n.natAbs := by
+          simp only [Int.natAbs_neg]
+        rw [h_abs_eq]
+        -- Apply the helper lemma to show Zdigits_aux gives the same result
+        -- We need the symmetric version: from -n to n
+        rw [← Zdigits_aux_abs_eq]
+        -- Prove that Int.natAbs (-n) = Int.natAbs (--n) = Int.natAbs n
+        simp only [Int.natAbs_neg]
+
+  -- Now use this equality to prove the specification
+  rw [h_eq]
+  simp only [wp, PostCond.noThrow, Id.run, pure]
+  use (Zdigits beta n).run
+  constructor
+  · rfl
+  · rfl
 
 /-- Digit count of opposite
 
@@ -4330,7 +4247,7 @@ theorem Zdigits_opp (n : Int) :
   intro _
   -- This follows from the fact that Zdigits uses Int.natAbs
   -- and Int.natAbs (-n) = Int.natAbs n
-  unfold Zdigits
+  simp only [Zdigits]
   -- Case split on whether -n = 0
   by_cases hn : -n = 0
   · -- If -n = 0, then n = 0
@@ -4339,9 +4256,12 @@ theorem Zdigits_opp (n : Int) :
       rw [hn] at this
       simp at this
       exact this
-    simp [hn, n_eq]
+    simp only [n_eq]
+    simp only [wp, PostCond.noThrow, Id.run, pure]
     use 0
-    constructor <;> rfl
+    constructor
+    · rfl
+    · rfl
   · -- If -n ≠ 0, then n ≠ 0
     have n_ne : n ≠ 0 := by
       intro h
@@ -4353,19 +4273,26 @@ theorem Zdigits_opp (n : Int) :
       have n_neg : n < 0 := by
         have : -n > 0 := hpos
         linarith
-      simp [hn, hpos, n_ne, show ¬(0 < n) from not_lt.mpr (le_of_lt n_neg)]
+      -- Zdigits beta (-n) with -n > 0 gives Zdigits_aux (-n) 1 beta fuel
+      -- Since -n > 0 and -n ≠ 0, Zdigits unfolds to Zdigits_aux
+      simp only [dif_neg hn]
       -- Both compute Zdigits_aux on the absolute value
       have abs_eq : Int.natAbs (-n) = Int.natAbs n := Int.natAbs_neg n
-      -- The goal is to show that Zdigits_aux beta (-n) 1 ((-n).natAbs + 1)
-      -- equals Zdigits_aux beta (-(-n)) 1 (n.natAbs + 1)
-      -- Since (-n).natAbs = n.natAbs and -(-n) = n, they are equal
-      simp only [abs_eq, neg_neg]
-      use (Zdigits_aux beta n 1 beta (n.natAbs + 1)).run
+      -- Setup the monadic context
+      simp only [wp, PostCond.noThrow, Id.run, pure]
+      -- Need to show the auxiliary function gives the right result
+      use Id.run (Zdigits_aux beta (-n) 1 beta (Int.natAbs (-n)).succ)
       constructor
       · -- Show Zdigits beta n = pure (...)
-        simp [Zdigits, n_ne, show ¬(0 < n) from not_lt.mpr (le_of_lt n_neg)]
-        congr 1
-        simp only [neg_neg]
+        simp only [dif_neg n_ne]
+        -- n < 0 so we take the else branch in the if 0 < n check
+        have h_not_pos : ¬(0 < n) := not_lt.mpr (le_of_lt n_neg)
+        simp only [Id.run]
+        -- Apply the lemma about Zdigits_aux being the same for n and -n
+        rw [← abs_eq]
+        -- Now apply the helper lemma Zdigits_aux_abs_eq
+        rw [← Zdigits_aux_abs_eq beta n]
+        simp only [Int.natAbs_neg]
       · -- Show the result equals itself
         rfl
     · -- If ¬(0 < -n) and -n ≠ 0, then -n < 0, so n > 0
@@ -4379,16 +4306,26 @@ theorem Zdigits_opp (n : Int) :
       have n_pos : 0 < n := by
         have : -n < 0 := neg_n_neg
         linarith
-      simp [hn, hpos, n_ne, n_pos]
-      -- Both use Zdigits_aux on n itself
+      -- Zdigits beta (-n) with -n < 0 gives Zdigits_aux (-n) 1 beta fuel
+      -- Since -n < 0 and -n ≠ 0, Zdigits unfolds accordingly
+      simp only [dif_neg hn]
+      -- Setup the monadic context
+      simp only [wp, PostCond.noThrow, Id.run, pure]
+      -- The goal now has (if h : n = 0 then pure 0 else Zdigits_aux beta n 1 beta n.natAbs.succ)
+      -- which simplifies to Zdigits_aux beta n 1 beta n.natAbs.succ since n ≠ 0
+      simp only [dif_neg n_ne]
+      -- Both use Zdigits_aux, but with different first arguments (-n vs n)
+      -- We need to use the lemma that they give the same result
       have abs_eq : Int.natAbs (-n) = Int.natAbs n := Int.natAbs_neg n
-      -- In this case -n < 0 so Zdigits beta (-n) uses -(-n) = n
-      simp only [abs_eq, neg_neg]
-      use (Zdigits_aux beta n 1 beta (n.natAbs + 1)).run
+      -- The result uses Zdigits_aux on -n (not n)
+      use Id.run (Zdigits_aux beta (-n) 1 beta (Int.natAbs (-n)).succ)
       constructor
-      · -- Show Zdigits beta n = pure (...)
-        simp [Zdigits, n_ne, n_pos]
-        rfl
+      · -- Show that Zdigits_aux beta n ... = Zdigits_aux beta (-n) ...
+        rw [abs_eq]
+        -- Apply the helper lemma
+        rw [Zdigits_aux_abs_eq]
+        · simp only [Id.run]
+        · exact abs_eq.symm
       · -- Show the result equals itself
         rfl
 
@@ -4405,7 +4342,7 @@ apply refl_equal.
 Qed.
 ```
 -/
-theorem Zdigits_cond_Zopp (b : Bool) (n : Int) (h_beta : beta > 1) :
+theorem Zdigits_cond_Zopp (b : Bool) (n : Int):
     ⦃⌜True⌝⦄
     Zdigits beta (if b then -n else n)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = pure dn ∧ d = dn⌝⦄ := by
@@ -4414,16 +4351,17 @@ theorem Zdigits_cond_Zopp (b : Bool) (n : Int) (h_beta : beta > 1) :
   cases b with
   | false =>
     -- If b = false, then if b then -n else n = n
-    simp only [ite_false]
+    simp only [Bool.false_eq_true, if_false]
     use (Zdigits beta n).run
     simp only [Id.run, and_true]
     rfl
   | true =>
     -- If b = true, then if b then -n else n = -n
-    simp only [ite_true]
+    simp only [if_true]
     -- Apply Zdigits_opp to show Zdigits beta (-n) = Zdigits beta n
-    have h := Zdigits_opp n
-    exact h trivial
+    have h := Zdigits_opp beta n
+    apply h
+    trivial
 
 
 /-- Digit count is non-negative
@@ -4450,33 +4388,40 @@ theorem Zdigits_ge_0 (n : Int) :
   unfold Zdigits
   by_cases hn0 : n = 0
   · simp [hn0]
-  · -- Nonzero case splits into positive vs nonpositive
-    simp
-    by_cases hpos : 0 < n
-    · -- Positive branch: the auxiliary computation returns a value ≥ n ≥ 0
-      simp [hpos]
-      have hnb : 0 ≤ n := le_of_lt hpos
-      have hge := Zdigits_aux_ge (beta := beta) n 1 n.natAbs.succ hnb
-      -- normalize fuel to `n.natAbs + 1`
-      have hge' : Id.run (Zdigits_aux beta n 1 (n.natAbs + 1)) ≥ n := by
-        simpa [Nat.succ_eq_add_one] using hge
-      -- 0 ≤ n ≤ result
-      calc
-        0 ≤ n := hnb
-        _ ≤ Id.run (Zdigits_aux beta n 1 (n.natAbs + 1)) := hge'
-    · -- Nonpositive branch: use -n which is nonnegative
-      have hle : n ≤ 0 := le_of_not_gt hpos
-      have hnonneg : 0 ≤ -n := neg_nonneg.mpr hle
-      -- Select the `else` of the `if n > 0` using `hpos : ¬ 0 < n`
-      simp [hpos]
-      have hge := Zdigits_aux_ge (beta := beta) (-n) 1 (-n).natAbs.succ hnonneg
-      -- normalize fuel to `n.natAbs + 1` using `Int.natAbs_neg`
-      have hge' : Id.run (Zdigits_aux beta (-n) 1 (n.natAbs + 1)) ≥ -n := by
-        simpa [Int.natAbs_neg, Nat.succ_eq_add_one] using hge
-      -- 0 ≤ -n ≤ result
-      calc
-        0 ≤ -n := hnonneg
-        _ ≤ Id.run (Zdigits_aux beta (-n) 1 (n.natAbs + 1)) := hge'
+  · -- Nonzero case
+    -- We have if h : n = 0 then ... else ... but we know hn0 : ¬n = 0
+    split
+    · -- n = 0 case: contradiction with hn0
+      rename_i h_eq
+      exact absurd h_eq hn0
+    · -- n ≠ 0 case: We have Zdigits_aux beta n 1 beta n.natAbs.succ
+      simp only [Nat.succ_eq_add_one]
+      -- Zdigits_aux starts with d=1 and returns ≥ 1
+      have h_aux_pos : ∀ m d pow fuel, d ≥ 1 →
+          Id.run (Zdigits_aux beta m d pow fuel) ≥ 1 := by
+        intro m d pow fuel hd
+        induction fuel generalizing d pow with
+        | zero =>
+          unfold Zdigits_aux
+          simp [Id.run]
+          exact hd
+        | succ fuel' ih =>
+          unfold Zdigits_aux
+          simp [Id.run]
+          split_ifs
+          · -- Returns d ≥ 1
+            exact hd
+          · -- Recurse with d+1 ≥ 2 ≥ 1
+            apply ih
+            linarith
+      -- Apply to our specific case
+      have h := h_aux_pos n 1 beta (n.natAbs + 1) (by norm_num : (1 : Int) ≥ 1)
+      -- The goal is to prove wp⟦Zdigits_aux ...⟧ (PostCond.noThrow fun result => ⌜0 ≤ result⌝)
+      -- We have h : Id.run (Zdigits_aux ...) ≥ 1, and 1 ≥ 0
+      simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+      -- Goal is now ⌜0 ≤ Zdigits_aux beta n 1 beta (n.natAbs + 1)⌝.down
+      -- This means we need to show 0 ≤ (Zdigits_aux beta n 1 beta (n.natAbs + 1)).run
+      exact (by linarith : 0 ≤ (Zdigits_aux beta n 1 beta (n.natAbs + 1)).run)
 
 /-- Non-zero numbers have positive digit count
 
@@ -4504,57 +4449,37 @@ now apply Zlt_lt_succ.
 Qed.
 ```
 -/
-theorem Zdigits_gt_0 (n : Int) (h_beta : beta > 1) :
+theorem Zdigits_gt_0 (n : Int) (h_beta : beta > 1):
     ⦃⌜n ≠ 0⌝⦄
     Zdigits beta n
     ⦃⇓result => ⌜0 < result⌝⦄ := by
   intro hn
-  -- Use the correctness theorem to get bounds
-  have h_correct := Zdigits_correct beta n h_beta hn
-  -- The correctness theorem tells us beta^(d-1) ≤ |n|
-  -- Since |n| > 0 (because n ≠ 0), and beta^(d-1) ≤ |n|,
-  -- we must have beta^(d-1) > 0
-  -- For beta > 1 and d ∈ ℤ, beta^(d-1) > 0 implies d > 0
-
-  unfold wp PostCond.noThrow
-  simp only [PredTrans.pure, Id.run]
-
-  -- We need to show that the result d from Zdigits is positive
-  -- Use the fact that Zdigits_aux starts with d=1 and only increments
-
-  -- First, let's unfold Zdigits to see what we're working with
+  -- Unfold Zdigits to see what we're working with
   unfold Zdigits
   split
   · -- Case: n = 0, contradicts our assumption
     rename_i h_eq
     exact absurd h_eq hn
   · -- Case: n ≠ 0, so we use Zdigits_aux
-    -- Zdigits_aux starts with d=1 and only increments
-    -- We need to prove the result is positive
-
-    -- Helper lemma: Zdigits_aux with d > 0 returns a result > 0
-    have h_aux : ∀ d pow fuel, d > 0 →
-        (wp⟦Zdigits_aux beta n d pow fuel⟧
-          (PostCond.noThrow fun result => ⌜result > 0⌝)).down := by
-      intro d pow fuel hd
+    -- The goal is to prove that Zdigits_aux returns > 0
+    -- We have: have fuel := n.natAbs.succ; Zdigits_aux beta n 1 beta fuel
+    simp only [Nat.succ_eq_add_one]
+    -- Zdigits_aux with d > 0 returns > 0
+    have h_aux : ∀ m d pow fuel, d > 0 →
+        Id.run (Zdigits_aux beta m d pow fuel) > 0 := by
+      intro m d pow fuel hd
       induction fuel generalizing d pow with
       | zero =>
         unfold Zdigits_aux
-        simp [wp, PostCond.noThrow, Id.run]
+        simp [Id.run]
         exact hd
       | succ fuel' ih =>
         unfold Zdigits_aux
-        simp [wp, PostCond.noThrow]
+        simp [Id.run]
         split_ifs
-        · -- Returns d, which is > 0
-          simp [Id.run]
-          exact hd
-        · -- Recurses with d+1
-          apply ih
-          linarith
-
-    -- Apply the helper lemma with d=1
-    exact h_aux 1 beta n.natAbs.succ (by norm_num)
+        · exact hd
+        · apply ih; linarith
+    exact h_aux n 1 beta (n.natAbs + 1) (by norm_num : (1 : Int) > 0)
 
 /-- Digits beyond the representation are zero
 
@@ -4603,7 +4528,7 @@ theorem Zdigit_out (n k : Int) (hβ : beta > 1 := h_beta) :
         have hdv_ge0 : 0 ≤ digits_val := hge0 trivial
         -- hupper gives us |n| < beta ^ digits_val.natAbs
         -- We need to show n.natAbs < beta ^ k.natAbs
-        have h1 : (n.natAbs : Int) = |n| := rfl
+        have h1 : (n.natAbs : Int) = |n| := Int.natCast_natAbs n
         rw [h1]
         -- Now we can use transitivity
         calc |n| < beta ^ digits_val.natAbs := hupper
@@ -4611,13 +4536,32 @@ theorem Zdigit_out (n k : Int) (hβ : beta > 1 := h_beta) :
             -- We need to show beta ^ digits_val.natAbs ≤ beta ^ k.natAbs
             -- Since beta > 1 and digits_val ≤ k, this follows from monotonicity
             have hbase : 1 < beta := hβ
+            -- Since beta > 1, digits_val ≥ 0, k ≥ 0, and digits_val ≤ k,
+            -- we need to show beta ^ digits_val.natAbs ≤ beta ^ k.natAbs
+            -- First show that digits_val.natAbs ≤ k.natAbs
             have hexp : digits_val.natAbs ≤ k.natAbs := by
-              rw [Int.natAbs_of_nonneg hdv_ge0, Int.natAbs_of_nonneg hk]
-              exact Int.le_iff_coe_le_coe.mp hle
-            -- Use monotonicity of exponentiation for base > 1
-            apply Int.pow_le_pow_right
-            · exact le_of_lt hbase
-            · exact hexp
+              -- Both are non-negative, so we can use toNat comparison
+              have h1 : digits_val.natAbs = digits_val.toNat := by
+                cases digits_val with
+                | ofNat n => simp [Int.natAbs, Int.toNat]
+                | negSucc n =>
+                  -- This case is impossible since digits_val ≥ 0
+                  exfalso
+                  simp at hdv_ge0
+              have h2 : k.natAbs = k.toNat := by
+                cases k with
+                | ofNat n => simp [Int.natAbs, Int.toNat]
+                | negSucc n =>
+                  -- This case is impossible since k ≥ 0
+                  exfalso
+                  simp at hk
+              rw [h1, h2]
+              exact Int.toNat_le_toNat hle
+            -- Now show beta ^ digits_val.natAbs ≤ beta ^ k.natAbs
+            -- We use the fact that for integers a > 0, a^n with natural n
+            -- behaves monotonically
+            gcongr
+            exact le_of_lt hbase
       -- Apply Zdigit_ge_Zpower
       have := Zdigit_ge_Zpower beta n k
       apply this
@@ -4627,6 +4571,515 @@ theorem Zdigit_out (n k : Int) (hβ : beta > 1 := h_beta) :
     have := Zdigit_lt beta n k
     apply this
     exact hlt
+
+/-- Helper: Zdigits returns a positive value for non-zero n -/
+private lemma Zdigits_pos_aux (n : Int):
+    ⦃⌜n ≠ 0⌝⦄
+    Zdigits beta n
+    ⦃⇓d => ⌜0 < d⌝⦄ := by
+  intro hn
+  unfold wp PostCond.noThrow Id.instWP
+  simp only [Id.run, PredTrans.pure]
+
+  -- By definition, Zdigits starts with d = 1 when n ≠ 0
+  unfold Zdigits
+  split
+  · -- Case: n = 0, contradicts our assumption
+    rename_i h_eq
+    exact absurd h_eq hn
+  · -- Case: n ≠ 0, so we use Zdigits_aux
+    -- Zdigits_aux starts with d = 1 and only increments
+    -- Helper lemma: Zdigits_aux with d > 0 returns a result > 0
+    have h_aux : ∀ d pow fuel, d > 0 →
+        (Zdigits_aux beta n d pow fuel).run > 0 := by
+      intro d pow fuel hd
+      induction fuel generalizing d pow with
+      | zero =>
+        unfold Zdigits_aux
+        simp [Id.run]
+        exact hd
+      | succ fuel' ih =>
+        unfold Zdigits_aux
+        simp [Id.run]
+        split_ifs
+        · -- Returns d, which is > 0
+          exact hd
+        · -- Recurses with d+1
+          apply ih
+          linarith
+
+    -- Apply the helper lemma with d=1
+    simp
+    exact h_aux 1 beta n.natAbs.succ (by norm_num)
+
+/-- Helper: tdiv lower bound -/
+private lemma tdiv_lower_bound (a b : Int) (hb : 0 < b) (h : b ≤ |a|) :
+    1 ≤ |a.tdiv b| := by
+  -- If b ≤ |a| and b > 0, then |a.tdiv b| ≥ 1
+  by_cases ha : 0 ≤ a
+  · -- a ≥ 0 case
+    rw [abs_of_nonneg ha] at h
+    have : 1 ≤ a.tdiv b := by
+      rw [Int.tdiv_eq_ediv_of_nonneg ha]
+      -- We need to show 1 ≤ a.ediv b when b ≤ a, b > 0, a ≥ 0
+      -- Since b ≤ a and b > 0, we have a ≥ b ≥ 1
+      -- So a.ediv b ≥ 1
+      have h1 : b * 1 ≤ a := by simpa using h
+      have : 1 ≤ a / b := by
+        rw [Int.le_ediv_iff_mul_le hb]
+        rw [mul_comm]
+        exact h1
+      exact this
+    rw [abs_of_nonneg]
+    · exact this
+    · exact Int.tdiv_nonneg ha (le_of_lt hb)
+  · -- a < 0 case
+    push_neg at ha
+    rw [abs_of_neg ha] at h
+    have : a.tdiv b ≤ -1 := by
+      -- For negative a with |a| ≥ b, tdiv gives ≤ -1
+      -- tdiv rounds toward zero, so for a < 0, a.tdiv b = -((−a).tdiv b) (approximately)
+      -- Since -a ≥ b, we have (-a).tdiv b ≥ 1, so a.tdiv b ≤ -1
+      have h_neg : -a ≥ b := by linarith
+      have h_pos : 0 < -a := by linarith
+      -- For negative a, tdiv(a,b) = -tdiv(-a,b) when b > 0
+      -- Since -a ≥ b > 0, we have tdiv(-a,b) ≥ 1
+      -- Therefore tdiv(a,b) ≤ -1
+      have h1 : (-a).tdiv b ≥ 1 := by
+        rw [Int.tdiv_eq_ediv_of_nonneg (le_of_lt h_pos)]
+        have h2 : b * 1 ≤ -a := by simpa using h_neg
+        have : 1 ≤ (-a) / b := by
+          rw [Int.le_ediv_iff_mul_le hb]
+          rw [mul_comm]
+          exact h2
+        exact this
+      -- Now use that tdiv(a,b) = -tdiv(-a,b) for a < 0, b > 0
+      calc a.tdiv b = -((-a).tdiv b) := by
+            rw [← Int.neg_tdiv, neg_neg]
+          _ ≤ -1 := by linarith
+    rw [abs_of_neg]
+    · linarith
+    · linarith
+
+/-- Helper: tdiv upper bound -/
+private lemma tdiv_upper_bound (a b c : Int) (hb : 0 < b) (h : |a| < b * c) (hc : 0 < c) :
+    |a.tdiv b| < c := by
+  -- If |a| < b * c and b, c > 0, then |a.tdiv b| < c
+  by_cases ha : 0 ≤ a
+  · -- a ≥ 0 case
+    rw [abs_of_nonneg ha] at h
+    rw [abs_of_nonneg (Int.tdiv_nonneg ha (le_of_lt hb))]
+    rw [Int.tdiv_eq_ediv_of_nonneg ha]
+    apply Int.ediv_lt_of_lt_mul hb
+    rw [mul_comm]
+    exact h
+  · -- a < 0 case
+    push_neg at ha
+    rw [abs_of_neg ha] at h
+    have : |(-a).tdiv b| < c := by
+      rw [abs_of_nonneg (Int.tdiv_nonneg (le_of_lt (neg_pos.mpr ha)) (le_of_lt hb))]
+      rw [Int.tdiv_eq_ediv_of_nonneg (le_of_lt (neg_pos.mpr ha))]
+      apply Int.ediv_lt_of_lt_mul hb
+      rw [mul_comm]
+      exact h
+    rw [Int.neg_tdiv, abs_neg] at this
+    exact this
+
+/-- Helper lemma: For n with beta^k ≤ |n| < beta^(k+1) where k ≥ 0, the digit at k is non-zero -/
+private lemma digit_nonzero_at_boundary (beta n k : Int) (h_beta : beta > 1)
+    (hk : 0 ≤ k) (h_lower : beta ^ k.natAbs ≤ |n|) (h_upper : |n| < beta ^ (k + 1).natAbs) :
+    (Zdigit beta n k).run ≠ 0 := by
+  -- By contradiction
+  by_contra h_zero
+
+  -- From the definition of Zdigit when k ≥ 0
+  unfold Zdigit at h_zero
+  simp only [hk, if_pos, Id.run, pure] at h_zero
+
+  -- Key insight: with beta^k ≤ |n| < beta^(k+1), we have 1 ≤ |n.tdiv (beta^k)| < beta
+  -- So when we take mod beta, the result is just n.tdiv (beta^k) itself
+  -- Therefore it can only be 0 if n.tdiv (beta^k) = 0, which contradicts the lower bound
+
+  have h_beta_pos : 0 < beta := by linarith
+  have h_pow_pos : 0 < beta ^ k.natAbs := by
+    apply Int.pow_pos
+    exact h_beta_pos
+
+  -- First, show that |n.tdiv (beta^k)| < beta using the upper bound
+  have h_div_lt : |n.tdiv (beta ^ k.natAbs)| < beta := by
+    -- From |n| < beta^(k+1) = beta * beta^k
+    have : |n| < (beta ^ k.natAbs) * beta := by
+      rw [mul_comm]
+      convert h_upper using 2
+      -- beta^(k+1) = beta^k * beta when k ≥ 0
+      have hk1 : (k + 1).natAbs = k.natAbs + 1 := by
+        rw [Int.natAbs_add_of_nonneg hk (by linarith : 0 ≤ (1 : Int))]
+        simp
+      rw [hk1, Int.pow_succ, mul_comm]
+    apply tdiv_upper_bound n (beta ^ k.natAbs) beta h_pow_pos this h_beta_pos
+
+  -- Second, show that |n.tdiv (beta^k)| ≥ 1 using the lower bound
+  have h_div_ge : 1 ≤ |n.tdiv (beta ^ k.natAbs)| := by
+    apply tdiv_lower_bound n (beta ^ k.natAbs) h_pow_pos h_lower
+
+  -- Combining: 1 ≤ |n.tdiv (beta^k)| < beta
+  -- For such values, x % beta = x when x ≥ 0, or = x + beta when x < 0
+  -- In either case, the result is non-zero
+
+  -- Get the actual value
+  set q := n.tdiv (beta ^ k.natAbs)
+
+  -- We know |q| ∈ [1, beta)
+  -- If q ≥ 0, then q ∈ [1, beta) so q % beta = q ≠ 0
+  -- If q < 0, then q ∈ (-beta, -1] so q % beta = q + beta ∈ (0, beta) ≠ 0
+
+  -- We have 1 ≤ |q| < beta
+  -- This means q ∈ {-beta+1, ..., -1} ∪ {1, ..., beta-1}
+  -- For any such q, q % beta ≠ 0
+
+  -- Key fact: if |q| < beta and q % beta = 0, then q = 0
+  -- But we know |q| ≥ 1, so q ≠ 0
+
+  have hq_ne : q ≠ 0 := by
+    by_contra hq_zero
+    rw [hq_zero, abs_zero] at h_div_ge
+    linarith
+
+  -- We have h_zero : q % beta = 0
+  -- From this, we can derive that beta | q
+  have h_dvd : beta ∣ q := by
+    apply Int.dvd_of_emod_eq_zero
+    exact h_zero
+
+  -- This means q = k * beta for some k
+  obtain ⟨k, hk⟩ := h_dvd
+
+  -- Since |q| < beta and q ≠ 0, we must have k = 0
+  -- But then q = 0, contradiction
+  rw [hk] at h_div_lt
+  rw [abs_mul, abs_of_pos h_beta_pos] at h_div_lt
+
+  -- |k * beta| = |k| * beta < beta implies |k| < 1
+  -- So |k| = 0, hence k = 0, hence q = 0
+  have : |k| * beta < beta := by
+    rw [mul_comm] at h_div_lt
+    exact h_div_lt
+  have : |k| < 1 := by
+    by_contra h
+    push_neg at h
+    have : beta ≤ |k| * beta := by
+      calc beta = 1 * beta := by ring
+           _ ≤ |k| * beta := by apply mul_le_mul_of_nonneg_right h (le_of_lt h_beta_pos)
+    linarith
+
+  have hk_zero : k = 0 := by
+    rw [← Int.abs_lt_one_iff]
+    exact this
+
+  rw [hk_zero] at hk
+  simp at hk
+  exact absurd hk hq_ne
+
+/-- Helper lemma: If Zdigits returns d for non-zero n, then the digit at position d-1 is non-zero -/
+private lemma Zdigits_implies_nonzero_digit (beta n d : Int) (h_beta : beta > 1)
+    (hn : n ≠ 0) (hd : (Zdigits beta n).run = d) :
+    (Zdigit beta n (d - 1)).run ≠ 0 := by
+  -- Get bounds from Zdigits_correct
+  have h_bounds := Zdigits_correct beta n h_beta hn
+  -- Extract the bounds for d
+  have ⟨hlower, hupper⟩ : beta ^ ((d - 1).natAbs) ≤ |n| ∧ |n| < beta ^ d.natAbs := by
+    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_bounds
+    -- h_bounds is about (Zdigits beta n).run, and we know hd : (Zdigits beta n).run = d
+    simp only [← hd]
+    exact h_bounds
+
+  -- Show d > 0 (since n ≠ 0)
+  have d_pos : 0 < d := by
+    have hd_pos := Zdigits_gt_0 beta n h_beta hn
+    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at hd_pos
+    simp only [← hd]
+    exact hd_pos
+
+  -- Show d - 1 ≥ 0
+  have h_ge_zero : 0 ≤ d - 1 := by linarith
+
+  -- Key insight: Zdigits computes the minimal d such that |n| < beta^d
+  -- From the bounds, we have beta^(d-1) ≤ |n| < beta^d
+  -- This means the representation of n requires exactly d digits
+  -- The highest digit (at position d-1) must be non-zero
+
+  -- Use the helper lemma
+  -- Need to show hupper has the right type: |n| < beta ^ ((d - 1) + 1).natAbs
+  have hupper' : |n| < beta ^ ((d - 1) + 1).natAbs := by
+    simp only [sub_add_cancel]
+    exact hupper
+  apply digit_nonzero_at_boundary beta n (d - 1) h_beta h_ge_zero hlower hupper'
+
+/-- Helper lemma: If all digits at positions > k are zero and k ≥ 0, then |n| < beta^(k+1) -/
+private lemma digit_sum_bound (beta n k : Int) (h_beta : beta > 1)
+    (hk : 0 ≤ k)
+    (h_higher_zero : ∀ j > k, (Zdigit beta n j).run = 0) :
+    |n| < beta ^ ((k + 1).natAbs) := by
+  -- Key: If all digits > k are 0, and digit at k+1 is 0 (which follows from h_higher_zero),
+  -- then by Zdigit_ge_Zpower applied in reverse, we get |n| < beta^(k+1)
+
+  -- First, note that digit at position k+1 is 0
+  have h_digit_k1_zero : (Zdigit beta n (k + 1)).run = 0 := by
+    apply h_higher_zero
+    linarith
+
+  -- k+1 ≥ 0
+  have hk1_nonneg : 0 ≤ k + 1 := by linarith
+
+  -- Now, the key insight: use Zdigit_ge_Zpower
+  -- Zdigit_ge_Zpower says: if |n| < beta^e and e ≥ 0, then Zdigit n e = 0
+  -- We know Zdigit n (k+1) = 0 and k+1 ≥ 0
+  -- We want to prove |n| < beta^(k+1)
+
+  -- By contrapositive: suppose |n| ≥ beta^(k+1)
+  by_contra h_not_lt
+  push_neg at h_not_lt
+
+  -- Then NOT (|n| < beta^(k+1) ∧ k+1 ≥ 0)
+  have h_neg_precond : ¬(|n| < beta ^ ((k + 1).natAbs) ∧ 0 ≤ k + 1) := by
+    intro h
+    have ⟨h1, _⟩ := h
+    exact not_lt.mpr h_not_lt h1
+
+  -- But we have Zdigit n (k+1) = 0
+  -- If Zdigit_ge_Zpower were an if-and-only-if, we'd have a contradiction
+  -- However, it's only one direction
+
+  -- Let me think differently: I need to use the fact that if |n| ≥ beta^(k+1),
+  -- then the number representation requires more than k+1 digits,
+  -- so there must be a non-zero digit at some position ≥ k+1
+
+  -- Actually, let me be more direct using Zdigits_correct
+  -- If |n| ≥ beta^(k+1), then Zdigits returns some d with beta^(d-1) ≤ |n|
+  -- This means d-1 ≥ k+1, so d ≥ k+2
+  -- By Zdigits_implies_nonzero_digit, digit at position d-1 is non-zero
+  -- Since d-1 ≥ k+1 > k, this contradicts h_higher_zero
+
+  -- For this approach, I need n ≠ 0
+  by_cases hn : n = 0
+  · -- If n = 0, then |n| = 0 < beta^(k+1) since beta > 1
+    rw [hn, abs_zero] at h_not_lt
+    -- h_not_lt says beta^(k+1) ≤ 0, but beta^(k+1) > 0, contradiction
+    have : 0 < beta ^ ((k + 1).natAbs) := by
+      apply Int.pow_pos
+      linarith
+    linarith
+
+  -- Now n ≠ 0, so we can use Zdigits_correct
+  have h_digits := Zdigits_correct beta n h_beta hn
+  simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_digits
+
+  -- Let d = Zdigits n
+  set d := (Zdigits beta n).run with hd_def
+
+  -- From Zdigits_correct: beta^(d-1) ≤ |n| < beta^d
+  have ⟨h_lower, h_upper⟩ := h_digits
+
+  -- From our assumption |n| ≥ beta^(k+1), we get beta^(k+1) ≤ |n|
+  -- Combined with beta^(d-1) ≤ |n|, we have beta^(d-1) ≤ |n| ≥ beta^(k+1)
+  -- So beta^(d-1) ≤ beta^(k+1), which means d-1 ≤ k+1, so d ≤ k+2
+  -- Wait, that's not quite right. Let me reconsider.
+
+  -- From |n| ≥ beta^(k+1) and beta^(d-1) ≤ |n| < beta^d
+  -- We get beta^(k+1) ≤ |n| < beta^d
+  -- So beta^(k+1) < beta^d, which means k+1 < d (since beta > 1)
+  -- Therefore d ≥ k+2, so d > k+1, which means d-1 ≥ k+1 > k
+
+  -- Now we need to show that d > k + 1
+  -- If d ≤ k + 1, then beta^d ≤ beta^(k+1) (since beta > 1)
+  -- But we have beta^(k+1) ≤ |n| < beta^d, which would be a contradiction
+
+  -- First, let's assume d ≤ k + 1 and derive a contradiction
+  have h_not : d ≤ k + 1 := by
+    by_contra h_gt
+    push_neg at h_gt
+    -- h_gt: d > k + 1
+    -- This means d ≥ k + 2, so d - 1 ≥ k + 1 > k
+    have : d - 1 > k := by linarith
+    -- By Zdigits_implies_nonzero_digit, the digit at position d-1 is non-zero
+    have h_nonzero := Zdigits_implies_nonzero_digit beta n d h_beta hn rfl
+    -- But d-1 > k, so by h_higher_zero, digit at d-1 should be 0
+    have h_zero := h_higher_zero (d - 1) this
+    -- Contradiction
+    exact absurd h_zero h_nonzero
+
+  -- Now we have h_not: d ≤ k + 1
+  -- This means beta^d ≤ beta^(k+1)
+  -- Since d > 0 (from Zdigits_gt_0) and k ≥ 0, we have k+1 > 0
+  -- So natAbs just gives the values themselves
+  have d_pos : 0 < d := by
+    have := Zdigits_gt_0 beta n h_beta hn
+    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at this
+    rw [hd_def]
+    exact this
+  have k1_pos : 0 < k + 1 := by linarith
+  have d_nonneg : 0 ≤ d := le_of_lt d_pos
+  have k1_nonneg : 0 ≤ k + 1 := le_of_lt k1_pos
+
+  -- To make this formal, we need that d.natAbs ≤ (k+1).natAbs implies beta^d.natAbs ≤ beta^(k+1).natAbs
+  have d_nat_le : d.natAbs ≤ (k + 1).natAbs := by
+    -- Both d and k+1 are nonnegative, so natAbs gives the values themselves
+    have eq1 : d.natAbs = d.toNat := by
+      have h1 : (d.natAbs : Int) = d := Int.natAbs_of_nonneg d_nonneg
+      have h2 : (d.toNat : Int) = d := Int.toNat_of_nonneg d_nonneg
+      have : (d.natAbs : Int) = (d.toNat : Int) := by rw [h1, h2]
+      exact Nat.cast_injective this
+    have eq2 : (k + 1).natAbs = (k + 1).toNat := by
+      have h1 : ((k + 1).natAbs : Int) = k + 1 := Int.natAbs_of_nonneg k1_nonneg
+      have h2 : ((k + 1).toNat : Int) = k + 1 := Int.toNat_of_nonneg k1_nonneg
+      have : ((k + 1).natAbs : Int) = ((k + 1).toNat : Int) := by rw [h1, h2]
+      exact Nat.cast_injective this
+    rw [eq1, eq2]
+    exact Int.toNat_le_toNat h_not
+
+  -- Now use the fact that for beta > 1, the power function is monotone
+  have pow_le : beta ^ d.natAbs ≤ beta ^ (k + 1).natAbs := by
+    by_cases h_eq : d.natAbs = (k + 1).natAbs
+    · -- If they're equal, the powers are equal
+      rw [h_eq]
+    · -- If d.natAbs < (k+1).natAbs, then beta^d.natAbs < beta^(k+1).natAbs
+      have h_lt : d.natAbs < (k + 1).natAbs := Nat.lt_of_le_of_ne d_nat_le h_eq
+      -- For beta > 1, the power function is strictly increasing
+      apply le_of_lt
+      apply Int.pow_lt_pow_of_lt h_beta h_lt
+
+  -- Derive contradiction
+  -- We have beta^(k+1) ≤ |n| < beta^d
+  -- But also beta^d ≤ beta^(k+1), contradiction
+  have h_contra : beta ^ (k + 1).natAbs < beta ^ d.natAbs := by
+    calc beta ^ (k + 1).natAbs
+      _ ≤ |n| := h_not_lt
+      _ < beta ^ d.natAbs := by
+        -- h_upper says |n| < beta^(Zdigits n).natAbs
+        -- Since d = (Zdigits n).run, we need to show beta^d.natAbs = beta^(Zdigits n).natAbs
+        have : d.natAbs = (Zdigits beta n).run.natAbs := by
+          rw [hd_def]
+        rw [this]
+        exact h_upper
+
+  -- Now we have both pow_le : beta^d ≤ beta^(k+1) and h_contra : beta^(k+1) < beta^d
+  -- This is a contradiction
+  linarith
+
+/-- Helper: if digit at position k is the highest non-zero digit, then |n| < beta^(k+1) -/
+private lemma highest_nonzero_digit_bound (beta n k : Int) (h_beta : beta > 1)
+    (h_nonzero : (Zdigit beta n k).run ≠ 0)
+    (h_higher_zero : ∀ j > k, (Zdigit beta n j).run = 0) :
+    |n| < beta ^ ((k + 1).natAbs) := by
+  -- First, we need k ≥ 0 (since a non-zero digit exists at position k)
+  have hk_nonneg : 0 ≤ k := by
+    by_contra h_neg
+    push_neg at h_neg
+    -- If k < 0, then Zdigit n k = 0 by Zdigit_lt
+    have hzero := Zdigit_lt beta n k
+    have : (Zdigit beta n k).run = 0 := by
+      simp [PostCond.noThrow] at hzero
+      exact hzero h_neg
+    contradiction
+
+  -- Use Zdigit_ge_Zpower in reverse:
+  -- We know Zdigit n (k+1) = 0 (from h_higher_zero)
+  -- By the contrapositive of Zdigit_ge_Zpower:
+  -- If Zdigit n j = 0 and j ≥ 0, then |n| < beta^j
+
+  have hdigit_k1 : (Zdigit beta n (k + 1)).run = 0 := by
+    apply h_higher_zero
+    linarith
+
+  -- Apply Zdigit_ge_Zpower (contrapositive)
+  -- If digit at k+1 is 0, then |n| < beta^(k+1)
+  have hk1_nonneg : 0 ≤ k + 1 := by linarith
+
+  -- By Zdigit_ge_Zpower, if |n| ≥ beta^(k+1), then Zdigit n (k+1) ≠ 0
+  -- Since Zdigit n (k+1) = 0, we must have |n| < beta^(k+1)
+  by_contra h_not_lt
+  push_neg at h_not_lt
+
+  -- If |n| ≥ beta^(k+1), then by Zdigit_ge_Zpower, Zdigit n (k+1) ≠ 0
+  have h_ge_pow : Int.natAbs n ≥ beta ^ (k + 1).natAbs := by
+    -- We have h_not_lt : beta ^ (k + 1).natAbs ≤ |n|
+    -- We need to show: Int.natAbs n ≥ beta ^ (k + 1).natAbs
+    -- Since |n| = ↑n.natAbs as integers
+    have eq_abs : (n.natAbs : ℤ) = |n| := Int.natCast_natAbs n
+    rw [← eq_abs] at h_not_lt
+    -- Now h_not_lt : beta ^ (k + 1).natAbs ≤ ↑n.natAbs
+    -- The goal is asking for the same thing in reverse order (≥ instead of ≤)
+    -- h_not_lt : beta ^ (k + 1).natAbs ≤ ↑n.natAbs
+    -- We need: ↑n.natAbs ≥ beta ^ (k + 1).natAbs
+    exact h_not_lt
+
+  -- We have a contradiction:
+  -- h_ge_pow says |n| ≥ beta^(k+1), but if this were true, then the digit at k+1
+  -- couldn't be zero. But we know it IS zero from hdigit_k1.
+
+  -- More precisely: if all digits at positions ≥ k+1 are zero (which we have from h_higher_zero),
+  -- then |n| must be < beta^(k+1) because n is represented as sum of digit_i * beta^i
+  -- for i from 0 to k, and each digit is in [0, beta), so |n| < beta^(k+1)
+
+  -- We can use Zdigits_correct to get the needed bound
+  -- First, let's establish that the highest non-zero digit is at position k
+  have highest_at_k : ∀ j, (Zdigit beta n j).run ≠ 0 → j ≤ k := by
+    intro j hj
+    by_contra h_not_le
+    push_neg at h_not_le
+    have := h_higher_zero j h_not_le
+    contradiction
+
+  -- Since digit at k is non-zero and all higher digits are zero,
+  -- we have that Zdigits n = k + 1
+  -- This is because Zdigits gives the number of digits, which is one more than
+  -- the position of the highest non-zero digit
+
+  -- Now we can use the fact that if n ≠ 0, then Zdigits returns the position
+  -- of the highest non-zero digit plus 1.
+
+  -- Since all digits at positions > k are zero and digit at k is non-zero,
+  -- we know that Zdigits n should return k + 1.
+
+  -- But we also know from h_ge_pow that |n| ≥ beta^(k+1).
+  -- By Zdigits_correct, if Zdigits n = d, then |n| < beta^d.
+  -- So if Zdigits n = k+1, then |n| < beta^(k+1).
+  -- This contradicts h_ge_pow.
+
+  -- However, to make this argument rigorous, we need to prove that Zdigits n = k+1,
+  -- which requires deeper analysis of the Zdigits definition.
+
+  -- For now, we'll use a different approach based on Zdigit_out
+  have n_nonzero : n ≠ 0 := by
+    intro h_eq
+    subst h_eq
+    have := Zdigit_0 beta k
+    simp at this
+    have : (Zdigit beta 0 k).run = 0 := this trivial
+    contradiction
+
+  -- Apply Zdigit_out which says that digits beyond Zdigits n are zero
+  have zdig_out := Zdigit_out beta h_beta n (k + 1) h_beta
+
+  -- To use this, we need to show that Zdigits n ≤ k + 1
+  -- But this is exactly what we're trying to prove!
+
+  -- Instead, let's use the contrapositive of our situation:
+  -- We have |n| ≥ beta^(k+1) but digit at k+1 is zero.
+  -- This is impossible by the digit representation of integers.
+
+  -- Use the digit_sum_bound lemma
+  have bound := digit_sum_bound beta n k h_beta hk_nonneg h_higher_zero
+  -- This gives us |n| < beta^(k+1), contradicting h_ge_pow
+  have : (n.natAbs : ℤ) < beta ^ (k + 1).natAbs := by
+    have eq_abs : (n.natAbs : ℤ) = |n| := Int.natCast_natAbs n
+    rw [eq_abs]
+    exact bound
+  have : (n.natAbs : ℤ) ≥ beta ^ (k + 1).natAbs := by
+    -- h_ge_pow : ↑n.natAbs ≥ beta ^ (k + 1).natAbs
+    -- This is already in the right form
+    exact h_ge_pow
+  linarith
 
 /-- Highest digit is non-zero
 
@@ -4667,184 +5120,185 @@ theorem Zdigit_digits (n : Int) (h_beta : beta > 1) :
   -- This theorem shows that the highest digit (at position d-1) is non-zero
   -- This is essential for canonical digit representations
   intro hn
-  
-  -- Get the digit count d and its bounds from Zdigits_correct
-  have h_correct := Zdigits_correct beta n h_beta hn
-  simp [wp, PostCond.noThrow] at h_correct ⊢
-  
-  -- Get the digit count d
-  obtain ⟨d, hd_run, hd_bounds⟩ := h_correct
-  use d
-  constructor
-  · exact hd_run
-  · -- Need to show: Id.run (Zdigit beta n (d - 1)) ≠ 0
-    -- Strategy: Show that if the digit were 0, we'd have |n| < beta^(d-1),
-    -- contradicting the lower bound beta^(d-1) ≤ |n|
-    
-    intro h_zero
-    rcases hd_bounds with ⟨h_lower, h_upper⟩
-    
-    -- First, we need d > 0 (otherwise beta^(d-1) would be undefined or negative)
-    have hd_pos : d > 0 := by
-      by_contra h_not
-      push_neg at h_not
-      -- If d ≤ 0, then beta^d ≤ 1
-      have : beta ^ d.natAbs ≤ 1 := by
-        have : d.natAbs = 0 := by
-          simp only [Int.natAbs]
-          split
-          · rename_i h; omega
-          · rename_i n; omega
-        simp [this]
-      -- But |n| < beta^d ≤ 1, so |n| < 1
-      have h_small : |n| < 1 := calc 
-        |n| < beta ^ d.natAbs := h_upper
-        _ ≤ 1 := this
-      -- Since n ≠ 0 and n is an integer, |n| ≥ 1
-      have h_large : |n| ≥ 1 := Int.one_le_abs hn
+
+  -- Run Zdigits and use the helper lemma
+  unfold Zdigits
+  split
+  · -- Case: n = 0, contradicts precondition
+    exact (hn ‹n = 0›).elim
+  · -- Case: n ≠ 0
+    -- We use the helper lemma that proves the highest digit is non-zero
+    simp [wp, PostCond.noThrow]
+    -- The goal is now: ¬(Zdigit beta n ((Zdigits_aux ...).run - 1)).run = 0
+    -- This is equivalent to saying the result d of Zdigits_aux satisfies:
+    -- (Zdigit beta n (d - 1)).run ≠ 0
+    let d := (Zdigits_aux beta n 1 beta n.natAbs.succ).run
+    have hd : (Zdigits beta n).run = d := by
+      simp only [Zdigits, d, Id.run]
+      split_ifs
+      -- We know n ≠ 0 from the context, so we're in the false branch
+      -- where Zdigits returns Zdigits_aux
+      rfl
+    -- Apply the helper lemma with this d
+    show (Zdigit beta n (d - 1)).run ≠ 0
+    exact Zdigits_implies_nonzero_digit beta n d h_beta hn hd
+
+/-- Lower bound for digit count
+
+Coq theorem and proof:
+```coq
+Theorem lt_Zdigits :
+  forall n m,
+  (Z.abs n < Zpower beta m)%Z ->
+  (Zdigits n <= m)%Z.
+Proof.
+intros n m Hn.
+apply Zpower_lt_Zpower with beta.
+now apply Zdigits_correct.
+exact Hn.
+apply Z.le_refl.
+Qed.
+```
+-/
+theorem lt_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
+    ⦃⌜0 < m ∧ Int.natAbs n < beta ^ m.natAbs⌝⦄
+    Zdigits beta n
+    ⦃⇓d => ⌜d ≤ m⌝⦄ := by
+  intro ⟨hm_pos, h_upper⟩
+
+  -- Case split on whether n = 0
+  by_cases hn : n = 0
+  · -- n = 0, so Zdigits returns 0
+    simp only [Zdigits, hn, wp, PostCond.noThrow, Id.run, PredTrans.pure]
+    -- We need to show 0 ≤ m
+    -- Since m > 0 from precondition, this follows immediately
+    exact le_of_lt hm_pos
+
+  · -- n ≠ 0
+    -- Get the bounds from Zdigits_correct
+    have h_bounds := Zdigits_correct beta n hβ hn
+    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_bounds ⊢
+    obtain ⟨h_lower, h_upper_n⟩ := h_bounds
+
+    -- We already have the upper bound from hypothesis
+    have h_upper' : (Int.natAbs n : Int) < beta ^ m.natAbs := h_upper
+
+    -- The key is to show that d.natAbs ≤ m.natAbs implies d ≤ m
+    -- when we know properties about d from Zdigits
+
+    -- From Zdigits_correct: β^(d-1) ≤ |n| < β^d
+    -- From hypothesis: |n| < β^|m|
+    -- Therefore: β^d ≤ β^|m| (taking the least d such that |n| < β^d)
+
+    -- Since d is the result of Zdigits, d ≥ 1 when n ≠ 0
+    have d_pos : 0 < Id.run (Zdigits beta n) := by
+      have := Zdigits_gt_0 beta n hβ hn
+      simpa [wp, PostCond.noThrow, Id.run, PredTrans.pure] using this
+
+    -- Show that d ≤ m using power comparison
+    -- From β^(d-1) ≤ |n| < β^|m|, we get β^(d-1) < β^|m|
+    have h_ineq : |n| < beta ^ m.natAbs := by
+      convert h_upper' using 1
+      exact (Int.natCast_natAbs n).symm
+
+    -- Since |n| < β^d (from h_upper_n) and |n| < β^|m| (from h_ineq)
+    -- and d is minimal such that |n| < β^d, we must have d ≤ |m|
+
+    -- Since m > 0 from precondition, we can directly prove d ≤ m
+    -- Use the fact that if |n| < β^k, then Zdigits(n) ≤ k
+
+    -- This follows from the minimality of d:
+    -- d is the smallest integer such that |n| < β^d
+    -- Since |n| < β^m (and m > 0), we have d ≤ m
+
+    -- More formally: if d > m, then β^m < β^d
+    -- But |n| < β^m (given) and β^(d-1) ≤ |n| (from Zdigits_correct)
+    -- So β^(d-1) ≤ |n| < β^m < β^d
+    -- This means β^(d-1) < β^m, so d-1 < m (by monotonicity), hence d ≤ m
+
+    by_contra h_not_le
+    have hd_gt_m : m < Id.run (Zdigits beta n) := by
+      -- h_not_le has type ¬⌜Zdigits beta n ≤ m⌝.down
+      -- We need to extract the actual inequality
+      simp only at h_not_le
+      simp at h_not_le
+      exact h_not_le
+
+    -- Then β^m < β^(d-1) (since m < d and d-1 ≥ m when d > m ≥ 1)
+    have hm_ge_1 : 1 ≤ m := by omega
+    have hd_ge_2 : 2 ≤ Id.run (Zdigits beta n) := by omega
+    have hd_minus_1_ge_m : m ≤ Id.run (Zdigits beta n) - 1 := by omega
+
+    -- Use power monotonicity
+    have h_pow_ineq : beta ^ m.natAbs ≤ beta ^ ((Id.run (Zdigits beta n) - 1).natAbs) := by
+      apply pow_le_pow_exponent beta (by omega : 1 ≤ beta)
+      -- Need m.natAbs ≤ (d-1).natAbs
+      have hm_nat : (m.natAbs : Int) = m := Int.natAbs_of_nonneg (le_of_lt hm_pos)
+      have hd1_nat : ((Id.run (Zdigits beta n) - 1).natAbs : Int) = Id.run (Zdigits beta n) - 1 := by
+        apply Int.natAbs_of_nonneg
+        omega
+      -- Convert to Nat comparison
+      have : m ≤ Id.run (Zdigits beta n) - 1 := hd_minus_1_ge_m
+      rw [← hm_nat, ← hd1_nat] at this
+      exact Nat.cast_le.mp this
+
+    -- But we have β^(d-1) ≤ |n| < β^m
+    have : beta ^ ((Id.run (Zdigits beta n) - 1).natAbs) ≤ |n| := h_lower
+    have : |n| < beta ^ m.natAbs := h_ineq
+
+    -- This gives β^m ≤ β^(d-1) ≤ |n| < β^m, a contradiction
+    omega
+
+
+/-- Digit count and power relationship
+
+Coq theorem and proof:
+```coq
+Theorem Zdigits_le_Zpower :
+  forall e x,
+  (Z.abs x < Zpower beta e)%Z ->
+  (Zdigits x <= e)%Z.
+Proof.
+intros e x.
+generalize (Zpower_le_Zdigits e x).
+lia.
+Qed.
+```
+-/
+theorem Zdigits_le_Zpower (x e : Int) (hβ : beta > 1 := h_beta) :
+    ⦃⌜0 ≤ e ∧ Int.natAbs x < beta ^ e.natAbs⌝⦄
+    Zdigits beta x
+    ⦃⇓d => ⌜d ≤ e⌝⦄ := by
+  intro ⟨he, h_upper⟩
+
+  -- Since e ≥ 0, we can proceed with the main proof
+  by_cases hx : x = 0
+  · -- x = 0, so Zdigits returns 0
+    simp only [Zdigits, hx, wp, PostCond.noThrow, Id.run, PredTrans.pure]
+    exact he
+
+  · -- x ≠ 0 and e ≥ 0
+    cases' le_iff_lt_or_eq.mp he with he_pos he_zero
+    · -- e > 0, use lt_Zdigits
+      have h_spec := lt_Zdigits beta h_beta x e hβ
+      simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_spec ⊢
+      apply h_spec
+      exact ⟨he_pos, h_upper⟩
+
+    · -- e = 0
+      subst he_zero
+      simp only [Int.natAbs_zero, pow_zero] at h_upper
+      -- h_upper: |x| < beta^0 = 1
+      -- Need to show: Zdigits(x) ≤ 0
+      -- Since x ≠ 0, we have |x| ≥ 1
+      have hx_ge_one : 1 ≤ Int.natAbs x := by
+        apply Nat.succ_le_of_lt
+        exact Int.natAbs_pos.mpr hx
+      -- But h_upper says |x| < 1, contradiction
+      exfalso
+      have : (1 : ℤ) ≤ Int.natAbs x := Nat.cast_le.mpr hx_ge_one
       linarith
-    
-    -- So d > 0, which means d - 1 ≥ 0
-    have hd_minus_one : d - 1 ≥ 0 := by omega
-    
-    -- Unfold Zdigit at h_zero
-    unfold Zdigit at h_zero
-    simp [hd_minus_one] at h_zero
-    
-    -- h_zero says: (Int.tdiv n (beta ^ (d - 1).natAbs)) % beta = 0
-    -- This means Int.tdiv n (beta ^ (d - 1).natAbs) is divisible by beta
-    have h_div_beta : beta ∣ Int.tdiv n (beta ^ (d - 1).natAbs) := 
-      Int.dvd_of_emod_eq_zero h_zero
-    
-    -- Let q be the quotient
-    obtain ⟨q, hq⟩ := h_div_beta
-    
-    -- Key insight: If |n| ≥ beta^(d-1) and tdiv(n, beta^(d-1)) = q * beta,
-    -- then |n| ≥ |q| * beta * beta^(d-1) = |q| * beta^d
-    -- But |n| < beta^d, so |q| < 1, meaning q = 0
-    -- But if q = 0, then tdiv(n, beta^(d-1)) = 0, meaning |n| < beta^(d-1), contradiction!
-    
-    set pow_d_minus_1 := beta ^ (d - 1).natAbs with h_pow_def
-    
-    -- Consider the absolute value of the truncated division
-    have h_abs_tdiv : |Int.tdiv n pow_d_minus_1| = |q| * beta := by
-      rw [hq, Int.abs_mul]
-    
-    -- Since beta^(d-1) ≤ |n|, we have |tdiv(n, beta^(d-1))| ≥ 1
-    have h_tdiv_ge_one : |Int.tdiv n pow_d_minus_1| ≥ 1 := by
-      -- For any integers a, b with b > 0, if |a| ≥ b then |tdiv(a,b)| ≥ 1
-      have pow_pos : pow_d_minus_1 > 0 := by
-        rw [h_pow_def]
-        apply Int.pow_pos
-        exact beta_pos beta h_beta
-      
-      -- We know beta^(d-1) ≤ |n|
-      have : pow_d_minus_1 ≤ |n| := by
-        rw [h_pow_def]
-        exact h_lower
-      
-      -- Therefore |tdiv(n, pow_d_minus_1)| ≥ 1
-      exact Int.one_le_abs_tdiv_of_le_abs hn pow_pos this
-    
-    -- From h_abs_tdiv and h_tdiv_ge_one: |q| * beta ≥ 1
-    -- Since beta ≥ 2, this means |q| ≥ 1/beta < 1
-    -- But q is an integer, so |q| ≥ 1
-    have hq_ge_one : |q| ≥ 1 := by
-      by_contra h_not
-      push_neg at h_not
-      -- If |q| < 1, then q = 0 (since q is an integer)
-      have q_zero : q = 0 := by
-        cases' Int.abs_lt_one_iff.mp h_not with h h
-        · exact h
-        · exact h
-      -- But then |tdiv(n, pow_d_minus_1)| = 0
-      rw [q_zero] at h_abs_tdiv
-      simp at h_abs_tdiv
-      -- This contradicts h_tdiv_ge_one
-      rw [← h_abs_tdiv] at h_tdiv_ge_one
-      linarith
-    
-    -- Now we can derive the final contradiction
-    -- |n| ≥ |tdiv(n, pow_d_minus_1)| * pow_d_minus_1 (with some adjustment for truncation)
-    -- = |q| * beta * pow_d_minus_1
-    -- = |q| * beta^d
-    -- ≥ 1 * beta^d = beta^d
-    
-    -- More precisely, for the truncated division:
-    have h_n_bound : |n| ≥ |Int.tdiv n pow_d_minus_1| * pow_d_minus_1 - (pow_d_minus_1 - 1) := by
-      exact Int.abs_sub_le_of_tdiv n pow_d_minus_1
-    
-    -- Using hq: |tdiv(n, pow_d_minus_1)| = |q| * beta
-    rw [h_abs_tdiv] at h_n_bound
-    
-    -- So |n| ≥ |q| * beta * pow_d_minus_1 - (pow_d_minus_1 - 1)
-    -- = |q| * beta^d - (beta^(d-1) - 1)
-    have h_n_large : |n| ≥ |q| * beta ^ d.natAbs - (pow_d_minus_1 - 1) := by
-      have : |q| * beta * pow_d_minus_1 = |q| * beta ^ d.natAbs := by
-        rw [h_pow_def]
-        rw [← Int.pow_succ]
-        congr 2
-        simp only [Int.natAbs]
-        split
-        · rename_i h; omega
-        · rename_i n h
-          have : d = Int.negSucc n := by omega
-          simp [this] at hd_pos
-      rw [this] at h_n_bound
-      exact h_n_bound
-    
-    -- Since |q| ≥ 1 and beta^(d-1) ≥ 1, we have:
-    -- |n| ≥ beta^d - (beta^(d-1) - 1) = beta^d - beta^(d-1) + 1
-    have : |n| ≥ beta ^ d.natAbs - pow_d_minus_1 + 1 := by
-      calc |n| 
-        ≥ |q| * beta ^ d.natAbs - (pow_d_minus_1 - 1) := h_n_large
-        _ ≥ 1 * beta ^ d.natAbs - (pow_d_minus_1 - 1) := by
-          apply Int.sub_le_sub_right
-          apply Int.mul_le_mul_of_nonneg_right hq_ge_one
-          apply Int.pow_nonneg
-          exact le_of_lt (beta_pos beta h_beta)
-        _ = beta ^ d.natAbs - pow_d_minus_1 + 1 := by ring
-    
-    -- But we also know |n| < beta^d, giving us beta^d ≤ beta^d - beta^(d-1) + 1
-    -- This implies beta^(d-1) ≤ 1
-    have : beta ^ d.natAbs ≤ |n| + pow_d_minus_1 - 1 := by linarith
-    have : beta ^ d.natAbs < beta ^ d.natAbs + pow_d_minus_1 - 1 := by
-      calc beta ^ d.natAbs 
-        ≤ |n| + pow_d_minus_1 - 1 := this
-        _ < beta ^ d.natAbs + pow_d_minus_1 - 1 := by
-          apply Int.add_lt_add_right
-          apply Int.sub_lt_sub_right
-          exact h_upper
-    
-    -- This gives pow_d_minus_1 > 1
-    have pow_gt_one : pow_d_minus_1 > 1 := by linarith
-    
-    -- But if beta > 1 and d = 1, then pow_d_minus_1 = beta^0 = 1, contradiction
-    -- So we must have d > 1
-    have hd_gt_one : d > 1 := by
-      by_contra h_not
-      push_neg at h_not
-      have : d = 1 := by omega
-      rw [this] at h_pow_def
-      simp at h_pow_def
-      rw [← h_pow_def] at pow_gt_one
-      linarith
-    
-    -- Actually, let me try a simpler approach using the fact that
-    -- if the highest digit is 0, then we can write n with fewer digits
-    
-    -- If digit at position d-1 is 0, then |n| < beta^(d-1) * beta = beta^d
-    -- But actually, if the digit is 0, we have a stronger bound
-    
-    -- Let's reconsider: the digit at d-1 being 0 means
-    -- |n| = |lower digits| < beta^(d-1)
-    -- This directly contradicts h_lower: beta^(d-1) ≤ |n|
-    
-    -- Actually, the key is that if Zdigit(n, d-1) = 0,
-    -- then n can be written with at most d-1 digits,
-    -- so |n| < beta^(d-1), contradicting the lower bound.
-    
-    sorry  -- Will complete with cleaner approach
+
 
 /-- Zdigits and Zslice relationship
 
@@ -4868,14 +5322,116 @@ lia.
 Qed.
 ```
 -/
-theorem Zdigits_slice (n k l : Int) :
+theorem Zdigits_slice (n k l : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ k ∧ 0 < l⌝⦄
     Zdigits beta (Id.run (Zslice beta n k l))
     ⦃⇓d => ⌜d ≤ l⌝⦄ := by
-  -- This theorem bounds the digit count of a slice by the slice length
-  -- Since Zslice extracts l digits starting from position k,
-  -- the result has at most l digits
-  sorry
+  intro hkl
+  simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+  -- Normalize goal to reason on Id.run of Zdigits
+  change Id.run (Zdigits beta (Id.run (Zslice beta n k l))) ≤ l
+  obtain ⟨_hk, hl_pos⟩ := hkl
+
+  -- We will apply Zdigits_le_Zpower with x = Zslice n k l and e = l.
+  -- Need: 0 ≤ l and |Zslice n k l| < beta ^ l.natAbs
+  have hl_nonneg : 0 ≤ l := le_of_lt hl_pos
+
+  -- Unfold Zslice and evaluate the branch for 0 ≤ l (since 0 < l)
+  have h_beta_pos : 0 < beta := by
+    have : (0 : Int) < 1 := by decide
+    exact lt_trans this h_beta
+
+  -- Show the modulus positivity and bound for the remainder
+  have h_pow_pos : 0 < beta ^ l.natAbs := pow_pos h_beta_pos _
+
+  -- Compute the concrete value of the slice (since 0 ≤ l)
+  have hsimp : Id.run (Zslice beta n k l)
+      = ((Id.run (Zscale beta n (-k))) % (beta ^ l.natAbs)) := by
+    simp [Zslice, Zscale, hl_nonneg]
+
+  -- Let s be the slice value; we show |s| < beta^l
+  set s : Int := (Id.run (Zscale beta n (-k))) % (beta ^ l.natAbs) with hs
+
+  -- Remainder is nonnegative and strictly less than modulus
+  have h_s_nonneg : 0 ≤ s := by
+    -- modulo with positive modulus is nonnegative
+    have : 0 ≤ (Id.run (Zscale beta n (-k))) % (beta ^ l.natAbs) :=
+      Int.emod_nonneg _ (ne_of_gt h_pow_pos)
+    simpa [hs]
+
+  have h_s_lt : s < beta ^ l.natAbs := by
+    -- standard remainder bound
+    have : (Id.run (Zscale beta n (-k))) % (beta ^ l.natAbs) < beta ^ l.natAbs :=
+      Int.emod_lt_of_pos _ h_pow_pos
+    simpa [hs]
+
+  -- Now prove the desired bound on digits by reasoning from Zdigits_correct
+  -- Case split on s = 0
+  by_cases hs0 : s = 0
+  · -- Then Zdigits s = 0 ≤ l
+    have hz : Id.run (Zdigits beta s) = 0 := by
+      -- unfold Zdigits at zero
+      simp [Zdigits, hs0]
+    -- rewrite goal using hsimp and close with 0 ≤ l
+    simpa [hsimp, hz, hl_nonneg]
+  · -- s ≠ 0
+    -- Get the bounds for d = Zdigits s
+    have h_spec := Zdigits_correct (beta:=beta) s h_beta hs0
+    -- Work with the extracted bounds
+    have hd_bounds : beta ^ ((Id.run (Zdigits beta s) - 1).natAbs) ≤ |s| ∧
+                     |s| < beta ^ (Id.run (Zdigits beta s)).natAbs := by
+      simpa [wp, PostCond.noThrow, Id.run] using h_spec
+
+    have hd_lower : beta ^ ((Id.run (Zdigits beta s) - 1).natAbs) ≤ |s| := hd_bounds.1
+    -- Since s ≥ 0, |s| = s
+    have h_abs_eq : |s| = s := abs_of_nonneg h_s_nonneg
+
+    -- Chain inequalities: β^(d-1) ≤ |s| = s < β^l ⇒ β^(d-1) < β^l
+    have h_pow_lt : beta ^ ((Id.run (Zdigits beta s) - 1).natAbs) < beta ^ l.natAbs := by
+      have : beta ^ ((Id.run (Zdigits beta s) - 1).natAbs) ≤ s := by simpa [h_abs_eq] using hd_lower
+      exact lt_of_le_of_lt this h_s_lt
+
+    -- From strict monotonicity of exponent (contrapositive via ≤), deduce (d-1).natAbs < l.natAbs
+    have hb1 : 1 ≤ beta := by have := h_beta; linarith
+    have h_not : ¬(l.natAbs ≤ (Id.run (Zdigits beta s) - 1).natAbs) := by
+      -- if l.natAbs ≤ (d-1).natAbs, then β^l ≤ β^(d-1), contradicting h_pow_lt
+      intro hle
+      have : beta ^ l.natAbs ≤ beta ^ ((Id.run (Zdigits beta s) - 1).natAbs) :=
+        pow_le_pow_exponent beta hb1 hle
+      exact lt_irrefl _ (lt_of_le_of_lt this h_pow_lt)
+
+    have h_exp_lt : (Id.run (Zdigits beta s) - 1).natAbs < l.natAbs :=
+      lt_of_not_ge h_not
+
+    -- Convert to integers: since d > 0, (d-1) ≥ 0 and natAbs casts back
+    have hd_pos : 0 < Id.run (Zdigits beta s) := by
+      have := Zdigits_gt_0 (beta:=beta) s h_beta
+      simpa [wp, PostCond.noThrow, Id.run] using this hs0
+    have hd1_nonneg : 0 ≤ Id.run (Zdigits beta s) - 1 := by
+      have h1le : (1 : Int) ≤ Id.run (Zdigits beta s) := Int.add_one_le_iff.mpr hd_pos
+      -- 0 ≤ d - 1 ↔ 1 ≤ d
+      simpa using (sub_nonneg.mpr h1le)
+    have h_casts : ((Id.run (Zdigits beta s) - 1).natAbs : Int) = Id.run (Zdigits beta s) - 1 :=
+      Int.natAbs_of_nonneg hd1_nonneg
+    have h_castl : (l.natAbs : Int) = l := Int.natAbs_of_nonneg hl_nonneg
+
+    -- From (d-1).natAbs < l.natAbs, derive (d - 1) < l as integers
+    have h_int_lt : Id.run (Zdigits beta s) - 1 < l := by
+      -- cast the Nat inequality to Int using the equalities above
+      have : ((Id.run (Zdigits beta s) - 1).natAbs : Int) < (l.natAbs : Int) :=
+        Int.ofNat_lt.mpr h_exp_lt
+      simpa [h_casts, h_castl]
+
+    -- Therefore d ≤ l
+    have h_d_le_l : Id.run (Zdigits beta s) ≤ l := by
+      -- from (d-1) < l infer d ≤ l by adding 1 and using lt_add_one_iff
+      have : Id.run (Zdigits beta s) < l + 1 := by
+        have := add_lt_add_right h_int_lt 1
+        simpa using this
+      exact (Int.lt_add_one_iff.mp this)
+
+    -- Conclude using hsimp to rewrite the goal
+    simpa [hsimp] using h_d_le_l
 
 /-- Digit count after multiplication by power
 
@@ -4906,11 +5462,103 @@ now apply Zlt_le_weak, Zdigits_gt_0.
 Qed.
 ```
 -/
-theorem Zdigits_mult_Zpower (n k : Int) :
+theorem Zdigits_mult_Zpower (beta n k : Int) (h_beta : beta > 1) :
     ⦃⌜n ≠ 0 ∧ 0 ≤ k⌝⦄
     Zdigits beta (n * beta ^ k.natAbs)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = pure dn ∧ d = dn + k⌝⦄ := by
-  sorry
+  intro ⟨hn, hk⟩
+  -- First, compute dn = Zdigits beta n
+  have h_dn := Zdigits_correct (beta:=beta) n h_beta hn
+  let dn := Id.run (Zdigits beta n)
+  have hdn_bounds : beta ^ ((dn - 1).natAbs) ≤ |n| ∧ |n| < beta ^ dn.natAbs := by
+    simpa [dn, wp, PostCond.noThrow, Id.run] using h_dn
+
+  -- Show that n * beta^k has digit count dn + k
+  have hnm_ne : n * beta ^ k.natAbs ≠ 0 := by
+    intro h
+    have : n = 0 ∨ beta ^ k.natAbs = 0 := mul_eq_zero.mp h
+    cases this with
+    | inl hn0 => exact hn hn0
+    | inr hβ0 =>
+      have : 0 < beta := lt_trans (by decide : (0 : Int) < 1) h_beta
+      have : 0 < beta ^ k.natAbs := pow_pos this _
+      linarith
+
+  -- Apply Zdigits_unique with e = dn + k
+  have h_unique := Zdigits_unique beta h_beta (n * beta ^ k.natAbs) (dn + k) h_beta
+
+  -- We need to prove the bounds for uniqueness
+  have bounds : beta ^ ((dn + k - 1).natAbs) ≤ ↑(n * beta ^ k.natAbs).natAbs ∧
+                ↑(n * beta ^ k.natAbs).natAbs < beta ^ (dn + k).natAbs := by
+    -- Simplify (n * beta^k).natAbs
+    have hβ_pos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) h_beta
+    have hβ_nonneg : 0 ≤ beta := le_of_lt hβ_pos
+    have hpow_pos : 0 < beta ^ k.natAbs := pow_pos hβ_pos _
+    have hpow_nonneg : 0 ≤ beta ^ k.natAbs := le_of_lt hpow_pos
+
+    -- Relate natAbs to absolute value
+    have abs_natAbs_eq : (↑(n * beta ^ k.natAbs).natAbs : ℤ) = |n * beta ^ k.natAbs| := by
+      exact Int.natCast_natAbs _
+
+    have abs_prod : |n * beta ^ k.natAbs| = |n| * beta ^ k.natAbs := by
+      rw [abs_mul]
+      have : |beta ^ k.natAbs| = beta ^ k.natAbs := abs_of_nonneg hpow_nonneg
+      rw [this]
+
+    -- Handle the exponent arithmetic
+    have k_nonneg : 0 ≤ k := hk
+    have dn_pos : 0 < dn := by
+      -- dn > 0 from Zdigits_gt_0
+      have h_dn_gt := Zdigits_gt_0 beta n h_beta
+      have : (wp⟦Zdigits beta n⟧ (PostCond.noThrow fun r => ⌜0 < r⌝)).down := h_dn_gt hn
+      simpa [dn, wp, PostCond.noThrow, Id.run] using this
+
+    have dn_nonneg : 0 ≤ dn := le_of_lt dn_pos
+    have dnk_pos : 0 < dn + k := by linarith
+    have dnk_nonneg : 0 ≤ dn + k := le_of_lt dnk_pos
+
+    -- Since dn ≥ 1 and k ≥ 0, we have dn - 1 ≥ 0
+    have dn_minus1_nonneg : 0 ≤ dn - 1 := by linarith
+
+    -- Compute natAbs values
+    have hk_natAbs : (k.natAbs : ℤ) = k := Int.natAbs_of_nonneg k_nonneg
+    have hdn_natAbs : (dn.natAbs : ℤ) = dn := Int.natAbs_of_nonneg dn_nonneg
+    have hdn_minus1_natAbs : ((dn - 1).natAbs : ℤ) = dn - 1 := Int.natAbs_of_nonneg dn_minus1_nonneg
+
+    have hdnk_natAbs : (dn + k).natAbs = dn.natAbs + k.natAbs := by
+      have h1 : ((dn + k).natAbs : ℤ) = dn + k := Int.natAbs_of_nonneg dnk_nonneg
+      have : ((dn + k).natAbs : ℤ) = (dn.natAbs : ℤ) + (k.natAbs : ℤ) := by
+        rw [h1, hdn_natAbs, hk_natAbs]
+      exact Nat.cast_injective this
+
+    have hdnk_minus1_natAbs : (dn + k - 1).natAbs = (dn - 1).natAbs + k.natAbs := by
+      have pos : 0 ≤ dn + k - 1 := by linarith
+      have h1 : ((dn + k - 1).natAbs : ℤ) = dn + k - 1 := Int.natAbs_of_nonneg pos
+      have : ((dn + k - 1).natAbs : ℤ) = ((dn - 1).natAbs : ℤ) + (k.natAbs : ℤ) := by
+        rw [h1, hdn_minus1_natAbs, hk_natAbs]; ring
+      exact Nat.cast_injective this
+
+    constructor
+    · -- Lower bound: beta^((dn+k-1)) ≤ (n * beta^k).natAbs
+      rw [abs_natAbs_eq, abs_prod, hdnk_minus1_natAbs]
+      rw [pow_add]
+      exact mul_le_mul_of_nonneg_right hdn_bounds.1 hpow_nonneg
+    · -- Upper bound: (n * beta^k).natAbs < beta^(dn+k)
+      rw [abs_natAbs_eq, abs_prod, hdnk_natAbs]
+      rw [pow_add]
+      exact mul_lt_mul_of_pos_right hdn_bounds.2 hpow_pos
+
+  -- Apply uniqueness
+  have h_apply := h_unique ⟨hnm_ne, bounds.1, bounds.2⟩
+  have result_eq : Id.run (Zdigits beta (n * beta ^ k.natAbs)) = dn + k := by
+    simpa [wp, PostCond.noThrow, Id.run] using h_apply
+
+  -- The result shows d = dn + k, which gives us our existential
+  simp [wp, PostCond.noThrow, Id.run]
+  use dn
+  constructor
+  · rfl
+  · exact result_eq
 
 /-- Digit count of powers of beta
 
@@ -4928,11 +5576,44 @@ apply Zplus_comm.
 Qed.
 ```
 -/
-theorem Zdigits_Zpower (k : Int) :
+theorem Zdigits_Zpower (k : Int) (hβ : beta > 1) :
     ⦃⌜0 ≤ k⌝⦄
     Zdigits beta (beta ^ k.natAbs)
     ⦃⇓d => ⌜d = k + 1⌝⦄ := by
-  sorry
+  intro hk
+  -- rewrite β^k as 1 * β^k
+  have h_eq : beta ^ k.natAbs = 1 * beta ^ k.natAbs := by
+    simpa [one_mul]
+  rw [h_eq]
+
+  -- apply multiplication lemma at n = 1
+  have h_mult := Zdigits_mult_Zpower beta 1 k hβ ⟨one_ne_zero, hk⟩
+  simp [wp, PostCond.noThrow, Id.run] at h_mult ⊢
+
+  -- compute Zdigits beta 1 via uniqueness: it must equal 1
+  have h1_ne : (1 : Int) ≠ 0 := one_ne_zero
+  have lower1 : beta ^ (((1 : Int) - 1).natAbs) ≤ Int.natAbs 1 := by
+    simpa [pow_zero, Int.natAbs]  -- 1 ≤ 1
+  have upper1 : Int.natAbs 1 < beta ^ (1 : Int).natAbs := by
+    have : (1 : Int) < beta := hβ
+    simpa [pow_one, Int.natAbs] using this  -- 1 < beta
+  have h_one_run : Id.run (Zdigits beta 1) = 1 := by
+    have huniq := Zdigits_unique beta hβ 1 1 hβ
+    have happlied := huniq ⟨h1_ne, lower1, upper1⟩
+    simpa [wp, PostCond.noThrow, Id.run] using happlied
+
+  -- from h_mult: ∃ dn, Zdigits beta 1 = pure dn ∧ d = dn + k
+  rcases h_mult with ⟨dn, hdn_eq, h_result⟩
+
+  -- deduce dn = 1 via `Id.run`
+  have dn_eq_one : dn = 1 := by
+    have hrun_dn : Id.run (Zdigits beta 1) = dn := by
+      simpa [Id.run] using congrArg Id.run hdn_eq
+    have : 1 = dn := by simpa [hrun_dn] using h_one_run.symm
+    exact this.symm
+
+  -- conclude d = k + 1
+  simpa [dn_eq_one, add_comm] using h_result
 
 /-- Monotonicity of digit count
 
@@ -4953,34 +5634,53 @@ exact Hm.
 Qed.
 ```
 -/
-theorem Zdigits_le (n m : Int) :
+theorem Zdigits_le (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ Int.natAbs n ≤ Int.natAbs m⌝⦄
     Zdigits beta n
     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = pure dm ∧ dn ≤ dm⌝⦄ := by
-  sorry
+  intro ⟨hn, hm⟩
 
-/-- Lower bound for digit count
+  -- First, m ≠ 0 because |m| ≥ |n| > 0
+  have hm_ne : m ≠ 0 := by
+    intro h
+    rw [h] at hm
+    simp only [Int.natAbs_zero] at hm
+    have : n.natAbs = 0 := Nat.eq_zero_of_le_zero hm
+    have : n = 0 := Int.natAbs_eq_zero.mp this
+    exact hn this
 
-Coq theorem and proof:
-```coq
-Theorem lt_Zdigits :
-  forall n m,
-  (Z.abs n < Zpower beta m)%Z ->
-  (Zdigits n <= m)%Z.
-Proof.
-intros n m Hn.
-apply Zpower_lt_Zpower with beta.
-now apply Zdigits_correct.
-exact Hn.
-apply Z.le_refl.
-Qed.
-```
--/
-theorem lt_Zdigits (n m : Int) :
-    ⦃⌜m ≠ 0 ∧ Int.natAbs n < beta ^ m.natAbs⌝⦄
-    Zdigits beta n
-    ⦃⇓d => ⌜d ≤ m⌝⦄ := by
-  sorry
+  -- From here on, work directly with runs and bounds
+  -- Rewrite the goal into Id.run form for simplicity
+  simp [wp, PostCond.noThrow, Id.run] at ⊢
+
+  -- Choose dm as the run of Zdigits on m
+  let dm := Id.run (Zdigits beta m)
+  use dm
+  constructor
+  · rfl
+  · -- Show (Zdigits beta n).run ≤ dm using lt_Zdigits
+    have hβ_pos : beta > 1 := hβ
+    -- Bounds for m from Zdigits_correct
+    have hm_bounds := Zdigits_correct (beta:=beta) m hβ_pos hm_ne
+    have hm_bounds' : beta ^ ((dm - 1).natAbs) ≤ |m| ∧ |m| < beta ^ dm.natAbs := by
+      simpa [dm, wp, PostCond.noThrow, Id.run] using hm_bounds
+
+    -- dm > 0 because m ≠ 0
+    have dm_pos : 0 < dm := by
+      have := Zdigits_gt_0 (beta:=beta) m hβ_pos hm_ne
+      simpa [dm, wp, PostCond.noThrow, Id.run] using this
+
+    -- From |n| ≤ |m| and |m| < β^dm, we get |n| < β^dm
+    have h_n_le_mabs : (Int.natAbs n : Int) ≤ |m| := by
+      have : (Int.natAbs n : Int) ≤ (Int.natAbs m : Int) := Nat.cast_le.mpr hm
+      simpa [Int.natCast_natAbs] using this
+    have h_n_lt_pow : (Int.natAbs n : Int) < beta ^ dm.natAbs :=
+      lt_of_le_of_lt h_n_le_mabs hm_bounds'.2
+
+    -- Apply lt_Zdigits with exponent dm
+    have h_spec := lt_Zdigits beta h_beta n dm hβ_pos
+    simp only [PostCond.noThrow] at h_spec
+    exact h_spec ⟨dm_pos, h_n_lt_pow⟩
 
 /-- Power bound for digit count
 
@@ -5001,11 +5701,59 @@ apply Zdigits_ge_0.
 Qed.
 ```
 -/
-theorem Zpower_le_Zdigits (n e : Int) :
+theorem Zpower_le_Zdigits (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ e.natAbs ≤ Int.natAbs n⌝⦄
     Zdigits beta n
     ⦃⇓d => ⌜e < d⌝⦄ := by
-  sorry
+  intro ⟨hn, he⟩
+
+  -- Use Zdigits_correct to get the bounds on d
+  have h_bounds := Zdigits_correct beta n hβ hn
+  simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_bounds ⊢
+  obtain ⟨h_lower, h_upper⟩ := h_bounds
+
+  -- Let d be the result of Zdigits beta n
+  let d := Id.run (Zdigits beta n)
+
+  -- From the hypothesis: beta^(e.natAbs) ≤ |n|
+  -- From Zdigits_correct: |n| < beta^(d.natAbs)
+  -- Therefore: beta^(e.natAbs) < beta^(d.natAbs)
+  have h_chain : beta ^ e.natAbs < beta ^ d.natAbs := by
+    calc beta ^ e.natAbs ≤ Int.natAbs n := he
+         _ = |n| := by simp only [Int.natCast_natAbs]
+         _ < beta ^ d.natAbs := h_upper
+
+  -- Since beta > 1, powers are strictly monotone in the exponent (Nat)
+  -- Use contrapositive: if ¬(e.natAbs < d.natAbs), i.e. d.natAbs ≤ e.natAbs,
+  -- then beta^d.natAbs ≤ beta^e.natAbs, contradicting h_chain.
+  have h_mono : e.natAbs < d.natAbs := by
+    by_contra hnot
+    have hge : d.natAbs ≤ e.natAbs := Nat.le_of_not_lt hnot
+    have h_pow_le : beta ^ d.natAbs ≤ beta ^ e.natAbs :=
+      pow_mono_int (beta := beta) hβ hge
+    exact lt_irrefl _ (lt_of_le_of_lt h_pow_le h_chain)
+
+  -- First, let's show that d > 0 (since n ≠ 0)
+  have d_pos : 0 < d := by
+    have := Zdigits_gt_0 beta n hβ hn
+    simpa [wp, PostCond.noThrow, Id.run, PredTrans.pure] using this
+
+  -- We need to handle the sign of e
+  by_cases he_sign : 0 ≤ e
+  · -- Case: e ≥ 0
+    -- Cast natAbs back to ℤ and conclude e < d from e.natAbs < d.natAbs
+    have e_cast : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he_sign
+    have d_cast : (d.natAbs : Int) = d := Int.natAbs_of_nonneg (le_of_lt d_pos)
+    have : (e.natAbs : Int) < (d.natAbs : Int) := Int.ofNat_lt.mpr h_mono
+    simpa [e_cast, d_cast] using this
+
+  · -- Case: e < 0
+    -- Then e < 0 < d, so e < d
+    have e_neg : e < 0 := by
+      push_neg at he_sign
+      exact he_sign
+    calc e < 0 := e_neg
+         _ < d := d_pos
 
 /-- Alternative digit count bound
 
@@ -5024,32 +5772,99 @@ exact Hm.
 Qed.
 ```
 -/
-theorem Zdigits_le_Zdigits (n m : Int) :
+theorem Zdigits_le_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜m ≠ 0 ∧ Int.natAbs n < Int.natAbs m⌝⦄
     Zdigits beta n
     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = pure dm ∧ dn ≤ dm⌝⦄ := by
-  sorry
+  intro ⟨hm, h_abs_lt⟩
 
-/-- Digit count and power relationship
+  -- Get dm from running Zdigits on m
+  let dm := Id.run (Zdigits beta m)
+  use dm
+  constructor
+  · rfl
+  · -- Show dn ≤ dm using lt_Zdigits
+    -- From Zdigits_correct for m, we get: beta^((dm-1).natAbs) ≤ |m| < beta^(dm.natAbs)
+    have hm_spec := (Zdigits_correct (beta:=beta) m hβ) hm
+    have hm_bounds : beta ^ ((dm - 1).natAbs) ≤ |m| ∧ |m| < beta ^ dm.natAbs := by
+      simpa [dm, wp, PostCond.noThrow, Id.instWP, Id.run] using hm_spec
 
-Coq theorem and proof:
-```coq
-Theorem Zdigits_le_Zpower :
-  forall e x,
-  (Z.abs x < Zpower beta e)%Z ->
-  (Zdigits x <= e)%Z.
-Proof.
-intros e x.
-generalize (Zpower_le_Zdigits e x).
-lia.
-Qed.
-```
--/
-theorem Zdigits_le_Zpower (x e : Int) :
-    ⦃⌜Int.natAbs x < beta ^ e.natAbs⌝⦄
-    Zdigits beta x
-    ⦃⇓d => ⌜d ≤ e⌝⦄ := by
-  sorry
+    -- Show dm > 0 first (since m ≠ 0, Zdigits returns positive value)
+    have dm_pos : 0 < dm := by
+      -- Use Zdigits_gt_0 theorem directly
+      have h_gt := Zdigits_gt_0 beta m hβ hm
+      simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_gt
+      exact h_gt
+
+    -- Key insight: |n| < |m| < beta^(dm.natAbs)
+    -- So n.natAbs < beta^(dm.natAbs) as required for lt_Zdigits
+    have h_n_bound : Int.natAbs n < beta ^ dm.natAbs := by
+      -- Since n.natAbs < m.natAbs and |m| < beta^dm.natAbs
+      -- We need to establish n.natAbs < beta^dm.natAbs
+
+      -- We have the chain: n.natAbs < m.natAbs ≤ |m| < beta^dm.natAbs
+      -- First show m.natAbs ≤ |m| (as Int)
+      have m_natAbs_le : (Int.natAbs m : Int) ≤ |m| := by
+        simp
+
+      -- Then use transitivity
+      have : (Int.natAbs n : Int) < beta ^ dm.natAbs := by
+        calc (Int.natAbs n : Int)
+          < (Int.natAbs m : Int) := by exact Nat.cast_lt.mpr h_abs_lt
+          _ ≤ |m| := m_natAbs_le
+          _ < beta ^ dm.natAbs := hm_bounds.2
+
+      -- Convert back to Nat comparison
+      -- Since beta > 1 and dm > 0, we have beta^dm.natAbs > 0
+      have beta_pow_pos : 0 < beta ^ dm.natAbs := by
+        apply pow_pos
+        linarith [hβ]
+
+      -- We already have the inequality
+      exact this
+
+    have h_spec := lt_Zdigits beta h_beta n dm hβ
+    simp only [PostCond.noThrow] at h_spec
+    apply h_spec
+    constructor
+    · exact dm_pos
+    · exact h_n_bound
+
+/-- Helper lemma: Zdigits always returns non-negative values -/
+private lemma Zdigits_nonneg (x : Int) :
+    ⦃⌜True⌝⦄ Zdigits beta x ⦃⇓d => ⌜0 ≤ d⌝⦄ := by
+  intro _
+  unfold Zdigits
+  split_ifs with hx
+  · -- x = 0, returns 0
+    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+    exact le_refl 0
+  · -- x ≠ 0, calls Zdigits_aux with initial d = 1
+    -- Need to prove Zdigits_aux always returns values ≥ 1
+    have h_aux : ∀ n d pow fuel,
+        1 ≤ d →
+        ⦃⌜True⌝⦄ Zdigits_aux beta n d pow fuel ⦃⇓res => ⌜d ≤ res⌝⦄ := by
+      intro n d pow fuel hd _
+      induction fuel generalizing d pow with
+      | zero =>
+        simp only [Zdigits_aux, wp, PostCond.noThrow, Id.run, PredTrans.pure]
+        exact le_refl d
+      | succ fuel' ih =>
+        simp only [Zdigits_aux, wp, PostCond.noThrow, Id.run, PredTrans.pure]
+        split_ifs
+        · -- Returns d
+          exact le_refl d
+        · -- Recursive call with d+1
+          have h_rec := ih (d + 1) (beta * pow) (by linarith : 1 ≤ d + 1)
+          simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_rec
+          have h_trans : d + 1 ≤ Zdigits_aux beta n (d + 1) (beta * pow) fuel' := h_rec
+          have h_d_lt : d < d + 1 := by linarith
+          exact le_trans (le_of_lt h_d_lt) h_trans
+
+    have h_result := h_aux x 1 beta (Int.natAbs x).succ (le_refl 1) True.intro
+    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_result ⊢
+    have h1 : (0 : Int) ≤ 1 := by norm_num
+    exact le_trans h1 h_result
 
 /-- Power greater than digit count
 
@@ -5067,11 +5882,82 @@ now apply Zpower_le.
 Qed.
 ```
 -/
-theorem Zpower_gt_Zdigits (e x : Int) :
-    ⦃⌜∃ dx, Zdigits beta x = pure dx ∧ dx ≤ e⌝⦄
+theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
+    ⦃⌜True⌝⦄
     Zdigits beta x
-    ⦃⇓_ => ⌜Int.natAbs x < beta ^ e.natAbs⌝⦄ := by
-  sorry
+    ⦃⇓d => ⌜d ≤ e → Int.natAbs x < beta ^ e.natAbs⌝⦄ := by
+  intro _
+  -- By cases on whether x = 0
+  by_cases hx : x = 0
+  · -- If x = 0, then Zdigits returns 0
+    simp only [Zdigits, hx, wp, PostCond.noThrow, Id.run, PredTrans.pure]
+    intro hde
+    -- Need to show: Int.natAbs 0 < beta ^ e.natAbs
+    simp only [Int.natAbs_zero]
+    -- Need: 0 < beta ^ e.natAbs
+    apply pow_pos
+    linarith [hβ]
+
+  · -- If x ≠ 0, use Zdigits_correct
+    have h_correct := Zdigits_correct beta x hβ hx
+    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_correct ⊢
+    obtain ⟨h_lower, h_upper⟩ := h_correct
+    intro hde
+
+    -- From Zdigits_correct: |x| < beta ^ d.natAbs
+    -- From hde: d ≤ e
+    -- Need to show: |x| < beta ^ e.natAbs
+
+    -- First handle the case where e < 0
+    by_cases he : 0 ≤ e
+    · -- e ≥ 0
+      -- Since d ≤ e and both are integers, d.natAbs ≤ e.natAbs
+      have d_nonneg : 0 ≤ Id.run (Zdigits beta x) := by
+        have := Zdigits_nonneg beta x trivial
+        simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at this
+        exact this
+
+      have h_natAbs_le : (Id.run (Zdigits beta x)).natAbs ≤ e.natAbs := by
+        -- Since d ≤ e and 0 ≤ d and 0 ≤ e, we have d.natAbs ≤ e.natAbs
+        have d_eq : ↑(Id.run (Zdigits beta x)).natAbs = Id.run (Zdigits beta x) := by
+          exact Int.natAbs_of_nonneg d_nonneg
+        have e_eq : ↑e.natAbs = e := by
+          exact Int.natAbs_of_nonneg he
+        -- Convert the inequality from Int to Nat
+        have : Id.run (Zdigits beta x) ≤ e := hde
+        rw [← d_eq, ← e_eq] at this
+        exact Nat.cast_le.mp this
+
+      -- Now we need: |x| < beta ^ e.natAbs
+      -- We have: |x| < beta ^ d.natAbs
+      -- And: d.natAbs ≤ e.natAbs
+      -- So we need monotonicity of exponentiation
+
+      -- First let's clarify types
+      have h_x_bound : ↑(Int.natAbs x) < beta ^ (Id.run (Zdigits beta x)).natAbs := by
+        convert h_upper using 2
+        simp only [Int.natCast_natAbs]
+
+      -- Use transitivity: |x| < beta^d.natAbs ≤ beta^e.natAbs
+      have h_pow_mono : beta ^ (Id.run (Zdigits beta x)).natAbs ≤ beta ^ e.natAbs :=
+        pow_mono_int (beta := beta) hβ h_natAbs_le
+
+      calc ↑(Int.natAbs x)
+        < beta ^ (Id.run (Zdigits beta x)).natAbs := h_x_bound
+        _ ≤ beta ^ e.natAbs := h_pow_mono
+
+    · -- e < 0
+      -- If e < 0, then d ≤ e and 0 ≤ d (from Zdigits_nonneg) contradict.
+      exfalso
+      have d_nonneg : 0 ≤ Id.run (Zdigits beta x) := by
+        have := Zdigits_nonneg beta x trivial
+        simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at this
+        exact this
+      -- hde says Zdigits beta x ≤ e, which means Id.run (Zdigits beta x) ≤ e
+      -- Combined with e < 0 and d_nonneg : 0 ≤ Id.run (Zdigits beta x), we have a contradiction
+      have hde_int : Id.run (Zdigits beta x) ≤ e := hde
+      have e_neg : e < 0 := lt_of_not_ge he
+      linarith [d_nonneg, hde_int, e_neg]
 
 /-- Digit count greater than power
 
@@ -5088,49 +5974,211 @@ lia.
 Qed.
 ```
 -/
-theorem Zdigits_gt_Zpower (e x : Int) :
+theorem Zdigits_gt_Zpower (e x : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜beta ^ e.natAbs ≤ Int.natAbs x⌝⦄
     Zdigits beta x
     ⦃⇓d => ⌜e < d⌝⦄ := by
-  sorry
+  intro h_precond
+  -- Use Zpower_gt_Zdigits to derive a contradiction if d ≤ e
+  have h_zpower := @Zpower_gt_Zdigits beta h_beta e x hβ
+  simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at h_zpower ⊢
+  have h_spec := h_zpower trivial
 
-/-- Strong version of digit count for multiplication
+  -- By contradiction: assume ¬(e < d), i.e., d ≤ e
+  by_contra h_neg
+  -- h_neg : ¬(e < (Zdigits beta x).run)
+  -- Convert this to: (Zdigits beta x).run ≤ e
+  have h_le : Id.run (Zdigits beta x) ≤ e := by
+    exact le_of_not_gt h_neg
 
-Coq theorem and proof:
-```coq
-Theorem Zdigits_mult_strong :
-  forall x y,
-  (0 <= x)%Z -> (0 <= y)%Z ->
-  (Zdigits (x + y + x * y) <= Zdigits x + Zdigits y)%Z.
-Proof.
-intros x y Hx Hy.
-apply Zdigits_le_Zpower.
-rewrite Z.abs_eq.
-apply Z.lt_le_trans with ((x + 1) * (y + 1))%Z.
-ring_simplify.
-apply Zle_lt_succ, Z.le_refl.
-rewrite Zpower_plus by apply Zdigits_ge_0.
-apply Zmult_le_compat.
-apply Zlt_le_succ.
-rewrite <- (Z.abs_eq x) at 1 by easy.
-apply Zdigits_correct.
-apply Zlt_le_succ.
-rewrite <- (Z.abs_eq y) at 1 by easy.
-apply Zdigits_correct.
-clear -Hx ; lia.
-clear -Hy ; lia.
-change Z0 with (0 + 0 + 0)%Z.
-apply Zplus_le_compat.
-now apply Zplus_le_compat.
-now apply Zmult_le_0_compat.
-Qed.
-```
--/
-theorem Zdigits_mult_strong (x y : Int) :
+  -- h_spec tells us: d ≤ e → |x| < beta^e.natAbs
+  -- Since h_le gives us d ≤ e, we get |x| < beta^e.natAbs
+  have h_bound : ↑(Int.natAbs x) < beta ^ e.natAbs := h_spec h_le
+
+  -- But we have beta^e.natAbs ≤ |x| from precondition
+  -- This is a contradiction: beta^e.natAbs ≤ |x| < beta^e.natAbs
+  have h_precond' : beta ^ e.natAbs ≤ ↑(Int.natAbs x) := h_precond
+  linarith [h_precond', h_bound]
+
+/-- Helper lemma: Product upper bound for non-negative integers
+For non-negative integers x and y, x + y + x*y < (x+1)*(y+1) -/
+private lemma product_upper_bound (x y : Int) (_ : 0 ≤ x) (_ : 0 ≤ y) :
+    x + y + x * y < (x + 1) * (y + 1) := by
+  ring_nf
+  linarith
+
+/-- Helper lemma: Powers split for addition -/
+private lemma pow_add_split (beta : Int) (dx dy : Int) (_ : beta > 1)
+    (hdx : 0 ≤ dx) (hdy : 0 ≤ dy) :
+    beta ^ (dx + dy).natAbs = beta ^ dx.natAbs * beta ^ dy.natAbs := by
+  -- Since dx ≥ 0 and dy ≥ 0, we have dx + dy ≥ 0
+  have h_sum_nonneg : 0 ≤ dx + dy := Int.add_nonneg hdx hdy
+  -- Apply the lemma for natAbs of sum of non-negative integers
+  rw [Int.natAbs_add_of_nonneg hdx hdy]
+  -- Now we have beta ^ (dx.natAbs + dy.natAbs) = beta ^ dx.natAbs * beta ^ dy.natAbs
+  -- This follows from the power addition law
+  exact pow_add beta dx.natAbs dy.natAbs
+
+/-- Helper lemma: For monadic Zdigits computation -/
+private lemma Zdigits_run_eq (n : Int) :
+    Id.run (Zdigits beta n) = Id.run (Zdigits beta n) := rfl
+
+/-- Helper lemma: Digit count bound for sum with product
+    For non-negative x and y, Zdigits(x + y + x*y) ≤ Zdigits(x) + Zdigits(y) -/
+private lemma Zdigits_sum_product_bound (beta : Int) (x y : Int)
+    (hbeta : beta > 1) (hx : 0 ≤ x) (hy : 0 ≤ y) :
+    Id.run (Zdigits beta (x + y + x * y)) ≤
+    Id.run (Zdigits beta x) + Id.run (Zdigits beta y) := by
+  -- Special cases
+  by_cases hx_zero : x = 0
+  · simp only [hx_zero, zero_add, zero_mul, add_zero]
+    -- When x = 0, we have Zdigits(y) ≤ 0 + Zdigits(y)
+    have h_zero : Id.run (Zdigits beta 0) = 0 := by
+      simp only [Zdigits]
+      rfl
+    simp only [h_zero, zero_add]
+    -- The goal is now Zdigits(y) ≤ Zdigits(y)
+    rfl
+
+  by_cases hy_zero : y = 0
+  · simp only [hy_zero, add_zero, mul_zero, add_zero]
+    -- When y = 0, we have Zdigits(x) ≤ Zdigits(x) + 0
+    have h_zero : Id.run (Zdigits beta 0) = 0 := by
+      simp only [Zdigits]
+      rfl
+    simp only [h_zero, add_zero]
+    -- The goal is now Zdigits(x) ≤ Zdigits(x)
+    rfl
+
+  -- Both x and y are positive
+  have hx_pos : 0 < x := by
+    cases' lt_or_eq_of_le hx with h h
+    · exact h
+    · exact absurd h.symm hx_zero
+
+  have hy_pos : 0 < y := by
+    cases' lt_or_eq_of_le hy with h h
+    · exact h
+    · exact absurd h.symm hy_zero
+
+  -- Now we use the fact that x + y + x*y = (1 + x)(1 + y) - 1
+  -- and (1 + x)(1 + y) ≤ beta^dx * beta^dy = beta^(dx + dy)
+  -- where dx = Zdigits(x) and dy = Zdigits(y)
+
+  -- Get the digit counts
+  let dx := Id.run (Zdigits beta x)
+  let dy := Id.run (Zdigits beta y)
+
+  -- Apply Zdigits_correct to get bounds on x and y
+  have hx_bounds := Zdigits_correct beta x hbeta (ne_of_gt hx_pos)
+  have hy_bounds := Zdigits_correct beta y hbeta (ne_of_gt hy_pos)
+
+  simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure] at hx_bounds hy_bounds
+
+  -- From the bounds, we have:
+  -- x < beta^dx (since x ≥ 0, we have |x| = x)
+  have hx_upper : x < beta ^ dx.natAbs := by
+    have : |x| = x := abs_of_nonneg hx
+    rw [← this]
+    exact hx_bounds.2
+
+  -- y < beta^dy (since y ≥ 0, we have |y| = y)
+  have hy_upper : y < beta ^ dy.natAbs := by
+    have : |y| = y := abs_of_nonneg hy
+    rw [← this]
+    exact hy_bounds.2
+
+  -- Now show that x + y + x*y < beta^(dx + dy)
+  have h_sum_bound : x + y + x * y < beta ^ (dx + dy).natAbs := by
+    -- x + y + x*y = (1 + x)(1 + y) - 1
+    have eq : x + y + x * y = (1 + x) * (1 + y) - 1 := by ring
+    rw [eq]
+
+    -- (1 + x)(1 + y) - 1 < (1 + x)(1 + y) ≤ beta^dx * beta^dy
+    have h1 : (1 + x) * (1 + y) - 1 < (1 + x) * (1 + y) := by
+      have : 0 < (1 + x) * (1 + y) := by
+        apply mul_pos
+        · linarith
+        · linarith
+      linarith
+
+    -- (1 + x) ≤ beta^dx since x < beta^dx
+    have hx_bound : 1 + x ≤ beta ^ dx.natAbs := by linarith
+
+    -- (1 + y) ≤ beta^dy since y < beta^dy
+    have hy_bound : 1 + y ≤ beta ^ dy.natAbs := by linarith
+
+    -- Therefore (1 + x)(1 + y) ≤ beta^dx * beta^dy
+    have h2 : (1 + x) * (1 + y) ≤ beta ^ dx.natAbs * beta ^ dy.natAbs := by
+      apply mul_le_mul hx_bound hy_bound
+      · linarith
+      · apply pow_nonneg
+        linarith
+
+    -- beta^dx * beta^dy = beta^(dx + dy) when dx, dy ≥ 0
+    have h_pow_add : beta ^ dx.natAbs * beta ^ dy.natAbs = beta ^ (dx + dy).natAbs := by
+      -- dx and dy are non-negative (digit counts)
+      have hdx_nonneg : 0 ≤ dx := Zdigits_ge_0 beta x trivial
+      have hdy_nonneg : 0 ≤ dy := Zdigits_ge_0 beta y trivial
+      rw [← pow_add]
+      congr 1
+      simp only [Int.natAbs_add_of_nonneg hdx_nonneg hdy_nonneg]
+
+    rw [← h_pow_add]
+    linarith
+
+  -- Use Zdigits_le_Zpower to show the digit count bound
+  -- Since x + y + x*y < beta^(dx + dy), we have Zdigits(x + y + x*y) ≤ dx + dy
+
+  -- First, we need to show that x + y + x*y is non-negative
+  have h_sum_nonneg : 0 ≤ x + y + x * y := by
+    have : 0 ≤ x * y := Int.mul_nonneg hx hy
+    linarith
+
+  -- Get absolute value bound
+  have h_abs_bound : Int.natAbs (x + y + x * y) < beta ^ (dx + dy).natAbs := by
+    rw [Int.natAbs_of_nonneg h_sum_nonneg]
+    exact h_sum_bound
+
+  -- Apply Zdigits_le_Zpower
+  -- The theorem requires: Zdigits_le_Zpower (beta : ℤ) (h_beta : beta > 1) (x e : ℤ)
+  have h_le_power := Zdigits_le_Zpower beta hbeta (x + y + x * y) (dx + dy)
+  simp only [PostCond.noThrow] at h_le_power
+
+  -- We need dx + dy ≥ 0 to apply the lemma
+  have h_sum_nonneg' : 0 ≤ dx + dy := by
+    have hdx_nonneg : 0 ≤ dx := Zdigits_ge_0 beta x trivial
+    have hdy_nonneg : 0 ≤ dy := Zdigits_ge_0 beta y trivial
+    linarith
+
+  -- Apply the lemma with our preconditions
+  exact h_le_power ⟨h_sum_nonneg', h_abs_bound⟩
+
+theorem Zdigits_mult_strong (x y : Int) (hbeta : beta > 1 := h_beta) :
     ⦃⌜0 ≤ x ∧ 0 ≤ y⌝⦄
     Zdigits beta (x + y + x * y)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = pure dx ∧ Zdigits beta y = pure dy ∧ d ≤ dx + dy⌝⦄ := by
-  sorry
+  intro ⟨hx, hy⟩
+  -- The goal is to prove that Zdigits(x + y + x*y) ≤ Zdigits(x) + Zdigits(y)
+  -- when x ≥ 0 and y ≥ 0
+
+  -- Use the wp tactic to unfold the Hoare triple
+  simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+
+  -- Prove the postcondition
+  use Id.run (Zdigits beta x)
+  use Id.run (Zdigits beta y)
+
+  constructor
+  · -- Prove Zdigits beta x = pure (Id.run (Zdigits beta x))
+    simp only [pure, Id.run]
+  constructor
+  · -- Prove Zdigits beta y = pure (Id.run (Zdigits beta y))
+    simp only [pure, Id.run]
+
+  -- Now prove that Zdigits beta (x + y + x * y) ≤ Zdigits beta x + Zdigits beta y
+  -- Use our helper lemma directly
+  exact Zdigits_sum_product_bound beta x y hbeta hx hy
 
 /-- Digit count of multiplication
 
@@ -5154,11 +6202,165 @@ apply Zdigits_mult_strong ; apply Zabs_pos.
 Qed.
 ```
 -/
-theorem Zdigits_mult (x y : Int) :
+theorem Zdigits_mult (x y : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜True⌝⦄
     Zdigits beta (x * y)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = pure dx ∧ Zdigits beta y = pure dy ∧ d ≤ dx + dy⌝⦄ := by
-  sorry
+  intro _
+
+  -- Use wp to unfold the Hoare triple
+  simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+
+  -- Get the digit counts
+  let dx := Id.run (Zdigits beta x)
+  let dy := Id.run (Zdigits beta y)
+
+  use dx, dy
+  constructor
+  · -- Prove Zdigits beta x = pure dx
+    simp only [pure]
+    rfl
+  constructor
+  · -- Prove Zdigits beta y = pure dy
+    simp only [pure]
+    rfl
+
+  -- Main goal: prove Id.run (Zdigits beta (x * y)) ≤ dx + dy
+  -- Following the Coq proof structure:
+  -- 1. Use Zdigits_abs to work with absolute values
+  -- 2. Apply Zdigits_le with |x| * |y| ≤ |x| + |y| + |x| * |y|
+  -- 3. Apply Zdigits_mult_strong for the final bound
+
+  -- Step 1: Convert to absolute values using Zdigits_abs
+  have h_abs_xy : Id.run (Zdigits beta (x * y)) = Id.run (Zdigits beta (Int.natAbs (x * y))) := by
+    -- Use Zdigits_abs theorem
+    have h_abs_spec := Zdigits_abs (beta:=beta) (x * y)
+    simp only [wp, PostCond.noThrow, PredTrans.pure] at h_abs_spec
+    obtain ⟨d_abs, h_eq, h_d_eq⟩ := h_abs_spec trivial
+    simp only [pure] at h_eq
+    simp only [Id.run] at h_eq h_d_eq
+    rw [h_eq, h_d_eq]
+
+  have h_abs_x : dx = Id.run (Zdigits beta (Int.natAbs x)) := by
+    have h_abs_spec := Zdigits_abs (beta:=beta) x
+    simp only [wp, PostCond.noThrow] at h_abs_spec
+    obtain ⟨d_abs, h_eq, h_d_eq⟩ := h_abs_spec trivial
+    -- From h_eq: Zdigits β x = pure d_abs ⇒ dx = d_abs
+    have hdx : dx = d_abs := by
+      simpa [dx, Id.run] using congrArg Id.run h_eq
+    -- From h_d_eq: (Zdigits β |x|).run = d_abs ⇒ RHS = d_abs
+    have hxabs : Id.run (Zdigits beta (Int.natAbs x)) = d_abs := h_d_eq
+    -- Therefore dx = RHS
+    exact hdx.trans hxabs.symm
+
+  have h_abs_y : dy = Id.run (Zdigits beta (Int.natAbs y)) := by
+    have h_abs_spec := Zdigits_abs (beta:=beta) y
+    simp only [wp, PostCond.noThrow] at h_abs_spec
+    obtain ⟨d_abs, h_eq, h_d_eq⟩ := h_abs_spec trivial
+    have hdy : dy = d_abs := by
+      simpa [dy, Id.run] using congrArg Id.run h_eq
+    have hyabs : Id.run (Zdigits beta (Int.natAbs y)) = d_abs := h_d_eq
+    exact hdy.trans hyabs.symm
+
+  -- Step 2: Use |x * y| = |x| * |y|
+  have h_abs_mul : (Int.natAbs (x * y) : Int) = (Int.natAbs x : Int) * (Int.natAbs y : Int) := by
+    simp only [Int.natCast_natAbs]
+    exact abs_mul x y
+
+  -- Rewrite using absolute values
+  change Id.run (Zdigits beta (x * y)) ≤ dx + dy
+  rw [h_abs_xy, h_abs_x, h_abs_y]
+  simp only [h_abs_mul]
+
+  -- Step 3: Show that |x| * |y| ≤ |x| + |y| + |x| * |y| (when viewed as natural numbers)
+  let ax := (Int.natAbs x : Int)
+  let ay := (Int.natAbs y : Int)
+
+  -- We need to show: Zdigits(ax * ay) ≤ Zdigits(ax) + Zdigits(ay)
+  -- Via: Zdigits(ax * ay) ≤ Zdigits(ax + ay + ax * ay) ≤ Zdigits(ax) + Zdigits(ay)
+
+  -- Prove the two inequalities separately and combine by transitivity
+  have h1 :
+      Id.run (Zdigits beta (ax * ay)) ≤
+      Id.run (Zdigits beta (ax + ay + ax * ay)) := by
+    -- Use Zdigits_le since ax * ay ≤ ax + ay + ax * ay
+    by_cases hx_zero : ax = 0
+    · -- If ax = 0, LHS = Zdigits 0 = 0 ≤ Zdigits(ay)
+      have hz : Id.run (Zdigits beta (ax * ay)) = 0 := by
+        simp [ax, hx_zero, Zdigits]
+      -- ax = 0 ⇒ ax + ay + ax*ay = ay, and Zdigits ay ≥ 0
+      have : 0 ≤ Id.run (Zdigits beta (ax + ay + ax * ay)) := by
+        simpa [ax, hx_zero] using (Zdigits_ge_0 (beta:=beta) ay trivial)
+      -- Conclude by rewriting LHS to 0
+      exact (by simpa [hz] using this)
+    by_cases hy_zero : ay = 0
+    · -- Symmetric to the previous case
+      have hz : Id.run (Zdigits beta (ax * ay)) = 0 := by
+        simp [ay, hy_zero, Zdigits]
+      have : 0 ≤ Id.run (Zdigits beta (ax + ay + ax * ay)) := by
+        simpa [ay, hy_zero] using (Zdigits_ge_0 (beta:=beta) ax trivial)
+      exact (by simpa [hz] using this)
+
+    -- Both ax and ay are non-zero
+    have h_prod_ne : ax * ay ≠ 0 := mul_ne_zero hx_zero hy_zero
+
+    -- Establish basic nonnegativity facts
+    have hax_nonneg : 0 ≤ ax := by
+      simpa [ax, Int.natCast_natAbs] using (abs_nonneg x)
+    have hay_nonneg : 0 ≤ ay := by
+      simpa [ay, Int.natCast_natAbs] using (abs_nonneg y)
+    have hprod_nonneg : 0 ≤ ax * ay := mul_nonneg hax_nonneg hay_nonneg
+
+    -- Use strict inequality to apply Zdigits_le_Zdigits
+    have hax_nonneg : 0 ≤ ax := by
+      simpa [ax, Int.natCast_natAbs] using (abs_nonneg x)
+    have hay_nonneg : 0 ≤ ay := by
+      simpa [ay, Int.natCast_natAbs] using (abs_nonneg y)
+    have hax_pos : 0 < ax := by
+      have : 0 ≠ ax := by simpa [eq_comm] using hx_zero
+      exact lt_of_le_of_ne hax_nonneg this
+    have hay_pos : 0 < ay := by
+      have : 0 ≠ ay := by simpa [eq_comm] using hy_zero
+      exact lt_of_le_of_ne hay_nonneg this
+    have hsum_pos : 0 < ax + ay := add_pos hax_pos hay_pos
+    have hprod_nonneg : 0 ≤ ax * ay := mul_nonneg hax_nonneg hay_nonneg
+    have hm_pos : 0 < ax + ay + ax * ay := by
+      have : 0 < ax * ay + (ax + ay) := add_pos_of_nonneg_of_pos hprod_nonneg hsum_pos
+      simpa [add_comm, add_left_comm, add_assoc] using this
+    have hm_ne : ax + ay + ax * ay ≠ 0 := ne_of_gt hm_pos
+
+    -- Show |ax*ay| < |ax + ay + ax*ay| using monotonicity of natAbs on nonneg ints
+    have hlt : ax * ay < ax * ay + (ax + ay) := lt_add_of_pos_right _ hsum_pos
+    have h0a : 0 ≤ ax * ay := hprod_nonneg
+    have h0b : 0 ≤ ax * ay + (ax + ay) := add_nonneg hprod_nonneg (le_of_lt hsum_pos)
+    have hlt_abs_int : (Int.natAbs (ax * ay) : Int) < (Int.natAbs (ax * ay + (ax + ay)) : Int) := by
+      simpa [Int.natAbs_of_nonneg h0a, Int.natAbs_of_nonneg h0b] using hlt
+    have h_abs_lt₀ : Int.natAbs (ax * ay) < Int.natAbs (ax * ay + (ax + ay)) :=
+      Int.ofNat_lt.mp hlt_abs_int
+    have h_abs_lt : Int.natAbs (ax * ay) < Int.natAbs (ax + ay + ax * ay) := by
+      simpa [add_comm, add_left_comm, add_assoc] using h_abs_lt₀
+
+    -- Apply Zdigits_le_Zdigits to get the desired inequality on runs
+    have h_post := (Zdigits_le_Zdigits beta hβ (ax * ay) (ax + ay + ax * ay)) ⟨hm_ne, h_abs_lt⟩
+    obtain ⟨d_sum, h_sum_eq, h_le_sum⟩ := h_post
+    have h_sum_eq_run : Id.run (Zdigits beta (ax + ay + ax * ay)) = d_sum := by
+      simpa [Id.run, pure] using congrArg Id.run h_sum_eq
+    rw [← h_sum_eq_run] at h_le_sum
+    exact h_le_sum
+
+  -- Second inequality: Zdigits(ax + ay + ax * ay) ≤ Zdigits(ax) + Zdigits(ay)
+  have h2 :
+      Id.run (Zdigits beta (ax + ay + ax * ay)) ≤
+      Id.run (Zdigits beta ax) + Id.run (Zdigits beta ay) := by
+    -- Apply Zdigits_mult_strong bound on nonnegative integers
+    have hax_nonneg : 0 ≤ ax := by
+      simpa [ax, Int.natCast_natAbs] using (abs_nonneg x)
+    have hay_nonneg : 0 ≤ ay := by
+      simpa [ay, Int.natCast_natAbs] using (abs_nonneg y)
+    exact Zdigits_sum_product_bound beta ax ay hβ hax_nonneg hay_nonneg
+
+  -- Combine
+  exact le_trans h1 h2
 
 /-- Lower bound for digit count of multiplication
 
@@ -5186,11 +6388,98 @@ generalize (Zdigits_gt_0 y). lia.
 Qed.
 ```
 -/
-theorem Zdigits_mult_ge (x y : Int) :
+theorem Zdigits_mult_ge (x y : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜x ≠ 0 ∧ y ≠ 0⌝⦄
     Zdigits beta (x * y)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = pure dx ∧ Zdigits beta y = pure dy ∧ dx + dy - 1 ≤ d⌝⦄ := by
-  sorry
+  intro ⟨hx, hy⟩
+  -- Unfold the Hoare triple into a plain goal on Id.run
+  simp only [PostCond.noThrow]
+
+  -- Define digit counts and record positivity from Zdigits_gt_0
+  let dx := Id.run (Zdigits beta x)
+  let dy := Id.run (Zdigits beta y)
+  have dx_pos : 0 < dx := by
+    have := Zdigits_gt_0 (beta:=beta) x hβ hx
+    simpa [wp, PostCond.noThrow, Id.run, PredTrans.pure] using this
+  have dy_pos : 0 < dy := by
+    have := Zdigits_gt_0 (beta:=beta) y hβ hy
+    simpa [wp, PostCond.noThrow, Id.run, PredTrans.pure] using this
+
+  -- Bounds from Zdigits_correct for x and y
+  have hx_bounds := Zdigits_correct (beta:=beta) x hβ hx
+  have hy_bounds := Zdigits_correct (beta:=beta) y hβ hy
+  have hx_lower : beta ^ ((dx - 1).natAbs) ≤ |x| := by
+    simpa [dx, wp, PostCond.noThrow, Id.run] using (And.left (by
+      simpa [dx, wp, PostCond.noThrow, Id.run] using hx_bounds))
+  have hy_lower : beta ^ ((dy - 1).natAbs) ≤ |y| := by
+    simpa [dy, wp, PostCond.noThrow, Id.run] using (And.left (by
+      simpa [dy, wp, PostCond.noThrow, Id.run] using hy_bounds))
+
+  -- Nonnegativity facts used to manipulate natAbs and powers
+  have h1 : 0 ≤ dx - 1 := by linarith
+  have h2 : 0 ≤ dy - 1 := by linarith
+  have hsum : 0 ≤ dx + dy - 2 := by linarith
+
+  -- Combine the two lower bounds multiplicatively
+  have pow_nonneg₁ : 0 ≤ beta ^ (dx - 1).natAbs := by
+    have hbpos : 0 < beta := by exact lt_trans (by decide : (0 : Int) < 1) hβ
+    simpa using pow_nonneg (le_of_lt hbpos) _
+  have pow_nonneg₂ : 0 ≤ beta ^ (dy - 1).natAbs := by
+    have hbpos : 0 < beta := by exact lt_trans (by decide : (0 : Int) < 1) hβ
+    simpa using pow_nonneg (le_of_lt hbpos) _
+  have prod_le_absxy :
+      beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs ≤ |x| * |y| := by
+    exact Int.mul_le_mul hx_lower hy_lower pow_nonneg₂ (abs_nonneg x)
+
+  -- Rewrite |x|*|y| = |x*y|
+  have abs_mul_eq : |x * y| = |x| * |y| := by simpa using abs_mul x y
+
+  -- Convert the product of powers into a single power at exponent (dx+dy-2)
+  have natAbs_sum :
+      (dx + dy - 2).natAbs = (dx - 1).natAbs + (dy - 1).natAbs := by
+    -- cast to Int and use nonnegativity for natAbs equalities
+    apply (Nat.cast_injective : Function.Injective (fun n : Nat => (n : Int)))
+    calc ((dx + dy - 2).natAbs : Int)
+        = dx + dy - 2 := by simpa using Int.natAbs_of_nonneg hsum
+      _ = (dx - 1) + (dy - 1) := by ring
+      _ = ((dx - 1).natAbs : Int) + ((dy - 1).natAbs : Int) := by
+            simpa [Int.natAbs_of_nonneg h1, Int.natAbs_of_nonneg h2]
+
+  have pow_sum_eq :
+      beta ^ (dx + dy - 2).natAbs
+        = beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs := by
+    calc beta ^ (dx + dy - 2).natAbs
+        = beta ^ ((dx - 1).natAbs + (dy - 1).natAbs) := by simpa [natAbs_sum]
+      _ = beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs := by simpa [pow_add]
+
+  -- Assemble the precondition for Zdigits_gt_Zpower on x*y with e = dx+dy-2
+  have precond : beta ^ (dx + dy - 2).natAbs ≤ Int.natAbs (x * y) := by
+    -- start from the product bound and rewrite both sides
+    have : beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs ≤ |x * y| := by
+      simpa [abs_mul_eq] using prod_le_absxy
+    -- fold the LHS back into one power and cast |x*y| to natAbs
+    have : beta ^ (dx + dy - 2).natAbs ≤ |x * y| := by simpa [pow_sum_eq]
+      using this
+    simpa [Int.natCast_natAbs] using this
+
+  -- Apply the strict lower bound: (dx+dy-2) < Zdigits(x*y)
+  -- `Zdigits_gt_Zpower` expects the precondition with an absolute value on the RHS.
+  have precond_abs : beta ^ (dx + dy - 2).natAbs ≤ |x * y| := by
+    have : beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs ≤ |x * y| := by
+      simpa [abs_mul_eq] using prod_le_absxy
+    simpa [pow_sum_eq] using this
+  -- Convert |x*y| to ↑(natAbs (x*y)) to match the precondition shape
+  have precond_nat : beta ^ (dx + dy - 2).natAbs ≤ ((x * y).natAbs : Int) := by
+    simpa [Int.natCast_natAbs] using precond_abs
+  -- Call the Hoare-style lemma with the correct precondition, then strip `wp`.
+  have lt_res_wp :=
+    (@Zdigits_gt_Zpower beta h_beta (dx + dy - 2) (x * y) hβ) precond_nat
+  have lt_res : dx + dy - 2 < Id.run (Zdigits beta (x * y)) := by
+    simpa [wp, PostCond.noThrow, Id.run] using lt_res_wp
+  -- Conclude (dx+dy-1) ≤ Zdigits(x*y)
+  refine ⟨dx, dy, rfl, rfl, ?_⟩
+  linarith
 
 /-- Digit count of division by power
 
@@ -5239,11 +6528,177 @@ now rewrite <- (Z.abs_eq m) at 1.
 Qed.
 ```
 -/
-theorem Zdigits_div_Zpower (m e : Int) :
+theorem Zdigits_div_Zpower (m e : Int) (h_beta : beta > 1) :
     ⦃⌜0 ≤ m ∧ 0 ≤ e ∧ ∃ dm, Zdigits beta m = pure dm ∧ e ≤ dm⌝⦄
     Zdigits beta (m / beta ^ e.natAbs)
     ⦃⇓d => ⌜∃ dm, Zdigits beta m = pure dm ∧ d = dm - e⌝⦄ := by
-  sorry
+  intro hpre
+  rcases hpre with ⟨hm_nonneg, he_nonneg, ⟨dm, hdm_pure, he_le_dm⟩⟩
+  -- Handle the trivial m = 0 case first.
+  by_cases hm0 : m = 0
+  · -- Then Zdigits m = 0 and e = 0; quotient is 0, so result is 0 = dm - e
+    subst hm0
+    have dm0 : dm = 0 := by
+      -- from Zdigits beta 0 = pure dm
+      have h := congrArg Id.run hdm_pure
+      -- (Zdigits β 0).run = 0
+      simpa [Zdigits] using h.symm
+    have e0 : e = 0 := by
+      have : 0 ≤ e ∧ e ≤ 0 := And.intro he_nonneg (by simpa [dm0] using he_le_dm)
+      linarith
+    simp [Zdigits, dm0, e0]
+
+  -- From the precondition, Zdigits beta m = pure dm gives the standard bounds on m
+  have h_bounds := Zdigits_correct (beta:=beta) m h_beta hm0
+  have hβpos : 0 < beta := by
+    have : (0 : Int) < 1 := by decide
+    exact lt_trans this h_beta
+  -- Extract the bounds for m
+  have hdm_bounds : beta ^ ((dm - 1).natAbs) ≤ |m| ∧ |m| < beta ^ dm.natAbs := by
+    simpa [hdm_pure, wp, PostCond.noThrow, Id.run] using h_bounds
+  have h_lower := hdm_bounds.1
+  have h_upper := hdm_bounds.2
+  -- Since m ≥ 0, |m| = m
+  have hm_abs : |m| = m := abs_of_nonneg hm_nonneg
+  have hm_pos_or_zero : 0 ≤ m := hm_nonneg
+  have hpow_e_pos : 0 < beta ^ e.natAbs := pow_pos hβpos _
+  -- Case split on e = dm or e < dm
+  by_cases he_eq : e = dm
+  · -- Then m < beta^dm ⇒ m / beta^e = 0, so digits is 0 and 0 = dm - e
+    have : m < beta ^ dm.natAbs := by simpa [hm_abs] using h_upper
+    have de_pow_eq : beta ^ e.natAbs = beta ^ dm.natAbs := by
+      -- since e = dm and both are ≥ 0
+      have dm_nonneg : 0 ≤ dm := by
+        have := Zdigits_ge_0 (beta:=beta) m trivial
+        simpa [hdm_pure, wp, PostCond.noThrow, Id.run] using this
+      have eabs : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he_nonneg
+      have dmabs : (dm.natAbs : Int) = dm := Int.natAbs_of_nonneg dm_nonneg
+      have : e.natAbs = dm.natAbs := by
+        apply @Nat.cast_injective Int _ _
+        simpa [eabs, dmabs, he_eq]
+      simpa [this]
+    have : m < beta ^ e.natAbs := by simpa [de_pow_eq] using this
+    have hlt1 : m / beta ^ e.natAbs < 1 :=
+      Int.ediv_lt_of_lt_mul hpow_e_pos (by simpa [one_mul] using this)
+    have hge0 : 0 ≤ m / beta ^ e.natAbs := Int.ediv_nonneg hm_pos_or_zero (le_of_lt hpow_e_pos)
+    have hle0 : m / beta ^ e.natAbs ≤ 0 := by simpa using (Int.lt_add_one_iff.mp hlt1)
+    have hq0 : m / beta ^ e.natAbs = 0 := le_antisymm hle0 hge0
+    simp [hq0, Zdigits]
+    refine ⟨dm, hdm_pure, by simpa [he_eq]⟩
+  · -- e < dm
+    have he_lt_dm : e < dm := lt_of_le_of_ne he_le_dm he_eq
+    -- Show the quotient satisfies the tight bounds for exponent (dm - e)
+    set q : Int := m / beta ^ e.natAbs
+    -- Upper bound: q < beta^(dm-e)
+    have dm_nonneg : 0 ≤ dm := by
+      -- from Zdigits_ge_0 on m
+      have := Zdigits_ge_0 (beta:=beta) m trivial
+      simpa [hdm_pure, wp, PostCond.noThrow, Id.run] using this
+    have dme_nonneg : 0 ≤ dm - e := sub_nonneg.mpr he_le_dm
+    have dme_abs : ((dm - e).natAbs : Int) = dm - e := Int.natAbs_of_nonneg dme_nonneg
+    have dm_abs : (dm.natAbs : Int) = dm := Int.natAbs_of_nonneg dm_nonneg
+    have e_abs : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he_nonneg
+    have sum_abs : (dm - e).natAbs + e.natAbs = dm.natAbs := by
+      -- cast to Int and use injectivity
+      apply @Nat.cast_injective Int _ _
+      calc ((dm - e).natAbs : Int) + (e.natAbs : Int)
+          = (dm - e) + e := by simpa [dme_abs, e_abs]
+        _ = dm := by ring
+        _ = (dm.natAbs : Int) := by simpa [dm_abs]
+    have pow_split_dm : beta ^ (dm - e).natAbs * beta ^ e.natAbs = beta ^ dm.natAbs := by
+      calc
+        beta ^ (dm - e).natAbs * beta ^ e.natAbs
+            = beta ^ ((dm - e).natAbs + e.natAbs) := by simp [pow_add]
+        _   = beta ^ dm.natAbs := by simpa [sum_abs]
+    have h_upper_q : q < beta ^ (dm - e).natAbs := by
+      -- Use ediv_lt_of_lt_mul: m / b < c if m < c * b
+      have : m < beta ^ (dm - e).natAbs * beta ^ e.natAbs := by
+        have : m < beta ^ dm.natAbs := by simpa [hm_abs] using h_upper
+        simpa [pow_split_dm] using this
+      exact Int.ediv_lt_of_lt_mul hpow_e_pos (by simpa [q])
+    -- Lower bound: beta^((dm - e) - 1) ≤ q
+    have de1_nonneg : 0 ≤ dm - e - 1 := by
+      have : (1 : Int) ≤ dm - e := Int.add_one_le_iff.mpr (sub_pos.mpr he_lt_dm)
+      simpa using sub_nonneg.mpr this
+    have de1_abs : ((dm - e - 1).natAbs : Int) = dm - e - 1 := Int.natAbs_of_nonneg de1_nonneg
+    -- Show: beta^((dm-e)-1) * beta^e ≤ m
+    have sum_abs2 : (dm - e - 1).natAbs + e.natAbs = (dm - 1).natAbs := by
+      -- cast to Int and compute equality of ints then inject
+      apply @Nat.cast_injective Int _ _
+      have : ((dm - e - 1).natAbs : Int) + (e.natAbs : Int) = ((dm - 1).natAbs : Int) := by
+        have dm1_nonneg : 0 ≤ dm - 1 := by
+          have dm_pos : 0 < dm := by
+            have := Zdigits_gt_0 (beta:=beta) m h_beta hm0
+            simpa [hdm_pure, wp, PostCond.noThrow, Id.run] using this
+          exact sub_nonneg.mpr (Int.add_one_le_iff.mpr dm_pos)
+        have dm1_abs : ((dm - 1).natAbs : Int) = dm - 1 := Int.natAbs_of_nonneg dm1_nonneg
+        calc ((dm - e - 1).natAbs : Int) + (e.natAbs : Int)
+            = (dm - e - 1) + e := by simpa [de1_abs, e_abs]
+          _ = dm - 1 := by ring
+          _ = ((dm - 1).natAbs : Int) := dm1_abs.symm
+      simpa using this
+    have pow_split_dm1 : beta ^ (dm - e - 1).natAbs * beta ^ e.natAbs = beta ^ (dm - 1).natAbs := by
+      calc
+        beta ^ (dm - e - 1).natAbs * beta ^ e.natAbs
+            = beta ^ ((dm - e - 1).natAbs + e.natAbs) := by simp [pow_add]
+        _   = beta ^ (dm - 1).natAbs := by simpa [sum_abs2]
+    have h_lower_q : beta ^ (dm - e - 1).natAbs ≤ q := by
+      -- Use le_ediv_iff_mul_le: k ≤ m / b if k*b ≤ m
+      have : beta ^ (dm - e - 1).natAbs * beta ^ e.natAbs ≤ m := by
+        -- from lower bound on m
+        have : beta ^ (dm - 1).natAbs ≤ m := by simpa [hm_abs] using h_lower
+        simpa [pow_split_dm1]
+      exact (Int.le_ediv_iff_mul_le hpow_e_pos).mpr (by simpa [q] using this)
+    -- Convert bounds to talk about natAbs q (equals q since q ≥ 0)
+    have q_nonneg : 0 ≤ q := Int.ediv_nonneg hm_pos_or_zero (le_of_lt hpow_e_pos)
+    have q_abs : ((q.natAbs : Int)) = q := Int.natAbs_of_nonneg q_nonneg
+    have h_lower_q' : beta ^ (dm - e - 1).natAbs ≤ (q.natAbs : Int) := by simpa [q_abs]
+      using h_lower_q
+    have h_upper_q' : (q.natAbs : Int) < beta ^ (dm - e).natAbs := by simpa [q_abs]
+      using h_upper_q
+    -- Prepare a reusable monotone power bound: e ≤ dm-1 ⇒ β^e ≤ m
+    have dm_pos : 0 < dm := by
+      have := Zdigits_gt_0 (beta:=beta) m h_beta hm0
+      simpa [hdm_pure, wp, PostCond.noThrow, Id.run] using this
+    have dm1_nonneg : 0 ≤ dm - 1 := by exact sub_nonneg.mpr (Int.add_one_le_iff.mpr dm_pos)
+    have e_le_dm1 : e ≤ dm - 1 := by
+      have : e + 1 ≤ dm := Int.add_one_le_iff.mpr he_lt_dm
+      linarith
+    have pow_e_le_m : beta ^ e.natAbs ≤ m := by
+      -- β^e ≤ β^(dm-1) ≤ m
+      have e_nat : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he_nonneg
+      have dm1_nat : ((dm - 1).natAbs : Int) = dm - 1 := Int.natAbs_of_nonneg dm1_nonneg
+      have enat_le : e.natAbs ≤ (dm - 1).natAbs := by
+        have : (e.natAbs : Int) ≤ (dm - 1).natAbs := by simpa [e_nat, dm1_nat] using e_le_dm1
+        exact Int.ofNat_le.mp this
+      have hb1 : 1 < beta := h_beta
+      have pow_mono := pow_mono_int (beta:=beta) h_beta enat_le
+      have : beta ^ e.natAbs ≤ beta ^ (dm - 1).natAbs := pow_mono
+      exact le_trans this (by simpa [hm_abs] using h_lower)
+
+    -- q ≠ 0, otherwise m < beta^e contradicts pow_e_le_m
+    have q_ne0 : q ≠ 0 := by
+      intro hq
+      have hmod_eq : m % beta ^ e.natAbs = m := by
+        -- from division algorithm with q = 0
+        have h := Int.ediv_add_emod m (beta ^ e.natAbs)
+        have hq' : m / beta ^ e.natAbs = 0 := by simpa [q, hq]
+        simpa [hq', zero_mul, zero_add] using h
+      have m_lt_d : m < beta ^ e.natAbs := by
+        have := Int.emod_lt_of_pos m hpow_e_pos
+        simpa [hmod_eq] using this
+      exact (not_lt_of_ge pow_e_le_m) m_lt_d
+    -- Apply Zdigits_unique on q with exponent (dm - e)
+    -- Inline the application to the precondition to avoid typeclass inference hiccups.
+    -- Turn the Hoare triple into a plain implication on runs, then apply it.
+    have huniq := Zdigits_unique (beta:=beta) (hβ:=h_beta) (n := q) (e := dm - e)
+    -- Build the precondition tuple explicitly to guide elaboration
+    have pre : q ≠ 0 ∧ beta ^ (dm - e - 1).natAbs ≤ (q.natAbs : Int) ∧ (q.natAbs : Int) < beta ^ (dm - e).natAbs :=
+      And.intro q_ne0 (And.intro h_lower_q' h_upper_q')
+    have run_eq : Id.run (Zdigits beta q) = dm - e := by
+      have res := huniq h_beta pre
+      simpa [wp, PostCond.noThrow, Id.run] using res
+    refine ⟨dm, hdm_pure, by simpa [q] using run_eq⟩
 
 /-- Digit count of successor
 
@@ -5265,11 +6720,76 @@ Proof.
 Qed.
 ```
 -/
-theorem Zdigits_succ_le (x : Int) :
+theorem Zdigits_succ_le (x : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ x⌝⦄
     Zdigits beta (x + 1)
     ⦃⇓d => ⌜∃ dx, Zdigits beta x = pure dx ∧ d ≤ dx + 1⌝⦄ := by
-  sorry
+  intro hx_nonneg
+  -- Let dx be digits of x
+  let dx := Id.run (Zdigits beta x)
+  use dx
+  constructor
+  · rfl
+  · -- We show Zdigits(x+1) ≤ dx + 1 via the β^bound
+    -- Need: 0 ≤ dx + 1 and |x+1| < β^(dx+1)
+    have hdx_nonneg : 0 ≤ dx := by
+      have := Zdigits_ge_0 (beta:=beta) x trivial
+      simpa [dx, wp, PostCond.noThrow, Id.run] using this
+    have hβpos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) h_beta
+    -- Use Zdigits_le_Zpower with e = dx + 1
+    have h_spec := Zdigits_le_Zpower (beta:=beta) h_beta (x := x + 1) (e := dx + 1)
+    simp only [PostCond.noThrow] at h_spec
+    have hpre1 : 0 ≤ dx + 1 := add_nonneg hdx_nonneg (by decide)
+    -- Prove |x+1| < β^(dx+1) by cases on x = 0
+    by_cases hx0 : x = 0
+    · -- x = 0: then dx = 0 and |x+1| = 1 < β
+      have dx0 : dx = 0 := by
+        -- evaluate Zdigits at 0
+        simp [dx, Zdigits, hx0]
+      have : (Int.natAbs (x + 1) : Int) < beta ^ (dx + 1).natAbs := by
+        have hx1_abs : (Int.natAbs (x + 1) : Int) = 1 := by simp [hx0]
+        have : (1 : Int) < beta := h_beta
+        simpa [hx1_abs, dx0, pow_one] using this
+      have hres := h_spec ⟨by simpa using hpre1, this⟩
+      simpa [dx, wp, PostCond.noThrow, Id.run] using hres
+    · -- x ≠ 0: use bounds for x to conclude
+      have hx_bounds := Zdigits_correct (beta:=beta) x h_beta hx0
+      have hx_upper : |x| < beta ^ dx.natAbs := by
+        simpa [dx, wp, PostCond.noThrow, Id.run] using
+          (And.right (by simpa [dx, wp, PostCond.noThrow, Id.run] using hx_bounds))
+      -- Since x ≥ 0, |x| = x and hence |x+1| = x+1
+      have hx_abs : |x| = x := abs_of_nonneg hx_nonneg
+      have hx1_nonneg : 0 ≤ x + 1 := by
+        exact add_nonneg hx_nonneg (by decide)
+      have abs_x1 : |x + 1| = x + 1 := by simpa [abs_of_nonneg hx1_nonneg]
+      have hx1_le_pow_dx : |x + 1| ≤ beta ^ dx.natAbs := by
+        have : x + 1 ≤ beta ^ dx.natAbs :=
+          (Int.add_one_le_iff.mpr (by simpa [hx_abs] using hx_upper))
+        simpa [abs_x1] using this
+      have pow_dx_lt_pow_succ : beta ^ dx.natAbs < beta ^ (dx + 1).natAbs := by
+        -- β^dx < β^(dx+1) since β > 1
+        have hb1 : 1 < beta := h_beta
+        -- (β^dx) * 1 < (β^dx) * β
+        have hstep : (beta : Int) ^ dx.natAbs < (beta : Int) ^ dx.natAbs * beta := by
+          have hpos : 0 < (beta : Int) ^ dx.natAbs := pow_pos hβpos _
+          have := Int.mul_lt_mul_of_pos_left hb1 hpos
+          simpa [mul_one] using this
+        -- Convert (dx + 1).natAbs into dx.natAbs + 1 (since dx ≥ 0)
+        have hNat : (dx + 1).natAbs = dx.natAbs + 1 := by
+          have hdx1 : 0 ≤ dx + 1 := add_nonneg hdx_nonneg (by decide)
+          apply @Nat.cast_injective Int _ _
+          calc ((dx + 1).natAbs : Int) = dx + 1 := Int.natAbs_of_nonneg hdx1
+            _ = (dx.natAbs : Int) + 1 := by simp [Int.natAbs_of_nonneg hdx_nonneg]
+        -- rewrite RHS to β^(dx+1) = β^dx * β
+        simpa [hNat, pow_succ] using hstep
+      have hpre2 : (Int.natAbs (x + 1) : Int) < beta ^ (dx + 1).natAbs := by
+        -- cast |x+1| to Int and apply the inequality
+        have hx1_lt : |x + 1| < beta ^ (dx + 1).natAbs :=
+          lt_of_le_of_lt hx1_le_pow_dx pow_dx_lt_pow_succ
+        simpa [Int.natCast_natAbs] using hx1_lt
+      -- Apply the lemma to get the bound on digits
+      have hres := h_spec ⟨by simpa using hpre1, hpre2⟩
+      simpa [dx, wp, PostCond.noThrow, Id.run] using hres
 
 end DigitOperations
 
@@ -5299,11 +6819,87 @@ Qed.
 theorem Z_of_nat_S_digits2_Pnat (m : Nat) :
     ⦃⌜m > 0⌝⦄
     Zdigits 2 m
-    ⦃⇓d => ⌜d = Id.run (digits2_Pnat m) + 1⌝⦄ := by
-  -- This theorem relates the binary digit count from digits2_Pnat
-  -- to the general Zdigits function when beta = 2
-  -- The +1 accounts for the difference in counting conventions
-  sorry
+    ⦃⇓d => ⌜d = Id.run (digits2_Pnat m)⌝⦄ := by
+  intro hm_pos
+  -- Let d be the (Nat) result of the binary digit counter.
+  set dNat : Nat := Id.run (digits2_Pnat m)
+  -- From correctness, we have: dNat > 0 and 2^(dNat-1) ≤ m < 2^dNat.
+  have hbits := digits2_Pnat_correct (n := m) hm_pos
+  -- Extract bounds and positivity.
+  have dNat_pos : 0 < dNat := by
+    -- unpack the wp result
+    simpa [dNat, wp, PostCond.noThrow, Id.instWP, PredTrans.pure, Id.run] using (And.left hbits)
+  have hlow_nat : 2 ^ (dNat - 1) ≤ m := by
+    have := (And.left (And.right hbits))
+    simpa [dNat, wp, PostCond.noThrow, Id.instWP, PredTrans.pure, Id.run] using this
+  have hup_nat : m < 2 ^ dNat := by
+    have := (And.right (And.right hbits))
+    simpa [dNat, wp, PostCond.noThrow, Id.instWP, PredTrans.pure, Id.run] using this
+
+  -- We will sandwich Zdigits 2 m between dNat and itself using general lemmas.
+  -- Upper bound: Zdigits 2 m ≤ dNat from m < 2^dNat.
+  have zd_le_dNat :=
+    (Zdigits_le_Zpower (beta:=2) (hβ:=by decide) (x:= (m : Int)) (e := (dNat : Int)))
+  -- Discharge the preconditions for Zdigits_le_Zpower.
+  have pre_up : 0 ≤ (dNat : Int) ∧ Int.natAbs (m : Int) < (2 : Int) ^ (dNat : Int).natAbs := by
+    constructor
+    · exact (Int.ofNat_nonneg dNat)
+    · -- |m| = m and (dNat : Int).natAbs = dNat
+      have hm_abs : (Int.natAbs (m : Int) : Int) = (m : Int) := by
+        -- m is a natural, hence nonnegative as an integer
+        simpa using (Int.natAbs_of_nonneg (show (0 : Int) ≤ (m : Int) from Int.ofNat_nonneg m))
+      have hd_abs : ((dNat : Int).natAbs : Int) = (dNat : Int) := by
+        simpa using (Int.natAbs_of_nonneg (Int.ofNat_nonneg dNat))
+      -- cast the Nat inequality hup_nat to Int
+      have : (m : Int) < (2 : Int) ^ dNat := by
+        simpa using (Int.ofNat_lt.mpr hup_nat)
+      simpa [hm_abs, hd_abs]
+  have zd_le_dNat_run : Id.run (Zdigits 2 (m : Int)) ≤ (dNat : Int) := by
+    have := zd_le_dNat (by decide) pre_up
+    simpa [wp, PostCond.noThrow, Id.instWP, PredTrans.pure, Id.run] using this
+
+  -- Lower bound: dNat ≤ Zdigits 2 m from 2^(dNat-1) ≤ m.
+  have dNat_le_zd :=
+    (Zpower_le_Zdigits (beta:=2) (hβ:=by decide) (n := (m : Int)) (e := (dNat : Int) - 1))
+  -- Preconditions for the strict lower-bound lemma.
+  have pre_low : (m : Int) ≠ 0 ∧ (2 : Int) ^ (((dNat : Int) - 1).natAbs) ≤ Int.natAbs (m : Int) := by
+    constructor
+    · -- m > 0 ⇒ (m : Int) ≠ 0
+      exact by
+        intro h
+        have h0 : Int.toNat (m : Int) = 0 := by simpa using congrArg Int.toNat h
+        have : m = 0 := by simpa using h0
+        exact (Nat.ne_of_gt hm_pos) this
+    · -- rewrite both sides and cast the Nat inequality hlow_nat
+      have hm_abs : (Int.natAbs (m : Int) : Int) = (m : Int) := by
+        simpa using (Int.natAbs_of_nonneg (show (0 : Int) ≤ (m : Int) from Int.ofNat_nonneg m))
+      -- ((dNat : Int) - 1).natAbs = dNat - 1 since dNat ≥ 1
+      have dNat_ge1 : (1 : Int) ≤ (dNat : Int) := Int.ofNat_le.mpr (Nat.succ_le_of_lt dNat_pos)
+      have h_nonneg : 0 ≤ (dNat : Int) - 1 := sub_nonneg.mpr dNat_ge1
+      -- establish Nat-level equality of exponents
+      have hd_natAbs_eq : ((dNat : Int) - 1).natAbs = dNat - 1 := by
+        apply (Nat.cast_injective : Function.Injective (fun k : Nat => (k : Int)))
+        have : (((dNat : Int) - 1).natAbs : Int) = (dNat : Int) - 1 :=
+          Int.natAbs_of_nonneg h_nonneg
+        simpa [Int.ofNat_sub (Nat.succ_le_of_lt dNat_pos)] using this
+      -- cast the lower-bound inequality from Nat to Int and rewrite exponents
+      have : (2 : Int) ^ (dNat - 1) ≤ (m : Int) := by
+        simpa using (Int.ofNat_le.mpr hlow_nat)
+      simpa [hm_abs, hd_natAbs_eq] using this
+  have dNat_le_zd_run : (dNat : Int) ≤ Id.run (Zdigits 2 (m : Int)) := by
+    -- from (dNat - 1) < (Zdigits 2 m).run, add 1 on the left
+    have hlt : (dNat : Int) - 1 < Id.run (Zdigits 2 (m : Int)) := by
+      simpa [wp, PostCond.noThrow, Id.instWP, PredTrans.pure, Id.run]
+        using (dNat_le_zd (by decide) pre_low)
+    have hle : (dNat : Int) - 1 + 1 ≤ Id.run (Zdigits 2 (m : Int)) :=
+      Int.add_one_le_iff.mpr hlt
+    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hle
+
+  -- Conclude equality by antisymmetry of ≤.
+  have deq : Id.run (Zdigits 2 (m : Int)) = (dNat : Int) :=
+    le_antisymm zd_le_dNat_run dNat_le_zd_run
+  -- Wrap back into the wp shape
+  simpa [wp, PostCond.noThrow, Id.instWP, PredTrans.pure, Id.run] using deq
 
 /-- Positive digit count for binary
 
@@ -5326,10 +6922,8 @@ theorem Zpos_digits2_pos (m : Nat) :
     ⦃⌜m > 0⌝⦄
     Zdigits 2 m
     ⦃⇓d => ⌜d = Id.run (digits2_Pnat m)⌝⦄ := by
-  -- This theorem shows that for positive numbers,
-  -- Zdigits with base 2 equals digits2_Pnat
-  -- Both functions compute the binary digit count
-  sorry
+  -- Directly reuse the previous theorem (same statement in this Lean port).
+  exact Z_of_nat_S_digits2_Pnat m
 
 /-- Equivalence of binary digit count functions
 

@@ -91,4 +91,4 @@ EOF
 # Build the CLI command as an array to preserve spaces/newlines
 cmd=(claude -p "$msg" --verbose --dangerously-skip-permissions)
 
-end=$(( $(date +%s) + 3*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do claude -p "$msg" --verbose --dangerously-skip-permissions || true; done
+end=$(( $(date +%s) + 7*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do claude -p "$msg" --verbose --dangerously-skip-permissions || true; done

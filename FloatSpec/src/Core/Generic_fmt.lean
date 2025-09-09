@@ -693,6 +693,12 @@ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+  -- We'll actually need the base power to be nonnegative
+  have hpow_pos_base : 0 < (beta : ℝ) ^ (fexp (mag beta x)) := by
+    -- base > 0 ⇒ every zpow is > 0
+    exact zpow_pos hbpos _
+  have hpow_nonneg_base : 0 ≤ (beta : ℝ) ^ (fexp (mag beta x)) :=
+    le_of_lt hpow_pos_base
 
   -- Show that beta^(-fexp(...)) is positive
   have hpow_pos : 0 < (beta : ℝ) ^ (-(fexp (mag beta x))) := by
@@ -713,7 +719,7 @@ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
   · right
     exact hx
   · left
-    exact (abs_of_nonneg hinv_nonneg).symm
+    exact (abs_of_nonneg hpow_nonneg_base).symm
 -- Section: Generic format closure properties
 
 /-- Specification: Generic format opposite
