@@ -59,7 +59,9 @@ This provides a searchable history of all significant changes to the codebase.
   - 54 files changed across entire codebase
   - See `.log/20250808_102956/` for details
 
-Use `uvx lean-lsp-mcp` to get feedback on your code. Usage:
+Use `uvx lean-lsp-mcp` to get feedback on your code (primary workflow). Prefer these tools for fast, local diagnostics after every change; use `lake build` for broader checks or when you need a full project build.
+
+Usage:
 
 - `lean_diagnostic_messages`: Get all diagnostic messages for a Lean file. This includes infos, warnings and errors.
 
@@ -149,12 +151,61 @@ just build        # Build Lean project
 just test         # Run Python tests
 
 # Or use direct commands:
-lake build        # Local Lean build (primary workflow)
+lake build        # Full Lean build (slower; use as a cross-check)
 uv run -m pytest -q  # Run tests directly
 
 # Check Lean syntax and types
 lake build --verbose
 ```
+
+## Proof Writing Playbook
+
+- One-by-one: Write exactly one proof, run LSP diagnostics immediately (via `lean_lsp_mcp`), fix issues, then move on. Do not batch multiple new proofs without checking.
+- Follow examples: Mirror patterns from existing proofs, especially `Zfast_div_eucl_spec` in `FloatSpec/src/Core/Zaux.lean` and nearby lemmas in the same file you are editing.
+- Before each proof:
+  - Verify the function body is correct and stable.
+  - Check existing specs to understand precisely what needs to be proven.
+  - Preserve specification/Hoare triple syntax; avoid changing it unless absolutely necessary. If change is unavoidable, decompose the spec into simpler lemmas rather than rewriting wholesale.
+- Compilation verification:
+  - After every proof, run `lean_lsp_mcp.lean_diagnostic_messages` for the edited file.
+  - Use `lake build` as a fallback or for a project-wide typecheck.
+  - “Complete” means: no `sorry` in the edited proof and the file typechecks.
+- When stuck:
+  - Search for relevant lemmas with MCP hover/decl tools or Mathlib; if a lemma doesn’t exist, write a small private helper lemma close to the proof.
+  - Decompose complex statements into smaller, local lemmas.
+  - Reference nearby proofs for patterns and naming.
+
+## Practical Lean Tips (FloatSpec)
+
+- Magnitude and logs:
+  - `mag` is defined with `Int.ceil (log (|x|)/log β)`. To get `|x| ≤ β^e`, sandwich `L := log|x|/logβ` and use `Real.log_le_iff_le_exp` plus `Real.log_zpow`.
+  - Keep a clean chain: derive `log |x| ≤ log (β^e)`, then exponentiate; avoid brittle simp rewrites between `exp (e*log β)` and `β^e`—prove equality explicitly using `Real.exp_log` and `Real.log_zpow`.
+- Powers and positivity:
+  - Use `zpow_pos : 0 < a → 0 < a^n` and `abs_of_nonneg` for `a^n` when the base is positive.
+  - Collapse products with `FloatSpec.Core.Generic_fmt.zpow_mul_sub` and reconstruct with `zpow_add₀` or `zpow_sub_add` (requires nonzero base).
+  - For nonnegative exponent `k ≥ 0`, switch to Nat powers via `zpow_nonneg_toNat`.
+- Absolute values with scaling factors:
+  - Prefer `abs (x * y) = |x| * |y|` and ensure `y ≥ 0` so `|y| = y`.
+  - When the scale is `β^(-c)`, consider rewriting as `((β^c)⁻¹)` and use `inv_nonneg.mpr (le_of_lt (zpow_pos …))` to keep monotonicity simple.
+- Integer truncation:
+  - Use `Ztrunc_intCast` and `Ztrunc_zero` to compute truncations on integer-valued expressions.
+- Calc blocks over heavy simp:
+  - Prefer explicit `calc`/`have` chains with named lemmas instead of relying on `simp` to bridge nondefinitional equalities (especially around `log/exp`, `zpow`, and `abs`).
+
+## Plan + Preambles (for AI agents)
+
+- Maintain a short, evolving plan (use the `update_plan` tool) with exactly one `in_progress` step.
+- Before grouped tool calls, write a concise 1–2 sentence preamble explaining what you are about to do.
+- Share progress updates after nontrivial steps, and re-align the plan if scope changes.
+
+## Quality Bar
+
+- 30-second reality check: After each change, be able to answer “yes” to all:
+  - Did I run/build the code (via MCP or `lake build`)?
+  - Did I trigger the exact feature I changed?
+  - Did I see expected results, and check for errors?
+  - Would I bet $100 it works?
+- Phrases to avoid: “should work”, “fixed the issue” (without verification), “try it now” (without running it yourself).
 
 ## FloatSpec Roadmap
 
