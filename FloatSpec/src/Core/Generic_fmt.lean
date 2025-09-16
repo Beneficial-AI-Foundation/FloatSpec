@@ -296,6 +296,22 @@ theorem generic_format_0 (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
   -- After unfolding, goal reduces to 0 = 0
   simp [Ztrunc]
 
+/-- Coq (Generic_fmt.v):
+Theorem generic_format_bpow:
+  forall e, generic_format beta fexp (bpow e).
+
+Lean (spec): For any integer exponent `e`, the power `(β : ℝ)^e`
+is representable in the generic format.
+-/
+theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+    ⦃⌜beta > 1⌝⦄
+    generic_format beta fexp ((beta : ℝ) ^ e)
+    ⦃⇓result => ⌜result⌝⦄ := by
+  -- Follows the Coq statement Generic_fmt.generic_format_bpow
+  -- Proof will be provided later.
+  intro _
+  sorry
+
 /-- Specification: Canonical exponent of opposite
 
     The canonical exponent is preserved under negation
@@ -841,6 +857,27 @@ theorem generic_format_satisfies_any (beta : Int) (fexp : Int → Int) [Valid_ex
   refine ⟨0, ?_⟩
   unfold generic_format scaled_mantissa cexp F2R
   simp [Ztrunc]
+
+
+-- Section: Magnitude-related bounds
+
+/-- Coq (Generic_fmt.v):
+Theorem mag_generic_gt:
+  forall x, x <> 0%R ->
+  generic_format x ->
+  (cexp x < mag beta x)%Z.
+
+Lean (spec): If `x ≠ 0` and `x` is in `generic_format`, then
+the canonical exponent is strictly less than `mag beta x`.
+-/
+theorem mag_generic_gt
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    ⦃⌜x ≠ 0 ∧ (generic_format beta fexp x).run⌝⦄
+    cexp beta fexp x
+    ⦃⇓e => ⌜e < mag beta x⌝⦄ := by
+  intro _
+  -- Placeholder; follows Coq's mag_generic_gt proof strategy
+  sorry
 
 
 -- Section: Format intersection and union

@@ -22,6 +22,8 @@ import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.Core.Round_generic
+import FloatSpec.src.Core.Ulp
+import FloatSpec.src.Core.FLX
 open FloatSpec.Core.Round_generic
 
 open Real
@@ -69,6 +71,23 @@ theorem FTZ_exp_spec (e : Int) :
 -/
 def FTZ_format (beta : Int) (x : ℝ) : Id Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x
+
+/-- Valid_exp instance for the FTZ exponent function (placeholder). -/
+instance FTZ_exp_valid (beta : Int) :
+    FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp prec emin) := by
+  refine ⟨?_⟩
+  intro k
+  refine And.intro ?h1 ?h2
+  · intro _
+    -- Proof omitted for now
+    sorry
+  · intro _
+    refine And.intro ?hA ?hB
+    · -- Proof omitted for now
+      sorry
+    · intro _ _
+      -- Proof omitted for now
+      sorry
 
 /-- Specification: FTZ format using generic format
 
@@ -155,6 +174,159 @@ theorem FTZ_format_abs_spec (beta : Int) (x : ℝ) :
     ⦃⌜(FTZ_format prec emin beta x).run⌝⦄
     FTZ_format_abs_check beta x
     ⦃⇓result => ⌜result = true⌝⦄ := by
+  sorry
+
+end FloatSpec.Core.FTZ
+
+namespace FloatSpec.Core.FTZ
+
+variable (prec emin : Int)
+
+/-- Coq (FTZ.v):
+Theorem FLXN_format_FTZ :
+  forall x, FTZ_format x -> FLXN_format beta prec x.
+
+Lean (spec): Any FTZ-format number is in FLXN_format for the same
+base and precision.
+-/
+theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
+    ⦃⌜(FTZ_format prec emin beta x).run⌝⦄
+    FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro _
+  -- Proof to follow Coq's FLXN_format_FTZ; omitted for now
+  sorry
+
+end FloatSpec.Core.FTZ
+
+namespace FloatSpec.Core.FTZ
+
+variable (prec emin : Int)
+
+/-- Coq (FTZ.v):
+Theorem FTZ_format_FLXN :
+  forall x : R,
+  (bpow (emin + prec - 1) <= Rabs x)%R ->
+  FLXN_format beta prec x -> FTZ_format x.
+
+Lean (spec): If |x| ≥ β^(emin + prec - 1) and x is in FLXN_format,
+then x is in FTZ_format for the same base and precision.
+-/
+theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
+    ⦃⌜(beta : ℝ) ^ (emin + prec - 1) ≤ |x| ∧ (FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x).run⌝⦄
+    FTZ_format prec emin beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro _
+  -- Proof to follow Coq's FTZ_format_FLXN; omitted for now
+  sorry
+
+end FloatSpec.Core.FTZ
+
+namespace FloatSpec.Core.FTZ
+
+variable (prec emin : Int)
+
+/-- Coq (FTZ.v):
+Theorem round_FTZ_FLX : forall x,
+  (bpow (emin + prec - 1) <= Rabs x) ->
+  round beta FTZ_exp Zrnd_FTZ x = round beta (FLX_exp prec) rnd x.
+
+Lean (spec): Under the lower-bound condition on |x|, rounding in
+FTZ equals rounding in FLX for any rounding predicate `rnd`.
+-/
+theorem round_FTZ_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    ⦃⌜(beta : ℝ) ^ (emin + prec - 1) ≤ |x|⌝⦄
+    (pure (
+      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x,
+      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec) (mode := rnd) x) : Id (ℝ × ℝ))
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  -- Proof to follow Coq's round_FTZ_FLX; omitted for now
+  sorry
+
+end FloatSpec.Core.FTZ
+
+namespace FloatSpec.Core.FTZ
+
+variable (prec emin : Int)
+
+/-- Coq (FTZ.v):
+Theorem round_FTZ_small : forall x,
+  (Rabs x < bpow (emin + prec - 1)) ->
+  round beta FTZ_exp Zrnd_FTZ x = 0.
+
+Lean (spec): If |x| is smaller than β^(emin+prec-1), then rounding in
+FTZ flushes to zero for any rounding predicate `rnd`.
+-/
+theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    ⦃⌜|x| < (beta : ℝ) ^ (emin + prec - 1)⌝⦄
+    (pure (FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x) : Id ℝ)
+    ⦃⇓r => ⌜r = 0⌝⦄ := by
+  intro _
+  -- Proof to follow Coq's round_FTZ_small; omitted for now
+  sorry
+
+end FloatSpec.Core.FTZ
+
+namespace FloatSpec.Core.FTZ
+
+variable (prec emin : Int)
+
+/-
+Coq (FTZ.v):
+Theorem generic_format_FTZ :
+  forall x, FTZ_format x -> generic_format beta FTZ_exp x.
+-/
+theorem generic_format_FTZ (beta : Int) (x : ℝ) :
+    ⦃⌜(FTZ_format prec emin beta x).run⌝⦄
+    FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FTZ_format]
+
+/-
+Coq (FTZ.v):
+Theorem FTZ_format_generic :
+  forall x, generic_format beta FTZ_exp x -> FTZ_format x.
+-/
+theorem FTZ_format_generic (beta : Int) (x : ℝ) :
+    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄
+    FTZ_format prec emin beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FTZ_format] using hx
+
+end FloatSpec.Core.FTZ
+
+namespace FloatSpec.Core.FTZ
+
+variable (prec emin : Int)
+
+/-
+Coq (FTZ.v):
+Theorem FTZ_format_satisfies_any :
+  satisfies_any FTZ_format.
+-/
+theorem FTZ_format_satisfies_any (beta : Int) :
+    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FTZ_format prec emin beta y).run) := by
+  simpa [FTZ_format]
+    using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FTZ_exp prec emin)
+
+end FloatSpec.Core.FTZ
+
+namespace FloatSpec.Core.FTZ
+
+variable (prec emin : Int)
+
+/-- Coq (FTZ.v):
+Theorem ulp_FTZ_0 : ulp beta FTZ_exp 0 = bpow emin.
+
+Lean (spec): The ULP under FTZ at 0 equals `β^emin`.
+-/
+theorem ulp_FTZ_0 (beta : Int) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0
+    ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
   sorry
 
 end FloatSpec.Core.FTZ

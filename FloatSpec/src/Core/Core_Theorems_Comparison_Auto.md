@@ -1,0 +1,1850 @@
+# Core Theorems Comparison (Auto): Coq vs Lean
+
+Automated theorem/lemma scan with simple name heuristics (case-insensitive, trailing primes, and _spec suffix). Content equivalence should be manually reviewed for substring matches.
+
+## File: Core.v
+- Coq: Core.v
+- Lean: (none)
+- Summary: Coq 0, Lean 0, match 0, partial 0
+
+### Coq Declarations
+(none)
+
+### Lean Declarations
+(none)
+
+### Mapping (Coq → Lean)
+
+## File: Defs.v
+- Coq: Defs.v
+- Lean: Defs.lean
+- Summary: Coq 0, Lean 7, match 0, partial 0
+
+### Coq Declarations
+(none)
+
+### Lean Declarations
+- theorem: `F2R_spec`
+- theorem: `Fnum_extract_spec`
+- theorem: `Fexp_extract_spec`
+- theorem: `make_float_spec`
+- theorem: `FlocqFloat_eq_spec`
+- theorem: `F2R_zero_spec`
+- theorem: `F2R_add_same_exp_spec`
+
+### Mapping (Coq → Lean)
+
+## File: Digits.v
+- Coq: Digits.v
+- Lean: Digits.lean
+- Summary: Coq 58, Lean 64, match 54, partial 4
+
+### Coq Declarations
+- Theorem: `digits2_Pnat_correct`
+- Theorem: `Zdigit_lt`
+- Theorem: `Zdigit_0`
+- Theorem: `Zdigit_opp`
+- Theorem: `Zdigit_ge_Zpower_pos`
+- Theorem: `Zdigit_ge_Zpower`
+- Theorem: `Zdigit_not_0_pos`
+- Theorem: `Zdigit_not_0`
+- Theorem: `Zdigit_mul_pow`
+- Theorem: `Zdigit_div_pow`
+- Theorem: `Zdigit_mod_pow`
+- Theorem: `Zdigit_mod_pow_out`
+- Theorem: `Zsum_digit_digit`
+- Theorem: `Zdigit_ext`
+- Theorem: `ZOmod_plus_pow_digit`
+- Theorem: `ZOdiv_plus_pow_digit`
+- Theorem: `Zdigit_plus`
+- Theorem: `Zdigit_scale`
+- Theorem: `Zscale_0`
+- Theorem: `Zsame_sign_scale`
+- Theorem: `Zscale_mul_pow`
+- Theorem: `Zscale_scale`
+- Theorem: `Zdigit_slice`
+- Theorem: `Zdigit_slice_out`
+- Theorem: `Zslice_0`
+- Theorem: `Zsame_sign_slice`
+- Theorem: `Zslice_slice`
+- Theorem: `Zslice_mul_pow`
+- Theorem: `Zslice_div_pow`
+- Theorem: `Zslice_scale`
+- Theorem: `Zslice_div_pow_scale`
+- Theorem: `Zplus_slice`
+- Theorem: `Zdigits_correct`
+- Theorem: `Zdigits_unique`
+- Theorem: `Zdigits_abs`
+- Theorem: `Zdigits_opp`
+- Theorem: `Zdigits_cond_Zopp`
+- Theorem: `Zdigits_gt_0`
+- Theorem: `Zdigits_ge_0`
+- Theorem: `Zdigit_out`
+- Theorem: `Zdigit_digits`
+- Theorem: `Zdigits_slice`
+- Theorem: `Zdigits_mult_Zpower`
+- Theorem: `Zdigits_Zpower`
+- Theorem: `Zdigits_le`
+- Theorem: `lt_Zdigits`
+- Theorem: `Zpower_le_Zdigits`
+- Theorem: `Zdigits_le_Zpower`
+- Theorem: `Zpower_gt_Zdigits`
+- Theorem: `Zdigits_gt_Zpower`
+- Theorem: `Zdigits_mult_strong`
+- Theorem: `Zdigits_mult`
+- Theorem: `Zdigits_mult_ge`
+- Theorem: `Zdigits_div_Zpower`
+- Theorem: `Zdigits_succ_le`
+- Theorem: `Z_of_nat_S_digits2_Pnat`
+- Theorem: `Zpos_digits2_pos`
+- Lemma: `Zdigits2_Zdigits`
+
+### Lean Declarations
+- lemma: `bits_pos`
+- lemma: `split2`
+- lemma: `bits_succ`
+- lemma: `digits2_eq_bits`
+- lemma: `bits_bounds`
+- theorem: `digits2_Pnat_correct`
+- theorem: `Zdigit_lt`
+- theorem: `Zdigit_0`
+- theorem: `Zdigit_opp`
+- theorem: `Zdigit_ge_Zpower_pos`
+- theorem: `Zdigit_ge_Zpower`
+- theorem: `Zdigit_not_0_pos`
+- theorem: `Zdigit_not_0`
+- theorem: `Zdigit_mul_pow`
+- theorem: `Zdigit_div_pow`
+- theorem: `Zdigit_mod_pow`
+- theorem: `Zdigit_mod_pow_out`
+- theorem: `Zsum_digit_digit`
+- theorem: `ZOmod_plus_pow_digit`
+- theorem: `Zdigit_ext_nonneg`
+- theorem: `ZOdiv_plus_pow_digit`
+- theorem: `Zdigit_plus_nonneg`
+- theorem: `Zdigit_scale_point`
+- theorem: `Zscale_0`
+- theorem: `Zsame_sign_scale`
+- theorem: `Zscale_mul_pow`
+- theorem: `Zscale_scale`
+- theorem: `Zdigit_slice`
+- theorem: `Zdigit_slice_out`
+- theorem: `Zslice_0`
+- theorem: `Zsame_sign_slice`
+- theorem: `Zslice_slice`
+- theorem: `Zslice_mul_pow`
+- theorem: `Zslice_div_pow`
+- theorem: `Zslice_scale`
+- theorem: `Zslice_div_pow_scale_nonnegKp`
+- theorem: `Zplus_slice`
+- theorem: `Zdigits_correct`
+- theorem: `Zdigits_unique`
+- theorem: `Zdigits_abs`
+- theorem: `Zdigits_opp`
+- theorem: `Zdigits_cond_Zopp`
+- theorem: `Zdigits_ge_0`
+- theorem: `Zdigits_gt_0`
+- theorem: `Zdigit_out`
+- theorem: `Zdigit_digits`
+- theorem: `lt_Zdigits`
+- theorem: `Zdigits_le_Zpower`
+- theorem: `Zdigits_slice`
+- theorem: `Zdigits_mult_Zpower`
+- theorem: `Zdigits_Zpower`
+- theorem: `Zdigits_le`
+- theorem: `Zpower_le_Zdigits`
+- theorem: `Zdigits_le_Zdigits`
+- theorem: `Zpower_gt_Zdigits`
+- theorem: `Zdigits_gt_Zpower`
+- theorem: `Zdigits_mult_strong`
+- theorem: `Zdigits_mult`
+- theorem: `Zdigits_mult_ge`
+- theorem: `Zdigits_div_Zpower`
+- theorem: `Zdigits_succ_le`
+- theorem: `Z_of_nat_S_digits2_Pnat`
+- theorem: `Zpos_digits2_pos`
+- theorem: `Zdigits2_Zdigits`
+
+### Mapping (Coq → Lean)
+- `digits2_Pnat_correct` → `digits2_Pnat_correct` (exact)
+- `Zdigit_lt` → `Zdigit_lt` (exact)
+- `Zdigit_0` → `Zdigit_0` (exact)
+- `Zdigit_opp` → `Zdigit_opp` (exact)
+- `Zdigit_ge_Zpower_pos` → `Zdigit_ge_Zpower_pos` (exact)
+- `Zdigit_ge_Zpower` → `Zdigit_ge_Zpower` (exact)
+- `Zdigit_not_0_pos` → `Zdigit_not_0_pos` (exact)
+- `Zdigit_not_0` → `Zdigit_not_0` (exact)
+- `Zdigit_mul_pow` → `Zdigit_mul_pow` (exact)
+- `Zdigit_div_pow` → `Zdigit_div_pow` (exact)
+- `Zdigit_mod_pow` → `Zdigit_mod_pow` (exact)
+- `Zdigit_mod_pow_out` → `Zdigit_mod_pow_out` (exact)
+- `Zsum_digit_digit` → `Zsum_digit_digit` (exact)
+- `Zdigit_ext` → `Zdigit_ext_nonneg` (substring)
+- `ZOmod_plus_pow_digit` → `ZOmod_plus_pow_digit` (exact)
+- `ZOdiv_plus_pow_digit` → `ZOdiv_plus_pow_digit` (exact)
+- `Zdigit_plus` → `Zdigit_plus_nonneg` (substring)
+- `Zdigit_scale` → `Zdigit_scale_point` (substring)
+- `Zscale_0` → `Zscale_0` (exact)
+- `Zsame_sign_scale` → `Zsame_sign_scale` (exact)
+- `Zscale_mul_pow` → `Zscale_mul_pow` (exact)
+- `Zscale_scale` → `Zscale_scale` (exact)
+- `Zdigit_slice` → `Zdigit_slice` (exact)
+- `Zdigit_slice_out` → `Zdigit_slice_out` (exact)
+- `Zslice_0` → `Zslice_0` (exact)
+- `Zsame_sign_slice` → `Zsame_sign_slice` (exact)
+- `Zslice_slice` → `Zslice_slice` (exact)
+- `Zslice_mul_pow` → `Zslice_mul_pow` (exact)
+- `Zslice_div_pow` → `Zslice_div_pow` (exact)
+- `Zslice_scale` → `Zslice_scale` (exact)
+- `Zslice_div_pow_scale` → `Zslice_div_pow` (substring)
+- `Zplus_slice` → `Zplus_slice` (exact)
+- `Zdigits_correct` → `Zdigits_correct` (exact)
+- `Zdigits_unique` → `Zdigits_unique` (exact)
+- `Zdigits_abs` → `Zdigits_abs` (exact)
+- `Zdigits_opp` → `Zdigits_opp` (exact)
+- `Zdigits_cond_Zopp` → `Zdigits_cond_Zopp` (exact)
+- `Zdigits_gt_0` → `Zdigits_gt_0` (exact)
+- `Zdigits_ge_0` → `Zdigits_ge_0` (exact)
+- `Zdigit_out` → `Zdigit_out` (exact)
+- `Zdigit_digits` → `Zdigit_digits` (exact)
+- `Zdigits_slice` → `Zdigits_slice` (exact)
+- `Zdigits_mult_Zpower` → `Zdigits_mult_Zpower` (exact)
+- `Zdigits_Zpower` → `Zdigits_Zpower` (exact)
+- `Zdigits_le` → `Zdigits_le` (exact)
+- `lt_Zdigits` → `lt_Zdigits` (exact)
+- `Zpower_le_Zdigits` → `Zpower_le_Zdigits` (exact)
+- `Zdigits_le_Zpower` → `Zdigits_le_Zpower` (exact)
+- `Zpower_gt_Zdigits` → `Zpower_gt_Zdigits` (exact)
+- `Zdigits_gt_Zpower` → `Zdigits_gt_Zpower` (exact)
+- `Zdigits_mult_strong` → `Zdigits_mult_strong` (exact)
+- `Zdigits_mult` → `Zdigits_mult` (exact)
+- `Zdigits_mult_ge` → `Zdigits_mult_ge` (exact)
+- `Zdigits_div_Zpower` → `Zdigits_div_Zpower` (exact)
+- `Zdigits_succ_le` → `Zdigits_succ_le` (exact)
+- `Z_of_nat_S_digits2_Pnat` → `Z_of_nat_S_digits2_Pnat` (exact)
+- `Zpos_digits2_pos` → `Zpos_digits2_pos` (exact)
+- `Zdigits2_Zdigits` → `Zdigits2_Zdigits` (exact)
+
+## File: FIX.v
+- Coq: FIX.v
+- Lean: FIX.lean
+- Summary: Coq 5, Lean 10, match 5, partial 0
+
+### Coq Declarations
+- Theorem: `generic_format_FIX`
+- Theorem: `FIX_format_generic`
+- Theorem: `FIX_format_satisfies_any`
+- Theorem: `ulp_FIX`
+- Theorem: `round_FIX_IZR`
+
+### Lean Declarations
+- theorem: `FIX_exp_spec`
+- theorem: `FIX_format_spec`
+- theorem: `FIX_exp_correct_spec`
+- theorem: `FIX_format_0_spec`
+- theorem: `FIX_format_opp_spec`
+- theorem: `generic_format_FIX`
+- theorem: `FIX_format_generic`
+- theorem: `FIX_format_satisfies_any`
+- theorem: `ulp_FIX`
+- theorem: `round_FIX_IZR`
+
+### Mapping (Coq → Lean)
+- `generic_format_FIX` → `generic_format_FIX` (exact)
+- `FIX_format_generic` → `FIX_format_generic` (exact)
+- `FIX_format_satisfies_any` → `FIX_format_satisfies_any` (exact)
+- `ulp_FIX` → `ulp_FIX` (exact)
+- `round_FIX_IZR` → `round_FIX_IZR` (exact)
+
+## File: FLT.v
+- Coq: FLT.v
+- Lean: FLT.lean
+- Summary: Coq 23, Lean 25, match 18, partial 0
+
+### Coq Declarations
+- Theorem: `generic_format_FLT`
+- Theorem: `FLT_format_generic`
+- Theorem: `generic_format_FLT_bpow`
+- Theorem: `FLT_format_bpow`
+- Theorem: `FLT_format_satisfies_any`
+- Theorem: `cexp_FLT_FLX`
+- Theorem: `generic_format_FLT_FLX`
+- Theorem: `generic_format_FLX_FLT`
+- Theorem: `round_FLT_FLX`
+- Theorem: `cexp_FLT_FIX`
+- Theorem: `generic_format_FIX_FLT`
+- Theorem: `generic_format_FLT_FIX`
+- Lemma: `negligible_exp_FLT`
+- Theorem: `generic_format_FLT_1`
+- Theorem: `ulp_FLT_0`
+- Theorem: `ulp_FLT_small`
+- Theorem: `ulp_FLT_le`
+- Theorem: `ulp_FLT_gt`
+- Lemma: `ulp_FLT_exact_shift`
+- Lemma: `succ_FLT_exact_shift_pos`
+- Lemma: `succ_FLT_exact_shift`
+- Lemma: `pred_FLT_exact_shift`
+- Theorem: `ulp_FLT_pred_pos`
+
+### Lean Declarations
+- theorem: `FLT_exp_spec`
+- theorem: `FLT_format_spec`
+- theorem: `FLT_exp_correct_spec`
+- theorem: `FLT_format_0_spec`
+- theorem: `FLT_format_opp_spec`
+- theorem: `FLT_format_abs_spec`
+- theorem: `FLT_exp_FLX_spec`
+- theorem: `generic_format_FLT`
+- theorem: `FLT_format_generic`
+- theorem: `FLT_format_satisfies_any`
+- theorem: `generic_format_FLT_bpow`
+- theorem: `FLT_format_bpow`
+- theorem: `generic_format_FLT_FLX`
+- theorem: `cexp_FLT_FLX`
+- theorem: `generic_format_FIX_FLT`
+- theorem: `generic_format_FLT_FIX`
+- theorem: `ulp_FLT_0`
+- theorem: `ulp_FLT_small`
+- theorem: `cexp_FLT_FIX`
+- theorem: `generic_format_FLT_1`
+- theorem: `generic_format_FLX_FLT`
+- theorem: `ulp_FLT_le`
+- theorem: `ulp_FLT_gt`
+- theorem: `ulp_FLT_exact_shift`
+- theorem: `round_FLT_FLX`
+
+### Mapping (Coq → Lean)
+- `generic_format_FLT` → `generic_format_FLT` (exact)
+- `FLT_format_generic` → `FLT_format_generic` (exact)
+- `generic_format_FLT_bpow` → `generic_format_FLT_bpow` (exact)
+- `FLT_format_bpow` → `FLT_format_bpow` (exact)
+- `FLT_format_satisfies_any` → `FLT_format_satisfies_any` (exact)
+- `cexp_FLT_FLX` → `cexp_FLT_FLX` (exact)
+- `generic_format_FLT_FLX` → `generic_format_FLT_FLX` (exact)
+- `generic_format_FLX_FLT` → `generic_format_FLX_FLT` (exact)
+- `round_FLT_FLX` → `round_FLT_FLX` (exact)
+- `cexp_FLT_FIX` → `cexp_FLT_FIX` (exact)
+- `generic_format_FIX_FLT` → `generic_format_FIX_FLT` (exact)
+- `generic_format_FLT_FIX` → `generic_format_FLT_FIX` (exact)
+- `negligible_exp_FLT` → (no match)
+- `generic_format_FLT_1` → `generic_format_FLT_1` (exact)
+- `ulp_FLT_0` → `ulp_FLT_0` (exact)
+- `ulp_FLT_small` → `ulp_FLT_small` (exact)
+- `ulp_FLT_le` → `ulp_FLT_le` (exact)
+- `ulp_FLT_gt` → `ulp_FLT_gt` (exact)
+- `ulp_FLT_exact_shift` → `ulp_FLT_exact_shift` (exact)
+- `succ_FLT_exact_shift_pos` → (no match)
+- `succ_FLT_exact_shift` → (no match)
+- `pred_FLT_exact_shift` → (no match)
+- `ulp_FLT_pred_pos` → (no match)
+
+## File: FLX.v
+- Coq: FLX.v
+- Lean: FLX.lean
+- Summary: Coq 20, Lean 12, match 6, partial 1
+
+### Coq Declarations
+- Theorem: `FIX_format_FLX`
+- Theorem: `FLX_format_generic`
+- Theorem: `generic_format_FLX`
+- Theorem: `FLX_format_satisfies_any`
+- Theorem: `FLX_format_FIX`
+- Theorem: `generic_format_FLXN`
+- Theorem: `FLXN_format_generic`
+- Theorem: `FLXN_format_satisfies_any`
+- Lemma: `negligible_exp_FLX`
+- Theorem: `generic_format_FLX_1`
+- Theorem: `ulp_FLX_0`
+- Lemma: `ulp_FLX_1`
+- Lemma: `succ_FLX_1`
+- Theorem: `eq_0_round_0_FLX`
+- Theorem: `gt_0_round_gt_0_FLX`
+- Theorem: `ulp_FLX_le`
+- Theorem: `ulp_FLX_ge`
+- Lemma: `ulp_FLX_exact_shift`
+- Lemma: `succ_FLX_exact_shift`
+- Lemma: `pred_FLX_exact_shift`
+
+### Lean Declarations
+- theorem: `FLX_exp_spec`
+- theorem: `FLX_format_spec`
+- theorem: `FLX_exp_correct_spec`
+- theorem: `FLX_format_0_spec`
+- theorem: `FLX_format_opp_spec`
+- theorem: `FLX_format_abs_spec`
+- theorem: `generic_format_FLX`
+- theorem: `FIX_format_FLX`
+- theorem: `FLX_format_FIX`
+- theorem: `FLX_format_satisfies_any`
+- theorem: `FLX_format_generic`
+- theorem: `generic_format_FLX_1`
+
+### Mapping (Coq → Lean)
+- `FIX_format_FLX` → `FIX_format_FLX` (exact)
+- `FLX_format_generic` → `FLX_format_generic` (exact)
+- `generic_format_FLX` → `generic_format_FLX` (exact)
+- `FLX_format_satisfies_any` → `FLX_format_satisfies_any` (exact)
+- `FLX_format_FIX` → `FLX_format_FIX` (exact)
+- `generic_format_FLXN` → `generic_format_FLX` (substring)
+- `FLXN_format_generic` → (no match)
+- `FLXN_format_satisfies_any` → (no match)
+- `negligible_exp_FLX` → (no match)
+- `generic_format_FLX_1` → `generic_format_FLX_1` (exact)
+- `ulp_FLX_0` → (no match)
+- `ulp_FLX_1` → (no match)
+- `succ_FLX_1` → (no match)
+- `eq_0_round_0_FLX` → (no match)
+- `gt_0_round_gt_0_FLX` → (no match)
+- `ulp_FLX_le` → (no match)
+- `ulp_FLX_ge` → (no match)
+- `ulp_FLX_exact_shift` → (no match)
+- `succ_FLX_exact_shift` → (no match)
+- `pred_FLX_exact_shift` → (no match)
+
+## File: FTZ.v
+- Coq: FTZ.v
+- Lean: FTZ.lean
+- Summary: Coq 8, Lean 12, match 6, partial 0
+
+### Coq Declarations
+- Theorem: `FLXN_format_FTZ`
+- Theorem: `generic_format_FTZ`
+- Theorem: `FTZ_format_generic`
+- Theorem: `FTZ_format_satisfies_any`
+- Theorem: `FTZ_format_FLXN`
+- Theorem: `ulp_FTZ_0`
+- Theorem: `round_FTZ_FLX`
+- Theorem: `round_FTZ_small`
+
+### Lean Declarations
+- theorem: `FTZ_exp_spec`
+- theorem: `FTZ_format_spec`
+- theorem: `FTZ_exp_correct_spec`
+- theorem: `FTZ_format_0_spec`
+- theorem: `FTZ_format_opp_spec`
+- theorem: `FTZ_format_abs_spec`
+- theorem: `round_FTZ_FLX`
+- theorem: `round_FTZ_small`
+- theorem: `generic_format_FTZ`
+- theorem: `FTZ_format_generic`
+- theorem: `FTZ_format_satisfies_any`
+- theorem: `ulp_FTZ_0`
+
+### Mapping (Coq → Lean)
+- `FLXN_format_FTZ` → (no match)
+- `generic_format_FTZ` → `generic_format_FTZ` (exact)
+- `FTZ_format_generic` → `FTZ_format_generic` (exact)
+- `FTZ_format_satisfies_any` → `FTZ_format_satisfies_any` (exact)
+- `FTZ_format_FLXN` → (no match)
+- `ulp_FTZ_0` → `ulp_FTZ_0` (exact)
+- `round_FTZ_FLX` → `round_FTZ_FLX` (exact)
+- `round_FTZ_small` → `round_FTZ_small` (exact)
+
+## File: Float_prop.v
+- Coq: Float_prop.v
+- Lean: Float_prop.lean
+- Summary: Coq 36, Lean 36, match 36, partial 0
+
+### Coq Declarations
+- Theorem: `Rcompare_F2R`
+- Theorem: `le_F2R`
+- Theorem: `F2R_le`
+- Theorem: `lt_F2R`
+- Theorem: `F2R_lt`
+- Theorem: `F2R_eq`
+- Theorem: `eq_F2R`
+- Theorem: `F2R_Zabs`
+- Theorem: `F2R_Zopp`
+- Theorem: `F2R_cond_Zopp`
+- Theorem: `F2R_0`
+- Theorem: `eq_0_F2R`
+- Theorem: `ge_0_F2R`
+- Theorem: `le_0_F2R`
+- Theorem: `gt_0_F2R`
+- Theorem: `lt_0_F2R`
+- Theorem: `F2R_ge_0`
+- Theorem: `F2R_le_0`
+- Theorem: `F2R_gt_0`
+- Theorem: `F2R_lt_0`
+- Theorem: `F2R_neq_0`
+- Lemma: `Fnum_ge_0`
+- Lemma: `Fnum_le_0`
+- Theorem: `F2R_bpow`
+- Theorem: `bpow_le_F2R`
+- Theorem: `F2R_p1_le_bpow`
+- Theorem: `bpow_le_F2R_m1`
+- Theorem: `F2R_lt_bpow`
+- Theorem: `F2R_change_exp`
+- Theorem: `F2R_prec_normalize`
+- Theorem: `mag_F2R_bounds`
+- Theorem: `mag_F2R`
+- Theorem: `Zdigits_mag`
+- Theorem: `mag_F2R_Zdigits`
+- Theorem: `mag_F2R_bounds_Zdigits`
+- Theorem: `float_distribution_pos`
+
+### Lean Declarations
+- theorem: `Rcompare_F2R`
+- theorem: `le_F2R`
+- theorem: `F2R_le`
+- theorem: `lt_F2R`
+- theorem: `F2R_lt`
+- theorem: `F2R_eq`
+- theorem: `eq_F2R`
+- theorem: `F2R_Zabs`
+- theorem: `F2R_Zopp`
+- theorem: `F2R_cond_Zopp`
+- theorem: `F2R_0`
+- theorem: `eq_0_F2R`
+- theorem: `ge_0_F2R`
+- theorem: `Fnum_ge_0`
+- theorem: `le_0_F2R`
+- theorem: `Fnum_le_0`
+- theorem: `gt_0_F2R`
+- theorem: `lt_0_F2R`
+- theorem: `F2R_ge_0`
+- theorem: `F2R_le_0`
+- theorem: `F2R_gt_0`
+- theorem: `F2R_lt_0`
+- theorem: `F2R_neq_0`
+- theorem: `F2R_bpow`
+- theorem: `bpow_le_F2R`
+- theorem: `F2R_p1_le_bpow`
+- theorem: `bpow_le_F2R_m1`
+- theorem: `F2R_lt_bpow`
+- theorem: `F2R_change_exp`
+- theorem: `F2R_prec_normalize`
+- theorem: `mag_F2R_bounds`
+- theorem: `mag_F2R`
+- theorem: `Zdigits_mag`
+- theorem: `mag_F2R_Zdigits`
+- theorem: `mag_F2R_bounds_Zdigits`
+- theorem: `float_distribution_pos`
+
+### Mapping (Coq → Lean)
+- `Rcompare_F2R` → `Rcompare_F2R` (exact)
+- `le_F2R` → `le_F2R` (exact)
+- `F2R_le` → `F2R_le` (exact)
+- `lt_F2R` → `lt_F2R` (exact)
+- `F2R_lt` → `F2R_lt` (exact)
+- `F2R_eq` → `F2R_eq` (exact)
+- `eq_F2R` → `eq_F2R` (exact)
+- `F2R_Zabs` → `F2R_Zabs` (exact)
+- `F2R_Zopp` → `F2R_Zopp` (exact)
+- `F2R_cond_Zopp` → `F2R_cond_Zopp` (exact)
+- `F2R_0` → `F2R_0` (exact)
+- `eq_0_F2R` → `eq_0_F2R` (exact)
+- `ge_0_F2R` → `ge_0_F2R` (exact)
+- `le_0_F2R` → `le_0_F2R` (exact)
+- `gt_0_F2R` → `gt_0_F2R` (exact)
+- `lt_0_F2R` → `lt_0_F2R` (exact)
+- `F2R_ge_0` → `F2R_ge_0` (exact)
+- `F2R_le_0` → `F2R_le_0` (exact)
+- `F2R_gt_0` → `F2R_gt_0` (exact)
+- `F2R_lt_0` → `F2R_lt_0` (exact)
+- `F2R_neq_0` → `F2R_neq_0` (exact)
+- `Fnum_ge_0` → `Fnum_ge_0` (exact)
+- `Fnum_le_0` → `Fnum_le_0` (exact)
+- `F2R_bpow` → `F2R_bpow` (exact)
+- `bpow_le_F2R` → `bpow_le_F2R` (exact)
+- `F2R_p1_le_bpow` → `F2R_p1_le_bpow` (exact)
+- `bpow_le_F2R_m1` → `bpow_le_F2R_m1` (exact)
+- `F2R_lt_bpow` → `F2R_lt_bpow` (exact)
+- `F2R_change_exp` → `F2R_change_exp` (exact)
+- `F2R_prec_normalize` → `F2R_prec_normalize` (exact)
+- `mag_F2R_bounds` → `mag_F2R_bounds` (exact)
+- `mag_F2R` → `mag_F2R` (exact)
+- `Zdigits_mag` → `Zdigits_mag` (exact)
+- `mag_F2R_Zdigits` → `mag_F2R_Zdigits` (exact)
+- `mag_F2R_bounds_Zdigits` → `mag_F2R_bounds_Zdigits` (exact)
+- `float_distribution_pos` → `float_distribution_pos` (exact)
+
+## File: Generic_fmt.v
+- Coq: Generic_fmt.v
+- Lean: Generic_fmt.lean, Round_generic.lean
+- Summary: Coq 113, Lean 55, match 30, partial 5
+
+### Coq Declarations
+- Theorem: `valid_exp_large`
+- Theorem: `valid_exp_large'`
+- Theorem: `generic_format_0`
+- Theorem: `cexp_opp`
+- Theorem: `cexp_abs`
+- Theorem: `canonical_generic_format`
+- Theorem: `generic_format_bpow`
+- Theorem: `generic_format_bpow'`
+- Theorem: `generic_format_F2R`
+- Lemma: `generic_format_F2R'`
+- Theorem: `canonical_opp`
+- Theorem: `canonical_abs`
+- Theorem: `canonical_0`
+- Theorem: `canonical_unique`
+- Theorem: `scaled_mantissa_generic`
+- Theorem: `scaled_mantissa_mult_bpow`
+- Theorem: `scaled_mantissa_0`
+- Theorem: `scaled_mantissa_opp`
+- Theorem: `scaled_mantissa_abs`
+- Theorem: `generic_format_opp`
+- Theorem: `generic_format_abs`
+- Theorem: `generic_format_abs_inv`
+- Theorem: `cexp_fexp`
+- Theorem: `cexp_fexp_pos`
+- Theorem: `mantissa_small_pos`
+- Theorem: `scaled_mantissa_lt_1`
+- Theorem: `scaled_mantissa_lt_bpow`
+- Theorem: `mag_generic_gt`
+- Lemma: `mantissa_DN_small_pos`
+- Lemma: `mantissa_UP_small_pos`
+- Theorem: `generic_format_discrete`
+- Theorem: `generic_format_canonical`
+- Theorem: `generic_format_ge_bpow`
+- Theorem: `abs_lt_bpow_prec`
+- Theorem: `generic_format_bpow_inv'`
+- Theorem: `generic_format_bpow_inv`
+- Theorem: `Zrnd_DN_or_UP`
+- Theorem: `Zrnd_ZR_or_AW`
+- Theorem: `round_bounded_large_pos`
+- Theorem: `round_bounded_small_pos`
+- Lemma: `round_le_pos`
+- Theorem: `round_generic`
+- Theorem: `round_0`
+- Theorem: `exp_small_round_0_pos`
+- Lemma: `generic_format_round_pos`
+- Theorem: `round_ext`
+- Theorem: `round_opp`
+- Theorem: `round_DN_or_UP`
+- Theorem: `round_ZR_or_AW`
+- Theorem: `round_le`
+- Theorem: `round_ge_generic`
+- Theorem: `round_le_generic`
+- Theorem: `round_abs_abs`
+- Theorem: `round_bounded_large`
+- Theorem: `exp_small_round_0`
+- Theorem: `abs_round_ge_generic`
+- Theorem: `abs_round_le_generic`
+- Theorem: `round_DN_opp`
+- Theorem: `round_UP_opp`
+- Theorem: `round_ZR_opp`
+- Theorem: `round_ZR_abs`
+- Theorem: `round_AW_opp`
+- Theorem: `round_AW_abs`
+- Theorem: `round_ZR_DN`
+- Theorem: `round_ZR_UP`
+- Theorem: `round_AW_UP`
+- Theorem: `round_AW_DN`
+- Theorem: `generic_format_round`
+- Theorem: `round_DN_pt`
+- Theorem: `generic_format_satisfies_any`
+- Theorem: `round_UP_pt`
+- Theorem: `round_ZR_pt`
+- Lemma: `round_DN_small_pos`
+- Theorem: `round_DN_UP_lt`
+- Lemma: `round_UP_small_pos`
+- Theorem: `generic_format_EM`
+- Lemma: `round_large_pos_ge_bpow`
+- Theorem: `mag_round_ZR`
+- Theorem: `mag_round`
+- Theorem: `mag_DN`
+- Theorem: `cexp_DN`
+- Theorem: `scaled_mantissa_DN`
+- Theorem: `generic_N_pt_DN_or_UP`
+- Theorem: `subnormal_exponent`
+- Lemma: `cexp_le_bpow`
+- Lemma: `cexp_ge_bpow`
+- Lemma: `lt_cexp_pos`
+- Theorem: `lt_cexp`
+- Theorem: `mag_round_ge`
+- Theorem: `cexp_round_ge`
+- Theorem: `Znearest_DN_or_UP`
+- Theorem: `Znearest_ge_floor`
+- Theorem: `Znearest_le_ceil`
+- Theorem: `Znearest_N_strict`
+- Theorem: `Znearest_half`
+- Theorem: `Znearest_imp`
+- Theorem: `round_N_pt`
+- Theorem: `round_N_middle`
+- Lemma: `round_N_small_pos`
+- Theorem: `round_NA_pt`
+- Theorem: `round_N0_pt`
+- Theorem: `Znearest_opp`
+- Theorem: `round_N_opp`
+- Lemma: `round_N0_opp`
+- Lemma: `round_N_small`
+- Theorem: `generic_inclusion_mag`
+- Theorem: `generic_inclusion_lt_ge`
+- Theorem: `generic_inclusion`
+- Theorem: `generic_inclusion_le_ge`
+- Theorem: `generic_inclusion_le`
+- Theorem: `generic_inclusion_ge`
+- Theorem: `generic_round_generic`
+- Lemma: `round_NA_opp`
+
+### Lean Declarations
+- lemma: `Ztrunc_int`
+- lemma: `zpow_ne_zero_of_pos`
+- theorem: `valid_exp_large`
+- theorem: `valid_exp_large'`
+- theorem: `cexp_spec`
+- theorem: `scaled_mantissa_spec`
+- theorem: `generic_format_spec`
+- theorem: `Ztrunc_neg`
+- theorem: `Ztrunc_intCast`
+- theorem: `zpow_mul_sub`
+- theorem: `zpow_sub_add`
+- theorem: `zpow_nonneg_toNat`
+- theorem: `generic_format_0`
+- theorem: `generic_format_bpow`
+- theorem: `cexp_opp`
+- theorem: `cexp_abs`
+- theorem: `canonical_generic_format`
+- theorem: `scaled_mantissa_mult_bpow`
+- lemma: `Ztrunc_zero`
+- theorem: `generic_format_F2R`
+- theorem: `generic_format_F2R'`
+- theorem: `canonical_opp`
+- theorem: `canonical_abs`
+- theorem: `canonical_0`
+- theorem: `canonical_unique`
+- theorem: `scaled_mantissa_0`
+- theorem: `scaled_mantissa_opp`
+- theorem: `scaled_mantissa_abs`
+- theorem: `generic_format_opp`
+- theorem: `generic_format_abs`
+- theorem: `generic_format_abs_inv`
+- theorem: `generic_format_satisfies_any`
+- theorem: `mag_generic_gt`
+- theorem: `round_UP_exists`
+- theorem: `generic_format_bpow`
+- theorem: `generic_format_bpow'`
+- theorem: `scaled_mantissa_generic`
+- theorem: `cexp_fexp`
+- theorem: `cexp_fexp_pos`
+- theorem: `mantissa_small_pos`
+- theorem: `scaled_mantissa_lt_1`
+- theorem: `scaled_mantissa_lt_bpow`
+- theorem: `generic_format_round_DN`
+- theorem: `generic_format_round_UP`
+- theorem: `generic_format_precision_bound`
+- theorem: `fexp_monotone`
+- theorem: `generic_format_equiv`
+- theorem: `round_to_generic_spec`
+- theorem: `round_0`
+- theorem: `generic_format_inter_valid`
+- theorem: `mag_generic_format`
+- theorem: `precision_generic_format`
+- theorem: `generic_format_error_bound`
+- theorem: `generic_format_relative_error`
+- theorem: `round_to_format_properties`
+
+### Mapping (Coq → Lean)
+- `valid_exp_large` → `valid_exp_large` (exact)
+- `valid_exp_large'` → `valid_exp_large'` (exact)
+- `generic_format_0` → `generic_format_0` (exact)
+- `cexp_opp` → `cexp_opp` (exact)
+- `cexp_abs` → `cexp_abs` (exact)
+- `canonical_generic_format` → `canonical_generic_format` (exact)
+- `generic_format_bpow` → `generic_format_bpow` (exact)
+- `generic_format_bpow'` → `generic_format_bpow'` (exact)
+- `generic_format_F2R` → `generic_format_F2R` (exact)
+- `generic_format_F2R'` → `generic_format_F2R'` (exact)
+- `canonical_opp` → `canonical_opp` (exact)
+- `canonical_abs` → `canonical_abs` (exact)
+- `canonical_0` → `canonical_0` (exact)
+- `canonical_unique` → `canonical_unique` (exact)
+- `scaled_mantissa_generic` → `scaled_mantissa_generic` (exact)
+- `scaled_mantissa_mult_bpow` → `scaled_mantissa_mult_bpow` (exact)
+- `scaled_mantissa_0` → `scaled_mantissa_0` (exact)
+- `scaled_mantissa_opp` → `scaled_mantissa_opp` (exact)
+- `scaled_mantissa_abs` → `scaled_mantissa_abs` (exact)
+- `generic_format_opp` → `generic_format_opp` (exact)
+- `generic_format_abs` → `generic_format_abs` (exact)
+- `generic_format_abs_inv` → `generic_format_abs_inv` (exact)
+- `cexp_fexp` → `cexp_fexp` (exact)
+- `cexp_fexp_pos` → `cexp_fexp_pos` (exact)
+- `mantissa_small_pos` → `mantissa_small_pos` (exact)
+- `scaled_mantissa_lt_1` → `scaled_mantissa_lt_1` (exact)
+- `scaled_mantissa_lt_bpow` → `scaled_mantissa_lt_bpow` (exact)
+- `mag_generic_gt` → `mag_generic_gt` (exact)
+- `mantissa_DN_small_pos` → (no match)
+- `mantissa_UP_small_pos` → (no match)
+- `generic_format_discrete` → (no match)
+- `generic_format_canonical` → (no match)
+- `generic_format_ge_bpow` → (no match)
+- `abs_lt_bpow_prec` → (no match)
+- `generic_format_bpow_inv'` → `generic_format_bpow` (substring)
+- `generic_format_bpow_inv` → `generic_format_bpow` (substring)
+- `Zrnd_DN_or_UP` → (no match)
+- `Zrnd_ZR_or_AW` → (no match)
+- `round_bounded_large_pos` → (no match)
+- `round_bounded_small_pos` → (no match)
+- `round_le_pos` → (no match)
+- `round_generic` → (no match)
+- `round_0` → `round_0` (exact)
+- `exp_small_round_0_pos` → `round_0` (substring)
+- `generic_format_round_pos` → (no match)
+- `round_ext` → (no match)
+- `round_opp` → (no match)
+- `round_DN_or_UP` → (no match)
+- `round_ZR_or_AW` → (no match)
+- `round_le` → (no match)
+- `round_ge_generic` → (no match)
+- `round_le_generic` → (no match)
+- `round_abs_abs` → (no match)
+- `round_bounded_large` → (no match)
+- `exp_small_round_0` → `round_0` (substring)
+- `abs_round_ge_generic` → (no match)
+- `abs_round_le_generic` → (no match)
+- `round_DN_opp` → (no match)
+- `round_UP_opp` → (no match)
+- `round_ZR_opp` → (no match)
+- `round_ZR_abs` → (no match)
+- `round_AW_opp` → (no match)
+- `round_AW_abs` → (no match)
+- `round_ZR_DN` → (no match)
+- `round_ZR_UP` → (no match)
+- `round_AW_UP` → (no match)
+- `round_AW_DN` → (no match)
+- `generic_format_round` → `generic_format_round_DN` (substring)
+- `round_DN_pt` → (no match)
+- `generic_format_satisfies_any` → `generic_format_satisfies_any` (exact)
+- `round_UP_pt` → (no match)
+- `round_ZR_pt` → (no match)
+- `round_DN_small_pos` → (no match)
+- `round_DN_UP_lt` → (no match)
+- `round_UP_small_pos` → (no match)
+- `generic_format_EM` → (no match)
+- `round_large_pos_ge_bpow` → (no match)
+- `mag_round_ZR` → (no match)
+- `mag_round` → (no match)
+- `mag_DN` → (no match)
+- `cexp_DN` → (no match)
+- `scaled_mantissa_DN` → (no match)
+- `generic_N_pt_DN_or_UP` → (no match)
+- `subnormal_exponent` → (no match)
+- `cexp_le_bpow` → (no match)
+- `cexp_ge_bpow` → (no match)
+- `lt_cexp_pos` → (no match)
+- `lt_cexp` → (no match)
+- `mag_round_ge` → (no match)
+- `cexp_round_ge` → (no match)
+- `Znearest_DN_or_UP` → (no match)
+- `Znearest_ge_floor` → (no match)
+- `Znearest_le_ceil` → (no match)
+- `Znearest_N_strict` → (no match)
+- `Znearest_half` → (no match)
+- `Znearest_imp` → (no match)
+- `round_N_pt` → (no match)
+- `round_N_middle` → (no match)
+- `round_N_small_pos` → (no match)
+- `round_NA_pt` → (no match)
+- `round_N0_pt` → (no match)
+- `Znearest_opp` → (no match)
+- `round_N_opp` → (no match)
+- `round_N0_opp` → (no match)
+- `round_N_small` → (no match)
+- `generic_inclusion_mag` → (no match)
+- `generic_inclusion_lt_ge` → (no match)
+- `generic_inclusion` → (no match)
+- `generic_inclusion_le_ge` → (no match)
+- `generic_inclusion_le` → (no match)
+- `generic_inclusion_ge` → (no match)
+- `generic_round_generic` → (no match)
+- `round_NA_opp` → (no match)
+
+## File: Raux.v
+- Coq: Raux.v
+- Lean: Raux.lean
+- Summary: Coq 152, Lean 27, match 26, partial 0
+
+### Coq Declarations
+- Theorem: `Rle_0_minus`
+- Theorem: `Rabs_eq_Rabs`
+- Theorem: `Rabs_minus_le`
+- Theorem: `Rabs_eq_R0`
+- Theorem: `Rmult_lt_compat`
+- Lemma: `Rmult_neq_reg_r`
+- Lemma: `Rmult_neq_compat_r`
+- Theorem: `Rmult_min_distr_r`
+- Theorem: `Rmult_min_distr_l`
+- Lemma: `Rmin_opp`
+- Lemma: `Rmax_opp`
+- Theorem: `exp_le`
+- Theorem: `Rinv_lt`
+- Theorem: `Rinv_le`
+- Theorem: `sqrt_ge_0`
+- Lemma: `sqrt_neg`
+- Lemma: `Rsqr_le_abs_0_alt`
+- Theorem: `Rabs_le_inv`
+- Theorem: `Rabs_ge`
+- Theorem: `Rabs_ge_inv`
+- Theorem: `Rabs_lt`
+- Theorem: `Rabs_lt_inv`
+- Theorem: `Rabs_gt`
+- Theorem: `Rabs_gt_inv`
+- Theorem: `IZR_le_lt`
+- Theorem: `le_lt_IZR`
+- Theorem: `neq_IZR`
+- Theorem: `Rcompare_spec`
+- Theorem: `Rcompare_Lt`
+- Theorem: `Rcompare_Lt_inv`
+- Theorem: `Rcompare_not_Lt`
+- Theorem: `Rcompare_not_Lt_inv`
+- Theorem: `Rcompare_Eq`
+- Theorem: `Rcompare_Eq_inv`
+- Theorem: `Rcompare_Gt`
+- Theorem: `Rcompare_Gt_inv`
+- Theorem: `Rcompare_not_Gt`
+- Theorem: `Rcompare_not_Gt_inv`
+- Theorem: `Rcompare_IZR`
+- Theorem: `Rcompare_sym`
+- Lemma: `Rcompare_opp`
+- Theorem: `Rcompare_plus_r`
+- Theorem: `Rcompare_plus_l`
+- Theorem: `Rcompare_mult_r`
+- Theorem: `Rcompare_mult_l`
+- Theorem: `Rcompare_middle`
+- Theorem: `Rcompare_half_l`
+- Theorem: `Rcompare_half_r`
+- Theorem: `Rcompare_sqr`
+- Theorem: `Rmin_compare`
+- Theorem: `Rle_bool_spec`
+- Theorem: `Rle_bool_true`
+- Theorem: `Rle_bool_false`
+- Theorem: `Rlt_bool_spec`
+- Theorem: `negb_Rlt_bool`
+- Theorem: `negb_Rle_bool`
+- Theorem: `Rlt_bool_true`
+- Theorem: `Rlt_bool_false`
+- Lemma: `Rlt_bool_opp`
+- Theorem: `Req_bool_spec`
+- Theorem: `Req_bool_true`
+- Theorem: `Req_bool_false`
+- Theorem: `Zfloor_lb`
+- Theorem: `Zfloor_ub`
+- Theorem: `Zfloor_lub`
+- Theorem: `Zfloor_imp`
+- Theorem: `Zfloor_IZR`
+- Theorem: `Zfloor_le`
+- Theorem: `Zceil_ub`
+- Theorem: `Zceil_lb`
+- Theorem: `Zceil_glb`
+- Theorem: `Zceil_imp`
+- Theorem: `Zceil_IZR`
+- Theorem: `Zceil_le`
+- Theorem: `Zceil_floor_neq`
+- Theorem: `Ztrunc_IZR`
+- Theorem: `Ztrunc_floor`
+- Theorem: `Ztrunc_ceil`
+- Theorem: `Ztrunc_le`
+- Theorem: `Ztrunc_opp`
+- Theorem: `Ztrunc_abs`
+- Theorem: `Ztrunc_lub`
+- Theorem: `Zaway_IZR`
+- Theorem: `Zaway_ceil`
+- Theorem: `Zaway_floor`
+- Theorem: `Zaway_le`
+- Theorem: `Zaway_opp`
+- Theorem: `Zaway_abs`
+- Theorem: `Rcompare_floor_ceil_middle`
+- Theorem: `Rcompare_ceil_floor_middle`
+- Theorem: `Zfloor_div`
+- Theorem: `Ztrunc_div`
+- Theorem: `radix_pos`
+- Theorem: `IZR_Zpower_pos`
+- Theorem: `bpow_powerRZ`
+- Theorem: `bpow_ge_0`
+- Theorem: `bpow_gt_0`
+- Theorem: `bpow_plus`
+- Theorem: `bpow_1`
+- Theorem: `bpow_plus_1`
+- Theorem: `bpow_opp`
+- Theorem: `IZR_Zpower_nat`
+- Theorem: `IZR_Zpower`
+- Theorem: `bpow_lt`
+- Theorem: `lt_bpow`
+- Theorem: `bpow_le`
+- Theorem: `le_bpow`
+- Theorem: `bpow_inj`
+- Theorem: `bpow_exp`
+- Lemma: `sqrt_bpow`
+- Lemma: `sqrt_bpow_ge`
+- Theorem: `bpow_lt_bpow`
+- Theorem: `bpow_unique`
+- Theorem: `mag_unique`
+- Theorem: `mag_opp`
+- Theorem: `mag_abs`
+- Theorem: `mag_unique_pos`
+- Theorem: `mag_le_abs`
+- Theorem: `mag_le`
+- Lemma: `lt_mag`
+- Theorem: `mag_bpow`
+- Theorem: `mag_mult_bpow`
+- Theorem: `mag_le_bpow`
+- Theorem: `mag_gt_bpow`
+- Theorem: `mag_ge_bpow`
+- Theorem: `bpow_mag_gt`
+- Theorem: `bpow_mag_le`
+- Theorem: `mag_le_Zpower`
+- Theorem: `mag_gt_Zpower`
+- Lemma: `mag_mult`
+- Lemma: `mag_plus`
+- Lemma: `mag_minus`
+- Lemma: `mag_minus_lb`
+- Theorem: `mag_plus_ge`
+- Lemma: `mag_div`
+- Lemma: `mag_sqrt`
+- Lemma: `mag_1`
+- Theorem: `eqb_sym`
+- Theorem: `eqb_false`
+- Theorem: `eqb_true`
+- Theorem: `IZR_cond_Zopp`
+- Theorem: `abs_cond_Ropp`
+- Theorem: `cond_Ropp_Rlt_bool`
+- Theorem: `Rlt_bool_cond_Ropp`
+- Theorem: `cond_Ropp_involutive`
+- Theorem: `cond_Ropp_inj`
+- Theorem: `cond_Ropp_mult_l`
+- Theorem: `cond_Ropp_mult_r`
+- Theorem: `cond_Ropp_plus`
+- Theorem: `LPO_min`
+- Theorem: `LPO`
+- Lemma: `LPO_Z`
+
+### Lean Declarations
+- theorem: `Rle_0_minus_spec`
+- theorem: `Rmult_lt_compat_spec`
+- theorem: `Rmult_neq_reg_r_spec`
+- theorem: `Rmult_neq_compat_r_spec`
+- theorem: `Rmult_min_distr_r_spec`
+- theorem: `Rmult_min_distr_l_spec`
+- theorem: `Rmin_opp_spec`
+- theorem: `Rmax_opp_spec`
+- theorem: `exp_le_spec`
+- theorem: `Rinv_lt_spec`
+- theorem: `Rinv_le_spec`
+- theorem: `Rcompare_spec`
+- theorem: `Rcompare_sym_spec`
+- theorem: `Rcompare_opp_spec`
+- theorem: `Rcompare_plus_r_spec`
+- theorem: `Rcompare_plus_l_spec`
+- theorem: `Rcompare_mult_r_spec`
+- theorem: `Rcompare_mult_l_spec`
+- theorem: `Rle_bool_spec`
+- theorem: `Rlt_bool_spec`
+- theorem: `negb_Rlt_bool_spec`
+- theorem: `negb_Rle_bool_spec`
+- theorem: `Req_bool_spec`
+- theorem: `eqb_sym_spec`
+- theorem: `cond_Ropp_spec`
+- theorem: `cond_Ropp_involutive_spec`
+- theorem: `cond_Ropp_inj_spec`
+
+### Mapping (Coq → Lean)
+- `Rle_0_minus` → `Rle_0_minus_spec` (spec-suffix)
+- `Rabs_eq_Rabs` → (no match)
+- `Rabs_minus_le` → (no match)
+- `Rabs_eq_R0` → (no match)
+- `Rmult_lt_compat` → `Rmult_lt_compat_spec` (spec-suffix)
+- `Rmult_neq_reg_r` → `Rmult_neq_reg_r_spec` (spec-suffix)
+- `Rmult_neq_compat_r` → `Rmult_neq_compat_r_spec` (spec-suffix)
+- `Rmult_min_distr_r` → `Rmult_min_distr_r_spec` (spec-suffix)
+- `Rmult_min_distr_l` → `Rmult_min_distr_l_spec` (spec-suffix)
+- `Rmin_opp` → `Rmin_opp_spec` (spec-suffix)
+- `Rmax_opp` → `Rmax_opp_spec` (spec-suffix)
+- `exp_le` → `exp_le_spec` (spec-suffix)
+- `Rinv_lt` → `Rinv_lt_spec` (spec-suffix)
+- `Rinv_le` → `Rinv_le_spec` (spec-suffix)
+- `sqrt_ge_0` → (no match)
+- `sqrt_neg` → (no match)
+- `Rsqr_le_abs_0_alt` → (no match)
+- `Rabs_le_inv` → (no match)
+- `Rabs_ge` → (no match)
+- `Rabs_ge_inv` → (no match)
+- `Rabs_lt` → (no match)
+- `Rabs_lt_inv` → (no match)
+- `Rabs_gt` → (no match)
+- `Rabs_gt_inv` → (no match)
+- `IZR_le_lt` → (no match)
+- `le_lt_IZR` → (no match)
+- `neq_IZR` → (no match)
+- `Rcompare_spec` → `Rcompare_spec` (exact)
+- `Rcompare_Lt` → (no match)
+- `Rcompare_Lt_inv` → (no match)
+- `Rcompare_not_Lt` → (no match)
+- `Rcompare_not_Lt_inv` → (no match)
+- `Rcompare_Eq` → (no match)
+- `Rcompare_Eq_inv` → (no match)
+- `Rcompare_Gt` → (no match)
+- `Rcompare_Gt_inv` → (no match)
+- `Rcompare_not_Gt` → (no match)
+- `Rcompare_not_Gt_inv` → (no match)
+- `Rcompare_IZR` → (no match)
+- `Rcompare_sym` → `Rcompare_sym_spec` (spec-suffix)
+- `Rcompare_opp` → `Rcompare_opp_spec` (spec-suffix)
+- `Rcompare_plus_r` → `Rcompare_plus_r_spec` (spec-suffix)
+- `Rcompare_plus_l` → `Rcompare_plus_l_spec` (spec-suffix)
+- `Rcompare_mult_r` → `Rcompare_mult_r_spec` (spec-suffix)
+- `Rcompare_mult_l` → `Rcompare_mult_l_spec` (spec-suffix)
+- `Rcompare_middle` → (no match)
+- `Rcompare_half_l` → (no match)
+- `Rcompare_half_r` → (no match)
+- `Rcompare_sqr` → (no match)
+- `Rmin_compare` → (no match)
+- `Rle_bool_spec` → `Rle_bool_spec` (exact)
+- `Rle_bool_true` → (no match)
+- `Rle_bool_false` → (no match)
+- `Rlt_bool_spec` → `Rlt_bool_spec` (exact)
+- `negb_Rlt_bool` → `negb_Rlt_bool_spec` (spec-suffix)
+- `negb_Rle_bool` → `negb_Rle_bool_spec` (spec-suffix)
+- `Rlt_bool_true` → (no match)
+- `Rlt_bool_false` → (no match)
+- `Rlt_bool_opp` → (no match)
+- `Req_bool_spec` → `Req_bool_spec` (exact)
+- `Req_bool_true` → (no match)
+- `Req_bool_false` → (no match)
+- `Zfloor_lb` → (no match)
+- `Zfloor_ub` → (no match)
+- `Zfloor_lub` → (no match)
+- `Zfloor_imp` → (no match)
+- `Zfloor_IZR` → (no match)
+- `Zfloor_le` → (no match)
+- `Zceil_ub` → (no match)
+- `Zceil_lb` → (no match)
+- `Zceil_glb` → (no match)
+- `Zceil_imp` → (no match)
+- `Zceil_IZR` → (no match)
+- `Zceil_le` → (no match)
+- `Zceil_floor_neq` → (no match)
+- `Ztrunc_IZR` → (no match)
+- `Ztrunc_floor` → (no match)
+- `Ztrunc_ceil` → (no match)
+- `Ztrunc_le` → (no match)
+- `Ztrunc_opp` → (no match)
+- `Ztrunc_abs` → (no match)
+- `Ztrunc_lub` → (no match)
+- `Zaway_IZR` → (no match)
+- `Zaway_ceil` → (no match)
+- `Zaway_floor` → (no match)
+- `Zaway_le` → (no match)
+- `Zaway_opp` → (no match)
+- `Zaway_abs` → (no match)
+- `Rcompare_floor_ceil_middle` → (no match)
+- `Rcompare_ceil_floor_middle` → (no match)
+- `Zfloor_div` → (no match)
+- `Ztrunc_div` → (no match)
+- `radix_pos` → (no match)
+- `IZR_Zpower_pos` → (no match)
+- `bpow_powerRZ` → (no match)
+- `bpow_ge_0` → (no match)
+- `bpow_gt_0` → (no match)
+- `bpow_plus` → (no match)
+- `bpow_1` → (no match)
+- `bpow_plus_1` → (no match)
+- `bpow_opp` → (no match)
+- `IZR_Zpower_nat` → (no match)
+- `IZR_Zpower` → (no match)
+- `bpow_lt` → (no match)
+- `lt_bpow` → (no match)
+- `bpow_le` → (no match)
+- `le_bpow` → (no match)
+- `bpow_inj` → (no match)
+- `bpow_exp` → (no match)
+- `sqrt_bpow` → (no match)
+- `sqrt_bpow_ge` → (no match)
+- `bpow_lt_bpow` → (no match)
+- `bpow_unique` → (no match)
+- `mag_unique` → (no match)
+- `mag_opp` → (no match)
+- `mag_abs` → (no match)
+- `mag_unique_pos` → (no match)
+- `mag_le_abs` → (no match)
+- `mag_le` → (no match)
+- `lt_mag` → (no match)
+- `mag_bpow` → (no match)
+- `mag_mult_bpow` → (no match)
+- `mag_le_bpow` → (no match)
+- `mag_gt_bpow` → (no match)
+- `mag_ge_bpow` → (no match)
+- `bpow_mag_gt` → (no match)
+- `bpow_mag_le` → (no match)
+- `mag_le_Zpower` → (no match)
+- `mag_gt_Zpower` → (no match)
+- `mag_mult` → (no match)
+- `mag_plus` → (no match)
+- `mag_minus` → (no match)
+- `mag_minus_lb` → (no match)
+- `mag_plus_ge` → (no match)
+- `mag_div` → (no match)
+- `mag_sqrt` → (no match)
+- `mag_1` → (no match)
+- `eqb_sym` → `eqb_sym_spec` (spec-suffix)
+- `eqb_false` → (no match)
+- `eqb_true` → (no match)
+- `IZR_cond_Zopp` → (no match)
+- `abs_cond_Ropp` → (no match)
+- `cond_Ropp_Rlt_bool` → (no match)
+- `Rlt_bool_cond_Ropp` → (no match)
+- `cond_Ropp_involutive` → `cond_Ropp_involutive_spec` (spec-suffix)
+- `cond_Ropp_inj` → `cond_Ropp_inj_spec` (spec-suffix)
+- `cond_Ropp_mult_l` → (no match)
+- `cond_Ropp_mult_r` → (no match)
+- `cond_Ropp_plus` → (no match)
+- `LPO_min` → (no match)
+- `LPO` → (no match)
+- `LPO_Z` → (no match)
+
+## File: Round_NE.v
+- Coq: Round_NE.v
+- Lean: Round_NE.lean
+- Summary: Coq 10, Lean 20, match 10, partial 0
+
+### Coq Declarations
+- Lemma: `DN_UP_parity_aux`
+- Theorem: `DN_UP_parity_generic_pos`
+- Theorem: `DN_UP_parity_generic`
+- Theorem: `Rnd_NE_pt_total`
+- Theorem: `Rnd_NE_pt_monotone`
+- Theorem: `Rnd_NE_pt_round`
+- Lemma: `round_NE_pt_pos`
+- Theorem: `round_NE_opp`
+- Lemma: `round_NE_abs`
+- Theorem: `round_NE_pt`
+
+### Lean Declarations
+- theorem: `DN_UP_parity_aux`
+- theorem: `DN_UP_parity_generic_pos`
+- theorem: `DN_UP_parity_generic`
+- theorem: `Rnd_NE_pt_unique_prop`
+- theorem: `Rnd_NE_pt_unique`
+- theorem: `Rnd_NE_pt_monotone`
+- theorem: `Rnd_NE_pt_total`
+- theorem: `Rnd_NE_pt_round`
+- theorem: `satisfies_any_imp_NE`
+- theorem: `Rnd_NE_pt_refl`
+- theorem: `Rnd_NE_pt_idempotent`
+- theorem: `DN_UP_parity_pos_holds`
+- theorem: `Rnd_NE_pt_sign`
+- theorem: `Rnd_NE_pt_abs`
+- theorem: `round_NE_pt_pos`
+- theorem: `round_NE_opp`
+- theorem: `round_NE_abs`
+- theorem: `round_NE_pt`
+- theorem: `Rnd_NE_pt_error_bound`
+- theorem: `Rnd_NE_pt_minimal_error`
+
+### Mapping (Coq → Lean)
+- `DN_UP_parity_aux` → `DN_UP_parity_aux` (exact)
+- `DN_UP_parity_generic_pos` → `DN_UP_parity_generic_pos` (exact)
+- `DN_UP_parity_generic` → `DN_UP_parity_generic` (exact)
+- `Rnd_NE_pt_total` → `Rnd_NE_pt_total` (exact)
+- `Rnd_NE_pt_monotone` → `Rnd_NE_pt_monotone` (exact)
+- `Rnd_NE_pt_round` → `Rnd_NE_pt_round` (exact)
+- `round_NE_pt_pos` → `round_NE_pt_pos` (exact)
+- `round_NE_opp` → `round_NE_opp` (exact)
+- `round_NE_abs` → `round_NE_abs` (exact)
+- `round_NE_pt` → `round_NE_pt` (exact)
+
+## File: Round_pred.v
+- Coq: Round_pred.v
+- Lean: Round_pred.lean
+- Summary: Coq 68, Lean 23, match 16, partial 0
+
+### Coq Declarations
+- Theorem: `round_val_of_pred`
+- Theorem: `round_fun_of_pred`
+- Theorem: `round_unique`
+- Theorem: `Rnd_DN_pt_monotone`
+- Theorem: `Rnd_DN_pt_unique`
+- Theorem: `Rnd_DN_unique`
+- Theorem: `Rnd_UP_pt_monotone`
+- Theorem: `Rnd_UP_pt_unique`
+- Theorem: `Rnd_UP_unique`
+- Theorem: `Rnd_UP_pt_opp`
+- Theorem: `Rnd_DN_pt_opp`
+- Theorem: `Rnd_DN_opp`
+- Theorem: `Rnd_DN_UP_pt_split`
+- Theorem: `Rnd_DN_pt_refl`
+- Theorem: `Rnd_DN_pt_idempotent`
+- Theorem: `Rnd_UP_pt_refl`
+- Theorem: `Rnd_UP_pt_idempotent`
+- Theorem: `Only_DN_or_UP`
+- Theorem: `Rnd_ZR_abs`
+- Theorem: `Rnd_ZR_pt_monotone`
+- Theorem: `Rnd_N_pt_DN_or_UP`
+- Theorem: `Rnd_N_pt_DN_or_UP_eq`
+- Theorem: `Rnd_N_pt_opp_inv`
+- Theorem: `Rnd_N_pt_monotone`
+- Theorem: `Rnd_N_pt_unique`
+- Theorem: `Rnd_N_pt_refl`
+- Theorem: `Rnd_N_pt_idempotent`
+- Theorem: `Rnd_N_pt_0`
+- Theorem: `Rnd_N_pt_ge_0`
+- Theorem: `Rnd_N_pt_le_0`
+- Theorem: `Rnd_N_pt_abs`
+- Theorem: `Rnd_N_pt_DN_UP`
+- Theorem: `Rnd_N_pt_DN`
+- Theorem: `Rnd_N_pt_UP`
+- Theorem: `Rnd_NG_pt_unique`
+- Theorem: `Rnd_NG_pt_monotone`
+- Theorem: `Rnd_NG_pt_refl`
+- Theorem: `Rnd_NG_pt_opp_inv`
+- Theorem: `Rnd_NG_unique`
+- Theorem: `Rnd_NA_NG_pt`
+- Lemma: `Rnd_NA_pt_unique_prop`
+- Theorem: `Rnd_NA_pt_unique`
+- Theorem: `Rnd_NA_pt_N`
+- Theorem: `Rnd_NA_unique`
+- Theorem: `Rnd_NA_pt_monotone`
+- Theorem: `Rnd_NA_pt_refl`
+- Theorem: `Rnd_NA_pt_idempotent`
+- Theorem: `Rnd_N0_NG_pt`
+- Lemma: `Rnd_N0_pt_unique_prop`
+- Theorem: `Rnd_N0_pt_unique`
+- Theorem: `Rnd_N0_pt_N`
+- Theorem: `Rnd_N0_unique`
+- Theorem: `Rnd_N0_pt_monotone`
+- Theorem: `Rnd_N0_pt_refl`
+- Theorem: `Rnd_N0_pt_idempotent`
+- Theorem: `round_pred_ge_0`
+- Theorem: `round_pred_gt_0`
+- Theorem: `round_pred_le_0`
+- Theorem: `round_pred_lt_0`
+- Theorem: `Rnd_DN_pt_equiv_format`
+- Theorem: `Rnd_UP_pt_equiv_format`
+- Theorem: `satisfies_any_eq`
+- Theorem: `satisfies_any_imp_DN`
+- Theorem: `satisfies_any_imp_UP`
+- Theorem: `satisfies_any_imp_ZR`
+- Theorem: `satisfies_any_imp_NG`
+- Theorem: `satisfies_any_imp_NA`
+- Theorem: `satisfies_any_imp_N0`
+
+### Lean Declarations
+- theorem: `Rnd_DN_spec`
+- theorem: `Rnd_UP_spec`
+- theorem: `Rnd_ZR_spec`
+- theorem: `Rnd_N_spec`
+- theorem: `Rnd_NG_spec`
+- theorem: `Rnd_NA_spec`
+- theorem: `Rnd_N0_spec`
+- theorem: `round_val_of_pred_spec`
+- theorem: `round_fun_of_pred_spec`
+- theorem: `round_unique_spec`
+- theorem: `Rnd_DN_pt_monotone_spec`
+- theorem: `Rnd_DN_pt_unique_spec`
+- theorem: `Rnd_DN_unique_spec`
+- theorem: `Rnd_UP_pt_monotone_spec`
+- theorem: `Rnd_UP_pt_unique_spec`
+- theorem: `Rnd_UP_unique_spec`
+- theorem: `Rnd_UP_pt_opp_spec`
+- theorem: `Rnd_DN_pt_opp_spec`
+- theorem: `Rnd_DN_pt_refl_spec`
+- theorem: `Rnd_DN_pt_idempotent_spec`
+- theorem: `Rnd_UP_pt_refl_spec`
+- theorem: `Rnd_UP_pt_idempotent_spec`
+- theorem: `Rnd_ZR_abs_spec`
+
+### Mapping (Coq → Lean)
+- `round_val_of_pred` → `round_val_of_pred_spec` (spec-suffix)
+- `round_fun_of_pred` → `round_fun_of_pred_spec` (spec-suffix)
+- `round_unique` → `round_unique_spec` (spec-suffix)
+- `Rnd_DN_pt_monotone` → `Rnd_DN_pt_monotone_spec` (spec-suffix)
+- `Rnd_DN_pt_unique` → `Rnd_DN_pt_unique_spec` (spec-suffix)
+- `Rnd_DN_unique` → `Rnd_DN_unique_spec` (spec-suffix)
+- `Rnd_UP_pt_monotone` → `Rnd_UP_pt_monotone_spec` (spec-suffix)
+- `Rnd_UP_pt_unique` → `Rnd_UP_pt_unique_spec` (spec-suffix)
+- `Rnd_UP_unique` → `Rnd_UP_unique_spec` (spec-suffix)
+- `Rnd_UP_pt_opp` → `Rnd_UP_pt_opp_spec` (spec-suffix)
+- `Rnd_DN_pt_opp` → `Rnd_DN_pt_opp_spec` (spec-suffix)
+- `Rnd_DN_opp` → (no match)
+- `Rnd_DN_UP_pt_split` → (no match)
+- `Rnd_DN_pt_refl` → `Rnd_DN_pt_refl_spec` (spec-suffix)
+- `Rnd_DN_pt_idempotent` → `Rnd_DN_pt_idempotent_spec` (spec-suffix)
+- `Rnd_UP_pt_refl` → `Rnd_UP_pt_refl_spec` (spec-suffix)
+- `Rnd_UP_pt_idempotent` → `Rnd_UP_pt_idempotent_spec` (spec-suffix)
+- `Only_DN_or_UP` → (no match)
+- `Rnd_ZR_abs` → `Rnd_ZR_abs_spec` (spec-suffix)
+- `Rnd_ZR_pt_monotone` → (no match)
+- `Rnd_N_pt_DN_or_UP` → (no match)
+- `Rnd_N_pt_DN_or_UP_eq` → (no match)
+- `Rnd_N_pt_opp_inv` → (no match)
+- `Rnd_N_pt_monotone` → (no match)
+- `Rnd_N_pt_unique` → (no match)
+- `Rnd_N_pt_refl` → (no match)
+- `Rnd_N_pt_idempotent` → (no match)
+- `Rnd_N_pt_0` → (no match)
+- `Rnd_N_pt_ge_0` → (no match)
+- `Rnd_N_pt_le_0` → (no match)
+- `Rnd_N_pt_abs` → (no match)
+- `Rnd_N_pt_DN_UP` → (no match)
+- `Rnd_N_pt_DN` → (no match)
+- `Rnd_N_pt_UP` → (no match)
+- `Rnd_NG_pt_unique` → (no match)
+- `Rnd_NG_pt_monotone` → (no match)
+- `Rnd_NG_pt_refl` → (no match)
+- `Rnd_NG_pt_opp_inv` → (no match)
+- `Rnd_NG_unique` → (no match)
+- `Rnd_NA_NG_pt` → (no match)
+- `Rnd_NA_pt_unique_prop` → (no match)
+- `Rnd_NA_pt_unique` → (no match)
+- `Rnd_NA_pt_N` → (no match)
+- `Rnd_NA_unique` → (no match)
+- `Rnd_NA_pt_monotone` → (no match)
+- `Rnd_NA_pt_refl` → (no match)
+- `Rnd_NA_pt_idempotent` → (no match)
+- `Rnd_N0_NG_pt` → (no match)
+- `Rnd_N0_pt_unique_prop` → (no match)
+- `Rnd_N0_pt_unique` → (no match)
+- `Rnd_N0_pt_N` → (no match)
+- `Rnd_N0_unique` → (no match)
+- `Rnd_N0_pt_monotone` → (no match)
+- `Rnd_N0_pt_refl` → (no match)
+- `Rnd_N0_pt_idempotent` → (no match)
+- `round_pred_ge_0` → (no match)
+- `round_pred_gt_0` → (no match)
+- `round_pred_le_0` → (no match)
+- `round_pred_lt_0` → (no match)
+- `Rnd_DN_pt_equiv_format` → (no match)
+- `Rnd_UP_pt_equiv_format` → (no match)
+- `satisfies_any_eq` → (no match)
+- `satisfies_any_imp_DN` → (no match)
+- `satisfies_any_imp_UP` → (no match)
+- `satisfies_any_imp_ZR` → (no match)
+- `satisfies_any_imp_NG` → (no match)
+- `satisfies_any_imp_NA` → (no match)
+- `satisfies_any_imp_N0` → (no match)
+
+## File: Ulp.v
+- Coq: Ulp.v
+- Lean: Ulp.lean
+- Summary: Coq 110, Lean 9, match 9, partial 2
+
+### Coq Declarations
+- Lemma: `Z_le_dec_aux`
+- Lemma: `negligible_exp_spec`
+- Lemma: `negligible_exp_spec'`
+- Lemma: `fexp_negligible_exp_eq`
+- Lemma: `ulp_neq_0`
+- Theorem: `ulp_opp`
+- Theorem: `ulp_abs`
+- Theorem: `ulp_ge_0`
+- Theorem: `ulp_le_id`
+- Theorem: `ulp_le_abs`
+- Theorem: `round_UP_DN_ulp`
+- Theorem: `ulp_canonical`
+- Theorem: `ulp_bpow`
+- Lemma: `generic_format_ulp_0`
+- Lemma: `generic_format_bpow_ge_ulp_0`
+- Lemma: `generic_format_ulp`
+- Lemma: `not_FTZ_generic_format_ulp`
+- Lemma: `ulp_ge_ulp_0`
+- Lemma: `not_FTZ_ulp_ge_ulp_0`
+- Lemma: `ulp_le_pos`
+- Theorem: `ulp_le`
+- Theorem: `eq_0_round_0_negligible_exp`
+- Theorem: `pred_eq_pos`
+- Theorem: `succ_eq_pos`
+- Theorem: `succ_opp`
+- Theorem: `pred_opp`
+- Theorem: `pred_bpow`
+- Theorem: `id_m_ulp_ge_bpow`
+- Theorem: `id_p_ulp_le_bpow`
+- Lemma: `generic_format_pred_aux1`
+- Lemma: `generic_format_pred_aux2`
+- Lemma: `generic_format_succ_aux1`
+- Lemma: `generic_format_pred_pos`
+- Theorem: `generic_format_succ`
+- Theorem: `generic_format_pred`
+- Lemma: `pred_pos_lt_id`
+- Theorem: `succ_gt_id`
+- Theorem: `pred_lt_id`
+- Theorem: `succ_ge_id`
+- Theorem: `pred_le_id`
+- Lemma: `pred_pos_ge_0`
+- Theorem: `pred_ge_0`
+- Lemma: `pred_pos_plus_ulp_aux1`
+- Lemma: `pred_pos_plus_ulp_aux2`
+- Lemma: `pred_pos_plus_ulp_aux3`
+- Lemma: `pred_pos_plus_ulp`
+- Theorem: `pred_plus_ulp`
+- Theorem: `mag_plus_eps`
+- Theorem: `round_DN_plus_eps_pos`
+- Theorem: `round_UP_plus_eps_pos`
+- Theorem: `round_UP_pred_plus_eps_pos`
+- Theorem: `round_DN_minus_eps_pos`
+- Theorem: `round_DN_plus_eps`
+- Theorem: `round_UP_plus_eps`
+- Lemma: `le_pred_pos_lt`
+- Lemma: `succ_le_lt_aux`
+- Theorem: `succ_le_lt`
+- Theorem: `pred_ge_gt`
+- Theorem: `succ_gt_ge`
+- Theorem: `pred_lt_le`
+- Lemma: `succ_pred_pos`
+- Theorem: `pred_ulp_0`
+- Theorem: `succ_0`
+- Theorem: `pred_0`
+- Lemma: `pred_succ_pos`
+- Theorem: `succ_pred`
+- Theorem: `pred_succ`
+- Theorem: `round_UP_pred_plus_eps`
+- Theorem: `round_DN_minus_eps`
+- Theorem: `error_lt_ulp`
+- Theorem: `error_le_ulp`
+- Theorem: `error_le_half_ulp`
+- Theorem: `ulp_DN`
+- Theorem: `round_neq_0_negligible_exp`
+- Theorem: `error_lt_ulp_round`
+- Lemma: `error_le_ulp_round`
+- Theorem: `error_le_half_ulp_round`
+- Theorem: `pred_le`
+- Theorem: `succ_le`
+- Theorem: `pred_le_inv`
+- Theorem: `succ_le_inv`
+- Theorem: `pred_lt`
+- Theorem: `succ_lt`
+- Lemma: `succ_le_plus_ulp`
+- Lemma: `generic_format_plus_ulp`
+- Theorem: `round_DN_ge_UP_gt`
+- Theorem: `round_UP_le_DN_lt`
+- Theorem: `pred_UP_le_DN`
+- Theorem: `UP_le_succ_DN`
+- Theorem: `pred_UP_eq_DN`
+- Theorem: `succ_DN_eq_UP`
+- Theorem: `round_DN_eq`
+- Theorem: `round_UP_eq`
+- Lemma: `ulp_ulp_0`
+- Lemma: `ulp_succ_pos`
+- Theorem: `ulp_pred_pos`
+- Lemma: `ulp_round_pos`
+- Theorem: `ulp_round`
+- Lemma: `succ_round_ge_id`
+- Lemma: `pred_round_le_id`
+- Theorem: `round_N_le_midp`
+- Theorem: `round_N_ge_midp`
+- Lemma: `round_N_ge_ge_midp`
+- Lemma: `round_N_le_le_midp`
+- Lemma: `round_N_eq_DN`
+- Lemma: `round_N_eq_DN_pt`
+- Lemma: `round_N_eq_UP`
+- Lemma: `round_N_eq_UP_pt`
+- Lemma: `round_N_plus_ulp_ge`
+- Lemma: `round_N_eq_ties`
+
+### Lean Declarations
+- theorem: `ulp_neq_0`
+- theorem: `ulp_opp`
+- theorem: `ulp_abs`
+- theorem: `ulp_ge_0`
+- theorem: `ulp_le_id`
+- theorem: `ulp_le_abs`
+- theorem: `ulp_bpow`
+- theorem: `generic_format_ulp_0`
+- theorem: `generic_format_bpow_ge_ulp_0`
+
+### Mapping (Coq → Lean)
+- `Z_le_dec_aux` → (no match)
+- `negligible_exp_spec` → (no match)
+- `negligible_exp_spec'` → (no match)
+- `fexp_negligible_exp_eq` → (no match)
+- `ulp_neq_0` → `ulp_neq_0` (exact)
+- `ulp_opp` → `ulp_opp` (exact)
+- `ulp_abs` → `ulp_abs` (exact)
+- `ulp_ge_0` → `ulp_ge_0` (exact)
+- `ulp_le_id` → `ulp_le_id` (exact)
+- `ulp_le_abs` → `ulp_le_abs` (exact)
+- `round_UP_DN_ulp` → (no match)
+- `ulp_canonical` → (no match)
+- `ulp_bpow` → `ulp_bpow` (exact)
+- `generic_format_ulp_0` → `generic_format_ulp_0` (exact)
+- `generic_format_bpow_ge_ulp_0` → `generic_format_bpow_ge_ulp_0` (exact)
+- `generic_format_ulp` → `generic_format_ulp_0` (substring)
+- `not_FTZ_generic_format_ulp` → (no match)
+- `ulp_ge_ulp_0` → (no match)
+- `not_FTZ_ulp_ge_ulp_0` → (no match)
+- `ulp_le_pos` → (no match)
+- `ulp_le` → `ulp_le_id` (substring)
+- `eq_0_round_0_negligible_exp` → (no match)
+- `pred_eq_pos` → (no match)
+- `succ_eq_pos` → (no match)
+- `succ_opp` → (no match)
+- `pred_opp` → (no match)
+- `pred_bpow` → (no match)
+- `id_m_ulp_ge_bpow` → (no match)
+- `id_p_ulp_le_bpow` → (no match)
+- `generic_format_pred_aux1` → (no match)
+- `generic_format_pred_aux2` → (no match)
+- `generic_format_succ_aux1` → (no match)
+- `generic_format_pred_pos` → (no match)
+- `generic_format_succ` → (no match)
+- `generic_format_pred` → (no match)
+- `pred_pos_lt_id` → (no match)
+- `succ_gt_id` → (no match)
+- `pred_lt_id` → (no match)
+- `succ_ge_id` → (no match)
+- `pred_le_id` → (no match)
+- `pred_pos_ge_0` → (no match)
+- `pred_ge_0` → (no match)
+- `pred_pos_plus_ulp_aux1` → (no match)
+- `pred_pos_plus_ulp_aux2` → (no match)
+- `pred_pos_plus_ulp_aux3` → (no match)
+- `pred_pos_plus_ulp` → (no match)
+- `pred_plus_ulp` → (no match)
+- `mag_plus_eps` → (no match)
+- `round_DN_plus_eps_pos` → (no match)
+- `round_UP_plus_eps_pos` → (no match)
+- `round_UP_pred_plus_eps_pos` → (no match)
+- `round_DN_minus_eps_pos` → (no match)
+- `round_DN_plus_eps` → (no match)
+- `round_UP_plus_eps` → (no match)
+- `le_pred_pos_lt` → (no match)
+- `succ_le_lt_aux` → (no match)
+- `succ_le_lt` → (no match)
+- `pred_ge_gt` → (no match)
+- `succ_gt_ge` → (no match)
+- `pred_lt_le` → (no match)
+- `succ_pred_pos` → (no match)
+- `pred_ulp_0` → (no match)
+- `succ_0` → (no match)
+- `pred_0` → (no match)
+- `pred_succ_pos` → (no match)
+- `succ_pred` → (no match)
+- `pred_succ` → (no match)
+- `round_UP_pred_plus_eps` → (no match)
+- `round_DN_minus_eps` → (no match)
+- `error_lt_ulp` → (no match)
+- `error_le_ulp` → (no match)
+- `error_le_half_ulp` → (no match)
+- `ulp_DN` → (no match)
+- `round_neq_0_negligible_exp` → (no match)
+- `error_lt_ulp_round` → (no match)
+- `error_le_ulp_round` → (no match)
+- `error_le_half_ulp_round` → (no match)
+- `pred_le` → (no match)
+- `succ_le` → (no match)
+- `pred_le_inv` → (no match)
+- `succ_le_inv` → (no match)
+- `pred_lt` → (no match)
+- `succ_lt` → (no match)
+- `succ_le_plus_ulp` → (no match)
+- `generic_format_plus_ulp` → (no match)
+- `round_DN_ge_UP_gt` → (no match)
+- `round_UP_le_DN_lt` → (no match)
+- `pred_UP_le_DN` → (no match)
+- `UP_le_succ_DN` → (no match)
+- `pred_UP_eq_DN` → (no match)
+- `succ_DN_eq_UP` → (no match)
+- `round_DN_eq` → (no match)
+- `round_UP_eq` → (no match)
+- `ulp_ulp_0` → (no match)
+- `ulp_succ_pos` → (no match)
+- `ulp_pred_pos` → (no match)
+- `ulp_round_pos` → (no match)
+- `ulp_round` → (no match)
+- `succ_round_ge_id` → (no match)
+- `pred_round_le_id` → (no match)
+- `round_N_le_midp` → (no match)
+- `round_N_ge_midp` → (no match)
+- `round_N_ge_ge_midp` → (no match)
+- `round_N_le_le_midp` → (no match)
+- `round_N_eq_DN` → (no match)
+- `round_N_eq_DN_pt` → (no match)
+- `round_N_eq_UP` → (no match)
+- `round_N_eq_UP_pt` → (no match)
+- `round_N_plus_ulp_ge` → (no match)
+- `round_N_eq_ties` → (no match)
+
+## File: Zaux.v
+- Coq: Zaux.v
+- Lean: Zaux.lean
+- Summary: Coq 68, Lean 48, match 44, partial 0
+
+### Coq Declarations
+- Theorem: `Zopp_le_cancel`
+- Theorem: `Zgt_not_eq`
+- Lemma: `eqbool_irrelevance`
+- Theorem: `Zeven_ex`
+- Theorem: `Zpower_plus`
+- Theorem: `Zpower_Zpower_nat`
+- Theorem: `Zpower_nat_S`
+- Theorem: `Zpower_pos_gt_0`
+- Theorem: `Zeven_Zpower_odd`
+- Theorem: `radix_val_inj`
+- Theorem: `radix_gt_0`
+- Theorem: `radix_gt_1`
+- Theorem: `Zpower_gt_1`
+- Theorem: `Zpower_gt_0`
+- Theorem: `Zpower_ge_0`
+- Theorem: `Zpower_le`
+- Theorem: `Zpower_lt`
+- Theorem: `Zpower_lt_Zpower`
+- Theorem: `Zpower_gt_id`
+- Theorem: `Zmod_mod_mult`
+- Theorem: `ZOmod_eq`
+- Theorem: `ZOmod_mod_mult`
+- Theorem: `Zdiv_mod_mult`
+- Theorem: `ZOdiv_mod_mult`
+- Theorem: `ZOdiv_small_abs`
+- Theorem: `ZOmod_small_abs`
+- Theorem: `ZOdiv_plus`
+- Theorem: `Zsame_sign_trans`
+- Theorem: `Zsame_sign_trans_weak`
+- Theorem: `Zsame_sign_imp`
+- Theorem: `Zsame_sign_odiv`
+- Theorem: `Zeq_bool_spec`
+- Theorem: `Zeq_bool_true`
+- Theorem: `Zeq_bool_false`
+- Theorem: `Zeq_bool_diag`
+- Theorem: `Zeq_bool_opp`
+- Theorem: `Zeq_bool_opp'`
+- Theorem: `Zle_bool_spec`
+- Theorem: `Zle_bool_true`
+- Theorem: `Zle_bool_false`
+- Theorem: `Zle_bool_opp_l`
+- Theorem: `Zle_bool_opp`
+- Theorem: `Zle_bool_opp_r`
+- Theorem: `Zlt_bool_spec`
+- Theorem: `Zlt_bool_true`
+- Theorem: `Zlt_bool_false`
+- Theorem: `negb_Zle_bool`
+- Theorem: `negb_Zlt_bool`
+- Theorem: `Zlt_bool_opp_l`
+- Theorem: `Zlt_bool_opp_r`
+- Theorem: `Zlt_bool_opp`
+- Theorem: `Zcompare_spec`
+- Theorem: `Zcompare_Lt`
+- Theorem: `Zcompare_Eq`
+- Theorem: `Zcompare_Gt`
+- Theorem: `cond_Zopp_0`
+- Theorem: `cond_Zopp_negb`
+- Theorem: `abs_cond_Zopp`
+- Theorem: `cond_Zopp_Zlt_bool`
+- Theorem: `Zeq_bool_cond_Zopp`
+- Theorem: `Zfast_pow_pos_correct`
+- Lemma: `Zdiv_eucl_unique`
+- Lemma: `Zpos_div_eucl_aux1_correct`
+- Lemma: `Zpos_div_eucl_aux_correct`
+- Theorem: `Zfast_div_eucl_correct`
+- Lemma: `iter_nat_plus`
+- Lemma: `iter_nat_S`
+- Lemma: `iter_pos_nat`
+
+### Lean Declarations
+- theorem: `Zopp_le_cancel_spec`
+- theorem: `Zgt_not_eq_spec`
+- theorem: `eqbool_irrelevance_spec`
+- theorem: `Zeven_ex_spec`
+- theorem: `Zpower_plus_spec`
+- theorem: `Zpower_Zpower_nat_spec`
+- theorem: `Zpower_nat_S_spec`
+- theorem: `Zmod_mod_mult_spec`
+- theorem: `ZOmod_eq_spec`
+- theorem: `Zdiv_mod_mult_spec`
+- theorem: `ZOmod_mod_mult_spec`
+- theorem: `ZOdiv_plus_spec`
+- theorem: `Zeq_bool_spec`
+- theorem: `Zle_bool_spec`
+- theorem: `Zlt_bool_spec`
+- theorem: `Zeq_bool_true_spec`
+- theorem: `Zeq_bool_false_spec`
+- theorem: `Zeq_bool_diag_spec`
+- theorem: `Zeq_bool_opp_spec`
+- theorem: `Zeq_bool_opp'_spec`
+- theorem: `Zle_bool_true_spec`
+- theorem: `Zle_bool_false_spec`
+- theorem: `Zle_bool_opp_l_spec`
+- theorem: `Zle_bool_opp_spec`
+- theorem: `Zle_bool_opp_r_spec`
+- theorem: `negb_Zle_bool_spec`
+- theorem: `negb_Zlt_bool_spec`
+- theorem: `Zlt_bool_true_spec`
+- theorem: `Zlt_bool_false_spec`
+- theorem: `Zlt_bool_opp_l_spec`
+- theorem: `Zlt_bool_opp_r_spec`
+- theorem: `Zlt_bool_opp_spec`
+- theorem: `Zcompare_spec`
+- theorem: `Zcompare_Lt_spec`
+- theorem: `Zcompare_Eq_spec`
+- theorem: `Zcompare_Gt_spec`
+- theorem: `cond_Zopp_spec`
+- theorem: `cond_Zopp_0_spec`
+- theorem: `cond_Zopp_negb_spec`
+- theorem: `abs_cond_Zopp_spec`
+- theorem: `cond_Zopp_Zlt_bool_spec`
+- theorem: `Zeq_bool_cond_Zopp_spec`
+- theorem: `Zfast_pow_pos_spec`
+- theorem: `Zfast_div_eucl_spec`
+- theorem: `iter_nat_spec`
+- theorem: `iter_nat_S_spec`
+- theorem: `iter_nat_plus_spec`
+- theorem: `iter_pos_nat_spec`
+
+### Mapping (Coq → Lean)
+- `Zopp_le_cancel` → `Zopp_le_cancel_spec` (spec-suffix)
+- `Zgt_not_eq` → `Zgt_not_eq_spec` (spec-suffix)
+- `eqbool_irrelevance` → `eqbool_irrelevance_spec` (spec-suffix)
+- `Zeven_ex` → `Zeven_ex_spec` (spec-suffix)
+- `Zpower_plus` → `Zpower_plus_spec` (spec-suffix)
+- `Zpower_Zpower_nat` → `Zpower_Zpower_nat_spec` (spec-suffix)
+- `Zpower_nat_S` → `Zpower_nat_S_spec` (spec-suffix)
+- `Zpower_pos_gt_0` → (no match)
+- `Zeven_Zpower_odd` → (no match)
+- `radix_val_inj` → (no match)
+- `radix_gt_0` → (no match)
+- `radix_gt_1` → (no match)
+- `Zpower_gt_1` → (no match)
+- `Zpower_gt_0` → (no match)
+- `Zpower_ge_0` → (no match)
+- `Zpower_le` → (no match)
+- `Zpower_lt` → (no match)
+- `Zpower_lt_Zpower` → (no match)
+- `Zpower_gt_id` → (no match)
+- `Zmod_mod_mult` → `Zmod_mod_mult_spec` (spec-suffix)
+- `ZOmod_eq` → `ZOmod_eq_spec` (spec-suffix)
+- `ZOmod_mod_mult` → `ZOmod_mod_mult_spec` (spec-suffix)
+- `Zdiv_mod_mult` → `Zdiv_mod_mult_spec` (spec-suffix)
+- `ZOdiv_mod_mult` → (no match)
+- `ZOdiv_small_abs` → (no match)
+- `ZOmod_small_abs` → (no match)
+- `ZOdiv_plus` → `ZOdiv_plus_spec` (spec-suffix)
+- `Zsame_sign_trans` → (no match)
+- `Zsame_sign_trans_weak` → (no match)
+- `Zsame_sign_imp` → (no match)
+- `Zsame_sign_odiv` → (no match)
+- `Zeq_bool_spec` → `Zeq_bool_spec` (exact)
+- `Zeq_bool_true` → `Zeq_bool_true_spec` (spec-suffix)
+- `Zeq_bool_false` → `Zeq_bool_false_spec` (spec-suffix)
+- `Zeq_bool_diag` → `Zeq_bool_diag_spec` (spec-suffix)
+- `Zeq_bool_opp` → `Zeq_bool_opp'_spec` (spec-suffix)
+- `Zeq_bool_opp'` → `Zeq_bool_opp'_spec` (spec-suffix)
+- `Zle_bool_spec` → `Zle_bool_spec` (exact)
+- `Zle_bool_true` → `Zle_bool_true_spec` (spec-suffix)
+- `Zle_bool_false` → `Zle_bool_false_spec` (spec-suffix)
+- `Zle_bool_opp_l` → `Zle_bool_opp_l_spec` (spec-suffix)
+- `Zle_bool_opp` → `Zle_bool_opp_spec` (spec-suffix)
+- `Zle_bool_opp_r` → `Zle_bool_opp_r_spec` (spec-suffix)
+- `Zlt_bool_spec` → `Zlt_bool_spec` (exact)
+- `Zlt_bool_true` → `Zlt_bool_true_spec` (spec-suffix)
+- `Zlt_bool_false` → `Zlt_bool_false_spec` (spec-suffix)
+- `negb_Zle_bool` → `negb_Zle_bool_spec` (spec-suffix)
+- `negb_Zlt_bool` → `negb_Zlt_bool_spec` (spec-suffix)
+- `Zlt_bool_opp_l` → `Zlt_bool_opp_l_spec` (spec-suffix)
+- `Zlt_bool_opp_r` → `Zlt_bool_opp_r_spec` (spec-suffix)
+- `Zlt_bool_opp` → `Zlt_bool_opp_spec` (spec-suffix)
+- `Zcompare_spec` → `Zcompare_spec` (exact)
+- `Zcompare_Lt` → `Zcompare_Lt_spec` (spec-suffix)
+- `Zcompare_Eq` → `Zcompare_Eq_spec` (spec-suffix)
+- `Zcompare_Gt` → `Zcompare_Gt_spec` (spec-suffix)
+- `cond_Zopp_0` → `cond_Zopp_0_spec` (spec-suffix)
+- `cond_Zopp_negb` → `cond_Zopp_negb_spec` (spec-suffix)
+- `abs_cond_Zopp` → `abs_cond_Zopp_spec` (spec-suffix)
+- `cond_Zopp_Zlt_bool` → `cond_Zopp_Zlt_bool_spec` (spec-suffix)
+- `Zeq_bool_cond_Zopp` → `Zeq_bool_cond_Zopp_spec` (spec-suffix)
+- `Zfast_pow_pos_correct` → (no match)
+- `Zdiv_eucl_unique` → (no match)
+- `Zpos_div_eucl_aux1_correct` → (no match)
+- `Zpos_div_eucl_aux_correct` → (no match)
+- `Zfast_div_eucl_correct` → (no match)
+- `iter_nat_plus` → `iter_nat_plus_spec` (spec-suffix)
+- `iter_nat_S` → `iter_nat_S_spec` (spec-suffix)
+- `iter_pos_nat` → `iter_pos_nat_spec` (spec-suffix)

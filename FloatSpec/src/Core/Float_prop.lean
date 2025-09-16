@@ -370,6 +370,23 @@ theorem ge_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
 
 /-
 Coq original:
+Lemma Fnum_ge_0: forall (f : float beta),
+  (0 <= F2R f)%R -> (0 <= Fnum f)%Z.
+Proof.
+  intros f H.
+  case (Zle_or_lt 0 (Fnum f)); trivial.
+  intros H1; contradict H.
+  apply Rlt_not_le.
+  now apply F2R_lt_0.
+Qed.
+-/
+theorem Fnum_ge_0 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  0 ≤ (F2R f).run → 0 ≤ f.Fnum := by
+  -- Directly reuse ge_0_F2R
+  exact ge_0_F2R (beta := beta) f hbeta
+
+/-
+Coq original:
 Theorem le_0_F2R : forall m e : Z,
   (F2R (Float beta m e) <= 0)%R -> (m <= 0)%Z.
 Proof.
@@ -386,6 +403,23 @@ theorem le_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
   have : (F2R (FlocqFloat.mk f.Fnum f.Fexp : FlocqFloat beta)).run ≤ (F2R (FlocqFloat.mk 0 f.Fexp : FlocqFloat beta)).run := by
     simpa [F2R_0 (beta := beta) (e := f.Fexp) hbeta]
   exact hiff.mpr this
+
+/-
+Coq original:
+Lemma Fnum_le_0: forall (f : float beta),
+  (F2R f <= 0)%R -> (Fnum f <= 0)%Z.
+Proof.
+  intros f H.
+  case (Zle_or_lt (Fnum f) 0); trivial.
+  intros H1; contradict H.
+  apply Rlt_not_le.
+  now apply F2R_gt_0.
+Qed.
+-/
+theorem Fnum_le_0 (f : FlocqFloat beta) (hbeta : 1 < beta) :
+  (F2R f).run ≤ 0 → f.Fnum ≤ 0 := by
+  -- Directly reuse le_0_F2R
+  exact le_0_F2R (beta := beta) f hbeta
 
 /-
 Coq original:

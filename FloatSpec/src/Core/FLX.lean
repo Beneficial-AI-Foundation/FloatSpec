@@ -22,6 +22,8 @@ import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.Core.Round_generic
+import FloatSpec.src.Core.Ulp
+import FloatSpec.src.Core.FIX
 
 
 open Real
@@ -71,6 +73,15 @@ theorem FLX_exp_spec (e : Int) :
 -/
 def FLX_format (beta : Int) (x : ℝ) : Id Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+
+/-- Unbounded fixed-precision format with normalized mantissas (placeholder).
+
+    This mirrors Coq's `FLXN_format`. For now, we model it using
+    the same underlying generic format predicate as `FLX_format`.
+    Proofs will refine this equivalence later.
+-/
+def FLXN_format (beta : Int) (x : ℝ) : Id Prop :=
+  FLX_format prec beta x
 
 /-- Specification: FLX format using generic format
 
@@ -157,6 +168,231 @@ theorem FLX_format_abs_spec (beta : Int) (x : ℝ) :
     ⦃⌜(FLX_format prec beta x).run⌝⦄
     FLX_format_abs_check beta x
     ⦃⇓result => ⌜result = true⌝⦄ := by
+  sorry
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
+/-
+Coq (FLX.v):
+Theorem generic_format_FLX :
+  forall x, FLX_format x -> generic_format beta FLX_exp x.
+-/
+theorem generic_format_FLX (beta : Int) (x : ℝ) :
+    ⦃⌜(FLX_format prec beta x).run⌝⦄
+    FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FLX_format]
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
+/-
+Coq (FLX.v):
+Theorem generic_format_FLXN:
+  forall x, FLXN_format x -> generic_format beta FLX_exp x.
+-/
+theorem generic_format_FLXN (beta : Int) (x : ℝ) :
+    ⦃⌜(FLXN_format prec beta x).run⌝⦄
+    FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FLXN_format, FLX_format]
+
+/-
+Coq (FLX.v):
+Theorem FLXN_format_generic:
+  forall x, generic_format beta FLX_exp x -> FLXN_format x.
+-/
+theorem FLXN_format_generic (beta : Int) (x : ℝ) :
+    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x).run⌝⦄
+    FLXN_format prec beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FLXN_format, FLX_format] using hx
+
+/-
+Coq (FLX.v):
+Theorem FIX_format_FLX :
+  forall x e,
+  (bpow (e - 1) <= Rabs x <= bpow e)%R ->
+  FLX_format x ->
+  FIX_format beta (e - prec) x.
+
+Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FLX_format,
+then x is in FIX_format with minimal exponent (e - prec).
+-/
+theorem FIX_format_FLX (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜(beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FLX_format prec beta x).run⌝⦄
+    FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro _
+  -- Proof follows Coq's FIX_format_FLX; omitted for now
+  sorry
+
+/-
+Coq (FLX.v):
+Theorem FLX_format_FIX :
+  forall x e,
+  (bpow (e - 1) <= Rabs x <= bpow e)%R ->
+  FIX_format beta (e - prec) x ->
+  FLX_format x.
+
+Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FIX_format
+with minimal exponent (e - prec), then x is in FLX_format.
+-/
+theorem FLX_format_FIX (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜(beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x).run⌝⦄
+    FLX_format prec beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro _
+  -- Proof follows Coq's FLX_format_FIX; omitted for now
+  sorry
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
+/- Valid_exp instance for FLX_exp (placeholder). -/
+instance FLX_exp_valid (beta : Int) :
+    FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec) := by
+  refine ⟨?_⟩
+  intro k
+  refine And.intro ?h1 ?h2
+  · intro _
+    -- Proof omitted for now
+    sorry
+  · intro _
+    refine And.intro ?hA ?hB
+    · -- Proof omitted for now
+      sorry
+    · intro _ _
+      -- Proof omitted for now
+      sorry
+
+/-
+Coq (FLX.v):
+Theorem FLX_format_satisfies_any :
+  satisfies_any FLX_format.
+-/
+theorem FLX_format_satisfies_any (beta : Int) :
+    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FLX_format prec beta y).run) := by
+  simpa [FLX_format]
+    using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLX_exp prec)
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
+/-- Coq (FLX.v):
+Theorem ulp_FLX_0 : ulp beta (FLX_exp prec) 0 = bpow (1 - prec).
+
+Lean (spec): The ULP under FLX at 0 equals `β^(1 - prec)`.
+-/
+theorem ulp_FLX_0 (beta : Int) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) 0
+    ⦃⇓r => ⌜r = (beta : ℝ) ^ (1 - prec)⌝⦄ := by
+  sorry
+
+/-- Coq (FLX.v):
+Lemma ulp_FLX_1 : ulp beta FLX_exp 1 = bpow (-prec + 1).
+
+Lean (spec): The ULP under FLX at 1 equals `β^(-prec + 1)`.
+-/
+theorem ulp_FLX_1 (beta : Int) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) 1
+    ⦃⇓r => ⌜r = (beta : ℝ) ^ (-prec + 1)⌝⦄ := by
+  sorry
+
+/-- Coq (FLX.v):
+Theorem ulp_FLX_le:
+  forall x, (ulp beta (FLX_exp prec) x <= Rabs x * bpow (1 - prec))%R.
+
+Lean (spec): ULP under FLX is bounded above by `|x| * β^(1 - prec)`.
+-/
+theorem ulp_FLX_le (beta : Int) (x : ℝ) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x
+    ⦃⇓r => ⌜r ≤ |x| * (beta : ℝ) ^ (1 - prec)⌝⦄ := by
+  sorry
+
+/-
+Coq (FLX.v):
+Theorem ulp_FLX_ge:
+  forall x, (Rabs x * bpow (-prec) <= ulp beta FLX_exp x)%R.
+
+Lean (spec): ULP under FLX is bounded below by `|x| * β^(-prec)`.
+-/
+theorem ulp_FLX_ge (beta : Int) (x : ℝ) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x
+    ⦃⇓r => ⌜|x| * (beta : ℝ) ^ (-prec) ≤ r⌝⦄ := by
+  sorry
+
+/-
+Coq (FLX.v):
+Lemma ulp_FLX_exact_shift:
+  forall x e,
+  (ulp beta FLX_exp (x * bpow e) = ulp beta FLX_exp x * bpow e)%R.
+
+Lean (spec): ULP under FLX scales exactly under multiplication by β^e.
+-/
+theorem ulp_FLX_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜True⌝⦄
+    (do
+      let u1 ← FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
+      let u2 ← FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x
+      pure (u1, u2))
+    ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
+  sorry
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
+/-
+Coq (FLX.v):
+Theorem FLX_format_generic :
+  forall x, generic_format beta FLX_exp x -> FLX_format x.
+-/
+theorem FLX_format_generic (beta : Int) (x : ℝ) :
+    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x).run⌝⦄
+    FLX_format prec beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FLX_format] using hx
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
+/-
+Coq (FLX.v):
+Theorem generic_format_FLX_1 :
+  generic_format beta FLX_exp 1.
+-/
+theorem generic_format_FLX_1 (beta : Int) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) 1
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro _
   sorry
 
 end FloatSpec.Core.FLX

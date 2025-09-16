@@ -19,6 +19,7 @@ COPYING file for more details.
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Round_generic
+import FloatSpec.src.Core.Ulp
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
@@ -70,6 +71,23 @@ theorem FIX_exp_spec (e : Int) :
 -/
 def FIX_format (beta : Int) (x : ℝ) : Id Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
+
+/-- Valid_exp instance for the fixed exponent function (placeholder). -/
+instance FIX_exp_valid (beta : Int) :
+    FloatSpec.Core.Generic_fmt.Valid_exp beta (FIX_exp emin) := by
+  refine ⟨?_⟩
+  intro k
+  refine And.intro ?h1 ?h2
+  · intro _; 
+    -- Proof omitted for now
+    sorry
+  · intro _
+    refine And.intro ?hA ?hB
+    · -- Proof omitted for now
+      sorry
+    · intro _ _
+      -- Proof omitted for now
+      sorry
 
 /-- Specification: FIX format using generic format
 
@@ -133,6 +151,68 @@ theorem FIX_format_opp_spec (beta : Int) (x : ℝ) :
     ⦃⌜(FIX_format emin beta x).run⌝⦄
     FIX_format_opp_check beta x
     ⦃⇓result => ⌜result = true⌝⦄ := by
+  sorry
+
+/-
+Coq (FIX.v):
+Theorem generic_format_FIX :
+  forall x, FIX_format x -> generic_format beta FIX_exp x.
+-/
+theorem generic_format_FIX (beta : Int) (x : ℝ) :
+    ⦃⌜(FIX_format emin beta x).run⌝⦄
+    FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FIX_format]
+
+/-
+Coq (FIX.v):
+Theorem FIX_format_generic :
+  forall x, generic_format beta FIX_exp x -> FIX_format x.
+-/
+theorem FIX_format_generic (beta : Int) (x : ℝ) :
+    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄
+    FIX_format emin beta x
+    ⦃⇓result => ⌜result⌝⦄ := by
+  intro hx
+  simpa [FIX_format] using hx
+
+/-
+Coq (FIX.v):
+Theorem FIX_format_satisfies_any :
+  satisfies_any FIX_format.
+-/
+theorem FIX_format_satisfies_any (beta : Int) :
+    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FIX_format emin beta y).run) := by
+  -- Immediate from the generic format version
+  simpa [FIX_format]
+    using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FIX_exp emin)
+
+/-- Coq (FIX.v):
+Theorem ulp_FIX : forall x, ulp beta FIX_exp x = bpow emin.
+
+Lean (spec): For any real `x`, the ULP under FIX exponent equals `β^emin`.
+-/
+theorem ulp_FIX (beta : Int) (x : ℝ) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Ulp.ulp beta (FIX_exp emin) x
+    ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
+  sorry
+
+end FloatSpec.Core.FIX
+
+namespace FloatSpec.Core.FIX
+
+/-- Coq (FIX.v):
+Theorem round_FIX_IZR : forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).
+
+Lean (spec): For base 2 and fixed exponent 0, rounding yields the
+real embedding of the integer produced by `f` at `x`.
+-/
+theorem round_FIX_IZR (f : ℝ → Int) (x : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (FloatSpec.Core.Round_generic.round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int))) (mode := fun _ _ => True) x) : Id ℝ)
+    ⦃⇓r => ⌜r = (f x : ℝ)⌝⦄ := by
   sorry
 
 end FloatSpec.Core.FIX

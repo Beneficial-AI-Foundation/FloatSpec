@@ -50,6 +50,92 @@ theorem Rle_0_minus_spec (x y : ℝ) :
   unfold Rle_0_minus
   exact sub_nonneg_of_le h
 
+-- (moved/alternative specs for exponential monotonicity exist below)
+
+/-- Absolute values equal implies values are equal up to sign
+
+    If |x| = |y|, then either x = y or x = -y.
+    This captures the two possible cases for equal magnitudes.
+-/
+def Rabs_eq_Rabs_case (x y : ℝ) : Id (ℝ × ℝ) :=
+  (x, y)
+
+/-- Specification: Equal absolute values give equality up to sign
+
+    Under the precondition |x| = |y|, the pair (x, y) satisfies
+    x = y or x = -y.
+-/
+theorem Rabs_eq_Rabs_spec (x y : ℝ) :
+    ⦃⌜|x| = |y|⌝⦄
+    Rabs_eq_Rabs_case x y
+    ⦃⇓p => ⌜p.1 = p.2 ∨ p.1 = -p.2⌝⦄ := by
+  intro _
+  unfold Rabs_eq_Rabs_case
+  -- Proof follows Coq's Rabs_eq_Rabs; omitted for now
+  sorry
+
+/-- Absolute value of difference bounded under simple conditions
+
+    If 0 ≤ y and y ≤ 2*x, then |x - y| ≤ x.
+-/
+def Rabs_minus_le_val (x y : ℝ) : Id ℝ :=
+  pure (abs (x - y))
+
+/-- Specification: Bound on |x - y|
+
+    Under 0 ≤ y and y ≤ 2*x, the value |x - y| is bounded by x.
+-/
+theorem Rabs_minus_le_spec (x y : ℝ) :
+    ⦃⌜0 ≤ y ∧ y ≤ 2 * x⌝⦄
+    Rabs_minus_le_val x y
+    ⦃⇓r => ⌜r ≤ x⌝⦄ := by
+  intro _
+  unfold Rabs_minus_le_val
+  -- Proof follows Coq's Rabs_minus_le; omitted for now
+  sorry
+
+/-- Lower bound characterization via absolute value
+
+    If y ≤ -x or x ≤ y, then x ≤ |y|.
+-/
+def Rabs_ge_case (x y : ℝ) : Id (ℝ × ℝ) :=
+  (x, y)
+
+theorem Rabs_ge_spec (x y : ℝ) :
+    ⦃⌜y ≤ -x ∨ x ≤ y⌝⦄
+    Rabs_ge_case x y
+    ⦃⇓p => ⌜p.1 ≤ |p.2|⌝⦄ := by
+  intro _
+  unfold Rabs_ge_case
+  -- Proof follows Coq's Rabs_ge; omitted for now
+  sorry
+
+/-- Inverse characterization: x ≤ |y| implies y ≤ -x or x ≤ y. -/
+def Rabs_ge_inv_case (x y : ℝ) : Id (ℝ × ℝ) :=
+  (x, y)
+
+theorem Rabs_ge_inv_spec (x y : ℝ) :
+    ⦃⌜x ≤ |y|⌝⦄
+    Rabs_ge_inv_case x y
+    ⦃⇓p => ⌜p.2 ≤ -p.1 ∨ p.1 ≤ p.2⌝⦄ := by
+  intro _
+  unfold Rabs_ge_inv_case
+  -- Proof follows Coq's Rabs_ge_inv; omitted for now
+  sorry
+
+/-- From |x| ≤ y, derive the two-sided bound -y ≤ x ≤ y. -/
+def Rabs_le_inv_pair (x y : ℝ) : Id (ℝ × ℝ) :=
+  (x, y)
+
+theorem Rabs_le_inv_spec (x y : ℝ) :
+    ⦃⌜|x| ≤ y⌝⦄
+    Rabs_le_inv_pair x y
+    ⦃⇓p => ⌜-p.2 ≤ p.1 ∧ p.1 ≤ p.2⌝⦄ := by
+  intro _
+  unfold Rabs_le_inv_pair
+  -- Mirrors Coq's Rabs_le_inv; proof omitted for now
+  sorry
+
 /-- Multiplication preserves strict inequalities
 
     For non-negative values, strict inequalities are preserved
@@ -218,7 +304,201 @@ theorem Rmax_opp_spec (x y : ℝ) :
   -- We need to prove: max (-x) (-y) = -(min x y)
   exact max_neg_neg x y
 
+/-- Monotonicity of the exponential function
+
+    If x ≤ y, then exp x ≤ exp y. This captures the
+    strict monotonicity of the real exponential function.
+-/
+noncomputable def exp_le_check (x y : ℝ) : Id ℝ :=
+  pure (Real.exp x)
+
+/-- Specification: Exponential is monotone increasing
+
+    Given x ≤ y, the value exp x is bounded above by exp y.
+-/
+theorem exp_le_spec (x y : ℝ) :
+    ⦃⌜x ≤ y⌝⦄
+    exp_le_check x y
+    ⦃⇓ex => ⌜ex ≤ Real.exp y⌝⦄ := by
+  intro _
+  -- Follows from monotonicity of Real.exp
+  sorry
+
 end Rmissing
+
+section Rrecip
+
+/-- Reciprocal comparison on positives: if 0 < x < y then 1/y < 1/x -/
+noncomputable def Rinv_lt_check (x y : ℝ) : Id (ℝ × ℝ) :=
+  (1 / y, 1 / x)
+
+/-- Specification: Reciprocal reverses order on positive reals -/
+theorem Rinv_lt_spec (x y : ℝ) :
+    ⦃⌜0 < x ∧ x < y⌝⦄
+    Rinv_lt_check x y
+    ⦃⇓p => ⌜p.1 < p.2⌝⦄ := by
+  intro _
+  -- Standard property: for 0 < x < y, we have 1/y < 1/x
+  sorry
+
+/-- Reciprocal comparison (≤) on positives: if 0 < x ≤ y then 1/y ≤ 1/x -/
+noncomputable def Rinv_le_check (x y : ℝ) : Id (ℝ × ℝ) :=
+  (1 / y, 1 / x)
+
+/-- Specification: Reciprocal is antitone on positive reals (≤ version) -/
+theorem Rinv_le_spec (x y : ℝ) :
+    ⦃⌜0 < x ∧ x ≤ y⌝⦄
+    Rinv_le_check x y
+    ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
+  intro _
+  -- Standard property: for 0 < x ≤ y, we have 1/y ≤ 1/x
+  sorry
+
+end Rrecip
+
+section Sqrt
+
+/-- Nonnegativity of square root
+
+    The square root of a non-negative real number is itself non-negative.
+    This captures the standard property of the real square root function.
+-/
+noncomputable def sqrt_ge_0_check (x : ℝ) : Id ℝ :=
+  Real.sqrt x
+
+/-- Specification: sqrt is non-negative on ℝ≥0
+
+    Given 0 ≤ x, the computed value satisfies 0 ≤ sqrt x.
+-/
+theorem sqrt_ge_0_spec (x : ℝ) :
+    ⦃⌜0 ≤ x⌝⦄
+    sqrt_ge_0_check x
+    ⦃⇓r => ⌜0 ≤ r⌝⦄ := by
+  intro _
+  unfold sqrt_ge_0_check
+  exact Real.sqrt_nonneg x
+
+/-
+  Coq (Raux.v):
+  Lemma sqrt_neg : forall x, (x <= 0)%R -> (sqrt x = 0)%R.
+
+  Lean (spec): If x ≤ 0 then sqrt x = 0.
+-/
+noncomputable def sqrt_neg_check (x : ℝ) : Id ℝ :=
+  Real.sqrt x
+
+theorem sqrt_neg_spec (x : ℝ) :
+    ⦃⌜x ≤ 0⌝⦄
+    sqrt_neg_check x
+    ⦃⇓r => ⌜r = 0⌝⦄ := by
+  intro _
+  -- Mirrors Coq's sqrt_neg; proof omitted for now
+  sorry
+
+end Sqrt
+
+section Abs
+
+/-- Check for zero absolute value
+
+    Encodes the predicate |x| = 0 as a boolean value for specification.
+-/
+noncomputable def Rabs_eq_R0_check (x : ℝ) : Id Bool :=
+  pure (|x| = 0)
+
+/-- Specification: Absolute value equals zero iff the number is zero
+
+    The absolute value of a real number is zero if and only if the number itself is zero.
+-/
+theorem Rabs_eq_R0_spec (x : ℝ) :
+    ⦃⌜True⌝⦄
+    Rabs_eq_R0_check x
+    ⦃⇓b => ⌜b ↔ x = 0⌝⦄ := by
+  intro _
+  unfold Rabs_eq_R0_check
+  -- Standard property: |x| = 0 ↔ x = 0
+  sorry
+
+end Abs
+
+section Squares
+
+/-
+  Coq (Raux.v):
+  Lemma Rsqr_le_abs_0_alt :
+    forall x y, (x² <= y² -> x <= Rabs y)%R.
+
+  Lean (spec): From x^2 ≤ y^2, deduce x ≤ |y|.
+-/
+noncomputable def Rsqr_le_abs_0_alt_val (x y : ℝ) : Id ℝ :=
+  pure x
+
+theorem Rsqr_le_abs_0_alt_spec (x y : ℝ) :
+    ⦃⌜x^2 ≤ y^2⌝⦄
+    Rsqr_le_abs_0_alt_val x y
+    ⦃⇓r => ⌜r ≤ |y|⌝⦄ := by
+  intro _
+  -- Mirrors Coq's Rsqr_le_abs_0_alt; proof omitted for now
+  sorry
+
+end Squares
+
+section AbsMore
+
+/-- Boolean check for strict inequality on absolute value: |x| < y -/
+noncomputable def Rabs_lt_check (x y : ℝ) : Id Bool :=
+  pure (|x| < y)
+
+/-- Specification: |x| < y iff the boolean returns true -/
+theorem Rabs_lt_spec (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    Rabs_lt_check x y
+    ⦃⇓b => ⌜b ↔ |x| < y⌝⦄ := by
+  intro _
+  unfold Rabs_lt_check
+  -- Follows from decidability of (<) on ℝ
+  sorry
+
+end AbsMore
+
+section AbsGt
+
+/-- Boolean check for strict lower bound on |x|: y < |x| -/
+noncomputable def Rabs_gt_check (x y : ℝ) : Id Bool :=
+  pure (y < |x|)
+
+/-- Specification: y < |x| iff the boolean returns true -/
+theorem Rabs_gt_spec (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    Rabs_gt_check x y
+    ⦃⇓b => ⌜b ↔ y < |x|⌝⦄ := by
+  intro _
+  unfold Rabs_gt_check
+  -- Follows from decidability of (<) on ℝ
+  sorry
+
+end AbsGt
+
+section AbsGtInv
+
+/-- Pair carrier for the converse direction: from y < x or y < -x to y < |x| -/
+def Rabs_gt_inv_pair (x y : ℝ) : Id (ℝ × ℝ) :=
+  (x, y)
+
+/-- Specification: If y < x or y < -x then y < |x|
+
+    This is the converse direction corresponding to `Rabs_gt_spec`.
+-/
+theorem Rabs_gt_inv_spec (x y : ℝ) :
+    ⦃⌜y < x ∨ y < -x⌝⦄
+    Rabs_gt_inv_pair x y
+    ⦃⇓p => ⌜p.2 < |p.1|⌝⦄ := by
+  intro _
+  unfold Rabs_gt_inv_pair
+  -- Standard property of absolute value; proof omitted for now
+  sorry
+
+end AbsGtInv
 
 section Rcompare
 
@@ -442,6 +722,26 @@ theorem Rle_bool_spec (x y : ℝ) :
   -- The decidable instance for ℝ gives us this
   exact decide_eq_true_iff
 
+/-- Monotone case: if x ≤ y then `Rle_bool x y = true` -/
+theorem Rle_bool_true (x y : ℝ) :
+    ⦃⌜x ≤ y⌝⦄
+    Rle_bool x y
+    ⦃⇓result => ⌜result = true⌝⦄ := by
+  intro _
+  unfold Rle_bool
+  -- Follows from decidability of (≤) on ℝ
+  sorry
+
+/-- Antitone case: if y < x then `Rle_bool x y = false` -/
+theorem Rle_bool_false (x y : ℝ) :
+    ⦃⌜y < x⌝⦄
+    Rle_bool x y
+    ⦃⇓result => ⌜result = false⌝⦄ := by
+  intro _
+  unfold Rle_bool
+  -- Follows from decidability of (≤) on ℝ and `¬(x ≤ y)` from `y < x`
+  sorry
+
 /-- Boolean strict less-than test for real numbers
 
     Tests whether x < y, returning a boolean result.
@@ -647,5 +947,24 @@ theorem cond_Ropp_inj_spec (b : Bool) (m1 m2 : ℝ) :
     exact h
 
 end ConditionalOpposite
+
+-- Inverse bounds for strict absolute inequalities
+section AbsLtInv
+
+/-- Pair carrier for the inverse strict-abs inequality result: -y < x ∧ x < y -/
+noncomputable def Rabs_lt_inv_pair (x y : ℝ) : Id (ℝ × ℝ) :=
+  (x, y)
+
+/-- Specification: From `|x| < y` derive the two-sided strict bound `-y < x < y`. -/
+theorem Rabs_lt_inv_spec (x y : ℝ) :
+    ⦃⌜|x| < y⌝⦄
+    Rabs_lt_inv_pair x y
+    ⦃⇓p => ⌜-p.2 < p.1 ∧ p.1 < p.2⌝⦄ := by
+  intro _
+  unfold Rabs_lt_inv_pair
+  -- Mirrors Coq's Rabs_lt_inv; proof omitted for now
+  sorry
+
+end AbsLtInv
 
 end FloatSpec.Core.Raux
