@@ -19,7 +19,7 @@ import Mathlib.Data.Real.Sqrt
 import Std.Do.Triple
 import Std.Tactic.Do
 
-open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt
+open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
 open FloatSpec.Core.Round_generic
 open Std.Do
 

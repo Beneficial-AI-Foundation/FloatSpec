@@ -28,7 +28,7 @@ import FloatSpec.src.Core.FIX
 
 open Real
 open Std.Do
-open FloatSpec.Core.Generic_fmt
+open FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
 open FloatSpec.Core.Round_generic
 
 namespace FloatSpec.Core.FLX
@@ -262,6 +262,26 @@ namespace FloatSpec.Core.FLX
 
 variable (prec : Int)
 
+/-
+Coq (FLX.v):
+Theorem FLXN_format_satisfies_any :
+  satisfies_any FLXN_format.
+-/
+theorem FLXN_format_satisfies_any (beta : Int)
+    [Valid_exp beta (FLX_exp prec)] :
+    FloatSpec.Core.Generic_fmt.satisfies_any
+      (fun y => (FLXN_format prec beta y).run) := by
+  simpa [FLXN_format, FLX_format]
+    using
+      FloatSpec.Core.Generic_fmt.generic_format_satisfies_any
+        (beta := beta) (fexp := FLX_exp prec)
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
 /- Valid_exp instance for FLX_exp (placeholder). -/
 instance FLX_exp_valid (beta : Int) :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec) := by
@@ -383,6 +403,20 @@ namespace FloatSpec.Core.FLX
 
 variable (prec : Int)
 
+/-- Coq (FLX.v):
+Lemma negligible_exp_FLX : negligible_exp FLX_exp = None.
+
+Lean (spec): In our simplified model, `Ulp.negligible_exp` is always `none`,
+so for FLX it is `none` as well.
+-/
+theorem negligible_exp_FLX (beta : Int) :
+    ⦃⌜True⌝⦄
+    (pure (FloatSpec.Core.Ulp.negligible_exp (fexp := FLX_exp prec)) : Id (Option Int))
+    ⦃⇓r => ⌜r = none⌝⦄ := by
+  intro _
+  -- By definition in this Lean port
+  sorry
+
 /-
 Coq (FLX.v):
 Theorem generic_format_FLX_1 :
@@ -392,6 +426,91 @@ theorem generic_format_FLX_1 (beta : Int) :
     ⦃⌜True⌝⦄
     FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) 1
     ⦃⇓result => ⌜result⌝⦄ := by
+  intro _
+  sorry
+
+end FloatSpec.Core.FLX
+
+namespace FloatSpec.Core.FLX
+
+variable (prec : Int)
+
+/-
+Coq (FLX.v):
+Lemma succ_FLX_1 : (succ beta FLX_exp 1 = 1 + bpow (-prec + 1))%R.
+
+Lean (spec): The successor at 1 under FLX equals `1 + β^(-prec + 1)`.
+-/
+theorem succ_FLX_1 (beta : Int) :
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Ulp.succ beta (FLX_exp prec) 1
+    ⦃⇓r => ⌜r = 1 + (beta : ℝ) ^ (-prec + 1)⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLX.v):
+Theorem eq_0_round_0_FLX :
+   forall rnd {Vr: Valid_rnd rnd} x,
+     round beta FLX_exp rnd x = 0%R -> x = 0%R.
+
+Lean (spec): If rounding in FLX yields 0, then the input is 0 (for any mode).
+-/
+theorem eq_0_round_0_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    ⦃⌜FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0⌝⦄
+    (pure x : Id ℝ)
+    ⦃⇓r => ⌜r = 0⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLX.v):
+Theorem gt_0_round_gt_0_FLX :
+   forall rnd {Vr: Valid_rnd rnd} x,
+     (0 < x)%R -> (0 < round beta FLX_exp rnd x)%R.
+
+Lean (spec): For any mode, if x > 0 then rounding in FLX yields a positive value.
+-/
+theorem gt_0_round_gt_0_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    ⦃⌜0 < x⌝⦄
+    (pure (FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x) : Id ℝ)
+    ⦃⇓r => ⌜0 < r⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLX.v):
+Lemma succ_FLX_exact_shift:
+  forall x e,
+  (succ beta FLX_exp (x * bpow e) = succ beta FLX_exp x * bpow e)%R.
+
+Lean (spec): Successor under FLX scales exactly under multiplication by β^e.
+-/
+theorem succ_FLX_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜True⌝⦄
+    (do
+      let s1 ← FloatSpec.Core.Ulp.succ beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
+      let s2 ← FloatSpec.Core.Ulp.succ beta (FLX_exp prec) x
+      pure (s1, s2))
+    ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLX.v):
+Lemma pred_FLX_exact_shift:
+  forall x e,
+  (pred beta FLX_exp (x * bpow e) = pred beta FLX_exp x * bpow e)%R.
+
+Lean (spec): Predecessor under FLX scales exactly under multiplication by β^e.
+-/
+theorem pred_FLX_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜True⌝⦄
+    (do
+      let p1 ← FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
+      let p2 ← FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x
+      pure (p1, p2))
+    ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro _
   sorry
 

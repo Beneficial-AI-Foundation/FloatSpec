@@ -15,7 +15,7 @@ fi
 IFS= read -r -d '' msg <<'EOF' || true
 Please ensure your implementation Always Works™ for:
 
-## Task: Fix Proofs in FloatSpec/src/Core/Round_generic.lean
+## Task: Fix Proofs in FloatSpec/src/Core/Raux.lean
 
 ## Scope
 
@@ -80,6 +80,9 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 - Skip already-proven theorems!! There might be warnings be just leave them there!
 - You can use exisiting (and proved) theorem to assist your proving. If a theorem is necessary but not proved, you can turn to work on that first. The useful theorems might not be in the same file, but in the import list
 - When you are trying to use a certain lemma, check through mcp tools (or https://github.com/leanprover-community/mathlib4) to make sure the lemma exists. Else, write your own implementation of the lemma.
+- The MCP tool is buggy, so please prioritize lake build and set up a timeout bound (~5 min) whenever you are using either of them.
+- You are not allowed to delete ANY theorems or functions in the file. You can only modify them in a very cautious way!
+- If you observe that the whole file is completed, which means that no sorry or error could be spotted in the file, find the process containing `iterate_codex.sh` and terminate it.
 
 ### Success Criteria
 
@@ -89,6 +92,6 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 EOF
 
 # Build the CLI command as an array to preserve spaces/newlines
-cmd=(codex exec "$msg" --dangerously-bypass-approvals-and-sandbox)
+cmd=(codex --model gpt-5 high exec "$msg" --dangerously-bypass-approvals-and-sandbox)
 
-end=$(( $(date +%s) + 1*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do claude -p "$msg" --verbose --dangerously-skip-permissions || true; done
+end=$(( $(date +%s) + 5*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do "${cmd[@]}" || true; done

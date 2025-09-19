@@ -19,7 +19,7 @@ import Std.Do.Triple
 import Std.Tactic.Do
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt
-open FloatSpec.Core.Round_generic
+open FloatSpec.Core.Round_generic FloatSpec.Core.Raux
 open Std.Do
 
 namespace FloatSpec.Calc.Div
@@ -45,10 +45,10 @@ def mag_div_F2R_compute (m1 e1 m2 e2 : Int) : Id Int :=
 lemma mag_div_F2R (m1 e1 m2 e2 : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2) :
     ⦃⌜0 < m1 ∧ 0 < m2⌝⦄
     mag_div_F2R_compute beta m1 e1 m2 e2
-    ⦃⇓e => ⌜e ≤ mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
-                        (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run) ∧
-           mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
-                    (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run) ≤ e + 1⌝⦄ := by
+    ⦃⇓e => ⌜e ≤ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
+                       (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)).run
+        ∧ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
+                     (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)).run ≤ e + 1⌝⦄ := by
   sorry
 
 end MagnitudeBounds

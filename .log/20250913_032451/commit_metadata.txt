@@ -1,8 +1,0 @@
-Commit metadata (HEAD):
-commit 569cc15dd9a0f3bb0bbf6e2e2f96891a3db1b042
-Author:     Lord-Van <2200017789@stu.pku.edu.cn>
-AuthorDate: Sat Sep 13 10:54:27 2025 +0800
-Commit:     Lord-Van <2200017789@stu.pku.edu.cn>
-CommitDate: Sat Sep 13 10:54:27 2025 +0800
-
-    Core/Round_generic: complete scaled_mantissa_lt_bpow proof; update CLAUDE.md with MCP/LSP workflow and proof guidelines

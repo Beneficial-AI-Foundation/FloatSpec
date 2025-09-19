@@ -296,6 +296,21 @@ variable (prec emin : Int)
 
 /-
 Coq (FLT.v):
+Lemma negligible_exp_FLT :
+  exists n, negligible_exp FLT_exp = Some n /\\ (n <= emin)%Z.
+
+Lean (spec): State existence of a negligible exponent bound for FLT.
+We keep the proof as a placeholder.
+-/
+theorem negligible_exp_FLT (beta : Int) :
+    ⦃⌜True⌝⦄
+    (pure (FloatSpec.Core.Ulp.negligible_exp (fexp := FLT_exp prec emin)) : Id (Option Int))
+    ⦃⇓r => ⌜∃ n, r = some n ∧ n ≤ emin⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLT.v):
 Theorem generic_format_FIX_FLT :
   forall x : R,
   generic_format beta FLT_exp x ->
@@ -452,7 +467,7 @@ Lemma ulp_FLT_exact_shift:
   (ulp beta FLT_exp (x * bpow e) = ulp beta FLT_exp x * bpow e)%R.
 -/
 theorem ulp_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
-    ⦃⌜x ≠ 0 ∧ emin + prec ≤ FloatSpec.Core.Generic_fmt.mag beta x ∧ emin + prec - FloatSpec.Core.Generic_fmt.mag beta x ≤ e⌝⦄
+    ⦃⌜x ≠ 0 ∧ emin + prec ≤ (FloatSpec.Core.Raux.mag beta x).run ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x).run ≤ e⌝⦄
     (do
       let u1 ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
       let u2 ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x
@@ -482,6 +497,88 @@ theorem round_FLT_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
       FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLT_exp prec emin) (mode := rnd) x,
       FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX.FLX_exp prec) (mode := rnd) x) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  sorry
+
+end FloatSpec.Core.FLT
+
+namespace FloatSpec.Core.FLT
+
+variable (prec emin : Int)
+
+/-
+Coq (FLT.v):
+Lemma succ_FLT_exact_shift_pos:
+  forall x e,
+  (0 < x)%R ->
+  (emin + prec + 1 <= mag beta x)%Z ->
+  (emin + prec - mag beta x + 1 <= e)%Z ->
+  (succ beta FLT_exp (x * bpow e) = succ beta FLT_exp x * bpow e)%R.
+-/
+theorem succ_FLT_exact_shift_pos (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜0 < x ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x).run ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x).run + 1 ≤ e⌝⦄
+    (do
+      let s1 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
+      let s2 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) x
+      pure (s1, s2))
+    ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLT.v):
+Lemma succ_FLT_exact_shift:
+  forall x e,
+  (x <> 0)%R ->
+  (emin + prec + 1 <= mag beta x)%Z ->
+  (emin + prec - mag beta x + 1 <= e)%Z ->
+  (succ beta FLT_exp (x * bpow e) = succ beta FLT_exp x * bpow e)%R.
+-/
+theorem succ_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜x ≠ 0 ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x).run ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x).run + 1 ≤ e⌝⦄
+    (do
+      let s1 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
+      let s2 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) x
+      pure (s1, s2))
+    ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLT.v):
+Lemma pred_FLT_exact_shift:
+  forall x e,
+  (x <> 0)%R ->
+  (emin + prec + 1 <= mag beta x)%Z ->
+  (emin + prec - mag beta x + 1 <= e)%Z ->
+  (pred beta FLT_exp (x * bpow e) = pred beta FLT_exp x * bpow e)%R.
+-/
+theorem pred_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+    ⦃⌜x ≠ 0 ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x).run ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x).run + 1 ≤ e⌝⦄
+    (do
+      let p1 ← FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
+      let p2 ← FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x
+      pure (p1, p2))
+    ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
+  intro _
+  sorry
+
+/-
+Coq (FLT.v):
+Theorem ulp_FLT_pred_pos:
+  forall x,
+  generic_format beta FLT_exp x ->
+  (0 <= x)%R ->
+  ulp beta FLT_exp (pred beta FLT_exp x) = ulp beta FLT_exp x \/
+  (x = bpow (mag beta x - 1) /\\ ulp beta FLT_exp (pred beta FLT_exp x) = (ulp beta FLT_exp x / IZR beta)%R).
+-/
+theorem ulp_FLT_pred_pos (beta : Int) (x : ℝ) :
+    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FLT_exp prec emin) x).run ∧ 0 ≤ x⌝⦄
+    (do
+      let up ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) ((FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x).run)
+      let ux ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x
+      pure (up, ux))
+    ⦃⇓p => ⌜p.1 = p.2 ∨ (x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run - 1) ∧ p.1 = p.2 / (beta : ℝ))⌝⦄ := by
   intro _
   sorry
 

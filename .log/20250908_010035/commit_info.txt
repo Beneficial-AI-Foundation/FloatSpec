@@ -1,5 +1,0 @@
-b54fbb61e121dbabba39aa2a70c69ee14ced80b0
-Lord-Van
-2200017789@stu.pku.edu.cn
-Mon Sep 8 01:00:29 2025 +0800
-Fix Zslice_slice proof in Digits.lean

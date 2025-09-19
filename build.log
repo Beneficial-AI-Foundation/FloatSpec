@@ -1,0 +1,413 @@
+⚠ [3064/3105] Replayed FloatSpec.src.Core.Zaux
+warning: FloatSpec/src/Core/Zaux.lean:487:22: unused variable `r`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Zaux.lean:737:28: unused variable `v`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Zaux.lean:757:33: unused variable `v`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [3067/3105] Replayed FloatSpec.src.Core.Digits
+info: FloatSpec/src/Core/Digits.lean:1856:16: Try this: ring_nf
+warning: FloatSpec/src/Core/Digits.lean:2242:44: unused variable `hd`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+info: FloatSpec/src/Core/Digits.lean:3068:6: Try this: ring_nf
+warning: FloatSpec/src/Core/Digits.lean:3686:4: missing doc string for public def Zdigits
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Digits.lean:3687:5: unused variable `h`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:3779:69: unused variable `hn`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:3818:13: unused variable `hβ`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:4452:32: unused variable `h_beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:4665:77: unused variable `hc`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:6238:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow, PredTrans.pure] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6238:37: This simp argument is unused:
+  PredTrans.pure
+
+Hint: Omit it from the simp argument list.
+  simp only [wp, PostCond.noThrow,̵ ̵P̵r̵e̵d̵T̵r̵a̵n̵s̵.̵p̵u̵r̵e̵] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6246:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6258:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6549:19: This simp argument is unused:
+  dm0
+
+Hint: Omit it from the simp argument list.
+  simp [Zdigits, d̵m̵0̵,̵ ̵e0]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6846:13: `Int.ofNat_nonneg` has been deprecated: Use `Int.natCast_nonneg` instead
+⚠ [3068/3105] Replayed FloatSpec.src.Core.Float_prop
+warning: FloatSpec/src/Core/Float_prop.lean:90:46: `le_of_not_lt` has been deprecated: Use `le_of_not_gt` instead
+warning: FloatSpec/src/Core/Float_prop.lean:87:20: This simp argument is unused:
+  hltR
+
+Hint: Omit it from the simp argument list.
+  simp [pure, hl̵t̵R̵,̵ ̵h̵eqR, hsign]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Float_prop.lean:99:34: This simp argument is unused:
+  hgtR
+
+Hint: Omit it from the simp argument list.
+  simp [pure, hnotlt, hneq, hg̵t̵R̵,̵ ̵h̵sign]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Float_prop.lean:226:32: unused variable `hbeta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Float_prop.lean:278:40: unused variable `hbeta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Float_prop.lean:294:56: unused variable `hbeta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Float_prop.lean:314:25: unused variable `hbeta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Float_prop.lean:574:28: unused variable `hbeta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Float_prop.lean:633:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:713:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:733:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:792:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:825:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:843:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:868:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:884:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:902:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Float_prop.lean:963:8: declaration uses 'sorry'
+⚠ [3069/3105] Replayed FloatSpec.src.Calc.Bracket
+warning: FloatSpec/src/Calc/Bracket.lean:25:4: missing doc string for public constructor Location.loc_Exact
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Calc/Bracket.lean:26:4: missing doc string for public constructor Location.loc_Inexact
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Calc/Bracket.lean:37:4: missing doc string for public constructor inbetween.inbetween_Exact
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Calc/Bracket.lean:38:4: missing doc string for public constructor inbetween.inbetween_Inexact
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Calc/Bracket.lean:64:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:81:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:99:28: unused variable `h`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:106:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:116:35: unused variable `h`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:117:5: unused variable `hl`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:124:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:142:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:160:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:171:65: unused variable `Hdu`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:174:25: unused variable `ord`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:180:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:198:25: unused variable `start`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:198:31: unused variable `step`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:198:42: unused variable `k`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:205:6: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:222:6: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:234:49: unused variable `start`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:234:55: unused variable `step`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:234:66: unused variable `nb_steps`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:234:83: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:234:91: unused variable `k`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Calc/Bracket.lean:241:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:263:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:283:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:314:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:345:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Bracket.lean:368:8: declaration uses 'sorry'
+⚠ [3070/3105] Replayed FloatSpec.src.Calc.Operations
+warning: FloatSpec/src/Calc/Operations.lean:47:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:66:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:87:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:108:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:130:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:147:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:164:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:186:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:203:8: declaration uses 'sorry'
+warning: FloatSpec/src/Calc/Operations.lean:224:8: declaration uses 'sorry'
+✖ [3072/3105] Building FloatSpec.src.Core.Generic_fmt (5.0s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/FloatSpec/src/Core/Generic_fmt.lean -o /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Core/Generic_fmt.olean -i /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Core/Generic_fmt.ilean -c /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Core/Generic_fmt.c --setup /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Core/Generic_fmt.setup.json --json
+warning: FloatSpec/src/Core/Generic_fmt.lean:74:10: This simp argument is unused:
+  h
+
+Hint: Omit it from the simp argument list.
+  simp [h̵,̵ ̵Int.ceil_intCast]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:76:10: This simp argument is unused:
+  h
+
+Hint: Omit it from the simp argument list.
+  simp [h̵,̵ ̵Int.floor_intCast]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+error: FloatSpec/src/Core/Generic_fmt.lean:173:12: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:182:18: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:219:33: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:232:53: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:246:88: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:246:122: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:257:2: unsolved goals
+case pos
+x : ℝ
+hx : x < 0
+hneg : ¬-x < 0
+⊢ (if x ≤ 0 then -⌈x⌉ else -⌊x⌋) = -if 0 ≤ x then ⌊x⌋ else ⌈x⌉
+error: FloatSpec/src/Core/Generic_fmt.lean:263:4: unsolved goals
+case neg
+x : ℝ
+hx : ¬x < 0
+hx0 : ¬x = 0
+hxpos : 0 < x
+hlt_negx : -x < 0
+⊢ (if x ≤ 0 then -⌈x⌉ else -⌊x⌋) = -if 0 ≤ x then ⌊x⌋ else ⌈x⌉
+warning: FloatSpec/src/Core/Generic_fmt.lean:259:10: This simp argument is unused:
+  hx
+
+Hint: Omit it from the simp argument list.
+  simp [hx̵,̵ ̵h̵neg, Int.floor_neg, Int.ceil_neg]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:259:14: This simp argument is unused:
+  hneg
+
+Hint: Omit it from the simp argument list.
+  simp [hx, h̵n̵e̵g̵,̵ ̵Int.floor_neg, Int.ceil_neg]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:265:12: This simp argument is unused:
+  hx
+
+Hint: Omit it from the simp argument list.
+  simp [hx̵,̵ ̵h̵lt_negx, Int.floor_neg, Int.ceil_neg]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:265:16: This simp argument is unused:
+  hlt_negx
+
+Hint: Omit it from the simp argument list.
+  simp [hx, h̵l̵t̵_̵n̵e̵g̵x̵,̵ ̵Int.floor_neg, Int.ceil_neg]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:294:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:310:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:325:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:339:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:351:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:364:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:378:8: declaration uses 'sorry'
+error: FloatSpec/src/Core/Generic_fmt.lean:407:39: Unknown identifier `mag`
+warning: FloatSpec/src/Core/Generic_fmt.lean:401:25: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:406:9: declaration uses 'sorry'
+error: FloatSpec/src/Core/Generic_fmt.lean:425:17: Unknown identifier `mag`
+warning: FloatSpec/src/Core/Generic_fmt.lean:423:25: declaration uses 'sorry'
+error: FloatSpec/src/Core/Generic_fmt.lean:457:17: Unknown identifier `mag`
+warning: FloatSpec/src/Core/Generic_fmt.lean:455:41: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:471:18: This simp argument is unused:
+  F2R
+
+Hint: Omit it from the simp argument list.
+  simp [cexp,̵ ̵F̵2̵R̵] at this
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+error: FloatSpec/src/Core/Generic_fmt.lean:571:14: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:572:6: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:560:50: unsolved goals
+beta : ℤ
+fexp : ℤ → ℤ
+m e : ℤ
+h : { Fnum := m, Fexp := e }.Fexp = fexp sorry
+hF2R_neg : (F2R { Fnum := -m, Fexp := e }).run = -(F2R { Fnum := m, Fexp := e }).run
+⊢ { Fnum := -m, Fexp := e }.Fexp = fexp sorry
+error: FloatSpec/src/Core/Generic_fmt.lean:595:17: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:595:30: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:585:53: unsolved goals
+beta : ℤ
+fexp : ℤ → ℤ
+m e : ℤ
+h : { Fnum := m, Fexp := e }.Fexp = fexp sorry
+x : ℝ := (F2R { Fnum := m, Fexp := e }).run
+y : ℝ := (F2R { Fnum := |m|, Fexp := e }).run
+habs_xy : |y| = |x|
+⊢ { Fnum := |m|, Fexp := e }.Fexp = fexp sorry
+error: FloatSpec/src/Core/Generic_fmt.lean:617:49: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:639:14: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:639:38: Unknown identifier `mag`
+warning: FloatSpec/src/Core/Generic_fmt.lean:689:8: declaration uses 'sorry'
+error: FloatSpec/src/Core/Generic_fmt.lean:707:8: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:704:33: unsolved goals
+beta : ℤ
+fexp : ℤ → ℤ
+a✝ : ⌜True⌝.down
+⊢ (wp⟦sorry ()⟧ (fun a ↦ ⌜True⌝, ExceptConds.false)).down
+warning: FloatSpec/src/Core/Generic_fmt.lean:714:8: declaration uses 'sorry'
+error: FloatSpec/src/Core/Generic_fmt.lean:735:14: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:735:33: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:731:69: unsolved goals
+beta : ℤ
+fexp : ℤ → ℤ
+x : ℝ
+hβ : ⌜beta > 1⌝.down
+⊢ (wp⟦do
+        let exp ←
+          do
+            let m ← sorry
+            pure (fexp m)
+        pure (|x| * ↑beta ^ (-exp))⟧
+      (PostCond.noThrow fun result ↦
+        ⌜result =
+            |(do
+                  let exp ←
+                    do
+                      let m ← sorry
+                      pure (fexp m)
+                  pure (x * ↑beta ^ (-exp))).run|⌝)).down
+error: FloatSpec/src/Core/Generic_fmt.lean:789:14: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:789:30: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:781:29: unsolved goals
+beta : ℤ
+fexp : ℤ → ℤ
+inst✝ : Valid_exp beta fexp
+x : ℝ
+hx : ⌜(generic_format beta fexp x).run⌝.down
+hx' : x = ↑(Ztrunc (x * (↑beta ^ fexp (sorry ()).run)⁻¹)).run * ↑beta ^ fexp (sorry ()).run
+⊢ (wp⟦do
+        let mantissa ←
+          do
+            let exp ←
+              do
+                let m ← sorry
+                pure (fexp m)
+            pure (-x * ↑beta ^ (-exp))
+        let exp ←
+          do
+            let m ← sorry
+            pure (fexp m)
+        let truncated ← Ztrunc mantissa
+        let reconstructed ←
+          pure (↑{ Fnum := truncated, Fexp := exp }.Fnum * ↑beta ^ { Fnum := truncated, Fexp := exp }.Fexp)
+        pure (-x = reconstructed)⟧
+      (PostCond.noThrow fun result ↦ ⌜result⌝)).down
+warning: FloatSpec/src/Core/Generic_fmt.lean:785:41: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:891:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:903:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:917:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:931:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:946:8: declaration uses 'sorry'
+error: FloatSpec/src/Core/Generic_fmt.lean:964:21: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:981:16: Unknown identifier `mag`
+warning: FloatSpec/src/Core/Generic_fmt.lean:992:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1006:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1022:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1064:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1078:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1110:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1128:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1138:18: missing doc string for public def Znearest_le_ceil_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1147:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1168:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1185:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1202:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1219:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1231:40: unused variable `choice`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1231:62: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1249:43: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1266:37: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1283:37: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1300:37: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1317:38: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1334:39: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1351:38: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+error: FloatSpec/src/Core/Generic_fmt.lean:1380:21: Unknown identifier `mag`
+error: FloatSpec/src/Core/Generic_fmt.lean:1380:48: Unknown identifier `mag`
+warning: FloatSpec/src/Core/Generic_fmt.lean:1394:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1410:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1427:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1443:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:1458:8: declaration uses 'sorry'
+error: Lean exited with code 1
+Some required targets logged failures:
+- FloatSpec.src.Core.Generic_fmt
+error: build failed

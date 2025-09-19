@@ -1,5 +1,0 @@
-06287faca48ddfe92fbcfeb343cfff9aef752716 Lord-Van <2200017789@stu.pku.edu.cn> 2025-08-13 18:33:46 Refactor Float_prop.lean to remove Hoare triple specifications
-Files changed: 5
-Insertions: 1016
-Deletions: 577
-Net change: +439

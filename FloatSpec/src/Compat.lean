@@ -22,11 +22,11 @@ noncomputable def generic_format (beta : Int) (fexp : Int → Int) (x : ℝ) : P
 
 /-- Bridge: magnitude function in root namespace -/
 noncomputable def mag (beta : Int) (x : ℝ) : Int :=
-  FloatSpec.Core.Generic_fmt.mag beta x
+  FloatSpec.Core.Raux.mag beta x
 
 /-- Bridge: integer truncation toward zero -/
 noncomputable def Ztrunc (x : ℝ) : Int :=
-  FloatSpec.Core.Generic_fmt.Ztrunc x
+  (FloatSpec.Core.Raux.Ztrunc x).run
 
 /-- Bridge: ulp as a plain ℝ (unwraps Id) -/
 noncomputable def ulp (beta : Int) (fexp : Int → Int) (x : ℝ) : ℝ :=

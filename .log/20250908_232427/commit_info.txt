@@ -1,4 +1,0 @@
-a8c43d1d029de76e264642dbd67f1839ecaa6668
-Lord-Van
-Mon Sep 8 23:24:18 2025 +0800
-Add pow_strict_mono_int lemma and clean up temporary files

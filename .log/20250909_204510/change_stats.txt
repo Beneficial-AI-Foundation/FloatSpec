@@ -1,5 +1,0 @@
- FloatSpec/src/Core/Digits.lean      | 3356 ++++++++++++++++++++++++++---------
- FloatSpec/src/Core/Generic_fmt.lean |    8 +-
- debug_test.lean                     |    5 -
- iterate.sh                          |    2 +-
- 4 files changed, 2483 insertions(+), 888 deletions(-)
