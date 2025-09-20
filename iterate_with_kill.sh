@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ========== Config ==========
+# Hourly kill interval; override with env if desired (seconds)
+KILL_INTERVAL="${KILL_INTERVAL:-3600}"
+# Grace period (seconds) between SIGTERM and SIGKILL
+KILL_GRACE="${KILL_GRACE:-10}"
+
+# ========== timeout utility detection ==========
 # Use GNU timeout if available; on macOS prefer gtimeout (coreutils)
 TIMEOUT_BIN="${TIMEOUT_BIN:-timeout}"
 command -v "$TIMEOUT_BIN" >/dev/null 2>&1 || TIMEOUT_BIN="gtimeout"
@@ -9,7 +16,76 @@ if ! command -v "$TIMEOUT_BIN" >/dev/null 2>&1; then
   TIMEOUT_BIN=""
 fi
 
-# Build the multi-line prompt literally, no expansions.
+# ========== Helper: timestamped log ==========
+ts() { date +"[%Y-%m-%d %H:%M:%S]"; }
+
+# ========== Background killer ==========
+start_killer() {
+  local self_pid="$1"
+  local killer_pid="$$" # this function runs in subshell; after backgrounding, $$ is killer's pid
+
+  # Prefer pkill/pgrep if present; fallback to ps+awk
+  have_pgrep=0
+  command -v pgrep >/dev/null 2>&1 && have_pgrep=1
+
+  list_pids() {
+    # args: pattern
+    local pat="$1"
+    if [[ $have_pgrep -eq 1 ]]; then
+      # -f: match against full command line
+      # Filter out self and killer
+      pgrep -f -- "$pat" 2>/dev/null | awk -v spid="$self_pid" -v kpid="$killer_pid" '($0!=spid)&&($0!=kpid)'
+    else
+      # portable fallback
+      # shellcheck disable=SC2009
+      ps -ax -o pid= -o command= | awk -v pat="$pat" -v spid="$self_pid" -v kpid="$killer_pid" '
+        index($0, pat) {
+          pid=$1
+          if (pid != spid && pid != kpid) print pid
+        }'
+    fi
+  }
+
+  kill_pattern() {
+    # args: pattern
+    local pat="$1"
+    # First try a gentle TERM
+    mapfile -t pids < <(list_pids "$pat" | sort -u || true)
+    if ((${#pids[@]})); then
+      echo "$(ts) Sending SIGTERM to ${#pids[@]} processes matching: $pat -> ${pids[*]}" >&2
+      kill -TERM "${pids[@]}" 2>/dev/null || true
+      sleep "$KILL_GRACE"
+      # Re-check remaining
+      mapfile -t remain < <(printf '%s\n' "${pids[@]}" | xargs -r ps -o pid= -p | awk '{print $1}' || true)
+      if ((${#remain[@]})); then
+        echo "$(ts) Escalating SIGKILL to ${#remain[@]} processes matching: $pat -> ${remain[*]}" >&2
+        kill -KILL "${remain[@]}" 2>/dev/null || true
+      fi
+    else
+      echo "$(ts) No processes found matching: $pat" >&2
+    fi
+  }
+
+  echo "$(ts) Killer started (pid=$killer_pid). Interval=${KILL_INTERVAL}s, grace=${KILL_GRACE}s." >&2
+  while :; do
+    sleep "$KILL_INTERVAL" || true
+    echo "$(ts) Hourly cleanup triggered." >&2
+    # Kill processes whose command line contains 'codex' or 'lean'
+    kill_pattern "codex"
+    kill_pattern " lean "     # pad with spaces to avoid over-matching short substrings
+    kill_pattern "/lean"      # common binary path pattern
+    kill_pattern " lake build"  # catch lean builds
+  done
+}
+
+# Launch killer in background (independent of main loop) and clean it up on exit
+SELF_PID="$$"
+start_killer "$SELF_PID" &
+KILLER_BG_PID=$!
+disown "$KILLER_BG_PID" 2>/dev/null || true
+trap 'kill -TERM "$KILLER_BG_PID" 2>/dev/null || true' EXIT INT TERM
+
+# ========== Build the multi-line prompt literally, no expansions ==========
 # NOTE: The line with EOF must be at column 1 with no trailing spaces/tabs.
 # The '|| true' prevents 'set -e' from exiting because read -d '' returns 1 at EOF.
 IFS= read -r -d '' msg <<'EOF' || true
@@ -91,7 +167,19 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 ✅ Each proof verified individually before moving on
 EOF
 
-# Build the CLI command as an array to preserve spaces/newlines
+# ========== Build the CLI command as an array to preserve spaces/newlines ==========
 cmd=(codex --model gpt-5 high exec "$msg" --dangerously-bypass-approvals-and-sandbox)
 
-end=$(( $(date +%s) + 2*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do "${cmd[@]}" || true; done
+# ========== Main execution loop (5 hours) ==========
+end=$(( $(date +%s) + 2*60*60 ))
+
+echo "$(ts) Starting execution loop. End at $(date -d "@$end" +"%Y-%m-%d %H:%M:%S" 2>/dev/null || date -r "$end" +"%Y-%m-%d %H:%M:%S")"
+while [ "$(date +%s)" -lt "$end" ]; do
+  if [[ -n "$TIMEOUT_BIN" ]]; then
+    # Add a per-iteration timeout as a guard (optional); adjust as needed
+    "$TIMEOUT_BIN" 30m "${cmd[@]}" || true
+  else
+    "${cmd[@]}" || true
+  fi
+done
+echo "$(ts) Execution loop finished."

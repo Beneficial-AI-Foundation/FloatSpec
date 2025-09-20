@@ -1,0 +1,128 @@
+⚠ [3064/3105] Replayed FloatSpec.src.Core.Zaux
+warning: FloatSpec/src/Core/Zaux.lean:487:22: unused variable `r`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Zaux.lean:737:28: unused variable `v`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Zaux.lean:757:33: unused variable `v`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [3065/3105] Replayed FloatSpec.src.Core.Digits
+info: FloatSpec/src/Core/Digits.lean:1856:16: Try this: ring_nf
+warning: FloatSpec/src/Core/Digits.lean:2242:44: unused variable `hd`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+info: FloatSpec/src/Core/Digits.lean:3068:6: Try this: ring_nf
+warning: FloatSpec/src/Core/Digits.lean:3686:4: missing doc string for public def Zdigits
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Digits.lean:3687:5: unused variable `h`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:3779:69: unused variable `hn`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:3818:13: unused variable `hβ`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:4452:32: unused variable `h_beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:4665:77: unused variable `hc`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:6238:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow, PredTrans.pure] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6238:37: This simp argument is unused:
+  PredTrans.pure
+
+Hint: Omit it from the simp argument list.
+  simp only [wp, PostCond.noThrow,̵ ̵P̵r̵e̵d̵T̵r̵a̵n̵s̵.̵p̵u̵r̵e̵] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6246:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6258:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6549:19: This simp argument is unused:
+  dm0
+
+Hint: Omit it from the simp argument list.
+  simp [Zdigits, d̵m̵0̵,̵ ̵e0]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6846:13: `Int.ofNat_nonneg` has been deprecated: Use `Int.natCast_nonneg` instead
+✖ [3067/3105] Building FloatSpec.src.Core.Raux (4.7s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/FloatSpec/src/Core/Raux.lean -o /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Core/Raux.olean -i /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Core/Raux.ilean -c /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Core/Raux.c --setup /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Core/Raux.setup.json --json
+warning: FloatSpec/src/Core/Raux.lean:347:34: unused variable `y`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:491:18: missing doc string for public def sqrt_neg_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Raux.lean:551:18: missing doc string for public def Rsqr_le_abs_0_alt_val
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Raux.lean:551:43: unused variable `y`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:997:10: This simp argument is unused:
+  hlt
+
+Hint: Omit it from the simp argument list.
+  simp [hl̵t̵,̵ ̵h̵Eq, pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1044:12: This simp argument is unused:
+  hnotlt
+
+Hint: Omit it from the simp argument list.
+  simp [hn̵o̵t̵l̵t̵,̵ ̵h̵eq, hEqR]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1044:25: This simp argument is unused:
+  hEqR
+
+Hint: Omit it from the simp argument list.
+  simp [hnotlt, heq,̵ ̵h̵E̵q̵R̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1110:12: This simp argument is unused:
+  hxnotlt
+
+Hint: Omit it from the simp argument list.
+  simp [hxn̵o̵t̵l̵t̵,̵ ̵h̵x̵eq, this]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1110:27: This simp argument is unused:
+  this
+
+Hint: Omit it from the simp argument list.
+  simp [hxnotlt, hxeq,̵ ̵t̵h̵i̵s̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+info: stdout:
+{"severity":"warning","pos":{"line":1161,"column":12},"kind":"linter.unusedSimpArgs","keepFullRange":false,"isSilent":false,"fileName":"/home/hantao/code/FloatSpec/FloatSpec/src/Core/Raux.lean","endPos":{"line":1161,"column":19},"data":"This simp argument is unused:\n  hxnotlt\n\nHint: Omit it from the simp argument lis
+
+info: stderr:
+Stack overflow detected. Aborting.
+error: Lean exited with code 134
+Some required targets logged failures:
+- FloatSpec.src.Core.Raux
+error: build failed

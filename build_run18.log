@@ -1,0 +1,375 @@
+⚠ [3064/3105] Replayed FloatSpec.src.Core.Zaux
+warning: FloatSpec/src/Core/Zaux.lean:487:22: unused variable `r`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Zaux.lean:737:28: unused variable `v`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Zaux.lean:757:33: unused variable `v`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+⚠ [3065/3105] Replayed FloatSpec.src.Core.Digits
+info: FloatSpec/src/Core/Digits.lean:1856:16: Try this: ring_nf
+warning: FloatSpec/src/Core/Digits.lean:2242:44: unused variable `hd`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+info: FloatSpec/src/Core/Digits.lean:3068:6: Try this: ring_nf
+warning: FloatSpec/src/Core/Digits.lean:3686:4: missing doc string for public def Zdigits
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Digits.lean:3687:5: unused variable `h`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:3779:69: unused variable `hn`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:3818:13: unused variable `hβ`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:4452:32: unused variable `h_beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:4665:77: unused variable `hc`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Digits.lean:6238:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow, PredTrans.pure] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6238:37: This simp argument is unused:
+  PredTrans.pure
+
+Hint: Omit it from the simp argument list.
+  simp only [wp, PostCond.noThrow,̵ ̵P̵r̵e̵d̵T̵r̵a̵n̵s̵.̵p̵u̵r̵e̵] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6246:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6258:15: This simp argument is unused:
+  wp
+
+Hint: Omit it from the simp argument list.
+  simp only [w̵p̵,̵ ̵PostCond.noThrow] at h_abs_spec
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6549:19: This simp argument is unused:
+  dm0
+
+Hint: Omit it from the simp argument list.
+  simp [Zdigits, d̵m̵0̵,̵ ̵e0]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Digits.lean:6846:13: `Int.ofNat_nonneg` has been deprecated: Use `Int.natCast_nonneg` instead
+✖ [3067/3105] Building FloatSpec.src.Core.Raux (7.0s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/FloatSpec/src/Core/Raux.lean -o /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Core/Raux.olean -i /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Core/Raux.ilean -c /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Core/Raux.c --setup /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Core/Raux.setup.json --json
+warning: FloatSpec/src/Core/Raux.lean:347:34: unused variable `y`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:491:18: missing doc string for public def sqrt_neg_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Raux.lean:551:18: missing doc string for public def Rsqr_le_abs_0_alt_val
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Raux.lean:551:43: unused variable `y`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:997:10: This simp argument is unused:
+  hlt
+
+Hint: Omit it from the simp argument list.
+  simp [hl̵t̵,̵ ̵h̵Eq, pure]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1044:12: This simp argument is unused:
+  hnotlt
+
+Hint: Omit it from the simp argument list.
+  simp [hn̵o̵t̵l̵t̵,̵ ̵h̵eq, hEqR]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1044:25: This simp argument is unused:
+  hEqR
+
+Hint: Omit it from the simp argument list.
+  simp [hnotlt, heq,̵ ̵h̵E̵q̵R̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1110:12: This simp argument is unused:
+  hxnotlt
+
+Hint: Omit it from the simp argument list.
+  simp [hxn̵o̵t̵l̵t̵,̵ ̵h̵x̵eq, this]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1110:27: This simp argument is unused:
+  this
+
+Hint: Omit it from the simp argument list.
+  simp [hxnotlt, hxeq,̵ ̵t̵h̵i̵s̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1161:12: This simp argument is unused:
+  hxnotlt
+
+Hint: Omit it from the simp argument list.
+  simp [hxn̵o̵t̵l̵t̵,̵ ̵h̵x̵eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1196:36: This simp argument is unused:
+  hxlt
+
+Hint: Omit it from the simp argument list.
+  simp [Rcompare, pure, Id.run, hxl̵t̵,̵ ̵h̵x̵eq', heq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1243:20: This simp argument is unused:
+  min_eq_left hle
+
+Hint: Omit it from the simp argument list.
+  simp [hlt, hle,̵ ̵m̵i̵n̵_̵e̵q̵_̵l̵e̵f̵t̵ ̵h̵l̵e̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1248:12: This simp argument is unused:
+  hnotlt
+
+Hint: Omit it from the simp argument list.
+  simp [h̵n̵o̵t̵l̵t̵,̵ ̵min_eq_left le_rfl]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1248:20: This simp argument is unused:
+  min_eq_left le_rfl
+
+Hint: Omit it from the simp argument list.
+  simp [hnotlt,̵ ̵m̵i̵n̵_̵e̵q̵_̵l̵e̵f̵t̵ ̵l̵e̵_̵r̵f̵l̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1253:32: This simp argument is unused:
+  min_eq_right hleyx
+
+Hint: Omit it from the simp argument list.
+  simp [hnotlt, heq, hleyx,̵ ̵m̵i̵n̵_̵e̵q̵_̵r̵i̵g̵h̵t̵ ̵h̵l̵e̵y̵x̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1485:18: missing doc string for public def eqb_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Raux.lean:1510:2: 'all_goals cases (hNe rfl)' tactic does nothing
+
+Note: This linter can be disabled with `set_option linter.unusedTactic false`
+warning: FloatSpec/src/Core/Raux.lean:1511:4: this tactic is never executed
+
+Note: This linter can be disabled with `set_option linter.unreachableTactic false`
+warning: FloatSpec/src/Core/Raux.lean:1629:38: This simp argument is unused:
+  cond_Ropp
+
+Hint: Omit it from the simp argument list.
+  simp [wp, PostCond.noThrow, Id.run, c̵o̵n̵d̵_̵R̵o̵p̵p̵,̵ ̵neg_mul]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1642:38: This simp argument is unused:
+  cond_Ropp
+
+Hint: Omit it from the simp argument list.
+  simp [wp, PostCond.noThrow, Id.run, c̵o̵n̵d̵_̵R̵o̵p̵p̵,̵ ̵mul_neg]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1656:40: This simp argument is unused:
+  cond_Ropp
+
+Hint: Omit it from the simp argument list.
+  simp [wp, PostCond.noThrow, Id.run, c̵o̵nd̵_̵R̵o̵p̵p̵,̵ ̵n̵eg_add, sub_eq_add_neg, add_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1656:51: This simp argument is unused:
+  neg_add
+
+Hint: Omit it from the simp argument list.
+  simp [wp, PostCond.noThrow, Id.run, cond_Ropp, n̵e̵g̵_̵a̵d̵d̵,̵ ̵sub_eq_add_neg, add_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1656:60: This simp argument is unused:
+  sub_eq_add_neg
+
+Hint: Omit it from the simp argument list.
+  simp [wp, PostCond.noThrow, Id.run, cond_Ropp, neg_add, s̵u̵b̵_̵e̵q̵_̵a̵d̵d̵_̵n̵e̵g̵,̵ ̵add_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1698:60: This simp argument is unused:
+  cond_Ropp
+
+Hint: Omit it from the simp argument list.
+  simp [wp, PostCond.noThrow, Id.run, pure, bind, Rlt_bool,̵ ̵c̵o̵n̵d̵_̵R̵o̵p̵p̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1700:14: This simp argument is unused:
+  decide_eq_true_iff
+
+Hint: Omit it from the simp argument list.
+  simp [hb,̵ ̵d̵e̵c̵i̵d̵e̵_̵e̵q̵_̵t̵r̵u̵e̵_̵i̵f̵f̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1701:14: This simp argument is unused:
+  decide_eq_true_iff
+
+Hint: Omit it from the simp argument list.
+  simp [hb,̵ ̵d̵e̵c̵i̵d̵e̵_̵e̵q̵_̵t̵r̵u̵e̵_̵i̵f̵f̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1943:61: This simp argument is unused:
+  Zceil
+
+Hint: Omit it from the simp argument list.
+  simp [Zc̵e̵i̵l̵,̵ ̵Z̵floor, h]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1943:68: This simp argument is unused:
+  Zfloor
+
+Hint: Omit it from the simp argument list.
+  simp [Zceil, Z̵f̵l̵o̵o̵r̵,̵ ̵h]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:1969:17: This simp argument is unused:
+  hlt
+
+Hint: Omit it from the simp argument list.
+  simp [Zceil, hl̵t̵,̵ ̵h̵xeq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:2026:39: This simp argument is unused:
+  Int.floor_neg
+
+Hint: Omit it from the simp argument list.
+  simp [hxpos, hnotlt, Int.ceil_neg,̵ ̵I̵n̵t̵.̵f̵l̵o̵o̵r̵_̵n̵e̵g̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:2031:40: This simp argument is unused:
+  Int.ceil_neg
+
+Hint: Omit it from the simp argument list.
+  simp [hxpos, hxlt, Int.floor_neg,̵ ̵I̵n̵t̵.̵c̵e̵i̵l̵_̵n̵e̵g̵]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:2134:60: This simp argument is unused:
+  Zfloor
+
+Hint: Omit it from the simp argument list.
+  simp [Zf̵l̵o̵o̵r̵,̵ ̵Z̵ceil, h]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:2134:68: This simp argument is unused:
+  Zceil
+
+Hint: Omit it from the simp argument list.
+  simp [Zfloor, Z̵c̵e̵i̵l̵,̵ ̵h]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:2160:18: This simp argument is unused:
+  Zceil
+
+Hint: Omit it from the simp argument list.
+  simp [Zfloor, Z̵c̵e̵i̵l̵,̵ ̵hlt, hxeq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/Core/Raux.lean:2160:25: This simp argument is unused:
+  hlt
+
+Hint: Omit it from the simp argument list.
+  simp [Zfloor, Zceil, hl̵t̵,̵ ̵h̵xeq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+error: FloatSpec/src/Core/Raux.lean:2419:10: Type mismatch
+  if_pos hfx
+has type
+  (if ↑⌊x⌋ = x then ?m.201 else ?m.202) = ?m.201
+but is expected to have type
+  (if ↑⌊x⌋ < x then -1 else if ↑⌊x⌋ = x then 0 else 1) = 0
+error: FloatSpec/src/Core/Raux.lean:2421:51: Tactic `simp` failed with a nested error:
+maximum recursion depth has been reached
+use `set_option maxRecDepth <num>` to increase limit
+use `set_option diagnostics true` to get diagnostic information
+error: FloatSpec/src/Core/Raux.lean:2424:10: Type mismatch
+  if_pos hx
+has type
+  (if x = ↑⌈x⌉ then ?m.262 else ?m.263) = ?m.262
+but is expected to have type
+  (if x < ↑⌈x⌉ then -1 else if x = ↑⌈x⌉ then 0 else 1) = 0
+warning: FloatSpec/src/Core/Raux.lean:2444:18: missing doc string for public def Rcompare_ceil_floor_middle_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Core/Raux.lean:2562:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2575:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2585:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2595:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2608:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2621:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2634:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2647:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2663:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2679:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2692:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2705:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2718:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2731:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2741:37: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:2744:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2754:36: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:2754:49: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:2757:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2771:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2784:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2797:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2810:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2829:34: unused variable `P`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:2839:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2851:30: unused variable `P`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:2859:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2871:32: unused variable `P`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Core/Raux.lean:2878:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2909:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2941:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2951:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2961:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2974:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2984:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:2994:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3004:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3014:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3024:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3037:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3047:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3057:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3067:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3077:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3091:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3105:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3119:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3133:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3143:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3157:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Raux.lean:3170:8: declaration uses 'sorry'
+error: Lean exited with code 1
+Some required targets logged failures:
+- FloatSpec.src.Core.Raux
+error: build failed
