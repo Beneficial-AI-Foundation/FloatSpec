@@ -91,7 +91,7 @@ trap 'kill -TERM "$KILLER_BG_PID" 2>/dev/null || true' EXIT INT TERM
 IFS= read -r -d '' msg <<'EOF' || true
 Please ensure your implementation Always Works™ for:
 
-## Task: Fix Proofs in FloatSpec/src/Core/Raux.lean
+## Task: Fix Proofs in FloatSpec/src/Core/Float_prop.lean
 
 ## Scope
 
@@ -156,8 +156,7 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 - Skip already-proven theorems!! There might be warnings be just leave them there!
 - You can use exisiting (and proved) theorem to assist your proving. If a theorem is necessary but not proved, you can turn to work on that first. The useful theorems might not be in the same file, but in the import list
 - When you are trying to use a certain lemma, check through mcp tools (or https://github.com/leanprover-community/mathlib4) to make sure the lemma exists. Else, write your own implementation of the lemma.
-- The MCP tool is buggy, so please prioritize lake build and set up a timeout bound (~5 min) whenever you are using either of them.
-- You are not allowed to delete ANY theorems or functions in the file. You can only modify them in a very cautious way!
+- You are not allowed to delete ANY theorems or functions in the file. You can only modify them in a very cautious way, and if you think some theorem itself is not correct, find its corresponding theorem in coq at /home/hantao/code/flocq/src/Core/Float_prop.v and use that definition instead. Do not change the theorem without any reference!
 - If you observe that the whole file is completed, which means that no sorry or error could be spotted in the file, find the process containing `iterate_codex.sh` and terminate it.
 
 ### Success Criteria
@@ -171,7 +170,7 @@ EOF
 cmd=(codex --model gpt-5 high exec "$msg" --dangerously-bypass-approvals-and-sandbox)
 
 # ========== Main execution loop (5 hours) ==========
-end=$(( $(date +%s) + 2*60*60 ))
+end=$(( $(date +%s) + 5*60*60 ))
 
 echo "$(ts) Starting execution loop. End at $(date -d "@$end" +"%Y-%m-%d %H:%M:%S" 2>/dev/null || date -r "$end" +"%Y-%m-%d %H:%M:%S")"
 while [ "$(date +%s)" -lt "$end" ]; do

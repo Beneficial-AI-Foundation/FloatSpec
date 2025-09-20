@@ -33,6 +33,18 @@ variable (beta : Int) (hbeta : 1 < beta)
 
 section FloatProp
 
+/-- Helper: if `(m : ℝ) < (beta : ℝ) ^ n`, then `m + 1 ≤ beta ^ n` as integers. -/
+private lemma int_lt_pow_real_to_int (beta m : Int) (n : Nat) :
+  (m : ℝ) < ((beta : ℝ) ^ n) → m + 1 ≤ beta ^ n := by
+  intro h
+  -- Convert RHS to an Int-cast to use `Int.cast_lt`
+  have hR : (m : ℝ) < (((beta ^ n : Int) : ℝ)) := by
+    simpa [Int.cast_pow]
+  -- Back to integers and apply `add_one_le_iff`
+  exact (Int.add_one_le_iff.mpr ((Int.cast_lt).1 hR))
+
+--
+
 /-- Magnitude function for real numbers
 
     Returns the exponent such that beta^(mag-1) ≤ |x| < beta^mag.
@@ -630,8 +642,10 @@ Proof.
   now apply Zle_minus_le_0.
 Qed.
 -/
-theorem F2R_p1_le_bpow (f : FlocqFloat beta) (hbeta : 1 < beta) :
-  0 < f.Fnum → (F2R f).run < (beta : ℝ) ^ (f.Fexp + 1) := by
+theorem F2R_p1_le_bpow (m e1 e2 : Int) (hbeta : 1 < beta) :
+  0 < m →
+  (F2R (FlocqFloat.mk m e1 : FlocqFloat beta)).run < (beta : ℝ) ^ e2 →
+  (F2R (FlocqFloat.mk (m + 1) e1 : FlocqFloat beta)).run ≤ (beta : ℝ) ^ e2 := by
   sorry
 
 /-

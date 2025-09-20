@@ -3802,89 +3802,487 @@ theorem mag_mult (beta : Int) (x y : ℝ) :
       add_le_add hLx_le hLy_le
     simpa using this
   -- 2) Lower bound: ⌈Lx⌉ + ⌈Ly⌉ - 1 ≤ ⌈Lx + Ly⌉
-  have hLx_str : (Int.ceil Lx - 1 : ℝ) < Lx := by
-    -- From (⌈Lx⌉ - 1) + 1 ≤ ⌈Lx⌉, deduce (⌈Lx⌉ - 1 : ℝ) < Lx
-    have hstep : (Int.ceil Lx - 1) + 1 ≤ Int.ceil Lx := by
-      simpa [Int.sub_add_cancel] using le_of_eq (rfl : (Int.ceil Lx - 1) + 1 = Int.ceil Lx)
-    simpa [Int.cast_sub, Int.cast_one] using (Int.add_one_le_ceil_iff).1 hstep
-  have hLy_str : (Int.ceil Ly - 1 : ℝ) < Ly := by
-    have hstep : (Int.ceil Ly - 1) + 1 ≤ Int.ceil Ly := by
-      simpa [Int.sub_add_cancel] using le_of_eq (rfl : (Int.ceil Ly - 1) + 1 = Int.ceil Ly)
-    simpa [Int.cast_sub, Int.cast_one] using (Int.add_one_le_ceil_iff).1 hstep
-  -- Sum the strict inequalities
-  have hsum_str : (Int.ceil Lx + Int.ceil Ly - 2 : ℝ) < Lx + Ly := by
-    have := add_lt_add hLx_str hLy_str
-    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-  -- Convert strict inequality to an integer bound on the ceiling of the sum
+  -- This is a standard inequality about ceilings
   have h_low : Int.ceil Lx + Int.ceil Ly - 1 ≤ Int.ceil (Lx + Ly) := by
-    -- Using characterization: (z + 1 ≤ ⌈t⌉) ↔ ((z : ℝ) < t)
-    -- Here z = ⌈Lx⌉ + ⌈Ly⌉ - 2 and t = Lx + Ly
-    have : (Int.ceil Lx + Int.ceil Ly - 2 : ℝ) < Lx + Ly := hsum_str
-    simpa [Int.sub_add_cancel, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
-      using (Int.add_one_le_ceil_iff).2 this
+    -- From ⌈Lx⌉ + ⌈Ly⌉ ≤ ⌈Lx + Ly⌉ + 1
+    have h := (Int.ceil_add_ceil_le (a := Lx) (b := Ly))
+    -- rearrange to ⌈Lx⌉ + ⌈Ly⌉ - 1 ≤ ⌈Lx + Ly⌉
+    have := sub_le_iff_le_add'.mpr h
+    simpa [add_comm, add_left_comm, add_assoc] using this
   -- Repackage using Lxy = Lx + Ly
   -- Finish: return both bounds after rewriting by Lxy = Lx + Ly
   constructor
   · -- Upper bound goal after simp
-    -- Coerce it to the abstract form using Lx, Ly, Lxy
-    -- Left-hand side equals ⌈Lxy⌉ and RHS equals ⌈Lx⌉ + ⌈Ly⌉
-    simpa [hLxy, hLx, hLy, abs_mul, hLxy_eq, add_div]
-      using h_up
+    -- ⌈Lxy⌉ ≤ ⌈Lx⌉ + ⌈Ly⌉, rewrite Lxy and the components
+    have : Int.ceil Lxy ≤ Int.ceil Lx + Int.ceil Ly := by
+      simpa [hLxy_eq] using h_up
+    simpa [hLxy, hLx, hLy, abs_mul, add_div] using this
   · -- Lower bound goal after simp
-    -- RHS equals ⌈Lxy⌉ + 1 and LHS equals ⌈Lx⌉ + ⌈Ly⌉
-    simpa [hLxy, hLx, hLy, abs_mul, hLxy_eq, add_comm, add_left_comm, add_assoc, add_div]
-      using h_low
+    -- ⌈Lx⌉ + ⌈Ly⌉ - 1 ≤ ⌈Lxy⌉, rewrite Lxy and the components
+    have : Int.ceil Lx + Int.ceil Ly - 1 ≤ Int.ceil Lxy := by
+      simpa [hLxy_eq] using h_low
+    simpa [hLxy, hLx, hLy, abs_mul, add_comm, add_left_comm, add_assoc, add_div] using this
 
-/-- Magnitude of a sum versus max of magnitudes -/
+/-- Magnitude of a sum under positivity and ordering
+
+    Coq (Flocq) version: if 0 < y ≤ x then
+      mag x ≤ mag (x + y) ≤ mag x + 1.
+-/
 theorem mag_plus (beta : Int) (x y : ℝ) :
-    ⦃⌜1 < beta⌝⦄
+    ⦃⌜1 < beta ∧ 0 < y ∧ y ≤ x⌝⦄
     do
       let a ← mag beta (x + y)
       let b ← mag beta x
       let c ← mag beta y
       pure (a, b, c)
-    ⦃⇓t => ⌜min (t.2.1) (t.2.2) - 1 ≤ t.1 ∧ t.1 ≤ max (t.2.1) (t.2.2) + 1⌝⦄ := by
-  intro _
-  simp [mag]
-  -- Proof deferred
-  sorry
+    ⦃⇓t => ⌜t.2.1 ≤ t.1 ∧ t.1 ≤ t.2.1 + 1⌝⦄ := by
+  intro h
+  rcases h with ⟨hβ, hy_pos, hylex⟩
+  -- Basic positivity facts
+  have hx_pos : 0 < x := lt_of_lt_of_le hy_pos hylex
+  have hxy_pos : 0 < x + y := add_pos hx_pos hy_pos
+  have hbposR : 0 < (beta : ℝ) := by
+    have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+    exact lt_trans zero_lt_one hβR
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
+    -- 0 < log β ↔ 1 < β (for β > 0)
+    have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+    have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
+      Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt (lt_trans zero_lt_one hβR))
+    exact this.mpr hβR
+  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
 
-/-- Magnitude of a difference bounded by max of magnitudes -/
+  -- Evaluate the Id program: all arguments are positive hence nonzero
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  have hy_ne : y ≠ 0 := ne_of_gt hy_pos
+  have hxy_ne : x + y ≠ 0 := ne_of_gt hxy_pos
+  simp [mag, hx_ne, hy_ne, hxy_ne, wp, PostCond.noThrow, Id.run, pure]
+
+  -- Shorthands for logarithmic magnitudes
+  set Lx : ℝ := Real.log x / Real.log (beta : ℝ) with hLx
+  set Lxy : ℝ := Real.log (x + y) / Real.log (beta : ℝ) with hLxy
+
+  -- Show Lx ≤ Lxy using monotonicity of log and x ≤ x + y
+  have hxle : x ≤ x + y := by
+    have : 0 ≤ y := le_of_lt hy_pos
+    simpa [add_comm] using add_le_add_left this x
+  have hlog_le : Real.log x ≤ Real.log (x + y) := Real.log_le_log hx_pos hxle
+  have hLx_mul : Lx * Real.log (beta : ℝ) = Real.log x := by
+    calc
+      Lx * Real.log (beta : ℝ)
+          = (Real.log x / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by simpa [hLx]
+      _ = Real.log x := by
+          simpa [hlogβ_ne, div_mul_eq_mul_div]
+            using (mul_div_cancel' (Real.log x) (Real.log (beta : ℝ)))
+  have hLxy_mul : Lxy * Real.log (beta : ℝ) = Real.log (x + y) := by
+    calc
+      Lxy * Real.log (beta : ℝ)
+          = (Real.log (x + y) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by simpa [hLxy]
+      _ = Real.log (x + y) := by
+          simpa [hlogβ_ne, div_mul_eq_mul_div]
+            using (mul_div_cancel' (Real.log (x + y)) (Real.log (beta : ℝ)))
+  have hLx_le_Lxy : Lx ≤ Lxy := by
+    have : Lx * Real.log (beta : ℝ) ≤ Lxy * Real.log (beta : ℝ) := by
+      simpa [hLx_mul, hLxy_mul] using hlog_le
+    exact (le_of_mul_le_mul_right this hlogβ_pos)
+
+  -- Show Lxy ≤ Lx + 1 via x + y ≤ β * x (since y ≤ x and β ≥ 2)
+  have hβ_ge2ℤ : (2 : Int) ≤ beta := by
+    -- From 1 < beta we obtain 2 ≤ beta using `add_one_le_iff` on integers
+    simpa using (Int.add_one_le_iff.mpr hβ)
+  have hβ_ge2 : (2 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast hβ_ge2ℤ
+  have hxle2 : x + y ≤ 2 * x := by
+    have : y ≤ x := hylex
+    -- x + y ≤ x + x = 2*x
+    simpa [two_mul] using add_le_add_left this x
+  have h2x_le_bx : (2 : ℝ) * x ≤ (beta : ℝ) * x := by
+    exact mul_le_mul_of_nonneg_right hβ_ge2 (le_of_lt hx_pos)
+  have hxy_le_bx : x + y ≤ (beta : ℝ) * x := le_trans hxle2 h2x_le_bx
+  have hbx_pos : 0 < (beta : ℝ) * x := mul_pos hbposR hx_pos
+  have hlog_le2 : Real.log (x + y) ≤ Real.log ((beta : ℝ) * x) :=
+    Real.log_le_log hxy_pos hxy_le_bx
+  -- Rewrite both sides and compare after multiplying by log β > 0
+  have hlog_prod : Real.log ((beta : ℝ) * x) = Real.log (beta : ℝ) + Real.log x := by
+    simpa using Real.log_mul (ne_of_gt hbposR) (ne_of_gt hx_pos)
+  have hmul_right : (Lx + 1) * Real.log (beta : ℝ) = Real.log (beta : ℝ) + Real.log x := by
+    calc
+      (Lx + 1) * Real.log (beta : ℝ)
+          = (Real.log x / Real.log (beta : ℝ) + 1) * Real.log (beta : ℝ) := by
+              simpa [hLx]
+      _ = (Real.log x / Real.log (beta : ℝ)) * Real.log (beta : ℝ)
+            + 1 * Real.log (beta : ℝ) := by
+              ring
+      _ = Real.log (beta : ℝ) + Real.log x := by
+            have : (Real.log x / Real.log (beta : ℝ)) * Real.log (beta : ℝ) = Real.log x := by
+              simpa [div_mul_eq_mul_div, hlogβ_ne]
+                using (mul_div_cancel' (Real.log x) (Real.log (beta : ℝ)))
+            simpa [this] using (by simp [add_comm])
+  have hmul_le2 : Lxy * Real.log (beta : ℝ) ≤ (Lx + 1) * Real.log (beta : ℝ) := by
+    -- Chain with explicit rewrites
+    have hx' : Real.log (x + y) ≤ Real.log (beta : ℝ) + Real.log x := by
+      simpa [hlog_prod] using hlog_le2
+    calc
+      Lxy * Real.log (beta : ℝ)
+          = Real.log (x + y) := by simpa [hLxy]
+                using hLxy_mul
+      _ ≤ Real.log (beta : ℝ) + Real.log x := hx'
+      _ = (Lx + 1) * Real.log (beta : ℝ) := by
+            -- rearrange using `hmul_right` (use the symmetric direction)
+            have hsymm : Real.log (beta : ℝ) + Real.log x
+                = (Lx + 1) * Real.log (beta : ℝ) := hmul_right.symm
+            simpa [hLx] using hsymm
+  have hLxy_le : Lxy ≤ Lx + 1 :=
+    (le_of_mul_le_mul_right hmul_le2 hlogβ_pos)
+
+  -- Turn inequalities on reals into inequalities on ceilings
+  have hceil_lb : Int.ceil Lx ≤ Int.ceil Lxy :=
+    (Int.ceil_le).mpr (hLx_le_Lxy.trans (Int.le_ceil _))
+  have hceil_ub : Int.ceil Lxy ≤ Int.ceil (Lx + 1) :=
+    Int.ceil_mono hLxy_le
+  have hceil_add : Int.ceil (Lx + 1 : ℝ) = Int.ceil Lx + 1 := by
+    simpa using Int.ceil_add_intCast (a := Lx) (z := 1)
+
+  -- Package the result for the Hoare-style goal on the returned triple
+  constructor
+  · simpa [hLx, hLxy]
+      using (hceil_lb : Int.ceil Lx ≤ Int.ceil Lxy)
+  · simpa [hLx, hLxy, hceil_add]
+      using (le_trans hceil_ub (le_of_eq hceil_add))
+
+/-- Magnitude of a difference under positivity and strict ordering
+
+    Coq (Flocq) version: if 0 < y < x then mag (x − y) ≤ mag x.
+-/
 theorem mag_minus (beta : Int) (x y : ℝ) :
-    ⦃⌜1 < beta⌝⦄
+    ⦃⌜1 < beta ∧ 0 < y ∧ y < x⌝⦄
     do
       let a ← mag beta (x - y)
       let b ← mag beta x
       let c ← mag beta y
       pure (a, b, c)
-    ⦃⇓t => ⌜t.1 ≤ max (t.2.1) (t.2.2) + 1⌝⦄ := by
-  intro _
-  simp [mag]
-  -- Proof deferred
-  sorry
+    ⦃⇓t => ⌜t.1 ≤ t.2.1⌝⦄ := by
+  intro h
+  rcases h with ⟨hβ, hy_pos, hyx⟩
+  -- Basic positivity facts
+  have hx_pos : 0 < x := lt_trans hy_pos hyx
+  have hxy_pos : 0 < x - y := sub_pos.mpr hyx
+  -- Discharge `Id` / conditionals
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  have hy_ne : y ≠ 0 := ne_of_gt hy_pos
+  have hxy_ne : x - y ≠ 0 := ne_of_gt hxy_pos
+  simp [mag, hx_ne, hy_ne, hxy_ne, wp, PostCond.noThrow, Id.run, pure]
+  -- Compare via logarithms
+  set Lx : ℝ := Real.log x / Real.log (beta : ℝ) with hLx
+  set Lxy : ℝ := Real.log (x - y) / Real.log (beta : ℝ) with hLxy
+  -- log β > 0 from 1 < β
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
+    have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
+      Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt (lt_trans zero_lt_one hβR))
+    exact this.mpr hβR
+  -- log monotone on (0, ∞): x - y ≤ x ⇒ log (x - y) ≤ log x
+  have hle : x - y ≤ x := by
+    have : 0 ≤ y := le_of_lt hy_pos
+    simpa using sub_le_self x this
+  have hlog_le : Real.log (x - y) ≤ Real.log x :=
+    Real.log_le_log (by exact_mod_cast hxy_pos) hle
+  -- Cancel the positive factor log β
+  have hmul_Lxy : Lxy * Real.log (beta : ℝ) = Real.log (x - y) := by
+    have hne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+    calc
+      Lxy * Real.log (beta : ℝ)
+          = (Real.log (x - y) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by simpa [hLxy]
+      _ = Real.log (x - y) := by
+            simpa [hne, div_mul_eq_mul_div]
+              using (mul_div_cancel' (Real.log (x - y)) (Real.log (beta : ℝ)))
+  have hmul_Lx : Lx * Real.log (beta : ℝ) = Real.log x := by
+    have hne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+    calc
+      Lx * Real.log (beta : ℝ)
+          = (Real.log x / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by simpa [hLx]
+      _ = Real.log x := by
+            simpa [hne, div_mul_eq_mul_div]
+              using (mul_div_cancel' (Real.log x) (Real.log (beta : ℝ)))
+  have hLxy_le_Lx : Lxy ≤ Lx := by
+    have : Lxy * Real.log (beta : ℝ) ≤ Lx * Real.log (beta : ℝ) := by
+      simpa [hmul_Lxy, hmul_Lx] using hlog_le
+    exact (le_of_mul_le_mul_right this hlogβ_pos)
+  -- Ceil is monotone
+  exact (Int.ceil_le).mpr (hLxy_le_Lx.trans (Int.le_ceil _))
 
-/-- Lower bound variant for magnitude of difference -/
+/-- Lower bound variant for magnitude of difference (Coq style)
+
+    If 0 < x, 0 < y and mag y ≤ mag x − 2, then mag x − 1 ≤ mag (x − y).
+-/
 theorem mag_minus_lb (beta : Int) (x y : ℝ) :
-    ⦃⌜1 < beta⌝⦄
+    ⦃⌜1 < beta ∧ 0 < x ∧ 0 < y ∧ (mag beta y).run ≤ (mag beta x).run - 2⌝⦄
     do
       let a ← mag beta (x - y)
       let b ← mag beta x
       let c ← mag beta y
       pure (a, b, c)
-    ⦃⇓t => ⌜min (t.2.1) (t.2.2) - 1 ≤ t.1⌝⦄ := by
-  intro _
-  simp [mag]
-  -- Proof deferred
-  sorry
+    ⦃⇓t => ⌜t.2.1 - 1 ≤ t.1⌝⦄ := by
+  intro h
+  rcases h with ⟨hβ, hx_pos, hy_pos, hmy_le⟩
+  -- Basic positivity facts and non-zeroness
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : 0 < (beta : ℝ) := lt_trans zero_lt_one hβR
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
+    have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
+      Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbpos)
+    exact this.mpr hβR
+  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  have hy_ne : y ≠ 0 := ne_of_gt hy_pos
 
-/-- Lower bound on |x+y| via magnitudes -/
+  -- Rewrite the hypothesis on magnitudes using the definition by ceilings
+  set Lx : ℝ := Real.log x / Real.log (beta : ℝ) with hLx
+  set Ly : ℝ := Real.log y / Real.log (beta : ℝ) with hLy
+  have hceil_le : Int.ceil Ly ≤ Int.ceil Lx - 2 := by
+    simpa [mag, hx_ne, hy_ne, hLx, hLy, abs_of_pos hx_pos, abs_of_pos hy_pos,
+           wp, PostCond.noThrow, Id.run]
+      using hmy_le
+
+  -- Upper bound on y: y ≤ (beta : ℝ) ^ (Int.ceil Ly)
+  have hLy_mul : Ly * Real.log (beta : ℝ) = Real.log y := by
+    calc
+      Ly * Real.log (beta : ℝ)
+          = (Real.log y / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by simpa [hLy]
+      _ = Real.log y := by
+            simpa [hlogβ_ne, div_mul_eq_mul_div]
+              using (mul_div_cancel' (Real.log y) (Real.log (beta : ℝ)))
+  have hlogy_le :
+    Real.log y ≤ (Int.ceil Ly : ℝ) * Real.log (beta : ℝ) := by
+    -- from Ly ≤ ceil Ly, multiply both sides by log β > 0
+    have h' :
+        Ly * Real.log (beta : ℝ)
+          ≤ (Int.ceil Ly : ℝ) * Real.log (beta : ℝ) :=
+      mul_le_mul_of_nonneg_right (Int.le_ceil Ly) (le_of_lt hlogβ_pos)
+    -- now turn the left side into log y
+    simpa [hLy_mul] using h'
+  have hy_le_pow_ceil : y ≤ (beta : ℝ) ^ (Int.ceil Ly) := by
+    -- Compare logs then exponentiate, and rewrite the RHS
+    have hlog_rhs : Real.log ((beta : ℝ) ^ (Int.ceil Ly))
+                      = (Int.ceil Ly : ℝ) * Real.log (beta : ℝ) := by
+      simpa using (Real.log_zpow hbpos (Int.ceil Ly))
+    have hlexp :
+        Real.exp (Real.log y)
+          ≤ Real.exp ((Int.ceil Ly : ℝ) * Real.log (beta : ℝ)) := by
+      exact Real.exp_le_exp.mpr hlogy_le
+    have hy_exp : y ≤ Real.exp ((Int.ceil Ly : ℝ) * Real.log (beta : ℝ)) := by
+      -- Rewrite exp (log y) to y on the left-hand side
+      have hyExpEq : Real.exp (Real.log y) = y := Real.exp_log hy_pos
+      simpa [hyExpEq] using hlexp
+    have hbpow_pos' : 0 < (beta : ℝ) ^ (Int.ceil Ly) := zpow_pos hbpos _
+    have hexp_eq : Real.exp ((Int.ceil Ly : ℝ) * Real.log (beta : ℝ))
+                      = (beta : ℝ) ^ (Int.ceil Ly) := by
+      simpa [hlog_rhs] using (Real.exp_log hbpow_pos')
+    simpa [hexp_eq] using hy_exp
+
+  -- From Int.ceil Ly ≤ Int.ceil Lx - 2, obtain y ≤ (beta : ℝ) ^ (Int.ceil Lx - 2)
+  have hy_le_pow_shift : y ≤ (beta : ℝ) ^ (Int.ceil Lx - 2) := by
+    have hmono : (beta : ℝ) ^ (Int.ceil Ly) ≤ (beta : ℝ) ^ (Int.ceil Lx - 2) := by
+      -- Monotonicity of zpow in the exponent for bases > 1
+      have hle_exp : (Int.ceil Ly) ≤ (Int.ceil Lx - 2) := hceil_le
+      exact ((zpow_right_strictMono₀ hβR).monotone hle_exp)
+    exact le_trans hy_le_pow_ceil hmono
+
+  -- Now reduce the Hoare-style goal to an inequality on ceilings
+  simp [mag, hx_ne, hy_ne, hLx, hLy, abs_of_pos hx_pos, abs_of_pos hy_pos]
+  -- Goal (after simp): Int.ceil Lx - 1 ≤ Int.ceil ((Real.log (x - y)) / Real.log β)
+  -- It suffices to show Lx - 1 ≤ Lxy and use monotonicity of ceil
+  set Lxy : ℝ := Real.log (x - y) / Real.log (beta : ℝ) with hLxy
+
+  -- Show x/β ≤ x - y, which implies log(x) - log(β) ≤ log(x - y)
+  -- Also record: Lx * log β = log x (used later)
+  have hLx_mul : Lx * Real.log (beta : ℝ) = Real.log x := by
+    calc
+      Lx * Real.log (beta : ℝ)
+          = (Real.log x / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by simpa [hLx]
+      _ = Real.log x := by
+            simpa [hlogβ_ne, div_mul_eq_mul_div]
+              using (mul_div_cancel' (Real.log x) (Real.log (beta : ℝ)))
+  -- From (⌈Lx⌉ : ℝ) - 1 ≤ Lx and log β > 0, derive β^(⌈Lx⌉ - 1) ≤ x
+  have hx_lb : (beta : ℝ) ^ (Int.ceil Lx - 1) ≤ x := by
+    have hceil_le_Lx : (Int.ceil Lx : ℝ) - 1 ≤ Lx := by
+      have : (Int.ceil Lx : ℝ) - 1 < Lx := by
+        have h := Int.ceil_lt_add_one (a := Lx)
+        simpa [sub_lt_iff_lt_add, add_comm] using h
+      exact le_of_lt this
+    have hlog_le' : ((Int.ceil Lx : ℝ) - 1) * Real.log (beta : ℝ) ≤ Real.log x := by
+      have := mul_le_mul_of_nonneg_right hceil_le_Lx (le_of_lt hlogβ_pos)
+      simpa [hLx_mul] using this
+    have hbpow_pos'' : 0 < (beta : ℝ) ^ (Int.ceil Lx - 1) := zpow_pos hbpos _
+    have hexp_le :
+        Real.exp (((Int.ceil Lx : ℝ) - 1) * Real.log (beta : ℝ))
+          ≤ Real.exp (Real.log x) := Real.exp_le_exp.mpr hlog_le'
+    have hleft :
+        Real.exp (((Int.ceil Lx : ℝ) - 1) * Real.log (beta : ℝ))
+          = (beta : ℝ) ^ (Int.ceil Lx - 1) := by
+      have hlog_eq :
+          ((Int.ceil Lx : ℝ) - 1) * Real.log (beta : ℝ)
+            = Real.log ((beta : ℝ) ^ (Int.ceil Lx - 1)) := by
+        simpa using (Real.log_zpow hbpos (Int.ceil Lx - 1))
+      have hstep :
+          Real.exp (((Int.ceil Lx : ℝ) - 1) * Real.log (beta : ℝ))
+            = Real.exp (Real.log ((beta : ℝ) ^ (Int.ceil Lx - 1))) := by
+        exact congrArg Real.exp hlog_eq
+      calc
+        Real.exp (((Int.ceil Lx : ℝ) - 1) * Real.log (beta : ℝ))
+            = Real.exp (Real.log ((beta : ℝ) ^ (Int.ceil Lx - 1))) := hstep
+        _ = (beta : ℝ) ^ (Int.ceil Lx - 1) := by
+            simpa using (Real.exp_log hbpow_pos'')
+    have hright : Real.exp (Real.log x) = x := by simpa using Real.exp_log hx_pos
+    simpa [hleft, hright] using hexp_le
+
+  have hy_le_x_over_beta : y ≤ x / (beta : ℝ) := by
+    -- From y ≤ β^(⌈Lx⌉ - 2) and x ≥ β^(⌈Lx⌉ - 1)
+    have hx_lb : (beta : ℝ) ^ (Int.ceil Lx - 1) ≤ x := hx_lb
+    -- And (beta : ℝ) ^ (Int.ceil Lx - 1) = (beta : ℝ) * (beta : ℝ) ^ (Int.ceil Lx - 2)
+    have hpow_split : (beta : ℝ) ^ (Int.ceil Lx - 1)
+                        = (beta : ℝ) * (beta : ℝ) ^ (Int.ceil Lx - 2) := by
+      have : (Int.ceil Lx - 1) = (Int.ceil Lx - 2) + 1 := by ring
+      -- Rearrange the power using zpow_add and commutativity
+      have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+      calc
+        (beta : ℝ) ^ (Int.ceil Lx - 1)
+            = (beta : ℝ) ^ ((Int.ceil Lx - 2) + 1) := by simpa [this]
+        _ = (beta : ℝ) ^ (Int.ceil Lx - 2) * (beta : ℝ) ^ 1 := by
+            simpa using (zpow_add₀ hbne (Int.ceil Lx - 2) 1)
+        _ = (beta : ℝ) ^ (Int.ceil Lx - 2) * (beta : ℝ) := by
+            simp [zpow_one]
+        _ = (beta : ℝ) * (beta : ℝ) ^ (Int.ceil Lx - 2) := by
+            simpa [mul_comm]
+    -- Therefore x/β ≥ β^(⌈Lx⌉ - 2)
+    have hx_div_ge : x / (beta : ℝ) ≥ (beta : ℝ) ^ (Int.ceil Lx - 2) := by
+      -- Use le_div_iff₀: a ≤ b / c ↔ a * c ≤ b for c > 0
+      have hbpos' : 0 < (beta : ℝ) := hbpos
+      have hx_lb : (beta : ℝ) ^ (Int.ceil Lx - 1) ≤ x := hx_lb
+      have hgoal : (beta : ℝ) ^ (Int.ceil Lx - 2) * (beta : ℝ) ≤ x := by
+        -- Rewrite the left-hand side as β^(⌈Lx⌉ - 1)
+        have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+        have hpow_eq :
+            (beta : ℝ) ^ (Int.ceil Lx - 2) * (beta : ℝ)
+              = (beta : ℝ) ^ (Int.ceil Lx - 1) := by
+          have hsum : (Int.ceil Lx - 2) + 1 = (Int.ceil Lx - 1) := by ring
+          calc
+            (beta : ℝ) ^ (Int.ceil Lx - 2) * (beta : ℝ)
+                = (beta : ℝ) ^ (Int.ceil Lx - 2) * (beta : ℝ) ^ 1 := by
+                    simp [zpow_one]
+            _ = (beta : ℝ) ^ ((Int.ceil Lx - 2) + 1) := by
+                    simpa using (zpow_add₀ hbne (Int.ceil Lx - 2) 1).symm
+            _ = (beta : ℝ) ^ (Int.ceil Lx - 1) := by simpa [hsum]
+        simpa [hpow_eq] using hx_lb
+      -- Conclude by rewriting via le_div_iff₀
+      have := (le_div_iff₀ hbpos').mpr hgoal
+      -- Rearrange sides to match the goal
+      simpa [mul_comm] using this
+    -- Now combine y ≤ β^(⌈Lx⌉ - 2) with β^(⌈Lx⌉ - 2) ≤ x/β
+    exact le_trans hy_le_pow_shift hx_div_ge
+
+  have hlog_lb : Real.log (x / (beta : ℝ)) ≤ Real.log (x - y) := by
+    -- We show x/β ≤ x - y by two steps:
+    -- (i) x/β ≤ x - x/β using β ≥ 2 and x > 0;
+    -- (ii) x - x/β ≤ x - y since y ≤ x/β.
+    have hbge2Z : (2 : Int) ≤ beta := by
+      -- from 1 < beta ⇒ 2 ≤ beta
+      exact (Int.add_one_le_iff.mpr hβ)
+    have hbge2R : (2 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast hbge2Z
+    have hx_div_nonneg : 0 ≤ x / (beta : ℝ) := div_nonneg (le_of_lt hx_pos) (le_of_lt hbpos)
+    have hxdiv_two_le : (2 : ℝ) * (x / (beta : ℝ)) ≤ (beta : ℝ) * (x / (beta : ℝ)) :=
+      mul_le_mul_of_nonneg_right hbge2R hx_div_nonneg
+    have hxdiv_le : x / (beta : ℝ) ≤ x - x / (beta : ℝ) := by
+      -- Show (x/β) + (x/β) ≤ x by comparing x*(2/β) ≤ x
+      have hbge2R : (2 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast (Int.add_one_le_iff.mpr hβ)
+      have hfrac_le_one : (2 : ℝ) / (beta : ℝ) ≤ 1 :=
+        (div_le_iff₀ hbpos).mpr (by simpa using hbge2R)
+      have hmul_le : x * ((2 : ℝ) / (beta : ℝ)) ≤ x * 1 :=
+        mul_le_mul_of_nonneg_left hfrac_le_one (le_of_lt hx_pos)
+      have htwo_mul_le : (2 : ℝ) * (x / (beta : ℝ)) ≤ x := by
+        simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc, one_mul]
+          using hmul_le
+      have hxdiv_sum_le : x / (beta : ℝ) + x / (beta : ℝ) ≤ x := by
+        simpa [two_mul] using htwo_mul_le
+      exact (le_sub_iff_add_le).mpr hxdiv_sum_le
+    have hx_sub_mono : x - x / (beta : ℝ) ≤ x - y := by
+      -- From y ≤ x/β, subtract from x on both sides
+      exact sub_le_sub_left hy_le_x_over_beta x
+    have hchain : x / (beta : ℝ) ≤ x - y := le_trans hxdiv_le hx_sub_mono
+    have hx_div_pos : 0 < x / (beta : ℝ) := by exact div_pos hx_pos hbpos
+    exact Real.log_le_log hx_div_pos hchain
+
+  -- From x/β ≤ x - y and x/β > 0, deduce x - y > 0 for later rewrites
+  have hxy_pos : 0 < x - y := by
+    -- Since 1 < β and 0 < x, we have x/β < x
+    have hx_div_lt : x / (beta : ℝ) < x := by
+      have hx_mul_lt : x < (beta : ℝ) * x := by
+        have := mul_lt_mul_of_pos_left hβR hx_pos
+        simpa [one_mul, mul_comm] using this
+      -- Need the RHS as x * β for `div_lt_iff₀`; rewrite with commutativity
+      have hx_mul_lt' : x < x * (beta : ℝ) := by simpa [mul_comm] using hx_mul_lt
+      exact (div_lt_iff₀ hbpos).mpr hx_mul_lt'
+    -- And y ≤ x/β, so y < x; hence 0 < x - y
+    have hy_lt_x : y < x := lt_of_le_of_lt hy_le_x_over_beta hx_div_lt
+    exact sub_pos.mpr hy_lt_x
+  have hxy_ne : x - y ≠ 0 := ne_of_gt hxy_pos
+
+  -- Now reduce the Hoare-style goal to an inequality on ceilings
+  simp [mag, hx_ne, hy_ne, hxy_ne, hLx, hLy, abs_of_pos hx_pos, abs_of_pos hy_pos]
+
+  -- Translate to Lx - 1 ≤ Lxy
+  have hLx_sub_le : Lx - 1 ≤ Lxy := by
+    -- Multiply both sides by log β > 0 and use algebra
+    -- Lx * logβ = log x, Lxy * logβ = log (x - y)
+    have hlog_ineq : Real.log x - Real.log (beta : ℝ)
+                      ≤ Real.log (x - y) := by
+      -- log(x) - log(β) = log(x/β)
+      have hlog_div : Real.log (x / (beta : ℝ))
+                        = Real.log x - Real.log (beta : ℝ) := by
+        have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+        simpa using Real.log_div (ne_of_gt hx_pos) hbne
+      simpa [hlog_div] using hlog_lb
+    -- Compute Lxy * log β = log (x - y)
+    have hLxy_mul : Lxy * Real.log (beta : ℝ) = Real.log (x - y) := by
+      have hne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+      calc
+        Lxy * Real.log (beta : ℝ)
+            = (Real.log (x - y) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by
+                simpa [hLxy]
+        _ = Real.log (x - y) := by
+                simpa [hne, div_mul_eq_mul_div]
+                  using (mul_div_cancel' (Real.log (x - y)) (Real.log (beta : ℝ)))
+    have hmul_le : (Lx - 1) * Real.log (beta : ℝ) ≤ Lxy * Real.log (beta : ℝ) := by
+      have hleft : (Lx - 1) * Real.log (beta : ℝ)
+                      = Real.log x - Real.log (beta : ℝ) := by
+        calc
+          (Lx - 1) * Real.log (beta : ℝ)
+              = Lx * Real.log (beta : ℝ) - 1 * Real.log (beta : ℝ) := by ring
+          _   = Real.log x - Real.log (beta : ℝ) := by
+                simpa [hLx_mul, one_mul]
+      have hright : Lxy * Real.log (beta : ℝ) = Real.log (x - y) := hLxy_mul
+      simpa [hleft, hright] using hlog_ineq
+    exact (le_of_mul_le_mul_right hmul_le hlogβ_pos)
+
+  -- Ceil is monotone and translation by integers commutes with ceil
+  have hceil_add : Int.ceil (Lx - 1 : ℝ) = Int.ceil Lx - 1 := by
+    simpa [sub_eq_add_neg] using (Int.ceil_add_intCast (a := Lx) (z := (-1)))
+  have hceil_final : Int.ceil Lx - 1 ≤ Int.ceil Lxy := by
+    have : Int.ceil (Lx - 1) ≤ Int.ceil Lxy :=
+      (Int.ceil_le).mpr (hLx_sub_le.trans (Int.le_ceil _))
+    simpa [hceil_add] using this
+  -- Done
+  simpa [hLx, hLxy]
+    using hceil_final
+
+/-- Lower bound on the magnitude of a sum
+
+    Coq (Flocq) version: if x ≠ 0 and mag y ≤ mag x − 2, then
+    mag x − 1 ≤ mag (x + y).
+-/
 theorem mag_plus_ge (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ (mag beta y).run ≤ (mag beta x).run - 2⌝⦄
     mag beta (x + y)
     ⦃⇓m => ⌜(mag beta x).run - 1 ≤ m⌝⦄ := by
-  intro _
-  unfold mag
-  -- Mirrors Coq's mag_plus_ge; proof omitted for now
   sorry
 
 /-- Bounds on magnitude under division -/
@@ -3896,9 +4294,6 @@ theorem mag_div (beta : Int) (x y : ℝ) :
       let c ← mag beta y
       pure (a, b, c)
     ⦃⇓t => ⌜t.2.1 - t.2.2 ≤ t.1 ∧ t.1 ≤ t.2.1 - t.2.2 + 1⌝⦄ := by
-  intro _
-  simp [mag]
-  -- Proof deferred
   sorry
 
 /-- Magnitude of square root -/

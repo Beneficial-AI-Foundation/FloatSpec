@@ -9,17 +9,42 @@ if ! command -v "$TIMEOUT_BIN" >/dev/null 2>&1; then
   TIMEOUT_BIN=""
 fi
 
-# Build the multi-line prompt literally, no expansions.
-# NOTE: The line with EOF must be at column 1 with no trailing spaces/tabs.
-# The '|| true' prevents 'set -e' from exiting because read -d '' returns 1 at EOF.
-IFS= read -r -d '' msg <<'EOF' || true
+# Files to process and per-file run time (in hours)
+file_list=(
+  Raux.lean
+  Float_prop.lean
+  Generic_fmt.lean
+  Round_generic.lean
+)
+hours=(
+  2
+  3
+  5
+  5
+)
+
+# Sanity check: arrays must match
+if [[ ${#file_list[@]} -ne ${#hours[@]} ]]; then
+  echo "error: file_list and hours length mismatch" >&2
+  exit 1
+fi
+
+# Iterate over indices of file_list
+for i in "${!file_list[@]}"; do
+  f="${file_list[$i]}"
+  t="${hours[$i]}"
+
+  # Build the multi-line prompt literally, no expansions.
+  # NOTE: The line with EOF must be at column 1 with no trailing spaces/tabs.
+  # The '|| true' prevents 'set -e' from exiting because read -d '' returns 1 at EOF.
+  IFS= read -r -d '' msg <<'EOF' || true
 Please ensure your implementation Always Works™ for:
 
-## Task: Fix Proofs in FloatSpec/src/Core/Raux.lean
+## Task: Fix Proofs in FloatSpec/src/Core/__PLACEHOLDER__
 
 ## Scope
 
-theorems: Fix the first (only the very first, work really hard on it and don't care about others) theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the line number and the error type you need to fix using lake build (preferred) or MCP tool (the very first incomplete proof within the target file), then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
+theorems: Fix the first (only the very first, work really hard on it and don't care about others) theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the line number and the error type you need to fix using lake build (preferred) or MCP tool (the very first incomplete proof within the target file). If there is error, locate the error with the smallest line number and deal with that theorem; if there is not error, search for the very first sorry and deal with that theorem; if no sorry or error appear in this file, just report this process and end. Then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
 
 ### Prerequisites
 
@@ -74,15 +99,15 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 
 ### Important Notes
 
-- Use MCP tool instead of bash command to get diagnostic messages!
+- The MCP tool is buggy, so please prioritize lake build and set up a timeout bound (~5 min) whenever you are using either of them. AGAIN: DO NOT USE MCP TOOL NOW!!!
 - Some functions ARE difficult to prove - persistence is expected
     - If you are meeting difficulties at least come up with some useful lemma that could compile and is helpful to future proofs before ending your session. Remember that!
 - Skip already-proven theorems!! There might be warnings be just leave them there!
 - You can use exisiting (and proved) theorem to assist your proving. If a theorem is necessary but not proved, you can turn to work on that first. The useful theorems might not be in the same file, but in the import list
 - When you are trying to use a certain lemma, check through mcp tools (or https://github.com/leanprover-community/mathlib4) to make sure the lemma exists. Else, write your own implementation of the lemma.
-- The MCP tool is buggy, so please prioritize lake build and set up a timeout bound (~5 min) whenever you are using either of them.
 - You are not allowed to delete ANY theorems or functions in the file. You can only modify them in a very cautious way!
 - If you observe that the whole file is completed, which means that no sorry or error could be spotted in the file, find the process containing `iterate_codex.sh` and terminate it.
+- Again, the MCP tool is buggy, so please prioritize lake build and set up a timeout bound (~5 min) whenever you are using either of them.
 
 ### Success Criteria
 
@@ -91,7 +116,19 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 ✅ Each proof verified individually before moving on
 EOF
 
-# Build the CLI command as an array to preserve spaces/newlines
-cmd=(codex --model gpt-5 high exec "$msg" --dangerously-bypass-approvals-and-sandbox)
+  # Replace the placeholder with the actual file name
+  msg=${msg//__PLACEHOLDER__/$f}
 
-end=$(( $(date +%s) + 2*60*60 )); while [ "$(date +%s)" -lt "$end" ]; do "${cmd[@]}" || true; done
+  # Build the CLI command as an array to preserve spaces/newlines
+  # NOTE: Keep your original flags; remove the stray 'high' token if not supported.
+  cmd=(codex --model gpt-5 exec "$msg" --dangerously-bypass-approvals-and-sandbox)
+
+  end=$(( $(date +%s) + t*60*60 ))
+  while [[ $(date +%s) -lt $end ]]; do
+    if [[ -n "$TIMEOUT_BIN" ]]; then
+      "$TIMEOUT_BIN" 300 "${cmd[@]}" || true
+    else
+      "${cmd[@]}" || true
+    fi
+  done
+done
