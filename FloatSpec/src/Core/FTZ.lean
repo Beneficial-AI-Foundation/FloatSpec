@@ -120,7 +120,7 @@ theorem FTZ_exp_correct_spec (e : Int) :
     with any exponent as 0 × β^e = 0.
 -/
 def FTZ_format_0_check (beta : Int) : Id Bool :=
-  pure true  -- Zero is always in format
+  sorry  -- Zero is always in format
 
 /-- Specification: Zero is in FTZ format
 
@@ -141,7 +141,7 @@ theorem FTZ_format_0_spec (beta : Int) :
     under sign changes.
 -/
 def FTZ_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
-  pure true  -- Always true for FTZ formats
+  sorry  -- Always true for FTZ formats
 
 /-- Specification: FTZ format closed under negation
 
@@ -162,7 +162,7 @@ theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
     in the flush-to-zero format.
 -/
 def FTZ_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
-  pure true  -- Always true for FTZ formats
+  sorry  -- Always true for FTZ formats
 
 /-- Specification: FTZ format closed under absolute value
 

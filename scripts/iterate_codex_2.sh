@@ -11,16 +11,16 @@ fi
 
 # Files to process and per-file run time (in hours)
 file_list=(
-  Raux.lean
-  Float_prop.lean
-  Generic_fmt.lean
+#   Float_prop.lean
+#   Raux.lean
   Round_generic.lean
+  Generic_fmt.lean
 )
 hours=(
-  2
-  3
-  5
-  5
+#   2
+#   2
+  4
+  4
 )
 
 # Sanity check: arrays must match
@@ -44,7 +44,7 @@ Please ensure your implementation Always Works™ for:
 
 ## Scope
 
-theorems: Fix the first (only the very first, work really hard on it and don't care about others) theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the line number and the error type you need to fix using lake build (preferred) or MCP tool (the very first incomplete proof within the target file). If there is error, locate the error with the smallest line number and deal with that theorem; if there is not error, search for the very first sorry and deal with that theorem; if no sorry or error appear in this file, just report this process and end. Then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
+theorems: Fix the first (only the very first, work really hard on it and don't care about others) theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the line number and the error type you need to fix using lake build (the very first incomplete proof within the target file). If there is error, locate the error with the smallest line number and deal with that theorem; if there is not error, search for the very first sorry and deal with that theorem; if the sorry appears inside a function, go search for it's original definition in /home/hantao/code/flocq/src/Core, transform it into lean4, and fix the corresponding theorems and proof accordingly; if no sorry or error appear in this file, just report this process and end. Then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
 
 ### Prerequisites
 
@@ -59,7 +59,7 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 1. **Follow the Zfast_div_eucl_spec example** in Zaux.lean and other proofs in current file as your template
 2. **ONE-BY-ONE approach is mandatory:**
     - Write ONE proof
-    - Check immediately with `lake build`(preferred) or `mcp` 
+    - Check immediately with `lake build`
     - Fix any errors before proceeding to next proof
     - Never batch multiple proofs without checking
 
@@ -73,7 +73,7 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 
 ### Compilation Verification
 
-- **After EVERY proof:** Run `mcp` or `lake build xxx`(preferred)
+- **After EVERY proof:** Run `lake build xxx`
 - **Definition of complete:** NO `sorry` statements AND clean compilation
 - **Never mark as complete if:**
     - Any `sorry` remains
@@ -86,7 +86,7 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
     - Specifications
     - Proofs
 2. **When facing difficulties:**
-    - Search for proof tactics using MCP tools
+    - Search for proof tactics
     - Trying to decompose the original theorem into lemmas and deal with them one by one.
     - If no tactics work, consider:
         - Reformatting the spec
@@ -99,15 +99,13 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 
 ### Important Notes
 
-- The MCP tool is buggy, so please prioritize lake build and set up a timeout bound (~5 min) whenever you are using either of them. AGAIN: DO NOT USE MCP TOOL NOW!!!
 - Some functions ARE difficult to prove - persistence is expected
     - If you are meeting difficulties at least come up with some useful lemma that could compile and is helpful to future proofs before ending your session. Remember that!
 - Skip already-proven theorems!! There might be warnings be just leave them there!
 - You can use exisiting (and proved) theorem to assist your proving. If a theorem is necessary but not proved, you can turn to work on that first. The useful theorems might not be in the same file, but in the import list
-- When you are trying to use a certain lemma, check through mcp tools (or https://github.com/leanprover-community/mathlib4) to make sure the lemma exists. Else, write your own implementation of the lemma.
+- When you are trying to use a certain lemma, check through https://github.com/leanprover-community/mathlib4 to make sure the lemma exists. Else, write your own implementation of the lemma.
 - You are not allowed to delete ANY theorems or functions in the file. You can only modify them in a very cautious way!
-- If you observe that the whole file is completed, which means that no sorry or error could be spotted in the file, find the process containing `iterate_codex.sh` and terminate it.
-- Again, the MCP tool is buggy, so please prioritize lake build and set up a timeout bound (~5 min) whenever you are using either of them.
+- The output of `lake build` could be long (but it's normal to be several minutes so don't be too hard on it): You could save the build output to a log file and search for error within it, which is better than going through the long log by yourself.
 
 ### Success Criteria
 
@@ -126,7 +124,7 @@ EOF
   end=$(( $(date +%s) + t*60*60 ))
   while [[ $(date +%s) -lt $end ]]; do
     if [[ -n "$TIMEOUT_BIN" ]]; then
-      "$TIMEOUT_BIN" 300 "${cmd[@]}" || true
+      "$TIMEOUT_BIN" 3600 "${cmd[@]}" || true
     else
       "${cmd[@]}" || true
     fi

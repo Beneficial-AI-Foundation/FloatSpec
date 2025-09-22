@@ -124,7 +124,7 @@ theorem FLT_exp_correct_spec (e : Int) :
     allowed exponent e, making it universal across FLT formats.
 -/
 def FLT_format_0_check (beta : Int) : Id Bool :=
-  pure true  -- Zero is always in format
+  sorry  -- Zero is always in format
 
 /-- Specification: Zero is in FLT format
 
@@ -145,7 +145,7 @@ theorem FLT_format_0_spec (beta : Int) :
     floating-point representation.
 -/
 def FLT_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
-  pure true  -- Always true for FLT formats
+  sorry  -- Always true for FLT formats
 
 /-- Specification: FLT format closed under negation
 
@@ -166,7 +166,7 @@ theorem FLT_format_opp_spec (beta : Int) (x : ℝ) :
     absolute values remain representable.
 -/
 def FLT_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
-  pure true  -- Always true for FLT formats
+  sorry -- Always true for FLT formats
 
 /-- Specification: FLT format closed under absolute value
 

@@ -130,9 +130,9 @@ def DN_UP_parity_prop : Prop :=
     canonical beta fexp gd ∧ canonical beta fexp gu ∧
     gd.Fnum % 2 ≠ gu.Fnum % 2
 
-/-- Check DN/UP parity auxiliary lemma -/ 
+/-- Check DN/UP parity auxiliary lemma -/
 def DN_UP_parity_aux_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Coq:
     Lemma DN_UP_parity_aux :
@@ -147,11 +147,11 @@ theorem DN_UP_parity_aux :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_aux_check
-  rfl
+  sorry
 
-/-- Check DN/UP parity holds for the generic format (positive case) -/ 
+/-- Check DN/UP parity holds for the generic format (positive case) -/
 def DN_UP_parity_generic_pos_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Coq:
     Theorem DN_UP_parity_generic_pos :
@@ -165,11 +165,11 @@ theorem DN_UP_parity_generic_pos :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_generic_pos_check
-  rfl
+  sorry
 
-/-- Check DN/UP parity holds for the generic format (all reals) -/ 
+/-- Check DN/UP parity holds for the generic format (all reals) -/
 def DN_UP_parity_generic_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Coq:
     Theorem DN_UP_parity_generic :
@@ -183,7 +183,7 @@ theorem DN_UP_parity_generic :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_generic_check
-  rfl
+  sorry
 
 end ParityAuxiliary
 
@@ -196,7 +196,7 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 /-- Check nearest-even uniqueness property
 -/
 def Rnd_NE_pt_unique_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest-even uniqueness property
 
@@ -209,12 +209,12 @@ theorem Rnd_NE_pt_unique_prop :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_unique_check
-  rfl
+  sorry
 
 /-- Check nearest-even rounding uniqueness for specific values
 -/
 def Rnd_NE_pt_unique_specific_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest-even rounding is unique
 
@@ -227,12 +227,12 @@ theorem Rnd_NE_pt_unique (x f1 f2 : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_unique_specific_check
-  rfl
+  sorry
 
 /-- Check nearest-even monotonicity
 -/
 def Rnd_NE_pt_monotone_check : Id Bool :=
-  pure true
+  sorry
 
 
 
@@ -250,11 +250,11 @@ theorem Rnd_NE_pt_monotone :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_monotone_check
-  rfl
+  sorry
 
-/-- Check nearest-even totality -/ 
+/-- Check nearest-even totality -/
 def Rnd_NE_pt_total_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -269,11 +269,11 @@ theorem Rnd_NE_pt_total :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_total_check
-  rfl
+  sorry
 
-/-- Check nearest-even forms a rounding predicate -/ 
+/-- Check nearest-even forms a rounding predicate -/
 def Rnd_NE_pt_round_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -288,7 +288,7 @@ theorem Rnd_NE_pt_round :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_round_check
-  rfl
+  sorry
 
 end UniquenessProperties
 
@@ -301,7 +301,7 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 /-- Check rounding predicate satisfaction
 -/
 def satisfies_any_imp_NE_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest-even satisfies rounding predicate
 
@@ -314,12 +314,12 @@ theorem satisfies_any_imp_NE :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_NE_check
-  rfl
+  sorry
 
 /-- Check nearest-even reflexivity
 -/
 def Rnd_NE_pt_refl_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -335,12 +335,12 @@ theorem Rnd_NE_pt_refl (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_refl_check
-  rfl
+  sorry
 
 /-- Check nearest-even idempotence
 -/
 def Rnd_NE_pt_idempotent_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -356,7 +356,7 @@ theorem Rnd_NE_pt_idempotent (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_idempotent_check
-  rfl
+  sorry
 
 end RoundingPredicateProperties
 
@@ -369,7 +369,7 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 /-- Check down-up parity property
 -/
 def DN_UP_parity_pos_holds_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Down-up parity for positive numbers
 
@@ -387,12 +387,12 @@ theorem DN_UP_parity_pos_holds :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_pos_holds_check
-  rfl
+  sorry
 
 /-- Check sign preservation
 -/
 def Rnd_NE_pt_sign_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Coq: Derived from round_NE_pt_pos and symmetry; sign preserved except zeros.
 
@@ -407,12 +407,12 @@ theorem Rnd_NE_pt_sign (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_sign_check
-  rfl
+  sorry
 
 /-- Check absolute value property
 -/
 def Rnd_NE_pt_abs_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -431,11 +431,11 @@ theorem Rnd_NE_pt_abs (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_abs_check
-  rfl
+  sorry
 
-/-- Check rounding at positive inputs -/ 
+/-- Check rounding at positive inputs -/
 def round_NE_pt_pos_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -452,11 +452,11 @@ theorem round_NE_pt_pos (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_pt_pos_check
-  rfl
+  sorry
 
-/-- Check rounding negation -/ 
+/-- Check rounding negation -/
 def round_NE_opp_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -473,11 +473,11 @@ theorem round_NE_opp (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_opp_check
-  rfl
+  sorry
 
-/-- Check absolute rounding equality -/ 
+/-- Check absolute rounding equality -/
 def round_NE_abs_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -494,11 +494,11 @@ theorem round_NE_abs (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_abs_check
-  rfl
+  sorry
 
-/-- Check predicate holds at rounded value -/ 
+/-- Check predicate holds at rounded value -/
 def round_NE_pt_check : Id Bool :=
-  pure true
+  sorry
 
 
 /-- Coq:
@@ -514,7 +514,7 @@ theorem round_NE_pt (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_pt_check
-  rfl
+  sorry
 
 end ParityProperties
 
@@ -527,7 +527,7 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 /-- Check error bound property
 -/
 def Rnd_NE_pt_error_bound_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Error bound for nearest-even rounding
 
@@ -539,12 +539,12 @@ theorem Rnd_NE_pt_error_bound (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_error_bound_check
-  rfl
+  sorry
 
 /-- Check minimal error property
 -/
 def Rnd_NE_pt_minimal_error_check : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest-even minimizes absolute error
 
@@ -557,7 +557,7 @@ theorem Rnd_NE_pt_minimal_error (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_minimal_error_check
-  rfl
+  sorry
 
 end ErrorBounds
 

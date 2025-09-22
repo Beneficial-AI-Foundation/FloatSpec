@@ -114,7 +114,7 @@ theorem FLX_exp_correct_spec (e : Int) :
     since it can be expressed as 0 × β^e for any exponent e.
 -/
 def FLX_format_0_check (beta : Int) : Id Bool :=
-  pure true  -- Zero is always in format
+  sorry  -- Zero is always in format
 
 /-- Specification: Zero is in FLX format
 
@@ -135,7 +135,7 @@ theorem FLX_format_0_spec (beta : Int) :
     fixed-precision floating-point numbers.
 -/
 def FLX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
-  pure true  -- Always true for fixed-precision formats
+  sorry  -- Always true for fixed-precision formats
 
 /-- Specification: FLX format closed under negation
 
@@ -156,7 +156,7 @@ theorem FLX_format_opp_spec (beta : Int) (x : ℝ) :
     should preserve representability in fixed-precision formats.
 -/
 def FLX_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
-  pure true  -- Always true for fixed-precision formats
+  sorry  -- Always true for fixed-precision formats
 
 /-- Specification: FLX format closed under absolute value
 

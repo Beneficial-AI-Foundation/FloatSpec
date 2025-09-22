@@ -78,7 +78,7 @@ instance FIX_exp_valid (beta : Int) :
   refine ⟨?_⟩
   intro k
   refine And.intro ?h1 ?h2
-  · intro _; 
+  · intro _;
     -- Proof omitted for now
     sorry
   · intro _
@@ -119,7 +119,7 @@ theorem FIX_exp_correct_spec (e : Int) :
     Zero should always be representable as 0 × β^emin = 0.
 -/
 def FIX_format_0_check (beta : Int) : Id Bool :=
-  pure true  -- Zero is always in format
+  sorry -- Zero is always in format
 
 /-- Specification: Zero is in FIX format
 
@@ -139,7 +139,7 @@ theorem FIX_format_0_spec (beta : Int) :
     This tests the closure property under additive inverse.
 -/
 def FIX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
-  pure true  -- Always true for fixed-point formats
+  sorry  -- Always true for fixed-point formats
 
 /-- Specification: FIX format closed under negation
 

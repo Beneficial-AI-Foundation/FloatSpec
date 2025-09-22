@@ -139,7 +139,7 @@ theorem Rnd_DN_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_DN_pt F x (rnd x))⌝⦄ := by
   intro _
   unfold Rnd_DN
-  rfl
+  sorry
 
 /-- Rounding up property for functions
 
@@ -162,7 +162,7 @@ theorem Rnd_UP_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_UP_pt F x (rnd x))⌝⦄ := by
   intro _
   unfold Rnd_UP
-  rfl
+  sorry
 
 /-- Rounding toward zero property for functions
 
@@ -185,7 +185,7 @@ theorem Rnd_ZR_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_ZR_pt F x (rnd x))⌝⦄ := by
   intro _
   unfold Rnd_ZR
-  rfl
+  sorry
 
 /-- Round to nearest property for functions
 
@@ -208,7 +208,7 @@ theorem Rnd_N_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_N_pt F x (rnd x))⌝⦄ := by
   intro _
   unfold Rnd_N
-  rfl
+  sorry
 
 /-- Generic rounding property with tie-breaking predicate
 
@@ -231,7 +231,7 @@ theorem Rnd_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (rnd : ℝ →
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_NG_pt F P x (rnd x))⌝⦄ := by
   intro _
   unfold Rnd_NG
-  rfl
+  sorry
 
 /-- Round ties away from zero property
 
@@ -254,7 +254,7 @@ theorem Rnd_NA_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_NA_pt F x (rnd x))⌝⦄ := by
   intro _
   unfold Rnd_NA
-  rfl
+  sorry
 
 /-- Round ties toward zero property
 
@@ -277,7 +277,7 @@ theorem Rnd_N0_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_N0_pt F x (rnd x))⌝⦄ := by
   intro _
   unfold Rnd_N0
-  rfl
+  sorry
 
 end RoundingFunctionProperties
 
@@ -305,7 +305,7 @@ theorem round_val_of_pred_spec (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⇓f => ⌜f = 0⌝⦄ := by
   intro h
   unfold round_val_of_pred
-  rfl
+  sorry
 
 /-- Extract rounding function from predicate
 
@@ -329,7 +329,7 @@ theorem round_fun_of_pred_spec (rnd : ℝ → ℝ → Prop) :
     ⦃⇓f => ⌜f = fun _ => 0⌝⦄ := by
   intro h
   unfold round_fun_of_pred
-  rfl
+  sorry
 
 /-- Check uniqueness of rounding result
 
@@ -338,7 +338,7 @@ theorem round_fun_of_pred_spec (rnd : ℝ → ℝ → Prop) :
     nature of rounding functions.
 -/
 def round_unique_check (rnd : ℝ → ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
-  pure true  -- Always true for monotonic predicates
+  sorry  -- Always true for monotonic predicates
 
 /-- Specification: Uniqueness of rounding result
 
@@ -352,7 +352,7 @@ theorem round_unique_spec (rnd : ℝ → ℝ → Prop) (x f1 f2 : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_unique_check
-  rfl
+  sorry
 
 end ExistenceAndUniqueness
 
@@ -365,7 +365,7 @@ section RoundDownProperties
     This fundamental property ensures consistent behavior.
 -/
 def Rnd_DN_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
-  pure true  -- Round down is always monotone
+  sorry  -- Round down is always monotone
 
 /-- Specification: Round down is monotone
 
@@ -379,7 +379,7 @@ theorem Rnd_DN_pt_monotone_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_pt_monotone_check
-  rfl
+  sorry
 
 /-- Check uniqueness of round down result
 
@@ -388,7 +388,7 @@ theorem Rnd_DN_pt_monotone_spec (F : ℝ → Prop) :
     of the downward rounding operation.
 -/
 def Rnd_DN_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
-  pure true  -- Round down always produces unique results
+  sorry  -- Round down always produces unique results
 
 /-- Specification: Round down point is unique
 
@@ -402,7 +402,7 @@ theorem Rnd_DN_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_pt_unique_check
-  rfl
+  sorry
 
 /-- Check uniqueness of round down function
 
@@ -411,7 +411,7 @@ theorem Rnd_DN_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
     they produce identical results on all inputs.
 -/
 def Rnd_DN_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
-  pure true  -- Round down functions are unique
+  sorry  -- Round down functions are unique
 
 /-- Specification: Round down function is unique
 
@@ -425,7 +425,7 @@ theorem Rnd_DN_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_unique_check
-  rfl
+  sorry
 
 end RoundDownProperties
 
@@ -438,7 +438,7 @@ section RoundUpProperties
     as the input values.
 -/
 def Rnd_UP_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
-  pure true  -- Round up is always monotone
+  sorry  -- Round up is always monotone
 
 /-- Specification: Round up is monotone
 
@@ -452,7 +452,7 @@ theorem Rnd_UP_pt_monotone_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_UP_pt_monotone_check
-  rfl
+  sorry
 
 /-- Check uniqueness of round up result
 
@@ -461,7 +461,7 @@ theorem Rnd_UP_pt_monotone_spec (F : ℝ → Prop) :
     in the given format.
 -/
 def Rnd_UP_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
-  pure true  -- Round up always produces unique results
+  sorry  -- Round up always produces unique results
 
 /-- Specification: Round up point is unique
 
@@ -475,7 +475,7 @@ theorem Rnd_UP_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_UP_pt_unique_check
-  rfl
+  sorry
 
 /-- Check uniqueness of round up function
 
@@ -484,7 +484,7 @@ theorem Rnd_UP_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
     implementation, ensuring no ambiguity.
 -/
 def Rnd_UP_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
-  pure true  -- Round up functions are unique
+  sorry  -- Round up functions are unique
 
 /-- Specification: Round up function is unique
 
@@ -498,7 +498,7 @@ theorem Rnd_UP_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_UP_unique_check
-  rfl
+  sorry
 
 end RoundUpProperties
 
@@ -511,7 +511,7 @@ section DualityProperties
     downward rounding through sign changes.
 -/
 def Rnd_UP_pt_opp_transform (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true  -- Duality always holds
+  sorry  -- Duality always holds
 
 /-- Specification: Round up from round down with opposite
 
@@ -525,7 +525,7 @@ theorem Rnd_UP_pt_opp_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_UP_pt_opp_transform
-  rfl
+  sorry
 
 /-- Transform round up to round down via negation
 
@@ -534,7 +534,7 @@ theorem Rnd_UP_pt_opp_spec (F : ℝ → Prop) (x f : ℝ) :
     the bidirectional relationship.
 -/
 def Rnd_DN_pt_opp_transform (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true  -- Reverse duality always holds
+  sorry  -- Reverse duality always holds
 
 /-- Specification: Round down from round up with opposite
 
@@ -548,7 +548,7 @@ theorem Rnd_DN_pt_opp_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_pt_opp_transform
-  rfl
+  sorry
 
 /-/ Transform round-down and round-up functions under negation
 
@@ -557,7 +557,7 @@ theorem Rnd_DN_pt_opp_spec (F : ℝ → Prop) (x f : ℝ) :
     function-level duality via negation.
 -/
 def Rnd_DN_opp_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Round-down vs round-up under negation
 
@@ -571,7 +571,7 @@ theorem Rnd_DN_opp_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_opp_check
-  rfl
+  sorry
 
 /-/ DN/UP split at a point
 
@@ -579,7 +579,7 @@ theorem Rnd_DN_opp_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
     then any representable `f` lies either below `d` or above `u`.
 -/
 def Rnd_DN_UP_pt_split_check (F : ℝ → Prop) (x d u f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: DN/UP split covers all representables
 
@@ -592,7 +592,7 @@ theorem Rnd_DN_UP_pt_split_spec (F : ℝ → Prop) (x d u f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_UP_pt_split_check
-  rfl
+  sorry
 
 /-- Coq-compatible name: DN/UP split covers all representables -/
 theorem Rnd_DN_UP_pt_split (F : ℝ → Prop) (x d u f : ℝ) :
@@ -607,7 +607,7 @@ theorem Rnd_DN_UP_pt_split (F : ℝ → Prop) (x d u f : ℝ) :
     and lies between them, then `f` must be equal to one of the endpoints.
 -/
 def Only_DN_or_UP_check (F : ℝ → Prop) (x fd fu f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Only DN or UP when bounded between them
 
@@ -620,7 +620,7 @@ theorem Only_DN_or_UP_spec (F : ℝ → Prop) (x fd fu f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Only_DN_or_UP_check
-  rfl
+  sorry
 
 /-- Coq-compatible name: only DN or UP when bounded between them -/
 theorem Only_DN_or_UP (F : ℝ → Prop) (x fd fu f : ℝ) :
@@ -640,7 +640,7 @@ section ReflexivityAndIdempotency
     This captures the exactness property.
 -/
 def Rnd_DN_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
-  pure true  -- Reflexivity always holds for representable values
+  sorry  -- Reflexivity always holds for representable values
 
 /-- Specification: Round down is reflexive
 
@@ -654,7 +654,7 @@ theorem Rnd_DN_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_pt_refl_check
-  rfl
+  sorry
 
 /-- Check idempotency of round down
 
@@ -663,7 +663,7 @@ theorem Rnd_DN_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     stability under repeated rounding.
 -/
 def Rnd_DN_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true  -- Idempotency always holds
+  sorry  -- Idempotency always holds
 
 /-- Specification: Round down is idempotent
 
@@ -677,7 +677,7 @@ theorem Rnd_DN_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_pt_idempotent_check
-  rfl
+  sorry
 
 /-- Check reflexivity of round up
 
@@ -686,7 +686,7 @@ theorem Rnd_DN_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     remain unchanged.
 -/
 def Rnd_UP_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
-  pure true  -- Reflexivity holds for round up
+  sorry  -- Reflexivity holds for round up
 
 /-- Specification: Round up is reflexive
 
@@ -700,7 +700,7 @@ theorem Rnd_UP_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_UP_pt_refl_check
-  rfl
+  sorry
 
 /-- Check idempotency of round up
 
@@ -708,7 +708,7 @@ theorem Rnd_UP_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     values, mirroring the round down idempotency property.
 -/
 def Rnd_UP_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true  -- Idempotency holds for round up
+  sorry  -- Idempotency holds for round up
 
 /-- Specification: Round up is idempotent
 
@@ -722,7 +722,7 @@ theorem Rnd_UP_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_UP_pt_idempotent_check
-  rfl
+  sorry
 
 end ReflexivityAndIdempotency
 
@@ -735,7 +735,7 @@ section RoundTowardZeroProperties
     This captures the truncation property.
 -/
 def Rnd_ZR_abs_check (F : ℝ → Prop) (rnd : ℝ → ℝ) (x : ℝ) : Id Bool :=
-  pure true  -- Round toward zero always satisfies the absolute value bound
+  sorry  -- Round toward zero always satisfies the absolute value bound
 
 /-- Specification: Round toward zero absolute value bound
 
@@ -749,7 +749,7 @@ theorem Rnd_ZR_abs_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_ZR_abs_check
-  rfl
+  sorry
 
 end RoundTowardZeroProperties
 
@@ -760,7 +760,7 @@ section RoundTowardZeroMonotone
     With 0 representable, the predicate `Rnd_ZR_pt F` is monotone.
 -/
 def Rnd_ZR_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Round toward zero is monotone when 0 ∈ F
 
@@ -773,7 +773,7 @@ theorem Rnd_ZR_pt_monotone_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_ZR_pt_monotone_check
-  rfl
+  sorry
 
 end RoundTowardZeroMonotone
 
@@ -784,7 +784,7 @@ section RoundNearestBasic
     Any nearest rounding point is either a DN-point or an UP-point.
 -/
 def Rnd_N_pt_DN_or_UP_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest point is DN or UP
 
@@ -797,7 +797,7 @@ theorem Rnd_N_pt_DN_or_UP_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_DN_or_UP_check
-  rfl
+  sorry
 
 /-- Coq-compatible name: nearest point is DN or UP -/
 theorem Rnd_N_pt_DN_or_UP (F : ℝ → Prop) (x f : ℝ) :
@@ -812,7 +812,7 @@ theorem Rnd_N_pt_DN_or_UP (F : ℝ → Prop) (x f : ℝ) :
     `f` equals either `d` or `u`.
 -/
 def Rnd_N_pt_DN_or_UP_eq_check (F : ℝ → Prop) (x d u f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest equals DN or UP under DN/UP existence
 
@@ -825,7 +825,7 @@ theorem Rnd_N_pt_DN_or_UP_eq_spec (F : ℝ → Prop) (x d u f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_DN_or_UP_eq_check
-  rfl
+  sorry
 
 /-- Coq-compatible name: nearest equals DN or UP -/
 theorem Rnd_N_pt_DN_or_UP_eq (F : ℝ → Prop) (x d u f : ℝ) :
@@ -844,7 +844,7 @@ section RoundNearestAdvanced
     then `(x,f)` is also a nearest pair.
 -/
 def Rnd_N_pt_opp_inv_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest invariant under negation (inverse)
 
@@ -857,7 +857,7 @@ theorem Rnd_N_pt_opp_inv_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_opp_inv_check
-  rfl
+  sorry
 
 /-- Coq-compatible name: nearest invariant under negation -/
 theorem Rnd_N_pt_opp_inv (F : ℝ → Prop) (x f : ℝ) :
@@ -871,7 +871,7 @@ theorem Rnd_N_pt_opp_inv (F : ℝ → Prop) (x f : ℝ) :
     If `x < y` and both are rounded to nearest, then `f ≤ g`.
 -/
 def Rnd_N_pt_monotone_check (F : ℝ → Prop) (x y f g : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest rounding is monotone
 
@@ -883,14 +883,14 @@ theorem Rnd_N_pt_monotone_spec (F : ℝ → Prop) (x y f g : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_monotone_check
-  rfl
+  sorry
 
 /-- Check uniqueness for nearest rounding under asymmetry
 
     If `x - d ≠ u - x`, then the nearest point is unique.
 -/
 def Rnd_N_pt_unique_check (F : ℝ → Prop) (x d u f1 f2 : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Uniqueness of nearest rounding
 
@@ -903,14 +903,14 @@ theorem Rnd_N_pt_unique_spec (F : ℝ → Prop) (x d u f1 f2 : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_unique_check
-  rfl
+  sorry
 
 /-- Check reflexivity for nearest rounding
 
     If `x` is representable, then it is its own nearest rounding.
 -/
 def Rnd_N_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest rounding is reflexive on representables
 
@@ -922,14 +922,14 @@ theorem Rnd_N_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_refl_check
-  rfl
+  sorry
 
 /-- Check idempotency for nearest rounding
 
     If `x` is representable and `f` is nearest to `x`, then `f = x`.
 -/
 def Rnd_N_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest rounding is idempotent on representables
 
@@ -941,7 +941,7 @@ theorem Rnd_N_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_idempotent_check
-  rfl
+  sorry
 
 end RoundNearestAdvanced
 
@@ -952,7 +952,7 @@ section RoundNearestAuxiliary
     If `0 ∈ F`, then `Rnd_N_pt F 0 0`.
 -/
 def Rnd_N_pt_0_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest at zero
 
@@ -964,14 +964,14 @@ theorem Rnd_N_pt_0_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_0_check
-  rfl
+  sorry
 
 /-- Check nonnegativity of nearest rounding for nonnegative inputs
 
     If `0 ≤ x` and `Rnd_N_pt F x f`, then `0 ≤ f`.
 -/
 def Rnd_N_pt_ge_0_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nonnegativity preserved by nearest rounding
 
@@ -983,14 +983,14 @@ theorem Rnd_N_pt_ge_0_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_ge_0_check
-  rfl
+  sorry
 
 /-- Check nonpositivity of nearest rounding for nonpositive inputs
 
     If `x ≤ 0` and `Rnd_N_pt F x f`, then `f ≤ 0`.
 -/
 def Rnd_N_pt_le_0_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nonpositivity preserved by nearest rounding
 
@@ -1002,7 +1002,7 @@ theorem Rnd_N_pt_le_0_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_le_0_check
-  rfl
+  sorry
 
 /-- Check absolute-value stability for nearest rounding
 
@@ -1010,7 +1010,7 @@ theorem Rnd_N_pt_le_0_spec (F : ℝ → Prop) (x f : ℝ) :
     absolute values: nearest at `x` maps to nearest at `|x|`.
 -/
 def Rnd_N_pt_abs_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Nearest rounding respects absolute value
 
@@ -1023,7 +1023,7 @@ theorem Rnd_N_pt_abs_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_abs_check
-  rfl
+  sorry
 
 /-- Check sufficient conditions for nearest rounding via DN/UP bounds
 
@@ -1031,7 +1031,7 @@ theorem Rnd_N_pt_abs_spec (F : ℝ → Prop) (x f : ℝ) :
     a nearest rounding of `x`.
 -/
 def Rnd_N_pt_DN_UP_check (F : ℝ → Prop) (x d u f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Construct nearest from DN/UP bounds
 
@@ -1044,14 +1044,14 @@ theorem Rnd_N_pt_DN_UP_spec (F : ℝ → Prop) (x d u f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_DN_UP_check
-  rfl
+  sorry
 
 /-- Check DN-case for nearest rounding under asymmetry
 
     If `x - d ≤ u - x`, then `d` is the nearest rounding of `x`.
 -/
 def Rnd_N_pt_DN_check (F : ℝ → Prop) (x d u : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: DN is nearest under left-smaller distance
 
@@ -1063,14 +1063,14 @@ theorem Rnd_N_pt_DN_spec (F : ℝ → Prop) (x d u : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_DN_check
-  rfl
+  sorry
 
 /-- Check UP-case for nearest rounding under asymmetry
 
     If `u - x ≤ x - d`, then `u` is the nearest rounding of `x`.
 -/
 def Rnd_N_pt_UP_check (F : ℝ → Prop) (x d u : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: UP is nearest under right-smaller distance
 
@@ -1082,7 +1082,7 @@ theorem Rnd_N_pt_UP_spec (F : ℝ → Prop) (x d u : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N_pt_UP_check
-  rfl
+  sorry
 
 end RoundNearestAuxiliary
 
@@ -1094,7 +1094,7 @@ section RoundNearestGeneric
 -/
 def Rnd_NG_pt_unique_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     (x f1 f2 : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Uniqueness of NG-point under tie uniqueness
 
@@ -1112,14 +1112,14 @@ theorem Rnd_NG_pt_unique_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NG_pt_unique_check
-  rfl
+  sorry
 
 /-- Check monotonicity for NG-point under tie uniqueness
 
     With the uniqueness property on ties, `Rnd_NG_pt F P` is monotone.
 -/
 def Rnd_NG_pt_monotone_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NG-point rounding is monotone (with tie uniqueness)
 
@@ -1135,14 +1135,14 @@ theorem Rnd_NG_pt_monotone_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NG_pt_monotone_check
-  rfl
+  sorry
 
 /-- Check reflexivity for NG-point
 
     A representable `x` is its own NG-point for any `P`.
 -/
 def Rnd_NG_pt_refl_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NG-point is reflexive
 
@@ -1154,7 +1154,7 @@ theorem Rnd_NG_pt_refl_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x : �
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NG_pt_refl_check
-  rfl
+  sorry
 
 /-- Check opposite invariance for NG-point
 
@@ -1163,7 +1163,7 @@ theorem Rnd_NG_pt_refl_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x : �
 -/
 def Rnd_NG_pt_opp_inv_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NG-point invariance under negation
 
@@ -1177,7 +1177,7 @@ theorem Rnd_NG_pt_opp_inv_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NG_pt_opp_inv_check
-  rfl
+  sorry
 
 /-- Coq-compatible name: NG-point invariance under negation -/
 theorem Rnd_NG_pt_opp_inv (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
@@ -1193,7 +1193,7 @@ theorem Rnd_NG_pt_opp_inv (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
 -/
 def Rnd_NG_unique_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Function-level uniqueness for NG rounding
 
@@ -1211,7 +1211,7 @@ theorem Rnd_NG_unique_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NG_unique_check
-  rfl
+  sorry
 
 end RoundNearestGeneric
 
@@ -1223,7 +1223,7 @@ section RoundNearestTies
     predicate `fun x f => |x| ≤ |f|`.
 -/
 def Rnd_NA_NG_pt_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NA equals NG with abs-based tie predicate
 
@@ -1235,14 +1235,14 @@ theorem Rnd_NA_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_NG_pt_check
-  rfl
+  sorry
 
 /-- Check uniqueness property for NA ties (auxiliary)
 
     The NA tie-breaking relation yields uniqueness under `F 0`.
 -/
 def Rnd_NA_pt_unique_prop_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NA tie uniqueness property holds
 
@@ -1254,14 +1254,14 @@ theorem Rnd_NA_pt_unique_prop_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_pt_unique_prop_check
-  rfl
+  sorry
 
 /-- Check uniqueness of NA-point
 
     With `F 0`, the NA-point is unique.
 -/
 def Rnd_NA_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NA-point uniqueness
 
@@ -1273,14 +1273,14 @@ theorem Rnd_NA_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_pt_unique_check
-  rfl
+  sorry
 
 /-- Check that NA-point is a valid nearest point under bound
 
     If `Rnd_N_pt F x f` and `|f| ≤ |x|` with `F 0`, then `Rnd_NA_pt F x f`.
 -/
 def Rnd_NA_pt_N_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: From nearest with abs bound to NA-point
 
@@ -1292,14 +1292,14 @@ theorem Rnd_NA_pt_N_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_pt_N_check
-  rfl
+  sorry
 
 /-- Check uniqueness of NA-based rounding functions
 
     If both functions satisfy `Rnd_NA`, they agree pointwise.
 -/
 def Rnd_NA_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Function-level uniqueness for NA rounding
 
@@ -1311,14 +1311,14 @@ theorem Rnd_NA_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_unique_check
-  rfl
+  sorry
 
 /-- Check monotonicity for NA-point rounding
 
     With `F 0`, the NA-point rounding predicate is monotone.
 -/
 def Rnd_NA_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NA-point is monotone
 
@@ -1330,14 +1330,14 @@ theorem Rnd_NA_pt_monotone_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_pt_monotone_check
-  rfl
+  sorry
 
 /-- Check reflexivity of NA-point
 
     Representable values are fixed by NA-point rounding.
 -/
 def Rnd_NA_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NA-point reflexivity on representables
 
@@ -1349,14 +1349,14 @@ theorem Rnd_NA_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_pt_refl_check
-  rfl
+  sorry
 
 /-- Check idempotency of NA-point
 
     If `Rnd_NA_pt F x f` and `F x`, then `f = x`.
 -/
 def Rnd_NA_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: NA-point idempotency on representables
 
@@ -1368,7 +1368,7 @@ theorem Rnd_NA_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NA_pt_idempotent_check
-  rfl
+  sorry
 
 /-- Check equivalence between N0 and NG with abs-based predicate
 
@@ -1376,7 +1376,7 @@ theorem Rnd_NA_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     predicate `fun x f => |f| ≤ |x|`.
 -/
 def Rnd_N0_NG_pt_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: N0 equals NG with abs-based tie predicate
 
@@ -1388,14 +1388,14 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_NG_pt_check
-  rfl
+  sorry
 
 /-- Check uniqueness property for N0 ties (auxiliary)
 
     The N0 tie-breaking relation yields uniqueness under `F 0`.
 -/
 def Rnd_N0_pt_unique_prop_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: N0 tie uniqueness property holds
 
@@ -1407,14 +1407,14 @@ theorem Rnd_N0_pt_unique_prop_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_pt_unique_prop_check
-  rfl
+  sorry
 
 /-- Check uniqueness of N0-point
 
     With `F 0`, the N0-point is unique.
 -/
 def Rnd_N0_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: N0-point uniqueness
 
@@ -1426,14 +1426,14 @@ theorem Rnd_N0_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_pt_unique_check
-  rfl
+  sorry
 
 /-- Check that N0-point arises from nearest with abs bound
 
     If `Rnd_N_pt F x f` and `|f| ≤ |x|` with `F 0`, then `Rnd_N0_pt F x f`.
 -/
 def Rnd_N0_pt_N_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: From nearest with abs bound to N0-point
 
@@ -1445,14 +1445,14 @@ theorem Rnd_N0_pt_N_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_pt_N_check
-  rfl
+  sorry
 
 /-- Check uniqueness of N0-based rounding functions
 
     If both functions satisfy `Rnd_N0`, they agree pointwise.
 -/
 def Rnd_N0_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Function-level uniqueness for N0 rounding
 
@@ -1464,14 +1464,14 @@ theorem Rnd_N0_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_unique_check
-  rfl
+  sorry
 
 /-- Check monotonicity for N0-point rounding
 
     With `F 0`, the N0-point rounding predicate is monotone.
 -/
 def Rnd_N0_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: N0-point is monotone
 
@@ -1483,14 +1483,14 @@ theorem Rnd_N0_pt_monotone_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_pt_monotone_check
-  rfl
+  sorry
 
 /-- Check reflexivity of N0-point
 
     Representable values are fixed by N0-point rounding.
 -/
 def Rnd_N0_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: N0-point reflexivity on representables
 
@@ -1502,14 +1502,14 @@ theorem Rnd_N0_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_pt_refl_check
-  rfl
+  sorry
 
 /-- Check idempotency of N0-point
 
     If `Rnd_N0_pt F x f` and `F x`, then `f = x`.
 -/
 def Rnd_N0_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: N0-point idempotency on representables
 
@@ -1521,7 +1521,7 @@ theorem Rnd_N0_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_N0_pt_idempotent_check
-  rfl
+  sorry
 
 end RoundNearestTies
 
@@ -1533,7 +1533,7 @@ section MonotoneImplications
     implies `0 ≤ f` when `P x f` holds.
 -/
 def round_pred_ge_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Monotone predicate preserves nonnegativity
 
@@ -1545,7 +1545,7 @@ theorem round_pred_ge_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_pred_ge_0_check
-  rfl
+  sorry
 
 /-- Check positivity implication from monotonicity
 
@@ -1553,7 +1553,7 @@ theorem round_pred_ge_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     implies `0 < x` when `P x f` holds.
 -/
 def round_pred_gt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Positivity transfers back via monotonicity
 
@@ -1565,7 +1565,7 @@ theorem round_pred_gt_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_pred_gt_0_check
-  rfl
+  sorry
 
 /-- Check nonpositivity from rounding predicate monotonicity
 
@@ -1573,7 +1573,7 @@ theorem round_pred_gt_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     implies `f ≤ 0` when `P x f` holds.
 -/
 def round_pred_le_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Monotone predicate preserves nonpositivity
 
@@ -1585,7 +1585,7 @@ theorem round_pred_le_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_pred_le_0_check
-  rfl
+  sorry
 
 /-- Check negativity implication from monotonicity
 
@@ -1593,7 +1593,7 @@ theorem round_pred_le_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     implies `x < 0` when `P x f` holds.
 -/
 def round_pred_lt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: Negativity transfers back via monotonicity
 
@@ -1605,7 +1605,7 @@ theorem round_pred_lt_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_pred_lt_0_check
-  rfl
+  sorry
 
 end MonotoneImplications
 
@@ -1617,7 +1617,7 @@ section FormatEquivalence
     interval are also DN-points in `F2`.
 -/
 def Rnd_DN_pt_equiv_format_check (F1 F2 : ℝ → Prop) (a b x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: DN-point equivalence under format agreement
 
@@ -1630,7 +1630,7 @@ theorem Rnd_DN_pt_equiv_format_spec (F1 F2 : ℝ → Prop) (a b x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_pt_equiv_format_check
-  rfl
+  sorry
 
 /-- Check UP-point equivalence under format agreement on an interval
 
@@ -1638,7 +1638,7 @@ theorem Rnd_DN_pt_equiv_format_spec (F1 F2 : ℝ → Prop) (a b x f : ℝ) :
     interval are also UP-points in `F2`.
 -/
 def Rnd_UP_pt_equiv_format_check (F1 F2 : ℝ → Prop) (a b x f : ℝ) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: UP-point equivalence under format agreement
 
@@ -1651,7 +1651,7 @@ theorem Rnd_UP_pt_equiv_format_spec (F1 F2 : ℝ → Prop) (a b x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_UP_pt_equiv_format_check
-  rfl
+  sorry
 
 end FormatEquivalence
 
@@ -1662,7 +1662,7 @@ section SatisfiesAnyConsequences
     Placeholder equivalence/characterization for satisfies_any.
 -/
 def satisfies_any_eq_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: satisfies_any alternative characterization
 
@@ -1674,14 +1674,14 @@ theorem satisfies_any_eq_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_eq_check
-  rfl
+  sorry
 
 /-- Check existence of DN rounding from satisfies_any
 
     If a format satisfies_any, DN rounding is total.
 -/
 def satisfies_any_imp_DN_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: satisfies_any implies DN rounding exists
 
@@ -1693,14 +1693,14 @@ theorem satisfies_any_imp_DN_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_DN_check
-  rfl
+  sorry
 
 /-- Check existence of UP rounding from satisfies_any
 
     If a format satisfies_any, UP rounding is total.
 -/
 def satisfies_any_imp_UP_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: satisfies_any implies UP rounding exists
 
@@ -1712,14 +1712,14 @@ theorem satisfies_any_imp_UP_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_UP_check
-  rfl
+  sorry
 
 /-- Check existence of ZR rounding from satisfies_any
 
     If a format satisfies_any, ZR rounding is total.
 -/
 def satisfies_any_imp_ZR_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: satisfies_any implies ZR rounding exists
 
@@ -1731,14 +1731,14 @@ theorem satisfies_any_imp_ZR_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_ZR_check
-  rfl
+  sorry
 
 /-- Check existence of NG rounding from satisfies_any
 
     If a format satisfies_any, NG rounding is total.
 -/
 def satisfies_any_imp_NG_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: satisfies_any implies NG rounding exists
 
@@ -1750,14 +1750,14 @@ theorem satisfies_any_imp_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) 
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_NG_check
-  rfl
+  sorry
 
 /-- Check existence of NA rounding from satisfies_any
 
     If a format satisfies_any, NA rounding is total.
 -/
 def satisfies_any_imp_NA_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: satisfies_any implies NA rounding exists
 
@@ -1769,14 +1769,14 @@ theorem satisfies_any_imp_NA_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_NA_check
-  rfl
+  sorry
 
 /-- Check existence of N0 rounding from satisfies_any
 
     If a format satisfies_any, N0 rounding is total.
 -/
 def satisfies_any_imp_N0_check (F : ℝ → Prop) : Id Bool :=
-  pure true
+  sorry
 
 /-- Specification: satisfies_any implies N0 rounding exists
 
@@ -1788,7 +1788,7 @@ theorem satisfies_any_imp_N0_spec (F : ℝ → Prop) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_N0_check
-  rfl
+  sorry
 
 end SatisfiesAnyConsequences
 
