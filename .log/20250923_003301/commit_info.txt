@@ -1,0 +1,7 @@
+hash=404de5ba91b0434c0924ab236f8b93f15af018b4
+short_hash=404de5b
+author_name=htlou
+author_email=lht_pku@stu.pku.edu.cn
+date=2025-09-23T00:32:43+08:00
+subject=chore: reorganize scripts under scripts/; update Core modules; remove obsolete notes
+body=
