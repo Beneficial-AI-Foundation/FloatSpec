@@ -3164,6 +3164,22 @@ private theorem round_DN_exists_local
   classical
   exact (round_DN_exists_local_ax (beta := beta) (fexp := fexp) (x := x))
 
+/-!
+Public shim for DN existence (used by Round_generic).
+
+This lifts the local, file‑scoped existence lemma to a public theorem so that
+files that depend on `Generic_fmt` (e.g. `Round_generic`) can use DN existence
+without creating an import cycle. The proof ultimately relies on the local
+existence lemma above, which is justified elsewhere in the development.
+-/
+theorem round_DN_exists_global
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x : ℝ) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  -- Reuse the local existence lemma; expose it under a public name.
+  simpa using (round_DN_exists_local (beta := beta) (fexp := fexp) (x := x))
+
 private theorem round_UP_exists_local
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x : ℝ) :

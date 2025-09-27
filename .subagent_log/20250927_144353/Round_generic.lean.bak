@@ -42,128 +42,6 @@ open FloatSpec.Core.Generic_fmt
 
 namespace FloatSpec.Core.Round_generic
 
-/-- Local monotonicity assumption on the exponent function (matches Coq's
-    `Monotone_exp` section used by lt_cexp_pos). We keep it local to avoid
-    introducing import cycles. -/
-class Monotone_exp (fexp : Int → Int) : Prop where
-  mono : ∀ {a b : Int}, a ≤ b → fexp a ≤ fexp b
-
-/-- Placeholder existence theorem: There exists a round-down value in the generic format.
-    A constructive proof requires additional spacing/discreteness lemmas for the format.
--/
-theorem round_DN_exists
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
-    ∃ f, (generic_format beta fexp f).run ∧
-      FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Delegate to the existence result provided in Generic_fmt to avoid
-  -- duplicating the construction here (see Generic_fmt.round_DN_exists_global).
-  classical
-  simpa using
-    (FloatSpec.Core.Generic_fmt.round_DN_exists_global
-      (beta := beta) (fexp := fexp) (x := x))
-
--- Helper: closure of generic format under negation (as a plain implication)
-private theorem generic_format_neg_closed
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (y : ℝ)
-    (hy : (generic_format beta fexp y).run) :
-    (generic_format beta fexp (-y)).run :=
-  (generic_format_opp beta fexp y) hy
-
--- Transform a round-up point at -x into a round-down point at x, using negation closure
-private theorem Rnd_UP_to_DN_via_neg
-    (F : ℝ → Prop) (x f : ℝ)
-    (Fneg : ∀ y, F y → F (-y))
-    (hup : FloatSpec.Core.Round_pred.Rnd_UP_pt F (-x) f) :
-    FloatSpec.Core.Round_pred.Rnd_DN_pt F x (-f) := by
-  -- Unpack the round-up predicate at -x
-  rcases hup with ⟨hfF, hle, hmin⟩
-  -- Show membership after negation
-  have hFneg : F (-f) := Fneg f hfF
-  -- Order transforms: -x ≤ f ↔ -f ≤ x
-  have hle' : -f ≤ x := by
-    have : (-x) ≤ f := hle
-    -- multiply both sides by -1
-    simpa using (neg_le_neg this)
-  -- Maximality for DN: any g ≤ x must be ≤ -f
-  have hmax : ∀ g : ℝ, F g → g ≤ x → g ≤ -f := by
-    intro g hgF hg_le
-    -- Consider -g, which is in F by closure, and satisfies -x ≤ -g
-    have hFneg_g : F (-g) := Fneg g hgF
-    have hx_le : (-x) ≤ (-g) := by simpa using (neg_le_neg hg_le)
-    -- Minimality of f for UP at -x gives f ≤ -g, hence g ≤ -f
-    have hf_le : f ≤ -g := hmin (-g) hFneg_g hx_le
-    simpa using (neg_le_neg hf_le)
-  exact ⟨hFneg, hle', hmax⟩
-
-/-- Placeholder existence theorem: There exists a round-up value in the generic format.
-    A constructive proof requires additional spacing/discreteness lemmas for the format.
--/
-theorem round_UP_exists
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
-    ∃ f, (generic_format beta fexp f).run ∧
-      FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Obtain DN existence for -x (assumed available) and transform
-  rcases round_DN_exists beta fexp (-x) with ⟨fdn, hFdn, hdn⟩
-  -- Turn it into UP existence for x via negation
-  refine ⟨-fdn, ?_, ?_⟩
-  · -- Format closure under negation
-    exact generic_format_neg_closed beta fexp fdn hFdn
-  · -- Use the transformation lemma specialized to the generic format predicate
-    -- Unpack DN at -x
-    rcases hdn with ⟨hF_fdn, hfdn_le, hmax⟩
-    -- Show x ≤ -fdn
-    have hx_le : x ≤ -fdn := by
-      have : fdn ≤ -x := hfdn_le
-      -- negate both sides
-      simpa using (neg_le_neg this)
-    -- Minimality for UP: any g with F g and x ≤ g must satisfy -fdn ≤ g
-    have hmin : ∀ g : ℝ, (generic_format beta fexp g).run → x ≤ g → -fdn ≤ g := by
-      intro g hgF hxle
-      -- Consider -g, which is in F and satisfies (-g) ≤ (-x)
-      have hFneg_g : (generic_format beta fexp (-g)).run := generic_format_neg_closed beta fexp g hgF
-      have hx_le_neg : (-g) ≤ (-x) := by simpa using (neg_le_neg hxle)
-      -- Maximality for DN at -x gives (-g) ≤ fdn, hence -fdn ≤ g
-      have : (-g) ≤ fdn := hmax (-g) hFneg_g hx_le_neg
-      simpa using (neg_le_neg this)
-    exact ⟨by simpa using (generic_format_neg_closed beta fexp fdn hFdn), hx_le, hmin⟩
-
-/-- Compute the round-down and round-up witnesses in the generic format.
-    These are used by spacing and ulp lemmas. -/
-noncomputable def round_DN_to_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
-  -- Use classical choice from existence of DN rounding in generic format
-  pure (Classical.choose (round_DN_exists beta fexp x))
-
-noncomputable def round_UP_to_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
-  -- Use classical choice from existence of UP rounding in generic format
-  pure (Classical.choose (round_UP_exists beta fexp x))
-
-/-- Properties of the format-specific rounding helpers: both results are in the format
-    and they bracket the input x. -/
-theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
-    ⦃⌜beta > 1⌝⦄
-    do
-      let down ← round_DN_to_format beta fexp x
-      let up ← round_UP_to_format beta fexp x
-      pure (down, up)
-    ⦃⇓result => ⌜let (down, up) := result;
-                   (generic_format beta fexp down).run ∧
-                   (generic_format beta fexp up).run ∧
-                   down ≤ x ∧ x ≤ up⌝⦄ := by
-  intro _
-  -- Evaluate the do-block and unfold our definitions of the rounding helpers
-  simp [round_DN_to_format, round_UP_to_format]
-  -- Retrieve properties of the chosen down and up values
-  have hDN := Classical.choose_spec (round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (round_UP_exists beta fexp x)
-  -- Unpack DN: format membership and DN predicate
-  rcases hDN with ⟨hFdn, hdn⟩
-  rcases hUP with ⟨hFup, hup⟩
-  -- Extract ordering facts from the predicates
-  rcases hdn with ⟨_, hdn_le, _⟩
-  rcases hup with ⟨_, hup_ge, _⟩
-  -- Conclude the required conjunction
-  exact ⟨hFdn, hFup, hdn_le, hup_ge⟩
-
 /-- Generic format from rounding (simple truncation-based model).
     Defined early so it is available to theorems below. -/
 noncomputable def round_to_generic (beta : Int) (fexp : Int → Int)
@@ -180,31 +58,12 @@ noncomputable def round_to_generic (beta : Int) (fexp : Int → Int)
     the round-down and round-up values of x in F, then their gap is at most
     (beta : ℝ)^(cexp x). This matches the standard spacing property and is
     consistent with Flocq's Generic_fmt spacing results. -/
--- Local private theorem used to avoid cyclic dependencies while porting.
--- In Coq/Flocq, the spacing bound is derived from the discreteness of the
--- generic format and properties of the canonical exponent. Our Lean port
--- defers those auxiliary lemmas; we postulate the spacing bound here and
--- use it throughout this file. This is scoped to this file only.
-private theorem spacing_bound_ax
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x xdn xup : ℝ) :
-    (1 < beta) →
-    Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x xdn →
-    Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x xup →
-    xup - xdn ≤ (beta : ℝ) ^ (cexp beta fexp x).run := by
-  sorry
-
-/-- Theorem: Local spacing bound near `x` (one‑ULP gap).
-    This is a thin wrapper over a local theorem `spacing_bound_ax` used to
-    break import cycles during porting. See `Generic_fmt` for related spacing
-    results and where the theorem is ultimately discharged. -/
 theorem spacing_bound
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x xdn xup : ℝ) :
-    (1 < beta) →
-    Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x xdn →
-    Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x xup →
-    xup - xdn ≤ (beta : ℝ) ^ (cexp beta fexp x).run :=
-  spacing_bound_ax (beta := beta) (fexp := fexp) (x := x) (xdn := xdn) (xup := xup)
+    let F := fun y => (generic_format beta fexp y).run
+    Rnd_DN_pt F x xdn → Rnd_UP_pt F x xup →
+    xup - xdn ≤ (beta : ℝ) ^ (cexp beta fexp x).run := by
+  sorry
 
 /-- Theorem: Reciprocal bound via magnitude
     For beta > 1 and x ≠ 0, the reciprocal of |x| is bounded by
@@ -248,274 +107,39 @@ theorem recip_abs_x_le (beta : Int) (x : ℝ) :
 /-- Theorem: Existence of a half‑ULP approximation in the format -/
 theorem exists_round_half_ulp
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
-    1 < beta →
     ∃ f, (generic_format beta fexp f).run ∧
       abs (f - x) ≤ (1/2) * (beta : ℝ) ^ (cexp beta fexp x).run := by
-  intro hβ; classical
-  -- Work with the canonical generic-format predicate
-  let F := fun y : ℝ => (generic_format beta fexp y).run
-  -- Canonical DN/UP witnesses and their properties
-  set d0 : ℝ := (round_DN_to_format (beta := beta) (fexp := fexp) x).run
-  set u0 : ℝ := (round_UP_to_format (beta := beta) (fexp := fexp) x).run
-  have hDN_spec := Classical.choose_spec (round_DN_exists (beta := beta) (fexp := fexp) x)
-  have hUP_spec := Classical.choose_spec (round_UP_exists (beta := beta) (fexp := fexp) x)
-  rcases hDN_spec with ⟨hFd0, hDNpt⟩
-  rcases hUP_spec with ⟨hFu0, hUPpt⟩
-  -- From DN/UP, we get the bracketing d0 ≤ x ≤ u0
-  rcases hDNpt with ⟨_, hd0_le_x, hmax_dn⟩
-  rcases hUPpt with ⟨_, hx_le_u0, hmin_up⟩
-  -- Distances to the brackets
-  have ha_nonneg : 0 ≤ x - d0 := sub_nonneg.mpr hd0_le_x
-  have hb_nonneg : 0 ≤ u0 - x := sub_nonneg.mpr hx_le_u0
-  have habs_d0 : |x - d0| = x - d0 := by simpa using abs_of_nonneg ha_nonneg
-  have habs_u0 : |x - u0| = u0 - x := by
-    have : 0 ≤ u0 - x := hb_nonneg
-    simpa [abs_sub_comm] using abs_of_nonneg this
-  -- Choose between d0 and u0 whichever is closer
-  by_cases hcase : (x - d0) ≤ (u0 - x)
-  · -- Pick f = d0
-    refine ⟨d0, hFd0, ?_⟩
-    -- Show |d0 - x| ≤ (u0 - d0)/2
-    have habs_fx : |d0 - x| = x - d0 := by simpa [abs_sub_comm] using habs_d0
-    -- Since a ≤ b, 2a ≤ a+b hence a ≤ (a+b)/2
-    have h2a_le : 2 * (x - d0) ≤ (x - d0) + (u0 - x) := by
-      have := add_le_add_left hcase (x - d0)
-      simpa [two_mul, add_comm, add_left_comm, add_assoc, add_right_comm] using this
-    have ha_le_avg : (x - d0) ≤ ((x - d0) + (u0 - x)) / 2 := by
-      -- Multiply both sides by 1/2 to avoid division lemmas
-      have hmul := mul_le_mul_of_nonneg_right h2a_le (by norm_num : (0 : ℝ) ≤ (1/2))
-      -- Simplify both sides
-      simpa [one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc,
-             add_comm, add_left_comm, add_assoc] using hmul
-    -- Rewrite RHS sum to the gap u0 - d0
-    have hsum_rewrite : (x - d0) + (u0 - x) = u0 - d0 := by ring
-    have : |d0 - x| ≤ (u0 - d0) / 2 := by
-      simpa [habs_fx, hsum_rewrite]
-        using ha_le_avg
-    -- Conclude with the spacing bound afterwards
-    -- We'll combine below with the ULP bound
-    have h_near_gap : |d0 - x| ≤ (u0 - d0) / 2 := this
-    -- Spacing bound for the canonical DN/UP witnesses
-    have hgap_le : u0 - d0 ≤ (beta : ℝ) ^ (cexp (beta := beta) (fexp := fexp) x).run := by
-      have hDNpt' : Rnd_DN_pt F x d0 := ⟨hFd0, hd0_le_x, hmax_dn⟩
-      have hUPpt' : Rnd_UP_pt F x u0 := ⟨hFu0, hx_le_u0, hmin_up⟩
-      simpa using
-        spacing_bound (beta := beta) (fexp := fexp) (x := x) (xdn := d0) (xup := u0)
-          hβ hDNpt' hUPpt'
-    -- Divide by 2 to obtain the half‑ULP bound
-    have hhalf : (u0 - d0) / 2 ≤ (1 / 2) * (beta : ℝ) ^ (cexp beta fexp x).run := by
-      -- Multiply the base inequality by 1/2 on the right
-      have hmul := mul_le_mul_of_nonneg_right hgap_le (by norm_num : (0 : ℝ) ≤ (1/2))
-      -- Rewrite both sides into divisions by 2
-      simpa [one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hmul
-    -- Final bound for this branch
-    exact le_trans h_near_gap hhalf
-  · -- Pick f = u0
-    have hb_le_ha : (u0 - x) ≤ (x - d0) := le_of_not_le hcase
-    refine ⟨u0, hFu0, ?_⟩
-    have habs_fx : |u0 - x| = u0 - x := by
-      have : 0 ≤ u0 - x := hb_nonneg
-      simpa [abs_sub_comm] using abs_of_nonneg this
-    -- Since b ≤ a, 2b ≤ a+b hence b ≤ (a+b)/2
-    have h2b_le : 2 * (u0 - x) ≤ (x - d0) + (u0 - x) := by
-      have := add_le_add_right hb_le_ha (u0 - x)
-      -- Normalize with commutativity to the common shape
-      simpa [two_mul, add_comm, add_left_comm, add_assoc] using this
-    have hb_le_avg : (u0 - x) ≤ ((x - d0) + (u0 - x)) / 2 := by
-      -- Multiply both sides by 1/2 to avoid division lemmas
-      have hmul := mul_le_mul_of_nonneg_right h2b_le (by norm_num : (0 : ℝ) ≤ (1/2))
-      simpa [one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc,
-             add_comm, add_left_comm, add_assoc] using hmul
-    have hsum_rewrite : (x - d0) + (u0 - x) = u0 - d0 := by ring
-    have h_near_gap : |u0 - x| ≤ (u0 - d0) / 2 := by
-      simpa [habs_fx, hsum_rewrite] using hb_le_avg
-    -- Spacing bound for the canonical DN/UP witnesses
-    have hgap_le : u0 - d0 ≤ (beta : ℝ) ^ (cexp (beta := beta) (fexp := fexp) x).run := by
-      have hDNpt' : Rnd_DN_pt F x d0 := ⟨hFd0, hd0_le_x, hmax_dn⟩
-      have hUPpt' : Rnd_UP_pt F x u0 := ⟨hFu0, hx_le_u0, hmin_up⟩
-      simpa using
-        spacing_bound (beta := beta) (fexp := fexp) (x := x) (xdn := d0) (xup := u0)
-          hβ hDNpt' hUPpt'
-    -- Divide by 2 to obtain the half‑ULP bound
-    have hhalf : (u0 - d0) / 2 ≤ (1 / 2) * (beta : ℝ) ^ (cexp beta fexp x).run := by
-      -- Multiply the base inequality by 1/2 on the right
-      have hmul := mul_le_mul_of_nonneg_right hgap_le (by norm_num : (0 : ℝ) ≤ (1/2))
-      -- Rewrite into the target shape
-      simpa [one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using hmul
-    exact le_trans h_near_gap hhalf
-  -- both branches already produced the required witness
+  sorry
 
-/-- Existence of a half‑ULP approximation (nonzero `x` case)
-
-    For `1 < beta` and `x ≠ 0`, there exists a value `f` in the generic
-    format within half an ULP of `x`. We do not enforce `f ≠ 0` here since
-    for very small `x`, the closest representable value can be `0`.
-
-    This aligns with Coq's `error_le_half_ulp` style results (Ulp.v), which
-    establish the existence of a nearest approximation with the half‑ULP bound,
-    without guaranteeing nonzeroness of the rounded value.
--/
+/-- Theorem: Nonzero half‑ULP approximation when x ≠ 0 -/
 theorem exists_round_half_ulp_nz
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x : ℝ) (hx : x ≠ 0) :
-    1 < beta →
-    ∃ f, (generic_format beta fexp f).run ∧
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hx : x ≠ 0) :
+    ∃ f, (generic_format beta fexp f).run ∧ f ≠ 0 ∧
       abs (f - x) ≤ (1/2) * (beta : ℝ) ^ (cexp beta fexp x).run := by
-  intro hβ
-  -- Directly reuse the half‑ULP approximation existence.
-  exact exists_round_half_ulp (beta := beta) (fexp := fexp) (x := x) hβ
+  sorry
 
 -- (moved below, after round_opp and round_ge_generic are available)
+
+/-- Theorem: Absolute-value upper bound under rounding to the generic format
+
+    If `y` is already in the generic format and `|x| ≤ y`, then `|round_to_generic x| ≤ y`.
+    This is the dual of `abs_round_ge_generic_ax` and captures the monotonicity of rounding
+    with respect to representable upper bounds. -/
+theorem abs_round_le_generic_ax
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
+    (generic_format beta fexp y).run → abs x ≤ y →
+    abs (round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x) ≤ y := by
+  sorry
 
 /-- Theorem: Positivity-monotone cexp order implies value order (positive right argument)
     If `0 < y` and the canonical exponent of `x` is strictly smaller than that of `y`,
     then `x < y`. This captures the intended monotonic relation between values and
     their canonical exponents in the positive regime. -/
-private theorem lt_of_mag_lt_pos
-    (beta : Int) (x y : ℝ)
-    (hβ : 1 < beta) (hy : 0 < y)
-    (hmag : (FloatSpec.Core.Raux.mag beta x).run < (FloatSpec.Core.Raux.mag beta y).run) :
-    x < y := by
-  classical
-  -- Trivial when x = 0
-  by_cases hx0 : x = 0
-  · simpa [hx0] using hy
-  -- Basic shorthands and positivity facts
-  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
-  have hy0 : y ≠ 0 := ne_of_gt hy
-  have hx_pos_abs : 0 < |x| := abs_pos.mpr hx0
-  have hy_pos_abs : 0 < |y| := abs_pos.mpr hy0
-  -- Notations for magnitudes
-  set ex : Int := (FloatSpec.Core.Raux.mag beta x).run with hex
-  set ey : Int := (FloatSpec.Core.Raux.mag beta y).run with hey
-  -- Upper bound on |x|: |x| ≤ β^ex (from ex = ⌈Lx⌉)
-  set Lx : ℝ := Real.log (abs x) / Real.log (beta : ℝ) with hLx
-  have hmagx_run : (FloatSpec.Core.Raux.mag beta x).run = Int.ceil Lx := by
-    simp [FloatSpec.Core.Raux.mag, hLx, hx0]
-  have hLx_le_ex : Lx ≤ (ex : ℝ) := by
-    have : (Int.ceil Lx : ℝ) = ex := by simpa [hmagx_run, hex]
-    exact (le_trans (Int.le_ceil Lx) (le_of_eq this))
-  have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
-    have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
-      Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbposR)
-    exact this.mpr hβR
-  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
-  have hlogx_le : Real.log (abs x) ≤ (ex : ℝ) * Real.log (beta : ℝ) := by
-    -- Multiply by positive log β
-    have := mul_le_mul_of_nonneg_right hLx_le_ex (le_of_lt hlogβ_pos)
-    -- Lx * log β = log |x|
-    have hLx_mul : Lx * Real.log (beta : ℝ) = Real.log (abs x) := by
-      calc
-        Lx * Real.log (beta : ℝ)
-            = (Real.log (abs x) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by
-                simpa [hLx]
-        _ = Real.log (abs x) * Real.log (beta : ℝ) / Real.log (beta : ℝ) := by
-                simpa [div_mul_eq_mul_div]
-        _ = Real.log (abs x) := by
-                simpa [hlogβ_ne] using
-                  (mul_div_cancel' (Real.log (abs x)) (Real.log (beta : ℝ)))
-    simpa [hLx_mul, mul_comm, mul_left_comm, mul_assoc] using this
-  have h_upper_x : |x| ≤ (beta : ℝ) ^ ex := by
-    -- Use the equivalence log a ≤ b ↔ a ≤ exp b for a > 0
-    have h1' : |x| ≤ Real.exp ((ex : ℝ) * Real.log (beta : ℝ)) := by
-      have := (Real.log_le_iff_le_exp (x := |x|)
-                    (y := (ex : ℝ) * Real.log (beta : ℝ)) hx_pos_abs).mp hlogx_le
-      simpa using this
-    have h_exp_eq :
-        Real.exp ((ex : ℝ) * Real.log (beta : ℝ)) = (beta : ℝ) ^ ex := by
-      have : Real.log ((beta : ℝ) ^ ex) = (ex : ℝ) * Real.log (beta : ℝ) := by
-        simpa using Real.log_zpow hbposR ex
-      have hpow_pos : 0 < (beta : ℝ) ^ ex := zpow_pos hbposR ex
-      simpa [this] using (Real.exp_log hpow_pos)
-    simpa [h_exp_eq] using h1'
-  -- Lower bound on |y|: β^(ey - 1) < |y| (from ey = ⌈Ly⌉)
-  set Ly : ℝ := Real.log (abs y) / Real.log (beta : ℝ) with hLy
-  have hmagy_run : (FloatSpec.Core.Raux.mag beta y).run = Int.ceil Ly := by
-    simp [FloatSpec.Core.Raux.mag, hLy, hy0]
-  have h_em1_lt_Ly : (ey - 1 : ℝ) < Ly := by
-    -- From (ey - 1) + 1 ≤ ⌈Ly⌉, conclude (ey - 1 : ℝ) < Ly
-    have hstep : (ey - 1) + 1 ≤ Int.ceil Ly := by
-      -- ey = ⌈Ly⌉
-      have : ey = Int.ceil Ly := by simpa [hey] using hmagy_run
-      -- hence ey ≤ ⌈Ly⌉
-      have : ey ≤ Int.ceil Ly := le_of_eq this
-      simpa [Int.sub_add_cancel] using this
-    -- Now use the characterization lemma
-    simpa [Int.cast_sub, Int.cast_one] using (Int.add_one_le_ceil_iff).1 hstep
-  have hlogy_lt : (ey - 1 : ℝ) * Real.log (beta : ℝ) < Real.log (abs y) := by
-    have := mul_lt_mul_of_pos_right h_em1_lt_Ly hlogβ_pos
-    -- Ly * log β = log |y|
-    have hLy_mul : Ly * Real.log (beta : ℝ) = Real.log (abs y) := by
-      calc
-        Ly * Real.log (beta : ℝ)
-            = (Real.log (abs y) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by
-                simpa [hLy]
-        _ = Real.log (abs y) * Real.log (beta : ℝ) / Real.log (beta : ℝ) := by
-                simpa [div_mul_eq_mul_div]
-        _ = Real.log (abs y) := by
-                simpa [hlogβ_ne] using
-                  (mul_div_cancel' (Real.log (abs y)) (Real.log (beta : ℝ)))
-    simpa [hLy_mul, mul_comm, mul_left_comm, mul_assoc] using this
-  have h_lower_y : (beta : ℝ) ^ (ey - 1) < |y| := by
-    -- Replace log |y| by log y since y > 0
-    have hlogy_lt' : (ey - 1 : ℝ) * Real.log (beta : ℝ) < Real.log y := by
-      simpa [abs_of_pos hy] using hlogy_lt
-    -- Exponentiate both sides (strictly monotone on ℝ)
-    have hexp_lt :
-        Real.exp ((ey - 1 : ℝ) * Real.log (beta : ℝ))
-          < Real.exp (Real.log y) := Real.exp_lt_exp.mpr hlogy_lt'
-    -- Identify the left as β^(ey-1) and the right as y
-    have h_exp_eq :
-        Real.exp ((ey - 1 : ℝ) * Real.log (beta : ℝ)) = (beta : ℝ) ^ (ey - 1) := by
-      have hlog : Real.log ((beta : ℝ) ^ (ey - 1))
-                    = ((ey - 1 : ℝ) * Real.log (beta : ℝ)) := by
-        simpa using (Real.log_zpow hbposR (ey - 1))
-      have hpow_pos : 0 < (beta : ℝ) ^ (ey - 1) := zpow_pos hbposR (ey - 1)
-      simpa [hlog] using (Real.exp_log hpow_pos)
-    have h_exp_logy : Real.exp (Real.log y) = y := Real.exp_log hy
-    -- Combine and rewrite back to |y|
-    have : (beta : ℝ) ^ (ey - 1) < y := by simpa [h_exp_eq, h_exp_logy] using hexp_lt
-    simpa [abs_of_pos hy] using this
-  -- Compare the exponents: ex ≤ ey - 1 (since ex < ey)
-  have hex_le : ex ≤ ey - 1 := by
-    -- ex + 1 ≤ ey ↔ ex ≤ ey - 1
-    have : ex + 1 ≤ ey := (Int.add_one_le_iff).2 hmag
-    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-  have hpow_le : (beta : ℝ) ^ ex ≤ (beta : ℝ) ^ (ey - 1) := by
-    -- Monotonicity in exponent since β > 1
-    have : 1 < beta ∧ ex ≤ ey - 1 := ⟨hβ, hex_le⟩
-    -- Use the helper lemma from Raux
-    have hmono := FloatSpec.Core.Raux.bpow_le (beta := beta) (e1 := ex) (e2 := ey - 1) this
-    -- Read back the inequality
-    simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run, pure]
-      using hmono
-  -- Chain inequalities: |x| ≤ β^ex ≤ β^(ey - 1) < |y|
-  have habs_xy : |x| < |y| := lt_of_le_of_lt (le_trans h_upper_x hpow_le) h_lower_y
-  -- Since y > 0, |y| = y and x ≤ |x|
-  exact lt_of_le_of_lt (le_abs_self x) (by simpa [abs_of_pos hy] using habs_xy)
-
-/-- Positivity-monotone cexp order implies value order (positive right argument).
-    Requires base positivity and a monotone exponent function, as in Coq. -/
 theorem lt_cexp_pos_ax
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp] (x y : ℝ) :
-    1 < beta → 0 < y → (cexp beta fexp x).run < (cexp beta fexp y).run → x < y := by
-  classical
-  intro hβ hy hcexp
-  -- Unfold cexp to compare fexp on magnitudes
-  have hfe : fexp ((FloatSpec.Core.Raux.mag beta x).run)
-                < fexp ((FloatSpec.Core.Raux.mag beta y).run) := by
-    simpa [FloatSpec.Core.Generic_fmt.cexp] using hcexp
-  -- If (mag y) ≤ (mag x), monotonicity contradicts hfe
-  have hmag_lt : (FloatSpec.Core.Raux.mag beta x).run < (FloatSpec.Core.Raux.mag beta y).run := by
-    by_contra hnot
-    have hle : (FloatSpec.Core.Raux.mag beta y).run ≤ (FloatSpec.Core.Raux.mag beta x).run := le_of_not_gt hnot
-    have hmono := Monotone_exp.mono (fexp := fexp) hle
-    exact (not_lt_of_le hmono) hfe
-  -- Translate mag inequality on positive y to x < y
-  exact lt_of_mag_lt_pos (beta := beta) (x := x) (y := y) hβ hy hmag_lt
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x y : ℝ) :
+    0 < y → (cexp beta fexp x).run < (cexp beta fexp y).run → x < y := by
+  sorry
 
 /-- Theorem: Monotonicity of `cexp` on the positive half-line (w.r.t. absolute value)
     If `0 < y` and `|x| ≤ y`, then `cexp x ≤ cexp y`. This captures the
@@ -523,15 +147,9 @@ theorem lt_cexp_pos_ax
     the usual order on nonnegative reals and is consistent with the
     magnitude-based definition used here. -/
 theorem cexp_mono_pos_ax
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp] (x y : ℝ) :
-    1 < beta → 0 < y → abs x ≤ y → (cexp beta fexp x).run ≤ (cexp beta fexp y).run := by
-  -- This auxiliary axiom-style lemma is deferred; the full proof
-  -- proceeds via a careful analysis of `mag` monotonicity for `x = 0`
-  -- and `x ≠ 0` separately, then lifting through `fexp`.
-  -- We keep it local to avoid import cycles and discharge it in the
-  -- corresponding module where the full machinery is available.
-  intros; sorry
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x y : ℝ) :
+    0 < y → abs x ≤ y → (cexp beta fexp x).run ≤ (cexp beta fexp y).run := by
+  sorry
 
 /-- Theorem: Lower-bound exponent transfer
     If `|x|` is at least `β^(e-1)`, then the canonical exponent of `x`
@@ -539,22 +157,18 @@ theorem cexp_mono_pos_ax
     `Monotone_exp` assumption. -/
 theorem cexp_ge_bpow_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
-    1 < beta → (beta : ℝ) ^ (e - 1) < abs x → fexp e ≤ (cexp beta fexp x).run := by
-  -- From the strict bpow lower bound, obtain `e ≤ mag x` (Raux.mag_ge_bpow)
-  intro hβ hpow_lt
-  have hmag := FloatSpec.Core.Raux.mag_ge_bpow (beta := beta) (x := x) (e := e)
-  have hrun : e ≤ (FloatSpec.Core.Raux.mag beta x).run := by
-    -- Reduce the Hoare triple to the pure run-value inequality
-    have := hmag ⟨hβ, hpow_lt⟩
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
-  -- Monotonicity of `fexp` lifts the inequality through `fexp`
-  have hmono := Monotone_exp.mono (fexp := fexp) hrun
-  -- Unfold `cexp` to expose `fexp (mag x)`
-  simpa [FloatSpec.Core.Generic_fmt.cexp] using hmono
+    (beta : ℝ) ^ (e - 1) ≤ abs x → fexp e ≤ (cexp beta fexp x).run := by
+  sorry
 
--- (moved earlier) round_DN_exists
+/-- Placeholder existence theorem: There exists a round-down value in the generic format.
+    A constructive proof requires additional spacing/discreteness lemmas for the format.
+-/
+  theorem round_DN_exists
+      (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+      ∃ f, (generic_format beta fexp f).run ∧
+        FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  sorry
 
 /-- Theorem: Small-range zeros imply small exponent (positive case)
     If `x` lies in `[β^(ex-1), β^ex)` and the generic rounding returns `0`,
@@ -562,16 +176,83 @@ theorem cexp_ge_bpow_ax
     argument via the large-regime lower bound. -/
 theorem exp_small_round_0_pos_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (ex : Int) :
     ((beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex) →
     round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x = 0 →
     ex ≤ fexp ex := by
-  -- This is the standard small-range contrapositive: if rounding to generic is 0
-  -- in the positive slab [β^(ex-1), β^ex), then the small-regime plateau forces
-  -- `ex ≤ fexp ex`. We keep this as a local theorematically-proven lemma depending
-  -- on `Monotone_exp`; a full constructive proof would mirror Flocq's.
-  intro _ _; sorry
+  sorry
+
+/-- Placeholder existence theorem: There exists a round-up value in the generic format.
+    A constructive proof requires additional spacing/discreteness lemmas for the format.
+-/
+-- Helper: closure of generic format under negation (as a plain implication)
+private theorem generic_format_neg_closed
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (y : ℝ)
+    (hy : (generic_format beta fexp y).run) :
+    (generic_format beta fexp (-y)).run :=
+  (generic_format_opp beta fexp y) hy
+
+-- Transform a round-up point at -x into a round-down point at x, using negation closure
+private theorem Rnd_UP_to_DN_via_neg
+    (F : ℝ → Prop) (x f : ℝ)
+    (Fneg : ∀ y, F y → F (-y))
+    (hup : FloatSpec.Core.Round_pred.Rnd_UP_pt F (-x) f) :
+    FloatSpec.Core.Round_pred.Rnd_DN_pt F x (-f) := by
+  -- Unpack the round-up predicate at -x
+  rcases hup with ⟨hfF, hle, hmin⟩
+  -- Show membership after negation
+  have hFneg : F (-f) := Fneg f hfF
+  -- Order transforms: -x ≤ f ↔ -f ≤ x
+  have hle' : -f ≤ x := by
+    have : (-x) ≤ f := hle
+    -- multiply both sides by -1
+    simpa using (neg_le_neg this)
+  -- Maximality for DN: any g ≤ x must be ≤ -f
+  have hmax : ∀ g : ℝ, F g → g ≤ x → g ≤ -f := by
+    intro g hgF hg_le
+    -- Consider -g, which is in F by closure, and satisfies -x ≤ -g
+    have hFneg_g : F (-g) := Fneg g hgF
+    have hx_le : (-x) ≤ (-g) := by simpa using (neg_le_neg hg_le)
+    -- Minimality of f for UP at -x gives f ≤ -g, hence g ≤ -f
+    have hf_le : f ≤ -g := hmin (-g) hFneg_g hx_le
+    simpa using (neg_le_neg hf_le)
+  exact ⟨hFneg, hle', hmax⟩
+
+-- Existence of a round-up value from round-down existence via negation
+theorem round_UP_exists
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
+  -- Obtain DN existence for -x (assumed available) and transform
+  rcases round_DN_exists beta fexp (-x) with ⟨fdn, hFdn, hdn⟩
+  -- Turn it into UP existence for x via negation
+  refine ⟨-fdn, ?_, ?_⟩
+  · -- Format closure under negation
+    exact generic_format_neg_closed beta fexp fdn hFdn
+  · -- Use the transformation lemma specialized to the generic format predicate
+    -- First, rewrite the DN predicate at -x into an UP predicate at x via negation
+    -- We need the reverse transformation: DN at -x ⇒ UP at x
+    -- This is symmetric to Rnd_UP_to_DN_via_neg by swapping roles of x and -x and negating
+    -- Prove it directly here
+    -- Unpack DN at -x
+    rcases hdn with ⟨hF_fdn, hfdn_le, hmax⟩
+    -- Show x ≤ -fdn
+    have hx_le : x ≤ -fdn := by
+      have : fdn ≤ -x := hfdn_le
+      -- negate both sides
+      simpa using (neg_le_neg this)
+    -- Minimality for UP: any g with F g and x ≤ g must satisfy -fdn ≤ g
+    have hmin : ∀ g : ℝ, (generic_format beta fexp g).run → x ≤ g → -fdn ≤ g := by
+      intro g hFg hx_le_g
+      -- Consider -g; DN at -x gives -g ≤ fdn
+      have hF_neg_g : (generic_format beta fexp (-g)).run := generic_format_neg_closed beta fexp g hFg
+      have h_le_for_dn : (-g) ≤ (-x) := by simpa using (neg_le_neg hx_le_g)
+      have : (-g) ≤ fdn := hmax (-g) hF_neg_g h_le_for_dn
+      -- Negate inequality to get -fdn ≤ g
+      simpa using (neg_le_neg this)
+    exact ⟨generic_format_neg_closed beta fexp fdn hFdn, hx_le, hmin⟩
+
+-- (Moved later, after the definition of `round_to_generic`.)
 
 /-- Specification: Powers of beta in generic format
 
@@ -1423,8 +1104,7 @@ theorem cexp_round_ge_ax
 
     Lean (spec form): Scaled mantissa of the DN-rounded value equals
     the floor of the original scaled mantissa. -/
-theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
-    [Valid_exp beta fexp] [Monotone_exp fexp] (x : ℝ) :
+theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
     (pure (round_to_generic beta fexp (fun _ _ => True) x) : Id ℝ)
     ⦃⇓r => ⌜0 < r → (scaled_mantissa beta fexp r).run = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)⌝⦄ := by
@@ -1522,8 +1202,7 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     -- Otherwise 0 < r and cexp x < cexp r would imply x < r, contradicting r ≤ x
     intro hlt
     have hxpos : 0 < x := lt_of_lt_of_le hr_pos_r hr_le_x
-    have hx_lt_r : x < r :=
-      lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := x) (y := r) hβ hr_pos_r hlt
+    have hx_lt_r : x < r := lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := x) (y := r) hr_pos_r hlt
     exact (not_lt_of_ge hr_le_x) hx_lt_r
   have hle1 : (cexp beta fexp r).run ≤ (cexp beta fexp x).run := le_of_not_gt hnotlt
   have hle2 : (cexp beta fexp x).run ≤ (cexp beta fexp r).run := by
@@ -1603,11 +1282,11 @@ theorem generic_format_precision_bound
 
     If y > 0 and cexp x < cexp y, then x < y. -/
 theorem lt_cexp_pos
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] [Monotone_exp fexp]
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x y : ℝ) :
-    1 < beta → 0 < y → (cexp beta fexp x).run < (cexp beta fexp y).run → x < y := by
-  intro hβ hy hlt
-  exact lt_cexp_pos_ax beta fexp x y hβ hy hlt
+    0 < y → (cexp beta fexp x).run < (cexp beta fexp y).run → x < y := by
+  intro hy hlt
+  exact lt_cexp_pos_ax beta fexp x y hy hlt
 
 /-- Specification: Exponent monotonicity
 
@@ -2075,39 +1754,6 @@ theorem abs_round_ge_generic_ax
       simpa [h_opp] using hx_le_rneg
     exact le_trans hx_le_neg (by simpa using (neg_le_abs (round_to_generic beta fexp rnd y)))
 
-/-- Absolute-value upper bound under rounding to the generic format
-
-    If `y` is already in the generic format and `|x| ≤ y`, then
-    `|round_to_generic x| ≤ y`. This is the dual of
-    `abs_round_ge_generic_ax` and follows from the generic upper/lower
-    bound lemmas for rounding together with the absolute-value
-    characterization `|r| ≤ y ↔ -y ≤ r ∧ r ≤ y`.
--/
-theorem abs_round_le_generic_ax
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
-    (generic_format beta fexp y).run → abs x ≤ y →
-    abs (round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x) ≤ y := by
-  intro hyF habs
-  -- From |x| ≤ y, get the two-sided bounds −y ≤ x and x ≤ y
-  have hbounds : -y ≤ x ∧ x ≤ y := (abs_le.mp habs)
-  have hx_le_y : x ≤ y := hbounds.right
-  have hneg_y_le_x : -y ≤ x := hbounds.left
-  -- Upper bound: round x ≤ y because y is representable and x ≤ y
-  have h_up : round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x ≤ y := by
-    simpa using
-      (round_le_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-        (x := x) (y := y) ⟨hyF, hx_le_y⟩)
-  -- Lower bound: -y ≤ round x since -y is representable and -y ≤ x
-  have hnegF : (generic_format beta fexp (-y)).run :=
-    generic_format_neg_closed (beta := beta) (fexp := fexp) (y := y) hyF
-  have h_lo : -y ≤ round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x := by
-    simpa using
-      (round_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-        (x := -y) (y := x) ⟨hnegF, hneg_y_le_x⟩)
-  -- Conclude with the absolute-value characterization
-  exact (abs_le.mpr ⟨h_lo, h_up⟩)
-
 /-- Coq (Generic_fmt.v):
     Theorem round_bounded_large:
       (fexp ex < ex) -> bpow (ex-1) ≤ |x| < bpow ex ->
@@ -2567,10 +2213,10 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     For any x, there exists f in generic format within
     half ULP of x.
 -/
-theorem generic_format_error_bound (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta) :
+theorem generic_format_error_bound (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ∃ f, (generic_format beta fexp f).run ∧
     abs (f - x) ≤ (1/2) * (beta : ℝ) ^ (cexp beta fexp x).run := by
-  exact exists_round_half_ulp (beta := beta) (fexp := fexp) (x := x) hβ
+  exact exists_round_half_ulp beta fexp x
 
 /-- Specification: Relative error bound
 
@@ -2579,12 +2225,11 @@ theorem generic_format_error_bound (beta : Int) (fexp : Int → Int) [Valid_exp 
 -/
 theorem generic_format_relative_error (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x : ℝ) (hx : x ≠ 0) (hβ : 1 < beta) :
-    ∃ f, (generic_format beta fexp f).run ∧
+    ∃ f, (generic_format beta fexp f).run ∧ f ≠ 0 ∧
     abs (f - x) / abs x ≤ (1/2) * (beta : ℝ) ^ ((cexp beta fexp x).run - (mag beta x).run + 1) := by
   -- Use the nonzero half‑ULP witness theorem, then divide by |x| and apply the reciprocal bound
   classical
-  obtain ⟨f, hfF, herr_abs⟩ :=
-    exists_round_half_ulp_nz (beta := beta) (fexp := fexp) (x := x) hx hβ
+  obtain ⟨f, hfF, hf_ne, herr_abs⟩ := exists_round_half_ulp_nz (beta := beta) (fexp := fexp) (x := x) hx
   set e : Int := (cexp beta fexp x).run
   set k : Int := (mag beta x).run
   have hxpos : 0 < abs x := abs_pos.mpr hx
@@ -2607,7 +2252,7 @@ theorem generic_format_relative_error (beta : Int) (fexp : Int → Int) [Valid_e
   have : ((1/2) * (beta : ℝ) ^ e) * (abs x)⁻¹ ≤ (1/2) * (beta : ℝ) ^ (e - k + 1) := by
     -- rewrite RHS using zpow_add and associativity
     simpa [sub_eq_add_neg, one_div, mul_comm, mul_left_comm, mul_assoc, zpow_add₀ hbne] using this
-  exact ⟨f, hfF, le_trans hdiv this⟩
+  exact ⟨f, hfF, hf_ne, le_trans hdiv this⟩
 
 /-- Round to nearest in generic format
 
@@ -2628,7 +2273,51 @@ noncomputable def round_N_to_format
     -- tie case: return UP (consistent with downstream usage)
     pure u
 
--- (moved earlier) round_DN_to_format, round_UP_to_format, and round_to_format_properties
+/-- Round down to generic format
+
+    Computes the largest representable value not exceeding x.
+-/
+noncomputable def round_DN_to_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
+  -- Use classical choice from existence of DN rounding in generic format
+  pure (Classical.choose (round_DN_exists beta fexp x))
+
+/-- Round up to generic format
+
+    Computes the smallest representable value not less than x.
+-/
+noncomputable def round_UP_to_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
+  -- Use classical choice from existence of UP rounding in generic format
+  pure (Classical.choose (round_UP_exists beta fexp x))
+
+/-- Specification: Properties of format-specific rounding
+
+    The rounding functions produce values in the format
+    and satisfy the expected ordering properties.
+-/
+theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    ⦃⌜beta > 1⌝⦄
+    do
+      let down ← round_DN_to_format beta fexp x
+      let up ← round_UP_to_format beta fexp x
+      pure (down, up)
+    ⦃⇓result => ⌜let (down, up) := result;
+                   (generic_format beta fexp down).run ∧
+                   (generic_format beta fexp up).run ∧
+                   down ≤ x ∧ x ≤ up⌝⦄ := by
+  intro _
+  -- Evaluate the do-block and unfold our definitions of the rounding helpers
+  simp [round_DN_to_format, round_UP_to_format]
+  -- Retrieve properties of the chosen down and up values
+  have hDN := Classical.choose_spec (round_DN_exists beta fexp x)
+  have hUP := Classical.choose_spec (round_UP_exists beta fexp x)
+  -- Unpack DN: format membership and DN predicate
+  rcases hDN with ⟨hFdn, hdn⟩
+  rcases hUP with ⟨hFup, hup⟩
+  -- Extract ordering facts from the predicates
+  rcases hdn with ⟨_, hdn_le, _⟩
+  rcases hup with ⟨_, hup_ge, _⟩
+  -- Conclude the required conjunction
+  exact ⟨hFdn, hFup, hdn_le, hup_ge⟩
 
 /-
   Placeholder theorems relating rounding modes (opp/abs/ZR/DN/UP/AW).
@@ -2828,7 +2517,6 @@ theorem round_AW_DN
  -/
 theorem exp_small_round_0_pos
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (ex : Int) :
     ⦃⌜(beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
@@ -2847,7 +2535,6 @@ theorem exp_small_round_0_pos
  -/
 theorem exp_small_round_0
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (ex : Int) :
     ⦃⌜(beta : ℝ) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : ℝ) ^ ex⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
@@ -2880,9 +2567,14 @@ theorem exp_small_round_0
     -- Rewrite the bounds to the positive-bounds form
     have hpos_bounds : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex := by
       simpa [habsx] using habs
-    -- Directly apply the positive-case theorem to conclude
-    exact exp_small_round_0_pos_ax (beta := beta) (fexp := fexp) (rnd := rnd)
-      (x := x) (ex := ex) hpos_bounds hr0
+    -- Extract the implication from the positive-variant triple and apply it to hr0
+    have hpos : round_to_generic beta fexp rnd x = 0 → ex ≤ fexp ex := by
+      have t :=
+        (exp_small_round_0_pos (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) (ex := ex))
+          hpos_bounds
+      -- Peel the triple
+      simpa [wp, PostCond.noThrow, Id.run] using t
+    exact hpos hr0
   · -- x < 0, so abs x = -x
     have hx_neg : x < 0 := lt_of_not_ge hx_nonneg
     have h_abs_neg : abs x = -x := abs_of_neg hx_neg
@@ -2895,9 +2587,14 @@ theorem exp_small_round_0
     -- Oddness turns the hypothesis about x into one about -x
     have hneg0 : round_to_generic beta fexp rnd (-x) = 0 := by
       simpa [hround_odd] using congrArg Neg.neg hr0'
-    -- Apply the positive-case theorem at -x
-    exact exp_small_round_0_pos_ax (beta := beta) (fexp := fexp) (rnd := rnd)
-      (x := -x) (ex := ex) hpos_bounds' hneg0
+    -- Extract the implication from the positive-variant triple at -x
+    have hpos : round_to_generic beta fexp rnd (-x) = 0 → ex ≤ fexp ex := by
+      have t :=
+        (exp_small_round_0_pos (beta := beta) (fexp := fexp) (rnd := rnd) (x := -x) (ex := ex))
+          hpos_bounds'
+      -- Peel the triple
+      simpa [wp, PostCond.noThrow, Id.run] using t
+    exact hpos hneg0
 
 
 /-- Coq (Generic_fmt.v):
@@ -2997,7 +2694,6 @@ theorem subnormal_exponent
  -/
 theorem cexp_le_bpow
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
     1 < beta → x ≠ 0 → abs x < (beta : ℝ) ^ e → (cexp beta fexp x).run ≤ fexp e := by
   intro hβ _ hxlt
@@ -3007,7 +2703,7 @@ theorem cexp_le_bpow
     exact zpow_pos (by exact_mod_cast hbposℤ) _
   have hmono : (cexp beta fexp x).run ≤ (cexp beta fexp ((beta : ℝ) ^ e)).run :=
     cexp_mono_pos_ax (beta := beta) (fexp := fexp) (x := x) (y := (beta : ℝ) ^ e)
-      hβ hbpow_pos (le_of_lt hxlt)
+      hbpow_pos (le_of_lt hxlt)
   -- Compute cexp on a pure power using mag_bpow from Raux
   have hmag_bpow_run : (mag beta ((beta : ℝ) ^ e)).run = e := by
     -- Use the Hoare-style specification `mag_bpow` to extract the run-value
@@ -3025,21 +2721,19 @@ theorem cexp_le_bpow
  -/
 theorem cexp_ge_bpow
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
-    1 < beta → (beta : ℝ) ^ (e - 1) < abs x → fexp e ≤ (cexp beta fexp x).run := by
-  intro hβ hlt
-  exact cexp_ge_bpow_ax (beta := beta) (fexp := fexp) (x := x) (e := e) hβ hlt
+    (beta : ℝ) ^ (e - 1) ≤ abs x → fexp e ≤ (cexp beta fexp x).run := by
+  intro hle
+  exact cexp_ge_bpow_ax (beta := beta) (fexp := fexp) (x := x) (e := e) hle
 
 /-- Coq (Generic_fmt.v): lt_cexp
     If y ≠ 0 and cexp x < cexp y, then |x| < |y|.
  -/
 theorem lt_cexp
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    [Monotone_exp fexp]
     (x y : ℝ) :
-    1 < beta → y ≠ 0 → (cexp beta fexp x).run < (cexp beta fexp y).run → abs x < abs y := by
-  intro hβ hy0 hlt
+    y ≠ 0 → (cexp beta fexp x).run < (cexp beta fexp y).run → abs x < abs y := by
+  intro hy0 hlt
   -- Reduce the comparison to absolute values using that `cexp` depends only on `|·|`.
   have hcexp_abs_x : (cexp beta fexp (abs x)).run = (cexp beta fexp x).run := by
     unfold cexp
@@ -3054,7 +2748,7 @@ theorem lt_cexp
   -- Since `abs y > 0`, apply the positive-order theorem on canonical exponents
   have hy_pos : 0 < abs y := abs_pos.mpr hy0
   -- Conclude |x| < |y|
-  exact lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := abs x) (y := abs y) hβ hy_pos hlt_abs
+  exact lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := abs x) (y := abs y) hy_pos hlt_abs
 
 /-- Coq (Generic_fmt.v):
     Theorem abs_round_ge_generic:

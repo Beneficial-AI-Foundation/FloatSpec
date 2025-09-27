@@ -1,0 +1,86 @@
+Always Works™ Subagent Fixer
+
+Task Context
+- Target file: FloatSpec/src/Core/Round_generic.lean
+- Selection: { line_number: 66, reason: sorry }
+- Target item: theorem `spacing_bound`
+- Coq source root: /home/hantao/code/flocq/src/Core
+- Policy summary:
+  - Scope: fix exactly the selected item; minimal local helper lemmas allowed (prefer `private`).
+  - Forbidden: `axiom`, `admit`, `pure true`, `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, or trivially-true variants; no new `sorry`; do not delete or broadly rewrite specs.
+  - Spec changes: only if required to match Coq; keep minimal and document with Coq reference.
+  - Build: repository must compile with 0 errors after patch.
+
+Proof Hints
+- This file ports from Coq Generic_fmt and uses round predicates from Round_pred.
+- The target `spacing_bound` resembles spacing/ulp gap results: if d = DN(x) and u = UP(x), then u - d ≤ bpow (cexp x).
+- Coq references to consult for structure:
+  - /home/hantao/code/flocq/src/Core/Ulp.v around lines 2584 and 2619 (lemmas combining Rnd_DN_pt and Rnd_UP_pt around midpoints/gaps).
+  - /home/hantao/code/flocq/src/Core/Generic_fmt.v for `generic_format` closure and cexp/spacing relationships.
+- Likely needs: closure under negation, properties of `cexp` and `bpow`, basic inequalities.
+
+Outputs Required
+1) A unified diff patch that only modifies the single selected theorem and minimal nearby helpers.
+2) A short proof approach summary (direct/helper/ported refs).
+3) A compile note (local checks you would run).
+4) A Change Log entry block matching the required template.
+
+Full Instructions
+
+Fix proofs / theorems in `FloatSpec/src/Core/Round_generic.lean`.
+
+Goal
+Repair exactly one item: `spacing_bound` at line 66.
+
+Prerequisites
+- Read FloatSpec/PIPELINE.md and ./CLAUDE.md if needed for style.
+
+Process
+1. Identify and confirm the target; record line 66 and reason sorry.
+2. Understand the local spec and definitions; refer to Coq sources as needed.
+3. Plan: direct proof or small helper lemmas (preferred if long).
+4. Implement: add minimal helpers (private); do not introduce forbidden placeholders.
+5. Check your diff for forbidden tokens; if any, revert and redo.
+6. Compile (you: simulate/assume) with `lake build`; fix all errors before finishing.
+7. Polish only if it reduces fragility and aligns with Coq.
+8. Log: provide the change log entry.
+
+Allowed vs Prohibited
+- Allowed: small helper lemmas; minimal reordering only to break dependency cycles; minimal Coq-aligned spec tweak if strictly necessary (must document with Coq path/justification).
+- Prohibited: deleting items; using `axiom`/`admit`/`pure true`/trivial placeholders; expanding beyond the single selected target; broad spec rewrites.
+
+Compilation & Completion Criteria
+- Selected target has no sorry and no forbidden placeholders.
+- `lake build` ends with 0 errors.
+- No unrelated items altered or broken.
+
+Change Log Template (fill in for this item)
+## File: FloatSpec/src/Core/Round_generic.lean
+- Target: spacing_bound at line 66
+- Reason picked: sorry
+- Approach: <direct proof | helper lemmas (list) | ported from Coq (list)>
+- Changes:
+  - [ ] Definition modified? (yes/no). If yes, minimal diff + reason.
+  - [ ] Spec modified? (yes/no). If yes, minimal diff + Coq reference path.
+  - [ ] Reordering done? (yes/no). If yes, explain dependency.
+- Coq reference(s): /home/hantao/code/flocq/src/Core/Ulp.v : 2584–2660; Generic_fmt.v : cexp/generic_format lemmas
+- Build: lake build | .log/<timestamp>_build.log
+- Notes: pitfalls, invariants, future useful lemmas (if any)
+
+Now, produce the outputs in this exact order:
+
+===PATCH_BEGIN===
+<unified diff touching only FloatSpec/src/Core/Round_generic.lean and minimal local helpers>
+===PATCH_END===
+
+===APPROACH_BEGIN===
+<2–6 sentence summary of the proof approach and any Coq references>
+===APPROACH_END===
+
+===COMPILE_NOTE_BEGIN===
+<brief note of local compile checks you’d run>
+===COMPILE_NOTE_END===
+
+===CHANGELOG_BEGIN===
+<the filled change log block>
+===CHANGELOG_END===

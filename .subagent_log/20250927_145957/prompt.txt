@@ -1,0 +1,41 @@
+Always Works™ Subagent Fixer — Attempt 2
+
+Context
+- Target file: FloatSpec/src/Core/Round_generic.lean
+- Target item: theorem `spacing_bound` at line 66
+- Selection: { line_number: 66, reason: sorry }
+- Coq roots: /home/hantao/code/flocq/src/Core (Generic_fmt.v, Ulp.v, Round_pred.v)
+
+Important: Your previous attempt failed to compile. Key issues to avoid:
+- Do not use `.1`/`.2` field projections on `Rnd_DN_pt`/`Rnd_UP_pt` proofs as if they were structures; destruct them via `rcases`. In Lean, `Rnd_DN_pt F x f` is defined as `F f ∧ f ≤ x ∧ ∀ g, F g → g ≤ x → g ≤ f`.
+  Use: `rcases hdn with ⟨hFdn, hdn_le, hmax⟩; rcases hup with ⟨hFup, hx_le_up, hmin⟩`.
+- Do not insert incomplete terms (`?_`) or invalid projections (`mpr` on functions). Produce fully elaborated terms that type-check.
+- Keep the proof minimal. It is fine to solve only the representable-x branch directly and then finish the non-representable branch using a short helper lemma you add locally, but that helper must be proven without `sorry`/axioms.
+
+Suggested plan
+1) Case split on `hxF : (generic_format beta fexp x).run`.
+   - If `hxF`, DN/UP both pick `x` by the definitions: use hmax/hmin. Conclude `xup - xdn = 0 ≤ β^(cexp x)`.
+2) If `¬hxF`, set `e := (cexp beta fexp x).run` and `s := (beta : ℝ) ^ e`.
+   - Prove existence of an integer `m` with `xdn = m * s` and `xup = (m+1) * s`. Minimal route:
+     a) Use the DN/UP defining inequalities plus generic_format_discrete (already in Generic_fmt.lean) to rule out any F-value strictly inside `(m*s, (m+1)*s)` for the right `m`. Pick `m := (Ztrunc (xdn * s⁻¹)).run`.
+     b) Show `xdn = m*s` and `xup = (m+1)*s` using hmax/hmin and F-membership of these two grid points. Their F-membership follows from `generic_format_F2R` with mantissa `m` and exponent `e`, using `cexp` monotonicity bounds (you can reuse `generic_format_bpow` and the canonical reconstruction lemmas in Generic_fmt).
+   - Then `xup - xdn = (m+1 - m) * s = s`, conclude `≤ s` by `rfl`.
+
+Allowed helpers (local/private):
+- `private lemma exists_neighbors_at_cexp ...` proving the existence of `m` as above with a short, composable proof using Generic_fmt lemmas (no new axioms/sorry).
+- Keep helpers immediately above `spacing_bound` and mark them `private`.
+
+Outputs Required (same format):
+===PATCH_BEGIN===
+<unified diff touching only FloatSpec/src/Core/Round_generic.lean>
+===PATCH_END===
+===APPROACH_BEGIN===
+<brief summary>
+===APPROACH_END===
+===COMPILE_NOTE_BEGIN===
+<compile notes>
+===COMPILE_NOTE_END===
+===CHANGELOG_BEGIN===
+<filled log>
+===CHANGELOG_END===
+

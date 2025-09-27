@@ -1,0 +1,118 @@
+System role: You are a Subagent Fixer for a Lean 4 proof repository. You must produce a minimal patch to fix exactly one target in the specified file, following strict policy. Do NOT apply or commit changes; only return the patch text and required notes.
+
+Repo root: /home/hantao/code/FloatSpec
+Target file: FloatSpec/src/Core/Round_generic.lean
+Selection: { line_number: 66, reason: sorry }
+Target item: theorem `spacing_bound`
+Coq reference root: /home/hantao/code/flocq/src/Core (likely Generic_fmt.v for spacing lemmas)
+Build command (for me to run): lake build
+Policy summary:
+- Scope: fix only the single selected item; allow minimal local helper lemmas (prefer `private`).
+- Prohibited: introducing `axiom`, `admit`, `pure true`, `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, or trivially-true variants; adding any new `sorry`; deleting or broadly editing unrelated code/specs.
+- Definitions: no placeholder bodies; if you must alter a spec minimally to match Coq, justify and cite.
+- Build must pass after patch; but YOU must not build or apply—only return patch and notes.
+Required outputs:
+1) A unified diff patch (or full new contents for the single file) touching only the target theorem and any tiny helper lemmas placed adjacent to it.
+2) A short proof approach summary (direct / helper lemmas / Coq refs).
+3) A compile note (what you expect to compile, local checks you conceptually did).
+4) A Change Log entry block per the template below (I will append it).
+
+Below is your task prompt body (adapted from scripts/subagent_prompt.md). Replace placeholders and follow strictly. Remember: return patch only, do NOT apply.
+
+---
+# Always Works™ Prompt
+
+## Task
+
+Fix proofs / theorems in `FloatSpec/src/Core/Round_generic.lean`.
+
+## Goal
+
+Repair exactly one item: `spacing_bound at line 66 (reason: sorry)`
+
+---
+
+## Prerequisites (read first)
+
+* FloatSpec/PIPELINE.md (overall pipeline)
+* ./CLAUDE.md (proof-writing conventions and mvcgen info)
+
+---
+
+## Process (ONE-BY-ONE; you return patch only)
+
+1. Identify target using the Goal and record the exact line number and reason.
+2. Understand spec & code (check Defs.lean for Rnd_DN_pt/Rnd_UP_pt and Generic_fmt.lean for generic_format; avoid changing specs unless necessary).
+3. Plan: prove directly or via a small local helper.
+4. Draft Implement:
+   - Modify only the `spacing_bound` proof and, if necessary, introduce minimal `private` helper lemmas located immediately above `spacing_bound`.
+   - Follow house style. Do not use any forbidden placeholders.
+5. Check Implement: self-scan your diff for forbidden tokens (`axiom`, `admit`, `pure true`, `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`). Ensure you are not introducing any new `sorry`.
+6. Output patch (do NOT apply); I will compile it.
+7. Polish: keep changes minimal and Coq-aligned.
+8. Log: include the filled Change Log entry.
+
+---
+
+## Allowed vs. Prohibited Changes
+
+Allowed (with restraint)
+- Introduce small helper lemmas (`private`) close to the target.
+- Reorder only if required to break a dependency cycle; document it.
+
+Prohibited
+- Deleting existing theorems/defs.
+- Using `axiom`, `admit`, or any non-`sorry` placeholder.
+- Expanding scope beyond the single selected target.
+- Broad spec rewrites or syntax changes to Hoare triples.
+
+---
+
+## Proof Strategy Guidelines
+
+- Prefer using the existing definitions:
+  * F := fun y => (generic_format beta fexp y).run
+  * Rnd_DN_pt F x xdn and Rnd_UP_pt F x xup as in FloatSpec/src/Core/Defs.lean
+- Aim to derive `xup - xdn ≤ (beta : ℝ) ^ (cexp beta fexp x).run` using spacing properties typical in Flocq’s Generic_fmt.v. It is acceptable to prove a slightly simpler bound that is valid under the imported abstractions.
+- Avoid depending on later theorems that are `sorry` in this file; rely on Defs/Generic_fmt and Mathlib basics.
+- Keep the final statement identical unless a minimal, Coq-justified tweak is essential (document if so).
+
+---
+
+## Change Log & Reporting (return this block filled)
+
+```
+## File: FloatSpec/src/Core/Round_generic.lean
+- Target: spacing_bound at line 66
+- Reason picked: sorry
+- Approach: <fill>
+- Changes:
+  - [ ] Definition modified? (yes/no). If yes, minimal diff + reason.
+  - [ ] Spec modified? (yes/no). If yes, minimal diff + Coq reference path.
+  - [ ] Reordering done? (yes/no). If yes, explain dependency.
+- Coq reference(s): /home/hantao/code/flocq/src/Core/Generic_fmt.v : <lemmas used>
+- Build: lake build | <to be filled by orchestrator>
+- Notes: <fill>
+```
+
+---
+
+## Deliverables format
+
+Return your answer as:
+
+===PATCH===
+<unified diff touching only FloatSpec/src/Core/Round_generic.lean>
+===ENDPATCH===
+
+===SUMMARY===
+<1–5 lines explaining the proof idea>
+===ENDSUMMARY===
+
+===COMPILE===
+<notes about expected compile, imports relied on, any assumptions>
+===ENDCOMPILE===
+
+===CHANGELOG===
+<populated block per template>
+===ENDCHANGELOG===
