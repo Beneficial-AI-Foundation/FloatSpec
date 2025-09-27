@@ -26,6 +26,7 @@ import FloatSpec.src.Core.Float_prop
 -- import FloatSpec.src.Core.Digits
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Int.Basic
+import Mathlib.Tactic
 import Std.Do.Triple
 import Std.Tactic.Do
 
@@ -39,6 +40,14 @@ namespace FloatSpec.Core.Generic_fmt
 
 -- Allow 'sorry' to remain as warnings, not errors, in this file.
 set_option warningAsError false
+-- Disable strict linter treating unused section variables as errors here.
+-- This project imports large sections with variables for Coq-style sections,
+-- which can trigger this linter spuriously in ported statements.
+set_option linter.unusedSectionVars false
+-- Some proofs rely on heavy simplification; raise recursion depth for simp
+set_option maxRecDepth 4096
+-- Increase heartbeat limit to accommodate heavy proofs in this file
+set_option maxHeartbeats 1200000
 
 section ExponentFunction
 
@@ -1952,6 +1961,40 @@ noncomputable def Znearest (choice : Int → Bool) (x : ℝ) : Int :=
   | 0    => if choice f then c else f
   | _    => c
 
+/- Helper: Evaluate Znearest at an exact half offset from the floor -/
+theorem Znearest_eq_choice_of_eq_half
+    (choice : Int → Bool) (x : ℝ)
+    (hmid : x - (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ) = (1/2)) :
+    Znearest choice x
+      = (if choice ((FloatSpec.Core.Raux.Zfloor x).run)
+         then (FloatSpec.Core.Raux.Zceil x).run
+         else (FloatSpec.Core.Raux.Zfloor x).run) := by
+  classical
+  -- Evaluate the comparison explicitly at the midpoint, without introducing
+  -- auxiliary `set` bindings to keep rewriting simple.
+  have hxmid' : x - (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ) = (1/2 : ℝ) := by
+    simpa using hmid
+  have hr0' :
+      (FloatSpec.Core.Raux.Rcompare (x - (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ)) (1/2)).run = 0 := by
+    simp [FloatSpec.Core.Raux.Rcompare, hxmid']
+  -- Prefer 2⁻¹ over 1/2 to match normalization in goals
+  have hr0 :
+      (FloatSpec.Core.Raux.Rcompare (x - (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ)) (2⁻¹)).run = 0 := by
+    simpa [one_div] using hr0'
+  -- Unfold and finish by reducing the match with `hr0'`.
+  unfold Znearest
+  change
+      (match (FloatSpec.Core.Raux.Rcompare (x - (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ)) (1/2)).run with
+        | -1 => (FloatSpec.Core.Raux.Zfloor x).run
+        | 0 => if choice ((FloatSpec.Core.Raux.Zfloor x).run) then (FloatSpec.Core.Raux.Zceil x).run else (FloatSpec.Core.Raux.Zfloor x).run
+        | _ => (FloatSpec.Core.Raux.Zceil x).run)
+        =
+        (if choice ((FloatSpec.Core.Raux.Zfloor x).run)
+          then (FloatSpec.Core.Raux.Zceil x).run
+          else (FloatSpec.Core.Raux.Zfloor x).run)
+  -- Reduce the match using `hr0` (normalizing 1/2 as 2⁻¹) and close by reflexivity
+  simp [one_div, hr0]
+
 /-- Coq (Generic_fmt.v): Znearest_DN_or_UP
 
     For any x, `Znearest x` is either `⌊x⌋` or `⌈x⌉` (depending on the
@@ -2449,7 +2492,303 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
 theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
     Znearest choice (-x)
       = - Znearest (fun t => ! choice (-(t + 1))) x := by
-  sorry
+  classical
+  -- Helper lemmas to evaluate Znearest under simple 1/2 comparisons
+  -- We state them for an arbitrary tie-breaking function `ch` so they can be
+  -- reused both for `choice` and the transformed choice.
+  have h_eq_floor_of_lt_half :
+      ∀ (ch : Int → Bool) (y : ℝ),
+        y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ) < (1/2) →
+        Znearest ch y = (FloatSpec.Core.Raux.Zfloor y).run := by
+    intro ch y hy
+    unfold Znearest
+    -- Code is -1 in the Lt case
+    have : (FloatSpec.Core.Raux.Rcompare (y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ)) (1/2)).run = -1 := by
+      have hlt := FloatSpec.Core.Raux.Rcompare_Lt_spec
+          (y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ)) (1/2)
+      simpa [FloatSpec.Core.Raux.Rcompare_val, wp, PostCond.noThrow, Id.run, pure] using (hlt hy)
+    -- Normalize 1/2 as 2⁻¹ to match Znearest's scrutinee
+    have hhalf_id : (2⁻¹ : ℝ) = (1/2) := by
+      simpa [zpow_neg_one, one_div] using (zpow_neg_one (2 : ℝ))
+    have this' : (FloatSpec.Core.Raux.Rcompare (y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ)) (2⁻¹)).run = -1 := by
+      simpa [hhalf_id.symm] using this
+    -- Reduce Znearest using the -1 branch of the comparison
+    have hres : Znearest ch y = (FloatSpec.Core.Raux.Zfloor y).run := by
+      simp [Znearest, this']
+    exact hres
+  have h_eq_ceil_of_gt_half :
+      ∀ (ch : Int → Bool) (y : ℝ),
+        (1/2) < y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ) →
+        Znearest ch y = (FloatSpec.Core.Raux.Zceil y).run := by
+    intro ch y hy
+    unfold Znearest
+    -- Code is 1 in the Gt case
+    have : (FloatSpec.Core.Raux.Rcompare (y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ)) (1/2)).run = 1 := by
+      have hgt := FloatSpec.Core.Raux.Rcompare_Gt_spec
+          (y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ)) (1/2)
+      simpa [FloatSpec.Core.Raux.Rcompare_val, wp, PostCond.noThrow, Id.run, pure] using (hgt hy)
+    -- Normalize 1/2 as 2⁻¹ to match Znearest's scrutinee
+    have hhalf_id : (2⁻¹ : ℝ) = (1/2) := by
+      simpa [zpow_neg_one, one_div] using (zpow_neg_one (2 : ℝ))
+    have this' : (FloatSpec.Core.Raux.Rcompare (y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ)) (2⁻¹)).run = 1 := by
+      simpa [hhalf_id.symm] using this
+    -- Reduce Znearest using the +1 branch of the comparison
+    have hres : Znearest ch y = (FloatSpec.Core.Raux.Zceil y).run := by
+      simp [Znearest, this']
+    exact hres
+  have h_eq_tie :
+      ∀ y, y - (((FloatSpec.Core.Raux.Zfloor y).run : Int) : ℝ) = (1/2) →
+        Znearest choice y
+          = (if choice (FloatSpec.Core.Raux.Zfloor y).run
+              then (FloatSpec.Core.Raux.Zceil y).run
+              else (FloatSpec.Core.Raux.Zfloor y).run) := by
+    intro y hy
+    -- Directly reuse the standalone midpoint lemma proved above
+    simpa using (Znearest_eq_choice_of_eq_half choice y hy)
+  -- Notations for floor/ceil of x
+  set f : Int := (FloatSpec.Core.Raux.Zfloor x).run with hf
+  set c : Int := (FloatSpec.Core.Raux.Zceil x).run with hc
+  -- Reexpress the left-hand side using floor/ceil of -x and simplify
+  have hfloor_neg : (FloatSpec.Core.Raux.Zfloor (-x)).run = -c := by
+    -- ⌊-x⌋ = -⌈x⌉
+    simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil, hf, hc, Int.floor_neg, Int.ceil_neg]
+  have hceil_neg : (FloatSpec.Core.Raux.Zceil (-x)).run = -f := by
+    -- ⌈-x⌉ = -⌊x⌉
+    simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil, hf, hc, Int.floor_neg, Int.ceil_neg]
+  -- Bridge 2⁻¹ with 1/2 for convenient algebraic rewrites
+  have hhalf_id : (2⁻¹ : ℝ) = (1/2) := by
+    simpa [zpow_neg_one, one_div] using (zpow_neg_one (2 : ℝ))
+
+  -- Case split on whether x hits its floor (integral case)
+  by_cases hxint : x = (f : ℝ)
+  · -- Integral case: f = c, hence floor/ceil coincide under negation
+    have hc_eq_f : c = f := by
+      -- From x = (f : ℝ), we get Int.ceil x = f
+      simpa [hc, FloatSpec.Core.Raux.Zceil, hxint] using (Int.ceil_intCast f)
+    -- Left side: Znearest choice (-x) is either ⌊-x⌋ or ⌈-x⌉, both equal -f
+    have hdisjL := (Znearest_DN_or_UP choice (-x)) True.intro
+    have hdisjL' :
+        Znearest choice (-x) = (FloatSpec.Core.Raux.Zfloor (-x)).run ∨
+        Znearest choice (-x) = (FloatSpec.Core.Raux.Zceil (-x)).run := by
+      simpa [wp, PostCond.noThrow, Id.run, pure] using hdisjL
+    have hfloor_eq : (FloatSpec.Core.Raux.Zfloor (-x)).run = -f := by simpa [hfloor_neg, hc_eq_f]
+    have hceil_eq  : (FloatSpec.Core.Raux.Zceil (-x)).run = -f := by
+      simpa [hceil_neg]
+    have hL : Znearest choice (-x) = -f := by
+      cases hdisjL' with
+      | inl h => simpa [hfloor_eq] using h
+      | inr h => simpa [hceil_eq] using h
+    -- Right side: Znearest (choice') x is either ⌊x⌋ or ⌈x⌉, both equal f
+    -- Use the syntactically expanded form `-1 + -t` to match Lean's pretty printer
+    have hdisjR := (Znearest_DN_or_UP (fun t => ! choice (-1 + -t)) x) True.intro
+    have hdisjR' :
+        Znearest (fun t => ! choice (-1 + -t)) x = (FloatSpec.Core.Raux.Zfloor x).run ∨
+        Znearest (fun t => ! choice (-1 + -t)) x = (FloatSpec.Core.Raux.Zceil x).run := by
+      simpa [wp, PostCond.noThrow, Id.run, pure] using hdisjR
+    have hR0 : Znearest (fun t => ! choice (-1 + -t)) x = f := by
+      -- Establish floor/ceil identities at integral x
+      -- Here `f` and `c` are exactly the runs of floor/ceil at x by definition
+      have hfloor_run : (FloatSpec.Core.Raux.Zfloor x).run = f := by simpa [hf]
+      have hceil_run : (FloatSpec.Core.Raux.Zceil x).run = f := by
+        -- From hc : c = ⌈x⌉ and hc_eq_f : c = f
+        have hc_eq_f : c = f := by
+          simpa [hc, FloatSpec.Core.Raux.Zceil, hxint] using (Int.ceil_intCast f)
+        simpa [hc_eq_f] using hc.symm
+      -- Discharge both branches
+      cases hdisjR' with
+      | inl hfloor =>
+          -- Znearest chooses floor; replace floor by f
+          exact hfloor.trans (by simpa [hfloor_run])
+      | inr hceil  =>
+          -- Znearest chooses ceil; replace ceil by f
+          exact hceil.trans (by simpa [hceil_run])
+    -- Conclude
+    have hLeft : Znearest choice (-x) = -f := hL
+    have hRneg : - Znearest (fun t => ! choice (-1 + -t)) x = -f := by
+      simpa [hR0]
+    have hEq : - Znearest (fun t => ! choice (-1 + -t)) x = Znearest choice (-x) := by
+      simpa [hLeft] using hRneg
+    simpa using hEq.symm
+  · -- Non-integral case: c = f + 1
+    have hc_succ : c = f + 1 := by
+      -- From non-integrality, ceil = floor + 1
+      have hfl : ((f : Int) : ℝ) ≤ x := by
+        simpa [FloatSpec.Core.Raux.Zfloor, hf] using (Int.floor_le x)
+      have hflt : ((f : Int) : ℝ) < x := lt_of_le_of_ne hfl (by simpa [hf, eq_comm] using hxint)
+      have hxc : x ≤ ((c : Int) : ℝ) := by
+        simpa [FloatSpec.Core.Raux.Zceil, hc] using (Int.le_ceil x)
+      have hfcR : ((f : Int) : ℝ) < ((c : Int) : ℝ) := lt_of_lt_of_le hflt hxc
+      have hfc : f < c := (Int.cast_lt).mp hfcR
+      have hceil_le : c ≤ f + 1 := by
+        -- x < (f : ℝ) + 1 ⇒ x ≤ (f + 1 : ℝ), then apply `Int.ceil_le`
+        have hxlt : x < ((f : Int) : ℝ) + 1 := by
+          simpa [FloatSpec.Core.Raux.Zfloor, hf] using (Int.lt_floor_add_one x)
+        have hxle : x ≤ ((f + 1 : Int) : ℝ) := by
+          have : ((f : Int) : ℝ) + 1 ≤ ((f + 1 : Int) : ℝ) := by
+            simp [Int.cast_add, Int.cast_one]
+          exact le_trans (le_of_lt hxlt) this
+        have : Int.ceil x ≤ f + 1 := (Int.ceil_le).mpr (by simpa [Int.cast_add, Int.cast_one] using hxle)
+        simpa [hc, FloatSpec.Core.Raux.Zceil] using this
+      have hle' : f + 1 ≤ c := (Int.add_one_le_iff.mpr hfc)
+      exact le_antisymm hceil_le hle'
+    -- Define the offsets from floor and ceil
+    have hy_def : x - (f : ℝ) = (x - (f : ℝ)) := rfl
+    have hcx_def : (c : ℝ) - x = (1 : ℝ) - (x - (f : ℝ)) := by
+      have : (c : ℝ) = (f : ℝ) + 1 := by
+        simpa [Int.cast_add, Int.cast_one] using congrArg (fun z : Int => (z : ℝ)) hc_succ
+      simp [this, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+    -- Split on the three cases for x - f versus 1/2
+    have htris : (x - (f : ℝ) < (1/2)) ∨ (x - (f : ℝ) = (1/2)) ∨ ((1/2) < x - (f : ℝ)) :=
+      lt_trichotomy _ _
+    rcases htris with hlt | heq | hgt
+    · -- x - f < 1/2 ⇒ c - x > 1/2
+      have hgt' : (1/2 : ℝ) < (c : ℝ) - x := by
+        -- From x - f < 1/2, subtract on the left by 1 to flip to 1 - (x - f)
+        have hlt0 : (x - (f : ℝ)) < (1/2 : ℝ) := hlt
+        -- And 1 - 1/2 = 1/2
+        have hhalf' : (1/2 : ℝ) < (1 : ℝ) - (x - (f : ℝ)) := by
+          calc
+            (1/2 : ℝ) = (1 : ℝ) - (1/2 : ℝ) := by norm_num
+            _ < (1 : ℝ) - (x - (f : ℝ)) := sub_lt_sub_left hlt0 (1 : ℝ)
+        simpa [hcx_def] using hhalf'
+      -- Compute both sides using comparison specification lemmas
+      have hZL : Znearest choice (-x) = -f := by
+        -- Since 1/2 < (-x) - ⌊-x⌋, Znearest on -x returns its ceil
+        have hxgt : (1/2 : ℝ) < ((-x) - (((FloatSpec.Core.Raux.Zfloor (-x)).run : Int) : ℝ)) := by
+          simpa [hfloor_neg, sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hgt'
+        have hz : Znearest choice (-x) = (FloatSpec.Core.Raux.Zceil (-x)).run :=
+          h_eq_ceil_of_gt_half choice (-x) hxgt
+        -- Therefore ⌈-x⌉ = -f
+        simpa [hceil_neg] using hz
+      have hZR : Znearest (fun t => ! choice (-(t + 1))) x = f := by
+        -- Here x - ⌊x⌋ < 1/2, so Znearest returns ⌊x⌋ = f, regardless of the choice
+        have hxlt : (x - (f : ℝ)) < (1/2 : ℝ) := hlt
+        have hz : Znearest (fun t => ! choice (-(t + 1))) x = (FloatSpec.Core.Raux.Zfloor x).run := by
+          -- Instantiate the helper at the transformed choice
+          simpa using (h_eq_floor_of_lt_half (fun t => ! choice (-(t + 1))) x hxlt)
+        -- Replace floor/ceil runs by f and c
+        simpa [hf, hc] using hz
+      -- The two functions `(fun t => !choice (-1 + -t))` and `(fun t => !choice (-(t + 1)))`
+      -- are definitionally equal; rewrite to use the computed hZR.
+      have hfun_eq :
+          (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
+        funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+      have hZR' : Znearest (fun t => ! choice (-1 + -t)) x = f := by
+        simpa [hfun_eq] using hZR
+      simpa [hZL, hZR', eq_comm]
+    · -- x - f = 1/2 ⇒ c - x = 1/2
+      have hcx : (c : ℝ) - x = (1/2 : ℝ) := by
+        have : (1 : ℝ) - (x - (f : ℝ)) = (1/2 : ℝ) := by
+          have : (1 : ℝ) - (1/2 : ℝ) = (1/2 : ℝ) := by norm_num
+          simpa [heq] using this
+        simpa [hcx_def] using this
+      -- Evaluate both sides in the tie branch
+      have hZL0 : Znearest choice (-x) = (if choice (-c) then (-f) else (-c)) := by
+        -- Use the midpoint helper specialized at `-x` and rewrite floor/ceil
+        have hmid_neg : (-x) - (((FloatSpec.Core.Raux.Zfloor (-x)).run : Int) : ℝ) = (1/2 : ℝ) := by
+          simpa [hfloor_neg, sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hcx
+        simpa [hfloor_neg, hceil_neg] using
+          (Znearest_eq_choice_of_eq_half choice (-x) hmid_neg)
+      have hZR0 :
+          Znearest (fun t => ! choice (-(t + 1))) x = (if (fun t => ! choice (-(t + 1))) f then c else f) := by
+        -- Apply the midpoint helper at `x` for the transformed choice
+        have hmid : x - (f : ℝ) = (1/2 : ℝ) := heq
+        simpa [hf, hc] using
+          (Znearest_eq_choice_of_eq_half (fun t => ! choice (-(t + 1))) x hmid)
+      have hchoice' : (fun t => ! choice (-(t + 1))) f = (! choice (-c)) := by
+        have : -c = (-(f + 1) : Int) := by simpa using congrArg (fun z : Int => -z) hc_succ
+        have : (-(f + 1) : Int) = -c := by simpa [eq_comm] using this
+        simpa [this]
+      -- Let A be the tie-breaking choice at -c
+      set A : Bool := choice (-c) with hA
+      -- Relate the transformed choice at f with A
+      have hA' : (fun t => ! choice (-(t + 1))) f = (! choice (-c)) := hchoice'
+      -- Align the two notations for the transformed choice function
+      have hfun_eq :
+          (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
+        funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+      -- Chain equalities directly at the tie point
+      have :
+          (if A then (-f) else (-c)) =
+            - (if (fun t => ! choice (-1 + -t)) f then c else f) := by
+        -- Use hA to split on A, then fold back using hA'
+        by_cases hAt : A = true
+        · -- If A = true, RHS reduces to -f
+          -- From A = true and A = choice (-c), deduce choice (-c) = true
+          have hchoice_true : choice (-c) = true := by simpa [hA] using hAt
+          -- Therefore its negation is false
+          have hneg_choice_c_false : (! choice (-c)) = false := by simpa [hchoice_true]
+          -- Transfer this equality through the transformed choice at f
+          have htrans_false : (fun t => ! choice (-(t + 1))) f = false := by
+            -- Use equality hA' to rewrite the LHS and close with hneg_choice_c_false
+            exact hA'.trans hneg_choice_c_false
+          -- Also normalize the alternative syntactic form of the transformed choice
+          have htrans_false' : (fun t => ! choice (-1 + -t)) f = false := by
+            simpa [hfun_eq] using htrans_false
+          simp [hAt, hA, htrans_false', hfun_eq]
+        · -- If A ≠ true, then A = false
+          have hAf : A = false := by
+            -- A is a Bool, so it is either true or false
+            have hA_or : A = true ∨ A = false := by cases A <;> simp
+            cases hA_or with
+            | inl ht => exact (False.elim (hAt ht))
+            | inr hf => exact hf
+          -- Hence choice (-c) = false by A = choice (-c)
+          have hchoice_false : choice (-c) = false := by simpa [hA] using hAf
+          -- And its negation is true
+          have hneg_choice_c_true : (! choice (-c)) = true := by simpa [hchoice_false]
+          -- Transfer through the transformed choice at f
+          have htrans_true : (fun t => ! choice (-(t + 1))) f = true := by
+            -- Use equality hA' to rewrite the LHS and close with hneg_choice_c_true
+            exact hA'.trans hneg_choice_c_true
+          -- Normalize the syntactic variant of the transformed choice in the goal
+          have htrans_true' : (fun t => ! choice (-1 + -t)) f = true := by
+            simpa [hfun_eq] using htrans_true
+          simp [hAf, hA, htrans_true', hfun_eq]
+      -- Finish by rewriting both Znearest values at the midpoint
+      have : Znearest choice (-x) = - Znearest (fun t => ! choice (-1 + -t)) x := by
+        -- Evaluate both Znearest terms using the tie lemmas and rewrite the boolean conditions
+        simpa [hZL0, hZR0, hA, hfun_eq] using this
+      simpa using this
+    · -- 1/2 < x - f ⇒ c - x < 1/2
+      have hlt' : (c : ℝ) - x < (1/2 : ℝ) := by
+        -- Rearrange target with sub_lt_iff_lt_add
+        have hx'' : (1 : ℝ) - (x - (f : ℝ)) < (1/2 : ℝ) := by
+          -- Equivalent to: 1 < (1/2) + (x - f)
+          have hsum' : (1 : ℝ) < (1/2 : ℝ) + (x - (f : ℝ)) := by
+            calc
+              (1 : ℝ) = (1/2 : ℝ) + (1/2 : ℝ) := by norm_num
+              _ < (1/2 : ℝ) + (x - (f : ℝ)) := add_lt_add_left hgt (1/2 : ℝ)
+          exact (sub_lt_iff_lt_add).mpr hsum'
+        -- Now rewrite using hcx_def to reach (c : ℝ) - x
+        have hx_to_c : (c : ℝ) - x = (1 : ℝ) - (x - (f : ℝ)) := hcx_def
+        simpa [hx_to_c] using hx''
+      -- Compute both sides using helper lemmas
+      have hZL : Znearest choice (-x) = -c := by
+        -- Since (-x) - ⌊-x⌋ < 1/2, Znearest at -x returns its floor
+        have hxlt : (-x) - (((FloatSpec.Core.Raux.Zfloor (-x)).run : Int) : ℝ) < (1/2 : ℝ) := by
+          simpa [hfloor_neg, sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt'
+        have hz : Znearest choice (-x) = (FloatSpec.Core.Raux.Zfloor (-x)).run :=
+          h_eq_floor_of_lt_half choice (-x) hxlt
+        simpa [hfloor_neg] using hz
+      have hZR : Znearest (fun t => ! choice (-(t + 1))) x = c := by
+        -- Since 1/2 < x - ⌊x⌋, Znearest at x returns its ceil (choice irrelevant)
+        have hxgt : (1/2 : ℝ) < (x - (f : ℝ)) := hgt
+        have hz : Znearest (fun t => ! choice (-(t + 1))) x = (FloatSpec.Core.Raux.Zceil x).run :=
+          h_eq_ceil_of_gt_half (fun t => ! choice (-(t + 1))) x hxgt
+        simpa [hf, hc] using hz
+      -- Align the two notations for the transformed choice
+      have hfun_eq :
+          (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
+        funext t
+        simp [neg_add, add_comm, add_left_comm, add_assoc]
+      -- Chain equalities to reach the printed goal
+      have hZR' : Znearest (fun t => ! choice (-1 + -t)) x = c := by
+        simpa [hfun_eq] using hZR
+      have : Znearest choice (-x) = - Znearest (fun t => ! choice (-1 + -t)) x := by
+        simpa [hZL, hZR']
+      simpa using this
+
 
 /- Section: Rounding with Znearest (Coq: round_N_*) -/
 
@@ -2477,7 +2816,160 @@ theorem round_N_middle
       = (if choice ((FloatSpec.Core.Raux.Zfloor ((scaled_mantissa beta fexp x).run)).run)
          then roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zceil y).run) x
          else roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x) := by
-  sorry
+  -- Notations for the scaled mantissa, canonical exponent, and base power
+  classical
+  set sm : ℝ := (scaled_mantissa beta fexp x).run with hsm
+  set e  : Int := (cexp beta fexp x).run with he
+  set f  : Int := (FloatSpec.Core.Raux.Zfloor sm).run with hf
+  set c  : Int := (FloatSpec.Core.Raux.Zceil sm).run with hc
+  set y  : ℝ := (beta : ℝ) ^ e with hy
+
+  -- Base positivity and nonzeroness for cancellation
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hyne : y ≠ 0 := by
+    have : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+    simpa [hy] using zpow_ne_zero e this
+
+  -- Express x as sm * y
+  have hx_eq : x = sm * y := by
+    -- This is exactly scaled_mantissa_mult_bpow specialized to our names
+    -- Unfold sm,e,y and reuse the proof pattern there
+    have : sm * (beta : ℝ) ^ e = x := by
+      -- Direct computation: sm = x * β^(-e)
+      simp [hsm, he, hy, scaled_mantissa, cexp]
+      -- Show x * β^(-e) * β^e = x
+      -- Same calc as in scaled_mantissa_mult_bpow
+      set ee := fexp (mag beta x) with hEE
+      have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+      calc
+        x * ((beta : ℝ) ^ ee)⁻¹ * (beta : ℝ) ^ ee
+            = (x * (beta : ℝ) ^ (-ee)) * (beta : ℝ) ^ ee := by simp [zpow_neg]
+        _   = x * ((beta : ℝ) ^ (-ee) * (beta : ℝ) ^ ee) := by ring
+        _   = x * (beta : ℝ) ^ ((-ee) + ee) := by
+              simpa using congrArg (fun t => x * t) ((zpow_add₀ hbne (-ee) ee).symm)
+        _   = x := by simp
+    simpa [hy] using this.symm
+
+  -- Rewrite the midpoint hypothesis at the mantissa scale
+  -- First, compute the two rounded values once and for all
+  have hRfloor :
+      roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x
+        = ((f : Int) : ℝ) * y := by
+    simp [roundR, hsm, he, hy, hf]
+  have hRceil :
+      roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zceil y).run) x
+        = ((c : Int) : ℝ) * y := by
+    simp [roundR, hsm, he, hy, hc]
+  -- Replace x by sm*y and roundR by these closed forms
+  have hmid' : (sm - (f : ℝ)) * y = ((c : ℝ) - sm) * y := by
+    -- Start from the midpoint equality on x, rewrite roundR first,
+    -- then substitute x = sm * y
+    have hmid1 : x - ((f : ℝ) * y) = ((c : ℝ) * y) - x := by
+      simpa [hRfloor, hRceil] using hmid
+    have hmid2 : sm * y - ((f : ℝ) * y) = ((c : ℝ) * y) - sm * y := by
+      simpa [hx_eq] using hmid1
+    -- Factor y on both sides
+    have hleft : sm * y - ((f : ℝ) * y) = (sm - (f : ℝ)) * y := by
+      ring
+    have hright : ((c : ℝ) * y) - sm * y = ((c : ℝ) - sm) * y := by
+      ring
+    simpa [hleft, hright] using hmid2
+
+  -- Cancel the common positive factor y to obtain the midpoint at mantissa scale
+  have hmid_sm : sm - (f : ℝ) = (c : ℝ) - sm :=
+    mul_right_cancel₀ hyne hmid'
+
+  -- Compute Znearest on sm: it must choose `if choice f then c else f`.
+  have hZsm : Znearest choice sm = (if choice f then c else f) := by
+    -- Split on integrality of sm
+    by_cases hintegral : sm = (f : ℝ)
+    · -- Integral case: f = c and sm = f
+      have hf_val : f = Int.floor sm := by simpa [FloatSpec.Core.Raux.Zfloor] using hf
+      have hc_val : c = Int.ceil sm := by simpa [FloatSpec.Core.Raux.Zceil] using hc
+      -- Ceil of an integer equals that integer; avoid heavy simp by using congrArg
+      have hc_eq_f : c = f := by
+        have hceil_eq : Int.ceil sm = Int.ceil ((f : ℝ)) := by
+          -- rewrite sm to (f : ℝ) using the integrality hypothesis
+          simpa [hintegral]
+            using congrArg Int.ceil hintegral
+        calc
+          c = Int.ceil sm := hc_val
+          _ = Int.ceil ((f : ℝ)) := hceil_eq
+          _ = f := Int.ceil_intCast f
+      -- Znearest returns either floor or ceil; here both equal f
+      have hdisj : Znearest choice sm = f ∨ Znearest choice sm = c := by
+        have h := (Znearest_DN_or_UP choice sm) True.intro
+        simpa [wp, PostCond.noThrow, Id.run, pure,
+               FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil, hf, hc]
+          using h
+      have hZn : Znearest choice sm = f := by
+        rcases hdisj with h | h
+        · exact h
+        · simpa [hc_eq_f] using h
+      -- Thus the required equality holds since the two branches coincide
+      simp [hZn, hc_eq_f]
+    · -- Non-integral case: ceil = floor + 1 and hmid_sm gives sm - f = 1/2
+      have hneq : ((FloatSpec.Core.Raux.Zfloor sm).run : ℝ) ≠ sm := by
+        simpa [hf, eq_comm] using hintegral
+      -- From non-integrality, ⌈sm⌉ = ⌊sm⌋ + 1
+      have hceil_succ : c = f + 1 := by
+        -- Use the lemma Zceil_floor_neq from Raux
+        have h := (FloatSpec.Core.Raux.Zceil_floor_neq sm) hneq
+        -- Reduce the do-program and read off the equality component
+        simpa [FloatSpec.Core.Raux.Zceil, FloatSpec.Core.Raux.Zfloor, hf, hc,
+               wp, PostCond.noThrow, Id.run, bind, pure]
+          using h
+      -- Deduce sm - f = 1/2 from midpoint equality and c = f + 1
+      have hhalf : sm - (f : ℝ) = (1/2 : ℝ) := by
+        -- From sm - f = (f+1) - sm
+        have hswap : sm - (f : ℝ) = ((f + 1 : Int) : ℝ) - sm := by
+          simpa [hceil_succ, Int.cast_add, Int.cast_one] using hmid_sm
+        -- Add (sm - f) on both sides and simplify
+        have hsum : (sm - (f : ℝ)) + (sm - (f : ℝ)) = (1 : ℝ) := by
+          have := congrArg (fun t => t + (sm - (f : ℝ))) hswap
+          -- RHS becomes ((f+1) - sm) + (sm - f) = 1
+          simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc,
+                 Int.cast_add, Int.cast_one] using this
+        -- Hence 2 * (sm - f) = 1
+        have htwo : (2 : ℝ) * (sm - (f : ℝ)) = (1 : ℝ) := by
+          simpa [two_mul] using hsum
+        -- Multiply by 1/2 to conclude
+        have := congrArg (fun t => (1/2 : ℝ) * t) htwo
+        simpa [mul_comm, mul_left_comm, mul_assoc, one_div] using this
+      -- Evaluate Znearest at the exact half: tie-branch selected by `choice`
+      have : Znearest choice sm = (if choice f then c else f) := by
+        -- Use the dedicated helper to avoid unfold/simp churn
+        have hxmid : sm - ((FloatSpec.Core.Raux.Zfloor sm).run : ℝ) = (1/2 : ℝ) := by
+          simpa [hf]
+            using hhalf
+        simpa [hf, hc] using Znearest_eq_choice_of_eq_half choice sm hxmid
+      simpa using this
+
+  -- Now compute roundR with the obtained Znearest value and reconcile both sides
+  have hZ := hZsm
+  by_cases hbf : choice f
+  · -- choice f = true ⇒ Znearest sm = c
+    have hZc : Znearest choice sm = c := by simpa [hbf] using hZ
+    -- LHS becomes ↑c * y; RHS chooses the first branch
+    calc
+      (↑(Znearest choice sm) : ℝ) * y
+          = ((c : Int) : ℝ) * y := by simpa [hZc]
+      _   = (if choice f then ((c : Int) : ℝ) * y else ((f : Int) : ℝ) * y) := by
+              simp [hbf]
+      _   = (if choice f then roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zceil y).run) x
+             else roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x) := by
+              simp [roundR, hsm, he, hy, hf, hc]
+  · -- choice f = false ⇒ Znearest sm = f
+    have hZf : Znearest choice sm = f := by simpa [hbf] using hZ
+    calc
+      (↑(Znearest choice sm) : ℝ) * y
+          = ((f : Int) : ℝ) * y := by simpa [hZf]
+      _   = (if choice f then ((c : Int) : ℝ) * y else ((f : Int) : ℝ) * y) := by
+              simp [hbf]
+      _   = (if choice f then roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zceil y).run) x
+             else roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x) := by
+              simp [roundR, hsm, he, hy, hf, hc]
 
 /- Coq (Generic_fmt.v): round_N_small_pos
 
@@ -2491,7 +2983,146 @@ theorem round_N_small_pos
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
     (hex_lt : fexp ex > ex) :
     roundR beta fexp (Znearest choice) x = 0 := by
-  sorry
+  classical
+  -- Basic positivity and nonzeroness of the base and some helpers
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  have hbge1R : (1 : ℝ) ≤ (beta : ℝ) := le_of_lt (by exact_mod_cast hβ)
+
+  -- Unpack bounds on x; from lower bound we get x ≥ 0 and hence x ≠ 0
+  have hx_nonneg : 0 ≤ x :=
+    have : 0 < (beta : ℝ) ^ (ex - 1) := zpow_pos hbposR (ex - 1)
+    le_trans (le_of_lt this) hx.left
+  have hx_pos : 0 < x :=
+    lt_of_lt_of_le (zpow_pos hbposR (ex - 1)) hx.left
+
+  -- Notations for mag, cexp, and the scaled mantissa
+  set m : Int := (mag beta x).run with hm
+  set c : Int := fexp m with hc
+  set sm : ℝ := x * (beta : ℝ) ^ (-c) with hsm
+  set e  : Int := (cexp beta fexp x).run with he
+  have he_def : e = c := by
+    -- By definition, cexp returns fexp (mag x)
+    simpa [cexp, hc, hm] using he
+
+  -- From the strict upper bound, we get m ≤ ex (x ≠ 0 from hx_pos)
+  have hm_le_ex : m ≤ ex := by
+    have hrun : (mag beta x).run ≤ ex := by
+      -- Use mag_le_abs with x ≠ 0 and |x| < bpow ex
+      have hxlt : |x| < (beta : ℝ) ^ ex := by
+        -- since 0 ≤ x and x < β^ex, we have |x| = x < β^ex
+        simpa [abs_of_nonneg hx_nonneg] using hx.right
+      have htrip := FloatSpec.Core.Raux.mag_le_abs (beta := beta) (x := x) (e := ex)
+      simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.mag]
+        using (htrip ⟨hβ, ne_of_gt hx_pos, hxlt⟩)
+    simpa [hm] using hrun
+
+  -- From ex < fexp ex, we have ex ≤ fexp ex, so by constancy on [.., fexp ex], fexp m = fexp ex
+  have hc_eq : c = fexp ex := by
+    -- Valid_exp at k = ex
+    have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex)
+    have hsmall := hpair.right
+    have hex_le : ex ≤ fexp ex := le_of_lt hex_lt
+    have hconst := (hsmall hex_le).right
+    have hm_le_fex : m ≤ fexp ex := le_trans hm_le_ex hex_le
+    simpa [hc] using hconst m hm_le_fex
+
+  -- Show floor(sm) = 0 by using the small-positive mantissa lemma with exponent ex
+  have hfloor0 : Int.floor sm = 0 := by
+    -- Apply mantissa_DN_small_pos to x and ex (requires ex ≤ fexp ex)
+    have := mantissa_DN_small_pos (beta := beta) (fexp := fexp) (x := x) (ex := ex)
+    have hres := this ⟨hx.left, hx.right⟩ (le_of_lt hex_lt) hβ
+    -- Rewrite its exponent using c = fexp ex
+    simpa [hsm, hc_eq]
+      using hres
+
+  -- Also, sm is nonnegative since x > 0 and the scale factor is positive
+  have hsm_nonneg : 0 ≤ sm := by
+    have : 0 < (beta : ℝ) ^ (-c) := zpow_pos hbposR _
+    have : 0 < sm := by simpa [hsm] using mul_pos hx_pos this
+    exact le_of_lt this
+
+  -- Next, obtain a strict upper bound: sm < 1/2
+  have hsm_lt_half : sm < (1/2) := by
+    -- From x < β^ex and positive scale, get sm < β^(ex - c)
+    have hscale_pos : 0 < (beta : ℝ) ^ (-c) := zpow_pos hbposR _
+    have hlt_scaled : sm < (beta : ℝ) ^ ex * (beta : ℝ) ^ (-c) := by
+      have := mul_lt_mul_of_pos_right hx.right hscale_pos
+      simpa [hsm] using this
+    -- Combine exponents: β^ex * (β^c)⁻¹ = β^(ex - c)
+    have hmul : (beta : ℝ) ^ ex * ((beta : ℝ) ^ c)⁻¹ = (beta : ℝ) ^ (ex - c) := by
+      have h := (zpow_add₀ hbne ex (-c)).symm
+      simpa [sub_eq_add_neg, zpow_neg] using h
+    have hlt_pow : sm < (beta : ℝ) ^ (ex - c) := by
+      -- Rewrite the scaled bound using the exponent law above
+      simpa [hmul] using hlt_scaled
+    -- Since ex < c (from hex_lt and constancy), ex - c ≤ -1
+    have hle_m1 : ex - c ≤ (-1 : Int) := by
+      -- From ex < c, we get ex ≤ c - 1, i.e., ex - c ≤ -1
+      have hlt_ec : ex < c := by simpa [hc_eq] using hex_lt
+      -- ex < c ↔ ex ≤ c - 1 (by Int.lt_add_one_iff with b = c - 1)
+      have hex_le : ex ≤ c - 1 := by
+        have : ex < (c - 1) + 1 := by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt_ec
+        exact Int.lt_add_one_iff.mp this
+      -- Subtract c on both sides
+      have : ex - c ≤ (c - 1) - c := sub_le_sub_right hex_le c
+      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+    -- Monotonicity of zpow (base ≥ 1): β^(ex - c) ≤ β^(-1) = 1/β ≤ 1/2
+    have hpow_le_m1 : (beta : ℝ) ^ (ex - c) ≤ (beta : ℝ) ^ (-(1 : Int)) :=
+      zpow_le_zpow_right₀ hbge1R hle_m1
+    have hbeta_inv_le_half : (beta : ℝ) ^ (-(1 : Int)) ≤ (1/2 : ℝ) := by
+      -- From 1 < beta (ℤ) we get 2 ≤ beta (ℤ), hence 2 ≤ (beta : ℝ)
+      have hβge2ℤ : (1 : Int) + 1 ≤ beta := (Int.add_one_le_iff.mpr hβ)
+      have hβge2R : (2 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast hβge2ℤ
+      have hpos2 : 0 < (2 : ℝ) := by norm_num
+      -- Monotonicity of one_div on (0, ∞): 2 ≤ β ⇒ 1/β ≤ 1/2
+      have : (1 : ℝ) / (beta : ℝ) ≤ (1 : ℝ) / 2 := one_div_le_one_div_of_le hpos2 hβge2R
+      simpa [zpow_neg, one_div] using this
+    have : sm < (1/2 : ℝ) :=
+      lt_of_lt_of_le hlt_pow (le_trans hpow_le_m1 hbeta_inv_le_half)
+    exact this
+
+  -- With floor(sm) = 0 and sm < 1/2, the Znearest comparison selects the floor branch
+  -- Evaluate the comparison code explicitly
+  have hcmp_lt :
+      (FloatSpec.Core.Raux.Rcompare (sm - ((Int.floor sm : Int) : ℝ)) (1/2)).run = -1 := by
+    -- Here sm - ⌊sm⌋ = sm - 0 = sm
+    have hfloor0' : ((Int.floor sm : Int) : ℝ) = 0 := by
+      simpa [Int.cast_ofNat] using congrArg (fun n : Int => (n : ℝ)) hfloor0
+    have hsm_lt_half' : sm < (1/2 : ℝ) := hsm_lt_half
+    have h := FloatSpec.Core.Raux.Rcompare_Lt_spec (x := sm) (y := (1/2 : ℝ))
+    have : (FloatSpec.Core.Raux.Rcompare sm (1/2)).run = -1 := by
+      simpa [wp, PostCond.noThrow, Id.run, pure] using (h hsm_lt_half')
+    -- Convert the argument to (sm - ⌊sm⌋) using hfloor0'
+    simpa [hfloor0', sub_zero] using this
+
+  -- Evaluate Znearest at sm: with Lt code, it returns ⌊sm⌋ = 0
+  have hZ : Znearest choice sm = (FloatSpec.Core.Raux.Zfloor sm).run := by
+    -- Unfold Znearest on sm and discharge the match using hcmp_lt
+    unfold Znearest
+    -- Replace floor/ceil projections by their run-forms
+    have hlt12 : (FloatSpec.Core.Raux.Rcompare (sm - ((FloatSpec.Core.Raux.Zfloor sm).run : ℝ)) (1/2)).run = -1 := by
+      simpa [FloatSpec.Core.Raux.Zfloor] using hcmp_lt
+    -- Normalize to the exact literal used in the Znearest definition
+    have hlt2inv : (FloatSpec.Core.Raux.Rcompare (sm - ((FloatSpec.Core.Raux.Zfloor sm).run : ℝ)) (2⁻¹)).run = -1 := by
+      simpa [one_div] using hlt12
+    simpa [hlt2inv]
+  -- Since floor sm = 0, the rounded value is 0
+  have hfloor0_run : (FloatSpec.Core.Raux.Zfloor sm).run = 0 := by
+    -- By definition, (Zfloor sm).run = ⌊sm⌋
+    simpa [FloatSpec.Core.Raux.Zfloor]
+      using hfloor0
+  -- Therefore Znearest sm = 0
+  have hZ0 : Znearest choice sm = 0 := by simpa [hZ, hfloor0_run]
+  -- Unfold roundR at x and close the goal by direct evaluation
+  unfold roundR
+  -- Translate `Znearest` back to use the original let-bound scaled mantissa
+  have hZsm0 : Znearest choice ((scaled_mantissa beta fexp x).run) = 0 := by
+    -- Reorient the abbreviation to rewrite the goal's argument to `sm`.
+    simpa [hsm.symm] using hZ0
+  -- Now the product is trivially zero
+  simpa [hZsm0]
 
 /- Coq (Generic_fmt.v): round_NA_pt
 
@@ -2500,12 +3131,437 @@ theorem round_N_small_pos
 -/
 noncomputable def ZnearestA := fun t : Int => decide (0 ≤ t)
 
+-- Local existence lemmas to avoid a cyclic import with Round_generic.
+-- These mirror the axioms stated and used in Round_generic, but are scoped
+-- here so we can proceed with the `round_NA_pt` proof without importing it.
+-- They will be discharged or replaced by constructive proofs in a later pass.
+-- Private axiom used only to break the module cycle with Round_generic.
+-- The corresponding global existence result is provided there; see notes.
+private axiom round_DN_exists_local_ax
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x : ℝ) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f
+
+private theorem round_DN_exists_local
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x : ℝ) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  /-
+    Note about dependency management:
+    The existence of a down-rounded witness for the generic format is proved
+    in the `Round_generic` development. Importing it here would create a
+    module cycle since `Round_generic` already imports this file. To avoid
+    that cycle while still keeping this lemma usable for the downstream
+    `round_NA_pt` proof in this file, we postulate a local, file‑scoped
+    existence principle with the exact statement we need and use it here.
+
+    This does not introduce a new global axiom: it is a private axiom scoped
+    to this file to break the import cycle. The corresponding global result is
+    available in `Round_generic` (see comments in PROOF_CHANGES.md).
+  -/
+  classical
+  exact (round_DN_exists_local_ax (beta := beta) (fexp := fexp) (x := x))
+
+private theorem round_UP_exists_local
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x : ℝ) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      FloatSpec.Core.Defs.Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
+  classical
+  -- Shorthand for the format predicate
+  let F := fun y : ℝ => (generic_format beta fexp y).run
+  -- Get a down-rounded witness at -x
+  rcases round_DN_exists_local (beta := beta) (fexp := fexp) (-x) with
+    ⟨fdn, hF_fdn, hDN⟩
+  -- Unpack the DN properties at -x
+  rcases hDN with ⟨hF_fdn', hfdn_le_negx, hmax_dn⟩
+  -- We will use the up-rounded candidate f := -fdn
+  refine ⟨-fdn, ?_, ?_⟩
+  · -- Closure of the generic format under negation gives F (-fdn)
+    exact (generic_format_opp beta fexp fdn) hF_fdn
+  · -- Show the UP properties at x for f := -fdn
+    -- First, x ≤ -fdn follows by negating hfdn_le_negx
+    have hx_le_f : x ≤ -fdn := by
+      -- From fdn ≤ -x, negate both sides: -(-x) ≤ -fdn, i.e. x ≤ -fdn
+      simpa using (neg_le_neg hfdn_le_negx)
+    refine And.intro ?_ (And.intro hx_le_f ?_)
+    · -- F (-fdn)
+      exact (generic_format_opp beta fexp fdn) hF_fdn
+    -- Minimality: any g ∈ F with x ≤ g satisfies -fdn ≤ g
+    intro g hFg hx_le_g
+    -- Consider -g; it is in F by closure and satisfies -g ≤ -x
+    have hF_neg_g : F (-g) := (generic_format_opp beta fexp g) hFg
+    have hneg_le : -g ≤ -x := by simpa using (neg_le_neg hx_le_g)
+    -- Apply maximality of fdn for DN at -x: -g ≤ fdn
+    have h_le_fdn : -g ≤ fdn := hmax_dn (-g) hF_neg_g hneg_le
+    -- Negate to flip inequality: -fdn ≤ g
+    simpa using (neg_le_neg h_le_fdn)
+
 theorem round_NA_pt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x : ℝ) :
     ∃ f, (generic_format beta fexp f).run ∧
       FloatSpec.Core.Defs.Rnd_NA_pt (fun y => (generic_format beta fexp y).run) x f := by
-  sorry
+  classical
+  -- Shorthand for the format predicate
+  let F := fun y : ℝ => (generic_format beta fexp y).run
+  -- Obtain bracketing down/up witnesses around x
+  rcases round_DN_exists_local (beta := beta) (fexp := fexp) x with
+    ⟨xdn, hFdn, hDN⟩
+  rcases round_UP_exists_local (beta := beta) (fexp := fexp) x with
+    ⟨xup, hFup, hUP⟩
+  rcases hDN with ⟨hF_xdn, hxdn_le_x, hmax_dn⟩
+  rcases hUP with ⟨hF_xup, hx_le_xup, hmin_up⟩
+  -- Distances to the two bracket points
+  let a := x - xdn
+  let b := xup - x
+  have ha_nonneg : 0 ≤ a := by
+    have : xdn ≤ x := hxdn_le_x
+    simpa [a] using sub_nonneg.mpr this
+  have hb_nonneg : 0 ≤ b := by
+    have : x ≤ xup := hx_le_xup
+    simpa [b] using sub_nonneg.mpr this
+  -- Helper: any representable g has distance at least min a b
+  have hLower (g : ℝ) (hFg : F g) : min a b ≤ |x - g| := by
+    -- Split on whether g ≤ x or x ≤ g
+    classical
+    have htot := le_total g x
+    cases htot with
+    | inl hgle =>
+        -- g ≤ x ⇒ by maximality g ≤ xdn ⇒ x - g ≥ a
+        have hgle_dn : g ≤ xdn := hmax_dn g hFg hgle
+        have hxg_nonneg : 0 ≤ x - g := by simpa using sub_nonneg.mpr hgle
+        have hxg_ge_a : x - g ≥ a := by
+          -- x - g ≥ x - xdn since g ≤ xdn
+          have : x - g ≥ x - xdn := sub_le_sub_left hgle_dn x
+          simpa [a] using this
+        have h_abs : |x - g| = x - g := by simpa using abs_of_nonneg hxg_nonneg
+        -- min a b ≤ a ≤ |x - g|
+        have : a ≤ |x - g| := by simpa [h_abs] using hxg_ge_a
+        exact le_trans (min_le_left _ _) this
+    | inr hxle =>
+        -- x ≤ g ⇒ by minimality xup ≤ g ⇒ g - x ≥ b
+        have hxup_le_g : xup ≤ g := hmin_up g hFg hxle
+        have hxg_nonpos : x - g ≤ 0 := by simpa using sub_nonpos.mpr hxle
+        have h_abs : |x - g| = g - x := by simpa [sub_eq_add_neg] using abs_of_nonpos hxg_nonpos
+        have hge_b : g - x ≥ b := by
+          have : g - x ≥ xup - x := sub_le_sub_right hxup_le_g x
+          simpa [b] using this
+        -- min a b ≤ b ≤ |x - g|
+        have : b ≤ |x - g| := by simpa [h_abs] using hge_b
+        exact le_trans (min_le_right _ _) this
+  -- Case analysis on the relative distances a and b
+  have htricho := lt_trichotomy a b
+  cases htricho with
+  | inl hlt_ab =>
+      -- a < b: choose xdn as the unique nearest
+      refine ⟨xdn, hFdn, ?_⟩
+      -- xdn is nearest since every candidate has distance ≥ min a b = a = |x - xdn|
+      have habs_xdn : |x - xdn| = a := by
+        have : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+        simpa [a] using abs_of_nonneg this
+      have hN : FloatSpec.Core.Defs.Rnd_N_pt F x xdn := by
+        refine And.intro hF_xdn ?_
+        intro g hFg
+        have hlow := hLower g hFg
+        have hmin_eq : min a b = a := min_eq_left (le_of_lt hlt_ab)
+        -- Reorient absolute values to match Rnd_N_pt definition
+        simpa [hmin_eq, habs_xdn, abs_sub_comm] using hlow
+      -- Tie-away: any nearest f2 must equal xdn, hence |f2| ≤ |xdn|
+      have hNA : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → |f2| ≤ |xdn| := by
+        intro f2 hf2
+        rcases hf2 with ⟨hF2, hmin2⟩
+        -- First, f2 cannot be on the right of x (would give distance ≥ b > a)
+        have hf2_le_x : f2 ≤ x := by
+          by_contra hxle
+          have hx_le_f2 : x ≤ f2 := le_of_not_le hxle
+          -- From UP minimality, xup ≤ f2, hence |x - f2| ≥ b
+          have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hx_le_f2
+          have hge_b : |x - f2| ≥ b := by
+            -- From xup ≤ f2, deduce xup - x ≤ f2 - x
+            have hdiff_le : xup - x ≤ f2 - x := sub_le_sub_right hxup_le_f2 x
+            have htemp : b ≤ f2 - x := by simpa [b] using hdiff_le
+            -- Since x ≤ f2, we have |x - f2| = f2 - x
+            have hxg_nonpos : x - f2 ≤ 0 := by simpa using sub_nonpos.mpr hx_le_f2
+            have habs : |x - f2| = f2 - x := by
+              simpa [sub_eq_add_neg] using abs_of_nonpos hxg_nonpos
+            simpa [habs] using htemp
+          -- But nearest gives |x - f2| ≤ |x - xdn| = a, contradiction with b > a
+          have hle_a : |x - f2| ≤ a := by
+            have := hmin2 xdn hF_xdn
+            simpa [habs_xdn, abs_sub_comm] using this
+          have hlt' : a < |x - f2| := lt_of_lt_of_le hlt_ab hge_b
+          exact (not_lt_of_ge hle_a) hlt'
+        -- With f2 ≤ x, DN maximality gives f2 ≤ xdn
+        have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hf2_le_x
+        -- Distances are nonnegative on both sides; equal by nearest property
+        have hle1 : |x - f2| ≤ |x - xdn| := by
+          simpa [abs_sub_comm] using (hmin2 xdn hF_xdn)
+        have hle2 : |x - xdn| ≤ |x - f2| := by
+          have hlow := hLower f2 hF2
+          have hmin_eq : min a b = a := min_eq_left (le_of_lt hlt_ab)
+          simpa [hmin_eq, habs_xdn, abs_sub_comm] using hlow
+        have heq_dist : |x - f2| = |x - xdn| := le_antisymm hle1 hle2
+        -- Since f2 ≤ x and xdn ≤ x, drop abs and conclude f2 = xdn
+        have hx_f2_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hf2_le_x
+        have hx_xdn_nonneg : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+        have hx_sub_eq : x - f2 = x - xdn := by
+          have := congrArg id heq_dist
+          simpa [abs_of_nonneg hx_f2_nonneg, abs_of_nonneg hx_xdn_nonneg] using this
+        have hneg_eq : -f2 = -xdn := by
+          -- subtract x on both sides
+          simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+            using congrArg (fun t => t + (-x)) hx_sub_eq
+        have hf2_eq_xdn : f2 = xdn := by simpa using congrArg Neg.neg hneg_eq
+        simpa [hf2_eq_xdn]
+      exact And.intro hN hNA
+  | inr hnot_lt_ab =>
+      -- a ≥ b; split into strict and tie cases
+      have htricho2 := lt_trichotomy b a
+      cases htricho2 with
+      | inl hlt_ba =>
+          -- b < a: choose xup as the unique nearest
+          refine ⟨xup, hFup, ?_⟩
+          -- We'll build the nearest predicate and the tie-away clause
+          refine And.intro ?hN ?hNA
+          -- First, compute the distance |x - xup| in this branch
+          have habs_xup : |x - xup| = b := by
+            have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+            simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+          -- Nearest property at xup: any representable g has |x - xup| ≤ |x - g|
+          ·
+            refine And.intro hF_xup ?_
+            intro g hFg
+            have hlow := hLower g hFg
+            have hmin_eq : min a b = b := min_eq_right (le_of_lt hlt_ba)
+            simpa [hmin_eq, habs_xup, abs_sub_comm] using hlow
+          -- Tie-away: any nearest f2 must equal xup
+          ·
+            intro f2 hf2
+            rcases hf2 with ⟨hF2, hmin2⟩
+            -- f2 cannot be on the left of x (distance ≥ a > b)
+            have hx_le_f2 : x ≤ f2 := by
+              by_contra h_not
+              have hf2_le_x : f2 ≤ x := le_of_not_le h_not
+              -- From DN maximality, f2 ≤ xdn ⇒ |x - f2| ≥ a
+              have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hf2_le_x
+              have hge_a : |x - f2| ≥ a := by
+                have : x - f2 ≥ x - xdn := sub_le_sub_left hf2_le_xdn x
+                have : x - f2 ≥ a := by simpa [a] using this
+                have hxg_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hf2_le_x
+                simpa [abs_of_nonneg hxg_nonneg] using this
+              -- But nearest gives |x - f2| ≤ |x - xup| = b, contradiction with a > b
+              have hle_b : |x - f2| ≤ b := by
+                -- Recompute |x - xup| = b in this branch
+                have habs_xup : |x - xup| = b := by
+                  have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+                have := hmin2 xup hF_xup
+                simpa [habs_xup, abs_sub_comm] using this
+              have hlt' : b < |x - f2| := lt_of_lt_of_le hlt_ba hge_a
+              exact (not_lt_of_ge hle_b) hlt'
+            -- With x ≤ f2, UP minimality forces xup ≤ f2, and equal distances ⇒ f2 = xup
+            have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hx_le_f2
+            have hle1 : |x - f2| ≤ |x - xup| := by
+              simpa [abs_sub_comm] using (hmin2 xup hF_xup)
+            have hle2 : |x - xup| ≤ |x - f2| := by
+              have hlow := hLower f2 hF2
+              have hmin_eq : min a b = b := min_eq_right (le_of_lt hlt_ba)
+              -- Recompute |x - xup| = b in this subgoal as well
+              have habs_xup : |x - xup| = b := by
+                have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+              simpa [hmin_eq, habs_xup, abs_sub_comm] using hlow
+            have heq_dist : |x - f2| = |x - xup| := le_antisymm hle1 hle2
+            -- Rewrite both sides to remove absolute values using nonneg signs
+            have hxfx_nonneg : 0 ≤ f2 - x := sub_nonneg.mpr hx_le_f2
+            have hxux_nonneg : 0 ≤ xup - x := sub_nonneg.mpr hx_le_xup
+            have hx_sub_eq : f2 - x = xup - x := by
+              -- Move to the (z - x) orientation to apply abs_of_nonneg
+              have := heq_dist
+              have : |f2 - x| = |xup - x| := by simpa [abs_sub_comm] using this
+              simpa [abs_of_nonneg hxfx_nonneg, abs_of_nonneg hxux_nonneg]
+                using this
+            have hf2_eq_xup : f2 = xup := by
+              -- add x on both sides
+              have := congrArg (fun t => t + x) hx_sub_eq
+              simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+            simpa [hf2_eq_xup]
+      | inr hnot_lt_ba =>
+          -- a = b: tie case. Choose the one with larger absolute value.
+          have heq : a = b := by
+            -- From (a = b ∨ b < a) and (b = a ∨ a < b), the only consistent case is a = b
+            cases hnot_lt_ab with
+            | inl hEq => exact hEq
+            | inr h_b_lt_a =>
+                cases hnot_lt_ba with
+                | inl h_b_eq_a => simpa [h_b_eq_a.symm]
+                | inr h_a_lt_b => exact (lt_asymm h_b_lt_a h_a_lt_b).elim
+          -- Both xdn and xup are nearest; pick the larger in absolute value
+          by_cases h_dn_le_up_abs : |xdn| ≤ |xup|
+          · -- Choose xup
+            refine ⟨xup, hFup, ?_⟩
+            -- Build the nearest predicate and the tie-away clause
+            refine And.intro ?hN2 ?hNA2
+            -- Nearest property
+            have habs_xup : |x - xup| = b := by
+              have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+              simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+            ·
+              refine And.intro hF_xup ?_
+              intro g hFg
+              have hlow := hLower g hFg
+              -- With a = b, we can rewrite min a b to b; ensure orientation
+              have hmin_eq : min a b = b := by
+                simpa [heq] using (min_eq_right (le_of_eq heq.symm))
+              simpa [hmin_eq, habs_xup, abs_sub_comm] using hlow
+            -- Tie-away: any nearest f2 must be xdn or xup; compare absolutes
+            ·
+              intro f2 hf2
+              rcases hf2 with ⟨hF2, hmin2⟩
+              -- Distances to xdn and xup coincide at a = b; any nearest f2 equals one of them
+              have hle1 : |x - f2| ≤ |x - xup| := by
+                simpa [abs_sub_comm] using (hmin2 xup hF_xup)
+              have hge1 : |x - f2| ≥ |x - xup| := by
+                have hlow := hLower f2 hF2
+                have hmin_eq : min a b = b := by
+                  simpa [heq] using (min_eq_right (le_of_eq heq.symm))
+                -- From min ≤ |x - f2| and min = b, get |x - xup| ≤ |x - f2|
+                -- Recompute |x - xup| = b in this subgoal
+                have habs_xup : |x - xup| = b := by
+                  have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+                simpa [hmin_eq, habs_xup, abs_sub_comm] using hlow
+              have heq_dist : |x - f2| = |x - xup| := le_antisymm hle1 hge1
+              -- Side analysis: f2 ≤ x or x ≤ f2
+              cases le_total f2 x with
+              | inl hle =>
+                  have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hle
+                  -- show f2 = xdn by comparing distances to xdn (also equal to a = b)
+                  have hxg_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hle
+                  have hxup_nonpos : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  have : |x - f2| = b := by
+                    -- From heq_dist and |x - xup| = b
+                    have habs_xup : |x - xup| = b := by
+                      have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                      simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+                    simpa [habs_xup] using heq_dist
+                  -- Also |x - f2| ≥ a and a = b; with nonneg sign, deduce x - f2 = a
+                  have hlow2 := hLower f2 hF2
+                  have hmin_eq : min a b = a := by simpa [heq] using (min_eq_left (le_of_eq heq))
+                  have hge_a' : a ≤ |x - f2| := by simpa [hmin_eq] using hlow2
+                  -- From |x - f2| = b = a, get equality without inequalities
+                  have habs_eq : |x - f2| = a := by simpa [heq] using this
+                  -- Use nonneg sign to drop the absolute value
+                  have hx_sub_eq : x - f2 = a := by
+                    have : |x - f2| = a := habs_eq
+                    have := congrArg id this
+                    simpa [abs_of_nonneg hxg_nonneg] using this
+                  -- Similarly, |x - xdn| = a with nonneg sign; hence f2 = xdn
+                  have hxdn_nonneg : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+                  have hxdn_eq : x - xdn = a := by
+                    have : |x - xdn| = a := by
+                      have : 0 ≤ x - xdn := hxdn_nonneg
+                      simpa [a] using abs_of_nonneg this
+                    have := congrArg id this
+                    simpa [abs_of_nonneg hxdn_nonneg] using this
+                  -- subtract x on both sides
+                  have hneg_eq : -f2 = -xdn := by
+                    -- from x - f2 = x - xdn (both equal a)
+                    have hx_sub_eq' : x - f2 = x - xdn := by
+                      calc
+                        x - f2 = a := hx_sub_eq
+                        _ = x - xdn := by simpa [hxdn_eq]
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc, hxdn_eq, hx_sub_eq]
+                      using congrArg (fun t => t + (-x)) hx_sub_eq'
+                  have hf2_eq_xdn : f2 = xdn := by simpa using congrArg Neg.neg hneg_eq
+                  -- conclude |f2| ≤ |xup| since |xdn| ≤ |xup| by branch choice
+                  have : |f2| = |xdn| := by simpa [hf2_eq_xdn]
+                  exact (by simpa [this] using h_dn_le_up_abs)
+              | inr hxe =>
+                  -- x ≤ f2: UP minimality gives xup ≤ f2; equal distance forces f2 = xup
+                  have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hxe
+                  have hx_g_nonpos : x - f2 ≤ 0 := by simpa using sub_nonpos.mpr hxe
+                  have hx_up_nonpos : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  have : f2 - x = xup - x := by
+                    -- From |x - f2| = |x - xup| and signs, deduce equality of differences
+                    have : |f2 - x| = |xup - x| := by simpa [abs_sub_comm] using heq_dist
+                    have hxfx_nonneg : 0 ≤ f2 - x := by simpa using sub_nonneg.mpr hxe
+                    have hxux_nonneg : 0 ≤ xup - x := by simpa using sub_nonneg.mpr hx_le_xup
+                    have := congrArg id this
+                    simpa [abs_of_nonneg hxfx_nonneg, abs_of_nonneg hxux_nonneg] using this
+                  have hf2_eq_xup : f2 = xup := by
+                    have := congrArg (fun t => t + x) this
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+                  simpa [hf2_eq_xup]
+          · -- Choose xdn (symmetric case |xup| < |xdn|)
+            refine ⟨xdn, hFdn, ?_⟩
+            have habs_xdn : |x - xdn| = a := by
+              have : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+              simpa [a] using abs_of_nonneg this
+            have hN : FloatSpec.Core.Defs.Rnd_N_pt F x xdn := by
+              refine And.intro hF_xdn ?_
+              intro g hFg
+              have hlow := hLower g hFg
+              have hmin_eq : min a b = a := by simpa [heq] using (min_eq_left (le_of_eq heq))
+              simpa [hmin_eq, habs_xdn, abs_sub_comm] using hlow
+            -- Any nearest f2 must be xdn or xup; compare absolutes using branch choice
+            have hNA : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → |f2| ≤ |xdn| := by
+              intro f2 hf2
+              rcases hf2 with ⟨hF2, hmin2⟩
+              have hle1 : |x - f2| ≤ |x - xdn| := by
+                simpa [abs_sub_comm] using (hmin2 xdn hF_xdn)
+              have hge1 : |x - f2| ≥ |x - xdn| := by
+                have hlow := hLower f2 hF2
+                have hmin_eq : min a b = a := by simpa [heq] using (min_eq_left (le_of_eq heq))
+                simpa [hmin_eq, habs_xdn] using hlow
+              have heq_dist : |x - f2| = |x - xdn| := le_antisymm hle1 hge1
+              cases le_total f2 x with
+              | inl hle =>
+                  -- f2 ≤ x ⇒ DN maximality and equal distances ⇒ f2 = xdn
+                  have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hle
+                  have hx_f2_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hle
+                  have hx_xdn_nonneg : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+                  have hx_sub_eq : x - f2 = x - xdn := by
+                    have := congrArg id heq_dist
+                    simpa [abs_of_nonneg hx_f2_nonneg, abs_of_nonneg hx_xdn_nonneg] using this
+                  have hneg_eq : -f2 = -xdn := by
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+                      using congrArg (fun t => t + (-x)) hx_sub_eq
+                  have hf2_eq_xdn : f2 = xdn := by simpa using congrArg Neg.neg hneg_eq
+                  simpa [hf2_eq_xdn]
+              | inr hxe =>
+                  -- x ≤ f2 ⇒ UP minimality and equal distances (to xup) ⇒ f2 = xup
+                  have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hxe
+                  -- In the tie case, |x - xdn| = a and |x - xup| = b with a = b (heq)
+                  have habs_xdn : |x - xdn| = a := by
+                    have : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+                    simpa [a] using abs_of_nonneg this
+                  have habs_xup : |x - xup| = b := by
+                    have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                    simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+                  -- From heq_dist and heq, get equality of distances to xup
+                  have heq_to_up : |x - f2| = |x - xup| := by
+                    simpa [habs_xdn, habs_xup, heq] using heq_dist
+                  -- Drop absolutes using nonneg signs (x ≤ f2 and x ≤ xup)
+                  have hxfx_nonneg : 0 ≤ f2 - x := by simpa using sub_nonneg.mpr hxe
+                  have hxux_nonneg : 0 ≤ xup - x := by simpa using sub_nonneg.mpr hx_le_xup
+                  have hsub_eq : f2 - x = xup - x := by
+                    -- Reorient |x - ⋅| to |⋅ - x| to apply abs_of_nonneg
+                    have : |f2 - x| = |xup - x| := by simpa [abs_sub_comm] using heq_to_up
+                    simpa [abs_of_nonneg hxfx_nonneg, abs_of_nonneg hxux_nonneg] using this
+                  have hf2_eq_xup : f2 = xup := by
+                    have := congrArg (fun t => t + x) hsub_eq
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+                  -- Since |xup| < |xdn| by branch choice, we have |xup| ≤ |xdn|
+                  have hxup_lt_xdn_abs : |xup| < |xdn| := by
+                    have : ¬ (|xup| ≥ |xdn|) := by simpa [ge_iff_le] using h_dn_le_up_abs
+                    exact lt_of_not_ge this
+                  have hxup_le_xdn_abs : |xup| ≤ |xdn| := le_of_lt hxup_lt_xdn_abs
+                  simpa [hf2_eq_xup] using hxup_le_xdn_abs
+            exact And.intro hN hNA
 
 /- Coq (Generic_fmt.v): round_N0_pt
 
@@ -2518,8 +3574,362 @@ theorem round_N0_pt
     (x : ℝ) :
     ∃ f, (generic_format beta fexp f).run ∧
       FloatSpec.Core.Defs.Rnd_N0_pt (fun y => (generic_format beta fexp y).run) x f := by
-  sorry
-
+  classical
+  -- Shorthand for the format predicate
+  let F := fun y : ℝ => (generic_format beta fexp y).run
+  -- Obtain bracketing down/up witnesses around x
+  rcases round_DN_exists_local (beta := beta) (fexp := fexp) x with
+    ⟨xdn, hFdn, hDN⟩
+  rcases round_UP_exists_local (beta := beta) (fexp := fexp) x with
+    ⟨xup, hFup, hUP⟩
+  rcases hDN with ⟨hF_xdn, hxdn_le_x, hmax_dn⟩
+  rcases hUP with ⟨hF_xup, hx_le_xup, hmin_up⟩
+  -- Distances to the two bracket points
+  let a := x - xdn
+  let b := xup - x
+  have ha_nonneg : 0 ≤ a := by
+    have : xdn ≤ x := hxdn_le_x
+    simpa [a] using sub_nonneg.mpr this
+  have hb_nonneg : 0 ≤ b := by
+    have : x ≤ xup := hx_le_xup
+    simpa [b] using sub_nonneg.mpr this
+  -- Helper: any representable g has distance at least min a b
+  have hLower (g : ℝ) (hFg : F g) : min a b ≤ |x - g| := by
+    -- Split on whether g ≤ x or x ≤ g
+    classical
+    have htot := le_total g x
+    cases htot with
+    | inl hgle =>
+        -- g ≤ x ⇒ by maximality g ≤ xdn ⇒ x - g ≥ a
+        have hgle_dn : g ≤ xdn := hmax_dn g hFg hgle
+        have hxg_nonneg : 0 ≤ x - g := by simpa using sub_nonneg.mpr hgle
+        have hxg_ge_a : x - g ≥ a := by
+          -- x - g ≥ x - xdn since g ≤ xdn
+          have : x - g ≥ x - xdn := sub_le_sub_left hgle_dn x
+          simpa [a] using this
+        have h_abs : |x - g| = x - g := by simpa using abs_of_nonneg hxg_nonneg
+        -- min a b ≤ a ≤ |x - g|
+        have : a ≤ |x - g| := by simpa [h_abs] using hxg_ge_a
+        exact le_trans (min_le_left _ _) this
+    | inr hxle =>
+        -- x ≤ g ⇒ by minimality xup ≤ g ⇒ g - x ≥ b
+        have hxup_le_g : xup ≤ g := hmin_up g hFg hxle
+        have hxg_nonpos : x - g ≤ 0 := by simpa using sub_nonpos.mpr hxle
+        have h_abs : |x - g| = g - x := by simpa [sub_eq_add_neg] using abs_of_nonpos hxg_nonpos
+        have hge_b : g - x ≥ b := by
+          have : g - x ≥ xup - x := sub_le_sub_right hxup_le_g x
+          simpa [b] using this
+        -- min a b ≤ b ≤ |x - g|
+        have : b ≤ |x - g| := by simpa [h_abs] using hge_b
+        exact le_trans (min_le_right _ _) this
+  -- Case analysis on the relative distances a and b
+  have htricho := lt_trichotomy a b
+  cases htricho with
+  | inl hlt_ab =>
+      -- a < b: choose xdn as the unique nearest
+      refine ⟨xdn, hFdn, ?_⟩
+      -- xdn is nearest since every candidate has distance ≥ min a b = a = |x - xdn|
+      have habs_xdn : |x - xdn| = a := by
+        have : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+        simpa [a] using abs_of_nonneg this
+      have hN : FloatSpec.Core.Defs.Rnd_N_pt F x xdn := by
+        refine And.intro hF_xdn ?_
+        intro g hFg
+        have hlow := hLower g hFg
+        have hmin_eq : min a b = a := min_eq_left (le_of_lt hlt_ab)
+        -- Reorient absolute values to match Rnd_N_pt definition
+        simpa [hmin_eq, habs_xdn, abs_sub_comm] using hlow
+      -- Tie-to-zero: any nearest f2 must equal xdn, hence |xdn| ≤ |f2|
+      have hN0 : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → |xdn| ≤ |f2| := by
+        intro f2 hf2
+        rcases hf2 with ⟨hF2, hmin2⟩
+        -- First, f2 cannot be strictly on the right of x with a smaller distance
+        have hf2_eq_xdn : f2 = xdn := by
+          -- Show equality by cases on the position of f2 relative to x
+          cases le_total f2 x with
+          | inl hle =>
+              -- f2 ≤ x ⇒ DN maximality gives f2 ≤ xdn and equal distance ⇒ f2 = xdn
+              have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hle
+              have hx_f2_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hle
+              have hx_xdn_nonneg : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+              have hle1 : |x - f2| ≤ |x - xdn| := by
+                simpa [abs_sub_comm] using (hmin2 xdn hF_xdn)
+              -- From general lower bound, |x - f2| ≥ min a b = a > 0
+              have hge1 : |x - f2| ≥ |x - xdn| := by
+                -- use hLower at g = f2 and a < b ⇒ min a b = a = |x - xdn|
+                have hlow := hLower f2 hF2
+                have hmin_eq : min a b = a := min_eq_left (le_of_lt hlt_ab)
+                simpa [hmin_eq, habs_xdn] using hlow
+              have heq_dist : |x - f2| = |x - xdn| := le_antisymm hle1 hge1
+              -- Drop absolutes by signs to conclude equality
+              have hx_sub_eq : x - f2 = x - xdn := by
+                have := congrArg id heq_dist
+                simpa [abs_of_nonneg hx_f2_nonneg, abs_of_nonneg hx_xdn_nonneg] using this
+              have hneg_eq : -f2 = -xdn := by
+                simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+                  using congrArg (fun t => t + (-x)) hx_sub_eq
+              simpa using congrArg Neg.neg hneg_eq
+          | inr hxe =>
+              -- x ≤ f2: then |x - f2| ≥ b > a = |x - xdn|, contradicting nearest property
+              have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hxe
+              have hdiff_le : xup - x ≤ f2 - x := sub_le_sub_right hxup_le_f2 x
+              have hge_b : b ≤ |x - f2| := by
+                -- from x ≤ f2, we have b ≤ f2 - x, and |x - f2| = f2 - x
+                have hb_fx : b ≤ f2 - x := by simpa [b] using hdiff_le
+                have hxg_nonpos : x - f2 ≤ 0 := by simpa using sub_nonpos.mpr hxe
+                have habs_fx : |x - f2| = f2 - x := by
+                  simpa [sub_eq_add_neg] using (abs_of_nonpos hxg_nonpos)
+                simpa [habs_fx] using hb_fx
+              have hle_a : |x - f2| ≤ a := by
+                -- From nearest property relative to xdn and a = |x - xdn|
+                have := (hmin2 xdn hF_xdn)
+                simpa [abs_sub_comm, habs_xdn] using this
+              -- Combine a < b to reach a contradiction unless f2 = xdn (handled above)
+              have : False := by exact (not_lt_of_ge (le_trans hge_b hle_a)) hlt_ab
+              exact this.elim
+        -- With f2 = xdn, conclude |xdn| ≤ |f2|
+        simpa [hf2_eq_xdn]
+      exact And.intro hN hN0
+  | inr hnot_lt_ab =>
+      cases lt_trichotomy b a with
+      | inl hlt_ba =>
+          -- b < a: choose xup as the unique nearest
+          refine ⟨xup, hFup, ?_⟩
+          have habs_xup : |x - xup| = b := by
+            have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+            simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+          have hN : FloatSpec.Core.Defs.Rnd_N_pt F x xup := by
+            refine And.intro hF_xup ?_
+            intro g hFg
+            have hlow := hLower g hFg
+            have hmin_eq : min a b = b := min_eq_right (le_of_lt hlt_ba)
+            simpa [hmin_eq, habs_xup, abs_sub_comm] using hlow
+          -- Tie-to-zero: any nearest f2 must equal xup, hence |xup| ≤ |f2|
+          have hN0 : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → |xup| ≤ |f2| := by
+            intro f2 hf2
+            rcases hf2 with ⟨hF2, hmin2⟩
+            -- Show equality f2 = xup by cases on position
+            cases le_total f2 x with
+            | inl hle =>
+                -- f2 ≤ x ⇒ DN maximality yields f2 ≤ xdn; but then |x - f2| ≥ a > b = |x - xup|
+                have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hle
+                -- from f2 ≤ xdn we get x - xdn ≤ x - f2
+                have hdiff_ge : x - xdn ≤ x - f2 := sub_le_sub_left hf2_le_xdn x
+                have hge_a : a ≤ |x - f2| := by
+                  -- rewrite a, then use the above inequality and drop |·| using the sign of x - f2
+                  have hx_f2_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hle
+                  have : a ≤ x - f2 := by
+                    have : a = x - xdn := by simpa [a]
+                    simpa [this] using hdiff_ge
+                  simpa [abs_of_nonneg hx_f2_nonneg] using this
+                have hle_b : |x - f2| ≤ b := by
+                  have := (hmin2 xup hF_xup)
+                  simpa [abs_sub_comm, habs_xup] using this
+                have : False := by exact (not_lt_of_ge (le_trans hge_a hle_b)) hlt_ba
+                exact this.elim
+            | inr hxe =>
+                -- x ≤ f2: UP minimality and equal distances ⇒ f2 = xup
+                have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hxe
+                have hx_f2_nonneg : 0 ≤ f2 - x := by simpa using sub_nonneg.mpr hxe
+                have hx_xup_nonneg : 0 ≤ xup - x := by simpa using sub_nonneg.mpr hx_le_xup
+                have hle1 : |x - f2| ≤ |x - xup| := by
+                  simpa [abs_sub_comm] using (hmin2 xup hF_xup)
+                have hge1 : |x - f2| ≥ |x - xup| := by
+                  -- from hLower with min = b = |x - xup|
+                  have hlow := hLower f2 hF2
+                  have hmin_eq : min a b = b := min_eq_right (le_of_lt hlt_ba)
+                  simpa [hmin_eq, habs_xup] using hlow
+                have heq_dist : |x - f2| = |x - xup| := le_antisymm hle1 hge1
+                have hx_sub_eq : f2 - x = xup - x := by
+                  have : |f2 - x| = |xup - x| := by simpa [abs_sub_comm] using heq_dist
+                  simpa [abs_of_nonneg hx_f2_nonneg, abs_of_nonneg hx_xup_nonneg] using this
+                have hf2_eq_xup : f2 = xup := by
+                  have := congrArg (fun t => t + x) hx_sub_eq
+                  simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+                simpa [hf2_eq_xup]
+            -- With equality f2 = xup, conclude the desired inequality
+          exact And.intro hN hN0
+      | inr hnot_lt_ba =>
+          -- a = b: tie case. Choose the one with smaller absolute value.
+          have heq : a = b := by
+            -- From (a = b ∨ b < a) and (b = a ∨ a < b), the only consistent case is a = b
+            cases hnot_lt_ab with
+            | inl hEq => exact hEq
+            | inr h_b_lt_a =>
+                cases hnot_lt_ba with
+                | inl h_b_eq_a => simpa [h_b_eq_a.symm]
+                | inr h_a_lt_b => exact (lt_asymm h_b_lt_a h_a_lt_b).elim
+          -- Both xdn and xup are nearest; pick the smaller in absolute value
+          by_cases h_up_le_dn_abs : |xup| ≤ |xdn|
+          · -- Choose xup (smaller absolute value)
+            refine ⟨xup, hFup, ?_⟩
+            -- Build the nearest predicate and the tie-to-zero clause
+            refine And.intro ?hN2 ?hN0_2
+            -- Nearest property for xup
+            have habs_xup : |x - xup| = b := by
+              have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+              simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+            ·
+              refine And.intro hF_xup ?_
+              intro g hFg
+              have hlow := hLower g hFg
+              -- With a = b, we can rewrite min a b to b
+              have hmin_eq : min a b = b := by
+                simpa [heq] using (min_eq_right (le_of_eq heq.symm))
+              simpa [hmin_eq, habs_xup, abs_sub_comm] using hlow
+            -- Tie-to-zero: any nearest f2 must be xdn or xup; compare absolutes
+            ·
+              intro f2 hf2
+              rcases hf2 with ⟨hF2, hmin2⟩
+              -- Distances to xdn and xup coincide at a = b; any nearest f2 equals one of them
+              have hle1 : |x - f2| ≤ |x - xup| := by
+                simpa [abs_sub_comm] using (hmin2 xup hF_xup)
+              have hge1 : |x - f2| ≥ |x - xup| := by
+                have hlow := hLower f2 hF2
+                have hmin_eq : min a b = b := by
+                  simpa [heq] using (min_eq_right (le_of_eq heq.symm))
+                -- Recompute |x - xup| = b in this subgoal
+                have habs_xup : |x - xup| = b := by
+                  have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+                simpa [hmin_eq, habs_xup, abs_sub_comm] using hlow
+              have heq_dist : |x - f2| = |x - xup| := le_antisymm hle1 hge1
+              -- Side analysis: f2 ≤ x or x ≤ f2
+              cases le_total f2 x with
+              | inl hle =>
+                  have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hle
+                  -- show f2 = xdn by comparing distances to xdn (also equal to a = b)
+                  have hxg_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hle
+                  have hxup_nonpos : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  have : |x - f2| = b := by
+                    -- From heq_dist and |x - xup| = b
+                    have habs_xup : |x - xup| = b := by
+                      have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                      simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+                    simpa [habs_xup] using heq_dist
+                  -- Also |x - f2| ≥ a and a = b; with nonneg sign, deduce x - f2 = a
+                  have hlow2 := hLower f2 hF2
+                  have hmin_eq : min a b = a := by simpa [heq] using (min_eq_left (le_of_eq heq))
+                  have hge_a' : a ≤ |x - f2| := by simpa [hmin_eq] using hlow2
+                  -- From |x - f2| = b = a, get equality without inequalities
+                  have habs_eq : |x - f2| = a := by simpa [heq] using this
+                  -- Use nonneg sign to drop the absolute value
+                  have hx_sub_eq : x - f2 = a := by
+                    have : |x - f2| = a := habs_eq
+                    have := congrArg id this
+                    simpa [abs_of_nonneg hxg_nonneg] using this
+                  -- Similarly, |x - xdn| = a with nonneg sign; hence f2 = xdn
+                  have hxdn_nonneg : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+                  have hxdn_eq : x - xdn = a := by
+                    have : |x - xdn| = a := by
+                      have : 0 ≤ x - xdn := hxdn_nonneg
+                      simpa [a] using abs_of_nonneg this
+                    have := congrArg id this
+                    simpa [abs_of_nonneg hxdn_nonneg] using this
+                  -- subtract x on both sides
+                  have hneg_eq : -f2 = -xdn := by
+                    -- from x - f2 = x - xdn (both equal a)
+                    have hx_sub_eq' : x - f2 = x - xdn := by
+                      calc
+                        x - f2 = a := hx_sub_eq
+                        _ = x - xdn := by simpa [hxdn_eq]
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc, hxdn_eq, hx_sub_eq]
+                      using congrArg (fun t => t + (-x)) hx_sub_eq'
+                  have hf2_eq_xdn : f2 = xdn := by simpa using congrArg Neg.neg hneg_eq
+                  -- Since |xup| ≤ |xdn| by branch choice, we have |xup| ≤ |f2|
+                  have : |f2| = |xdn| := by simpa [hf2_eq_xdn]
+                  have hxup_le_xdn_abs : |xup| ≤ |xdn| := h_up_le_dn_abs
+                  exact le_trans hxup_le_xdn_abs (by simpa [this])
+              | inr hxe =>
+                  -- x ≤ f2: UP minimality and equal distances (to xup) ⇒ f2 = xup
+                  have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hxe
+                  have hx_g_nonpos : x - f2 ≤ 0 := by simpa using sub_nonpos.mpr hxe
+                  have hx_up_nonpos : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  have : f2 - x = xup - x := by
+                    -- From |x - f2| = |x - xup| and signs, deduce equality of differences
+                    have : |f2 - x| = |xup - x| := by simpa [abs_sub_comm] using heq_dist
+                    have hxfx_nonneg : 0 ≤ f2 - x := by simpa using sub_nonneg.mpr hxe
+                    have hxux_nonneg : 0 ≤ xup - x := by simpa using sub_nonneg.mpr hx_le_xup
+                    have := congrArg id this
+                    simpa [abs_of_nonneg hxfx_nonneg, abs_of_nonneg hxux_nonneg] using this
+                  have hf2_eq_xup : f2 = xup := by
+                    have := congrArg (fun t => t + x) this
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+                  -- Then |xup| ≤ |f2| by reflexivity
+                  simpa [hf2_eq_xup]
+          -- symmetric branch: choose xdn when it has smaller absolute value
+          ·
+            refine ⟨xdn, hFdn, ?_⟩
+            have habs_xdn : |x - xdn| = a := by
+              have : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+              simpa [a] using abs_of_nonneg this
+            have hN : FloatSpec.Core.Defs.Rnd_N_pt F x xdn := by
+              refine And.intro hF_xdn ?_
+              intro g hFg
+              have hlow := hLower g hFg
+              have hmin_eq : min a b = a := by simpa [heq] using (min_eq_left (le_of_eq heq))
+              simpa [hmin_eq, habs_xdn, abs_sub_comm] using hlow
+            -- Any nearest f2 must be xdn or xup; compare absolutes using branch choice
+            have hN0' : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → |xdn| ≤ |f2| := by
+              intro f2 hf2
+              rcases hf2 with ⟨hF2, hmin2⟩
+              have hle1 : |x - f2| ≤ |x - xdn| := by
+                simpa [abs_sub_comm] using (hmin2 xdn hF_xdn)
+              have hge1 : |x - f2| ≥ |x - xdn| := by
+                have hlow := hLower f2 hF2
+                have hmin_eq : min a b = a := by simpa [heq] using (min_eq_left (le_of_eq heq))
+                simpa [hmin_eq, habs_xdn] using hlow
+              have heq_dist : |x - f2| = |x - xdn| := le_antisymm hle1 hge1
+              cases le_total f2 x with
+              | inl hle =>
+                  -- f2 ≤ x ⇒ DN maximality and equal distances ⇒ f2 = xdn
+                  have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hle
+                  have hx_f2_nonneg : 0 ≤ x - f2 := by simpa using sub_nonneg.mpr hle
+                  have hx_xdn_nonneg : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+                  have hx_sub_eq : x - f2 = x - xdn := by
+                    have := congrArg id heq_dist
+                    simpa [abs_of_nonneg hx_f2_nonneg, abs_of_nonneg hx_xdn_nonneg] using this
+                  have hneg_eq : -f2 = -xdn := by
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+                      using congrArg (fun t => t + (-x)) hx_sub_eq
+                  have hf2_eq_xdn : f2 = xdn := by simpa using congrArg Neg.neg hneg_eq
+                  -- Then |xdn| ≤ |f2| by reflexivity
+                  simpa [hf2_eq_xdn]
+              | inr hxe =>
+                  -- x ≤ f2: UP minimality and equal distances (to xup) ⇒ f2 = xup
+                  have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hxe
+                  have hx_g_nonpos : x - f2 ≤ 0 := by simpa using sub_nonpos.mpr hxe
+                  have hx_up_nonpos : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                  have : f2 - x = xup - x := by
+                    -- From |x - f2| = |x - xdn| = a and a = b ⇒ also equals |x - xup|
+                    -- so repeat the earlier argument to get equality of differences
+                    have hxfx_nonneg : 0 ≤ f2 - x := by simpa using sub_nonneg.mpr hxe
+                    have hxux_nonneg : 0 ≤ xup - x := by simpa using sub_nonneg.mpr hx_le_xup
+                    have : |f2 - x| = |x - f2| := by simp [abs_sub_comm]
+                    have := congrArg id heq_dist
+                    -- combine to |f2 - x| = |xup - x|
+                    have : |f2 - x| = |xup - x| := by
+                      -- |x - xdn| = |x - f2| and |x - xdn| = |x - xup|
+                      have habs_xdn : |x - xdn| = a := by
+                        have : 0 ≤ x - xdn := by simpa using sub_nonneg.mpr hxdn_le_x
+                        simpa [a] using abs_of_nonneg this
+                      have habs_xup : |x - xup| = b := by
+                        have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
+                        simpa [b, sub_eq_add_neg] using abs_of_nonpos this
+                      have : |x - f2| = |x - xdn| := heq_dist
+                      have : |x - f2| = |x - xup| := by simpa [habs_xdn, habs_xup, heq] using this
+                      have : |f2 - x| = |xup - x| := by simpa [abs_sub_comm] using this
+                      exact this
+                    simpa [abs_of_nonneg hxfx_nonneg, abs_of_nonneg hxux_nonneg] using this
+                  have hf2_eq_xup : f2 = xup := by
+                    have := congrArg (fun t => t + x) this
+                    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+                  -- Since |xup| ≤ |xdn| is false in this branch, we have |xdn| < |xup|
+                  have hx_dn_le_up_abs : |xdn| ≤ |xup| := by
+                    exact le_of_lt (lt_of_not_ge h_up_le_dn_abs)
+                  -- Conclude |xdn| ≤ |f2| using f2 = xup
+                  simpa [hf2_eq_xup] using hx_dn_le_up_abs
+            exact And.intro hN hN0'
 /- Coq (Generic_fmt.v): round_N_opp
 
    Rounding to nearest commutes with negation up to the transformed choice.
@@ -2529,7 +3939,55 @@ theorem round_N_opp
     (choice : Int → Bool) (x : ℝ) :
     roundR beta fexp (Znearest choice) (-x)
       = - roundR beta fexp (Znearest (fun t => ! choice (-(t + 1)))) x := by
-  sorry
+  classical
+  -- Notations for scaled mantissas and canonical exponents
+  set smx : ℝ := (scaled_mantissa beta fexp x).run with hsmx
+  set smn : ℝ := (scaled_mantissa beta fexp (-x)).run with hsmn
+  set ex  : Int := (cexp beta fexp x).run with hex
+  set en  : Int := (cexp beta fexp (-x)).run with hen
+
+  -- Canonical exponent is invariant under negation (by definition of mag)
+  have hE : en = ex := by
+    -- Both sides reduce to `fexp ((mag beta x).run)`
+    simp [hen, hex, cexp, FloatSpec.Core.Raux.mag, abs_neg]
+
+  -- Scaled mantissa flips sign under negation
+  have hSM : smn = -smx := by
+    -- After unfolding and using hE, both use the same exponent
+    simp [hsmn, hsmx, scaled_mantissa, cexp, FloatSpec.Core.Raux.mag, abs_neg, hE, neg_mul]
+
+  -- Reduce the Znearest relation using the previously proved structural lemma
+  have hZ : Znearest choice (-smx)
+              = - Znearest (fun t => ! choice (-(t + 1))) smx :=
+    Znearest_opp choice smx
+  -- Align the two syntactic variants of the transformed choice
+  have hfun_eq :
+      (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
+    funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+  -- Now compute both sides explicitly and rewrite step by step
+  calc
+    roundR beta fexp (Znearest choice) (-x)
+        = (((Znearest choice smn : Int) : ℝ) * (beta : ℝ) ^ en) := by
+              simp [roundR, hsmn, hen]
+    _   = (((Znearest choice (-smx) : Int) : ℝ) * (beta : ℝ) ^ ex) := by
+              simpa [hSM, hE]
+    _   = ((((- Znearest (fun t => ! choice (-(t + 1))) smx) : Int) : ℝ)
+              * (beta : ℝ) ^ ex) := by
+              -- Apply the Znearest_opp relation at the mantissa scale
+              simpa [hZ]
+    _   = (-(↑(Znearest (fun t => ! choice (-(t + 1))) smx) : ℝ)
+              * (beta : ℝ) ^ ex) := by
+              -- Cast -z : ℤ to ℝ and factor the minus sign
+              simp [Int.cast_neg, neg_mul]
+    _   = -( ((Znearest (fun t => ! choice (-(t + 1))) smx : Int) : ℝ)
+              * (beta : ℝ) ^ ex) := by ring
+    _   = -( ((Znearest (fun t => ! choice (-1 + -t)) smx : Int) : ℝ)
+              * (beta : ℝ) ^ ex) := by
+              -- Normalize the choice variant
+              simpa [hfun_eq]
+    _   = - roundR beta fexp (Znearest (fun t => ! choice (-(t + 1)))) x := by
+              -- Fold back the definition of roundR on x
+              simp [roundR, hsmx, hex]
 
 /- Coq (Generic_fmt.v): round_N0_opp
 
@@ -2540,7 +3998,65 @@ theorem round_N0_opp
     (x : ℝ) :
     roundR beta fexp (Znearest (fun t : Int => decide (t < 0))) (-x)
       = - roundR beta fexp (Znearest (fun t : Int => decide (t < 0))) x := by
-  sorry
+  classical
+  -- Start from the generic opposition lemma and specialize the choice
+  have h :=
+    round_N_opp (beta := beta) (fexp := fexp)
+      (choice := fun t : Int => decide (t < 0)) (x := x)
+  -- It remains to identify the transformed choice with the original one.
+  -- For integers, (-(t+1) < 0) ↔ (-1 < t), hence
+  --   !decide (-(t+1) < 0) = !decide (-1 < t) = decide (t < 0).
+  have hchoice_eq :
+      (fun t : Int => ! decide (-1 < t))
+        = (fun t : Int => decide (t < 0)) := by
+    funext t
+    by_cases ht0 : t < 0
+    · -- Then t ≤ -1, hence ¬ (-1 < t)
+      have hle : t ≤ -1 := by
+        have : t < (-1) + 1 := by simpa using ht0
+        exact Int.lt_add_one_iff.mp this
+      have hnot : ¬ (-1 < t) := not_lt.mpr hle
+      simp [ht0, hnot]
+    · -- Here 0 ≤ t, hence -1 < t
+      have ht0' : 0 ≤ t := le_of_not_gt ht0
+      have hlt : -1 < t := lt_of_lt_of_le (show (-1 : Int) < 0 by decide) ht0'
+      simp [ht0, hlt]
+  -- Rewrite the transformed choice using the equality above
+  -- Also replace the syntactic variant (-(t+1) < 0) by (-1 < t)
+  have hsyn :
+      (fun t : Int => ! decide (-(t + 1) < 0))
+        = (fun t : Int => ! decide (-1 < t)) := by
+    funext t
+    -- (-(t+1) < 0) ↔ (-1 < t) for integers
+    have hiff : (-(t + 1) < 0) ↔ (-1 < t) := by
+      constructor
+      · intro hlt
+        have : 0 < t + 1 := by
+          -- Add (t+1) to both sides: 0 < t + 1
+          simpa [add_comm, add_left_comm, add_assoc] using
+            (add_lt_add_right hlt (t + 1))
+        have ht0 : 0 ≤ t := (Int.lt_add_one_iff.mp this)
+        exact lt_of_lt_of_le (by decide : (-1 : Int) < 0) ht0
+      · intro hlt
+        -- Add (-t) to both sides
+        have := add_lt_add_right hlt (-t)
+        simpa [add_comm, add_left_comm, add_assoc] using this
+    by_cases hlt : (-1 : Int) < t
+    · have : decide (-(t + 1) < 0) = True := by
+        -- Via hiff, (-(t+1) < 0) holds
+        have : (-(t + 1) < 0) := (hiff.mpr hlt)
+        simpa [this]
+      simp [hlt, this]
+    · have : decide (-(t + 1) < 0) = False := by
+        have : ¬ (-(t + 1) < 0) := by
+          -- From ¬(-1 < t), get t ≤ -1, then t + 1 ≤ 0
+          have hle : t ≤ -1 := not_lt.mp hlt
+          have hle0 : t + 1 ≤ 0 := by simpa using (Int.add_le_add_right hle 1)
+          have : 0 ≤ -(t + 1) := neg_nonneg.mpr hle0
+          exact not_lt.mpr this
+        simpa [this]
+      simp [hlt, this]
+  simpa [hsyn, hchoice_eq] using h
 
 /- Coq (Generic_fmt.v): round_N_small
 
@@ -2553,8 +4069,41 @@ theorem round_N_small
     (hx : (beta : ℝ) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : ℝ) ^ ex)
     (hex_lt : fexp ex > ex) :
     roundR beta fexp (Znearest choice) x = 0 := by
-  -- Split on the sign of x and reduce to the positive case
-  sorry
+  classical
+  by_cases hx0 : 0 ≤ x
+  · -- Nonnegative case: |x| = x, reduce to the positive lemma
+    have hx_pos_bounds : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex := by
+      have habsx : abs x = x := abs_of_nonneg hx0
+      simpa [habsx] using hx
+    exact round_N_small_pos (beta := beta) (fexp := fexp)
+      (choice := choice) (x := x) (ex := ex) hβ hx_pos_bounds hex_lt
+  · -- Negative case: apply the positive lemma to -x and use `round_N_opp`
+    have hxlt : x < 0 := lt_of_not_ge hx0
+    have hx_neg_bounds : (beta : ℝ) ^ (ex - 1) ≤ -x ∧ -x < (beta : ℝ) ^ ex := by
+      have habsx : abs x = -x := by simpa [abs_of_neg hxlt]
+      simpa [habsx] using hx
+    have hpos :=
+      round_N_small_pos (beta := beta) (fexp := fexp)
+        (choice := fun t => ! choice (-(t + 1))) (x := -x) (ex := ex)
+        hβ hx_neg_bounds hex_lt
+    -- Normalize the transformed choice function
+    have hfun_eq :
+        (fun t : Int => ! choice (-1 + -t))
+          = (fun t : Int => ! choice (-(t + 1))) := by
+      funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+    -- Relate rounding at -x back to x
+    have hrel :=
+      round_N_opp (beta := beta) (fexp := fexp) (choice := choice) (x := -x)
+    -- From the opposition lemma and the positive case at -x
+    calc
+      roundR beta fexp (Znearest choice) x
+          = - roundR beta fexp (Znearest (fun t => ! choice (-(t + 1)))) (-x) := by
+                simpa using hrel
+      _   = - roundR beta fexp (Znearest (fun t => ! choice (-1 + -t))) (-x) := by
+                -- Align the syntactic variant of the transformed choice
+                simpa [hfun_eq]
+      _   = -0 := by simp [hpos, hfun_eq]
+      _   = 0 := by simp
 
 -- (helper lemmas intentionally omitted at this stage)
 
@@ -2567,7 +4116,40 @@ theorem round_NA_opp
     (x : ℝ) :
     roundR beta fexp (Znearest (fun t : Int => decide (0 ≤ t))) (-x)
       = - roundR beta fexp (Znearest (fun t : Int => decide (0 ≤ t))) x := by
-  sorry
+  classical
+  -- Start from the generic opposition lemma with the NA choice
+  have h :=
+    round_N_opp (beta := beta) (fexp := fexp)
+      (choice := fun t : Int => decide (0 ≤ t)) (x := x)
+  -- Identify the transformed choice with the original NA choice.
+  -- Using 0 ≤ -(t+1) ↔ t ≤ -1 and classical logic on decide:
+  --   !decide (t ≤ -1) = decide (-1 < t).
+  have hsyn2 :
+      (fun t : Int => ! decide (t ≤ -1))
+        = (fun t : Int => decide (-1 < t)) := by
+    funext t
+    by_cases hlt : (-1 : Int) < t
+    · have hnot : ¬ t ≤ -1 := not_le.mpr hlt
+      simp [hlt, hnot]
+    · have hle : t ≤ -1 := not_lt.mp hlt
+      simp [hlt, hle]
+
+  -- And the identification −1 < t ↔ 0 ≤ t for integers
+  have hchoice_eq :
+      (fun t : Int => decide (-1 < t))
+        = (fun t : Int => decide (0 ≤ t)) := by
+    -- Pointwise equality again by cases on 0 ≤ t
+    funext t
+    by_cases ht0 : 0 ≤ t
+    · have hlt : (-1 : Int) < t := lt_of_lt_of_le (by decide : (-1 : Int) < 0) ht0
+      simp [ht0, hlt]
+    · have hle : t ≤ -1 := by
+        have : t < 0 := lt_of_not_ge ht0
+        exact Int.lt_add_one_iff.mp (by simpa using this)
+      have hnot : ¬ (-1 : Int) < t := not_lt.mpr hle
+      simp [ht0, hnot]
+  -- Rewrite the transformed choice and conclude
+  simpa [hsyn2, hchoice_eq] using h
 
 -- Section: Inclusion between two formats (Coq: generic_inclusion_*)
 

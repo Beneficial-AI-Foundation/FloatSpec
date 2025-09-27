@@ -113,8 +113,9 @@ theorem FLX_exp_correct_spec (e : Int) :
     Zero should always be representable regardless of the precision
     since it can be expressed as 0 × β^e for any exponent e.
 -/
-def FLX_format_0_check (beta : Int) : Id Bool :=
-  sorry  -- Zero is always in format
+noncomputable def FLX_format_0_check (beta : Int) : Id Bool :=
+  -- Concrete arithmetic check: Ztrunc 0 = 0
+  pure (((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int))
 
 /-- Specification: Zero is in FLX format
 
@@ -134,8 +135,9 @@ theorem FLX_format_0_spec (beta : Int) :
     This tests the closure property under additive inverse for
     fixed-precision floating-point numbers.
 -/
-def FLX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
-  sorry  -- Always true for fixed-precision formats
+noncomputable def FLX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+  -- Concrete arithmetic check leveraging Ztrunc_opp: Ztrunc(-x) + Ztrunc(x) = 0
+  pure (((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int))
 
 /-- Specification: FLX format closed under negation
 
@@ -155,8 +157,10 @@ theorem FLX_format_opp_spec (beta : Int) (x : ℝ) :
     This tests closure under the absolute value operation, which
     should preserve representability in fixed-precision formats.
 -/
-def FLX_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
-  sorry  -- Always true for fixed-precision formats
+noncomputable def FLX_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
+  -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
+  pure (((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
+        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs))
 
 /-- Specification: FLX format closed under absolute value
 

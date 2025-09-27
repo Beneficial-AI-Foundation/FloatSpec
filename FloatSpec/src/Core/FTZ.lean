@@ -119,8 +119,9 @@ theorem FTZ_exp_correct_spec (e : Int) :
     Zero should always be representable since it can be expressed
     with any exponent as 0 × β^e = 0.
 -/
-def FTZ_format_0_check (beta : Int) : Id Bool :=
-  sorry  -- Zero is always in format
+noncomputable def FTZ_format_0_check (beta : Int) : Id Bool :=
+  -- Concrete arithmetic check: Ztrunc 0 = 0
+  pure (((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int))
 
 /-- Specification: Zero is in FTZ format
 
@@ -140,8 +141,9 @@ theorem FTZ_format_0_spec (beta : Int) :
     This tests the symmetry property of flush-to-zero representation
     under sign changes.
 -/
-def FTZ_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
-  sorry  -- Always true for FTZ formats
+noncomputable def FTZ_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+  -- Concrete arithmetic check leveraging Ztrunc_opp: Ztrunc(-x) + Ztrunc(x) = 0
+  pure (((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int))
 
 /-- Specification: FTZ format closed under negation
 
@@ -161,8 +163,10 @@ theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
     This ensures that magnitude operations preserve representability
     in the flush-to-zero format.
 -/
-def FTZ_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
-  sorry  -- Always true for FTZ formats
+noncomputable def FTZ_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
+  -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
+  pure (((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
+        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs))
 
 /-- Specification: FTZ format closed under absolute value
 

@@ -131,8 +131,11 @@ def DN_UP_parity_prop : Prop :=
     gd.Fnum % 2 ≠ gu.Fnum % 2
 
 /-- Check DN/UP parity auxiliary lemma -/
-def DN_UP_parity_aux_check : Id Bool :=
-  sorry
+noncomputable def DN_UP_parity_aux_check : Id Bool :=
+  by
+    classical
+    -- Decide the general parity property; the spec lemma will prove it.
+    exact pure (decide (DN_UP_parity_prop beta fexp))
 
 /-- Coq:
     Lemma DN_UP_parity_aux :
@@ -143,15 +146,18 @@ def DN_UP_parity_aux_check : Id Bool :=
 -/
 theorem DN_UP_parity_aux :
     ⦃⌜beta > 1 ∧ DN_UP_parity_pos_prop beta fexp⌝⦄
-    DN_UP_parity_aux_check
+    DN_UP_parity_aux_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_aux_check
   sorry
 
 /-- Check DN/UP parity holds for the generic format (positive case) -/
-def DN_UP_parity_generic_pos_check : Id Bool :=
-  sorry
+noncomputable def DN_UP_parity_generic_pos_check : Id Bool :=
+  by
+    classical
+    -- Decide the positive-case parity property for DN/UP neighbors.
+    exact pure (decide (DN_UP_parity_pos_prop beta fexp))
 
 /-- Coq:
     Theorem DN_UP_parity_generic_pos :
@@ -161,15 +167,18 @@ def DN_UP_parity_generic_pos_check : Id Bool :=
 -/
 theorem DN_UP_parity_generic_pos :
     ⦃⌜beta > 1⌝⦄
-    DN_UP_parity_generic_pos_check
+    DN_UP_parity_generic_pos_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_generic_pos_check
   sorry
 
 /-- Check DN/UP parity holds for the generic format (all reals) -/
-def DN_UP_parity_generic_check : Id Bool :=
-  sorry
+noncomputable def DN_UP_parity_generic_check : Id Bool :=
+  by
+    classical
+    -- Decide the general (sign-agnostic) parity property for DN/UP neighbors.
+    exact pure (decide (DN_UP_parity_prop beta fexp))
 
 /-- Coq:
     Theorem DN_UP_parity_generic :
@@ -179,7 +188,7 @@ def DN_UP_parity_generic_check : Id Bool :=
 -/
 theorem DN_UP_parity_generic :
     ⦃⌜beta > 1⌝⦄
-    DN_UP_parity_generic_check
+    DN_UP_parity_generic_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_generic_check
@@ -195,8 +204,15 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Check nearest-even uniqueness property
 -/
-def Rnd_NE_pt_unique_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_unique_check : Id Bool :=
+  by
+    classical
+    -- Decide the global uniqueness property for nearest-even rounding.
+    exact
+      pure
+        (decide
+          (∀ x f1 f2 : ℝ,
+            Rnd_NE_pt beta fexp x f1 → Rnd_NE_pt beta fexp x f2 → f1 = f2))
 
 /-- Specification: Nearest-even uniqueness property
 
@@ -205,7 +221,7 @@ def Rnd_NE_pt_unique_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_unique_prop :
     ⦃⌜beta > 1⌝⦄
-    Rnd_NE_pt_unique_check
+    Rnd_NE_pt_unique_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_unique_check
@@ -213,8 +229,16 @@ theorem Rnd_NE_pt_unique_prop :
 
 /-- Check nearest-even rounding uniqueness for specific values
 -/
-def Rnd_NE_pt_unique_specific_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_unique_specific_check : Id Bool :=
+  by
+    classical
+    -- Decide the uniqueness of the rounded value at any given input.
+    -- (Specialized equality goal proved in the accompanying theorem.)
+    exact
+      pure
+        (decide
+          (∀ x f1 f2 : ℝ,
+            Rnd_NE_pt beta fexp x f1 → Rnd_NE_pt beta fexp x f2 → f1 = f2))
 
 /-- Specification: Nearest-even rounding is unique
 
@@ -223,7 +247,7 @@ def Rnd_NE_pt_unique_specific_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_unique (x f1 f2 : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f1 ∧ Rnd_NE_pt beta fexp x f2⌝⦄
-    Rnd_NE_pt_unique_specific_check
+    Rnd_NE_pt_unique_specific_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_unique_specific_check
@@ -231,8 +255,11 @@ theorem Rnd_NE_pt_unique (x f1 f2 : ℝ) :
 
 /-- Check nearest-even monotonicity
 -/
-def Rnd_NE_pt_monotone_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_monotone_check : Id Bool :=
+  by
+    classical
+    -- Decide monotonicity of the nearest-even rounding predicate.
+    exact pure (decide (round_pred_monotone (Rnd_NE_pt beta fexp)))
 
 
 
@@ -246,15 +273,18 @@ def Rnd_NE_pt_monotone_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_monotone :
     ⦃⌜beta > 1⌝⦄
-    Rnd_NE_pt_monotone_check
+    Rnd_NE_pt_monotone_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_monotone_check
   sorry
 
 /-- Check nearest-even totality -/
-def Rnd_NE_pt_total_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_total_check : Id Bool :=
+  by
+    classical
+    -- Decide totality of the nearest-even rounding predicate.
+    exact pure (decide (round_pred_total (Rnd_NE_pt beta fexp)))
 
 
 /-- Coq:
@@ -265,15 +295,18 @@ def Rnd_NE_pt_total_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_total :
     ⦃⌜beta > 1⌝⦄
-    Rnd_NE_pt_total_check
+    Rnd_NE_pt_total_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_total_check
   sorry
 
 /-- Check nearest-even forms a rounding predicate -/
-def Rnd_NE_pt_round_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_round_check : Id Bool :=
+  by
+    classical
+    -- Decide that nearest-even defines a proper rounding predicate.
+    exact pure (decide (round_pred (Rnd_NE_pt beta fexp)))
 
 
 /-- Coq:
@@ -284,7 +317,7 @@ def Rnd_NE_pt_round_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_round :
     ⦃⌜beta > 1⌝⦄
-    Rnd_NE_pt_round_check
+    Rnd_NE_pt_round_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_round_check
@@ -300,8 +333,12 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Check rounding predicate satisfaction
 -/
-def satisfies_any_imp_NE_check : Id Bool :=
-  sorry
+noncomputable def satisfies_any_imp_NE_check : Id Bool :=
+  by
+    classical
+    -- Decide that nearest-even forms a proper rounding predicate under the
+    -- `satisfies_any` hypothesis on the format.
+    exact pure (decide (round_pred (Rnd_NE_pt beta fexp)))
 
 /-- Specification: Nearest-even satisfies rounding predicate
 
@@ -310,7 +347,7 @@ def satisfies_any_imp_NE_check : Id Bool :=
 -/
 theorem satisfies_any_imp_NE :
     ⦃⌜beta > 1 ∧ satisfies_any (fun x => (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)⌝⦄
-    satisfies_any_imp_NE_check
+    satisfies_any_imp_NE_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold satisfies_any_imp_NE_check
@@ -318,8 +355,16 @@ theorem satisfies_any_imp_NE :
 
 /-- Check nearest-even reflexivity
 -/
-def Rnd_NE_pt_refl_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_refl_check : Id Bool :=
+  by
+    classical
+    -- Representable values are fixed points of nearest-even rounding.
+    exact
+      pure
+        (decide
+          (∀ x : ℝ,
+            (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run →
+            Rnd_NE_pt beta fexp x x))
 
 
 /-- Coq:
@@ -331,7 +376,7 @@ def Rnd_NE_pt_refl_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_refl (x : ℝ) :
     ⦃⌜beta > 1 ∧ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run⌝⦄
-    Rnd_NE_pt_refl_check
+    Rnd_NE_pt_refl_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_refl_check
@@ -339,8 +384,17 @@ theorem Rnd_NE_pt_refl (x : ℝ) :
 
 /-- Check nearest-even idempotence
 -/
-def Rnd_NE_pt_idempotent_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_idempotent_check : Id Bool :=
+  by
+    classical
+    -- If x is representable and f rounds to x under NE, then f = x.
+    exact
+      pure
+        (decide
+          (∀ x f : ℝ,
+            Rnd_NE_pt beta fexp x f →
+            (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run →
+            f = x))
 
 
 /-- Coq:
@@ -352,7 +406,7 @@ def Rnd_NE_pt_idempotent_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_idempotent (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f ∧ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run⌝⦄
-    Rnd_NE_pt_idempotent_check
+    Rnd_NE_pt_idempotent_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_idempotent_check
@@ -368,8 +422,11 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Check down-up parity property
 -/
-def DN_UP_parity_pos_holds_check : Id Bool :=
-  sorry
+noncomputable def DN_UP_parity_pos_holds_check : Id Bool :=
+  by
+    classical
+    -- Decide the positive-case parity property for DN/UP neighbors.
+    exact pure (decide (DN_UP_parity_pos_prop beta fexp))
 
 /-- Specification: Down-up parity for positive numbers
 
@@ -383,7 +440,7 @@ def DN_UP_parity_pos_holds_check : Id Bool :=
 theorem DN_UP_parity_pos_holds :
     -- Coq: Theorem DN_UP_parity_generic_pos : DN_UP_parity_pos_prop.
     ⦃⌜beta > 1⌝⦄
-    DN_UP_parity_pos_holds_check
+    DN_UP_parity_pos_holds_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_pos_holds_check
@@ -391,8 +448,15 @@ theorem DN_UP_parity_pos_holds :
 
 /-- Check sign preservation
 -/
-def Rnd_NE_pt_sign_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_sign_check : Id Bool :=
+  by
+    classical
+    -- Decide sign preservation: if Rnd_NE_pt x f with x ≠ 0 and 0 < f, then 0 < x.
+    exact
+      pure
+        (decide
+          (∀ x f : ℝ,
+            Rnd_NE_pt beta fexp x f → x ≠ 0 → 0 < f → 0 < x))
 
 /-- Coq: Derived from round_NE_pt_pos and symmetry; sign preserved except zeros.
 
@@ -403,7 +467,7 @@ def Rnd_NE_pt_sign_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_sign (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f ∧ x ≠ 0 ∧ 0 < f⌝⦄
-    Rnd_NE_pt_sign_check
+    Rnd_NE_pt_sign_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_sign_check
@@ -411,8 +475,16 @@ theorem Rnd_NE_pt_sign (x f : ℝ) :
 
 /-- Check absolute value property
 -/
-def Rnd_NE_pt_abs_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_abs_check : Id Bool :=
+  by
+    classical
+    -- Decide absolute-value stability: rounding relates |x| to |f| as well.
+    exact
+      pure
+        (decide
+          (∀ x f : ℝ,
+            Rnd_NE_pt beta fexp x f →
+            Rnd_NE_pt beta fexp (abs x) (abs f)))
 
 
 /-- Coq:
@@ -427,15 +499,18 @@ def Rnd_NE_pt_abs_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_abs (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f⌝⦄
-    Rnd_NE_pt_abs_check
+    Rnd_NE_pt_abs_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_abs_check
   sorry
 
 /-- Check rounding at positive inputs -/
-def round_NE_pt_pos_check : Id Bool :=
-  sorry
+noncomputable def round_NE_pt_pos_check : Id Bool :=
+  by
+    classical
+    -- Decide existence of an NE-rounded value at positive inputs.
+    exact pure (decide (∀ x : ℝ, 0 < x → ∃ f : ℝ, Rnd_NE_pt beta fexp x f))
 
 
 /-- Coq:
@@ -448,15 +523,21 @@ def round_NE_pt_pos_check : Id Bool :=
 -/
 theorem round_NE_pt_pos (x : ℝ) :
     ⦃⌜beta > 1 ∧ 0 < x⌝⦄
-    round_NE_pt_pos_check
+    round_NE_pt_pos_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_pt_pos_check
   sorry
 
 /-- Check rounding negation -/
-def round_NE_opp_check : Id Bool :=
-  sorry
+noncomputable def round_NE_opp_check : Id Bool :=
+  by
+    classical
+    -- Decide negation-compatibility: rounding commutes with negation at the predicate level.
+    exact
+      pure
+        (decide
+          (∀ x f : ℝ, Rnd_NE_pt beta fexp x f ↔ Rnd_NE_pt beta fexp (-x) (-f)))
 
 
 /-- Coq:
@@ -469,15 +550,22 @@ def round_NE_opp_check : Id Bool :=
 -/
 theorem round_NE_opp (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    round_NE_opp_check
+    round_NE_opp_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_opp_check
   sorry
 
 /-- Check absolute rounding equality -/
-def round_NE_abs_check : Id Bool :=
-  sorry
+noncomputable def round_NE_abs_check : Id Bool :=
+  by
+    classical
+    -- Decide absolute-value compatibility between input and output under NE rounding.
+    exact
+      pure
+        (decide
+          (∀ x f : ℝ,
+            Rnd_NE_pt beta fexp x f ↔ Rnd_NE_pt beta fexp (abs x) (abs f)))
 
 
 /-- Coq:
@@ -490,15 +578,18 @@ def round_NE_abs_check : Id Bool :=
 -/
 theorem round_NE_abs (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    round_NE_abs_check
+    round_NE_abs_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_abs_check
   sorry
 
 /-- Check predicate holds at rounded value -/
-def round_NE_pt_check : Id Bool :=
-  sorry
+noncomputable def round_NE_pt_check : Id Bool :=
+  by
+    classical
+    -- Decide totality: every input admits an NE-rounded value.
+    exact pure (decide (∀ x : ℝ, ∃ f : ℝ, Rnd_NE_pt beta fexp x f))
 
 
 /-- Coq:
@@ -510,7 +601,7 @@ def round_NE_pt_check : Id Bool :=
 -/
 theorem round_NE_pt (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    round_NE_pt_check
+    round_NE_pt_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_pt_check
@@ -526,8 +617,16 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Check error bound property
 -/
-def Rnd_NE_pt_error_bound_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_error_bound_check : Id Bool :=
+  by
+    classical
+    -- Decide the half‑ULP error bound for nearest-even rounding.
+    exact
+      pure
+        (decide
+          (∀ x f : ℝ,
+            Rnd_NE_pt beta fexp x f →
+            |f - x| ≤ (1/2) * ((FloatSpec.Core.Ulp.ulp beta fexp x).run)))
 
 /-- Specification: Error bound for nearest-even rounding
 
@@ -535,7 +634,7 @@ def Rnd_NE_pt_error_bound_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_error_bound (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f⌝⦄
-    Rnd_NE_pt_error_bound_check
+    Rnd_NE_pt_error_bound_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_error_bound_check
@@ -543,8 +642,17 @@ theorem Rnd_NE_pt_error_bound (x f : ℝ) :
 
 /-- Check minimal error property
 -/
-def Rnd_NE_pt_minimal_error_check : Id Bool :=
-  sorry
+noncomputable def Rnd_NE_pt_minimal_error_check : Id Bool :=
+  by
+    classical
+    -- Decide that nearest-even minimizes absolute error among representables.
+    exact
+      pure
+        (decide
+          (∀ x f g : ℝ,
+            Rnd_NE_pt beta fexp x f →
+            (FloatSpec.Core.Generic_fmt.generic_format beta fexp g).run →
+            |f - x| ≤ |g - x|))
 
 /-- Specification: Nearest-even minimizes absolute error
 
@@ -553,7 +661,7 @@ def Rnd_NE_pt_minimal_error_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_minimal_error (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f⌝⦄
-    Rnd_NE_pt_minimal_error_check
+    Rnd_NE_pt_minimal_error_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_minimal_error_check

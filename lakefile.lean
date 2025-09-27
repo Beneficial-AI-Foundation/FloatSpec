@@ -9,7 +9,9 @@ package FloatSpec where
     ⟨`autoImplicit, true⟩,
     ⟨`relaxedAutoImplicit, false⟩,
     ⟨`linter.missingDocs, true⟩,
-    ⟨`linter.unnecessarySimpa, false⟩
+    ⟨`linter.unnecessarySimpa, false⟩,
+    -- Allow work-in-progress files that use `sorry` to compile
+    ⟨`warningAsError, false⟩
   ]
   -- Cloud release configuration for pre-built artifacts
   releaseRepo := "https://github.com/Beneficial-AI-Foundation/FloatSpec"
