@@ -1,0 +1,10 @@
+hash=19da3a62ad8f2555788c7e60dac26c84075f9118
+short_hash=19da3a6
+author_name=htlou
+author_email=lht_pku@stu.pku.edu.cn
+date=2025-09-27T13:52:00+08:00
+subject=chore: update Core rounding/formatting modules; tweak lakefile; manage scripts
+body=- Update Core modules: Generic_fmt, Ulp, Round_*; touch FIX/FLX/FLT/FTZ
+- Tweak lakefile.lean
+- Add scripts/full_prompt.md and scripts/iterate_new_import.sh
+- Remove scripts/iterate_codex_2.sh
