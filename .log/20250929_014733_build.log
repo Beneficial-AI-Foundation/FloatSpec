@@ -1,0 +1,64 @@
+✔ [7/2797] Built Mathlib.Tactic.Linter.DirectoryDependency (1.5s)
+✔ [9/3123] Built FloatSpec.src.Prop (368ms)
+✔ [10/3123] Built Mathlib.Tactic.Polyrith (652ms)
+✔ [11/3123] Built Mathlib.Tactic.Linter.Header (1.3s)
+✔ [12/3123] Built Mathlib.Tactic.DeclarationNames (847ms)
+✔ [13/3123] Built Mathlib.Tactic.Linter.OldObtain (818ms)
+✔ [28/3123] Built Mathlib.Tactic.Linter.HashCommandLinter (914ms)
+✔ [29/3123] Built Mathlib.Tactic.Linter.UnusedTacticExtension (904ms)
+✔ [30/3123] Built Mathlib.Lean.Elab.Tactic.Meta (885ms)
+✔ [31/3123] Built Mathlib.Tactic.Linter.GlobalAttributeIn (979ms)
+✔ [32/3123] Built Mathlib.Tactic.Linter.Multigoal (994ms)
+✔ [33/3123] Built Mathlib.Tactic.Linter.DocPrime (1.1s)
+✔ [34/3123] Built Mathlib.Tactic.Linter.DocString (1.2s)
+✔ [35/3123] Built Mathlib.Tactic.Linter.DeprecatedSyntaxLinter (1.3s)
+✔ [36/3123] Built Mathlib.Tactic.Linter.CommandStart (1.6s)
+✔ [37/3123] Built Mathlib.Lean.ContextInfo (825ms)
+✔ [38/3123] Built Mathlib.Tactic.Linter.FlexibleLinter (1.9s)
+✔ [39/3123] Built Mathlib.Tactic.Linter.Style (2.1s)
+✔ [40/3123] Built Mathlib.Tactic.TacticAnalysis (1.4s)
+✔ [237/3123] Built Mathlib.Tactic.Linter.Lint (915ms)
+✔ [238/3123] Built Mathlib.Tactic.Linter.UnusedTactic (1.1s)
+✔ [243/3123] Built Aesop.Util.Tactic (1.3s)
+✔ [244/3123] Built ProofWidgets.Component.OfRpcMethod (1.4s)
+✔ [245/3123] Built Mathlib.Tactic.MinImports (1.2s)
+✔ [246/3123] Built Mathlib.Tactic.ExtractGoal (1.3s)
+✔ [247/3123] Built Mathlib.Tactic.Linter.MinImports (1.4s)
+✔ [248/3123] Built Aesop.Script.SpecificTactics (3.4s)
+✔ [249/3123] Built Mathlib.Tactic.TacticAnalysis.Declarations (1.8s)
+✖ [250/3123] Building Mathlib.Init (342ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Init.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Init.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Init.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Init.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Init.setup.json --json
+error: Mathlib/Init.lean:1:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean/Batteries/Util/LibraryNote.olean', incompatible header
+error: Lean exited with code 1
+✔ [604/3123] Built Aesop.RuleTac.Preprocess (1.4s)
+✔ [605/3123] Built Aesop.RuleTac.Apply (1.7s)
+✔ [606/3123] Built Aesop.RuleTac.Cases (1.9s)
+✖ [607/3123] Building Aesop.Builder.Cases (552ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Builder/Cases.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Builder/Cases.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Builder/Cases.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Builder/Cases.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Builder/Cases.setup.json --json
+error: Aesop/Builder/Cases.lean:7:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Index/DiscrTreeConfig.olean', incompatible header
+error: Lean exited with code 1
+✔ [609/3123] Built Aesop.Forward.Match (2.8s)
+✖ [610/3123] Building Aesop.Index (253ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Index.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Index.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Index.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Index.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Index.setup.json --json
+error: Aesop/Index.lean:7:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Forward/PremiseIndex.olean', incompatible header
+error: Lean exited with code 1
+✖ [611/3123] Building Aesop.Tree.Data.ForwardRuleMatches (224ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Tree/Data/ForwardRuleMatches.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/Data/ForwardRuleMatches.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/Data/ForwardRuleMatches.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/Data/ForwardRuleMatches.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/Data/ForwardRuleMatches.setup.json --json
+error: Aesop/Tree/Data/ForwardRuleMatches.lean:7:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Forward/PremiseIndex.olean', incompatible header
+error: Lean exited with code 1
+✖ [613/3123] Building Aesop.Forward.State (229ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Forward/State.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Forward/State.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Forward/State.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Forward/State.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Forward/State.setup.json --json
+error: Aesop/Forward/State.lean:7:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Forward/PremiseIndex.olean', incompatible header
+error: Lean exited with code 1
+✖ [615/3123] Building Aesop.RuleTac.Forward (233ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/RuleTac/Forward.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/RuleTac/Forward.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/RuleTac/Forward.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/RuleTac/Forward.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/RuleTac/Forward.setup.json --json
+error: Aesop/RuleTac/Forward.lean:7:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Forward/PremiseIndex.olean', incompatible header
+error: Lean exited with code 1
+Some required targets logged failures:
+- Mathlib.Init
+- Aesop.Builder.Cases
+- Aesop.Index
+- Aesop.Tree.Data.ForwardRuleMatches
+- Aesop.Forward.State
+- Aesop.RuleTac.Forward
+error: build failed

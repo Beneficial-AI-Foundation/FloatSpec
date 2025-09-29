@@ -1,0 +1,259 @@
+info: waiting for previous installation request to finish (/home/hantao/.elan/toolchains/leanprover--lean4---v4.24.lock, held by PID 628011)
+⚠ [33/156] Replayed Aesop.Rule.Name
+warning: Aesop/Rule/Name.lean:25:27: `Aesop.PhaseName.toCtorIdx` has been deprecated: Use `Aesop.PhaseName.ctorIdx` instead
+warning: Aesop/Rule/Name.lean:25:40: `Aesop.PhaseName.toCtorIdx` has been deprecated: Use `Aesop.PhaseName.ctorIdx` instead
+warning: Aesop/Rule/Name.lean:46:27: `Aesop.ScopeName.toCtorIdx` has been deprecated: Use `Aesop.ScopeName.ctorIdx` instead
+warning: Aesop/Rule/Name.lean:46:40: `Aesop.ScopeName.toCtorIdx` has been deprecated: Use `Aesop.ScopeName.ctorIdx` instead
+warning: Aesop/Rule/Name.lean:72:27: `Aesop.BuilderName.toCtorIdx` has been deprecated: Use `Aesop.BuilderName.ctorIdx` instead
+warning: Aesop/Rule/Name.lean:72:40: `Aesop.BuilderName.toCtorIdx` has been deprecated: Use `Aesop.BuilderName.ctorIdx` instead
+✔ [65/564] Built Batteries.Data.List.Matcher (786ms)
+✔ [66/703] Built Batteries.Tactic.Lint.TypeClass (1.1s)
+✔ [67/1146] Built Aesop.RuleTac.RuleTerm (966ms)
+✔ [68/1324] Built Aesop.Util.UnorderedArraySet (1.1s)
+✔ [69/1324] Built Batteries.Lean.Meta.SavedState (1.0s)
+✔ [70/1324] Built Batteries.Lean.Meta.DiscrTree (853ms)
+✔ [71/1497] Built Batteries.Lean.Meta.InstantiateMVars (983ms)
+✔ [72/1633] Built Batteries.Lean.AttributeExtra (937ms)
+✔ [73/1794] Built Batteries.Tactic.Lint.Misc (1.7s)
+✔ [74/1794] Built Batteries.CodeAction.Basic (1.6s)
+✔ [75/1943] Built Batteries.Data.Fin.Lemmas (1.5s)
+✔ [76/1943] Built Plausible.Gen (1.1s)
+✔ [77/1943] Built ProofWidgets.Compat (924ms)
+✔ [78/2022] Built Batteries.Classes.SatisfiesM (1.8s)
+✔ [79/2022] Built Batteries.Data.Nat.Basic (926ms)
+✔ [80/2115] Built Batteries.WF (917ms)
+✔ [81/2262] Built Batteries.Util.Cache (1.3s)
+✔ [82/2368] Built Mathlib.Tactic.Linter.DirectoryDependency (2.2s)
+✔ [83/2368] Built ProofWidgets.Util (1.3s)
+✔ [84/2525] Built Batteries.Linter.UnreachableTactic (1.7s)
+✔ [85/2674] Built ImportGraph.Imports (2.3s)
+✖ [86/2812] Building Batteries.Tactic.Alias (2.6s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/batteries/Batteries/Tactic/Alias.lean -o /home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean/Batteries/Tactic/Alias.olean -i /home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean/Batteries/Tactic/Alias.ilean -c /home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/ir/Batteries/Tactic/Alias.c --setup /home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/ir/Batteries/Tactic/Alias.setup.json --json
+error: Batteries/Tactic/Alias.lean:116:27: Application type mismatch: The argument
+  declMods.docString?
+has type
+  Option (TSyntax `Lean.Parser.Command.docComment × Bool)
+but is expected to have type
+  Syntax
+in the application
+  addDocString' declName declMods.docString?
+error: Batteries/Tactic/Alias.lean:152:25: Application type mismatch: The argument
+  declMods.docString?
+has type
+  Option (TSyntax `Lean.Parser.Command.docComment × Bool)
+but is expected to have type
+  Syntax
+in the application
+  addDocString' declName declMods.docString?
+error: Lean exited with code 1
+✔ [88/2812] Built Aesop.Script.Tactic (2.2s)
+✔ [90/2812] Built Batteries.Data.MLList.Basic (1.7s)
+✔ [96/2867] Built Batteries.Tactic.Lint.Simp (2.6s)
+✔ [97/2867] Built Batteries.Tactic.Lint.Frontend (2.7s)
+✔ [98/2867] Built Batteries.Data.List.Monadic (719ms)
+✔ [99/2867] Built Aesop.Index.DiscrTreeConfig (2.3s)
+✔ [100/2867] Built Aesop.RuleTac.FVarIdSubst (2.3s)
+✔ [101/2867] Built Aesop.Script.GoalWithMVars (2.3s)
+✔ [102/2867] Built Batteries.Lean.HashMap (554ms)
+✔ [103/2867] Built Batteries.Data.String.Matcher (620ms)
+✔ [104/2935] Built Aesop.ElabM (2.3s)
+✔ [105/2935] Built Aesop.Util.Tactic (2.3s)
+✔ [106/2935] Built Aesop.RuleSet.Name (2.2s)
+✔ [107/2935] Built Batteries.Tactic.Init (2.1s)
+✔ [108/3059] Built Aesop.Exception (2.2s)
+✔ [109/3059] Built Aesop.Frontend.Basic (2.1s)
+✔ [110/3059] Built Qq.Typ (2.1s)
+✔ [112/3105] Built Aesop.Options.Public (2.7s)
+✔ [113/3105] Built Qq.ForLean.ToExpr (2.2s)
+✔ [115/3105] Built Aesop.Script.OptimizeSyntax (2.5s)
+✔ [116/3105] Built Qq.ForLean.Do (2.2s)
+✔ [117/3105] Built ProofWidgets.Component.Basic (1.2s)
+✔ [118/3105] Built Batteries.Tactic.Congr (1.0s)
+✔ [119/3105] Built Batteries.Linter.UnnecessarySeqFocus (1.6s)
+✔ [120/3105] Built Qq.ForLean.ReduceEval (2.4s)
+✔ [121/3105] Built ProofWidgets.Cancellable (1.3s)
+✔ [122/3105] Built Batteries.Tactic.Lint (759ms)
+✔ [123/3105] Built Aesop.Util.EqualUpToIds (3.1s)
+✔ [124/3105] Built Aesop.Util.Tactic.Unfold (2.9s)
+✔ [125/3105] Built Plausible.Sampleable (1.5s)
+✖ [126/3105] Building Mathlib.Tactic.Linter.Header (1.5s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Tactic/Linter/Header.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Tactic/Linter/Header.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Tactic/Linter/Header.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Tactic/Linter/Header.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Tactic/Linter/Header.setup.json --json
+error: Mathlib/Tactic/Linter/Header.lean:330:40: `input` is not a field of structure `Parser.InputContext`
+error: Mathlib/Tactic/Linter/Header.lean:330:38: Fields missing: `inputString`
+
+Hint: Add missing fields:
+  ,̲
+  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲i̲n̲p̲u̲t̲S̲t̲r̲i̲n̲g̲ ̲:̲=̲ ̲_̲
+error: Mathlib/Tactic/Linter/Header.lean:330:38: could not synthesize default value for field 'endPos_valid' of 'Lean.Parser.InputContext' using tactics
+error: Mathlib/Tactic/Linter/Header.lean:330:38: `simp` made no progress
+error: Lean exited with code 1
+✔ [146/3105] Built Batteries.CodeAction.Misc (3.5s)
+✔ [147/3105] Built Batteries.Tactic.Case (2.8s)
+✔ [186/3105] Built Mathlib.Tactic.RewriteSearch (817ms)
+✔ [330/3105] Built Batteries.Tactic.Trans (3.9s)
+✔ [335/3105] Built Batteries.Linter (759ms)
+⚠ [356/3105] Built Mathlib.Tactic.Hint (1.4s)
+warning: Mathlib/Tactic/Hint.lean:83:43: `Lean.Meta.Tactic.TryThis.SuggestionStyle.success` has been deprecated: `SuggestionStyle` is not used anymore.
+warning: Mathlib/Tactic/Hint.lean:83:43: `Lean.Meta.Tactic.TryThis.SuggestionStyle.success` has been deprecated: `SuggestionStyle` is not used anymore.
+✔ [364/3105] Built LeanSearchClient.Syntax (3.3s)
+✔ [365/3105] Built ProofWidgets.Component.MakeEditLink (1.1s)
+✔ [366/3105] Built Aesop.RuleSet.Filter (1.5s)
+✔ [367/3105] Built Batteries.Data.List.Basic (4.2s)
+✔ [380/3105] Built Aesop.Options.Internal (1.4s)
+✔ [381/3105] Built Aesop.Script.TacticState (1.6s)
+✔ [438/3105] Built ProofWidgets.Component.Panel.Basic (1.5s)
+✔ [439/3105] Built Aesop.RuleTac.ElabRuleTerm (1.9s)
+✔ [440/3105] Built Batteries.Tactic.Basic (745ms)
+✔ [449/3105] Built Plausible.Testable (2.0s)
+✔ [450/3105] Built Aesop.Options (1.3s)
+✔ [451/3105] Built Batteries.Classes.Order (1.0s)
+✔ [471/3105] Built LeanSearchClient.LoogleSyntax (1.7s)
+✔ [472/3105] Built Aesop.Util.Basic (3.5s)
+✖ [473/3105] Building ProofWidgets.Data.Html (3.1s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/proofwidgets/ProofWidgets/Data/Html.lean -o /home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean/ProofWidgets/Data/Html.olean -i /home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean/ProofWidgets/Data/Html.ilean -c /home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/ir/ProofWidgets/Data/Html.c --setup /home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/ir/ProofWidgets/Data/Html.setup.json --json
+error: ProofWidgets/Data/Html.lean:66:53: Application type mismatch: The argument
+  c
+has type
+  ParserContext
+but is expected to have type
+  optParam Bool true
+in the application
+  mkNodeToken `ProofWidgets.Jsx.jsxText startPos c
+error: ProofWidgets/Data/Html.lean:81:0: cannot evaluate code because 'ProofWidgets.Jsx.jsxText._lam_2' uses 'sorry' and/or contains errors
+error: ProofWidgets/Data/Html.lean:110:17: unexpected token '$'; expected 'jsxChild', 'jsxElement' or jsxElement
+error: ProofWidgets/Data/Html.lean:247:30: unexpected token '$'; expected 'jsxChild', 'jsxElement' or jsxElement
+error: ProofWidgets/Data/Html.lean:262:0: Missing name after `end`: Expected the current scope name `delaborator`
+
+Hint: To end the current scope `delaborator`, specify its name:
+  end ̲d̲e̲l̲a̲b̲o̲r̲a̲t̲o̲r̲
+error: Lean exited with code 1
+✔ [486/3105] Built Plausible.Functions (900ms)
+✔ [487/3105] Built Plausible.Tactic (1.1s)
+✔ [488/3105] Built LeanSearchClient (681ms)
+✔ [489/3105] Built Batteries.Tactic.HelpCmd (5.9s)
+✔ [490/3105] Built Aesop.RPINF.Basic (6.7s)
+✔ [491/3105] Built Plausible (652ms)
+✔ [492/3105] Built Aesop.Script.Util (1.5s)
+✔ [493/3105] Built Aesop.Script.CtorNames (1.7s)
+✔ [494/3105] Built Aesop.RuleTac.Forward.Basic (1.6s)
+✔ [495/3105] Built Aesop.Tracing (1.9s)
+✔ [496/3105] Built Aesop.Forward.Substitution (1.8s)
+✔ [498/3105] Built Aesop.Util.Tactic.Ext (1.6s)
+✔ [499/3105] Built Aesop.Stats.Basic (1.9s)
+✔ [500/3105] Built Aesop.Script.Step (2.1s)
+✔ [501/3105] Built Qq.Macro (7.4s)
+✔ [503/3105] Built Aesop.BaseM (1.5s)
+✔ [504/3105] Built Aesop.Stats.Extension (1.4s)
+✔ [505/3105] Built Aesop.Script.UScript (1.4s)
+✔ [506/3105] Built Aesop.Script.SScript (1.5s)
+✔ [507/3105] Built Qq.Commands (2.0s)
+✔ [508/3105] Built Aesop.Script.ScriptM (1.4s)
+✔ [509/3105] Built Batteries.Data.BinomialHeap.Basic (7.1s)
+✔ [510/3105] Built Aesop.Stats.Report (1.7s)
+✔ [511/3105] Built Aesop.Script.Check (1.5s)
+✔ [512/3105] Built Aesop.RPINF (1.8s)
+✔ [513/3105] Built Qq.Delab (2.7s)
+✔ [514/3105] Built Aesop.Script.UScriptToSScript (1.9s)
+✔ [515/3105] Built Qq.MetaM (1.5s)
+✔ [516/3105] Built Aesop.Script.StructureStatic (1.7s)
+✔ [517/3105] Built Aesop.RulePattern (2.2s)
+✔ [518/3105] Built Aesop.RuleTac.GoalDiff (2.2s)
+✔ [519/3105] Built Qq.Simp (1.2s)
+✔ [520/3105] Built Aesop.Script.SpecificTactics (3.3s)
+✔ [521/3105] Built Aesop.Script.StructureDynamic (2.5s)
+✔ [522/3105] Built Qq.AssertInstancesCommute (2.1s)
+✔ [523/3105] Built Aesop.Forward.RuleInfo (1.9s)
+✔ [524/3105] Built Aesop.Script.Main (1.5s)
+✔ [525/3105] Built Aesop.Rule.Forward (1.3s)
+✔ [526/3105] Built Aesop.Forward.Match.Types (1.4s)
+✔ [527/3105] Built Aesop.Index.Basic (1.4s)
+✔ [528/3105] Built Qq.Match (7.4s)
+✔ [531/3105] Built Aesop.Index.Forward (1.5s)
+✔ [532/3105] Built Aesop.RuleTac.Basic (1.7s)
+✔ [533/3105] Built Aesop.Index.RulePattern (1.9s)
+✔ [534/3105] Built Qq (1.2s)
+✔ [579/3105] Built Aesop.RuleTac.Descr (1.5s)
+✔ [580/3105] Built Aesop.RuleTac.Preprocess (1.4s)
+✔ [581/3105] Built Aesop.Search.Expansion.Basic (1.5s)
+✔ [582/3105] Built Aesop.RuleTac.Apply (1.7s)
+✔ [583/3105] Built Aesop.RuleTac.Cases (1.7s)
+✔ [584/3105] Built Aesop.RuleTac.Tactic (1.8s)
+✔ [585/3105] Built Aesop.Rule.Basic (1.2s)
+✔ [586/3105] Built Aesop.Rule (1.5s)
+✔ [587/3105] Built Aesop.RuleSet.Member (1.3s)
+✔ [588/3105] Built Aesop.Tree.UnsafeQueue (1.4s)
+✔ [589/3105] Built Aesop.Forward.Match (2.3s)
+✔ [590/3105] Built Aesop.Builder.Basic (1.5s)
+✔ [591/3105] Built Aesop.Tree.Data.ForwardRuleMatches (1.5s)
+✔ [592/3105] Built Aesop.Index (1.9s)
+✔ [593/3105] Built Aesop.Builder.Cases (1.6s)
+✔ [594/3105] Built Aesop.Builder.Constructors (1.5s)
+✔ [595/3105] Built Aesop.Builder.NormSimp (1.5s)
+✔ [596/3105] Built Aesop.Builder.Apply (1.5s)
+✔ [597/3105] Built Aesop.Builder.Unfold (1.5s)
+✔ [598/3105] Built Aesop.Builder.Tactic (1.6s)
+✔ [599/3105] Built Aesop.RuleTac.Forward (2.5s)
+✔ [600/3105] Built Aesop.Builder.Forward (2.1s)
+✔ [601/3105] Built Aesop.Builder.Default (1.4s)
+✔ [602/3105] Built Aesop.RuleTac (1.3s)
+✔ [603/3105] Built Aesop.RuleSet (3.0s)
+✔ [604/3105] Built Aesop.Forward.State (5.1s)
+✔ [605/3105] Built Aesop.Frontend.Extension.Init (1.3s)
+✔ [606/3105] Built Aesop.Forward.State.ApplyGoalDiff (1.5s)
+✔ [607/3105] Built Aesop.Forward.State.Initial (1.7s)
+✔ [608/3105] Built Aesop.Frontend.RuleExpr (3.9s)
+✔ [609/3105] Built Aesop.Frontend.Extension (1.6s)
+✔ [610/3105] Built Aesop.Tree.Data (2.8s)
+✖ [611/3105] Building Aesop.Tree.RunMetaM (1.5s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Tree/RunMetaM.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/RunMetaM.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/RunMetaM.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/RunMetaM.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/RunMetaM.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/RunMetaM.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/RunMetaM.olean'
+error: Lean exited with code 1
+✖ [612/3105] Building Aesop.Search.Queue.Class (1.4s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Search/Queue/Class.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Search/Queue/Class.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Search/Queue/Class.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Search/Queue/Class.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Search/Queue/Class.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Search/Queue/Class.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Search/Queue/Class.olean'
+error: Lean exited with code 1
+✖ [613/3105] Building Aesop.Tree.Traversal (1.5s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Tree/Traversal.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/Traversal.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/Traversal.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/Traversal.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/Traversal.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/Traversal.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/Traversal.olean'
+error: Lean exited with code 1
+✖ [616/3105] Building Aesop.Frontend.Attribute (1.6s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Frontend/Attribute.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Attribute.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Attribute.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Frontend/Attribute.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Frontend/Attribute.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Attribute.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Attribute.olean'
+error: Lean exited with code 1
+✖ [626/3105] Building Aesop.Tree.TreeM (1.7s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Tree/TreeM.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/TreeM.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/TreeM.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/TreeM.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Tree/TreeM.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/TreeM.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Tree/TreeM.olean'
+error: Lean exited with code 1
+✖ [640/3105] Building Aesop.Saturate (3.0s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Saturate.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Saturate.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Saturate.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Saturate.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Saturate.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Saturate.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Saturate.olean'
+error: Lean exited with code 1
+✖ [642/3105] Building Aesop.Frontend.Tactic (2.2s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Frontend/Tactic.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Tactic.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Tactic.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Frontend/Tactic.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Frontend/Tactic.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Tactic.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Tactic.olean'
+error: Lean exited with code 1
+✖ [644/3105] Building Aesop.Frontend.Command (2.3s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1/bin/lean /home/hantao/code/FloatSpec/.lake/packages/aesop/Aesop/Frontend/Command.lean -o /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Command.olean -i /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Command.ilean -c /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Frontend/Command.c --setup /home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/ir/Aesop/Frontend/Command.setup.json --json
+info: stderr:
+failed to write '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Command.olean': failed to create file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Frontend/Command.olean'
+error: Lean exited with code 1
+Some required targets logged failures:
+- Batteries.Tactic.Alias
+- Mathlib.Tactic.Linter.Header
+- ProofWidgets.Data.Html
+- Aesop.Tree.RunMetaM
+- Aesop.Search.Queue.Class
+- Aesop.Tree.Traversal
+- Aesop.Frontend.Attribute
+- Aesop.Tree.TreeM
+- Aesop.Saturate
+- Aesop.Frontend.Tactic
+- Aesop.Frontend.Command
+error: build failed

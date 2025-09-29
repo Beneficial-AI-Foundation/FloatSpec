@@ -1,3 +1,5 @@
 /.lake
 debug.lean
 fwOut.txt
+/.change_log
+/.subagent_log

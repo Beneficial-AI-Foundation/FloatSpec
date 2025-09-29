@@ -63,7 +63,9 @@ theorem FLX_exp_spec (e : Int) :
     ⦃⌜True⌝⦄
     FLX_exp_correct_check prec e
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  sorry
+  intro _
+  -- Unfold and compute: FLX_exp prec e = e - prec by definition
+  simp [FLX_exp_correct_check, FLX_exp]
 
 /-- Fixed-precision format predicate
 
@@ -93,7 +95,11 @@ theorem FLX_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
     FLX_format prec beta x
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x).run⌝⦄ := by
-  sorry
+  intro _
+  -- By definition, `FLX_format` is `generic_format beta (FLX_exp prec)`
+  unfold FLX_format
+  -- Reduce the Id-triple and compute both sides to the same run
+  simp [wp, PostCond.noThrow, Id.run]
 
 /-- Specification: FLX exponent function correctness
 
@@ -105,7 +111,8 @@ theorem FLX_exp_correct_spec (e : Int) :
     ⦃⌜True⌝⦄
     FLX_exp_correct_check prec e
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  sorry
+  intro _
+  simp [FLX_exp_correct_check, FLX_exp]
 
 /-- Check if zero is in FLX format
 
@@ -127,7 +134,10 @@ theorem FLX_format_0_spec (beta : Int) :
     ⦃⌜beta > 1⌝⦄
     FLX_format_0_check beta
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  sorry
+  intro _
+  unfold FLX_format_0_check
+  -- Reduce the Id triple and use Ztrunc_zero to compute the boolean
+  simp [wp, PostCond.noThrow, FloatSpec.Core.Generic_fmt.Ztrunc_zero]
 
 /-- Check closure under negation
 
@@ -149,7 +159,10 @@ theorem FLX_format_opp_spec (beta : Int) (x : ℝ) :
     ⦃⌜(FLX_format prec beta x).run⌝⦄
     FLX_format_opp_check beta x
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  sorry
+  intro _
+  unfold FLX_format_opp_check
+  -- Use Ztrunc_neg to simplify Ztrunc(-x) + Ztrunc(x)
+  simp [wp, PostCond.noThrow, FloatSpec.Core.Generic_fmt.Ztrunc_neg]
 
 /-- Check closure under absolute value
 
@@ -172,13 +185,86 @@ theorem FLX_format_abs_spec (beta : Int) (x : ℝ) :
     ⦃⌜(FLX_format prec beta x).run⌝⦄
     FLX_format_abs_check beta x
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  sorry
+  intro _
+  -- Local helper: compute Ztrunc(|x|) in terms of Ztrunc(x).
+  -- This mirrors `Raux.Ztrunc_abs` but produces a direct equality,
+  -- convenient for rewriting the boolean equality to `true`.
+  have zabs_eq :
+      (FloatSpec.Core.Raux.Ztrunc (abs x)).run
+        = Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs) := by
+    -- Expand truncation and split on the sign of x.
+    -- On |x| we always take the floor branch since |x| ≥ 0.
+    simp [FloatSpec.Core.Raux.Ztrunc, not_lt.mpr (abs_nonneg x)]
+    by_cases hxlt : x < 0
+    · -- Negative case: |x| = -x and ⌊-x⌋ = -⌈x⌉; natAbs(⌈x⌉) coerces to |-⌈x⌉|.
+      have hxle : x ≤ 0 := le_of_lt hxlt
+      have habs : |x| = -x := by simpa using (abs_of_neg hxlt)
+      have hceil_nonpos : Int.ceil x ≤ 0 := (Int.ceil_le).mpr (by simpa using hxle)
+      have hAbsCeil : |Int.ceil x| = - Int.ceil x := abs_of_nonpos hceil_nonpos
+      -- Rewrite both sides to meet on |⌈x⌉|.
+      have hNatAbsCeil : ((Int.ceil x).natAbs : Int) = |Int.ceil x| :=
+        (Int.natCast_natAbs (Int.ceil x))
+      -- LHS: ⌊|x|⌋ = ⌊-x⌋ = -⌈x⌉; RHS: ↑(natAbs ⌈x⌉) = |⌈x⌉| = -⌈x⌉.
+      simpa [habs, Int.floor_neg, hxlt, hAbsCeil, hNatAbsCeil]
+    · -- Nonnegative case: |x| = x, so we compare ⌊x⌋ with its nonnegative abs.
+      have hxge : 0 ≤ x := le_of_not_gt hxlt
+      have hxabs : |x| = x := by simpa using (abs_of_nonneg hxge)
+      -- ⌊x⌋ ≥ 0 when x ≥ 0
+      have hfloor_nonneg : 0 ≤ (Int.floor x : Int) := by
+        have : ((0 : Int) : ℝ) ≤ x := by simpa using hxge
+        have : (0 : Int) ≤ Int.floor x := (Int.le_floor).mpr this
+        simpa using this
+      have hAbsFloor : |Int.floor x| = Int.floor x := abs_of_nonneg hfloor_nonneg
+      -- Coerce natAbs to Int and rewrite via |⌊x⌋|
+      have hNatAbsFloor : ((Int.floor x).natAbs : Int) = |Int.floor x| :=
+        (Int.natCast_natAbs (Int.floor x))
+      -- LHS: ⌊|x|⌋ = ⌊x⌋; RHS: ↑(natAbs ⌊x⌋) = |⌊x⌋| = ⌊x⌋.
+      simpa [hxabs, hAbsFloor, hNatAbsFloor, hxlt]
+  -- Now reduce the boolean equality using the computed equality.
+  unfold FLX_format_abs_check
+  -- Evaluate the Id-triple and discharge the boolean equality by rewriting.
+  simpa [wp, PostCond.noThrow, zabs_eq]
 
 end FloatSpec.Core.FLX
 
 namespace FloatSpec.Core.FLX
 
 variable (prec : Int)
+
+/- Valid_exp instance for FLX_exp (requires positive precision). -/
+instance FLX_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
+    FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec) := by
+  refine ⟨?_⟩
+  intro k
+  refine And.intro ?hlarge ?hsmall
+  · -- Large regime: if fexp k < k then fexp (k+1) ≤ k
+    -- For FLX_exp, fexp k = k - prec. If k - prec < k, then prec > 0.
+    -- Using 0 < prec, we have 1 ≤ prec and thus k + 1 ≤ k + prec,
+    -- which rewrites to k + 1 - prec ≤ k, i.e., FLX_exp prec (k+1) ≤ k.
+    intro _
+    have h1 : 1 ≤ prec := (Int.add_one_le_iff).mpr hp.out
+    -- Prove directly by rewriting the inequality
+    have h1 : 1 ≤ prec := (Int.add_one_le_iff).mpr hp.out
+    have hadd : k + 1 ≤ k + prec := add_le_add_left h1 k
+    show FLX_exp prec (k + 1) ≤ k
+    · simpa [FLX_exp, sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hadd
+  · -- Small regime: if k ≤ fexp k, derive contradiction from 0 < prec
+    intro hk
+    -- From k ≤ k - prec, adding prec to both sides yields k + prec ≤ k,
+    -- which contradicts k < k + prec since prec > 0.
+    -- The hypothesis `k ≤ FLX_exp prec k` simplifies to `k + prec ≤ k`,
+    -- which contradicts `k < k + prec` from `0 < prec`.
+    have hk' : k + prec ≤ k := by
+      -- k ≤ k - prec ⇒ k + prec ≤ k
+      have hk'' := add_le_add_right hk prec
+      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hk''
+    have hklt : k < k + prec := lt_add_of_pos_right _ hp.out
+    have hfalse : False := (not_lt_of_ge hk') hklt
+    refine And.intro ?_ ?_
+    · -- fexp (fexp k + 1) ≤ fexp k (vacuous under contradiction)
+      exact False.elim hfalse
+    · -- ∀ l ≤ fexp k, fexp l = fexp k (vacuous under contradiction)
+      intro _ _; exact False.elim hfalse
 
 /-
 Coq (FLX.v):
@@ -234,12 +320,30 @@ Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FLX_format,
 then x is in FIX_format with minimal exponent (e - prec).
 -/
 theorem FIX_format_FLX (beta : Int) (x : ℝ) (e : Int) :
-    ⦃⌜(beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FLX_format prec beta x).run⌝⦄
+    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) < |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FLX_format prec beta x).run⌝⦄
     FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro _
-  -- Proof follows Coq's FIX_format_FLX; omitted for now
-  sorry
+  intro hpre
+  -- Unpack preconditions
+  rcases hpre with ⟨hprec, hβ, hlt, hupp, hx_fmt⟩
+  -- Provide the `Fact (0 < prec)` instance for `Valid_exp` below
+  have _instPrec : Fact (0 < prec) := ⟨hprec⟩
+  -- Pointwise inequality at e is an equality for FLX_exp vs FIX_exp (both = e - prec)
+  have hle_e : FloatSpec.Core.FIX.FIX_exp (emin := e - prec) e ≤ FLX_exp prec e := by
+    simp [FloatSpec.Core.FIX.FIX_exp, FLX_exp]
+  -- Apply inclusion with tight bounds at e
+  have :=
+    FloatSpec.Core.Generic_fmt.generic_inclusion
+      (beta := beta)
+      (fexp1 := FLX_exp prec)
+      (fexp2 := FloatSpec.Core.FIX.FIX_exp (emin := e - prec))
+      (e := e)
+  -- Prepare the hypotheses for the lemma and conclude
+  have hrun :
+      (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := e - prec)) x).run := by
+    exact this hβ hle_e x ⟨hlt, hupp⟩ hx_fmt
+  simpa [FloatSpec.Core.FIX.FIX_format, FLX_format]
+    using hrun
 
 /-
 Coq (FLX.v):
@@ -253,12 +357,34 @@ Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FIX_format
 with minimal exponent (e - prec), then x is in FLX_format.
 -/
 theorem FLX_format_FIX (beta : Int) (x : ℝ) (e : Int) :
-    ⦃⌜(beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x).run⌝⦄
+    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x).run⌝⦄
     FLX_format prec beta x
     ⦃⇓result => ⌜result⌝⦄ := by
-  intro _
-  -- Proof follows Coq's FLX_format_FIX; omitted for now
-  sorry
+  intro hpre
+  -- Unpack hypotheses
+  rcases hpre with ⟨hprec, hβ, _hlb, hupp, hx_fix⟩
+  -- Provide the `Fact (0 < prec)` instance for `Valid_exp` below
+  have _instPrec : Fact (0 < prec) := ⟨hprec⟩
+  -- Use inclusion lemma with fexp1 := FIX_exp (emin := e - prec), fexp2 := FLX_exp
+  -- We only need a pointwise inequality for all e' ≤ e, which holds by arithmetic.
+  have hle_all : ∀ e' : Int,
+      e' ≤ e →
+      FLX_exp prec e' ≤ FloatSpec.Core.FIX.FIX_exp (emin := e - prec) e' := by
+    intro e' he'
+    -- FLX_exp prec e' = e' - prec and FIX_exp (emin := e - prec) e' = e - prec
+    simpa [FLX_exp, FloatSpec.Core.FIX.FIX_exp] using he'
+  -- Apply the generic inclusion with only an upper bound at e
+  have hrun :
+      (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x).run := by
+    exact
+      (FloatSpec.Core.Generic_fmt.generic_inclusion_le
+        (beta := beta)
+        (fexp1 := FloatSpec.Core.FIX.FIX_exp (emin := e - prec))
+        (fexp2 := FLX_exp prec)
+        (e2 := e))
+        hβ hle_all x hupp hx_fix
+  -- Repackage to FLX_format
+  simpa [FLX_format] using hrun
 
 end FloatSpec.Core.FLX
 
@@ -287,28 +413,14 @@ namespace FloatSpec.Core.FLX
 variable (prec : Int)
 
 /- Valid_exp instance for FLX_exp (placeholder). -/
-instance FLX_exp_valid (beta : Int) :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec) := by
-  refine ⟨?_⟩
-  intro k
-  refine And.intro ?h1 ?h2
-  · intro _
-    -- Proof omitted for now
-    sorry
-  · intro _
-    refine And.intro ?hA ?hB
-    · -- Proof omitted for now
-      sorry
-    · intro _ _
-      -- Proof omitted for now
-      sorry
 
 /-
 Coq (FLX.v):
 Theorem FLX_format_satisfies_any :
   satisfies_any FLX_format.
 -/
-theorem FLX_format_satisfies_any (beta : Int) :
+theorem FLX_format_satisfies_any (beta : Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)] :
     FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FLX_format prec beta y).run) := by
   simpa [FLX_format]
     using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLX_exp prec)

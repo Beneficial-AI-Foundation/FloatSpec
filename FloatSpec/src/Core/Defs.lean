@@ -25,6 +25,14 @@ import Std.Tactic.Do
 open Real
 open Std.Do
 
+/-
+Coq typeclass: precision strictly positive.
+Placed at root so both Core and higher layers can depend on it
+without cyclic imports.
+-/
+class Prec_gt_0 (prec : Int) : Prop :=
+  (pos : 0 < prec)
+
 namespace FloatSpec.Core.Defs
 
 section BasicDefinitions

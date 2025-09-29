@@ -2430,7 +2430,10 @@ theorem Rnd_NA_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
         -- |(f + f2)/2| = |f + f2|/2 ≤ (|f| + |f2|)/2
         have habs_div2 : |(f + f2) / 2| = |f + f2| / 2 := by
           simpa [abs_div, abs_of_nonneg (by norm_num : (0 : ℝ) ≤ (2 : ℝ))]
-        have htri : |f + f2| ≤ |f| + |f2| := abs_add _ _
+        have htri : |f + f2| ≤ |f| + |f2| := by
+          -- Use `abs_add'` with `b := -f2` and simplify
+          simpa [abs_neg, add_comm, add_left_comm, add_assoc]
+            using (abs_add' (f + f2) (-f2))
         have hdiv_le : |f + f2| / 2 ≤ (|f| + |f2|) / 2 :=
           (div_le_div_of_nonneg_right htri (by norm_num : (0 : ℝ) ≤ 2))
         have hxabs : |x| = |(f + f2) / 2| := by simpa [hx_mid]

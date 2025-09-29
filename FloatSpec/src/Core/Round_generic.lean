@@ -31,6 +31,8 @@ import Mathlib.Algebra.Order.Floor.Ring
 import Std.Do.Triple
 import Std.Tactic.Do
 
+-- NOTE: Do NOT import `Ulp` here to avoid a cyclic dependency.
+
 open Real
 open Std.Do
 open FloatSpec.Core.Defs
@@ -192,6 +194,7 @@ private theorem spacing_bound_ax
     Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x xdn →
     Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x xup →
     xup - xdn ≤ (beta : ℝ) ^ (cexp beta fexp x).run := by
+  -- Placeholder; discharged in Generic_fmt spacing development to avoid cycles.
   sorry
 
 /-- Theorem: Local spacing bound near `x` (one‑ULP gap).
@@ -1406,191 +1409,19 @@ theorem cexp_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ
 
 /- Theorem: Canonical exponent does not decrease under rounding (nonzero case)
    Mirrors Coq's `cexp_round_ge`: if `r = round … x` and `r ≠ 0`, then
-   `cexp x ≤ cexp r`. We encapsulate it as a localized theorem consistent
-   with the simple truncation model used by `round_to_generic`. -/
-theorem cexp_round_ge_ax
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    let r := round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x
-    r ≠ 0 → (cexp beta fexp x).run ≤ (cexp beta fexp r).run := by
-  sorry
+   `cexp x ≤ cexp r`. We implement this later in the file, after the
+   magnitude lemmas; see the final definition inserted below. -/
 
 
 /-- Coq (Generic_fmt.v):
     Theorem scaled_mantissa_DN:
       0 < round Zfloor x ->
       scaled_mantissa (round Zfloor x) = IZR (Zfloor (scaled_mantissa x)).
-
-    Lean (spec form): Scaled mantissa of the DN-rounded value equals
-    the floor of the original scaled mantissa. -/
-theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
-    [Valid_exp beta fexp] [Monotone_exp fexp] (x : ℝ) :
-    ⦃⌜1 < beta⌝⦄
-    (pure (round_to_generic beta fexp (fun _ _ => True) x) : Id ℝ)
-    ⦃⇓r => ⌜0 < r → (scaled_mantissa beta fexp r).run = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)⌝⦄ := by
-  intro hβ
-  -- Reduce the computation to bind-free form and introduce the positivity premise.
-  -- Keep `round_to_generic` opaque here to preserve a clean goal shape
-  simp [wp, PostCond.noThrow, Id.run, pure]
-  intro hr_pos
-  -- Notation for the rounded value and exponents
-  set ex : Int := (cexp beta fexp x).run with hex
-  set s : ℝ := (scaled_mantissa beta fexp x).run with hs
-  set r : ℝ := round_to_generic beta fexp (fun _ _ => True) x with hrdef
-  -- Normalize the goal to an equality of real numbers (eliminate the Id wrapper)
-  -- Adjust only the goal; no hypotheses need changing here.
-  change (scaled_mantissa beta fexp r).run =
-    (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
-  -- An explicit form of `r` convenient for algebraic rewrites
-  have hr_explicit : r = (((Ztrunc s).run : Int) : ℝ) * (beta : ℝ) ^ ex := by
-    simp [round_to_generic,
-          FloatSpec.Core.Generic_fmt.scaled_mantissa,
-          FloatSpec.Core.Generic_fmt.cexp,
-          hrdef, hs, hex]
-  -- Record that r > 0 in terms of the local definition of r
-  -- Rephrase the positivity premise to the local notation for `r`.
-  -- Express `s` using the inverse power form to match the `round_to_generic` expansion
-  have hs_alt : s = x * ((beta : ℝ) ^ ex)⁻¹ := by
-    have hs_eval0 : s = x * (beta : ℝ) ^ (-(cexp beta fexp x).run) := by
-      simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa, FloatSpec.Core.Generic_fmt.cexp] using hs
-    simpa [hex, zpow_neg] using hs_eval0
-  have hr_pos_r : 0 < r := by
-    -- Directly translate the premise 0 < round_to_generic … x to 0 < r
-    simpa [hrdef] using hr_pos
-  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-  have hbpow_pos : 0 < (beta : ℝ) ^ ex := zpow_pos hbposR _
-  -- If s < 0 then Ztrunc takes the ceiling branch, which is ≤ 0; contradict r > 0
-  -- Establish that s is not negative; otherwise r would be ≤ 0, contradicting hr_pos
-  have hnotlt_s : ¬ s < 0 := by
-    intro hslt'
-    -- In this case, (Ztrunc s).run ≤ 0, hence r ≤ 0
-    have hz_le0 : ((Ztrunc s).run : ℝ) ≤ 0 := by
-      -- Ztrunc uses ceil for negative inputs; ceil s ≤ 0 when s ≤ 0
-      have hz_eq_ceil : (Ztrunc s).run = Int.ceil s := by
-        simp [FloatSpec.Core.Raux.Ztrunc, hslt']
-      have hsle0' : s ≤ ((0 : Int) : ℝ) := by simpa using (le_of_lt hslt' : s ≤ (0 : ℝ))
-      have hceil_le0 : Int.ceil s ≤ 0 := (Int.ceil_le).mpr hsle0'
-      -- Cast to ℝ
-      have hz_int_le0 : (Ztrunc s).run ≤ 0 := by simpa [hz_eq_ceil] using hceil_le0
-      exact_mod_cast hz_int_le0
-    -- Multiply both sides by the nonnegative factor β^ex
-    have hr_le0' : ((Ztrunc s).run : ℝ) * (beta : ℝ) ^ ex ≤ 0 :=
-      mul_nonpos_of_nonpos_of_nonneg hz_le0 (le_of_lt hbpow_pos)
-    -- Contradict 0 < r by rewriting the above inequality to the unfolded form of r
-    have hr_le0 : r ≤ 0 := by
-      simpa [hr_explicit, hex, hs, mul_comm, mul_left_comm, mul_assoc] using hr_le0'
-    exact (not_le_of_gt hr_pos_r) hr_le0
-  have hs_nonneg : 0 ≤ s := le_of_not_gt hnotlt_s
-  -- With s ≥ 0, Ztrunc s = ⌊s⌋ and ⌊s⌋ ≤ s, hence r ≤ x
-  have hfloor_le : (((Ztrunc s).run : Int) : ℝ) ≤ s := by
-    -- At nonnegative s, truncation coincides with floor
-    have : (Ztrunc s).run = Int.floor s := by
-      have : ¬ s < 0 := not_lt.mpr hs_nonneg
-      simp [FloatSpec.Core.Raux.Ztrunc, this]
-    -- floor s ≤ s
-    simpa [this] using (Int.floor_le s)
-  have hr_le_x : r ≤ x := by
-    -- r = (Ztrunc s) * β^ex ≤ s * β^ex = x
-    have hmul_le' : ((Ztrunc s).run : ℝ) * (beta : ℝ) ^ ex ≤ s * (beta : ℝ) ^ ex :=
-      mul_le_mul_of_nonneg_right hfloor_le (le_of_lt hbpow_pos)
-    -- s * β^ex equals x
-    have hs_eval : s * (beta : ℝ) ^ ex = x := by
-      -- Express s in inverse-power form and multiply by β^ex
-      have hs_eval0 : s = x * (beta : ℝ) ^ (-(cexp beta fexp x).run) := by
-        simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa, FloatSpec.Core.Generic_fmt.cexp] using hs
-      -- Replace (cexp … x).run by ex
-      have hs_eval0' : s = x * (beta : ℝ) ^ (-ex) := by simpa [hex] using hs_eval0
-      have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
-      calc
-        s * (beta : ℝ) ^ ex
-            = (x * (beta : ℝ) ^ (-ex)) * (beta : ℝ) ^ ex := by simpa [hs_eval0']
-        _   = x * ((beta : ℝ) ^ (-ex) * (beta : ℝ) ^ ex) := by
-              -- reassociate (x * a) * b into x * (a * b)
-              simpa [mul_left_comm, mul_assoc] using
-                (mul_assoc x ((beta : ℝ) ^ (-ex)) ((beta : ℝ) ^ ex)).symm
-        _   = x * (beta : ℝ) ^ ((-ex) + ex) := by
-              -- use the zpow addition law in the symmetric direction
-              simpa using congrArg (fun t => x * t) ((zpow_add₀ hbne (-ex) ex).symm)
-        _   = x * (beta : ℝ) ^ (0 : Int) := by simpa
-        _   = x := by simpa using (zpow_zero (beta : ℝ))
-    have hr_le_x' : r ≤ s * (beta : ℝ) ^ ex := by
-      simpa [hr_explicit] using hmul_le'
-    simpa [hs_eval] using hr_le_x'
-  -- Use r ≤ x and 0 < r to sandwich cexp and get equality
-  have hnotlt : ¬ (cexp beta fexp x).run < (cexp beta fexp r).run := by
-    -- Otherwise 0 < r and cexp x < cexp r would imply x < r, contradicting r ≤ x
-    intro hlt
-    have hxpos : 0 < x := lt_of_lt_of_le hr_pos_r hr_le_x
-    have hx_lt_r : x < r :=
-      lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := x) (y := r) hβ hr_pos_r hlt
-    exact (not_lt_of_ge hr_le_x) hx_lt_r
-  have hle1 : (cexp beta fexp r).run ≤ (cexp beta fexp x).run := le_of_not_gt hnotlt
-  have hle2 : (cexp beta fexp x).run ≤ (cexp beta fexp r).run := by
-    -- From the localized theorem for round-to-generic, applied to our `r`
-    have hr_ne : r ≠ 0 := ne_of_gt hr_pos_r
-    -- Make `r` syntactically match the theorem's `round_to_generic` result
-    have hr_eq : round_to_generic (beta := beta) (fexp := fexp) (mode := fun _ _ => True) x = r := by
-      simp [round_to_generic,
-            FloatSpec.Core.Generic_fmt.scaled_mantissa,
-            FloatSpec.Core.Generic_fmt.cexp,
-            hrdef, hs, hex]
-    -- Rewrite the target and use the theorem
-    simpa [hr_eq] using
-      (cexp_round_ge_ax (beta := beta) (fexp := fexp) (rnd := fun _ _ => True) (x := x) hr_ne)
-  have heq_exp : (cexp beta fexp r).run = (cexp beta fexp x).run := le_antisymm hle1 hle2
-  -- Base nonnegativity facts from 1 < beta
-  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
-  -- Compute the scaled mantissa of r and simplify using exponent laws
-  have hsm_r : (scaled_mantissa beta fexp r).run =
-      r * (beta : ℝ) ^ (-(cexp beta fexp r).run) := by
-    unfold FloatSpec.Core.Generic_fmt.scaled_mantissa FloatSpec.Core.Generic_fmt.cexp; rfl
-  -- Use exponent arithmetic to eliminate the product of powers
-  have hpow_collapse :
-      (beta : ℝ) ^ ex * (beta : ℝ) ^ (-(cexp beta fexp r).run)
-        = (beta : ℝ) ^ (ex - (cexp beta fexp r).run) := by
-    -- (β^ex) * (β^(-(er))) = β^(ex - er)
-    simpa using
-      (FloatSpec.Core.Generic_fmt.zpow_mul_sub (a := (beta : ℝ)) (hbne := hbne)
-        (e := ex) (c := (cexp beta fexp r).run))
-  -- With equal exponents, the difference is zero; β^0 = 1
-  have hdiff_zero : ex - (cexp beta fexp r).run = 0 := by
-    have : (cexp beta fexp r).run = ex := by simpa [hex] using heq_exp
-    simpa [this]
-  have hpow_one : (beta : ℝ) ^ (ex - (cexp beta fexp r).run) = 1 := by
-    -- β^(ex - ex) = β^0 = 1
-    simpa [hdiff_zero] using (zpow_zero (beta : ℝ))
-  -- Align the Ztrunc factor with `s`'s definition
-  have hZ : (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
-              = (((Ztrunc s).run : Int) : ℝ) := by
-    simpa [hs]
-  -- Conclude via a calculation chain avoiding inverse forms
-  calc
-    (scaled_mantissa beta fexp r).run
-        = r * (beta : ℝ) ^ (-(cexp beta fexp r).run) := by simpa using hsm_r
-    _   = (((Ztrunc s).run : Int) : ℝ)
-            * ((beta : ℝ) ^ ex * (beta : ℝ) ^ (-(cexp beta fexp r).run)) := by
-              -- expand r and reassociate
-              simpa [hr_explicit, mul_comm, mul_left_comm, mul_assoc]
-    _   = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
-            * (beta : ℝ) ^ (ex - (cexp beta fexp r).run) := by
-      -- Replace `s` by its definition and collapse powers in a stable way
-      -- First collapse the powers under left-multiplication by the Ztrunc term
-      have hmul := congrArg (fun t => (((Ztrunc s).run : Int) : ℝ) * t) hpow_collapse
-      -- Then rewrite the Ztrunc term using `s = scaled_mantissa x`
-      simpa [hZ] using hmul
-    _   = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ) * 1 := by
-              simpa [hpow_one]
-    _   = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ) := by
-              simpa
-
-/-- Specification: Precision bounds for generic format
-
-    For non-zero x in generic format, the scaled mantissa
-    is bounded by beta^(mag(x) - cexp(x)).
 -/
+
+-- Specification: Precision bounds for generic format
+-- For non-zero x in generic format, the scaled mantissa
+-- is bounded by beta^(mag(x) - cexp(x)).
 theorem generic_format_precision_bound
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x : ℝ) (h : (generic_format beta fexp x).run) (hx : x ≠ 0)
@@ -3453,6 +3284,199 @@ theorem mag_round_ZR
     simpa [hmag_bpow_run] using h_runs
   -- Chain bounds to get equality on integers
   exact le_antisymm h_le h_ge
+
+/-- Canonical exponent does not decrease under rounding (nonzero case).
+    If `r = round_to_generic … x` and `r ≠ 0`, then `cexp x ≤ cexp r`.
+    We use the magnitude preservation lemma for nonzero rounds. -/
+theorem cexp_round_ge_ax
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    1 < beta →
+    ∀ r : ℝ,
+      r = round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x →
+      r ≠ 0 → (cexp beta fexp x).run ≤ (cexp beta fexp r).run := by
+  intro hβ r hrdef hr_ne
+  -- From `mag_round_ZR`, rounding preserves magnitude for nonzero results.
+  have hZR := (mag_round_ZR (beta := beta) (fexp := fexp) (rndZR := rnd) (x := x)) hβ
+  have hmag_imp :
+      round_to_generic beta fexp rnd x ≠ 0 →
+      (mag beta (round_to_generic beta fexp rnd x)).run = (mag beta x).run := by
+    simpa [wp, PostCond.noThrow, Id.run, pure] using hZR
+  -- Coerce the nonzeroness to the syntactic form expected by `hmag_imp`.
+  have hr_ne0 : round_to_generic beta fexp rnd x ≠ 0 := by simpa [hrdef] using hr_ne
+  -- Apply `fexp` to the magnitude equality and unfold `cexp`
+  have hcexp_eq : (cexp beta fexp r).run = (cexp beta fexp x).run := by
+    have hmag_eq' := hmag_imp hr_ne0
+    have hfx : fexp (mag beta r).run = fexp (mag beta x).run := by
+      simpa [hrdef] using (congrArg fexp (by simpa [hrdef] using hmag_eq'))
+    simpa [FloatSpec.Core.Generic_fmt.cexp] using hfx
+  -- Conclude inequality as equality
+  have : (cexp beta fexp x).run ≤ (cexp beta fexp x).run := le_rfl
+  simpa [hcexp_eq]
+
+theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
+    [Valid_exp beta fexp] [Monotone_exp fexp] (x : ℝ) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (round_to_generic beta fexp (fun _ _ => True) x) : Id ℝ)
+    ⦃⇓r => ⌜0 < r → (scaled_mantissa beta fexp r).run = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)⌝⦄ := by
+  intro hβ
+  -- Reduce the computation to bind-free form and introduce the positivity premise.
+  -- Keep `round_to_generic` opaque here to preserve a clean goal shape
+  simp [wp, PostCond.noThrow, Id.run, pure]
+  intro hr_pos
+  -- Notation for the rounded value and exponents
+  set ex : Int := (cexp beta fexp x).run with hex
+  set s : ℝ := (scaled_mantissa beta fexp x).run with hs
+  set r : ℝ := round_to_generic beta fexp (fun _ _ => True) x with hrdef
+  -- Normalize the goal to an equality of real numbers (eliminate the Id wrapper)
+  -- Adjust only the goal; no hypotheses need changing here.
+  change (scaled_mantissa beta fexp r).run =
+    (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
+  -- An explicit form of `r` convenient for algebraic rewrites
+  have hr_explicit : r = (((Ztrunc s).run : Int) : ℝ) * (beta : ℝ) ^ ex := by
+    simp [round_to_generic,
+          FloatSpec.Core.Generic_fmt.scaled_mantissa,
+          FloatSpec.Core.Generic_fmt.cexp,
+          hrdef, hs, hex]
+  -- Record that r > 0 in terms of the local definition of r
+  -- Rephrase the positivity premise to the local notation for `r`.
+  -- Express `s` using the inverse power form to match the `round_to_generic` expansion
+  have hs_alt : s = x * ((beta : ℝ) ^ ex)⁻¹ := by
+    have hs_eval0 : s = x * (beta : ℝ) ^ (-(cexp beta fexp x).run) := by
+      simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa, FloatSpec.Core.Generic_fmt.cexp] using hs
+    simpa [hex, zpow_neg] using hs_eval0
+  have hr_pos_r : 0 < r := by
+    -- Directly translate the premise 0 < round_to_generic … x to 0 < r
+    simpa [hrdef] using hr_pos
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbpow_pos : 0 < (beta : ℝ) ^ ex := zpow_pos hbposR _
+  -- If s < 0 then Ztrunc takes the ceiling branch, which is ≤ 0; contradict r > 0
+  -- Establish that s is not negative; otherwise r would be ≤ 0, contradicting hr_pos
+  have hnotlt_s : ¬ s < 0 := by
+    intro hslt'
+    -- In this case, (Ztrunc s).run ≤ 0, hence r ≤ 0
+    have hz_le0 : ((Ztrunc s).run : ℝ) ≤ 0 := by
+      -- Ztrunc uses ceil for negative inputs; ceil s ≤ 0 when s ≤ 0
+      have hz_eq_ceil : (Ztrunc s).run = Int.ceil s := by
+        simp [FloatSpec.Core.Raux.Ztrunc, hslt']
+      have hsle0' : s ≤ ((0 : Int) : ℝ) := by simpa using (le_of_lt hslt' : s ≤ (0 : ℝ))
+      have hceil_le0 : Int.ceil s ≤ 0 := (Int.ceil_le).mpr hsle0'
+      -- Cast to ℝ
+      have hz_int_le0 : (Ztrunc s).run ≤ 0 := by simpa [hz_eq_ceil] using hceil_le0
+      exact_mod_cast hz_int_le0
+    -- Multiply both sides by the nonnegative factor β^ex
+    have hr_le0' : ((Ztrunc s).run : ℝ) * (beta : ℝ) ^ ex ≤ 0 :=
+      mul_nonpos_of_nonpos_of_nonneg hz_le0 (le_of_lt hbpow_pos)
+    -- Contradict 0 < r by rewriting the above inequality to the unfolded form of r
+    have hr_le0 : r ≤ 0 := by
+      simpa [hr_explicit, hex, hs, mul_comm, mul_left_comm, mul_assoc] using hr_le0'
+    exact (not_le_of_gt hr_pos_r) hr_le0
+  have hs_nonneg : 0 ≤ s := le_of_not_gt hnotlt_s
+  -- With s ≥ 0, Ztrunc s = ⌊s⌋ and ⌊s⌋ ≤ s, hence r ≤ x
+  have hfloor_le : (((Ztrunc s).run : Int) : ℝ) ≤ s := by
+    -- At nonnegative s, truncation coincides with floor
+    have : (Ztrunc s).run = Int.floor s := by
+      have : ¬ s < 0 := not_lt.mpr hs_nonneg
+      simp [FloatSpec.Core.Raux.Ztrunc, this]
+    -- floor s ≤ s
+    simpa [this] using (Int.floor_le s)
+  have hr_le_x : r ≤ x := by
+    -- r = (Ztrunc s) * β^ex ≤ s * β^ex = x
+    have hmul_le' : ((Ztrunc s).run : ℝ) * (beta : ℝ) ^ ex ≤ s * (beta : ℝ) ^ ex :=
+      mul_le_mul_of_nonneg_right hfloor_le (le_of_lt hbpow_pos)
+    -- s * β^ex equals x
+    have hs_eval : s * (beta : ℝ) ^ ex = x := by
+      -- Express s in inverse-power form and multiply by β^ex
+      have hs_eval0 : s = x * (beta : ℝ) ^ (-(cexp beta fexp x).run) := by
+        simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa, FloatSpec.Core.Generic_fmt.cexp] using hs
+      -- Replace (cexp … x).run by ex
+      have hs_eval0' : s = x * (beta : ℝ) ^ (-ex) := by simpa [hex] using hs_eval0
+      have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+      calc
+        s * (beta : ℝ) ^ ex
+            = (x * (beta : ℝ) ^ (-ex)) * (beta : ℝ) ^ ex := by simpa [hs_eval0']
+        _   = x * ((beta : ℝ) ^ (-ex) * (beta : ℝ) ^ ex) := by
+              -- reassociate (x * a) * b into x * (a * b)
+              simpa [mul_left_comm, mul_assoc] using
+                (mul_assoc x ((beta : ℝ) ^ (-ex)) ((beta : ℝ) ^ ex)).symm
+        _   = x * (beta : ℝ) ^ ((-ex) + ex) := by
+              -- use the zpow addition law in the symmetric direction
+              simpa using congrArg (fun t => x * t) ((zpow_add₀ hbne (-ex) ex).symm)
+        _   = x * (beta : ℝ) ^ (0 : Int) := by simpa
+        _   = x := by simpa using (zpow_zero (beta : ℝ))
+    have hr_le_x' : r ≤ s * (beta : ℝ) ^ ex := by
+      simpa [hr_explicit] using hmul_le'
+    simpa [hs_eval] using hr_le_x'
+  -- Use r ≤ x and 0 < r to sandwich cexp and get equality
+  have hnotlt : ¬ (cexp beta fexp x).run < (cexp beta fexp r).run := by
+    -- Otherwise 0 < r and cexp x < cexp r would imply x < r, contradicting r ≤ x
+    intro hlt
+    have hxpos : 0 < x := lt_of_lt_of_le hr_pos_r hr_le_x
+    have hx_lt_r : x < r :=
+      lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := x) (y := r) hβ hr_pos_r hlt
+    exact (not_lt_of_ge hr_le_x) hx_lt_r
+  have hle1 : (cexp beta fexp r).run ≤ (cexp beta fexp x).run := le_of_not_gt hnotlt
+  have hle2 : (cexp beta fexp x).run ≤ (cexp beta fexp r).run := by
+    -- From the localized theorem for round-to-generic, applied to our `r`
+    have hr_ne : r ≠ 0 := ne_of_gt hr_pos_r
+    -- Make `r` syntactically match the theorem's `round_to_generic` result
+    have hr_eq : round_to_generic (beta := beta) (fexp := fexp) (mode := fun _ _ => True) x = r := by
+      simp [round_to_generic,
+            FloatSpec.Core.Generic_fmt.scaled_mantissa,
+            FloatSpec.Core.Generic_fmt.cexp,
+            hrdef, hs, hex]
+    -- Rewrite the target and use the theorem
+    simpa [hr_eq] using
+      (cexp_round_ge_ax (beta := beta) (fexp := fexp)
+        (rnd := fun _ _ => True) (x := x) hβ r hr_eq.symm hr_ne)
+  have heq_exp : (cexp beta fexp r).run = (cexp beta fexp x).run := le_antisymm hle1 hle2
+  -- Base nonnegativity facts from 1 < beta
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  -- Compute the scaled mantissa of r and simplify using exponent laws
+  have hsm_r : (scaled_mantissa beta fexp r).run =
+      r * (beta : ℝ) ^ (-(cexp beta fexp r).run) := by
+    unfold FloatSpec.Core.Generic_fmt.scaled_mantissa FloatSpec.Core.Generic_fmt.cexp; rfl
+  -- Use exponent arithmetic to eliminate the product of powers
+  have hpow_collapse :
+      (beta : ℝ) ^ ex * (beta : ℝ) ^ (-(cexp beta fexp r).run)
+        = (beta : ℝ) ^ (ex - (cexp beta fexp r).run) := by
+    -- (β^ex) * (β^(-(er))) = β^(ex - er)
+    simpa using
+      (FloatSpec.Core.Generic_fmt.zpow_mul_sub (a := (beta : ℝ)) (hbne := hbne)
+        (e := ex) (c := (cexp beta fexp r).run))
+  -- With equal exponents, the difference is zero; β^0 = 1
+  have hdiff_zero : ex - (cexp beta fexp r).run = 0 := by
+    have : (cexp beta fexp r).run = ex := by simpa [hex] using heq_exp
+    simpa [this]
+  have hpow_one : (beta : ℝ) ^ (ex - (cexp beta fexp r).run) = 1 := by
+    -- β^(ex - ex) = β^0 = 1
+    simpa [hdiff_zero] using (zpow_zero (beta : ℝ))
+  -- Align the Ztrunc factor with `s`'s definition
+  have hZ : (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
+              = (((Ztrunc s).run : Int) : ℝ) := by
+    simpa [hs]
+  -- Conclude via a calculation chain avoiding inverse forms
+  calc
+    (scaled_mantissa beta fexp r).run
+        = r * (beta : ℝ) ^ (-(cexp beta fexp r).run) := by simpa using hsm_r
+    _   = (((Ztrunc s).run : Int) : ℝ)
+            * ((beta : ℝ) ^ ex * (beta : ℝ) ^ (-(cexp beta fexp r).run)) := by
+              -- expand r and reassociate
+              simpa [hr_explicit, mul_comm, mul_left_comm, mul_assoc]
+    _   = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
+            * (beta : ℝ) ^ (ex - (cexp beta fexp r).run) := by
+      -- Replace `s` by its definition and collapse powers in a stable way
+      -- First collapse the powers under left-multiplication by the Ztrunc term
+      have hmul := congrArg (fun t => (((Ztrunc s).run : Int) : ℝ) * t) hpow_collapse
+      -- Then rewrite the Ztrunc term using `s = scaled_mantissa x`
+      simpa [hZ] using hmul
+    _   = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ) * 1 := by
+              simpa [hpow_one]
+    _   = (((Ztrunc ((scaled_mantissa beta fexp x).run)).run : Int) : ℝ) := by
+              simpa
 
 /-- Coq (Generic_fmt.v):
     Theorem mag_DN:

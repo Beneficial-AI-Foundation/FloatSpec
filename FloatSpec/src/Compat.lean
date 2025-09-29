@@ -53,8 +53,11 @@ class Monotone_exp (fexp : Int → Int) : Prop :=
   (trivial : True := True.intro)
 
 /-- Stub: precision and range constraints for IEEE 754 (placeholders) -/
-class Prec_gt_0 (prec : Int) : Prop :=
-  (trivial : True := True.intro)
+/-
+Coq: `Prec_gt_0 prec` asserts strictly positive precision.
+We model it as `0 < prec` so arithmetic lemmas may use it.
+-/
+-- NOTE: `Prec_gt_0` is defined in `Core/Defs.lean` to avoid import cycles.
 
 class Prec_lt_emax (prec emax : Int) : Prop :=
   (trivial : True := True.intro)

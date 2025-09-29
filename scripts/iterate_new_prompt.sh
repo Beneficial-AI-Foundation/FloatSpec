@@ -13,14 +13,22 @@ fi
 file_list=(
 #   Float_prop.lean
 #   Raux.lean
-  Round_generic.lean
+  # FIX.lean
+  # FLT.lean
+  FLX.lean
+  FTZ.lean
+  Round_NE.lean
   # Round_pred.lean
 )
 hours=(
 #   2
 #   2
   # 4
-  12
+  # 3
+  # 3
+  2
+  2
+  2
 )
 
 # Sanity check: arrays must match
@@ -54,8 +62,9 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 
 ## Selection Rule (deterministic)
 
+0. Find the latest log in `.change_log/` (by timestamp). Read the log and indentify if there are unfinished target left behind. If this target belongs to the current file or the dependencies of the current file (i.e. without fixing this error, current file can never be built), continue to work on it. If not, proceed to step 1.
 1. Run `lake build` and capture logs.
-2. Search for all `error` inside the log file. If the build reports any **error** inside the target file, choose the error with the **smallest line number**; the associated theorem is your target.
+2. Search for all `error` inside the log file. If the build reports any **error** inside the target file, choose the error with the **smallest line number**; the associated theorem is your target. If the build is blocked by errors in other files, fix those first (they may be dependencies).
 3. Otherwise, search the file for the first `sorry` (by line number).
 
    * If that `sorry` is **inside a `def`/function body**, locate the original Coq source in `/home/hantao/code/flocq/src/Core`, port the definition to Lean 4, and then prove the corresponding theorems. Do not use `pure true` or any placeholder in the definition.
@@ -104,12 +113,14 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 
 **Allowed (with restraint)**
 
+* Be persistent: The calling process is single-rounded, so try your best to close the target, or at least leave behind useful, compiling helper lemmas (or comments) that reduce the remaining gap.
 * Introduce small, well-named helper lemmas.
 * Reorder theorems **only** to resolve clear dependency cycles—and log it.
 * Minimal spec tweaks **only if** the Coq original demands it (see below).
 
 **Prohibited**
 
+* The dependency cycle is strictly forbidden in lean4. So do not attempt to include any import that causes a dependency cycle. If you need a definition from another file, check if the import will cause a dependency cycle; if so, do not reorder and check the Coq original source and use the proof Strategy from there.
 * Deleting any existing theorems/functions.
 * Using `axiom`, `admit`, `pure true`, or any non-`sorry` placeholder, including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and all variants which could be easily deducted to a `True`. If you see such placeholders, replace them with `sorry` instead.
 * Expanding scope beyond the **single selected** target.
@@ -134,6 +145,8 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 * Use existing proven lemmas from imports and `mathlib4` where available; if uncertain, search first, otherwise implement locally.
 * Keep terms and rewriting explicit; avoid fragile tactic scripts.
 * Preserve existing notation and Hoare triple syntax whenever possible.
+* Trying is encouraged: if a tactic or approach seems promising, implement and test it instead of over-planning.
+* Some theorems lack a pre-condition `1 < beta`—if needed, add it (Coq reference required).
 
 ---
 
@@ -151,7 +164,7 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 
 ## Change Log & Reporting (mandatory)
 
-Append an entry to a markdown file (e.g., `docs/FloatSpec-ProofChanges.md`) with:
+Append an entry to a markdown file (e.g., `.change_log/$timestamp.md`) with:
 
 ```
 ## File: FloatSpec/src/Core/__PLACEHOLDER__
@@ -201,12 +214,12 @@ EOF
 
   # Build the CLI command as an array to preserve spaces/newlines
   # NOTE: Keep your original flags; remove the stray 'high' token if not supported.
-  cmd=(codex --model gpt-5 exec "$msg" --dangerously-bypass-approvals-and-sandbox)
+  cmd=(codex exec "$msg" --dangerously-bypass-approvals-and-sandbox)
 
   end=$(( $(date +%s) + t*60*60 ))
   while [[ $(date +%s) -lt $end ]]; do
     if [[ -n "$TIMEOUT_BIN" ]]; then
-      "$TIMEOUT_BIN" 3600 "${cmd[@]}" || true
+      "$TIMEOUT_BIN" 7200 "${cmd[@]}" || true
     else
       "${cmd[@]}" || true
     fi

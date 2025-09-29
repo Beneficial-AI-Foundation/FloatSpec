@@ -150,7 +150,124 @@ theorem DN_UP_parity_aux :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_aux_check
-  sorry
+  classical
+  -- Reduce the Hoare triple on `Id` to a propositional goal about `decide`.
+  -- It suffices to prove `DN_UP_parity_prop beta fexp`.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Unpack the precondition: base > 1 and the positive-case parity property.
+  intro x xd xu hnotFmt hDN hUP
+  -- We'll reason by cases on the sign of x.
+  have htrich := lt_trichotomy (0 : ℝ) x
+  -- Helper: format predicate for this file.
+  let F := fun y : ℝ => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  have Fopp : ∀ y, F y → F (-y) :=
+    by
+      intro y hy
+      -- `generic_format_opp` gives closure under negation.
+      simpa using (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := y) hy)
+  -- Case analysis on the sign of x
+  rcases htrich with hpos | hzeq | hneg
+  · -- 0 < x: apply the given positive parity hypothesis directly.
+    -- The hypothesis provides the required canonical neighbors with opposite parity.
+    -- `DN_UP_parity_pos_prop` is exactly the desired property under 0 < x.
+    simpa using (And.right ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp› x xd xu hpos hnotFmt hDN hUP)
+  · -- x = 0: this contradicts `¬ format x`, as 0 is always representable.
+    -- Hence the goal holds vacuously.
+    exfalso
+    have h0F : F 0 := by
+      -- generic_format_0 ensures 0 is in format when beta > 1
+      have hβ := (And.left ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
+      -- Extract the boolean result of the Hoare-triple style theorem
+      have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp) (hβ)
+      -- The theorem above states `generic_format beta fexp 0`.
+      simpa using h
+    -- Rewrite x = 0 into the hypothesis and contradict.
+    exact hnotFmt (by simpa [hzeq] using h0F)
+  · -- x < 0: reduce to the positive case on -x and transport the conclusion back.
+    -- From x < 0, we have 0 < -x.
+    have hpos' : 0 < -x := by simpa [neg_pos] using hneg
+    -- Show that -x is not representable (otherwise x would be representable by symmetry).
+    have hnotFmtNeg : ¬ F (-x) := by
+      intro hFneg
+      have hxF : F x := by
+        -- Using closure under opposite in the other direction (apply to -x)
+        have := Fopp (-x) hFneg
+        simpa [neg_neg] using this
+      exact hnotFmt hxF
+    -- Build the dual rounding predicates at -x by unfolding definitions.
+    -- From DN at x, we get UP at -x for -xd.
+    have hUP_at_negx : FloatSpec.Core.Defs.Rnd_UP_pt F (-x) (-xd) := by
+      -- Expand the definition and push negations through inequalities.
+      rcases hDN with ⟨Hf, Hle, Hmax⟩
+      refine And.intro (Fopp _ Hf) ?_
+      refine And.intro (by simpa using (neg_le_neg Hle)) ?_
+      intro g HgF hxle
+      have h1 : -g ≤ x := by
+        have := neg_le_neg hxle
+        simpa [neg_neg] using this
+      have Hnegg : F (-g) := Fopp _ HgF
+      have h2 : -g ≤ xd := Hmax (-g) Hnegg h1
+      have := neg_le_neg h2
+      simpa [neg_neg] using this
+    -- From UP at x, we get DN at -x for -xu.
+    have hDN_at_negx : FloatSpec.Core.Defs.Rnd_DN_pt F (-x) (-xu) := by
+      rcases hUP with ⟨Hf, hxle, Hmin⟩
+      refine And.intro (Fopp _ Hf) ?_
+      refine And.intro (by simpa using (neg_le_neg hxle)) ?_
+      intro g HgF hgle
+      have hx_le_negg : x ≤ -g := by
+        have := neg_le_neg hgle
+        simpa [neg_neg] using this
+      have Hnegg : F (-g) := Fopp _ HgF
+      have hf_le_negg : xu ≤ -g := Hmin (-g) Hnegg hx_le_negg
+      -- Negate back to get g ≤ -xu
+      have := neg_le_neg hf_le_negg
+      simpa [neg_neg] using this
+    -- Apply the positive-case property at -x with neighbors (-xu) and (-xd).
+    rcases (And.right ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
+      (-x) (-xu) (-xd) hpos' hnotFmtNeg hDN_at_negx hUP_at_negx with
+      ⟨gd_pos, gu_pos, hxueq, hxdeq, hcanon_d, hcanon_u, hpar_pos⟩
+    -- Transport back to x by negating the canonical floats.
+    -- Define the floats for x so that their real values equal xd and xu respectively.
+    refine ?_ 
+    -- Candidate floats for x
+    let gd : FlocqFloat beta := ⟨-gu_pos.Fnum, gu_pos.Fexp⟩
+    let gu : FlocqFloat beta := ⟨-gd_pos.Fnum, gd_pos.Fexp⟩
+    -- Show xd = F2R gd and xu = F2R gu using F2R_Zopp.
+    have hxd : xd = (F2R gd).run := by
+      -- From hxdeq: (-xd) = (F2R gu_pos).run
+      -- So xd = -(F2R gu_pos).run = F2R (negate mantissa of gu_pos)
+      have hx' : -(F2R gu_pos).run = (F2R gd).run := by
+        -- F2R_Zopp: -(F2R f).run = F2R (mk (-f.Fnum) f.Fexp)
+        have := FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := gu_pos)
+          (hbeta := And.left ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
+        simpa using this
+      -- Rearranging the equation from hxdeq
+      -- hxdeq : (-xd) = (F2R gu_pos).run
+      have : xd = -(F2R gu_pos).run := by simpa using congrArg Neg.neg hxdeq
+      simpa [hx'] using this
+    have hxu : xu = (F2R gu).run := by
+      -- From hxueq: (-xu) = (F2R gd_pos).run
+      have hx' : -(F2R gd_pos).run = (F2R gu).run := by
+        have := FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := gd_pos)
+          (hbeta := And.left ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
+        simpa using this
+      have : xu = -(F2R gd_pos).run := by simpa using congrArg Neg.neg hxueq
+      simpa [hx'] using this
+    -- Canonicality is preserved under mantissa negation.
+    have hcanon_gd : canonical beta fexp gd := by
+      -- Use `canonical_opp` from Generic_fmt
+      exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp) (m := gu_pos.Fnum) (e := gu_pos.Fexp) hcanon_u
+    have hcanon_gu : canonical beta fexp gu := by
+      exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp) (m := gd_pos.Fnum) (e := gd_pos.Fexp) hcanon_d
+    -- Now convert the parity inequality through negation using the lemma.
+    have hparity' : gd.Fnum % 2 ≠ gu.Fnum % 2 := by
+      -- gd.Fnum = -gu_pos.Fnum, gu.Fnum = -gd_pos.Fnum
+      change (-gu_pos.Fnum) % 2 ≠ (-gd_pos.Fnum) % 2
+      -- Rewrite both sides using `Int.neg_emod_two` and symmetry of `≠`.
+      simpa [Int.neg_emod_two, ne_comm] using hpar_pos
+    -- Assemble the final witnesses.
+    refine ⟨gd, gu, hxd, hxu, hcanon_gd, hcanon_gu, hparity'⟩
 
 /-- Check DN/UP parity holds for the generic format (positive case) -/
 noncomputable def DN_UP_parity_generic_pos_check : Id Bool :=

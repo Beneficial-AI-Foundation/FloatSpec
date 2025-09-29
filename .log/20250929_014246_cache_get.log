@@ -1,0 +1,42 @@
+✔ [6/19] Built Cache.Lean (407ms)
+✔ [7/19] Built Batteries.Data.String.Basic:c.o (882ms)
+✔ [8/19] Built Cache.Lean:c.o (466ms)
+✔ [9/19] Built Batteries.Data.Array.Match:c.o (909ms)
+✔ [10/19] Built Batteries.Data.String.Matcher:c.o (954ms)
+✔ [11/19] Built Cache.IO (1.9s)
+✔ [12/19] Built Cache.Hashing (1.0s)
+✔ [13/19] Built Cache.Hashing:c.o (977ms)
+✔ [14/19] Built Cache.IO:c.o (2.1s)
+✔ [15/19] Built Cache.Requests (1.6s)
+✔ [16/19] Built Cache.Main (914ms)
+✔ [17/19] Built Cache.Requests:c.o (1.6s)
+✔ [18/19] Built Cache.Main:c.o (750ms)
+✔ [19/19] Built cache:exe (2.2s)
+uncaught exception: unknown module prefix '[anonymous]'
+
+No directory '[anonymous]' or file '[anonymous].lean' in the search path entries:
+.lake/packages/Cli
+.lake/packages/batteries
+.lake/packages/batteries
+.lake/packages/Qq
+.lake/packages/aesop
+.lake/packages/aesop
+.lake/packages/proofwidgets
+.lake/packages/proofwidgets
+.lake/packages/importGraph
+.lake/packages/importGraph
+.lake/packages/LeanSearchClient
+.lake/packages/LeanSearchClient
+.lake/packages/plausible
+.lake/packages/plausible
+.lake/packages/mathlib
+.lake/packages/mathlib
+.lake/packages/mathlib
+.lake/packages/mathlib
+.lake/packages/mathlib
+.lake/packages/mathlib
+.lake/packages/mathlib
+.
+/home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/src/lean/lake
+.lake/packages/mathlib/.lake/build/bin/../src/lean/lake
+.lake/packages/mathlib/.lake/build/bin/../src/lean

@@ -4422,7 +4422,7 @@ theorem mag_plus_ge (beta : Int) (x y : ℝ) :
     -- From |(x+y)+(-y)| ≤ |x+y| + |y|
     have htri : |x| ≤ |x + y| + |y| := by
       simpa [abs_neg, add_assoc, add_comm, add_left_comm]
-        using (abs_add (x + y) (-y))
+        using (abs_add' (x) (y))
     exact (sub_le_iff_le_add).mpr htri
   -- Combine bounds to get: (beta : ℝ)^(ex - 2) < |x + y|
   have hstrict_bound : (beta : ℝ) ^ (ex - 2) < |x + y| := by

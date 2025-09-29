@@ -1,0 +1,2391 @@
+✔ [1524/3105] Built Mathlib.Algebra.BigOperators.GroupWithZero.Finset (2.3s)
+✔ [1525/3105] Built Mathlib.Data.Countable.Basic (2.2s)
+✔ [1526/3105] Built Mathlib.Order.CompleteLattice.Finset (2.7s)
+✔ [1527/3105] Built Mathlib.Data.DFinsupp.Ext (2.1s)
+✔ [1528/3105] Built Mathlib.Logic.Encodable.Basic (2.9s)
+✔ [1529/3105] Built Mathlib.Topology.Basic (2.5s)
+✔ [1530/3105] Built Mathlib.Data.Set.Constructions (2.6s)
+✔ [1531/3105] Built Mathlib.Order.Filter.AtTopBot.Prod (2.6s)
+✔ [1532/3105] Built Mathlib.Tactic.Monotonicity.Lemmas (1.9s)
+✔ [1533/3105] Built Mathlib.Algebra.Ring.Subring.Units (2.4s)
+✔ [1534/3105] Built Mathlib.Algebra.Group.Submonoid.BigOperators (3.4s)
+✔ [1535/3105] Built Mathlib.Order.Filter.AtTopBot.ModEq (2.3s)
+✔ [1536/3105] Built Mathlib.Order.Interval.Set.OrdConnectedComponent (2.9s)
+✔ [1537/3105] Built Mathlib.CategoryTheory.MorphismProperty.Basic (3.4s)
+✔ [1538/3105] Built Mathlib.Algebra.Group.Subgroup.MulOpposite (2.0s)
+✔ [1539/3105] Built Mathlib.Algebra.Star.Pointwise (2.6s)
+✔ [1540/3105] Built Mathlib.Data.Set.Semiring (3.0s)
+✔ [1541/3105] Built Mathlib.CategoryTheory.Limits.Preserves.Ulift (2.4s)
+✔ [1542/3105] Built Mathlib.SetTheory.Cardinal.SchroederBernstein (3.2s)
+✔ [1543/3105] Built Mathlib.Order.CompleteLatticeIntervals (4.2s)
+✔ [1544/3105] Built Mathlib.Order.Filter.AtTopBot.Group (3.7s)
+✔ [1545/3105] Built Mathlib.Order.Interval.Set.Pi (3.7s)
+✔ [1546/3105] Built Mathlib.Tactic.Monotonicity (1.7s)
+✔ [1547/3105] Built Mathlib.Data.Rat.Encodable (1.0s)
+✔ [1548/3105] Built Mathlib.Topology.Defs.Induced (2.2s)
+✔ [1549/3105] Built Mathlib.Order.Filter.IndicatorFunction (2.5s)
+✔ [1550/3105] Built Mathlib.Logic.Encodable.Lattice (2.4s)
+✔ [1551/3105] Built Mathlib.Algebra.BigOperators.Group.Finset.Indicator (2.7s)
+✔ [1552/3105] Built Mathlib.Algebra.Group.Submonoid.Membership (5.6s)
+✔ [1553/3105] Built Mathlib.Order.UpperLower.CompleteLattice (5.1s)
+✔ [1554/3105] Built Mathlib.GroupTheory.GroupAction.Defs (5.9s)
+✔ [1555/3105] Built Mathlib.Algebra.Star.Center (2.4s)
+✔ [1556/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.Defs (2.8s)
+✔ [1557/3105] Built Mathlib.Logic.Denumerable (3.2s)
+✔ [1558/3105] Built Mathlib.Algebra.GroupWithZero.Action.Pointwise.Set (5.8s)
+✔ [1559/3105] Built Mathlib.Algebra.Order.Nonneg.Lattice (2.2s)
+✔ [1560/3105] Built Mathlib.Order.Filter.AtTopBot.Ring (2.3s)
+✔ [1561/3105] Built Mathlib.CategoryTheory.MorphismProperty.Composition (3.2s)
+✔ [1562/3105] Built Mathlib.Data.Finset.Lattice.Fold (6.0s)
+✔ [1563/3105] Built Mathlib.Algebra.Group.Subgroup.Lattice (7.2s)
+✔ [1564/3105] Built Mathlib.Order.SuccPred.Basic (7.0s)
+✔ [1565/3105] Built Mathlib.CategoryTheory.Adjunction.FullyFaithful (3.6s)
+✔ [1566/3105] Built Mathlib.Algebra.Ring.Action.Submonoid (2.0s)
+✔ [1567/3105] Built Mathlib.Tactic.DeriveEncodable (4.9s)
+✔ [1568/3105] Built Mathlib.Order.UpperLower.Principal (2.3s)
+✔ [1569/3105] Built Mathlib.CategoryTheory.Adjunction.Limits (6.6s)
+✔ [1570/3105] Built Mathlib.Logic.Equiv.List (2.4s)
+✔ [1571/3105] Built Mathlib.Order.Filter.Germ.Basic (6.9s)
+✔ [1572/3105] Built Mathlib.Algebra.Order.Star.Basic (7.9s)
+✔ [1573/3105] Built Mathlib.Data.Finset.Pairwise (2.4s)
+✔ [1574/3105] Built Mathlib.Data.Finset.Lattice.Union (2.6s)
+✔ [1575/3105] Built Mathlib.Order.SuccPred.WithBot (2.5s)
+✔ [1576/3105] Built Mathlib.Algebra.Order.GroupWithZero.Finset (2.7s)
+✔ [1577/3105] Built Mathlib.CategoryTheory.Limits.FunctorCategory.Basic (8.1s)
+✔ [1578/3105] Built Mathlib.Data.Finset.Sigma (2.7s)
+✔ [1579/3105] Built Mathlib.Algebra.Order.Nonneg.Ring (3.2s)
+✔ [1580/3105] Built Mathlib.GroupTheory.Coset.Defs (3.9s)
+✔ [1581/3105] Built Mathlib.Data.Finset.Lattice.Prod (2.9s)
+✔ [1582/3105] Built Mathlib.Algebra.Category.MonCat.Limits (8.3s)
+✔ [1583/3105] Built Mathlib.Order.Filter.Extr (3.1s)
+✔ [1584/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Equivalence (1.9s)
+✔ [1585/3105] Built Mathlib.Order.Filter.AtTopBot.Field (3.7s)
+✔ [1586/3105] Built Mathlib.Order.SuccPred.Archimedean (3.5s)
+✔ [1587/3105] Built Mathlib.Logic.Equiv.Multiset (2.0s)
+✔ [1588/3105] Built Mathlib.CategoryTheory.MorphismProperty.Factorization (7.2s)
+✔ [1589/3105] Built Mathlib.Data.Set.Countable (2.4s)
+✔ [1590/3105] Built Mathlib.Algebra.GroupWithZero.NonZeroDivisors (5.7s)
+✔ [1591/3105] Built Mathlib.Algebra.BigOperators.Pi (4.3s)
+✔ [1592/3105] Built Mathlib.Order.UpperLower.Closure (3.3s)
+✔ [1593/3105] Built Mathlib.Order.Interval.Set.SuccPred (4.2s)
+✔ [1594/3105] Built Mathlib.RingTheory.NonUnitalSubsemiring.Basic (5.8s)
+✔ [1595/3105] Built Mathlib.Data.NNRat.Order (1.0s)
+✔ [1596/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Equalizers (10s)
+✔ [1597/3105] Built Mathlib.Data.Finset.Max (5.1s)
+✔ [1598/3105] Built Mathlib.CategoryTheory.Limits.Shapes.WidePullbacks (10s)
+✔ [1599/3105] Built Mathlib.Data.Finset.Powerset (2.7s)
+✔ [1600/3105] Built Mathlib.Algebra.BigOperators.Group.Finset.Sigma (2.8s)
+✔ [1601/3105] Built Mathlib.Data.Finset.Preimage (3.0s)
+✔ [1602/3105] Built Mathlib.Order.SuccPred.Relation (2.0s)
+✔ [1603/3105] Built Mathlib.CategoryTheory.Limits.Yoneda (3.1s)
+✔ [1604/3105] Built Mathlib.Order.Interval.Set.Monotone (2.5s)
+✔ [1605/3105] Built Mathlib.Order.SupIndep (3.6s)
+✔ [1606/3105] Built Mathlib.Algebra.Order.Nonneg.Field (3.6s)
+✔ [1607/3105] Built Mathlib.Algebra.Order.Group.Finset (3.5s)
+✔ [1608/3105] Built Mathlib.Data.Finset.NAry (3.7s)
+✔ [1609/3105] Built Mathlib.Order.Filter.CountableInter (2.6s)
+✔ [1610/3105] Built Mathlib.Algebra.Ring.NonZeroDivisors (2.3s)
+✔ [1611/3105] Built Mathlib.RingTheory.OreLocalization.NonZeroDivisors (2.5s)
+✔ [1612/3105] Built Mathlib.Algebra.QuadraticDiscriminant (3.5s)
+✔ [1613/3105] Built Mathlib.Data.Fintype.Lattice (2.3s)
+✔ [1614/3105] Built Mathlib.Data.Set.Finite.Powerset (2.1s)
+✔ [1615/3105] Built Mathlib.Algebra.Group.Subgroup.Map (7.3s)
+✔ [1616/3105] Built Mathlib.Data.Fintype.Powerset (2.3s)
+✔ [1617/3105] Built Mathlib.Data.Fintype.List (2.2s)
+✔ [1618/3105] Built Mathlib.Order.Atoms (7.5s)
+✔ [1619/3105] Built Mathlib.MeasureTheory.MeasurableSpace.Defs (3.5s)
+✔ [1620/3105] Built Mathlib.Algebra.BigOperators.Group.Finset.Preimage (2.2s)
+✔ [1621/3105] Built Mathlib.Algebra.BigOperators.Group.Finset.Powerset (2.6s)
+✔ [1622/3105] Built Mathlib.GroupTheory.GroupAction.SubMulAction (9.1s)
+✔ [1623/3105] Built Mathlib.Data.Finset.Sort (3.3s)
+✔ [1624/3105] Built Mathlib.Algebra.Order.Field.Rat (1.0s)
+✔ [1625/3105] Built Mathlib.Algebra.Group.Finsupp (3.7s)
+✔ [1626/3105] Built Mathlib.Data.Rat.Cast.Lemmas (2.5s)
+✔ [1627/3105] Built Mathlib.Order.Filter.CountableSeparatingOn (2.2s)
+✔ [1628/3105] Built Mathlib.Order.SuccPred.Limit (5.5s)
+✔ [1629/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Products (14s)
+✔ [1630/3105] Built Mathlib.Data.Set.Finite.Lemmas (1.0s)
+✔ [1631/3105] Built Mathlib.MeasureTheory.MeasurableSpace.Instances (2.0s)
+✔ [1632/3105] Built Mathlib.Order.ZornAtoms (2.2s)
+✔ [1633/3105] Built Mathlib.MeasureTheory.MeasurableSpace.EventuallyMeasurable (2.3s)
+✔ [1634/3105] Built Mathlib.Order.Filter.AtTopBot.BigOperators (2.1s)
+✔ [1635/3105] Built Mathlib.MeasureTheory.MeasurableSpace.Basic (2.5s)
+✔ [1636/3105] Built Mathlib.Data.Fintype.Order (2.6s)
+✔ [1637/3105] Built Mathlib.Logic.Equiv.Finset (2.1s)
+✔ [1638/3105] Built Mathlib.Algebra.Group.Subgroup.ZPowers.Basic (2.0s)
+✔ [1639/3105] Built Mathlib.Data.Fintype.Sort (2.2s)
+✔ [1640/3105] Built Mathlib.Data.Fintype.Sigma (7.0s)
+✔ [1641/3105] Built Mathlib.Data.Finsupp.Ext (1.0s)
+✔ [1642/3105] Built Mathlib.Data.NNRat.Lemmas (2.6s)
+✔ [1643/3105] Built Mathlib.Algebra.BigOperators.Ring.Finset (3.6s)
+✔ [1644/3105] Built Mathlib.Data.Finsupp.SMulWithZero (2.3s)
+✔ [1645/3105] Built Mathlib.Order.SuccPred.InitialSeg (2.2s)
+✔ [1646/3105] Built Mathlib.Algebra.Ring.Subsemiring.Basic (7.1s)
+✔ [1647/3105] Built Mathlib.Tactic.NormNum.OfScientific (2.7s)
+✔ [1648/3105] Built Mathlib.RingTheory.TwoSidedIdeal.Basic (3.7s)
+✔ [1649/3105] Built Mathlib.GroupTheory.GroupAction.SubMulAction.Pointwise (3.9s)
+✔ [1650/3105] Built Mathlib.Order.SuccPred.CompleteLinearOrder (2.8s)
+✔ [1651/3105] Built Mathlib.RingTheory.OreLocalization.Ring (5.3s)
+✔ [1652/3105] Built Mathlib.Logic.Encodable.Pi (1.9s)
+✔ [1653/3105] Built Mathlib.Algebra.Order.BigOperators.Group.Finset (6.8s)
+✔ [1654/3105] Built Mathlib.Data.List.Cycle (4.0s)
+✔ [1655/3105] Built Mathlib.Data.Finite.Sigma (1.9s)
+✔ [1656/3105] Built Mathlib.Order.Interval.Finset.Defs (6.9s)
+✔ [1657/3105] Built Mathlib.Algebra.Order.SuccPred (3.5s)
+✔ [1658/3105] Built Mathlib.GroupTheory.Perm.Sign (4.3s)
+✔ [1659/3105] Built Mathlib.Order.Filter.Ultrafilter.Defs (3.0s)
+✔ [1660/3105] Built Mathlib.Algebra.Module.Submodule.Defs (5.2s)
+✔ [1661/3105] Built Mathlib.Tactic.DeriveFintype (3.0s)
+✔ [1662/3105] Built Mathlib.Data.Fintype.BigOperators (3.1s)
+✔ [1663/3105] Built Mathlib.Data.Rat.Cast.Order (5.7s)
+✔ [1664/3105] Built Mathlib.RingTheory.Coprime.Lemmas (3.3s)
+✔ [1665/3105] Built Mathlib.Data.W.Basic (2.1s)
+✔ [1666/3105] Built Mathlib.CategoryTheory.Comma.StructuredArrow.Basic (20s)
+✔ [1669/3105] Built Mathlib.Topology.Defs.Ultrafilter (1.9s)
+✔ [1670/3105] Built Mathlib.RingTheory.TwoSidedIdeal.Lattice (3.2s)
+✔ [1671/3105] Built Mathlib.Data.Nat.SuccPred (2.3s)
+✔ [1672/3105] Built Mathlib.Data.Finset.Density (6.6s)
+✔ [1673/3105] Built Mathlib.Algebra.Order.Interval.Finset.Basic (2.5s)
+✔ [1674/3105] Built Mathlib.GroupTheory.Perm.Option (2.4s)
+✔ [1675/3105] Built Mathlib.Algebra.Order.Antidiag.Prod (2.7s)
+✔ [1676/3105] Built Mathlib.Algebra.Group.Subgroup.Ker (8.0s)
+✔ [1677/3105] Built Mathlib.SetTheory.Cardinal.Order (3.6s)
+✔ [1678/3105] Built Mathlib.RingTheory.Ideal.Defs (2.5s)
+✔ [1679/3105] Built Mathlib.Data.Finsupp.Fintype (1.0s)
+✔ [1680/3105] Built Mathlib.Dynamics.PeriodicPts.Defs (3.4s)
+✔ [1681/3105] Built Mathlib.Tactic.NormNum (2.0s)
+✔ [1682/3105] Built Mathlib.Data.Fintype.CardEmbedding (2.4s)
+✔ [1683/3105] Built Mathlib.Order.IsNormal (4.1s)
+✔ [1684/3105] Built Mathlib.Algebra.Module.Submodule.Basic (3.2s)
+✔ [1685/3105] Built Mathlib.Tactic.Rify (2.2s)
+✔ [1686/3105] Built Mathlib.Data.Set.Finite.Lattice (4.1s)
+✔ [1687/3105] Built Mathlib.GroupTheory.MonoidLocalization.Basic (22s)
+✔ [1688/3105] Built Mathlib.RingTheory.SimpleRing.Defs (1.0s)
+✔ [1689/3105] Built Mathlib.Algebra.Order.Module.Rat (2.8s)
+✔ [1690/3105] Built Mathlib.Order.Interval.Finset.SuccPred (4.5s)
+✔ [1691/3105] Built Mathlib.RingTheory.TwoSidedIdeal.Kernel (2.3s)
+✔ [1692/3105] Built Mathlib.Data.Int.SuccPred (2.2s)
+✔ [1693/3105] Built Mathlib.Order.SuccPred.LinearLocallyFinite (4.6s)
+✔ [1694/3105] Built Mathlib.Data.Sign.Defs (3.7s)
+✔ [1695/3105] Built Mathlib.Algebra.BigOperators.Field (2.4s)
+✔ [1696/3105] Built Mathlib.GroupTheory.GroupAction.Basic (5.1s)
+✔ [1697/3105] Built Mathlib.Algebra.Module.Submodule.LinearMap (4.7s)
+✔ [1698/3105] Built Mathlib.Algebra.BigOperators.Finsupp.Basic (6.9s)
+✔ [1699/3105] Built Mathlib.Data.Finset.NatAntidiagonal (2.9s)
+✔ [1700/3105] Built Mathlib.Dynamics.PeriodicPts.Lemmas (2.3s)
+✔ [1701/3105] Built Mathlib.Algebra.Module.Submodule.Lattice (5.2s)
+✔ [1702/3105] Built Mathlib.CategoryTheory.Monoidal.Functor (18s)
+✔ [1703/3105] Built Mathlib.Tactic.Linarith (2.2s)
+✔ [1704/3105] Built Mathlib.RingTheory.Ideal.BigOperators (2.0s)
+✔ [1705/3105] Built Mathlib.Tactic.NormNum.NatSqrt (2.4s)
+✔ [1706/3105] Built Mathlib.Tactic.NormNum.NatLog (2.5s)
+✔ [1707/3105] Built Mathlib.Tactic.Positivity.Finset (3.8s)
+✔ [1708/3105] Built Mathlib.GroupTheory.GroupAction.FixedPoints (3.1s)
+✔ [1709/3105] Built Mathlib.Order.Atoms.Finite (2.3s)
+✔ [1710/3105] Built Mathlib.Data.Set.MemPartition (2.3s)
+✔ [1711/3105] Built Mathlib.Algebra.Group.Pointwise.Finset.Basic (12s)
+✔ [1712/3105] Built Mathlib.Tactic.NormNum.NatFactorial (3.0s)
+✔ [1713/3105] Built Mathlib.Data.Nat.PrimeFin (2.7s)
+✔ [1714/3105] Built Mathlib.GroupTheory.MonoidLocalization.Away (2.7s)
+✔ [1715/3105] Built Mathlib.Algebra.Order.BigOperators.Ring.Finset (7.1s)
+✔ [1716/3105] Built Mathlib.Order.Filter.Finite (2.9s)
+✔ [1717/3105] Built Mathlib.RingTheory.SimpleRing.Basic (2.5s)
+✔ [1718/3105] Built Mathlib.GroupTheory.MonoidLocalization.MonoidWithZero (3.0s)
+✔ [1719/3105] Built Mathlib.Order.ConditionallyCompleteLattice.Finset (3.2s)
+✔ [1720/3105] Built Mathlib.Tactic.NormNum.GCD (4.3s)
+✔ [1721/3105] Built Mathlib.Algebra.BigOperators.NatAntidiagonal (2.3s)
+✔ [1722/3105] Built Mathlib.SetTheory.Cardinal.Basic (4.9s)
+✔ [1723/3105] Built Mathlib.Data.ENat.Basic (5.7s)
+✔ [1724/3105] Built Mathlib.Algebra.Group.Graph (5.2s)
+✔ [1725/3105] Built Mathlib.Tactic.Positivity (2.0s)
+✔ [1726/3105] Built Mathlib.Algebra.Group.AddChar (5.3s)
+✔ [1727/3105] Built Mathlib.Algebra.BigOperators.Associated (2.8s)
+✔ [1728/3105] Built Mathlib.Data.Nat.Choose.Central (2.6s)
+✔ [1729/3105] Built Mathlib.RingTheory.Ideal.Lattice (2.8s)
+✔ [1730/3105] Built Mathlib.Tactic.IntervalCases (5.0s)
+✔ [1731/3105] Built Mathlib.Data.Nat.Fib.Basic (3.0s)
+✔ [1732/3105] Built Mathlib.Algebra.Order.Interval.Finset.SuccPred (4.2s)
+✔ [1733/3105] Built Mathlib.Algebra.Module.Submodule.RestrictScalars (3.1s)
+✔ [1734/3105] Built Mathlib.Order.Filter.Bases.Finite (2.3s)
+✔ [1735/3105] Built Mathlib.Order.Filter.AtTopBot.Finset (2.3s)
+✔ [1736/3105] Built Mathlib.Algebra.Algebra.Field (2.1s)
+✔ [1737/3105] Built Mathlib.Data.Sign.Basic (4.5s)
+✔ [1738/3105] Built Mathlib.Data.Nat.Digits.Defs (3.6s)
+✔ [1739/3105] Built Mathlib.GroupTheory.GroupAction.FixingSubgroup (3.1s)
+✔ [1740/3105] Built Mathlib.GroupTheory.QuotientGroup.Defs (6.8s)
+✔ [1741/3105] Built Mathlib.Order.Filter.Lift (3.1s)
+✔ [1742/3105] Built Mathlib.Data.Rat.Cardinal (2.2s)
+✔ [1743/3105] Built Mathlib.Tactic.NormNum.IsCoprime (2.4s)
+✔ [1744/3105] Built Mathlib.CategoryTheory.Monoidal.Free.Basic (4.9s)
+✔ [1745/3105] Built Mathlib.RingTheory.TwoSidedIdeal.Operations (4.8s)
+✔ [1746/3105] Built Mathlib.Tactic.ENatToNat (2.6s)
+✔ [1747/3105] Built Mathlib.RingTheory.Ideal.Prime (2.5s)
+✔ [1748/3105] Built Mathlib.Tactic.NormNum.NatFib (2.7s)
+✔ [1749/3105] Built Mathlib.SetTheory.Cardinal.ENat (3.7s)
+✔ [1750/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.Basic (3.6s)
+✔ [1751/3105] Built Mathlib.Algebra.Group.Subgroup.Basic (8.9s)
+✔ [1752/3105] Built Mathlib.Order.Filter.CountablyGenerated (2.5s)
+✔ [1753/3105] Built Mathlib.LinearAlgebra.Span.Defs (6.2s)
+✔ [1754/3105] Built Mathlib.Order.Interval.Finset.Basic (11s)
+✔ [1755/3105] Built Mathlib.Order.Filter.AtTopBot.Finite (2.8s)
+✔ [1756/3105] Built Mathlib.Algebra.CharZero.Quotient (2.4s)
+✔ [1757/3105] Built Mathlib.Order.Filter.Pi (2.0s)
+✔ [1758/3105] Built Mathlib.Order.Filter.SmallSets (2.3s)
+✔ [1759/3105] Built Mathlib.Topology.Closure (3.1s)
+✔ [1760/3105] Built Mathlib.RingTheory.Spectrum.Prime.Defs (2.1s)
+✔ [1761/3105] Built Mathlib.Order.SupClosed (6.2s)
+✔ [1762/3105] Built Mathlib.Algebra.ModEq (4.3s)
+✔ [1763/3105] Built Mathlib.Algebra.Module.Submodule.Map (8.4s)
+✔ [1764/3105] Built Mathlib.LinearAlgebra.Quotient.Defs (4.3s)
+✔ [1765/3105] Built Mathlib.GroupTheory.Subgroup.Simple (2.4s)
+✔ [1766/3105] Built Mathlib.Order.Filter.Subsingleton (2.4s)
+✔ [1767/3105] Built Mathlib.GroupTheory.Subgroup.Center (2.6s)
+✔ [1768/3105] Built Mathlib.Algebra.Group.Subgroup.Order (2.6s)
+✔ [1769/3105] Built Mathlib.GroupTheory.FreeGroup.Basic (11s)
+✔ [1770/3105] Built Mathlib.SetTheory.Cardinal.ToNat (2.8s)
+✔ [1771/3105] Built Mathlib.Order.Filter.AtTopBot.CountablyGenerated (2.7s)
+✔ [1772/3105] Built Mathlib.Order.Interval.Multiset (2.8s)
+✔ [1773/3105] Built Mathlib.Order.Filter.Cofinite (2.6s)
+✔ [1774/3105] Built Mathlib.Algebra.Group.Subgroup.MulOppositeLemmas (3.3s)
+✔ [1775/3105] Built Mathlib.Data.Int.Interval (3.3s)
+✔ [1776/3105] Built Mathlib.RingTheory.Multiplicity (7.3s)
+✔ [1777/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors (3.8s)
+✔ [1778/3105] Built Mathlib.Order.Filter.Pointwise (8.6s)
+✔ [1779/3105] Built Mathlib.Topology.GDelta.Basic (2.5s)
+✔ [1780/3105] Built Mathlib.Algebra.Group.UniqueProds.Basic (9.1s)
+✔ [1781/3105] Built Mathlib.SetTheory.Ordinal.Basic (7.8s)
+✔ [1782/3105] Built Mathlib.CategoryTheory.Monoidal.Free.Coherence (5.4s)
+✔ [1783/3105] Built Mathlib.Topology.Neighborhoods (2.9s)
+✔ [1784/3105] Built Mathlib.Algebra.Order.Floor.Ring (10s)
+✔ [1785/3105] Built Mathlib.RingTheory.Localization.Defs (9.3s)
+✔ [1786/3105] Built Mathlib.Order.Filter.EventuallyConst (2.5s)
+✔ [1787/3105] Built Mathlib.Algebra.Group.Subgroup.Actions (2.7s)
+✔ [1788/3105] Built Mathlib.Topology.Bornology.Basic (2.6s)
+✔ [1789/3105] Built Mathlib.RingTheory.Ideal.Quotient.Defs (3.5s)
+✔ [1790/3105] Built Mathlib.Order.Filter.Ultrafilter.Basic (2.9s)
+✔ [1791/3105] Built Mathlib.NumberTheory.Padics.PadicVal.Defs (2.3s)
+✔ [1792/3105] Built Mathlib.Order.Filter.Interval (5.4s)
+✔ [1793/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.Nat (2.3s)
+✔ [1794/3105] Built Mathlib.Algebra.BigOperators.Finprod (13s)
+✔ [1795/3105] Built Mathlib.RingTheory.NonUnitalSubring.Basic (6.1s)
+✔ [1796/3105] Built Mathlib.SetTheory.Cardinal.Finite (3.3s)
+✔ [1797/3105] Built Mathlib.Algebra.FreeMonoid.UniqueProds (2.2s)
+✔ [1798/3105] Built Mathlib.GroupTheory.Subgroup.Centralizer (3.6s)
+✔ [1799/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.Finite (2.6s)
+✔ [1800/3105] Built Mathlib.Topology.Baire.Lemmas (2.5s)
+✔ [1801/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.Multiplicity (2.8s)
+✔ [1802/3105] Built Mathlib.Algebra.Module.Submodule.Ker (4.5s)
+✔ [1803/3105] Built Mathlib.Order.Interval.Finset.Nat (3.7s)
+✔ [1804/3105] Built Mathlib.Topology.NhdsSet (2.7s)
+✔ [1805/3105] Built Mathlib.Topology.ClusterPt (2.8s)
+✔ [1806/3105] Built Mathlib.Data.Finsupp.Basic (13s)
+✔ [1807/3105] Built Mathlib.RingTheory.Localization.Integer (2.6s)
+✔ [1808/3105] Built Mathlib.Order.Filter.IsBounded (4.2s)
+✔ [1809/3105] Built Mathlib.Order.Sublattice (5.7s)
+✔ [1810/3105] Built Mathlib.Tactic.CategoryTheory.Coherence (3.9s)
+✔ [1811/3105] Built Mathlib.Topology.Bornology.Constructions (2.5s)
+✔ [1812/3105] Built Mathlib.Topology.Bornology.Hom (2.5s)
+✔ [1813/3105] Built Mathlib.Algebra.Ring.Subring.Basic (8.2s)
+✔ [1814/3105] Built Mathlib.GroupTheory.Coset.Basic (8.3s)
+✔ [1815/3105] Built Mathlib.Data.Fintype.Units (2.3s)
+✔ [1816/3105] Built Mathlib.Algebra.Group.Subgroup.ZPowers.Lemmas (2.3s)
+✔ [1817/3105] Built Mathlib.Data.Finite.Card (2.5s)
+✔ [1818/3105] Built Mathlib.Topology.Bornology.Absorbs (3.3s)
+✔ [1819/3105] Built Mathlib.Algebra.Module.Submodule.IterateMapComap (2.3s)
+✔ [1820/3105] Built Mathlib.Algebra.Module.Submodule.EqLocus (2.4s)
+✔ [1821/3105] Built Mathlib.Algebra.BigOperators.GroupWithZero.Action (3.4s)
+✔ [1822/3105] Built Mathlib.Topology.Continuous (2.5s)
+✔ [1823/3105] Built Mathlib.Algebra.Order.Round (5.3s)
+✔ [1824/3105] Built Mathlib.Data.Nat.Lattice (3.1s)
+✔ [1825/3105] Built Mathlib.GroupTheory.Commutator.Basic (3.7s)
+✔ [1826/3105] Built Mathlib.GroupTheory.GroupAction.ConjAct (3.8s)
+✔ [1827/3105] Built Mathlib.Order.PartialSups (3.2s)
+✔ [1828/3105] Built Mathlib.Data.Finsupp.SMul (3.2s)
+✔ [1829/3105] Built Mathlib.Topology.Order.Bornology (2.3s)
+✔ [1830/3105] Built Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs (10s)
+✔ [1831/3105] Built Mathlib.SetTheory.Ordinal.Arithmetic (6.6s)
+✔ [1832/3105] Built Mathlib.LinearAlgebra.Quotient.Card (2.1s)
+✔ [1833/3105] Built Mathlib.Data.Finsupp.Option (3.5s)
+✔ [1834/3105] Built Mathlib.Algebra.Order.BigOperators.Group.LocallyFinite (3.8s)
+✔ [1835/3105] Built Mathlib.Algebra.Module.Submodule.Invariant (3.3s)
+✔ [1836/3105] Built Mathlib.RingTheory.ChainOfDivisors (4.2s)
+✔ [1837/3105] Built Mathlib.Data.Finsupp.Multiset (3.7s)
+✔ [1838/3105] Built Mathlib.Data.Finsupp.Order (4.4s)
+✔ [1839/3105] Built Mathlib.Algebra.Module.BigOperators (2.5s)
+✔ [1840/3105] Built Mathlib.Topology.Ultrafilter (2.7s)
+✔ [1841/3105] Built Mathlib.Order.Interval.Finset.Fin (5.5s)
+✔ [1842/3105] Built Mathlib.Algebra.Ring.Action.ConjAct (2.3s)
+✔ [1843/3105] Built Mathlib.Algebra.Module.Submodule.Range (5.8s)
+✔ [1844/3105] Built Mathlib.Order.OrderIsoNat (2.6s)
+✔ [1845/3105] Built Mathlib.Topology.Separation.SeparatedNhds (3.1s)
+✔ [1846/3105] Built Mathlib.Algebra.Group.Subgroup.Finite (4.1s)
+✔ [1847/3105] Built Mathlib.Algebra.Order.SuccPred.PartialSups (2.7s)
+✔ [1848/3105] Built Mathlib.GroupTheory.Abelianization.Defs (2.9s)
+✔ [1849/3105] Built Mathlib.Order.LiminfLimsup (5.6s)
+✔ [1850/3105] Built Mathlib.RingTheory.Nilpotent.Defs (2.9s)
+✔ [1851/3105] Built Mathlib.Data.ENat.Lattice (3.1s)
+✔ [1852/3105] Built Mathlib.LinearAlgebra.Finsupp.SumProd (2.7s)
+✔ [1853/3105] Built Mathlib.Data.Finsupp.Antidiagonal (2.6s)
+✔ [1854/3105] Built Mathlib.Topology.Order (4.1s)
+✔ [1855/3105] Built Mathlib.GroupTheory.Coset.Card (5.3s)
+✔ [1856/3105] Built Mathlib.Algebra.Field.Subfield.Basic (5.6s)
+✔ [1857/3105] Built Mathlib.Data.Finsupp.ToDFinsupp (3.7s)
+✔ [1858/3105] Built Mathlib.Algebra.BigOperators.Intervals (4.1s)
+✔ [1859/3105] Built Mathlib.Algebra.BigOperators.Expect (5.2s)
+✔ [1860/3105] Built Mathlib.Data.Fintype.Fin (2.4s)
+✔ [1861/3105] Built Mathlib.Data.Nat.Factorization.Defs (3.3s)
+✔ [1862/3105] Built Mathlib.Order.WellQuasiOrder (2.3s)
+✔ [1863/3105] Built Mathlib.Algebra.Algebra.Basic (6.7s)
+✔ [1864/3105] Built Mathlib.SetTheory.Ordinal.Family (4.6s)
+✔ [1865/3105] Built Mathlib.Data.Rat.Floor (5.8s)
+✔ [1866/3105] Built Mathlib.Data.Set.Card (9.3s)
+✔ [1867/3105] Built Mathlib.Order.Disjointed (2.0s)
+✔ [1868/3105] Built Mathlib.LinearAlgebra.Finsupp.Defs (5.4s)
+✔ [1869/3105] Built Mathlib.CategoryTheory.Comma.Over.Basic (25s)
+✔ [1872/3105] Built Mathlib.GroupTheory.Solvable (3.2s)
+✔ [1873/3105] Built Mathlib.Data.DFinsupp.Small (2.1s)
+✔ [1874/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.FactorSet (5.3s)
+✔ [1875/3105] Built Mathlib.Topology.Maps.Basic (3.1s)
+✔ [1876/3105] Built Mathlib.GroupTheory.GroupAction.Quotient (7.1s)
+✔ [1877/3105] Built Mathlib.Combinatorics.Enumerative.InclusionExclusion (5.4s)
+✔ [1878/3105] Built Mathlib.Algebra.BigOperators.Balance (2.8s)
+✔ [1879/3105] Built Mathlib.Data.Nat.Factorial.SuperFactorial (2.7s)
+✔ [1880/3105] Built Mathlib.Order.CompactlyGenerated.Basic (5.0s)
+✔ [1881/3105] Built Mathlib.SetTheory.Ordinal.Enum (2.7s)
+✔ [1882/3105] Built Mathlib.Data.Nat.Factorization.Induction (2.0s)
+✔ [1883/3105] Built Mathlib.Topology.UniformSpace.Defs (4.4s)
+✔ [1884/3105] Built Mathlib.Data.Matrix.Mul (8.4s)
+✔ [1885/3105] Built Mathlib.Algebra.BigOperators.Module (3.3s)
+✔ [1886/3105] Built Mathlib.Data.DFinsupp.BigOperators (8.7s)
+✔ [1887/3105] Built Mathlib.Data.Nat.Digits.Lemmas (3.3s)
+✔ [1888/3105] Built Mathlib.Algebra.Module.Submodule.Equiv (5.8s)
+✔ [1889/3105] Built Mathlib.SetTheory.Ordinal.Exponential (3.6s)
+✔ [1890/3105] Built Mathlib.Data.Nat.Choose.Sum (4.0s)
+✔ [1891/3105] Built Mathlib.Algebra.Ring.GeomSum (4.1s)
+✔ [1892/3105] Built Mathlib.Data.Nat.Factorization.Basic (3.0s)
+✔ [1893/3105] Built Mathlib.Topology.Maps.OpenQuotient (2.3s)
+✔ [1894/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.GCDMonoid (2.9s)
+✔ [1895/3105] Built Mathlib.MeasureTheory.PiSystem (4.1s)
+✔ [1896/3105] Built Mathlib.Algebra.Group.Pointwise.Set.Card (4.4s)
+✔ [1897/3105] Built Mathlib.Order.WellFoundedSet (5.1s)
+✔ [1898/3105] Built Mathlib.MeasureTheory.MeasurableSpace.Constructions (4.8s)
+✔ [1899/3105] Built Mathlib.GroupTheory.FreeAbelianGroup (7.3s)
+✔ [1900/3105] Built Mathlib.Algebra.Order.BigOperators.Expect (5.6s)
+✔ [1901/3105] Built Mathlib.Topology.UniformSpace.OfFun (2.4s)
+✔ [1902/3105] Built Mathlib.Data.Complex.BigOperators (2.9s)
+✔ [1903/3105] Built Mathlib.Order.CompactlyGenerated.Intervals (2.8s)
+✔ [1904/3105] Built Mathlib.Topology.Homeomorph.Defs (3.7s)
+✔ [1905/3105] Built Mathlib.Data.DFinsupp.Submonoid (2.4s)
+✔ [1906/3105] Built Mathlib.Algebra.Algebra.Hom (5.7s)
+✔ [1907/3105] Built Mathlib.Algebra.MonoidAlgebra.Defs (10s)
+✔ [1908/3105] Built Mathlib.Combinatorics.Matroid.Basic (5.5s)
+✔ [1909/3105] Built Mathlib.Data.Nat.Factorization.LCM (2.5s)
+✔ [1910/3105] Built Mathlib.Order.RelSeries (8.9s)
+✔ [1911/3105] Built Mathlib.NumberTheory.Divisors (14s)
+✔ [1912/3105] Built Mathlib.Algebra.Field.GeomSum (2.8s)
+✔ [1913/3105] Built Mathlib.LinearAlgebra.Finsupp.LSum (5.9s)
+✔ [1914/3105] Built Mathlib.SetTheory.Ordinal.FixedPoint (3.1s)
+✔ [1915/3105] Built Mathlib.Algebra.Order.Ring.GeomSum (3.1s)
+✔ [1916/3105] Built Mathlib.RingTheory.Nilpotent.Basic (3.1s)
+✔ [1917/3105] Built Mathlib.Algebra.Order.Ring.IsNonarchimedean (3.3s)
+✔ [1918/3105] Built Mathlib.SetTheory.Cardinal.Aleph (4.9s)
+✔ [1919/3105] Built Mathlib.LinearAlgebra.Matrix.SemiringInverse (4.7s)
+✔ [1920/3105] Built Mathlib.MeasureTheory.MeasurableSpace.Pi (2.4s)
+✔ [1921/3105] Built Mathlib.Algebra.FreeAbelianGroup.Finsupp (2.6s)
+✔ [1922/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Grothendieck (6.9s)
+✔ [1923/3105] Built Mathlib.Tactic.NormNum.Ordinal (4.3s)
+✔ [1924/3105] Built Mathlib.MeasureTheory.MeasurableSpace.MeasurablyGenerated (3.2s)
+✔ [1925/3105] Built Mathlib.Data.DFinsupp.Lex (3.6s)
+✔ [1926/3105] Built Mathlib.Algebra.Order.Archimedean.Basic (8.4s)
+✔ [1927/3105] Built Mathlib.Tactic.Simproc.Divisors (2.3s)
+✔ [1928/3105] Built Mathlib.Data.Nat.Factorization.PrimePow (2.5s)
+✔ [1929/3105] Built Mathlib.Algebra.MonoidAlgebra.Division (3.4s)
+✔ [1930/3105] Built Mathlib.Algebra.MonoidAlgebra.Lift (3.5s)
+✔ [1931/3105] Built Mathlib.Algebra.Group.Submonoid.Pointwise (4.6s)
+✔ [1932/3105] Built Mathlib.Data.Nat.Choose.Factorization (2.8s)
+✔ [1933/3105] Built Mathlib.Algebra.MonoidAlgebra.Opposite (4.2s)
+✔ [1934/3105] Built Mathlib.Algebra.Squarefree.Basic (3.4s)
+✔ [1935/3105] Built Mathlib.LinearAlgebra.Finsupp.Supported (3.8s)
+✔ [1936/3105] Built Mathlib.SetTheory.Cardinal.Arithmetic (3.5s)
+✔ [1937/3105] Built Mathlib.MeasureTheory.MeasurableSpace.Embedding (6.1s)
+✔ [1938/3105] Built Mathlib.Algebra.BigOperators.Fin (11s)
+✔ [1939/3105] Built Mathlib.Algebra.DirectSum.Basic (5.8s)
+✔ [1940/3105] Built Mathlib.LinearAlgebra.Span.Basic (8.1s)
+✔ [1941/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Multiequalizer (10s)
+✔ [1942/3105] Built Mathlib.Topology.Constructions.SumProd (6.6s)
+✔ [1943/3105] Built Mathlib.Data.Finsupp.Lex (3.4s)
+✔ [1944/3105] Built Mathlib.GroupTheory.Archimedean (3.5s)
+✔ [1945/3105] Built Mathlib.Algebra.GroupWithZero.Submonoid.Pointwise (2.6s)
+✔ [1946/3105] Built Mathlib.Order.JordanHolder (5.8s)
+✔ [1947/3105] Built Mathlib.Order.Filter.AtTopBot.Archimedean (3.6s)
+✔ [1948/3105] Built Mathlib.Algebra.MonoidAlgebra.NoZeroDivisors (2.7s)
+✔ [1949/3105] Built Mathlib.Data.Real.Archimedean (4.1s)
+✔ [1950/3105] Built Mathlib.Algebra.Ring.Submonoid.Pointwise (3.4s)
+✔ [1951/3105] Built Mathlib.Data.Nat.Multiplicity (3.2s)
+✔ [1952/3105] Built Mathlib.Algebra.MonoidAlgebra.Module (4.0s)
+✔ [1953/3105] Built Mathlib.Algebra.MonoidAlgebra.MapDomain (4.1s)
+✔ [1954/3105] Built Mathlib.Data.W.Cardinal (2.3s)
+✔ [1955/3105] Built Mathlib.SetTheory.Cardinal.Continuum (2.4s)
+✔ [1956/3105] Built Mathlib.SetTheory.Cardinal.Finsupp (2.6s)
+✔ [1957/3105] Built Mathlib.MeasureTheory.MeasurableSpace.Prod (2.5s)
+✔ [1958/3105] Built Mathlib.Algebra.BigOperators.Finsupp.Fin (2.4s)
+✔ [1959/3105] Built Mathlib.Data.Nat.Squarefree (3.5s)
+✔ [1960/3105] Built Mathlib.Topology.FiberBundle.IsHomeomorphicTrivialBundle (1.9s)
+✔ [1961/3105] Built Mathlib.Topology.Algebra.Monoid.Defs (2.3s)
+✔ [1962/3105] Built Mathlib.Algebra.Algebra.Equiv (8.7s)
+✔ [1963/3105] Built Mathlib.SetTheory.Cardinal.Cofinality (3.4s)
+✔ [1964/3105] Built Mathlib.MeasureTheory.MeasurableSpace.CountablyGenerated (3.4s)
+✔ [1965/3105] Built Mathlib.Data.Fin.Tuple.Reflection (3.4s)
+✔ [1966/3105] Built Mathlib.RingTheory.Ideal.Span (3.3s)
+✔ [1967/3105] Built Mathlib.Algebra.Group.Submonoid.Units (5.3s)
+✔ [1968/3105] Built Mathlib.Algebra.Algebra.NonUnitalHom (9.4s)
+✔ [1969/3105] Built Mathlib.Algebra.Ring.Subsemiring.Pointwise (3.0s)
+✔ [1970/3105] Built Mathlib.Algebra.Order.CauSeq.BigOperators (6.6s)
+✔ [1971/3105] Built Mathlib.Data.Real.Pointwise (2.7s)
+✔ [1972/3105] Built Mathlib.Combinatorics.Matroid.IndepAxioms (9.7s)
+✔ [1973/3105] Built Mathlib.Algebra.Group.Subgroup.Pointwise (6.1s)
+✔ [1974/3105] Built Mathlib.Algebra.MonoidAlgebra.Support (2.4s)
+✔ [1975/3105] Built Mathlib.SetTheory.Cardinal.Subfield (2.5s)
+✔ [1976/3105] Built Mathlib.CategoryTheory.Limits.Shapes.BinaryProducts (14s)
+✔ [1982/3105] Built Mathlib.NumberTheory.Padics.PadicVal.Basic (3.4s)
+✔ [1983/3105] Built Mathlib.Combinatorics.Enumerative.Composition (5.2s)
+✔ [1984/3105] Built Mathlib.Algebra.CharP.Lemmas (3.7s)
+✔ [1985/3105] Built Mathlib.Topology.Algebra.Group.Defs (2.6s)
+✔ [1986/3105] Built Mathlib.Topology.Constructions (5.3s)
+✔ [1987/3105] Built Mathlib.Algebra.Algebra.Prod (2.0s)
+✔ [1988/3105] Built Mathlib.SetTheory.Cardinal.Regular (2.9s)
+✔ [1989/3105] Built Mathlib.RingTheory.Ideal.Maximal (2.9s)
+✔ [1990/3105] Built Mathlib.LinearAlgebra.Finsupp.Span (6.4s)
+✔ [1991/3105] Built Mathlib.LinearAlgebra.Finsupp.LinearCombination (8.4s)
+✔ [1992/3105] Built Mathlib.Algebra.Algebra.Tower (4.6s)
+✔ [1993/3105] Built Mathlib.Algebra.GroupWithZero.Subgroup (3.1s)
+✔ [1994/3105] Built Mathlib.Combinatorics.Matroid.Dual (3.6s)
+✔ [1995/3105] Built Mathlib.Algebra.Algebra.Opposite (4.9s)
+✔ [1996/3105] Built Mathlib.Combinatorics.Enumerative.Partition (2.6s)
+✔ [1997/3105] Built Mathlib.Topology.Hom.ContinuousEvalConst (2.4s)
+✔ [1998/3105] Built Mathlib.RingTheory.Spectrum.Maximal.Defs (2.0s)
+✔ [1999/3105] Built Mathlib.GroupTheory.Finiteness (4.1s)
+✔ [2000/3105] Built Mathlib.SetTheory.Cardinal.Pigeonhole (2.4s)
+✔ [2001/3105] Built Mathlib.Algebra.CharP.Frobenius (3.2s)
+✔ [2002/3105] Built Mathlib.RingTheory.Ideal.Nonunits (2.5s)
+✔ [2003/3105] Built Mathlib.Data.NNReal.Defs (7.6s)
+✔ [2004/3105] Built Mathlib.Algebra.Polynomial.Basic (7.3s)
+✔ [2005/3105] Built Mathlib.LinearAlgebra.BilinearMap (17s)
+✔ [2006/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Pullback.HasPullback (5.9s)
+✔ [2011/3105] Built Mathlib.GroupTheory.Divisible (3.1s)
+✔ [2012/3105] Built Mathlib.RingTheory.Spectrum.Maximal.Basic (2.4s)
+✔ [2013/3105] Built Mathlib.Topology.Hom.ContinuousEval (2.5s)
+✔ [2014/3105] Built Mathlib.Algebra.Algebra.RestrictScalars (3.3s)
+✔ [2015/3105] Built Mathlib.Algebra.CharP.Reduced (2.5s)
+✔ [2016/3105] Built Mathlib.RingTheory.Ideal.Basic (3.5s)
+✔ [2017/3105] Built Mathlib.RingTheory.LocalRing.Basic (2.4s)
+✔ [2018/3105] Built Mathlib.Algebra.Ring.Subring.Pointwise (3.7s)
+✔ [2019/3105] Built Mathlib.Algebra.Algebra.Pi (3.7s)
+✔ [2020/3105] Built Mathlib.Algebra.MonoidAlgebra.Basic (8.1s)
+✔ [2021/3105] Built Mathlib.GroupTheory.QuotientGroup.Basic (7.5s)
+✔ [2022/3105] Built Mathlib.Tactic.Algebraize (4.4s)
+✔ [2023/3105] Built Mathlib.Topology.ContinuousOn (6.1s)
+✔ [2024/3105] Built Mathlib.Algebra.Polynomial.Monomial (2.7s)
+✔ [2025/3105] Built Mathlib.Data.Int.WithZero (2.0s)
+✔ [2026/3105] Built Mathlib.Topology.Algebra.ContinuousMonoidHom (6.7s)
+✔ [2027/3105] Built Mathlib.Algebra.MonoidAlgebra.Degree (7.0s)
+✔ [2028/3105] Built Mathlib.Data.NNReal.Basic (3.5s)
+✔ [2029/3105] Built Mathlib.Algebra.Module.Submodule.Bilinear (3.4s)
+✔ [2030/3105] Built Mathlib.Algebra.Polynomial.Coeff (4.2s)
+✔ [2031/3105] Built Mathlib.RingTheory.LocalRing.MaximalIdeal.Defs (2.4s)
+✔ [2032/3105] Built Mathlib.Combinatorics.Matroid.Minor.Restrict (6.2s)
+✔ [2033/3105] Built Mathlib.LinearAlgebra.BilinearForm.Basic (4.9s)
+✔ [2034/3105] Built Mathlib.GroupTheory.QuotientGroup.Finite (2.7s)
+✔ [2035/3105] Built Mathlib.Algebra.Polynomial.Eval.Defs (5.4s)
+✔ [2036/3105] Built Mathlib.Topology.Order.LeftRight (2.7s)
+✔ [2037/3105] Built Mathlib.Topology.LocallyFinite (2.9s)
+✔ [2038/3105] Built Mathlib.Topology.Piecewise (2.8s)
+✔ [2039/3105] Built Mathlib.Algebra.Module.Submodule.Pointwise (7.3s)
+✔ [2040/3105] Built Mathlib.RingTheory.Finiteness.Defs (2.8s)
+✔ [2041/3105] Built Mathlib.CategoryTheory.Filtered.Basic (4.3s)
+✔ [2044/3105] Built Mathlib.Topology.Clopen (2.9s)
+✔ [2045/3105] Built Mathlib.LinearAlgebra.Basis.Defs (7.5s)
+✔ [2046/3105] Built Mathlib.NumberTheory.ArithmeticFunction (12s)
+✔ [2047/3105] Built Mathlib.Data.ENNReal.Basic (6.1s)
+✔ [2048/3105] Built Mathlib.Topology.Coherent (3.1s)
+✔ [2049/3105] Built Mathlib.RingTheory.Localization.Basic (7.7s)
+✔ [2050/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Pullback.Mono (4.7s)
+✔ [2051/3105] Built Mathlib.Topology.Irreducible (3.6s)
+✔ [2052/3105] Built Mathlib.LinearAlgebra.LinearIndependent.Defs (8.7s)
+✔ [2053/3105] Built Mathlib.Algebra.Polynomial.Degree.Definitions (4.1s)
+✔ [2054/3105] Built Mathlib.Topology.Inseparable (4.7s)
+✔ [2055/3105] Built Mathlib.Combinatorics.Matroid.Constructions (2.8s)
+✔ [2056/3105] Built Mathlib.Algebra.Polynomial.Eval.Algebra (2.2s)
+✔ [2057/3105] Built Mathlib.Analysis.Normed.Group.Seminorm (7.9s)
+✔ [2058/3105] Built Mathlib.LinearAlgebra.Dual.Defs (7.6s)
+✔ [2059/3105] Built Mathlib.CategoryTheory.Limits.Types.Shapes (6.7s)
+✔ [2060/3105] Built Mathlib.LinearAlgebra.Prod (11s)
+✔ [2061/3105] Built Mathlib.RingTheory.Finiteness.Bilinear (2.5s)
+✔ [2062/3105] Built Mathlib.Topology.Algebra.Indicator (2.4s)
+✔ [2063/3105] Built Mathlib.Data.ENNReal.Lemmas (2.4s)
+✔ [2064/3105] Built Mathlib.Algebra.Polynomial.Eval.Coeff (3.0s)
+✔ [2065/3105] Built Mathlib.Topology.Order.LocalExtr (5.7s)
+✔ [2066/3105] Built Mathlib.CategoryTheory.Limits.Types.Filtered (2.8s)
+✔ [2067/3105] Built Mathlib.Topology.UniformSpace.Basic (5.8s)
+✔ [2068/3105] Built Mathlib.LinearAlgebra.Basis.Bilinear (3.1s)
+✔ [2069/3105] Built Mathlib.Topology.Compactness.Compact (6.2s)
+✔ [2070/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Pullback.Pasting (7.9s)
+✔ [2071/3105] Built Mathlib.Data.Real.ENatENNReal (3.2s)
+✔ [2072/3105] Built Mathlib.Analysis.Normed.Lp.WithLp (3.3s)
+✔ [2073/3105] Built Mathlib.Data.ENNReal.Real (3.7s)
+✔ [2074/3105] Built Mathlib.Algebra.Polynomial.Degree.Monomial (2.3s)
+✔ [2075/3105] Built Mathlib.Topology.Connected.Basic (3.4s)
+✔ [2076/3105] Built Mathlib.RingTheory.IntegralClosure.IsIntegral.Defs (2.5s)
+✔ [2077/3105] Built Mathlib.CategoryTheory.Comma.Over.Pullback (8.8s)
+✔ [2078/3105] Built Mathlib.LinearAlgebra.Basis.Cardinality (3.3s)
+✔ [2079/3105] Built Mathlib.LinearAlgebra.SModEq (4.8s)
+✔ [2080/3105] Built Mathlib.Topology.NhdsKer (2.0s)
+✔ [2081/3105] Built Mathlib.RingTheory.Finiteness.Prod (2.5s)
+✔ [2082/3105] Built Mathlib.Topology.UniformSpace.DiscreteUniformity (2.2s)
+✔ [2083/3105] Built Mathlib.Topology.Compactness.LocallyFinite (2.0s)
+✔ [2084/3105] Built Mathlib.Topology.Compactness.CompactlyCoherentSpace (2.1s)
+✔ [2085/3105] Built Mathlib.Topology.Bases (8.3s)
+✔ [2086/3105] Built Mathlib.RingTheory.Ideal.Quotient.Basic (5.9s)
+✔ [2087/3105] Built Mathlib.Topology.Compactness.LocallyCompact (2.5s)
+✔ [2088/3105] Built Mathlib.Combinatorics.Matroid.Map (4.0s)
+✔ [2089/3105] Built Mathlib.Topology.UniformSpace.Compact (2.7s)
+✔ [2090/3105] Built Mathlib.RingTheory.IntegralClosure.IsIntegralClosure.Defs (2.1s)
+✔ [2091/3105] Built Mathlib.Topology.Connected.LocallyConnected (2.2s)
+✔ [2092/3105] Built Mathlib.RingTheory.IntegralClosure.Algebra.Defs (2.1s)
+✔ [2093/3105] Built Mathlib.LinearAlgebra.Dual.Basis (4.1s)
+✔ [2094/3105] Built Mathlib.Algebra.Polynomial.Degree.Operations (4.8s)
+✔ [2095/3105] Built Mathlib.Topology.Compactness.NhdsKer (1.9s)
+✔ [2096/3105] Built Mathlib.GroupTheory.Index (9.9s)
+✔ [2097/3105] Built Mathlib.Algebra.Algebra.NonUnitalSubalgebra (18s)
+✔ [2098/3105] Built Mathlib.Topology.Connected.Clopen (3.0s)
+✔ [2099/3105] Built Mathlib.Topology.Compactness.Bases (2.2s)
+✔ [2100/3105] Built Mathlib.Algebra.Star.Module (5.5s)
+✔ [2101/3105] Built Mathlib.Algebra.Star.StarAlgHom (11s)
+✔ [2102/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Images (7.7s)
+✔ [2103/3105] Built Mathlib.Topology.Compactness.SigmaCompact (2.9s)
+✔ [2104/3105] Built Mathlib.Algebra.Polynomial.Degree.Domain (2.6s)
+✔ [2105/3105] Built Mathlib.Algebra.Polynomial.Degree.Support (2.7s)
+✔ [2106/3105] Built Mathlib.Topology.AlexandrovDiscrete (2.6s)
+✔ [2107/3105] Built Mathlib.Algebra.Polynomial.Degree.SmallDegree (2.9s)
+✔ [2108/3105] Built Mathlib.Topology.Connected.TotallyDisconnected (2.7s)
+✔ [2109/3105] Built Mathlib.Data.ENNReal.Operations (5.9s)
+✔ [2110/3105] Built Mathlib.Tactic.Module (17s)
+✔ [2111/3105] Built Mathlib.CategoryTheory.Limits.Types.Images (2.1s)
+✔ [2112/3105] Built Mathlib.LinearAlgebra.Pi (8.2s)
+✔ [2113/3105] Built Mathlib.Algebra.Polynomial.Eval.Subring (2.3s)
+✔ [2114/3105] Built Mathlib.Topology.Separation.Basic (5.6s)
+✔ [2115/3105] Built Mathlib.LinearAlgebra.LinearIndependent.Basic (10s)
+✔ [2116/3105] Built Mathlib.Algebra.Polynomial.Degree.Units (2.4s)
+✔ [2117/3105] Built Mathlib.Algebra.Polynomial.Eval.SMul (2.6s)
+✔ [2118/3105] Built Mathlib.Algebra.Polynomial.Degree.TrailingDegree (3.1s)
+✔ [2119/3105] Built Mathlib.Topology.Compactness.Lindelof (3.5s)
+✔ [2120/3105] Built Mathlib.RingTheory.Localization.FractionRing (12s)
+✔ [2121/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Pullback.Assoc (9.2s)
+✔ [2122/3105] Built Mathlib.CategoryTheory.Limits.ConcreteCategory.Basic (2.6s)
+✔ [2123/3105] Built Mathlib.Data.ENNReal.Action (3.2s)
+✔ [2124/3105] Built Mathlib.CategoryTheory.Limits.Shapes.ZeroMorphisms (5.1s)
+✔ [2125/3105] Built Mathlib.CategoryTheory.Limits.Final (10s)
+✔ [2126/3105] Built Mathlib.Topology.Filter (2.6s)
+✔ [2127/3105] Built Mathlib.LinearAlgebra.Finsupp.Pi (3.5s)
+✔ [2128/3105] Built Mathlib.Topology.IndicatorConstPointwise (2.6s)
+✔ [2129/3105] Built Mathlib.Algebra.Polynomial.Derivative (5.4s)
+✔ [2130/3105] Built Mathlib.Topology.DiscreteSubset (3.2s)
+✔ [2131/3105] Built Mathlib.Algebra.Polynomial.Eval.Degree (3.3s)
+✔ [2132/3105] Built Mathlib.Topology.Separation.Hausdorff (3.6s)
+✔ [2133/3105] Built Mathlib.LinearAlgebra.Basis.Basic (3.6s)
+✔ [2134/3105] Built Mathlib.Algebra.Module.LocalizedModule.Basic (23s)
+✔ [2135/3105] Built Mathlib.RingTheory.Localization.NumDen (3.3s)
+✔ [2136/3105] Built Mathlib.RingTheory.Finiteness.Basic (5.2s)
+✔ [2137/3105] Built Mathlib.Combinatorics.Matroid.Closure (9.9s)
+✔ [2138/3105] Built Mathlib.Data.EReal.Basic (6.0s)
+✔ [2139/3105] Built Mathlib.LinearAlgebra.Dimension.Basic (4.4s)
+✔ [2140/3105] Built Mathlib.CategoryTheory.Limits.Preserves.Shapes.Zero (2.9s)
+✔ [2141/3105] Built Mathlib.Data.ENNReal.Inv (6.0s)
+✔ [2142/3105] Built Mathlib.FieldTheory.RatFunc.Defs (4.5s)
+✔ [2143/3105] Built Mathlib.Algebra.Polynomial.Identities (2.9s)
+✔ [2144/3105] Built Mathlib.Topology.SeparatedMap (2.6s)
+✔ [2145/3105] Built Mathlib.LinearAlgebra.LinearPMap (15s)
+✔ [2146/3105] Built Mathlib.LinearAlgebra.Dimension.Subsingleton (2.3s)
+✔ [2147/3105] Built Mathlib.Combinatorics.Matroid.Rank.Finite (2.5s)
+✔ [2148/3105] Built Mathlib.LinearAlgebra.FreeModule.Basic (3.2s)
+✔ [2149/3105] Built Mathlib.Topology.Algebra.InfiniteSum.Defs (3.3s)
+✔ [2150/3105] Built Mathlib.Data.Matrix.Basic (8.1s)
+✔ [2151/3105] Built Mathlib.RingTheory.Noetherian.Defs (2.9s)
+✔ [2152/3105] Built Mathlib.LinearAlgebra.Basis.Fin (3.6s)
+✔ [2153/3105] Built Mathlib.Topology.Separation.Regular (3.8s)
+✔ [2154/3105] Built Mathlib.Algebra.Polynomial.Degree.Lemmas (3.0s)
+✔ [2155/3105] Built Mathlib.LinearAlgebra.Quotient.Basic (8.4s)
+✔ [2156/3105] Built Mathlib.Algebra.Algebra.Subalgebra.Basic (11s)
+✔ [2157/3105] Built Mathlib.LinearAlgebra.Ray (8.9s)
+✔ [2158/3105] Built Mathlib.Topology.Algebra.Support (4.4s)
+✔ [2159/3105] Built Mathlib.LinearAlgebra.Basis.SMul (4.2s)
+✔ [2160/3105] Built Mathlib.RingTheory.AlgebraTower (4.2s)
+✔ [2161/3105] Built Mathlib.Data.ENNReal.Holder (2.7s)
+✔ [2162/3105] Built Mathlib.Data.ENNReal.BigOperators (2.9s)
+✔ [2163/3105] Built Mathlib.Topology.ContinuousMap.Basic (4.8s)
+✔ [2164/3105] Built Mathlib.LinearAlgebra.Basis.Submodule (5.1s)
+✔ [2165/3105] Built Mathlib.Combinatorics.Matroid.Circuit (5.0s)
+✔ [2166/3105] Built Mathlib.Topology.Order.OrderClosed (5.8s)
+✔ [2167/3105] Built Mathlib.LinearAlgebra.Basis.Prod (2.7s)
+✔ [2168/3105] Built Mathlib.LinearAlgebra.Dimension.Finrank (2.8s)
+✔ [2169/3105] Built Mathlib.Topology.Perfect (2.4s)
+✔ [2170/3105] Built Mathlib.Topology.Separation.GDelta (2.6s)
+✔ [2171/3105] Built Mathlib.Topology.UniformSpace.Separation (2.8s)
+✔ [2172/3105] Built Mathlib.Topology.DenseEmbedding (3.2s)
+✔ [2173/3105] Built Mathlib.Topology.EMetricSpace.Defs (5.2s)
+✔ [2174/3105] Built Mathlib.RingTheory.Finiteness.Finsupp (3.1s)
+✔ [2175/3105] Built Mathlib.Algebra.Polynomial.EraseLead (3.4s)
+✔ [2176/3105] Built Mathlib.Topology.ContinuousMap.CocompactMap (2.5s)
+✔ [2177/3105] Built Mathlib.RingTheory.Polynomial.Pochhammer (4.1s)
+✔ [2178/3105] Built Mathlib.Tactic.ComputeDegree (4.5s)
+✔ [2179/3105] Built Mathlib.Data.Real.ConjExponents (4.3s)
+✔ [2180/3105] Built Mathlib.Topology.Order.Lattice (2.0s)
+✔ [2181/3105] Built Mathlib.LinearAlgebra.TensorProduct.Basic (26s)
+✔ [2182/3105] Built Mathlib.Data.EReal.Operations (8.3s)
+✔ [2183/3105] Built Mathlib.Topology.Sets.Opens (4.5s)
+✔ [2184/3105] Built Mathlib.Topology.CompactOpen (4.7s)
+✔ [2185/3105] Built Mathlib.Algebra.Polynomial.Inductions (3.0s)
+✔ [2186/3105] Built Mathlib.Combinatorics.Matroid.Loop (4.8s)
+✔ [2187/3105] Built Mathlib.Algebra.Polynomial.Reverse (3.2s)
+✔ [2188/3105] Built Mathlib.Data.Nat.Factorial.Cast (2.5s)
+✔ [2189/3105] Built Mathlib.Topology.Homeomorph.Lemmas (3.8s)
+✔ [2190/3105] Built Mathlib.LinearAlgebra.LinearIndependent.Lemmas (14s)
+✔ [2191/3105] Built Mathlib.LinearAlgebra.Multilinear.Basic (15s)
+✔ [2192/3105] Built Mathlib.LinearAlgebra.Isomorphisms (7.1s)
+✔ [2193/3105] Built Mathlib.Data.Matrix.Basis (7.5s)
+✔ [2194/3105] Built Mathlib.Algebra.Polynomial.CancelLeads (2.8s)
+✔ [2195/3105] Built Mathlib.Topology.Algebra.InfiniteSum.Basic (8.4s)
+✔ [2196/3105] Built Mathlib.Topology.Order.Basic (6.1s)
+✔ [2197/3105] Built Mathlib.LinearAlgebra.AffineSpace.AffineMap (16s)
+✔ [2198/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Kernels (11s)
+✔ [2199/3105] Built Mathlib.Data.Nat.Choose.Cast (2.4s)
+✔ [2200/3105] Built Mathlib.Topology.MetricSpace.Pseudo.Defs (6.2s)
+✔ [2201/3105] Built Mathlib.Data.EReal.Inv (4.2s)
+✔ [2202/3105] Built Mathlib.LinearAlgebra.Multilinear.Basis (2.3s)
+✔ [2203/3105] Built Mathlib.Topology.Maps.Proper.Basic (2.7s)
+✔ [2204/3105] Built Mathlib.Topology.Sets.Closeds (4.4s)
+✔ [2205/3105] Built Mathlib.Topology.Algebra.Constructions (2.9s)
+✔ [2206/3105] Built Mathlib.Algebra.Algebra.Bilinear (4.6s)
+✔ [2207/3105] Built Mathlib.Topology.Instances.Sign (2.1s)
+✔ [2208/3105] Built Mathlib.Topology.Instances.Discrete (2.3s)
+✔ [2209/3105] Built Mathlib.Algebra.Polynomial.Monic (3.7s)
+✔ [2210/3105] Built Mathlib.Data.Matrix.Composition (3.2s)
+✔ [2211/3105] Built Mathlib.Topology.Order.T5 (2.5s)
+✔ [2212/3105] Built Mathlib.Topology.Order.ProjIcc (2.7s)
+✔ [2213/3105] Built Mathlib.GroupTheory.OrderOfElement (22s)
+✔ [2214/3105] Built Mathlib.Topology.Order.MonotoneConvergence (3.3s)
+✔ [2215/3105] Built Mathlib.LinearAlgebra.Matrix.ConjTranspose (4.1s)
+✔ [2216/3105] Built Mathlib.Combinatorics.Matroid.Rank.ENat (4.8s)
+✔ [2217/3105] Built Mathlib.LinearAlgebra.AffineSpace.Slope (3.4s)
+✔ [2218/3105] Built Mathlib.Topology.MetricSpace.Defs (2.7s)
+✔ [2219/3105] Built Mathlib.Topology.Algebra.Star (2.3s)
+✔ [2220/3105] Built Mathlib.Topology.NoetherianSpace (2.9s)
+✔ [2221/3105] Built Mathlib.Topology.Order.Real (2.3s)
+✔ [2222/3105] Built Mathlib.LinearAlgebra.Projection (12s)
+✔ [2223/3105] Built Mathlib.LinearAlgebra.Multilinear.Curry (6.2s)
+✔ [2224/3105] Built Mathlib.Topology.PartialHomeomorph (6.7s)
+✔ [2225/3105] Built Mathlib.Algebra.Module.LocalizedModule.IsLocalization (3.9s)
+✔ [2226/3105] Built Mathlib.Topology.LocallyConstant.Basic (4.0s)
+✔ [2227/3105] Built Mathlib.Algebra.CharP.Two (2.0s)
+✔ [2228/3105] Built Mathlib.Algebra.Polynomial.BigOperators (3.3s)
+✔ [2229/3105] Built Mathlib.Topology.UniformSpace.Cauchy (4.3s)
+✔ [2230/3105] Built Mathlib.GroupTheory.Perm.Finite (3.3s)
+✔ [2231/3105] Built Mathlib.Topology.QuasiSeparated (2.3s)
+✔ [2232/3105] Built Mathlib.Combinatorics.Matroid.Rank.Cardinal (3.6s)
+✔ [2233/3105] Built Mathlib.LinearAlgebra.Matrix.RowCol (3.8s)
+✔ [2234/3105] Built Mathlib.MeasureTheory.OuterMeasure.Defs (2.3s)
+✔ [2235/3105] Built Mathlib.Topology.Order.LeftRightNhds (7.4s)
+✔ [2236/3105] Built Mathlib.LinearAlgebra.DFinsupp (8.6s)
+✔ [2237/3105] Built Mathlib.CategoryTheory.Preadditive.Basic (6.8s)
+✔ [2238/3105] Built Mathlib.Algebra.Polynomial.Div (5.2s)
+✔ [2239/3105] Built Mathlib.LinearAlgebra.BilinearForm.Hom (6.3s)
+✔ [2240/3105] Built Mathlib.NumberTheory.MulChar.Basic (5.4s)
+✔ [2241/3105] Built Mathlib.Topology.IsLocalHomeomorph (2.6s)
+✔ [2242/3105] Built Mathlib.Data.Matrix.Block (5.4s)
+✔ [2243/3105] Built Mathlib.GroupTheory.NoncommPiCoprod (5.0s)
+✔ [2244/3105] Built Mathlib.Topology.Sequences (3.1s)
+✔ [2245/3105] Built Mathlib.Data.Matrix.Invertible (5.8s)
+✔ [2246/3105] Built Mathlib.Data.ZMod.Basic (6.4s)
+✔ [2247/3105] Built Mathlib.LinearAlgebra.Basis.VectorSpace (4.6s)
+✔ [2248/3105] Built Mathlib.Topology.UniformSpace.UniformConvergence (3.7s)
+✔ [2249/3105] Built Mathlib.LinearAlgebra.TensorProduct.Associator (12s)
+✔ [2250/3105] Built Mathlib.Topology.Algebra.ConstMulAction (8.5s)
+✔ [2251/3105] Built Mathlib.Topology.UniformSpace.UniformEmbedding (4.4s)
+✔ [2252/3105] Built Mathlib.GroupTheory.Exponent (7.7s)
+✔ [2253/3105] Built Mathlib.Topology.Order.MonotoneContinuity (3.5s)
+✔ [2254/3105] Built Mathlib.LinearAlgebra.Finsupp.VectorSpace (3.5s)
+✔ [2255/3105] Built Mathlib.GroupTheory.Perm.Cycle.Basic (4.9s)
+✔ [2256/3105] Built Mathlib.CategoryTheory.Limits.Opposites (10s)
+✔ [2257/3105] Built Mathlib.Topology.Sets.Compacts (4.2s)
+✔ [2258/3105] Built Mathlib.Algebra.Category.Grp.Preadditive (3.8s)
+✔ [2259/3105] Built Mathlib.LinearAlgebra.AffineSpace.AffineEquiv (11s)
+✔ [2260/3105] Built Mathlib.Algebra.Field.ZMod (2.5s)
+✔ [2261/3105] Built Mathlib.Algebra.Algebra.ZMod (2.5s)
+✔ [2262/3105] Built Mathlib.Data.ZMod.Units (2.6s)
+✔ [2263/3105] Built Mathlib.Data.ZMod.Aut (2.7s)
+✔ [2264/3105] Built Mathlib.Topology.Algebra.Order.Group (4.8s)
+✔ [2265/3105] Built Mathlib.Data.ZMod.IntUnitsPower (2.0s)
+✔ [2266/3105] Built Mathlib.Topology.UniformSpace.LocallyUniformConvergence (2.6s)
+✔ [2267/3105] Built Mathlib.Data.ZMod.ValMinAbs (3.1s)
+✔ [2268/3105] Built Mathlib.RingTheory.Localization.Module (6.7s)
+✔ [2269/3105] Built Mathlib.Topology.Order.IsLUB (5.0s)
+✔ [2270/3105] Built Mathlib.Topology.UniformSpace.CompleteSeparated (2.1s)
+✔ [2271/3105] Built Mathlib.Topology.UniformSpace.Pi (2.4s)
+✔ [2272/3105] Built Mathlib.NumberTheory.LegendreSymbol.ZModChar (3.6s)
+✔ [2273/3105] Built Mathlib.Dynamics.Minimal (2.8s)
+✔ [2274/3105] Built Mathlib.GroupTheory.Perm.Closure (2.6s)
+✔ [2275/3105] Built Mathlib.Topology.MetricSpace.Pseudo.Constructions (3.4s)
+✔ [2276/3105] Built Mathlib.LinearAlgebra.Matrix.Notation (6.6s)
+✔ [2277/3105] Built Mathlib.Data.ZMod.QuotientGroup (4.8s)
+✔ [2278/3105] Built Mathlib.LinearAlgebra.SesquilinearForm (15s)
+✔ [2279/3105] Built Mathlib.Topology.Algebra.MulAction (4.0s)
+✔ [2280/3105] Built Mathlib.LinearAlgebra.Alternating.Basic (12s)
+✔ [2281/3105] Built Mathlib.Algebra.Ring.NegOnePow (2.3s)
+✔ [2282/3105] Built Mathlib.Algebra.DirectSum.Module (7.1s)
+✔ [2283/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Biproducts (14s)
+✔ [2284/3105] Built Mathlib.Topology.UniformSpace.UniformApproximation (2.4s)
+✔ [2285/3105] Built Mathlib.Topology.Algebra.Order.Archimedean (2.9s)
+✔ [2286/3105] Built Mathlib.LinearAlgebra.StdBasis (4.4s)
+✔ [2287/3105] Built Mathlib.Algebra.Algebra.Operations (13s)
+✔ [2288/3105] Built Mathlib.GroupTheory.Perm.Cycle.Factors (4.6s)
+✔ [2289/3105] Built Mathlib.CategoryTheory.Limits.Preserves.Shapes.Pullbacks (4.5s)
+✔ [2290/3105] Built Mathlib.LinearAlgebra.AffineSpace.Midpoint (4.3s)
+✔ [2291/3105] Built Mathlib.Algebra.Star.NonUnitalSubalgebra (34s)
+✔ [2292/3105] Built Mathlib.Topology.UniformSpace.Equiv (3.3s)
+✔ [2293/3105] Built Mathlib.Data.Matrix.Reflection (2.5s)
+✔ [2294/3105] Built Mathlib.Algebra.DirectSum.Finsupp (2.1s)
+✔ [2295/3105] Built Mathlib.Algebra.Field.NegOnePow (2.2s)
+✔ [2296/3105] Built Mathlib.Topology.Order.Monotone (4.6s)
+✔ [2297/3105] Built Mathlib.Topology.Algebra.Affine (2.7s)
+✔ [2298/3105] Built Mathlib.Topology.EMetricSpace.Basic (4.8s)
+✔ [2299/3105] Built Mathlib.LinearAlgebra.Matrix.StdBasis (2.2s)
+✔ [2300/3105] Built Mathlib.Topology.Order.DenselyOrdered (5.2s)
+✔ [2301/3105] Built Mathlib.LinearAlgebra.Matrix.Trace (3.9s)
+✔ [2302/3105] Built Mathlib.RingTheory.Finiteness.Cardinality (2.5s)
+✔ [2303/3105] Built Mathlib.CategoryTheory.Limits.Constructions.BinaryProducts (3.2s)
+✔ [2304/3105] Built Mathlib.Algebra.Ring.Periodic (5.2s)
+✔ [2305/3105] Built Mathlib.Algebra.DirectSum.Decomposition (5.1s)
+✔ [2306/3105] Built Mathlib.Topology.EMetricSpace.Pi (2.6s)
+✔ [2307/3105] Built Mathlib.Topology.UniformSpace.AbstractCompletion (3.6s)
+✔ [2308/3105] Built Mathlib.GroupTheory.Perm.Cycle.Type (4.3s)
+✔ [2309/3105] Built Mathlib.RingTheory.OrzechProperty (2.4s)
+✔ [2310/3105] Built Mathlib.LinearAlgebra.FreeModule.Finite.Basic (2.4s)
+✔ [2311/3105] Built Mathlib.Topology.Order.LiminfLimsup (3.5s)
+✔ [2312/3105] Built Mathlib.Topology.MetricSpace.Pseudo.Lemmas (2.8s)
+✔ [2313/3105] Built Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Basic (9.0s)
+✔ [2314/3105] Built Mathlib.Topology.Order.LeftRightLim (3.6s)
+✔ [2315/3105] Built Mathlib.Topology.MetricSpace.Pseudo.Basic (4.2s)
+✔ [2316/3105] Built Mathlib.CategoryTheory.Limits.Constructions.ZeroObjects (2.6s)
+✔ [2317/3105] Built Mathlib.Data.Nat.Periodic (2.3s)
+✔ [2318/3105] Built Mathlib.Algebra.Category.Grp.Limits (10s)
+✔ [2319/3105] Built Mathlib.Algebra.Algebra.Subalgebra.Lattice (6.0s)
+✔ [2320/3105] Built Mathlib.Algebra.CharP.CharAndCard (2.7s)
+✔ [2321/3105] Built Mathlib.Algebra.Field.Periodic (2.0s)
+✔ [2322/3105] Built Mathlib.Topology.MetricSpace.Pseudo.Pi (2.0s)
+✔ [2323/3105] Built Mathlib.Topology.EMetricSpace.Diam (3.0s)
+✔ [2324/3105] Built Mathlib.Topology.UniformSpace.UniformConvergenceTopology (6.7s)
+✔ [2325/3105] Built Mathlib.Topology.MetricSpace.Cauchy (2.4s)
+✔ [2326/3105] Built Mathlib.Analysis.Convex.Segment (7.3s)
+✔ [2327/3105] Built Mathlib.Topology.UniformSpace.Completion (3.8s)
+✔ [2328/3105] Built Mathlib.LinearAlgebra.AffineSpace.Restrict (3.3s)
+✔ [2329/3105] Built Mathlib.LinearAlgebra.AffineSpace.Pointwise (3.7s)
+✔ [2330/3105] Built Mathlib.Topology.Algebra.Monoid (10s)
+✔ [2331/3105] Built Mathlib.Algebra.Central.Defs (2.4s)
+✔ [2332/3105] Built Mathlib.Algebra.Algebra.Subalgebra.Prod (2.6s)
+✔ [2333/3105] Built Mathlib.GroupTheory.Perm.Fin (5.1s)
+✔ [2334/3105] Built Mathlib.RingTheory.Finiteness.Subalgebra (2.7s)
+✔ [2335/3105] Built Mathlib.Topology.UniformSpace.Real (2.2s)
+✔ [2336/3105] Built Mathlib.Topology.MetricSpace.Pseudo.Real (2.4s)
+✔ [2337/3105] Built Mathlib.Topology.MetricSpace.ProperSpace (2.5s)
+✔ [2338/3105] Built Mathlib.Data.Nat.Totient (3.3s)
+✔ [2339/3105] Built Mathlib.Algebra.Algebra.Subalgebra.Pointwise (3.1s)
+✔ [2340/3105] Built Mathlib.Topology.MetricSpace.Basic (2.9s)
+✔ [2341/3105] Built Mathlib.Algebra.Algebra.Subalgebra.Tower (3.4s)
+✔ [2342/3105] Built Mathlib.Algebra.Algebra.Subalgebra.Directed (3.5s)
+✔ [2343/3105] Built Mathlib.Topology.Order.IntermediateValue (8.3s)
+✔ [2344/3105] Built Mathlib.Analysis.Oscillation (3.5s)
+✔ [2345/3105] Built Mathlib.Topology.UniformSpace.Equicontinuity (3.7s)
+✔ [2346/3105] Built Mathlib.Topology.UniformSpace.CompactConvergence (4.5s)
+✔ [2347/3105] Built Mathlib.Algebra.FreeAlgebra (5.1s)
+✔ [2348/3105] Built Mathlib.Topology.EMetricSpace.Lipschitz (4.8s)
+✔ [2349/3105] Built Mathlib.Algebra.Module.LocalizedModule.Submodule (12s)
+✔ [2350/3105] Built Mathlib.LinearAlgebra.AffineSpace.Combination (7.3s)
+✔ [2351/3105] Built Mathlib.RingTheory.Ideal.Operations (12s)
+✔ [2352/3105] Built Mathlib.Topology.Algebra.GroupWithZero (3.8s)
+✔ [2353/3105] Built Mathlib.Topology.Metrizable.Basic (2.6s)
+✔ [2354/3105] Built Mathlib.Analysis.Convex.Star (5.2s)
+✔ [2355/3105] Built Mathlib.RingTheory.Adjoin.Basic (3.1s)
+✔ [2356/3105] Built Mathlib.Topology.UniformSpace.HeineCantor (2.4s)
+✔ [2357/3105] Built Mathlib.Topology.MetricSpace.Equicontinuity (2.4s)
+✔ [2358/3105] Built Mathlib.CategoryTheory.Limits.Shapes.BinaryBiproducts (14s)
+✔ [2359/3105] Built Mathlib.Algebra.Polynomial.AlgebraMap (7.5s)
+✔ [2360/3105] Built Mathlib.Algebra.CharP.Algebra (2.5s)
+✔ [2361/3105] Built Mathlib.RingTheory.UniqueFactorizationDomain.Ideal (2.6s)
+✔ [2362/3105] Built Mathlib.RingTheory.IsPrimary (2.7s)
+✔ [2363/3105] Built Mathlib.Topology.Metrizable.Real (2.4s)
+✔ [2364/3105] Built Mathlib.Topology.Order.Compact (4.8s)
+✔ [2365/3105] Built Mathlib.LinearAlgebra.AffineSpace.Centroid (3.1s)
+✔ [2366/3105] Built Mathlib.Topology.Algebra.WithZeroTopology (3.2s)
+✔ [2367/3105] Built Mathlib.Algebra.MvPolynomial.Basic (9.7s)
+✔ [2368/3105] Built Mathlib.Topology.Metrizable.Uniformity (3.9s)
+✔ [2369/3105] Built Mathlib.RingTheory.Polynomial.Tower (2.8s)
+✔ [2370/3105] Built Mathlib.RingTheory.Adjoin.Polynomial (3.0s)
+✔ [2371/3105] Built Mathlib.RingTheory.Algebraic.Defs (3.1s)
+✔ [2372/3105] Built Mathlib.Algebra.Polynomial.Lifts (3.1s)
+✔ [2373/3105] Built Mathlib.RingTheory.Noetherian.UniqueFactorizationDomain (2.8s)
+✔ [2374/3105] Built Mathlib.Algebra.Order.ToIntervalMod (13s)
+✔ [2375/3105] Built Mathlib.RingTheory.Polynomial.ScaleRoots (3.6s)
+✔ [2376/3105] Built Mathlib.Algebra.Polynomial.GroupRingAction (3.6s)
+✔ [2377/3105] Built Mathlib.RingTheory.Ideal.IsPrimary (3.1s)
+✔ [2378/3105] Built Mathlib.Algebra.Polynomial.RingDivision (4.3s)
+✔ [2379/3105] Built Mathlib.Tactic.Ring.NamePolyVars (2.7s)
+✔ [2380/3105] Built Mathlib.Order.Filter.ENNReal (4.2s)
+✔ [2381/3105] Built Mathlib.LinearAlgebra.Matrix.Determinant.Basic (10s)
+✔ [2382/3105] Built Mathlib.Algebra.Category.Ring.Limits (13s)
+✔ [2383/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Pullback.CommSq (6.7s)
+✔ [2384/3105] Built Mathlib.Analysis.Convex.Basic (7.6s)
+✔ [2385/3105] Built Mathlib.LinearAlgebra.AffineSpace.Independent (8.0s)
+✔ [2386/3105] Built Mathlib.Topology.MetricSpace.Bounded (5.6s)
+✔ [2387/3105] Built Mathlib.RingTheory.Ideal.MinimalPrime.Basic (2.7s)
+✔ [2388/3105] Built Mathlib.Algebra.Star.Subalgebra (14s)
+✔ [2389/3105] Built Mathlib.RingTheory.Polynomial.IntegralNormalization (4.2s)
+✔ [2390/3105] Built Mathlib.LinearAlgebra.Matrix.Reindex (3.1s)
+✔ [2391/3105] Built Mathlib.RingTheory.Ideal.Maps (10s)
+✔ [2392/3105] Built Mathlib.LinearAlgebra.Matrix.Polynomial (3.2s)
+✔ [2393/3105] Built Mathlib.CategoryTheory.Limits.Shapes.KernelPair (3.0s)
+✔ [2394/3105] Built Mathlib.Topology.Algebra.Group.Basic (14s)
+✔ [2395/3105] Built Mathlib.Topology.Bornology.Real (2.9s)
+✔ [2396/3105] Built Mathlib.Topology.Instances.Int (2.0s)
+✔ [2397/3105] Built Mathlib.Topology.MetricSpace.Antilipschitz (3.1s)
+✔ [2398/3105] Built Mathlib.Analysis.Convex.Hull (3.5s)
+✔ [2399/3105] Built Mathlib.Algebra.MvPolynomial.Eval (7.8s)
+✔ [2400/3105] Built Mathlib.GroupTheory.SpecificGroups.Cyclic (14s)
+✔ [2401/3105] Built Mathlib.Topology.MetricSpace.Lipschitz (3.9s)
+✔ [2402/3105] Built Mathlib.Algebra.Polynomial.Roots (6.3s)
+✔ [2403/3105] Built Mathlib.Analysis.BoxIntegral.Box.Basic (4.3s)
+✔ [2404/3105] Built Mathlib.RingTheory.Finiteness.Ideal (3.0s)
+✔ [2405/3105] Built Mathlib.Algebra.Algebra.Subalgebra.Operations (3.1s)
+✔ [2406/3105] Built Mathlib.RingTheory.Ideal.Colon (3.5s)
+✔ [2407/3105] Built Mathlib.Topology.Instances.Nat (2.7s)
+✔ [2408/3105] Built Mathlib.RingTheory.Ideal.Pointwise (3.7s)
+✔ [2409/3105] Built Mathlib.RingTheory.Ideal.Prod (3.8s)
+✔ [2410/3105] Built Mathlib.Topology.Algebra.Group.GroupTopology (3.4s)
+✔ [2411/3105] Built Mathlib.RingTheory.MvPolynomial.Tower (2.7s)
+✔ [2412/3105] Built Mathlib.RingTheory.Polynomial.Ideal (4.2s)
+✔ [2413/3105] Built Mathlib.LinearAlgebra.AffineSpace.Basis (6.0s)
+✔ [2414/3105] Built Mathlib.LinearAlgebra.TensorProduct.Tower (33s)
+✔ [2415/3105] Built Mathlib.LinearAlgebra.Matrix.Transvection (5.4s)
+✔ [2416/3105] Built Mathlib.Analysis.Normed.Group.Basic (18s)
+✔ [2417/3105] Built Mathlib.RingTheory.Jacobson.Radical (5.6s)
+✔ [2418/3105] Built Mathlib.Algebra.MvPolynomial.Rename (4.1s)
+✔ [2419/3105] Built Mathlib.LinearAlgebra.Matrix.ToLin (18s)
+✔ [2420/3105] Built Mathlib.Topology.MetricSpace.Isometry (5.4s)
+✔ [2421/3105] Built Mathlib.RingTheory.IntegralDomain (4.5s)
+✔ [2422/3105] Built Mathlib.Analysis.BoxIntegral.Partition.Basic (5.0s)
+✔ [2423/3105] Built Mathlib.Algebra.Algebra.Spectrum.Basic (7.6s)
+✔ [2424/3105] Built Mathlib.FieldTheory.IntermediateField.Basic (16s)
+✔ [2425/3105] Built Mathlib.Analysis.Normed.Group.Indicator (2.6s)
+✔ [2426/3105] Built Mathlib.Analysis.Normed.Group.Submodule (2.8s)
+✔ [2427/3105] Built Mathlib.Analysis.Normed.Group.Int (2.7s)
+✔ [2428/3105] Built Mathlib.RingTheory.PrincipalIdealDomain (4.5s)
+✔ [2429/3105] Built Mathlib.Analysis.Normed.Group.Subgroup (2.0s)
+✔ [2430/3105] Built Mathlib.Topology.Algebra.Group.Pointwise (8.1s)
+✔ [2431/3105] Built Mathlib.RingTheory.Localization.Away.Basic (8.8s)
+✔ [2432/3105] Built Mathlib.Topology.Algebra.Ring.Basic (4.9s)
+✔ [2433/3105] Built Mathlib.RingTheory.Noetherian.Basic (5.5s)
+✔ [2434/3105] Built Mathlib.Topology.MetricSpace.ProperSpace.Real (2.8s)
+✔ [2435/3105] Built Mathlib.RingTheory.Nilpotent.Lemmas (3.3s)
+✔ [2436/3105] Built Mathlib.Geometry.Convex.Cone.Basic (8.3s)
+✔ [2437/3105] Built Mathlib.Analysis.Convex.Function (12s)
+✔ [2438/3105] Built Mathlib.Analysis.Normed.Group.Constructions (5.3s)
+✔ [2439/3105] Built Mathlib.RingTheory.Valuation.Basic (10s)
+✔ [2440/3105] Built Mathlib.Topology.MetricSpace.Dilation (4.5s)
+✖ [2441/3105] Building Mathlib.Algebra.MvPolynomial.Degrees (5.5s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Algebra/MvPolynomial/Degrees.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/MvPolynomial/Degrees.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/MvPolynomial/Degrees.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/MvPolynomial/Degrees.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/MvPolynomial/Degrees.setup.json --json
+error: Mathlib/Algebra/MvPolynomial/Degrees.lean:464:62: unknown tactic
+error: Mathlib/Algebra/MvPolynomial/Degrees.lean:464:58: unsolved goals
+R : Type u
+σ : Type u_1
+inst✝ : CommSemiring R
+f : MvPolynomial σ R
+i : σ
+d : σ →₀ ℕ
+hd : d ∈ f.support
+⊢ d i = 0 → ?m.29
+error: Lean exited with code 1
+✔ [2464/3105] Built Mathlib.LinearAlgebra.Matrix.Basis (5.1s)
+✔ [2465/3105] Built Mathlib.Analysis.BoxIntegral.Partition.Split (3.9s)
+✔ [2466/3105] Built Mathlib.Algebra.CharP.IntermediateField (3.5s)
+✔ [2467/3105] Built Mathlib.RingTheory.EuclideanDomain (3.2s)
+✔ [2468/3105] Built Mathlib.RingTheory.Bezout (3.2s)
+✔ [2469/3105] Built Mathlib.Analysis.BoxIntegral.Partition.Tagged (4.5s)
+✔ [2470/3105] Built Mathlib.Topology.Algebra.Group.Compact (3.1s)
+✔ [2471/3105] Built Mathlib.LinearAlgebra.DirectSum.TensorProduct (6.8s)
+✔ [2472/3105] Built Mathlib.RingTheory.RootsOfUnity.Basic (5.5s)
+✔ [2474/3105] Built Mathlib.FieldTheory.Tower (3.1s)
+✔ [2475/3105] Built Mathlib.RingTheory.Noetherian.Orzech (3.3s)
+✔ [2476/3105] Built Mathlib.Topology.Algebra.Group.Quotient (3.0s)
+✔ [2477/3105] Built Mathlib.Topology.Algebra.IsUniformGroup.Defs (12s)
+✖ [2478/3105] Building Mathlib.Analysis.Convex.Mul (3.4s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Analysis/Convex/Mul.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Convex/Mul.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Convex/Mul.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Convex/Mul.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Convex/Mul.setup.json --json
+error: Mathlib/Analysis/Convex/Mul.lean:32:3: Unknown identifier `IsOrderedModule`
+error: Mathlib/Analysis/Convex/Mul.lean:34:38: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:34:40: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:34:27: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:34:60: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:34:62: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:34:49: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:34:83: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:34:91: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:35:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:35:30: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:35:53: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:35:55: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:35:57: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:35:73: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:35:76: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:35:80: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:35:62: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:37:2: No goals to be solved
+error: Mathlib/Analysis/Convex/Mul.lean:53:23: Unknown identifier `IsOrderedModule`
+error: Mathlib/Analysis/Convex/Mul.lean:73:23: Unknown identifier `IsOrderedModule`
+error: Mathlib/Analysis/Convex/Mul.lean:80:41: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:80:43: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:80:29: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:80:64: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:80:66: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:80:52: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:80:87: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:80:91: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:81:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:81:26: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:81:53: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:81:55: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:81:57: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:81:73: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:81:76: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:81:80: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:81:62: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:86:47: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:86:49: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:86:36: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:86:70: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:86:72: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:86:58: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:87:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:87:30: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:87:53: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:87:57: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:87:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:87:86: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:87:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:88:16: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:88:19: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:88:23: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:88:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:92:31: Unknown identifier `IsOrderedModule`
+error: Mathlib/Analysis/Convex/Mul.lean:98:32: Unknown identifier `IsOrderedModule`
+error: Mathlib/Analysis/Convex/Mul.lean:104:49: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:104:51: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:104:37: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:104:71: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:104:73: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:104:60: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:105:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:105:26: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:105:53: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:105:61: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:105:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:105:86: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:105:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:106:16: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:106:19: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:106:23: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:106:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:110:10: Unknown identifier `IsOrderedModule`
+error: Mathlib/Analysis/Convex/Mul.lean:112:36: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:112:38: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:112:25: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:112:58: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:112:60: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:112:47: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:112:81: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:112:89: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:113:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:113:30: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:113:53: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:113:55: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:113:57: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:114:15: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:114:18: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:114:22: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:114:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:116:38: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:116:40: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:116:26: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:116:61: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:116:63: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:116:49: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:117:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:117:30: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:117:53: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:117:61: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:117:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:117:86: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:117:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:118:16: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:118:19: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:118:23: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:118:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:120:37: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:120:39: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:120:26: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:120:59: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:120:61: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:120:48: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:120:82: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:120:86: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:121:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:121:26: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:121:53: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:121:55: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:121:57: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:122:16: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:122:19: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:122:23: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:122:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:124:39: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:124:41: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:124:27: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:124:62: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:124:64: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:124:50: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:124:85: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:124:89: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:125:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:125:26: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:125:53: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:125:55: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:125:57: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:126:15: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:126:18: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:126:22: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:126:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:128:46: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:128:48: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:128:35: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:128:69: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:128:71: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:128:57: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:129:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:129:30: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:129:53: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:129:57: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:129:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:129:86: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:129:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:130:16: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:130:19: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:130:23: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:130:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:132:47: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:132:49: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:132:35: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:132:69: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:132:71: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:132:58: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:133:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:133:30: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:133:53: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:133:57: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:133:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:133:86: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:133:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:134:15: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:134:18: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:134:22: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:134:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:136:47: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:136:49: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:136:36: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:136:70: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:136:72: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:136:58: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:137:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:137:26: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:137:53: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:137:61: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:137:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:137:86: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:137:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:138:15: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:138:18: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:138:22: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:138:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:140:48: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:140:50: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:140:36: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:140:70: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:140:72: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:140:59: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:141:22: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:141:26: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:141:53: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:141:61: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:141:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:141:86: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:141:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:142:16: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:142:19: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:142:23: Unknown identifier `g`
+error: Mathlib/Analysis/Convex/Mul.lean:142:4: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:144:36: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:144:38: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:144:25: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:144:59: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:144:67: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:145:20: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Mul.lean:145:23: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Mul.lean:145:9: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:153:42: failed to synthesize
+  OfNat 𝕜 0
+numerals are polymorphic in Lean, but the numeral `0` cannot be used in a context where the expected type is
+  𝕜
+due to the absence of the instance above
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:153:38: failed to synthesize
+  Preorder 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:153:26: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:154:2: Invalid field `pow`: The environment does not contain `And.pow`
+  convexOn_id (convex_Ici ?m.38)
+has type
+  Convex ?m.29 (Ici ?m.38) ∧
+    ∀ ⦃x : ?m.30⦄,
+      x ∈ Ici ?m.38 →
+        ∀ ⦃y : ?m.30⦄,
+          y ∈ Ici ?m.38 → ∀ ⦃a b : ?m.29⦄, 0 ≤ a → 0 ≤ b → a + b = 1 → id (a • x + b • y) ≤ a • id x + b • id y
+error: Mathlib/Analysis/Convex/Mul.lean:157:86: failed to synthesize
+  HPow 𝕜 ℕ ?m.15
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:157:58: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Mul.lean:159:11: `simp` made no progress
+error: Mathlib/Analysis/Convex/Mul.lean:176:11: Unknown identifier `convexOn_pow`
+error: Mathlib/Analysis/Convex/Mul.lean:179:11: Invalid field `pow`: The environment does not contain `And.pow`
+  convexOn_iff_forall_pos.mpr ⟨convex_Ioi ?m.70, ?m.71⟩
+has type
+  Convex ?m.61 (Ioi ?m.70) ∧
+    ∀ ⦃x : ?m.62⦄,
+      x ∈ Ioi ?m.70 →
+        ∀ ⦃y : ?m.62⦄,
+          y ∈ Ioi ?m.70 → ∀ ⦃a b : ?m.61⦄, 0 ≤ a → 0 ≤ b → a + b = 1 → ?m.56 (a • x + b • y) ≤ a • ?m.56 x + b • ?m.56 y
+error: Mathlib/Analysis/Convex/Mul.lean:180:4: No goals to be solved
+error: Lean exited with code 1
+✔ [2479/3105] Built Mathlib.Analysis.Convex.Cone.Extension (4.4s)
+✔ [2480/3105] Built Mathlib.Topology.Algebra.Field (5.5s)
+✔ [2481/3105] Built Mathlib.RingTheory.Spectrum.Prime.Basic (5.2s)
+✔ [2482/3105] Built Mathlib.RingTheory.Valuation.ExtendToLocalization (3.7s)
+✔ [2483/3105] Built Mathlib.Topology.MetricSpace.DilationEquiv (3.8s)
+✔ [2484/3105] Built Mathlib.Analysis.Convex.Strict (6.6s)
+✖ [2485/3105] Building Mathlib.Algebra.Polynomial.Laurent (6.7s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Algebra/Polynomial/Laurent.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/Polynomial/Laurent.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/Polynomial/Laurent.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/Polynomial/Laurent.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/Polynomial/Laurent.setup.json --json
+error: Mathlib/Algebra/Polynomial/Laurent.lean:500:4: 'map_units' is not a field of structure 'IsLocalization'
+error: Mathlib/Algebra/Polynomial/Laurent.lean:504:4: 'surj' is not a field of structure 'IsLocalization'
+error: Mathlib/Algebra/Polynomial/Laurent.lean:500:2: Fields missing: `map_units'`, `surj'`
+
+Hint: Add missing fields:
+  
+  ̲ ̲ ̲ ̲ ̲m̲a̲p̲_̲u̲n̲i̲t̲s̲'̲ ̲:̲=̲ ̲_̲
+  ̲ ̲ ̲ ̲ ̲s̲u̲r̲j̲'̲ ̲:̲=̲ ̲_̲
+error: Lean exited with code 1
+✔ [2486/3105] Built Mathlib.Topology.Algebra.Ring.Ideal (2.8s)
+✖ [2487/3105] Building Mathlib.Analysis.Convex.Slope (5.4s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Analysis/Convex/Slope.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Convex/Slope.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Convex/Slope.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Convex/Slope.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Convex/Slope.setup.json --json
+error: Mathlib/Analysis/Convex/Slope.lean:34:2: linarith failed to find a contradiction
+case h
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : ConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : 0 < y - x
+hyz : 0 < z - y
+hxz : 0 < z - x
+ha : 0 ≤ (z - y) / (z - x)
+hb : 0 ≤ (y - x) / (z - x)
+key : f y ≤ (f x * (z - y) + f z * (y - x)) / (z - x)
+a✝ : (f z - f y) / (z - y) < (f y - f x) / (y - x)
+⊢ False
+failed
+error: Mathlib/Analysis/Convex/Slope.lean:59:2: linarith failed to find a contradiction
+case h
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : StrictConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : 0 < y - x
+hyz : 0 < z - y
+hxz : 0 < z - x
+hxz' : x ≠ z
+ha : 0 < (z - y) / (z - x)
+hb : 0 < (y - x) / (z - x)
+key : f y < (f x * (z - y) + f z * (y - x)) / (z - x)
+a✝ : (f z - f y) / (z - y) ≤ (f y - f x) / (y - x)
+⊢ False
+failed
+error: Mathlib/Analysis/Convex/Slope.lean:84:4: ring failed, ring expressions not equal up to an additive constant
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hs : Convex 𝕜 s
+hf : ∀ {x y z : 𝕜}, x ∈ s → z ∈ s → x < y → y < z → (f y - f x) / (y - x) ≤ (f z - f y) / (z - y)
+x : 𝕜
+hx : x ∈ s
+z : 𝕜
+hz : z ∈ s
+hxz : x < z
+a b : 𝕜
+ha : 0 < a
+hb : 0 < b
+hab : a + b = 1
+hxy : x < a * x + b * z
+hyz : a * x + b * z < z
+key : (f (a * x + b * z) - f x) / (a * x + b * z - x) ≤ (f z - f (a * x + b * z)) / (z - (a * x + b * z))
+⊢ z * f (a * x + b * z) - z * f z * b + z * b * f x + (-(z * f x) - x * f (a * x + b * z)) + (x * f z - x * f z * a) +
+            x * a * f x +
+          (-(f (a * x + b * z) * (z + (-(z * b) - x * a))⁻¹) - f (a * x + b * z) * (z * b - x + x * a)⁻¹) +
+        f z * (z + (-(z * b) - x * a))⁻¹ +
+      f x * (z * b - x + x * a)⁻¹ ≤
+    0
+error: Mathlib/Analysis/Convex/Slope.lean:112:4: ring failed, ring expressions not equal up to an additive constant
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hs : Convex 𝕜 s
+hf : ∀ {x y z : 𝕜}, x ∈ s → z ∈ s → x < y → y < z → (f y - f x) / (y - x) < (f z - f y) / (z - y)
+x : 𝕜
+hx : x ∈ s
+z : 𝕜
+hz : z ∈ s
+hxz : x < z
+a b : 𝕜
+ha : 0 < a
+hb : 0 < b
+hab : a + b = 1
+hxy : x < a * x + b * z
+hyz : a * x + b * z < z
+key : (f (a * x + b * z) - f x) / (a * x + b * z - x) < (f z - f (a * x + b * z)) / (z - (a * x + b * z))
+⊢ z * f (a * x + b * z) - z * f z * b + z * b * f x + (-(z * f x) - x * f (a * x + b * z)) + (x * f z - x * f z * a) +
+            x * a * f x +
+          (-(f (a * x + b * z) * (z + (-(z * b) - x * a))⁻¹) - f (a * x + b * z) * (z * b - x + x * a)⁻¹) +
+        f z * (z + (-(z * b) - x * a))⁻¹ +
+      f x * (z * b - x + x * a)⁻¹ ≤
+    0
+error: Mathlib/Analysis/Convex/Slope.lean:179:4: ring failed, ring expressions not equal up to an additive constant
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : ConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : x < y
+hyz : y < z
+hxy' : 0 < y - x
+hyz' : 0 < z - y
+hxz' : 0 < z - x
+ha : 0 ≤ (z - y) / (z - x)
+hb : 0 ≤ (y - x) / (z - x)
+key : f y ≤ (f x * (z - y) + f z * (y - x)) / (z - x)
+⊢ z * f y - z * f x + (z * f x * (z - x)⁻¹ - x * f y) + x * f z + (-(x * f z * (z - x)⁻¹) - f y) + f x * y +
+        (-(f x * y * (z - x)⁻¹) - y * f z) +
+      y * f z * (z - x)⁻¹ ≤
+    0
+error: Mathlib/Analysis/Convex/Slope.lean:188:2: linarith failed to find a contradiction
+case h
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : ConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : x < y
+hyz : y < z
+hxy' : 0 < y - x
+hxz' : 0 < z - x
+a✝ : (f z - f x) / (z - x) < (f y - f x) / (y - x)
+⊢ False
+failed
+error: Mathlib/Analysis/Convex/Slope.lean:195:2: linarith failed to find a contradiction
+case h
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : ConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : x < y
+hyz : y < z
+hyz' : 0 < z - y
+hxz' : 0 < z - x
+a✝ : (f z - f y) / (z - y) < (f z - f x) / (z - x)
+⊢ False
+failed
+error: Mathlib/Analysis/Convex/Slope.lean:222:4: ring failed, ring expressions not equal up to an additive constant
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : StrictConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : x < y
+hyz : y < z
+hxy' : 0 < y - x
+hyz' : 0 < z - y
+hxz' : 0 < z - x
+ha : 0 < (z - y) / (z - x)
+hb : 0 < (y - x) / (z - x)
+key : f y < (f x * (z - y) + f z * (y - x)) / (z - x)
+⊢ z * f y - z * f x + (z * f x * (z - x)⁻¹ - x * f y) + x * f z + (-(x * f z * (z - x)⁻¹) - f y) + f x * y +
+        (-(f x * y * (z - x)⁻¹) - y * f z) +
+      y * f z * (z - x)⁻¹ ≤
+    0
+error: Mathlib/Analysis/Convex/Slope.lean:231:2: linarith failed to find a contradiction
+case h
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : StrictConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : x < y
+hyz : y < z
+hxy' : 0 < y - x
+hxz' : 0 < z - x
+a✝ : (f z - f x) / (z - x) ≤ (f y - f x) / (y - x)
+⊢ False
+failed
+error: Mathlib/Analysis/Convex/Slope.lean:238:2: linarith failed to find a contradiction
+case h
+𝕜 : Type u_1
+inst✝² : Field 𝕜
+inst✝¹ : LinearOrder 𝕜
+inst✝ : IsStrictOrderedRing 𝕜
+s : Set 𝕜
+f : 𝕜 → 𝕜
+hf : StrictConvexOn 𝕜 s f
+x y z : 𝕜
+hx : x ∈ s
+hz : z ∈ s
+hxy : x < y
+hyz : y < z
+hyz' : 0 < z - y
+hxz' : 0 < z - x
+a✝ : (f z - f y) / (z - y) ≤ (f z - f x) / (z - x)
+⊢ False
+failed
+error: Lean exited with code 1
+✔ [2488/3105] Built Mathlib.RingTheory.Valuation.Integers (5.2s)
+✔ [2489/3105] Built Mathlib.LinearAlgebra.Complex.Module (10s)
+✔ [2490/3105] Built Mathlib.RingTheory.SimpleModule.Basic (13s)
+✔ [2491/3105] Built Mathlib.Topology.Algebra.Module.Basic (4.4s)
+✔ [2492/3105] Built Mathlib.Topology.Algebra.UniformMulAction (4.1s)
+✔ [2493/3105] Built Mathlib.LinearAlgebra.InvariantBasisNumber (4.8s)
+✖ [2494/3105] Building Mathlib.Topology.Algebra.Module.LinearMap (331ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Topology/Algebra/Module/LinearMap.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Algebra/Module/LinearMap.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Algebra/Module/LinearMap.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Topology/Algebra/Module/LinearMap.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Topology/Algebra/Module/LinearMap.setup.json --json
+error: Mathlib/Topology/Algebra/Module/LinearMap.lean:7:0: object file '/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/Module/LinearMap/DivisionRing.olean' of module Mathlib.Algebra.Module.LinearMap.DivisionRing does not exist
+error: Lean exited with code 1
+✖ [2506/3105] Building Mathlib.Algebra.Polynomial.FieldDivision (6.8s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Algebra/Polynomial/FieldDivision.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/Polynomial/FieldDivision.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/Polynomial/FieldDivision.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/Polynomial/FieldDivision.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/Polynomial/FieldDivision.setup.json --json
+error: Mathlib/Algebra/Polynomial/FieldDivision.lean:134:22: unknown tactic
+error: Mathlib/Algebra/Polynomial/FieldDivision.lean:134:18: unsolved goals
+R : Type u
+inst✝ : CommRing R
+p : R[X]
+t : R
+h : p ≠ 0
+x✝ : p.IsRoot t ∧ (derivative p).IsRoot t
+h0 : p.IsRoot t
+h1 : (derivative p).IsRoot t
+m : ℕ
+hm : m + 1 + 1 ≤ 1
+⊢ ((⇑derivative)^[m + 1 + 1] p).IsRoot t
+error: Mathlib/Algebra/Polynomial/FieldDivision.lean:191:3: unknown tactic
+error: Mathlib/Algebra/Polynomial/FieldDivision.lean:179:76: unsolved goals
+case intro
+R : Type u
+inst✝² : CommRing R
+inst✝¹ : IsDomain R
+inst✝ : CharZero R
+f g : R[X]
+hf0 : f ≠ 0
+a : R
+haf : f.IsRoot a
+r : R[X]
+hr : derivative f * g = f * r
+hdf0 : derivative f ≠ 0
+hg : ¬g.IsRoot a
+hdfg0 : derivative f * g ≠ 0
+hr' : rootMultiplicity a f = rootMultiplicity a r + rootMultiplicity a f + Nat.succ 0
+⊢ False
+error: Lean exited with code 1
+✔ [2511/3105] Built Mathlib.FieldTheory.IntermediateField.Adjoin.Defs (10s)
+✔ [2512/3105] Built Mathlib.Topology.MetricSpace.IsometricSMul (12s)
+✖ [2513/3105] Building Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots (6.8s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/RingTheory/RootsOfUnity/PrimitiveRoots.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/RootsOfUnity/PrimitiveRoots.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/RootsOfUnity/PrimitiveRoots.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/RootsOfUnity/PrimitiveRoots.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/RootsOfUnity/PrimitiveRoots.setup.json --json
+error: Mathlib/RingTheory/RootsOfUnity/PrimitiveRoots.lean:541:31: Unknown constant `Int.emod_add_mul_ediv`
+error: Lean exited with code 1
+✔ [2514/3105] Built Mathlib.LinearAlgebra.DirectSum.Finsupp (7.1s)
+✖ [2515/3105] Building Mathlib.Analysis.Normed.Group.AddTorsor (639ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Analysis/Normed/Group/AddTorsor.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Normed/Group/AddTorsor.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Normed/Group/AddTorsor.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Normed/Group/AddTorsor.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Normed/Group/AddTorsor.setup.json --json
+error: Mathlib/Analysis/Normed/Group/AddTorsor.lean:6:0: object file '/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Algebra/Group/AddTorsor.olean' of module Mathlib.Topology.Algebra.Group.AddTorsor does not exist
+error: Lean exited with code 1
+✔ [2516/3105] Built Mathlib.Topology.Algebra.InfiniteSum.Group (6.6s)
+✔ [2517/3105] Built Mathlib.Topology.Algebra.OpenSubgroup (7.2s)
+✔ [2518/3105] Built Mathlib.Topology.Algebra.Module.Simple (2.8s)
+✔ [2519/3105] Built Mathlib.Algebra.Star.Unitary (12s)
+✔ [2520/3105] Built Mathlib.Topology.Algebra.Order.Field (6.1s)
+✖ [2522/3105] Building Mathlib.Topology.Algebra.IsUniformGroup.Basic (9.0s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Topology/Algebra/IsUniformGroup/Basic.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Algebra/IsUniformGroup/Basic.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Algebra/IsUniformGroup/Basic.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Topology/Algebra/IsUniformGroup/Basic.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Topology/Algebra/IsUniformGroup/Basic.setup.json --json
+error: Mathlib/Topology/Algebra/IsUniformGroup/Basic.lean:228:9: Tactic `rcases` failed: scrutinee has type
+  ¬h' / h ∉ V
+but is expected to have type
+  h' / h ∈ V
+warning: Mathlib/Topology/Algebra/IsUniformGroup/Basic.lean:233:0: automatically included section variable(s) unused in theorem 'Subgroup.tendsto_coe_cofinite_of_discrete':
+  [IsTopologicalGroup G]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [IsTopologicalGroup G] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+error: Lean exited with code 1
+✔ [2523/3105] Built Mathlib.Topology.Algebra.GroupCompletion (4.9s)
+✔ [2527/3105] Built Mathlib.CategoryTheory.Limits.Shapes.Diagonal (21s)
+✔ [2528/3105] Built Mathlib.Analysis.Convex.Combination (17s)
+✔ [2529/3105] Built Mathlib.LinearAlgebra.Dimension.StrongRankCondition (5.2s)
+✖ [2530/3105] Building Mathlib.RingTheory.TensorProduct.Free (3.6s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/RingTheory/TensorProduct/Free.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/TensorProduct/Free.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/TensorProduct/Free.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/TensorProduct/Free.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/TensorProduct/Free.setup.json --json
+error: Mathlib/RingTheory/TensorProduct/Free.lean:73:15: Unknown constant `LinearEquiv.coe_symm_mk'`
+error: Mathlib/RingTheory/TensorProduct/Free.lean:72:90: unsolved goals
+R : Type u_1
+A : Type u_2
+M : Type uM
+ι : Type uι
+inst✝⁴ : CommSemiring R
+inst✝³ : Semiring A
+inst✝² : Algebra R A
+inst✝¹ : AddCommMonoid M
+inst✝ : Module R M
+b : Basis ι R M
+a : A
+i : ι
+⊢ {
+          toAddHom :=
+            (↑((TensorProduct.congr (Finsupp.LinearEquiv.finsuppUnique R A PUnit.{uι + 1}).symm b.repr).trans
+                  ((finsuppTensorFinsupp R R A R PUnit.{uι + 1} ι).trans
+                    (Finsupp.lcongr (Equiv.uniqueProd ι PUnit.{uι + 1}) (TensorProduct.rid R A))))).toAddHom,
+          map_smul' := ⋯,
+          invFun :=
+            ⇑(((Finsupp.lcongr (Equiv.uniqueProd ι PUnit.{uι + 1}).symm (TensorProduct.rid R A).symm).trans
+                    (finsuppTensorFinsupp R R A R PUnit.{uι + 1} ι).symm).trans
+                (TensorProduct.congr (Finsupp.LinearEquiv.finsuppUnique R A PUnit.{uι + 1}).symm b.repr).symm),
+          left_inv := ⋯, right_inv := ⋯ }.symm
+      (Finsupp.single i a) =
+    a ⊗ₜ[R] b i
+warning: Mathlib/RingTheory/TensorProduct/Free.lean:73:41: This simp argument is unused:
+  Equiv.uniqueProd_symm_apply
+
+Hint: Omit it from the simp argument list.
+  simp [basis, LinearEquiv.coe_symm_mk', E̵q̵u̵i̵v̵.̵u̵n̵i̵q̵u̵e̵P̵r̵o̵d̵_̵s̵y̵m̵m̵_̵a̵p̵p̵l̵y̵,̵ ̵basisAux]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+error: Lean exited with code 1
+✔ [2531/3105] Built Mathlib.RingTheory.Valuation.ValuationRing (6.8s)
+✔ [2532/3105] Built Mathlib.Topology.Algebra.MetricSpace.Lipschitz (2.4s)
+✔ [2533/3105] Built Mathlib.Topology.Algebra.Nonarchimedean.Basic (3.3s)
+✔ [2534/3105] Built Mathlib.Topology.Algebra.Ring.Real (2.9s)
+✔ [2537/3105] Built Mathlib.Topology.Algebra.UniformConvergence (6.4s)
+✔ [2538/3105] Built Mathlib.Topology.Algebra.FilterBasis (6.4s)
+✔ [2539/3105] Built Mathlib.LinearAlgebra.TensorProduct.Basis (4.7s)
+✔ [2540/3105] Built Mathlib.LinearAlgebra.Dimension.Free (3.2s)
+✔ [2541/3105] Built Mathlib.Analysis.Normed.Ring.Basic (15s)
+✖ [2542/3105] Building Mathlib.Topology.Algebra.InfiniteSum.NatInt (6.6s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Topology/Algebra/InfiniteSum/NatInt.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Algebra/InfiniteSum/NatInt.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Topology/Algebra/InfiniteSum/NatInt.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Topology/Algebra/InfiniteSum/NatInt.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Topology/Algebra/InfiniteSum/NatInt.setup.json --json
+error: Mathlib/Topology/Algebra/InfiniteSum/NatInt.lean:445:9: unknown tactic
+error: Mathlib/Topology/Algebra/InfiniteSum/NatInt.lean:431:15: 'calc' expression has type
+  (∏ x ∈ u1 ∪ u2, f x * if x = 0 then f 0 else 1) = (∏ x ∈ u1 ∪ u2, f x) * ∏ x ∈ u1 ∩ u2, f x
+but is expected to have type
+  (∏ x ∈ u1 ∪ u2, f x * if x = 0 then f 0 else 1) = ∏ b ∈ v', f ↑b * f (-↑b)
+error: Mathlib/Topology/Algebra/InfiniteSum/NatInt.lean:442:6: unsolved goals
+case e_a.refine_2
+M : Type u_1
+inst✝² : CommMonoid M
+inst✝¹ : TopologicalSpace M
+m : M
+inst✝ : ContinuousMul M
+f : ℤ → M
+hf : HasProd f m
+u : Finset ℤ
+v' : Finset ℕ
+hv' : image Int.natAbs u ⊆ v'
+u1 : Finset ℤ := image (fun x ↦ ↑x) v'
+u2 : Finset ℤ := image (fun x ↦ -↑x) v'
+A : u ⊆ u1 ∪ u2
+x : ℤ
+hx : (∃ a ∈ v', ↑a = x) ∧ ∃ a ∈ v', -↑a = x
+⊢ x = 0
+error: Lean exited with code 1
+✔ [2544/3105] Built Mathlib.Topology.Algebra.Equicontinuity (2.8s)
+✔ [2545/3105] Built Mathlib.Topology.Algebra.UniformFilterBasis (2.8s)
+✔ [2546/3105] Built Mathlib.RingTheory.Ideal.Quotient.Operations (23s)
+✖ [2553/3105] Building Mathlib.Analysis.Convex.Jensen (4.5s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Analysis/Convex/Jensen.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Convex/Jensen.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Analysis/Convex/Jensen.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Convex/Jensen.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Analysis/Convex/Jensen.setup.json --json
+error: Mathlib/Analysis/Convex/Jensen.lean:44:69: Unknown identifier `IsStrictOrderedModule`
+error: Mathlib/Analysis/Convex/Jensen.lean:48:52: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:48:54: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:48:41: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:48:69: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:48:76: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:49:20: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:49:23: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:49:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:49:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:49:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:50:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:50:27: Unknown identifier `t.centerMass`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:21: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:49: Unknown identifier `E`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:53: Unknown identifier `β`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:63: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:67: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:25: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:31: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:51:35: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:57:54: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:57:56: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:57:42: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:57:71: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:57:78: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:58:20: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:58:23: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:58:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:58:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:58:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:59:4: Unknown identifier `t.centerMass`
+error: Mathlib/Analysis/Convex/Jensen.lean:59:29: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:60:2: Unknown constant `ConvexOn.map_centerMass_le`
+error: Mathlib/Analysis/Convex/Jensen.lean:63:45: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:63:47: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:63:34: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:63:62: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:63:69: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:63:86: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:63:89: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:64:18: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:64:27: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:64:21: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:64:32: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:64:63: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:64:66: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:64:72: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:69:47: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:69:49: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:69:35: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:69:64: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:69:71: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:70:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:70:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:70:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:70:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:70:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:71:11: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:71:14: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:71:20: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:71:31: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:72:2: Unknown constant `ConvexOn.map_sum_le`
+error: Mathlib/Analysis/Convex/Jensen.lean:75:47: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:75:49: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:75:36: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:75:64: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:75:71: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:10: Unknown identifier `v`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:20: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:23: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:46: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:55: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:49: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:68: Unknown identifier `v`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:81: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:76:77: Unknown identifier `q`
+error: Mathlib/Analysis/Convex/Jensen.lean:77:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:77:37: Unknown identifier `v`
+error: Mathlib/Analysis/Convex/Jensen.lean:77:41: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:77:53: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:77:56: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:77:62: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:78:27: Unknown identifier `v`
+error: Mathlib/Analysis/Convex/Jensen.lean:78:29: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:77:73: unsolved goals
+hf : sorry
+h₀ : ∀ i ∈ sorry, 0 ≤ sorry
+h₁ : sorry + ∑ i ∈ sorry, sorry = 1
+hmem : ∀ i ∈ sorry, sorry ∈ sorry
+hv : 0 ≤ sorry
+hq : sorry ∈ sorry
+⊢ sorry ≤ sorry • sorry + ∑ i ∈ sorry, sorry • sorry
+error: Mathlib/Analysis/Convex/Jensen.lean:86:49: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:86:51: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:86:37: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:86:66: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:86:73: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:10: Unknown identifier `v`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:20: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:23: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:46: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:55: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:49: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:68: Unknown identifier `v`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:81: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:87:77: Unknown identifier `q`
+error: Mathlib/Analysis/Convex/Jensen.lean:88:4: Unknown identifier `v`
+error: Mathlib/Analysis/Convex/Jensen.lean:88:8: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:88:20: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:88:23: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:88:29: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:88:39: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:99:55: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:99:57: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:99:38: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:99:72: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:99:79: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:66: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:75: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:78: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:100:84: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:101:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:101:35: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:101:38: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:101:44: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:105:13: Unknown identifier `t.erase`
+error: Mathlib/Analysis/Convex/Jensen.lean:143:57: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:143:59: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:143:39: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:143:74: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:143:81: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:66: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:75: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:78: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:144:84: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:145:10: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:145:13: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:145:19: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:145:29: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:155:61: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:155:63: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:155:44: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:155:78: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:155:85: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:156:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:156:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:156:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:156:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:156:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:157:18: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:157:21: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:157:27: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:157:37: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:158:15: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:158:30: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:158:34: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:158:40: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:167:63: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:167:65: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:167:45: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:167:80: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:167:87: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:168:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:168:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:168:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:168:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:168:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:169:12: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:169:43: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:169:46: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:169:52: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:170:15: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:170:30: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:170:34: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:170:40: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:178:83: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:178:85: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:178:66: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:179:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:179:19: failed to synthesize
+  LT 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:179:40: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:179:34: failed to synthesize
+  AddCommMonoid 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:179:66: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:179:75: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:180:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:180:35: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:180:44: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:180:60: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:180:75: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:180:78: failed to synthesize
+  HSMul 𝕜 E ?m.65
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:180:69: failed to synthesize
+  AddCommMonoid E
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:179:19: failed to synthesize
+  OfNat 𝕜 0
+numerals are polymorphic in Lean, but the numeral `0` cannot be used in a context where the expected type is
+  𝕜
+due to the absence of the instance above
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:181:2: Tactic `constructor` failed: no applicable constructor found
+
+𝕜 : Type u_1
+E : Type u_2
+ι : Type u_5
+w : ι → 𝕜
+p : ι → E
+hf : sorry
+h₀ : (i : ι) → i ∈ sorry → sorry
+h₁ : sorry = 1
+hmem : ∀ i ∈ sorry, p i ∈ sorry
+⊢ sorry = ∑ i ∈ sorry, w i • sorry ↔ ∀ j ∈ sorry, p j = ∑ i ∈ sorry, sorry
+error: Mathlib/Analysis/Convex/Jensen.lean:204:61: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:204:63: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:204:43: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:204:78: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:204:85: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:205:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:205:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:205:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:205:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:205:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:35: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:38: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:44: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:60: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:63: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:75: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:78: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:206:84: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:214:60: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:214:62: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:214:43: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:214:77: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:214:84: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:215:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:215:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:215:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:215:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:215:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:216:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:216:35: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:216:38: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:216:44: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:217:12: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:217:15: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:217:25: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:217:37: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:217:40: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:217:46: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:218:23: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:218:28: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:218:34: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:218:44: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:217:53: unsolved goals
+hf : sorry
+h₀ : ∀ i ∈ sorry, 0 ≤ sorry
+h₁ : ∑ i ∈ sorry, sorry = 1
+hmem : ∀ i ∈ sorry, sorry ∈ sorry
+⊢ sorry = ∑ i ∈ sorry, sorry • sorry ↔ ∀ j ∈ sorry, sorry ≠ 0 → sorry = ∑ i ∈ sorry, sorry • sorry
+error: Mathlib/Analysis/Convex/Jensen.lean:231:62: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:231:64: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:231:44: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:231:79: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:231:86: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:232:16: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:232:19: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:232:42: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:232:51: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:232:45: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:233:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:233:35: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:233:38: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:233:44: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:234:12: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:234:15: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:234:25: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:234:37: Unknown identifier `t`
+error: Mathlib/Analysis/Convex/Jensen.lean:234:40: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:234:46: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:245:16: Unknown identifier `IsStrictOrderedModule`
+error: Mathlib/Analysis/Convex/Jensen.lean:248:74: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:248:76: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:248:63: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:248:91: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:249:14: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:249:10: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:250:4: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:250:63: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:250:71: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:250:36: failed to synthesize
+  AddCommMonoid E
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:255:75: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:255:77: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:255:63: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:255:92: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:256:14: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:256:10: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:257:57: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:257:65: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:257:30: failed to synthesize
+  AddCommMonoid E
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:257:69: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:262:70: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:262:72: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:262:59: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:263:24: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:263:49: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:263:75: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:263:69: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:264:13: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:264:36: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:265:24: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:265:26: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:267:39: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:267:49: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:267:55: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:267:61: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:267:68: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:267:72: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:268:20: Unknown identifier `𝕜`
+error: Mathlib/Analysis/Convex/Jensen.lean:268:38: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:268:47: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:267:80: unsolved goals
+ι : Type u_5
+t : Finset ι
+h : sorry
+hw₀ : ∀ i ∈ t, 0 ≤ sorry
+hw₁ : 0 < ∑ i ∈ t, sorry
+hp : ∀ i ∈ t, sorry ∈ sorry
+y : ?m.62 := t.centerMass sorry sorry
+hw' : sorry
+⊢ ∃ i ∈ {i ∈ t | sorry ≠ 0}, sorry • sorry ≤ sorry • (sorry ∘ sorry) i
+error: Mathlib/Analysis/Convex/Jensen.lean:274:8: Invalid `⟨...⟩` notation: The expected type of this term could not be determined
+error: Mathlib/Analysis/Convex/Jensen.lean:278:72: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:278:74: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:278:60: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:279:24: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:279:49: Unknown identifier `w`
+error: Mathlib/Analysis/Convex/Jensen.lean:279:75: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:279:69: Unknown identifier `p`
+error: Mathlib/Analysis/Convex/Jensen.lean:280:13: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:280:23: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:284:72: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:284:74: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:284:61: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:284:88: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:285:14: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:285:10: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:285:41: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:285:47: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:294:74: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:294:76: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:294:62: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:294:90: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:295:14: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:295:10: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:295:41: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:295:47: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:299:54: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:299:56: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:299:43: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:299:69: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:299:65: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:299:82: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:299:78: Unknown identifier `y`
+error: Mathlib/Analysis/Convex/Jensen.lean:300:15: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:300:22: Unknown identifier `y`
+error: Mathlib/Analysis/Convex/Jensen.lean:300:14: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:300:10: Unknown identifier `z`
+error: Mathlib/Analysis/Convex/Jensen.lean:300:28: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:300:39: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:300:45: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:305:56: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:305:58: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:305:44: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:305:71: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:305:67: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:305:84: Unknown identifier `s`
+error: Mathlib/Analysis/Convex/Jensen.lean:305:80: Unknown identifier `y`
+error: Mathlib/Analysis/Convex/Jensen.lean:306:15: Unknown identifier `x`
+error: Mathlib/Analysis/Convex/Jensen.lean:306:22: Unknown identifier `y`
+error: Mathlib/Analysis/Convex/Jensen.lean:306:14: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:306:10: Unknown identifier `z`
+error: Mathlib/Analysis/Convex/Jensen.lean:306:33: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:306:39: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:306:46: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:310:75: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:311:40: overloaded, errors 
+  failed to synthesize
+    Preorder 𝕜
+  
+  Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+  
+  failed to synthesize
+    Preorder 𝕜
+  
+  Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:311:57: failed to synthesize
+  Max β
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:311:51: failed to synthesize
+  LE β
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:311:76: unsolved goals
+𝕜 : Type u_1
+β : Type u_4
+s : Set 𝕜
+f : 𝕜 → β
+x y z : 𝕜
+hf : sorry
+hx : x ∈ s
+hy : y ∈ s
+hz : z ∈ sorry
+⊢ sorry
+error: Mathlib/Analysis/Convex/Jensen.lean:316:76: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:317:40: overloaded, errors 
+  failed to synthesize
+    Preorder 𝕜
+  
+  Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+  
+  failed to synthesize
+    Preorder 𝕜
+  
+  Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:317:51: failed to synthesize
+  Min β
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:317:51: failed to synthesize
+  LE β
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:320:82: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:320:69: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:321:14: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:321:34: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:321:39: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:323:10: Application type mismatch: The argument
+  b
+has type
+  ?m.26 hst hf
+but is expected to have type
+  ?m.40
+in the application
+  Exists.intro b
+error: Mathlib/Analysis/Convex/Jensen.lean:328:84: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:328:70: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Mathlib/Analysis/Convex/Jensen.lean:329:14: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:329:34: Unknown identifier `f`
+error: Mathlib/Analysis/Convex/Jensen.lean:329:39: failed to synthesize
+  Semiring 𝕜
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+error: Lean exited with code 1
+✔ [2554/3105] Built Mathlib.Topology.Instances.Rat (3.7s)
+✔ [2556/3105] Built Mathlib.Topology.Instances.Real.Lemmas (4.0s)
+✔ [2557/3105] Built Mathlib.CategoryTheory.MorphismProperty.Limits (5.5s)
+✔ [2558/3105] Built Mathlib.Topology.Algebra.Nonarchimedean.Bases (4.0s)
+✔ [2559/3105] Built Mathlib.Algebra.Module.Projective (4.6s)
+✔ [2561/3105] Built Mathlib.Topology.UnitInterval (5.3s)
+✔ [2562/3105] Built Mathlib.Analysis.Normed.Group.Continuity (5.4s)
+✔ [2568/3105] Built Mathlib.Analysis.Normed.Ring.Finite (2.7s)
+✔ [2569/3105] Built Mathlib.RingTheory.Ideal.Quotient.Noetherian (2.5s)
+✔ [2570/3105] Built Mathlib.Analysis.Normed.Group.Rat (2.6s)
+✔ [2572/3105] Built Mathlib.LinearAlgebra.FiniteDimensional.Defs (4.2s)
+✔ [2573/3105] Built Mathlib.RingTheory.Polynomial.Nilpotent (3.8s)
+✔ [2574/3105] Built Mathlib.RingTheory.Finiteness.Projective (2.5s)
+✔ [2575/3105] Built Mathlib.RingTheory.Jacobson.Ideal (4.3s)
+✔ [2576/3105] Built Mathlib.LinearAlgebra.Matrix.InvariantBasisNumber (2.8s)
+✖ [2577/3105] Building Mathlib.RingTheory.Localization.Ideal (4.6s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/RingTheory/Localization/Ideal.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/Localization/Ideal.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/Localization/Ideal.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/Localization/Ideal.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/Localization/Ideal.setup.json --json
+error: Mathlib/RingTheory/Localization/Ideal.lean:314:2: 'map_units' is not a field of structure 'IsLocalization'
+error: Mathlib/RingTheory/Localization/Ideal.lean:317:2: 'surj' is not a field of structure 'IsLocalization'
+error: Mathlib/RingTheory/Localization/Ideal.lean:313:94: Fields missing: `map_units'`, `surj'`
+error: Lean exited with code 1
+✔ [2578/3105] Built Mathlib.LinearAlgebra.Dimension.Constructions (5.5s)
+✔ [2579/3105] Built Mathlib.Topology.Algebra.InfiniteSum.Constructions (12s)
+✔ [2581/3105] Built Mathlib.LinearAlgebra.FreeModule.PID (9.4s)
+✔ [2582/3105] Built Mathlib.RingTheory.Ideal.Over (5.5s)
+✔ [2583/3105] Built Mathlib.Analysis.Normed.Group.Bounded (4.4s)
+✔ [2587/3105] Built Mathlib.RingTheory.LocalRing.MaximalIdeal.Basic (2.3s)
+✔ [2592/3105] Built Mathlib.Analysis.Convex.StdSimplex (5.1s)
+✔ [2593/3105] Built Mathlib.Analysis.Normed.Field.Basic (8.5s)
+✔ [2616/3105] Built Mathlib.Topology.Algebra.InfiniteSum.Ring (2.0s)
+✔ [2727/3105] Built Mathlib.RingTheory.Adjoin.Dimension (3.8s)
+✔ [2728/3105] Built Mathlib.RingTheory.LocalRing.ResidueField.Defs (2.1s)
+✔ [2729/3105] Built Mathlib.LinearAlgebra.Dimension.ErdosKaplansky (4.3s)
+✔ [2730/3105] Built Mathlib.RingTheory.LocalRing.RingHom.Basic (2.5s)
+✔ [2731/3105] Built Mathlib.LinearAlgebra.Dimension.FreeAndStrongRankCondition (4.7s)
+✔ [2732/3105] Built Mathlib.Topology.Path (8.1s)
+✔ [2733/3105] Built Mathlib.Topology.MetricSpace.CauSeqFilter (2.6s)
+✔ [2734/3105] Built Mathlib.LinearAlgebra.Dimension.Finite (7.4s)
+✔ [2736/3105] Built Mathlib.Algebra.Category.Ring.Instances (3.0s)
+✔ [2737/3105] Built Mathlib.Analysis.Convex.Topology (5.3s)
+✔ [2740/3105] Built Mathlib.Topology.Connected.PathConnected (3.0s)
+✔ [2743/3105] Built Mathlib.RingTheory.LocalRing.ResidueField.Basic (5.5s)
+✔ [2748/3105] Built Mathlib.FieldTheory.Finiteness (2.7s)
+✔ [2749/3105] Built Mathlib.Topology.Connected.LocPathConnected (2.3s)
+✔ [2750/3105] Built Mathlib.LinearAlgebra.Dimension.RankNullity (5.5s)
+✔ [2751/3105] Built Mathlib.Analysis.Convex.PathConnected (4.0s)
+✔ [2755/3105] Built Mathlib.LinearAlgebra.FiniteDimensional.Basic (7.3s)
+✔ [2757/3105] Built Mathlib.Analysis.Asymptotics.Defs (12s)
+✔ [2797/3105] Built Mathlib.LinearAlgebra.Dimension.DivisionRing (3.8s)
+✔ [2798/3105] Built Mathlib.Topology.Algebra.Module.LocallyConvex (5.5s)
+✔ [2894/3105] Built Mathlib.LinearAlgebra.Dimension.LinearMap (3.5s)
+✖ [2895/3105] Building Mathlib.LinearAlgebra.FiniteDimensional.Lemmas (4.7s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/LinearAlgebra/FiniteDimensional/Lemmas.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/LinearAlgebra/FiniteDimensional/Lemmas.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/LinearAlgebra/FiniteDimensional/Lemmas.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/LinearAlgebra/FiniteDimensional/Lemmas.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/LinearAlgebra/FiniteDimensional/Lemmas.setup.json --json
+error: Mathlib/LinearAlgebra/FiniteDimensional/Lemmas.lean:142:3: unknown tactic
+error: Mathlib/LinearAlgebra/FiniteDimensional/Lemmas.lean:138:27: unsolved goals
+K : Type u
+V : Type v
+inst✝⁶ : DivisionRing K
+inst✝⁵ : AddCommGroup V
+inst✝⁴ : Module K V
+V₂ : Type v'
+inst✝³ : AddCommGroup V₂
+inst✝² : Module K V₂
+inst✝¹ : FiniteDimensional K V
+inst✝ : FiniteDimensional K V₂
+f : V →ₗ[K] V₂
+h : finrank K V₂ < finrank K V
+h₁ : finrank K ↥(range f) + finrank K ↥(ker f) = finrank K V
+h₂ : finrank K ↥(range f) ≤ finrank K V₂
+⊢ 0 < finrank K ↥(ker f)
+error: Lean exited with code 1
+✔ [2900/3105] Built Mathlib.LinearAlgebra.Matrix.Diagonal (2.9s)
+✔ [2901/3105] Built Mathlib.RingTheory.TensorProduct.Basic (56s)
+✔ [2913/3105] Built Mathlib.RingTheory.TensorProduct.Finite (3.7s)
+✔ [2914/3105] Built Mathlib.LinearAlgebra.Matrix.Kronecker (8.2s)
+✔ [2976/3105] Built Mathlib.RingTheory.MatrixAlgebra (8.6s)
+✔ [2977/3105] Built Mathlib.RingTheory.IsTensorProduct (17s)
+✖ [2979/3105] Building Mathlib.RingTheory.PolynomialAlgebra (338ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/RingTheory/PolynomialAlgebra.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/PolynomialAlgebra.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/PolynomialAlgebra.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/PolynomialAlgebra.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/PolynomialAlgebra.setup.json --json
+error: Mathlib/RingTheory/PolynomialAlgebra.lean:6:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean/Aesop/Check.olean', incompatible header
+error: Lean exited with code 1
+✖ [2988/3105] Building Mathlib.RingTheory.Localization.BaseChange (396ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/RingTheory/Localization/BaseChange.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/Localization/BaseChange.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/RingTheory/Localization/BaseChange.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/Localization/BaseChange.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/RingTheory/Localization/BaseChange.setup.json --json
+error: Mathlib/RingTheory/Localization/BaseChange.lean:6:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean/Batteries/CodeAction/Deprecated.olean', incompatible header
+error: Lean exited with code 1
+✖ [3035/3105] Building Mathlib.Algebra.Category.Ring.Constructions (405ms)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.23.0-rc2/bin/lean /home/hantao/code/FloatSpec/.lake/packages/mathlib/Mathlib/Algebra/Category/Ring/Constructions.lean -o /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/Category/Ring/Constructions.olean -i /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean/Mathlib/Algebra/Category/Ring/Constructions.ilean -c /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/Category/Ring/Constructions.c --setup /home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/ir/Mathlib/Algebra/Category/Ring/Constructions.setup.json --json
+error: Mathlib/Algebra/Category/Ring/Constructions.lean:6:0: failed to read file '/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean/Batteries/CodeAction/Deprecated.olean', incompatible header
+error: Lean exited with code 1
+Some required targets logged failures:
+- Mathlib.Algebra.MvPolynomial.Degrees
+- Mathlib.Analysis.Convex.Mul
+- Mathlib.Algebra.Polynomial.Laurent
+- Mathlib.Analysis.Convex.Slope
+- Mathlib.Topology.Algebra.Module.LinearMap
+- Mathlib.Algebra.Polynomial.FieldDivision
+- Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
+- Mathlib.Analysis.Normed.Group.AddTorsor
+- Mathlib.Topology.Algebra.IsUniformGroup.Basic
+- Mathlib.RingTheory.TensorProduct.Free
+- Mathlib.Topology.Algebra.InfiniteSum.NatInt
+- Mathlib.Analysis.Convex.Jensen
+- Mathlib.RingTheory.Localization.Ideal
+- Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
+- Mathlib.RingTheory.PolynomialAlgebra
+- Mathlib.RingTheory.Localization.BaseChange
+- Mathlib.Algebra.Category.Ring.Constructions
+error: build failed

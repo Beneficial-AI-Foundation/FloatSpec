@@ -1830,6 +1830,27 @@ class Valid_rnd (rnd : ℝ → Int) : Prop where
   /-- Agreement on integers: rounding an integer returns it -/
   Zrnd_IZR : ∀ n : Int, rnd (n : ℝ) = n
 
+/-!
+Local instance: validity of `Zfloor` as an integer rounding.
+
+We will use this to construct down-rounding witnesses by applying `Zfloor`
+to the scaled mantissa and rescaling by the canonical exponent.
+-/
+noncomputable def rnd_floor (x : ℝ) : Int := (FloatSpec.Core.Raux.Zfloor x).run
+
+instance valid_rnd_floor : Valid_rnd rnd_floor := by
+  refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt };
+  · -- Monotonicity: ⌊x⌋ ≤ ⌊y⌋ when x ≤ y
+    intro x y hxy
+    -- From ((⌊x⌋):ℝ) ≤ x ≤ y, we get ((⌊x⌋):ℝ) ≤ y, hence ⌊x⌋ ≤ ⌊y⌋
+    have hreal : ((Int.floor x) : ℝ) ≤ y := le_trans (by simpa using (Int.floor_le x)) hxy
+    -- Use the floor characterization: z ≤ ⌊y⌋ ↔ (z:ℝ) ≤ y
+    have : Int.floor x ≤ Int.floor y := (Int.le_floor.mpr hreal)
+    simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using this
+  · -- Agreement on integers: ⌊n⌋ = n
+    intro n
+    simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using (Int.floor_intCast (n := n))
+
 /-- Coq (Generic_fmt.v): Zrnd_DN_or_UP
 
     Any valid integer rounding is either floor or ceiling on every input.
@@ -2449,10 +2470,10 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
     have hineq :
         |(((Znearest choice x) : Int) : ℝ) - ((n : Int) : ℝ)|
           ≤ |(((Znearest choice x) : Int) : ℝ) - x| + |x - ((n : Int) : ℝ)| := by
-      have := abs_add ( (((Znearest choice x) : Int) : ℝ) - x) (x - ((n : Int) : ℝ))
-      -- Rewrite ((Z) - n) as ((Z) - x) + (x - n)
-      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc, sub_add_sub_cancel]
-        using this
+      -- Direct triangle inequality |a - c| ≤ |a - b| + |b - c|
+      -- with a = (Znearest x : ℝ), b = x, c = (n : ℝ)
+      simpa using
+        (abs_sub_le (((((Znearest choice x) : Int) : ℝ))) x (((n : Int) : ℝ)))
     -- Also rewrite |((Z) - x)| to |x - (Z)|
     have hineq' :
         |(((Znearest choice x) : Int) : ℝ) - ((n : Int) : ℝ)|
@@ -3137,11 +3158,12 @@ noncomputable def ZnearestA := fun t : Int => decide (0 ≤ t)
 -- They will be discharged or replaced by constructive proofs in a later pass.
 -- Private axiom used only to break the module cycle with Round_generic.
 -- The corresponding global existence result is provided there; see notes.
-private axiom round_DN_exists_local_ax
+private theorem round_DN_exists_local_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x : ℝ) :
     ∃ f, (generic_format beta fexp f).run ∧
-      FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f
+      FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  sorry
 
 private theorem round_DN_exists_local
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]

@@ -1,0 +1,40 @@
+info: mathlib: checking out revision 'f48b2e99e9f147a03910b4932c4143c718332755'
+info: updating toolchain to 'leanprover/lean4:v4.24.0-rc1'
+info: restarting Lake via Elan
+info: downloading https://releases.lean-lang.org/lean4/v4.24.0-rc1/lean-4.24.0-rc1-linux.tar.zst
+info: installing /home/hantao/.elan/toolchains/leanprover--lean4---v4.24.0-rc1
+info: toolchain not updated; already up-to-date
+info: plausible: checking out revision '9f492660e9837df43fd885a2ad05c520da9ff9f5'
+info: importGraph: checking out revision '90f3b0f429411beeeb29bbc248d799c18a2d520d'
+info: proofwidgets: checking out revision '556caed0eadb7901e068131d1be208dd907d07a2'
+info: aesop: checking out revision '9e8de5716b162ec8983a89711a186d13ff871c22'
+info: Qq: checking out revision '2e582a44b0150db152bff1c8484eb557fb5340da'
+info: batteries: checking out revision '903b509acff8e83c0dd7820d164968e0cb941b97'
+info: Cli: checking out revision 'b62fd39acc32da6fb8bb160c82d1bbc3cb3c186e'
+info: mathlib: running post-update hooks
+✔ [3/19] Built Batteries.Data.String.Basic (487ms)
+✔ [4/19] Built Cache.Lean (548ms)
+✔ [5/19] Built Batteries.Data.String.Basic:c.o (120ms)
+✔ [6/19] Built Cache.Lean:c.o (150ms)
+✔ [7/19] Built Batteries.Data.Array.Match (984ms)
+✔ [8/19] Built Batteries.Data.Array.Match:c.o (300ms)
+✔ [9/19] Built Batteries.Data.String.Matcher (431ms)
+✔ [10/19] Built Batteries.Data.String.Matcher:c.o (242ms)
+✔ [11/19] Built Cache.IO (1.7s)
+✔ [12/19] Built Cache.Hashing (1.2s)
+✔ [13/19] Built Cache.Hashing:c.o (812ms)
+✔ [14/19] Built Cache.IO:c.o (2.3s)
+✔ [15/19] Built Cache.Requests (2.1s)
+✔ [16/19] Built Cache.Main (1.1s)
+✔ [17/19] Built Cache.Requests:c.o (1.6s)
+✔ [18/19] Built Cache.Main:c.o (731ms)
+✔ [19/19] Built cache:exe (699ms)
+Dependency Mathlib uses a different lean-toolchain
+  Project uses leanprover/lean4:v4.24.0-rc1
+  Mathlib uses leanprover/lean4:v4.23.0-rc2
+
+The cache will not work unless your project's toolchain matches Mathlib's toolchain
+This can be achieved by copying the contents of the file `.lake/packages/mathlib/lean-toolchain`
+into the `lean-toolchain` file at the root directory of your project
+You can use `cp .lake/packages/mathlib/lean-toolchain ./lean-toolchain`
+error: mathlib: failed to fetch cache

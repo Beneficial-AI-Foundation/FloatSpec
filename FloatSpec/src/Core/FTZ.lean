@@ -49,7 +49,8 @@ def FTZ_exp (e : Int) : Int :=
     the conditional logic for flush-to-zero behavior.
 -/
 def FTZ_exp_correct_check (e : Int) : Id Bool :=
-  pure (FTZ_exp prec emin e = if emin ≤ e - prec then e - prec else emin)
+  -- Use boolean equality to avoid Prop-in-Bool mismatches
+  pure ((FTZ_exp prec emin e) == (if emin ≤ e - prec then e - prec else emin))
 
 /-- Specification: FTZ exponent calculation
 
@@ -61,7 +62,10 @@ theorem FTZ_exp_spec (e : Int) :
     ⦃⌜True⌝⦄
     FTZ_exp_correct_check prec emin e
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  sorry
+  intro _
+  unfold FTZ_exp_correct_check FTZ_exp
+  -- Reflexivity on the conditional makes the boolean check true
+  simp
 
 /-- Flush-to-zero format predicate
 
@@ -99,7 +103,9 @@ theorem FTZ_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
     FTZ_format prec emin beta x
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄ := by
-  sorry
+  intro _
+  -- Reduce the Hoare triple on `Id`; unfold the definition of `FTZ_format`.
+  simp [FTZ_format, wp, PostCond.noThrow, Id.run, bind, pure]
 
 /-- Specification: FTZ exponent function correctness
 
