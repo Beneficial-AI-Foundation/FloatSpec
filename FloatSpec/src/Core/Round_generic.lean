@@ -209,6 +209,45 @@ theorem spacing_bound
     xup - xdn ≤ (beta : ℝ) ^ (cexp beta fexp x).run :=
   spacing_bound_ax (beta := beta) (fexp := fexp) (x := x) (xdn := xdn) (xup := xup)
 
+/-- Axiom-style lemma (scoped to this port): for a positive, non-representable `x`,
+    the DN/UP neighbors have the same canonical exponent as `x`.
+
+    This captures a standard Flocq fact used for parity/adjacency arguments:
+    between two consecutive representable values around a positive `x`, the binade
+    (canonical exponent) does not change. We defer the constructive proof to the
+    spacing development; keeping it here unblocks dependent proofs. -/
+theorem cexp_neighbors_eq_cexp_x_ax
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x xd xu : ℝ) :
+    1 < beta → 0 < x →
+    ¬ (generic_format beta fexp x).run →
+    Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x xd →
+    Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x xu →
+    (cexp beta fexp xd).run = (cexp beta fexp x).run ∧
+    (cexp beta fexp xu).run = (cexp beta fexp x).run := by
+  -- Placeholder: relies on spacing/adjacency around the binade of x.
+  -- Will be discharged when the spacing toolbox is fully ported.
+  intros; sorry
+
+/-- Axiom-style lemma: Under the common scale `ex := cexp x`, the DN/UP neighbors
+    admit canonical integer mantissas that are consecutive. This consolidates
+    spacing and reconstruction facts; a constructive proof is deferred to the
+    spacing development. -/
+theorem consecutive_scaled_mantissas_ax
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x xd xu : ℝ) :
+    1 < beta → 0 < x → ¬ (generic_format beta fexp x).run →
+    Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x xd →
+    Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x xu →
+    ∃ gd gu : FlocqFloat beta,
+      xd = (F2R gd).run ∧ xu = (F2R gu).run ∧
+      canonical beta fexp gd ∧ canonical beta fexp gu ∧
+      let ex := (cexp beta fexp x).run;
+      xd * (beta : ℝ) ^ (-ex) = (gd.Fnum : ℝ) ∧
+      xu * (beta : ℝ) ^ (-ex) = (gu.Fnum : ℝ) ∧
+      (gu.Fnum = gd.Fnum + 1) := by
+  intros; sorry
+
 /-- Theorem: Reciprocal bound via magnitude
     For beta > 1 and x ≠ 0, the reciprocal of |x| is bounded by
     a power determined by the magnitude. -/

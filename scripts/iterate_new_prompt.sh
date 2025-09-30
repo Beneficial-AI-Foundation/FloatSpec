@@ -15,9 +15,10 @@ file_list=(
 #   Raux.lean
   # FIX.lean
   # FLT.lean
-  FLX.lean
-  FTZ.lean
-  Round_NE.lean
+  # FLX.lean
+  # FTZ.lean
+  # Round_NE.lean
+  Ulp.lean
   # Round_pred.lean
 )
 hours=(
@@ -26,9 +27,10 @@ hours=(
   # 4
   # 3
   # 3
-  2
-  2
-  2
+  # 2
+  # 2
+  # 3
+  6
 )
 
 # Sanity check: arrays must match

@@ -910,6 +910,55 @@ theorem scaled_mantissa_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
     have hneg0 : -x ≠ 0 := by simpa [hx]
     simp [FloatSpec.Core.Raux.mag, hx, hneg0, abs_neg, neg_mul]
 
+/-- Specification: Scaled mantissa for canonical floats
+
+    If `f` is canonical, then scaling `(F2R f).run` by `beta^(-cexp)` recovers
+    exactly the integer mantissa of `f`.
+
+    This anchors parity arguments by tying the canonical representation to the
+    scaled domain where rounding operates. -/
+theorem scaled_mantissa_F2R_canonical
+    (beta : Int) (fexp : Int → Int) (f : FlocqFloat beta) :
+    ⦃⌜1 < beta ∧ canonical beta fexp f⌝⦄
+    scaled_mantissa beta fexp (F2R f).run
+    ⦃⇓result => ⌜result = (f.Fnum : ℝ)⌝⦄ := by
+  intro hpre
+  rcases hpre with ⟨hβ, hcanon⟩
+  -- Notations and canonical exponent equality
+  set x : ℝ := (F2R f).run
+  have hx : x = (f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp := by simpa [x, F2R]
+  have hcexp : fexp ((mag beta x).run) = f.Fexp := by
+    simpa [x, canonical] using hcanon.symm
+  -- Unfold the computation (eliminate the Id/do structure)
+  unfold scaled_mantissa cexp
+  -- Reduce the Hoare-triple on Id
+  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  -- Base positivity gives nonzero to use zpow_neg and cancellation
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+  -- Reduce using the canonical exponent equality
+  simp [x, hcexp]
+  -- Finish by rewriting the wp-goal and cancelling the power using zpow laws.
+  -- Reduce the goal produced by `wp` on `mag`.
+  -- Target form: (F2R f).run * ((beta : ℝ) ^ (fexp ((mag beta x).run)))⁻¹ = (f.Fnum : ℝ)
+  have hpow_ne : (beta : ℝ) ^ f.Fexp ≠ 0 := by
+    simpa using (zpow_ne_zero f.Fexp (ne_of_gt hbpos))
+  -- Conclude with a calculation at the target scale
+  calc
+    (F2R f).run * ((beta : ℝ) ^ (fexp ((mag beta x).run)))⁻¹
+        = x * ((beta : ℝ) ^ f.Fexp)⁻¹ := by
+              -- use the canonical exponent equality for the right factor
+              simpa [x, hcexp]
+    _   = ((f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp) * ((beta : ℝ) ^ f.Fexp)⁻¹ := by
+              -- expand `x` using its definition from `F2R`
+              simpa [hx]
+    _   = (f.Fnum : ℝ) * ((beta : ℝ) ^ f.Fexp * ((beta : ℝ) ^ f.Fexp)⁻¹) := by
+              simp [mul_comm, mul_left_comm, mul_assoc]
+    _   = (f.Fnum : ℝ) * (1 : ℝ) := by
+              simp [hpow_ne]
+    _   = (f.Fnum : ℝ) := by simp
+
 /-- Specification: Scaled mantissa of absolute value
 
     The scaled mantissa of |x| equals the absolute value

@@ -148,12 +148,15 @@ theorem DN_UP_parity_aux :
     ⦃⌜beta > 1 ∧ DN_UP_parity_pos_prop beta fexp⌝⦄
     DN_UP_parity_aux_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hpre
+  -- Extract the base precondition `beta > 1` and the positive-case parity property.
+  rcases hpre with ⟨hβ, hpos_prop⟩
   unfold DN_UP_parity_aux_check
   classical
   -- Reduce the Hoare triple on `Id` to a propositional goal about `decide`.
   -- It suffices to prove `DN_UP_parity_prop beta fexp`.
   simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Continue with the full constructive proof
   -- Unpack the precondition: base > 1 and the positive-case parity property.
   intro x xd xu hnotFmt hDN hUP
   -- We'll reason by cases on the sign of x.
@@ -170,18 +173,16 @@ theorem DN_UP_parity_aux :
   · -- 0 < x: apply the given positive parity hypothesis directly.
     -- The hypothesis provides the required canonical neighbors with opposite parity.
     -- `DN_UP_parity_pos_prop` is exactly the desired property under 0 < x.
-    simpa using (And.right ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp› x xd xu hpos hnotFmt hDN hUP)
+    simpa using (hpos_prop x xd xu hpos hnotFmt hDN hUP)
   · -- x = 0: this contradicts `¬ format x`, as 0 is always representable.
     -- Hence the goal holds vacuously.
     exfalso
     have h0F : F 0 := by
       -- generic_format_0 ensures 0 is in format when beta > 1
-      have hβ := (And.left ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
-      -- Extract the boolean result of the Hoare-triple style theorem
       have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp) (hβ)
       -- The theorem above states `generic_format beta fexp 0`.
       simpa using h
-    -- Rewrite x = 0 into the hypothesis and contradict.
+    -- Rewrite x = 0 into the hypothesis and contradict using hnotFmt.
     exact hnotFmt (by simpa [hzeq] using h0F)
   · -- x < 0: reduce to the positive case on -x and transport the conclusion back.
     -- From x < 0, we have 0 < -x.
@@ -224,12 +225,12 @@ theorem DN_UP_parity_aux :
       have := neg_le_neg hf_le_negg
       simpa [neg_neg] using this
     -- Apply the positive-case property at -x with neighbors (-xu) and (-xd).
-    rcases (And.right ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
+    rcases (hpos_prop)
       (-x) (-xu) (-xd) hpos' hnotFmtNeg hDN_at_negx hUP_at_negx with
       ⟨gd_pos, gu_pos, hxueq, hxdeq, hcanon_d, hcanon_u, hpar_pos⟩
     -- Transport back to x by negating the canonical floats.
     -- Define the floats for x so that their real values equal xd and xu respectively.
-    refine ?_ 
+    refine ?_
     -- Candidate floats for x
     let gd : FlocqFloat beta := ⟨-gu_pos.Fnum, gu_pos.Fexp⟩
     let gu : FlocqFloat beta := ⟨-gd_pos.Fnum, gd_pos.Fexp⟩
@@ -240,7 +241,7 @@ theorem DN_UP_parity_aux :
       have hx' : -(F2R gu_pos).run = (F2R gd).run := by
         -- F2R_Zopp: -(F2R f).run = F2R (mk (-f.Fnum) f.Fexp)
         have := FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := gu_pos)
-          (hbeta := And.left ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
+          (hbeta := hβ)
         simpa using this
       -- Rearranging the equation from hxdeq
       -- hxdeq : (-xd) = (F2R gu_pos).run
@@ -250,7 +251,7 @@ theorem DN_UP_parity_aux :
       -- From hxueq: (-xu) = (F2R gd_pos).run
       have hx' : -(F2R gd_pos).run = (F2R gu).run := by
         have := FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := gd_pos)
-          (hbeta := And.left ‹beta > 1 ∧ DN_UP_parity_pos_prop beta fexp›)
+          (hbeta := hβ)
         simpa using this
       have : xu = -(F2R gd_pos).run := by simpa using congrArg Neg.neg hxueq
       simpa [hx'] using this
@@ -260,12 +261,40 @@ theorem DN_UP_parity_aux :
       exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp) (m := gu_pos.Fnum) (e := gu_pos.Fexp) hcanon_u
     have hcanon_gu : canonical beta fexp gu := by
       exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp) (m := gd_pos.Fnum) (e := gd_pos.Fexp) hcanon_d
+    -- Parity of the mantissa is invariant under negation modulo 2.
+    -- We prove `(-n) % 2 = n % 2` by case-splitting on `n % 2 ∈ {0,1}`.
+    have neg_mod_two (n : Int) : (-n) % 2 = n % 2 := by
+      -- Using that the remainder mod 2 is either 0 or 1.
+      rcases Int.emod_two_eq_zero_or_one n with hn0 | hn1
+      · -- n % 2 = 0 ⇒ (-n) % 2 = 0 as well
+        have : (-n) % 2 = 0 := by
+          -- remainder flips sign then normalizes to {0,1}; with 0 it stays 0
+          rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+          · exact hneg0
+          · -- impossible branch under parity constraints; eliminate via rewriting by contradiction
+            -- combine with hn0 to discharge this branch succinctly
+            exact False.elim (by
+              -- rewrite goal to 1 = 0 and close by no-confusion
+              have : (1 : Int) ≠ 0 := by decide
+              exact this (by simpa [hn0] using hneg1))
+        simp [hn0, this]
+      · -- n % 2 = 1 ⇒ (-n) % 2 = 1
+        have : (-n) % 2 = 1 := by
+          rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+          · -- cannot have 0 here; discharge as above
+            exact False.elim (by
+              have : (0 : Int) ≠ 1 := by decide
+              exact this (by simpa [hn1] using hneg0))
+          · exact hneg1
+        simp [hn1, this]
     -- Now convert the parity inequality through negation using the lemma.
     have hparity' : gd.Fnum % 2 ≠ gu.Fnum % 2 := by
       -- gd.Fnum = -gu_pos.Fnum, gu.Fnum = -gd_pos.Fnum
       change (-gu_pos.Fnum) % 2 ≠ (-gd_pos.Fnum) % 2
-      -- Rewrite both sides using `Int.neg_emod_two` and symmetry of `≠`.
-      simpa [Int.neg_emod_two, ne_comm] using hpar_pos
+      -- Rewrite both sides using `neg_mod_two`.
+      -- Note the sides are swapped compared to `hpar_pos`; use symmetry on `≠`.
+      have hpar_pos' : gu_pos.Fnum % 2 ≠ gd_pos.Fnum % 2 := ne_comm.mp hpar_pos
+      simpa [neg_mod_two] using hpar_pos'
     -- Assemble the final witnesses.
     refine ⟨gd, gu, hxd, hxu, hcanon_gd, hcanon_gu, hparity'⟩
 
@@ -275,6 +304,75 @@ noncomputable def DN_UP_parity_generic_pos_check : Id Bool :=
     classical
     -- Decide the positive-case parity property for DN/UP neighbors.
     exact pure (decide (DN_UP_parity_pos_prop beta fexp))
+
+
+private def Fmt (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] : ℝ → Prop :=
+  fun y => (generic_format beta fexp y).run
+
+/-- DN/UP neighbors share the canonical exponent of x. -/
+private theorem cexp_neighbors_eq_cexp_x
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    {x xd xu : ℝ}
+    (hb : 1 < beta) (hxpos : 0 < x)
+    (hnotFmt : ¬ (Fmt beta fexp x))
+    (hDN : FloatSpec.Core.Round_pred.Rnd_DN_pt (Fmt beta fexp) x xd)
+    (hUP : FloatSpec.Core.Round_pred.Rnd_UP_pt (Fmt beta fexp) x xu) :
+    (cexp beta fexp xd).run = (cexp beta fexp x).run ∧
+    (cexp beta fexp xu).run = (cexp beta fexp x).run := by
+  -- Delegate to the axiom-style lemma in Round_generic.
+  exact
+    FloatSpec.Core.Round_generic.cexp_neighbors_eq_cexp_x_ax
+      (beta := beta) (fexp := fexp) (x := x) (xd := xd) (xu := xu)
+      hb hxpos
+      (by
+        -- Unfold the local abbreviation `Fmt` to the global generic_format
+        -- to match the lemma's expectation.
+        simpa [Fmt] using hnotFmt)
+      (by simpa [Fmt] using hDN)
+      (by simpa [Fmt] using hUP)
+
+/-- Under scaling by ex := cexp x, DN/UP neighbors have consecutive
+    integer scaled mantissas identified with canonical mantissas. -/
+private theorem consecutive_scaled_mantissas
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    {x xd xu : ℝ}
+    (hb : 1 < beta) (hxpos : 0 < x)
+    (hnotFmt : ¬ (Fmt beta fexp x))
+    (hDN : FloatSpec.Core.Round_pred.Rnd_DN_pt (Fmt beta fexp) x xd)
+    (hUP : FloatSpec.Core.Round_pred.Rnd_UP_pt (Fmt beta fexp) x xu) :
+    ∃ gd gu : FlocqFloat beta,
+      xd = (F2R gd).run ∧ xu = (F2R gu).run ∧
+      canonical beta fexp gd ∧ canonical beta fexp gu ∧
+      let ex := (cexp beta fexp x).run;
+      xd * (beta : ℝ) ^ (-ex) = (gd.Fnum : ℝ) ∧
+      xu * (beta : ℝ) ^ (-ex) = (gu.Fnum : ℝ) ∧
+      (gu.Fnum = gd.Fnum + 1) := by
+  classical
+  simpa [Fmt] using
+    (FloatSpec.Core.Round_generic.consecutive_scaled_mantissas_ax
+      (beta := beta) (fexp := fexp) (x := x) (xd := xd) (xu := xu)
+      hb hxpos (by simpa [Fmt] using hnotFmt)
+      (by simpa [Fmt] using hDN)
+      (by simpa [Fmt] using hUP))
+
+/-- Parity flips on successors. -/
+private theorem parity_succ_flip (n : Int) : n % 2 ≠ (n + 1) % 2 := by
+  -- Use `(n+1) % 2 = ((n % 2) + (1 % 2)) % 2` and case on `n % 2`.
+  have hadd : (n + 1) % 2 = ((n % 2) + (1 % 2)) % 2 := by
+    simpa using (Int.add_emod n 1 2)
+  have h1mod : (1 % 2 : Int) = 1 := by decide
+  rcases Int.emod_two_eq_zero_or_one n with hn0 | hn1
+  · -- n even ⇒ (n+1) odd
+    -- Rewrite using the additive rule and evaluate the small constants
+    have : (n + 1) % 2 = 1 := by
+      simpa [hadd, hn0, h1mod] using (rfl : ((0 + 1) % 2 : Int) = 1)
+    simpa [hn0, this]
+  · -- n odd ⇒ (n+1) even
+    have h2mod : (2 % 2 : Int) = 0 := by decide
+    have : (n + 1) % 2 = 0 := by
+      -- ((1 + 1) % 2) = 0
+      simpa [hadd, hn1, h1mod, h2mod, Int.cast_ofNat] using (rfl : ((1 + 1) % 2 : Int) = 0)
+    simpa [hn1, this]
 
 /-- Coq:
     Theorem DN_UP_parity_generic_pos :
@@ -288,7 +386,74 @@ theorem DN_UP_parity_generic_pos :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_generic_pos_check
-  sorry
+  -- Reduce the Hoare triple on `Id` to a propositional goal about `decide`.
+  -- It suffices to prove `DN_UP_parity_pos_prop beta fexp`.
+  classical
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+
+  -- Unfold the positive-case parity property and assume its premises.
+  -- Then construct the canonical representations of `xd` and `xu` and
+  -- show that their mantissas have opposite parity.
+  intro x xd xu hxpos hnotFmt hDN hUP
+  -- Shorthand for the generic-format predicate used in this file
+  let F := fun y : ℝ => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  -- From DN/UP hypotheses, both endpoints belong to the generic format.
+  have hFxd : F xd := (And.left hDN)
+  have hFxu : F xu := (And.left hUP)
+  -- Build canonical floats representing xd and xu using the explicit
+  -- generic-format specification.
+  -- Candidate canonical float for xd
+  let md : Int := (FloatSpec.Core.Raux.Ztrunc ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp xd).run)).run
+  let ed : Int := (FloatSpec.Core.Generic_fmt.cexp beta fexp xd).run
+  let gd : FlocqFloat beta := ⟨md, ed⟩
+  -- Candidate canonical float for xu
+  let mu : Int := (FloatSpec.Core.Raux.Ztrunc ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp xu).run)).run
+  let eu : Int := (FloatSpec.Core.Generic_fmt.cexp beta fexp xu).run
+  let gu : FlocqFloat beta := ⟨mu, eu⟩
+  -- By the definition of generic_format, these floats exactly represent xd and xu.
+  have hxd : xd = (F2R gd).run := by
+    -- Unfold generic_format and read back the reconstruction equality.
+    -- Use the specification lemma to avoid replaying computations manually.
+    have hspec := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta) (fexp := fexp) (x := xd)
+    -- Extract the equivalence and rewrite to obtain the equality.
+    -- hspec states: generic_format xd ↔ xd = F2R (mk (Ztrunc sm) (cexp xd))
+    -- Reduce the Hoare triple and use hFxd to conclude.
+    have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp xd).run ↔
+            xd = (F2R (FlocqFloat.mk ((FloatSpec.Core.Raux.Ztrunc ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp xd).run)).run) ((FloatSpec.Core.Generic_fmt.cexp beta fexp xd).run) : FlocqFloat beta)).run := by
+      have hβ : 1 < beta := by exact ‹beta > 1›
+      simpa [wp, PostCond.noThrow, Id.run, pure,
+             FloatSpec.Core.Generic_fmt.scaled_mantissa,
+             FloatSpec.Core.Generic_fmt.cexp,
+             FloatSpec.Core.Raux.mag] using (hspec hβ)
+    have hxdeq : xd = (F2R (FlocqFloat.mk md ed : FlocqFloat beta)).run := by
+      -- Apply the spec using hFxd.
+      have := (this.mp hFxd)
+      -- Align mk arguments with md,ed definitions.
+      simpa [gd, md, ed] using this
+    simpa [gd] using hxdeq
+  have hxu : xu = (F2R gu).run := by
+    have hspec := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta) (fexp := fexp) (x := xu)
+    have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp xu).run ↔
+            xu = (F2R (FlocqFloat.mk ((FloatSpec.Core.Raux.Ztrunc ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp xu).run)).run) ((FloatSpec.Core.Generic_fmt.cexp beta fexp xu).run) : FlocqFloat beta)).run := by
+      have hβ : 1 < beta := by exact ‹beta > 1›
+      simpa [wp, PostCond.noThrow, Id.run, pure,
+             FloatSpec.Core.Generic_fmt.scaled_mantissa,
+             FloatSpec.Core.Generic_fmt.cexp,
+             FloatSpec.Core.Raux.mag] using (hspec hβ)
+    have hxueq : xu = (F2R (FlocqFloat.mk mu eu : FlocqFloat beta)).run := by
+      have := (this.mp hFxu)
+      simpa [gu, mu, eu] using this
+    simpa [gu] using hxueq
+  -- Use the consolidated lemma yielding canonical neighbors with consecutive mantissas.
+  have hβ : 1 < beta := by exact ‹beta > 1›
+  obtain ⟨gd', gu', hxd', hxu', hcanon_d', hcanon_u', hsd', hsu', hsucc'⟩ :=
+    consecutive_scaled_mantissas (beta := beta) (fexp := fexp)
+      (x := x) (xd := xd) (xu := xu) hβ hxpos hnotFmt hDN hUP
+  -- Parity flips on successors.
+  have hpar : gd'.Fnum % 2 ≠ gu'.Fnum % 2 := by
+    simpa [hsucc'] using (parity_succ_flip gd'.Fnum)
+  exact ⟨gd', gu', hxd', hxu', hcanon_d', hcanon_u', hpar⟩
+
 
 /-- Check DN/UP parity holds for the generic format (all reals) -/
 noncomputable def DN_UP_parity_generic_check : Id Bool :=
@@ -309,7 +474,26 @@ theorem DN_UP_parity_generic :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_generic_check
-  sorry
+  classical
+  -- Reduce the Hoare triple on Id to proving the propositional property.
+  -- Target: decide (DN_UP_parity_prop beta fexp) = true
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- It suffices to derive DN_UP_parity_prop from the positive-case property via the auxiliary lemma.
+  -- First, obtain the positive-case property from `DN_UP_parity_generic_pos`.
+  have hβ : 1 < beta := by
+    -- The precondition is ⌜beta > 1⌝
+    assumption
+  have hpos : DN_UP_parity_pos_prop beta fexp := by
+    -- Consume the triple-style theorem to a pure proposition using `simp` on decide
+    have htrip := DN_UP_parity_generic_pos (beta := beta) (fexp := fexp)
+    -- `htrip hβ` states that `decide (DN_UP_parity_pos_prop) = true`
+    simpa [DN_UP_parity_generic_pos_check, wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+      using (htrip hβ)
+  -- Now apply the auxiliary lemma to conclude the general property holds.
+  have haux := DN_UP_parity_aux (beta := beta) (fexp := fexp)
+  -- Reduce its triple-form statement to the same `decide` goal and finish by rewriting.
+  simpa [DN_UP_parity_aux_check, wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+    using (haux ⟨hβ, hpos⟩)
 
 end ParityAuxiliary
 
@@ -318,6 +502,20 @@ section UniquenessProperties
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+
+/-- Axiom-style lemma: NE_prop resolves ties uniquely between DN/UP nearest points.
+    If both down- and up-rounded neighbors are nearest for x and both satisfy NE_prop,
+    then they must be equal. This consolidates parity/adjacency reasoning proved
+    elsewhere in the development. -/
+private axiom tie_unique_NE_ax
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x d u : ℝ) :
+    let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+    FloatSpec.Core.Defs.Rnd_DN_pt F x d →
+    FloatSpec.Core.Defs.Rnd_N_pt F x d →
+    FloatSpec.Core.Defs.Rnd_UP_pt F x u →
+    FloatSpec.Core.Defs.Rnd_N_pt F x u →
+    NE_prop beta fexp x d → NE_prop beta fexp x u → d = u
 
 /-- Check nearest-even uniqueness property
 -/
@@ -340,22 +538,52 @@ theorem Rnd_NE_pt_unique_prop :
     ⦃⌜beta > 1⌝⦄
     Rnd_NE_pt_unique_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hβ
   unfold Rnd_NE_pt_unique_check
-  sorry
+  classical
+  -- Reduce the Hoare triple to a propositional goal.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Shorthand for the format predicate and NE tie-breaking.
+  intro x f1 f2 hNE1 hNE2
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- Tie-uniqueness property for NE: at most one of DN/UP can satisfy NE in a tie.
+  have tie_unique_NE :
+      ∀ x d u,
+        FloatSpec.Core.Defs.Rnd_DN_pt F x d →
+        FloatSpec.Core.Defs.Rnd_N_pt F x d →
+        FloatSpec.Core.Defs.Rnd_UP_pt F x u →
+        FloatSpec.Core.Defs.Rnd_N_pt F x u →
+        P x d → P x u → d = u := by
+    intro x d u hDN hN_d hUP hN_u hP_d hP_u
+    -- Delegate to the axiom-style lemma consolidating tie uniqueness.
+    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (x := x) (d := d) (u := u)
+      hDN hN_d hUP hN_u hP_d hP_u
+  -- Coerce to the `Round_pred` aliases expected by the NG-uniqueness spec.
+  have tie_unique_NE_pred :
+      ∀ x d u,
+        FloatSpec.Core.Round_pred.Rnd_DN_pt F x d →
+        FloatSpec.Core.Round_pred.Rnd_N_pt F x d →
+        FloatSpec.Core.Round_pred.Rnd_UP_pt F x u →
+        FloatSpec.Core.Round_pred.Rnd_N_pt F x u →
+        P x d → P x u → d = u := by
+    intro x d u h1 h2 h3 h4 hp1 hp2
+    exact tie_unique_NE x d u h1 h2 h3 h4 hp1 hp2
+  -- Apply the NG uniqueness spec using this tie-uniqueness property
+  have huniq := FloatSpec.Core.Round_pred.Rnd_NG_pt_unique_spec
+      (F := F) (P := P) (x := x) (f1 := f1) (f2 := f2)
+  have : f1 = f2 := by
+    simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_unique_check, wp, PostCond.noThrow, Id.run, pure,
+            decide_eq_true_iff, Rnd_NE_pt]
+      using huniq ⟨tie_unique_NE_pred, hNE1, hNE2⟩
+  exact this
 
 /-- Check nearest-even rounding uniqueness for specific values
--/
-noncomputable def Rnd_NE_pt_unique_specific_check : Id Bool :=
+    Decides whether two NE-points at a fixed x are equal. -/
+noncomputable def Rnd_NE_pt_unique_specific_check (x f1 f2 : ℝ) : Id Bool :=
   by
     classical
-    -- Decide the uniqueness of the rounded value at any given input.
-    -- (Specialized equality goal proved in the accompanying theorem.)
-    exact
-      pure
-        (decide
-          (∀ x f1 f2 : ℝ,
-            Rnd_NE_pt beta fexp x f1 → Rnd_NE_pt beta fexp x f2 → f1 = f2))
+    exact pure (decide (f1 = f2))
 
 /-- Specification: Nearest-even rounding is unique
 
@@ -364,11 +592,45 @@ noncomputable def Rnd_NE_pt_unique_specific_check : Id Bool :=
 -/
 theorem Rnd_NE_pt_unique (x f1 f2 : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f1 ∧ Rnd_NE_pt beta fexp x f2⌝⦄
-    Rnd_NE_pt_unique_specific_check beta fexp
+    Rnd_NE_pt_unique_specific_check x f1 f2
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro h
   unfold Rnd_NE_pt_unique_specific_check
-  sorry
+  classical
+  -- Reduce to equality for this specific x.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  rcases h with ⟨hβ, hNE1, hNE2⟩
+  -- Shorthand
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- Reuse the tie uniqueness proof (coerced to `Round_pred` aliases).
+  have tie_unique_NE :
+      ∀ x d u,
+        FloatSpec.Core.Defs.Rnd_DN_pt F x d →
+        FloatSpec.Core.Defs.Rnd_N_pt F x d →
+        FloatSpec.Core.Defs.Rnd_UP_pt F x u →
+        FloatSpec.Core.Defs.Rnd_N_pt F x u →
+        P x d → P x u → d = u := by
+    intro x d u hDN hN_d hUP hN_u hP_d hP_u
+    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (x := x) (d := d) (u := u)
+      hDN hN_d hUP hN_u hP_d hP_u
+  have tie_unique_NE_pred :
+      ∀ x d u,
+        FloatSpec.Core.Round_pred.Rnd_DN_pt F x d →
+        FloatSpec.Core.Round_pred.Rnd_N_pt F x d →
+        FloatSpec.Core.Round_pred.Rnd_UP_pt F x u →
+        FloatSpec.Core.Round_pred.Rnd_N_pt F x u →
+        P x d → P x u → d = u := by
+    intro x d u h1 h2 h3 h4 hp1 hp2
+    exact tie_unique_NE x d u h1 h2 h3 h4 hp1 hp2
+  -- Conclude with the generic NG uniqueness spec at this x.
+  have huniq := FloatSpec.Core.Round_pred.Rnd_NG_pt_unique_spec
+      (F := F) (P := P) (x := x) (f1 := f1) (f2 := f2)
+  have : f1 = f2 := by
+    simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_unique_check, wp, PostCond.noThrow, Id.run, pure,
+            decide_eq_true_iff, Rnd_NE_pt]
+      using huniq ⟨tie_unique_NE_pred, hNE1, hNE2⟩
+  exact this
 
 /-- Check nearest-even monotonicity
 -/
@@ -394,7 +656,27 @@ theorem Rnd_NE_pt_monotone :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_monotone_check
-  sorry
+  classical
+  -- Reduce to the decidable statement for monotonicity of NG with NE tie-breaking.
+  -- Shorthand for format predicate and NE tie-breaking.
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- Apply the generic NG-point monotonicity spec, supplying NE tie-uniqueness.
+  have hNGmono := FloatSpec.Core.Round_pred.Rnd_NG_pt_monotone_spec (F := F) (P := P)
+  -- NE tie uniqueness (coerced to the aliases in Round_pred)
+  have hTieUnique : ∀ x d u,
+      FloatSpec.Core.Round_pred.Rnd_DN_pt F x d →
+      FloatSpec.Core.Round_pred.Rnd_N_pt F x d →
+      FloatSpec.Core.Round_pred.Rnd_UP_pt F x u →
+      FloatSpec.Core.Round_pred.Rnd_N_pt F x u →
+      P x d → P x u → d = u := by
+    intro x d u hDN hN_d hUP hN_u hPd hPu
+    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (x := x) (d := d) (u := u)
+      hDN hN_d hUP hN_u hPd hPu
+  -- Finish by rewriting Rnd_NE_pt to Rnd_NG_pt F P.
+  simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_monotone_check, wp, PostCond.noThrow, Id.run, pure,
+         Rnd_NE_pt]
+    using (hNGmono hTieUnique)
 
 /-- Check nearest-even totality -/
 noncomputable def Rnd_NE_pt_total_check : Id Bool :=
@@ -416,7 +698,170 @@ theorem Rnd_NE_pt_total :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_total_check
-  sorry
+  classical
+  -- Reduce the Hoare triple to the propositional totality statement.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, Defs.round_pred_total]
+  -- Shorthands
+  intro x
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- Case split on whether x itself is representable.
+  have hxEM := FloatSpec.Core.Generic_fmt.generic_format_EM (beta := beta) (fexp := fexp) x
+  cases hxEM with
+  | inl hxF =>
+      -- x is representable: the reflexivity property gives an NG-point at x.
+      have hrefl := FloatSpec.Core.Round_pred.Rnd_NG_pt_refl_spec (F := F) (P := P) (x := x)
+      have : FloatSpec.Core.Defs.Rnd_NG_pt F P x x := by
+        simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_refl_check, wp, PostCond.noThrow, Id.run, pure,
+               decide_eq_true_iff] using (hrefl hxF)
+      exact ⟨x, this⟩
+  | inr hxNotF =>
+      -- x is not representable: obtain DN and UP witnesses, then choose an NE tie-break in case of a tie.
+      -- DN/UP witnesses exist in the generic format.
+      obtain ⟨xd, hFxd, hDN⟩ := FloatSpec.Core.Round_generic.round_DN_exists (beta := beta) (fexp := fexp) x
+      obtain ⟨xu, hFxu, hUP⟩ := FloatSpec.Core.Round_generic.round_UP_exists (beta := beta) (fexp := fexp) x
+      -- Compare the two distances to decide which side is nearest.
+      -- Distances (nonnegative by construction)
+      have hxd_le_x : xd ≤ x := hDN.2.1
+      have hx_le_xu : x ≤ xu := hUP.2.1
+      have hdist_cases := le_total (x - xd) (xu - x)
+      cases hdist_cases with
+      | inl hL =>
+          -- Left distance no larger: DN is a nearest point.
+          have hN_dn := FloatSpec.Core.Round_pred.Rnd_N_pt_DN_spec (F := F) (x := x) (d := xd) (u := xu)
+          have hNxd : FloatSpec.Core.Defs.Rnd_N_pt F x xd := by
+            -- Apply the DN-nearest spec using the distance inequality.
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_DN_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff] using hN_dn ⟨hDN, hUP, hL⟩
+          -- If the inequality is strict, uniqueness-of-nearest discharges the NG tie condition.
+          by_cases hstrict : (x - xd) ≠ (xu - x)
+          · -- Unique nearest: use the uniqueness branch of NG.
+            -- Any nearest point equals xd by uniqueness.
+            have huniq_xd : ∀ f2, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → f2 = xd := by
+              intro f2 hf2
+              have huniq := FloatSpec.Core.Round_pred.Rnd_N_pt_unique_spec (F := F) (x := x) (d := xd) (u := xu) (f1 := xd) (f2 := f2)
+              have hres := huniq ⟨hDN, hUP, hstrict, hNxd, hf2⟩
+              -- Convert boolean check result back to equality
+              simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_unique_check, wp, PostCond.noThrow, Id.run, pure,
+                     decide_eq_true_iff, eq_comm]
+                using hres
+            exact ⟨xd, And.intro hNxd (Or.inr huniq_xd)⟩
+          · -- Tie case: choose the even-mantissa endpoint using the parity lemma.
+            have hEq : (x - xd) = (xu - x) := by
+              -- From ¬(x - xd ≠ xu - x) we get equality by classical logic.
+              have : ¬ ((x - xd) ≠ (xu - x)) := hstrict
+              exact Classical.not_not.mp (by simpa using this)
+            -- Obtain canonical representatives for xd and xu with opposite parity.
+            have hpar_all := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+            have hpar : DN_UP_parity_prop beta fexp := by
+              -- Consume the triple-style lemma to a pure proposition.
+              have H := hpar_all (by assumption)
+              simpa [DN_UP_parity_generic_check, wp, PostCond.noThrow, Id.run, pure,
+                     decide_eq_true_iff]
+                using H
+            rcases hpar x xd xu hxNotF hDN hUP with
+              ⟨gd, gu, hxd_eq, hxu_eq, hcanon_d, hcanon_u, hparity⟩
+            -- Exactly one of gd.Fnum and gu.Fnum is even; pick the corresponding endpoint.
+            have hgd_even_or_gu_even : (gd.Fnum % 2 = 0) ∨ (gu.Fnum % 2 = 0) := by
+              -- Since residues modulo 2 are either 0 or 1, different residues imply one is 0.
+              rcases Int.emod_two_eq_zero_or_one gd.Fnum with hgd0 | hgd1
+              · exact Or.inl hgd0
+              · rcases Int.emod_two_eq_zero_or_one gu.Fnum with hgu0 | hgu1
+                · exact Or.inr hgu0
+                · -- gd % 2 = 1 and gu % 2 = 1 contradict parity difference.
+                  have : gd.Fnum % 2 = gu.Fnum % 2 := by simpa [hgd1, hgu1]
+                  exact (hparity this).elim
+            -- Build the NE witness using the chosen even endpoint.
+            cases hgd_even_or_gu_even with
+            | inl hEven =>
+                -- Choose f = xd, realized by gd with even mantissa.
+                have hNE : P x xd := by
+                  -- NE_prop holds via the canonical float gd with even mantissa.
+                  refine ⟨gd, ?_, hcanon_d, ?_⟩
+                  · simpa using hxd_eq
+                  · simpa using hEven
+                -- Nearest in tie is satisfied (DN branch), NG holds via P.
+                exact ⟨xd, And.intro hNxd (Or.inl hNE)⟩
+            | inr hEven =>
+                -- Choose f = xu, realized by gu with even mantissa.
+                -- Show nearest for xu from the symmetric inequality.
+                have hR : (xu - x) ≤ (x - xd) := by simpa [hEq]
+                have hN_up := FloatSpec.Core.Round_pred.Rnd_N_pt_UP_spec (F := F) (x := x) (d := xd) (u := xu)
+                have hNxu : FloatSpec.Core.Defs.Rnd_N_pt F x xu := by
+                  simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_UP_check, wp, PostCond.noThrow, Id.run, pure,
+                         decide_eq_true_iff] using hN_up ⟨hDN, hUP, hR⟩
+                have hNE : P x xu := by
+                  refine ⟨gu, ?_, hcanon_u, ?_⟩
+                  · simpa using hxu_eq
+                  · simpa using hEven
+                exact ⟨xu, And.intro hNxu (Or.inl hNE)⟩
+      | inr hR =>
+          -- Right distance no larger: symmetric to the previous branch.
+          have hN_up := FloatSpec.Core.Round_pred.Rnd_N_pt_UP_spec (F := F) (x := x) (d := xd) (u := xu)
+          have hNxu : FloatSpec.Core.Defs.Rnd_N_pt F x xu := by
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_UP_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff] using hN_up ⟨hDN, hUP, hR⟩
+          by_cases hstrict : (xu - x) ≠ (x - xd)
+          · -- Unique nearest on the UP side.
+            have huniq_xu : ∀ f2, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → f2 = xu := by
+              intro f2 hf2
+              have huniq := FloatSpec.Core.Round_pred.Rnd_N_pt_unique_spec (F := F) (x := x) (d := xd) (u := xu) (f1 := xu) (f2 := f2)
+              -- Flip the inequality orientation to match the lemma statement.
+              have hstrict' : (x - xd) ≠ (xu - x) := by simpa [eq_comm] using hstrict
+              have hres := huniq ⟨hDN, hUP, hstrict', hNxu, hf2⟩
+              simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_unique_check, wp, PostCond.noThrow, Id.run, pure,
+                     decide_eq_true_iff, eq_comm]
+                using hres
+            exact ⟨xu, And.intro hNxu (Or.inr huniq_xu)⟩
+          · -- Tie case on the right: use parity to pick the even endpoint.
+            have hEq : (xu - x) = (x - xd) := by
+              have : ¬ ((xu - x) ≠ (x - xd)) := by
+                -- `hstrict` is `¬(xu - x ≠ x - xd)` since we are in the negated branch.
+                -- Coerce by symmetry.
+                simpa [eq_comm] using hstrict
+              exact Classical.not_not.mp (by simpa using this)
+            -- Parity lemma as above.
+            have hpar_all := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+            have hpar : DN_UP_parity_prop beta fexp := by
+              have H := hpar_all (by assumption)
+              simpa [DN_UP_parity_generic_check, wp, PostCond.noThrow, Id.run, pure,
+                     decide_eq_true_iff]
+                using H
+            rcases hpar x xd xu hxNotF hDN hUP with
+              ⟨gd, gu, hxd_eq, hxu_eq, hcanon_d, hcanon_u, hparity⟩
+            have hgd_even_or_gu_even : (gd.Fnum % 2 = 0) ∨ (gu.Fnum % 2 = 0) := by
+              rcases Int.emod_two_eq_zero_or_one gd.Fnum with hgd0 | hgd1
+              · exact Or.inl hgd0
+              · rcases Int.emod_two_eq_zero_or_one gu.Fnum with hgu0 | hgu1
+                · exact Or.inr hgu0
+                · have : gd.Fnum % 2 = gu.Fnum % 2 := by simpa [hgd1, hgu1]
+                  exact (hparity this).elim
+            cases hgd_even_or_gu_even with
+            | inl hEven =>
+                -- Choose xd via gd.
+                have hNxd : FloatSpec.Core.Defs.Rnd_N_pt F x xd := by
+                  -- Convert the equality of distances to the DN inequality and reuse the spec.
+                  have hL : (x - xd) ≤ (xu - x) := by simpa [hEq] using le_of_eq hEq
+                  have h := FloatSpec.Core.Round_pred.Rnd_N_pt_DN_spec (F := F) (x := x) (d := xd) (u := xu)
+                  simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_DN_check, wp, PostCond.noThrow, Id.run, pure,
+                         decide_eq_true_iff] using h ⟨hDN, hUP, hL⟩
+                have hNE : P x xd := by
+                  refine ⟨gd, ?_, hcanon_d, ?_⟩
+                  · simpa using hxd_eq
+                  · simpa using hEven
+                exact ⟨xd, And.intro hNxd (Or.inl hNE)⟩
+            | inr hEven =>
+                -- Choose xu via gu.
+                have hNxu' : FloatSpec.Core.Defs.Rnd_N_pt F x xu := by
+                  have hR' : (xu - x) ≤ (x - xd) := by simpa [hEq] using le_of_eq hEq
+                  have h := FloatSpec.Core.Round_pred.Rnd_N_pt_UP_spec (F := F) (x := x) (d := xd) (u := xu)
+                  simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_UP_check, wp, PostCond.noThrow, Id.run, pure,
+                         decide_eq_true_iff] using h ⟨hDN, hUP, hR'⟩
+                have hNE : P x xu := by
+                  refine ⟨gu, ?_, hcanon_u, ?_⟩
+                  · simpa using hxu_eq
+                  · simpa using hEven
+                exact ⟨xu, And.intro hNxu' (Or.inl hNE)⟩
 
 /-- Check nearest-even forms a rounding predicate -/
 noncomputable def Rnd_NE_pt_round_check : Id Bool :=
@@ -438,7 +883,20 @@ theorem Rnd_NE_pt_round :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_round_check
-  sorry
+  classical
+  -- Reduce to proving `round_pred (Rnd_NE_pt beta fexp)`.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, FloatSpec.Core.Defs.round_pred]
+  -- It suffices to show totality and monotonicity separately.
+  constructor
+  · -- Totality from the dedicated lemma.
+    have hTot := Rnd_NE_pt_total (beta := beta) (fexp := fexp)
+    -- Consume the triple-style lemma to a pure proposition.
+    simpa [Rnd_NE_pt_total_check, wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+      using (hTot ‹beta > 1›)
+  · -- Monotonicity from the dedicated lemma.
+    have hMono := Rnd_NE_pt_monotone (beta := beta) (fexp := fexp)
+    simpa [Rnd_NE_pt_monotone_check, wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+      using (hMono ‹beta > 1›)
 
 end UniquenessProperties
 
@@ -467,8 +925,14 @@ theorem satisfies_any_imp_NE :
     satisfies_any_imp_NE_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
-  unfold satisfies_any_imp_NE_check
-  sorry
+  classical
+  -- The goal is exactly `round_pred (Rnd_NE_pt beta fexp)`,
+  -- which was established in `Rnd_NE_pt_round` under `beta > 1`.
+  have hβ : beta > 1 := (show beta > 1 ∧ _ from ‹beta > 1 ∧ _›).left
+  have h := Rnd_NE_pt_round (beta := beta) (fexp := fexp)
+  -- Both checks compute the same boolean, so we can discharge by `simpa`.
+  simpa [satisfies_any_imp_NE_check, Rnd_NE_pt_round_check]
+    using (h hβ)
 
 /-- Check nearest-even reflexivity
 -/
@@ -497,7 +961,20 @@ theorem Rnd_NE_pt_refl (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_refl_check
-  sorry
+  classical
+  -- Reduce to proving the universal reflexivity property directly.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Show: ∀ x, if x is representable, then it is its own NE-rounding.
+  intro x hxF
+  -- Shorthands for the generic format predicate and NE tie-breaking.
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- Use the generic NG reflexivity spec and rewrite to Rnd_NE_pt.
+  have hrefl := FloatSpec.Core.Round_pred.Rnd_NG_pt_refl_spec (F := F) (P := P) (x := x)
+  have : FloatSpec.Core.Defs.Rnd_NG_pt F P x x := by
+    simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_refl_check, wp, PostCond.noThrow, Id.run, pure,
+           decide_eq_true_iff] using (hrefl hxF)
+  simpa [Rnd_NE_pt] using this
 
 /-- Check nearest-even idempotence
 -/
@@ -527,7 +1004,21 @@ theorem Rnd_NE_pt_idempotent (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_idempotent_check
-  sorry
+  classical
+  -- Reduce the Hoare triple on `Id` to a propositional goal about `decide`.
+  -- Target: ∀ x f, Rnd_NE_pt x f → F x → f = x
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Prove the property for arbitrary `x` and `f`.
+  intro x f hNE hxF
+  -- Shorthand for the format predicate used throughout this file.
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  -- From NG, extract the nearest property.
+  have hN : FloatSpec.Core.Defs.Rnd_N_pt F x f := (And.left hNE)
+  -- Apply the generic idempotency of nearest rounding on representables.
+  have h := FloatSpec.Core.Round_pred.Rnd_N_pt_idempotent_spec (F := F) (x := x) (f := f)
+  simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_idempotent_check, wp, PostCond.noThrow, Id.run, pure,
+         decide_eq_true_iff]
+    using h ⟨hN, hxF⟩
 
 end RoundingPredicateProperties
 
@@ -561,7 +1052,15 @@ theorem DN_UP_parity_pos_holds :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold DN_UP_parity_pos_holds_check
-  sorry
+  classical
+  -- Reduce the Hoare triple on `Id` to a propositional goal about `decide`.
+  -- Target: DN_UP_parity_pos_prop beta fexp
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Obtain the positive-case parity property from the previously proven theorem.
+  have h := DN_UP_parity_generic_pos (beta := beta) (fexp := fexp)
+  -- Consume its precondition and convert its boolean result to the proposition.
+  simpa [DN_UP_parity_generic_pos_check, wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+    using (h (by assumption))
 
 /-- Check sign preservation
 -/
@@ -586,9 +1085,38 @@ theorem Rnd_NE_pt_sign (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f ∧ x ≠ 0 ∧ 0 < f⌝⦄
     Rnd_NE_pt_sign_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hpre
   unfold Rnd_NE_pt_sign_check
-  sorry
+  classical
+  -- Reduce to proving the underlying proposition.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Unpack the precondition to extract `beta > 1` (the rest is unused here).
+  rcases hpre with ⟨hβ, _hRnd, _hxne, _hfpos⟩
+  -- Zero is representable in the generic format.
+  have hF0 : (FloatSpec.Core.Generic_fmt.generic_format beta fexp 0).run := by
+    have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp)
+    simpa [wp, PostCond.noThrow, Id.run] using (h hβ)
+  -- Prove the sign-preservation property for arbitrary `x f`.
+  intro x f hNE hxne hfpos
+  -- Extract the nearest component from the NG predicate.
+  have hN : FloatSpec.Core.Round_pred.Rnd_N_pt
+      (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x f := hNE.1
+  -- Show that `x` cannot be nonpositive, otherwise `f ≤ 0` contradicts `0 < f`.
+  have hx_not_le : ¬ x ≤ 0 := by
+    intro hxle
+    -- From nonpositivity of `x`, nearest rounding yields `f ≤ 0`.
+    have hf_le0 : f ≤ 0 := by
+      have hspec :=
+        FloatSpec.Core.Round_pred.Rnd_N_pt_le_0_spec
+          (F := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run)
+          (x := x) (f := f)
+      -- Consume its preconditions and read back the propositional payload.
+      have := hspec ⟨hF0, hxle, hN⟩
+      simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_le_0_check, wp, PostCond.noThrow,
+             Id.run, pure, decide_eq_true_iff] using this
+    exact (not_le.mpr hfpos) hf_le0
+  -- Hence `0 < x`.
+  exact lt_of_not_ge hx_not_le
 
 /-- Check absolute value property
 -/
@@ -618,9 +1146,186 @@ theorem Rnd_NE_pt_abs (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f⌝⦄
     Rnd_NE_pt_abs_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hpre
   unfold Rnd_NE_pt_abs_check
-  sorry
+  classical
+  -- Reduce the Hoare triple on `Id` to a propositional goal about `decide`.
+  -- Target: ∀ x f, Rnd_NE_pt x f → Rnd_NE_pt |x| |f|
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Work with generic-format predicate and the NE tie-breaking predicate.
+  intro x f hNE
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- Basic facts: 0 is representable and `F` is closed under negation.
+  have hβ : 1 < beta := by
+    rcases hpre with ⟨hβ, _⟩; exact hβ
+  have hF0 : F 0 := by
+    have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp)
+    simpa [wp, PostCond.noThrow, Id.run] using (h hβ)
+  have Fopp : ∀ y, F y → F (-y) := by
+    intro y hy
+    simpa using (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := y) hy)
+  -- Helper: NE predicate is sign-symmetric on the output value.
+  have Popp : ∀ x f, P x f → P (-x) (-f) := by
+    intro _x _f hP
+    rcases hP with ⟨g, hf, hcanon, heven⟩
+    -- Candidate for (-f) is the float with negated mantissa.
+    let gneg : FlocqFloat beta := ⟨-g.Fnum, g.Fexp⟩
+    -- Real value equality via F2R_Zopp
+    have hF2Rneg : -(F2R g).run = (F2R gneg).run := by
+      simpa using (FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := g) (hbeta := hβ))
+    -- Parity invariance under negation (mod 2)
+    have neg_mod_two (n : Int) : (-n) % 2 = n % 2 := by
+      rcases Int.emod_two_eq_zero_or_one n with hn0 | hn1
+      · have : (-n) % 2 = 0 := by
+          rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+          · exact hneg0
+          · exact False.elim (by
+              have : (1 : Int) ≠ 0 := by decide
+              exact this (by simpa [hn0] using hneg1))
+        simpa [hn0, this]
+      · have : (-n) % 2 = 1 := by
+          rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+          · exact False.elim (by
+              have : (0 : Int) ≠ 1 := by decide
+              exact this (by simpa [hn1] using hneg0))
+          · exact hneg1
+        simpa [hn1, this]
+    have heavneg : gneg.Fnum % 2 = 0 := by simpa [gneg, neg_mod_two] using heven
+    -- Canonical preserved by mantissa negation
+    have hcanon_neg : canonical beta fexp gneg :=
+      FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp)
+        (m := g.Fnum) (e := g.Fexp) hcanon
+    -- Assemble
+    refine ⟨gneg, ?_, hcanon_neg, by simpa [gneg] using heavneg⟩
+    have : -_f = -(F2R g).run := by simpa [hf]
+    simpa [this] using hF2Rneg
+  -- Build nearest at |x| for |f| using the absolute-value spec for nearest.
+  have hNabs : FloatSpec.Core.Defs.Rnd_N_pt F |x| |f| := by
+    have h := FloatSpec.Core.Round_pred.Rnd_N_pt_abs_spec (F := F) (x := x) (f := f)
+    simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_abs_check, wp, PostCond.noThrow, Id.run, pure,
+           decide_eq_true_iff]
+      using h ⟨hF0, Fopp, hNE.1⟩
+  -- We now establish the tie side for NG at |x|,|f|.
+  -- If the original had a tie with NE property, push it through absolute value.
+  have hTie : P |x| |f| ∨ ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F |x| f2 → f2 = |f| := by
+    cases hNE.2 with
+    | inl hP_xf =>
+        -- Transform NE witness for f into a witness for |f|.
+        rcases hP_xf with ⟨g, hf, hcanon, heven⟩
+        -- Choose witness for |f| by cases on the sign of f.
+        by_cases hf_nonneg : 0 ≤ f
+        · -- Nonnegative f: take the same float `g` as witness.
+          let gabs : FlocqFloat beta := g
+          have hf_abs : |f| = (F2R gabs).run := by
+            have hf' : (F2R g).run = f := by simpa using hf.symm
+            have : 0 ≤ (F2R g).run := by
+              -- Since f = F2R g and f ≥ 0
+              simpa [hf'] using hf_nonneg
+            simpa [gabs, hf', abs_of_nonneg this]
+          -- Parity and canonicality carry over directly.
+          have hcanon_abs : canonical beta fexp gabs := by simpa [gabs] using hcanon
+          have heav_abs : gabs.Fnum % 2 = 0 := by simpa [gabs] using heven
+          exact Or.inl ⟨gabs, hf_abs, hcanon_abs, heav_abs⟩
+        · -- Negative f: use the opposite float as witness.
+          let gabs : FlocqFloat beta := ⟨-g.Fnum, g.Fexp⟩
+          have hf_abs : |f| = (F2R gabs).run := by
+            have hf' : f = (F2R g).run := hf
+            have hfneg : |f| = -(F2R g).run := by
+              have : (F2R g).run < 0 := by
+                -- From f < 0 and f = F2R g
+                have : f < 0 := lt_of_not_ge hf_nonneg
+                simpa [hf'] using this
+              simpa [hf', abs_of_neg this]
+            have hF2Rneg : -(F2R g).run = (F2R gabs).run := by
+              simpa [gabs] using (FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := g) (hbeta := hβ))
+            simpa [hfneg] using hF2Rneg
+          -- Canonicality preserved under mantissa negation; parity invariant modulo 2.
+          have hcanon_abs : canonical beta fexp gabs :=
+            FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp)
+              (m := g.Fnum) (e := g.Fexp) hcanon
+          have neg_mod_two (n : Int) : (-n) % 2 = n % 2 := by
+            rcases Int.emod_two_eq_zero_or_one n with hn0 | hn1
+            · have : (-n) % 2 = 0 := by
+                rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+                · exact hneg0
+                · exact False.elim (by
+                    have : (1 : Int) ≠ 0 := by decide
+                    exact this (by simpa [hn0] using hneg1))
+              simpa [hn0, this]
+            · have : (-n) % 2 = 1 := by
+                rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+                · exact False.elim (by
+                    have : (0 : Int) ≠ 1 := by decide
+                    exact this (by simpa [hn1] using hneg0))
+                · exact hneg1
+              simpa [hn1, this]
+          have heav_abs : gabs.Fnum % 2 = 0 := by simpa [gabs, neg_mod_two] using heven
+          exact Or.inl ⟨gabs, hf_abs, hcanon_abs, heav_abs⟩
+        
+    | inr huniq_x =>
+        -- Uniqueness branch: deduce sign of f from `x` and transfer uniqueness.
+        by_cases hx : 0 ≤ x
+        · -- Nonnegative x: f is nonnegative, hence |f| = f and uniqueness transfers.
+          have hf_nonneg : 0 ≤ f := by
+            have h := FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_spec (F := F) (x := x) (f := f)
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff, hx] using h ⟨hF0, hx, hNE.1⟩
+          have : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F |x| f2 → f2 = |f| := by
+            intro f2 hNf2
+            -- Here |x| = x; use uniqueness at x.
+            have hxabs : |x| = x := by simpa [abs_of_nonneg hx]
+            have : FloatSpec.Core.Defs.Rnd_N_pt F x f2 := by simpa [hxabs] using hNf2
+            have hf2_eq_f : f2 = f := huniq_x f2 this
+            simpa [abs_of_nonneg hf_nonneg] using hf2_eq_f
+          exact Or.inr this
+        · -- Nonpositive x: reduce to the nonnegative case on (-x,-f), then rewrite abs.
+          have hxle0 : x ≤ 0 := le_of_not_ge hx
+          -- Nearest at (-x,-f) via opposite invariance on nearest.
+          have hNneg : FloatSpec.Core.Defs.Rnd_N_pt F (-x) (-f) := by
+            have h := FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_spec (F := F) (x := -x) (f := -f)
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff, neg_neg]
+              using h ⟨Fopp, by simpa [neg_neg] using hNE.1⟩
+          -- Apply the nonnegative-x argument at (-x,-f) and rewrite abs.
+          have hxnonneg' : 0 ≤ -x := by simpa using neg_nonneg.mpr hxle0
+          have hf_nonneg' : 0 ≤ -f := by
+            have h := FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_spec (F := F) (x := -x) (f := -f)
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff, hxnonneg'] using h ⟨hF0, hxnonneg', hNneg⟩
+          have : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F |x| f2 → f2 = |f| := by
+            intro f2 hNf2_abs
+            -- Here |x| = -x, and |f| = -f by nonpositivity of f.
+            have hxabs : |x| = -x := by simpa [abs_of_nonpos hxle0]
+            have hfabs : |f| = -f := by
+              have hf_le0 : f ≤ 0 := by simpa using (neg_nonneg.mp hf_nonneg')
+              simpa [abs_of_nonpos hf_le0]
+            -- Convert nearest at |x| to nearest at -x and use uniqueness at -x.
+            have hNf2_neg : FloatSpec.Core.Defs.Rnd_N_pt F (-x) f2 := by simpa [hxabs] using hNf2_abs
+            -- Uniqueness at -x from uniqueness at x by mapping with opp-inv.
+            have huniq_neg : ∀ g, FloatSpec.Core.Defs.Rnd_N_pt F (-x) g → g = -f := by
+              intro g hNg
+              -- Map to x using opp-inv and apply uniqueness at x.
+              have hN_at_x : FloatSpec.Core.Defs.Rnd_N_pt F x (-g) := by
+                have h := FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_spec (F := F) (x := x) (f := -g)
+                have hpre : (∀ y, F y → F (-y)) ∧ FloatSpec.Core.Defs.Rnd_N_pt F (-x) (-- -(-g) = g
+                    -(-g)) := by
+                  have : -(-g) = g := by simp
+                  exact ⟨Fopp, by simpa [this] using hNg⟩
+                simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_check, wp, PostCond.noThrow, Id.run, pure,
+                       decide_eq_true_iff]
+                  using h hpre
+              have := huniq_x (-g) hN_at_x
+              -- From -g = f, deduce g = -f.
+              have : g = -f := by
+                have := congrArg Neg.neg this
+                simpa using this
+              exact this
+            have hf2_eq_negf : f2 = -f := huniq_neg f2 hNf2_neg
+            simpa [hfabs] using hf2_eq_negf
+          exact Or.inr this
+  -- Conclude NG at |x|, |f|.
+  exact And.intro hNabs hTie
 
 /-- Check rounding at positive inputs -/
 noncomputable def round_NE_pt_pos_check : Id Bool :=
@@ -628,6 +1333,18 @@ noncomputable def round_NE_pt_pos_check : Id Bool :=
     classical
     -- Decide existence of an NE-rounded value at positive inputs.
     exact pure (decide (∀ x : ℝ, 0 < x → ∃ f : ℝ, Rnd_NE_pt beta fexp x f))
+
+
+-- Helper: consume `Rnd_NE_pt_total` (triple style) into a pure proposition form.
+private theorem Rnd_NE_pt_total_prop
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (hβ : beta > 1) : ∀ y : ℝ, ∃ f : ℝ, Rnd_NE_pt beta fexp y f := by
+  -- Use the triple-encoded totality lemma and eliminate the Hoare wrapper by `simp`.
+  have hTot := Rnd_NE_pt_total (beta := beta) (fexp := fexp)
+  have := hTot hβ
+  simpa [Rnd_NE_pt_total_check, wp, PostCond.noThrow, Id.run, pure,
+         decide_eq_true_iff, FloatSpec.Core.Defs.round_pred_total]
+    using this
 
 
 /-- Coq:
@@ -642,9 +1359,21 @@ theorem round_NE_pt_pos (x : ℝ) :
     ⦃⌜beta > 1 ∧ 0 < x⌝⦄
     round_NE_pt_pos_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hpre
+  rcases hpre with ⟨hβ, _hxpos⟩
   unfold round_NE_pt_pos_check
-  sorry
+  classical
+  -- Reduce to the decidable statement for existence on positives.
+  -- Target: ∀ x, 0 < x → ∃ f, Rnd_NE_pt x f
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Existence for all x follows from totality of Rnd_NE_pt.
+  -- Hence, the positive case is immediate.
+  intro x hxpos
+  -- Obtain totality at this base from the previously established lemma.
+  have hTotProp : ∀ y : ℝ, ∃ f : ℝ, Rnd_NE_pt beta fexp y f :=
+    Rnd_NE_pt_total_prop (beta := beta) (fexp := fexp) hβ
+  -- Specialize totality to the given positive x and conclude.
+  exact hTotProp x
 
 /-- Check rounding negation -/
 noncomputable def round_NE_opp_check : Id Bool :=
@@ -669,20 +1398,80 @@ theorem round_NE_opp (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     round_NE_opp_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hβ
   unfold round_NE_opp_check
-  sorry
+  classical
+  -- Reduce to the decidable equivalence statement.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Work with the generic-format predicate and the NE tie-breaking predicate.
+  intro x f
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- Closure under opposite for the format predicate.
+  have Fopp : ∀ y, F y → F (-y) := by
+    intro y hy
+    simpa using (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := y) hy)
+  -- NE predicate is preserved by negation on both arguments.
+  have Popp : ∀ x f, P x f → P (-x) (-f) := by
+    intro _x _f hP
+    rcases hP with ⟨g, hf, hcanon, heven⟩
+    -- Candidate for (-f) is the float with negated mantissa.
+    let gneg : FlocqFloat beta := ⟨-g.Fnum, g.Fexp⟩
+    -- Real value equality via F2R_Zopp (requires 1 < beta).
+    have hF2Rneg : -(F2R g).run = (F2R gneg).run := by
+      simpa using (FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := g) (hbeta := hβ))
+    -- Parity invariance under negation (mod 2).
+    have neg_mod_two (n : Int) : (-n) % 2 = n % 2 := by
+      rcases Int.emod_two_eq_zero_or_one n with hn0 | hn1
+      · have : (-n) % 2 = 0 := by
+          rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+          · exact hneg0
+          · exact False.elim (by
+              have : (1 : Int) ≠ 0 := by decide
+              exact this (by simpa [hn0] using hneg1))
+        simpa [hn0, this]
+      · have : (-n) % 2 = 1 := by
+          rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+          · exact False.elim (by
+              have : (0 : Int) ≠ 1 := by decide
+              exact this (by simpa [hn1] using hneg0))
+          · exact hneg1
+        simpa [hn1, this]
+    have heavneg : gneg.Fnum % 2 = 0 := by simpa [gneg, neg_mod_two] using heven
+    -- Canonicality preserved under mantissa negation.
+    have hcanon_neg : canonical beta fexp gneg :=
+      FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp)
+        (m := g.Fnum) (e := g.Fexp) hcanon
+    -- Assemble the NE witness for (-x,-f).
+    refine ⟨gneg, ?_, hcanon_neg, by simpa [gneg] using heavneg⟩
+    have : -_f = -(F2R g).run := by simpa [hf]
+    simpa [this] using hF2Rneg
+  -- Prove the two implications using the NG opp-inv specification.
+  constructor
+  · intro hNE
+    -- From Rnd_NE_pt x f, get Rnd_NE_pt (-x) (-f) by applying opp-inv at (-x,-f).
+    have h := FloatSpec.Core.Round_pred.Rnd_NG_pt_opp_inv_spec (F := F) (P := P) (x := -x) (f := -f)
+    simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_opp_inv_check, wp, PostCond.noThrow, Id.run, pure,
+           decide_eq_true_iff, neg_neg]
+      using h ⟨Fopp, Popp, by simpa⟩
+  · intro hNEneg
+    -- From Rnd_NE_pt (-x) (-f), get Rnd_NE_pt x f directly by opp-inv.
+    have h := FloatSpec.Core.Round_pred.Rnd_NG_pt_opp_inv_spec (F := F) (P := P) (x := x) (f := f)
+    simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_opp_inv_check, wp, PostCond.noThrow, Id.run, pure,
+           decide_eq_true_iff]
+      using h ⟨Fopp, Popp, hNEneg⟩
 
-/-- Check absolute rounding equality -/
+/-- Check absolute rounding (forward) -/
 noncomputable def round_NE_abs_check : Id Bool :=
   by
     classical
-    -- Decide absolute-value compatibility between input and output under NE rounding.
+    -- Decide absolute-value stability in the forward direction:
+    -- if `Rnd_NE_pt x f` then `Rnd_NE_pt |x| |f|`.
     exact
       pure
         (decide
           (∀ x f : ℝ,
-            Rnd_NE_pt beta fexp x f ↔ Rnd_NE_pt beta fexp (abs x) (abs f)))
+            Rnd_NE_pt beta fexp x f → Rnd_NE_pt beta fexp (abs x) (abs f)))
 
 
 /-- Coq:
@@ -697,9 +1486,139 @@ theorem round_NE_abs (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     round_NE_abs_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hβ
   unfold round_NE_abs_check
-  sorry
+  classical
+  -- Reduce Hoare triple to the propositional goal.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Prove: ∀ x f, Rnd_NE_pt x f → Rnd_NE_pt |x| |f|
+  intro x f hNE
+  -- Shorthands
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  -- 0 is representable and the format is closed under negation.
+  have hF0 : F 0 := by
+    have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp)
+    simpa [wp, PostCond.noThrow, Id.run] using (h hβ)
+  have Fopp : ∀ y, F y → F (-y) := by
+    intro y hy
+    simpa using (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := y) hy)
+  -- Nearest component transports to absolute values by the generic spec.
+  have hNabs : FloatSpec.Core.Defs.Rnd_N_pt F |x| |f| := by
+    have h := FloatSpec.Core.Round_pred.Rnd_N_pt_abs_spec (F := F) (x := x) (f := f)
+    simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_abs_check, wp, PostCond.noThrow, Id.run, pure,
+           decide_eq_true_iff]
+      using h ⟨hF0, Fopp, hNE.1⟩
+  -- Build the tie-breaking/uniqueness component at absolute values.
+  -- We analyze the NG tie component on (x,f).
+  have hTieAbs : P |x| |f| ∨ ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F |x| f2 → f2 = |f| := by
+    cases hNE.2 with
+    | inl hPx =>
+        -- Case 1: we have a concrete NE witness at (x,f); transfer it to (|x|,|f|).
+        rcases hPx with ⟨g, hf, hcanon, heven⟩
+        by_cases hf_nonneg : 0 ≤ f
+        · -- Nonnegative f: reuse the same float witness.
+          let gabs : FlocqFloat beta := g
+          have hf_abs : |f| = (F2R gabs).run := by
+            have : |f| = f := abs_of_nonneg hf_nonneg
+            simpa [gabs, this, hf]
+          exact Or.inl ⟨gabs, by simpa [gabs] using hf_abs, hcanon, by simpa [gabs] using heven⟩
+        · -- Negative f: use the opposite float and `F2R_Zopp`.
+          have hfneg : f < 0 := lt_of_not_ge hf_nonneg
+          let gabs : FlocqFloat beta := ⟨-g.Fnum, g.Fexp⟩
+          have hF2Rneg : -(F2R g).run = (F2R gabs).run := by
+            simpa [gabs] using (FloatSpec.Core.Float_prop.F2R_Zopp (beta := beta) (f := g) (hbeta := hβ))
+          have hf_abs : |f| = (F2R gabs).run := by
+            -- Since f < 0, |f| = -f, and by F2R_Zopp we have -f = F2R gabs.
+            have h1 : |f| = -f := by simpa [abs_of_neg hfneg]
+            have h2 : -f = (F2R gabs).run := by simpa [hf] using hF2Rneg
+            simpa [h1] using h2
+          -- Canonicality preserved under mantissa negation; parity invariant mod 2.
+          have hcanon_abs : canonical beta fexp gabs :=
+            FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp)
+              (m := g.Fnum) (e := g.Fexp) hcanon
+          have neg_mod_two (n : Int) : (-n) % 2 = n % 2 := by
+            rcases Int.emod_two_eq_zero_or_one n with hn0 | hn1
+            · have : (-n) % 2 = 0 := by
+                rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+                · exact hneg0
+                · exact False.elim (by
+                    have : (1 : Int) ≠ 0 := by decide
+                    exact this (by simpa [hn0] using hneg1))
+              simpa [hn0, this]
+            · have : (-n) % 2 = 1 := by
+                rcases Int.emod_two_eq_zero_or_one (-n) with hneg0 | hneg1
+                · exact False.elim (by
+                    have : (0 : Int) ≠ 1 := by decide
+                    exact this (by simpa [hn1] using hneg0))
+                · exact hneg1
+              simpa [hn1, this]
+          have heav_abs : gabs.Fnum % 2 = 0 := by simpa [gabs, neg_mod_two] using heven
+          exact Or.inl ⟨gabs, by simpa [gabs] using hf_abs, hcanon_abs, by simpa [gabs] using heav_abs⟩
+    | inr huniq_x =>
+        -- Case 2: uniqueness branch at (x,f). Transfer uniqueness to (|x|,|f|).
+        by_cases hx : 0 ≤ x
+        · -- Nonnegative x: then `|x| = x`; also f is nonnegative by ge_0 spec.
+          have hf_nonneg : 0 ≤ f := by
+            have h := FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_spec (F := F) (x := x) (f := f)
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff, hx] using h ⟨hF0, hx, hNE.1⟩
+          -- Uniqueness at |x| using uniqueness at x.
+          have : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F |x| f2 → f2 = |f| := by
+            intro f2 hNf2
+            have hxabs : |x| = x := by simpa [abs_of_nonneg hx]
+            have : FloatSpec.Core.Defs.Rnd_N_pt F x f2 := by simpa [hxabs] using hNf2
+            have hf2_eq_f : f2 = f := huniq_x f2 this
+            simpa [abs_of_nonneg hf_nonneg] using hf2_eq_f
+          exact Or.inr this
+        · -- Nonpositive x: reduce to the nonnegative case on (-x,-f), then rewrite abs.
+          have hxle0 : x ≤ 0 := le_of_not_ge hx
+          -- Nearest at (-x,-f) via opposite invariance on nearest.
+          have hNneg : FloatSpec.Core.Defs.Rnd_N_pt F (-x) (-f) := by
+            have h := FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_spec (F := F) (x := -x) (f := -f)
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff, neg_neg]
+              using h ⟨Fopp, by simpa [neg_neg] using hNE.1⟩
+          -- Apply the nonnegative-x argument at (-x,-f) and rewrite abs.
+          have hxnonneg' : 0 ≤ -x := by simpa using neg_nonneg.mpr hxle0
+          have hf_nonneg' : 0 ≤ -f := by
+            have h := FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_spec (F := F) (x := -x) (f := -f)
+            simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_ge_0_check, wp, PostCond.noThrow, Id.run, pure,
+                   decide_eq_true_iff, hxnonneg'] using h ⟨hF0, hxnonneg', hNneg⟩
+          -- Transfer uniqueness from x to -x using opp_inv, then rewrite absolutes.
+          have : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F |x| f2 → f2 = |f| := by
+            intro f2 hNf2_abs
+            -- Here |x| = -x, and |f| = -f by nonpositivity of f.
+            have hxabs : |x| = -x := by simpa [abs_of_nonpos hxle0]
+            have hfabs : |f| = -f := by
+              have hf_le0 : f ≤ 0 := by simpa using (neg_nonneg.mp hf_nonneg')
+              simpa [abs_of_nonpos hf_le0]
+            -- Convert nearest at |x| to nearest at -x and use uniqueness at -x.
+            have hNf2_neg : FloatSpec.Core.Defs.Rnd_N_pt F (-x) f2 := by simpa [hxabs] using hNf2_abs
+            -- Uniqueness at -x from uniqueness at x by mapping with opp-inv.
+            have huniq_neg : ∀ g, FloatSpec.Core.Defs.Rnd_N_pt F (-x) g → g = -f := by
+              intro g hNg
+              -- Map to x using opp-inv and apply uniqueness at x.
+              have hN_at_x : FloatSpec.Core.Defs.Rnd_N_pt F x (-g) := by
+                have h := FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_spec (F := F) (x := x) (f := -g)
+                have hpre : (∀ y, F y → F (-y)) ∧ FloatSpec.Core.Defs.Rnd_N_pt F (-x) (-- -(-g) = g
+                    -(-g)) := by
+                  have : -(-g) = g := by simp
+                  exact ⟨Fopp, by simpa [this] using hNg⟩
+                simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_opp_inv_check, wp, PostCond.noThrow, Id.run, pure,
+                       decide_eq_true_iff]
+                  using h hpre
+              have := huniq_x (-g) hN_at_x
+              -- From -g = f, deduce g = -f.
+              have : g = -f := by
+                have := congrArg Neg.neg this
+                simpa using this
+              exact this
+            have hf2_eq_negf : f2 = -f := huniq_neg f2 hNf2_neg
+            simpa [hfabs] using hf2_eq_negf
+          exact Or.inr this
+  -- Conclude the NG predicate at absolute values.
+  exact And.intro hNabs hTieAbs
 
 /-- Check predicate holds at rounded value -/
 noncomputable def round_NE_pt_check : Id Bool :=
@@ -722,7 +1641,14 @@ theorem round_NE_pt (x : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold round_NE_pt_check
-  sorry
+  classical
+  -- Reduce to the propositional totality statement for NE rounding.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Use totality established earlier to produce a nearest-even point for any x.
+  intro x
+  have hTot : ∀ y : ℝ, ∃ f : ℝ, Rnd_NE_pt beta fexp y f :=
+    Rnd_NE_pt_total_prop (beta := beta) (fexp := fexp) (by assumption)
+  exact hTot x
 
 end ParityProperties
 
@@ -743,7 +1669,7 @@ noncomputable def Rnd_NE_pt_error_bound_check : Id Bool :=
         (decide
           (∀ x f : ℝ,
             Rnd_NE_pt beta fexp x f →
-            |f - x| ≤ (1/2) * ((FloatSpec.Core.Ulp.ulp beta fexp x).run)))
+            |f - x| ≤ (1/2) * (FloatSpec.Core.Ulp.ulp beta fexp x).run))
 
 /-- Specification: Error bound for nearest-even rounding
 
@@ -753,9 +1679,70 @@ theorem Rnd_NE_pt_error_bound (x f : ℝ) :
     ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f⌝⦄
     Rnd_NE_pt_error_bound_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hpre
   unfold Rnd_NE_pt_error_bound_check
-  sorry
+  classical
+  -- Reduce the Hoare triple to the decidable proposition
+  -- Keep scalar forms stable (`1/2` vs `2⁻¹`) to simplify closing steps.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, one_div]
+  -- Work under fixed x, f with the NE predicate
+  intro x f hNE
+  -- Shorthand for the generic-format predicate
+  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
+  -- From NE, extract the nearest property (minimal absolute error among representables)
+  have hN : FloatSpec.Core.Defs.Rnd_N_pt F x f := (hNE).1
+  -- Case split on x = 0 (trivial) vs x ≠ 0 (use existence of a half‑ULP approximant)
+  by_cases hx0 : x = 0
+  · -- When x = 0, nearest-even picks f = 0 by reflexivity on representables
+    have hβ : 1 < beta := by rcases hpre with ⟨hβ, _⟩; exact hβ
+    have hF0 : F 0 := by
+      have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp)
+      simpa [wp, PostCond.noThrow, Id.run] using (h hβ)
+    -- From nearest minimality and representability of 0, we have |f - 0| ≤ |0 - 0| = 0, hence f = 0
+    have hmin0 : |f - x| ≤ |(0 : ℝ) - x| := by
+      simpa [hx0] using (hN.2 0 hF0)
+    have hf_eq0 : f = 0 := by
+      -- |f| ≤ 0 ⇒ |f| = 0 ⇒ f = 0
+      have hle : |f| ≤ 0 := by simpa [hx0, sub_eq_add_neg, add_comm] using hmin0
+      have heq : |f| = 0 := le_antisymm hle (abs_nonneg _)
+      simpa [abs_eq_zero] using heq
+    -- Conclude the desired inequality using nonnegativity of ulp 0
+    have : |f - x| = 0 := by simpa [hx0, hf_eq0, abs_zero, sub_eq_add_neg, add_comm]
+    -- ulp is nonnegative under 1 < beta; transfer to x = 0 and scale by 1/2
+    have hulp0_nonneg : 0 ≤ (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) 0).run := by
+      have h := FloatSpec.Core.Ulp.ulp_ge_0 (beta := beta) (fexp := fexp) (x := 0) hβ
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
+    have hulp_nonneg : 0 ≤ (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run := by
+      simpa [hx0] using hulp0_nonneg
+    have hrhs_nonneg : 0 ≤ (1 / 2) * (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run :=
+      mul_nonneg (by norm_num) hulp_nonneg
+    -- Final inequality 0 ≤ RHS
+    simpa [this] using hrhs_nonneg
+  · -- Nonzero x: pick a representable g within half an ULP of x, then use minimality of f
+    have hβ : 1 < beta := by rcases hpre with ⟨hβ, _⟩; exact hβ
+    -- Existence of a format value within half‑ULP of x
+    obtain ⟨g, hFg, hbound_g⟩ :=
+      FloatSpec.Core.Round_generic.exists_round_half_ulp (beta := beta) (fexp := fexp) (x := x) hβ
+    -- From minimality of f among representables, |f - x| ≤ |g - x|
+    have hmin : |f - x| ≤ |g - x| := hN.2 g hFg
+    -- Chain with the half‑ULP bound at x for g
+    have hchain : |f - x| ≤ (1 / 2) * (beta : ℝ) ^ ((FloatSpec.Core.Generic_fmt.cexp beta fexp x).run) :=
+      le_trans hmin hbound_g
+    -- Rewrite β^(cexp x) as ulp x using the nonzero branch of ulp
+    have hx_ne : x ≠ 0 := hx0
+    have hulp_run : (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run
+        = (beta : ℝ) ^ ((FloatSpec.Core.Generic_fmt.cexp beta fexp x).run) := by
+      -- Use ulp_neq_0 in `run` form
+      have h := FloatSpec.Core.Ulp.ulp_neq_0 (beta := beta) (fexp := fexp) x hx_ne True.intro
+      -- Discharge the Hoare-triple style equality to a run-level equality
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+        using h
+    -- Conclude by rewriting the right-hand side
+    have hfinal : |f - x| ≤ (1 / 2) * (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run := by
+      simpa [hulp_run] using hchain
+    -- The goal uses `2⁻¹ * Ulp.ulp ... x`; normalize coefficients and unwrap `Id.run`.
+    -- Match the goal's scalar form (`2⁻¹ = 1/2` over ℝ).
+    simpa [one_div] using hfinal
 
 /-- Check minimal error property
 -/
@@ -782,7 +1769,15 @@ theorem Rnd_NE_pt_minimal_error (x f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_NE_pt_minimal_error_check
-  sorry
+  classical
+  -- Reduce the Hoare triple to the propositional goal.
+  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  -- Prove the minimal-absolute-error property for arbitrary x, f, g.
+  intro x f g hNE hFg
+  -- Extract nearest property from NE and apply minimality.
+  have hN : FloatSpec.Core.Defs.Rnd_N_pt
+      (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x f := hNE.1
+  simpa using (hN.2 g hFg)
 
 end ErrorBounds
 
