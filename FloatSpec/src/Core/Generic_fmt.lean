@@ -280,16 +280,21 @@ theorem Ztrunc_neg (x : ℝ) : (Ztrunc (-x)).run = - (Ztrunc x).run := by
 theorem Ztrunc_intCast (z : Int) : (Ztrunc (z : ℝ)).run = z := by
   simpa using Ztrunc_int z
 
+/-- For nonzero real a, zpow distributes over addition: a^m * a^n = a^(m+n). -/
+-- Note: Using Mathlib's zpow_add₀ directly instead of redefining
+private theorem zpow_add_local {a : ℝ} (ha : a ≠ 0) (m n : Int) : a ^ m * a ^ n = a ^ (m + n) := by
+  exact (zpow_add₀ ha m n).symm
+
 /-- zpow product with negative exponent collapses to subtraction in exponent -/
 theorem zpow_mul_sub {a : ℝ} (hbne : a ≠ 0) (e c : Int) :
     a ^ e * a ^ (-c) = a ^ (e - c) := by
-  have := (zpow_add₀ hbne e (-c))
-  simpa [sub_eq_add_neg] using this.symm
+  have := (_root_.zpow_add₀ hbne e (-c)).symm
+  simpa [sub_eq_add_neg] using this
 
 /-- zpow split: (e - c) then c gives back e -/
 theorem zpow_sub_add {a : ℝ} (hbne : a ≠ 0) (e c : Int) :
     a ^ (e - c) * a ^ c = a ^ e := by
-  simpa [sub_add_cancel] using (zpow_add₀ hbne (e - c) c).symm
+  simpa [sub_add_cancel] using (_root_.zpow_add₀ hbne (e - c) c).symm
 
 /-- For nonnegative exponent, zpow reduces to Nat pow via toNat -/
 theorem zpow_nonneg_toNat (a : ℝ) (k : Int) (hk : 0 ≤ k) :
@@ -497,7 +502,7 @@ theorem scaled_mantissa_mult_bpow (beta : Int) (fexp : Int → Int) (x : ℝ) :
         = (x * (beta : ℝ) ^ (-e)) * (beta : ℝ) ^ e := by simp [zpow_neg]
     _   = x * ((beta : ℝ) ^ (-e) * (beta : ℝ) ^ e) := by simpa [mul_assoc]
     _   = x * (beta : ℝ) ^ ((-e) + e) := by
-          have h := (zpow_add₀ hbne (-e) e).symm
+          have h := (_root_.zpow_add₀ hbne (-e) e).symm
           simpa using congrArg (fun t => x * t) h
     _   = x := by simp
 
@@ -539,7 +544,7 @@ theorem generic_format_F2R (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
     have hinv : (beta : ℝ) ^ (-c) = ((beta : ℝ) ^ c)⁻¹ := zpow_neg _ _
 
     have hmul_pow : (beta : ℝ) ^ e * ((beta : ℝ) ^ c)⁻¹ = (beta : ℝ) ^ (e - c) := by
-      rw [← hinv, ← zpow_add₀ hbne]
+      rw [← hinv, (_root_.zpow_add₀ hbne e (-c)).symm]
       simp [sub_eq_add_neg]
 
     have hpow_nonneg : 0 ≤ e - c := sub_nonneg.mpr hcle
@@ -565,8 +570,8 @@ theorem generic_format_F2R (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
 
     -- Power splitting lemma
     have hsplit : (beta : ℝ) ^ e = (beta : ℝ) ^ (e - c) * (beta : ℝ) ^ c := by
-      rw [← zpow_add₀ hbne (e - c) c]
-      simp [sub_add_cancel]
+      -- Use zpow_sub_add theorem directly
+      exact (zpow_sub_add hbne e c).symm
 
     -- Prove the main equality
     calc (m : ℝ) * (beta : ℝ) ^ e
@@ -1203,7 +1208,7 @@ theorem scaled_mantissa_lt_1
                 = (beta : ℝ) ^ (ex - fexp m) := by
     -- zpow product identity written with an inverse
     have : (beta : ℝ) ^ (-(fexp m)) = ((beta : ℝ) ^ (fexp m))⁻¹ := by simp [zpow_neg]
-    have := zpow_add₀ hbne ex (-(fexp m))
+    have := (_root_.zpow_add₀ hbne ex (-(fexp m))).symm
     simpa [sub_eq_add_neg, this]
   -- Since ex ≤ fexp ex and fexp m = fexp ex, we have ex - fexp m ≤ 0
   have hdiff_le0 : ex - fexp m ≤ 0 := by
@@ -1325,7 +1330,7 @@ theorem mantissa_DN_small_pos
       simpa [hzpow_toNat] using one_le_pow_nat' (Int.toNat (c - ex))
     -- From 1 ≤ β^(c - ex), deduce β^(ex - c) ≤ 1 by multiplying both sides
     have hmul_id : (beta : ℝ) ^ (ex - c) * (beta : ℝ) ^ (c - ex) = 1 := by
-      have := (zpow_add₀ hbne (ex - c) (c - ex)).symm
+      have := (_root_.zpow_add₀ hbne (ex - c) (c - ex)).symm
       simpa [sub_add_cancel] using this
     have hfac_nonneg : 0 ≤ (beta : ℝ) ^ (ex - c) := by
       exact le_of_lt (zpow_pos hbpos _)
@@ -1412,7 +1417,7 @@ theorem mantissa_UP_small_pos
         simpa [hzpow_toNat] using one_le_pow_nat' (Int.toNat (c - ex))
       -- From 1 ≤ β^(c - ex), deduce β^(ex - c) ≤ 1 via zpow_add₀
       have hmul_id : (beta : ℝ) ^ (ex - c) * (beta : ℝ) ^ (c - ex) = 1 := by
-        have := (zpow_add₀ hbne (ex - c) (c - ex)).symm
+        have := (_root_.zpow_add₀ hbne (ex - c) (c - ex)).symm
         simpa [sub_add_cancel] using this
       have hfac_nonneg : 0 ≤ (beta : ℝ) ^ (ex - c) := by
         exact le_of_lt (zpow_pos hbpos _)
@@ -1899,6 +1904,54 @@ instance valid_rnd_floor : Valid_rnd rnd_floor := by
   · -- Agreement on integers: ⌊n⌋ = n
     intro n
     simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using (Int.floor_intCast (n := n))
+
+/-- Coq (Generic_fmt.v): Ceiling rounding function.
+We will use this to construct up-rounding witnesses by applying `Zceil`
+to the scaled mantissa and rescaling by the canonical exponent.
+-/
+noncomputable def rnd_ceil (x : ℝ) : Int := (FloatSpec.Core.Raux.Zceil x).run
+
+instance valid_rnd_ceil : Valid_rnd rnd_ceil := by
+  refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt };
+  · -- Monotonicity: ⌈x⌉ ≤ ⌈y⌉ when x ≤ y
+    intro x y hxy
+    -- From x ≤ y ≤ ((⌈y⌉):ℝ), we get x ≤ ((⌈y⌉):ℝ), hence ⌈x⌉ ≤ ⌈y⌉
+    have hreal : x ≤ ((Int.ceil y) : ℝ) := le_trans hxy (by simpa using (Int.le_ceil y))
+    -- Use the ceiling characterization: ⌈x⌉ ≤ z ↔ x ≤ (z:ℝ)
+    have : Int.ceil x ≤ Int.ceil y := (Int.ceil_le.mpr hreal)
+    simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil] using this
+  · -- Agreement on integers: ⌈n⌉ = n
+    intro n
+    simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil] using (Int.ceil_intCast (n := n))
+
+/-- Coq (Generic_fmt.v): Opposite rounding function.
+    Given a rounding function rnd, Zrnd_opp rnd negates the rounding of the negated input.
+    Definition from Coq: Zrnd_opp x := Z.opp (rnd (-x)). -/
+noncomputable def Zrnd_opp (rnd : ℝ → Int) (x : ℝ) : Int :=
+  -(rnd (-x))
+
+/-- Validity of opposite rounding -/
+instance valid_rnd_opp (rnd : ℝ → Int) [Valid_rnd rnd] : Valid_rnd (Zrnd_opp rnd) := by
+  refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
+  · -- Monotonicity: If x ≤ y, then Zrnd_opp rnd x ≤ Zrnd_opp rnd y
+    intro x y hxy
+    unfold Zrnd_opp
+    -- We have x ≤ y, so -y ≤ -x
+    have h_neg : -y ≤ -x := neg_le_neg hxy
+    -- By monotonicity of rnd: rnd(-y) ≤ rnd(-x)
+    have h_rnd : rnd (-y) ≤ rnd (-x) := Valid_rnd.Zrnd_le (-y) (-x) h_neg
+    -- Negating: -(rnd(-x)) ≤ -(rnd(-y))
+    exact neg_le_neg h_rnd
+  · -- Agreement on integers: Zrnd_opp rnd n = n for integer n
+    intro n
+    unfold Zrnd_opp
+    -- We have rnd(-n) = -n (since -n is an integer)
+    have h1 : rnd (-(n : ℝ)) = -n := by
+      calc rnd (-(n : ℝ))
+        _ = rnd ((-n : Int) : ℝ) := by simp only [Int.cast_neg]
+        _ = -n := Valid_rnd.Zrnd_IZR (-n)
+    -- So Zrnd_opp rnd n = -(-n) = n
+    simp [h1]
 
 /-- Coq (Generic_fmt.v): Zrnd_DN_or_UP
 
@@ -2917,7 +2970,7 @@ theorem round_N_middle
             = (x * (beta : ℝ) ^ (-ee)) * (beta : ℝ) ^ ee := by simp [zpow_neg]
         _   = x * ((beta : ℝ) ^ (-ee) * (beta : ℝ) ^ ee) := by ring
         _   = x * (beta : ℝ) ^ ((-ee) + ee) := by
-              simpa using congrArg (fun t => x * t) ((zpow_add₀ hbne (-ee) ee).symm)
+              simpa using congrArg (fun t => x * t) ((_root_.zpow_add₀ hbne (-ee) ee).symm)
         _   = x := by simp
     simpa [hy] using this.symm
 
@@ -3122,7 +3175,7 @@ theorem round_N_small_pos
       simpa [hsm] using this
     -- Combine exponents: β^ex * (β^c)⁻¹ = β^(ex - c)
     have hmul : (beta : ℝ) ^ ex * ((beta : ℝ) ^ c)⁻¹ = (beta : ℝ) ^ (ex - c) := by
-      have h := (zpow_add₀ hbne ex (-c)).symm
+      have h := (_root_.zpow_add₀ hbne ex (-c)).symm
       simpa [sub_eq_add_neg, zpow_neg] using h
     have hlt_pow : sm < (beta : ℝ) ^ (ex - c) := by
       -- Rewrite the scaled bound using the exponent law above
@@ -3193,6 +3246,24 @@ theorem round_N_small_pos
     simpa [hsm.symm] using hZ0
   -- Now the product is trivially zero
   simpa [hZsm0]
+
+/-- Theorem: generic_format_round
+
+    Any valid rounding of a real number produces a result in generic format.
+    This is a fundamental property that justifies the coherence of the floating-point model.
+
+    Corresponds to Coq's Generic_fmt.v:1226-1247
+-/
+theorem generic_format_round
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    (generic_format beta fexp (roundR beta fexp rnd x)).run := by
+  sorry -- TODO: This requires implementing generic_format_round_pos first
+  -- The proof strategy from Coq:
+  -- 1. Case split on x < 0, x = 0, x > 0
+  -- 2. For x < 0: use round_DN_or_UP, round_DN_opp, round_UP_opp, and generic_format_opp
+  -- 3. For x = 0: round(0) = 0, and 0 is in generic format
+  -- 4. For x > 0: use generic_format_round_pos (which handles the positive case)
 
 /- Coq (Generic_fmt.v): round_NA_pt
 

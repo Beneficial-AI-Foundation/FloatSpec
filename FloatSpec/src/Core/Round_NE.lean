@@ -45,6 +45,7 @@ section NearestEvenRounding
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Round_generic.Monotone_exp fexp]
 
 /-- Nearest-even rounding property
 
@@ -1657,6 +1658,7 @@ section ErrorBounds
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Round_generic.Monotone_exp fexp]
 
 /-- Check error bound property
 -/

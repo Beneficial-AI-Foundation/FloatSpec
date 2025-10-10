@@ -2124,6 +2124,29 @@ theorem Ztrunc_lub (n : Int) (x : ℝ) :
       simpa [abs_of_nonneg hfloor_nonneg] using h_le_floor
     exact this
 
+/-- Basic truncation error bound: |Ztrunc x - x| < 1 -/
+theorem abs_Ztrunc_sub_lt_one (x : ℝ) : abs (((Ztrunc x).run : ℝ) - x) < 1 := by
+  unfold Ztrunc
+  by_cases h : x < 0
+  · -- Negative case: Ztrunc x = ⌈x⌉
+    simp [h]
+    -- We have x ≤ ⌈x⌉ < x + 1, so 0 ≤ ⌈x⌉ - x < 1
+    have h1 : x ≤ (⌈x⌉ : ℝ) := Int.le_ceil x
+    have h2 : (⌈x⌉ : ℝ) < x + 1 := Int.ceil_lt_add_one x
+    have pos : 0 ≤ ⌈x⌉ - x := by linarith [h1]
+    have lt : ⌈x⌉ - x < 1 := by linarith [h2]
+    rw [abs_of_nonneg pos]
+    exact lt
+  · -- Non-negative case: Ztrunc x = ⌊x⌋
+    simp [h]
+    -- We have ⌊x⌋ ≤ x < ⌊x⌋ + 1, so 0 ≤ x - ⌊x⌋ < 1
+    have h1 : (⌊x⌋ : ℝ) ≤ x := Int.floor_le x
+    have h2 : x < ⌊x⌋ + 1 := Int.lt_floor_add_one x
+    have pos : 0 ≤ x - ⌊x⌋ := by linarith [h1]
+    have lt : x - ⌊x⌋ < 1 := by linarith [h2]
+    rw [abs_sub_comm, abs_of_nonneg pos]
+    exact lt
+
 end IntTrunc
 
 section IntAway

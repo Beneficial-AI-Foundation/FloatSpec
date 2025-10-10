@@ -1429,22 +1429,7 @@ theorem round_DN_or_UP
   rcases round_DN_exists beta fexp x with ⟨f, hF, hDN⟩
   exact ⟨f, hF, Or.inl hDN⟩
 
--- moved below, after `mag_round_ZR`, to use that lemma
-
-/-- Coq (Generic_fmt.v):
-    Theorem cexp_DN:
-      0 < round Zfloor x -> cexp (round Zfloor x) = cexp x.
-
-    Lean (spec form): The canonical exponent is preserved by
-    positive DN rounding. -/
-theorem cexp_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure x : Id ℝ)
-    ⦃⇓r => ⌜0 < r → (cexp beta fexp r).run = (cexp beta fexp x).run⌝⦄ := by
-  intro _
-  -- Choose r = x; the postcondition becomes reflexive under the premise 0 < x.
-  simp [wp, PostCond.noThrow, Id.run]
-  intro _; rfl
+-- moved below, after `mag_DN`, to use that lemma
 
 /- Theorem: Canonical exponent does not decrease under rounding (nonzero case)
    Mirrors Coq's `cexp_round_ge`: if `r = round … x` and `r ≠ 0`, then
@@ -1729,6 +1714,24 @@ theorem round_ext
   -- both computations produce the same value definitionally.
   -- Simplify the do-block and unfold the definition to see the equality.
   simp [round_to_generic]
+
+/-- Coq (Generic_fmt.v):
+    Theorem round_generic:
+      forall x, generic_format x -> round x = x.
+
+    Lean: If x is already in generic format, then rounding x returns x unchanged.
+-/
+theorem round_generic_identity
+    (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    ⦃⌜(generic_format beta fexp x).run⌝⦄
+    (pure (round_to_generic beta fexp rnd x) : Id ℝ)
+    ⦃⇓r => ⌜r = x⌝⦄ := by
+  intro hx
+  -- When x is in generic format, round_to_generic returns x
+  -- This requires showing that when x = F2R(m, e) for some integer m and e,
+  -- then round_to_generic returns x unchanged
+  sorry -- TODO: Complete proof showing round_to_generic is identity on generic format values
 
 /-- Coq (Generic_fmt.v):
     Theorem round_opp:

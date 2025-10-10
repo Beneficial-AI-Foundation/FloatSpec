@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export ANTHROPIC_LOG=debug
 
 # Use GNU timeout if available; on macOS prefer gtimeout (coreutils)
 TIMEOUT_BIN="${TIMEOUT_BIN:-timeout}"
@@ -30,7 +31,7 @@ hours=(
   # 2
   # 2
   # 3
-  6
+  12
 )
 
 # Sanity check: arrays must match
@@ -58,20 +59,20 @@ Fix proofs / theorems in `FloatSpec/src/Core/__PLACEHOLDER__`.
 
 ## Goal
 
-Repair **exactly one** item: the **first** theorem in the target file that lacks a full proof (due to `sorry`, errors, or unsolved goals). Priority: errors > sorry. Deliver a clean `lake build` with **no new breakages** introduced.
+Repair **exactly one** theorem: the **first** theorem in the target file that lacks a full proof (due to `sorry`, errors, or unsolved goals). Priority: errors > sorry. Deliver a clean `lake build` with **no new breakages** introduced and no `sorry`, errors, and unsolved goals in the target theorem.
 
 ---
 
 ## Selection Rule (deterministic)
 
-0. Find the latest log in `.change_log/` (by timestamp). Read the log and indentify if there are unfinished target left behind. If this target belongs to the current file or the dependencies of the current file (i.e. without fixing this error, current file can never be built), continue to work on it. If not, proceed to step 1.
 1. Run `lake build` and capture logs.
 2. Search for all `error` inside the log file. If the build reports any **error** inside the target file, choose the error with the **smallest line number**; the associated theorem is your target. If the build is blocked by errors in other files, fix those first (they may be dependencies).
-3. Otherwise, search the file for the first `sorry` (by line number).
+3. Find the latest log in `.change_log/` (by timestamp). Read the log and indentify if there are unfinished target left behind. If this target belongs to the current file or the dependencies of the current file (i.e. without fixing this error, current file can never be built), continue to work on it. If not, proceed to step 1.
+4. Otherwise, search the file for the first `sorry` (by line number).
 
    * If that `sorry` is **inside a `def`/function body**, locate the original Coq source in `/home/hantao/code/flocq/src/Core`, port the definition to Lean 4, and then prove the corresponding theorems. Do not use `pure true` or any placeholder in the definition.
-4. If there is **no** error and **no** `sorry` in the file, go through the file to examine non-`sorry` placeholder in the definition of functions or specs, including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and its variants which could be easily deducted to a `True`. If you find any of these placeholders, locate the original Coq source in `/home/hantao/code/flocq/src/Core`, port the definition to Lean 4 to replace original placeholder, and then prove the corresponding theorems.
-5. If none of the previous case are detected, write a short report explaining what you checked and **stop**.
+5. If there is **no** error and **no** `sorry` in the file, go through the file to examine non-`sorry` placeholder in the definition of functions or specs, including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and its variants which could be easily deducted to a `True`. If you find any of these placeholders, locate the original Coq source in `/home/hantao/code/flocq/src/Core`, port the definition to Lean 4 to replace original placeholder, and then prove the corresponding theorems.
+6. If none of the previous case are detected, write a short report explaining what you checked and **stop**.
 
 > “First” always means **smallest line number** in the target file.
 
@@ -96,14 +97,16 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 
    * Add minimal helper lemmas (use `private` or local `namespace`).
    * Follow house style; use `Zaux.lean`’s `Zfast_div_eucl_spec` and in-file patterns as templates.
-   * Do not attempt to skip or bypass the proof: `axiom`, `admit`, `pure true`, or any non-`sorry` placeholder (including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and all variants which could be easily deducted to a `True`) are strictly forbidden.
-5. **Check Implement**: review your changes to ensure no forbidden placeholders were introduced. To be specific:
+   * Do not attempt to skip or bypass the proof: `axiom`, `admit`, `pure true`, or any placeholder (including `sorry`, `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and all variants which could be easily deducted to a `True`) are strictly forbidden.
+5. **Compile**: `lake build` immediately after the change.
+
+   * Fix all reported errors before making more changes.
+6. **Check Implement**: review your changes to ensure no forbidden placeholders were introduced. To be specific:
     * Search the diff for `axiom`, `admit`, `pure true`, `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and all variants which could be easily deducted to a `True`.
     * If you find any of these placeholders, revert all the related changes and work from beginning.
     * If the search did not find any of these placeholders, apply the patch and proceed to the next step.
-6. **Compile**: `lake build` immediately after the change.
-
-   * Fix all reported errors before making more changes.
+    * Search the diff for `sorry`. If you find any sorry, continue to work on it until there is no sorry left in the diff.
+    * If you did not find any sorry in the diff, proceed to the next step.
 7. **Polish**: refactor only if it **reduces** proof fragility and aligns with the Coq source.
 8. **Log**: update the change log (see “Change Log & Reporting”).
 
@@ -119,6 +122,8 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 * Introduce small, well-named helper lemmas.
 * Reorder theorems **only** to resolve clear dependency cycles—and log it.
 * Minimal spec tweaks **only if** the Coq original demands it (see below).
+* Start a complex fix of a certain proof, despite the risk of failure, if you have a clear plan and the Coq source as a guide.
+* Move the target theorem to a different location in the file (e.g., closer to related lemmas or later than some required lemmas) if it helps your workflow.
 
 **Prohibited**
 
@@ -127,6 +132,7 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 * Using `axiom`, `admit`, `pure true`, or any non-`sorry` placeholder, including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and all variants which could be easily deducted to a `True`. If you see such placeholders, replace them with `sorry` instead.
 * Expanding scope beyond the **single selected** target.
 * Broad spec rewrites or syntax changes to Hoare triples (unless strictly required by the Coq source and documented).
+* Use `complex proof` as an excuse for doing no action. Instead, you should do whatever you are able to - moving theorems to avoid dependency issues, create local lemmas which does not exist previously (and you need them to prove the target theorem), etc. The goal is to reduce the gap as much as possible.
 
 ---
 
@@ -143,12 +149,13 @@ Repair **exactly one** item: the **first** theorem in the target file that lacks
 
 ## Proof Strategy Guidelines
 
-* Prefer decomposition: prove small lemmas, then assemble.
-* Use existing proven lemmas from imports and `mathlib4` where available; if uncertain, search first, otherwise implement locally.
+* Prefer no decomposition: Try your best to prove the theorem directly through trial and error. Only if you are completely stuck, factor out small helper lemmas. Aviod replacing a single sorry with multiple sorries that you are UNCERTAIN about the correctness.
+* Use existing proven lemmas from imports, existing files and `mathlib4` where available; if uncertain, search first, otherwise implement locally.
 * Keep terms and rewriting explicit; avoid fragile tactic scripts.
 * Preserve existing notation and Hoare triple syntax whenever possible.
 * Trying is encouraged: if a tactic or approach seems promising, implement and test it instead of over-planning.
 * Some theorems lack a pre-condition `1 < beta`—if needed, add it (Coq reference required).
+* You are allowed to move theorems: When you observe that the target theorem depends on some lemmas that are defined later in the file, you can move the target theorem to a different location in the file (e.g., closer to related lemmas or later than some required lemmas) if it helps your workflow. If you do reorder, YOU MUST MAKE SURE THAT THE DEPENDENCY IS error-safe after your move (or else you could make other moves first to ensure that), then document it. If the dependency you need is in another file, check if the import will cause a dependency cycle; if so, do not reorder and check the coq original source and use the proof Strategy from there.
 
 ---
 
@@ -217,6 +224,7 @@ EOF
   # Build the CLI command as an array to preserve spaces/newlines
   # NOTE: Keep your original flags; remove the stray 'high' token if not supported.
   cmd=(codex exec "$msg" --dangerously-bypass-approvals-and-sandbox)
+  # cmd=(claude -p "$msg" --dangerously-skip-permissions)
 
   end=$(( $(date +%s) + t*60*60 ))
   while [[ $(date +%s) -lt $end ]]; do
