@@ -21,10 +21,8 @@ import FloatSpec.src.Core.Generic_fmt
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Core.FLX
-open FloatSpec.Core.Round_generic
 
 open Real
 open Std.Do
@@ -522,8 +520,8 @@ theorem round_FTZ_FLX (beta : Int)
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta ∧ (beta : ℝ) ^ (emin + prec) ≤ |x|⌝⦄
     (pure (
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x,
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec) (mode := rnd) x) : Id (ℝ × ℝ))
+      round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x,
+      round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec) (mode := rnd) x) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_lb⟩
@@ -578,10 +576,10 @@ theorem round_FTZ_FLX (beta : Int)
     unfold FloatSpec.Core.Generic_fmt.cexp; simp [FloatSpec.Core.Raux.mag, hM]
   -- With identical exponents, `round_to_generic` produces identical results
   have :
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x
-        = FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec) (mode := rnd) x := by
+      round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x
+        = round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec) (mode := rnd) x := by
     -- Unfold the definition and rewrite the equal exponents
-    unfold FloatSpec.Core.Round_generic.round_to_generic
+    unfold round_to_generic
     -- Replace both `cexp` calls by the same value and reduce
     simp [hcexp_FTZ, hcexp_FLX, hEqExp]
   -- Discharge the Hoare triple over the pure pair
@@ -603,7 +601,7 @@ FTZ flushes to zero for any rounding predicate `rnd`.
 -/
 theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta ∧ |x| < (beta : ℝ) ^ (emin)⌝⦄
-    (pure (FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x) : Id ℝ)
+    (pure (round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x) : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hxlt⟩
@@ -661,10 +659,10 @@ theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
       -- Ztrunc sm = ⌊sm⌋ when 0 ≤ sm
       simpa [FloatSpec.Core.Raux.Ztrunc, not_lt.mpr hnonneg, hfloor0]
   -- Unfold rounding: with truncated mantissa 0, the reconstructed value is 0
-  have : FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x = 0 := by
+  have : round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x = 0 := by
     -- Expand definition and rewrite step-by-step without triggering zpow inversion
     classical
-    unfold FloatSpec.Core.Round_generic.round_to_generic
+    unfold round_to_generic
     set E : Int := (FloatSpec.Core.Generic_fmt.cexp beta (FTZ_exp prec emin) x).run with hE
     -- Replace the argument by sm and use Ztrunc sm = 0
     set m : ℝ := x * (beta : ℝ) ^ (-E) with hm
@@ -676,9 +674,9 @@ theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     have htrunc0R : ((FloatSpec.Core.Raux.Ztrunc m).run : ℝ) = 0 := by simpa [htrunc0']
     -- Compute the final value explicitly to avoid zpow inversion rewrites
     have hrw :
-        FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x
+        round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x
           = ((FloatSpec.Core.Raux.Ztrunc m).run : ℝ) * (beta : ℝ) ^ E := by
-      simp [FloatSpec.Core.Round_generic.round_to_generic, hE, hm]
+      simp [round_to_generic, hE, hm]
     -- With truncated mantissa equal to 0, the result is 0
     -- Guard against zpow inversion by proving the required Ztrunc equality directly
     have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)

@@ -18,7 +18,6 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Ulp
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
@@ -27,7 +26,6 @@ import Std.Tactic.Do
 open Real
 open Std.Do
 open FloatSpec.Core.Generic_fmt
-open FloatSpec.Core.Round_generic
 
 namespace FloatSpec.Core.FIX
 
@@ -247,12 +245,12 @@ canonical exponent. For `fexp = FIX_exp 0` and `beta = 2`, this reduces to
 -/
 theorem round_FIX_IZR (x : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (FloatSpec.Core.Round_generic.round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int))) (mode := fun _ _ => True) x) : Id ℝ)
+    (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int))) (mode := fun _ _ => True) x) : Id ℝ)
     ⦃⇓r => ⌜r = ((FloatSpec.Core.Raux.Ztrunc x).run : ℝ)⌝⦄ := by
   intro _
   -- Unfold the rounding model and compute with the constant exponent 0
   simp [wp, PostCond.noThrow,
-        FloatSpec.Core.Round_generic.round_to_generic,
+        round_to_generic,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         FIX_exp]

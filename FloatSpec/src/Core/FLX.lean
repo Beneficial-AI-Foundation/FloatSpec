@@ -23,7 +23,6 @@ import Mathlib.Algebra.Ring.Defs
 import Mathlib.Algebra.Ring.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Core.FIX
 
@@ -39,7 +38,6 @@ attribute [-simp] neg_mul
 open Real
 open Std.Do
 open FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
-open FloatSpec.Core.Round_generic
 
 namespace FloatSpec.Core.FLX
 
@@ -285,7 +283,7 @@ instance FLX_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
 
 /- Monotonicity of FLX_exp: subtracting a fixed `prec` preserves ≤. -/
 instance FLX_exp_mono :
-    FloatSpec.Core.Round_generic.Monotone_exp (FLX_exp prec) :=
+    Monotone_exp (FLX_exp prec) :=
   ⟨by
     intro a b hab
     -- a ≤ b ⇒ a - prec ≤ b - prec
@@ -997,7 +995,7 @@ theorem eq_0_round_0_FLX
     [Prec_gt_0 prec]
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜1 < beta ∧ FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0⌝⦄
+    ⦃⌜1 < beta ∧ round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0⌝⦄
     (pure x : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   intro hpre; classical
@@ -1009,7 +1007,7 @@ theorem eq_0_round_0_FLX
     simpa [wp, PostCond.noThrow] using (negligible_exp_FLX (prec := prec) (beta := beta) (by trivial))
   -- Use the generic lemma `eq_0_round_0_negligible_exp` specialized to FLX
   have himpl :
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0 → x = 0 := by
+      round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0 → x = 0 := by
     simpa [wp, PostCond.noThrow, Id.run, bind, pure]
       using
         (FloatSpec.Core.Ulp.eq_0_round_0_negligible_exp
@@ -1030,7 +1028,7 @@ theorem gt_0_round_gt_0_FLX
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta ∧ 0 < x⌝⦄
-    (pure (FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x) : Id ℝ)
+    (pure (round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x) : Id ℝ)
     ⦃⇓r => ⌜0 < r⌝⦄ := by
   intro hpre; classical
   -- Reduce the Hoare triple to a pure goal and unpack premises
@@ -1038,16 +1036,16 @@ theorem gt_0_round_gt_0_FLX
   rcases hpre with ⟨hβ, hx_pos⟩
   -- Monotonicity gives nonnegativity: round 0 ≤ round x and round 0 = 0
   have hr0 :
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) 0 = 0 := by
-    simp [FloatSpec.Core.Round_generic.round_to_generic, FloatSpec.Core.Generic_fmt.Ztrunc_zero]
+      round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) 0 = 0 := by
+    simp [round_to_generic, FloatSpec.Core.Generic_fmt.Ztrunc_zero]
   have hmono :=
-    FloatSpec.Core.Round_generic.round_to_generic_monotone
+    round_to_generic_monotone
       (beta := beta) (fexp := FLX_exp prec) (rnd := rnd)
   have hr_nonneg :
-      0 ≤ FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x := by
+      0 ≤ round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x := by
     have :
-        FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) 0
-          ≤ FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x :=
+        round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) 0
+          ≤ round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x :=
       hmono (le_of_lt hx_pos)
     simpa [hr0] using this
   -- In FLX, there is no flush-to-zero: rounding a nonzero positive x cannot yield 0
@@ -1055,7 +1053,7 @@ theorem gt_0_round_gt_0_FLX
     simpa [wp, PostCond.noThrow]
       using (negligible_exp_FLX (prec := prec) (beta := beta) (by trivial))
   have hr_ne :
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x ≠ 0 := by
+      round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x ≠ 0 := by
     -- Use the generic `round_neq_0_negligible_exp` under `Monotone_exp` for FLX
     have hx_ne : x ≠ 0 := ne_of_gt hx_pos
     have htrip :=

@@ -11,7 +11,6 @@ import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Digits
 import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Calc.Bracket
 import Mathlib.Data.Real.Basic
@@ -20,7 +19,7 @@ import Std.Do.Triple
 import Std.Tactic.Do
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
-open FloatSpec.Core.Round_generic
+open FloatSpec.Core.Generic_fmt
 open Std.Do
 
 namespace FloatSpec.Calc.Sqrt

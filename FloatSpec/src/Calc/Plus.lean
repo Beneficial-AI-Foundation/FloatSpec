@@ -12,13 +12,12 @@ import FloatSpec.src.Calc.Operations
 import FloatSpec.src.Calc.Round
 import FloatSpec.src.Core.Digits
 import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Round_generic
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Digits FloatSpec.Core.Defs FloatSpec.Core.Generic_fmt
-open FloatSpec.Core.Round_generic
+open FloatSpec.Core.Generic_fmt
 open Std.Do
 
 namespace FloatSpec.Calc.Plus

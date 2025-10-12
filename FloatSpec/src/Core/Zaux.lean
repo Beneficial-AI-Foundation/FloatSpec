@@ -225,7 +225,7 @@ theorem radix_val_inj (r1 r2 : Radix) :
   -- Follows `radix_val_inj_spec`.
   exact radix_val_inj_spec r1 r2
 
-/-- Positivity of a radix value -/ 
+/-- Positivity of a radix value -/
 def radix_gt_0_check (r : Radix) : Id Bool :=
   decide (0 < r.val)
 
@@ -245,7 +245,7 @@ theorem radix_gt_0 (r : Radix) :
     ⦃⇓result => ⌜result = decide (0 < r.val)⌝⦄ := by
   exact radix_gt_0_spec r
 
-/-- Lower bound of any radix (strict): r > 1 -/ 
+/-- Lower bound of any radix (strict): r > 1 -/
 def radix_gt_1_check (r : Radix) : Id Bool :=
   decide (1 < r.val)
 
@@ -733,7 +733,7 @@ end DivMod
 
 section SameSign
 
-/-- Transitivity of nonnegativity through a nonzero middle factor -/ 
+/-- Transitivity of nonnegativity through a nonzero middle factor -/
 def Zsame_sign_trans_check (v u w : Int) : Id Bool :=
   decide (0 ≤ u * w)
 

@@ -18,7 +18,6 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Core.FLX
 import FloatSpec.src.Core.FIX
@@ -29,7 +28,6 @@ import Std.Tactic.Do
 open Real
 open Std.Do
 open FloatSpec.Core.Generic_fmt
-open FloatSpec.Core.Round_generic
 
 namespace FloatSpec.Core.FLT
 
@@ -1261,8 +1259,8 @@ FLT equals rounding in FLX for any rounding predicate `rnd`.
 theorem round_FLT_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec) ≤ |x|⌝⦄
     (pure (
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLT_exp prec emin) (mode := rnd) x,
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX.FLX_exp prec) (mode := rnd) x) : Id (ℝ × ℝ))
+      round_to_generic (beta := beta) (fexp := FLT_exp prec emin) (mode := rnd) x,
+      round_to_generic (beta := beta) (fexp := FLX.FLX_exp prec) (mode := rnd) x) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_lb⟩
@@ -1319,10 +1317,10 @@ theorem round_FLT_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     unfold FloatSpec.Core.Generic_fmt.cexp; simp [FloatSpec.Core.Raux.mag, hM]
   -- With identical exponents, `round_to_generic` produces identical results
   have :
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLT_exp prec emin) (mode := rnd) x
-        = FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := FLX.FLX_exp prec) (mode := rnd) x := by
+      round_to_generic (beta := beta) (fexp := FLT_exp prec emin) (mode := rnd) x
+        = round_to_generic (beta := beta) (fexp := FLX.FLX_exp prec) (mode := rnd) x := by
     -- Unfold the definition and rewrite the equal exponents
-    unfold FloatSpec.Core.Round_generic.round_to_generic
+    unfold round_to_generic
     -- Replace both `cexp` calls by the same value and reduce
     simp [hcexp_FLT, hcexp_FLX, hEqExp]
   -- Discharge the Hoare triple over the pure pair

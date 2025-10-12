@@ -133,6 +133,7 @@ Repair **exactly one** theorem: the **first** theorem in the target file that la
 * Expanding scope beyond the **single selected** target.
 * Broad spec rewrites or syntax changes to Hoare triples (unless strictly required by the Coq source and documented).
 * Use `complex proof` as an excuse for doing no action. Instead, you should do whatever you are able to - moving theorems to avoid dependency issues, create local lemmas which does not exist previously (and you need them to prove the target theorem), etc. The goal is to reduce the gap as much as possible.
+* It is strictly forbidden to revert any previous changes through git commands. If you find any previous changes that are incorrect, you should fix them through new changes instead of reverting them.
 
 ---
 

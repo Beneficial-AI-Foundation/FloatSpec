@@ -24,7 +24,6 @@ import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Float_prop
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
@@ -48,8 +47,6 @@ variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 -- Scoped assumption: many lemmas in this file rely on exponent monotonicity.
 -- Keeping it as a section variable lets downstream code provide an instance
--- only when needed, while our bridge-instance above supplies Round_generic's.
--- Local monotonicity assumption used by spacing lemmas from Round_generic
 -- If you like a local alias:
 abbrev Float := Defs.FlocqFloat beta
 
@@ -653,11 +650,11 @@ toolbox is fully ported.
 -- of `pred_round_le_id_theorem` to discharge an impossible case.
 private theorem round_neq_0_negligible_exp_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (hne : negligible_exp fexp = none)
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : x ≠ 0)
     (hβ : 1 < beta) :
-    FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x ≠ 0 := by
+    FloatSpec.Core.Generic_fmt.round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x ≠ 0 := by
   classical
   -- Suppose the rounded value is zero and derive a contradiction.
   intro hr0
@@ -742,11 +739,11 @@ private theorem round_neq_0_negligible_exp_theorem
       simpa [ex, add_comm, add_left_comm, add_assoc, sub_eq_add_neg] using hx_lt'
     -- Apply the small‑regime lemma with this exponent
     have hsmall :=
-      (FloatSpec.Core.Round_generic.exp_small_round_0 (beta := beta) (fexp := fexp)
+      (FloatSpec.Core.Generic_fmt.exp_small_round_0 (beta := beta) (fexp := fexp)
         (rnd := rnd) (x := x) (ex := ex)) ⟨hlow, hupp⟩
     have hex_le : ex ≤ fexp ex := by
       simpa [wp, PostCond.noThrow, Id.run]
-        using (hsmall (by simpa [FloatSpec.Core.Round_generic.round_to_generic] using hr0))
+        using (hsmall (by simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using hr0))
     -- From negligible_exp = none, obtain fexp ex < ex
     have hall : ∀ n : Int, fexp n < n := by
       rcases (negligible_exp_spec' (fexp := fexp)) with h | hsome
@@ -762,11 +759,11 @@ private theorem round_neq_0_negligible_exp_theorem
     have hupp : |x| < (beta : ℝ) ^ ex0 := lt_of_le_of_ne hupp_le hEq
     -- Apply `exp_small_round_0` at exponent ex0.
     have hsmall :=
-      (FloatSpec.Core.Round_generic.exp_small_round_0 (beta := beta) (fexp := fexp)
+      (FloatSpec.Core.Generic_fmt.exp_small_round_0 (beta := beta) (fexp := fexp)
         (rnd := rnd) (x := x) (ex := ex0)) ⟨hlow0, hupp⟩
     have hex_le : ex0 ≤ fexp ex0 := by
       simpa [wp, PostCond.noThrow, Id.run]
-        using (hsmall (by simpa [FloatSpec.Core.Round_generic.round_to_generic] using hr0))
+        using (hsmall (by simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using hr0))
     -- Negligible-exp = none yields a contradiction at ex0.
     have hall : ∀ n : Int, fexp n < n := by
       rcases (negligible_exp_spec' (fexp := fexp)) with h | hsome
@@ -782,8 +779,8 @@ private theorem succ_round_ge_id_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     (1 < beta) →
-    (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x)
-      ≤ (succ beta fexp (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x)).run := by
+    (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)
+      ≤ (succ beta fexp (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)).run := by
   -- This local bridge only needs the basic growth of `succ` on its input.
   -- Instantiate `y := round_to_generic … x` in `succ_run_ge_self`.
   intro hβ; exact succ_run_ge_self (beta := beta) (fexp := fexp) hβ _
@@ -795,11 +792,11 @@ private theorem succ_round_ge_id_theorem
 -- ported proof later.
 private theorem ulp0_ge_pow_cexp_round0_neg_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (e : Int) (B : ℝ) :
     (1 < beta) →
     x ≠ 0 →
-    FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x = 0 →
+    FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x = 0 →
     e = (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run →
     B = (beta : ℝ) ^ e →
     B ≤ (ulp beta fexp 0).run := by
@@ -827,10 +824,10 @@ private theorem ulp0_ge_pow_cexp_round0_neg_theorem
         simpa [wp, PostCond.noThrow, Id.run, bind, pure, hex0] using (hce hβ)
       have he' : e = fexp ex0 := by simpa [hcexp_run] using he
       -- Unfold the rounding definition to expose the scaled mantissa and Ztrunc
-      -- Notation as in Round_generic: r = (m : ℝ) * B
-      have hr_run : FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x =
+      -- Notation as in Generic_fmt: r = (m : ℝ) * B
+      have hr_run : FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x =
             ((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-e))).run : ℝ) * B := by
-        simp [FloatSpec.Core.Round_generic.round_to_generic, he, hB]
+        simp [FloatSpec.Core.Generic_fmt.round_to_generic, he, hB]
       -- From r = 0 and B ≠ 0, deduce the truncated mantissa is zero
       have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
       have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
@@ -943,17 +940,17 @@ private theorem ulp0_ge_pow_cexp_round0_neg_theorem
 
 private theorem pred_round_le_id_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     (1 < beta) →
-    (pred beta fexp (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x)).run ≤ x := by
+    (pred beta fexp (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)).run ≤ x := by
   intro hβ; classical
   -- Abbreviations
   set e : Int := (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run with he
   set B : ℝ := (beta : ℝ) ^ e with hB
   set t : ℝ := x * (beta : ℝ) ^ (-e) with ht
   set m : Int := (FloatSpec.Core.Raux.Ztrunc t).run with hm
-  set r : ℝ := (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x) with hr
+  set r : ℝ := (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x) with hr
   -- Base positivity from 1 < beta
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
@@ -962,7 +959,7 @@ private theorem pred_round_le_id_theorem
   -- Expose the definition of r
   have hr_run : r = (m : ℝ) * B := by
     -- Unfold round_to_generic and rewrite with the abbreviations
-    simp [hr, FloatSpec.Core.Round_generic.round_to_generic, he, hB, ht, hm]
+    simp [hr, FloatSpec.Core.Generic_fmt.round_to_generic, he, hB, ht, hm]
   -- Two sign cases on x
   by_cases hx0 : 0 ≤ x
   · -- Nonnegative x: t ≥ 0, Ztrunc = floor, so (m : ℝ) ≤ t
@@ -1124,7 +1121,7 @@ private theorem pred_round_le_id_theorem
         have hB_le_ulp0 : B ≤ (ulp beta fexp 0).run := by
           have hx_ne : x ≠ 0 := ne_of_lt hxlt
           -- From r = 0 and hr : r = round_to_generic x, conclude round_to_generic x = 0
-          have hround0 : FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x = 0 := by
+          have hround0 : FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x = 0 := by
             simpa [hr] using hr0
           exact (ulp0_ge_pow_cexp_round0_neg_theorem
                     (beta := beta) (fexp := fexp) (rnd := rnd)
@@ -1184,7 +1181,7 @@ private theorem pred_round_le_id_theorem
             have := (FloatSpec.Core.Raux.mag_opp (beta := beta) (x := r))
             simpa [wp, PostCond.noThrow, Id.run, pure] using (this hβ)
           have hmag_round : (FloatSpec.Core.Raux.mag beta r).run = (FloatSpec.Core.Raux.mag beta x).run := by
-            have := (FloatSpec.Core.Round_generic.mag_round_ZR (beta := beta) (fexp := fexp) (rndZR := rnd) (x := x)) hβ
+            have := (FloatSpec.Core.Generic_fmt.mag_round_ZR (beta := beta) (fexp := fexp) (rndZR := rnd) (x := x)) hβ
             have hspec := by simpa [wp, PostCond.noThrow, Id.run, pure, hr] using this
             exact hspec hr_ne
           simpa [hmag_neg] using hmag_round
@@ -1260,13 +1257,13 @@ private theorem round_N_eq_DN_pt_theorem
     (Hd : FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x d)
     (Hu : FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x u)
     (h : x < ((d + u) / 2)) :
-    (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run = d := by
+    (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run = d := by
   classical
   -- Chosen DN/UP witnesses for x
-  set d₀ := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) with hd
-  set u₀ := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x) with hu0
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  set d₀ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) with hd
+  set u₀ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) with hu0
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hDN with ⟨hFd₀, hdn₀⟩
   rcases hUP with ⟨hFu₀, hup₀⟩
   rcases hdn₀ with ⟨_Fd₀', hd₀_le_x, hmax_dn₀⟩
@@ -1289,8 +1286,8 @@ private theorem round_N_eq_DN_pt_theorem
   -- Evaluate the definition of round_N_to_format on this branch
   have hnotgt : ¬ ((d₀ + u₀) / 2) < x := by
     exact not_lt.mpr (le_of_lt hbranch)
-  have hres : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run = d₀ := by
-    simp [FloatSpec.Core.Round_generic.round_N_to_format,
+  have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run = d₀ := by
+    simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
           hd.symm, hu0.symm, hbranch, hnotgt]
   simpa [hd_eq] using hres
 
@@ -1304,13 +1301,13 @@ private theorem round_N_eq_UP_pt_theorem
     (Hd : FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x d)
     (Hu : FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x u)
     (h : ((d + u) / 2) < x) :
-    (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run = u := by
+    (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run = u := by
   classical
   -- Chosen DN/UP witnesses for x
-  set d₀ := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) with hd
-  set u₀ := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x) with hu0
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  set d₀ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) with hd
+  set u₀ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) with hu0
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hDN with ⟨hFd₀, hdn₀⟩
   rcases hUP with ⟨hFu₀, hup₀⟩
   rcases hdn₀ with ⟨_Fd₀', hd₀_le_x, hmax_dn₀⟩
@@ -1330,8 +1327,8 @@ private theorem round_N_eq_UP_pt_theorem
   have hbranch : (d₀ + u₀) / 2 < x := by simpa [hd_eq, hu_eq] using h
   -- Evaluate the definition of round_N_to_format on this branch
   have hnotlt : ¬ x < (d₀ + u₀) / 2 := by exact not_lt.mpr (le_of_lt hbranch)
-  have hres : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run = u₀ := by
-    simp [FloatSpec.Core.Round_generic.round_N_to_format,
+  have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run = u₀ := by
+    simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
           hd.symm, hu0.symm, hnotlt, hbranch]
   simpa [hu_eq] using hres
 
@@ -1344,43 +1341,43 @@ Theorem round_DN_ge_UP_gt:
 theorem round_DN_ge_UP_gt
     (x y : ℝ)
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run)
-    (hlt : y < (FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x).run) :
+    (hlt : y < (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x).run) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
       pure dn
     ⦃⇓r => ⌜y ≤ r⌝⦄ := by
   intro _; classical
   -- Reduce the specification to a pure goal and unfold the chosen rounders
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   -- Notation for the format
   let F : ℝ → Prop := fun z => (FloatSpec.Core.Generic_fmt.generic_format beta fexp z).run
   -- Properties of the chosen round-up value at x
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hUP with ⟨hFup, hup⟩
   rcases hup with ⟨_hFup', hx_le_up, hmin_up⟩
   -- From y < up and minimality of up: it cannot be that x ≤ y
   have hnot_le_xy : ¬ x ≤ y := by
     intro hxle
-    have : (Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)) ≤ y :=
+    have : (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)) ≤ y :=
       hmin_up y Fy hxle
     -- Contradiction with y < up
-    have : ¬ (Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)) ≤ y :=
+    have : ¬ (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)) ≤ y :=
       not_le_of_gt (by
         -- rewrite the hypothesis hlt to expose the chosen up
-        simpa [FloatSpec.Core.Round_generic.round_UP_to_format, Id.run, bind, pure]
+        simpa [FloatSpec.Core.Generic_fmt.round_UP_to_format, Id.run, bind, pure]
           using hlt)
     exact this ‹_≤_›
   -- Hence y < x, so y ≤ x
   have hylex : y ≤ x := le_of_lt (lt_of_not_ge hnot_le_xy)
   -- Properties of the chosen round-down value at x
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
   rcases hDN with ⟨hFdn, hdn⟩
   rcases hdn with ⟨_hfF, _hfdn_le, hmax_dn⟩
   -- By maximality of DN at x, any format value ≤ x is ≤ DN; apply to y
   exact by
     -- Unfold the returned value r to the chosen DN
-    change y ≤ Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
+    change y ≤ Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
     exact hmax_dn y Fy hylex
 
 /-- Coq (Ulp.v):
@@ -1390,25 +1387,25 @@ Theorem round_UP_le_DN_lt:
 theorem round_UP_le_DN_lt
     (x y : ℝ)
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run)
-    (hlt : (FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x).run < y) :
+    (hlt : (FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x).run < y) :
     ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
       pure up
     ⦃⇓r => ⌜r ≤ y⌝⦄ := by
   intro _; classical
   -- Reduce to a pure inequality on the chosen round-up value
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   -- Notation for the format
   let F : ℝ → Prop := fun z => (FloatSpec.Core.Generic_fmt.generic_format beta fexp z).run
   -- Properties of the chosen round-down value at x
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
   rcases hDN with ⟨hFdn, hdn⟩
   rcases hdn with ⟨_hFdn', hdn_le_x, hmax_dn⟩
   -- Rewrite the hypothesis on DN into the chosen value form
   have hdn_lt_y :
-      Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) < y := by
-    simpa [FloatSpec.Core.Round_generic.round_DN_to_format, Id.run, bind, pure]
+      Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) < y := by
+    simpa [FloatSpec.Core.Generic_fmt.round_DN_to_format, Id.run, bind, pure]
       using hlt
   -- Show x ≤ y; otherwise we contradict the maximality of DN at x applied to y
   have hx_le_y : x ≤ y := by
@@ -1416,11 +1413,11 @@ theorem round_UP_le_DN_lt
     have hy_lt_x : y < x := lt_of_not_ge hx_nle
     have hy_le_x : y ≤ x := le_of_lt hy_lt_x
     have hy_le_dn :
-        y ≤ Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) :=
+        y ≤ Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) :=
       hmax_dn y Fy hy_le_x
     exact (not_le_of_gt hdn_lt_y) hy_le_dn
   -- Properties of the chosen round-up value at x
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hUP with ⟨hFup, hup⟩
   rcases hup with ⟨_hFup', hx_le_up, hmin_up⟩
   -- By minimality of UP at x, any F-value ≥ x (such as y) is ≥ UP
@@ -1496,7 +1493,7 @@ private theorem error_lt_ulp_x_theorem
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (hβ : 1 < beta)
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : x ≠ 0) :
-    abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x) <
+    abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) <
     (ulp (beta := beta) (fexp := fexp) x).run := by
   classical
   -- Case split on whether x is already in the generic format
@@ -1504,8 +1501,8 @@ private theorem error_lt_ulp_x_theorem
   | inl Hx =>
     -- Case: x is in generic format
     -- Then round_to_generic x = x by round_generic_identity
-    have round_eq : FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x = x := by
-      have h_ident := FloatSpec.Core.Round_generic.round_generic_identity beta hβ fexp rnd x
+    have round_eq : FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x = x := by
+      have h_ident := FloatSpec.Core.Generic_fmt.round_generic_identity beta hβ fexp rnd x
       have h_apply := h_ident Hx
       simp only [wp, PostCond.noThrow, Id.run, pure] at h_apply
       exact h_apply
@@ -1528,7 +1525,7 @@ private theorem error_lt_ulp_x_theorem
     -- The error from truncation is bounded by the spacing at the exponent level
 
     -- Unpack the definition of round_to_generic
-    simp only [FloatSpec.Core.Round_generic.round_to_generic]
+    simp only [FloatSpec.Core.Generic_fmt.round_to_generic]
 
     -- Let's work with the components
     let exp := (cexp beta fexp x).run
@@ -1536,13 +1533,13 @@ private theorem error_lt_ulp_x_theorem
     let rounded_mantissa : Int := (FloatSpec.Core.Raux.Ztrunc mantissa).run
 
     -- The rounded value is:
-    have h_round_eq : FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x =
+    have h_round_eq : FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x =
                       (rounded_mantissa : ℝ) * (beta : ℝ) ^ exp := by
-      simp only [FloatSpec.Core.Round_generic.round_to_generic]
+      simp only [FloatSpec.Core.Generic_fmt.round_to_generic]
       rfl
 
     -- The error is:
-    have h_error : FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x =
+    have h_error : FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x =
                    ((rounded_mantissa : ℝ) - mantissa) * (beta : ℝ) ^ exp := by
       rw [h_round_eq]
       -- Expand x = mantissa * beta^exp
@@ -1556,7 +1553,7 @@ private theorem error_lt_ulp_x_theorem
       ring
 
     -- The absolute error is bounded by the truncation error times the scale
-    have h_abs_error : abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x) =
+    have h_abs_error : abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) =
                        abs ((rounded_mantissa : ℝ) - mantissa) * abs ((beta : ℝ) ^ exp) := by
       rw [h_error]
       exact abs_mul _ _
@@ -1580,7 +1577,7 @@ private theorem error_lt_ulp_x_theorem
       simp only [FloatSpec.Core.Raux.bpow, Id.run, pure]
       rfl
 
-    calc abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x)
+    calc abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x)
       _ = abs ((rounded_mantissa : ℝ) - mantissa) * abs ((beta : ℝ) ^ exp) := by
         exact h_abs_error
       _ = abs ((rounded_mantissa : ℝ) - mantissa) * (beta : ℝ) ^ exp := by
@@ -1601,15 +1598,15 @@ It depends on adjacency/spacing facts not yet ported here. -/
 private lemma round_to_generic_format
     (beta : Int) (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-      (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x)).run := by
+      (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)).run := by
   -- The proof shows that rounding any real number to the generic format produces
   -- a value that is indeed in the generic format.
   -- Use generic_format_F2R with the scaled mantissa construction
 
-  unfold FloatSpec.Core.Round_generic.round_to_generic
+  unfold FloatSpec.Core.Generic_fmt.round_to_generic
 
   -- round_to_generic returns F2R(Ztrunc(scaled_mantissa x e), e) where e = cexp x
   let exp := (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run
@@ -1637,7 +1634,7 @@ private lemma round_to_generic_format
     -- Use monotonicity of fexp
     have h_mono : ∀ ex1 ex2, ex1 ≤ ex2 → fexp ex1 ≤ fexp ex2 := by
       intros ex1 ex2 h
-      exact FloatSpec.Core.Round_generic.Monotone_exp.mono h
+      exact FloatSpec.Core.Generic_fmt.Monotone_exp.mono h
 
     -- Goal reduces to showing mag(F2R(mantissa, exp)) ≤ mag(x)
     apply h_mono
@@ -1761,1068 +1758,14 @@ midpoint and spacing lemmas for the generic format are fully ported. -/
 private theorem error_le_half_ulp_roundN_theorem
     (beta : Int) (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (hβ : 1 < beta)
     (choice : Int → Bool) (x : ℝ) :
-    abs ((FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run - x)
+    abs ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run - x)
       ≤ (1/2) *
         (ulp (beta := beta) (fexp := fexp)
-             ((FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run)).run := by
-  -- Following Coq's error_le_half_ulp_round (Ulp.v:1896-1975)
-  -- The proof requires several dependencies that come later in the file:
-  -- 1. error_le_half_ulp_theorem (line 2623)
-  -- 2. ulp_DN_run_theorem (line 2496)
-  -- 3. ulp_le (line 5423)
-  -- Due to forward reference limitations, we provide a partial proof structure
-
-  classical
-  -- Get the rounded value
-  set fx := (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run
-  -- Case split on whether round_N x = 0
-  by_cases hfx_zero : fx = 0
-  · -- Case 1: round_N x = 0
-    by_cases hx_zero : x = 0
-    · -- Subcase: x = 0, then round_N 0 = 0
-      rw [hx_zero, hfx_zero]
-      simp only [sub_zero, abs_zero]
-      -- Expand ulp 0
-      unfold ulp
-      simp only [if_pos (rfl : (0 : ℝ) = 0)]
-      -- Now we need to show 0 ≤ (1/2) * (match negligible_exp ...)
-      -- Since everything is nonnegative, this holds
-      match hn : negligible_exp fexp with
-      | some n =>
-        simp only [hn, Id.run, pure]
-        apply mul_nonneg
-        · norm_num
-        · have hbeta_pos : (0 : ℝ) < beta := by
-            exact_mod_cast (lt_trans Int.zero_lt_one hβ)
-          exact le_of_lt (zpow_pos hbeta_pos _)
-      | none =>
-        simp only [hn, Id.run, pure]
-        norm_num
-    · -- Subcase: x ≠ 0, round_N x = 0 (underflow case)
-      -- This case requires error_le_half_ulp_theorem and negligible_exp reasoning
-      -- The Coq proof uses:
-      -- - error_le_half_ulp to get |round_N x - x| ≤ 1/2 * ulp x
-      -- - negligible_exp_spec' to handle ulp 0
-      -- - When negligible_exp = None, contradicts round_N x = 0 with x ≠ 0
-      -- - When negligible_exp = Some n, uses transitivity with β^(fexp n - 1)
-
-      -- Since fx = 0 and x ≠ 0, we have |0 - x| = |x|
-      rw [hfx_zero]
-      rw [zero_sub, abs_neg]
-      unfold ulp
-      rw [if_pos (rfl : (0 : ℝ) = 0)]
-
-      -- Case analysis on negligible_exp
-      match hn : negligible_exp fexp with
-      | none =>
-        simp only [hn, Id.run, pure, mul_zero]
-        -- When negligible_exp = None, round_N x = 0 with x ≠ 0 leads to contradiction
-        -- The contradiction comes from the fact that round_N_to_format cannot round
-        -- a nonzero value to zero when negligible_exp = none
-
-        -- We'll prove that fx = 0 is impossible
-        exfalso
-
-        -- round_N_to_format returns either DN(x) or UP(x)
-        -- Both DN and UP are instances of round_to_generic with specific rounding predicates
-        -- When negligible_exp = none and x ≠ 0, round_to_generic never returns 0
-
-        -- First, let's examine what fx is
-        -- fx = round_N_to_format(...).run, and we know fx = 0
-        -- Unfolding round_N_to_format, we get an if-then-else returning either d or u
-
-        -- Since fx is defined as round_N_to_format(...).run, we need to work with the definition
-        unfold FloatSpec.Core.Round_generic.round_N_to_format at hfx_zero
-
-        -- Extract the definition directly
-        -- round_N_to_format returns either d or u based on midpoint comparison
-        let d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-        let u := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-        let mid := (d + u) / 2
-
-        -- Now hfx_zero says: (if x < mid then pure d else if mid < x then pure u else ...).run = 0
-        -- Split based on the conditions
-        by_cases hlt : x < mid
-        · -- Case: x < mid, so fx = d
-          have : fx = d := by
-            unfold fx FloatSpec.Core.Round_generic.round_N_to_format
-            simp only [Id.run]
-            -- The definition matches exactly with our d and mid
-            show (if x < mid then d else if mid < x then u else u) = d
-            simp only [if_pos hlt]
-          rw [this] at hfx_zero
-          -- d is obtained from round_DN_exists, which gives us a value satisfying round_DN
-          have hd_spec := Classical.choose_spec
-            (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-          -- Use the fact that d is a DN value to show it can't be zero
-          -- d satisfies the round_DN predicate
-          have ⟨hFd, hDNpt⟩ := hd_spec
-          have hd_ne0 : d ≠ 0 := by
-            -- When negligible_exp = none and x ≠ 0, DN(x) cannot be 0
-            -- We use the fact that d is essentially a rounded value
-            -- Apply the general principle that rounding nonzero x with negligible_exp = none gives nonzero result
-
-            -- The DN value d can be viewed as round_to_generic with Rnd_DN_pt predicate
-            -- Since round_neq_0_negligible_exp_theorem applies to any rounding mode,
-            -- and DN is a valid rounding mode, d ≠ 0
-
-            -- More directly: if d = 0 is the DN of x ≠ 0, we have:
-            -- 1) d = 0 is in the format (true)
-            -- 2) d = 0 ≤ x
-            -- 3) d = 0 is maximal among format values ≤ x
-
-            by_contra hd0
-            -- From d = 0 and the DN predicate, we get 0 ≤ x
-            have h0_le_x : 0 ≤ x := by
-              rw [← hd0]
-              exact hDNpt.2.1
-
-            -- Since x ≠ 0 and 0 ≤ x, we must have x > 0
-            have hx_pos : 0 < x := lt_of_le_of_ne h0_le_x (Ne.symm hx_zero)
-
-            -- Use a simplified contradiction: when negligible_exp = none,
-            -- there's no "underflow" region, so positive values don't round down to 0
-            -- This is captured by round_neq_0_negligible_exp_theorem
-
-            -- The key is that d satisfies a rounding property equivalent to round_to_generic
-            -- with the DN mode, and that theorem says no nonzero x rounds to 0
-
-            -- When negligible_exp = none, we can find a positive format value
-            -- Since negligible_exp = none, by the definition of negligible_exp,
-            -- there exists some positive value in the format
-
-            -- We use the fact that when negligible_exp = none, the format contains
-            -- positive values arbitrarily close to 0. In particular, there must be
-            -- some positive format value less than x.
-
-            -- Let's use a different approach: since d = 0 is maximal among format
-            -- values ≤ x, and x > 0, we need to show there's a positive format value < x
-
-            -- When negligible_exp = none, the smallest positive format value is
-            -- β^(fexp (mag 0)) where mag 0 is conventionally some value
-            -- But this requires careful handling of the mag at 0
-
-            -- Instead, use the fact that round_to_generic with any rounding mode
-            -- produces a format value, and for x > 0 with negligible_exp = none,
-            -- it cannot be 0
-            have round_ne_0 := round_neq_0_negligible_exp_theorem beta fexp hn
-              (FloatSpec.Core.Round_pred.Rnd_DN_pt
-                (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run))
-              x hx_zero hβ
-
-            -- When negligible_exp = none, we have ∀ n, fexp n < n
-            have h_all : ∀ n : Int, fexp n < n := by
-              have h_spec := negligible_exp_spec' (fexp := fexp)
-              rcases h_spec with ⟨h_none, h_forall⟩ | ⟨n, h_some, _⟩
-              · exact h_forall
-              · -- negligible_exp = some n contradicts hn = none
-                rw [hn] at h_some
-                simp at h_some
-
-            -- Take the magnitude of x
-            let ex := (FloatSpec.Core.Raux.mag beta x).run
-            exfalso
-
-            -- Choose a large negative exponent
-            let m := -(ex.natAbs + 10 : Int)  -- Sufficiently negative
-            let n := ex - 2
-
-            -- From h_all, we have fexp n < n
-            have hfexp_lt : fexp n < n := h_all n
-
-            -- Consider the value v = β^(fexp n)
-            let v := (beta : ℝ) ^ (fexp n)
-
-            -- v is in the format (it's a power of β with exponent fexp n)
-            have hFv : (FloatSpec.Core.Generic_fmt.generic_format beta fexp v).run := by
-              -- v = β^(fexp n) is in format
-              -- We need to show fexp(fexp n) ≤ fexp n to use generic_format_bpow'
-              unfold v
-
-              -- Since negligible_exp = none, we have ∀ m, fexp m < m (from h_all)
-              -- Therefore fexp(fexp n) < fexp n, which gives us fexp(fexp n) ≤ fexp n
-              have h_fexp_le : fexp (fexp n) ≤ fexp n := by
-                have h_strict : fexp (fexp n) < fexp n := h_all (fexp n)
-                exact le_of_lt h_strict
-
-              -- Now apply generic_format_bpow'
-              have h_result := FloatSpec.Core.Generic_fmt.generic_format_bpow'
-                (beta := beta) (fexp := fexp) (e := fexp n) ⟨hβ, h_fexp_le⟩
-              simp [wp, PostCond.noThrow, Id.run] at h_result
-              exact h_result
-
-            -- v > 0 (since β > 1 and any power is positive)
-            have hv_pos : 0 < v := by
-              unfold v
-              have hbpos : (0 : ℝ) < beta := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
-              exact zpow_pos hbpos _
-
-            -- v < x (by choice of n and properties of mag)
-            have hv_lt_x : v < x := by
-              unfold v n
-              -- We have fexp (ex - 2) < ex - 2
-              have : fexp (ex - 2) < ex - 2 := hfexp_lt
-              -- So β^(fexp (ex - 2)) ≤ β^(ex - 3) (since fexp (ex - 2) ≤ ex - 3)
-              have hexp_le : fexp (ex - 2) ≤ ex - 3 := by linarith
-              have hbpos : (0 : ℝ) < beta := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
-              have hβ_ge_1 : 1 ≤ (beta : ℝ) := by exact_mod_cast (le_of_lt hβ)
-              have hpow_le : (beta : ℝ) ^ (fexp (ex - 2)) ≤ (beta : ℝ) ^ (ex - 3) := by
-                apply zpow_le_zpow_right₀ hβ_ge_1 hexp_le
-              -- And β^(ex - 3) < β^(ex - 1) ≤ x
-              calc v = (beta : ℝ) ^ (fexp (ex - 2)) := rfl
-                _ ≤ (beta : ℝ) ^ (ex - 3) := hpow_le
-                _ < (beta : ℝ) ^ (ex - 1) := by
-                  have hb_gt1 : 1 < (beta : ℝ) := by exact_mod_cast hβ
-                  apply zpow_lt_zpow_right₀ hb_gt1
-                  linarith
-                _ ≤ x := by
-                  -- From mag properties, β^(ex - 1) ≤ |x| = x (since x > 0)
-                  have hmag := FloatSpec.Core.Raux.bpow_mag_le beta x ex
-                  simp [wp, PostCond.noThrow, Id.run] at hmag
-                  have hle := hmag (And.intro hβ (And.intro hx_zero (le_rfl : ex ≤ ex)))
-                  simp [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run] at hle
-                  rwa [abs_of_pos hx_pos] at hle
-
-            -- Now v is a positive format value with 0 < v < x
-            -- But d = 0 is supposed to be maximal among format values ≤ x
-            -- This means v ≤ 0, contradicting v > 0
-            have hv_le_0 : v ≤ 0 := by
-              -- Use the DN property: d is maximal among format values ≤ x
-              have hmax := hDNpt.2.2 v hFv (le_of_lt hv_lt_x)
-              -- hmax : v ≤ d, and hfx_zero : d = 0
-              -- Since d = 0 from hfx_zero, and hmax says v ≤ d, we get v ≤ 0
-              exact le_trans hmax (le_of_eq hfx_zero)
-
-            -- Contradiction: v > 0 and v ≤ 0
-            linarith
-          exact hd_ne0 hfx_zero
-        · -- Case: x ≥ mid
-          -- Need to check if mid < x
-          by_cases hgt : mid < x
-          · -- Case: mid < x, so fx = u
-            have : fx = u := by
-              unfold fx FloatSpec.Core.Round_generic.round_N_to_format
-              simp only [Id.run]
-              -- The definition matches exactly with our d, u and mid
-              show (if x < mid then d else if mid < x then u else u) = u
-              simp only [if_neg hlt, if_pos hgt]
-            rw [this] at hfx_zero
-            have hu_spec := Classical.choose_spec
-              (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-            have ⟨hFu, hUPpt⟩ := hu_spec
-            have hu_ne0 : u ≠ 0 := by
-              -- Similar to DN case: UP(x) ≠ 0 when x ≠ 0 and negligible_exp = none
-              by_contra hu0
-              -- From u = 0 and the UP predicate, we get x ≤ 0
-              have hx_le_0 : x ≤ 0 := by
-                rw [← hu0]
-                exact hUPpt.2.1
-
-              -- Since x ≠ 0 and x ≤ 0, we must have x < 0
-              have hx_neg : x < 0 := lt_of_le_of_ne hx_le_0 hx_zero
-
-
-              -- Axiomatize: for negative x, there exists a negative format value f with x < f < 0
-              have format_density_neg : ∃ f : ℝ, f < 0 ∧ x < f ∧ (generic_format beta fexp f).run := by
-                -- Similar to the positive case, we need format density for negative values
-                -- Choose a negative exponent that gives a small negative format value
-                let ex := (FloatSpec.Core.Raux.mag beta x).run
-                let n := ex - 2
-                -- From negligible_exp = none, we have fexp n < n
-                have h_all : ∀ n : Int, fexp n < n := by
-                  have h_spec := negligible_exp_spec' (fexp := fexp)
-                  rcases h_spec with ⟨h_none, h_forall⟩ | ⟨m, h_some, _⟩
-                  · exact h_forall
-                  · rw [hn] at h_some
-                    simp at h_some
-                have hfexp_lt : fexp n < n := h_all n
-
-                -- Consider f = -β^(fexp n)
-                let f := -(beta : ℝ) ^ (fexp n)
-                use f
-
-                constructor
-                · -- f < 0
-                  unfold f
-                  have hbpos : (0 : ℝ) < beta := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
-                  simp [zpow_pos hbpos]
-
-                constructor
-                · -- x < f
-                  unfold f n
-                  -- Since x < 0 and mag x = ex, we have -β^ex < x ≤ -β^(ex-1)
-                  -- We want to show x < -β^(fexp (ex - 2))
-                  -- Since fexp (ex - 2) < ex - 2, we have fexp (ex - 2) ≤ ex - 3
-                  have hexp_le : fexp (ex - 2) ≤ ex - 3 := by linarith [hfexp_lt]
-                  have hbpos : (0 : ℝ) < beta := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
-                  have hβ_ge_1 : 1 ≤ (beta : ℝ) := by exact_mod_cast (le_of_lt hβ)
-
-                  -- For negative x, mag gives us bounds on |x|
-                  -- The calc chain below only uses the upper bound x ≤ -β^(ex-1), which follows from
-                  -- the lower bound β^(ex-1) ≤ |x| that we get from mag x = ex
-                  -- We don't actually need to establish |x| < β^ex
-
-                  -- We need to show x < -β^(fexp (ex - 2))
-                  -- From mag: -β^ex < x ≤ -β^(ex - 1)
-                  -- We have upper bound x ≤ -β^(ex - 1)
-                  have hx_upper : x ≤ -(beta : ℝ) ^ (ex - 1) := by
-                    -- mag x = ex means β^(ex-1) ≤ |x| < β^ex
-                    -- For x < 0, |x| = -x, so β^(ex-1) ≤ -x
-                    -- This gives x ≤ -β^(ex-1)
-                    have hmag_lower := FloatSpec.Core.Raux.bpow_mag_le beta x ex
-                    simp [wp, PostCond.noThrow, Id.run] at hmag_lower
-                    have h_bound := hmag_lower (And.intro hβ (And.intro hx_zero (le_rfl : ex ≤ ex)))
-                    simp [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run] at h_bound
-                    have h_abs : |x| = -x := abs_of_neg hx_neg
-                    rw [h_abs] at h_bound
-                    -- From β^(ex - 1) ≤ -x, we get -x ≥ β^(ex - 1)
-                    -- Multiplying both sides by -1: x ≤ -β^(ex - 1)
-                    have : -x ≥ (beta : ℝ) ^ (ex - 1) := h_bound
-                    linarith
-
-                  -- Now show x < -β^(fexp (ex - 2))
-                  calc x
-                    ≤ -(beta : ℝ) ^ (ex - 1) := hx_upper
-                    _ < -(beta : ℝ) ^ (ex - 2) := by
-                      simp only [neg_lt_neg_iff]
-                      have hb_gt1 : 1 < (beta : ℝ) := by exact_mod_cast hβ
-                      apply zpow_lt_zpow_right₀ hb_gt1
-                      linarith
-                    _ ≤ -(beta : ℝ) ^ (ex - 3) := by
-                      simp only [neg_le_neg_iff]
-                      have hb_gt1 : 1 < (beta : ℝ) := by exact_mod_cast hβ
-                      apply zpow_le_zpow_right₀ (le_of_lt hb_gt1)
-                      linarith
-                    _ ≤ -(beta : ℝ) ^ (fexp (ex - 2)) := by
-                      simp only [neg_le_neg_iff]
-                      apply zpow_le_zpow_right₀ hβ_ge_1 hexp_le
-                    _ = f := rfl
-
-                · -- f is in format
-                  unfold f
-                  -- -β^(fexp n) is in format because β^(fexp n) is in format
-                  have h_bpow : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ fexp n)).run := by
-                    have h_fexp_le : fexp (fexp n) ≤ fexp n := by
-                      have h_strict : fexp (fexp n) < fexp n := h_all (fexp n)
-                      exact le_of_lt h_strict
-                    exact (FloatSpec.Core.Generic_fmt.generic_format_bpow' (beta := beta) (fexp := fexp) (e := fexp n)
-                      ⟨by exact_mod_cast hβ, h_fexp_le⟩)
-                  exact (FloatSpec.Core.Generic_fmt.generic_format_opp beta fexp ((beta : ℝ) ^ fexp n)) h_bpow
-
-              -- Extract the witness
-              rcases format_density_neg with ⟨f, hf_neg, hf_gt, hf_format⟩
-
-              -- But UP property with u = 0 says f ≥ 0
-              have : f ≥ 0 := by
-                have h := hUPpt.2.2 f hf_format (le_of_lt hf_gt)
-                rw [← hu0]
-                exact h
-
-              -- This contradicts f < 0
-              linarith
-            exact hu_ne0 hfx_zero
-          · -- Case: x = mid (tie case), also fx = u
-            have : fx = u := by
-              unfold fx FloatSpec.Core.Round_generic.round_N_to_format
-              simp only [Id.run]
-              -- The definition matches exactly with our d, u and mid
-              show (if x < mid then d else if mid < x then u else u) = u
-              simp only [if_neg hlt, if_neg hgt]
-            rw [this] at hfx_zero
-            have hu_spec := Classical.choose_spec
-              (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-            have ⟨hFu, hUPpt⟩ := hu_spec
-            have hu_ne0 : u ≠ 0 := by
-              -- Similar to DN case: UP(x) ≠ 0 when x ≠ 0 and negligible_exp = none
-              by_contra hu0
-              -- From u = 0 and the UP predicate, we get x ≤ 0
-              have hx_le_0 : x ≤ 0 := by
-                rw [← hu0]
-                exact hUPpt.2.1
-
-              -- Since x ≠ 0 and x ≤ 0, we must have x < 0
-              have hx_neg : x < 0 := lt_of_le_of_ne hx_le_0 hx_zero
-
-              -- Axiomatize: for negative x, there exists a negative format value f with x < f < 0
-              have format_density_neg : ∃ f : ℝ, f < 0 ∧ x < f ∧ (generic_format beta fexp f).run := by
-                -- Similar to the positive case, we need format density for negative values
-                -- Choose a negative exponent that gives a small negative format value
-                let ex := (FloatSpec.Core.Raux.mag beta x).run
-                let n := ex - 2
-                -- From negligible_exp = none, we have fexp n < n
-                have h_all : ∀ n : Int, fexp n < n := by
-                  have h_spec := negligible_exp_spec' (fexp := fexp)
-                  rcases h_spec with ⟨h_none, h_forall⟩ | ⟨m, h_some, _⟩
-                  · exact h_forall
-                  · rw [hn] at h_some
-                    simp at h_some
-                have hfexp_lt : fexp n < n := h_all n
-
-                -- Consider f = -β^(fexp n)
-                let f := -(beta : ℝ) ^ (fexp n)
-                use f
-
-                constructor
-                · -- f < 0
-                  unfold f
-                  have hbpos : (0 : ℝ) < beta := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
-                  simp [zpow_pos hbpos]
-
-                constructor
-                · -- x < f
-                  unfold f n
-                  -- Since x < 0 and mag x = ex, we have -β^ex < x ≤ -β^(ex-1)
-                  -- We want to show x < -β^(fexp (ex - 2))
-                  -- Since fexp (ex - 2) < ex - 2, we have fexp (ex - 2) ≤ ex - 3
-                  have hexp_le : fexp (ex - 2) ≤ ex - 3 := by linarith [hfexp_lt]
-                  have hbpos : (0 : ℝ) < beta := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
-                  have hβ_ge_1 : 1 ≤ (beta : ℝ) := by exact_mod_cast (le_of_lt hβ)
-
-                  -- For negative x, mag gives us bounds on |x|
-                  -- The calc chain below only uses the upper bound x ≤ -β^(ex-1), which follows from
-                  -- the lower bound β^(ex-1) ≤ |x| that we get from mag x = ex
-                  -- We don't actually need to establish |x| < β^ex
-
-                  -- We need to show x < -β^(fexp (ex - 2))
-                  -- From mag: -β^ex < x ≤ -β^(ex - 1)
-                  -- We have upper bound x ≤ -β^(ex - 1)
-                  have hx_upper : x ≤ -(beta : ℝ) ^ (ex - 1) := by
-                    -- mag x = ex means β^(ex-1) ≤ |x| < β^ex
-                    -- For x < 0, |x| = -x, so β^(ex-1) ≤ -x
-                    -- This gives x ≤ -β^(ex-1)
-                    have hmag_lower := FloatSpec.Core.Raux.bpow_mag_le beta x ex
-                    simp [wp, PostCond.noThrow, Id.run] at hmag_lower
-                    have h_bound := hmag_lower (And.intro hβ (And.intro hx_zero (le_rfl : ex ≤ ex)))
-                    simp [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run] at h_bound
-                    have h_abs : |x| = -x := abs_of_neg hx_neg
-                    rw [h_abs] at h_bound
-                    -- From β^(ex - 1) ≤ -x, we get -x ≥ β^(ex - 1)
-                    -- Multiplying both sides by -1: x ≤ -β^(ex - 1)
-                    have : -x ≥ (beta : ℝ) ^ (ex - 1) := h_bound
-                    linarith
-
-                  -- Now show x < -β^(fexp (ex - 2))
-                  calc x
-                    ≤ -(beta : ℝ) ^ (ex - 1) := hx_upper
-                    _ < -(beta : ℝ) ^ (ex - 2) := by
-                      simp only [neg_lt_neg_iff]
-                      have hb_gt1 : 1 < (beta : ℝ) := by exact_mod_cast hβ
-                      apply zpow_lt_zpow_right₀ hb_gt1
-                      linarith
-                    _ ≤ -(beta : ℝ) ^ (ex - 3) := by
-                      simp only [neg_le_neg_iff]
-                      have hb_gt1 : 1 < (beta : ℝ) := by exact_mod_cast hβ
-                      apply zpow_le_zpow_right₀ (le_of_lt hb_gt1)
-                      linarith
-                    _ ≤ -(beta : ℝ) ^ (fexp (ex - 2)) := by
-                      simp only [neg_le_neg_iff]
-                      apply zpow_le_zpow_right₀ hβ_ge_1 hexp_le
-                    _ = f := rfl
-
-                · -- f is in format
-                  unfold f
-                  -- -β^(fexp n) is in format because β^(fexp n) is in format
-                  have h_bpow : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ fexp n)).run := by
-                    have h_fexp_le : fexp (fexp n) ≤ fexp n := by
-                      have h_strict : fexp (fexp n) < fexp n := h_all (fexp n)
-                      exact le_of_lt h_strict
-                    exact (FloatSpec.Core.Generic_fmt.generic_format_bpow' (beta := beta) (fexp := fexp) (e := fexp n)
-                      ⟨by exact_mod_cast hβ, h_fexp_le⟩)
-                  exact (FloatSpec.Core.Generic_fmt.generic_format_opp beta fexp ((beta : ℝ) ^ fexp n)) h_bpow
-
-              -- Extract the witness
-              rcases format_density_neg with ⟨f, hf_neg, hf_gt, hf_format⟩
-
-              -- But UP property with u = 0 says f ≥ 0
-              have : f ≥ 0 := by
-                have h := hUPpt.2.2 f hf_format (le_of_lt hf_gt)
-                rw [← hu0]
-                exact h
-
-              -- This contradicts f < 0
-              linarith
-            exact hu_ne0 hfx_zero
-      | some n =>
-        -- When negligible_exp = Some n
-        simp only [hn, Id.run, pure]
-        -- We need to show |x| ≤ (1/2) * β^(fexp n)
-
-        -- When round_N x = 0 and negligible_exp = Some n, x must be very small
-        -- From the fact that fx = 0, we know x is in the underflow region
-        -- The negligible_exp spec gives us that n ≤ fexp n
-        have hn_spec : n ≤ fexp n := by
-          rcases (negligible_exp_spec' (fexp := fexp)) with hnone | hsome
-          · have : negligible_exp fexp = none := hnone.1
-            rw [hn] at this
-            simp at this
-          · rcases hsome with ⟨m, hm_eq, hm_le⟩
-            have : m = n := by
-              have : some m = some n := by rw [← hm_eq, ← hn]
-              simp at this
-              exact this
-            rw [← this]
-            exact hm_le
-
-        -- When round_N rounds x to 0, we have |x| is bounded by the underflow threshold
-        -- This is a consequence of the rounding properties and negligible_exp
-
-        -- When fx = 0, we know that either:
-        -- 1. x < mid and d = 0 (DN case)
-        -- 2. x ≥ mid and u = 0 (UP case)
-
-        -- Define d, u, mid like in the none case
-        let d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-        let u := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-        let mid := (d + u) / 2
-
-        -- Get the DN and UP properties
-        have hd_spec := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-        have hu_spec := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-        have ⟨hFd, hDNpt⟩ := hd_spec
-        have ⟨hFu, hUPpt⟩ := hu_spec
-
-        -- First, let's understand what happens when round_N gives 0
-        have hfx_eq : fx = 0 := hfx_zero
-        unfold fx FloatSpec.Core.Round_generic.round_N_to_format at hfx_eq
-        simp only [Id.run] at hfx_eq
-
-        -- Since fx = 0 and round_N chose 0, we know:
-        have h0_format : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (0 : ℝ)).run := by
-          -- 0 is in the format
-          have h := FloatSpec.Core.Generic_fmt.generic_format_0 beta fexp
-          have hβ_gt_1 : beta > 1 := hβ
-          simpa [wp, PostCond.noThrow, Id.run] using h hβ_gt_1
-
-        -- Either d = 0 or u = 0
-        have h_du_zero : d = 0 ∨ u = 0 := by
-          -- Since DN x ≤ x ≤ UP x and DN/UP are format points bracketing x
-          -- If x ≠ 0, then either:
-          -- - x > 0 and DN x ≤ 0 < x ≤ UP x (so DN x = 0 or DN x < 0)
-          -- - x < 0 and DN x ≤ x < 0 ≤ UP x (so UP x = 0 or UP x > 0)
-          by_cases hx_pos : 0 < x
-          · -- x > 0 case
-            have hd_le_x : d ≤ x := hDNpt.2.1
-            have h0_le_x : 0 < x := hx_pos
-            -- d ≤ x and x > 0, so either d ≤ 0
-            by_cases hd_pos : 0 < d
-            · -- If d > 0, then u > d > 0
-              have hu_pos : d < u := by
-                -- When x is not in the format, DN x < UP x
-                -- This is because DN x ≤ x ≤ UP x, and if DN x = UP x, then x must be in format
-                by_contra h_not_lt
-                push_neg at h_not_lt
-                have h_eq : d = u := by
-                  -- We have d ≤ u from DN ≤ x ≤ UP
-                  have hd_le_u : d ≤ u := le_trans hDNpt.2.1 hUPpt.2.1
-                  exact le_antisymm hd_le_u h_not_lt
-                -- If d = u, then x = d = u and x is in format
-                have hx_eq_d : x = d := by
-                  apply le_antisymm
-                  · -- x ≤ d: Since u ≥ x and u = d, we have d ≥ x
-                    rw [h_eq]
-                    exact hUPpt.2.1
-                  · -- d ≤ x: This is from DN property
-                    exact hDNpt.2.1
-                -- But d is in format, so x = d is in format
-                -- And since x = d, round_N would return d, not 0
-                -- This contradicts hfx_eq which says fx = 0
-                have : fx = d := by
-                  unfold fx FloatSpec.Core.Round_generic.round_N_to_format
-                  simp only [Id.run]
-                  -- When x = d and d is in format, round_N returns d
-                  rw [hx_eq_d]
-                  -- The midpoint is (d + u)/2 = (d + d)/2 = d (since d = u)
-                  -- So d < (d + d)/2 is false, and (d + d)/2 < d is also false
-                  -- Therefore round_N returns d
-                  have h_not_lt : ¬(d < (d + u) / 2) := by
-                    rw [h_eq]
-                    simp
-                  have h_not_gt : ¬((d + u) / 2 < d) := by
-                    rw [h_eq]
-                    simp
-                  -- The goal is an if-then-else expression where both conditions are false
-                  -- So it returns u, which equals d
-                  -- When x = d and d is in the format, DN(x) = d and UP(x) = d (or the next format point)
-                  -- Since d = u, we have UP(x) = d as well
-                  -- The round_N_to_format function will evaluate with these values
-
-                  -- First, show that when x = d and d is in format, Classical.choose gives us d
-                  have hDN_eq : Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp d) = d := by
-                    -- DN(d) = d when d is in the format
-                    have hd_DN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp d)
-                    have ⟨hFd', hDNd⟩ := hd_DN
-                    -- d is in format (from hFd), d ≤ d, and DN(d) ≤ d
-                    -- Since DN(d) is the largest format point ≤ d, and d is in format, DN(d) = d
-                    apply le_antisymm
-                    · exact hDNd.2.1  -- DN(d) ≤ d
-                    · exact hDNd.2.2 d hFd (le_refl d)  -- d ≤ DN(d)
-
-                  have hUP_eq : Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp d) = d := by
-                    -- When d = u and both are the same format point, UP(d) = d
-                    have hu_UP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp d)
-                    have ⟨hFu', hUPd⟩ := hu_UP
-                    apply le_antisymm
-                    · -- UP(d) ≤ d
-                      -- Since d is a format point ≥ d itself, UP(d) ≤ d
-                      have : d ≥ d := le_refl d
-                      exact hUPd.2.2 d hFd this
-                    · -- d ≤ UP(d)
-                      exact hUPd.2.1
-
-                  -- Now simplify the goal using these equalities
-                  simp only [hDN_eq, hUP_eq]
-                  have hmid_eq : (d + d) / 2 = d := by
-                    ring_nf
-                  rw [hmid_eq]
-                  -- Now we have: if d < d then d else if d < d then d else d
-                  -- Both conditions are false, so we get d
-                  simp only [lt_self_iff_false, if_false]
-                  rfl
-                -- But we have fx = 0 and d > 0, contradiction
-                rw [this] at hfx_zero
-                linarith [hfx_zero, hd_pos]
-              have hu_gt_0 : 0 < u := lt_trans hd_pos hu_pos
-              -- But then fx cannot be 0 since both d and u are positive
-              -- The midpoint (d + u)/2 would be positive
-              have hmid_pos : 0 < mid := by
-                unfold mid
-                apply div_pos
-                · linarith
-                · norm_num
-              -- So fx would be either d or u, both positive
-              -- Now show that fx can't be 0 when both d and u are positive
-              -- fx is defined via round_N_to_format, which returns d when x < mid, u when x > mid
-              -- Since d > 0 and u > d > 0, fx is either d or u, both positive
-              have hfx_pos : 0 < fx := by
-                unfold fx FloatSpec.Core.Round_generic.round_N_to_format
-                simp only [Id.run]
-                -- The if-then-else returns either d or u based on comparison with mid
-                split_ifs
-                · -- Case: x < mid, so fx = d > 0
-                  exact hd_pos
-                · -- Case: mid < x, so fx = u > 0
-                  exact hu_gt_0
-                · -- Case: x = mid (neither x < mid nor mid < x), so fx = u > 0
-                  exact hu_gt_0
-              -- But we know fx = 0, contradiction
-              rw [hfx_zero] at hfx_pos
-              linarith
-            · -- d ≤ 0
-              push_neg at hd_pos
-              left
-              by_cases hd_eq : d = 0
-              · exact hd_eq
-              · -- d < 0, but DN is the largest format value ≤ x
-                -- Since 0 is in the format and 0 < x, we have 0 ≤ DN x
-                have h0_le_d : 0 ≤ d := hDNpt.2.2 0 h0_format (le_of_lt hx_pos)
-                linarith
-          · -- x ≤ 0 case
-            push_neg at hx_pos
-            by_cases hx_eq : x = 0
-            · -- x = 0 contradicts our assumption
-              exact absurd hx_eq hx_zero
-            · -- x < 0
-              have hx_neg : x < 0 := by
-                have h_le := hx_pos
-                have h_ne : x ≠ 0 := hx_eq
-                exact lt_of_le_of_ne h_le h_ne
-              have hu_ge_x : x ≤ u := hUPpt.2.1
-              -- u ≥ x and x < 0, so either u ≥ 0
-              by_cases hu_neg : u < 0
-              · -- If u < 0, then d < u < 0
-                have hd_neg : d < u := by
-                  -- Apply the same reasoning as above
-                  by_contra h_not_lt
-                  push_neg at h_not_lt
-                  have h_eq : d = u := by
-                    have hd_le_u : d ≤ u := le_trans hDNpt.2.1 hUPpt.2.1
-                    exact le_antisymm hd_le_u h_not_lt
-                  have hx_eq_d : x = d := by
-                    apply le_antisymm
-                    · rw [h_eq]; exact hUPpt.2.1
-                    · exact hDNpt.2.1
-                  -- If x = d and d is in the format, then x would be in the format
-                  -- But then round_N would return x = d, not 0
-                  have : fx = d := by
-                    unfold fx FloatSpec.Core.Round_generic.round_N_to_format
-                    simp only [Id.run]
-                    rw [hx_eq_d]
-                    -- When x = d, and d = u, the midpoint is d
-                    -- So round_N returns d
-                    have h_not_lt : ¬(d < (d + u) / 2) := by
-                      rw [h_eq]
-                      simp
-                    have h_not_gt : ¬((d + u) / 2 < d) := by
-                      rw [h_eq]
-                      simp
-                    -- The goal is an if-then-else expression where both conditions are false
-                    -- So it returns u, which equals d
-                    -- When x = d and d is in the format, DN(x) = d and UP(x) = d (or the next format point)
-                    -- Since d = u, we have UP(x) = d as well
-                    -- The round_N_to_format function will evaluate with these values
-
-                    -- First, show that when x = d and d is in format, Classical.choose gives us d
-                    have hDN_eq : Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp d) = d := by
-                      -- DN(d) = d when d is in the format
-                      have hd_DN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp d)
-                      have ⟨hFd', hDNd⟩ := hd_DN
-                      -- d is in format (from hFd), d ≤ d, and DN(d) ≤ d
-                      -- Since DN(d) is the largest format point ≤ d, and d is in format, DN(d) = d
-                      apply le_antisymm
-                      · exact hDNd.2.1  -- DN(d) ≤ d
-                      · exact hDNd.2.2 d hFd (le_refl d)  -- d ≤ DN(d)
-
-                    have hUP_eq : Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp d) = d := by
-                      -- When d = u and both are the same format point, UP(d) = d
-                      have hu_UP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp d)
-                      have ⟨hFu', hUPd⟩ := hu_UP
-                      apply le_antisymm
-                      · -- UP(d) ≤ d
-                        -- Since d is a format point ≥ d itself, UP(d) ≤ d
-                        have : d ≥ d := le_refl d
-                        exact hUPd.2.2 d hFd this
-                      · -- d ≤ UP(d)
-                        exact hUPd.2.1
-
-                    -- Now simplify the goal using these equalities
-                    simp only [hDN_eq, hUP_eq]
-                    have hmid_eq : (d + d) / 2 = d := by
-                      ring_nf
-                    rw [hmid_eq]
-                    -- Now we have: if d < d then d else if d < d then d else d
-                    -- Both conditions are false, so we get d
-                    simp only [lt_self_iff_false, if_false]
-                    rfl
-                  -- But fx = 0 and d < 0, contradiction
-                  rw [this] at hfx_zero
-                  linarith [hfx_zero, hu_neg]
-                have hd_lt_0 : d < 0 := lt_trans hd_neg hu_neg
-                -- But then fx cannot be 0 since both d and u are negative
-                -- Similar reasoning: fx is either d or u, both negative
-                have hfx_neg : fx < 0 := by
-                  unfold fx FloatSpec.Core.Round_generic.round_N_to_format
-                  simp only [Id.run]
-                  -- The if-then-else returns either d or u based on comparison with mid
-                  split_ifs
-                  · -- Case: x < mid, so fx = d < 0
-                    exact hd_lt_0
-                  · -- Case: mid < x, so fx = u < 0
-                    exact hu_neg
-                  · -- Case: x = mid (neither x < mid nor mid < x), so fx = u < 0
-                    exact hu_neg
-                -- But we know fx = 0, contradiction
-                rw [hfx_zero] at hfx_neg
-                linarith
-              · -- u ≥ 0
-                push_neg at hu_neg
-                right
-                by_cases hu_eq : u = 0
-                · exact hu_eq
-                · -- u > 0, but UP is the smallest format value ≥ x
-                  -- Since 0 is in the format and x < 0, we have UP x ≤ 0
-                  have hu_le_0 : u ≤ 0 := hUPpt.2.2 0 h0_format (le_of_lt hx_neg)
-                  linarith
-
-        -- Now we know one of d or u is 0. The key is to show |x| ≤ (1/2) * β^(fexp n)
-        -- This follows from the fact that round_N chose 0 over the non-zero bracket value
-
-        -- Case analysis on which bracketing point is 0
-        cases h_du_zero with
-        | inl hd_zero =>
-          -- Case: d = 0, so DN(x) = 0
-          -- Since DN(x) ≤ x ≤ UP(x) and DN(x) = 0, we have 0 ≤ x ≤ u
-          have hx_nonneg : 0 ≤ x := by
-            rw [← hd_zero]
-            exact hDNpt.2.1
-
-          -- Since round_N returns 0 = d, and d < u (when x ≠ 0 and not in format),
-          -- we must have x < (d + u)/2 = u/2
-          have hx_lt_mid : x < mid := by
-            unfold mid
-            rw [hd_zero]
-            simp only [zero_add]
-            -- Since round_N returns d = 0, we have x < (0 + u)/2 = u/2
-            by_contra h_not_lt
-            push_neg at h_not_lt
-            -- If x ≥ u/2, then round_N would return u, not 0
-            -- The round_N_to_format function checks if x < mid, then returns d, else returns u
-            -- Since fx = 0 = d, we must have had x < mid
-            have hu_pos : 0 < u := by
-              by_contra h_not_pos
-              push_neg at h_not_pos
-              have : u ≤ 0 := h_not_pos
-              have : u = 0 := le_antisymm this (le_trans hx_nonneg hUPpt.2.1)
-              have : d = u := by rw [hd_zero, this]
-              -- If d = u, then x is in format, contradiction
-              have hx_format : x = d := by
-                apply le_antisymm
-                · rw [this]; exact hUPpt.2.1
-                · exact hDNpt.2.1
-              rw [hx_format, hd_zero] at hx_zero
-              exact hx_zero rfl
-            -- If x ≥ u/2 > 0, round_N would choose u > 0, not 0
-            have hmid_eq : mid = u / 2 := by
-              unfold mid
-              rw [hd_zero, zero_add]
-            have hnotlt : ¬ x < mid := not_lt.mpr h_not_lt
-            -- Evaluate the round-to-nearest decision; ties go to `u`.
-            have hfx_eq_u : fx = u := by
-              by_cases hmid_lt : mid < x
-              · have hrun : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run = u := by
-                  simp [FloatSpec.Core.Round_generic.round_N_to_format, fx, d, u, mid,
-                        hnotlt, hmid_lt, hmid_eq]
-                simpa [fx] using hrun
-              · have hx_eq_mid : x = mid := by
-                  apply le_antisymm
-                  · exact le_of_not_lt hmid_lt
-                  · simpa [hmid_eq]
-                have hrun : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run = u := by
-                  simp [FloatSpec.Core.Round_generic.round_N_to_format, fx, d, u, mid,
-                        hnotlt, hmid_lt, hmid_eq, hx_eq_mid]
-                simpa [fx] using hrun
-            have hfx_pos : fx > 0 := by simpa [hfx_eq_u] using hu_pos
-            have hfne : fx ≠ 0 := ne_of_gt hfx_pos
-            exact hfne hfx_zero
-            linarith [hfx_zero]
-
-          -- Now we need to bound u using format properties
-          -- u is the smallest positive format number > x
-          -- When negligible_exp = Some n, the smallest positive format numbers are bounded by β^(fexp n)
-          have hu_bound : u ≤ (beta : ℝ) ^ fexp n := by
-            -- u is in the format, so u = m * β^e for some m, e with |m| ∈ [1, β) and e = fexp(mag u)
-            -- Since u > 0 and u is the smallest format point > x ≥ 0,
-            -- we need to show u ≤ β^(fexp n)
-
-            -- First, u > 0 since x ≥ 0 and u > x
-            have hu_pos : 0 < u := by
-              have : 0 ≤ x := hx_nonneg
-              have : x ≤ u := hUPpt.2.1
-              by_contra h_not_pos
-              push_neg at h_not_pos
-              have : u ≤ 0 := h_not_pos
-              have : u = 0 := le_antisymm this (le_trans hx_nonneg hUPpt.2.1)
-              -- But we showed u ≠ 0 earlier
-              have hu_ne_zero : u ≠ 0 := by
-                intro hu_zero
-                have : d = u := by rw [hd_zero, hu_zero]
-                -- If d = u, then x is in format, contradiction
-                have hx_format : x = d := by
-                  apply le_antisymm
-                  · rw [this]; exact hUPpt.2.1
-                  · exact hDNpt.2.1
-                rw [hx_format, hd_zero] at hx_zero
-                exact hx_zero rfl
-              exact hu_ne_zero this
-
-            -- Since u is a positive format point, u ≥ β^(fexp (mag u))
-            -- But if mag u ≤ fexp n, then fexp (mag u) ≤ fexp n (by monotonicity)
-            -- So u ≤ β * β^(fexp (mag u)) ≤ β * β^(fexp n) = β^(fexp n + 1)
-            -- However, we need a tighter bound using the negligible_exp property
-
-            -- For the underflow region with negligible_exp = Some n:
-            -- The smallest positive format numbers are bounded by β^(fexp n)
-            -- We use contradiction: if u > β^(fexp n), then the format structure
-            -- would force a different rounding outcome
-
-            by_contra h_not_bound
-            push_neg at h_not_bound
-            -- Suppose u > β^(fexp n)
-            have hu_gt : (beta : ℝ) ^ fexp n < u := h_not_bound
-
-            -- Since u is in the generic format, u = m * β^e for some m with 1 ≤ |m| < β
-            -- and e = fexp(mag u). Since u > 0, we have m > 0.
-            -- The smallest positive format point with exponent e is β^e
-            -- So u ≥ β^(fexp(mag u))
-
-            -- If u > β^(fexp n) and u is a format point, then mag(u) > fexp n
-            -- This would mean u is not in the underflow region
-            -- But then round_N would not round x to 0 when x is close to u/2
-
-            -- This contradicts our assumption that round_N(x) = 0
-            -- The detailed proof requires analyzing the generic format structure
-            -- and the relationship between mag, fexp, and negligible_exp
-
-            -- For now, we accept this as an axiom about underflow thresholds
-            sorry -- Requires detailed format analysis
-
-          -- Therefore |x| < u/2 ≤ β^(fexp n) / 2
-          have : |x| < u / 2 := by
-            rw [abs_of_nonneg hx_nonneg]
-            unfold mid at hx_lt_mid
-            rw [hd_zero, zero_add] at hx_lt_mid
-            exact hx_lt_mid
-          have : |x| ≤ (beta : ℝ) ^ fexp n / 2 := by
-            have h1 : |x| < u / 2 := this
-            have h2 : u / 2 ≤ (beta : ℝ) ^ fexp n / 2 := by
-              apply div_le_div_of_nonneg_right hu_bound
-              linarith
-            exact le_trans (le_of_lt h1) h2
-          -- Convert to the required form (1/2) * β^(fexp n)
-          have eq_form : (beta : ℝ) ^ fexp n / 2 = 1 / 2 * (beta : ℝ) ^ fexp n := by
-            ring
-          rw [eq_form] at this
-          exact this
-
-        | inr hu_zero =>
-          -- Case: u = 0, so UP(x) = 0
-          -- Since DN(x) ≤ x ≤ UP(x) and UP(x) = 0, we have d ≤ x ≤ 0
-          have hx_nonpos : x ≤ 0 := by
-            rw [← hu_zero]
-            exact hUPpt.2.1
-
-          -- Since round_N returns 0 = u, and d < u (when x ≠ 0 and not in format),
-          -- we must have x ≥ (d + u)/2 = d/2
-          have hx_ge_mid : x ≥ mid := by
-            unfold mid
-            rw [hu_zero]
-            simp only [add_zero]
-            -- Since round_N returns u = 0, we have x ≥ (d + 0)/2 = d/2
-            by_contra h_not_ge
-            push_neg at h_not_ge
-            -- If x < d/2, then round_N would return d, not 0
-            have : fx = d := by
-              -- Since x < d/2 = mid and hu = 0, round_N returns d
-              -- The evaluation of round_N_to_format with Classical.choose requires
-              -- showing that the values match our let-bound d and u
-              sorry  -- Classical.choose evaluation
-            rw [this] at hfx_zero
-            -- But d ≠ 0 since d < u when x is not in format
-            have hd_ne_zero : d ≠ 0 := by
-              intro hd_zero
-              have : d = u := by rw [hd_zero, hu_zero]
-              -- If d = u, then x is in format, contradiction
-              have hx_format : x = d := by
-                apply le_antisymm
-                · rw [this]; exact hUPpt.2.1
-                · exact hDNpt.2.1
-              rw [hx_format] at hx_zero
-              rw [hd_zero] at hx_zero
-              exact hx_zero rfl
-            exact hd_ne_zero hfx_zero
-
-          -- Now we need to bound |d| using format properties
-          -- d is the largest negative format number < x
-          -- When negligible_exp = Some n, the largest negative format numbers are bounded by -β^(fexp n)
-          have hd_bound : -d ≤ (beta : ℝ) ^ fexp n := by
-            -- -d is positive since d < 0
-            -- d is the largest negative format point < x ≤ 0
-            -- So -d is the smallest positive value among negative format points near 0
-
-            -- First, d < 0 since x ≤ 0 and d < x
-            have hd_neg : d < 0 := by
-              have : x ≤ 0 := hx_nonpos
-              have : d ≤ x := hDNpt.2.1
-              by_contra h_not_neg
-              push_neg at h_not_neg
-              have : 0 ≤ d := h_not_neg
-              have : d = 0 := le_antisymm (le_trans hDNpt.2.1 hx_nonpos) h_not_neg
-              -- But we showed d ≠ 0 earlier
-              have hd_ne_zero : d ≠ 0 := by
-                intro hd_zero
-                have : d = u := by rw [hd_zero, hu_zero]
-                -- If d = u, then x is in format, contradiction
-                have hx_format : x = d := by
-                  apply le_antisymm
-                  · rw [this]; exact hUPpt.2.1
-                  · exact hDNpt.2.1
-                rw [hx_format] at hx_zero
-                rw [hd_zero] at hx_zero
-                exact hx_zero rfl
-              exact hd_ne_zero this
-
-            -- For the underflow region with negligible_exp = Some n:
-            -- The largest negative format numbers have absolute value bounded by β^(fexp n)
-            -- We use a similar contradiction argument as for the positive case
-
-            by_contra h_not_bound
-            push_neg at h_not_bound
-            -- Suppose -d > β^(fexp n), i.e., d < -β^(fexp n)
-            have hd_lt : d < -(beta : ℝ) ^ fexp n := by linarith
-
-            -- Since d is in the generic format and d < 0, we have d = -m * β^e
-            -- for some m > 0 with 1 ≤ m < β and e = fexp(mag d)
-            -- The largest negative format point with exponent e is -β^e
-            -- So d ≤ -β^(fexp(mag d))
-
-            -- If d < -β^(fexp n), then mag(d) > fexp n
-            -- This would mean d is not in the underflow region
-            -- But then round_N would not round x to 0 when x is close to d/2
-
-            -- This contradicts our assumption that round_N(x) = 0
-            -- The detailed proof requires analyzing the generic format structure
-            -- and the relationship between mag, fexp, and negligible_exp
-
-            -- For now, we accept this as an axiom about underflow thresholds
-            sorry -- Requires detailed format analysis
-
-          -- Therefore |x| < |d|/2 ≤ β^(fexp n) / 2
-          have hx_neg : x < 0 := by
-            by_contra h_not_neg
-            push_neg at h_not_neg
-            have : x = 0 := le_antisymm hx_nonpos h_not_neg
-            exact hx_zero this
-
-          -- Therefore |x| ≤ |d|/2 ≤ β^(fexp n) / 2
-          have : |x| ≤ -d / 2 := by
-            rw [abs_of_neg hx_neg]
-            unfold mid at hx_ge_mid
-            rw [hu_zero, add_zero] at hx_ge_mid
-            -- From x ≥ d/2 and x ≤ 0, we get -x ≤ -d/2
-            linarith
-          have : |x| ≤ (beta : ℝ) ^ fexp n / 2 := by
-            have h1 : |x| ≤ -d / 2 := this
-            have h2 : -d / 2 ≤ (beta : ℝ) ^ fexp n / 2 := by
-              apply div_le_div_of_nonneg_right hd_bound
-              linarith
-            exact le_trans h1 h2
-          -- Convert to the required form (1/2) * β^(fexp n)
-          have eq_form : (beta : ℝ) ^ fexp n / 2 = 1 / 2 * (beta : ℝ) ^ fexp n := by
-            ring
-          rw [eq_form] at this
-          exact this
-  · -- Case 2: round_N x ≠ 0
-    -- The Coq proof uses round_DN_or_UP to split on whether round_N = DN or UP
-    -- For DN case: uses ulp_DN (ulp is invariant under round_DN for x ≥ 0)
-    -- For UP case: uses ulp_le_pos to relate ulp(round_UP x) with ulp x
-    -- The proof structure would be:
-    -- 1. Get DN and UP witnesses from round_DN_exists and round_UP_exists
-    -- 2. Analyze midpoint comparison in round_N_to_format
-    -- 3. When x < mid: round_N = DN, use ulp_DN for x ≥ 0, ulp_le for x < 0
-    -- 4. When x > mid: round_N = UP, use ulp_le_pos
-    -- 5. When x = mid: handle tie-breaking
-    -- The proof requires showing |x - round_N x| ≤ (1/2) * ulp(round_N x)
-
-    -- Define the rounded value
-    let r := (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run
-
-    -- Get DN and UP values
-    let d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-    let u := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-    let mid := (d + u) / 2
-
-    -- The proof splits into cases based on how round_N decides:
-
-    -- Case 1: x < mid, so r = d (round down)
-    -- Need: |x - d| ≤ (1/2) * ulp(d)
-    -- This uses ulp_DN: ulp(round_DN x) = ulp(x) for x ≥ 0
-
-    -- Case 2: x > mid, so r = u (round up)
-    -- Need: |x - u| ≤ (1/2) * ulp(u)
-    -- This uses ulp_le_pos and properties of UP rounding
-
-    -- Case 3: x = mid (tie), so r = u (tie-break up)
-    -- Need: |mid - u| ≤ (1/2) * ulp(u)
-    -- This follows from mid = (d + u)/2
-
-    -- The complete proof requires:
-    -- 1. ulp_DN_run_theorem (line 2926) - ulp invariance under DN
-    -- 2. ulp_le (line 5423) - ulp monotonicity
-    -- 3. Properties of the midpoint and format spacing
-
-    sorry -- Forward reference to ulp comparison lemmas
+             ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run)).run := by
+  sorry
 
 /-- Local theorem (port bridge): pred (UP x) ≤ DN x.
 
@@ -2834,8 +1777,8 @@ private theorem pred_UP_le_DN_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ) :
     (pred beta fexp
-       (Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x))).run ≤
-    Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) := by
+       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x))).run ≤
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) := by
   sorry -- Following the Coq proof structure (Ulp.v:2154-2183):
         -- 1. Use generic_format_EM to case split on whether x is in format
         -- 2. If x is in format, use round_generic and pred_le_id
@@ -2855,8 +1798,8 @@ private theorem pred_UP_eq_DN_theorem
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
     (pred beta fexp
-       (Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x))).run =
-    Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) := by
+       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x))).run =
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) := by
   sorry
 
 /-- Local theorem (port bridge): If `x` is not representable, then the successor
@@ -2873,8 +1816,8 @@ private theorem succ_DN_eq_UP_theorem
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
     (succ beta fexp
-       (Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x))).run =
-    Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x) := by
+       (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))).run =
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) := by
   sorry
 
 /-- Local bridge theorem: upper neighbor is below successor of the lower neighbor. -/
@@ -2882,8 +1825,8 @@ private theorem UP_le_succ_DN_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ) :
     (1 < beta) →
-    Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-      ≤ (succ beta fexp (Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x))).run := by
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
+      ≤ (succ beta fexp (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))).run := by
   sorry
 
 /-- Coq (Ulp.v):
@@ -2892,16 +1835,16 @@ Theorem pred_UP_le_DN:
 -/
 theorem pred_UP_le_DN (x : ℝ) :
     ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
       let p ← pred beta fexp up
       pure (p, dn)
     ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
   intro _; classical
   -- Reduce the program to the chosen UP/DN witnesses
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format,
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   -- Apply the local bridge theorem
   exact pred_UP_le_DN_theorem (beta := beta) (fexp := fexp) x
 
@@ -2911,16 +1854,16 @@ Theorem UP_le_succ_DN:
 -/
 theorem UP_le_succ_DN (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
       let s ← succ beta fexp dn
       pure (up, s)
     ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
   intro hβ; classical
   -- Reduce to the chosen UP/DN witnesses and delegate to a local bridge theorem
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format,
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   exact UP_le_succ_DN_theorem (beta := beta) (fexp := fexp) (x := x) hβ
 
 /-- Coq (Ulp.v):
@@ -2931,16 +1874,16 @@ theorem pred_UP_eq_DN
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
     ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
       let p ← pred beta fexp up
       pure (p, dn)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
   -- Reduce to the chosen UP/DN witnesses and apply the local bridge theorem
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format,
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   exact pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) x Fx
 
 /-- Coq (Ulp.v):
@@ -2951,16 +1894,16 @@ theorem succ_DN_eq_UP
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
       let s ← succ beta fexp dn
       pure (s, up)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
   -- Reduce to the chosen DN/UP witnesses and apply the local symmetric bridge
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format,
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   exact succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) x Fx
 
 -- (moved later, after `generic_format_succ`)
@@ -3089,7 +2032,7 @@ private theorem ulp_round_pos_theorem
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
   [Exp_not_FTZ fexp]
   (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : 0 < x) :
-  let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+  let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
   let e := (FloatSpec.Core.Raux.mag beta x).run
   (ulp beta fexp r).run = (ulp beta fexp x).run ∨ r = (beta : ℝ) ^ e := by
   sorry
@@ -3098,7 +2041,7 @@ theorem ulp_round_pos
     [Exp_not_FTZ fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : 0 < x) :
     ⦃⌜True⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let ur ← ulp beta fexp r
       let ux ← ulp beta fexp x
       let mx := (FloatSpec.Core.Raux.mag beta x).run
@@ -3108,7 +2051,7 @@ theorem ulp_round_pos
   -- Local bridge capturing the Coq lemma shape for positive x:
   -- either ulp(round x) = ulp x or round x hits the power at mag x.
   have hbridge :
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let e := (FloatSpec.Core.Raux.mag beta x).run
       (ulp beta fexp r).run = (ulp beta fexp x).run ∨ r = (beta : ℝ) ^ e :=
     ulp_round_pos_theorem (beta := beta) (fexp := fexp) (rnd := rnd) x hx
@@ -3130,9 +2073,9 @@ private theorem ulp_round_theorem
     [Exp_not_FTZ fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     (1 < beta) →
-    ((ulp beta fexp (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x)).run
+    ((ulp beta fexp (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)).run
       = (ulp beta fexp x).run) ∨
-    (abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x)
+    (abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)
       = (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x).run) := by
   sorry
 
@@ -3140,7 +2083,7 @@ theorem ulp_round
     [Exp_not_FTZ fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let ur ← ulp beta fexp r
       let ux ← ulp beta fexp x
       let mx := (FloatSpec.Core.Raux.mag beta x).run
@@ -3158,7 +2101,7 @@ Lemma succ_round_ge_id:
 theorem succ_round_ge_id
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let s ← succ beta fexp r
       pure (r, s)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
@@ -3173,10 +2116,10 @@ Lemma pred_round_le_id:
   forall rnd x, pred (round rnd x) ≤ x.
 -/
 theorem pred_round_le_id
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let p ← pred beta fexp r
       pure p
     ⦃⇓p => ⌜p ≤ x⌝⦄ := by
@@ -3200,12 +2143,12 @@ Lemma round_N_eq_DN: forall choice x, let d := round_DN x; let u := round_UP x; 
 -/
 theorem round_N_eq_DN
     (choice : Int → Bool) (x : ℝ)
-    (h : let d := (FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x).run;
-         let u := (FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x).run;
+    (h : let d := (FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x).run;
+         let u := (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x).run;
          x < ((d + u) / 2)) :
     ⦃⌜True⌝⦄ do
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
-      let d ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
+      let d ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
       pure (rn, d)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
@@ -3213,15 +2156,15 @@ theorem round_N_eq_DN
   simp [wp, PostCond.noThrow, Id.run, bind, pure] at h ⊢
   -- Unpack DN/UP existence to obtain the witness predicates
   let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hDN with ⟨hFdn, hRndDN⟩
   rcases hUP with ⟨hFup, hRndUP⟩
   -- Apply the local bridge: strict-below-midpoint selects the DN witness
   exact round_N_eq_DN_pt_theorem (beta := beta) (fexp := fexp)
     (choice := choice) (x := x)
-    (d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x))
-    (u := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x))
+    (d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))
+    (u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x))
     hRndDN hRndUP h
 
 theorem round_N_eq_DN_pt
@@ -3230,7 +2173,7 @@ theorem round_N_eq_DN_pt
     (Hu : FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x u)
     (h : x < ((d + u) / 2)) :
     ⦃⌜True⌝⦄ do
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
       pure rn
     ⦃⇓r => ⌜r = d⌝⦄ := by
   intro _; classical
@@ -3245,12 +2188,12 @@ Lemma round_N_eq_UP: forall choice x, let d := round_DN x; let u := round_UP x; 
 -/
 theorem round_N_eq_UP
     (choice : Int → Bool) (x : ℝ)
-    (h : let d := (FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x).run;
-         let u := (FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x).run;
+    (h : let d := (FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x).run;
+         let u := (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x).run;
          ((d + u) / 2) < x) :
     ⦃⌜True⌝⦄ do
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
-      let u ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
+      let u ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
       pure (rn, u)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
@@ -3258,15 +2201,15 @@ theorem round_N_eq_UP
   simp [wp, PostCond.noThrow, Id.run, bind, pure] at h ⊢
   -- Unpack DN/UP existence to obtain the witness predicates
   let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hDN with ⟨hFdn, hRndDN⟩
   rcases hUP with ⟨hFup, hRndUP⟩
   -- Apply the local bridge: strict-above-midpoint selects the UP witness
   exact round_N_eq_UP_pt_theorem (beta := beta) (fexp := fexp)
     (choice := choice) (x := x)
-    (d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x))
-    (u := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x))
+    (d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))
+    (u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x))
     hRndDN hRndUP h
 
 /-- Coq (Ulp.v):
@@ -3278,7 +2221,7 @@ theorem round_N_eq_UP_pt
     (Hu : FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x u)
     (h : ((d + u) / 2) < x) :
     ⦃⌜True⌝⦄ do
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
       pure rn
     ⦃⇓r => ⌜r = u⌝⦄ := by
   intro _; classical
@@ -3305,9 +2248,9 @@ private theorem round_N_plus_ulp_ge_theorem
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     [Monotone_exp fexp]
     (x : ℝ) :
-    x ≤ (FloatSpec.Core.Round_generic.round_N_to_format beta fexp
-          ((FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run +
-           (ulp beta fexp ((FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run)).run)).run := by
+    x ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp
+          ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run +
+           (ulp beta fexp ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run)).run)).run := by
   sorry
 
 /-- Coq (Ulp.v):
@@ -3319,9 +2262,9 @@ theorem round_N_plus_ulp_ge
     [Monotone_exp fexp]
     (choice1 choice2 : Int → Bool) (x : ℝ) :
     ⦃⌜True⌝⦄ do
-      let rx ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
+      let rx ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
       let u ← ulp beta fexp rx
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp (rx + u)
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp (rx + u)
       pure (rx, rn)
     ⦃⇓r => ⌜x ≤ r.2⌝⦄ := by
   intro _; classical
@@ -3336,18 +2279,18 @@ Lemma round_N_eq_ties: forall c1 c2 x,
 -/
 theorem round_N_eq_ties
     (c1 c2 : Int → Bool) (x : ℝ)
-    (hne : x - (FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x).run ≠
-            (FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x).run - x) :
+    (hne : x - (FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x).run ≠
+            (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x).run - x) :
     ⦃⌜True⌝⦄ do
-      let r1 ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
-      let r2 ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
+      let r1 ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
+      let r2 ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
       pure (r1, r2)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
   -- `round_N_to_format` in this port does not depend on the tie-breaking choice
   -- (both calls compute the same value). Reduce the monadic program definitionally.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_N_to_format]
+        FloatSpec.Core.Generic_fmt.round_N_to_format]
 
 /-- Coq (Ulp.v):
 Theorem error_lt_ulp_round:
@@ -3355,10 +2298,10 @@ Theorem error_lt_ulp_round:
   x <> 0 -> |round rnd x - x| < ulp (round rnd x).
 -/
 theorem error_lt_ulp_round
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : x ≠ 0) :
     ⦃⌜1 < beta⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let u ← ulp beta fexp r
       pure (abs (r - x), u)
     ⦃⇓p => ⌜p.1 < p.2⌝⦄ := by
@@ -3373,10 +2316,10 @@ Lemma error_le_ulp_round:
   |round rnd x - x| <= ulp (round rnd x).
 -/
 theorem error_le_ulp_round
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let u ← ulp beta fexp r
       pure (abs (r - x), u)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
@@ -3391,10 +2334,10 @@ Theorem error_le_half_ulp_round:
   |round (Znearest choice) x - x| <= /2 * ulp (round (Znearest choice) x).
 -/
 theorem error_le_half_ulp_round
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (choice : Int → Bool) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
-      let r ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
+      let r ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
       let u ← ulp beta fexp r
       pure (abs (r - x), u)
     ⦃⇓p => ⌜p.1 ≤ (1/2) * p.2⌝⦄ := by
@@ -3428,13 +2371,13 @@ private theorem ulp_DN_run_theorem
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ) (hx : 0 ≤ x) :
     (ulp (beta := beta) (fexp := fexp)
-        (Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x))).run
+        (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))).run
       = (ulp (beta := beta) (fexp := fexp) x).run := by
   sorry
 
 theorem ulp_DN (x : ℝ) (hx : 0 ≤ x) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
       let u1 ← ulp beta fexp dn
       let u2 ← ulp beta fexp x
       pure (u1, u2)
@@ -3442,7 +2385,7 @@ theorem ulp_DN (x : ℝ) (hx : 0 ≤ x) :
   intro _; classical
   -- Reduce the program to run-values of ulp at the DN witness and at x
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   -- Apply the local bridge theorem capturing invariance of ulp under round-down for x ≥ 0
   exact ulp_DN_run_theorem (beta := beta) (fexp := fexp) (x := x) hx
 
@@ -3457,10 +2400,10 @@ Theorem round_neq_0_negligible_exp:
 -- fully ported to this Lean file. We expose the exact reduced statement
 -- needed by the Hoare‑style specification here as a temporary theorem.
 theorem round_neq_0_negligible_exp
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (hne : negligible_exp fexp = none)
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : x ≠ 0) :
-    ⦃⌜1 < beta⌝⦄ (pure (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x) : Id ℝ)
+    ⦃⌜1 < beta⌝⦄ (pure (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x) : Id ℝ)
     ⦃⇓r => ⌜r ≠ 0⌝⦄ := by
   intro hβ; classical
   -- Local bridge (port of Coq's `exp_small_round_0` argument):
@@ -3469,7 +2412,7 @@ theorem round_neq_0_negligible_exp
   -- This isolates spacing/`mag` facts not yet fully ported here.
   -- We declare a narrow, file‑scoped theorem with exactly the reduced shape.
   have :
-      FloatSpec.Core.Round_generic.round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x ≠ 0 := by
+      FloatSpec.Core.Generic_fmt.round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x ≠ 0 := by
     -- theorem capturing the Coq lemma `round_neq_0_negligible_exp`.
     -- See PROOF_CHANGES.md for rationale and the Coq reference.
     exact round_neq_0_negligible_exp_theorem (beta := beta) (fexp := fexp)
@@ -3489,7 +2432,7 @@ Theorem error_lt_ulp:
 theorem error_lt_ulp
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : x ≠ 0) :
     ⦃⌜1 < beta⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let u ← ulp beta fexp x
       pure (abs (r - x), u)
     ⦃⇓p => ⌜p.1 < p.2⌝⦄ := by
@@ -3498,7 +2441,7 @@ theorem error_lt_ulp
   -- This matches the Hoare-triple reduction below and will be discharged
   -- by porting spacing/cexp stability lemmas from Coq.
   have h :
-      abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x) <
+      abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) <
       (ulp (beta := beta) (fexp := fexp) x).run :=
     error_lt_ulp_x_theorem (beta := beta) (fexp := fexp) hβ (rnd := rnd) (x := x) hx
   -- Reduce the Hoare triple to the pure strict inequality above.
@@ -3512,7 +2455,7 @@ Theorem error_le_ulp:
 theorem error_le_ulp
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
-      let r := FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x
+      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
       let u ← ulp beta fexp x
       pure (abs (r - x), u)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
@@ -3522,8 +2465,8 @@ theorem error_le_ulp
   · -- At x = 0, rounding yields 0 exactly; bound by nonnegativity of ulp 0
     -- Unfold the program and simplify both computations at x = 0
     -- `round_to_generic 0 = 0` by direct evaluation of its definition
-    have : FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd 0 = 0 := by
-      simp [FloatSpec.Core.Round_generic.round_to_generic,
+    have : FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd 0 = 0 := by
+      simp [FloatSpec.Core.Generic_fmt.round_to_generic,
             FloatSpec.Core.Generic_fmt.Ztrunc_zero]
     -- Now discharge the goal using `ulp` nonnegativity under 1 < beta
     have hnonneg : 0 ≤ (ulp beta fexp 0).run :=
@@ -3533,11 +2476,11 @@ theorem error_le_ulp
     exact hnonneg
   · -- For x ≠ 0, apply the strict bound and relax to ≤
     have hlt :
-        abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x) <
+        abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) <
         (ulp (beta := beta) (fexp := fexp) x).run :=
       error_lt_ulp_x_theorem (beta := beta) (fexp := fexp) hβ (rnd := rnd) (x := x) (hx := hx)
     have hle :
-        abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x) ≤
+        abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) ≤
         (ulp (beta := beta) (fexp := fexp) x).run := le_of_lt hlt
     simp [wp, PostCond.noThrow, Id.run, bind, pure] at *
     exact hle
@@ -3554,7 +2497,7 @@ private theorem error_le_half_ulp_theorem
     (beta : Int) (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (choice : Int → Bool) (x : ℝ) :
-    abs ((FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run - x)
+    abs ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run - x)
       ≤ (1/2) * (ulp (beta := beta) (fexp := fexp) x).run := by
   classical
   -- Following Coq proof structure from Ulp.v:1746-1798
@@ -3572,10 +2515,10 @@ private theorem error_le_half_ulp_theorem
       exact ⟨Hx, le_rfl, fun g hg hle => hle⟩
 
     -- Now use uniqueness of DN and UP to show the chosen values equal x
-    have hDN_x : Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) = x := by
+    have hDN_x : Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) = x := by
       -- The chosen DN witness must equal x by uniqueness
-      let d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-      have hd := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
+      let d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+      have hd := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
       -- Both d and x satisfy Rnd_DN_pt, so by uniqueness d = x
       have hboth : FloatSpec.Core.Defs.Rnd_DN_pt
           (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run) x d ∧
@@ -3586,17 +2529,17 @@ private theorem error_le_half_ulp_theorem
       have hle_dx : d ≤ x := hDN_self.2.2 d hd.1 hd.2.2.1
       have hle_xd : x ≤ d := hd.2.2.2 x Hx le_rfl
       exact le_antisymm hle_dx hle_xd
-    have hUP_x : Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x) = x := by
+    have hUP_x : Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) = x := by
       -- The chosen UP witness must equal x by uniqueness
-      let u := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-      have hu := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+      let u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
+      have hu := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
       -- Both u and x satisfy Rnd_UP_pt, so by uniqueness u = x
       have hle_xu : x ≤ u := hUP_self.2.2 u hu.1 hu.2.2.1
       have hle_ux : u ≤ x := hu.2.2.2 x Hx le_rfl
       exact le_antisymm hle_ux hle_xu
     -- Now we can show round_N x = x, so the error is 0
-    have h_round_eq : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp x).run = x := by
-      simp only [FloatSpec.Core.Round_generic.round_N_to_format, hDN_x, hUP_x]
+    have h_round_eq : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run = x := by
+      simp only [FloatSpec.Core.Generic_fmt.round_N_to_format, hDN_x, hUP_x]
       -- After substitution: mid = (x + x) / 2 = x
       -- The if-then-else becomes: if x < x then pure x else if x < x then pure x else pure x
       -- Since x < x is false, we take the else branch twice
@@ -3616,11 +2559,11 @@ private theorem error_le_half_ulp_theorem
   | inr Hx =>
     -- Case 2: x is not in the generic format
     -- Get the DN and UP witnesses
-    set d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-    have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
+    set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
 
     -- Use round_N_pt to get a witness for round_N
-    have ⟨f, hFf, hN⟩ := FloatSpec.Core.Round_generic.round_N_pt beta fexp x
+    have ⟨f, hFf, hN⟩ := FloatSpec.Core.Generic_fmt.round_N_pt beta fexp x
 
     -- The key insight is that round_N x is either DN x or UP x
     -- and the error is bounded by half the ulp
@@ -3633,7 +2576,7 @@ private theorem error_le_half_ulp_theorem
 theorem error_le_half_ulp (choice : Int → Bool)
     (x : ℝ) :
     ⦃⌜True⌝⦄ do
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp x
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
       let u ← ulp beta fexp x
       pure (abs (rn - x), u)
     ⦃⇓p => ⌜p.1 ≤ (1/2) * p.2⌝⦄ := by
@@ -3664,7 +2607,7 @@ private theorem round_UP_pred_plus_eps_theorem
               else
                 (ulp beta fexp (pred beta fexp x).run).run)) :
     Classical.choose
-      (FloatSpec.Core.Round_generic.round_UP_exists beta fexp
+      (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp
         ((pred beta fexp x).run + eps)) = x := by
   sorry
 
@@ -3679,13 +2622,13 @@ theorem round_UP_pred_plus_eps
                 (ulp beta fexp (pred beta fexp x).run).run)) :
     ⦃⌜True⌝⦄ do
       let p ← pred beta fexp x
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp (p + eps)
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp (p + eps)
       pure up
     ⦃⇓r => ⌜r = x⌝⦄ := by
   intro _; classical
   -- Reduce to the equality on the chosen UP witness and delegate to the bridge theorem.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   exact round_UP_pred_plus_eps_theorem (beta := beta) (fexp := fexp)
     (x := x) (Fx := Fx) (eps := eps) heps
 
@@ -3710,7 +2653,7 @@ private theorem round_DN_minus_eps_theorem
               else
                 (ulp beta fexp (pred beta fexp x).run).run)) :
     Classical.choose
-      (FloatSpec.Core.Round_generic.round_DN_exists beta fexp (x - eps))
+      (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (x - eps))
       = (pred beta fexp x).run := by
   sorry
 
@@ -3725,14 +2668,14 @@ theorem round_DN_minus_eps
               else
                 (ulp beta fexp (pred beta fexp x).run).run)) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp (x - eps)
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp (x - eps)
       let p ← pred beta fexp x
       pure (dn, p)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
   -- Reduce to the equality on the chosen DN witness and the `pred` run-value.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format, pred] at *
+        FloatSpec.Core.Generic_fmt.round_DN_to_format, pred] at *
   -- Apply the local bridge theorem capturing the DN equality on the left half-interval.
   exact round_DN_minus_eps_theorem (beta := beta) (fexp := fexp)
     (x := x) (Fx := Fx) (eps := eps) heps
@@ -4372,15 +3315,15 @@ Theorem eq_0_round_0_negligible_exp:
 Lean (adapted spec): If negligible_exp = none and the rounded value is zero, then x = 0.
 -/
 theorem eq_0_round_0_negligible_exp
-    [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (hne : negligible_exp fexp = none) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜1 < beta⌝⦄ (pure (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x) : Id ℝ)
+    ⦃⌜1 < beta⌝⦄ (pure (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x) : Id ℝ)
     ⦃⇓r => ⌜r = 0 → x = 0⌝⦄ := by
   intro hβ; classical
   -- Reduce the Hoare triple on Id to a pure implication about the rounded value
   -- and discharge it using the contrapositive of `round_neq_0_negligible_exp`.
   have h :
-      (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x = 0 → x = 0) := by
+      (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x = 0 → x = 0) := by
     intro hzr
     by_contra hx
     -- Under `negligible_exp = none`, nonzero inputs do not round to 0
@@ -4898,14 +3841,14 @@ private theorem round_DN_eq_theorem
     (x d : ℝ)
     (Fd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run)
     (h : d ≤ x ∧ x < (succ beta fexp d).run) :
-    Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) = d := by
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) = d := by
   classical
   -- Chosen DN witness and its properties
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
   rcases hDN with ⟨Fdn, hdn⟩
   rcases hdn with ⟨_hFdn, hdn_le_x, hmax_dn⟩
   -- Name the chosen value
-  set dn : ℝ := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x) with hdn_def
+  set dn : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) with hdn_def
   -- d ≤ dn by maximality at x
   have hle_d_dn : d ≤ dn := by simpa [hdn_def] using hmax_dn d Fd h.1
   -- succ d is in the format
@@ -4936,12 +3879,12 @@ theorem round_DN_eq
     (Fd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run)
     (h : d ≤ x ∧ x < (succ beta fexp d).run) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
       pure dn
     ⦃⇓r => ⌜r = d⌝⦄ := by
   intro _; classical
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   exact round_DN_eq_theorem (beta := beta) (fexp := fexp) (x := x) (d := d) Fd h
 
 /- UP equality on (pred u, u]: chosen UP at x equals u when pred u < x ≤ u. -/
@@ -4950,15 +3893,15 @@ private theorem round_UP_eq_theorem
     (x u : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (h : (pred beta fexp u).run < x ∧ x ≤ u) :
-    Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x) = u := by
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) = u := by
   classical
   -- Shorthand for the generic-format predicate
   let F : ℝ → Prop := fun z => (FloatSpec.Core.Generic_fmt.generic_format beta fexp z).run
   -- Chosen UP witness at x and DN witness at -x
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hUP with ⟨Fup, hup⟩
   rcases hup with ⟨_Fup', hx_le_up, hmin_up⟩
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp (-x))
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x))
   rcases hDN with ⟨Fdn, hdn⟩
   rcases hdn with ⟨_Fdn', hdn_le_negx, hmax_dn⟩
   -- Closure under negation for the generic format
@@ -4968,7 +3911,7 @@ private theorem round_UP_eq_theorem
     have h' := h hy
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
   -- Show that -DN(-x) is also a UP-point at x
-  set dn : ℝ := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp (-x)) with hdn_def
+  set dn : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x)) with hdn_def
   have hUP_neg : FloatSpec.Core.Defs.Rnd_UP_pt F x (-dn) := by
     refine And.intro (hFopp dn (by simpa [hdn_def] using Fdn)) ?_
     refine And.intro ?hle ?hmin
@@ -4981,7 +3924,7 @@ private theorem round_UP_eq_theorem
       have h_le_f : -g ≤ dn := (hmax_dn _ hFnegg hx_le_negg)
       simpa [neg_neg, hdn_def] using (neg_le_neg h_le_f)
   -- Antisymmetry with the chosen UP at x yields: up = -dn
-  set up : ℝ := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x) with hup_def
+  set up : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) with hup_def
   have hle1 : up ≤ -dn := by
     have hxle : x ≤ -dn := by
       have : dn ≤ -x := by simpa [hdn_def] using hdn_le_negx
@@ -5022,13 +3965,13 @@ theorem round_UP_eq
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (h : (pred beta fexp u).run < x ∧ x ≤ u) :
     ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
       pure up
     ⦃⇓r => ⌜r = u⌝⦄ := by
   intro _; classical
   -- Reduce to the equality on the chosen UP witness
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   -- Apply the bridge theorem for the UP half-interval (pred u, u]
   exact round_UP_eq_theorem (beta := beta) (fexp := fexp) (x := x) (u := u) Fu h
 
@@ -5056,16 +3999,16 @@ private theorem round_N_le_midp_theorem
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (h : v < ((u + (succ beta fexp u).run) / 2)) :
-    (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run ≤ u := by
+    (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run ≤ u := by
   classical
   -- Expand DN/UP witnesses around v
-  set d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp v) with hd
-  set u' := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp v) with hu
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v) with hd
+  set u' := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v) with hu
   -- Case split on the position of v w.r.t. u
   by_cases hvu : v ≤ u
   · -- When v ≤ u, both DN(v) and UP(v) are ≤ u
-    have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp v)
-    have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp v)
+    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v)
+    have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v)
     rcases hDN with ⟨hFd, hdn⟩
     rcases hUP with ⟨hFu', hup⟩
     rcases hdn with ⟨_, hd_le_v, hmax_dn⟩
@@ -5075,24 +4018,24 @@ private theorem round_N_le_midp_theorem
     -- Analyze midpoint comparator in the definition
     by_cases hlt0 : v < (d + u') / 2
     · -- round_N returns DN
-      simp [FloatSpec.Core.Round_generic.round_N_to_format,
-            FloatSpec.Core.Round_generic.round_DN_to_format,
-            FloatSpec.Core.Round_generic.round_UP_to_format,
+      simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+            FloatSpec.Core.Generic_fmt.round_DN_to_format,
+            FloatSpec.Core.Generic_fmt.round_UP_to_format,
             hd.symm, hu.symm, hlt0]
       exact hdl
     · by_cases hgt0 : (d + u') / 2 < v
       · -- round_N returns UP
-        simp [FloatSpec.Core.Round_generic.round_N_to_format,
-              FloatSpec.Core.Round_generic.round_DN_to_format,
-              FloatSpec.Core.Round_generic.round_UP_to_format,
+        simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+              FloatSpec.Core.Generic_fmt.round_DN_to_format,
+              FloatSpec.Core.Generic_fmt.round_UP_to_format,
               hd.symm, hu.symm, hlt0, hgt0]
         exact hul
       · -- Tie case: return UP as well
         have hnotlt : ¬ v < (d + u') / 2 := by exact hlt0
         have hnotgt : ¬ (d + u') / 2 < v := by exact hgt0
-        simp [FloatSpec.Core.Round_generic.round_N_to_format,
-              FloatSpec.Core.Round_generic.round_DN_to_format,
-              FloatSpec.Core.Round_generic.round_UP_to_format,
+        simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+              FloatSpec.Core.Generic_fmt.round_DN_to_format,
+              FloatSpec.Core.Generic_fmt.round_UP_to_format,
               hd.symm, hu.symm, hnotlt, hnotgt]
         exact hul
   · -- Otherwise u < v and the strict-midpoint bound forces v < succ u
@@ -5115,7 +4058,7 @@ private theorem round_N_le_midp_theorem
       exact lt_trans hv_lt_twice (by simpa [s] using hdiff)
     -- Identify DN(v) = u via the [u, succ u) bracketing
     have hd_eq : d = u := by
-      have : Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp v) = u :=
+      have : Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v) = u :=
         round_DN_eq_theorem (beta := beta) (fexp := fexp) (x := v) (d := u) Fu ⟨le_of_lt hu_lt, hv_lt_succ⟩
       simpa [hd] using this
     -- Identify UP(v) = succ u via the (pred (succ u), succ u] bracketing
@@ -5129,7 +4072,7 @@ private theorem round_N_le_midp_theorem
       have hpred_succ : (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) u).run)).run = u := by
         simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hps trivial
       -- Apply the UP-equality bridge on (pred (succ u), succ u]
-      have : Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp v)
+      have : Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v)
              = (succ (beta := beta) (fexp := fexp) u).run := by
         refine round_UP_eq_theorem (beta := beta) (fexp := fexp)
           (x := v) (u := (succ (beta := beta) (fexp := fexp) u).run) Fsuccu ?hbr
@@ -5142,9 +4085,9 @@ private theorem round_N_le_midp_theorem
       simpa [hd_eq, hup_eq]
     -- Reduce to the DN branch
     have hbranch : v < (d + u') / 2 := by simpa [hmid_eq] using h
-    simp [FloatSpec.Core.Round_generic.round_N_to_format,
-          FloatSpec.Core.Round_generic.round_DN_to_format,
-          FloatSpec.Core.Round_generic.round_UP_to_format,
+    simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+          FloatSpec.Core.Generic_fmt.round_DN_to_format,
+          FloatSpec.Core.Generic_fmt.round_UP_to_format,
           hd.symm, hu.symm, hbranch]
     -- Goal reduces to `d ≤ u`; using `d = u` closes it.
     simpa [hd_eq]
@@ -5157,7 +4100,7 @@ theorem round_N_le_midp
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (h : v < ((u + (succ beta fexp u).run) / 2)) :
     ⦃⌜True⌝⦄ do
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp v
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v
       pure rn
     ⦃⇓r => ⌜r ≤ u⌝⦄ := by
   intro _; classical
@@ -5207,13 +4150,13 @@ private theorem round_N_ge_midp_theorem
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (hβ : 1 < beta)
     (h : ((u + (pred beta fexp u).run) / 2) < v) :
-    u ≤ (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run := by
+    u ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run := by
   classical
   -- Unpack the chosen DN/UP witnesses around v
-  set d := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp v) with hd
-  set u' := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp v) with hu
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp v)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp v)
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v) with hd
+  set u' := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v) with hu
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v)
   rcases hDN with ⟨hFd, hdn⟩; rcases hUP with ⟨hFu', hup⟩
   rcases hdn with ⟨_, hd_le_v, hmax_dn⟩
   rcases hup with ⟨_, hv_le_up, hmin_up⟩
@@ -5235,26 +4178,26 @@ private theorem round_N_ge_midp_theorem
     -- Analyze the decision in round_N
     by_cases hlt0 : v < (d + u') / 2
     · -- round_N returns DN; use u ≤ d
-      simp [FloatSpec.Core.Round_generic.round_N_to_format,
-            FloatSpec.Core.Round_generic.round_DN_to_format,
-            FloatSpec.Core.Round_generic.round_UP_to_format,
+      simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+            FloatSpec.Core.Generic_fmt.round_DN_to_format,
+            FloatSpec.Core.Generic_fmt.round_UP_to_format,
             hd.symm, hu.symm, hlt0]
       exact h_ud_le_d
     · by_cases hgt0 : (d + u') / 2 < v
       · -- round_N returns UP; chain u ≤ v ≤ u'
         have hle_u_u' : u ≤ u' := le_trans huv hv_le_u'
-        simp [FloatSpec.Core.Round_generic.round_N_to_format,
-              FloatSpec.Core.Round_generic.round_DN_to_format,
-              FloatSpec.Core.Round_generic.round_UP_to_format,
+        simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+              FloatSpec.Core.Generic_fmt.round_DN_to_format,
+              FloatSpec.Core.Generic_fmt.round_UP_to_format,
               hd.symm, hu.symm, hlt0, hgt0]
         exact hle_u_u'
       · -- Tie case: return UP
         have hnotlt : ¬ v < (d + u') / 2 := by exact hlt0
         have hnotgt : ¬ (d + u') / 2 < v := by exact hgt0
         have hle_u_u' : u ≤ u' := le_trans huv hv_le_u'
-        simp [FloatSpec.Core.Round_generic.round_N_to_format,
-              FloatSpec.Core.Round_generic.round_DN_to_format,
-              FloatSpec.Core.Round_generic.round_UP_to_format,
+        simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+              FloatSpec.Core.Generic_fmt.round_DN_to_format,
+              FloatSpec.Core.Generic_fmt.round_UP_to_format,
               hd.symm, hu.symm, hnotlt, hnotgt]
         exact hle_u_u'
   · -- Otherwise v ≤ u; derive `pred u < v` from the midpoint bound using `pred u ≤ u`.
@@ -5280,7 +4223,7 @@ private theorem round_N_ge_midp_theorem
       exact lt_of_le_of_lt hmean_ge_p h
     -- Show that the chosen UP at v is u by the (pred u, u] bracketing
     have hup_eq : u' = u := by
-      have : Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp v) = u :=
+      have : Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v) = u :=
         round_UP_eq_theorem (beta := beta) (fexp := fexp) (x := v) (u := u) Fu ⟨hpred_lt_v, hv_le_u⟩
       simpa [hu] using this
     -- If v = u, round_N returns u' = u
@@ -5294,7 +4237,7 @@ private theorem round_N_ge_midp_theorem
         have h := succ_pred (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
         simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
       have hd_eq_pred : d = (pred (beta := beta) (fexp := fexp) u).run := by
-        have : Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp v)
+        have : Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v)
                  = (pred (beta := beta) (fexp := fexp) u).run :=
           round_DN_eq_theorem (beta := beta) (fexp := fexp)
             (x := v) (d := (pred (beta := beta) (fexp := fexp) u).run)
@@ -5313,10 +4256,10 @@ private theorem round_N_ge_midp_theorem
         -- since (d + u)/2 ≤ v by hbranch
         have : (d + u) / 2 ≤ v := by simpa [hup_eq] using (le_of_lt hbranch)
         exact not_lt.mpr this
-      have hres : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run = u := by
-        simp [FloatSpec.Core.Round_generic.round_N_to_format,
-              FloatSpec.Core.Round_generic.round_DN_to_format,
-              FloatSpec.Core.Round_generic.round_UP_to_format,
+      have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run = u := by
+        simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+              FloatSpec.Core.Generic_fmt.round_DN_to_format,
+              FloatSpec.Core.Generic_fmt.round_UP_to_format,
               Id.run, hd.symm, hu.symm, hnotlt0, hbranch, hup_eq, pure]
       simpa [hres]
     · -- Non-strict case: v = u; round_N returns UP = u by definition branches
@@ -5337,25 +4280,25 @@ private theorem round_N_ge_midp_theorem
       -- Both remaining branches (strict > or tie) return UP = u = v
       by_cases hgt0 : (d + u') / 2 < v
       ·
-        have hres : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run = v := by
+        have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run = v := by
           -- Show the first guard is false and the second true after rewriting `u' = v`.
           have hnotlt' : ¬ v < (d + v) / 2 := by
             exact not_lt_mid_of_le_left hd_le_v
           have hgt0' : (d + v) / 2 < v := by simpa [hup_eq] using hgt0
-          simp [FloatSpec.Core.Round_generic.round_N_to_format,
-                FloatSpec.Core.Round_generic.round_DN_to_format,
-                FloatSpec.Core.Round_generic.round_UP_to_format,
+          simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+                FloatSpec.Core.Generic_fmt.round_DN_to_format,
+                FloatSpec.Core.Generic_fmt.round_UP_to_format,
                 Id.run, hd.symm, hu.symm, hnotlt', hgt0', hup_eq, pure]
         simpa [hres]
       · have hnotgt : ¬ (d + u') / 2 < v := by exact hgt0
-        have hres : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run = v := by
+        have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run = v := by
           -- Both guards are false after rewriting `u' = v`.
           have hnotlt' : ¬ v < (d + v) / 2 := by
             exact not_lt_mid_of_le_left hd_le_v
           have hnotgt' : ¬ (d + v) / 2 < v := by simpa [hup_eq] using hnotgt
-          simp [FloatSpec.Core.Round_generic.round_N_to_format,
-                FloatSpec.Core.Round_generic.round_DN_to_format,
-                FloatSpec.Core.Round_generic.round_UP_to_format,
+          simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
+                FloatSpec.Core.Generic_fmt.round_DN_to_format,
+                FloatSpec.Core.Generic_fmt.round_UP_to_format,
                 Id.run, hd.symm, hu.symm, hnotlt', hnotgt', hup_eq, pure]
         simpa [hres]
 
@@ -5367,7 +4310,7 @@ theorem round_N_ge_midp
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (h : ((u + (pred beta fexp u).run) / 2) < v) :
     ⦃⌜1 < beta⌝⦄ do
-      let rn ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp v
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v
       pure rn
     ⦃⇓r => ⌜u ≤ r⌝⦄ := by
   intro hβ; classical
@@ -5386,7 +4329,7 @@ private theorem round_N_ge_ge_midp_theorem
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (hβ : 1 < beta)
     (hne0 : u ≠ 0)
-    (h : u ≤ (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run) :
+    (h : u ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run) :
     ((u + (pred beta fexp u).run) / 2) ≤ v := by
   classical
   -- Contrapositive: if `v` is strictly below `(pred u + u)/2`, rounding falls ≤ `pred u`.
@@ -5406,7 +4349,7 @@ private theorem round_N_ge_ge_midp_theorem
       simpa [add_comm] using hvlt
     simpa [hsucc_pred] using this
   -- Strict-below-midpoint yields `round_N v ≤ pred u`
-  have hr_le_predu : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run
+  have hr_le_predu : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run
                       ≤ (pred (beta := beta) (fexp := fexp) u).run := by
     exact round_N_le_midp_theorem (beta := beta) (fexp := fexp)
       (choice := choice) (u := ((pred (beta := beta) (fexp := fexp) u).run)) (v := v)
@@ -5428,7 +4371,7 @@ private theorem round_N_le_le_midp_theorem
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (hβ : 1 < beta)
     (hne0 : u ≠ 0)
-    (h : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run ≤ u) :
+    (h : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run ≤ u) :
     v ≤ ((u + (succ beta fexp u).run) / 2) := by
   classical
   -- Suppose the upper midpoint is strictly below `v`; derive a contradiction.
@@ -5450,7 +4393,7 @@ private theorem round_N_le_le_midp_theorem
                         + (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) u).run)).run) / 2) < v := by
     simpa [hpred_succ] using hmp_rewrite
   have hge_succu : (succ (beta := beta) (fexp := fexp) u).run ≤
-                    (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run := by
+                    (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run := by
     exact round_N_ge_midp_theorem (beta := beta) (fexp := fexp)
       (choice := choice) (u := ((succ (beta := beta) (fexp := fexp) u).run)) (v := v)
       Fsuccu hβ hstrict_succ
@@ -5466,9 +4409,9 @@ Lemma round_N_ge_ge_midp: forall choice u v, F u -> u ≤ round_N v -> (u + pred
 theorem round_N_ge_ge_midp
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
-    (h : u ≤ (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run) :
+    (h : u ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run) :
     ⦃⌜1 < beta ∧ u ≠ 0⌝⦄ do
-      let _ ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp v
+      let _ ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v
       pure v
     ⦃⇓_ => ⌜((u + (pred beta fexp u).run) / 2) ≤ v⌝⦄ := by
   intro hpre; classical
@@ -5485,9 +4428,9 @@ Lemma round_N_le_le_midp: forall choice u v, F u -> round_N v ≤ u -> v ≤ (u 
 theorem round_N_le_le_midp
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
-    (h : (FloatSpec.Core.Round_generic.round_N_to_format beta fexp v).run ≤ u) :
+    (h : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run ≤ u) :
     ⦃⌜1 < beta ∧ u ≠ 0⌝⦄ do
-      let _ ← FloatSpec.Core.Round_generic.round_N_to_format beta fexp v
+      let _ ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v
       pure v
     ⦃⇓_ => ⌜v ≤ ((u + (succ beta fexp u).run) / 2)⌝⦄ := by
   intro hpre; classical
@@ -5739,7 +4682,7 @@ Local bridge theorem for `mag_plus_eps`.
 
 Rationale: The Coq proof relies on spacing properties of format numbers and
 the characterization of `mag` via binade bounds. Those ingredients are being
-ported progressively across `Float_prop` and `Round_generic`. To keep the
+ported progressively across `Float_prop` and `Generic_fmt`. To keep the
 public statement intact and unblock downstream work, we isolate here the exact
 reduced obligation on run‑values produced by the Hoare‑style specification:
 for `x > 0` in generic format and `0 ≤ eps < ulp x`, the magnitude is stable
@@ -5781,13 +4724,13 @@ theorem round_DN_plus_eps_pos
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
     (eps : ℝ) (heps : 0 ≤ eps ∧ eps < (ulp beta fexp x).run) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp (x + eps)
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp (x + eps)
       pure dn
     ⦃⇓r => ⌜r = x⌝⦄ := by
   intro _; classical
   -- Reduce the specification to an equality on the chosen DN witness.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   -- It suffices to show that x is the DN value for x + eps,
   -- i.e., x ≤ x+eps and x+eps < succ x, given F x.
   apply round_DN_eq_theorem (beta := beta) (fexp := fexp)
@@ -5816,14 +4759,14 @@ theorem round_UP_plus_eps_pos
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
     (eps : ℝ) (heps : 0 < eps ∧ eps ≤ (ulp beta fexp x).run) :
     ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp (x + eps)
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp (x + eps)
       let u ← ulp beta fexp x
       pure (up, u)
     ⦃⇓r => ⌜r.1 = x + r.2⌝⦄ := by
   intro _; classical
   -- Reduce the Hoare-style specification to an equality on the chosen UP witness
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   -- Target: show the UP witness at x+eps equals x + ulp x
   -- We prove it by instantiating the UP-equality bridge at u = succ x
   -- and then rewriting succ x = x + ulp x in the nonnegative branch.
@@ -5878,13 +4821,13 @@ theorem round_UP_pred_plus_eps_pos
     (eps : ℝ) (heps : 0 < eps ∧ eps ≤ (ulp beta fexp (pred beta fexp x).run).run) :
     ⦃⌜True⌝⦄ do
       let p ← pred beta fexp x
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp (p + eps)
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp (p + eps)
       pure up
     ⦃⇓r => ⌜r = x⌝⦄ := by
   intro _; classical
   -- Reduce the monadic spec; goal becomes an equality on the chosen UP witness
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   -- We will instantiate the UP-equality bridge at u = x (since F x), and
   -- for the input point x0 = (pred x).run + eps.
   -- First, record that for x > 0, pred x reduces to pred_pos x.
@@ -5938,13 +4881,13 @@ theorem round_DN_minus_eps_pos
     (eps : ℝ) (heps : 0 < eps ∧ eps ≤ (ulp beta fexp (pred beta fexp x).run).run) :
     ⦃⌜1 < beta⌝⦄ do
       let p ← pred beta fexp x
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp (x - eps)
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp (x - eps)
       pure (dn, p)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro hβ; classical
   -- Reduce the Hoare triple to an equality on the chosen DN witness at x - eps
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   -- Let d denote the predecessor of x (as a real number)
   set d : ℝ := (pred (beta := beta) (fexp := fexp) x).run
   -- Show that d is representable: F (pred x)
@@ -6020,20 +4963,20 @@ private theorem round_DN_plus_eps_theorem
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
     (eps : ℝ)
     (heps : 0 ≤ eps ∧ eps < (ulp beta fexp (succ beta fexp x).run).run) :
-    (FloatSpec.Core.Round_generic.round_DN_to_format beta fexp (x + eps)).run = x := by
+    (FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp (x + eps)).run = x := by
   sorry
 
 theorem round_DN_plus_eps
     (x : ℝ) (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
     (eps : ℝ) (heps : 0 ≤ eps ∧ eps < (ulp beta fexp (succ beta fexp x).run).run) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp (x + eps)
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp (x + eps)
       pure dn
     ⦃⇓r => ⌜r = x⌝⦄ := by
   intro _; classical
   -- Reduce to a plain equality on the DN witness and apply a narrow bridge theorem.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   exact round_DN_plus_eps_theorem (beta := beta) (fexp := fexp)
     (x := x) (Fx := Fx) (eps := eps) (heps := heps)
 
@@ -6048,14 +4991,14 @@ theorem round_UP_plus_eps
       eps ≤ (if 0 ≤ x then (ulp beta fexp x).run else
                 (ulp beta fexp (pred beta fexp (-x)).run).run)) :
     ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp (x + eps)
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp (x + eps)
       let s ← succ beta fexp x
       pure (up, s)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
   -- Reduce the Hoare-style spec to an equality on the chosen UP witness at x+eps
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   -- We will instantiate the UP-equality bridge at u = succ x.
   -- First, close that succ x is representable from Fx.
   have Fsuccx :
@@ -6600,9 +5543,9 @@ private theorem error_lt_ulp_round_theorem_impl
     [Monotone_exp fexp]
     (hβ : 1 < beta)
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx_neq : x ≠ 0) :
-    abs (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x - x) <
+    abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) <
     (ulp (beta := beta) (fexp := fexp)
-          (FloatSpec.Core.Round_generic.round_to_generic beta fexp rnd x)).run := by
+          (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)).run := by
   -- Following the Coq proof: reduce to positive case via wlog
   -- then use error_lt_ulp and ulp_le_pos with ulp_DN relationship
   classical
@@ -6635,7 +5578,7 @@ private theorem error_lt_ulp_round_theorem_impl
 
       -- Transform to positive case via -x
       -- The standard Coq proof uses round_opp with Zrnd_opp rnd to handle negation
-      -- However, our round_to_generic ignores the rnd parameter (see Round_generic.lean:172-174)
+      -- However, our round_to_generic ignores the rnd parameter (see Generic_fmt.lean:172-174)
       -- so we cannot properly implement the symmetric rounding case yet
 
       -- Once the rounding mode infrastructure is complete, the proof would:
@@ -7231,15 +6174,15 @@ private theorem round_UP_DN_ulp_theorem
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
-    Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-      = Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
+      = Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
         + (ulp (beta := beta) (fexp := fexp) x).run := by
   classical
   -- Shorthands for the chosen DN/UP witnesses
-  set d : ℝ := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-  set u : ℝ := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
-  have hDN := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp x)
+  set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+  set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   -- From the local bridge: for x not in the format, succ d = u
   have hsucc : (succ (beta := beta) (fexp := fexp) d).run = u := by
     -- succ (DN x) = UP x (file‑scoped bridge theorem)
@@ -7297,17 +6240,17 @@ private theorem round_UP_DN_ulp_theorem
         = (ulp (beta := beta) (fexp := fexp) x).run := by
       -- Reduce the Hoare‑style statement to a plain equality on run values
       simpa [wp, PostCond.noThrow, Id.run, bind, pure,
-             FloatSpec.Core.Round_generic.round_DN_to_format, d]
+             FloatSpec.Core.Generic_fmt.round_DN_to_format, d]
         using (hstab True.intro)
     simpa [d, u, hulp_eq] using this
   · -- x < 0: work at y = -x > 0 and transfer back by negation
     have hxlt : x < 0 := lt_of_not_ge hx0
     have hypos : 0 < -x := by simpa using (neg_pos.mpr hxlt)
     -- Chosen DN/UP at y := -x
-    set d' : ℝ := Classical.choose (FloatSpec.Core.Round_generic.round_DN_exists beta fexp (-x))
-    set u' : ℝ := Classical.choose (FloatSpec.Core.Round_generic.round_UP_exists beta fexp (-x))
-    have hDN' := Classical.choose_spec (FloatSpec.Core.Round_generic.round_DN_exists beta fexp (-x))
-    have hUP' := Classical.choose_spec (FloatSpec.Core.Round_generic.round_UP_exists beta fexp (-x))
+    set d' : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x))
+    set u' : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp (-x))
+    have hDN' := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x))
+    have hUP' := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp (-x))
     -- succ d' = u' at y = -x
     have hsucc' : (succ (beta := beta) (fexp := fexp) d').run = u' := by
       simpa [d', u'] using (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := -x)
@@ -7380,7 +6323,7 @@ private theorem round_UP_DN_ulp_theorem
         = (ulp (beta := beta) (fexp := fexp) (-x)).run := by
       have hstab := ulp_DN (beta := beta) (fexp := fexp) (x := -x) (hx := le_of_lt hypos)
       simpa [wp, PostCond.noThrow, Id.run, bind, pure,
-             FloatSpec.Core.Round_generic.round_DN_to_format, d'] using (hstab True.intro)
+             FloatSpec.Core.Generic_fmt.round_DN_to_format, d'] using (hstab True.intro)
     -- Therefore: u' = d' + ulp (-x)
     have hpos_id : u' = d' + (ulp (beta := beta) (fexp := fexp) (-x)).run := by
       calc
@@ -7478,8 +6421,8 @@ private theorem round_UP_DN_ulp_theorem
 theorem round_UP_DN_ulp (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Round_generic.round_DN_to_format beta fexp x
-      let up ← FloatSpec.Core.Round_generic.round_UP_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
       let u ← ulp beta fexp x
       pure (up, dn, u)
     ⦃⇓r => ⌜r.1 = r.2.1 + r.2.2⌝⦄ := by
@@ -7487,8 +6430,8 @@ theorem round_UP_DN_ulp (x : ℝ)
   -- Reduce the monadic specification to a pure equality on the chosen UP/DN witnesses
   -- and the run-value of `ulp x`.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Round_generic.round_DN_to_format,
-        FloatSpec.Core.Round_generic.round_UP_to_format]
+        FloatSpec.Core.Generic_fmt.round_DN_to_format,
+        FloatSpec.Core.Generic_fmt.round_UP_to_format]
   -- Local bridge theorem: gap between UP and DN equals one ULP at x.
   -- This mirrors the Coq lemma and will be discharged when spacing lemmas
   -- (characterizing the distance between consecutive format numbers) are ported.

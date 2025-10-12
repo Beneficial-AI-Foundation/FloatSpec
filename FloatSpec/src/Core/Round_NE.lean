@@ -24,7 +24,6 @@ import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Core.Ulp
 import Mathlib.Data.Real.Basic
@@ -36,7 +35,6 @@ open Std.Do
 open FloatSpec.Core.Defs
 open FloatSpec.Core.Round_pred
 open FloatSpec.Core.Generic_fmt
-open FloatSpec.Core.Round_generic
 
 namespace FloatSpec.Core.RoundNE
 
@@ -45,7 +43,7 @@ section NearestEvenRounding
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-variable [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 /-- Nearest-even rounding property
 
@@ -320,9 +318,8 @@ private theorem cexp_neighbors_eq_cexp_x
     (hUP : FloatSpec.Core.Round_pred.Rnd_UP_pt (Fmt beta fexp) x xu) :
     (cexp beta fexp xd).run = (cexp beta fexp x).run ∧
     (cexp beta fexp xu).run = (cexp beta fexp x).run := by
-  -- Delegate to the axiom-style lemma in Round_generic.
   exact
-    FloatSpec.Core.Round_generic.cexp_neighbors_eq_cexp_x_ax
+    FloatSpec.Core.Generic_fmt.cexp_neighbors_eq_cexp_x_ax
       (beta := beta) (fexp := fexp) (x := x) (xd := xd) (xu := xu)
       hb hxpos
       (by
@@ -350,7 +347,7 @@ private theorem consecutive_scaled_mantissas
       (gu.Fnum = gd.Fnum + 1) := by
   classical
   simpa [Fmt] using
-    (FloatSpec.Core.Round_generic.consecutive_scaled_mantissas_ax
+    (FloatSpec.Core.Generic_fmt.consecutive_scaled_mantissas_ax
       (beta := beta) (fexp := fexp) (x := x) (xd := xd) (xu := xu)
       hb hxpos (by simpa [Fmt] using hnotFmt)
       (by simpa [Fmt] using hDN)
@@ -719,8 +716,8 @@ theorem Rnd_NE_pt_total :
   | inr hxNotF =>
       -- x is not representable: obtain DN and UP witnesses, then choose an NE tie-break in case of a tie.
       -- DN/UP witnesses exist in the generic format.
-      obtain ⟨xd, hFxd, hDN⟩ := FloatSpec.Core.Round_generic.round_DN_exists (beta := beta) (fexp := fexp) x
-      obtain ⟨xu, hFxu, hUP⟩ := FloatSpec.Core.Round_generic.round_UP_exists (beta := beta) (fexp := fexp) x
+      obtain ⟨xd, hFxd, hDN⟩ := FloatSpec.Core.Generic_fmt.round_DN_exists (beta := beta) (fexp := fexp) x
+      obtain ⟨xu, hFxu, hUP⟩ := FloatSpec.Core.Generic_fmt.round_UP_exists (beta := beta) (fexp := fexp) x
       -- Compare the two distances to decide which side is nearest.
       -- Distances (nonnegative by construction)
       have hxd_le_x : xd ≤ x := hDN.2.1
@@ -1263,7 +1260,7 @@ theorem Rnd_NE_pt_abs (x f : ℝ) :
               simpa [hn1, this]
           have heav_abs : gabs.Fnum % 2 = 0 := by simpa [gabs, neg_mod_two] using heven
           exact Or.inl ⟨gabs, hf_abs, hcanon_abs, heav_abs⟩
-        
+
     | inr huniq_x =>
         -- Uniqueness branch: deduce sign of f from `x` and transfer uniqueness.
         by_cases hx : 0 ≤ x
@@ -1658,7 +1655,7 @@ section ErrorBounds
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-variable [FloatSpec.Core.Round_generic.Monotone_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 /-- Check error bound property
 -/
@@ -1724,7 +1721,7 @@ theorem Rnd_NE_pt_error_bound (x f : ℝ) :
     have hβ : 1 < beta := by rcases hpre with ⟨hβ, _⟩; exact hβ
     -- Existence of a format value within half‑ULP of x
     obtain ⟨g, hFg, hbound_g⟩ :=
-      FloatSpec.Core.Round_generic.exists_round_half_ulp (beta := beta) (fexp := fexp) (x := x) hβ
+      FloatSpec.Core.Generic_fmt.exists_round_half_ulp (beta := beta) (fexp := fexp) (x := x) hβ
     -- From minimality of f among representables, |f - x| ≤ |g - x|
     have hmin : |f - x| ≤ |g - x| := hN.2 g hFg
     -- Chain with the half‑ULP bound at x for g

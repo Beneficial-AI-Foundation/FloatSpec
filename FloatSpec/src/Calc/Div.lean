@@ -10,7 +10,6 @@ import FloatSpec.src.Core.Zaux
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Round_generic
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Core.Digits
 import FloatSpec.src.Calc.Bracket
@@ -19,7 +18,7 @@ import Std.Do.Triple
 import Std.Tactic.Do
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt
-open FloatSpec.Core.Round_generic FloatSpec.Core.Raux
+open FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
 open Std.Do
 
 namespace FloatSpec.Calc.Div
