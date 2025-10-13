@@ -50,8 +50,6 @@ for i in "${!file_list[@]}"; do
   # NOTE: The line with EOF must be at column 1 with no trailing spaces/tabs.
   # The '|| true' prevents 'set -e' from exiting because read -d '' returns 1 at EOF.
   IFS= read -r -d '' msg <<'EOF' || true
-Here’s a tighter, more deterministic version you can drop in as a system/task prompt.
-
 # Always Works™ Prompt
 
 ## Task
@@ -60,19 +58,18 @@ Fix proofs / theorems in `FloatSpec/src/Core/__PLACEHOLDER__`.
 
 ## Goal
 
-Repair **exactly one** theorem: the **first** theorem in the target file that lacks a full proof (due to `sorry`, errors, or unsolved goals). Priority: errors > sorry. Deliver a clean `lake build` with **no new breakages** introduced and no `sorry`, errors, and unsolved goals in the target theorem.
+Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md that could be handled right now and lacks a full proof (due to `sorry`, errors, or unsolved goals). Deliver a clean `lake build` with **no new breakages** introduced and no `sorry`, errors, and unsolved goals in the target theorem.
 
 ---
 
-## Selection Rule (deterministic)
+## Selection Rule (deterministic, do it step-by-step)
 
+0. You should stick to this rule tightly, and do not consider other factors in the selection process.z
 1. Run `lake build` and capture logs.
-2. Search for all `error` inside the log file. If the build reports any **error** inside the target file, choose the error with the **smallest line number**; the associated theorem is your target. If the build is blocked by errors in other files, fix those first (they may be dependencies).
-3. Find the latest log in `.change_log/` (by timestamp). Read the log and indentify if there are unfinished target left behind. If this target belongs to the current file or the dependencies of the current file (i.e. without fixing this error, current file can never be built), continue to work on it. If not, proceed to step 1.
-4. Otherwise, search the file for the first `sorry` (by line number).
-
-   * If that `sorry` is **inside a `def`/function body**, locate the original Coq source in `/home/hantao/code/flocq/src/Core`, port the definition to Lean 4, and then prove the corresponding theorems. Do not use `pure true` or any placeholder in the definition.
-5. If there is **no** error and **no** `sorry` in the file, go through the file to examine non-`sorry` placeholder in the definition of functions or specs, including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and its variants which could be easily deducted to a `True`. If you find any of these placeholders, locate the original Coq source in `/home/hantao/code/flocq/src/Core`, port the definition to Lean 4 to replace original placeholder, and then prove the corresponding theorems.
+2. Compare the logs and the corresponding code files with the record in /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md. If there are misalignments, update the status file to reflect the current state.
+3. Read the updated /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `in progress`. This should be an exact match, and DO NOT pick the one with `could not be finished now` at this stage. If you find corresponding theorem in the status file, go to prove it.
+4. When the previous steps cannot find any valid target, read the updated /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `unfinished`. If you find corresponding theorem in the status file, go to prove it.
+5. When the previous steps cannot find any valid target, pick the **first** theorem that is not marked as `finished` and is either in `could not be finished now` or other state. Work hard and attempt to prove it.
 6. If none of the previous case are detected, write a short report explaining what you checked and **stop**.
 
 > “First” always means **smallest line number** in the target file.
@@ -91,8 +88,10 @@ Repair **exactly one** theorem: the **first** theorem in the target file that la
 1. **Identify target** using the Selection Rule and record the exact line number and reason (error/sorry/unsolved goals).
 2. **Understand spec & code**
 
-   * Verify the definition body (if relevant) matches intent and source (Coq).
-   * Review the local spec/Hoare triples and nearby lemmas.
+  * Read the 'Reason' in this theorem’s Status.md entry.
+   * Read the Coq original in `/home/hantao/code/flocq/src/Core` (if available).
+  * Verify the definition body (if relevant) matches intent and source (Coq).
+  * Review the local spec/Hoare triples and nearby lemmas.
 3. **Plan**: decide whether to prove directly or factor helper lemmas (preferred for long proofs).
 4. **Draft Implement**
 
@@ -175,23 +174,10 @@ Repair **exactly one** theorem: the **first** theorem in the target file that la
 
 ## Change Log & Reporting (mandatory)
 
-Append an entry to a markdown file (e.g., `.change_log/$timestamp.md`) with:
+Update the change status file `/home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md`:
+If the full proof is completed (which means no sorry in its proof and the helper lemmas you added), change the 'Status' to `finished` for the target theorem. If you could not finish the full proof, but you made some progress, update the 'Status' to `in progress` or `could not be finished now` (choose one that best describes the current state) for the target theorem. If you did not make any progress on the target theorem, do not change its status.
 
-```
-## File: FloatSpec/src/Core/__PLACEHOLDER__
-- Target: <theorem/def name> at line <n>
-- Reason picked: <error|sorry|unsolved goals>
-- Approach: <direct proof | helper lemmas (list) | ported from Coq (list)>
-- Changes:
-  - [ ] Definition modified? (yes/no). If yes, minimal diff + reason.
-  - [ ] Spec modified? (yes/no). If yes, minimal diff + Coq reference path.
-  - [ ] Reordering done? (yes/no). If yes, explain dependency.
-- Coq reference(s): /home/hantao/code/flocq/src/Core/<file>.v : <lines/lemma names>
-- Build: <command used> | <log file path>
-- Notes: pitfalls, invariants, future useful lemmas (if any)
-```
-
-If the file had no target (no errors, no `sorry`), write a brief “No-action report”.
+Update the 'Reason' to reflect the current state (e.g., `Made an task list, among them A, B, C is finished, and next we should focus on D, E, F`, `in progress: lemma X added`, `fixed error: ...`, `could not be finished now: ...`). If the 'Status' is changed to `finished`, the 'Reason' must explain how the proof was completed, referencing Coq source lines where relevant.
 
 ---
 
@@ -231,7 +217,7 @@ EOF
   end=$(( $(date +%s) + t*60*60 ))
   while [[ $(date +%s) -lt $end ]]; do
     if [[ -n "$TIMEOUT_BIN" ]]; then
-      "$TIMEOUT_BIN" 7200 "${cmd[@]}" || true
+      "$TIMEOUT_BIN" 10800 "${cmd[@]}" || true
     else
       "${cmd[@]}" || true
     fi

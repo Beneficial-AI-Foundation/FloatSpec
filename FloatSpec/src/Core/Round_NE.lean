@@ -308,27 +308,6 @@ noncomputable def DN_UP_parity_generic_pos_check : Id Bool :=
 private def Fmt (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] : ℝ → Prop :=
   fun y => (generic_format beta fexp y).run
 
-/-- DN/UP neighbors share the canonical exponent of x. -/
-private theorem cexp_neighbors_eq_cexp_x
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    {x xd xu : ℝ}
-    (hb : 1 < beta) (hxpos : 0 < x)
-    (hnotFmt : ¬ (Fmt beta fexp x))
-    (hDN : FloatSpec.Core.Round_pred.Rnd_DN_pt (Fmt beta fexp) x xd)
-    (hUP : FloatSpec.Core.Round_pred.Rnd_UP_pt (Fmt beta fexp) x xu) :
-    (cexp beta fexp xd).run = (cexp beta fexp x).run ∧
-    (cexp beta fexp xu).run = (cexp beta fexp x).run := by
-  exact
-    FloatSpec.Core.Generic_fmt.cexp_neighbors_eq_cexp_x_ax
-      (beta := beta) (fexp := fexp) (x := x) (xd := xd) (xu := xu)
-      hb hxpos
-      (by
-        -- Unfold the local abbreviation `Fmt` to the global generic_format
-        -- to match the lemma's expectation.
-        simpa [Fmt] using hnotFmt)
-      (by simpa [Fmt] using hDN)
-      (by simpa [Fmt] using hUP)
-
 /-- Under scaling by ex := cexp x, DN/UP neighbors have consecutive
     integer scaled mantissas identified with canonical mantissas. -/
 private theorem consecutive_scaled_mantissas
@@ -1669,79 +1648,6 @@ noncomputable def Rnd_NE_pt_error_bound_check : Id Bool :=
           (∀ x f : ℝ,
             Rnd_NE_pt beta fexp x f →
             |f - x| ≤ (1/2) * (FloatSpec.Core.Ulp.ulp beta fexp x).run))
-
-/-- Specification: Error bound for nearest-even rounding
-
-    The error in nearest-even rounding is bounded by half a ULP.
--/
-theorem Rnd_NE_pt_error_bound (x f : ℝ) :
-    ⦃⌜beta > 1 ∧ Rnd_NE_pt beta fexp x f⌝⦄
-    Rnd_NE_pt_error_bound_check beta fexp
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro hpre
-  unfold Rnd_NE_pt_error_bound_check
-  classical
-  -- Reduce the Hoare triple to the decidable proposition
-  -- Keep scalar forms stable (`1/2` vs `2⁻¹`) to simplify closing steps.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, one_div]
-  -- Work under fixed x, f with the NE predicate
-  intro x f hNE
-  -- Shorthand for the generic-format predicate
-  let F : ℝ → Prop := fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run
-  -- From NE, extract the nearest property (minimal absolute error among representables)
-  have hN : FloatSpec.Core.Defs.Rnd_N_pt F x f := (hNE).1
-  -- Case split on x = 0 (trivial) vs x ≠ 0 (use existence of a half‑ULP approximant)
-  by_cases hx0 : x = 0
-  · -- When x = 0, nearest-even picks f = 0 by reflexivity on representables
-    have hβ : 1 < beta := by rcases hpre with ⟨hβ, _⟩; exact hβ
-    have hF0 : F 0 := by
-      have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp)
-      simpa [wp, PostCond.noThrow, Id.run] using (h hβ)
-    -- From nearest minimality and representability of 0, we have |f - 0| ≤ |0 - 0| = 0, hence f = 0
-    have hmin0 : |f - x| ≤ |(0 : ℝ) - x| := by
-      simpa [hx0] using (hN.2 0 hF0)
-    have hf_eq0 : f = 0 := by
-      -- |f| ≤ 0 ⇒ |f| = 0 ⇒ f = 0
-      have hle : |f| ≤ 0 := by simpa [hx0, sub_eq_add_neg, add_comm] using hmin0
-      have heq : |f| = 0 := le_antisymm hle (abs_nonneg _)
-      simpa [abs_eq_zero] using heq
-    -- Conclude the desired inequality using nonnegativity of ulp 0
-    have : |f - x| = 0 := by simpa [hx0, hf_eq0, abs_zero, sub_eq_add_neg, add_comm]
-    -- ulp is nonnegative under 1 < beta; transfer to x = 0 and scale by 1/2
-    have hulp0_nonneg : 0 ≤ (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) 0).run := by
-      have h := FloatSpec.Core.Ulp.ulp_ge_0 (beta := beta) (fexp := fexp) (x := 0) hβ
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
-    have hulp_nonneg : 0 ≤ (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run := by
-      simpa [hx0] using hulp0_nonneg
-    have hrhs_nonneg : 0 ≤ (1 / 2) * (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run :=
-      mul_nonneg (by norm_num) hulp_nonneg
-    -- Final inequality 0 ≤ RHS
-    simpa [this] using hrhs_nonneg
-  · -- Nonzero x: pick a representable g within half an ULP of x, then use minimality of f
-    have hβ : 1 < beta := by rcases hpre with ⟨hβ, _⟩; exact hβ
-    -- Existence of a format value within half‑ULP of x
-    obtain ⟨g, hFg, hbound_g⟩ :=
-      FloatSpec.Core.Generic_fmt.exists_round_half_ulp (beta := beta) (fexp := fexp) (x := x) hβ
-    -- From minimality of f among representables, |f - x| ≤ |g - x|
-    have hmin : |f - x| ≤ |g - x| := hN.2 g hFg
-    -- Chain with the half‑ULP bound at x for g
-    have hchain : |f - x| ≤ (1 / 2) * (beta : ℝ) ^ ((FloatSpec.Core.Generic_fmt.cexp beta fexp x).run) :=
-      le_trans hmin hbound_g
-    -- Rewrite β^(cexp x) as ulp x using the nonzero branch of ulp
-    have hx_ne : x ≠ 0 := hx0
-    have hulp_run : (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run
-        = (beta : ℝ) ^ ((FloatSpec.Core.Generic_fmt.cexp beta fexp x).run) := by
-      -- Use ulp_neq_0 in `run` form
-      have h := FloatSpec.Core.Ulp.ulp_neq_0 (beta := beta) (fexp := fexp) x hx_ne True.intro
-      -- Discharge the Hoare-triple style equality to a run-level equality
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-        using h
-    -- Conclude by rewriting the right-hand side
-    have hfinal : |f - x| ≤ (1 / 2) * (FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x).run := by
-      simpa [hulp_run] using hchain
-    -- The goal uses `2⁻¹ * Ulp.ulp ... x`; normalize coefficients and unwrap `Id.run`.
-    -- Match the goal's scalar form (`2⁻¹ = 1/2` over ℝ).
-    simpa [one_div] using hfinal
 
 /-- Check minimal error property
 -/

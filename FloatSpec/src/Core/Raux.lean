@@ -839,7 +839,7 @@ theorem Rcompare_Lt_spec (x y : ℝ) :
   intro hxy
   unfold Rcompare_val Rcompare
   -- Reduce the Hoare triple to the postcondition on the pure result
-  simp [wp, PostCond.noThrow, Id.run, pure]
+  simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
   -- With x < y, the comparison branch yields -1
   have hx : x < y := hxy
   simp [hx, pure]
@@ -1753,6 +1753,59 @@ noncomputable def Zceil (x : ℝ) : Id Int :=
 /-- Truncation toward zero: ceil for negatives, floor otherwise -/
 noncomputable def Ztrunc (x : ℝ) : Id Int :=
   pure (if x < 0 then ⌈x⌉ else ⌊x⌋)
+
+/-! Auxiliary: casting truncation commutes with absolute value.
+
+    This stays in Raux to avoid cross-file dependencies during proofs
+    that need it (e.g., round_to_generic_abs). -/
+/- Carrier program for `Ztrunc_abs_real`: casted truncation of `|y|` as `ℝ`. -/
+noncomputable def Ztrunc_abs_real_val (y : ℝ) : Id ℝ :=
+  pure (((Ztrunc (abs y)).run : Int) : ℝ)
+
+theorem Ztrunc_abs_real (y : ℝ) :
+    ⦃⌜True⌝⦄
+    Ztrunc_abs_real_val y
+    ⦃⇓r => ⌜r = abs (((Ztrunc y).run : Int) : ℝ)⌝⦄ := by
+  -- First, reduce the Hoare-style triple for `pure` to a plain goal.
+  -- This turns the specification into `True → r = ...`.
+  intro _
+  -- Work by cases on the sign of y and unfold Ztrunc.
+  unfold Ztrunc_abs_real_val
+  by_cases hy : y < 0
+  · -- Negative case: compute both sides explicitly and compare
+    have hceil_nonpos : Int.ceil y ≤ 0 := (Int.ceil_le).mpr (by simpa using (le_of_lt hy))
+    have hceil_nonposR : ((Int.ceil y : Int) : ℝ) ≤ 0 := by exact_mod_cast hceil_nonpos
+    -- Left-hand side: Ztrunc (|y|) = ⌊-y⌋ = -⌈y⌉
+    have hL : (((Ztrunc (abs y)).run : Int) : ℝ) = -(((Int.ceil y : Int) : ℝ)) := by
+      have : (Ztrunc (abs y)).run = Int.floor (-y) := by
+        -- since y < 0, we have |y| = -y and Ztrunc uses floor on nonnegatives
+        have : (abs y) = -y := by simpa [abs_of_neg hy]
+        -- Ztrunc on nonnegative arguments reduces to floor
+        -- because -y > 0 given y < 0
+        have hypos : 0 < -y := by exact neg_pos.mpr hy
+        -- Now simplify Ztrunc (abs y)
+        simp [Ztrunc, this, hypos, not_lt.mpr (le_of_lt hypos)]
+      -- Cast both sides to ℝ and rewrite floor(-y)
+      simpa [Int.floor_neg, Int.cast_neg] using congrArg (fun i : Int => (i : ℝ)) this
+    -- Right-hand side: abs (⌈y⌉) = -⌈y⌉ because ⌈y⌉ ≤ 0
+    have hR : abs ((((Ztrunc y).run : Int) : ℝ)) = -(((Int.ceil y : Int) : ℝ)) := by
+      -- Ztrunc y uses ceil when y < 0
+      have : (((Ztrunc y).run : Int) : ℝ) = ((Int.ceil y : Int) : ℝ) := by
+        simp [Ztrunc, hy]
+      -- simplify absolute value using nonpositivity of ⌈y⌉
+      simpa [this, abs_of_nonpos hceil_nonposR]
+    -- Conclude by comparing both canonical forms
+    simpa [Ztrunc_abs_real_val, hL, hR]
+  · -- Nonnegative case: |y| = y and both truncations use floor
+    have hy0 : 0 ≤ y := le_of_not_gt hy
+    have hfloor_nonneg : 0 ≤ (Int.floor y : Int) := (Int.le_floor).mpr (by simpa using hy0)
+    have hL : ((((Ztrunc (abs y)).run : Int) : ℝ)) = ((Int.floor y : Int) : ℝ) := by
+      simp [Ztrunc, abs_of_nonneg hy0, hy]
+    have hR : abs ((((Ztrunc y).run : Int) : ℝ)) = ((Int.floor y : Int) : ℝ) := by
+      have : (((Ztrunc y).run : Int) : ℝ) = ((Int.floor y : Int) : ℝ) := by
+        simp [Ztrunc, hy]
+      simpa [this, abs_of_nonneg (by exact_mod_cast hfloor_nonneg)]
+    simpa [Ztrunc_abs_real_val, hL, hR]
 
 /-- Away-from-zero rounding: floor for negatives, ceil otherwise -/
 noncomputable def Zaway (x : ℝ) : Id Int :=

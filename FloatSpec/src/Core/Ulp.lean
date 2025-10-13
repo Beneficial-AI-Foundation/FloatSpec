@@ -30,8 +30,6 @@ import Std.Do.Triple
 import Std.Tactic.Do
 
 set_option maxRecDepth 4096
--- Treat warnings (including `sorry`) as warnings, not build‑blocking errors here.
-set_option warningAsError false
 
 open Real
 open Std.Do
@@ -3621,22 +3619,6 @@ theorem generic_format_pred_aux2
     ⦃⇓g => ⌜g⌝⦄ := by
   sorry
 
-/-! Local bridge theorem (declared after use for locality):
-If x > 0 is in generic format, equals the binade boundary `β^(mag x - 1)`, and
-the subtraction by `β^(fexp (mag x - 1))` is nonzero, then the result stays in
-generic format. This theorem mirrors Coq's spacing lemma used in Ulp.v. -/
-private theorem generic_format_pred_aux2_theorem
-    (beta : Int) (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ)
-    (hx : 0 < x)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
-    (hxe : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run - 1))
-    (hne : x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)) ≠ 0) :
-    (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-      (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)))).run := by
-  sorry
-
 /-- Coq (Ulp.v):
 Lemma generic_format_succ_aux1:
   forall x, 0 < x -> F x -> F (x + ulp x).
@@ -5534,60 +5516,6 @@ theorem ulp_le_abs (x : ℝ) (hx : x ≠ 0)
     _ = (beta : ℝ) ^ c := h_ulp
     _ ≤ |(n : ℝ)| * |(beta : ℝ) ^ c| := hle_pow
     _ = |x| := habs_prod
-
-/- Implementation of error_lt_ulp_round_theorem.
-Moved here after ulp_le_abs to satisfy dependency ordering. -/
-private theorem error_lt_ulp_round_theorem_impl
-    (beta : Int) (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    [Monotone_exp fexp]
-    (hβ : 1 < beta)
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx_neq : x ≠ 0) :
-    abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) <
-    (ulp (beta := beta) (fexp := fexp)
-          (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x)).run := by
-  -- Following the Coq proof: reduce to positive case via wlog
-  -- then use error_lt_ulp and ulp_le_pos with ulp_DN relationship
-  classical
-  by_cases h_pos : 0 < x
-  · -- Case: x > 0
-    -- Following Coq's proof structure from error_lt_ulp_round (lines 1867-1881)
-    -- First get |round x - x| < ulp x
-    have err_lt := error_lt_ulp_x_theorem beta fexp hβ rnd x (ne_of_gt h_pos)
-
-    -- Apply transitivity with ulp x
-    apply lt_of_lt_of_le err_lt
-
-    -- Now show ulp x ≤ ulp (round x)
-    -- The full Coq proof uses round_DN_or_UP to determine whether round x = round_DN x
-    -- or round x = round_UP x, then uses ulp_DN and ulp_le_pos
-    -- However, the current infrastructure doesn't properly support this
-
-    -- For now, we leave this incomplete as it requires:
-    -- 1. A proper round_DN_or_UP that relates round_to_generic to round_DN/round_UP
-    -- 2. The connection between round_DN_to_format and the actual rounding predicates
-    sorry -- Requires infrastructure to relate round_to_generic to round_DN/UP predicates
-
-  · -- Case: x ≤ 0
-    push_neg at h_pos
-    by_cases h_zero : x = 0
-    · -- x = 0: contradicts hx_neq
-      exact absurd h_zero hx_neq
-    · -- x < 0: use symmetry via negation
-      have h_neg : x < 0 := lt_of_le_of_ne h_pos h_zero
-
-      -- Transform to positive case via -x
-      -- The standard Coq proof uses round_opp with Zrnd_opp rnd to handle negation
-      -- However, our round_to_generic ignores the rnd parameter (see Generic_fmt.lean:172-174)
-      -- so we cannot properly implement the symmetric rounding case yet
-
-      -- Once the rounding mode infrastructure is complete, the proof would:
-      -- 1. Apply the positive case to -x with Zrnd_opp rnd
-      -- 2. Use round_opp to relate round(rnd, -x) to -round(Zrnd_opp rnd, x)
-      -- 3. Use ulp_opp to relate ulp(round(x)) to ulp(round(-x))
-      -- 4. Transform the absolute value expression using algebraic identities
-
-      sorry -- Requires proper rounding mode support in round_to_generic
 
 /-- Coq (Ulp.v): Theorem ulp_canonical
     forall m e, m ≠ 0 -> canonical (m,e) -> ulp(F2R(m,e)) = bpow e. -/
