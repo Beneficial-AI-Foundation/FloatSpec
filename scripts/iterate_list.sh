@@ -64,7 +64,7 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 
 ## Selection Rule (deterministic, do it step-by-step)
 
-0. You should stick to this rule tightly, and do not consider other factors in the selection process.z
+0. You should stick to this rule tightly, and do not consider other factors in the selection process. On any step, if you find a valid target, stop, do not look into later steps and go straight to the proving process.
 1. Run `lake build` and capture logs.
 2. Compare the logs and the corresponding code files with the record in /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md. If there are misalignments, update the status file to reflect the current state.
 3. Read the updated /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `in progress`. This should be an exact match, and DO NOT pick the one with `could not be finished now` at this stage. If you find corresponding theorem in the status file, go to prove it.
