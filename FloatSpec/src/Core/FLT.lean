@@ -1434,15 +1434,17 @@ private theorem pred_FLT_exact_shift_pos_aux (beta : Int) (x : ℝ) (e : Int) :
   -- Evaluate pred on both sides using `pred_eq_pos`
   have hpred_y_run : (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)).run
                       = x * (beta : ℝ) ^ e - (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)).run := by
-    -- Use the lemma `pred_eq_pos` with hx ≥ 0
-    have := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLT_exp prec emin)
-                  (x := x * (beta : ℝ) ^ e) (hx := hy_nonneg) True.intro
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
+    -- Use the lemma `pred_eq_pos` with hx ≥ 0 and pass `hβ`
+    have h := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLT_exp prec emin)
+                  (x := x * (beta : ℝ) ^ e) (hx := hy_nonneg)
+    have hrun := h hβ
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
   have hpred_x_run : (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x).run
                       = x - (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x).run := by
-    have := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLT_exp prec emin)
-                  (x := x) (hx := le_of_lt hx_pos) True.intro
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
+    have h := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLT_exp prec emin)
+                  (x := x) (hx := le_of_lt hx_pos)
+    have hrun := h hβ
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
   -- Use ULP exact shift to relate ulp at x and at the scaled input
   set M : Int := (FloatSpec.Core.Raux.mag beta x).run with hM
   have hMx_lb : emin + prec ≤ M := by
@@ -1670,14 +1672,13 @@ theorem ulp_FLT_pred_pos (beta : Int) (x : ℝ) :
       have := FloatSpec.Core.Ulp.pred_plus_ulp (beta := beta) (fexp := FLT_exp prec emin)
                     (x := x) (hx := hxpos) (Fx := Fx)
       simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-        using (this True.intro)
+        using (this hβ)
     -- pred x = x - ulp x (positive branch)
     have hpred_run : (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x).run
                       = x - (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x).run := by
-      have := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLT_exp prec emin) (x := x) (hx := hx0)
-      -- Extract the first component equality
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-        using (this True.intro)
+      have h := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLT_exp prec emin) (x := x) (hx := hx0)
+      -- Extract the first component equality under `1 < beta`.
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h hβ)
     -- Subtract `pred x` from both sides of `pred x + ulp(pred x) = x`
     have heq : (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) ((FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x).run)).run
                 = (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x).run := by

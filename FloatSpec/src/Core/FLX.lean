@@ -1094,15 +1094,17 @@ private theorem pred_FLX_exact_shift_pos_aux (beta : Int) [Prec_gt_0 prec]
   have hpred_y_run :
       (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e)).run
         = x * (beta : ℝ) ^ e - (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e)).run := by
-    have := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLX_exp prec)
-                (x := x * (beta : ℝ) ^ e) (hx := hy_nonneg) True.intro
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
+    have h := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLX_exp prec)
+                (x := x * (beta : ℝ) ^ e) (hx := hy_nonneg)
+    have hrun := h hβ
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
   have hpred_x_run :
       (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x).run
         = x - (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x).run := by
-    have := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLX_exp prec)
-                (x := x) (hx := hx_nonneg) True.intro
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
+    have h := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLX_exp prec)
+                (x := x) (hx := hx_nonneg)
+    have hrun := h hβ
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
   -- ULP scales exactly under β^e in FLX
   have hulp_shift :
       (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e)).run

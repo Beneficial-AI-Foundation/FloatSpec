@@ -19,9 +19,9 @@ file_list=(
   # FLX.lean
   # FTZ.lean
   # Round_NE.lean
-  # Ulp.lean
+  Ulp.lean
   # Round_pred.lean
-  Generic_fmt.lean
+  # Generic_fmt.lean
 )
 hours=(
 #   2
@@ -64,9 +64,9 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 
 ## Selection Rule (deterministic, do it step-by-step)
 
-0. You should stick to this rule tightly, and do not consider other factors in the selection process. On any step, if you find a valid target, stop, do not look into later steps and go straight to the proving process.
+0. You should stick to this rule tightly, and do not consider other factors in the selection process. On any step, if you find a valid target, stop, do not look into later steps or think too much; go straight to the proving process and spend your thoughts there.
 1. Run `lake build` and capture logs.
-2. Compare the logs and the corresponding code files with the record in /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md. If there are misalignments, update the status file to reflect the current state.
+2. Compare the logs and the corresponding code files with the record in /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md. Check if they are currently aligned with the update rules. If there are misalignments, update the status file to reflect the current state.
 3. Read the updated /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `in progress`. This should be an exact match, and DO NOT pick the one with `could not be finished now` at this stage. If you find corresponding theorem in the status file, go to prove it.
 4. When the previous steps cannot find any valid target, read the updated /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `unfinished`. If you find corresponding theorem in the status file, go to prove it.
 5. When the previous steps cannot find any valid target, pick the **first** theorem that is not marked as `finished` and is either in `could not be finished now` or other state. Work hard and attempt to prove it.
@@ -127,6 +127,7 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 
 **Prohibited**
 
+* Remove theorems or functions. In order to move a theorem, you should first copy the theorem to the new location, then delete the old one. You should never directly delete or remove a theorem or function with the excuse of moving it.
 * The dependency cycle is strictly forbidden in lean4. So do not attempt to include any import that causes a dependency cycle. If you need a definition from another file, check if the import will cause a dependency cycle; if so, do not reorder and check the Coq original source and use the proof Strategy from there.
 * Deleting any existing theorems/functions.
 * Using `axiom`, `admit`, `pure true`, or any non-`sorry` placeholder, including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and all variants which could be easily deducted to a `True`. If you see such placeholders, replace them with `sorry` instead.
@@ -150,12 +151,13 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 
 ## Proof Strategy Guidelines
 
-* Prefer no decomposition: Try your best to prove the theorem directly through trial and error. Only if you are completely stuck, factor out small helper lemmas. Aviod replacing a single sorry with multiple sorries that you are UNCERTAIN about the correctness.
+* Do not overthink! If you think some tactic or approach seems promising, implement and test it instead of over-planning. But do obey the rules in the prompt.
+* Some theorems lack a pre-condition `1 < beta`—if needed, add it (Coq reference required). But you have to press all related errors to make compile pass safely.
+* Prefer no decomposition and moving operations: Try your best to prove the theorem directly through trial and error. Only if you are completely stuck, factor out small helper lemmas. Aviod replacing a single sorry with multiple sorries that you are UNCERTAIN about the correctness.
 * Use existing proven lemmas from imports, existing files and `mathlib4` where available; if uncertain, search first, otherwise implement locally.
 * Keep terms and rewriting explicit; avoid fragile tactic scripts.
 * Preserve existing notation and Hoare triple syntax whenever possible.
 * Trying is encouraged: if a tactic or approach seems promising, implement and test it instead of over-planning.
-* Some theorems lack a pre-condition `1 < beta`—if needed, add it (Coq reference required).
 * You are allowed to move theorems: When you observe that the target theorem depends on some lemmas that are defined later in the file, you can move the target theorem to a different location in the file (e.g., closer to related lemmas or later than some required lemmas) if it helps your workflow. If you do reorder, YOU MUST MAKE SURE THAT THE DEPENDENCY IS error-safe after your move (or else you could make other moves first to ensure that), then document it. If the dependency you need is in another file, check if the import will cause a dependency cycle; if so, do not reorder and check the coq original source and use the proof Strategy from there.
 
 ---
@@ -175,9 +177,16 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 ## Change Log & Reporting (mandatory)
 
 Update the change status file `/home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md`:
-If the full proof is completed (which means no sorry in its proof and the helper lemmas you added), change the 'Status' to `finished` for the target theorem. If you could not finish the full proof, but you made some progress, update the 'Status' to `in progress` or `could not be finished now` (choose one that best describes the current state) for the target theorem. If you did not make any progress on the target theorem, do not change its status.
+Compile again. Double check the log and the proof body itself:
+If the full proof is completed (which means no sorry in its proof and the helper lemmas you added), change the 'Status' to `finished` for the target theorem. You should be extremely cautious to ensure that the proof is indeed complete before changing the status to `finished`. (which means at least double-check).
+If you could not finish the full proof, but you made some progress, update the 'Status' to `in progress` or `could not be finished now` (choose one that best describes the current state) for the target theorem. If you did not make any progress on the target theorem, do not change its status.
+Specifically, if your attempts on the target theorem is more than 3, you should change the 'Status' to `could not be finished now` for the target theorem. 
 
-Update the 'Reason' to reflect the current state (e.g., `Made an task list, among them A, B, C is finished, and next we should focus on D, E, F`, `in progress: lemma X added`, `fixed error: ...`, `could not be finished now: ...`). If the 'Status' is changed to `finished`, the 'Reason' must explain how the proof was completed, referencing Coq source lines where relevant.
+Update the 'Reason' to reflect the current state (e.g., `Made an task list, among them A, B, C is finished, and next we should focus on D, E, F`, `in progress: lemma X added`, `fixed error: ...`, `could not be finished now: ...`). If the 'Status' is changed to `finished`, the 'Reason' must explain how the proof was completed, referencing Coq source lines where relevant. 
+
+Update the 'Attempt' to log the number of attempts you made on this theorem. If this is your first attempt, set it to 1. If you have made previous attempts, increment the count by 1.
+
+Update the theorems: If you add any new helper lemmas, add them to the Status.md file with correct line numbers, 'Status', ''Reason', and 'Attempt' fields. If you move the target theorem to a different location in the file, update its line number accordingly.
 
 ---
 
@@ -216,11 +225,12 @@ EOF
 
   end=$(( $(date +%s) + t*60*60 ))
   while [[ $(date +%s) -lt $end ]]; do
-    if [[ -n "$TIMEOUT_BIN" ]]; then
-      "$TIMEOUT_BIN" 10800 "${cmd[@]}" || true
-    else
-      "${cmd[@]}" || true
-    fi
+    # if [[ -n "$TIMEOUT_BIN" ]]; then
+    #   "$TIMEOUT_BIN" 10800 "${cmd[@]}" || true
+    # else
+    #   "${cmd[@]}" || true
+    # fi
+    "${cmd[@]}" || true
     git add .
     timestamp=$(date +%Y%m%d_%H%M%S)
     git commit -m "Update $f at $timestamp after an agent round" || true
