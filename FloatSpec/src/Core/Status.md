@@ -44,7 +44,7 @@
 
 ## FloatSpec/src/Core/Ulp.lean
 1. error_le_half_ulp_round — FloatSpec/src/Core/Ulp.lean:2276 (sorry at: 2284)
-    - Status: unfinished
+    - Status: could not be finished now
     - Reason: Still contains a placeholder proof. The Coq proof splits on whether the rounded value is zero and uses spacing lemmas plus `error_lt_ulp_round`/`error_le_ulp_round`. In this Lean port, those bridge lemmas are not fully discharged yet; the theorem remains with `sorry` at the main goal after reducing the Hoare triple.
     - Attempt: 6
 2. pred_UP_le_DN_theorem — FloatSpec/src/Core/Ulp.lean:1774 (sorry at: 1780)
