@@ -180,7 +180,7 @@
     - Reason: Ported Coq Ulp.v Theorem mag_plus_eps (lines ~1013ff). The proof works at run-value level using Raux mag bounds. For x > 0 in generic format and 0 ≤ eps < ulp x, we show β^(ex−1) ≤ x ≤ x+eps and x+eps ≤ β^ex via the spacing lemma id_p_ulp_le_bpow (with ex = mag x). Then apply mag_unique_pos to conclude mag(x+eps) = ex = mag x. This avoids the earlier local placeholder and matches the Coq structure. Key Lean ingredients: Raux.bpow_mag_le (lower bound), Ulp.id_p_ulp_le_bpow (upper bound of x+ulp x), and Raux.mag_unique_pos for uniqueness on the binade interval.
     - Attempt: 1
 35. round_DN_plus_eps_theorem — FloatSpec/src/Core/Ulp.lean:6261 (sorry at: 6269)
-    - Status: in progress
+    - Status: unfinished
     - Reason: Target strengthened vs. Coq: requires `eps < ulp (succ x)` rather than case‑split bound (`eps < ulp x` if `0 ≤ x` else `eps < ulp (pred (-x))`). Positive branch appears feasible by combining `ulp_succ_pos` (gives `ulp (succ x) = ulp x` or `succ x = β^(mag x)` so ulps equal) with the finished `round_DN_plus_eps_pos`. The zero/negative branch needs spacing bridges to relate `ulp (succ x)` to the DN half‑interval `(x, succ x)` or to `ulp (pred (-x))`; these rely on local lemmas (`ulp_succ_pos`, `ulp_pred_pos`) whose core spacing proofs are still placeholders. Will finish once those bridges are discharged.
     - Attempt: 1
 36. error_lt_ulp_round_theorem_impl — FloatSpec/src/Core/Ulp.lean (renamed)
@@ -191,3 +191,7 @@
     - Status: could not be finished now
     - Reason: Do it later. Need a manual fix...
     - Attempt: 10
+38. mag_plus_eps_theorem - FloatSpec/src/Core/Ulp.lean
+    - Status: in progress
+    - Reason: Currently there are multiple errors in the proof. Next step is to fix them.
+    - Attempt: 1

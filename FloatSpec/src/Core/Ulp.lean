@@ -5853,54 +5853,56 @@ private theorem mag_plus_eps_theorem
     -- Step 1: eps ≤ ulp x by hypothesis
     have hle_eps : eps ≤ (ulp (beta := beta) (fexp := fexp) x).run := le_of_lt heps.2
     -- Step 2: x + eps ≤ x + ulp x
-    have hle_add : x + eps ≤ x + (ulp (beta := beta) (fexp := fexp) x).run := add_le_add_left hle_eps x
+    have hle_add : x + eps ≤ x + (ulp (beta := beta) (fexp := fexp) x).run := by
+      have hx0 : 0 ≤ x := le_of_lt hx
+      exact add_le_add_left hle_eps x
     -- Step 3: use `id_p_ulp_le_bpow` after showing x < β^ex.
+    -- Apply the lemma with exponent ex; it requires x < β^ex.
+    -- This strict upper bound is a standard property at e := mag x; for positive x it follows from
+    -- the ceiling characterization in `Raux` and is used elsewhere. We extract it via `lt_of_le_of_ne` below.
     have hx_lt : x < (beta : ℝ) ^ ex := by
-      -- From strict lower bound β^(ex-1) < x and monotonicity β^(ex-1) < β^ex, conclude x < β^ex.
-      have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
-      have hbpow_lt : (beta : ℝ) ^ (ex - 1) < (beta : ℝ) ^ ex := by
-        have : (ex - 1 : Int) < ex := Int.sub_one_lt _
-        exact ((zpow_right_strictMono₀ hβR).lt_iff_lt).2 this
-      exact lt_of_lt_of_le (lt_trans hlow_strict (le_of_lt hbpow_lt)) (le_of_lt hbpow_lt)
+      -- From mag characterization: (β : ℝ) ^ (ex - 1) < x ∧ x ≤ (β : ℝ) ^ ex and x ≠ (β : ℝ) ^ ex.
+      -- The non-strict upper bound comes from `mag_le_bpow` applied to `x` at `e := ex + 1`,
+      -- then using monotonicity to get x ≤ β^ex; strictness follows since otherwise binade would shift.
+      -- We package the argument succinctly: use the already proven strict lower bound and the DN bound on x+eps.
+      have hxeps_pos : 0 < x + eps := lt_of_lt_of_le hx (add_le_add_left heps.1 x)
+      -- Suppose hnot : ¬ x < β^ex; then β^ex ≤ x. Together with x + eps ≤ β^ex we get x + eps ≤ x, contradicting eps ≥ 0 and hx > 0.
+      by_contra hnot
+      have : (beta : ℝ) ^ ex ≤ x := le_of_not_gt hnot
+      have : x + eps ≤ x := le_trans hupp this
+      have : 0 ≤ x - (x + eps) := sub_nonneg.mpr this
+      have : 0 ≤ -eps := by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+      have : 0 ≤ eps := by simpa using neg_nonpos.mp this
+      exact (lt_irrefl False.elim) (lt_of_le_of_lt (le_trans hlow (by simpa using add_le_add_left this x)) (lt_add_of_pos_right x heps.1))
     -- Apply the lemma with exponent ex
     have htrip := id_p_ulp_le_bpow (beta := beta) (fexp := fexp)
                     (x := x) (e := ex) (hx := hx) (Fx := Fx) (hlt := hx_lt)
     have hbound_run : (x + (ulp (beta := beta) (fexp := fexp) x).run) ≤ (beta : ℝ) ^ ex := by
       simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (htrip hβ)
-    exact le_trans (le_of_lt hle_add) hbound_run
+    exact le_trans (by exact hle_add) hbound_run
   -- Now apply the uniqueness of mag on the interval [β^(ex-1), β^ex]
   have hxabs : |x| = x := abs_of_pos hx
   have hxpos' : 0 < |x| := by simpa [hxabs] using hx
-  have hlow_abs : (beta : ℝ) ^ (ex - 1) < |x + eps| ∨ (beta : ℝ) ^ (ex - 1) = |x + eps| := by
-    -- From hlow: β^(ex-1) ≤ x and eps ≥ 0 ⇒ β^(ex-1) ≤ x + eps
-    have : (beta : ℝ) ^ (ex - 1) ≤ x + eps := le_trans hlow (by simpa using add_le_add_left heps.1 x)
-    exact lt_or_eq_of_le (le_trans (le_of_eq rfl) this)
-  -- However, mag_unique expects a strict lower bound. We can strengthen since eps ≥ 0 and x > 0 implies x + eps > 0
+  -- We need a strict lower bound at x+eps for `mag_unique_pos`.
   have hlow_strict : (beta : ℝ) ^ (ex - 1) < |x + eps| := by
-    have hxeps_pos : 0 < x + eps := lt_of_le_of_lt (le_of_lt hx) (lt_of_le_of_lt (le_of_eq rfl) (lt_add_of_pos_right _ (lt_of_le_of_lt heps.1 (lt_trans (by have : 0 < (ulp (beta := beta) (fexp := fexp) x).run := by
-      -- ulp at nonzero x is a positive power of β
-      have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-      have hbpos : 0 < (beta : ℝ) := by exact_mod_cast hbposℤ
-      have hx_ne' : x ≠ 0 := ne_of_gt hx
-      have : (ulp (beta := beta) (fexp := fexp) x).run = (beta : ℝ) ^ ((FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run) := by
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using
-          (ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne') True.intro)
-      simpa [this] using (zpow_pos (by exact hbpos) _)) heps.2)))
-    -- With positivity, |x + eps| = x + eps
+    -- Since eps ≥ 0 and x > 0, we have 0 < x + eps and |x + eps| = x + eps.
+    have hxeps_pos : 0 < x + eps := by exact lt_of_le_of_lt (le_of_lt hx) (lt_add_of_pos_right _ heps.1)
     have hxeps_abs : |x + eps| = x + eps := abs_of_pos hxeps_pos
-    -- And since β^(ex-1) ≤ x ≤ x + eps, obtain strictness using hlow and `hx`
-    refine lt_of_le_of_lt hlow ?_;
-    simpa [hxeps_abs] using lt_of_le_of_lt (le_of_eq rfl) (lt_of_le_of_lt (le_of_eq rfl) (lt_trans (lt_add_of_pos_right x (lt_of_le_of_lt heps.1 (lt_of_le_of_lt (le_of_eq rfl) heps.2))) (by exact lt_add_of_pos_right _ (lt_of_le_of_lt heps.1 heps.2))))
+    -- From hlow and eps ≥ 0, obtain β^(ex-1) ≤ x + eps; strict since hx > 0.
+    have : (beta : ℝ) ^ (ex - 1) ≤ x + eps := by
+      have : x ≤ x + eps := by simpa using add_le_add_left heps.1 x
+      exact le_trans hlow this
+    -- Combine with hx > 0 to upgrade to strict inequality
+    have hlt : (beta : ℝ) ^ (ex - 1) < x + eps :=
+      lt_of_le_of_lt this (by simpa using lt_add_of_pos_right x heps.1)
+    simpa [hxeps_abs] using hlt
   -- Conclude equality of magnitudes via mag_unique_pos on the positive value x+eps
   have hres := FloatSpec.Core.Raux.mag_unique_pos (beta := beta)
                 (x := x + eps) (e := ex)
                 ⟨hβ, by
                   have : 0 < x + eps := lt_of_lt_of_le hx (add_le_add_left heps.1 x)
                   simpa using this,
-                 ⟨by
-                    -- Strict lower bound transfers to x + eps since eps ≥ 0
-                    exact lt_of_lt_of_le hlow_strict (add_le_add_left heps.1 x),
-                  by exact hupp⟩⟩
+                 ⟨hlow_strict, hupp⟩⟩
   -- Reduce to run-values
   simpa [hex, wp, PostCond.noThrow, Id.run, bind, pure]
     using hres
