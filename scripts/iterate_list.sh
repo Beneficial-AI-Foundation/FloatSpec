@@ -127,7 +127,7 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 
 **Prohibited**
 
-* Remove theorems or functions. In order to move a theorem, you should first copy the theorem to the new location, then delete the old one. You should never directly delete or remove a theorem or function with the excuse of moving it.
+* Remove theorems or functions. DO NOT DIRECTLY REMOVE ANYTHING!!!! In order to move a theorem, you should first copy the theorem to the new location, then delete the old one for the sake of replication. Besides the sake of replication, nothing should be directly removed. You should never directly delete or remove a theorem or function with the excuse of moving it.
 * The dependency cycle is strictly forbidden in lean4. So do not attempt to include any import that causes a dependency cycle. If you need a definition from another file, check if the import will cause a dependency cycle; if so, do not reorder and check the Coq original source and use the proof Strategy from there.
 * Deleting any existing theorems/functions.
 * Using `axiom`, `admit`, `pure true`, or any non-`sorry` placeholder, including `pure (decide True)`, `pure (decide ((0 : ℝ) ≤ 0))`, and all variants which could be easily deducted to a `True`. If you see such placeholders, replace them with `sorry` instead.
@@ -192,6 +192,7 @@ Update the theorems: If you add any new helper lemmas, add them to the Status.md
 
 ## Practical Tips
 
+* Be determined and persistent: Do not overthink or overplan on selection or proof strategy. If you think some tactic or approach seems promising, implement and test it instead of over-planning. But do obey the rules in the prompt.
 * Save build output to a log and search it instead of scrolling:
 
   * Example: `lake build 2>&1 | tee .log/$(date +%Y%m%d_%H%M%S)_build.log`
