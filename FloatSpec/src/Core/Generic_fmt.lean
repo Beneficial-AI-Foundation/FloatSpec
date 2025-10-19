@@ -4090,11 +4090,6 @@ theorem round_DN_exists
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ∃ f, (generic_format beta fexp f).run ∧
       Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Existence of DN in the generic format requires the spacing/neighbor
-  -- development provided later in this file. We keep this theorem as a
-  -- placeholder here to break dependency cycles; the constructive proof
-  -- appears after establishing the necessary spacing lemmas.
-  -- See Status.md for details and Coq reference (Generic_fmt.v, DN existence).
   sorry
 
 -- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
@@ -4104,7 +4099,8 @@ theorem round_DN_exists_global
     ∃ f, (generic_format beta fexp f).run ∧
       FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
   classical
-  exact round_DN_exists beta fexp x
+  -- `round_DN_exists` does not require `1 < beta`, so we can reuse it directly.
+  simpa using (round_DN_exists (beta := beta) (fexp := fexp) (x := x))
 
 -- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
 -- Remove the earlier forward declaration to avoid duplicate definitions.
@@ -4152,7 +4148,7 @@ theorem round_UP_exists
     ∃ f, (generic_format beta fexp f).run ∧
       Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
   -- Obtain DN existence for -x (assumed available) and transform
-  rcases round_DN_exists beta fexp (-x) with ⟨fdn, hFdn, hdn⟩
+  rcases round_DN_exists (beta := beta) (fexp := fexp) (x := -x) with ⟨fdn, hFdn, hdn⟩
   -- Turn it into UP existence for x via negation
   refine ⟨-fdn, ?_, ?_⟩
   · -- Format closure under negation
@@ -4185,7 +4181,7 @@ theorem round_NA_pt
   -- Shorthand for the format predicate
   let F := fun y : ℝ => (generic_format beta fexp y).run
   -- Obtain bracketing down/up witnesses around x
-  rcases round_DN_exists (beta := beta) (fexp := fexp) x with
+  rcases round_DN_exists (beta := beta) (fexp := fexp) (x := x) with
     ⟨xdn, hFdn, hDN⟩
   rcases round_UP_exists (beta := beta) (fexp := fexp) x with
     ⟨xup, hFup, hUP⟩
@@ -4904,17 +4900,20 @@ theorem round_N0_pt
 
 /-- Compute the round-down and round-up witnesses in the generic format.
     These are used by spacing and ulp lemmas. -/
-noncomputable def round_DN_to_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
+noncomputable def round_DN_to_format (beta : Int) (fexp : Int → Int)
+  [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
   -- Use classical choice from existence of DN rounding in generic format
   pure (Classical.choose (round_DN_exists beta fexp x))
 
-noncomputable def round_UP_to_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
+noncomputable def round_UP_to_format (beta : Int) (fexp : Int → Int)
+  [Valid_exp beta fexp] (x : ℝ) : Id ℝ :=
   -- Use classical choice from existence of UP rounding in generic format
   pure (Classical.choose (round_UP_exists beta fexp x))
 
 /-- Properties of the format-specific rounding helpers: both results are in the format
     and they bracket the input x. -/
-theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+theorem round_to_format_properties (beta : Int) (fexp : Int → Int)
+    [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     do
       let down ← round_DN_to_format beta fexp x
@@ -4928,8 +4927,8 @@ theorem round_to_format_properties (beta : Int) (fexp : Int → Int) [Valid_exp 
   -- Evaluate the do-block and unfold our definitions of the rounding helpers
   simp [round_DN_to_format, round_UP_to_format]
   -- Retrieve properties of the chosen down and up values
-  have hDN := Classical.choose_spec (round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (round_UP_exists beta fexp x)
+  have hDN := Classical.choose_spec (round_DN_exists (beta := beta) (fexp := fexp) (x := x))
+  have hUP := Classical.choose_spec (round_UP_exists (beta := beta) (fexp := fexp) (x := x))
   -- Unpack DN: format membership and DN predicate
   rcases hDN with ⟨hFdn, hdn⟩
   rcases hUP with ⟨hFup, hup⟩
@@ -5491,8 +5490,8 @@ theorem generic_format_round_DN (beta : Int) (hbeta : 1 < beta) (fexp : Int → 
   -- Derive DN existence for x from UP existence for -x via negation
   have hFneg : ∀ y, (generic_format beta fexp y).run → (generic_format beta fexp (-y)).run :=
     generic_format_neg_closed beta fexp
-  -- Use the UP existence at -x
-  rcases round_UP_exists (beta := beta) (fexp := fexp) (-x) with ⟨fu, hFu, hup⟩
+  -- Use the UP existence at -x (which we prove without extra hypotheses)
+  rcases round_UP_exists (beta := beta) (fexp := fexp) (x := -x) with ⟨fu, hFu, hup⟩
   -- Transform to DN at x with f = -fu
   refine ⟨-fu, ?_, ?_⟩
   · exact hFneg fu hFu
@@ -5507,8 +5506,8 @@ theorem generic_format_round_DN (beta : Int) (hbeta : 1 < beta) (fexp : Int → 
 -/
 theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Use the (temporary) existence theorem to obtain a witness.
-  exact round_UP_exists beta fexp x
+  -- Use the existence theorem (which depends on 1 < beta) to obtain a witness.
+  exact round_UP_exists (beta := beta) (fexp := fexp) (x := x)
 
 /-- Coq (Generic_fmt.v): generic_format_round_pos
 
@@ -5517,7 +5516,7 @@ theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp bet
 -/
 theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f :=
-  generic_format_round_UP beta fexp x
+  generic_format_round_UP (beta := beta) (fexp := fexp) (x := x)
 
 /-- Coq (Generic_fmt.v):
     Theorem round_DN_pt:

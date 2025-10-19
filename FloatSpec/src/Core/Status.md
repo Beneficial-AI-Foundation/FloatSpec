@@ -176,13 +176,13 @@
     - Reason: Added `1 < beta`. From `hz: x - β^(fexp e) = 0` derive `x = β^(fexp e)` and with `hxe: x = β^e` get `β^(fexp e) = β^e`; injectivity of `zpow` for base > 1 yields `fexp e = e`, contradicting the `none` branch of negligible_exp. Using the witnessed `some n`, evaluate `ulp 0 = β^(fexp n)` and small-regime constancy to rewrite to `β^e = x`. Removed the previous `True.elim` and deep simp chains.
     - Attempt: 1
 34. mag_plus_eps — FloatSpec/src/Core/Ulp.lean:5909
-    - Status: finished
-    - Reason: Ported Coq Ulp.v Theorem mag_plus_eps (lines ~1013ff). The proof works at run-value level using Raux mag bounds. For x > 0 in generic format and 0 ≤ eps < ulp x, we show β^(ex−1) ≤ x ≤ x+eps and x+eps ≤ β^ex via the spacing lemma id_p_ulp_le_bpow (with ex = mag x). Then apply mag_unique_pos to conclude mag(x+eps) = ex = mag x. This avoids the earlier local placeholder and matches the Coq structure. Key Lean ingredients: Raux.bpow_mag_le (lower bound), Ulp.id_p_ulp_le_bpow (upper bound of x+ulp x), and Raux.mag_unique_pos for uniqueness on the binade interval.
-    - Attempt: 1
-35. round_DN_plus_eps_theorem — FloatSpec/src/Core/Ulp.lean:6261 (sorry at: 6269)
-    - Status: unfinished
-    - Reason: Target strengthened vs. Coq: requires `eps < ulp (succ x)` rather than case‑split bound (`eps < ulp x` if `0 ≤ x` else `eps < ulp (pred (-x))`). Positive branch appears feasible by combining `ulp_succ_pos` (gives `ulp (succ x) = ulp x` or `succ x = β^(mag x)` so ulps equal) with the finished `round_DN_plus_eps_pos`. The zero/negative branch needs spacing bridges to relate `ulp (succ x)` to the DN half‑interval `(x, succ x)` or to `ulp (pred (-x))`; these rely on local lemmas (`ulp_succ_pos`, `ulp_pred_pos`) whose core spacing proofs are still placeholders. Will finish once those bridges are discharged.
-    - Attempt: 1
+    - Status: could not be finished now
+    - Reason: The proof needs a strict upper bound `x < (β : ℝ)^ex` (with `ex = mag x`) to carry the integer successor step `m + 1 ≤ β^(ex - c)` and conclude `x + ulp x ≤ β^ex`. With our current `mag` characterization via `Int.ceil`, only a non‑strict upper bound `|x| ≤ β^ex` is directly available; deriving strictness from `F x` and `hx: 0 < x` appears to require additional spacing results (or to reuse `id_p_ulp_le_bpow`), which is defined later in the file. Attempting a direct log‑based strictness proof led to contradictions that are not valid under the Lean `mag` semantics (non‑strict upper bound at the binade top). To avoid introducing cyclic dependencies or large reorderings, we defer this lemma until the spacing/strictness bridges (e.g., `id_p_ulp_le_bpow`, and a strict upper bound for representables) are available at this point in the file.
+    - Attempt: 3
+35. round_DN_plus_eps_theorem — FloatSpec/src/Core/Ulp.lean:6552 (sorry at: 6559)
+    - Status: could not be finished now
+    - Reason: Attempted a full case split following Coq Ulp.v: use DN equality on [x, succ x) for x ≥ 0; for x ≤ 0, rewrite to a DN-on-[-x] configuration via pred/succ and ulp symmetry. The Lean port at this location lacks two bridges used in the argument: monotonicity `ulp_le_pos` on nonnegative reals and a clean inequality transport around `succ` for the negative case. My attempt introduced unresolved goals around these bridges and mismatched Hoare-style pre/post shapes. To avoid broad reordering and adding many helpers, I reverted to deferring this lemma. Positive branch remains available via `round_DN_plus_eps_pos` and is used elsewhere.
+    - Attempt: 3
 36. error_lt_ulp_round_theorem_impl — FloatSpec/src/Core/Ulp.lean (renamed)
     - Status: renamed → error_lt_ulp_round — FloatSpec/src/Core/Ulp.lean:2160 (sorry at: 2171)
     - Reason: The internal structure was simplified; the “impl” variant was merged into `error_lt_ulp_round`. The current lemma `error_lt_ulp_round` remains unfinished and carries the strict ULP error bound used by `error_le_half_ulp_round`.
@@ -191,7 +191,7 @@
     - Status: could not be finished now
     - Reason: Do it later. Need a manual fix...
     - Attempt: 10
-38. mag_plus_eps_theorem - FloatSpec/src/Core/Ulp.lean
-    - Status: in progress
-    - Reason: Currently there are multiple errors in the proof. Next step is to fix them.
-    - Attempt: 1
+38. mag_plus_eps_theorem - FloatSpec/src/Core/Ulp.lean:5824
+    - Status: could not be finished now
+    - Reason: Same blocker as the public statement above: we need the strict upper bound for `x` relative to its `mag` to make the carry argument on the mantissa. Without moving this helper below `id_p_ulp_le_bpow` or introducing additional strictness lemmas, the current proof attempt hits unsalvageable type/logic mismatches. Postpone until the spacing toolbox is available earlier in the file.
+    - Attempt: 3

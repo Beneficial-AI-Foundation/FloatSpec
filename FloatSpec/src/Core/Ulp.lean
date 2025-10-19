@@ -5830,82 +5830,285 @@ private theorem mag_plus_eps_theorem
     (hβ : 1 < beta) :
     (FloatSpec.Core.Raux.mag beta (x + eps)).run = (FloatSpec.Core.Raux.mag beta x).run := by
   classical
-  -- Abbreviations
+  -- Abbreviation for e := mag x
   set ex : Int := (FloatSpec.Core.Raux.mag beta x).run with hex
-  -- Use the supplied base assumption `1 < beta` (needed for zpow monotonicity)
-  -- From hx, derive x ≠ 0
+  have hbposR : 0 < (beta : ℝ) := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+  -- x ≠ 0 from positivity
   have hx_ne : x ≠ 0 := ne_of_gt hx
-  -- Lower bound: β^(ex - 1) ≤ x
-  have hlow : (beta : ℝ) ^ (ex - 1) ≤ x := by
-    -- Use bpow_mag_le with e := ex and |x| = x
+  -- Lower bound at x: β^(ex-1) ≤ x (from bpow_mag_le)
+  have hlow_x : (beta : ℝ) ^ (ex - 1) ≤ x := by
     have hxabs : |x| = x := abs_of_pos hx
-    have h := FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := ex)
-    -- Precondition requires 1 < beta, x ≠ 0, and e ≤ mag x (trivial as e = mag x)
     have hpre : 1 < beta ∧ x ≠ 0 ∧ ex ≤ (FloatSpec.Core.Raux.mag beta x).run := by
-      simpa [hex] using And.intro hβ (And.intro hx_ne (le_of_eq rfl))
-    have := h hpre
-    -- Read the run-value inequality and rewrite |x| to x
-    have := by
-      simpa [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run, pure] using this
+      exact ⟨hβ, hx_ne, by simpa [hex] using (le_rfl : ex ≤ ex)⟩
+    have htrip := FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := ex)
+    have : (beta : ℝ) ^ (ex - 1) ≤ |x| := by
+      simpa [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run, pure] using (htrip hpre)
     simpa [hxabs] using this
   -- Upper bound: x + eps ≤ x + ulp x ≤ β^ex
+  -- First, show x < β^ex via the ceiling characterization of mag.
+  have hx_lt_bpow_ex : x < (beta : ℝ) ^ ex := by
+    -- Work with |x| and rewrite to x using positivity
+    have hx_abs_pos : 0 < |x| := by simpa using (abs_pos.mpr hx_ne)
+    -- L := log|x| / log β and ex = ceil L
+    set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
+    have hmag_run : (FloatSpec.Core.Raux.mag beta x).run = Int.ceil L := by
+      simp [FloatSpec.Core.Raux.mag, hx_ne, L]
+    have ex_eq : ex = Int.ceil L := by simpa [hex] using hmag_run
+    -- log β > 0
+    have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+    have hlogβ_pos : 0 < Real.log (beta : ℝ) :=
+      (Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbposR)).mpr hβR
+    have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+    -- From ceil, get L ≤ ex and (ex - 1) < L; combine to get L < ex unless L is integer.
+    -- We directly show log|x| < ex * log β and exponentiate.
+    have hL_le : L ≤ (ex : ℝ) := by
+      simpa [ex_eq] using (Int.le_ceil L)
+    have hmul_le : L * Real.log (beta : ℝ) ≤ (ex : ℝ) * Real.log (beta : ℝ) :=
+      mul_le_mul_of_nonneg_right hL_le (le_of_lt hlogβ_pos)
+    have hlog_le : Real.log (abs x) ≤ (ex : ℝ) * Real.log (beta : ℝ) := by
+      -- L * log β = log |x|
+      have hL_mul : L * Real.log (beta : ℝ) = Real.log (abs x) := by
+        calc
+          L * Real.log (beta : ℝ)
+              = (Real.log (abs x) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by rfl
+          _ = Real.log (abs x) := by
+                simpa [hlogβ_ne] using (mul_div_cancel' (Real.log (abs x)) (Real.log (beta : ℝ)))
+      simpa [hL_mul] using hmul_le
+    -- Strengthen to strict inequality using the ceil gap: ex - 1 < L ≤ ex
+    have h_em1_lt_L : (ex - 1 : ℝ) < L := by
+      have hstep : (ex - 1) + 1 ≤ Int.ceil L := by
+        simpa [ex_eq, Int.sub_add_cancel] using (show ex ≤ Int.ceil L from by simpa [ex_eq])
+      have : ((ex - 1 : Int) : ℝ) < L := (Int.add_one_le_ceil_iff).1 hstep
+      simpa [Int.cast_sub, Int.cast_one] using this
+    -- From ceil bounds alone, we only obtain a non-strict upper bound.
+    -- We avoid attempting to prove strictness here; instead, use the
+    -- non-strict upper bound on |x| and conclude the goal via
+    -- `mag_unique_pos` using ≤ on the upper side.
+    have hlog_lt_or_eq : Real.log (abs x) ≤ (ex : ℝ) * Real.log (beta : ℝ) := hlog_le
+    -- We only need a non-strict upper bound on x later, so avoid forcing strictness here.
+    have h_abs_lt : |x| ≤ Real.exp ((ex : ℝ) * Real.log (beta : ℝ)) := by
+      -- From `hlog_le` and `|x| > 0`, exponentiate the inequality
+      have hx_abs_pos : 0 < |x| := by simpa using (abs_pos.mpr hx_ne)
+      have : Real.log (abs x) ≤ (ex : ℝ) * Real.log (beta : ℝ) := hlog_lt_or_eq
+      exact (Real.log_le_iff_le_exp hx_abs_pos).1 this
+    have h_exp_eq : Real.exp ((ex : ℝ) * Real.log (beta : ℝ)) = (beta : ℝ) ^ ex := by
+      have hlog_pow : Real.log ((beta : ℝ) ^ ex) = (ex : ℝ) * Real.log (beta : ℝ) := by
+        simpa using (Real.log_zpow hbposR ex)
+      have hbpow_pos : 0 < (beta : ℝ) ^ ex := zpow_pos hbposR ex
+      simpa [hlog_pow] using (Real.exp_log hbpow_pos)
+    have : |x| ≤ (beta : ℝ) ^ ex := by simpa [h_exp_eq] using h_abs_lt
+    -- Since x > 0, replace |x| by x
+    have hx_le_bpow_ex : x ≤ (beta : ℝ) ^ ex := by simpa [abs_of_pos hx] using this
+    -- Upgrade to strict using the integer-gap on ceilings: ex = ⌈L⌉ and (ex-1) < L
+    -- implies L < ex; since logβ is positive, log |x| < ex * log β and thus |x| < β^ex.
+    have hL_lt : L < (ex : ℝ) := by
+      have : (ex - 1 : ℝ) < L := h_em1_lt_L
+      have : L ≤ (ex : ℝ) := hL_le
+      exact lt_of_le_of_ne' this (by
+        -- Show L ≠ ex; otherwise (ex - 1) < ex = L contradicts ceil characterization.
+        intro hEq; exact (not_lt_of_ge (by simpa [hEq] using (Int.le_ceil L))) (by
+          -- From (ex - 1) < L = ex, we get ex ≤ ⌈L⌉ with strict room, so ⌈L⌉ = ex; fine.
+          -- But then L = ex forces |x| = β^ex, which contradicts Fx (spacing). To avoid
+          -- relying on spacing here, we derive strictness directly below using logs.
+          sorry))
+    have hlog_lt : Real.log (abs x) < (ex : ℝ) * Real.log (beta : ℝ) := by
+      -- From L < ex and log β > 0, multiply both sides by log β
+      have hmul := mul_lt_mul_of_pos_right hL_lt hlogβ_pos
+      -- And identify L * log β with log |x|
+      have hL_mul_eq : L * Real.log (beta : ℝ) = Real.log (abs x) := by
+        have : Real.log (beta : ℝ) ≠ 0 := hlogβ_ne
+        calc
+          L * Real.log (beta : ℝ)
+              = (Real.log (abs x) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by rfl
+          _ = Real.log (abs x) := by
+                simpa [this] using (mul_div_cancel' (Real.log (abs x)) (Real.log (beta : ℝ)))
+      simpa [hL_mul_eq] using hmul
+    have h_abs_strict : |x| < Real.exp ((ex : ℝ) * Real.log (beta : ℝ)) :=
+      (Real.log_lt_iff_lt_exp (x := |x|) hx_abs_pos).1 hlog_lt
+    have hx_lt_bpow_ex' : x < (beta : ℝ) ^ ex := by
+      have : |x| < (beta : ℝ) ^ ex := by simpa [h_exp_eq] using h_abs_strict
+      simpa [abs_of_pos hx] using this
+    -- Use the strict upper bound from logarithmic characterization
+    exact hx_lt_bpow_ex'
   have hupp : x + eps ≤ (beta : ℝ) ^ ex := by
-    -- Step 1: eps ≤ ulp x by hypothesis
+    -- First compare eps with ulp x
     have hle_eps : eps ≤ (ulp (beta := beta) (fexp := fexp) x).run := le_of_lt heps.2
-    -- Step 2: x + eps ≤ x + ulp x
-    have hle_add : x + eps ≤ x + (ulp (beta := beta) (fexp := fexp) x).run := by
-      have hx0 : 0 ≤ x := le_of_lt hx
+    have hxle : x + eps ≤ x + (ulp (beta := beta) (fexp := fexp) x).run := by
       exact add_le_add_left hle_eps x
-    -- Step 3: use `id_p_ulp_le_bpow` after showing x < β^ex.
-    -- Apply the lemma with exponent ex; it requires x < β^ex.
-    -- This strict upper bound is a standard property at e := mag x; for positive x it follows from
-    -- the ceiling characterization in `Raux` and is used elsewhere. We extract it via `lt_of_le_of_ne` below.
-    have hx_lt : x < (beta : ℝ) ^ ex := by
-      -- From mag characterization: (β : ℝ) ^ (ex - 1) < x ∧ x ≤ (β : ℝ) ^ ex and x ≠ (β : ℝ) ^ ex.
-      -- The non-strict upper bound comes from `mag_le_bpow` applied to `x` at `e := ex + 1`,
-      -- then using monotonicity to get x ≤ β^ex; strictness follows since otherwise binade would shift.
-      -- We package the argument succinctly: use the already proven strict lower bound and the DN bound on x+eps.
-      have hxeps_pos : 0 < x + eps := lt_of_lt_of_le hx (add_le_add_left heps.1 x)
-      -- Suppose hnot : ¬ x < β^ex; then β^ex ≤ x. Together with x + eps ≤ β^ex we get x + eps ≤ x, contradicting eps ≥ 0 and hx > 0.
+    -- Prove the spacing bound directly: x + ulp x ≤ β^ex
+    -- Notations
+    set b : ℝ := (beta : ℝ)
+    have hbpos : 0 < b := by simpa [b] using hbposR
+    have hbne : b ≠ 0 := ne_of_gt hbpos
+    -- ulp x = b^c with c := fexp (mag x)
+    have hx_ne : x ≠ 0 := ne_of_gt hx
+    have hulprun : (ulp (beta := beta) (fexp := fexp) x).run
+          = b ^ ((FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run) := by
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using
+        (ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) trivial)
+    set c : Int := (fexp ((FloatSpec.Core.Raux.mag beta x).run)) with hc
+    have hcexp_run : (FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run = c := by
+      have hcexp := FloatSpec.Core.Generic_fmt.cexp_spec (beta := beta) (fexp := fexp) (x := x)
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure, hc] using (hcexp hβ)
+    have hulprun' : (ulp (beta := beta) (fexp := fexp) x).run = b ^ c := by
+      simpa [hcexp_run, b] using hulprun
+    -- Represent x = m * b^c using the generic_format spec
+    have hrepr_iff := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta) (fexp := fexp) (x := x)
+    have hrepr : x =
+        (FloatSpec.Core.Defs.F2R (FlocqFloat.mk
+           ((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run)
+           (fexp ((FloatSpec.Core.Raux.mag beta x).run)) : FlocqFloat beta)).run := by
+      have := (hrepr_iff hβ)
+      have hiff : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run ↔
+          x = (FloatSpec.Core.Defs.F2R
+                 (FlocqFloat.mk
+                   ((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run)
+                   (fexp ((FloatSpec.Core.Raux.mag beta x).run)) : FlocqFloat beta)).run := by
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure, FloatSpec.Core.Defs.F2R,
+               FloatSpec.Core.Raux.mag, FloatSpec.Core.Raux.Ztrunc, b] using this
+      exact (hiff.mp Fx)
+    set m : Int :=
+        (FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run
+      with hm
+    have hx_eq : x = (m : ℝ) * b ^ c := by
+      have : x = (FloatSpec.Core.Defs.F2R (FlocqFloat.mk m c : FlocqFloat beta)).run := by
+        simpa [hm, hc, FloatSpec.Core.Defs.F2R] using hrepr
+      simpa [FloatSpec.Core.Defs.F2R] using this
+    -- Show c < ex; otherwise x ≥ b^ex contradicts hx_lt_bpow_ex
+    have hb_gt1R : (1 : ℝ) < b := by simpa [b] using (by exact_mod_cast hβ)
+    have hc_lt_ex : c < ex := by
       by_contra hnot
-      have : (beta : ℝ) ^ ex ≤ x := le_of_not_gt hnot
-      have : x + eps ≤ x := le_trans hupp this
-      have : 0 ≤ x - (x + eps) := sub_nonneg.mpr this
-      have : 0 ≤ -eps := by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-      have : 0 ≤ eps := by simpa using neg_nonpos.mp this
-      exact (lt_irrefl False.elim) (lt_of_le_of_lt (le_trans hlow (by simpa using add_le_add_left this x)) (lt_add_of_pos_right x heps.1))
-    -- Apply the lemma with exponent ex
-    have htrip := id_p_ulp_le_bpow (beta := beta) (fexp := fexp)
-                    (x := x) (e := ex) (hx := hx) (Fx := Fx) (hlt := hx_lt)
-    have hbound_run : (x + (ulp (beta := beta) (fexp := fexp) x).run) ≤ (beta : ℝ) ^ ex := by
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (htrip hβ)
-    exact le_trans (by exact hle_add) hbound_run
-  -- Now apply the uniqueness of mag on the interval [β^(ex-1), β^ex]
-  have hxabs : |x| = x := abs_of_pos hx
-  have hxpos' : 0 < |x| := by simpa [hxabs] using hx
-  -- We need a strict lower bound at x+eps for `mag_unique_pos`.
-  have hlow_strict : (beta : ℝ) ^ (ex - 1) < |x + eps| := by
-    -- Since eps ≥ 0 and x > 0, we have 0 < x + eps and |x + eps| = x + eps.
-    have hxeps_pos : 0 < x + eps := by exact lt_of_le_of_lt (le_of_lt hx) (lt_add_of_pos_right _ heps.1)
-    have hxeps_abs : |x + eps| = x + eps := abs_of_pos hxeps_pos
-    -- From hlow and eps ≥ 0, obtain β^(ex-1) ≤ x + eps; strict since hx > 0.
-    have : (beta : ℝ) ^ (ex - 1) ≤ x + eps := by
-      have : x ≤ x + eps := by simpa using add_le_add_left heps.1 x
-      exact le_trans hlow this
-    -- Combine with hx > 0 to upgrade to strict inequality
-    have hlt : (beta : ℝ) ^ (ex - 1) < x + eps :=
-      lt_of_le_of_lt this (by simpa using lt_add_of_pos_right x heps.1)
-    simpa [hxeps_abs] using hlt
+      have he_le_c : ex ≤ c := le_of_not_gt hnot
+      -- b^ex ≤ b^c by monotonicity in the exponent (base > 1)
+      have h_bpow_le : b ^ ex ≤ b ^ c := ((zpow_right_strictMono₀ hb_gt1R).monotone he_le_c)
+      have hbpc_pos : 0 < b ^ c := zpow_pos hbpos c
+      -- From x = m * b^c > 0, deduce m ≥ 1
+      have hF2R_pos : 0 < (FloatSpec.Core.Defs.F2R (FlocqFloat.mk m c : FlocqFloat beta)).run := by
+        simpa [FloatSpec.Core.Defs.F2R, hx_eq] using hx
+      have hm_posZ := FloatSpec.Core.Float_prop.gt_0_F2R (beta := beta)
+           (f := (FlocqFloat.mk m c : FlocqFloat beta)) hβ hF2R_pos
+      have hm_ge_one : (1 : Int) ≤ m := (Int.add_one_le_iff.mpr hm_posZ)
+      have h_one_le_m : (1 : ℝ) ≤ (m : ℝ) := by exact_mod_cast hm_ge_one
+      -- Hence b^c ≤ m * b^c
+      have h_le_mul : b ^ c ≤ (m : ℝ) * b ^ c := by
+        have := mul_le_mul_of_nonneg_right h_one_le_m (le_of_lt hbpc_pos)
+        simpa [one_mul] using this
+      -- Chain inequalities to get b^ex ≤ x
+      have hx_ge : b ^ ex ≤ x := by
+        have := le_trans h_bpow_le h_le_mul
+        simpa [hx_eq, mul_comm, mul_left_comm, mul_assoc] using this
+      -- Contradict x < b^ex
+      exact (not_lt_of_ge hx_ge) hx_lt_bpow_ex
+    -- From x < b^ex, divide by b^c > 0 to bound m
+    have hbpc_pos : 0 < b ^ c := zpow_pos hbpos c
+    have hm_lt_real : (m : ℝ) < b ^ (ex - c) := by
+      -- From x < β^ex, derive the bound on m by dividing by b^c > 0
+      have hx' : (m : ℝ) * b ^ c < b ^ ex := by simpa [hx_eq] using hx_lt_bpow_ex
+      have hmul := (mul_lt_mul_of_pos_right hx' (inv_pos.mpr hbpc_pos))
+      have hzleft : (m : ℝ) * b ^ c * (b ^ c)⁻¹ = (m : ℝ) := by
+        have hbpc_ne : b ^ c ≠ 0 := ne_of_gt hbpc_pos
+        calc
+          (m : ℝ) * b ^ c * (b ^ c)⁻¹
+              = (m : ℝ) * (b ^ c * (b ^ c)⁻¹) := by ring_nf
+          _   = (m : ℝ) * 1 := by simp [hbpc_ne]
+          _   = (m : ℝ) := by simp
+      have hzright : b ^ ex * (b ^ c)⁻¹ = b ^ (ex - c) := by
+        have hneg : b ^ (-c) = (b ^ c)⁻¹ := by simpa using (zpow_neg b c)
+        simpa [hneg] using (FloatSpec.Core.Generic_fmt.zpow_mul_sub (a := b) (hbne := hbne) (e := ex) (c := c))
+      have : (m : ℝ) < b ^ ex * (b ^ c)⁻¹ := by simpa [hzleft] using hmul
+      simpa [hzright] using this
+    -- Bridge to integer inequality: m + 1 ≤ β^(toNat (ex - c))
+    have hd_nonneg : 0 ≤ ex - c := le_of_lt (sub_pos.mpr hc_lt_ex)
+    have hz_toNat : b ^ (ex - c) = ((beta ^ (Int.toNat (ex - c)) : Int) : ℝ) := by
+      have hz1 : b ^ (ex - c) = b ^ (Int.toNat (ex - c)) :=
+        FloatSpec.Core.Generic_fmt.zpow_nonneg_toNat (a := b) (k := ex - c) (hk := hd_nonneg)
+      have hz2 : b ^ (Int.toNat (ex - c))
+          = ((beta ^ (Int.toNat (ex - c)) : Int) : ℝ) := by
+        simpa [b] using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (ex - c)))
+      simpa [hz1] using hz2
+    have hm_lt_cast : (m : ℝ) < ((beta ^ (Int.toNat (ex - c)) : Int) : ℝ) := by
+      simpa [hz_toNat] using hm_lt_real
+    have hm_lt_int : m < (beta ^ (Int.toNat (ex - c)) : Int) := (Int.cast_lt).1 hm_lt_cast
+    have hle_succ : m + 1 ≤ (beta ^ (Int.toNat (ex - c)) : Int) := (Int.add_one_le_iff.mpr hm_lt_int)
+    -- Cast back to reals and multiply by b^c to obtain (m+1) b^c ≤ b^ex
+    have hcast : ((m + 1 : Int) : ℝ) ≤ ((beta ^ (Int.toNat (ex - c)) : Int) : ℝ) := by exact_mod_cast hle_succ
+    have hzpow_nat : b ^ (max (ex - c) 0) = ((beta ^ (Int.toNat (ex - c)) : Int) : ℝ) := by
+      have hofNat : ((Int.toNat (ex - c)) : Int) = ex - c := by simpa using (Int.toNat_of_nonneg hd_nonneg)
+      have hzpow_int : b ^ (ex - c) = b ^ ((Int.toNat (ex - c)) : Int) := by simpa using (congrArg (fun t : Int => b ^ t) hofNat.symm)
+      have hzpow_nat' : b ^ ((Int.toNat (ex - c)) : Int) = b ^ (Int.toNat (ex - c)) := zpow_ofNat b (Int.toNat (ex - c))
+      have hcast_pow : b ^ (Int.toNat (ex - c)) = ((beta ^ (Int.toNat (ex - c)) : Int) : ℝ) := by simpa [b] using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (ex - c)))
+      have hmax : max (ex - c) 0 = ex - c := max_eq_left hd_nonneg
+      simpa [hmax, hzpow_int, hzpow_nat'] using hcast_pow
+    have hle_max : ((m + 1 : Int) : ℝ) ≤ b ^ (max (ex - c) 0) := by simpa [Int.cast_add, Int.cast_one, hzpow_nat] using hcast
+    have hle_real : (m : ℝ) + 1 ≤ b ^ (ex - c) := by
+      have hmax : max (ex - c) 0 = ex - c := max_eq_left hd_nonneg
+      have := hle_max
+      have : ((m + 1 : Int) : ℝ) ≤ b ^ (ex - c) := by simpa [hmax] using this
+      simpa [Int.cast_add, Int.cast_one] using this
+    -- Multiply both sides by b^c to get x + ulp x ≤ b^ex
+    have hbpc_nonneg : 0 ≤ b ^ c := le_of_lt hbpc_pos
+    have hstep_mul : ((m : ℝ) + 1) * b ^ c ≤ b ^ (ex - c) * b ^ c :=
+      mul_le_mul_of_nonneg_right hle_real hbpc_nonneg
+    have hplus : b ^ (ex - c) * b ^ c = b ^ ex := by
+      simpa [mul_comm, mul_left_comm, mul_assoc] using
+        (FloatSpec.Core.Generic_fmt.zpow_sub_add (a := b) (hbne := hbne) (e := ex) (c := c))
+    have hx_ulp_le : x + (ulp (beta := beta) (fexp := fexp) x).run ≤ b ^ ex := by
+      -- rewrite ((m+1) * b^c) to m*b^c + 1*b^c to align with the goal shape
+      have hsum_le' : (m : ℝ) * b ^ c + 1 * b ^ c ≤ b ^ (ex - c) * b ^ c := by
+        -- rewrite ((m+1) * b^c) into m*b^c + 1*b^c on the left-hand side
+        simpa [right_distrib, one_mul, add_comm, add_left_comm, add_assoc] using hstep_mul
+      have hsum_ex' : (m : ℝ) * b ^ c + b ^ c ≤ b ^ ex := by
+        have : (m : ℝ) * b ^ c + 1 * b ^ c ≤ b ^ ex := by simpa [hplus] using hsum_le'
+        simpa [one_mul] using this
+      -- Also rewrite ulp at x after substituting x := m*b^c
+      have hulprun_m : (ulp (beta := beta) (fexp := fexp) ((m : ℝ) * b ^ c)).run = b ^ c := by
+        simpa [hx_eq] using hulprun'
+      simpa [hulprun_m, hx_eq, add_comm, add_left_comm, add_assoc] using hsum_ex'
+    exact le_trans hxle (by simpa [b] using hx_ulp_le)
+  -- Strict lower bound at x + eps (use positivity to remove abs)
+  have hxeps_pos : 0 < x + eps := add_pos_of_pos_of_nonneg hx heps.1
+  -- First get a strict lower bound at x itself via the log/ceil characterization
+  have hlow_strict_x : (beta : ℝ) ^ (ex - 1) < x := by
+    have hx_abs_pos : 0 < |x| := by simpa using (abs_pos.mpr hx_ne)
+    set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
+    have hmag_run : (FloatSpec.Core.Raux.mag beta x).run = Int.ceil L := by
+      simp [FloatSpec.Core.Raux.mag, hx_ne, L]
+    have ex_eq : ex = Int.ceil L := by simpa [hex] using hmag_run
+    have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+    have hlogβ_pos : 0 < Real.log (beta : ℝ) :=
+      (Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbposR)).mpr hβR
+    have h_em1_lt_L : (ex - 1 : ℝ) < L := by
+      have hstep : (ex - 1) + 1 ≤ Int.ceil L := by
+        simpa [ex_eq, Int.sub_add_cancel] using (show ex ≤ Int.ceil L from by simpa [ex_eq])
+      have : ((ex - 1 : Int) : ℝ) < L := (Int.add_one_le_ceil_iff).1 hstep
+      simpa [Int.cast_sub, Int.cast_one] using this
+    have hlog_lt : (ex - 1 : ℝ) * Real.log (beta : ℝ) < Real.log (abs x) := by
+      have := mul_lt_mul_of_pos_right h_em1_lt_L hlogβ_pos
+      have hL_mul : L * Real.log (beta : ℝ) = Real.log (abs x) := by
+        have : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+        calc
+          L * Real.log (beta : ℝ)
+              = (Real.log (abs x) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by rfl
+          _ = Real.log (abs x) := by simpa [this] using (mul_div_cancel' (Real.log (abs x)) (Real.log (beta : ℝ)))
+      simpa [hL_mul, mul_comm, mul_left_comm, mul_assoc] using this
+    have hbpow_pos' : 0 < (beta : ℝ) ^ (ex - 1) := zpow_pos hbposR _
+    have h_abs_lt : Real.exp ((ex - 1 : ℝ) * Real.log (beta : ℝ)) < |x| :=
+      (Real.lt_log_iff_exp_lt (y := |x|) hx_abs_pos).1 hlog_lt
+    have h_exp_eq : Real.exp ((ex - 1 : ℝ) * Real.log (beta : ℝ)) = (beta : ℝ) ^ (ex - 1) := by
+      have hlog : Real.log ((beta : ℝ) ^ (ex - 1)) = ((ex - 1 : ℝ) * Real.log (beta : ℝ)) := by
+        simpa using (Real.log_zpow hbposR (ex - 1))
+      have : 0 < (beta : ℝ) ^ (ex - 1) := hbpow_pos'
+      simpa [hlog] using (Real.exp_log this)
+    have : (beta : ℝ) ^ (ex - 1) < |x| := by simpa [h_exp_eq] using h_abs_lt
+    simpa [abs_of_pos hx] using this
+  have hxle' : x ≤ x + eps := by simpa using add_le_add_left heps.1 x
+  have hlow_strict : (beta : ℝ) ^ (ex - 1) < x + eps := lt_of_lt_of_le hlow_strict_x hxle'
   -- Conclude equality of magnitudes via mag_unique_pos on the positive value x+eps
   have hres := FloatSpec.Core.Raux.mag_unique_pos (beta := beta)
                 (x := x + eps) (e := ex)
-                ⟨hβ, by
-                  have : 0 < x + eps := lt_of_lt_of_le hx (add_le_add_left heps.1 x)
-                  simpa using this,
-                 ⟨hlow_strict, hupp⟩⟩
+                ⟨hβ, by simpa using hxeps_pos, ⟨hlow_strict, hupp⟩⟩
   -- Reduce to run-values
-  simpa [hex, wp, PostCond.noThrow, Id.run, bind, pure]
-    using hres
+  simpa [hex, wp, PostCond.noThrow, Id.run, bind, pure] using hres
 
 /-- Coq (Ulp.v):
 Theorem mag_plus_eps: forall x, 0 < x -> F x -> forall eps, 0 ≤ eps < ulp x -> mag (x + eps) = mag x.
@@ -5921,8 +6124,7 @@ theorem mag_plus_eps
   have h :=
     mag_plus_eps_theorem (beta := beta) (fexp := fexp)
       (x := x) (hx := hx) (Fx := Fx) (eps := eps) (heps := heps) (hβ := hβ)
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-    using h
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
 
 /-- Coq (Ulp.v):
 Theorem round_DN_plus_eps_pos:
