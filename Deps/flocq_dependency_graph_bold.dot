@@ -1,0 +1,201 @@
+digraph FlocqDependencies {
+  rankdir=TB;
+  compound=true;
+  
+  subgraph cluster_Core {
+    label=<<FONT POINT-SIZE="36"><B>Core</B></FONT>>;
+    style=filled;
+    fillcolor="#E6F3FF";
+    src_Core_Core_v [label="Core\n(0 defs)", shape=box];
+    src_Core_Defs_v [label="Defs\n(12 defs)", shape=box];
+    src_Core_Digits_v [label="Digits\n(62 defs)", shape=box];
+    src_Core_FIX_v [label="FIX\n(7 defs)", shape=box];
+    src_Core_FLT_v [label="FLT\n(25 defs)", shape=box];
+    src_Core_FLX_v [label="FLX\n(23 defs)", shape=box];
+    src_Core_FTZ_v [label="FTZ\n(11 defs)", shape=box];
+    src_Core_Float_prop_v [label="Float_prop\n(36 defs)", shape=box];
+    src_Core_Generic_fmt_v [label="Generic_fmt\n(124 defs)", shape=box];
+    src_Core_Raux_v [label="Raux\n(169 defs)", shape=box];
+    src_Core_Round_NE_v [label="Round_NE\n(99 defs)", shape=box];
+    src_Core_Round_pred_v [label="Round_pred\n(78 defs)", shape=box];
+    src_Core_Ulp_v [label="Ulp\n(116 defs)", shape=box];
+    src_Core_Zaux_v [label="Zaux\n(80 defs)", shape=box];
+  }
+
+  subgraph cluster_Calc {
+    label=<<FONT POINT-SIZE="36"><B>Calc</B></FONT>>;
+    style=filled;
+    fillcolor="#E6FFE6";
+    src_Calc_Bracket_v [label="Bracket\n(37 defs)", shape=box];
+    src_Calc_Div_v [label="Div\n(22 defs)", shape=box];
+    src_Calc_Operations_v [label="Operations\n(16 defs)", shape=box];
+    src_Calc_Plus_v [label="Plus\n(19 defs)", shape=box];
+    src_Calc_Round_v [label="Round\n(37 defs)", shape=box];
+    src_Calc_Sqrt_v [label="Sqrt\n(17 defs)", shape=box];
+  }
+
+  subgraph cluster_Prop {
+    label=<<FONT POINT-SIZE="36"><B>Prop</B></FONT>>;
+    style=filled;
+    fillcolor="#FFFFE6";
+    src_Prop_Div_sqrt_error_v [label="Div_sqrt_error\n(39 defs)", shape=box];
+    src_Prop_Double_rounding_v [label="Double_rounding\n(48 defs)", shape=box];
+    src_Prop_Mult_error_v [label="Mult_error\n(12 defs)", shape=box];
+    src_Prop_Plus_error_v [label="Plus_error\n(29 defs)", shape=box];
+    src_Prop_Relative_v [label="Relative\n(58 defs)", shape=box];
+    src_Prop_Round_odd_v [label="Round_odd\n(26 defs)", shape=box];
+    src_Prop_Sterbenz_v [label="Sterbenz\n(30 defs)", shape=box];
+  }
+
+  subgraph cluster_IEEE754 {
+    label=<<FONT POINT-SIZE="36"><B>IEEE754</B></FONT>>;
+    style=filled;
+    fillcolor="#FFE6E6";
+    src_IEEE754_Binary_v [label="Binary\n(286 defs)", shape=box];
+    src_IEEE754_BinarySingleNaN_v [label="BinarySingleNaN\n(91 defs)", shape=box];
+    src_IEEE754_Bits_v [label="Bits\n(36 defs)", shape=box];
+    src_IEEE754_PrimFloat_v [label="PrimFloat\n(2 defs)", shape=box];
+  }
+
+  subgraph cluster_Pff {
+    label=<<FONT POINT-SIZE="36"><B>Pff</B></FONT>>;
+    style=filled;
+    fillcolor="#F0F0F0";
+    src_Pff_Nat2Z_8_12_v [label="Nat2Z_8_12\n(0 defs)", shape=box];
+    src_Pff_Pff_v [label="Pff\n(647 defs)", shape=box];
+    src_Pff_Pff2Flocq_v [label="Pff2Flocq\n(29 defs)", shape=box];
+    src_Pff_Pff2FlocqAux_v [label="Pff2FlocqAux\n(214 defs)", shape=box];
+  }
+
+  // Dependencies
+  src_Core_Zaux_v -> src_Core_Raux_v;
+  src_Core_Raux_v -> src_Core_Defs_v;
+  src_Core_Zaux_v -> src_Core_Defs_v;
+  src_Core_Zaux_v -> src_Core_Digits_v;
+  src_Core_Defs_v -> src_Core_Float_prop_v;
+  src_Core_Digits_v -> src_Core_Float_prop_v;
+  src_Core_Raux_v -> src_Core_Float_prop_v;
+  src_Core_Zaux_v -> src_Core_Float_prop_v;
+  src_Core_Defs_v -> src_Core_Round_pred_v;
+  src_Core_Raux_v -> src_Core_Round_pred_v;
+  src_Core_Defs_v -> src_Core_Generic_fmt_v;
+  src_Core_Float_prop_v -> src_Core_Generic_fmt_v;
+  src_Core_Raux_v -> src_Core_Generic_fmt_v;
+  src_Core_Round_pred_v -> src_Core_Generic_fmt_v;
+  src_Core_Zaux_v -> src_Core_Generic_fmt_v;
+  src_Core_Defs_v -> src_Core_Ulp_v;
+  src_Core_Float_prop_v -> src_Core_Ulp_v;
+  src_Core_Generic_fmt_v -> src_Core_Ulp_v;
+  src_Core_Raux_v -> src_Core_Ulp_v;
+  src_Core_Round_pred_v -> src_Core_Ulp_v;
+  src_Core_Zaux_v -> src_Core_Ulp_v;
+  src_Core_Defs_v -> src_Core_Round_NE_v;
+  src_Core_Float_prop_v -> src_Core_Round_NE_v;
+  src_Core_Generic_fmt_v -> src_Core_Round_NE_v;
+  src_Core_Raux_v -> src_Core_Round_NE_v;
+  src_Core_Round_pred_v -> src_Core_Round_NE_v;
+  src_Core_Ulp_v -> src_Core_Round_NE_v;
+  src_Core_Zaux_v -> src_Core_Round_NE_v;
+  src_Core_Defs_v -> src_Core_FIX_v;
+  src_Core_Generic_fmt_v -> src_Core_FIX_v;
+  src_Core_Raux_v -> src_Core_FIX_v;
+  src_Core_Round_NE_v -> src_Core_FIX_v;
+  src_Core_Round_pred_v -> src_Core_FIX_v;
+  src_Core_Ulp_v -> src_Core_FIX_v;
+  src_Core_Zaux_v -> src_Core_FIX_v;
+  src_Core_Defs_v -> src_Core_FLX_v;
+  src_Core_FIX_v -> src_Core_FLX_v;
+  src_Core_Float_prop_v -> src_Core_FLX_v;
+  src_Core_Generic_fmt_v -> src_Core_FLX_v;
+  src_Core_Raux_v -> src_Core_FLX_v;
+  src_Core_Round_NE_v -> src_Core_FLX_v;
+  src_Core_Round_pred_v -> src_Core_FLX_v;
+  src_Core_Ulp_v -> src_Core_FLX_v;
+  src_Core_Zaux_v -> src_Core_FLX_v;
+  src_Core_Defs_v -> src_Core_FLT_v;
+  src_Core_FIX_v -> src_Core_FLT_v;
+  src_Core_FLX_v -> src_Core_FLT_v;
+  src_Core_Float_prop_v -> src_Core_FLT_v;
+  src_Core_Generic_fmt_v -> src_Core_FLT_v;
+  src_Core_Raux_v -> src_Core_FLT_v;
+  src_Core_Round_NE_v -> src_Core_FLT_v;
+  src_Core_Round_pred_v -> src_Core_FLT_v;
+  src_Core_Ulp_v -> src_Core_FLT_v;
+  src_Core_Zaux_v -> src_Core_FLT_v;
+  src_Core_Defs_v -> src_Core_Core_v;
+  src_Core_Digits_v -> src_Core_Core_v;
+  src_Core_FIX_v -> src_Core_Core_v;
+  src_Core_FLT_v -> src_Core_Core_v;
+  src_Core_FLX_v -> src_Core_Core_v;
+  src_Core_Float_prop_v -> src_Core_Core_v;
+  src_Core_Generic_fmt_v -> src_Core_Core_v;
+  src_Core_Raux_v -> src_Core_Core_v;
+  src_Core_Round_NE_v -> src_Core_Core_v;
+  src_Core_Round_pred_v -> src_Core_Core_v;
+  src_Core_Ulp_v -> src_Core_Core_v;
+  src_Core_Zaux_v -> src_Core_Core_v;
+  src_Core_Defs_v -> src_Core_FTZ_v;
+  src_Core_FLX_v -> src_Core_FTZ_v;
+  src_Core_Float_prop_v -> src_Core_FTZ_v;
+  src_Core_Generic_fmt_v -> src_Core_FTZ_v;
+  src_Core_Raux_v -> src_Core_FTZ_v;
+  src_Core_Round_pred_v -> src_Core_FTZ_v;
+  src_Core_Ulp_v -> src_Core_FTZ_v;
+  src_Core_Zaux_v -> src_Core_FTZ_v;
+  src_Core_Defs_v -> src_Calc_Bracket_v;
+  src_Core_Float_prop_v -> src_Calc_Bracket_v;
+  src_Core_Raux_v -> src_Calc_Bracket_v;
+  src_Core_Zaux_v -> src_Calc_Bracket_v;
+  src_Core_Defs_v -> src_Calc_Operations_v;
+  src_Core_Float_prop_v -> src_Calc_Operations_v;
+  src_Core_Raux_v -> src_Calc_Operations_v;
+  src_Core_Zaux_v -> src_Calc_Operations_v;
+  src_Calc_Bracket_v -> src_Calc_Div_v;
+  src_Core_Defs_v -> src_Calc_Div_v;
+  src_Core_Digits_v -> src_Calc_Div_v;
+  src_Core_Float_prop_v -> src_Calc_Div_v;
+  src_Core_Generic_fmt_v -> src_Calc_Div_v;
+  src_Core_Raux_v -> src_Calc_Div_v;
+  src_Core_Zaux_v -> src_Calc_Div_v;
+  src_Calc_Bracket_v -> src_Calc_Sqrt_v;
+  src_Core_Defs_v -> src_Calc_Sqrt_v;
+  src_Core_Digits_v -> src_Calc_Sqrt_v;
+  src_Core_Float_prop_v -> src_Calc_Sqrt_v;
+  src_Core_Generic_fmt_v -> src_Calc_Sqrt_v;
+  src_Core_Raux_v -> src_Calc_Sqrt_v;
+  src_Core_Zaux_v -> src_Calc_Sqrt_v;
+  src_Calc_Bracket_v -> src_Calc_Round_v;
+  src_Core_Core_v -> src_Calc_Round_v;
+  src_Core_Digits_v -> src_Calc_Round_v;
+  src_Core_Float_prop_v -> src_Calc_Round_v;
+  src_Calc_Bracket_v -> src_Calc_Plus_v;
+  src_Calc_Operations_v -> src_Calc_Plus_v;
+  src_Calc_Round_v -> src_Calc_Plus_v;
+  src_Core_Core_v -> src_Calc_Plus_v;
+  src_Core_Core_v -> src_Prop_Relative_v;
+  src_Calc_Operations_v -> src_Prop_Sterbenz_v;
+  src_Core_Defs_v -> src_Prop_Sterbenz_v;
+  src_Core_Generic_fmt_v -> src_Prop_Sterbenz_v;
+  src_Core_Raux_v -> src_Prop_Sterbenz_v;
+  src_Core_Zaux_v -> src_Prop_Sterbenz_v;
+  src_Calc_Operations_v -> src_Prop_Plus_error_v;
+  src_Core_Core_v -> src_Prop_Plus_error_v;
+  src_Prop_Relative_v -> src_Prop_Plus_error_v;
+  src_Calc_Operations_v -> src_Prop_Mult_error_v;
+  src_Core_Core_v -> src_Prop_Mult_error_v;
+  src_Prop_Plus_error_v -> src_Prop_Mult_error_v;
+  src_Calc_Operations_v -> src_Prop_Div_sqrt_error_v;
+  src_Core_Core_v -> src_Prop_Div_sqrt_error_v;
+  src_Prop_Mult_error_v -> src_Prop_Div_sqrt_error_v;
+  src_Prop_Relative_v -> src_Prop_Div_sqrt_error_v;
+  src_Prop_Sterbenz_v -> src_Prop_Div_sqrt_error_v;
+  src_Calc_Operations_v -> src_Prop_Round_odd_v;
+  src_Core_Core_v -> src_Prop_Round_odd_v;
+  src_Core_Core_v -> src_Prop_Double_rounding_v;
+  src_Core_FTZ_v -> src_Prop_Double_rounding_v;
+  src_Pff_Pff_v -> src_Pff_Pff2FlocqAux_v;
+  src_Core_Core_v -> src_Pff_Pff2FlocqAux_v;
+  src_Calc_Operations_v -> src_Pff_Pff2Flocq_v;
+  src_Core_Core_v -> src_Pff_Pff2Flocq_v;
+  src_Pff_Pff_v -> src_Pff_Pff2Flocq_v;
+}

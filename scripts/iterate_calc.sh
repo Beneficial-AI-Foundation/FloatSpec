@@ -15,20 +15,20 @@ file_list=(
 #   Raux.lean
   # Round_generic.lean
   # Ulp.lean
-  Bracket.lean
+  
   Div.lean
-  Operations.lean
-  Plus.lean
+  # Plus.lean
   Round.lean
-  Sqrt.lean
-
+  # Sqrt.lean
+  Operations.lean
+  Bracket.lean
 )
 hours=(
 #   2
 #   2
   # 4
-  2
-  2
+  # 2
+  # 2
   2
   2
   2
