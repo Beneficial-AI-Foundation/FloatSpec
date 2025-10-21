@@ -18,7 +18,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
-import Mathlib.Data.Real.Basic
+-- import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.Core.Ulp

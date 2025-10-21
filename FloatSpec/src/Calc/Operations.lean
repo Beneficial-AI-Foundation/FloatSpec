@@ -76,7 +76,7 @@ theorem Falign_spec (f1 f2 : FlocqFloat beta) :
     Returns the common exponent after alignment
 -/
 def Falign_exp (f1 f2 : FlocqFloat beta) : Id Int :=
-  sorry
+  Falign beta f1 f2 >>= fun (_, _, e) => pure e
 
 /-- Specification: Aligned exponent is minimum
 
@@ -257,7 +257,7 @@ theorem F2R_plus (f1 f2 : FlocqFloat beta) :
     Direct mantissa addition when exponents match
 -/
 def Fplus_same_exp (m1 m2 e : Int) : Id (FlocqFloat beta) :=
-  sorry
+  Fplus beta (FlocqFloat.mk m1 e) (FlocqFloat.mk m2 e)
 
 /-- Specification: Same-exponent addition
 
@@ -274,7 +274,7 @@ theorem Fplus_same_exp_spec (m1 m2 e : Int) :
     Returns the exponent of the sum of two floats
 -/
 def Fexp_Fplus (f1 f2 : FlocqFloat beta) : Id Int :=
-  sorry
+  Fplus beta f1 f2 >>= fun f => pure f.Fexp
 
 /-- Specification: Sum exponent is minimum
 
@@ -409,7 +409,7 @@ theorem F2R_minus (f1 f2 : FlocqFloat beta) :
     Direct mantissa subtraction when exponents match
 -/
 def Fminus_same_exp (m1 m2 e : Int) : Id (FlocqFloat beta) :=
-  sorry
+  Fminus beta (FlocqFloat.mk m1 e) (FlocqFloat.mk m2 e)
 
 /-- Specification: Same-exponent subtraction
 

@@ -18,7 +18,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
-import Mathlib.Data.Real.Basic
+-- import Mathlib.Data.Real.Basic
 import FloatSpec.src.Core.Generic_fmt
 import Std.Do.Triple
 import Std.Tactic.Do
@@ -29,11 +29,6 @@ open FloatSpec.Core.Defs
 
 namespace FloatSpec.Core.Round_pred
 
--- Allow 'sorry' to remain as warnings, not errors, in this file.
-set_option warningAsError false
--- Disable strict linters that would otherwise flag harmless warnings
-set_option linter.unusedSimpArgs false
-set_option linter.unusedVariables false
 
 -- variable {beta : Int}
 

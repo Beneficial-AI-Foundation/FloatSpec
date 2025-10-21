@@ -18,7 +18,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Zaux
-import Mathlib.Data.Real.Basic
+-- import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 
@@ -304,7 +304,7 @@ theorem F2R_add_same_exp_spec {beta : Int} (f g : FlocqFloat beta) :
   unfold F2R_add_same_exp
   simp only [F2R, pure, h_eq, bind]
   -- Now we have a pair where we need to prove the two components are equal
-  -- The left component: (f.Fnum + g.Fnum) * beta^g.Fexp  
+  -- The left component: (f.Fnum + g.Fnum) * beta^g.Fexp
   -- The right component: f.Fnum * beta^g.Fexp + g.Fnum * beta^g.Fexp
   -- This follows from distributivity of multiplication over addition
   simp [add_mul]

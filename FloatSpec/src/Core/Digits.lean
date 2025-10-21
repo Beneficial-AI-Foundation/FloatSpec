@@ -35,7 +35,6 @@ open scoped Int
 
 namespace FloatSpec.Core.Digits
 
-set_option maxRecDepth 4096
 universe u
 
 section DigitOperations

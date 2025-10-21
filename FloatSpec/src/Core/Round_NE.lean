@@ -26,7 +26,7 @@ import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Core.Ulp
-import Mathlib.Data.Real.Basic
+-- import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 

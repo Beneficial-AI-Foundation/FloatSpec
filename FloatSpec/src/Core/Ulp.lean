@@ -29,7 +29,6 @@ import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
 
-set_option maxRecDepth 4096
 
 open Real
 open Std.Do
@@ -38,10 +37,6 @@ open FloatSpec.Core.Defs
 
 namespace FloatSpec.Core.Ulp
 
-set_option linter.unusedSimpArgs false
-set_option linter.unusedSectionVars false
-set_option linter.missingDocs false
-set_option linter.unusedVariables false
 
 section UnitInLastPlace
 
@@ -7295,7 +7290,7 @@ theorem pred_bpow (e : Int) :
   -- reduce the Hoare triple on `Id` and close with `hrun`
   simpa [wp, PostCond.noThrow, Id.run, bind, pure, x] using hrun
 
-set_option maxHeartbeats 1200000 in
+
 /-- Coq (Ulp.v): Theorem id_m_ulp_ge_bpow
     forall x e, F x -> x ≠ ulp x -> bpow e < x -> bpow e ≤ x - ulp x. -/
 theorem id_m_ulp_ge_bpow (x : ℝ) (e : Int)

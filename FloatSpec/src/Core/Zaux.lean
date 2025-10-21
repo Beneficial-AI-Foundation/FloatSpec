@@ -103,24 +103,13 @@ end ProofIrrelevance
 
 section EvenOdd
 
-/-- Existence of even/odd decomposition for integers
-
-    Every integer can be written as 2*p + r where r is 0 or 1
-    depending on whether the integer is even or odd.
--/
+/-- Existence of even/odd decomposition for integers. Every integer can be written as two times a number plus a remainder 0 or 1. -/
 def Zeven_ex (x : Int) : Id (Int × Int) :=
   let p := x / 2
   let r := x % 2
   (p, r)
 
-/-- Specification: Even/odd decomposition exists
-
-    For any integer x, there exists p such that:
-    - x = 2*p if x is even
-    - x = 2*p + 1 if x is odd
-
-    This captures the fundamental division algorithm for base 2.
--/
+/-- Specification: For any integer x, there exist p and r with r = 0 or r = 1 and x equals two times p plus r. -/
 theorem Zeven_ex_spec (x : Int) :
     ⦃⌜True⌝⦄
     Zeven_ex x
@@ -135,8 +124,8 @@ theorem Zeven_ex_spec (x : Int) :
   simp only [Id.run]
   constructor
   · -- Prove: x = 2 * (x / 2) + (x % 2)
-    -- Use Lean's theorem: b * (a / b) + a % b = a
-    have h := Int.emod_add_ediv x 2
+    -- Use the current lemma name for the Euclidean division identity
+    have h := Int.emod_add_mul_ediv x 2
     -- h: x % 2 + 2 * (x / 2) = x
     rw [Int.add_comm] at h
     exact h.symm
@@ -147,25 +136,14 @@ end EvenOdd
 
 section Zpower
 
-/-- Power addition formula for integers
-
-    Computes the product of powers: n^(k1+k2) = n^k1 * n^k2
-    when both exponents are non-negative.
--/
+/-- Power addition formula for integers. -/
 def Zpower_plus (n k1 k2 : Int) : Id Int :=
   if k1 ≥ 0 && k2 ≥ 0 then
     n^(k1.natAbs + k2.natAbs)
   else
     0  -- Undefined for negative exponents in this context
 
-/-- Specification: Power addition rule
-
-    The power operation satisfies the exponential law:
-    n^(k1 + k2) = n^k1 * n^k2 for non-negative exponents.
-
-    This is a fundamental property of exponentiation used
-    throughout floating-point arithmetic.
--/
+/-- Specification: Exponential addition rule for nonnegative exponents. -/
 theorem Zpower_plus_spec (n k1 k2 : Int) :
     ⦃⌜0 ≤ k1 ∧ 0 ≤ k2⌝⦄
     Zpower_plus n k1 k2
@@ -267,23 +245,14 @@ theorem radix_gt_1 (r : Radix) :
 
 end RadixProps
 
-/-- Relationship between integer power and natural power
-
-    For non-negative exponents, Zpower equals Zpower_nat
-    composed with absolute value conversion.
--/
+/-- Relationship between integer power and natural power. -/
 def Zpower_Zpower_nat (b e : Int) : Id Int :=
   if e ≥ 0 then
     b^e.natAbs
   else
     0  -- Undefined for negative exponents
 
-/-- Specification: Integer and natural powers coincide
-
-    When the exponent is non-negative, the integer power
-    function agrees with the natural number power function
-    applied to the absolute value of the exponent.
--/
+/-- Specification: When 0 ≤ e, integer and natural powers coincide. -/
 theorem Zpower_Zpower_nat_spec (b e : Int) :
     ⦃⌜0 ≤ e⌝⦄
     Zpower_Zpower_nat b e
@@ -298,20 +267,11 @@ theorem Zpower_Zpower_nat_spec (b e : Int) :
     -- This case contradicts our precondition
     exact absurd h h_neg
 
-/-- Successor property for natural power
-
-    Shows that b^(n+1) = b * b^n for natural number exponents.
-    This is the fundamental recursive property of exponentiation.
--/
+/-- Successor property for natural power. -/
 def Zpower_nat_S (b : Int) (e : Nat) : Id Int :=
   b * b^e
 
-/-- Specification: Power successor formula
-
-    The power function satisfies the recursive relation:
-    b^(S e) = b * b^e. This allows inductive reasoning
-    about powers with natural number exponents.
--/
+/-- Specification: Successor exponent formula for natural powers. -/
 theorem Zpower_nat_S_spec (b : Int) (e : Nat) :
     ⦃⌜True⌝⦄
     Zpower_nat_S b e
@@ -520,20 +480,11 @@ end RadixZpower
 
 section DivMod
 
-/-- Modulo operation with multiple
-
-    Computes (n mod (a*b)) mod b, which equals n mod b
-    when a > 0 and b ≥ 0.
--/
+/-- Modulo simplification lemma. -/
 def Zmod_mod_mult (n _a b : Int) : Id Int :=
   n % b
 
-/-- Specification: Nested modulo simplification
-
-    The modulo operation satisfies: (n mod (a*b)) mod b = n mod b
-    when a is positive and b is non-negative. This allows
-    simplification of nested modulo operations.
--/
+/-- Specification: Nested modulo simplifies under side conditions. -/
 theorem Zmod_mod_mult_spec (n a b : Int) :
     ⦃⌜0 < a ∧ 0 ≤ b⌝⦄
     Zmod_mod_mult n a b
@@ -542,20 +493,11 @@ theorem Zmod_mod_mult_spec (n a b : Int) :
   unfold Zmod_mod_mult
   rfl
 
-/-- Division and modulo relationship
-
-    Expresses the quotient-remainder theorem: a = q*b + r
-    where q is the quotient and r is the remainder.
--/
+/-- Division and modulo relationship. -/
 def ZOmod_eq (a b : Int) : Id Int :=
   a % b
 
-/-- Specification: Quotient-remainder decomposition
-
-    Every integer a can be uniquely written as a = q*b + r
-    where q is the quotient and r is the remainder with
-    0 ≤ r < |b| for b ≠ 0.
--/
+/-- Specification: Quotient and remainder decomposition. -/
 theorem ZOmod_eq_spec (a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
     ZOmod_eq a b
@@ -564,23 +506,14 @@ theorem ZOmod_eq_spec (a b : Int) :
   unfold ZOmod_eq
   rfl
 
-/-- Division of nested modulo
-
-    Computes (n mod (a*b)) / a, which equals (n/a) mod b
-    under appropriate conditions.
--/
+/-- Division of nested modulo. -/
 def Zdiv_mod_mult (n a b : Int) : Id Int :=
   if a ≠ 0 && b ≠ 0 then
     (n / a) % b
   else
     0
 
-/-- Specification: Division distributes over modulo
-
-    The operation satisfies: (n mod (a*b)) / a = (n/a) mod b
-    when a and b are non-negative. This is useful for
-    decomposing multi-precision arithmetic operations.
--/
+/-- Specification: Division distributes over modulo for nonnegative inputs, i.e. (n % (a * b)) / a = (n / a) % b. -/
 theorem Zdiv_mod_mult_spec (n a b : Int) :
     ⦃⌜0 ≤ a ∧ 0 ≤ b⌝⦄
     Zdiv_mod_mult n a b
@@ -591,8 +524,7 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
   split
   · -- Case: a ≠ 0 && b ≠ 0
     rename_i h_both_nonzero
-    -- When both are non-zero, a = 0 || b = 0 is false
-    -- So if a = 0 || b = 0 then 0 else (n / a) % b reduces to (n / a) % b
+    -- When both are nonzero, a = 0 || b = 0 is false and the RHS reduces to (n / a) % b
     have ha_nonzero : a ≠ 0 := by
       simp at h_both_nonzero
       exact h_both_nonzero.1
@@ -618,21 +550,11 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
       simp [hb_zero]
       rfl
 
-/-- Nested modulo with multiplication
-
-    Computes (n mod (a*b)) mod b using the quotient-based
-    remainder formula. This is equivalent to n mod b for
-    appropriate signs.
--/
+/-- Nested modulo with multiplication: for integers n, a, b, the term {lean}`(n % (a * b)) % b` is equivalent to {lean}`n % b` under standard side conditions. -/
 def ZOmod_mod_mult (n _a b : Int) : Id Int :=
   n % b
 
-/-- Specification: Nested modulo simplification (quotient version)
-
-    The quotient-based modulo operation satisfies:
-    (n mod (a*b)) mod b = n mod b. This allows simplification
-    of nested modulo operations in quotient arithmetic.
--/
+/-- Specification: {lean}`(n % (a * b)) % b = n % b` (quotient-style statement). -/
 theorem ZOmod_mod_mult_spec (n a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
     ZOmod_mod_mult n a b

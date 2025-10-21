@@ -26,10 +26,6 @@ import Std.Tactic.Do
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Core.FIX
 
-set_option maxRecDepth 4096
--- Debugging aid for typeclass synthesis during development of this file.
-set_option diagnostics true
-
 -- Avoid `simp` from eagerly using `neg_mul`, which in this file
 -- triggers deep typeclass search for `HasDistribNeg` on ℝ.
 attribute [-simp] neg_mul

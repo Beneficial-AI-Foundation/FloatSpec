@@ -24,9 +24,9 @@ import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Float_prop
 -- import FloatSpec.src.Core.Digits
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Int.Basic
-import Mathlib.Tactic
+-- import Mathlib.Data.Real.Basic
+-- import Mathlib.Data.Int.Basic
+-- import Mathlib.Tactic
 import Std.Do.Triple
 import Std.Tactic.Do
 
@@ -38,14 +38,6 @@ open FloatSpec.Core.Raux
 
 namespace FloatSpec.Core.Generic_fmt
 
-set_option linter.unusedSimpArgs false
-set_option linter.unusedSectionVars false
-set_option linter.missingDocs false
-set_option linter.unusedVariables false
-
-set_option maxRecDepth 81920
--- Increase heartbeat limit to accommodate heavy proofs in this file
-set_option maxHeartbeats 1200000
 
 abbrev Rnd_DN_pt := FloatSpec.Core.Defs.Rnd_DN_pt
 abbrev Rnd_UP_pt := FloatSpec.Core.Defs.Rnd_UP_pt

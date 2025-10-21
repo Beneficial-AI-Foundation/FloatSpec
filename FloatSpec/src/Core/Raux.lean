@@ -17,11 +17,11 @@ COPYING file for more details.
 -/
 
 import FloatSpec.src.Core.Zaux
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Sqrt
-import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Mathlib.Data.Nat.Find
-import Mathlib.Tactic
+-- import Mathlib.Data.Real.Basic
+-- import Mathlib.Data.Real.Sqrt
+-- import Mathlib.Analysis.SpecialFunctions.Log.Basic
+-- import Mathlib.Data.Nat.Find
+-- import Mathlib.Tactic
 import Std.Do.Triple
 import Std.Tactic.Do
 
@@ -2466,7 +2466,6 @@ noncomputable def Rcompare_floor_ceil_middle_check (x : ℝ) : Id (Int × Int) :
     let c ← Zceil x
     pure ((Rcompare (f : ℝ) x).run, (Rcompare x (c : ℝ)).run)
 
-set_option maxRecDepth 4096 in
 theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_floor_ceil_middle_check x
@@ -2562,7 +2561,6 @@ noncomputable def Rcompare_ceil_floor_middle_check (x : ℝ) : Id (Int × Int) :
     let c ← Zceil x
     pure ((Rcompare (c : ℝ) x).run, (Rcompare x (f : ℝ)).run)
 
-set_option maxRecDepth 4096 in
 theorem Rcompare_ceil_floor_middle_spec (x : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_ceil_floor_middle_check x
@@ -3219,8 +3217,6 @@ end LPO
 -/
 section Mag
 
--- Increase the heartbeat budget for some heavy proofs in this section
-set_option maxHeartbeats 1200000
 
 /-- Magnitude of a real number with respect to base `beta`.
 
