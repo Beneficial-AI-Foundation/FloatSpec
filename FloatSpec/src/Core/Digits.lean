@@ -176,7 +176,7 @@ lemma bits_bounds (m : Nat) (hm : 0 < m) :
 /-- Correctness of binary bit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem digits2_Pnat_correct :
   forall n,
   let d := digits2_Pnat n in
@@ -217,7 +217,7 @@ def Zdigit (n k : Int) : Id Int :=
 /-- Digits with negative index are zero
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_lt :
   forall n k,
   (k < 0)%Z ->
@@ -239,7 +239,7 @@ theorem Zdigit_lt (n k : Int) :
 /-- Digit of zero is always zero
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_0 :
   forall k, Zdigit 0 k = Z0.
 Proof.
@@ -261,7 +261,7 @@ theorem Zdigit_0 (k : Int) :
 /-- Digit of opposite number
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_opp :
   forall n k,
   Zdigit (-n) k = Z.opp (Zdigit n k).
@@ -288,7 +288,7 @@ theorem Zdigit_opp (n k : Int) :
 /-- Digit is zero for large indices
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_ge_Zpower_pos :
   forall e n,
   (0 <= n < Zpower beta e)%Z ->
@@ -329,7 +329,7 @@ theorem Zdigit_ge_Zpower_pos (n e : Int) :
 /-- Digit is zero for large indices (general case)
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_ge_Zpower :
   forall e n,
   (Z.abs n < Zpower beta e)%Z ->
@@ -544,7 +544,7 @@ private lemma exists_nonzero_digit (beta n : Int) (hβ : beta > 1) (hn : 0 < n) 
 /-- Non-zero digit exists for positive numbers
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_not_0_pos :
   forall n, (0 < n)%Z ->
   exists k, (0 <= k)%Z /\ Zdigit n k <> Z0.
@@ -604,7 +604,7 @@ theorem Zdigit_not_0_pos (n : Int) (hβ : beta > 1 := h_beta) :
 /-- Non-zero digit exists for non-zero numbers
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_not_0 :
   forall n, n <> Z0 ->
   exists k, (0 <= k)%Z /\ Zdigit n k <> Z0.
@@ -677,7 +677,7 @@ theorem Zdigit_not_0 (n : Int) (hβ : beta > 1 := h_beta) :
 /-- Digit of multiplied number
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_mul_pow :
   forall n k k', (0 <= k')%Z ->
   Zdigit (n * Zpower beta k') k = Zdigit n (k - k').
@@ -836,7 +836,7 @@ theorem Zdigit_mul_pow (n k l : Int) (hβ : beta > 1 := h_beta):
 /-- Digit of divided number
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_div_pow :
   forall n k k', (0 <= k)%Z -> (0 <= k')%Z ->
   Zdigit (Z.quot n (Zpower beta k')) k = Zdigit n (k + k').
@@ -899,7 +899,7 @@ theorem Zdigit_div_pow (n k l : Int) (hβ : beta > 1 := h_beta):
 /-- Digit modulo power
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_mod_pow :
   forall n k k', (k < k')%Z ->
   Zdigit (Z.rem n (Zpower beta k')) k = Zdigit n k.
@@ -1047,7 +1047,7 @@ theorem Zdigit_mod_pow (n k l : Int) (hβ : beta > 1 := h_beta):
 /-- Digit modulo power outside range
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_mod_pow_out :
   forall n k k', (0 <= k' <= k)%Z ->
   Zdigit (Z.rem n (Zpower beta k')) k = Z0.
@@ -1190,7 +1190,7 @@ def Zsum_digit (f : Int → Int) : Nat → Id Int
 /-- Sum reconstructs from digits
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zsum_digit_digit :
   forall n k,
   Zsum_digit (Zdigit n) k = Z.rem n (Zpower beta (Z_of_nat k)).
@@ -1372,7 +1372,7 @@ theorem Zsum_digit_digit (n : Int) (k : Nat) (hβ : beta > 1 := h_beta) :
 /-- Extensionality for digit functions
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_ext :
   forall n1 n2,
   (forall k, (0 <= k)%Z -> Zdigit n1 k = Zdigit n2 k) ->
@@ -1955,7 +1955,7 @@ private lemma wp_mono_pure
 /-- Digit of scaled number
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_scale :
   forall n k k', (0 <= k')%Z ->
   Zdigit (Zscale n k) k' = Zdigit n (k' - k).
@@ -2014,7 +2014,7 @@ theorem Zdigit_scale_point
 /-- Scaling zero
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zscale_0 :
   forall k,
   Zscale 0 k = Z0.
@@ -2498,7 +2498,7 @@ def Zslice (n k1 k2 : Int) : Id Int := do
 /-- Digit of slice
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_slice :
   forall n k l m, (0 <= m)%Z ->
   Zdigit (Zslice n k l) m =
@@ -2639,7 +2639,7 @@ theorem Zdigit_slice (n k l m : Int) (h_beta : beta > 1) :
 /-- Digit of slice outside range
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_slice_out :
   forall n k l m, (l <= m)%Z ->
   Zdigit (Zslice n k l) m = Z0.
@@ -2682,7 +2682,7 @@ theorem Zdigit_slice_out (n k l m : Int) (h_beta : beta > 1):
 /-- Zslice of zero is always zero
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zslice_0 :
   forall k k',
   Zslice 0 k k' = Z0.
@@ -2707,7 +2707,7 @@ theorem Zslice_0 (k k' : Int) :
 /-- Slicing preserves sign conditions
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zsame_sign_slice :
   forall n k l,
   (0 <= n)%Z -> (0 <= k)%Z -> (0 <= l)%Z ->
@@ -2746,7 +2746,7 @@ theorem Zsame_sign_slice (n k l : Int) (h_beta : beta > 1):
 /-- Composition of Zslice operations
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zslice_slice :
   forall n k1 k2 k1' k2',
   (0 <= k1')%Z -> (k1' <= k2)%Z ->
@@ -3011,7 +3011,7 @@ theorem Zslice_slice (n k1 k2 k1' k2' : Int) (h_beta : beta > 1) :
 /-- Zslice and multiplication by power of beta
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zslice_mul_pow :
   forall n k k1 k2,
   (0 <= k)%Z ->
@@ -3077,7 +3077,7 @@ theorem Zslice_mul_pow (n k k1 k2 : Int) (h_beta : beta > 1):
 /-- Zslice and division by power of beta
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zslice_div_pow :
   forall n k k1 k2,
   (0 <= k)%Z -> (0 <= k1)%Z ->
@@ -3192,7 +3192,7 @@ theorem Zslice_div_pow (n k k1 k2 : Int) (h_beta : beta > 1):
 /-- Zslice and scaling
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zslice_scale :
   forall n k k1 k2,
   (0 <= k1)%Z ->
@@ -3359,7 +3359,7 @@ private lemma div_mul_pow_eq_div_sub
 /-- Combined division and scaling for Zslice
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zslice_div_pow_scale :
   forall n k k' k1 k2,
   (0 <= k)%Z ->
@@ -3451,7 +3451,7 @@ theorem Zslice_div_pow_scale_nonnegKp
 /-- Addition and Zslice interaction
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zplus_slice :
   forall n m k l,
   (0 <= k)%Z -> (0 <= l)%Z ->
@@ -3692,7 +3692,7 @@ def Zdigits (n : Int) : Id Int :=
 /-- Correctness of digit count bounds
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_correct :
   forall n,
   (Zpower beta (Zdigits n - 1) <= Z.abs n < Zpower beta (Zdigits n))%Z.
@@ -3943,7 +3943,7 @@ theorem Zdigits_correct (n : Int) (hβ : beta > 1) :
 /-- Unique characterization of digit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_unique :
   forall n d,
   (Zpower beta (d - 1) <= Z.abs n < Zpower beta d)%Z ->
@@ -4134,7 +4134,7 @@ theorem Zdigits_unique (n e : Int) (hβ : beta > 1 := h_beta) :
     -- Need to show d = (Zdigits beta n).run, which is how d was defined
   exact this
 
-/-- Helper lemma: Zdigits_aux only depends on the absolute value of n -/
+/-- Helper lemma: {name}`Zdigits_aux` only depends on the absolute value of {name}`n`. -/
 private lemma Zdigits_aux_abs_eq (n : Int) (d pow : Int) (fuel : Nat) :
     Int.natAbs n = Int.natAbs (-n) →
     Zdigits_aux beta n d pow fuel = Zdigits_aux beta (-n) d pow fuel := by
@@ -4228,7 +4228,7 @@ theorem Zdigits_abs (n : Int) :
 /-- Digit count of opposite
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_opp :
   forall n, Zdigits (-n) = Zdigits n.
 Proof.
@@ -4331,7 +4331,7 @@ theorem Zdigits_opp (n : Int) :
 /-- Digit count with conditional opposite
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_cond_Zopp :
   forall b n, Zdigits (cond_Zopp b n) = Zdigits n.
 Proof.
@@ -4366,7 +4366,7 @@ theorem Zdigits_cond_Zopp (b : Bool) (n : Int):
 /-- Digit count is non-negative
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_ge_0 :
   forall n, (0 <= Zdigits n)%Z.
 Proof.
@@ -4425,7 +4425,7 @@ theorem Zdigits_ge_0 (n : Int) :
 /-- Non-zero numbers have positive digit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_gt_0 :
   forall n, n <> Z0 -> (0 < Zdigits n)%Z.
 Proof.
@@ -4483,7 +4483,7 @@ theorem Zdigits_gt_0 (n : Int) (h_beta : beta > 1):
 /-- Digits beyond the representation are zero
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_out :
   forall n k, (Zdigits n <= k)%Z -> Zdigit n k = Z0.
 Proof.
@@ -5083,7 +5083,7 @@ private lemma highest_nonzero_digit_bound (beta n k : Int) (h_beta : beta > 1)
 /-- Highest digit is non-zero
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigit_digits :
   forall n, n <> Z0 -> Zdigit n (Zdigits n - 1) <> Z0.
 Proof.
@@ -5145,7 +5145,7 @@ theorem Zdigit_digits (n : Int) (h_beta : beta > 1) :
 /-- Lower bound for digit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem lt_Zdigits :
   forall n m,
   (Z.abs n < Zpower beta m)%Z ->
@@ -5252,7 +5252,7 @@ theorem lt_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
 /-- Digit count and power relationship
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_le_Zpower :
   forall e x,
   (Z.abs x < Zpower beta e)%Z ->
@@ -5302,7 +5302,7 @@ theorem Zdigits_le_Zpower (x e : Int) (hβ : beta > 1 := h_beta) :
 /-- Zdigits and Zslice relationship
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_slice :
   forall n k l,
   (0 <= k)%Z -> (0 < l)%Z ->
@@ -5435,7 +5435,7 @@ theorem Zdigits_slice (n k l : Int) (h_beta : beta > 1):
 /-- Digit count after multiplication by power
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_mult_Zpower :
   forall m e,
   m <> Z0 -> (0 <= e)%Z ->
@@ -5562,7 +5562,7 @@ theorem Zdigits_mult_Zpower (beta n k : Int) (h_beta : beta > 1) :
 /-- Digit count of powers of beta
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_Zpower :
   forall e,
   (0 <= e)%Z ->
@@ -5617,7 +5617,7 @@ theorem Zdigits_Zpower (k : Int) (hβ : beta > 1) :
 /-- Monotonicity of digit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_le :
   forall n m,
   n <> Z0 -> (Z.abs n <= Z.abs m)%Z ->
@@ -5684,7 +5684,7 @@ theorem Zdigits_le (n m : Int) (hβ : beta > 1 := h_beta) :
 /-- Power bound for digit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zpower_le_Zdigits :
   forall e n,
   n <> Z0 ->
@@ -5757,7 +5757,7 @@ theorem Zpower_le_Zdigits (n e : Int) (hβ : beta > 1 := h_beta) :
 /-- Alternative digit count bound
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_le_Zdigits :
   forall n m,
   m <> Z0 -> (Z.abs n < Z.abs m)%Z ->
@@ -5868,7 +5868,7 @@ private lemma Zdigits_nonneg (x : Int) :
 /-- Power greater than digit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zpower_gt_Zdigits :
   forall e x,
   (Zdigits x <= e)%Z ->
@@ -5961,7 +5961,7 @@ theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
 /-- Digit count greater than power
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_gt_Zpower :
   forall e x,
   (Zpower beta e <= Z.abs x)%Z ->
@@ -6022,8 +6022,9 @@ private lemma pow_add_split (beta : Int) (dx dy : Int) (_ : beta > 1)
 private lemma Zdigits_run_eq (n : Int) :
     Id.run (Zdigits beta n) = Id.run (Zdigits beta n) := rfl
 
-/-- Helper lemma: Digit count bound for sum with product
-    For non-negative x and y, Zdigits(x + y + x*y) ≤ Zdigits(x) + Zdigits(y) -/
+/-- Helper lemma: Digit count bound for sum with product.
+    For non-negative {lit}`x` and {lit}`y`,
+    {lit}`(Zdigits (x + y + x*y)).run ≤ (Zdigits x).run + (Zdigits y).run`. -/
 private lemma Zdigits_sum_product_bound (beta : Int) (x y : Int)
     (hbeta : beta > 1) (hx : 0 ≤ x) (hy : 0 ≤ y) :
     Id.run (Zdigits beta (x + y + x * y)) ≤
@@ -6182,7 +6183,7 @@ theorem Zdigits_mult_strong (x y : Int) (hbeta : beta > 1 := h_beta) :
 /-- Digit count of multiplication
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_mult :
   forall x y,
   (Zdigits (x * y) <= Zdigits x + Zdigits y)%Z.
@@ -6364,7 +6365,7 @@ theorem Zdigits_mult (x y : Int) (hβ : beta > 1 := h_beta):
 /-- Lower bound for digit count of multiplication
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_mult_ge :
   forall x y,
   (x <> 0)%Z -> (y <> 0)%Z ->
@@ -6483,7 +6484,7 @@ theorem Zdigits_mult_ge (x y : Int) (hβ : beta > 1 := h_beta) :
 /-- Digit count of division by power
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_div_Zpower :
   forall m e,
   (0 <= m)%Z ->
@@ -6702,7 +6703,7 @@ theorem Zdigits_div_Zpower (m e : Int) (h_beta : beta > 1) :
 /-- Digit count of successor
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_succ_le :
   forall x, (0 <= x)%Z ->
   (Zdigits (x + 1) <= Zdigits x + 1)%Z.
@@ -6799,7 +6800,7 @@ variable (beta : Int) (h_beta : beta > 1)
 /-- Relationship between natural and integer digit count
 
 Coq theorem and proof:
-```coq
+```
 Theorem Z_of_nat_S_digits2_Pnat :
   forall m : positive,
   Z_of_nat (S (digits2_Pnat m)) = Zdigits radix2 (Zpos m).
@@ -6903,7 +6904,7 @@ theorem Z_of_nat_S_digits2_Pnat (m : Nat) :
 /-- Positive digit count for binary
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zpos_digits2_pos :
   forall m : positive,
   Zpos (digits2_pos m) = Zdigits radix2 (Zpos m).
@@ -6927,7 +6928,7 @@ theorem Zpos_digits2_pos (m : Nat) :
 /-- Equivalence of binary digit count functions
 
 Coq theorem and proof:
-```coq
+```
 Lemma Zdigits2_Zdigits :
   forall n, Zdigits2 n = Zdigits radix2 n.
 Proof.

@@ -411,18 +411,17 @@ theorem le_lt_IZR_spec (m n p : Int) :
 def neq_IZR_pair (m n : Int) : Id (Int × Int) :=
   (m, n)
 
-/-- If the real casts of m and n are unequal, then m and n are unequal as integers (Coq: neq_IZR). -/
+/-- If the real casts of m and n are unequal, then m and n are unequal as integers (Coq: {lit}`neq_IZR`). -/
 theorem neq_IZR_spec (m n : Int) :
     ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
     neq_IZR_pair m n
     ⦃⇓p => ⌜p.1 ≠ p.2⌝⦄ := by
   intro hmnR
   unfold neq_IZR_pair
-  -- Show: m ≠ n, using injectivity of Int-cast into ℝ
-  intro hmn
-  apply hmnR
-  -- Casting preserves equalities
-  simpa [hmn]
+  -- Reduce the Hoare-style triple on Id to a pure proposition
+  simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+  -- Goal is `m ≠ n`; close it by contraposition using cast injectivity
+  exact fun hmn => hmnR (by simpa [hmn])
 
 end IZR
 
@@ -790,7 +789,7 @@ noncomputable def Rcompare_mult_r (x y _z : ℝ) : Id Int :=
 
 /-- Specification: Positive scaling preserves comparison
 
-    If 0 < z, then Rcompare (x * z) (y * z) = Rcompare x y.
+    If {lean}`0<z`, then {lean}`Rcompare (x*z) (y*z) = Rcompare x y`.
 -/
 theorem Rcompare_mult_r_spec (x y z : ℝ) :
     ⦃⌜0 < z⌝⦄
@@ -809,7 +808,7 @@ noncomputable def Rcompare_mult_l (x y _z : ℝ) : Id Int :=
 
 /-- Specification: Left positive scaling preserves comparison
 
-    If 0 < z, then Rcompare (z * x) (z * y) = Rcompare x y.
+    If {lean}`0<z`, then {lean}`Rcompare (z*x) (z*y) = Rcompare x y`.
 -/
 theorem Rcompare_mult_l_spec (x y z : ℝ) :
     ⦃⌜0 < z⌝⦄
