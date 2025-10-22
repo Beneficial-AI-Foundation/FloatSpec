@@ -76,7 +76,7 @@ theorem FLT_exp_spec (e : Int) :
 def FLT_format (beta : Int) (x : ℝ) : Id Prop :=
   pure (generic_format beta (FLT_exp prec emin) x)
 
-/-- Valid_exp instance for the FLT exponent function (placeholder). -/
+/-- `Valid_exp `instance for the FLT exponent function. -/
 instance FLT_exp_valid (beta : Int) [Prec_gt_0 prec] :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp prec emin) := by
   refine ⟨?_⟩
@@ -620,11 +620,13 @@ variable (prec emin : Int) [Prec_gt_0 prec]
 
 /-
 Coq (FLT.v):
+```
 Theorem generic_format_FLT_FIX :
   forall x : R,
   (Rabs x <= bpow (emin + prec))%R ->
   generic_format beta (FIX_exp emin) x ->
   generic_format beta FLT_exp x.
+```
 -/
 theorem generic_format_FLT_FIX (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ |x| ≤ (beta : ℝ) ^ (emin + prec) ∧ (generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x).run⌝⦄
@@ -659,7 +661,7 @@ namespace FloatSpec.Core.FLT
 variable (prec emin : Int) [Prec_gt_0 prec]
 
 /-- Coq (FLT.v):
-Theorem ulp_FLT_0 : ulp beta FLT_exp 0 = bpow emin.
+Theorem `ulp_FLT_0` : `ulp beta FLT_exp 0 = bpow emin.`
 
 Lean (spec): The ULP under FLT at 0 equals `β^emin`.
 -/
@@ -692,8 +694,8 @@ theorem ulp_FLT_0 (beta : Int) :
   simpa [this, h_fexp_n_eq]
 
 /-- Coq (FLT.v):
-Theorem ulp_FLT_small:
-  forall x, Rabs x < bpow (emin + prec) -> ulp beta FLT_exp x = bpow emin.
+Theorem `ulp_FLT_small`:
+  `forall x, Rabs x < bpow (emin + prec) -> ulp beta FLT_exp x = bpow emin.`
 
 Lean (spec): If |x| < β^(emin+prec), then ULP under FLT at x equals `β^emin`.
 -/

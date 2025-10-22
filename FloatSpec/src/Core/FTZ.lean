@@ -73,7 +73,7 @@ theorem FTZ_exp_spec (e : Int) :
 def FTZ_format (beta : Int) (x : ℝ) : Id Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x
 
-/-- Valid_exp instance for the FTZ exponent function (placeholder). -/
+/-- `Valid_exp` instance for the FTZ exponent function. -/
 instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp prec emin) := by
   refine ⟨?_⟩
@@ -306,10 +306,10 @@ namespace FloatSpec.Core.FTZ
 variable (prec emin : Int) [Fact (0 < prec)]
 
 /-- Coq (FTZ.v):
-Theorem FLXN_format_FTZ :
-  forall x, FTZ_format x -> FLXN_format beta prec x.
+Theorem `FLXN_format_FTZ` :
+  `forall x, FTZ_format x -> FLXN_format beta prec x.`
 
-Lean (spec): Any FTZ-format number is in FLXN_format for the same
+Lean (spec): Any FTZ-format number is in `FLXN_format` for the same
 base and precision.
 -/
 theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
@@ -508,9 +508,12 @@ namespace FloatSpec.Core.FTZ
 variable (prec emin : Int) [Fact (0 < prec)]
 
 /-- Coq (FTZ.v):
-Theorem round_FTZ_FLX : forall x,
+Theorem `round_FTZ_FLX` :
+```
+  forall x,
   (bpow (emin + prec - 1) <= Rabs x) ->
   round beta FTZ_exp Zrnd_FTZ x = round beta (FLX_exp prec) rnd x.
+```
 
 Lean (spec): Under the lower-bound condition on |x|, rounding in
 FTZ equals rounding in FLX for any rounding predicate `rnd`.
@@ -749,7 +752,7 @@ namespace FloatSpec.Core.FTZ
 variable (prec emin : Int) [Fact (0 < prec)]
 
 /-- Coq (FTZ.v):
-Theorem ulp_FTZ_0 : ulp beta FTZ_exp 0 = bpow emin.
+Theorem `ulp_FTZ_0` : `ulp beta FTZ_exp 0 = bpow emin`.
 
 Lean (spec): The ULP under FTZ at 0 equals `β^emin`.
 -/

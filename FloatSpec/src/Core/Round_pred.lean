@@ -45,8 +45,8 @@ section RoundingFunctionProperties
 
 /-- Rounding down property for functions
 
-    A rounding function rnd satisfies Rnd_DN if for every input x,
-    rnd(x) is the round-down value according to format F.
+    A rounding function rnd satisfies `Rnd_DN` if for every input x,
+    rnd(x) is the round down value according to format F.
     This lifts the pointwise property to functions.
 -/
 def Rnd_DN (F : ℝ → Prop) (rnd : ℝ → ℝ) : Id Prop :=
@@ -68,8 +68,8 @@ theorem Rnd_DN_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
 
 /-- Rounding up property for functions
 
-    A rounding function rnd satisfies Rnd_UP if for every input x,
-    rnd(x) is the round-up value according to format F.
+    A rounding function rnd satisfies `Rnd_UP` if for every input x,
+    rnd(x) is the round up value according to format F.
     This provides the functional counterpart to round-up.
 -/
 def Rnd_UP (F : ℝ → Prop) (rnd : ℝ → ℝ) : Id Prop :=
@@ -91,9 +91,9 @@ theorem Rnd_UP_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
 
 /-- Rounding toward zero property for functions
 
-    A function satisfies Rnd_ZR if it implements truncation:
+    A function satisfies `Rnd_ZR` if it implements truncation:
     round toward zero for all inputs. This combines round-down
-    for positive values and round-up for negative values.
+    for positive values and round up for negative values.
 -/
 def Rnd_ZR (F : ℝ → Prop) (rnd : ℝ → ℝ) : Id Prop :=
   -- Use the Coq-accurate predicate from Defs to ensure both directions (x ≥ 0 and x ≤ 0)
@@ -115,9 +115,9 @@ theorem Rnd_ZR_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
 
 /-- Round to nearest property for functions
 
-    A function satisfies Rnd_N if it always returns the nearest
+    A function satisfies `Rnd_N` if it always returns the nearest
     representable value. This is the base property for all
-    round-to-nearest modes without specifying tie-breaking.
+    `round-to-nearest` modes without specifying tie breaking.
 -/
 def Rnd_N (F : ℝ → Prop) (rnd : ℝ → ℝ) : Id Prop :=
   pure (∀ x : ℝ, Rnd_N_pt F x (rnd x))
@@ -138,14 +138,14 @@ theorem Rnd_N_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
 
 /-- Generic rounding property with tie-breaking predicate
 
-    A function satisfies Rnd_NG with predicate P if it rounds
+    A function satisfies `Rnd_NG` with predicate P if it rounds
     to nearest and uses P to break ties. This generalizes
-    all round-to-nearest variants with different tie policies.
+    all `round-to-nearest` variants with different tie policies.
 -/
 def Rnd_NG (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (rnd : ℝ → ℝ) : Id Prop :=
   pure (∀ x : ℝ, Rnd_NG_pt F P x (rnd x))
 
-/-- Specification: Generic round to nearest with tie-breaking
+/-- Specification: Generic round to nearest with tie breaking
 
     The generic nearest property with custom tie-breaking
     provides a unified framework for implementing various
@@ -161,9 +161,9 @@ theorem Rnd_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (rnd : ℝ →
 
 /-- Round ties away from zero property
 
-    A function satisfies Rnd_NA if it rounds to nearest,
+    A function satisfies `Rnd_NA` if it rounds to nearest,
     breaking ties by choosing the value farther from zero.
-    This implements IEEE 754's "away from zero" tie-breaking.
+    This implements IEEE 754's "away from zero" tie breaking.
 -/
 def Rnd_NA (F : ℝ → Prop) (rnd : ℝ → ℝ) : Id Prop :=
   pure (∀ x : ℝ, Rnd_NA_pt F x (rnd x))
@@ -184,9 +184,9 @@ theorem Rnd_NA_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
 
 /-- Round ties toward zero property
 
-    A function satisfies Rnd_N0 if it rounds to nearest,
+    A function satisfies `Rnd_N0` if it rounds to nearest,
     breaking ties by choosing the value closer to zero.
-    This provides an alternative tie-breaking strategy.
+    This provides an alternative tie breaking strategy.
 -/
 def Rnd_N0 (F : ℝ → Prop) (rnd : ℝ → ℝ) : Id Prop :=
   pure (∀ x : ℝ, Rnd_N0_pt F x (rnd x))
@@ -769,7 +769,7 @@ theorem Rnd_DN_UP_pt_split (F : ℝ → Prop) (x d u f : ℝ) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   exact Rnd_DN_UP_pt_split_spec F x d u f
 
-/-- Exclusivity: representable within [dn, up] is at an endpoint
+/-- Exclusivity: representable within `[dn, up]` is at an endpoint
 
     If `fd` and `fu` are the DN/UP points for `x` and `f` is representable
     and lies between them, then `f` must be equal to one of the endpoints.
@@ -3935,9 +3935,9 @@ end FormatEquivalence
 
 section SatisfiesAnyConsequences
 
-/-- Check alternative characterization of satisfies_any
+/-- Check alternative characterization of `satisfies_any`
 
-    Placeholder equivalence/characterization for satisfies_any.
+    Placeholder equivalence/characterization for `satisfies_any`.
 -/
 noncomputable def satisfies_any_eq_check (F : ℝ → Prop) : Id Bool :=
   by
@@ -3951,7 +3951,7 @@ noncomputable def satisfies_any_eq_check (F : ℝ → Prop) : Id Bool :=
             FloatSpec.Core.Generic_fmt.satisfies_any F1 →
             FloatSpec.Core.Generic_fmt.satisfies_any F2))
 
-/-- Specification: satisfies_any alternative characterization
+/-- Specification: `satisfies_any` alternative characterization
 
     A placeholder statement expressing equivalence for `satisfies_any`.
 -/
@@ -3969,9 +3969,9 @@ theorem satisfies_any_eq_spec (F : ℝ → Prop) :
   rcases hAny with ⟨x, hx⟩
   exact ⟨x, (hEq x).mp hx⟩
 
-/-- Check existence of DN rounding from satisfies_any
+/-- Check existence of DN rounding from `satisfies_any`
 
-    If a format satisfies_any, DN rounding is total.
+    If a format `satisfies_any`, DN rounding is total.
 -/
 noncomputable def satisfies_any_imp_DN_check (F : ℝ → Prop) : Id Bool :=
   by
@@ -3979,7 +3979,7 @@ noncomputable def satisfies_any_imp_DN_check (F : ℝ → Prop) : Id Bool :=
     -- Totality of DN rounding as a round_pred property.
     exact pure (decide (round_pred (Rnd_DN_pt F)))
 
-/-- Specification: satisfies_any implies DN rounding exists
+/-- Specification: `satisfies_any` implies DN rounding exists
 
     From `satisfies_any F`, DN rounding predicate is total.
 -/
@@ -4003,16 +4003,16 @@ theorem satisfies_any_imp_DN_spec (F : ℝ → Prop) :
     have hf_le_y : f ≤ y := le_trans hf_le_x hxy
     exact hmax_y f hfF hf_le_y
 
-/-- Check existence of UP rounding from satisfies_any
+/-- Check existence of UP rounding from `satisfies_any`
 
-    If a format satisfies_any, UP rounding is total.
+    If a format `satisfies_any`, UP rounding is total.
 -/
 noncomputable def satisfies_any_imp_UP_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
     exact pure (decide (round_pred (Rnd_UP_pt F)))
 
-/-- Specification: satisfies_any implies UP rounding exists
+/-- Specification: `satisfies_any` implies UP rounding exists
 
     From `satisfies_any F`, UP rounding predicate is total.
 -/
@@ -4036,16 +4036,16 @@ theorem satisfies_any_imp_UP_spec (F : ℝ → Prop) :
     have hx_le_g : x ≤ g := le_trans hxy hy_le_y
     exact hmin_x g hgF hx_le_g
 
-/-- Check existence of ZR rounding from satisfies_any
+/-- Check existence of ZR rounding from `satisfies_any`
 
-    If a format satisfies_any, ZR rounding is total.
+    If a format `satisfies_any`, ZR rounding is total.
 -/
 noncomputable def satisfies_any_imp_ZR_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
     exact pure (decide (round_pred (FloatSpec.Core.Defs.Rnd_ZR_pt F)))
 
-/-- Specification: satisfies_any implies ZR rounding exists
+/-- Specification: `satisfies_any` implies ZR rounding exists
 
     From `satisfies_any F`, ZR rounding predicate is total.
 -/
@@ -4094,16 +4094,16 @@ theorem satisfies_any_imp_ZR_spec (F : ℝ → Prop) :
         have hxleg : x ≤ g := le_trans hxy hUPy.2.1
         exact hUPx.2.2 g hUPy.1 hxleg
 
-/-- Check existence of NG rounding from satisfies_any
+/-- Check existence of NG rounding from `satisfies_any`
 
-    If a format satisfies_any, NG rounding is total.
+    If a format `satisfies_any`, NG rounding is total.
 -/
 noncomputable def satisfies_any_imp_NG_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Id Bool :=
   by
     classical
     exact pure (decide (round_pred (Rnd_NG_pt F P)))
 
-/-- Specification: satisfies_any implies NG rounding exists
+/-- Specification: `satisfies_any` implies NG rounding exists
 
     From `satisfies_any F` and a predicate `P`, NG rounding predicate is total.
 -/
@@ -4131,16 +4131,16 @@ theorem satisfies_any_imp_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) 
     simpa [Rnd_NG_pt_monotone_check, wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
       using hmono hTieUnique
 
-/-- Check existence of NA rounding from satisfies_any
+/-- Check existence of NA rounding from `satisfies_any`
 
-    If a format satisfies_any, NA rounding is total.
+    If a format `satisfies_any`, NA rounding is total.
 -/
 noncomputable def satisfies_any_imp_NA_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
     exact pure (decide (round_pred (Rnd_NA_pt F)))
 
-/-- Specification: satisfies_any implies NA rounding exists
+/-- Specification: `satisfies_any` implies NA rounding exists
 
     From `satisfies_any F`, NA rounding predicate is total.
 -/
@@ -4161,16 +4161,16 @@ theorem satisfies_any_imp_NA_spec (F : ℝ → Prop) :
     simpa [Rnd_NA_pt_monotone_check, wp, PostCond.noThrow, Id.run, pure,
       decide_eq_true_iff] using hmono hF0
 
-/-- Check existence of N0 rounding from satisfies_any
+/-- Check existence of N0 rounding from `satisfies_any`
 
-    If a format satisfies_any, N0 rounding is total.
+    If a format `satisfies_any`, N0 rounding is total.
 -/
 noncomputable def satisfies_any_imp_N0_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
     exact pure (decide (round_pred (Rnd_N0_pt F)))
 
-/-- Specification: satisfies_any implies N0 rounding exists
+/-- Specification: `satisfies_any` implies N0 rounding exists
 
     From `satisfies_any F`, N0 rounding predicate is total.
 -/

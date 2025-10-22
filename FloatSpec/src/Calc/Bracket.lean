@@ -78,7 +78,7 @@ private lemma compare_mul_pos_right_zero (t c : ℝ) (hc : 0 < c) :
       simp [compare, heq]
 variable (x : ℝ)
 
-/-- Determine location of x relative to interval [d, u)
+/-- Determine location of x relative to interval `[d, u)`
 
     Classifies a real number's position within an interval:
     - Exact if x equals the lower bound d
@@ -92,7 +92,7 @@ noncomputable def inbetween_loc : Id Location :=
 
 /-- Specification: Location determination is correct
 
-    The computed location accurately represents x's position in [d, u)
+    The computed location accurately represents x's position in `[d, u)`
 -/
 theorem inbetween_spec (Hx : d ≤ x ∧ x < u) :
     ⦃⌜d ≤ x ∧ x < u⌝⦄
@@ -123,7 +123,7 @@ def inbetween_unique_check (l l' : Location) : Id Bool :=
 
 /-- Specification: Location is unique
 
-    If x has two valid locations in [d, u), they must be identical
+    If x has two valid locations in `[d, u)`, they must be identical
 -/
 theorem inbetween_unique (l l' : Location)
     (Hl : inbetween d u x l) (Hl' : inbetween d u x l') :
@@ -245,7 +245,7 @@ theorem inbetween_distance_inexact_abs (ord : Ordering)
 
 /-- Construct a witness for location existence
 
-    Produces an x value that has the given location in [d, u)
+    Produces an x value that has the given location in `[d, u)`
 -/
 noncomputable def inbetween_ex_witness (d u : ℝ) (l : Location) (Hdu : d < u) : Id ℝ :=
   -- Choose a witness depending on the desired ordering:

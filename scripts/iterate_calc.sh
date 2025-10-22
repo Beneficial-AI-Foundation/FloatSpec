@@ -16,7 +16,7 @@ file_list=(
   # Round_generic.lean
   # Ulp.lean
   
-  Div.lean
+  # Div.lean
   # Plus.lean
   Round.lean
   # Sqrt.lean
@@ -29,10 +29,10 @@ hours=(
   # 4
   # 2
   # 2
-  2
-  2
-  2
-  2
+  # 2
+  4
+  4
+  4
 )
 
 # Sanity check: arrays must match

@@ -42,9 +42,9 @@ def FIX_exp (_ : Int) : Int :=
 
 /-- Check FIX format correctness
 
-    Verify the fundamental property that FIX_exp always
+    Verify the fundamental property that `FIX_exp` always
     returns emin regardless of input. This validates
-    the fixed-point nature of the format.
+    the `fixed-point` nature of the format.
 -/
 def FIX_exp_correct_check (e : Int) : Id Bool :=
   -- Use boolean equality on integers to avoid Prop placeholders
@@ -74,7 +74,7 @@ theorem FIX_exp_spec (e : Int) :
 def FIX_format (beta : Int) (x : ℝ) : Id Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
 
-/-- Valid_exp instance for the fixed exponent function (placeholder). -/
+/-- `Valid_exp` instance for the fixed exponent function. -/
 instance FIX_exp_valid (beta : Int) :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FIX_exp emin) := by
   refine ⟨?_⟩
@@ -236,7 +236,7 @@ end FloatSpec.Core.FIX
 namespace FloatSpec.Core.FIX
 
 /-- Coq (FIX.v):
-Theorem round_FIX_IZR : forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).
+Theorem `round_FIX_IZR `: `forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).`
 
 Lean (ported, minimal adaptation): Our `round_to_generic` model ignores the
 rounding function `f` and performs truncation of the scaled mantissa with the
