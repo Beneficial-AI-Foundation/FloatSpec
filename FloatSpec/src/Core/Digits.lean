@@ -471,10 +471,12 @@ private lemma tdiv_pow_succ_assoc
   -- It remains to show the Euclidean-division identity on the rhs
   -- `(n / beta) / (beta^k) = n / (beta^(k+1))`
   have hmid' : (n / beta) / (beta ^ k) = n / (beta ^ (k + 1)) := by
-    have hb_pow_nonneg : 0 ≤ beta ^ k := le_of_lt (pow_pos hb k)
-    -- use `(a / b) / c = a / (b*c)` for nonnegative `c`
-    simpa [pow_succ, mul_comm] using
-      (Int.ediv_ediv_eq_ediv_mul (a := n) (b := beta) (c := beta ^ k) hb_pow_nonneg)
+    -- Use `(a / b) / c = a / (b * c)` requiring `0 ≤ b` (here `b = beta`).
+    have hb_nonneg : 0 ≤ beta := le_of_lt hb
+    have hassoc : (n / beta) / (beta ^ k) = n / (beta * (beta ^ k)) := by
+      simpa using (Int.ediv_ediv hb_nonneg)
+    -- Normalize powers
+    simpa [pow_succ, mul_comm] using hassoc
   have hmid : n / (beta ^ (k + 1)) = (n / beta) / (beta ^ k) := hmid'.symm
   -- Replace `(tdiv n beta)` by `(n / beta)` in the right-hand expression
   have hdiv_eq : Int.tdiv n beta = n / beta := by
@@ -914,7 +916,12 @@ theorem Zdigit_div_pow (n k l : Int) (hβ : beta > 1 := h_beta):
       have hdiv_nonneg : 0 ≤ n / beta ^ l.natAbs := Int.ediv_nonneg hn_nonneg (Int.le_of_lt hbL)
       rw [Int.tdiv_eq_ediv_of_nonneg hdiv_nonneg]
       rw [Int.tdiv_eq_ediv_of_nonneg hn_nonneg]
-      rw [Int.ediv_ediv_eq_ediv_mul n (Int.le_of_lt hbL)]
+      -- `(n / (β^l)) / (β^k) = n / (β^(l+k))` for nonnegative divisor `β^l`
+      -- Use `Int.ediv_ediv` (requires `0 ≤ β^l`) and then normalize powers.
+      have := Int.ediv_ediv (Int.le_of_lt hbL)
+      -- `this : (n / (β^l)) / (β^k) = n / ((β^l) * (β^k))`
+      -- Replace by `pow_add` in the next step.
+      simpa [pow_add, mul_comm] using this
       rw [mul_comm]
     rw [hdiv_eq]
 
@@ -1731,11 +1738,9 @@ theorem ZOdiv_plus_pow_digit
 
   -- (n / b) / β = n / (b * β)
   have ediv_assoc : (n / b) / beta = n / (b * beta) := by
-    -- Use ediv_ediv with b ≥ 0
-    have : n / b / beta = n / (b * beta) := by
-      rw [Int.ediv_ediv_eq_ediv_mul]
-      exact Int.le_of_lt hb_pos
-    exact this
+    -- Use `Int.ediv_ediv` with `0 ≤ b`
+    have hb_nonneg : 0 ≤ b := le_of_lt hb_pos
+    simpa using (Int.ediv_ediv hb_nonneg)
 
   -- n / b = (n / (b*β)) * β + (n / b) % β
   have step : n / b = (n / (b * beta)) * beta + (n / b % beta) := by
@@ -2462,8 +2467,9 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
           calc n / (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs) * beta ^ l.natAbs
             = n / (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs) * beta ^ l.natAbs := rfl
             _ = (n / beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs * beta ^ l.natAbs := by
-              rw [Int.ediv_ediv_eq_ediv_mul]
-              exact Int.le_of_lt hposl
+              -- associate Euclidean divisions: `(n/b)/c = n/(b*c)` for `0 ≤ b`
+              have hb_nonneg : 0 ≤ beta ^ l.natAbs := le_of_lt hposl
+              simpa using (Int.ediv_ediv hb_nonneg)
             _ = ((n / beta ^ l.natAbs) * beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs := by
               rw [Int.mul_ediv_assoc' _ hdiv_compose2]
             _ = n / beta ^ (-(k + l)).natAbs := by
@@ -2482,8 +2488,9 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
       have hpos2 : 0 < beta ^ (-l).natAbs := by simpa using pow_pos hβpos (-l).natAbs
       have : (n / beta ^ (-k).natAbs) / beta ^ (-l).natAbs
                = n / (beta ^ (-k).natAbs * beta ^ (-l).natAbs) := by
-        rw [Int.ediv_ediv_eq_ediv_mul]
-        exact Int.le_of_lt hpos1
+        -- `(n/a)/b = n/(a*b)` for `0 ≤ a`
+        have ha_nonneg : 0 ≤ beta ^ (-k).natAbs := le_of_lt hpos1
+        simpa using (Int.ediv_ediv ha_nonneg)
       have : (n / beta ^ (-k).natAbs) / beta ^ (-l).natAbs
                = n / beta ^ (-(k + l)).natAbs := by
         -- combine powers on the RHS
@@ -3177,7 +3184,7 @@ theorem Zslice_div_pow (n k k1 k2 : Int) (h_beta : beta > 1):
           (n / beta ^ k.natAbs) / beta ^ k1.natAbs
             = n / (beta ^ k.natAbs * beta ^ k1.natAbs) := by
         have h_pos : 0 ≤ beta ^ k.natAbs := le_of_lt hbK
-        exact Int.ediv_ediv n h_pos
+        exact Int.ediv_ediv h_pos
       -- β^a * β^b = β^(a+b)
       have mul_to_pow :
           beta ^ k.natAbs * beta ^ k1.natAbs
