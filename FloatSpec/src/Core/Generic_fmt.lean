@@ -5852,12 +5852,11 @@ theorem generic_format_equiv (beta : Int) (x : ℝ) (e1 e2 : Int) :
 
 variable (rnd : ℝ → ℝ → Prop)
 
-/-- Coq (Generic_fmt.v):
-    Theorem generic_round_generic:
+/-- Coq (`Generic_fmt.v`):
+    Theorem `generic_round_generic`:
     If x is in the generic format for fexp1, then rounding with
     fexp2 and relation rnd stays in that format.
-
-    Lean (spec): round_to_generic with fexp2 remains in format fexp1. -/
+    Lean (spec): `round_to_generic` with fexp2 remains in format fexp1. -/
 -- We use a localized theorem capturing the closure of a generic format under
 -- rounding to a (possibly different) generic exponent function. This mirrors
 -- the Coq result and lets us focus later work on quantitative bounds.
@@ -6352,12 +6351,11 @@ theorem round_le_generic
     simpa using hmono
   simpa [hfix]
 
-/-- Coq (Generic_fmt.v):
-    Theorem round_abs_abs:
-      forall P, (∀ rnd x, 0 ≤ x → P x (round rnd x)) →
-                 ∀ rnd x, P |x| |round rnd x|.
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lit}`round_abs_abs`:
+      {lit}`∀ P, (∀ rnd x, 0 ≤ x → P x (round rnd x)) → ∀ rnd x, P |x| |round rnd x|`.
 
-    Lean (spec): Lifts absolute value through rounding for predicates `P`.
+    Lean (spec): Lifts absolute value through rounding for predicates {lit}`P`.
  -/
 theorem round_abs_abs
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -6454,12 +6452,12 @@ theorem abs_round_le_generic_ax
   -- Conclude with the absolute-value characterization
   exact (abs_le.mpr ⟨h_lo, h_up⟩)
 
-/-- Coq (Generic_fmt.v):
-    Theorem round_bounded_large:
-      (fexp ex < ex) -> bpow (ex-1) ≤ |x| < bpow ex ->
-      bpow (ex-1) ≤ |round rnd x| ≤ bpow ex.
+/-
+  Coq Generic_fmt.v: Theorem round_bounded_large.
+  If fexp ex < ex and bpow (ex-1) ≤ |x| < bpow ex,
+  then bpow (ex-1) ≤ |round rnd x| ≤ bpow ex.
 
-    Lean (spec): Bounds the magnitude of rounded values in the large regime.
+  Lean (spec): Bounds the magnitude of rounded values in the large regime.
  -/
 theorem round_bounded_large
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -6934,10 +6932,8 @@ noncomputable def round_N_to_format
   We re-introduce them one-by-one with empty proofs to align with Coq.
 -/
 
-/-- Coq {lit}`Generic_fmt.v`:
-    Theorem {lean}`round_DN_opp`:
-    {lean}`∀ x, round Zfloor (-x) = - round Zceil x`.
-
+/-- Coq Generic_fmt.v: Theorem round_DN_opp.
+    Statement: ∀ x, round Zfloor (-x) = - round Zceil x.
     Lean (spec placeholder): Specializes round_opp for DN/UP relations. -/
 theorem round_DN_opp
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -7121,10 +7117,8 @@ theorem round_AW_DN
 -- (moved below after `round_large_pos_ge_bpow`)
 
 
-/-- Coq (Generic_fmt.v):
-    Theorem mag_round_ge:
-      round rnd x ≠ 0 → mag x ≤ mag (round rnd x).
-
+/-- Coq Generic_fmt.v: Theorem mag_round_ge.
+    If round rnd x ≠ 0, then mag x ≤ mag (round rnd x).
     Lean (spec placeholder): Magnitude does not decrease under rounding away from zero.
  -/
 theorem mag_round_ge
@@ -7142,11 +7136,8 @@ theorem mag_round_ge
 
 -- (exp_small_round_0_pos_ax moved below round_large_pos_ge_bpow)
 
-/-- Coq (Generic_fmt.v):
-    Theorem generic_N_pt_DN_or_UP:
-      Rnd_N_pt generic_format x f → f = round Zfloor x ∨ f = round Zceil x.
-
-    Lean (predicate form): Any nearest point is either a DN- or UP-point.
+/-- Coq Generic_fmt.v: Theorem generic_N_pt_DN_or_UP.
+    Any nearest point is either a DN- or UP-point.
  -/
 theorem generic_N_pt_DN_or_UP
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -7278,12 +7269,9 @@ theorem lt_cexp
   -- Conclude |x| < |y|
   exact lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := abs x) (y := abs y) hβ hy_pos hlt_abs
 
-/-- Coq (Generic_fmt.v):
-    Theorem abs_round_ge_generic:
-      generic_format x → x ≤ |y| → x ≤ |round rnd y|.
-
-    Lean (spec): Absolute-value monotonicity w.r.t. a representable lower bound.
- -/
+/-- Coq Generic_fmt.v: Theorem abs_round_ge_generic.
+    If generic_format x and x ≤ |y|, then x ≤ |round rnd y|.
+    Lean (spec): Absolute-value monotonicity w.r.t. a representable lower bound. -/
 theorem abs_round_ge_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
@@ -7297,12 +7285,9 @@ theorem abs_round_ge_generic
   -- Apply the absolute-value lower-bound theorem
   exact abs_round_ge_generic_ax (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) (y := y) hxF hxle
 
-/-- Coq (Generic_fmt.v):
-    Theorem abs_round_le_generic:
-      generic_format y → |x| ≤ y → |round rnd x| ≤ y.
-
-    Lean (spec): Absolute-value monotonicity w.r.t. a representable upper bound.
- -/
+/-- Coq Generic_fmt.v: Theorem abs_round_le_generic.
+    If generic_format y and |x| ≤ y, then |round rnd x| ≤ y.
+    Lean (spec): Absolute-value monotonicity w.r.t. a representable upper bound. -/
 theorem abs_round_le_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
@@ -7457,10 +7442,8 @@ theorem round_bounded_large_pos
   -- Conclude
   simpa [wp, PostCond.noThrow, Id.run, pure] using And.intro hlow' hupp'
 
-/-- Coq (Generic_fmt.v):
-    Lemma round_le_pos:
-      0 < x → x ≤ y → round rnd x ≤ round rnd y.
- -/
+/-- Coq Generic_fmt.v: Lemma round_le_pos.
+    If 0 < x and x ≤ y then round rnd x ≤ round rnd y. -/
 theorem round_le_pos
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
@@ -7529,9 +7512,9 @@ theorem round_DN_UP_lt
       right
       exact hmin f hfF hx_le_f
 
-/-- Coq (Generic_fmt.v):
-    Lemma round_large_pos_ge_bpow:
-      If fexp ex < ex and bpow (ex-1) ≤ x, then bpow (ex-1) ≤ round rnd x.
+/-- Coq {lit}`Generic_fmt.v`:
+    Lemma {lean}`round_large_pos_ge_bpow`:
+      If {lean}`fexp ex < ex` and {lean}`bpow (ex-1) ≤ x`, then {lean}`bpow (ex-1) ≤ round rnd x`.
  -/
 theorem round_large_pos_ge_bpow
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
