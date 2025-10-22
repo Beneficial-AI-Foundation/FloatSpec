@@ -606,7 +606,11 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
   simpa [FloatSpec.Core.Defs.F2R] using
     (generic_format_F2R (beta := beta) (fexp := fexp) (m := 1) (e := e) ⟨hβ, hbound⟩)
 
-/-- Variant generic_format_bpow' (Coq Generic_fmt): assumes fexp e ≤ e. -/
+/--
+Variant {lean}`generic_format_bpow'` (Coq {lit}`Generic_fmt`).
+
+Assumes {lean}`fexp e ≤ e`.
+-/
 theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
     ⦃⌜beta > 1 ∧ fexp e ≤ e⌝⦄
     generic_format beta fexp ((beta : ℝ) ^ e)
@@ -1664,16 +1668,7 @@ theorem mag_generic_gt
   -- This matches the simplified goal (unfolding the definition of mag on runs)
   simpa [M, FloatSpec.Core.Raux.mag]
 
-/-- Coq (Generic_fmt.v): abs_lt_bpow_prec
-
-    Lean adaptation: with our `mag` characterization using a non‑strict upper
-    bound, we obtain a non‑strict inequality. Under `1 < beta` and the
-    hypothesis `∀ e, e - prec ≤ fexp e`, for any real `x` we have
-    `|x| ≤ β^(prec + cexp(x))`.
-
-    Note: Coq’s original statement is strict (`<`). See PROOF_CHANGES.md for
-    rationale about the relaxed inequality in this port.
--/
+/-- Coq (Generic_fmt.v): abs_lt_bpow_prec. Lean port uses a non-strict bound. -/
 theorem abs_lt_bpow_prec
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (prec : Int) :
@@ -1884,10 +1879,7 @@ instance valid_rnd_floor : Valid_rnd rnd_floor := by
     intro n
     simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using (Int.floor_intCast (n := n))
 
-/-- Coq (Generic_fmt.v): Ceiling rounding function.
-We will use this to construct up-rounding witnesses by applying `Zceil`
-to the scaled mantissa and rescaling by the canonical exponent.
--/
+/-- Coq ({lit}`Generic_fmt.v`): Ceiling rounding function used for up-rounding witnesses. -/
 noncomputable def rnd_ceil (x : ℝ) : Int := (FloatSpec.Core.Raux.Zceil x).run
 
 instance valid_rnd_ceil : Valid_rnd rnd_ceil := by
@@ -1903,9 +1895,7 @@ instance valid_rnd_ceil : Valid_rnd rnd_ceil := by
     intro n
     simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil] using (Int.ceil_intCast (n := n))
 
-/-- Coq (Generic_fmt.v): Opposite rounding function.
-    Given a rounding function rnd, Zrnd_opp rnd negates the rounding of the negated input.
-    Definition from Coq: Zrnd_opp x := Z.opp (rnd (-x)). -/
+/-- Coq ({lit}`Generic_fmt.v`): Opposite rounding function {lean}`Zrnd_opp`. -/
 noncomputable def Zrnd_opp (rnd : ℝ → Int) (x : ℝ) : Int :=
   -(rnd (-x))
 
@@ -2401,14 +2391,11 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
     have : |x - (c : ℝ)| < (2⁻¹) := by simpa [habs] using this
     simpa [habs_near]
 
-/-- Check value for Znearest_half: |x - IZR (Znearest x)| -/
+/-- Check value for {lean}`Znearest_half`: {lean}`|x - IZR (Znearest x)|`. -/
 noncomputable def Znearest_half_check (choice : Int → Bool) (x : ℝ) : Id ℝ :=
   Znearest_N_strict_check choice x
 
-/-- Coq (Generic_fmt.v): Znearest_half
-
-    Always `|x - IZR (Znearest x)| ≤ 1/2`.
--/
+/-- Coq (Generic_fmt.v): {lean}`Znearest_half`. Always {lean}`|x - IZR (Znearest x)| ≤ 1/2`. -/
 theorem Znearest_half (choice : Int → Bool) (x : ℝ) :
     ⦃⌜True⌝⦄
     Znearest_half_check choice x
@@ -3965,11 +3952,7 @@ theorem generic_inclusion_le_ge (e1 e2 : Int) :
         (generic_inclusion (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2) (e := e2))
           hβ hle_e2 x hbounds hx_fmt1
 
-/-- Coq (Generic_fmt.v):
-    Theorem generic_inclusion_le:
-      ∀ e2, (∀ e, e ≤ e2 → fexp2 e ≤ fexp1 e) →
-      ∀ x, |x| ≤ bpow e2 → generic_format fexp1 x → generic_format fexp2 x.
--/
+/-- Coq ({lit}`Generic_fmt.v`): Theorem {lean}`generic_inclusion_le` (rephrased). -/
 theorem generic_inclusion_le (e2 : Int) :
     1 < beta →
     (∀ e : Int, e ≤ e2 → fexp2 e ≤ fexp1 e) →
@@ -4014,11 +3997,7 @@ theorem generic_inclusion_le (e2 : Int) :
       exact (generic_inclusion (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2) (e := e2))
         hβ hle_e2 x hbounds hx_fmt1
 
-/-- Coq (Generic_fmt.v):
-    Theorem generic_inclusion_ge:
-      ∀ e1, (∀ e, e1 < e → fexp2 e ≤ fexp1 e) →
-      ∀ x, bpow e1 ≤ |x| → generic_format fexp1 x → generic_format fexp2 x.
--/
+/-- Coq ({lit}`Generic_fmt.v`): Theorem {lean}`generic_inclusion_ge` (rephrased). -/
 theorem generic_inclusion_ge (e1 : Int) :
     1 < beta →
     (∀ e : Int, e1 ≤ e → fexp2 e ≤ fexp1 e) →
@@ -5732,11 +5711,7 @@ theorem round_DN_or_UP
    magnitude lemmas; see the final definition inserted below. -/
 
 
-/-- Coq (Generic_fmt.v):
-    Theorem scaled_mantissa_DN:
-      0 < round Zfloor x ->
-      scaled_mantissa (round Zfloor x) = IZR (Zfloor (scaled_mantissa x)).
--/
+/-- Coq ({lit}`Generic_fmt.v`): Theorem {lean}`scaled_mantissa_DN` (rephrased). -/
 
 -- Specification: Precision bounds for generic format
 -- For non-zero x in generic format, the scaled mantissa
