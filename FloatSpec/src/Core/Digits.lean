@@ -2481,7 +2481,15 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
                   (Int.ediv_ediv hb_nonneg :
                     (n / (beta ^ l.natAbs)) / (beta ^ (-(k + l)).natAbs)
                       = n / ((beta ^ l.natAbs) * (beta ^ (-(k + l)).natAbs)))
-              simpa [hassoc]
+              -- Rewrite the left-hand side using the symmetric form
+              -- of the associativity equality we just established.
+              have hassoc' :
+                  n / (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs)
+                    = (n / beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs := by
+                simpa using hassoc.symm
+              -- rewrite the division by a product into two successive divisions
+              -- the goal then closes by reflexivity
+              rw [hassoc']
             _ = ((n / beta ^ l.natAbs) * beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs := by
               rw [Int.mul_ediv_assoc' _ hdiv_compose2]
             _ = n / beta ^ (-(k + l)).natAbs := by
