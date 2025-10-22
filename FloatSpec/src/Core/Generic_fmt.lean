@@ -800,7 +800,7 @@ theorem canonical_unique
 
 -- Section: Scaled mantissa properties
 
-/-- Coq (Generic_fmt.v): generic_format_canonical
+/-- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_canonical`
 
     If a float `f` is canonical, then its real value `(F2R f)`
     is representable in the generic format.
@@ -1122,7 +1122,7 @@ theorem generic_format_satisfies_any (beta : Int) (fexp : Int → Int) [Valid_ex
   simp [Ztrunc]
 
 
-/-- Coq (Generic_fmt.v): generic_format_EM
+/-- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_EM`
 
     Law of excluded middle for membership in the generic format.
     Either a real `x` is in the generic format or it is not.
@@ -1699,7 +1699,7 @@ theorem abs_lt_bpow_prec
   -- Chain the inequalities
   exact le_trans h_abs_le h_bpow_le
 
-/-- Coq (Generic_fmt.v): generic_format_discrete
+/-- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_discrete`
 
     If x lies strictly between two consecutive representable values at the
     canonical exponent `e := cexp x`, then x is not in the generic format.
@@ -2037,7 +2037,7 @@ theorem Zrnd_ZR_or_AW (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
 
 -- Section: Znearest (round to nearest with tie-breaking choice)
 
-/-- Coq (Generic_fmt.v): Znearest
+/-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest`
 
     Round to nearest integer using a choice function on ties at half.
     If `Rcompare (x - ⌊x⌋) (1/2)` is:
@@ -2087,7 +2087,7 @@ theorem Znearest_eq_choice_of_eq_half
   -- Reduce the match using `hr0` (normalizing 1/2 as 2⁻¹) and close by reflexivity
   simp [one_div, hr0]
 
-/-- Coq (Generic_fmt.v): Znearest_DN_or_UP
+/-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_DN_or_UP`
 
     For any x, `Znearest x` is either `⌊x⌋` or `⌈x⌉` (depending on the
     comparison and the tie-breaking choice). We state it using the
@@ -2164,7 +2164,7 @@ noncomputable def Znearest_ge_floor_check (choice : Int → Bool) (x : ℝ) : Id
     let f ← FloatSpec.Core.Raux.Zfloor x
     pure (f, Znearest choice x)
 
-/-- Coq (Generic_fmt.v): Znearest_ge_floor
+/-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_ge_floor`
 
     Always `⌊x⌋ ≤ Znearest x`.
 -/
@@ -2212,7 +2212,7 @@ noncomputable def Znearest_le_ceil_check (choice : Int → Bool) (x : ℝ) : Id 
     let c ← FloatSpec.Core.Raux.Zceil x
     pure (Znearest choice x, c)
 
-/-- Coq (Generic_fmt.v): Znearest_le_ceil
+/-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_le_ceil`
 
     Always `Znearest x ≤ ⌈x⌉`.
 -/
@@ -2258,11 +2258,11 @@ theorem Znearest_le_ceil (choice : Int → Bool) (x : ℝ) :
    Znearest_le_ceil, Znearest_N_strict, Znearest_half, Znearest_imp, Znearest_opp.
    We add them one-by-one following the pipeline instructions. -/
 
-/-- Check value for Znearest_N_strict: |x - IZR (Znearest x)| -/
+/-- Check value for {lean}`Znearest_N_strict`: {lean}`|x - (((Znearest choice x) : Int) : ℝ)|` -/
 noncomputable def Znearest_N_strict_check (choice : Int → Bool) (x : ℝ) : Id ℝ :=
   pure (|x - (((Znearest choice x) : Int) : ℝ)|)
 
-/-- Coq (Generic_fmt.v): Znearest_N_strict
+/-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_N_strict`
 
     If `(x - ⌊x⌋) ≠ 1/2` then `|x - IZR (Znearest x)| < 1/2`.
 -/
@@ -2391,12 +2391,13 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
     have : |x - (c : ℝ)| < (2⁻¹) := by simpa [habs] using this
     simpa [habs_near]
 
-/-- Check value for {lean}`Znearest_half`: {lean}`|x - IZR (Znearest x)|`. -/
+/-- Check value for {lit}`Znearest_half`: {lean}`|x - ((Znearest choice x : Int) : ℝ)|`. -/
 noncomputable def Znearest_half_check (choice : Int → Bool) (x : ℝ) : Id ℝ :=
   Znearest_N_strict_check choice x
 
-/-- Coq (Generic_fmt.v): {lean}`Znearest_half`. Always {lean}`|x - IZR (Znearest x)| ≤ 1/2`. -/
-theorem Znearest_half (choice : Int → Bool) (x : ℝ) :
+/-- Coq {lit}`Generic_fmt.v`: {lit}`Znearest_half`.
+    Always {lean}`|x - ((Znearest choice x : Int) : ℝ)| ≤ (1/2)`. -/
+theorem Znearest_half_theorem (choice : Int → Bool) (x : ℝ) :
     ⦃⌜True⌝⦄
     Znearest_half_check choice x
     ⦃⇓r => ⌜r ≤ (1/2)⌝⦄ := by
@@ -2493,11 +2494,11 @@ theorem Znearest_half (choice : Int → Bool) (x : ℝ) :
     exact le_of_lt hlt'
 
 
-/-- Check pair for Znearest_imp: returns (Znearest x, n) -/
+/-- {lit}`Check pair for Znearest_imp: returns (Znearest choice x, n)` -/
 noncomputable def Znearest_imp_check (choice : Int → Bool) (x : ℝ) (n : Int) : Id (Int × Int) :=
   pure (Znearest choice x, n)
 
-/-- Coq (Generic_fmt.v): Znearest_imp
+/-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_imp`
 
     If `|x - IZR n| < 1/2` then `Znearest x = n`.
 -/
@@ -2510,9 +2511,9 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
   -- Reduce to a pure equality on Id
   simp [wp, PostCond.noThrow, Id.run, pure]
   classical
-  -- From Znearest_half: |x - Znearest x| ≤ 1/2
+  -- From Znearest_half_theorem: |x - Znearest x| ≤ 1/2
   have hZ_le : |x - (((Znearest choice x) : Int) : ℝ)| ≤ (1/2) := by
-    have h := (Znearest_half choice x) True.intro
+    have h := (Znearest_half_theorem choice x) True.intro
     simpa [Znearest_half_check, Znearest_N_strict_check, wp, PostCond.noThrow, Id.run, pure] using h
   -- Triangle inequality to compare the two integers Znearest and n
   have hsum_lt : |x - ((n : Int) : ℝ)| + |x - (((Znearest choice x) : Int) : ℝ)| < 1 := by
@@ -2889,7 +2890,7 @@ noncomputable def roundR (beta : Int) (fexp : Int → Int)
   let e  := (cexp beta fexp x).run
   (((rnd sm : Int) : ℝ) * (beta : ℝ) ^ e)
 
-/-- Coq (Generic_fmt.v): round_N_middle
+/-- Coq {lit}`Generic_fmt.v`: {lean}`round_N_middle`
 
     If x is exactly in the middle between its down- and up-rounded values,
     then rounding to nearest chooses the branch dictated by `choice` at the
@@ -3709,7 +3710,7 @@ theorem round_N_small
 
 -- (helper lemmas intentionally omitted at this stage)
 
-/-- Coq (Generic_fmt.v): round_NA_opp
+/-- Coq {lit}`Generic_fmt.v`: {lean}`round_NA_opp`
 
     For round-to-nearest-away-from-zero, rounding commutes with negation.
 -/
@@ -3760,7 +3761,7 @@ section Inclusion
 variable (beta : Int) (fexp1 fexp2 : Int → Int)
 variable [Valid_exp beta fexp1] [Valid_exp beta fexp2]
 
-/-- Coq (Generic_fmt.v): generic_inclusion_mag
+/-- Coq {lit}`Generic_fmt.v`: {lean}`generic_inclusion_mag`
 
     If for all nonzero x we have `fexp2 (mag x) ≤ fexp1 (mag x)`, then
     `generic_format fexp1 x → generic_format fexp2 x`.
@@ -5478,7 +5479,7 @@ theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp bet
   -- Use the existence theorem (which depends on 1 < beta) to obtain a witness.
   exact round_UP_exists (beta := beta) (fexp := fexp) (x := x)
 
-/-- Coq (Generic_fmt.v): generic_format_round_pos
+/-- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_round_pos`
 
     Compatibility lemma name alias: existence of a rounding-up value in the generic
     format. This wraps `generic_format_round_UP` to align with the Coq lemma name.
@@ -5487,9 +5488,9 @@ theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp be
     ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f :=
   generic_format_round_UP (beta := beta) (fexp := fexp) (x := x)
 
-/-- Coq (Generic_fmt.v):
-    Theorem round_DN_pt:
-      forall x, Rnd_DN_pt format x (round Zfloor x).
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_DN_pt`:
+    {lean}`∀ x, Rnd_DN_pt format x (round Zfloor x)`.
 
     Lean (existence form): There exists a down-rounded value in the
     generic format for any real x. This mirrors the Coq statement
@@ -5504,9 +5505,9 @@ theorem round_DN_pt
   -- One can retrieve such a witness from `generic_format_round_DN` when beta > 1.
   exact round_DN_exists beta fexp x
 
-/-- Coq (Generic_fmt.v):
-    Theorem round_UP_pt:
-      forall x, Rnd_UP_pt format x (round Zceil x).
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_UP_pt`:
+    {lean}`∀ x, Rnd_UP_pt format x (round Zceil x)`.
 
     Lean (existence form): There exists an up-rounded value in the
     generic format for any real x, stated with the pointwise predicate.
@@ -5517,9 +5518,9 @@ theorem round_UP_pt
       Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
   exact round_UP_exists beta fexp x
 
-/-- Coq (Generic_fmt.v):
-    Theorem round_ZR_pt:
-      forall x, Rnd_ZR_pt format x (round Ztrunc x).
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_ZR_pt`:
+    {lean}`∀ x, Rnd_ZR_pt format x (round Ztrunc x)`.
 
     Lean (existence form): There exists a toward-zero rounded value
     in the generic format for any real x. -/
@@ -5569,9 +5570,9 @@ theorem round_ZR_pt
     -- DN side is vacuous since 0 ≤ x contradicts hx; UP side holds by the witness.
     exact And.intro (fun hx0 => (False.elim (hx hx0))) (fun _ => hUP)
 
-/-- Coq (Generic_fmt.v):
-    Theorem round_N_pt:
-      ∀ x, Rnd_N_pt format x (round Znearest x).
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_N_pt`:
+    {lean}`∀ x, Rnd_N_pt format x (round Znearest x)`.
 
     Lean (existence form): There exists a nearest-rounded value in the
     generic format for any real x, stated with the pointwise predicate.
@@ -5711,7 +5712,7 @@ theorem round_DN_or_UP
    magnitude lemmas; see the final definition inserted below. -/
 
 
-/-- Coq ({lit}`Generic_fmt.v`): Theorem {lean}`scaled_mantissa_DN` (rephrased). -/
+/-- Coq {lit}`Generic_fmt.v`: Theorem {lit}`scaled_mantissa_DN` (rephrased). -/
 
 -- Specification: Precision bounds for generic format
 -- For non-zero x in generic format, the scaled mantissa
@@ -5724,7 +5725,7 @@ theorem generic_format_precision_bound
   -- Use the general bound for scaled mantissa
   exact scaled_mantissa_lt_bpow (beta := beta) (fexp := fexp) (x := x) hβ
 
-/-- Coq (Generic_fmt.v): lt_cexp_pos
+/-- Coq {lit}`Generic_fmt.v`: {lean}`lt_cexp_pos`
 
     If y > 0 and cexp x < cexp y, then x < y. -/
 theorem lt_cexp_pos
@@ -6939,9 +6940,9 @@ noncomputable def round_N_to_format
   We re-introduce them one-by-one with empty proofs to align with Coq.
 -/
 
-/-- Coq (Generic_fmt.v):
-    Theorem round_DN_opp:
-      forall x, round Zfloor (-x) = - round Zceil x.
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_DN_opp`:
+    {lean}`∀ x, round Zfloor (-x) = - round Zceil x`.
 
     Lean (spec placeholder): Specializes round_opp for DN/UP relations. -/
 theorem round_DN_opp
@@ -7197,7 +7198,7 @@ theorem generic_N_pt_DN_or_UP
       have hx_sub_le : f - x ≤ g - x := by simpa [h_abs_f, h_abs_g] using hineq
       exact (sub_le_sub_iff_right (x)).1 hx_sub_le
 
-/-- Coq (Generic_fmt.v): subnormal_exponent
+/-- Coq {lit}`Generic_fmt.v`: {lean}`subnormal_exponent`
     If ex ≤ fexp ex and x is representable, then changing the exponent to fexp ex
     while keeping the scaled mantissa yields x.
  -/
@@ -7219,7 +7220,7 @@ theorem subnormal_exponent
   -- Rewrite the canonical exponent fexp(mag x) as fexp ex using constancy
   simpa [F2R, hcexp_eq] using hx_eq
 
-/-- Coq (Generic_fmt.v): cexp_le_bpow
+/-- Coq {lit}`Generic_fmt.v`: {lean}`cexp_le_bpow`
     If x ≠ 0 and |x| < β^e, then cexp x ≤ fexp e.
  -/
 theorem cexp_le_bpow
@@ -7247,7 +7248,7 @@ theorem cexp_le_bpow
   -- Chain the inequalities
   exact hmono.trans (by simpa [hcexp_bpow])
 
-/-- Coq (Generic_fmt.v): cexp_ge_bpow
+/-- Coq {lit}`Generic_fmt.v`: {lean}`cexp_ge_bpow`
     If β^(e-1) ≤ |x|, then fexp e ≤ cexp x.
  -/
 theorem cexp_ge_bpow
@@ -7258,7 +7259,7 @@ theorem cexp_ge_bpow
   intro hβ hlt
   exact cexp_ge_bpow_ax (beta := beta) (fexp := fexp) (x := x) (e := e) hβ hlt
 
-/-- Coq (Generic_fmt.v): lt_cexp
+/-- Coq {lit}`Generic_fmt.v`: {lean}`lt_cexp`
     If y ≠ 0 and cexp x < cexp y, then |x| < |y|.
  -/
 theorem lt_cexp
