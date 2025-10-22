@@ -4157,7 +4157,7 @@ private lemma Zdigits_aux_abs_eq (n : Int) (d pow : Int) (fuel : Nat) :
 /-- Digit count of absolute value
 
 Coq theorem and proof:
-```coq
+```
 Theorem Zdigits_abs :
   forall n, Zdigits (Z.abs n) = Zdigits n.
 Proof.
