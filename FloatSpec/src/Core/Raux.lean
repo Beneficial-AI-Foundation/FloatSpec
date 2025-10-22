@@ -316,7 +316,8 @@ theorem Rmin_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rmin_opp x y
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  intro _
+  -- Precondition is trivial; name it to avoid parser confusion
+  intro hTrue
   unfold Rmin_opp
   -- We need to prove: min (-x) (-y) = -(max x y)
   exact min_neg_neg x y
@@ -338,7 +339,7 @@ theorem Rmax_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rmax_opp x y
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  intro _
+  intro htriv
   unfold Rmax_opp
   -- We need to prove: max (-x) (-y) = -(min x y)
   exact max_neg_neg x y
@@ -874,23 +875,24 @@ theorem Rcompare_Lt_inv_spec (x y : ℝ) :
     Rcompare_val x y
     ⦃⇓r => ⌜r = -1 → x < y⌝⦄ := by
   intro _
-  unfold Rcompare_val
-  -- Reduce the Hoare triple to a pure proposition about the returned code
-  unfold Rcompare
-  simp [wp, PostCond.noThrow, Id.run]
-  -- Goal after simp: (if x < y then -1 else if x = y then 0 else 1) = -1 → x < y
+  unfold Rcompare_val Rcompare
+  -- Reduce to a pure goal on the returned code
+  simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+  -- Goal: (if x < y then -1 else if x = y then 0 else 1) = -1 → x < y
   intro hcode
-  by_cases hlt : x < y
-  · exact hlt
-  · -- Not (x < y); then the code is 0 or 1, never -1
-    have hneq : (if x < y then (-1 : Int) else if x = y then 0 else 1) ≠ (-1 : Int) := by
-      by_cases heq : x = y
-      · have : (0 : Int) ≠ (-1 : Int) := by decide
-        simpa [hlt, heq] using this
-      · have : (1 : Int) ≠ (-1 : Int) := by decide
-        have hyx : y < x := lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm heq)
-        simpa [hlt, heq, hyx] using this
-    exact (hneq hcode).elim
+  by_cases hxlt : x < y
+  · exact hxlt
+  · -- Not (x < y); the code cannot be -1
+    have hbranch : (if x = y then (0 : Int) else 1) = -1 := by
+      simpa [hxlt] using hcode
+    by_cases heq : x = y
+    · have h0 : (0 : Int) ≠ (-1 : Int) := by decide
+      have : (0 : Int) = (-1 : Int) := by simpa [heq] using hbranch
+      exact (False.elim (h0 this))
+    · have h1 : (1 : Int) ≠ (-1 : Int) := by decide
+      have hyx : y < x := lt_of_le_of_ne (le_of_not_gt hxlt) (Ne.symm heq)
+      have : (1 : Int) = (-1 : Int) := by simpa [heq, hyx] using hbranch
+      exact (False.elim (h1 this))
 
 /-/ Coq: Rcompare_not_Lt - if y ≤ x then comparison is not Lt (-1). -/
 theorem Rcompare_not_Lt_spec (x y : ℝ) :
@@ -900,7 +902,7 @@ theorem Rcompare_not_Lt_spec (x y : ℝ) :
   intro hyx
   unfold Rcompare_val Rcompare
   -- Reduce Hoare triple on Id to a pure goal
-  simp [wp, PostCond.noThrow, Id.run, pure]
+  simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
   -- Under y ≤ x, we have ¬ x < y, so we enter the second branch
   have hnot : ¬ x < y := not_lt.mpr hyx
   -- It remains to show: (if x = y then (0 : Int) else 1) ≠ -1
@@ -915,7 +917,7 @@ private theorem Rcompare_not_Lt_wr (x y : ℝ) :
     ⦃⇓r => ⌜r ≠ -1⌝⦄ := by
   simpa using Rcompare_not_Lt_spec x y
 
-/-- Coq: Rcompare_not_Lt_inv — from code not Lt {lean}`-1`, deduce {lean}`y ≤ x`. -/
+/-- Coq: Rcompare_not_Lt_inv: from result code r ≠ -1, deduce y ≤ x. -/
 theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -924,12 +926,13 @@ theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
   unfold Rcompare_val
   -- Reduce to a pure proposition about the returned comparison code
   unfold Rcompare
-  simp [wp, PostCond.noThrow, Id.run]
+  simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
   -- Goal after simp: (if x < y then -1 else if x = y then 0 else 1) ≠ -1 → y ≤ x
   intro hneq
   by_cases hlt : x < y
-  · -- Then the code is -1, contradiction with hneq
-    exact (False.elim (hneq (by simpa [hlt]))).
+  · -- Then the code is -1, contradiction with the premise r ≠ -1
+    have : (if x < y then -1 else if x = y then 0 else 1) = (-1 : Int) := by simpa [hlt]
+    exact (hneq this).elim
   · -- Not (x < y) ⇒ y ≤ x
     exact le_of_not_gt hlt
 
