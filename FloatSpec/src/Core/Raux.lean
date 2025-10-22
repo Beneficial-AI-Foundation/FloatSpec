@@ -79,14 +79,14 @@ theorem Rabs_eq_Rabs_spec (x y : ℝ) :
 
 /-- Absolute value of difference bounded under simple conditions
 
-    If 0 ≤ y and y ≤ 2*x, then |x - y| ≤ x.
+    If {lean}`0 ≤ y` and {lean}`y ≤ 2 * x`, then {lean}`|x - y| ≤ x`.
 -/
 def Rabs_minus_le_val (x y : ℝ) : Id ℝ :=
   pure (abs (x - y))
 
-/-- Specification: Bound on |x - y|
+/-- Specification: Bound on {lean}`|x - y|`
 
-    Under 0 ≤ y and y ≤ 2*x, the value |x - y| is bounded by x.
+    Under {lean}`0 ≤ y` and {lean}`y ≤ 2 * x`, the value {lean}`|x - y|` is bounded by {lean}`x`.
 -/
 theorem Rabs_minus_le_spec (x y : ℝ) :
     ⦃⌜0 ≤ y ∧ y ≤ 2 * x⌝⦄
@@ -184,7 +184,8 @@ def Rmult_lt_compat (r1 r2 r3 r4 : ℝ) : Id (ℝ × ℝ) :=
 
 /-- Specification: Multiplication preserves strict inequalities
 
-    If 0 ≤ r1, 0 ≤ r3, r1 < r2, and r3 < r4, then r1 * r3 < r2 * r4.
+    If {lean}`0 ≤ r1`, {lean}`0 ≤ r3`, {lean}`r1 < r2`, and {lean}`r3 < r4`,
+    then {lean}`r1 * r3 < r2 * r4`.
     This property is crucial for analyzing products of bounds.
 -/
 theorem Rmult_lt_compat_spec (r1 r2 r3 r4 : ℝ) :
@@ -211,7 +212,7 @@ def Rmult_neq_reg_r (_r1 r2 r3 : ℝ) : Id (ℝ × ℝ) :=
 
 /-- Specification: Right multiplication cancellation
 
-    If r2 * r1 ≠ r3 * r1, then r2 ≠ r3.
+    If {lean}`r2 * r1 ≠ r3 * r1`, then {lean}`r2 ≠ r3`.
     This allows cancellation in multiplication inequalities.
 -/
 theorem Rmult_neq_reg_r_spec (r1 r2 r3 : ℝ) :
@@ -237,7 +238,8 @@ def Rmult_neq_compat_r (r1 r2 r3 : ℝ) : Id (ℝ × ℝ) :=
 
 /-- Specification: Multiplication preserves non-equality
 
-    If r1 ≠ 0 and r2 ≠ r3, then r2 * r1 ≠ r3 * r1.
+    If {lean}`r1 ≠ 0` and {lean}`r2 ≠ r3`,
+    then {lean}`r2 * r1 ≠ r3 * r1`.
 -/
 theorem Rmult_neq_compat_r_spec (r1 r2 r3 : ℝ) :
     ⦃⌜r1 ≠ 0 ∧ r2 ≠ r3⌝⦄
@@ -263,7 +265,7 @@ def Rmult_min_distr_r (x y z : ℝ) : Id (ℝ × ℝ) :=
 
 /-- Specification: Right distributivity of minimum
 
-    If 0 ≤ z, then min (x * z) (y * z) = min x y * z.
+    If {lean}`0 ≤ z`, then {lean}`min (x * z) (y * z) = min x y * z`.
 -/
 theorem Rmult_min_distr_r_spec (x y z : ℝ) :
     ⦃⌜0 ≤ z⌝⦄
@@ -285,7 +287,7 @@ def Rmult_min_distr_l (x y z : ℝ) : Id (ℝ × ℝ) :=
 
 /-- Specification: Left distributivity of minimum
 
-    If 0 ≤ x, then min (x * y) (x * z) = x * min y z.
+    If {lean}`0 ≤ x`, then {lean}`min (x * y) (x * z) = x * min y z`.
 -/
 theorem Rmult_min_distr_l_spec (x y z : ℝ) :
     ⦃⌜0 ≤ x⌝⦄
@@ -394,10 +396,7 @@ theorem IZR_le_lt_spec (m n p : Int) :
 def le_lt_IZR_triple (m n p : Int) : Id (Int × Int × Int) :=
   (m, n, p)
 
-/-- Coq: le_lt_IZR
-
-    If (m:ℝ) ≤ (n:ℝ) < (p:ℝ), then m ≤ n < p as integers.
--/
+/-- If the real casts satisfy m <= n and n < p, then m <= n < p as integers (Coq: le_lt_IZR). -/
 theorem le_lt_IZR_spec (m n p : Int) :
     ⦃⌜(m : ℝ) ≤ (n : ℝ) ∧ (n : ℝ) < (p : ℝ)⌝⦄
     le_lt_IZR_triple m n p
@@ -412,10 +411,7 @@ theorem le_lt_IZR_spec (m n p : Int) :
 def neq_IZR_pair (m n : Int) : Id (Int × Int) :=
   (m, n)
 
-/-- Coq: neq_IZR
-
-    If (m:ℝ) ≠ (n:ℝ), then m ≠ n as integers.
--/
+/-- If the real casts of m and n are unequal, then m and n are unequal as integers (Coq: neq_IZR). -/
 theorem neq_IZR_spec (m n : Int) :
     ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
     neq_IZR_pair m n
