@@ -469,11 +469,13 @@ private lemma tdiv_pow_succ_assoc
     simpa using (Int.tdiv_eq_ediv_of_nonneg htdiv_nonneg :
       Int.tdiv (Int.tdiv n beta) (beta ^ k) = (Int.tdiv n beta) / (beta ^ k))
   -- It remains to show the Euclidean-division identity on the rhs
-  -- `n / (beta^(k+1)) = (n / beta) / (beta^k)`
-  have hmid : n / (beta ^ (k + 1)) = (n / beta) / (beta ^ k) := by
-    -- use associativity of `ediv` and `pow_succ'`
-    simpa [pow_succ'] using
-      (Int.ediv_ediv_eq_ediv_mul n (Int.le_of_lt hb)).symm
+  -- `(n / beta) / (beta^k) = n / (beta^(k+1))`
+  have hmid' : (n / beta) / (beta ^ k) = n / (beta ^ (k + 1)) := by
+    have hb_pow_nonneg : 0 ≤ beta ^ k := le_of_lt (pow_pos hb k)
+    -- use `(a / b) / c = a / (b*c)` for nonnegative `c`
+    simpa [pow_succ, mul_comm] using
+      (Int.ediv_ediv_eq_ediv_mul (a := n) (b := beta) (c := beta ^ k) hb_pow_nonneg)
+  have hmid : n / (beta ^ (k + 1)) = (n / beta) / (beta ^ k) := hmid'.symm
   -- Replace `(tdiv n beta)` by `(n / beta)` in the right-hand expression
   have hdiv_eq : Int.tdiv n beta = n / beta := by
     simpa using (Int.tdiv_eq_ediv_of_nonneg hn : Int.tdiv n beta = n / beta)
@@ -3175,7 +3177,7 @@ theorem Zslice_div_pow (n k k1 k2 : Int) (h_beta : beta > 1):
           (n / beta ^ k.natAbs) / beta ^ k1.natAbs
             = n / (beta ^ k.natAbs * beta ^ k1.natAbs) := by
         have h_pos : 0 ≤ beta ^ k.natAbs := le_of_lt hbK
-        exact Int.ediv_ediv_eq_ediv_mul n h_pos
+        exact Int.ediv_ediv n h_pos
       -- β^a * β^b = β^(a+b)
       have mul_to_pow :
           beta ^ k.natAbs * beta ^ k1.natAbs

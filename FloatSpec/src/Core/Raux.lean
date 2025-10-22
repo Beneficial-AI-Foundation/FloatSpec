@@ -917,7 +917,7 @@ private theorem Rcompare_not_Lt_wr (x y : ℝ) :
     ⦃⇓r => ⌜r ≠ -1⌝⦄ := by
   simpa using Rcompare_not_Lt_spec x y
 
-/-- Coq: Rcompare_not_Lt_inv: from result code r ≠ -1, deduce y ≤ x. -/
+/-- Coq: Rcompare\_not\_Lt\_inv. -/
 theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -988,7 +988,7 @@ theorem Rcompare_Eq_inv_spec (x y : ℝ) :
     by_cases heq : x = y
     · -- Then the code is 0, so x = y holds
       exact heq
-  · -- Otherwise y < x, code is 1, contradiction with = 0
+    · -- Otherwise y < x, code is 1, contradiction with = 0
       have hyx : y < x := lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm heq)
       have : (1 : Int) ≠ 0 := by decide
       have : False := this (by simpa [hlt, heq, hyx] using hcode)
@@ -1023,7 +1023,7 @@ private theorem Rcompare_Gt_wr (x y : ℝ) :
     ⦃⇓r => ⌜r = 1⌝⦄ := by
   simpa using Rcompare_Gt_spec x y
 
-/-- Coq: {lean}`Rcompare_Gt_inv` — from code Gt {lean}`1`, deduce {lean}`y < x`. -/
+/-- Coq: Rcompare_Gt_inv — from code Gt 1, deduce y < x. -/
 theorem Rcompare_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -1081,7 +1081,7 @@ private theorem Rcompare_not_Gt_wr (x y : ℝ) :
     ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
   simpa using Rcompare_not_Gt_spec x y
 
-/-- Coq: {lean}`Rcompare_not_Gt_inv` — from not Gt {lean}`1`, deduce {lean}`x ≤ y`. -/
+/-- Coq theorem Rcompare\_not\_Gt\_inv. -/
 theorem Rcompare_not_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -1123,32 +1123,8 @@ theorem Rcompare_IZR_spec (m n : Int) :
     Rcompare_IZR m n
     ⦃⇓r => ⌜r = (Zcompare_int m n).run⌝⦄ := by
   intro _
-  unfold Zcompare_int Rcompare
-  -- Split on the integer comparison and transport it to ℝ via cast
-  by_cases hlt : m < n
-  ·
-    have hltR : (m : ℝ) < (n : ℝ) := by exact_mod_cast hlt
-    simp [hlt, hltR]
-  ·
-    -- Not (m < n); either m = n or m > n
-    have hnotlt : ¬ m < n := hlt
-    by_cases heq : m = n
-    ·
-      -- Equal case
-      have hEqR : (m : ℝ) = (n : ℝ) := by simpa [heq]
-      simp [hnotlt, heq, hEqR]
-    ·
-      -- Strict greater case: n < m
-      have hle : n ≤ m := not_lt.mp hnotlt
-      have hgt : n < m := lt_of_le_of_ne hle (Ne.symm heq)
-      have hgtR : (n : ℝ) < (m : ℝ) := by exact_mod_cast hgt
-      have hnotltR : ¬ (m : ℝ) < (n : ℝ) := not_lt.mpr (le_of_lt hgtR)
-      -- From m ≠ n in ℤ, get m ≠ n in ℝ by injectivity of the cast
-      have hneR : (m : ℝ) ≠ (n : ℝ) := by
-        intro hEqR
-        exact heq (Int.cast_inj.mp hEqR)
-      -- Both sides reduce to 1
-      simp [hnotlt, heq, hnotltR, hneR]
+  -- Discharge the Hoare triple by computation on both sides
+  simp [Zcompare_int, Rcompare_IZR, Rcompare, wp, PostCond.noThrow, Id.run, pure]
 
 /-- Middle-value comparison identity: compare (x - d) vs (u - x) equals comparing x vs (d+u)/2 -/
 noncomputable def Rcompare_middle_check (x d u : ℝ) : Id (Int × Int) :=
@@ -2492,7 +2468,7 @@ theorem Zfloor_div (x y : Int) :
   -- Conclude by the floor characterization
   simpa using ((Int.floor_eq_iff).2 ⟨h_lower, h_upper⟩)
 
-/-- Coq lemma {lean}`Ztrunc_div`: for integers x and y with y ≠ 0, {lean}`Ztrunc (IZR x / IZR y)` equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
+/-- Coq lemma `Ztrunc_div`: for integers x and y with y ≠ 0, Ztrunc (IZR x / IZR y) equals the integer quotient; in Lean we state it as `Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
     Ztrunc ((x : ℝ) / (y : ℝ))
@@ -3182,7 +3158,7 @@ noncomputable def LPO_min_choice (P : Nat → Prop) : Id (Option Nat) :=
       else
         pure none
 
-/-- Coq (Raux.v) LPO_min. Lean spec uses `Option Nat` to encode the sum. -/
+/-- Coq (Raux.v) `LPO_min`. Lean spec uses `Option Nat` to encode the sum. -/
 theorem LPO_min (P : Nat → Prop) :
     ⦃⌜∀ n : Nat, P n ∨ ¬ P n⌝⦄
     LPO_min_choice P
@@ -3250,7 +3226,7 @@ noncomputable def LPO_Z_choice (P : Int → Prop) : Id (Option Int) :=
       else
         pure none
 
-/-- Coq (Raux.v) lemma {lean}`LPO_Z`: for any predicate on integers with decidability, either some n satisfies it or it holds for none; the Lean spec encodes this as an option meaning {lean}`some n` indicates {lean}`P n` and {lean}`none` indicates {lean}`∀ n, ¬ P n`. -/
+/-- Coq (Raux.v) lemma {lean}`LPO_Z`: for any predicate on integers with decidability, either some n satisfies it or it holds for none; the Lean spec encodes this as an option meaning `some n` indicates `P n` and {lean}`none` indicates {lean}`∀ n, ¬ P n`. -/
 theorem LPO_Z (P : Int → Prop) :
     ⦃⌜∀ n : Int, P n ∨ ¬ P n⌝⦄
     LPO_Z_choice P
