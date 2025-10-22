@@ -808,11 +808,7 @@ theorem Zeq_bool_false_spec (x y : Int) :
   unfold Zeq_bool_false
   rfl
 
-/-- Boolean equality is reflexive
-
-    Zeq_bool x x = true for all x. This captures
-    the reflexivity of equality in boolean form.
--/
+/-- Boolean equality is reflexive. -/
 def Zeq_bool_diag (_ : Int) : Id Bool :=
   true
 
@@ -874,11 +870,7 @@ theorem Zeq_bool_opp'_spec (x y : Int) :
   unfold Zeq_bool_opp'
   rfl
 
-/-- Boolean less-or-equal is true when satisfied
-
-    x ≤ y implies Zle_bool x y = true. This provides
-    the forward direction of boolean ordering correctness.
--/
+/-- Boolean less-or-equal is true when satisfied. -/
 def Zle_bool_true (_ _ : Int) : Id Bool :=
   true
 
@@ -896,11 +888,7 @@ theorem Zle_bool_true_spec (x y : Int) :
   unfold Zle_bool_true
   rfl
 
-/-- Boolean less-or-equal is false when violated
-
-    y < x implies Zle_bool x y = false. This provides
-    the reverse direction of boolean ordering correctness.
--/
+/-- Boolean less-or-equal is false when violated. -/
 def Zle_bool_false (_ _ : Int) : Id Bool :=
   false
 
@@ -1023,11 +1011,7 @@ theorem negb_Zlt_bool_spec (x y : Int) :
   unfold negb_Zlt_bool
   rfl
 
-/-- Boolean less-than is true when satisfied
-
-    x < y implies Zlt_bool x y = true. This provides
-    the forward direction of boolean strict ordering correctness.
--/
+/-- Boolean less-than is true when satisfied. -/
 def Zlt_bool_true (_ _ : Int) : Id Bool :=
   true
 
@@ -1045,11 +1029,7 @@ theorem Zlt_bool_true_spec (x y : Int) :
   unfold Zlt_bool_true
   rfl
 
-/-- Boolean less-than is false when violated
-
-    y ≤ x implies Zlt_bool x y = false. This provides
-    the reverse direction of boolean strict ordering correctness.
--/
+/-- Boolean less-than is false when violated. -/
 def Zlt_bool_false (_ _ : Int) : Id Bool :=
   false
 
@@ -1339,19 +1319,11 @@ theorem cond_Zopp_spec (b : Bool) (x : Int) :
   unfold cond_Zopp
   rfl
 
-/-- Conditional opposite of zero
-
-    cond_Zopp of zero is always zero, regardless of the condition.
-    This captures the invariance of zero under negation.
--/
+/-- Conditional opposite of zero. -/
 def cond_Zopp_0 (_ : Bool) : Id Int :=
   0
 
-/-- Specification: Zero invariance under conditional opposite
-
-    The conditional opposite of zero is always zero:
-    cond_Zopp sx 0 = 0 for any boolean sx.
--/
+/-- Specification: Zero invariance under conditional opposite. -/
 theorem cond_Zopp_0_spec (sx : Bool) :
     ⦃⌜True⌝⦄
     cond_Zopp_0 sx
@@ -1360,19 +1332,11 @@ theorem cond_Zopp_0_spec (sx : Bool) :
   unfold cond_Zopp_0
   rfl
 
-/-- Negated condition flips conditional opposite
-
-    cond_Zopp (negb x) y = -cond_Zopp x y. This shows how
-    negating the condition relates to negating the result.
--/
+/-- Negated condition flips conditional opposite. -/
 def cond_Zopp_negb (x : Bool) (y : Int) : Id Int :=
   -(if x then -y else y)
 
-/-- Specification: Condition negation flips result
-
-    Negating the boolean condition is equivalent to negating
-    the result: cond_Zopp (!x) y = -(cond_Zopp x y).
--/
+/-- Specification: Condition negation flips result. -/
 theorem cond_Zopp_negb_spec (x : Bool) (y : Int) :
     ⦃⌜True⌝⦄
     cond_Zopp_negb x y
@@ -1381,19 +1345,11 @@ theorem cond_Zopp_negb_spec (x : Bool) (y : Int) :
   unfold cond_Zopp_negb
   rfl
 
-/-- Absolute value preservation under conditional opposite
-
-    The absolute value of cond_Zopp b m equals |m|.
-    This shows that conditional negation preserves magnitude.
--/
+/-- Absolute value preservation under conditional opposite. -/
 def abs_cond_Zopp (_b : Bool) (m : Int) : Id Int :=
   (Int.natAbs m : Int)
 
-/-- Specification: Conditional opposite preserves magnitude
-
-    The absolute value is preserved: |cond_Zopp b m| = |m|
-    regardless of the boolean condition b.
--/
+/-- Specification: Conditional opposite preserves magnitude. -/
 theorem abs_cond_Zopp_spec (b : Bool) (m : Int) :
     ⦃⌜True⌝⦄
     abs_cond_Zopp b m
@@ -1402,20 +1358,11 @@ theorem abs_cond_Zopp_spec (b : Bool) (m : Int) :
   unfold abs_cond_Zopp
   rfl
 
-/-- Absolute value via conditional opposite
-
-    Computes |m| using cond_Zopp based on the sign test.
-    This shows how absolute value can be implemented using
-    conditional negation.
--/
+/-- Absolute value via conditional opposite. -/
 def cond_Zopp_Zlt_bool (m : Int) : Id Int :=
   (Int.natAbs m : Int)
 
-/-- Specification: Absolute value computation
-
-    Using conditional opposite with a sign test computes the
-    absolute value: cond_Zopp (m < 0) m = |m|.
--/
+/-- Specification: Absolute value computation. -/
 theorem cond_Zopp_Zlt_bool_spec (m : Int) :
     ⦃⌜True⌝⦄
     cond_Zopp_Zlt_bool m
@@ -1523,15 +1470,7 @@ theorem Zpos_div_eucl_aux_correct_spec (a b : Int) :
   unfold Zpos_div_eucl_aux
   rfl
 
-/-- Fast Euclidean division for integers
-
-    Implements Euclidean division that always returns a non-negative remainder.
-    For integers a and b with b ≠ 0, returns (q, r) such that:
-    - a = b * q + r
-    - 0 ≤ r < |b|
-
-    This implementation uses Lean's built-in Euclidean division operators.
--/
+/-- Fast Euclidean division for integers. -/
 def Zfast_div_eucl (a b : Int) : Id (Int × Int) :=
   if b = 0 then
     return (0, a)
@@ -1539,11 +1478,7 @@ def Zfast_div_eucl (a b : Int) : Id (Int × Int) :=
     -- Lean's built-in division is already Euclidean division
     return (a / b, a % b)
 
-/-- Specification: Fast division computes correct quotient and remainder
-
-    The fast division algorithm produces the same result as the
-    standard Euclidean division with guaranteed non-negative remainder.
--/
+/-- Specification: Fast division computes correct quotient and remainder. -/
 theorem Zfast_div_eucl_spec (a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
     Zfast_div_eucl a b
@@ -1615,14 +1550,7 @@ def iter_nat {A : Type} (f : A → A) (n : Nat) (x : A) : Id A :=
   | 0 => x
   | n'+1 => f (iter_nat f n' x).run
 
-/-- Specification: Iteration applies function n times
-
-    The iteration operation satisfies:
-    - iter_nat f 0 x = x
-    - iter_nat f (n+1) x = f (iter_nat f n x)
-
-    This captures the fundamental iteration pattern.
--/
+/-- Specification: Iteration applies function n times. -/
 theorem iter_nat_spec {A : Type} (f : A → A) (n : Nat) (x : A) :
     ⦃⌜True⌝⦄
     iter_nat f n x
@@ -1665,20 +1593,11 @@ theorem iter_nat_S_spec {A : Type} (f : A → A) (p : Nat) (x : A) :
   unfold iter_nat_S
   rfl
 
-/-- Iteration addition formula
-
-    Shows that iter_nat f (p + q) x = iter_nat f p (iter_nat f q x).
-    This captures the additive property of iteration counts.
--/
+/-- Iteration addition formula. -/
 def iter_nat_plus {A : Type} (f : A → A) (p q : Nat) (x : A) : Id A :=
   (iter_nat f p (iter_nat f q x).run).run
 
-/-- Specification: Iteration count addition
-
-    Iterating p + q times is equivalent to iterating q times
-    followed by iterating p times. This fundamental property
-    allows decomposition of iterations.
--/
+/-- Specification: Iteration count addition. -/
 theorem iter_nat_plus_spec {A : Type} (f : A → A) (p q : Nat) (x : A) :
     ⦃⌜True⌝⦄
     iter_nat_plus f p q x
