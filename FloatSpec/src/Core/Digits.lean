@@ -917,12 +917,18 @@ theorem Zdigit_div_pow (n k l : Int) (hβ : beta > 1 := h_beta):
       rw [Int.tdiv_eq_ediv_of_nonneg hdiv_nonneg]
       rw [Int.tdiv_eq_ediv_of_nonneg hn_nonneg]
       -- `(n / (β^l)) / (β^k) = n / (β^(l+k))` for nonnegative divisor `β^l`
-      -- Use `Int.ediv_ediv` (requires `0 ≤ β^l`) and then normalize powers.
-      have := Int.ediv_ediv (Int.le_of_lt hbL)
-      -- `this : (n / (β^l)) / (β^k) = n / ((β^l) * (β^k))`
-      -- Replace by `pow_add` in the next step.
-      simpa [pow_add, mul_comm] using this
-      rw [mul_comm]
+      -- Use `Int.ediv_ediv` with explicit parameters (requires `0 ≤ β^l`).
+      -- `(n / (β^l)) / (β^k) = n / ((β^l) * (β^k))`
+      have hassoc : (n / (beta ^ l.natAbs)) / (beta ^ k.natAbs)
+          = n / ((beta ^ l.natAbs) * (beta ^ k.natAbs)) := by
+        have hbL_nonneg : 0 ≤ beta ^ l.natAbs := Int.le_of_lt hbL
+        -- Specialize `Int.ediv_ediv` to our `a,b,c` via type annotation
+        simpa using
+          (Int.ediv_ediv hbL_nonneg :
+            (n / (beta ^ l.natAbs)) / (beta ^ k.natAbs)
+              = n / ((beta ^ l.natAbs) * (beta ^ k.natAbs)))
+      -- Normalize powers and commutativity of multiplication to match the goal
+      simpa [pow_add, mul_comm] using hassoc
     rw [hdiv_eq]
 
 /-- Digit modulo power
@@ -2469,7 +2475,13 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
             _ = (n / beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs * beta ^ l.natAbs := by
               -- associate Euclidean divisions: `(n/b)/c = n/(b*c)` for `0 ≤ b`
               have hb_nonneg : 0 ≤ beta ^ l.natAbs := le_of_lt hposl
-              simpa using (Int.ediv_ediv hb_nonneg)
+              have hassoc : (n / beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs
+                    = n / (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs) := by
+                simpa using
+                  (Int.ediv_ediv hb_nonneg :
+                    (n / (beta ^ l.natAbs)) / (beta ^ (-(k + l)).natAbs)
+                      = n / ((beta ^ l.natAbs) * (beta ^ (-(k + l)).natAbs)))
+              simpa [hassoc]
             _ = ((n / beta ^ l.natAbs) * beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs := by
               rw [Int.mul_ediv_assoc' _ hdiv_compose2]
             _ = n / beta ^ (-(k + l)).natAbs := by
