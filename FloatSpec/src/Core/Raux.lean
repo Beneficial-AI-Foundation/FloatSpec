@@ -1066,7 +1066,7 @@ theorem Rcompare_not_Gt_inv (x y : ℝ) :
 def Zcompare_int (m n : Int) : Id Int :=
   pure (if m < n then -1 else if m = n then 0 else 1)
 
-/-- Coq: Rcompare_IZR — comparison of casted integers matches integer comparison. -/
+/-- Coq theorem {lit}`Rcompare_IZR`: comparing casts of integers matches integer comparison. -/
 theorem Rcompare_IZR_spec (m n : Int) :
     ⦃⌜True⌝⦄
     Rcompare ((m : ℝ)) (n : ℝ)
@@ -2441,8 +2441,7 @@ theorem Zfloor_div (x y : Int) :
   -- Conclude by the floor characterization
   simpa using ((Int.floor_eq_iff).2 ⟨h_lower, h_upper⟩)
 
-/-- Coq: Ztrunc_div. For integers x, y with y ≠ 0,
-    Ztrunc (IZR x / IZR y) = Int.tdiv x y (toward-zero quotient). -/
+/-- Coq lemma {lit}`Ztrunc_div`: for integers x and y with y ≠ 0, {lit}`Ztrunc (IZR x / IZR y)` equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
     Ztrunc ((x : ℝ) / (y : ℝ))
@@ -3202,10 +3201,7 @@ noncomputable def LPO_Z_choice (P : Int → Prop) : Id (Option Int) :=
       else
         pure none
 
-/-- Coq (Raux.v):
-Lemma LPO_Z : ∀ P : ℤ → Prop, (∀ n, P n ∨ ¬ P n) → {n : ℤ | P n} + {∀ n, ¬ P n}.
-
-Lean (spec): `some n` indicates `P n`; `none` indicates `∀ n, ¬ P n`. -/
+/-- Coq (Raux.v) lemma {lit}`LPO_Z`: for any predicate on integers with decidability, either some n satisfies it or it holds for none; the Lean spec encodes this as an option meaning {lit}`some n` indicates {lean}`P n` and {lit}`none` indicates {lean}`∀ n, ¬ P n`. -/
 theorem LPO_Z (P : Int → Prop) :
     ⦃⌜∀ n, P n ∨ ¬ P n⌝⦄
     LPO_Z_choice P
