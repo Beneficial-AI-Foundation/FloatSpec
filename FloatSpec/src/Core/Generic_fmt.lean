@@ -63,7 +63,7 @@ lemma Ztrunc_int (n : Int) : (Ztrunc (n : ℝ)).run = n := by
 lemma zpow_ne_zero_of_pos (a : ℝ) (n : Int) (ha : 0 < a) : a ^ n ≠ 0 := by
   exact zpow_ne_zero n (ne_of_gt ha)
 
-/-- A format satisfies_any if it contains representable values
+/-- A format is nonempty if it contains representable values
 
     This property ensures that the floating-point format is non-empty
     and can represent at least some real numbers.
@@ -256,8 +256,8 @@ theorem Ztrunc_intCast (z : Int) : (Ztrunc (z : ℝ)).run = z := by
 
 /-- For nonzero real a, zpow distributes over addition: a^m * a^n = a^(m+n). -/
 -- Note: Using Mathlib's zpow_add₀ directly instead of redefining
-private theorem zpow_add_local {a : ℝ} (ha : a ≠ 0) (m n : Int) : a ^ m * a ^ n = a ^ (m + n) := by
-  exact (zpow_add₀ ha m n).symm
+theorem zpow_add_local {a : ℝ} (ha : a ≠ 0) (m n : Int) : a ^ m * a ^ n = a ^ (m + n) := by
+  simpa [add_comm] using (zpow_add₀ ha m n).symm
 
 /-- zpow product with negative exponent collapses to subtraction in exponent -/
 theorem zpow_mul_sub {a : ℝ} (hbne : a ≠ 0) (e c : Int) :
@@ -7623,12 +7623,7 @@ theorem exp_small_round_0_pos_ax
   have hpow_pos : 0 < (beta : ℝ) ^ (ex - 1) := zpow_pos hbposR _
   exact (not_le_of_gt hpow_pos) hle0
 
-/-- Coq (Generic_fmt.v):
-    Theorem exp_small_round_0_pos:
-      (bpow (ex-1) ≤ x < bpow ex) → round rnd x = 0 → ex ≤ fexp ex.
-
-    Lean (spec placeholder): Positive small-exponent inputs round to zero only in the
-    small regime (no absolute value in the bounds). -/
+/-- Small range zero implies small exponent (positive case). -/
 theorem exp_small_round_0_pos
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     [Monotone_exp fexp]
@@ -7706,10 +7701,7 @@ theorem exp_small_round_0
 
 -- (intentionally blank; moved exp_small_round_0_pos and exp_small_round_0 below)
 
-/-- Coq (Generic_fmt.v):
-    Theorem mag_round_ZR:
-      round Ztrunc x ≠ 0 → mag (round Ztrunc x) = mag x.
- -/
+/-- Rounding with Ztrunc preserves magnitude when result is nonzero. -/
 -- Helper: absolute value of Ztrunc is bounded by the absolute value
 private theorem abs_Ztrunc_le_abs (y : ℝ) :
     abs (((FloatSpec.Core.Raux.Ztrunc y).run : Int) : ℝ) ≤ abs y := by
