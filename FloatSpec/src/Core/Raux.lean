@@ -826,7 +826,7 @@ section RcompareMore
 noncomputable def Rcompare_val (x y : ℝ) : Id Int :=
   Rcompare x y
 
-/-- Coq: Rcompare_Lt - if x < y then comparison yields Lt (-1 here). -/
+/-- Coq: {lit}`Rcompare_Lt` — if {lean}`x < y` then the comparison yields the Lt code {lit}`-1`. -/
 theorem Rcompare_Lt_spec (x y : ℝ) :
     ⦃⌜x < y⌝⦄
     Rcompare_val x y
@@ -882,7 +882,7 @@ theorem Rcompare_not_Lt_spec (x y : ℝ) :
   · simp [hxy]
   · simp [hxy]
 
-/-- Coq: Rcompare_not_Lt_inv - from not Lt (-1) deduce y ≤ x. -/
+/-- Coq: {name}`Rcompare_not_Lt_inv` — from code not Lt {lit}`-1`, deduce {lean}`y ≤ x`. -/
 theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -895,7 +895,7 @@ theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
   -- Goal after simp: y ≤ x → ¬(if x = y then 0 else 1) = -1 → y ≤ x
   intro hyx _; exact hyx
 
-/-- Coq: Rcompare_Eq - if x = y then comparison yields Eq (0 here). -/
+/-- Coq: {name}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lit}`0`. -/
 theorem Rcompare_Eq_spec (x y : ℝ) :
     ⦃⌜x = y⌝⦄
     Rcompare_val x y
@@ -934,7 +934,7 @@ theorem Rcompare_Eq_inv_spec (x y : ℝ) :
       have : False := this (by simpa [hlt, heq, hyx] using hcode)
       exact this.elim
 
-/-- Coq: Rcompare_Gt - if y < x then comparison yields Gt (1 here). -/
+/-- Coq: {name}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lit}`1`. -/
 theorem Rcompare_Gt_spec (x y : ℝ) :
     ⦃⌜y < x⌝⦄
     Rcompare_val x y
@@ -949,7 +949,7 @@ theorem Rcompare_Gt_spec (x y : ℝ) :
   have hneq : x ≠ y := by exact Ne.symm (ne_of_lt hyx)
   simp [hnotlt, hneq]
 
-/-- Coq: Rcompare_Gt_inv - from code Gt (1) deduce y < x. -/
+/-- Coq: {name}`Rcompare_Gt_inv` — from code Gt {lit}`1`, deduce {lean}`y < x`. -/
 theorem Rcompare_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -975,7 +975,7 @@ theorem Rcompare_Gt_inv_spec (x y : ℝ) :
     · -- Otherwise y < x, as desired
       exact lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm heq)
 
-/-- Coq: Rcompare_not_Gt - if x ≤ y then comparison is not Gt (1). -/
+/-- Coq: {name}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lit}`1`. -/
 theorem Rcompare_not_Gt_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     Rcompare_val x y
@@ -993,7 +993,7 @@ theorem Rcompare_not_Gt_spec (x y : ℝ) :
     have hEq : x = y := le_antisymm hxy hyx
     simp [hlt, hEq, pure]
 
-/-- Coq: Rcompare_not_Gt_inv - from not Gt (1) deduce x ≤ y. -/
+/-- Coq: {name}`Rcompare_not_Gt_inv` — from not Gt {lit}`1`, deduce {lean}`x ≤ y`. -/
 theorem Rcompare_not_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -1065,7 +1065,7 @@ theorem Rcompare_middle_spec (x d u : ℝ) :
   unfold Rcompare_middle_check
   simp [wp, PostCond.noThrow, Id.run]
 
-/-- Halving on left: compare (x/2) y equals compare x (2*y) -/
+/-- Halving on left: compare {lean}`x/2` with {lean}`y` equals compare {lean}`x` with {lean}`2*y`. -/
 noncomputable def Rcompare_half_l_check (x y : ℝ) : Id (Int × Int) :=
   ((Rcompare (x / 2) y).run, (Rcompare x (2 * y)).run)
 
@@ -1116,7 +1116,7 @@ theorem Rcompare_half_l_spec (x y : ℝ) :
         exact hxeq (heq.mp h)
       simp [hxnotlt, hxeq, hx2notlt, hx2neq]
 
-/-- Halving on right: compare x (y/2) equals compare (2*x) y -/
+/-- Halving on right: compare {lean}`x` with {lean}`y/2` equals compare {lean}`2*x` with {lean}`y`. -/
 noncomputable def Rcompare_half_r_check (x y : ℝ) : Id (Int × Int) :=
   ((Rcompare x (y / 2)).run, (Rcompare (2 * x) y).run)
 
