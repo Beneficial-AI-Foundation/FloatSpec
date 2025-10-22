@@ -91,6 +91,8 @@ Verso is now added to the lakefile, and doc should follow a certain set of rules
 
 In face of any doc-related issues, it's forbidden to skip, bypass or directly delete related docs.
 
+Note that you should avoid using {lit}, as it is against the intention of using documentation to check implementation order. Generally, use {lean} unless there is a very specific reason not to. If you have to use {lit}, please document the reason in the change log.
+
 ---
 
 ## Process (ONE-BY-ONE, compile after each step)

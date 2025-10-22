@@ -411,7 +411,21 @@ theorem le_lt_IZR_spec (m n p : Int) :
 def neq_IZR_pair (m n : Int) : Id (Int × Int) :=
   (m, n)
 
-/-- If the real casts of m and n are unequal, then m and n are unequal as integers (Coq: {lit}`neq_IZR`). -/
+/-  If the real casts of m and n are unequal, then m and n are unequal as
+    integers. Provide the Coq-named lemma so documentation cross-references like
+    {name}`neq_IZR` resolve. This is the same content as `neq_IZR_spec` below. -/
+theorem neq_IZR (m n : Int) :
+    ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
+    neq_IZR_pair m n
+    ⦃⇓p => ⌜p.1 ≠ p.2⌝⦄ := by
+  intro hmnR
+  unfold neq_IZR_pair
+  -- Reduce the Hoare-style triple on Id to a pure proposition
+  simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
+  -- Goal is `m ≠ n`; close it by contraposition using cast injectivity
+  exact fun hmn => hmnR (by simpa [hmn])
+
+/-- If the real casts of m and n are unequal, then m and n are unequal as integers (Coq: {lean}`neq_IZR`). -/
 theorem neq_IZR_spec (m n : Int) :
     ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
     neq_IZR_pair m n
@@ -422,6 +436,7 @@ theorem neq_IZR_spec (m n : Int) :
   simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
   -- Goal is `m ≠ n`; close it by contraposition using cast injectivity
   exact fun hmn => hmnR (by simpa [hmn])
+
 
 end IZR
 
@@ -823,10 +838,16 @@ end Rcompare
 section RcompareMore
 
 /-- Return the comparison code; used in specialized specs below -/
-noncomputable def Rcompare_val (x y : ℝ) : Id Int :=
-  Rcompare x y
+/-  Coq names like `Rcompare_Lt` refer to the comparison on reals; we provide a
+    tiny wrapper returning the Int code, so {name}`Rcompare_Lt` etc. can target it. -/
+noncomputable def Rcompare_Lt (x y : ℝ) : Id Int := Rcompare x y
+noncomputable def Rcompare_Eq (x y : ℝ) : Id Int := Rcompare x y
+noncomputable def Rcompare_Gt (x y : ℝ) : Id Int := Rcompare x y
+noncomputable def Rcompare_not_Lt (x y : ℝ) : Id Int := Rcompare x y
+noncomputable def Rcompare_not_Gt (x y : ℝ) : Id Int := Rcompare x y
+noncomputable def Rcompare_val (x y : ℝ) : Id Int := Rcompare x y
 
-/-- Coq: {lit}`Rcompare_Lt` — if {lean}`x < y` then the comparison yields the Lt code {lit}`-1`. -/
+/-- Coq: {lean}`Rcompare_Lt` — if {lean}`x < y` then the comparison yields the Lt code {lean}`-1`. -/
 theorem Rcompare_Lt_spec (x y : ℝ) :
     ⦃⌜x < y⌝⦄
     Rcompare_val x y
@@ -882,7 +903,7 @@ theorem Rcompare_not_Lt_spec (x y : ℝ) :
   · simp [hxy]
   · simp [hxy]
 
-/-- Coq: {lit}`Rcompare_not_Lt_inv` — from code not Lt {lit}`-1`, deduce {lean}`y ≤ x`. -/
+/-- Coq: {lean}`Rcompare_not_Lt_inv` — from code not Lt {lean}`-1`, deduce {lean}`y ≤ x`. -/
 theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -907,7 +928,7 @@ theorem Rcompare_not_Lt_inv (x y : ℝ) :
     ⦃⇓r => ⌜r ≠ -1 → y ≤ x⌝⦄ := by
   simpa using Rcompare_not_Lt_inv_spec x y
 
-/-- Coq: {lit}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lit}`0`. -/
+/-- Coq: {lean}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lean}`0`. -/
 theorem Rcompare_Eq_spec (x y : ℝ) :
     ⦃⌜x = y⌝⦄
     Rcompare_val x y
@@ -926,7 +947,7 @@ theorem Rcompare_Eq (x y : ℝ) :
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   simpa using Rcompare_Eq_spec x y
 
-/-- Coq: {lit}`Rcompare_Eq_inv` - from code Eq {lit}`0` deduce {lean}`x = y`. -/
+/-- Coq: {lean}`Rcompare_Eq_inv` - from code Eq {lean}`0` deduce {lean}`x = y`. -/
 theorem Rcompare_Eq_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -953,7 +974,7 @@ theorem Rcompare_Eq_inv_spec (x y : ℝ) :
       have : False := this (by simpa [hlt, heq, hyx] using hcode)
       exact this.elim
 
-/-- Coq: {lit}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lit}`1`. -/
+/-- Coq: {lean}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lean}`1`. -/
 theorem Rcompare_Gt_spec (x y : ℝ) :
     ⦃⌜y < x⌝⦄
     Rcompare_val x y
@@ -975,7 +996,7 @@ theorem Rcompare_Gt (x y : ℝ) :
     ⦃⇓r => ⌜r = 1⌝⦄ := by
   simpa using Rcompare_Gt_spec x y
 
-/-- Coq: {lit}`Rcompare_Gt_inv` — from code Gt {lit}`1`, deduce {lean}`y < x`. -/
+/-- Coq: {lean}`Rcompare_Gt_inv` — from code Gt {lean}`1`, deduce {lean}`y < x`. -/
 theorem Rcompare_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -1008,7 +1029,7 @@ theorem Rcompare_Gt_inv (x y : ℝ) :
     ⦃⇓r => ⌜r = 1 → y < x⌝⦄ := by
   simpa using Rcompare_Gt_inv_spec x y
 
-/-- Coq: {lit}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lit}`1`. -/
+/-- Coq: {lean}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lean}`1`. -/
 theorem Rcompare_not_Gt_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     Rcompare_val x y
@@ -1033,7 +1054,7 @@ theorem Rcompare_not_Gt (x y : ℝ) :
     ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
   simpa using Rcompare_not_Gt_spec x y
 
-/-- Coq: {lit}`Rcompare_not_Gt_inv` — from not Gt {lit}`1`, deduce {lean}`x ≤ y`. -/
+/-- Coq: {lean}`Rcompare_not_Gt_inv` — from not Gt {lean}`1`, deduce {lean}`x ≤ y`. -/
 theorem Rcompare_not_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -1066,10 +1087,13 @@ theorem Rcompare_not_Gt_inv (x y : ℝ) :
 def Zcompare_int (m n : Int) : Id Int :=
   pure (if m < n then -1 else if m = n then 0 else 1)
 
-/-- Coq theorem {lit}`Rcompare_IZR`: comparing casts of integers matches integer comparison. -/
+/-  Coq theorem name `Rcompare_IZR`: comparing casts of integers matches integer comparison. -/
+noncomputable def Rcompare_IZR (m n : Int) : Id Int := Rcompare (m : ℝ) (n : ℝ)
+
+/-- Coq theorem {name}`Rcompare_IZR`: comparing casts of integers matches integer comparison. -/
 theorem Rcompare_IZR_spec (m n : Int) :
     ⦃⌜True⌝⦄
-    Rcompare ((m : ℝ)) (n : ℝ)
+    Rcompare_IZR m n
     ⦃⇓r => ⌜r = (Zcompare_int m n).run⌝⦄ := by
   intro _
   unfold Zcompare_int Rcompare
@@ -2441,7 +2465,7 @@ theorem Zfloor_div (x y : Int) :
   -- Conclude by the floor characterization
   simpa using ((Int.floor_eq_iff).2 ⟨h_lower, h_upper⟩)
 
-/-- Coq lemma {lit}`Ztrunc_div`: for integers x and y with y ≠ 0, {lit}`Ztrunc (IZR x / IZR y)` equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
+/-- Coq lemma {lean}`Ztrunc_div`: for integers x and y with y ≠ 0, {lean}`Ztrunc (IZR x / IZR y)` equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
     Ztrunc ((x : ℝ) / (y : ℝ))
@@ -2782,12 +2806,7 @@ theorem bpow_1 (beta : Int) :
   -- Reduce the Hoare triple on Id to a pure equality and use zpow at 1
   simp [wp, PostCond.noThrow, Id.run, pure, zpow_one]
 
-/-
-info: ()
--/
-#guard_msgs in
-#eval ()
-set_option linter.unusedVariables false in
+-- Removed stray diagnostic block that broke parsing around here.
 noncomputable def bpow_plus_1_check (beta e : Int) : Id (ℝ × ℝ) :=
   pure (((beta : ℝ) ^ (e + 1), (beta : ℝ) * ((beta : ℝ) ^ e)))
 
@@ -3003,10 +3022,11 @@ theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int) :
   -- Antisymmetry yields equality of exponents
   exact le_antisymm hle12 hle21
 
-/-- Square-root law for even exponents: sqrt ((beta : ℝ) ^ (2 * e)) = (beta : ℝ) ^ e -/
+-- Helper for the square-root law on even exponents
 noncomputable def sqrt_bpow_check (beta e : Int) : Id (ℝ × ℝ) :=
   pure ((Real.sqrt ((beta : ℝ) ^ (2 * e)), (beta : ℝ) ^ e))
 
+/-- Square-root law for even exponents: {lean}`Real.sqrt ((beta : ℝ) ^ (2 * e)) = (beta : ℝ) ^ e` -/
 theorem sqrt_bpow (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
     sqrt_bpow_check beta e
@@ -3121,9 +3141,10 @@ end PowBasics
   (ported from Coq Raux.v). We encode the computational content as
   Id-wrapped options that select a witness when it exists.
  -/
+/-!  LPO (limited principle of omniscience) corner -/
 section LPO
 
-/-- Carrier for LPO_min: either `some n` with a minimal witness, or `none` if none exists. -/
+/-- Carrier for `LPO_min`: either `some n` with a minimal witness, or `none` if none exists. -/
 noncomputable def LPO_min_choice (P : Nat → Prop) : Id (Option Nat) :=
   by
     classical
@@ -3136,11 +3157,9 @@ noncomputable def LPO_min_choice (P : Nat → Prop) : Id (Option Nat) :=
 
 /-- Coq (Raux.v) LPO_min. Lean spec uses `Option Nat` to encode the sum. -/
 theorem LPO_min (P : Nat → Prop) :
-    ⦃⌜∀ n, P n ∨ ¬ P n⌝⦄
+    ⦃⌜∀ n : Nat, P n ∨ ¬ P n⌝⦄
     LPO_min_choice P
-    ⦃⇓r => ⌜match r with
-            | some n => P n ∧ ∀ i, i < n → ¬ P i
-            | none   => ∀ n, ¬ P n⌝⦄ := by
+    ⦃⇓r => ⌜match r with | some n => P n ∧ ∀ i, i < n → ¬ P i | none => ∀ n : Nat, ¬ P n⌝⦄ := by
   intro _
   unfold LPO_min_choice
   classical
@@ -3175,11 +3194,9 @@ noncomputable def LPO_choice (P : Nat → Prop) : Id (Option Nat) :=
 
 /-- Coq (Raux.v) LPO. Lean spec: `some n` indicates a witness `P n`; `none` indicates universal negation. -/
 theorem LPO (P : Nat → Prop) :
-    ⦃⌜∀ n, P n ∨ ¬ P n⌝⦄
+    ⦃⌜∀ n : Nat, P n ∨ ¬ P n⌝⦄
     LPO_choice P
-    ⦃⇓r => ⌜match r with
-            | some n => P n
-            | none   => ∀ n, ¬ P n⌝⦄ := by
+    ⦃⇓r => ⌜match r with | some n => P n | none => ∀ n : Nat, ¬ P n⌝⦄ := by
   intro _
   unfold LPO_choice
   classical
@@ -3206,13 +3223,11 @@ noncomputable def LPO_Z_choice (P : Int → Prop) : Id (Option Int) :=
       else
         pure none
 
-/-- Coq (Raux.v) lemma {lit}`LPO_Z`: for any predicate on integers with decidability, either some n satisfies it or it holds for none; the Lean spec encodes this as an option meaning {lit}`some n` indicates {lean}`P n` and {lit}`none` indicates {lean}`∀ n, ¬ P n`. -/
+/-- Coq (Raux.v) lemma {lean}`LPO_Z`: for any predicate on integers with decidability, either some n satisfies it or it holds for none; the Lean spec encodes this as an option meaning {lean}`some n` indicates {lean}`P n` and {lean}`none` indicates {lean}`∀ n, ¬ P n`. -/
 theorem LPO_Z (P : Int → Prop) :
-    ⦃⌜∀ n, P n ∨ ¬ P n⌝⦄
+    ⦃⌜∀ n : Int, P n ∨ ¬ P n⌝⦄
     LPO_Z_choice P
-    ⦃⇓r => ⌜match r with
-            | some n => P n
-            | none   => ∀ n, ¬ P n⌝⦄ := by
+    ⦃⇓r => ⌜match r with | some n => P n | none => ∀ n : Int, ¬ P n⌝⦄ := by
   intro _
   unfold LPO_Z_choice
   classical

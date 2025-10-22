@@ -513,7 +513,7 @@ def Zdiv_mod_mult (n a b : Int) : Id Int :=
   else
     0
 
-/-- Specification: Division distributes over modulo for nonnegative inputs, i.e. {lit}`(n % (a * b)) / a = (n / a) % b`. -/
+/-- Specification: Division distributes over modulo for nonnegative inputs, i.e. {lean}`(n % (a * b)) / a = (n / a) % b`. -/
 theorem Zdiv_mod_mult_spec (n a b : Int) :
     ⦃⌜0 ≤ a ∧ 0 ≤ b⌝⦄
     Zdiv_mod_mult n a b
@@ -550,11 +550,14 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
       simp [hb_zero]
       rfl
 
-/-- Nested modulo with multiplication: for integers n, a, b, the term {lit}`(n % (a * b)) % b` is equivalent to {lit}`n % b` under standard side conditions. -/
+/-- Nested modulo with multiplication: for integers `n`, `a`, `b`, the term
+    {lean}`(fun (n a b : Int) => (n % (a * b)) % b)` is extensionally equal to
+    {lean}`(fun (n b : Int) => n % b)` under standard side conditions. -/
 def ZOmod_mod_mult (n _a b : Int) : Id Int :=
   n % b
 
-/-- Specification: {lean}`(n % (a * b)) % b = n % b` (quotient-style statement). -/
+/-- Specification: {lean}`(fun (n a b : Int) => (n % (a * b)) % b = n % b)`
+    (quotient-style statement). -/
 theorem ZOmod_mod_mult_spec (n a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
     ZOmod_mod_mult n a b
@@ -566,7 +569,7 @@ theorem ZOmod_mod_mult_spec (n a b : Int) :
 /-- Truncated division over nested remainder and multiplication
 
     Quotient distributes over remainder/multiplication in the truncated variant:
-    {lit}`(n % (a*b)) / a = (n / a) % b`.
+    {lean}`(n % (a*b)) / a = (n / a) % b`.
 -/
 def ZOdiv_mod_mult (n a b : Int) : Id Bool :=
   decide (((n % (a * b)) / a) = ((n / a) % b))
@@ -582,7 +585,7 @@ theorem ZOdiv_mod_mult_spec (n a b : Int) :
 
 /-- Small-absolute-value truncated division is zero
 
-    If {lit}`|a| < b`, then {lit}`a / b = 0` in truncated division.
+    If {lean}`|a| < b`, then {lean}`a / b = 0` in truncated division.
 -/
 def ZOdiv_small_abs_check (a b : Int) : Id Bool :=
   decide (a / b = 0)
