@@ -839,7 +839,8 @@ section RcompareMore
 
 /-- Return the comparison code; used in specialized specs below -/
 /-  Coq names like `Rcompare_Lt` refer to the comparison on reals; we provide a
-    tiny wrapper returning the Int code, so {name}`Rcompare_Lt` etc. can target it. -/
+    tiny wrapper returning the Int code, so cross-references to these names
+    type-check in documentation. -/
 noncomputable def Rcompare_Lt (x y : ℝ) : Id Int := Rcompare x y
 noncomputable def Rcompare_Eq (x y : ℝ) : Id Int := Rcompare x y
 noncomputable def Rcompare_Gt (x y : ℝ) : Id Int := Rcompare x y
@@ -860,6 +861,13 @@ theorem Rcompare_Lt_spec (x y : ℝ) :
   have hx : x < y := hxy
   simp [hx, pure]
 
+/-/ Coq-named wrapper (renamed locally to avoid clashing with the def). -/
+private theorem Rcompare_Lt_wr (x y : ℝ) :
+    ⦃⌜x < y⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r = -1⌝⦄ := by
+  simpa using Rcompare_Lt_spec x y
+
 /-- Coq: Rcompare_Lt_inv - from code Lt (-1) deduce x < y. -/
 theorem Rcompare_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
@@ -869,24 +877,22 @@ theorem Rcompare_Lt_inv_spec (x y : ℝ) :
   unfold Rcompare_val
   -- Reduce the Hoare triple to a pure proposition about the returned code
   unfold Rcompare
-  simp [wp, PostCond.noThrow, Id.run, pure]
-  -- Goal after simp: (y ≤ x → (if x = y then 0 else 1) = -1) → x < y
+  simp [wp, PostCond.noThrow, Id.run]
+  -- Goal after simp: (if x < y then -1 else if x = y then 0 else 1) = -1 → x < y
   intro hcode
-  -- Prove by contradiction: if ¬(x < y), then y ≤ x, forcing an impossible code
-  by_contra hnot
-  have hyx : y ≤ x := not_lt.mp hnot
-  have hx : (if x = y then (0 : Int) else 1) = (-1 : Int) := hcode hyx
-  have hneq : (if x = y then (0 : Int) else 1) ≠ (-1 : Int) := by
-    by_cases heq : x = y
-    · -- Then we would have 0 = -1, impossible
-      have : (0 : Int) ≠ (-1 : Int) := by decide
-      simpa [heq] using this
-    · -- Then we would have 1 = -1, impossible
-      have : (1 : Int) ≠ (-1 : Int) := by decide
-      simpa [heq] using this
-  exact hneq hx
+  by_cases hlt : x < y
+  · exact hlt
+  · -- Not (x < y); then the code is 0 or 1, never -1
+    have hneq : (if x < y then (-1 : Int) else if x = y then 0 else 1) ≠ (-1 : Int) := by
+      by_cases heq : x = y
+      · have : (0 : Int) ≠ (-1 : Int) := by decide
+        simpa [hlt, heq] using this
+      · have : (1 : Int) ≠ (-1 : Int) := by decide
+        have hyx : y < x := lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm heq)
+        simpa [hlt, heq, hyx] using this
+    exact (hneq hcode).elim
 
-/-- Coq: Rcompare_not_Lt - if y ≤ x then comparison is not Lt (-1). -/
+/-/ Coq: Rcompare_not_Lt - if y ≤ x then comparison is not Lt (-1). -/
 theorem Rcompare_not_Lt_spec (x y : ℝ) :
     ⦃⌜y ≤ x⌝⦄
     Rcompare_val x y
@@ -894,16 +900,22 @@ theorem Rcompare_not_Lt_spec (x y : ℝ) :
   intro hyx
   unfold Rcompare_val Rcompare
   -- Reduce Hoare triple on Id to a pure goal
-  simp [wp, PostCond.noThrow, Id.run]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Under y ≤ x, we have ¬ x < y, so we enter the second branch
   have hnot : ¬ x < y := not_lt.mpr hyx
-  simp [hnot]
   -- It remains to show: (if x = y then (0 : Int) else 1) ≠ -1
   by_cases hxy : x = y
-  · simp [hxy]
-  · simp [hxy]
+  · simpa [hnot, hxy]
+  · simpa [hnot, hxy]
 
-/-- Coq: {lean}`Rcompare_not_Lt_inv` — from code not Lt {lean}`-1`, deduce {lean}`y ≤ x`. -/
+/-- Coq-named wrapper. -/
+private theorem Rcompare_not_Lt_wr (x y : ℝ) :
+    ⦃⌜y ≤ x⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r ≠ -1⌝⦄ := by
+  simpa using Rcompare_not_Lt_spec x y
+
+/-- Coq: Rcompare_not_Lt_inv — from code not Lt {lean}`-1`, deduce {lean}`y ≤ x`. -/
 theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -912,9 +924,14 @@ theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
   unfold Rcompare_val
   -- Reduce to a pure proposition about the returned comparison code
   unfold Rcompare
-  simp [wp, PostCond.noThrow, Id.run, pure]
-  -- Goal after simp: y ≤ x → ¬(if x = y then 0 else 1) = -1 → y ≤ x
-  intro hyx _; exact hyx
+  simp [wp, PostCond.noThrow, Id.run]
+  -- Goal after simp: (if x < y then -1 else if x = y then 0 else 1) ≠ -1 → y ≤ x
+  intro hneq
+  by_cases hlt : x < y
+  · -- Then the code is -1, contradiction with hneq
+    exact (False.elim (hneq (by simpa [hlt]))).
+  · -- Not (x < y) ⇒ y ≤ x
+    exact le_of_not_gt hlt
 
 /-
   Provide the Coq-named lemma without the `_spec` suffix so documentation
@@ -928,7 +945,7 @@ theorem Rcompare_not_Lt_inv (x y : ℝ) :
     ⦃⇓r => ⌜r ≠ -1 → y ≤ x⌝⦄ := by
   simpa using Rcompare_not_Lt_inv_spec x y
 
-/-- Coq: {lean}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lean}`0`. -/
+/-/ Coq: {lit}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lean}`0`. -/
 theorem Rcompare_Eq_spec (x y : ℝ) :
     ⦃⌜x = y⌝⦄
     Rcompare_val x y
@@ -941,13 +958,13 @@ theorem Rcompare_Eq_spec (x y : ℝ) :
   simp [wp, PostCond.noThrow, Id.run, pure, hEq]
 
 /-  Coq-named wrapper to satisfy doc cross-references. -/
-theorem Rcompare_Eq (x y : ℝ) :
+private theorem Rcompare_Eq_wr (x y : ℝ) :
     ⦃⌜x = y⌝⦄
     Rcompare_val x y
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   simpa using Rcompare_Eq_spec x y
 
-/-- Coq: {lean}`Rcompare_Eq_inv` - from code Eq {lean}`0` deduce {lean}`x = y`. -/
+/-/ Coq: {lean}`Rcompare_Eq_inv` - from code Eq {lean}`0` deduce {lean}`x = y`. -/
 theorem Rcompare_Eq_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -968,13 +985,20 @@ theorem Rcompare_Eq_inv_spec (x y : ℝ) :
     by_cases heq : x = y
     · -- Then the code is 0, so x = y holds
       exact heq
-    · -- Otherwise y < x, code is 1, contradiction with = 0
+  · -- Otherwise y < x, code is 1, contradiction with = 0
       have hyx : y < x := lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm heq)
       have : (1 : Int) ≠ 0 := by decide
       have : False := this (by simpa [hlt, heq, hyx] using hcode)
       exact this.elim
 
-/-- Coq: {lean}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lean}`1`. -/
+/-- Coq-named wrapper. -/
+theorem Rcompare_Eq_inv (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r = 0 → x = y⌝⦄ := by
+  simpa using Rcompare_Eq_inv_spec x y
+
+/-/ Coq: {lean}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lean}`1`. -/
 theorem Rcompare_Gt_spec (x y : ℝ) :
     ⦃⌜y < x⌝⦄
     Rcompare_val x y
@@ -990,7 +1014,7 @@ theorem Rcompare_Gt_spec (x y : ℝ) :
   simp [hnotlt, hneq]
 
 /-  Coq-named wrapper. -/
-theorem Rcompare_Gt (x y : ℝ) :
+private theorem Rcompare_Gt_wr (x y : ℝ) :
     ⦃⌜y < x⌝⦄
     Rcompare_val x y
     ⦃⇓r => ⌜r = 1⌝⦄ := by
@@ -1029,7 +1053,7 @@ theorem Rcompare_Gt_inv (x y : ℝ) :
     ⦃⇓r => ⌜r = 1 → y < x⌝⦄ := by
   simpa using Rcompare_Gt_inv_spec x y
 
-/-- Coq: {lean}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lean}`1`. -/
+/-/ Coq: {lean}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lean}`1`. -/
 theorem Rcompare_not_Gt_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     Rcompare_val x y
@@ -1048,7 +1072,7 @@ theorem Rcompare_not_Gt_spec (x y : ℝ) :
     simp [hlt, hEq, pure]
 
 /-  Coq-named wrapper. -/
-theorem Rcompare_not_Gt (x y : ℝ) :
+private theorem Rcompare_not_Gt_wr (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     Rcompare_val x y
     ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
