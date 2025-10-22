@@ -456,15 +456,35 @@ private lemma tdiv_pow_succ_assoc
   have hbeta_pow : 0 < beta ^ k := pow_pos hb k
   have hbeta_pow_succ : 0 < beta ^ (k + 1) := pow_pos hb (k + 1)
 
-  -- Convert tdiv to ediv for non-negative arguments
-  rw [Int.tdiv_eq_ediv_of_nonneg hn]
-  rw [Int.tdiv_eq_ediv_of_nonneg]
-  · rw [Int.tdiv_eq_ediv_of_nonneg hn]
-    -- Now we can use the ediv associativity lemma
-    rw [pow_succ']
-    rw [Int.ediv_ediv_eq_ediv_mul _ (Int.le_of_lt hb)]
-  · -- Prove that n.tdiv beta ≥ 0
-    apply Int.tdiv_nonneg hn (Int.le_of_lt hb)
+  -- Convert both `tdiv` into Euclidean division using nonnegativity
+  -- Left side: `tdiv n (beta^(k+1)) = n / (beta^(k+1))`
+  have hL : Int.tdiv n (beta ^ (k + 1)) = n / (beta ^ (k + 1)) := by
+    simpa using (Int.tdiv_eq_ediv_of_nonneg hn :
+      Int.tdiv n (beta ^ (k + 1)) = n / (beta ^ (k + 1)))
+  -- Right side: `tdiv (tdiv n beta) (beta^k) = (tdiv n beta) / (beta^k)`
+  have hR : Int.tdiv (Int.tdiv n beta) (beta ^ k)
+      = (Int.tdiv n beta) / (beta ^ k) := by
+    have htdiv_nonneg : 0 ≤ Int.tdiv n beta :=
+      Int.tdiv_nonneg hn (Int.le_of_lt hb)
+    simpa using (Int.tdiv_eq_ediv_of_nonneg htdiv_nonneg :
+      Int.tdiv (Int.tdiv n beta) (beta ^ k) = (Int.tdiv n beta) / (beta ^ k))
+  -- It remains to show the Euclidean-division identity on the rhs
+  -- `n / (beta^(k+1)) = (n / beta) / (beta^k)`
+  have hmid : n / (beta ^ (k + 1)) = (n / beta) / (beta ^ k) := by
+    -- use associativity of `ediv` and `pow_succ'`
+    simpa [pow_succ'] using
+      (Int.ediv_ediv_eq_ediv_mul n (Int.le_of_lt hb)).symm
+  -- Replace `(tdiv n beta)` by `(n / beta)` in the right-hand expression
+  have hdiv_eq : Int.tdiv n beta = n / beta := by
+    simpa using (Int.tdiv_eq_ediv_of_nonneg hn : Int.tdiv n beta = n / beta)
+  -- Assemble the chain of equalities
+  calc
+    Int.tdiv n (beta ^ (k + 1))
+        = n / (beta ^ (k + 1)) := hL
+    _   = (n / beta) / (beta ^ k) := hmid
+    _   = (Int.tdiv n beta) / (beta ^ k) := by simpa [hdiv_eq]
+    _   = Int.tdiv (Int.tdiv n beta) (beta ^ k) := by
+      simpa using hR.symm
 
 
 /-- Helper lemma: For positive n, there exists k ≥ 0 such that Zdigit beta n k ≠ 0 -/

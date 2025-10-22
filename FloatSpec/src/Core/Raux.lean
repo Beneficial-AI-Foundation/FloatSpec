@@ -1066,7 +1066,7 @@ theorem Rcompare_not_Gt_inv (x y : ℝ) :
 def Zcompare_int (m n : Int) : Id Int :=
   pure (if m < n then -1 else if m = n then 0 else 1)
 
-/-- Coq: Rcompare_IZR - comparison of casted Ints matches integer comparison. -/
+/-- Coq: Rcompare_IZR — comparison of casted integers matches integer comparison. -/
 theorem Rcompare_IZR_spec (m n : Int) :
     ⦃⌜True⌝⦄
     Rcompare ((m : ℝ)) (n : ℝ)
@@ -1409,7 +1409,7 @@ theorem Rlt_bool_opp (x y : ℝ) :
 
 /-- Negation of strict less-than is greater-or-equal
 
-    Shows that negb (Rlt_bool x y) = true ↔ y ≤ x.
+    Boolean negation of x < y is equivalent to y ≤ x.
     This captures the duality between < and ≥.
 -/
 noncomputable def negb_Rlt_bool (x y : ℝ) : Id Bool :=
@@ -1417,7 +1417,7 @@ noncomputable def negb_Rlt_bool (x y : ℝ) : Id Bool :=
 
 /-- Specification: Negated < equals ≥
 
-    !Rlt_bool x y ↔ y ≤ x.
+    For booleans, not (x < y) ↔ y ≤ x.
     This duality is fundamental for simplifying comparisons.
 -/
 theorem negb_Rlt_bool_spec (x y : ℝ) :
@@ -1432,7 +1432,7 @@ theorem negb_Rlt_bool_spec (x y : ℝ) :
 
 /-- Negation of less-or-equal is strict greater-than
 
-    Shows that negb (Rle_bool x y) = true ↔ y < x.
+    Boolean negation of x ≤ y is equivalent to y < x.
     This captures the duality between ≤ and >.
 -/
 noncomputable def negb_Rle_bool (x y : ℝ) : Id Bool :=
@@ -1440,7 +1440,7 @@ noncomputable def negb_Rle_bool (x y : ℝ) : Id Bool :=
 
 /-- Specification: Negated ≤ equals >
 
-    !Rle_bool x y ↔ y < x.
+    For booleans, {lean}`(¬ (x ≤ y)) ↔ y < x`.
     This completes the duality between orderings.
 -/
 theorem negb_Rle_bool_spec (x y : ℝ) :
@@ -1796,11 +1796,12 @@ noncomputable def Zceil (x : ℝ) : Id Int :=
 noncomputable def Ztrunc (x : ℝ) : Id Int :=
   pure (if x < 0 then ⌈x⌉ else ⌊x⌋)
 
-/-! Auxiliary: casting truncation commutes with absolute value.
+/-- Auxiliary: casting truncation commutes with absolute value.
 
     This stays in Raux to avoid cross-file dependencies during proofs
-    that need it (e.g., round_to_generic_abs). -/
-/- Carrier program for `Ztrunc_abs_real`: casted truncation of `|y|` as `ℝ`. -/
+    that need it (e.g., round_to_generic_abs). Carrier for Ztrunc_abs_real:
+    casted truncation of |y| as ℝ.
+-/
 noncomputable def Ztrunc_abs_real_val (y : ℝ) : Id ℝ :=
   pure (((Ztrunc (abs y)).run : Int) : ℝ)
 
@@ -2395,12 +2396,7 @@ end IntAway
 
 section IntDiv
 
-/-- Division at floors: floor (x / y) for integer x,y
-
-    Coq: Zfloor_div
-    For integers x,y with y ≠ 0, we have
-    Zfloor (IZR x / IZR y) = x / y.
--/
+/-- Division at floors for integers: floor((x:ℝ)/(y:ℝ)) = x / y when y ≠ 0. -/
 theorem Zfloor_div (x y : Int) :
     ⦃⌜0 < y⌝⦄
     Zfloor ((x : ℝ) / (y : ℝ))
@@ -3013,7 +3009,8 @@ theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int) :
   -- Antisymmetry yields equality of exponents
   exact le_antisymm hle12 hle21
 
-/-- Square-root law for even exponents: sqrt (bpow (2*e)) = bpow e -/
+/-- Square-root law for even exponents:
+{lean}`Real.sqrt ((beta : ℝ) ^ (2 * e)) = (beta : ℝ) ^ e` -/
 noncomputable def sqrt_bpow_check (beta e : Int) : Id (ℝ × ℝ) :=
   pure ((Real.sqrt ((beta : ℝ) ^ (2 * e)), (beta : ℝ) ^ e))
 
