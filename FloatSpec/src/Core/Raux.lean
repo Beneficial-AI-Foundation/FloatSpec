@@ -882,7 +882,7 @@ theorem Rcompare_not_Lt_spec (x y : ℝ) :
   · simp [hxy]
   · simp [hxy]
 
-/-- Coq: {name}`Rcompare_not_Lt_inv` — from code not Lt {lit}`-1`, deduce {lean}`y ≤ x`. -/
+/-- Coq: {lit}`Rcompare_not_Lt_inv` — from code not Lt {lit}`-1`, deduce {lean}`y ≤ x`. -/
 theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -895,7 +895,19 @@ theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
   -- Goal after simp: y ≤ x → ¬(if x = y then 0 else 1) = -1 → y ≤ x
   intro hyx _; exact hyx
 
-/-- Coq: {name}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lit}`0`. -/
+/-
+  Provide the Coq-named lemma without the `_spec` suffix so documentation
+  cross-references like {name}`Rcompare_not_Lt_inv` resolve. The statement
+  matches `Rcompare_not_Lt_inv_spec` exactly; we expose it under the Coq name
+  as a thin wrapper.
+-/
+theorem Rcompare_not_Lt_inv (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r ≠ -1 → y ≤ x⌝⦄ := by
+  simpa using Rcompare_not_Lt_inv_spec x y
+
+/-- Coq: {lit}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lit}`0`. -/
 theorem Rcompare_Eq_spec (x y : ℝ) :
     ⦃⌜x = y⌝⦄
     Rcompare_val x y
@@ -907,7 +919,14 @@ theorem Rcompare_Eq_spec (x y : ℝ) :
   have hEq : x = y := hxy
   simp [wp, PostCond.noThrow, Id.run, pure, hEq]
 
-/-- Coq: Rcompare_Eq_inv - from code Eq (0) deduce x = y. -/
+/-  Coq-named wrapper to satisfy doc cross-references. -/
+theorem Rcompare_Eq (x y : ℝ) :
+    ⦃⌜x = y⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r = 0⌝⦄ := by
+  simpa using Rcompare_Eq_spec x y
+
+/-- Coq: {lit}`Rcompare_Eq_inv` - from code Eq {lit}`0` deduce {lean}`x = y`. -/
 theorem Rcompare_Eq_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -934,7 +953,7 @@ theorem Rcompare_Eq_inv_spec (x y : ℝ) :
       have : False := this (by simpa [hlt, heq, hyx] using hcode)
       exact this.elim
 
-/-- Coq: {name}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lit}`1`. -/
+/-- Coq: {lit}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lit}`1`. -/
 theorem Rcompare_Gt_spec (x y : ℝ) :
     ⦃⌜y < x⌝⦄
     Rcompare_val x y
@@ -949,7 +968,14 @@ theorem Rcompare_Gt_spec (x y : ℝ) :
   have hneq : x ≠ y := by exact Ne.symm (ne_of_lt hyx)
   simp [hnotlt, hneq]
 
-/-- Coq: {name}`Rcompare_Gt_inv` — from code Gt {lit}`1`, deduce {lean}`y < x`. -/
+/-  Coq-named wrapper. -/
+theorem Rcompare_Gt (x y : ℝ) :
+    ⦃⌜y < x⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r = 1⌝⦄ := by
+  simpa using Rcompare_Gt_spec x y
+
+/-- Coq: {lit}`Rcompare_Gt_inv` — from code Gt {lit}`1`, deduce {lean}`y < x`. -/
 theorem Rcompare_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -975,7 +1001,14 @@ theorem Rcompare_Gt_inv_spec (x y : ℝ) :
     · -- Otherwise y < x, as desired
       exact lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm heq)
 
-/-- Coq: {name}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lit}`1`. -/
+/-  Coq-named wrapper. -/
+theorem Rcompare_Gt_inv (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r = 1 → y < x⌝⦄ := by
+  simpa using Rcompare_Gt_inv_spec x y
+
+/-- Coq: {lit}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lit}`1`. -/
 theorem Rcompare_not_Gt_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     Rcompare_val x y
@@ -993,7 +1026,14 @@ theorem Rcompare_not_Gt_spec (x y : ℝ) :
     have hEq : x = y := le_antisymm hxy hyx
     simp [hlt, hEq, pure]
 
-/-- Coq: {name}`Rcompare_not_Gt_inv` — from not Gt {lit}`1`, deduce {lean}`x ≤ y`. -/
+/-  Coq-named wrapper. -/
+theorem Rcompare_not_Gt (x y : ℝ) :
+    ⦃⌜x ≤ y⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
+  simpa using Rcompare_not_Gt_spec x y
+
+/-- Coq: {lit}`Rcompare_not_Gt_inv` — from not Gt {lit}`1`, deduce {lean}`x ≤ y`. -/
 theorem Rcompare_not_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     Rcompare_val x y
@@ -1014,6 +1054,13 @@ theorem Rcompare_not_Gt_inv_spec (x y : ℝ) :
       simpa [heq]
     · -- Otherwise, the code would be 1, contradicting hneq; derive x ≤ y by ex falso
       exact (False.elim (hneq (by simpa [hlt, heq])))
+
+/-  Coq-named wrapper. -/
+theorem Rcompare_not_Gt_inv (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    Rcompare_val x y
+    ⦃⇓r => ⌜r ≠ 1 → x ≤ y⌝⦄ := by
+  simpa using Rcompare_not_Gt_inv_spec x y
 
 /-- Integer comparison as an Int code (-1/0/1), mirroring Coq's Z.compare -/
 def Zcompare_int (m n : Int) : Id Int :=
