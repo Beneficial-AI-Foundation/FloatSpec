@@ -254,9 +254,12 @@ theorem Ztrunc_neg (x : ℝ) : (Ztrunc (-x)).run = - (Ztrunc x).run := by
 theorem Ztrunc_intCast (z : Int) : (Ztrunc (z : ℝ)).run = z := by
   simpa using Ztrunc_int z
 
-/-- For nonzero real a, zpow distributes over addition: a^m * a^n = a^(m+n). -/
--- Note: Using Mathlib's zpow_add₀ directly instead of redefining
-theorem zpow_add_local {a : ℝ} (ha : a ≠ 0) (m n : Int) : a ^ m * a ^ n = a ^ (m + n) := by
+/-- For nonzero real `a`, we have `a^m * a^n = a^(m+n)`.
+
+This is a tiny wrapper around the Mathlib lemma `zpow_add₀`, phrased in the
+direction convenient for rewriting left-to-right in this file. -/
+theorem zpow_add_local {a : ℝ} (ha : a ≠ 0) (m n : Int) :
+    a ^ m * a ^ n = a ^ (m + n) := by
   simpa [add_comm] using (zpow_add₀ ha m n).symm
 
 /-- zpow product with negative exponent collapses to subtraction in exponent -/
@@ -603,12 +606,7 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
   simpa [FloatSpec.Core.Defs.F2R] using
     (generic_format_F2R (beta := beta) (fexp := fexp) (m := 1) (e := e) ⟨hβ, hbound⟩)
 
-/-- Coq (Generic_fmt.v): generic_format_bpow'
-
-    Variant of `generic_format_bpow` under the simpler hypothesis `fexp e ≤ e`.
-    This mirrors the Coq statement where `bpow'` assumes `fexp e ≤ e` directly.
-    We produce the canonical representation with mantissa `1` and exponent `e`.
--/
+/-- Variant generic_format_bpow' (Coq Generic_fmt): assumes fexp e ≤ e. -/
 theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
     ⦃⌜beta > 1 ∧ fexp e ≤ e⌝⦄
     generic_format beta fexp ((beta : ℝ) ^ e)
