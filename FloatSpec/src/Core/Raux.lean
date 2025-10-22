@@ -2782,7 +2782,12 @@ theorem bpow_1 (beta : Int) :
   -- Reduce the Hoare triple on Id to a pure equality and use zpow at 1
   simp [wp, PostCond.noThrow, Id.run, pure, zpow_one]
 
-/-- Increment law: bpow (e+1) = beta * bpow e -/
+/-
+info: ()
+-/
+#guard_msgs in
+#eval ()
+set_option linter.unusedVariables false in
 noncomputable def bpow_plus_1_check (beta e : Int) : Id (ℝ × ℝ) :=
   pure (((beta : ℝ) ^ (e + 1), (beta : ℝ) * ((beta : ℝ) ^ e)))
 
