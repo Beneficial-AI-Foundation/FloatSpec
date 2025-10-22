@@ -513,7 +513,7 @@ def Zdiv_mod_mult (n a b : Int) : Id Int :=
   else
     0
 
-/-- Specification: Division distributes over modulo for nonnegative inputs, i.e. (n % (a * b)) / a = (n / a) % b. -/
+/-- Specification: Division distributes over modulo for nonnegative inputs, i.e. {lit}`(n % (a * b)) / a = (n / a) % b`. -/
 theorem Zdiv_mod_mult_spec (n a b : Int) :
     ⦃⌜0 ≤ a ∧ 0 ≤ b⌝⦄
     Zdiv_mod_mult n a b
@@ -550,7 +550,7 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
       simp [hb_zero]
       rfl
 
-/-- Nested modulo with multiplication: for integers n, a, b, the term {lean}`(n % (a * b)) % b` is equivalent to {lean}`n % b` under standard side conditions. -/
+/-- Nested modulo with multiplication: for integers n, a, b, the term {lit}`(n % (a * b)) % b` is equivalent to {lit}`n % b` under standard side conditions. -/
 def ZOmod_mod_mult (n _a b : Int) : Id Int :=
   n % b
 
@@ -566,7 +566,7 @@ theorem ZOmod_mod_mult_spec (n a b : Int) :
 /-- Truncated division over nested remainder and multiplication
 
     Quotient distributes over remainder/multiplication in the truncated variant:
-    (n % (a*b)) / a = (n / a) % b.
+    {lit}`(n % (a*b)) / a = (n / a) % b`.
 -/
 def ZOdiv_mod_mult (n a b : Int) : Id Bool :=
   decide (((n % (a * b)) / a) = ((n / a) % b))
@@ -582,7 +582,7 @@ theorem ZOdiv_mod_mult_spec (n a b : Int) :
 
 /-- Small-absolute-value truncated division is zero
 
-    If |a| < b, then a / b = 0 in truncated division.
+    If {lit}`|a| < b`, then {lit}`a / b = 0` in truncated division.
 -/
 def ZOdiv_small_abs_check (a b : Int) : Id Bool :=
   decide (a / b = 0)
@@ -634,13 +634,7 @@ def ZOdiv_plus (a b c : Int) : Id Int :=
   else
     0
 
-/-- Specification: Quotient of sum decomposition
-
-    The quotient of a sum can be expressed as:
-    quot(a+b, c) = quot(a, c) + quot(b, c) + quot(rem(a, c) + rem(b, c), c)
-    when a*b ≥ 0. This decomposition is crucial for multi-precision
-    arithmetic operations.
--/
+/-- Specification: Decomposes the quotient of a sum into a sum of quotients plus the quotient of remainders, under a nonnegativity side condition. -/
 theorem ZOdiv_plus_spec (a b c : Int) :
     ⦃⌜0 ≤ a * b ∧ c ≠ 0⌝⦄
     ZOdiv_plus a b c
@@ -659,7 +653,7 @@ section SameSign
 def Zsame_sign_trans_check (v u w : Int) : Id Bool :=
   decide (0 ≤ u * w)
 
-/-- Specification: If v ≠ 0 and 0 ≤ u*v and 0 ≤ v*w then 0 ≤ u*w -/
+/-- Specification: If v ≠ 0 and both u·v and v·w are nonnegative, then u·w is nonnegative. -/
 theorem Zsame_sign_trans_spec (v u w : Int) :
     ⦃⌜v ≠ 0 ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
     Zsame_sign_trans_check v u w
@@ -679,7 +673,7 @@ theorem Zsame_sign_trans (v u w : Int) :
 def Zsame_sign_trans_weak_check (v u w : Int) : Id Bool :=
   decide (0 ≤ u * w)
 
-/-- Specification: If (v = 0 → w = 0) and 0 ≤ u*v and 0 ≤ v*w then 0 ≤ u*w -/
+/-- Specification: If (v = 0 → w = 0) and both u·v and v·w are nonnegative, then u·w is nonnegative. -/
 theorem Zsame_sign_trans_weak_spec (v u w : Int) :
     ⦃⌜(v = 0 → w = 0) ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
     Zsame_sign_trans_weak_check v u w
@@ -701,7 +695,7 @@ def Zsame_sign_imp (u v : Int)
     (_hn : 0 < -u → 0 ≤ -v) : Id Bool :=
   decide (0 ≤ u * v)
 
-/-- Specification: If u>0⇒v≥0 and -u>0⇒-v≥0 then 0 ≤ u*v -/
+/-- Specification: If u > 0 implies v ≥ 0 and −u > 0 implies −v ≥ 0, then 0 ≤ u·v. -/
 theorem Zsame_sign_imp_spec (u v : Int)
     (hp : 0 < u → 0 ≤ v) (hn : 0 < -u → 0 ≤ -v) :
     ⦃⌜True⌝⦄
@@ -711,11 +705,11 @@ theorem Zsame_sign_imp_spec (u v : Int)
   unfold Zsame_sign_imp
   rfl
 
-/-- Nonnegativity of u * (u / v) when v ≥ 0 (truncated division) -/
+/-- Nonnegativity of u·(u / v) when v ≥ 0 (truncated division). -/
 def Zsame_sign_odiv (u v : Int) : Id Bool :=
   decide (0 ≤ u * (u / v))
 
-/-- Specification: If 0 ≤ v then 0 ≤ u * (u / v) -/
+/-- Specification: If 0 ≤ v then 0 ≤ u·(u / v). -/
 theorem Zsame_sign_odiv_spec (u v : Int) :
     ⦃⌜0 ≤ v⌝⦄
     Zsame_sign_odiv u v
@@ -779,11 +773,7 @@ theorem Zle_bool_spec (x y : Int) :
 def Zlt_bool (x y : Int) : Id Bool :=
   decide (x < y)
 
-/-- Specification: Boolean strict ordering test
-
-    The boolean less-than test returns true if and only if
-    x < y. This provides a computational version of strict ordering.
--/
+/-- Specification: Boolean strict ordering test -/
 theorem Zlt_bool_spec (x y : Int) :
     ⦃⌜True⌝⦄
     Zlt_bool x y
@@ -792,20 +782,11 @@ theorem Zlt_bool_spec (x y : Int) :
   unfold Zlt_bool
   rfl
 
-/-- Boolean equality is true when equal
-
-    x = y implies Zeq_bool x y = true. This provides
-    the forward direction of boolean equality correctness.
--/
+/-- Boolean equality is true when equal -/
 def Zeq_bool_true (_ _ : Int) : Id Bool :=
   true
 
-/-- Specification: Equality implies true
-
-    When two integers are equal, the boolean equality test
-    returns true. This is half of the correctness property
-    for boolean equality.
--/
+/-- Specification: Equality implies true -/
 theorem Zeq_bool_true_spec (x y : Int) :
     ⦃⌜x = y⌝⦄
     Zeq_bool_true x y
@@ -814,20 +795,11 @@ theorem Zeq_bool_true_spec (x y : Int) :
   unfold Zeq_bool_true
   rfl
 
-/-- Boolean equality is false when not equal
-
-    x ≠ y implies Zeq_bool x y = false. This provides
-    the reverse direction of boolean equality correctness.
--/
+/-- Boolean equality is false when not equal -/
 def Zeq_bool_false (_ _ : Int) : Id Bool :=
   false
 
-/-- Specification: Inequality implies false
-
-    When two integers are not equal, the boolean equality test
-    returns false. This completes the correctness property
-    for boolean equality.
--/
+/-- Specification: Inequality implies false -/
 theorem Zeq_bool_false_spec (x y : Int) :
     ⦃⌜x ≠ y⌝⦄
     Zeq_bool_false x y
