@@ -2258,7 +2258,7 @@ theorem Znearest_le_ceil (choice : Int → Bool) (x : ℝ) :
    Znearest_le_ceil, Znearest_N_strict, Znearest_half, Znearest_imp, Znearest_opp.
    We add them one-by-one following the pipeline instructions. -/
 
-/-- Check value for {lean}`Znearest_N_strict`: {lean}`|x - (((Znearest choice x) : Int) : ℝ)|` -/
+/-- Check value for {lit}`Znearest_N_strict`: {lean}`|x - (((Znearest choice x) : Int) : ℝ)|`. -/
 noncomputable def Znearest_N_strict_check (choice : Int → Bool) (x : ℝ) : Id ℝ :=
   pure (|x - (((Znearest choice x) : Int) : ℝ)|)
 
@@ -5490,7 +5490,7 @@ theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp be
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_DN_pt`:
-    {lean}`∀ x, Rnd_DN_pt format x (round Zfloor x)`.
+    {lit}`∀ x, Rnd_DN_pt format x (round Zfloor x)`.
 
     Lean (existence form): There exists a down-rounded value in the
     generic format for any real x. This mirrors the Coq statement
@@ -5507,7 +5507,7 @@ theorem round_DN_pt
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_UP_pt`:
-    {lean}`∀ x, Rnd_UP_pt format x (round Zceil x)`.
+    {lit}`∀ x, Rnd_UP_pt format x (round Zceil x)`.
 
     Lean (existence form): There exists an up-rounded value in the
     generic format for any real x, stated with the pointwise predicate.
@@ -5520,7 +5520,7 @@ theorem round_UP_pt
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_ZR_pt`:
-    {lean}`∀ x, Rnd_ZR_pt format x (round Ztrunc x)`.
+    {lit}`∀ x, Rnd_ZR_pt format x (round Ztrunc x)`.
 
     Lean (existence form): There exists a toward-zero rounded value
     in the generic format for any real x. -/
@@ -5570,9 +5570,9 @@ theorem round_ZR_pt
     -- DN side is vacuous since 0 ≤ x contradicts hx; UP side holds by the witness.
     exact And.intro (fun hx0 => (False.elim (hx hx0))) (fun _ => hUP)
 
-/-- Coq {lit}`Generic_fmt.v`:
-    Theorem {lean}`round_N_pt`:
-    {lean}`∀ x, Rnd_N_pt format x (round Znearest x)`.
+/-- Coq {lit}`Generic_fmt.v`,
+    Theorem {lean}`round_N_pt`,
+    {lit}`∀ x, Rnd_N_pt format x (round Znearest x)`.
 
     Lean (existence form): There exists a nearest-rounded value in the
     generic format for any real x, stated with the pointwise predicate.
@@ -5854,10 +5854,10 @@ variable (rnd : ℝ → ℝ → Prop)
 
 /-- Coq (Generic_fmt.v):
     Theorem generic_round_generic:
-      ∀ x, generic_format fexp1 x →
-            generic_format fexp1 (round fexp2 rnd x).
+    If x is in the generic format for fexp1, then rounding with
+    fexp2 and relation rnd stays in that format.
 
-    Lean (spec): round_to_generic with `fexp2` remains in format `fexp1`. -/
+    Lean (spec): round_to_generic with fexp2 remains in format fexp1. -/
 -- We use a localized theorem capturing the closure of a generic format under
 -- rounding to a (possibly different) generic exponent function. This mirrors
 -- the Coq result and lets us focus later work on quantitative bounds.
@@ -6133,10 +6133,8 @@ theorem round_to_generic_spec (beta : Int) (fexp : Int → Int) [Valid_exp beta 
 
 /-- Coq (Generic_fmt.v):
     Theorem round_generic:
-      forall rnd x, generic_format (round rnd x).
-
-    Lean (spec): Rounding to generic format produces a value in the generic format.
--/
+    For any rounding relation and real `x`, rounding to the generic
+    format produces a value in the generic format. -/
 theorem round_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
@@ -6188,10 +6186,8 @@ theorem round_ext
 
 /-- Coq (Generic_fmt.v):
     Theorem round_generic:
-      forall x, generic_format x -> round x = x.
-
-    Lean: If x is already in generic format, then rounding x returns x unchanged.
--/
+    If `x` is already in the generic format, then rounding `x`
+    returns `x` unchanged. -/
 theorem round_generic_identity
     (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
@@ -6213,10 +6209,8 @@ theorem round_generic_identity
 
 /-- Coq (Generic_fmt.v):
     Theorem round_opp:
-      forall rnd x, round rnd (-x) = - round (Zrnd_opp rnd) x.
-
-    Lean (spec placeholder): A general opposite relation between two rounding relations.
--/
+    Rounding commutes with negation up to an appropriate opposite
+    rounding relation. -/
 theorem round_opp
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd rndOpp : ℝ → ℝ → Prop) (x : ℝ) :
