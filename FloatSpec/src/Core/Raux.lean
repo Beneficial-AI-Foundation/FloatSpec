@@ -1076,7 +1076,7 @@ theorem Rcompare_IZR_spec (m n : Int) :
   -- Split on the integer comparison and transport it to ℝ via cast
   by_cases hlt : m < n
   ·
-    have hltR : (m : ℝ) < (n : ℝ) := (Int.cast_lt).2 hlt
+    have hltR : (m : ℝ) < (n : ℝ) := by exact_mod_cast hlt
     simp [hlt, hltR]
   ·
     -- Not (m < n); either m = n or m > n
@@ -1090,7 +1090,7 @@ theorem Rcompare_IZR_spec (m n : Int) :
       -- Strict greater case: n < m
       have hle : n ≤ m := not_lt.mp hnotlt
       have hgt : n < m := lt_of_le_of_ne hle (Ne.symm heq)
-      have hgtR : (n : ℝ) < (m : ℝ) := (Int.cast_lt).2 hgt
+      have hgtR : (n : ℝ) < (m : ℝ) := by exact_mod_cast hgt
       have hnotltR : ¬ (m : ℝ) < (n : ℝ) := not_lt.mpr (le_of_lt hgtR)
       -- From m ≠ n in ℤ, get m ≠ n in ℝ by injectivity of the cast
       have hneR : (m : ℝ) ≠ (n : ℝ) := by
@@ -1796,12 +1796,7 @@ noncomputable def Zceil (x : ℝ) : Id Int :=
 noncomputable def Ztrunc (x : ℝ) : Id Int :=
   pure (if x < 0 then ⌈x⌉ else ⌊x⌋)
 
-/-- Auxiliary: casting truncation commutes with absolute value.
-
-    This stays in Raux to avoid cross-file dependencies during proofs
-    that need it (e.g., round_to_generic_abs). Carrier for Ztrunc_abs_real:
-    casted truncation of |y| as ℝ.
--/
+/-- Carrier for Ztrunc_abs_real: casted truncation of |y| as a real. -/
 noncomputable def Ztrunc_abs_real_val (y : ℝ) : Id ℝ :=
   pure (((Ztrunc (abs y)).run : Int) : ℝ)
 
@@ -2446,12 +2441,8 @@ theorem Zfloor_div (x y : Int) :
   -- Conclude by the floor characterization
   simpa using ((Int.floor_eq_iff).2 ⟨h_lower, h_upper⟩)
 
-/-- Division at truncation: trunc (x / y) for integer x,y (toward zero)
-
-    Coq: Ztrunc_div
-    For integers x,y with y ≠ 0, we have
-    Ztrunc (IZR x / IZR y) = Int.quot x y (toward-zero quotient).
--/
+/-- Coq: Ztrunc_div. For integers x, y with y ≠ 0,
+    Ztrunc (IZR x / IZR y) = Int.tdiv x y (toward-zero quotient). -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
     Ztrunc ((x : ℝ) / (y : ℝ))
@@ -2802,8 +2793,7 @@ theorem bpow_plus_1 (beta e : Int) :
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold bpow_plus_1_check
-  -- zpow addition specialized to 1; proof omitted
-  -- Use zpow addition for nonzero base and the fact that (beta : ℝ) ^ (1 : Int) = beta
+  -- zpow addition specialized to 1; use zpow_add₀ for nonzero base
   have h1β : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast ‹1 < beta›
   have hbpos : (0 : ℝ) < (beta : ℝ) := lt_trans zero_lt_one h1β
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
@@ -3009,8 +2999,7 @@ theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int) :
   -- Antisymmetry yields equality of exponents
   exact le_antisymm hle12 hle21
 
-/-- Square-root law for even exponents:
-{lean}`Real.sqrt ((beta : ℝ) ^ (2 * e)) = (beta : ℝ) ^ e` -/
+/-- Square-root law for even exponents: sqrt ((beta : ℝ) ^ (2 * e)) = (beta : ℝ) ^ e -/
 noncomputable def sqrt_bpow_check (beta e : Int) : Id (ℝ × ℝ) :=
   pure ((Real.sqrt ((beta : ℝ) ^ (2 * e)), (beta : ℝ) ^ e))
 
@@ -3141,13 +3130,7 @@ noncomputable def LPO_min_choice (P : Nat → Prop) : Id (Option Nat) :=
       else
         pure none
 
-/-- Coq (Raux.v):
-Theorem LPO_min:
-  ∀ P : ℕ → Prop, (∀ n, P n ∨ ¬ P n) →
-  {n : ℕ | P n ∧ ∀ i, i < n → ¬ P i} + {∀ n, ¬ P n}.
-
-Lean (spec): Using an `Option Nat` to encode the sum; when `some n`, the
-returned `n` is a minimal witness; when `none`, no witness exists. -/
+/-- Coq (Raux.v) LPO_min. Lean spec uses `Option Nat` to encode the sum. -/
 theorem LPO_min (P : Nat → Prop) :
     ⦃⌜∀ n, P n ∨ ¬ P n⌝⦄
     LPO_min_choice P
@@ -3186,11 +3169,7 @@ noncomputable def LPO_choice (P : Nat → Prop) : Id (Option Nat) :=
       else
         pure none
 
-/-- Coq (Raux.v):
-Theorem LPO:
-  ∀ P : ℕ → Prop, (∀ n, P n ∨ ¬ P n) → {n : ℕ | P n} + {∀ n, ¬ P n}.
-
-Lean (spec): `some n` indicates a witness `P n`; `none` indicates universal negation. -/
+/-- Coq (Raux.v) LPO. Lean spec: `some n` indicates a witness `P n`; `none` indicates universal negation. -/
 theorem LPO (P : Nat → Prop) :
     ⦃⌜∀ n, P n ∨ ¬ P n⌝⦄
     LPO_choice P
@@ -3831,14 +3810,7 @@ theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
   -- Conclude the (non-strict) inequality required by the spec
   exact le_of_lt hpow_lt
 
-/-- Translate bpow bound via integer power: if |x| < IZR (Zpower _ e) then mag x ≤ e
-
-    Note on porting: in Coq, `IZR (Zpower beta e)` is `0` when `e < 0`, so the
-    hypothesis `|x| < IZR (Zpower beta e)` implies `0 ≤ e`. In this Lean port,
-    we model `IZR (Zpower beta e)` via the real integer power `(beta : ℝ)^e`,
-    which is always positive; to faithfully reflect the Coq statement we add
-    the side condition `0 ≤ e` to the precondition.
--/
+/-- If `1 < beta`, `0 ≤ e`, and `|x| < (beta : ℝ)^e`, then `mag beta x ≤ e`. -/
 theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 ≤ e ∧ |x| < ((beta : ℝ) ^ e)⌝⦄
     mag beta x
@@ -3854,14 +3826,7 @@ theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     have : (1 < beta ∧ x ≠ 0 ∧ |x| < (beta : ℝ) ^ e) := ⟨hβ, by exact hx0, hlt⟩
     exact (mag_le_bpow beta x e) this
 
-/-- Translate bpow lower bound via integer power: if IZR (Zpower _ (e-1)) < |x| then e ≤ mag x.
-
-    Note: Coq's `Zpower` returns `0` for negative exponents, making the original
-    non-strict statement with `≤` true at the boundary `x = β^(e-1)` in some cases.
-    In this Lean port, `(beta : ℝ)^n` is always positive for any integer `n`, so the
-    boundary case `|x| = (beta : ℝ)^(e-1)` would incorrectly force `mag x = e - 1`.
-    We therefore require a strict lower bound here, aligning with `mag_ge_bpow`.
--/
+/-- If `1 < beta` and `(beta : ℝ)^(e-1) < |x|`, then `e ≤ mag beta x`. -/
 theorem mag_gt_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ (e - 1)) < |x|⌝⦄
     mag beta x
