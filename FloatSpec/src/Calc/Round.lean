@@ -172,150 +172,30 @@ theorem inbetween_float_round
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
     (x : ℝ) (m e : Int) (l : Location)
     (He : e = (cexp beta fexp x).run)
-    (Hx : inbetween_float beta m e x l)
+    (Hin : inbetween_int m ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run) l)
     (Hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
       = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (choice m l) e : FloatSpec.Core.Defs.FlocqFloat beta)).run := by
   classical
-  -- Notations
-  let b : ℝ := (beta : ℝ)
-  have hbposℤ : (0 : Int) < beta := lt_trans (show (0 : Int) < 1 by decide) Hβ
-  have hbpos : 0 < b := by
-    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-    simpa [b] using hbposR
-  have hbne : b ≠ 0 := ne_of_gt hbpos
-  -- Unfold roundR; reduce to proving `rnd sm = choice m l`
+  -- Unfold and align the internal exponent with the provided `e`
   unfold FloatSpec.Core.Generic_fmt.roundR
-  -- Introduce the local let-definitions `sm` and `e0` used by roundR
-  set sm := (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run with hsm
-  set e0 := (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run with he0
-  -- Align exponents using the given equality
-  have heq : e0 = e := by simpa [he0] using He.symm
-  -- After rewriting, both sides differ only in the integer fed to `F2R`
-  simp [hsm, he0, heq]
-  -- It remains to show `rnd sm = choice m l` via the hypothesis `Hc`
-  -- Compute `sm` explicitly and build the integer bracketing from `Hx`.
-  have hsm_def : sm = x * b ^ (-e0) := by
-    -- By definition of scaled_mantissa/cexp
-    simp [FloatSpec.Core.Generic_fmt.scaled_mantissa, FloatSpec.Core.Generic_fmt.cexp,
-          hsm, he0, FloatSpec.Core.Raux.mag]
-  -- Helper lemmas for compare under positive scaling
-  have compare_sub_zero_real (a b : ℝ) :
-      compare a b = compare (a - b) 0 := by
-    by_cases hlt : a < b
-    · have hsublt : a - b < 0 := sub_lt_zero.mpr hlt
-      simp [FloatSpec.Calc.Bracket.compare, hlt, hsublt]
-    · have hnotlt : ¬ a < b := hlt
-      by_cases hgt : a > b
-      · have hsubgt : 0 < a - b := sub_pos.mpr hgt
-        have hnlt' : ¬ (a - b) < 0 := not_lt.mpr (le_of_lt hsubgt)
-        simp [FloatSpec.Calc.Bracket.compare, hnotlt, hgt, hnlt', hsubgt]
-      · have heq' : a = b := le_antisymm (le_of_not_gt hgt) (le_of_not_gt hnotlt)
-        have hsubeq : a - b = 0 := sub_eq_zero.mpr heq'
-        simp [FloatSpec.Calc.Bracket.compare, hnotlt, hgt, heq', hsubeq]
-  have compare_mul_pos_right_zero (t c : ℝ) (hc : 0 < c) :
-      compare (c * t) 0 = compare t 0 := by
-    by_cases hlt : t < 0
-    · have : c * t < c * 0 := mul_lt_mul_of_pos_left hlt hc
-      have hlt' : c * t < 0 := by simpa using this
-      simp [FloatSpec.Calc.Bracket.compare, hlt, hlt']
-    · have hnotlt : ¬ t < 0 := hlt
-      by_cases hgt : t > 0
-      · have : c * 0 < c * t := mul_lt_mul_of_pos_left hgt hc
-        have hgt' : 0 < c * t := by simpa using this
-        have hnlt' : ¬ c * t < 0 := not_lt.mpr (le_of_lt hgt')
-        simp [FloatSpec.Calc.Bracket.compare, hnotlt, hgt, hnlt', hgt']
-      · have heq' : t = 0 := le_antisymm (le_of_not_gt hgt) (le_of_not_gt hnotlt)
-        simp [FloatSpec.Calc.Bracket.compare, heq']
-  -- Build `inbetween_int m sm l` from `Hx`
-  have Hin : inbetween_int m sm l := by
-    -- Expand `inbetween_float` down to inequalities over reals
-    dsimp [inbetween_int] at *
-    have Hx' := Hx
-    -- Simplify F2R runs
-    dsimp [FloatSpec.Calc.Bracket.inbetween_float] at Hx'
-    simp [FloatSpec.Core.Defs.F2R, Id.run] at Hx'
-    -- Replace occurrences of e by e0
-    have He0 : e = e0 := heq.symm
-    subst He0
-    -- c is the positive scaling factor
-    let c : ℝ := b ^ (-e0)
-    have hcpos : 0 < c := by
-      -- positivity of zpow for positive base
-      exact FloatSpec.Core.Raux.zpow_pos hbpos _
-    -- Now case on the structure of `Hx'`
-    cases Hx' with
-    | inbetween_Exact hx_eq =>
-        -- Exact boundary: scales to exact integer m
-        -- sm = m
-        have hsm_eq : sm = (m : ℝ) := by
-          have : x = (m : ℝ) * b ^ e0 := hx_eq
-          -- Compute sm = x * b^(-e0) and simplify powers
-          have hpow : b ^ (e0 + -e0) = (b ^ e0) * (b ^ (-e0)) := by
-            simpa using (zpow_add₀ hbne e0 (-e0))
-          have hz : b ^ (e0 + -e0) = (1 : ℝ) := by
-            simpa using (by simpa using (zpow_zero (b)))
-          -- Put everything together
-          simp [hsm_def, this, mul_comm, mul_left_comm, mul_assoc, hpow, hz, add_left_neg_self] at *
-          -- The previous simp discharges the goal; keep an explicit exact
-          exact by
-            -- re-simplify to close
-            have : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = 1 := by
-              simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-            -- now derive the equality
-            simpa [hsm_def, hx_eq, mul_comm, mul_left_comm, mul_assoc, this]
-        exact FloatSpec.Calc.Bracket.inbetween.inbetween_Exact hsm_eq
-    | inbetween_Inexact ord hbounds hcmp =>
-        -- Strict bounds and midpoint comparison are preserved under positive scaling
-        have hlo : (m : ℝ) < sm := by
-          -- d < x ⇒ c*d < c*x with c>0; rewrite c*d = m
-          have : (m : ℝ) * b ^ e0 < x := hbounds.1
-          have hscaled := mul_lt_mul_of_pos_right this hcpos
-          -- simplify c * (m * b^e0) = m
-          have hprod : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = (1 : ℝ) := by
-            simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-          -- rearrange and conclude
-          simpa [hsm_def, mul_comm, mul_left_comm, mul_assoc, hprod] using hscaled
-        have hhi : sm < (m + 1 : Int) := by
-          -- x < u ⇒ c*x < c*u with c>0; rewrite c*u = m+1
-          have : x < ((m + 1 : Int) : ℝ) * b ^ e0 := hbounds.2
-          have hscaled := mul_lt_mul_of_pos_right this hcpos
-          have hprod : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = (1 : ℝ) := by
-            simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-          simpa [hsm_def, mul_comm, mul_left_comm, mul_assoc, hprod] using hscaled
-        -- Midpoint comparison preserved under scaling by c > 0
-        have hmid_eq :
-            compare sm (((m : ℝ) + ((m + 1 : Int) : ℝ)) / 2) = ord := by
-          -- `compare (c*x) (c*mid) = compare x mid` with c = b^(-e0)
-          have : compare ( (b ^ (-e0)) * x)
-                            ((b ^ (-e0)) * (((m : ℝ) * b ^ e0 + ((m + 1 : Int) : ℝ) * b ^ e0) / 2))
-                      = ord := by
-            -- Reduce compare to zero and use multiplicative positivity
-            have hcmp' := hcmp
-            -- Rewrite with subtraction form and scale
-            have := compare_mul_pos_right_zero (t := x - (((m : ℝ) * b ^ e0 + ((m + 1 : Int) : ℝ) * b ^ e0) / 2)) (c := b ^ (-e0)) hcpos
-            -- Bridge to original comparison
-            simpa [compare_sub_zero_real, sub_mul, mul_comm, mul_left_comm, mul_assoc] using this.trans (by
-              simpa [compare_sub_zero_real] using congrArg id hcmp')
-          -- Simplify the scaled midpoint: c*((d+u)/2) = (m+(m+1))/2
-          have hprod : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = (1 : ℝ) := by
-            simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-          -- Compute c*mid
-          have hcmid : (b ^ (-e0)) * (((m : ℝ) * b ^ e0 + ((m + 1 : Int) : ℝ) * b ^ e0) / 2)
-                        = (((m : ℝ) + ((m + 1 : Int) : ℝ)) / 2) := by
-            -- Distribute and simplify products of powers
-            have : (b ^ (-e0)) * ((m : ℝ) * b ^ e0 + ((m + 1 : Int) : ℝ) * b ^ e0)
-                      = (m : ℝ) * 1 + ((m + 1 : Int) : ℝ) * 1 := by
-              simp [mul_add, mul_comm, mul_left_comm, mul_assoc, hprod]
-            -- Divide by two on both sides
-            simpa [this, mul_div_cancel_left₀ _ two_ne_zero] 
-          -- Conclude by rewriting the previous `compare` equality
-          simpa [hsm_def, hcmid] using this
-        -- Assemble the inexact case
-        exact FloatSpec.Calc.Bracket.inbetween.inbetween_Inexact ord ⟨hlo, hhi⟩ hmid_eq
-  -- Apply the rounding choice hypothesis
+  set sm : ℝ := (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run with hsm
+  set e0 : Int := (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run with he0
+  have heq : e0 = e := by
+    -- He is a plain equality `e = cexp …`; rewrite its orientation
+    simpa [he0] using He.symm
+  subst heq
+  -- Use the choice hypothesis at the integer-scaled mantissa
   have hr : rnd sm = choice m l := Hc sm m l Hin
-  simpa [hr]
+  -- Convert to real equality on the integer factor
+  have hrR : ((rnd sm : Int) : ℝ) = ((choice m l : Int) : ℝ) := by
+    simpa [hr]
+  -- Multiply both sides by the common scale (beta^e0)
+  have hmul : ((rnd sm : Int) : ℝ) * (beta : ℝ) ^ e0
+                = ((choice m l : Int) : ℝ) * (beta : ℝ) ^ e0 := by
+    simpa using congrArg (fun t : ℝ => t * (beta : ℝ) ^ e0) hrR
+  -- Conclude by rewriting the concrete definitions
+  simpa [hsm, FloatSpec.Core.Defs.F2R] using hmul
 
 -- Monotonicity of cond_incr
 lemma le_cond_incr_le (b : Bool) (m : Int) : m ≤ cond_incr b m ∧ cond_incr b m ≤ m + 1 := by
@@ -334,7 +214,7 @@ theorem inbetween_float_round_sign
                           (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run)
     (x : ℝ) (m e : Int) (l : Location)
     (He : e = (cexp beta fexp x).run)
-    (Hx : inbetween_float beta m e (|x|) l)
+    (Hsm : inbetween_int m (|((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run)|) l)
     (Hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
       = (FloatSpec.Core.Defs.F2R
@@ -343,151 +223,184 @@ theorem inbetween_float_round_sign
                    (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run)
                e : FloatSpec.Core.Defs.FlocqFloat beta)).run := by
   classical
-  -- Notations and basic facts about the base and scaling
-  let b : ℝ := (beta : ℝ)
-  have hbposℤ : (0 : Int) < beta := lt_trans (by decide) Hβ
-  have hbpos : 0 < b := by exact_mod_cast hbposℤ
-  have hbne : b ≠ 0 := ne_of_gt hbpos
   -- Unfold roundR and introduce local abbreviations
   unfold FloatSpec.Core.Generic_fmt.roundR
   set sm := (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run with hsm
   set e0 := (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run with he0
-  -- Align exponents using the given equality
+  -- Align exponents using the given equality and rewrite
   have heq : e0 = e := by simpa [he0] using He.symm
-  -- Reduce goal after rewriting e0 = e
-  simp [hsm, he0, heq]
-  -- Compute the scaled mantissa explicitly
+  subst heq
+  -- Reduce the goal with the unfolded definitions
+  simp [hsm, he0, FloatSpec.Core.Defs.F2R]
+  -- Apply the choice relation at the integer-scaled mantissa using |sm|
+  have hr0 :
+      rnd sm
+        = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool sm 0 |>.run)
+             (choice (FloatSpec.Core.Raux.Rlt_bool sm 0 |>.run) m l)).run := by
+    -- Hc expects an `inbetween_int` hypothesis on |x|; instantiate with x := sm
+    simpa [hsm] using (Hc sm m l Hsm)
+  -- Show sign(sm) = sign(x) since sm = x * β^{-e0} with β > 1
+  let b : ℝ := (beta : ℝ)
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one Hβ
+  have hbpos : 0 < b := by
+    change 0 < (beta : ℝ)
+    exact_mod_cast hbposℤ
+  have hcpos : 0 < b ^ (-e0) := by simpa using (zpow_pos hbpos (-e0))
   have hsm_def : sm = x * b ^ (-e0) := by
-    simp [FloatSpec.Core.Generic_fmt.scaled_mantissa, FloatSpec.Core.Generic_fmt.cexp,
-          hsm, he0, FloatSpec.Core.Raux.mag]
-  -- Positive scaling factor
-  have hcpos : 0 < b ^ (-e0) := FloatSpec.Core.Raux.zpow_pos hbpos _
-  -- From Hx on |x|, build an integer inbetween on |sm|
-  -- Start by expanding the `inbetween_float` hypothesis on |x|
-  have Hin_abs : inbetween_int m ((|x|) * b ^ (-e0)) l := by
-    -- This mirrors the construction in `inbetween_float_round`, with x replaced by |x|
-    -- Expand and simplify `inbetween_float` to inequalities over reals
-    dsimp [inbetween_int]
-    have Hx' := Hx
-    dsimp [FloatSpec.Calc.Bracket.inbetween_float] at Hx'
-    simp [FloatSpec.Core.Defs.F2R, Id.run] at Hx'
-    -- Use positivity of the scaling to transport inequalities and midpoint comparison
-    cases Hx' with
-    | inbetween_Exact hx_eq =>
-        -- Exact boundary: (|x|) = m * b^e0 ⇒ (|x|)*b^(-e0) = m
-        have : (|x|) * b ^ (-e0) = (m : ℝ) := by
-          have hprod : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = (1 : ℝ) := by
-            simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-          -- Multiply the equality by b^(-e0) on the right and simplify
-          have := congrArg (fun t => t * b ^ (-e0)) hx_eq
-          simpa [mul_comm, mul_left_comm, mul_assoc, hprod] using this
-        exact FloatSpec.Calc.Bracket.inbetween.inbetween_Exact (by simpa [mul_comm] using this.symm)
-    | inbetween_Inexact ord hbounds hcmp =>
-        -- Strict bounds preserved by positive scaling
-        have hlo : (m : ℝ) < (|x|) * b ^ (-e0) := by
-          have := mul_lt_mul_of_pos_right hbounds.1 hcpos
-          have hprod : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = (1 : ℝ) := by
-            simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-          simpa [mul_comm, mul_left_comm, mul_assoc, hprod] using this
-        have hhi : (|x|) * b ^ (-e0) < ((m + 1 : Int) : ℝ) := by
-          have := mul_lt_mul_of_pos_right hbounds.2 hcpos
-          have hprod : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = (1 : ℝ) := by
-            simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-          simpa [mul_comm, mul_left_comm, mul_assoc, hprod] using this
-        -- Midpoint comparison preserved under positive scaling
-        have hmid :
-            compare ((|x|) * b ^ (-e0)) (((m : ℝ) + ((m + 1 : Int) : ℝ)) / 2) = ord := by
-          -- Scale both x and the midpoint, then cancel the common positive factor
-          have hprod : (b : ℝ) ^ e0 * (b : ℝ) ^ (-e0) = (1 : ℝ) := by
-            simpa [zpow_add₀ hbne, add_left_neg_self] using (zpow_zero (b))
-          have hcmid : (b ^ (-e0)) * (((m : ℝ) * b ^ e0 + ((m + 1 : Int) : ℝ) * b ^ e0) / 2)
-                        = (((m : ℝ) + ((m + 1 : Int) : ℝ)) / 2) := by
-            have : (b ^ (-e0)) * ((m : ℝ) * b ^ e0 + ((m + 1 : Int) : ℝ) * b ^ e0)
-                      = (m : ℝ) * 1 + ((m + 1 : Int) : ℝ) * 1 := by
-              simp [mul_add, mul_comm, mul_left_comm, mul_assoc, hprod]
-            simpa [this, mul_div_cancel_left₀ _ two_ne_zero]
-          -- From hcmp on |x|, deduce the comparison after scaling
-          -- We can reason by cases on the comparison structure, but a direct rewrite suffices here.
-          -- Replace x by |x| in the generic argument and cancel the factor b^(-e0).
-          -- Use the equality on the midpoint computed above.
-          -- The original hcmp already states the comparison at the unscaled midpoint.
-          -- After scaling by a positive constant, the Ordering is preserved.
-          -- Therefore the compare is identical.
-          -- (We keep this as a simple rewrite step.)
-          simpa [hcmid] using hcmp
-        exact FloatSpec.Calc.Bracket.inbetween.inbetween_Inexact ord ⟨hlo, hhi⟩ hmid
-  -- Relate |sm| to (|x|) * b^(-e0)
-  have h_abs_sm : |sm| = (|x|) * b ^ (-e0) := by
-    -- sm = x * c and c > 0, hence |sm| = |x| * c
-    have : sm = x * b ^ (-e0) := hsm_def
-    have habs : |x * b ^ (-e0)| = |x| * |b ^ (-e0)| := by
-      simpa using (abs_mul x (b ^ (-e0)))
-    have hcnonneg : 0 ≤ b ^ (-e0) := le_of_lt hcpos
-    have hposAbs : |b ^ (-e0)| = b ^ (-e0) := by exact abs_of_nonneg hcnonneg
-    simpa [this, habs, hposAbs]
-  -- Instantiate Hc at x := sm using the inbetween on |sm|
-  have Hin_sm : inbetween_int m (|sm|) l := by simpa [h_abs_sm] using Hin_abs
-  have hr0 : rnd sm
-              = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool sm 0 |>.run)
-                   (choice (FloatSpec.Core.Raux.Rlt_bool sm 0 |>.run) m l)).run :=
-    Hc sm m l Hin_sm
-  -- The sign of sm equals the sign of x because b^(-e0) > 0
+    -- Use the Core lemma that characterizes the scaled mantissa
+    -- together with the definition of `e0`.
+    have : (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run
+            = x * (beta : ℝ) ^ (-e0) := by
+      -- From Core: scaled_mantissa_abs and related defs yield this identity
+      -- after unfolding `e0`.
+      simp [FloatSpec.Core.Generic_fmt.scaled_mantissa, FloatSpec.Core.Generic_fmt.cexp,
+            he0, FloatSpec.Core.Raux.mag]
+    simpa [hsm, b] using this
   have hsign_eq : (FloatSpec.Core.Raux.Rlt_bool sm 0 |>.run)
                     = (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) := by
-    -- Reduce to propositional comparison via the definition of Rlt_bool
-    -- and use order-preservation under multiplication by a positive scalar.
-    -- We do this by case analysis on x < 0 and ¬ x < 0.
-    -- True branch
-    have h_if : (x < 0) → (sm < 0) := by
-      intro hxlt
-      have : x * b ^ (-e0) < 0 := by
-        simpa [mul_zero] using (mul_lt_mul_of_pos_right hxlt hcpos)
-      simpa [hsm_def] using this
-    -- False branch
-    have h_only_if : (sm < 0) → (x < 0) := by
-      intro hmlt
-      -- From x*c < 0*c and c > 0 infer x < 0
-      have : x * b ^ (-e0) < 0 * b ^ (-e0) := by
-        simpa [mul_zero, hsm_def] using hmlt
-      exact lt_of_mul_lt_mul_right this hcpos
-    -- Now decide the booleans by propositional equivalence
-    -- Use decidability of (<) on ℝ to bridge Bool equality
-    -- Both sides are decides of the same proposition
-    have : (x < 0) ↔ (sm < 0) := ⟨h_if, h_only_if⟩
-    -- Turn ↔ into boolean equality via decide
-    -- Rlt_bool is defined as a pure boolean test of x < y, so `run` yields that boolean
-    -- Hence we can rewrite with `by_cases` on (x < 0).
+    -- Reduce to propositional statements and use positivity of the factor
     by_cases hx : x < 0
-    · have hsm : sm < 0 := (this.mp hx)
-      -- Evaluate both booleans to true
+    · have : sm < 0 := by
+        have := mul_lt_mul_of_pos_right hx hcpos
+        simpa [hsm_def, mul_zero] using this
       unfold FloatSpec.Core.Raux.Rlt_bool at *
-      simp [Id.run, pure, hsm_def, hx, hsm]
-    · have hsm : ¬ sm < 0 := by exact not_lt.mpr (le_of_not_gt (by
-          -- If ¬ x < 0 then 0 ≤ x. Since c > 0, 0 ≤ x*c ⇒ ¬ x*c < 0
-          have hxle : 0 ≤ x := le_of_not_gt hx
-          have : 0 ≤ x * b ^ (-e0) := by exact mul_nonneg hxle (le_of_lt hcpos)
-          simpa [hsm_def] using this))
+      simp [hx, this]
+    · have hx' : 0 ≤ x := le_of_not_gt hx
+      have : ¬ sm < 0 := by
+        have hxsm : 0 ≤ sm := by
+          have := mul_nonneg hx' (le_of_lt hcpos)
+          simpa [hsm_def] using this
+        exact not_lt.mpr hxsm
       unfold FloatSpec.Core.Raux.Rlt_bool at *
-      simp [Id.run, pure, hsm_def, hx, hsm]
-  -- Rewrite the rounding integer using Hc and the sign equivalence
-  have hr : rnd sm
-              = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
-                   (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run := by
+      simp [hx, this]
+  -- Replace sign(sm) by sign(x) in hr0
+  have hr :
+      rnd sm
+        = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
+             (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run := by
     simpa [hsign_eq] using hr0
-  simpa [hr]
+  -- Conclude by transporting equality through multiplication by the common scale
+  have hR : (((rnd sm : Int) : ℝ)) = (((FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
+      (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run : Int) : ℝ) := by
+    simpa [hr]
+  have hmul : (((rnd sm : Int) : ℝ) * (beta : ℝ) ^ e0)
+                = ((((FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
+                      (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run : Int) : ℝ)
+                    * (beta : ℝ) ^ e0) := by
+    simpa using congrArg (fun t : ℝ => t * (beta : ℝ) ^ e0) hR
+  simpa using hmul
 
 -- Rounding down (DN)
 theorem inbetween_int_DN (x : ℝ) (m : Int) (l : Location)
     (Hl : inbetween_int m x l) :
     (FloatSpec.Core.Raux.Zfloor x).run = m := by
-  sorry
+  -- Expand the integer bracketing and analyze cases
+  unfold inbetween_int at Hl
+  cases Hl with
+  | inbetween_Exact hxeq =>
+      -- x = m ⇒ ⌊x⌋ = m
+      simp [FloatSpec.Core.Raux.Zfloor, hxeq]
+  | inbetween_Inexact _ hbounds _ =>
+      -- Bounds give m ≤ x < m+1; characterize the floor
+      have hxlo : (m : ℝ) ≤ x := le_of_lt hbounds.1
+      have hxhi : x < (m : ℝ) + 1 := by
+        simpa [Int.cast_add, Int.cast_one] using hbounds.2
+      -- Use the standard floor characterization
+      have : Int.floor x = m := (Int.floor_eq_iff).2 ⟨hxlo, hxhi⟩
+      simpa [FloatSpec.Core.Raux.Zfloor] using this
 
 theorem inbetween_float_DN (x : ℝ) (m e : Int) (l : Location)
     (He : e = (cexp beta fexp x).run)
-    (Hx : inbetween_float beta m e x l) :
+    (Hx : inbetween_float beta m e x l)
+    (Hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x)
       = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)).run := by
-  sorry
+  classical
+  -- Align exponent to the canonical one and set the scaled mantissa
+  set e0 : Int := (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run with he0
+  have heq : e = e0 := by simpa [he0] using He
+  subst heq
+  set sm : ℝ := (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run with hsm
+  -- Base positivity and cancellation identity
+  have hbpos : 0 < (beta : ℝ) := by exact_mod_cast (lt_trans Int.zero_lt_one Hβ)
+  have hcpos : 0 < (beta : ℝ) ^ (-e0) := by simpa using (zpow_pos hbpos (-e0))
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+  have hcancel : (beta : ℝ) ^ e0 * (beta : ℝ) ^ (-e0) = 1 := by
+    have hz : (beta : ℝ) ^ e0 ≠ 0 := zpow_ne_zero e0 hbne
+    -- β^e0 * β^(-e0) = β^e0 * (β^e0)⁻¹ = 1
+    simp [zpow_neg, hz]
+  -- Extract bounds from inbetween_float and transport them to sm
+  have hsm_def : sm = x * (beta : ℝ) ^ (-e0) := by
+    simp [hsm, FloatSpec.Core.Generic_fmt.scaled_mantissa, he0, FloatSpec.Core.Generic_fmt.cexp]
+  have Hx' : FloatSpec.Calc.Bracket.inbetween ((m : ℝ) * (beta : ℝ) ^ e0)
+              (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) x l := by
+    simpa [inbetween_float, FloatSpec.Core.Defs.F2R, Int.cast_add, Int.cast_one] using Hx
+  -- From bounds on x, deduce floor sm = m
+  have hfloor_run : (FloatSpec.Core.Raux.Zfloor sm).run = m := by
+    cases Hx' with
+    | inbetween_Exact hxeq =>
+        -- Then sm = m, so the floor is m
+        have hx : x = ((m : ℝ) * (beta : ℝ) ^ e0) := by
+          simpa [FloatSpec.Core.Defs.F2R] using hxeq
+        have hz : (beta : ℝ) ^ e0 ≠ 0 := zpow_ne_zero _ hbne
+        have hsmm : sm = (m : ℝ) := by
+          -- sm = x * β^{-e0} = m * β^{e0} * β^{-e0} = m
+          simp [hsm_def, hx, mul_comm, mul_left_comm, mul_assoc, zpow_neg, hz]
+        simp [FloatSpec.Core.Raux.Zfloor, hsmm]
+    | inbetween_Inexact _ hbounds _ =>
+        -- dR < x < uR ⇒ m < sm < m+1 ⇒ floor sm = m
+        have hlt_lo : (m : ℝ) < sm := by
+          let bneg : ℝ := (beta : ℝ) ^ (-e0)
+          have hmul : ((m : ℝ) * (beta : ℝ) ^ e0) * bneg < x * bneg :=
+            mul_lt_mul_of_pos_right hbounds.1 hcpos
+          have hz : (beta : ℝ) ^ e0 ≠ 0 := zpow_ne_zero _ hbne
+          have hleft : ((m : ℝ) * (beta : ℝ) ^ e0) * bneg = (m : ℝ) := by
+            have hprod1 : ((beta : ℝ) ^ e0) * bneg = (1 : ℝ) := by
+              simp [bneg, zpow_neg, hz]
+            calc
+              ((m : ℝ) * (beta : ℝ) ^ e0) * bneg
+                  = (m : ℝ) * (((beta : ℝ) ^ e0) * bneg) := by
+                        simp [mul_left_comm, mul_comm, mul_assoc]
+              _   = (m : ℝ) * 1 := by simpa [hprod1]
+              _   = (m : ℝ) := by simp
+          have hsm_eq : sm = x * bneg := by simpa [hsm_def, bneg]
+          simpa [hleft, hsm_eq] using hmul
+        have hlt_hi : sm < ((m + 1 : Int) : ℝ) := by
+          let bneg : ℝ := (beta : ℝ) ^ (-e0)
+          have hmul : x * bneg < (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) * bneg :=
+            mul_lt_mul_of_pos_right hbounds.2 hcpos
+          have hz : (beta : ℝ) ^ e0 ≠ 0 := zpow_ne_zero _ hbne
+          have hsm_eq : sm = x * bneg := by simpa [hsm_def, bneg]
+          have hmul' : sm < ((m + 1 : Int) : ℝ) * (((beta : ℝ) ^ e0) * bneg) := by
+            -- Reassociate and rewrite both sides
+            simpa [hsm_eq, mul_left_comm, mul_comm, mul_assoc] using hmul
+          have hprod1 : ((beta : ℝ) ^ e0) * bneg = (1 : ℝ) := by
+            simp [bneg, zpow_neg, hz]
+          have : sm < ((m + 1 : Int) : ℝ) * 1 := by
+            simpa [hprod1] using hmul'
+          simpa [Int.cast_add, Int.cast_one] using this
+        have hfloor : Int.floor sm = m :=
+          (Int.floor_eq_iff).2 ⟨le_of_lt hlt_lo, by simpa [Int.cast_add, Int.cast_one] using hlt_hi⟩
+        simpa [FloatSpec.Core.Raux.Zfloor] using hfloor
+  -- Evaluate roundR at x and rewrite with the computed floor
+  have hr :
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x)
+        = ((((FloatSpec.Core.Raux.Zfloor ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
+              * (beta : ℝ) ^ e0) := by
+    -- Unfold roundR; note sm = scaled_mantissa.run
+    simp [FloatSpec.Core.Generic_fmt.roundR, he0]
+  -- Reconcile the Zfloor at sm with the one at scaled_mantissa.run
+  have hZeqR :
+      (((FloatSpec.Core.Raux.Zfloor ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run)).run : Int) : ℝ)
+        = (((FloatSpec.Core.Raux.Zfloor sm).run : Int) : ℝ) := by
+    simpa [hsm]
+  have hr' :
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x)
+        = ((m : ℝ) * (beta : ℝ) ^ e0) := by
+    -- Rewrite the integer factor using hZeqR then substitute hfloor_run
+    simpa [hZeqR, hfloor_run]
+      using hr
+  simpa [FloatSpec.Core.Defs.F2R] using hr'
 
 def round_sign_DN' (s : Bool) (l : Location) : Bool :=
   match l with
@@ -499,7 +412,66 @@ theorem inbetween_int_DN_sign (x : ℝ) (m : Int) (l : Location)
     (FloatSpec.Core.Raux.Zfloor x).run =
       (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
         (cond_incr (round_sign_DN' (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) l) m)).run := by
-  sorry
+  classical
+  -- Split on the sign of x
+  by_cases hxlt : x < 0
+  · -- Negative case: use |x| = -x and analyze location
+    cases Hl with
+    | inbetween_Exact hxeq =>
+        -- Here, |x| = m. Since x < 0, we have x = -m.
+        have hx_eq : x = -((m : Int) : ℝ) := by
+          have : |x| = (m : ℝ) := by simpa using hxeq
+          have : -x = (m : ℝ) := by simpa [abs_of_neg hxlt] using this
+          simpa using congrArg Neg.neg this
+        -- Boolean for sign(x)
+        have hb : (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) = true := by
+          simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+        -- Normalize both sides using the facts above
+        simp [FloatSpec.Core.Raux.Zfloor, hx_eq, Int.floor_neg, Int.ceil_intCast,
+              FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr, Id.run]
+    | inbetween_Inexact ord hbounds _ =>
+        -- Bounds: m < |x| < m+1. With |x| = -x, we get -m-1 < x < -m.
+        have hlt_hi : x < -((m : Int) : ℝ) := by
+          -- From m < |x| and |x| = -x
+          have : (m : ℝ) < |x| := hbounds.1
+          have : (m : ℝ) < -x := by simpa [abs_of_neg hxlt] using this
+          -- Multiply by (-1) on both sides: m < -x ⇒ x < -m
+          simpa [Int.cast_neg] using (neg_lt_neg this)
+        have hlt_lo : (-(((m + 1 : Int) : ℝ))) < x := by
+          -- From |x| < m+1 and |x| = -x
+          have : |x| < ((m + 1 : Int) : ℝ) := hbounds.2
+          have : -x < ((m + 1 : Int) : ℝ) := by simpa [abs_of_neg hxlt] using this
+          -- Multiply by (-1) on both sides: -x < y ⇒ -y < x
+          have hneg := neg_lt_neg this
+          -- Rearrange (-x < y) → (-y) < x with y = m+1
+          simpa [Int.cast_add, Int.cast_one, Int.cast_neg] using hneg
+        -- Characterize the floor with n = -(m+1)
+        have hfloor : Int.floor x = -(m + 1) := by
+          apply (Int.floor_eq_iff).2
+          refine And.intro (le_of_lt ?_) ?_
+          · -- lower bound: -(m+1) ≤ x from strict <
+            simpa [Int.cast_add, Int.cast_one, Int.cast_neg] using hlt_lo
+          · -- upper bound: x < -(m+1) + 1 = -m
+            simpa [Int.cast_add, Int.cast_one, Int.cast_neg] using hlt_hi
+        -- Boolean for sign(x)
+        have hb : (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) = true := by
+          simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+        -- Normalize both sides using the facts above
+        simp [FloatSpec.Core.Raux.Zfloor, hfloor,
+              FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr, Id.run]
+  · -- Nonnegative case: |x| = x and ⌊x⌋ = m by the DN lemma
+    have hx0 : 0 ≤ x := le_of_not_gt hxlt
+    -- Transport the inbetween hypothesis from |x| to x
+    have Hl' : inbetween_int m x l := by
+      simpa [inbetween_int, abs_of_nonneg hx0] using Hl
+    -- Boolean for nonnegativity
+    have hb : (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) = false := by
+      simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+    -- Use DN lemma and normalize both sides
+    have hL : Int.floor x = m := by
+      simpa [FloatSpec.Core.Raux.Zfloor] using (inbetween_int_DN (x := x) (m := m) (l := l) Hl')
+    simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Zaux.cond_Zopp,
+          hb, hL, round_sign_DN', cond_incr, Id.run]
 
 theorem inbetween_float_DN_sign (x : ℝ) (m e : Int) (l : Location)
     (He : e = (cexp beta fexp x).run)
@@ -610,21 +582,21 @@ theorem inbetween_float_NE_sign (x : ℝ) (m e : Int) (l : Location)
 
 theorem inbetween_int_NA (x : ℝ) (m : Int) (l : Location)
     (Hl : inbetween_int m x l) :
-    (FloatSpec.Core.Generic_fmt.ZnearestA) x
+    (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x
       = cond_incr (round_N true l) m := by
   sorry
 
 theorem inbetween_float_NA (x : ℝ) (m e : Int) (l : Location)
     (He : e = (cexp beta fexp x).run)
     (Hx : inbetween_float beta m e x l) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp (FloatSpec.Core.Generic_fmt.ZnearestA) x)
+    (FloatSpec.Core.Generic_fmt.roundR beta fexp (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x)
       = (FloatSpec.Core.Defs.F2R
             (FloatSpec.Core.Defs.FlocqFloat.mk (cond_incr (round_N true l) m) e : FloatSpec.Core.Defs.FlocqFloat beta)).run := by
   sorry
 
 theorem inbetween_int_NA_sign (x : ℝ) (m : Int) (l : Location)
     (Hl : inbetween_int m (|x|) l) :
-    (FloatSpec.Core.Generic_fmt.ZnearestA) x
+    (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x
       = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
           (cond_incr (round_N true l) m)).run := by
   sorry
@@ -632,7 +604,7 @@ theorem inbetween_int_NA_sign (x : ℝ) (m : Int) (l : Location)
 theorem inbetween_float_NA_sign (x : ℝ) (m e : Int) (l : Location)
     (He : e = (cexp beta fexp x).run)
     (Hx : inbetween_float beta m e (|x|) l) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp (FloatSpec.Core.Generic_fmt.ZnearestA) x)
+    (FloatSpec.Core.Generic_fmt.roundR beta fexp (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x)
       = (FloatSpec.Core.Defs.F2R
             (FloatSpec.Core.Defs.FlocqFloat.mk
               ((FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
@@ -759,15 +731,19 @@ theorem round_sign_any_correct
             rnd x = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
                        (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run)
     (x : ℝ) (m e : Int) (l : Location)
-    (Hx : inbetween_float beta m e (|x|) l)
-    (He : e = (cexp beta fexp x).run ∨ (l = Location.loc_Exact ∧ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)) :
-    round beta fexp rnd x
+    (He : e = (cexp beta fexp x).run)
+    (Hsm : inbetween_int m (|((FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x).run)|) l)
+    (Hβ : 1 < beta) :
+    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
       = (FloatSpec.Core.Defs.F2R
-            (FloatSpec.Core.Defs.FlocqFloat.mk
-              ((FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
-                 (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run)
-              e : FloatSpec.Core.Defs.FlocqFloat beta)).run := by
-  sorry
+             (FloatSpec.Core.Defs.FlocqFloat.mk
+               ((FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run)
+                   (choice (FloatSpec.Core.Raux.Rlt_bool x 0 |>.run) m l)).run)
+               e : FloatSpec.Core.Defs.FlocqFloat beta)).run := by
+  -- Directly reuse the specialized sign-aware rounding lemma above
+  exact inbetween_float_round_sign (beta := beta) (fexp := fexp)
+    (rnd := rnd) (choice := choice) (Hc := Hc)
+    (x := x) (m := m) (e := e) (l := l) (He := He) (Hsm := Hsm) (Hβ := Hβ)
 
 theorem round_trunc_sign_any_correct'
     (rnd : ℝ → Int)

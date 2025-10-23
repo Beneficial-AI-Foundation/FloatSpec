@@ -86,7 +86,18 @@ theorem Falign_spec_exp (f1 f2 : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Falign_exp beta f1 f2
     ⦃⇓result => ⌜result = min f1.Fexp f2.Fexp⌝⦄ := by
-  sorry
+  intro _
+  unfold Falign_exp
+  cases f1 with
+  | mk m1 e1 =>
+    cases f2 with
+    | mk m2 e2 =>
+      by_cases hle : e1 ≤ e2
+      · -- exponent chosen is e1, which is min when e1 ≤ e2
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_left hle]
+      · -- exponent chosen is e2, which is min when e2 ≤ e1
+        have hle' : e2 ≤ e1 := le_of_lt (lt_of_not_ge hle)
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_right hle']
 
 end FloatAlignment
 
@@ -267,7 +278,11 @@ theorem Fplus_same_exp_spec (m1 m2 e : Int) :
     ⦃⌜True⌝⦄
     Fplus_same_exp beta m1 m2 e
     ⦃⇓result => ⌜result = FlocqFloat.mk (m1 + m2) e⌝⦄ := by
-  sorry
+  intro _
+  unfold Fplus_same_exp Fplus
+  -- With equal exponents, alignment keeps mantissas unchanged
+  simp [Falign, wp, PostCond.noThrow, Id.run, pure, bind, le_rfl,
+        Int.sub_self, Int.natAbs_zero, pow_zero, mul_one]
 
 /-- Extract exponent of sum
 
@@ -284,7 +299,18 @@ theorem Fexp_Fplus_spec (f1 f2 : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Fexp_Fplus beta f1 f2
     ⦃⇓result => ⌜result = min f1.Fexp f2.Fexp⌝⦄ := by
-  sorry
+  intro _
+  unfold Fexp_Fplus Fplus
+  cases f1 with
+  | mk m1 e1 =>
+    cases f2 with
+    | mk m2 e2 =>
+      by_cases hle : e1 ≤ e2
+      · -- exponent chosen is e1, which is min when e1 ≤ e2
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_left hle]
+      · -- exponent chosen is e2, which is min when e2 ≤ e1
+        have hle' : e2 ≤ e1 := le_of_lt (lt_of_not_ge hle)
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_right hle']
 
 end FloatAddition
 
@@ -419,7 +445,11 @@ theorem Fminus_same_exp_spec (m1 m2 e : Int) :
     ⦃⌜True⌝⦄
     Fminus_same_exp beta m1 m2 e
     ⦃⇓result => ⌜result = FlocqFloat.mk (m1 - m2) e⌝⦄ := by
-  sorry
+  intro _
+  unfold Fminus_same_exp Fminus Fplus
+  -- With equal exponents, alignment keeps mantissas unchanged; then apply negation
+  simp [Fopp, Falign, wp, PostCond.noThrow, Id.run, pure, bind, le_rfl,
+        Int.sub_self, Int.natAbs_zero, pow_zero, mul_one, sub_eq_add_neg]
 
 end FloatSubtraction
 

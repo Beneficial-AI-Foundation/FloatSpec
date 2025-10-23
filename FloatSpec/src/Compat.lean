@@ -16,7 +16,7 @@ open FloatSpec.Core.Generic_fmt
 noncomputable def F2R {beta : Int} (f : FlocqFloat beta) : ℝ :=
   (FloatSpec.Core.Defs.F2R f).run
 
-/-- Bridge: generic_format as a plain Prop (unwraps Id) -/
+/-- Bridge: `generic_format` as a plain Prop (unwraps Id) -/
 noncomputable def generic_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Prop :=
   (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run
 
@@ -57,8 +57,6 @@ class Monotone_exp (fexp : Int → Int) : Prop :=
 Coq: `Prec_gt_0 prec` asserts strictly positive precision.
 We model it as `0 < prec` so arithmetic lemmas may use it.
 -/
--- NOTE: `Prec_gt_0` is defined in `Core/Defs.lean` to avoid import cycles.
-
 class Prec_lt_emax (prec emax : Int) : Prop :=
   (trivial : True := True.intro)
 
