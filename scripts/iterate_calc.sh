@@ -21,7 +21,7 @@ file_list=(
   Round.lean
   # Sqrt.lean
   # Operations.lean
-  Bracket.lean
+  # Bracket.lean
 )
 hours=(
 #   2
@@ -30,9 +30,9 @@ hours=(
   # 2
   # 2
   # 2
-  4
+  6
   # 4
-  4
+  
 )
 
 # Sanity check: arrays must match
@@ -119,7 +119,7 @@ theorems: Fix the first (only the very first, work really hard on it and don't c
 - You can use exisiting (and proved) theorem to assist your proving. If a theorem is necessary but not proved, you can turn to work on that first. The useful theorems might not be in the same file, but in the import list
 - When you are trying to use a certain lemma, check through https://github.com/leanprover-community/mathlib4 to make sure the lemma exists. Else, write your own implementation of the lemma.
 - You are not allowed to delete ANY theorems or functions in the file. You can only modify them in a very cautious way!
-- The output of `lake build` could be long (but it's normal to be several minutes so don't be too hard on it): You could save the build output to a log file and search for error within it, which is better than going through the long log by yourself.
+- The output of `lake build` could be long (but it's normal to be several minutes so don't be too hard on it): You could save the build output to a log file in `.log/` and search for error within it, which is better than going through the long log by yourself.
 - If some theorems relies on other theorems that is not imported yet (possibly in the later part of this file), you should move that theorem to the later part of this file and prove the other theorems first. You should only change the order of the theorems in a very cautious way, and if you think some theorem itself is not correct, find its corresponding theorem in coq at /home/hantao/code/flocq/src/Calc and use that definition instead. Do not change the theorem without any reference!
 - Again, do not replace existing theorems or functions with `sorry`, `pure true`, or `admit` for the simplicity of compilation!  If the theorem is indeed hard, you should check the original theorem and proof in the corresponding file at /home/hantao/code/flocq/src/Calc, and try to understand the original proof and transform it into lean4. AGAIN, NO `pure true` SHOULD BE USED TO ESCAPE THE PROOF OR TO SERVE AS A PLACEHOLDER! IF YOU WANT TO USE A PLACEHOLDER, USE `sorry` INSTEAD!
 - Some theorems are in the format of a def and a theorem pair. If the def is given by sorry, you should first implement the def according to the original definition in /home/hantao/code/flocq/src/Calc, and then prove the corresponding theorem. If the sorry in def is hard to implement as a function, you should directly contain all the content (you can derive that from /home/hantao/code/flocq/src/Calc by search the theorem there) in the theorems, clean the def, and prove the theorem.
