@@ -3178,14 +3178,14 @@ via ordering bridges and then applies `succ_pred` at the UP witness. -/
 theorem succ_DN_eq_UP_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) ():
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
     (succ beta fexp
       (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
-      = Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) := by
+      = Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) := by
   classical
   -- Abbreviations for the chosen DN/UP witnesses and their specs
-  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) with hd
-  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) with hu
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
   have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
   have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
   rcases hDN with ⟨Fd, hdn⟩
