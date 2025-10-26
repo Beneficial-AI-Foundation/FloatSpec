@@ -2203,8 +2203,8 @@ private theorem round_N_plus_ulp_ge_theorem
     [Monotone_exp fexp]
     (x : ℝ) :
     x ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp
-          ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run +
-           (ulp beta fexp ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x).run)).run)).run := by
+          ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ).run +
+           (ulp beta fexp ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ).run)).run) hβ).run := by
   sorry
 
 /-- Coq (Ulp.v):
@@ -2215,9 +2215,9 @@ theorem round_N_plus_ulp_ge
     [Monotone_exp fexp]
     (choice1 choice2 : Int → Bool) (x : ℝ) :
     ⦃⌜True⌝⦄ do
-      let rx ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
+      let rx ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
       let u ← ulp beta fexp rx
-      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp (rx + u)
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp (rx + u) hβ
       pure (rx, rn)
     ⦃⇓r => ⌜x ≤ r.2⌝⦄ := by
   intro _; classical
@@ -5404,7 +5404,7 @@ private theorem round_N_ge_ge_midp_theorem
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (hβ : 1 < beta)
     (hne0 : u ≠ 0)
-    (h : u ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run) :
+    (h : u ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ).run) :
     ((u + (pred beta fexp u).run) / 2) ≤ v := by
   classical
   -- Contrapositive: if `v` is strictly below `(pred u + u)/2`, rounding falls ≤ `pred u`.
@@ -5484,9 +5484,9 @@ Lemma `round_N_ge_ge_midp`: forall choice u v, F u -> u ≤ `round_N` v -> (u + 
 theorem round_N_ge_ge_midp
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
-    (h : u ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run) :
+    (h : u ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ).run) :
     ⦃⌜1 < beta ∧ u ≠ 0⌝⦄ do
-      let _ ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v
+      let _ ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ
       pure v
     ⦃⇓_ => ⌜((u + (pred beta fexp u).run) / 2) ≤ v⌝⦄ := by
   intro hpre; classical
@@ -5503,9 +5503,9 @@ Lemma `round_N_le_le_midp`: forall choice u v, F u -> `round_N` v ≤ u -> v ≤
 theorem round_N_le_le_midp
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
-    (h : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run ≤ u) :
+    (h : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ).run ≤ u) :
     ⦃⌜1 < beta ∧ u ≠ 0⌝⦄ do
-      let _ ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v
+      let _ ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ
       pure v
     ⦃⇓_ => ⌜v ≤ ((u + (succ beta fexp u).run) / 2)⌝⦄ := by
   intro hpre; classical
