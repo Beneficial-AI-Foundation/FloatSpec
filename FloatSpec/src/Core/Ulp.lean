@@ -3096,80 +3096,8 @@ theorem succ_le_lt
   exact succ_le_lt_theorem (beta := beta) (fexp := fexp)
     (x := x) (y := y) Fx Fy hxy
 
-/-- Local theorem (port bridge): pred (UP x) ≤ DN x. -/
-private theorem pred_UP_le_DN_theorem
-    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ) (hβ: 1 < beta):
-    (pred beta fexp
-       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run ≤
-    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
-  classical
-  -- Abbreviations for the chosen DN/UP witnesses as plain reals
-  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
-  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
-  -- Properties from the existence lemmas
-  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
-  -- Unpack properties: format-membership and bracketing around x
-  rcases hDN with ⟨hFd, hdn⟩
-  rcases hUP with ⟨hFu, hup⟩
-  rcases hdn with ⟨_hFdn', hd_le_x, _hmax_dn⟩
-  rcases hup with ⟨_hFup', hx_le_u, _hmin_up⟩
-  -- We will show: pred u ≤ d by antisymmetry with d ≤ pred u coming from `pred_ge_gt_theorem`.
-  have hdu : d ≤ u := le_trans hd_le_x hx_le_u
-  by_cases hneq : d = u
-  · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
-    have hpred_le_u : (pred beta fexp u).run ≤ u :=
-      pred_run_le_self (beta := beta) (fexp := fexp) hβ u
-    simpa [hneq] using le_trans hpred_le_u (le_of_eq hneq.symm)
-  · -- Strictly separated case: d < u.
-    have hlt : d < u := lt_of_le_of_ne hdu (by simpa [ne_comm] using hneq)
-    -- From the local bridge `pred_ge_gt_theorem` (proved earlier), on
-    -- format points we get: d ≤ pred u.
-    have h_le_pred : d ≤ (pred (beta := beta) (fexp := fexp) u).run :=
-      pred_ge_gt_theorem (beta := beta) (fexp := fexp)
-        (x := d) (y := u) (Fx := hFd) (Fy := hFu) hlt
-    -- Conversely, `pred u ≤ d` follows since otherwise `u ≤ pred u` contradicts `pred u < u`.
-    -- Use DN maximality at x: since `pred u < u` and `x ≤ u`, we must have `pred u ≤ x`;
-    -- hence `pred u ≤ d` by maximality of `d = DN x`.
-    have hpred_le_x : (pred (beta := beta) (fexp := fexp) u).run ≤ x := by
-      -- If `x ≤ pred u`, minimality of `u = UP x` would force `u ≤ pred u`, contradiction.
-      by_contra hxle
-      have hxle' : x ≤ (pred (beta := beta) (fexp := fexp) u).run := le_of_not_gt hxle
-      -- From minimality of UP at x
-      have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
-      rcases hUP with ⟨_Fup, hup⟩; rcases hup with ⟨_hFup', hx_le_up, hmin_up⟩
-      have Fpred_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((pred (beta := beta) (fexp := fexp) u).run)).run := by
-        -- Reuse the membership `hFu` of `u` and transport through `pred` via the closure lemma.
-        -- This is available later as `generic_format_pred`; here we only need a placeholder-free term
-        -- convertible to the goal. We obtain it using that `pred` at a format point stays in format.
-        have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := hFu
-        -- Use `generic_format_pred` which appears later in the file.
-        have h := generic_format_pred (beta := beta) (fexp := fexp) (x := u) (Fx := this)
-        simpa using h
-      have hup_le : u ≤ (pred (beta := beta) (fexp := fexp) u).run :=
-        hmin_up ((pred (beta := beta) (fexp := fexp) u).run) Fpred_u hxle'
-      -- Yet by definition, `pred u ≤ u`.
-      have hpred_le_u : (pred (beta := beta) (fexp := fexp) u).run ≤ u :=
-        pred_run_le_self (beta := beta) (fexp := fexp) hβ u
-      exact (not_lt_of_ge (le_trans hpred_le_u hup_le))
-        (lt_of_le_of_ne (le_of_eq rfl) (by intro h; exact (ne_of_lt hlt) (by simpa [h])))
-    -- DN maximality: any format `y ≤ x` is ≤ d; apply to `y = pred u`.
-    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
-    rcases hDN with ⟨_Fdn, hdn⟩; rcases hdn with ⟨_hFdn', _hd_le_x, hmax_dn⟩
-    have hpred_le_d : (pred (beta := beta) (fexp := fexp) u).run ≤ d :=
-      hmax_dn ((pred (beta := beta) (fexp := fexp) u).run)
-        (by
-          -- Transport format from `u` through `pred_run_le_self` via pred_succ bridge
-          -- Use `pred_succ_theorem` to see `(pred (succ z)) = z` and instantiate at `z = u`.
-          -- Then `(pred u)` is a format point since it equals `pred (succ (pred u))`.
-          -- For this localized bridge, accept the existing membership `hFu` to stand in.
-          simpa using hFu)
-        hpred_le_x
-    -- Combine inequalities: d ≤ pred u and pred u ≤ d
-    have h_eq : (pred (beta := beta) (fexp := fexp) u).run = d := le_antisymm hpred_le_d h_le_pred
-    -- Done
-    simpa [d, u] using h_eq.le
+-- Local theorem (port bridge): pred (UP x) ≤ DN x.
+-- Moved below; see a single canonical definition later after `generic_format_pred`.
 
 /-- Coq (Ulp.v):
 Lemma `succ_le_lt_aux`:
@@ -3267,12 +3195,67 @@ private theorem pred_UP_le_DN_theorem
        (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run ≤
     Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
   classical
-  -- Names for the chosen witnesses and their specifications
-  set d := (FloatSpec.Core.Generic_fmt.round_DN_to_format (beta := beta) (fexp := fexp) x hβ).run
-  set u := (FloatSpec.Core.Generic_fmt.round_UP_to_format (beta := beta) (fexp := fexp) x hβ).run
-  -- From `round_to_format_properties`, both are in-format and bracket x
-  -- (replaced: we derived the needed facts directly from existence lemmas above)
+  -- Abbreviations for the chosen DN/UP witnesses as plain reals
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
+  -- Properties from the existence lemmas
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+  -- Unpack properties: format-membership and bracketing around x
+  rcases hDN with ⟨hFd, hdn⟩
+  rcases hUP with ⟨hFu, hup⟩
+  rcases hdn with ⟨_hFdn', hd_le_x, _hmax_dn⟩
+  rcases hup with ⟨_hFup', hx_le_u, _hmin_up⟩
   -- We will show: pred u ≤ d by antisymmetry with d ≤ pred u coming from `pred_ge_gt_theorem`.
+  have hdu : d ≤ u := le_trans hd_le_x hx_le_u
+  by_cases hneq : d = u
+  · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
+    have hpred_le_u : (pred beta fexp u).run ≤ u :=
+      pred_run_le_self (beta := beta) (fexp := fexp) hβ u
+    simpa [hneq] using le_trans hpred_le_u (le_of_eq hneq.symm)
+  · -- Strictly separated case: d < u.
+    have hlt : d < u := lt_of_le_of_ne hdu (by simpa [ne_comm] using hneq)
+    -- From the local bridge `pred_ge_gt_theorem` (proved earlier), on
+    -- format points we get: d ≤ pred u.
+    have h_le_pred : d ≤ (pred (beta := beta) (fexp := fexp) u).run :=
+      pred_ge_gt_theorem (beta := beta) (fexp := fexp)
+        (x := d) (y := u) (Fx := hFd) (Fy := hFu) hlt
+    -- Conversely, `pred u ≤ d` follows since otherwise `u ≤ pred u` contradicts `pred u < u`.
+    -- Use DN maximality at x: since `pred u < u` and `x ≤ u`, we must have `pred u ≤ x`;
+    -- hence `pred u ≤ d` by maximality of `d = DN x`.
+    have hpred_le_x : (pred (beta := beta) (fexp := fexp) u).run ≤ x := by
+      -- If `x ≤ pred u`, minimality of `u = UP x` would force `u ≤ pred u`, contradiction.
+      by_contra hxle
+      have hxle' : x ≤ (pred (beta := beta) (fexp := fexp) u).run := le_of_not_gt hxle
+      -- From minimality of UP at x
+      have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+      rcases hUP with ⟨_Fup, hup⟩; rcases hup with ⟨_hFup', hx_le_up, hmin_up⟩
+      have Fpred_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((pred (beta := beta) (fexp := fexp) u).run)).run := by
+        -- `pred` preserves format at format points.
+        have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := hFu
+        have h := generic_format_pred (beta := beta) (fexp := fexp) (x := u) (Fx := this)
+        simpa using h
+      have hup_le : u ≤ (pred (beta := beta) (fexp := fexp) u).run :=
+        hmin_up ((pred (beta := beta) (fexp := fexp) u).run) Fpred_u hxle'
+      -- Yet `pred u ≤ u`.
+      have hpred_le_u : (pred (beta := beta) (fexp := fexp) u).run ≤ u :=
+        pred_run_le_self (beta := beta) (fexp := fexp) hβ u
+      exact (not_lt_of_ge (le_trans hpred_le_u hup_le)) (lt_irrefl _)
+    -- DN maximality: any format `y ≤ x` is ≤ d; apply to `y = pred u`.
+    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+    rcases hDN with ⟨_Fdn, hdn⟩; rcases hdn with ⟨_hFdn', _hd_le_x, hmax_dn⟩
+    have hpred_le_d : (pred (beta := beta) (fexp := fexp) u).run ≤ d :=
+      hmax_dn ((pred (beta := beta) (fexp := fexp) u).run)
+        (by
+          -- `(pred u)` is in format by `generic_format_pred` from `hFu`.
+          have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := hFu
+          have h := generic_format_pred (beta := beta) (fexp := fexp) (x := u) (Fx := this)
+          simpa using h)
+        hpred_le_x
+    -- Combine inequalities: d ≤ pred u and pred u ≤ d
+    have h_eq : (pred (beta := beta) (fexp := fexp) u).run = d := le_antisymm hpred_le_d h_le_pred
+    -- Done
+    simpa [d, u] using h_eq.le
   have hdu : d ≤ u := le_trans hd_le_x hx_le_u
   by_cases hneq : d = u
   · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
