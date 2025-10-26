@@ -3186,14 +3186,14 @@ theorem succ_DN_eq_UP_theorem
   -- Abbreviations for the chosen DN/UP witnesses and their specs
   set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
   set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
-  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
   rcases hDN with ⟨Fd, hdn⟩
   rcases hUP with ⟨Fu, hup⟩
   -- Normalize format-membership witnesses to the local names `d` and `u`
-  have Fd_d : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run := by
+  have Fd_d : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d hβ).run := by
     simpa [hd] using Fd
-  have Fu_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := by
+  have Fu_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u hβ).run := by
     simpa [hu] using Fu
   rcases hdn with ⟨_Fd', hd_le_x, _hmax_dn⟩
   rcases hup with ⟨_Fu', hx_le_u, _hmin_up⟩
@@ -3211,8 +3211,8 @@ theorem succ_DN_eq_UP_theorem
   -- Establish `pred u = d` by antisymmetry using the local ordering bridges
   -- First, restate the strict inequality on the chosen witnesses directly
   have h_du_lt0 :
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)) <
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)) := by
+      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)) <
+      (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)) := by
     simpa [hd, hu]
       using h_du_lt
   -- Apply predecessor ordering on format points to the chosen witnesses
