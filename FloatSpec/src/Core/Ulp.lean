@@ -3217,12 +3217,12 @@ theorem succ_DN_eq_UP_theorem
       using h_du_lt
   -- Apply predecessor ordering on format points to the chosen witnesses
   have h_le_pred0 :
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)) ≤
+      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)) ≤
       (pred (beta := beta) (fexp := fexp)
-        (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x))).run := by
+        (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run := by
     exact pred_ge_gt_theorem (beta := beta) (fexp := fexp)
-      (x := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))
-      (y := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x))
+      (x := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))
+      (y := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))
       (Fx := Fd) (Fy := Fu) h_du_lt0
   have h_le_pred : d ≤ (pred (beta := beta) (fexp := fexp) u).run := by
     simpa [hd, hu] using h_le_pred0
