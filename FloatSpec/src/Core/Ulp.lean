@@ -2586,11 +2586,7 @@ private theorem generic_format_ulp0_theorem
       -- `1 < beta`, we defer to the ambient development; inserting a local
       -- placeholder maintains consistency with other uses of `sorry` in this
       -- file until a global base‑assumption is threaded.
-      have hpre : (1 < beta) ∧ fexp (fexp n + 1) ≤ fexp n := And.intro (by
-        -- TODO: plumb `1 < beta` into this local bridge if needed by callers.
-        -- Many lemmas in this file assume `1 < beta`; aligning with that
-        -- invariant will discharge this placeholder.
-        sorry) hsmall
+      have hpre : (1 < beta) ∧ fexp (fexp n + 1) ≤ fexp n := And.intro (by hβ) hsmall
       -- Reduce the Hoare triple and close the goal.
       simp [h, wp, PostCond.noThrow, Id.run, bind, pure]
       -- Remaining obligation: `1 < beta` (provided by the outer context when used).
