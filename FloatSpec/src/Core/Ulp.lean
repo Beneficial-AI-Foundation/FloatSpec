@@ -1731,12 +1731,12 @@ private lemma round_to_generic_format
         exact hF2R_ne_zero
       · exact hF2R_bound
 
-/-- Local theorem (port bridge): pred (UP x) ≤ DN x.
-
-The Coq proof uses several spacing lemmas and format-closure properties
-(`generic_format_pred`, adjacency between `DN` and `UP`) not yet ported.
-We isolate that reasoning here as a file-scoped theorem so we can proceed
-with the development one theorem at a time. -/
+-- Local theorem (port bridge): pred (UP x) ≤ DN x.
+--
+-- The Coq proof uses several spacing lemmas and format-closure properties
+-- (`generic_format_pred`, adjacency between `DN` and `UP`) not yet ported.
+-- We isolate that reasoning here as a file-scoped theorem so we can proceed
+-- with the development one theorem at a time.
 -- (moved below, after `pred_ge_gt_theorem` to avoid private forward refs)
 
 /-- Coq (Ulp.v):
@@ -3104,22 +3104,17 @@ private theorem pred_UP_le_DN_theorem
        (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run ≤
     Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
   classical
-  -- Names for the chosen witnesses and their specifications
-  set d := (FloatSpec.Core.Generic_fmt.round_DN_to_format (beta := beta) (fexp := fexp) x hβ).run
-  set u := (FloatSpec.Core.Generic_fmt.round_UP_to_format (beta := beta) (fexp := fexp) x hβ).run
-  -- From `round_to_format_properties`, both are in-format and bracket x
-  have hprops :=
-    by
-      -- Use the helper theorem to obtain format membership and bracketing
-      have := FloatSpec.Core.Generic_fmt.round_to_format_properties
-        (beta := beta) (fexp := fexp) (x := x)
-      -- Introduce `hβ` and evaluate the do-block
-      simpa [FloatSpec.Core.Generic_fmt.round_DN_to_format,
-             FloatSpec.Core.Generic_fmt.round_UP_to_format,
-             d, u, wp, PostCond.noThrow, Id.run, pure, bind]
-        using (this hβ)
-  -- Unpack properties: F d ∧ F u ∧ d ≤ x ∧ x ≤ u
-  rcases hprops with ⟨hFd, hFu, hd_le_x, hx_le_u⟩
+  -- Abbreviations for the chosen DN/UP witnesses as plain reals
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
+  -- Properties from the existence lemmas
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+  -- Unpack properties: format-membership and bracketing around x
+  rcases hDN with ⟨hFd, hdn⟩
+  rcases hUP with ⟨hFu, hup⟩
+  rcases hdn with ⟨_hFdn', hd_le_x, _hmax_dn⟩
+  rcases hup with ⟨_hFup', hx_le_u, _hmin_up⟩
   -- We will show: pred u ≤ d by antisymmetry with d ≤ pred u coming from `pred_ge_gt_theorem`.
   have hdu : d ≤ u := le_trans hd_le_x hx_le_u
   by_cases hneq : d = u
@@ -3145,12 +3140,13 @@ private theorem pred_UP_le_DN_theorem
       have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
       rcases hUP with ⟨_Fup, hup⟩; rcases hup with ⟨_hFup', hx_le_up, hmin_up⟩
       have Fpred_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((pred (beta := beta) (fexp := fexp) u).run)).run := by
-        -- Established earlier: predecessor preserves format; proved as `generic_format_pred` later.
-        -- For this local bridge, we rely on the monotone predecessor bound `pred_run_le_self` only,
-        -- thus avoid needing explicit format here by applying minimality to `u` itself instead.
-        -- We won't use this placeholder; keep a harmless inhabitant via `by cases hFu; assumption`.
-        -- But Lean requires a term; reuse `hFu` after rewriting.
-        simpa using hFu
+        -- Reuse the membership `hFu` of `u` and transport through `pred` via the closure lemma.
+        -- This is available later as `generic_format_pred`; here we only need a placeholder-free term
+        -- convertible to the goal. We obtain it using that `pred` at a format point stays in format.
+        have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := hFu
+        -- Use `generic_format_pred` which appears later in the file.
+        have h := generic_format_pred (beta := beta) (fexp := fexp) (x := u) (Fx := this)
+        simpa using h
       have hup_le : u ≤ (pred (beta := beta) (fexp := fexp) u).run :=
         hmin_up ((pred (beta := beta) (fexp := fexp) u).run) Fpred_u hxle'
       -- Yet by definition, `pred u ≤ u`.
@@ -3275,18 +3271,7 @@ private theorem pred_UP_le_DN_theorem
   set d := (FloatSpec.Core.Generic_fmt.round_DN_to_format (beta := beta) (fexp := fexp) x hβ).run
   set u := (FloatSpec.Core.Generic_fmt.round_UP_to_format (beta := beta) (fexp := fexp) x hβ).run
   -- From `round_to_format_properties`, both are in-format and bracket x
-  have hprops :=
-    by
-      -- Use the helper theorem to obtain format membership and bracketing
-      have := FloatSpec.Core.Generic_fmt.round_to_format_properties
-        (beta := beta) (fexp := fexp) (x := x)
-      -- Introduce `hβ` and evaluate the do-block
-      simpa [FloatSpec.Core.Generic_fmt.round_DN_to_format,
-             FloatSpec.Core.Generic_fmt.round_UP_to_format,
-             d, u, wp, PostCond.noThrow, Id.run, pure, bind]
-        using (this hβ)
-  -- Unpack properties: F d ∧ F u ∧ d ≤ x ∧ x ≤ u
-  rcases hprops with ⟨hFd, hFu, hd_le_x, hx_le_u⟩
+  -- (replaced: we derived the needed facts directly from existence lemmas above)
   -- We will show: pred u ≤ d by antisymmetry with d ≤ pred u coming from `pred_ge_gt_theorem`.
   have hdu : d ≤ u := le_trans hd_le_x hx_le_u
   by_cases hneq : d = u
