@@ -2765,7 +2765,7 @@ private theorem pred_succ_pos_theorem
   have h := pred_succ (beta := beta) (fexp := fexp) (x := x) Fx True.intro
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
 
--- (moved below, after `succ_DN_eq_UP_theorem`)
+  -- (moved below, after `succ_DN_eq_UP_theorem`)
 
 /-- Bridge lemma: For non-representable `x`, the successor of `DN x` equals `UP x`.
 
@@ -3118,76 +3118,9 @@ theorem succ_le_lt_aux
   exact succ_le_lt_theorem (beta := beta) (fexp := fexp)
     (x := x) (y := y) Fx Fy hxy
 
-/-- Bridge lemma: For non-representable `x`, the successor of `DN x` equals `UP x`.
-
-This mirrors the Coq adjacency fact between the lower and upper neighbors around
-`x` when `x` is not already in the format. The proof reduces to `pred (UP x) = DN x`
-via ordering bridges and then applies `succ_pred` at the UP witness. -/
-theorem succ_DN_eq_UP_theorem
-    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
-    (succ beta fexp
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
-      = Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) := by
-  classical
-  -- Abbreviations for the chosen DN/UP witnesses and their specs
-  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
-  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
-  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
-  rcases hDN with ⟨Fd, hdn⟩
-  rcases hUP with ⟨Fu, hup⟩
-  -- Normalize format-membership witnesses to the local names `d` and `u`
-  have Fd_d : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run := by
-    simpa [hd] using Fd
-  have Fu_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := by
-    simpa [hu] using Fu
-  rcases hdn with ⟨_Fd', hd_le_x, _hmax_dn⟩
-  rcases hup with ⟨_Fu', hx_le_u, _hmin_up⟩
-  -- Show d ≠ u; otherwise x would be representable
-  have hne : d ≠ u := by
-    intro hdu
-    have hxd : x = d := by
-      have hx_le_d : x ≤ d := by simpa [hdu] using hx_le_u
-      exact le_antisymm hx_le_d hd_le_x
-    have Fx' : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
-      simpa [hxd] using Fd_d
-    exact Fx Fx'
-  -- From d ≤ x ≤ u and d ≠ u, we get strict inequality d < u
-  have h_du_lt : d < u := lt_of_le_of_ne (le_trans hd_le_x hx_le_u) hne
-  -- Establish `pred u = d` using ordering bridges
-  have h_du_lt0 :
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)) <
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)) := by
-    simpa [hd, hu] using h_du_lt
-  have h_le_pred0 :
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)) ≤
-      (pred (beta := beta) (fexp := fexp)
-        (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run := by
-    exact pred_ge_gt_theorem (beta := beta) (fexp := fexp)
-      (x := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))
-      (y := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))
-      (Fx := Fd) (Fy := Fu) h_du_lt0
-  have h_le_pred : d ≤ (pred (beta := beta) (fexp := fexp) u).run := by
-    simpa [hd, hu] using h_le_pred0
-  have h_pred_le : (pred (beta := beta) (fexp := fexp) u).run ≤ d := by
-    -- Apply the bridge relating `pred (UP x)` to `DN x` on chosen witnesses
-    have h_pred_le0 := (pred_UP_le_DN_theorem (beta := beta) (fexp := fexp) (x := x) hβ)
-    simpa [hd, hu] using h_pred_le0
-  have h_pred_eq : (pred (beta := beta) (fexp := fexp) u).run = d :=
-    le_antisymm h_pred_le h_le_pred
-  -- Apply `succ_pred` at the format point `u` and rewrite using `pred u = d`
-  have hsucc_pred_eq : (succ (beta := beta) (fexp := fexp)
-      ((pred (beta := beta) (fexp := fexp) u).run)).run = u := by
-    exact succ_pred_theorem (beta := beta) (fexp := fexp) (x := u) (Fx := Fu_u)
-  -- Conclude the desired equality
-  have hsucc_d : (succ (beta := beta) (fexp := fexp) d).run = u := by
-    simpa [h_pred_eq] using hsucc_pred_eq
-  simpa [hd, hu] using hsucc_d
-
--- Now that `succ_DN_eq_UP_theorem` is available, derive `pred (UP x) = DN x`.
-/-- Local theorem (port bridge): pred (UP x) ≤ DN x. -/
+-- Local theorem (port bridge): pred (UP x) ≤ DN x.
+-- We place it here so that later adjacency lemmas can reuse it without
+-- forward references.
 private theorem pred_UP_le_DN_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ) (hβ: 1 < beta):
@@ -3206,7 +3139,8 @@ private theorem pred_UP_le_DN_theorem
   rcases hUP with ⟨hFu, hup⟩
   rcases hdn with ⟨_hFdn', hd_le_x, _hmax_dn⟩
   rcases hup with ⟨_hFup', hx_le_u, _hmin_up⟩
-  -- We will show: pred u ≤ d by antisymmetry with d ≤ pred u coming from `pred_ge_gt_theorem`.
+  -- We will show: pred u ≤ d by contradiction via UP/DN extremal properties,
+  -- then combine with d ≤ pred u (from `pred_ge_gt_theorem`) to get equality.
   have hdu : d ≤ u := le_trans hd_le_x hx_le_u
   by_cases hneq : d = u
   · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
@@ -3253,9 +3187,76 @@ private theorem pred_UP_le_DN_theorem
           simpa using h)
         hpred_le_x
     -- Combine inequalities: d ≤ pred u and pred u ≤ d
-    have h_eq : (pred (beta := beta) (fexp := fexp) u).run = d := le_antisymm hpred_le_d h_le_pred
-    -- Done
-    simpa [d, u] using h_eq.le
+    exact (le_antisymm hpred_le_d h_le_pred)
+
+/-- Equality bridge: for non-representable `x`, `pred (UP x) = DN x`. -/
+theorem pred_UP_eq_DN_theorem
+    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x : ℝ)
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
+    (pred beta fexp
+       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run =
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
+  classical
+  -- Abbreviations for the chosen DN/UP witnesses
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
+  -- Extract format-membership and bracketing
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+  rcases hDN with ⟨Fd, hdn⟩
+  rcases hUP with ⟨Fu, hup⟩
+  rcases hdn with ⟨_Fd', hd_le_x, _hmax_dn⟩
+  rcases hup with ⟨_Fu', hx_le_u, _hmin_up⟩
+  -- Show d ≠ u; otherwise x would be representable
+  have hne : d ≠ u := by
+    intro hdu
+    have hxd : x = d := by
+      have hx_le_d : x ≤ d := by simpa [hdu] using hx_le_u
+      exact le_antisymm hx_le_d hd_le_x
+    have Fx' : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
+      simpa [hxd] using Fd
+    exact Fx Fx'
+  -- From d ≤ x ≤ u and d ≠ u, we get strict inequality d < u
+  have h_du_lt : d < u := lt_of_le_of_ne (le_trans hd_le_x hx_le_u) hne
+  -- Two inequalities give equality
+  have h1 : (pred (beta := beta) (fexp := fexp) u).run ≤ d := by
+    -- Use the inequality bridge proved just above
+    have h := pred_UP_le_DN_theorem (beta := beta) (fexp := fexp) (x := x) hβ
+    simpa [hd, hu] using h
+  have h2 : d ≤ (pred (beta := beta) (fexp := fexp) u).run := by
+    -- Use predecessor ordering on format points
+    exact pred_ge_gt_theorem (beta := beta) (fexp := fexp) (x := d) (y := u)
+      (Fx := Fd) (Fy := Fu) h_du_lt
+  exact le_antisymm h1 h2
+
+/-- Bridge lemma: For non-representable `x`, the successor of `DN x` equals `UP x`. -/
+theorem succ_DN_eq_UP_theorem
+    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x : ℝ)
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
+    (succ beta fexp
+      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
+      = Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) := by
+  classical
+  -- Abbreviations
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
+  -- From equality on predecessors, obtain equality on successors at format points
+  have hpred_eq : (pred (beta := beta) (fexp := fexp) u).run = d := by
+    simpa [hd, hu] using pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
+  -- Close `F u` to use `succ_pred`
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+  rcases hUP with ⟨Fu, _⟩
+  have Fu_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := by simpa [hu] using Fu
+  -- succ (pred u) = u, rewrite pred u by d
+  have hsucc_pred_eq : (succ (beta := beta) (fexp := fexp)
+      ((pred (beta := beta) (fexp := fexp) u).run)).run = u := by
+    exact succ_pred_theorem (beta := beta) (fexp := fexp) (x := u) (Fx := Fu_u)
+  -- Conclude succ d = u
+  have hsucc_d : (succ (beta := beta) (fexp := fexp) d).run = u := by
+    simpa [hpred_eq] using hsucc_pred_eq
+  simpa [hd, hu] using hsucc_d
   have hdu : d ≤ u := le_trans hd_le_x hx_le_u
   by_cases hneq : d = u
   · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
@@ -3277,7 +3278,8 @@ private theorem pred_UP_le_DN_theorem
     -- Rewrite and conclude the desired inequality.
     simpa [h_pred_eq_d] using h_le_pred
 
-theorem pred_UP_eq_DN_theorem
+-- (duplicate removed; canonical statement appears above)
+-- theorem pred_UP_eq_DN_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
