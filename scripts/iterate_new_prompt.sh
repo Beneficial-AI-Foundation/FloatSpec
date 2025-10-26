@@ -119,6 +119,7 @@ Repair **exactly one** theorem: the **first** theorem in the target file that la
 
 **Allowed (with restraint)**
 
+* Some theorems lack a pre-condition `1 < beta`—if needed,  you should add it if it become the block to the full proof (Coq reference required).
 * Be persistent: The calling process is single-rounded, so try your best to close the target, or at least leave behind useful, compiling helper lemmas (or comments) that reduce the remaining gap.
 * Introduce small, well-named helper lemmas.
 * Reorder theorems **only** to resolve clear dependency cycles—and log it.
@@ -156,7 +157,7 @@ Repair **exactly one** theorem: the **first** theorem in the target file that la
 * Keep terms and rewriting explicit; avoid fragile tactic scripts.
 * Preserve existing notation and Hoare triple syntax whenever possible.
 * Trying is encouraged: if a tactic or approach seems promising, implement and test it instead of over-planning.
-* Some theorems lack a pre-condition `1 < beta`—if needed, add it (Coq reference required).
+* Some theorems lack a pre-condition `1 < beta`—if needed,  you should add it if it become the block to the full proof (Coq reference required).
 * You are allowed to move theorems: When you observe that the target theorem depends on some lemmas that are defined later in the file, you can move the target theorem to a different location in the file (e.g., closer to related lemmas or later than some required lemmas) if it helps your workflow. If you do reorder, YOU MUST MAKE SURE THAT THE DEPENDENCY IS error-safe after your move (or else you could make other moves first to ensure that), then document it. If the dependency you need is in another file, check if the import will cause a dependency cycle; if so, do not reorder and check the coq original source and use the proof Strategy from there.
 
 ---

@@ -1737,62 +1737,7 @@ The Coq proof uses several spacing lemmas and format-closure properties
 (`generic_format_pred`, adjacency between `DN` and `UP`) not yet ported.
 We isolate that reasoning here as a file-scoped theorem so we can proceed
 with the development one theorem at a time. -/
-  private theorem pred_UP_le_DN_theorem
-      (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-      (x : ℝ) (hβ: 1 < beta):
-      (pred beta fexp
-         (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run ≤
-      Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
-  classical
-  -- Names for the chosen witnesses and their specifications
-  set d := (FloatSpec.Core.Generic_fmt.round_DN_to_format (beta := beta) (fexp := fexp) x hβ).run
-  set u := (FloatSpec.Core.Generic_fmt.round_UP_to_format (beta := beta) (fexp := fexp) x hβ).run
-  -- From `round_to_format_properties`, both are in-format and bracket x
-  have hprops :=
-    by
-      -- Use the helper theorem to obtain format membership and bracketing
-      have := FloatSpec.Core.Generic_fmt.round_to_format_properties
-        (beta := beta) (fexp := fexp) (x := x)
-      -- Introduce `hβ` and evaluate the do-block
-      simpa [FloatSpec.Core.Generic_fmt.round_DN_to_format,
-             FloatSpec.Core.Generic_fmt.round_UP_to_format,
-             d, u, wp, PostCond.noThrow, Id.run, pure, bind]
-        using (this hβ)
-  -- Unpack properties: F d ∧ F u ∧ d ≤ x ∧ x ≤ u
-  -- Unpack the tuple (F d ∧ F u ∧ d ≤ x ∧ x ≤ u)
-  rcases hprops with ⟨hFd, hFu, hd_le_x, hx_le_u⟩
-  -- We will show: pred u ≤ d by antisymmetry with d ≤ pred u coming from `pred_ge_gt_theorem`.
-  -- First, d < u (since d ≤ x ≤ u and uniqueness of DN/UP ensure separation unless equal;
-  -- equality is handled as a degenerate case where the inequality is trivial).
-  have hdu : d ≤ u := le_trans hd_le_x hx_le_u
-  by_cases hneq : d = u
-  · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
-    have hpred_le_u : (pred beta fexp u).run ≤ u :=
-      pred_run_le_self (beta := beta) (fexp := fexp) hβ u
-    simpa [hneq] using le_trans hpred_le_u (le_of_eq hneq.symm)
-  · -- Strictly separated case: d < u.
-    have hlt : d < u := lt_of_le_of_ne hdu (by simpa [ne_comm] using hneq)
-    -- From the local bridge `pred_ge_gt_theorem` (proved later in this file),
-    -- on format points we get: d ≤ pred u.
-    have h_le_pred : d ≤ (pred (beta := beta) (fexp := fexp) u).run :=
-      pred_ge_gt_theorem (beta := beta) (fexp := fexp)
-        (x := d) (y := u) (Fx := hFd) (Fy := hFu) hlt
-    -- Conversely, from the adjacency between UP and DN expressed by
-    -- `pred_UP_eq_DN_theorem`, we have pred u = d; reduce to that bridge here.
-    have h_pred_eq_d : (pred (beta := beta) (fexp := fexp) u).run = d := by
-      -- This is exactly the non-monadic equality proved later in the file; we
-      -- reuse it here on the chosen witnesses.
-      have h_eq := pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x)
-      -- `pred_UP_eq_DN_theorem` states equality for the chosen witnesses; unfold d,u.
-      simpa [d, u] using h_eq
-    -- Rewrite and conclude the desired inequality.
-    simpa [h_pred_eq_d]
-
--- Local theorem (port bridge): If `x` is not already representable,
--- then the predecessor of `UP x` equals `DN x`.
--- (moved below, after `succ_DN_eq_UP_theorem` and `pred_succ`)
-
-
+-- (moved below, after `pred_ge_gt_theorem` to avoid private forward refs)
 
 /-- Coq (Ulp.v):
 Lemma `ulp_ulp_0`: `forall {H : Exp_not_FTZfexp}, ulp (ulp 0) = ulp 0.`
@@ -3243,6 +3188,52 @@ theorem succ_DN_eq_UP_theorem
   simpa [hd, hu] using hsucc_d
 
 -- Now that `succ_DN_eq_UP_theorem` is available, derive `pred (UP x) = DN x`.
+/-- Local theorem (port bridge): pred (UP x) ≤ DN x. -/
+private theorem pred_UP_le_DN_theorem
+    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x : ℝ) (hβ: 1 < beta):
+    (pred beta fexp
+       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run ≤
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
+  classical
+  -- Names for the chosen witnesses and their specifications
+  set d := (FloatSpec.Core.Generic_fmt.round_DN_to_format (beta := beta) (fexp := fexp) x hβ).run
+  set u := (FloatSpec.Core.Generic_fmt.round_UP_to_format (beta := beta) (fexp := fexp) x hβ).run
+  -- From `round_to_format_properties`, both are in-format and bracket x
+  have hprops :=
+    by
+      -- Use the helper theorem to obtain format membership and bracketing
+      have := FloatSpec.Core.Generic_fmt.round_to_format_properties
+        (beta := beta) (fexp := fexp) (x := x)
+      -- Introduce `hβ` and evaluate the do-block
+      simpa [FloatSpec.Core.Generic_fmt.round_DN_to_format,
+             FloatSpec.Core.Generic_fmt.round_UP_to_format,
+             d, u, wp, PostCond.noThrow, Id.run, pure, bind]
+        using (this hβ)
+  -- Unpack properties: F d ∧ F u ∧ d ≤ x ∧ x ≤ u
+  rcases hprops with ⟨hFd, hFu, hd_le_x, hx_le_u⟩
+  -- We will show: pred u ≤ d by antisymmetry with d ≤ pred u coming from `pred_ge_gt_theorem`.
+  have hdu : d ≤ u := le_trans hd_le_x hx_le_u
+  by_cases hneq : d = u
+  · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
+    have hpred_le_u : (pred beta fexp u).run ≤ u :=
+      pred_run_le_self (beta := beta) (fexp := fexp) hβ u
+    simpa [hneq] using le_trans hpred_le_u (le_of_eq hneq.symm)
+  · -- Strictly separated case: d < u.
+    have hlt : d < u := lt_of_le_of_ne hdu (by simpa [ne_comm] using hneq)
+    -- From the local bridge `pred_ge_gt_theorem` (proved earlier), on
+    -- format points we get: d ≤ pred u.
+    have h_le_pred : d ≤ (pred (beta := beta) (fexp := fexp) u).run :=
+      pred_ge_gt_theorem (beta := beta) (fexp := fexp)
+        (x := d) (y := u) (Fx := hFd) (Fy := hFu) hlt
+    -- Conversely, from adjacency `pred (UP x) = DN x`, rewrite the RHS.
+    have h_pred_eq_d : (pred (beta := beta) (fexp := fexp) u).run = d := by
+      -- This is exactly the non-monadic equality proved below; unfold d,u.
+      have h_eq := pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x)
+      simpa [d, u] using h_eq
+    -- Rewrite and conclude the desired inequality.
+    simpa [h_pred_eq_d] using h_le_pred
+
 theorem pred_UP_eq_DN_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
@@ -8161,8 +8152,11 @@ private theorem generic_format_plus_ulp_theorem
       simp [succ, hx0, Id.run, bind, pure]
     -- `succ x` is in generic format from `Fx`
     have Fsucc : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) x).run)).run := by
-      have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
+      have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx) hβ
+      have h' := by
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+          using h
+      exact h' trivial
     -- Rewrite `succ x` to `x + ulp x`
     simpa [hsucc_eq]
       using Fsucc
@@ -8214,8 +8208,11 @@ private theorem generic_format_plus_ulp_theorem
           _ = x + (ulp beta fexp x).run := by simpa [hulp_opp]
       -- `succ x` is in generic format; rewrite to the target
       have Fsucc : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) x).run)).run := by
-        have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
+        have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx) hβ
+        have h' := by
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+            using h
+        exact h' trivial
       simpa [hsucc_eq] using Fsucc
     · -- Generic: `pred_pos (-x) = (-x) - ulp (-x)` so `succ x = x + ulp x`
       have hpred_run : (pred_pos beta fexp (-x)).run = (-x) - (ulp beta fexp (-x)).run := by
@@ -8233,8 +8230,11 @@ private theorem generic_format_plus_ulp_theorem
           _ = x + (ulp beta fexp x).run := by simpa [hulp_opp]
       -- `succ x` is in generic format; rewrite to the target
       have Fsucc : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) x).run)).run := by
-        have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
+        have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx) hβ
+        have h' := by
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+            using h
+        exact h' trivial
       simpa [hsucc_eq] using Fsucc
 
 /-- Coq (Ulp.v):
