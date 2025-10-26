@@ -2691,9 +2691,9 @@ theorem error_le_ulp
 
 theorem error_le_half_ulp (choice : Int → Bool)
     [Exp_not_FTZ fexp]
-    (x : ℝ) :
+    (x : ℝ) (hβ):
     ⦃⌜1 < beta⌝⦄ do
-      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
       let u ← ulp beta fexp x
       pure (abs (rn - x), u)
     ⦃⇓p => ⌜p.1 ≤ (1/2) * p.2⌝⦄ := by
