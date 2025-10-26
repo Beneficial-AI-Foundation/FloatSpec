@@ -2691,7 +2691,7 @@ theorem error_le_ulp
 
 theorem error_le_half_ulp (choice : Int → Bool)
     [Exp_not_FTZ fexp]
-    (x : ℝ) (hβ):
+    (x : ℝ) (hβ: 1 < beta) :
     ⦃⌜1 < beta⌝⦄ do
       let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
       let u ← ulp beta fexp x
@@ -3178,9 +3178,9 @@ via ordering bridges and then applies `succ_pred` at the UP witness. -/
 theorem succ_DN_eq_UP_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) ():
     (succ beta fexp
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))).run
+      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
       = Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) := by
   classical
   -- Abbreviations for the chosen DN/UP witnesses and their specs
