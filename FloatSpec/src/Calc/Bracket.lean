@@ -228,10 +228,9 @@ variable (Hdu : d < u)
 
     Returns whether x is within the interval bounds
 -/
-def inbetween_bounds_check (h : inbetween d u x l) : Id Bool :=
-  -- We return a constant boolean; the spec theorem provides the bounds.
-  -- Keeping the computation trivial avoids noncomputability from `decide` on ℝ.
-  pure true
+def inbetween_bounds_check (h : inbetween d u x l) : Id Unit :=
+  -- Computation carries no data; theorem provides the bounds.
+  pure ()
 
 /-- Specification: Bounds are satisfied
 
@@ -261,9 +260,9 @@ theorem inbetween_bounds (h : inbetween d u x l) (Hdu : d < u) :
     For inexact locations, x is strictly between bounds
 -/
 def inbetween_bounds_not_Eq_check (h : inbetween d u x l)
-    (hl : l ≠ Location.loc_Exact) : Id Bool :=
-  -- Keep the computation trivial; the theorem will carry the proof.
-  pure true
+    (hl : l ≠ Location.loc_Exact) : Id Unit :=
+  -- Computation carries no data; theorem provides the strict bounds.
+  pure ()
 
 /-- Specification: Strict bounds for inexact locations
 
@@ -519,9 +518,9 @@ variable (Hstep : 0 < step)
 
     Verifies that consecutive steps are properly ordered
 -/
-def ordered_steps_check (start step : ℝ) (k : Int) : Id Bool :=
-  -- Pure check; the proof will establish the strict inequality.
-  pure true
+def ordered_steps_check (start step : ℝ) (k : Int) : Id Unit :=
+  -- Computation carries no data; theorem proves the strict inequality.
+  pure ()
 
 /-- Specification: Steps are ordered
 

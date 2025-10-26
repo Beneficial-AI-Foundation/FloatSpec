@@ -21,7 +21,7 @@ file_list=(
   # Round_NE.lean
   # Ulp.lean
   # Round_pred.lean
-  Generic_fmt.lean
+  Ulp.lean
 )
 hours=(
 #   2

@@ -21,7 +21,7 @@ file_list=(
   # Round_NE.lean
   # Ulp.lean
   # Round_pred.lean
-  Generic_fmt.lean
+  Ulp.lean
 )
 hours=(
 #   2
@@ -32,7 +32,7 @@ hours=(
   # 2
   # 2
   # 3
-  12
+  4
 )
 
 # Sanity check: arrays must match
