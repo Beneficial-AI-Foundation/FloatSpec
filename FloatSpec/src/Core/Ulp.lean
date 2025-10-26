@@ -3191,9 +3191,9 @@ theorem succ_DN_eq_UP_theorem
   rcases hDN with ⟨Fd, hdn⟩
   rcases hUP with ⟨Fu, hup⟩
   -- Normalize format-membership witnesses to the local names `d` and `u`
-  have Fd_d : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d hβ).run := by
+  have Fd_d : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run := by
     simpa [hd] using Fd
-  have Fu_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u hβ).run := by
+  have Fu_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := by
     simpa [hu] using Fu
   rcases hdn with ⟨_Fd', hd_le_x, _hmax_dn⟩
   rcases hup with ⟨_Fu', hx_le_u, _hmin_up⟩
@@ -3228,7 +3228,7 @@ theorem succ_DN_eq_UP_theorem
     simpa [hd, hu] using h_le_pred0
   have h_pred_le : (pred (beta := beta) (fexp := fexp) u).run ≤ d := by
     -- Apply the bridge relating `pred (UP x)` to `DN x` on chosen witnesses
-    have h_pred_le0 := (pred_UP_le_DN_theorem (beta := beta) (fexp := fexp) (x := x))
+    have h_pred_le0 := (pred_UP_le_DN_theorem (beta := beta) (fexp := fexp) (x := x) hβ)
     simpa [hd, hu] using h_pred_le0
   have h_pred_eq : (pred (beta := beta) (fexp := fexp) u).run = d :=
     le_antisymm h_pred_le h_le_pred
@@ -3246,21 +3246,21 @@ theorem succ_DN_eq_UP_theorem
 theorem pred_UP_eq_DN_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
     (pred beta fexp
-       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x))).run =
-    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) := by
+       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run =
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
   classical
   -- Abbreviations for the chosen DN/UP witnesses
-  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) with hd
-  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) with hu
+  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
   -- From adjacency: succ d = u
   have hsucc : (succ (beta := beta) (fexp := fexp) d).run = u := by
     simpa [hd, hu] using
-      (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx)
+      (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
   -- Apply pred to both sides and simplify the LHS via pred_succ at the format point d
   have hFd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run := by
-    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
     rcases hDN with ⟨hFdn, _⟩
     simpa [hd] using hFdn
   have hpred_succ_eq :
@@ -3274,10 +3274,10 @@ theorem pred_UP_eq_DN_theorem
 
 theorem pred_UP_eq_DN
     (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
     ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
-      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
       let p ← pred beta fexp up
       pure (p, dn)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
@@ -3286,7 +3286,7 @@ theorem pred_UP_eq_DN
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
         FloatSpec.Core.Generic_fmt.round_UP_to_format,
         FloatSpec.Core.Generic_fmt.round_DN_to_format]
-  exact pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) x Fx
+  exact pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) x Fx hβ
 
 /-- Inequality bridge: for non-representable `x`, the chosen `UP x` is
 bounded above by the successor of `DN x`.
@@ -3295,17 +3295,17 @@ This follows immediately from the adjacency equality `succ (DN x) = UP x`.
 -/
 theorem UP_le_succ_DN_theorem
     (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
     ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
-      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
       let s ← succ beta fexp dn
       pure (up, s)
     ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
   intro _; classical
   -- Abbreviations for the chosen witnesses
-  set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x) with hd
-  set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x) with hu
+  set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
   -- Reduce the specification to a pure inequality on `u` and `succ d`
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
         FloatSpec.Core.Generic_fmt.round_DN_to_format,
@@ -3314,7 +3314,7 @@ theorem UP_le_succ_DN_theorem
   -- From adjacency: succ d = u; hence the goal reduces to `u ≤ u` (i.e., True).
   have hadj : (succ (beta := beta) (fexp := fexp) d).run = u := by
     simpa [hd, hu] using
-      (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx)
+      (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
   -- Reduce the goal to `u ≤ (succ d).run`, then rewrite by adjacency.
   have hgoal : u ≤ (succ (beta := beta) (fexp := fexp) d).run := by
     simpa [hadj] using (le_rfl : u ≤ u)
@@ -4445,7 +4445,7 @@ Theorem generic_format_succ: forall x, F x -> F (succ x).
 -/
 theorem generic_format_succ
     (x : ℝ)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ : 1 < beta):
     ⦃⌜True⌝⦄ do
       let s ← succ beta fexp x
       FloatSpec.Core.Generic_fmt.generic_format beta fexp s
@@ -4464,7 +4464,7 @@ theorem generic_format_succ
       -- Evaluate the do-block and apply the local bridge theorem.
       simp [wp, PostCond.noThrow, Id.run, bind, pure, succ]
       -- `simp` leaves the pure `generic_format` goal on `(ulp 0).run`.
-      exact generic_format_ulp0_theorem (beta := beta) (fexp := fexp)
+      exact generic_format_ulp0_theorem (beta := beta) (fexp := fexp) hβ
     · -- Strictly positive case: use the dedicated auxiliary bridge
       -- succ x = x + ulp x stays in generic format under 0 < x and F x
       have h := generic_format_succ_aux1_theorem (beta := beta) (fexp := fexp) x hxpos Fx
@@ -4517,7 +4517,7 @@ private theorem ulp_DN_round_bridge_pos
     [Exp_not_FTZ fexp]
     (x : ℝ) (hx : 0 < x) (hβ : 1 < beta) :
     (ulp (beta := beta) (fexp := fexp)
-        (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x))).run
+        (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
       = (ulp (beta := beta) (fexp := fexp)
           (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x)).run := by
     sorry
@@ -4868,7 +4868,7 @@ private theorem round_DN_eq_theorem
   -- succ d is in the format
   have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp d).run)).run := by
     have hs := generic_format_succ (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hs trivial
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hs hbeta
   -- dn is in the format
   have Fdn' : (FloatSpec.Core.Generic_fmt.generic_format beta fexp dn).run := by
     simpa [hdn_def] using Fdn
@@ -5000,11 +5000,11 @@ private theorem generic_format_succ_pre
     (beta : Int) (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ : 1 < beta):
     (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp x).run)).run := by
   classical
   have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h hβ
 
 -- Rounding to nearest below the midpoint yields the DN witness (bridge lemma).
 private theorem round_N_le_midp_theorem
