@@ -2547,7 +2547,7 @@ theorem error_le_half_ulp_round
 -- spacing properties and `mag` on pure powers; we isolate it as a narrow,
 -- file‑scoped theorem to avoid pulling those dependencies here.
 private theorem generic_format_ulp0_theorem
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) (fexp : Int → Int) (hβ : 1 < beta)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] :
     (FloatSpec.Core.Generic_fmt.generic_format beta fexp
       ((ulp (beta := beta) (fexp := fexp) 0).run)).run := by
