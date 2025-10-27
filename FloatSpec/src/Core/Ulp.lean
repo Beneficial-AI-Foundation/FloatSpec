@@ -4232,7 +4232,8 @@ Theorem generic_format_succ: forall x, F x -> F (succ x).
 -/
 theorem generic_format_succ
     (x : ℝ)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ : 1 < beta):
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
+    (hβ : 1 < beta):
     ⦃⌜True⌝⦄ do
       let s ← succ beta fexp x
       FloatSpec.Core.Generic_fmt.generic_format beta fexp s
@@ -4252,24 +4253,13 @@ theorem generic_format_succ
       simp [wp, PostCond.noThrow, Id.run, bind, pure, succ]
       -- `simp` leaves the pure `generic_format` goal on `(ulp 0).run`.
       exact generic_format_ulp0_theorem (beta := beta) (fexp := fexp) hβ
-    · -- Strictly positive case: succ x = x + ulp x stays in generic format
-      -- Evaluate the do-block for succ and reduce to a pure goal
-      simp [wp, PostCond.noThrow, Id.run, bind, pure, succ, hx0]
-      -- It suffices to show F (x + ulp x). Since 0 < x, we have 0 ≤ x and
-      -- thus (succ x).run = x + (ulp x).run by definition; so showing
-      -- F ((succ x).run) is enough.
-      have hxnonneg : 0 ≤ x := le_of_lt hxpos
-      have h_eq : (x + (ulp (beta := beta) (fexp := fexp) x).run)
-                    = (succ (beta := beta) (fexp := fexp) x).run := by
-        simp [succ, hxnonneg, Id.run, bind, pure]
-      -- Therefore, it suffices to prove F ((succ x).run). This is exactly
-      -- `generic_format_succ` applied to `x`, transported along `h_eq`.
-      have hsucc := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-      have hsucc' := hsucc hβ
-      -- Unpack the Hoare triple with the trivial precondition witness.
-      have Fsuccx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) x).run)).run := by
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hsucc' trivial
-      simpa [h_eq]
+    · -- Strictly positive case: it suffices to show `succ x` is in generic format
+      -- Evaluate the do-block for `succ` to reduce to a pure goal on its run-value
+      simp [wp, PostCond.noThrow, Id.run, bind, pure]
+      -- Close using the local helper established below
+      have h := generic_format_succ_pre (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+        using (h hβ) True.intro
   · -- Negative branch: succ x = - pred_pos (-x)
     -- First, close F (-x) from F x via generic_format_opp
     have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
@@ -4672,8 +4662,8 @@ private theorem round_DN_eq_theorem
   -- d ≤ dn by maximality at x
   have hle_d_dn : d ≤ dn := by simpa [hdn_def] using hmax_dn d Fd h.1
   -- succ d is in the format
-  have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp d).run)).run := by
-    have hs := generic_format_succ (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
+    have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp d).run)).run := by
+    have hs := generic_format_succ_pre (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
     -- Discharge the (trivial) precondition of the Hoare-style statement
     -- and reduce it to a plain proposition about the run-value.
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hs hbeta) True.intro
@@ -4804,7 +4794,7 @@ proved above.
 -/
 
 -- Generic‑format closure under successor (bridge for earlier sections).
-  private theorem generic_format_succ_pre
+private theorem generic_format_succ_pre
       (beta : Int) (fexp : Int → Int)
       [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
       (x : ℝ)
