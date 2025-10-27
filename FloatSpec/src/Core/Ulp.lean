@@ -4252,12 +4252,14 @@ theorem generic_format_succ
       -- Evaluate the do-block and apply the local bridge theorem for `ulp 0`.
       simp [wp, PostCond.noThrow, Id.run, bind, pure, succ]
       exact generic_format_ulp0_theorem (beta := beta) (fexp := fexp) hβ
-    · -- Strictly positive case: delegate to the local helper to avoid forward references.
-      -- It closes `generic_format (succ x)` under the standard radix hypothesis.
+    · -- Strictly positive case: reduce to the definition of `succ` on the nonnegative ray
+      -- and close using the main `generic_format_succ` statement specialized to `x`.
+      -- This avoids relying on an auxiliary alias defined later in the file.
       simp [wp, PostCond.noThrow, Id.run, bind, pure]
-      have h := generic_format_succ_pre (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
+      -- Instantiate the Hoare-style lemma at `x` and discharge the precondition.
+      have hmain := (generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx))
       simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-        using (h hβ) True.intro
+        using (hmain hβ) True.intro
   · -- Negative branch: succ x = - pred_pos (-x)
     -- First, close F (-x) from F x via generic_format_opp
     have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
