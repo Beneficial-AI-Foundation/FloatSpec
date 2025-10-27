@@ -4249,14 +4249,12 @@ theorem generic_format_succ
       · exact Or.inr hxpos
     rcases hxpos_or_zero with rfl | hxpos
     · -- x = 0 ⇒ goal reduces to F (ulp 0)
-      -- Evaluate the do-block and apply the local bridge theorem.
+      -- Evaluate the do-block and apply the local bridge theorem for `ulp 0`.
       simp [wp, PostCond.noThrow, Id.run, bind, pure, succ]
-      -- `simp` leaves the pure `generic_format` goal on `(ulp 0).run`.
       exact generic_format_ulp0_theorem (beta := beta) (fexp := fexp) hβ
-    · -- Strictly positive case: it suffices to show `succ x` is in generic format
-      -- Evaluate the do-block for `succ` to reduce to a pure goal on its run-value
+    · -- Strictly positive case: delegate to the local helper to avoid forward references.
+      -- It closes `generic_format (succ x)` under the standard radix hypothesis.
       simp [wp, PostCond.noThrow, Id.run, bind, pure]
-      -- Close using the local helper established below
       have h := generic_format_succ_pre (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
       simpa [wp, PostCond.noThrow, Id.run, bind, pure]
         using (h hβ) True.intro
@@ -4794,7 +4792,7 @@ proved above.
 -/
 
 -- Generic‑format closure under successor (bridge for earlier sections).
-private theorem generic_format_succ_pre
+theorem generic_format_succ_pre
       (beta : Int) (fexp : Int → Int)
       [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
       (x : ℝ)
