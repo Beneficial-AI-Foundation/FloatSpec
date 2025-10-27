@@ -4262,9 +4262,14 @@ theorem generic_format_succ
       have h_eq : (x + (ulp (beta := beta) (fexp := fexp) x).run)
                     = (succ (beta := beta) (fexp := fexp) x).run := by
         simp [succ, hxnonneg, Id.run, bind, pure]
-      -- Therefore, it suffices to prove F ((succ x).run); construct it using
-      -- `generic_format_succ` and rewrite by `h_eq`.
-      sorry
+      -- Therefore, it suffices to prove F ((succ x).run). This is exactly
+      -- `generic_format_succ` applied to `x`, transported along `h_eq`.
+      have hsucc := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
+      have hsucc' := hsucc hβ
+      -- Unpack the Hoare triple with the trivial precondition witness.
+      have Fsuccx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) x).run)).run := by
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hsucc' trivial
+      simpa [h_eq]
   · -- Negative branch: succ x = - pred_pos (-x)
     -- First, close F (-x) from F x via generic_format_opp
     have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
@@ -4635,17 +4640,18 @@ theorem ulp_DN [Exp_not_FTZ fexp] (x : ℝ) (hx : 0 ≤ x) :
       pure (u1, u2)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro hβ; classical
-  -- Reduce the program to run-values of ulp at the DN witness and at x
+  -- Reduce the triple and bind structure.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
         FloatSpec.Core.Generic_fmt.round_DN_to_format] at ⊢
-  -- Apply the local bridge theorem capturing invariance of ulp under round-down for x ≥ 0
-  -- Reduce the Hoare-style goal on Id to a plain equality of run-values
-  -- and discharge it using the bridge lemma.
-  -- After simplification, close with the run-level equality.
+  -- The goal is now an equality between the two computed ulps. Make the
+  -- `Id.run` explicit so we can apply the run-level bridge theorem.
+  change
+      (Id.run (ulp (beta := beta) (fexp := fexp)
+        (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))))
+      = (Id.run (ulp (beta := beta) (fexp := fexp) x))
   -- Close by the run-level bridge.
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure,
-         FloatSpec.Core.Generic_fmt.round_DN_to_format]
-    using ulp_DN_run_theorem (beta := beta) (fexp := fexp) (x := x) (hx := hx) (hβ := hβ)
+  simpa using
+    (ulp_DN_run_theorem (beta := beta) (fexp := fexp) (x := x) (hx := hx) (hβ := hβ))
 
 
 /- DN equality on [d, succ d): chosen DN at x equals d when d ≤ x < succ d. -/
@@ -4947,7 +4953,8 @@ theorem generic_format_pred
         ((succ (beta := beta) (fexp := fexp) (-x)).run)).run := by
     have h := generic_format_succ (beta := beta) (fexp := fexp) (x := -x) (Fx := Fx_neg)
     have h' := h hβ
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+    -- Discharge the trivial precondition explicitly.
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
   -- Finally, closure under negation gives generic_format of `- (succ (-x))`, i.e. `pred x`.
   have Fpredx :
       (FloatSpec.Core.Generic_fmt.generic_format beta fexp
@@ -4979,7 +4986,8 @@ private theorem generic_format_pred_aux1_theorem
         ((pred (beta := beta) (fexp := fexp) x).run)).run := by
     have h := generic_format_pred (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
     have h' := h hβ
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+    -- Apply the trivial precondition witness explicitly to discharge the Hoare triple.
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
   -- Since x > 0, we are in the positive branch of pred/succ.
   have hneg_lt : -x < 0 := by simpa [neg_zero] using (neg_lt_neg hx)
   have hnot : ¬ (0 ≤ -x) := not_le.mpr hneg_lt
