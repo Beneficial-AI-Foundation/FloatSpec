@@ -7642,14 +7642,14 @@ private theorem round_UP_DN_ulp_theorem
         + (ulp (beta := beta) (fexp := fexp) x).run := by
   classical
   -- Shorthands for the chosen DN/UP witnesses
-  set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
-  set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
-  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
-  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
+  set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+  set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
   -- From the local bridge: for x not in the format, succ d = u
   have hsucc : (succ (beta := beta) (fexp := fexp) d).run = u := by
     -- succ (DN x) = UP x (file‑scoped bridge theorem)
-    simpa [d, u] using (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx)
+    simpa [d, u] using (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
   -- Evaluate succ d case‑by‑case on the sign of d to obtain
   -- (succ d).run = d + (ulp d).run
   have hsucc_add : (succ (beta := beta) (fexp := fexp) d).run =
@@ -7712,10 +7712,10 @@ private theorem round_UP_DN_ulp_theorem
     have hxlt : x < 0 := lt_of_not_ge hx0
     have hypos : 0 < -x := by simpa using (neg_pos.mpr hxlt)
     -- Chosen DN/UP at y := -x
-    set d' : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x))
-    set u' : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp (-x))
-    have hDN' := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x))
-    have hUP' := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp (-x))
+    set d' : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x) hβ)
+    set u' : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp (-x) hβ)
+    have hDN' := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp (-x) hβ)
+    have hUP' := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp (-x) hβ)
     -- succ d' = u' at y = -x
     have hsucc' : (succ (beta := beta) (fexp := fexp) d').run = u' := by
       simpa [d', u'] using (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := -x)
@@ -7725,7 +7725,7 @@ private theorem round_UP_DN_ulp_theorem
                                 have Fpos := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (-x)) Fneg
                                 have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
                                   simpa using Fpos
-                                exact Fx this))
+                                exact Fx this) hβ)
     -- succ d' = d' + ulp d'
     have hsucc_add' : (succ (beta := beta) (fexp := fexp) d').run
         = d' + (ulp (beta := beta) (fexp := fexp) d').run := by
@@ -7845,7 +7845,7 @@ private theorem round_UP_DN_ulp_theorem
       have h := succ_opp (beta := beta) (fexp := fexp) u
       simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h True.intro)
     have hpred_u_eq_d : (pred (beta := beta) (fexp := fexp) u).run = d := by
-      simpa [u, d] using (pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x) Fx)
+      simpa [u, d] using (pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
     have hlt_x_succ_neg : (-x) < (succ (beta := beta) (fexp := fexp) (-u)).run := by
       -- Using pred u = d and d < x (since x not in F and d ≤ x), get -x < -d = succ(-u)
       have hx_ge_d : d ≤ x := by
@@ -7887,8 +7887,8 @@ private theorem round_UP_DN_ulp_theorem
 theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
     ⦃⌜1 < beta⌝⦄ do
-      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x
-      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
+      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
       let u ← ulp beta fexp x
       pure (up, dn, u)
     ⦃⇓r => ⌜r.1 = r.2.1 + r.2.2⌝⦄ := by
