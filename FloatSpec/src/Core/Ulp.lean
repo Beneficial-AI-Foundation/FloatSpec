@@ -4569,16 +4569,9 @@ theorem ulp_DN [Exp_not_FTZ fexp] (x : ℝ) (hx : 0 ≤ x) :
       pure (u1, u2)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro hβ; classical
-  -- Reduce the triple and bind structure.
+  -- Reduce the monadic triple to a run‑level equality goal and close by the bridge lemma.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Generic_fmt.round_DN_to_format] at ⊢
-  -- The goal is now an equality between the two computed ulps. Make the
-  -- `Id.run` explicit so we can apply the run-level bridge theorem.
-  change
-      (Id.run (ulp (beta := beta) (fexp := fexp)
-        (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))))
-      = (Id.run (ulp (beta := beta) (fexp := fexp) x))
-  -- Close by the run-level bridge.
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
   simpa using
     (ulp_DN_run_theorem (beta := beta) (fexp := fexp) (x := x) (hx := hx) (hβ := hβ))
 
@@ -4601,7 +4594,7 @@ private theorem round_DN_eq_theorem
   -- d ≤ dn by maximality at x
   have hle_d_dn : d ≤ dn := by simpa [hdn_def] using hmax_dn d Fd h.1
   -- succ d is in the format
-    have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp d).run)).run := by
+  have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp d).run)).run := by
     have hs := generic_format_succ_pre (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
     -- Discharge the (trivial) precondition of the Hoare-style statement
     -- and reduce it to a plain proposition about the run-value.
