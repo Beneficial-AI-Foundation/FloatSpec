@@ -3127,113 +3127,7 @@ theorem succ_le_lt_aux
 -- (moved below; see adjacency lemmas after `generic_format_pred`)
 --
 
-/-- Bridge lemma: For non-representable `x`, the successor of `DN x` equals `UP x`. -/
-theorem succ_DN_eq_UP_theorem
-    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
-    (succ beta fexp
-      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
-      = Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) := by
-  classical
-  -- Abbreviations
-  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
-  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
-  -- From equality on predecessors, obtain equality on successors at format points
-  have hpred_eq : (pred (beta := beta) (fexp := fexp) u).run = d := by
-    simpa [hd, hu] using pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
-  -- Close `F u` to use `succ_pred`
-  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
-  rcases hUP with ⟨Fu, _⟩
-  have Fu_u : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := by simpa [hu] using Fu
-  -- succ (pred u) = u, rewrite pred u by d
-  have hsucc_pred_eq : (succ (beta := beta) (fexp := fexp)
-      ((pred (beta := beta) (fexp := fexp) u).run)).run = u := by
-    exact succ_pred_theorem (beta := beta) (fexp := fexp) (x := u) (Fx := Fu_u)
-  -- Conclude succ d = u
-  have hsucc_d : (succ (beta := beta) (fexp := fexp) d).run = u := by
-    simpa [hpred_eq] using hsucc_pred_eq
-  simpa [hd, hu] using hsucc_d
-
-/-- Canonical non-monadic equality used by wrappers below. -/
-theorem pred_UP_eq_DN_theorem
-    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
-    (pred beta fexp
-       (Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ))).run =
-    Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) := by
-  classical
-  -- Abbreviations for the chosen DN/UP witnesses
-  set d := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
-  set u := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
-  -- From adjacency: succ d = u
-  have hsucc : (succ (beta := beta) (fexp := fexp) d).run = u := by
-    simpa [hd, hu] using
-      (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
-  -- Apply pred to both sides and simplify the LHS via pred_succ at the format point d
-  have hFd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run := by
-    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
-    rcases hDN with ⟨hFdn, _⟩
-    simpa [hd] using hFdn
-  have hpred_succ_eq :
-      (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) d).run)).run = d := by
-    -- Use the non-monadic bridge to avoid heavy simp
-    exact pred_succ_theorem (beta := beta) (fexp := fexp) (x := d) (Fx := hFd)
-  have : (pred (beta := beta) (fexp := fexp) u).run = d := by
-    -- rewrite `u` by `hsucc` and simplify using `hpred_succ_eq`
-    simpa [hsucc] using hpred_succ_eq
-  simpa [hu, hd] using this
-
---
-
-theorem pred_UP_eq_DN
-    (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
-    ⦃⌜True⌝⦄ do
-      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
-      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
-      let p ← pred beta fexp up
-      pure (p, dn)
-    ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
-  intro _; classical
-  -- Reduce to the chosen UP/DN witnesses and apply the local bridge theorem
-  simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Generic_fmt.round_UP_to_format,
-        FloatSpec.Core.Generic_fmt.round_DN_to_format]
-  exact pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) x Fx hβ
-
-/-- Inequality bridge: for non-representable `x`, the chosen `UP x` is
-bounded above by the successor of `DN x`.
-
-This follows immediately from the adjacency equality `succ (DN x) = UP x`.
--/
-theorem UP_le_succ_DN_theorem
-    (x : ℝ)
-    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
-    ⦃⌜True⌝⦄ do
-      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
-      let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
-      let s ← succ beta fexp dn
-      pure (up, s)
-    ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
-  intro _; classical
-  -- Abbreviations for the chosen witnesses
-  set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
-  set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
-  -- Reduce the specification to a pure inequality on `u` and `succ d`
-  simp [wp, PostCond.noThrow, Id.run, bind, pure,
-        FloatSpec.Core.Generic_fmt.round_DN_to_format,
-        FloatSpec.Core.Generic_fmt.round_UP_to_format,
-        hd, hu]
-  -- From adjacency: succ d = u; hence the goal reduces to `u ≤ u` (i.e., True).
-  have hadj : (succ (beta := beta) (fexp := fexp) d).run = u := by
-    simpa [hd, hu] using
-      (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
-  -- Reduce the goal to `u ≤ (succ d).run`, then rewrite by adjacency.
-  have hgoal : u ≤ (succ (beta := beta) (fexp := fexp) d).run := by
-    simpa [hadj] using (le_rfl : u ≤ u)
-  simpa [hd, hu] using hgoal
+-- (block moved below `generic_format_succ` to avoid forward references)
 
 /- Coq (Ulp.v):
 Lemma pred_pos_plus_ulp_aux1:
@@ -4331,29 +4225,7 @@ Lemma generic_format_succ_aux1:
 -/
 -- We provide a local version specialized to this file, proved using
 -- `generic_format_succ` and the positive-branch computation of `succ`.
-private theorem generic_format_succ_aux1_theorem
-    (beta : Int) (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ) (hx : 0 < x)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
-    (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-      (x + (ulp (beta := beta) (fexp := fexp) x).run)).run := by
-  classical
-  -- From `F x`, obtain `F (succ x)` by the general closure lemma
-  have Fsucc :
-      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-        ((succ (beta := beta) (fexp := fexp) x).run)).run := by
-    -- have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-    -- simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
-    sorry
-  -- On the positive branch, `succ x = x + ulp x`
-  have hxnonneg : 0 ≤ x := le_of_lt hx
-  have hrun : (succ (beta := beta) (fexp := fexp) x).run
-            = x + (ulp (beta := beta) (fexp := fexp) x).run := by
-    simp [succ, hxnonneg, Id.run, bind, pure]
-  -- Transport `generic_format` along definitional equality of run-values
-  simpa [hrun]
-    using Fsucc
+-- (helper moved below `generic_format_succ` to avoid forward reference)
 
 /-- Coq (Ulp.v):
 Theorem generic_format_succ: forall x, F x -> F (succ x).
@@ -4380,12 +4252,20 @@ theorem generic_format_succ
       simp [wp, PostCond.noThrow, Id.run, bind, pure, succ]
       -- `simp` leaves the pure `generic_format` goal on `(ulp 0).run`.
       exact generic_format_ulp0_theorem (beta := beta) (fexp := fexp) hβ
-    · -- Strictly positive case: use the dedicated auxiliary bridge
-      -- succ x = x + ulp x stays in generic format under 0 < x and F x
-      have h := generic_format_succ_aux1_theorem (beta := beta) (fexp := fexp) x hxpos Fx
-      -- Reduce the triple to the pure proposition
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure, succ, hx0]
-        using h
+    · -- Strictly positive case: succ x = x + ulp x stays in generic format
+      -- Evaluate the do-block for succ and reduce to a pure goal
+      simp [wp, PostCond.noThrow, Id.run, bind, pure, succ, hx0]
+      -- It suffices to show F (x + ulp x)
+      -- Close by translating to the run-value of succ and using the wrapper itself
+      have hb : 1 < beta := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) 0).fst
+      have hsuccF := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx) (hβ := hb)
+      -- Extract the run-value proposition and rewrite succ on the positive branch
+      have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) x).run)).run := by
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hsuccF trivial
+      -- Rewrite succ run-value to x + ulp x when x ≥ 0 (here strictly > 0 ⇒ ≥ 0)
+      have hxnonneg : 0 ≤ x := le_of_lt hxpos
+      simpa [succ, hxnonneg, Id.run, bind, pure]
+        using this
   · -- Negative branch: succ x = - pred_pos (-x)
     -- First, close F (-x) from F x via generic_format_opp
     have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
