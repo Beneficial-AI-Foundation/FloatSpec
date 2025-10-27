@@ -7526,6 +7526,63 @@ lemmas are not yet fully ported here; we expose exactly this reduced
 obligation as a narrow, file-scoped theorem. It matches the pure obligation
 obtained by the Hoare-triple simplification above and will be discharged
 once the spacing toolbox is available. -/
+/- Local bridge: successor of DN equals UP at non-representable x. -/
+private theorem succ_DN_eq_UP_theorem
+    (beta : Int) (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [Exp_not_FTZ fexp]
+    (x : ℝ)
+    (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
+    (hβ : 1 < beta) :
+    (succ (beta := beta) (fexp := fexp)
+      (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
+      = Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) := by
+  classical
+  -- Notations for DN/UP witnesses and their specs
+  set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+  set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
+  have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+  have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+  rcases hDN with ⟨Fd, hdn⟩; rcases hdn with ⟨_Fd', hd_le_x, hmax_dn⟩
+  rcases hUP with ⟨Fu, hup⟩; rcases hup with ⟨_Fu', hx_le_u, hmin_up⟩
+  -- Show d < x from Fx and d ≤ x
+  have hd_lt_x : d < x := by
+    have hd_le_x' : d ≤ x := by simpa [hd] using hd_le_x
+    have hd_ne_x : d ≠ x := by
+      intro h; apply Fx; simpa [h] using Fd
+    exact lt_of_le_of_ne hd_le_x' hd_ne_x
+  -- succ d is representable
+  have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) d).run)).run := by
+    have hs := generic_format_succ (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hs hβ) True.intro
+  -- Bound x < succ d by maximality of DN at x (otherwise succ d ≤ x contradicts maximality)
+  have hx_lt_succd : x < (succ (beta := beta) (fexp := fexp) d).run := by
+    have : ¬ (succ (beta := beta) (fexp := fexp) d).run ≤ x := by
+      intro hle
+      have hle' : (succ (beta := beta) (fexp := fexp) d).run ≤ d :=
+        hmax_dn ((succ (beta := beta) (fexp := fexp) d).run) Fsuccd (by simpa [hd] using hle)
+      -- Also d ≤ succ d (always)
+      have hle_succ : d ≤ (succ (beta := beta) (fexp := fexp) d).run :=
+        succ_run_ge_self (beta := beta) (fexp := fexp) hβ d
+      exact (not_lt_of_ge (le_antisymm hle' hle_succ)) hd_lt_x
+    exact lt_of_not_ge this
+  -- Use the UP half-interval equality with u' := succ d
+  have hpred_succ_eq :
+      (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) d).run)).run = d := by
+    have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hps
+  have hup_eq :
+      Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+        = (succ (beta := beta) (fexp := fexp) d).run := by
+    -- Apply the UP equality bridge on (pred u', u'] with u' = succ d
+    have := round_UP_eq_theorem (beta := beta) (fexp := fexp)
+      (x := x) (u := (succ (beta := beta) (fexp := fexp) d).run)
+      (Fu := Fsuccd) (h := And.intro (by simpa [hpred_succ_eq] using hd_lt_x) (by exact le_of_lt hx_lt_succd)) hβ
+    simpa [hu]
+      using this
+  -- Conclude equality of run-values between succ DN and the chosen UP witness
+  simpa [hd, hu] using hup_eq.symm
+
 private theorem round_UP_DN_ulp_theorem
     (beta : Int) (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
@@ -7544,9 +7601,7 @@ private theorem round_UP_DN_ulp_theorem
   have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
   -- From the local bridge: for x not in the format, succ d = u
   have hsucc : (succ (beta := beta) (fexp := fexp) d).run = u := by
-    -- succ (DN x) = UP x (file‑scoped bridge theorem)
-    -- Use the established bridge `succ_DN_eq_UP` (equality form) available earlier
-    -- in this file.
+    -- succ (DN x) = UP x (bridge proved above)
     have h := succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
     -- Reduce the Hoare‑style statement to an equality of run-values
     simpa [wp, PostCond.noThrow, Id.run, bind, pure, d, u] using h
@@ -7806,6 +7861,7 @@ private theorem round_UP_DN_ulp_theorem
     forall x, ~ F x -> round UP x = round DN x + ulp x. -/
 theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
+    (hβ : 1 < beta) →
     ⦃⌜1 < beta⌝⦄ do
       let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
       let up ← FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
