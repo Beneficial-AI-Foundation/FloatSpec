@@ -7666,9 +7666,12 @@ private theorem round_UP_DN_ulp_theorem
     -- From ulp stability on the nonnegative ray at y = -x: ulp d' = ulp (-x)
     have hulp_stab' : (ulp (beta := beta) (fexp := fexp) d').run
         = (ulp (beta := beta) (fexp := fexp) (-x)).run := by
-      have hstab := ulp_DN (beta := beta) (fexp := fexp) (x := -x) (hx := le_of_lt hypos)
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure,
-             FloatSpec.Core.Generic_fmt.round_DN_to_format, d'] using (hstab hβ)
+      -- Use the run-level bridge `ulp_DN_run_theorem` to avoid Hoare‑triple unpacking
+      have hstab :=
+        ulp_DN_run_theorem (beta := beta) (fexp := fexp)
+          (x := -x) (hx := le_of_lt hypos) (hβ := hβ)
+      -- The chosen DN at -x is `d'` by definition
+      simpa [d'] using hstab
     -- Therefore: u' = d' + ulp (-x)
     have hpos_id : u' = d' + (ulp (beta := beta) (fexp := fexp) (-x)).run := by
       calc
@@ -7708,7 +7711,7 @@ private theorem round_UP_DN_ulp_theorem
       simpa [hpred_opp_run, hsucc] using this
     have hUP_eq_neg := round_UP_eq (beta := beta) (fexp := fexp)
                           (x := -x) (u := -d) (Fu := hFd_neg)
-                          (h := And.intro hlt_neg hle_neg)
+                          (h := And.intro hlt_neg hle_neg) (hβ := hβ)
     have hUP_neg_eq : u' = -d := by
       simpa [wp, PostCond.noThrow, Id.run, bind, pure, u'] using (hUP_eq_neg True.intro)
     -- Similarly, DN at -x equals -u using DN equality bridge at -x with candidate -u
@@ -7723,8 +7726,17 @@ private theorem round_UP_DN_ulp_theorem
           = - (pred (beta := beta) (fexp := fexp) u).run := by
       have h := succ_opp (beta := beta) (fexp := fexp) u
       simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h True.intro)
+    -- Also `pred u = d` since `u = succ d` and `pred (succ d) = d` at format points
     have hpred_u_eq_d : (pred (beta := beta) (fexp := fexp) u).run = d := by
-      simpa [u, d] using (pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
+      have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := hDN.left)
+      have hpred_succ_d :
+          (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) d).run)).run = d := by
+        -- Unpack the Hoare-triple for `pred_succ` at x = d
+        have := (by
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+            using (hps True.intro))
+        exact this
+      simpa [hsucc] using hpred_succ_d
     have hlt_x_succ_neg : (-x) < (succ (beta := beta) (fexp := fexp) (-u)).run := by
       -- Using pred u = d and d < x (since x not in F and d ≤ x), get -x < -d = succ(-u)
       have hx_ge_d : d ≤ x := by
