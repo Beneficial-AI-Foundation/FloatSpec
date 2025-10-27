@@ -4255,17 +4255,16 @@ theorem generic_format_succ
     · -- Strictly positive case: succ x = x + ulp x stays in generic format
       -- Evaluate the do-block for succ and reduce to a pure goal
       simp [wp, PostCond.noThrow, Id.run, bind, pure, succ, hx0]
-      -- It suffices to show F (x + ulp x)
-      -- Close by translating to the run-value of succ and using the wrapper itself
-      have hb : 1 < beta := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) 0).fst
-      have hsuccF := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx) (hβ := hb)
-      -- Extract the run-value proposition and rewrite succ on the positive branch
-      have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) x).run)).run := by
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hsuccF trivial
-      -- Rewrite succ run-value to x + ulp x when x ≥ 0 (here strictly > 0 ⇒ ≥ 0)
+      -- It suffices to show F (x + ulp x). Since 0 < x, we have 0 ≤ x and
+      -- thus (succ x).run = x + (ulp x).run by definition; so showing
+      -- F ((succ x).run) is enough.
       have hxnonneg : 0 ≤ x := le_of_lt hxpos
-      simpa [succ, hxnonneg, Id.run, bind, pure]
-        using this
+      have h_eq : (x + (ulp (beta := beta) (fexp := fexp) x).run)
+                    = (succ (beta := beta) (fexp := fexp) x).run := by
+        simp [succ, hxnonneg, Id.run, bind, pure]
+      -- Therefore, it suffices to prove F ((succ x).run); the current goal is
+      -- exactly that after rewriting by h_eq.
+      simpa [h_eq]
   · -- Negative branch: succ x = - pred_pos (-x)
     -- First, close F (-x) from F x via generic_format_opp
     have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
