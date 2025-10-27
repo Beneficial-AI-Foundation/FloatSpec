@@ -5090,8 +5090,8 @@ private theorem round_N_ge_midp_theorem
       exact lt_of_le_of_lt hmean_ge_p h
     -- Show that the chosen UP at v is u by the (pred u, u] bracketing
     have hup_eq : u' = u := by
-      have : Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v) = u :=
-        round_UP_eq_theorem (beta := beta) (fexp := fexp) (x := v) (u := u) Fu ⟨hpred_lt_v, hv_le_u⟩
+      have : Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v hβ) = u :=
+        round_UP_eq_theorem (beta := beta) (fexp := fexp) (x := v) (u := u) Fu ⟨hpred_lt_v, hv_le_u⟩ hβ
       simpa [hu] using this
     -- If v = u, round_N returns u' = u
     by_cases hvlt : v < u
@@ -5104,11 +5104,11 @@ private theorem round_N_ge_midp_theorem
         have h := succ_pred (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
         simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
       have hd_eq_pred : d = (pred (beta := beta) (fexp := fexp) u).run := by
-        have : Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v)
+        have : Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v hβ)
                  = (pred (beta := beta) (fexp := fexp) u).run :=
           round_DN_eq_theorem (beta := beta) (fexp := fexp)
             (x := v) (d := (pred (beta := beta) (fexp := fexp) u).run)
-            Fpredu ⟨le_of_lt hpred_lt_v, by simpa [hsucc_pred_eq] using hvlt⟩
+            Fpredu ⟨le_of_lt hpred_lt_v, by simpa [hsucc_pred_eq] using hvlt⟩ hβ
         simpa [hd] using this
     -- Midpoint reduces to (pred u + u)/2 and strict bound selects UP
       have hmid_eq : (d + u') / 2 = ((pred (beta := beta) (fexp := fexp) u).run + u) / 2 := by
@@ -5123,7 +5123,7 @@ private theorem round_N_ge_midp_theorem
         -- since (d + u)/2 ≤ v by hbranch
         have : (d + u) / 2 ≤ v := by simpa [hup_eq] using (le_of_lt hbranch)
         exact not_lt.mpr this
-      have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run = u := by
+      have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ).run = u := by
         simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
               FloatSpec.Core.Generic_fmt.round_DN_to_format,
               FloatSpec.Core.Generic_fmt.round_UP_to_format,
@@ -5147,7 +5147,7 @@ private theorem round_N_ge_midp_theorem
       -- Both remaining branches (strict > or tie) return UP = u = v
       by_cases hgt0 : (d + u') / 2 < v
       ·
-        have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run = v := by
+        have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ).run = v := by
           -- Show the first guard is false and the second true after rewriting `u' = v`.
           have hnotlt' : ¬ v < (d + v) / 2 := by
             exact not_lt_mid_of_le_left hd_le_v
@@ -5158,7 +5158,7 @@ private theorem round_N_ge_midp_theorem
                 Id.run, hd.symm, hu.symm, hnotlt', hgt0', hup_eq, pure]
         simpa [hres]
       · have hnotgt : ¬ (d + u') / 2 < v := by exact hgt0
-        have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run = v := by
+        have hres : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ).run = v := by
           -- Both guards are false after rewriting `u' = v`.
           have hnotlt' : ¬ v < (d + v) / 2 := by
             exact not_lt_mid_of_le_left hd_le_v
@@ -5177,7 +5177,7 @@ theorem round_N_ge_midp
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run)
     (h : ((u + (pred beta fexp u).run) / 2) < v) :
     ⦃⌜1 < beta⌝⦄ do
-      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v
+      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ
       pure rn
     ⦃⇓r => ⌜u ≤ r⌝⦄ := by
   intro hβ; classical
@@ -5204,7 +5204,9 @@ private theorem round_N_ge_ge_midp_theorem
   -- Close F (pred u)
   have Fpredu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((pred (beta := beta) (fexp := fexp) u).run)).run := by
     have h := generic_format_pred (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
+    -- Provide the radix assumption required by `generic_format_pred`.
+    have h' := h hβ
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
   -- succ (pred u) = u at format points
   have hsucc_pred : (succ (beta := beta) (fexp := fexp) ((pred (beta := beta) (fexp := fexp) u).run)).run = u := by
     have h := succ_pred (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
@@ -5216,7 +5218,7 @@ private theorem round_N_ge_ge_midp_theorem
       simpa [add_comm] using hvlt
     simpa [hsucc_pred] using this
   -- Strict-below-midpoint yields `round_N v ≤ pred u`
-  have hr_le_predu : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v).run
+  have hr_le_predu : (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp v hβ).run
                       ≤ (pred (beta := beta) (fexp := fexp) u).run := by
     exact round_N_le_midp_theorem (beta := beta) (fexp := fexp)
       (choice := choice) (u := ((pred (beta := beta) (fexp := fexp) u).run)) (v := v)
