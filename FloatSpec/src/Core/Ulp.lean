@@ -3125,6 +3125,7 @@ theorem succ_le_lt_aux
 -- Local theorem (port bridge): pred (UP x) ≤ DN x.
 -- Moved below (after `generic_format_pred`) to avoid forward references.
 -- (moved below; see adjacency lemmas after `generic_format_pred`)
+--
 
 /-- Bridge lemma: For non-representable `x`, the successor of `DN x` equals `UP x`. -/
 theorem succ_DN_eq_UP_theorem
@@ -3153,29 +3154,9 @@ theorem succ_DN_eq_UP_theorem
   have hsucc_d : (succ (beta := beta) (fexp := fexp) d).run = u := by
     simpa [hpred_eq] using hsucc_pred_eq
   simpa [hd, hu] using hsucc_d
-  have hdu : d ≤ u := le_trans hd_le_x hx_le_u
-  by_cases hneq : d = u
-  · -- Degenerate case: DN = UP; then pred u ≤ u = d by `pred_run_le_self`.
-    have hpred_le_u : (pred beta fexp u).run ≤ u :=
-      pred_run_le_self (beta := beta) (fexp := fexp) hβ u
-    simpa [hneq] using le_trans hpred_le_u (le_of_eq hneq.symm)
-  · -- Strictly separated case: d < u.
-    have hlt : d < u := lt_of_le_of_ne hdu (by simpa [ne_comm] using hneq)
-    -- From the local bridge `pred_ge_gt_theorem` (proved earlier), on
-    -- format points we get: d ≤ pred u.
-    have h_le_pred : d ≤ (pred (beta := beta) (fexp := fexp) u).run :=
-      pred_ge_gt_theorem (beta := beta) (fexp := fexp)
-        (x := d) (y := u) (Fx := hFd) (Fy := hFu) hlt
-    -- Conversely, from adjacency `pred (UP x) = DN x`, rewrite the RHS.
-    have h_pred_eq_d : (pred (beta := beta) (fexp := fexp) u).run = d := by
-      -- This is exactly the non-monadic equality proved below; unfold d,u.
-      have h_eq := pred_UP_eq_DN_theorem (beta := beta) (fexp := fexp) (x := x)
-      simpa [d, u] using h_eq
-    -- Rewrite and conclude the desired inequality.
-    simpa [h_pred_eq_d] using h_le_pred
 
--- (duplicate removed; canonical statement appears above)
--- theorem pred_UP_eq_DN_theorem
+/-- Canonical non-monadic equality used by wrappers below. -/
+theorem pred_UP_eq_DN_theorem
     (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ: 1 < beta):
@@ -3203,6 +3184,8 @@ theorem succ_DN_eq_UP_theorem
     -- rewrite `u` by `hsucc` and simplify using `hpred_succ_eq`
     simpa [hsucc] using hpred_succ_eq
   simpa [hu, hd] using this
+
+--
 
 theorem pred_UP_eq_DN
     (x : ℝ)
