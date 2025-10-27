@@ -5099,8 +5099,11 @@ private theorem round_N_ge_midp_theorem
     by_cases hvlt : v < u
     · -- Strict case: identify DN(v) = pred u using (pred u) ≤ v < u = succ (pred u)
       have Fpredu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((pred (beta := beta) (fexp := fexp) u).run)).run := by
+        -- `generic_format_pred` requires the radix hypothesis `1 < beta`;
+        -- apply it here before discharging the trivial Hoare precondition.
         have h := generic_format_pred (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
+        have h' := h hβ
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
       -- Use succ_pred to rewrite the upper bound
       have hsucc_pred_eq : (succ (beta := beta) (fexp := fexp) ((pred (beta := beta) (fexp := fexp) u).run)).run = u := by
         have h := succ_pred (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
@@ -5184,6 +5187,7 @@ theorem round_N_ge_midp
     ⦃⇓r => ⌜u ≤ r⌝⦄ := by
   intro hβ; classical
   simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  -- Provide the required radix hypothesis to `round_N_ge_midp_theorem`.
   exact round_N_ge_midp_theorem (beta := beta) (fexp := fexp)
     (choice := choice) (u := u) (v := v) Fu hβ h
 
