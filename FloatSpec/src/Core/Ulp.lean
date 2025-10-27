@@ -7516,8 +7516,8 @@ private theorem round_UP_DN_ulp_theorem
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
     (hβ : 1 < beta) :
-    Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x)
-      = Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x)
+    Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
+      = Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
         + (ulp (beta := beta) (fexp := fexp) x).run := by
   classical
   -- Shorthands for the chosen DN/UP witnesses
@@ -7528,7 +7528,11 @@ private theorem round_UP_DN_ulp_theorem
   -- From the local bridge: for x not in the format, succ d = u
   have hsucc : (succ (beta := beta) (fexp := fexp) d).run = u := by
     -- succ (DN x) = UP x (file‑scoped bridge theorem)
-    simpa [d, u] using (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
+    -- Use the established bridge `succ_DN_eq_UP` (equality form) available earlier
+    -- in this file.
+    have h := succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
+    -- Reduce the Hoare‑style statement to an equality of run-values
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure, d, u] using h
   -- Evaluate succ d case‑by‑case on the sign of d to obtain
   -- (succ d).run = d + (ulp d).run
   have hsucc_add : (succ (beta := beta) (fexp := fexp) d).run =
@@ -7597,14 +7601,15 @@ private theorem round_UP_DN_ulp_theorem
     have hUP' := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp (-x) hβ)
     -- succ d' = u' at y = -x
     have hsucc' : (succ (beta := beta) (fexp := fexp) d').run = u' := by
-      simpa [d', u'] using (succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := -x)
-                              (Fx := by
-                                -- If -x ∈ F then x ∈ F by closure, contradicting Fx
-                                intro Fneg
-                                have Fpos := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (-x)) Fneg
-                                have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
-                                  simpa using Fpos
-                                exact Fx this) hβ)
+      have h := succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := -x)
+                  (Fx := by
+                    -- If -x ∈ F then x ∈ F by closure, contradicting Fx
+                    intro Fneg
+                    have Fpos := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (-x)) Fneg
+                    have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
+                      simpa using Fpos
+                    exact Fx this) hβ
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure, d', u'] using h
     -- succ d' = d' + ulp d'
     have hsucc_add' : (succ (beta := beta) (fexp := fexp) d').run
         = d' + (ulp (beta := beta) (fexp := fexp) d').run := by
@@ -7680,8 +7685,10 @@ private theorem round_UP_DN_ulp_theorem
         _ = d' + (ulp (beta := beta) (fexp := fexp) (-x)).run := by simpa [hulp_stab']
     -- Relate DN/UP witnesses across negation via equality bridges
     -- Show u' = -d using UP equality at -x with candidate -d
-    have hFd_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-d)).run :=
-      (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) d) hDN.left
+  have hFd_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-d)).run := by
+    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := d))
+    have h' := h hDN.left
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
     have hle_neg : (-x) ≤ (-d) := by
       have hx_ge_d : d ≤ x := by
         -- From DN at x: d ≤ x
@@ -7713,10 +7720,15 @@ private theorem round_UP_DN_ulp_theorem
                           (x := -x) (u := -d) (Fu := hFd_neg)
                           (h := And.intro hlt_neg hle_neg) (hβ := hβ)
     have hUP_neg_eq : u' = -d := by
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure, u'] using (hUP_eq_neg True.intro)
+      have : (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp (-x) hβ).run = -d := by
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+          using (hUP_eq_neg True.intro)
+      simpa [u'] using this
     -- Similarly, DN at -x equals -u using DN equality bridge at -x with candidate -u
-    have hFu_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-u)).run :=
-      (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) u) hUP.left
+    have hFu_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-u)).run := by
+      have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := u))
+      have h' := h hUP.left
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
     have h_neg_le : (-u) ≤ (-x) := by
       have hx_le_u : x ≤ u := by
         -- From UP at x: x ≤ u
