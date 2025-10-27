@@ -4221,47 +4221,8 @@ Lemma generic_format_succ_aux1:
 -- `generic_format_succ` and the positive-branch computation of `succ`.
 -- (helper moved below `generic_format_succ` to avoid forward reference)
 
-/-- Coq (Ulp.v):
-Theorem generic_format_succ: forall x, F x -> F (succ x).
--/
-theorem generic_format_succ
-    (x : ℝ)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
-    (hβ : 1 < beta):
-    ⦃⌜True⌝⦄ do
-      let s ← succ beta fexp x
-      FloatSpec.Core.Generic_fmt.generic_format beta fexp s
-    ⦃⇓g => ⌜g⌝⦄ := by
-  intro _; classical
-  -- Strategy: derive F (pred (-x)) from F (-x) using `generic_format_pred`,
-  -- then use closure under negation and the definition of `pred` to rewrite
-  -- to F (succ x).
-  -- 1) F (-x) by stability under negation.
-  have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
-    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := x))
-    have h' := h Fx
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-  -- 2) F (pred (-x)) by predecessor closure.
-  have Fpred_negx :
-      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-        ((pred (beta := beta) (fexp := fexp) (-x)).run)).run := by
-    have h := generic_format_pred (beta := beta) (fexp := fexp) (x := -x) (Fx := Fx_neg)
-    have h' := h hβ
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
-  -- 3) Opposite of `pred (-x)` is in format; rewrite it to `(succ x).run`.
-  have Fsucc_run :
-      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-        (-(pred (beta := beta) (fexp := fexp) (-x)).run)).run := by
-    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp)
-      (x := ((pred (beta := beta) (fexp := fexp) (-x)).run)))
-    have h' := h Fpred_negx
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-  -- Compute `pred (-x)` and conclude `(succ x).run`.
-  have hpred_run : (pred (beta := beta) (fexp := fexp) (-x)).run = - ((succ (beta := beta) (fexp := fexp) x).run) := by
-    simp [pred, Id.run, bind, pure]
-  -- 4) Discharge the Hoare triple and rewrite the returned value to `succ x`.
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure, hpred_run]
-    using Fsucc_run
+-- [moved] Coq (Ulp.v): Theorem `generic_format_succ` is placed below, after
+-- `generic_format_pred`, to avoid forward reference during elaboration.
 
 /-- Coq (Ulp.v):
 Theorem ulp_DN:
@@ -4975,7 +4936,7 @@ private theorem generic_format_pred_aux1_theorem
     using Fpred_run
 
 /-- Coq (Ulp.v) `generic_format_pred_aux1` packaged as a Hoare triple wrapper. -/
-theorem generic_format_pred_aux1
+  theorem generic_format_pred_aux1
     (x : ℝ)
     (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
@@ -4988,6 +4949,48 @@ theorem generic_format_pred_aux1
   have h := generic_format_pred_aux1_theorem (beta := beta) (fexp := fexp)
               (x := x) (hx := hx) (Fx := Fx) (hne := hne)
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h hβ
+  
+  /-- Coq (Ulp.v):
+  Theorem generic_format_succ: forall x, F x -> F (succ x).
+  -/
+  theorem generic_format_succ
+      (x : ℝ)
+      (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
+      (hβ : 1 < beta):
+      ⦃⌜True⌝⦄ do
+        let s ← succ beta fexp x
+        FloatSpec.Core.Generic_fmt.generic_format beta fexp s
+      ⦃⇓g => ⌜g⌝⦄ := by
+    intro _; classical
+    -- Strategy: derive F (pred (-x)) from F (-x) using `generic_format_pred`,
+    -- then use closure under negation and the definition of `pred` to rewrite
+    -- to F (succ x).
+    -- 1) F (-x) by stability under negation.
+    have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
+      have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := x))
+      have h' := h Fx
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+    -- 2) F (pred (-x)) by predecessor closure.
+    have Fpred_negx :
+        (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+          ((pred (beta := beta) (fexp := fexp) (-x)).run)).run := by
+      have h := generic_format_pred (beta := beta) (fexp := fexp) (x := -x) (Fx := Fx_neg)
+      have h' := h hβ
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
+    -- 3) Opposite of `pred (-x)` is in format; rewrite it to `(succ x).run`.
+    have Fsucc_run :
+        (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+          (-(pred (beta := beta) (fexp := fexp) (-x)).run)).run := by
+      have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp)
+        (x := ((pred (beta := beta) (fexp := fexp) (-x)).run)))
+      have h' := h Fpred_negx
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+    -- Compute `pred (-x)` and conclude `(succ x).run`.
+    have hpred_run : (pred (beta := beta) (fexp := fexp) (-x)).run = - ((succ (beta := beta) (fexp := fexp) x).run) := by
+      simp [pred, Id.run, bind, pure]
+    -- 4) Discharge the Hoare triple and rewrite the returned value to `succ x`.
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure, hpred_run]
+      using Fsucc_run
 
 -- Rounding to nearest above the lower midpoint yields a value ≥ u (bridge lemma).
 private theorem round_N_ge_midp_theorem
