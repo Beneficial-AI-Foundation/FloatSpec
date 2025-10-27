@@ -2499,7 +2499,8 @@ private theorem generic_format_ulp0_theorem
   classical
   -- Evaluate `ulp` at 0 and split on `negligible_exp`.
   unfold ulp
-  simp [ne_of_eq_of_ne rfl] -- simplify the `if 0 = 0` branch
+  -- simplify the `if 0 = 0` branch
+  simp
   -- Two cases on the witness of `negligible_exp`.
   cases h : negligible_exp fexp with
   | none =>
@@ -2527,15 +2528,8 @@ private theorem generic_format_ulp0_theorem
         (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) n)
       have hsmall : fexp (fexp n + 1) ≤ fexp n := (hpair.right hn_small).left
       -- Build the precondition required by `generic_format_bpow`.
-      -- The second component is given by `hsmall`. For the base hypothesis
-      -- `1 < beta`, we defer to the ambient development; inserting a local
-      -- placeholder maintains consistency with other uses of `sorry` in this
-      -- file until a global base‑assumption is threaded.
-      have hpre : (1 < beta) ∧ fexp (fexp n + 1) ≤ fexp n := And.intro (by
-        -- TODO: plumb `1 < beta` into this local bridge if needed by callers.
-        -- Many lemmas in this file assume `1 < beta`; aligning with that
-        -- invariant will discharge this placeholder.
-        sorry) hsmall
+      -- Both components are available: `hβ` and the small‑regime inequality `hsmall`.
+      have hpre : (1 < beta) ∧ fexp (fexp n + 1) ≤ fexp n := And.intro hβ hsmall
       -- Reduce the Hoare triple and close the goal.
       simp [h, wp, PostCond.noThrow, Id.run, bind, pure]
       -- Remaining obligation: `1 < beta` (provided by the outer context when used).
@@ -4239,51 +4233,35 @@ theorem generic_format_succ
       FloatSpec.Core.Generic_fmt.generic_format beta fexp s
     ⦃⇓g => ⌜g⌝⦄ := by
   intro _; classical
-  -- Reduce the Hoare triple and case on the sign branch of `succ`.
-  by_cases hx0 : 0 ≤ x
-  · -- Nonnegative branch: succ x = x + ulp x
-    have hxpos_or_zero : x = 0 ∨ 0 < x := by
-      -- `le_iff_eq_or_lt.mp hx0 : 0 = x ∨ 0 < x`; commute the equality when needed
-      rcases (le_iff_eq_or_lt.mp hx0) with hzero | hxpos
-      · exact Or.inl (by simpa [eq_comm] using hzero)
-      · exact Or.inr hxpos
-    rcases hxpos_or_zero with rfl | hxpos
-    · -- x = 0 ⇒ goal reduces to F (ulp 0)
-      -- Evaluate the do-block and apply the local bridge theorem for `ulp 0`.
-      simp [wp, PostCond.noThrow, Id.run, bind, pure, succ]
-      exact generic_format_ulp0_theorem (beta := beta) (fexp := fexp) hβ
-    · -- Strictly positive case: reduce to the definition of `succ` on the nonnegative ray
-      -- and close using the main `generic_format_succ` statement specialized to `x`.
-      -- This avoids relying on an auxiliary alias defined later in the file.
-      simp [wp, PostCond.noThrow, Id.run, bind, pure]
-      -- Instantiate the Hoare-style lemma at `x` and discharge the precondition.
-      have hmain := (generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx))
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-        using (hmain hβ) True.intro
-  · -- Negative branch: succ x = - pred_pos (-x)
-    -- First, close F (-x) from F x via generic_format_opp
-    have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
-      have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := x))
-      -- Apply the precondition and discharge the Hoare triple
-      have h' := h Fx
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-    -- Since x < 0, we have 0 < -x
-    have hxneg : 0 < -x := by
-      have : x < 0 := lt_of_not_ge hx0
-      simpa using (neg_pos.mpr this)
-    -- Apply the positive predecessor closure at -x
-    have Fpred_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((pred_pos (beta := beta) (fexp := fexp) (-x)).run)).run := by
-      have h := generic_format_pred_pos (beta := beta) (fexp := fexp) (-x) Fx_neg hxneg
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
-    -- Close by stability under negation: F (-(pred_pos (-x))) = F (succ x)
-    have Fopp : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-((pred_pos (beta := beta) (fexp := fexp) (-x)).run))).run := by
-      have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp)
-        (x := ((pred_pos (beta := beta) (fexp := fexp) (-x)).run)))
-      have h' := h Fpred_neg
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-    -- Evaluate `succ` on the negative branch and rewrite
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure, succ, hx0]
-      using Fopp
+  -- Strategy: derive F (pred (-x)) from F (-x) using `generic_format_pred`,
+  -- then use closure under negation and the definition of `pred` to rewrite
+  -- to F (succ x).
+  -- 1) F (-x) by stability under negation.
+  have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
+    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := x))
+    have h' := h Fx
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+  -- 2) F (pred (-x)) by predecessor closure.
+  have Fpred_negx :
+      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+        ((pred (beta := beta) (fexp := fexp) (-x)).run)).run := by
+    have h := generic_format_pred (beta := beta) (fexp := fexp) (x := -x) (Fx := Fx_neg)
+    have h' := h hβ
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
+  -- 3) Opposite of `pred (-x)` is in format; rewrite it to `(succ x).run`.
+  have Fsucc_run :
+      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+        (-(pred (beta := beta) (fexp := fexp) (-x)).run)).run := by
+    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp)
+      (x := ((pred (beta := beta) (fexp := fexp) (-x)).run)))
+    have h' := h Fpred_negx
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+  -- Compute `pred (-x)` and conclude `(succ x).run`.
+  have hpred_run : (pred (beta := beta) (fexp := fexp) (-x)).run = - ((succ (beta := beta) (fexp := fexp) x).run) := by
+    simp [pred, Id.run, bind, pure]
+  -- 4) Discharge the Hoare triple and rewrite the returned value to `succ x`.
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure, hpred_run]
+    using Fsucc_run
 
 /-- Coq (Ulp.v):
 Theorem ulp_DN:
