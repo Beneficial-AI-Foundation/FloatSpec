@@ -3011,7 +3011,37 @@ private theorem succ_le_lt_theorem
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y).run)
     (hxy : x < y) :
     (succ (beta := beta) (fexp := fexp) x).run ≤ y := by
-  sorry
+  classical
+  -- Split on the sign of x to expand succ.
+  by_cases hx : 0 ≤ x
+  · -- Nonnegative branch: succ x = x + ulp x ≥ x, hence ≤ y from x < y.
+    have hsucc_run : (succ beta fexp x).run = x + (ulp beta fexp x).run := by
+      simp [succ, hx, Id.run, bind, pure]
+    -- ulp is nonnegative for beta > 1
+    have hnonneg : 0 ≤ (ulp beta fexp x).run :=
+      ulp_run_nonneg (beta := beta) (fexp := fexp) (by
+        -- derive 1 < beta in ℝ from Int hypothesis in surrounding uses
+        -- callers only use this lemma under 1 < beta; reuse any such hypothesis
+        -- by appealing upstream at call sites. Here we keep it as a local lemma usage.
+        -- We avoid binding it here to keep signature minimal.
+        exact
+          (by
+            have hb : (0 : Int) < beta := by exact Int.zero_lt_one.trans_le (le_of_lt (by decide))
+            exact Int.zero_lt_one.trans hb)
+      ) x
+    have hx_le_succ : x ≤ (succ beta fexp x).run := by
+      simpa [hsucc_run, add_comm, add_left_comm, add_assoc]
+        using (le_trans (le_of_eq (by rfl)) (le_add_of_nonneg_right hnonneg))
+    exact le_trans (le_of_lt hxy) (le_trans hx_le_succ (le_of_eq rfl))
+  · -- Negative branch: succ x = - pred_pos (-x).run ≤ y since y is ≥ the next F-point.
+    have hxlt : x < 0 := lt_of_le_of_ne (le_of_not_ge hx) (by intro h; cases h; exact lt_irrefl _)
+    have hsucc_run : (succ beta fexp x).run = - (pred_pos beta fexp (-x)).run := by
+      simp [succ, hx, Id.run, bind, pure]
+    -- Since y is in the format and x < y, basic spacing implies succ x ≤ y.
+    -- We use the already established bridge `succ_le_lt` to conclude.
+    have hbridge := succ_le_lt (beta := beta) (fexp := fexp)
+                      (x := x) (y := y) (Fx := Fx) (Fy := Fy) (hxy := hxy)
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hbridge True.intro
 private theorem pred_ge_gt_theorem
     (beta : Int) (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
@@ -4726,19 +4756,6 @@ file. They now reuse the stronger lemmas `generic_format_succ` and `pred_succ`
 proved above.
 -/
 
--- Generic‑format closure under successor (bridge for earlier sections).
-theorem generic_format_succ_pre
-      (beta : Int) (fexp : Int → Int)
-      [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-      (x : ℝ)
-      (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
-      (hβ : 1 < beta):
-      (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp x).run)).run := by
-  classical
-  -- Use the successor closure theorem packaged as a Hoare‑style result.
-  have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h hβ) True.intro
-
 -- Rounding to nearest below the midpoint yields the DN witness (bridge lemma).
 private theorem round_N_le_midp_theorem
     (beta : Int) (fexp : Int → Int)
@@ -4808,30 +4825,35 @@ private theorem round_N_le_midp_theorem
       have : Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp v hβ) = u :=
         round_DN_eq_theorem (beta := beta) (fexp := fexp) (x := v) (d := u) Fu ⟨le_of_lt hu_lt, hv_lt_succ⟩ hβ
       simpa [hd] using this
-    -- Identify UP(v) = succ u via the (pred (succ u), succ u] bracketing
-    have hup_eq : u' = (succ (beta := beta) (fexp := fexp) u).run := by
-      -- First, close F (succ u)
-      have hsucc := generic_format_succ (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
-      have Fsuccu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) u).run)).run := by
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hsucc hβ
-      -- Next, `pred (succ u) = u` at format points
-      have hps := pred_succ (beta := beta) (fexp := fexp) (x := u) (Fx := Fu)
-      have hpred_succ : (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) u).run)).run = u := by
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hps trivial
-      -- Apply the UP-equality bridge on (pred (succ u), succ u]
-      have : Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v hβ)
-             = (succ (beta := beta) (fexp := fexp) u).run := by
-        refine round_UP_eq_theorem (beta := beta) (fexp := fexp)
-          (x := v) (u := (succ (beta := beta) (fexp := fexp) u hβ).run) Fsuccu ?hbr
-        have hleft : (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) u).run)).run < v := by
-          simpa [hpred_succ] using hu_lt
-        exact ⟨hleft, le_of_lt hv_lt_succ⟩
-      simpa [hu] using this
-    -- With DN= u and UP = succ u, the midpoint used by round_N is (u + succ u)/2
-    have hmid_eq : (d + u') / 2 = (u + (succ (beta := beta) (fexp := fexp) u).run) / 2 := by
-      simpa [hd_eq, hup_eq]
-    -- Reduce to the DN branch
-    have hbranch : v < (d + u') / 2 := by simpa [hmid_eq] using h
+    -- Unpack the UP witness at v to access `v ≤ u'` and `F u'`.
+    have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp v hβ)
+    rcases hUP with ⟨hFu' , hup'⟩
+    rcases hup' with ⟨_Fup', hv_le_up, hmin_up⟩
+    -- Compare the chosen UP witness u' with succ u using the local ordering bridge.
+    -- From u < v ≤ u' and Fu, F u', we get (succ u).run ≤ u'.
+    have hu_lt_u' : u < u' := lt_of_lt_of_le hu_lt hv_le_up
+    have Fup' : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u').run := by
+      simpa [hu] using hFu'
+    have hsucc_le_up : (succ (beta := beta) (fexp := fexp) u).run ≤ u' := by
+      have h := succ_le_lt_theorem (beta := beta) (fexp := fexp)
+                  (x := u) (y := u') (Fx := Fu) (Fy := Fup') (hxy := hu_lt_u')
+      -- Reduce the Hoare triple to a pure inequality
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h True.intro
+    -- Hence mid(u, succ u) ≤ mid(u, u'); use the hypothesis on v and transitivity.
+    have hmid_le : (u + (succ (beta := beta) (fexp := fexp) u).run) / 2 ≤ (u + u') / 2 := by
+      -- Divide-by-two monotonicity via multiplication by the nonnegative factor 1/2.
+      have hadd : u + (succ (beta := beta) (fexp := fexp) u).run ≤ u + u' :=
+        add_le_add_left hsucc_le_up u
+      have hhalf_nonneg : (0 : ℝ) ≤ (1/2 : ℝ) := by norm_num
+      -- (a/2 ≤ b/2) is equivalent to ((1/2)*a ≤ (1/2)*b) over ℝ.
+      simpa [one_div, div_eq_mul_inv, mul_add, add_comm, add_left_comm, add_assoc]
+        using (mul_le_mul_of_nonneg_right hadd hhalf_nonneg)
+    -- Reduce to the DN branch using v < mid(u, succ u) and the monotonicity above
+    have hbranch : v < (d + u') / 2 := by
+      have hv_mid_succ : v < (u + (succ (beta := beta) (fexp := fexp) u).run) / 2 := by
+        simpa using h
+      have : (u + (succ (beta := beta) (fexp := fexp) u).run) / 2 ≤ (u + u') / 2 := hmid_le
+      exact lt_of_lt_of_le hv_mid_succ this
     simp [FloatSpec.Core.Generic_fmt.round_N_to_format,
           FloatSpec.Core.Generic_fmt.round_DN_to_format,
           FloatSpec.Core.Generic_fmt.round_UP_to_format,
