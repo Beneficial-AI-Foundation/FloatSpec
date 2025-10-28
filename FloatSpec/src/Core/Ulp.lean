@@ -7543,7 +7543,11 @@ private theorem succ_DN_eq_UP_theorem
   have hd_lt_x : d < x := by
     have hd_le_x' : d ≤ x := by simpa [hd] using hd_le_x
     have hd_ne_x : d ≠ x := by
-      intro h; apply Fx; simpa [h] using Fd
+      intro hdx
+      -- If d = x, then x is in the generic format since d is.
+      have hx_fmt : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
+        simpa [hdx] using Fd
+      exact Fx hx_fmt
     exact lt_of_le_of_ne hd_le_x' hd_ne_x
   -- succ d is representable
   have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) d).run)).run := by
