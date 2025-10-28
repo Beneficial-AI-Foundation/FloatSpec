@@ -7573,8 +7573,8 @@ private theorem succ_DN_eq_UP_theorem
         succ_run_ge_self (beta := beta) (fexp := fexp) hβ d
       -- This forces `(succ d).run = d`, contradicting `d < x` and `(succ d).run ≤ x`.
       have hEq : (succ (beta := beta) (fexp := fexp) d).run = d := le_antisymm hle' hle_succ
-      -- Then `d ≤ x` from `hle` and `hEq`, but `d < x` already holds; impossible.
-      exact (not_lt_of_ge (by simpa [hEq] using hle)) hd_lt_x
+      -- From `hle` and `hEq`, we get `d ≤ x`, contradicting `d < x`.
+      exact (not_le_of_gt hd_lt_x) (by simpa [hEq] using hle)
     -- Conclude `x < succ d` from `¬ (succ d ≤ x)` via linear order totality.
     exact lt_of_not_ge hnle
   -- Use the UP half-interval equality with u' := succ d
