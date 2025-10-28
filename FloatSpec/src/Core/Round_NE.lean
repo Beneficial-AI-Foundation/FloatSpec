@@ -675,7 +675,7 @@ theorem Rnd_NE_pt_total :
     ⦃⌜beta > 1⌝⦄
     Rnd_NE_pt_total_check beta fexp
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hβ
   unfold Rnd_NE_pt_total_check
   classical
   -- Reduce the Hoare triple to the propositional totality statement.
@@ -697,8 +697,10 @@ theorem Rnd_NE_pt_total :
   | inr hxNotF =>
       -- x is not representable: obtain DN and UP witnesses, then choose an NE tie-break in case of a tie.
       -- DN/UP witnesses exist in the generic format.
-      obtain ⟨xd, hFxd, hDN⟩ := FloatSpec.Core.Generic_fmt.round_DN_exists (beta := beta) (fexp := fexp) x
-      obtain ⟨xu, hFxu, hUP⟩ := FloatSpec.Core.Generic_fmt.round_UP_exists (beta := beta) (fexp := fexp) x
+      obtain ⟨xd, hFxd, hDN⟩ :=
+        FloatSpec.Core.Generic_fmt.round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)
+      obtain ⟨xu, hFxu, hUP⟩ :=
+        FloatSpec.Core.Generic_fmt.round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)
       -- Compare the two distances to decide which side is nearest.
       -- Distances (nonnegative by construction)
       have hxd_le_x : xd ≤ x := hDN.2.1
@@ -734,7 +736,7 @@ theorem Rnd_NE_pt_total :
             have hpar_all := DN_UP_parity_generic (beta := beta) (fexp := fexp)
             have hpar : DN_UP_parity_prop beta fexp := by
               -- Consume the triple-style lemma to a pure proposition.
-              have H := hpar_all (by assumption)
+              have H := hpar_all hβ
               simpa [DN_UP_parity_generic_check, wp, PostCond.noThrow, Id.run, pure,
                      decide_eq_true_iff]
                 using H
@@ -802,7 +804,7 @@ theorem Rnd_NE_pt_total :
             -- Parity lemma as above.
             have hpar_all := DN_UP_parity_generic (beta := beta) (fexp := fexp)
             have hpar : DN_UP_parity_prop beta fexp := by
-              have H := hpar_all (by assumption)
+              have H := hpar_all hβ
               simpa [DN_UP_parity_generic_check, wp, PostCond.noThrow, Id.run, pure,
                      decide_eq_true_iff]
                 using H

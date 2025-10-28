@@ -22,7 +22,8 @@ theorem double_round_eq (fexp1 fexp2 : Int → Int)
   sorry
 
 /-- Double rounding property for FLX and FLT -/
-theorem double_round_FLX_FLT (prec1 prec2 emin : Int) (choice1 choice2 : Int → Bool) (x : ℝ)
+theorem double_round_FLX_FLT (prec1 prec2 emin : Int) [Prec_gt_0 prec1] [Prec_gt_0 prec2]
+  (choice1 choice2 : Int → Bool) (x : ℝ)
   (h_prec : prec2 ≤ prec1) :
   FloatSpec.Calc.Round.round beta (FLT_exp emin prec2) (Znearest choice2)
     (FloatSpec.Calc.Round.round beta (FLX_exp prec1) (Znearest choice1) x) =

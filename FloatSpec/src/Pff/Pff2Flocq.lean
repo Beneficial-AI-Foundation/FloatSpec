@@ -38,7 +38,7 @@ theorem pff_mul_equiv (x y : PffFloat) :
   sorry
 
 -- Pff rounding corresponds to Flocq rounding
-theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) :
+theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 prec] :
   let flocq_rnd := pff_to_flocq_rnd mode
   let fexp := FLX_exp prec
   pff_to_R beta (flocq_to_pff (round_float beta fexp flocq_rnd x)) = 

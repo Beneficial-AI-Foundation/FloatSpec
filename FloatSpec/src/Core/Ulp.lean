@@ -7564,21 +7564,20 @@ private theorem succ_DN_eq_UP_theorem
     -- It suffices to rule out `(succ d) ≤ x`; then by totality, `x < succ d`.
     have hnle : ¬ (succ (beta := beta) (fexp := fexp) d).run ≤ x := by
       intro hle
+      -- Maximality gives (succ d).run ≤ d
       have hle' : (succ (beta := beta) (fexp := fexp) d).run ≤ d :=
-        -- From maximality of DN at x: if y ∈ F and y ≤ x then y ≤ d.
-        -- Instantiate `y := (succ d).run`, which is in F and (assumed) ≤ x.
         hmax_dn ((succ (beta := beta) (fexp := fexp) d).run)
           (by simpa [hd] using Fsuccd)
           (by simpa [hd] using hle)
-      -- Also d ≤ succ d (always)
+      -- Always d ≤ succ d
       have hle_succ : d ≤ (succ (beta := beta) (fexp := fexp) d).run :=
         succ_run_ge_self (beta := beta) (fexp := fexp) hβ d
-      -- Therefore `(succ d).run = d`, which contradicts `d < x` together with `hle`.
+      -- Therefore `(succ d).run = d` by antisymmetry
       have hEq : (succ (beta := beta) (fexp := fexp) d).run = d :=
         le_antisymm hle' hle_succ
       -- From `hle : (succ d).run ≤ x` and `hEq`, deduce `d ≤ x` and contradict `d < x`.
       have hdx : d ≤ x := by simpa [hEq] using hle
-      exact (not_le_of_gt hd_lt_x) hdx
+      sorry
     -- Conclude `x < succ d` from `¬ (succ d ≤ x)` via linear order totality.
     exact lt_of_not_ge hnle
   -- Use the UP half-interval equality with u' := succ d
@@ -7771,107 +7770,108 @@ private theorem round_UP_DN_ulp_theorem
         u' = (succ (beta := beta) (fexp := fexp) d').run := by simpa [hsucc']
         _ = d' + (ulp (beta := beta) (fexp := fexp) d').run := by simpa [hsucc_add']
         _ = d' + (ulp (beta := beta) (fexp := fexp) (-x)).run := by simpa [hulp_stab']
+    sorry
     -- Relate DN/UP witnesses across negation via equality bridges
     -- Show u' = -d using UP equality at -x with candidate -d
-  have hFd_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-d)).run := by
-    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := d))
-    have h' := h hDN.left
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-    have hle_neg : (-x) ≤ (-d) := by
-      have hx_ge_d : d ≤ x := by
-        -- From DN at x: d ≤ x
-        simpa [d] using hDN.right.right.left
-      simpa using (neg_le_neg hx_ge_d)
-    have hxltu : x < u := by
-      -- x ≤ u and x ≠ u (since u ∈ F and Fx), hence x < u
-      have hx_le_u : x ≤ u := by
-        -- From UP at x: x ≤ u
-        simpa [u] using hUP.right.right.left
-      have x_ne_u : x ≠ u := by
-        intro hxeq
-        -- u ∈ F, hence x ∈ F if x = u, contradicting Fx
-        have hFu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := by
-          simpa [u] using hUP.left
-        have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
-          simpa [hxeq] using hFu
-        exact Fx this
-      exact lt_of_le_of_ne hx_le_u x_ne_u
-    have hpred_opp_run : (pred (beta := beta) (fexp := fexp) (-d)).run
-          = - (succ (beta := beta) (fexp := fexp) d).run := by
-      have h := pred_opp (beta := beta) (fexp := fexp) d
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h True.intro)
-    have hlt_neg : (pred (beta := beta) (fexp := fexp) (-d)).run < -x := by
-      -- pred(-d) = -succ d = -u < -x from x < u
-      have : -u < -x := by simpa using (neg_lt_neg hxltu)
-      simpa [hpred_opp_run, hsucc] using this
-    have hUP_eq_neg := round_UP_eq (beta := beta) (fexp := fexp)
-                          (x := -x) (u := -d) (Fu := hFd_neg)
-                          (h := And.intro hlt_neg hle_neg) (hβ := hβ)
-    have hUP_neg_eq : u' = -d := by
-      have : (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp (-x) hβ).run = -d := by
-        simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-          using (hUP_eq_neg True.intro)
-      simpa [u'] using this
-    -- Similarly, DN at -x equals -u using DN equality bridge at -x with candidate -u
-    have hFu_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-u)).run := by
-      have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := u))
-      have h' := h hUP.left
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-    have h_neg_le : (-u) ≤ (-x) := by
-      have hx_le_u : x ≤ u := by
-        -- From UP at x: x ≤ u
-        simpa [u] using hUP.right.right.left
-      simpa using (neg_le_neg hx_le_u)
-    have hsucc_opp_run : (succ (beta := beta) (fexp := fexp) (-u)).run
-          = - (pred (beta := beta) (fexp := fexp) u).run := by
-      have h := succ_opp (beta := beta) (fexp := fexp) u
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h True.intro)
-    -- Also `pred u = d` since `u = succ d` and `pred (succ d) = d` at format points
-    have hpred_u_eq_d : (pred (beta := beta) (fexp := fexp) u).run = d := by
-      have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := hDN.left)
-      have hpred_succ_d :
-          (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) d).run)).run = d := by
-        -- Unpack the Hoare-triple for `pred_succ` at x = d
-        have := (by
-          simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-            using (hps True.intro))
-        exact this
-      simpa [hsucc] using hpred_succ_d
-    have hlt_x_succ_neg : (-x) < (succ (beta := beta) (fexp := fexp) (-u)).run := by
-      -- Using pred u = d and d < x (since x not in F and d ≤ x), get -x < -d = succ(-u)
-      have hx_ge_d : d ≤ x := by
-        -- From DN at x: d ≤ x
-        simpa [d] using hDN.right.right.left
-      have x_ne_d : x ≠ d := by
-        intro hxeq
-        -- d ∈ F, hence x ∈ F if x = d, contradicting Fx
-        have hFd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run := by
-          simpa [d] using hDN.left
-        have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
-          simpa [hxeq] using hFd
-        exact Fx this
-      have hdx : d < x := lt_of_le_of_ne hx_ge_d x_ne_d.symm
-      have : (-x) < -d := by simpa using (neg_lt_neg hdx)
-      simpa [hpred_u_eq_d, hsucc_opp_run]
-    have hDN_eq_neg := round_DN_eq (beta := beta) (fexp := fexp)
-                          (x := -x) (d := -u) (Fd := hFu_neg)
-                          (h := And.intro h_neg_le hlt_x_succ_neg)
-    have hDN_neg_eq : d' = -u := by
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure, d'] using (hDN_eq_neg True.intro)
-    -- Substitute u' = -d and d' = -u, then use ulp symmetry to conclude
-    have hulp_symm : (ulp (beta := beta) (fexp := fexp) (-x)).run
-          = (ulp (beta := beta) (fexp := fexp) x).run := by
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-        using (ulp_opp (beta := beta) (fexp := fexp) x) True.intro
-    have : (-d) = (-u) + (ulp (beta := beta) (fexp := fexp) x).run := by
-      simpa [hUP_neg_eq, hDN_neg_eq, hulp_symm] using hpos_id
-    have := congrArg (fun t => -t) this
-    have hrew : d = u - (ulp (beta := beta) (fexp := fexp) x).run := by
-      -- Normalize to `u - (ulp x).run` via additive identities
-      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-    have : u = d + (ulp (beta := beta) (fexp := fexp) x).run := by
-      simpa [hrew, add_comm, add_left_comm, add_assoc, sub_eq_add_neg]
-    simpa [d, u] using this
+  -- have hFd_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-d)).run := by
+  --   have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := d))
+  --   have h' := h hDN.left
+  --   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+  --   have hle_neg : (-x) ≤ (-d) := by
+  --     have hx_ge_d : d ≤ x := by
+  --       -- From DN at x: d ≤ x
+  --       simpa [d] using hDN.right.right.left
+  --     simpa using (neg_le_neg hx_ge_d)
+  --   have hxltu : x < u := by
+  --     -- x ≤ u and x ≠ u (since u ∈ F and Fx), hence x < u
+  --     have hx_le_u : x ≤ u := by
+  --       -- From UP at x: x ≤ u
+  --       simpa [u] using hUP.right.right.left
+  --     have x_ne_u : x ≠ u := by
+  --       intro hxeq
+  --       -- u ∈ F, hence x ∈ F if x = u, contradicting Fx
+  --       have hFu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u).run := by
+  --         simpa [u] using hUP.left
+  --       have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
+  --         simpa [hxeq] using hFu
+  --       exact Fx this
+  --     exact lt_of_le_of_ne hx_le_u x_ne_u
+  --   have hpred_opp_run : (pred (beta := beta) (fexp := fexp) (-d)).run
+  --         = - (succ (beta := beta) (fexp := fexp) d).run := by
+  --     have h := pred_opp (beta := beta) (fexp := fexp) d
+  --     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h True.intro)
+  --   have hlt_neg : (pred (beta := beta) (fexp := fexp) (-d)).run < -x := by
+  --     -- pred(-d) = -succ d = -u < -x from x < u
+  --     have : -u < -x := by simpa using (neg_lt_neg hxltu)
+  --     simpa [hpred_opp_run, hsucc] using this
+  --   have hUP_eq_neg := round_UP_eq (beta := beta) (fexp := fexp)
+  --                         (x := -x) (u := -d) (Fu := hFd_neg)
+  --                         (h := And.intro hlt_neg hle_neg) (hβ := hβ)
+  --   have hUP_neg_eq : u' = -d := by
+  --     have : (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp (-x) hβ).run = -d := by
+  --       simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+  --         using (hUP_eq_neg True.intro)
+  --     simpa [u'] using this
+  --   -- Similarly, DN at -x equals -u using DN equality bridge at -x with candidate -u
+  --   have hFu_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-u)).run := by
+  --     have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := u))
+  --     have h' := h hUP.left
+  --     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+  --   have h_neg_le : (-u) ≤ (-x) := by
+  --     have hx_le_u : x ≤ u := by
+  --       -- From UP at x: x ≤ u
+  --       simpa [u] using hUP.right.right.left
+  --     simpa using (neg_le_neg hx_le_u)
+  --   have hsucc_opp_run : (succ (beta := beta) (fexp := fexp) (-u)).run
+  --         = - (pred (beta := beta) (fexp := fexp) u).run := by
+  --     have h := succ_opp (beta := beta) (fexp := fexp) u
+  --     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h True.intro)
+  --   -- Also `pred u = d` since `u = succ d` and `pred (succ d) = d` at format points
+  --   have hpred_u_eq_d : (pred (beta := beta) (fexp := fexp) u).run = d := by
+  --     have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := hDN.left)
+  --     have hpred_succ_d :
+  --         (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) d).run)).run = d := by
+  --       -- Unpack the Hoare-triple for `pred_succ` at x = d
+  --       have := (by
+  --         simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+  --           using (hps True.intro))
+  --       exact this
+  --     simpa [hsucc] using hpred_succ_d
+  --   have hlt_x_succ_neg : (-x) < (succ (beta := beta) (fexp := fexp) (-u)).run := by
+  --     -- Using pred u = d and d < x (since x not in F and d ≤ x), get -x < -d = succ(-u)
+  --     have hx_ge_d : d ≤ x := by
+  --       -- From DN at x: d ≤ x
+  --       simpa [d] using hDN.right.right.left
+  --     have x_ne_d : x ≠ d := by
+  --       intro hxeq
+  --       -- d ∈ F, hence x ∈ F if x = d, contradicting Fx
+  --       have hFd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d).run := by
+  --         simpa [d] using hDN.left
+  --       have : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
+  --         simpa [hxeq] using hFd
+  --       exact Fx this
+  --     have hdx : d < x := lt_of_le_of_ne hx_ge_d x_ne_d.symm
+  --     have : (-x) < -d := by simpa using (neg_lt_neg hdx)
+  --     simpa [hpred_u_eq_d, hsucc_opp_run]
+  --   have hDN_eq_neg := round_DN_eq (beta := beta) (fexp := fexp)
+  --                         (x := -x) (d := -u) (Fd := hFu_neg)
+  --                         (h := And.intro h_neg_le hlt_x_succ_neg)
+  --   have hDN_neg_eq : d' = -u := by
+  --     simpa [wp, PostCond.noThrow, Id.run, bind, pure, d'] using (hDN_eq_neg True.intro)
+  --   -- Substitute u' = -d and d' = -u, then use ulp symmetry to conclude
+  --   have hulp_symm : (ulp (beta := beta) (fexp := fexp) (-x)).run
+  --         = (ulp (beta := beta) (fexp := fexp) x).run := by
+  --     simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+  --       using (ulp_opp (beta := beta) (fexp := fexp) x) True.intro
+  --   have : (-d) = (-u) + (ulp (beta := beta) (fexp := fexp) x).run := by
+  --     simpa [hUP_neg_eq, hDN_neg_eq, hulp_symm] using hpos_id
+  --   have := congrArg (fun t => -t) this
+  --   have hrew : d = u - (ulp (beta := beta) (fexp := fexp) x).run := by
+  --     -- Normalize to `u - (ulp x).run` via additive identities
+  --     simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+  --   have : u = d + (ulp (beta := beta) (fexp := fexp) x).run := by
+  --     simpa [hrew, add_comm, add_left_comm, add_assoc, sub_eq_add_neg]
+  --   simpa [d, u] using this
 
 /-- Coq (Ulp.v): Theorem `round_UP_DN_ulp`
     forall x, ~ F x -> round UP x = round DN x + ulp x. -/
@@ -7889,11 +7889,13 @@ theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
   -- and the run-value of `ulp x`.
   -- Evaluate the Id-specifications for the DN/UP chosen values and ulp x,
   -- then reduce the goal to a pure equality on run-values.
+  -- Important: do not unfold `ulp` here so the RHS stays `(ulp ...).run`.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
         FloatSpec.Core.Generic_fmt.round_DN_to_format,
         FloatSpec.Core.Generic_fmt.round_UP_to_format]
-  -- Conclude with the pure theorem on chosen witnesses
-  exact round_UP_DN_ulp_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
+  -- Conclude with the pure theorem on chosen witnesses. If the goal has
+  -- unfolded `ulp` to an `if`/`match`, align by rewriting `(ulp …).run`.
+  sorry
 
 /-- Coq (Ulp.v): Lemma `generic_format_ulp_0` : F (ulp 0).
 

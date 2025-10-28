@@ -187,7 +187,7 @@ lemma u_ro_pos : 0 ≤ u_ro beta prec := by
 lemma u_ro_lt_1 : u_ro beta prec < 1 := by
   sorry
 
-/-- Unit roundoff divided by (1 + u_ro) is positive -/
+-- Unit roundoff divided by (1 + u_ro) is positive
 lemma u_rod1pu_ro_pos : 0 ≤ u_ro beta prec / (1 + u_ro beta prec) := by
   sorry
 
@@ -246,6 +246,10 @@ theorem relative_error_FLT (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
   (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + prec - 1) : Nat) ≤ |x|) :
   |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () x - x| < 
     (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) * |x| := by
+  -- Ensure `Valid_exp` is available for the FLT exponent under the given `prec`.
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
+  -- Proof content not yet ported.
   sorry
 
 /-- FLT relative error F2R emin -/
@@ -276,6 +280,8 @@ theorem relative_error_N_FLT (x : ℝ)
   (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + prec - 1) : Nat) ≤ |x|) :
   |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x - x| ≤ 
     (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) * |x| := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- FLT relative error nearest existence -/
@@ -283,6 +289,8 @@ theorem relative_error_N_FLT_ex (x : ℝ)
   (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + prec - 1) : Nat) ≤ |x|) :
   ∃ eps, |eps| ≤ (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) ∧
     FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x = x * (1 + eps) := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- FLT relative error nearest round -/
@@ -291,6 +299,8 @@ theorem relative_error_N_FLT_round (x : ℝ)
   |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x - x| ≤ 
     (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) * 
     |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x| := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- FLT relative error nearest F2R emin -/
@@ -299,6 +309,8 @@ theorem relative_error_N_FLT_F2R_emin (m : Int) :
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta)| ≤ 
     (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) * 
     |F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta)| := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- FLT relative error nearest F2R emin existence -/
@@ -306,6 +318,8 @@ theorem relative_error_N_FLT_F2R_emin_ex (m : Int) :
   ∃ eps, |eps| ≤ (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) ∧
     FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta)) = 
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta) * (1 + eps) := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- FLT relative error nearest round F2R emin -/
@@ -314,6 +328,8 @@ theorem relative_error_N_FLT_round_F2R_emin (m : Int) :
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta)| ≤ 
     (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) * 
     |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta))| := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- FLT error nearest auxiliary -/
@@ -330,6 +346,8 @@ theorem relative_error_N_FLT'_ex (x : ℝ) :
     |eta| ≤ (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs emin : Nat) ∧
     eps * eta = 0 ∧
     FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x = x * (1 + eps) + eta := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- FLT relative error nearest alternative separate -/
@@ -339,12 +357,17 @@ theorem relative_error_N_FLT'_ex_separate (x : ℝ) :
     (∃ eta, |eta| ≤ (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs emin : Nat) ∧ x' = x + eta) ∧
     (∃ eps, |eps| ≤ u_ro beta prec / (1 + u_ro beta prec) ∧
       FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x' = x' * (1 + eps)) := by
+  haveI : Prec_gt_0 prec := inferInstance
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
 
 /-- General FLT error nearest -/
-theorem error_N_FLT (emin prec : Int) (h_pos : 0 < prec) (choice : Int → Bool) (x : ℝ) :
+theorem error_N_FLT (emin prec : Int) [Prec_gt_0 prec] (h_pos : 0 < prec) (choice : Int → Bool) (x : ℝ) :
   ∃ eps eta, |eps| ≤ (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) ∧
     |eta| ≤ (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs emin : Nat) ∧
     eps * eta = 0 ∧
     FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x = x * (1 + eps) + eta := by
+  -- Provide the `Prec_gt_0` instance required for `Valid_exp` on `FLT_exp`.
+  haveI : Prec_gt_0 prec := ⟨h_pos⟩
+  have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
