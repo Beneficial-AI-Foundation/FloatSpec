@@ -7561,7 +7561,8 @@ private theorem succ_DN_eq_UP_theorem
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hs hβ) True.intro
   -- Bound x < succ d by maximality of DN at x (otherwise succ d ≤ x contradicts maximality)
   have hx_lt_succd : x < (succ (beta := beta) (fexp := fexp) d).run := by
-    have : ¬ (succ (beta := beta) (fexp := fexp) d).run ≤ x := by
+    -- It suffices to rule out `(succ d) ≤ x`; then by totality, `x < succ d`.
+    have hnle : ¬ (succ (beta := beta) (fexp := fexp) d).run ≤ x := by
       intro hle
       have hle' : (succ (beta := beta) (fexp := fexp) d).run ≤ d :=
         hmax_dn ((succ (beta := beta) (fexp := fexp) d).run)
@@ -7570,13 +7571,17 @@ private theorem succ_DN_eq_UP_theorem
       -- Also d ≤ succ d (always)
       have hle_succ : d ≤ (succ (beta := beta) (fexp := fexp) d).run :=
         succ_run_ge_self (beta := beta) (fexp := fexp) hβ d
-      exact (not_lt_of_ge (le_antisymm hle' hle_succ)) hd_lt_x
-    exact lt_of_not_ge this
+      -- This forces `(succ d).run = d`, contradicting `d < x` and `(succ d).run ≤ x`.
+      have hEq : (succ (beta := beta) (fexp := fexp) d).run = d := le_antisymm hle' hle_succ
+      -- Then `d ≤ x` from `hle` and `hEq`, but `d < x` already holds; impossible.
+      exact (not_lt_of_ge (by simpa [hEq] using hle)) hd_lt_x
+    -- Conclude `x < succ d` from `¬ (succ d ≤ x)` via linear order totality.
+    exact lt_of_not_ge hnle
   -- Use the UP half-interval equality with u' := succ d
   have hpred_succ_eq :
       (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) d).run)).run = d := by
     have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := (by simpa [hd] using Fd))
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hps trivial
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hps True.intro)
   have hup_eq :
       Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
         = (succ (beta := beta) (fexp := fexp) d).run := by
