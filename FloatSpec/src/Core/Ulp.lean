@@ -7565,16 +7565,20 @@ private theorem succ_DN_eq_UP_theorem
     have hnle : ¬ (succ (beta := beta) (fexp := fexp) d).run ≤ x := by
       intro hle
       have hle' : (succ (beta := beta) (fexp := fexp) d).run ≤ d :=
+        -- From maximality of DN at x: if y ∈ F and y ≤ x then y ≤ d.
+        -- Instantiate `y := (succ d).run`, which is in F and (assumed) ≤ x.
         hmax_dn ((succ (beta := beta) (fexp := fexp) d).run)
           (by simpa [hd] using Fsuccd)
           (by simpa [hd] using hle)
       -- Also d ≤ succ d (always)
       have hle_succ : d ≤ (succ (beta := beta) (fexp := fexp) d).run :=
         succ_run_ge_self (beta := beta) (fexp := fexp) hβ d
-      -- This forces `(succ d).run = d`, contradicting `d < x` and `(succ d).run ≤ x`.
-      have hEq : (succ (beta := beta) (fexp := fexp) d).run = d := le_antisymm hle' hle_succ
-      -- From `hle` and `hEq`, we get `d ≤ x`, contradicting `d < x`.
-      exact (not_le_of_gt hd_lt_x) (by simpa [hEq] using hle)
+      -- Therefore `(succ d).run = d`, which contradicts `d < x` together with `hle`.
+      have hEq : (succ (beta := beta) (fexp := fexp) d).run = d :=
+        le_antisymm hle' hle_succ
+      -- From `hle : (succ d).run ≤ x` and `hEq`, deduce `d ≤ x` and contradict `d < x`.
+      have hdx : d ≤ x := by simpa [hEq] using hle
+      exact (not_le_of_gt hd_lt_x) hdx
     -- Conclude `x < succ d` from `¬ (succ d ≤ x)` via linear order totality.
     exact lt_of_not_ge hnle
   -- Use the UP half-interval equality with u' := succ d
