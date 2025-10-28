@@ -152,6 +152,8 @@ Repair **exactly one** theorem: the **first** theorem in the target file that la
 
 ## Proof Strategy Guidelines
 
+* Error first: You should fix existing errors within the build log first, before moving on to proving sorries or unsolved goals.
+* One-at-a-time: Focus on proving one theorem at a time; do not batch multiple proofs without checking.
 * Prefer no decomposition: Try your best to prove the theorem directly through trial and error. Only if you are completely stuck, factor out small helper lemmas. Aviod replacing a single sorry with multiple sorries that you are UNCERTAIN about the correctness.
 * Use existing proven lemmas from imports, existing files and `mathlib4` where available; if uncertain, search first, otherwise implement locally.
 * Keep terms and rewriting explicit; avoid fragile tactic scripts.

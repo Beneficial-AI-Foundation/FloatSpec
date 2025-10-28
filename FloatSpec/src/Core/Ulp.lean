@@ -7541,8 +7541,8 @@ private theorem succ_DN_eq_UP_theorem
   set u : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ) with hu
   have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
   have hUP := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
-  rcases hDN with ⟨Fd, hdn⟩; rcases hdn with ⟨_Fd', hd_le_x, hmax_dn⟩
-  rcases hUP with ⟨Fu, hup⟩; rcases hup with ⟨_Fu', hx_le_u, hmin_up⟩
+  rcases hDN with ⟨Fd, hdn⟩; rcases hdn with ⟨_hFdn, hd_le_x, hmax_dn⟩
+  rcases hUP with ⟨Fu, hup⟩; rcases hup with ⟨_hFup, hx_le_u, hmin_up⟩
   -- Show d < x from Fx and d ≤ x
   have hd_lt_x : d < x := by
     have hd_le_x' : d ≤ x := by simpa [hd] using hd_le_x
@@ -7550,19 +7550,23 @@ private theorem succ_DN_eq_UP_theorem
       intro hdx
       -- If d = x, then x is in the generic format since d is.
       have hx_fmt : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
-        simpa [hdx] using Fd
+        -- Rewrite the chosen DN witness to `d`, then to `x` via `hdx`.
+        simpa [hd, hdx] using Fd
       exact Fx hx_fmt
     exact lt_of_le_of_ne hd_le_x' hd_ne_x
   -- succ d is representable
   have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ (beta := beta) (fexp := fexp) d).run)).run := by
-    have hs := generic_format_succ (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
+    -- Rewrite `Fd` in terms of `d` and use `generic_format_succ`
+    have hs := generic_format_succ (beta := beta) (fexp := fexp) (x := d) (Fx := (by simpa [hd] using Fd))
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hs hβ) True.intro
   -- Bound x < succ d by maximality of DN at x (otherwise succ d ≤ x contradicts maximality)
   have hx_lt_succd : x < (succ (beta := beta) (fexp := fexp) d).run := by
     have : ¬ (succ (beta := beta) (fexp := fexp) d).run ≤ x := by
       intro hle
       have hle' : (succ (beta := beta) (fexp := fexp) d).run ≤ d :=
-        hmax_dn ((succ (beta := beta) (fexp := fexp) d).run) Fsuccd (by simpa [hd] using hle)
+        hmax_dn ((succ (beta := beta) (fexp := fexp) d).run)
+          (by simpa [hd] using Fsuccd)
+          (by simpa [hd] using hle)
       -- Also d ≤ succ d (always)
       have hle_succ : d ≤ (succ (beta := beta) (fexp := fexp) d).run :=
         succ_run_ge_self (beta := beta) (fexp := fexp) hβ d
@@ -7571,7 +7575,7 @@ private theorem succ_DN_eq_UP_theorem
   -- Use the UP half-interval equality with u' := succ d
   have hpred_succ_eq :
       (pred (beta := beta) (fexp := fexp) ((succ (beta := beta) (fexp := fexp) d).run)).run = d := by
-    have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
+    have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := (by simpa [hd] using Fd))
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hps trivial
   have hup_eq :
       Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists beta fexp x hβ)
@@ -7579,7 +7583,8 @@ private theorem succ_DN_eq_UP_theorem
     -- Apply the UP equality bridge on (pred u', u'] with u' = succ d
     have := round_UP_eq_theorem (beta := beta) (fexp := fexp)
       (x := x) (u := (succ (beta := beta) (fexp := fexp) d).run)
-      (Fu := Fsuccd) (h := And.intro (by simpa [hpred_succ_eq] using hd_lt_x) (by exact le_of_lt hx_lt_succd)) hβ
+      (Fu := (by simpa [hd] using Fsuccd))
+      (h := And.intro (by simpa [hpred_succ_eq] using hd_lt_x) (by exact le_of_lt hx_lt_succd)) hβ
     simpa [hu]
       using this
   -- Conclude equality of run-values between succ DN and the chosen UP witness
@@ -7873,13 +7878,12 @@ theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
   intro hβ; classical
   -- Reduce the monadic specification to a pure equality on the chosen UP/DN witnesses
   -- and the run-value of `ulp x`.
+  -- Evaluate the Id-specifications for the DN/UP chosen values and ulp x,
+  -- then reduce the goal to a pure equality on run-values.
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
         FloatSpec.Core.Generic_fmt.round_DN_to_format,
         FloatSpec.Core.Generic_fmt.round_UP_to_format]
-  -- Local bridge theorem: gap between UP and DN equals one ULP at x.
-  -- This mirrors the Coq lemma and will be discharged when spacing lemmas
-  -- (characterizing the distance between consecutive format numbers) are ported.
-  -- Thread the 1 < beta hypothesis to the local bridge
+  -- Conclude with the pure theorem on chosen witnesses
   exact round_UP_DN_ulp_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
 
 /-- Coq (Ulp.v): Lemma `generic_format_ulp_0` : F (ulp 0).
