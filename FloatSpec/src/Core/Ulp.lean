@@ -7550,8 +7550,8 @@ private theorem succ_DN_eq_UP_theorem
       intro hdx
       -- If d = x, then x is in the generic format since d is.
       have hx_fmt : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run := by
-        -- Rewrite the chosen DN witness to `d`, then to `x` via `hdx`.
-        simpa [hd, hdx] using Fd
+        -- First replace the chosen witness by `d` (use `hd.symm`), then rewrite `d = x`.
+        simpa [hd.symm, hdx] using Fd
       exact Fx hx_fmt
     exact lt_of_le_of_ne hd_le_x' hd_ne_x
   -- succ d is representable
