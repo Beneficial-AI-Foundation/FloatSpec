@@ -4598,28 +4598,24 @@ private theorem round_DN_eq_theorem
   set dn : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hbeta) with hdn_def
   -- d ≤ dn by maximality at x
   have hle_d_dn : d ≤ dn := by simpa [hdn_def] using hmax_dn d Fd h.1
-  -- succ d is in the format
-  have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp d).run)).run := by
-    -- Use `generic_format_succ_pre` (declared below as a simple wrapper around
-    -- `generic_format_succ`) to avoid forward‑reference issues.
-    have hs := generic_format_succ_pre (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hs hbeta) True.intro
   -- dn is in the format
   have Fdn' : (FloatSpec.Core.Generic_fmt.generic_format beta fexp dn).run := by
     simpa [hdn_def] using Fdn
   -- Strict inequality: dn < succ d since dn ≤ x and x < succ d
   have hlt_succ : dn < (succ beta fexp d).run := lt_of_le_of_lt (by simpa [hdn_def] using hdn_le_x) h.2
-  -- Predecessor bound: dn ≤ pred (succ d)
-  have hdn_le_predsucc :
-      dn ≤ (pred (beta := beta) (fexp := fexp) ((succ beta fexp d).run)).run := by
-    have htrip := pred_ge_gt (beta := beta) (fexp := fexp)
-      (x := dn) (y := (succ beta fexp d).run) (Fx := Fdn') (Fy := Fsuccd) (hxy := hlt_succ)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htrip trivial
-  -- Identify pred (succ d) with d at format points
-  have hpred_succ_eq : (pred (beta := beta) (fexp := fexp) ((succ beta fexp d).run)).run = d := by
-    have hps := pred_succ (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hps trivial
-  have hle_dn_d : dn ≤ d := by simpa [hpred_succ_eq] using hdn_le_predsucc
+  -- Show dn ≤ d by contradiction using the local ordering bridge on `succ`.
+  -- If d < dn, then `(succ d).run ≤ dn` (since Fd, Fdn'), contradicting `dn < (succ d).run`.
+  have hle_dn_d : dn ≤ d := by
+    by_contra hlt : ¬ dn ≤ d
+    have hlt' : d < dn := lt_of_le_of_ne hle_d_dn (by
+      have : dn ≠ d := by
+        exact fun h => hlt (le_of_eq h.symm)
+      exact this.symm ▸ lt_of_le_of_ne hle_d_dn (by simpa))
+    have hsucc_le_dn : (succ (beta := beta) (fexp := fexp) d).run ≤ dn := by
+      have h := succ_le_lt_theorem (beta := beta) (fexp := fexp)
+                  (x := d) (y := dn) (Fx := Fd) (Fy := Fdn') (hxy := hlt')
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
+    exact (not_lt_of_ge hsucc_le_dn) hlt_succ
   have h_eq : dn = d := le_antisymm hle_dn_d hle_d_dn
   simpa [hdn_def, h_eq]
 
@@ -4735,13 +4731,13 @@ theorem generic_format_succ_pre
       (beta : Int) (fexp : Int → Int)
       [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
       (x : ℝ)
-      (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ : 1 < beta):
+      (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
+      (hβ : 1 < beta):
       (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp x).run)).run := by
-    classical
-    -- We use the `generic_format_succ` Hoare‑style theorem proved later in
-    -- this file and immediately discharge its trivial precondition.
-    have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h hβ) True.intro
+  classical
+  -- Use the successor closure theorem packaged as a Hoare‑style result.
+  have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h hβ) True.intro
 
 -- Rounding to nearest below the midpoint yields the DN witness (bridge lemma).
 private theorem round_N_le_midp_theorem
