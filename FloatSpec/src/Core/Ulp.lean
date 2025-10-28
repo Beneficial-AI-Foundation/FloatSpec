@@ -4606,15 +4606,15 @@ private theorem round_DN_eq_theorem
   -- Show dn ≤ d by contradiction using the local ordering bridge on `succ`.
   -- If d < dn, then `(succ d).run ≤ dn` (since Fd, Fdn'), contradicting `dn < (succ d).run`.
   have hle_dn_d : dn ≤ d := by
-    by_contra hlt : ¬ dn ≤ d
-    have hlt' : d < dn := lt_of_le_of_ne hle_d_dn (by
-      have : dn ≠ d := by
-        exact fun h => hlt (le_of_eq h.symm)
-      exact this.symm ▸ lt_of_le_of_ne hle_d_dn (by simpa))
+    by_contra hnot
+    -- From ¬(dn ≤ d) in a linear order, we get d < dn
+    have hlt' : d < dn := lt_of_not_ge hnot
+    -- Apply the local `succ`-ordering bridge to obtain `(succ d).run ≤ dn`
     have hsucc_le_dn : (succ (beta := beta) (fexp := fexp) d).run ≤ dn := by
       have h := succ_le_lt_theorem (beta := beta) (fexp := fexp)
                   (x := d) (y := dn) (Fx := Fd) (Fy := Fdn') (hxy := hlt')
       simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
+    -- Contradict `dn < (succ d).run`
     exact (not_lt_of_ge hsucc_le_dn) hlt_succ
   have h_eq : dn = d := le_antisymm hle_dn_d hle_d_dn
   simpa [hdn_def, h_eq]
