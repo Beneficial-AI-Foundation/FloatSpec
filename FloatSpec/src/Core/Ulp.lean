@@ -3012,36 +3012,32 @@ private theorem succ_le_lt_theorem
     (hxy : x < y) :
     (succ (beta := beta) (fexp := fexp) x).run ≤ y := by
   classical
-  -- Split on the sign of x to expand succ.
-  by_cases hx : 0 ≤ x
-  · -- Nonnegative branch: succ x = x + ulp x ≥ x, hence ≤ y from x < y.
-    have hsucc_run : (succ beta fexp x).run = x + (ulp beta fexp x).run := by
-      simp [succ, hx, Id.run, bind, pure]
-    -- ulp is nonnegative for beta > 1
-    have hnonneg : 0 ≤ (ulp beta fexp x).run :=
-      ulp_run_nonneg (beta := beta) (fexp := fexp) (by
-        -- derive 1 < beta in ℝ from Int hypothesis in surrounding uses
-        -- callers only use this lemma under 1 < beta; reuse any such hypothesis
-        -- by appealing upstream at call sites. Here we keep it as a local lemma usage.
-        -- We avoid binding it here to keep signature minimal.
-        exact
-          (by
-            have hb : (0 : Int) < beta := by exact Int.zero_lt_one.trans_le (le_of_lt (by decide))
-            exact Int.zero_lt_one.trans hb)
-      ) x
-    have hx_le_succ : x ≤ (succ beta fexp x).run := by
-      simpa [hsucc_run, add_comm, add_left_comm, add_assoc]
-        using (le_trans (le_of_eq (by rfl)) (le_add_of_nonneg_right hnonneg))
-    exact le_trans (le_of_lt hxy) (le_trans hx_le_succ (le_of_eq rfl))
-  · -- Negative branch: succ x = - pred_pos (-x).run ≤ y since y is ≥ the next F-point.
-    have hxlt : x < 0 := lt_of_le_of_ne (le_of_not_ge hx) (by intro h; cases h; exact lt_irrefl _)
-    have hsucc_run : (succ beta fexp x).run = - (pred_pos beta fexp (-x)).run := by
-      simp [succ, hx, Id.run, bind, pure]
-    -- Since y is in the format and x < y, basic spacing implies succ x ≤ y.
-    -- We use the already established bridge `succ_le_lt` to conclude.
-    have hbridge := succ_le_lt (beta := beta) (fexp := fexp)
-                      (x := x) (y := y) (Fx := Fx) (Fy := Fy) (hxy := hxy)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hbridge True.intro
+  -- Use order duality via negation and the definition `pred z = - succ (-z)`.
+  -- From `x < y`, we have `-y < -x` with both sides in the format by closure.
+  have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
+    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := x))
+    have h' := h Fx
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+  have Fy_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-y)).run := by
+    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := y))
+    have h' := h Fy
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
+  have hlt' : -y < -x := by simpa using (neg_lt_neg hxy)
+  -- Apply the predecessor ordering on negatives and negate back.
+  have hpred_le : (-y) ≤ (pred (beta := beta) (fexp := fexp) (-x)).run := by
+    have h := pred_ge_gt_theorem (beta := beta) (fexp := fexp)
+                (x := -y) (y := -x) (Fx := Fy_neg) (Fy := Fx_neg) (hxy := hlt')
+    -- Discharge the Hoare triple returned by the theorem body.
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
+  -- Rewrite in terms of `succ x` via `pred = - ∘ succ ∘ neg`.
+  have : - (succ (beta := beta) (fexp := fexp) (-x)).run = (pred (beta := beta) (fexp := fexp) (-x)).run := by
+    simp [pred, Id.run, bind, pure]
+  -- Negate both sides to conclude `(succ x).run ≤ y`.
+  have : (succ (beta := beta) (fexp := fexp) x).run ≤ y := by
+    -- Start from `(-y) ≤ pred (-x)` and negate.
+    have := (neg_le_neg hpred_le)
+    simpa [pred, Id.run, bind, pure, neg_neg] using this
+  exact this
 private theorem pred_ge_gt_theorem
     (beta : Int) (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
