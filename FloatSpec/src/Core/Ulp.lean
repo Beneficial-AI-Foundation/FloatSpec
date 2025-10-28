@@ -4561,19 +4561,24 @@ private theorem ulp_DN_run_theorem
     simpa [hbridge, hulp_d_eq_r] using hulp_r_eqx
 
 theorem ulp_DN [Exp_not_FTZ fexp] (x : ℝ) (hx : 0 ≤ x) :
-    (hbeta: 1 < beta) →
+    (hβ: 1 < beta) →
     ⦃⌜1 < beta⌝⦄ do
-      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hbeta
+      let dn ← FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
       let u1 ← ulp beta fexp dn
       let u2 ← ulp beta fexp x
       pure (u1, u2)
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
-  intro hβ; classical
+  intro hβ; intro _; classical
   -- Reduce the monadic triple to a run‑level equality goal and close by the bridge lemma.
+  -- First, normalize the Hoare‑style goal to a pure proposition
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
         FloatSpec.Core.Generic_fmt.round_DN_to_format]
-  simpa using
-    (ulp_DN_run_theorem (beta := beta) (fexp := fexp) (x := x) (hx := hx) (hβ := hβ))
+  -- The goal now states equality of run‑values for the two ulps; close it with
+  -- the run‑level bridge `ulp_DN_run_theorem`.
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure,
+        FloatSpec.Core.Generic_fmt.round_DN_to_format]
+    using (ulp_DN_run_theorem (beta := beta) (fexp := fexp)
+              (x := x) (hx := hx) (hβ := hβ))
 
 
 /- DN equality on [d, succ d): chosen DN at x equals d when d ≤ x < succ d. -/
@@ -4595,9 +4600,9 @@ private theorem round_DN_eq_theorem
   have hle_d_dn : d ≤ dn := by simpa [hdn_def] using hmax_dn d Fd h.1
   -- succ d is in the format
   have Fsuccd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp d).run)).run := by
+    -- Use `generic_format_succ_pre` (declared below as a simple wrapper around
+    -- `generic_format_succ`) to avoid forward‑reference issues.
     have hs := generic_format_succ_pre (beta := beta) (fexp := fexp) (x := d) (Fx := Fd)
-    -- Discharge the (trivial) precondition of the Hoare-style statement
-    -- and reduce it to a plain proposition about the run-value.
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hs hbeta) True.intro
   -- dn is in the format
   have Fdn' : (FloatSpec.Core.Generic_fmt.generic_format beta fexp dn).run := by
@@ -4733,8 +4738,9 @@ theorem generic_format_succ_pre
       (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) (hβ : 1 < beta):
       (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((succ beta fexp x).run)).run := by
     classical
+    -- We use the `generic_format_succ` Hoare‑style theorem proved later in
+    -- this file and immediately discharge its trivial precondition.
     have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-    -- Discharge the trivial precondition and reduce the Hoare triple to a pure proposition.
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (h hβ) True.intro
 
 -- Rounding to nearest below the midpoint yields the DN witness (bridge lemma).
