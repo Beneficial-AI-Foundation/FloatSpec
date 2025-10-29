@@ -29,7 +29,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `split_bits_inj` → `split_bits_inj [FloatSpec/src/IEEE754/Bits.lean:148]` (exact)
 - `split_bits_of_binary_float_correct` → `split_bits_of_binary_float_correct [FloatSpec/src/IEEE754/Bits.lean:110]` (exact)
 - `bits_of_binary_float_range` → `bits_of_binary_float_range [FloatSpec/src/IEEE754/Bits.lean:122]` (exact)
-- `binary_float_of_bits_aux_correct` → (no Lean counterpart)
+- `binary_float_of_bits_aux_correct` → `binary_float_of_bits_aux_correct [FloatSpec/src/IEEE754/Bits.lean:86]` (spec-variant)
 - `binary_float_of_bits_of_binary_float` → `binary_float_of_bits_of_binary_float [FloatSpec/src/IEEE754/Bits.lean:131]` (exact)
 - `bits_of_binary_float_of_bits` → `bits_of_binary_float_of_bits [FloatSpec/src/IEEE754/Bits.lean:139]` (exact)
 

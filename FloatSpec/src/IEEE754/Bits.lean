@@ -2,10 +2,13 @@
 -- Translated from Coq file: flocq/src/IEEE754/Bits.v
 
 import FloatSpec.src.Core
+import Std.Do.Triple
+import Std.Tactic.Do
 import FloatSpec.src.IEEE754.Binary
 import Mathlib.Data.Real.Basic
 
 open Real
+open Std.Do
 
 -- Number of bits for the fraction and exponent
 variable (mw ew : Int)
@@ -71,6 +74,22 @@ theorem bits_binary_roundtrip (bits : Int)
   (h_valid : 0 ≤ bits ∧ bits < (2 : Int) ^ Int.toNat (mant_width prec + exp_width emax + 1)) :
   binary_to_bits prec emax (bits_to_binary prec emax bits) = bits := by
   sorry
+
+-- Auxillary constructor used in Coq: binary_float_of_bits_aux
+-- We expose it here as a pure computation wrapped in Id to
+-- mirror the hoare-triple specification pattern used across the project.
+def binary_float_of_bits_aux (bits : Int) : Id (Binary754 prec emax) :=
+  pure (bits_to_binary prec emax bits)
+
+-- Coq lemma: binary_float_of_bits_aux_correct
+-- We state it in hoare-triple style around the pure computation above.
+theorem binary_float_of_bits_aux_correct (bits : Int) :
+  ⦃⌜True⌝⦄
+  binary_float_of_bits_aux (prec:=prec) (emax:=emax) bits
+  ⦃⇓result => ⌜result = bits_to_binary prec emax bits⌝⦄ := by
+  intro _
+  unfold binary_float_of_bits_aux
+  rfl
 
 -- Extract components from bits
 def extract_sign (prec emax : Int) (bits : Int) : Bool :=

@@ -5,8 +5,11 @@ import FloatSpec.src.Core
 import FloatSpec.src.Compat
 import FloatSpec.src.Calc
 import Mathlib.Data.Real.Basic
+import Std.Do.Triple
+import Std.Tactic.Do
 
 open Real
+open Std.Do
 
 -- IEEE 754 full float representation
 inductive FullFloat where
@@ -171,17 +174,21 @@ theorem B2FF_FF2B {prec emax} (x : FullFloat) :
 -- Coq: FF2B_B2FF — FF2B after B2FF is identity
 theorem FF2B_B2FF {prec emax} (x : Binary754 prec emax) :
   FF2B (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x) = x := by
-  sorry
+  -- trivial by construction of `FF2B` and `B2FF`
+  cases x <;> rfl
 
 -- Coq: B2FF_inj — B2FF is injective
 theorem B2FF_inj {prec emax} (x y : Binary754 prec emax) :
   B2FF (prec:=prec) (emax:=emax) x = B2FF (prec:=prec) (emax:=emax) y → x = y := by
-  sorry
+  intro h; cases x; cases y; cases h; rfl
 
 -- Coq: FF2R_B2FF — Real semantics preserved by B2FF
 theorem FF2R_B2FF (beta : Int) {prec emax} (x : Binary754 prec emax) :
   FF2R beta (B2FF (prec:=prec) (emax:=emax) x) = FF2R beta x.val := by
-  sorry
+  rfl
+
+-- (reserved) Coq counterparts `valid_binary_B2FF` and `FF2B_B2FF_valid`
+-- will be introduced in hoare-triple form after aligning specs.
 
 -- Standard IEEE 754 operations
 def binary_add (x y : Binary754 prec emax) : Binary754 prec emax := by
