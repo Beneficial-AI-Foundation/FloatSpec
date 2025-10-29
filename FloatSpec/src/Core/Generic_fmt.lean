@@ -4052,34 +4052,7 @@ end Inclusion
 
 section Round_generic
 
-/-- Placeholder existence theorem: There exists a round-down value in the generic format.
-    A constructive proof requires additional spacing/discreteness lemmas for the format.
-    We declare it here so earlier results can depend on it. The detailed development
-    appears later in this file. -/
-theorem round_DN_exists
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
-    ∃ f, (generic_format beta fexp f).run ∧
-      Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Delegate to the general DN-existence theorem proved later using UP via negation.
-  -- This keeps the public existence at a single location and avoids duplication.
-  exact generic_format_round_DN (beta := beta) (fexp := fexp) (x := x) hβ
-
--- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
-theorem round_DN_exists_global
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x : ℝ) (hβ : 1 < beta) :
-    ∃ f, (generic_format beta fexp f).run ∧
-      FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  classical
-  -- `round_DN_exists` does not require `1 < beta`, so we can reuse it directly.
-  simpa using (round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
-
--- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
--- Remove the earlier forward declaration to avoid duplicate definitions.
-
--- (moved above) round_DN_exists
-
--- Helper: closure of generic format under negation (as a plain implication)
+/-- Helper: closure of generic format under negation (as a plain implication) -/
 private theorem generic_format_neg_closed
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (y : ℝ)
     (hy : (generic_format beta fexp y).run) :
@@ -4112,10 +4085,21 @@ private theorem Rnd_UP_to_DN_via_neg
     simpa using (neg_le_neg hf_le)
   exact ⟨hFneg, hle', hmax⟩
 
-/-- Placeholder existence theorem: There exists a round-up value in the generic format.
+-- (round_DN_exists moved below, after `round_UP_exists`)
+
+-- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
+-- Remove the earlier forward declaration to avoid duplicate definitions.
+
+-- (moved above) round_DN_exists
+
+-- (helpers moved above)
+
+-- (duplicate removed) 
+/- Placeholder existence theorem: There exists a round-up value in the generic format.
     A constructive proof requires additional spacing/discreteness lemmas for the format.
 -/
-theorem round_UP_exists
+-- Note: duplicate removed to avoid multiple identical declarations
+private theorem round_UP_exists
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f).run ∧
       Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
@@ -4158,6 +4142,98 @@ theorem round_NA_pt
   rcases round_UP_exists (beta := beta) (fexp := fexp) x (hβ := hβ) with
     ⟨xup, hFup, hUP⟩
   rcases hDN with ⟨hF_xdn, hxdn_le_x, hmax_dn⟩
+
+-- Order note: we place the existence lemmas to avoid forward references.
+
+/-- Placeholder existence theorem: There exists a round-up value in the generic format.
+    A constructive proof requires additional spacing/discreteness lemmas for the format.
+-/
+-- [duplicate removed]
+theorem generic_format_round_DN (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    ∃ f, (generic_format beta fexp f).run ∧ Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  -- Derive DN existence for x from UP existence for -x via negation
+  have hFneg : ∀ y, (generic_format beta fexp y).run → (generic_format beta fexp (-y)).run :=
+    generic_format_neg_closed beta fexp
+  -- Use the UP existence at -x (which we prove without extra hypotheses)
+  rcases round_UP_exists (beta := beta) (fexp := fexp) (x := -x) hbeta with ⟨fu, hFu, hup⟩
+  -- Transform to DN at x with f = -fu
+  refine ⟨-fu, ?_, ?_⟩
+  · exact hFneg fu hFu
+  · -- Apply the transformation lemma
+    exact Rnd_UP_to_DN_via_neg (F := fun y => (generic_format beta fexp y).run) (x := x) (f := fu)
+      hFneg hup
+
+/-- Placeholder existence theorem: There exists a round-down value in the generic format.
+    A constructive proof requires additional spacing/discreteness lemmas for the format.
+    We declare it here so earlier results can depend on it. The detailed development
+    appears later in this file. -/
+theorem round_DN_exists
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
+    ∃ f, (generic_format beta fexp f).run ∧
+      Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  -- Delegate to the general DN-existence theorem proved later using UP via negation.
+  -- This keeps the public existence at a single location and avoids duplication.
+  exact generic_format_round_DN (beta := beta) (fexp := fexp) (x := x) hβ
+
+-- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
+theorem round_DN_exists_global
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x : ℝ) (hβ : 1 < beta) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  classical
+  -- `round_DN_exists` does not require `1 < beta`, so we can reuse it directly.
+  simpa using (round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
+
+/-- Specification: Generic format is closed under rounding up
+
+    For any x, there exists a value f in generic format
+    that is the rounding up of x.
+-/
+theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+    ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
+  -- Use the existence theorem (which depends on 1 < beta) to obtain a witness.
+  exact round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hbeta)
+
+/-- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_round_pos`
+
+    Compatibility lemma name alias: existence of a rounding-up value in the generic
+    format. This wraps `generic_format_round_UP` to align with the Coq lemma name.
+-/
+theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+    ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f :=
+  generic_format_round_UP (beta := beta) (fexp := fexp) (x := x) hbeta
+
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_DN_pt`:
+    {lit}`∀ x, Rnd_DN_pt format x (round Zfloor x)`.
+
+    Lean (existence form): There exists a down-rounded value in the
+    generic format for any real x. This mirrors the Coq statement
+    using our pointwise predicate rather than a concrete `round`.
+-/
+theorem round_DN_pt
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+  -- Directly reuse the DN existence result established above.
+  -- Requires beta > 1 in the Coq development; we keep existence here.
+  -- One can retrieve such a witness from `generic_format_round_DN` when beta > 1.
+  exact round_DN_exists beta fexp x hbeta
+
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_UP_pt`:
+    {lit}`∀ x, Rnd_UP_pt format x (round Zceil x)`.
+
+    Lean (existence form): There exists an up-rounded value in the
+    generic format for any real x, stated with the pointwise predicate.
+-/
+theorem round_UP_pt
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
+  exact round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hbeta)
+
   rcases hUP with ⟨hF_xup, hx_le_xup, hmin_up⟩
   -- Distances to the two bracket points
   let a := x - xdn
@@ -5455,43 +5531,16 @@ theorem mantissa_small_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int
   have hpos_scaled : 0 < x * (beta : ℝ) ^ (-(fexp ex)) := mul_pos hx_pos hscale_pos
   exact ⟨hpos_scaled, hlt_one⟩
 
-/-- Specification: Generic format is closed under rounding down
+-- (generic_format_round_DN moved below, after `round_UP_exists`)
 
-    For any x, there exists a value f in generic format
-    that is the rounding down of x.
--/
-theorem generic_format_round_DN (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
-    ∃ f, (generic_format beta fexp f).run ∧ Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Derive DN existence for x from UP existence for -x via negation
-  have hFneg : ∀ y, (generic_format beta fexp y).run → (generic_format beta fexp (-y)).run :=
-    generic_format_neg_closed beta fexp
-  -- Use the UP existence at -x (which we prove without extra hypotheses)
-  rcases round_UP_exists (beta := beta) (fexp := fexp) (x := -x) hbeta with ⟨fu, hFu, hup⟩
-  -- Transform to DN at x with f = -fu
-  refine ⟨-fu, ?_, ?_⟩
-  · exact hFneg fu hFu
-  · -- Apply the transformation lemma
-    exact Rnd_UP_to_DN_via_neg (F := fun y => (generic_format beta fexp y).run) (x := x) (f := fu)
-      hFneg hup
-
-/-- Specification: Generic format is closed under rounding up
-
-    For any x, there exists a value f in generic format
-    that is the rounding up of x.
--/
-theorem generic_format_round_UP (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Use the existence theorem (which depends on 1 < beta) to obtain a witness.
-  exact round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hbeta)
+-- (generic_format_round_UP remains below, after the existence lemmas)
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_round_pos`
 
     Compatibility lemma name alias: existence of a rounding-up value in the generic
     format. This wraps `generic_format_round_UP` to align with the Coq lemma name.
 -/
-theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f).run ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f :=
-  generic_format_round_UP (beta := beta) (fexp := fexp) (x := x) hbeta
+-- (generic_format_round_pos stays with `generic_format_round_UP`)
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_DN_pt`:
@@ -5501,14 +5550,7 @@ theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp be
     generic format for any real x. This mirrors the Coq statement
     using our pointwise predicate rather than a concrete `round`.
 -/
-theorem round_DN_pt
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f).run ∧
-      Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Directly reuse the DN existence result established above.
-  -- Requires beta > 1 in the Coq development; we keep existence here.
-  -- One can retrieve such a witness from `generic_format_round_DN` when beta > 1.
-  exact round_DN_exists beta fexp x hbeta
+-- (round_DN_pt stays with `generic_format_round_DN`)
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_UP_pt`:
@@ -5517,11 +5559,7 @@ theorem round_DN_pt
     Lean (existence form): There exists an up-rounded value in the
     generic format for any real x, stated with the pointwise predicate.
 -/
-theorem round_UP_pt
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f).run ∧
-      Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
-  exact round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hbeta)
+-- (round_UP_pt stays with `generic_format_round_UP`)
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_ZR_pt`:
