@@ -169,7 +169,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `match_FF2B` → `match_FF2B [FloatSpec/src/IEEE754/Binary.lean:333]` (exact)
 - `canonical_canonical_mantissa` → `canonical_canonical_mantissa [FloatSpec/src/IEEE754/Binary.lean:611]` (spec-variant, hoare)
 - `generic_format_B2R` → `generic_format_B2R [FloatSpec/src/IEEE754/Binary.lean:627]` (spec-variant, hoare)
-- `FLT_format_B2R` → (no Lean counterpart)
+ - `FLT_format_B2R` → `FLT_format_B2R [FloatSpec/src/IEEE754/Binary.lean:642]` (spec-variant, hoare)
  - `B2FF_inj` → `B2FF_inj [FloatSpec/src/IEEE754/Binary.lean:181]` (exact)
 - `is_finite_strict_B2BSN` → (no Lean counterpart)
 - `B2R_inj` → `B2R_inj [FloatSpec/src/IEEE754/Binary.lean:262]` (spec-variant)

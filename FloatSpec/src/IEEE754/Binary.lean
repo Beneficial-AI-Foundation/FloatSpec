@@ -632,3 +632,19 @@ theorem generic_format_B2R {prec emax : Int}
   intro _
   -- Proof deferred; follows Coq's generic_format_B2R
   sorry
+
+-- Coq: FLT_format_B2R
+-- FLT-format property of the real semantics of a binary float.
+-- We mirror the statement in hoare-triple style and defer the proof.
+def FLT_format_B2R_check {prec emax : Int} (x : Binary754 prec emax) : Id Unit :=
+  pure ()
+
+theorem FLT_format_B2R
+  {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  FLT_format_B2R_check (prec:=prec) (emax:=emax) x
+  ⦃⇓_ => ⌜(FloatSpec.Core.FLT.FLT_format (prec:=prec) (emin := 3 - emax - prec) 2 (B2R (prec:=prec) (emax:=emax) x)).run⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's FLT_format_B2R via generic_format_B2R and FLT_format_generic
+  sorry
