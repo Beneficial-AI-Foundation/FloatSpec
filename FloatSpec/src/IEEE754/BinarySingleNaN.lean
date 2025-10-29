@@ -29,6 +29,14 @@ noncomputable def B754_to_R (x : B754) : ℝ :=
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat 2)
   | _ => 0
 
+-- Bridge from Binary754 to single-NaN binary (Coq: B2BSN)
+def B2BSN {prec emax} (x : Binary754 prec emax) : B754 :=
+  match x.val with
+  | FullFloat.F754_finite s m e => B754.B754_finite s m e
+  | FullFloat.F754_infinity s => B754.B754_infinity s
+  | FullFloat.F754_zero s => B754.B754_zero s
+  | FullFloat.F754_nan _ _ => B754.B754_nan
+
 -- View a single-NaN binary into the standard IEEE 754 float
 def B2SF_BSN (x : B754) : StandardFloat :=
   match x with
@@ -36,6 +44,80 @@ def B2SF_BSN (x : B754) : StandardFloat :=
   | B754.B754_infinity s => StandardFloat.S754_infinity s
   | B754.B754_zero s => StandardFloat.S754_zero s
   | B754.B754_nan => StandardFloat.S754_nan
+
+-- Finite/NaN/sign classifiers on the BinarySingleNaN side
+def BSN_is_finite (x : B754) : Bool :=
+  match x with
+  | B754.B754_finite _ _ _ => true
+  | B754.B754_zero _ => true
+  | _ => false
+
+def BSN_is_nan (x : B754) : Bool :=
+  match x with
+  | B754.B754_nan => true
+  | _ => false
+
+def BSN_sign (x : B754) : Bool :=
+  match x with
+  | B754.B754_zero s => s
+  | B754.B754_infinity s => s
+  | B754.B754_finite s _ _ => s
+  | B754.B754_nan => false
+
+-- Coq: B2SF_B2BSN — standard view commutes with bridge to single-NaN
+def B2SF_B2BSN_check {prec emax} (x : Binary754 prec emax) : Id StandardFloat :=
+  pure (B2SF_BSN (B2BSN (prec:=prec) (emax:=emax) x))
+
+theorem B2SF_B2BSN {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  B2SF_B2BSN_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = B2SF (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  exact sorry
+
+-- Coq: is_finite_B2BSN — finiteness preserved by the bridge
+def is_finite_B2BSN_check {prec emax} (x : Binary754 prec emax) : Id Bool :=
+  pure (BSN_is_finite (B2BSN (prec:=prec) (emax:=emax) x))
+
+theorem is_finite_B2BSN {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  is_finite_B2BSN_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = is_finite_B (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  exact sorry
+
+-- Coq: is_nan_B2BSN — NaN preserved by the bridge
+def is_nan_B2BSN_check {prec emax} (x : Binary754 prec emax) : Id Bool :=
+  pure (BSN_is_nan (B2BSN (prec:=prec) (emax:=emax) x))
+
+theorem is_nan_B2BSN {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  is_nan_B2BSN_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = is_nan_B (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  exact sorry
+
+-- Coq: Bsign_B2BSN — sign preserved by the bridge
+def Bsign_B2BSN_check {prec emax} (x : Binary754 prec emax) : Id Bool :=
+  pure (BSN_sign (B2BSN (prec:=prec) (emax:=emax) x))
+
+theorem Bsign_B2BSN {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Bsign_B2BSN_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = Bsign (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  exact sorry
+
+-- Coq: B2R_B2BSN — real semantics commutes with bridge to single-NaN
+noncomputable def B2R_B2BSN_check {prec emax} (x : Binary754 prec emax) : Id ℝ :=
+  pure (B754_to_R (B2BSN (prec:=prec) (emax:=emax) x))
+
+theorem B2R_B2BSN {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  B2R_B2BSN_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = B2R (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  exact sorry
 
 -- Coq: SF2R_B2SF — Real semantics after mapping to StandardFloat
 -- We state it in hoare-triple style around a pure computation.

@@ -200,6 +200,19 @@ theorem FF2SF_B2FF {prec emax} (x : Binary754 prec emax) :
   FF2SF (B2FF (prec:=prec) (emax:=emax) x) = B2SF (prec:=prec) (emax:=emax) x := by
   rfl
 
+-- Coq: B2SF_FF2B — Standard view after FF2B equals FF2SF of source
+theorem B2SF_FF2B {prec emax} (x : FullFloat) :
+  B2SF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x) = FF2SF x := by
+  rfl
+
+-- Coq: B2SF_B2BSN — compatibility between `B2SF` and the SingleNaN bridge
+-- We mirror the Coq lemma by delegating to the version in BinarySingleNaN
+-- that we stated using the hoare-triple style.
+-- NOTE: The hoare-triple version of this lemma lives in BinarySingleNaN.
+
+-- Coq: B2R_B2BSN — compatibility for real semantics
+-- NOTE: The hoare-triple version of this lemma lives in BinarySingleNaN.
+
 -- Coq: is_finite_B2FF — Finite predicate preserved by B2FF
 -- We mirror the Coq statement with a straightforward alias in our setting.
 def is_finite_B {prec emax} (x : Binary754 prec emax) : Bool :=
