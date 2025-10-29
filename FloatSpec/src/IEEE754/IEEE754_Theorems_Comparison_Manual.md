@@ -366,11 +366,25 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 ### Lean Declarations
 - theorem: `B754_plus_correct` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:71)
 - theorem: `B754_mult_correct` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:81)
+- theorem: `SF2R_B2SF` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:147)
+- theorem: `B2SF_SF2B` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:60)
+- theorem: `B2SF_inj` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:157)
+- theorem: `SF2B_B2SF` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:160)
+- theorem: `B2R_SF2B` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:196)
+- theorem: `valid_binary_B2SF` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:169)
+- theorem: `SF2B_B2SF_valid` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:182)
 
 ### Mapping (Coq → Lean)
 - `Bplus_correct` → `B754_plus_correct [FloatSpec/src/IEEE754/BinarySingleNaN.lean:71]` (content-equivalent)
 - `Bmult_correct` → `B754_mult_correct [FloatSpec/src/IEEE754/BinarySingleNaN.lean:81]` (content-equivalent)
 - All other Coq declarations above → (no Lean counterpart)
+ - `B2SF_SF2B` → `B2SF_SF2B [FloatSpec/src/IEEE754/BinarySingleNaN.lean:60]` (exact)
+ - `B2SF_inj` → `B2SF_inj [FloatSpec/src/IEEE754/BinarySingleNaN.lean:157]` (exact)
+ - `SF2B_B2SF` → `SF2B_B2SF [FloatSpec/src/IEEE754/BinarySingleNaN.lean:160]` (exact)
+ - `B2R_SF2B` → `B2R_SF2B [FloatSpec/src/IEEE754/BinarySingleNaN.lean:196]` (exact)
+ - `valid_binary_B2SF` → `valid_binary_B2SF [FloatSpec/src/IEEE754/BinarySingleNaN.lean:169]` (spec-variant, hoare)
+ - `SF2B_B2SF_valid` → `SF2B_B2SF_valid [FloatSpec/src/IEEE754/BinarySingleNaN.lean:182]` (spec-variant, hoare)
+  - `SF2R_B2SF` → `SF2R_B2SF [FloatSpec/src/IEEE754/BinarySingleNaN.lean:147]` (exact)
 
 ## File: PrimFloat.v → PrimFloat.lean
 

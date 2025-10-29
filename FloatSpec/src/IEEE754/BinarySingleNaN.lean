@@ -45,6 +45,26 @@ def B2SF_BSN (x : B754) : StandardFloat :=
   | B754.B754_zero s => StandardFloat.S754_zero s
   | B754.B754_nan => StandardFloat.S754_nan
 
+-- Bridge from StandardFloat to BinarySingleNaN (Coq: SF2B)
+def SF2B (x : StandardFloat) : B754 :=
+  match x with
+  | StandardFloat.S754_finite s m e => B754.B754_finite s m e
+  | StandardFloat.S754_infinity s => B754.B754_infinity s
+  | StandardFloat.S754_zero s => B754.B754_zero s
+  | StandardFloat.S754_nan => B754.B754_nan
+
+-- Coq: B2SF_SF2B — standard view after SF2B is identity
+def B2SF_SF2B_check (x : StandardFloat) : Id StandardFloat :=
+  pure (B2SF_BSN (SF2B x))
+
+theorem B2SF_SF2B (x : StandardFloat) :
+  ⦃⌜True⌝⦄
+  B2SF_SF2B_check x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  -- Follows by cases on x; mirroring Coq's SF2B/B2SF roundtrip.
+  exact sorry
+
 -- Finite/NaN/sign classifiers on the BinarySingleNaN side
 def BSN_is_finite (x : B754) : Bool :=
   match x with
@@ -133,6 +153,53 @@ theorem SF2R_B2SF (x : B754) :
   -- Proof deferred.
   exact sorry
 
+-- Coq: SF2B_B2SF — roundtrip from B2SF back to B754 via SF2B
+def SF2B_B2SF_check (x : B754) : Id B754 :=
+  pure (SF2B (B2SF_BSN x))
+
+theorem SF2B_B2SF (x : B754) :
+  ⦃⌜True⌝⦄
+  SF2B_B2SF_check x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  -- By cases on x; definitionally equal.
+  exact sorry
+
+-- Coq: valid_binary_B2SF — validity of `B2SF` image
+def valid_binary_B2SF_check {prec emax : Int} (x : B754) : Id Bool :=
+  pure (valid_binary_SF (prec:=prec) (emax:=emax) (B2SF_BSN x))
+
+theorem valid_binary_B2SF {prec emax} (x : B754) :
+  ⦃⌜True⌝⦄
+  valid_binary_B2SF_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = true⌝⦄ := by
+  intro _
+  -- Holds by the current definition of valid_binary_SF.
+  unfold valid_binary_B2SF_check
+  rfl
+
+-- Coq: SF2B_B2SF_valid — roundtrip with validity argument
+def SF2B_B2SF_valid_check (x : B754) : Id B754 :=
+  pure (SF2B (B2SF_BSN x))
+
+theorem SF2B_B2SF_valid (x : B754) :
+  ⦃⌜True⌝⦄
+  SF2B_B2SF_valid_check x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  -- Same computation as SF2B_B2SF.
+  unfold SF2B_B2SF_valid_check
+  -- Proof deferred.
+  exact sorry
+
+-- Coq: B2SF_inj — injectivity of B2SF on non-NaN values
+theorem B2SF_inj (x y : B754)
+  (hx : BSN_is_nan x = false)
+  (hy : BSN_is_nan y = false)
+  (h : B2SF_BSN x = B2SF_BSN y) : x = y := by
+  -- Proof by cases on x and y; NaN excluded by hypotheses.
+  exact sorry
+
 -- Bridge back from single-NaN view to FullFloat (Coq: BSN2B)
 def BSN2B (s : Bool) (payload : Nat) (x : B754) : FullFloat :=
   match x with
@@ -163,6 +230,18 @@ theorem B2R_BSN2B (s : Bool) (payload : Nat) (x : B754) :
   ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
   intro _
   -- Proof follows by cases on x; deferred.
+  exact sorry
+
+-- Coq: B2R_SF2B — real semantics after SF2B equals SF2R of source
+noncomputable def B2R_SF2B_check (x : StandardFloat) : Id ℝ :=
+  pure (B754_to_R (SF2B x))
+
+theorem B2R_SF2B (x : StandardFloat) :
+  ⦃⌜True⌝⦄
+  B2R_SF2B_check x
+  ⦃⇓result => ⌜result = SF2R 2 x⌝⦄ := by
+  intro _
+  -- Case split on x; follows definitions.
   exact sorry
 
 -- Coq: is_finite_BSN2B — finiteness preserved through BSN2B
