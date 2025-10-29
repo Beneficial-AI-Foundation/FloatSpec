@@ -89,6 +89,12 @@ theorem is_nan_FF2SF (x : FullFloat) :
   is_nan_SF (FF2SF x) = is_nan_FF x := by
   sorry
 
+-- Round-trip when not NaN (Coq: SF2FF_FF2SF)
+theorem SF2FF_FF2SF (x : FullFloat)
+  (hnotnan : is_nan_FF x = false) :
+  SF2FF (FF2SF x) = x := by
+  sorry
+
 -- Sign extraction for FullFloat
 def sign_FF (x : FullFloat) : Bool :=
   match x with
@@ -156,6 +162,26 @@ structure Binary754 (prec emax : Int) where
 def B2FF {prec emax} (x : Binary754 prec emax) : FullFloat := x.val
 def FF2B {prec emax} (x : FullFloat) : Binary754 prec emax :=
   { val := x, valid := by intro; trivial }
+
+-- Coq: B2FF_FF2B — B2FF after FF2B is identity
+theorem B2FF_FF2B {prec emax} (x : FullFloat) :
+  B2FF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x) = x := by
+  rfl
+
+-- Coq: FF2B_B2FF — FF2B after B2FF is identity
+theorem FF2B_B2FF {prec emax} (x : Binary754 prec emax) :
+  FF2B (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x) = x := by
+  sorry
+
+-- Coq: B2FF_inj — B2FF is injective
+theorem B2FF_inj {prec emax} (x y : Binary754 prec emax) :
+  B2FF (prec:=prec) (emax:=emax) x = B2FF (prec:=prec) (emax:=emax) y → x = y := by
+  sorry
+
+-- Coq: FF2R_B2FF — Real semantics preserved by B2FF
+theorem FF2R_B2FF (beta : Int) {prec emax} (x : Binary754 prec emax) :
+  FF2R beta (B2FF (prec:=prec) (emax:=emax) x) = FF2R beta x.val := by
+  sorry
 
 -- Standard IEEE 754 operations
 def binary_add (x y : Binary754 prec emax) : Binary754 prec emax := by
