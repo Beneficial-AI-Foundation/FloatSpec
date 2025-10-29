@@ -4103,32 +4103,9 @@ private theorem round_UP_exists
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f).run ∧
       Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Obtain DN existence from `satisfies_any` via Round_pred
-  have hAny : satisfies_any (fun y => (generic_format beta fexp y).run) :=
-    generic_format_satisfies_any (beta := beta) (fexp := fexp)
-  -- We construct an UP-witness using the explicit DN/UP existence proved below
-  -- together with the symmetry lemma `Rnd_UP_to_DN_via_neg`.
-  -- First obtain a DN witness at -x and flip the sign.
+  -- Obtain a DN witness at -x, then flip the sign and transport properties.
   rcases generic_format_round_DN (beta := beta) (fexp := fexp) (x := -x) hβ with ⟨fdn, hFdn, hdn⟩
-  refine ⟨-fdn, ?_, ?_⟩
-  · -- Format closure under negation
-    exact generic_format_neg_closed beta fexp fdn hFdn
-  · -- Turn `Rnd_DN_pt F (-x) fdn` into `Rnd_UP_pt F x (-fdn)`
-    exact (Rnd_UP_to_DN_via_neg (F := fun y => (generic_format beta fexp y).run) (x := x) (f := -fdn)
-      (Fneg := by
-        intro y hy
-        exact generic_format_neg_closed beta fexp y hy)
-      (by
-        -- Provide `Rnd_UP_pt F (-x) (-(-fdn))`, which is `Rnd_UP_pt F (-x) fdn`,
-        -- using the DN witness at -x and the equivalence between UP at -x and DN at x via negation.
-        -- We already have `hdn : Rnd_DN_pt F (-x) fdn`. Convert it using the helper.
-        -- Specialize the helper with `x := -x`, `f := fdn`.
-        have := Rnd_UP_to_DN_via_neg (F := fun y => (generic_format beta fexp y).run) (x := -x) (f := fdn)
-          (Fneg := by intro y hy; exact generic_format_neg_closed beta fexp y hy)
-          ?hup
-        -- To apply the helper we need an UP point at x; derive it from DN at -x by symmetry.
-        sorry))
-  -- Turn it into UP existence for x via negation
+  -- Candidate UP witness at x is -fdn
   refine ⟨-fdn, ?_, ?_⟩
   · -- Format closure under negation
     exact generic_format_neg_closed beta fexp fdn hFdn
