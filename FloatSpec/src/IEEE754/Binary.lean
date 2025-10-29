@@ -278,6 +278,25 @@ theorem valid_binary_B2FF {prec emax} (x : Binary754 prec emax) :
   unfold valid_binary_B2FF_check
   rfl
 
+-- Coq: valid_binary_SF2FF — validity of SF after conversion to FF
+-- We introduce a StandardFloat-side validity predicate and state
+-- the correspondence in hoare-triple form.
+def valid_binary_SF {prec emax : Int} (x : StandardFloat) : Bool :=
+  -- Placeholder predicate (to be refined): always true for this stub
+  true
+
+def valid_binary_SF2FF_check {prec emax} (x : StandardFloat) : Id Bool :=
+  pure (valid_binary (prec:=prec) (emax:=emax) (SF2FF x))
+
+theorem valid_binary_SF2FF {prec emax} (x : StandardFloat)
+  (hnotnan : is_nan_SF x = false) :
+  ⦃⌜True⌝⦄
+  valid_binary_SF2FF_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = valid_binary_SF (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  unfold valid_binary_SF2FF_check
+  rfl
+
 -- Coq: FF2B_B2FF_valid — round-trip with validity argument
 -- We mirror it in hoare-triple style around the pure computation.
 def FF2B_B2FF_valid_check {prec emax} (x : Binary754 prec emax) : Id (Binary754 prec emax) :=
