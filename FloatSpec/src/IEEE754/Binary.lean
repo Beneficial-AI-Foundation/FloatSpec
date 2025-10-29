@@ -115,6 +115,183 @@ theorem is_nan_build_nan (s : Bool) (payload : Nat) :
   unfold is_nan_build_nan_check build_nan is_nan_FF
   rfl
 
+-- Real value of a freshly built NaN is zero (Coq: B2R_build_nan)
+noncomputable def B2R_build_nan_check (s : Bool) (payload : Nat) : Id ℝ :=
+  pure (FF2R 2 (build_nan s payload))
+
+theorem B2R_build_nan (s : Bool) (payload : Nat) :
+  ⦃⌜True⌝⦄
+  B2R_build_nan_check s payload
+  ⦃⇓result => ⌜result = 0⌝⦄ := by
+  intro _
+  -- Follows from the definition of FF2R on non-finite values
+  -- and the shape of build_nan.
+  unfold B2R_build_nan_check build_nan FF2R
+  rfl
+
+-- Finiteness check of a freshly built NaN is false (Coq: is_finite_build_nan)
+def is_finite_build_nan_check (s : Bool) (payload : Nat) : Id Bool :=
+  pure (is_finite_FF (build_nan s payload))
+
+theorem is_finite_build_nan (s : Bool) (payload : Nat) :
+  ⦃⌜True⌝⦄
+  is_finite_build_nan_check s payload
+  ⦃⇓result => ⌜result = false⌝⦄ := by
+  intro _
+  unfold is_finite_build_nan_check build_nan is_finite_FF
+  rfl
+
+-- Extract a NaN payload (mirrors Coq `get_nan_pl`)
+def get_nan_pl (x : FullFloat) : Nat :=
+  match x with
+  | FullFloat.F754_nan _ pl => pl
+  | _ => 1
+
+-- Hoare wrapper for Coq-style `build_nan_correct`
+-- In Coq: for x with is_nan x = true, build_nan x = x
+-- Here we rebuild a NaN from the sign and payload of `x` and assert equality.
+def build_nan_correct_check (x : { f : FullFloat // is_nan_FF f = true }) : Id FullFloat :=
+  pure (build_nan (sign_FF x.val) (get_nan_pl x.val))
+
+theorem build_nan_correct (x : { f : FullFloat // is_nan_FF f = true }) :
+  ⦃⌜True⌝⦄
+  build_nan_correct_check x
+  ⦃⇓result => ⌜result = x.val⌝⦄ := by
+  intro _
+  -- Proof deferred; follows by case analysis on `x.val` being a NaN
+  -- and unfolding `build_nan`, `sign_FF`, and `get_nan_pl`.
+  sorry
+
+-- A no-op erasure on FullFloat (Coq: erase)
+def erase (x : FullFloat) : FullFloat := x
+
+def erase_check (x : FullFloat) : Id FullFloat :=
+  pure (erase x)
+
+theorem erase_correct (x : FullFloat) :
+  ⦃⌜True⌝⦄
+  erase_check x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  unfold erase_check erase
+  rfl
+
+-- Opposite (negation) on FullFloat (Coq: Bopp)
+def Bopp (x : FullFloat) : FullFloat :=
+  match x with
+  | FullFloat.F754_nan s pl => FullFloat.F754_nan (bnot s) pl
+  | FullFloat.F754_infinity s => FullFloat.F754_infinity (bnot s)
+  | FullFloat.F754_finite s m e => FullFloat.F754_finite (bnot s) m e
+  | FullFloat.F754_zero s => FullFloat.F754_zero (bnot s)
+
+def Bopp_involutive_check (x : FullFloat) : Id FullFloat :=
+  pure (Bopp (Bopp x))
+
+theorem Bopp_involutive (x : FullFloat)
+  (hx : is_nan_FF x = false) :
+  ⦃⌜True⌝⦄
+  Bopp_involutive_check x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  -- Proof deferred; case on x and simplify boolean negations.
+  exact sorry
+
+noncomputable def B2R_Bopp_check (x : FullFloat) : Id ℝ :=
+  pure (FF2R 2 (Bopp x))
+
+theorem B2R_Bopp (x : FullFloat) :
+  ⦃⌜True⌝⦄
+  B2R_Bopp_check x
+  ⦃⇓result => ⌜result = - FF2R 2 x⌝⦄ := by
+  intro _
+  -- Proof deferred; follows the shape of FF2R and Bopp on finite/others.
+  exact sorry
+
+def is_finite_Bopp_check (x : FullFloat) : Id Bool :=
+  pure (is_finite_FF (Bopp x))
+
+theorem is_finite_Bopp (x : FullFloat) :
+  ⦃⌜True⌝⦄
+  is_finite_Bopp_check x
+  ⦃⇓result => ⌜result = is_finite_FF x⌝⦄ := by
+  intro _
+  -- Proof deferred; direct by cases on x.
+  exact sorry
+
+def Bsign_Bopp_check (x : FullFloat) : Id Bool :=
+  pure (sign_FF (Bopp x))
+
+theorem Bsign_Bopp (x : FullFloat) (hx : is_nan_FF x = false) :
+  ⦃⌜True⌝⦄
+  Bsign_Bopp_check x
+  ⦃⇓result => ⌜result = bnot (sign_FF x)⌝⦄ := by
+  intro _
+  -- Proof deferred; case on x using hx to exclude NaN case.
+  exact sorry
+
+-- Absolute value on FullFloat (Coq: Babs)
+def Babs (x : FullFloat) : FullFloat :=
+  match x with
+  | FullFloat.F754_nan s pl => FullFloat.F754_nan s pl
+  | FullFloat.F754_infinity _ => FullFloat.F754_infinity false
+  | FullFloat.F754_finite _ m e => FullFloat.F754_finite false m e
+  | FullFloat.F754_zero _ => FullFloat.F754_zero false
+
+noncomputable def B2R_Babs_check (x : FullFloat) : Id ℝ :=
+  pure (FF2R 2 (Babs x))
+
+theorem B2R_Babs (x : FullFloat) :
+  ⦃⌜True⌝⦄
+  B2R_Babs_check x
+  ⦃⇓result => ⌜result = |FF2R 2 x|⌝⦄ := by
+  intro _
+  -- Proof deferred; follows FF2R and Babs cases.
+  exact sorry
+
+def is_finite_Babs_check (x : FullFloat) : Id Bool :=
+  pure (is_finite_FF (Babs x))
+
+theorem is_finite_Babs (x : FullFloat) :
+  ⦃⌜True⌝⦄
+  is_finite_Babs_check x
+  ⦃⇓result => ⌜result = is_finite_FF x⌝⦄ := by
+  intro _
+  -- Proof deferred; direct by cases on x.
+  exact sorry
+
+def Bsign_Babs_check (x : FullFloat) : Id Bool :=
+  pure (sign_FF (Babs x))
+
+theorem Bsign_Babs (x : FullFloat) (hx : is_nan_FF x = false) :
+  ⦃⌜True⌝⦄
+  Bsign_Babs_check x
+  ⦃⇓result => ⌜result = false⌝⦄ := by
+  intro _
+  -- Proof deferred; case on x using hx to exclude NaN case.
+  exact sorry
+
+def Babs_idempotent_check (x : FullFloat) : Id FullFloat :=
+  pure (Babs (Babs x))
+
+theorem Babs_idempotent (x : FullFloat) (hx : is_nan_FF x = false) :
+  ⦃⌜True⌝⦄
+  Babs_idempotent_check x
+  ⦃⇓result => ⌜result = Babs x⌝⦄ := by
+  intro _
+  -- Proof deferred; case on x using hx to exclude NaN.
+  exact sorry
+
+def Babs_Bopp_check (x : FullFloat) : Id FullFloat :=
+  pure (Babs (Bopp x))
+
+theorem Babs_Bopp (x : FullFloat) (hx : is_nan_FF x = false) :
+  ⦃⌜True⌝⦄
+  Babs_Bopp_check x
+  ⦃⇓result => ⌜result = Babs x⌝⦄ := by
+  intro _
+  -- Proof deferred; case on x using hx to exclude NaN.
+  exact sorry
+
 -- Sign extraction for FullFloat
 def sign_FF (x : FullFloat) : Bool :=
   match x with

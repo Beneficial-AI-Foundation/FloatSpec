@@ -133,6 +133,62 @@ theorem SF2R_B2SF (x : B754) :
   -- Proof deferred.
   exact sorry
 
+-- Bridge back from single-NaN view to FullFloat (Coq: BSN2B)
+def BSN2B (s : Bool) (payload : Nat) (x : B754) : FullFloat :=
+  match x with
+  | B754.B754_nan => FullFloat.F754_nan s payload
+  | B754.B754_zero b => FullFloat.F754_zero b
+  | B754.B754_infinity b => FullFloat.F754_infinity b
+  | B754.B754_finite b m e => FullFloat.F754_finite b m e
+
+-- Coq: B2BSN_BSN2B — roundtrip through the bridge
+def B2BSN_BSN2B_check {prec emax} (s : Bool) (payload : Nat) (x : B754) : Id B754 :=
+  pure (B2BSN (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) (BSN2B s payload x)))
+
+theorem B2BSN_BSN2B {prec emax} (s : Bool) (payload : Nat) (x : B754) :
+  ⦃⌜True⌝⦄
+  B2BSN_BSN2B_check (prec:=prec) (emax:=emax) s payload x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  unfold B2BSN_BSN2B_check BSN2B B2BSN FF2B
+  cases x <;> rfl
+
+-- Coq: B2R_BSN2B — real semantics preserved through BSN2B
+noncomputable def B2R_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Id ℝ :=
+  pure (FF2R 2 (BSN2B s payload x))
+
+theorem B2R_BSN2B (s : Bool) (payload : Nat) (x : B754) :
+  ⦃⌜True⌝⦄
+  B2R_BSN2B_check s payload x
+  ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
+  intro _
+  -- Proof follows by cases on x; deferred.
+  exact sorry
+
+-- Coq: is_finite_BSN2B — finiteness preserved through BSN2B
+def is_finite_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Id Bool :=
+  pure (is_finite_FF (BSN2B s payload x))
+
+theorem is_finite_BSN2B (s : Bool) (payload : Nat) (x : B754) :
+  ⦃⌜True⌝⦄
+  is_finite_BSN2B_check s payload x
+  ⦃⇓result => ⌜result = BSN_is_finite x⌝⦄ := by
+  intro _
+  -- Proof by cases on x; deferred.
+  exact sorry
+
+-- Coq: is_nan_BSN2B — NaN preserved through BSN2B
+def is_nan_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Id Bool :=
+  pure (is_nan_FF (BSN2B s payload x))
+
+theorem is_nan_BSN2B (s : Bool) (payload : Nat) (x : B754) :
+  ⦃⌜True⌝⦄
+  is_nan_BSN2B_check s payload x
+  ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
+  intro _
+  -- Proof by cases on x; deferred.
+  exact sorry
+
 -- Valid B754 predicate
 def validB754 (x : B754) : Prop :=
   match x with
