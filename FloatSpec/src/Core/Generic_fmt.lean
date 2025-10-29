@@ -4095,38 +4095,54 @@ private theorem Rnd_UP_to_DN_via_neg
 -- (helpers moved above)
 
 -- (duplicate removed) 
-/- Placeholder existence theorem: There exists a round-up value in the generic format.
-    A constructive proof requires additional spacing/discreteness lemmas for the format.
--/
--- Note: duplicate removed to avoid multiple identical declarations
-private theorem round_UP_exists
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
-    ∃ f, (generic_format beta fexp f).run ∧
-      Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Obtain a DN witness at -x, then flip the sign and transport properties.
-  rcases generic_format_round_DN (beta := beta) (fexp := fexp) (x := -x) hβ with ⟨fdn, hFdn, hdn⟩
-  -- Candidate UP witness at x is -fdn
-  refine ⟨-fdn, ?_, ?_⟩
-  · -- Format closure under negation
-    exact generic_format_neg_closed beta fexp fdn hFdn
-  · -- Use the transformation lemma specialized to the generic format predicate
-    -- Unpack DN at -x
-    rcases hdn with ⟨hF_fdn, hfdn_le, hmax⟩
-    -- Show x ≤ -fdn
-    have hx_le : x ≤ -fdn := by
-      have : fdn ≤ -x := hfdn_le
-      -- negate both sides
-      simpa using (neg_le_neg this)
-    -- Minimality for UP: any g with F g and x ≤ g must satisfy -fdn ≤ g
-    have hmin : ∀ g : ℝ, (generic_format beta fexp g).run → x ≤ g → -fdn ≤ g := by
-      intro g hgF hxle
-      -- Consider -g, which is in F and satisfies (-g) ≤ (-x)
-      have hFneg_g : (generic_format beta fexp (-g)).run := generic_format_neg_closed beta fexp g hgF
-      have hx_le_neg : (-g) ≤ (-x) := by simpa using (neg_le_neg hxle)
-      -- Maximality for DN at -x gives (-g) ≤ fdn, hence -fdn ≤ g
-      have : (-g) ≤ fdn := hmax (-g) hFneg_g hx_le_neg
-      simpa using (neg_le_neg this)
-    exact ⟨by simpa using (generic_format_neg_closed beta fexp fdn hFdn), hx_le, hmin⟩
+/- Placeholder existence theorems placed in a mutual block to avoid forward references.
+   We prove UP-existence from DN at −x and DN-existence from UP at −x, using
+   the negation-transport lemmas above. -/
+mutual
+  theorem round_UP_exists
+      (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
+      ∃ f, (generic_format beta fexp f).run ∧
+        Rnd_UP_pt (fun y => (generic_format beta fexp y).run) x f := by
+    -- Obtain a DN witness at -x, then flip the sign and transport properties.
+    rcases generic_format_round_DN (beta := beta) (fexp := fexp) (x := -x) hβ with ⟨fdn, hFdn, hdn⟩
+    -- Candidate UP witness at x is -fdn
+    refine ⟨-fdn, ?_, ?_⟩
+    · -- Format closure under negation
+      exact generic_format_neg_closed beta fexp fdn hFdn
+    · -- Use the transformation lemma specialized to the generic format predicate
+      -- Unpack DN at -x
+      rcases hdn with ⟨hF_fdn, hfdn_le, hmax⟩
+      -- Show x ≤ -fdn
+      have hx_le : x ≤ -fdn := by
+        have : fdn ≤ -x := hfdn_le
+        -- negate both sides
+        simpa using (neg_le_neg this)
+      -- Minimality for UP: any g with F g and x ≤ g must satisfy -fdn ≤ g
+      have hmin : ∀ g : ℝ, (generic_format beta fexp g).run → x ≤ g → -fdn ≤ g := by
+        intro g hgF hxle
+        -- Consider -g, which is in F and satisfies (-g) ≤ (-x)
+        have hFneg_g : (generic_format beta fexp (-g)).run := generic_format_neg_closed beta fexp g hgF
+        have hx_le_neg : (-g) ≤ (-x) := by simpa using (neg_le_neg hxle)
+        -- Maximality for DN at -x gives (-g) ≤ fdn, hence -fdn ≤ g
+        have : (-g) ≤ fdn := hmax (-g) hFneg_g hx_le_neg
+        simpa using (neg_le_neg this)
+      exact ⟨by simpa using (generic_format_neg_closed beta fexp fdn hFdn), hx_le, hmin⟩
+
+  theorem generic_format_round_DN (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int)
+      [Valid_exp beta fexp] (x : ℝ) :
+      ∃ f, (generic_format beta fexp f).run ∧ Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
+    -- Derive DN existence for x from UP existence for -x via negation
+    have hFneg : ∀ y, (generic_format beta fexp y).run → (generic_format beta fexp (-y)).run :=
+      generic_format_neg_closed beta fexp
+    -- Use the UP existence at -x (obtained via the mutual existence lemma)
+    rcases round_UP_exists (beta := beta) (fexp := fexp) (x := -x) hbeta with ⟨fu, hFu, hup⟩
+    -- Transform to DN at x with f = -fu
+    refine ⟨-fu, ?_, ?_⟩
+    · exact hFneg fu hFu
+    · -- Apply the transformation lemma
+      exact Rnd_UP_to_DN_via_neg (F := fun y => (generic_format beta fexp y).run) (x := x) (f := fu)
+        hFneg hup
+end
 
 theorem round_NA_pt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -4149,19 +4165,7 @@ theorem round_NA_pt
     A constructive proof requires additional spacing/discreteness lemmas for the format.
 -/
 -- [duplicate removed]
-theorem generic_format_round_DN (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
-    ∃ f, (generic_format beta fexp f).run ∧ Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  -- Derive DN existence for x from UP existence for -x via negation
-  have hFneg : ∀ y, (generic_format beta fexp y).run → (generic_format beta fexp (-y)).run :=
-    generic_format_neg_closed beta fexp
-  -- Use the UP existence at -x (obtained from `satisfies_any`)
-  rcases round_UP_exists (beta := beta) (fexp := fexp) (x := -x) hbeta with ⟨fu, hFu, hup⟩
-  -- Transform to DN at x with f = -fu
-  refine ⟨-fu, ?_, ?_⟩
-  · exact hFneg fu hFu
-  · -- Apply the transformation lemma
-    exact Rnd_UP_to_DN_via_neg (F := fun y => (generic_format beta fexp y).run) (x := x) (f := fu)
-      hFneg hup
+-- (generic_format_round_DN moved into the mutual block above)
 
 /-- Placeholder existence theorem: There exists a round-down value in the generic format.
     A constructive proof requires additional spacing/discreteness lemmas for the format.
