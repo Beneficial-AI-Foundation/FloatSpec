@@ -267,7 +267,7 @@ def valid_binary {prec emax : Int} (x : FullFloat) : Bool :=
   -- Placeholder predicate (to be refined): always true for this stub
   true
 
-def valid_binary_B2FF_check {prec emax} (x : Binary754 prec emax) : Id Bool :=
+def valid_binary_B2FF_check {prec emax : Int} (x : Binary754 prec emax) : Id Bool :=
   pure (valid_binary (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x))
 
 theorem valid_binary_B2FF {prec emax} (x : Binary754 prec emax) :
@@ -285,7 +285,7 @@ def valid_binary_SF {prec emax : Int} (x : StandardFloat) : Bool :=
   -- Placeholder predicate (to be refined): always true for this stub
   true
 
-def valid_binary_SF2FF_check {prec emax} (x : StandardFloat) : Id Bool :=
+def valid_binary_SF2FF_check {prec emax : Int} (x : StandardFloat) : Id Bool :=
   pure (valid_binary (prec:=prec) (emax:=emax) (SF2FF x))
 
 theorem valid_binary_SF2FF {prec emax} (x : StandardFloat)
@@ -299,7 +299,7 @@ theorem valid_binary_SF2FF {prec emax} (x : StandardFloat)
 
 -- Coq: FF2B_B2FF_valid — round-trip with validity argument
 -- We mirror it in hoare-triple style around the pure computation.
-def FF2B_B2FF_valid_check {prec emax} (x : Binary754 prec emax) : Id (Binary754 prec emax) :=
+def FF2B_B2FF_valid_check {prec emax : Int} (x : Binary754 prec emax) : Id (Binary754 prec emax) :=
   pure (FF2B (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x))
 
 theorem FF2B_B2FF_valid {prec emax} (x : Binary754 prec emax) :
@@ -309,6 +309,33 @@ theorem FF2B_B2FF_valid {prec emax} (x : Binary754 prec emax) :
   intro _
   unfold FF2B_B2FF_valid_check
   simpa using (FF2B_B2FF (prec:=prec) (emax:=emax) x)
+
+-- Coq: match_FF2B — pattern match through FF2B corresponds to match on source
+-- We expose a small check returning the right-hand side match directly on `x`.
+def match_FF2B_check {T : Type} (fz : Bool → T) (fi : Bool → T)
+  (fn : Bool → Nat → T) (ff : Bool → Nat → Int → T)
+  (x : FullFloat) : Id T :=
+  pure <|
+    match x with
+    | FullFloat.F754_zero sx => fz sx
+    | FullFloat.F754_infinity sx => fi sx
+    | FullFloat.F754_nan b p => fn b p
+    | FullFloat.F754_finite sx mx ex => ff sx mx ex
+
+theorem match_FF2B {T : Type} (fz : Bool → T) (fi : Bool → T)
+  (fn : Bool → Nat → T) (ff : Bool → Nat → Int → T)
+  (x : FullFloat) :
+  ⦃⌜True⌝⦄
+  match_FF2B_check fz fi fn ff x
+  ⦃⇓result => ⌜result =
+      (match x with
+       | FullFloat.F754_zero sx => fz sx
+       | FullFloat.F754_infinity sx => fi sx
+       | FullFloat.F754_nan b p => fn b p
+       | FullFloat.F754_finite sx mx ex => ff sx mx ex)⌝⦄ := by
+  intro _
+  unfold match_FF2B_check
+  rfl
 
 -- Standard IEEE 754 operations
 def binary_add (x y : Binary754 prec emax) : Binary754 prec emax := by
