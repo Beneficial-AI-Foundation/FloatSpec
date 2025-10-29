@@ -1,6 +1,7 @@
 -- Mirror of Coq file: flocq/src/Pff/Nat2Z_8_12.v
 -- Provides Nat → Int compatibility lemma for division.
 
+import Std.Do.Triple
 import FloatSpec.src.Core
 import FloatSpec.src.Compat
 
@@ -21,7 +22,7 @@ theorem inj_div (n m : Nat) :
     ⦃⌜True⌝⦄
     inj_div_eval n m
     ⦃⇓result => ⌜result = Int.ofNat n / Int.ofNat m⌝⦄ := by
+  -- Proof deferred for later alignment with Coq’s `Nat2Z.inj_div`.
   sorry
 
 end FloatSpec.Pff.Nat2Z
-

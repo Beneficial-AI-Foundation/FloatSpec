@@ -917,6 +917,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Odd_0` → `not_odd_0` (Pff.lean:25) (content-equivalent)
 - `Odd_1` → `odd_1` (Pff.lean:20) (content-equivalent)
 - `min_or` → (no Lean counterpart)
+- `min_or` → `min_or` (Pff.lean:68)
 - `convert_not_O` → (no Lean counterpart)
 - `inj_abs` → (no Lean counterpart)
 - `inject_nat_convert` → (no Lean counterpart)

@@ -64,6 +64,15 @@ theorem pow_neg (r : ℝ) (z : Int) :
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
 
+-- Discrete min disjunction (Coq: Pff.v `min_or`)
+theorem min_or (n m : Nat) :
+  (Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n) := by
+  sorry
+
+-- Coq: `ZleLe` — order reflection through Int.ofNat
+theorem ZleLe (x y : Nat) (h : (Int.ofNat x ≤ Int.ofNat y)) : x ≤ y := by
+  sorry
+
 -- List operations used in Pff
 def list_sum (l : List ℝ) : ℝ :=
   l.foldr (· + ·) 0
