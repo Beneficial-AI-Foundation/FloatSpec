@@ -1,0 +1,419 @@
+# IEEE754 Theorems Comparison (content-reviewed)
+
+This file lists theorem-like declarations per file (Coq vs Lean) and records correspondences judged by statement intent. Names may differ; mapping is by content where appropriate.
+
+## File: Bits.v → Bits.lean
+
+### Coq Declarations
+- Lemma: `join_bits_range`
+- Theorem: `split_join_bits`
+- Theorem: `join_split_bits`
+- Theorem: `split_bits_inj`
+- Theorem: `split_bits_of_binary_float_correct`
+- Theorem: `bits_of_binary_float_range`
+- Lemma: `binary_float_of_bits_aux_correct`
+- Theorem: `binary_float_of_bits_of_binary_float`
+- Theorem: `bits_of_binary_float_of_bits`
+
+### Lean Declarations
+- theorem: `join_bits_range` (FloatSpec/src/IEEE754/Bits.lean:20)
+- theorem: `split_join_bits` (FloatSpec/src/IEEE754/Bits.lean:33)
+- theorem: `join_split_bits` (FloatSpec/src/IEEE754/Bits.lean:39)
+- theorem: `binary_bits_roundtrip` (FloatSpec/src/IEEE754/Bits.lean:66)
+- theorem: `bits_binary_roundtrip` (FloatSpec/src/IEEE754/Bits.lean:70)
+
+### Mapping (Coq → Lean)
+- `join_bits_range` → `join_bits_range [FloatSpec/src/IEEE754/Bits.lean:20]` (exact)
+- `split_join_bits` → `split_join_bits [FloatSpec/src/IEEE754/Bits.lean:33]` (exact)
+- `join_split_bits` → `join_split_bits [FloatSpec/src/IEEE754/Bits.lean:39]` (exact)
+- `split_bits_inj` → (no Lean counterpart)
+- `split_bits_of_binary_float_correct` → (no Lean counterpart)
+- `bits_of_binary_float_range` → (no Lean counterpart)
+- `binary_float_of_bits_aux_correct` → (no Lean counterpart)
+- `binary_float_of_bits_of_binary_float` → `binary_bits_roundtrip [FloatSpec/src/IEEE754/Bits.lean:66]` (content-equivalent)
+- `bits_of_binary_float_of_bits` → `bits_binary_roundtrip [FloatSpec/src/IEEE754/Bits.lean:70]` (content-equivalent)
+
+## File: Binary.v → Binary.lean
+
+### Coq Declarations
+- Lemma: `SF2R_FF2SF`
+- Lemma: `FF2SF_SF2FF`
+- Lemma: `FF2R_SF2FF`
+- Lemma: `is_nan_SF2FF`
+- Lemma: `is_nan_FF2SF`
+- Lemma: `SF2FF_FF2SF`
+- Lemma: `is_finite_SF2FF`
+- Lemma: `sign_SF2FF`
+- Lemma: `valid_binary_SF2FF`
+- Lemma: `B2SF_B2BSN`
+- Lemma: `B2SF_FF2B`
+- Lemma: `B2R_B2BSN`
+- Lemma: `FF2SF_B2FF`
+- Theorem: `FF2R_B2FF`
+- Theorem: `B2FF_FF2B`
+- Theorem: `valid_binary_B2FF`
+- Theorem: `FF2B_B2FF`
+- Theorem: `FF2B_B2FF_valid`
+- Theorem: `B2R_FF2B`
+- Theorem: `match_FF2B`
+- Theorem: `canonical_canonical_mantissa`
+- Theorem: `generic_format_B2R`
+- Theorem: `FLT_format_B2R`
+- Theorem: `B2FF_inj`
+- Lemma: `is_finite_strict_B2BSN`
+- Theorem: `B2R_inj`
+- Theorem: `Bsign_FF2B`
+- Lemma: `is_finite_B2BSN`
+- Theorem: `is_finite_FF2B`
+- Theorem: `is_finite_B2FF`
+- Theorem: `B2R_Bsign_inj`
+- Lemma: `is_nan_B2BSN`
+- Theorem: `is_nan_FF2B`
+- Theorem: `is_nan_B2FF`
+- Theorem: `build_nan_correct`
+- Theorem: `B2R_build_nan`
+- Theorem: `is_finite_build_nan`
+- Theorem: `is_nan_build_nan`
+- Lemma: `B2BSN_BSN2B`
+- Lemma: `B2R_BSN2B`
+- Lemma: `is_finite_BSN2B`
+- Lemma: `is_nan_BSN2B`
+- Lemma: `Bsign_B2BSN`
+- Lemma: `Bsign_BSN2B`
+- Lemma: `B2BSN_BSN2B'`
+- Lemma: `B2R_BSN2B'`
+- Lemma: `B2FF_BSN2B'`
+- Lemma: `Bsign_BSN2B'`
+- Lemma: `is_finite_BSN2B'`
+- Lemma: `is_nan_BSN2B'`
+- Theorem: `erase_correct`
+- Theorem: `Bopp_involutive`
+- Theorem: `B2R_Bopp`
+- Theorem: `is_finite_Bopp`
+- Lemma: `Bsign_Bopp`
+- Theorem: `B2R_Babs`
+- Theorem: `is_finite_Babs`
+- Theorem: `Bsign_Babs`
+- Theorem: `Babs_idempotent`
+- Theorem: `Babs_Bopp`
+- Theorem: `Bcompare_correct`
+- Theorem: `Bcompare_swap`
+- Theorem: `bounded_le_emax_minus_prec`
+- Theorem: `bounded_lt_emax`
+- Theorem: `bounded_ge_emin`
+- Theorem: `abs_B2R_le_emax_minus_prec`
+- Theorem: `abs_B2R_lt_emax`
+- Theorem: `abs_B2R_ge_emin`
+- Theorem: `bounded_canonical_lt_emax`
+- Theorem: `shr_fexp_truncate`
+- Lemma: `eq_binary_overflow_FF2SF`
+- Theorem: `binary_round_aux_correct'`
+- Theorem: `binary_round_aux_correct`
+- Theorem: `Bmult_correct`
+- Lemma: `shl_align_fexp_correct`
+- Theorem: `binary_round_correct`
+- Theorem: `binary_normalize_correct`
+- Theorem: `Bplus_correct`
+- Theorem: `Bminus_correct`
+- Theorem: `Bfma_correct`
+- Theorem: `Bdiv_correct`
+- Theorem: `Bsqrt_correct`
+- Theorem: `Bnearbyint_correct`
+- Theorem: `Btrunc_correct`
+- Theorem: `Bone_correct`
+- Lemma: `is_finite_Bone`
+- Lemma: `Bsign_Bone`
+- Lemma: `B2BSN_lift`
+- Theorem: `Bldexp_correct`
+- Theorem: `Bfrexp_correct`
+- Theorem: `Bulp_correct`
+- Lemma: `Bsucc_correct`
+- Lemma: `Bpred_correct`
+
+### Lean Declarations
+- theorem: `SF2R_FF2SF` (FloatSpec/src/IEEE754/Binary.lean:48)
+- theorem: `FF2SF_SF2FF` (FloatSpec/src/IEEE754/Binary.lean:61)
+- theorem: `is_nan_SF2FF` (FloatSpec/src/IEEE754/Binary.lean:78)
+- theorem: `is_finite_SF2FF` (FloatSpec/src/IEEE754/Binary.lean:113)
+- theorem: `sign_SF2FF` (FloatSpec/src/IEEE754/Binary.lean:118)
+- theorem: `binary_add_correct` (FloatSpec/src/IEEE754/Binary.lean:164)
+- theorem: `binary_mul_correct` (FloatSpec/src/IEEE754/Binary.lean:170)
+
+### Mapping (Coq → Lean)
+- `SF2R_FF2SF` → `SF2R_FF2SF [FloatSpec/src/IEEE754/Binary.lean:48]` (exact)
+- `FF2SF_SF2FF` → `FF2SF_SF2FF [FloatSpec/src/IEEE754/Binary.lean:61]` (exact)
+- `FF2R_SF2FF` → (no Lean counterpart)
+- `is_nan_SF2FF` → `is_nan_SF2FF [FloatSpec/src/IEEE754/Binary.lean:78]` (exact)
+- `is_nan_FF2SF` → (no Lean counterpart)
+- `SF2FF_FF2SF` → (no Lean counterpart)
+- `is_finite_SF2FF` → `is_finite_SF2FF [FloatSpec/src/IEEE754/Binary.lean:113]` (exact)
+- `sign_SF2FF` → `sign_SF2FF [FloatSpec/src/IEEE754/Binary.lean:118]` (exact)
+- `valid_binary_SF2FF` → (no Lean counterpart)
+- `B2SF_B2BSN` → (no Lean counterpart)
+- `B2SF_FF2B` → (no Lean counterpart)
+- `B2R_B2BSN` → (no Lean counterpart)
+- `FF2SF_B2FF` → (no Lean counterpart)
+- `FF2R_B2FF` → (no Lean counterpart)
+- `B2FF_FF2B` → (no Lean counterpart)
+- `valid_binary_B2FF` → (no Lean counterpart)
+- `FF2B_B2FF` → (no Lean counterpart)
+- `FF2B_B2FF_valid` → (no Lean counterpart)
+- `B2R_FF2B` → (no Lean counterpart)
+- `match_FF2B` → (no Lean counterpart)
+- `canonical_canonical_mantissa` → (no Lean counterpart)
+- `generic_format_B2R` → (no Lean counterpart)
+- `FLT_format_B2R` → (no Lean counterpart)
+- `B2FF_inj` → (no Lean counterpart)
+- `is_finite_strict_B2BSN` → (no Lean counterpart)
+- `B2R_inj` → (no Lean counterpart)
+- `Bsign_FF2B` → (no Lean counterpart)
+- `is_finite_B2BSN` → (no Lean counterpart)
+- `is_finite_FF2B` → (no Lean counterpart)
+- `is_finite_B2FF` → (no Lean counterpart)
+- `B2R_Bsign_inj` → (no Lean counterpart)
+- `is_nan_B2BSN` → (no Lean counterpart)
+- `is_nan_FF2B` → (no Lean counterpart)
+- `is_nan_B2FF` → (no Lean counterpart)
+- `build_nan_correct` → (no Lean counterpart)
+- `B2R_build_nan` → (no Lean counterpart)
+- `is_finite_build_nan` → (no Lean counterpart)
+- `is_nan_build_nan` → (no Lean counterpart)
+- `B2BSN_BSN2B` → (no Lean counterpart)
+- `B2R_BSN2B` → (no Lean counterpart)
+- `is_finite_BSN2B` → (no Lean counterpart)
+- `is_nan_BSN2B` → (no Lean counterpart)
+- `Bsign_B2BSN` → (no Lean counterpart)
+- `Bsign_BSN2B` → (no Lean counterpart)
+- `B2BSN_BSN2B'` → (no Lean counterpart)
+- `B2R_BSN2B'` → (no Lean counterpart)
+- `B2FF_BSN2B'` → (no Lean counterpart)
+- `Bsign_BSN2B'` → (no Lean counterpart)
+- `is_finite_BSN2B'` → (no Lean counterpart)
+- `is_nan_BSN2B'` → (no Lean counterpart)
+- `erase_correct` → (no Lean counterpart)
+- `Bopp_involutive` → (no Lean counterpart)
+- `B2R_Bopp` → (no Lean counterpart)
+- `is_finite_Bopp` → (no Lean counterpart)
+- `Bsign_Bopp` → (no Lean counterpart)
+- `B2R_Babs` → (no Lean counterpart)
+- `is_finite_Babs` → (no Lean counterpart)
+- `Bsign_Babs` → (no Lean counterpart)
+- `Babs_idempotent` → (no Lean counterpart)
+- `Babs_Bopp` → (no Lean counterpart)
+- `Bcompare_correct` → (no Lean counterpart)
+- `Bcompare_swap` → (no Lean counterpart)
+- `bounded_le_emax_minus_prec` → (no Lean counterpart)
+- `bounded_lt_emax` → (no Lean counterpart)
+- `bounded_ge_emin` → (no Lean counterpart)
+- `abs_B2R_le_emax_minus_prec` → (no Lean counterpart)
+- `abs_B2R_lt_emax` → (no Lean counterpart)
+- `abs_B2R_ge_emin` → (no Lean counterpart)
+- `bounded_canonical_lt_emax` → (no Lean counterpart)
+- `shr_fexp_truncate` → (no Lean counterpart)
+- `eq_binary_overflow_FF2SF` → (no Lean counterpart)
+- `binary_round_aux_correct'` → (no Lean counterpart)
+- `binary_round_aux_correct` → (no Lean counterpart)
+- `Bmult_correct` → `binary_mul_correct [FloatSpec/src/IEEE754/Binary.lean:170]` (content-equivalent)
+- `shl_align_fexp_correct` → (no Lean counterpart)
+- `binary_round_correct` → (no Lean counterpart)
+- `binary_normalize_correct` → (no Lean counterpart)
+- `Bplus_correct` → `binary_add_correct [FloatSpec/src/IEEE754/Binary.lean:164]` (content-equivalent)
+- `Bminus_correct` → (no Lean counterpart)
+- `Bfma_correct` → (no Lean counterpart)
+- `Bdiv_correct` → (no Lean counterpart)
+- `Bsqrt_correct` → (no Lean counterpart)
+- `Bnearbyint_correct` → (no Lean counterpart)
+- `Btrunc_correct` → (no Lean counterpart)
+- `Bone_correct` → (no Lean counterpart)
+- `is_finite_Bone` → (no Lean counterpart)
+- `Bsign_Bone` → (no Lean counterpart)
+- `B2BSN_lift` → (no Lean counterpart)
+- `Bldexp_correct` → (no Lean counterpart)
+- `Bfrexp_correct` → (no Lean counterpart)
+- `Bulp_correct` → (no Lean counterpart)
+- `Bsucc_correct` → (no Lean counterpart)
+- `Bpred_correct` → (no Lean counterpart)
+
+## File: BinarySingleNaN.v → BinarySingleNaN.lean
+
+### Coq Declarations
+- Theorem: `SF2R_B2SF`
+- Theorem: `B2SF_SF2B`
+- Theorem: `valid_binary_B2SF`
+- Theorem: `SF2B_B2SF`
+- Theorem: `SF2B_B2SF_valid`
+- Theorem: `B2R_SF2B`
+- Theorem: `match_SF2B`
+- Theorem: `canonical_canonical_mantissa`
+- Theorem: `canonical_bounded`
+- Lemma: `emin_lt_emax`
+- Lemma: `fexp_emax`
+- Theorem: `generic_format_B2R`
+- Theorem: `FLT_format_B2R`
+- Theorem: `B2SF_inj`
+- Theorem: `SF2B'_B2SF`
+- Theorem: `is_finite_strict_B2R`
+- Theorem: `is_finite_strict_SF2B`
+- Theorem: `B2R_inj`
+- Theorem: `Bsign_SF2B`
+- Theorem: `is_finite_SF2B`
+- Theorem: `is_finite_SF_B2SF`
+- Theorem: `B2R_Bsign_inj`
+- Theorem: `is_nan_SF2B`
+- Theorem: `is_nan_SF_B2SF`
+- Theorem: `erase_correct`
+- Theorem: `Bopp_involutive`
+- Theorem: `B2R_Bopp`
+- Theorem: `is_nan_Bopp`
+- Theorem: `is_finite_Bopp`
+- Theorem: `is_finite_strict_Bopp`
+- Lemma: `Bsign_Bopp`
+- Theorem: `B2R_Babs`
+- Theorem: `is_nan_Babs`
+- Theorem: `is_finite_Babs`
+- Theorem: `is_finite_strict_Babs`
+- Theorem: `Bsign_Babs`
+- Theorem: `Babs_idempotent`
+- Theorem: `Babs_Bopp`
+- Theorem: `Bcompare_correct`
+- Theorem: `Bcompare_swap`
+- Theorem: `Beqb_correct`
+- Theorem: `Beqb_refl`
+- Theorem: `Bltb_correct`
+- Theorem: `Bleb_correct`
+- Theorem: `bounded_le_emax_minus_prec`
+- Theorem: `bounded_lt_emax`
+- Theorem: `bounded_le_emax_minus_prec`
+- Theorem: `bounded_ge_emin`
+- Theorem: `abs_B2R_le_emax_minus_prec`
+- Theorem: `abs_B2R_lt_emax`
+- Theorem: `abs_B2R_ge_emin`
+- Theorem: `bounded_canonical_lt_emax`
+- Theorem: `shr_m_shr_record_of_loc`
+- Theorem: `loc_of_shr_record_of_loc`
+- Lemma: `inbetween_shr_1`
+- Lemma: `shr_nat`
+- Lemma: `le_shr1_le`
+- Theorem: `inbetween_shr`
+- Lemma: `le_shr_le`
+- Lemma: `shr_limit`
+- Theorem: `shr_truncate`
+- Theorem: `shr_fexp_truncate`
+- Lemma: `le_choice_mode_le`
+- Lemma: `round_mode_choice_mode`
+- Theorem: `is_nan_binary_overflow`
+- Theorem: `binary_overflow_correct`
+- Theorem: `binary_fit_aux_correct`
+- Theorem: `binary_round_aux_correct'`
+- Theorem: `binary_round_aux_correct`
+- Theorem: `Bmult_correct_aux`
+- Theorem: `Bmult_correct`
+- Theorem: `shl_align_correct'`
+- Theorem: `shl_align_correct`
+- Lemma: `snd_shl_align`
+- Lemma: `shl_align_fexp_correct`
+- Theorem: `binary_round_correct`
+- Theorem: `is_nan_binary_round`
+- Theorem: `binary_normalize_correct`
+- Theorem: `is_nan_binary_normalize`
+- Theorem: `Fplus_naive_correct`
+- Theorem: `sign_plus_overflow`
+- Theorem: `Bplus_correct`
+- Theorem: `Bminus_correct`
+- Theorem: `Bfma_correct`
+- Theorem: `Bdiv_correct_aux`
+- Theorem: `Bdiv_correct`
+- Theorem: `Bsqrt_correct_aux`
+- Theorem: `Bsqrt_correct`
+- Theorem: `Bnearbyint_correct_aux`
+- Theorem: `Bnearbyint_correct`
+- Theorem: `Btrunc_correct`
+- Theorem: `Bone_correct`
+- Theorem: `is_finite_strict_Bone`
+- Theorem: `is_nan_Bone`
+- Theorem: `is_finite_Bone`
+- Theorem: `Bsign_Bone`
+- Theorem: `Bmax_float_proof`
+- Theorem: `Bnormfr_mantissa_correct`
+- Theorem: `is_nan_Bldexp`
+- Theorem: `Bldexp_correct`
+- Theorem: `Bldexp_Bopp_NE`
+- Theorem: `Bfrexp_correct_aux`
+- Theorem: `is_nan_Bfrexp`
+- Theorem: `Bfrexp_correct`
+- Theorem: `Bulp_correct_aux`
+- Theorem: `is_nan_Bulp`
+- Theorem: `Bulp_correct`
+- Theorem: `is_finite_strict_Bulp`
+- Theorem: `Bulp'_correct`
+- Theorem: `is_nan_Bsucc`
+- Theorem: `Bsucc_correct`
+- Theorem: `is_nan_Bpred`
+- Theorem: `Bpred_correct`
+- Theorem: `Bpred_pos'_correct`
+- Theorem: `Bsucc'_correct`
+
+### Lean Declarations
+- theorem: `B754_plus_correct` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:71)
+- theorem: `B754_mult_correct` (FloatSpec/src/IEEE754/BinarySingleNaN.lean:81)
+
+### Mapping (Coq → Lean)
+- `Bplus_correct` → `B754_plus_correct [FloatSpec/src/IEEE754/BinarySingleNaN.lean:71]` (content-equivalent)
+- `Bmult_correct` → `B754_mult_correct [FloatSpec/src/IEEE754/BinarySingleNaN.lean:81]` (content-equivalent)
+- All other Coq declarations above → (no Lean counterpart)
+
+## File: PrimFloat.v → PrimFloat.lean
+
+### Coq Declarations
+- Lemma: `B2Prim_Prim2B`
+- Lemma: `Prim2B_B2Prim`
+- Lemma: `Prim2B_inj`
+- Lemma: `B2Prim_inj`
+- Lemma: `B2SF_Prim2B`
+- Lemma: `Prim2SF_B2Prim`
+- Theorem: `opp_equiv`
+- Theorem: `abs_equiv`
+- Theorem: `compare_equiv`
+- Lemma: `round_nearest_even_equiv`
+- Lemma: `binary_round_aux_equiv`
+- Theorem: `mul_equiv`
+- Lemma: `binary_round_equiv`
+- Lemma: `binary_normalize_equiv`
+- Theorem: `add_equiv`
+- Theorem: `sub_equiv`
+- Theorem: `div_equiv`
+- Theorem: `sqrt_equiv`
+- Theorem: `normfr_mantissa_equiv`
+- Theorem: `ldexp_equiv`
+- Theorem: `ldshiftexp_equiv`
+- Theorem: `frexp_equiv`
+- Theorem: `frshiftexp_equiv`
+- Theorem: `infinity_equiv`
+- Theorem: `neg_infinity_equiv`
+- Theorem: `nan_equiv`
+- Theorem: `zero_equiv`
+- Theorem: `neg_zero_equiv`
+- Theorem: `one_equiv`
+- Theorem: `two_equiv`
+- Theorem: `ulp_equiv`
+- Theorem: `next_up_equiv`
+- Theorem: `next_down_equiv`
+- Theorem: `is_nan_equiv`
+- Theorem: `is_zero_equiv`
+- Theorem: `is_infinity_equiv`
+- Theorem: `get_sign_equiv`
+- Theorem: `is_finite_equiv`
+- Theorem: `of_int63_equiv`
+- Theorem: `eqb_equiv`
+- Theorem: `ltb_equiv`
+- Theorem: `leb_equiv`
+
+### Lean Declarations
+- theorem: `prim_add_correct` (FloatSpec/src/IEEE754/PrimFloat.lean:52)
+- theorem: `prim_mul_correct` (FloatSpec/src/IEEE754/PrimFloat.lean:58)
+
+### Mapping (Coq → Lean)
+- `add_equiv` → `prim_add_correct [FloatSpec/src/IEEE754/PrimFloat.lean:52]` (content-equivalent)
+- `mul_equiv` → `prim_mul_correct [FloatSpec/src/IEEE754/PrimFloat.lean:58]` (content-equivalent)
+- All other Coq declarations above → (no Lean counterpart)
+

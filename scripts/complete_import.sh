@@ -16,14 +16,17 @@ file_list=(
     # Digits.lean
     # Float_prop.lean
     # Round_pred.lean
-    Generic_fmt.lean
-    Round_generic.lean
+    # Generic_fmt.lean
+    # Round_generic.lean
     # Round_NE.lean
     # FIX.lean
     # FLT.lean
     # FLX.lean
     # FTZ.lean
-    Ulp.lean
+    # Ulp.lean
+    IEEE754
+    Pff
+    Prop
 )
 
 round_num=10
@@ -37,7 +40,7 @@ for ((i=1; i<=round_num; i++)); do
 IFS= read -r -d '' msg <<'EOF' || true
 Please ensure your implementation Always Works™ for:
 
-## Task: Introduce Missing Theorems in FloatSpec/src/Core
+## Task: Introduce Missing Theorems in FloatSpec/src/__FILE_PLACEHOLDER__
 
 ## Scope
 
@@ -100,7 +103,7 @@ Introduce missing theorems in the file. You can find the record of missing theor
 ✅ Each theorem verified individually before moving on
 EOF
 
-# msg="${msg//__FILE_PLACEHOLDER__/$file}"
+msg="${msg//__FILE_PLACEHOLDER__/$file}"
 
 log_name=/home/hantao/code/FloatSpec/.log/codex_log/import_missing_theorems_final_clean_round_${i}.log
 # Build the CLI command as an array to preserve spaces/newlines
