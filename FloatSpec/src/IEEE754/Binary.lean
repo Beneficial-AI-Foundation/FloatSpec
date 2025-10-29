@@ -726,3 +726,120 @@ theorem Bcompare_swap {prec emax : Int}
   intro _
   -- Proof deferred; mirrors Coq's `Bcompare_swap` via properties of Rcompare.
   exact sorry
+
+-- Coq: bounded_le_emax_minus_prec
+-- For mantissa/exponent pairs that are `bounded`, the real value is
+-- bounded above by bpow emax minus bpow (emax - prec).
+-- We mirror the statement using a lightweight `bounded` predicate and
+-- a hoare-triple wrapper, deferring the proof.
+def bounded {prec emax : Int} (mx : Nat) (ex : Int) : Bool :=
+  -- Placeholder for the Coq `SpecFloat.bounded prec emax` predicate
+  true
+
+def bounded_le_emax_minus_prec_check {prec emax : Int} (mx : Nat) (ex : Int) : Id Unit :=
+  pure ()
+
+theorem bounded_le_emax_minus_prec {prec emax : Int}
+  (mx : Nat) (ex : Int)
+  (h : bounded (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  bounded_le_emax_minus_prec_check (prec:=prec) (emax:=emax) mx ex
+  ⦃⇓_ => ⌜
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex : FloatSpec.Core.Defs.FlocqFloat 2)
+        ≤ (FloatSpec.Core.Raux.bpow 2 emax).run
+          - (FloatSpec.Core.Raux.bpow 2 (emax - prec)).run⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `bounded_le_emax_minus_prec` via the BSN bridge.
+  exact sorry
+
+-- Coq: bounded_lt_emax — bounded values lie strictly below bpow emax
+def bounded_lt_emax_check {prec emax : Int} (mx : Nat) (ex : Int) : Id Unit :=
+  pure ()
+
+theorem bounded_lt_emax {prec emax : Int}
+  (mx : Nat) (ex : Int)
+  (h : bounded (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  bounded_lt_emax_check (prec:=prec) (emax:=emax) mx ex
+  ⦃⇓_ => ⌜
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex : FloatSpec.Core.Defs.FlocqFloat 2)
+        < (FloatSpec.Core.Raux.bpow 2 emax).run⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `bounded_lt_emax`.
+  exact sorry
+
+-- Coq: bounded_ge_emin — bounded values lie above bpow emin
+def bounded_ge_emin_check {prec emax : Int} (mx : Nat) (ex : Int) : Id Unit :=
+  pure ()
+
+theorem bounded_ge_emin {prec emax : Int}
+  (mx : Nat) (ex : Int)
+  (h : bounded (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  bounded_ge_emin_check (prec:=prec) (emax:=emax) mx ex
+  ⦃⇓_ => ⌜
+      (FloatSpec.Core.Raux.bpow 2 (3 - emax - prec)).run
+        ≤ F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex : FloatSpec.Core.Defs.FlocqFloat 2)⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `bounded_ge_emin` using emin := 3 - emax - prec.
+  exact sorry
+
+-- Coq: abs_B2R_le_emax_minus_prec
+-- The absolute value of the real semantics of any binary float is bounded
+-- above by bpow emax minus bpow (emax - prec).
+def abs_B2R_le_emax_minus_prec_check {prec emax : Int}
+  (x : Binary754 prec emax) : Id Unit :=
+  pure ()
+
+theorem abs_B2R_le_emax_minus_prec {prec emax : Int}
+  (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  abs_B2R_le_emax_minus_prec_check (prec:=prec) (emax:=emax) x
+  ⦃⇓_ => ⌜
+      |B2R (prec:=prec) (emax:=emax) x|
+        ≤ (FloatSpec.Core.Raux.bpow 2 emax).run
+            - (FloatSpec.Core.Raux.bpow 2 (emax - prec)).run⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `abs_B2R_le_emax_minus_prec` via the BSN bridge.
+  exact sorry
+
+-- Coq: abs_B2R_lt_emax — absolute semantics strictly below bpow emax
+def abs_B2R_lt_emax_check {prec emax : Int}
+  (x : Binary754 prec emax) : Id Unit :=
+  pure ()
+
+theorem abs_B2R_lt_emax {prec emax : Int}
+  (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  abs_B2R_lt_emax_check (prec:=prec) (emax:=emax) x
+  ⦃⇓_ => ⌜
+      |B2R (prec:=prec) (emax:=emax) x|
+        < (FloatSpec.Core.Raux.bpow 2 emax).run⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `abs_B2R_lt_emax` via the BSN bridge.
+  exact sorry
+
+-- Local strict-finiteness classifier for Binary754 (finite and nonzero semantics).
+-- Coq uses a positive mantissa, so finite implies nonzero. Our Lean stub keeps
+-- the shape and defers proof obligations elsewhere.
+def is_finite_strict_Bin {prec emax : Int} (x : Binary754 prec emax) : Bool :=
+  match x.val with
+  | FullFloat.F754_finite _ _ _ => true
+  | _ => false
+
+-- Coq: abs_B2R_ge_emin — strict finiteness implies lower bound by bpow emin
+def abs_B2R_ge_emin_check {prec emax : Int}
+  (x : Binary754 prec emax) : Id Unit :=
+  pure ()
+
+theorem abs_B2R_ge_emin {prec emax : Int}
+  (x : Binary754 prec emax)
+  (hx : is_finite_strict_Bin (prec:=prec) (emax:=emax) x = true) :
+  ⦃⌜True⌝⦄
+  abs_B2R_ge_emin_check (prec:=prec) (emax:=emax) x
+  ⦃⇓_ => ⌜
+      (FloatSpec.Core.Raux.bpow 2 (3 - emax - prec)).run
+        ≤ |B2R (prec:=prec) (emax:=emax) x|⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `abs_B2R_ge_emin` using emin := 3 - emax - prec.
+  exact sorry
