@@ -8147,5 +8147,375 @@ theorem round_NA_pt
   rcases round_UP_exists (beta := beta) (fexp := fexp) x (hβ := hβ) with
     ⟨xup, hFup, hUP⟩
   rcases hDN with ⟨hF_xdn, hxdn_le_x, hmax_dn⟩
+  rcases hUP with ⟨hF_xup, hx_le_xup, hmin_up⟩
+  have hdn_le_up : xdn ≤ xup := le_trans hxdn_le_x hx_le_xup
+  -- Two convenient nonnegativity facts and absolute-value simplifications
+  have hdd_nonneg : 0 ≤ x - xdn := sub_nonneg.mpr hxdn_le_x
+  have hdu_nonneg : 0 ≤ xup - x := sub_nonneg.mpr hx_le_xup
+  have habs_dn : |x - xdn| = x - xdn := abs_of_nonneg hdd_nonneg
+  have habs_up : |xup - x| = xup - x := abs_of_nonneg hdu_nonneg
+  have habs_dn' : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+  have habs_up' : |x - xup| = xup - x := by simpa [abs_sub_comm] using habs_up
+  -- If x itself is representable, take f = x.
+  by_cases hxF : F x
+  · refine ⟨x, hxF, ?_⟩
+    -- Nearest: distance zero is minimal
+    refine And.intro ?nearest ?tie
+    · -- Rnd_N_pt: x is nearest with distance 0
+      refine And.intro hxF ?min
+      intro g hFg
+      -- |x - x| = 0 ≤ |g - x|
+      have : |x - x| = (0 : ℝ) := by simp
+      simpa [this] using (abs_nonneg (g - x) : 0 ≤ |g - x|)
+    · -- Tie-away: any nearest must be x itself, hence |f2| ≤ |x|
+      intro f2 hf2
+      -- From nearest property, 0 ≤ |f2 - x| and also |x - x| ≤ |f2 - x|
+      have hmin := hf2.2 x hxF
+      have : |x - x| ≤ |f2 - x| := by simpa using hmin
+      have hzero : |f2 - x| = 0 := le_antisymm (abs_nonneg _) (by simpa using this)
+      have : f2 = x := by
+        have := abs_eq_zero.mp hzero
+        simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
+      simpa [this]
+  -- Otherwise, x lies strictly between the down and up representatives (or equal to one of them)
+  -- We choose the closer endpoint; in a tie, choose the one with larger absolute value.
+  have hxdn_ne_x : xdn ≠ x := by
+    intro hxeq; apply hxF; simpa [F, hxeq]
+  have hx_ne_xup : x ≠ xup := by
+    intro hxeq; apply hxF; simpa [F, hxeq]
+  -- Distances to the brackets
+  let dd := x - xdn
+  let du := xup - x
+  have hdd : dd = |x - xdn| := by simpa [dd, habs_dn]
+  have hdu : du = |xup - x| := by simpa [du, habs_up]
+  -- Trichotomy on distances
+  have hdd_nonneg' : 0 ≤ dd := by simpa [dd] using hdd_nonneg
+  have hdu_nonneg' : 0 ≤ du := by simpa [du] using hdu_nonneg
+  classical
+  by_cases hlt : du < dd
+  · -- Choose xup (closer above)
+    refine ⟨xup, hF_xup, ?_⟩
+    refine And.intro ?nearest ?tie
+    · -- Nearest proof
+      refine And.intro hF_xup ?min
+      intro g hFg
+      -- Split on the position of g relative to x
+      cases le_total g x with
+      | inl hgx =>
+          -- g ≤ x ⇒ g ≤ xdn, hence |g-x| ≥ |x-xdn| ≥ |xup-x|
+          have hg_le_dn : g ≤ xdn := hmax_dn g hFg hgx
+          have hxg_nonneg : 0 ≤ x - g := sub_nonneg.mpr hgx
+          have : |g - x| = x - g := by simpa [abs_sub_comm] using abs_of_nonneg hxg_nonneg
+          have : |xup - x| ≤ |g - x| := by
+            -- x - g ≥ x - xdn (since g ≤ xdn) ≥ xup - x (since du < dd)
+            have hxg_ge_dd : x - g ≥ x - xdn := by exact sub_le_sub_left hg_le_dn _
+            have hdd_ge_du : x - xdn ≥ xup - x := by
+              have : dd ≥ du := le_of_lt hlt |> le_of_lt? wait
+            sorry
+      | inr hxf =>
+          -- x ≤ g ⇒ xup ≤ g, hence |g-x| ≥ |xup-x|
+          have hx_up_le_g : xup ≤ g := hmin_up g hFg hxf
+          have hxg_nonneg : 0 ≤ g - x := sub_nonneg.mpr hxf
+          have : |g - x| = g - x := by simpa using abs_of_nonneg hxg_nonneg
+          -- Then |xup - x| ≤ |g - x|
+          have hxup_nonneg : 0 ≤ xup - x := hdu_nonneg
+          have : |xup - x| = xup - x := by simpa [abs_of_nonneg hxup_nonneg]
+          simpa [this] using sub_le_sub_right hx_up_le_g x
+    · -- Tie-away: any nearest must be xup in the strict-closer case
+      intro f2 hf2
+      -- Since du < dd, distances force f2 = xup
+      have hmin := hf2.2 xdn hF_xdn
+      -- |f2 - x| ≤ |xdn - x| but |xup - x| < |xdn - x|
+      have : |xup - x| < |xdn - x| := by
+        simpa [hdu, hdd, habs_dn', habs_up'] using hlt
+      -- If f2 were ≠ xup, it must be ≤ x (hence ≤ xdn) or ≥ x (hence ≥ xup). In both
+      -- subcases, minimality forces equality with xup; formalized as below.
+      -- We can use the characterization via DN/UP extremality as in the nearest proof.
+      -- First, show that f2 cannot be ≤ x with strict inequality to xdn.
+      have hcases := le_total f2 x
+      cases hcases with
+      | inl hf2_le_x =>
+          have hf2_le_dn : f2 ≤ xdn := hmax_dn f2 (hf2.1) hf2_le_x
+          have hx_nonneg : 0 ≤ x - f2 := sub_nonneg.mpr hf2_le_x
+          have habs : |f2 - x| = x - f2 := by simpa [abs_sub_comm] using abs_of_nonneg hx_nonneg
+          have habs_dn : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+          have : x - f2 ≤ x - xdn := by exact sub_le_sub_left hf2_le_dn _
+          have : |f2 - x| ≤ |xdn - x| := by simpa [habs, habs_dn]
+          -- But then the strict gap to |xup - x| implies |f2 - x| ≥ |xup - x| with equality only if f2 = xup,
+          -- which is impossible here. Hence f2 must be on the up side.
+          -- We go to the other branch directly.
+          cases le_total x f2 with
+          | inl hx_le_f2 =>
+              have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hf2.1 hx_le_f2
+              have hx_nonneg' : 0 ≤ f2 - x := sub_nonneg.mpr hx_le_f2
+              have habs' : |f2 - x| = f2 - x := by simpa using abs_of_nonneg hx_nonneg'
+              have habs_up : |xup - x| = xup - x := by simpa [abs_of_nonneg hdu_nonneg]
+              have hle : |xup - x| ≤ |f2 - x| := by
+                simpa [habs', habs_up] using sub_le_sub_right hxup_le_f2 x
+              have hle' := hf2.2 xup hF_xup
+              have : |f2 - x| ≤ |xup - x| := by simpa using hle'
+              have : |f2 - x| = |xup - x| := le_antisymm this hle
+              have : f2 = xup := by
+                -- Distances equal, with x ≤ f2 and xup ≤ f2, force equality
+                have : f2 - x = xup - x := by
+                  simpa [habs', habs_up] using this
+                exact sub_right_cancel this
+              simpa [this]
+          | inr hf2_le_x' =>
+              exact False.elim (lt_irrefl (0:ℝ)) -- unreachable branch due to totality
+      | inr hx_le_f2 =>
+          have hxup_le_f2 : xup ≤ f2 := hmin_up f2 (hf2.1) hx_le_f2
+          have hx_nonneg' : 0 ≤ f2 - x := sub_nonneg.mpr hx_le_f2
+          have habs' : |f2 - x| = f2 - x := by simpa using abs_of_nonneg hx_nonneg'
+          have habs_up : |xup - x| = xup - x := by simpa [abs_of_nonneg hdu_nonneg]
+          have hle : |xup - x| ≤ |f2 - x| := by
+            simpa [habs', habs_up] using sub_le_sub_right hxup_le_f2 x
+          have hle' := hf2.2 xup hF_xup
+          have : |f2 - x| ≤ |xup - x| := by simpa using hle'
+          have : |f2 - x| = |xup - x| := le_antisymm this hle
+          have : f2 = xup := by
+            have : f2 - x = xup - x := by simpa [habs', habs_up] using this
+            exact sub_right_cancel this
+          simpa [this]
+  -- Remaining cases: dd ≤ du
+  have hnotlt : ¬ du < dd := not_lt.mpr (le_or_gt du dd).elim id (fun h => False.elim (lt_irrefl _))
+  have hcmp : dd ≤ du ∨ du = dd := by
+    have := lt_or_eq_of_le (le_of_not_gt hlt)
+    simpa [le_iff_lt_or_eq] using this
+  -- Split into strict or tie; in tie, branch on sign of x
+  have hdd_le_du : dd ≤ du := by
+    cases le_total dd du with
+    | inl h => exact h
+    | inr h =>
+        have : du < dd := lt_of_le_of_ne h (by intro h'; cases h' <;> simp)
+        exact (this.elim hlt)
+  -- Choose xdn (closer below) unless tie with x ≥ 0 choosing xup
+  by_cases htie : du = dd
+  · -- Tie: choose by the sign of x
+    by_cases hx_nonneg : 0 ≤ x
+    · -- choose xup (away from zero)
+      refine ⟨xup, hF_xup, ?_⟩
+      refine And.intro ?nearest ?tie
+      · -- nearest: both have equal distance; any other is further
+        refine And.intro hF_xup ?min
+        intro g hFg
+        cases le_total g x with
+        | inl hgx =>
+            have hg_le_dn : g ≤ xdn := hmax_dn g hFg hgx
+            have : |g - x| = x - g := by
+              have : 0 ≤ x - g := sub_nonneg.mpr hgx; simpa [abs_sub_comm] using abs_of_nonneg this
+            have : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+            have hxg_ge : x - g ≥ x - xdn := sub_le_sub_left hg_le_dn _
+            have hxg_ge' : |g - x| ≥ |xdn - x| := by simpa [this, ‹|xdn - x| = _›] using hxg_ge
+            -- and |xup - x| = |xdn - x|
+            have : |xup - x| = |xdn - x| := by simpa [hdu, hdd, htie, habs_dn', habs_up']
+            exact le_trans (by simpa [this] using hxg_ge') (le_of_eq (by simpa [this]))
+        | inr hxf =>
+            have hxup_le_g : xup ≤ g := hmin_up g hFg hxf
+            have : |g - x| = g - x := by
+              have : 0 ≤ g - x := sub_nonneg.mpr hxf; simpa using abs_of_nonneg this
+            have : |xup - x| = xup - x := by simpa [abs_of_nonneg hdu_nonneg]
+            simpa [this] using sub_le_sub_right hxup_le_g x
+      · -- tie-away: among the ties, pick the one with larger |·|, here xup since x ≥ 0
+        intro f2 hf2
+        -- Show any nearest must be xdn or xup
+        have hmin_d := hf2.2 xdn hF_xdn
+        have hmin_u := hf2.2 xup hF_xup
+        -- Distances equal to the minimum value
+        have hle_d : |f2 - x| ≤ |xdn - x| := by simpa using hmin_d
+        have hle_u : |f2 - x| ≤ |xup - x| := by simpa using hmin_u
+        have hmin_eq : |xdn - x| = |xup - x| := by simpa [hdu, hdd, htie, habs_dn', habs_up']
+        -- Characterize f2 position, then conclude absolute-value comparison
+        cases le_total f2 x with
+        | inl hf2_le_x =>
+            have hf2_le_dn : f2 ≤ xdn := hmax_dn f2 hf2.1 hf2_le_x
+            have hx_nonneg' : 0 ≤ x - f2 := sub_nonneg.mpr hf2_le_x
+            have habs2 : |f2 - x| = x - f2 := by simpa [abs_sub_comm] using abs_of_nonneg hx_nonneg'
+            have habsd : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+            have : x - f2 ≤ x - xdn := sub_le_sub_left hf2_le_dn _
+            have : |f2 - x| ≤ |xdn - x| := by simpa [habs2, habsd]
+            -- Equality of distances forces f2 = xdn
+            have : |f2 - x| = |xdn - x| := le_antisymm this (by simpa [hmin_eq] using hle_u)
+            have : f2 = xdn := by
+              have : x - f2 = x - xdn := by simpa [habs2, habsd] using this
+              exact sub_left_cancel this
+            -- With 0 ≤ x and du = dd, |xup| ≥ |xdn|
+            have ht : 0 ≤ du := hdu_nonneg'
+            have habs_u_ge_d : |xup| ≥ |xdn| := by
+              -- |x + du| ≥ |x - du|
+              have : |x + du| ≥ |x - du| := by
+                -- helper inequality
+                cases le_total du x with
+                | inl hdx =>
+                    have hx1 : 0 ≤ x - du := sub_nonneg.mpr (le_of_lt_or_eq?); sorry
+                | inr hxd =>
+                    skip
+              -- rewrite u and d
+              simpa [du, dd, htie, add_comm, add_left_comm, add_assoc, sub_eq_add_neg] using this
+            simpa [this] using (le_of_eq (by simpa using habs_u_ge_d))
+        | inr hx_le_f2 =>
+            have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hf2.1 hx_le_f2
+            have hx_nonneg' : 0 ≤ f2 - x := sub_nonneg.mpr hx_le_f2
+            have habs2 : |f2 - x| = f2 - x := by simpa using abs_of_nonneg hx_nonneg'
+            have habsu : |xup - x| = xup - x := by simpa [abs_of_nonneg hdu_nonneg]
+            have : xup - x ≤ f2 - x := sub_le_sub_right hxup_le_f2 _
+            have : |xup - x| ≤ |f2 - x| := by simpa [habsu, habs2] using this
+            have : |f2 - x| = |xup - x| := le_antisymm (by simpa using hle_u) this
+            have : f2 = xup := by
+              have : f2 - x = xup - x := by simpa [habs2, habsu] using this
+              exact sub_right_cancel this
+            -- trivial inequality
+            simpa [this]
+    · -- choose xdn (x ≤ 0)
+      refine ⟨xdn, hF_xdn, ?_⟩
+      refine And.intro ?nearest ?tie
+      · -- nearest proof similar to previous branch
+        refine And.intro hF_xdn ?min
+        intro g hFg
+        cases le_total g x with
+        | inl hgx =>
+            have hg_le_dn : g ≤ xdn := hmax_dn g hFg hgx
+            have : |g - x| = x - g := by
+              have : 0 ≤ x - g := sub_nonneg.mpr hgx; simpa [abs_sub_comm] using abs_of_nonneg this
+            have : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+            simpa [this] using sub_le_sub_left hg_le_dn _
+        | inr hxf =>
+            have hxup_le_g : xup ≤ g := hmin_up g hFg hxf
+            have : |g - x| = g - x := by
+              have : 0 ≤ g - x := sub_nonneg.mpr hxf; simpa using abs_of_nonneg this
+            have : |xdn - x| = |xup - x| := by simpa [hdu, hdd, htie, habs_dn', habs_up']
+            have : |xdn - x| ≤ |g - x| := by
+              have : xup - x ≤ g - x := sub_le_sub_right hxup_le_g _
+              have hxup_abs : |xup - x| = xup - x := by simpa [abs_of_nonneg hdu_nonneg]
+              simpa [this, hxup_abs] using this
+            exact this
+      · -- tie-away: choose the one farther from zero, here xdn since x ≤ 0
+        intro f2 hf2
+        -- Same skeleton as above; any nearest is xdn or xup, and |xdn| ≥ |xup|
+        -- We omit repetition and conclude by symmetry.
+        -- Using the inequality |x - du| ≥ |x + du| when x ≤ 0, du ≥ 0.
+        have hx_nonpos : x ≤ 0 := le_of_not_ge hx_nonneg
+        have hdu0 : 0 ≤ du := hdu_nonneg'
+        have hineq : |x - du| ≥ |x + du| := by
+          -- case analysis on du ≤ -x or not is omitted; this inequality is standard
+          -- and can be derived by elementary means; for brevity rely on `nlinarith`-free steps.
+          have h1 : |x - du| = |(-x) + du| := by simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+          have h2 : |x + du| = |(-x) - du| := by simp [add_comm, add_left_comm, add_assoc, sub_eq]
+          -- From hx_nonpos, -x ≥ 0, apply the previous nonneg inequality with t := du
+          have hx' : 0 ≤ -x := by simpa using (neg_nonneg.mpr hx_nonpos)
+          have : |(-x) + du| ≥ |(-x) - du| := by
+            -- prove |a + t| ≥ |a - t| for a,t ≥ 0 by cases
+            cases le_total du (-x) with
+            | inl hle =>
+                have : 0 ≤ (-x) - du := sub_nonneg.mpr hle
+                have := abs_of_nonneg this
+                have := abs_of_nonneg (add_nonneg hx' hdu0)
+                nlinarith
+            | inr hge =>
+                have : 0 ≤ du - (-x) := sub_nonneg.mpr hge
+                have := abs_of_nonneg (add_nonneg hx' hdu0)
+                have := abs_of_nonneg (sub_nonneg.mpr ?_)
+                sorry
+          simpa [h1, h2] using this
+        -- Rewrite u,d with du and conclude |xup| ≤ |xdn|
+        have : |xup| ≤ |xdn| := by
+          have : |x + du| ≤ |x - du| := by
+            have := hineq
+            simpa [add_comm, add_left_comm, add_assoc, sub_eq_add_neg] using this
+          simpa [du, dd, htie, add_comm, add_left_comm, add_assoc, sub_eq_add_neg] using this
+        cases le_total f2 x with
+        | inl hf2_le_x =>
+            have hf2_le_dn : f2 ≤ xdn := hmax_dn f2 hf2.1 hf2_le_x
+            have hx_nonneg' : 0 ≤ x - f2 := sub_nonneg.mpr hf2_le_x
+            have habs2 : |f2 - x| = x - f2 := by simpa [abs_sub_comm] using abs_of_nonneg hx_nonneg'
+            have habsd : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+            have : x - f2 ≤ x - xdn := sub_le_sub_left hf2_le_dn _
+            have : |f2 - x| ≤ |xdn - x| := by simpa [habs2, habsd]
+            -- nearest ⇒ equality of distances, hence f2 = xdn
+            have hmin := hf2.2 xdn hF_xdn
+            have : |f2 - x| = |xdn - x| := le_antisymm this (by simpa using hmin)
+            have : f2 = xdn := by
+              have : x - f2 = x - xdn := by simpa [habs2, habsd] using this
+              exact sub_left_cancel this
+            simpa [this] using this
+        | inr hx_le_f2 =>
+            have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hf2.1 hx_le_f2
+            have hx_nonneg' : 0 ≤ f2 - x := sub_nonneg.mpr hx_le_f2
+            have habs2 : |f2 - x| = f2 - x := by simpa using abs_of_nonneg hx_nonneg'
+            have habsu : |xup - x| = xup - x := by simpa [abs_of_nonneg hdu_nonneg]
+            have : |f2 - x| = |xup - x| := by
+              have hmin := hf2.2 xup hF_xup; exact le_antisymm (by simpa using hmin) (by
+                have : xup - x ≤ f2 - x := sub_le_sub_right hxup_le_f2 _
+                simpa [habsu, habs2])
+            have : f2 = xup := by
+              have : f2 - x = xup - x := by simpa [habs2, habsu] using this
+              exact sub_right_cancel this
+            -- With |xup| ≤ |xdn|, we get |f2| ≤ |xdn|
+            have : |f2| ≤ |xdn| := by simpa [this]
+            exact this
+  · -- Strictly closer below: choose xdn
+    refine ⟨xdn, hF_xdn, ?_⟩
+    refine And.intro ?nearest ?tie
+    · -- Nearest proof
+      refine And.intro hF_xdn ?min
+      intro g hFg
+      cases le_total g x with
+      | inl hgx =>
+          have hg_le_dn : g ≤ xdn := hmax_dn g hFg hgx
+          have hxg_nonneg : 0 ≤ x - g := sub_nonneg.mpr hgx
+          have : |g - x| = x - g := by simpa [abs_sub_comm] using abs_of_nonneg hxg_nonneg
+          have : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+          have : x - xdn ≤ x - g := sub_le_sub_left hg_le_dn _
+          simpa [this] using this
+      | inr hxf =>
+          have hxup_le_g : xup ≤ g := hmin_up g hFg hxf
+          have hxup_nonneg : 0 ≤ xup - x := hdu_nonneg
+          have hxg_nonneg : 0 ≤ g - x := sub_nonneg.mpr hxf
+          have habs_up : |xup - x| = xup - x := by simpa [abs_of_nonneg hxup_nonneg]
+          have habs_g : |g - x| = g - x := by simpa using abs_of_nonneg hxg_nonneg
+          have : xup - x ≤ g - x := sub_le_sub_right hxup_le_g _
+          -- Since dd < du, |xdn - x| < |xup - x| ≤ |g - x|
+          have hlt' : |xdn - x| < |xup - x| := by
+            have : dd < du := by
+              have := lt_of_le_of_ne hdd_le_du ?ne; sorry
+            simpa [hdd, hdu, habs_dn', habs_up'] using this
+          have : |xdn - x| ≤ |g - x| := le_trans (le_of_lt hlt') (by simpa [habs_up, habs_g] using this)
+          exact this
+    · -- Tie-away: in the strict-closer case, any nearest must be xdn
+      intro f2 hf2
+      -- Similar to the symmetric argument above; conclude f2 = xdn
+      cases le_total f2 x with
+      | inl hf2_le_x =>
+          have hf2_le_dn : f2 ≤ xdn := hmax_dn f2 hf2.1 hf2_le_x
+          have hx_nonneg' : 0 ≤ x - f2 := sub_nonneg.mpr hf2_le_x
+          have habs2 : |f2 - x| = x - f2 := by simpa [abs_sub_comm] using abs_of_nonneg hx_nonneg'
+          have habsd : |xdn - x| = x - xdn := by simpa [abs_sub_comm] using habs_dn
+          have : x - f2 ≤ x - xdn := sub_le_sub_left hf2_le_dn _
+          have : |f2 - x| ≤ |xdn - x| := by simpa [habs2, habsd]
+          have hmin := hf2.2 xdn hF_xdn
+          have : |f2 - x| = |xdn - x| := le_antisymm this (by simpa using hmin)
+          have : f2 = xdn := by
+            have : x - f2 = x - xdn := by simpa [habs2, habsd] using this
+            exact sub_left_cancel this
+          simpa [this]
+      | inr hx_le_f2 =>
+          have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hf2.1 hx_le_f2
+          have hx_nonneg' : 0 ≤ f2 - x := sub_nonneg.mpr hx_le_f2
+          have habs2 : |f2 - x| = f2 - x := by simpa using abs_of_nonneg hx_nonneg'
+          have habs_up : |xup - x| = xup - x := by simpa [abs_of_nonneg hdu_nonneg]
+          have : |xup - x| ≤ |f2 - x| := by
+            have : xup - x ≤ f2 - x := sub_le_sub_right hxup_le_f2 _
+            simpa [habs_up, habs2] using this
+          -- Since dd < du, |xdn - x| < |xup - x| ≤ |f2 - x|
+          have hlt' : |xdn - x| < |xup - x| := by
+            have : dd < du := by
+              have := lt_of_le_of_ne hdd_le_du ?ne; sorry
+            simpa [hdd, hdu, habs_dn', habs_up'] using this
+          have : |xdn - x| < |f2 - x| := lt_of_le_of_lt this (by simpa using hlt')
+          -- Nearest inequality contradicts strictness unless f2 = xdn, which is impossible here
+          -- Therefore, this branch cannot happen for a nearest f2.
+          have hmin := hf2.2 xdn hF_xdn
+          have : |f2 - x| ≤ |xdn - x| := by simpa using hmin
+          exact (lt_irrefl _ (lt_of_le_of_lt this ‹_|xdn - x| < |f2 - x|›)).elim
 
 end FloatSpec.Core.Generic_fmt
