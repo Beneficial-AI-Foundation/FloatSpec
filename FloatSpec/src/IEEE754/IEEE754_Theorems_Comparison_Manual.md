@@ -230,11 +230,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 -- `Bplus_correct` → `binary_add_correct [FloatSpec/src/IEEE754/Binary.lean:579]` (content-equivalent)
 -- `Bminus_correct` → `Bminus_correct [FloatSpec/src/IEEE754/Binary.lean:597]` (spec-variant, hoare)
 -- `Bdiv_correct` → `Bdiv_correct [FloatSpec/src/IEEE754/Binary.lean:612]` (spec-variant, hoare)
--- `Bsqrt_correct` → `Bsqrt_correct [FloatSpec/src/IEEE754/Binary.lean:627]` (spec-variant, hoare)
-- `Bfma_correct` → (no Lean counterpart)
+ -- `Bsqrt_correct` → `Bsqrt_correct [FloatSpec/src/IEEE754/Binary.lean:627]` (spec-variant, hoare)
+ - `Bfma_correct` → `Bfma_correct [FloatSpec/src/IEEE754/Binary.lean:601]` (spec-variant, hoare)
 - `Bdiv_correct` → (no Lean counterpart)
 - `Bsqrt_correct` → (no Lean counterpart)
-- `Bnearbyint_correct` → (no Lean counterpart)
+ - `Bnearbyint_correct` → `Bnearbyint_correct [FloatSpec/src/IEEE754/Binary.lean:667]` (spec-variant, hoare)
 - `Btrunc_correct` → (no Lean counterpart)
 - `Bone_correct` → (no Lean counterpart)
 - `is_finite_Bone` → (no Lean counterpart)
@@ -389,6 +389,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
   - `SF2R_B2SF` → `SF2R_B2SF [FloatSpec/src/IEEE754/BinarySingleNaN.lean:184]` (exact)
   - `is_finite_strict_B2R` → `is_finite_strict_B2R [FloatSpec/src/IEEE754/BinarySingleNaN.lean:172]` (spec-variant, hoare)
   - `is_finite_strict_SF2B` → `is_finite_strict_SF2B [FloatSpec/src/IEEE754/BinarySingleNaN.lean:242]` (spec-variant, hoare)
+  - `match_SF2B` → `match_SF2B [FloatSpec/src/IEEE754/BinarySingleNaN.lean:67]` (exact)
 
 ## File: PrimFloat.v → PrimFloat.lean
 

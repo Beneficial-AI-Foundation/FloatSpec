@@ -53,6 +53,32 @@ def SF2B (x : StandardFloat) : B754 :=
   | StandardFloat.S754_zero s => B754.B754_zero s
   | StandardFloat.S754_nan => B754.B754_nan
 
+-- Coq: match_SF2B — pattern match through SF2B corresponds to match on source
+def match_SF2B_check {T : Type}
+  (fz : Bool → T) (fi : Bool → T) (fn : T) (ff : Bool → Nat → Int → T)
+  (x : StandardFloat) : Id T :=
+  pure <|
+    match x with
+    | StandardFloat.S754_zero sx => fz sx
+    | StandardFloat.S754_infinity sx => fi sx
+    | StandardFloat.S754_nan => fn
+    | StandardFloat.S754_finite sx mx ex => ff sx mx ex
+
+theorem match_SF2B {T : Type}
+  (fz : Bool → T) (fi : Bool → T) (fn : T) (ff : Bool → Nat → Int → T)
+  (x : StandardFloat) :
+  ⦃⌜True⌝⦄
+  match_SF2B_check fz fi fn ff x
+  ⦃⇓result => ⌜result =
+      (match SF2B x with
+       | B754.B754_zero sx => fz sx
+       | B754.B754_infinity sx => fi sx
+       | B754.B754_nan => fn
+       | B754.B754_finite sx mx ex => ff sx mx ex)⌝⦄ := by
+  intro _
+  unfold match_SF2B_check SF2B
+  cases x <;> rfl
+
 -- Coq: B2SF_SF2B — standard view after SF2B is identity
 def B2SF_SF2B_check (x : StandardFloat) : Id StandardFloat :=
   pure (B2SF_BSN (SF2B x))

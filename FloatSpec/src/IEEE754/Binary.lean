@@ -563,6 +563,11 @@ def binary_div (x y : Binary754 prec emax) : Binary754 prec emax := by
 def binary_sqrt (x : Binary754 prec emax) : Binary754 prec emax := by
   sorry
 
+-- Fused multiply-add
+def binary_fma (x y z : Binary754 prec emax) : Binary754 prec emax := by
+  -- Placeholder implementation; semantics captured by the theorem below.
+  sorry
+
 -- IEEE 754 rounding modes
 inductive RoundingMode where
   | RNE : RoundingMode  -- Round to nearest, ties to even
@@ -587,6 +592,22 @@ theorem binary_mul_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
   FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
     (FF2R 2 x.val * FF2R 2 y.val) := by
   sorry
+
+-- Fused multiply-add correctness (Coq: Bfma_correct)
+noncomputable def Bfma_correct_check (mode : RoundingMode)
+  (x y z : Binary754 prec emax) : Id ℝ :=
+  pure (FF2R 2 ((binary_fma (prec:=prec) (emax:=emax) x y z).val))
+
+theorem Bfma_correct (mode : RoundingMode)
+  (x y z : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Bfma_correct_check (prec:=prec) (emax:=emax) mode x y z
+  ⦃⇓result => ⌜result =
+      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
+        (FF2R 2 x.val * FF2R 2 y.val + FF2R 2 z.val)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows the pattern of multiplication/addition correctness.
+  exact sorry
 
 -- Subtraction correctness (Coq: Bminus_correct)
 -- We follow the hoare-triple wrapper pattern used in this project.
@@ -632,6 +653,25 @@ theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax) :
         (Real.sqrt (FF2R 2 x.val))⌝⦄ := by
   intro _
   -- Proof deferred; follows pattern of `binary_mul_correct`.
+  exact sorry
+
+-- Round to nearest integer-like operation (Coq: Bnearbyint)
+def binary_nearbyint (mode : RoundingMode) (x : Binary754 prec emax) : Binary754 prec emax := by
+  -- Placeholder implementation; semantics captured by the theorem below.
+  sorry
+
+noncomputable def Bnearbyint_correct_check (mode : RoundingMode)
+  (x : Binary754 prec emax) : Id ℝ :=
+  pure (FF2R 2 ((binary_nearbyint (prec:=prec) (emax:=emax) mode x).val))
+
+theorem Bnearbyint_correct (mode : RoundingMode) (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Bnearbyint_correct_check (prec:=prec) (emax:=emax) mode x
+  ⦃⇓result => ⌜result =
+      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
+        (FF2R 2 x.val)⌝⦄ := by
+  intro _
+  -- Proof deferred; nearbyint rounds x according to the current format.
   exact sorry
 
 -- Common IEEE 754 formats
