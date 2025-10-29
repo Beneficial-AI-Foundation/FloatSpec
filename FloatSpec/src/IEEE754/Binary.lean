@@ -588,6 +588,52 @@ theorem binary_mul_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
     (FF2R 2 x.val * FF2R 2 y.val) := by
   sorry
 
+-- Subtraction correctness (Coq: Bminus_correct)
+-- We follow the hoare-triple wrapper pattern used in this project.
+noncomputable def Bminus_correct_check (mode : RoundingMode)
+  (x y : Binary754 prec emax) : Id ℝ :=
+  pure (FF2R 2 ((binary_sub (prec:=prec) (emax:=emax) x y).val))
+
+theorem Bminus_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Bminus_correct_check (prec:=prec) (emax:=emax) mode x y
+  ⦃⇓result => ⌜result =
+      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
+        (FF2R 2 x.val - FF2R 2 y.val)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors `binary_add_correct` with subtraction.
+  exact sorry
+
+-- Division correctness (Coq: Bdiv_correct)
+noncomputable def Bdiv_correct_check (mode : RoundingMode)
+  (x y : Binary754 prec emax) : Id ℝ :=
+  pure (FF2R 2 ((binary_div (prec:=prec) (emax:=emax) x y).val))
+
+theorem Bdiv_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Bdiv_correct_check (prec:=prec) (emax:=emax) mode x y
+  ⦃⇓result => ⌜result =
+      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
+        (FF2R 2 x.val / FF2R 2 y.val)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows pattern of `binary_mul_correct`.
+  exact sorry
+
+-- Square-root correctness (Coq: Bsqrt_correct)
+noncomputable def Bsqrt_correct_check (mode : RoundingMode)
+  (x : Binary754 prec emax) : Id ℝ :=
+  pure (FF2R 2 ((binary_sqrt (prec:=prec) (emax:=emax) x).val))
+
+theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Bsqrt_correct_check (prec:=prec) (emax:=emax) mode x
+  ⦃⇓result => ⌜result =
+      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
+        (Real.sqrt (FF2R 2 x.val))⌝⦄ := by
+  intro _
+  -- Proof deferred; follows pattern of `binary_mul_correct`.
+  exact sorry
+
 -- Common IEEE 754 formats
 def Binary16 := Binary754 11 15
 def Binary32 := Binary754 24 127
