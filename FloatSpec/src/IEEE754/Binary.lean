@@ -62,6 +62,11 @@ theorem FF2SF_SF2FF (x : StandardFloat) :
   FF2SF (SF2FF x) = x := by
   sorry
 
+-- FF2R after SF2FF equals SF2R
+theorem FF2R_SF2FF (beta : Int) (x : StandardFloat) :
+  FF2R beta (SF2FF x) = SF2R beta x := by
+  sorry
+
 -- NaN detection for FullFloat
 def is_nan_FF (f : FullFloat) : Bool :=
   match f with
@@ -77,6 +82,11 @@ def is_nan_SF (f : StandardFloat) : Bool :=
 -- NaN detection consistency
 theorem is_nan_SF2FF (x : StandardFloat) :
   is_nan_FF (SF2FF x) = is_nan_SF x := by
+  sorry
+
+-- NaN detection consistency in the other direction
+theorem is_nan_FF2SF (x : FullFloat) :
+  is_nan_SF (FF2SF x) = is_nan_FF x := by
   sorry
 
 -- Sign extraction for FullFloat
@@ -114,9 +124,19 @@ theorem is_finite_SF2FF (x : StandardFloat) :
   is_finite_FF (SF2FF x) = is_finite_SF x := by
   sorry
 
+-- Finite predicate in the other direction
+theorem is_finite_FF2SF (x : FullFloat) :
+  is_finite_SF (FF2SF x) = is_finite_FF x := by
+  sorry
+
 -- Sign consistency
 theorem sign_SF2FF (x : StandardFloat) :
   sign_FF (SF2FF x) = sign_SF x := by
+  sorry
+
+-- Sign consistency in the other direction
+theorem sign_FF2SF (x : FullFloat) :
+  sign_SF (FF2SF x) = sign_FF x := by
   sorry
 
 -- Section: Binary IEEE 754 formats
@@ -131,6 +151,11 @@ structure Binary754 (prec emax : Int) where
   valid : is_finite_FF val = true →
     -- Valid range and precision constraints
     True
+
+-- Helper conversions between FullFloat and Binary754
+def B2FF {prec emax} (x : Binary754 prec emax) : FullFloat := x.val
+def FF2B {prec emax} (x : FullFloat) : Binary754 prec emax :=
+  { val := x, valid := by intro; trivial }
 
 -- Standard IEEE 754 operations
 def binary_add (x y : Binary754 prec emax) : Binary754 prec emax := by

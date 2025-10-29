@@ -105,3 +105,51 @@ def is_nan_bits (prec emax : Int) (bits : Int) : Bool :=
   extract_mantissa prec bits ≠ 0
 
 end IEEE754_Bits
+
+-- Split bits of binary float correctness
+theorem split_bits_of_binary_float_correct
+  {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) :
+  split_bits (mant_width prec) (exp_width emax)
+    (binary_to_bits prec emax x) =
+  let s := extract_sign prec emax (binary_to_bits prec emax x)
+  let m := extract_mantissa prec (binary_to_bits prec emax x)
+  let e := extract_exponent prec emax (binary_to_bits prec emax x)
+  (s, m, e) := by
+  sorry
+
+-- Bits of binary float range
+theorem bits_of_binary_float_range
+  {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) :
+  0 ≤ binary_to_bits prec emax x ∧
+    binary_to_bits prec emax x <
+      (2 : Int) ^ Int.toNat (mant_width prec + exp_width emax + 1) := by
+  sorry
+
+-- Roundtrip: constructing from bits and back
+theorem binary_float_of_bits_of_binary_float
+  {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) :
+  bits_to_binary prec emax (binary_to_bits prec emax x) = x := by
+  -- Alias of binary_bits_roundtrip
+  simpa using (binary_bits_roundtrip (prec:=prec) (emax:=emax) x)
+
+-- Roundtrip: bits_of_binary_float_of_bits
+theorem bits_of_binary_float_of_bits
+  {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (bits : Int)
+  (h : 0 ≤ bits ∧ bits < (2 : Int) ^ Int.toNat (mant_width prec + exp_width emax + 1)) :
+  binary_to_bits prec emax (bits_to_binary prec emax bits) = bits := by
+  -- Alias of bits_binary_roundtrip
+  simpa using (bits_binary_roundtrip (prec:=prec) (emax:=emax) bits h)
+
+-- Injectivity of split_bits within range
+theorem split_bits_inj (x y : Int)
+  (hx : 0 ≤ x ∧ x < (2 : Int) ^ Int.toNat (mw + ew + 1))
+  (hy : 0 ≤ y ∧ y < (2 : Int) ^ Int.toNat (mw + ew + 1))
+  (hxy : split_bits mw ew x = split_bits mw ew y) :
+  x = y := by
+  -- Follows Coq: deduce from join_split_bits on both sides
+  -- using computed components equality.
+  sorry
