@@ -2,16 +2,16 @@
 
 This file lists theorem-like declarations per file (Coq vs Lean) and records correspondences judged by statement intent. Where Lean names differ from Coq, correspondences are matched by content.
 
-## File: Nat2Z_8_12.v → (no Lean file)
+## File: Nat2Z_8_12.v → Nat2Z_8_12.lean
 
 ### Coq Declarations
 - Lemma: `inj_div` (Nat2Z_8_12.v:9)
 
 ### Lean Declarations
-- (none found)
+- theorem: `inj_div` (Nat2Z_8_12.lean:20)
 
 ### Mapping (Coq → Lean)
-- `inj_div` → (no Lean counterpart)
+- `inj_div` → `inj_div` (Nat2Z_8_12.lean:20)
 
 ## File: Pff2FlocqAux.v → Pff2FlocqAux.lean
 
@@ -1646,4 +1646,3 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `RND_Max_correct` → (no Lean counterpart)
 - `RND_EvenClosest_canonic` → (no Lean counterpart)
 - `RND_EvenClosest_correct` → (no Lean counterpart)
-
