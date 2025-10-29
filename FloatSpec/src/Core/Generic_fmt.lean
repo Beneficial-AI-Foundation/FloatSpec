@@ -4060,7 +4060,9 @@ theorem round_DN_exists
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f).run ∧
       Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  sorry
+  -- Delegate to the general DN-existence theorem proved later using UP via negation.
+  -- This keeps the public existence at a single location and avoids duplication.
+  exact generic_format_round_DN (beta := beta) (fexp := fexp) (x := x) hβ
 
 -- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
 theorem round_DN_exists_global
