@@ -98,6 +98,23 @@ theorem SF2FF_FF2SF (x : FullFloat)
   SF2FF (FF2SF x) = x := by
   sorry
 
+-- Build a NaN value (Coq: build_nan)
+def build_nan (s : Bool) (payload : Nat) : FullFloat :=
+  FullFloat.F754_nan s payload
+
+-- Hoare wrapper for checking NaN-ness of build_nan
+def is_nan_build_nan_check (s : Bool) (payload : Nat) : Id Bool :=
+  pure (is_nan_FF (build_nan s payload))
+
+-- Coq: is_nan_build_nan — building a NaN yields a NaN
+theorem is_nan_build_nan (s : Bool) (payload : Nat) :
+  ⦃⌜True⌝⦄
+  is_nan_build_nan_check s payload
+  ⦃⇓result => ⌜result = true⌝⦄ := by
+  intro _
+  unfold is_nan_build_nan_check build_nan is_nan_FF
+  rfl
+
 -- Sign extraction for FullFloat
 def sign_FF (x : FullFloat) : Bool :=
   match x with

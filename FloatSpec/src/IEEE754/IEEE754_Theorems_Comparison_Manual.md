@@ -188,6 +188,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `B2R_build_nan` → (no Lean counterpart)
 - `is_finite_build_nan` → (no Lean counterpart)
 - `is_nan_build_nan` → (no Lean counterpart)
+ - `is_nan_build_nan` → `is_nan_build_nan [FloatSpec/src/IEEE754/Binary.lean:110]` (exact)
 - `B2BSN_BSN2B` → (no Lean counterpart)
 - `B2R_BSN2B` → (no Lean counterpart)
 - `is_finite_BSN2B` → (no Lean counterpart)
