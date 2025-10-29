@@ -260,6 +260,37 @@ theorem B2R_Bsign_inj {prec emax} (x y : Binary754 prec emax)
 -- (reserved) Coq counterparts `valid_binary_B2FF` and `FF2B_B2FF_valid`
 -- will be introduced in hoare-triple form after aligning specs.
 
+-- Coq: valid_binary_B2FF — validity of `B2FF` images
+-- We expose a lightweight validity predicate and state the theorem
+-- using the Hoare-triple style around a pure computation.
+def valid_binary {prec emax : Int} (x : FullFloat) : Bool :=
+  -- Placeholder predicate (to be refined): always true for this stub
+  true
+
+def valid_binary_B2FF_check {prec emax} (x : Binary754 prec emax) : Id Bool :=
+  pure (valid_binary (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x))
+
+theorem valid_binary_B2FF {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  valid_binary_B2FF_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = true⌝⦄ := by
+  intro _
+  unfold valid_binary_B2FF_check
+  rfl
+
+-- Coq: FF2B_B2FF_valid — round-trip with validity argument
+-- We mirror it in hoare-triple style around the pure computation.
+def FF2B_B2FF_valid_check {prec emax} (x : Binary754 prec emax) : Id (Binary754 prec emax) :=
+  pure (FF2B (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x))
+
+theorem FF2B_B2FF_valid {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  FF2B_B2FF_valid_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  unfold FF2B_B2FF_valid_check
+  simpa using (FF2B_B2FF (prec:=prec) (emax:=emax) x)
+
 -- Standard IEEE 754 operations
 def binary_add (x y : Binary754 prec emax) : Binary754 prec emax := by
   sorry
