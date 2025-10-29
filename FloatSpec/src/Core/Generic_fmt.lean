@@ -4144,21 +4144,6 @@ mutual
         hFneg hup
 end
 
-theorem round_NA_pt
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x : ℝ) (hβ : 1 < beta) :
-    ∃ f, (generic_format beta fexp f).run ∧
-      FloatSpec.Core.Defs.Rnd_NA_pt (fun y => (generic_format beta fexp y).run) x f := by
-  classical
-  -- Shorthand for the format predicate
-  let F := fun y : ℝ => (generic_format beta fexp y).run
-  -- Obtain bracketing down/up witnesses around x
-  rcases round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ) with
-    ⟨xdn, hFdn, hDN⟩
-  rcases round_UP_exists (beta := beta) (fexp := fexp) x (hβ := hβ) with
-    ⟨xup, hFup, hUP⟩
-  rcases hDN with ⟨hF_xdn, hxdn_le_x, hmax_dn⟩
-
 -- Order note: we place the existence lemmas to avoid forward references.
 
 /-- Placeholder existence theorem: There exists a round-up value in the generic format.
@@ -8144,5 +8129,23 @@ theorem mag_round
 
 
 end Round_generic
+
+/- Coq {lit}`Generic_fmt.v`:
+    Theorem {lean}`round_NA_pt` (nearest, ties away from zero): existence in the
+    generic format. We derive it from DN/UP existence established above. -/
+theorem round_NA_pt
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (x : ℝ) (hβ : 1 < beta) :
+    ∃ f, (generic_format beta fexp f).run ∧
+      FloatSpec.Core.Defs.Rnd_NA_pt (fun y => (generic_format beta fexp y).run) x f := by
+  classical
+  -- Shorthand for the format predicate
+  let F := fun y : ℝ => (generic_format beta fexp y).run
+  -- Obtain bracketing down/up witnesses around x
+  rcases round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ) with
+    ⟨xdn, hFdn, hDN⟩
+  rcases round_UP_exists (beta := beta) (fexp := fexp) x (hβ := hβ) with
+    ⟨xup, hFup, hUP⟩
+  rcases hDN with ⟨hF_xdn, hxdn_le_x, hmax_dn⟩
 
 end FloatSpec.Core.Generic_fmt
