@@ -84,6 +84,12 @@ def BSN_sign (x : B754) : Bool :=
   | B754.B754_finite s _ _ => s
   | B754.B754_nan => false
 
+-- Strict finiteness on StandardFloat (true iff finite, not considering zeros specially)
+def is_finite_strict_SF (x : StandardFloat) : Bool :=
+  match x with
+  | StandardFloat.S754_finite _ _ _ => true
+  | _ => false
+
 -- Coq: B2SF_B2BSN — standard view commutes with bridge to single-NaN
 def B2SF_B2BSN_check {prec emax} (x : Binary754 prec emax) : Id StandardFloat :=
   pure (B2SF_BSN (B2BSN (prec:=prec) (emax:=emax) x))
@@ -104,6 +110,29 @@ theorem is_finite_B2BSN {prec emax} (x : Binary754 prec emax) :
   is_finite_B2BSN_check (prec:=prec) (emax:=emax) x
   ⦃⇓result => ⌜result = is_finite_B (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  exact sorry
+
+-- Strict finiteness (finite-but-not-zero) classifiers, used for missing Coq theorems.
+def BSN_is_finite_strict (x : B754) : Bool :=
+  match x with
+  | B754.B754_finite _ _ _ => true
+  | _ => false
+
+def is_finite_strict_B {prec emax} (x : Binary754 prec emax) : Bool :=
+  match x.val with
+  | FullFloat.F754_finite _ _ _ => true
+  | _ => false
+
+-- Coq: is_finite_strict_B2BSN — strict finiteness preserved by the bridge
+def is_finite_strict_B2BSN_check {prec emax} (x : Binary754 prec emax) : Id Bool :=
+  pure (BSN_is_finite_strict (B2BSN (prec:=prec) (emax:=emax) x))
+
+theorem is_finite_strict_B2BSN {prec emax} (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  is_finite_strict_B2BSN_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜result = is_finite_strict_B (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  -- Proof deferred; follows by cases on `x.val`.
   exact sorry
 
 -- Coq: is_nan_B2BSN — NaN preserved by the bridge
@@ -137,6 +166,20 @@ theorem B2R_B2BSN {prec emax} (x : Binary754 prec emax) :
   B2R_B2BSN_check (prec:=prec) (emax:=emax) x
   ⦃⇓result => ⌜result = B2R (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  exact sorry
+
+-- Coq: is_finite_strict_B2R — nonzero real semantics implies strict finiteness
+-- Stated for the single-NaN binary `B754` using `B754_to_R` as semantics.
+def is_finite_strict_B2R_check (x : B754) : Id Bool :=
+  pure (BSN_is_finite_strict x)
+
+theorem is_finite_strict_B2R (x : B754)
+  (h : B754_to_R x ≠ 0) :
+  ⦃⌜True⌝⦄
+  is_finite_strict_B2R_check x
+  ⦃⇓result => ⌜result = true⌝⦄ := by
+  intro _
+  -- Proof deferred; by cases on `x` and using `h` to exclude zero cases.
   exact sorry
 
 -- Coq: SF2R_B2SF — Real semantics after mapping to StandardFloat
@@ -190,6 +233,18 @@ theorem SF2B_B2SF_valid (x : B754) :
   -- Same computation as SF2B_B2SF.
   unfold SF2B_B2SF_valid_check
   -- Proof deferred.
+  exact sorry
+
+-- Coq: is_finite_strict_SF2B — strict finiteness preserved by SF2B
+def is_finite_strict_SF2B_check (x : StandardFloat) : Id Bool :=
+  pure (BSN_is_finite_strict (SF2B x))
+
+theorem is_finite_strict_SF2B (x : StandardFloat) :
+  ⦃⌜True⌝⦄
+  is_finite_strict_SF2B_check x
+  ⦃⇓result => ⌜result = is_finite_strict_SF x⌝⦄ := by
+  intro _
+  -- Proof deferred; by cases on x.
   exact sorry
 
 -- Coq: B2SF_inj — injectivity of B2SF on non-NaN values
