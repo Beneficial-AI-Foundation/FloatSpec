@@ -142,10 +142,10 @@ def BSN2B (s : Bool) (payload : Nat) (x : B754) : FullFloat :=
   | B754.B754_finite b m e => FullFloat.F754_finite b m e
 
 -- Coq: B2BSN_BSN2B — roundtrip through the bridge
-def B2BSN_BSN2B_check {prec emax} (s : Bool) (payload : Nat) (x : B754) : Id B754 :=
+def B2BSN_BSN2B_check {prec emax : Int} (s : Bool) (payload : Nat) (x : B754) : Id B754 :=
   pure (B2BSN (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) (BSN2B s payload x)))
 
-theorem B2BSN_BSN2B {prec emax} (s : Bool) (payload : Nat) (x : B754) :
+theorem B2BSN_BSN2B {prec emax : Int} (s : Bool) (payload : Nat) (x : B754) :
   ⦃⌜True⌝⦄
   B2BSN_BSN2B_check (prec:=prec) (emax:=emax) s payload x
   ⦃⇓result => ⌜result = x⌝⦄ := by

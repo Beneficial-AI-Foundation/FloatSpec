@@ -11,6 +11,9 @@ import Std.Tactic.Do
 open Real
 open Std.Do
 
+-- Local boolean negation alias (to mirror Coq's `bnot`)
+def bnot (b : Bool) : Bool := !b
+
 -- IEEE 754 full float representation
 inductive FullFloat where
   | F754_zero (s : Bool) : FullFloat
@@ -80,6 +83,21 @@ def is_nan_FF (f : FullFloat) : Bool :=
 def is_nan_SF (f : StandardFloat) : Bool :=
   match f with
   | StandardFloat.S754_nan => true
+  | _ => false
+
+-- Sign extraction for FullFloat
+def sign_FF (x : FullFloat) : Bool :=
+  match x with
+  | FullFloat.F754_nan s _ => s
+  | FullFloat.F754_zero s => s
+  | FullFloat.F754_infinity s => s
+  | FullFloat.F754_finite s _ _ => s
+
+-- Finite check for FullFloat
+def is_finite_FF (f : FullFloat) : Bool :=
+  match f with
+  | FullFloat.F754_finite _ _ _ => true
+  | FullFloat.F754_zero _ => true
   | _ => false
 
 -- NaN detection consistency
@@ -292,14 +310,6 @@ theorem Babs_Bopp (x : FullFloat) (hx : is_nan_FF x = false) :
   -- Proof deferred; case on x using hx to exclude NaN.
   exact sorry
 
--- Sign extraction for FullFloat
-def sign_FF (x : FullFloat) : Bool :=
-  match x with
-  | FullFloat.F754_nan s _ => s
-  | FullFloat.F754_zero s => s
-  | FullFloat.F754_infinity s => s
-  | FullFloat.F754_finite s _ _ => s
-
 -- Sign extraction for StandardFloat
 def sign_SF (x : StandardFloat) : Bool :=
   match x with
@@ -307,13 +317,6 @@ def sign_SF (x : StandardFloat) : Bool :=
   | StandardFloat.S754_infinity s => s
   | StandardFloat.S754_nan => false
   | StandardFloat.S754_finite s _ _ => s
-
--- Finite check for FullFloat
-def is_finite_FF (f : FullFloat) : Bool :=
-  match f with
-  | FullFloat.F754_finite _ _ _ => true
-  | FullFloat.F754_zero _ => true
-  | _ => false
 
 -- Finite check for StandardFloat
 def is_finite_SF (f : StandardFloat) : Bool :=
@@ -613,4 +616,19 @@ theorem canonical_canonical_mantissa (sx : Bool) (mx : Nat) (ex : Int)
             (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
   intro _
   -- Proof deferred; will be aligned with Coq's canonical_canonical_mantissa
+  sorry
+
+-- Coq: generic_format_B2R
+-- Generic-format property of the real semantics of a binary float.
+-- We mirror the statement in hoare-triple style and defer the proof.
+def generic_format_B2R_check {prec emax : Int} (x : Binary754 prec emax) : Id Unit :=
+  pure ()
+
+theorem generic_format_B2R {prec emax : Int}
+  (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  generic_format_B2R_check (prec:=prec) (emax:=emax) x
+  ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.generic_format 2 (FLT_exp (3 - emax - prec) prec) (B2R (prec:=prec) (emax:=emax) x)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's generic_format_B2R
   sorry
