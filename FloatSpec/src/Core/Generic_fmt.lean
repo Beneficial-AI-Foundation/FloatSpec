@@ -5553,14 +5553,14 @@ theorem mantissa_small_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int
 
 -- (generic_format_round_UP remains below, after the existence lemmas)
 
-/-- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_round_pos`
+/- Coq {lit}`Generic_fmt.v`: {lean}`generic_format_round_pos`
 
     Compatibility lemma name alias: existence of a rounding-up value in the generic
     format. This wraps `generic_format_round_UP` to align with the Coq lemma name.
 -/
 -- (generic_format_round_pos stays with `generic_format_round_UP`)
 
-/-- Coq {lit}`Generic_fmt.v`:
+/- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_DN_pt`:
     {lit}`∀ x, Rnd_DN_pt format x (round Zfloor x)`.
 
@@ -5570,7 +5570,7 @@ theorem mantissa_small_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int
 -/
 -- (round_DN_pt stays with `generic_format_round_DN`)
 
-/-- Coq {lit}`Generic_fmt.v`:
+/- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_UP_pt`:
     {lit}`∀ x, Rnd_UP_pt format x (round Zceil x)`.
 
