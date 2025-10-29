@@ -4,9 +4,12 @@
 import FloatSpec.src.IEEE754.Binary
 import FloatSpec.src.Compat
 import FloatSpec.src.Calc.Round
+import Std.Do.Triple
+import Std.Tactic.Do
 import Mathlib.Data.Real.Basic
 
 open Real
+open Std.Do
 
 variable (prec emax : Int)
 variable [Prec_gt_0 prec]
@@ -25,6 +28,28 @@ noncomputable def B754_to_R (x : B754) : ℝ :=
   | B754.B754_finite s m e => 
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat 2)
   | _ => 0
+
+-- View a single-NaN binary into the standard IEEE 754 float
+def B2SF_BSN (x : B754) : StandardFloat :=
+  match x with
+  | B754.B754_finite s m e => StandardFloat.S754_finite s m e
+  | B754.B754_infinity s => StandardFloat.S754_infinity s
+  | B754.B754_zero s => StandardFloat.S754_zero s
+  | B754.B754_nan => StandardFloat.S754_nan
+
+-- Coq: SF2R_B2SF — Real semantics after mapping to StandardFloat
+-- We state it in hoare-triple style around a pure computation.
+noncomputable def SF2R_B2SF_check (x : B754) : Id ℝ :=
+  pure (SF2R 2 (B2SF_BSN x))
+
+theorem SF2R_B2SF (x : B754) :
+  ⦃⌜True⌝⦄
+  SF2R_B2SF_check x
+  ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
+  intro _
+  -- Structure follows the hoare-triple pattern used in this project.
+  -- Proof deferred.
+  exact sorry
 
 -- Valid B754 predicate
 def validB754 (x : B754) : Prop :=
