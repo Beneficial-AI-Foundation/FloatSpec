@@ -413,3 +413,27 @@ def Binary16 := Binary754 11 15
 def Binary32 := Binary754 24 127
 def Binary64 := Binary754 53 1023
 def Binary128 := Binary754 113 16383
+
+-- Missing Theorems (ported from Coq; hoare-style specs, proofs deferred)
+
+-- Coq: canonical_canonical_mantissa
+-- We introduce a lightweight placeholder predicate mirroring Coq's
+-- canonical_mantissa and expose the canonicality statement in a
+-- hoare-triple style wrapper. The actual proof is deferred.
+def canonical_mantissa {prec emax : Int} (m : Nat) (e : Int) : Bool :=
+  -- Placeholder: to be refined to the true canonical-mantissa predicate
+  true
+
+def canonical_canonical_mantissa_check {prec emax : Int}
+  (sx : Bool) (mx : Nat) (ex : Int) : Id Unit :=
+  pure ()
+
+theorem canonical_canonical_mantissa (sx : Bool) (mx : Nat) (ex : Int)
+  (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  canonical_canonical_mantissa_check (prec:=prec) (emax:=emax) sx mx ex
+  ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
+            (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
+  intro _
+  -- Proof deferred; will be aligned with Coq's canonical_canonical_mantissa
+  sorry
