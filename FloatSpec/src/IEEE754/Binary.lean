@@ -694,3 +694,35 @@ theorem FLT_format_B2R
   intro _
   -- Proof deferred; follows Coq's FLT_format_B2R via generic_format_B2R and FLT_format_generic
   sorry
+
+-- Coq: Bcompare_correct
+-- We expose a comparison wrapper that, under finiteness of both operands,
+-- returns the comparison code of the real semantics (using Rcompare.run).
+noncomputable def Bcompare_check {prec emax : Int}
+  (x y : Binary754 prec emax) : Id (Option Int) :=
+  pure (some ((FloatSpec.Core.Raux.Rcompare (B2R (prec:=prec) (emax:=emax) x)
+                                   (B2R (prec:=prec) (emax:=emax) y)).run))
+
+theorem Bcompare_correct {prec emax : Int}
+  (x y : Binary754 prec emax)
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
+  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
+  ⦃⌜True⌝⦄
+  Bcompare_check (prec:=prec) (emax:=emax) x y
+  ⦃⇓result => ⌜result = some ((FloatSpec.Core.Raux.Rcompare (B2R (prec:=prec) (emax:=emax) x)
+                                                   (B2R (prec:=prec) (emax:=emax) y)).run)⌝⦄ := by
+  intro _
+  -- Proof deferred; will align with Coq's Bcompare_correct via the BSN bridge.
+  exact sorry
+
+-- Coq: Bcompare_swap
+-- Swapping the arguments of the comparison negates the comparison code.
+theorem Bcompare_swap {prec emax : Int}
+  (x y : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Bcompare_check (prec:=prec) (emax:=emax) y x
+  ⦃⇓result => ⌜result = some (-(FloatSpec.Core.Raux.Rcompare (B2R (prec:=prec) (emax:=emax) x)
+                                             (B2R (prec:=prec) (emax:=emax) y)).run)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `Bcompare_swap` via properties of Rcompare.
+  exact sorry
