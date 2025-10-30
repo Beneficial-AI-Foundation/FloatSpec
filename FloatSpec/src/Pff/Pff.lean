@@ -485,6 +485,22 @@ theorem Z_eq_bool_correct (p q : Int) :
     ⦃⇓_ => ⌜(if Z_eq_bool p q then p = q else p ≠ q)⌝⦄ := by
   sorry
 
+-- Coq: `Zcompare_correct` — trichotomy via a comparison function
+noncomputable def Zcompare (p q : Int) : Ordering :=
+  if p < q then Ordering.lt else if p = q then Ordering.eq else Ordering.gt
+
+noncomputable def Zcompare_correct_check (p q : Int) : Id Unit :=
+  pure ()
+
+theorem Zcompare_correct (p q : Int) :
+    ⦃⌜True⌝⦄
+    Zcompare_correct_check p q
+    ⦃⇓_ => ⌜match Zcompare p q with
+            | Ordering.gt => q < p
+            | Ordering.lt => p < q
+            | Ordering.eq => p = q⌝⦄ := by
+  sorry
+
 -- Coq: `Zabs_Zopp` — | -z | = | z |
 noncomputable def Zabs_Zopp_check (z : Int) : Id Unit :=
   pure ()
