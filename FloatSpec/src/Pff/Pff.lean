@@ -574,3 +574,83 @@ theorem Zle_Zpred_inv (z1 z2 : Int) :
     Zle_Zpred_inv_check z1 z2
     ⦃⇓_ => ⌜z1 < z2⌝⦄ := by
   sorry
+
+-- Coq: `Zabs_intro` — if `P` holds for `-z` and `z`, it holds for `|z|`
+noncomputable def Zabs_intro_check (P : Int → Prop) (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zabs_intro (P : Int → Prop) (z : Int) :
+    ⦃⌜P (-z) ∧ P z⌝⦄
+    Zabs_intro_check P z
+    ⦃⇓_ => ⌜P (|z|)⌝⦄ := by
+  sorry
+
+-- Coq: `Zpred_Zle_Zabs_intro` — if -pred z2 ≤ z1 ≤ pred z2 then |z1| < z2
+noncomputable def Zpred_Zle_Zabs_intro_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zpred_Zle_Zabs_intro (z1 z2 : Int) :
+    ⦃⌜-Int.pred z2 ≤ z1 ∧ z1 ≤ Int.pred z2⌝⦄
+    Zpred_Zle_Zabs_intro_check z1 z2
+    ⦃⇓_ => ⌜|z1| < z2⌝⦄ := by
+  sorry
+
+-- Coq: `Zlt_Zabs_intro` — if -z2 < z1 < z2 then |z1| < z2
+noncomputable def Zlt_Zabs_intro_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_Zabs_intro (z1 z2 : Int) :
+    ⦃⌜-z2 < z1 ∧ z1 < z2⌝⦄
+    Zlt_Zabs_intro_check z1 z2
+    ⦃⇓_ => ⌜|z1| < z2⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_less` — for q > 0, Zpower_nat n q > 0
+noncomputable def Zpower_nat_less_check (n : Int) (q : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_less (n : Int) (q : Nat) :
+    ⦃⌜0 < q⌝⦄
+    Zpower_nat_less_check n q
+    ⦃⇓_ => ⌜0 < n ^ q⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_monotone_S` — n^(q+1) ≥ n^q for n ≥ 1
+noncomputable def Zpower_nat_monotone_S_check (n : Int) (q : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_monotone_S (n : Int) (q : Nat) :
+    ⦃⌜1 ≤ n⌝⦄
+    Zpower_nat_monotone_S_check n q
+    ⦃⇓_ => ⌜n ^ q ≤ n ^ (q+1)⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_monotone_lt` — if 1 < n then n^q < n^(q+1)
+noncomputable def Zpower_nat_monotone_lt_check (n : Int) (q : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_monotone_lt (n : Int) (q : Nat) :
+    ⦃⌜1 < n⌝⦄
+    Zpower_nat_monotone_lt_check n q
+    ⦃⇓_ => ⌜n ^ q < n ^ (q+1)⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_anti_monotone_lt` — if 0 ≤ n < 1 then n^(q+1) < n^q
+noncomputable def Zpower_nat_anti_monotone_lt_check (n : Int) (q : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_anti_monotone_lt (n : Int) (q : Nat) :
+    ⦃⌜0 ≤ n ∧ n < 1⌝⦄
+    Zpower_nat_anti_monotone_lt_check n q
+    ⦃⇓_ => ⌜n ^ (q+1) < n ^ q⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_monotone_le` — if 1 ≤ n then n^q ≤ n^r for q ≤ r
+noncomputable def Zpower_nat_monotone_le_check (n : Int) (q r : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_monotone_le (n : Int) (q r : Nat) :
+    ⦃⌜1 ≤ n ∧ q ≤ r⌝⦄
+    Zpower_nat_monotone_le_check n q r
+    ⦃⇓_ => ⌜n ^ q ≤ n ^ r⌝⦄ := by
+  sorry

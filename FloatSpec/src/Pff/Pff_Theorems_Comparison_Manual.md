@@ -969,23 +969,23 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zlt_mult_simpl_l` → `Zlt_mult_simpl_l [FloatSpec/src/Pff/Pff.lean:421]`
 - `Z_eq_bool_correct` → `Z_eq_bool_correct [FloatSpec/src/Pff/Pff.lean:433]`
 - `Zle_Zpred_Zpred` → (no Lean counterpart)
-- `Zlt_Zabs_inv1` → (no Lean counterpart)
-- `Zle_Zabs_inv1` → (no Lean counterpart)
-- `Zle_Zabs_inv2` → (no Lean counterpart)
+- `Zlt_Zabs_inv1` → `Zlt_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:532]`
+- `Zle_Zabs_inv1` → `Zle_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:542]`
+- `Zle_Zabs_inv2` → `Zle_Zabs_inv2 [FloatSpec/src/Pff/Pff.lean:552]`
 - `Zlt_Zabs_Zpred` → (no Lean counterpart)
  -- `Zle_n_Zpred` → `Zle_n_Zpred [FloatSpec/src/Pff/Pff.lean:490]`
 - `Zpred_Zopp_Zs` → `Zpred_Zopp_Zs [FloatSpec/src/Pff/Pff.lean:164]`
  -- `Zlt_1_O` → `Zlt_1_O [FloatSpec/src/Pff/Pff.lean:500]`
-- `Zlt_not_eq_rev` → (no Lean counterpart)
+- `Zlt_not_eq_rev` → `Zlt_not_eq_rev [FloatSpec/src/Pff/Pff.lean:562]`
 - `Zle_Zpred_inv` → `Zle_Zpred_inv [FloatSpec/src/Pff/Pff.lean:572]`
-- `Zabs_intro` → (no Lean counterpart)
-- `Zpred_Zle_Zabs_intro` → (no Lean counterpart)
-- `Zlt_Zabs_intro` → (no Lean counterpart)
-- `Zpower_nat_less` → (no Lean counterpart)
-- `Zpower_nat_monotone_S` → (no Lean counterpart)
-- `Zpower_nat_monotone_lt` → (no Lean counterpart)
-- `Zpower_nat_anti_monotone_lt` → (no Lean counterpart)
-- `Zpower_nat_monotone_le` → (no Lean counterpart)
+- `Zabs_intro` → `Zabs_intro [FloatSpec/src/Pff/Pff.lean:582]`
+- `Zpred_Zle_Zabs_intro` → `Zpred_Zle_Zabs_intro [FloatSpec/src/Pff/Pff.lean:592]`
+- `Zlt_Zabs_intro` → `Zlt_Zabs_intro [FloatSpec/src/Pff/Pff.lean:602]`
+- `Zpower_nat_less` → `Zpower_nat_less [FloatSpec/src/Pff/Pff.lean:610]`
+- `Zpower_nat_monotone_S` → `Zpower_nat_monotone_S [FloatSpec/src/Pff/Pff.lean:620]`
+- `Zpower_nat_monotone_lt` → `Zpower_nat_monotone_lt [FloatSpec/src/Pff/Pff.lean:630]`
+- `Zpower_nat_anti_monotone_lt` → `Zpower_nat_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:640]`
+- `Zpower_nat_monotone_le` → `Zpower_nat_monotone_le [FloatSpec/src/Pff/Pff.lean:650]`
 - `digitAux1` → (no Lean counterpart)
 - `Zcompare_correct` → (no Lean counterpart)
 - `digitAuxLess` → (no Lean counterpart)
