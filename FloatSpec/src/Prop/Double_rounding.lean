@@ -337,6 +337,25 @@ lemma round_round_plus_aux1_aux
       < (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run) - k) := by
   sorry
 
+/-- Coq: `round_round_plus_aux1`
+    If `0 < x`, `0 < y`, `mag y ≤ fexp1 (mag x) - 2`, and `x` is
+    `fexp1`-generic, then rounding `x + y` at `fexp2` then at `fexp1`
+    (both to nearest) equals rounding once at `fexp1`. -/
+lemma round_round_plus_aux1
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y)
+  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2)
+  (Fx : generic_format beta fexp1 x) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
+  sorry
+
 /-- Coq: `round_round_gt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
     above both midpoints and fexp2 is at a further place. -/
