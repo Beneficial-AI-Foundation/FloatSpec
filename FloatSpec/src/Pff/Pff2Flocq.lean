@@ -133,3 +133,19 @@ theorem C_format (emin prec s : Int) [Prec_gt_0 prec] :
     C_format_check emin prec s
     ⦃⇓_ => ⌜generic_format beta (FLT_exp emin prec) ((beta : ℝ) ^ s + 1)⌝⦄ := by
   sorry
+
+-- Coq: `Veltkamp_Even` — specialized Veltkamp with even tie-breaking
+noncomputable def Veltkamp_Even_check (emin prec s : Int)
+    (choice : Int → Bool) (hx x : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `Veltkamp_Even` — assuming the boolean tie-breaker `choice` agrees
+    with even rounding, the constructed `hx` equals rounding `x` at precision
+    `prec - s`. We model rounding via `Calc.Round.round` on `FLT_exp`.
+    This is a compatibility statement; proof deferred. -/
+theorem Veltkamp_Even (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)]
+    (choice : Int → Bool) (hx x : ℝ) :
+    ⦃⌜choice = fun z => ! decide (z % 2 = 0)⌝⦄
+    Veltkamp_Even_check emin prec s choice hx x
+    ⦃⇓_ => ⌜hx = FloatSpec.Calc.Round.round 2 (FLT_exp emin (prec - s)) () x⌝⦄ := by
+  sorry
