@@ -35,6 +35,27 @@ theorem double_round_eq (fexp1 fexp2 : Int → Int)
 -- Structural hypothesis relating places for the product exponents.
 -- We will introduce it if needed by subsequent lemmas.
 
+/-- Coq: `round_round_mult_hyp`
+    Structural relation between the places produced by `fexp1` and `fexp2`
+    for products. -/
+def round_round_mult_hyp (fexp1 fexp2 : Int → Int) : Prop :=
+  (∀ ex ey, fexp2 (ex + ey) ≤ fexp1 ex + fexp1 ey) ∧
+  (∀ ex ey, fexp2 (ex + ey - 1) ≤ fexp1 ex + fexp1 ey)
+
+/-- Coq: `round_round_mult_aux`
+    Under `round_round_mult_hyp`, the product of two `fexp1`-generic
+    numbers is `fexp2`-generic. -/
+lemma round_round_mult_aux
+  (fexp1 fexp2 : Int → Int)
+  (Hh : round_round_mult_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x * y) := by
+  sorry
+
+
+
 /-- Coq: `round_round_lt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
     below both midpoints and fexp2 is at a further place. -/
