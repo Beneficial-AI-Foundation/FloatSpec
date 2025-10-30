@@ -972,7 +972,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zlt_Zabs_inv1` → `Zlt_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:532]`
 - `Zle_Zabs_inv1` → `Zle_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:542]`
 - `Zle_Zabs_inv2` → `Zle_Zabs_inv2 [FloatSpec/src/Pff/Pff.lean:552]`
-- `Zlt_Zabs_Zpred` → (no Lean counterpart)
+-- `Zlt_Zabs_Zpred` → `Zlt_Zabs_Zpred [FloatSpec/src/Pff/Pff.lean:578]`
  -- `Zle_n_Zpred` → `Zle_n_Zpred [FloatSpec/src/Pff/Pff.lean:490]`
 - `Zpred_Zopp_Zs` → `Zpred_Zopp_Zs [FloatSpec/src/Pff/Pff.lean:164]`
  -- `Zlt_1_O` → `Zlt_1_O [FloatSpec/src/Pff/Pff.lean:500]`

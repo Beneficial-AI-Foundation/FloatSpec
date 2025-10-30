@@ -571,6 +571,26 @@ theorem Zle_Zabs_inv2 (z1 z2 : Int) :
     ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
   sorry
 
+-- Coq: `Zlt_Zabs_Zpred` — if |z1| < z2 and z1 ≠ pred z2 then |succ z1| < z2
+noncomputable def Zlt_Zabs_Zpred_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_Zabs_Zpred (z1 z2 : Int) :
+    ⦃⌜|z1| < z2 ∧ z1 ≠ Int.pred z2⌝⦄
+    Zlt_Zabs_Zpred_check z1 z2
+    ⦃⇓_ => ⌜|Int.succ z1| < z2⌝⦄ := by
+  sorry
+
+-- Coq: `EvenO` — Even 0
+noncomputable def EvenO_check : Id Unit :=
+  pure ()
+
+theorem EvenO :
+    ⦃⌜True⌝⦄
+    EvenO_check
+    ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
+  sorry
+
 -- Coq: `Zlt_not_eq_rev` — if q < p then p ≠ q
 noncomputable def Zlt_not_eq_rev_check (p q : Int) : Id Unit :=
   pure ()
