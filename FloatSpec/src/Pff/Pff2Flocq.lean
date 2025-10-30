@@ -5,9 +5,11 @@ import FloatSpec.src.Core
 import FloatSpec.src.Compat
 import FloatSpec.src.Pff.Pff
 import Mathlib.Data.Real.Basic
+import Std.Do.Triple
 
 open Real
 open FloatSpec.Core.Defs
+open Std.Do
 
 -- Conversion functions between Pff and Flocq representations
 
@@ -57,4 +59,25 @@ theorem pff_flocq_bijection (f : FloatSpec.Core.Defs.FlocqFloat beta) :
 
 theorem flocq_pff_bijection (f : PffFloat) :
   flocq_to_pff (pff_to_flocq beta f) = f := by
+  sorry
+
+/-!
+Missing theorems imported from Coq Pff2Flocq.v
+
+We follow the project convention: introduce a `_check` function and state each
+theorem using the Hoare-triple style, leaving proofs as `sorry` for now.
+-/
+
+-- Coq: `round_N_opp_sym` — rounding to nearest-even is odd-symmetric
+noncomputable def round_N_opp_sym_check (emin prec : Int) (choice : Int → Bool) (x : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `round_N_opp_sym` — for any `choice` satisfying the usual symmetry,
+    rounding of the negation equals the negation of rounding. We phrase the
+    statement using the rounding operator from Compat/Core. -/
+theorem round_N_opp_sym (emin prec : Int) (choice : Int → Bool) (x : ℝ) :
+    ⦃⌜∀ t : Int, choice t = ! choice (-(t + 1))⌝⦄
+    round_N_opp_sym_check emin prec choice x
+    ⦃⇓_ => ⌜FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) () (-x)
+            = - FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) () x⌝⦄ := by
   sorry
