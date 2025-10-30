@@ -16239,3 +16239,4 @@ Some required targets logged failures:
 - FloatSpec.src.IEEE754.PrimFloat
 - FloatSpec.src.IEEE754
 - FloatSpec
+error: build failed

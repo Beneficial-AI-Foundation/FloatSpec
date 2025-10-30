@@ -560,6 +560,36 @@ def binary_mul (x y : Binary754 prec emax) : Binary754 prec emax := by
 
 -- (reserved) Decomposition theorem (Coq: Bfrexp) will be added later
 
+-- Decomposition (Coq: Bfrexp)
+-- We expose a placeholder implementation returning a mantissa-like binary
+-- float together with an exponent, and state the Coq theorem in
+-- Hoare‑triple style. Proof is deferred.
+def Bfrexp (x : Binary754 prec emax) : (Binary754 prec emax) × Int :=
+  -- Placeholder: actual implementation exists in Coq and relates to the BSN layer.
+  (x, 0)
+
+noncomputable def Bfrexp_correct_check (x : Binary754 prec emax) :
+  Id ((Binary754 prec emax) × Int) :=
+  pure (Bfrexp (prec:=prec) (emax:=emax) x)
+
+-- Coq: Bfrexp_correct
+-- For strictly finite inputs, Bfrexp decomposes x = z * 2^e with |B2R z| in [1/2,1)
+-- and e = mag 2 (B2R x).
+theorem Bfrexp_correct (x : Binary754 prec emax)
+  (hx : is_finite_strict_Bin (prec:=prec) (emax:=emax) x = true) :
+  ⦃⌜True⌝⦄
+  Bfrexp_correct_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜
+      let z := result.1; let e := result.2;
+      (1 / 2 ≤ |B2R (prec:=prec) (emax:=emax) z| ∧
+         |B2R (prec:=prec) (emax:=emax) z| < 1) ∧
+      B2R (prec:=prec) (emax:=emax) x
+        = B2R (prec:=prec) (emax:=emax) z * (FloatSpec.Core.Raux.bpow 2 e).run ∧
+      e = (FloatSpec.Core.Raux.mag 2 (B2R (prec:=prec) (emax:=emax) x)).run⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq via the BSN bridge (BinarySingleNaN.Bfrexp_correct)
+  exact sorry
+
 def binary_div (x y : Binary754 prec emax) : Binary754 prec emax := by
   sorry
 
@@ -721,6 +751,50 @@ theorem Bldexp_correct (mode : RoundingMode)
   exact sorry
 
 -- (reserved) Unit in the last place (Coq: Bulp) will be added later
+
+-- Successor and predecessor (Coq: Bsucc, Bpred)
+-- We expose placeholders for the operations and their correctness theorems
+-- in hoare‑triple style, mirroring the Coq statements via the BSN bridge.
+
+def Bsucc (x : Binary754 prec emax) : Binary754 prec emax := by
+  -- Placeholder; real implementation follows BinarySingleNaN bridge in Coq.
+  sorry
+
+noncomputable def Bsucc_correct_check (x : Binary754 prec emax) : Id ℝ :=
+  pure (FF2R 2 ((Bsucc (prec:=prec) (emax:=emax) x).val))
+
+-- Coq: Bsucc_correct — either steps by one ULP or overflows to +∞
+theorem Bsucc_correct (x : Binary754 prec emax)
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true) :
+  ⦃⌜True⌝⦄
+  Bsucc_correct_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜
+      result =
+        (FloatSpec.Core.Ulp.succ 2 (FLT_exp (3 - emax - prec) prec)
+          (B2R (prec:=prec) (emax:=emax) x)).run ∨
+      B2FF (prec:=prec) (emax:=emax) (Bsucc (prec:=prec) (emax:=emax) x)
+        = FullFloat.F754_infinity false⌝⦄ := by
+  intro _; exact sorry
+
+def Bpred (x : Binary754 prec emax) : Binary754 prec emax := by
+  -- Placeholder; real implementation follows BinarySingleNaN bridge in Coq.
+  sorry
+
+noncomputable def Bpred_correct_check (x : Binary754 prec emax) : Id ℝ :=
+  pure (FF2R 2 ((Bpred (prec:=prec) (emax:=emax) x).val))
+
+-- Coq: Bpred_correct — either steps by one ULP or overflows to −∞
+theorem Bpred_correct (x : Binary754 prec emax)
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true) :
+  ⦃⌜True⌝⦄
+  Bpred_correct_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜
+      result =
+        (FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec)
+          (B2R (prec:=prec) (emax:=emax) x)).run ∨
+      B2FF (prec:=prec) (emax:=emax) (Bpred (prec:=prec) (emax:=emax) x)
+        = FullFloat.F754_infinity true⌝⦄ := by
+  intro _; exact sorry
 
 -- Constant one (Coq: Bone)
 def binary_one : Binary754 prec emax :=
