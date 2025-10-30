@@ -250,6 +250,66 @@ theorem Zlt_next (n m : Int) :
     ⦃⇓_ => ⌜m = Int.succ n ∨ Int.succ n < m⌝⦄ := by
   sorry
 
+-- Coq: `Zle_next` — either m = n or succ n ≤ m when n ≤ m
+noncomputable def Zle_next_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_next (n m : Int) :
+    ⦃⌜n ≤ m⌝⦄
+    Zle_next_check n m
+    ⦃⇓_ => ⌜m = n ∨ Int.succ n ≤ m⌝⦄ := by
+  sorry
+
+-- Coq: `inj_pred` — Z_of_nat (pred n) = Z.pred (Z_of_nat n) for n ≠ 0
+noncomputable def inj_pred_check (n : Nat) : Id Unit :=
+  pure ()
+
+theorem inj_pred (n : Nat) :
+    ⦃⌜n ≠ 0⌝⦄
+    inj_pred_check n
+    ⦃⇓_ => ⌜Int.ofNat (Nat.pred n) = Int.pred (Int.ofNat n)⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_abs` — p ≤ Z_of_nat (Z.abs_nat p)
+noncomputable def Zle_abs_check (p : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_abs (p : Int) :
+    ⦃⌜True⌝⦄
+    Zle_abs_check p
+    ⦃⇓_ => ⌜p ≤ Int.ofNat (Int.natAbs p)⌝⦄ := by
+  sorry
+
+-- Coq: `Zabs_eq_opp` — if x ≤ 0 then |x| = -x
+noncomputable def Zabs_eq_opp_check (x : Int) : Id Unit :=
+  pure ()
+
+theorem Zabs_eq_opp (x : Int) :
+    ⦃⌜x ≤ 0⌝⦄
+    Zabs_eq_opp_check x
+    ⦃⇓_ => ⌜|x| = -x⌝⦄ := by
+  sorry
+
+-- Coq: `lt_Zlt_inv` — if Z_of_nat n < Z_of_nat m then n < m
+noncomputable def lt_Zlt_inv_check (n m : Nat) : Id Unit :=
+  pure ()
+
+theorem lt_Zlt_inv (n m : Nat) :
+    ⦃⌜Int.ofNat n < Int.ofNat m⌝⦄
+    lt_Zlt_inv_check n m
+    ⦃⇓_ => ⌜n < m⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zpred` — if x < y then x ≤ pred y
+noncomputable def Zle_Zpred_check (x y : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zpred (x y : Int) :
+    ⦃⌜x < y⌝⦄
+    Zle_Zpred_check x y
+    ⦃⇓_ => ⌜x ≤ Int.pred y⌝⦄ := by
+  sorry
+
 -- List operations used in Pff
 def list_sum (l : List ℝ) : ℝ :=
   l.foldr (· + ·) 0
