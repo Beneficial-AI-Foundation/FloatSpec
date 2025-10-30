@@ -5,9 +5,11 @@ import FloatSpec.src.Core
 import FloatSpec.src.Compat
 import FloatSpec.src.Calc.Round
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.FTZ
 import Mathlib.Data.Real.Basic
 
 open Real
+open FloatSpec.Core.FTZ
 
 variable (beta : Int)
 
@@ -52,6 +54,79 @@ lemma round_round_mult_aux
   (Fx : generic_format beta fexp1 x)
   (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x * y) := by
+  sorry
+
+
+/-- Coq: `round_round_mult`
+    If the product of two `fexp1`-generic numbers is always
+    `fexp2`-generic (captured by `round_round_mult_hyp` together with
+    `round_round_mult_aux`), then rounding the product twice with the
+    same rounding mode `rnd` is innocuous. -/
+theorem round_round_mult
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (mode : FloatSpec.Calc.Round.Mode)
+  (Hh : round_round_mult_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 mode
+      (FloatSpec.Calc.Round.round beta fexp2 mode (x * y))
+  = FloatSpec.Calc.Round.round beta fexp1 mode (x * y) := by
+  sorry
+
+/-- Coq: `round_round_mult_FLX`
+    Double rounding for products in FLX under the precision relation
+    `2 * prec ≤ prec'`. -/
+theorem round_round_mult_FLX
+  (prec prec' : Int) [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (mode : FloatSpec.Calc.Round.Mode)
+  (x y : ℝ)
+  (hprec : 2 * prec ≤ prec')
+  (Fx : generic_format beta (FLX_exp prec) x)
+  (Fy : generic_format beta (FLX_exp prec) y) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) mode
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') mode (x * y))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) mode (x * y) := by
+  sorry
+
+/-- Coq: `round_round_mult_FLT`
+    Double rounding for products in FLT under relations on exponents
+    and precisions. -/
+theorem round_round_mult_FLT
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin' prec')]
+  (mode : FloatSpec.Calc.Round.Mode)
+  (x y : ℝ)
+  (Hemin : emin' ≤ 2 * emin) (Hprec : 2 * prec ≤ prec')
+  (Fx : generic_format beta (FLT_exp emin prec) x)
+  (Fy : generic_format beta (FLT_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) mode
+    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') mode (x * y))
+  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) mode (x * y) := by
+  sorry
+
+/-- Coq: `round_round_mult_FTZ`
+    Double rounding for products in FTZ under relations on exponents
+    and precisions. -/
+theorem round_round_mult_FTZ
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin' prec')]
+  (mode : FloatSpec.Calc.Round.Mode)
+  (x y : ℝ)
+  (Hemin : emin' + prec' ≤ 2 * emin + prec) (Hprec : 2 * prec ≤ prec')
+  (Fx : generic_format beta (FTZ_exp emin prec) x)
+  (Fy : generic_format beta (FTZ_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) mode
+    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') mode (x * y))
+  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) mode (x * y) := by
   sorry
 
 

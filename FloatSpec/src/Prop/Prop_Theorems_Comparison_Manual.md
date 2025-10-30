@@ -334,13 +334,13 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `round_round_mult_aux` → `round_round_mult_aux` [Double_rounding.lean:48] (spec-variant)
 
-- `round_round_mult` → (no direct Lean match found)
+ - `round_round_mult` → `round_round_mult` [Double_rounding.lean:65] (spec-variant)
 
-- `round_round_mult_FLX` → (no direct Lean match found)
+ - `round_round_mult_FLX` → `round_round_mult_FLX` [Double_rounding.lean:82] (spec-variant)
 
-- `round_round_mult_FLT` → (no direct Lean match found)
+ - `round_round_mult_FLT` → `round_round_mult_FLT` [Double_rounding.lean:99] (spec-variant)
 
-- `round_round_mult_FTZ` → (no direct Lean match found)
+ - `round_round_mult_FTZ` → `round_round_mult_FTZ` [Double_rounding.lean:117] (spec-variant)
 
 - `mag_plus_disj` → (no direct Lean match found)
 
