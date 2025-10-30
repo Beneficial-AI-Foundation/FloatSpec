@@ -144,9 +144,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `TwoSum_correct` → (no Lean counterpart)
 - `TwoSum_correct` → `TwoSum_correct [FloatSpec/src/Pff/Pff2Flocq.lean:104]`
 - `C_format` → (no Lean counterpart)
-- `Veltkamp_Even` → (no Lean counterpart)
-- `Veltkamp` → (no Lean counterpart)
-- `Veltkamp_tail` → (no Lean counterpart)
+- `Veltkamp_Even` → `Veltkamp_Even [FloatSpec/src/Pff/Pff2Flocq.lean:146]`
+- `Veltkamp` → `Veltkamp [FloatSpec/src/Pff/Pff2Flocq.lean:163]`
+- `Veltkamp_tail` → `Veltkamp_tail [FloatSpec/src/Pff/Pff2Flocq.lean:178]`
 - `underf_mult_aux` → (no Lean counterpart)
 - `underf_mult_aux'` → (no Lean counterpart)
 - `Dekker` → (no Lean counterpart)

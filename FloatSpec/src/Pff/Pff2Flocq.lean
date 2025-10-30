@@ -149,3 +149,37 @@ theorem Veltkamp_Even (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)
     Veltkamp_Even_check emin prec s choice hx x
     ⦃⇓_ => ⌜hx = FloatSpec.Calc.Round.round 2 (FLT_exp emin (prec - s)) () x⌝⦄ := by
   sorry
+
+-- Coq: `Veltkamp` — there exists a tie-breaker `choice'` such that
+-- rounding at precision `prec - s` yields the constructed `hx`.
+noncomputable def Veltkamp_check (emin prec s : Int)
+    (choice : Int → Bool) (hx x : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `Veltkamp` — existence of a nearest-ties choice `choice'`
+    for which `hx` equals rounding `x` at precision `prec - s`.
+    We model rounding via `Calc.Round.round` with `Znearest choice'`.
+    Proof deferred. -/
+theorem Veltkamp (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)]
+    (choice : Int → Bool) (hx x : ℝ) :
+    ⦃⌜True⌝⦄
+    Veltkamp_check emin prec s choice hx x
+    ⦃⇓_ => ⌜∃ choice' : Int → Bool,
+              hx = FloatSpec.Calc.Round.round 2 (FLT_exp emin (prec - s)) (Znearest choice') x⌝⦄ := by
+  sorry
+
+-- Coq: `Veltkamp_tail` — decomposition x = hx + tx with tx representable
+noncomputable def Veltkamp_tail_check (emin prec s : Int)
+    (choice : Int → Bool) (hx tx x : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `Veltkamp_tail` — the residual `tx` is representable at `s` and
+    reconstructs `x = hx + tx`. Proof deferred. -/
+theorem Veltkamp_tail (emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (hx tx x : ℝ) :
+    ⦃⌜True⌝⦄
+    Veltkamp_tail_check emin prec s choice hx tx x
+    ⦃⇓_ => ⌜x = hx + tx ∧ generic_format 2 (FLT_exp emin s) tx⌝⦄ := by
+  sorry
+
+-- (reserved) underf_mult_aux and underf_mult_aux' will be added later
