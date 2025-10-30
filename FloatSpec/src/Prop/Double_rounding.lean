@@ -270,6 +270,44 @@ lemma round_round_div_aux0
         - (1/2) * (ulp beta fexp2 (x / y)) ≤ x / y) := by
   sorry
 
+/-- Coq: `round_round_div_aux1`
+    In the division setting, under `round_round_div_hyp` and assuming
+    positivity and genericity hypotheses, the mid-interval above `x/y`
+    cannot occur when `fexp1 (mag (x / y)) ≤ mag (x / y)`.
+    This is used as a case in the all-mid-cases analysis. -/
+lemma round_round_div_aux1
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_div_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y)
+  (h_f1_le : fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)).run)
+              ≤ (FloatSpec.Core.Raux.mag beta (x / y)).run) :
+  ¬ (midp (beta := beta) fexp1 (x / y) - (1/2) * (ulp beta fexp2 (x / y)) ≤ x / y
+      ∧ x / y < midp (beta := beta) fexp1 (x / y)) := by
+  sorry
+
+/-- Coq: `round_round_div_aux2`
+    Companion inequality used in the all-mid-cases division analysis
+    for the complementary magnitude split. -/
+lemma round_round_div_aux2
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_div_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y)
+  (h_f1_gt : (FloatSpec.Core.Raux.mag beta (x / y)).run
+              < fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)).run)) :
+  ¬ (midp (beta := beta) fexp1 (x / y) ≤ x / y
+      ∧ x / y < midp (beta := beta) fexp1 (x / y) + (1/2) * (ulp beta fexp2 (x / y))) := by
+  sorry
+
 -- Coq: `round_round_mult_aux`
 -- Under `round_round_mult_hyp`, the product of two `fexp1`-generic
 -- numbers is `fexp2`-generic.

@@ -42,6 +42,20 @@ lemma Zceil_plus (n : Int) (y : ℝ) :
     n + (FloatSpec.Core.Raux.Zceil y).run := by
   sorry
 
+/-- Parity is invariant by absolute value: `(abs z)` is even iff `z` is even.
+    Coq counterpart: `Zeven_abs`. -/
+lemma Zeven_abs (z : Int) :
+  ((Int.ofNat (Int.natAbs z)) % 2 = 0) ↔ (z % 2 = 0) := by
+  sorry
+
+/-- Sum with round-to-odd at an even integer point.
+    Coq counterpart: `Zrnd_odd_plus`. -/
+lemma Zrnd_odd_plus (x y : ℝ)
+  (hx : x = (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ))
+  (heven : ((FloatSpec.Core.Raux.Zfloor x).run : Int) % 2 = 0) :
+  ((Zodd (x + y) : Int) : ℝ) = x + ((Zodd y : Int) : ℝ) := by
+  sorry
+
 /-- Round to odd properties -/
 theorem round_odd_ge_ulp (x : ℝ) :
   generic_format beta fexp x ∨ 

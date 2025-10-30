@@ -485,9 +485,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_div_aux0` → `round_round_div_aux0` [Double_rounding.lean:258] (spec-variant)
 
-- `round_round_div_aux1` → (no direct Lean match found)
+- `round_round_div_aux1` → `round_round_div_aux1` [Double_rounding.lean:278] (spec-variant)
 
-- `round_round_div_aux2` → (no direct Lean match found)
+- `round_round_div_aux2` → `round_round_div_aux2` [Double_rounding.lean:296] (spec-variant)
 
 - `round_round_div_aux` → (no direct Lean match found)
 
@@ -1064,11 +1064,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `Zfloor_plus` → `Zfloor_plus` [Round_odd.lean:34] (spec-variant)
 
- - `Zceil_plus` → `Zceil_plus` [Round_odd.lean:40] (spec-variant)
+- `Zceil_plus` → `Zceil_plus` [Round_odd.lean:40] (spec-variant)
 
-- `Zeven_abs` → (no direct Lean match found)
+- `Zeven_abs` → `Zeven_abs` [Round_odd.lean:47] (spec-variant)
 
-- `Zrnd_odd_plus` → (no direct Lean match found)
+- `Zrnd_odd_plus` → `Zrnd_odd_plus` [Round_odd.lean:53] (spec-variant)
 
 - `Rnd_odd_pt_opp_inv` → (no direct Lean match found)
 
