@@ -403,6 +403,43 @@ lemma round_round_plus_aux1
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
   sorry
 
+/-- Coq: `round_round_plus_aux2`
+    Case split on `mag y ≤ fexp1 (mag x) - 2` driving either the
+    `round_round_plus_aux1` branch or the exact-addition branch
+    `round_round_plus_aux0`. -/
+lemma round_round_plus_aux2
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y) (hyx : y ≤ x)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
+  sorry
+
+/-- Coq: `round_round_plus_aux`
+    Nonnegative inputs version: for `0 ≤ x` and `0 ≤ y`, under the
+    structural hypothesis `round_round_plus_hyp`, double rounding of
+    `x + y` (nearest-on-nearest) collapses to a single rounding at
+    `fexp1`. -/
+lemma round_round_plus_aux
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_nonneg : 0 ≤ x) (hy_nonneg : 0 ≤ y)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
+  sorry
+
 /-- Coq: `round_round_gt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
     above both midpoints and fexp2 is at a further place. -/
