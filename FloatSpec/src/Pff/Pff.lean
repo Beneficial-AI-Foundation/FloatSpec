@@ -66,6 +66,97 @@ theorem pow_neg (r : ℝ) (z : Int) :
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
 
+-- Coq: `pow_NR0` — if e ≠ 0 then e^n ≠ 0
+noncomputable def pow_NR0_check (e : ℝ) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem pow_NR0 (e : ℝ) (n : Nat) :
+    ⦃⌜e ≠ 0⌝⦄
+    pow_NR0_check e n
+    ⦃⇓_ => ⌜e ^ n ≠ 0⌝⦄ := by
+  sorry
+
+-- Coq: `pow_add` — e^(n+m) = e^n * e^m
+noncomputable def pow_add_compat_check (e : ℝ) (n m : Nat) : Id Unit :=
+  pure ()
+
+-- Renamed to avoid clashing with Mathlib's `pow_add`
+theorem pow_add_compat (e : ℝ) (n m : Nat) :
+    ⦃⌜True⌝⦄
+    pow_add_compat_check e n m
+    ⦃⇓_ => ⌜e ^ (n + m) = e ^ n * e ^ m⌝⦄ := by
+  sorry
+
+-- Coq: `pow_RN_plus` — e ≠ 0 → e^n = e^(n+m) * (e^m)⁻¹
+noncomputable def pow_RN_plus_check (e : ℝ) (n m : Nat) : Id Unit :=
+  pure ()
+
+theorem pow_RN_plus (e : ℝ) (n m : Nat) :
+    ⦃⌜e ≠ 0⌝⦄
+    pow_RN_plus_check e n m
+    ⦃⇓_ => ⌜e ^ n = e ^ (n + m) * (e ^ m)⁻¹⌝⦄ := by
+  sorry
+
+-- Coq: `pow_lt` — 0 < e → 0 < e^n
+noncomputable def pow_lt_check (e : ℝ) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem pow_lt (e : ℝ) (n : Nat) :
+    ⦃⌜0 < e⌝⦄
+    pow_lt_check e n
+    ⦃⇓_ => ⌜0 < e ^ n⌝⦄ := by
+  sorry
+
+-- Coq: `Rlt_pow_R1` — 1 < e → 0 < n → 1 < e^n
+noncomputable def Rlt_pow_R1_check (e : ℝ) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem Rlt_pow_R1 (e : ℝ) (n : Nat) :
+    ⦃⌜1 < e ∧ 0 < n⌝⦄
+    Rlt_pow_R1_check e n
+    ⦃⇓_ => ⌜1 < e ^ n⌝⦄ := by
+  sorry
+
+-- Coq: `Rlt_pow` — 1 < e → n < m → e^n < e^m
+noncomputable def Rlt_pow_check (e : ℝ) (n m : Nat) : Id Unit :=
+  pure ()
+
+theorem Rlt_pow (e : ℝ) (n m : Nat) :
+    ⦃⌜1 < e ∧ n < m⌝⦄
+    Rlt_pow_check e n m
+    ⦃⇓_ => ⌜e ^ n < e ^ m⌝⦄ := by
+  sorry
+
+-- Coq: `pow_R1` — r^n = 1 → |r| = 1 ∨ n = 0
+noncomputable def pow_R1_check (r : ℝ) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem pow_R1 (r : ℝ) (n : Nat) :
+    ⦃⌜r ^ n = 1⌝⦄
+    pow_R1_check r n
+    ⦃⇓_ => ⌜|r| = 1 ∨ n = 0⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_NR0` — 0 ≤ e → 0 ≤ e^n (as integer power on Int)
+noncomputable def Zpower_NR0_check (e : Int) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_NR0 (e : Int) (n : Nat) :
+    ⦃⌜0 ≤ e⌝⦄
+    Zpower_NR0_check e n
+    ⦃⇓_ => ⌜0 ≤ (e : Int) ^ n⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_NR1` — 1 ≤ e → 1 ≤ e^n (as integer power on Int)
+noncomputable def Zpower_NR1_check (e : Int) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_NR1 (e : Int) (n : Nat) :
+    ⦃⌜1 ≤ e⌝⦄
+    Zpower_NR1_check e n
+    ⦃⇓_ => ⌜1 ≤ (e : Int) ^ n⌝⦄ := by
+  sorry
+
 -- Coq: `Rledouble` — if 0 ≤ r then r ≤ 2r
 noncomputable def Rledouble_check (r : ℝ) : Id Unit :=
   pure ()

@@ -999,15 +999,15 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `digitAdd` → (no Lean counterpart)
 - `digit_abs` → (no Lean counterpart)
 - `digit_anti_monotone_lt` → (no Lean counterpart)
-- `pow_NR0` → (no Lean counterpart)
-- `pow_add` → (no Lean counterpart)
-- `pow_RN_plus` → (no Lean counterpart)
-- `pow_lt` → (no Lean counterpart)
-- `Rlt_pow_R1` → (no Lean counterpart)
-- `Rlt_pow` → (no Lean counterpart)
-- `pow_R1` → (no Lean counterpart)
-- `Zpower_NR0` → (no Lean counterpart)
-- `Zpower_NR1` → (no Lean counterpart)
+- `pow_NR0` → `pow_NR0 [FloatSpec/src/Pff/Pff.lean:73]`
+- `pow_add` → `pow_add_compat [FloatSpec/src/Pff/Pff.lean:84]` (content-equivalent)
+- `pow_RN_plus` → `pow_RN_plus [FloatSpec/src/Pff/Pff.lean:94]`
+- `pow_lt` → `pow_lt [FloatSpec/src/Pff/Pff.lean:104]`
+- `Rlt_pow_R1` → `Rlt_pow_R1 [FloatSpec/src/Pff/Pff.lean:114]`
+- `Rlt_pow` → `Rlt_pow [FloatSpec/src/Pff/Pff.lean:124]`
+- `pow_R1` → `pow_R1 [FloatSpec/src/Pff/Pff.lean:134]`
+- `Zpower_NR0` → `Zpower_NR0 [FloatSpec/src/Pff/Pff.lean:144]`
+- `Zpower_NR1` → `Zpower_NR1 [FloatSpec/src/Pff/Pff.lean:154]`
 - `powerRZ_O` → (no Lean counterpart)
 - `powerRZ_1` → (no Lean counterpart)
 - `powerRZ_NOR` → (no Lean counterpart)
