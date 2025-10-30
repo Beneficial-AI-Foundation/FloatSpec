@@ -137,6 +137,16 @@ theorem pow_R1 (r : ℝ) (n : Nat) :
     ⦃⇓_ => ⌜|r| = 1 ∨ n = 0⌝⦄ := by
   sorry
 
+-- Coq: `powerRZ_O` — e^0 = 1 (integer exponent)
+noncomputable def powerRZ_O_check (e : ℝ) : Id Unit :=
+  pure ()
+
+theorem powerRZ_O (e : ℝ) :
+    ⦃⌜True⌝⦄
+    powerRZ_O_check e
+    ⦃⇓_ => ⌜e ^ (0 : Int) = (1 : ℝ)⌝⦄ := by
+  sorry
+
 -- Coq: `Zpower_NR0` — 0 ≤ e → 0 ≤ e^n (as integer power on Int)
 noncomputable def Zpower_NR0_check (e : Int) (n : Nat) : Id Unit :=
   pure ()
@@ -157,6 +167,26 @@ theorem Zpower_NR1 (e : Int) (n : Nat) :
     ⦃⇓_ => ⌜1 ≤ (e : Int) ^ n⌝⦄ := by
   sorry
 
+-- Coq: `powerRZ_1` — e^1 = e (integer exponent)
+noncomputable def powerRZ_1_check (e : ℝ) : Id Unit :=
+  pure ()
+
+theorem powerRZ_1 (e : ℝ) :
+    ⦃⌜True⌝⦄
+    powerRZ_1_check e
+    ⦃⇓_ => ⌜e ^ (1 : Int) = e⌝⦄ := by
+  sorry
+
+-- Coq: `powerRZ_add` — e^(m+n) = e^m * e^n (integer exponent)
+noncomputable def powerRZ_add_check (e : ℝ) (m n : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_add (e : ℝ) (m n : Int) :
+    ⦃⌜True⌝⦄
+    powerRZ_add_check e m n
+    ⦃⇓_ => ⌜e ^ (m + n) = e ^ m * e ^ n⌝⦄ := by
+  sorry
+
 -- Coq: `Rledouble` — if 0 ≤ r then r ≤ 2r
 noncomputable def Rledouble_check (r : ℝ) : Id Unit :=
   pure ()
@@ -175,6 +205,16 @@ theorem Rltdouble (r : ℝ) :
     ⦃⌜0 < r⌝⦄
     Rltdouble_check r
     ⦃⇓_ => ⌜r < 2 * r⌝⦄ := by
+  sorry
+
+-- Coq: `powerRZ_NOR` — e^n ≠ 0 when e ≠ 0 (integer exponent)
+noncomputable def powerRZ_NOR_check (e : ℝ) (n : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_NOR (e : ℝ) (n : Int) :
+    ⦃⌜e ≠ 0⌝⦄
+    powerRZ_NOR_check e n
+    ⦃⇓_ => ⌜e ^ n ≠ 0⌝⦄ := by
   sorry
 
 -- Coq: `Rle_Rinv` — monotonicity of inverse on (0, ∞)
