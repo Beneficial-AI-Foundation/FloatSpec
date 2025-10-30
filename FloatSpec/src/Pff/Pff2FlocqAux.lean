@@ -243,3 +243,23 @@ theorem pff_shift_mant_correct (f : PffFloat) (n : Int) :
   pff_to_R beta (pff_shift_mant f n) = 
   pff_to_R beta f * (2 : ℝ) ^ n := by
   sorry
+
+/-!
+Missing theorems from Coq Pff2FlocqAux.v
+
+We follow the project convention: introduce a `_check` function and state the
+theorem using Hoare-triple syntax, leaving the proof as `sorry`.
+-/
+
+-- Exponent lower bound from magnitude lower bound
+noncomputable def FloatFexp_gt_check (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) : Id Unit :=
+  pure ()
+
+/-- Coq: `FloatFexp_gt` — if `f` is bounded and `(beta : ℝ)^(e+p) ≤ |FtoR f|`,
+    then `e < Fexp f`. Here we use `pff_to_R` for `FtoR` and the `exponent`
+    field of `PffFloat` for `Fexp`. -/
+theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
+    ⦃⌜pGivesBound beta b p ∧ Fbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R beta f|⌝⦄
+    FloatFexp_gt_check beta b p e f
+    ⦃⇓_ => ⌜e < f.exponent⌝⦄ := by
+  sorry
