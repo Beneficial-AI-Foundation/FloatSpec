@@ -484,9 +484,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_all_mid_cases` → (no direct Lean match found)
 
-- `mag_div_disj` → (no direct Lean match found)
+- `mag_div_disj` → `mag_div_disj` [Double_rounding.lean:229] (exact)
 
-- `round_round_div_aux0` → (no direct Lean match found)
+- `round_round_div_aux0` → `round_round_div_aux0` [Double_rounding.lean:258] (spec-variant)
 
 - `round_round_div_aux1` → (no direct Lean match found)
 

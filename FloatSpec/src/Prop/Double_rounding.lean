@@ -223,6 +223,53 @@ lemma mag_mult_disj (x y : ℝ)
       = (FloatSpec.Core.Raux.mag beta x).run + (FloatSpec.Core.Raux.mag beta y).run) := by
   sorry
 
+/-- Coq: `mag_div_disj`
+    For positive `x` and `y`, the magnitude of the quotient `x / y`
+    is either `mag x - mag y` or exactly one greater. -/
+lemma mag_div_disj (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y) :
+  ((FloatSpec.Core.Raux.mag beta (x / y)).run
+      = (FloatSpec.Core.Raux.mag beta x).run - (FloatSpec.Core.Raux.mag beta y).run)
+  ∨ ((FloatSpec.Core.Raux.mag beta (x / y)).run
+      = (FloatSpec.Core.Raux.mag beta x).run - (FloatSpec.Core.Raux.mag beta y).run + 1) := by
+  sorry
+
+/-- Coq: `round_round_div_hyp`
+    Structural hypothesis relating `fexp1` and `fexp2` for analyzing
+    double rounding of divisions. -/
+def round_round_div_hyp (fexp1 fexp2 : Int → Int) : Prop :=
+  (∀ ex, fexp2 ex ≤ fexp1 ex - 1) ∧
+  (∀ ex ey, fexp1 ex < ex → fexp1 ey < ey →
+            fexp1 (ex - ey) ≤ ex - ey + 1 →
+            fexp2 (ex - ey) ≤ fexp1 ex - ey) ∧
+  (∀ ex ey, fexp1 ex < ex → fexp1 ey < ey →
+            fexp1 (ex - ey + 1) ≤ ex - ey + 1 + 1 →
+            fexp2 (ex - ey + 1) ≤ fexp1 ex - ey) ∧
+  (∀ ex ey, fexp1 ex < ex → fexp1 ey < ey →
+            fexp1 (ex - ey) ≤ ex - ey →
+            fexp2 (ex - ey) ≤ fexp1 (ex - ey) + fexp1 ey - ey) ∧
+  (∀ ex ey, fexp1 ex < ex → fexp1 ey < ey →
+            fexp1 (ex - ey) = ex - ey + 1 →
+            fexp2 (ex - ey) ≤ ex - ey - ey + fexp1 ey)
+
+/-- Coq: `round_round_div_aux0`
+    First auxiliary inequality used in the division double-rounding
+    analysis when the place equals `mag (x / y) + 1`. -/
+lemma round_round_div_aux0
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_div_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y)
+  (hplace : fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)).run)
+            = (FloatSpec.Core.Raux.mag beta (x / y)).run + 1) :
+  ¬ ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta (x / y)).run)
+        - (1/2) * (ulp beta fexp2 (x / y)) ≤ x / y) := by
+  sorry
+
 -- Coq: `round_round_mult_aux`
 -- Under `round_round_mult_hyp`, the product of two `fexp1`-generic
 -- numbers is `fexp2`-generic.
