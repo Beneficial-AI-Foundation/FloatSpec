@@ -522,6 +522,11 @@ def B754_sign (x : B754) : Bool :=
   | B754.B754_finite s _ _ => s
   | B754.B754_nan => false
 
+-- Overflow constructor (Coq: BinarySingleNaN.binary_overflow)
+-- Placeholder: returns an infinity with the requested sign.
+def binary_overflow (mode : RoundingMode) (s : Bool) : StandardFloat :=
+  StandardFloat.S754_infinity s
+
 -- Correctness of operations
 theorem B754_plus_correct (mode : RoundingMode) (x y : B754)
   (hx : True)

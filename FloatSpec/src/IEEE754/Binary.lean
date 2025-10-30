@@ -2,6 +2,7 @@
 -- Translated from Coq file: flocq/src/IEEE754/Binary.v
 
 import FloatSpec.src.Core
+import FloatSpec.src.IEEE754.BinarySingleNaN
 import FloatSpec.src.Compat
 import FloatSpec.src.Calc
 import Mathlib.Data.Real.Basic
@@ -579,6 +580,28 @@ inductive RoundingMode where
 -- Convert rounding mode to rounding function
 def rnd_of_mode (mode : RoundingMode) : ℝ → Int := by
   sorry
+
+-- Overflow helper: FullFloat version of BinarySingleNaN.binary_overflow (Coq: binary_overflow)
+def binary_overflow (mode : RoundingMode) (s : Bool) : FullFloat :=
+  SF2FF (FloatSpec.src.IEEE754.BinarySingleNaN.binary_overflow mode s)
+
+-- Coq: eq_binary_overflow_FF2SF
+-- If FF2SF x corresponds to the single-NaN overflow value, then x is the
+-- corresponding full-float overflow value.
+def eq_binary_overflow_FF2SF_check
+  (x : FullFloat) (mode : RoundingMode) (s : Bool)
+  (h : FF2SF x = FloatSpec.src.IEEE754.BinarySingleNaN.binary_overflow mode s) : Id FullFloat :=
+  pure x
+
+theorem eq_binary_overflow_FF2SF
+  (x : FullFloat) (mode : RoundingMode) (s : Bool)
+  (h : FF2SF x = FloatSpec.src.IEEE754.BinarySingleNaN.binary_overflow mode s) :
+  ⦃⌜True⌝⦄
+  eq_binary_overflow_FF2SF_check x mode s h
+  ⦃⇓result => ⌜result = binary_overflow mode s⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq via `SF2FF_FF2SF` and `is_nan_binary_overflow`.
+  exact sorry
 
 -- Binary format properties
 theorem binary_add_correct (mode : RoundingMode) (x y : Binary754 prec emax) :

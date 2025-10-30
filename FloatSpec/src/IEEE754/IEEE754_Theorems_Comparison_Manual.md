@@ -220,7 +220,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `abs_B2R_ge_emin` → (no Lean counterpart)
 - `bounded_canonical_lt_emax` → (no Lean counterpart)
 - `shr_fexp_truncate` → (no Lean counterpart)
-- `eq_binary_overflow_FF2SF` → (no Lean counterpart)
+- `eq_binary_overflow_FF2SF` → `eq_binary_overflow_FF2SF [FloatSpec/src/IEEE754/Binary.lean:591]` (spec-variant, hoare)
 - `binary_round_aux_correct'` → (no Lean counterpart)
 - `binary_round_aux_correct` → (no Lean counterpart)
 - `Bmult_correct` → `binary_mul_correct [FloatSpec/src/IEEE754/Binary.lean:170]` (content-equivalent)
