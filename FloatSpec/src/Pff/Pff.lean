@@ -227,9 +227,14 @@ theorem Rle_Rinv (x y : ℝ) :
     ⦃⇓_ => ⌜y⁻¹ ≤ x⁻¹⌝⦄ := by
   sorry
 
--- Discrete min disjunction (Coq: Pff.v `min_or`)
+-- Hoare-style wrapper for `min_or`
+noncomputable def min_or_check (n m : Nat) : Id Unit :=
+  pure ()
+
 theorem min_or (n m : Nat) :
-  (Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n) := by
+    ⦃⌜True⌝⦄
+    min_or_check n m
+    ⦃⇓_ => ⌜(Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n)⌝⦄ := by
   sorry
 
 -- Coq: `ZmaxSym` — symmetry of integer max
@@ -880,4 +885,39 @@ theorem digitLess (n : Int) (q : Int) :
     ⦃⌜q ≠ 0⌝⦄
     digitLess_check n q
     ⦃⇓_ => ⌜Zpower_nat n (Nat.pred (digit n q)) ≤ |q|⌝⦄ := by
+  sorry
+
+-- Length of a positive number in base-2 (placeholder)
+noncomputable def pos_length (p : Positive) : Nat := 0
+
+-- Coq: `pos_length_pow` — Zpos p < Zpower_nat n (S (pos_length p))
+noncomputable def pos_length_pow_check (n : Int) (p : Positive) : Id Unit :=
+  pure ()
+
+theorem pos_length_pow (n : Int) (p : Positive) :
+    ⦃⌜True⌝⦄
+    pos_length_pow_check n p
+    ⦃⇓_ => ⌜Int.ofNat (nat_of_P p) < Zpower_nat n (Nat.succ (pos_length p))⌝⦄ := by
+  sorry
+
+-- Coq: `digitMore` — |q| < Zpower_nat n (digit q)
+noncomputable def digitMore_check (n : Int) (q : Int) : Id Unit :=
+  pure ()
+
+theorem digitMore (n : Int) (q : Int) :
+    ⦃⌜True⌝⦄
+    digitMore_check n q
+    ⦃⇓_ => ⌜|q| < Zpower_nat n (digit n q)⌝⦄ := by
+  sorry
+
+-- Coq: `digitAuxMore` — complementary case for digit auxiliary
+noncomputable def digitAuxMore_check (n : Int) (v r : Int) (p : Positive) : Id Unit :=
+  pure ()
+
+theorem digitAuxMore (n : Int) (v r : Int) (p : Positive) :
+    ⦃⌜True⌝⦄
+    digitAuxMore_check n v r p
+    ⦃⇓_ => ⌜match digitAux n v r p with
+            | Nat.succ r' => v < Zpower_nat n r' * r
+            | 0 => True⌝⦄ := by
   sorry

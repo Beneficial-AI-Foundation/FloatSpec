@@ -28,8 +28,7 @@ structure Fbound where
 -- Constructor mirroring Coq `Bound`
 def Bound (vnum dexp : Int) : Fbound := { vNum := vnum, dExp := dexp }
 
--- Integer power on naturals (Coq: Zpower_nat)
-noncomputable def Zpower_nat (beta : Int) (n : Nat) : Int := beta ^ n
+-- Use the existing `Zpower_nat` defined in `Pff.lean` to avoid duplication.
 
 -- A canonical radix-2 constant
 def radix2 : Int := 2
