@@ -921,17 +921,17 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `convert_not_O` → (no Lean counterpart)
 - `inj_abs` → (no Lean counterpart)
 - `inject_nat_convert` → (no Lean counterpart)
-- `ZleLe` → (no Lean counterpart)
-- `Zlt_Zopp` → (no Lean counterpart)
-- `Zle_Zopp` → (no Lean counterpart)
-- `Zabs_absolu` → (no Lean counterpart)
-- `Zpower_nat_O` → (no Lean counterpart)
-- `Zpower_nat_1` → (no Lean counterpart)
+- `ZleLe` → `ZleLe [FloatSpec/src/Pff/Pff.lean:104]`
+- `Zlt_Zopp` → `Zlt_Zopp [FloatSpec/src/Pff/Pff.lean:112]`
+- `Zle_Zopp` → `Zle_Zopp [FloatSpec/src/Pff/Pff.lean:127]`
+- `Zabs_absolu` → `Zabs_absolu [FloatSpec/src/Pff/Pff.lean:137]`
+- `Zpower_nat_O` → `Zpower_nat_O [FloatSpec/src/Pff/Pff.lean:147]`
+- `Zpower_nat_1` → `Zpower_nat_1 [FloatSpec/src/Pff/Pff.lean:157]`
 - `Zmin_Zle` → (no Lean counterpart)
 - `Zopp_Zpred_Zs` → (no Lean counterpart)
-- `ZmaxLe1` → (no Lean counterpart)
+- `ZmaxLe1` → `ZmaxLe1 [FloatSpec/src/Pff/Pff.lean:88]`
 -- `ZmaxSym` → `ZmaxSym [FloatSpec/src/Pff/Pff.lean:78]`
-- `ZmaxLe2` → (no Lean counterpart)
+- `ZmaxLe2` → `ZmaxLe2 [FloatSpec/src/Pff/Pff.lean:98]`
 - `Zeq_Zs` → (no Lean counterpart)
 - `Zmin_Zmax` → (no Lean counterpart)
 - `Zle_Zmult_comp_r` → (no Lean counterpart)

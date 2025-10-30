@@ -81,8 +81,83 @@ theorem ZmaxSym (a b : Int) :
     ⦃⇓_ => ⌜max a b = max b a⌝⦄ := by
   sorry
 
--- Coq: `ZleLe` — order reflection through Int.ofNat
-theorem ZleLe (x y : Nat) (h : (Int.ofNat x ≤ Int.ofNat y)) : x ≤ y := by
+-- Coq: `ZmaxLe1` — left argument ≤ max
+noncomputable def ZmaxLe1_check (a b : Int) : Id Unit :=
+  pure ()
+
+theorem ZmaxLe1 (a b : Int) :
+    ⦃⌜True⌝⦄
+    ZmaxLe1_check a b
+    ⦃⇓_ => ⌜a ≤ max a b⌝⦄ := by
+  sorry
+
+-- Coq: `ZmaxLe2` — right argument ≤ max
+noncomputable def ZmaxLe2_check (a b : Int) : Id Unit :=
+  pure ()
+
+theorem ZmaxLe2 (a b : Int) :
+    ⦃⌜True⌝⦄
+    ZmaxLe2_check a b
+    ⦃⇓_ => ⌜b ≤ max a b⌝⦄ := by
+  sorry
+
+noncomputable def ZleLe_check (x y : Nat) : Id Unit :=
+  pure ()
+
+theorem ZleLe (x y : Nat) :
+    ⦃⌜(Int.ofNat x ≤ Int.ofNat y)⌝⦄
+    ZleLe_check x y
+    ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
+  sorry
+
+-- Coq: `Zlt_Zopp` — negate flips strict inequality
+noncomputable def Zlt_Zopp_check (x y : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_Zopp (x y : Int) :
+    ⦃⌜x < y⌝⦄
+    Zlt_Zopp_check x y
+    ⦃⇓_ => ⌜-y < -x⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zopp` — negate flips non-strict inequality
+noncomputable def Zle_Zopp_check (x y : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zopp (x y : Int) :
+    ⦃⌜x ≤ y⌝⦄
+    Zle_Zopp_check x y
+    ⦃⇓_ => ⌜-y ≤ -x⌝⦄ := by
+  sorry
+
+-- Coq: `Zabs_absolu` — absolute value equals natAbs cast
+noncomputable def Zabs_absolu_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zabs_absolu (z : Int) :
+    ⦃⌜True⌝⦄
+    Zabs_absolu_check z
+    ⦃⇓_ => ⌜|z| = Int.ofNat (Int.natAbs z)⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_O` — any base to 0 is 1
+noncomputable def Zpower_nat_O_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_O (z : Int) :
+    ⦃⌜True⌝⦄
+    Zpower_nat_O_check z
+    ⦃⇓_ => ⌜z^0 = (1 : Int)⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_1` — any base to 1 is itself
+noncomputable def Zpower_nat_1_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_1 (z : Int) :
+    ⦃⌜True⌝⦄
+    Zpower_nat_1_check z
+    ⦃⇓_ => ⌜z^1 = z⌝⦄ := by
   sorry
 
 -- List operations used in Pff
