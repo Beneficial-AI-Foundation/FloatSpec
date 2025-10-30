@@ -160,6 +160,96 @@ theorem Zpower_nat_1 (z : Int) :
     ⦃⇓_ => ⌜z^1 = z⌝⦄ := by
   sorry
 
+-- Coq: `Zmin_Zmax` — min is always ≤ max
+noncomputable def Zmin_Zmax_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zmin_Zmax (z1 z2 : Int) :
+    ⦃⌜True⌝⦄
+    Zmin_Zmax_check z1 z2
+    ⦃⇓_ => ⌜min z1 z2 ≤ max z1 z2⌝⦄ := by
+  sorry
+
+-- Coq: `Zeq_Zs` — if p ≤ q < succ p, then p = q
+noncomputable def Zeq_Zs_check (p q : Int) : Id Unit :=
+  pure ()
+
+theorem Zeq_Zs (p q : Int) :
+    ⦃⌜p ≤ q ∧ q < Int.succ p⌝⦄
+    Zeq_Zs_check p q
+    ⦃⇓_ => ⌜p = q⌝⦄ := by
+  sorry
+
+-- Coq: `Zopp_Zpred_Zs` — negation distributes over predecessor/successor
+noncomputable def Zopp_Zpred_Zs_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zopp_Zpred_Zs (z : Int) :
+    ⦃⌜True⌝⦄
+    Zopp_Zpred_Zs_check z
+    ⦃⇓_ => ⌜-(Int.pred z) = Int.succ (-z)⌝⦄ := by
+  sorry
+
+-- Coq: `Zmin_Zle` — lower bound is ≤ minimum of two bounds
+noncomputable def Zmin_Zle_check (z1 z2 z3 : Int) : Id Unit :=
+  pure ()
+
+theorem Zmin_Zle (z1 z2 z3 : Int) :
+    ⦃⌜z1 ≤ z2 ∧ z1 ≤ z3⌝⦄
+    Zmin_Zle_check z1 z2 z3
+    ⦃⇓_ => ⌜z1 ≤ min z2 z3⌝⦄ := by
+  sorry
+
+-- Coq: `Zpred_Zopp_Zs` — predecessor of negation equals negation of successor
+noncomputable def Zpred_Zopp_Zs_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zpred_Zopp_Zs (z : Int) :
+    ⦃⌜True⌝⦄
+    Zpred_Zopp_Zs_check z
+    ⦃⇓_ => ⌜Int.pred (-z) = -(Int.succ z)⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zmult_comp_r` — multiply on the right preserves ≤ for nonnegative multiplier
+noncomputable def Zle_Zmult_comp_r_check (x y z : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zmult_comp_r (x y z : Int) :
+    ⦃⌜0 ≤ z ∧ x ≤ y⌝⦄
+    Zle_Zmult_comp_r_check x y z
+    ⦃⇓_ => ⌜x * z ≤ y * z⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zmult_comp_l` — multiply on the left preserves ≤ for nonnegative multiplier
+noncomputable def Zle_Zmult_comp_l_check (x y z : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zmult_comp_l (x y z : Int) :
+    ⦃⌜0 ≤ z ∧ x ≤ y⌝⦄
+    Zle_Zmult_comp_l_check x y z
+    ⦃⇓_ => ⌜z * x ≤ z * y⌝⦄ := by
+  sorry
+
+-- Coq: `absolu_Zs` — natAbs of succ increments under nonnegativity
+noncomputable def absolu_Zs_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem absolu_Zs (z : Int) :
+    ⦃⌜0 ≤ z⌝⦄
+    absolu_Zs_check z
+    ⦃⇓_ => ⌜Int.natAbs (Int.succ z) = Nat.succ (Int.natAbs z)⌝⦄ := by
+  sorry
+
+-- Coq: `Zlt_next` — either m = succ n or succ n < m when n < m
+noncomputable def Zlt_next_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_next (n m : Int) :
+    ⦃⌜n < m⌝⦄
+    Zlt_next_check n m
+    ⦃⇓_ => ⌜m = Int.succ n ∨ Int.succ n < m⌝⦄ := by
+  sorry
+
 -- List operations used in Pff
 def list_sum (l : List ℝ) : ℝ :=
   l.foldr (· + ·) 0
