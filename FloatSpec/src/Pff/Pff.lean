@@ -821,3 +821,47 @@ theorem Zpower_nat_monotone_le (n : Int) (q r : Nat) :
     Zpower_nat_monotone_le_check n q r
     ⦃⇓_ => ⌜n ^ q ≤ n ^ r⌝⦄ := by
   sorry
+
+-- Alias for Coq's Zpower_nat on integers
+noncomputable def Zpower_nat (n : Int) (q : Nat) : Int := n ^ q
+
+-- Coq: `digitAux1` — (Zpower_nat n (S p) * r) = (Zpower_nat n p * (n * r))
+noncomputable def digitAux1_check (n : Int) (p : Nat) (r : Int) : Id Unit :=
+  pure ()
+
+theorem digitAux1 (n : Int) (p : Nat) (r : Int) :
+    ⦃⌜True⌝⦄
+    digitAux1_check n p r
+    ⦃⇓_ => ⌜Zpower_nat n (Nat.succ p) * r = Zpower_nat n p * (n * r)⌝⦄ := by
+  sorry
+
+-- Minimal positive and digit infrastructure used by digit lemmas
+-- Reuse existing `Positive` defined above; define a placeholder `digitAux`.
+noncomputable def digitAux (n v r : Int) (q : Positive) : Nat := 0
+
+-- Coq: `digitAuxLess`
+noncomputable def digitAuxLess_check (n : Int) (v r : Int) (q : Positive) : Id Unit :=
+  pure ()
+
+theorem digitAuxLess (n : Int) (v r : Int) (q : Positive) :
+    ⦃⌜True⌝⦄
+    digitAuxLess_check n v r q
+    ⦃⇓_ => ⌜match digitAux n v r q with
+            | Nat.succ r' => Zpower_nat n r' * r ≤ v
+            | 0 => True⌝⦄ := by
+  sorry
+
+-- Coq: `digitLess` — if q ≠ 0 then Zpower_nat n (pred (digit q)) ≤ |q|
+noncomputable def digitLess_check (n : Int) (q : Int) : Id Unit :=
+  pure ()
+
+noncomputable def digit (n : Int) (q : Int) : Nat :=
+  match q with
+  | Int.ofNat _ => 0
+  | Int.negSucc _ => 0
+
+theorem digitLess (n : Int) (q : Int) :
+    ⦃⌜q ≠ 0⌝⦄
+    digitLess_check n q
+    ⦃⇓_ => ⌜Zpower_nat n (Nat.pred (digit n q)) ≤ |q|⌝⦄ := by
+  sorry
