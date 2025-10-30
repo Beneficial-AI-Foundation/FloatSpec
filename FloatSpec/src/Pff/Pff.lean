@@ -495,3 +495,13 @@ theorem Zle_Zabs_inv2 (z1 z2 : Int) :
     Zle_Zabs_inv2_check z1 z2
     ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
   sorry
+
+-- Coq: `Zlt_not_eq_rev` — if q < p then p ≠ q
+noncomputable def Zlt_not_eq_rev_check (p q : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_not_eq_rev (p q : Int) :
+    ⦃⌜q < p⌝⦄
+    Zlt_not_eq_rev_check p q
+    ⦃⇓_ => ⌜p ≠ q⌝⦄ := by
+  sorry
