@@ -975,3 +975,40 @@ theorem bounded_canonical_lt_emax {prec emax : Int}
   intro _
   -- Proof deferred; mirrors Coq's `bounded_canonical_lt_emax`.
   exact sorry
+
+-- Truncation helpers and theorem (Coq: shr_fexp_truncate)
+-- We introduce lightweight placeholders sufficient to state the theorem
+-- in hoare-triple style, following the project pattern.
+
+-- Local alias of the Bracket location type
+abbrev Loc := FloatSpec.Calc.Bracket.Location
+
+-- Placeholder for Coq's `shr_record_of_loc` (depends only on mantissa here)
+def shr_record_of_loc (m : Int) (_ : Loc) : Int := m
+
+-- Shifting according to `fexp` via truncation; mirrors Coq's `shr_fexp` shape
+def shr_fexp (m e : Int) (l : Loc) : Int × Int :=
+  let r := (FloatSpec.Calc.Round.truncate (beta := 2)
+              (f := (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat 2))
+              (e := e) (l := l)).run
+  let m' := r.1; let e' := r.2.1; let l' := r.2.2
+  (shr_record_of_loc m' l', e')
+
+-- Hoare wrapper to expose `shr_fexp` as a pure computation
+def shr_fexp_truncate_check (m e : Int) (l : Loc) : Id (Int × Int) :=
+  pure (shr_fexp m e l)
+
+-- Coq: shr_fexp_truncate — express `shr_fexp` via `truncate`
+theorem shr_fexp_truncate (m e : Int) (l : Loc)
+  (hm : 0 ≤ m) :
+  ⦃⌜True⌝⦄
+  shr_fexp_truncate_check m e l
+  ⦃⇓result => ⌜
+      let r := (FloatSpec.Calc.Round.truncate (beta := 2)
+                  (f := (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat 2))
+                  (e := e) (l := l)).run
+      let m' := r.1; let e' := r.2.1; let l' := r.2.2
+      result = (shr_record_of_loc m' l', e')⌝⦄ := by
+  intro _
+  -- Proof deferred; follows by unfolding `shr_fexp` and the placeholder definitions.
+  exact sorry
