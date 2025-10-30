@@ -674,6 +674,66 @@ theorem Bnearbyint_correct (mode : RoundingMode) (x : Binary754 prec emax) :
   -- Proof deferred; nearbyint rounds x according to the current format.
   exact sorry
 
+-- Constant one (Coq: Bone)
+def binary_one : Binary754 prec emax :=
+  -- Canonical finite representation for 1 = 1 * 2^0
+  FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_finite false 1 0)
+
+-- Hoare wrapper for Coq `Bone_correct` — real value of constant one
+noncomputable def Bone_correct_check : Id ℝ :=
+  pure (FF2R 2 (binary_one (prec:=prec) (emax:=emax)).val)
+
+theorem Bone_correct :
+  ⦃⌜True⌝⦄
+  Bone_correct_check (prec:=prec) (emax:=emax)
+  ⦃⇓result => ⌜result = 1⌝⦄ := by
+  intro _
+  -- Proof deferred; unfolds to F2R of mantissa 1 at exponent 0.
+  exact sorry
+
+-- Hoare wrapper for Coq `is_finite_Bone` — constant one is finite
+def is_finite_Bone_check : Id Bool :=
+  pure (is_finite_B (prec:=prec) (emax:=emax) (binary_one (prec:=prec) (emax:=emax)))
+
+theorem is_finite_Bone :
+  ⦃⌜True⌝⦄
+  is_finite_Bone_check (prec:=prec) (emax:=emax)
+  ⦃⇓result => ⌜result = true⌝⦄ := by
+  intro _
+  -- Proof deferred; immediate from the definition of `binary_one`.
+  exact sorry
+
+-- Hoare wrapper for Coq `Bsign_Bone` — sign of constant one is false (positive)
+def Bsign_Bone_check : Id Bool :=
+  pure (Bsign (prec:=prec) (emax:=emax) (binary_one (prec:=prec) (emax:=emax)))
+
+theorem Bsign_Bone :
+  ⦃⌜True⌝⦄
+  Bsign_Bone_check (prec:=prec) (emax:=emax)
+  ⦃⇓result => ⌜result = false⌝⦄ := by
+  intro _
+  -- Proof deferred; immediate from the definition of `binary_one`.
+  exact sorry
+
+-- Truncation to integer (Coq: Btrunc)
+noncomputable def binary_trunc (x : Binary754 prec emax) : Int :=
+  -- Defined semantically via rounding toward zero at FIX_exp 0
+  (FloatSpec.Core.Raux.Ztrunc (B2R (prec:=prec) (emax:=emax) x)).run
+
+-- Hoare wrapper for Coq `Btrunc_correct`
+noncomputable def Btrunc_correct_check (x : Binary754 prec emax) : Id Int :=
+  pure (binary_trunc (prec:=prec) (emax:=emax) x)
+
+theorem Btrunc_correct (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Btrunc_correct_check (prec:=prec) (emax:=emax) x
+  ⦃⇓result => ⌜(result : ℝ) =
+      FloatSpec.Calc.Round.round 2 (FIX_exp 0) FloatSpec.Compat.Ztrunc
+        (B2R (prec:=prec) (emax:=emax) x)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's Btrunc_correct via BSN bridge.
+  exact sorry
+
 -- Common IEEE 754 formats
 def Binary16 := Binary754 11 15
 def Binary32 := Binary754 24 127
