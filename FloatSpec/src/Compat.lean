@@ -28,6 +28,9 @@ noncomputable def mag (beta : Int) (x : ℝ) : Int :=
 noncomputable def Ztrunc (x : ℝ) : Int :=
   (FloatSpec.Core.Raux.Ztrunc x).run
 
+/-- Fixed-exponent function: always returns the provided exponent. -/
+def FIX_exp (emin : Int) : Int → Int := fun _ => emin
+
 /-- Bridge: ulp as a plain ℝ (unwraps Id) -/
 noncomputable def ulp (beta : Int) (fexp : Int → Int) (x : ℝ) : ℝ :=
   (FloatSpec.Core.Ulp.ulp beta fexp x).run
@@ -57,6 +60,8 @@ bridge instances so users of the Compat layer can synthesize
 without further hints.
 -/
 
+-- Bridge instances for FLX/FLT exponent functions via the Core instances
+
 instance instValidExp_FLX_Compat (beta prec : Int) [Prec_gt_0 prec] :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec) := by
   -- Use the Core instance after providing the `Fact (0 < prec)` bridge.
@@ -72,6 +77,12 @@ instance instValidExp_FLT_Compat (beta emin prec : Int) [Prec_gt_0 prec] :
   -- We just rewrite through the alias.
   simpa [FLT_exp] using
     (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FloatSpec.Core.FLT.FLT_exp prec emin))
+
+-- Namespace aliases so existing references like `FloatSpec.Compat.Ztrunc` work.
+namespace FloatSpec.Compat
+noncomputable def Ztrunc := _root_.Ztrunc
+def FIX_exp := _root_.FIX_exp
+end FloatSpec.Compat
 
 /-- Stub: rounding function parameter validity (placeholder) -/
 class Valid_rnd (rnd : ℝ → Int) : Prop :=

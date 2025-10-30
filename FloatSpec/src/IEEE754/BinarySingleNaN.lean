@@ -323,6 +323,32 @@ theorem Bsign_BSN2B (s : Bool) (payload : Nat) (x : B754)
   -- Proof deferred; by cases on x using nx to exclude NaN case
   exact sorry
 
+-- A lifting combinator mirroring Coq's `lift` (Binary.v)
+-- If `x` is NaN, return `x`; otherwise, rebuild a full float from `y`.
+def lift (x : FullFloat) (y : B754)
+  (Ny : BSN_is_nan y = is_nan_FF x) : FullFloat :=
+  match h:is_nan_FF x with
+  | true => x
+  | false => BSN2B' y (by simpa [h] using Ny)
+
+-- Coq: B2BSN_lift — viewing the lifted value back to BSN yields `y`
+def B2BSN_lift_check {prec emax : Int}
+  (x : FullFloat) (y : B754)
+  (Ny : BSN_is_nan y = is_nan_FF x) : Id B754 :=
+  pure (B2BSN (prec:=prec) (emax:=emax)
+          (FF2B (prec:=prec) (emax:=emax)
+            (lift x y Ny)))
+
+theorem B2BSN_lift {prec emax : Int}
+  (x : FullFloat) (y : B754)
+  (Ny : BSN_is_nan y = is_nan_FF x) :
+  ⦃⌜True⌝⦄
+  B2BSN_lift_check (prec:=prec) (emax:=emax) x y Ny
+  ⦃⇓result => ⌜result = y⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's `B2BSN_lift` by cases on `is_nan_FF x`.
+  exact sorry
+
 -- Coq: B2BSN_BSN2B' — roundtrip through the non-NaN bridge
 def B2BSN_BSN2B'_check {prec emax : Int} (x : B754)
   (nx : BSN_is_nan x = false) : Id B754 :=

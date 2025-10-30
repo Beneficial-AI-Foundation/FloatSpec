@@ -724,11 +724,21 @@ noncomputable def binary_trunc (x : Binary754 prec emax) : Int :=
 noncomputable def Btrunc_correct_check (x : Binary754 prec emax) : Id Int :=
   pure (binary_trunc (prec:=prec) (emax:=emax) x)
 
+-- Local Valid_exp instance for the constant exponent function used below
+instance instValidExp_FIX0 :
+  FloatSpec.Core.Generic_fmt.Valid_exp 2 (fun _ => (0 : Int)) := by
+  refine ⟨?_⟩
+  intro k; constructor
+  · intro hk; exact le_of_lt hk
+  · intro _; constructor
+    · exact le_rfl
+    · intro _ _; rfl
+
 theorem Btrunc_correct (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
   Btrunc_correct_check (prec:=prec) (emax:=emax) x
   ⦃⇓result => ⌜(result : ℝ) =
-      FloatSpec.Calc.Round.round 2 (FIX_exp 0) FloatSpec.Compat.Ztrunc
+      FloatSpec.Calc.Round.round 2 (fun _ => (0 : Int)) ()
         (B2R (prec:=prec) (emax:=emax) x)⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's Btrunc_correct via BSN bridge.

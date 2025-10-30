@@ -87,6 +87,8 @@ public class Valid_exp (beta : Int) (fexp : Int → Int) : Prop where
       (fexp (fexp k + 1) ≤ fexp k) ∧
       ∀ l : Int, (l ≤ fexp k) → fexp l = fexp k)
 
+/- auxiliary instances, if any, live outside Core to avoid layering issues -/
+
 /-- Specification: Valid exponent for large values
 
     When fexp k < k (k is in the "large" regime),

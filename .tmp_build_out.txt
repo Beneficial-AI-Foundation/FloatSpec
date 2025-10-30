@@ -1935,21 +1935,21 @@ Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/Core/Generic_fmt.lean:48:7: missing doc string for public abbrev Rnd_ZR_pt
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:245:35: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:247:35: This simp argument is unused:
   Int.ceil_neg
 
 Hint: Omit it from the simp argument list.
   simp [hx, hneg, Int.floor_neg,̵ ̵I̵n̵t̵.̵c̵e̵i̵l̵_̵n̵e̵g̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:251:26: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:253:26: This simp argument is unused:
   Int.floor_neg
 
 Hint: Omit it from the simp argument list.
   simp [hx, hlt_negx, Int.f̵l̵o̵o̵r̵_̵n̵e̵g̵,̵ ̵I̵n̵t̵.̵ceil_neg]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:257:21: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:259:21: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`a`
@@ -1957,7 +1957,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`a`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:257:34: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:259:34: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`a^m * a^n = a^(m+n)`
@@ -1967,14 +1967,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`a^m * a^n = a^(m+n)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:259:48: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:261:48: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲n̲a̲m̲e̲}̲`zpow_add₀`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`zpow_add₀`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:303:8: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:305:8: This simp argument is unused:
   wp
 
 Hint: Omit it from the simp argument list.
@@ -1982,14 +1982,14 @@ Hint: Omit it from the simp argument list.
   ̵  ̵ ̵ ̵ ̵ ̵ ̵ ̵FloatSpec.Core.Raux.mag, FloatSpec.Core.Raux.Ztrunc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:303:12: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:305:12: This simp argument is unused:
   PostCond.noThrow
 
 Hint: Omit it from the simp argument list.
   simp [wp, P̵o̵s̵t̵C̵o̵n̵d̵.̵n̵o̵T̵h̵r̵o̵w̵,̵ ̵Id.run, bind, pure, FloatSpec.Core.Raux.mag, FloatSpec.Core.Raux.Ztrunc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:318:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:320:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`β^e`
@@ -1999,7 +1999,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`β^e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:319:15: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:321:15: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`fexp (e + 1) ≤ e`
@@ -2009,7 +2009,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`fexp (e + 1) ≤ e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:401:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:403:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`β^e`
@@ -2019,7 +2019,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`β^e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:401:58: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:403:58: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`fexp e ≤ e`
@@ -2029,7 +2029,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`fexp e ≤ e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:574:38: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:576:38: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`e`
@@ -2037,7 +2037,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:574:53: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:576:53: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`(β : ℝ)^e`
@@ -2047,7 +2047,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`(β : ℝ)^e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:575:48: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:577:48: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`fexp (e+1) ≤ e`
@@ -2057,7 +2057,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`fexp (e+1) ≤ e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:805:15: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:807:15: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`f`
@@ -2065,7 +2065,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:805:53: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:807:53: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`(F2R f)`
@@ -2080,28 +2080,28 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`(F2R f)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:867:34: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:869:34: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
   simp [this, mul_comm, mul_l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:867:49: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:869:49: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
   simp [this, mul_comm, mul_left_comm,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:896:39: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:898:39: This simp argument is unused:
   neg_mul
 
 Hint: Omit it from the simp argument list.
   simp [hx, FloatSpec.Core.Raux.mag,̵ ̵n̵e̵g̵_̵m̵u̵l̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:903:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:905:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`f`
@@ -2109,7 +2109,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:903:38: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:905:38: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`(F2R f).run`
@@ -2119,7 +2119,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`(F2R f).run`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:903:55: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:905:55: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`beta^(-cexp)`
@@ -2129,7 +2129,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`beta^(-cexp)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:904:36: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:906:36: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`f`
@@ -2137,35 +2137,35 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:929:11: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:931:11: This simp argument is unused:
   hcexp
 
 Hint: Omit it from the simp argument list.
   simp [x,̵ ̵h̵c̵e̵x̵p̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:1036:26: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:1038:26: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
   simp [mul_comm, mul_l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵assoc, neg_mul, mul_neg]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:1036:41: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:1038:41: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
   simp [mul_comm, mul_left_comm, m̵u̵l̵_̵a̵s̵s̵o̵c̵,̵ ̵neg_mul, mul_neg]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:1036:61: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:1038:61: This simp argument is unused:
   mul_neg
 
 Hint: Omit it from the simp argument list.
   simp [mul_comm, mul_left_comm, mul_assoc, neg_mul,̵ ̵m̵u̵l̵_̵n̵e̵g̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:1128:18: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1130:18: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -2173,7 +2173,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1142:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1144:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|x| < β^ex`
@@ -2183,7 +2183,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|x| < β^ex`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1142:24: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1144:24: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`ex ≤ fexp ex`
@@ -2193,7 +2193,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ex ≤ fexp ex`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1143:23: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1145:23: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -2201,7 +2201,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1241:33: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1243:33: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`ex ≤ fexp ex`
@@ -2211,7 +2211,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ex ≤ fexp ex`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1242:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1244:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Int.floor (x * β^(-fexp ex)) = 0`
@@ -2221,7 +2221,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Int.floor (x * β^(-fexp ex)) = 0`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1336:33: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1338:33: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`ex ≤ fexp ex`
@@ -2231,7 +2231,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ex ≤ fexp ex`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1337:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1339:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Int.ceil (x * β^(-fexp ex)) = 1`
@@ -2241,7 +2241,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Int.ceil (x * β^(-fexp ex)) = 1`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1421:17: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1423:17: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`mag x`
@@ -2254,7 +2254,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`mag x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1421:29: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1423:29: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`cexp x`
@@ -2267,7 +2267,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`cexp x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1423:20: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1425:20: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`1 < beta`
@@ -2277,7 +2277,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`1 < beta`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1424:23: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1426:23: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲a̲c̲t̲i̲c̲.̲G̲r̲i̲n̲d̲.̲«̲g̲r̲i̲n̲d̲_̲f̲i̲l̲t̲e̲r̲G̲e̲n̲≤̲_̲»̲)̲}̲`≤` (in `grind_filter`)
@@ -2286,7 +2286,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`≤`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1424:49: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1426:49: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|x| = (β : ℝ)^e`
@@ -2296,7 +2296,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|x| = (β : ℝ)^e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1517:16: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1519:16: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x ≠ 0`
@@ -2306,7 +2306,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x ≠ 0`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1517:28: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1519:28: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -2314,7 +2314,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1517:38: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1519:38: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`generic_format`
@@ -2322,7 +2322,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1518:45: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1520:45: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`mag beta x`
@@ -2334,7 +2334,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`mag beta x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1568:37: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1570:37: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`mag`
@@ -2342,7 +2342,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`mag`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1569:28: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1571:28: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`cexp x ≤ (mag x).run`
@@ -2352,7 +2352,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`cexp x ≤ (mag x).run`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1571:41: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1573:41: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲a̲c̲t̲i̲c̲.̲G̲r̲i̲n̲d̲.̲«̲g̲r̲i̲n̲d̲_̲f̲i̲l̲t̲e̲r̲G̲e̲n̲<̲_̲»̲)̲}̲`<` (in `grind_filter`)
@@ -2361,7 +2361,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`<`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1572:37: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1574:37: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`mag`
@@ -2369,14 +2369,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`mag`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1705:23: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1707:23: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`e := cexp x`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`e := cexp x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1766:52: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1768:52: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`emin`
@@ -2384,7 +2384,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`emin`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1767:60: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1769:60: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`β^emin`
@@ -2394,14 +2394,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`β^emin`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1852:24: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1854:24: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`rnd : ℝ → Int`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`rnd : ℝ → Int`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1853:61: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1855:61: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Valid_rnd`
@@ -2409,14 +2409,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Valid_rnd`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1852:24: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1854:24: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`rnd : ℝ → Int`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`rnd : ℝ → Int`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1853:61: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1855:61: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Valid_rnd`
@@ -2424,7 +2424,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Valid_rnd`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1862:28: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1864:28: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Zfloor`
@@ -2432,7 +2432,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Zfloor`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1864:66: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1866:66: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Zfloor`
@@ -2440,10 +2440,10 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Zfloor`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:1867:18: missing doc string for public def rnd_floor
+warning: FloatSpec/src/Core/Generic_fmt.lean:1869:18: missing doc string for public def rnd_floor
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:1928:45: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:1930:45: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`pure (rnd x)`
@@ -2455,7 +2455,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`pure (rnd x)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2043:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2045:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Rcompare (x - ⌊x⌋) (1/2)`
@@ -2467,7 +2467,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Rcompare (x - ⌊x⌋) (1/2)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2044:17: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2046:17: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`⌊x⌋`
@@ -2477,7 +2477,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`⌊x⌋`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2045:17: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2047:17: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`if choice ⌊x⌋ then ⌈x⌉ else ⌊x⌋`
@@ -2487,7 +2487,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`if choice ⌊x⌋ then ⌈x⌉ else ⌊x⌋`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2046:17: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2048:17: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`⌈x⌉`
@@ -2497,7 +2497,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`⌈x⌉`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2092:15: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2094:15: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Znearest x`
@@ -2510,7 +2510,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Znearest x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2092:38: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2094:38: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`⌊x⌋`
@@ -2520,7 +2520,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`⌊x⌋`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2092:47: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2094:47: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`⌈x⌉`
@@ -2530,7 +2530,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`⌈x⌉`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2094:54: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2096:54: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Znearest`
@@ -2538,21 +2538,21 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Znearest`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2158:23: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2160:23: This simp argument is unused:
   h1
 
 Hint: Omit it from the simp argument list.
   simp [hr.symm, h1̵,̵ ̵h̵2]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2158:27: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2160:27: This simp argument is unused:
   h2
 
 Hint: Omit it from the simp argument list.
   simp [hr.symm, h1,̵ ̵h̵2̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2169:11: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2171:11: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`⌊x⌋ ≤ Znearest x`
@@ -2562,10 +2562,10 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`⌊x⌋ ≤ Znearest x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2210:18: missing doc string for public def Znearest_le_ceil_check
+warning: FloatSpec/src/Core/Generic_fmt.lean:2212:18: missing doc string for public def Znearest_le_ceil_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2217:11: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2219:11: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Znearest x ≤ ⌈x⌉`
@@ -2575,8 +2575,8 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Znearest x ≤ ⌈x⌉`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2329:37: `le_of_not_lt` has been deprecated: Use `le_of_not_gt` instead
-warning: FloatSpec/src/Core/Generic_fmt.lean:2267:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2331:37: `le_of_not_lt` has been deprecated: Use `le_of_not_gt` instead
+warning: FloatSpec/src/Core/Generic_fmt.lean:2269:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`(x - ⌊x⌋) ≠ 1/2`
@@ -2586,7 +2586,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`(x - ⌊x⌋) ≠ 1/2`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2267:30: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2269:30: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|x - IZR (Znearest x)| < 1/2`
@@ -2596,7 +2596,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|x - IZR (Znearest x)| < 1/2`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2503:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2505:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|x - IZR n| < 1/2`
@@ -2606,7 +2606,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|x - IZR n| < 1/2`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2503:32: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2505:32: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Znearest x = n`
@@ -2616,7 +2616,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Znearest x = n`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2578:29: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2580:29: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Znearest`
@@ -2624,7 +2624,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Znearest`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2578:43: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2580:43: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`-x`
@@ -2634,108 +2634,108 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`-x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2729:59: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2731:59: This simp argument is unused:
   add_assoc
 
 Hint: Omit it from the simp argument list.
   simp [this, sub_eq_add_neg, add_comm, add_left_comm,̵ ̵a̵d̵d̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2765:24: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2767:24: This simp argument is unused:
   neg_add
 
 Hint: Omit it from the simp argument list.
   simp [̵n̵e̵g̵_̵a̵d̵d̵,̵ ̵a̵d̵d̵_̵c̵o̵m̵m̵,̵[̲a̲d̲d̲_̲c̲o̲m̲m̲,̲ add_left_comm, add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2765:43: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2767:43: This simp argument is unused:
   add_left_comm
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, a̵d̵d̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2765:58: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2767:58: This simp argument is unused:
   add_assoc
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, add_left_comm,̵ ̵a̵d̵d̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2799:24: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2801:24: This simp argument is unused:
   neg_add
 
 Hint: Omit it from the simp argument list.
   simp [̵n̵e̵g̵_̵a̵d̵d̵,̵ ̵a̵d̵d̵_̵c̵o̵m̵m̵,̵[̲a̲d̲d̲_̲c̲o̲m̲m̲,̲ add_left_comm, add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2799:43: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2801:43: This simp argument is unused:
   add_left_comm
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, a̵d̵d̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2799:58: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2801:58: This simp argument is unused:
   add_assoc
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, add_left_comm,̵ ̵a̵d̵d̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2818:21: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2820:21: This simp argument is unused:
   hA
 
 Hint: Omit it from the simp argument list.
   simp [hAt, hA̵,̵ ̵h̵trans_false', hfun_eq]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2818:40: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2820:40: This simp argument is unused:
   hfun_eq
 
 Hint: Omit it from the simp argument list.
   simp [hAt, hA, htrans_false',̵ ̵h̵f̵u̵n̵_̵e̵q̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2837:21: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2839:21: This simp argument is unused:
   hA
 
 Hint: Omit it from the simp argument list.
   simp [hAf, hA̵,̵ ̵h̵trans_true', hfun_eq]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2837:39: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2839:39: This simp argument is unused:
   hfun_eq
 
 Hint: Omit it from the simp argument list.
   simp [hAf, hA, htrans_true',̵ ̵h̵f̵u̵n̵_̵e̵q̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2874:14: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2876:14: This simp argument is unused:
   neg_add
 
 Hint: Omit it from the simp argument list.
   simp [̵n̵e̵g̵_̵a̵d̵d̵,̵ ̵a̵d̵d̵_̵c̵o̵m̵m̵,̵[̲a̲d̲d̲_̲c̲o̲m̲m̲,̲ add_left_comm, add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2874:33: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2876:33: This simp argument is unused:
   add_left_comm
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, a̵d̵d̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2874:48: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2876:48: This simp argument is unused:
   add_assoc
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, add_left_comm,̵ ̵a̵d̵d̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2887:18: missing doc string for public def roundR
+warning: FloatSpec/src/Core/Generic_fmt.lean:2889:18: missing doc string for public def roundR
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:2896:60: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:2898:60: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`choice`
@@ -2743,62 +2743,62 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`choice`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:2930:21: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:2932:21: This simp argument is unused:
   hy
 
 Hint: Omit it from the simp argument list.
   simp [hsm, he, h̵y̵,̵ ̵scaled_mantissa, cexp]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3219:18: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3221:18: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`round_bounded_small_pos`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_bounded_small_pos`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3270:48: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3272:48: This simp argument is unused:
   he_run
 
 Hint: Omit it from the simp argument list.
   simp [scaled_mantissa, cexp, hsm, hc, hm, he̵_̵r̵u̵n̵,̵ ̵h̵x_ne]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3270:56: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3272:56: This simp argument is unused:
   hx_ne
 
 Hint: Omit it from the simp argument list.
   simp [scaled_mantissa, cexp, hsm, hc, hm, he_run,̵ ̵h̵x̵_̵n̵e̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3306:18: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3308:18: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`round_bounded_large_pos`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_bounded_large_pos`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3361:46: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3363:46: This simp argument is unused:
   he_run
 
 Hint: Omit it from the simp argument list.
   simp [scaled_mantissa, cexp, hsm, hc, hm, he̵_̵r̵u̵n̵,̵ ̵h̵x_ne]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3361:54: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3363:54: This simp argument is unused:
   hx_ne
 
 Hint: Omit it from the simp argument list.
   simp [scaled_mantissa, cexp, hsm, hc, hm, he_run,̵ ̵h̵x̵_̵n̵e̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3482:27: unused variable `mode`
+warning: FloatSpec/src/Core/Generic_fmt.lean:3484:27: unused variable `mode`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3495:18: missing doc string for public def ZnearestA
+warning: FloatSpec/src/Core/Generic_fmt.lean:3497:18: missing doc string for public def ZnearestA
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3498:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3500:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Monotone_exp`
@@ -2806,7 +2806,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Monotone_exp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3498:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3500:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Monotone_exp`
@@ -2814,10 +2814,10 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Monotone_exp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3501:2: missing doc string for public field Monotone_exp.mono
+warning: FloatSpec/src/Core/Generic_fmt.lean:3503:2: missing doc string for public field Monotone_exp.mono
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3503:29: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3505:29: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`cexp`
@@ -2825,7 +2825,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`cexp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3504:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3506:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`0 < y`
@@ -2835,7 +2835,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`0 < y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3504:19: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3506:19: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|x| ≤ y`
@@ -2845,7 +2845,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|x| ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3504:35: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3506:35: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`cexp x ≤ cexp y`
@@ -2855,79 +2855,79 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`cexp x ≤ cexp y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3534:18: missing doc string for public def Znearest0
+warning: FloatSpec/src/Core/Generic_fmt.lean:3536:18: missing doc string for public def Znearest0
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3560:79: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3562:79: This simp argument is unused:
   hE
 
 Hint: Omit it from the simp argument list.
   simp [hsmn, hsmx, scaled_mantissa, cexp, FloatSpec.Core.Raux.mag, abs_neg, h̵E̵,̵ ̵neg_mul]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3569:20: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3571:20: This simp argument is unused:
   neg_add
 
 Hint: Omit it from the simp argument list.
   simp [̵n̵e̵g̵_̵a̵d̵d̵,̵ ̵a̵d̵d̵_̵c̵o̵m̵m̵,̵[̲a̲d̲d̲_̲c̲o̲m̲m̲,̲ add_left_comm, add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3569:39: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3571:39: This simp argument is unused:
   add_left_comm
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, a̵d̵d̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3569:54: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3571:54: This simp argument is unused:
   add_assoc
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, add_left_comm,̵ ̵a̵d̵d̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3652:17: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3654:17: This simp argument is unused:
   this
 
 Hint: Omit it from the simp argument list.
   simp [hlt,̵ ̵t̵h̵i̵s̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3661:17: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3663:17: This simp argument is unused:
   this
 
 Hint: Omit it from the simp argument list.
   simp [hlt,̵ ̵t̵h̵i̵s̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3696:22: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3698:22: This simp argument is unused:
   neg_add
 
 Hint: Omit it from the simp argument list.
   simp [̵n̵e̵g̵_̵a̵d̵d̵,̵ ̵a̵d̵d̵_̵c̵o̵m̵m̵,̵[̲a̲d̲d̲_̲c̲o̲m̲m̲,̲ add_left_comm, add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3696:41: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3698:41: This simp argument is unused:
   add_left_comm
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, a̵d̵d̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵add_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3696:56: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3698:56: This simp argument is unused:
   add_assoc
 
 Hint: Omit it from the simp argument list.
   simp [neg_add, add_comm, add_left_comm,̵ ̵a̵d̵d̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3769:0: automatically included section variable(s) unused in theorem `FloatSpec.Core.Generic_fmt.generic_inclusion_mag`:
+warning: FloatSpec/src/Core/Generic_fmt.lean:3771:0: automatically included section variable(s) unused in theorem `FloatSpec.Core.Generic_fmt.generic_inclusion_mag`:
   [Valid_exp beta fexp1]
 consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
   omit [Valid_exp beta fexp1] in theorem ...
 
 Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:3766:33: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3768:33: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`fexp2 (mag x) ≤ fexp1 (mag x)`
@@ -2937,7 +2937,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`fexp2 (mag x) ≤ fexp1 (mag x)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3767:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3769:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`generic_format fexp1 x → generic_format fexp2 x`
@@ -2947,7 +2947,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format fexp1 x → generic_format fexp2 x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:3839:53: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:3841:53: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`.run`
@@ -2957,18 +2957,18 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`.run`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:4059:8: declaration uses 'sorry'
-warning: FloatSpec/src/Core/Generic_fmt.lean:4222:36: `le_of_not_le` has been deprecated: Use `le_of_not_ge` instead
-warning: FloatSpec/src/Core/Generic_fmt.lean:4290:40: `le_of_not_le` has been deprecated: Use `le_of_not_ge` instead
-warning: FloatSpec/src/Core/Generic_fmt.lean:4914:46: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:4061:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:4224:36: `le_of_not_le` has been deprecated: Use `le_of_not_ge` instead
+warning: FloatSpec/src/Core/Generic_fmt.lean:4292:40: `le_of_not_le` has been deprecated: Use `le_of_not_ge` instead
+warning: FloatSpec/src/Core/Generic_fmt.lean:4916:46: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`ex := cexp x`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ex := cexp x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:4918:8: declaration uses 'sorry'
-warning: FloatSpec/src/Core/Generic_fmt.lean:4973:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:4920:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:4975:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`0 < y`
@@ -2978,7 +2978,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`0 < y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:4973:45: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:4975:45: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -2986,7 +2986,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:4973:82: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:4975:82: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`y`
@@ -2994,7 +2994,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:4974:9: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:4976:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x < y`
@@ -3004,8 +3004,8 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x < y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5118:11: `not_lt_of_le` has been deprecated: Use `not_lt_of_ge` instead
-warning: FloatSpec/src/Core/Generic_fmt.lean:5125:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5120:11: `not_lt_of_le` has been deprecated: Use `not_lt_of_ge` instead
+warning: FloatSpec/src/Core/Generic_fmt.lean:5127:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|x|`
@@ -3015,7 +3015,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|x|`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5125:25: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5127:25: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`β^(e-1)`
@@ -3025,7 +3025,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`β^(e-1)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5125:67: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5127:67: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3033,7 +3033,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5126:16: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5128:16: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`fexp e`
@@ -3046,14 +3046,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`fexp e`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5126:40: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5128:40: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`cexp_ge_bpow`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`cexp_ge_bpow`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5127:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5129:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Monotone_exp`
@@ -3061,7 +3061,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Monotone_exp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5488:23: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5490:23: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`generic_format_round_UP`
@@ -3069,27 +3069,27 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format_round_UP`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5500:57: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5502:57: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲n̲a̲m̲e̲}̲`round`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5725:13: unused variable `h`
+warning: FloatSpec/src/Core/Generic_fmt.lean:5727:13: unused variable `h`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:5725:52: unused variable `hx`
+warning: FloatSpec/src/Core/Generic_fmt.lean:5727:52: unused variable `hx`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:5859:12: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5861:12: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`generic_round_generic`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_round_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5862:17: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5864:17: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_to_generic`
@@ -3097,14 +3097,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_to_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5882:28: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:5884:28: This simp argument is unused:
   scaled_mantissa
 
 Hint: Omit it from the simp argument list.
   simp [round_to_generic, s̵c̵a̵l̵e̵d̵_̵m̵a̵n̵t̵i̵s̵s̵a̵,̵ ̵cexp, hEqFexp]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:5896:33: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5898:33: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_to_generic`
@@ -3112,7 +3112,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_to_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5898:49: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5900:49: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x ≤ y`
@@ -3122,7 +3122,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5899:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5901:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_to_generic x ≤ round_to_generic y`
@@ -3132,8 +3132,8 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_to_generic x ≤ round_to_generic y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5902:8: declaration uses 'sorry'
-warning: FloatSpec/src/Core/Generic_fmt.lean:5908:37: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:5904:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:5910:37: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_to_generic`
@@ -3141,34 +3141,34 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_to_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:5944:28: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:5946:28: This simp argument is unused:
   scaled_mantissa
 
 Hint: Omit it from the simp argument list.
   simp [round_to_generic, s̵c̵a̵l̵e̵d̵_̵m̵a̵n̵t̵i̵s̵s̵a̵,̵ ̵cexp, he, hs]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:5968:30: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:5970:30: This simp argument is unused:
   scaled_mantissa
 
 Hint: Omit it from the simp argument list.
   simp [round_to_generic, s̵c̵a̵l̵e̵d̵_̵m̵a̵n̵t̵i̵s̵s̵a̵,̵ ̵cexp, hf_abs]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6048:32: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6050:32: This simp argument is unused:
   scaled_mantissa
 
 Hint: Omit it from the simp argument list.
   simp [round_to_generic, s̵c̵a̵l̵e̵d̵_̵m̵a̵n̵t̵i̵s̵s̵a̵,̵ ̵cexp, hf_neg]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6041:12: 'ring_nf' tactic does nothing
+warning: FloatSpec/src/Core/Generic_fmt.lean:6043:12: 'ring_nf' tactic does nothing
 
 Note: This linter can be disabled with `set_option linter.unusedTactic false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6041:12: this tactic is never executed
+warning: FloatSpec/src/Core/Generic_fmt.lean:6043:12: this tactic is never executed
 
 Note: This linter can be disabled with `set_option linter.unreachableTactic false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6098:26: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6100:26: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`rnd`
@@ -3176,7 +3176,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`rnd`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6098:67: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6100:67: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`r ≠ 0`
@@ -3186,7 +3186,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`r ≠ 0`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6099:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6101:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`mag x ≤ mag r`
@@ -3196,14 +3196,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`mag x ≤ mag r`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6099:40: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6101:40: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`mag_round_ge`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`mag_round_ge`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6101:35: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6103:35: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_to_generic`
@@ -3211,8 +3211,8 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_to_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6102:8: declaration uses 'sorry'
-warning: FloatSpec/src/Core/Generic_fmt.lean:6138:39: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6104:8: declaration uses 'sorry'
+warning: FloatSpec/src/Core/Generic_fmt.lean:6140:39: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3220,7 +3220,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6158:31: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6160:31: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_generic`
@@ -3228,10 +3228,10 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6176:5: unused variable `hEq`
+warning: FloatSpec/src/Core/Generic_fmt.lean:6178:5: unused variable `hEq`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6191:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6193:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3239,7 +3239,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6191:59: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6193:59: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3247,7 +3247,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6192:12: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6194:12: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3255,10 +3255,10 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6194:18: unused variable `hbeta`
+warning: FloatSpec/src/Core/Generic_fmt.lean:6196:18: unused variable `hbeta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6235:18: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6237:18: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
@@ -3266,7 +3266,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵mul_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6235:33: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6237:33: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
@@ -3274,7 +3274,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6241:39: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6243:39: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`rnd`
@@ -3282,7 +3282,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`rnd`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6241:49: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6243:49: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x ≤ y`
@@ -3292,7 +3292,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6242:21: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6244:21: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3300,7 +3300,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6242:51: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6244:51: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`y`
@@ -3308,7 +3308,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6287:35: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6289:35: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3316,7 +3316,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6287:64: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6289:64: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x ≤ y`
@@ -3326,7 +3326,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6288:31: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6290:31: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`y`
@@ -3334,7 +3334,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6288:48: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6290:48: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`rnd`
@@ -3342,7 +3342,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`rnd`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6324:35: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6326:35: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`y`
@@ -3350,7 +3350,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6324:64: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6326:64: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x ≤ y`
@@ -3360,7 +3360,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6325:25: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6327:25: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3368,7 +3368,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6325:34: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6327:34: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`y`
@@ -3376,7 +3376,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6325:51: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6327:51: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`rnd`
@@ -3384,7 +3384,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`rnd`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6383:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6385:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3392,7 +3392,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6383:48: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6385:48: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x ≤ |y|`
@@ -3402,7 +3402,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x ≤ |y|`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6383:64: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6385:64: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x ≤ |round_to_generic y|`
@@ -3412,7 +3412,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x ≤ |round_to_generic y|`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6420:22: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6422:22: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
@@ -3420,7 +3420,7 @@ Hint: Omit it from the simp argument list.
           FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵mul_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6420:37: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6422:37: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
@@ -3428,7 +3428,7 @@ Hint: Omit it from the simp argument list.
           FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6427:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6429:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`y`
@@ -3436,7 +3436,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6427:48: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6429:48: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|x| ≤ y`
@@ -3446,7 +3446,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|x| ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6428:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6430:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|round_to_generic x| ≤ y`
@@ -3456,7 +3456,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|round_to_generic x| ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6429:4: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6431:4: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`abs_round_ge_generic_ax`
@@ -3464,7 +3464,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`abs_round_ge_generic_ax`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6431:21: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:6433:21: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`|r| ≤ y ↔ -y ≤ r ∧ r ≤ y`
@@ -3474,20 +3474,20 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`|r| ≤ y ↔ -y ≤ r ∧ r ≤ y`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:6645:59: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6647:59: This simp argument is unused:
   hcexp_min
 
 Hint: Omit it from the simp argument list.
   simp only [generic_format, scaled_mantissa, cexp, F2R,̵ ̵h̵c̵e̵x̵p̵_̵m̵i̵n̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6923:5: unused variable `hlt`
+warning: FloatSpec/src/Core/Generic_fmt.lean:6925:5: unused variable `hlt`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6925:10: unused variable `hgt`
+warning: FloatSpec/src/Core/Generic_fmt.lean:6927:10: unused variable `hgt`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6960:18: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6962:18: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
@@ -3495,7 +3495,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵mul_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6960:33: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6962:33: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
@@ -3503,7 +3503,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6980:18: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6982:18: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
@@ -3511,7 +3511,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵mul_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:6980:33: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:6982:33: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
@@ -3519,7 +3519,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7000:18: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7002:18: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
@@ -3527,7 +3527,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵mul_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7000:33: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7002:33: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
@@ -3535,7 +3535,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7041:18: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7043:18: This simp argument is unused:
   mul_left_comm
 
 Hint: Omit it from the simp argument list.
@@ -3543,7 +3543,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵mul_assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7041:33: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7043:33: This simp argument is unused:
   mul_assoc
 
 Hint: Omit it from the simp argument list.
@@ -3551,7 +3551,7 @@ Hint: Omit it from the simp argument list.
       FloatSpec.Core.Generic_fmt.Ztrunc_neg, Int.cast_neg, mul_comm, m̵u̵l̵_̵l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]̵m̲u̲l̲_̲l̲e̲f̲t̲_̲c̲o̲m̲m̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7123:33: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7125:33: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`mag_round_ge`
@@ -3559,7 +3559,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`mag_round_ge`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7275:33: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7277:33: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`abs_round_ge_generic`
@@ -3567,7 +3567,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`abs_round_ge_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7291:33: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7293:33: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`abs_round_le_generic`
@@ -3575,7 +3575,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`abs_round_le_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7448:31: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7450:31: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_le_pos`
@@ -3583,7 +3583,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_le_pos`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7548:7: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7550:7: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`x`
@@ -3591,7 +3591,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`x`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7548:71: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7550:71: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`0`
@@ -3609,7 +3609,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`0`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7549:9: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7551:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`ex ≤ fexp ex`
@@ -3619,28 +3619,28 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ex ≤ fexp ex`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7549:44: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7551:44: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`exp_small_round_0_pos`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`exp_small_round_0_pos`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7665:10: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7667:10: This simp argument is unused:
   FloatSpec.Core.Raux.Ztrunc
 
 Hint: Omit it from the simp argument list.
   simp [F̵l̵o̵a̵t̵S̵p̵e̵c̵.̵C̵o̵r̵e̵.̵R̵a̵u̵x̵.̵Z̵t̵r̵u̵n̵c̵,̵ ̵hy]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7678:10: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7680:10: This simp argument is unused:
   FloatSpec.Core.Raux.Ztrunc
 
 Hint: Omit it from the simp argument list.
   simp [F̵l̵o̵a̵t̵S̵p̵e̵c̵.̵C̵o̵r̵e̵.̵R̵a̵u̵x̵.̵Z̵t̵r̵u̵n̵c̵,̵ ̵hy]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7774:38: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7776:38: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`r ≠ 0`
@@ -3650,7 +3650,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`r ≠ 0`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7774:52: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7776:52: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`cexp x ≤ cexp r`
@@ -3660,14 +3660,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`cexp x ≤ cexp r`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7911:12: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7913:12: This simp argument is unused:
   FloatSpec.Core.Generic_fmt.scaled_mantissa
 
 Hint: Omit it from the simp argument list.
   simp [round_to_generic, F̵l̵o̵a̵t̵S̵p̵e̵c̵.̵C̵o̵r̵e̵.̵G̵e̵n̵e̵r̵i̵c̵_̵f̵m̵t̵.̵s̵c̵a̵l̵e̵d̵_̵m̵a̵n̵t̵i̵s̵s̵a̵,̵FloatSpec.Core.Generic_fmt.cexp, hrdef, hs, hex]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7913:19: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7915:19: This simp argument is unused:
   hs
 
 Hint: Omit it from the simp argument list.
@@ -3675,7 +3675,7 @@ Hint: Omit it from the simp argument list.
           FloatSpec.Core.Generic_fmt.cexp, hrdef, h̵s̵,̵ ̵hex]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7913:23: This simp argument is unused:
+warning: FloatSpec/src/Core/Generic_fmt.lean:7915:23: This simp argument is unused:
   hex
 
 Hint: Omit it from the simp argument list.
@@ -3683,7 +3683,7 @@ Hint: Omit it from the simp argument list.
           FloatSpec.Core.Generic_fmt.cexp, hrdef, h̵s̵,̵ ̵h̵e̵x̵]̵h̲s̲]̲
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/Core/Generic_fmt.lean:7970:63: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7972:63: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`round_to_generic`
@@ -3691,7 +3691,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`round_to_generic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Core/Generic_fmt.lean:7972:41: Code element could be more specific.
+warning: FloatSpec/src/Core/Generic_fmt.lean:7974:41: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`1 < beta`
@@ -11365,43 +11365,49 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Compat.lean:77:39: `class ... :=` has been deprecated in favor of `class ... where`.
-
-Note: This linter can be disabled with `set_option linter.deprecated false`
-warning: FloatSpec/src/Compat.lean:78:3: missing doc string for public field Valid_rnd.trivial
+warning: FloatSpec/src/Compat.lean:83:18: missing doc string for public def Ztrunc
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Compat.lean:81:45: `class ... :=` has been deprecated in favor of `class ... where`.
-
-Note: This linter can be disabled with `set_option linter.deprecated false`
-warning: FloatSpec/src/Compat.lean:82:3: missing doc string for public field Monotone_exp.trivial
+warning: FloatSpec/src/Compat.lean:84:4: missing doc string for public def FIX_exp
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Compat.lean:89:44: `class ... :=` has been deprecated in favor of `class ... where`.
+warning: FloatSpec/src/Compat.lean:88:39: `class ... :=` has been deprecated in favor of `class ... where`.
 
 Note: This linter can be disabled with `set_option linter.deprecated false`
-warning: FloatSpec/src/Compat.lean:90:3: missing doc string for public field Prec_lt_emax.trivial
+warning: FloatSpec/src/Compat.lean:89:3: missing doc string for public field Valid_rnd.trivial
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Compat.lean:93:44: `class ... :=` has been deprecated in favor of `class ... where`.
+warning: FloatSpec/src/Compat.lean:92:45: `class ... :=` has been deprecated in favor of `class ... where`.
 
 Note: This linter can be disabled with `set_option linter.deprecated false`
-warning: FloatSpec/src/Compat.lean:94:3: missing doc string for public field Exp_not_FTZ.trivial
+warning: FloatSpec/src/Compat.lean:93:3: missing doc string for public field Monotone_exp.trivial
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Compat.lean:97:26: unused variable `y`
+warning: FloatSpec/src/Compat.lean:100:44: `class ... :=` has been deprecated in favor of `class ... where`.
+
+Note: This linter can be disabled with `set_option linter.deprecated false`
+warning: FloatSpec/src/Compat.lean:101:3: missing doc string for public field Prec_lt_emax.trivial
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Compat.lean:104:44: `class ... :=` has been deprecated in favor of `class ... where`.
+
+Note: This linter can be disabled with `set_option linter.deprecated false`
+warning: FloatSpec/src/Compat.lean:105:3: missing doc string for public field Exp_not_FTZ.trivial
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Compat.lean:108:26: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Compat.lean:100:26: unused variable `y`
+warning: FloatSpec/src/Compat.lean:111:26: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Compat.lean:109:44: unused variable `fexp`
+warning: FloatSpec/src/Compat.lean:120:44: unused variable `fexp`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Compat.lean:109:63: unused variable `rnd`
+warning: FloatSpec/src/Compat.lean:120:63: unused variable `rnd`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Compat.lean:109:79: unused variable `x`
+warning: FloatSpec/src/Compat.lean:120:79: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
 ⚠ [3009/3028] Replayed FloatSpec.src.Pff.Pff
@@ -16199,7 +16205,7 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Nat2Z_8_12.lean:21:8: declaration uses 'sorry'
-⚠ [3022/3028] Built FloatSpec.src.IEEE754.Binary (4.9s)
+⚠ [3022/3028] Built FloatSpec.src.IEEE754.Binary (4.6s)
 warning: FloatSpec/src/IEEE754/Binary.lean:15:4: missing doc string for public def bnot
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -16499,175 +16505,197 @@ warning: FloatSpec/src/IEEE754/Binary.lean:663:18: missing doc string for public
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/IEEE754/Binary.lean:667:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:678:4: missing doc string for public def Binary16
+warning: FloatSpec/src/IEEE754/Binary.lean:678:4: missing doc string for public def binary_one
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:679:4: missing doc string for public def Binary32
+warning: FloatSpec/src/IEEE754/Binary.lean:683:18: missing doc string for public def Bone_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:680:4: missing doc string for public def Binary64
+warning: FloatSpec/src/IEEE754/Binary.lean:686:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:695:4: missing doc string for public def is_finite_Bone_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:681:4: missing doc string for public def Binary128
+warning: FloatSpec/src/IEEE754/Binary.lean:698:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:707:4: missing doc string for public def Bsign_Bone_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:689:4: missing doc string for public def canonical_mantissa
+warning: FloatSpec/src/IEEE754/Binary.lean:710:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:719:18: missing doc string for public def binary_trunc
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:689:24: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:689:29: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:689:42: unused variable `m`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:689:52: unused variable `e`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:693:4: missing doc string for public def canonical_canonical_mantissa_check
+warning: FloatSpec/src/IEEE754/Binary.lean:724:18: missing doc string for public def Btrunc_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:693:40: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:693:45: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:694:3: unused variable `sx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:694:15: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:694:26: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:697:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:710:4: missing doc string for public def generic_format_B2R_check
+warning: FloatSpec/src/IEEE754/Binary.lean:737:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:748:4: missing doc string for public def Binary16
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:710:48: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:713:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:725:4: missing doc string for public def FLT_format_B2R_check
+warning: FloatSpec/src/IEEE754/Binary.lean:749:4: missing doc string for public def Binary32
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:725:44: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:728:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:741:18: missing doc string for public def Bcompare_check
+warning: FloatSpec/src/IEEE754/Binary.lean:750:4: missing doc string for public def Binary64
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:746:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:760:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:775:4: missing doc string for public def bounded
+warning: FloatSpec/src/IEEE754/Binary.lean:751:4: missing doc string for public def Binary128
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:775:13: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:775:18: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:775:31: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:775:42: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:779:4: missing doc string for public def bounded_le_emax_minus_prec_check
+warning: FloatSpec/src/IEEE754/Binary.lean:759:4: missing doc string for public def canonical_mantissa
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:779:38: unused variable `prec`
+warning: FloatSpec/src/IEEE754/Binary.lean:759:24: unused variable `prec`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:779:43: unused variable `emax`
+warning: FloatSpec/src/IEEE754/Binary.lean:759:29: unused variable `emax`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:779:56: unused variable `mx`
+warning: FloatSpec/src/IEEE754/Binary.lean:759:42: unused variable `m`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:779:67: unused variable `ex`
+warning: FloatSpec/src/IEEE754/Binary.lean:759:52: unused variable `e`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:782:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:796:4: missing doc string for public def bounded_lt_emax_check
+warning: FloatSpec/src/IEEE754/Binary.lean:763:4: missing doc string for public def canonical_canonical_mantissa_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:796:27: unused variable `prec`
+warning: FloatSpec/src/IEEE754/Binary.lean:763:40: unused variable `prec`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:796:32: unused variable `emax`
+warning: FloatSpec/src/IEEE754/Binary.lean:763:45: unused variable `emax`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:796:45: unused variable `mx`
+warning: FloatSpec/src/IEEE754/Binary.lean:764:3: unused variable `sx`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:796:56: unused variable `ex`
+warning: FloatSpec/src/IEEE754/Binary.lean:764:15: unused variable `mx`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:799:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:812:4: missing doc string for public def bounded_ge_emin_check
+warning: FloatSpec/src/IEEE754/Binary.lean:764:26: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:767:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:780:4: missing doc string for public def generic_format_B2R_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:812:27: unused variable `prec`
+warning: FloatSpec/src/IEEE754/Binary.lean:780:48: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:812:32: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:812:45: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:812:56: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:815:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:830:4: missing doc string for public def abs_B2R_le_emax_minus_prec_check
+warning: FloatSpec/src/IEEE754/Binary.lean:783:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:795:4: missing doc string for public def FLT_format_B2R_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:831:3: unused variable `x`
+warning: FloatSpec/src/IEEE754/Binary.lean:795:44: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:834:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:847:4: missing doc string for public def abs_B2R_lt_emax_check
+warning: FloatSpec/src/IEEE754/Binary.lean:798:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:811:18: missing doc string for public def Bcompare_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:848:3: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:851:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:865:4: missing doc string for public def is_finite_strict_Bin
+warning: FloatSpec/src/IEEE754/Binary.lean:816:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:830:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:845:4: missing doc string for public def bounded
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:871:4: missing doc string for public def abs_B2R_ge_emin_check
+warning: FloatSpec/src/IEEE754/Binary.lean:845:13: unused variable `prec`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:845:18: unused variable `emax`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:845:31: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:845:42: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:849:4: missing doc string for public def bounded_le_emax_minus_prec_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:872:3: unused variable `x`
+warning: FloatSpec/src/IEEE754/Binary.lean:849:38: unused variable `prec`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:875:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:891:4: missing doc string for public def bounded_canonical_lt_emax_check
+warning: FloatSpec/src/IEEE754/Binary.lean:849:43: unused variable `emax`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:849:56: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:849:67: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:852:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:866:4: missing doc string for public def bounded_lt_emax_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:891:37: unused variable `prec`
+warning: FloatSpec/src/IEEE754/Binary.lean:866:27: unused variable `prec`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:891:42: unused variable `emax`
+warning: FloatSpec/src/IEEE754/Binary.lean:866:32: unused variable `emax`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:892:3: unused variable `mx`
+warning: FloatSpec/src/IEEE754/Binary.lean:866:45: unused variable `mx`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:892:14: unused variable `ex`
+warning: FloatSpec/src/IEEE754/Binary.lean:866:56: unused variable `ex`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:895:8: declaration uses 'sorry'
-⚠ [3023/3028] Built FloatSpec.src.IEEE754.Bits (3.9s)
+warning: FloatSpec/src/IEEE754/Binary.lean:869:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:882:4: missing doc string for public def bounded_ge_emin_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/Binary.lean:882:27: unused variable `prec`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:882:32: unused variable `emax`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:882:45: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:882:56: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:885:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:900:4: missing doc string for public def abs_B2R_le_emax_minus_prec_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/Binary.lean:901:3: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:904:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:917:4: missing doc string for public def abs_B2R_lt_emax_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/Binary.lean:918:3: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:921:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:935:4: missing doc string for public def is_finite_strict_Bin
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/Binary.lean:941:4: missing doc string for public def abs_B2R_ge_emin_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/Binary.lean:942:3: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:945:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/Binary.lean:961:4: missing doc string for public def bounded_canonical_lt_emax_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/Binary.lean:961:37: unused variable `prec`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:961:42: unused variable `emax`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:962:3: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:962:14: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/Binary.lean:965:8: declaration uses 'sorry'
+⚠ [3023/3028] Built FloatSpec.src.IEEE754.Bits (3.0s)
 warning: FloatSpec/src/IEEE754/Bits.lean:17:4: missing doc string for public def join_bits
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -16733,7 +16761,7 @@ Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/IEEE754/Bits.lean:129:8: declaration uses 'sorry'
 warning: FloatSpec/src/IEEE754/Bits.lean:141:8: declaration uses 'sorry'
 warning: FloatSpec/src/IEEE754/Bits.lean:167:8: declaration uses 'sorry'
-⚠ [3024/3028] Built FloatSpec.src.IEEE754.BinarySingleNaN (4.2s)
+⚠ [3024/3028] Built FloatSpec.src.IEEE754.BinarySingleNaN (4.0s)
 warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:19:10: missing doc string for public inductive B754
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -16837,59 +16865,112 @@ warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:277:8: declaration uses 'sor
 warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:285:4: missing doc string for public def BSN2B
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:293:4: missing doc string for public def B2BSN_BSN2B_check
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:294:4: missing doc string for public def BSN2B'
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:305:18: missing doc string for public def B2R_BSN2B_check
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:302:4: missing doc string for public def B2BSN_BSN2B_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:308:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:317:18: missing doc string for public def B2R_SF2B_check
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:314:4: missing doc string for public def Bsign_BSN2B_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:320:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:329:4: missing doc string for public def is_finite_BSN2B_check
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:317:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:328:4: missing doc string for public def lift
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:332:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:341:4: missing doc string for public def is_nan_BSN2B_check
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:335:4: missing doc string for public def B2BSN_lift_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:344:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:353:4: missing doc string for public def validB754
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:342:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:353:4: missing doc string for public def B2BSN_BSN2B'_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:355:21: unused variable `s`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:367:18: missing doc string for public def B2R_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:378:20: This simp argument is unused:
+  B754_to_R
+
+Hint: Omit it from the simp argument list.
+  simp [B7̵5̵4̵_̵t̵o̵_̵R̵,̵ ̵B̵SN_is_nan] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:381:4: missing doc string for public def B2FF_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:395:4: missing doc string for public def Bsign_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:406:32: This simp argument is unused:
+  BSN_sign
+
+Hint: Omit it from the simp argument list.
+  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵s̵i̵g̵n̵] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:409:4: missing doc string for public def is_finite_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:420:32: This simp argument is unused:
+  BSN_is_finite
+
+Hint: Omit it from the simp argument list.
+  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵i̵s̵_̵f̵i̵n̵i̵t̵e̵] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:423:4: missing doc string for public def is_nan_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:437:18: missing doc string for public def B2R_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:440:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:449:18: missing doc string for public def B2R_SF2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:452:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:461:4: missing doc string for public def is_finite_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:464:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:473:4: missing doc string for public def is_nan_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:476:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:485:4: missing doc string for public def validB754
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:487:21: unused variable `s`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:362:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:362:4: missing doc string for public def B754_plus
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:494:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:494:4: missing doc string for public def B754_plus
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:365:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:365:4: missing doc string for public def B754_mult
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:497:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:497:4: missing doc string for public def B754_mult
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:368:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:368:4: missing doc string for public def B754_div
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:500:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:500:4: missing doc string for public def B754_div
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:371:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:371:4: missing doc string for public def B754_sqrt
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:503:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:503:4: missing doc string for public def B754_sqrt
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:375:4: missing doc string for public def B754_is_finite
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:507:4: missing doc string for public def B754_is_finite
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:381:4: missing doc string for public def B754_is_nan
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:513:4: missing doc string for public def B754_is_nan
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:386:4: missing doc string for public def B754_sign
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:518:4: missing doc string for public def B754_sign
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:394:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:404:8: declaration uses 'sorry'
-⚠ [3025/3028] Built FloatSpec.src.IEEE754.PrimFloat (3.3s)
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:526:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:536:8: declaration uses 'sorry'
+⚠ [3025/3028] Built FloatSpec.src.IEEE754.PrimFloat (3.0s)
 warning: FloatSpec/src/IEEE754/PrimFloat.lean:12:7: missing doc string for public abbrev PrimFloat
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -16957,6 +17038,6 @@ warning: FloatSpec/src/IEEE754/PrimFloat.lean:47:4: missing doc string for publi
 Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/IEEE754/PrimFloat.lean:52:8: declaration uses 'sorry'
 warning: FloatSpec/src/IEEE754/PrimFloat.lean:58:8: declaration uses 'sorry'
-✔ [3026/3028] Built FloatSpec.src.IEEE754 (3.6s)
+✔ [3026/3028] Built FloatSpec.src.IEEE754 (3.9s)
 ✔ [3027/3028] Built FloatSpec (3.2s)
 Build completed successfully (3028 jobs).
