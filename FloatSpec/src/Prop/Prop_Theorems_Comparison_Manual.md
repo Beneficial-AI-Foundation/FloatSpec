@@ -72,7 +72,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `sqrt_error_N_FLX_aux1` → (no direct Lean match found)
 - `sqrt_error_N_FLX_aux1` → `sqrt_error_N_FLX_aux1` [Div_sqrt_error.lean:51] (exact)
 
-- `sqrt_error_N_FLX_aux2` → (no direct Lean match found)
+-- `sqrt_error_N_FLX_aux2` → `sqrt_error_N_FLX_aux2` [Div_sqrt_error.lean:62] (exact)
 
 - `sqrt_error_N_FLX_aux3` → (no direct Lean match found)
 

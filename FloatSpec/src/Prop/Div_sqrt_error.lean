@@ -56,6 +56,19 @@ lemma sqrt_error_N_FLX_aux1 (x : ℝ)
     (1 ≤ mu ∧ mu < (beta : ℝ) ^ (2 : Int)) := by
   sorry
 
+/-- Auxiliary bound cases for sqrt error in FLX.
+    If `x ≥ 1` and is in FLX format, then `x` is either exactly `1`, or exactly `1 + 2·u_ro`,
+    or at least `1 + 4·u_ro`. -/
+lemma sqrt_error_N_FLX_aux2 (x : ℝ)
+  (hx : generic_format beta (FLX_exp prec) x) (hx_ge1 : 1 ≤ x) :
+  x = 1 ∨ x = 1 + 2 * u_ro beta prec ∨ 1 + 4 * u_ro beta prec ≤ x := by
+  sorry
+
+-- Local notation for unit roundoff used below
+local notation "uro" => u_ro beta prec
+
+
+
 /-- Division error in FLT -/
 theorem div_error_FLT (emin : Int) (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
   (hx : generic_format beta (FLT_exp emin prec) x) (hy : generic_format beta (FLT_exp emin prec) y)
