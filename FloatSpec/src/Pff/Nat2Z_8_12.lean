@@ -4,7 +4,7 @@
 import Std.Do.Triple
 import FloatSpec.src.Core
 import FloatSpec.src.Compat
-
+open Std.Do
 open FloatSpec.Core
 
 namespace FloatSpec.Pff.Nat2Z

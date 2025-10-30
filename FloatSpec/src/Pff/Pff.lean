@@ -1,11 +1,13 @@
 -- Legacy Pff library compatibility layer
 -- Translated from Coq file: flocq/src/Pff/Pff.v
 
+import Std.Do.Triple
 import FloatSpec.src.Core
 import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
 
 open Real
+open Std.Do
 
 -- Compatibility definitions for Pff legacy support
 
@@ -67,6 +69,16 @@ theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
 -- Discrete min disjunction (Coq: Pff.v `min_or`)
 theorem min_or (n m : Nat) :
   (Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n) := by
+  sorry
+
+-- Coq: `ZmaxSym` — symmetry of integer max
+noncomputable def ZmaxSym_check (a b : Int) : Id Unit :=
+  pure ()
+
+theorem ZmaxSym (a b : Int) :
+    ⦃⌜True⌝⦄
+    ZmaxSym_check a b
+    ⦃⇓_ => ⌜max a b = max b a⌝⦄ := by
   sorry
 
 -- Coq: `ZleLe` — order reflection through Int.ofNat

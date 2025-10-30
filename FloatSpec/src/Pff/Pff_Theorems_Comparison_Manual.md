@@ -930,7 +930,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zmin_Zle` → (no Lean counterpart)
 - `Zopp_Zpred_Zs` → (no Lean counterpart)
 - `ZmaxLe1` → (no Lean counterpart)
-- `ZmaxSym` → (no Lean counterpart)
+-- `ZmaxSym` → `ZmaxSym [FloatSpec/src/Pff/Pff.lean:78]`
 - `ZmaxLe2` → (no Lean counterpart)
 - `Zeq_Zs` → (no Lean counterpart)
 - `Zmin_Zmax` → (no Lean counterpart)
