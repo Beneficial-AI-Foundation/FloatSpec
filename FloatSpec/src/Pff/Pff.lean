@@ -370,6 +370,16 @@ theorem Zle_Zabs (z : Int) :
     ⦃⇓_ => ⌜z ≤ |z|⌝⦄ := by
   sorry
 
+-- Coq: `absolu_lt_nz` — if z ≠ 0 then 0 < Z.abs_nat z
+noncomputable def absolu_lt_nz_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem absolu_lt_nz (z : Int) :
+    ⦃⌜z ≠ 0⌝⦄
+    absolu_lt_nz_check z
+    ⦃⇓_ => ⌜0 < Int.natAbs z⌝⦄ := by
+  sorry
+
 -- List operations used in Pff
 def list_sum (l : List ℝ) : ℝ :=
   l.foldr (· + ·) 0

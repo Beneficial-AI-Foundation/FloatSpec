@@ -943,7 +943,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zle_abs` → `Zle_abs [FloatSpec/src/Pff/Pff.lean:256]`
 - `lt_Zlt_inv` → `lt_Zlt_inv [FloatSpec/src/Pff/Pff.lean:266]`
 - `NconvertO` → (no Lean counterpart)
-- `absolu_lt_nz` → (no Lean counterpart)
+- `absolu_lt_nz` → `absolu_lt_nz [FloatSpec/src/Pff/Pff.lean:377]`
 - `Rledouble` → `Rledouble [FloatSpec/src/Pff/Pff.lean:73]`
 - `Rltdouble` → `Rltdouble [FloatSpec/src/Pff/Pff.lean:83]`
 - `Rle_Rinv` → `Rle_Rinv [FloatSpec/src/Pff/Pff.lean:93]`
