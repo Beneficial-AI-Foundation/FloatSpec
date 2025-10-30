@@ -16958,3 +16958,5 @@ Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/IEEE754/PrimFloat.lean:52:8: declaration uses 'sorry'
 warning: FloatSpec/src/IEEE754/PrimFloat.lean:58:8: declaration uses 'sorry'
 ✔ [3026/3028] Built FloatSpec.src.IEEE754 (3.6s)
+✔ [3027/3028] Built FloatSpec (3.2s)
+Build completed successfully (3028 jobs).
