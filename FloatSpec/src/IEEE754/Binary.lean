@@ -1064,3 +1064,87 @@ theorem shr_fexp_truncate (m e : Int) (l : Loc)
   intro _
   -- Proof deferred; follows by unfolding `shr_fexp` and the placeholder definitions.
   exact sorry
+
+-- Rounding auxiliary (Coq: binary_round_aux and its correctness lemmas)
+-- We introduce a lightweight placeholder for `binary_round_aux` and
+-- state Coq's two correctness theorems in Hoare‑triple style. Proofs are deferred.
+
+-- Auxiliary rounding step (placeholder; mirrors Coq's `binary_round_aux` shape)
+noncomputable def binary_round_aux (mode : RoundingMode)
+  (sx : Bool) (mx : Int) (ex : Int) (lx : Loc) : FullFloat := by
+  -- Implemented elsewhere in Coq; here we only expose its type.
+  exact FullFloat.F754_nan false 1
+
+-- Hoare wrapper for `binary_round_aux_correct'` (prime version)
+noncomputable def binary_round_aux_correct'_check
+  (mode : RoundingMode) (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) : Id FullFloat :=
+  pure (binary_round_aux mode sx (mx : Int) ex lx)
+
+-- Coq: binary_round_aux_correct'
+-- Either returns a finite result that corresponds to rounding of x
+-- or signals overflow via `binary_overflow`. We capture this shape
+-- without committing to exact numerical premises here.
+theorem binary_round_aux_correct' (mode : RoundingMode)
+  (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) :
+  ⦃⌜True⌝⦄
+  binary_round_aux_correct'_check mode x sx mx ex lx
+  ⦃⇓z => ⌜is_finite_FF z = true ∨
+              z = binary_overflow (prec:=prec) (emax:=emax) mode sx⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's binary_round_aux_correct' via the BSN bridge.
+  exact sorry
+
+-- High-level rounding (Coq: binary_round and binary_round_correct)
+noncomputable def binary_round (mode : RoundingMode)
+  (sx : Bool) (mx : Nat) (ex : Int) : FullFloat :=
+  -- Placeholder: actual implementation delegated to BSN layer in Coq.
+  FullFloat.F754_nan false 1
+
+noncomputable def binary_round_correct_check (mode : RoundingMode)
+  (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) : Id FullFloat :=
+  pure (binary_round mode sx mx ex)
+
+theorem binary_round_correct (mode : RoundingMode)
+  (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) :
+  ⦃⌜True⌝⦄
+  binary_round_correct_check mode x sx mx ex
+  ⦃⇓z => ⌜is_finite_FF z = true ∨
+              z = binary_overflow (prec:=prec) (emax:=emax) mode sx⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `binary_round_correct` via the BSN bridge.
+  exact sorry
+
+-- Normalization (Coq: binary_normalize and binary_normalize_correct)
+noncomputable def binary_normalize (mode : RoundingMode)
+  (mx : Nat) (ex : Int) (szero : Bool) : FullFloat :=
+  -- Placeholder: actual implementation exists in Coq; we only mirror the API.
+  FullFloat.F754_nan false 1
+
+noncomputable def binary_normalize_correct_check (mode : RoundingMode)
+  (mx : Nat) (ex : Int) (szero : Bool) : Id FullFloat :=
+  pure (binary_normalize mode mx ex szero)
+
+theorem binary_normalize_correct (mode : RoundingMode)
+  (mx : Nat) (ex : Int) (szero : Bool) :
+  ⦃⌜True⌝⦄
+  binary_normalize_correct_check mode mx ex szero
+  ⦃⇓z => ⌜is_finite_FF z = true ∨ is_nan_FF z = true⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `binary_normalize_correct` shape.
+  exact sorry
+
+-- Hoare wrapper for `binary_round_aux_correct` (non‑prime version)
+noncomputable def binary_round_aux_correct_check
+  (mode : RoundingMode) (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) : Id FullFloat :=
+  pure (binary_round_aux mode sx (mx : Int) ex lx)
+
+-- Coq: binary_round_aux_correct
+theorem binary_round_aux_correct (mode : RoundingMode)
+  (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) :
+  ⦃⌜True⌝⦄
+  binary_round_aux_correct_check mode x sx mx ex lx
+  ⦃⇓z => ⌜is_finite_FF z = true ∨
+              z = binary_overflow (prec:=prec) (emax:=emax) mode sx⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's binary_round_aux_correct via the BSN bridge.
+  exact sorry
