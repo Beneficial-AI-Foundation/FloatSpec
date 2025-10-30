@@ -558,6 +558,8 @@ def binary_sub (x y : Binary754 prec emax) : Binary754 prec emax := by
 def binary_mul (x y : Binary754 prec emax) : Binary754 prec emax := by
   sorry
 
+-- (reserved) Decomposition theorem (Coq: Bfrexp) will be added later
+
 def binary_div (x y : Binary754 prec emax) : Binary754 prec emax := by
   sorry
 
@@ -696,6 +698,29 @@ theorem Bnearbyint_correct (mode : RoundingMode) (x : Binary754 prec emax) :
   intro _
   -- Proof deferred; nearbyint rounds x according to the current format.
   exact sorry
+
+-- Exponent scaling (Coq: Bldexp)
+def binary_ldexp (mode : RoundingMode) (x : Binary754 prec emax) (e : Int) : Binary754 prec emax := by
+  -- Placeholder; semantics specified in the theorem below.
+  sorry
+
+noncomputable def Bldexp_correct_check (mode : RoundingMode)
+  (x : Binary754 prec emax) (e : Int) : Id ℝ :=
+  pure (FF2R 2 ((binary_ldexp (prec:=prec) (emax:=emax) mode x e).val))
+
+-- Coq: Bldexp_correct — scaling by 2^e then rounding to the target format
+theorem Bldexp_correct (mode : RoundingMode)
+  (x : Binary754 prec emax) (e : Int) :
+  ⦃⌜True⌝⦄
+  Bldexp_correct_check (prec:=prec) (emax:=emax) mode x e
+  ⦃⇓result => ⌜result =
+      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
+        (FF2R 2 x.val * (FloatSpec.Core.Raux.bpow 2 e).run)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's `Bldexp_correct`.
+  exact sorry
+
+-- (reserved) Unit in the last place (Coq: Bulp) will be added later
 
 -- Constant one (Coq: Bone)
 def binary_one : Binary754 prec emax :=

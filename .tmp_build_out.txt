@@ -11410,7 +11410,32 @@ Note: This linter can be disabled with `set_option linter.unusedVariables false`
 warning: FloatSpec/src/Compat.lean:120:79: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-⚠ [3009/3028] Replayed FloatSpec.src.Pff.Pff
+✖ [3009/3028] Running FloatSpec.src.IEEE754.Binary
+error: build cycle detected:
+  +FloatSpec.src.IEEE754.BinarySingleNaN:leanArts
+  +FloatSpec.src.IEEE754.BinarySingleNaN:exportInfo
+  +FloatSpec.src.IEEE754.Binary:importInfo
+  +FloatSpec.src.IEEE754.Binary:setup
+  +FloatSpec.src.IEEE754.Binary:leanArts
+  +FloatSpec.src.IEEE754.Binary:exportInfo
+  +FloatSpec.src.IEEE754.BinarySingleNaN:importInfo
+  +FloatSpec.src.IEEE754.BinarySingleNaN:setup
+  FloatSpec/FloatSpecLib:leanArts
+  FloatSpec/FloatSpecLib:default
+  +FloatSpec.src.IEEE754.BinarySingleNaN:leanArts
+✖ [3010/3028] Running FloatSpec.src.IEEE754.BinarySingleNaN
+error: FloatSpec/src/IEEE754/BinarySingleNaN.lean: bad import 'FloatSpec.src.IEEE754.Binary'
+✖ [3011/3028] Running FloatSpec.src.IEEE754.Bits
+error: FloatSpec/src/IEEE754/Bits.lean: bad import 'FloatSpec.src.IEEE754.Binary'
+✖ [3012/3028] Running FloatSpec.src.IEEE754.PrimFloat
+error: FloatSpec/src/IEEE754/PrimFloat.lean: bad import 'FloatSpec.src.IEEE754.Binary'
+error: FloatSpec/src/IEEE754/PrimFloat.lean: bad import 'FloatSpec.src.IEEE754.Bits'
+✖ [3013/3028] Running FloatSpec.src.IEEE754
+error: FloatSpec/src/IEEE754.lean: bad import 'FloatSpec.src.IEEE754.Binary'
+error: FloatSpec/src/IEEE754.lean: bad import 'FloatSpec.src.IEEE754.Bits'
+error: FloatSpec/src/IEEE754.lean: bad import 'FloatSpec.src.IEEE754.BinarySingleNaN'
+error: FloatSpec/src/IEEE754.lean: bad import 'FloatSpec.src.IEEE754.PrimFloat'
+⚠ [3014/3028] Replayed FloatSpec.src.Pff.Pff
 warning: FloatSpec/src/Pff/Pff.lean:15:4: missing doc string for public def nat_even
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -12281,7 +12306,7 @@ warning: FloatSpec/src/Pff/Pff.lean:914:60: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
 warning: FloatSpec/src/Pff/Pff.lean:917:8: declaration uses 'sorry'
-⚠ [3010/3028] Replayed FloatSpec.src.Pff.Pff2Flocq
+⚠ [3015/3028] Replayed FloatSpec.src.Pff.Pff2Flocq
 warning: FloatSpec/src/Pff/Pff2Flocq.lean:19:4: missing doc string for public def pff_to_float
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -12870,56 +12895,56 @@ warning: FloatSpec/src/Pff/Pff2Flocq.lean:215:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
 warning: FloatSpec/src/Pff/Pff2Flocq.lean:221:8: declaration uses 'sorry'
-⚠ [3011/3028] Replayed FloatSpec.src.Pff.Pff2FlocqAux
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:24:10: missing doc string for public structure Fbound
+⚠ [3016/3028] Replayed FloatSpec.src.Pff.Pff2FlocqAux
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:25:10: missing doc string for public structure Fbound
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:25:2: missing doc string for public field Fbound.vNum
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:26:2: missing doc string for public field Fbound.vNum
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:26:2: missing doc string for public field Fbound.dExp
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:27:2: missing doc string for public field Fbound.dExp
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:29:4: missing doc string for public def Bound
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:30:4: missing doc string for public def Bound
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:34:4: missing doc string for public def radix2
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:35:4: missing doc string for public def radix2
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:37:4: missing doc string for public def pGivesBound
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:38:4: missing doc string for public def pGivesBound
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:40:4: missing doc string for public def precisionNotZero
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:41:4: missing doc string for public def precisionNotZero
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:43:4: missing doc string for public def Fbounded
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:44:4: missing doc string for public def Fbounded
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:44:4: missing doc string for public def Fcanonic
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:45:4: missing doc string for public def Fcanonic
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:47:18: missing doc string for public def make_bound
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:48:18: missing doc string for public def make_bound
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:53:18: missing doc string for public def bsingle
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:54:18: missing doc string for public def bsingle
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:54:18: missing doc string for public def bdouble
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:55:18: missing doc string for public def bdouble
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:57:18: missing doc string for public def make_bound_Emin_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:58:18: missing doc string for public def make_bound_Emin_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:57:41: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:58:41: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:57:46: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:58:46: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:57:48: unused variable `E`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:58:48: unused variable `E`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:60:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:61:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`make_bound_Emin`
@@ -12927,7 +12952,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`make_bound_Emin`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:60:32: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:61:32: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`E ≤ 0`
@@ -12937,7 +12962,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`E ≤ 0`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:60:46: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:61:46: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`(dExp (make_bound beta p E)) = -E`
@@ -12947,20 +12972,20 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`(dExp (make_bound beta p E)) = -E`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:61:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:68:18: missing doc string for public def make_bound_p_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:62:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:69:18: missing doc string for public def make_bound_p_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:68:38: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:69:38: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:68:43: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:69:43: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:68:45: unused variable `E`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:69:45: unused variable `E`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:72:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`make_bound_p`
@@ -12968,14 +12993,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`make_bound_p`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:30: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:72:30: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`vNum`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`vNum`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:40: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:72:40: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`make_bound`
@@ -12983,7 +13008,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`make_bound`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:60: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:72:60: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Zpower_nat beta (Z.abs_nat p)`
@@ -12995,14 +13020,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Zpower_nat beta (Z.abs_nat p)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:72:19: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:73:19: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`vNum`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`vNum`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:72:42: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:73:42: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Int`
@@ -13010,7 +13035,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Int`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:72:53: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:73:53: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Z.abs_nat p`
@@ -13023,7 +13048,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Z.abs_nat p`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:73:3: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:74:3: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Int.toNat (Int.natAbs p)`
@@ -13035,11 +13060,11 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Int.toNat (Int.natAbs p)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:74:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:81:18: missing doc string for public def psGivesBound_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:75:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:82:18: missing doc string for public def psGivesBound_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:84:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:85:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`psGivesBound`
@@ -13047,11 +13072,11 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`psGivesBound`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:85:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:92:18: missing doc string for public def pdGivesBound_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:86:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:93:18: missing doc string for public def pdGivesBound_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:95:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:96:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`pdGivesBound`
@@ -13059,26 +13084,26 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`pdGivesBound`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:96:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:105:18: missing doc string for public def mk_from_generic
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:97:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:106:18: missing doc string for public def mk_from_generic
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:111:18: missing doc string for public def format_is_pff_format'_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:112:18: missing doc string for public def format_is_pff_format'_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:111:47: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:112:47: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:111:60: unused variable `b`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:112:60: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:111:73: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:112:73: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:111:83: unused variable `r`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:112:83: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:114:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:115:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`format_is_pff_format'`
@@ -13086,7 +13111,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`format_is_pff_format'`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:114:40: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:115:40: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`generic_format`
@@ -13094,8 +13119,8 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:115:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:121:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:116:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:122:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`format_is_pff_format`
@@ -13103,7 +13128,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`format_is_pff_format`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:121:39: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:122:39: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`generic_format`
@@ -13111,23 +13136,23 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:123:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:130:18: missing doc string for public def pff_format_is_format_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:124:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:131:18: missing doc string for public def pff_format_is_format_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:130:46: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:131:46: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:130:59: unused variable `b`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:131:59: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:130:72: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:131:72: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:130:82: unused variable `f`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:131:82: unused variable `f`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:134:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`pff_format_is_format`
@@ -13135,7 +13160,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`pff_format_is_format`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:39: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:134:39: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Fbounded b f`
@@ -13147,7 +13172,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fbounded b f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:62: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:134:62: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
@@ -13159,7 +13184,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:134:60: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:135:60: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`pff_to_R`
@@ -13167,14 +13192,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`pff_to_R`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:135:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:142:18: missing doc string for public def equiv_RNDs_aux_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:136:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:143:18: missing doc string for public def equiv_RNDs_aux_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:142:40: unused variable `z`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:143:40: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:145:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:146:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`equiv_RNDs_aux`
@@ -13182,7 +13207,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`equiv_RNDs_aux`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:145:31: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:146:31: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Z.even z = true`
@@ -13192,7 +13217,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Z.even z = true`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:145:54: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:146:54: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Even z`
@@ -13205,7 +13230,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Even z`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:146:13: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:147:13: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Even z`
@@ -13218,7 +13243,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Even z`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:146:55: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:147:55: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`∃ k, z = 2*k`
@@ -13228,22 +13253,22 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`∃ k, z = 2*k`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:147:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:153:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:148:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:154:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`pff_canonic_is_canonic`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`pff_canonic_is_canonic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:153:61: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:154:61: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`canonical`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`canonical`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:154:26: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:155:26: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`pff_to_flocq`
@@ -13251,20 +13276,20 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`pff_to_flocq`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:155:48: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:156:48: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:155:61: unused variable `b`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:156:61: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:155:74: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:156:74: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:155:84: unused variable `f`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:156:84: unused variable `f`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:158:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:164:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:159:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:165:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`format_is_pff_format_can`
@@ -13272,7 +13297,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`format_is_pff_format_can`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:164:43: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:165:43: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`generic_format`
@@ -13280,7 +13305,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`generic_format`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:165:31: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:166:31: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`format_is_pff_format'`
@@ -13288,50 +13313,50 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`format_is_pff_format'`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:167:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:176:4: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:176:4: missing doc string for public def pff_normalize
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:168:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:177:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:177:4: missing doc string for public def pff_normalize
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:179:4: missing doc string for public def pff_abs
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:180:4: missing doc string for public def pff_abs
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:182:4: missing doc string for public def pff_opp
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:183:4: missing doc string for public def pff_opp
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:186:4: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:186:4: missing doc string for public def pff_compare
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:187:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:187:4: missing doc string for public def pff_compare
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:189:4: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:189:4: missing doc string for public def pff_max
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:190:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:190:4: missing doc string for public def pff_max
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:192:4: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:192:4: missing doc string for public def pff_min
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:193:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:193:4: missing doc string for public def pff_min
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:196:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:200:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:204:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:218:6: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:222:6: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:229:4: missing doc string for public def pff_shift_exp
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:197:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:201:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:205:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:219:6: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:223:6: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:230:4: missing doc string for public def pff_shift_exp
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:232:4: missing doc string for public def pff_shift_mant
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:233:4: missing doc string for public def pff_shift_mant
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:236:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:241:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:249:46: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:237:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:242:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:250:46: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`_check`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`_check`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:250:56: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:251:56: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲a̲c̲t̲i̲c̲.̲G̲r̲i̲n̲d̲.̲s̲o̲r̲r̲y̲)̲}̲`sorry` (in `grind`)
@@ -13347,25 +13372,25 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`sorry`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:254:18: missing doc string for public def FloatFexp_gt_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:255:18: missing doc string for public def FloatFexp_gt_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:254:38: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:255:38: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:254:51: unused variable `b`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:255:51: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:254:64: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:255:64: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:254:66: unused variable `e`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:255:66: unused variable `e`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:254:76: unused variable `f`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:255:76: unused variable `f`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:258:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`FloatFexp_gt`
@@ -13373,7 +13398,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`FloatFexp_gt`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:29: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:258:29: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`f`
@@ -13381,7 +13406,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:48: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:258:48: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`(beta : ℝ)^(e+p) ≤ |FtoR f|`
@@ -13391,7 +13416,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`(beta : ℝ)^(e+p) ≤ |FtoR f|`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:258:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:259:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`e < Fexp f`
@@ -13401,7 +13426,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`e < Fexp f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:258:35: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:259:35: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`pff_to_R`
@@ -13409,21 +13434,21 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`pff_to_R`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:258:50: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:259:50: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`FtoR`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`FtoR`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:258:65: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:259:65: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`exponent`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`exponent`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:259:13: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:260:13: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`PffFloat`
@@ -13431,30 +13456,30 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`PffFloat`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:259:28: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:260:28: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`Fexp`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fexp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:260:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:267:18: missing doc string for public def CanonicGeNormal_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:261:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:268:18: missing doc string for public def CanonicGeNormal_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:267:41: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:268:41: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:267:54: unused variable `b`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:268:54: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:267:67: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:268:67: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:267:77: unused variable `f`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:268:77: unused variable `f`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:271:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`CanonicGeNormal`
@@ -13462,7 +13487,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`CanonicGeNormal`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:32: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:271:32: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`f`
@@ -13470,7 +13495,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:53: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:271:53: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`β^(-dExp b + p - 1) ≤ |FtoR f|`
@@ -13480,7 +13505,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`β^(-dExp b + p - 1) ≤ |FtoR f|`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:271:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:272:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`f`
@@ -13488,7 +13513,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:271:73: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:272:73: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`True`
@@ -13496,7 +13521,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`True`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:272:30: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:273:30: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Fbounded`
@@ -13504,7 +13529,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fbounded`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:272:41: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:273:41: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Fcanonic`
@@ -13512,23 +13537,23 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fcanonic`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:273:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:280:18: missing doc string for public def Fulp_ulp_aux_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:274:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:281:18: missing doc string for public def Fulp_ulp_aux_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:280:38: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:281:38: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:280:51: unused variable `b`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:281:51: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:280:64: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:281:64: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:280:74: unused variable `f`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:281:74: unused variable `f`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:284:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Fulp_ulp_aux`
@@ -13536,7 +13561,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fulp_ulp_aux`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:40: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:284:40: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`f`
@@ -13544,14 +13569,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`f`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:45: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:284:45: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`Fulp`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fulp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:59: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:284:59: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`ulp`
@@ -13559,7 +13584,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ulp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:68: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:284:68: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`(FLT_exp (-dExp b) p)`
@@ -13573,14 +13598,14 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`(FLT_exp (-dExp b) p)`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:284:15: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:285:15: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲g̲i̲v̲e̲n̲}̲`Fulp`
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fulp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:284:42: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:285:42: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`ulp`
@@ -13588,23 +13613,23 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ulp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:285:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:291:18: missing doc string for public def Fulp_ulp_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:286:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:292:18: missing doc string for public def Fulp_ulp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:291:34: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:292:34: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:291:47: unused variable `b`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:292:47: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:291:60: unused variable `p`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:292:60: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:291:70: unused variable `f`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:292:70: unused variable `f`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:295:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Fulp_ulp`
@@ -13612,7 +13637,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fulp_ulp`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:30: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:295:30: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Fulp_ulp_aux`
@@ -13620,7 +13645,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fulp_ulp_aux`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:54: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:295:54: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`Fbounded`
@@ -13628,22 +13653,24 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`Fbounded`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:295:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:302:18: missing doc string for public def round_NE_is_pff_round_b32_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:296:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:303:18: missing doc string for public def round_NE_is_pff_round_b32_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:302:51: unused variable `r`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:303:51: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:305:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:311:18: missing doc string for public def round_NE_is_pff_round_b64_check
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:306:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:312:18: missing doc string for public def round_NE_is_pff_round_b64_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:311:51: unused variable `r`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:312:51: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:314:8: declaration uses 'sorry'
-⚠ [3013/3028] Replayed FloatSpec.src.Core.FTZ
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:315:8: declaration uses 'sorry'
+✖ [3018/3028] Running FloatSpec
+error: FloatSpec.lean: bad import 'FloatSpec.src.IEEE754'
+⚠ [3019/3028] Replayed FloatSpec.src.Core.FTZ
 warning: FloatSpec/src/Core/FTZ.lean:37:64: Code element could be more specific.
 
 Hint: Insert a role to document it:
@@ -13830,7 +13857,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`β^emin`
     to mark the code as literal text and disable suggestions
-⚠ [3014/3028] Replayed FloatSpec.src.Prop.Relative
+⚠ [3020/3028] Replayed FloatSpec.src.Prop.Relative
 warning: FloatSpec/src/Prop/Relative.lean:19:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Relative.lean:26:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Relative.lean:33:6: declaration uses 'sorry'
@@ -13877,7 +13904,7 @@ warning: FloatSpec/src/Prop/Relative.lean:336:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Relative.lean:344:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Relative.lean:354:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Relative.lean:365:8: declaration uses 'sorry'
-⚠ [3015/3028] Replayed FloatSpec.src.Prop.Plus_error
+⚠ [3021/3028] Replayed FloatSpec.src.Prop.Plus_error
 warning: FloatSpec/src/Prop/Plus_error.lean:20:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Plus_error.lean:29:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Plus_error.lean:36:8: declaration uses 'sorry'
@@ -13896,7 +13923,7 @@ warning: FloatSpec/src/Prop/Plus_error.lean:141:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Plus_error.lean:152:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Plus_error.lean:164:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Plus_error.lean:170:6: declaration uses 'sorry'
-⚠ [3016/3028] Replayed FloatSpec.src.Prop.Double_rounding
+⚠ [3022/3028] Replayed FloatSpec.src.Prop.Double_rounding
 warning: FloatSpec/src/Prop/Double_rounding.lean:17:18: missing doc string for public def midp
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -15965,7 +15992,7 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`2 * prec + 1 ≤ prec'`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Prop/Double_rounding.lean:969:8: declaration uses 'sorry'
-⚠ [3017/3028] Replayed FloatSpec.src.Prop.Round_odd
+⚠ [3023/3028] Replayed FloatSpec.src.Prop.Round_odd
 warning: FloatSpec/src/Prop/Round_odd.lean:24:0: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Round_odd.lean:26:7: Code element could be more specific.
 
@@ -16076,7 +16103,7 @@ warning: FloatSpec/src/Prop/Round_odd.lean:53:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Round_odd.lean:60:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Round_odd.lean:66:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Round_odd.lean:76:8: declaration uses 'sorry'
-⚠ [3018/3028] Replayed FloatSpec.src.Prop.Mult_error
+⚠ [3024/3028] Replayed FloatSpec.src.Prop.Mult_error
 warning: FloatSpec/src/Prop/Mult_error.lean:23:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Mult_error.lean:32:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Mult_error.lean:38:6: declaration uses 'sorry'
@@ -16085,12 +16112,12 @@ warning: FloatSpec/src/Prop/Mult_error.lean:56:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Mult_error.lean:61:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Mult_error.lean:70:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Mult_error.lean:77:6: declaration uses 'sorry'
-⚠ [3019/3028] Replayed FloatSpec.src.Prop.Sterbenz
+⚠ [3025/3028] Replayed FloatSpec.src.Prop.Sterbenz
 warning: FloatSpec/src/Prop/Sterbenz.lean:16:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Sterbenz.lean:23:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Sterbenz.lean:30:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Sterbenz.lean:37:8: declaration uses 'sorry'
-⚠ [3020/3028] Replayed FloatSpec.src.Prop.Div_sqrt_error
+⚠ [3026/3028] Replayed FloatSpec.src.Prop.Div_sqrt_error
 warning: FloatSpec/src/Prop/Div_sqrt_error.lean:19:6: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Div_sqrt_error.lean:31:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Div_sqrt_error.lean:37:8: declaration uses 'sorry'
@@ -16165,7 +16192,7 @@ Hint: Insert a role to document it:
 warning: FloatSpec/src/Prop/Div_sqrt_error.lean:174:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Div_sqrt_error.lean:186:8: declaration uses 'sorry'
 warning: FloatSpec/src/Prop/Div_sqrt_error.lean:193:8: declaration uses 'sorry'
-⚠ [3021/3028] Replayed FloatSpec.src.Pff.Nat2Z_8_12
+⚠ [3027/3028] Replayed FloatSpec.src.Pff.Nat2Z_8_12
 warning: FloatSpec/src/Pff/Nat2Z_8_12.lean:12:22: Code element could be more specific.
 
 Hint: Insert a role to document it:
@@ -16205,839 +16232,10 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Nat2Z_8_12.lean:21:8: declaration uses 'sorry'
-⚠ [3022/3028] Built FloatSpec.src.IEEE754.Binary (4.6s)
-warning: FloatSpec/src/IEEE754/Binary.lean:15:4: missing doc string for public def bnot
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:18:10: missing doc string for public inductive FullFloat
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:19:4: missing doc string for public constructor FullFloat.F754_zero
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:20:4: missing doc string for public constructor FullFloat.F754_infinity
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:21:4: missing doc string for public constructor FullFloat.F754_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:22:4: missing doc string for public constructor FullFloat.F754_finite
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:25:10: missing doc string for public inductive StandardFloat
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:26:4: missing doc string for public constructor StandardFloat.S754_zero
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:27:4: missing doc string for public constructor StandardFloat.S754_infinity
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:28:4: missing doc string for public constructor StandardFloat.S754_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:29:4: missing doc string for public constructor StandardFloat.S754_finite
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:32:4: missing doc string for public def FF2SF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:40:18: missing doc string for public def FF2R
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:47:18: missing doc string for public def SF2R
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:54:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:59:4: missing doc string for public def SF2FF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:67:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:72:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:77:4: missing doc string for public def is_nan_FF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:83:4: missing doc string for public def is_nan_SF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:89:4: missing doc string for public def sign_FF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:97:4: missing doc string for public def is_finite_FF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:104:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:109:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:114:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:120:4: missing doc string for public def build_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:124:4: missing doc string for public def is_nan_build_nan_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:137:18: missing doc string for public def B2R_build_nan_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:151:4: missing doc string for public def is_finite_build_nan_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:163:4: missing doc string for public def get_nan_pl
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:171:4: missing doc string for public def build_nan_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:174:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:184:4: missing doc string for public def erase
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:186:4: missing doc string for public def erase_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:198:4: missing doc string for public def Bopp
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:205:4: missing doc string for public def Bopp_involutive_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:208:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:217:18: missing doc string for public def B2R_Bopp_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:220:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:228:4: missing doc string for public def is_finite_Bopp_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:231:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:239:4: missing doc string for public def Bsign_Bopp_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:242:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:251:4: missing doc string for public def Babs
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:258:18: missing doc string for public def B2R_Babs_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:261:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:269:4: missing doc string for public def is_finite_Babs_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:272:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:280:4: missing doc string for public def Bsign_Babs_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:283:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:291:4: missing doc string for public def Babs_idempotent_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:294:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:302:4: missing doc string for public def Babs_Bopp_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:305:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:314:4: missing doc string for public def sign_SF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:322:4: missing doc string for public def is_finite_SF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:329:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:334:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:339:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:344:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:355:10: missing doc string for public structure Binary754
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:356:2: missing doc string for public field Binary754.val
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:357:2: missing doc string for public field Binary754.valid
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:362:4: missing doc string for public def B2FF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:363:4: missing doc string for public def FF2B
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:367:18: missing doc string for public def B2R
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:371:4: missing doc string for public def B2SF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:383:10: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
-
-Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
-warning: FloatSpec/src/IEEE754/Binary.lean:415:4: missing doc string for public def is_finite_B
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:423:4: missing doc string for public def is_nan_B
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:431:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:436:4: missing doc string for public def Bsign
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:454:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:462:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:476:4: missing doc string for public def valid_binary
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:476:18: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:476:23: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:476:36: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:480:4: missing doc string for public def valid_binary_B2FF_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:494:4: missing doc string for public def valid_binary_SF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:494:21: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:494:26: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:494:39: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:498:4: missing doc string for public def valid_binary_SF2FF_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:502:3: unused variable `hnotnan`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:512:4: missing doc string for public def FF2B_B2FF_valid_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:525:4: missing doc string for public def match_FF2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:551:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:551:4: missing doc string for public def binary_add
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:554:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:554:4: missing doc string for public def binary_sub
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:557:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:557:4: missing doc string for public def binary_mul
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:560:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:560:4: missing doc string for public def binary_div
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:563:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:563:4: missing doc string for public def binary_sqrt
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:567:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:567:4: missing doc string for public def binary_fma
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:572:10: missing doc string for public inductive RoundingMode
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:573:4: missing doc string for public constructor RoundingMode.RNE
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:574:4: missing doc string for public constructor RoundingMode.RNA
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:575:4: missing doc string for public constructor RoundingMode.RTP
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:576:4: missing doc string for public constructor RoundingMode.RTN
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:577:4: missing doc string for public constructor RoundingMode.RTZ
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:580:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:580:4: missing doc string for public def rnd_of_mode
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:584:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:590:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:597:18: missing doc string for public def Bfma_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:597:38: unused variable `mode`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:601:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:614:18: missing doc string for public def Bminus_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:614:40: unused variable `mode`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:618:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:629:18: missing doc string for public def Bdiv_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:629:38: unused variable `mode`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:633:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:644:18: missing doc string for public def Bsqrt_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:644:39: unused variable `mode`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:648:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:659:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:659:4: missing doc string for public def binary_nearbyint
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:663:18: missing doc string for public def Bnearbyint_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:667:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:678:4: missing doc string for public def binary_one
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:683:18: missing doc string for public def Bone_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:686:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:695:4: missing doc string for public def is_finite_Bone_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:698:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:707:4: missing doc string for public def Bsign_Bone_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:710:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:719:18: missing doc string for public def binary_trunc
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:724:18: missing doc string for public def Btrunc_correct_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:737:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:748:4: missing doc string for public def Binary16
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:749:4: missing doc string for public def Binary32
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:750:4: missing doc string for public def Binary64
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:751:4: missing doc string for public def Binary128
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:759:4: missing doc string for public def canonical_mantissa
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:759:24: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:759:29: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:759:42: unused variable `m`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:759:52: unused variable `e`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:763:4: missing doc string for public def canonical_canonical_mantissa_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:763:40: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:763:45: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:764:3: unused variable `sx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:764:15: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:764:26: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:767:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:780:4: missing doc string for public def generic_format_B2R_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:780:48: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:783:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:795:4: missing doc string for public def FLT_format_B2R_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:795:44: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:798:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:811:18: missing doc string for public def Bcompare_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:816:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:830:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:845:4: missing doc string for public def bounded
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:845:13: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:845:18: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:845:31: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:845:42: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:849:4: missing doc string for public def bounded_le_emax_minus_prec_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:849:38: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:849:43: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:849:56: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:849:67: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:852:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:866:4: missing doc string for public def bounded_lt_emax_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:866:27: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:866:32: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:866:45: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:866:56: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:869:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:882:4: missing doc string for public def bounded_ge_emin_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:882:27: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:882:32: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:882:45: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:882:56: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:885:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:900:4: missing doc string for public def abs_B2R_le_emax_minus_prec_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:901:3: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:904:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:917:4: missing doc string for public def abs_B2R_lt_emax_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:918:3: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:921:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:935:4: missing doc string for public def is_finite_strict_Bin
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:941:4: missing doc string for public def abs_B2R_ge_emin_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:942:3: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:945:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Binary.lean:961:4: missing doc string for public def bounded_canonical_lt_emax_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Binary.lean:961:37: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:961:42: unused variable `emax`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:962:3: unused variable `mx`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:962:14: unused variable `ex`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/Binary.lean:965:8: declaration uses 'sorry'
-⚠ [3023/3028] Built FloatSpec.src.IEEE754.Bits (3.0s)
-warning: FloatSpec/src/IEEE754/Bits.lean:17:4: missing doc string for public def join_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:23:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:29:4: missing doc string for public def split_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:36:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:42:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:55:4: missing doc string for public def mant_width
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:58:4: missing doc string for public def exp_width
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:61:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:61:4: missing doc string for public def binary_to_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:65:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:65:4: missing doc string for public def bits_to_binary
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:69:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:73:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:81:4: missing doc string for public def binary_float_of_bits_aux
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:86:0: automatically included section variable(s) unused in theorem `binary_float_of_bits_aux_correct`:
-  [Prec_gt_0 prec]
-  [Prec_lt_emax prec emax]
-consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
-  omit [Prec_gt_0 prec] [Prec_lt_emax prec emax] in theorem ...
-
-Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
-warning: FloatSpec/src/IEEE754/Bits.lean:95:4: missing doc string for public def extract_sign
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:98:4: missing doc string for public def extract_exponent
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:101:4: missing doc string for public def extract_mantissa
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:105:4: missing doc string for public def zero_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:108:4: missing doc string for public def infinity_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:111:4: missing doc string for public def nan_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:115:4: missing doc string for public def is_zero_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:118:4: missing doc string for public def is_infinity_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:122:4: missing doc string for public def is_nan_bits
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/Bits.lean:129:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:141:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/Bits.lean:167:8: declaration uses 'sorry'
-⚠ [3024/3028] Built FloatSpec.src.IEEE754.BinarySingleNaN (4.0s)
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:19:10: missing doc string for public inductive B754
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:20:4: missing doc string for public constructor B754.B754_zero
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:21:4: missing doc string for public constructor B754.B754_infinity
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:22:4: missing doc string for public constructor B754.B754_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:23:4: missing doc string for public constructor B754.B754_finite
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:26:18: missing doc string for public def B754_to_R
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:33:4: missing doc string for public def B2BSN
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:41:4: missing doc string for public def B2SF_BSN
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:49:4: missing doc string for public def SF2B
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:57:4: missing doc string for public def match_SF2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:83:4: missing doc string for public def B2SF_SF2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:86:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:95:4: missing doc string for public def BSN_is_finite
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:101:4: missing doc string for public def BSN_is_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:106:4: missing doc string for public def BSN_sign
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:114:4: missing doc string for public def is_finite_strict_SF
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:120:4: missing doc string for public def B2SF_B2BSN_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:123:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:131:4: missing doc string for public def is_finite_B2BSN_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:134:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:142:4: missing doc string for public def BSN_is_finite_strict
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:147:4: missing doc string for public def is_finite_strict_B
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:153:4: missing doc string for public def is_finite_strict_B2BSN_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:156:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:165:4: missing doc string for public def is_nan_B2BSN_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:168:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:176:4: missing doc string for public def Bsign_B2BSN_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:179:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:187:18: missing doc string for public def B2R_B2BSN_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:190:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:199:4: missing doc string for public def is_finite_strict_B2R_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:202:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:213:18: missing doc string for public def SF2R_B2SF_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:216:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:226:4: missing doc string for public def SF2B_B2SF_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:229:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:238:4: missing doc string for public def valid_binary_B2SF_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:251:4: missing doc string for public def SF2B_B2SF_valid_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:254:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:265:4: missing doc string for public def is_finite_strict_SF2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:268:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:277:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:285:4: missing doc string for public def BSN2B
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:294:4: missing doc string for public def BSN2B'
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:302:4: missing doc string for public def B2BSN_BSN2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:314:4: missing doc string for public def Bsign_BSN2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:317:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:328:4: missing doc string for public def lift
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:335:4: missing doc string for public def B2BSN_lift_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:342:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:353:4: missing doc string for public def B2BSN_BSN2B'_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:367:18: missing doc string for public def B2R_BSN2B'_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:378:20: This simp argument is unused:
-  B754_to_R
-
-Hint: Omit it from the simp argument list.
-  simp [B7̵5̵4̵_̵t̵o̵_̵R̵,̵ ̵B̵SN_is_nan] at nx
-
-Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:381:4: missing doc string for public def B2FF_BSN2B'_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:395:4: missing doc string for public def Bsign_BSN2B'_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:406:32: This simp argument is unused:
-  BSN_sign
-
-Hint: Omit it from the simp argument list.
-  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵s̵i̵g̵n̵] at nx
-
-Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:409:4: missing doc string for public def is_finite_BSN2B'_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:420:32: This simp argument is unused:
-  BSN_is_finite
-
-Hint: Omit it from the simp argument list.
-  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵i̵s̵_̵f̵i̵n̵i̵t̵e̵] at nx
-
-Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:423:4: missing doc string for public def is_nan_BSN2B'_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:437:18: missing doc string for public def B2R_BSN2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:440:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:449:18: missing doc string for public def B2R_SF2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:452:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:461:4: missing doc string for public def is_finite_BSN2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:464:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:473:4: missing doc string for public def is_nan_BSN2B_check
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:476:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:485:4: missing doc string for public def validB754
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:487:21: unused variable `s`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:494:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:494:4: missing doc string for public def B754_plus
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:497:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:497:4: missing doc string for public def B754_mult
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:500:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:500:4: missing doc string for public def B754_div
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:503:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:503:4: missing doc string for public def B754_sqrt
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:507:4: missing doc string for public def B754_is_finite
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:513:4: missing doc string for public def B754_is_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:518:4: missing doc string for public def B754_sign
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:526:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:536:8: declaration uses 'sorry'
-⚠ [3025/3028] Built FloatSpec.src.IEEE754.PrimFloat (3.0s)
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:12:7: missing doc string for public abbrev PrimFloat
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:15:4: missing doc string for public def prim_add
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:16:4: missing doc string for public def prim_sub
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:17:4: missing doc string for public def prim_mul
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:18:18: missing doc string for public def prim_div
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:19:18: missing doc string for public def prim_sqrt
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:22:18: missing doc string for public def prim_eq
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:23:18: missing doc string for public def prim_lt
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:24:18: missing doc string for public def prim_le
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:27:18: missing doc string for public def prim_is_zero
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:28:4: missing doc string for public def prim_is_finite
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:29:4: missing doc string for public def prim_is_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:30:4: missing doc string for public def prim_is_infinite
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:33:4: missing doc string for public def prim_zero
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:34:4: missing doc string for public def prim_infinity
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:35:4: missing doc string for public def prim_nan
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:38:4: missing doc string for public def prim_neg
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:39:4: missing doc string for public def prim_abs
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:40:18: missing doc string for public def prim_sign
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:43:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:43:4: missing doc string for public def binary_to_prim
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:47:4: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:47:4: missing doc string for public def prim_to_binary
-
-Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:52:8: declaration uses 'sorry'
-warning: FloatSpec/src/IEEE754/PrimFloat.lean:58:8: declaration uses 'sorry'
-✔ [3026/3028] Built FloatSpec.src.IEEE754 (3.9s)
-✔ [3027/3028] Built FloatSpec (3.2s)
-Build completed successfully (3028 jobs).
+Some required targets logged failures:
+- FloatSpec.src.IEEE754.Binary
+- FloatSpec.src.IEEE754.BinarySingleNaN
+- FloatSpec.src.IEEE754.Bits
+- FloatSpec.src.IEEE754.PrimFloat
+- FloatSpec.src.IEEE754
+- FloatSpec

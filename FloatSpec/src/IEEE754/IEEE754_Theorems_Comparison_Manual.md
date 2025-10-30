@@ -242,9 +242,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `is_finite_Bone` → `is_finite_Bone [FloatSpec/src/IEEE754/Binary.lean:698]` (spec-variant, hoare)
  - `Bsign_Bone` → `Bsign_Bone [FloatSpec/src/IEEE754/Binary.lean:710]` (spec-variant, hoare)
 - `B2BSN_lift` → (no Lean counterpart)
-- `Bldexp_correct` → (no Lean counterpart)
+- `Bldexp_correct` → `Bldexp_correct [FloatSpec/src/IEEE754/Binary.lean:712]` (spec-variant, hoare)
 - `Bfrexp_correct` → (no Lean counterpart)
-- `Bulp_correct` → (no Lean counterpart)
+- `Bulp_correct` → `Bulp_correct [FloatSpec/src/IEEE754/Binary.lean:732]` (spec-variant, hoare)
 - `Bsucc_correct` → (no Lean counterpart)
 - `Bpred_correct` → (no Lean counterpart)
 
