@@ -53,15 +53,19 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - lemma: `pff_mantissa_bounds` (Pff2FlocqAux.lean:61)
 - theorem: `pff_shift_exp_correct` (Pff2FlocqAux.lean:75)
 - theorem: `pff_shift_mant_correct` (Pff2FlocqAux.lean:80)
+ - lemma: `make_bound_Emin` (Pff2FlocqAux.lean:52)
+ - lemma: `make_bound_p` (Pff2FlocqAux.lean:65)
+ - lemma: `psGivesBound` (Pff2FlocqAux.lean:76)
+ - lemma: `pdGivesBound` (Pff2FlocqAux.lean:87)
 
 ### Mapping (Coq → Lean)
 - `RND_Closest_canonic` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)
 - `RND_Closest_correct` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)
-- `make_bound_Emin` → (no Lean counterpart)
-- `make_bound_p` → (no Lean counterpart)
+ - `make_bound_Emin` → `make_bound_Emin [FloatSpec/src/Pff/Pff2FlocqAux.lean:52]`
+ - `make_bound_p` → `make_bound_p [FloatSpec/src/Pff/Pff2FlocqAux.lean:65]`
 - `FtoR_F2R` → `pff_flocq_equiv` (Pff2Flocq.lean:25) (content-equivalent)
-- `psGivesBound` → (no Lean counterpart)
-- `pdGivesBound` → (no Lean counterpart)
+ - `psGivesBound` → `psGivesBound [FloatSpec/src/Pff/Pff2FlocqAux.lean:76]`
+ - `pdGivesBound` → `pdGivesBound [FloatSpec/src/Pff/Pff2FlocqAux.lean:87]`
 - `pff_format_is_format` → (no Lean counterpart)
 - `format_is_pff_format'` → (no Lean counterpart)
 - `format_is_pff_format` → (no Lean counterpart)

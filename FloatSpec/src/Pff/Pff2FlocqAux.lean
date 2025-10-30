@@ -34,6 +34,16 @@ noncomputable def Zpower_nat (beta : Int) (n : Nat) : Int := beta ^ n
 -- A canonical radix-2 constant
 def radix2 : Int := 2
 
+-- Predicate mirroring Coq hypotheses in this file
+def pGivesBound (beta : Int) (b : Fbound) (p : Int) : Prop :=
+  b.vNum = Zpower_nat beta (Int.toNat (Int.natAbs p))
+
+def precisionNotZero (p : Int) : Prop := 1 < p
+
+-- Placeholder predicates (Coq: Fbounded/Fcanonic)
+def Fbounded (_b : Fbound) (_f : PffFloat) : Prop := True
+def Fcanonic (_beta : Int) (_b : Fbound) (_f : PffFloat) : Prop := True
+
 -- Minimal `make_bound` used in Coq proofs
 noncomputable def make_bound (beta p E : Int) : Fbound :=
   let v := Zpower_nat beta (Int.toNat (Int.natAbs p))
@@ -53,6 +63,53 @@ theorem make_bound_Emin (beta p E : Int) :
     ⦃⌜E ≤ 0⌝⦄
     make_bound_Emin_check beta p E
     ⦃⇓_ => ⌜(make_bound beta p E).dExp = -E⌝⦄ := by
+  sorry
+
+-- Second missing theorem: make_bound_p
+noncomputable def make_bound_p_check (beta p E : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `make_bound_p` — the `vNum` of `make_bound` equals `Zpower_nat beta (Z.abs_nat p)`.
+In this Lean port, `vNum` is stored as an `Int`, and `Z.abs_nat p` corresponds
+to `Int.toNat (Int.natAbs p)`. -/
+theorem make_bound_p (beta p E : Int) :
+    ⦃⌜True⌝⦄
+    make_bound_p_check beta p E
+    ⦃⇓_ => ⌜(make_bound beta p E).vNum = Zpower_nat beta (Int.toNat (Int.natAbs p))⌝⦄ := by
+  sorry
+
+-- Third missing theorem: psGivesBound
+noncomputable def psGivesBound_check : Id Unit :=
+  pure ()
+
+/-- Coq: `psGivesBound` — the bound for single precision gives 2^24. -/
+theorem psGivesBound :
+    ⦃⌜True⌝⦄
+    psGivesBound_check
+    ⦃⇓_ => ⌜bsingle.vNum = Zpower_nat 2 24⌝⦄ := by
+  sorry
+
+-- Fourth missing theorem: pdGivesBound
+noncomputable def pdGivesBound_check : Id Unit :=
+  pure ()
+
+/-- Coq: `pdGivesBound` — the bound for double precision gives 2^53. -/
+theorem pdGivesBound :
+    ⦃⌜True⌝⦄
+    pdGivesBound_check
+    ⦃⇓_ => ⌜bdouble.vNum = Zpower_nat 2 53⌝⦄ := by
+  sorry
+
+-- Next missing theorem: pff_format_is_format
+noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
+
+/-- Coq: `pff_format_is_format` — from `Fbounded b f`, obtain `generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`.
+We phrase it using the project's hoare triple style and the `pff_to_R` bridge. -/
+theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+    ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ Fbounded b f⌝⦄
+    pff_format_is_format_check beta b p f
+    ⦃⇓_ => ⌜generic_format beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
   sorry
 
 variable (beta : Int)
