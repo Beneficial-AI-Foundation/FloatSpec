@@ -66,12 +66,12 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `FtoR_F2R` → `pff_flocq_equiv` (Pff2Flocq.lean:25) (content-equivalent)
  - `psGivesBound` → `psGivesBound [FloatSpec/src/Pff/Pff2FlocqAux.lean:76]`
  - `pdGivesBound` → `pdGivesBound [FloatSpec/src/Pff/Pff2FlocqAux.lean:87]`
-- `pff_format_is_format` → (no Lean counterpart)
-- `format_is_pff_format'` → (no Lean counterpart)
-- `format_is_pff_format` → (no Lean counterpart)
-- `format_is_pff_format_can` → (no Lean counterpart)
-- `equiv_RNDs_aux` → (no Lean counterpart)
-- `pff_canonic_is_canonic` → (no Lean counterpart)
+ -- `pff_format_is_format` → `pff_format_is_format [FloatSpec/src/Pff/Pff2FlocqAux.lean:133]`
+ -- `format_is_pff_format'` → `format_is_pff_format' [FloatSpec/src/Pff/Pff2FlocqAux.lean:115]`
+ -- `format_is_pff_format` → `format_is_pff_format [FloatSpec/src/Pff/Pff2FlocqAux.lean:121]`
+ -- `format_is_pff_format_can` → `format_is_pff_format_can [FloatSpec/src/Pff/Pff2FlocqAux.lean:145]`
+ - `equiv_RNDs_aux` → `equiv_RNDs_aux [FloatSpec/src/Pff/Pff2FlocqAux.lean:151]`
+ - `pff_canonic_is_canonic` → `pff_canonic_is_canonic [FloatSpec/src/Pff/Pff2FlocqAux.lean:166]`
 - `pff_round_NE_is_round` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)
 - `round_NE_is_pff_round` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)
 - `pff_round_UP_is_round` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)

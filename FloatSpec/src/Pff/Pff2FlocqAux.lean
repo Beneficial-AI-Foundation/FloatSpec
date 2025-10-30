@@ -119,6 +119,14 @@ theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⇓_ => ⌜Fbounded b (mk_from_generic beta b p r)⌝⦄ := by
   sorry
 
+/-- Coq: `format_is_pff_format` — from `generic_format` derive the existence of a bounded Pff float
+    whose real value is the given real. This is the existential variant used by later lemmas. -/
+theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
+    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
+    format_is_pff_format'_check beta b p r
+    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ Fbounded b f⌝⦄ := by
+  sorry
+
 -- Next missing theorem: pff_format_is_format
 noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
@@ -129,6 +137,38 @@ theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) 
     ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ Fbounded b f⌝⦄
     pff_format_is_format_check beta b p f
     ⦃⇓_ => ⌜generic_format beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
+  sorry
+
+-- Bridge for Coq's boolean evenness to existential parity on integers
+noncomputable def equiv_RNDs_aux_check (z : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `equiv_RNDs_aux` — if `Z.even z = true` then `Even z`.
+    We model `Even z` as existence of an integer half: `∃ k, z = 2*k`. -/
+theorem equiv_RNDs_aux (z : Int) :
+    ⦃⌜Int.emod z 2 = 0⌝⦄
+    equiv_RNDs_aux_check z
+    ⦃⇓_ => ⌜∃ k : Int, z = 2 * k⌝⦄ := by
+  sorry
+
+/-- Coq: `pff_canonic_is_canonic` — canonical in Pff implies `canonical` in Flocq sense
+    for the corresponding `pff_to_flocq` float, assuming nonzero value. -/
+noncomputable def pff_canonic_is_canonic_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
+
+theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+    ⦃⌜Fcanonic beta b f ∧ pff_to_R beta f ≠ 0⌝⦄
+    pff_canonic_is_canonic_check beta b p f
+    ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp (-b.dExp) p) (pff_to_flocq beta f)⌝⦄ := by
+  sorry
+
+/-- Coq: `format_is_pff_format_can` — from `generic_format`, produce a canonical Pff float.
+    We use the same checker as `format_is_pff_format'` and return existence of a
+    canonical witness with the right real value. -/
+theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
+    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
+    format_is_pff_format'_check beta b p r
+    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ Fcanonic beta b f⌝⦄ := by
   sorry
 
 variable (beta : Int)
