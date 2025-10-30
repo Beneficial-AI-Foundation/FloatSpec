@@ -919,7 +919,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `min_or` → (no Lean counterpart)
 - `min_or` → `min_or` (Pff.lean:68)
 - `convert_not_O` → (no Lean counterpart)
-- `inj_abs` → (no Lean counterpart)
+- `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:287]`
 - `inject_nat_convert` → (no Lean counterpart)
 - `ZleLe` → `ZleLe [FloatSpec/src/Pff/Pff.lean:104]`
 - `Zlt_Zopp` → `Zlt_Zopp [FloatSpec/src/Pff/Pff.lean:112]`
@@ -944,18 +944,18 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `lt_Zlt_inv` → `lt_Zlt_inv [FloatSpec/src/Pff/Pff.lean:266]`
 - `NconvertO` → (no Lean counterpart)
 - `absolu_lt_nz` → (no Lean counterpart)
-- `Rledouble` → (no Lean counterpart)
-- `Rltdouble` → (no Lean counterpart)
-- `Rle_Rinv` → (no Lean counterpart)
+- `Rledouble` → `Rledouble [FloatSpec/src/Pff/Pff.lean:73]`
+- `Rltdouble` → `Rltdouble [FloatSpec/src/Pff/Pff.lean:83]`
+- `Rle_Rinv` → `Rle_Rinv [FloatSpec/src/Pff/Pff.lean:93]`
 - `Zabs_eq_opp` → (no Lean counterpart)
 - `Zabs_eq_opp` → `Zabs_eq_opp [FloatSpec/src/Pff/Pff.lean:287]`
-- `Zabs_Zs` → (no Lean counterpart)
+- `Zabs_Zs` → `Zabs_Zs [FloatSpec/src/Pff/Pff.lean:337]`
 - `Zle_Zpred` → (no Lean counterpart)
 - `Zle_Zpred` → `Zle_Zpred [FloatSpec/src/Pff/Pff.lean:286]`
-- `Zabs_Zopp` → (no Lean counterpart)
-- `Zle_Zabs` → (no Lean counterpart)
-- `Zlt_mult_simpl_l` → (no Lean counterpart)
-- `Z_eq_bool_correct` → (no Lean counterpart)
+- `Zabs_Zopp` → `Zabs_Zopp [FloatSpec/src/Pff/Pff.lean:443]`
+- `Zle_Zabs` → `Zle_Zabs [FloatSpec/src/Pff/Pff.lean:367]`
+- `Zlt_mult_simpl_l` → `Zlt_mult_simpl_l [FloatSpec/src/Pff/Pff.lean:421]`
+- `Z_eq_bool_correct` → `Z_eq_bool_correct [FloatSpec/src/Pff/Pff.lean:433]`
 - `Zle_Zpred_Zpred` → (no Lean counterpart)
 - `Zlt_Zabs_inv1` → (no Lean counterpart)
 - `Zle_Zabs_inv1` → (no Lean counterpart)

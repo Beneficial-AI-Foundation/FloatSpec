@@ -66,6 +66,36 @@ theorem pow_neg (r : ℝ) (z : Int) :
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
 
+-- Coq: `Rledouble` — if 0 ≤ r then r ≤ 2r
+noncomputable def Rledouble_check (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem Rledouble (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    Rledouble_check r
+    ⦃⇓_ => ⌜r ≤ 2 * r⌝⦄ := by
+  sorry
+
+-- Coq: `Rltdouble` — if 0 < r then r < 2r
+noncomputable def Rltdouble_check (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem Rltdouble (r : ℝ) :
+    ⦃⌜0 < r⌝⦄
+    Rltdouble_check r
+    ⦃⇓_ => ⌜r < 2 * r⌝⦄ := by
+  sorry
+
+-- Coq: `Rle_Rinv` — monotonicity of inverse on (0, ∞)
+noncomputable def Rle_Rinv_check (x y : ℝ) : Id Unit :=
+  pure ()
+
+theorem Rle_Rinv (x y : ℝ) :
+    ⦃⌜0 < x ∧ x ≤ y⌝⦄
+    Rle_Rinv_check x y
+    ⦃⇓_ => ⌜y⁻¹ ≤ x⁻¹⌝⦄ := by
+  sorry
+
 -- Discrete min disjunction (Coq: Pff.v `min_or`)
 theorem min_or (n m : Nat) :
   (Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n) := by
@@ -280,6 +310,16 @@ theorem Zle_abs (p : Int) :
     ⦃⇓_ => ⌜p ≤ Int.ofNat (Int.natAbs p)⌝⦄ := by
   sorry
 
+-- Coq: `inj_abs` — if 0 ≤ x then Z_of_nat (Z.abs_nat x) = x
+noncomputable def inj_abs_check (x : Int) : Id Unit :=
+  pure ()
+
+theorem inj_abs (x : Int) :
+    ⦃⌜0 ≤ x⌝⦄
+    inj_abs_check x
+    ⦃⇓_ => ⌜Int.ofNat (Int.natAbs x) = x⌝⦄ := by
+  sorry
+
 -- Coq: `Zabs_eq_opp` — if x ≤ 0 then |x| = -x
 noncomputable def Zabs_eq_opp_check (x : Int) : Id Unit :=
   pure ()
@@ -288,6 +328,16 @@ theorem Zabs_eq_opp (x : Int) :
     ⦃⌜x ≤ 0⌝⦄
     Zabs_eq_opp_check x
     ⦃⇓_ => ⌜|x| = -x⌝⦄ := by
+  sorry
+
+-- Coq: `Zabs_Zs` — |succ z| ≤ succ |z|
+noncomputable def Zabs_Zs_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zabs_Zs (z : Int) :
+    ⦃⌜True⌝⦄
+    Zabs_Zs_check z
+    ⦃⇓_ => ⌜|Int.succ z| ≤ Int.succ |z|⌝⦄ := by
   sorry
 
 -- Coq: `lt_Zlt_inv` — if Z_of_nat n < Z_of_nat m then n < m
@@ -308,6 +358,16 @@ theorem Zle_Zpred (x y : Int) :
     ⦃⌜x < y⌝⦄
     Zle_Zpred_check x y
     ⦃⇓_ => ⌜x ≤ Int.pred y⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zabs` — z ≤ |z|
+noncomputable def Zle_Zabs_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zabs (z : Int) :
+    ⦃⌜True⌝⦄
+    Zle_Zabs_check z
+    ⦃⇓_ => ⌜z ≤ |z|⌝⦄ := by
   sorry
 
 -- List operations used in Pff
@@ -352,4 +412,76 @@ inductive PffRounding where
 
 -- Convert Pff rounding to Flocq rounding
 def pff_to_flocq_rnd (mode : PffRounding) : ℝ → Int := by
+  sorry
+
+-- Coq: `Zlt_mult_simpl_l` — cancel positive multiplier on left for <
+noncomputable def Zlt_mult_simpl_l_check (a b c : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_mult_simpl_l (a b c : Int) :
+    ⦃⌜0 < c ∧ c * a < c * b⌝⦄
+    Zlt_mult_simpl_l_check a b c
+    ⦃⇓_ => ⌜a < b⌝⦄ := by
+  sorry
+
+-- Coq: `Z_eq_bool_correct` — boolean equality correctness for Int
+noncomputable def Z_eq_bool (p q : Int) : Bool := decide (p = q)
+
+noncomputable def Z_eq_bool_correct_check (p q : Int) : Id Unit :=
+  pure ()
+
+theorem Z_eq_bool_correct (p q : Int) :
+    ⦃⌜True⌝⦄
+    Z_eq_bool_correct_check p q
+    ⦃⇓_ => ⌜(if Z_eq_bool p q then p = q else p ≠ q)⌝⦄ := by
+  sorry
+
+-- Coq: `Zabs_Zopp` — | -z | = | z |
+noncomputable def Zabs_Zopp_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zabs_Zopp (z : Int) :
+    ⦃⌜True⌝⦄
+    Zabs_Zopp_check z
+    ⦃⇓_ => ⌜|-z| = |z|⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zpred_Zpred` — predecessor is monotone
+noncomputable def Zle_Zpred_Zpred_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zpred_Zpred (z1 z2 : Int) :
+    ⦃⌜z1 ≤ z2⌝⦄
+    Zle_Zpred_Zpred_check z1 z2
+    ⦃⇓_ => ⌜Int.pred z1 ≤ Int.pred z2⌝⦄ := by
+  sorry
+
+-- Coq: `Zlt_Zabs_inv1` — |z1| < z2 → -z2 < z1
+noncomputable def Zlt_Zabs_inv1_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_Zabs_inv1 (z1 z2 : Int) :
+    ⦃⌜|z1| < z2⌝⦄
+    Zlt_Zabs_inv1_check z1 z2
+    ⦃⇓_ => ⌜-z2 < z1⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zabs_inv1` — |z1| ≤ z2 → -z2 ≤ z1
+noncomputable def Zle_Zabs_inv1_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zabs_inv1 (z1 z2 : Int) :
+    ⦃⌜|z1| ≤ z2⌝⦄
+    Zle_Zabs_inv1_check z1 z2
+    ⦃⇓_ => ⌜-z2 ≤ z1⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_Zabs_inv2` — |z1| ≤ z2 → z1 ≤ z2
+noncomputable def Zle_Zabs_inv2_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_Zabs_inv2 (z1 z2 : Int) :
+    ⦃⌜|z1| ≤ z2⌝⦄
+    Zle_Zabs_inv2_check z1 z2
+    ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
   sorry
