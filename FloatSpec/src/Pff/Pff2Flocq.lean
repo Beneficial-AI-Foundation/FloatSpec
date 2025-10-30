@@ -75,9 +75,48 @@ noncomputable def round_N_opp_sym_check (emin prec : Int) (choice : Int → Bool
 /-- Coq: `round_N_opp_sym` — for any `choice` satisfying the usual symmetry,
     rounding of the negation equals the negation of rounding. We phrase the
     statement using the rounding operator from Compat/Core. -/
-theorem round_N_opp_sym (emin prec : Int) (choice : Int → Bool) (x : ℝ) :
+theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool) (x : ℝ) :
     ⦃⌜∀ t : Int, choice t = ! choice (-(t + 1))⌝⦄
     round_N_opp_sym_check emin prec choice x
     ⦃⇓_ => ⌜FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) () (-x)
             = - FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) () x⌝⦄ := by
+  sorry
+
+-- Coq: `Fast2Sum_correct` — error-free transformation for x+y when |y| ≤ |x|
+noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `Fast2Sum_correct` — if `x` and `y` are in format and `|y| ≤ |x|`,
+    then the two-sum algorithm reconstructs `x + y` exactly.
+    We state it using the rounding operator from `Calc.Round` and the
+    `generic_format` predicate from `Compat`. -/
+theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool)
+    (x y : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) x ∧ generic_format 2 (FLT_exp emin prec) y ∧ |y| ≤ |x|⌝⦄
+    Fast2Sum_correct_check emin prec choice x y
+    ⦃⇓_ =>
+      ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+        let a := round_flt (x + y)
+        let b := round_flt (y + round_flt (x - a))
+        a + b = x + y⌝⦄ := by
+  sorry
+
+-- Coq: `TwoSum_correct` — error-free transformation producing exact sum
+noncomputable def TwoSum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `TwoSum_correct` — for any `x, y` in format, the two-sum variant
+    with compensated steps satisfies `a + b = x + y` exactly. -/
+theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool)
+    (x y : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) x ∧ generic_format 2 (FLT_exp emin prec) y⌝⦄
+    TwoSum_correct_check emin prec choice x y
+    ⦃⇓_ =>
+      ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+        let a  := round_flt (x + y)
+        let x' := round_flt (a - x)
+        let dx := round_flt (x - round_flt (a - x'))
+        let dy := round_flt (y - x')
+        let b  := round_flt (dx + dy)
+        a + b = x + y⌝⦄ := by
   sorry

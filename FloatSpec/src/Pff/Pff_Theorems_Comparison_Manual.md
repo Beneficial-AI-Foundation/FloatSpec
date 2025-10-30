@@ -85,6 +85,12 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Fulp_ulp` → (no Lean counterpart)
 - `round_NE_is_pff_round_b32` → (no Lean counterpart)
 - `round_NE_is_pff_round_b64` → (no Lean counterpart)
+ - `FloatFexp_gt` → `FloatFexp_gt [FloatSpec/src/Pff/Pff2FlocqAux.lean:261]`
+ - `CanonicGeNormal` → `CanonicGeNormal [FloatSpec/src/Pff/Pff2FlocqAux.lean:274]`
+ - `Fulp_ulp_aux` → `Fulp_ulp_aux [FloatSpec/src/Pff/Pff2FlocqAux.lean:286]`
+ - `Fulp_ulp` → `Fulp_ulp [FloatSpec/src/Pff/Pff2FlocqAux.lean:296]`
+ - `round_NE_is_pff_round_b32` → `round_NE_is_pff_round_b32 [FloatSpec/src/Pff/Pff2FlocqAux.lean:306]`
+ - `round_NE_is_pff_round_b64` → `round_NE_is_pff_round_b64 [FloatSpec/src/Pff/Pff2FlocqAux.lean:315]`
 
 ## File: Pff2Flocq.v → Pff2Flocq.lean
 
@@ -132,9 +138,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - theorem: `flocq_pff_bijection` (Pff2Flocq.lean:58)
 
 ### Mapping (Coq → Lean)
-- `round_N_opp_sym` → (no Lean counterpart)
+- `round_N_opp_sym` → `round_N_opp_sym [FloatSpec/src/Pff/Pff2Flocq.lean:78]`
 - `Fast2Sum_correct` → (no Lean counterpart)
+- `Fast2Sum_correct` → `Fast2Sum_correct [FloatSpec/src/Pff/Pff2Flocq.lean:86]`
 - `TwoSum_correct` → (no Lean counterpart)
+- `TwoSum_correct` → `TwoSum_correct [FloatSpec/src/Pff/Pff2Flocq.lean:104]`
 - `C_format` → (no Lean counterpart)
 - `Veltkamp_Even` → (no Lean counterpart)
 - `Veltkamp` → (no Lean counterpart)
