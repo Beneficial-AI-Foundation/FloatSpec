@@ -1024,10 +1024,10 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zlt_powerRZ` → (no Lean counterpart)
 - `Zle_powerRZ` → (no Lean counterpart)
 - `Rinv_powerRZ` → `pow_neg` (Pff.lean:59) (content-related)
-- `floatEq` → (no Lean counterpart)
-- `floatDec` → (no Lean counterpart)
-- `FzeroisReallyZero` → (no Lean counterpart)
-- `is_Fzero_rep1` → (no Lean counterpart)
+-- `floatEq` → `floatEq [FloatSpec/src/Pff/Pff.lean:580]`
+-- `floatDec` → `floatDec [FloatSpec/src/Pff/Pff.lean:592]`
+-- `FzeroisReallyZero` → `FzeroisReallyZero [FloatSpec/src/Pff/Pff.lean:620]`
+-- `is_Fzero_rep1` → `is_Fzero_rep1 [FloatSpec/src/Pff/Pff.lean:631]`
 - `LtFnumZERO` → (no Lean counterpart)
 - `is_Fzero_rep2` → (no Lean counterpart)
 - `NisFzeroComp` → (no Lean counterpart)

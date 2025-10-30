@@ -570,6 +570,32 @@ structure PffFloat where
   exponent : Int
   sign : Bool
 
+-- Equality of Flocq-style floats by components (Coq: `floatEq`)
+-- We mirror Coq's record equality lemma for the Flocq float record
+-- (with fields `Fnum` and `Fexp`).
+noncomputable def floatEq_check {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem floatEq {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜p.Fnum = q.Fnum ∧ p.Fexp = q.Fexp⌝⦄
+    floatEq_check p q
+    ⦃⇓_ => ⌜p = q⌝⦄ := by
+  sorry
+
+-- Decidability of equality for Core floats (Coq: `floatDec`)
+noncomputable def floatDec_check {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem floatDec {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    floatDec_check x y
+    ⦃⇓_ => ⌜x = y ∨ x ≠ y⌝⦄ := by
+  sorry
+
 -- Conversion between Pff and Flocq formats
 def pff_to_flocq (beta : Int) (f : PffFloat) : FloatSpec.Core.Defs.FlocqFloat beta :=
   FloatSpec.Core.Defs.FlocqFloat.mk (if f.sign then -f.mantissa else f.mantissa) f.exponent
@@ -578,6 +604,36 @@ def flocq_to_pff {beta : Int} (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFlo
   { mantissa := Int.natAbs f.Fnum,
     exponent := f.Fexp,
     sign := f.Fnum < 0 }
+
+-- Zero float at exponent z (Coq: `Fzero`)
+def Fzero (beta : Int) (z : Int) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  FloatSpec.Core.Defs.FlocqFloat.mk 0 z
+
+-- Predicate: zero mantissa (Coq: `is_Fzero`)
+def is_Fzero {beta : Int} (x : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  x.Fnum = 0
+
+-- Coq: `FzeroisReallyZero` — real value of zero float is 0
+noncomputable def FzeroisReallyZero_check {beta : Int} (z : Int) : Id Unit :=
+  pure ()
+
+theorem FzeroisReallyZero {beta : Int} (z : Int) :
+    ⦃⌜True⌝⦄
+    FzeroisReallyZero_check (beta:=beta) z
+    ⦃⇓_ => ⌜_root_.F2R (Fzero beta z) = 0⌝⦄ := by
+  sorry
+
+-- Coq: `is_Fzero_rep1` — zero mantissa implies zero real value
+noncomputable def is_Fzero_rep1_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem is_Fzero_rep1 {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜is_Fzero x⌝⦄
+    is_Fzero_rep1_check x
+    ⦃⇓_ => ⌜_root_.F2R x = 0⌝⦄ := by
+  sorry
 
 -- Coq: `Fle_Zle` — compare two floats of same exponent by their mantissas
 -- We mirror the Coq statement Fle_Zle: n1 ≤ n2 → Fle (Float n1 d) (Float n2 d)
