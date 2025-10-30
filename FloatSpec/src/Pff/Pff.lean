@@ -360,6 +360,23 @@ theorem Zle_Zpred (x y : Int) :
     ⦃⇓_ => ⌜x ≤ Int.pred y⌝⦄ := by
   sorry
 
+-- Coq `positive` compatibility and `nat_of_P`
+structure Positive where
+  val : Nat
+
+noncomputable def nat_of_P (p : Positive) : Nat :=
+  p.val.succ
+
+-- Coq: `NconvertO` — nat_of_P p <> 0 for positive p
+noncomputable def NconvertO_check (p : Positive) : Id Unit :=
+  pure ()
+
+theorem NconvertO (p : Positive) :
+    ⦃⌜True⌝⦄
+    NconvertO_check p
+    ⦃⇓_ => ⌜nat_of_P p ≠ 0⌝⦄ := by
+  sorry
+
 -- Coq: `Zle_Zabs` — z ≤ |z|
 noncomputable def Zle_Zabs_check (z : Int) : Id Unit :=
   pure ()
@@ -464,6 +481,26 @@ theorem Zle_Zpred_Zpred (z1 z2 : Int) :
     ⦃⌜z1 ≤ z2⌝⦄
     Zle_Zpred_Zpred_check z1 z2
     ⦃⇓_ => ⌜Int.pred z1 ≤ Int.pred z2⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_n_Zpred` — cancel pred on both sides for ≤
+noncomputable def Zle_n_Zpred_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_n_Zpred (z1 z2 : Int) :
+    ⦃⌜Int.pred z1 ≤ Int.pred z2⌝⦄
+    Zle_n_Zpred_check z1 z2
+    ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
+  sorry
+
+-- Coq: `Zlt_1_O` — 1 ≤ z → 0 < z
+noncomputable def Zlt_1_O_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_1_O (z : Int) :
+    ⦃⌜1 ≤ z⌝⦄
+    Zlt_1_O_check z
+    ⦃⇓_ => ⌜0 < z⌝⦄ := by
   sorry
 
 -- Coq: `Zlt_Zabs_inv1` — |z1| < z2 → -z2 < z1
