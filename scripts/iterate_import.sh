@@ -24,9 +24,9 @@ file_list=(
     # FLX.lean
     # FTZ.lean
     # Ulp.lean
-    # IEEE754
+    IEEE754
     Pff
-    # Prop
+    Prop
 )
 hours=(
 #   2
@@ -35,9 +35,9 @@ hours=(
   # 2
   # 2
   # 2
-  # 4
-  4
-  # 4
+  3
+  5
+  5
   # 4
   
 )

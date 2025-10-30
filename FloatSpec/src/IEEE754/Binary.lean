@@ -883,3 +883,25 @@ theorem abs_B2R_ge_emin {prec emax : Int}
   intro _
   -- Proof deferred; aligns with Coq's `abs_B2R_ge_emin` using emin := 3 - emax - prec.
   exact sorry
+
+-- Coq: bounded_canonical_lt_emax
+-- If a finite float with positive mantissa is canonical and its real value is
+-- strictly below bpow emax, then the mantissa/exponent pair is `bounded`.
+-- We mirror the statement in hoare-triple style and defer the proof.
+def bounded_canonical_lt_emax_check {prec emax : Int}
+  (mx : Nat) (ex : Int) : Id Unit :=
+  pure ()
+
+theorem bounded_canonical_lt_emax {prec emax : Int}
+  (mx : Nat) (ex : Int)
+  (hcanon : FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
+              (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex))
+  (hval :
+    F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex : FloatSpec.Core.Defs.FlocqFloat 2)
+      < (FloatSpec.Core.Raux.bpow 2 emax).run) :
+  ⦃⌜True⌝⦄
+  bounded_canonical_lt_emax_check (prec:=prec) (emax:=emax) mx ex
+  ⦃⇓_ => ⌜bounded (prec:=prec) (emax:=emax) mx ex = true⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `bounded_canonical_lt_emax`.
+  exact sorry
