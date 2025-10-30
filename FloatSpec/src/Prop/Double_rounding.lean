@@ -31,6 +31,10 @@ theorem double_round_eq (fexp1 fexp2 : Int → Int)
   FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x := by
   sorry
 
+-- (reserved for later) Coq: `round_round_mult_hyp`
+-- Structural hypothesis relating places for the product exponents.
+-- We will introduce it if needed by subsequent lemmas.
+
 /-- Coq: `round_round_lt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
     below both midpoints and fexp2 is at a further place. -/
@@ -111,6 +115,23 @@ theorem round_round_lt_mid
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
   sorry
+
+/-- Coq: `mag_mult_disj`
+    For nonzero `x` and `y`, the magnitude of the product is either the
+    sum of magnitudes or one less. -/
+lemma mag_mult_disj (x y : ℝ)
+  (hx : x ≠ 0) (hy : y ≠ 0) :
+  ((FloatSpec.Core.Raux.mag beta (x * y)).run
+      = (FloatSpec.Core.Raux.mag beta x).run + (FloatSpec.Core.Raux.mag beta y).run - 1)
+  ∨ ((FloatSpec.Core.Raux.mag beta (x * y)).run
+      = (FloatSpec.Core.Raux.mag beta x).run + (FloatSpec.Core.Raux.mag beta y).run) := by
+  sorry
+
+-- Coq: `round_round_mult_aux`
+-- Under `round_round_mult_hyp`, the product of two `fexp1`-generic
+-- numbers is `fexp2`-generic.
+-- (reserved for later) Coq: `round_round_mult_aux` and `round_round_mult`
+-- These will be added after `mag_mult_disj` compiles cleanly.
 
 /-- Coq: `round_round_gt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
