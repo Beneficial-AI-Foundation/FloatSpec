@@ -2,6 +2,7 @@
 -- Translated from Coq file: flocq/src/Pff/Pff2FlocqAux.v
 
 import FloatSpec.src.Pff.Pff2Flocq
+import FloatSpec.src.Pff.Pff
 import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple

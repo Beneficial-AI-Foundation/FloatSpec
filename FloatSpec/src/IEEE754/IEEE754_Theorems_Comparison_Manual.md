@@ -224,7 +224,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `binary_round_aux_correct'` → (no Lean counterpart)
 - `binary_round_aux_correct` → (no Lean counterpart)
 - `Bmult_correct` → `binary_mul_correct [FloatSpec/src/IEEE754/Binary.lean:170]` (content-equivalent)
-- `shl_align_fexp_correct` → (no Lean counterpart)
+- `shl_align_fexp_correct` → `shl_align_fexp_correct [FloatSpec/src/IEEE754/Binary.lean:1019]` (spec-variant, hoare)
 - `binary_round_correct` → (no Lean counterpart)
 - `binary_normalize_correct` → (no Lean counterpart)
 -- `Bplus_correct` → `binary_add_correct [FloatSpec/src/IEEE754/Binary.lean:579]` (content-equivalent)

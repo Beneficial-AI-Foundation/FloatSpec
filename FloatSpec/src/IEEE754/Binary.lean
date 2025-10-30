@@ -999,6 +999,35 @@ theorem bounded_canonical_lt_emax {prec emax : Int}
   -- Proof deferred; mirrors Coq's `bounded_canonical_lt_emax`.
   exact sorry
 
+-- Alignment helper (Coq: shl_align_fexp)
+-- In Coq, this calls `shl_align mx ex (fexp (Zpos (digits2_pos mx) + ex))`.
+-- We expose a placeholder returning a mantissa/exponent pair; properties are
+-- captured by the Hoare-style theorem below.
+def shl_align_fexp (mx : Nat) (ex : Int) : Nat × Int :=
+  (mx, ex)
+
+-- Hoare wrapper to expose `shl_align_fexp` as a pure computation
+def shl_align_fexp_check (mx : Nat) (ex : Int) : Id (Nat × Int) :=
+  pure (shl_align_fexp mx ex)
+
+-- Coq: shl_align_fexp_correct
+-- After alignment, the real value is preserved and the new exponent
+-- satisfies the `fexp` bound at `Zdigits mx' + ex'`.
+theorem shl_align_fexp_correct {prec emax : Int}
+  (mx : Nat) (ex : Int) :
+  ⦃⌜True⌝⦄
+  shl_align_fexp_check mx ex
+  ⦃⇓result => ⌜
+      let mx' := result.1; let ex' := result.2
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx' : Int) ex' : FloatSpec.Core.Defs.FlocqFloat 2)
+        = F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex : FloatSpec.Core.Defs.FlocqFloat 2)
+        ∧ ex' ≤ FLT_exp (3 - emax - prec) prec ((FloatSpec.Core.Digits.Zdigits 2 (mx' : Int)).run + ex')⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from the correctness of `shl_align` specialized
+  -- to `fexp := FLT_exp (3 - emax - prec) prec` and the relation between
+  -- `Zdigits` and `digits2_pos`.
+  exact sorry
+
 -- Truncation helpers and theorem (Coq: shr_fexp_truncate)
 -- We introduce lightweight placeholders sufficient to state the theorem
 -- in hoare-triple style, following the project pattern.
