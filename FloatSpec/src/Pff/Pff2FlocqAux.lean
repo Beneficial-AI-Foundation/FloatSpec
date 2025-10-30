@@ -4,10 +4,56 @@
 import FloatSpec.src.Pff.Pff2Flocq
 import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
+import Std.Do.Triple
 
 open Real
+open Std.Do
 
 -- Auxiliary lemmas and functions for Pff/Flocq conversion
+
+/-
+Scaffold for missing Pff theorems ported from Coq.
+
+We introduce minimal placeholders for the Coq-side objects used by
+the lemmas in Pff2FlocqAux.v (e.g., Fbound/Bound/make_bound and related
+accessors). Theorems are stated using the project Hoare-triple style and
+left as `sorry` per the task instructions.
+-/
+
+-- Minimal placeholder for bound record used by Pff theorems
+structure Fbound where
+  vNum : Int
+  dExp : Int
+
+-- Constructor mirroring Coq `Bound`
+def Bound (vnum dexp : Int) : Fbound := { vNum := vnum, dExp := dexp }
+
+-- Integer power on naturals (Coq: Zpower_nat)
+noncomputable def Zpower_nat (beta : Int) (n : Nat) : Int := beta ^ n
+
+-- A canonical radix-2 constant
+def radix2 : Int := 2
+
+-- Minimal `make_bound` used in Coq proofs
+noncomputable def make_bound (beta p E : Int) : Fbound :=
+  let v := Zpower_nat beta (Int.toNat (Int.natAbs p))
+  let de := if E ≤ 0 then -E else E
+  Bound v de
+
+-- Predefined single/double bounds from Coq
+noncomputable def bsingle : Fbound := make_bound radix2 24 (-149)
+noncomputable def bdouble : Fbound := make_bound radix2 53 1074
+
+-- First missing theorem: make_bound_Emin
+noncomputable def make_bound_Emin_check (beta p E : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `make_bound_Emin` — if `E ≤ 0`, then `(dExp (make_bound beta p E)) = -E`. -/
+theorem make_bound_Emin (beta p E : Int) :
+    ⦃⌜E ≤ 0⌝⦄
+    make_bound_Emin_check beta p E
+    ⦃⇓_ => ⌜(make_bound beta p E).dExp = -E⌝⦄ := by
+  sorry
 
 variable (beta : Int)
 
