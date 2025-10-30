@@ -250,3 +250,32 @@ theorem double_round_same (fexp : Int → Int)
   FloatSpec.Calc.Round.round beta fexp (Znearest choice) (FloatSpec.Calc.Round.round beta fexp (Znearest choice) x) =
   FloatSpec.Calc.Round.round beta fexp (Znearest choice) x := by
   sorry
+
+/-- Coq: `round_round_plus`
+    Skeleton lemma asserting innocuous double rounding for a sum under
+    appropriate magnitude/place side-conditions. We mirror the name and
+    interface as a placeholder; the proof will be added later. -/
+lemma round_round_plus
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (x y : ℝ) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
+  sorry
+
+/-- Coq: `round_round_minus`
+    Skeleton lemma asserting innocuous double rounding for a difference
+    under appropriate hypotheses. -/
+lemma round_round_minus
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (x y : ℝ) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry

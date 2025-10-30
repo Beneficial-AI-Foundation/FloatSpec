@@ -23,6 +23,25 @@ noncomputable def Zodd : ℝ → Int := fun x =>
 /-- Round to odd is a valid rounding -/
 instance : Valid_rnd (Zodd) := by sorry
 
+/-- If `x` is not exactly an integer (`Zfloor x`), then the result of
+    rounding-to-odd (`Zodd x`) is odd. This mirrors Coq's `Zrnd_odd_Zodd`. -/
+lemma Zrnd_odd_Zodd (x : ℝ)
+  (hx : x ≠ (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ)) :
+  (Zodd x) % 2 = 1 := by
+  sorry
+
+/-- Integer floor of a translated real: `Zfloor (n + y) = n + Zfloor y`. -/
+lemma Zfloor_plus (n : Int) (y : ℝ) :
+  (FloatSpec.Core.Raux.Zfloor ((n : ℝ) + y)).run =
+    n + (FloatSpec.Core.Raux.Zfloor y).run := by
+  sorry
+
+/-- Integer ceil of a translated real: `Zceil (n + y) = n + Zceil y`. -/
+lemma Zceil_plus (n : Int) (y : ℝ) :
+  (FloatSpec.Core.Raux.Zceil ((n : ℝ) + y)).run =
+    n + (FloatSpec.Core.Raux.Zceil y).run := by
+  sorry
+
 /-- Round to odd properties -/
 theorem round_odd_ge_ulp (x : ℝ) :
   generic_format beta fexp x ∨ 

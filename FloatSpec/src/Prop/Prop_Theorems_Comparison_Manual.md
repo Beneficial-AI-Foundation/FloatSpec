@@ -1063,10 +1063,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 ### Mapping (Coq → Lean)
 
 - `Zrnd_odd_Zodd` → (no direct Lean match found)
+ - `Zrnd_odd_Zodd` → `Zrnd_odd_Zodd` [Round_odd.lean:28] (spec-variant)
 
-- `Zfloor_plus` → (no direct Lean match found)
+ - `Zfloor_plus` → `Zfloor_plus` [Round_odd.lean:34] (spec-variant)
 
-- `Zceil_plus` → (no direct Lean match found)
+ - `Zceil_plus` → `Zceil_plus` [Round_odd.lean:40] (spec-variant)
 
 - `Zeven_abs` → (no direct Lean match found)
 
