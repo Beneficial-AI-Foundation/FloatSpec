@@ -930,7 +930,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Odd_1` → `odd_1` (Pff.lean:20) (content-equivalent)
 - `min_or` → (no Lean counterpart)
 - `min_or` → `min_or` (Pff.lean:68)
-- `convert_not_O` → (no Lean counterpart)
+- `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:526]`
 - `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:287]`
 - `inject_nat_convert` → (no Lean counterpart)
 - `ZleLe` → `ZleLe [FloatSpec/src/Pff/Pff.lean:104]`
