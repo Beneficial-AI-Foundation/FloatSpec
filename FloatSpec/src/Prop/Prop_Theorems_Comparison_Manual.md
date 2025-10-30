@@ -74,7 +74,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 -- `sqrt_error_N_FLX_aux2` → `sqrt_error_N_FLX_aux2` [Div_sqrt_error.lean:62] (exact)
 
-- `sqrt_error_N_FLX_aux3` → (no direct Lean match found)
+ - `sqrt_error_N_FLX_aux3` → `sqrt_error_N_FLX_aux3` [Div_sqrt_error.lean:88] (exact)
 
 - `om1ds1p2u_ro_pos` → (no direct Lean match found)
 
@@ -82,25 +82,25 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `s1p2u_rom1_pos` → (no direct Lean match found)
 
-- `sqrt_error_N_FLX` → (no direct Lean match found)
+ - `sqrt_error_N_FLX` → `sqrt_error_N_FLX` [Div_sqrt_error.lean:95] (exact)
 
-- `sqrt_error_N_FLX_ex` → (no direct Lean match found)
+ - `sqrt_error_N_FLX_ex` → `sqrt_error_N_FLX_ex` [Div_sqrt_error.lean:102] (exact)
 
-- `sqrt_error_N_round_ex_derive` → (no direct Lean match found)
+ - `sqrt_error_N_round_ex_derive` → `sqrt_error_N_round_ex_derive` [Div_sqrt_error.lean:110] (exact)
 
-- `sqrt_error_N_FLX_round_ex` → (no direct Lean match found)
+ - `sqrt_error_N_FLX_round_ex` → `sqrt_error_N_FLX_round_ex` [Div_sqrt_error.lean:116] (exact)
 
-- `sqrt_error_N_FLT_ex` → (no direct Lean match found)
+ - `sqrt_error_N_FLT_ex` → `sqrt_error_N_FLT_ex` [Div_sqrt_error.lean:124] (exact)
 
-- `sqrt_error_N_FLT_round_ex` → (no direct Lean match found)
+ - `sqrt_error_N_FLT_round_ex` → `sqrt_error_N_FLT_round_ex` [Div_sqrt_error.lean:132] (exact)
 
-- `format_REM_aux` → (no direct Lean match found)
+ - `format_REM_aux` → `format_REM_aux` [Div_sqrt_error.lean:145] (spec-variant)
 
-- `format_REM` → (no direct Lean match found)
+ - `format_REM` → `format_REM` [Div_sqrt_error.lean:157] (spec-variant)
 
-- `format_REM_ZR` → (no direct Lean match found)
+ - `format_REM_ZR` → `format_REM_ZR` [Div_sqrt_error.lean:166] (spec-variant)
 
-- `format_REM_N` → (no direct Lean match found)
+ - `format_REM_N` → `format_REM_N` [Div_sqrt_error.lean:173] (spec-variant)
 
 ## File: Double_rounding.v → Double_rounding.lean
 

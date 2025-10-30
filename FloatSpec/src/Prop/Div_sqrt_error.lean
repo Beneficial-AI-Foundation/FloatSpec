@@ -91,6 +91,96 @@ lemma sqrt_error_N_FLX_aux3 :
   sorry
 
 
+/-/ Relative-error bound for rounding sqrt in FLX (nearest) -/
+theorem sqrt_error_N_FLX (x : ℝ)
+  (hx : generic_format beta (FLX_exp prec) x) :
+  |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x) - Real.sqrt x|
+    ≤ (1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec)) * |Real.sqrt x| := by
+  sorry
+
+/-/ Existence form of the nearest-rounding sqrt error in FLX -/
+theorem sqrt_error_N_FLX_ex (x : ℝ)
+  (hx : generic_format beta (FLX_exp prec) x) :
+  ∃ eps, |eps| ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) ∧
+    FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x)
+      = Real.sqrt x * (1 + eps) := by
+  sorry
+
+/-- Derive symmetric existence bound from relative-error form -/
+theorem sqrt_error_N_round_ex_derive (x rx : ℝ)
+  (h : ∃ eps, |eps| ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) ∧ rx = x * (1 + eps)) :
+  ∃ eps, |eps| ≤ Real.sqrt (1 + 2 * u_ro beta prec) - 1 ∧ x = rx * (1 + eps) := by
+  sorry
+
+/-- Existence of nearest-rounding sqrt remainder decomposition (FLX) -/
+theorem sqrt_error_N_FLX_round_ex (x : ℝ)
+  (hx : generic_format beta (FLX_exp prec) x) :
+  ∃ eps, |eps| ≤ Real.sqrt (1 + 2 * u_ro beta prec) - 1 ∧
+    Real.sqrt x
+      = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x) * (1 + eps) := by
+  sorry
+
+/-- Existence of nearest-rounding sqrt factorization under FLT (with emin bound) -/
+theorem sqrt_error_N_FLT_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
+  (hx : generic_format beta (FLT_exp emin prec) x) :
+  ∃ eps, |eps| ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) ∧
+    FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (Real.sqrt x)
+      = Real.sqrt x * (1 + eps) := by
+  sorry
+
+/-- Symmetric existence form for FLT nearest-rounding sqrt remainder -/
+theorem sqrt_error_N_FLT_round_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
+  (hx : generic_format beta (FLT_exp emin prec) x) :
+  ∃ eps, |eps| ≤ Real.sqrt (1 + 2 * u_ro beta prec) - 1 ∧
+    Real.sqrt x
+      = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (Real.sqrt x) * (1 + eps) := by
+  sorry
+
+-- Section: format_REM (remainder formatting for general exponents)
+section FormatREM
+variable (fexp : Int → Int)
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [Monotone_exp fexp]
+
+/-- Auxiliary remainder formatting under generic exponent function. -/
+theorem format_REM_aux
+  (rnd : ℝ → Int) [Valid_rnd rnd]
+  (x y : ℝ)
+  (hx : generic_format beta fexp x)
+  (hy : generic_format beta fexp y)
+  (hx_nonneg : 0 ≤ x)
+  (hy_pos : 0 < y)
+  (rnd_small : (0 < x / y ∧ x / y < (1/2 : ℝ)) → rnd (x / y) = 0) :
+  generic_format beta fexp (x - ((rnd (x / y) : Int) : ℝ) * y) := by
+  sorry
+
+/-- Remainder formatting under a small-argument rounding hypothesis. -/
+theorem format_REM
+  (rnd : ℝ → Int) [Valid_rnd rnd]
+  (x y : ℝ)
+  (Hrnd0 : |x / y| < (1/2 : ℝ) → rnd (x / y) = 0)
+  (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
+  generic_format beta fexp (x - ((rnd (x / y) : Int) : ℝ) * y) := by
+  sorry
+
+/-- Specialization: remainder formatting with truncation `Ztrunc`. -/
+theorem format_REM_ZR
+  (x y : ℝ)
+  (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
+  generic_format beta fexp (x - ((Ztrunc (x / y) : Int) : ℝ) * y) := by
+  sorry
+
+/-- Specialization: remainder formatting with nearest `Znearest`. -/
+theorem format_REM_N
+  (choice : Int → Bool)
+  (x y : ℝ)
+  (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
+  generic_format beta fexp
+    (x - ((FloatSpec.Core.Generic_fmt.Znearest choice (x / y) : Int) : ℝ) * y) := by
+  sorry
+
+end FormatREM
+
 
 /-- Division error in FLT -/
 theorem div_error_FLT (emin : Int) (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
