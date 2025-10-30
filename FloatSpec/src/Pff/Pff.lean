@@ -921,3 +921,13 @@ theorem digitAuxMore (n : Int) (v r : Int) (p : Positive) :
             | Nat.succ r' => v < Zpower_nat n r' * r
             | 0 => True⌝⦄ := by
   sorry
+
+-- Coq: `digitInv` — if n^(pred r) ≤ |q| < n^r then digit n q = r
+noncomputable def digitInv_check (n : Int) (q : Int) (r : Nat) : Id Unit :=
+  pure ()
+
+theorem digitInv (n : Int) (q : Int) (r : Nat) :
+    ⦃⌜Zpower_nat n (Nat.pred r) ≤ |q| ∧ |q| < Zpower_nat n r⌝⦄
+    digitInv_check n q r
+    ⦃⇓_ => ⌜digit n q = r⌝⦄ := by
+  sorry
