@@ -540,6 +540,8 @@ theorem Zle_Zabs (z : Int) :
     ⦃⇓_ => ⌜z ≤ |z|⌝⦄ := by
   sorry
 
+-- We declare the `_check` and theorem later after `pff_to_flocq` is defined.
+
 -- Coq: `absolu_lt_nz` — if z ≠ 0 then 0 < Z.abs_nat z
 noncomputable def absolu_lt_nz_check (z : Int) : Id Unit :=
   pure ()
@@ -571,6 +573,20 @@ def flocq_to_pff {beta : Int} (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFlo
   { mantissa := Int.natAbs f.Fnum,
     exponent := f.Fexp,
     sign := f.Fnum < 0 }
+
+-- Coq: `Fle_Zle` — compare two floats of same exponent by their mantissas
+-- We mirror the Coq statement Fle_Zle: n1 ≤ n2 → Fle (Float n1 d) (Float n2 d)
+-- Our Pff compatibility struct `PffFloat` uses fields (mantissa, exponent, sign).
+-- We state an analogous lemma at the level of reals via `F2R ∘ pff_to_flocq`.
+noncomputable def Fle_Zle_check (beta : Int) (n1 n2 d : Int) : Id Unit :=
+  pure ()
+
+theorem Fle_Zle (beta : Int) (n1 n2 d : Int) :
+    ⦃⌜n1 ≤ n2⌝⦄
+    Fle_Zle_check beta n1 n2 d
+    ⦃⇓_ => ⌜_root_.F2R (pff_to_flocq beta { mantissa := n1, exponent := d, sign := false })
+            ≤ _root_.F2R (pff_to_flocq beta { mantissa := n2, exponent := d, sign := false })⌝⦄ := by
+  sorry
 
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by

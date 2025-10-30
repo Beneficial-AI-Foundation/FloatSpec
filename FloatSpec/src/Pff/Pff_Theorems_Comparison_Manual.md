@@ -1047,6 +1047,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `FshiftCorrectSym` → (no Lean counterpart)
 - `FdigitEq` → (no Lean counterpart)
 - `Fle_Zle` → (no Lean counterpart)
+ - `Fle_Zle` → `Fle_Zle [FloatSpec/src/Pff/Pff.lean:555]`
 - `Rlt_Fexp_eq_Zlt` → (no Lean counterpart)
 - `Rle_Fexp_eq_Zle` → (no Lean counterpart)
 - `LtR0Fnum` → (no Lean counterpart)
