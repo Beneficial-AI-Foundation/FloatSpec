@@ -100,6 +100,25 @@ theorem pdGivesBound :
     ⦃⇓_ => ⌜bdouble.vNum = Zpower_nat 2 53⌝⦄ := by
   sorry
 
+-- Format bridging lemmas (Coq: format_is_pff_format' and variants)
+
+-- Build a Pff-style float from a real known to be in generic_format
+noncomputable def mk_from_generic (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : PffFloat :=
+  { mantissa :=
+      Ztrunc ((FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FLT_exp (-b.dExp) p) r).run)
+    , exponent := cexp beta (FLT_exp (-b.dExp) p) r
+    , sign := false }
+
+noncomputable def format_is_pff_format'_check (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `format_is_pff_format'` — from `generic_format`, construct a bounded Pff float. -/
+theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
+    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
+    format_is_pff_format'_check beta b p r
+    ⦃⇓_ => ⌜Fbounded b (mk_from_generic beta b p r)⌝⦄ := by
+  sorry
+
 -- Next missing theorem: pff_format_is_format
 noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
