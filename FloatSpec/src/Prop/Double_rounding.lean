@@ -229,6 +229,114 @@ lemma mag_mult_disj (x y : ℝ)
 -- (reserved for later) Coq: `round_round_mult_aux` and `round_round_mult`
 -- These will be added after `mag_mult_disj` compiles cleanly.
 
+/-- Coq: `mag_plus_disj`
+    For `0 < y ≤ x`, the magnitude of `x + y` is either the same as
+    the magnitude of `x` or exactly one greater. -/
+lemma mag_plus_disj (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y ≤ x) :
+  ((FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run)
+  ∨ ((FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run + 1) := by
+  sorry
+
+/-- Coq: `mag_plus_separated`
+    If `x` is positive, `y` is nonnegative, `x` is `fexp`-generic and
+    `mag y ≤ fexp (mag x)`, then `mag (x + y) = mag x`. -/
+lemma mag_plus_separated (fexp : Int → Int)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_nonneg : 0 ≤ y)
+  (Fx : generic_format beta fexp x)
+  (Hsep : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run)) :
+  (FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run := by
+  sorry
+
+/-- Coq: `mag_minus_disj`
+    For positive `x` and `y` with `mag y ≤ mag x - 2`, the magnitude of
+    `x - y` is either `mag x` or `mag x - 1`. -/
+lemma mag_minus_disj (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y)
+  (hln : (FloatSpec.Core.Raux.mag beta y).run ≤ (FloatSpec.Core.Raux.mag beta x).run - 2) :
+  ((FloatSpec.Core.Raux.mag beta (x - y)).run = (FloatSpec.Core.Raux.mag beta x).run)
+  ∨ ((FloatSpec.Core.Raux.mag beta (x - y)).run = (FloatSpec.Core.Raux.mag beta x).run - 1) := by
+  sorry
+
+/-- Coq: `mag_minus_separated`
+    Under separation hypotheses and genericity of `x`, the magnitude of
+    `x - y` equals `mag x`. -/
+lemma mag_minus_separated (fexp : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y) (hy_lt_x : y < x)
+  (hx_gt_pow : (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run - 1) < x)
+  (Fx : generic_format beta fexp x)
+  (Ly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run)) :
+  (FloatSpec.Core.Raux.mag beta (x - y)).run = (FloatSpec.Core.Raux.mag beta x).run := by
+  sorry
+
+/-- Coq: `round_round_plus_aux0_aux_aux`
+    If `fexp1 (mag x) ≤ fexp1 (mag y)` and the place induced by `fexp2`
+    at `mag (x + y)` is below both `fexp1 (mag x)` and `fexp1 (mag y)`,
+    then the sum of two `fexp1`-generic numbers is `fexp2`-generic. -/
+lemma round_round_plus_aux0_aux_aux
+  (fexp1 fexp2 : Int → Int) (x y : ℝ)
+  (Hxy : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
+  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
+  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x + y) := by
+  sorry
+
+/-- Coq: `round_round_plus_aux0_aux`
+    Symmetric version using only the two fexp2-bounds at `mag (x + y)`.
+    Given `fexp2 (mag (x + y)) ≤ fexp1 (mag x)` and similarly for `y`,
+    the sum of two `fexp1`-generic numbers is `fexp2`-generic. -/
+lemma round_round_plus_aux0_aux
+  (fexp1 fexp2 : Int → Int) (x y : ℝ)
+  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
+  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x + y) := by
+  sorry
+
+/-- Coq: `round_round_plus_hyp`
+    Structural hypothesis relating `fexp1` and `fexp2` around places
+    needed for reasoning on sums. -/
+def round_round_plus_hyp (fexp1 fexp2 : Int → Int) : Prop :=
+  (∀ ex ey, fexp1 (ex + 1) - 1 ≤ ey → fexp2 ex ≤ fexp1 ey) ∧
+  (∀ ex ey, fexp1 (ex - 1) + 1 ≤ ey → fexp2 ex ≤ fexp1 ey) ∧
+  (∀ ex ey, fexp1 ex - 1 ≤ ey → fexp2 ex ≤ fexp1 ey) ∧
+  (∀ ex ey, ex - 1 ≤ ey → fexp2 ex ≤ fexp1 ey)
+
+/-- Coq: `round_round_plus_aux0`
+    Exact-addition case in the largest precision captured by
+    `round_round_plus_hyp`. -/
+lemma round_round_plus_aux0
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y) (hyx : y ≤ x)
+  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1 ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x + y) := by
+  sorry
+
+/-- Coq: `round_round_plus_aux1_aux`
+    With a positive integer `k`, if `mag y ≤ fexp (mag x) - k` and the
+    magnitudes of `x` and `x + y` coincide, then the rounding gap for
+    `(x + y)` is within `bpow (fexp (mag x) - k)` and positive. -/
+lemma round_round_plus_aux1_aux
+  (k : Int) (Hk : 0 < k)
+  (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y)
+  (Hln : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run) - k)
+  (Hlxy : (FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run)
+  (Fx : generic_format beta fexp x) :
+  0 < (x + y) - FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) (x + y)
+    ∧ (x + y) - FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) (x + y)
+      < (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run) - k) := by
+  sorry
+
 /-- Coq: `round_round_gt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
     above both midpoints and fexp2 is at a further place. -/

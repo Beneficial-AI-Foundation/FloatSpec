@@ -342,21 +342,21 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `round_round_mult_FTZ` → `round_round_mult_FTZ` [Double_rounding.lean:117] (spec-variant)
 
-- `mag_plus_disj` → (no direct Lean match found)
+ - `mag_plus_disj` → `mag_plus_disj` [Double_rounding.lean:235] (spec-variant)
 
-- `mag_plus_separated` → (no direct Lean match found)
+ - `mag_plus_separated` → `mag_plus_separated` [Double_rounding.lean:244] (spec-variant)
 
-- `mag_minus_disj` → (no direct Lean match found)
+ - `mag_minus_disj` → `mag_minus_disj` [Double_rounding.lean:255] (spec-variant)
 
-- `mag_minus_separated` → (no direct Lean match found)
+ - `mag_minus_separated` → `mag_minus_separated` [Double_rounding.lean:265] (spec-variant)
 
-- `round_round_plus_aux0_aux_aux` → (no direct Lean match found)
+ - `round_round_plus_aux0_aux_aux` → `round_round_plus_aux0_aux_aux` [Double_rounding.lean:289] (spec-variant)
 
-- `round_round_plus_aux0_aux` → (no direct Lean match found)
+ - `round_round_plus_aux0_aux` → `round_round_plus_aux0_aux` [Double_rounding.lean:304] (spec-variant)
 
-- `round_round_plus_aux0` → (no direct Lean match found)
+ - `round_round_plus_aux0` → `round_round_plus_aux0` [Double_rounding.lean:317] (spec-variant)
 
-- `round_round_plus_aux1_aux` → (no direct Lean match found)
+ - `round_round_plus_aux1_aux` → `round_round_plus_aux1_aux` [Double_rounding.lean:333] (spec-variant)
 
 - `round_round_plus_aux1` → (no direct Lean match found)
 
