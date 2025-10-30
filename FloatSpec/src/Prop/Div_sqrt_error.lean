@@ -39,6 +39,23 @@ theorem sqrt_error_FLX (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
   generic_format beta (FLX_exp prec) (x - (FloatSpec.Calc.Round.round beta (FLX_exp prec) () (Real.sqrt x))^2) := by
   sorry
 
+/-- Remainder of the square in FLX (with p > 1) and rounding to nearest -/
+theorem sqrt_error_FLX_N (h_gt1 : 1 < prec) (x : ℝ)
+  (hx : generic_format beta (FLX_exp prec) x) :
+  generic_format beta (FLX_exp prec)
+    (x - (FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x))^2) := by
+  sorry
+
+/-- Auxiliary decomposition for sqrt error in FLX: represent x as mu · β^(2e)
+    with mu between 1 and β^2. -/
+lemma sqrt_error_N_FLX_aux1 (x : ℝ)
+  (hx : generic_format beta (FLX_exp prec) x) (px : 0 < x) :
+  ∃ (mu : ℝ) (e : Int),
+    generic_format beta (FLX_exp prec) mu ∧
+    x = mu * (beta : ℝ) ^ (2 * e) ∧
+    (1 ≤ mu ∧ mu < (beta : ℝ) ^ (2 : Int)) := by
+  sorry
+
 /-- Division error in FLT -/
 theorem div_error_FLT (emin : Int) (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
   (hx : generic_format beta (FLT_exp emin prec) x) (hy : generic_format beta (FLT_exp emin prec) y)
