@@ -332,7 +332,6 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `mag_mult_disj` → `mag_mult_disj` [Double_rounding.lean:143] (exact)
 
- - `round_round_mult_aux` → `round_round_mult_aux` [Double_rounding.lean:48] (spec-variant)
 
  - `round_round_mult` → `round_round_mult` [Double_rounding.lean:65] (spec-variant)
 
@@ -342,7 +341,6 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `round_round_mult_FTZ` → `round_round_mult_FTZ` [Double_rounding.lean:117] (spec-variant)
 
- - `mag_plus_disj` → `mag_plus_disj` [Double_rounding.lean:235] (spec-variant)
 
  - `mag_plus_separated` → `mag_plus_separated` [Double_rounding.lean:244] (spec-variant)
 
@@ -352,17 +350,16 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `round_round_plus_aux0_aux_aux` → `round_round_plus_aux0_aux_aux` [Double_rounding.lean:289] (spec-variant)
 
- - `round_round_plus_aux0_aux` → `round_round_plus_aux0_aux` [Double_rounding.lean:304] (spec-variant)
 
  - `round_round_plus_aux0` → `round_round_plus_aux0` [Double_rounding.lean:317] (spec-variant)
 
  - `round_round_plus_aux1_aux` → `round_round_plus_aux1_aux` [Double_rounding.lean:333] (spec-variant)
 
-- `round_round_plus_aux1` → (no direct Lean match found)
+ - `round_round_plus_aux1` → `round_round_plus_aux1` [Double_rounding.lean:391] (spec-variant)
 
-- `round_round_plus_aux2` → (no direct Lean match found)
+ - `round_round_plus_aux2` → `round_round_plus_aux2` [Double_rounding.lean:410] (spec-variant)
 
-- `round_round_plus_aux` → (no direct Lean match found)
+ - `round_round_plus_aux` → `round_round_plus_aux` [Double_rounding.lean:429] (spec-variant)
 
 - `round_round_minus_aux0_aux` → (no direct Lean match found)
 
@@ -378,27 +375,27 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_minus_aux` → (no direct Lean match found)
 
-- `round_round_plus` → (no direct Lean match found)
+ - `round_round_plus` → `round_round_plus` [Double_rounding.lean:540] (spec-variant)
 
-- `round_round_minus` → (no direct Lean match found)
+ - `round_round_minus` → `round_round_minus` [Double_rounding.lean:555] (spec-variant)
 
-- `FLX_round_round_plus_hyp` → (no direct Lean match found)
+- `FLX_round_round_plus_hyp` → `FLX_round_round_plus_hyp` [Double_rounding.lean:573] (spec-variant)
 
-- `round_round_plus_FLX` → (no direct Lean match found)
+ - `round_round_plus_FLX` → `round_round_plus_FLX` [Double_rounding.lean:580] (spec-variant)
 
-- `round_round_minus_FLX` → (no direct Lean match found)
+ - `round_round_minus_FLX` → `round_round_minus_FLX` [Double_rounding.lean:597] (spec-variant)
 
-- `FLT_round_round_plus_hyp` → (no direct Lean match found)
+ - `FLT_round_round_plus_hyp` → `FLT_round_round_plus_hyp` [Double_rounding.lean:605] (spec-variant)
 
-- `round_round_plus_FLT` → (no direct Lean match found)
+ - `round_round_plus_FLT` → `round_round_plus_FLT` [Double_rounding.lean:740] (spec-variant)
 
-- `round_round_minus_FLT` → (no direct Lean match found)
+ - `round_round_minus_FLT` → `round_round_minus_FLT` [Double_rounding.lean:758] (spec-variant)
 
-- `FTZ_round_round_plus_hyp` → (no direct Lean match found)
+ - `FTZ_round_round_plus_hyp` → `FTZ_round_round_plus_hyp` [Double_rounding.lean:767] (spec-variant)
 
-- `round_round_plus_FTZ` → (no direct Lean match found)
+ - `round_round_plus_FTZ` → `round_round_plus_FTZ` [Double_rounding.lean:782] (spec-variant)
 
-- `round_round_minus_FTZ` → (no direct Lean match found)
+ - `round_round_minus_FTZ` → `round_round_minus_FTZ` [Double_rounding.lean:800] (spec-variant)
 
 - `round_round_plus_radix_ge_3_aux0` → (no direct Lean match found)
 

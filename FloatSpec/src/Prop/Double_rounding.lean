@@ -565,3 +565,256 @@ lemma round_round_minus
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
   sorry
+
+/-- Coq: `round_round_minus_aux0_aux`
+    If the place induced by `fexp2` at `mag (x - y)` is below both
+    `fexp1 (mag x)` and `fexp1 (mag y)`, then the difference of two
+    `fexp1`-generic numbers is `fexp2`-generic. -/
+lemma round_round_minus_aux0_aux
+  (fexp1 fexp2 : Int → Int)
+  (x y : ℝ)
+  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x - y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
+  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x - y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_aux0`
+    Exact-subtraction case in the largest precision captured by
+    `round_round_plus_hyp`. -/
+lemma round_round_minus_aux0
+  (fexp1 fexp2 : Int → Int)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y < x)
+  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1 ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_aux1`
+    Under `mag y ≤ fexp1 (mag x) - 2` and a bound relating
+    `fexp1 (mag (x - y))` and `mag y`, subtraction is exact in the
+    largest precision. -/
+lemma round_round_minus_aux1
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y < x)
+  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2)
+  (Hln' : fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) - 1 ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_aux2_aux`
+    Auxiliary bound: for `0 < y < x`, with `mag y ≤ fexp (mag x) - 1` and
+    both `x` and `y` being `fexp`-generic, the rounding gap of `x - y`
+    under an upward rounding (mode placeholder) is at most `y`. -/
+lemma round_round_minus_aux2_aux
+  (fexp : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y < x)
+  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (Fx : generic_format beta fexp x)
+  (Fy : generic_format beta fexp y) :
+  FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) (x - y) - (x - y) ≤ y := by
+  sorry
+
+/-- Coq: `round_round_minus_aux2`
+    If `0 < y < x`, `mag y ≤ fexp1 (mag x) - 2` and also
+    `mag y ≤ fexp1 (mag (x - y)) - 2`, then nearest-on-nearest double
+    rounding of `x - y` collapses to a single rounding at `fexp1`. -/
+lemma round_round_minus_aux2
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y < x)
+  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2)
+  (Hly' : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) - 2)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_aux3`
+    Case distinction combining `round_round_minus_aux{0,1,2}`. -/
+lemma round_round_minus_aux3
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y ≤ x)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_aux`
+    Nonnegative inputs version for differences: for `0 ≤ x` and `0 ≤ y`,
+    under the structural hypothesis `round_round_plus_hyp`, nearest-on-
+    nearest double rounding of `x - y` collapses to a single rounding
+    at `fexp1`. -/
+lemma round_round_minus_aux
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_nonneg : 0 ≤ x) (hy_nonneg : 0 ≤ y)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry
+
+
+/-- Coq: `FLX_round_round_plus_hyp`
+    Under the precision relation `2 * prec + 1 ≤ prec'`, the structural
+    hypothesis `round_round_plus_hyp (FLX_exp prec) (FLX_exp prec')` holds. -/
+lemma FLX_round_round_plus_hyp
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (hprec : 2 * prec + 1 ≤ prec') :
+  round_round_plus_hyp (FLX_exp prec) (FLX_exp prec') := by
+  sorry
+
+/-- Coq: `round_round_plus_FLX`
+    Under `2 * prec + 1 ≤ prec'`, nearest-on-nearest double rounding of
+    a sum collapses from `(FLX prec')` then `(FLX prec)` to a single
+    rounding at `(FLX prec)`. -/
+theorem round_round_plus_FLX
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (choice1 choice2 : Int → Bool)
+  (hprec : 2 * prec + 1 ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FLX_exp prec) x)
+  (Fy : generic_format beta (FLX_exp prec) y) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (x + y) := by
+  sorry
+
+/-- Coq: `round_round_minus_FLX`
+    FLX difference version under `2 * prec + 1 ≤ prec'`. -/
+theorem round_round_minus_FLX
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (choice1 choice2 : Int → Bool)
+  (hprec : 2 * prec + 1 ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FLX_exp prec) x)
+  (Fy : generic_format beta (FLX_exp prec) y) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (x - y) := by
+  sorry
+
+/-- Coq: `FLT_round_round_plus_hyp`
+    Under `(emin' ≤ emin)` and `2 * prec + 1 ≤ prec'`, the structural
+    hypothesis holds between the corresponding FLT exponent functions. -/
+lemma FLT_round_round_plus_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : emin' ≤ emin) (Hprec : 2 * prec + 1 ≤ prec') :
+  round_round_plus_hyp (FLT_exp emin prec) (FLT_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_plus_FLT`
+    FLT sum version under `(emin' ≤ emin)` and `2 * prec + 1 ≤ prec'`. -/
+theorem round_round_plus_FLT
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hemin : emin' ≤ emin) (Hprec : 2 * prec + 1 ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FLT_exp emin prec) x)
+  (Fy : generic_format beta (FLT_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1) (x + y) := by
+  sorry
+
+/-- Coq: `round_round_minus_FLT`
+    FLT difference version under `(emin' ≤ emin)` and `2 * prec + 1 ≤ prec'`. -/
+theorem round_round_minus_FLT
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hemin : emin' ≤ emin) (Hprec : 2 * prec + 1 ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FLT_exp emin prec) x)
+  (Fy : generic_format beta (FLT_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1) (x - y) := by
+  sorry
+
+/-- Coq: `FTZ_round_round_plus_hyp`
+    Under `(emin' + prec' ≤ emin + 1)` and `2 * prec + 1 ≤ prec'`, the
+    structural hypothesis holds between the corresponding FTZ exponent
+    functions. -/
+lemma FTZ_round_round_plus_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : emin' + prec' ≤ emin + 1) (Hprec : 2 * prec + 1 ≤ prec') :
+  round_round_plus_hyp (FTZ_exp emin prec) (FTZ_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_plus_FTZ`
+    FTZ sum version under `(emin' + prec' ≤ emin + 1)` and
+    `2 * prec + 1 ≤ prec'`. -/
+theorem round_round_plus_FTZ
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hemin : emin' + prec' ≤ emin + 1) (Hprec : 2 * prec + 1 ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FTZ_exp emin prec) x)
+  (Fy : generic_format beta (FTZ_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1) (x + y) := by
+  sorry
+
+/-- Coq: `round_round_minus_FTZ`
+    FTZ difference version under `(emin' + prec' ≤ emin + 1)` and
+    `2 * prec + 1 ≤ prec'`. -/
+theorem round_round_minus_FTZ
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hemin : emin' + prec' ≤ emin + 1) (Hprec : 2 * prec + 1 ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FTZ_exp emin prec) x)
+  (Fy : generic_format beta (FTZ_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1) (x - y) := by
+  sorry
