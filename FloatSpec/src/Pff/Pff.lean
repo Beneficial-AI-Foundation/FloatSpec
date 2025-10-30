@@ -320,6 +320,24 @@ theorem inj_abs (x : Int) :
     ⦃⇓_ => ⌜Int.ofNat (Int.natAbs x) = x⌝⦄ := by
   sorry
 
+-- Coq `positive` compatibility and `nat_of_P`
+structure Positive where
+  val : Nat
+
+noncomputable def nat_of_P (p : Positive) : Nat :=
+  p.val.succ
+
+-- Coq: `inject_nat_convert` — if p = Zpos q then Z_of_nat (nat_of_P q) = p
+noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Id Unit :=
+  pure ()
+
+theorem inject_nat_convert (p : Int) (q : Positive) :
+    ⦃⌜p = Int.ofNat (nat_of_P q)⌝⦄
+    inject_nat_convert_check p q
+    ⦃⇓_ => ⌜Int.ofNat (nat_of_P q) = p⌝⦄ := by
+  -- Trivial restatement in Lean; Coq version states for Zpos q.
+  sorry
+
 -- Coq: `Zabs_eq_opp` — if x ≤ 0 then |x| = -x
 noncomputable def Zabs_eq_opp_check (x : Int) : Id Unit :=
   pure ()
@@ -360,13 +378,6 @@ theorem Zle_Zpred (x y : Int) :
     ⦃⇓_ => ⌜x ≤ Int.pred y⌝⦄ := by
   sorry
 
--- Coq `positive` compatibility and `nat_of_P`
-structure Positive where
-  val : Nat
-
-noncomputable def nat_of_P (p : Positive) : Nat :=
-  p.val.succ
-
 -- Coq: `NconvertO` — nat_of_P p <> 0 for positive p
 noncomputable def NconvertO_check (p : Positive) : Id Unit :=
   pure ()
@@ -375,6 +386,17 @@ theorem NconvertO (p : Positive) :
     ⦃⌜True⌝⦄
     NconvertO_check p
     ⦃⇓_ => ⌜nat_of_P p ≠ 0⌝⦄ := by
+  sorry
+
+-- Coq: `convert_not_O` — nat_of_P p <> 0 for positive p (alias of NconvertO)
+noncomputable def convert_not_O_check (p : Positive) : Id Unit :=
+  pure ()
+
+theorem convert_not_O (p : Positive) :
+    ⦃⌜True⌝⦄
+    convert_not_O_check p
+    ⦃⇓_ => ⌜nat_of_P p ≠ 0⌝⦄ := by
+  -- Mirrors `NconvertO`; proof deferred per import task.
   sorry
 
 -- Coq: `Zle_Zabs` — z ≤ |z|

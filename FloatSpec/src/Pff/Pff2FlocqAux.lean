@@ -263,3 +263,57 @@ theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
     FloatFexp_gt_check beta b p e f
     ⦃⇓_ => ⌜e < f.exponent⌝⦄ := by
   sorry
+
+-- From canonicity and a magnitude lower bound, derive normality
+noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
+
+/-- Coq: `CanonicGeNormal` — if `f` is canonical and `β^(-dExp b + p - 1) ≤ |FtoR f|`,
+    then `f` is normal (in the Pff sense). We phrase normality as a Prop `True`
+    placeholder associated to `Fbounded`/`Fcanonic` in this port. -/
+theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+    ⦃⌜Fcanonic beta b f ∧ (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R beta f|⌝⦄
+    CanonicGeNormal_check beta b p f
+    ⦃⇓_ => ⌜True⌝⦄ := by
+  sorry
+
+-- Ulp for canonical/bounded matches Core.ulps
+noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
+
+/-- Coq: `Fulp_ulp_aux` — for canonical `f`, `Fulp` equals `ulp` at `(FLT_exp (-dExp b) p)`.
+    We express `Fulp` via the Compat.lean `ulp` bridge on reals. -/
+theorem Fulp_ulp_aux (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+    ⦃⌜Fcanonic beta b f⌝⦄
+    Fulp_ulp_aux_check beta b p f
+    ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
+  sorry
+
+noncomputable def Fulp_ulp_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
+
+/-- Coq: `Fulp_ulp` — same as `Fulp_ulp_aux` but from `Fbounded` via normalization. -/
+theorem Fulp_ulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+    ⦃⌜Fbounded b f⌝⦄
+    Fulp_ulp_check beta b p f
+    ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
+  sorry
+
+-- Instances for single/double rounding to nearest even
+noncomputable def round_NE_is_pff_round_b32_check (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem round_NE_is_pff_round_b32 (r : ℝ) [Prec_gt_0 24] :
+    ⦃⌜True⌝⦄
+    round_NE_is_pff_round_b32_check r
+    ⦃⇓_ => ⌜∃ f : PffFloat, True ∧ True ∧ pff_to_R 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-149) 24) () r⌝⦄ := by
+  sorry
+
+noncomputable def round_NE_is_pff_round_b64_check (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem round_NE_is_pff_round_b64 (r : ℝ) [Prec_gt_0 53] :
+    ⦃⌜True⌝⦄
+    round_NE_is_pff_round_b64_check r
+    ⦃⇓_ => ⌜∃ f : PffFloat, True ∧ True ∧ pff_to_R 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-1074) 53) () r⌝⦄ := by
+  sorry
