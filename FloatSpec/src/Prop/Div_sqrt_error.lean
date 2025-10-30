@@ -68,6 +68,29 @@ lemma sqrt_error_N_FLX_aux2 (x : ℝ)
 local notation "uro" => u_ro beta prec
 
 
+/-- Positivity helper. -/
+lemma om1ds1p2u_ro_pos :
+  0 ≤ 1 - 1 / Real.sqrt (1 + 2 * uro) := by
+  sorry
+
+/-- Monotone bound helper. -/
+lemma om1ds1p2u_ro_le_u_rod1pu_ro :
+  1 - 1 / Real.sqrt (1 + 2 * uro) ≤ uro / (1 + uro) := by
+  sorry
+
+/-- Nonnegativity helper. -/
+lemma s1p2u_rom1_pos :
+  0 ≤ Real.sqrt (1 + 2 * uro) - 1 := by
+  sorry
+
+
+/-- Auxiliary inequality for sqrt error. -/
+lemma sqrt_error_N_FLX_aux3 :
+  u_ro beta prec / Real.sqrt (1 + 4 * u_ro beta prec)
+    ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) := by
+  sorry
+
+
 
 /-- Division error in FLT -/
 theorem div_error_FLT (emin : Int) (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
