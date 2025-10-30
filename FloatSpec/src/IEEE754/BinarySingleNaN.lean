@@ -457,6 +457,30 @@ theorem B2R_SF2B (x : StandardFloat) :
   -- Case split on x; follows definitions.
   exact sorry
 
+-- Coq: is_nan_SF_B2SF — NaN predicate after B2SF matches BSN-side NaN
+def is_nan_SF_B2SF_check (x : B754) : Id Bool :=
+  pure (is_nan_SF (B2SF_BSN x))
+
+theorem is_nan_SF_B2SF (x : B754) :
+  ⦃⌜True⌝⦄
+  is_nan_SF_B2SF_check x
+  ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
+  intro _
+  -- Proof deferred; by cases on `x`.
+  exact sorry
+
+-- Coq: is_finite_SF_B2SF — finiteness after B2SF matches BSN-side finiteness
+def is_finite_SF_B2SF_check (x : B754) : Id Bool :=
+  pure (is_finite_SF (B2SF_BSN x))
+
+theorem is_finite_SF_B2SF (x : B754) :
+  ⦃⌜True⌝⦄
+  is_finite_SF_B2SF_check x
+  ⦃⇓result => ⌜result = BSN_is_finite x⌝⦄ := by
+  intro _
+  -- Proof deferred; by cases on `x`.
+  exact sorry
+
 -- Coq: is_finite_BSN2B — finiteness preserved through BSN2B
 def is_finite_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Id Bool :=
   pure (is_finite_FF (BSN2B s payload x))

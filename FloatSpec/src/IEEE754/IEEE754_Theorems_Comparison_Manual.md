@@ -390,6 +390,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
   - `is_finite_strict_B2R` → `is_finite_strict_B2R [FloatSpec/src/IEEE754/BinarySingleNaN.lean:172]` (spec-variant, hoare)
   - `is_finite_strict_SF2B` → `is_finite_strict_SF2B [FloatSpec/src/IEEE754/BinarySingleNaN.lean:242]` (spec-variant, hoare)
   - `match_SF2B` → `match_SF2B [FloatSpec/src/IEEE754/BinarySingleNaN.lean:67]` (exact)
+  - `is_nan_SF_B2SF` → `is_nan_SF_B2SF [FloatSpec/src/IEEE754/BinarySingleNaN.lean:464]` (exact)
+  - `is_finite_SF_B2SF` → `is_finite_SF_B2SF [FloatSpec/src/IEEE754/BinarySingleNaN.lean:476]` (exact)
 
 ## File: PrimFloat.v → PrimFloat.lean
 
