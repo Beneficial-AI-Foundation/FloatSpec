@@ -183,3 +183,47 @@ theorem Veltkamp_tail (emin prec s : Int) [Prec_gt_0 prec]
   sorry
 
 -- (reserved) underf_mult_aux and underf_mult_aux' will be added later
+
+/-!
+Underflow multiplication auxiliary lemmas (from Coq Pff2Flocq.v)
+
+We follow the project convention: introduce a `_check` function and state each
+theorem using the Hoare-triple style, leaving the proofs as `sorry` for now.
+-/
+
+-- Coq: `underf_mult_aux` — lower bound on |x*y| implies exponent sum bound
+noncomputable def underf_mult_aux_check (emin prec e : Int)
+    (x y : PffFloat) : Id Unit :=
+  pure ()
+
+/-- Coq: `underf_mult_aux` — for `x, y` representable at `(FLT_exp emin prec)`,
+    if `(beta : ℝ)^(e + 2*prec - 1) ≤ |FtoR x * FtoR y|` then
+    `e ≤ Fexp x + Fexp y`. Here we model `FtoR` by `pff_to_R` and `Fexp` by
+    the `exponent` field of `PffFloat`. -/
+theorem underf_mult_aux (emin prec e : Int) [Prec_gt_0 prec]
+    (x y : PffFloat) :
+    ⦃⌜generic_format beta (FLT_exp emin prec) (pff_to_R beta x) ∧
+        generic_format beta (FLT_exp emin prec) (pff_to_R beta y) ∧
+        (beta : ℝ) ^ (e + 2 * prec - 1) ≤ |pff_to_R beta x * pff_to_R beta y|⌝⦄
+    underf_mult_aux_check emin prec e x y
+    ⦃⇓_ => ⌜e ≤ x.exponent + y.exponent⌝⦄ := by
+  sorry
+
+-- Coq: `underf_mult_aux'` — instantiated at `e := -dExp b` in Coq; here we
+-- keep a general statement phrased directly on `emin, prec` for compatibility.
+noncomputable def underf_mult_aux'_check (emin prec : Int)
+    (x y : PffFloat) : Id Unit :=
+  pure ()
+
+/- Coq: `underf_mult_aux'` — specialized bound using `emin` instead of an
+    explicit `e`. With our simplified model, the precondition uses
+    `(beta : ℝ)^(-emin + 2*prec - 1)`. -/
+theorem underf_mult_aux' (emin prec : Int) [Prec_gt_0 prec]
+    (x y : PffFloat) :
+    ⦃⌜generic_format beta (FLT_exp emin prec) (pff_to_R beta x) ∧
+        generic_format beta (FLT_exp emin prec) (pff_to_R beta y) ∧
+        (beta : ℝ) ^ (-emin + 2 * prec - 1) ≤ |pff_to_R beta x * pff_to_R beta y|⌝⦄
+    underf_mult_aux'_check emin prec x y
+    ⦃⇓_ => ⌜-emin ≤ x.exponent + y.exponent⌝⦄ := by
+  sorry
+-- (we will add `underf_mult_aux'` after verifying `underf_mult_aux` compiles)
