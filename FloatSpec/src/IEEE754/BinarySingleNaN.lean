@@ -289,6 +289,15 @@ def BSN2B (s : Bool) (payload : Nat) (x : B754) : FullFloat :=
   | B754.B754_infinity b => FullFloat.F754_infinity b
   | B754.B754_finite b m e => FullFloat.F754_finite b m e
 
+-- A variant of the bridge that requires a non-NaN witness, mirroring Coq's `BSN2B'`.
+-- For non-NaN inputs, it returns the corresponding `FullFloat` without needing a NaN payload.
+def BSN2B' (x : B754) (nx : BSN_is_nan x = false) : FullFloat :=
+  match x with
+  | B754.B754_zero b => FullFloat.F754_zero b
+  | B754.B754_infinity b => FullFloat.F754_infinity b
+  | B754.B754_finite b m e => FullFloat.F754_finite b m e
+  | B754.B754_nan => nomatch nx
+
 -- Coq: B2BSN_BSN2B — roundtrip through the bridge
 def B2BSN_BSN2B_check {prec emax : Int} (s : Bool) (payload : Nat) (x : B754) : Id B754 :=
   pure (B2BSN (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) (BSN2B s payload x)))
@@ -300,6 +309,103 @@ theorem B2BSN_BSN2B {prec emax : Int} (s : Bool) (payload : Nat) (x : B754) :
   intro _
   unfold B2BSN_BSN2B_check BSN2B B2BSN FF2B
   cases x <;> rfl
+
+-- Coq: Bsign_BSN2B — sign preserved by BSN2B on non-NaN values
+def Bsign_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Id Bool :=
+  pure (sign_FF (BSN2B s payload x))
+
+theorem Bsign_BSN2B (s : Bool) (payload : Nat) (x : B754)
+  (nx : BSN_is_nan x = false) :
+  ⦃⌜True⌝⦄
+  Bsign_BSN2B_check s payload x
+  ⦃⇓result => ⌜result = BSN_sign x⌝⦄ := by
+  intro _
+  -- Proof deferred; by cases on x using nx to exclude NaN case
+  exact sorry
+
+-- Coq: B2BSN_BSN2B' — roundtrip through the non-NaN bridge
+def B2BSN_BSN2B'_check {prec emax : Int} (x : B754)
+  (nx : BSN_is_nan x = false) : Id B754 :=
+  pure (B2BSN (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) (BSN2B' x nx)))
+
+theorem B2BSN_BSN2B' {prec emax : Int} (x : B754)
+  (nx : BSN_is_nan x = false) :
+  ⦃⌜True⌝⦄
+  B2BSN_BSN2B'_check (prec:=prec) (emax:=emax) x nx
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  unfold B2BSN_BSN2B'_check BSN2B' B2BSN FF2B
+  cases x <;> simp [BSN_is_nan] at nx <;> rfl
+
+-- Coq: B2R_BSN2B' — real semantics preserved through BSN2B' on non-NaN values
+noncomputable def B2R_BSN2B'_check (x : B754)
+  (nx : BSN_is_nan x = false) : Id ℝ :=
+  pure (FF2R 2 (BSN2B' x nx))
+
+theorem B2R_BSN2B' (x : B754)
+  (nx : BSN_is_nan x = false) :
+  ⦃⌜True⌝⦄
+  B2R_BSN2B'_check x nx
+  ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
+  intro _
+  unfold B2R_BSN2B'_check BSN2B'
+  cases x <;> simp [B754_to_R, BSN_is_nan] at nx <;> rfl
+
+-- Coq: B2FF_BSN2B' — standard full-float view after BSN2B'
+def B2FF_BSN2B'_check {prec emax : Int} (x : B754)
+  (nx : BSN_is_nan x = false) : Id FullFloat :=
+  pure (B2FF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) (BSN2B' x nx)))
+
+theorem B2FF_BSN2B' {prec emax : Int} (x : B754)
+  (nx : BSN_is_nan x = false) :
+  ⦃⌜True⌝⦄
+  B2FF_BSN2B'_check (prec:=prec) (emax:=emax) x nx
+  ⦃⇓result => ⌜result = SF2FF (B2SF_BSN x)⌝⦄ := by
+  intro _
+  unfold B2FF_BSN2B'_check BSN2B' B2SF_BSN
+  cases x <;> simp [BSN_is_nan] at nx <;> rfl
+
+-- Coq: Bsign_BSN2B' — sign preserved through BSN2B' on non-NaN values
+def Bsign_BSN2B'_check (x : B754)
+  (nx : BSN_is_nan x = false) : Id Bool :=
+  pure (sign_FF (BSN2B' x nx))
+
+theorem Bsign_BSN2B' (x : B754)
+  (nx : BSN_is_nan x = false) :
+  ⦃⌜True⌝⦄
+  Bsign_BSN2B'_check x nx
+  ⦃⇓result => ⌜result = BSN_sign x⌝⦄ := by
+  intro _
+  unfold Bsign_BSN2B'_check BSN2B'
+  cases x <;> simp [BSN_is_nan, BSN_sign] at nx <;> rfl
+
+-- Coq: is_finite_BSN2B' — finiteness preserved through BSN2B'
+def is_finite_BSN2B'_check (x : B754)
+  (nx : BSN_is_nan x = false) : Id Bool :=
+  pure (is_finite_FF (BSN2B' x nx))
+
+theorem is_finite_BSN2B' (x : B754)
+  (nx : BSN_is_nan x = false) :
+  ⦃⌜True⌝⦄
+  is_finite_BSN2B'_check x nx
+  ⦃⇓result => ⌜result = BSN_is_finite x⌝⦄ := by
+  intro _
+  unfold is_finite_BSN2B'_check BSN2B'
+  cases x <;> simp [BSN_is_nan, BSN_is_finite] at nx <;> rfl
+
+-- Coq: is_nan_BSN2B' — NaN predicate preserved through BSN2B' (trivially false)
+def is_nan_BSN2B'_check (x : B754)
+  (nx : BSN_is_nan x = false) : Id Bool :=
+  pure (is_nan_FF (BSN2B' x nx))
+
+theorem is_nan_BSN2B' (x : B754)
+  (nx : BSN_is_nan x = false) :
+  ⦃⌜True⌝⦄
+  is_nan_BSN2B'_check x nx
+  ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
+  intro _
+  unfold is_nan_BSN2B'_check BSN2B'
+  cases x <;> simp [BSN_is_nan] at nx <;> rfl
 
 -- Coq: B2R_BSN2B — real semantics preserved through BSN2B
 noncomputable def B2R_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Id ℝ :=
