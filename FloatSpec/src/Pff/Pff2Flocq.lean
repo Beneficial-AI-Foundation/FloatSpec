@@ -120,3 +120,16 @@ theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool
         let b  := round_flt (dx + dy)
         a + b = x + y⌝⦄ := by
   sorry
+
+-- Coq: `C_format` — (β^s + 1) is in generic format for FLT(emin, prec)
+noncomputable def C_format_check (emin prec s : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `C_format` — under the usual small-precision side conditions,
+    the real `(β^s + 1)` is representable in `generic_format β (FLT_exp emin prec)`.
+    We capture the side conditions in the Hoare precondition. -/
+theorem C_format (emin prec s : Int) [Prec_gt_0 prec] :
+    ⦃⌜(2 ≤ s) ∧ (s ≤ prec - 2) ∧ (emin ≤ 0)⌝⦄
+    C_format_check emin prec s
+    ⦃⇓_ => ⌜generic_format beta (FLT_exp emin prec) ((beta : ℝ) ^ s + 1)⌝⦄ := by
+  sorry
