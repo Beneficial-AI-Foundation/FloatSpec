@@ -314,6 +314,26 @@ lemma round_round_div_aux2
 -- (reserved for later) Coq: `round_round_mult_aux` and `round_round_mult`
 -- These will be added after `mag_mult_disj` compiles cleanly.
 
+/-- Coq: `round_round_div`
+    General double-rounding property for divisions under the structural
+    hypothesis `round_round_div_hyp` and an even-base assumption on `beta`.
+    We mirror the Coq statement and leave the proof as a placeholder. -/
+lemma round_round_div
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Ebeta : ∃ n : Int, beta = 2 * n)
+  (Hexp : round_round_div_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_nz : y ≠ 0)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x / y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x / y) := by
+  sorry
+
 /-- Coq: `mag_plus_disj`
     For `0 < y ≤ x`, the magnitude of `x + y` is either the same as
     the magnitude of `x` or exactly one greater. -/
