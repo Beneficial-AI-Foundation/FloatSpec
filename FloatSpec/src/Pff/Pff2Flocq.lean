@@ -327,3 +327,36 @@ theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
     ErrFMA_correct_check emin prec choice a x y
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `mult_error_FLT_ge_bpow'`
+
+In Coq (section ErrFMA_V2), the following lemma relates a magnitude lower
+bound on a product to a corresponding lower bound on the rounding error when
+rounding to nearest-even at precision `prec` with `FLT_exp emin prec`.
+
+We mirror the statement using the hoare-triple style and Lean's
+`FloatSpec.Calc.Round.round` operator. The proof is deferred.
+-/
+
+noncomputable def mult_error_FLT_ge_bpow'_check (emin prec e : Int)
+    (a b : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `mult_error_FLT_ge_bpow'` — assuming `a` and `b` are in
+    `generic_format 2 (FLT_exp emin prec)` and either the product is zero or
+    has magnitude at least `(2 : ℝ)^e`, then either the rounding error is zero
+    or it has magnitude at least `(2 : ℝ)^(e + 1 - 2*prec)` when rounding
+    `a*b` to nearest-even at `(emin, prec)`.
+    We phrase the result with `round_flt := FloatSpec.Calc.Round.round 2
+    (FLT_exp emin prec) ()`. -/
+theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
+    (a b : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
+        generic_format 2 (FLT_exp emin prec) b ∧
+        (a * b = 0 ∨ (2 : ℝ) ^ e ≤ |a * b|)⌝⦄
+    mult_error_FLT_ge_bpow'_check emin prec e a b
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let err := a * b - round_flt (a * b)
+            err = 0 ∨ (2 : ℝ) ^ (e + 1 - 2 * prec) ≤ |err|⌝⦄ := by
+  sorry
