@@ -362,6 +362,22 @@ theorem is_nan_equiv (prec emax : Int)
   -- Proof deferred; follows via `B2SF_Prim2B` cases.
   exact sorry
 
+-- Coq: get_sign_equiv — sign bit correspondence
+noncomputable def get_sign_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id Bool :=
+  pure (prim_sign x)
+
+theorem get_sign_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  get_sign_equiv_check prec emax x
+  ⦃⇓result => ⌜result = Bsign (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `get_sign_equiv` via `B2SF_Prim2B`.
+  exact sorry
+
 -- Binary-side boolean comparisons used in Coq's eqb/ltb/leb lemmas
 noncomputable def Beqb (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
