@@ -1638,6 +1638,10 @@ noncomputable def Fdigit_opp_check {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
   pure ()
 
+-- Minimal placeholder used by digit lemmas
+noncomputable def Fdigit {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat := 0
+
 theorem Fdigit_opp {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
@@ -1712,8 +1716,7 @@ def pff_to_flocq_rnd (mode : PffRounding) : ℝ → Int := by
 noncomputable def maxDiv (v : Int) (p : Nat) : Nat := 0
 
 -- Number of significant digits of a float at a given radix (placeholder)
-noncomputable def Fdigit {beta : Int}
-    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat := 0
+-- (moved earlier)
 
 -- Shift operation on floats (placeholder, no-op)
 noncomputable def Fshift {beta : Int}
