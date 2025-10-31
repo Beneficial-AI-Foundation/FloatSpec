@@ -346,6 +346,22 @@ theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   -- Proof deferred; mirrors Coq's `two_equiv`.
   exact sorry
 
+-- Coq: is_nan_equiv — NaN classifier correspondence
+noncomputable def is_nan_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id Bool :=
+  pure (prim_is_nan x)
+
+theorem is_nan_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  is_nan_equiv_check prec emax x
+  ⦃⇓result => ⌜result = is_nan_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows via `B2SF_Prim2B` cases.
+  exact sorry
+
 -- Binary-side boolean comparisons used in Coq's eqb/ltb/leb lemmas
 noncomputable def Beqb (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
