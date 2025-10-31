@@ -99,13 +99,27 @@ def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop := True
 
 -- Minimal skeletons for min/max rounding predicates used by Pff.v theorems
 structure Fbound_skel where
-  dummy : Unit := ()
+  -- Minimal exponent field needed by several Pff theorems (e.g. RleRoundedAbs)
+  dExp : Int := 0
 
 def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
   fun _ _ => True
 
 def isMax {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
   fun _ _ => True
+
+-- ---------------------------------------------------------------------------
+-- Closest/Normal placeholders (from Pff.v sections)
+
+-- Coq-style rounding relation to the closest representable float (placeholder)
+def Closest {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+-- Coq-style normality predicate (placeholder)
+def Fnormal {beta : Int}
+    (radix : ℝ) (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
 
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
@@ -138,6 +152,26 @@ theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
     RoundedProjector_check P
     ⦃⇓_ => ⌜ProjectorP P⌝⦄ := by
+  sorry
+
+-- ---------------------------------------------------------------------------
+-- RleRoundedAbs (Coq: Pff.v) — lower bound on |r| from rounding to nearest
+
+noncomputable def RleRoundedAbs_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) (p : Int)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RleRoundedAbs` — if `Closest bo radix r f`, `Fnormal radix bo f` and
+    `-(dExp bo) < Fexp f`, then
+    `((radix ^ (p - 1) + - (1 / (2 * radix))) * radix ^ (Fexp f) ≤ |r|)`.
+    We mirror the structure and leave proof deferred. -/
+theorem RleRoundedAbs {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) (p : Int)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
+    ⦃⌜Closest (beta:=beta) bo radix r f ∧ Fnormal (beta:=beta) radix bo f ∧ (-bo.dExp < f.Fexp)⌝⦄
+    RleRoundedAbs_check (beta:=beta) bo radix p f r
+    ⦃⇓_ => ⌜((radix ^ (p - 1) + - (1 / (2 * radix))) * (radix ^ (f.Fexp)) ≤ |r|)⌝⦄ := by
   sorry
 
 -- Coq: `MinCompatible` — CompatibleP (isMin b radix)
