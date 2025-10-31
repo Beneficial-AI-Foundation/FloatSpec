@@ -356,7 +356,9 @@ theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) b ∧
         (a * b = 0 ∨ (2 : ℝ) ^ e ≤ |a * b|)⌝⦄
     mult_error_FLT_ge_bpow'_check emin prec e a b
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) (); let err := a * b - round_flt (a * b); err = 0 ∨ (2 : ℝ) ^ (e + 1 - 2 * prec) ≤ |err|⌝⦄ := by
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let err := a * b - round_flt (a * b)
+            err = 0 ∨ (2 : ℝ) ^ (e + 1 - 2 * prec) ≤ |err|⌝⦄ := by
   sorry
 
 /-!
