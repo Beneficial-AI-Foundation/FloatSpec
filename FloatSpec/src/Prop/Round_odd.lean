@@ -251,3 +251,181 @@ lemma mag_d (x : ℝ)
   (FloatSpec.Core.Raux.mag beta (F2R d)).run
     = (FloatSpec.Core.Raux.mag beta x).run := by
   sorry
+
+/-- Midpoint between the DN/UP witnesses used in Coq's section `Fcore_rnd_odd`.
+    We keep it as a plain real number constructed from `d` and `u`. -/
+noncomputable def m (d u : FloatSpec.Core.Defs.FlocqFloat beta) : ℝ :=
+  (F2R d + F2R u) / 2
+
+/-- Coq: `Fexp_d`. If `0 < F2R d`, then the exponent of `d` equals
+    `fexp (mag x)`. We mirror the statement shape used by adjacent lemmas. -/
+lemma Fexp_d (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dPos : 0 < F2R d) :
+  d.Fexp = fexp ((FloatSpec.Core.Raux.mag beta x).run) := by
+  sorry
+
+/-- Coq: `format_bpow_x` (spec-variant). If `0 < F2R d`, then the radix-
+    power at `mag x` is in format. -/
+lemma format_bpow_x (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dPos : 0 < F2R d) :
+  generic_format beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)) := by
+  sorry
+
+/-- Coq: `format_bpow_d` (spec-variant). If `0 < F2R d`, then the radix-
+    power at `mag (F2R d)` is in format. -/
+lemma format_bpow_d (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dPos : 0 < F2R d) :
+  generic_format beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta (F2R d)).run)) := by
+  sorry
+
+/-- Coq: `d_le_m`. The down-rounded value is below the midpoint `m`. -/
+lemma d_le_m (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) :
+  F2R d ≤ m (beta := beta) d u := by
+  sorry
+
+/-- Coq: `m_le_u`. The midpoint `m` is below the up-rounded value. -/
+lemma m_le_u (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) :
+  m (beta := beta) d u ≤ F2R u := by
+  sorry
+
+/-- Coq: `mag_m`. If `0 < F2R d`, then `mag m = mag (F2R d)`. -/
+lemma mag_m (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dPos : 0 < F2R d) :
+  (FloatSpec.Core.Raux.mag beta (m (beta := beta) d u)).run
+    = (FloatSpec.Core.Raux.mag beta (F2R d)).run := by
+  sorry
+
+/-- Coq: `mag_m_0`. If `F2R d = 0`, then `mag m = mag (F2R u) - 1`. -/
+lemma mag_m_0 (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dZero : F2R d = 0) :
+  (FloatSpec.Core.Raux.mag beta (m (beta := beta) d u)).run
+    = (FloatSpec.Core.Raux.mag beta (F2R u)).run - 1 := by
+  sorry
+
+/-- Coq: `u'_eq`. If `0 < F2R d`, there exists a float with the same
+    real value as `u` and exponent equal to `Fexp d`. -/
+lemma u'_eq (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dPos : 0 < F2R d) :
+  ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R f = F2R u ∧ f.Fexp = d.Fexp := by
+  sorry
+
+/-- Coq: `m_eq`. If `0 < F2R d`, there exists a float whose value is `m`
+    and whose exponent is `fexp (mag x) - 1`. -/
+lemma m_eq (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dPos : 0 < F2R d) :
+  ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R f = m (beta := beta) d u ∧ f.Fexp = fexp ((FloatSpec.Core.Raux.mag beta x).run) - 1 := by
+  sorry
+
+/-- Coq: `m_eq_0`. If `F2R d = 0`, there exists a float whose value is `m`
+    and whose exponent is `fexp (mag (F2R u)) - 1`. -/
+lemma m_eq_0 (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dZero : F2R d = 0) :
+  ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R f = m (beta := beta) d u ∧ f.Fexp = fexp ((FloatSpec.Core.Raux.mag beta (F2R u)).run) - 1 := by
+  sorry
+
+/-- Coq: `fexp_m_eq_0`. If `F2R d = 0`, then `fexp (mag (F2R u) - 1) < fexp (mag (F2R u)) + 1`. -/
+lemma fexp_m_eq_0 (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dZero : F2R d = 0) :
+  fexp ((FloatSpec.Core.Raux.mag beta (F2R u)).run - 1)
+    < fexp ((FloatSpec.Core.Raux.mag beta (F2R u)).run) + 1 := by
+  sorry
+
+variable (fexpe : Int → Int)
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexpe]
+
+/-- Coq: `Fm`. The midpoint `m` is in the auxiliary format `fexpe`. -/
+lemma Fm (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (Hrel : ∀ e, fexpe e ≤ fexp e - 2) :
+  generic_format beta fexpe (m (beta := beta) d u) := by
+  sorry
+
+/-- Coq: `Zm`. There exists a canonical representative of `m` in `fexpe`
+    with an even mantissa. -/
+lemma Zm (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (Hrel : ∀ e, fexpe e ≤ fexp e - 2) :
+  ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R g = m (beta := beta) d u ∧
+    FloatSpec.Core.Generic_fmt.canonical beta fexpe g ∧
+    g.Fnum % 2 = 0 := by
+  sorry
