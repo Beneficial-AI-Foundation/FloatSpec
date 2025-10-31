@@ -302,23 +302,4 @@ theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
--- Coq lemma: `ErrFMA_bounded`
--- Within Section ErrFMA_V1 in Coq, given inputs `a, x, y` in format and using
--- the intermediate variables defined by the compensated-FMA scheme, the values
--- `r1`, `r2`, and `r3` are also in the target `generic_format`.
--- We mirror this using the Hoare-triple style; proofs are deferred.
-
-noncomputable def ErrFMA_bounded_check (emin prec : Int)
-    (choice : Int → Bool) (a x y : ℝ) : Id Unit :=
-  pure ()
-
-/-- Coq: `ErrFMA_bounded` — if `a, x, y` are representable in
-    `generic_format beta (FLT_exp emin prec)`, then for the standard
-    compensated-FMA intermediates, `r1`, `r2`, and `r3` are also in format.
-    Placeholder statement for now. -/
-theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
-    (choice : Int → Bool) (a x y : ℝ) :
-    ⦃⌜True⌝⦄
-    ErrFMA_bounded_check emin prec choice a x y
-    ⦃⇓_ => ⌜True⌝⦄ := by
-  sorry
+-- (reserved) ErrFMA_bounded will be added next after validating preceding lemmas
