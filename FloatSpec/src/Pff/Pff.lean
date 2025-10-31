@@ -226,6 +226,27 @@ theorem ClosestMinEq {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min⌝⦄ := by
   sorry
 
+-- Equality under strict-leaning midpoint toward max (Coq: `ClosestMaxEq`)
+noncomputable def ClosestMaxEq_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (r : ℝ)
+    (min max p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestMaxEq` — if `(min + max) < (2 * r)` and `p` is closest,
+    then the closest equals `max` at the real level. -/
+theorem ClosestMaxEq {beta : Int}
+    (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
+    (r : ℝ)
+    (min max p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r min ∧
+        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
+        _root_.F2R min + _root_.F2R max < 2 * r ∧
+        Closest (beta:=beta) bo radixR r p⌝⦄
+    ClosestMaxEq_check (beta:=beta) bo radixR r min max p
+    ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R max⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
