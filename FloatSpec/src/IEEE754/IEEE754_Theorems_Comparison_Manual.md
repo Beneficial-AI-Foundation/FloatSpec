@@ -388,6 +388,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `is_nan_Bldexp` → `is_nan_Bldexp [FloatSpec/src/IEEE754/BinarySingleNaN.lean:631]` (spec-variant, hoare)
  - `Bldexp_Bopp_NE` → `Bldexp_Bopp_NE [FloatSpec/src/IEEE754/BinarySingleNaN.lean:654]` (spec-variant, hoare)
  - `Bfrexp_correct_aux` → `Bfrexp_correct_aux [FloatSpec/src/IEEE754/BinarySingleNaN.lean:705]` (spec-variant, hoare)
+ - `is_nan_Bfrexp` → `is_nan_Bfrexp [FloatSpec/src/IEEE754/BinarySingleNaN.lean:671]` (spec-variant, hoare)
  - All other Coq declarations above → (no Lean counterpart)
 - `B2SF_SF2B` → `B2SF_SF2B [FloatSpec/src/IEEE754/BinarySingleNaN.lean:60]` (exact)
  - `B2SF_inj` → `B2SF_inj [FloatSpec/src/IEEE754/BinarySingleNaN.lean:157]` (exact)
