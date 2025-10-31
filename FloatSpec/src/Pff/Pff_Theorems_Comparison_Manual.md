@@ -1232,6 +1232,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `FmaxRep` → (no Lean counterpart)
 - `OddSEven` → `OddSEven [FloatSpec/src/Pff/Pff.lean:77]`
 - `EvenSOdd` → `EvenSOdd [FloatSpec/src/Pff/Pff.lean:86]`
+- `OddSEvenInv` → `OddSEvenInv [FloatSpec/src/Pff/Pff.lean:94]`
+- `EvenSOddInv` → `EvenSOddInv [FloatSpec/src/Pff/Pff.lean:103]`
 - `OddSEvenInv` → (no Lean counterpart)
 - `EvenSOddInv` → (no Lean counterpart)
 - `EvenO` → (no Lean counterpart)
