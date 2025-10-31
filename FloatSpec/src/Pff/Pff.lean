@@ -1220,6 +1220,18 @@ theorem MSB_abs {beta : Int}
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fabs x)⌝⦄ := by
   sorry
 
+-- Coq: `LSB_le_MSB` — for nonzero floats, least ≤ most significant bit
+noncomputable def LSB_le_MSB_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LSB_le_MSB {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜¬ is_Fzero x⌝⦄
+    LSB_le_MSB_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜LSB (beta:=beta) radix x ≤ MSB (beta:=beta) radix x⌝⦄ := by
+  sorry
+
 -- Coq: `Zlt_mult_simpl_l` — cancel positive multiplier on left for <
 noncomputable def Zlt_mult_simpl_l_check (a b c : Int) : Id Unit :=
   pure ()
