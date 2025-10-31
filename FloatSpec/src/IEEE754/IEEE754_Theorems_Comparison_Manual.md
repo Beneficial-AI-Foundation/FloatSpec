@@ -461,4 +461,6 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `B2Prim_Prim2B` → `B2Prim_Prim2B [FloatSpec/src/IEEE754/PrimFloat.lean:69]` (spec-variant, hoare)
 - `Prim2B_B2Prim` → `Prim2B_B2Prim [FloatSpec/src/IEEE754/PrimFloat.lean:100]` (spec-variant, hoare)
 - `compare_equiv` → `compare_equiv [FloatSpec/src/IEEE754/PrimFloat.lean:75]` (spec-variant, hoare)
+- `B2SF_Prim2B` → `B2SF_Prim2B [FloatSpec/src/IEEE754/PrimFloat.lean:77]` (spec-variant, hoare)
+- `Prim2SF_B2Prim` → `Prim2SF_B2Prim [FloatSpec/src/IEEE754/PrimFloat.lean:91]` (spec-variant, hoare)
 - All other Coq declarations above → (no Lean counterpart)
