@@ -1638,6 +1638,10 @@ noncomputable def Fdigit_opp_check {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
   pure ()
 
+-- Forward declaration: minimal placeholder for `Fdigit` used below
+noncomputable def Fdigit {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat := 0
+
 theorem Fdigit_opp {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
@@ -1678,7 +1682,7 @@ theorem Fabs_correct {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Fabs_correct_check (beta:=beta) x
-    ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = | _root_.F2R x |⌝⦄ := by
+    ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = |_root_.F2R x|⌝⦄ := by
   sorry
 
 -- Compatibility operations
