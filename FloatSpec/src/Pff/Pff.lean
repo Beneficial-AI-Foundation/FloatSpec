@@ -1240,6 +1240,18 @@ theorem FshiftFdigit {beta : Int}
             Fdigit (beta:=beta) radix x + n⌝⦄ := by
   sorry
 
+-- Coq: `FshiftCorrect` — shifting does not change the real value
+noncomputable def FshiftCorrect_check {beta : Int}
+    (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FshiftCorrect {beta : Int}
+    (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    FshiftCorrect_check (beta:=beta) radix n x
+    ⦃⇓_ => ⌜_root_.F2R (Fshift (beta:=beta) radix n x) = _root_.F2R x⌝⦄ := by
+  sorry
+
 -- Least significant bit position of a float (placeholder definition)
 noncomputable def LSB {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
