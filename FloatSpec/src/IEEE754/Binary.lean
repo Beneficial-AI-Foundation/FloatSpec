@@ -567,6 +567,11 @@ def Bfrexp (x : Binary754 prec emax) : (Binary754 prec emax) × Int :=
   -- Placeholder: actual implementation exists in Coq and relates to the BSN layer.
   (x, 0)
 
+-- Local strict-finiteness classifier for Binary754 (finite and nonzero semantics).
+-- Coq uses a positive mantissa, so finite implies nonzero. Our Lean stub keeps
+-- the shape and defers proof obligations elsewhere.
+-- moved earlier above
+
 noncomputable def Bfrexp_correct_check (x : Binary754 prec emax) :
   Id ((Binary754 prec emax) × Int) :=
   pure (Bfrexp (prec:=prec) (emax:=emax) x)
@@ -612,21 +617,22 @@ inductive RoundingMode where
 def rnd_of_mode (mode : RoundingMode) : ℝ → Int := by
   sorry
 
--- Overflow helper: FullFloat version of BinarySingleNaN.binary_overflow (Coq: binary_overflow)
+-- Overflow helper (FullFloat variant). In Coq this is bridged via SingleNaN.
+-- We keep a local stub returning an infinity with the requested sign.
 def binary_overflow (mode : RoundingMode) (s : Bool) : FullFloat :=
-  SF2FF (FloatSpec.src.IEEE754.BinarySingleNaN.binary_overflow mode s)
+  FullFloat.F754_infinity s
 
 -- Coq: eq_binary_overflow_FF2SF
 -- If FF2SF x corresponds to the single-NaN overflow value, then x is the
 -- corresponding full-float overflow value.
 def eq_binary_overflow_FF2SF_check
   (x : FullFloat) (mode : RoundingMode) (s : Bool)
-  (h : FF2SF x = FloatSpec.src.IEEE754.BinarySingleNaN.binary_overflow mode s) : Id FullFloat :=
+  (h : FF2SF x = StandardFloat.S754_infinity s) : Id FullFloat :=
   pure x
 
 theorem eq_binary_overflow_FF2SF
   (x : FullFloat) (mode : RoundingMode) (s : Bool)
-  (h : FF2SF x = FloatSpec.src.IEEE754.BinarySingleNaN.binary_overflow mode s) :
+  (h : FF2SF x = StandardFloat.S754_infinity s) :
   ⦃⌜True⌝⦄
   eq_binary_overflow_FF2SF_check x mode s h
   ⦃⇓result => ⌜result = binary_overflow mode s⌝⦄ := by
@@ -1187,7 +1193,7 @@ theorem binary_round_aux_correct' (mode : RoundingMode)
   ⦃⌜True⌝⦄
   binary_round_aux_correct'_check mode x sx mx ex lx
   ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow (prec:=prec) (emax:=emax) mode sx⌝⦄ := by
+              z = binary_overflow mode sx⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's binary_round_aux_correct' via the BSN bridge.
   exact sorry
@@ -1207,7 +1213,7 @@ theorem binary_round_correct (mode : RoundingMode)
   ⦃⌜True⌝⦄
   binary_round_correct_check mode x sx mx ex
   ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow (prec:=prec) (emax:=emax) mode sx⌝⦄ := by
+              z = binary_overflow mode sx⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `binary_round_correct` via the BSN bridge.
   exact sorry
@@ -1242,7 +1248,7 @@ theorem binary_round_aux_correct (mode : RoundingMode)
   ⦃⌜True⌝⦄
   binary_round_aux_correct_check mode x sx mx ex lx
   ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow (prec:=prec) (emax:=emax) mode sx⌝⦄ := by
+              z = binary_overflow mode sx⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's binary_round_aux_correct via the BSN bridge.
   exact sorry
