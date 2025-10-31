@@ -1621,6 +1621,18 @@ theorem Fplus_correct {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (Fplus (beta:=beta) x y) = _root_.F2R x + _root_.F2R y⌝⦄ := by
   sorry
 
+-- Coq: `Fopp_Fopp` — involutive property of float negation
+noncomputable def Fopp_Fopp_check {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fopp_Fopp {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fopp_Fopp_check (beta:=beta) p
+    ⦃⇓_ => ⌜Fopp (beta:=beta) (Fopp (beta:=beta) p) = p⌝⦄ := by
+  sorry
+
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by
   sorry
