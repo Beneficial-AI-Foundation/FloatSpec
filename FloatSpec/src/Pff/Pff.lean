@@ -110,6 +110,46 @@ theorem EvenSOddInv (n : Int) :
     ⦃⇓_ => ⌜Odd n⌝⦄ := by
   sorry
 
+-- Coq: `EvenO` — zero is even
+noncomputable def EvenO_check : Id Unit :=
+  pure ()
+
+theorem EvenO :
+    ⦃⌜True⌝⦄
+    EvenO_check
+    ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
+  sorry
+
+-- Coq: `Odd1` — one is odd
+noncomputable def Odd1_check : Id Unit :=
+  pure ()
+
+theorem Odd1 :
+    ⦃⌜True⌝⦄
+    Odd1_check
+    ⦃⇓_ => ⌜Odd (1 : Int)⌝⦄ := by
+  sorry
+
+-- Coq: `OddOpp` — odd is preserved by integer negation
+noncomputable def OddOpp_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem OddOpp (z : Int) :
+    ⦃⌜Odd z⌝⦄
+    OddOpp_check z
+    ⦃⇓_ => ⌜Odd (-z)⌝⦄ := by
+  sorry
+
+-- Coq: `EvenOpp` — even is preserved by integer negation
+noncomputable def EvenOpp_check (z : Int) : Id Unit :=
+  pure ()
+
+theorem EvenOpp (z : Int) :
+    ⦃⌜Even z⌝⦄
+    EvenOpp_check z
+    ⦃⇓_ => ⌜Even (-z)⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- Rounded-mode predicate framework (Coq FRound section, minimized shell)
 -- We provide lightweight predicate encodings to state meta-theorems such as
