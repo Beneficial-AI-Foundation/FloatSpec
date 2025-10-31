@@ -51,6 +51,11 @@ def prim_to_binary (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) : Binary754 prec emax := by
   sorry
 
+-- Bridge view: StandardFloat image of a PrimFloat via Binary754
+noncomputable def Prim2SF (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : StandardFloat :=
+  B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)
+
 -- Correctness theorems
 theorem prim_add_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : Binary754 prec emax) :
@@ -63,6 +68,20 @@ theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
   binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) = 
   prim_mul (binary_to_prim prec emax x) (binary_to_prim prec emax y) := by
   sorry
+
+-- Coq: B2SF_Prim2B — standard view after Prim→Binary equals Prim2SF
+def B2SF_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id StandardFloat :=
+  pure (B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
+
+theorem B2SF_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  B2SF_Prim2B_check prec emax x
+  ⦃⇓result => ⌜result = Prim2SF prec emax x⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `B2SF_Prim2B` round-trip property.
+  exact sorry
 
 -- Coq: compare_equiv — comparison correspondence between PrimFloat and Binary754
 noncomputable def prim_compare (x y : PrimFloat) : Option Int :=
