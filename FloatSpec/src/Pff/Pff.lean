@@ -659,6 +659,16 @@ theorem Zmin_Zle (z1 z2 z3 : Int) :
     ⦃⇓_ => ⌜z1 ≤ min z2 z3⌝⦄ := by
   sorry
 
+-- Coq: `Zmin_Zlt` — if z1 < z2 and z1 < z3 then z1 < min z2 z3
+noncomputable def Zmin_Zlt_check (z1 z2 z3 : Int) : Id Unit :=
+  pure ()
+
+theorem Zmin_Zlt (z1 z2 z3 : Int) :
+    ⦃⌜z1 < z2 ∧ z1 < z3⌝⦄
+    Zmin_Zlt_check z1 z2 z3
+    ⦃⇓_ => ⌜z1 < min z2 z3⌝⦄ := by
+  sorry
+
 -- Coq: `Zpred_Zopp_Zs` — predecessor of negation equals negation of successor
 noncomputable def Zpred_Zopp_Zs_check (z : Int) : Id Unit :=
   pure ()
