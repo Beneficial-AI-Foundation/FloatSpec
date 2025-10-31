@@ -262,6 +262,21 @@ theorem ClosestMonotone {beta : Int}
     ⦃⇓_ => ⌜MonotoneP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
+-- Rounded-mode packaging for `Closest` (Coq: `ClosestRoundedModeP`)
+noncomputable def ClosestRoundedModeP_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestRoundedModeP` — the `Closest` relation forms a `RoundedModeP`.
+    This gathers totality, compatibility, min-or-max disjunction and monotonicity
+    into the `RoundedModeP` bundle for `Closest`. -/
+theorem ClosestRoundedModeP {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) :
+    ⦃⌜True⌝⦄
+    ClosestRoundedModeP_check (beta:=beta) bo radix
+    ⦃⇓_ => ⌜RoundedModeP (Closest (beta:=beta) bo radix)⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
