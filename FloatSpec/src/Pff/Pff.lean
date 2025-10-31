@@ -1101,3 +1101,53 @@ theorem digitInv (n : Int) (q : Int) (r : Nat) :
     digitInv_check n q r
     ⦃⇓_ => ⌜digit n q = r⌝⦄ := by
   sorry
+
+-- Coq: `digit_monotone` — if |p| ≤ |q| then digit n p ≤ digit n q
+noncomputable def digit_monotone_check (n : Int) (p q : Int) : Id Unit :=
+  pure ()
+
+theorem digit_monotone (n : Int) (p q : Int) :
+    ⦃⌜|p| ≤ |q|⌝⦄
+    digit_monotone_check n p q
+    ⦃⇓_ => ⌜digit n p ≤ digit n q⌝⦄ := by
+  sorry
+
+-- Coq: `digitNotZero` — if q ≠ 0 then 0 < digit n q
+noncomputable def digitNotZero_check (n : Int) (q : Int) : Id Unit :=
+  pure ()
+
+theorem digitNotZero (n : Int) (q : Int) :
+    ⦃⌜q ≠ 0⌝⦄
+    digitNotZero_check n q
+    ⦃⇓_ => ⌜0 < digit n q⌝⦄ := by
+  sorry
+
+-- Coq: `digitAdd` — digit n (q * n^r) = digit n q + r for q ≠ 0
+noncomputable def digitAdd_check (n : Int) (q : Int) (r : Nat) : Id Unit :=
+  pure ()
+
+theorem digitAdd (n : Int) (q : Int) (r : Nat) :
+    ⦃⌜q ≠ 0⌝⦄
+    digitAdd_check n q r
+    ⦃⇓_ => ⌜digit n (q * Zpower_nat n r) = digit n q + r⌝⦄ := by
+  sorry
+
+-- Coq: `digit_abs` — digit n (|p|) = digit n p
+noncomputable def digit_abs_check (n : Int) (p : Int) : Id Unit :=
+  pure ()
+
+theorem digit_abs (n : Int) (p : Int) :
+    ⦃⌜True⌝⦄
+    digit_abs_check n p
+    ⦃⇓_ => ⌜digit n (|p|) = digit n p⌝⦄ := by
+  sorry
+
+-- Coq: `digit_anti_monotone_lt` — if 1 < n and digit n p < digit n q, then |p| < |q|
+noncomputable def digit_anti_monotone_lt_check (n : Int) (p q : Int) : Id Unit :=
+  pure ()
+
+theorem digit_anti_monotone_lt (n : Int) (p q : Int) :
+    ⦃⌜1 < n ∧ digit n p < digit n q⌝⦄
+    digit_anti_monotone_lt_check n p q
+    ⦃⇓_ => ⌜|p| < |q|⌝⦄ := by
+  sorry

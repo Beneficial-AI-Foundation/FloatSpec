@@ -994,11 +994,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `pos_length_pow` → (no Lean counterpart)
 - `digitMore` → (no Lean counterpart)
 -- `digitInv` → `digitInv [FloatSpec/src/Pff/Pff.lean:929]`
-- `digit_monotone` → (no Lean counterpart)
-- `digitNotZero` → (no Lean counterpart)
-- `digitAdd` → (no Lean counterpart)
-- `digit_abs` → (no Lean counterpart)
-- `digit_anti_monotone_lt` → (no Lean counterpart)
+ - `digit_monotone` → `digit_monotone [FloatSpec/src/Pff/Pff.lean:1109]`
+ - `digitNotZero` → `digitNotZero [FloatSpec/src/Pff/Pff.lean:1119]`
+ - `digitAdd` → `digitAdd [FloatSpec/src/Pff/Pff.lean:1129]`
+ - `digit_abs` → `digit_abs [FloatSpec/src/Pff/Pff.lean:1139]`
+ - `digit_anti_monotone_lt` → `digit_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:1149]`
 - `pow_NR0` → `pow_NR0 [FloatSpec/src/Pff/Pff.lean:73]`
 - `pow_add` → `pow_add_compat [FloatSpec/src/Pff/Pff.lean:84]` (content-equivalent)
 - `pow_RN_plus` → `pow_RN_plus [FloatSpec/src/Pff/Pff.lean:94]`
