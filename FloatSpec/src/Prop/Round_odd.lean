@@ -429,3 +429,17 @@ lemma Zm (x : ℝ)
     FloatSpec.Core.Generic_fmt.canonical beta fexpe g ∧
     g.Fnum % 2 = 0 := by
   sorry
+
+/-- Coq: `DN_odd_d_aux`.
+    For any `z` between `F2R d` and `F2R u`, the DN rounding predicate
+    selects `F2R d`. -/
+lemma DN_odd_d_aux (x z : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (Hz : F2R d ≤ z ∧ z < F2R u) :
+  FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) z (F2R d) := by
+  sorry
