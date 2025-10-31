@@ -5,7 +5,6 @@ import Std.Do.Triple
 import FloatSpec.src.Core
 import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Int.Parity
 import FloatSpec.src.Calc.Operations
 
 open Real
