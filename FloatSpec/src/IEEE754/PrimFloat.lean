@@ -4,9 +4,12 @@
 import FloatSpec.src.IEEE754.Binary
 import FloatSpec.src.IEEE754.Bits
 import Mathlib.Data.Real.Basic
+import Std.Do.Triple
+import Std.Tactic.Do
 
 open Real
 open Classical
+open Std.Do
 
 -- Primitive float type placeholder (use real numbers for compilation)
 abbrev PrimFloat := ℝ
@@ -75,6 +78,20 @@ theorem B2Prim_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax
   -- Proof deferred; relies on intended equivalence between Prim and Binary.
   exact sorry
 
+-- Coq: opp_equiv — negation correspondence between PrimFloat and Binary754
+def opp_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (prim_neg x)))
+
+theorem opp_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  opp_equiv_check prec emax x
+  ⦃⇓result => ⌜result = Bopp (B2FF (prim_to_binary prec emax x))⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `opp_equiv` using bridge lemmas.
+  exact sorry
+
 -- Coq: Prim2B_B2Prim — roundtrip Binary → Prim → Binary
 def Prim2B_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax) : Id (Binary754 prec emax) :=
@@ -87,4 +104,68 @@ theorem Prim2B_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
   -- Proof deferred; relies on intended equivalence between Prim and Binary.
+  exact sorry
+
+-- Coq: abs_equiv — absolute-value correspondence between PrimFloat and Binary754
+def abs_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (prim_abs x)))
+
+theorem abs_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  abs_equiv_check prec emax x
+  ⦃⇓result => ⌜result = Babs (B2FF (prim_to_binary prec emax x))⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `abs_equiv` using bridge lemmas.
+  exact sorry
+
+-- Coq: div_equiv — division correspondence between PrimFloat and Flocq Binary
+noncomputable def div_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (prim_div x y)))
+
+theorem div_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) :
+  ⦃⌜True⌝⦄
+  div_equiv_check prec emax x y
+  ⦃⇓result => ⌜result =
+      B2FF (binary_div (prec:=prec) (emax:=emax)
+              (prim_to_binary prec emax x)
+              (prim_to_binary prec emax y))⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `div_equiv` via SingleNaN bridge.
+  exact sorry
+
+-- Coq: sub_equiv — subtraction correspondence between PrimFloat and Flocq Binary
+def sub_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (prim_sub x y)))
+
+theorem sub_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) :
+  ⦃⌜True⌝⦄
+  sub_equiv_check prec emax x y
+  ⦃⇓result => ⌜result =
+      B2FF (binary_sub (prec:=prec) (emax:=emax)
+              (prim_to_binary prec emax x)
+              (prim_to_binary prec emax y))⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `sub_equiv` via SingleNaN bridge.
+  exact sorry
+
+-- Coq: sqrt_equiv — square-root correspondence between PrimFloat and Flocq Binary
+noncomputable def sqrt_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (prim_sqrt x)))
+
+theorem sqrt_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  sqrt_equiv_check prec emax x
+  ⦃⇓result => ⌜result =
+      B2FF (binary_sqrt (prec:=prec) (emax:=emax)
+              (prim_to_binary prec emax x))⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `sqrt_equiv` via SingleNaN bridge.
   exact sorry

@@ -81,15 +81,15 @@ theorem match_SF2B {T : Type}
 
 -- Coq: canonical_canonical_mantissa (SingleNaN side)
 -- Mirror the Binary.lean style: hoare-triple statement yielding canonicality.
-def canonical_canonical_mantissa_check
+def canonical_canonical_mantissa_bsn_check
   (sx : Bool) (mx : Nat) (ex : Int) : Id Unit :=
   pure ()
 
-theorem canonical_canonical_mantissa
+theorem canonical_canonical_mantissa_bsn
   (sx : Bool) (mx : Nat) (ex : Int)
   (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
   ⦃⌜True⌝⦄
-  canonical_canonical_mantissa_check (prec:=prec) (emax:=emax) sx mx ex
+  canonical_canonical_mantissa_bsn_check sx mx ex
   ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
             (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
   intro _
@@ -563,30 +563,31 @@ def B754_sign (x : B754) : Bool :=
   | B754.B754_finite s _ _ => s
   | B754.B754_nan => false
 
--- Overflow constructor (Coq: BinarySingleNaN.binary_overflow)
--- Placeholder: returns an infinity with the requested sign.
-def binary_overflow (mode : RoundingMode) (s : Bool) : StandardFloat :=
+-- We use a BSN-local name to avoid clashing with `Binary.binary_overflow`.
+def bsn_binary_overflow (mode : RoundingMode) (s : Bool) : StandardFloat :=
   StandardFloat.S754_infinity s
 
 -- Correctness of operations
 theorem B754_plus_correct (mode : RoundingMode) (x y : B754)
+  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
   (hx : True)
   (hy : True) :
   True ∧
   (¬B754_is_nan (B754_plus mode x y) → 
-   B754_to_R (B754_plus mode x y) = 
-   FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) () 
-     (B754_to_R x + B754_to_R y)) := by
+  B754_to_R (B754_plus mode x y) = 
+  FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) () 
+    (B754_to_R x + B754_to_R y)) := by
   sorry
 
 theorem B754_mult_correct (mode : RoundingMode) (x y : B754)
+  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
   (hx : True)
   (hy : True) :
   True ∧
   (¬B754_is_nan (B754_mult mode x y) → 
-   B754_to_R (B754_mult mode x y) = 
-   FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) () 
-     (B754_to_R x * B754_to_R y)) := by
+  B754_to_R (B754_mult mode x y) = 
+  FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) () 
+    (B754_to_R x * B754_to_R y)) := by
   sorry
 
 -- Boolean xor used to combine signs (Coq: xorb)
@@ -597,14 +598,17 @@ def bxor (a b : Bool) : Bool :=
 -- Auxiliary correctness for division at the SF/BSN layer.
 -- We follow the project pattern: provide a pure check and a Hoare-style theorem.
 noncomputable def Bdiv_correct_aux_check {prec emax : Int}
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (mode : RoundingMode)
   (sx : Bool) (mx : Nat) (ex : Int)
   (sy : Bool) (my : Nat) (ey : Int) : Id StandardFloat :=
-  -- Placeholder: actual Coq builds via SFdiv_core_binary then binary_round_aux
+  -- Placeholder: actual Coq builds via SFdiv_core_binary then binary_round_aux.
   -- We return the overflow shape as a representative value.
-  pure (binary_overflow mode (bxor sx sy))
+  pure (bsn_binary_overflow mode (bxor sx sy))
 
 theorem Bdiv_correct_aux {prec emax : Int}
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
   (mode : RoundingMode)
   (sx : Bool) (mx : Nat) (ex : Int)
   (sy : Bool) (my : Nat) (ey : Int) :
@@ -617,7 +621,7 @@ theorem Bdiv_correct_aux {prec emax : Int}
       ((SF2R 2 z
           = FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) () (x / y)
         ∧ is_finite_SF z = true ∧ sign_SF z = bxor sx sy)
-        ∨ z = binary_overflow mode (bxor sx sy))⌝⦄ := by
+        ∨ z = bsn_binary_overflow mode (bxor sx sy))⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `Bdiv_correct_aux` by case analysis
   -- on the overflow guard and using properties of `SF2R` and rounding.
