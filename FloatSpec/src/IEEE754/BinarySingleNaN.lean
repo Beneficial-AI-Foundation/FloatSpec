@@ -708,9 +708,9 @@ theorem Bfrexp_correct_aux
   ⦃⌜True⌝⦄
   Bfrexp_correct_aux_check (prec:=prec) (emax:=emax) sx mx ex Hx
   ⦃⇓res => ⌜
-      let z := res.1; let e := res.2
+      let z := res.1; let e := res.2;
       valid_binary_SF (prec:=prec) (emax:=emax) z = true ∧
-      ((2 : Int) < emax → (/ (2 : ℝ) ≤ |SF2R 2 z| ∧ |SF2R 2 z| < 1)) ∧
+      ((2 : Int) < emax → ((1 : ℝ) / 2 ≤ |SF2R 2 z| ∧ |SF2R 2 z| < 1)) ∧
       SF2R 2 (StandardFloat.S754_finite sx mx ex)
         = SF2R 2 z * (FloatSpec.Core.Raux.bpow 2 e).run⌝⦄ := by
   intro _
