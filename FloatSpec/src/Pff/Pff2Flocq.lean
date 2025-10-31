@@ -358,3 +358,38 @@ theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
     mult_error_FLT_ge_bpow'_check emin prec e a b
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) (); let err := a * b - round_flt (a * b); err = 0 ∨ (2 : ℝ) ^ (e + 1 - 2 * prec) ≤ |err|⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `V2_Und4`
+
+In the ErrFMA V2 section, Coq proves that under the non-underflow hypothesis
+`a*x ≠ 0`, the intermediate value `beta1 := round_flt (u1 + alpha1)` either
+vanishes or has a magnitude bounded below by `β^(emin + prec + 1)`.
+
+We mirror that statement in the project hoare-triple style using the rounding
+operator `FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` (nearest-even),
+and we define the same intermediate quantities via local `let` bindings.
+Proof is deferred per the import task instructions.
+-/
+
+noncomputable def V2_Und4_check (emin prec : Int)
+    (a x y : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `V2_Und4` — assuming `a*x ≠ 0`, let
+    `u1 := round_flt (a*x)`, `u2 := a*x - u1`, `alpha1 := round_flt (y + u2)`,
+    and `beta1 := round_flt (u1 + alpha1)`. Then either `beta1 = 0` or
+    `(2 : ℝ)^(emin + prec + 1) ≤ |beta1|`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`.
+    Proof deferred. -/
+theorem V2_Und4 (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ) :
+    ⦃⌜a * x ≠ 0⌝⦄
+    V2_Und4_check emin prec a x y
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let u1 := round_flt (a * x)
+            let u2 := a * x - u1
+            let alpha1 := round_flt (y + u2)
+            let beta1 := round_flt (u1 + alpha1)
+            beta1 = 0 ∨ (2 : ℝ) ^ (emin + prec + 1) ≤ |beta1|⌝⦄ := by
+  sorry
