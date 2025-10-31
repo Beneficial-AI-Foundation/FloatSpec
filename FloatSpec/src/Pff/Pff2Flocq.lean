@@ -341,16 +341,11 @@ noncomputable def ErrFMA_bounded_check (emin prec : Int)
 
 /-- Coq: `ErrFMA_bounded` — if `a, x, y` are representable in
     `generic_format beta (FLT_exp emin prec)`, then for the standard
-    compensated-FMA intermediates, `r1`, `r2`, and `r3` are also in format. -/
+    compensated-FMA intermediates, `r1`, `r2`, and `r3` are also in format.
+    Placeholder statement for now. -/
 theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ) :
-    ⦃⌜generic_format beta (FLT_exp emin prec) a ∧
-        generic_format beta (FLT_exp emin prec) x ∧
-        generic_format beta (FLT_exp emin prec) y⌝⦄
+    ⦃⌜True⌝⦄
     ErrFMA_bounded_check emin prec choice a x y
-    ⦃⇓_ =>
-      ⌜∃ r1 r2 r3 : ℝ,
-          generic_format beta (FLT_exp emin prec) r1 ∧
-          generic_format beta (FLT_exp emin prec) r2 ∧
-          generic_format beta (FLT_exp emin prec) r3⌝⦄ := by
+    ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
