@@ -224,3 +224,16 @@ lemma u_eq (x : ℝ)
     (FloatSpec.Core.Generic_fmt.roundR (beta := beta) (fexp := fexp)
         (fun y => (FloatSpec.Core.Raux.Zceil y).run) x) := by
   sorry
+
+/-- Coq: `d_ge_0`
+    From the DN-witness hypothesis, the down-rounded value `F2R d` is
+    nonnegative when `0 < x`. -/
+lemma d_ge_0 (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) :
+  0 ≤ F2R d := by
+  sorry
