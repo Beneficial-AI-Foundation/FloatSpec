@@ -1030,7 +1030,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 -- `Rle_powerRZ` → `Rle_powerRZ [FloatSpec/src/Pff/Pff.lean:371]`
 -- `Zlt_powerRZ` → `Zlt_powerRZ [FloatSpec/src/Pff/Pff.lean:381]`
 -- `Zle_powerRZ` → `Zle_powerRZ [FloatSpec/src/Pff/Pff.lean:391]`
-- `Rinv_powerRZ` → `pow_neg` (Pff.lean:59) (content-related)
+- `Rinv_powerRZ` → `Rinv_powerRZ [FloatSpec/src/Pff/Pff.lean:801]`
 -- `floatEq` → `floatEq [FloatSpec/src/Pff/Pff.lean:580]`
 -- `floatDec` → `floatDec [FloatSpec/src/Pff/Pff.lean:592]`
 -- `FzeroisReallyZero` → `FzeroisReallyZero [FloatSpec/src/Pff/Pff.lean:620]`
