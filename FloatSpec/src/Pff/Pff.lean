@@ -418,7 +418,7 @@ theorem RoundedModeBounded {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q⌝⌝⦄
+    ⦃⌜RoundedModeP P ∧ P r q⌝⦄
     RoundedModeBounded_check (beta:=beta) b radix P r q
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
   sorry
