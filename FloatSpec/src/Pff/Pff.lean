@@ -137,6 +137,20 @@ theorem ClosestTotal {beta : Int}
             Closest (beta:=beta) bo radix r f⌝⦄ := by
   sorry
 
+-- Compatibility of `Closest` w.r.t. equalities (Coq: `ClosestCompatible`)
+noncomputable def ClosestCompatible_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestCompatible` — the `Closest` relation is compatible
+    with equality of reals and representations. -/
+theorem ClosestCompatible {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) :
+    ⦃⌜True⌝⦄
+    ClosestCompatible_check (beta:=beta) bo radix
+    ⦃⇓_ => ⌜CompatibleP (Closest (beta:=beta) bo radix)⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
