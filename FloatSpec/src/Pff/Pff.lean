@@ -1237,6 +1237,23 @@ theorem inj_oZ1 (z : Option Positive) :
     ⦃⇓_ => ⌜oZ1 z = Int.ofNat (oZ z)⌝⦄ := by
   sorry
 
+-- Coq: Zquotient — integer quotient using positive division on magnitudes
+-- We mirror the Coq shape but keep a lightweight placeholder body for now.
+noncomputable def Zquotient (m n : Int) : Int := 0
+
+-- Coq: `ZquotientProp` — decomposition m = (Zquotient m n) * n + r with bounds
+noncomputable def ZquotientProp_check (m n : Int) : Id Unit :=
+  pure ()
+
+theorem ZquotientProp (m n : Int) :
+    ⦃⌜n ≠ 0⌝⦄
+    ZquotientProp_check m n
+    ⦃⇓_ => ⌜∃ r : Int,
+            m = Zquotient m n * n + r ∧
+            |Zquotient m n * n| ≤ |m| ∧
+            |r| < |n|⌝⦄ := by
+  sorry
+
 -- Coq: `inject_nat_convert` — if p = Zpos q then Z_of_nat (nat_of_P q) = p
 noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Id Unit :=
   pure ()
