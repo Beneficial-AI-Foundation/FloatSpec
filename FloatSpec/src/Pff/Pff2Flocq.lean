@@ -300,7 +300,7 @@ noncomputable def Dekker_check (emin prec s : Int)
     Side condition: `beta = 2 ∨ Int.Even prec` (as in Coq). -/
 theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (x y : ℝ) :
-    ⦃⌜(beta = 2) ∨ FloatSpec.Calc.Round.Int.Even prec⌝⦄
+    ⦃⌜(beta = 2) ∨ Int.Even prec⌝⦄
     Dekker_check emin prec s choice x y
     ⦃⇓_ =>
       ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
