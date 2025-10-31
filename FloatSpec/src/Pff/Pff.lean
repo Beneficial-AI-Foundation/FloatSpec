@@ -5,6 +5,7 @@ import Std.Do.Triple
 import FloatSpec.src.Core
 import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
+import FloatSpec.src.Calc.Operations
 
 open Real
 open Std.Do
@@ -1351,6 +1352,18 @@ theorem Rlt_Fexp_eq_Zlt {beta : Int}
     ⦃⌜_root_.F2R x < _root_.F2R y ∧ x.Fexp = y.Fexp⌝⦄
     Rlt_Fexp_eq_Zlt_check (beta:=beta) x y
     ⦃⇓_ => ⌜x.Fnum < y.Fnum⌝⦄ := by
+  sorry
+
+-- Coq: `Fopp_correct` — float negation corresponds to real negation
+noncomputable def Fopp_correct_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fopp_correct {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fopp_correct_check (beta:=beta) x
+    ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Calc.Operations.Fopp (beta:=beta) x) = - _root_.F2R x⌝⦄ := by
   sorry
 
 -- Coq: `Fplus_correct` — float addition corresponds to real addition
