@@ -21173,3 +21173,7 @@ warning: FloatSpec/src/IEEE754/PrimFloat.lean:188:18: missing doc string for pub
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/IEEE754/PrimFloat.lean:192:8: declaration uses 'sorry'
+✔ [3026/3028] Built FloatSpec.src.IEEE754 (7.3s)
+✔ [3027/3028] Built FloatSpec (5.5s)
+Build completed successfully (3028 jobs).
+0:45.07 3155892KB
