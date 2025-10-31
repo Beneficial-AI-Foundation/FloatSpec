@@ -20166,3 +20166,4 @@ warning: FloatSpec/src/IEEE754/PrimFloat.lean:705:18: missing doc string for pub
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/IEEE754/PrimFloat.lean:710:8: declaration uses 'sorry'
+✔ [3023/3028] Built FloatSpec.src.IEEE754 (3.5s)
