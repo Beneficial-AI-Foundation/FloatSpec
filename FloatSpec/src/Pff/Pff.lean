@@ -794,6 +794,16 @@ theorem Zle_powerRZ (e : ℝ) (n m : Int) :
     ⦃⇓_ => ⌜n ≤ m⌝⦄ := by
   sorry
 
+-- Coq: `Rinv_powerRZ` — (/ (e^n)) = e^(-n) for nonzero base (integer exponent)
+noncomputable def Rinv_powerRZ_check (e : ℝ) (n : Int) : Id Unit :=
+  pure ()
+
+theorem Rinv_powerRZ (e : ℝ) (n : Int) :
+    ⦃⌜e ≠ 0⌝⦄
+    Rinv_powerRZ_check e n
+    ⦃⇓_ => ⌜(e ^ n)⁻¹ = e ^ (-n)⌝⦄ := by
+  sorry
+
 -- Coq: `Rledouble` — if 0 ≤ r then r ≤ 2r
 noncomputable def Rledouble_check (r : ℝ) : Id Unit :=
   pure ()
