@@ -291,6 +291,16 @@ theorem powerRZ_1 (e : ℝ) :
     ⦃⇓_ => ⌜e ^ (1 : Int) = e⌝⦄ := by
   sorry
 
+-- Coq: `powerRZ_R1` — 1^n = 1 (integer exponent)
+noncomputable def powerRZ_R1_check (n : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_R1 (n : Int) :
+    ⦃⌜True⌝⦄
+    powerRZ_R1_check n
+    ⦃⇓_ => ⌜(1 : ℝ) ^ n = (1 : ℝ)⌝⦄ := by
+  sorry
+
 -- Coq: `powerRZ_add` — e^(m+n) = e^m * e^n (integer exponent)
 noncomputable def powerRZ_add_check (e : ℝ) (m n : Int) : Id Unit :=
   pure ()
@@ -362,6 +372,16 @@ theorem Rlt_powerRZ (e : ℝ) (n m : Int) :
     ⦃⌜1 < e ∧ n < m⌝⦄
     Rlt_powerRZ_check e n m
     ⦃⇓_ => ⌜e ^ n < e ^ m⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_powerRZ_absolu` — IZR (Zpower_nat n (Z.abs_nat m)) = powerRZ (IZR n) m for m ≥ 0
+noncomputable def Zpower_nat_powerRZ_absolu_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_powerRZ_absolu (n m : Int) :
+    ⦃⌜0 ≤ m⌝⦄
+    Zpower_nat_powerRZ_absolu_check n m
+    ⦃⇓_ => ⌜(Zpower_nat n (Int.toNat (Int.natAbs m)) : ℝ) = (n : ℝ) ^ m⌝⦄ := by
   sorry
 
 -- Coq: `Rle_powerRZ` — 1 ≤ e → n ≤ m → e^n ≤ e^m
