@@ -328,16 +328,12 @@ theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
-/-!
-Coq lemma: `mult_error_FLT_ge_bpow'`
-
-In Coq (section ErrFMA_V2), the following lemma relates a magnitude lower
-bound on a product to a corresponding lower bound on the rounding error when
-rounding to nearest-even at precision `prec` with `FLT_exp emin prec`.
-
-We mirror the statement using the hoare-triple style and Lean's
-`FloatSpec.Calc.Round.round` operator. The proof is deferred.
--/
+-- Coq lemma: `mult_error_FLT_ge_bpow'`
+-- In Coq (section ErrFMA_V2), the following lemma relates a magnitude lower
+-- bound on a product to a corresponding lower bound on the rounding error when
+-- rounding to nearest-even at precision `prec` with `FLT_exp emin prec`.
+-- We mirror the statement using the hoare-triple style and Lean's
+-- `FloatSpec.Calc.Round.round` operator. The proof is deferred.
 
 noncomputable def mult_error_FLT_ge_bpow'_check (emin prec e : Int)
     (a b : ℝ) : Id Unit :=
@@ -361,18 +357,14 @@ theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
             err = 0 ∨ (2 : ℝ) ^ (e + 1 - 2 * prec) ≤ |err|⌝⦄ := by
   sorry
 
-/-!
-Coq lemma: `V2_Und4`
-
-In the ErrFMA V2 section, Coq proves that under the non-underflow hypothesis
-`a*x ≠ 0`, the intermediate value `beta1 := round_flt (u1 + alpha1)` either
-vanishes or has a magnitude bounded below by `β^(emin + prec + 1)`.
-
-We mirror that statement in the project hoare-triple style using the rounding
-operator `FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` (nearest-even),
-and we define the same intermediate quantities via local `let` bindings.
-Proof is deferred per the import task instructions.
--/
+-- Coq lemma: `V2_Und4`
+-- In the ErrFMA V2 section, Coq proves that under the non-underflow hypothesis
+-- `a*x ≠ 0`, the intermediate value `beta1 := round_flt (u1 + alpha1)` either
+-- vanishes or has a magnitude bounded below by `β^(emin + prec + 1)`.
+-- We mirror that statement in the project hoare-triple style using the rounding
+-- operator `FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` (nearest-even),
+-- and we define the same intermediate quantities via local `let` bindings.
+-- Proof is deferred per the import task instructions.
 
 noncomputable def V2_Und4_check (emin prec : Int)
     (a x y : ℝ) : Id Unit :=
