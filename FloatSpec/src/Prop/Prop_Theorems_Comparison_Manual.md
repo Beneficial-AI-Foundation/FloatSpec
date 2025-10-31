@@ -462,9 +462,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_sqrt_FLT` → (no direct Lean match found)
 
-- `FTZ_round_round_sqrt_hyp` → (no direct Lean match found)
+- `FTZ_round_round_sqrt_hyp` → `FTZ_round_round_sqrt_hyp` [Double_rounding.lean:472] (spec-variant)
 
-- `round_round_sqrt_FTZ` → (no direct Lean match found)
+- `round_round_sqrt_FTZ` → `round_round_sqrt_FTZ` [Double_rounding.lean:485] (spec-variant)
 
 - `round_round_sqrt_radix_ge_4_hyp` → `round_round_sqrt_radix_ge_4_hyp` [Double_rounding.lean:363] (spec-variant)
 

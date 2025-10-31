@@ -466,6 +466,38 @@ theorem round_round_sqrt_radix_ge_4_FLT
   = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1) (Real.sqrt x) := by
   sorry
 
+/-- Coq: `FTZ_round_round_sqrt_hyp`
+    Sufficient conditions for FTZ exponents to satisfy the base
+    `round_round_sqrt_hyp`. -/
+lemma FTZ_round_round_sqrt_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
+  (Hprec : 2 * prec + 2 ≤ prec') :
+  round_round_sqrt_hyp (FTZ_exp emin prec) (FTZ_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_sqrt_FTZ`
+    Under `4 ≤ beta` and the above FTZ relations, nearest-on-nearest
+    double rounding of `sqrt x` from `(FTZ_exp emin' prec')` to
+    `(FTZ_exp emin prec)` collapses to a single rounding at
+    `(FTZ_exp emin prec)`. -/
+theorem round_round_sqrt_FTZ
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hbeta : 4 ≤ beta)
+  (Hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
+  (Hprec : 2 * prec + 2 ≤ prec')
+  (x : ℝ)
+  (Fx : generic_format beta (FTZ_exp emin prec) x) :
+  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
 /-- Coq: `FTZ_round_round_sqrt_radix_ge_4_hyp`
     Sufficient conditions for FTZ exponents to satisfy the
     `round_round_sqrt_radix_ge_4_hyp`. -/
