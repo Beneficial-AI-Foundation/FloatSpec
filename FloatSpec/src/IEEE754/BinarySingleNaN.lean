@@ -658,12 +658,12 @@ theorem Bldexp_Bopp_NE (x : B754) (e : Int) :
   exact sorry
 
 -- Decomposition (Coq: Bfrexp on SingleNaN side)
-def Bfrexp (x : B754) : B754 × Int :=
+def Bfrexp_bsn (x : B754) : B754 × Int :=
   -- Placeholder: actual Coq computes a normalized significand and exponent.
   (x, 0)
 
 def is_nan_Bfrexp_check (x : B754) : Id Bool :=
-  pure (BSN_is_nan ((Bfrexp x).1))
+  pure (BSN_is_nan ((Bfrexp_bsn x).1))
 
 -- Coq: is_nan_Bfrexp — NaN-ness preserved for the significand of Bfrexp
 theorem is_nan_Bfrexp (x : B754) :
