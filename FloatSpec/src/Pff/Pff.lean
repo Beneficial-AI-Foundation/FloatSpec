@@ -248,6 +248,20 @@ theorem ClosestMaxEq {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R max⌝⦄ := by
   sorry
 
+-- Monotonicity of the Closest relation (Coq: `ClosestMonotone`)
+noncomputable def ClosestMonotone_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestMonotone` — the `Closest` relation is monotone
+    in the sense captured by `MonotoneP` placeholder. -/
+theorem ClosestMonotone {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) :
+    ⦃⌜True⌝⦄
+    ClosestMonotone_check (beta:=beta) bo radix
+    ⦃⇓_ => ⌜MonotoneP (Closest (beta:=beta) bo radix)⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
