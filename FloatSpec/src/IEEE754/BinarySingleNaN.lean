@@ -657,6 +657,23 @@ theorem Bldexp_Bopp_NE (x : B754) (e : Int) :
   -- Proof deferred; mirrors Coq's `Bldexp_Bopp_NE`.
   exact sorry
 
+-- Decomposition (Coq: Bfrexp on SingleNaN side)
+def Bfrexp (x : B754) : B754 × Int :=
+  -- Placeholder: actual Coq computes a normalized significand and exponent.
+  (x, 0)
+
+def is_nan_Bfrexp_check (x : B754) : Id Bool :=
+  pure (BSN_is_nan ((Bfrexp x).1))
+
+-- Coq: is_nan_Bfrexp — NaN-ness preserved for the significand of Bfrexp
+theorem is_nan_Bfrexp (x : B754) :
+  ⦃⌜True⌝⦄
+  is_nan_Bfrexp_check x
+  ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
+  intro _
+  -- Proof deferred; immediate by the placeholder definition of `Bfrexp`.
+  exact sorry
+
 -- Boolean xor used to combine signs (Coq: xorb)
 def bxor (a b : Bool) : Bool :=
   (a && !b) || (!a && b)
