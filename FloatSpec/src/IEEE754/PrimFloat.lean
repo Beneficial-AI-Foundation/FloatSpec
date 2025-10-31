@@ -242,6 +242,24 @@ theorem div_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   -- Proof deferred; mirrors Coq's `div_equiv` via SingleNaN bridge.
   exact sorry
 
+-- Coq: ldshiftexp_equiv — shift-exponent scaling correspondence
+noncomputable def ldshiftexp_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) (e : Int) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (prim_ldexp x (e - 1)) ))
+
+theorem ldshiftexp_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) (e : Int) :
+  ⦃⌜True⌝⦄
+  ldshiftexp_equiv_check prec emax x e
+  ⦃⇓result => ⌜result =
+      B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
+              (prim_to_binary prec emax x) (e - 1))⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `ldshiftexp_equiv` using `ldexp_equiv` pattern.
+  exact sorry
+
 -- Coq: sub_equiv — subtraction correspondence between PrimFloat and Flocq Binary
 def sub_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : Id FullFloat :=
