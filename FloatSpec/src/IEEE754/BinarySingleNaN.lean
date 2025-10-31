@@ -630,7 +630,7 @@ def is_nan_Bldexp_check (mode : RoundingMode) (x : B754) (e : Int) : Id Bool :=
 -- Coq: is_nan_Bldexp — exponent scaling preserves NaN-ness
 theorem is_nan_Bldexp (mode : RoundingMode) (x : B754) (e : Int) :
   ⦃⌜True⌝⦄
-  is_nan_Bldexp_check (prec:=prec) (emax:=emax) mode x e
+  is_nan_Bldexp_check mode x e
   ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
   intro _
   -- Proof deferred; corresponds to Coq's `is_nan_Bldexp`.
