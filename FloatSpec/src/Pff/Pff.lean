@@ -612,6 +612,19 @@ theorem FtoREqInv2 {beta : Int}
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   sorry
 
+-- Coq: `sameExpEq` — if two floats have equal real value and same exponent, they are equal
+noncomputable def sameExpEq_check {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem sameExpEq {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R p = _root_.F2R q ∧ p.Fexp = q.Fexp⌝⦄
+    sameExpEq_check (beta:=beta) p q
+    ⦃⇓_ => ⌜p = q⌝⦄ := by
+  -- Mirrors Coq `sameExpEq`; see also `FtoREqInv2`.
+  sorry
+
 -- Coq: `Rlt_Float_Zlt` — compare mantissas when exponents equal
 noncomputable def Rlt_Float_Zlt_check {beta : Int} (p q r : Int) : Id Unit :=
   pure ()
