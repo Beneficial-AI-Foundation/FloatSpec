@@ -364,18 +364,18 @@ noncomputable def Bcmp (prec emax : Int)
   ((FloatSpec.Core.Raux.Rcompare (B2R (prec:=prec) (emax:=emax) x)
                                  (B2R (prec:=prec) (emax:=emax) y)).run)
 
-def Bltb (prec emax : Int)
+noncomputable def Bltb (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : Binary754 prec emax) : Bool :=
   Bcmp prec emax x y = (-1)
 
-def Bleb (prec emax : Int)
+noncomputable def Bleb (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : Binary754 prec emax) : Bool :=
   Bcmp prec emax x y ≠ 1
 
 -- Coq: eqb_equiv — boolean equality correspondence
-def eqb_equiv_check (prec emax : Int)
+noncomputable def eqb_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : Id Bool :=
   pure (prim_eq x y)
@@ -392,7 +392,7 @@ theorem eqb_equiv (prec emax : Int)
   exact sorry
 
 -- Coq: ltb_equiv — boolean strict ordering correspondence
-def ltb_equiv_check (prec emax : Int)
+noncomputable def ltb_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : Id Bool :=
   pure (prim_lt x y)
@@ -409,7 +409,7 @@ theorem ltb_equiv (prec emax : Int)
   exact sorry
 
 -- Coq: leb_equiv — boolean non-strict ordering correspondence
-def leb_equiv_check (prec emax : Int)
+noncomputable def leb_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : Id Bool :=
   pure (prim_le x y)
