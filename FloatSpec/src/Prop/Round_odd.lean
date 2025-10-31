@@ -56,6 +56,13 @@ lemma Zrnd_odd_plus (x y : ℝ)
   ((Zodd (x + y) : Int) : ℝ) = x + ((Zodd y : Int) : ℝ) := by
   sorry
 
+/-- Negation commutes with round-to-odd (mode `()` in this file).
+    Coq counterpart: `round_odd_opp`. -/
+theorem round_odd_opp (x : ℝ) :
+  FloatSpec.Calc.Round.round beta fexp () (-x)
+  = - FloatSpec.Calc.Round.round beta fexp () x := by
+  sorry
+
 /-- Round to odd properties -/
 theorem round_odd_ge_ulp (x : ℝ) :
   generic_format beta fexp x ∨ 

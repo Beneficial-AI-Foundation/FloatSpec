@@ -1081,7 +1081,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `Rnd_odd_pt_opp_inv` → (no direct Lean match found)
 
-- `round_odd_opp` → (no direct Lean match found)
+- `round_odd_opp` → `round_odd_opp` [Round_odd.lean:61] (spec-variant)
 
 - `round_odd_pt` → (no direct Lean match found)
 
