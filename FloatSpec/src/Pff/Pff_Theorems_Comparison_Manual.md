@@ -925,6 +925,44 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 ### Mapping (Coq → Lean)
 - `Even_0` → `even_0` (Pff.lean:18) (content-equivalent)
 - `Even_1` → `not_even_1` (Pff.lean:22) (content-equivalent)
+- `min_or` → `min_or [FloatSpec/src/Pff/Pff.lean:1094]`
+- `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:1463]`
+- `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:1336]`
+- `inject_nat_convert` → `inject_nat_convert [FloatSpec/src/Pff/Pff.lean:1411]`
+- `ZleLe` → `ZleLe [FloatSpec/src/Pff/Pff.lean:1116]`
+- `Zlt_Zopp` → `Zlt_Zopp [FloatSpec/src/Pff/Pff.lean:1156]`
+- `Zle_Zopp` → `Zle_Zopp [FloatSpec/src/Pff/Pff.lean:1166]`
+- `Zabs_absolu` → `Zabs_absolu [FloatSpec/src/Pff/Pff.lean:1176]`
+- `Zpower_nat_O` → `Zpower_nat_O [FloatSpec/src/Pff/Pff.lean:1186]`
+- `Zpower_nat_1` → `Zpower_nat_1 [FloatSpec/src/Pff/Pff.lean:1196]`
+- `Zmin_Zle` → `Zmin_Zle [FloatSpec/src/Pff/Pff.lean:1236]`
+- `Zopp_Zpred_Zs` → `Zopp_Zpred_Zs [FloatSpec/src/Pff/Pff.lean:1226]`
+- `ZmaxLe1` → `ZmaxLe1 [FloatSpec/src/Pff/Pff.lean:1127]`
+- `ZmaxSym` → `ZmaxSym [FloatSpec/src/Pff/Pff.lean:1117]`
+- `ZmaxLe2` → `ZmaxLe2 [FloatSpec/src/Pff/Pff.lean:1137]`
+- `Zeq_Zs` → `Zeq_Zs [FloatSpec/src/Pff/Pff.lean:1216]`
+- `Zmin_Zmax` → `Zmin_Zmax [FloatSpec/src/Pff/Pff.lean:1206]`
+- `Zle_Zmult_comp_r` → `Zle_Zmult_comp_r [FloatSpec/src/Pff/Pff.lean:1266]`
+- `Zle_Zmult_comp_l` → `Zle_Zmult_comp_l [FloatSpec/src/Pff/Pff.lean:1276]`
+- `Zabs_eq_opp` → `Zabs_eq_opp [FloatSpec/src/Pff/Pff.lean:1409]`
+- `Zabs_Zs` → `Zabs_Zs [FloatSpec/src/Pff/Pff.lean:1419]`
+- `Zle_Zpred` → `Zle_Zpred [FloatSpec/src/Pff/Pff.lean:1439]`
+- `Zle_abs` → `Zle_abs [FloatSpec/src/Pff/Pff.lean:1313]`
+- `lt_Zlt_inv` → `lt_Zlt_inv [FloatSpec/src/Pff/Pff.lean:1429]`
+- `Zle_Zpred_Zpred` → `Zle_Zpred_Zpred [FloatSpec/src/Pff/Pff.lean:2062]`
+- `Zcompare_correct` → `Zcompare_correct [FloatSpec/src/Pff/Pff.lean:2039]`
+- `digitAux1` → `digitAux1 [FloatSpec/src/Pff/Pff.lean:2329]`
+- `digitAuxLess` → `digitAuxLess [FloatSpec/src/Pff/Pff.lean:2343]`
+- `digitLess` → `digitLess [FloatSpec/src/Pff/Pff.lean:2360]`
+- `pos_length_pow` → `pos_length_pow [FloatSpec/src/Pff/Pff.lean:2373]`
+- `digitMore` → `digitMore [FloatSpec/src/Pff/Pff.lean:2383]`
+- `digitAuxMore` → `digitAuxMore [FloatSpec/src/Pff/Pff.lean:2393]`
+- `digitInv` → `digitInv [FloatSpec/src/Pff/Pff.lean:2405]`
+- `digit_monotone` → `digit_monotone [FloatSpec/src/Pff/Pff.lean:2415]`
+- `digitNotZero` → `digitNotZero [FloatSpec/src/Pff/Pff.lean:2425]`
+- `digitAdd` → `digitAdd [FloatSpec/src/Pff/Pff.lean:2435]`
+- `digit_abs` → `digit_abs [FloatSpec/src/Pff/Pff.lean:2445]`
+- `digit_anti_monotone_lt` → `digit_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:2455]`
 - `Odd_0` → `not_odd_0` (Pff.lean:25) (content-equivalent)
 - `Odd_1` → `odd_1` (Pff.lean:20) (content-equivalent)
 - `min_or` → (no Lean counterpart)
