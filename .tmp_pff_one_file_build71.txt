@@ -23555,3 +23555,945 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Nat2Z_8_12.lean:21:8: declaration uses 'sorry'
+⚠ [3027/3028] Built FloatSpec.src.Prop.Round_odd (27s)
+warning: FloatSpec/src/Prop/Round_odd.lean:18:18: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Rnd_odd_pt`
+  • {̲n̲a̲m̲e̲}̲`Rnd_odd_pt`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Rnd_odd_pt`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:18:42: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`f`
+  • {̲n̲a̲m̲e̲}̲`f`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`f`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:19:11: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`x`
+  • {̲n̲a̲m̲e̲}̲`x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:39:0: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:41:7: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`x`
+  • {̲n̲a̲m̲e̲}̲`x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:41:38: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Zfloor x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zfloor x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:42:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zodd x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Zodd x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Zodd x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`Zodd x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Zodd x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Zodd x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Zodd x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zodd x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:42:58: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zrnd_odd_Zodd`
+  • {̲n̲a̲m̲e̲}̲`Zrnd_odd_Zodd`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zrnd_odd_Zodd`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:43:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:48:40: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zfloor (n + y) = n + Zfloor y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Zfloor (n + y) = n + Zfloor y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Zfloor (n + y) = n + Zfloor y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Zfloor (n + y) = n + Zfloor y`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zfloor (n + y) = n + Zfloor y`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:49:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:54:39: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zceil (n + y) = n + Zceil y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Zceil (n + y) = n + Zceil y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Zceil (n + y) = n + Zceil y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Zceil (n + y) = n + Zceil y`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zceil (n + y) = n + Zceil y`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:55:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:60:43: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲f̲e̲a̲t̲u̲r̲e̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲r̲i̲n̲t̲r̲o̲P̲a̲t̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲s̲t̲x̲}̲`(abs z)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`(abs z)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`(abs z)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:60:65: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`z`
+  • {̲n̲a̲m̲e̲}̲`z`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`z`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:61:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zeven_abs`
+  • {̲n̲a̲m̲e̲}̲`Zeven_abs`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zeven_abs`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:62:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:67:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zrnd_odd_plus`
+  • {̲n̲a̲m̲e̲}̲`Zrnd_odd_plus`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zrnd_odd_plus`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:68:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:74:32: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Rnd_odd_pt`
+  • {̲n̲a̲m̲e̲}̲`Rnd_odd_pt`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Rnd_odd_pt`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:75:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Rnd_odd_pt_opp_inv`
+  • {̲n̲a̲m̲e̲}̲`Rnd_odd_pt_opp_inv`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Rnd_odd_pt_opp_inv`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:76:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:81:46: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`()`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`()`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`()`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`()`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`()`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:82:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`round_odd_opp`
+  • {̲n̲a̲m̲e̲}̲`round_odd_opp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`round_odd_opp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:83:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:88:39: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`round beta fexp () x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`round beta fexp () x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`round beta fexp () x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`round beta fexp () x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`round beta fexp () x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:89:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`round_odd_pt`
+  • {̲n̲a̲m̲e̲}̲`round_odd_pt`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`round_odd_pt`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:90:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:95:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Rnd_odd_pt_unique`
+  • {̲n̲a̲m̲e̲}̲`Rnd_odd_pt_unique`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Rnd_odd_pt_unique`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:96:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:103:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Rnd_odd_pt_monotone`
+  • {̲n̲a̲m̲e̲}̲`Rnd_odd_pt_monotone`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Rnd_odd_pt_monotone`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:104:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:109:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:115:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:125:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:129:53: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag_round_odd`
+  • {̲n̲a̲m̲e̲}̲`mag_round_odd`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag_round_odd`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:130:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:135:58: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp_round_odd`
+  • {̲n̲a̲m̲e̲}̲`fexp_round_odd`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp_round_odd`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:136:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:145:30: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexpe`
+  • {̲n̲a̲m̲e̲}̲`fexpe`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexpe`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:145:57: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp - 2`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`fexp - 2`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`fexp - 2`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`fexp - 2`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`fexp - 2`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`fexp - 2`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp - 2`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:146:13: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp`
+  • {̲n̲a̲m̲e̲}̲`fexp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:146:43: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexpe`
+  • {̲n̲a̲m̲e̲}̲`fexpe`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexpe`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:147:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`generic_format_fexpe_fexp`
+  • {̲n̲a̲m̲e̲}̲`generic_format_fexpe_fexp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`generic_format_fexpe_fexp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:148:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:156:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zrnd_odd_plus'`
+  • {̲n̲a̲m̲e̲}̲`Zrnd_odd_plus'`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zrnd_odd_plus'`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:158:7: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`beta`
+  • {̲n̲a̲m̲e̲}̲`beta`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`beta`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:158:26: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`x`
+  • {̲n̲a̲m̲e̲}̲`x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:159:4: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`n * beta^e`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`n * beta^e`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`n * beta^e`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`n * beta^e`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`n * beta^e`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:159:22: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`1 ≤ e`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`1 ≤ e`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`1 ≤ e`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`1 ≤ e`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`1 ≤ e`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:160:4: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zodd (x + y) = x + Zodd y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Zodd (x + y) = x + Zodd y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Zodd (x + y) = x + Zodd y`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Zodd (x + y) = x + Zodd y`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zodd (x + y) = x + Zodd y`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:162:8: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:169:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`exists_even_fexp_lt`
+  • {̲n̲a̲m̲e̲}̲`exists_even_fexp_lt`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`exists_even_fexp_lt`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:170:50: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`c`
+  • {̲n̲a̲m̲e̲}̲`c`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`c`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:171:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:190:68: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:190:76: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`u`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`u`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:193:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`d_eq`
+  • {̲n̲a̲m̲e̲}̲`d_eq`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`d_eq`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:194:60: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`Zfloor`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zfloor`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:195:13: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`F2R d = round beta fexp Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`F2R d = round beta fexp Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`F2R d = round beta fexp Zfloor x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`F2R d = round beta fexp Zfloor x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`F2R d = round beta fexp Zfloor x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:197:28: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`roundR`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`roundR`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:197:73: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`Zfloor`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zfloor`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:199:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:211:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`u_eq`
+  • {̲n̲a̲m̲e̲}̲`u_eq`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`u_eq`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:212:60: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`Zceil`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zceil`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:214:13: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`F2R u = round beta fexp Zceil x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`F2R u = round beta fexp Zceil x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`F2R u = round beta fexp Zceil x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`F2R u = round beta fexp Zceil x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`F2R u = round beta fexp Zceil x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:214:64: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`roundR`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`roundR`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:215:46: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`Zceil`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zceil`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:215:58: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Int`
+  • {̲n̲a̲m̲e̲}̲`Int`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Int`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:215:68: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`.run`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`.run`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`.run`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`.run`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`.run`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:216:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:228:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`d_ge_0`
+  • {̲n̲a̲m̲e̲}̲`d_ge_0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`d_ge_0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:229:59: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:230:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:231:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:241:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag_d`
+  • {̲n̲a̲m̲e̲}̲`mag_d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag_d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:242:7: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:242:43: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:242:55: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`x`
+  • {̲n̲a̲m̲e̲}̲`x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:243:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:255:63: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`Fcore_rnd_odd`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fcore_rnd_odd`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:256:55: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`d`
+  • {̲n̲a̲m̲e̲}̲`d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:256:63: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`u`
+  • {̲n̲a̲m̲e̲}̲`u`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`u`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:260:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fexp_d`
+  • {̲n̲a̲m̲e̲}̲`Fexp_d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fexp_d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:260:22: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:260:56: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`d`
+  • {̲n̲a̲m̲e̲}̲`d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:261:4: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp (mag x)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`fexp (mag x)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`fexp (mag x)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`fexp (mag x)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`fexp (mag x)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`fexp (mag x)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp (mag x)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:262:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:273:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`format_bpow_x`
+  • {̲n̲a̲m̲e̲}̲`format_bpow_x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`format_bpow_x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:273:44: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:274:13: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`mag x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`mag x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`mag x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`mag x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`mag x`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`mag x`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag x`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:275:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:286:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`format_bpow_d`
+  • {̲n̲a̲m̲e̲}̲`format_bpow_d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`format_bpow_d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:286:44: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:287:13: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`mag (F2R d)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag (F2R d)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:288:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:299:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`d_le_m`
+  • {̲n̲a̲m̲e̲}̲`d_le_m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`d_le_m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:299:64: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m`
+  • {̲n̲a̲m̲e̲}̲`m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:300:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:310:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m_le_u`
+  • {̲n̲a̲m̲e̲}̲`m_le_u`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m_le_u`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:310:32: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m`
+  • {̲n̲a̲m̲e̲}̲`m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:311:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:321:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag_m`
+  • {̲n̲a̲m̲e̲}̲`mag_m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag_m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:321:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:321:39: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag m = mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`mag m = mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`mag m = mag (F2R d)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`mag m = mag (F2R d)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag m = mag (F2R d)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:322:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:334:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag_m_0`
+  • {̲n̲a̲m̲e̲}̲`mag_m_0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag_m_0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:334:23: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`F2R d = 0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`F2R d = 0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:334:41: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`mag m = mag (F2R u) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`mag m = mag (F2R u) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`mag m = mag (F2R u) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`mag m = mag (F2R u) - 1`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`mag m = mag (F2R u) - 1`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:335:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:347:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`u'_eq`
+  • {̲n̲a̲m̲e̲}̲`u'_eq`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`u'_eq`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:347:21: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:348:18: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`u`
+  • {̲n̲a̲m̲e̲}̲`u`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`u`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:348:44: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fexp d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Fexp d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Fexp d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`Fexp d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Fexp d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Fexp d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Fexp d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fexp d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:349:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:361:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m_eq`
+  • {̲n̲a̲m̲e̲}̲`m_eq`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m_eq`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:361:20: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`0 < F2R d`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`0 < F2R d`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`0 < F2R d`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:361:69: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m`
+  • {̲n̲a̲m̲e̲}̲`m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:362:26: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp (mag x) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`fexp (mag x) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`fexp (mag x) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`fexp (mag x) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`fexp (mag x) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`fexp (mag x) - 1`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp (mag x) - 1`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:363:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:375:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m_eq_0`
+  • {̲n̲a̲m̲e̲}̲`m_eq_0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m_eq_0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:375:22: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`F2R d = 0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`F2R d = 0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:375:71: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m`
+  • {̲n̲a̲m̲e̲}̲`m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:376:26: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp (mag (F2R u)) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`fexp (mag (F2R u)) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`fexp (mag (F2R u)) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`fexp (mag (F2R u)) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`fexp (mag (F2R u)) - 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`fexp (mag (F2R u)) - 1`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp (mag (F2R u)) - 1`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:377:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:389:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp_m_eq_0`
+  • {̲n̲a̲m̲e̲}̲`fexp_m_eq_0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp_m_eq_0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:389:27: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`F2R d = 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`F2R d = 0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`F2R d = 0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:389:45: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexp (mag (F2R u) - 1) < fexp (mag (F2R u)) + 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`fexp (mag (F2R u) - 1) < fexp (mag (F2R u)) + 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`fexp (mag (F2R u) - 1) < fexp (mag (F2R u)) + 1`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`fexp (mag (F2R u) - 1) < fexp (mag (F2R u)) + 1`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexp (mag (F2R u) - 1) < fexp (mag (F2R u)) + 1`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:390:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:405:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fm`
+  • {̲n̲a̲m̲e̲}̲`Fm`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fm`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:405:28: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m`
+  • {̲n̲a̲m̲e̲}̲`m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:405:59: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexpe`
+  • {̲n̲a̲m̲e̲}̲`fexpe`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexpe`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:406:6: declaration uses 'sorry'
+warning: FloatSpec/src/Prop/Round_odd.lean:417:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zm`
+  • {̲n̲a̲m̲e̲}̲`Zm`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zm`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:417:58: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`m`
+  • {̲n̲a̲m̲e̲}̲`m`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`m`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:417:65: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`fexpe`
+  • {̲n̲a̲m̲e̲}̲`fexpe`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`fexpe`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Prop/Round_odd.lean:419:6: declaration uses 'sorry'
+Build completed successfully (3028 jobs).
