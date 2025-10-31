@@ -1008,21 +1008,21 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `pow_R1` → `pow_R1 [FloatSpec/src/Pff/Pff.lean:134]`
 - `Zpower_NR0` → `Zpower_NR0 [FloatSpec/src/Pff/Pff.lean:144]`
 - `Zpower_NR1` → `Zpower_NR1 [FloatSpec/src/Pff/Pff.lean:154]`
-- `powerRZ_O` → (no Lean counterpart)
-- `powerRZ_1` → (no Lean counterpart)
-- `powerRZ_NOR` → (no Lean counterpart)
-- `powerRZ_add` → (no Lean counterpart)
+-- `powerRZ_O` → `powerRZ_O [FloatSpec/src/Pff/Pff.lean:258]`
+-- `powerRZ_1` → `powerRZ_1 [FloatSpec/src/Pff/Pff.lean:288]`
+-- `powerRZ_NOR` → `powerRZ_NOR [FloatSpec/src/Pff/Pff.lean:421]`
+-- `powerRZ_add` → `powerRZ_add [FloatSpec/src/Pff/Pff.lean:298]`
 - `powerRZ_Zopp` → `powerRZ_Zopp [FloatSpec/src/Pff/Pff.lean:308]`
 - `powerRZ_Zs` → `powerRZ_Zs [FloatSpec/src/Pff/Pff.lean:318]`
-- `Zpower_nat_Z_powerRZ` → (no Lean counterpart)
-- `powerRZ_lt` → (no Lean counterpart)
-- `powerRZ_le` → (no Lean counterpart)
-- `Rlt_powerRZ` → (no Lean counterpart)
-- `Zpower_nat_powerRZ_absolu` → (no Lean counterpart)
-- `powerRZ_R1` → (no Lean counterpart)
-- `Rle_powerRZ` → (no Lean counterpart)
-- `Zlt_powerRZ` → (no Lean counterpart)
-- `Zle_powerRZ` → (no Lean counterpart)
+-- `Zpower_nat_Z_powerRZ` → `Zpower_nat_Z_powerRZ [FloatSpec/src/Pff/Pff.lean:331]`
+-- `powerRZ_lt` → `powerRZ_lt [FloatSpec/src/Pff/Pff.lean:341]`
+-- `powerRZ_le` → `powerRZ_le [FloatSpec/src/Pff/Pff.lean:351]`
+-- `Rlt_powerRZ` → `Rlt_powerRZ [FloatSpec/src/Pff/Pff.lean:361]`
+ - `Zpower_nat_powerRZ_absolu` → (no Lean counterpart)
+-- `powerRZ_R1` → (no Lean counterpart)
+-- `Rle_powerRZ` → `Rle_powerRZ [FloatSpec/src/Pff/Pff.lean:371]`
+-- `Zlt_powerRZ` → `Zlt_powerRZ [FloatSpec/src/Pff/Pff.lean:381]`
+-- `Zle_powerRZ` → `Zle_powerRZ [FloatSpec/src/Pff/Pff.lean:391]`
 - `Rinv_powerRZ` → `pow_neg` (Pff.lean:59) (content-related)
 -- `floatEq` → `floatEq [FloatSpec/src/Pff/Pff.lean:580]`
 -- `floatDec` → `floatDec [FloatSpec/src/Pff/Pff.lean:592]`

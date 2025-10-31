@@ -322,6 +322,9 @@ theorem powerRZ_Zs (e : ℝ) (n : Int) :
   sorry
 
 -- Coq: `Zpower_nat_Z_powerRZ` — bridge between integer and real powers
+-- Alias for Coq's Zpower_nat on integers (placed early for downstream uses)
+noncomputable def Zpower_nat (n : Int) (q : Nat) : Int := n ^ q
+
 noncomputable def Zpower_nat_Z_powerRZ_check (n : Int) (m : Nat) : Id Unit :=
   pure ()
 
@@ -339,6 +342,56 @@ theorem powerRZ_lt (e : ℝ) (z : Int) :
     ⦃⌜0 < e⌝⦄
     powerRZ_lt_check e z
     ⦃⇓_ => ⌜0 < e ^ z⌝⦄ := by
+  sorry
+
+-- Coq: `powerRZ_le` — 0 < e → 0 ≤ e^z (integer exponent)
+noncomputable def powerRZ_le_check (e : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_le (e : ℝ) (z : Int) :
+    ⦃⌜0 < e⌝⦄
+    powerRZ_le_check e z
+    ⦃⇓_ => ⌜0 ≤ e ^ z⌝⦄ := by
+  sorry
+
+-- Coq: `Rlt_powerRZ` — 1 < e → n < m → e^n < e^m
+noncomputable def Rlt_powerRZ_check (e : ℝ) (n m : Int) : Id Unit :=
+  pure ()
+
+theorem Rlt_powerRZ (e : ℝ) (n m : Int) :
+    ⦃⌜1 < e ∧ n < m⌝⦄
+    Rlt_powerRZ_check e n m
+    ⦃⇓_ => ⌜e ^ n < e ^ m⌝⦄ := by
+  sorry
+
+-- Coq: `Rle_powerRZ` — 1 ≤ e → n ≤ m → e^n ≤ e^m
+noncomputable def Rle_powerRZ_check (e : ℝ) (n m : Int) : Id Unit :=
+  pure ()
+
+theorem Rle_powerRZ (e : ℝ) (n m : Int) :
+    ⦃⌜1 ≤ e ∧ n ≤ m⌝⦄
+    Rle_powerRZ_check e n m
+    ⦃⇓_ => ⌜e ^ n ≤ e ^ m⌝⦄ := by
+  sorry
+
+-- Coq: `Zlt_powerRZ` — 1 ≤ e → e^n < e^m → n < m
+noncomputable def Zlt_powerRZ_check (e : ℝ) (n m : Int) : Id Unit :=
+  pure ()
+
+theorem Zlt_powerRZ (e : ℝ) (n m : Int) :
+    ⦃⌜1 ≤ e ∧ e ^ n < e ^ m⌝⦄
+    Zlt_powerRZ_check e n m
+    ⦃⇓_ => ⌜n < m⌝⦄ := by
+  sorry
+
+-- Coq: `Zle_powerRZ` — 1 < e → e^n ≤ e^m → n ≤ m
+noncomputable def Zle_powerRZ_check (e : ℝ) (n m : Int) : Id Unit :=
+  pure ()
+
+theorem Zle_powerRZ (e : ℝ) (n m : Int) :
+    ⦃⌜1 < e ∧ e ^ n ≤ e ^ m⌝⦄
+    Zle_powerRZ_check e n m
+    ⦃⇓_ => ⌜n ≤ m⌝⦄ := by
   sorry
 
 -- Coq: `Rledouble` — if 0 ≤ r then r ≤ 2r
@@ -1201,7 +1254,7 @@ theorem Zpower_nat_monotone_le (n : Int) (q r : Nat) :
   sorry
 
 -- Alias for Coq's Zpower_nat on integers
-noncomputable def Zpower_nat (n : Int) (q : Nat) : Int := n ^ q
+-- (moved earlier)
 
 -- Coq: `digitAux1` — (Zpower_nat n (S p) * r) = (Zpower_nat n p * (n * r))
 noncomputable def digitAux1_check (n : Int) (p : Nat) (r : Int) : Id Unit :=
