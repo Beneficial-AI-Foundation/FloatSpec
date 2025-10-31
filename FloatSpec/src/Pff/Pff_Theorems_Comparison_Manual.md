@@ -166,7 +166,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `format_dp` → `format_dp [FloatSpec/src/Pff/Pff2Flocq.lean:546]`
 - `format_dq` → `format_dq [FloatSpec/src/Pff/Pff2Flocq.lean:566]`
 - `format_d_discri1` → `format_d_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:606]`
-- `U5_discri1_aux` → (no Lean counterpart)
+- `U5_discri1_aux` → `U5_discri1_aux [FloatSpec/src/Pff/Pff2Flocq.lean:617]`
 - `U5_discri1` → `U5_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:650]`
 - `discri_correct_test` → (no Lean counterpart)
 - `format_d_discri2` → (no Lean counterpart)

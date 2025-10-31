@@ -618,6 +618,36 @@ theorem format_d_discri1 (emin prec : Int) [Prec_gt_0 prec]
   sorry
 
 /-!
+Coq lemma: `U5_discri1_aux`
+
+Auxiliary bound: for any `x, y` in format with exponent lower bound `e` not
+smaller than `emin`, if `bpow e ≤ |x|` and `bpow e ≤ |y|` and the rounding of
+`x + y` is not exact, then `bpow e ≤ |round_flt (x + y)|`.
+-/
+
+noncomputable def U5_discri1_aux_check (emin prec : Int)
+    (x y : ℝ) (e : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `U5_discri1_aux` — with `round_flt := FloatSpec.Calc.Round.round 2
+    (FLT_exp emin prec) ()`, assuming `generic_format` of `x` and `y`, the
+    inequality `(emin ≤ e)` and lower bounds on `|x|` and `|y|`, together with
+    non-exact rounding of `x + y`, we have `bpow e ≤ |round_flt (x + y)|`.
+    Proof deferred. -/
+theorem U5_discri1_aux (emin prec : Int) [Prec_gt_0 prec]
+    (x y : ℝ) (e : Int) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) x ∧
+        generic_format 2 (FLT_exp emin prec) y ∧
+        emin ≤ e ∧
+        (2 : ℝ) ^ e ≤ |x| ∧ (2 : ℝ) ^ e ≤ |y| ∧
+        (let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+         round_flt (x + y) ≠ x + y)⌝⦄
+    U5_discri1_aux_check emin prec x y e
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            (2 : ℝ) ^ e ≤ |round_flt (x + y)|⌝⦄ := by
+  sorry
+
+/-!
 Coq lemma: `U5_discri1`
 
 With the same local definitions as in Discri1, assume `b*b ≠ 0`, `a*c ≠ 0`,
