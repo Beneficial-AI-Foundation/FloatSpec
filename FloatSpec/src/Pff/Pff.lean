@@ -68,19 +68,6 @@ theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
 
 -- ---------------------------------------------------------------------------
--- Basic nat reasoning helpers from Coq Pff.v
-
--- Coq: `min_or` — characterization of `min n m`
-noncomputable def min_or_check (n m : Nat) : Id Unit :=
-  pure ()
-
-theorem min_or (n m : Nat) :
-    ⦃⌜True⌝⦄
-    min_or_check n m
-    ⦃⇓_ => ⌜Nat.min n m = n ∧ n ≤ m ∨ Nat.min n m = m ∧ m < n⌝⦄ := by
-  sorry
-
--- ---------------------------------------------------------------------------
 -- Integer parity lemmas (aligned with Coq: Odd/Even over Z)
 
 -- Coq: `OddSEven` — if n is odd then succ n is even
