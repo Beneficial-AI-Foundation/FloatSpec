@@ -645,6 +645,20 @@ theorem eq_binary_overflow_FF2SF
   -- Proof deferred; follows Coq via `SF2FF_FF2SF` and `is_nan_binary_overflow`.
   exact sorry
 
+-- Coq: fexp_emax — the exponent function at emax
+-- In the Binary (full‑float) view, this expresses the relationship
+-- between FLT_exp and emax; we mirror as a hoare‑style assertion.
+def fexp_emax_check : Id Unit :=
+  pure ()
+
+theorem fexp_emax :
+  ⦃⌜True⌝⦄
+  fexp_emax_check
+  ⦃⇓_ => ⌜(FLT_exp (3 - emax - prec) prec) emax = emax - prec⌝⦄ := by
+  intro _
+  -- Proof deferred; unfolds `FLT_exp` and simplifies arithmetic.
+  exact sorry
+
 -- Binary format properties
 theorem binary_add_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
   FF2R 2 ((binary_add (prec:=prec) (emax:=emax) x y).val) =
