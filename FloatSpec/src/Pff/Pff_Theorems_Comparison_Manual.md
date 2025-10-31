@@ -968,6 +968,14 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zle_Zabs` → `Zle_Zabs [FloatSpec/src/Pff/Pff.lean:367]`
 - `Zlt_mult_simpl_l` → `Zlt_mult_simpl_l [FloatSpec/src/Pff/Pff.lean:421]`
 - `Z_eq_bool_correct` → `Z_eq_bool_correct [FloatSpec/src/Pff/Pff.lean:433]`
+- `Rlt_Fexp_eq_Zlt` → `Rlt_Fexp_eq_Zlt [FloatSpec/src/Pff/Pff.lean:950]`
+- `Rle_Fexp_eq_Zle` → `Rle_Fexp_eq_Zle [FloatSpec/src/Pff/Pff.lean:313]`
+- `LtR0Fnum` → `LtR0Fnum [FloatSpec/src/Pff/Pff.lean:1209]`
+- `LeR0Fnum` → `LeR0Fnum [FloatSpec/src/Pff/Pff.lean:1221]`
+- `LeFnumZERO` → `LeFnumZERO [FloatSpec/src/Pff/Pff.lean:1233]`
+- `R0LtFnum` → `R0LtFnum [FloatSpec/src/Pff/Pff.lean:1245]`
+- `R0LeFnum` → `R0LeFnum [FloatSpec/src/Pff/Pff.lean:1257]`
+- `LeZEROFnum` → `LeZEROFnum [FloatSpec/src/Pff/Pff.lean:1269]`
 - `Zle_Zpred_Zpred` → (no Lean counterpart)
 - `Zlt_Zabs_inv1` → `Zlt_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:532]`
 - `Zle_Zabs_inv1` → `Zle_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:542]`

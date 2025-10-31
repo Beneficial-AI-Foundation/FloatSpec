@@ -305,6 +305,18 @@ theorem pow_R1 (r : ℝ) (n : Nat) :
     ⦃⇓_ => ⌜|r| = 1 ∨ n = 0⌝⦄ := by
   sorry
 
+-- Coq: `Rle_Fexp_eq_Zle` — if x ≤ y and Fexp x = Fexp y then Fnum x ≤ Fnum y
+noncomputable def Rle_Fexp_eq_Zle_check {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Rle_Fexp_eq_Zle {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x ≤ _root_.F2R y ∧ x.Fexp = y.Fexp⌝⦄
+    Rle_Fexp_eq_Zle_check (beta:=beta) x y
+    ⦃⇓_ => ⌜x.Fnum ≤ y.Fnum⌝⦄ := by
+  sorry
+
 -- Coq: `powerRZ_O` — e^0 = 1 (integer exponent)
 noncomputable def powerRZ_O_check (e : ℝ) : Id Unit :=
   pure ()
@@ -930,6 +942,18 @@ theorem Fle_Zle (beta : Int) (n1 n2 d : Int) :
             ≤ _root_.F2R (pff_to_flocq beta { mantissa := n2, exponent := d, sign := false })⌝⦄ := by
   sorry
 
+-- Coq: `Rlt_Fexp_eq_Zlt` — if x < y and Fexp x = Fexp y then Fnum x < Fnum y
+noncomputable def Rlt_Fexp_eq_Zlt_check {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Rlt_Fexp_eq_Zlt {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x < _root_.F2R y ∧ x.Fexp = y.Fexp⌝⦄
+    Rlt_Fexp_eq_Zlt_check (beta:=beta) x y
+    ⦃⇓_ => ⌜x.Fnum < y.Fnum⌝⦄ := by
+  sorry
+
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by
   sorry
@@ -1175,6 +1199,90 @@ theorem Zlt_1_O (z : Int) :
     ⦃⌜1 ≤ z⌝⦄
     Zlt_1_O_check z
     ⦃⇓_ => ⌜0 < z⌝⦄ := by
+  sorry
+
+-- Coq: `LtR0Fnum` — 0 < x → 0 < Fnum x
+noncomputable def LtR0Fnum_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LtR0Fnum {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 < _root_.F2R x⌝⦄
+    LtR0Fnum_check (beta:=beta) x
+    ⦃⇓_ => ⌜0 < x.Fnum⌝⦄ := by
+  sorry
+
+-- Coq: `LeR0Fnum` — 0 ≤ x → 0 ≤ Fnum x
+noncomputable def LeR0Fnum_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LeR0Fnum {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ _root_.F2R x⌝⦄
+    LeR0Fnum_check (beta:=beta) x
+    ⦃⇓_ => ⌜0 ≤ x.Fnum⌝⦄ := by
+  sorry
+
+-- Coq: `LeFnumZERO` — 0 ≤ Fnum x → 0 ≤ x
+noncomputable def LeFnumZERO_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LeFnumZERO {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ x.Fnum⌝⦄
+    LeFnumZERO_check (beta:=beta) x
+    ⦃⇓_ => ⌜0 ≤ _root_.F2R x⌝⦄ := by
+  sorry
+
+-- Coq: `R0LtFnum` — x < 0 → Fnum x < 0
+noncomputable def R0LtFnum_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem R0LtFnum {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x < 0⌝⦄
+    R0LtFnum_check (beta:=beta) x
+    ⦃⇓_ => ⌜x.Fnum < 0⌝⦄ := by
+  sorry
+
+-- Coq: `R0LeFnum` — x ≤ 0 → Fnum x ≤ 0
+noncomputable def R0LeFnum_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem R0LeFnum {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x ≤ 0⌝⦄
+    R0LeFnum_check (beta:=beta) x
+    ⦃⇓_ => ⌜x.Fnum ≤ 0⌝⦄ := by
+  sorry
+
+-- Coq: `LeZEROFnum` — Fnum x ≤ 0 → x ≤ 0
+noncomputable def LeZEROFnum_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LeZEROFnum {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜x.Fnum ≤ 0⌝⦄
+    LeZEROFnum_check (beta:=beta) x
+    ⦃⇓_ => ⌜_root_.F2R x ≤ 0⌝⦄ := by
+  sorry
+
+-- Coq: `LtFnumZERO` — 0 < Fnum x → 0 < x
+noncomputable def LtFnumZERO_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LtFnumZERO {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 < x.Fnum⌝⦄
+    LtFnumZERO_check (beta:=beta) x
+    ⦃⇓_ => ⌜0 < _root_.F2R x⌝⦄ := by
   sorry
 
 -- Coq: `Zlt_Zabs_inv1` — |z1| < z2 → -z2 < z1
