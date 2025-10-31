@@ -41,8 +41,10 @@ def pGivesBound (beta : Int) (b : Fbound) (p : Int) : Prop :=
 def precisionNotZero (p : Int) : Prop := 1 < p
 
 -- Placeholder predicates (Coq: Fbounded/Fcanonic)
-def Fbounded (_b : Fbound) (_f : PffFloat) : Prop := True
-def Fcanonic (_beta : Int) (_b : Fbound) (_f : PffFloat) : Prop := True
+-- Use distinct names to avoid clashing with similarly named placeholders
+-- in other modules (e.g., Pff.lean uses FlocqFloat whereas here we use PffFloat).
+def PFbounded (_b : Fbound) (_f : PffFloat) : Prop := True
+def PFcanonic (_beta : Int) (_b : Fbound) (_f : PffFloat) : Prop := True
 
 -- Minimal `make_bound` used in Coq proofs
 noncomputable def make_bound (beta p E : Int) : Fbound :=
@@ -116,7 +118,7 @@ noncomputable def format_is_pff_format'_check (beta : Int) (b : Fbound) (p : Int
 theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
-    ⦃⇓_ => ⌜Fbounded b (mk_from_generic beta b p r)⌝⦄ := by
+    ⦃⇓_ => ⌜PFbounded b (mk_from_generic beta b p r)⌝⦄ := by
   sorry
 
 /-- Coq: `format_is_pff_format` — from `generic_format` derive the existence of a bounded Pff float
@@ -124,7 +126,7 @@ theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
 theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
-    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ Fbounded b f⌝⦄ := by
+    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFbounded b f⌝⦄ := by
   sorry
 
 -- Next missing theorem: pff_format_is_format
@@ -134,7 +136,7 @@ noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int)
 /-- Coq: `pff_format_is_format` — from `Fbounded b f`, obtain `generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`.
 We phrase it using the project's hoare triple style and the `pff_to_R` bridge. -/
 theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ Fbounded b f⌝⦄
+    ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ PFbounded b f⌝⦄
     pff_format_is_format_check beta b p f
     ⦃⇓_ => ⌜generic_format beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
   sorry
@@ -272,7 +274,7 @@ noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f :
     then `f` is normal (in the Pff sense). We phrase normality as a Prop `True`
     placeholder associated to `Fbounded`/`Fcanonic` in this port. -/
 theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜Fcanonic beta b f ∧ (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R beta f|⌝⦄
+    ⦃⌜PFcanonic beta b f ∧ (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R beta f|⌝⦄
     CanonicGeNormal_check beta b p f
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
@@ -284,7 +286,7 @@ noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : Pf
 /-- Coq: `Fulp_ulp_aux` — for canonical `f`, `Fulp` equals `ulp` at `(FLT_exp (-dExp b) p)`.
     We express `Fulp` via the Compat.lean `ulp` bridge on reals. -/
 theorem Fulp_ulp_aux (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜Fcanonic beta b f⌝⦄
+    ⦃⌜PFcanonic beta b f⌝⦄
     Fulp_ulp_aux_check beta b p f
     ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
   sorry
@@ -294,7 +296,7 @@ noncomputable def Fulp_ulp_check (beta : Int) (b : Fbound) (p : Int) (f : PffFlo
 
 /-- Coq: `Fulp_ulp` — same as `Fulp_ulp_aux` but from `Fbounded` via normalization. -/
 theorem Fulp_ulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜Fbounded b f⌝⦄
+    ⦃⌜PFbounded b f⌝⦄
     Fulp_ulp_check beta b p f
     ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
   sorry
