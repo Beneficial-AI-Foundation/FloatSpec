@@ -480,3 +480,50 @@ theorem U3_discri1 (emin prec : Int) [Prec_gt_0 prec]
             let q := round_flt (a * c)
             (2 : ℝ) ^ (emin + 2 * prec) ≤ |round_flt (p - q)|⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `U4_discri1`
+
+Under the hypotheses of Discri1 (non-underflow side-conditions and `p - q ≠ 0`),
+Coq proves a lower bound on the magnitude of the discriminant-like quantity `d`,
+defined from the rounded intermediates `p, q, dp, dq`.
+
+We mirror that statement with the same local `let` bindings and the project
+Hoare-triple style. The rounding operator is modeled by
+`FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` (nearest-even). Proof is
+left as `sorry` per the import process.
+-/
+
+noncomputable def U4_discri1_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `U4_discri1` — with `p := round_flt (b*b)`, `q := round_flt (a*c)`,
+    `dp := b*b - p`, `dq := a*c - q`, and
+    `d := if p + q ≤ 3*|p - q| then round_flt (p - q)
+          else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
+    assuming the usual format and non-underflow side-conditions and `p - q ≠ 0`,
+    we have the lower bound `(2 : ℝ)^(emin + prec) ≤ |d|`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`. -/
+theorem U4_discri1 (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
+        generic_format 2 (FLT_exp emin prec) b ∧
+        generic_format 2 (FLT_exp emin prec) c ∧
+        (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|) ∧
+        (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|) ∧
+        (let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+         let p := round_flt (b * b)
+         let q := round_flt (a * c)
+         True ∧ p - q ≠ 0)⌝⦄
+    U4_discri1_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let p := round_flt (b * b)
+            let q := round_flt (a * c)
+            let dp := b * b - p
+            let dq := a * c - q
+            let d := if (p + q ≤ 3 * |p - q|)
+                     then round_flt (p - q)
+                     else round_flt (round_flt (p - q) + round_flt (dp - dq))
+            (2 : ℝ) ^ (emin + prec) ≤ |d|⌝⦄ := by
+  sorry
