@@ -1048,11 +1048,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `oneExp_Zlt` → `oneExp_Zlt [FloatSpec/src/Pff/Pff.lean:641]`
 - `sameExpEq` → `sameExpEq [FloatSpec/src/Pff/Pff.lean:620]`
 - `FshiftFdigit` → `FshiftFdigit [FloatSpec/src/Pff/Pff.lean:1235]`
-- `FshiftCorrect` → (no Lean counterpart)
-- `FshiftCorrectInv` → (no Lean counterpart)
-- `FshiftO` → (no Lean counterpart)
-- `FshiftCorrectSym` → (no Lean counterpart)
-- `FdigitEq` → (no Lean counterpart)
+- `FshiftCorrect` → `FshiftCorrect [FloatSpec/src/Pff/Pff.lean:1320]`
+- `FshiftCorrectInv` → `FshiftCorrectInv [FloatSpec/src/Pff/Pff.lean:1329]`
+- `FshiftO` → `FshiftO [FloatSpec/src/Pff/Pff.lean:1341]`
+- `FshiftCorrectSym` → `FshiftCorrectSym [FloatSpec/src/Pff/Pff.lean:1353]`
+- `FdigitEq` → `FdigitEq [FloatSpec/src/Pff/Pff.lean:1365]`
 - `Fle_Zle` → (no Lean counterpart)
  - `Fle_Zle` → `Fle_Zle [FloatSpec/src/Pff/Pff.lean:555]`
 - `Rlt_Fexp_eq_Zlt` → (no Lean counterpart)
