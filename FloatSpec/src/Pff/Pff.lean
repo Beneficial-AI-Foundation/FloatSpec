@@ -198,6 +198,11 @@ def Fnormal {beta : Int}
     (radix : ℝ) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
 
+-- Coq-style boundedness predicate (placeholder)
+def Fbounded {beta : Int}
+    (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
 -- Existence of a closest representation (Coq: `ClosestTotal`)
 noncomputable def ClosestTotal_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ) : Id Unit :=
@@ -384,6 +389,86 @@ theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
     RoundedProjector_check P
     ⦃⇓_ => ⌜ProjectorP P⌝⦄ := by
+  sorry
+
+-- Coq: `RoundedModeProjectorIdem` — under RoundedModeP, P p p for bounded p
+noncomputable def RoundedModeProjectorIdem_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RoundedModeProjectorIdem {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p⌝⦄
+    RoundedModeProjectorIdem_check (beta:=beta) b radix P p
+    ⦃⇓_ => ⌜P (_root_.F2R p) p⌝⦄ := by
+  sorry
+
+-- Coq: `RoundedModeBounded` — from P r q under RoundedModeP, q is bounded
+noncomputable def RoundedModeBounded_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RoundedModeBounded {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜RoundedModeP P ∧ P r q⌝⌝⦄
+    RoundedModeBounded_check (beta:=beta) b radix P r q
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
+  sorry
+
+-- Coq: `RoundedModeProjectorIdemEq` — equality on reals under RoundedModeP
+noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RoundedModeProjectorIdemEq {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧ P (_root_.F2R p) q⌝⦄
+    RoundedModeProjectorIdemEq_check (beta:=beta) b radix P p q
+    ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
+  sorry
+
+-- Coq: `RoundedModeMult` — monotonicity wrt scaling by radix
+noncomputable def RoundedModeMult_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RoundedModeMult {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ r ≤ radix * _root_.F2R q'⌝⦄
+    RoundedModeMult_check (beta:=beta) b radix P r q q'
+    ⦃⇓_ => ⌜_root_.F2R q ≤ radix * _root_.F2R q'⌝⦄ := by
+  sorry
+
+-- Coq: `RoundedModeMultLess` — dual inequality for scaling by radix
+noncomputable def RoundedModeMultLess_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RoundedModeMultLess {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ radix * _root_.F2R q' ≤ r⌝⦄
+    RoundedModeMultLess_check (beta:=beta) b radix P r q q'
+    ⦃⇓_ => ⌜radix * _root_.F2R q' ≤ _root_.F2R q⌝⦄ := by
   sorry
 
 -- ---------------------------------------------------------------------------
