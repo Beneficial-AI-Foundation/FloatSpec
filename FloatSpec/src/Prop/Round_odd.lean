@@ -107,7 +107,7 @@ theorem Rnd_odd_pt_monotone :
 
 /-- Round to odd properties -/
 theorem round_odd_ge_ulp (x : ℝ) :
-  generic_format beta fexp x ∨ 
+  generic_format beta fexp x ∨
   ulp beta fexp x ≤ |FloatSpec.Calc.Round.round beta fexp () x - x| := by
   sorry
 
@@ -117,7 +117,7 @@ theorem round_odd_double_round (fexp1 fexp2 : Int → Int)
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
   (choice : Int → Bool) (x : ℝ)
   (h_precision : ∀ e, fexp2 e ≤ fexp1 e) :
-  FloatSpec.Calc.Round.round beta fexp2 (Znearest choice) (FloatSpec.Calc.Round.round beta fexp1 () x) = 
+  FloatSpec.Calc.Round.round beta fexp2 (Znearest choice) (FloatSpec.Calc.Round.round beta fexp1 () x) =
   FloatSpec.Calc.Round.round beta fexp2 (Znearest choice) x := by
   sorry
 
@@ -138,10 +138,6 @@ theorem fexp_round_odd (x : ℝ) :
     ≤ (FloatSpec.Core.Raux.mag beta x).run + 1 := by
   sorry
 
-/-!
-  Additional helpers from Coq's Round_odd.v
-  We mirror statements and leave proofs as placeholders.
--/
 
 variable (fexpe : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexpe]

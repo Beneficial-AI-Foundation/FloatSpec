@@ -35,7 +35,7 @@ hours=(
   # 2
   # 2
   # 2
-  3
+  2
   5
   5
   # 4
@@ -94,7 +94,7 @@ Introduce missing theorems in the directory. You can find the record of missing 
 
 ### Compilation Verification
 
-- **After EVERY theorem:** Run `mcp` (preferred) or `lake build xxx`
+- **After EVERY theorem:** Run `mcp` or `lake build xxx` (preferred)
 - **Definition of complete:** NO errors or 'pure true' statements (functions should be implemented already, but proofs can be sorry placeholders)
 - **Never mark as complete if:**
     - Any errors or 'pure true' statements remain

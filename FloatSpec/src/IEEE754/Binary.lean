@@ -2,7 +2,6 @@
 -- Translated from Coq file: flocq/src/IEEE754/Binary.v
 
 import FloatSpec.src.Core
-import FloatSpec.src.IEEE754.BinarySingleNaN
 import FloatSpec.src.Compat
 import FloatSpec.src.Calc
 import Mathlib.Data.Real.Basic

@@ -79,6 +79,23 @@ theorem match_SF2B {T : Type}
   unfold match_SF2B_check SF2B
   cases x <;> rfl
 
+-- Coq: canonical_canonical_mantissa (SingleNaN side)
+-- Mirror the Binary.lean style: hoare-triple statement yielding canonicality.
+def canonical_canonical_mantissa_check
+  (sx : Bool) (mx : Nat) (ex : Int) : Id Unit :=
+  pure ()
+
+theorem canonical_canonical_mantissa
+  (sx : Bool) (mx : Nat) (ex : Int)
+  (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  canonical_canonical_mantissa_check (prec:=prec) (emax:=emax) sx mx ex
+  ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
+            (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's canonical_canonical_mantissa.
+  exact sorry
+
 -- Coq: B2SF_SF2B — standard view after SF2B is identity
 def B2SF_SF2B_check (x : StandardFloat) : Id StandardFloat :=
   pure (B2SF_BSN (SF2B x))
