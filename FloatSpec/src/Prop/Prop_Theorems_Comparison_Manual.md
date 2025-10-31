@@ -1102,31 +1102,31 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `mag_d` → (no direct Lean match found)
 
-- `Fexp_d` → (no direct Lean match found)
+ - `Fexp_d` → `Fexp_d` [Round_odd.lean:156] (spec-variant)
 
-- `format_bpow_x` → (no direct Lean match found)
+ - `format_bpow_x` → `format_bpow_x` [Round_odd.lean:170] (spec-variant)
 
-- `format_bpow_d` → (no direct Lean match found)
+ - `format_bpow_d` → `format_bpow_d` [Round_odd.lean:182] (spec-variant)
 
-- `d_le_m` → (no direct Lean match found)
+ - `d_le_m` → `d_le_m` [Round_odd.lean:195] (spec-variant)
 
-- `m_le_u` → (no direct Lean match found)
+ - `m_le_u` → `m_le_u` [Round_odd.lean:206] (spec-variant)
 
-- `mag_m` → (no direct Lean match found)
+ - `mag_m` → `mag_m` [Round_odd.lean:214] (spec-variant)
 
-- `mag_m_0` → (no direct Lean match found)
+ - `mag_m_0` → `mag_m_0` [Round_odd.lean:226] (spec-variant)
 
-- `u'_eq` → (no direct Lean match found)
+ - `u'_eq` → `u'_eq` [Round_odd.lean:239] (spec-variant)
 
-- `m_eq` → (no direct Lean match found)
+ - `m_eq` → `m_eq` [Round_odd.lean:251] (spec-variant)
 
-- `m_eq_0` → (no direct Lean match found)
+ - `m_eq_0` → `m_eq_0` [Round_odd.lean:265] (spec-variant)
 
-- `fexp_m_eq_0` → (no direct Lean match found)
+ - `fexp_m_eq_0` → `fexp_m_eq_0` [Round_odd.lean:279] (spec-variant)
 
-- `Fm` → (no direct Lean match found)
+ - `Fm` → `Fm` [Round_odd.lean:293] (spec-variant)
 
-- `Zm` → (no direct Lean match found)
+ - `Zm` → `Zm` [Round_odd.lean:306] (spec-variant)
 
 - `DN_odd_d_aux` → (no direct Lean match found)
 
