@@ -1685,6 +1685,19 @@ theorem Fabs_correct {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = |_root_.F2R x|⌝⦄ := by
   sorry
 
+-- Coq: `RleFexpFabs` — for nonzero real value, Float 1 (Fexp p) ≤ Fabs p
+noncomputable def RleFexpFabs_check {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RleFexpFabs {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R p ≠ 0⌝⦄
+    RleFexpFabs_check (beta:=beta) p
+    ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp)
+            ≤ _root_.F2R (Fabs (beta:=beta) p)⌝⦄ := by
+  sorry
+
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by
   sorry
