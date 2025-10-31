@@ -261,7 +261,7 @@ noncomputable def FloatFexp_gt_check (beta : Int) (b : Fbound) (p e : Int) (f : 
     then `e < Fexp f`. Here we use `pff_to_R` for `FtoR` and the `exponent`
     field of `PffFloat` for `Fexp`. -/
 theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
-    ⦃⌜pGivesBound beta b p ∧ Fbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R beta f|⌝⦄
+    ⦃⌜pGivesBound beta b p ∧ PFbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R beta f|⌝⦄
     FloatFexp_gt_check beta b p e f
     ⦃⇓_ => ⌜e < f.exponent⌝⦄ := by
   sorry
