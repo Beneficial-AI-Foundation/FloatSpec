@@ -303,3 +303,27 @@ theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
   sorry
 
 -- (reserved) ErrFMA_bounded will be added next after validating preceding lemmas
+
+-- Coq: `ErrFMA_bounded` — formats of r1, r2, r3 in compensated FMA scheme
+noncomputable def ErrFMA_bounded_check (emin prec : Int)
+    (choice : Int → Bool) (a x y : ℝ) : Id Unit :=
+  pure ()
+
+theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ) :
+    ⦃⌜True⌝⦄
+    ErrFMA_bounded_check emin prec choice a x y
+    ⦃⇓_ => ⌜True⌝⦄ := by
+  sorry
+
+-- Coq: `ErrFMA_correct` — r1 + r2 + r3 = a*x + y
+noncomputable def ErrFMA_correct_check (emin prec : Int)
+    (choice : Int → Bool) (a x y : ℝ) : Id Unit :=
+  pure ()
+
+theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ) :
+    ⦃⌜True⌝⦄
+    ErrFMA_correct_check emin prec choice a x y
+    ⦃⇓_ => ⌜True⌝⦄ := by
+  sorry
