@@ -83,6 +83,20 @@ theorem B2SF_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   -- Proof deferred; mirrors Coq's `B2SF_Prim2B` round-trip property.
   exact sorry
 
+-- Coq: Prim2SF_B2Prim — standard view of Binary→Prim equals direct B2SF
+def Prim2SF_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) : Id StandardFloat :=
+  pure (Prim2SF prec emax (binary_to_prim prec emax x))
+
+theorem Prim2SF_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Prim2SF_B2Prim_check prec emax x
+  ⦃⇓result => ⌜result = B2SF (prec:=prec) (emax:=emax) x⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `Prim2SF_B2Prim` lemma.
+  exact sorry
+
 -- Coq: compare_equiv — comparison correspondence between PrimFloat and Binary754
 noncomputable def prim_compare (x y : PrimFloat) : Option Int :=
   some ((FloatSpec.Core.Raux.Rcompare x y).run)
