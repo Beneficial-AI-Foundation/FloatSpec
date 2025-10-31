@@ -357,6 +357,25 @@ theorem ClosestRoundedModeP {beta : Int}
     ⦃⇓_ => ⌜RoundedModeP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
+-- ---------------------------------------------------------------------------
+-- Underflow/Exponent growth lemmas (ported skeletons)
+
+-- Coq: `FexpGeUnderf` — from boundedness and a magnitude lower bound on |F2R f|
+-- derive a lower bound on the exponent Fexp f. We keep the statement in terms of
+-- integers and real powers, mirroring the Coq intent. Proof deferred.
+noncomputable def FexpGeUnderf_check {beta : Int}
+    (bo : Fbound_skel) (precision e : Int)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FexpGeUnderf {beta : Int}
+    (bo : Fbound_skel) (precision e : Int)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) bo f ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f|⌝⦄
+    FexpGeUnderf_check (beta:=beta) bo precision e f
+    ⦃⇓_ => ⌜e - precision + 1 ≤ f.Fexp⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
