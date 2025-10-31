@@ -21,6 +21,11 @@ def prim_mul (x y : PrimFloat) : PrimFloat := x * y
 noncomputable def prim_div (x y : PrimFloat) : PrimFloat := x / y
 noncomputable def prim_sqrt (x : PrimFloat) : PrimFloat := Real.sqrt x
 
+-- Exponent scaling on primitive floats (Coq: Z.ldexp)
+-- We mirror the intended semantics using `bpow 2 e` from Core.Raux.
+noncomputable def prim_ldexp (x : PrimFloat) (e : Int) : PrimFloat :=
+  x * (FloatSpec.Core.Raux.bpow 2 e).run
+
 -- Comparison operations
 noncomputable def prim_eq (x y : PrimFloat) : Bool := decide (x = y)
 noncomputable def prim_lt (x y : PrimFloat) : Bool := decide (x < y)
@@ -68,6 +73,24 @@ theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
   binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) = 
   prim_mul (binary_to_prim prec emax x) (binary_to_prim prec emax y) := by
   sorry
+
+-- Coq: ldexp_equiv — exponent scaling correspondence between PrimFloat and Binary754
+noncomputable def ldexp_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) (e : Int) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (prim_ldexp x e)))
+
+theorem ldexp_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) (e : Int) :
+  ⦃⌜True⌝⦄
+  ldexp_equiv_check prec emax x e
+  ⦃⇓result => ⌜result =
+      B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
+              (prim_to_binary prec emax x) e)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `ldexp_equiv` via `binary_ldexp` and bridges.
+  exact sorry
 
 -- Coq: B2SF_Prim2B — standard view after Prim→Binary equals Prim2SF
 def B2SF_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
