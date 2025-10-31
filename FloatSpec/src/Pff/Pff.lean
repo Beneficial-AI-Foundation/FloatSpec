@@ -90,6 +90,10 @@ def MinOrMaxP {α : Type} (P : ℝ → α → Prop) : Prop := True
 def RoundedModeP {α : Type} (P : ℝ → α → Prop) : Prop :=
   TotalP P ∧ CompatibleP P ∧ MinOrMaxP P ∧ MonotoneP P
 
+-- Uniqueness of a rounding relation P
+def UniqueP {α : Type} (P : ℝ → α → Prop) : Prop :=
+  ∀ r p q, P r p → P r q → p = q
+
 -- Projector property placeholder
 def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop := True
 
@@ -178,6 +182,56 @@ theorem MaxRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
     MaxRoundedModeP_check (α:=α) b radix
     ⦃⇓_ => ⌜RoundedModeP (isMax (α:=α) b radix)⌝⦄ := by
+  sorry
+
+-- Coq: `MinUniqueP` — uniqueness for isMin
+noncomputable def MinUniqueP_check {α : Type}
+    (b : Fbound_skel) (radix : Int) : Id Unit :=
+  pure ()
+
+theorem MinUniqueP {α : Type} (b : Fbound_skel) (radix : Int) :
+    ⦃⌜True⌝⦄
+    MinUniqueP_check (α:=α) b radix
+    ⦃⇓_ => ⌜UniqueP (isMin (α:=α) b radix)⌝⦄ := by
+  sorry
+
+-- Coq: `MaxUniqueP` — uniqueness for isMax
+noncomputable def MaxUniqueP_check {α : Type}
+    (b : Fbound_skel) (radix : Int) : Id Unit :=
+  pure ()
+
+theorem MaxUniqueP {α : Type} (b : Fbound_skel) (radix : Int) :
+    ⦃⌜True⌝⦄
+    MaxUniqueP_check (α:=α) b radix
+    ⦃⇓_ => ⌜UniqueP (isMax (α:=α) b radix)⌝⦄ := by
+  sorry
+
+-- (Next missing theorems will be added one-by-one after validation.)
+
+-- Coq: `MinOrMaxRep` — representation form for Min/Max predicates
+noncomputable def MinOrMaxRep_check {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Id Unit :=
+  pure ()
+
+theorem MinOrMaxRep {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
+    ⦃⌜MinOrMaxP P⌝⦄
+    MinOrMaxRep_check (beta:=beta) P
+    ⦃⇓_ => ⌜∀ r (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+            P r q → ∃ m : Int, q = ⟨m, p.Fexp⟩⌝⦄ := by
+  sorry
+
+-- Coq: `RoundedModeRep` — representation form for rounded modes
+noncomputable def RoundedModeRep_check {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Id Unit :=
+  pure ()
+
+theorem RoundedModeRep {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
+    ⦃⌜RoundedModeP P⌝⦄
+    RoundedModeRep_check (beta:=beta) P
+    ⦃⇓_ => ⌜∀ r (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+            P r q → ∃ m : Int, q = ⟨m, p.Fexp⟩⌝⦄ := by
   sorry
 
 -- Coq: `pow_NR0` — if e ≠ 0 then e^n ≠ 0
