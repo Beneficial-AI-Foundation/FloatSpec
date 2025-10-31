@@ -379,6 +379,23 @@ theorem is_zero_equiv (prec emax : Int)
   -- Proof deferred; mirrors Coq's zero predicate equivalence.
   exact sorry
 
+-- Coq: of_int63_equiv — integer conversion equivalence
+noncomputable def of_int63_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (z : Int) : Id PrimFloat :=
+  pure (z)
+
+theorem of_int63_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (z : Int) :
+  ⦃⌜True⌝⦄
+  of_int63_equiv_check prec emax z
+  ⦃⇓result => ⌜result =
+      binary_to_prim prec emax (prim_to_binary prec emax (z))⌝⦄ := by
+  intro _
+  -- Proof deferred; corresponds to Coq's `of_int63_equiv` through conversions.
+  exact sorry
+
 -- Coq: is_infinity_equiv — infinity classifier correspondence
 noncomputable def is_infinity_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
