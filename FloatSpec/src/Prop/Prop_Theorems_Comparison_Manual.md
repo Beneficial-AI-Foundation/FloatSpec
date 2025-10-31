@@ -1079,7 +1079,6 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `Zeven_abs` → `Zeven_abs` [Round_odd.lean:47] (spec-variant)
 
-- `Zrnd_odd_plus` → `Zrnd_odd_plus` [Round_odd.lean:53] (spec-variant)
 
 - `Rnd_odd_pt_opp_inv` → (no direct Lean match found)
 
@@ -1097,7 +1096,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `d_eq` → (no direct Lean match found)
 
-- `u_eq` → (no direct Lean match found)
+ - `u_eq` → `u_eq` [Round_odd.lean:220] (spec-variant)
 
 - `d_ge_0` → (no direct Lean match found)
 

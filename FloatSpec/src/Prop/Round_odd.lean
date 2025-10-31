@@ -211,3 +211,20 @@ lemma d_eq (x : ℝ)
     (FloatSpec.Core.Generic_fmt.roundR (beta := beta) (fexp := fexp)
         (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x) := by
   sorry
+
+/-- Coq: `u_eq`
+    Equality between the UP-witness value and rounding with `Zceil`.
+
+    Mirrors: `F2R u = round beta fexp Zceil x`. We use the Core `roundR`
+    helper with the integer rounding function `Zceil` (as `Int` via `.run`). -/
+lemma u_eq (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) :
+  F2R u =
+    (FloatSpec.Core.Generic_fmt.roundR (beta := beta) (fexp := fexp)
+        (fun y => (FloatSpec.Core.Raux.Zceil y).run) x) := by
+  sorry
