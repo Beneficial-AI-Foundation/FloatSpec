@@ -1,1 +1,1 @@
-error: build failed
+0

@@ -938,6 +938,30 @@ theorem is_Fzero_rep1 {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R x = 0⌝⦄ := by
   sorry
 
+-- Coq: `is_Fzero_rep2` — zero real value implies zero mantissa
+noncomputable def is_Fzero_rep2_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem is_Fzero_rep2 {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x = 0⌝⦄
+    is_Fzero_rep2_check x
+    ⦃⇓_ => ⌜is_Fzero x⌝⦄ := by
+  sorry
+
+-- Coq: `NisFzeroComp` — if x is not zero and F2R x = F2R y then y is not zero
+noncomputable def NisFzeroComp_check {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem NisFzeroComp {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
+    NisFzeroComp_check x y
+    ⦃⇓_ => ⌜¬ is_Fzero y⌝⦄ := by
+  sorry
+
 -- Coq: `Fle_Zle` — compare two floats of same exponent by their mantissas
 -- We mirror the Coq statement Fle_Zle: n1 ≤ n2 → Fle (Float n1 d) (Float n2 d)
 -- Our Pff compatibility struct `PffFloat` uses fields (mantissa, exponent, sign).
