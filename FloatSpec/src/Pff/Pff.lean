@@ -113,6 +113,16 @@ theorem EvenSOddInv (n : Int) :
 -- Coq: `EvenO` — zero is even
 -- Removed duplicate EvenO here; canonical definition appears later near Z lemmas.
 
+-- Coq: `EvenO` — zero is even (integer version)
+noncomputable def EvenO_check : Id Unit :=
+  pure ()
+
+theorem EvenO :
+    ⦃⌜True⌝⦄
+    EvenO_check
+    ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
+  sorry
+
 -- Coq: `Odd1` — one is odd
 noncomputable def Odd1_check : Id Unit :=
   pure ()
