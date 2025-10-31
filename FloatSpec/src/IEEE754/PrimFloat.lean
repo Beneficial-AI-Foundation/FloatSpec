@@ -251,3 +251,16 @@ theorem sqrt_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   intro _
   -- Proof deferred; mirrors Coq's `sqrt_equiv` via SingleNaN bridge.
   exact sorry
+
+-- Coq: infinity_equiv — primitive +∞ corresponds to Binary infinity
+noncomputable def infinity_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : Id PrimFloat :=
+  pure (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_infinity false)))
+
+theorem infinity_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  infinity_equiv_check prec emax
+  ⦃⇓result => ⌜result = prim_infinity⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from the intended semantics of `binary_to_prim` and constants.
+  exact sorry
