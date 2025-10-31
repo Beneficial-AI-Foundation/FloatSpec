@@ -96,6 +96,20 @@ theorem canonical_canonical_mantissa_bsn
   -- Proof deferred; aligns with Coq's canonical_canonical_mantissa.
   exact sorry
 
+-- Coq: canonical_bounded — canonical mantissa implies boundedness of (mx, ex)
+def canonical_bounded_check (sx : Bool) (mx : Nat) (ex : Int) : Id Unit :=
+  pure ()
+
+theorem canonical_bounded
+  (sx : Bool) (mx : Nat) (ex : Int)
+  (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  canonical_bounded_check sx mx ex
+  ⦃⇓_ => ⌜bounded (prec:=prec) (emax:=emax) mx ex = true⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from `canonical_canonical_mantissa_bsn` and Coq's lemma.
+  exact sorry
+
 -- Coq: B2SF_SF2B — standard view after SF2B is identity
 def B2SF_SF2B_check (x : StandardFloat) : Id StandardFloat :=
   pure (B2SF_BSN (SF2B x))
