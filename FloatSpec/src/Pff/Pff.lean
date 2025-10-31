@@ -66,6 +66,120 @@ theorem pow_neg (r : ℝ) (z : Int) :
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
 
+-- ---------------------------------------------------------------------------
+-- Rounded-mode predicate framework (Coq FRound section, minimized shell)
+-- We provide lightweight predicate encodings to state meta-theorems such as
+-- RoundedModeP_inv2 / RoundedModeP_inv4. Detailed semantics (isMin/isMax,
+-- boundedness, projector properties) are intentionally deferred.
+
+-- Totality of a rounding relation P
+def TotalP {α : Type} (P : ℝ → α → Prop) : Prop :=
+  ∀ r : ℝ, ∃ p : α, P r p
+
+-- Compatibility of P under equal real value and representation equality
+def CompatibleP {α : Type} (P : ℝ → α → Prop) : Prop :=
+  ∀ r1 r2 : ℝ, ∀ p q : α, P r1 p → r1 = r2 → p = q → P r2 q
+
+-- Monotonicity placeholder (kept abstract for now)
+def MonotoneP {α : Type} (P : ℝ → α → Prop) : Prop := True
+
+-- Min/Max disjunction placeholder (kept abstract for now)
+def MinOrMaxP {α : Type} (P : ℝ → α → Prop) : Prop := True
+
+-- Rounded-mode package
+def RoundedModeP {α : Type} (P : ℝ → α → Prop) : Prop :=
+  TotalP P ∧ CompatibleP P ∧ MinOrMaxP P ∧ MonotoneP P
+
+-- Projector property placeholder
+def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop := True
+
+-- Minimal skeletons for min/max rounding predicates used by Pff.v theorems
+structure Fbound_skel where
+  dummy : Unit := ()
+
+def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
+  fun _ _ => True
+
+def isMax {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
+  fun _ _ => True
+
+-- First projection: RoundedModeP -> CompatibleP
+noncomputable def RoundedModeP_inv2_check {α : Type}
+    (P : ℝ → α → Prop) : Id Unit :=
+  pure ()
+
+theorem RoundedModeP_inv2 {α : Type} (P : ℝ → α → Prop) :
+    ⦃⌜RoundedModeP P⌝⦄
+    RoundedModeP_inv2_check P
+    ⦃⇓_ => ⌜CompatibleP P⌝⦄ := by
+  sorry
+
+-- Fourth projection: RoundedModeP -> MonotoneP
+noncomputable def RoundedModeP_inv4_check {α : Type}
+    (P : ℝ → α → Prop) : Id Unit :=
+  pure ()
+
+theorem RoundedModeP_inv4 {α : Type} (P : ℝ → α → Prop) :
+    ⦃⌜RoundedModeP P⌝⦄
+    RoundedModeP_inv4_check P
+    ⦃⇓_ => ⌜MonotoneP P⌝⦄ := by
+  sorry
+
+-- Projection to a projector property (placeholder)
+noncomputable def RoundedProjector_check {α : Type}
+    (P : ℝ → α → Prop) : Id Unit :=
+  pure ()
+
+theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
+    ⦃⌜RoundedModeP P⌝⦄
+    RoundedProjector_check P
+    ⦃⇓_ => ⌜ProjectorP P⌝⦄ := by
+  sorry
+
+-- Coq: `MinCompatible` — CompatibleP (isMin b radix)
+noncomputable def MinCompatible_check {α : Type}
+    (b : Fbound_skel) (radix : Int) : Id Unit :=
+  pure ()
+
+theorem MinCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
+    ⦃⌜True⌝⦄
+    MinCompatible_check (α:=α) b radix
+    ⦃⇓_ => ⌜CompatibleP (isMin (α:=α) b radix)⌝⦄ := by
+  sorry
+
+-- Coq: `MinRoundedModeP` — RoundedModeP (isMin b radix)
+noncomputable def MinRoundedModeP_check {α : Type}
+    (b : Fbound_skel) (radix : Int) : Id Unit :=
+  pure ()
+
+theorem MinRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
+    ⦃⌜True⌝⦄
+    MinRoundedModeP_check (α:=α) b radix
+    ⦃⇓_ => ⌜RoundedModeP (isMin (α:=α) b radix)⌝⦄ := by
+  sorry
+
+-- Coq: `MaxCompatible` — CompatibleP (isMax b radix)
+noncomputable def MaxCompatible_check {α : Type}
+    (b : Fbound_skel) (radix : Int) : Id Unit :=
+  pure ()
+
+theorem MaxCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
+    ⦃⌜True⌝⦄
+    MaxCompatible_check (α:=α) b radix
+    ⦃⇓_ => ⌜CompatibleP (isMax (α:=α) b radix)⌝⦄ := by
+  sorry
+
+-- Coq: `MaxRoundedModeP` — RoundedModeP (isMax b radix)
+noncomputable def MaxRoundedModeP_check {α : Type}
+    (b : Fbound_skel) (radix : Int) : Id Unit :=
+  pure ()
+
+theorem MaxRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
+    ⦃⌜True⌝⦄
+    MaxRoundedModeP_check (α:=α) b radix
+    ⦃⇓_ => ⌜RoundedModeP (isMax (α:=α) b radix)⌝⦄ := by
+  sorry
+
 -- Coq: `pow_NR0` — if e ≠ 0 then e^n ≠ 0
 noncomputable def pow_NR0_check (e : ℝ) (n : Nat) : Id Unit :=
   pure ()
