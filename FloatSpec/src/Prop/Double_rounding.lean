@@ -1061,6 +1061,26 @@ theorem round_round_plus_radix_ge_3_FLX
   = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (x + y) := by
   sorry
 
+/-- Coq: `round_round_minus_radix_ge_3_FLX`
+    Under `3 ≤ beta` and `2 * prec ≤ prec'`, nearest-on-nearest double
+    rounding of `x - y` from `(FLX_exp prec')` to `(FLX_exp prec)`
+    collapses to a single rounding at `(FLX_exp prec)`. -/
+theorem round_round_minus_radix_ge_3_FLX
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hbeta : 3 ≤ beta)
+  (hprec : 2 * prec ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FLX_exp prec) x)
+  (Fy : generic_format beta (FLX_exp prec) y) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (x - y) := by
+  sorry
+
 /-- Coq: `round_round_plus_radix_ge_3_FLT`
     Under `3 ≤ beta`, `emin' ≤ emin` and `2 * prec ≤ prec'`, nearest-on-
     nearest double rounding of `x + y` from `(FLT_exp emin' prec')` to
