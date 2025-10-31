@@ -1,0 +1,81 @@
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:85:3: warning: unused variable `sx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:85:15: warning: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:85:26: warning: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:88:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:103:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:140:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:151:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:173:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:185:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:196:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:207:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:219:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:232:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:246:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:259:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:284:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:298:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:307:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:347:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:372:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:408:20: warning: This simp argument is unused:
+  B754_to_R
+
+Hint: Omit it from the simp argument list.
+  simp [B7̵5̵4̵_̵t̵o̵_̵R̵,̵ ̵B̵SN_is_nan] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:436:32: warning: This simp argument is unused:
+  BSN_sign
+
+Hint: Omit it from the simp argument list.
+  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵s̵i̵g̵n̵] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:450:32: warning: This simp argument is unused:
+  BSN_is_finite
+
+Hint: Omit it from the simp argument list.
+  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵i̵s̵_̵f̵i̵n̵i̵t̵e̵] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:470:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:482:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:494:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:506:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:518:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:530:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:541:21: warning: unused variable `s`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:548:4: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:551:4: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:554:4: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:557:4: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:580:25: warning: unused variable `mode`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:584:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:595:8: warning: declaration uses 'sorry'
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:616:15: warning: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:616:26: warning: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:617:15: warning: unused variable `my`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:617:26: warning: unused variable `ey`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+FloatSpec/src/IEEE754/BinarySingleNaN.lean:622:8: warning: declaration uses 'sorry'
+failed to write '/dev/null': failed to create file '/dev/null'
+Command exited with non-zero status 1
+0:15.29 3137516KB
