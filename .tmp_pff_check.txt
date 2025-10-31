@@ -1,4 +1,4 @@
-lean: unrecognized option '--check'
+lean: unrecognized option '--make'
 Unknown command line option
 Lean (version 4.25.0-rc1, x86_64-unknown-linux-gnu, commit 66466a7b5db73989b88c3d74cf8c68f4f11991b0, Release)
 Miscellaneous
