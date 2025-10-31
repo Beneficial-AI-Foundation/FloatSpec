@@ -279,13 +279,10 @@ theorem V1_Und3 (emin prec : Int) [Prec_gt_0 prec]
             u1 = 0 ∨ ((beta : ℝ) ^ (emin + prec) ≤ |u1|)⌝⦄ := by
   sorry
 
-/-!
-Coq theorem: `Dekker`
-
-We mirror the statement structure by introducing local `let`-bound intermediates
-that model the algorithm steps, and we state both the conditional exactness and
-the global error bound. Proof is deferred.
--/
+-- Coq theorem: `Dekker`
+-- We mirror the statement structure by introducing local `let`-bound
+-- intermediates that model the algorithm steps, and we state both the
+-- conditional exactness and the global error bound. Proof is deferred.
 
 noncomputable def Dekker_check (emin prec s : Int)
     (choice : Int → Bool) (x y : ℝ) : Id Unit :=
