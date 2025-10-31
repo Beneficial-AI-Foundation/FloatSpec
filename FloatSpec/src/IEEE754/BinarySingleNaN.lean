@@ -211,6 +211,19 @@ theorem B2R_B2BSN {prec emax} (x : Binary754 prec emax) :
   intro _
   exact sorry
 
+-- Coq: emin_lt_emax — the minimal exponent is strictly less than emax
+-- We state it using the hoare‑triple style used throughout this project.
+def emin_lt_emax_check : Id Unit :=
+  pure ()
+
+theorem emin_lt_emax :
+  ⦃⌜True⌝⦄
+  emin_lt_emax_check
+  ⦃⇓_ => ⌜(3 - emax - prec) < emax⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from the `Prec_lt_emax` assumption.
+  exact sorry
+
 -- Coq: is_finite_strict_B2R — nonzero real semantics implies strict finiteness
 -- Stated for the single-NaN binary `B754` using `B754_to_R` as semantics.
 def is_finite_strict_B2R_check (x : B754) : Id Bool :=
