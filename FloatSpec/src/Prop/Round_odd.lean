@@ -237,3 +237,17 @@ lemma d_ge_0 (x : ℝ)
   (xPos : 0 < x) :
   0 ≤ F2R d := by
   sorry
+
+/-- Coq: `mag_d`
+    If `0 < F2R d`, then the magnitudes of `F2R d` and `x` coincide. -/
+lemma mag_d (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (dPos : 0 < F2R d) :
+  (FloatSpec.Core.Raux.mag beta (F2R d)).run
+    = (FloatSpec.Core.Raux.mag beta x).run := by
+  sorry
