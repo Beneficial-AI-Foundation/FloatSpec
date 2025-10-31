@@ -443,3 +443,48 @@ lemma DN_odd_d_aux (x z : ℝ)
   (Hz : F2R d ≤ z ∧ z < F2R u) :
   FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) z (F2R d) := by
   sorry
+
+/-- Coq: `UP_odd_d_aux`.
+    For any `z` strictly between `F2R d` and `F2R u` (up to `≤` on the right),
+    the UP rounding predicate selects `F2R u`. -/
+lemma UP_odd_d_aux (x z : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (Hz : F2R d < z ∧ z ≤ F2R u) :
+  FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) z (F2R u) := by
+  sorry
+
+variable (fexpe : Int → Int)
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexpe]
+
+/-- Coq: `round_N_odd_pos`.
+    Under the relation `fexpe e ≤ fexp e - 2`, double rounding with
+    round-to-odd at `fexpe` then nearest at `fexp` equals nearest at `fexp`.
+
+    This is the “positive x” auxiliary version taking DN/UP witnesses `d,u`. -/
+theorem round_N_odd_pos (choice : Int → Bool) (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x)
+  (Hrel : ∀ e, fexpe e ≤ fexp e - 2) :
+  FloatSpec.Calc.Round.round beta fexp (Znearest choice)
+      (FloatSpec.Calc.Round.round beta fexpe () x)
+    = FloatSpec.Calc.Round.round beta fexp (Znearest choice) x := by
+  sorry
+
+/-- Coq: `round_N_odd`.
+    Global double-rounding equivalence: nearest at `fexp` after odd at `fexpe`
+    equals nearest at `fexp`, assuming `fexpe ≤ fexp - 2`. -/
+theorem round_N_odd (choice : Int → Bool)
+  (Hrel : ∀ e, fexpe e ≤ fexp e - 2) (x : ℝ) :
+  FloatSpec.Calc.Round.round beta fexp (Znearest choice)
+      (FloatSpec.Calc.Round.round beta fexpe () x)
+    = FloatSpec.Calc.Round.round beta fexp (Znearest choice) x := by
+  sorry
