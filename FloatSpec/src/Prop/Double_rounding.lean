@@ -356,6 +356,149 @@ theorem round_round_sqrt_FLX
   sorry
 
 
+/-
+  Coq: `round_round_sqrt_radix_ge_4_hyp`
+  Strengthened hypothesis used for sqrt when the radix satisfies `4 ≤ beta`.
+-/
+def round_round_sqrt_radix_ge_4_hyp (fexp1 fexp2 : Int → Int) : Prop :=
+  (∀ ex, 2 * fexp1 ex ≤ fexp1 (2 * ex)) ∧
+  (∀ ex, 2 * fexp1 ex ≤ fexp1 (2 * ex - 1)) ∧
+  (∀ ex, fexp1 (2 * ex) < 2 * ex → fexp2 ex + ex ≤ 2 * fexp1 ex - 1)
+
+
+/-- Coq: `round_round_sqrt_radix_ge_4_aux`
+    Under `4 ≤ beta` and `round_round_sqrt_radix_ge_4_hyp`, if `0 < x`,
+    `fexp2 (mag (sqrt x)) ≤ fexp1 (mag (sqrt x)) - 1`, and `x` is
+    `fexp1`-generic, then the midpoint gap at `sqrt x` is strictly larger
+    than `1/2 * ulp fexp2 (sqrt x)`. -/
+lemma round_round_sqrt_radix_ge_4_aux
+  (Hbeta : 4 ≤ beta)
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1)
+  (Fx : generic_format beta fexp1 x) :
+  (1/2) * (ulp beta fexp2 (Real.sqrt x))
+    < |Real.sqrt x - midp (beta := beta) fexp1 (Real.sqrt x)| := by
+  sorry
+
+/-- Coq: `round_round_sqrt_radix_ge_4`
+    Under `4 ≤ beta` and `round_round_sqrt_radix_ge_4_hyp`, if `x` is
+    `fexp1`-generic and `fexp2 (mag (sqrt x)) ≤ fexp1 (mag (sqrt x)) - 1`,
+    then nearest-on-nearest double rounding of `sqrt x` from `fexp2` to
+    `fexp1` collapses to a single rounding at `fexp1`. -/
+lemma round_round_sqrt_radix_ge_4
+  (Hbeta : 4 ≤ beta)
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
+  (x : ℝ)
+  (Fx : generic_format beta fexp1 x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
+/-- Coq: `FLX_round_round_sqrt_radix_ge_4_hyp`
+    For FLX exponents, the `round_round_sqrt_radix_ge_4_hyp` holds
+    unconditionally. -/
+lemma FLX_round_round_sqrt_radix_ge_4_hyp
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec'] :
+  round_round_sqrt_radix_ge_4_hyp (FLX_exp prec) (FLX_exp prec') := by
+  sorry
+
+/-- Coq: `round_round_sqrt_radix_ge_4_FLX`
+    Under `4 ≤ beta` and `2 * prec + 1 ≤ prec'`, double rounding of
+    `sqrt x` from `(FLX_exp prec')` to `(FLX_exp prec)` collapses. -/
+theorem round_round_sqrt_radix_ge_4_FLX
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hbeta : 4 ≤ beta)
+  (hprec : 2 * prec + 1 ≤ prec')
+  (x : ℝ)
+  (Fx : generic_format beta (FLX_exp prec) x) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
+/-- Coq: `FLT_round_round_sqrt_radix_ge_4_hyp`
+    Sufficient conditions for FLT exponents to satisfy the
+    `round_round_sqrt_radix_ge_4_hyp`. -/
+lemma FLT_round_round_sqrt_radix_ge_4_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : emin ≤ 0)
+  (Hrel : emin' ≤ emin - prec - 1 ∨ 2 * emin' ≤ emin - 4 * prec)
+  (Hprec : 2 * prec + 1 ≤ prec') :
+  round_round_sqrt_radix_ge_4_hyp (FLT_exp emin prec) (FLT_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_sqrt_radix_ge_4_FLT`
+    Under `4 ≤ beta` and the above FLT relations, double rounding of
+    `sqrt x` from `(FLT_exp emin' prec')` to `(FLT_exp emin prec)` collapses. -/
+theorem round_round_sqrt_radix_ge_4_FLT
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hbeta : 4 ≤ beta)
+  (Hemin : emin ≤ 0)
+  (Hrel : emin' ≤ emin - prec - 1 ∨ 2 * emin' ≤ emin - 4 * prec)
+  (Hprec : 2 * prec + 1 ≤ prec')
+  (x : ℝ)
+  (Fx : generic_format beta (FLT_exp emin prec) x) :
+  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
+/-- Coq: `FTZ_round_round_sqrt_radix_ge_4_hyp`
+    Sufficient conditions for FTZ exponents to satisfy the
+    `round_round_sqrt_radix_ge_4_hyp`. -/
+lemma FTZ_round_round_sqrt_radix_ge_4_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
+  (Hprec : 2 * prec + 1 ≤ prec') :
+  round_round_sqrt_radix_ge_4_hyp (FTZ_exp emin prec) (FTZ_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_sqrt_radix_ge_4_FTZ`
+    Under `4 ≤ beta` and the above FTZ relations, double rounding of
+    `sqrt x` from `(FTZ_exp emin' prec')` to `(FTZ_exp emin prec)` collapses. -/
+theorem round_round_sqrt_radix_ge_4_FTZ
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hbeta : 4 ≤ beta)
+  (Hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
+  (Hprec : 2 * prec + 1 ≤ prec')
+  (x : ℝ)
+  (Fx : generic_format beta (FTZ_exp emin prec) x) :
+  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
+
+
+
 
 /-- Coq: `round_round_lt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently

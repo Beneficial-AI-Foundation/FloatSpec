@@ -466,21 +466,23 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_sqrt_FTZ` → (no direct Lean match found)
 
-- `round_round_sqrt_radix_ge_4_aux` → (no direct Lean match found)
+- `round_round_sqrt_radix_ge_4_hyp` → `round_round_sqrt_radix_ge_4_hyp` [Double_rounding.lean:363] (spec-variant)
 
-- `round_round_sqrt_radix_ge_4` → (no direct Lean match found)
+- `round_round_sqrt_radix_ge_4_aux` → `round_round_sqrt_radix_ge_4_aux` [Double_rounding.lean:374] (spec-variant)
 
-- `FLX_round_round_sqrt_radix_ge_4_hyp` → (no direct Lean match found)
+- `round_round_sqrt_radix_ge_4` → `round_round_sqrt_radix_ge_4` [Double_rounding.lean:394] (spec-variant)
 
-- `round_round_sqrt_radix_ge_4_FLX` → (no direct Lean match found)
+- `FLX_round_round_sqrt_radix_ge_4_hyp` → `FLX_round_round_sqrt_radix_ge_4_hyp` [Double_rounding.lean:413] (spec-variant)
 
-- `FLT_round_round_sqrt_radix_ge_4_hyp` → (no direct Lean match found)
+- `round_round_sqrt_radix_ge_4_FLX` → `round_round_sqrt_radix_ge_4_FLX` [Double_rounding.lean:422] (spec-variant)
 
-- `round_round_sqrt_radix_ge_4_FLT` → (no direct Lean match found)
+- `FLT_round_round_sqrt_radix_ge_4_hyp` → `FLT_round_round_sqrt_radix_ge_4_hyp` [Double_rounding.lean:440] (spec-variant)
 
-- `FTZ_round_round_sqrt_radix_ge_4_hyp` → (no direct Lean match found)
+- `round_round_sqrt_radix_ge_4_FLT` → `round_round_sqrt_radix_ge_4_FLT` [Double_rounding.lean:452] (spec-variant)
 
-- `round_round_sqrt_radix_ge_4_FTZ` → (no direct Lean match found)
+- `FTZ_round_round_sqrt_radix_ge_4_hyp` → `FTZ_round_round_sqrt_radix_ge_4_hyp` [Double_rounding.lean:472] (spec-variant)
+
+- `round_round_sqrt_radix_ge_4_FTZ` → `round_round_sqrt_radix_ge_4_FTZ` [Double_rounding.lean:483] (spec-variant)
 
  - `round_round_eq_mid_beta_even` → `round_round_eq_mid_beta_even` [Double_rounding.lean:165] (spec-variant)
 
