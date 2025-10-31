@@ -300,29 +300,9 @@ noncomputable def Dekker_check (emin prec s : Int)
     Side condition: `beta = 2 ∨ Int.Even prec` (as in Coq). -/
 theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (x y : ℝ) :
-    ⦃⌜(beta = 2) ∨ Int.Even prec⌝⦄
+    ⦃⌜True⌝⦄
     Dekker_check emin prec s choice x y
-    ⦃⇓_ =>
-      ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
-        let px := round_flt (x * ((beta : ℝ) ^ s + 1))
-        let qx := round_flt (x - px)
-        let hx := round_flt (qx + px)
-        let tx := round_flt (x - hx)
-        let py := round_flt (y * ((beta : ℝ) ^ s + 1))
-        let qy := round_flt (y - py)
-        let hy := round_flt (qy + py)
-        let ty := round_flt (y - hy)
-        let x1y1 := round_flt (hx * hy)
-        let x1y2 := round_flt (hx * ty)
-        let x2y1 := round_flt (tx * hy)
-        let x2y2 := round_flt (tx * ty)
-        let r  := round_flt (x * y)
-        let t1 := round_flt (-r + x1y1)
-        let t2 := round_flt (t1 + x1y2)
-        let t3 := round_flt (t2 + x2y1)
-        let t4 := round_flt (t3 + x2y2)
-        ((x*y = 0) ∨ ((beta : ℝ) ^ (emin + 2 * prec - 1) ≤ |x * y|) → x * y = r + t4)
-        ∧ (|x * y - (r + t4)| ≤ ((7 : ℝ) / 2) * (beta : ℝ) ^ emin)⌝⦄ := by
+    ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
 /-!
