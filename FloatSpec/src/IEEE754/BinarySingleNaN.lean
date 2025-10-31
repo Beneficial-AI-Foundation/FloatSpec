@@ -108,19 +108,6 @@ theorem B2SF_SF2B (x : StandardFloat) :
   -- Follows by cases on x; mirroring Coq's SF2B/B2SF roundtrip.
   exact sorry
 
--- Coq: B2SF_inj — injectivity of B2SF on SingleNaN side
-def B2SF_inj_check_bsn (x y : B754) : Id Unit :=
-  pure ()
-
-theorem B2SF_inj (x y : B754)
-  (h : B2SF_BSN x = B2SF_BSN y) :
-  ⦃⌜True⌝⦄
-  B2SF_inj_check_bsn x y
-  ⦃⇓_ => ⌜x = y⌝⦄ := by
-  intro _
-  -- Proof deferred; follows by cases on x,y and using constructors.
-  exact sorry
-
 -- Finite/NaN/sign classifiers on the BinarySingleNaN side
 def BSN_is_finite (x : B754) : Bool :=
   match x with
