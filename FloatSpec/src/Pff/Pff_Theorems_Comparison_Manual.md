@@ -1364,7 +1364,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `ClosestCompatible` → `ClosestCompatible [FloatSpec/src/Pff/Pff.lean:142]`
 - `ClosestMin` → `ClosestMin [FloatSpec/src/Pff/Pff.lean:156]` (radixZ/radixR split)
 - `ClosestMax` → `ClosestMax [FloatSpec/src/Pff/Pff.lean:183]`
-- `ClosestMinOrMax` → (no Lean counterpart)
+- `ClosestMinOrMax` → `ClosestMinOrMax [FloatSpec/src/Pff/Pff.lean:201]`
 - `ClosestMinEq` → (no Lean counterpart)
 - `ClosestMaxEq` → (no Lean counterpart)
 - `ClosestMonotone` → (no Lean counterpart)
