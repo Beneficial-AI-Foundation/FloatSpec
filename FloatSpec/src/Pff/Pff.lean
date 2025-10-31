@@ -1266,6 +1266,43 @@ theorem FshiftCorrectInv {beta : Int}
     ⦃⇓_ => ⌜Fshift (beta:=beta) radix (Int.natAbs (y.Fexp - x.Fexp)) y = x⌝⦄ := by
   sorry
 
+-- Coq: `FshiftO` — shifting by 0 is identity
+noncomputable def FshiftO_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FshiftO {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    FshiftO_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜Fshift (beta:=beta) radix 0 x = x ⌝⦄ := by
+  sorry
+
+-- Coq: `FshiftCorrectSym` — equal reals imply some shifts match
+noncomputable def FshiftCorrectSym_check {beta : Int}
+    (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FshiftCorrectSym {beta : Int}
+    (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x = _root_.F2R y⌝⦄
+    FshiftCorrectSym_check (beta:=beta) radix x y
+    ⦃⇓_ => ⌜∃ n m : Nat, Fshift (beta:=beta) radix n x = Fshift (beta:=beta) radix m y⌝⦄ := by
+  sorry
+
+-- Coq: `FdigitEq` — if not zero and same real/digit, floats are equal
+noncomputable def FdigitEq_check {beta : Int}
+    (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FdigitEq {beta : Int}
+    (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y ∧
+        Fdigit (beta:=beta) radix x = Fdigit (beta:=beta) radix y⌝⦄
+    FdigitEq_check (beta:=beta) radix x y
+    ⦃⇓_ => ⌜x = y⌝⦄ := by
+  sorry
+
 -- Least significant bit position of a float (placeholder definition)
 noncomputable def LSB {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
