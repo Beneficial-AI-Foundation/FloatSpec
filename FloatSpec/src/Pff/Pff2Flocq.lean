@@ -618,6 +618,41 @@ theorem format_d_discri1 (emin prec : Int) [Prec_gt_0 prec]
   sorry
 
 /-!
+Coq lemma: `format_d_discri2`
+
+A companion to `format_d_discri1`, ensuring that with the same local
+definitions for `p, q, dp, dq` and `d`, the value `d` is representable in
+`generic_format 2 (FLT_exp emin prec)`.
+-/
+
+noncomputable def format_d_discri2_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `format_d_discri2` — with local definitions
+    `p := round_flt (b*b)`, `q := round_flt (a*c)`, `dp := b*b - p`,
+    `dq := a*c - q`, and
+    `d := if p + q ≤ 3*|p - q| then round_flt (p - q)
+          else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
+    the value `d` is representable in `generic_format 2 (FLT_exp emin prec)`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`.
+    Proof deferred. -/
+theorem format_d_discri2 (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜True⌝⦄
+    format_d_discri2_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let p := round_flt (b * b)
+            let q := round_flt (a * c)
+            let dp := b * b - p
+            let dq := a * c - q
+            let d := if (p + q ≤ 3 * |p - q|)
+                     then round_flt (p - q)
+                     else round_flt (round_flt (p - q) + round_flt (dp - dq))
+            generic_format 2 (FLT_exp emin prec) d⌝⦄ := by
+  sorry
+
+/-!
 Coq lemma: `U5_discri1_aux`
 
 Auxiliary bound: for any `x, y` in format with exponent lower bound `e` not
