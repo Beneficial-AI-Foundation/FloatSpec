@@ -785,6 +785,153 @@ inductive PffRounding where
 def pff_to_flocq_rnd (mode : PffRounding) : ℝ → Int := by
   sorry
 
+-- ---------------------------------------------------------------
+-- Minimal LSB/MSB infrastructure (placeholders for compatibility)
+
+-- A simplistic divisor-count function used in Coq's LSB definition.
+-- Here we only need the type to state lemmas; its actual behavior
+-- is irrelevant for this port's specifications.
+noncomputable def maxDiv (v : Int) (p : Nat) : Nat := 0
+
+-- Number of significant digits of a float at a given radix (placeholder)
+noncomputable def Fdigit {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat := 0
+
+-- Shift operation on floats (placeholder, no-op)
+noncomputable def Fshift {beta : Int}
+    (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    FloatSpec.Core.Defs.FlocqFloat beta := x
+
+-- Least significant bit position of a float (placeholder definition)
+noncomputable def LSB {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
+  Int.ofNat (maxDiv x.Fnum (Fdigit (beta:=beta) radix x)) + x.Fexp
+
+-- Coq: `LSB_shift` — ~is_Fzero x -> LSB x = LSB (Fshift n x)
+noncomputable def LSB_shift_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem LSB_shift {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
+    ⦃⌜¬ is_Fzero x⌝⦄
+    LSB_shift_check (beta:=beta) radix x n
+    ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fshift (beta:=beta) radix n x)⌝⦄ := by
+  sorry
+
+-- Coq: `LSB_comp` — ~is_Fzero x → x = y :>R → LSB x = LSB y
+noncomputable def LSB_comp_check {beta : Int}
+    (radix : Int)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem LSB_comp {beta : Int}
+    (radix : Int)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
+    ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
+    LSB_comp_check (beta:=beta) radix x y n
+    ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix y⌝⦄ := by
+  sorry
+
+-- Coq: `maxDiv_opp` — maxDiv v p = maxDiv (-v) p
+noncomputable def maxDiv_opp_check (v : Int) (p : Nat) : Id Unit :=
+  pure ()
+
+theorem maxDiv_opp (v : Int) (p : Nat) :
+    ⦃⌜True⌝⦄
+    maxDiv_opp_check v p
+    ⦃⇓_ => ⌜maxDiv v p = maxDiv (-v) p⌝⦄ := by
+  sorry
+
+-- Coq: `LSB_opp` — LSB x = LSB (Fopp x)
+noncomputable def LSB_opp_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LSB_opp {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    LSB_opp_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fopp x)⌝⦄ := by
+  sorry
+
+-- Coq: `maxDiv_abs` — maxDiv v p = maxDiv (|v|) p
+noncomputable def maxDiv_abs_check (v : Int) (p : Nat) : Id Unit :=
+  pure ()
+
+theorem maxDiv_abs (v : Int) (p : Nat) :
+    ⦃⌜True⌝⦄
+    maxDiv_abs_check v p
+    ⦃⇓_ => ⌜maxDiv v p = maxDiv |v| p⌝⦄ := by
+  sorry
+
+-- Coq: `LSB_abs` — LSB x = LSB (Fabs x)
+noncomputable def LSB_abs_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem LSB_abs {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    LSB_abs_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fabs x)⌝⦄ := by
+  sorry
+
+-- Most significant bit position of a float (placeholder definition)
+noncomputable def MSB {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
+  Int.pred (Int.ofNat (Fdigit (beta:=beta) radix x) + x.Fexp)
+
+-- Coq: `MSB_shift` — ~is_Fzero x -> MSB x = MSB (Fshift n x)
+noncomputable def MSB_shift_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem MSB_shift {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
+    ⦃⌜¬ is_Fzero x⌝⦄
+    MSB_shift_check (beta:=beta) radix x n
+    ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fshift (beta:=beta) radix n x)⌝⦄ := by
+  sorry
+
+-- Coq: `MSB_comp` — ~is_Fzero x → x = y :>R → MSB x = MSB y
+noncomputable def MSB_comp_check {beta : Int}
+    (radix : Int)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem MSB_comp {beta : Int}
+    (radix : Int)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
+    ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
+    MSB_comp_check (beta:=beta) radix x y n
+    ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix y⌝⦄ := by
+  sorry
+
+-- Coq: `MSB_opp` — MSB x = MSB (Fopp x)
+noncomputable def MSB_opp_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem MSB_opp {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    MSB_opp_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fopp x)⌝⦄ := by
+  sorry
+
+-- Coq: `MSB_abs` — MSB x = MSB (Fabs x)
+noncomputable def MSB_abs_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem MSB_abs {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    MSB_abs_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fabs x)⌝⦄ := by
+  sorry
+
 -- Coq: `Zlt_mult_simpl_l` — cancel positive multiplier on left for <
 noncomputable def Zlt_mult_simpl_l_check (a b c : Int) : Id Unit :=
   pure ()
