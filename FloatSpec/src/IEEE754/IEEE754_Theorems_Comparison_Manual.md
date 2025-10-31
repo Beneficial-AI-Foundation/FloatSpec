@@ -451,6 +451,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - theorem: `div_equiv` (FloatSpec/src/IEEE754/PrimFloat.lean:128)
 - theorem: `sub_equiv` (FloatSpec/src/IEEE754/PrimFloat.lean:145)
 - theorem: `sqrt_equiv` (FloatSpec/src/IEEE754/PrimFloat.lean:162)
+- theorem: `eqb_equiv` (FloatSpec/src/IEEE754/PrimFloat.lean:383)
+- theorem: `ltb_equiv` (FloatSpec/src/IEEE754/PrimFloat.lean:400)
+- theorem: `leb_equiv` (FloatSpec/src/IEEE754/PrimFloat.lean:417)
 
 ### Mapping (Coq → Lean)
 - `add_equiv` → `prim_add_correct [FloatSpec/src/IEEE754/PrimFloat.lean:52]` (content-equivalent)
@@ -473,3 +476,6 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `neg_zero_equiv` → `neg_zero_equiv [FloatSpec/src/IEEE754/PrimFloat.lean:312]` (spec-variant, hoare)
  - `one_equiv` → `one_equiv [FloatSpec/src/IEEE754/PrimFloat.lean:325]` (spec-variant, hoare)
  - `two_equiv` → `two_equiv [FloatSpec/src/IEEE754/PrimFloat.lean:341]` (spec-variant, hoare)
+  - `eqb_equiv` → `eqb_equiv [FloatSpec/src/IEEE754/PrimFloat.lean:383]` (spec-variant, hoare)
+  - `ltb_equiv` → `ltb_equiv [FloatSpec/src/IEEE754/PrimFloat.lean:400]` (spec-variant, hoare)
+  - `leb_equiv` → `leb_equiv [FloatSpec/src/IEEE754/PrimFloat.lean:417]` (spec-variant, hoare)
