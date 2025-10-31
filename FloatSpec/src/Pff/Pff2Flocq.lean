@@ -228,7 +228,7 @@ theorem underf_mult_aux' (emin prec : Int) [Prec_gt_0 prec]
   sorry
 -- (we will add `underf_mult_aux'` after verifying `underf_mult_aux` compiles)
 
-/ -!
+/-!
 Coq lemma: `V1_Und3'`
 
 Within the FMA error analysis section, Coq proves that from the non-underflow
@@ -253,6 +253,30 @@ theorem V1_Und3' (emin prec : Int) [Prec_gt_0 prec]
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
             let u1 := round_flt (a * x)
             u1 = 0 ∨ ((beta : ℝ) ^ (emin + 2 * prec - 1) ≤ |u1|)⌝⦄ := by
+  sorry
+
+/-!
+Coq lemma: `V1_Und3`
+
+This is a variant of `V1_Und3'` with a slightly stronger magnitude bound
+threshold in the postcondition: `β^(emin + prec)` instead of `β^(emin +
+2*prec - 1)`. We mirror the Coq statement in the same hoare-triple style.
+-/
+
+noncomputable def V1_Und3_check (emin prec : Int)
+    (choice : Int → Bool) (a x : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `V1_Und3` — if `a*x = 0` or `(beta : ℝ)^(emin + 2*prec - 1) ≤ |a*x|`,
+    then for `u1 := round beta (FLT_exp emin prec) (Znearest choice) (a*x)` we have
+    `u1 = 0 ∨ (beta : ℝ)^(emin + prec) ≤ |u1|`. -/
+theorem V1_Und3 (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x : ℝ) :
+    ⦃⌜(a * x = 0) ∨ ((beta : ℝ) ^ (emin + 2 * prec - 1) ≤ |a * x|)⌝⦄
+    V1_Und3_check emin prec choice a x
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
+            let u1 := round_flt (a * x)
+            u1 = 0 ∨ ((beta : ℝ) ^ (emin + prec) ≤ |u1|)⌝⦄ := by
   sorry
 
 /-!
