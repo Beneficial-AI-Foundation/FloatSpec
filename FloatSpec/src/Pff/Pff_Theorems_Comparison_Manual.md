@@ -1273,7 +1273,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `MinOrMaxRep` → `MinOrMaxRep [FloatSpec/src/Pff/Pff.lean:206]`
  - `RoundedModeRep` → `RoundedModeRep [FloatSpec/src/Pff/Pff.lean:215]`
  - `Pdiv_correct` → `Pdiv_correct [FloatSpec/src/Pff/Pff.lean:1101]`
-- `inj_oZ1` → (no Lean counterpart)
+- `inj_oZ1` → `inj_oZ1 [FloatSpec/src/Pff/Pff.lean:1113]`
 - `ZquotientProp` → (no Lean counterpart)
 - `ZquotientPos` → (no Lean counterpart)
 - `ZdividesZquotient` → (no Lean counterpart)
