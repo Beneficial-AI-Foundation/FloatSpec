@@ -159,7 +159,7 @@ noncomputable def pff_canonic_is_canonic_check (beta : Int) (b : Fbound) (p : In
   pure ()
 
 theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜Fcanonic beta b f ∧ pff_to_R beta f ≠ 0⌝⦄
+    ⦃⌜PFcanonic beta b f ∧ pff_to_R beta f ≠ 0⌝⦄
     pff_canonic_is_canonic_check beta b p f
     ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp (-b.dExp) p) (pff_to_flocq beta f)⌝⦄ := by
   sorry
@@ -170,7 +170,7 @@ theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat
 theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
-    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ Fcanonic beta b f⌝⦄ := by
+    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFcanonic beta b f⌝⦄ := by
   sorry
 
 variable (beta : Int)
