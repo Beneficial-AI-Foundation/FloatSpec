@@ -401,11 +401,10 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_plus_radix_ge_3_aux1` → (no direct Lean match found)
 
-- `round_round_plus_radix_ge_3_aux2` → `round_round_plus_radix_ge_3_aux2` [Double_rounding.lean:948] (spec-variant)
 
-- `round_round_plus_radix_ge_3_aux` → (no direct Lean match found)
+-- `round_round_plus_radix_ge_3_aux` → (no direct Lean match found)
 
-- `round_round_minus_radix_ge_3_aux0` → `round_round_minus_radix_ge_3_aux0` [Double_rounding.lean:915] (spec-variant)
+-- `round_round_minus_radix_ge_3_aux0` → `round_round_minus_radix_ge_3_aux0` [Double_rounding.lean:915] (spec-variant)
 
 - `round_round_minus_radix_ge_3_aux1` → `round_round_minus_radix_ge_3_aux1` [Double_rounding.lean:930] (spec-variant)
 
@@ -419,23 +418,24 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_minus_radix_ge_3` → (no direct Lean match found)
 
-- `FLX_round_round_plus_radix_ge_3_hyp` → `FLX_round_round_plus_radix_ge_3_hyp` [Double_rounding.lean:1017] (spec-variant, requires 2*prec ≤ prec')
 
-- `round_round_plus_radix_ge_3_FLX` → `round_round_plus_radix_ge_3_FLX` [Double_rounding.lean:1017] (spec-variant)
+- `FLX_round_round_plus_radix_ge_3_hyp` → `FLX_round_round_plus_radix_ge_3_hyp` [Double_rounding.lean] (spec-variant, requires 2*prec ≤ prec')
+
+- `round_round_plus_radix_ge_3_FLX` → `round_round_plus_radix_ge_3_FLX` [Double_rounding.lean] (spec-variant)
 
 - `round_round_minus_radix_ge_3_FLX` → (no direct Lean match found)
 
-- `FLT_round_round_plus_radix_ge_3_hyp` → (no direct Lean match found)
+- `FLT_round_round_plus_radix_ge_3_hyp` → `FLT_round_round_plus_radix_ge_3_hyp` [Double_rounding.lean] (spec-variant)
 
-- `round_round_plus_radix_ge_3_FLT` → (no direct Lean match found)
+- `round_round_plus_radix_ge_3_FLT` → `round_round_plus_radix_ge_3_FLT` [Double_rounding.lean] (spec-variant)
 
-- `round_round_minus_radix_ge_3_FLT` → (no direct Lean match found)
+- `round_round_minus_radix_ge_3_FLT` → `round_round_minus_radix_ge_3_FLT` [Double_rounding.lean] (spec-variant)
 
-- `FTZ_round_round_plus_radix_ge_3_hyp` → (no direct Lean match found)
+- `FTZ_round_round_plus_radix_ge_3_hyp` → `FTZ_round_round_plus_radix_ge_3_hyp` [Double_rounding.lean] (spec-variant)
 
-- `round_round_plus_radix_ge_3_FTZ` → (no direct Lean match found)
+- `round_round_plus_radix_ge_3_FTZ` → `round_round_plus_radix_ge_3_FTZ` [Double_rounding.lean] (spec-variant)
 
-- `round_round_minus_radix_ge_3_FTZ` → (no direct Lean match found)
+- `round_round_minus_radix_ge_3_FTZ` → `round_round_minus_radix_ge_3_FTZ` [Double_rounding.lean] (spec-variant)
 
 - `round_round_mid_cases` → (no direct Lean match found)
 - `round_round_mid_cases` → (no direct Lean match found)

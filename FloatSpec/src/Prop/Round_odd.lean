@@ -181,3 +181,9 @@ lemma exists_even_fexp_lt
     FloatSpec.Core.Generic_fmt.canonical beta c g ∧
     g.Fnum % 2 = 0 := by
   sorry
+
+/-
+  Additional Coq lemmas (`DN_odd_d_aux`, `UP_odd_d_aux`, `round_N_odd_pos`, `round_N_odd`)
+  are not imported yet. They depend on a larger internal development
+  around witnesses d,u,m and will be introduced with that context.
+-/
