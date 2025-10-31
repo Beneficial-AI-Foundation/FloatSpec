@@ -191,6 +191,20 @@ theorem ClosestMax {beta : Int}
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r max⌝⦄ := by
   sorry
 
+-- Disjunction: any candidate is either a min or a max (Coq: `ClosestMinOrMax`)
+noncomputable def ClosestMinOrMax_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestMinOrMax` — any closest candidate is either a min-side or
+    a max-side witness of closeness. -/
+theorem ClosestMinOrMax {beta : Int}
+    (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ) :
+    ⦃⌜True⌝⦄
+    ClosestMinOrMax_check (beta:=beta) bo radixR
+    ⦃⇓_ => ⌜MinOrMaxP (Closest (beta:=beta) bo radixR)⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
