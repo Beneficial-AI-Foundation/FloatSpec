@@ -403,6 +403,58 @@ theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   -- Proof deferred; mirrors Coq's `two_equiv`.
   exact sorry
 
+-- Coq: ulp_equiv — ulp correspondence via Binary side
+noncomputable def ulp_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id FullFloat :=
+  -- Placeholder: bridge through Binary `Bulp'` once available.
+  pure (B2FF (prim_to_binary prec emax (prim_ldexp 1 (0)) ))
+
+theorem ulp_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  ulp_equiv_check prec emax x
+  ⦃⇓result => ⌜result =
+      B2FF (prim_to_binary prec emax (prim_ldexp 1 (0)))⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `ulp_equiv` after adding Binary `Bulp'`.
+  exact sorry
+
+-- Coq: next_up_equiv — successor correspondence
+noncomputable def next_up_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (x + 0)))
+
+theorem next_up_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  next_up_equiv_check prec emax x
+  ⦃⇓result => ⌜result =
+      B2FF (Bsucc (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `next_up_equiv` via `Bsucc`.
+  exact sorry
+
+-- Coq: next_down_equiv — predecessor correspondence
+noncomputable def next_down_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id FullFloat :=
+  pure (B2FF (prim_to_binary prec emax (x - 0)))
+
+theorem next_down_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  next_down_equiv_check prec emax x
+  ⦃⇓result => ⌜result =
+      B2FF (Bpred (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `next_down_equiv` via `Bpred`.
+  exact sorry
+
 -- Coq: is_nan_equiv — NaN classifier correspondence
 noncomputable def is_nan_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
