@@ -22868,7 +22868,7 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Pff2Flocq.lean:667:8: declaration uses 'sorry'
-⚠ [3025/3028] Replayed FloatSpec.src.Pff.Pff2FlocqAux
+⚠⚠ [3025/3028] Built FloatSpec.src.Pff.Pff2FlocqAux (17s)
 warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:25:10: missing doc string for public structure Fbound
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -23640,7 +23640,8 @@ warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:314:51: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
 warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:317:8: declaration uses 'sorry'
-✔ [3027/3028] Built FloatSpec (3.5s)
 Build completed successfully (3028 jobs).
+1:18.49 3220596KB
+y (3028 jobs).
 pec (3.5s)
 Build completed successfully (3028 jobs).
