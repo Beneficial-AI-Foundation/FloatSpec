@@ -376,6 +376,24 @@ theorem FexpGeUnderf {beta : Int}
     ⦃⇓_ => ⌜e - precision + 1 ≤ f.Fexp⌝⦄ := by
   sorry
 
+-- Coq: `AddExpGeUnderf` — if `g` is a closest rounding of `f1+f2` and both `f1`
+-- and `f2` are sufficiently large in magnitude, then `g` is either zero or has
+-- magnitude at least `β^(e-precision+1)`.
+noncomputable def AddExpGeUnderf_check {beta : Int}
+    (bo : Fbound_skel) (precision e : Int) (radix : ℝ)
+    (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem AddExpGeUnderf {beta : Int}
+    (bo : Fbound_skel) (precision e : Int) (radix : ℝ)
+    (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Closest (beta:=beta) bo radix (_root_.F2R f1 + _root_.F2R f2) g ∧
+        Fbounded (beta:=beta) bo f1 ∧ Fbounded (beta:=beta) bo f2 ∧
+        (beta : ℝ) ^ e ≤ |_root_.F2R f1| ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f2|⌝⦄
+    AddExpGeUnderf_check (beta:=beta) bo precision e radix f1 f2 g
+    ⦃⇓_ => ⌜_root_.F2R g = 0 ∨ (beta : ℝ) ^ (e - precision + 1) ≤ |_root_.F2R g|⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
