@@ -1252,6 +1252,20 @@ theorem FshiftCorrect {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (Fshift (beta:=beta) radix n x) = _root_.F2R x⌝⦄ := by
   sorry
 
+-- Coq: `FshiftCorrectInv` — align exponents by shifting the larger one down
+noncomputable def FshiftCorrectInv_check {beta : Int}
+    (radix : Int)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FshiftCorrectInv {beta : Int}
+    (radix : Int)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x = _root_.F2R y ∧ x.Fexp ≤ y.Fexp⌝⦄
+    FshiftCorrectInv_check (beta:=beta) radix x y
+    ⦃⇓_ => ⌜Fshift (beta:=beta) radix (Int.natAbs (y.Fexp - x.Fexp)) y = x⌝⦄ := by
+  sorry
+
 -- Least significant bit position of a float (placeholder definition)
 noncomputable def LSB {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
