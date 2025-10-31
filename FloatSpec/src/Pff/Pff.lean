@@ -1714,6 +1714,18 @@ theorem RleFexpFabs {beta : Int}
             ≤ _root_.F2R (Fabs (beta:=beta) p)⌝⦄ := by
   sorry
 
+-- Coq: `Fabs_Fzero` — nonzero stays nonzero under absolute value
+noncomputable def Fabs_Fzero_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fabs_Fzero {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜¬ is_Fzero x⌝⦄
+    Fabs_Fzero_check (beta:=beta) x
+    ⦃⇓_ => ⌜¬ is_Fzero (Fabs (beta:=beta) x)⌝⦄ := by
+  sorry
+
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by
   sorry
