@@ -616,3 +616,42 @@ theorem format_d_discri1 (emin prec : Int) [Prec_gt_0 prec]
                      else round_flt (round_flt (p - q) + round_flt (dp - dq))
             generic_format 2 (FLT_exp emin prec) d⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `U5_discri1`
+
+With the same local definitions as in Discri1, assume `b*b ≠ 0`, `a*c ≠ 0`,
+and the rounding of `dp - dq` is not exact. Then the rounded value has a
+lower magnitude bound `(2 : ℝ)^(emin + prec - 1)`.
+-/
+
+noncomputable def U5_discri1_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `U5_discri1` — let `p := round_flt (b*b)`, `q := round_flt (a*c)`,
+    `dp := b*b - p`, `dq := a*c - q`. If `round_flt (dp - dq) ≠ dp - dq` and
+    the non-underflow side-conditions hold for `a*c` and `b*b`, then
+    `(2 : ℝ)^(emin + prec - 1) ≤ |round_flt (dp - dq)|`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`. -/
+theorem U5_discri1 (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
+        generic_format 2 (FLT_exp emin prec) b ∧
+        generic_format 2 (FLT_exp emin prec) c ∧
+        (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|) ∧
+        (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|) ∧
+        (let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+         let p := round_flt (b * b)
+         let q := round_flt (a * c)
+         let dp := b * b - p
+         let dq := a * c - q
+         True ∧ round_flt (dp - dq) ≠ dp - dq)⌝⦄
+    U5_discri1_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let p := round_flt (b * b)
+            let q := round_flt (a * c)
+            let dp := b * b - p
+            let dq := a * c - q
+            (2 : ℝ) ^ (emin + prec - 1) ≤ |round_flt (dp - dq)|⌝⦄ := by
+  sorry
