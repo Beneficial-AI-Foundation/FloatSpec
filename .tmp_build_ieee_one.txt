@@ -19884,3 +19884,299 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Nat2Z_8_12.lean:21:8: declaration uses 'sorry'
+⚠ [3022/3028] Built FloatSpec.src.IEEE754.BinarySingleNaN (4.3s)
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:19:10: missing doc string for public inductive B754
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:20:4: missing doc string for public constructor B754.B754_zero
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:21:4: missing doc string for public constructor B754.B754_infinity
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:22:4: missing doc string for public constructor B754.B754_nan
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:23:4: missing doc string for public constructor B754.B754_finite
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:26:18: missing doc string for public def B754_to_R
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:33:4: missing doc string for public def B2BSN
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:41:4: missing doc string for public def B2SF_BSN
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:49:4: missing doc string for public def SF2B
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:57:4: missing doc string for public def match_SF2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:84:4: missing doc string for public def canonical_canonical_mantissa_bsn_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:85:3: unused variable `sx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:85:15: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:85:26: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:88:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:100:4: missing doc string for public def canonical_bounded_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:100:29: unused variable `sx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:100:41: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:100:52: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:103:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:114:4: missing doc string for public def B2SF_SF2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:117:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:126:4: missing doc string for public def BSN_is_finite
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:132:4: missing doc string for public def BSN_is_nan
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:137:4: missing doc string for public def BSN_sign
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:145:4: missing doc string for public def is_finite_strict_SF
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:151:4: missing doc string for public def B2SF_B2BSN_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:154:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:162:4: missing doc string for public def is_finite_B2BSN_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:165:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:173:4: missing doc string for public def BSN_is_finite_strict
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:178:4: missing doc string for public def is_finite_strict_B
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:184:4: missing doc string for public def is_finite_strict_B2BSN_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:187:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:196:4: missing doc string for public def is_nan_B2BSN_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:199:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:207:4: missing doc string for public def Bsign_B2BSN_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:210:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:218:18: missing doc string for public def B2R_B2BSN_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:221:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:230:4: missing doc string for public def emin_lt_emax_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:233:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:243:4: missing doc string for public def is_finite_strict_B2R_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:246:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:257:18: missing doc string for public def SF2R_B2SF_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:260:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:270:4: missing doc string for public def SF2B_B2SF_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:273:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:282:4: missing doc string for public def valid_binary_B2SF_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:295:4: missing doc string for public def SF2B_B2SF_valid_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:298:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:309:4: missing doc string for public def is_finite_strict_SF2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:312:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:321:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:329:4: missing doc string for public def BSN2B
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:338:4: missing doc string for public def BSN2B'
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:346:4: missing doc string for public def B2BSN_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:358:4: missing doc string for public def Bsign_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:361:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:372:4: missing doc string for public def lift
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:379:4: missing doc string for public def B2BSN_lift_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:386:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:397:4: missing doc string for public def B2BSN_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:411:18: missing doc string for public def B2R_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:422:20: This simp argument is unused:
+  B754_to_R
+
+Hint: Omit it from the simp argument list.
+  simp [B7̵5̵4̵_̵t̵o̵_̵R̵,̵ ̵B̵SN_is_nan] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:425:4: missing doc string for public def B2FF_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:439:4: missing doc string for public def Bsign_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:450:32: This simp argument is unused:
+  BSN_sign
+
+Hint: Omit it from the simp argument list.
+  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵s̵i̵g̵n̵] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:453:4: missing doc string for public def is_finite_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:464:32: This simp argument is unused:
+  BSN_is_finite
+
+Hint: Omit it from the simp argument list.
+  simp [BSN_is_nan,̵ ̵B̵S̵N̵_̵i̵s̵_̵f̵i̵n̵i̵t̵e̵] at nx
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:467:4: missing doc string for public def is_nan_BSN2B'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:481:18: missing doc string for public def B2R_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:484:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:493:18: missing doc string for public def B2R_SF2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:496:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:505:4: missing doc string for public def is_nan_SF_B2SF_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:508:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:517:4: missing doc string for public def is_finite_SF_B2SF_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:520:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:529:4: missing doc string for public def is_finite_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:532:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:541:4: missing doc string for public def is_nan_BSN2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:544:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:553:4: missing doc string for public def validB754
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:555:21: unused variable `s`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:562:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:562:4: missing doc string for public def B754_plus
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:565:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:565:4: missing doc string for public def B754_mult
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:568:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:568:4: missing doc string for public def B754_div
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:571:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:571:4: missing doc string for public def B754_sqrt
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:575:4: missing doc string for public def B754_is_finite
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:581:4: missing doc string for public def B754_is_nan
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:586:4: missing doc string for public def B754_sign
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:594:4: missing doc string for public def bsn_binary_overflow
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:594:25: unused variable `mode`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:598:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:609:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:622:4: missing doc string for public def Bldexp
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:622:12: unused variable `mode`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:622:45: unused variable `e`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:627:4: missing doc string for public def is_nan_Bldexp_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:631:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:640:4: missing doc string for public def bxor
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:646:18: missing doc string for public def Bdiv_correct_aux_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:649:15: unused variable `mx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:649:26: unused variable `ex`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:650:15: unused variable `my`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:650:26: unused variable `ey`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:655:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:679:18: missing doc string for public def Bsqrt_correct_aux_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:681:3: unused variable `mode`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:683:3: unused variable `Hx`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/BinarySingleNaN.lean:688:8: declaration uses 'sorry'
+✔ [3023/3028] Built FloatSpec.src.IEEE754 (3.4s)
