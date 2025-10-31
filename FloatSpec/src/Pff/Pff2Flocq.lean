@@ -324,3 +324,43 @@ theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
         ((x*y = 0) ∨ ((beta : ℝ) ^ (emin + 2 * prec - 1) ≤ |x * y|) → x * y = r + t4)
         ∧ (|x * y - (r + t4)| ≤ ((7 : ℝ) / 2) * (beta : ℝ) ^ emin)⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `ErrFMA_bounded`
+
+Within Section ErrFMA_V1 in Coq, given inputs `a, x, y` in format and using
+the intermediate variables defined by the compensated-FMA scheme, the values
+`r1`, `r2`, and `r3` are also in the target `generic_format`.
+
+We mirror this using the Hoare-triple style; proofs are deferred.
+-/
+
+noncomputable def ErrFMA_bounded_check (emin prec : Int)
+    (choice : Int → Bool) (a x y : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ErrFMA_bounded` — if `a, x, y` are representable in
+    `generic_format beta (FLT_exp emin prec)`, then for the standard
+    compensated-FMA intermediates, `r1`, `r2`, and `r3` are also in format. -/
+theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ) :
+    ⦃⌜generic_format beta (FLT_exp emin prec) a ∧
+        generic_format beta (FLT_exp emin prec) x ∧
+        generic_format beta (FLT_exp emin prec) y⌝⦄
+    ErrFMA_bounded_check emin prec choice a x y
+    ⦃⇓_ =>
+      ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
+        let r1 := round_flt (a * x + y)
+        let u1 := round_flt (a * x)
+        let u2 := a * x - u1
+        let alpha1 := round_flt (y + u2)
+        let alpha2 := (y + u2) - alpha1
+        let beta1 := round_flt (u1 + alpha1)
+        let beta2 := (u1 + alpha1) - beta1
+        let gamma := round_flt (round_flt (beta1 - r1) + beta2)
+        let r2 := round_flt (gamma + alpha2)
+        let r3 := (gamma + alpha2) - r2
+        generic_format beta (FLT_exp emin prec) r1 ∧
+        generic_format beta (FLT_exp emin prec) r2 ∧
+        generic_format beta (FLT_exp emin prec) r3⌝⦄ := by
+  sorry
