@@ -1141,6 +1141,18 @@ theorem Rlt_Fexp_eq_Zlt {beta : Int}
     ⦃⇓_ => ⌜x.Fnum < y.Fnum⌝⦄ := by
   sorry
 
+-- Coq: `Fplus_correct` — float addition corresponds to real addition
+noncomputable def Fplus_correct_check {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fplus_correct {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fplus_correct_check (beta:=beta) x y
+    ⦃⇓_ => ⌜_root_.F2R (Fplus (beta:=beta) x y) = _root_.F2R x + _root_.F2R y⌝⦄ := by
+  sorry
+
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by
   sorry
