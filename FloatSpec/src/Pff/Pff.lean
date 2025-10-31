@@ -1633,6 +1633,18 @@ theorem Fopp_Fopp {beta : Int}
     ⦃⇓_ => ⌜Fopp (beta:=beta) (Fopp (beta:=beta) p) = p⌝⦄ := by
   sorry
 
+-- Coq: `Fdigit_opp` — digit invariant under negation
+noncomputable def Fdigit_opp_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fdigit_opp {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fdigit_opp_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fopp x) = Fdigit (beta:=beta) radix x⌝⦄ := by
+  sorry
+
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by
   sorry
