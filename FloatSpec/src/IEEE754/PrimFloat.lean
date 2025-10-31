@@ -362,6 +362,55 @@ theorem is_nan_equiv (prec emax : Int)
   -- Proof deferred; follows via `B2SF_Prim2B` cases.
   exact sorry
 
+-- Coq: is_zero_equiv — zero classifier correspondence
+noncomputable def is_zero_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id Bool :=
+  pure (prim_is_zero x)
+
+theorem is_zero_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  is_zero_equiv_check prec emax x
+  ⦃⇓result => ⌜result = decide (B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero false ∨
+                                   B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero true)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's zero predicate equivalence.
+  exact sorry
+
+-- Coq: is_infinity_equiv — infinity classifier correspondence
+noncomputable def is_infinity_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id Bool :=
+  pure (prim_is_infinite x)
+
+theorem is_infinity_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  is_infinity_equiv_check prec emax x
+  ⦃⇓result => ⌜result = decide (∃ s, B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_infinity s)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's infinity predicate equivalence.
+  exact sorry
+
+-- Coq: is_finite_equiv — finiteness classifier correspondence
+noncomputable def is_finite_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id Bool :=
+  pure (prim_is_finite x)
+
+theorem is_finite_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  is_finite_equiv_check prec emax x
+  ⦃⇓result => ⌜result = is_finite_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `is_finite_equiv`.
+  exact sorry
+
 -- Coq: get_sign_equiv — sign bit correspondence
 noncomputable def get_sign_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
