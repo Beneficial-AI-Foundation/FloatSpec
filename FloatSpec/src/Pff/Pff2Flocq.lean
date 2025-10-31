@@ -685,3 +685,44 @@ theorem U5_discri1 (emin prec : Int) [Prec_gt_0 prec]
             let dq := a * c - q
             (2 : ℝ) ^ (emin + prec - 1) ≤ |round_flt (dp - dq)|⌝⦄ := by
   sorry
+
+/-!
+Coq theorem: `discri_correct_test`
+
+In the Discri1 context, Coq proves an error bound on the discriminant-like
+quantity `d` relative to the ideal expression `(b*b - a*c)`, namely
+`|d - (b*b - a*c)| ≤ 2 * ulp_flt d`.
+
+We mirror this statement using the same local `let` bindings and the project’s
+rounding operator `FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` for
+nearest-even rounding, and the `Compat.ulp` bridge for the ULP as a real.
+Proof is deferred.
+-/
+
+noncomputable def discri_correct_test_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `discri_correct_test` — with
+    `p := round_flt (b*b)`, `q := round_flt (a*c)`, `dp := b*b - p`,
+    `dq := a*c - q`, and
+    `d := if p + q ≤ 3*|p - q| then round_flt (p - q)
+          else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
+    we have the error bound
+    `|d - (b*b - a*c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`.
+    Proof deferred. -/
+theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜True⌝⦄
+    discri_correct_test_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let p := round_flt (b * b)
+            let q := round_flt (a * c)
+            let dp := b * b - p
+            let dq := a * c - q
+            let d := if (p + q ≤ 3 * |p - q|)
+                     then round_flt (p - q)
+                     else round_flt (round_flt (p - q) + round_flt (dp - dq))
+            |d - (b * b - a * c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d⌝⦄ := by
+  sorry
