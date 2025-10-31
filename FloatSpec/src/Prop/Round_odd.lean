@@ -13,6 +13,21 @@ variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
+/-- Rnd_odd_pt: pointwise specification of round-to-odd witness
+
+    Mirrors Coq's `Rnd_odd_pt` predicate: `f` is in format and either
+    equals `x`, or it is a DN/UP witness and corresponds to a canonical
+    float with an odd mantissa. -/
+def Rnd_odd_pt (x f : ℝ) : Prop :=
+  generic_format beta fexp f ∧
+  (f = x ∨
+    ((FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x f ∨
+      FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x f) ∧
+     ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+       f = (FloatSpec.Core.Defs.F2R g).run ∧
+       FloatSpec.Core.Generic_fmt.canonical beta fexp g ∧
+       g.Fnum % 2 ≠ 0))
+
 /-- Round to odd rounding mode -/
 noncomputable def Zodd : ℝ → Int := fun x =>
   let n := Ztrunc x
@@ -56,11 +71,38 @@ lemma Zrnd_odd_plus (x y : ℝ)
   ((Zodd (x + y) : Int) : ℝ) = x + ((Zodd y : Int) : ℝ) := by
   sorry
 
+/-- Negation invariance for the `Rnd_odd_pt` predicate.
+    Coq counterpart: `Rnd_odd_pt_opp_inv`. -/
+theorem Rnd_odd_pt_opp_inv (x f : ℝ) :
+  Rnd_odd_pt (beta := beta) (fexp := fexp) (-x) (-f) →
+  Rnd_odd_pt (beta := beta) (fexp := fexp) x f := by
+  sorry
+
 /-- Negation commutes with round-to-odd (mode `()` in this file).
     Coq counterpart: `round_odd_opp`. -/
 theorem round_odd_opp (x : ℝ) :
   FloatSpec.Calc.Round.round beta fexp () (-x)
   = - FloatSpec.Calc.Round.round beta fexp () x := by
+  sorry
+
+/-- Pointwise round-to-odd witness for `round beta fexp () x`.
+    Coq counterpart: `round_odd_pt`. -/
+theorem round_odd_pt (x : ℝ) :
+  Rnd_odd_pt (beta := beta) (fexp := fexp) x (FloatSpec.Calc.Round.round beta fexp () x) := by
+  sorry
+
+/-- Uniqueness of the round-to-odd witness.
+    Coq counterpart: `Rnd_odd_pt_unique`. -/
+theorem Rnd_odd_pt_unique (x f1 f2 : ℝ) :
+  Rnd_odd_pt (beta := beta) (fexp := fexp) x f1 →
+  Rnd_odd_pt (beta := beta) (fexp := fexp) x f2 →
+  f1 = f2 := by
+  sorry
+
+/-- Monotonicity of the round-to-odd predicate.
+    Coq counterpart: `Rnd_odd_pt_monotone`. -/
+theorem Rnd_odd_pt_monotone :
+  FloatSpec.Core.Defs.round_pred_monotone (Rnd_odd_pt (beta := beta) (fexp := fexp)) := by
   sorry
 
 /-- Round to odd properties -/
@@ -82,4 +124,16 @@ theorem round_odd_double_round (fexp1 fexp2 : Int → Int)
 /-- Round to odd maintains format when appropriate -/
 theorem generic_format_round_odd (x : ℝ) :
   generic_format beta fexp (FloatSpec.Calc.Round.round beta fexp () x) := by
+  sorry
+
+/-- Magnitude after round-to-odd is controlled. Coq: `mag_round_odd`. -/
+theorem mag_round_odd (x : ℝ) :
+  (FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x)).run
+    ≤ (FloatSpec.Core.Raux.mag beta x).run + 1 := by
+  sorry
+
+/-- Exponent after round-to-odd is within one place. Coq: `fexp_round_odd`. -/
+theorem fexp_round_odd (x : ℝ) :
+  fexp ((FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x)).run)
+    ≤ (FloatSpec.Core.Raux.mag beta x).run + 1 := by
   sorry
