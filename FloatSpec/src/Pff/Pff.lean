@@ -1637,6 +1637,19 @@ theorem Fplus_correct {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (Fplus (beta:=beta) x y) = _root_.F2R x + _root_.F2R y⌝⦄ := by
   sorry
 
+-- Coq: `Fminus_correct` — float subtraction corresponds to real subtraction
+noncomputable def Fminus_correct_check {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fminus_correct {beta : Int}
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fminus_correct_check (beta:=beta) x y
+    ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y) =
+            _root_.F2R x - _root_.F2R y⌝⦄ := by
+  sorry
+
 -- Coq: `Fopp_Fopp` — involutive property of float negation
 noncomputable def Fopp_Fopp_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
@@ -1663,6 +1676,18 @@ theorem Fdigit_opp {beta : Int}
     ⦃⌜True⌝⦄
     Fdigit_opp_check (beta:=beta) radix x
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fopp x) = Fdigit (beta:=beta) radix x⌝⦄ := by
+  sorry
+
+-- Coq: `Fdigit_abs` — digit invariant under absolute value
+noncomputable def Fdigit_abs_check {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fdigit_abs {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fdigit_abs_check (beta:=beta) radix x
+    ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fabs (beta:=beta) x) = Fdigit (beta:=beta) radix x⌝⦄ := by
   sorry
 
 -- Coq: `Fabs_correct1` — if 0 ≤ F2R x then F2R (Fabs x) = F2R x
