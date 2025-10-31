@@ -68,7 +68,7 @@ theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
 noncomputable def prim_compare (x y : PrimFloat) : Option Int :=
   some ((FloatSpec.Core.Raux.Rcompare x y).run)
 
-def compare_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+noncomputable def compare_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : Id (Option Int) :=
   pure (prim_compare x y)
 
