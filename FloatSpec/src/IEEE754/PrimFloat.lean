@@ -84,7 +84,7 @@ theorem B2SF_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   exact sorry
 
 -- Coq: Prim2SF_B2Prim — standard view of Binary→Prim equals direct B2SF
-def Prim2SF_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+noncomputable def Prim2SF_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax) : Id StandardFloat :=
   pure (Prim2SF prec emax (binary_to_prim prec emax x))
 
