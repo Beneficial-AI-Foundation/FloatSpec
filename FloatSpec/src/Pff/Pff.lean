@@ -218,6 +218,62 @@ theorem MaxRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⇓_ => ⌜RoundedModeP (isMax (α:=α) b radix)⌝⦄ := by
   sorry
 
+-- Coq: `RleMinR0` — if 0 ≤ r and `isMin b radix r min` then 0 ≤ F2R min
+noncomputable def RleMinR0_check {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (r : ℝ) (min : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RleMinR0 {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (r : ℝ) (min : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ r ∧ isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min⌝⦄
+    RleMinR0_check (beta:=beta) b radix r min
+    ⦃⇓_ => ⌜0 ≤ _root_.F2R min⌝⦄ := by
+  sorry
+
+-- Coq: `RleRoundedR0` — under RoundedModeP P, if P r p and 0 ≤ r then 0 ≤ F2R p
+noncomputable def RleRoundedR0_check {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem RleRoundedR0 {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
+    ⦃⌜RoundedModeP P ∧ P r p ∧ 0 ≤ r⌝⦄
+    RleRoundedR0_check (beta:=beta) P p r
+    ⦃⇓_ => ⌜0 ≤ _root_.F2R p⌝⦄ := by
+  sorry
+
+-- Coq: `RleMaxR0` — if r ≤ 0 and `isMax b radix r max` then F2R max ≤ 0
+noncomputable def RleMaxR0_check {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (r : ℝ) (max : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RleMaxR0 {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (r : ℝ) (max : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜r ≤ 0 ∧ isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max⌝⦄
+    RleMaxR0_check (beta:=beta) b radix r max
+    ⦃⇓_ => ⌜_root_.F2R max ≤ 0⌝⦄ := by
+  sorry
+
+-- Coq: `RleRoundedLessR0` — under RoundedModeP P, if P r p and r ≤ 0 then F2R p ≤ 0
+noncomputable def RleRoundedLessR0_check {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem RleRoundedLessR0 {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
+    ⦃⌜RoundedModeP P ∧ P r p ∧ r ≤ 0⌝⦄
+    RleRoundedLessR0_check (beta:=beta) P p r
+    ⦃⇓_ => ⌜_root_.F2R p ≤ 0⌝⦄ := by
+  sorry
+
 -- Coq: `MinUniqueP` — uniqueness for isMin
 noncomputable def MinUniqueP_check {α : Type}
     (b : Fbound_skel) (radix : Int) : Id Unit :=

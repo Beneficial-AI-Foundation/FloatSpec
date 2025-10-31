@@ -1334,15 +1334,14 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `RoundedModeErrorExpStrict` → (no Lean counterpart)
 - `RoundedModeProjectorIdem` → (no Lean counterpart)
 - `RoundedModeBounded` → (no Lean counterpart)
-- `RoundedModeProjectorIdemEq` → (no Lean counterpart)
 - `RoundedModeMult` → (no Lean counterpart)
 - `RoundedModeMultLess` → (no Lean counterpart)
-- `RleMinR0` → (no Lean counterpart)
-- `RleRoundedR0` → (no Lean counterpart)
-- `RleMaxR0` → (no Lean counterpart)
-- `RleRoundedLessR0` → (no Lean counterpart)
-- `PminPos` → (no Lean counterpart)
-- `div2IsBetweenPos` → (no Lean counterpart)
+ - `RleMinR0` → `RleMinR0 [FloatSpec/src/Pff/Pff.lean:227]`
+ - `RleRoundedR0` → `RleRoundedR0 [FloatSpec/src/Pff/Pff.lean:241]`
+ - `RleMaxR0` → `RleMaxR0 [FloatSpec/src/Pff/Pff.lean:255]`
+ - `RleRoundedLessR0` → `RleRoundedLessR0 [FloatSpec/src/Pff/Pff.lean:267]`
+ - `PminPos` → (no Lean counterpart)
+ - `div2IsBetweenPos` → (no Lean counterpart)
 - `div2IsBetween` → (no Lean counterpart)
 - `RoundedModeMultAbs` → (no Lean counterpart)
 - `isMinComp` → (no Lean counterpart)
