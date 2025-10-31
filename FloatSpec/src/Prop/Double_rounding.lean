@@ -534,6 +534,27 @@ lemma round_round_div_aux2
       ∧ x / y < midp (beta := beta) fexp1 (x / y) + (1/2) * (ulp beta fexp2 (x / y))) := by
   sorry
 
+/-/ Coq: `round_round_div_aux`
+    Positive case: under an even-base hypothesis `beta = 2*n` and the
+    structural hypothesis `round_round_div_hyp`, for `0 < x` and `0 < y`
+    with `fexp1`-genericity of both operands, nearest-on-nearest double
+    rounding of `x / y` from `fexp2` to `fexp1` collapses to a single
+    rounding at `fexp1`. -/
+lemma round_round_div_aux
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Ebeta : ∃ n : Int, beta = 2 * n)
+  (Hexp : round_round_div_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_pos : 0 < x) (hy_pos : 0 < y)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x / y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x / y) := by
+  sorry
+
 -- Coq: `round_round_mult_aux`
 -- Under `round_round_mult_hyp`, the product of two `fexp1`-generic
 -- numbers is `fexp2`-generic.
