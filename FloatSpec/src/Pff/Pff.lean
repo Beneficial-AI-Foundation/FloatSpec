@@ -1638,10 +1638,6 @@ noncomputable def Fdigit_opp_check {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
   pure ()
 
--- Forward declaration: minimal placeholder for `Fdigit` used below
-noncomputable def Fdigit {beta : Int}
-    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat := 0
-
 theorem Fdigit_opp {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
