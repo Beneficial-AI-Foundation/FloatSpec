@@ -623,6 +623,28 @@ theorem Rlt_Float_Zlt {beta : Int} (p q r : Int) :
     ⦃⇓_ => ⌜p < q⌝⦄ := by
   sorry
 
+-- Coq: `oneExp_le` — with mantissa 1, exponent order preserves real ≤
+noncomputable def oneExp_le_check {beta : Int} (x y : Int) : Id Unit :=
+  pure ()
+
+theorem oneExp_le {beta : Int} (x y : Int) :
+    ⦃⌜x ≤ y⌝⦄
+    oneExp_le_check (beta:=beta) x y
+    ⦃⇓_ => ⌜_root_.F2R (⟨1, x⟩ : FloatSpec.Core.Defs.FlocqFloat beta)
+            ≤ _root_.F2R (⟨1, y⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄ := by
+  sorry
+
+-- Coq: `oneExp_Zlt` — with mantissa 1, real < implies exponent <
+noncomputable def oneExp_Zlt_check {beta : Int} (x y : Int) : Id Unit :=
+  pure ()
+
+theorem oneExp_Zlt {beta : Int} (x y : Int) :
+    ⦃⌜_root_.F2R (⟨1, x⟩ : FloatSpec.Core.Defs.FlocqFloat beta) <
+         _root_.F2R (⟨1, y⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄
+    oneExp_Zlt_check (beta:=beta) x y
+    ⦃⇓_ => ⌜x < y⌝⦄ := by
+  sorry
+
 -- Coq: `Zle_powerRZ` — 1 < e → e^n ≤ e^m → n ≤ m
 noncomputable def Zle_powerRZ_check (e : ℝ) (n m : Int) : Id Unit :=
   pure ()

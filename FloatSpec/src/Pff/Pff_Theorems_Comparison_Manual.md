@@ -1044,8 +1044,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Rle_monotony_contra_exp` → (no Lean counterpart)
 - `FtoREqInv2` → (no Lean counterpart)
 - `Rlt_Float_Zlt` → (no Lean counterpart)
-- `oneExp_le` → (no Lean counterpart)
-- `oneExp_Zlt` → (no Lean counterpart)
+- `oneExp_le` → `oneExp_le [FloatSpec/src/Pff/Pff.lean:630]`
+- `oneExp_Zlt` → `oneExp_Zlt [FloatSpec/src/Pff/Pff.lean:641]`
 - `sameExpEq` → (no Lean counterpart)
 - `FshiftFdigit` → (no Lean counterpart)
 - `FshiftCorrect` → (no Lean counterpart)
