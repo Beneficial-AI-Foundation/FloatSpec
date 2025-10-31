@@ -694,6 +694,29 @@ theorem Bdiv_correct_aux {prec emax : Int}
   -- on the overflow guard and using properties of `SF2R` and rounding.
   exact sorry
 
+-- Coq: Bfrexp_correct_aux (SingleNaN side)
+-- Auxiliary correctness for extracting a normalized significand and exponent.
+noncomputable def Bfrexp_correct_aux_check
+  (sx : Bool) (mx : Nat) (ex : Int)
+  (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true) : Id (StandardFloat × Int) :=
+  -- Placeholder: actual Coq uses Ffrexp_core_binary; we return a representative pair.
+  pure (StandardFloat.S754_finite sx mx ex, 0)
+
+theorem Bfrexp_correct_aux
+  (sx : Bool) (mx : Nat) (ex : Int)
+  (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  Bfrexp_correct_aux_check (prec:=prec) (emax:=emax) sx mx ex Hx
+  ⦃⇓res => ⌜
+      let z := res.1; let e := res.2
+      valid_binary_SF (prec:=prec) (emax:=emax) z = true ∧
+      ((2 : Int) < emax → (/ (2 : ℝ) ≤ |SF2R 2 z| ∧ |SF2R 2 z| < 1)) ∧
+      SF2R 2 (StandardFloat.S754_finite sx mx ex)
+        = SF2R 2 z * (FloatSpec.Core.Raux.bpow 2 e).run⌝⦄ := by
+  intro _
+  -- Proof deferred; aligns with Coq's `Bfrexp_correct_aux` structure.
+  exact sorry
+
 -- Coq: Bsqrt_correct_aux (SingleNaN side)
 -- Auxiliary correctness for square root at the SF/BSN layer.
 -- We follow the project pattern: provide a pure check and a Hoare-style theorem.
