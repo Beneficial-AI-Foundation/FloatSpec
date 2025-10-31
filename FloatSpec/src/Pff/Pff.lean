@@ -1227,6 +1227,19 @@ noncomputable def Fshift {beta : Int}
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     FloatSpec.Core.Defs.FlocqFloat beta := x
 
+-- Coq: `FshiftFdigit` — ~is_Fzero x -> Fdigit (Fshift n x) = Fdigit x + n
+noncomputable def FshiftFdigit_check {beta : Int}
+    (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FshiftFdigit {beta : Int}
+    (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜¬ is_Fzero x⌝⦄
+    FshiftFdigit_check (beta:=beta) radix n x
+    ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fshift (beta:=beta) radix n x) =
+            Fdigit (beta:=beta) radix x + n⌝⦄ := by
+  sorry
+
 -- Least significant bit position of a float (placeholder definition)
 noncomputable def LSB {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
