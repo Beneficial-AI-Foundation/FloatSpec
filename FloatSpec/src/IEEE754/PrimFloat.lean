@@ -456,6 +456,24 @@ noncomputable def Beqb (prec emax : Int)
       decide (sx = sy ∧ mx = my ∧ ex = ey)
   | _, _ => false
 
+-- Coq: Beqb_correct — equality on binary numbers matches real equality under finiteness
+noncomputable def Beqb_correct_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Id Bool :=
+  pure (Beqb prec emax x y)
+
+theorem Beqb_correct (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax)
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
+  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
+  ⦃⌜True⌝⦄
+  Beqb_correct_check prec emax x y
+  ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x = B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `Beqb_correct` via `Bcompare_correct`.
+  exact sorry
+
 noncomputable def Bcmp (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : Binary754 prec emax) : Int :=
