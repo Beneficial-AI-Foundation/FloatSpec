@@ -24711,3 +24711,4 @@ Hint: Insert a role to document it:
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Prop/Round_odd.lean:485:8: declaration uses 'sorry'
 Build completed successfully (3028 jobs).
+0:36.17 3180452KB
