@@ -482,13 +482,13 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_sqrt_radix_ge_4_FTZ` → (no direct Lean match found)
 
-- `round_round_eq_mid_beta_even` → (no direct Lean match found)
+ - `round_round_eq_mid_beta_even` → `round_round_eq_mid_beta_even` [Double_rounding.lean:165] (spec-variant)
 
-- `round_round_really_zero` → (no direct Lean match found)
+ - `round_round_really_zero` → `round_round_really_zero` [Double_rounding.lean:187] (spec-variant)
 
-- `round_round_zero` → (no direct Lean match found)
+ - `round_round_zero` → `round_round_zero` [Double_rounding.lean:204] (spec-variant)
 
-- `round_round_all_mid_cases` → (no direct Lean match found)
+ - `round_round_all_mid_cases` → `round_round_all_mid_cases` [Double_rounding.lean:224] (spec-variant)
 
 - `mag_div_disj` → `mag_div_disj` [Double_rounding.lean:229] (exact)
 
@@ -498,21 +498,21 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_div_aux2` → `round_round_div_aux2` [Double_rounding.lean:296] (spec-variant)
 
-- `round_round_div_aux` → (no direct Lean match found)
+ - `round_round_div_aux` → (no direct Lean match found)
 
-- `round_round_div` → (no direct Lean match found)
+ - `round_round_div` → `round_round_div` [Double_rounding.lean:547] (spec-variant)
 
-- `FLX_round_round_div_hyp` → (no direct Lean match found)
+ - `FLX_round_round_div_hyp` → `FLX_round_round_div_hyp` [Double_rounding.lean:566] (spec-variant)
 
-- `round_round_div_FLX` → (no direct Lean match found)
+ - `round_round_div_FLX` → `round_round_div_FLX` [Double_rounding.lean:577] (spec-variant)
 
-- `FLT_round_round_div_hyp` → (no direct Lean match found)
+ - `FLT_round_round_div_hyp` → `FLT_round_round_div_hyp` [Double_rounding.lean:597] (spec-variant)
 
-- `round_round_div_FLT` → (no direct Lean match found)
+ - `round_round_div_FLT` → `round_round_div_FLT` [Double_rounding.lean:609] (spec-variant)
 
-- `FTZ_round_round_div_hyp` → (no direct Lean match found)
+ - `FTZ_round_round_div_hyp` → `FTZ_round_round_div_hyp` [Double_rounding.lean:630] (spec-variant)
 
-- `round_round_div_FTZ` → (no direct Lean match found)
+ - `round_round_div_FTZ` → `round_round_div_FTZ` [Double_rounding.lean:641] (spec-variant)
 
 ## File: Mult_error.v → Mult_error.lean
 

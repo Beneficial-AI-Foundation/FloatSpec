@@ -157,6 +157,118 @@ lemma round_round_mid_cases
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
   sorry
 
+/-- Coq: `round_round_eq_mid_beta_even`
+    Midpoint equality case under an even-base assumption on `beta`.
+    If `x` equals the `fexp1`-midpoint, with `fexp2 (mag x) ≤ fexp1 (mag x) - 1`
+    and `fexp1 (mag x) ≤ mag x`, then nearest-on-nearest double rounding
+    from `fexp2` to `fexp1` is innocuous. -/
+lemma round_round_eq_mid_beta_even
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Ebeta : ∃ n : Int, beta = 2 * n)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (hx_mid : x = midp (beta := beta) fexp1 x) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
+  sorry
+
+/-- Coq: `round_round_really_zero`
+    If `fexp1 (mag x)` is at least two places beyond `mag x` and `x > 0`,
+    then double rounding (nearest-on-nearest) from `fexp2` to `fexp1`
+    is innocuous. -/
+lemma round_round_really_zero
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_f1 : (FloatSpec.Core.Raux.mag beta x).run
+            ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
+  sorry
+
+/-- Coq: `round_round_zero`
+    Special case where `fexp1 (mag x) = mag x + 1` and `x` lies strictly
+    below `bpow (mag x) - 1/2 * ulp fexp2 x`; double rounding is innocuous. -/
+lemma round_round_zero
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_f1 : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+            = (FloatSpec.Core.Raux.mag beta x).run + 1)
+  (hx_lt : x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)
+              - (1/2) * (ulp beta fexp2 x)) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
+  sorry
+
+/-- Coq: `round_round_all_mid_cases`
+    All-mid-cases splitter used by the division lemmas later: under
+    `fexp2 (mag x) ≤ fexp1 (mag x) - 1`, reduce to near-midpoint cases
+    or to the equality midpoint case guarded by an even `beta` premise. -/
+lemma round_round_all_mid_cases
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (case1 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+              = (FloatSpec.Core.Raux.mag beta x).run + 1)
+            → (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)
+              - (1/2) * (ulp beta fexp2 x) ≤ x
+            → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+                (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+              = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
+  (case2 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+              ≤ (FloatSpec.Core.Raux.mag beta x).run)
+            → midp (beta := beta) fexp1 x - (1/2) * (ulp beta fexp2 x) ≤ x
+            → x < midp (beta := beta) fexp1 x
+            → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+                (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+              = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
+  (case3 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+              ≤ (FloatSpec.Core.Raux.mag beta x).run)
+            → x = midp (beta := beta) fexp1 x
+            → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+                (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+              = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
+  (case4 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+              ≤ (FloatSpec.Core.Raux.mag beta x).run)
+            → midp (beta := beta) fexp1 x < x
+            → x ≤ midp (beta := beta) fexp1 x + (1/2) * (ulp beta fexp2 x)
+            → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+                (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+              = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
+  (case5 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+              = (FloatSpec.Core.Raux.mag beta x).run + 1)
+            → x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)
+                - (1/2) * (ulp beta fexp2 x)
+            → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+                (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+              = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
+  sorry
+
 /-- Coq: `mag_sqrt_disj`
     For positive `x`, the magnitude of `x` is either
     `2 * mag (sqrt x) - 1` or exactly `2 * mag (sqrt x)`.
@@ -446,6 +558,102 @@ lemma round_round_div
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x / y))
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x / y) := by
+  sorry
+
+/-- Coq: `FLX_round_round_div_hyp`
+    Under `2 * prec ≤ prec'`, the division structural hypothesis holds
+    between `(FLX_exp prec)` and `(FLX_exp prec')`. -/
+lemma FLX_round_round_div_hyp
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (hprec : 2 * prec ≤ prec') :
+  round_round_div_hyp (FLX_exp prec) (FLX_exp prec') := by
+  sorry
+
+/-- Coq: `round_round_div_FLX`
+    For FLX with an even radix and `2 * prec ≤ prec'`, nearest-on-nearest
+    double rounding of a quotient collapses to a single rounding at
+    `(FLX_exp prec)`. -/
+theorem round_round_div_FLX
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (choice1 choice2 : Int → Bool)
+  (Ebeta : ∃ n : Int, beta = 2 * n)
+  (hprec : 2 * prec ≤ prec')
+  (x y : ℝ)
+  (hy_nz : y ≠ 0)
+  (Fx : generic_format beta (FLX_exp prec) x)
+  (Fy : generic_format beta (FLX_exp prec) y) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (x / y))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (x / y) := by
+  sorry
+
+/-- Coq: `FLT_round_round_div_hyp`
+    Under `emin' ≤ emin - prec - 2` and `2 * prec ≤ prec'`, the division
+    structural hypothesis holds between the corresponding FLT exponents. -/
+lemma FLT_round_round_div_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : emin' ≤ emin - prec - 2)
+  (Hprec : 2 * prec ≤ prec') :
+  round_round_div_hyp (FLT_exp emin prec) (FLT_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_div_FLT`
+    For FLT with an even radix and the above relations on `emin/prec`,
+    nearest-on-nearest double rounding of a quotient collapses at
+    `(FLT_exp emin prec)`. -/
+theorem round_round_div_FLT
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Ebeta : ∃ n : Int, beta = 2 * n)
+  (Hemin : emin' ≤ emin - prec - 2)
+  (Hprec : 2 * prec ≤ prec')
+  (x y : ℝ)
+  (hy_nz : y ≠ 0)
+  (Fx : generic_format beta (FLT_exp emin prec) x)
+  (Fy : generic_format beta (FLT_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') (Znearest choice2) (x / y))
+  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1) (x / y) := by
+  sorry
+
+/-- Coq: `FTZ_round_round_div_hyp`
+    Under `emin' + prec' ≤ emin - 1` and `2 * prec ≤ prec'`, the division
+    structural hypothesis holds between the corresponding FTZ exponents. -/
+lemma FTZ_round_round_div_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : emin' + prec' ≤ emin - 1)
+  (Hprec : 2 * prec ≤ prec') :
+  round_round_div_hyp (FTZ_exp emin prec) (FTZ_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_div_FTZ`
+    For FTZ with an even radix and the above relation, nearest-on-nearest
+    double rounding of a quotient collapses at `(FTZ_exp emin prec)`. -/
+theorem round_round_div_FTZ
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Ebeta : ∃ n : Int, beta = 2 * n)
+  (Hemin : emin' + prec' ≤ emin - 1)
+  (Hprec : 2 * prec ≤ prec')
+  (x y : ℝ)
+  (hy_nz : y ≠ 0)
+  (Fx : generic_format beta (FTZ_exp emin prec) x)
+  (Fy : generic_format beta (FTZ_exp emin prec) y) :
+  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') (Znearest choice2) (x / y))
+  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1) (x / y) := by
   sorry
 
 /-- Coq: `mag_plus_disj`

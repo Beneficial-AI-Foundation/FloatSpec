@@ -1,58 +1,46 @@
-FloatSpec/src/Prop/Double_rounding.lean:27:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:50:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:65:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:82:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:99:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:117:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:139:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:165:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:186:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:205:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:223:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:246:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:257:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:286:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:306:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:324:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:349:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:368:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:377:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:388:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:398:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:412:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:425:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:445:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:460:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:477:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:505:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:520:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:540:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:560:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:581:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:600:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:619:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:636:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:656:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:676:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:694:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:715:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:724:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:734:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:748:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:763:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:775:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:789:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:806:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:821:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:840:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:860:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:878:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:889:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:906:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:924:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:933:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:950:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:969:6: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:979:8: warning: declaration uses 'sorry'
-FloatSpec/src/Prop/Double_rounding.lean:997:8: warning: declaration uses 'sorry'
-failed to write '/dev/null': failed to create file '/dev/null'
+lean: unrecognized option '--make'
+Unknown command line option
+Lean (version 4.25.0-rc1, x86_64-unknown-linux-gnu, commit 66466a7b5db73989b88c3d74cf8c68f4f11991b0, Release)
+Miscellaneous
+  -h, --help             display this message
+      --features         display features compiler provides (eg. LLVM support)
+  -v, --version          display version information
+  -V, --short-version    display short version number
+  -g, --githash          display the git commit hash number used to build this binary
+      --run <file>       call the 'main' definition in the given file with the remaining arguments
+  -o, --o=oname          create olean file
+  -i, --i=iname          create ilean file
+  -c, --c=fname          name of the C output file
+  -b, --bc=fname         name of the LLVM bitcode file
+      --stdin            take input from stdin
+      --root=dir         set package root directory from which the module name
+
+                         of the input file is calculated
+
+                         (default: current working directory)
+
+  -t, --trust=num        trust level (default: max) 0 means do not trust any macro,
+
+                         and type check all imported modules
+
+  -q, --quiet            do not print verbose messages
+  -M, --memory=num       maximum amount of memory that should be used by Lean
+                         (in megabytes)
+  -T, --timeout=num      maximum number of memory allocations per task
+                         this is a deterministic way of interrupting long running tasks
+  -j, --threads=num      number of threads used to process lean files
+  -s, --tstack=num       thread stack size in Kb
+      --server           start lean in server mode
+      --worker           start lean in server-worker mode
+      --plugin=file      load and initialize Lean shared library for registering linters etc.
+      --load-dynlib=file load shared library to make its symbols available to the interpreter
+      --setup=file       JSON file with module setup data (supersedes the file's header)
+      --json             report Lean output (e.g., messages) as JSON (one per line)
+  -E  --error=kind       report Lean messages of kind as errors
+      --deps             just print dependencies of a Lean input
+      --src-deps         just print dependency sources of a Lean input
+      --print-prefix     print the installation prefix for Lean and exit
+      --print-libdir     print the installation directory for Lean's built-in libraries and exit
+      --profile          display elaboration/type checking time for each definition/theorem
+      --stats            display environment statistics
+      -D name=value      set a configuration option (see set_option command)
