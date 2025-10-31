@@ -490,6 +490,58 @@ noncomputable def Bleb (prec emax : Int)
   (x y : Binary754 prec emax) : Bool :=
   Bcmp prec emax x y ≠ 1
 
+-- Coq: Beqb_refl — reflexivity of Beqb except NaN
+noncomputable def Beqb_refl_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) : Id Bool :=
+  pure (Beqb prec emax x x)
+
+theorem Beqb_refl (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Beqb_refl_check prec emax x
+  ⦃⇓result => ⌜result = bnot (is_nan_B (prec:=prec) (emax:=emax) x)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's `Beqb_refl` by case analysis.
+  exact sorry
+
+-- Coq: Bltb_correct — strict-ordered comparison matches real comparison
+noncomputable def Bltb_correct_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Id Bool :=
+  pure (Bltb prec emax x y)
+
+theorem Bltb_correct (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax)
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
+  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
+  ⦃⌜True⌝⦄
+  Bltb_correct_check prec emax x y
+  ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x < B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `Bltb_correct` via `Bcompare_correct` and `Rcompare`.
+  exact sorry
+
+-- Coq: Bleb_correct — non-strict-ordered comparison matches real comparison
+noncomputable def Bleb_correct_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Id Bool :=
+  pure (Bleb prec emax x y)
+
+theorem Bleb_correct (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax)
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
+  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
+  ⦃⌜True⌝⦄
+  Bleb_correct_check prec emax x y
+  ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x ≤ B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `Bleb_correct` via `Bcompare_correct` and `Rcompare`.
+  exact sorry
+
 -- Coq: eqb_equiv — boolean equality correspondence
 noncomputable def eqb_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
