@@ -357,6 +357,22 @@ theorem ClosestRoundedModeP {beta : Int}
     ⦃⇓_ => ⌜RoundedModeP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
+-- Symmetry under negation on the real side (Coq: `ClosestOpp`)
+noncomputable def ClosestOpp_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestOpp` — if `p` is a closest representation of `r`, then
+    `Fopp p` is a closest representation of `-r`. -/
+theorem ClosestOpp {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
+    ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
+    ClosestOpp_check (beta:=beta) bo radix p r
+    ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (-r) (Fopp p)⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- Underflow/Exponent growth lemmas (ported skeletons)
 
