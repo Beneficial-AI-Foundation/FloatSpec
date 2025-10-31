@@ -64,6 +64,25 @@ theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
   prim_mul (binary_to_prim prec emax x) (binary_to_prim prec emax y) := by
   sorry
 
+-- Coq: compare_equiv — comparison correspondence between PrimFloat and Binary754
+noncomputable def prim_compare (x y : PrimFloat) : Option Int :=
+  some ((FloatSpec.Core.Raux.Rcompare x y).run)
+
+def compare_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) : Id (Option Int) :=
+  pure (prim_compare x y)
+
+theorem compare_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) :
+  ⦃⌜True⌝⦄
+  compare_equiv_check prec emax x y
+  ⦃⇓result => ⌜result =
+      (Bcompare_check (prec:=prec) (emax:=emax)
+        (prim_to_binary prec emax x) (prim_to_binary prec emax y))⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's `compare_equiv` via `B2SF`/`SF2B` bridges.
+  exact sorry
+
 -- Coq: B2Prim_Prim2B — roundtrip Prim → Binary → Prim
 def B2Prim_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) : Id PrimFloat :=
