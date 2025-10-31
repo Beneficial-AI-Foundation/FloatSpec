@@ -527,3 +527,31 @@ theorem U4_discri1 (emin prec : Int) [Prec_gt_0 prec]
                      else round_flt (round_flt (p - q) + round_flt (dp - dq))
             (2 : ℝ) ^ (emin + prec) ≤ |d|⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `format_dp`
+
+In the Discri1 context, `dp := b*b - p` where `p := round_flt (b*b)` is
+represented in the target format. We mirror the statement by reconstructing
+the local `let` bindings and asserting `generic_format` of `dp`.
+-/
+
+noncomputable def format_dp_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `format_dp` — with `p := round_flt (b*b)` and `dp := b*b - p`,
+    `dp` is representable in `generic_format 2 (FLT_exp emin prec)`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`. -/
+theorem format_dp (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
+        generic_format 2 (FLT_exp emin prec) b ∧
+        generic_format 2 (FLT_exp emin prec) c ∧
+        (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|)⌝⦄
+    format_dp_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let p := round_flt (b * b)
+            let dp := b * b - p
+            generic_format 2 (FLT_exp emin prec) dp⌝⦄ := by
+  sorry
