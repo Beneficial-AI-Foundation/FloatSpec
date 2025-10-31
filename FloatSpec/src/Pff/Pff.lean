@@ -121,6 +121,22 @@ def Fnormal {beta : Int}
     (radix : ℝ) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
 
+-- Existence of a closest representation (Coq: `ClosestTotal`)
+noncomputable def ClosestTotal_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestTotal` — for any real `r`, there exists a float `f`
+    that is a closest representation according to `Closest`.
+    We use the Hoare-triple style and defer the proof. -/
+theorem ClosestTotal {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    ClosestTotal_check (beta:=beta) bo radix r
+    ⦃⇓_ => ⌜∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+            Closest (beta:=beta) bo radix r f⌝⦄ := by
+  sorry
+
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
     (P : ℝ → α → Prop) : Id Unit :=
