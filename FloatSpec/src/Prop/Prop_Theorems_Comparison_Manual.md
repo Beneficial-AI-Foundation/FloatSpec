@@ -1137,7 +1137,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_N_odd` → (no direct Lean match found)
 
-- `Zrnd_odd_plus'` → (no direct Lean match found)
+- `generic_format_fexpe_fexp` → `generic_format_fexpe_fexp` [Round_odd.lean:147] (spec-variant)
+- `exists_even_fexp_lt` → `exists_even_fexp_lt` [Round_odd.lean:157] (spec-variant)
+ - `Zrnd_odd_plus'` → `Zrnd_odd_plus'` [Round_odd.lean:148] (spec-variant)
 
 - `mag_round_odd` → (no direct Lean match found)
 

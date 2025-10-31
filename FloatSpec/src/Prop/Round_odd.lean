@@ -137,3 +137,47 @@ theorem fexp_round_odd (x : ℝ) :
   fexp ((FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x)).run)
     ≤ (FloatSpec.Core.Raux.mag beta x).run + 1 := by
   sorry
+
+/-!
+  Additional helpers from Coq's Round_odd.v
+  We mirror statements and leave proofs as placeholders.
+-/
+
+variable (fexpe : Int → Int)
+variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexpe]
+
+/-- If the auxiliary exponent `fexpe` is pointwise below `fexp - 2`,
+    then any `fexp`-generic number is also `fexpe`-generic.
+    Coq counterpart: `generic_format_fexpe_fexp`. -/
+lemma generic_format_fexpe_fexp
+  (hrel : ∀ e, fexpe e ≤ fexp e - 2)
+  (x : ℝ) :
+  generic_format beta fexp x → generic_format beta fexpe x := by
+  intro _
+  sorry
+
+/-- Zodd summation at even-base aligned points.
+    Coq counterpart: `Zrnd_odd_plus'`.
+
+    If `beta` is even and `x` sits exactly on a radix grid point
+    `n * beta^e` with `1 ≤ e`, then rounding-to-odd satisfies
+    `Zodd (x + y) = x + Zodd y` (as integers mapped to reals).
+    We mirror the Coq statement and leave the proof as a placeholder. -/
+theorem Zrnd_odd_plus' (Ebeta : ∃ n : Int, beta = 2 * n)
+  (x y : ℝ)
+  (hx : ∃ n e : Int, x = (n : ℝ) * (beta : ℝ) ^ e ∧ 1 ≤ e) :
+  ((Zodd (x + y) : Int) : ℝ) = x + ((Zodd y : Int) : ℝ) := by
+  sorry
+
+/-- Existence of an even-exponent canonical representative larger than a bound.
+    Coq counterpart: `exists_even_fexp_lt`.
+    We pose it over an abstract exponent function `c` mirroring the Coq version. -/
+lemma exists_even_fexp_lt
+  (c : Int → Int) (x : ℝ)
+  (hx : ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+            (FloatSpec.Core.Defs.F2R g).run = x ∧ c ((FloatSpec.Core.Raux.mag beta x).run) < g.Fexp) :
+  ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+    (FloatSpec.Core.Defs.F2R g).run = x ∧
+    FloatSpec.Core.Generic_fmt.canonical beta c g ∧
+    g.Fnum % 2 = 0 := by
+  sorry
