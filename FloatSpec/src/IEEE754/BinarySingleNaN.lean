@@ -653,3 +653,33 @@ theorem Bdiv_correct_aux {prec emax : Int}
   -- Proof deferred; mirrors Coq's `Bdiv_correct_aux` by case analysis
   -- on the overflow guard and using properties of `SF2R` and rounding.
   exact sorry
+
+-- Coq: Bsqrt_correct_aux (SingleNaN side)
+-- Auxiliary correctness for square root at the SF/BSN layer.
+-- We follow the project pattern: provide a pure check and a Hoare-style theorem.
+noncomputable def Bsqrt_correct_aux_check {prec emax : Int}
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (mode : RoundingMode)
+  (mx : Nat) (ex : Int)
+  (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true) : Id StandardFloat :=
+  -- Placeholder: actual Coq builds via SFsqrt_core_binary then binary_round_aux.
+  -- Return a positive finite as representative shape (sign false as in Coq conclusion).
+  pure (StandardFloat.S754_finite false mx ex)
+
+theorem Bsqrt_correct_aux {prec emax : Int}
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+  (mode : RoundingMode)
+  (mx : Nat) (ex : Int)
+  (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true) :
+  ⦃⌜True⌝⦄
+  Bsqrt_correct_aux_check (prec:=prec) (emax:=emax) mode mx ex Hx
+  ⦃⇓z => ⌜
+      let x := SF2R 2 (StandardFloat.S754_finite false mx ex);
+      valid_binary_SF (prec:=prec) (emax:=emax) z = true ∧
+      SF2R 2 z = FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) () (Real.sqrt x) ∧
+      is_finite_SF z = true ∧ sign_SF z = false⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `Bsqrt_correct_aux` by unfolding the construction
+  -- of `z` via `SFsqrt_core_binary` and applying `binary_round_aux_correct'`.
+  exact sorry
