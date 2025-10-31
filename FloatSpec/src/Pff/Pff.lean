@@ -1645,6 +1645,42 @@ theorem Fdigit_opp {beta : Int}
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fopp x) = Fdigit (beta:=beta) radix x⌝⦄ := by
   sorry
 
+-- Coq: `Fabs_correct1` — if 0 ≤ F2R x then F2R (Fabs x) = F2R x
+noncomputable def Fabs_correct1_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fabs_correct1 {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ _root_.F2R x⌝⦄
+    Fabs_correct1_check (beta:=beta) x
+    ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = _root_.F2R x⌝⦄ := by
+  sorry
+
+-- Coq: `Fabs_correct2` — if F2R x ≤ 0 then F2R (Fabs x) = - F2R x
+noncomputable def Fabs_correct2_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fabs_correct2 {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R x ≤ 0⌝⦄
+    Fabs_correct2_check (beta:=beta) x
+    ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = - _root_.F2R x⌝⦄ := by
+  sorry
+
+-- Coq: `Fabs_correct` — F2R (Fabs x) = |F2R x|
+noncomputable def Fabs_correct_check {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fabs_correct {beta : Int}
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fabs_correct_check (beta:=beta) x
+    ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = | _root_.F2R x |⌝⦄ := by
+  sorry
+
 -- Compatibility operations
 def pff_add (x y : PffFloat) : PffFloat := by
   sorry
