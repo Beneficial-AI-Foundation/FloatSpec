@@ -90,6 +90,26 @@ theorem EvenSOdd (n : Int) :
     ⦃⇓_ => ⌜Odd (Int.succ n)⌝⦄ := by
   sorry
 
+-- Coq: `OddSEvenInv` — if succ n is odd then n is even
+noncomputable def OddSEvenInv_check (n : Int) : Id Unit :=
+  pure ()
+
+theorem OddSEvenInv (n : Int) :
+    ⦃⌜Odd (Int.succ n)⌝⦄
+    OddSEvenInv_check n
+    ⦃⇓_ => ⌜Even n⌝⦄ := by
+  sorry
+
+-- Coq: `EvenSOddInv` — if succ n is even then n is odd
+noncomputable def EvenSOddInv_check (n : Int) : Id Unit :=
+  pure ()
+
+theorem EvenSOddInv (n : Int) :
+    ⦃⌜Even (Int.succ n)⌝⦄
+    EvenSOddInv_check n
+    ⦃⇓_ => ⌜Odd n⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- Rounded-mode predicate framework (Coq FRound section, minimized shell)
 -- We provide lightweight predicate encodings to state meta-theorems such as
