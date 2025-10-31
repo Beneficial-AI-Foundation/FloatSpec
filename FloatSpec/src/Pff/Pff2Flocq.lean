@@ -439,3 +439,44 @@ theorem V2_Und5 (emin prec : Int) [Prec_gt_0 prec]
             let r1 := round_flt (a * x + y)
             r1 = 0 ∨ (2 : ℝ) ^ (emin + prec - 1) ≤ |r1|⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `U3_discri1`
+
+In the Discri1 section of Coq, with `p := round_flt (b*b)` and
+`q := round_flt (a*c)`, if `b*b ≠ 0`, `a*c ≠ 0`, and `p - q ≠ 0`, then
+`(2 : ℝ)^(emin + 2*prec) ≤ |round_flt (p - q)|` for
+`round_flt := round 2 (FLT_exp emin prec) ZnearestE`.
+
+We mirror that statement using the project hoare-triple convention and Lean’s
+`FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` to denote nearest-even
+rounding. Proof is deferred.
+-/
+
+noncomputable def U3_discri1_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `U3_discri1` — with `p := round_flt (b*b)` and `q := round_flt (a*c)`,
+    assuming non-underflow side-conditions and `p - q ≠ 0`, we have the
+    magnitude lower bound on `round_flt (p - q)` at `(emin, prec)`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`.
+    We include the format hypotheses and non-underflow conditions as pure
+    preconditions, following the Coq section structure. -/
+theorem U3_discri1 (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
+        generic_format 2 (FLT_exp emin prec) b ∧
+        generic_format 2 (FLT_exp emin prec) c ∧
+        (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|) ∧
+        (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|) ∧
+        (let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+         let p := round_flt (b * b)
+         let q := round_flt (a * c)
+         True ∧ p - q ≠ 0)⌝⦄
+    U3_discri1_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let p := round_flt (b * b)
+            let q := round_flt (a * c)
+            (2 : ℝ) ^ (emin + 2 * prec) ≤ |round_flt (p - q)|⌝⦄ := by
+  sorry
