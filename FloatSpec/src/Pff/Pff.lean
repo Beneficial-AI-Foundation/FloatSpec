@@ -1105,6 +1105,22 @@ theorem Pdiv_correct (p q : Positive) :
             oZ (Prod.snd (Pdiv p q)) < nat_of_P q⌝⦄ := by
   sorry
 
+-- Bridge Option Positive to Int (Coq oZ1)
+noncomputable def oZ1 (h : Option Positive) : Int :=
+  match h with
+  | none => 0
+  | some p => Int.ofNat (nat_of_P p)
+
+-- Coq: inj_oZ1 — Int/nat bridge for oZ/oZ1
+noncomputable def inj_oZ1_check (z : Option Positive) : Id Unit :=
+  pure ()
+
+theorem inj_oZ1 (z : Option Positive) :
+    ⦃⌜True⌝⦄
+    inj_oZ1_check z
+    ⦃⇓_ => ⌜oZ1 z = Int.ofNat (oZ z)⌝⦄ := by
+  sorry
+
 -- Coq: `inject_nat_convert` — if p = Zpos q then Z_of_nat (nat_of_P q) = p
 noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Id Unit :=
   pure ()
