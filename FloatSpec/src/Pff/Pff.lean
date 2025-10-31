@@ -1080,6 +1080,31 @@ structure Positive where
 noncomputable def nat_of_P (p : Positive) : Nat :=
   p.val.succ
 
+-- ---------------------------------------------------------------------------
+-- Coq: Pdiv and its correctness properties over positive numbers
+
+-- Optional-positive to Nat (Coq oZ)
+noncomputable def oZ (h : Option Positive) : Nat :=
+  match h with
+  | none => 0
+  | some p => nat_of_P p
+
+-- Coq: Pdiv — division with remainder on positives, returning quotient/remainder
+-- We only need the interface here; implementation is deferred.
+noncomputable def Pdiv (p q : Positive) : Option Positive × Option Positive :=
+  (none, none)
+
+-- Correctness of Pdiv (quotient-remainder form and remainder bound)
+noncomputable def Pdiv_correct_check (p q : Positive) : Id Unit :=
+  pure ()
+
+theorem Pdiv_correct (p q : Positive) :
+    ⦃⌜True⌝⦄
+    Pdiv_correct_check p q
+    ⦃⇓_ => ⌜nat_of_P p = oZ (Prod.fst (Pdiv p q)) * nat_of_P q + oZ (Prod.snd (Pdiv p q)) ∧
+            oZ (Prod.snd (Pdiv p q)) < nat_of_P q⌝⦄ := by
+  sorry
+
 -- Coq: `inject_nat_convert` — if p = Zpos q then Z_of_nat (nat_of_P q) = p
 noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Id Unit :=
   pure ()
