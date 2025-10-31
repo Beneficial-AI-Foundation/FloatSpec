@@ -130,6 +130,46 @@ theorem round_round_mult_FTZ
   sorry
 
 
+/-- Coq: `round_round_mid_cases`
+    Midpoint case splitter: assuming `0 < x`, a place relation
+    `fexp2 (mag x) ≤ fexp1 (mag x) - 1`, and `fexp1 (mag x) ≤ mag x`,
+    if the absolute gap to the `fexp1`-midpoint is at most
+    `1/2 * ulp fexp2 x`, then double rounding (nearest-on-nearest)
+    from `fexp2` to `fexp1` equals a single rounding at `fexp1`. -/
+lemma round_round_mid_cases
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (Cmid : |x - midp (beta := beta) fexp1 x|
+            ≤ (1/2) * (ulp beta fexp2 x) →
+          FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+            (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+          = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
+  sorry
+
+/-- Coq: `mag_sqrt_disj`
+    For positive `x`, the magnitude of `x` is either
+    `2 * mag (sqrt x) - 1` or exactly `2 * mag (sqrt x)`.
+    We mirror the Coq statement and leave the proof as a placeholder. -/
+lemma mag_sqrt_disj (x : ℝ)
+  (hx_pos : 0 < x) :
+  ((FloatSpec.Core.Raux.mag beta x).run
+      = 2 * (FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run - 1)
+  ∨ ((FloatSpec.Core.Raux.mag beta x).run
+      = 2 * (FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) := by
+  sorry
+
+
 
 /-- Coq: `round_round_lt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
