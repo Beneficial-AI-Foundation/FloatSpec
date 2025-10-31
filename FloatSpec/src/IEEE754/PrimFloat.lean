@@ -264,3 +264,84 @@ theorem infinity_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec ema
   intro _
   -- Proof deferred; follows from the intended semantics of `binary_to_prim` and constants.
   exact sorry
+
+-- Coq: neg_infinity_equiv — primitive −∞ corresponds to Binary −∞
+noncomputable def neg_infinity_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : Id PrimFloat :=
+  pure (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_infinity true)))
+
+theorem neg_infinity_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  neg_infinity_equiv_check prec emax
+  ⦃⇓result => ⌜result = prim_infinity⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from the intended semantics of `binary_to_prim` and constants.
+  exact sorry
+
+-- Coq: nan_equiv — primitive NaN corresponds to Binary NaN
+noncomputable def nan_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : Id PrimFloat :=
+  pure (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_nan false 1)))
+
+theorem nan_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  nan_equiv_check prec emax
+  ⦃⇓result => ⌜result = prim_nan⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from the intended semantics of constants.
+  exact sorry
+
+-- Coq: zero_equiv — primitive +0 corresponds to Binary zero
+noncomputable def zero_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : Id PrimFloat :=
+  pure (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero false)))
+
+theorem zero_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  zero_equiv_check prec emax
+  ⦃⇓result => ⌜result = prim_zero⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from the intended semantics.
+  exact sorry
+
+-- Coq: neg_zero_equiv — primitive −0 corresponds to Binary −0
+noncomputable def neg_zero_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : Id PrimFloat :=
+  pure (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero true)))
+
+theorem neg_zero_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  neg_zero_equiv_check prec emax
+  ⦃⇓result => ⌜result = prim_zero⌝⦄ := by
+  intro _
+  -- Proof deferred; follows from the intended semantics.
+  exact sorry
+
+-- Coq: one_equiv — primitive one corresponds to Binary constant one
+noncomputable def one_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : Id PrimFloat :=
+  pure (binary_to_prim prec emax (binary_one (prec:=prec) (emax:=emax)))
+
+theorem one_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  one_equiv_check prec emax
+  ⦃⇓result => ⌜result = 1⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `one_equiv`.
+  exact sorry
+
+-- Coq: two_equiv — primitive two corresponds to Binary plus one one
+noncomputable def two_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : Id PrimFloat :=
+  pure (binary_to_prim prec emax
+          (binary_add (prec:=prec) (emax:=emax)
+            (binary_one (prec:=prec) (emax:=emax))
+            (binary_one (prec:=prec) (emax:=emax))))
+
+theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  two_equiv_check prec emax
+  ⦃⇓result => ⌜result = 2⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `two_equiv`.
+  exact sorry
