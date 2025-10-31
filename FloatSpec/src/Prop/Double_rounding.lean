@@ -908,6 +908,122 @@ lemma round_round_plus_radix_ge_3
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
   sorry
 
+/-- Coq: `round_round_minus_radix_ge_3_aux0`
+    If `0 < y < x`, `fexp1 (mag x) ≤ mag y`, and both `x` and `y` are
+    `fexp1`-generic, then the subtraction `x - y` is `fexp2`-generic
+    under the hypothesis `round_round_plus_radix_ge_3_hyp`. -/
+lemma round_round_minus_radix_ge_3_aux0
+  (fexp1 fexp2 : Int → Int)
+  (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y < x)
+  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_radix_ge_3_aux1`
+    If `0 < y < x`, `mag y ≤ fexp1 (mag x) - 1`, and
+    `fexp1 (mag (x - y)) ≤ mag y`, then under
+    `round_round_plus_radix_ge_3_hyp` the subtraction `x - y` is
+    `fexp2`-generic. -/
+lemma round_round_minus_radix_ge_3_aux1
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y < x)
+  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (Hln' : fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
+  generic_format beta fexp2 (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_radix_ge_3_aux2`
+    If `0 < y < x`, `mag y ≤ fexp1 (mag x) - 1` and also
+    `mag y ≤ fexp1 (mag (x - y)) - 1`, then nearest-on-nearest double
+    rounding of `x - y` collapses to a single rounding at `fexp1` under
+    the radix-≥3 hypothesis. -/
+lemma round_round_minus_radix_ge_3_aux2
+  (Hbeta : 3 ≤ beta)
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y < x)
+  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (Hly' : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) - 1)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_radix_ge_3_aux3`
+    Combination lemma for the subtraction case under radix-≥3: for
+    `0 < y ≤ x` with both operands `fexp1`-generic, nearest-on-nearest
+    double rounding of `x - y` collapses to a single rounding at `fexp1`. -/
+lemma round_round_minus_radix_ge_3_aux3
+  (Hbeta : 3 ≤ beta)
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hy_pos : 0 < y) (hyx : y ≤ x)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_radix_ge_3_aux`
+    Nonnegative inputs version for differences: for `0 ≤ x` and `0 ≤ y`,
+    under the hypothesis `round_round_plus_radix_ge_3_hyp`, nearest-on-
+    nearest double rounding of `x - y` collapses to a single rounding at
+    `fexp1`. -/
+lemma round_round_minus_radix_ge_3_aux
+  (Hbeta : 3 ≤ beta)
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (hx_nonneg : 0 ≤ x) (hy_nonneg : 0 ≤ y)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry
+
+/-- Coq: `round_round_minus_radix_ge_3`
+    Full sign-split theorem for subtraction: for arbitrary `x` and `y`
+    that are `fexp1`-generic, under the radix-≥3 hypothesis and
+    `round_round_plus_radix_ge_3_hyp`, double rounding of `x - y` is
+    innocuous. -/
+lemma round_round_minus_radix_ge_3
+  (Hbeta : 3 ≤ beta)
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x - y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
+  sorry
+
 /-- Coq: `round_round_plus_aux2`
     Case split on `mag y ≤ fexp1 (mag x) - 2` driving either the
     `round_round_plus_aux1` branch or the exact-addition branch
