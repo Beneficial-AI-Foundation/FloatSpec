@@ -162,7 +162,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `ErrFmaAppr_correct` → (no Lean counterpart)
 - `Axpy` → (no Lean counterpart)
 - `U3_discri1` → (no Lean counterpart)
-- `U4_discri1` → (no Lean counterpart)
+- `U4_discri1` → `U4_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:508]`
 - `format_dp` → (no Lean counterpart)
 - `format_dq` → (no Lean counterpart)
 - `format_d_discri1` → (no Lean counterpart)
