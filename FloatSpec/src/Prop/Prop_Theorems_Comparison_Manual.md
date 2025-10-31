@@ -419,9 +419,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_minus_radix_ge_3` → (no direct Lean match found)
 
-- `FLX_round_round_plus_radix_ge_3_hyp` → (no direct Lean match found)
+- `FLX_round_round_plus_radix_ge_3_hyp` → `FLX_round_round_plus_radix_ge_3_hyp` [Double_rounding.lean:1017] (spec-variant, requires 2*prec ≤ prec')
 
-- `round_round_plus_radix_ge_3_FLX` → (no direct Lean match found)
+- `round_round_plus_radix_ge_3_FLX` → `round_round_plus_radix_ge_3_FLX` [Double_rounding.lean:1017] (spec-variant)
 
 - `round_round_minus_radix_ge_3_FLX` → (no direct Lean match found)
 

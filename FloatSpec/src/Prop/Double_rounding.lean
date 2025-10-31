@@ -1011,6 +1011,36 @@ lemma round_round_plus_radix_ge_3_aux2
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
   sorry
 
+/-- Coq: `FLX_round_round_plus_radix_ge_3_hyp`
+    For FLX exponent functions, the radix-≥3 structural hypothesis for
+    plus double rounding holds unconditionally. -/
+lemma FLX_round_round_plus_radix_ge_3_hyp
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (hprec : 2 * prec ≤ prec') :
+  round_round_plus_radix_ge_3_hyp (FLX_exp prec) (FLX_exp prec') := by
+  sorry
+
+/-- Coq: `round_round_plus_radix_ge_3_FLX`
+    Under `3 ≤ beta` and `2 * prec ≤ prec'`, nearest-on-nearest
+    double rounding of `x + y` from `(FLX_exp prec')` to `(FLX_exp prec)`
+    collapses to a single rounding at `(FLX_exp prec)`. -/
+theorem round_round_plus_radix_ge_3_FLX
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hbeta : 3 ≤ beta)
+  (hprec : 2 * prec ≤ prec')
+  (x y : ℝ)
+  (Fx : generic_format beta (FLX_exp prec) x)
+  (Fy : generic_format beta (FLX_exp prec) y) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (x + y) := by
+  sorry
+
 /-- Coq: `round_round_plus_radix_ge_3_aux`
     Nonnegative case: if `0 ≤ x`, `0 ≤ y`, and both are `fexp1`-generic,
     then under `round_round_plus_radix_ge_3_hyp` the double rounding of
