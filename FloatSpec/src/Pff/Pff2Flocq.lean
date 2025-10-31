@@ -387,3 +387,32 @@ theorem V2_Und4 (emin prec : Int) [Prec_gt_0 prec]
             let beta1 := round_flt (u1 + alpha1)
             beta1 = 0 ∨ (2 : ℝ) ^ (emin + prec + 1) ≤ |beta1|⌝⦄ := by
   sorry
+
+-- Coq lemma: `V2_Und2`
+-- In the ErrFMA V2 section, Coq proves that under the hypothesis `y ≠ 0`,
+-- the intermediate value `alpha1 := round_flt (y + u2)` either vanishes or
+-- has a magnitude bounded below by `β^(emin + prec)`.
+-- We mirror that statement using the rounding operator
+-- `FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` (nearest-even), and we
+-- define the same intermediate quantities via local `let` bindings. Proof is
+-- deferred per the import task instructions.
+
+noncomputable def V2_Und2_check (emin prec : Int)
+    (a x y : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `V2_Und2` — assuming `y ≠ 0`, let
+    `u1 := round_flt (a*x)`, `u2 := a*x - u1`, and `alpha1 := round_flt (y + u2)`.
+    Then either `alpha1 = 0` or `(2 : ℝ)^(emin + prec) ≤ |alpha1|`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`.
+    Proof deferred. -/
+theorem V2_Und2 (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ) :
+    ⦃⌜y ≠ 0⌝⦄
+    V2_Und2_check emin prec a x y
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let u1 := round_flt (a * x)
+            let u2 := a * x - u1
+            let alpha1 := round_flt (y + u2)
+            alpha1 = 0 ∨ (2 : ℝ) ^ (emin + prec) ≤ |alpha1|⌝⦄ := by
+  sorry
