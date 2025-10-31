@@ -301,6 +301,46 @@ theorem powerRZ_add (e : ℝ) (m n : Int) :
     ⦃⇓_ => ⌜e ^ (m + n) = e ^ m * e ^ n⌝⦄ := by
   sorry
 
+-- Coq: `powerRZ_Zopp` — e^(-z) = (e^z)⁻¹ for nonzero base
+noncomputable def powerRZ_Zopp_check (e : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_Zopp (e : ℝ) (z : Int) :
+    ⦃⌜e ≠ 0⌝⦄
+    powerRZ_Zopp_check e z
+    ⦃⇓_ => ⌜e ^ (-z) = (e ^ z)⁻¹⌝⦄ := by
+  sorry
+
+-- Coq: `powerRZ_Zs` — e^(Z.succ n) = e * e^n for nonzero base
+noncomputable def powerRZ_Zs_check (e : ℝ) (n : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_Zs (e : ℝ) (n : Int) :
+    ⦃⌜e ≠ 0⌝⦄
+    powerRZ_Zs_check e n
+    ⦃⇓_ => ⌜e ^ (Int.succ n) = e * e ^ n⌝⦄ := by
+  sorry
+
+-- Coq: `Zpower_nat_Z_powerRZ` — bridge between integer and real powers
+noncomputable def Zpower_nat_Z_powerRZ_check (n : Int) (m : Nat) : Id Unit :=
+  pure ()
+
+theorem Zpower_nat_Z_powerRZ (n : Int) (m : Nat) :
+    ⦃⌜True⌝⦄
+    Zpower_nat_Z_powerRZ_check n m
+    ⦃⇓_ => ⌜(Zpower_nat n m : ℝ) = ( (n : ℝ) ^ (m : Int) )⌝⦄ := by
+  sorry
+
+-- Coq: `powerRZ_lt` — if 0 < e then 0 < e^z (integer exponent)
+noncomputable def powerRZ_lt_check (e : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_lt (e : ℝ) (z : Int) :
+    ⦃⌜0 < e⌝⦄
+    powerRZ_lt_check e z
+    ⦃⇓_ => ⌜0 < e ^ z⌝⦄ := by
+  sorry
+
 -- Coq: `Rledouble` — if 0 ≤ r then r ≤ 2r
 noncomputable def Rledouble_check (r : ℝ) : Id Unit :=
   pure ()

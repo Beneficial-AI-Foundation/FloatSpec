@@ -1012,8 +1012,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `powerRZ_1` → (no Lean counterpart)
 - `powerRZ_NOR` → (no Lean counterpart)
 - `powerRZ_add` → (no Lean counterpart)
-- `powerRZ_Zopp` → `pow_neg` (Pff.lean:59) (content-related)
-- `powerRZ_Zs` → (no Lean counterpart)
+- `powerRZ_Zopp` → `powerRZ_Zopp [FloatSpec/src/Pff/Pff.lean:308]`
+- `powerRZ_Zs` → `powerRZ_Zs [FloatSpec/src/Pff/Pff.lean:318]`
 - `Zpower_nat_Z_powerRZ` → (no Lean counterpart)
 - `powerRZ_lt` → (no Lean counterpart)
 - `powerRZ_le` → (no Lean counterpart)
