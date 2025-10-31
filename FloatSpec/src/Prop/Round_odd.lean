@@ -187,3 +187,27 @@ lemma exists_even_fexp_lt
   are not imported yet. They depend on a larger internal development
   around witnesses d,u,m and will be introduced with that context.
 -/
+
+/-!
+  Coq Section Fcore_rnd_odd: auxiliary witnesses d, u, and midpoint m.
+  We introduce the missing lemmas by mirroring the Coq statements and
+  leave proofs as placeholders. These lemmas assume DN/UP witnesses `d` and `u`.
+-/
+
+/-- Coq: `d_eq`
+    Equality between the DN-witness value and rounding with `Zfloor`.
+    Mirrors: `F2R d = round beta fexp Zfloor x`.
+
+    We state it over Core’s `roundR` with the concrete rounding function `Zfloor`.
+-/
+lemma d_eq (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) :
+  F2R d =
+    (FloatSpec.Core.Generic_fmt.roundR (beta := beta) (fexp := fexp)
+        (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x) := by
+  sorry

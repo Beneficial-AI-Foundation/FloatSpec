@@ -1141,6 +1141,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `exists_even_fexp_lt` → `exists_even_fexp_lt` [Round_odd.lean:157] (spec-variant)
  - `Zrnd_odd_plus'` → `Zrnd_odd_plus'` [Round_odd.lean:148] (spec-variant)
 
+- `d_eq` → `d_eq` [Round_odd.lean:203] (spec-variant)
+
 - `mag_round_odd` → (no direct Lean match found)
 
 - `fexp_round_odd` → (no direct Lean match found)
