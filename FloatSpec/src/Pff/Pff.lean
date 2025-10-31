@@ -470,6 +470,69 @@ theorem Zlt_powerRZ (e : ℝ) (n m : Int) :
     ⦃⇓_ => ⌜n < m⌝⦄ := by
   sorry
 
+-- Coq: `Rlt_monotony_exp` — multiply preserves < with positive factor (power)
+noncomputable def Rlt_monotony_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem Rlt_monotony_exp (radix : ℝ) (x y : ℝ) (z : Int) :
+    ⦃⌜x < y⌝⦄
+    Rlt_monotony_exp_check radix x y z
+    ⦃⇓_ => ⌜x * radix ^ z < y * radix ^ z⌝⦄ := by
+  sorry
+
+-- Coq: `Rle_monotone_exp` — multiply preserves ≤ with positive factor (power)
+noncomputable def Rle_monotone_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem Rle_monotone_exp (radix : ℝ) (x y : ℝ) (z : Int) :
+    ⦃⌜x ≤ y⌝⦄
+    Rle_monotone_exp_check radix x y z
+    ⦃⇓_ => ⌜x * radix ^ z ≤ y * radix ^ z⌝⦄ := by
+  sorry
+
+-- Coq: `Rlt_monotony_contra_exp` — cancel positive power factor from <
+noncomputable def Rlt_monotony_contra_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem Rlt_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
+    ⦃⌜x * radix ^ z < y * radix ^ z⌝⦄
+    Rlt_monotony_contra_exp_check radix x y z
+    ⦃⇓_ => ⌜x < y⌝⦄ := by
+  sorry
+
+-- Coq: `Rle_monotony_contra_exp` — cancel positive power factor from ≤
+noncomputable def Rle_monotony_contra_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem Rle_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
+    ⦃⌜x * radix ^ z ≤ y * radix ^ z⌝⦄
+    Rle_monotony_contra_exp_check radix x y z
+    ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
+  sorry
+
+-- Coq: `FtoREqInv2` — equality by equal real value and same exponent
+noncomputable def FtoREqInv2_check {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FtoREqInv2 {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜_root_.F2R p = _root_.F2R q ∧ p.Fexp = q.Fexp⌝⦄
+    FtoREqInv2_check (beta:=beta) p q
+    ⦃⇓_ => ⌜p = q⌝⦄ := by
+  sorry
+
+-- Coq: `Rlt_Float_Zlt` — compare mantissas when exponents equal
+noncomputable def Rlt_Float_Zlt_check {beta : Int} (p q r : Int) : Id Unit :=
+  pure ()
+
+theorem Rlt_Float_Zlt {beta : Int} (p q r : Int) :
+    ⦃⌜_root_.F2R (⟨p, r⟩ : FloatSpec.Core.Defs.FlocqFloat beta) <
+         _root_.F2R (⟨q, r⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄
+    Rlt_Float_Zlt_check (beta:=beta) p q r
+    ⦃⇓_ => ⌜p < q⌝⦄ := by
+  sorry
+
 -- Coq: `Zle_powerRZ` — 1 < e → e^n ≤ e^m → n ≤ m
 noncomputable def Zle_powerRZ_check (e : ℝ) (n m : Int) : Id Unit :=
   pure ()
