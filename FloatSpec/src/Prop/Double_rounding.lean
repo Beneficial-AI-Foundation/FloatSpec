@@ -309,7 +309,7 @@ lemma round_round_sqrt_aux
     < |Real.sqrt x - midp (beta := beta) fexp1 (Real.sqrt x)| := by
   sorry
 
-/-- Coq: `round_round_sqrt`
+/-- Coq: `round_round_sqrt` 
     If `round_round_sqrt_hyp` holds and `x` is `fexp1`-generic with the
     place relation at `mag (sqrt x)`, then nearest-on-nearest double
     rounding of `sqrt x` from `fexp2` to `fexp1` is innocuous. -/
@@ -353,6 +353,38 @@ theorem round_round_sqrt_FLX
   FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
     (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (Real.sqrt x))
   = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
+/-- Coq: `FLT_round_round_sqrt_hyp`
+    Sufficient conditions for FLT exponents to satisfy the
+    `round_round_sqrt_hyp` (non-radix-ge-4 variant). -/
+lemma FLT_round_round_sqrt_hyp
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  (Hemin : emin ≤ 0)
+  (Hrel : emin' ≤ emin - prec - 2 ∨ 2 * emin' ≤ emin - 4 * prec - 2)
+  (Hprec : 2 * prec + 2 ≤ prec') :
+  round_round_sqrt_hyp (FLT_exp emin prec) (FLT_exp emin' prec') := by
+  sorry
+
+/-- Coq: `round_round_sqrt_FLT`
+    Under `Hemin`, `Hrel`, and `2 * prec + 2 ≤ prec'`, nearest-on-nearest
+    double rounding of `sqrt x` from `(FLT_exp emin' prec')` to
+    `(FLT_exp emin prec)` is innocuous. -/
+theorem round_round_sqrt_FLT
+  (emin prec emin' prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin' prec')]
+  (choice1 choice2 : Int → Bool)
+  (Hemin : emin ≤ 0)
+  (Hrel : emin' ≤ emin - prec - 2 ∨ 2 * emin' ≤ emin - 4 * prec - 2)
+  (Hprec : 2 * prec + 2 ≤ prec')
+  (x : ℝ)
+  (Fx : generic_format beta (FLT_exp emin prec) x) :
+  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice1) (Real.sqrt x) := by
   sorry
 
 
