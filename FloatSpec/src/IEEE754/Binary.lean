@@ -432,6 +432,19 @@ theorem B2R_FF2B (beta : Int) {prec emax} (x : FullFloat) :
   FF2R beta (B2FF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x)) = FF2R beta x := by
   sorry
 
+-- Coq: B2SF_inj — injectivity of B2SF (StandardFloat view)
+def B2SF_inj_check {prec emax} (x y : Binary754 prec emax) : Id Unit :=
+  pure ()
+
+theorem B2SF_inj {prec emax} (x y : Binary754 prec emax)
+  (h : B2SF (prec:=prec) (emax:=emax) x = B2SF (prec:=prec) (emax:=emax) y) :
+  ⦃⌜True⌝⦄
+  B2SF_inj_check x y
+  ⦃⇓_ => ⌜x = y⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `B2SF_inj` via constructors.
+  exact sorry
+
 -- Coq: Bsign_FF2B — Sign preserved by FF2B
 def Bsign {prec emax} (x : Binary754 prec emax) : Bool :=
   sign_FF x.val

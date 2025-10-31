@@ -106,6 +106,36 @@ theorem Prim2B_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax
   -- Proof deferred; relies on intended equivalence between Prim and Binary.
   exact sorry
 
+-- Coq: Prim2B_inj — injectivity of Prim→Binary conversion
+def Prim2B_inj_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) : Id Unit :=
+  pure ()
+
+theorem Prim2B_inj (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat)
+  (h : prim_to_binary prec emax x = prim_to_binary prec emax y) :
+  ⦃⌜True⌝⦄
+  Prim2B_inj_check prec emax x y
+  ⦃⇓_ => ⌜x = y⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's Prim2B_inj using roundtrip lemmas.
+  exact sorry
+
+-- Coq: B2Prim_inj — injectivity of Binary→Prim conversion
+def B2Prim_inj_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Id Unit :=
+  pure ()
+
+theorem B2Prim_inj (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax)
+  (h : binary_to_prim prec emax x = binary_to_prim prec emax y) :
+  ⦃⌜True⌝⦄
+  B2Prim_inj_check prec emax x y
+  ⦃⇓_ => ⌜x = y⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's B2Prim_inj using roundtrip lemmas.
+  exact sorry
+
 -- Coq: abs_equiv — absolute-value correspondence between PrimFloat and Binary754
 def abs_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) : Id FullFloat :=
