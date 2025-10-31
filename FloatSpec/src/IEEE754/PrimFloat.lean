@@ -345,3 +345,82 @@ theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   intro _
   -- Proof deferred; mirrors Coq's `two_equiv`.
   exact sorry
+
+-- Binary-side boolean comparisons used in Coq's eqb/ltb/leb lemmas
+noncomputable def Beqb (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Bool :=
+  match B2SF (prec:=prec) (emax:=emax) x, B2SF (prec:=prec) (emax:=emax) y with
+  | StandardFloat.S754_zero sx, StandardFloat.S754_zero sy => decide (sx = sy)
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_infinity sy => decide (sx = sy)
+  | StandardFloat.S754_nan, StandardFloat.S754_nan => true
+  | StandardFloat.S754_finite sx mx ex, StandardFloat.S754_finite sy my ey =>
+      decide (sx = sy ∧ mx = my ∧ ex = ey)
+  | _, _ => false
+
+noncomputable def Bcmp (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Int :=
+  ((FloatSpec.Core.Raux.Rcompare (B2R (prec:=prec) (emax:=emax) x)
+                                 (B2R (prec:=prec) (emax:=emax) y)).run)
+
+def Bltb (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Bool :=
+  Bcmp prec emax x y = (-1)
+
+def Bleb (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : Binary754 prec emax) : Bool :=
+  Bcmp prec emax x y ≠ 1
+
+-- Coq: eqb_equiv — boolean equality correspondence
+def eqb_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) : Id Bool :=
+  pure (prim_eq x y)
+
+theorem eqb_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) :
+  ⦃⌜True⌝⦄
+  eqb_equiv_check prec emax x y
+  ⦃⇓result => ⌜result =
+      Beqb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `eqb_equiv` via `B2SF_Prim2B`.
+  exact sorry
+
+-- Coq: ltb_equiv — boolean strict ordering correspondence
+def ltb_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) : Id Bool :=
+  pure (prim_lt x y)
+
+theorem ltb_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) :
+  ⦃⌜True⌝⦄
+  ltb_equiv_check prec emax x y
+  ⦃⇓result => ⌜result =
+      Bltb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `ltb_equiv` via `B2R` and `Rcompare`.
+  exact sorry
+
+-- Coq: leb_equiv — boolean non-strict ordering correspondence
+def leb_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) : Id Bool :=
+  pure (prim_le x y)
+
+theorem leb_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x y : PrimFloat) :
+  ⦃⌜True⌝⦄
+  leb_equiv_check prec emax x y
+  ⦃⇓result => ⌜result =
+      Bleb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `leb_equiv` via `B2R` and `Rcompare`.
+  exact sorry
