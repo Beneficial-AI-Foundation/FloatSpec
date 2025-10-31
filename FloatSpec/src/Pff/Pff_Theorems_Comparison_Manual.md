@@ -1361,7 +1361,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `errorBoundedMultExpPos` → (no Lean counterpart)
 - `errorBoundedMultExp` → (no Lean counterpart)
 - `ClosestTotal` → `ClosestTotal [FloatSpec/src/Pff/Pff.lean:132]`
-- `ClosestCompatible` → (no Lean counterpart)
+- `ClosestCompatible` → `ClosestCompatible [FloatSpec/src/Pff/Pff.lean:142]`
 - `ClosestMin` → (no Lean counterpart)
 - `ClosestMax` → (no Lean counterpart)
 - `ClosestMinOrMax` → (no Lean counterpart)
