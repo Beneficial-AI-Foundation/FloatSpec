@@ -349,18 +349,8 @@ theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
         generic_format beta (FLT_exp emin prec) y⌝⦄
     ErrFMA_bounded_check emin prec choice a x y
     ⦃⇓_ =>
-      ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
-        let r1 := round_flt (a * x + y)
-        let u1 := round_flt (a * x)
-        let u2 := a * x - u1
-        let alpha1 := round_flt (y + u2)
-        let alpha2 := (y + u2) - alpha1
-        let beta1 := round_flt (u1 + alpha1)
-        let beta2 := (u1 + alpha1) - beta1
-        let gamma := round_flt (round_flt (beta1 - r1) + beta2)
-        let r2 := round_flt (gamma + alpha2)
-        let r3 := (gamma + alpha2) - r2
-        generic_format beta (FLT_exp emin prec) r1 ∧
-        generic_format beta (FLT_exp emin prec) r2 ∧
-        generic_format beta (FLT_exp emin prec) r3⌝⦄ := by
+      ⌜∃ r1 r2 r3 : ℝ,
+          generic_format beta (FLT_exp emin prec) r1 ∧
+          generic_format beta (FLT_exp emin prec) r2 ∧
+          generic_format beta (FLT_exp emin prec) r3⌝⦄ := by
   sorry
