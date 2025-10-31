@@ -5,6 +5,7 @@ import Std.Do.Triple
 import FloatSpec.src.Core
 import FloatSpec.src.Compat
 import Mathlib.Data.Real.Basic
+import Mathlib.Data.Int.Parity
 import FloatSpec.src.Calc.Operations
 
 open Real
@@ -65,6 +66,19 @@ theorem pow_neg (r : ℝ) (z : Int) :
 
 -- Real number compatibility
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
+  sorry
+
+-- ---------------------------------------------------------------------------
+-- Integer parity lemmas (aligned with Coq: Odd/Even over Z)
+
+-- Coq: `OddSEven` — if n is odd then succ n is even
+noncomputable def OddSEven_check (n : Int) : Id Unit :=
+  pure ()
+
+theorem OddSEven (n : Int) :
+    ⦃⌜Odd n⌝⦄
+    OddSEven_check n
+    ⦃⇓_ => ⌜Even (Int.succ n)⌝⦄ := by
   sorry
 
 -- ---------------------------------------------------------------------------
