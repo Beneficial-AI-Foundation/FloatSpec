@@ -951,6 +951,16 @@ theorem FLT_format_B2R
   -- Proof deferred; follows Coq's FLT_format_B2R via generic_format_B2R and FLT_format_generic
   sorry
 
+-- Coq: emin_lt_emax — the minimal exponent is strictly less than emax (Binary side)
+def emin_lt_emax_check_B : Id Unit :=
+  pure ()
+
+theorem emin_lt_emax_B :
+  ⦃⌜True⌝⦄
+  emin_lt_emax_check_B
+  ⦃⇓_ => ⌜(3 - emax - prec) < emax⌝⦄ := by
+  intro _; exact sorry
+
 -- Coq: Bcompare_correct
 -- We expose a comparison wrapper that, under finiteness of both operands,
 -- returns the comparison code of the real semantics (using Rcompare.run).
