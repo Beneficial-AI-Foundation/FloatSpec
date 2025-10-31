@@ -276,6 +276,22 @@ theorem frexp_equiv (prec emax : Int)
   -- Proof deferred; mirrors Coq's `frexp_equiv` relating decompositions.
   exact sorry
 
+-- Coq: frshiftexp_equiv — shifted decomposition correspondence
+noncomputable def frshiftexp_equiv_check (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id ((Binary754 prec emax) × Int) :=
+  pure (Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
+
+theorem frshiftexp_equiv (prec emax : Int)
+  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  frshiftexp_equiv_check prec emax x
+  ⦃⇓result => ⌜result = Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
+  intro _
+  -- Proof deferred; follows Coq's `frshiftexp_equiv` structure.
+  exact sorry
+
 -- Coq: sub_equiv — subtraction correspondence between PrimFloat and Flocq Binary
 def sub_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : Id FullFloat :=
