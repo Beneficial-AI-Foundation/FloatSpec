@@ -636,6 +636,27 @@ theorem is_nan_Bldexp (mode : RoundingMode) (x : B754) (e : Int) :
   -- Proof deferred; corresponds to Coq's `is_nan_Bldexp`.
   exact sorry
 
+-- Negation on SingleNaN binary floats (Coq: Bopp on B754)
+def Bopp_bsn (x : B754) : B754 :=
+  match x with
+  | B754.B754_nan => B754.B754_nan
+  | B754.B754_zero s => B754.B754_zero (!s)
+  | B754.B754_infinity s => B754.B754_infinity (!s)
+  | B754.B754_finite s m e => B754.B754_finite (!s) m e
+
+-- Hoare wrapper for `Bldexp_Bopp_NE`
+def Bldexp_Bopp_NE_check (x : B754) (e : Int) : Id B754 :=
+  pure (Bldexp RoundingMode.RNE (Bopp_bsn x) e)
+
+-- Coq: Bldexp_Bopp_NE — ldexp at nearest-even commutes with negation
+theorem Bldexp_Bopp_NE (x : B754) (e : Int) :
+  ⦃⌜True⌝⦄
+  Bldexp_Bopp_NE_check x e
+  ⦃⇓result => ⌜result = Bopp_bsn (Bldexp RoundingMode.RNE x e)⌝⦄ := by
+  intro _
+  -- Proof deferred; mirrors Coq's `Bldexp_Bopp_NE`.
+  exact sorry
+
 -- Boolean xor used to combine signs (Coq: xorb)
 def bxor (a b : Bool) : Bool :=
   (a && !b) || (!a && b)
