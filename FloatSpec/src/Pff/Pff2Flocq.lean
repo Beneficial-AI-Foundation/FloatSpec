@@ -416,3 +416,26 @@ theorem V2_Und2 (emin prec : Int) [Prec_gt_0 prec]
             let alpha1 := round_flt (y + u2)
             alpha1 = 0 ∨ (2 : ℝ) ^ (emin + prec) ≤ |alpha1|⌝⦄ := by
   sorry
+
+-- Coq lemma: `V2_Und5`
+-- In the ErrFMA V2 section, with `r1 := round_flt (a*x + y)` and assuming
+-- `a*x ≠ 0`, either `r1 = 0` or `|r1|` is bounded below by `β^(emin + prec - 1)`.
+-- We mirror this statement with `round_flt := FloatSpec.Calc.Round.round 2
+-- (FLT_exp emin prec) ()` (nearest-even). Proof deferred.
+
+noncomputable def V2_Und5_check (emin prec : Int)
+    (a x y : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `V2_Und5` — assuming `a*x ≠ 0`, let `r1 := round_flt (a*x + y)`.
+    Then `r1 = 0 ∨ (2 : ℝ)^(emin + prec - 1) ≤ |r1|` with
+    `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`.
+    Proof deferred. -/
+theorem V2_Und5 (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ) :
+    ⦃⌜a * x ≠ 0⌝⦄
+    V2_Und5_check emin prec a x y
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let r1 := round_flt (a * x + y)
+            r1 = 0 ∨ (2 : ℝ) ^ (emin + prec - 1) ≤ |r1|⌝⦄ := by
+  sorry
