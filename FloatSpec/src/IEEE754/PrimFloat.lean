@@ -60,3 +60,31 @@ theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
   binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) = 
   prim_mul (binary_to_prim prec emax x) (binary_to_prim prec emax y) := by
   sorry
+
+-- Coq: B2Prim_Prim2B — roundtrip Prim → Binary → Prim
+def B2Prim_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) : Id PrimFloat :=
+  pure (binary_to_prim prec emax (prim_to_binary prec emax x))
+
+theorem B2Prim_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : PrimFloat) :
+  ⦃⌜True⌝⦄
+  B2Prim_Prim2B_check prec emax x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  -- Proof deferred; relies on intended equivalence between Prim and Binary.
+  exact sorry
+
+-- Coq: Prim2B_B2Prim — roundtrip Binary → Prim → Binary
+def Prim2B_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) : Id (Binary754 prec emax) :=
+  pure (prim_to_binary prec emax (binary_to_prim prec emax x))
+
+theorem Prim2B_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : Binary754 prec emax) :
+  ⦃⌜True⌝⦄
+  Prim2B_B2Prim_check prec emax x
+  ⦃⇓result => ⌜result = x⌝⦄ := by
+  intro _
+  -- Proof deferred; relies on intended equivalence between Prim and Binary.
+  exact sorry

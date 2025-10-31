@@ -570,7 +570,10 @@ def Bfrexp (x : Binary754 prec emax) : (Binary754 prec emax) × Int :=
 -- Local strict-finiteness classifier for Binary754 (finite and nonzero semantics).
 -- Coq uses a positive mantissa, so finite implies nonzero. Our Lean stub keeps
 -- the shape and defers proof obligations elsewhere.
--- moved earlier above
+def is_finite_strict_Bin (x : Binary754 prec emax) : Bool :=
+  match x.val with
+  | FullFloat.F754_finite _ _ _ => true
+  | _ => false
 
 noncomputable def Bfrexp_correct_check (x : Binary754 prec emax) :
   Id ((Binary754 prec emax) × Int) :=
@@ -1059,10 +1062,7 @@ theorem abs_B2R_lt_emax {prec emax : Int}
 -- Local strict-finiteness classifier for Binary754 (finite and nonzero semantics).
 -- Coq uses a positive mantissa, so finite implies nonzero. Our Lean stub keeps
 -- the shape and defers proof obligations elsewhere.
-def is_finite_strict_Bin {prec emax : Int} (x : Binary754 prec emax) : Bool :=
-  match x.val with
-  | FullFloat.F754_finite _ _ _ => true
-  | _ => false
+-- Duplicate declaration cleanup: ensure only the early local definition exists.
 
 -- Coq: abs_B2R_ge_emin — strict finiteness implies lower bound by bpow emin
 def abs_B2R_ge_emin_check {prec emax : Int}

@@ -447,4 +447,6 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 ### Mapping (Coq → Lean)
 - `add_equiv` → `prim_add_correct [FloatSpec/src/IEEE754/PrimFloat.lean:52]` (content-equivalent)
 - `mul_equiv` → `prim_mul_correct [FloatSpec/src/IEEE754/PrimFloat.lean:58]` (content-equivalent)
+- `B2Prim_Prim2B` → `B2Prim_Prim2B [FloatSpec/src/IEEE754/PrimFloat.lean:69]` (spec-variant, hoare)
+- `Prim2B_B2Prim` → `Prim2B_B2Prim [FloatSpec/src/IEEE754/PrimFloat.lean:79]` (spec-variant, hoare)
 - All other Coq declarations above → (no Lean counterpart)
