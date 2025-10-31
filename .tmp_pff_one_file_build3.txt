@@ -14601,3 +14601,5 @@ warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:312:51: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
 warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:315:8: declaration uses 'sorry'
+✔ [3006/3006] Built FloatSpec.src.Pff (7.6s)
+Build completed successfully (3006 jobs).
