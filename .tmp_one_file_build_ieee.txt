@@ -19879,179 +19879,144 @@ Note: This linter can be disabled with `set_option linter.missingDocs false`
 warning: FloatSpec/src/IEEE754/Bits.lean:129:8: declaration uses 'sorry'
 warning: FloatSpec/src/IEEE754/Bits.lean:141:8: declaration uses 'sorry'
 warning: FloatSpec/src/IEEE754/Bits.lean:167:8: declaration uses 'sorry'
-y'
-✖ [3022/3028] Building FloatSpec.src.Pff.Pff2Flocq (29s)
-trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.25.0-rc1/bin/lean /home/hantao/code/FloatSpec/FloatSpec/src/Pff/Pff2Flocq.lean -o /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Pff/Pff2Flocq.olean -i /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Pff/Pff2Flocq.ilean -c /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Pff/Pff2Flocq.c --setup /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Pff/Pff2Flocq.setup.json --json
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:19:4: missing doc string for public def pff_to_float
+✖ [3022/3028] Building FloatSpec.src.IEEE754.PrimFloat (14s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.25.0-rc1/bin/lean /home/hantao/code/FloatSpec/FloatSpec/src/IEEE754/PrimFloat.lean -o /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/IEEE754/PrimFloat.olean -i /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/IEEE754/PrimFloat.ilean -c /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/IEEE754/PrimFloat.c --setup /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/IEEE754/PrimFloat.setup.json --json
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:15:7: missing doc string for public abbrev PrimFloat
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:23:18: missing doc string for public def pff_to_R
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:18:4: missing doc string for public def prim_add
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:27:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:32:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:37:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:43:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:51:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:56:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:60:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:67:46: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲g̲i̲v̲e̲n̲}̲`_check`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`_check`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:68:56: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲a̲c̲t̲i̲c̲.̲G̲r̲i̲n̲d̲.̲s̲o̲r̲r̲y̲)̲}̲`sorry` (in `grind`)
-  • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲a̲c̲t̲i̲c̲.̲t̲a̲c̲t̲i̲c̲S̲o̲r̲r̲y̲)̲}̲`sorry` (in `tactic`)
-  • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲e̲r̲m̲.̲s̲o̲r̲r̲y̲)̲}̲`sorry` (in `term`)
-  • {̲l̲e̲a̲n̲}̲`sorry`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`sorry`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`sorry`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲}̲`sorry`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲a̲c̲t̲i̲c̲}̲`sorry`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`sorry`
-  • {̲t̲a̲c̲t̲i̲c̲}̲`sorry`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`sorry`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:72:18: missing doc string for public def round_N_opp_sym_check
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:19:4: missing doc string for public def prim_sub
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:72:41: unused variable `emin`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:72:46: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:72:59: unused variable `choice`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:72:81: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:75:9: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`round_N_opp_sym`
-  • {̲n̲a̲m̲e̲}̲`round_N_opp_sym`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`round_N_opp_sym`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:75:37: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`choice`
-  • {̲n̲a̲m̲e̲}̲`choice`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`choice`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:78:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:86:18: missing doc string for public def Fast2Sum_correct_check
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:20:4: missing doc string for public def prim_mul
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:86:42: unused variable `emin`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:86:47: unused variable `prec`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:86:60: unused variable `choice`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:86:82: unused variable `x`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:86:84: unused variable `y`
-
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:89:9: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`Fast2Sum_correct`
-  • {̲n̲a̲m̲e̲}̲`Fast2Sum_correct`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`Fast2Sum_correct`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:89:33: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`x`
-  • {̲n̲a̲m̲e̲}̲`x`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`x`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:89:41: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`y`
-  • {̲n̲a̲m̲e̲}̲`y`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`y`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:89:63: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`|y| ≤ |x|`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`|y| ≤ |x|`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`|y| ≤ |x|`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`|y| ≤ |x|`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`|y| ≤ |x|`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:90:44: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`x + y`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`x + y`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`x + y`
-  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`x + y`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`x + y`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:92:4: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`generic_format`
-  • {̲n̲a̲m̲e̲}̲`generic_format`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`generic_format`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:92:36: Code element could be more specific.
-
-Hint: Insert a role to document it:
-  • {̲g̲i̲v̲e̲n̲}̲`Compat`
-  • Use the `lit` role:
-    {̲l̲i̲t̲}̲`Compat`
-    to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:93:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:105:18: missing doc string for public def TwoSum_correct_check
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:21:18: missing doc string for public def prim_div
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:105:40: unused variable `emin`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:22:18: missing doc string for public def prim_sqrt
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:25:18: missing doc string for public def prim_eq
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:26:18: missing doc string for public def prim_lt
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:27:18: missing doc string for public def prim_le
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:30:18: missing doc string for public def prim_is_zero
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:31:4: missing doc string for public def prim_is_finite
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:32:4: missing doc string for public def prim_is_nan
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:33:4: missing doc string for public def prim_is_infinite
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:36:4: missing doc string for public def prim_zero
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:37:4: missing doc string for public def prim_infinity
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:38:4: missing doc string for public def prim_nan
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:41:4: missing doc string for public def prim_neg
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:42:4: missing doc string for public def prim_abs
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:43:18: missing doc string for public def prim_sign
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:46:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:46:4: missing doc string for public def binary_to_prim
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:50:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:50:4: missing doc string for public def prim_to_binary
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:55:18: missing doc string for public def Prim2SF
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:60:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:66:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:73:4: missing doc string for public def B2SF_Prim2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:77:8: declaration uses 'sorry'
+error: FloatSpec/src/IEEE754/PrimFloat.lean:87:4: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'Prim2SF', which is 'noncomputable'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:87:4: missing doc string for public def Prim2SF_B2Prim_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:91:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:101:18: missing doc string for public def prim_compare
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:104:18: missing doc string for public def compare_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:108:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:120:4: missing doc string for public def B2Prim_Prim2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:124:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:134:4: missing doc string for public def opp_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:138:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:148:4: missing doc string for public def Prim2B_B2Prim_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:152:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:162:4: missing doc string for public def Prim2B_inj_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:163:3: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:105:45: unused variable `prec`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:163:5: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:105:58: unused variable `choice`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:166:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:177:4: missing doc string for public def B2Prim_inj_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:178:3: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:105:80: unused variable `x`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:178:5: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:105:82: unused variable `y`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:181:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:192:4: missing doc string for public def abs_equiv_check
 
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff2Flocq.lean:108:9: Code element could be more specific.
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:196:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:206:18: missing doc string for public def div_equiv_check
 
-Hint: Insert a role to document it:
-  • {̲l̲e̲a̲n̲}̲`TwoSum_correct`
-  • {̲n̲a̲m̲e̲}̲`TwoSum_correct`
-  • Use the `lit` role:
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:210:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:223:4: missing doc string for public def sub_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:227:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:240:18: missing doc string for public def sqrt_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:244:8: declaration uses 'sorry'
+error: Lean exited with code 1
+ role:
     {̲l̲i̲t̲}̲`TwoSum_correct`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Pff2Flocq.lean:108:36: Code element could be more specific.
@@ -20924,3 +20889,144 @@ Hint: Insert a role to document it:
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Pff2Flocq.lean:353:8: declaration uses 'sorry'
 error: Lean exited with code 1
+✖ [3025/3028] Building FloatSpec.src.IEEE754.PrimFloat (12s)
+trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.25.0-rc1/bin/lean /home/hantao/code/FloatSpec/FloatSpec/src/IEEE754/PrimFloat.lean -o /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/IEEE754/PrimFloat.olean -i /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/IEEE754/PrimFloat.ilean -c /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/IEEE754/PrimFloat.c --setup /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/IEEE754/PrimFloat.setup.json --json
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:15:7: missing doc string for public abbrev PrimFloat
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:18:4: missing doc string for public def prim_add
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:19:4: missing doc string for public def prim_sub
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:20:4: missing doc string for public def prim_mul
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:21:18: missing doc string for public def prim_div
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:22:18: missing doc string for public def prim_sqrt
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:25:18: missing doc string for public def prim_eq
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:26:18: missing doc string for public def prim_lt
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:27:18: missing doc string for public def prim_le
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:30:18: missing doc string for public def prim_is_zero
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:31:4: missing doc string for public def prim_is_finite
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:32:4: missing doc string for public def prim_is_nan
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:33:4: missing doc string for public def prim_is_infinite
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:36:4: missing doc string for public def prim_zero
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:37:4: missing doc string for public def prim_infinity
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:38:4: missing doc string for public def prim_nan
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:41:4: missing doc string for public def prim_neg
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:42:4: missing doc string for public def prim_abs
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:43:18: missing doc string for public def prim_sign
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:46:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:46:4: missing doc string for public def binary_to_prim
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:50:4: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:50:4: missing doc string for public def prim_to_binary
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:55:18: missing doc string for public def Prim2SF
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:60:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:66:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:73:4: missing doc string for public def B2SF_Prim2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:77:8: declaration uses 'sorry'
+error: FloatSpec/src/IEEE754/PrimFloat.lean:87:4: failed to compile definition, consider marking it as 'noncomputable' because it depends on 'Prim2SF', which is 'noncomputable'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:87:4: missing doc string for public def Prim2SF_B2Prim_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:91:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:101:18: missing doc string for public def prim_compare
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:104:18: missing doc string for public def compare_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:108:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:120:4: missing doc string for public def B2Prim_Prim2B_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:124:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:134:4: missing doc string for public def opp_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:138:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:148:4: missing doc string for public def Prim2B_B2Prim_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:152:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:162:4: missing doc string for public def Prim2B_inj_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:163:3: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:163:5: unused variable `y`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:166:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:177:4: missing doc string for public def B2Prim_inj_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:178:3: unused variable `x`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:178:5: unused variable `y`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:181:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:192:4: missing doc string for public def abs_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:196:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:206:18: missing doc string for public def div_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:210:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:223:4: missing doc string for public def sub_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:227:8: declaration uses 'sorry'
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:240:18: missing doc string for public def sqrt_equiv_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/IEEE754/PrimFloat.lean:244:8: declaration uses 'sorry'
+error: Lean exited with code 1
+Some required targets logged failures:
+- FloatSpec.src.Pff.Pff2Flocq
+- FloatSpec.src.IEEE754.PrimFloat
+error: build failed
