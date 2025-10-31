@@ -617,6 +617,25 @@ theorem B754_mult_correct (mode : RoundingMode) (x y : B754)
     (B754_to_R x * B754_to_R y)) := by
   sorry
 
+-- Exponent scaling (Coq: Bldexp) at the SingleNaN level
+-- We mirror the Coq API and state key properties in hoare‑triple style.
+def Bldexp (mode : RoundingMode) (x : B754) (e : Int) : B754 := by
+  -- Placeholder; actual implementation composes SF-level rounding and SF2B.
+  -- We only expose the function for theorem statements; proof is deferred.
+  exact x
+
+def is_nan_Bldexp_check (mode : RoundingMode) (x : B754) (e : Int) : Id Bool :=
+  pure (BSN_is_nan (Bldexp mode x e))
+
+-- Coq: is_nan_Bldexp — exponent scaling preserves NaN-ness
+theorem is_nan_Bldexp (mode : RoundingMode) (x : B754) (e : Int) :
+  ⦃⌜True⌝⦄
+  is_nan_Bldexp_check (prec:=prec) (emax:=emax) mode x e
+  ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
+  intro _
+  -- Proof deferred; corresponds to Coq's `is_nan_Bldexp`.
+  exact sorry
+
 -- Boolean xor used to combine signs (Coq: xorb)
 def bxor (a b : Bool) : Bool :=
   (a && !b) || (!a && b)
