@@ -555,3 +555,30 @@ theorem format_dp (emin prec : Int) [Prec_gt_0 prec]
             let dp := b * b - p
             generic_format 2 (FLT_exp emin prec) dp⌝⦄ := by
   sorry
+
+/-!
+Coq lemma: `format_dq`
+
+Symmetric to `format_dp`, with `q := round_flt (a*c)` and `dq := a*c - q`.
+We assert `generic_format` of `dq` under the same Discri1 context assumptions.
+-/
+
+noncomputable def format_dq_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `format_dq` — with `q := round_flt (a*c)` and `dq := a*c - q`,
+    `dq` is representable in `generic_format 2 (FLT_exp emin prec)`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`. -/
+theorem format_dq (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
+        generic_format 2 (FLT_exp emin prec) b ∧
+        generic_format 2 (FLT_exp emin prec) c ∧
+        (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|)⌝⦄
+    format_dq_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let q := round_flt (a * c)
+            let dq := a * c - q
+            generic_format 2 (FLT_exp emin prec) dq⌝⦄ := by
+  sorry
