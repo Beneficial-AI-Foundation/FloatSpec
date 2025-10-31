@@ -161,14 +161,14 @@ noncomputable def ClosestMin_check {beta : Int}
 /-- Coq: `ClosestMin` — if `min` and `max` bracket `r` appropriately and are
     extremal for `isMin/isMax`, then `min` is a closest representation. -/
 theorem ClosestMin {beta : Int}
-    (bo : Fbound_skel) (radix : ℝ)
+    (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radix r min ∧
-        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radix r max ∧
+    ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r min ∧
+        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
         2 * r ≤ _root_.F2R min + _root_.F2R max⌝⦄
-    ClosestMin_check (beta:=beta) bo radix r min max
-    ⦃⇓_ => ⌜Closest (beta:=beta) bo radix r min⌝⦄ := by
+    ClosestMin_check (beta:=beta) bo radixR r min max
+    ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r min⌝⦄ := by
   sorry
 
 -- First projection: RoundedModeP -> CompatibleP
