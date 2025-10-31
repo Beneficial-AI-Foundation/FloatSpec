@@ -170,6 +170,80 @@ lemma mag_sqrt_disj (x : ℝ)
   sorry
 
 
+/-- Coq: `round_round_sqrt_hyp`
+    Structural hypothesis used for analyzing double rounding on square
+    roots. We mirror the Coq definition. -/
+def round_round_sqrt_hyp (fexp1 fexp2 : Int → Int) : Prop :=
+  (∀ ex, 2 * fexp1 ex ≤ fexp1 (2 * ex)) ∧
+  (∀ ex, 2 * fexp1 ex ≤ fexp1 (2 * ex - 1)) ∧
+  (∀ ex, fexp1 (2 * ex) < 2 * ex → fexp2 ex + ex ≤ 2 * fexp1 ex - 2)
+
+/-- Coq: `round_round_sqrt_aux`
+    Under `round_round_sqrt_hyp`, positivity of `x`, a place relation at
+    `mag (sqrt x)`, and `fexp1`-genericity of `x`, the midpoint gap for
+    `sqrt x` is larger than `1/2 * ulp fexp2 (sqrt x)`. We keep the same
+    name and leave the proof as a placeholder. -/
+lemma round_round_sqrt_aux
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (Hexp : round_round_sqrt_hyp fexp1 fexp2)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1)
+  (Fx : generic_format beta fexp1 x) :
+  (1/2) * (ulp beta fexp2 (Real.sqrt x))
+    < |Real.sqrt x - midp (beta := beta) fexp1 (Real.sqrt x)| := by
+  sorry
+
+/-- Coq: `round_round_sqrt`
+    If `round_round_sqrt_hyp` holds and `x` is `fexp1`-generic with the
+    place relation at `mag (sqrt x)`, then nearest-on-nearest double
+    rounding of `sqrt x` from `fexp2` to `fexp1` is innocuous. -/
+lemma round_round_sqrt
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_sqrt_hyp fexp1 fexp2)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1)
+  (Fx : generic_format beta fexp1 x) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
+/-- Coq: `FLX_round_round_sqrt_hyp`
+    In FLX, the structural hypothesis for sqrt double rounding holds
+    without additional side conditions. -/
+lemma FLX_round_round_sqrt_hyp
+  (prec prec' : Int) [Prec_gt_0 prec] [Prec_gt_0 prec'] :
+  round_round_sqrt_hyp (FLX_exp prec) (FLX_exp prec') := by
+  sorry
+
+/-- Coq: `round_round_sqrt_FLX`
+    For FLX with `2 * prec + 2 ≤ prec'`, nearest-on-nearest double
+    rounding of `sqrt x` from `(FLX_exp prec')` to `(FLX_exp prec)` is
+    innocuous. -/
+theorem round_round_sqrt_FLX
+  (prec prec' : Int)
+  [Prec_gt_0 prec] [Prec_gt_0 prec']
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
+  (choice1 choice2 : Int → Bool)
+  (hprec : 2 * prec + 2 ≤ prec')
+  (x : ℝ)
+  (Fx : generic_format beta (FLX_exp prec) x) :
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') (Znearest choice2) (Real.sqrt x))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice1) (Real.sqrt x) := by
+  sorry
+
+
 
 /-- Coq: `round_round_lt_mid_further_place'`
     Conditions for innocuous double rounding when x lies sufficiently
