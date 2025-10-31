@@ -131,7 +131,7 @@ noncomputable def C_format_check (emin prec s : Int) : Id Unit :=
 theorem C_format (emin prec s : Int) [Prec_gt_0 prec] :
     ⦃⌜(2 ≤ s) ∧ (s ≤ prec - 2) ∧ (emin ≤ 0)⌝⦄
     C_format_check emin prec s
-    ⦃⇓_ => ⌜generic_format beta (FLT_exp emin prec) ((beta : ℝ) ^ s + 1)⌝⦄ := by
+    ⦃⇓_ => ⌜generic_format 2 (FLT_exp emin prec) ((2 : ℝ) ^ (Int.toNat s) + 1)⌝⦄ := by
   sorry
 
 -- Coq: `Veltkamp_Even` — specialized Veltkamp with even tie-breaking
