@@ -1133,16 +1133,16 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `maxMax` → (no Lean counterpart)
  -- `SterbenzAux` → `SterbenzAux [FloatSpec/src/Pff/Pff.lean:2830]`
  -- `Sterbenz` → `Sterbenz [FloatSpec/src/Pff/Pff.lean:2849]`
-- `mZlist_aux_correct` → (no Lean counterpart)
-- `mZlist_aux_correct_rev1` → (no Lean counterpart)
-- `mZlist_aux_correct_rev2` → (no Lean counterpart)
-- `mZlist_correct` → (no Lean counterpart)
-- `mZlist_correct_rev1` → (no Lean counterpart)
-- `mZlist_correct_rev2` → (no Lean counterpart)
-- `mProd_correct` → (no Lean counterpart)
-- `mProd_correct_rev1` → (no Lean counterpart)
-- `mProd_correct_rev2` → (no Lean counterpart)
-- `in_map_inv` → (no Lean counterpart)
+- `mZlist_aux_correct` → `mZlist_aux_correct [FloatSpec/src/Pff/Pff.lean:2909]`
+- `mZlist_aux_correct_rev1` → `mZlist_aux_correct_rev1 [FloatSpec/src/Pff/Pff.lean:2920]`
+- `mZlist_aux_correct_rev2` → `mZlist_aux_correct_rev2 [FloatSpec/src/Pff/Pff.lean:2931]`
+- `mZlist_correct` → `mZlist_correct [FloatSpec/src/Pff/Pff.lean:2951]`
+- `mZlist_correct_rev1` → `mZlist_correct_rev1 [FloatSpec/src/Pff/Pff.lean:2961]`
+- `mZlist_correct_rev2` → `mZlist_correct_rev2 [FloatSpec/src/Pff/Pff.lean:2971]`
+- `mProd_correct` → `mProd_correct [FloatSpec/src/Pff/Pff.lean:2988]`
+- `mProd_correct_rev1` → `mProd_correct_rev1 [FloatSpec/src/Pff/Pff.lean:3000]`
+- `mProd_correct_rev2` → `mProd_correct_rev2 [FloatSpec/src/Pff/Pff.lean:3012]`
+- `in_map_inv` → `in_map_inv [FloatSpec/src/Pff/Pff.lean:3024]`
 - `FnormalBounded` → (no Lean counterpart)
 - `FnormalNotZero` → (no Lean counterpart)
 - `FnormalFop` → (no Lean counterpart)
