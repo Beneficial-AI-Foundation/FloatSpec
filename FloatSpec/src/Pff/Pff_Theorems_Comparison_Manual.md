@@ -1336,7 +1336,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `maxDivUniqueDigit` → (no Lean counterpart)
 - `maxDivUniqueInverse` → (no Lean counterpart)
 - `maxDivUniqueInverseDigit` → (no Lean counterpart)
-- `maxDivPlus` → (no Lean counterpart)
+- `maxDivPlus` → `maxDivPlus [FloatSpec/src/Pff/Pff.lean:2938]`
  - `LSB_shift` → `LSB_shift [FloatSpec/src/Pff/Pff.lean:815]`
  - `LSB_comp` → `LSB_comp [FloatSpec/src/Pff/Pff.lean:828]`
  - `maxDiv_opp` → `maxDiv_opp [FloatSpec/src/Pff/Pff.lean:840]`

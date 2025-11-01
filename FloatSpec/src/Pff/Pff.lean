@@ -2931,6 +2931,17 @@ theorem digitAdd (n : Int) (q : Int) (r : Nat) :
     ⦃⇓_ => ⌜digit n (q * Zpower_nat n r) = digit n q + r⌝⦄ := by
   sorry
 
+-- Coq: `maxDivPlus` — multiplicative stability of maxDiv against n-th power of radix
+noncomputable def maxDivPlus_check (radix : Int) (v : Int) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem maxDivPlus (radix : Int) (v : Int) (n : Nat) :
+    ⦃⌜v ≠ 0⌝⦄
+    maxDivPlus_check radix v n
+    ⦃⇓_ => ⌜maxDiv (v * Zpower_nat radix n) (digit radix v + n) =
+            maxDiv v (digit radix v) + n⌝⦄ := by
+  sorry
+
 -- Coq: `digit_abs` — digit n (|p|) = digit n p
 noncomputable def digit_abs_check (n : Int) (p : Int) : Id Unit :=
   pure ()
