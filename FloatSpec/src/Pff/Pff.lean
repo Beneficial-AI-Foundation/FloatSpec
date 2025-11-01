@@ -2974,6 +2974,60 @@ theorem mZlist_correct_rev2 (p q r : Int) :
     ⦃⇓_ => ⌜r ≤ q⌝⦄ := by
   sorry
 
+-- Cartesian product list (Coq: mProd)
+def mProd {A B : Type} (l1 : List A) (l2 : List B) : List (A × B) :=
+  match l2 with
+  | [] => []
+  | b :: l2' => (l1.map (fun a => (a, b))) ++ mProd l1 l2'
+
+noncomputable def mProd_correct_check {A B : Type}
+    (l1 : List A) (l2 : List B) (a : A) (b : B) : Id Unit :=
+  pure ()
+
+/-- Coq: `mProd_correct` — if `a ∈ l1` and `b ∈ l2` then `(a,b) ∈ mProd l1 l2`. -/
+theorem mProd_correct {A B : Type}
+    (l1 : List A) (l2 : List B) (a : A) (b : B) :
+    ⦃⌜List.Mem a l1 ∧ List.Mem b l2⌝⦄
+    mProd_correct_check l1 l2 a b
+    ⦃⇓_ => ⌜List.Mem (a, b) (mProd l1 l2)⌝⦄ := by
+  sorry
+
+noncomputable def mProd_correct_rev1_check {A B : Type}
+    (l1 : List A) (l2 : List B) (a : A) (b : B) : Id Unit :=
+  pure ()
+
+/-- Coq: `mProd_correct_rev1` — if `(a,b) ∈ mProd l1 l2` then `a ∈ l1`. -/
+theorem mProd_correct_rev1 {A B : Type}
+    (l1 : List A) (l2 : List B) (a : A) (b : B) :
+    ⦃⌜List.Mem (a, b) (mProd l1 l2)⌝⦄
+    mProd_correct_rev1_check l1 l2 a b
+    ⦃⇓_ => ⌜List.Mem a l1⌝⦄ := by
+  sorry
+
+noncomputable def mProd_correct_rev2_check {A B : Type}
+    (l1 : List A) (l2 : List B) (a : A) (b : B) : Id Unit :=
+  pure ()
+
+/-- Coq: `mProd_correct_rev2` — if `(a,b) ∈ mProd l1 l2` then `b ∈ l2`. -/
+theorem mProd_correct_rev2 {A B : Type}
+    (l1 : List A) (l2 : List B) (a : A) (b : B) :
+    ⦃⌜List.Mem (a, b) (mProd l1 l2)⌝⦄
+    mProd_correct_rev2_check l1 l2 a b
+    ⦃⇓_ => ⌜List.Mem b l2⌝⦄ := by
+  sorry
+
+noncomputable def in_map_inv_check {A B : Type}
+    (f : A → B) (l : List A) (x : A) : Id Unit :=
+  pure ()
+
+/-- Coq: `in_map_inv` — if `f` is injective and `f x ∈ map f l` then `x ∈ l`. -/
+theorem in_map_inv {A B : Type}
+    (f : A → B) (l : List A) (x : A) :
+    ⦃⌜(∀ a b, f a = f b → a = b) ∧ List.Mem (f x) (l.map f)⌝⦄
+    in_map_inv_check f l x
+    ⦃⇓_ => ⌜List.Mem x l⌝⦄ := by
+  sorry
+
 -- Legacy floating-point format compatibility
 structure PffFloat where
   mantissa : Int
