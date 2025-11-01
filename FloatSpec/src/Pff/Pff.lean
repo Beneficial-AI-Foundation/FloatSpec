@@ -504,6 +504,20 @@ theorem RND_Min_Pos_canonic {beta : Int}
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
+-- Lower rounding on nonnegative reals is ≤ the input (Coq: RND_Min_Pos_Rle)
+noncomputable def RND_Min_Pos_Rle_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_Pos_Rle` — for nonnegative `r`, the value of
+    `RND_Min_Pos r` (interpreted in ℝ) is less than or equal to `r`. -/
+theorem RND_Min_Pos_Rle {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    RND_Min_Pos_Rle_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r) ≤ r⌝⦄ := by
+  sorry
+
 -- Roundings of any real (Coq-style top-level RND operators)
 def RND_Min {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
@@ -1380,30 +1394,6 @@ theorem RleRoundedAbs {beta : Int}
     ⦃⇓_ => ⌜((radix ^ (p - 1) + - (1 / (2 * radix))) * (radix ^ (f.Fexp)) ≤ |r|)⌝⦄ := by
   sorry
 
--- ---------------------------------------------------------------------------
--- Coq: `PminPos` — existence of bounded complement to the min rounding
-
-noncomputable def PminPos_check {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (p min : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `PminPos` — if `0 ≤ F2R p`, `Fbounded b p` and `isMin b radix ((1/2) * F2R p) min`,
-    then there exists a bounded float `c` such that `F2R c = F2R p - F2R min`.
-    We keep the statement in Hoare-triple style and defer the proof. -/
-theorem PminPos {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (p min : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜0 ≤ _root_.F2R p ∧
-        Fbounded (beta:=beta) b p ∧
-        isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1 / 2 : ℝ) * _root_.F2R p) min⌝⦄
-    PminPos_check (beta:=beta) b radix p min
-    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
-            Fbounded (beta:=beta) b c ∧
-            _root_.F2R c = _root_.F2R p - _root_.F2R min⌝⦄ := by
-  sorry
-
--- ---------------------------------------------------------------------------
 -- Coq: `RoundedModeMultAbs` — absolute-value scaling under RoundedModeP
 
 noncomputable def RoundedModeMultAbs_check {beta : Int}
