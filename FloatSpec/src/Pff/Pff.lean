@@ -457,6 +457,34 @@ def EvenClosest {beta : Int}
     (∀ q : FloatSpec.Core.Defs.FlocqFloat beta,
       Closest (beta:=beta) b radix r q → q = p))
 
+-- ---------------------------------------------------------------------------
+-- Rounding operators (RND_*) and canonicity (skeletons to mirror Coq Pff.v)
+
+-- Minimal placeholder: canonicity predicate used by RND_* theorems
+def Fcanonic {beta : Int}
+    (radix : Int) (b : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+-- Placeholders for rounding operators on nonnegative reals and their variants
+def RND_Min_Pos {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  -- Skeleton: return an arbitrary float; semantics deferred
+  ⟨0, 0⟩
+
+noncomputable def RND_Min_Pos_canonic_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_Pos_canonic` — for nonnegative `r`, `RND_Min_Pos r` is canonical.
+    Stated using project Hoare-triple syntax; proof deferred. -/
+theorem RND_Min_Pos_canonic {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    RND_Min_Pos_canonic_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
 -- Totality of EvenClosest
 noncomputable def EvenClosestTotal_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) : Id Unit :=

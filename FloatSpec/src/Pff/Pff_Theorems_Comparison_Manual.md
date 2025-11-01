@@ -1704,7 +1704,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `IRNDD_eq` → (no Lean counterpart)
 - `IRNDD_projector` → (no Lean counterpart)
 - `RND_Min_Pos_bounded_aux` → (no Lean counterpart)
-- `RND_Min_Pos_canonic` → (no Lean counterpart)
+- `RND_Min_Pos_canonic` → `RND_Min_Pos_canonic [FloatSpec/src/Pff/Pff.lean:481]`
 - `RND_Min_Pos_Rle` → (no Lean counterpart)
 - `RND_Min_Pos_monotone` → (no Lean counterpart)
 - `RND_Min_Pos_projector` → (no Lean counterpart)
