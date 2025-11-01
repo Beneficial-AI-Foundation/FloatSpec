@@ -1100,6 +1100,23 @@ theorem ClosestMinOrMax {beta : Int}
     ⦃⇓_ => ⌜MinOrMaxP (Closest (beta:=beta) bo radixR)⌝⦄ := by
   sorry
 
+-- Zero case for Closest rounding (Coq: `ClosestZero`)
+noncomputable def ClosestZero_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestZero` — if `x` is a closest rounding of `r` and `r = 0`,
+    then the real value of `x` is `0`. We phrase this using the project
+    `Closest` predicate and `F2R` interpretation. -/
+theorem ClosestZero {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Closest (beta:=beta) bo radix r x ∧ r = 0⌝⦄
+    ClosestZero_check (beta:=beta) bo radix r x
+    ⦃⇓_ => ⌜_root_.F2R x = 0⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- Min/Max existence over finite lists (from Coq Pff.v)
 
