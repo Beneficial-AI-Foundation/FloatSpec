@@ -1827,7 +1827,7 @@ Hint: Omit it from the simp argument list.
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
 warning: FloatSpec/src/Core/Digits.lean:6895:13: `Int.ofNat_nonneg` has been deprecated: Use `Int.natCast_nonneg` instead
-⚠ [2991/3028] Replayed FloatSpec.src.Core.Float_prop
+⚠ [2992/3028] Replayed FloatSpec.src.Core.Float_prop
 warning: FloatSpec/src/Core/Float_prop.lean:36:15: Code element could be more specific.
 
 Hint: Insert a role to document it:
@@ -1913,7 +1913,7 @@ Note: This linter can be disabled with `set_option linter.unusedTactic false`
 warning: FloatSpec/src/Core/Float_prop.lean:1284:43: this tactic is never executed
 
 Note: This linter can be disabled with `set_option linter.unreachableTactic false`
-⚠ [2992/3028] Replayed FloatSpec.src.Core.Generic_fmt
+⚠ [2993/3028] Replayed FloatSpec.src.Core.Generic_fmt
 warning: FloatSpec/src/Core/Generic_fmt.lean:42:7: missing doc string for public abbrev Rnd_DN_pt
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -3701,7 +3701,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`1 < beta`
     to mark the code as literal text and disable suggestions
-⚠ [2993/3028] Replayed FloatSpec.src.Core.Round_pred
+⚠ [2994/3028] Replayed FloatSpec.src.Core.Round_pred
 warning: FloatSpec/src/Core/Round_pred.lean:36:7: missing doc string for public abbrev Rnd_DN_pt
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -7325,7 +7325,7 @@ Hint: Omit it from the simp argument list.
   simp [wp, PostCond.noThrow, Id.run, pure, d̵e̵c̵i̵d̵e̵_̵e̵q̵_̵t̵r̵u̵e̵_̵i̵f̵f̵,̵ ̵round_pred]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-⚠ [2994/3028] Replayed FloatSpec.src.Core.Ulp
+⚠ [2995/3028] Replayed FloatSpec.src.Core.Ulp
 warning: FloatSpec/src/Core/Ulp.lean:49:7: missing doc string for public abbrev Float
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -9362,7 +9362,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`forall { Hm : Monotone_exp fexp } x, F x -> F (x + ulp x).`
     to mark the code as literal text and disable suggestions
-⚠ [2995/3028] Replayed FloatSpec.src.Core.Round_NE
+⚠ [2996/3028] Replayed FloatSpec.src.Core.Round_NE
 warning: FloatSpec/src/Core/Round_NE.lean:57:45: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
@@ -9639,7 +9639,7 @@ Hint: Omit it from the simp argument list.
   simp [wp, PostCond.noThrow, Id.run, pure,̵ ̵d̵e̵c̵i̵d̵e̵_̵e̵q̵_̵t̵r̵u̵e̵_̵i̵f̵f̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-⚠ [2996/3028] Replayed FloatSpec.src.Core.FIX
+⚠ [2997/3028] Replayed FloatSpec.src.Core.FIX
 warning: FloatSpec/src/Core/FIX.lean:45:41: Code element could be more specific.
 
 Hint: Insert a role to document it:
@@ -9774,7 +9774,7 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`0`
     to mark the code as literal text and disable suggestions
-⚠ [2997/3028] Replayed FloatSpec.src.Core.FLX
+⚠ [2998/3028] Replayed FloatSpec.src.Core.FLX
 warning: FloatSpec/src/Core/FLX.lean:85:23: Code element could be more specific.
 
 Hint: Insert a role to document it:
@@ -10114,7 +10114,7 @@ Hint: Omit it from the simp argument list.
   simp [hnone, Id.run, b̵i̵n̵d̵,̵ ̵pure]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-⚠ [2998/3028] Replayed FloatSpec.src.Core.FLT
+⚠ [2999/3028] Replayed FloatSpec.src.Core.FLT
 warning: FloatSpec/src/Core/FLT.lean:61:0: automatically included section variable(s) unused in theorem `FloatSpec.Core.FLT.FLT_exp_spec`:
   [Prec_gt_0 prec]
 consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
@@ -10324,7 +10324,7 @@ Hint: Omit it from the simp argument list.
   ̲  ̲ ̲ ̲ ̲ ̲mul_add, add_mul, mul_comm, mul_left_comm,̵ ̵m̵u̵l̵_̵a̵s̵s̵o̵c̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-⚠ [3000/3028] Replayed FloatSpec.src.Calc.Bracket
+⚠ [3001/3028] Replayed FloatSpec.src.Calc.Bracket
 warning: FloatSpec/src/Calc/Bracket.lean:29:4: missing doc string for public constructor Location.loc_Exact
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -10573,7 +10573,7 @@ Note: This linter can be disabled with `set_option linter.unusedTactic false`
 warning: FloatSpec/src/Calc/Bracket.lean:2381:62: this tactic is never executed
 
 Note: This linter can be disabled with `set_option linter.unreachableTactic false`
-⚠ [3001/3028] Replayed FloatSpec.src.Calc.Operations
+⚠ [3002/3028] Replayed FloatSpec.src.Calc.Operations
 warning: FloatSpec/src/Calc/Operations.lean:97:69: This simp argument is unused:
   min_eq_left hle
 
@@ -10749,7 +10749,7 @@ Hint: Omit it from the simp argument list.
   simp [Fmult, wp, PostCond.noThrow, Id.run, pure, F2R, Int.cast_mul,̵ ̵I̵n̵t̵.̵c̵a̵s̵t̵_̵a̵d̵d̵]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-⚠ [3002/3028] Replayed FloatSpec.src.Calc.Div
+⚠ [3003/3028] Replayed FloatSpec.src.Calc.Div
 warning: FloatSpec/src/Calc/Div.lean:44:39: unused variable `Hm1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
@@ -10791,7 +10791,7 @@ Hint: Omit it from the simp argument list.
   simp [div_eq_mul_inv, mul_comm, mul_l̵e̵f̵t̵_̵c̵o̵m̵m̵,̵ ̵m̵u̵l̵_̵assoc]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-⚠ [3003/3028] Replayed FloatSpec.src.Calc.Sqrt
+⚠ [3004/3028] Replayed FloatSpec.src.Calc.Sqrt
 warning: FloatSpec/src/Calc/Sqrt.lean:46:34: unused variable `Hm1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
@@ -10883,7 +10883,7 @@ Hint: Insert a role to document it:
 warning: FloatSpec/src/Calc/Sqrt.lean:124:45: unused variable `Hx`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-⚠ [3004/3028] Replayed FloatSpec.src.Calc.Round
+⚠ [3005/3028] Replayed FloatSpec.src.Calc.Round
 warning: FloatSpec/src/Calc/Round.lean:31:18: missing doc string for public def round
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
@@ -11318,7 +11318,7 @@ Hint: Omit it from the simp argument list.
   simp [truncate_FIX, hk̵d̵e̵f̵,̵ ̵h̵cond]
 
 Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
-⚠ [3005/3028] Replayed FloatSpec.src.Calc.Plus
+⚠ [3006/3028] Replayed FloatSpec.src.Calc.Plus
 warning: FloatSpec/src/Calc/Plus.lean:45:50: unused variable `He1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
