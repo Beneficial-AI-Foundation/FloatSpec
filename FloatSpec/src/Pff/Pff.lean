@@ -1400,6 +1400,29 @@ theorem ClosestSymmetric {beta : Int}
     ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
+-- Coq: `ClosestZero1` — if `Closest r f`, `F2R f = 0`, `r = F2R g`, and
+-- `-dExp bo ≤ Fexp g`, then `r = 0`.
+noncomputable def ClosestZero1_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (r : ℝ)
+    (f g : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestZero1` — under the stated conditions, the rounded value `r`
+    must be zero. We mirror the statement using the project Hoare-triple style
+    and leave the proof as a placeholder. -/
+theorem ClosestZero1 {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (r : ℝ)
+    (f g : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Closest (beta:=beta) bo radix r f ∧
+        _root_.F2R f = 0 ∧
+        r = _root_.F2R g ∧
+        (-bo.dExp : Int) ≤ g.Fexp⌝⦄
+    ClosestZero1_check (beta:=beta) bo radix r f g
+    ⦃⇓_ => ⌜r = 0⌝⦄ := by
+  sorry
+
 /-!
 Div-by-2 midpoint characterizations (ported from Coq Pff.v)
 
