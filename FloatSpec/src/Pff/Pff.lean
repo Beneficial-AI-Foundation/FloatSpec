@@ -133,7 +133,86 @@ theorem powerRZ_neg (r : ℝ) (z : Int) :
 -- (reserved for future compatibility lemmas)
 
 -- ---------------------------------------------------------------------------
+-- Integer rounding down by 1 (IRNDD) and basic properties (Coq alignment)
+
+-- Coq: `IRNDD (r) = Z.pred (up r)`; we provide a simple placeholder.
+noncomputable def IRNDD (r : ℝ) : Int := 0
+
+noncomputable def IRNDD_correct1_check (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `IRNDD_correct1` — IRNDD r ≤ r. -/
+theorem IRNDD_correct1 (r : ℝ) :
+    ⦃⌜True⌝⦄
+    IRNDD_correct1_check r
+    ⦃⇓_ => ⌜(IRNDD r : ℝ) ≤ r⌝⦄ := by
+  sorry
+
+noncomputable def IRNDD_correct2_check (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `IRNDD_correct2` — r < succ (IRNDD r). -/
+theorem IRNDD_correct2 (r : ℝ) :
+    ⦃⌜True⌝⦄
+    IRNDD_correct2_check r
+    ⦃⇓_ => ⌜r < ((Int.succ (IRNDD r)) : ℝ)⌝⦄ := by
+  sorry
+
+noncomputable def IRNDD_correct3_check (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `IRNDD_correct3` — r - 1 < IRNDD r. -/
+theorem IRNDD_correct3 (r : ℝ) :
+    ⦃⌜True⌝⦄
+    IRNDD_correct3_check r
+    ⦃⇓_ => ⌜r - 1 < (IRNDD r : ℝ)⌝⦄ := by
+  sorry
+
+noncomputable def IRNDD_pos_check (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `IRNDD_pos` — 0 ≤ r → 0 ≤ IRNDD r. -/
+theorem IRNDD_pos (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    IRNDD_pos_check r
+    ⦃⇓_ => ⌜0 ≤ IRNDD r⌝⦄ := by
+  sorry
+
+noncomputable def IRNDD_eq_check (r : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `IRNDD_eq` — if z ≤ r < succ z then IRNDD r = z. -/
+theorem IRNDD_eq (r : ℝ) (z : Int) :
+    ⦃⌜(z : ℝ) ≤ r ∧ r < ((Int.succ z) : ℝ)⌝⦄
+    IRNDD_eq_check r z
+    ⦃⇓_ => ⌜IRNDD r = z⌝⦄ := by
+  sorry
+
+noncomputable def IRNDD_projector_check (z : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `IRNDD_projector` — IRNDD z = z for integer inputs. -/
+theorem IRNDD_projector (z : Int) :
+    ⦃⌜True⌝⦄
+    IRNDD_projector_check z
+    ⦃⇓_ => ⌜IRNDD (z : ℝ) = z⌝⦄ := by
+  sorry
+
+-- ---------------------------------------------------------------------------
 -- Integer parity lemmas (aligned with Coq: Odd/Even over Z)
+
+-- ---------------------------------------------------------------------------
+-- Log/exponential auxiliary lemmas from Coq Pff.v
+
+noncomputable def ln_radix_pos_check (radix : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ln_radix_pos` — 0 < ln radix. -/
+theorem ln_radix_pos (radix : ℝ) :
+    ⦃⌜True⌝⦄
+    ln_radix_pos_check radix
+    ⦃⇓_ => ⌜0 < Real.log radix⌝⦄ := by
+  sorry
 
 -- Coq: `OddSEven` — if n is odd then succ n is even
 noncomputable def OddSEven_check (n : Int) : Id Unit :=

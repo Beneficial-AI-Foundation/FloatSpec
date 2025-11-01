@@ -1693,16 +1693,16 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `MKnuth7` → (no Lean counterpart)
 - `Knuth` → (no Lean counterpart)
 - `exp_ln_powerRZ` → (no Lean counterpart)
-- `ln_radix_pos` → (no Lean counterpart)
+- `ln_radix_pos` → `ln_radix_pos [FloatSpec/src/Pff/Pff.lean:206]`
 - `exp_le_inv` → (no Lean counterpart)
 - `exp_monotone` → (no Lean counterpart)
 - `firstNormalPos_eq` → (no Lean counterpart)
-- `IRNDD_correct1` → (no Lean counterpart)
-- `IRNDD_correct2` → (no Lean counterpart)
-- `IRNDD_correct3` → (no Lean counterpart)
-- `IRNDD_pos` → (no Lean counterpart)
-- `IRNDD_eq` → (no Lean counterpart)
-- `IRNDD_projector` → (no Lean counterpart)
+- `IRNDD_correct1` → `IRNDD_correct1 [FloatSpec/src/Pff/Pff.lean:145]`
+- `IRNDD_correct2` → `IRNDD_correct2 [FloatSpec/src/Pff/Pff.lean:155]`
+- `IRNDD_correct3` → `IRNDD_correct3 [FloatSpec/src/Pff/Pff.lean:165]`
+- `IRNDD_pos` → `IRNDD_pos [FloatSpec/src/Pff/Pff.lean:175]`
+- `IRNDD_eq` → `IRNDD_eq [FloatSpec/src/Pff/Pff.lean:185]`
+- `IRNDD_projector` → `IRNDD_projector [FloatSpec/src/Pff/Pff.lean:195]`
 - `RND_Min_Pos_bounded_aux` → `RND_Min_Pos_bounded_aux [FloatSpec/src/Pff/Pff.lean:518]`
 - `RND_Min_Pos_canonic` → `RND_Min_Pos_canonic [FloatSpec/src/Pff/Pff.lean:481]`
 - `RND_Min_Pos_Rle` → `RND_Min_Pos_Rle [FloatSpec/src/Pff/Pff.lean:538]`
