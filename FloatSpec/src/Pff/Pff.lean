@@ -2934,6 +2934,26 @@ theorem mZlist_aux_correct_rev2 (n : Nat) (p q : Int) :
     ⦃⇓_ => ⌜q ≤ p + Int.ofNat n⌝⦄ := by
   sorry
 
+def mZlist (p q : Int) : List Int :=
+  let d := q - p
+  if h0 : d = 0 then
+    [p]
+  else if hpos : d > 0 then
+    mZlist_aux p (Int.toNat d)
+  else
+    []
+
+noncomputable def mZlist_correct_check (p q r : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `mZlist_correct` — if `p ≤ r ≤ q` then `r ∈ mZlist p q`.
+Hoare-triple wrapper; proof deferred. -/
+theorem mZlist_correct (p q r : Int) :
+    ⦃⌜p ≤ r ∧ r ≤ q⌝⦄
+    mZlist_correct_check p q r
+    ⦃⇓_ => ⌜List.Mem r (mZlist p q)⌝⦄ := by
+  sorry
+
 -- Legacy floating-point format compatibility
 structure PffFloat where
   mantissa : Int
