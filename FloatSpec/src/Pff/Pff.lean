@@ -2912,6 +2912,28 @@ theorem mZlist_aux_correct (n : Nat) (p q : Int) :
     ⦃⇓_ => ⌜List.Mem q (mZlist_aux p n)⌝⦄ := by
   sorry
 
+noncomputable def mZlist_aux_correct_rev1_check (n : Nat) (p q : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `mZlist_aux_correct_rev1` — if `q ∈ mZlist_aux p n` then `p ≤ q`.
+Hoare-triple wrapper; proof deferred. -/
+theorem mZlist_aux_correct_rev1 (n : Nat) (p q : Int) :
+    ⦃⌜List.Mem q (mZlist_aux p n)⌝⦄
+    mZlist_aux_correct_rev1_check n p q
+    ⦃⇓_ => ⌜p ≤ q⌝⦄ := by
+  sorry
+
+noncomputable def mZlist_aux_correct_rev2_check (n : Nat) (p q : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `mZlist_aux_correct_rev2` — membership implies upper bound by `p + n`.
+Hoare-triple wrapper; proof deferred. -/
+theorem mZlist_aux_correct_rev2 (n : Nat) (p q : Int) :
+    ⦃⌜List.Mem q (mZlist_aux p n)⌝⦄
+    mZlist_aux_correct_rev2_check n p q
+    ⦃⇓_ => ⌜q ≤ p + Int.ofNat n⌝⦄ := by
+  sorry
+
 -- Legacy floating-point format compatibility
 structure PffFloat where
   mantissa : Int
