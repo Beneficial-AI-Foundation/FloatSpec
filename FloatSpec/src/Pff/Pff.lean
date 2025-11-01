@@ -1158,6 +1158,29 @@ theorem RoundedModeBounded {beta : Int}
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
   sorry
 
+-- ---------------------------------------------------------------------------
+-- Coq: `PminPos` — existence of bounded complement to the min rounding
+
+noncomputable def PminPos_check {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `PminPos` — if `0 ≤ F2R p`, `Fbounded b p` and `isMin b radix ((1/2) * F2R p) min`,
+    then there exists a bounded float `c` such that `F2R c = F2R p - F2R min`.
+    We keep the statement in Hoare-triple style and defer the proof. -/
+theorem PminPos {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ _root_.F2R p ∧
+        Fbounded (beta:=beta) b p ∧
+        isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1 / 2 : ℝ) * _root_.F2R p) min⌝⦄
+    PminPos_check (beta:=beta) b radix p min
+    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
+            Fbounded (beta:=beta) b c ∧
+            _root_.F2R c = _root_.F2R p - _root_.F2R min⌝⦄ := by
+  sorry
+
 -- Coq: `RoundedModeProjectorIdemEq` — equality on reals under RoundedModeP
 noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
@@ -1256,6 +1279,50 @@ theorem RleRoundedAbs {beta : Int}
     ⦃⌜Closest (beta:=beta) bo radix r f ∧ Fnormal (beta:=beta) radix bo f ∧ (-bo.dExp < f.Fexp)⌝⦄
     RleRoundedAbs_check (beta:=beta) bo radix p f r
     ⦃⇓_ => ⌜((radix ^ (p - 1) + - (1 / (2 * radix))) * (radix ^ (f.Fexp)) ≤ |r|)⌝⦄ := by
+  sorry
+
+-- ---------------------------------------------------------------------------
+-- Coq: `PminPos` — existence of bounded complement to the min rounding
+
+noncomputable def PminPos_check {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `PminPos` — if `0 ≤ F2R p`, `Fbounded b p` and `isMin b radix ((1/2) * F2R p) min`,
+    then there exists a bounded float `c` such that `F2R c = F2R p - F2R min`.
+    We keep the statement in Hoare-triple style and defer the proof. -/
+theorem PminPos {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ _root_.F2R p ∧
+        Fbounded (beta:=beta) b p ∧
+        isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1 / 2 : ℝ) * _root_.F2R p) min⌝⦄
+    PminPos_check (beta:=beta) b radix p min
+    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
+            Fbounded (beta:=beta) b c ∧
+            _root_.F2R c = _root_.F2R p - _root_.F2R min⌝⦄ := by
+  sorry
+
+-- ---------------------------------------------------------------------------
+-- Coq: `RoundedModeMultAbs` — absolute-value scaling under RoundedModeP
+
+noncomputable def RoundedModeMultAbs_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `RoundedModeMultAbs` — under a rounded mode `P`, if `P r q`, `q'` is
+    bounded by `b`, and `|r| ≤ radix * F2R q'`, then `|F2R q| ≤ radix * F2R q'`.
+    Proof deferred. -/
+theorem RoundedModeMultAbs {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ |r| ≤ radix * _root_.F2R q'⌝⦄
+    RoundedModeMultAbs_check (beta:=beta) b radix P r q q'
+    ⦃⇓_ => ⌜|_root_.F2R q| ≤ radix * _root_.F2R q'⌝⦄ := by
   sorry
 
 -- Coq: `MinCompatible` — CompatibleP (isMin b radix)
