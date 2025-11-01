@@ -28001,3 +28001,780 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Nat2Z_8_12.lean:21:8: declaration uses 'sorry'
+⚠ [3025/3028] Built FloatSpec.src.Pff.Pff2FlocqAux (23s)
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:25:10: missing doc string for public structure Fbound
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:26:2: missing doc string for public field Fbound.vNum
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:27:2: missing doc string for public field Fbound.dExp
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:30:4: missing doc string for public def Bound
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:35:4: missing doc string for public def radix2
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:38:4: missing doc string for public def pGivesBound
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:41:4: missing doc string for public def precisionNotZero
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:46:4: missing doc string for public def PFbounded
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:47:4: missing doc string for public def PFcanonic
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:50:18: missing doc string for public def make_bound
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:56:18: missing doc string for public def bsingle
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:57:18: missing doc string for public def bdouble
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:60:18: missing doc string for public def make_bound_Emin_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:60:41: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:60:46: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:60:48: unused variable `E`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:63:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`make_bound_Emin`
+  • {̲n̲a̲m̲e̲}̲`make_bound_Emin`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`make_bound_Emin`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:63:32: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`E ≤ 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`E ≤ 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`E ≤ 0`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`E ≤ 0`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`E ≤ 0`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:63:46: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`(dExp (make_bound beta p E)) = -E`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`(dExp (make_bound beta p E)) = -E`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`(dExp (make_bound beta p E)) = -E`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`(dExp (make_bound beta p E)) = -E`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`(dExp (make_bound beta p E)) = -E`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:64:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:18: missing doc string for public def make_bound_p_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:38: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:43: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:71:45: unused variable `E`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:74:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`make_bound_p`
+  • {̲n̲a̲m̲e̲}̲`make_bound_p`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`make_bound_p`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:74:30: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`vNum`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`vNum`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:74:40: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`make_bound`
+  • {̲n̲a̲m̲e̲}̲`make_bound`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`make_bound`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:74:60: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Zpower_nat beta (Z.abs_nat p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Zpower_nat beta (Z.abs_nat p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Zpower_nat beta (Z.abs_nat p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Zpower_nat beta (Z.abs_nat p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Zpower_nat beta (Z.abs_nat p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Zpower_nat beta (Z.abs_nat p)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Zpower_nat beta (Z.abs_nat p)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:75:19: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`vNum`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`vNum`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:75:42: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Int`
+  • {̲n̲a̲m̲e̲}̲`Int`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Int`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:75:53: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Z.abs_nat p`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Z.abs_nat p`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Z.abs_nat p`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`Z.abs_nat p`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Z.abs_nat p`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Z.abs_nat p`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Z.abs_nat p`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Z.abs_nat p`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:76:3: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Int.toNat (Int.natAbs p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Int.toNat (Int.natAbs p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Int.toNat (Int.natAbs p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Int.toNat (Int.natAbs p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Int.toNat (Int.natAbs p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Int.toNat (Int.natAbs p)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Int.toNat (Int.natAbs p)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:77:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:84:18: missing doc string for public def psGivesBound_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:87:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`psGivesBound`
+  • {̲n̲a̲m̲e̲}̲`psGivesBound`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`psGivesBound`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:88:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:95:18: missing doc string for public def pdGivesBound_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:98:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`pdGivesBound`
+  • {̲n̲a̲m̲e̲}̲`pdGivesBound`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`pdGivesBound`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:99:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:108:18: missing doc string for public def mk_from_generic
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:114:18: missing doc string for public def format_is_pff_format'_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:114:47: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:114:60: unused variable `b`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:114:73: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:114:83: unused variable `r`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:117:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`format_is_pff_format'`
+  • {̲n̲a̲m̲e̲}̲`format_is_pff_format'`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`format_is_pff_format'`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:117:40: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`generic_format`
+  • {̲n̲a̲m̲e̲}̲`generic_format`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`generic_format`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:118:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:124:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`format_is_pff_format`
+  • {̲n̲a̲m̲e̲}̲`format_is_pff_format`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`format_is_pff_format`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:124:39: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`generic_format`
+  • {̲n̲a̲m̲e̲}̲`generic_format`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`generic_format`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:126:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:18: missing doc string for public def pff_format_is_format_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:46: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:59: unused variable `b`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:72: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:133:82: unused variable `f`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:136:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`pff_format_is_format`
+  • {̲n̲a̲m̲e̲}̲`pff_format_is_format`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`pff_format_is_format`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:136:39: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fbounded b f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Fbounded b f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Fbounded b f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Fbounded b f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Fbounded b f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Fbounded b f`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fbounded b f`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:136:62: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:137:60: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`pff_to_R`
+  • {̲n̲a̲m̲e̲}̲`pff_to_R`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`pff_to_R`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:138:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:145:18: missing doc string for public def equiv_RNDs_aux_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:145:40: unused variable `z`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:148:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`equiv_RNDs_aux`
+  • {̲n̲a̲m̲e̲}̲`equiv_RNDs_aux`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`equiv_RNDs_aux`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:148:31: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Z.even z = true`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Z.even z = true`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Z.even z = true`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Z.even z = true`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Z.even z = true`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:148:54: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Even z`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Even z`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:149:13: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲a̲t̲t̲r̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`Even z`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`Even z`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Even z`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:149:55: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`∃ k, z = 2*k`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`∃ k, z = 2*k`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`∃ k, z = 2*k`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`∃ k, z = 2*k`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`∃ k, z = 2*k`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:150:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:156:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`pff_canonic_is_canonic`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`pff_canonic_is_canonic`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:156:61: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`canonical`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`canonical`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:157:26: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`pff_to_flocq`
+  • {̲n̲a̲m̲e̲}̲`pff_to_flocq`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`pff_to_flocq`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:158:48: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:158:61: unused variable `b`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:158:74: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:158:84: unused variable `f`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:161:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:167:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`format_is_pff_format_can`
+  • {̲n̲a̲m̲e̲}̲`format_is_pff_format_can`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`format_is_pff_format_can`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:167:43: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`generic_format`
+  • {̲n̲a̲m̲e̲}̲`generic_format`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`generic_format`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:168:31: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`format_is_pff_format'`
+  • {̲n̲a̲m̲e̲}̲`format_is_pff_format'`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`format_is_pff_format'`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:170:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:179:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:179:4: missing doc string for public def pff_normalize
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:182:4: missing doc string for public def pff_abs
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:185:4: missing doc string for public def pff_opp
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:189:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:189:4: missing doc string for public def pff_compare
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:192:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:192:4: missing doc string for public def pff_max
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:195:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:195:4: missing doc string for public def pff_min
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:199:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:203:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:207:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:221:6: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:225:6: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:232:4: missing doc string for public def pff_shift_exp
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:235:4: missing doc string for public def pff_shift_mant
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:239:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:244:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:252:46: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`_check`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`_check`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:253:56: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲a̲c̲t̲i̲c̲.̲G̲r̲i̲n̲d̲.̲s̲o̲r̲r̲y̲)̲}̲`sorry` (in `grind`)
+  • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲a̲c̲t̲i̲c̲.̲t̲a̲c̲t̲i̲c̲S̲o̲r̲r̲y̲)̲}̲`sorry` (in `tactic`)
+  • {̲k̲w̲ ̲(̲o̲f̲ ̲:̲=̲ ̲L̲e̲a̲n̲.̲P̲a̲r̲s̲e̲r̲.̲T̲e̲r̲m̲.̲s̲o̲r̲r̲y̲)̲}̲`sorry` (in `term`)
+  • {̲l̲e̲a̲n̲}̲`sorry`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`sorry`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`sorry`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲}̲`sorry`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲a̲c̲t̲i̲c̲}̲`sorry`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`sorry`
+  • {̲t̲a̲c̲t̲i̲c̲}̲`sorry`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`sorry`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:18: missing doc string for public def FloatFexp_gt_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:38: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:51: unused variable `b`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:64: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:66: unused variable `e`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:257:76: unused variable `f`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:260:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`FloatFexp_gt`
+  • {̲n̲a̲m̲e̲}̲`FloatFexp_gt`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`FloatFexp_gt`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:260:29: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`f`
+  • {̲n̲a̲m̲e̲}̲`f`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`f`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:260:48: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`(beta : ℝ)^(e+p) ≤ |FtoR f|`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`(beta : ℝ)^(e+p) ≤ |FtoR f|`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`(beta : ℝ)^(e+p) ≤ |FtoR f|`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`(beta : ℝ)^(e+p) ≤ |FtoR f|`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`(beta : ℝ)^(e+p) ≤ |FtoR f|`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:261:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`e < Fexp f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`e < Fexp f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`e < Fexp f`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`e < Fexp f`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`e < Fexp f`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:261:35: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`pff_to_R`
+  • {̲n̲a̲m̲e̲}̲`pff_to_R`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`pff_to_R`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:261:50: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`FtoR`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`FtoR`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:261:65: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`exponent`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`exponent`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:262:13: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`PffFloat`
+  • {̲n̲a̲m̲e̲}̲`PffFloat`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`PffFloat`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:262:28: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲g̲i̲v̲e̲n̲}̲`Fexp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fexp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:263:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:18: missing doc string for public def CanonicGeNormal_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:41: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:54: unused variable `b`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:67: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:270:77: unused variable `f`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:273:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`CanonicGeNormal`
+  • {̲n̲a̲m̲e̲}̲`CanonicGeNormal`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`CanonicGeNormal`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:273:32: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`f`
+  • {̲n̲a̲m̲e̲}̲`f`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`f`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:273:53: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`β^(-dExp b + p - 1) ≤ |FtoR f|`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`β^(-dExp b + p - 1) ≤ |FtoR f|`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`β^(-dExp b + p - 1) ≤ |FtoR f|`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`β^(-dExp b + p - 1) ≤ |FtoR f|`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`β^(-dExp b + p - 1) ≤ |FtoR f|`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:274:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`f`
+  • {̲n̲a̲m̲e̲}̲`f`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`f`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:274:73: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`True`
+  • {̲n̲a̲m̲e̲}̲`True`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`True`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:275:30: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fbounded`
+  • {̲n̲a̲m̲e̲}̲`Fbounded`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fbounded`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:275:41: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fcanonic`
+  • {̲n̲a̲m̲e̲}̲`Fcanonic`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fcanonic`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:276:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:18: missing doc string for public def Fulp_ulp_aux_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:38: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:51: unused variable `b`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:64: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:283:74: unused variable `f`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:286:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fulp_ulp_aux`
+  • {̲n̲a̲m̲e̲}̲`Fulp_ulp_aux`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fulp_ulp_aux`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:286:40: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`f`
+  • {̲n̲a̲m̲e̲}̲`f`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`f`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:286:45: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fulp`
+  • {̲n̲a̲m̲e̲}̲`Fulp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fulp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:286:59: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`ulp`
+  • {̲n̲a̲m̲e̲}̲`ulp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`ulp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:286:68: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`(FLT_exp (-dExp b) p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲a̲t̲t̲r̲_̲r̲u̲l̲e̲s̲}̲`(FLT_exp (-dExp b) p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲f̲e̲a̲t̲u̲r̲e̲}̲`(FLT_exp (-dExp b) p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲A̲e̲s̲o̲p̲.̲r̲u̲l̲e̲_̲e̲x̲p̲r̲}̲`(FLT_exp (-dExp b) p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲d̲o̲E̲l̲e̲m̲}̲`(FLT_exp (-dExp b) p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲g̲r̲i̲n̲d̲_̲r̲e̲f̲}̲`(FLT_exp (-dExp b) p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲r̲i̲n̲t̲r̲o̲P̲a̲t̲}̲`(FLT_exp (-dExp b) p)`
+  • {̲s̲y̲n̲t̲a̲x̲ ̲t̲e̲r̲m̲}̲`(FLT_exp (-dExp b) p)`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`(FLT_exp (-dExp b) p)`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:287:15: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fulp`
+  • {̲n̲a̲m̲e̲}̲`Fulp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fulp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:287:42: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`ulp`
+  • {̲n̲a̲m̲e̲}̲`ulp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`ulp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:288:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:18: missing doc string for public def Fulp_ulp_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:34: unused variable `beta`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:47: unused variable `b`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:60: unused variable `p`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:294:70: unused variable `f`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:297:9: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fulp_ulp`
+  • {̲n̲a̲m̲e̲}̲`Fulp_ulp`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fulp_ulp`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:297:30: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fulp_ulp_aux`
+  • {̲n̲a̲m̲e̲}̲`Fulp_ulp_aux`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fulp_ulp_aux`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:297:54: Code element could be more specific.
+
+Hint: Insert a role to document it:
+  • {̲l̲e̲a̲n̲}̲`Fbounded`
+  • {̲n̲a̲m̲e̲}̲`Fbounded`
+  • Use the `lit` role:
+    {̲l̲i̲t̲}̲`Fbounded`
+    to mark the code as literal text and disable suggestions
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:298:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:305:18: missing doc string for public def round_NE_is_pff_round_b32_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:305:51: unused variable `r`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:308:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:314:18: missing doc string for public def round_NE_is_pff_round_b64_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:314:51: unused variable `r`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff2FlocqAux.lean:317:8: declaration uses 'sorry'
+Build completed successfully (3028 jobs).
+0:32.40 3151780KB
