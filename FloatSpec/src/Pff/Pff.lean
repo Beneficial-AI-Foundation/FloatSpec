@@ -1840,6 +1840,28 @@ theorem MinOrMaxRep {beta : Int}
   sorry
 
 -- ---------------------------------------------------------------------------
+-- Max-bound comparison lemmas (around Coq: maxFbounded, maxMax, maxMaxBis)
+
+-- We port `maxMax` first. In Coq, it states that if `p` is bounded by `b` and
+-- `Fexp p ≤ z`, then `Fabs p < Float (Zpos (vNum b)) z`. Our bound skeleton
+-- does not carry `vNum`; we state the result against the canonical unit
+-- mantissa at exponent `z`, consistent with other places using `⟨1, z⟩`.
+noncomputable def maxMax_check {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `maxMax` — if `p` is bounded and `p.Fexp ≤ z`, then
+`F2R (Fabs p) < F2R ⟨1, z⟩` (skeleton version).
+This mirrors the Coq intent with our simplified bound structure. -/
+theorem maxMax {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
+    maxMax_check (beta:=beta) b p z
+    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) <
+            _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
+  sorry
+
+-- ---------------------------------------------------------------------------
 -- Exponent comparison helper lemmas (around Coq: eqExpLess, FboundedShiftLess...)
 
 -- Coq: `eqExpLess` — if `p` is bounded and `F2R p = F2R q`,

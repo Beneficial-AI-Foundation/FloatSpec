@@ -963,11 +963,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `digitNotZero` → `digitNotZero [FloatSpec/src/Pff/Pff.lean:2425]`
 - `digitAdd` → `digitAdd [FloatSpec/src/Pff/Pff.lean:2435]`
 - `digit_abs` → `digit_abs [FloatSpec/src/Pff/Pff.lean:2445]`
-- `digit_anti_monotone_lt` → `digit_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:2455]`
+ - `digit_anti_monotone_lt` → `digit_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:2455]`
 -- `Odd_0` → `Odd_0 [FloatSpec/src/Pff/Pff.lean:71]`
 -- `Odd_1` → `Odd_1 [FloatSpec/src/Pff/Pff.lean:81]`
  - `min_or` → `min_or [FloatSpec/src/Pff/Pff.lean:1151]`
-- `min_or` → `min_or` (Pff.lean:68)
+ - `min_or` → `min_or` (Pff.lean:68)
 - `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:526]`
 - `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:287]`
 - `inject_nat_convert` → (no Lean counterpart)
@@ -1007,7 +1007,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zlt_mult_simpl_l` → `Zlt_mult_simpl_l [FloatSpec/src/Pff/Pff.lean:421]`
 - `Z_eq_bool_correct` → `Z_eq_bool_correct [FloatSpec/src/Pff/Pff.lean:433]`
 - `Rlt_Fexp_eq_Zlt` → `Rlt_Fexp_eq_Zlt [FloatSpec/src/Pff/Pff.lean:950]`
-- `Rle_Fexp_eq_Zle` → `Rle_Fexp_eq_Zle [FloatSpec/src/Pff/Pff.lean:313]`
+ - `Rle_Fexp_eq_Zle` → `Rle_Fexp_eq_Zle [FloatSpec/src/Pff/Pff.lean:313]`
+ - `maxMax` → `maxMax [FloatSpec/src/Pff/Pff.lean:1856]`
 - `LtR0Fnum` → `LtR0Fnum [FloatSpec/src/Pff/Pff.lean:1209]`
 - `LeR0Fnum` → `LeR0Fnum [FloatSpec/src/Pff/Pff.lean:1221]`
 - `LeFnumZERO` → `LeFnumZERO [FloatSpec/src/Pff/Pff.lean:1233]`
