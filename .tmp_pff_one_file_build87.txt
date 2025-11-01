@@ -18586,7 +18586,7 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Nat2Z_8_12.lean:21:8: declaration uses 'sorry'
-✖ [3023/3028] Building FloatSpec.src.Pff.Pff (23s)
+✖ [3023/3028] Building FloatSpec.src.Pff.Pff (22s)
 trace: .> LEAN_PATH=/home/hantao/code/FloatSpec/.lake/packages/Cli/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/batteries/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/Qq/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/aesop/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/importGraph/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/plausible/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/packages/mathlib/.lake/build/lib/lean:/home/hantao/code/FloatSpec/.lake/build/lib/lean /home/hantao/.elan/toolchains/leanprover--lean4---v4.25.0-rc1/bin/lean /home/hantao/code/FloatSpec/FloatSpec/src/Pff/Pff.lean -o /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Pff/Pff.olean -i /home/hantao/code/FloatSpec/.lake/build/lib/lean/FloatSpec/src/Pff/Pff.ilean -c /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Pff/Pff.c --setup /home/hantao/code/FloatSpec/.lake/build/ir/FloatSpec/src/Pff/Pff.setup.json --json
 warning: FloatSpec/src/Pff/Pff.lean:16:4: missing doc string for public def nat_even
 

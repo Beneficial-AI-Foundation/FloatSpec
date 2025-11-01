@@ -1410,12 +1410,12 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `ClosestMaxEq` → `ClosestMaxEq [FloatSpec/src/Pff/Pff.lean:231]`
 - `ClosestMonotone` → (no Lean counterpart)
 - `ClosestRoundedModeP` → (no Lean counterpart)
-- `EvenClosestTotal` → (no Lean counterpart)
-- `EvenClosestCompatible` → (no Lean counterpart)
-- `EvenClosestMinOrMax` → (no Lean counterpart)
-- `EvenClosestMonotone` → (no Lean counterpart)
-- `EvenClosestRoundedModeP` → (no Lean counterpart)
-- `EvenClosestUniqueP` → (no Lean counterpart)
+- `EvenClosestTotal` → `EvenClosestTotal [FloatSpec/src/Pff/Pff.lean:297]`
+- `EvenClosestCompatible` → `EvenClosestCompatible [FloatSpec/src/Pff/Pff.lean:501]`
+- `EvenClosestMinOrMax` → `EvenClosestMinOrMax [FloatSpec/src/Pff/Pff.lean:513]`
+- `EvenClosestMonotone` → `EvenClosestMonotone [FloatSpec/src/Pff/Pff.lean:525]`
+- `EvenClosestRoundedModeP` → `EvenClosestRoundedModeP [FloatSpec/src/Pff/Pff.lean:537]`
+- `EvenClosestUniqueP` → `EvenClosestUniqueP [FloatSpec/src/Pff/Pff.lean:549]`
  - `ClosestSymmetric` → `ClosestSymmetric [FloatSpec/src/Pff/Pff.lean:420]`
 - `EvenClosestSymmetric` → (no Lean counterpart)
 - `ClosestOpp` → (no Lean counterpart)

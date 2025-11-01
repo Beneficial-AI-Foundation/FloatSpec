@@ -255,6 +255,53 @@ def Fbounded {beta : Int}
     (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
 
+-- ---------------------------------------------------------------------------
+-- Parity on floats and neighbor operations (skeleton placeholders)
+
+-- Coq uses predicates like FNeven/FNodd and neighbors FNSucc/FNPred.
+-- We introduce minimal placeholders so that theorem statements compile.
+def FNeven {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+def FNodd {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+def FNSucc {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  p
+
+def FNPred {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  p
+
+-- EvenClosest: closest rounding with tie-breaking toward even (or uniqueness)
+def EvenClosest {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (r : ℝ)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Closest (beta:=beta) b radix r p ∧
+  (FNeven (beta:=beta) b radix precision p ∨
+    (∀ q : FloatSpec.Core.Defs.FlocqFloat beta,
+      Closest (beta:=beta) b radix r q → q = p))
+
+-- Totality of EvenClosest
+noncomputable def EvenClosestTotal_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `EvenClosestTotal` — `EvenClosest` is total. -/
+theorem EvenClosestTotal {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    EvenClosestTotal_check (beta:=beta) b radix precision r
+    ⦃⇓_ => ⌜∃ p : FloatSpec.Core.Defs.FlocqFloat beta,
+            EvenClosest (beta:=beta) b radix precision r p⌝⦄ := by
+  sorry
+
 -- Existence of a closest representation (Coq: `ClosestTotal`)
 noncomputable def ClosestTotal_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ) : Id Unit :=
@@ -443,6 +490,67 @@ theorem ClosestSymmetric {beta : Int}
     ⦃⌜True⌝⦄
     ClosestSymmetric_check (beta:=beta) bo radix
     ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
+  sorry
+
+-- Compatibility of `EvenClosest` (Coq: `EvenClosestCompatible`)
+noncomputable def EvenClosestCompatible_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Id Unit :=
+  pure ()
+
+/-- Coq: `EvenClosestCompatible` — `EvenClosest` respects equality compat. -/
+theorem EvenClosestCompatible {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
+    ⦃⌜True⌝⦄
+    EvenClosestCompatible_check (beta:=beta) b radix precision
+    ⦃⇓_ => ⌜CompatibleP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
+  sorry
+
+-- Min-or-max disjunction for `EvenClosest` (Coq: `EvenClosestMinOrMax`)
+noncomputable def EvenClosestMinOrMax_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Id Unit :=
+  pure ()
+
+theorem EvenClosestMinOrMax {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
+    ⦃⌜True⌝⦄
+    EvenClosestMinOrMax_check (beta:=beta) b radix precision
+    ⦃⇓_ => ⌜MinOrMaxP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
+  sorry
+
+-- Monotonicity for `EvenClosest` (Coq: `EvenClosestMonotone`)
+noncomputable def EvenClosestMonotone_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Id Unit :=
+  pure ()
+
+theorem EvenClosestMonotone {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
+    ⦃⌜True⌝⦄
+    EvenClosestMonotone_check (beta:=beta) b radix precision
+    ⦃⇓_ => ⌜MonotoneP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
+  sorry
+
+-- Rounded-mode packaging for `EvenClosest` (Coq: `EvenClosestRoundedModeP`)
+noncomputable def EvenClosestRoundedModeP_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Id Unit :=
+  pure ()
+
+theorem EvenClosestRoundedModeP {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
+    ⦃⌜True⌝⦄
+    EvenClosestRoundedModeP_check (beta:=beta) b radix precision
+    ⦃⇓_ => ⌜RoundedModeP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
+  sorry
+
+-- Uniqueness for `EvenClosest` (Coq: `EvenClosestUniqueP`)
+noncomputable def EvenClosestUniqueP_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Id Unit :=
+  pure ()
+
+theorem EvenClosestUniqueP {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
+    ⦃⌜True⌝⦄
+    EvenClosestUniqueP_check (beta:=beta) b radix precision
+    ⦃⇓_ => ⌜UniqueP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
 -- ---------------------------------------------------------------------------
