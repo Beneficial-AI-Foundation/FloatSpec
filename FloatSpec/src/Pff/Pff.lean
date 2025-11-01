@@ -2497,6 +2497,22 @@ theorem FvalScale (beta : Int)
             ((beta : ℝ) ^ (Int.ofNat n)) * _root_.F2R (beta:=beta) p⌝⦄ := by
   sorry
 
+-- Coq: `maxFbounded` — the maximal mantissa at exponent z is bounded
+-- In this Lean port, we use a canonical representative with mantissa 1
+-- due to the simplified bound skeleton (no vNum field). This preserves
+-- the intent that there exists a bounded float at any exponent z above
+-- the minimal exponent bound.
+noncomputable def maxFbounded_check {beta : Int}
+    (b : Fbound_skel) (z : Int) : Id Unit :=
+  pure ()
+
+theorem maxFbounded {beta : Int}
+    (b : Fbound_skel) (z : Int) :
+    ⦃⌜- b.dExp ≤ z⌝⦄
+    maxFbounded_check (beta:=beta) b z
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 z)⌝⦄ := by
+  sorry
+
 -- Coq: `oppBounded` — boundedness preserved under negation
 noncomputable def oppBounded_check {beta : Int}
     (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
