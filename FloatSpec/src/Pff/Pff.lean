@@ -110,6 +110,28 @@ theorem pow_neg (r : ℝ) (z : Int) :
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
 
+-- Coq compat: `powerRZ_inv` — (r^z)⁻¹ = r^(-z)
+noncomputable def powerRZ_inv_check (r : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_inv (r : ℝ) (z : Int) :
+    ⦃⌜True⌝⦄
+    powerRZ_inv_check r z
+    ⦃⇓_ => ⌜(r ^ z)⁻¹ = r ^ (-z)⌝⦄ := by
+  sorry
+
+-- Coq compat: `powerRZ_neg` — r^(-z) = (r^z)⁻¹
+noncomputable def powerRZ_neg_check (r : ℝ) (z : Int) : Id Unit :=
+  pure ()
+
+theorem powerRZ_neg (r : ℝ) (z : Int) :
+    ⦃⌜True⌝⦄
+    powerRZ_neg_check r z
+    ⦃⇓_ => ⌜r ^ (-z) = (r ^ z)⁻¹⌝⦄ := by
+  sorry
+
+-- (reserved for future compatibility lemmas)
+
 -- ---------------------------------------------------------------------------
 -- Integer parity lemmas (aligned with Coq: Odd/Even over Z)
 
