@@ -1048,6 +1048,70 @@ theorem ClosestMinOrMax {beta : Int}
     ⦃⇓_ => ⌜MinOrMaxP (Closest (beta:=beta) bo radixR)⌝⦄ := by
   sorry
 
+-- ---------------------------------------------------------------------------
+-- Min/Max existence over finite lists (from Coq Pff.v)
+
+/-!
+Coq: `MinExList`
+
+For any real `r` and finite list `L` of floats, either every element of `L`
+has value strictly greater than `r`, or there exists an element `min ∈ L`
+such that `F2R min ≤ r` and it is minimal among those at most `r`.
+
+We state this property over the project float representation and leave the
+proof as `sorry`, following the hoare-triple pattern used across this file.
+-/
+noncomputable def MinExList_check {beta : Int}
+    (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) : Id Unit :=
+  pure ()
+
+theorem MinExList {beta : Int}
+    (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) :
+    ⦃⌜True⌝⦄
+    MinExList_check (beta:=beta) r L
+    ⦃⇓_ => ⌜(∀ f, f ∈ L → r < _root_.F2R f) ∨
+            (∃ min, min ∈ L ∧ _root_.F2R min ≤ r ∧
+              ∀ f, f ∈ L → _root_.F2R f ≤ r → _root_.F2R f ≤ _root_.F2R min)⌝⦄ := by
+  sorry
+
+/-!
+Coq: `MinEx`
+
+For any real `r`, there exists a float `min` that is a lower extremal witness
+for `r` (captured here by the abstract predicate `isMin`). We keep the
+statement abstract with respect to the bound structure and radix since this
+file provides only skeletons; the concrete Coq proof uses project-specific
+constructions such as `mBFloat` and `boundR`.
+-/
+noncomputable def MinEx_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem MinEx {beta : Int}
+    (b : Fbound_skel) (radix : Int) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    MinEx_check (beta:=beta) b radix r
+    ⦃⇓_ => ⌜∃ min : FloatSpec.Core.Defs.FlocqFloat beta,
+              isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min⌝⦄ := by
+  sorry
+
+/-!
+Coq: `MaxEx`
+
+Dual existence result for an upper extremal witness `max` w.r.t. `isMax`.
+-/
+noncomputable def MaxEx_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+theorem MaxEx {beta : Int}
+    (b : Fbound_skel) (radix : Int) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    MaxEx_check (beta:=beta) b radix r
+    ⦃⇓_ => ⌜∃ max : FloatSpec.Core.Defs.FlocqFloat beta,
+              isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max⌝⦄ := by
+  sorry
+
 -- Equality under strict-leaning midpoint toward min (Coq: `ClosestMinEq`)
 noncomputable def ClosestMinEq_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
