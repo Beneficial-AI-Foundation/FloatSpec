@@ -1436,6 +1436,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 -- `ClosestIdem` → `ClosestIdem [FloatSpec/src/Pff/Pff.lean:892]`
 -- `FmultRadixInv` → `FmultRadixInv [FloatSpec/src/Pff/Pff.lean:905]`
 - `ClosestErrorBound` → (no Lean counterpart)
+ - `ClosestErrorBound` → `ClosestErrorBound [FloatSpec/src/Pff/Pff.lean:1321]`
 - `ClosestErrorBoundNormal_aux` → (no Lean counterpart)
 - `ClosestErrorBoundNormal` → (no Lean counterpart)
 - `FpredUlpPos` → (no Lean counterpart)
