@@ -104,6 +104,7 @@ Introduce missing theorems in the directory. You can find the record of missing 
 
 ### Important Notes
 
+- Remember to update the record markdown file after completing each theorem! If there are other theorems that are already implemented, mark them as complete directly in the record file to avoid redundant work.
 - Use MCP tool instead of bash command to get diagnostic messages!
 - Skip already-imported theorems!! There might be warnings but just leave them there!
 - You can use exisiting (and proved) theorem to assist your spec writing. If a theorem is necessary but not introduced, you can turn to work on that first. The useful theorems might not be in the same file, but in the import list

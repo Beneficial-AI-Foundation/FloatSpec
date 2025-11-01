@@ -761,3 +761,45 @@ theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
                      else round_flt (round_flt (p - q) + round_flt (dp - dq))
             |d - (b * b - a * c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d⌝⦄ := by
   sorry
+
+/-!
+Coq theorem: `discri_fp_test`
+
+This is the Discri2 counterpart of `discri_correct_test`, where the branch
+condition compares rounded quantities:
+`if round_flt (p+q) ≤ round_flt (3*|round_flt (p-q)|) then ... else ...`.
+
+We mirror the same structure and state the same error bound
+`|d - (b*b - a*c)| ≤ 2 * ulp_flt d` using the project rounding operator
+`FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()` for nearest-even and the
+compatibility `ulp` from `Compat`.
+-/
+
+noncomputable def discri_fp_test_check (emin prec : Int)
+    (a b c : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `discri_fp_test` — with
+    `p := round_flt (b*b)`, `q := round_flt (a*c)`, `dp := b*b - p`,
+    `dq := a*c - q`, and
+    `d := if round_flt (p + q) ≤ round_flt (3 * |round_flt (p - q)|)
+          then round_flt (p - q)
+          else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
+    we have the error bound
+    `|d - (b*b - a*c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d`.
+    Here `round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()`.
+    Proof deferred. -/
+theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
+    (a b c : ℝ) :
+    ⦃⌜True⌝⦄
+    discri_fp_test_check emin prec a b c
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+            let p := round_flt (b * b)
+            let q := round_flt (a * c)
+            let dp := b * b - p
+            let dq := a * c - q
+            let d := if (round_flt (p + q) ≤ round_flt (3 * |round_flt (p - q)|))
+                     then round_flt (p - q)
+                     else round_flt (round_flt (p - q) + round_flt (dp - dq))
+            |d - (b * b - a * c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d⌝⦄ := by
+  sorry

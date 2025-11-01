@@ -150,14 +150,14 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `underf_mult_aux'` → `underf_mult_aux' [FloatSpec/src/Pff/Pff2Flocq.lean:221]`
 - `Dekker` → `Dekker [FloatSpec/src/Pff/Pff2Flocq.lean:250]`
 - `V1_Und3'` → `V1_Und3' [FloatSpec/src/Pff/Pff2Flocq.lean:249]`
-- `V1_Und3` → (no Lean counterpart)
+-- `V1_Und3` → (no Lean counterpart)
 - `ErrFMA_bounded` → (no Lean counterpart)
 - `ErrFMA_correct` → (no Lean counterpart)
 - `mult_error_FLT_ge_bpow'` → `mult_error_FLT_ge_bpow' [FloatSpec/src/Pff/Pff2Flocq.lean:353]`
 - `ErrFMA_bounded_simpl` → (no Lean counterpart)
 - `V2_Und4` → (no Lean counterpart)
 - `V2_Und2` → (no Lean counterpart)
-- `V2_Und5` → (no Lean counterpart)
+-- `V2_Und5` → (no Lean counterpart)
 - `ErrFMA_correct_simpl` → (no Lean counterpart)
 - `ErrFmaAppr_correct` → (no Lean counterpart)
 - `Axpy` → (no Lean counterpart)
@@ -167,10 +167,11 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `format_dq` → `format_dq [FloatSpec/src/Pff/Pff2Flocq.lean:566]`
 - `format_d_discri1` → `format_d_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:606]`
 - `U5_discri1_aux` → `U5_discri1_aux [FloatSpec/src/Pff/Pff2Flocq.lean:617]`
-- `U5_discri1` → `U5_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:650]`
-- `discri_correct_test` → (no Lean counterpart)
+-- `U5_discri1` → `U5_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:650]`
 - `format_d_discri2` → `format_d_discri2 [FloatSpec/src/Pff/Pff2Flocq.lean:640]`
-- `discri_fp_test` → (no Lean counterpart)
+- `discri_correct_test` → `discri_correct_test [FloatSpec/src/Pff/Pff2Flocq.lean:750]`
+ - `format_d_discri2` → `format_d_discri2 [FloatSpec/src/Pff/Pff2Flocq.lean:640]`
+ - `discri_fp_test` → `discri_fp_test [FloatSpec/src/Pff/Pff2Flocq.lean:792]`
 
 ## File: Pff.v → Pff.lean
 
