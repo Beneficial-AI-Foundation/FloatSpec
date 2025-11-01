@@ -1308,6 +1308,26 @@ theorem ClosestIdem {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
   sorry
 
+-- Error bound for closest rounding (Coq: `ClosestErrorBound`)
+noncomputable def ClosestErrorBound_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestErrorBound` — if `p` is a closest representation of `x` and
+    `q` represents the error `x - F2R p`, then the magnitude of `q` is bounded by
+    `Float 1 (Fexp p) / 2`. We phrase this using the Hoare-triple style and keep
+    the proof as a placeholder. -/
+theorem ClosestErrorBound {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
+    ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix x p ∧
+        _root_.F2R q = x - _root_.F2R p⌝⦄
+    ClosestErrorBound_check (beta:=beta) bo radix p q x
+    ⦃⇓_ => ⌜|_root_.F2R q| ≤
+            _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) * (1 / 2 : ℝ)⌝⦄ := by
+  sorry
+
 -- Inequality lifting for scaling by radix halves (Coq: `FmultRadixInv`)
 noncomputable def FmultRadixInv_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
