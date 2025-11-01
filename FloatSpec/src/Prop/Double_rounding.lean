@@ -33,6 +33,33 @@ theorem double_round_eq (fexp1 fexp2 : Int → Int)
   FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x := by
   sorry
 
+/-
+  Coq: `round_round_lt_mid_further_place`
+
+  Hypotheses: `0 < x`, place relation `fexp2 (mag x) ≤ fexp1 (mag x) - 1`,
+  and `fexp1 (mag x) ≤ mag x`, together with a strict bound placing `x`
+  to the left of the `fexp1`-midpoint minus half a `fexp2`-ULP.
+
+  Conclusion: nearest-on-nearest double rounding from `fexp2` to `fexp1`
+  is innocuous. We mirror the statement and leave the proof as a placeholder.
+-/
+theorem round_round_lt_mid_further_place
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (x : ℝ)
+  (hx_pos : 0 < x)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
+                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (hx_lt : x < midp (beta := beta) fexp1 x - (1/2) * (ulp beta fexp2 x)) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
+  sorry
+
 -- (reserved for later) Coq: `round_round_mult_hyp`
 -- Structural hypothesis relating places for the product exponents.
 -- We will introduce it if needed by subsequent lemmas.

@@ -316,7 +316,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `round_round_lt_mid_further_place'` → `round_round_lt_mid_further_place'` [Double_rounding.lean:570] (spec-variant)
  - `round_round_lt_mid_further_place'` → `round_round_lt_mid_further_place'` [Double_rounding.lean:37] (spec-variant)
 
-- `round_round_lt_mid_further_place` → (no direct Lean match found)
+- `round_round_lt_mid_further_place` → `round_round_lt_mid_further_place` [Double_rounding.lean:46] (spec-variant)
 
 - `round_round_lt_mid_same_place` → (no direct Lean match found)
 
