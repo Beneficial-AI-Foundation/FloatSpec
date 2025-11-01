@@ -316,17 +316,17 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_lt_mid_further_place` → `round_round_lt_mid_further_place` [Double_rounding.lean:46] (spec-variant)
 
-- `round_round_lt_mid_same_place` → (no direct Lean match found)
+- `round_round_lt_mid_same_place` → `round_round_lt_mid_same_place` [Double_rounding.lean:618] (spec-variant)
 
-- `round_round_lt_mid` → (no direct Lean match found)
+- `round_round_lt_mid` → `round_round_lt_mid` [Double_rounding.lean:636] (spec-variant)
 
  - `round_round_gt_mid_further_place'` → `round_round_gt_mid_further_place'` [Double_rounding.lean:1428] (spec-variant)
 
-- `round_round_gt_mid_further_place` → (no direct Lean match found)
+- `round_round_gt_mid_further_place` → `round_round_gt_mid_further_place` [Double_rounding.lean:1456] (spec-variant)
 
-- `round_round_gt_mid_same_place` → (no direct Lean match found)
+- `round_round_gt_mid_same_place` → `round_round_gt_mid_same_place` [Double_rounding.lean:1476] (spec-variant)
 
-- `round_round_gt_mid` → (no direct Lean match found)
+- `round_round_gt_mid` → `round_round_gt_mid` [Double_rounding.lean:1494] (spec-variant)
 
  - `mag_mult_disj` → `mag_mult_disj` [Double_rounding.lean:143] (exact)
 
@@ -359,19 +359,19 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `round_round_plus_aux` → `round_round_plus_aux` [Double_rounding.lean:429] (spec-variant)
 
-- `round_round_minus_aux0_aux` → (no direct Lean match found)
+- `round_round_minus_aux0_aux` → `round_round_minus_aux0_aux` [Double_rounding.lean:1563] (spec-variant)
 
-- `round_round_minus_aux0` → (no direct Lean match found)
+- `round_round_minus_aux0` → `round_round_minus_aux0` [Double_rounding.lean:1575] (spec-variant)
 
-- `round_round_minus_aux1` → (no direct Lean match found)
+- `round_round_minus_aux1` → `round_round_minus_aux1` [Double_rounding.lean:1589] (spec-variant)
 
-- `round_round_minus_aux2_aux` → (no direct Lean match found)
+- `round_round_minus_aux2_aux` → `round_round_minus_aux2_aux` [Double_rounding.lean:1606] (spec-variant)
 
-- `round_round_minus_aux2` → (no direct Lean match found)
+- `round_round_minus_aux2` → `round_round_minus_aux2` [Double_rounding.lean:1621] (spec-variant)
 
-- `round_round_minus_aux3` → (no direct Lean match found)
+- `round_round_minus_aux3` → `round_round_minus_aux3` [Double_rounding.lean:1640] (spec-variant)
 
-- `round_round_minus_aux` → (no direct Lean match found)
+- `round_round_minus_aux` → `round_round_minus_aux` [Double_rounding.lean:1660] (spec-variant)
 
  - `round_round_plus` → `round_round_plus` [Double_rounding.lean:540] (spec-variant)
 
@@ -395,12 +395,12 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
  - `round_round_minus_FTZ` → `round_round_minus_FTZ` [Double_rounding.lean:800] (spec-variant)
 
-- `round_round_plus_radix_ge_3_aux0` → (no direct Lean match found)
+- `round_round_plus_radix_ge_3_aux0` → `round_round_plus_radix_ge_3_aux0` [Double_rounding.lean:1035] (spec-variant)
 
-- `round_round_plus_radix_ge_3_aux1` → (no direct Lean match found)
+- `round_round_plus_radix_ge_3_aux1` → `round_round_plus_radix_ge_3_aux1` [Double_rounding.lean:1050] (spec-variant)
 
 
--- `round_round_plus_radix_ge_3_aux` → (no direct Lean match found)
+-- `round_round_plus_radix_ge_3_aux` → `round_round_plus_radix_ge_3_aux` [Double_rounding.lean:1244] (spec-variant)
 
 -- `round_round_minus_radix_ge_3_aux0` → `round_round_minus_radix_ge_3_aux0` [Double_rounding.lean:915] (spec-variant)
 
@@ -408,20 +408,20 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_minus_radix_ge_3_aux2` → `round_round_minus_radix_ge_3_aux2` [Double_rounding.lean:948] (spec-variant)
 
-- `round_round_minus_radix_ge_3_aux3` → (no direct Lean match found)
+- `round_round_minus_radix_ge_3_aux3` → `round_round_minus_radix_ge_3_aux3` [Double_rounding.lean:1339] (spec-variant)
 
-- `round_round_minus_radix_ge_3_aux` → (no direct Lean match found)
+- `round_round_minus_radix_ge_3_aux` → `round_round_minus_radix_ge_3_aux` [Double_rounding.lean:1360] (spec-variant)
 
-- `round_round_plus_radix_ge_3` → (no direct Lean match found)
+- `round_round_plus_radix_ge_3` → `round_round_plus_radix_ge_3` [Double_rounding.lean:1265] (spec-variant)
 
-- `round_round_minus_radix_ge_3` → (no direct Lean match found)
+- `round_round_minus_radix_ge_3` → `round_round_minus_radix_ge_3` [Double_rounding.lean:1381] (spec-variant)
 
 
 - `FLX_round_round_plus_radix_ge_3_hyp` → `FLX_round_round_plus_radix_ge_3_hyp` [Double_rounding.lean] (spec-variant, requires 2*prec ≤ prec')
 
 - `round_round_plus_radix_ge_3_FLX` → `round_round_plus_radix_ge_3_FLX` [Double_rounding.lean] (spec-variant)
 
-- `round_round_minus_radix_ge_3_FLX` → (no direct Lean match found)
+- `round_round_minus_radix_ge_3_FLX` → `round_round_minus_radix_ge_3_FLX` [Double_rounding.lean:1140] (spec-variant)
 
 - `FLT_round_round_plus_radix_ge_3_hyp` → `FLT_round_round_plus_radix_ge_3_hyp` [Double_rounding.lean] (spec-variant)
 
@@ -435,8 +435,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_minus_radix_ge_3_FTZ` → `round_round_minus_radix_ge_3_FTZ` [Double_rounding.lean] (spec-variant)
 
-- `round_round_mid_cases` → (no direct Lean match found)
-- `round_round_mid_cases` → (no direct Lean match found)
+- `round_round_mid_cases` → `round_round_mid_cases` [Double_rounding.lean:166] (spec-variant)
+ - `round_round_mid_cases` → `round_round_mid_cases` [Double_rounding.lean:166] (spec-variant)
 
 - `mag_sqrt_disj` → `mag_sqrt_disj` [Double_rounding.lean:164] (spec-variant)
 
@@ -448,13 +448,13 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `round_round_sqrt_FLX` → `round_round_sqrt_FLX` [Double_rounding.lean:232] (spec-variant)
 
-- `round_round_sqrt_aux` → (no direct Lean match found)
+- `round_round_sqrt_aux` → `round_round_sqrt_aux` [Double_rounding.lean:325] (spec-variant)
 
-- `round_round_sqrt` → (no direct Lean match found)
+- `round_round_sqrt` → `round_round_sqrt` [Double_rounding.lean:343] (spec-variant)
 
-- `FLX_round_round_sqrt_hyp` → (no direct Lean match found)
+- `FLX_round_round_sqrt_hyp` → `FLX_round_round_sqrt_hyp` [Double_rounding.lean:362] (spec-variant)
 
-- `round_round_sqrt_FLX` → (no direct Lean match found)
+- `round_round_sqrt_FLX` → `round_round_sqrt_FLX` [Double_rounding.lean:371] (spec-variant)
 
 - `FLT_round_round_sqrt_hyp` → `FLT_round_round_sqrt_hyp` [Double_rounding.lean:361] (spec-variant)
 
@@ -1068,37 +1068,36 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 ### Mapping (Coq → Lean)
 
-- `Zrnd_odd_Zodd` → (no direct Lean match found)
- - `Zrnd_odd_Zodd` → `Zrnd_odd_Zodd` [Round_odd.lean:28] (spec-variant)
+- `Zrnd_odd_Zodd` → `Zrnd_odd_Zodd` [Round_odd.lean:43] (spec-variant)
 
- - `Zfloor_plus` → `Zfloor_plus` [Round_odd.lean:34] (spec-variant)
+ - `Zfloor_plus` → `Zfloor_plus` [Round_odd.lean:48] (spec-variant)
 
-- `Zceil_plus` → `Zceil_plus` [Round_odd.lean:40] (spec-variant)
+ - `Zceil_plus` → `Zceil_plus` [Round_odd.lean:55] (spec-variant)
 
-- `Zeven_abs` → `Zeven_abs` [Round_odd.lean:47] (spec-variant)
+ - `Zeven_abs` → `Zeven_abs` [Round_odd.lean:62] (spec-variant)
 
 
-- `Rnd_odd_pt_opp_inv` → (no direct Lean match found)
+- `Rnd_odd_pt_opp_inv` → `Rnd_odd_pt_opp_inv` [Round_odd.lean:76] (spec-variant)
 
 - `round_odd_opp` → `round_odd_opp` [Round_odd.lean:61] (spec-variant)
 
-- `round_odd_pt` → (no direct Lean match found)
+- `round_odd_pt` → `round_odd_pt` [Round_odd.lean:90] (spec-variant)
 
-- `Rnd_odd_pt_unique` → (no direct Lean match found)
+- `Rnd_odd_pt_unique` → `Rnd_odd_pt_unique` [Round_odd.lean:96] (spec-variant)
 
-- `Rnd_odd_pt_monotone` → (no direct Lean match found)
+- `Rnd_odd_pt_monotone` → `Rnd_odd_pt_monotone` [Round_odd.lean:104] (spec-variant)
 
-- `generic_format_fexpe_fexp` → (no direct Lean match found)
+- `generic_format_fexpe_fexp` → `generic_format_fexpe_fexp` [Round_odd.lean:148] (spec-variant)
 
-- `exists_even_fexp_lt` → (no direct Lean match found)
+- `exists_even_fexp_lt` → `exists_even_fexp_lt` [Round_odd.lean:171] (spec-variant)
 
-- `d_eq` → (no direct Lean match found)
+- `d_eq` → `d_eq` [Round_odd.lean:199] (spec-variant)
 
  - `u_eq` → `u_eq` [Round_odd.lean:220] (spec-variant)
 
-- `d_ge_0` → (no direct Lean match found)
+- `d_ge_0` → `d_ge_0` [Round_odd.lean:231] (spec-variant)
 
-- `mag_d` → (no direct Lean match found)
+- `mag_d` → `mag_d` [Round_odd.lean:243] (spec-variant)
 
  - `Fexp_d` → `Fexp_d` [Round_odd.lean:156] (spec-variant)
 
@@ -1140,9 +1139,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `d_eq` → `d_eq` [Round_odd.lean:203] (spec-variant)
 
-- `mag_round_odd` → (no direct Lean match found)
+- `mag_round_odd` → `mag_round_odd` [Round_odd.lean:130] (spec-variant)
 
-- `fexp_round_odd` → (no direct Lean match found)
+- `fexp_round_odd` → `fexp_round_odd` [Round_odd.lean:136] (spec-variant)
 
 ## File: Sterbenz.v → Sterbenz.lean
 
