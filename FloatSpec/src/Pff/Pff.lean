@@ -2242,6 +2242,16 @@ theorem LSB_shift {beta : Int}
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fshift (beta:=beta) radix n x)⌝⦄ := by
   sorry
 
+-- Coq: `maxDivLess` — maxDiv v p ≤ p
+noncomputable def maxDivLess_check (v : Int) (p : Nat) : Id Unit :=
+  pure ()
+
+theorem maxDivLess (v : Int) (p : Nat) :
+    ⦃⌜True⌝⦄
+    maxDivLess_check v p
+    ⦃⇓_ => ⌜maxDiv v p ≤ p⌝⦄ := by
+  sorry
+
 -- Coq: `LSB_comp` — ~is_Fzero x → x = y :>R → LSB x = LSB y
 noncomputable def LSB_comp_check {beta : Int}
     (radix : Int)
