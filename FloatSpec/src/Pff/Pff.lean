@@ -1809,6 +1809,60 @@ theorem MinOrMaxRep {beta : Int}
             P r q → ∃ m : Int, q = ⟨m, p.Fexp⟩⌝⦄ := by
   sorry
 
+-- ---------------------------------------------------------------------------
+-- Exponent comparison helper lemmas (around Coq: eqExpLess, FboundedShiftLess...)
+
+-- Coq: `eqExpLess` — if `p` is bounded and `F2R p = F2R q`,
+-- then there exists a bounded `r` with the same real value as `q`
+-- and exponent at least that of `q`.
+noncomputable def eqExpLess_check {beta : Int}
+    (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem eqExpLess {beta : Int}
+    (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧ _root_.F2R p = _root_.F2R q⌝⦄
+    eqExpLess_check (beta:=beta) b p q
+    ⦃⇓_ => ⌜∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
+              Fbounded (beta:=beta) b r ∧
+              _root_.F2R r = _root_.F2R q ∧
+              q.Fexp ≤ r.Fexp⌝⦄ := by
+  sorry
+
+-- Coq: `FboundedShiftLess` — if `m ≤ n` and `Fshift radix n f` is bounded,
+-- then `Fshift radix m f` is also bounded.
+noncomputable def FboundedShiftLess_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) : Id Unit :=
+  pure ()
+
+theorem FboundedShiftLess {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) :
+    ⦃⌜m ≤ n ∧ Fbounded (beta:=beta) b (Fshift (beta:=beta) radix n f)⌝⦄
+    FboundedShiftLess_check (beta:=beta) b radix f n m
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fshift (beta:=beta) radix m f)⌝⦄ := by
+  sorry
+
+-- Coq: `eqExpMax` — if `p` and `q` are bounded and |F2R p| ≤ F2R q,
+-- then there exists a bounded `r` with F2R r = F2R p and Fexp r ≤ Fexp q.
+noncomputable def eqExpMax_check {beta : Int}
+    (b : Fbound_skel)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem eqExpMax {beta : Int}
+    (b : Fbound_skel)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
+        | _root_.F2R p | ≤ _root_.F2R q⌝⦄
+    eqExpMax_check (beta:=beta) b p q
+    ⦃⇓_ => ⌜∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
+              Fbounded (beta:=beta) b r ∧
+              _root_.F2R r = _root_.F2R p ∧
+              r.Fexp ≤ q.Fexp⌝⦄ := by
+  sorry
+
 -- Coq: `RoundedModeRep` — representation form for rounded modes
 noncomputable def RoundedModeRep_check {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Id Unit :=

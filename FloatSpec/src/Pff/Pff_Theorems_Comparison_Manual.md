@@ -1124,9 +1124,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `oppBoundedInv` → `oppBoundedInv [FloatSpec/src/Pff/Pff.lean:2452]`
 - `absFBounded` → `absFBounded [FloatSpec/src/Pff/Pff.lean:2470]`
 - `FboundedEqExp` → `FboundedEqExp [FloatSpec/src/Pff/Pff.lean:2488]`
-- `eqExpLess` → (no Lean counterpart)
-- `FboundedShiftLess` → (no Lean counterpart)
-- `eqExpMax` → (no Lean counterpart)
+- `eqExpLess` → `eqExpLess [FloatSpec/src/Pff/Pff.lean:1822]`
+- `FboundedShiftLess` → `FboundedShiftLess [FloatSpec/src/Pff/Pff.lean:1839]`
+- `eqExpMax` → `eqExpMax [FloatSpec/src/Pff/Pff.lean:1850]`
 - `maxFbounded` → (no Lean counterpart)
 - `maxMax` → (no Lean counterpart)
  -- `SterbenzAux` → `SterbenzAux [FloatSpec/src/Pff/Pff.lean:2830]`
