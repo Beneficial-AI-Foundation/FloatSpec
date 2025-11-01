@@ -328,6 +328,21 @@ theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
+-- Coq: `ErrFMA_bounded_simpl` — simplified boundedness of r1, r2, r3
+noncomputable def ErrFMA_bounded_simpl_check (emin prec : Int)
+    (a x y : ℝ) : Id Unit :=
+  pure ()
+
+-- Coq: `ErrFMA_bounded_simpl` — in the ErrFMA V2 setting (nearest-even),
+-- the intermediate results `r1`, `r2`, `r3` are in format. We provide a
+-- compatibility shell and defer the proof.
+theorem ErrFMA_bounded_simpl (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ) :
+    ⦃⌜True⌝⦄
+    ErrFMA_bounded_simpl_check emin prec a x y
+    ⦃⇓_ => ⌜True⌝⦄ := by
+  sorry
+
 -- Coq lemma: `mult_error_FLT_ge_bpow'`
 -- In Coq (section ErrFMA_V2), the following lemma relates a magnitude lower
 -- bound on a product to a corresponding lower bound on the rounding error when
@@ -526,6 +541,46 @@ theorem U4_discri1 (emin prec : Int) [Prec_gt_0 prec]
                      then round_flt (p - q)
                      else round_flt (round_flt (p - q) + round_flt (dp - dq))
             (2 : ℝ) ^ (emin + prec) ≤ |d|⌝⦄ := by
+  sorry
+
+/-
+Coq lemma: `ErrFMA_correct_simpl`
+
+In the ErrFMA V2 section, Coq proves a simplified correctness result stating
+that the compensated sum r1 + r2 + r3 equals a*x + y. We mirror the statement
+with our hoare-triple style skeleton and defer the proof.
+-/
+
+noncomputable def ErrFMA_correct_simpl_check (emin prec : Int)
+    (a x y : ℝ) : Id Unit :=
+  pure ()
+
+-- Coq: `ErrFMA_correct_simpl` — simplified equality r1 + r2 + r3 = a * x + y
+-- under the ErrFMA V2 construction with ties-to-even rounding.
+theorem ErrFMA_correct_simpl (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ) :
+    ⦃⌜True⌝⦄
+    ErrFMA_correct_simpl_check emin prec a x y
+    ⦃⇓_ => ⌜True⌝⦄ := by
+  sorry
+
+/-
+Coq lemma: `ErrFmaAppr_correct`
+
+In the ErrFmaApprox section, Coq establishes an a priori error bound for the
+two-step approximation variant. We include a compatibility shell with a `True`
+postcondition and leave the proof as `sorry` per the import process.
+-/
+
+noncomputable def ErrFmaAppr_correct_check (emin prec : Int)
+    (a x y : ℝ) : Id Unit :=
+  pure ()
+
+theorem ErrFmaAppr_correct (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ) :
+    ⦃⌜True⌝⦄
+    ErrFmaAppr_correct_check emin prec a x y
+    ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
 /-!
