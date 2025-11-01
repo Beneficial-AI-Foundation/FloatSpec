@@ -106,17 +106,6 @@ theorem pow_neg (r : ℝ) (z : Int) :
   r^(-z) = (r^z)⁻¹ := by
   sorry
 
--- Natural-exponent power addition (Coq: `pow_add`)
-noncomputable def pow_add_check (e : ℝ) (m n : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `pow_add` — `(e)^(m+n) = (e)^m * (e)^n` for natural exponents. -/
-theorem pow_add (e : ℝ) (m n : Nat) :
-    ⦃⌜True⌝⦄
-    pow_add_check e m n
-    ⦃⇓_ => ⌜e ^ (m + n) = e ^ m * e ^ n⌝⦄ := by
-  sorry
-
 -- Real number compatibility
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
   sorry
