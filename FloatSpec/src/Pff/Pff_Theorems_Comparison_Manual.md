@@ -1417,7 +1417,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `EvenClosestRoundedModeP` → `EvenClosestRoundedModeP [FloatSpec/src/Pff/Pff.lean:537]`
 - `EvenClosestUniqueP` → `EvenClosestUniqueP [FloatSpec/src/Pff/Pff.lean:549]`
  - `ClosestSymmetric` → `ClosestSymmetric [FloatSpec/src/Pff/Pff.lean:420]`
-- `EvenClosestSymmetric` → (no Lean counterpart)
+ - `EvenClosestSymmetric` → `EvenClosestSymmetric [FloatSpec/src/Pff/Pff.lean:539]`
 - `ClosestOpp` → (no Lean counterpart)
 - `ClosestFabs` → (no Lean counterpart)
 - `ClosestUlp` → (no Lean counterpart)

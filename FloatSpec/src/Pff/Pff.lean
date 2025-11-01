@@ -529,6 +529,20 @@ theorem EvenClosestMonotone {beta : Int}
     ⦃⇓_ => ⌜MonotoneP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
+-- Symmetric property of EvenClosest (Coq: `EvenClosestSymmetric`)
+noncomputable def EvenClosestSymmetric_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Id Unit :=
+  pure ()
+
+/-- Coq: `EvenClosestSymmetric` — the `EvenClosest` relation is symmetric under
+    real negation accompanied by float negation. -/
+theorem EvenClosestSymmetric {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
+    ⦃⌜True⌝⦄
+    EvenClosestSymmetric_check (beta:=beta) b radix precision
+    ⦃⇓_ => ⌜SymmetricP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
+  sorry
+
 -- Rounded-mode packaging for `EvenClosest` (Coq: `EvenClosestRoundedModeP`)
 noncomputable def EvenClosestRoundedModeP_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Id Unit :=
@@ -1848,12 +1862,12 @@ noncomputable def FvalScale_check {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Id Unit :=
   pure ()
 
-theorem FvalScale {beta : Int}
+theorem FvalScale (beta : Int)
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜True⌝⦄
     FvalScale_check (beta:=beta) b p n
-    ⦃⇓_ => ⌜_root_.F2R ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩ =
-            (powerRZ (beta:=beta) n) * _root_.F2R p⌝⦄ := by
+    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩ =
+            ((beta : ℝ) ^ (Int.ofNat n)) * _root_.F2R (beta:=beta) p⌝⦄ := by
   sorry
 
 -- Coq: `oppBounded` — boundedness preserved under negation
