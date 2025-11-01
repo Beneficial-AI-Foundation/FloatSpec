@@ -1703,15 +1703,16 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `IRNDD_pos` → (no Lean counterpart)
 - `IRNDD_eq` → (no Lean counterpart)
 - `IRNDD_projector` → (no Lean counterpart)
-- `RND_Min_Pos_bounded_aux` → (no Lean counterpart)
+- `RND_Min_Pos_bounded_aux` → `RND_Min_Pos_bounded_aux [FloatSpec/src/Pff/Pff.lean:518]`
 - `RND_Min_Pos_canonic` → `RND_Min_Pos_canonic [FloatSpec/src/Pff/Pff.lean:481]`
-- `RND_Min_Pos_Rle` → (no Lean counterpart)
-- `RND_Min_Pos_monotone` → (no Lean counterpart)
-- `RND_Min_Pos_projector` → (no Lean counterpart)
-- `RND_Min_Pos_correct` → (no Lean counterpart)
+- `RND_Min_Pos_Rle` → `RND_Min_Pos_Rle [FloatSpec/src/Pff/Pff.lean:538]`
+ - `RND_Min_Pos_monotone` → `RND_Min_Pos_monotone [FloatSpec/src/Pff/Pff.lean:552]`
+- `RND_Min_Pos_projector` → `RND_Min_Pos_projector [FloatSpec/src/Pff/Pff.lean:564]`
+ - `RND_Min_Pos_projector` → `RND_Min_Pos_projector [FloatSpec/src/Pff/Pff.lean:564]`
+- `RND_Min_Pos_correct` → `RND_Min_Pos_correct [FloatSpec/src/Pff/Pff.lean:603]`
  - `RND_Max_Pos_canonic` → `RND_Max_Pos_canonic [FloatSpec/src/Pff/Pff.lean:541]`
-- `RND_Max_Pos_Rle` → (no Lean counterpart)
-- `RND_Max_Pos_correct` → (no Lean counterpart)
+- `RND_Max_Pos_Rle` → `RND_Max_Pos_Rle [FloatSpec/src/Pff/Pff.lean:620]`
+- `RND_Max_Pos_correct` → `RND_Max_Pos_correct [FloatSpec/src/Pff/Pff.lean:631]`
 - `RND_Min_canonic` → (no Lean counterpart)
  - `RND_Min_correct` → `RND_Min_correct [FloatSpec/src/Pff/Pff.lean:571]`
  - `RND_Max_canonic` → `RND_Max_canonic [FloatSpec/src/Pff/Pff.lean:561]`
@@ -1719,6 +1720,6 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `RND_Min_canonic` → `RND_Min_canonic [FloatSpec/src/Pff/Pff.lean:501]`
  - `RND_Max_canonic` → `RND_Max_canonic [FloatSpec/src/Pff/Pff.lean:561]`
 - `RND_EvenClosest_canonic` → (no Lean counterpart)
- - `RND_EvenClosest_canonic` → `RND_EvenClosest_canonic [FloatSpec/src/Pff/Pff.lean:593]`
+ - `RND_EvenClosest_canonic` → `RND_EvenClosest_canonic [FloatSpec/src/Pff/Pff.lean:732]`
 - `RND_EvenClosest_correct` → (no Lean counterpart)
- - `RND_EvenClosest_correct` → `RND_EvenClosest_correct [FloatSpec/src/Pff/Pff.lean:607]`
+ - `RND_EvenClosest_correct` → `RND_EvenClosest_correct [FloatSpec/src/Pff/Pff.lean:747]`

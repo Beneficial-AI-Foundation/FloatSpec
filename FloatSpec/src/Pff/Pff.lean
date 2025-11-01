@@ -513,6 +513,20 @@ def RND_Min_Pos {beta : Int}
   -- Skeleton: return an arbitrary float; semantics deferred
   ⟨0, 0⟩
 
+-- Auxiliary boundedness of `RND_Min_Pos` on nonnegative reals (Coq: RND_Min_Pos_bounded_aux)
+noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_Pos_bounded_aux` — for nonnegative `r`, the value of
+    `RND_Min_Pos r` is bounded according to the bound structure `b`. -/
+theorem RND_Min_Pos_bounded_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    RND_Min_Pos_bounded_aux_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
 noncomputable def RND_Min_Pos_canonic_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
   pure ()
@@ -538,6 +552,41 @@ theorem RND_Min_Pos_Rle {beta : Int}
     ⦃⌜0 ≤ r⌝⦄
     RND_Min_Pos_Rle_check (beta:=beta) b radix p r
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r) ≤ r⌝⦄ := by
+  sorry
+
+-- Monotonicity of `RND_Min_Pos` w.r.t. the real input (Coq: RND_Min_Pos_monotone)
+noncomputable def RND_Min_Pos_monotone_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r₁ r₂ : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_Pos_monotone` — for nonnegative `r₁ ≤ r₂`, the lower rounding
+    on nonnegative reals is monotone in the sense that the real value of
+    `RND_Min_Pos r₁` is less than or equal to that of `RND_Min_Pos r₂`.
+    We mirror the statement using the hoare-triple style and defer the proof. -/
+theorem RND_Min_Pos_monotone {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r₁ r₂ : ℝ) :
+    ⦃⌜0 ≤ r₁ ∧ r₁ ≤ r₂⌝⦄
+    RND_Min_Pos_monotone_check (beta:=beta) b radix p r₁ r₂
+    ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₁)
+            ≤ _root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₂)⌝⦄ := by
+  sorry
+
+-- Projector property for `RND_Min_Pos` on canonical inputs (Coq: RND_Min_Pos_projector)
+noncomputable def RND_Min_Pos_projector_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_Pos_projector` — for a canonical nonnegative float `f`,
+    rounding the real value of `f` with `RND_Min_Pos` projects back to `f`.
+    We state this equality at the real level via `F2R` and leave the proof sorry. -/
+theorem RND_Min_Pos_projector {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ _root_.F2R f ∧ Fcanonic (beta:=beta) radix b f⌝⦄
+    RND_Min_Pos_projector_check (beta:=beta) b radix p f
+    ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p (_root_.F2R f))
+            = _root_.F2R f⌝⦄ := by
   sorry
 
 -- Roundings of any real (Coq-style top-level RND operators)
@@ -579,6 +628,50 @@ theorem RND_Max_Pos_canonic {beta : Int}
     ⦃⌜0 ≤ r⌝⦄
     RND_Max_Pos_canonic_check (beta:=beta) b radix p r
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
+-- Lower rounding correctness on nonnegative reals (Coq: RND_Min_Pos_correct)
+noncomputable def RND_Min_Pos_correct_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_Pos_correct` — for nonnegative `r`, `RND_Min_Pos r` is
+    an extremal lower witness captured by `isMin`. -/
+theorem RND_Min_Pos_correct {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    RND_Min_Pos_correct_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r
+              (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
+-- Upper rounding is ≥ the input on nonnegative reals (Coq: RND_Max_Pos_Rle)
+noncomputable def RND_Max_Pos_Rle_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Max_Pos_Rle` — for nonnegative `r`, the value of
+    `RND_Max_Pos r` (interpreted in ℝ) is greater than or equal to `r`. -/
+theorem RND_Max_Pos_Rle {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    RND_Max_Pos_Rle_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜r ≤ _root_.F2R (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
+-- Upper rounding correctness on nonnegative reals (Coq: RND_Max_Pos_correct)
+noncomputable def RND_Max_Pos_correct_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Max_Pos_correct` — for nonnegative `r`, `RND_Max_Pos r` is
+    an extremal upper witness captured by `isMax`. -/
+theorem RND_Max_Pos_correct {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    RND_Max_Pos_correct_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r
+              (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
 -- Roundings of any real (upper rounding)
