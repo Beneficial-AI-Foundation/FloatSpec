@@ -214,6 +214,36 @@ theorem ln_radix_pos (radix : ℝ) :
     ⦃⇓_ => ⌜0 < Real.log radix⌝⦄ := by
   sorry
 
+-- Coq: `exp_ln_powerRZ` — exp (ln u * v) = u^v for integer u>0, v:Z
+noncomputable def exp_ln_powerRZ_check (u v : Int) : Id Unit :=
+  pure ()
+
+theorem exp_ln_powerRZ (u v : Int) :
+    ⦃⌜0 < u⌝⦄
+    exp_ln_powerRZ_check u v
+    ⦃⇓_ => ⌜Real.exp (Real.log (u : ℝ) * (v : ℝ)) = (u : ℝ) ^ v⌝⦄ := by
+  sorry
+
+-- Coq: `exp_le_inv` — if exp x ≤ exp y then x ≤ y
+noncomputable def exp_le_inv_check (x y : ℝ) : Id Unit :=
+  pure ()
+
+theorem exp_le_inv (x y : ℝ) :
+    ⦃⌜Real.exp x ≤ Real.exp y⌝⦄
+    exp_le_inv_check x y
+    ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
+  sorry
+
+-- Coq: `exp_monotone` — if x ≤ y then exp x ≤ exp y
+noncomputable def exp_monotone_check (x y : ℝ) : Id Unit :=
+  pure ()
+
+theorem exp_monotone (x y : ℝ) :
+    ⦃⌜x ≤ y⌝⦄
+    exp_monotone_check x y
+    ⦃⇓_ => ⌜Real.exp x ≤ Real.exp y⌝⦄ := by
+  sorry
+
 -- Coq: `OddSEven` — if n is odd then succ n is even
 noncomputable def OddSEven_check (n : Int) : Id Unit :=
   pure ()
@@ -1829,15 +1859,21 @@ theorem eqExpLess {beta : Int}
               q.Fexp ≤ r.Fexp⌝⦄ := by
   sorry
 
+-- Shift operation on floats (placeholder, no-op). We place it early so that
+-- subsequent lemmas can reference it.
+noncomputable def Fshift {beta : Int}
+    (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    FloatSpec.Core.Defs.FlocqFloat beta := x
+
 -- Coq: `FboundedShiftLess` — if `m ≤ n` and `Fshift radix n f` is bounded,
 -- then `Fshift radix m f` is also bounded.
 noncomputable def FboundedShiftLess_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) : Id Unit :=
   pure ()
 
 theorem FboundedShiftLess {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) :
     ⦃⌜m ≤ n ∧ Fbounded (beta:=beta) b (Fshift (beta:=beta) radix n f)⌝⦄
     FboundedShiftLess_check (beta:=beta) b radix f n m
@@ -1855,7 +1891,7 @@ theorem eqExpMax {beta : Int}
     (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
-        | _root_.F2R p | ≤ _root_.F2R q⌝⦄
+        |_root_.F2R p| ≤ _root_.F2R q⌝⦄
     eqExpMax_check (beta:=beta) b p q
     ⦃⇓_ => ⌜∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
               Fbounded (beta:=beta) b r ∧
@@ -3276,9 +3312,7 @@ noncomputable def maxDiv (v : Int) (p : Nat) : Nat := 0
 -- (moved earlier)
 
 -- Shift operation on floats (placeholder, no-op)
-noncomputable def Fshift {beta : Int}
-    (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
-    FloatSpec.Core.Defs.FlocqFloat beta := x
+-- NOTE: a duplicate placeholder existed later; keep only the early one above.
 
 -- Coq: `FshiftFdigit` — ~is_Fzero x -> Fdigit (Fshift n x) = Fdigit x + n
 noncomputable def FshiftFdigit_check {beta : Int}
