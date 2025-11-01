@@ -1291,11 +1291,19 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `EvenExp` → `EvenExp [FloatSpec/src/Pff/Pff.lean:276]`
  - `OddExp` → `OddExp [FloatSpec/src/Pff/Pff.lean:288]`
  - `FevenOrFodd` → `FevenOrFodd [FloatSpec/src/Pff/Pff.lean:312]`
-- `FevenSucProp` → (no Lean counterpart)
-- `FoddSuc` → (no Lean counterpart)
-- `FevenSuc` → (no Lean counterpart)
-- `FevenFop` → (no Lean counterpart)
-- `FNoddEq` → (no Lean counterpart)
+ - `FevenSucProp` → `FevenSucProp [FloatSpec/src/Pff/Pff.lean:410]`
+ - `FoddSuc` → `FoddSuc [FloatSpec/src/Pff/Pff.lean:428]`
+ - `FevenSuc` → `FevenSuc [FloatSpec/src/Pff/Pff.lean:442]`
+ - `FevenFop` → `FevenFop [FloatSpec/src/Pff/Pff.lean:462]`
+ - `FNoddEq` → `FNoddEq [FloatSpec/src/Pff/Pff.lean:476]`
+ - `FNevenEq` → `FNevenEq [FloatSpec/src/Pff/Pff.lean:494]`
+ - `FNevenFop` → `FNevenFop [FloatSpec/src/Pff/Pff.lean:509]`
+ - `FNoddSuc` → `FNoddSuc [FloatSpec/src/Pff/Pff.lean:523]`
+ - `FNevenSuc` → `FNevenSuc [FloatSpec/src/Pff/Pff.lean:539]`
+ - `FNevenOrFNodd` → `FNevenOrFNodd [FloatSpec/src/Pff/Pff.lean:555]`
+ - `FnOddNEven` → `FnOddNEven [FloatSpec/src/Pff/Pff.lean:568]`
+- `FevenFop` → `FevenFop [FloatSpec/src/Pff/Pff.lean:462]`
+- `FNoddEq` → `FNoddEq [FloatSpec/src/Pff/Pff.lean:476]`
 - `FNevenEq` → (no Lean counterpart)
 - `FNevenFop` → (no Lean counterpart)
 - `FNoddSuc` → (no Lean counterpart)

@@ -413,9 +413,38 @@ theorem FevenSucProp {beta : Int}
     ⦃⌜True⌝⦄
     FevenSucProp_check (beta:=beta) b radix precision p
     ⦃⇓_ => ⌜(Fodd (beta:=beta) p →
-              Feven (beta:=beta) (FNSucc (beta:=beta) b radix precision p)) ∧
+    Feven (beta:=beta) (FNSucc (beta:=beta) b radix precision p)) ∧
             (Feven (beta:=beta) p →
               Fodd (beta:=beta) (FNSucc (beta:=beta) b radix precision p))⌝⦄ := by
+  sorry
+
+-- Parity corollaries for successor (Coq: FoddSuc / FevenSuc)
+noncomputable def FoddSuc_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FoddSuc` — if a float is odd, its successor is even. -/
+theorem FoddSuc {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fodd (beta:=beta) p⌝⦄
+    FoddSuc_check (beta:=beta) b radix precision p
+    ⦃⇓_ => ⌜Feven (beta:=beta) (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
+  sorry
+
+noncomputable def FevenSuc_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FevenSuc` — if a float is even, its successor is odd. -/
+theorem FevenSuc {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Feven (beta:=beta) p⌝⦄
+    FevenSuc_check (beta:=beta) b radix precision p
+    ⦃⇓_ => ⌜Fodd (beta:=beta) (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
   sorry
 
 -- EvenClosest: closest rounding with tie-breaking toward even (or uniqueness)
@@ -440,6 +469,125 @@ theorem EvenClosestTotal {beta : Int}
     EvenClosestTotal_check (beta:=beta) b radix precision r
     ⦃⇓_ => ⌜∃ p : FloatSpec.Core.Defs.FlocqFloat beta,
             EvenClosest (beta:=beta) b radix precision r p⌝⦄ := by
+  sorry
+
+-- Parity under negation (Coq: FevenFop)
+noncomputable def FevenFop_check {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FevenFop` — if a float is even, its negation is even. -/
+theorem FevenFop {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Feven (beta:=beta) p⌝⦄
+    FevenFop_check (beta:=beta) p
+    ⦃⇓_ => ⌜Feven (beta:=beta) (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
+  sorry
+
+-- Normalized-odd is preserved under equal real value (Coq: FNoddEq)
+noncomputable def FNoddEq_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FNoddEq` — if `f1` and `f2` are bounded, have equal real value,
+    and `f1` is FNodd, then `f2` is FNodd. -/
+theorem FNoddEq {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b f1 ∧ Fbounded (beta:=beta) b f2 ∧
+        _root_.F2R f1 = _root_.F2R f2 ∧ FNodd (beta:=beta) b radix precision f1⌝⦄
+    FNoddEq_check (beta:=beta) b radix precision f1 f2
+    ⦃⇓_ => ⌜FNodd (beta:=beta) b radix precision f2⌝⦄ := by
+  sorry
+
+-- Normalized-even is preserved under equal real value (Coq: FNevenEq)
+noncomputable def FNevenEq_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FNevenEq` — if `f1` and `f2` are bounded, have equal real value,
+    and `f1` is FNeven, then `f2` is FNeven. -/
+theorem FNevenEq {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b f1 ∧ Fbounded (beta:=beta) b f2 ∧
+        _root_.F2R f1 = _root_.F2R f2 ∧ FNeven (beta:=beta) b radix precision f1⌝⦄
+    FNevenEq_check (beta:=beta) b radix precision f1 f2
+    ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision f2⌝⦄ := by
+  sorry
+
+-- Normalized-even under negation (Coq: FNevenFop)
+noncomputable def FNevenFop_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FNevenFop` — if a float is normalized-even, its negation is normalized-even. -/
+theorem FNevenFop {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜FNeven (beta:=beta) b radix precision p⌝⦄
+    FNevenFop_check (beta:=beta) b radix precision p
+    ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
+  sorry
+
+-- Successor parity for normalized predicates (Coq: FNoddSuc / FNevenSuc)
+noncomputable def FNoddSuc_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FNoddSuc` — for bounded `p`, normalized-odd implies successor is normalized-even. -/
+theorem FNoddSuc {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧ FNodd (beta:=beta) b radix precision p⌝⦄
+    FNoddSuc_check (beta:=beta) b radix precision p
+    ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
+  sorry
+
+noncomputable def FNevenSuc_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FNevenSuc` — for bounded `p`, normalized-even implies successor is normalized-odd. -/
+theorem FNevenSuc {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧ FNeven (beta:=beta) b radix precision p⌝⦄
+    FNevenSuc_check (beta:=beta) b radix precision p
+    ⦃⇓_ => ⌜FNodd (beta:=beta) b radix precision (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
+  sorry
+
+-- Disjunction for normalized parity (Coq: FNevenOrFNodd)
+noncomputable def FNevenOrFNodd_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FNevenOrFNodd {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    FNevenOrFNodd_check (beta:=beta) b radix precision p
+    ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision p ∨ FNodd (beta:=beta) b radix precision p⌝⦄ := by
+  sorry
+
+-- Incompatibility of normalized odd and even (Coq: FnOddNEven)
+noncomputable def FnOddNEven_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (n : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FnOddNEven {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (n : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜FNodd (beta:=beta) b radix precision n⌝⦄
+    FnOddNEven_check (beta:=beta) b radix precision n
+    ⦃⇓_ => ⌜¬ FNeven (beta:=beta) b radix precision n⌝⦄ := by
   sorry
 
 -- Existence of a closest representation (Coq: `ClosestTotal`)
