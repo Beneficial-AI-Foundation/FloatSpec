@@ -165,6 +165,16 @@ theorem Odd1 :
     ⦃⇓_ => ⌜Odd (1 : Int)⌝⦄ := by
   sorry
 
+-- Coq: `EvenO` — zero is even (integer parity)
+noncomputable def EvenO_check : Id Unit :=
+  pure ()
+
+theorem EvenO :
+    ⦃⌜True⌝⦄
+    EvenO_check
+    ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
+  sorry
+
 -- Coq: `OddOpp` — odd is preserved by integer negation
 noncomputable def OddOpp_check (z : Int) : Id Unit :=
   pure ()
@@ -807,6 +817,99 @@ theorem ClosestOpp {beta : Int}
     ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
     ClosestOpp_check (beta:=beta) bo radix p r
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (-r) (Fopp p)⌝⦄ := by
+  sorry
+
+-- Absolute-value symmetry on the real side (Coq: `ClosestFabs`)
+noncomputable def ClosestFabs_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestFabs` — if `p` is a closest representation of `r`, then
+    `Fabs p` is a closest representation of `|r|`. -/
+theorem ClosestFabs {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
+    ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
+    ClosestFabs_check (beta:=beta) bo radix p r
+    ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (|r|) (Fabs p)⌝⦄ := by
+  sorry
+
+-- Ulp inequality for closest rounding (Coq: `ClosestUlp`)
+noncomputable def ClosestUlp_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestUlp` — if `q` is a closest representation of `p`, then
+    `2 * |p - F2R q| ≤ ulp radix (FLT_exp ...) (F2R q)`. We keep the skeleton
+    form referencing the Compat.lean `ulp` bridge. -/
+theorem ClosestUlp {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Closest (beta:=beta) bo radix p q⌝⦄
+    ClosestUlp_check (beta:=beta) bo radix p q
+    ⦃⇓_ => ⌜True⌝⦄ := by
+  sorry
+
+-- Exponent inequality from closest error (Coq: `ClosestExp`)
+noncomputable def ClosestExp_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : Int) (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `ClosestExp` — a strict bound on `(2 * |x - F2R q|)` implies
+    `powerRZ radix p ≤ powerRZ radix (Fexp q)`. Skeleton only. -/
+theorem ClosestExp {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p : Int) (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Closest (beta:=beta) bo radix x q ∧ (2 * |x - _root_.F2R q| : ℝ) ≤ (beta : ℝ) ^ p⌝⦄
+    ClosestExp_check (beta:=beta) bo radix p x q
+    ⦃⇓_ => ⌜(beta : ℝ) ^ p ≤ (beta : ℝ) ^ (Fexp q)⌝⦄ := by
+  sorry
+
+-- Strict error-exp implication (Coq: `ClosestErrorExpStrict`)
+noncomputable def ClosestErrorExpStrict_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) : Id Unit :=
+  pure ()
+
+theorem ClosestErrorExpStrict {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
+    ⦃⌜Fbounded (beta:=beta) bo p ∧ Fbounded (beta:=beta) bo q ∧
+        Closest (beta:=beta) bo radix x p ∧ _root_.F2R q = x - _root_.F2R p ∧
+        _root_.F2R q ≠ 0⌝⦄
+    ClosestErrorExpStrict_check (beta:=beta) bo radix p q x
+    ⦃⇓_ => ⌜Fexp q < Fexp p⌝⦄ := by
+  sorry
+
+-- Idempotence property for Closest (Coq: `ClosestIdem`)
+noncomputable def ClosestIdem_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem ClosestIdem {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix (_root_.F2R p) q⌝⦄
+    ClosestIdem_check (beta:=beta) bo radix p q
+    ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
+  sorry
+
+-- Inequality lifting for scaling by radix halves (Coq: `FmultRadixInv`)
+noncomputable def FmultRadixInv_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (x z : FloatSpec.Core.Defs.FlocqFloat beta) (y : ℝ) : Id Unit :=
+  pure ()
+
+theorem FmultRadixInv {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ)
+    (x z : FloatSpec.Core.Defs.FlocqFloat beta) (y : ℝ) :
+    ⦃⌜Fbounded (beta:=beta) bo x ∧ Closest (beta:=beta) bo radix y z ∧ (1/2 : ℝ) * _root_.F2R x < y⌝⦄
+    FmultRadixInv_check (beta:=beta) bo radix x z y
+    ⦃⇓_ => ⌜(1/2 : ℝ) * _root_.F2R x ≤ _root_.F2R z⌝⦄ := by
   sorry
 
 -- Symmetric property of Closest (Coq: `ClosestSymmetric`)

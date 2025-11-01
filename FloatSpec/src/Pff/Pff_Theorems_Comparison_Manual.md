@@ -1275,7 +1275,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `EvenSOddInv` → `EvenSOddInv [FloatSpec/src/Pff/Pff.lean:103]`
 - `OddSEvenInv` → (no Lean counterpart)
 - `EvenSOddInv` → (no Lean counterpart)
-- `EvenO` → (no Lean counterpart)
+- `EvenO` → `EvenO [FloatSpec/src/Pff/Pff.lean:136]`
 - `Odd1` → (no Lean counterpart)
 - `OddOpp` → (no Lean counterpart)
 - `EvenOpp` → (no Lean counterpart)
@@ -1427,13 +1427,13 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `EvenClosestUniqueP` → `EvenClosestUniqueP [FloatSpec/src/Pff/Pff.lean:549]`
  - `ClosestSymmetric` → `ClosestSymmetric [FloatSpec/src/Pff/Pff.lean:420]`
  - `EvenClosestSymmetric` → `EvenClosestSymmetric [FloatSpec/src/Pff/Pff.lean:539]`
-- `ClosestOpp` → (no Lean counterpart)
-- `ClosestFabs` → (no Lean counterpart)
-- `ClosestUlp` → (no Lean counterpart)
-- `ClosestExp` → (no Lean counterpart)
-- `ClosestErrorExpStrict` → (no Lean counterpart)
-- `ClosestIdem` → (no Lean counterpart)
-- `FmultRadixInv` → (no Lean counterpart)
+-- `ClosestOpp` → `ClosestOpp [FloatSpec/src/Pff/Pff.lean:815]`
+-- `ClosestFabs` → `ClosestFabs [FloatSpec/src/Pff/Pff.lean:830]`
+-- `ClosestUlp` → `ClosestUlp [FloatSpec/src/Pff/Pff.lean:842]`
+-- `ClosestExp` → `ClosestExp [FloatSpec/src/Pff/Pff.lean:858]`
+-- `ClosestErrorExpStrict` → `ClosestErrorExpStrict [FloatSpec/src/Pff/Pff.lean:874]`
+-- `ClosestIdem` → `ClosestIdem [FloatSpec/src/Pff/Pff.lean:892]`
+-- `FmultRadixInv` → `FmultRadixInv [FloatSpec/src/Pff/Pff.lean:905]`
 - `ClosestErrorBound` → (no Lean counterpart)
 - `ClosestErrorBoundNormal_aux` → (no Lean counterpart)
 - `ClosestErrorBoundNormal` → (no Lean counterpart)
