@@ -2954,6 +2954,26 @@ theorem mZlist_correct (p q r : Int) :
     ⦃⇓_ => ⌜List.Mem r (mZlist p q)⌝⦄ := by
   sorry
 
+noncomputable def mZlist_correct_rev1_check (p q r : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `mZlist_correct_rev1` — membership implies lower bound `p ≤ r`. -/
+theorem mZlist_correct_rev1 (p q r : Int) :
+    ⦃⌜List.Mem r (mZlist p q)⌝⦄
+    mZlist_correct_rev1_check p q r
+    ⦃⇓_ => ⌜p ≤ r⌝⦄ := by
+  sorry
+
+noncomputable def mZlist_correct_rev2_check (p q r : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `mZlist_correct_rev2` — membership implies upper bound `r ≤ q`. -/
+theorem mZlist_correct_rev2 (p q r : Int) :
+    ⦃⌜List.Mem r (mZlist p q)⌝⦄
+    mZlist_correct_rev2_check p q r
+    ⦃⇓_ => ⌜r ≤ q⌝⦄ := by
+  sorry
+
 -- Legacy floating-point format compatibility
 structure PffFloat where
   mantissa : Int
