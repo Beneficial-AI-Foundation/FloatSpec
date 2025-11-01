@@ -244,6 +244,28 @@ theorem exp_monotone (x y : ℝ) :
     ⦃⇓_ => ⌜Real.exp x ≤ Real.exp y⌝⦄ := by
   sorry
 
+-- Coq: `firstNormalPos_eq` — value of the first normal positive float
+noncomputable def firstNormalPos {beta : Int}
+    (radix : Int) (b : Fbound_skel) (p : Int) :
+    FloatSpec.Core.Defs.FlocqFloat beta :=
+  -- Skeleton representative; concrete construction deferred to Core.
+  ⟨1, Int.pred p + - b.dExp⟩
+
+noncomputable def firstNormalPos_eq_check {beta : Int}
+    (radix : Int) (b : Fbound_skel) (p : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `firstNormalPos_eq` — states that interpreting the `firstNormalPos`
+    float at base `radix` equals `(radix : ℝ)^(pred p + - b.dExp)`.
+    We mirror the statement with the project's Hoare triple style; proof deferred. -/
+theorem firstNormalPos_eq {beta : Int}
+    (radix : Int) (b : Fbound_skel) (p : Int) :
+    ⦃⌜True⌝⦄
+    firstNormalPos_eq_check (beta:=beta) radix b p
+    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p)
+            = (radix : ℝ) ^ (Int.pred p + - b.dExp)⌝⦄ := by
+  sorry
+
 -- Coq: `OddSEven` — if n is odd then succ n is even
 noncomputable def OddSEven_check (n : Int) : Id Unit :=
   pure ()
