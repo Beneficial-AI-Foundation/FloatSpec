@@ -1066,12 +1066,13 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 -- `powerRZ_le` → `powerRZ_le [FloatSpec/src/Pff/Pff.lean:351]`
 -- `Rlt_powerRZ` → `Rlt_powerRZ [FloatSpec/src/Pff/Pff.lean:361]`
  - `Zpower_nat_powerRZ_absolu` → (no Lean counterpart)
--- `powerRZ_R1` → (no Lean counterpart)
--- `Rle_powerRZ` → `Rle_powerRZ [FloatSpec/src/Pff/Pff.lean:371]`
--- `Zlt_powerRZ` → `Zlt_powerRZ [FloatSpec/src/Pff/Pff.lean:381]`
--- `Zle_powerRZ` → `Zle_powerRZ [FloatSpec/src/Pff/Pff.lean:391]`
-- `Rinv_powerRZ` → `Rinv_powerRZ [FloatSpec/src/Pff/Pff.lean:801]`
--- `floatEq` → `floatEq [FloatSpec/src/Pff/Pff.lean:580]`
+ -- `powerRZ_R1` → (no Lean counterpart)
+ -- `Rle_powerRZ` → `Rle_powerRZ [FloatSpec/src/Pff/Pff.lean:371]`
+ -- `Zlt_powerRZ` → `Zlt_powerRZ [FloatSpec/src/Pff/Pff.lean:381]`
+ -- `Zle_powerRZ` → `Zle_powerRZ [FloatSpec/src/Pff/Pff.lean:391]`
+ - `Rinv_powerRZ` → `Rinv_powerRZ [FloatSpec/src/Pff/Pff.lean:801]`
+ - `firstNormalPos_eq` → `firstNormalPos_eq [FloatSpec/src/Pff/Pff.lean:262]`
+ -- `floatEq` → `floatEq [FloatSpec/src/Pff/Pff.lean:580]`
 -- `floatDec` → `floatDec [FloatSpec/src/Pff/Pff.lean:592]`
 -- `FzeroisReallyZero` → `FzeroisReallyZero [FloatSpec/src/Pff/Pff.lean:620]`
 -- `is_Fzero_rep1` → `is_Fzero_rep1 [FloatSpec/src/Pff/Pff.lean:631]`
