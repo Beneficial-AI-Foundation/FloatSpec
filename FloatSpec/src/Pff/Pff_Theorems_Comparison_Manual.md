@@ -924,9 +924,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - theorem: `abs_inv_compat` (Pff.lean:64)
 
 ### Mapping (Coq → Lean)
-- `Even_0` → `even_0` (Pff.lean:18) (content-equivalent)
-- `Even_1` → `not_even_1` (Pff.lean:22) (content-equivalent)
-- `min_or` → `min_or [FloatSpec/src/Pff/Pff.lean:1094]`
+-- `Even_0` → `Even_0 [FloatSpec/src/Pff/Pff.lean:51]`
+-- `Even_1` → `Even_1 [FloatSpec/src/Pff/Pff.lean:61]`
+- `min_or` → `min_or [FloatSpec/src/Pff/Pff.lean:1137]`
 - `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:1463]`
 - `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:1336]`
 - `inject_nat_convert` → `inject_nat_convert [FloatSpec/src/Pff/Pff.lean:1411]`
@@ -964,8 +964,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `digitAdd` → `digitAdd [FloatSpec/src/Pff/Pff.lean:2435]`
 - `digit_abs` → `digit_abs [FloatSpec/src/Pff/Pff.lean:2445]`
 - `digit_anti_monotone_lt` → `digit_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:2455]`
-- `Odd_0` → `not_odd_0` (Pff.lean:25) (content-equivalent)
-- `Odd_1` → `odd_1` (Pff.lean:20) (content-equivalent)
+-- `Odd_0` → `Odd_0 [FloatSpec/src/Pff/Pff.lean:71]`
+-- `Odd_1` → `Odd_1 [FloatSpec/src/Pff/Pff.lean:81]`
 - `min_or` → (no Lean counterpart)
 - `min_or` → `min_or` (Pff.lean:68)
 - `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:526]`

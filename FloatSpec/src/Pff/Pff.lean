@@ -41,6 +41,49 @@ theorem even_iff_double (n : Nat) : nat_even n ↔ n = nat_double (nat_div2 n) :
 theorem odd_iff_double (n : Nat) : nat_odd n ↔ n = nat_double (nat_div2 n) + 1 := by
   sorry
 
+-- ---------------------------------------------------------------------------
+-- Missing parity lemmas over Nat (Coq compatibility)
+
+noncomputable def Even_0_check : Id Unit :=
+  pure ()
+
+/-- Coq: `Even_0` — 0 is even. -/
+theorem Even_0 :
+    ⦃⌜True⌝⦄
+    Even_0_check
+    ⦃⇓_ => ⌜nat_even 0⌝⦄ := by
+  sorry
+
+noncomputable def Even_1_check : Id Unit :=
+  pure ()
+
+/-- Coq: `Even_1` — 1 is not even. -/
+theorem Even_1 :
+    ⦃⌜True⌝⦄
+    Even_1_check
+    ⦃⇓_ => ⌜¬ nat_even 1⌝⦄ := by
+  sorry
+
+noncomputable def Odd_0_check : Id Unit :=
+  pure ()
+
+/-- Coq: `Odd_0` — 0 is not odd. -/
+theorem Odd_0 :
+    ⦃⌜True⌝⦄
+    Odd_0_check
+    ⦃⇓_ => ⌜¬ nat_odd 0⌝⦄ := by
+  sorry
+
+noncomputable def Odd_1_check : Id Unit :=
+  pure ()
+
+/-- Coq: `Odd_1` — 1 is odd. -/
+theorem Odd_1 :
+    ⦃⌜True⌝⦄
+    Odd_1_check
+    ⦃⇓_ => ⌜nat_odd 1⌝⦄ := by
+  sorry
+
 -- Legacy tactical support (simplified)
 section LegacyTactics
 
