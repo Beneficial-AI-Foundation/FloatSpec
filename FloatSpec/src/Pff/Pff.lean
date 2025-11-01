@@ -359,6 +359,15 @@ def UniqueP {α : Type} (P : ℝ → α → Prop) : Prop :=
 -- Projector property placeholder
 def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop := True
 
+-- ---------------------------------------------------------------------------
+-- Ulp placeholder (Coq-style `Fulp` on floats)
+
+/-- Coq compatibility: abstract ulp on a float. In detailed developments,
+`Fulp` ties to `ulp beta (FLT_exp ...) (F2R q)`. We keep it abstract here so
+theorems can be stated and proved elsewhere. -/
+noncomputable def Fulp {beta : Int} (q : FloatSpec.Core.Defs.FlocqFloat beta) : ℝ :=
+  1
+
 -- Minimal skeletons for min/max rounding predicates used by Pff.v theorems
 structure Fbound_skel where
   -- Minimal exponent field needed by several Pff theorems (e.g. RleRoundedAbs)
@@ -1163,6 +1172,22 @@ theorem RoundedModeProjectorIdemEq {beta : Int}
     ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧ P (_root_.F2R p) q⌝⦄
     RoundedModeProjectorIdemEq_check (beta:=beta) b radix P p q
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
+  sorry
+
+-- Coq: `RoundedModeUlp` — under a rounded mode P and P p q, |p - q| < Fulp q
+noncomputable def RoundedModeUlp_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem RoundedModeUlp {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
+    (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜RoundedModeP P ∧ P p q⌝⦄
+    RoundedModeUlp_check (beta:=beta) b radix P p q
+    ⦃⇓_ => ⌜|p - _root_.F2R q| < Fulp (beta:=beta) q⌝⦄ := by
   sorry
 
 -- Coq: `RoundedModeMult` — monotonicity wrt scaling by radix

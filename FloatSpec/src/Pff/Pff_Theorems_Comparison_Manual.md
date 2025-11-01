@@ -1380,7 +1380,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `CanonicFulp` → (no Lean counterpart)
 - `FSuccUlpPos` → (no Lean counterpart)
 - `FulpFabs` → (no Lean counterpart)
-- `RoundedModeUlp` → (no Lean counterpart)
+- `RoundedModeUlp` → `RoundedModeUlp [FloatSpec/src/Pff/Pff.lean:1184]`
 - `RoundedModeErrorExpStrict` → (no Lean counterpart)
 - `RoundedModeProjectorIdem` → (no Lean counterpart)
 - `RoundedModeBounded` → (no Lean counterpart)
