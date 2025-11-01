@@ -1937,6 +1937,39 @@ theorem Zdivides1 (m : Int) :
     ⦃⇓_ => ⌜Zdivides m 1⌝⦄ := by
   sorry
 
+-- Coq: `ZDividesLe` — if n ≠ 0 and n divides m then |m| ≤ |n|
+noncomputable def ZDividesLe_check (n m : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `ZDividesLe` — divisibility bounds the absolute value. -/
+theorem ZDividesLe (n m : Int) :
+    ⦃⌜n ≠ 0 ∧ Zdivides n m⌝⦄
+    ZDividesLe_check n m
+    ⦃⇓_ => ⌜|m| ≤ |n|⌝⦄ := by
+  sorry
+
+-- Coq: `NotDividesDigit` — if 1 < r and v ≠ 0 then v does not divide r^(digit r v)
+noncomputable def NotDividesDigit_check (r v : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `NotDividesDigit` — no divisibility at the digit boundary. -/
+theorem NotDividesDigit (r v : Int) :
+    ⦃⌜1 < r ∧ v ≠ 0⌝⦄
+    NotDividesDigit_check r v
+    ⦃⇓_ => ⌜¬ Zdivides v (Zpower_nat r (digit r v))⌝⦄ := by
+  sorry
+
+-- Coq: `ZquotientPos` — if z1 ≥ 0 and z2 ≥ 0 then Zquotient z1 z2 ≥ 0
+noncomputable def ZquotientPos_check (z1 z2 : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `ZquotientPos` — positivity of quotient under nonnegativity hypotheses. -/
+theorem ZquotientPos (z1 z2 : Int) :
+    ⦃⌜0 ≤ z1 ∧ 0 ≤ z2⌝⦄
+    ZquotientPos_check z1 z2
+    ⦃⇓_ => ⌜0 ≤ Zquotient z1 z2⌝⦄ := by
+  sorry
+
 -- Coq: `inject_nat_convert` — if p = Zpos q then Z_of_nat (nat_of_P q) = p
 noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Id Unit :=
   pure ()

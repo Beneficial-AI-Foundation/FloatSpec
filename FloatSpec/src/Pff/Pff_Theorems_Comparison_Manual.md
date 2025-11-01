@@ -1325,14 +1325,15 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `inj_oZ1` → `inj_oZ1 [FloatSpec/src/Pff/Pff.lean:1113]`
 - `ZquotientProp` → (no Lean counterpart)
 - `ZquotientPos` → (no Lean counterpart)
+- `ZquotientPos` → `ZquotientPos [FloatSpec/src/Pff/Pff.lean:1965]`
 - `ZdividesZquotient` → (no Lean counterpart)
 - `ZdividesZquotientInv` → `ZdividesZquotientInv [FloatSpec/src/Pff/Pff.lean:1455]`
 - `ZdividesMult` → `ZdividesMult [FloatSpec/src/Pff/Pff.lean:1463]`
 - `Zeq_mult_simpl` → `Zeq_mult_simpl [FloatSpec/src/Pff/Pff.lean:1473]`
 - `ZdividesDiv` → `ZdividesDiv [FloatSpec/src/Pff/Pff.lean:1488]`
 - `Zdivides1` → `Zdivides1 [FloatSpec/src/Pff/Pff.lean:1498]`
-- `NotDividesDigit` → (no Lean counterpart)
-- `ZDividesLe` → (no Lean counterpart)
+- `NotDividesDigit` → `NotDividesDigit [FloatSpec/src/Pff/Pff.lean:1951]`
+- `ZDividesLe` → `ZDividesLe [FloatSpec/src/Pff/Pff.lean:1945]`
 - `maxDivLess` → (no Lean counterpart)
 - `maxDivLt` → (no Lean counterpart)
 - `maxDivCorrect` → (no Lean counterpart)
