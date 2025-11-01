@@ -1391,8 +1391,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `RleMaxR0` → `RleMaxR0 [FloatSpec/src/Pff/Pff.lean:255]`
  - `RleRoundedLessR0` → `RleRoundedLessR0 [FloatSpec/src/Pff/Pff.lean:267]`
  - `PminPos` → (no Lean counterpart)
- - `div2IsBetweenPos` → (no Lean counterpart)
-- `div2IsBetween` → (no Lean counterpart)
+- `div2IsBetweenPos` → `div2IsBetweenPos [FloatSpec/src/Pff/Pff.lean:948]`
+- `div2IsBetween` → `div2IsBetween [FloatSpec/src/Pff/Pff.lean:965]`
 - `RoundedModeMultAbs` → (no Lean counterpart)
 - `isMinComp` → (no Lean counterpart)
 - `isMaxComp` → (no Lean counterpart)

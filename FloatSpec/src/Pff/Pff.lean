@@ -172,7 +172,7 @@ noncomputable def EvenO_check : Id Unit :=
 theorem EvenO :
     ⦃⌜True⌝⦄
     EvenO_check
-    ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
+  ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
   sorry
 
 -- Coq: `OddOpp` — odd is preserved by integer negation
@@ -865,7 +865,7 @@ theorem ClosestExp {beta : Int}
     (p : Int) (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix x q ∧ (2 * |x - _root_.F2R q| : ℝ) ≤ (beta : ℝ) ^ p⌝⦄
     ClosestExp_check (beta:=beta) bo radix p x q
-    ⦃⇓_ => ⌜(beta : ℝ) ^ p ≤ (beta : ℝ) ^ (Fexp q)⌝⦄ := by
+    ⦃⇓_ => ⌜(beta : ℝ) ^ p ≤ (beta : ℝ) ^ (q.Fexp)⌝⦄ := by
   sorry
 
 -- Strict error-exp implication (Coq: `ClosestErrorExpStrict`)
@@ -881,7 +881,7 @@ theorem ClosestErrorExpStrict {beta : Int}
         Closest (beta:=beta) bo radix x p ∧ _root_.F2R q = x - _root_.F2R p ∧
         _root_.F2R q ≠ 0⌝⦄
     ClosestErrorExpStrict_check (beta:=beta) bo radix p q x
-    ⦃⇓_ => ⌜Fexp q < Fexp p⌝⦄ := by
+    ⦃⇓_ => ⌜q.Fexp < p.Fexp⌝⦄ := by
   sorry
 
 -- Idempotence property for Closest (Coq: `ClosestIdem`)
@@ -929,6 +929,47 @@ theorem ClosestSymmetric {beta : Int}
     ⦃⌜True⌝⦄
     ClosestSymmetric_check (beta:=beta) bo radix
     ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
+  sorry
+
+/-!
+Div-by-2 midpoint characterizations (ported from Coq Pff.v)
+
+We introduce the Hoare-style statements for `div2IsBetweenPos` and
+`div2IsBetween`. Proofs are deferred (`sorry`) per the import process.
+-/
+
+-- Coq: `div2IsBetweenPos` — if 0 ≤ p and min/max are the rounded bounds of p/2,
+-- then F2R p = F2R min + F2R max
+noncomputable def div2IsBetweenPos_check {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min max : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem div2IsBetweenPos {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min max : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜0 ≤ _root_.F2R p ∧
+        Fbounded (beta:=beta) b p ∧
+        isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) min ∧
+        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max⌝⦄
+    div2IsBetweenPos_check (beta:=beta) b radix p min max
+    ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min + _root_.F2R max⌝⦄ := by
+  sorry
+
+-- Coq: `div2IsBetween` — same as above without the nonnegativity side-condition
+noncomputable def div2IsBetween_check {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min max : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem div2IsBetween {beta : Int}
+    (b : Fbound_skel) (radix : Int)
+    (p min max : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧
+        isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) min ∧
+        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max⌝⦄
+    div2IsBetween_check (beta:=beta) b radix p min max
+    ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min + _root_.F2R max⌝⦄ := by
   sorry
 
 -- Compatibility of `EvenClosest` (Coq: `EvenClosestCompatible`)
@@ -3073,15 +3114,7 @@ theorem Zlt_Zabs_Zpred (z1 z2 : Int) :
     ⦃⇓_ => ⌜|Int.succ z1| < z2⌝⦄ := by
   sorry
 
--- Coq: `EvenO` — Even 0
-noncomputable def EvenO_check : Id Unit :=
-  pure ()
-
-theorem EvenO :
-    ⦃⌜True⌝⦄
-    EvenO_check
-    ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
-  sorry
+-- (removed duplicate EvenO declarations)
 
 -- Coq: `Zlt_not_eq_rev` — if q < p then p ≠ q
 noncomputable def Zlt_not_eq_rev_check (p q : Int) : Id Unit :=
