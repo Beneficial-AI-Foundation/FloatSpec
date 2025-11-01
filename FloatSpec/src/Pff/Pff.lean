@@ -185,6 +185,36 @@ theorem EvenOpp (z : Int) :
     ⦃⇓_ => ⌜Even (-z)⌝⦄ := by
   sorry
 
+-- Coq: `OddEvenDec` — for any integer, it is either odd or even
+noncomputable def OddEvenDec_check (n : Int) : Id Unit :=
+  pure ()
+
+theorem OddEvenDec (n : Int) :
+    ⦃⌜True⌝⦄
+    OddEvenDec_check n
+    ⦃⇓_ => ⌜Odd n ∨ Even n⌝⦄ := by
+  sorry
+
+-- Coq: `OddNEven` — odd numbers are not even
+noncomputable def OddNEven_check (n : Int) : Id Unit :=
+  pure ()
+
+theorem OddNEven (n : Int) :
+    ⦃⌜Odd n⌝⦄
+    OddNEven_check n
+    ⦃⇓_ => ⌜¬ Even n⌝⦄ := by
+  sorry
+
+-- Coq: `EvenNOdd` — even numbers are not odd
+noncomputable def EvenNOdd_check (n : Int) : Id Unit :=
+  pure ()
+
+theorem EvenNOdd (n : Int) :
+    ⦃⌜Even n⌝⦄
+    EvenNOdd_check n
+    ⦃⇓_ => ⌜¬ Odd n⌝⦄ := by
+  sorry
+
 -- Coq: `EvenPlus1` — if n and m are even then n + m is even
 noncomputable def EvenPlus1_check (n m : Int) : Id Unit :=
   pure ()
@@ -193,6 +223,99 @@ theorem EvenPlus1 (n m : Int) :
     ⦃⌜Even n ∧ Even m⌝⦄
     EvenPlus1_check n m
     ⦃⇓_ => ⌜Even (n + m)⌝⦄ := by
+  sorry
+
+-- Coq: `OddPlus2` — if n is even and m is odd then n + m is odd
+noncomputable def OddPlus2_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem OddPlus2 (n m : Int) :
+    ⦃⌜Even n ∧ Odd m⌝⦄
+    OddPlus2_check n m
+    ⦃⇓_ => ⌜Odd (n + m)⌝⦄ := by
+  sorry
+
+-- Coq: `EvenMult1` — if n is even then n*m is even
+noncomputable def EvenMult1_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem EvenMult1 (n m : Int) :
+    ⦃⌜Even n⌝⦄
+    EvenMult1_check n m
+    ⦃⇓_ => ⌜Even (n * m)⌝⦄ := by
+  sorry
+
+-- Coq: `EvenMult2` — if m is even then n*m is even
+noncomputable def EvenMult2_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem EvenMult2 (n m : Int) :
+    ⦃⌜Even m⌝⦄
+    EvenMult2_check n m
+    ⦃⇓_ => ⌜Even (n * m)⌝⦄ := by
+  sorry
+
+-- Coq: `OddMult` — if n and m are odd then n*m is odd
+noncomputable def OddMult_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem OddMult (n m : Int) :
+    ⦃⌜Odd n ∧ Odd m⌝⦄
+    OddMult_check n m
+    ⦃⇓_ => ⌜Odd (n * m)⌝⦄ := by
+  sorry
+
+-- Coq: `EvenMultInv` — if n*m is even and n is odd then m is even
+noncomputable def EvenMultInv_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem EvenMultInv (n m : Int) :
+    ⦃⌜Even (n * m) ∧ Odd n⌝⦄
+    EvenMultInv_check n m
+    ⦃⇓_ => ⌜Even m⌝⦄ := by
+  sorry
+
+-- Integer power on Int for natural exponent (compat with Coq Zpower_nat)
+noncomputable def Zpower_nat_int (n : Int) (k : Nat) : Int := n ^ k
+
+-- Coq: `EvenExp` — if n is even then n^(S m) is even (nat exponent)
+noncomputable def EvenExp_check (n : Int) (m : Nat) : Id Unit :=
+  pure ()
+
+theorem EvenExp (n : Int) (m : Nat) :
+    ⦃⌜Even n⌝⦄
+    EvenExp_check n m
+    ⦃⇓_ => ⌜Even (Zpower_nat_int n (Nat.succ m))⌝⦄ := by
+  sorry
+
+-- Coq: `OddExp` — if n is odd then n^m is odd (nat exponent)
+noncomputable def OddExp_check (n : Int) (m : Nat) : Id Unit :=
+  pure ()
+
+theorem OddExp (n : Int) (m : Nat) :
+    ⦃⌜Odd n⌝⦄
+    OddExp_check n m
+    ⦃⇓_ => ⌜Odd (Zpower_nat_int n m)⌝⦄ := by
+  sorry
+
+-- Float-level parity wrappers and lemmas (Lean skeletons mirroring Coq)
+def Feven {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Even p.Fnum
+
+def Fodd {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Odd p.Fnum
+
+noncomputable def FevenOrFodd_check {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FevenOrFodd {beta : Int}
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    FevenOrFodd_check (beta:=beta) p
+    ⦃⇓_ => ⌜Feven (beta:=beta) p ∨ Fodd (beta:=beta) p⌝⦄ := by
   sorry
 
 -- ---------------------------------------------------------------------------
