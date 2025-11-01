@@ -1675,7 +1675,7 @@ lemma round_round_minus_aux
     General double-rounding property for sums under the structural
     hypothesis `round_round_plus_hyp`. No sign constraints; this is the
     sign-split consolidation of the `aux` lemmas. -/
-lemma round_round_plus
+lemma round_round_plus'
   (fexp1 fexp2 : Int → Int)
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
