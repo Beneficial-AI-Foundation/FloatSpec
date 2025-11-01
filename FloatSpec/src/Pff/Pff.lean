@@ -2442,6 +2442,48 @@ theorem oppBounded {beta : Int}
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄ := by
   sorry
 
+-- Coq: `oppBoundedInv` — boundedness inversion under negation
+noncomputable def oppBoundedInv_check {beta : Int}
+    (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `oppBoundedInv` — if `Fopp x` is bounded then `x` is bounded.
+    Hoare-triple style statement mirroring Pff.v; proof deferred. -/
+theorem oppBoundedInv {beta : Int}
+    (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄
+    oppBoundedInv_check (beta:=beta) b x
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b x⌝⦄ := by
+  sorry
+
+-- Coq: `absFBounded` — boundedness preserved under absolute value
+noncomputable def absFBounded_check {beta : Int}
+    (b : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `absFBounded` — if `f` is bounded then `Fabs f` is also bounded.
+    Hoare-triple style statement; proof deferred. -/
+theorem absFBounded {beta : Int}
+    (b : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b f⌝⦄
+    absFBounded_check (beta:=beta) b f
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fabs f)⌝⦄ := by
+  sorry
+
+-- Coq: `FboundedEqExp` — transfer boundedness along equal value and exp inequality
+noncomputable def FboundedEqExp_check {beta : Int}
+    (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FboundedEqExp` — if `p` is bounded, `F2R p = F2R q`, and `p.Fexp ≤ q.Fexp`,
+    then `q` is bounded. Statement mirrors Pff.v; proof deferred. -/
+theorem FboundedEqExp {beta : Int}
+    (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧ _root_.F2R p = _root_.F2R q ∧ p.Fexp ≤ q.Fexp⌝⦄
+    FboundedEqExp_check (beta:=beta) b p q
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
+  sorry
+
 -- Coq: `is_Fzero_rep1` — zero mantissa implies zero real value
 noncomputable def is_Fzero_rep1_check {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=

@@ -1120,10 +1120,10 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `FboundedZeroSameExp` → (no Lean counterpart)
 - `FBoundedScale` → (no Lean counterpart)
 - `FvalScale` → (no Lean counterpart)
-- `oppBounded` → (no Lean counterpart)
-- `oppBoundedInv` → (no Lean counterpart)
-- `absFBounded` → (no Lean counterpart)
-- `FboundedEqExp` → (no Lean counterpart)
+- `oppBounded` → `oppBounded [FloatSpec/src/Pff/Pff.lean:2536]`
+- `oppBoundedInv` → `oppBoundedInv [FloatSpec/src/Pff/Pff.lean:2452]`
+- `absFBounded` → `absFBounded [FloatSpec/src/Pff/Pff.lean:2470]`
+- `FboundedEqExp` → `FboundedEqExp [FloatSpec/src/Pff/Pff.lean:2488]`
 - `eqExpLess` → (no Lean counterpart)
 - `FboundedShiftLess` → (no Lean counterpart)
 - `eqExpMax` → (no Lean counterpart)
