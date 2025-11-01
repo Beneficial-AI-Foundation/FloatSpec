@@ -1434,6 +1434,20 @@ theorem ZquotientProp (m n : Int) :
             |r| < |n|⌝⦄ := by
   sorry
 
+-- Coq: Zdivides — m divides n means n = m * q (note Coq's argument order)
+noncomputable def Zdivides (n m : Int) : Prop := ∃ q : Int, n = m * q
+
+-- Coq: `ZdividesZquotient` — if m divides n and m ≠ 0 then
+-- n = (Zquotient n m) * m
+noncomputable def ZdividesZquotient_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem ZdividesZquotient (n m : Int) :
+    ⦃⌜m ≠ 0 ∧ Zdivides n m⌝⦄
+    ZdividesZquotient_check n m
+    ⦃⇓_ => ⌜n = Zquotient n m * m⌝⦄ := by
+  sorry
+
 -- Coq: `inject_nat_convert` — if p = Zpos q then Z_of_nat (nat_of_P q) = p
 noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Id Unit :=
   pure ()
