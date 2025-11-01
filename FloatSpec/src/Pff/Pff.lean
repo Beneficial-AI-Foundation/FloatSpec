@@ -3680,6 +3680,18 @@ theorem maxDivCorrect (radix : Int) (v : Int) (p : Nat) :
     ⦃⇓_ => ⌜Zdivides v (Zpower_nat radix (maxDiv v p))⌝⦄ := by
   sorry
 
+-- Coq: `maxDivLt` — ~Zdivides v (radix^p) → maxDiv v p < p
+noncomputable def maxDivLt_check (radix : Int) (v : Int) (p : Nat) : Id Unit :=
+  pure ()
+
+/-- Coq: `maxDivLt` — if `v` does not divide `radix^p` then the maximal
+exponent `maxDiv v p` is strictly less than `p`. Statement only. -/
+theorem maxDivLt (radix : Int) (v : Int) (p : Nat) :
+    ⦃⌜¬ Zdivides v (Zpower_nat radix p)⌝⦄
+    maxDivLt_check radix v p
+    ⦃⇓_ => ⌜maxDiv v p < p⌝⦄ := by
+  sorry
+
 -- Coq: `maxDiv_opp` — maxDiv v p = maxDiv (-v) p
 noncomputable def maxDiv_opp_check (v : Int) (p : Nat) : Id Unit :=
   pure ()
