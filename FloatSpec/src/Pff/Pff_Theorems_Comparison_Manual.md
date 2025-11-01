@@ -160,7 +160,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 -- `V2_Und5` → (no Lean counterpart)
 - `ErrFMA_correct_simpl` → (no Lean counterpart)
 - `ErrFmaAppr_correct` → (no Lean counterpart)
-- `Axpy` → (no Lean counterpart)
+ - `Axpy` → `Axpy [FloatSpec/src/Pff/Pff2Flocq.lean:831]`
 - `U3_discri1` → `U3_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:466]`
 - `U4_discri1` → `U4_discri1 [FloatSpec/src/Pff/Pff2Flocq.lean:508]`
 - `format_dp` → `format_dp [FloatSpec/src/Pff/Pff2Flocq.lean:546]`

@@ -803,3 +803,48 @@ theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
                      else round_flt (round_flt (p - q) + round_flt (dp - dq))
             |d - (b * b - a * c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d⌝⦄ := by
   sorry
+
+-- Coq theorem: `Axpy`
+--
+-- Port of the Axpy rounding-mode disjunction. In the Coq development, under
+-- formatting and size assumptions on auxiliaries `ta, tx, ty` that approximate
+-- `a, x, y`, the value
+--
+--   tv := round_flt (ty + round_flt (ta * tx))
+--
+-- is a rounding of `y + a*x` either toward minus infinity (`Zfloor`) or toward
+-- plus infinity (`Zceil`). We mirror the statement using the Core `roundR`
+-- helper with integer rounding functions `Zfloor`/`Zceil`, and keep the proof
+-- deferred.
+
+noncomputable def Axpy_check (emin prec : Int)
+    (choice : Int → Bool) (a x y ta tx ty : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `Axpy` — under the usual Axpy preconditions (precision/range side
+    conditions, representability of `ta, tx, ty`, and the magnitude bounds on
+    approximation errors), the value `tv := round_flt (ty + round_flt (ta*tx))`
+    equals a rounding of `y + a*x` either with `Zfloor` or with `Zceil`.
+    We express the result using the Core `roundR` with `Zfloor`/`Zceil` and the
+    project’s `FLT_exp` exponent function. Proof deferred. -/
+theorem Axpy (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool)
+    (a x y ta tx ty : ℝ) :
+    ⦃⌜(1 < prec) ∧ (emin ≤ 0) ∧
+        generic_format 2 (FLT_exp emin prec) ta ∧
+        generic_format 2 (FLT_exp emin prec) tx ∧
+        generic_format 2 (FLT_exp emin prec) ty ∧
+        ((5 + 4 * (2 : ℝ) ^ (-prec)) / (1 - (2 : ℝ) ^ (-prec)) *
+           (|ta * tx| + (2 : ℝ) ^ (emin - 1)) ≤ |ty|) ∧
+        (|y - ty| + |a * x - ta * tx|
+           ≤ (2 : ℝ) ^ (-prec - 2) * (1 - (2 : ℝ) ^ (1 - prec)) * |ty|
+             - (2 : ℝ) ^ (-prec - 2) * |ta * tx| - (2 : ℝ) ^ (emin - 2))⌝⦄
+    Axpy_check emin prec choice a x y ta tx ty
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) (Znearest choice)
+            let tv := round_flt (ty + round_flt (ta * tx))
+            tv = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+                    (fun t => (FloatSpec.Core.Raux.Zfloor t).run) (y + a * x)
+              ∨
+            tv = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+                    (fun t => (FloatSpec.Core.Raux.Zceil t).run) (y + a * x)⌝⦄ := by
+  sorry
