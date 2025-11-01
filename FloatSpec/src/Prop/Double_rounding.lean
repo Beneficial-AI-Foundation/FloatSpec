@@ -1671,6 +1671,24 @@ lemma round_round_minus_aux
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x - y) := by
   sorry
 
+/-- Coq: `round_round_plus`
+    General double-rounding property for sums under the structural
+    hypothesis `round_round_plus_hyp`. No sign constraints; this is the
+    sign-split consolidation of the `aux` lemmas. -/
+lemma round_round_plus
+  (fexp1 fexp2 : Int → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+  (choice1 choice2 : Int → Bool)
+  (Hexp : round_round_plus_hyp fexp1 fexp2)
+  (x y : ℝ)
+  (Fx : generic_format beta fexp1 x)
+  (Fy : generic_format beta fexp1 y) :
+  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
+    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x + y))
+  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (x + y) := by
+  sorry
+
 
 /-- Coq: `FLX_round_round_plus_hyp`
     Under the precision relation `2 * prec + 1 ≤ prec'`, the structural
