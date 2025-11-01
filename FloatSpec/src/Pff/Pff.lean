@@ -1687,6 +1687,79 @@ theorem FzeroisReallyZero {beta : Int} (z : Int) :
     ⦃⇓_ => ⌜_root_.F2R (Fzero beta z) = 0⌝⦄ := by
   sorry
 
+-- Coq: `FzeroisZero` — specialized form using a bound's exponent
+noncomputable def FzeroisZero_check {beta : Int}
+    (b : Fbound_skel) : Id Unit :=
+  pure ()
+
+theorem FzeroisZero {beta : Int}
+    (b : Fbound_skel) :
+    ⦃⌜True⌝⦄
+    FzeroisZero_check (beta:=beta) b
+    ⦃⇓_ => ⌜_root_.F2R (Fzero beta (- b.dExp)) = 0⌝⦄ := by
+  sorry
+
+-- Coq: `FboundedFzero` — the zero float is bounded for any bound descriptor
+noncomputable def FboundedFzero_check {beta : Int}
+    (b : Fbound_skel) : Id Unit :=
+  pure ()
+
+theorem FboundedFzero {beta : Int}
+    (b : Fbound_skel) :
+    ⦃⌜True⌝⦄
+    FboundedFzero_check (beta:=beta) b
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (- b.dExp))⌝⦄ := by
+  sorry
+
+-- Coq: `FboundedZeroSameExp` — boundedness preserved when replacing mantissa by zero at same exponent
+noncomputable def FboundedZeroSameExp_check {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FboundedZeroSameExp {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b p⌝⦄
+    FboundedZeroSameExp_check (beta:=beta) b p
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (p.Fexp))⌝⦄ := by
+  sorry
+
+-- Coq: `FBoundedScale` — scaling exponent by natural n preserves boundedness
+noncomputable def FBoundedScale_check {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem FBoundedScale {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
+    ⦃⌜Fbounded (beta:=beta) b p⌝⦄
+    FBoundedScale_check (beta:=beta) b p n
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩⌝⦄ := by
+  sorry
+
+-- Coq: `FvalScale` — value after scaling exponent equals multiplication by powerRZ
+noncomputable def FvalScale_check {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Id Unit :=
+  pure ()
+
+theorem FvalScale {beta : Int}
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
+    ⦃⌜True⌝⦄
+    FvalScale_check (beta:=beta) b p n
+    ⦃⇓_ => ⌜_root_.F2R ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩ =
+            (powerRZ (beta:=beta) n) * _root_.F2R p⌝⦄ := by
+  sorry
+
+-- Coq: `oppBounded` — boundedness preserved under negation
+noncomputable def oppBounded_check {beta : Int}
+    (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem oppBounded {beta : Int}
+    (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b x⌝⦄
+    oppBounded_check (beta:=beta) b x
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄ := by
+  sorry
+
 -- Coq: `is_Fzero_rep1` — zero mantissa implies zero real value
 noncomputable def is_Fzero_rep1_check {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
@@ -1798,6 +1871,20 @@ theorem Fopp_Fopp {beta : Int}
     ⦃⇓_ => ⌜Fopp (beta:=beta) (Fopp (beta:=beta) p) = p⌝⦄ := by
   sorry
 
+-- Coq: `Fopp_Fminus` — negation of a subtraction swaps the operands
+noncomputable def Fopp_Fminus_check {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fopp_Fminus {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fopp_Fminus_check (beta:=beta) p q
+    ⦃⇓_ => ⌜Fopp (beta:=beta)
+              (FloatSpec.Calc.Operations.Fminus (beta:=beta) p q) =
+            FloatSpec.Calc.Operations.Fminus (beta:=beta) q p⌝⦄ := by
+  sorry
+
 -- Coq: `Fdigit_opp` — digit invariant under negation
 noncomputable def Fdigit_opp_check {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
@@ -1812,6 +1899,21 @@ theorem Fdigit_opp {beta : Int}
     ⦃⌜True⌝⦄
     Fdigit_opp_check (beta:=beta) radix x
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fopp x) = Fdigit (beta:=beta) radix x⌝⦄ := by
+  sorry
+
+-- Coq: `Fopp_Fminus_dist` — negation distributes over subtraction
+noncomputable def Fopp_Fminus_dist_check {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem Fopp_Fminus_dist {beta : Int}
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    Fopp_Fminus_dist_check (beta:=beta) p q
+    ⦃⇓_ => ⌜Fopp (beta:=beta)
+              (FloatSpec.Calc.Operations.Fminus (beta:=beta) p q) =
+            FloatSpec.Calc.Operations.Fminus (beta:=beta)
+              (Fopp (beta:=beta) p) (Fopp (beta:=beta) q)⌝⦄ := by
   sorry
 
 -- Coq: `Fdigit_abs` — digit invariant under absolute value

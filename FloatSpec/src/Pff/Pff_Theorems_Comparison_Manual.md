@@ -1113,9 +1113,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Fabs_Fzero` → `Fabs_Fzero [FloatSpec/src/Pff/Pff.lean:1722]`
 - `Fdigit_abs` → `Fdigit_abs [FloatSpec/src/Pff/Pff.lean:1731]`
 - `Fminus_correct` → `Fminus_correct [FloatSpec/src/Pff/Pff.lean:1619]`
-- `Fopp_Fminus` → (no Lean counterpart)
-- `Fopp_Fminus_dist` → (no Lean counterpart)
-- `FzeroisZero` → (no Lean counterpart)
+ - `Fopp_Fminus` → `Fopp_Fminus [FloatSpec/src/Pff/Pff.lean:1806]`
+ - `Fopp_Fminus_dist` → `Fopp_Fminus_dist [FloatSpec/src/Pff/Pff.lean:1836]`
+ - `FzeroisZero` → `FzeroisZero [FloatSpec/src/Pff/Pff.lean:1670]`
 - `FboundedFzero` → (no Lean counterpart)
 - `FboundedZeroSameExp` → (no Lean counterpart)
 - `FBoundedScale` → (no Lean counterpart)
