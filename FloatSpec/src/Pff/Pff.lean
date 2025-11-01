@@ -2895,6 +2895,23 @@ def list_sum (l : List ℝ) : ℝ :=
 def list_prod (l : List ℝ) : ℝ :=
   l.foldr (· * ·) 1
 
+-- Enumerating consecutive integers (Coq: mZlist and friends)
+def mZlist_aux (p : Int) (n : Nat) : List Int :=
+  match n with
+  | 0 => [p]
+  | Nat.succ n' => p :: mZlist_aux (p + 1) n'
+
+noncomputable def mZlist_aux_correct_check (n : Nat) (p q : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `mZlist_aux_correct` — if `p ≤ q ≤ p + Z_of_nat n` then `q ∈ mZlist_aux p n`.
+We mirror the statement using the project's hoare-triple style; proof deferred. -/
+theorem mZlist_aux_correct (n : Nat) (p q : Int) :
+    ⦃⌜p ≤ q ∧ q ≤ p + Int.ofNat n⌝⦄
+    mZlist_aux_correct_check n p q
+    ⦃⇓_ => ⌜List.Mem q (mZlist_aux p n)⌝⦄ := by
+  sorry
+
 -- Legacy floating-point format compatibility
 structure PffFloat where
   mantissa : Int
