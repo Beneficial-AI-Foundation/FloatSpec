@@ -416,6 +416,25 @@ theorem ClosestOpp {beta : Int}
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (-r) (Fopp p)⌝⦄ := by
   sorry
 
+-- Symmetric property of Closest (Coq: `ClosestSymmetric`)
+noncomputable def ClosestSymmetric_check {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) : Id Unit :=
+  pure ()
+
+/-- Auxiliary predicate: symmetry for rounding relations on floats. -/
+def SymmetricP {beta : Int}
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
+  ∀ r (p : FloatSpec.Core.Defs.FlocqFloat beta), P r p → P (-r) (Fopp p)
+
+/-- Coq: `ClosestSymmetric` — the `Closest` relation is symmetric under
+    real negation accompanied by float negation. -/
+theorem ClosestSymmetric {beta : Int}
+    (bo : Fbound_skel) (radix : ℝ) :
+    ⦃⌜True⌝⦄
+    ClosestSymmetric_check (beta:=beta) bo radix
+    ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- Underflow/Exponent growth lemmas (ported skeletons)
 

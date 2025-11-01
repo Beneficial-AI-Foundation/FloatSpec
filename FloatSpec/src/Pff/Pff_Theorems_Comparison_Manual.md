@@ -966,7 +966,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `digit_anti_monotone_lt` → `digit_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:2455]`
 -- `Odd_0` → `Odd_0 [FloatSpec/src/Pff/Pff.lean:71]`
 -- `Odd_1` → `Odd_1 [FloatSpec/src/Pff/Pff.lean:81]`
-- `min_or` → (no Lean counterpart)
+ - `min_or` → `min_or [FloatSpec/src/Pff/Pff.lean:1151]`
 - `min_or` → `min_or` (Pff.lean:68)
 - `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:526]`
 - `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:287]`
@@ -1416,7 +1416,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `EvenClosestMonotone` → (no Lean counterpart)
 - `EvenClosestRoundedModeP` → (no Lean counterpart)
 - `EvenClosestUniqueP` → (no Lean counterpart)
-- `ClosestSymmetric` → (no Lean counterpart)
+ - `ClosestSymmetric` → `ClosestSymmetric [FloatSpec/src/Pff/Pff.lean:420]`
 - `EvenClosestSymmetric` → (no Lean counterpart)
 - `ClosestOpp` → (no Lean counterpart)
 - `ClosestFabs` → (no Lean counterpart)
