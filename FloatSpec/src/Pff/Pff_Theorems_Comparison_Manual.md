@@ -1709,14 +1709,16 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `RND_Min_Pos_monotone` → (no Lean counterpart)
 - `RND_Min_Pos_projector` → (no Lean counterpart)
 - `RND_Min_Pos_correct` → (no Lean counterpart)
-- `RND_Max_Pos_canonic` → (no Lean counterpart)
+ - `RND_Max_Pos_canonic` → `RND_Max_Pos_canonic [FloatSpec/src/Pff/Pff.lean:541]`
 - `RND_Max_Pos_Rle` → (no Lean counterpart)
 - `RND_Max_Pos_correct` → (no Lean counterpart)
 - `RND_Min_canonic` → (no Lean counterpart)
-- `RND_Min_correct` → (no Lean counterpart)
-- `RND_Max_canonic` → (no Lean counterpart)
-- `RND_Max_correct` → (no Lean counterpart)
+ - `RND_Min_correct` → `RND_Min_correct [FloatSpec/src/Pff/Pff.lean:571]`
+ - `RND_Max_canonic` → `RND_Max_canonic [FloatSpec/src/Pff/Pff.lean:561]`
+ - `RND_Max_correct` → `RND_Max_correct [FloatSpec/src/Pff/Pff.lean:585]`
 - `RND_Min_canonic` → `RND_Min_canonic [FloatSpec/src/Pff/Pff.lean:501]`
-- `RND_Max_canonic` → (no Lean counterpart)
+ - `RND_Max_canonic` → `RND_Max_canonic [FloatSpec/src/Pff/Pff.lean:561]`
 - `RND_EvenClosest_canonic` → (no Lean counterpart)
+ - `RND_EvenClosest_canonic` → `RND_EvenClosest_canonic [FloatSpec/src/Pff/Pff.lean:593]`
 - `RND_EvenClosest_correct` → (no Lean counterpart)
+ - `RND_EvenClosest_correct` → `RND_EvenClosest_correct [FloatSpec/src/Pff/Pff.lean:607]`

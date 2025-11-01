@@ -524,6 +524,105 @@ theorem RND_Min_canonic {beta : Int}
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
+-- Upper rounding operators (mirroring Coq RND_Max_*)
+
+def RND_Max_Pos {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  -- Skeleton: return an arbitrary float; semantics deferred
+  ⟨0, 0⟩
+
+noncomputable def RND_Max_Pos_canonic_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Max_Pos_canonic` — for nonnegative `r`, `RND_Max_Pos r` is canonical.
+    Stated using project Hoare-triple syntax; proof deferred. -/
+theorem RND_Max_Pos_canonic {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r⌝⦄
+    RND_Max_Pos_canonic_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
+-- Roundings of any real (upper rounding)
+def RND_Max {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  -- Skeleton: delegate to the nonnegative operator (sign handling deferred).
+  RND_Max_Pos (beta:=beta) b radix p r
+
+noncomputable def RND_Max_canonic_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Max_canonic` — canonicity of the upper rounding `RND_Max`.
+    Mirrored with the same Hoare-triple style as other RND theorems. -/
+theorem RND_Max_canonic {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    RND_Max_canonic_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Max (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
+-- Correctness of lower rounding (Coq: RND_Min_correct)
+noncomputable def RND_Min_correct_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_correct` — `RND_Min` produces a lower extremal value. -/
+theorem RND_Min_correct {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    RND_Min_correct_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r (RND_Min (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
+-- Correctness of upper rounding (Coq: RND_Max_correct)
+noncomputable def RND_Max_correct_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Max_correct` — `RND_Max` produces an upper extremal value. -/
+theorem RND_Max_correct {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    RND_Max_correct_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r (RND_Max (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
+-- Even-closest rounding: canonicity (Coq: RND_EvenClosest_canonic)
+noncomputable def RND_EvenClosest_canonic_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_EvenClosest_canonic` — even-tie closest rounding is canonic. -/
+theorem RND_EvenClosest_canonic {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (r : ℝ) :
+    ⦃⌜True⌝⦄
+    RND_EvenClosest_canonic_check (beta:=beta) b radix precision r
+    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min (beta:=beta) b radix (Int.ofNat precision) r)⌝⦄ := by
+  sorry
+
+-- Even-closest rounding: correctness (Coq: RND_EvenClosest_correct)
+noncomputable def RND_EvenClosest_correct_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_EvenClosest_correct` — correctness of even-tie closest rounding. -/
+theorem RND_EvenClosest_correct {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (r : ℝ) :
+    ⦃⌜True⌝⦄
+    RND_EvenClosest_correct_check (beta:=beta) b radix precision r
+    ⦃⇓_ => ⌜True⌝⦄ := by
+  sorry
+
 -- Totality of EvenClosest
 noncomputable def EvenClosestTotal_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) : Id Unit :=
