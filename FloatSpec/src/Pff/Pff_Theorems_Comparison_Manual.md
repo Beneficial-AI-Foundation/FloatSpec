@@ -1716,5 +1716,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `RND_Min_correct` → (no Lean counterpart)
 - `RND_Max_canonic` → (no Lean counterpart)
 - `RND_Max_correct` → (no Lean counterpart)
+- `RND_Min_canonic` → `RND_Min_canonic [FloatSpec/src/Pff/Pff.lean:501]`
+- `RND_Max_canonic` → (no Lean counterpart)
 - `RND_EvenClosest_canonic` → (no Lean counterpart)
 - `RND_EvenClosest_correct` → (no Lean counterpart)

@@ -485,6 +485,26 @@ theorem RND_Min_Pos_canonic {beta : Int}
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
+-- Roundings of any real (Coq-style top-level RND operators)
+def RND_Min {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int)
+    (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  -- Skeleton: delegate to the nonnegative operator (sign handling deferred).
+  RND_Min_Pos (beta:=beta) b radix p r
+
+noncomputable def RND_Min_canonic_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
+
+/-- Coq: `RND_Min_canonic` — canonicity of the lower rounding `RND_Min`.
+    We mirror the statement using the project Hoare-triple style. -/
+theorem RND_Min_canonic {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
+    ⦃⌜True⌝⦄
+    RND_Min_canonic_check (beta:=beta) b radix p r
+    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min (beta:=beta) b radix p r)⌝⦄ := by
+  sorry
+
 -- Totality of EvenClosest
 noncomputable def EvenClosestTotal_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) : Id Unit :=
