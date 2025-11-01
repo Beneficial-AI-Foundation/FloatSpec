@@ -1448,6 +1448,56 @@ theorem ZdividesZquotient (n m : Int) :
     ⦃⇓_ => ⌜n = Zquotient n m * m⌝⦄ := by
   sorry
 
+-- Coq: `ZdividesZquotientInv` — from decomposition n = (Zquotient n m) * m, deduce divisibility
+noncomputable def ZdividesZquotientInv_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem ZdividesZquotientInv (n m : Int) :
+    ⦃⌜n = Zquotient n m * m⌝⦄
+    ZdividesZquotientInv_check n m
+    ⦃⇓_ => ⌜Zdivides n m⌝⦄ := by
+  sorry
+
+-- Coq: `ZdividesMult` — if m divides n then p*m divides p*n
+noncomputable def ZdividesMult_check (n m p : Int) : Id Unit :=
+  pure ()
+
+theorem ZdividesMult (n m p : Int) :
+    ⦃⌜Zdivides n m⌝⦄
+    ZdividesMult_check n m p
+    ⦃⇓_ => ⌜Zdivides (p * n) (p * m)⌝⦄ := by
+  sorry
+
+-- Coq: `Zeq_mult_simpl` — cancel a nonzero multiplier on both sides of equality
+noncomputable def Zeq_mult_simpl_check (a b c : Int) : Id Unit :=
+  pure ()
+
+theorem Zeq_mult_simpl (a b c : Int) :
+    ⦃⌜c ≠ 0 ∧ a * c = b * c⌝⦄
+    Zeq_mult_simpl_check a b c
+    ⦃⇓_ => ⌜a = b⌝⦄ := by
+  sorry
+
+-- Coq: `ZdividesDiv` — if p ≠ 0 and p*m divides p*n, then m divides n
+noncomputable def ZdividesDiv_check (n m p : Int) : Id Unit :=
+  pure ()
+
+theorem ZdividesDiv (n m p : Int) :
+    ⦃⌜p ≠ 0 ∧ Zdivides (p * n) (p * m)⌝⦄
+    ZdividesDiv_check n m p
+    ⦃⇓_ => ⌜Zdivides n m⌝⦄ := by
+  sorry
+
+-- Coq: `Zdivides1` — every integer divides 1
+noncomputable def Zdivides1_check (m : Int) : Id Unit :=
+  pure ()
+
+theorem Zdivides1 (m : Int) :
+    ⦃⌜True⌝⦄
+    Zdivides1_check m
+    ⦃⇓_ => ⌜Zdivides m 1⌝⦄ := by
+  sorry
+
 -- Coq: `inject_nat_convert` — if p = Zpos q then Z_of_nat (nat_of_P q) = p
 noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Id Unit :=
   pure ()
