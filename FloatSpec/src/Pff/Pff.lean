@@ -2812,6 +2812,51 @@ theorem Fopp_Fminus_dist {beta : Int}
               (Fopp (beta:=beta) p) (Fopp (beta:=beta) q)⌝⦄ := by
   sorry
 
+/-!
+Sterbenz lemmas (missing from Coq Pff.v)
+
+We introduce Coq's `SterbenzAux` in the project's Hoare‑triple style. It uses
+the placeholders `Fbounded` and the operation `Fminus` available in this file.
+Proof is deferred as per the import instructions.
+-/
+
+noncomputable def SterbenzAux_check {beta : Int}
+    (b : Fbound_skel)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `SterbenzAux` — if `x` and `y` are bounded in the same bound `b` and
+    satisfy `F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded in `b`. -/
+theorem SterbenzAux {beta : Int}
+    (b : Fbound_skel)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b x ∧
+        Fbounded (beta:=beta) b y ∧
+        (_root_.F2R y) ≤ (_root_.F2R x) ∧
+        (_root_.F2R x) ≤ 2 * (_root_.F2R y)⌝⦄
+    SterbenzAux_check (beta:=beta) b x y
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
+  sorry
+
+-- Coq: `Sterbenz` — symmetric bound version using 1/2 ≤ x/y ≤ 2
+noncomputable def Sterbenz_check {beta : Int}
+    (b : Fbound_skel)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `Sterbenz` — if `x` and `y` are bounded in `b` and satisfy
+    `(1/2)*F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded in `b`. -/
+theorem Sterbenz {beta : Int}
+    (b : Fbound_skel)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b x ∧
+        Fbounded (beta:=beta) b y ∧
+        ((1/2 : ℝ) * (_root_.F2R y)) ≤ (_root_.F2R x) ∧
+        (_root_.F2R x) ≤ 2 * (_root_.F2R y)⌝⦄
+    Sterbenz_check (beta:=beta) b x y
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
+  sorry
+
 -- Coq: `Fdigit_abs` — digit invariant under absolute value
 noncomputable def Fdigit_abs_check {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=

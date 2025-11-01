@@ -1129,8 +1129,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `eqExpMax` → (no Lean counterpart)
 - `maxFbounded` → (no Lean counterpart)
 - `maxMax` → (no Lean counterpart)
-- `SterbenzAux` → (no Lean counterpart)
-- `Sterbenz` → (no Lean counterpart)
+ -- `SterbenzAux` → `SterbenzAux [FloatSpec/src/Pff/Pff.lean:2830]`
+ -- `Sterbenz` → `Sterbenz [FloatSpec/src/Pff/Pff.lean:2849]`
 - `mZlist_aux_correct` → (no Lean counterpart)
 - `mZlist_aux_correct_rev1` → (no Lean counterpart)
 - `mZlist_aux_correct_rev2` → (no Lean counterpart)
