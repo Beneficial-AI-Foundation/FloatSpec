@@ -3040,6 +3040,18 @@ theorem LSB_comp {beta : Int}
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix y⌝⦄ := by
   sorry
 
+-- Coq: `maxDivCorrect` — Zdivides v (radix^maxDiv v p)
+noncomputable def maxDivCorrect_check (radix : Int) (v : Int) (p : Nat) : Id Unit :=
+  pure ()
+
+/-- Coq: `maxDivCorrect` — for any integer `v` and natural `p`,
+`v` divides `radix^(maxDiv v p)`. We only state the property here. -/
+theorem maxDivCorrect (radix : Int) (v : Int) (p : Nat) :
+    ⦃⌜True⌝⦄
+    maxDivCorrect_check radix v p
+    ⦃⇓_ => ⌜Zdivides v (Zpower_nat radix (maxDiv v p))⌝⦄ := by
+  sorry
+
 -- Coq: `maxDiv_opp` — maxDiv v p = maxDiv (-v) p
 noncomputable def maxDiv_opp_check (v : Int) (p : Nat) : Id Unit :=
   pure ()
