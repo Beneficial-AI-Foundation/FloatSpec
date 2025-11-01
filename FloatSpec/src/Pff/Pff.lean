@@ -1005,6 +1005,22 @@ theorem RoundedModeMultLess {beta : Int}
     ⦃⇓_ => ⌜radix * _root_.F2R q' ≤ _root_.F2R q⌝⦄ := by
   sorry
 
+-- Coq: `FnormalBounded` — normal floats are bounded
+noncomputable def FnormalBounded_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+/-- Coq: `FnormalBounded` — if a float is normal with respect to `b` and `radix`,
+    then it is bounded by `b`. Placeholder statement aligned with Coq; proof deferred. -/
+theorem FnormalBounded {beta : Int}
+    (b : Fbound_skel) (radix : ℝ)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
+    FnormalBounded_check (beta:=beta) b radix p
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- RleRoundedAbs (Coq: Pff.v) — lower bound on |r| from rounding to nearest
 
@@ -1947,6 +1963,12 @@ theorem ZDividesLe (n m : Int) :
     ZDividesLe_check n m
     ⦃⇓_ => ⌜|m| ≤ |n|⌝⦄ := by
   sorry
+
+-- Define a minimal placeholder for `digit` before its first use.
+noncomputable def digit (n : Int) (q : Int) : Nat :=
+  match q with
+  | Int.ofNat _ => 0
+  | Int.negSucc _ => 0
 
 -- Coq: `NotDividesDigit` — if 1 < r and v ≠ 0 then v does not divide r^(digit r v)
 noncomputable def NotDividesDigit_check (r v : Int) : Id Unit :=
@@ -3043,10 +3065,7 @@ theorem digitAuxLess (n : Int) (v r : Int) (q : Positive) :
 noncomputable def digitLess_check (n : Int) (q : Int) : Id Unit :=
   pure ()
 
-noncomputable def digit (n : Int) (q : Int) : Nat :=
-  match q with
-  | Int.ofNat _ => 0
-  | Int.negSucc _ => 0
+-- `digit` is defined earlier near its first use (NotDividesDigit).
 
 theorem digitLess (n : Int) (q : Int) :
     ⦃⌜q ≠ 0⌝⦄

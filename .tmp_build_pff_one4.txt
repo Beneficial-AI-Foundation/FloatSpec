@@ -21226,17 +21226,22 @@ Hint: Insert a role to document it:
     {̲l̲i̲t̲}̲`ZDividesLe`
     to mark the code as literal text and disable suggestions
 warning: FloatSpec/src/Pff/Pff.lean:1961:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:1968:18: missing doc string for public def NotDividesDigit_check
+warning: FloatSpec/src/Pff/Pff.lean:1970:18: missing doc string for public def digit
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:1968:41: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:1970:25: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:1968:43: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:1976:18: missing doc string for public def NotDividesDigit_check
+
+Note: This linter can be disabled with `set_option linter.missingDocs false`
+warning: FloatSpec/src/Pff/Pff.lean:1976:41: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-error: FloatSpec/src/Pff/Pff.lean:1975:40: Unknown identifier `digit`
-warning: FloatSpec/src/Pff/Pff.lean:1971:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff.lean:1976:43: unused variable `v`
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: FloatSpec/src/Pff/Pff.lean:1979:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`NotDividesDigit`
@@ -21244,16 +21249,17 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`NotDividesDigit`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff.lean:1979:18: missing doc string for public def ZquotientPos_check
+warning: FloatSpec/src/Pff/Pff.lean:1980:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:1987:18: missing doc string for public def ZquotientPos_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:1979:38: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:1987:38: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:1979:41: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:1987:41: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:1982:9: Code element could be more specific.
+warning: FloatSpec/src/Pff/Pff.lean:1990:9: Code element could be more specific.
 
 Hint: Insert a role to document it:
   • {̲l̲e̲a̲n̲}̲`ZquotientPos`
@@ -21261,1096 +21267,1094 @@ Hint: Insert a role to document it:
   • Use the `lit` role:
     {̲l̲i̲t̲}̲`ZquotientPos`
     to mark the code as literal text and disable suggestions
-warning: FloatSpec/src/Pff/Pff.lean:1983:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:1990:18: missing doc string for public def inject_nat_convert_check
+warning: FloatSpec/src/Pff/Pff.lean:1991:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:1998:18: missing doc string for public def inject_nat_convert_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:1990:44: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:1998:44: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:1990:54: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:1998:54: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:1993:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2001:18: missing doc string for public def Zabs_eq_opp_check
+warning: FloatSpec/src/Pff/Pff.lean:2001:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2009:18: missing doc string for public def Zabs_eq_opp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2001:37: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2009:37: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2004:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2011:18: missing doc string for public def Zabs_Zs_check
+warning: FloatSpec/src/Pff/Pff.lean:2012:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2019:18: missing doc string for public def Zabs_Zs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2011:33: unused variable `z`
+warning: FloatSpec/src/Pff/Pff.lean:2019:33: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2014:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2021:18: missing doc string for public def lt_Zlt_inv_check
+warning: FloatSpec/src/Pff/Pff.lean:2022:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2029:18: missing doc string for public def lt_Zlt_inv_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2021:36: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2029:36: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2021:38: unused variable `m`
+warning: FloatSpec/src/Pff/Pff.lean:2029:38: unused variable `m`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2024:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2031:18: missing doc string for public def Zle_Zpred_check
+warning: FloatSpec/src/Pff/Pff.lean:2032:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2039:18: missing doc string for public def Zle_Zpred_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2031:35: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2039:35: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2031:37: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2039:37: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2034:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2041:18: missing doc string for public def NconvertO_check
+warning: FloatSpec/src/Pff/Pff.lean:2042:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2049:18: missing doc string for public def NconvertO_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2041:35: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2049:35: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2044:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2051:18: missing doc string for public def convert_not_O_check
+warning: FloatSpec/src/Pff/Pff.lean:2052:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2059:18: missing doc string for public def convert_not_O_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2051:39: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2059:39: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2054:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2062:18: missing doc string for public def Zle_Zabs_check
+warning: FloatSpec/src/Pff/Pff.lean:2062:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2070:18: missing doc string for public def Zle_Zabs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2062:34: unused variable `z`
+warning: FloatSpec/src/Pff/Pff.lean:2070:34: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2065:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2074:18: missing doc string for public def absolu_lt_nz_check
+warning: FloatSpec/src/Pff/Pff.lean:2073:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2082:18: missing doc string for public def absolu_lt_nz_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2074:38: unused variable `z`
+warning: FloatSpec/src/Pff/Pff.lean:2082:38: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2077:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2084:4: missing doc string for public def list_sum
+warning: FloatSpec/src/Pff/Pff.lean:2085:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2092:4: missing doc string for public def list_sum
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2087:4: missing doc string for public def list_prod
+warning: FloatSpec/src/Pff/Pff.lean:2095:4: missing doc string for public def list_prod
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2091:10: missing doc string for public structure PffFloat
+warning: FloatSpec/src/Pff/Pff.lean:2099:10: missing doc string for public structure PffFloat
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2092:2: missing doc string for public field PffFloat.mantissa
+warning: FloatSpec/src/Pff/Pff.lean:2100:2: missing doc string for public field PffFloat.mantissa
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2093:2: missing doc string for public field PffFloat.exponent
+warning: FloatSpec/src/Pff/Pff.lean:2101:2: missing doc string for public field PffFloat.exponent
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2094:2: missing doc string for public field PffFloat.sign
+warning: FloatSpec/src/Pff/Pff.lean:2102:2: missing doc string for public field PffFloat.sign
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2099:18: missing doc string for public def floatEq_check
+warning: FloatSpec/src/Pff/Pff.lean:2107:18: missing doc string for public def floatEq_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2100:5: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2108:5: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2100:7: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2108:7: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2103:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2111:18: missing doc string for public def floatDec_check
+warning: FloatSpec/src/Pff/Pff.lean:2111:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2119:18: missing doc string for public def floatDec_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2112:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2120:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2112:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2120:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2115:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2123:4: missing doc string for public def pff_to_flocq
+warning: FloatSpec/src/Pff/Pff.lean:2123:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2131:4: missing doc string for public def pff_to_flocq
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2126:4: missing doc string for public def flocq_to_pff
+warning: FloatSpec/src/Pff/Pff.lean:2134:4: missing doc string for public def flocq_to_pff
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2132:4: missing doc string for public def Fzero
+warning: FloatSpec/src/Pff/Pff.lean:2140:4: missing doc string for public def Fzero
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2136:4: missing doc string for public def is_Fzero
+warning: FloatSpec/src/Pff/Pff.lean:2144:4: missing doc string for public def is_Fzero
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2140:18: missing doc string for public def FzeroisReallyZero_check
+warning: FloatSpec/src/Pff/Pff.lean:2148:18: missing doc string for public def FzeroisReallyZero_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2140:43: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff.lean:2148:43: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2140:56: unused variable `z`
+warning: FloatSpec/src/Pff/Pff.lean:2148:56: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2143:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2150:18: missing doc string for public def FzeroisZero_check
+warning: FloatSpec/src/Pff/Pff.lean:2151:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2158:18: missing doc string for public def FzeroisZero_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2150:37: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff.lean:2158:37: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2151:5: unused variable `b`
+warning: FloatSpec/src/Pff/Pff.lean:2159:5: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2154:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2162:18: missing doc string for public def FboundedFzero_check
+warning: FloatSpec/src/Pff/Pff.lean:2162:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2170:18: missing doc string for public def FboundedFzero_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2162:39: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff.lean:2170:39: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2163:5: unused variable `b`
+warning: FloatSpec/src/Pff/Pff.lean:2171:5: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2166:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2174:18: missing doc string for public def FboundedZeroSameExp_check
+warning: FloatSpec/src/Pff/Pff.lean:2174:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2182:18: missing doc string for public def FboundedZeroSameExp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2175:5: unused variable `b`
+warning: FloatSpec/src/Pff/Pff.lean:2183:5: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2175:23: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2183:23: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2178:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2186:18: missing doc string for public def FBoundedScale_check
+warning: FloatSpec/src/Pff/Pff.lean:2186:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2194:18: missing doc string for public def FBoundedScale_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2187:5: unused variable `b`
+warning: FloatSpec/src/Pff/Pff.lean:2195:5: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2187:23: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2195:23: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2187:65: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2195:65: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2190:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2198:18: missing doc string for public def FvalScale_check
+warning: FloatSpec/src/Pff/Pff.lean:2198:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2206:18: missing doc string for public def FvalScale_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2199:5: unused variable `b`
+warning: FloatSpec/src/Pff/Pff.lean:2207:5: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2199:23: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2207:23: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2199:65: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2207:65: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2202:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2211:18: missing doc string for public def oppBounded_check
+warning: FloatSpec/src/Pff/Pff.lean:2210:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2219:18: missing doc string for public def oppBounded_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2212:5: unused variable `b`
+warning: FloatSpec/src/Pff/Pff.lean:2220:5: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2212:23: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2220:23: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2215:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2223:18: missing doc string for public def is_Fzero_rep1_check
+warning: FloatSpec/src/Pff/Pff.lean:2223:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2231:18: missing doc string for public def is_Fzero_rep1_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2224:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2232:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2227:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2235:18: missing doc string for public def is_Fzero_rep2_check
+warning: FloatSpec/src/Pff/Pff.lean:2235:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2243:18: missing doc string for public def is_Fzero_rep2_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2236:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2244:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2239:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2247:18: missing doc string for public def NisFzeroComp_check
+warning: FloatSpec/src/Pff/Pff.lean:2247:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2255:18: missing doc string for public def NisFzeroComp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2248:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2256:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2248:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2256:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2251:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2262:18: missing doc string for public def Fle_Zle_check
+warning: FloatSpec/src/Pff/Pff.lean:2259:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2270:18: missing doc string for public def Fle_Zle_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2262:33: unused variable `beta`
+warning: FloatSpec/src/Pff/Pff.lean:2270:33: unused variable `beta`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2262:46: unused variable `n1`
+warning: FloatSpec/src/Pff/Pff.lean:2270:46: unused variable `n1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2262:49: unused variable `n2`
+warning: FloatSpec/src/Pff/Pff.lean:2270:49: unused variable `n2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2262:52: unused variable `d`
+warning: FloatSpec/src/Pff/Pff.lean:2270:52: unused variable `d`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2265:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2273:18: missing doc string for public def Rlt_Fexp_eq_Zlt_check
+warning: FloatSpec/src/Pff/Pff.lean:2273:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2281:18: missing doc string for public def Rlt_Fexp_eq_Zlt_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2274:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2282:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2274:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2282:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2277:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2285:18: missing doc string for public def Fopp_correct_check
+warning: FloatSpec/src/Pff/Pff.lean:2285:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2293:18: missing doc string for public def Fopp_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2286:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2294:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2289:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2297:18: missing doc string for public def Fplus_correct_check
+warning: FloatSpec/src/Pff/Pff.lean:2297:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2305:18: missing doc string for public def Fplus_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2298:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2306:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2298:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2306:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2301:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2309:18: missing doc string for public def Fminus_correct_check
+warning: FloatSpec/src/Pff/Pff.lean:2309:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2317:18: missing doc string for public def Fminus_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2310:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2318:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2310:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2318:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2313:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2322:18: missing doc string for public def Fopp_Fopp_check
+warning: FloatSpec/src/Pff/Pff.lean:2321:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2330:18: missing doc string for public def Fopp_Fopp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2323:5: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2331:5: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2326:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2334:18: missing doc string for public def Fopp_Fminus_check
+warning: FloatSpec/src/Pff/Pff.lean:2334:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2342:18: missing doc string for public def Fopp_Fminus_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2335:5: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2343:5: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2335:7: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2343:7: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2338:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2348:18: missing doc string for public def Fdigit_opp_check
+warning: FloatSpec/src/Pff/Pff.lean:2346:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2356:18: missing doc string for public def Fdigit_opp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2349:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2357:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2349:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2357:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2353:18: missing doc string for public def Fdigit
+warning: FloatSpec/src/Pff/Pff.lean:2361:18: missing doc string for public def Fdigit
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2354:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2362:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2354:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2362:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2356:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2364:18: missing doc string for public def Fopp_Fminus_dist_check
+warning: FloatSpec/src/Pff/Pff.lean:2364:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2372:18: missing doc string for public def Fopp_Fminus_dist_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2365:5: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2373:5: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2365:7: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2373:7: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2368:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2379:18: missing doc string for public def Fdigit_abs_check
+warning: FloatSpec/src/Pff/Pff.lean:2376:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2387:18: missing doc string for public def Fdigit_abs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2380:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2388:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2380:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2388:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2383:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2391:18: missing doc string for public def Fabs_correct1_check
+warning: FloatSpec/src/Pff/Pff.lean:2391:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2399:18: missing doc string for public def Fabs_correct1_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2392:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2400:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2395:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2403:18: missing doc string for public def Fabs_correct2_check
+warning: FloatSpec/src/Pff/Pff.lean:2403:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2411:18: missing doc string for public def Fabs_correct2_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2404:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2412:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2407:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2415:18: missing doc string for public def Fabs_correct_check
+warning: FloatSpec/src/Pff/Pff.lean:2415:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2423:18: missing doc string for public def Fabs_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2416:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2424:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2419:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2427:18: missing doc string for public def RleFexpFabs_check
+warning: FloatSpec/src/Pff/Pff.lean:2427:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2435:18: missing doc string for public def RleFexpFabs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2428:5: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2436:5: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2431:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2440:18: missing doc string for public def Fabs_Fzero_check
+warning: FloatSpec/src/Pff/Pff.lean:2439:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2448:18: missing doc string for public def Fabs_Fzero_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2441:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2449:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2444:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2452:4: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2452:4: missing doc string for public def pff_add
+warning: FloatSpec/src/Pff/Pff.lean:2452:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2460:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2460:4: missing doc string for public def pff_add
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2455:4: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2455:4: missing doc string for public def pff_mul
+warning: FloatSpec/src/Pff/Pff.lean:2463:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2463:4: missing doc string for public def pff_mul
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2459:18: missing doc string for public def pff_error_bound
+warning: FloatSpec/src/Pff/Pff.lean:2467:18: missing doc string for public def pff_error_bound
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2463:10: missing doc string for public inductive PffRounding
+warning: FloatSpec/src/Pff/Pff.lean:2471:10: missing doc string for public inductive PffRounding
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2464:4: missing doc string for public constructor PffRounding.RN
+warning: FloatSpec/src/Pff/Pff.lean:2472:4: missing doc string for public constructor PffRounding.RN
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2465:4: missing doc string for public constructor PffRounding.RZ
+warning: FloatSpec/src/Pff/Pff.lean:2473:4: missing doc string for public constructor PffRounding.RZ
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2466:4: missing doc string for public constructor PffRounding.RP
+warning: FloatSpec/src/Pff/Pff.lean:2474:4: missing doc string for public constructor PffRounding.RP
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2467:4: missing doc string for public constructor PffRounding.RM
+warning: FloatSpec/src/Pff/Pff.lean:2475:4: missing doc string for public constructor PffRounding.RM
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2470:4: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2470:4: missing doc string for public def pff_to_flocq_rnd
+warning: FloatSpec/src/Pff/Pff.lean:2478:4: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2478:4: missing doc string for public def pff_to_flocq_rnd
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2479:18: missing doc string for public def maxDiv
+warning: FloatSpec/src/Pff/Pff.lean:2487:18: missing doc string for public def maxDiv
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2479:26: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:2487:26: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2479:36: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2487:36: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2485:18: missing doc string for public def Fshift
+warning: FloatSpec/src/Pff/Pff.lean:2493:18: missing doc string for public def Fshift
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2486:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2494:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2486:19: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2494:19: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2490:18: missing doc string for public def FshiftFdigit_check
+warning: FloatSpec/src/Pff/Pff.lean:2498:18: missing doc string for public def FshiftFdigit_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2491:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2499:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2491:19: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2499:19: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2491:29: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2499:29: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2494:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2503:18: missing doc string for public def FshiftCorrect_check
+warning: FloatSpec/src/Pff/Pff.lean:2502:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2511:18: missing doc string for public def FshiftCorrect_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2504:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2512:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2504:19: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2512:19: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2504:29: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2512:29: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2507:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2515:18: missing doc string for public def FshiftCorrectInv_check
+warning: FloatSpec/src/Pff/Pff.lean:2515:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2523:18: missing doc string for public def FshiftCorrectInv_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2516:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2524:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2517:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2525:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2517:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2525:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2520:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2529:18: missing doc string for public def FshiftO_check
+warning: FloatSpec/src/Pff/Pff.lean:2528:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2537:18: missing doc string for public def FshiftO_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2530:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2538:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2530:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2538:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2533:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2541:18: missing doc string for public def FshiftCorrectSym_check
+warning: FloatSpec/src/Pff/Pff.lean:2541:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2549:18: missing doc string for public def FshiftCorrectSym_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2542:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2550:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2542:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2550:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2542:21: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2550:21: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2545:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2553:18: missing doc string for public def FdigitEq_check
+warning: FloatSpec/src/Pff/Pff.lean:2553:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2561:18: missing doc string for public def FdigitEq_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2554:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2562:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2554:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2562:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2554:21: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2562:21: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2557:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2566:18: missing doc string for public def LSB
+warning: FloatSpec/src/Pff/Pff.lean:2565:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2574:18: missing doc string for public def LSB
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2571:18: missing doc string for public def LSB_shift_check
+warning: FloatSpec/src/Pff/Pff.lean:2579:18: missing doc string for public def LSB_shift_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2572:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2580:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2572:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2580:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2572:61: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2580:61: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2575:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2583:18: missing doc string for public def maxDivLess_check
+warning: FloatSpec/src/Pff/Pff.lean:2583:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2591:18: missing doc string for public def maxDivLess_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2583:36: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:2591:36: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2583:46: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2591:46: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2586:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2593:18: missing doc string for public def LSB_comp_check
+warning: FloatSpec/src/Pff/Pff.lean:2594:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2601:18: missing doc string for public def LSB_comp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2594:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2602:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2595:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2603:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2595:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2603:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2595:49: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2603:49: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2598:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2607:18: missing doc string for public def maxDiv_opp_check
+warning: FloatSpec/src/Pff/Pff.lean:2606:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2615:18: missing doc string for public def maxDiv_opp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2607:36: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:2615:36: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2607:46: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2615:46: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2610:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2617:18: missing doc string for public def LSB_opp_check
+warning: FloatSpec/src/Pff/Pff.lean:2618:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2625:18: missing doc string for public def LSB_opp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2618:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2626:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2618:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2626:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2621:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2629:18: missing doc string for public def maxDiv_abs_check
+warning: FloatSpec/src/Pff/Pff.lean:2629:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2637:18: missing doc string for public def maxDiv_abs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2629:36: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:2637:36: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2629:46: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2637:46: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2632:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2639:18: missing doc string for public def LSB_abs_check
+warning: FloatSpec/src/Pff/Pff.lean:2640:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2647:18: missing doc string for public def LSB_abs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2640:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2648:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2640:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2648:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2643:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2651:18: missing doc string for public def MSB
+warning: FloatSpec/src/Pff/Pff.lean:2651:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2659:18: missing doc string for public def MSB
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2656:18: missing doc string for public def MSB_shift_check
+warning: FloatSpec/src/Pff/Pff.lean:2664:18: missing doc string for public def MSB_shift_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2657:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2665:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2657:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2665:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2657:61: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2665:61: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2660:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2668:18: missing doc string for public def MSB_comp_check
+warning: FloatSpec/src/Pff/Pff.lean:2668:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2676:18: missing doc string for public def MSB_comp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2669:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2677:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2670:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2678:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2670:7: unused variable `y`
+warning: FloatSpec/src/Pff/Pff.lean:2678:7: unused variable `y`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2670:49: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2678:49: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2673:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2682:18: missing doc string for public def MSB_opp_check
+warning: FloatSpec/src/Pff/Pff.lean:2681:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2690:18: missing doc string for public def MSB_opp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2683:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2691:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2683:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2691:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2686:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2694:18: missing doc string for public def MSB_abs_check
+warning: FloatSpec/src/Pff/Pff.lean:2694:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2702:18: missing doc string for public def MSB_abs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2695:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2703:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2695:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2703:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2698:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2706:18: missing doc string for public def LSB_le_MSB_check
+warning: FloatSpec/src/Pff/Pff.lean:2706:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2714:18: missing doc string for public def LSB_le_MSB_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2707:5: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:2715:5: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2707:19: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2715:19: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2710:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2718:18: missing doc string for public def Zlt_mult_simpl_l_check
+warning: FloatSpec/src/Pff/Pff.lean:2718:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2726:18: missing doc string for public def Zlt_mult_simpl_l_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2718:42: unused variable `a`
+warning: FloatSpec/src/Pff/Pff.lean:2726:42: unused variable `a`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2718:44: unused variable `b`
+warning: FloatSpec/src/Pff/Pff.lean:2726:44: unused variable `b`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2718:46: unused variable `c`
+warning: FloatSpec/src/Pff/Pff.lean:2726:46: unused variable `c`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2721:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2728:18: missing doc string for public def Z_eq_bool
+warning: FloatSpec/src/Pff/Pff.lean:2729:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2736:18: missing doc string for public def Z_eq_bool
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2730:18: missing doc string for public def Z_eq_bool_correct_check
+warning: FloatSpec/src/Pff/Pff.lean:2738:18: missing doc string for public def Z_eq_bool_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2730:43: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2738:43: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2730:45: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2738:45: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2733:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2740:18: missing doc string for public def Zcompare
+warning: FloatSpec/src/Pff/Pff.lean:2741:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2748:18: missing doc string for public def Zcompare
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2743:18: missing doc string for public def Zcompare_correct_check
+warning: FloatSpec/src/Pff/Pff.lean:2751:18: missing doc string for public def Zcompare_correct_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2743:42: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2751:42: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2743:44: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2751:44: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2746:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2756:18: missing doc string for public def Zabs_Zopp_check
+warning: FloatSpec/src/Pff/Pff.lean:2754:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2764:18: missing doc string for public def Zabs_Zopp_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2756:35: unused variable `z`
+warning: FloatSpec/src/Pff/Pff.lean:2764:35: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2759:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2766:18: missing doc string for public def Zle_Zpred_Zpred_check
+warning: FloatSpec/src/Pff/Pff.lean:2767:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2774:18: missing doc string for public def Zle_Zpred_Zpred_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2766:41: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2774:41: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2766:44: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2774:44: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2769:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2776:18: missing doc string for public def Zle_n_Zpred_check
+warning: FloatSpec/src/Pff/Pff.lean:2777:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2784:18: missing doc string for public def Zle_n_Zpred_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2776:37: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2784:37: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2776:40: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2784:40: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2779:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2786:18: missing doc string for public def Zlt_1_O_check
+warning: FloatSpec/src/Pff/Pff.lean:2787:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2794:18: missing doc string for public def Zlt_1_O_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2786:33: unused variable `z`
+warning: FloatSpec/src/Pff/Pff.lean:2794:33: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2789:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2796:18: missing doc string for public def LtR0Fnum_check
+warning: FloatSpec/src/Pff/Pff.lean:2797:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2804:18: missing doc string for public def LtR0Fnum_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2797:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2805:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2800:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2808:18: missing doc string for public def LeR0Fnum_check
+warning: FloatSpec/src/Pff/Pff.lean:2808:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2816:18: missing doc string for public def LeR0Fnum_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2809:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2817:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2812:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2820:18: missing doc string for public def LeFnumZERO_check
+warning: FloatSpec/src/Pff/Pff.lean:2820:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2828:18: missing doc string for public def LeFnumZERO_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2821:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2829:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2824:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2832:18: missing doc string for public def R0LtFnum_check
+warning: FloatSpec/src/Pff/Pff.lean:2832:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2840:18: missing doc string for public def R0LtFnum_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2833:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2841:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2836:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2844:18: missing doc string for public def R0LeFnum_check
+warning: FloatSpec/src/Pff/Pff.lean:2844:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2852:18: missing doc string for public def R0LeFnum_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2845:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2853:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2848:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2856:18: missing doc string for public def LeZEROFnum_check
+warning: FloatSpec/src/Pff/Pff.lean:2856:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2864:18: missing doc string for public def LeZEROFnum_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2857:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2865:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2860:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2868:18: missing doc string for public def LtFnumZERO_check
+warning: FloatSpec/src/Pff/Pff.lean:2868:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2876:18: missing doc string for public def LtFnumZERO_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2869:5: unused variable `x`
+warning: FloatSpec/src/Pff/Pff.lean:2877:5: unused variable `x`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2872:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2880:18: missing doc string for public def Zlt_Zabs_inv1_check
+warning: FloatSpec/src/Pff/Pff.lean:2880:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2888:18: missing doc string for public def Zlt_Zabs_inv1_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2880:39: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2888:39: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2880:42: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2888:42: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2883:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2890:18: missing doc string for public def Zle_Zabs_inv1_check
+warning: FloatSpec/src/Pff/Pff.lean:2891:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2898:18: missing doc string for public def Zle_Zabs_inv1_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2890:39: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2898:39: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2890:42: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2898:42: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2893:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2900:18: missing doc string for public def Zle_Zabs_inv2_check
+warning: FloatSpec/src/Pff/Pff.lean:2901:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2908:18: missing doc string for public def Zle_Zabs_inv2_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2900:39: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2908:39: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2900:42: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2908:42: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2903:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2910:18: missing doc string for public def Zlt_Zabs_Zpred_check
+warning: FloatSpec/src/Pff/Pff.lean:2911:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2918:18: missing doc string for public def Zlt_Zabs_Zpred_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2910:40: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2918:40: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2910:43: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2918:43: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2913:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2920:18: missing doc string for public def EvenO_check
+warning: FloatSpec/src/Pff/Pff.lean:2921:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2928:18: missing doc string for public def EvenO_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2923:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2930:18: missing doc string for public def Zlt_not_eq_rev_check
+warning: FloatSpec/src/Pff/Pff.lean:2931:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2938:18: missing doc string for public def Zlt_not_eq_rev_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2930:40: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:2938:40: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2930:42: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2938:42: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2933:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2940:18: missing doc string for public def Zle_Zpred_inv_check
+warning: FloatSpec/src/Pff/Pff.lean:2941:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2948:18: missing doc string for public def Zle_Zpred_inv_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2940:39: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2948:39: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2940:42: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2948:42: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2943:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2950:18: missing doc string for public def Zabs_intro_check
+warning: FloatSpec/src/Pff/Pff.lean:2951:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2958:18: missing doc string for public def Zabs_intro_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2950:36: unused variable `P`
+warning: FloatSpec/src/Pff/Pff.lean:2958:36: unused variable `P`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2950:53: unused variable `z`
+warning: FloatSpec/src/Pff/Pff.lean:2958:53: unused variable `z`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2953:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2960:18: missing doc string for public def Zpred_Zle_Zabs_intro_check
+warning: FloatSpec/src/Pff/Pff.lean:2961:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2968:18: missing doc string for public def Zpred_Zle_Zabs_intro_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2960:46: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2968:46: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2960:49: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2968:49: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2963:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2970:18: missing doc string for public def Zlt_Zabs_intro_check
+warning: FloatSpec/src/Pff/Pff.lean:2971:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2978:18: missing doc string for public def Zlt_Zabs_intro_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2970:40: unused variable `z1`
+warning: FloatSpec/src/Pff/Pff.lean:2978:40: unused variable `z1`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2970:43: unused variable `z2`
+warning: FloatSpec/src/Pff/Pff.lean:2978:43: unused variable `z2`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2973:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2980:18: missing doc string for public def Zpower_nat_less_check
+warning: FloatSpec/src/Pff/Pff.lean:2981:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2988:18: missing doc string for public def Zpower_nat_less_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2980:41: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2988:41: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2980:51: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2988:51: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2983:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:2990:18: missing doc string for public def Zpower_nat_monotone_S_check
+warning: FloatSpec/src/Pff/Pff.lean:2991:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:2998:18: missing doc string for public def Zpower_nat_monotone_S_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:2990:47: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:2998:47: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2990:57: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:2998:57: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:2993:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3000:18: missing doc string for public def Zpower_nat_monotone_lt_check
+warning: FloatSpec/src/Pff/Pff.lean:3001:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3008:18: missing doc string for public def Zpower_nat_monotone_lt_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3000:48: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3008:48: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3000:58: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3008:58: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3003:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3010:18: missing doc string for public def Zpower_nat_anti_monotone_lt_check
+warning: FloatSpec/src/Pff/Pff.lean:3011:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3018:18: missing doc string for public def Zpower_nat_anti_monotone_lt_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3010:53: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3018:53: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3010:63: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3018:63: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3013:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3020:18: missing doc string for public def Zpower_nat_monotone_le_check
+warning: FloatSpec/src/Pff/Pff.lean:3021:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3028:18: missing doc string for public def Zpower_nat_monotone_le_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3020:48: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3028:48: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3020:58: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3028:58: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3020:60: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:3028:60: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3023:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3033:18: missing doc string for public def digitAux1_check
+warning: FloatSpec/src/Pff/Pff.lean:3031:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3041:18: missing doc string for public def digitAux1_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3033:35: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3041:35: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3033:45: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:3041:45: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3033:55: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:3041:55: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3036:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3044:18: missing doc string for public def digitAux
+warning: FloatSpec/src/Pff/Pff.lean:3044:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3052:18: missing doc string for public def digitAux
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3044:28: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3052:28: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3044:30: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:3052:30: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3044:32: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:3052:32: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3044:42: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3052:42: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3047:18: missing doc string for public def digitAuxLess_check
+warning: FloatSpec/src/Pff/Pff.lean:3055:18: missing doc string for public def digitAuxLess_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3047:38: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3055:38: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3047:48: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:3055:48: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3047:50: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:3055:50: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3047:60: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3055:60: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3050:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3059:18: missing doc string for public def digitLess_check
+warning: FloatSpec/src/Pff/Pff.lean:3058:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3067:18: missing doc string for public def digitLess_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3059:35: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3067:35: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3059:45: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3067:45: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3062:18: missing doc string for public def digit
+error: FloatSpec/src/Pff/Pff.lean:3071:18: `digit` has already been declared
+warning: FloatSpec/src/Pff/Pff.lean:3071:18: missing doc string for public def digit
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3062:25: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3076:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3083:18: missing doc string for public def pos_length
 
-Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3067:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3074:18: missing doc string for public def pos_length
-
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3074:30: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:3083:30: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3077:18: missing doc string for public def pos_length_pow_check
+warning: FloatSpec/src/Pff/Pff.lean:3086:18: missing doc string for public def pos_length_pow_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3077:40: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3086:40: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3077:50: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:3086:50: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3080:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3087:18: missing doc string for public def digitMore_check
+warning: FloatSpec/src/Pff/Pff.lean:3089:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3096:18: missing doc string for public def digitMore_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3087:35: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3096:35: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3087:45: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3096:45: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3090:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3097:18: missing doc string for public def digitAuxMore_check
+warning: FloatSpec/src/Pff/Pff.lean:3099:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3106:18: missing doc string for public def digitAuxMore_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3097:38: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3106:38: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3097:48: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:3106:48: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3097:50: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:3106:50: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3097:60: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:3106:60: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3100:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3109:18: missing doc string for public def digitInv_check
+warning: FloatSpec/src/Pff/Pff.lean:3109:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3118:18: missing doc string for public def digitInv_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3109:34: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3118:34: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3109:44: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3118:44: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3109:54: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:3118:54: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3112:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3119:18: missing doc string for public def digit_monotone_check
+warning: FloatSpec/src/Pff/Pff.lean:3121:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3128:18: missing doc string for public def digit_monotone_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3119:40: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3128:40: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3119:50: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:3128:50: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3119:52: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3128:52: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3122:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3129:18: missing doc string for public def digitNotZero_check
+warning: FloatSpec/src/Pff/Pff.lean:3131:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3138:18: missing doc string for public def digitNotZero_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3129:38: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3138:38: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3129:48: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3138:48: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3132:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3139:18: missing doc string for public def digitAdd_check
+warning: FloatSpec/src/Pff/Pff.lean:3141:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3148:18: missing doc string for public def digitAdd_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3139:34: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3148:34: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3139:44: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3148:44: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3139:54: unused variable `r`
+warning: FloatSpec/src/Pff/Pff.lean:3148:54: unused variable `r`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3142:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3149:18: missing doc string for public def maxDivPlus_check
+warning: FloatSpec/src/Pff/Pff.lean:3151:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3158:18: missing doc string for public def maxDivPlus_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3149:36: unused variable `radix`
+warning: FloatSpec/src/Pff/Pff.lean:3158:36: unused variable `radix`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3149:50: unused variable `v`
+warning: FloatSpec/src/Pff/Pff.lean:3158:50: unused variable `v`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3149:60: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3158:60: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3152:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3160:18: missing doc string for public def digit_abs_check
+warning: FloatSpec/src/Pff/Pff.lean:3161:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3169:18: missing doc string for public def digit_abs_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3160:35: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3169:35: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3160:45: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:3169:45: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3163:8: declaration uses 'sorry'
-warning: FloatSpec/src/Pff/Pff.lean:3170:18: missing doc string for public def digit_anti_monotone_lt_check
+warning: FloatSpec/src/Pff/Pff.lean:3172:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3179:18: missing doc string for public def digit_anti_monotone_lt_check
 
 Note: This linter can be disabled with `set_option linter.missingDocs false`
-warning: FloatSpec/src/Pff/Pff.lean:3170:48: unused variable `n`
+warning: FloatSpec/src/Pff/Pff.lean:3179:48: unused variable `n`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3170:58: unused variable `p`
+warning: FloatSpec/src/Pff/Pff.lean:3179:58: unused variable `p`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3170:60: unused variable `q`
+warning: FloatSpec/src/Pff/Pff.lean:3179:60: unused variable `q`
 
 Note: This linter can be disabled with `set_option linter.unusedVariables false`
-warning: FloatSpec/src/Pff/Pff.lean:3173:8: declaration uses 'sorry'
+warning: FloatSpec/src/Pff/Pff.lean:3182:8: declaration uses 'sorry'
 error: Lean exited with code 1
 Some required targets logged failures:
 - FloatSpec.src.Pff.Pff
