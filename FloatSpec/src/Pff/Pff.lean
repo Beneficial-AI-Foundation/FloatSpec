@@ -510,6 +510,28 @@ def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
 def isMax {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
   fun _ _ => True
 
+-- Coq: `firstNormalPos_eq` — value of the first normal positive float
+noncomputable def firstNormalPos {beta : Int}
+    (radix : Int) (b : Fbound_skel) (p : Int) :
+    FloatSpec.Core.Defs.FlocqFloat beta :=
+  -- Skeleton representative; concrete construction deferred to Core.
+  ⟨1, Int.pred p + - b.dExp⟩
+
+noncomputable def firstNormalPos_eq_check {beta : Int}
+    (radix : Int) (b : Fbound_skel) (p : Int) : Id Unit :=
+  pure ()
+
+/-- Coq: `firstNormalPos_eq` — interpreting the `firstNormalPos` float at
+    base `radix` equals `(radix : ℝ)^(pred p + - b.dExp)`.
+    We mirror the statement using project Hoare-triple style; proof deferred. -/
+theorem firstNormalPos_eq {beta : Int}
+    (radix : Int) (b : Fbound_skel) (p : Int) :
+    ⦃⌜True⌝⦄
+    firstNormalPos_eq_check (beta:=beta) radix b p
+    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p)
+            = (radix : ℝ) ^ (Int.pred p + - b.dExp)⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- Closest/Normal placeholders (from Pff.v sections)
 
