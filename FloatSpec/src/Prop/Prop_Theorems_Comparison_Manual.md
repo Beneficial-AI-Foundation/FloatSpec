@@ -66,21 +66,19 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 - `div_error_FLX` → `div_error_FLX` [Div_sqrt_error.lean:31] (exact)
 
-- `sqrt_error_FLX_N` → (no direct Lean match found)
-- `sqrt_error_FLX_N` → `sqrt_error_FLX_N` [Div_sqrt_error.lean:43] (exact)
+ - `sqrt_error_FLX_N` → `sqrt_error_FLX_N` [Div_sqrt_error.lean:43] (exact)
 
-- `sqrt_error_N_FLX_aux1` → (no direct Lean match found)
-- `sqrt_error_N_FLX_aux1` → `sqrt_error_N_FLX_aux1` [Div_sqrt_error.lean:51] (exact)
+ - `sqrt_error_N_FLX_aux1` → `sqrt_error_N_FLX_aux1` [Div_sqrt_error.lean:51] (exact)
 
 -- `sqrt_error_N_FLX_aux2` → `sqrt_error_N_FLX_aux2` [Div_sqrt_error.lean:62] (exact)
 
  - `sqrt_error_N_FLX_aux3` → `sqrt_error_N_FLX_aux3` [Div_sqrt_error.lean:88] (exact)
 
-- `om1ds1p2u_ro_pos` → (no direct Lean match found)
+ - `om1ds1p2u_ro_pos` → `om1ds1p2u_ro_pos` [Div_sqrt_error.lean:72] (spec-variant)
 
-- `om1ds1p2u_ro_le_u_rod1pu_ro` → (no direct Lean match found)
+ - `om1ds1p2u_ro_le_u_rod1pu_ro` → `om1ds1p2u_ro_le_u_rod1pu_ro` [Div_sqrt_error.lean:77] (spec-variant)
 
-- `s1p2u_rom1_pos` → (no direct Lean match found)
+ - `s1p2u_rom1_pos` → `s1p2u_rom1_pos` [Div_sqrt_error.lean:82] (spec-variant)
 
  - `sqrt_error_N_FLX` → `sqrt_error_N_FLX` [Div_sqrt_error.lean:95] (exact)
 
