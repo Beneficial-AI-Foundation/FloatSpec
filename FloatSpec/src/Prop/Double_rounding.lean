@@ -612,25 +612,6 @@ theorem round_round_lt_mid_further_place'
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
   sorry
 
-/-- Coq: `round_round_lt_mid_further_place`
-    Further-place condition with an additional bound on `fexp1 (mag x)`
-    ensuring innocuous double rounding below midpoints. -/
-theorem round_round_lt_mid_further_place
-  (fexp1 fexp2 : Int → Int)
-  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
-  (choice1 choice2 : Int → Bool)
-  (x : ℝ)
-  (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) ≤ (FloatSpec.Core.Raux.mag beta x).run)
-  (hx_lt : x < midp (beta := beta) fexp1 x - (1/2) * (ulp beta fexp2 x)) :
-  FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
-    (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
-  = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
-  sorry
-
 /-- Coq: `round_round_lt_mid_same_place`
     Same-place condition: if both formats have the same place at `mag x`
     and `x` lies below the midpoint, double rounding is innocuous. -/
