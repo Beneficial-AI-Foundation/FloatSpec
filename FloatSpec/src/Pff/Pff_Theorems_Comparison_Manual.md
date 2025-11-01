@@ -1282,7 +1282,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `OddEvenDec` → (no Lean counterpart)
 - `OddNEven` → (no Lean counterpart)
 - `EvenNOdd` → (no Lean counterpart)
-- `EvenPlus1` → (no Lean counterpart)
+- `EvenPlus1` → `EvenPlus1 [FloatSpec/src/Pff/Pff.lean:2360]`
 - `OddPlus2` → (no Lean counterpart)
 - `EvenMult1` → (no Lean counterpart)
 - `EvenMult2` → (no Lean counterpart)

@@ -185,6 +185,16 @@ theorem EvenOpp (z : Int) :
     ⦃⇓_ => ⌜Even (-z)⌝⦄ := by
   sorry
 
+-- Coq: `EvenPlus1` — if n and m are even then n + m is even
+noncomputable def EvenPlus1_check (n m : Int) : Id Unit :=
+  pure ()
+
+theorem EvenPlus1 (n m : Int) :
+    ⦃⌜Even n ∧ Even m⌝⦄
+    EvenPlus1_check n m
+    ⦃⇓_ => ⌜Even (n + m)⌝⦄ := by
+  sorry
+
 -- ---------------------------------------------------------------------------
 -- Rounded-mode predicate framework (Coq FRound section, minimized shell)
 -- We provide lightweight predicate encodings to state meta-theorems such as
