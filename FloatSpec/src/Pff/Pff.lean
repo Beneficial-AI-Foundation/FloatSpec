@@ -401,6 +401,23 @@ def FNPred {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : FloatSpec.Core.Defs.FlocqFloat beta :=
   p
 
+-- Parity behavior of successor (Coq: FevenSucProp)
+noncomputable def FevenSucProp_check {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
+  pure ()
+
+theorem FevenSucProp {beta : Int}
+    (b : Fbound_skel) (radix : ℝ) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜True⌝⦄
+    FevenSucProp_check (beta:=beta) b radix precision p
+    ⦃⇓_ => ⌜(Fodd (beta:=beta) p →
+              Feven (beta:=beta) (FNSucc (beta:=beta) b radix precision p)) ∧
+            (Feven (beta:=beta) p →
+              Fodd (beta:=beta) (FNSucc (beta:=beta) b radix precision p))⌝⦄ := by
+  sorry
+
 -- EvenClosest: closest rounding with tie-breaking toward even (or uniqueness)
 def EvenClosest {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
