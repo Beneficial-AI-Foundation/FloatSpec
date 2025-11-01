@@ -244,6 +244,16 @@ theorem exp_monotone (x y : ℝ) :
     ⦃⇓_ => ⌜Real.exp x ≤ Real.exp y⌝⦄ := by
   sorry
 
+-- Coq: `Rlt_monotony_exp` — if x < y then exp x < exp y
+noncomputable def Rlt_monotony_exp_check (x y : ℝ) : Id Unit :=
+  pure ()
+
+theorem Rlt_monotony_exp (x y : ℝ) :
+    ⦃⌜x < y⌝⦄
+    Rlt_monotony_exp_check x y
+    ⦃⇓_ => ⌜Real.exp x < Real.exp y⌝⦄ := by
+  sorry
+
 -- Coq: `OddSEven` — if n is odd then succ n is even
 noncomputable def OddSEven_check (n : Int) : Id Unit :=
   pure ()
