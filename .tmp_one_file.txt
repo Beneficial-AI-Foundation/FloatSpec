@@ -1,6 +1,0 @@
-FloatSpec/src/Prop/Double_rounding.lean:4:0: error: unknown module prefix 'FloatSpec'
-
-No directory 'FloatSpec' or file 'FloatSpec.olean' in the search path entries:
-/home/hantao/.elan/toolchains/leanprover--lean4---v4.25.0-rc1/lib/lean
-Command exited with non-zero status 1
-0:00.16 167772KB

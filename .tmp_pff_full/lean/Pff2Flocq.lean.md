@@ -1,7 +1,0 @@
-- theorem: `pff_flocq_equiv` (Pff2Flocq.lean:25)
-- theorem: `pff_add_equiv` (Pff2Flocq.lean:30)
-- theorem: `pff_mul_equiv` (Pff2Flocq.lean:35)
-- theorem: `pff_round_equiv` (Pff2Flocq.lean:41)
-- theorem: `pff_error_bound_equiv` (Pff2Flocq.lean:49)
-- theorem: `pff_flocq_bijection` (Pff2Flocq.lean:54)
-- theorem: `flocq_pff_bijection` (Pff2Flocq.lean:58)

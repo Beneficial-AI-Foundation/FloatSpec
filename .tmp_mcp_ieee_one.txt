@@ -1,1 +1,0 @@
-bash: ./scripts/mcp: No such file or directory
