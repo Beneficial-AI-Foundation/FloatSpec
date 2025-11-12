@@ -4,3 +4,5 @@ fwOut.txt
 /.change_log
 /.subagent_log
 /.log
+__pycache__/
+*.pyc
