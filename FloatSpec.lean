@@ -6,6 +6,8 @@ import FloatSpec.src.Calc
 
 -- Property analysis and error bounds
 import FloatSpec.src.Prop
+-- VCFloat-style error bound scaffolding
+import FloatSpec.src.ErrorBound
 
 -- IEEE 754 standard implementation
 import FloatSpec.src.IEEE754
