@@ -21,6 +21,8 @@ The library is organized into layered modules. The top‑level aggregator `Float
   - Executable reference operations with specifications: `Operations.lean` (align, plus, neg, abs, mult), `Sqrt.lean`, `Div.lean`, `Plus.lean`, `Round.lean`, and bracketing utilities `Bracket.lean`
 - Prop (`FloatSpec/src/Prop`)
   - Error bounds and classical theorems about rounding: `Plus_error.lean`, `Div_sqrt_error.lean`, `Double_rounding.lean`, `Relative.lean`, `Round_odd.lean`, `Sterbenz.lean`
+- ErrorBound (`FloatSpec/src/ErrorBound`)
+  - VCFloat-style error-bound integration scaffold: `Types.lean`, `RExpr.lean`, `MakeRounding.lean`, `Absolute.lean`, `Compose.lean`, `Examples/FPBench.lean`
 - IEEE754 (`FloatSpec/src/IEEE754`)
   - Encodings/decodings, bit‑level operations, and a structured IEEE 754 view: `Binary.lean`, `BinarySingleNaN.lean`, `Bits.lean`, and a bridge to primitive floats `PrimFloat.lean`
 - Compat (`FloatSpec/src/Compat.lean`)
@@ -36,7 +38,9 @@ Project configuration lives in `lakefile.lean` and `lean-toolchain` (Lean 4 v4.2
 The project is actively under development. Many modules are executable with “shape/spec” theorems in place, while a number of deep proofs are still placeholders.
 
 - Build: compiles with Lean 4 v4.25.0‑rc1 and Mathlib v4.25.0‑rc1 (warnings allowed for `sorry`).
-- Proof placeholders: a significant number of theorems are still marked `sorry` while porting and bridging lemmas are completed. A quick count at the time of writing shows ~270 occurrences across the tree (notably in `Core/Generic_fmt.lean`, `Core/Ulp.lean`, IEEE 754 encodings, and error‑bound files).
+- Proof placeholders: a significant number of theorems are still marked `sorry` while porting and bridging lemmas are completed (notably in `Core/Generic_fmt.lean`, `Core/Ulp.lean`, IEEE 754 encodings, and Prop error‑bound files).
+- ErrorBound scaffolding: new `FloatSpec/src/ErrorBound/**` namespace has been added to prepare a VCFloat‑style error‑bound pipeline. The files currently contain stubs and compile.
+- VCFloat integration plan and tasks live in `FloatSpec/docs/vcfloat_integration/ARCHITECTURE_AND_PLAN.md` and `FloatSpec/docs/vcfloat_integration/TODOs.md`.
 - Status artifacts:
   - Progress PDF: `FloatSpec_status.pdf`
   - Detailed Core status: `FloatSpec/src/Core/Status.md`
@@ -65,6 +69,7 @@ REPL and usage
 - In a Lean file, import the library root or a specific area:
   - `import FloatSpec` (re‑exports) or
   - `import FloatSpec.src.Calc.Operations`
+  - `import FloatSpec.src.ErrorBound` (VCFloat‑style error‑bound scaffold)
 - Example (informal sketch):
   - Use `FloatSpec.Core.Defs.F2R` to interpret `FlocqFloat` as a real number
   - Use `FloatSpec.Calc.Operations.Falign`/`Fplus` to add two floats, with specs `Falign_spec`/`F2R_plus`
@@ -100,6 +105,7 @@ See:
 - Close error‑bound theorems in `Prop` (`Plus_error`, `Div_sqrt_error`, `Double_rounding`, `Relative`, `Sterbenz`, `Round_odd`).
 - Expand “calc” coverage (division, sqrt bracketing) from shape to fully verified correctness.
 - Documentation and examples; add small sanity tests once more core proofs stabilize.
+- VCFloat integration (ErrorBound): implement MVP per `docs/vcfloat_integration/TODOs.md` — Types/Knowledge, RExpr, make_rounding, absolute error lemmas, and two FPBench examples; then extend to relative lemmas and composition rules.
 
 
 ## Repository Layout
@@ -107,6 +113,7 @@ See:
 - `FloatSpec.lean` – root re‑exports and version
 - `Main.lean` – placeholder executable entry point
 - `FloatSpec/src/**` – library source (see Architecture)
+- `FloatSpec/docs/vcfloat_integration/**` – design notes and TODOs for VCFloat‑style error‑bound integration
 - `lakefile.lean`, `lean-toolchain` – build configuration
 - `PIPELINE.md`, `CLAUDE.md` – proof workflow and notes
 - `FloatSpec_status.pdf` – progress/status snapshot
