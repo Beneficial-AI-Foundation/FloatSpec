@@ -24,7 +24,7 @@ file_list=(
     # FLX.lean
     # FTZ.lean
     # Ulp.lean
-    # IEEE754
+    IEEE754
     Pff
     # Prop
 )
@@ -35,7 +35,7 @@ hours=(
   # 2
   # 2
   # 2
-  # 2
+  2
   12
   # 5
   # 4
@@ -67,7 +67,7 @@ Introduce missing theorems in the directory. You can find the record of missing 
 1. **Read documentation first:**
     - FloatSpec/PIPELINE.md - understand the overall pipeline
     - ./CLAUDE.md - focus on proof writing instructions and mvcgen info
-    - The markdown file named with Theorem_Compatison_Manual in /home/hantao/code/FloatSpec/FloatSpec/src/__FILE_PLACEHOLDER__ - produce the list of theorems with `no match` or `not-found` tag, and be ready to implement them one by one
+    - The markdown file named with Theorem_Compatison_Manual in /home/hantao/code/FloatSpec/FloatSpec/src/__FILE_PLACEHOLDER__ - produce the list of theorems with `no match`, `no Lean counterpart`, or `not-found` tag, and be ready to implement them one by one
 
 ### Core Requirements
 
