@@ -19,7 +19,7 @@ file_list=(
   # FLX.lean
   # FTZ.lean
   # Round_NE.lean
-  Ulp.lean
+  # Ulp.lean
   # Round_pred.lean
   # Generic_fmt.lean
 )
@@ -58,7 +58,7 @@ Fix proofs / theorems in `FloatSpec/src/Core/__PLACEHOLDER__`.
 
 ## Goal
 
-Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md that could be handled right now and lacks a full proof (due to `sorry`, errors, or unsolved goals). Deliver a clean `lake build` with **no new breakages** introduced and no `sorry`, errors, and unsolved goals in the target theorem.
+Repair **exactly one** theorem: the **first** theorem mentioned in /data/hantao/FloatSpec/FloatSpec/src/Core/Status.md that could be handled right now and lacks a full proof (due to `sorry`, errors, or unsolved goals). Deliver a clean `lake build` with **no new breakages** introduced and no `sorry`, errors, and unsolved goals in the target theorem.
 
 ---
 
@@ -66,9 +66,9 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 
 0. You should stick to this rule tightly, and do not consider other factors in the selection process. On any step, if you find a valid target, stop, do not look into later steps or think too much; go straight to the proving process and spend your thoughts there.
 1. Run `lake build` and capture logs.
-2. Compare the logs and the corresponding code files with the record in /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md. Check if they are currently aligned with the update rules. If there are misalignments, update the status file to reflect the current state.
-3. Read the updated /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `in progress` (just search for `- Status: in progress` and grab the first match). This should be an exact match, and DO NOT pick the one with `could not be finished now` at this stage. If you find corresponding theorem in the status file, go to prove it.
-4. When the previous steps cannot find any valid target, read the updated /home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `unfinished` (just search for `- Status: unfinished` and grab the first match). If you find corresponding theorem in the status file, go to prove it.
+2. Compare the logs and the corresponding code files with the record in /data/hantao/FloatSpec/FloatSpec/src/Core/Status.md. Check if they are currently aligned with the update rules. If there are misalignments, update the status file to reflect the current state.
+3. Read the updated /data/hantao/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `in progress` (just search for `- Status: in progress` and grab the first match). This should be an exact match, and DO NOT pick the one with `could not be finished now` at this stage. If you find corresponding theorem in the status file, go to prove it.
+4. When the previous steps cannot find any valid target, read the updated /data/hantao/FloatSpec/FloatSpec/src/Core/Status.md carefully and select the **first** theorem that is marked as `unfinished` (just search for `- Status: unfinished` and grab the first match). If you find corresponding theorem in the status file, go to prove it.
 5. When the previous steps cannot find any valid target, pick the **first** theorem that is not marked as `finished` and is either in `could not be finished now` or other state. Work hard and attempt to prove it.
 6. If none of the previous case are detected, write a short report explaining what you checked and **stop**.
 
@@ -176,7 +176,7 @@ Repair **exactly one** theorem: the **first** theorem mentioned in /home/hantao/
 
 ## Change Log & Reporting (mandatory)
 
-Update the change status file `/home/hantao/code/FloatSpec/FloatSpec/src/Core/Status.md`:
+Update the change status file `/data/hantao/FloatSpec/FloatSpec/src/Core/Status.md`:
 Compile again. Double check the log and the proof body itself:
 If the full proof is completed (which means no sorry in its proof and the helper lemmas you added), change the 'Status' to `finished` for the target theorem. You should be extremely cautious to ensure that the proof is indeed complete before changing the status to `finished`. (which means at least double-check).
 If you could not finish the full proof, but you made some progress, update the 'Status' to `in progress` or `could not be finished now` (choose one that best describes the current state) for the target theorem. If you did not make any progress on the target theorem, do not change its status.

@@ -67,6 +67,7 @@ theorem make_bound_Emin (beta p E : Int) :
     ⦃⇓_ => ⌜(make_bound beta p E).dExp = -E⌝⦄ := by
   sorry
 
+
 -- Second missing theorem: make_bound_p
 noncomputable def make_bound_p_check (beta p E : Int) : Id Unit :=
   pure ()

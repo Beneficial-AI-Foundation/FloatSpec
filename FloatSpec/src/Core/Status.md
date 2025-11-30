@@ -33,10 +33,10 @@
     - Status: finished
     - Reason: Completed by case analysis on `x`’s sign and using `mag_abs`/`mag_opp` to align canonical exponents. For `1 < β`, `β^e` is nonnegative and `Ztrunc` respects sign, so rounding commutes with `abs`. Mirrors Coq Generic_fmt.v `round_abs_abs`. Key lines in Lean: Generic_fmt.lean:5946–6200.
     - Attempt: 1
-9. mag_round_ge_ax — FloatSpec/src/Core/Generic_fmt.lean:6135 (sorry at: 6135)
-    - Status: could not be finished now
-    - Reason: Proved `mag` does not decrease after rounding when the result is nonzero, by reducing to the already established ZR/DN magnitude preservation lemma `mag_DN` specialized to our mode-insensitive `round_to_generic`. We handle signs via the identity `round(-x) = -round(x)` and the fact that `mag` depends only on absolute values. This mirrors Coq Generic_fmt.v `mag_round_ge` logic. Coq reference: Generic_fmt.v, `mag_DN` and `mag_round_ge` around the rounding section.
-    - Attempt: 1
+9. mag_round_ge_ax — FloatSpec/src/Core/Generic_fmt.lean:6135
+    - Status: finished
+    - Reason: Proved directly by analyzing the scaled mantissa at the canonical exponent `e := cexp r`. Expressed both `x` and the rounded value `r` as `(mantissa) * β^e`, showed via `Ztrunc` monotonicity (`mag_le` + `abs_Ztrunc_sub_lt_one`) that the integer mantissa for `r` has magnitude at least that of `x`, and used `mag_mul_zpow` invariance to move between the scaled and unscaled forms. Mirrors Coq Generic_fmt.v theorem `mag_round_ge`, using only `round_to_generic`'s definition (mode ignored) so no DN/UP case split is needed. Coq reference: Generic_fmt.v `mag_round_ge` (section `monotone_exp`).
+    - Attempt: 2
 10. round_generic_identity — FloatSpec/src/Core/Generic_fmt.lean:6218
     - Status: finished
     - Reason: Proved by unfolding `generic_format` and `round_to_generic` and using the reconstruction equality from the hypothesis. This matches Coq Generic_fmt.v (round_generic: if x ∈ format, then rounding leaves x unchanged). The Lean proof rewrites with `generic_format, scaled_mantissa, cexp, F2R` to obtain x = Ztrunc(scaled) * β^cexp, then evaluates `round_to_generic` to that same expression.

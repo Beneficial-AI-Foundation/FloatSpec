@@ -79,12 +79,12 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `pff_round_N_is_round` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)
 - `round_N_is_pff_round` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)
 - `pff_round_is_round_N` → `pff_round_equiv` (Pff2Flocq.lean:41) (content-equivalent)
-- `FloatFexp_gt` → (no Lean counterpart)
-- `CanonicGeNormal` → (no Lean counterpart)
-- `Fulp_ulp_aux` → (no Lean counterpart)
-- `Fulp_ulp` → (no Lean counterpart)
-- `round_NE_is_pff_round_b32` → (no Lean counterpart)
-- `round_NE_is_pff_round_b64` → (no Lean counterpart)
+- `FloatFexp_gt` → `FloatFexp_gt [FloatSpec/src/Pff/Pff2FlocqAux.lean:263]`
+- `CanonicGeNormal` → `CanonicGeNormal [FloatSpec/src/Pff/Pff2FlocqAux.lean:275]`
+- `Fulp_ulp_aux` → `Fulp_ulp_aux [FloatSpec/src/Pff/Pff2FlocqAux.lean:287]`
+- `Fulp_ulp` → `Fulp_ulp [FloatSpec/src/Pff/Pff2FlocqAux.lean:297]`
+- `round_NE_is_pff_round_b32` → `round_NE_is_pff_round_b32 [FloatSpec/src/Pff/Pff2FlocqAux.lean:307]`
+- `round_NE_is_pff_round_b64` → `round_NE_is_pff_round_b64 [FloatSpec/src/Pff/Pff2FlocqAux.lean:316]`
  - `FloatFexp_gt` → `FloatFexp_gt [FloatSpec/src/Pff/Pff2FlocqAux.lean:261]`
  - `CanonicGeNormal` → `CanonicGeNormal [FloatSpec/src/Pff/Pff2FlocqAux.lean:274]`
  - `Fulp_ulp_aux` → `Fulp_ulp_aux [FloatSpec/src/Pff/Pff2FlocqAux.lean:286]`
@@ -139,10 +139,10 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 
 ### Mapping (Coq → Lean)
 - `round_N_opp_sym` → `round_N_opp_sym [FloatSpec/src/Pff/Pff2Flocq.lean:78]`
-- `Fast2Sum_correct` → (no Lean counterpart)
 - `Fast2Sum_correct` → `Fast2Sum_correct [FloatSpec/src/Pff/Pff2Flocq.lean:86]`
-- `TwoSum_correct` → (no Lean counterpart)
-- `C_format` → (no Lean counterpart)
+- `Fast2Sum_correct` → `Fast2Sum_correct [FloatSpec/src/Pff/Pff2Flocq.lean:86]`
+- `TwoSum_correct` → `TwoSum_correct [FloatSpec/src/Pff/Pff2Flocq.lean:118]`
+- `C_format` → `C_format [FloatSpec/src/Pff/Pff2Flocq.lean:132]`
 - `Veltkamp_Even` → `Veltkamp_Even [FloatSpec/src/Pff/Pff2Flocq.lean:146]`
 - `Veltkamp` → `Veltkamp [FloatSpec/src/Pff/Pff2Flocq.lean:163]`
 - `Veltkamp_tail` → `Veltkamp_tail [FloatSpec/src/Pff/Pff2Flocq.lean:178]`
@@ -150,14 +150,14 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `underf_mult_aux'` → `underf_mult_aux' [FloatSpec/src/Pff/Pff2Flocq.lean:221]`
 - `Dekker` → `Dekker [FloatSpec/src/Pff/Pff2Flocq.lean:250]`
 - `V1_Und3'` → `V1_Und3' [FloatSpec/src/Pff/Pff2Flocq.lean:249]`
--- `V1_Und3` → (no Lean counterpart)
-- `ErrFMA_bounded` → (no Lean counterpart)
-- `ErrFMA_correct` → (no Lean counterpart)
+- `V1_Und3` → `V1_Und3 [FloatSpec/src/Pff/Pff2Flocq.lean:273]`
+- `ErrFMA_bounded` → `ErrFMA_bounded [FloatSpec/src/Pff/Pff2Flocq.lean:311]`
+- `ErrFMA_correct` → `ErrFMA_correct [FloatSpec/src/Pff/Pff2Flocq.lean:325]`
 - `mult_error_FLT_ge_bpow'` → `mult_error_FLT_ge_bpow' [FloatSpec/src/Pff/Pff2Flocq.lean:353]`
 - `ErrFMA_bounded_simpl` → `ErrFMA_bounded_simpl [FloatSpec/src/Pff/Pff2Flocq.lean:339]`
-- `V2_Und4` → (no Lean counterpart)
-- `V2_Und2` → (no Lean counterpart)
--- `V2_Und5` → (no Lean counterpart)
+- `V2_Und4` → `V2_Und4 [FloatSpec/src/Pff/Pff2Flocq.lean:394]`
+- `V2_Und2` → `V2_Und2 [FloatSpec/src/Pff/Pff2Flocq.lean:424]`
+- `V2_Und5` → `V2_Und5 [FloatSpec/src/Pff/Pff2Flocq.lean:445]`
 - `ErrFMA_correct_simpl` → `ErrFMA_correct_simpl [FloatSpec/src/Pff/Pff2Flocq.lean:560]`
 - `ErrFmaAppr_correct` → `ErrFmaAppr_correct [FloatSpec/src/Pff/Pff2Flocq.lean:579]`
  - `Axpy` → `Axpy [FloatSpec/src/Pff/Pff2Flocq.lean:831]`
@@ -390,10 +390,10 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - Theorem: `FcanonicLeastExp` (Pff.v:2772)
 - Theorem: `FcanonicLtPos` (Pff.v:2793)
 - Theorem: `Fcanonic_Rle_Zle` (Pff.v:2820)
-- Theorem: `FcanonicLtNeg` (Pff.v:2838)
+- `FcanonicLtNeg` → `FcanonicLtNeg [FloatSpec/src/Pff/Pff.lean:776]`
 - Theorem: `FcanonicFnormalizeEq` (Pff.v:2857)
-- Theorem: `FcanonicPosFexpRlt` (Pff.v:2866)
-- Theorem: `FcanonicNegFexpRlt` (Pff.v:2881)
+- `FcanonicPosFexpRlt` → `FcanonicPosFexpRlt [FloatSpec/src/Pff/Pff.lean:872]`
+- `FcanonicNegFexpRlt` → `FcanonicNegFexpRlt [FloatSpec/src/Pff/Pff.lean:900]`
 - Theorem: `vNumbMoreThanOne` (Pff.v:2896)
 - Theorem: `PosNormMin` (Pff.v:2902)
 - Theorem: `FnormalPpred` (Pff.v:2909)
@@ -930,6 +930,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:1463]`
 - `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:1336]`
 - `inject_nat_convert` → `inject_nat_convert [FloatSpec/src/Pff/Pff.lean:1411]`
+- `RleBoundRoundl` → `RleBoundRoundl [FloatSpec/src/Pff/Pff.lean:508]`
 - `ZleLe` → `ZleLe [FloatSpec/src/Pff/Pff.lean:1116]`
 - `Zlt_Zopp` → `Zlt_Zopp [FloatSpec/src/Pff/Pff.lean:1156]`
 - `Zle_Zopp` → `Zle_Zopp [FloatSpec/src/Pff/Pff.lean:1166]`
@@ -945,7 +946,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zmin_Zmax` → `Zmin_Zmax [FloatSpec/src/Pff/Pff.lean:1206]`
 - `Zle_Zmult_comp_r` → `Zle_Zmult_comp_r [FloatSpec/src/Pff/Pff.lean:1266]`
 - `Zle_Zmult_comp_l` → `Zle_Zmult_comp_l [FloatSpec/src/Pff/Pff.lean:1276]`
-- `Zabs_eq_opp` → `Zabs_eq_opp [FloatSpec/src/Pff/Pff.lean:1409]`
+- `Zabs_eq_opp` → `Zabs_eq_opp [FloatSpec/src/Pff/Pff.lean:2854]`
 - `Zabs_Zs` → `Zabs_Zs [FloatSpec/src/Pff/Pff.lean:1419]`
 - `Zle_Zpred` → `Zle_Zpred [FloatSpec/src/Pff/Pff.lean:1439]`
 - `Zle_abs` → `Zle_abs [FloatSpec/src/Pff/Pff.lean:1313]`
@@ -970,7 +971,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `min_or` → `min_or` (Pff.lean:68)
 - `convert_not_O` → `convert_not_O [FloatSpec/src/Pff/Pff.lean:526]`
 - `inj_abs` → `inj_abs [FloatSpec/src/Pff/Pff.lean:287]`
-- `inject_nat_convert` → (no Lean counterpart)
+- `inject_nat_convert` → `inject_nat_convert [FloatSpec/src/Pff/Pff.lean:2844]`
 - `ZleLe` → `ZleLe [FloatSpec/src/Pff/Pff.lean:104]`
 - `Zlt_Zopp` → `Zlt_Zopp [FloatSpec/src/Pff/Pff.lean:112]`
 - `Zle_Zopp` → `Zle_Zopp [FloatSpec/src/Pff/Pff.lean:127]`
@@ -997,10 +998,10 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Rledouble` → `Rledouble [FloatSpec/src/Pff/Pff.lean:73]`
 - `Rltdouble` → `Rltdouble [FloatSpec/src/Pff/Pff.lean:83]`
 - `Rle_Rinv` → `Rle_Rinv [FloatSpec/src/Pff/Pff.lean:93]`
-- `Zabs_eq_opp` → (no Lean counterpart)
+- `Zabs_eq_opp` → `Zabs_eq_opp [FloatSpec/src/Pff/Pff.lean:2854]`
 - `Zabs_eq_opp` → `Zabs_eq_opp [FloatSpec/src/Pff/Pff.lean:287]`
 - `Zabs_Zs` → `Zabs_Zs [FloatSpec/src/Pff/Pff.lean:337]`
-- `Zle_Zpred` → (no Lean counterpart)
+- `Zle_Zpred` → `Zle_Zpred [FloatSpec/src/Pff/Pff.lean:2884]`
 - `Zle_Zpred` → `Zle_Zpred [FloatSpec/src/Pff/Pff.lean:286]`
 - `Zabs_Zopp` → `Zabs_Zopp [FloatSpec/src/Pff/Pff.lean:443]`
 - `Zle_Zabs` → `Zle_Zabs [FloatSpec/src/Pff/Pff.lean:367]`
@@ -1015,7 +1016,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `R0LtFnum` → `R0LtFnum [FloatSpec/src/Pff/Pff.lean:1245]`
 - `R0LeFnum` → `R0LeFnum [FloatSpec/src/Pff/Pff.lean:1257]`
 - `LeZEROFnum` → `LeZEROFnum [FloatSpec/src/Pff/Pff.lean:1269]`
-- `Zle_Zpred_Zpred` → (no Lean counterpart)
+- `Zle_Zpred_Zpred` → `Zle_Zpred_Zpred [FloatSpec/src/Pff/Pff.lean:3877]`
 - `Zlt_Zabs_inv1` → `Zlt_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:532]`
 - `Zle_Zabs_inv1` → `Zle_Zabs_inv1 [FloatSpec/src/Pff/Pff.lean:542]`
 - `Zle_Zabs_inv2` → `Zle_Zabs_inv2 [FloatSpec/src/Pff/Pff.lean:552]`
@@ -1033,13 +1034,13 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Zpower_nat_monotone_lt` → `Zpower_nat_monotone_lt [FloatSpec/src/Pff/Pff.lean:630]`
 - `Zpower_nat_anti_monotone_lt` → `Zpower_nat_anti_monotone_lt [FloatSpec/src/Pff/Pff.lean:640]`
 - `Zpower_nat_monotone_le` → `Zpower_nat_monotone_le [FloatSpec/src/Pff/Pff.lean:650]`
-- `digitAux1` → (no Lean counterpart)
-- `Zcompare_correct` → (no Lean counterpart)
-- `digitAuxLess` → (no Lean counterpart)
-- `digitLess` → (no Lean counterpart)
+- `digitAux1` → `digitAux1 [FloatSpec/src/Pff/Pff.lean:4136]`
+- `Zcompare_correct` → `Zcompare_correct [FloatSpec/src/Pff/Pff.lean:3854]`
+- `digitAuxLess` → `digitAuxLess [FloatSpec/src/Pff/Pff.lean:4346]`
+- `digitLess` → `digitLess [FloatSpec/src/Pff/Pff.lean:4375]`
 - `digitAuxMore` → `digitAuxMore [FloatSpec/src/Pff/Pff.lean:894]`
-- `pos_length_pow` → (no Lean counterpart)
-- `digitMore` → (no Lean counterpart)
+- `pos_length_pow` → `pos_length_pow [FloatSpec/src/Pff/Pff.lean:4177]`
+- `digitMore` → `digitMore [FloatSpec/src/Pff/Pff.lean:4187]`
 -- `digitInv` → `digitInv [FloatSpec/src/Pff/Pff.lean:929]`
  - `digit_monotone` → `digit_monotone [FloatSpec/src/Pff/Pff.lean:1109]`
  - `digitNotZero` → `digitNotZero [FloatSpec/src/Pff/Pff.lean:1119]`
@@ -1059,32 +1060,30 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 -- `powerRZ_1` → `powerRZ_1 [FloatSpec/src/Pff/Pff.lean:288]`
 -- `powerRZ_NOR` → `powerRZ_NOR [FloatSpec/src/Pff/Pff.lean:421]`
 -- `powerRZ_add` → `powerRZ_add [FloatSpec/src/Pff/Pff.lean:298]`
-- `powerRZ_Zopp` → `powerRZ_Zopp [FloatSpec/src/Pff/Pff.lean:308]`
-- `powerRZ_Zs` → `powerRZ_Zs [FloatSpec/src/Pff/Pff.lean:318]`
 -- `Zpower_nat_Z_powerRZ` → `Zpower_nat_Z_powerRZ [FloatSpec/src/Pff/Pff.lean:331]`
 -- `powerRZ_lt` → `powerRZ_lt [FloatSpec/src/Pff/Pff.lean:341]`
 -- `powerRZ_le` → `powerRZ_le [FloatSpec/src/Pff/Pff.lean:351]`
 -- `Rlt_powerRZ` → `Rlt_powerRZ [FloatSpec/src/Pff/Pff.lean:361]`
- - `Zpower_nat_powerRZ_absolu` → (no Lean counterpart)
- -- `powerRZ_R1` → (no Lean counterpart)
- -- `Rle_powerRZ` → `Rle_powerRZ [FloatSpec/src/Pff/Pff.lean:371]`
- -- `Zlt_powerRZ` → `Zlt_powerRZ [FloatSpec/src/Pff/Pff.lean:381]`
- -- `Zle_powerRZ` → `Zle_powerRZ [FloatSpec/src/Pff/Pff.lean:391]`
- - `Rinv_powerRZ` → `Rinv_powerRZ [FloatSpec/src/Pff/Pff.lean:801]`
+- `Zpower_nat_powerRZ_absolu` → `Zpower_nat_powerRZ_absolu [FloatSpec/src/Pff/Pff.lean:2247]`
+ - `powerRZ_R1` → `powerRZ_R1 [FloatSpec/src/Pff/Pff.lean:2166]`
+-- `Rle_powerRZ` → `Rle_powerRZ [FloatSpec/src/Pff/Pff.lean:371]`
+-- `Zlt_powerRZ` → `Zlt_powerRZ [FloatSpec/src/Pff/Pff.lean:381]`
+-- `Zle_powerRZ` → `Zle_powerRZ [FloatSpec/src/Pff/Pff.lean:391]`
+- `Rinv_powerRZ` → `Rinv_powerRZ [FloatSpec/src/Pff/Pff.lean:801]`
  - `firstNormalPos_eq` → `firstNormalPos_eq [FloatSpec/src/Pff/Pff.lean:262]`
  -- `floatEq` → `floatEq [FloatSpec/src/Pff/Pff.lean:580]`
 -- `floatDec` → `floatDec [FloatSpec/src/Pff/Pff.lean:592]`
 -- `FzeroisReallyZero` → `FzeroisReallyZero [FloatSpec/src/Pff/Pff.lean:620]`
 -- `is_Fzero_rep1` → `is_Fzero_rep1 [FloatSpec/src/Pff/Pff.lean:631]`
-- `LtFnumZERO` → (no Lean counterpart)
-- `is_Fzero_rep2` → (no Lean counterpart)
-- `NisFzeroComp` → (no Lean counterpart)
-- `Rlt_monotony_exp` → (no Lean counterpart)
-- `Rle_monotone_exp` → (no Lean counterpart)
-- `Rlt_monotony_contra_exp` → (no Lean counterpart)
-- `Rle_monotony_contra_exp` → (no Lean counterpart)
-- `FtoREqInv2` → (no Lean counterpart)
-- `Rlt_Float_Zlt` → (no Lean counterpart)
+- `LtFnumZERO` → `LtFnumZERO [FloatSpec/src/Pff/Pff.lean:3981]`
+- `is_Fzero_rep2` → `is_Fzero_rep2 [FloatSpec/src/Pff/Pff.lean:3301]`
+- `NisFzeroComp` → `NisFzeroComp [FloatSpec/src/Pff/Pff.lean:3311]`
+- `Rlt_monotony_exp` → `Rlt_monotony_exp [FloatSpec/src/Pff/Pff.lean:206]`
+- `Rle_monotone_exp` → `Rle_monotone_exp [FloatSpec/src/Pff/Pff.lean:2323]`
+- `Rlt_monotony_contra_exp` → `Rlt_monotony_contra_exp [FloatSpec/src/Pff/Pff.lean:2333]`
+- `Rle_monotony_contra_exp` → `Rle_monotony_contra_exp [FloatSpec/src/Pff/Pff.lean:2343]`
+- `FtoREqInv2` → `FtoREqInv2 [FloatSpec/src/Pff/Pff.lean:2354]` 
+- `Rlt_Float_Zlt` → `Rlt_Float_Zlt [FloatSpec/src/Pff/Pff.lean:2378]`
 - `oneExp_le` → `oneExp_le [FloatSpec/src/Pff/Pff.lean:630]`
 - `oneExp_Zlt` → `oneExp_Zlt [FloatSpec/src/Pff/Pff.lean:641]`
 - `sameExpEq` → `sameExpEq [FloatSpec/src/Pff/Pff.lean:620]`
@@ -1093,35 +1092,35 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `FshiftCorrectInv` → `FshiftCorrectInv [FloatSpec/src/Pff/Pff.lean:1329]`
 - `FshiftO` → `FshiftO [FloatSpec/src/Pff/Pff.lean:1341]`
 - `FshiftCorrectSym` → `FshiftCorrectSym [FloatSpec/src/Pff/Pff.lean:1353]`
-- `FdigitEq` → `FdigitEq [FloatSpec/src/Pff/Pff.lean:1365]`
-- `Fle_Zle` → (no Lean counterpart)
+- `Fle_Zle` → `Fle_Zle [FloatSpec/src/Pff/Pff.lean:3371]`
+- `Fle_Zle` → `Fle_Zle [FloatSpec/src/Pff/Pff.lean:3371]`
  - `Fle_Zle` → `Fle_Zle [FloatSpec/src/Pff/Pff.lean:555]`
-- `Rlt_Fexp_eq_Zlt` → (no Lean counterpart)
-- `Rle_Fexp_eq_Zle` → (no Lean counterpart)
-- `LtR0Fnum` → (no Lean counterpart)
-- `LeR0Fnum` → (no Lean counterpart)
-- `LeFnumZERO` → (no Lean counterpart)
-- `R0LtFnum` → (no Lean counterpart)
-- `R0LeFnum` → (no Lean counterpart)
-- `LeZEROFnum` → (no Lean counterpart)
-- `Fplus_correct` → (no Lean counterpart)
+- `Fplus_correct` → `Fplus_correct [FloatSpec/src/Pff/Pff.lean:3407]`
+- `Rle_Fexp_eq_Zle` → `LtR0Fnum [FloatSpec/src/Pff/Pff.lean:3972]`
+- `LtR0Fnum` → `LeR0Fnum [FloatSpec/src/Pff/Pff.lean:3984]`
+- `LeR0Fnum` → `LeFnumZERO [FloatSpec/src/Pff/Pff.lean:3996]`
+- `LeFnumZERO` → `R0LtFnum [FloatSpec/src/Pff/Pff.lean:4008]`
+- `R0LtFnum` → `R0LeFnum [FloatSpec/src/Pff/Pff.lean:4020]`
+- `Fabs_correct` → `Fabs_correct [FloatSpec/src/Pff/Pff.lean:3570]`
+- `LeZEROFnum` → `Fplus_correct [FloatSpec/src/Pff/Pff.lean:3407]`
+- `Fplus_correct` → `Fplus_correct [FloatSpec/src/Pff/Pff.lean:3407]`
 - `Fopp_correct` → `Fopp_correct [FloatSpec/src/Pff/Pff.lean:1362]`
-- `Fopp_Fopp` → (no Lean counterpart)
-- `Fdigit_opp` → (no Lean counterpart)
-- `Fabs_correct1` → (no Lean counterpart)
-- `Fabs_correct2` → (no Lean counterpart)
-- `Fabs_correct` → (no Lean counterpart)
+- `Fopp_Fopp` → `Fdigit_opp [FloatSpec/src/Pff/Pff.lean:3462]`
+- `Fdigit_opp` → `Fabs_correct1 [FloatSpec/src/Pff/Pff.lean:3546]`
+- `Fabs_correct1` → `Fabs_correct2 [FloatSpec/src/Pff/Pff.lean:3558]`
+- `Fabs_correct2` → `Fabs_correct [FloatSpec/src/Pff/Pff.lean:3570]`
+- `Fabs_correct` → `Fabs_correct [FloatSpec/src/Pff/Pff.lean:3570]`
 - `RleFexpFabs` → `RleFexpFabs [FloatSpec/src/Pff/Pff.lean:170]`
 - `Fabs_Fzero` → `Fabs_Fzero [FloatSpec/src/Pff/Pff.lean:1722]`
-- `Fdigit_abs` → `Fdigit_abs [FloatSpec/src/Pff/Pff.lean:1731]`
+- `FvalScale` → `FvalScale [FloatSpec/src/Pff/Pff.lean:3250]`
 - `Fminus_correct` → `Fminus_correct [FloatSpec/src/Pff/Pff.lean:1619]`
  - `Fopp_Fminus` → `Fopp_Fminus [FloatSpec/src/Pff/Pff.lean:1806]`
  - `Fopp_Fminus_dist` → `Fopp_Fminus_dist [FloatSpec/src/Pff/Pff.lean:1836]`
  - `FzeroisZero` → `FzeroisZero [FloatSpec/src/Pff/Pff.lean:1670]`
-- `FboundedFzero` → (no Lean counterpart)
-- `FboundedZeroSameExp` → (no Lean counterpart)
-- `FBoundedScale` → (no Lean counterpart)
-- `FvalScale` → (no Lean counterpart)
+- `FboundedFzero` → `FboundedZeroSameExp [FloatSpec/src/Pff/Pff.lean:3226]`
+- `FboundedZeroSameExp` → `FBoundedScale [FloatSpec/src/Pff/Pff.lean:3238]`
+- `FBoundedScale` → `FvalScale [FloatSpec/src/Pff/Pff.lean:3250]`
+- `FvalScale` → `FvalScale [FloatSpec/src/Pff/Pff.lean:3250]`
 - `oppBounded` → `oppBounded [FloatSpec/src/Pff/Pff.lean:2536]`
 - `oppBoundedInv` → `oppBoundedInv [FloatSpec/src/Pff/Pff.lean:2452]`
 - `absFBounded` → `absFBounded [FloatSpec/src/Pff/Pff.lean:2470]`
@@ -1129,8 +1128,8 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `eqExpLess` → `eqExpLess [FloatSpec/src/Pff/Pff.lean:1822]`
 - `FboundedShiftLess` → `FboundedShiftLess [FloatSpec/src/Pff/Pff.lean:1839]`
 - `eqExpMax` → `eqExpMax [FloatSpec/src/Pff/Pff.lean:1850]`
-- `maxFbounded` → (no Lean counterpart)
-- `maxMax` → (no Lean counterpart)
+- `maxFbounded` → `maxFbounded [FloatSpec/src/Pff/Pff.lean:3267]`
+- `maxMax` → `maxMax [FloatSpec/src/Pff/Pff.lean:2022]`
  -- `SterbenzAux` → `SterbenzAux [FloatSpec/src/Pff/Pff.lean:2830]`
  -- `Sterbenz` → `Sterbenz [FloatSpec/src/Pff/Pff.lean:2849]`
 - `mZlist_aux_correct` → `mZlist_aux_correct [FloatSpec/src/Pff/Pff.lean:2909]`
@@ -1143,58 +1142,58 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `mProd_correct_rev1` → `mProd_correct_rev1 [FloatSpec/src/Pff/Pff.lean:3000]`
 - `mProd_correct_rev2` → `mProd_correct_rev2 [FloatSpec/src/Pff/Pff.lean:3012]`
 - `in_map_inv` → `in_map_inv [FloatSpec/src/Pff/Pff.lean:3024]`
-- `FnormalBounded` → (no Lean counterpart)
-- `FnormalNotZero` → (no Lean counterpart)
-- `FnormalFop` → (no Lean counterpart)
-- `FnormalFabs` → (no Lean counterpart)
-- `maxMax1` → (no Lean counterpart)
-- `FsubnormalFbounded` → (no Lean counterpart)
-- `FsubnormalFexp` → (no Lean counterpart)
-- `FsubnormFopp` → (no Lean counterpart)
-- `FsubnormFabs` → (no Lean counterpart)
-- `FsubnormalUnique` → (no Lean counterpart)
-- `FsubnormalLt` → (no Lean counterpart)
-- `FcanonicBound` → (no Lean counterpart)
-- `FcanonicFopp` → (no Lean counterpart)
-- `FcanonicFabs` → (no Lean counterpart)
-- `MaxFloat` → (no Lean counterpart)
-- `FboundNext` → (no Lean counterpart)
-- `digitPredVNumiSPrecision` → (no Lean counterpart)
-- `digitVNumiSPrecision` → (no Lean counterpart)
-- `vNumPrecision` → (no Lean counterpart)
-- `pGivesDigit` → (no Lean counterpart)
-- `digitGivesBoundedNum` → (no Lean counterpart)
-- `FboundedMboundPos` → (no Lean counterpart)
-- `FboundedMbound` → (no Lean counterpart)
-- `FnormalPrecision` → (no Lean counterpart)
-- `FnormalUnique` → (no Lean counterpart)
-- `FnormalLtPos` → (no Lean counterpart)
-- `nNormPos` → (no Lean counterpart)
-- `digitnNormMin` → (no Lean counterpart)
-- `nNrMMimLevNum` → (no Lean counterpart)
-- `firstNormalPosNormal` → (no Lean counterpart)
-- `pNormal_absolu_min` → (no Lean counterpart)
-- `maxMaxBis` → (no Lean counterpart)
-- `FnormalLtFirstNormalPos` → (no Lean counterpart)
-- `FsubnormalDigit` → (no Lean counterpart)
-- `pSubnormal_absolu_min` → (no Lean counterpart)
-- `FsubnormalLtFirstNormalPos` → (no Lean counterpart)
-- `FsubnormalnormalLtPos` → (no Lean counterpart)
-- `FsubnormalnormalLtNeg` → (no Lean counterpart)
-- `FnormalizeCorrect` → (no Lean counterpart)
-- `Fnormalize_Fopp` → (no Lean counterpart)
-- `FnormalizeBounded` → (no Lean counterpart)
-- `FnormalizeCanonic` → (no Lean counterpart)
-- `NormalAndSubNormalNotEq` → (no Lean counterpart)
-- `FcanonicUnique` → (no Lean counterpart)
-- `FcanonicLeastExp` → (no Lean counterpart)
-- `FcanonicLtPos` → (no Lean counterpart)
-- `Fcanonic_Rle_Zle` → (no Lean counterpart)
-- `FcanonicLtNeg` → (no Lean counterpart)
-- `FcanonicFnormalizeEq` → (no Lean counterpart)
-- `FcanonicPosFexpRlt` → (no Lean counterpart)
+- `FnormalBounded` → `FnormalBounded [FloatSpec/src/Pff/Pff.lean:1774]`
+- `FnormalNotZero` → `FnormalNotZero [FloatSpec/src/Pff/Pff.lean:1777]`
+- `FnormalFop` → `FnormalFop [FloatSpec/src/Pff/Pff.lean:1808]`
+- `FnormalFabs` → `FnormalFabs [FloatSpec/src/Pff/Pff.lean:1820]`
+- `maxMax1` → `maxMax1 [FloatSpec/src/Pff/Pff.lean:2040]`
+- `FsubnormalFbounded` → `FsubnormalFbounded [FloatSpec/src/Pff/Pff.lean:1852]`
+- `FsubnormalFexp` → `FsubnormalFexp [FloatSpec/src/Pff/Pff.lean:1866]`
+- `FsubnormFopp` → `FsubnormFopp [FloatSpec/src/Pff/Pff.lean:1888]`
+- `FsubnormFabs` → `FsubnormFabs [FloatSpec/src/Pff/Pff.lean:1902]`
+- `FsubnormalUnique` → `FsubnormalUnique [FloatSpec/src/Pff/Pff.lean:1913]`
+- `FsubnormalLt` → `FsubnormalLt [FloatSpec/src/Pff/Pff.lean:1928]`
+-- `FcanonicBound` → `FcanonicBound` [FloatSpec/src/Pff/Pff.lean:672]
+-- `FcanonicFopp` → `FcanonicFopp` [FloatSpec/src/Pff/Pff.lean:686]
+-- `FcanonicFabs` → `FcanonicFabs` [FloatSpec/src/Pff/Pff.lean:700]
+- `MaxFloat` → `MaxFloat [FloatSpec/src/Pff/Pff.lean:2168]`
+- `FboundNext` → `FboundNext [FloatSpec/src/Pff/Pff.lean:1792]`
+- `digitPredVNumiSPrecision` → `digitPredVNumiSPrecision [FloatSpec/src/Pff/Pff.lean:3090]`
+- `digitVNumiSPrecision` → `digitVNumiSPrecision [FloatSpec/src/Pff/Pff.lean:3099]`
+- `vNumPrecision` → `vNumPrecision [FloatSpec/src/Pff/Pff.lean:3052]`
+- `pGivesDigit` → `pGivesDigit [FloatSpec/src/Pff/Pff.lean:3125]`
+- `digitGivesBoundedNum` → `digitGivesBoundedNum [FloatSpec/src/Pff/Pff.lean:3134]`
+- `FboundedMboundPos` → `FboundedMboundPos [FloatSpec/src/Pff/Pff.lean:1222]`
+- `FboundedMbound` → `FboundedMbound [FloatSpec/src/Pff/Pff.lean:1234]`
+- `FnormalPrecision` → `FnormalPrecision [FloatSpec/src/Pff/Pff.lean:3194]`
+- `FnormalUnique` → `FnormalUnique [FloatSpec/src/Pff/Pff.lean:3208]`
+- `FnormalLtPos` → `FnormalLtPos [FloatSpec/src/Pff/Pff.lean:3236]`
+- `nNormPos` → `nNormPos [FloatSpec/src/Pff/Pff.lean:3223]`
+- `digitnNormMin` → `digitnNormMin [FloatSpec/src/Pff/Pff.lean:3233]`
+- `nNrMMimLevNum` → `nNrMMimLevNum [FloatSpec/src/Pff/Pff.lean:3245]`
+- `firstNormalPosNormal` → `firstNormalPosNormal [FloatSpec/src/Pff/Pff.lean:3253]`
+- `pNormal_absolu_min` → `pNormal_absolu_min [FloatSpec/src/Pff/Pff.lean:3271]`
+- `maxMaxBis` → `maxMaxBis [FloatSpec/src/Pff/Pff.lean:2279]`
+- `FnormalLtFirstNormalPos` → `FnormalLtFirstNormalPos [FloatSpec/src/Pff/Pff.lean:3301]`
+- `FsubnormalDigit` → `FsubnormalDigit [FloatSpec/src/Pff/Pff.lean:3317]`
+- `pSubnormal_absolu_min` → `pSubnormal_absolu_min [FloatSpec/src/Pff/Pff.lean:3334]`
+- `FsubnormalLtFirstNormalPos` → `FsubnormalLtFirstNormalPos [FloatSpec/src/Pff/Pff.lean:3348]`
+- `FsubnormalnormalLtPos` → `FsubnormalnormalLtPos [FloatSpec/src/Pff/Pff.lean:3369]`
+- `FsubnormalnormalLtNeg` → `FsubnormalnormalLtNeg [FloatSpec/src/Pff/Pff.lean:3385]`
+- `FnormalizeCorrect` → `FnormalizeCorrect [FloatSpec/src/Pff/Pff.lean:671]`
+- `Fnormalize_Fopp` → `Fnormalize_Fopp [FloatSpec/src/Pff/Pff.lean:760]`
+- `FnormalizeBounded` → `FnormalizeBounded [FloatSpec/src/Pff/Pff.lean:771]`
+- `FnormalizeCanonic` → `FnormalizeCanonic [FloatSpec/src/Pff/Pff.lean:808]`
+- `NormalAndSubNormalNotEq` → `NormalAndSubNormalNotEq [FloatSpec/src/Pff/Pff.lean:802]`
+- `FcanonicUnique` → `FcanonicUnique [FloatSpec/src/Pff/Pff.lean:818]`
+- `FcanonicLeastExp` → `FcanonicLeastExp [FloatSpec/src/Pff/Pff.lean:835]`
+- `FcanonicLtPos` → FcanonicLtPos [FloatSpec/src/Pff/Pff.lean:739]
+- `Fcanonic_Rle_Zle` → `Fcanonic_Rle_Zle [FloatSpec/src/Pff/Pff.lean:739]`
+- `FcanonicLtNeg` → `FcanonicLtNeg [FloatSpec/src/Pff/Pff.lean:776]`
+- `FcanonicFnormalizeEq` → `FcanonicFnormalizeEq [FloatSpec/src/Pff/Pff.lean:863]`
+- `FcanonicPosFexpRlt` → `FcanonicPosFexpRlt [FloatSpec/src/Pff/Pff.lean:872]`
 - `FcanonicNegFexpRlt` → (no Lean counterpart)
-- `vNumbMoreThanOne` → (no Lean counterpart)
+- `vNumbMoreThanOne` → `vNumbMoreThanOne [FloatSpec/src/Pff/Pff.lean:3476]`
 - `PosNormMin` → (no Lean counterpart)
 - `FnormalPpred` → (no Lean counterpart)
 - `FcanonicPpred` → (no Lean counterpart)
@@ -1265,9 +1264,9 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `MinOppMax` → (no Lean counterpart)
 - `MaxOppMin` → (no Lean counterpart)
 - `MinMax` → (no Lean counterpart)
-- `MinExList` → (no Lean counterpart)
-- `MinEx` → (no Lean counterpart)
-- `MaxEx` → (no Lean counterpart)
+- `MinExList` → `MinExList [FloatSpec/src/Pff/Pff.lean:1163]`
+- `MinEx` → `MinEx [FloatSpec/src/Pff/Pff.lean:1186]`
+- `MaxEx` → `MaxEx [FloatSpec/src/Pff/Pff.lean:1197]`
 - `FminRep` → (no Lean counterpart)
 - `MaxMin` → (no Lean counterpart)
 - `FmaxRep` → (no Lean counterpart)
@@ -1385,7 +1384,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `RoundedModeUlp` → `RoundedModeUlp [FloatSpec/src/Pff/Pff.lean:1184]`
 - `RoundedModeErrorExpStrict` → (no Lean counterpart)
 - `RoundedModeProjectorIdem` → (no Lean counterpart)
-- `RoundedModeBounded` → (no Lean counterpart)
+- `RoundedModeBounded` → `RoundedModeBounded [FloatSpec/src/Pff/Pff.lean:1654]`
 - `RoundedModeMult` → (no Lean counterpart)
 - `RoundedModeMultLess` → (no Lean counterpart)
  - `RleMinR0` → `RleMinR0 [FloatSpec/src/Pff/Pff.lean:227]`
@@ -1399,7 +1398,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `isMinComp` → (no Lean counterpart)
 - `isMaxComp` → (no Lean counterpart)
 - `RleBoundRoundl` → (no Lean counterpart)
-- `RleBoundRoundr` → (no Lean counterpart)
+- `RleBoundRoundr` → `RleBoundRoundr [FloatSpec/src/Pff/Pff.lean:536]`
 - `RoundAbsMonotoner` → (no Lean counterpart)
 - `RoundAbsMonotonel` → (no Lean counterpart)
 - `FUlp_Le_LSigB` → (no Lean counterpart)
@@ -1580,7 +1579,7 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
 - `Fulp_le_twice_r` → (no Lean counterpart)
 - `Half_Closest_Round` → (no Lean counterpart)
 - `Twice_EvenClosest_Round` → (no Lean counterpart)
-- `EvenClosestMonotone2` → (no Lean counterpart)
+  - `EvenClosestMonotone2` → `EvenClosestMonotone2 [FloatSpec/src/Pff/Pff.lean:1523]`
 - `Fulp_le_twice_r_round` → (no Lean counterpart)
 - `discri1` → (no Lean counterpart)
 - `Q_positive` → (no Lean counterpart)
@@ -1716,11 +1715,10 @@ This file lists theorem-like declarations per file (Coq vs Lean) and records cor
  - `RND_Max_Pos_canonic` → `RND_Max_Pos_canonic [FloatSpec/src/Pff/Pff.lean:541]`
 - `RND_Max_Pos_Rle` → `RND_Max_Pos_Rle [FloatSpec/src/Pff/Pff.lean:620]`
 - `RND_Max_Pos_correct` → `RND_Max_Pos_correct [FloatSpec/src/Pff/Pff.lean:631]`
-- `RND_Min_canonic` → (no Lean counterpart)
+- `RND_Min_canonic` → `RND_Min_canonic [FloatSpec/src/Pff/Pff.lean:755]`
  - `RND_Min_correct` → `RND_Min_correct [FloatSpec/src/Pff/Pff.lean:571]`
  - `RND_Max_canonic` → `RND_Max_canonic [FloatSpec/src/Pff/Pff.lean:561]`
  - `RND_Max_correct` → `RND_Max_correct [FloatSpec/src/Pff/Pff.lean:585]`
-- `RND_Min_canonic` → `RND_Min_canonic [FloatSpec/src/Pff/Pff.lean:501]`
  - `RND_Max_canonic` → `RND_Max_canonic [FloatSpec/src/Pff/Pff.lean:561]`
 - `RND_EvenClosest_canonic` → (no Lean counterpart)
  - `RND_EvenClosest_canonic` → `RND_EvenClosest_canonic [FloatSpec/src/Pff/Pff.lean:732]`

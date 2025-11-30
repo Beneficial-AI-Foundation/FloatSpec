@@ -496,7 +496,6 @@ def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop := True
 structure Fbound_skel where
   -- Minimal exponent field needed by several Pff theorems (e.g. RleRoundedAbs)
   dExp : Int := 0
-  vNum : Int := 1
 
 def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
   fun _ _ => True
@@ -537,43 +536,26 @@ theorem RleBoundRoundl {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p ≤ _root_.F2R (beta:=beta) q⌝⦄ := by
   sorry
 
-noncomputable def RleBoundRoundr_check {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Id Unit :=
-  pure ()
-
-/-- Coq: `RleBoundRoundr` — if `P` forms a rounded mode and `r ≤ _root_.F2R p`,
-    any `q` produced by rounding `r` also satisfies `_root_.F2R q ≤ _root_.F2R p`. -/
-theorem RleBoundRoundr {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧
-        (r ≤ _root_.F2R (beta:=beta) p) ∧ P r q⌝⦄
-    RleBoundRoundr_check (beta:=beta) b radix P p q r
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) q ≤ _root_.F2R (beta:=beta) p⌝⦄ := by
-  sorry
-
 -- Coq: `firstNormalPos_eq` — value of the first normal positive float
 noncomputable def firstNormalPos {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat) :
+    (radix : Int) (b : Fbound_skel) (p : Int) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
-  ⟨nNormMin radix precision, -b.dExp⟩
+  -- Skeleton representative; concrete construction deferred to Core.
+  ⟨1, Int.pred p + - b.dExp⟩
 
 noncomputable def firstNormalPos_eq_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat) : Id Unit :=
+    (radix : Int) (b : Fbound_skel) (p : Int) : Id Unit :=
   pure ()
 
 /-- Coq: `firstNormalPos_eq` — interpreting the `firstNormalPos` float at
-    base `radix` equals the real value `(nNormMin radix precision : ℝ) * (radix : ℝ) ^ (-b.dExp)`.
-    Following the file's Hoare-triple convention; proof deferred. -/
+    base `radix` equals `(radix : ℝ)^(pred p + - b.dExp)`.
+    We mirror the statement using project Hoare-triple style; proof deferred. -/
 theorem firstNormalPos_eq {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat) :
+    (radix : Int) (b : Fbound_skel) (p : Int) :
     ⦃⌜True⌝⦄
-    firstNormalPos_eq_check (beta:=beta) radix b precision
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b precision)
-            = (nNormMin radix precision : ℝ) * (radix : ℝ) ^ (-b.dExp)⌝⦄ := by
+    firstNormalPos_eq_check (beta:=beta) radix b p
+    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p)
+            = (radix : ℝ) ^ (Int.pred p + - b.dExp)⌝⦄ := by
   sorry
 
 -- ---------------------------------------------------------------------------
@@ -592,14 +574,6 @@ def Fnormal {beta : Int}
 def Fsubnormal {beta : Int}
     (radix : ℝ) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
-
--- Minimal placeholder for the Coq `digit` function used in later statements.
-noncomputable def Fdigit {beta : Int}
-    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat := 0
-
--- Predicate: zero mantissa (Coq: `is_Fzero`). Placed early for downstream uses.
-def is_Fzero {beta : Int} (x : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
-  x.Fnum = 0
 
 -- Coq-style boundedness predicate (placeholder)
 -- ---------------------------------------------------------------------------
@@ -731,237 +705,12 @@ theorem FcanonicFabs {beta : Int}
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (Fabs p)⌝⦄ := by
   sorry
 
--- Relative ordering of canonical floats (Coq: `FcanonicLtPos`)
-noncomputable def FcanonicLtPos_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FcanonicLtPos` — for canonical floats `p` and `q`, if
-`0 ≤ F2R p < F2R q`, then either the exponent of `p` is strictly
-smaller than that of `q`, or the exponents match and the mantissa of `p`
-is strictly smaller. -/
-theorem FcanonicLtPos {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b p ∧
-        Fcanonic (beta:=beta) radix b q ∧
-        0 ≤ _root_.F2R (beta:=beta) p ∧
-        _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
-    FcanonicLtPos_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜p.Fexp < q.Fexp ∨
-            (p.Fexp = q.Fexp ∧ p.Fnum < q.Fnum)⌝⦄ := by
-  sorry
-
-noncomputable def Fcanonic_Rle_Zle_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `Fcanonic_Rle_Zle` — canonical floats ordered by absolute value have
-    nondecreasing exponents. -/
-theorem Fcanonic_Rle_Zle {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b x ∧
-        Fcanonic (beta:=beta) radix b y ∧
-        |_root_.F2R (beta:=beta) x|
-          ≤ |_root_.F2R (beta:=beta) y|⌝⦄
-    Fcanonic_Rle_Zle_check (beta:=beta) radix b x y
-    ⦃⇓_ => ⌜x.Fexp ≤ y.Fexp⌝⦄ := by
-  sorry
-
-noncomputable def FcanonicLtNeg_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FcanonicLtNeg` — for canonical floats `p` and `q`, if
-`_root_.F2R q ≤ 0` and `_root_.F2R p < _root_.F2R q`, then either the exponent
-of `q` is strictly smaller than the exponent of `p`, or the exponents match and
-the mantissa of `p` is strictly smaller. -/
-theorem FcanonicLtNeg {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b p ∧
-        Fcanonic (beta:=beta) radix b q ∧
-        _root_.F2R (beta:=beta) q ≤ 0 ∧
-        _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
-    FcanonicLtNeg_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜q.Fexp < p.Fexp ∨
-            (p.Fexp = q.Fexp ∧ p.Fnum < q.Fnum)⌝⦄ := by
-  sorry
-
 -- Placeholders for rounding operators on nonnegative reals and their variants
 def RND_Min_Pos {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   -- Skeleton: return an arbitrary float; semantics deferred
   ⟨0, 0⟩
-
--- ---------------------------------------------------------------------------
--- Normalization helper (Coq: Fnormalize) and its basic properties
-
-/-- Placeholder for the Coq `Fnormalize` operator. The Lean port keeps the
-structure abstract by simply returning the input float; detailed behavior will
-be filled in when the full normalization pipeline is migrated. -/
-noncomputable def Fnormalize {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    FloatSpec.Core.Defs.FlocqFloat beta :=
-  p
-
-noncomputable def FnormalizeCorrect_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FnormalizeCorrect` — the normalized float represents the same real
-value as the original. -/
-theorem FnormalizeCorrect {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜True⌝⦄
-    FnormalizeCorrect_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta)
-            (Fnormalize (beta:=beta) radix b precision p) =
-            _root_.F2R (beta:=beta) p⌝⦄ := by
-  intro _
-  unfold Fnormalize
-  rfl
-
-noncomputable def FnormalizeBounded_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FnormalizeBounded` — normalization preserves boundedness. -/
-theorem FnormalizeBounded {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    FnormalizeBounded_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜Fbounded (beta:=beta) b
-            (Fnormalize (beta:=beta) radix b precision p)⌝⦄ := by
-  sorry
-
-noncomputable def FnormalizeCanonic_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FnormalizeCanonic` — normalization yields a canonical float. -/
-theorem FnormalizeCanonic {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    FnormalizeCanonic_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b
-            (Fnormalize (beta:=beta) radix b precision p)⌝⦄ := by
-  sorry
-
-noncomputable def FcanonicFnormalizeEq_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FcanonicFnormalizeEq` — canonical floats are fixed points of
-`Fnormalize`. -/
-theorem FcanonicFnormalizeEq {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
-    FcanonicFnormalizeEq_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜Fnormalize (beta:=beta) radix b precision p = p⌝⦄ := by
-  sorry
-
-noncomputable def FcanonicPosFexpRlt_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FcanonicPosFexpRlt` — among nonnegative canonical floats, a strictly
-smaller exponent yields a strictly smaller value. -/
-theorem FcanonicPosFexpRlt {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b x ∧
-        Fcanonic (beta:=beta) radix b y ∧
-        0 ≤ _root_.F2R (beta:=beta) x ∧
-        0 ≤ _root_.F2R (beta:=beta) y ∧
-        x.Fexp < y.Fexp⌝⦄
-    FcanonicPosFexpRlt_check (beta:=beta) radix b x y
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) x < _root_.F2R (beta:=beta) y⌝⦄ := by
-  sorry
-
-noncomputable def FcanonicNegFexpRlt_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FcanonicNegFexpRlt` — among nonpositive canonical floats, a strictly
-larger exponent forces a strictly smaller real value. -/
-theorem FcanonicNegFexpRlt {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b x ∧
-        Fcanonic (beta:=beta) radix b y ∧
-        _root_.F2R (beta:=beta) x ≤ 0 ∧
-        _root_.F2R (beta:=beta) y ≤ 0 ∧
-        x.Fexp < y.Fexp⌝⦄
-    FcanonicNegFexpRlt_check (beta:=beta) radix b x y
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) y < _root_.F2R (beta:=beta) x⌝⦄ := by
-  sorry
-
-noncomputable def NormalAndSubNormalNotEq_check {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `NormalAndSubNormalNotEq` — a normal float and a subnormal float
-represent different real numbers. -/
-theorem NormalAndSubNormalNotEq {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fnormal (beta:=beta) radix b p ∧
-        Fsubnormal (beta:=beta) radix b q⌝⦄
-    NormalAndSubNormalNotEq_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p ≠ _root_.F2R (beta:=beta) q⌝⦄ := by
-  sorry
-
-noncomputable def FcanonicUnique_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FcanonicUnique` — canonical floats that represent the same real
-number are equal as floats. -/
-theorem FcanonicUnique {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b p ∧
-        Fcanonic (beta:=beta) radix b q ∧
-        _root_.F2R (beta:=beta) p = _root_.F2R (beta:=beta) q⌝⦄
-    FcanonicUnique_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜p = q⌝⦄ := by
-  sorry
-
-noncomputable def FcanonicLeastExp_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FcanonicLeastExp` — a canonical float with the same value as a
-bounded float has exponent no larger than the bounded one. -/
-theorem FcanonicLeastExp {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜_root_.F2R (beta:=beta) x = _root_.F2R (beta:=beta) y ∧
-        Fbounded (beta:=beta) b x ∧
-        Fcanonic (beta:=beta) radix b y⌝⦄
-    FcanonicLeastExp_check (beta:=beta) radix b x y
-    ⦃⇓_ => ⌜y.Fexp ≤ x.Fexp⌝⦄ := by
-  sorry
 
 -- Auxiliary boundedness of `RND_Min_Pos` on nonnegative reals (Coq: RND_Min_Pos_bounded_aux)
 noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
@@ -1438,50 +1187,6 @@ theorem ClosestZero {beta : Int}
 
 -- ---------------------------------------------------------------------------
 -- Min/Max existence over finite lists (from Coq Pff.v)
-
-/-
-Coq: `FboundedMboundPos`
-
-Construct a bounded float whose real value equals `m * radix^z` when the
-mantissa/exponent bounds hold. The real radix is obtained from the integer
-radix via coercion so that `powerRZ` can be reused verbatim.
--/
-noncomputable def FboundedMboundPos_check {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (z m : Int) : Id Unit :=
-  pure ()
-
-theorem FboundedMboundPos {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (precision : Nat)
-    (z m : Int) :
-    ⦃⌜0 ≤ m ∧
-        m ≤ Zpower_nat_int radix precision ∧
-        - b.dExp ≤ z⌝⦄
-    FboundedMboundPos_check (beta:=beta) b radix z m
-    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
-        Fbounded b c ∧
-        _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
-  sorry
-
-/-- Coq: `FboundedMbound` — extends `FboundedMboundPos` by allowing
-negative mantissas via symmetry. -/
-noncomputable def FboundedMbound_check {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (z m : Int) : Id Unit :=
-  pure ()
-
-theorem FboundedMbound {beta : Int}
-    (b : Fbound_skel) (radix : Int)
-    (precision : Nat)
-    (z m : Int) :
-    ⦃⌜|m| ≤ Zpower_nat_int radix precision ∧
-        - b.dExp ≤ z⌝⦄
-    FboundedMbound_check (beta:=beta) b radix z m
-    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
-        Fbounded b c ∧
-        _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
-  sorry
 
 /-!
 Coq: `MinExList`
@@ -2451,24 +2156,6 @@ theorem MinOrMaxRep {beta : Int}
 
 -- ---------------------------------------------------------------------------
 -- Max-bound comparison lemmas (around Coq: maxFbounded, maxMax, maxMaxBis)
--- Coq: `MaxFloat` — bounded floats stay below the canonical bound at their exponent
-noncomputable def MaxFloat_check {beta : Int}
-    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) : Id Unit :=
-  pure ()
-
-/-- Coq: `MaxFloat` — if a float `p` is bounded by `b` and `p.Fexp ≤ z`, then
-`|F2R p|` remains below the canonical representative `⟨1, z⟩`. We approximate
-Coq's exact bound `Float (Zpos (vNum b)) (Fexp p)` via the skeleton float
-`⟨(1 : Int), z⟩`. Proof deferred per import policy. -/
-theorem MaxFloat {beta : Int}
-    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
-    MaxFloat_check (beta:=beta) b p z
-    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
-            _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
-  sorry
-
-
 
 -- We port `maxMax` first. In Coq, it states that if `p` is bounded by `b` and
 -- `Fexp p ≤ z`, then `Fabs p < Float (Zpos (vNum b)) z`. Our bound skeleton
@@ -2504,17 +2191,6 @@ theorem maxMax1 {beta : Int}
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
     maxMax1_check (beta:=beta) b p z
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) ≤
-            _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
-  sorry
-
-/-- Coq: `maxMaxBis` — bounded floats with exponent strictly below `z` stay
-below the canonical representative `⟨1, z⟩`. Mirrors the Coq semantics using
-the simplified bound skeleton employed throughout this section. -/
-theorem maxMaxBis {beta : Int}
-    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp < z⌝⦄
-    maxMax1_check (beta:=beta) b p z
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) <
             _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
   sorry
 
@@ -3365,345 +3041,10 @@ theorem ZDividesLe (n m : Int) :
   sorry
 
 -- Define a minimal placeholder for `digit` before its first use.
-noncomputable def digit (n : Int) (q : Int) : Nat := 0
-
--- Context-specific helper for digit/precision lemmas translated from Coq.
-noncomputable def digitPredVNumiSPrecision_check
-    (radix : Int) (b : Fbound_skel) (precision : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `digitPredVNumiSPrecision` — the digit of `pred (vNum b)` equals the precision
-    when the bound's mantissa matches `radix^precision`. -/
-theorem digitPredVNumiSPrecision
-    (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    ⦃⌜precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision⌝⦄
-    digitPredVNumiSPrecision_check radix b precision
-    ⦃⇓_ => ⌜digit radix (Int.pred b.vNum) = precision⌝⦄ := by
-  intro _
-  -- Statement imported from Coq; proof pending
-  sorry
-
-noncomputable def digitVNumiSPrecision_check
-    (radix : Int) (b : Fbound_skel) (precision : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `digitVNumiSPrecision` — the digit of `vNum b` is `precision + 1`
-    under the standard bound relationship. -/
-theorem digitVNumiSPrecision
-    (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    ⦃⌜precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision⌝⦄
-    digitVNumiSPrecision_check radix b precision
-    ⦃⇓_ => ⌜digit radix b.vNum = Nat.succ precision⌝⦄ := by
-  intro _
-  -- Statement imported from Coq; proof pending
-  sorry
-
-noncomputable def pGivesDigit_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `pGivesDigit` — bounded floats have digit ≤ precision. -/
-theorem pGivesDigit {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    pGivesDigit_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜Fdigit (beta:=beta) radix p ≤ precision⌝⦄ := by
-  intro _
-  -- Placeholder for Coq proof port
-  sorry
-
-noncomputable def digitGivesBoundedNum_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `digitGivesBoundedNum` — digit bound implies vNum bound. -/
-theorem digitGivesBoundedNum {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fdigit (beta:=beta) radix p ≤ precision⌝⦄
-    digitGivesBoundedNum_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜|p.Fnum| < b.vNum⌝⦄ := by
-  intro _
-  -- Placeholder for Coq proof port
-  sorry
-
-noncomputable def FnormalPrecision_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FnormalPrecision` — a normal float always has digit `precision`. -/
-theorem FnormalPrecision {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    FnormalPrecision_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜Fdigit (beta:=beta) radix p = precision⌝⦄ := by
-  intro _
-  -- Imported statement; proof pending porting from Coq
-  sorry
-
--- ---------------------------------------------------------------------------
--- Minimal normal mantissa (`nNormMin`) and related Coq lemmas
-
-/-- Minimal normal mantissa (`nNormMin`) defined using a positive-exponent power. -/
-noncomputable def nNormMin (radix : Int) (precision : Nat) : Int :=
-  radix ^ (precision - 1)
-
-noncomputable def nNormPos_check (radix : Int) (precision : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `nNormPos` — minimal normal mantissa is strictly positive. -/
-theorem nNormPos (radix : Int) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    nNormPos_check radix precision
-    ⦃⇓_ => ⌜0 < nNormMin radix precision⌝⦄ := by
-  intro _
-  -- Proof port pending from Coq
-  sorry
-
-noncomputable def digitnNormMin_check (radix : Int) (precision : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `digitnNormMin` — `digit radix nNormMin = precision`. -/
-theorem digitnNormMin (radix : Int) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    digitnNormMin_check radix precision
-    ⦃⇓_ => ⌜digit radix (nNormMin radix precision) = precision⌝⦄ := by
-  intro _
-  -- Proof port pending from Coq
-  sorry
-
-noncomputable def vNumbMoreThanOne_check (b : Fbound_skel) (radix : Int) (precision : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `vNumbMoreThanOne` — when `b.vNum = radix^precision` with positive `radix`
-and nonzero `precision`, the bound exceeds 1. -/
-theorem vNumbMoreThanOne
-    (b : Fbound_skel) (radix : Int) (precision : Nat) :
-    ⦃⌜precision ≠ 0 ∧ 1 < radix ∧ b.vNum = Zpower_nat radix precision⌝⦄
-    vNumbMoreThanOne_check b radix precision
-    ⦃⇓_ => ⌜(1 : Int) < b.vNum⌝⦄ := by
-  intro h
-  rcases h with ⟨hp, hr, hv⟩
-  have hpow : (1 : Int) < Zpower_nat radix precision := by
-    -- placeholder proof to be completed later
-    sorry
-  simpa [hv]
-
-noncomputable def nNrMMimLevNum_check
-    (radix : Int) (b : Fbound_skel) (precision : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `nNrMMimLevNum` — minimal mantissa bounded by `vNum` under standard relation. -/
-theorem nNrMMimLevNum (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    ⦃⌜b.vNum = Zpower_nat radix precision⌝⦄
-    nNrMMimLevNum_check radix b precision
-    ⦃⇓_ => ⌜nNormMin radix precision ≤ b.vNum⌝⦄ := by
-  sorry
-
-noncomputable def firstNormalPos
-    {beta : Int} (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    FloatSpec.Core.Defs.FlocqFloat beta :=
-  ⟨nNormMin radix precision, -b.dExp⟩
-
-noncomputable def firstNormalPosNormal_check
-    {beta : Int} (radix : Int) (b : Fbound_skel) (precision : Nat) : Id Unit :=
-  pure ()
-
-/-- Coq: `firstNormalPosNormal` — `firstNormalPos` is normal. -/
-theorem firstNormalPosNormal {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    firstNormalPosNormal_check (beta:=beta) radix b precision
-    ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (firstNormalPos (beta:=beta) radix b precision)⌝⦄ := by
-  intro _
-  -- Proof port pending from Coq
-  sorry
-
-noncomputable def pNormal_absolu_min_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `pNormal_absolu_min` — normal mantissas dominate `nNormMin`. -/
-theorem pNormal_absolu_min {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    pNormal_absolu_min_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜nNormMin radix precision ≤ |p.Fnum|⌝⦄ := by
-  intro _
-  -- Proof port pending from Coq
-  sorry
-
-noncomputable def FnormalLtFirstNormalPos_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FnormalLtFirstNormalPos` — normal nonnegative floats dominate
-the first normal positive value. -/
-theorem FnormalLtFirstNormalPos {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fnormal (beta:=beta) radix b p ∧ 0 ≤ _root_.F2R (beta:=beta) p⌝⦄
-    FnormalLtFirstNormalPos_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta)
-            (firstNormalPos (beta:=beta) radix b precision)
-            ≤ _root_.F2R (beta:=beta) p⌝⦄ := by
-  intro _
-  -- Proof port pending from Coq
-noncomputable def FsubnormalDigit_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FsubnormalDigit` — a subnormal float has digit strictly below
-`precision`. Mirrors the original statement with Hoare triple syntax. -/
-theorem FsubnormalDigit {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    FsubnormalDigit_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜Fdigit (beta:=beta) radix p < precision⌝⦄ := by
-  intro _
-  -- Imported from Coq; proof to be filled when the arithmetic lemmas land
-  sorry
-
--- Coq: `pSubnormal_absolu_min` — subnormal mantissas lie below `nNormMin`.
-noncomputable def pSubnormal_absolu_min_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `pSubnormal_absolu_min` — the absolute mantissa of a subnormal is
-bounded by `nNormMin`. -/
-theorem pSubnormal_absolu_min {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    pSubnormal_absolu_min_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜|p.Fnum| < nNormMin radix precision⌝⦄ := by
-  intro _
-  -- Proof deferred to a future ported development step
-  sorry
-
-noncomputable def FsubnormalLtFirstNormalPos_check {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FsubnormalLtFirstNormalPos` — a nonnegative subnormal float lies
-strictly below the first positive normal float. -/
-theorem FsubnormalLtFirstNormalPos {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
-        0 ≤ _root_.F2R (beta:=beta) p⌝⦄
-    FsubnormalLtFirstNormalPos_check (beta:=beta) radix b precision p
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p <
-            _root_.F2R (beta:=beta)
-              (firstNormalPos (beta:=beta) radix b precision)⌝⦄ := by
-  intro _
-  -- Proof deferred; follows Coq's `FsubnormalLtFirstNormalPos` argument
-  sorry
-
-noncomputable def FsubnormalnormalLtPos_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FsubnormalnormalLtPos` — a nonnegative subnormal float is strictly
-below any nonnegative normal float. -/
-theorem FsubnormalnormalLtPos {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
-        Fnormal (beta:=beta) radix b q ∧
-        0 ≤ _root_.F2R (beta:=beta) p ∧
-        0 ≤ _root_.F2R (beta:=beta) q⌝⦄
-    FsubnormalnormalLtPos_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p <
-            _root_.F2R (beta:=beta) q⌝⦄ := by
-  intro _
-  -- Direct port of Coq's `FsubnormalnormalLtPos`; proof deferred
-  sorry
-
-noncomputable def FsubnormalnormalLtNeg_check {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FsubnormalnormalLtNeg` — a nonpositive subnormal float is strictly
-above any nonpositive normal float. -/
-theorem FsubnormalnormalLtNeg {beta : Int}
-    (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
-        Fnormal (beta:=beta) radix b q ∧
-        _root_.F2R (beta:=beta) p ≤ 0 ∧
-        _root_.F2R (beta:=beta) q ≤ 0⌝⦄
-    FsubnormalnormalLtNeg_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) q <
-            _root_.F2R (beta:=beta) p⌝⦄ := by
-  intro _
-  -- Direct port of Coq's `FsubnormalnormalLtNeg`; proof deferred
-  sorry
-
-noncomputable def FnormalUnique_check {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FnormalUnique` — normal floats that agree as reals are equal. -/
-theorem FnormalUnique {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fnormal (beta:=beta) radix b p ∧
-        Fnormal (beta:=beta) radix b q ∧
-        _root_.F2R (beta:=beta) p = _root_.F2R (beta:=beta) q⌝⦄
-    FnormalUnique_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜p = q⌝⦄ :=
-  sorry
-
--- Coq: `FnormalLtPos` — ordered normal floats compare via exponent then mantissa.
-noncomputable def FnormalLtPos_check {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
-  pure ()
-
-/-- Coq: `FnormalLtPos` — if `p` and `q` are normal, `0 ≤ F2R p`, and
-    `_root_.F2R p < _root_.F2R q`, then either `p.Fexp < q.Fexp` or their
-    exponents coincide while `p.Fnum < q.Fnum`. -/
-theorem FnormalLtPos {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fnormal (beta:=beta) radix b p ∧
-        Fnormal (beta:=beta) radix b q ∧
-        0 ≤ _root_.F2R (beta:=beta) p ∧
-        _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
-    FnormalLtPos_check (beta:=beta) radix b p q
-    ⦃⇓_ => ⌜p.Fexp < q.Fexp ∨
-            (p.Fexp = q.Fexp ∧ p.Fnum < q.Fnum)⌝⦄ :=
-  sorry
-
-
-noncomputable def vNumPrecision_check
-    (b : Fbound_skel) (radix : Int) (precision : Nat) (n : Int) : Id Unit :=
-  pure ()
-
-/-- Coq: `vNumPrecision` — if `digit radix n ≤ precision` then
-`|n| < b.vNum`. -/
-theorem vNumPrecision
-    (b : Fbound_skel) (radix : Int) (precision : Nat) (n : Int) :
-    ⦃⌜digit radix n ≤ precision⌝⦄
-    vNumPrecision_check b radix precision n
-    ⦃⇓_ => ⌜|n| < b.vNum⌝⦄ := by
-  sorry
+noncomputable def digit (n : Int) (q : Int) : Nat :=
+  match q with
+  | Int.ofNat _ => 0
+  | Int.negSucc _ => 0
 
 -- Coq: `NotDividesDigit` — if 1 < r and v ≠ 0 then v does not divide r^(digit r v)
 noncomputable def NotDividesDigit_check (r v : Int) : Id Unit :=
@@ -4007,6 +3348,10 @@ def flocq_to_pff {beta : Int} (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFlo
 def Fzero (beta : Int) (z : Int) : FloatSpec.Core.Defs.FlocqFloat beta :=
   FloatSpec.Core.Defs.FlocqFloat.mk 0 z
 
+-- Predicate: zero mantissa (Coq: `is_Fzero`)
+def is_Fzero {beta : Int} (x : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  x.Fnum = 0
+
 -- Coq: `FzeroisReallyZero` — real value of zero float is 0
 noncomputable def FzeroisReallyZero_check {beta : Int} (z : Int) : Id Unit :=
   pure ()
@@ -4277,6 +3622,10 @@ theorem Fopp_Fminus {beta : Int}
 noncomputable def Fdigit_opp_check {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=
   pure ()
+
+-- Minimal placeholder used by digit lemmas
+noncomputable def Fdigit {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat := 0
 
 theorem Fdigit_opp {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
