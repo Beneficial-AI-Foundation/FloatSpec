@@ -27,7 +27,7 @@ require verso from git "https://github.com/leanprover/verso" @ "v4.27.0-rc1"
 require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.27.0-rc1"
 
 -- Coq/Flocq documentation roles for literate programming
-require VersoCoq from ".." / "VersoCoq"
+require VersoCoq from git "https://github.com/alok/VersoCoq" @ "main"
 
 /-- Verso roles - imports VersoCoq.Roles to register {coq} doc role.
 
