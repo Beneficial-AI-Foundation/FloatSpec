@@ -46,19 +46,23 @@ def FIX_exp (_ : Int) : Int :=
     returns emin regardless of input. This validates
     the `fixed-point` nature of the format.
 -/
-def FIX_exp_correct_check (e : Int) : Id Bool :=
+def FIX_exp_correct_check (e : Int) : Bool :=
   -- Use boolean equality on integers to avoid Prop placeholders
-  pure ((FIX_exp emin e) == emin)
+  (FIX_exp emin e) == emin
 
 /-- Specification: Fixed exponent always returns emin
 
     The fixed-point exponent function ignores its input and
     always returns the fixed exponent emin. This ensures
     uniform scaling across all representable values.
+
+    Note: We wrap the pure function in `(pure ... : Id T)` because
+    mvcgen requires a monadic context for Hoare triples.
 -/
+@[spec]
 theorem FIX_exp_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FIX_exp_correct_check emin e
+    (pure (FIX_exp_correct_check emin e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FIX_exp_correct_check FIX_exp
@@ -71,8 +75,8 @@ theorem FIX_exp_spec (e : Int) :
     using the generic format with the fixed exponent function.
     This means x = m × β^emin for some integer mantissa m.
 -/
-def FIX_format (beta : Int) (x : ℝ) : Id Prop :=
-  FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
+def FIX_format (beta : Int) (x : ℝ) : Prop :=
+  (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run
 
 /-- `Valid_exp` instance for the fixed exponent function. -/
 instance FIX_exp_valid (beta : Int) :
@@ -100,9 +104,10 @@ instance FIX_exp_valid (beta : Int) :
     with a fixed exponent function. This provides a concrete
     characterization of fixed-point representable numbers.
 -/
+@[spec]
 theorem FIX_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
-    FIX_format emin beta x
+    (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄ := by
   intro _
   unfold FIX_format
@@ -115,9 +120,10 @@ theorem FIX_format_spec (beta : Int) (x : ℝ) :
     it always returns emin for any input e. This establishes
     the correctness of the fixed-point implementation.
 -/
+@[spec]
 theorem FIX_exp_correct_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FIX_exp_correct_check emin e
+    (pure (FIX_exp_correct_check emin e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   simpa using (FIX_exp_spec (emin := emin) (e := e))
 
@@ -126,9 +132,9 @@ theorem FIX_exp_correct_spec (e : Int) :
     Verify that zero is representable in the fixed-point format.
     Zero should always be representable as 0 × β^emin = 0.
 -/
-noncomputable def FIX_format_0_check (beta : Int) : Id Bool :=
+noncomputable def FIX_format_0_check (beta : Int) : Bool :=
   -- A concrete, checkable fact used by the spec proof: Ztrunc 0 = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int)
 
 /-- Specification: Zero is in FIX format
 
@@ -136,9 +142,10 @@ noncomputable def FIX_format_0_check (beta : Int) : Id Bool :=
     it can be expressed as 0 × β^emin. This ensures that
     fixed-point formats always contain the additive identity.
 -/
+@[spec]
 theorem FIX_format_0_spec (beta : Int) :
     ⦃⌜beta > 1⌝⦄
-    FIX_format_0_check beta
+    (pure (FIX_format_0_check beta) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Reduce the Hoare triple on Id and compute the boolean
@@ -151,9 +158,9 @@ theorem FIX_format_0_spec (beta : Int) :
     Verify that if x is in FIX format, then -x is also in FIX format.
     This tests the closure property under additive inverse.
 -/
-noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_neg: Ztrunc(-x) + Ztrunc(x) = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int)
 
 /-- Specification: FIX format closed under negation
 
@@ -161,9 +168,10 @@ noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
     representable, then -x is also representable. This follows
     from the fact that if x = m × β^emin, then -x = (-m) × β^emin.
 -/
+@[spec]
 theorem FIX_format_opp_spec (beta : Int) (x : ℝ) :
-    ⦃⌜(FIX_format emin beta x).run⌝⦄
-    FIX_format_opp_check beta x
+    ⦃⌜FIX_format emin beta x⌝⦄
+    (pure (FIX_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FIX_format_opp_check
@@ -176,11 +184,11 @@ Theorem generic_format_FIX :
   forall x, FIX_format x -> generic_format beta FIX_exp x.
 -/
 theorem generic_format_FIX (beta : Int) (x : ℝ) :
-    ⦃⌜(FIX_format emin beta x).run⌝⦄
+    ⦃⌜FIX_format emin beta x⌝⦄
     FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simpa [FIX_format]
+  simpa [FIX_format] using hx
 
 /-
 Coq (FIX.v):
@@ -189,7 +197,7 @@ Theorem FIX_format_generic :
 -/
 theorem FIX_format_generic (beta : Int) (x : ℝ) :
     ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄
-    FIX_format emin beta x
+    (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   simpa [FIX_format] using hx
@@ -200,7 +208,7 @@ Theorem FIX_format_satisfies_any :
   satisfies_any FIX_format.
 -/
 theorem FIX_format_satisfies_any (beta : Int) :
-    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FIX_format emin beta y).run) := by
+    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FIX_format emin beta y) := by
   -- Immediate from the generic format version
   simpa [FIX_format]
     using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FIX_exp emin)
