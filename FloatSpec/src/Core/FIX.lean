@@ -19,6 +19,7 @@ COPYING file for more details.
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Ulp
+import FloatSpec.VersoExt
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
@@ -243,13 +244,13 @@ end FloatSpec.Core.FIX
 
 namespace FloatSpec.Core.FIX
 
-/-- Coq (FIX.v):
-Theorem `round_FIX_IZR `: `forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).`
+/-- Coq ({lit}`FIX.v`):
+Theorem {coq}`round_FIX_IZR`: {lit}`forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).`
 
-Lean (ported, minimal adaptation): Our `round_to_generic` model ignores the
-rounding function `f` and performs truncation of the scaled mantissa with the
-canonical exponent. For `fexp = FIX_exp 0` and `beta = 2`, this reduces to
-`Ztrunc x` since the canonical exponent is constantly `0`.
+Lean (ported, minimal adaptation): Our {lean}`round_to_generic` model ignores the
+rounding function {lit}`f` and performs truncation of the scaled mantissa with the
+canonical exponent. For {lean}`fexp` = {lean}`FIX_exp` 0 and {lean}`beta` = 2, this reduces to
+{lean}`Ztrunc` x since the canonical exponent is constantly 0.
 -/
 theorem round_FIX_IZR (x : ℝ) :
     ⦃⌜True⌝⦄
