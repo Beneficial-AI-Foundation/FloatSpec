@@ -42,6 +42,31 @@ Roles annotate inline code elements in docstrings:
 | `{lit}` | Literal text (no checking) | `{lit}\`pseudo-code\`` |
 | `{syntax term}` | Syntax reference | `{syntax term}\`match\`` |
 
+### FloatSpec Custom Role: {coq}
+
+The `{coq}` role marks Coq/Flocq code references with hover documentation:
+
+```lean
+import FloatSpec.VersoExt
+
+/-- Coq ({lit}`FIX.v`): Theorem {coq}`round_FIX_IZR` -/
+```
+
+**Features:**
+- **Hover docs**: Shows Coq decl name, Flocq module, and documentation link
+- **Auto-inference**: Infers Flocq URLs from declaration names
+- **Optional URL**: `{coq url="https://..."}\`myFunc\``
+
+**Auto-inferred modules:**
+| Prefix | Module |
+|--------|--------|
+| `Ztrunc`, `Zceil`, `Zfloor` | Core.Raux |
+| `Znearest`, `Zrnd`, `generic_*`, `round_*` | Core.Generic_fmt |
+| `ulp`, `succ`, `pred` | Core.Ulp |
+| `FIX_*`, `FLX_*`, `FLT_*`, `FTZ_*` | Respective modules |
+| `bpow` | Core.Defs |
+| `Z*` (fallback) | Core.Zaux |
+
 ### Custom Roles
 
 Define custom roles with `@[role name]`:

@@ -18,6 +18,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.VersoExt
 import Mathlib.Data.Real.Basic
 import Mathlib.Algebra.Ring.Defs
 import Mathlib.Algebra.Ring.Basic
@@ -63,6 +64,7 @@ def FLX_exp_correct_check (e : Int) : Id Bool :=
     input exponent. This adjustment ensures that all representable
     numbers have exactly 'prec' significant digits in their mantissa.
 -/
+@[spec]
 theorem FLX_exp_spec (e : Int) :
     ⦃⌜True⌝⦄
     FLX_exp_correct_check prec e
@@ -95,6 +97,7 @@ def FLXN_format (beta : Int) (x : ℝ) : Id Prop :=
     with the fixed-precision exponent function. This characterizes
     floating-point numbers with constant precision.
 -/
+@[spec]
 theorem FLX_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
     FLX_format prec beta x
@@ -111,6 +114,7 @@ theorem FLX_format_spec (beta : Int) (x : ℝ) :
     adjustment by returning e - prec. This ensures the mantissa
     precision remains constant across different magnitudes.
 -/
+@[spec]
 theorem FLX_exp_correct_spec (e : Int) :
     ⦃⌜True⌝⦄
     FLX_exp_correct_check prec e
@@ -134,6 +138,7 @@ noncomputable def FLX_format_0_check (beta : Int) : Id Bool :=
     This follows from the fact that 0 = 0 × β^(e-prec) for
     any exponent e, making zero universal across all formats.
 -/
+@[spec]
 theorem FLX_format_0_spec (beta : Int) :
     ⦃⌜beta > 1⌝⦄
     FLX_format_0_check beta
@@ -159,6 +164,7 @@ noncomputable def FLX_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
     representable as m × β^(e-prec), then -x is representable
     as (-m) × β^(e-prec), preserving precision and format properties.
 -/
+@[spec]
 theorem FLX_format_opp_spec (beta : Int) (x : ℝ) :
     ⦃⌜(FLX_format prec beta x).run⌝⦄
     FLX_format_opp_check beta x
@@ -185,6 +191,7 @@ noncomputable def FLX_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
     If x is representable, then |x| is also representable since
     |x| can use the same mantissa magnitude with appropriate sign.
 -/
+@[spec]
 theorem FLX_format_abs_spec (beta : Int) (x : ℝ) :
     ⦃⌜(FLX_format prec beta x).run⌝⦄
     FLX_format_abs_check beta x
@@ -450,11 +457,11 @@ namespace FloatSpec.Core.FLX
 
 variable (prec : Int)
 
-/-- Coq (FLX.v):
-Theorem `ulp_FLX_0`: `ulp beta FLX_exp 0 = 0`.
+/-- Coq ({lit}`FLX.v`):
+Theorem {coq}`ulp_FLX_0`: {lean}`ulp beta FLX_exp 0 = 0`.
 
-Lean (spec): In FLX (with positive precision), `negligible_exp` is `none`,
-so `ulp` at zero evaluates to `0`.
+Lean (spec): In FLX (with positive precision), {lean}`negligible_exp` is {lit}`none`,
+so {lean}`ulp` at zero evaluates to 0.
 -/
 theorem ulp_FLX_0 (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜True⌝⦄
@@ -485,10 +492,10 @@ theorem ulp_FLX_0 (beta : Int) [Prec_gt_0 prec] :
   unfold FloatSpec.Core.Ulp.ulp
   simp [wp, PostCond.noThrow, Id.run, bind, pure, hnone]
 
-/-- Coq (FLX.v):
-Lemma `ulp_FLX_1` : `ulp beta FLX_exp 1 = bpow (-prec + 1)`.
+/-- Coq ({lit}`FLX.v`):
+Lemma {coq}`ulp_FLX_1`: {lit}`ulp beta FLX_exp 1 = bpow (-prec + 1)`.
 
-Lean (spec): The ULP under FLX at 1 equals `β^(-prec + 1)`.
+Lean (spec): The ULP under FLX at 1 equals {lit}`β^(-prec + 1)`.
 -/
 theorem ulp_FLX_1 (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜1 < beta⌝⦄
@@ -525,11 +532,11 @@ theorem ulp_FLX_1 (beta : Int) [Prec_gt_0 prec] :
     simpa [hcexp_eq]
   simpa [zpow_neg] using hpow_eq
 
-/-- Coq (FLX.v):
-Theorem `ulp_FLX_le`:
-  `forall x, (ulp beta (FLX_exp prec) x <= Rabs x * bpow (1 - prec))%R.`
+/-- Coq ({lit}`FLX.v`):
+Theorem {coq}`ulp_FLX_le`:
+  {lit}`forall x, (ulp beta (FLX_exp prec) x <= Rabs x * bpow (1 - prec))%R.`
 
-Lean (spec): ULP under FLX is bounded above by `|x| * β^(1 - prec)`.
+Lean (spec): ULP under FLX is bounded above by {lit}`|x| * β^(1 - prec)`.
 -/
 theorem ulp_FLX_le (beta : Int) [Prec_gt_0 prec] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
@@ -902,11 +909,11 @@ namespace FloatSpec.Core.FLX
 
 variable (prec : Int)
 
-/-- Coq (FLX.v):
-Lemma negligible_exp_FLX : negligible_exp FLX_exp = None.
+/-- Coq ({lit}`FLX.v`):
+Lemma {coq}`negligible_exp_FLX`: {lit}`negligible_exp FLX_exp = None`.
 
-Lean (spec): In our simplified model, `Ulp.negligible_exp` is always `none`,
-so for FLX it is `none` as well.
+Lean (spec): In our simplified model, {lean}`Ulp.negligible_exp` is always {lit}`none`,
+so for FLX it is {lit}`none` as well.
 -/
 theorem negligible_exp_FLX (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜True⌝⦄
