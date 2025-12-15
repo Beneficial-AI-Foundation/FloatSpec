@@ -458,7 +458,7 @@ namespace FloatSpec.Core.FLX
 variable (prec : Int)
 
 /-- Coq ({lit}`FLX.v`):
-Theorem {coq}`ulp_FLX_0`: {lean}`ulp beta FLX_exp 0 = 0`.
+Theorem {lit}`ulp_FLX_0`: {lean}`ulp beta FLX_exp 0 = 0`.
 
 Lean (spec): In FLX (with positive precision), {lean}`negligible_exp` is {lit}`none`,
 so {lean}`ulp` at zero evaluates to 0.
@@ -493,7 +493,7 @@ theorem ulp_FLX_0 (beta : Int) [Prec_gt_0 prec] :
   simp [wp, PostCond.noThrow, Id.run, bind, pure, hnone]
 
 /-- Coq ({lit}`FLX.v`):
-Lemma {coq}`ulp_FLX_1`: {lit}`ulp beta FLX_exp 1 = bpow (-prec + 1)`.
+Lemma {lit}`ulp_FLX_1`: {lit}`ulp beta FLX_exp 1 = bpow (-prec + 1)`.
 
 Lean (spec): The ULP under FLX at 1 equals {lit}`β^(-prec + 1)`.
 -/
@@ -533,7 +533,7 @@ theorem ulp_FLX_1 (beta : Int) [Prec_gt_0 prec] :
   simpa [zpow_neg] using hpow_eq
 
 /-- Coq ({lit}`FLX.v`):
-Theorem {coq}`ulp_FLX_le`:
+Theorem {lit}`ulp_FLX_le`:
   {lit}`forall x, (ulp beta (FLX_exp prec) x <= Rabs x * bpow (1 - prec))%R.`
 
 Lean (spec): ULP under FLX is bounded above by {lit}`|x| * β^(1 - prec)`.
@@ -910,7 +910,7 @@ namespace FloatSpec.Core.FLX
 variable (prec : Int)
 
 /-- Coq ({lit}`FLX.v`):
-Lemma {coq}`negligible_exp_FLX`: {lit}`negligible_exp FLX_exp = None`.
+Lemma {lit}`negligible_exp_FLX`: {lit}`negligible_exp FLX_exp = None`.
 
 Lean (spec): In our simplified model, {lean}`Ulp.negligible_exp` is always {lit}`none`,
 so for FLX it is {lit}`none` as well.

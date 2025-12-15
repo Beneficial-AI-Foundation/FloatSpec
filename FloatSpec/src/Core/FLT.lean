@@ -669,7 +669,7 @@ namespace FloatSpec.Core.FLT
 variable (prec emin : Int) [Prec_gt_0 prec]
 
 /-- Coq ({lit}`FLT.v`):
-Theorem {coq}`ulp_FLT_0`: {lit}`ulp beta FLT_exp 0 = bpow emin`.
+Theorem {lit}`ulp_FLT_0`: {lit}`ulp beta FLT_exp 0 = bpow emin`.
 
 Lean (spec): The ULP under FLT at 0 equals {lit}`β^emin`.
 -/
@@ -702,7 +702,7 @@ theorem ulp_FLT_0 (beta : Int) :
   simpa [this, h_fexp_n_eq]
 
 /-- Coq ({lit}`FLT.v`):
-Theorem {coq}`ulp_FLT_small`:
+Theorem {lit}`ulp_FLT_small`:
   {lit}`forall x, Rabs x < bpow (emin + prec) -> ulp beta FLT_exp x = bpow emin`.
 
 Lean (spec): If {lit}`|x| < β^(emin+prec)`, then ULP under FLT at x equals {lit}`β^emin`.

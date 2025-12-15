@@ -18,6 +18,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.VersoExt
 -- import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
@@ -45,9 +46,9 @@ def FTZ_exp (e : Int) : Int :=
     Verify that the FTZ exponent function correctly implements
     the conditional logic for flush-to-zero behavior.
 -/
-def FTZ_exp_correct_check (e : Int) : Id Bool :=
+def FTZ_exp_correct_check (e : Int) : Bool :=
   -- Use boolean equality to avoid Prop-in-Bool mismatches
-  pure ((FTZ_exp prec emin e) == (if emin ≤ e - prec then e - prec else emin))
+  (FTZ_exp prec emin e) == (if emin ≤ e - prec then e - prec else emin)
 
 /-- Specification: FTZ exponent calculation
 
@@ -55,9 +56,10 @@ def FTZ_exp_correct_check (e : Int) : Id Bool :=
     numbers but flushes small numbers to the minimum exponent,
     eliminating subnormal numbers from the representation.
 -/
+@[spec]
 theorem FTZ_exp_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FTZ_exp_correct_check prec emin e
+    (pure (FTZ_exp_correct_check prec emin e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FTZ_exp_correct_check FTZ_exp
@@ -70,8 +72,8 @@ theorem FTZ_exp_spec (e : Int) :
     using the generic format with the FTZ exponent function.
     This provides a floating-point format without subnormal numbers.
 -/
-def FTZ_format (beta : Int) (x : ℝ) : Id Prop :=
-  FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x
+def FTZ_format (beta : Int) (x : ℝ) : Prop :=
+  (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run
 
 /-- `Valid_exp` instance for the FTZ exponent function. -/
 instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
@@ -168,9 +170,10 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
     flush-to-zero exponent function, providing simpler arithmetic
     at the cost of reduced precision near zero.
 -/
+@[spec]
 theorem FTZ_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
-    FTZ_format prec emin beta x
+    (pure (FTZ_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄ := by
   intro _
   -- Reduce the Hoare triple on `Id`; unfold the definition of `FTZ_format`.
@@ -182,9 +185,10 @@ theorem FTZ_format_spec (beta : Int) (x : ℝ) :
     semantics, choosing between precision-based and minimum
     exponents based on the magnitude of the input.
 -/
+@[spec]
 theorem FTZ_exp_correct_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FTZ_exp_correct_check prec emin e
+    (pure (FTZ_exp_correct_check prec emin e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FTZ_exp_correct_check FTZ_exp
@@ -196,9 +200,9 @@ theorem FTZ_exp_correct_spec (e : Int) :
     Zero should always be representable since it can be expressed
     with any exponent as 0 × β^e = 0.
 -/
-noncomputable def FTZ_format_0_check (beta : Int) : Id Bool :=
+noncomputable def FTZ_format_0_check (beta : Int) : Bool :=
   -- Concrete arithmetic check: Ztrunc 0 = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int)
 
 /-- Specification: Zero is in FTZ format
 
@@ -206,9 +210,10 @@ noncomputable def FTZ_format_0_check (beta : Int) : Id Bool :=
     the special property that 0 × β^e = 0 for any exponent e,
     making it representable regardless of format constraints.
 -/
+@[spec]
 theorem FTZ_format_0_spec (beta : Int) :
     ⦃⌜beta > 1⌝⦄
-    FTZ_format_0_check beta
+    (pure (FTZ_format_0_check beta) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Evaluate the concrete check: Ztrunc 0 = 0
@@ -221,9 +226,9 @@ theorem FTZ_format_0_spec (beta : Int) :
     This tests the symmetry property of flush-to-zero representation
     under sign changes.
 -/
-noncomputable def FTZ_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+noncomputable def FTZ_format_opp_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_opp: Ztrunc(-x) + Ztrunc(x) = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int)
 
 /-- Specification: FTZ format closed under negation
 
@@ -231,9 +236,10 @@ noncomputable def FTZ_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
     is representable, then -x = (-m) × β^e is also representable
     using the same exponent with negated mantissa.
 -/
+@[spec]
 theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
-    ⦃⌜(FTZ_format prec emin beta x).run⌝⦄
-    FTZ_format_opp_check beta x
+    ⦃⌜FTZ_format prec emin beta x⌝⦄
+    (pure (FTZ_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Use truncation under negation: Ztrunc (-x) = - Ztrunc x
@@ -249,9 +255,9 @@ theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
     This ensures that magnitude operations preserve representability
     in the flush-to-zero format.
 -/
-noncomputable def FTZ_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
+noncomputable def FTZ_format_abs_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
-  pure (((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
+  ((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
         == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs))
 
 /-- Specification: FTZ format closed under absolute value
@@ -260,9 +266,10 @@ noncomputable def FTZ_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
     The magnitude of any representable number remains representable
     using the same exponent structure with positive mantissa.
 -/
+@[spec]
 theorem FTZ_format_abs_spec (beta : Int) (x : ℝ) :
-    ⦃⌜(FTZ_format prec emin beta x).run⌝⦄
-    FTZ_format_abs_check beta x
+    ⦃⌜FTZ_format prec emin beta x⌝⦄
+    (pure (FTZ_format_abs_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Compute Ztrunc(|x|) in terms of Ztrunc(x)
@@ -305,11 +312,11 @@ namespace FloatSpec.Core.FTZ
 
 variable (prec emin : Int) [Fact (0 < prec)]
 
-/-- Coq (FTZ.v):
-Theorem `FLXN_format_FTZ` :
-  `forall x, FTZ_format x -> FLXN_format beta prec x.`
+/-- Coq ({lit}`FTZ.v`):
+Theorem {lit}`FLXN_format_FTZ`:
+  {lit}`forall x, FTZ_format x -> FLXN_format beta prec x.`
 
-Lean (spec): Any FTZ-format number is in `FLXN_format` for the same
+Lean (spec): Any FTZ-format number is in {lean}`FLXN_format` for the same
 base and precision.
 -/
 theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
@@ -363,14 +370,12 @@ namespace FloatSpec.Core.FTZ
 
 variable (prec emin : Int) [Fact (0 < prec)]
 
-/-- Coq (FTZ.v):
-Theorem FTZ_format_FLXN :
-  forall x : R,
-  (bpow (emin + prec - 1) <= Rabs x)%R ->
-  FLXN_format beta prec x -> FTZ_format x.
+/-- Coq ({lit}`FTZ.v`):
+Theorem {lit}`FTZ_format_FLXN`:
+  {lit}`forall x : R, (bpow (emin + prec - 1) <= Rabs x)%R -> FLXN_format beta prec x -> FTZ_format x.`
 
-Lean (spec): If |x| ≥ β^(emin + prec - 1) and x is in FLXN_format,
-then x is in FTZ_format for the same base and precision.
+Lean (spec): If {lit}`|x| ≥ β^(emin + prec - 1)` and x is in {lean}`FLXN_format`,
+then x is in {lean}`FTZ_format` for the same base and precision.
 -/
 theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta ∧ (beta : ℝ) ^ (emin + prec - 1) ≤ |x| ∧ (FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x).run⌝⦄
@@ -507,16 +512,12 @@ namespace FloatSpec.Core.FTZ
 
 variable (prec emin : Int) [Fact (0 < prec)]
 
-/-- Coq (FTZ.v):
-Theorem `round_FTZ_FLX` :
-```
-  forall x,
-  (bpow (emin + prec - 1) <= Rabs x) ->
-  round beta FTZ_exp Zrnd_FTZ x = round beta (FLX_exp prec) rnd x.
-```
+/-- Coq ({lit}`FTZ.v`):
+Theorem {lit}`round_FTZ_FLX`:
+{lit}`forall x, (bpow (emin + prec - 1) <= Rabs x) -> round beta FTZ_exp Zrnd_FTZ x = round beta (FLX_exp prec) rnd x.`
 
 Lean (spec): Under the lower-bound condition on |x|, rounding in
-FTZ equals rounding in FLX for any rounding predicate `rnd`.
+FTZ equals rounding in FLX for any rounding predicate {lit}`rnd`.
 -/
 theorem round_FTZ_FLX (beta : Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FloatSpec.Core.FLX.FLX_exp prec)]
@@ -594,13 +595,12 @@ namespace FloatSpec.Core.FTZ
 
 variable (prec emin : Int) [Fact (0 < prec)]
 
-/-- Coq (FTZ.v):
-Theorem round_FTZ_small : forall x,
-  (Rabs x < bpow (emin + prec - 1)) ->
-  round beta FTZ_exp Zrnd_FTZ x = 0.
+/-- Coq ({lit}`FTZ.v`):
+Theorem {lit}`round_FTZ_small`:
+{lit}`forall x, (Rabs x < bpow (emin + prec - 1)) -> round beta FTZ_exp Zrnd_FTZ x = 0.`
 
-Lean (spec): If |x| is smaller than β^(emin+prec-1), then rounding in
-FTZ flushes to zero for any rounding predicate `rnd`.
+Lean (spec): If |x| is smaller than {lit}`β^(emin+prec-1)`, then rounding in
+FTZ flushes to zero for any rounding predicate {lit}`rnd`.
 -/
 theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜1 < beta ∧ |x| < (beta : ℝ) ^ (emin)⌝⦄
@@ -751,10 +751,10 @@ namespace FloatSpec.Core.FTZ
 
 variable (prec emin : Int) [Fact (0 < prec)]
 
-/-- Coq (FTZ.v):
-Theorem `ulp_FTZ_0` : `ulp beta FTZ_exp 0 = bpow emin`.
+/-- Coq ({lit}`FTZ.v`):
+Theorem {lit}`ulp_FTZ_0`: {lit}`ulp beta FTZ_exp 0 = bpow emin`.
 
-Lean (spec): The ULP under FTZ at 0 equals `β^emin`.
+Lean (spec): The ULP under FTZ at 0 equals {lit}`β^emin`.
 -/
 theorem ulp_FTZ_0 (beta : Int) :
     ⦃⌜True⌝⦄

@@ -74,6 +74,7 @@ noncomputable def F2R (f : FlocqFloat beta) : Id ℝ :=
     This is the bridge between the discrete float representation
     and the continuous real numbers it approximates.
 -/
+@[spec]
 theorem F2R_spec (f : FlocqFloat beta) :
     ⦃⌜beta > 1⌝⦄
     F2R f
@@ -188,6 +189,7 @@ def Fnum_extract {beta : Int} (f : FlocqFloat beta) : Id Int :=
 
     The extraction returns the Fnum field unchanged.
 -/
+@[spec]
 theorem Fnum_extract_spec {beta : Int} (f : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Fnum_extract f
@@ -207,6 +209,7 @@ def Fexp_extract {beta : Int} (f : FlocqFloat beta) : Id Int :=
 
     The extraction returns the Fexp field unchanged.
 -/
+@[spec]
 theorem Fexp_extract_spec {beta : Int} (f : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Fexp_extract f
@@ -226,6 +229,7 @@ def make_float {beta : Int} (num exp : Int) : Id (FlocqFloat beta) :=
 
     The constructor properly sets both fields.
 -/
+@[spec]
 theorem make_float_spec {beta : Int} (num exp : Int) :
     ⦃⌜True⌝⦄
     make_float (beta := beta) num exp
@@ -250,6 +254,7 @@ def FlocqFloat_eq {beta : Int} (f g : FlocqFloat beta) : Id Bool :=
 
     Two FlocqFloats are equal iff their components are equal.
 -/
+@[spec]
 theorem FlocqFloat_eq_spec {beta : Int} (f g : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     FlocqFloat_eq f g
@@ -270,6 +275,7 @@ noncomputable def F2R_zero_float {beta : Int} : Id ℝ :=
 
     The zero float (0, 0) converts to real zero.
 -/
+@[spec]
 theorem F2R_zero_spec {beta : Int} :
     ⦃⌜beta > 1⌝⦄
     F2R_zero_float (beta := beta)
@@ -296,6 +302,7 @@ noncomputable def F2R_add_same_exp {beta : Int} (f g : FlocqFloat beta) : Id (�
 
     When two floats have the same exponent, F2R distributes over addition.
 -/
+@[spec]
 theorem F2R_add_same_exp_spec {beta : Int} (f g : FlocqFloat beta) :
     ⦃⌜f.Fexp = g.Fexp ∧ beta > 1⌝⦄
     F2R_add_same_exp f g

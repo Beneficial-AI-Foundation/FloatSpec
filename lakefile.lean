@@ -26,15 +26,21 @@ require verso from git "https://github.com/leanprover/verso" @ "v4.27.0-rc1"
 
 require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.27.0-rc1"
 
+-- Coq/Flocq documentation roles for literate programming
+require VersoCoq from ".." / "VersoCoq"
+
+/-- Verso roles - imports VersoCoq.Roles to register {coq} doc role.
+
+    Must compile BEFORE main library due to @[doc_role] attribute timing.
+-/
+lean_lib FloatSpecRoles where
+  globs := #[.one `FloatSpecRoles]
+
 /-- Main library -/
 @[default_target]
 lean_lib FloatSpecLib where
   -- Include the root module and all submodules
-  globs := #[.andSubmodules `FloatSpec]
-
-/-- Verso extensions for FloatSpec documentation -/
-lean_lib VersoExt where
-  roots := #[`FloatSpec.VersoExt]
+  globs := #[.submodules `FloatSpec.src, .one `FloatSpec]
 
 
 /-- Executables -/

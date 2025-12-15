@@ -44,6 +44,7 @@ def Falign (f1 f2 : FlocqFloat beta) : Id (Int × Int × Int) :=
     After alignment, both floats maintain their original real values
     but are expressed with a common exponent
 -/
+@[spec]
 theorem Falign_spec (f1 f2 : FlocqFloat beta) :
     ⦃⌜1 < beta⌝⦄
     Falign beta f1 f2
@@ -82,6 +83,7 @@ def Falign_exp (f1 f2 : FlocqFloat beta) : Id Int :=
 
     The common exponent is the minimum of the two original exponents
 -/
+@[spec]
 theorem Falign_spec_exp (f1 f2 : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Falign_exp beta f1 f2
@@ -94,7 +96,7 @@ theorem Falign_spec_exp (f1 f2 : FlocqFloat beta) :
     | mk m2 e2 =>
       by_cases hle : e1 ≤ e2
       · -- exponent chosen is e1, which is min when e1 ≤ e2
-        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_left hle]
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind]
       · -- exponent chosen is e2, which is min when e2 ≤ e1
         have hle' : e2 ≤ e1 := le_of_lt (lt_of_not_ge hle)
         simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_right hle']
@@ -179,7 +181,8 @@ theorem F2R_plus (f1 f2 : FlocqFloat beta) :
       -- Evaluate alignment depending on exponents
       by_cases hle : e1 ≤ e2
       · -- Aligned exponent is e1; second mantissa is scaled
-        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, F2R, Int.cast_add, Int.cast_mul, mul_add, add_comm, add_left_comm, add_assoc]
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, F2R, Int.cast_add,
+          Int.cast_mul]
         -- Show scaling identity: b^(|e2-e1|) * b^e1 = b^e2
         set b : ℝ := (beta : ℝ)
         have hbposInt : (0 : Int) < beta := lt_trans (by decide) hβ
@@ -224,7 +227,8 @@ theorem F2R_plus (f1 f2 : FlocqFloat beta) :
         simpa [this, add_comm, add_left_comm, add_assoc, mul_comm, mul_left_comm, mul_assoc]
       · -- Symmetric case: aligned exponent is e2; first mantissa is scaled
         have hle' : e2 ≤ e1 := le_of_lt (lt_of_not_ge hle)
-        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, F2R, Int.cast_add, Int.cast_mul, mul_add, add_comm, add_left_comm, add_assoc]
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, F2R, Int.cast_add,
+          Int.cast_mul, add_comm]
         set b : ℝ := (beta : ℝ)
         have hbposInt : (0 : Int) < beta := lt_trans (by decide) hβ
         have hbposReal : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposInt
@@ -274,6 +278,7 @@ def Fplus_same_exp (m1 m2 e : Int) : Id (FlocqFloat beta) :=
 
     Adding floats with identical exponents just adds mantissas
 -/
+@[spec]
 theorem Fplus_same_exp_spec (m1 m2 e : Int) :
     ⦃⌜True⌝⦄
     Fplus_same_exp beta m1 m2 e
@@ -281,8 +286,7 @@ theorem Fplus_same_exp_spec (m1 m2 e : Int) :
   intro _
   unfold Fplus_same_exp Fplus
   -- With equal exponents, alignment keeps mantissas unchanged
-  simp [Falign, wp, PostCond.noThrow, Id.run, pure, bind, le_rfl,
-        Int.sub_self, Int.natAbs_zero, pow_zero, mul_one]
+  simp [Falign, wp, PostCond.noThrow, Id.run, pure, bind, Int.natAbs_zero, pow_zero, mul_one]
 
 /-- Extract exponent of sum
 
@@ -295,6 +299,7 @@ def Fexp_Fplus (f1 f2 : FlocqFloat beta) : Id Int :=
 
     The exponent of a sum is the minimum of the input exponents
 -/
+@[spec]
 theorem Fexp_Fplus_spec (f1 f2 : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     Fexp_Fplus beta f1 f2
@@ -307,7 +312,7 @@ theorem Fexp_Fplus_spec (f1 f2 : FlocqFloat beta) :
     | mk m2 e2 =>
       by_cases hle : e1 ≤ e2
       · -- exponent chosen is e1, which is min when e1 ≤ e2
-        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_left hle]
+        simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind]
       · -- exponent chosen is e2, which is min when e2 ≤ e1
         have hle' : e2 ≤ e1 := le_of_lt (lt_of_not_ge hle)
         simp [Falign, hle, wp, PostCond.noThrow, Id.run, pure, bind, min_eq_right hle']
@@ -342,9 +347,8 @@ theorem F2R_minus (f1 f2 : FlocqFloat beta) :
       -- After negation, alignment is identical to addition, with the second mantissa negated
       by_cases hle : e1 ≤ e2
       · -- Aligned exponent is e1; the second mantissa becomes scaled and negated
-        simp [Fopp, Falign, hle, Fplus, wp, PostCond.noThrow, Id.run, pure, bind, F2R,
-              Int.cast_add, Int.cast_mul, Int.cast_neg, sub_eq_add_neg,
-              mul_add, add_comm, add_left_comm, add_assoc, neg_mul]
+        simp [Fopp, Falign, hle, Fplus, wp, PostCond.noThrow, Id.run, pure, bind, F2R, Int.cast_add,
+          Int.cast_mul, Int.cast_neg, sub_eq_add_neg, neg_mul]
         -- Reuse the same scaling identity as in F2R_plus
         set b : ℝ := (beta : ℝ)
         have hbposInt : (0 : Int) < beta := lt_trans (by decide) hβ
@@ -388,9 +392,8 @@ theorem F2R_minus (f1 f2 : FlocqFloat beta) :
                mul_comm, mul_left_comm, mul_assoc]
       · -- Symmetric case: aligned exponent is e2; the first mantissa is scaled
         have hle' : e2 ≤ e1 := le_of_lt (lt_of_not_ge hle)
-        simp [Fopp, Falign, hle, Fplus, wp, PostCond.noThrow, Id.run, pure, bind, F2R,
-              Int.cast_add, Int.cast_mul, Int.cast_neg, sub_eq_add_neg,
-              mul_add, add_comm, add_left_comm, add_assoc, neg_mul]
+        simp [Fopp, Falign, hle, Fplus, wp, PostCond.noThrow, Id.run, pure, bind, F2R, Int.cast_add,
+          Int.cast_mul, Int.cast_neg, sub_eq_add_neg, add_comm]
         set b : ℝ := (beta : ℝ)
         have hbposInt : (0 : Int) < beta := lt_trans (by decide) hβ
         have hbposReal : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposInt
@@ -441,6 +444,7 @@ def Fminus_same_exp (m1 m2 e : Int) : Id (FlocqFloat beta) :=
 
     Subtracting floats with identical exponents just subtracts mantissas
 -/
+@[spec]
 theorem Fminus_same_exp_spec (m1 m2 e : Int) :
     ⦃⌜True⌝⦄
     Fminus_same_exp beta m1 m2 e
@@ -448,8 +452,8 @@ theorem Fminus_same_exp_spec (m1 m2 e : Int) :
   intro _
   unfold Fminus_same_exp Fminus Fplus
   -- With equal exponents, alignment keeps mantissas unchanged; then apply negation
-  simp [Fopp, Falign, wp, PostCond.noThrow, Id.run, pure, bind, le_rfl,
-        Int.sub_self, Int.natAbs_zero, pow_zero, mul_one, sub_eq_add_neg]
+  simp [Fopp, Falign, wp, PostCond.noThrow, Id.run, pure, bind, Int.natAbs_zero, pow_zero, mul_one,
+    sub_eq_add_neg]
 
 end FloatSubtraction
 
@@ -472,7 +476,7 @@ theorem F2R_mult (f1 f2 : FlocqFloat beta) :
     ⦃⇓result => ⌜(F2R result).run = (F2R f1).run * (F2R f2).run⌝⦄ := by
   intro hβ
   -- Evaluate both sides and reduce to algebraic identities on ℝ
-  simp [Fmult, wp, PostCond.noThrow, Id.run, pure, F2R, Int.cast_mul, Int.cast_add]
+  simp [Fmult, wp, PostCond.noThrow, Id.run, pure, F2R, Int.cast_mul]
   -- Set base and obtain non-zeroness to use zpow_add₀
   set b : ℝ := (beta : ℝ)
   have hbposInt : (0 : Int) < beta := lt_trans (by decide) hβ

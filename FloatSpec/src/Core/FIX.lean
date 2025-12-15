@@ -245,7 +245,7 @@ end FloatSpec.Core.FIX
 namespace FloatSpec.Core.FIX
 
 /-- Coq ({lit}`FIX.v`):
-Theorem {coq}`round_FIX_IZR`: {lit}`forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).`
+Theorem {lit}`round_FIX_IZR`: {lit}`forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).`
 
 Lean (ported, minimal adaptation): Our {lean}`round_to_generic` model ignores the
 rounding function {lit}`f` and performs truncation of the scaled mantissa with the

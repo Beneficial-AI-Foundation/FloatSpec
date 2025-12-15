@@ -56,6 +56,7 @@ def truncate (beta : Int) (f : FlocqFloat beta) (e : Int) (l : Location) : Id (I
 
     Truncation maintains the represented value while updating location information
 -/
+@[spec]
 theorem truncate_spec (f : FlocqFloat beta) (e : Int) (l : Location)
     (He : f.Fexp ≤ e) (Hl : inbetween_float beta f.Fnum e ((F2R f).run) l) :
     ⦃⌜f.Fexp ≤ e ∧ inbetween_float beta f.Fnum e ((F2R f).run) l⌝⦄

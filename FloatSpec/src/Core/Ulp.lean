@@ -50,8 +50,8 @@ abbrev Float := Defs.FlocqFloat beta
 
 /-- Non-FTZ exponent property (local, minimal theorem used in this file).
 
-In Flocq, `Exp_not_FTZ` entails stability of the exponent function on the
-"small" regime. The following idempotence on `fexp` is a lightweight
+In Flocq, {name}`Exp_not_FTZ` entails stability of the exponent function on the
+"small" regime. The following idempotence on {name}`fexp` is a lightweight
 abstraction sufficient for the `ulp_ulp_0` lemma and remains local to
 this file.
 -/
@@ -63,17 +63,17 @@ class Exp_not_FTZ (fexp : Int → Int) : Prop where
 
 /-- Monotone exponent property (used in ULP spacing proofs).
 
-We assume `fexp` is monotone with respect to `≤` on integers: increasing the
+We assume {name}`fexp` is monotone with respect to {lit}`≤` on integers: increasing the
 input does not decrease the exponent. This is the minimal property we need in
-this file to compare consecutive exponents like `fexp (m-1) ≤ fexp m`.
+this file to compare consecutive exponents like {given -show}`m` {lean}`fexp (m-1) ≤ fexp m`.
 -/
 class Monotone_exp (fexp : Int → Int) : Prop where
   mono : ∀ {a b : Int}, a ≤ b → fexp a ≤ fexp b
 
 
-/-- Negligible exponent detection (Coq: `negligible_exp`).
-We follow the classical (noncomputable) choice: if there exists `n` such that
-`n ≤ fexp n`, we return `some n` (choosing a witness); otherwise `none`.
+/-- Negligible exponent detection (Coq: {name}`negligible_exp`).
+We follow the classical (noncomputable) choice: if there exists {given}`n : Int` such that
+{lit}`n ≤ fexp n`, we return {lean}`some n` (choosing a witness); otherwise {name}`none`.
 -/
 noncomputable def negligible_exp (fexp : Int → Int) : Option Int := by
   classical
@@ -111,12 +111,12 @@ theorem Z_le_dec_aux (x y : Int) : (x ≤ y) ∨ ¬ (x ≤ y) := by
   classical
   exact em (x ≤ y)
 
-/-- Coq (Ulp.v): `negligible_exp` property predicate (parameterized by `fexp`). -/
+/-- Coq (Ulp.v): {name}`negligible_exp` property predicate (parameterized by {name}`fexp`). -/
 inductive negligible_exp_prop (fexp : Int → Int) : Option Int → Prop where
   | negligible_None : (∀ n : Int, fexp n < n) → negligible_exp_prop fexp none
   | negligible_Some : ∀ n : Int, n ≤ fexp n → negligible_exp_prop fexp (some n)
 
-/-- Coq (Ulp.v): `negligible_exp_spec`. -/
+/-- Coq (Ulp.v): {name}`negligible_exp_spec`. -/
 lemma negligible_exp_spec : negligible_exp_prop fexp (negligible_exp fexp) := by
   classical
   unfold negligible_exp
@@ -138,7 +138,7 @@ lemma negligible_exp_spec : negligible_exp_prop fexp (negligible_exp fexp) := by
     simpa [negligible_exp, h] using
       negligible_exp_prop.negligible_None (fexp := fexp) hforall
 
-/-- Coq (Ulp.v): `negligible_exp_spec'`. -/
+/-- Coq (Ulp.v): {name}`negligible_exp_spec'`. -/
 lemma negligible_exp_spec' :
     (negligible_exp fexp = none ∧ ∀ n : Int, fexp n < n)
     ∨ ∃ n : Int, negligible_exp fexp = some n ∧ n ≤ fexp n := by
@@ -157,7 +157,7 @@ lemma negligible_exp_spec' :
       have Hsome : negligible_exp_prop fexp (some n) := by simpa [hopt] using H
       cases Hsome with
       | @negligible_Some m hm =>
-          -- `m` is definally the same as `n`; transport `hm` and expose the witness
+          -- `m` is definitionally the same as `n`; transport `hm` and expose the witness
           exact Or.inr ⟨n, by simpa [hopt], by simpa using hm⟩
 
 /-- Coq (Ulp.v): `fexp_negligible_exp_eq`. -/
@@ -229,7 +229,7 @@ dependencies, we prove a slightly weaker, but sufficient, monotonicity:
 and the fact that `ulp` and powers of a positive base are nonnegative.
 We require the standard radix hypothesis `1 < beta`.
 -/
-
+omit [Valid_exp beta fexp] in
 private lemma ulp_run_nonneg (hβ : 1 < beta) (x : ℝ) :
     0 ≤ (ulp beta fexp x).run := by
   classical
@@ -586,7 +586,7 @@ private theorem succ_le_plus_ulp_theorem
         simpa [hulp_neg_eq] using hle_to_ulp_neg
       -- Add x to both sides and rewrite succ x
       have : x + (beta : ℝ) ^ (fexp (m - 1)) ≤ x + (ulp beta fexp x).run :=
-        add_le_add_left hle_to_ulp_x x
+        add_le_add_right hle_to_ulp_x x
       simpa [hsucc_explicit]
         using this
     · -- Generic case: pred_pos (-x) = -x - ulp (-x)
@@ -871,7 +871,7 @@ private theorem ulp0_ge_pow_cexp_round0_neg_theorem
             have hpos : (0 : ℝ) < t + 1 := by
               simpa [hceil0, Int.cast_zero] using (Int.ceil_lt_add_one t)
             have h' : 0 + (-1 : ℝ) < (t + 1) + (-1 : ℝ) :=
-              add_lt_add_right hpos (-1 : ℝ)
+              add_lt_add_left hpos (-1 : ℝ)
             simpa [add_comm, add_left_comm, add_assoc] using h'
           have ht_le0 : t ≤ 0 := le_of_lt htlt
           -- Combine inequalities to bound |t|
@@ -1146,7 +1146,7 @@ private theorem pred_round_le_id_theorem
             exact_mod_cast hceil_le_floor_succ
           have h2 : ((FloatSpec.Core.Raux.Zfloor t).run : ℝ) ≤ t := Int.floor_le t
           have : ((FloatSpec.Core.Raux.Zceil t).run : ℝ) ≤ t + 1 := by
-            exact le_trans h1 (add_le_add_right h2 1)
+            exact le_trans h1 (add_le_add_left h2 1)
           -- Use m = ⌈t⌉ to conclude
           have hm_eq : m = (FloatSpec.Core.Raux.Zceil t).run := by
             have := FloatSpec.Core.Raux.Ztrunc_ceil (x := t) (by exact (le_of_lt htneg))
@@ -3247,7 +3247,7 @@ private theorem pred_pos_plus_ulp_aux1_theorem
       simpa [abs_mul] using this.symm
     -- Conclude u ≤ x since x > 0 makes |x| = x
     have hule_x : u ≤ x := by
-      have : (beta : ℝ) ^ c ≤ |x| := by simpa [habs_prod] using hle_pow
+      have : (beta : ℝ) ^ c ≤ |x| := le_of_le_of_eq hle_pow habs_prod
       simpa [hulp, abs_of_nonneg (le_of_lt hx)] using this
     -- Hence s = x - u is nonnegative
     exact sub_nonneg.mpr hule_x
@@ -4841,7 +4841,7 @@ private theorem round_N_le_midp_theorem
     have hmid_le : (u + (succ (beta := beta) (fexp := fexp) u).run) / 2 ≤ (u + u') / 2 := by
       -- Divide-by-two monotonicity via multiplication by the nonnegative factor 1/2.
       have hadd : u + (succ (beta := beta) (fexp := fexp) u).run ≤ u + u' :=
-        add_le_add_left hsucc_le_up u
+        add_le_add_right hsucc_le_up u
       have hhalf_nonneg : (0 : ℝ) ≤ (1/2 : ℝ) := by norm_num
       -- (a/2 ≤ b/2) is equivalent to ((1/2)*a ≤ (1/2)*b) over ℝ.
       simpa [one_div, div_eq_mul_inv, mul_add, add_comm, add_left_comm, add_assoc]
@@ -5031,7 +5031,7 @@ private theorem round_N_ge_midp_theorem
   -- Helper: under `d ≤ v`, we cannot have `v < (d + v)/2`.
   have not_lt_mid_of_le_left (hdv : d ≤ v) : ¬ v < (d + v) / 2 := by
     -- From d ≤ v, we have (d + v)/2 ≤ v, so ¬ v < (d + v)/2
-    have hsum_le : d + v ≤ v + v := add_le_add_right hdv v
+    have hsum_le : d + v ≤ v + v := add_le_add_left hdv v
     have : (d + v) / 2 ≤ (v + v) / 2 := by
       have : (0 : ℝ) ≤ 2 := by norm_num
       exact div_le_div_of_nonneg_right hsum_le this
@@ -5079,7 +5079,7 @@ private theorem round_N_ge_midp_theorem
       have hsum_le : (pred (beta := beta) (fexp := fexp) u).run
                       + (pred (beta := beta) (fexp := fexp) u).run
                         ≤ u + (pred (beta := beta) (fexp := fexp) u).run := by
-        exact add_le_add_right hpred_le_u _
+        exact add_le_add_left hpred_le_u _
       have hhalf_le : ((pred (beta := beta) (fexp := fexp) u).run
                         + (pred (beta := beta) (fexp := fexp) u).run) / 2
                         ≤ (u + (pred (beta := beta) (fexp := fexp) u).run) / 2 := by
@@ -5140,7 +5140,7 @@ private theorem round_N_ge_midp_theorem
       have hnotlt : ¬ v < (d + u') / 2 := by
         -- (d + v)/2 ≤ v since d ≤ v
         have : d ≤ v := hd_le_v
-        have hsum_le : d + v ≤ v + v := add_le_add_right this v
+        have hsum_le : d + v ≤ v + v := add_le_add_left this v
         have : (d + v) / 2 ≤ (v + v) / 2 := by
           have : (0 : ℝ) ≤ (2 : ℝ) := by norm_num
           exact div_le_div_of_nonneg_right hsum_le this
@@ -5736,7 +5736,7 @@ private theorem mag_plus_eps_theorem
     -- First compare eps with ulp x
     have hle_eps : eps ≤ (ulp (beta := beta) (fexp := fexp) x).run := le_of_lt heps.2
     have hxle : x + eps ≤ x + (ulp (beta := beta) (fexp := fexp) x).run := by
-      exact add_le_add_left hle_eps x
+      exact add_le_add_right hle_eps x
     -- Prove the spacing bound directly: x + ulp x ≤ β^ex
     -- Notations
     set b : ℝ := (beta : ℝ)
@@ -5951,7 +5951,7 @@ theorem round_DN_plus_eps_pos
     (x := x + eps) (d := x) Fx
   constructor
   · -- Lower bound: x ≤ x + eps since eps ≥ 0
-    have : x + 0 ≤ x + eps := add_le_add_left heps.1 x
+    have : x + 0 ≤ x + eps := add_le_add_right heps.1 x
     simpa using this
   · -- Upper bound: x + eps < succ x since succ x = x + ulp x for x ≥ 0
     have hsucc_run : (succ beta fexp x).run = x + (ulp beta fexp x).run := by
@@ -5959,7 +5959,7 @@ theorem round_DN_plus_eps_pos
       have hx0 : 0 ≤ x := le_of_lt hx
       simp [succ, hx0, Id.run, bind, pure]
     -- Translate eps < ulp x into the desired inequality by adding x on both sides
-    have : x + eps < x + (ulp beta fexp x).run := add_lt_add_left heps.2 x
+    have : x + eps < x + (ulp beta fexp x).run := add_lt_add_right heps.2 x
     simpa [hsucc_run]
       using this
   simpa
@@ -6015,7 +6015,7 @@ theorem round_UP_plus_eps_pos
   have hle_right : x + eps ≤ (succ (beta := beta) (fexp := fexp) x).run := by
     -- Add x to both sides of `eps ≤ ulp x` and rewrite succ x
     have : x + eps ≤ x + (ulp (beta := beta) (fexp := fexp) x).run :=
-      add_le_add_left heps.2 x
+      add_le_add_right heps.2 x
     simpa [hsucc_run] using this
   -- Apply the UP-equality bridge on the half-interval (pred u, u]
   have hup :=
@@ -6075,7 +6075,7 @@ theorem round_UP_pred_plus_eps_pos
           (pred (beta := beta) (fexp := fexp) x).run +
             (ulp (beta := beta) (fexp := fexp)
               ((pred (beta := beta) (fexp := fexp) x).run)).run := by
-      exact add_le_add_left heps.2 _
+      exact add_le_add_right heps.2 _
     -- Rewrite both occurrences of (pred x).run to (pred_pos x).run
     -- and the RHS using the decomposition equality above.
     simpa [hpred_run, hdecomp]
@@ -6153,7 +6153,7 @@ theorem round_UP_pred_plus_eps
           (pred (beta := beta) (fexp := fexp) x).run + eps
             ≤ (pred (beta := beta) (fexp := fexp) x).run
                 + (ulp (beta := beta) (fexp := fexp) (-x)).run := by
-        exact add_le_add_left hbound _
+        exact add_le_add_right hbound _
       -- Conclude using the explicit expression of pred x on this branch
       simpa [hpred_run, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
         using hle'
@@ -6439,7 +6439,7 @@ theorem round_UP_plus_eps
         simpa [hx] using heps.2
       -- Add x to both sides and rewrite succ x
       have : x + eps ≤ x + (ulp (beta := beta) (fexp := fexp) x).run :=
-        add_le_add_left hbound x
+        add_le_add_right hbound x
       simpa [hsucc_run] using this
     · -- Negative branch: let y := -x (> 0). We show y - eps ≥ pred_pos y.
       have hypos : 0 < -x := by
@@ -7997,7 +7997,7 @@ theorem generic_format_bpow_ge_ulp_0 (e : Int)
             lt_of_le_of_lt h_small (lt_add_of_pos_right _ Int.zero_lt_one)
           have hlt_e1 : fexp (e + 1) < (e + 1) :=
             FloatSpec.Core.Generic_fmt.valid_exp_large (beta := beta) (fexp := fexp)
-              (k := fexp m + 1) (l := e + 1) hlt_k (add_le_add_right hn_le_e 1)
+              (k := fexp m + 1) (l := e + 1) hlt_k (add_le_add_left hn_le_e 1)
           -- Conclude with `Int.lt_add_one_iff`
           exact Int.lt_add_one_iff.mp hlt_e1
   -- With `fexp (e+1) ≤ e` established, apply the generic-format lemma for powers.

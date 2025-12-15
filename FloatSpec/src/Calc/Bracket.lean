@@ -147,6 +147,7 @@ noncomputable def inbetween_loc : Id Location :=
 
     The computed location accurately represents x's position in `[d, u)`
 -/
+@[spec]
 theorem inbetween_spec (Hx : d ≤ x ∧ x < u) :
     ⦃⌜d ≤ x ∧ x < u⌝⦄
     inbetween_loc d u x

@@ -474,7 +474,7 @@ private lemma tdiv_pow_succ_assoc
     -- Use `(a / b) / c = a / (b * c)` requiring `0 ≤ b` (here `b = beta`).
     have hb_nonneg : 0 ≤ beta := le_of_lt hb
     have hassoc : (n / beta) / (beta ^ k) = n / (beta * (beta ^ k)) := by
-      simpa using (Int.ediv_ediv hb_nonneg)
+      simpa using (Int.ediv_ediv_eq_ediv_mul hb_nonneg)
     -- Normalize powers
     simpa [pow_succ, mul_comm] using hassoc
   have hmid : n / (beta ^ (k + 1)) = (n / beta) / (beta ^ k) := hmid'.symm
@@ -917,14 +917,14 @@ theorem Zdigit_div_pow (n k l : Int) (hβ : beta > 1 := h_beta):
       rw [Int.tdiv_eq_ediv_of_nonneg hdiv_nonneg]
       rw [Int.tdiv_eq_ediv_of_nonneg hn_nonneg]
       -- `(n / (β^l)) / (β^k) = n / (β^(l+k))` for nonnegative divisor `β^l`
-      -- Use `Int.ediv_ediv` with explicit parameters (requires `0 ≤ β^l`).
+      -- Use `Int.ediv_ediv_eq_ediv_mul` with explicit parameters (requires `0 ≤ β^l`).
       -- `(n / (β^l)) / (β^k) = n / ((β^l) * (β^k))`
       have hassoc : (n / (beta ^ l.natAbs)) / (beta ^ k.natAbs)
           = n / ((beta ^ l.natAbs) * (beta ^ k.natAbs)) := by
         have hbL_nonneg : 0 ≤ beta ^ l.natAbs := Int.le_of_lt hbL
-        -- Specialize `Int.ediv_ediv` to our `a,b,c` via type annotation
+        -- Specialize `Int.ediv_ediv_eq_ediv_mul` to our `a,b,c` via type annotation
         simpa using
-          (Int.ediv_ediv hbL_nonneg :
+          (Int.ediv_ediv_eq_ediv_mul hbL_nonneg :
             (n / (beta ^ l.natAbs)) / (beta ^ k.natAbs)
               = n / ((beta ^ l.natAbs) * (beta ^ k.natAbs)))
       -- Normalize powers and commutativity of multiplication to match the goal
@@ -1342,8 +1342,9 @@ theorem Zsum_digit_digit (n : Int) (k : Nat) (hβ : beta > 1 := h_beta) :
         exact this
 
       -- From hx, add (n / b % beta) * b to both sides:
-      have hx' : (n % b + 1) + (n / b % beta) * b ≤ b + (n / b % beta) * b :=
-        add_le_add_right hx ((n / b % beta) * b)
+      have hx' : (n % b + 1) + (n / b % beta) * b ≤ b + (n / b % beta) * b := by
+        have := add_le_add_left hx ((n / b % beta) * b)
+        linarith
 
       -- But (r + 1) = (n % b + 1) + (n / b % beta) * b (just reassociate/commute):
       have : r + 1 ≤ (n / b % beta) * b + b := by
@@ -1744,9 +1745,9 @@ theorem ZOdiv_plus_pow_digit
 
   -- (n / b) / β = n / (b * β)
   have ediv_assoc : (n / b) / beta = n / (b * beta) := by
-    -- Use `Int.ediv_ediv` with `0 ≤ b`
+    -- Use `Int.ediv_ediv_eq_ediv_mul` with `0 ≤ b`
     have hb_nonneg : 0 ≤ b := le_of_lt hb_pos
-    simpa using (Int.ediv_ediv hb_nonneg)
+    simpa using (Int.ediv_ediv_eq_ediv_mul hb_nonneg)
 
   -- n / b = (n / (b*β)) * β + (n / b) % β
   have step : n / b = (n / (b * beta)) * beta + (n / b % beta) := by
@@ -2478,7 +2479,7 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
               have hassoc : (n / beta ^ l.natAbs) / beta ^ (-(k + l)).natAbs
                     = n / (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs) := by
                 simpa using
-                  (Int.ediv_ediv hb_nonneg :
+                  (Int.ediv_ediv_eq_ediv_mul hb_nonneg :
                     (n / (beta ^ l.natAbs)) / (beta ^ (-(k + l)).natAbs)
                       = n / ((beta ^ l.natAbs) * (beta ^ (-(k + l)).natAbs)))
               -- Rewrite the left-hand side using the symmetric form
@@ -2510,7 +2511,7 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
                = n / (beta ^ (-k).natAbs * beta ^ (-l).natAbs) := by
         -- `(n/a)/b = n/(a*b)` for `0 ≤ a`
         have ha_nonneg : 0 ≤ beta ^ (-k).natAbs := le_of_lt hpos1
-        simpa using (Int.ediv_ediv ha_nonneg)
+        simpa using (Int.ediv_ediv_eq_ediv_mul ha_nonneg)
       have : (n / beta ^ (-k).natAbs) / beta ^ (-l).natAbs
                = n / beta ^ (-(k + l)).natAbs := by
         -- combine powers on the RHS
@@ -3204,7 +3205,7 @@ theorem Zslice_div_pow (n k k1 k2 : Int) (h_beta : beta > 1):
           (n / beta ^ k.natAbs) / beta ^ k1.natAbs
             = n / (beta ^ k.natAbs * beta ^ k1.natAbs) := by
         have h_pos : 0 ≤ beta ^ k.natAbs := le_of_lt hbK
-        exact Int.ediv_ediv h_pos
+        exact Int.ediv_ediv_eq_ediv_mul h_pos
       -- β^a * β^b = β^(a+b)
       have mul_to_pow :
           beta ^ k.natAbs * beta ^ k1.natAbs
@@ -5475,7 +5476,9 @@ theorem Zdigits_slice (n k l : Int) (h_beta : beta > 1):
       -- from (d-1) < l infer d ≤ l by adding 1 and using lt_add_one_iff
       have : Id.run (Zdigits beta s) < l + 1 := by
         have := add_lt_add_right h_int_lt 1
-        simpa using this
+        -- 1 + (d - 1) = d when d ≥ 1
+        have hd_ge1 : 1 ≤ (Zdigits beta s).run := hd_pos
+        omega
       exact (Int.lt_add_one_iff.mp this)
 
     -- Conclude using hsimp to rewrite the goal
