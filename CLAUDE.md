@@ -264,10 +264,46 @@ theorem program_correct : program_spec := by
   all_goals mleave; grind         -- Discharge pure goals
 ```
 
+### Pure Functions with Id Monad Pattern
+
+**IMPORTANT**: For pure functions, keep return types pure and use `Id` wrapper ONLY in specs:
+
+```lean
+-- CORRECT: Pure function returning plain type
+def myCheck (x : Int) : Bool := x > 0
+
+-- CORRECT: Spec wraps with (pure ... : Id T)
+@[spec]
+theorem myCheck_spec (x : Int) :
+    ⦃⌜True⌝⦄
+    (pure (myCheck x) : Id Bool)
+    ⦃⇓r => ⌜r = true ↔ x > 0⌝⦄ := by
+  intro _
+  simp [wp, PostCond.noThrow, myCheck]
+
+-- WRONG: Don't make the function return Id
+def badCheck (x : Int) : Id Bool := pure (x > 0)  -- DON'T DO THIS
+```
+
+**Why?** `mvcgen` requires SOME monad, even for pure functions. `Id` is the trivial monad, and wrapping only in specs keeps the function definitions clean.
+
+### The @[spec] Attribute
+
+Mark specification theorems with `@[spec]` to enable automatic lookup during verification:
+
+```lean
+@[spec]
+theorem operation_spec : ⦃P⦄ operation ⦃Q⦄ := ...
+```
+
 ### Loop Invariants:
 - Use zipper data structures (`xs.pref` for processed elements, `xs.suff` for remaining)
 - Early returns supported with `Invariant.withEarlyReturn`
 - State-dependent invariants can reference monadic state through function arguments
+
+### Skill Documentation
+
+See `.claude/docs/lean4/mvcgen-tactic.md` and `.claude/docs/lean4/grind-tactic.md` for comprehensive documentation on these tactics.
 
 This approach scales to complex imperative programs while maintaining compositional reasoning and avoiding the need to replicate control flow in proofs.
 ### Import and Module Structure
