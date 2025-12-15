@@ -21,6 +21,7 @@ import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Core.FLX
 import FloatSpec.src.Core.FIX
+import FloatSpec.VersoExt
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
@@ -48,8 +49,8 @@ def FLT_exp (e : Int) : Int :=
     the maximum of (e - prec) and emin. This validates the
     IEEE 754-style exponent calculation.
 -/
-def FLT_exp_correct_check (e : Int) : Id Bool :=
-  pure (FLT_exp prec emin e = max (e - prec) emin)
+def FLT_exp_correct_check (e : Int) : Bool :=
+  decide (FLT_exp prec emin e = max (e - prec) emin)
 
 /-- Specification: FLT exponent calculation
 
@@ -58,9 +59,10 @@ def FLT_exp_correct_check (e : Int) : Id Bool :=
     when possible, but enforces a minimum exponent emin to prevent
     excessive underflow and maintain gradual underflow behavior.
 -/
+@[spec]
 theorem FLT_exp_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FLT_exp_correct_check prec emin e
+    (pure (FLT_exp_correct_check prec emin e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Direct by unfolding the check and `FLT_exp`.
@@ -73,8 +75,8 @@ theorem FLT_exp_spec (e : Int) :
     This gives IEEE 754-style floating-point representation
     with both precision and minimum exponent constraints.
 -/
-def FLT_format (beta : Int) (x : ℝ) : Id Prop :=
-  pure (generic_format beta (FLT_exp prec emin) x)
+def FLT_format (beta : Int) (x : ℝ) : Prop :=
+  (generic_format beta (FLT_exp prec emin) x).run
 
 /-- `Valid_exp `instance for the FLT exponent function. -/
 instance FLT_exp_valid (beta : Int) [Prec_gt_0 prec] :
@@ -151,10 +153,11 @@ instance FLT_exp_valid (beta : Int) [Prec_gt_0 prec] :
     (for normal numbers) with minimum exponent protection
     (for subnormal numbers), matching IEEE 754 behavior.
 -/
+@[spec]
 theorem FLT_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
-    FLT_format prec emin beta x
-    ⦃⇓result => ⌜result = (generic_format beta (FLT_exp prec emin) x)⌝⦄ := by
+    (pure (FLT_format prec emin beta x) : Id Prop)
+    ⦃⇓result => ⌜result = (generic_format beta (FLT_exp prec emin) x).run⌝⦄ := by
   intro _
   simp [FLT_format]
 
@@ -164,9 +167,10 @@ theorem FLT_format_spec (beta : Int) (x : ℝ) :
     exponent selection logic, choosing between precision-based
     and minimum-bounded exponents as appropriate.
 -/
+@[spec]
 theorem FLT_exp_correct_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FLT_exp_correct_check prec emin e
+    (pure (FLT_exp_correct_check prec emin e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   simp [FLT_exp_correct_check, FLT_exp]
@@ -177,9 +181,9 @@ theorem FLT_exp_correct_spec (e : Int) :
     Zero should always be representable as 0 × β^e for any
     allowed exponent e, making it universal across FLT formats.
 -/
-noncomputable def FLT_format_0_check (beta : Int) : Id Bool :=
+noncomputable def FLT_format_0_check (beta : Int) : Bool :=
   -- Concrete arithmetic check: Ztrunc 0 = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int)
 
 /-- Specification: Zero is in FLT format
 
@@ -187,9 +191,10 @@ noncomputable def FLT_format_0_check (beta : Int) : Id Bool :=
     be expressed as 0 × β^e for any exponent e, regardless
     of precision or minimum exponent constraints.
 -/
+@[spec]
 theorem FLT_format_0_spec (beta : Int) :
     ⦃⌜beta > 1⌝⦄
-    FLT_format_0_check beta
+    (pure (FLT_format_0_check beta) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Ztrunc 0 = 0, so the boolean equality holds.
@@ -203,9 +208,9 @@ theorem FLT_format_0_spec (beta : Int) :
     This tests the sign symmetry property of IEEE 754-style
     floating-point representation.
 -/
-noncomputable def FLT_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
+noncomputable def FLT_format_opp_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_neg: Ztrunc(-x) + Ztrunc(x) = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int)
 
 /-- Specification: FLT format closed under negation
 
@@ -213,9 +218,10 @@ noncomputable def FLT_format_opp_check (beta : Int) (x : ℝ) : Id Bool :=
     is representable, then -x = (-m) × β^e is also representable
     using the same exponent and negated mantissa.
 -/
+@[spec]
 theorem FLT_format_opp_spec (beta : Int) (x : ℝ) :
-    ⦃⌜(FLT_format prec emin beta x).run⌝⦄
-    FLT_format_opp_check beta x
+    ⦃⌜FLT_format prec emin beta x⌝⦄
+    (pure (FLT_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FLT_format_opp_check
@@ -228,10 +234,10 @@ theorem FLT_format_opp_spec (beta : Int) (x : ℝ) :
     This tests the magnitude preservation property, ensuring that
     absolute values remain representable.
 -/
-noncomputable def FLT_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
+noncomputable def FLT_format_abs_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
-  pure (((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
-        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs))
+  ((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
+        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs)
 
 /-- Specification: FLT format closed under absolute value
 
@@ -239,9 +245,10 @@ noncomputable def FLT_format_abs_check (beta : Int) (x : ℝ) : Id Bool :=
     The magnitude of a representable number is always
     representable using the same exponent structure.
 -/
+@[spec]
 theorem FLT_format_abs_spec (beta : Int) (x : ℝ) :
-    ⦃⌜(FLT_format prec emin beta x).run⌝⦄
-    FLT_format_abs_check beta x
+    ⦃⌜FLT_format prec emin beta x⌝⦄
+    (pure (FLT_format_abs_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FLT_format_abs_check
@@ -293,8 +300,8 @@ theorem FLT_format_abs_spec (beta : Int) (x : ℝ) :
     (i.e., emin ≤ e - prec), FLT behaves exactly like FLX.
     This verifies the normal number behavior of IEEE 754.
 -/
-def FLT_exp_FLX_check (e : Int) : Id Bool :=
-  pure (emin ≤ e - prec → FLT_exp prec emin e = FLX.FLX_exp prec e)
+def FLT_exp_FLX_check (e : Int) : Bool :=
+  decide (emin ≤ e - prec → FLT_exp prec emin e = FLX.FLX_exp prec e)
 
 /-- Specification: FLT reduces to FLX for normal numbers
 
@@ -302,9 +309,10 @@ def FLT_exp_FLX_check (e : Int) : Id Bool :=
     FLT format behaves identically to FLX format. This captures
     the normal number range of IEEE 754 floating-point.
 -/
+@[spec]
 theorem FLT_exp_FLX_spec (e : Int) :
     ⦃⌜emin ≤ e - prec⌝⦄
-    FLT_exp_FLX_check prec emin e
+    (pure (FLT_exp_FLX_check prec emin e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro h
   -- Unfold and reduce using the hypothesis `emin ≤ e - prec`.
@@ -660,10 +668,10 @@ namespace FloatSpec.Core.FLT
 
 variable (prec emin : Int) [Prec_gt_0 prec]
 
-/-- Coq (FLT.v):
-Theorem `ulp_FLT_0` : `ulp beta FLT_exp 0 = bpow emin.`
+/-- Coq ({lit}`FLT.v`):
+Theorem {coq}`ulp_FLT_0`: {lit}`ulp beta FLT_exp 0 = bpow emin`.
 
-Lean (spec): The ULP under FLT at 0 equals `β^emin`.
+Lean (spec): The ULP under FLT at 0 equals {lit}`β^emin`.
 -/
 theorem ulp_FLT_0 (beta : Int) :
     ⦃⌜True⌝⦄
@@ -693,11 +701,11 @@ theorem ulp_FLT_0 (beta : Int) :
   -- Conclude by rewriting with the computed branch and simplifying the exponent.
   simpa [this, h_fexp_n_eq]
 
-/-- Coq (FLT.v):
-Theorem `ulp_FLT_small`:
-  `forall x, Rabs x < bpow (emin + prec) -> ulp beta FLT_exp x = bpow emin.`
+/-- Coq ({lit}`FLT.v`):
+Theorem {coq}`ulp_FLT_small`:
+  {lit}`forall x, Rabs x < bpow (emin + prec) -> ulp beta FLT_exp x = bpow emin`.
 
-Lean (spec): If |x| < β^(emin+prec), then ULP under FLT at x equals `β^emin`.
+Lean (spec): If {lit}`|x| < β^(emin+prec)`, then ULP under FLT at x equals {lit}`β^emin`.
 -/
 theorem ulp_FLT_small (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ |x| < (beta : ℝ) ^ (emin + prec)⌝⦄
