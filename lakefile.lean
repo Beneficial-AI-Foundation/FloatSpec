@@ -22,16 +22,19 @@ package FloatSpec where
 /-! Dependencies (order matters for compilation) -/
 
 -- Used for documentation generation
+require verso from git "https://github.com/leanprover/verso" @ "v4.27.0-rc1"
 
-
-
-require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.25.0-rc1"
+require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.27.0-rc1"
 
 /-- Main library -/
 @[default_target]
 lean_lib FloatSpecLib where
   -- Include the root module and all submodules
   globs := #[.andSubmodules `FloatSpec]
+
+/-- Verso extensions for FloatSpec documentation -/
+lean_lib VersoExt where
+  roots := #[`FloatSpec.VersoExt]
 
 
 /-- Executables -/
