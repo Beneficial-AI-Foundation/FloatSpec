@@ -450,7 +450,7 @@ theorem inbetween_ex (d u : ℝ) (l : Location) (Hdu : d < u) :
       have hxlt : d + w * (u - d) < u := by
         have : w * (u - d) < (1 : ℝ) * (u - d) := by
           simpa using (mul_lt_mul_of_pos_right hw01.2 hpos)
-        have : d + w * (u - d) < d + (1 : ℝ) * (u - d) := add_lt_add_left this d
+        have : d + w * (u - d) < d + (1 : ℝ) * (u - d) := add_lt_add_right this d
         simpa [one_mul, sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
       refine inbetween.inbetween_Inexact (l := ord) ?hb ?hc
       · -- Normalize the witness expression to match the constructor arguments.
@@ -471,7 +471,7 @@ theorem inbetween_ex (d u : ℝ) (l : Location) (Hdu : d < u) :
               have : (1 / 4 : ℝ) * (u - d) < (1 / 2 : ℝ) * (u - d) :=
                 mul_lt_mul_of_pos_right hcoef hpos
               have : d + (1 / 4 : ℝ) * (u - d) < d + (1 / 2 : ℝ) * (u - d) :=
-                add_lt_add_left this d
+                add_lt_add_right this d
               simpa [hw, hm_as_d_plus, one_div, mul_comm] using this
             have hcmp : compare (d + w * (u - d)) m = Ordering.lt := by
               simp [compare, hxlt']
@@ -499,7 +499,7 @@ theorem inbetween_ex (d u : ℝ) (l : Location) (Hdu : d < u) :
               have : (1 / 2 : ℝ) * (u - d) < (3 / 4 : ℝ) * (u - d) :=
                 mul_lt_mul_of_pos_right hcoef hpos
               have : d + (1 / 2 : ℝ) * (u - d) < d + (3 / 4 : ℝ) * (u - d) :=
-                add_lt_add_left this d
+                add_lt_add_right this d
               simpa [hm_as_d_plus, hw, one_div, mul_comm] using this
             have hnlt : ¬ d + w * (u - d) < m := not_lt.mpr (le_of_lt hxgt')
             have hcmp : compare (d + w * (u - d)) m = Ordering.gt := by
@@ -633,7 +633,7 @@ theorem inbetween_step_not_Eq (x : ℝ) (k : Int) (l : Location) (ord : Ordering
     have hx_lt_global : x < start + nb_steps * step := by
       -- Rewrite `(k + 1) * step ≤ nb_steps * step` inside a larger sum with `start`
       have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-        add_le_add_left hmul_le _
+        add_le_add_right hmul_le start
       exact lt_of_lt_of_le hx_lt_step_succ this
     exact ⟨hx_gt_start, hx_lt_global⟩
   · -- Midpoint comparison: show global midpoint equals `start + (nb_steps/2 * step)`
@@ -715,7 +715,7 @@ theorem inbetween_step_Lo (x : ℝ) (k : Int) (l : Location)
       | inbetween_Inexact _ hbounds _ => exact hbounds.2
     have hx_lt_global : x < start + nb_steps * step := by
       have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-        add_le_add_left hmul_le _
+        add_le_add_right hmul_le start
       exact lt_of_lt_of_le hx_lt_step_succ this
     exact ⟨hx_gt_start, hx_lt_global⟩
   · -- Midpoint comparison: show x is strictly less than the global midpoint
@@ -735,7 +735,7 @@ theorem inbetween_step_Lo (x : ℝ) (k : Int) (l : Location)
         2 * (start + (k + 1) * step)
             = 2 * start + 2 * ((k + 1 : ℝ) * step) := by ring
         _   ≤ 2 * start + (nb_steps : ℝ) * step := by
-              exact add_le_add_left hmul _
+              exact add_le_add_right hmul (2 * start)
         _   = start + (start + nb_steps * step) := by ring
     have h2' : (start + (k + 1) * step) * 2 ≤ start + (start + nb_steps * step) := by
       simpa [mul_comm] using h2
@@ -824,7 +824,7 @@ theorem inbetween_step_Hi (x : ℝ) (k : Int) (l : Location)
       | inbetween_Inexact _ hbounds _ => exact hbounds.2
     have hx_lt_global : x < start + nb_steps * step := by
       have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-        add_le_add_left hmul_le _
+        add_le_add_right hmul_le start
       exact lt_of_lt_of_le hx_lt_step_succ this
     exact ⟨hx_gt_start, hx_lt_global⟩
   · -- Midpoint comparison: x is strictly greater than the global midpoint
@@ -841,7 +841,7 @@ theorem inbetween_step_Hi (x : ℝ) (k : Int) (l : Location)
         start + (start + nb_steps * step)
             = start + start + (nb_steps : ℝ) * step := by ring
         _ < start + start + (2 : ℝ) * ((k : ℝ) * step) := by
-              exact add_lt_add_left hmul _
+              exact add_lt_add_right hmul (start + start)
         _ = 2 * (start + k * step) := by ring
     -- Divide the strict inequality by 2 > 0
     have two_pos : 0 < (2 : ℝ) := by norm_num
@@ -1059,7 +1059,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
           | inbetween_Inexact _ hbounds _ => exact hbounds.2
         have hx_lt_global : x < start + nb_steps * step := by
           have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-            add_le_add_left hmul_le _
+            add_le_add_right hmul_le start
           exact lt_of_lt_of_le hx_lt_step_succ this
         exact And.intro hx_gt_start hx_lt_global
       · -- Midpoint comparison: x is strictly less than the global midpoint
@@ -1072,7 +1072,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
         have h2 : 2 * (start + (k + 1) * step) ≤ start + (start + nb_steps * step) := by
           calc
             2 * (start + (k + 1) * step) = 2 * start + 2 * ((k + 1 : ℝ) * step) := by ring
-            _ ≤ 2 * start + (nb_steps : ℝ) * step := by exact add_le_add_left hmul _
+            _ ≤ 2 * start + (nb_steps : ℝ) * step := by exact add_le_add_right hmul (2 * start)
             _ = start + (start + nb_steps * step) := by ring
         -- Use the form produced by `le_div_iff₀` to avoid reordering mismatches
         have hmid_upper' : start + step * (k + 1) ≤ (start + (start + step * (nb_steps : ℝ))) / 2 := by
@@ -1151,7 +1151,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
               have hx_lt_step_succ : x < start + (k + 1) * step := hbounds.2
               have hx_lt_global : x < start + nb_steps * step := by
                 have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-                  add_le_add_left hmul_le _
+                  add_le_add_right hmul_le start
                 exact lt_of_lt_of_le hx_lt_step_succ this
               exact And.intro hx_gt_start hx_lt_global
             · -- x strictly greater than the midpoint (which equals start + k*step)
@@ -1188,7 +1188,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
             | inbetween_Inexact _ hbounds _ => exact hbounds.2
           have hx_lt_global : x < start + nb_steps * step := by
             have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-              add_le_add_left hmul_le _
+              add_le_add_right hmul_le start
             exact lt_of_lt_of_le hx_lt_step_succ this
           exact And.intro hx_gt_start hx_lt_global
         · -- Midpoint comparison: x strictly greater than midpoint
@@ -1198,7 +1198,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
           have hsum : start + (start + nb_steps * step) < 2 * (start + k * step) := by
             calc
               start + (start + nb_steps * step) = start + start + (nb_steps : ℝ) * step := by ring
-              _ < start + start + (2 : ℝ) * ((k : ℝ) * step) := by exact add_lt_add_left hmul _
+              _ < start + start + (2 : ℝ) * ((k : ℝ) * step) := by exact add_lt_add_right hmul (start + start)
               _ = 2 * (start + k * step) := by ring
           have two_pos : 0 < (2 : ℝ) := by norm_num
           have hmid_lt_step : (start + (start + nb_steps * step)) / 2 < start + k * step := by
@@ -1393,7 +1393,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
           have hmul_le : (k + 1 : ℝ) * step ≤ ((nb_steps : ℝ) / 2) * step :=
             mul_le_mul_of_nonneg_right hle_nb hstep_nonneg
           have : start + (k + 1 : ℝ) * step ≤ start + ((nb_steps : ℝ) / 2) * step :=
-            add_le_add_left hmul_le _
+            add_le_add_right hmul_le start
           -- And ((nb_steps:ℝ)/2)*step ≤ midpoint since midpoint = start + ((nb_steps:ℝ)*step)/2
           have hmid_alt : (start + (start + nb_steps * step)) / 2 =
               start + ((nb_steps : ℝ) / 2) * step := by ring
@@ -1415,7 +1415,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
           mul_le_mul_of_nonneg_right hle_succR hstep_nonneg
         have hx_lt_global : x < start + nb_steps * step := by
           have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-            add_le_add_left hmul_le' _
+            add_le_add_right hmul_le' start
           exact lt_of_lt_of_le hx_lt_step_succ this
         -- Conclude, matching the computed program result for this branch
         simpa [new_location_odd, hkz, h2k1]
@@ -1488,14 +1488,14 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
               have hk_le_2k : k ≤ 2 * k := by
                 have : (1 : Int) ≤ 2 := by decide
                 simpa [one_mul] using (Int.mul_le_mul_of_nonneg_right this hk0le)
-              have : k + 1 ≤ 2 * k + 1 := add_le_add_right hk_le_2k 1
+              have : k + 1 ≤ 2 * k + 1 := add_le_add_left hk_le_2k 1
               simpa [heq] using this
             have hle_succR : (k + 1 : ℝ) ≤ (nb_steps : ℝ) := by exact_mod_cast hle_succ
             have hmul_le : (k + 1 : ℝ) * step ≤ (nb_steps : ℝ) * step :=
               mul_le_mul_of_nonneg_right hle_succR hstep_nonneg
             have hx_lt_global : x < start + nb_steps * step := by
               have hle : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-                add_le_add_left hmul_le _
+                add_le_add_right hmul_le start
               exact lt_of_lt_of_le (by simpa [hxeq] using hx_lt_step_succ) hle
             -- Evaluate the program in this branch: `¬ (2*k+1 < nb_steps)` and `2*k+1 = nb_steps`.
             have hlt_false : ¬ (2 * k + 1 < nb_steps) := by
@@ -1544,7 +1544,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
                 -- Multiply the inequality `1 ≤ 2` by the nonnegative `k` on the right.
                 have : (1 : Int) ≤ 2 := by decide
                 simpa [one_mul] using (mul_le_mul_of_nonneg_right this hk0le)
-              have : k + 1 ≤ 2 * k + 1 := add_le_add_right hk_le_2k 1
+              have : k + 1 ≤ 2 * k + 1 := add_le_add_left hk_le_2k 1
               simpa [heq] using this
             have hle_succR : (k + 1 : ℝ) ≤ (nb_steps : ℝ) := by exact_mod_cast hle_succ
             have hmul_le : (k + 1 : ℝ) * step ≤ (nb_steps : ℝ) * step :=
@@ -1554,7 +1554,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
               exact hbounds.2
             have hx_lt_global : x < start + nb_steps * step := by
               have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-                add_le_add_left hmul_le _
+                add_le_add_right hmul_le start
               exact lt_of_lt_of_le hx_lt_step_succ this
             -- Evaluate the program in this branch: `¬ (2*k+1 < nb_steps)` and `2*k+1 = nb_steps`.
             have hlt_false : ¬ (2 * k + 1 < nb_steps) := by
@@ -1626,7 +1626,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
           | inbetween_Inexact _ hbounds _ => exact hbounds.2
         have hx_lt_global : x < start + nb_steps * step := by
           have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-            add_le_add_left hmul_le _
+            add_le_add_right hmul_le start
           exact lt_of_lt_of_le hx_lt_step_succ this
         -- Midpoint comparison: x > midpoint
         have h1R : (nb_steps : ℝ) < (2 : ℝ) * (k : ℝ) := by exact_mod_cast hk1'
@@ -1636,7 +1636,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
           calc
             start + (start + nb_steps * step)
                 = start + start + (nb_steps : ℝ) * step := by ring
-            _ < start + start + (2 : ℝ) * ((k : ℝ) * step) := by exact add_lt_add_left hmul' _
+            _ < start + start + (2 : ℝ) * ((k : ℝ) * step) := by exact add_lt_add_right hmul' (start + start)
             _ = 2 * (start + k * step) := by ring
         have hmid_lt_step : (start + (start + nb_steps * step)) / 2 < start + k * step := by
           have := mul_lt_mul_of_pos_left hsum (by norm_num : 0 < (1 / 2 : ℝ))
@@ -1950,7 +1950,7 @@ theorem inbetween_step_Lo_Mi_Eq_odd
         -- k ≤ k + k = 2*k using k ≥ 0
         have := add_le_add_left hk_nonneg k
         simpa [two_mul] using this
-      have hcoef_le : k + 1 ≤ 2 * k + 1 := add_le_add_right hk_le_2k 1
+      have hcoef_le : k + 1 ≤ 2 * k + 1 := add_le_add_left hk_le_2k 1
       have hcoef_leR : ((k + 1 : Int) : ℝ) ≤ (nb_steps : ℝ) := by
         have : ((k + 1 : Int) : ℝ) ≤ ((2 * k + 1 : Int) : ℝ) := by exact_mod_cast hcoef_le
         simpa [Hk] using this
@@ -1963,7 +1963,7 @@ theorem inbetween_step_Lo_Mi_Eq_odd
       -- Global upper bound
       have hx_lt_global : x < start + nb_steps * step := by
         have : start + (((k : ℝ) + 1) * step) ≤ start + (nb_steps : ℝ) * step :=
-          add_le_add_left hmul_le _
+          add_le_add_right hmul_le start
         exact lt_of_lt_of_le hx_lt_step_succ this
       -- Midpoint comparison: x is left of the global midpoint
       -- First express the global midpoint in the "nb_steps/2" form
@@ -1984,7 +1984,7 @@ theorem inbetween_step_Lo_Mi_Eq_odd
         -- Then (a + a) / 2 < (a + b) / 2 since division by 2 preserves order.
         have hsum_lt : (start + k * step) + (start + k * step)
                           < (start + k * step) + (start + (k + 1) * step) :=
-          add_lt_add_left hlt_ab (start + k * step)
+          add_lt_add_right hlt_ab (start + k * step)
         have hdiv_lt :
             ((start + k * step) + (start + k * step)) / 2
               < ((start + k * step) + (start + (k + 1) * step)) / 2 := by
@@ -2062,7 +2062,7 @@ theorem inbetween_step_Hi_Mi_even
     have hx_lt_succ : x < start + ((k : ℝ) + 1) * step := by
       simpa [Int.cast_add, Int.cast_ofNat, add_mul, one_mul] using hbounds.2
     have : start + (((k : ℝ) + 1) * step) ≤ start + (nb_steps : ℝ) * step :=
-      add_le_add_left hmul_le' _
+      add_le_add_right hmul_le' start
     exact lt_of_lt_of_le hx_lt_succ this
   -- Midpoint comparison: even case midpoint equals start + k*step
   have hmid_global_shape :
@@ -2153,7 +2153,7 @@ theorem inbetween_step_Mi_Mi_even
         mul_le_mul_of_nonneg_right hle_succR hstep_nonneg
       have hx_lt_global : x < start + nb_steps * step := by
         have : start + ((k + 1 : ℝ) * step) ≤ start + (nb_steps : ℝ) * step :=
-          add_le_add_left hmul_le _
+          add_le_add_right hmul_le start
         exact lt_of_lt_of_le hx_lt_step_succ this
       -- Midpoint equality for even case: global midpoint equals `start + k*step`.
       -- Cast integer equality `2*k = nb_steps` to reals in a convenient orientation.
@@ -2194,7 +2194,7 @@ theorem inbetween_plus_compat (x d u : ℝ) (l : Location) (t : ℝ) :
       -- Translate strict bounds and midpoint comparison by t
       refine inbetween.inbetween_Inexact (l := ord) ?hb ?hc
       · -- Bounds: add t preserves strict inequalities
-        exact ⟨add_lt_add_right hbounds.1 t, add_lt_add_right hbounds.2 t⟩
+        exact ⟨add_lt_add_left hbounds.1 t, add_lt_add_left hbounds.2 t⟩
       · -- Midpoint: ((d+t)+(u+t))/2 = (d+u)/2 + t
         have hmid_eq : ((d + t) + (u + t)) / 2 = (d + u) / 2 + t := by
           ring

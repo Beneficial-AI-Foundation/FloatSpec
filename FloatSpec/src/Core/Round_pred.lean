@@ -485,7 +485,7 @@ theorem Rnd_UP_pt_monotone_spec (F : ℝ → Prop) :
   unfold Rnd_UP_pt_monotone_check
   -- Reduce to the underlying proposition about monotonicity of UP-points.
   classical
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred_monotone]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred_monotone]
   intro x y f g hx hy hxy
   -- Use minimality of the UP-point at x with candidate g.
   -- From hy we have `F g` and `y ≤ g`; transitivity gives `x ≤ g`.
@@ -1080,7 +1080,7 @@ theorem Rnd_ZR_pt_monotone_spec (F : ℝ → Prop) :
   unfold Rnd_ZR_pt_monotone_check
   classical
   -- Reduce to the monotonicity property for `Rnd_ZR_pt F`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred_monotone]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred_monotone]
   -- Prove monotonicity of `Rnd_ZR_pt F` assuming `F 0`.
   intro x y f g hx hy hxy
   -- Split on the sign of x
@@ -1305,7 +1305,7 @@ theorem Rnd_N_pt_opp_inv_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N_pt_opp_inv_check
   classical
   -- Reduce the Hoare triple to proving the target proposition.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hFopp, hNearestNeg⟩
   rcases hNearestNeg with ⟨Hf_neg, Hmin_neg⟩
   -- Show `F f` using closure under negation from `F (-f)`.
@@ -1355,7 +1355,7 @@ theorem Rnd_N_pt_monotone_spec (F : ℝ → Prop) (x y f g : ℝ) :
   unfold Rnd_N_pt_monotone_check
   classical
   -- Reduce to proving the pure inequality `f ≤ g`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨Hxf, Hyg, hxy⟩
   rcases Hxf with ⟨HfF, Hxmin⟩
   rcases Hyg with ⟨HgF, Hymin⟩
@@ -1419,7 +1419,7 @@ theorem Rnd_N_pt_monotone_spec (F : ℝ → Prop) (x y f g : ℝ) :
         simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
       -- and (f - x) + (y - g) = (y - x) + (f - g)
       have hR : (f - x) + (y - g) = (y - x) + (f - g) := by
-        simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+        simp [sub_eq_add_neg, add_left_comm, add_assoc]
       -- Since y - x > 0, we have (x - y) < (y - x), hence L < R after adding (f - g)
       have hyx_pos : 0 < y - x := sub_pos.mpr hxy
       have hxmy_lt_hyx : (x - y) < (y - x) := by
@@ -1456,7 +1456,7 @@ theorem Rnd_N_pt_unique_spec (F : ℝ → Prop) (x d u f1 f2 : ℝ) :
   unfold Rnd_N_pt_unique_check
   classical
   -- Reduce to proving f1 = f2 from the hypotheses.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨Hd, Hu, hneq, Hf1, Hf2⟩
   -- Each nearest point is either a DN- or an UP-point.
   have Hclass1 := Rnd_N_pt_DN_or_UP_eq_spec F x d u f1
@@ -1576,7 +1576,7 @@ theorem Rnd_N_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N_pt_idempotent_check
   classical
   -- Reduce to proving `f = x` from nearest property at `x` and representability of `x`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hN, hxF⟩
   rcases hN with ⟨hfF, hmin⟩
   -- Minimality at `g = x` yields `|f - x| ≤ 0`, hence `f = x`.
@@ -1616,7 +1616,7 @@ theorem Rnd_N_pt_0_spec (F : ℝ → Prop) :
   unfold Rnd_N_pt_0_check
   classical
   -- Reduce to proving `Rnd_N_pt F 0 0` from `F 0`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Build `Rnd_N_pt F 0 0` directly: representability from the precondition,
   -- and minimality since |0 - 0| = 0 ≤ |g - 0| for any representable g.
   refine And.intro (by simpa) ?_
@@ -1646,7 +1646,7 @@ theorem Rnd_N_pt_ge_0_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N_pt_ge_0_check
   classical
   -- Reduce to a propositional goal.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Unpack the assumptions.
   rcases h with ⟨hF0, hx0, hN⟩
   -- From nearest minimality, using g = 0 (since F 0), we get |x - f| ≤ |x - 0| = x.
@@ -1691,7 +1691,7 @@ theorem Rnd_N_pt_le_0_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N_pt_le_0_check
   classical
   -- Reduce to a propositional goal.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Unpack the assumptions.
   rcases h with ⟨hF0, hx0, hN⟩
   -- From nearest minimality with g = 0 (since F 0), obtain |f - x| ≤ |0 - x| = -x.
@@ -1740,7 +1740,7 @@ theorem Rnd_N_pt_abs_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N_pt_abs_check
   classical
   -- Reduce to the propositional goal.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Unpack assumptions: membership of 0 (unused here), closure under negation, and nearest at x.
   rcases h with ⟨_hF0, hFopp, hN⟩
   -- We prove `Rnd_N_pt F |x| |f|` by a case split on the sign of `x`.
@@ -1792,7 +1792,7 @@ theorem Rnd_N_pt_abs_spec (F : ℝ → Prop) (x f : ℝ) :
           simpa [sub_eq_add_neg]
         have hx2 : abs ((-g) - x) = abs (g + x) := by
           have hx2' : (-g) - x = -(g + x) := by
-            simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+            simp [sub_eq_add_neg, add_comm]
           calc
             abs ((-g) - x) = abs (-(g + x)) := by simpa [hx2']
             _ = abs (g + x) := by exact abs_neg (g + x)
@@ -1831,7 +1831,7 @@ theorem Rnd_N_pt_DN_UP_spec (F : ℝ → Prop) (x d u f : ℝ) :
   unfold Rnd_N_pt_DN_UP_check
   classical
   -- Reduce to proving the nearest-point predicate holds.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Unpack the preconditions.
   rcases h with ⟨hFf, hDN, hUP, hbdL, hbdR⟩
   -- It suffices to provide the nearest-point witness and distance minimality.
@@ -1876,7 +1876,7 @@ theorem Rnd_N_pt_DN_spec (F : ℝ → Prop) (x d u : ℝ) :
   unfold Rnd_N_pt_DN_check
   classical
   -- Reduce goal to establishing `Rnd_N_pt F x d`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hDN, hUP, hdist⟩
   -- From DN we immediately get representability and `d ≤ x`.
   have hFd : F d := hDN.1
@@ -1928,7 +1928,7 @@ theorem Rnd_N_pt_UP_spec (F : ℝ → Prop) (x d u : ℝ) :
   unfold Rnd_N_pt_UP_check
   classical
   -- Reduce goal to establishing `Rnd_N_pt F x u`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hDN, hUP, hdist⟩
   -- From UP we immediately get representability and `x ≤ u`.
   have hFu : F u := hUP.1
@@ -1993,7 +1993,7 @@ theorem Rnd_NG_pt_unique_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
   unfold Rnd_NG_pt_unique_check
   classical
   -- Reduce to a propositional goal about equality.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Unpack assumptions: tie uniqueness property and NG-points for f1,f2.
   rcases h with ⟨hTie, hNG1, hNG2⟩
   rcases hNG1 with ⟨hN1, hT1⟩
@@ -2070,7 +2070,7 @@ theorem Rnd_NG_pt_monotone_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) :
   unfold Rnd_NG_pt_monotone_check
   classical
   -- Reduce to proving `round_pred_monotone (Rnd_NG_pt F P)`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Local helper: a nearest point is either DN or UP.
   -- Port of Rnd_N_pt_DN_or_UP (propositional form).
   have nearest_DN_or_UP
@@ -2189,7 +2189,7 @@ theorem Rnd_NG_pt_monotone_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) :
           have hL : (x - g) + (f - y) = (x - y) + (f - g) := by
             simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
           have hR : (f - x) + (y - g) = (y - x) + (f - g) := by
-            simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+            simp [sub_eq_add_neg, add_left_comm, add_assoc]
           have hyx_pos : 0 < y - x := sub_pos.mpr hlt
           have hxmy_lt_hyx : (x - y) < (y - x) := by
             have : -(y - x) < (y - x) := neg_lt_self hyx_pos
@@ -2259,7 +2259,7 @@ theorem Rnd_NG_pt_refl_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x : �
   unfold Rnd_NG_pt_refl_check
   classical
   -- Reduce the Hoare triple to proving the proposition directly.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Show `Rnd_N_pt F x x` and use the uniqueness branch for ties.
   refine And.intro ?nearest ?tie
   · -- Nearest at x is x itself.
@@ -2309,7 +2309,7 @@ theorem Rnd_NG_pt_opp_inv_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
   unfold Rnd_NG_pt_opp_inv_check
   classical
   -- Reduce Hoare triple to propositional goal.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hFopp, hPopp, hNGneg⟩
   rcases hNGneg with ⟨hN_neg, hTie_neg⟩
   -- Transfer nearest property from (-x,-f) to (x,f).
@@ -2427,7 +2427,7 @@ theorem Rnd_NA_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_NA_NG_pt_check
   classical
   -- Reduce to the underlying equivalence
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   constructor
   · -- (→) From NA to NG with predicate |x| ≤ |f| (or uniqueness)
     intro hNA
@@ -2623,7 +2623,7 @@ theorem Rnd_NA_pt_unique_prop_spec (F : ℝ → Prop) :
   unfold Rnd_NA_pt_unique_prop_check
   classical
   -- Reduce to the underlying propositional statement.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   intro x d u hDN hNd hUP hNu hAd hAu
   -- Case split on the sign of x.
   by_cases hx : 0 ≤ x
@@ -2748,7 +2748,7 @@ theorem Rnd_NA_pt_N_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_NA_pt_N_check
   classical
   -- Reduce goal to establishing `Rnd_NA_pt F x f`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hF0, hN, hbound⟩
   -- Use equivalence NA ↔ NG with predicate P := fun x f => |x| ≤ |f| under F 0.
   have hEqv : Rnd_NA_pt F x f ↔ Rnd_NG_pt F (fun x f => |x| ≤ |f|) x f := by
@@ -2821,7 +2821,7 @@ theorem Rnd_NA_pt_monotone_spec (F : ℝ → Prop) :
   unfold Rnd_NA_pt_monotone_check
   classical
   -- Reduce to proving the monotonicity proposition directly.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred_monotone]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred_monotone]
   -- As in the NG monotonicity proof, we first show that any nearest point
   -- is either a DN-point or an UP-point at the same input.
   have nearest_DN_or_UP
@@ -2938,7 +2938,7 @@ theorem Rnd_NA_pt_monotone_spec (F : ℝ → Prop) :
           have hL : (x - g) + (f - y) = (x - y) + (f - g) := by
             simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
           have hR : (f - x) + (y - g) = (y - x) + (f - g) := by
-            simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+            simp [sub_eq_add_neg, add_left_comm, add_assoc]
           have hyx_pos : 0 < y - x := sub_pos.mpr hlt
           have hxmy_lt_hyx : (x - y) < (y - x) := by
             have : -(y - x) < (y - x) := neg_lt_self hyx_pos
@@ -3090,7 +3090,7 @@ theorem Rnd_NA_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     simpa [hfx] using (le_rfl : |x| ≤ |x|)
   -- Assemble NA-point at x and finish.
   have hNA : Rnd_NA_pt F x x := And.intro hN hTie
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, hNA]
+  simp [wp, PostCond.noThrow, Id.run, pure, hNA]
 
 /-- Check idempotency of NA-point
 
@@ -3114,7 +3114,7 @@ theorem Rnd_NA_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_NA_pt_idempotent_check
   classical
   -- Reduce to proving `f = x` from nearest property at `x` and representability of `x`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hNA, hxF⟩
   -- From NA, extract nearest property.
   rcases hNA with ⟨hN, _hTie⟩
@@ -3149,7 +3149,7 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N0_NG_pt_check
   classical
   -- Reduce to the desired propositional equivalence.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- We prove both directions by cases on the sign of x.
   by_cases hx : 0 ≤ x
   · -- Case 0 ≤ x
@@ -3469,7 +3469,7 @@ theorem Rnd_N0_pt_unique_prop_spec (F : ℝ → Prop) :
   unfold Rnd_N0_pt_unique_prop_check
   classical
   -- Reduce to the underlying propositional goal.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   intro x d u hDN hNd hUP hNu hAd hAu
   -- Case split on the sign of x.
   by_cases hx : 0 ≤ x
@@ -3591,7 +3591,7 @@ theorem Rnd_N0_pt_N_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N0_pt_N_check
   classical
   -- Reduce to establishing `Rnd_N0_pt F x f` from the preconditions.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   rcases h with ⟨hF0, hN, hbound⟩
   -- Use equivalence N0 ↔ NG with predicate P := fun x f => |f| ≤ |x| under F 0.
   have hEqv :
@@ -3665,7 +3665,7 @@ theorem Rnd_N0_pt_monotone_spec (F : ℝ → Prop) :
   unfold Rnd_N0_pt_monotone_check
   classical
   -- Reduce to the underlying proposition about monotonicity of N0-points.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   intro x y f g hx hy hxy
   -- Use equivalence N0 ↔ NG with predicate P := fun x f => |f| ≤ |x| (under F 0).
   have hEqv_x :
@@ -3719,7 +3719,7 @@ theorem Rnd_N0_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
   unfold Rnd_N0_pt_refl_check
   classical
   -- Reduce the Hoare triple to a pure goal about the N0-point predicate.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Build `Rnd_N0_pt F x x` directly from `F x`.
   -- First, `x` is nearest to itself.
   refine And.intro ?hN ?hminAbs
@@ -3759,7 +3759,7 @@ theorem Rnd_N0_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
   unfold Rnd_N0_pt_idempotent_check
   classical
   -- Reduce to proving `f = x` from nearest property at `x` and representability of `x`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Extract nearest property from the N0-point hypothesis.
   -- The minimal-absolute tie information is not needed for idempotency at x.
   rcases ‹Rnd_N0_pt F x f ∧ F x› with ⟨hN0, hxF⟩
@@ -3927,7 +3927,7 @@ theorem Rnd_DN_pt_equiv_format_spec (F1 F2 : ℝ → Prop) (a b x f : ℝ) :
   unfold Rnd_DN_pt_equiv_format_check
   classical
   -- Reduce to the underlying DN-point predicate over F2.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Unpack assumptions.
   rcases h with ⟨Ha, HFeq, hax, hxb, hDN⟩
   rcases hDN with ⟨HfF1, hf_le_x, hmax1⟩
@@ -3978,7 +3978,7 @@ theorem Rnd_UP_pt_equiv_format_spec (F1 F2 : ℝ → Prop) (a b x f : ℝ) :
   unfold Rnd_UP_pt_equiv_format_check
   classical
   -- Reduce to the underlying UP-point predicate over F2.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Unpack assumptions.
   rcases h with ⟨Hb, HFeq, hax, hxb, hUP⟩
   rcases hUP with ⟨HfF1, hx_le_f, hmin1⟩
@@ -4037,7 +4037,7 @@ theorem satisfies_any_eq_spec (F : ℝ → Prop) :
   unfold satisfies_any_eq_check
   classical
   -- Reduce to proving the Coq-style consequence as a proposition.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   -- Proof of: ∀ F1 F2, (∀ x, F1 x ↔ F2 x) → satisfies_any F1 → satisfies_any F2
   intro F1 F2 hEq hAny
   rcases hAny with ⟨x, hx⟩
@@ -4067,7 +4067,7 @@ theorem satisfies_any_imp_DN_spec (F : ℝ → Prop) :
   classical
   -- Reduce the Hoare triple to the underlying proposition about `round_pred`.
   -- It suffices to show totality and monotonicity for `Rnd_DN_pt F`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred]
   constructor
   · -- Totality comes from the precondition (Coq's satisfies_any contains this field).
     exact htot
@@ -4100,7 +4100,7 @@ theorem satisfies_any_imp_UP_spec (F : ℝ → Prop) :
   unfold satisfies_any_imp_UP_check
   classical
   -- Reduce the Hoare triple to proving `round_pred (Rnd_UP_pt F)`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred]
   constructor
   · -- Totality comes from the precondition.
     exact htot
@@ -4134,7 +4134,7 @@ theorem satisfies_any_imp_ZR_spec (F : ℝ → Prop) :
   unfold satisfies_any_imp_ZR_check
   classical
   -- Reduce the Hoare triple to proving `round_pred (Rnd_ZR_pt F)`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred]
   constructor
   · -- Totality follows from the precondition.
     exact htot
@@ -4197,7 +4197,7 @@ theorem satisfies_any_imp_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) 
   unfold satisfies_any_imp_NG_check
   classical
   -- Reduce to the underlying `round_pred` proposition.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred]
   rcases h with ⟨htot, hTieUnique⟩
   constructor
   · -- Totality provided by the precondition.
@@ -4231,7 +4231,7 @@ theorem satisfies_any_imp_NA_spec (F : ℝ → Prop) :
   unfold satisfies_any_imp_NA_check
   classical
   -- Reduce to proving `round_pred (Rnd_NA_pt F)`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred]
   rcases h with ⟨htot, hF0⟩
   constructor
   · exact htot
@@ -4262,7 +4262,7 @@ theorem satisfies_any_imp_N0_spec (F : ℝ → Prop) :
   unfold satisfies_any_imp_N0_check
   classical
   -- Reduce to proving `round_pred (Rnd_N0_pt F)`.
-  simp [wp, PostCond.noThrow, Id.run, pure, decide_eq_true_iff, round_pred]
+  simp [wp, PostCond.noThrow, Id.run, pure, round_pred]
   rcases h with ⟨htot, hF0⟩
   constructor
   · exact htot

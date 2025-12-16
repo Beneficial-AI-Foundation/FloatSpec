@@ -86,9 +86,7 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
     have hemin_le_k : emin ≤ k := by
       by_cases h : emin ≤ k - prec
       · -- arithmetic branch at k
-        have hle' : emin + prec ≤ k := by
-          have := add_le_add_right h prec
-          simpa [sub_add_cancel] using this
+        have hle' : emin + prec ≤ k := by omega
         have h0 : 0 ≤ prec := le_of_lt hp.out
         exact le_trans (le_add_of_nonneg_right h0) hle'
       · -- else-branch at k: fexp k = emin < k
@@ -98,9 +96,7 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
     -- Evaluate fexp at (k+1)
     by_cases h1 : emin ≤ (k + 1) - prec
     · -- fexp (k+1) = (k+1) - prec ≤ k since 1 ≤ prec
-      have : (k + 1) - prec ≤ k := by
-        have : k + 1 ≤ k + prec := add_le_add_left hprec1 k
-        exact (sub_le_iff_le_add).2 (by simpa [add_comm, add_left_comm, add_assoc] using this)
+      have : (k + 1) - prec ≤ k := by omega
       simpa [FTZ_exp, h1] using this
     · -- fexp (k+1) = emin ≤ k
       simpa [FTZ_exp, h1] using hemin_le_k
@@ -130,11 +126,7 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
       have hgoal : FTZ_exp prec emin (emin + 1) ≤ emin := by
         by_cases h1 : emin ≤ (emin + 1) - prec
         · -- arithmetic branch at emin + 1
-          have hle : (emin + 1) - prec ≤ emin := by
-            -- 1 ≤ prec ⇒ (emin + 1) ≤ emin + prec ⇒ (emin + 1) - prec ≤ emin
-            have : emin + 1 ≤ emin + prec := add_le_add_left hprec1 emin
-            exact (sub_le_iff_le_add).2 (by
-              simpa [add_comm, add_left_comm, add_assoc] using this)
+          have hle : (emin + 1) - prec ≤ emin := by omega
           simpa [FTZ_exp, h1] using hle
         · -- else-branch at (emin + 1): fexp = emin
           simp [FTZ_exp, h1]
@@ -257,7 +249,7 @@ theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
 noncomputable def FTZ_format_abs_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
   ((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
-        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs))
+        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs)
 
 /-- Specification: FTZ format closed under absolute value
 
@@ -315,11 +307,11 @@ variable (prec emin : Int) [Fact (0 < prec)]
 Theorem {lit}`FLXN_format_FTZ`:
   {lit}`forall x, FTZ_format x -> FLXN_format beta prec x.`
 
-Lean (spec): Any FTZ-format number is in {lean}`FLXN_format` for the same
+Lean (spec): Any FTZ-format number is in {lean}`FloatSpec.Core.FLX.FLXN_format` for the same
 base and precision.
 -/
 theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
-    ⦃⌜1 < beta ∧ (FTZ_format prec emin beta x).run⌝⦄
+    ⦃⌜1 < beta ∧ FTZ_format prec emin beta x⌝⦄
     FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
@@ -373,14 +365,15 @@ variable (prec emin : Int) [Fact (0 < prec)]
 Theorem {lit}`FTZ_format_FLXN`:
   {lit}`forall x : R, (bpow (emin + prec - 1) <= Rabs x)%R -> FLXN_format beta prec x -> FTZ_format x.`
 
-Lean (spec): If {lit}`|x| ≥ β^(emin + prec - 1)` and x is in {lean}`FLXN_format`,
-then x is in {lean}`FTZ_format` for the same base and precision.
+Lean (spec): If {lit}`|x| ≥ β^(emin + prec - 1)` and x is in {lean}`FloatSpec.Core.FLX.FLXN_format`,
+then x is in {lean}`FloatSpec.Core.FTZ.FTZ_format` for the same base and precision.
 -/
 theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
-    ⦃⌜1 < beta ∧ (beta : ℝ) ^ (emin + prec - 1) ≤ |x| ∧ (FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x).run⌝⦄
-    FTZ_format prec emin beta x
+    ⦃⌜1 < beta ∧ (beta : ℝ) ^ (emin + prec - 1) ≤ |x| ∧ FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x⌝⦄
+    (pure (FTZ_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   -- Unpack the preconditions
   rcases hpre with ⟨hβ, hlb, hx_flx⟩
   -- Abbreviations
@@ -710,11 +703,12 @@ Theorem generic_format_FTZ :
   forall x, FTZ_format x -> generic_format beta FTZ_exp x.
 -/
 theorem generic_format_FTZ (beta : Int) (x : ℝ) :
-    ⦃⌜(FTZ_format prec emin beta x).run⌝⦄
+    ⦃⌜FTZ_format prec emin beta x⌝⦄
     FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simpa [FTZ_format]
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure, FTZ_format] at hx ⊢
+  exact hx
 
 /-
 Coq (FTZ.v):
@@ -723,10 +717,11 @@ Theorem FTZ_format_generic :
 -/
 theorem FTZ_format_generic (beta : Int) (x : ℝ) :
     ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄
-    FTZ_format prec emin beta x
+    (pure (FTZ_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simpa [FTZ_format] using hx
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure, FTZ_format]
+  exact hx
 
 end FloatSpec.Core.FTZ
 
@@ -740,7 +735,7 @@ Theorem FTZ_format_satisfies_any :
   satisfies_any FTZ_format.
 -/
 theorem FTZ_format_satisfies_any (beta : Int) :
-    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FTZ_format prec emin beta y).run) := by
+    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FTZ_format prec emin beta y) := by
   simpa [FTZ_format]
     using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FTZ_exp prec emin)
 

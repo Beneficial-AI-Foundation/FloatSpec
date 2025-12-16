@@ -868,7 +868,7 @@ theorem generic_format_canonical
       _   = (((Ztrunc (x * ((beta : ℝ) ^ f.Fexp)⁻¹)).run : Int) : ℝ) * (beta : ℝ) ^ f.Fexp := by
             -- Collapse the middle factor to 1 and simplify
             have : (beta : ℝ) ^ f.Fexp * ((beta : ℝ) ^ f.Fexp)⁻¹ = (1 : ℝ) := hmul_cancel
-            simp [this, mul_comm, mul_left_comm, mul_assoc]
+            simp [this, mul_comm]
 
 
 /-- Specification: Scaled mantissa of zero
@@ -897,7 +897,7 @@ theorem scaled_mantissa_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
   -- Reduce the Hoare triple on Id and handle cases on x = 0
   by_cases hx : x = 0
   · -- Both sides are 0 when x = 0
-    simp [hx, FloatSpec.Core.Raux.mag, neg_mul]
+    simp [hx, FloatSpec.Core.Raux.mag]
   · -- Use definitional equality of mag under negation: abs (-x) = abs x
     have hneg0 : -x ≠ 0 := by simpa [hx]
     simp [FloatSpec.Core.Raux.mag, hx, hneg0, abs_neg, neg_mul]
@@ -930,7 +930,7 @@ theorem scaled_mantissa_F2R_canonical
   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
   -- Reduce using the canonical exponent equality
-  simp [x, hcexp]
+  simp [x]
   -- Finish by rewriting the wp-goal and cancelling the power using zpow laws.
   -- Reduce the goal produced by `wp` on `mag`.
   -- Target form: (F2R f).run * ((beta : ℝ) ^ (fexp ((mag beta x).run)))⁻¹ = (f.Fnum : ℝ)
@@ -997,11 +997,11 @@ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
   -- The goal is now about |(β^fexp)⁻¹| = (β^fexp)⁻¹ ∨ x = 0
   by_cases hx : x = 0
   · -- wp goal for x = 0
-    simp only [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.mag, hx]
+    simp only [wp, Id.run, pure, FloatSpec.Core.Raux.mag, hx]
     right
     trivial
   · -- wp goal for x ≠ 0
-    simp only [wp, PostCond.noThrow, Id.run, PredTrans.pure, FloatSpec.Core.Raux.mag, hx,
+    simp only [wp, Id.run, PredTrans.pure, FloatSpec.Core.Raux.mag, hx,
                if_false, or_false]
     -- Goal: ↑beta ^ fexp e = |↑beta| ^ fexp e  where beta > 0
     have hbeta_abs : |(beta : ℝ)| = (beta : ℝ) := abs_of_pos hbpos
@@ -1044,7 +1044,7 @@ theorem generic_format_opp (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
     _   = (((Ztrunc (-(x * (beta : ℝ) ^ (-(fexp (mag beta x)))))).run : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x)) := by
           simpa [Ztrunc_neg]
     _   = (((Ztrunc ((-x) * (beta : ℝ) ^ (-(fexp (mag beta x))))).run : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta x)) := by
-          simp [mul_comm, mul_left_comm, mul_assoc, neg_mul, mul_neg]
+          simp [mul_comm]
     _   = (((Ztrunc ((-x) * (beta : ℝ) ^ (-(fexp (mag beta (-x)))))).run : Int) : ℝ) * (beta : ℝ) ^ (fexp (mag beta (-x))) := by
           simpa [hmag]
 
@@ -2164,7 +2164,7 @@ theorem Znearest_DN_or_UP (choice : Int → Bool) (x : ℝ) :
         -- Rewrite the scrutinee to r and discharge by the default branch
         have h1 : r ≠ -1 := hneg
         have h2 : r ≠ 0 := heq
-        simp [hr.symm, h1, h2]
+        simp [hr.symm]
       exact Or.inr (by simpa [hZ] using hR)
 
 /-- Check pair for Znearest_ge_floor: returns (⌊x⌋, Znearest x) -/
@@ -2736,7 +2736,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
     have hcx_def : (c : ℝ) - x = (1 : ℝ) - (x - (f : ℝ)) := by
       have : (c : ℝ) = (f : ℝ) + 1 := by
         simpa [Int.cast_add, Int.cast_one] using congrArg (fun z : Int => (z : ℝ)) hc_succ
-      simp [this, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+      simp [this]; ring
     -- Split on the three cases for x - f versus 1/2
     have htris : (x - (f : ℝ) < (1/2)) ∨ (x - (f : ℝ) = (1/2)) ∨ ((1/2) < x - (f : ℝ)) :=
       lt_trichotomy _ _
@@ -2772,7 +2772,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
       -- are definitionally equal; rewrite to use the computed hZR.
       have hfun_eq :
           (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
-        funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+        funext t; simp [add_comm]
       have hZR' : Znearest (fun t => ! choice (-1 + -t)) x = f := by
         simpa [hfun_eq] using hZR
       simpa [hZL, hZR', eq_comm]
@@ -2806,7 +2806,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
       -- Align the two notations for the transformed choice function
       have hfun_eq :
           (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
-        funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+        funext t; simp [add_comm]
       -- Chain equalities directly at the tie point
       have :
           (if A then (-f) else (-c)) =
@@ -2825,7 +2825,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
           -- Also normalize the alternative syntactic form of the transformed choice
           have htrans_false' : (fun t => ! choice (-1 + -t)) f = false := by
             simpa [hfun_eq] using htrans_false
-          simp [hAt, hA, htrans_false', hfun_eq]
+          simp [hAt, htrans_false']
         · -- If A ≠ true, then A = false
           have hAf : A = false := by
             -- A is a Bool, so it is either true or false
@@ -2844,7 +2844,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
           -- Normalize the syntactic variant of the transformed choice in the goal
           have htrans_true' : (fun t => ! choice (-1 + -t)) f = true := by
             simpa [hfun_eq] using htrans_true
-          simp [hAf, hA, htrans_true', hfun_eq]
+          simp [hAf, htrans_true']
       -- Finish by rewriting both Znearest values at the midpoint
       have : Znearest choice (-x) = - Znearest (fun t => ! choice (-1 + -t)) x := by
         -- Evaluate both Znearest terms using the tie lemmas and rewrite the boolean conditions
@@ -2881,7 +2881,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
       have hfun_eq :
           (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
         funext t
-        simp [neg_add, add_comm, add_left_comm, add_assoc]
+        simp [add_comm]
       -- Chain equalities to reach the printed goal
       have hZR' : Znearest (fun t => ! choice (-1 + -t)) x = c := by
         simpa [hfun_eq] using hZR
@@ -2937,7 +2937,7 @@ theorem round_N_middle
     -- Unfold sm,e,y and reuse the proof pattern there
     have : sm * (beta : ℝ) ^ e = x := by
       -- Direct computation: sm = x * β^(-e)
-      simp [hsm, he, hy, scaled_mantissa, cexp]
+      simp [hsm, he, scaled_mantissa, cexp]
       -- Show x * β^(-e) * β^e = x
       -- Same calc as in scaled_mantissa_mult_bpow
       set ee := fexp (mag beta x) with hEE
@@ -3277,7 +3277,7 @@ theorem roundR_bounded_small_pos
     have he_run : (cexp beta fexp x).run = c := by
       simpa [he_eq] using he.symm
     have hsm_run : (scaled_mantissa beta fexp x).run = sm := by
-      simp [scaled_mantissa, cexp, hsm, hc, hm, he_run, hx_ne]
+      simp [scaled_mantissa, cexp, hsm, hc, hm]
 
     -- Floor and ceil of the scaled mantissa in the small positive regime
     have hfloor0 : Int.floor sm = 0 := by
@@ -3368,7 +3368,7 @@ theorem roundR_bounded_large_pos
   have he_run : (cexp beta fexp x).run = c := by
     simpa [he_eq] using he.symm
   have hsm_run : (scaled_mantissa beta fexp x).run = sm := by
-    simp [scaled_mantissa, cexp, hsm, hc, hm, he_run, hx_ne]
+    simp [scaled_mantissa, cexp, hsm, hc, hm]
 
   -- Power-of-β inequalities obtained from the interval on m
   have hpow_lower : (beta : ℝ) ^ (ex - 1 - c) ≤ sm := by
@@ -3567,7 +3567,7 @@ theorem round_N_opp
   -- Scaled mantissa flips sign under negation
   have hSM : smn = -smx := by
     -- After unfolding and using hE, both use the same exponent
-    simp [hsmn, hsmx, scaled_mantissa, cexp, FloatSpec.Core.Raux.mag, abs_neg, hE, neg_mul]
+    simp [hsmn, hsmx, scaled_mantissa, cexp, FloatSpec.Core.Raux.mag, abs_neg, neg_mul]
 
   -- Reduce the Znearest relation using the previously proved structural lemma
   have hZ : Znearest choice (-smx)
@@ -3576,7 +3576,7 @@ theorem round_N_opp
   -- Align the two syntactic variants of the transformed choice
   have hfun_eq :
       (fun t : Int => ! choice (-1 + -t)) = (fun t : Int => ! choice (-(t + 1))) := by
-    funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+    funext t; simp [add_comm]
   -- Now compute both sides explicitly and rewrite step by step
   calc
     roundR beta fexp (Znearest choice) (-x)
@@ -3659,7 +3659,7 @@ theorem round_N0_opp
         -- Via hiff, (-(t+1) < 0) holds
         have : (-(t + 1) < 0) := (hiff.mpr hlt)
         simpa [this]
-      simp [hlt, this]
+      simp [hlt]
     · have : decide (-(t + 1) < 0) = False := by
         have : ¬ (-(t + 1) < 0) := by
           -- From ¬(-1 < t), get t ≤ -1, then t + 1 ≤ 0
@@ -3668,7 +3668,7 @@ theorem round_N0_opp
           have : 0 ≤ -(t + 1) := neg_nonneg.mpr hle0
           exact not_lt.mpr this
         simpa [this]
-      simp [hlt, this]
+      simp [hlt]
   simpa [hsyn, hchoice_eq] using h
 
 /- Coq (Generic_fmt.v): round_N_small
@@ -3703,7 +3703,7 @@ theorem round_N_small
     have hfun_eq :
         (fun t : Int => ! choice (-1 + -t))
           = (fun t : Int => ! choice (-(t + 1))) := by
-      funext t; simp [neg_add, add_comm, add_left_comm, add_assoc]
+      funext t; simp [add_comm]
     -- Relate rounding at -x back to x
     have hrel :=
       round_N_opp (beta := beta) (fexp := fexp) (choice := choice) (x := -x)
@@ -4055,10 +4055,8 @@ end Inclusion
 
 section Round_generic
 
-/-- Placeholder existence theorem: There exists a round-down value in the generic format.
-    A constructive proof requires additional spacing/discreteness lemmas for the format.
-    We declare it here so earlier results can depend on it. The detailed development
-    appears later in this file. -/
+/-- Existence of round-down value in the generic format.
+    Follows from format discreteness. Uses sorry pending constructive proof. -/
 theorem round_DN_exists
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f).run ∧
@@ -4914,10 +4912,8 @@ theorem round_to_format_properties (beta : Int) (fexp : Int → Int)
   -- Conclude the required conjunction
   exact ⟨hFdn, hFup, hdn_le, hup_ge⟩
 
-/-- Axiom-style lemma: Under the common scale `ex := cexp x`, the DN/UP neighbors
-    admit canonical integer mantissas that are consecutive. This consolidates
-    spacing and reconstruction facts; a constructive proof is deferred to the
-    spacing development. -/
+/-- Consecutive scaled mantissas for DN/UP neighbors.
+    Uses sorry pending constructive proof via format spacing. -/
 theorem consecutive_scaled_mantissas_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x xd xu : ℝ) :
@@ -5882,7 +5878,7 @@ theorem generic_round_generic_ax
         = (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp1 x).run))).run : Int) : ℝ)
             * (beta : ℝ) ^ (cexp beta fexp1 x).run := by
     -- Unfold and rewrite cexp with fexp2 = fexp1
-    simp [round_to_generic, scaled_mantissa, cexp, hEqFexp]
+    simp [round_to_generic, cexp, hEqFexp]
   -- From `generic_format` at x, we have the same reconstruction equality.
   have hx_eq : x
       = (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp1 x).run))).run : Int) : ℝ)
@@ -5896,12 +5892,8 @@ theorem generic_round_generic_ax
   simpa [hr_eq_x]
     using hx
 
-/-- Monotonicity placeholder for `round_to_generic`.
-
-    The helper rounding function is monotone: if `x ≤ y` then
-    `round_to_generic x ≤ round_to_generic y`. This mirrors the
-    standard monotonicity property of rounding operations and will
-    be replaced by a constructive proof using DN/UP witnesses. -/
+/-- Monotonicity of generic rounding: x <= y implies round x <= round y.
+    Uses sorry pending constructive proof via Ztrunc monotonicity. -/
 theorem round_to_generic_monotone
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) :
@@ -5944,7 +5936,7 @@ theorem round_to_generic_abs
   have hround_x :
       round_to_generic beta fexp rnd x
         = (((Ztrunc s).run : Int) : ℝ) * (beta : ℝ) ^ e := by
-    simp [round_to_generic, scaled_mantissa, cexp, he, hs]
+    simp [round_to_generic, cexp, he, hs]
   -- Case split on the sign of x
   by_cases hx : 0 ≤ x
   · -- Nonnegative case: result is nonnegative, so abs is identity
@@ -5968,7 +5960,7 @@ theorem round_to_generic_abs
     have hL :
         round_to_generic beta fexp rnd (abs x)
           = (((Ztrunc ((abs x) * (beta : ℝ) ^ (-e))).run : Int) : ℝ) * (beta : ℝ) ^ e := by
-      simp [round_to_generic, scaled_mantissa, cexp, hf_abs]
+      simp [round_to_generic, cexp, hf_abs]
     -- Convert to the ((β^e)⁻¹) form used by simp elsewhere
     have hbne : (beta : ℝ) ≠ 0 := by exact_mod_cast (ne_of_gt hbposℤ)
     have hzpow_neg : (beta : ℝ) ^ (-e) = ((beta : ℝ) ^ e)⁻¹ := by simpa [zpow_neg]
@@ -6048,7 +6040,7 @@ theorem round_to_generic_abs
       -- Expand both sides and use Ztrunc_neg, keeping the (-e) form aligned
       have hLneg : round_to_generic beta fexp rnd (-x)
             = (((Ztrunc ((-x) * (beta : ℝ) ^ (-e))).run : Int) : ℝ) * (beta : ℝ) ^ e := by
-        simp [round_to_generic, scaled_mantissa, cexp, hf_neg]
+        simp [round_to_generic, cexp, hf_neg]
       -- Convert both occurrences to the ((β^e)⁻¹) form
       have hLneg' : round_to_generic beta fexp rnd (-x)
             = (((Ztrunc ((-x) * ((beta : ℝ) ^ e)⁻¹)).run : Int) : ℝ) * (beta : ℝ) ^ e := by
@@ -6097,11 +6089,8 @@ theorem round_to_generic_abs
               simpa [abs_of_nonpos this]
 
 
-/-- Theorem: Magnitude does not decrease under rounding when the result is nonzero.
-    For any rounding mode `rnd`, if `r = round_to_generic … x` and `r ≠ 0`, then
-    `mag x ≤ mag r`. This mirrors Coq's `mag_round_ge` using the decomposition
-    into ZR/AW cases; here we encapsulate it as a localized theorem consistent
-    with the intended semantics of `round_to_generic` in this file. -/
+/-- Magnitude does not decrease under rounding when result is nonzero.
+    Uses sorry pending constructive proof via mag properties. -/
 theorem mag_round_ge_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
@@ -6236,7 +6225,7 @@ theorem round_opp
         abs_neg,
         FloatSpec.Core.Generic_fmt.Ztrunc_neg,
         Int.cast_neg,
-        mul_comm, mul_left_comm, mul_assoc]
+        mul_comm]
 
 /-- Coq (Generic_fmt.v):
     Theorem round_le:
@@ -6421,7 +6410,7 @@ theorem abs_round_ge_generic_ax
             abs_neg,
             FloatSpec.Core.Generic_fmt.Ztrunc_neg,
             Int.cast_neg,
-            mul_comm, mul_left_comm, mul_assoc]
+            mul_comm]
     have hx_le_neg : x ≤ - round_to_generic beta fexp rnd y := by
       simpa [h_opp] using hx_le_rneg
     exact le_trans hx_le_neg (by simpa using (neg_le_abs (round_to_generic beta fexp rnd y)))
@@ -6646,7 +6635,7 @@ theorem generic_format_inter_valid (beta : Int) (fexp1 fexp2 : Int → Int)
     have hcexp_min : (cexp beta (fun k => min (fexp1 k) (fexp2 k)) x).run = c3 := by
       simp [FloatSpec.Core.Generic_fmt.cexp, c1, c2, c3]
     -- Now unfold and rewrite to the reconstruction equality
-    simp only [generic_format, scaled_mantissa, cexp, F2R, hcexp_min]
+    simp only [generic_format, scaled_mantissa, cexp, F2R]
     -- Goal reduces exactly to the reconstruction equality
     simpa using hrecon
   simpa using this
@@ -6961,7 +6950,7 @@ theorem round_DN_opp
         abs_neg,
         FloatSpec.Core.Generic_fmt.Ztrunc_neg,
         Int.cast_neg,
-        mul_comm, mul_left_comm, mul_assoc]
+        mul_comm]
 
 -- Coq (Generic_fmt.v): round_UP_opp
 theorem round_UP_opp
@@ -6981,7 +6970,7 @@ theorem round_UP_opp
         abs_neg,
         FloatSpec.Core.Generic_fmt.Ztrunc_neg,
         Int.cast_neg,
-        mul_comm, mul_left_comm, mul_assoc]
+        mul_comm]
 
 -- Coq (Generic_fmt.v): round_ZR_opp
 theorem round_ZR_opp
@@ -7001,7 +6990,7 @@ theorem round_ZR_opp
         abs_neg,
         FloatSpec.Core.Generic_fmt.Ztrunc_neg,
         Int.cast_neg,
-        mul_comm, mul_left_comm, mul_assoc]
+        mul_comm]
 
 -- Coq (Generic_fmt.v): round_ZR_abs
 theorem round_ZR_abs
@@ -7042,7 +7031,7 @@ theorem round_AW_opp
         abs_neg,
         FloatSpec.Core.Generic_fmt.Ztrunc_neg,
         Int.cast_neg,
-        mul_comm, mul_left_comm, mul_assoc]
+        mul_comm]
 
 -- Coq (Generic_fmt.v): round_AW_abs
 theorem round_AW_abs
@@ -7666,7 +7655,7 @@ private theorem abs_Ztrunc_le_abs (y : ℝ) :
   unfold FloatSpec.Core.Raux.Ztrunc
   by_cases hy : y < 0
   · -- Negative branch: Ztrunc y = ⌈y⌉ and both sides reduce with negatives
-    simp [FloatSpec.Core.Raux.Ztrunc, hy]
+    simp [hy]
     have hyle : y ≤ 0 := le_of_lt hy
     have habs_y : abs y = -y := by simpa using (abs_of_nonpos hyle)
     have hceil_le0 : (Int.ceil y : Int) ≤ 0 := (Int.ceil_le).mpr (by simpa using hyle)
@@ -7679,7 +7668,7 @@ private theorem abs_Ztrunc_le_abs (y : ℝ) :
     simpa [habs_y, habs_ceil]
       using this
   · -- Nonnegative branch: Ztrunc y = ⌊y⌋, with 0 ≤ ⌊y⌋ ≤ y
-    simp [FloatSpec.Core.Raux.Ztrunc, hy]
+    simp [hy]
     have hy0 : 0 ≤ y := le_of_not_gt hy
     have hfloor_nonneg : 0 ≤ (Int.floor y : Int) := by
       -- From 0 ≤ y and GLB property of floor with m = 0
@@ -7912,9 +7901,8 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     -- Make `r` syntactically match the theorem's `round_to_generic` result
     have hr_eq : round_to_generic (beta := beta) (fexp := fexp) (mode := fun _ _ => True) x = r := by
       simp [round_to_generic,
-            FloatSpec.Core.Generic_fmt.scaled_mantissa,
             FloatSpec.Core.Generic_fmt.cexp,
-            hrdef, hs, hex]
+            hrdef]
     -- Rewrite the target and use the theorem
     simpa [hr_eq] using
       (cexp_round_ge_ax (beta := beta) (fexp := fexp)

@@ -555,6 +555,10 @@ theorem RleBoundRoundr {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) q ≤ _root_.F2R (beta:=beta) p⌝⦄ := by
   sorry
 
+/-- Minimal normal mantissa (`nNormMin`) defined using a positive-exponent power. -/
+noncomputable def nNormMin (radix : Int) (precision : Nat) : Int :=
+  radix ^ (precision - 1)
+
 -- Coq: `firstNormalPos_eq` — value of the first normal positive float
 noncomputable def firstNormalPos {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
@@ -3449,9 +3453,7 @@ theorem FnormalPrecision {beta : Int}
 -- ---------------------------------------------------------------------------
 -- Minimal normal mantissa (`nNormMin`) and related Coq lemmas
 
-/-- Minimal normal mantissa (`nNormMin`) defined using a positive-exponent power. -/
-noncomputable def nNormMin (radix : Int) (precision : Nat) : Int :=
-  radix ^ (precision - 1)
+-- NOTE: `nNormMin` is defined earlier in this file (near firstNormalPos)
 
 noncomputable def nNormPos_check (radix : Int) (precision : Nat) : Id Unit :=
   pure ()
@@ -3505,10 +3507,7 @@ theorem nNrMMimLevNum (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⇓_ => ⌜nNormMin radix precision ≤ b.vNum⌝⦄ := by
   sorry
 
-noncomputable def firstNormalPos
-    {beta : Int} (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    FloatSpec.Core.Defs.FlocqFloat beta :=
-  ⟨nNormMin radix precision, -b.dExp⟩
+-- NOTE: `firstNormalPos` is defined earlier in this file (near nNormMin)
 
 noncomputable def firstNormalPosNormal_check
     {beta : Int} (radix : Int) (b : Fbound_skel) (precision : Nat) : Id Unit :=
@@ -3557,6 +3556,8 @@ theorem FnormalLtFirstNormalPos {beta : Int}
             ≤ _root_.F2R (beta:=beta) p⌝⦄ := by
   intro _
   -- Proof port pending from Coq
+  sorry
+
 noncomputable def FsubnormalDigit_check {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Id Unit :=

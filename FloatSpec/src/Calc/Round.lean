@@ -600,9 +600,8 @@ theorem inbetween_float_DN_sign (x : ℝ) (m e : Int) (l : Location)
     -- Expand and massage via a calc chain to avoid fragile simpa goals
     have h1 : |sm| = |x * (beta : ℝ) ^ (-e0)| := by simpa [hsm_def]
     have h2 : |x * (beta : ℝ) ^ (-e0)| = |x| * |(beta : ℝ) ^ (-e0)| := by simpa [abs_mul]
-    have h3 : |(beta : ℝ) ^ (-e0)| = (beta : ℝ) ^ (-e0) := by
-      simpa [abs_of_nonneg hbpow_nonneg]
-    simpa [h1, h2, h3]
+    have h3 : |(beta : ℝ) ^ (-e0)| = (beta : ℝ) ^ (-e0) := abs_of_nonneg hbpow_nonneg
+    simp only [h1, h2, h3]
   -- Then rewrite the point to |sm| using the above identity
   have Hx0 : FloatSpec.Calc.Bracket.inbetween (m : ℝ) ((m + 1 : Int) : ℝ) (|sm|) l := by
     simpa [hsm_abs_base] using Hx0a
@@ -1433,9 +1432,8 @@ private lemma inbetween_abs_scaled_mantissa
   have hx_or_zero : 0 ≤ (beta : ℝ) ^ e0 ∨ x = 0 := Or.inl (le_of_lt (zpow_pos hbpos e0))
   have hsm_abs_base : |sm| = |x| * (beta : ℝ) ^ (-e0) := by
     have hbnonneg : 0 ≤ (beta : ℝ) ^ (-e0) := le_of_lt hcpos
-    have habs_scale : |(beta : ℝ) ^ (-e0)| = (beta : ℝ) ^ (-e0) := by
-      simpa [abs_of_nonneg hbnonneg]
-    simpa [hsm_def, abs_mul, habs_scale]
+    have habs_scale : |(beta : ℝ) ^ (-e0)| = (beta : ℝ) ^ (-e0) := abs_of_nonneg hbnonneg
+    simp only [hsm_def, abs_mul, habs_scale]
   have : FloatSpec.Calc.Bracket.inbetween (m : ℝ) ((m + 1 : Int) : ℝ) (|sm|) l := by
     simpa [hsm_abs_base] using Hx0
   simpa [inbetween_int] using this
@@ -1582,7 +1580,7 @@ theorem inbetween_int_NA_sign (x : ℝ) (m : Int) (l : Location)
     have hm_gt_neg1 : -1 < m := by
       have hnot : ¬ m ≤ -1 := by
         intro hmle
-        have hle0 : m + 1 ≤ 0 := by simpa using add_le_add_right hmle 1
+        have hle0 : m + 1 ≤ 0 := by simpa using add_le_add_left hmle 1
         have : ((m + 1 : Int) : ℝ) ≤ (0 : ℝ) := by exact_mod_cast hle0
         exact (not_le_of_gt hpos_m1) this
       exact lt_of_not_ge hnot

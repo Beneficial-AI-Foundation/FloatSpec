@@ -946,7 +946,7 @@ theorem FLT_format_B2R
   (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
   FLT_format_B2R_check (prec:=prec) (emax:=emax) x
-  ⦃⇓_ => ⌜(FloatSpec.Core.FLT.FLT_format (prec:=prec) (emin := 3 - emax - prec) 2 (B2R (prec:=prec) (emax:=emax) x)).run⌝⦄ := by
+  ⦃⇓_ => ⌜FloatSpec.Core.FLT.FLT_format (prec:=prec) (emin := 3 - emax - prec) 2 (B2R (prec:=prec) (emax:=emax) x)⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's FLT_format_B2R via generic_format_B2R and FLT_format_generic
   sorry

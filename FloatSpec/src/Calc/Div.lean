@@ -299,7 +299,7 @@ theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
         simpa using this
       have : xR < dR + b ^ e := by
         have hbnd : dR + ((r : ℝ) / (m2 : ℝ)) * b ^ e < dR + b ^ e := by
-          exact add_lt_add_left hincr_lt _
+          exact add_lt_add_right hincr_lt dR
         simpa [hx'] using hbnd
       -- rewrite dR + b^e into (q + 1) * b^e using distributivity
       have hsum : dR + b ^ e = (q + 1 : ℝ) * b ^ e := by
