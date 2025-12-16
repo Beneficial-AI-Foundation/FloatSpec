@@ -325,11 +325,12 @@ Theorem generic_format_FLT :
   forall x, FLT_format x -> generic_format beta FLT_exp x.
 -/
 theorem generic_format_FLT (beta : Int) (x : ℝ) :
-    ⦃⌜(FLT_format prec emin beta x).run⌝⦄
-    generic_format beta (FLT_exp prec emin) x
+    ⦃⌜FLT_format prec emin beta x⌝⦄
+    (pure ((generic_format beta (FLT_exp prec emin) x).run) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simpa [FLT_format]
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure, FLT_format] at hx ⊢
+  exact hx
 
 /-
 Coq (FLT.v):
@@ -338,10 +339,11 @@ Theorem FLT_format_generic :
 -/
 theorem FLT_format_generic (beta : Int) (x : ℝ) :
     ⦃⌜(generic_format beta (FLT_exp prec emin) x).run⌝⦄
-    FLT_format prec emin beta x
+    (pure (FLT_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simpa [FLT_format] using hx
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure, FLT_format]
+  exact hx
 
 /-
 Coq (FLT.v):
@@ -349,9 +351,9 @@ Theorem FLT_format_satisfies_any :
   satisfies_any FLT_format.
 -/
 theorem FLT_format_satisfies_any (beta : Int) :
-    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FLT_format prec emin beta y).run) := by
-  simpa [FLT_format]
-    using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLT_exp prec emin)
+    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FLT_format prec emin beta y) := by
+  simp only [FLT_format]
+  exact FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLT_exp prec emin)
 
 /-
 Coq (FLT.v):
@@ -360,9 +362,10 @@ Theorem generic_format_FLT_bpow :
 -/
 theorem generic_format_FLT_bpow (beta : Int) (e : Int) :
     ⦃⌜beta > 1 ∧ emin ≤ e⌝⦄
-    generic_format beta (FLT_exp prec emin) ((beta : ℝ) ^ e)
+    (pure ((generic_format beta (FLT_exp prec emin) ((beta : ℝ) ^ e)).run) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   rcases hpre with ⟨hβ, hemin_le_e⟩
   -- We will use `generic_format_bpow` once we show
   -- `FLT_exp prec emin (e + 1) ≤ e`.
@@ -387,9 +390,10 @@ Theorem FLT_format_bpow :
 -/
 theorem FLT_format_bpow (beta : Int) (e : Int) :
     ⦃⌜beta > 1 ∧ emin ≤ e⌝⦄
-    FLT_format prec emin beta ((beta : ℝ) ^ e)
+    (pure (FLT_format prec emin beta ((beta : ℝ) ^ e)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   rcases hpre with ⟨hβ, hemin_le_e⟩
   -- Show FLT_exp e ≤ e from `prec > 0` and `emin ≤ e`.
   have hprec_pos : 0 < prec := (Prec_gt_0.pos : 0 < prec)
@@ -1181,7 +1185,7 @@ theorem ulp_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
         Real.log (abs (x * (beta : ℝ) ^ e)) / Real.log (beta : ℝ)
             = Real.log (|x| * |(beta : ℝ) ^ e|) / Real.log (beta : ℝ) := by simpa [habs_mul]
         _   = (Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
-                simpa [hlog_prod]
+                rw [hlog_prod]
         _   = Real.log (|x|) / Real.log (beta : ℝ)
                 + ((e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
                 simpa using (add_div (Real.log (|x|)) ((e : ℝ) * Real.log (beta : ℝ)) (Real.log (beta : ℝ)))
