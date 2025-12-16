@@ -247,6 +247,18 @@ private lemma ulp_run_nonneg (hβ : 1 < beta) (x : ℝ) :
   · -- ulp x = β^(cexp x)
     simp [hx, Id.run, bind, pure, le_of_lt (zpow_pos hbpos _)]
 
+omit [Valid_exp beta fexp] in
+/-- Strict positivity of ULP for nonzero inputs: `0 < ulp x` when `x ≠ 0`.
+    This is a key spacing lemma used to prove `succ x > x` strictly. -/
+private lemma ulp_run_pos (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
+    0 < (ulp beta fexp x).run := by
+  classical
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  unfold ulp
+  simp [hx, Id.run, bind, pure]
+  exact zpow_pos hbpos _
+
 private lemma pred_pos_run_le_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
     (pred_pos beta fexp x).run ≤ x := by
   classical
@@ -392,6 +404,30 @@ private lemma succ_run_ge_self (hβ : 1 < beta) (y : ℝ) :
       pred_pos_run_le_self (beta := beta) (fexp := fexp) hβ (-y) hypos
     -- Negating flips the inequality and rewrites `- -y` to `y`
     simpa [neg_neg] using (neg_le_neg hle)
+
+/-- Strict growth of `succ` for nonzero inputs: `x < succ x` when `x ≠ 0`.
+    This is the key spacing lemma that shows format neighbors are distinct. -/
+private lemma succ_run_gt_self (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
+    x < (succ beta fexp x).run := by
+  classical
+  by_cases h0 : 0 ≤ x
+  · -- Nonnegative branch: succ x = x + ulp x, and ulp x > 0 since x ≠ 0
+    have hpos := ulp_run_pos (beta := beta) (fexp := fexp) hβ x hx
+    have hlt : x < x + (ulp beta fexp x).run := by
+      have : x + 0 < x + (ulp beta fexp x).run := by
+        simpa using (add_lt_add_left hpos x)
+      simpa using this
+    simpa [succ, h0, Id.run, bind, pure] using hlt
+  · -- Negative branch: succ x = -pred_pos(-x), and pred_pos(-x) < -x since -x > 0
+    have hxneg : x < 0 := lt_of_not_ge h0
+    have hypos : 0 < -x := by simpa using (neg_pos.mpr hxneg)
+    -- Goal: x < -(pred_pos (-x)).run, equivalently (pred_pos (-x)).run < -x
+    simp [succ, h0, Id.run, bind, pure]
+    -- Use strict decrease: pred_pos (-x) < -x
+    have hlt : (pred_pos beta fexp (-x)).run < -x :=
+      pred_pos_run_lt_self (beta := beta) (fexp := fexp) hβ (-x) hypos
+    -- Negate both sides to get: -(-x) < -(pred_pos (-x)).run, i.e., x < -pred_pos(-x)
+    simpa [neg_neg] using (neg_lt_neg hlt)
 
 /-- Coq (Ulp.v): Theorem `succ_le`: forall x y, F x -> F y -> x <= y -> succ x <= succ y.
 
@@ -7584,9 +7620,28 @@ private theorem succ_DN_eq_UP_theorem
       -- Therefore `(succ d).run = d` by antisymmetry
       have hEq : (succ (beta := beta) (fexp := fexp) d).run = d :=
         le_antisymm hle' hle_succ
-      -- From `hle : (succ d).run ≤ x` and `hEq`, deduce `d ≤ x` and contradict `d < x`.
-      have hdx : d ≤ x := by simpa [hEq] using hle
-      sorry
+      -- Contradiction: for d ≠ 0, succ d > d strictly, contradicting hEq.
+      -- For d = 0, we analyze the format structure.
+      by_cases hd0 : d = 0
+      · -- d = 0 case: succ 0 = ulp 0
+        -- From hEq: (succ 0).run = 0, so ulp 0 = 0
+        -- succ 0 = 0 + ulp 0 = ulp 0, so hEq says ulp 0 = 0
+        have hulp0_eq : (ulp beta fexp 0).run = 0 := by
+          have hsucc0 : (succ (beta := beta) (fexp := fexp) 0).run = (ulp beta fexp 0).run := by
+            simp [succ, Id.run, bind, pure]
+          simpa [hd0, hsucc0] using hEq
+        -- ulp 0 = 0 means negligible_exp = none (degenerate format).
+        -- Under Exp_not_FTZ, this contradicts the format structure.
+        -- The d = 0 case with ulp 0 = 0 is degenerate and requires deeper analysis.
+        -- For typical floating-point formats with Exp_not_FTZ, ulp 0 > 0.
+        exfalso
+        sorry
+      · -- d ≠ 0 case: use strict bound succ d > d
+        have hlt_succ := succ_run_gt_self (beta := beta) (fexp := fexp) hβ d hd0
+        -- hlt_succ : d < (succ d).run
+        -- hEq : (succ d).run = d
+        -- These contradict: d < d is false
+        exact (lt_irrefl d) (by simpa [hEq] using hlt_succ)
     -- Conclude `x < succ d` from `¬ (succ d ≤ x)` via linear order totality.
     exact lt_of_not_ge hnle
   -- Use the UP half-interval equality with u' := succ d
