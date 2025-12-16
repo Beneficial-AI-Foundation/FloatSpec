@@ -2690,8 +2690,24 @@ private theorem pred_succ_theorem
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
     (pred beta fexp ((succ beta fexp x).run)).run = x := by
-  -- Deferred: this identity relies on spacing/adjacency lemmas not yet
-  -- available at this point. Keep as a local placeholder; see Status.md (item 20).
+  classical
+  -- The proof uses the definition of pred and succ:
+  -- pred x = -(succ(-x))
+  -- succ x = x + ulp x (for x ≥ 0) or -(pred_pos(-x)) (for x < 0)
+  -- The key identity pred(succ x) = x follows from the inverse relationship
+  -- between succ and pred on format points.
+  --
+  -- NOTE: This theorem appears before the spacing lemmas (ulp_succ_pos, etc.)
+  -- which are needed for a complete proof. The full proof requires showing that
+  -- ulp(succ x) = ulp x for most cases, with special handling at power boundaries.
+  -- For now, we use a sorry pending file reorganization.
+  --
+  -- The complete proof would use:
+  -- 1. For x ≥ 0: pred(succ x) = pred(x + ulp x) = pred_pos(x + ulp x)
+  --    where pred_pos(y) = y - ulp y (or y - β^(fexp(mag y - 1)) at boundaries)
+  -- 2. By ulp_succ_pos: ulp(succ x) = ulp x in most cases
+  -- 3. Therefore pred_pos(succ x) = succ x - ulp(succ x) = x + ulp x - ulp x = x
+  -- The boundary case x = β^(mag x) requires additional care.
   sorry
 
 /-- Coq (Ulp.v):
@@ -3744,31 +3760,45 @@ private theorem ulp_succ_pos_theorem
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
   (x : ℝ)
   (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
-  (hx : 0 < x) :
+  (hx : 0 < x)
+  (hβ : 1 < beta) :
   let s := (succ beta fexp x).run
   let e := (FloatSpec.Core.Raux.mag beta x).run
   (ulp beta fexp s).run = (ulp beta fexp x).run ∨ s = (beta : ℝ) ^ e := by
+  -- NOTE: This theorem requires `id_p_ulp_le_bpow` which appears later in the file
+  -- (around line 7627). Without file reorganization, this cannot be proved directly
+  -- here. The proof strategy is:
+  --
+  -- 1. Show x ≤ β^(mag x) from the ceiling definition of magnitude
+  -- 2. Case split on x < β^e vs x = β^e:
+  --    - For x < β^e: Use id_p_ulp_le_bpow to get succ x ≤ β^e
+  --      - If succ x < β^e: mag(succ x) = mag x, so ulp(succ x) = ulp x
+  --      - If succ x = β^e: Second disjunct holds
+  --    - For x = β^e (boundary): More complex case requiring fexp(e+1) = fexp(e)
+  --
+  -- See the detailed proof attempt in git history for the full implementation.
+  -- The file would need reorganization to move this theorem after id_p_ulp_le_bpow.
   sorry
 
 theorem ulp_succ_pos
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
     (hx : 0 < x) :
-    ⦃⌜True⌝⦄ do
+    ⦃⌜1 < beta⌝⦄ do
       let s ← succ beta fexp x
       let us ← ulp beta fexp s
       let ux ← ulp beta fexp x
       let mx := (FloatSpec.Core.Raux.mag beta x).run
       pure ((us, ux), s, mx)
     ⦃⇓r => ⌜r.1.1 = r.1.2 ∨ r.2.1 = (beta : ℝ) ^ r.2.2⌝⦄ := by
-  intro _; classical
+  intro hβ; classical
   -- Use a narrow, local bridge capturing the Coq lemma:
   -- For positive representable x, either ulp(succ x) = ulp x, or succ x hits bpow (mag x).
   have hbridge :
       let s := (succ beta fexp x).run
       let e := (FloatSpec.Core.Raux.mag beta x).run
       (ulp beta fexp s).run = (ulp beta fexp x).run ∨ s = (beta : ℝ) ^ e :=
-    ulp_succ_pos_theorem (beta := beta) (fexp := fexp) x Fx hx
+    ulp_succ_pos_theorem (beta := beta) (fexp := fexp) x Fx hx hβ
   -- Reduce the Hoare triple on Id to a pure disjunction and normalize definitions.
   -- Since hx > 0, the positive branch of succ is taken: succ x = x + ulp x.
   -- The goal now matches the bridge statement exactly.
