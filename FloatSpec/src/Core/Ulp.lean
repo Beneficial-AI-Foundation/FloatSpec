@@ -5008,7 +5008,16 @@ private theorem generic_format_pred_aux1_theorem
     have hpred_run : (pred (beta := beta) (fexp := fexp) (-x)).run = - ((succ (beta := beta) (fexp := fexp) x).run) := by
       simp [pred, Id.run, bind, pure]
     -- 4) Discharge the Hoare triple and rewrite the returned value to `succ x`.
-    sorry
+    -- From hpred_run: -(pred (-x)).run = (succ x).run (by double negation)
+    have hsucc_eq : -(pred (beta := beta) (fexp := fexp) (-x)).run = (succ (beta := beta) (fexp := fexp) x).run := by
+      simp [hpred_run]
+    -- Convert Fsucc_run to the form we need
+    have Fsucc_at_succ :
+        (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+          ((succ (beta := beta) (fexp := fexp) x).run)).run := by
+      rw [← hsucc_eq]; exact Fsucc_run
+    -- Now discharge the Hoare triple
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using Fsucc_at_succ
 
 -- Rounding to nearest above the lower midpoint yields a value ≥ u (bridge lemma).
 private theorem round_N_ge_midp_theorem
