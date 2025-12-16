@@ -93,7 +93,7 @@ instance FLT_exp_valid (beta : Int) [Prec_gt_0 prec] :
       le_of_lt (lt_of_le_of_lt (le_max_right (k - prec) emin) hk)
     -- And (k + 1 - prec) ≤ k follows from 1 ≤ prec
     have hsub_nonpos : 1 - prec ≤ 0 := sub_nonpos.mpr hprec_ge1
-    have hlin : k + (1 - prec) ≤ k + 0 := add_le_add_left hsub_nonpos k
+    have hlin : k + (1 - prec) ≤ k + 0 := by omega
     have hlin' : k + 1 - prec ≤ k := by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlin
     -- Conclude using max_le_iff
     exact (max_le_iff.mpr ⟨hlin', hemin_le⟩)
@@ -103,8 +103,7 @@ instance FLT_exp_valid (beta : Int) [Prec_gt_0 prec] :
       have hprec_pos : 0 < prec := (Prec_gt_0.pos : 0 < prec)
       have hprec_ge1 : (1 : Int) ≤ prec := Int.add_one_le_iff.mpr hprec_pos
       have hsub_nonpos : 1 - prec ≤ 0 := sub_nonpos.mpr hprec_ge1
-      have hlin : (FLT_exp prec emin k) + (1 - prec) ≤ (FLT_exp prec emin k) + 0 :=
-        add_le_add_left hsub_nonpos (FLT_exp prec emin k)
+      have hlin : (FLT_exp prec emin k) + (1 - prec) ≤ (FLT_exp prec emin k) + 0 := by omega
       have hlin' : (FLT_exp prec emin k) + 1 - prec ≤ (FLT_exp prec emin k) := by
         simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlin
       have hemin_le : emin ≤ FLT_exp prec emin k := le_max_right _ _
@@ -158,7 +157,9 @@ theorem FLT_format_spec (beta : Int) (x : ℝ) :
     (pure (FLT_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result = (generic_format beta (FLT_exp prec emin) x).run⌝⦄ := by
   intro _
-  simp [FLT_format]
+  unfold FLT_format
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  trivial
 
 /-- Specification: FLT exponent function correctness
 

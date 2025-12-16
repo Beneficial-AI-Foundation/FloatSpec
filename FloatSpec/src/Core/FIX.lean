@@ -110,9 +110,10 @@ theorem FIX_format_spec (beta : Int) (x : ℝ) :
     (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄ := by
   intro _
-  unfold FIX_format
   -- Directly by unfolding; both sides are the same computation
-  simp [wp, PostCond.noThrow, Id.run]
+  unfold FIX_format
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  trivial
 
 /-- Specification: FIX exponent function correctness
 
@@ -248,8 +249,8 @@ Theorem {lit}`round_FIX_IZR`: {lit}`forall f x, round radix2 (FIX_exp 0) f x = I
 
 Lean (ported, minimal adaptation): Our {lean}`round_to_generic` model ignores the
 rounding function {lit}`f` and performs truncation of the scaled mantissa with the
-canonical exponent. For {lean}`fexp` = {lean}`FIX_exp` 0 and {lean}`beta` = 2, this reduces to
-{lean}`Ztrunc` x since the canonical exponent is constantly 0.
+canonical exponent. For {lit}`fexp` = {lean}`FIX_exp` 0 and {lit}`beta` = 2, this reduces to
+{lean}`FloatSpec.Core.Raux.Ztrunc` x since the canonical exponent is constantly 0.
 -/
 theorem round_FIX_IZR (x : ℝ) :
     ⦃⌜True⌝⦄

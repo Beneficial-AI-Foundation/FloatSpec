@@ -259,7 +259,7 @@ instance FLX_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
       (fun _ =>
         -- 0 < prec → 1 ≤ prec over ℤ
         have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr hp.out
-        have hadd : k + 1 ≤ k + prec := add_le_add_left hprec1 k
+        have hadd : k + 1 ≤ k + prec := by omega
         -- Convert to subtraction form: (k + 1) - prec ≤ k
         have hsub : (k + 1) - prec ≤ k := by
           -- (k + 1) - prec ≤ k ↔ k + 1 ≤ k + prec
@@ -274,9 +274,8 @@ instance FLX_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
         -- From k ≤ k - prec, deduce k + prec ≤ k
         have hk' : k + prec ≤ k := by
           calc
-            k + prec ≤ (FLX_exp prec k) + prec := add_le_add_right hk prec
-            _ = k := by
-              simp [FLX_exp, sub_eq_add_neg, sub_add_cancel]
+            k + prec ≤ (FLX_exp prec k) + prec := by omega
+            _ = k := by simp [FLX_exp, sub_eq_add_neg]
             _ ≤ k := le_rfl
         -- But k < k + prec since 0 < prec
         have hklt : k < k + prec := lt_add_of_pos_right k hp.out
@@ -346,9 +345,10 @@ then x is in FIX_format with minimal exponent (e - prec).
 -/
 theorem FIX_format_FLX (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) < |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FLX_format prec beta x).run⌝⦄
-    FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x
+    (pure (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   -- Unpack preconditions
   rcases hpre with ⟨hprec, hβ, hlt, hupp, hx_fmt⟩
   -- Provide the `Fact (0 < prec)` instance for `Valid_exp` below
@@ -382,10 +382,11 @@ Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FIX_format
 with minimal exponent (e - prec), then x is in FLX_format.
 -/
 theorem FLX_format_FIX (beta : Int) (x : ℝ) (e : Int) :
-    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x).run⌝⦄
-    FLX_format prec beta x
+    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x⌝⦄
+    (pure (FLX_format prec beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   -- Unpack hypotheses
   rcases hpre with ⟨hprec, hβ, _hlb, hupp, hx_fix⟩
   -- Provide the `Fact (0 < prec)` instance for `Valid_exp` below
@@ -457,10 +458,10 @@ namespace FloatSpec.Core.FLX
 variable (prec : Int)
 
 /-- Coq ({lit}`FLX.v`):
-Theorem {lit}`ulp_FLX_0`: {lean}`ulp beta FLX_exp 0 = 0`.
+Theorem {lit}`ulp_FLX_0`: {lit}`ulp beta FLX_exp 0 = 0`.
 
-Lean (spec): In FLX (with positive precision), {lean}`negligible_exp` is {lit}`none`,
-so {lean}`ulp` at zero evaluates to 0.
+Lean (spec): In FLX (with positive precision), {lit}`negligible_exp` is {lit}`none`,
+so {lit}`ulp` at zero evaluates to 0.
 -/
 theorem ulp_FLX_0 (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜True⌝⦄
@@ -843,7 +844,7 @@ theorem ulp_FLX_exact_shift (beta : Int) [Prec_gt_0 prec] (x : ℝ) (e : Int) :
           Real.log (abs (x * (beta : ℝ) ^ e)) / Real.log (beta : ℝ)
               = Real.log (|x| * |(beta : ℝ) ^ e|) / Real.log (beta : ℝ) := by simpa [habs_mul]
           _   = (Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
-                  simpa [hlog_prod]
+                  rw [hlog_prod]
           _   = Real.log (|x|) / Real.log (beta : ℝ)
                   + ((e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
                   simpa using (add_div (Real.log (|x|)) ((e : ℝ) * Real.log (beta : ℝ)) (Real.log (beta : ℝ)))
