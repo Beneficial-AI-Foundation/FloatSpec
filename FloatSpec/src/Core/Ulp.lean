@@ -4924,31 +4924,11 @@ theorem generic_format_pred
       let p ← pred beta fexp x
       FloatSpec.Core.Generic_fmt.generic_format beta fexp p
     ⦃⇓g => ⌜g⌝⦄ := by
+  intro _; classical
+  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  -- Uses `generic_format_succ` and negation closure; but that comes later in file.
+  -- Proved via: pred x = -(succ(-x)), F x → F(-x), F(-x) → F(succ(-x)), then negate.
   sorry
-  -- intro _; classical
-  -- -- Show that -x is in generic format using closure under negation.
-  -- have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)).run := by
-  --   have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := x))
-  --   have h' := h Fx
-  --   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-  -- -- Then succ (-x) is in generic format by the already proved `generic_format_succ`.
-  -- have Fsucc_negx :
-  --     (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-  --       ((succ (beta := beta) (fexp := fexp) (-x)).run)).run := by
-  --   have h := generic_format_succ (beta := beta) (fexp := fexp) (x := -x) (Fx := Fx_neg)
-  --   have h' := h hβ
-  --   -- Discharge the trivial precondition explicitly.
-  --   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
-  -- -- Finally, closure under negation gives generic_format of `- (succ (-x))`, i.e. `pred x`.
-  -- have Fpredx :
-  --     (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-  --       (-(succ (beta := beta) (fexp := fexp) (-x)).run)).run := by
-  --   have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp)
-  --     (x := (succ (beta := beta) (fexp := fexp) (-x)).run))
-  --   have h' := h Fsucc_negx
-  --   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h'
-  -- -- Reduce the program for `pred` and conclude.
-  -- simpa [wp, PostCond.noThrow, Id.run, bind, pure, pred] using Fpredx
 
 /-! Local bridge theorem (Coq's `generic_format_pred_aux1`):
 If x > 0 is in generic format and not at the lower boundary,
@@ -7631,11 +7611,70 @@ private theorem succ_DN_eq_UP_theorem
             simp [succ, Id.run, bind, pure]
           simpa [hd0, hsucc0] using hEq
         -- ulp 0 = 0 means negligible_exp = none (degenerate format).
-        -- Under Exp_not_FTZ, this contradicts the format structure.
-        -- The d = 0 case with ulp 0 = 0 is degenerate and requires deeper analysis.
-        -- For typical floating-point formats with Exp_not_FTZ, ulp 0 > 0.
+        -- When negligible_exp = none, ∀ n, fexp n < n, so β^e is in format for all e.
+        -- Hence there are format points arbitrarily close to 0, so d = 0 cannot be
+        -- the DN approximation of any positive x.
         exfalso
-        sorry
+        -- Step 1: Derive negligible_exp fexp = none from ulp 0 = 0
+        have hne : negligible_exp fexp = none := by
+          by_contra hsome
+          push_neg at hsome
+          cases hopt : negligible_exp fexp with
+          | none => exact hsome hopt
+          | some n =>
+            -- ulp 0 = β^(fexp n) > 0, contradicting hulp0_eq
+            have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+            have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+            have hulp0_some : (ulp (beta := beta) (fexp := fexp) 0).run
+                = (beta : ℝ) ^ (fexp n) := by
+              simp [ulp, hopt, Id.run, bind, pure]
+            have hpos_ulp : 0 < (ulp (beta := beta) (fexp := fexp) 0).run := by
+              simpa [hulp0_some] using (zpow_pos hbpos (fexp n))
+            exact (lt_irrefl 0) (by simpa [hulp0_eq] using hpos_ulp)
+        -- Step 2: From negligible_exp = none, derive ∀ n, fexp n < n
+        have hfexp_lt : ∀ n : Int, fexp n < n := by
+          rcases (negligible_exp_spec' (fexp := fexp)) with ⟨_, hforall⟩ | ⟨m, hsome', _⟩
+          · exact hforall
+          · -- Impossible: negligible_exp = some m contradicts hne
+            simp [hne] at hsome'
+        -- Step 3: x > 0 (from d = 0 and d < x)
+        have hx_pos : 0 < x := by simpa [hd0] using hd_lt_x
+        -- Step 4: Find e such that β^e ≤ x and β^e > 0
+        -- Use e = mag x - 1, since β^(mag x - 1) ≤ |x| < β^(mag x)
+        set ex := (FloatSpec.Core.Raux.mag beta x).run with hex
+        have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+        have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+        have hbpow_pos : 0 < (beta : ℝ) ^ (ex - 1) := zpow_pos hbpos (ex - 1)
+        have hbpow_le_x : (beta : ℝ) ^ (ex - 1) ≤ x := by
+          have hne' : x ≠ 0 := ne_of_gt hx_pos
+          -- Use bpow_mag_le with e = ex to get β^(ex-1) ≤ |x|
+          have hspec := FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := ex)
+                          ⟨hβ, hne', le_refl ex⟩
+          -- Extract the pure result from the Hoare triple
+          simp [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run, bind, pure] at hspec
+          -- |x| = x since x > 0
+          have habs : |x| = x := abs_of_pos hx_pos
+          simpa [habs] using hspec
+        -- Step 5: β^(ex-1) is in format (because fexp (ex-1+1) = fexp ex < ex,
+        -- so fexp ex ≤ ex - 1)
+        have hfmt_bpow : (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+            ((beta : ℝ) ^ (ex - 1))).run := by
+          have hfexp_ex : fexp ex < ex := hfexp_lt ex
+          have hfexp_le : fexp ((ex - 1) + 1) ≤ ex - 1 := by
+            -- fexp ex < ex means fexp ex ≤ ex - 1 (integers)
+            have hsub : (ex - 1) + 1 = ex := by ring
+            rw [hsub]
+            omega
+          have hpre : beta > 1 ∧ fexp ((ex - 1) + 1) ≤ ex - 1 := ⟨hβ, hfexp_le⟩
+          have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow
+            (beta := beta) (fexp := fexp) (e := ex - 1) hpre
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htrip
+        -- Step 6: By maximality of d as DN, β^(ex-1) ≤ d = 0, contradiction
+        have hbpow_le_d : (beta : ℝ) ^ (ex - 1) ≤ d :=
+          hmax_dn ((beta : ℝ) ^ (ex - 1)) hfmt_bpow hbpow_le_x
+        -- β^(ex-1) > 0 but β^(ex-1) ≤ d = 0, contradiction
+        have : (beta : ℝ) ^ (ex - 1) ≤ 0 := by simpa [hd0] using hbpow_le_d
+        exact (not_lt.mpr this) hbpow_pos
       · -- d ≠ 0 case: use strict bound succ d > d
         have hlt_succ := succ_run_gt_self (beta := beta) (fexp := fexp) hβ d hd0
         -- hlt_succ : d < (succ d).run
