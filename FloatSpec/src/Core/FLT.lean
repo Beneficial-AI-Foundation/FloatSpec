@@ -21,7 +21,6 @@ import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Core.FLX
 import FloatSpec.src.Core.FIX
-import FloatSpec.VersoExt
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
