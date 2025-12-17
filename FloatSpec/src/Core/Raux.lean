@@ -3905,6 +3905,74 @@ theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
   -- Conclude the (non-strict) inequality required by the spec
   exact le_of_lt hpow_lt
 
+/-- Direct lower bound: for x ≠ 0, beta^(mag x - 1) ≤ |x|.
+    This is a corollary of `bpow_mag_le` with e = mag x. -/
+theorem mag_lower_bound (beta : Int) (x : ℝ) :
+    ⦃⌜1 < beta ∧ x ≠ 0⌝⦄
+    abs_val x
+    ⦃⇓v => ⌜(beta : ℝ) ^ ((mag beta x).run - 1) ≤ v⌝⦄ := by
+  intro h
+  rcases h with ⟨hβ, hx_ne⟩
+  -- Apply bpow_mag_le with e = (mag beta x).run
+  have hpre : 1 < beta ∧ x ≠ 0 ∧ (mag beta x).run ≤ (mag beta x).run := ⟨hβ, hx_ne, le_refl _⟩
+  exact (bpow_mag_le beta x (mag beta x).run) hpre
+
+/-- Direct upper bound: for x ≠ 0, |x| ≤ beta^(mag x).
+    Note: This is non-strict (≤). When x = beta^e for some e, equality holds.
+    This follows from the ceiling definition: mag(x) = ceil(log|x|/log β) ≥ log|x|/log β. -/
+theorem mag_upper_bound (beta : Int) (x : ℝ) :
+    ⦃⌜1 < beta ∧ x ≠ 0⌝⦄
+    abs_val x
+    ⦃⇓v => ⌜v ≤ (beta : ℝ) ^ (mag beta x).run⌝⦄ := by
+  intro h
+  unfold abs_val
+  rcases h with ⟨hβ, hx_ne⟩
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : 0 < (beta : ℝ) := lt_trans zero_lt_one hβR
+  have hx_pos : 0 < |x| := abs_pos.mpr hx_ne
+  -- Abbreviation L := log |x| / log β
+  set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
+  -- Evaluate `(mag beta x).run` under `x ≠ 0`
+  have hmag_run : (mag beta x).run = Int.ceil L := by simp [mag, hx_ne, L]
+  -- log β > 0
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
+    have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
+      Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbpos)
+    exact this.mpr hβR
+  -- From ceiling property: L ≤ ⌈L⌉
+  have hL_le_ceil : L ≤ Int.ceil L := Int.le_ceil L
+  -- Multiply by log β > 0: L * log β ≤ ⌈L⌉ * log β
+  have hmul : L * Real.log (beta : ℝ) ≤ (Int.ceil L : ℝ) * Real.log (beta : ℝ) :=
+    mul_le_mul_of_nonneg_right hL_le_ceil (le_of_lt hlogβ_pos)
+  -- L * log β = log |x|
+  have hL_mul : L * Real.log (beta : ℝ) = Real.log (abs x) := by
+    have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+    calc L * Real.log (beta : ℝ)
+        = (Real.log (abs x) / Real.log (beta : ℝ)) * Real.log (beta : ℝ) := by simp [L]
+      _ = Real.log (abs x) := by field_simp
+  -- log |x| ≤ ⌈L⌉ * log β
+  have hlog_le : Real.log (abs x) ≤ (Int.ceil L : ℝ) * Real.log (beta : ℝ) := by
+    simpa [hL_mul] using hmul
+  -- ⌈L⌉ * log β = log (β^⌈L⌉)
+  have hlog_pow : (Int.ceil L : ℝ) * Real.log (beta : ℝ) = Real.log ((beta : ℝ) ^ Int.ceil L) := by
+    have := Real.log_zpow (beta : ℝ) (Int.ceil L)
+    linarith [this]
+  -- log |x| ≤ log (β^⌈L⌉)
+  have hlog_le' : Real.log (abs x) ≤ Real.log ((beta : ℝ) ^ Int.ceil L) := by
+    calc Real.log (abs x) ≤ (Int.ceil L : ℝ) * Real.log (beta : ℝ) := hlog_le
+      _ = Real.log ((beta : ℝ) ^ Int.ceil L) := hlog_pow
+  -- Exponentiate: |x| ≤ β^⌈L⌉
+  have hpow_pos : 0 < (beta : ℝ) ^ Int.ceil L := zpow_pos hbpos _
+  have habs_le : |x| ≤ (beta : ℝ) ^ Int.ceil L :=
+    (Real.log_le_log_iff hx_pos hpow_pos).mp hlog_le'
+  -- Conclude: (mag beta x).run = Int.ceil L
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  -- Goal: ⌜|x| ≤ ↑beta ^ mag beta x⌝.down
+  -- Since Id.run is the identity, mag beta x = (mag beta x).run = ⌈L⌉
+  have hmag : mag beta x = Int.ceil L := hmag_run
+  simp_rw [hmag]
+  exact habs_le
+
 /-- If `1 < beta`, `0 ≤ e`, and `|x| < (beta : ℝ)^e`, then `mag beta x ≤ e`. -/
 theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 ≤ e ∧ |x| < ((beta : ℝ) ^ e)⌝⦄

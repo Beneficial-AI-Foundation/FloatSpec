@@ -2697,17 +2697,10 @@ private theorem pred_succ_theorem
   -- The key identity pred(succ x) = x follows from the inverse relationship
   -- between succ and pred on format points.
   --
-  -- NOTE: This theorem appears before the spacing lemmas (ulp_succ_pos, etc.)
-  -- which are needed for a complete proof. The full proof requires showing that
-  -- ulp(succ x) = ulp x for most cases, with special handling at power boundaries.
-  -- For now, we use a sorry pending file reorganization.
-  --
-  -- The complete proof would use:
-  -- 1. For x ≥ 0: pred(succ x) = pred(x + ulp x) = pred_pos(x + ulp x)
-  --    where pred_pos(y) = y - ulp y (or y - β^(fexp(mag y - 1)) at boundaries)
-  -- 2. By ulp_succ_pos: ulp(succ x) = ulp x in most cases
-  -- 3. Therefore pred_pos(succ x) = succ x - ulp(succ x) = x + ulp x - ulp x = x
-  -- The boundary case x = β^(mag x) requires additional care.
+  -- NOTE: The proof requires careful case analysis with ulp_succ_pos_theorem
+  -- for x > 0, handling of x = 0 with negligible_exp, and the negative case
+  -- which requires succ_pred_pos. These edge cases involve complex interactions
+  -- with pred_pos boundary detection. Full proof pending.
   sorry
 
 /-- Coq (Ulp.v):
@@ -3748,6 +3741,208 @@ private theorem ulp_pred_pos_theorem
     -- Done: ulp p = ulp x
     left; simpa [hu] using hulpeq
 
+/-- Coq (Ulp.v): Theorem id_p_ulp_le_bpow
+    forall x e, 0 < x -> F x -> x < bpow e -> x + ulp x ≤ bpow e. -/
+-- Local bridge theorem (port): integer successor bound from a strict real bound by a power.
+-- If (m : ℝ) < (β : ℝ)^(e-c) with e - c ≥ 0 and β > 0, then m + 1 ≤ β^(toNat (e - c)).
+private theorem int_succ_le_of_lt_pow_theorem
+    (beta : Int) (e c m : Int)
+    (hbpos : 0 < (beta : ℝ)) (hd_nonneg : 0 ≤ e - c)
+    (hm_lt : (m : ℝ) < (beta : ℝ) ^ (e - c)) :
+    m + 1 ≤ (beta ^ (Int.toNat (e - c)) : Int) := by
+  -- Align the ℤ-exponent with a ℕ-exponent via `toNat`, then cast to ℝ
+  have hz_toNat : (beta : ℝ) ^ (e - c) = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
+    -- (β : ℝ)^(e-c) = (β : ℝ)^(toNat (e-c)) and then identify with casted Int pow
+    have hz1 : (beta : ℝ) ^ (e - c) = (beta : ℝ) ^ (Int.toNat (e - c)) :=
+      FloatSpec.Core.Generic_fmt.zpow_nonneg_toNat (a := (beta : ℝ)) (k := e - c) (hk := hd_nonneg)
+    have hz2 : (beta : ℝ) ^ (Int.toNat (e - c))
+        = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
+      simpa using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (e - c)))
+    simpa [hz1] using hz2
+  -- Turn the strict inequality on reals into a strict inequality on integers
+  have hm_lt_cast : (m : ℝ) < ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
+    simpa [hz_toNat] using hm_lt
+  have hm_lt_int : m < (beta ^ (Int.toNat (e - c)) : Int) :=
+    (Int.cast_lt).1 hm_lt_cast
+  -- Strict < on integers gives the desired successor ≤ bound
+  exact (Int.add_one_le_iff.mpr hm_lt_int)
+
+theorem id_p_ulp_le_bpow (x : ℝ) (e : Int)
+    (hx : 0 < x)
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
+    (hlt : x < (beta : ℝ) ^ e) :
+    ⦃⌜1 < beta⌝⦄ do
+      let u ← ulp beta fexp x
+      pure (x + u)
+    ⦃⇓r => ⌜r ≤ (beta : ℝ) ^ e⌝⦄ := by
+  intro hβ; classical
+  -- Notation and basic positivity facts
+  set b : ℝ := (beta : ℝ)
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  -- Cast base positivity to the reals and rewrite to `b`
+  have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbpos : 0 < b := by simpa [b] using hbposℝ
+  have hbne : b ≠ 0 := ne_of_gt hbpos
+  -- Evaluate ulp at a nonzero input: u = b^(cexp x)
+  have hx_ne : x ≠ 0 := ne_of_gt hx
+  have hulprun : (ulp (beta := beta) (fexp := fexp) x).run
+        = b ^ ((FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run) := by
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using
+      (ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) trivial)
+  -- Shorthand for the canonical exponent c := fexp (mag x)
+  set c : Int := (fexp ((FloatSpec.Core.Raux.mag beta x).run)) with hc
+  -- Compute (cexp x).run = c
+  have hcexp_run : (FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run = c := by
+    have hcexp := FloatSpec.Core.Generic_fmt.cexp_spec (beta := beta) (fexp := fexp) (x := x)
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure, hc] using (hcexp hβ)
+  -- Represent x in F2R form using the generic-format specification
+  have hrepr_iff := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta) (fexp := fexp) (x := x)
+  have hrepr : x =
+      (FloatSpec.Core.Defs.F2R (FlocqFloat.mk
+         ((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run)
+         (fexp ((FloatSpec.Core.Raux.mag beta x).run)) : FlocqFloat beta)).run := by
+    have := (hrepr_iff hβ)
+    -- Reduce the Hoare triple to a plain ↔ and instantiate with Fx
+    have hiff : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run ↔
+        x = (FloatSpec.Core.Defs.F2R
+               (FlocqFloat.mk
+                 ((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run)
+                 (fexp ((FloatSpec.Core.Raux.mag beta x).run)) : FlocqFloat beta)).run := by
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure, FloatSpec.Core.Defs.F2R,
+             FloatSpec.Core.Raux.mag, FloatSpec.Core.Raux.Ztrunc, b] using this
+    exact (hiff.mp Fx)
+  -- Extract the integer mantissa m and rewrite x = (m : ℝ) * b^c
+  set m : Int :=
+      (FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run
+    with hm
+  have hx_eq : x = (m : ℝ) * b ^ c := by
+    -- Rewrite the representation using the cexp alias and F2R
+    have : x = (FloatSpec.Core.Defs.F2R (FlocqFloat.mk m c : FlocqFloat beta)).run := by
+      simpa [hm, hc, FloatSpec.Core.Defs.F2R] using hrepr
+    simpa [FloatSpec.Core.Defs.F2R] using this
+  -- From x > 0 and b^c > 0, deduce m ≥ 1
+  have hbpc_pos : 0 < b ^ c := zpow_pos hbpos _
+  have hm_pos : 0 < m := by
+    -- x = m * b^c with b^c > 0 and x > 0 ⇒ m > 0 over ℤ
+    have hF2R_pos : 0 < (FloatSpec.Core.Defs.F2R (FlocqFloat.mk m c : FlocqFloat beta)).run := by
+      simpa [FloatSpec.Core.Defs.F2R, hx_eq] using hx
+    have hm_posZ := FloatSpec.Core.Float_prop.gt_0_F2R (beta := beta)
+       (f := (FlocqFloat.mk m c : FlocqFloat beta)) hβ hF2R_pos
+    simpa using hm_posZ
+  have hm_ge_one : (1 : Int) ≤ m := (Int.add_one_le_iff.mpr hm_pos)
+  -- Evaluate ulp x and rewrite the goal with m and c
+  have hulprun' : (ulp (beta := beta) (fexp := fexp) x).run = b ^ c := by simpa [hcexp_run, b] using hulprun
+  -- Reduce the Hoare triple to a pure inequality on reals
+  -- Goal becomes: (m : ℝ) * b ^ c + b ^ c ≤ b ^ e
+  have hbpc_nonneg : 0 ≤ b ^ c := le_of_lt hbpc_pos
+  -- Show that e > c; otherwise x < b^e contradicts x = m * b^c with m ≥ 1 and b^e ≤ b^c
+  have hc_lt_e : c < e := by
+    by_contra hnot
+    have he_le_c : e ≤ c := le_of_not_gt hnot
+    -- monotonicity of zpow in exponent for base > 1
+    have hbR_gt1ℝ : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+    have hbR_gt1 : (1 : ℝ) < b := by simpa [b] using hbR_gt1ℝ
+    have : b ^ e ≤ b ^ c := ((zpow_right_strictMono₀ hbR_gt1).monotone he_le_c)
+    -- Then x = m*b^c ≥ 1*b^c ≥ b^e contradicts x < b^e
+    have : x ≥ b ^ e := by
+      have h_le_bc : b ^ e ≤ b ^ c := this
+      have h_bc_le_x : b ^ c ≤ x := by
+        have : (1 : ℝ) ≤ (m : ℝ) := by exact_mod_cast hm_ge_one
+        have : (1 : ℝ) * b ^ c ≤ (m : ℝ) * b ^ c :=
+          mul_le_mul_of_nonneg_right this hbpc_nonneg
+        simpa [hx_eq, one_mul] using this
+      exact le_trans h_le_bc h_bc_le_x
+    exact (not_lt_of_ge this) hlt
+  have hpos_diff : 0 < e - c := sub_pos.mpr hc_lt_e
+  -- From x < b^e and positivity of b^c, divide to obtain a bound on m
+  have hm_lt_real : (m : ℝ) < b ^ (e - c) := by
+    -- Start from x = m * b^c < b^e and cancel the positive factor b^c
+    have hx' : (m : ℝ) * b ^ c < b ^ e := by simpa [hx_eq] using hlt
+    -- Multiply both sides by (b^c)⁻¹ > 0
+    have hmul :=
+      (mul_lt_mul_of_pos_right hx' (inv_pos.mpr hbpc_pos))
+    -- Right-hand side becomes b^e / b^c = b^(e-c)
+    have hzsplit : b ^ e * (b ^ c)⁻¹ = b ^ (e - c) := by
+      have hbpc_ne : b ^ c ≠ 0 := ne_of_gt hbpc_pos
+      -- From zpow_add₀: b^(e) = b^(e-c) * b^c
+      have hplus := zpow_add₀ hbne (e - c) c
+      have : b ^ e = (b ^ (e - c)) * b ^ c := by
+        simpa [sub_add_cancel, mul_comm, mul_left_comm, mul_assoc] using hplus
+      -- Divide both sides by b^c
+      have := (eq_div_iff_mul_eq (by exact hbpc_ne)).2 this.symm
+      -- Rewrite division as multiplication by inverse
+      simpa [div_eq_mul_inv] using this.symm
+    -- Left-hand side simplifies to m by cancellation
+    have hzleft : (m : ℝ) * b ^ c * (b ^ c)⁻¹ = (m : ℝ) := by
+      have hbpc_ne : b ^ c ≠ 0 := ne_of_gt hbpc_pos
+      -- (a * t) * t⁻¹ = a
+      calc
+        (m : ℝ) * b ^ c * (b ^ c)⁻¹
+            = (m : ℝ) * (b ^ c * (b ^ c)⁻¹) := by ring_nf
+        _   = (m : ℝ) * 1 := by
+          simp [hbpc_ne]
+        _   = (m : ℝ) := by simp
+    -- Put the pieces together
+    have : (m : ℝ) < b ^ e * (b ^ c)⁻¹ := by
+      simpa [hzleft] using hmul
+    simpa [hzsplit] using this
+  -- Bridge to an integer bound on the exponentiated base
+  -- (file-scoped theorem; discharged by integer rounding lemmas in the Coq port)
+  have hle_succ : m + 1 ≤ (beta ^ (Int.toNat (e - c)) : Int) :=
+    int_succ_le_of_lt_pow_theorem (beta := beta) (e := e) (c := c) (m := m)
+      (hbpos := hbpos) (hd_nonneg := le_of_lt hpos_diff) (hm_lt := hm_lt_real)
+  -- Cast back to reals: (m : ℝ) + 1 ≤ b ^ (e - c)
+  have hle_real : (m : ℝ) + 1 ≤ b ^ (e - c) := by
+    -- Start from the integer bound and cast both sides to ℝ
+    have hcast : ((m + 1 : Int) : ℝ) ≤ ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
+      exact_mod_cast hle_succ
+    -- Express the RHS as a real power with the `max`-form exponent
+    have hd_nonneg : 0 ≤ e - c := le_of_lt hpos_diff
+    have hzpow_nat : b ^ (max (e - c) 0) = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
+      -- Align with the earlier normalization to the `max`-form
+      have hofNat : ((Int.toNat (e - c)) : Int) = e - c := by
+        simpa using (Int.toNat_of_nonneg hd_nonneg)
+      have hzpow_int : b ^ (e - c) = b ^ ((Int.toNat (e - c)) : Int) := by
+        simpa using (congrArg (fun t : Int => b ^ t) hofNat.symm)
+      have hzpow_nat' : b ^ ((Int.toNat (e - c)) : Int) = b ^ (Int.toNat (e - c)) :=
+        zpow_ofNat b (Int.toNat (e - c))
+      have hcast_pow : b ^ (Int.toNat (e - c)) =
+          ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
+        simpa [b] using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (e - c)))
+      have hmax : max (e - c) 0 = e - c := max_eq_left hd_nonneg
+      simpa [hmax, hzpow_int, hzpow_nat'] using hcast_pow
+    -- Conclude: cast inequality becomes an inequality on b ^ (max (e - c) 0)
+    have hle_max : (m : ℝ) + 1 ≤ b ^ (max (e - c) 0) := by
+      simpa [Int.cast_add, Int.cast_one, hzpow_nat] using hcast
+    -- Replace `max (e - c) 0` by `e - c` under nonnegativity
+    have hmax : max (e - c) 0 = e - c := max_eq_left hd_nonneg
+    simpa [hmax] using hle_max
+  -- Multiply both sides by b^c ≥ 0 to reach the target inequality
+  have : b ^ c * ((m : ℝ) + 1) ≤ (b ^ (e - c)) * b ^ c := by
+    -- The lemma yields b^c * (m+1) ≤ b^c * b^(e-c); commute the right-hand side
+    simpa [mul_comm] using (mul_le_mul_of_nonneg_left hle_real hbpc_nonneg)
+  -- Reassemble the exponents and rewrite the left-hand side as x + ulp x
+  have hsplit : b ^ e = (b ^ (e - c)) * (b ^ c) := by
+    simpa [sub_add_cancel, mul_comm, mul_left_comm, mul_assoc] using
+      (zpow_add₀ hbne (e - c) c)
+  -- Final simplification to close the goal
+  have : (m : ℝ) * b ^ c + b ^ c ≤ b ^ e := by
+    -- b^c * ((m : ℝ) + 1) = b^c * (m : ℝ) + b^c
+    have : b ^ c * (m : ℝ) + b ^ c ≤ (b ^ (e - c)) * b ^ c := by
+      simpa [left_distrib] using this
+    -- Commute to ((m : ℝ) * b^c) + b^c and rewrite the right-hand side to b^e
+    simpa [mul_comm, mul_left_comm, mul_assoc, hsplit, add_comm, add_left_comm, add_assoc] using this
+  -- Discharge the Hoare triple to the pure inequality on reals
+  -- Align ulp at x = (m : ℝ) * b^c
+  have hulprun_m : (ulp (beta := beta) (fexp := fexp) ((m : ℝ) * b ^ c)).run = b ^ c := by
+    simpa [hx_eq] using hulprun'
+  -- Rephrase the inequality with ulp explicitly
+  have hwith_ulp :
+      (m : ℝ) * b ^ c + (ulp (beta := beta) (fexp := fexp) ((m : ℝ) * b ^ c)).run ≤ b ^ e := by
+    simpa [hulprun_m] using this
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure, hx_eq,
+        add_comm, add_left_comm, add_assoc] using hwith_ulp
+
 /-- Coq (Ulp.v):
 Lemma ulp_succ_pos:
   forall x, F x -> 0 < x -> ulp (succ x) = ulp x \/ succ x = bpow (mag x).
@@ -3765,20 +3960,156 @@ private theorem ulp_succ_pos_theorem
   let s := (succ beta fexp x).run
   let e := (FloatSpec.Core.Raux.mag beta x).run
   (ulp beta fexp s).run = (ulp beta fexp x).run ∨ s = (beta : ℝ) ^ e := by
-  -- NOTE: This theorem requires `id_p_ulp_le_bpow` which appears later in the file
-  -- (around line 7627). Without file reorganization, this cannot be proved directly
-  -- here. The proof strategy is:
-  --
-  -- 1. Show x ≤ β^(mag x) from the ceiling definition of magnitude
-  -- 2. Case split on x < β^e vs x = β^e:
-  --    - For x < β^e: Use id_p_ulp_le_bpow to get succ x ≤ β^e
-  --      - If succ x < β^e: mag(succ x) = mag x, so ulp(succ x) = ulp x
-  --      - If succ x = β^e: Second disjunct holds
-  --    - For x = β^e (boundary): More complex case requiring fexp(e+1) = fexp(e)
-  --
-  -- See the detailed proof attempt in git history for the full implementation.
-  -- The file would need reorganization to move this theorem after id_p_ulp_le_bpow.
-  sorry
+  -- Proof strategy:
+  -- 1. Show x < β^(mag x) from the ceiling definition of magnitude
+  -- 2. Use id_p_ulp_le_bpow to get succ x = x + ulp x ≤ β^e
+  -- 3. Case split: succ x < β^e (ulp unchanged) or succ x = β^e (second disjunct)
+  classical
+  -- Notation and basic positivity facts
+  set b : ℝ := (beta : ℝ)
+  set e : Int := (FloatSpec.Core.Raux.mag beta x).run with he
+  have hβposZ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hβposℝ : (0 : ℝ) < b := by simp only [b]; exact_mod_cast hβposZ
+  have hβ_gt1 : (1 : ℝ) < b := by simp only [b]; exact_mod_cast hβ
+  have hx_ne : x ≠ 0 := ne_of_gt hx
+  -- For positive x, succ x = x + ulp x
+  have hsucc_pos : (succ beta fexp x).run = x + (ulp beta fexp x).run := by
+    simp [succ, le_of_lt hx, Id.run, bind, pure]
+  -- From magnitude properties: |x| ≤ β^e (non-strict)
+  have habs : |x| = x := abs_of_pos hx
+  have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x)
+  have hpre' : 1 < beta ∧ x ≠ 0 := ⟨hβ, hx_ne⟩
+  have hupper : |x| ≤ b ^ (FloatSpec.Core.Raux.mag beta x).run := by
+    simpa [wp, PostCond.noThrow, Id.run, FloatSpec.Core.Raux.abs_val, b] using (hmag_upper hpre')
+  have hx_le_bpow : x ≤ b ^ e := by simpa [habs, he] using hupper
+  -- Case split: x < β^e (use id_p_ulp_le_bpow) or x = β^e (exact power case)
+  rcases (lt_or_eq_of_le hx_le_bpow) with hx_lt_bpow | hx_eq_bpow
+  -- Case 2: x = β^e (exact power) - prove first disjunct via different argument
+  case inr =>
+    -- When x = β^e, we have succ(x) = β^e + ulp(β^e) > β^e
+    -- So succ(x) ≠ β^e = β^(mag x), meaning second disjunct is false
+    -- We need to show the first disjunct: ulp(succ x) = ulp(x)
+    -- This requires proving mag(succ x) gives same fexp contribution
+    -- For now, we prove directly using the structure of exact powers
+    left
+    -- When x = β^e:
+    -- - mag(x) = e (by mag_bpow)
+    -- - ulp(x) = β^(fexp(e+1)) (since cexp(β^e) uses mag(β^e) = e)
+    -- - succ(x) = β^e + β^(fexp(e+1))
+    -- - For typical valid exponents, fexp(e+1) < e, so succ(x) < 2*β^e < β^(e+1)
+    -- - Thus mag(succ x) can be e or e+1 depending on format
+    -- Since this is complex and depends on fexp properties, we use sorry for now
+    -- This case needs careful analysis of the fexp function behavior at exact powers
+    sorry
+  -- Case 1: x < β^e (strict) - use the standard approach
+  case inl =>
+    -- Use id_p_ulp_le_bpow: x + ulp x ≤ β^e
+    have hid_p_ulp := id_p_ulp_le_bpow (beta := beta) (fexp := fexp) (x := x) (e := e)
+      hx Fx hx_lt_bpow hβ
+    have hsucc_le : x + (ulp beta fexp x).run ≤ b ^ e := by
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hid_p_ulp
+    -- Case split: succ x < β^e or succ x = β^e
+    have hsucc_le' : (succ beta fexp x).run ≤ b ^ e := by
+      simpa [hsucc_pos] using hsucc_le
+    rcases (lt_or_eq_of_le hsucc_le').symm with hsucc_eq | hsucc_lt
+    · -- Case: succ x = β^e (second disjunct)
+      right; exact hsucc_eq
+    · -- Case: succ x < β^e (first disjunct: ulp unchanged)
+      left
+      -- When succ x < β^e, we need to show ulp(succ x) = ulp x
+      -- This follows from mag(succ x) = mag x, which holds because:
+      -- - succ x > 0 (since x > 0 and ulp x > 0)
+      -- - β^(e-1) ≤ x < succ x < β^e, so mag(succ x) = e = mag x
+      have hulp_pos : 0 < (ulp beta fexp x).run := by
+        have hulp_nz := ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) trivial
+        have hulp_run : (ulp beta fexp x).run = b ^ (FloatSpec.Core.Generic_fmt.cexp
+            (beta := beta) (fexp := fexp) x).run := by
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hulp_nz
+        have hexp_pos : 0 < b ^ (FloatSpec.Core.Generic_fmt.cexp
+            (beta := beta) (fexp := fexp) x).run := zpow_pos hβposℝ _
+        simpa [hulp_run] using hexp_pos
+      have hsucc_pos' : 0 < (succ beta fexp x).run := by
+        simpa [hsucc_pos] using (add_pos hx hulp_pos)
+      have hsucc_ne : (succ beta fexp x).run ≠ 0 := ne_of_gt hsucc_pos'
+      -- Lower bound: x ≥ β^(e-1) implies succ x ≥ β^(e-1)
+      have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x)
+      have hpre_lower : 1 < beta ∧ x ≠ 0 := ⟨hβ, hx_ne⟩
+      have hlower : b ^ (e - 1) ≤ |x| := by
+        simpa [wp, PostCond.noThrow, Id.run, FloatSpec.Core.Raux.abs_val, b, he]
+          using (hmag_lower hpre_lower)
+      have hx_ge : b ^ (e - 1) ≤ x := by simpa [abs_of_pos hx] using hlower
+      have hsucc_ge : b ^ (e - 1) ≤ (succ beta fexp x).run := by
+        calc b ^ (e - 1) ≤ x := hx_ge
+          _ ≤ x + (ulp beta fexp x).run := le_add_of_nonneg_right (le_of_lt hulp_pos)
+          _ = (succ beta fexp x).run := hsucc_pos.symm
+      -- Now show mag(succ x) = mag x = e
+      -- From β^(e-1) ≤ succ x < β^e and succ x > 0, we get mag(succ x) = e
+      have habs_succ : |(succ beta fexp x).run| = (succ beta fexp x).run := abs_of_pos hsucc_pos'
+      -- Upper bound on mag(succ x): since |succ x| < β^e, mag(succ x) ≤ e
+      have hmag_le := FloatSpec.Core.Raux.mag_le_bpow (beta := beta)
+          (x := (succ beta fexp x).run) (e := e)
+      have hpre_le : 1 < beta ∧ (succ beta fexp x).run ≠ 0 ∧
+          |(succ beta fexp x).run| < b ^ e := by
+        refine ⟨hβ, hsucc_ne, ?_⟩
+        simpa [habs_succ] using hsucc_lt
+      have hmag_succ_le : (FloatSpec.Core.Raux.mag beta (succ beta fexp x).run).run ≤ e := by
+        simpa [wp, PostCond.noThrow, Id.run, b] using (hmag_le hpre_le)
+      -- Lower bound on mag(succ x): since β^(e-1) ≤ |succ x|, e ≤ mag(succ x)
+      have hmag_ge := FloatSpec.Core.Raux.mag_gt_bpow (beta := beta)
+          (x := (succ beta fexp x).run) (e := e)
+      have hpre_ge : 1 < beta ∧ b ^ (e - 1) < |(succ beta fexp x).run| := by
+        constructor
+        · exact hβ
+        · -- We have β^(e-1) ≤ succ x, but need strict. If β^(e-1) = succ x then x < β^(e-1)
+          -- contradicting x ≥ β^(e-1). So β^(e-1) < succ x.
+          have hsucc_gt : b ^ (e - 1) < (succ beta fexp x).run := by
+            -- If they were equal, then x + ulp x = β^(e-1)
+            -- But x ≥ β^(e-1) and ulp x > 0, so x + ulp x > β^(e-1)
+            calc b ^ (e - 1) ≤ x := hx_ge
+              _ < x + (ulp beta fexp x).run := lt_add_of_pos_right x hulp_pos
+              _ = (succ beta fexp x).run := hsucc_pos.symm
+          simpa [habs_succ] using hsucc_gt
+      have hmag_succ_ge : e ≤ (FloatSpec.Core.Raux.mag beta (succ beta fexp x).run).run := by
+        simpa [wp, PostCond.noThrow, Id.run, b] using (hmag_ge hpre_ge)
+      -- Combine: mag(succ x) = e = mag x
+      have hmag_succ_eq : (FloatSpec.Core.Raux.mag beta (succ beta fexp x).run).run = e :=
+        le_antisymm hmag_succ_le hmag_succ_ge
+      -- Since ulp depends only on mag through fexp, ulp(succ x) = ulp x
+      have hulp_eq : (ulp beta fexp (succ beta fexp x).run).run = (ulp beta fexp x).run := by
+        -- ulp y = β^(fexp(mag y)) for y ≠ 0
+        have hulp_x := ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) trivial
+        have hulp_succ := ulp_neq_0 (beta := beta) (fexp := fexp)
+            (x := (succ beta fexp x).run) (hx := hsucc_ne) trivial
+        have hcexp_x : (FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run =
+            fexp ((FloatSpec.Core.Raux.mag beta x).run) := by
+          have hspec := FloatSpec.Core.Generic_fmt.cexp_spec (beta := beta) (fexp := fexp) (x := x)
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hspec hβ)
+        have hcexp_succ : (FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp)
+            (succ beta fexp x).run).run =
+            fexp ((FloatSpec.Core.Raux.mag beta (succ beta fexp x).run).run) := by
+          have hspec := FloatSpec.Core.Generic_fmt.cexp_spec (beta := beta) (fexp := fexp)
+              (x := (succ beta fexp x).run)
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure] using (hspec hβ)
+        have hulp_x_run : (ulp beta fexp x).run =
+            b ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run)) := by
+          have : (ulp beta fexp x).run =
+              b ^ (FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run := by
+            simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hulp_x
+          simpa [hcexp_x] using this
+        have hulp_succ_run : (ulp beta fexp (succ beta fexp x).run).run =
+            b ^ (fexp ((FloatSpec.Core.Raux.mag beta (succ beta fexp x).run).run)) := by
+          have : (ulp beta fexp (succ beta fexp x).run).run =
+              b ^ (FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp)
+                  (succ beta fexp x).run).run := by
+            simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hulp_succ
+          simpa [hcexp_succ] using this
+        -- Since mag(succ x) = mag x = e, fexp(mag(succ x)) = fexp(e) = fexp(mag x)
+        calc (ulp beta fexp (succ beta fexp x).run).run
+            = b ^ (fexp ((FloatSpec.Core.Raux.mag beta (succ beta fexp x).run).run)) := hulp_succ_run
+          _ = b ^ (fexp e) := by rw [hmag_succ_eq]
+          _ = b ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run)) := by rfl
+          _ = (ulp beta fexp x).run := hulp_x_run.symm
+      exact hulp_eq
 
 theorem ulp_succ_pos
     (x : ℝ)
@@ -7367,208 +7698,6 @@ theorem id_m_ulp_ge_bpow (x : ℝ) (e : Int)
   have : b ^ e ≤ (m : ℝ) * b ^ c - (ulp beta fexp ((m : ℝ) * b ^ c)).run := by
     simpa [mul_comm, mul_left_comm, mul_assoc, hulp_eval] using hgoal'
   exact this
-
-/-- Coq (Ulp.v): Theorem id_p_ulp_le_bpow
-    forall x e, 0 < x -> F x -> x < bpow e -> x + ulp x ≤ bpow e. -/
--- Local bridge theorem (port): integer successor bound from a strict real bound by a power.
--- If (m : ℝ) < (β : ℝ)^(e-c) with e - c ≥ 0 and β > 0, then m + 1 ≤ β^(toNat (e - c)).
-private theorem int_succ_le_of_lt_pow_theorem
-    (beta : Int) (e c m : Int)
-    (hbpos : 0 < (beta : ℝ)) (hd_nonneg : 0 ≤ e - c)
-    (hm_lt : (m : ℝ) < (beta : ℝ) ^ (e - c)) :
-    m + 1 ≤ (beta ^ (Int.toNat (e - c)) : Int) := by
-  -- Align the ℤ-exponent with a ℕ-exponent via `toNat`, then cast to ℝ
-  have hz_toNat : (beta : ℝ) ^ (e - c) = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
-    -- (β : ℝ)^(e-c) = (β : ℝ)^(toNat (e-c)) and then identify with casted Int pow
-    have hz1 : (beta : ℝ) ^ (e - c) = (beta : ℝ) ^ (Int.toNat (e - c)) :=
-      FloatSpec.Core.Generic_fmt.zpow_nonneg_toNat (a := (beta : ℝ)) (k := e - c) (hk := hd_nonneg)
-    have hz2 : (beta : ℝ) ^ (Int.toNat (e - c))
-        = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
-      simpa using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (e - c)))
-    simpa [hz1] using hz2
-  -- Turn the strict inequality on reals into a strict inequality on integers
-  have hm_lt_cast : (m : ℝ) < ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
-    simpa [hz_toNat] using hm_lt
-  have hm_lt_int : m < (beta ^ (Int.toNat (e - c)) : Int) :=
-    (Int.cast_lt).1 hm_lt_cast
-  -- Strict < on integers gives the desired successor ≤ bound
-  exact (Int.add_one_le_iff.mpr hm_lt_int)
-
-theorem id_p_ulp_le_bpow (x : ℝ) (e : Int)
-    (hx : 0 < x)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
-    (hlt : x < (beta : ℝ) ^ e) :
-    ⦃⌜1 < beta⌝⦄ do
-      let u ← ulp beta fexp x
-      pure (x + u)
-    ⦃⇓r => ⌜r ≤ (beta : ℝ) ^ e⌝⦄ := by
-  intro hβ; classical
-  -- Notation and basic positivity facts
-  set b : ℝ := (beta : ℝ)
-  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-  -- Cast base positivity to the reals and rewrite to `b`
-  have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-  have hbpos : 0 < b := by simpa [b] using hbposℝ
-  have hbne : b ≠ 0 := ne_of_gt hbpos
-  -- Evaluate ulp at a nonzero input: u = b^(cexp x)
-  have hx_ne : x ≠ 0 := ne_of_gt hx
-  have hulprun : (ulp (beta := beta) (fexp := fexp) x).run
-        = b ^ ((FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run) := by
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using
-      (ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) trivial)
-  -- Shorthand for the canonical exponent c := fexp (mag x)
-  set c : Int := (fexp ((FloatSpec.Core.Raux.mag beta x).run)) with hc
-  -- Compute (cexp x).run = c
-  have hcexp_run : (FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := fexp) x).run = c := by
-    have hcexp := FloatSpec.Core.Generic_fmt.cexp_spec (beta := beta) (fexp := fexp) (x := x)
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure, hc] using (hcexp hβ)
-  -- Represent x in F2R form using the generic-format specification
-  have hrepr_iff := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta) (fexp := fexp) (x := x)
-  have hrepr : x =
-      (FloatSpec.Core.Defs.F2R (FlocqFloat.mk
-         ((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run)
-         (fexp ((FloatSpec.Core.Raux.mag beta x).run)) : FlocqFloat beta)).run := by
-    have := (hrepr_iff hβ)
-    -- Reduce the Hoare triple to a plain ↔ and instantiate with Fx
-    have hiff : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run ↔
-        x = (FloatSpec.Core.Defs.F2R
-               (FlocqFloat.mk
-                 ((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run)
-                 (fexp ((FloatSpec.Core.Raux.mag beta x).run)) : FlocqFloat beta)).run := by
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure, FloatSpec.Core.Defs.F2R,
-             FloatSpec.Core.Raux.mag, FloatSpec.Core.Raux.Ztrunc, b] using this
-    exact (hiff.mp Fx)
-  -- Extract the integer mantissa m and rewrite x = (m : ℝ) * b^c
-  set m : Int :=
-      (FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp ((FloatSpec.Core.Raux.mag beta x).run))))).run
-    with hm
-  have hx_eq : x = (m : ℝ) * b ^ c := by
-    -- Rewrite the representation using the cexp alias and F2R
-    have : x = (FloatSpec.Core.Defs.F2R (FlocqFloat.mk m c : FlocqFloat beta)).run := by
-      simpa [hm, hc, FloatSpec.Core.Defs.F2R] using hrepr
-    simpa [FloatSpec.Core.Defs.F2R] using this
-  -- From x > 0 and b^c > 0, deduce m ≥ 1
-  have hbpc_pos : 0 < b ^ c := zpow_pos hbpos _
-  have hm_pos : 0 < m := by
-    -- x = m * b^c with b^c > 0 and x > 0 ⇒ m > 0 over ℤ
-    have hF2R_pos : 0 < (FloatSpec.Core.Defs.F2R (FlocqFloat.mk m c : FlocqFloat beta)).run := by
-      simpa [FloatSpec.Core.Defs.F2R, hx_eq] using hx
-    have hm_posZ := FloatSpec.Core.Float_prop.gt_0_F2R (beta := beta)
-       (f := (FlocqFloat.mk m c : FlocqFloat beta)) hβ hF2R_pos
-    simpa using hm_posZ
-  have hm_ge_one : (1 : Int) ≤ m := (Int.add_one_le_iff.mpr hm_pos)
-  -- Evaluate ulp x and rewrite the goal with m and c
-  have hulprun' : (ulp (beta := beta) (fexp := fexp) x).run = b ^ c := by simpa [hcexp_run, b] using hulprun
-  -- Reduce the Hoare triple to a pure inequality on reals
-  -- Goal becomes: (m : ℝ) * b ^ c + b ^ c ≤ b ^ e
-  have hbpc_nonneg : 0 ≤ b ^ c := le_of_lt hbpc_pos
-  -- Show that e > c; otherwise x < b^e contradicts x = m * b^c with m ≥ 1 and b^e ≤ b^c
-  have hc_lt_e : c < e := by
-    by_contra hnot
-    have he_le_c : e ≤ c := le_of_not_gt hnot
-    -- monotonicity of zpow in exponent for base > 1
-    have hbR_gt1ℝ : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
-    have hbR_gt1 : (1 : ℝ) < b := by simpa [b] using hbR_gt1ℝ
-    have : b ^ e ≤ b ^ c := ((zpow_right_strictMono₀ hbR_gt1).monotone he_le_c)
-    -- Then x = m*b^c ≥ 1*b^c ≥ b^e contradicts x < b^e
-    have : x ≥ b ^ e := by
-      have h_le_bc : b ^ e ≤ b ^ c := this
-      have h_bc_le_x : b ^ c ≤ x := by
-        have : (1 : ℝ) ≤ (m : ℝ) := by exact_mod_cast hm_ge_one
-        have : (1 : ℝ) * b ^ c ≤ (m : ℝ) * b ^ c :=
-          mul_le_mul_of_nonneg_right this hbpc_nonneg
-        simpa [hx_eq, one_mul] using this
-      exact le_trans h_le_bc h_bc_le_x
-    exact (not_lt_of_ge this) hlt
-  have hpos_diff : 0 < e - c := sub_pos.mpr hc_lt_e
-  -- From x < b^e and positivity of b^c, divide to obtain a bound on m
-  have hm_lt_real : (m : ℝ) < b ^ (e - c) := by
-    -- Start from x = m * b^c < b^e and cancel the positive factor b^c
-    have hx' : (m : ℝ) * b ^ c < b ^ e := by simpa [hx_eq] using hlt
-    -- Multiply both sides by (b^c)⁻¹ > 0
-    have hmul :=
-      (mul_lt_mul_of_pos_right hx' (inv_pos.mpr hbpc_pos))
-    -- Right-hand side becomes b^e / b^c = b^(e-c)
-    have hzsplit : b ^ e * (b ^ c)⁻¹ = b ^ (e - c) := by
-      have hbpc_ne : b ^ c ≠ 0 := ne_of_gt hbpc_pos
-      -- From zpow_add₀: b^(e) = b^(e-c) * b^c
-      have hplus := zpow_add₀ hbne (e - c) c
-      have : b ^ e = (b ^ (e - c)) * b ^ c := by
-        simpa [sub_add_cancel, mul_comm, mul_left_comm, mul_assoc] using hplus
-      -- Divide both sides by b^c
-      have := (eq_div_iff_mul_eq (by exact hbpc_ne)).2 this.symm
-      -- Rewrite division as multiplication by inverse
-      simpa [div_eq_mul_inv] using this.symm
-    -- Left-hand side simplifies to m by cancellation
-    have hzleft : (m : ℝ) * b ^ c * (b ^ c)⁻¹ = (m : ℝ) := by
-      have hbpc_ne : b ^ c ≠ 0 := ne_of_gt hbpc_pos
-      -- (a * t) * t⁻¹ = a
-      calc
-        (m : ℝ) * b ^ c * (b ^ c)⁻¹
-            = (m : ℝ) * (b ^ c * (b ^ c)⁻¹) := by ring_nf
-        _   = (m : ℝ) * 1 := by
-          simp [hbpc_ne]
-        _   = (m : ℝ) := by simp
-    -- Put the pieces together
-    have : (m : ℝ) < b ^ e * (b ^ c)⁻¹ := by
-      simpa [hzleft] using hmul
-    simpa [hzsplit] using this
-  -- Bridge to an integer bound on the exponentiated base
-  -- (file-scoped theorem; discharged by integer rounding lemmas in the Coq port)
-  have hle_succ : m + 1 ≤ (beta ^ (Int.toNat (e - c)) : Int) :=
-    int_succ_le_of_lt_pow_theorem (beta := beta) (e := e) (c := c) (m := m)
-      (hbpos := hbpos) (hd_nonneg := le_of_lt hpos_diff) (hm_lt := hm_lt_real)
-  -- Cast back to reals: (m : ℝ) + 1 ≤ b ^ (e - c)
-  have hle_real : (m : ℝ) + 1 ≤ b ^ (e - c) := by
-    -- Start from the integer bound and cast both sides to ℝ
-    have hcast : ((m + 1 : Int) : ℝ) ≤ ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
-      exact_mod_cast hle_succ
-    -- Express the RHS as a real power with the `max`-form exponent
-    have hd_nonneg : 0 ≤ e - c := le_of_lt hpos_diff
-    have hzpow_nat : b ^ (max (e - c) 0) = ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
-      -- Align with the earlier normalization to the `max`-form
-      have hofNat : ((Int.toNat (e - c)) : Int) = e - c := by
-        simpa using (Int.toNat_of_nonneg hd_nonneg)
-      have hzpow_int : b ^ (e - c) = b ^ ((Int.toNat (e - c)) : Int) := by
-        simpa using (congrArg (fun t : Int => b ^ t) hofNat.symm)
-      have hzpow_nat' : b ^ ((Int.toNat (e - c)) : Int) = b ^ (Int.toNat (e - c)) :=
-        zpow_ofNat b (Int.toNat (e - c))
-      have hcast_pow : b ^ (Int.toNat (e - c)) =
-          ((beta ^ (Int.toNat (e - c)) : Int) : ℝ) := by
-        simpa [b] using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (e - c)))
-      have hmax : max (e - c) 0 = e - c := max_eq_left hd_nonneg
-      simpa [hmax, hzpow_int, hzpow_nat'] using hcast_pow
-    -- Conclude: cast inequality becomes an inequality on b ^ (max (e - c) 0)
-    have hle_max : (m : ℝ) + 1 ≤ b ^ (max (e - c) 0) := by
-      simpa [Int.cast_add, Int.cast_one, hzpow_nat] using hcast
-    -- Replace `max (e - c) 0` by `e - c` under nonnegativity
-    have hmax : max (e - c) 0 = e - c := max_eq_left hd_nonneg
-    simpa [hmax] using hle_max
-  -- Multiply both sides by b^c ≥ 0 to reach the target inequality
-  have : b ^ c * ((m : ℝ) + 1) ≤ (b ^ (e - c)) * b ^ c := by
-    -- The lemma yields b^c * (m+1) ≤ b^c * b^(e-c); commute the right-hand side
-    simpa [mul_comm] using (mul_le_mul_of_nonneg_left hle_real hbpc_nonneg)
-  -- Reassemble the exponents and rewrite the left-hand side as x + ulp x
-  have hsplit : b ^ e = (b ^ (e - c)) * (b ^ c) := by
-    simpa [sub_add_cancel, mul_comm, mul_left_comm, mul_assoc] using
-      (zpow_add₀ hbne (e - c) c)
-  -- Final simplification to close the goal
-  have : (m : ℝ) * b ^ c + b ^ c ≤ b ^ e := by
-    -- b^c * ((m : ℝ) + 1) = b^c * (m : ℝ) + b^c
-    have : b ^ c * (m : ℝ) + b ^ c ≤ (b ^ (e - c)) * b ^ c := by
-      simpa [left_distrib] using this
-    -- Commute to ((m : ℝ) * b^c) + b^c and rewrite the right-hand side to b^e
-    simpa [mul_comm, mul_left_comm, mul_assoc, hsplit, add_comm, add_left_comm, add_assoc] using this
-  -- Discharge the Hoare triple to the pure inequality on reals
-  -- Align ulp at x = (m : ℝ) * b^c
-  have hulprun_m : (ulp (beta := beta) (fexp := fexp) ((m : ℝ) * b ^ c)).run = b ^ c := by
-    simpa [hx_eq] using hulprun'
-  -- Rephrase the inequality with ulp explicitly
-  have hwith_ulp :
-      (m : ℝ) * b ^ c + (ulp (beta := beta) (fexp := fexp) ((m : ℝ) * b ^ c)).run ≤ b ^ e := by
-    simpa [hulprun_m] using this
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure, hx_eq,
-        add_comm, add_left_comm, add_assoc] using hwith_ulp
 
 /-! Local bridge theorem (port): gap between UP and DN equals one ULP at x.
 
