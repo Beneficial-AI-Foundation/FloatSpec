@@ -379,7 +379,7 @@ theorem exp_le_spec (x y : ℝ) :
   -- Using monotonicity of exp: exp x ≤ exp y ↔ x ≤ y
   exact (Iff.mpr Real.exp_le_exp hxy)
 
-/-- Coq name compatibility: `exp_le` -/
+/-- Coq name compatibility: {lean}`exp_le` -/
 theorem exp_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     exp_le_check x y
@@ -394,7 +394,7 @@ section IZR
 def IZR_le_lt_triple (m n p : Int) : Id (ℝ × ℝ × ℝ) :=
   ((m : ℝ), (n : ℝ), (p : ℝ))
 
-/-- Coq: `IZR_le_lt`
+/-- Coq: {coq}`IZR_le_lt`
 
     If m ≤ n < p as integers, then (m:ℝ) ≤ (n:ℝ) < (p:ℝ).
 -/
@@ -535,7 +535,7 @@ theorem sqrt_neg_spec (x : ℝ) :
 
 /-- Coq (Raux.v): Theorem sqrt_ge_0
     For all real x, 0 ≤ sqrt x. We provide a wrapper with
-    the exact Coq name around `sqrt_ge_0_check`.
+    the exact Coq name around {lean}`sqrt_ge_0_check`.
 
     Lean (spec): No precondition; sqrt is nonnegative. -/
 theorem sqrt_ge_0 (x : ℝ) :
@@ -649,7 +649,7 @@ def Rabs_gt_inv_pair (x y : ℝ) : Id (ℝ × ℝ) :=
 
 /-- Specification: If y < x or y < -x then y < |x|
 
-    This is the converse direction corresponding to `Rabs_gt_spec`.
+    This is the converse direction corresponding to {lean}`Rabs_gt_spec`.
 -/
 @[spec]
 theorem Rabs_gt_inv_spec (x y : ℝ) :
@@ -1401,7 +1401,7 @@ theorem Rle_bool_spec (x y : ℝ) :
   -- The decidable instance for ℝ gives: decide (x ≤ y) = true ↔ x ≤ y
   -- Goal is solved by simp
 
-/-- Monotone case: if x ≤ y then `Rle_bool x y = true` -/
+/-- Monotone case: if x ≤ y then {lean}`Rle_bool x y = true` -/
 theorem Rle_bool_true (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     Rle_bool x y
@@ -1412,7 +1412,7 @@ theorem Rle_bool_true (x y : ℝ) :
   simp [wp, PostCond.noThrow, Id.run, pure]
   exact hxy
 
-/-- Antitone case: if y < x then `Rle_bool x y = false` -/
+/-- Antitone case: if y < x then {lean}`Rle_bool x y = false` -/
 theorem Rle_bool_false (x y : ℝ) :
     ⦃⌜y < x⌝⦄
     Rle_bool x y
@@ -1447,7 +1447,7 @@ theorem Rlt_bool_spec (x y : ℝ) :
   -- The decidable instance for ℝ gives us this
   exact decide_eq_true_iff
 
-/-- Monotone case: if x < y then `Rlt_bool x y = true` -/
+/-- Monotone case: if x < y then {lean}`Rlt_bool x y = true` -/
 theorem Rlt_bool_true (x y : ℝ) :
     ⦃⌜x < y⌝⦄
     Rlt_bool x y
@@ -1458,7 +1458,7 @@ theorem Rlt_bool_true (x y : ℝ) :
   simp [wp, PostCond.noThrow, Id.run, pure]
   exact hlt
 
-/-- Antitone case: if y ≤ x then `Rlt_bool x y = false` -/
+/-- Antitone case: if y ≤ x then {lean}`Rlt_bool x y = false` -/
 theorem Rlt_bool_false (x y : ℝ) :
     ⦃⌜y ≤ x⌝⦄
     Rlt_bool x y
