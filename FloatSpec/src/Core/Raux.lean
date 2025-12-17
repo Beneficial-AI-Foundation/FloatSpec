@@ -1559,7 +1559,7 @@ theorem Req_bool_spec (x y : ℝ) :
   -- The decidable instance for ℝ gives us this
   exact decide_eq_true_iff
 
-/-- If x = y then `Req_bool x y = true` -/
+/-- If x = y then {lean}`Req_bool x y = true` -/
 theorem Req_bool_true (x y : ℝ) :
     ⦃⌜x = y⌝⦄
     Req_bool x y
@@ -1570,7 +1570,7 @@ theorem Req_bool_true (x y : ℝ) :
   simp [wp, PostCond.noThrow, Id.run, pure]
   exact hxy
 
-/-- If x ≠ y then `Req_bool x y = false` -/
+/-- If x ≠ y then {lean}`Req_bool x y = false` -/
 theorem Req_bool_false (x y : ℝ) :
     ⦃⌜x ≠ y⌝⦄
     Req_bool x y
@@ -1864,7 +1864,7 @@ section AbsLtInv
 noncomputable def Rabs_lt_inv_pair (x y : ℝ) : Id (ℝ × ℝ) :=
   (x, y)
 
-/-- Specification: From `|x| < y` derive the two-sided strict bound `-y < x < y`. -/
+/-- Specification: From {lit}`|x| < y` derive the two-sided strict bound {lit}`-y < x < y`. -/
 @[spec]
 theorem Rabs_lt_inv_spec (x y : ℝ) :
     ⦃⌜|x| < y⌝⦄
@@ -2539,7 +2539,7 @@ theorem Zfloor_div (x y : Int) :
   simp only [hfloor]
   rfl
 
-/-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, Ztrunc (IZR x / IZR y) equals the integer quotient; in Lean we state it as `Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
+/-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, {coq}`Ztrunc` ({coq}`IZR` x / {coq}`IZR` y) equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
     Ztrunc ((x : ℝ) / (y : ℝ))
@@ -3220,7 +3220,7 @@ end PowBasics
 /-!  LPO (limited principle of omniscience) corner -/
 section LPO
 
-/-- Carrier for `LPO_min`: either `some n` with a minimal witness, or `none` if none exists. -/
+/-- Carrier for {coq}`LPO_min`: either {given -show}`n : Nat` wrapped in {lean}`some n` with a minimal witness, or {lean}`none` if none exists. -/
 noncomputable def LPO_min_choice (P : Nat → Prop) : Id (Option Nat) :=
   by
     classical
@@ -3231,7 +3231,7 @@ noncomputable def LPO_min_choice (P : Nat → Prop) : Id (Option Nat) :=
       else
         pure none
 
-/-- Coq (Raux.v) `LPO_min`. Lean spec uses `Option Nat` to encode the sum. -/
+/-- Coq (Raux.v) {coq}`LPO_min`. Lean spec uses {lean}`Option` {lean}`Nat` to encode the sum. -/
 theorem LPO_min (P : Nat → Prop) :
     ⦃⌜∀ n : Nat, P n ∨ ¬ P n⌝⦄
     LPO_min_choice P
@@ -3257,7 +3257,7 @@ theorem LPO_min (P : Nat → Prop) :
     -- From ¬∃ n, P n, derive ∀ n, ¬ P n
     simpa [h] using (not_exists.mp h)
 
-/-- Carrier for LPO: either `some n` with a witness, or `none` if none exists. -/
+/-- Carrier for {coq}`LPO`: either {given -show}`n : Nat` wrapped in {lean}`some n` with a witness, or {lean}`none` if none exists. -/
 noncomputable def LPO_choice (P : Nat → Prop) : Id (Option Nat) :=
   by
     classical
@@ -3268,7 +3268,7 @@ noncomputable def LPO_choice (P : Nat → Prop) : Id (Option Nat) :=
       else
         pure none
 
-/-- Coq (Raux.v) LPO. Lean spec: `some n` indicates a witness `P n`; `none` indicates universal negation. -/
+/-- Coq (Raux.v) {coq}`LPO`. Lean spec: {given -show}`n : Nat` in {lean}`some n` indicates a witness satisfying the predicate; {lean}`none` indicates universal negation. -/
 theorem LPO (P : Nat → Prop) :
     ⦃⌜∀ n : Nat, P n ∨ ¬ P n⌝⦄
     LPO_choice P
@@ -3288,7 +3288,7 @@ theorem LPO (P : Nat → Prop) :
     -- From ¬∃ n, P n, derive ∀ n, ¬ P n
     simpa [h] using (not_exists.mp h)
 
-/-- Carrier for LPO over integers: either `some n` with a witness, or `none`. -/
+/-- Carrier for {coq}`LPO` over integers: either {given -show}`n : Int` in {lean}`some n` with a witness, or {lean}`none`. -/
 noncomputable def LPO_Z_choice (P : Int → Prop) : Id (Option Int) :=
   by
     classical
@@ -3299,7 +3299,7 @@ noncomputable def LPO_Z_choice (P : Int → Prop) : Id (Option Int) :=
       else
         pure none
 
-/-- Coq (Raux.v) lemma {lean}`LPO_Z`: for any predicate on integers with decidability, either some n satisfies it or it holds for none; the Lean spec encodes this as an option meaning `some n` indicates `P n` and {lean}`none` indicates {lean}`∀ n, ¬ P n`. -/
+/-- Coq (Raux.v) lemma {coq}`LPO_Z`: for any predicate on integers with decidability, either {given -show}`n : Int` satisfies it or no integer does; the Lean spec encodes this as an option meaning {lean}`some n` indicates satisfaction and {lean}`none` indicates no witness exists. -/
 theorem LPO_Z (P : Int → Prop) :
     ⦃⌜∀ n : Int, P n ∨ ¬ P n⌝⦄
     LPO_Z_choice P
@@ -3328,11 +3328,11 @@ end LPO
 section Mag
 
 
-/-- Magnitude of a real number with respect to base `beta`.
+/-- Magnitude of a real number with respect to base {lit}`beta`.
 
-    In Coq, `mag` is characterized by bpow bounds: for nonzero `x`,
-    bpow (e - 1) ≤ |x| < bpow e, where `e = mag x`.
-    We model it as an `Id Int` computation for use in Hoare-style specs.
+    In Coq, {coq}`mag` is characterized by {coq}`bpow` bounds: for nonzero {lit}`x`,
+    {lit}`bpow (e - 1) ≤ |x| < bpow e`, where {lit}`e = mag x`.
+    We model it as an {lean}`Id Int` computation for use in Hoare-style specs.
 -/
 noncomputable def mag (beta : Int) (x : ℝ) : Id Int :=
   -- We model `mag` as a pure computation in the `Id` monad
@@ -3440,10 +3440,10 @@ theorem mag_abs (beta : Int) (x : ℝ) :
   intro _
   simp [mag]
 
-/-- Uniqueness under positivity: if 0 < x and (β^(e-1) < x ≤ β^e), then mag x = e.
+/-- Uniqueness under positivity: for {given -show}`β`, {given -show}`x : ℝ`, {given -show}`e : ℤ`, if {lean}`0 < x` and `β^(e-1) < x ≤ β^e`, then {lean}`mag β x = e`.
 
-    Note: the lower bound must be strict for uniqueness with `Int.ceil`.
-    With a non-strict lower bound (x = β^(e-1)), `mag` would be `e-1`.
+    Note: the lower bound must be strict for uniqueness with ceiling.
+    With a non-strict lower bound, {coq}`mag` would be {lean}`e - 1`.
 -/
 theorem mag_unique_pos (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 < x ∧ ((beta : ℝ) ^ (e - 1) < x ∧ x ≤ (beta : ℝ) ^ e)⌝⦄
@@ -3574,10 +3574,10 @@ theorem mag_le (beta : Int) (x y : ℝ) :
   simpa [mag, hx_ne, hy_ne, wp, PostCond.noThrow, Id.run, hLx, hLy, pure]
     using hceil
 
-/-- If 0 < |x| < bpow e then mag x ≤ e
+/-- If {lit}`0 < |x| < bpow e` then {lit}`mag x ≤ e`
 
-    Since mag is defined via `Int.ceil (log |x| / log beta)`, the bound
-    `|x| < (beta : ℝ) ^ e` implies `log_beta |x| < e`, hence `mag x ≤ e`.
+    Since {coq}`mag` is defined via {lean}`Int.ceil (log |x| / log beta)`, the bound
+    {lit}`|x| < (beta : ℝ) ^ e` implies {lit}`log_beta |x| < e`, hence {lit}`mag x ≤ e`.
     This corrects the direction compared to an earlier draft. -/
 theorem lt_mag (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 < |x| ∧ |x| < (beta : ℝ) ^ e⌝⦄
@@ -3974,7 +3974,7 @@ theorem mag_upper_bound (beta : Int) (x : ℝ) :
   simp_rw [hmag]
   exact habs_le
 
-/-- If `1 < beta`, `0 ≤ e`, and `|x| < (beta : ℝ)^e`, then `mag beta x ≤ e`. -/
+/-- If {lit}`1 < beta`, {lit}`0 ≤ e`, and {lit}`|x| < (beta : ℝ)^e`, then {lit}`mag beta x ≤ e`. -/
 theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 ≤ e ∧ |x| < ((beta : ℝ) ^ e)⌝⦄
     mag beta x
