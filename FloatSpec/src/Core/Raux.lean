@@ -2514,7 +2514,7 @@ theorem Zfloor_div (x y : Int) :
   -- Real identity: (x : ℝ) = (y : ℝ) * (x / y) + (x % y)
   have hx_decomp : (y : ℝ) * ((x / y : Int) : ℝ) + ((x % y : Int) : ℝ) = (x : ℝ) := by
     simpa [Int.cast_add, Int.cast_mul] using
-      congrArg (fun t : Int => (t : ℝ)) (Int.ediv_add_emod x y)
+      congrArg (fun t : Int => (t : ℝ)) (Int.mul_ediv_add_emod x y)
   -- Lower bound: (x / y : ℝ) ≤ (x : ℝ) / (y : ℝ)
   have h_lower : ((x / y : Int) : ℝ) ≤ (x : ℝ) / (y : ℝ) := by
     -- Multiply both sides by y > 0 and use the decomposition
@@ -2564,7 +2564,7 @@ theorem Ztrunc_div (x y : Int) :
   have hr_nonneg : (0 : ℝ) ≤ ((x % y : Int) : ℝ) := by simpa using (Int.cast_mono hr_nonnegZ)
   have hr_lt : ((x % y : Int) : ℝ) < (y : ℝ) := by simpa using (Int.cast_strictMono hr_ltZ)
   have hx_decomp : (y : ℝ) * ((x / y : Int) : ℝ) + ((x % y : Int) : ℝ) = (x : ℝ) := by
-    simpa [Int.cast_add, Int.cast_mul] using congrArg (fun t : Int => (t : ℝ)) (Int.ediv_add_emod x y)
+    simpa [Int.cast_add, Int.cast_mul] using congrArg (fun t : Int => (t : ℝ)) (Int.mul_ediv_add_emod x y)
   have h_lower : ((x / y : Int) : ℝ) ≤ (x : ℝ) / (y : ℝ) := by
     have hmul_le : ((x / y : Int) : ℝ) * (y : ℝ) ≤ (x : ℝ) := by
       have : ((x / y : Int) : ℝ) * (y : ℝ)
@@ -3153,7 +3153,7 @@ theorem sqrt_bpow_ge (beta e : Int) :
   refine (Real.le_sqrt hx_nonneg hy_nonneg).2 ?_;
   -- Rewrite the right-hand side using the division algorithm: e = 2*(e/2) + e % 2
   have hdecomp : 2 * (e / 2) + e % 2 = e := by
-    simpa using (Int.ediv_add_emod e 2)
+    simpa using (Int.mul_ediv_add_emod e 2)
   -- Show: (beta^(e/2))^2 = (beta)^(2*(e/2))
   have hx_sq : ((beta : ℝ) ^ (e / 2)) ^ 2 = (beta : ℝ) ^ (2 * (e / 2)) := by
     -- x^2 = x*x and a^(m+n) = a^m * a^n (for a ≠ 0)
