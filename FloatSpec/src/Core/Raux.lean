@@ -1122,7 +1122,7 @@ theorem Rcompare_not_Gt_spec (x y : ℝ) :
   · -- Not (x < y). Under x ≤ y, this forces x = y
     have hyx : y ≤ x := not_lt.mp hlt
     have hEq : x = y := le_antisymm hxy hyx
-    simp [hlt, hEq, pure]
+    simp [hEq, pure]
 
 /-  Coq-named wrapper. -/
 private theorem Rcompare_not_Gt_wr (x y : ℝ) :
@@ -1232,7 +1232,7 @@ theorem Rcompare_half_l_spec (x y : ℝ) :
   · have hxnotlt : ¬ x < 2 * y := by exact hxlt
     by_cases hxeq : x = 2 * y
     · have : x / 2 = y := (heq.mpr hxeq)
-      simp [hxnotlt, hxeq, this]
+      simp [hxeq]
     ·
       -- From ¬ (x < 2*y), obtain ¬ (x/2 < y) via hlt;
       -- from x ≠ 2*y, obtain x/2 ≠ y via heq.
@@ -1283,8 +1283,8 @@ theorem Rcompare_half_r_spec (x y : ℝ) :
   · have hxnotlt : ¬ 2 * x < y := by exact hxlt
     by_cases hxeq : 2 * x = y
     · have hx_eq : x = y / 2 := (heq.symm.mp hxeq)
-      -- First reduce the right side using hxnotlt and hxeq
-      simp [hxnotlt, hxeq]
+      -- First reduce the right side using hxeq
+      simp [hxeq]
       -- Then reduce the left side using hx_eq
       simp [hx_eq]
     ·
@@ -1319,7 +1319,7 @@ private theorem Rcompare_sqr_run_eq (x y : ℝ) :
     · -- Contradiction: rewriting by equality gives x*x < x*x
       have hxlt' : x * x < x * x := by simpa [hxeq'] using hxlt
       exact (False.elim ((lt_irrefl _) hxlt'))
-    · simp [Rcompare, pure, Id.run, hxlt, hxeq', heq]
+    · simp [Rcompare, pure, Id.run, hxeq', heq]
   · -- Gt case
     have hy2 : y ^ 2 < x ^ 2 := (sq_lt_sq).2 hgt
     have hnotlt : ¬ x * x < y * y := by
@@ -1368,17 +1368,17 @@ theorem Rmin_compare_spec (x y : ℝ) :
   by_cases hlt : x < y
   · have hle : x ≤ y := le_of_lt hlt
     -- Left side: min x y = x; right side reduces to x
-    simp [hlt, hle, min_eq_left hle]
+    simp [hlt, hle]
   · have hnotlt : ¬ x < y := hlt
     by_cases heq : x = y
     · -- In the equality case, both sides reduce to x
       subst heq
-      simp [hnotlt, min_eq_left le_rfl]
+      simp
     · -- Strict greater case: y < x
       have hgt : y < x := lt_of_le_of_ne (le_of_not_gt hnotlt) (Ne.symm heq)
       have hleyx : y ≤ x := le_of_lt hgt
       -- Left side: min x y = y; right side reduces to y
-      simp [hnotlt, heq, hleyx, min_eq_right hleyx]
+      simp [hnotlt, heq, hleyx]
 
 end RcompareMore
 
@@ -1643,8 +1643,6 @@ theorem eqb_false_spec (a b : Bool) :
   -- Follows from Bool disequality
   -- Exhaust over a,b and use the contradiction for equal cases
   cases a <;> cases b <;> simp at *
-  all_goals
-    cases (hNe rfl)
 
 end BooleanOperations
 
@@ -1767,7 +1765,7 @@ theorem cond_Ropp_mult_l_spec (b : Bool) (x y : ℝ) :
   intro _
   unfold cond_Ropp_mult_l_check cond_Ropp
   -- Reduce the Hoare triple on Id to a pure goal
-  simp [wp, PostCond.noThrow, Id.run, cond_Ropp, neg_mul]
+  simp [wp, PostCond.noThrow, Id.run, neg_mul]
 
 /-- Conditional negation distributes over multiplication (right) -/
 noncomputable def cond_Ropp_mult_r_check (b : Bool) (x y : ℝ) : Id ℝ :=
@@ -1781,7 +1779,7 @@ theorem cond_Ropp_mult_r_spec (b : Bool) (x y : ℝ) :
   intro _
   unfold cond_Ropp_mult_r_check cond_Ropp
   -- if b then -(x*y) else (x*y) equals x * (if b then -y else y)
-  simp [wp, PostCond.noThrow, Id.run, cond_Ropp, mul_neg]
+  simp [wp, PostCond.noThrow, Id.run, mul_neg]
 
 /-- Conditional negation distributes over addition -/
 noncomputable def cond_Ropp_plus_check (b : Bool) (x y : ℝ) : Id ℝ :=
@@ -1796,7 +1794,7 @@ theorem cond_Ropp_plus_spec (b : Bool) (x y : ℝ) :
   unfold cond_Ropp_plus_check cond_Ropp
   -- if b then -(x+y) else (x+y) equals (if b then -x else x) + (if b then -y else y)
   cases b <;>
-    simp [wp, PostCond.noThrow, Id.run, cond_Ropp, neg_add, sub_eq_add_neg, add_comm]
+    simp [wp, PostCond.noThrow, Id.run, add_comm]
 
 end CondAbsMulAdd
 

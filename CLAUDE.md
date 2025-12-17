@@ -548,8 +548,9 @@ Do NOT use the `{lit}` verso role if an identifier is missing. Use `{given
 ## Verso Docstring Roles
 
 - `{lean}` validates identifiers against global scope - metavariables like `n` will error
-- `{given -show}`n : Nat`` introduces metavariables for subsequent `{lean}` roles to reference
-- Pattern: `{given -show}`n : Nat`` then `{lean}`some n`` works
+- `{given +show}`n : Nat`` introduces metavariables for display and subsequent `{lean}` roles
+- `{given -show}` for internal (non-displayed) variable introduction
+- Pattern: `{given +show}`n : Nat`` then `{lean}`some n`` works
 - `{coq}` role (from VersoCoq) links to Flocq documentation
 - `{lit}` for literal math notation without validation, but don't overuse for patterns with metavariables
 - `@[doc_role]` must define at root namespace for role name to match (e.g., `coq` not `VersoCoq.Roles.coq`)
