@@ -17,6 +17,7 @@ COPYING file for more details.
 -/
 
 import FloatSpec.src.Core.Zaux
+import FloatSpecRoles  -- Register {coq} doc role
 -- import Mathlib.Data.Real.Basic
 -- import Mathlib.Data.Real.Sqrt
 -- import Mathlib.Analysis.SpecialFunctions.Log.Basic
@@ -2538,7 +2539,7 @@ theorem Zfloor_div (x y : Int) :
   simp only [hfloor]
   rfl
 
-/-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, Ztrunc (IZR x / IZR y) equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
+/-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, Ztrunc (IZR x / IZR y) equals the integer quotient; in Lean we state it as `Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
     Ztrunc ((x : ℝ) / (y : ℝ))
@@ -3575,8 +3576,8 @@ theorem mag_le (beta : Int) (x y : ℝ) :
 
 /-- If 0 < |x| < bpow e then mag x ≤ e
 
-    Since mag is defined via {lean}`Int.ceil (log |x| / log β)`, the bound
-    {lean}`|x| < (beta : ℝ) ^ e` implies {lean}`logβ |x| < e`, hence {lean}`mag x ≤ e`.
+    Since mag is defined via `Int.ceil (log |x| / log beta)`, the bound
+    `|x| < (beta : ℝ) ^ e` implies `log_beta |x| < e`, hence `mag x ≤ e`.
     This corrects the direction compared to an earlier draft. -/
 theorem lt_mag (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 < |x| ∧ |x| < (beta : ℝ) ^ e⌝⦄
@@ -3973,7 +3974,7 @@ theorem mag_upper_bound (beta : Int) (x : ℝ) :
   simp_rw [hmag]
   exact habs_le
 
-/-- If {lean}`1 < beta`, {lean}`0 ≤ e`, and {lean}`|x| < (beta : ℝ)^e`, then {lean}`mag beta x ≤ e`. -/
+/-- If `1 < beta`, `0 ≤ e`, and `|x| < (beta : ℝ)^e`, then `mag beta x ≤ e`. -/
 theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 ≤ e ∧ |x| < ((beta : ℝ) ^ e)⌝⦄
     mag beta x

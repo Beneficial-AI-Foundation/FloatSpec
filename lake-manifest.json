@@ -5,7 +5,7 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "ebaafde445b397e062c9846ade9e03581febddea",
+   "rev": "bff6967d3ceaeda822ffb5d38a1b3a69af877f25",
    "name": "VersoCoq",
    "manifestFile": "lake-manifest.json",
    "inputRev": "main",
