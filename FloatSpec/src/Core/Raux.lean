@@ -1471,7 +1471,7 @@ theorem Rlt_bool_false (x y : ℝ) :
 /-- Negation flips strict-less-than boolean
 
     Rlt_bool (-x) (-y) = Rlt_bool y x.
-    Direct consequence of `Rcompare_opp` in Coq; mirrors here.
+    Direct consequence of {coq}`Rcompare_opp` in Coq; mirrors here.
 -/
 theorem Rlt_bool_opp (x y : ℝ) :
     ⦃⌜True⌝⦄
@@ -2538,7 +2538,7 @@ theorem Zfloor_div (x y : Int) :
   simp only [hfloor]
   rfl
 
-/-- Coq lemma `Ztrunc_div`: for integers x and y with y ≠ 0, Ztrunc (IZR x / IZR y) equals the integer quotient; in Lean we state it as `Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
+/-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, Ztrunc (IZR x / IZR y) equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
     Ztrunc ((x : ℝ) / (y : ℝ))
@@ -2913,7 +2913,7 @@ theorem bpow_opp (beta e : Int) :
 
 /-- Strict monotonicity of bpow in the exponent
 
-    If `1 < beta` and `e1 < e2`, then `(beta : ℝ) ^ e1 < (beta : ℝ) ^ e2`.
+    If {lean}`1 < beta` and {lean}`e1 < e2`, then {lean}`(beta : ℝ) ^ e1 < (beta : ℝ) ^ e2`.
 -/
 noncomputable def bpow_lt_check (beta e1 e2 : Int) : Id (ℝ × ℝ) :=
   pure (((beta : ℝ) ^ e1, (beta : ℝ) ^ e2))
@@ -2931,7 +2931,7 @@ theorem bpow_lt (beta e1 e2 : Int) :
 
 /-- Converse monotonicity: compare exponents via bpow values
 
-    If `1 < beta` and `(beta : ℝ) ^ e1 < (beta : ℝ) ^ e2`, then `e1 < e2`.
+    If {lean}`1 < beta` and {lean}`(beta : ℝ) ^ e1 < (beta : ℝ) ^ e2`, then {lean}`e1 < e2`.
 -/
 noncomputable def lt_bpow_check (beta e1 e2 : Int) : Id (ℝ × ℝ) :=
   pure (((beta : ℝ) ^ e1, (beta : ℝ) ^ e2))
@@ -3504,7 +3504,7 @@ theorem mag_le_abs (beta : Int) (x : ℝ) (e : Int) :
 
 /-- Monotonicity: if x ≠ 0 and |x| ≤ |y| then mag x ≤ mag y
 
-    Note: with our definition `mag 0 = 0`, the claim with x = 0 is false in general
+    Note: with our definition {lean}`mag 0 = 0`, the claim with x = 0 is false in general
     (e.g. for 1 < beta and 0 < |y| < 1, we have mag 0 = 0 > mag y). We therefore
     assume x ≠ 0; this also forces y ≠ 0 under |x| ≤ |y|.
 -/
@@ -3575,8 +3575,8 @@ theorem mag_le (beta : Int) (x y : ℝ) :
 
 /-- If 0 < |x| < bpow e then mag x ≤ e
 
-    Since mag is defined via `Int.ceil (log |x| / log β)`, the bound
-    `|x| < (beta : ℝ) ^ e` implies `logβ |x| < e`, hence `mag x ≤ e`.
+    Since mag is defined via {lean}`Int.ceil (log |x| / log β)`, the bound
+    {lean}`|x| < (beta : ℝ) ^ e` implies {lean}`logβ |x| < e`, hence {lean}`mag x ≤ e`.
     This corrects the direction compared to an earlier draft. -/
 theorem lt_mag (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 < |x| ∧ |x| < (beta : ℝ) ^ e⌝⦄
@@ -3835,9 +3835,9 @@ theorem bpow_mag_gt (beta : Int) (x : ℝ) (e : Int) :
 
 /-- If e ≤ mag x then bpow (e - 1) ≤ |x|
 
-    Note: this requires `x ≠ 0`. For `x = 0`, we have `(mag beta 0).run = 0`
-    while `(beta : ℝ) ^ (e - 1) > 0` for all integers `e` when `1 < beta`,
-    so the statement would be false for `e ≤ 0`.
+    Note: this requires {lean}`x ≠ 0`. For {lean}`x = 0`, we have {lean}`(mag beta 0).run = 0`
+    while {lean}`(beta : ℝ) ^ (e - 1) > 0` for all integers {lean}`e` when {lean}`1 < beta`,
+    so the statement would be false for {lean}`e ≤ 0`.
 -/
 theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ e ≤ (mag beta x).run⌝⦄
@@ -3906,7 +3906,7 @@ theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
   exact le_of_lt hpow_lt
 
 /-- Direct lower bound: for x ≠ 0, beta^(mag x - 1) ≤ |x|.
-    This is a corollary of `bpow_mag_le` with e = mag x. -/
+    This is a corollary of {lean}`bpow_mag_le` with e = mag x. -/
 theorem mag_lower_bound (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0⌝⦄
     abs_val x
@@ -3973,7 +3973,7 @@ theorem mag_upper_bound (beta : Int) (x : ℝ) :
   simp_rw [hmag]
   exact habs_le
 
-/-- If `1 < beta`, `0 ≤ e`, and `|x| < (beta : ℝ)^e`, then `mag beta x ≤ e`. -/
+/-- If {lean}`1 < beta`, {lean}`0 ≤ e`, and {lean}`|x| < (beta : ℝ)^e`, then {lean}`mag beta x ≤ e`. -/
 theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 ≤ e ∧ |x| < ((beta : ℝ) ^ e)⌝⦄
     mag beta x
@@ -3989,7 +3989,7 @@ theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     have : (1 < beta ∧ x ≠ 0 ∧ |x| < (beta : ℝ) ^ e) := ⟨hβ, by exact hx0, hlt⟩
     exact (mag_le_bpow beta x e) this
 
-/-- If `1 < beta` and `(beta : ℝ)^(e-1) < |x|`, then `e ≤ mag beta x`. -/
+/-- If {lean}`1 < beta` and {lean}`(beta : ℝ)^(e-1) < |x|`, then {lean}`e ≤ mag beta x`. -/
 theorem mag_gt_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ (e - 1)) < |x|⌝⦄
     mag beta x
