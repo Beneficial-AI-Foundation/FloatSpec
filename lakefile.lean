@@ -10,6 +10,7 @@ package FloatSpec where
     ⟨`relaxedAutoImplicit, false⟩,
     ⟨`linter.missingDocs, true⟩,
     ⟨`linter.unnecessarySimpa, false⟩,
+    ⟨`linter.unusedSimpArgs, false⟩,
     -- Allow work-in-progress files that use `sorry` to compile
     ⟨`warningAsError, false⟩,
     ⟨`doc.verso, true⟩
