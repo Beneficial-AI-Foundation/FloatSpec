@@ -363,8 +363,8 @@ theorem Rmax_opp_spec (x y : ℝ) :
     If x ≤ y, then exp x ≤ exp y. This captures the
     strict monotonicity of the real exponential function.
 -/
-noncomputable def exp_le_check (x y : ℝ) : Id ℝ :=
-  pure (Real.exp x )
+noncomputable def exp_le_check (x _y : ℝ) : Id ℝ :=
+  pure (Real.exp x)
 
 /-- Specification: Exponential is monotone increasing
 
@@ -522,6 +522,7 @@ theorem sqrt_ge_0_spec (x : ℝ) :
 
   Lean (spec): If x ≤ 0 then sqrt x = 0.
 -/
+/-- Carrier for {coq}`sqrt_neg`: returns {lean}`Real.sqrt x`. -/
 noncomputable def sqrt_neg_check (x : ℝ) : Id ℝ :=
   Real.sqrt x
 
@@ -584,7 +585,8 @@ section Squares
 
   Lean (spec): From x^2 ≤ y^2, deduce x ≤ |y|.
 -/
-noncomputable def Rsqr_le_abs_0_alt_val (x y : ℝ) : Id ℝ :=
+/-- Carrier for {coq}`Rsqr_le_abs_0_alt`: returns the first argument. -/
+noncomputable def Rsqr_le_abs_0_alt_val (x _y : ℝ) : Id ℝ :=
   pure x
 
 @[spec]
@@ -877,10 +879,15 @@ section RcompareMore
     tiny wrapper returning the Int code, so cross-references to these names
     type-check in documentation. -/
 noncomputable def Rcompare_Lt (x y : ℝ) : Id Int := Rcompare x y
+/-- Carrier for {coq}`Rcompare_Eq`: comparison yielding Eq code. -/
 noncomputable def Rcompare_Eq (x y : ℝ) : Id Int := Rcompare x y
+/-- Carrier for {coq}`Rcompare_Gt`: comparison yielding Gt code. -/
 noncomputable def Rcompare_Gt (x y : ℝ) : Id Int := Rcompare x y
+/-- Carrier for {coq}`Rcompare_not_Lt`: comparison when not Lt. -/
 noncomputable def Rcompare_not_Lt (x y : ℝ) : Id Int := Rcompare x y
+/-- Carrier for {coq}`Rcompare_not_Gt`: comparison when not Gt. -/
 noncomputable def Rcompare_not_Gt (x y : ℝ) : Id Int := Rcompare x y
+/-- Carrier for {coq}`Rcompare`: generic comparison. -/
 noncomputable def Rcompare_val (x y : ℝ) : Id Int := Rcompare x y
 
 /-- Coq: {lean}`Rcompare_Lt` — if {lean}`x < y` then the comparison yields the Lt code {lean}`-1`. -/
@@ -1158,7 +1165,7 @@ theorem Rcompare_not_Gt_inv (x y : ℝ) :
 def Zcompare_int (m n : Int) : Id Int :=
   pure (if m < n then -1 else if m = n then 0 else 1)
 
-/-  Coq theorem name `Rcompare_IZR`: comparing casts of integers matches integer comparison. -/
+/-- Carrier for {coq}`Rcompare_IZR`: comparing casts of integers matches integer comparison. -/
 noncomputable def Rcompare_IZR (m n : Int) : Id Int := Rcompare (m : ℝ) (n : ℝ)
 
 /-- Coq theorem {name}`Rcompare_IZR`: comparing casts of integers matches integer comparison. -/
@@ -1608,8 +1615,8 @@ theorem eqb_sym_spec (a b : Bool) :
   -- Boolean equality is symmetric
   exact Bool.beq_comm
 
-/- Boolean equality test wrapper -/
-noncomputable def eqb_check (a b : Bool) : Id Bool :=
+/-- Boolean equality test wrapper for {coq}`eqb` specs. -/
+def eqb_check (a b : Bool) : Id Bool :=
   pure (a == b)
 
 /-- If a = b then (a == b) = true -/
@@ -2682,6 +2689,7 @@ theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
   -- Finish by reducing the wp-goal to this equality.
   simpa [wp, PostCond.noThrow] using this
 
+/-- Carrier for {coq}`Rcompare_ceil_floor_middle`: checks ceiling/floor comparison codes. -/
 noncomputable def Rcompare_ceil_floor_middle_check (x : ℝ) : Id (Int × Int) :=
   do
     let f ← Zfloor x
@@ -2882,7 +2890,7 @@ theorem bpow_1 (beta : Int) :
   -- Reduce the Hoare triple on Id to a pure equality and use zpow at 1
   simp [wp, PostCond.noThrow, Id.run, pure, zpow_one]
 
--- Removed stray diagnostic block that broke parsing around here.
+/-- Carrier for {coq}`bpow_plus_1`: checks `β^(e+1) = β * β^e`. -/
 noncomputable def bpow_plus_1_check (beta e : Int) : Id (ℝ × ℝ) :=
   pure (((beta : ℝ) ^ (e + 1), (beta : ℝ) * ((beta : ℝ) ^ e)))
 
@@ -3098,7 +3106,7 @@ theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int) :
   -- Antisymmetry yields equality of exponents
   exact le_antisymm hle12 hle21
 
--- Helper for the square-root law on even exponents
+/-- Carrier for {coq}`sqrt_bpow`: square-root law on even exponents. -/
 noncomputable def sqrt_bpow_check (beta e : Int) : Id (ℝ × ℝ) :=
   pure ((Real.sqrt ((beta : ℝ) ^ (2 * e)), (beta : ℝ) ^ e))
 
