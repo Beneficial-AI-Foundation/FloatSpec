@@ -539,3 +539,17 @@ auto-update-stale = true    # Auto-update stale working copies when switching co
 - [Non-terminal simp](https://github.com/nielsvoss/lean-pitfalls#non-terminal-simp)
 - [Ignoring warnings](https://github.com/nielsvoss/lean-pitfalls#ignoring-warnings)
 - [Ambiguous unicode characters](https://github.com/nielsvoss/lean-pitfalls#ambiguous-unicode-characters)
+
+## Docs
+
+Do NOT use the `{lit}` verso role if an identifier is missing. Use `{given
+-show}`foo` and {givenInstance} roles.
+
+## Verso Docstring Roles
+
+- `{lean}` validates identifiers against global scope - metavariables like `n` will error
+- `{given -show}`n : Nat`` introduces metavariables for subsequent `{lean}` roles to reference
+- Pattern: `{given -show}`n : Nat`` then `{lean}`some n`` works
+- `{coq}` role (from VersoCoq) links to Flocq documentation
+- `{lit}` for literal math notation without validation, but don't overuse for patterns with metavariables
+- `@[doc_role]` must define at root namespace for role name to match (e.g., `coq` not `VersoCoq.Roles.coq`)
