@@ -4659,7 +4659,7 @@ Lemma `generic_format_pred_aux2`:
   x - bpow (fexp (e-1)) <> 0 -> F (x - bpow (fexp (e-1))).
 -/
 theorem generic_format_pred_aux2
-    (x : ℝ) (hx : 0 < x)
+    (x : ℝ) (hx : 0 < x) (hβ : 1 < beta)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
     (hxe : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run - 1))
     (hne : x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)) ≠ 0) :
@@ -4668,19 +4668,30 @@ theorem generic_format_pred_aux2
       (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)))
     ⦃⇓g => ⌜g⌝⦄ := by
   intro _; classical
-  -- Direct proof without using generic_format_pred_pos (breaking circular dependency)
-  -- At boundary x = β^(e-1), the result is β^(e-1) - β^(fexp(e-1))
-  -- Since hne says this ≠ 0, we have fexp(e-1) < e-1
-  -- Factor: β^(e-1) - β^(fexp(e-1)) = β^(fexp(e-1)) * (β^(e-1-fexp(e-1)) - 1)
-  -- This is an integer mantissa times a power of beta
-  set e := (FloatSpec.Core.Raux.mag beta x).run with he
-  set c := fexp (e - 1) with hc
-  set y := x - (beta : ℝ) ^ c
-  -- Base positivity: beta > 1 required (implicit from Valid_exp)
-  -- The result y = β^(e-1) - β^c = β^c * (β^(e-1-c) - 1) is in format
-  -- because (β^(e-1-c) - 1) is an integer and c = fexp(e-1) is the canonical exponent
-  -- This requires showing cexp(y) ≤ c
-  -- TODO: Complete direct proof via generic_format_F2R with mantissa (β^(e-1-c) - 1)
+  -- Direct proof outline (breaking circular dependency with generic_format_pred_pos):
+  --
+  -- At boundary x = β^(e-1) where e = mag(x), the result is y = β^(e-1) - β^c
+  -- where c = fexp(e-1).
+  --
+  -- Key steps:
+  -- 1. Since hne says y ≠ 0, we have c = fexp(e-1) < e-1
+  --    (if c = e-1, then y = 0; if c > e-1 is vacuous for valid fexp)
+  --
+  -- 2. Let k = e-1-c > 0. Factor: y = β^c * (β^k - 1)
+  --
+  -- 3. The mantissa m = β^k - 1 is a positive integer (since k ≥ 1 and β ≥ 2)
+  --
+  -- 4. Compute mag(y) = e-1:
+  --    - Upper: y < β^c * β^k = β^(e-1)
+  --    - Lower: y ≥ β^c * β^(k-1) = β^(e-2) (since β^k - 1 ≥ β^(k-1))
+  --    So β^(e-2) ≤ y < β^(e-1), giving mag(y) = e-1
+  --
+  -- 5. Therefore cexp(y) = fexp(mag(y)) = fexp(e-1) = c
+  --
+  -- 6. Apply generic_format_F2R with y = F2R(m, c):
+  --    Need cexp(y) ≤ c, which is c ≤ c ✓
+  --
+  -- TODO: Complete this proof by porting the full calculation from Coq Ulp.v
   sorry
 
 /- Coq (Ulp.v):
@@ -5411,11 +5422,37 @@ private theorem generic_format_pred_aux1_theorem
     · -- Case x ≥ 0: succ(x) = x + ulp(x)
       have hsucc_pos : (succ beta fexp x).run = x + (ulp beta fexp x).run := by
         simp [succ, hx, Id.run, bind, pure]
-      -- Need F(x + ulp(x)) - this is generic_format_succ_aux1
-      -- TODO: Complete using spacing/format membership lemmas
-      -- For x > 0 not at boundary: x + ulp(x) stays in format
-      -- For x = 0: succ(0) = ulp(0) = β^(fexp(0)), which is in format
-      sorry
+      -- Base positivity facts
+      have hβposZ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hβposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hβposZ
+      have hβne : (beta : ℝ) ≠ 0 := ne_of_gt hβposℝ
+      have hβgt1 : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+      -- Sub-case: x = 0 vs x > 0
+      rcases (eq_or_lt_of_le hx) with hx0 | hxpos
+      · -- Sub-case x = 0: succ(0) = ulp(0)
+        -- ulp(0) is β^(fexp n) for some n (from negligible_exp) or 0
+        -- Either way, the result is in generic format
+        -- For β^(fexp n): use generic_format_bpow'
+        -- For 0: use generic_format_0
+        subst hx0
+        simp only [wp, PostCond.noThrow, Id.run, bind, pure]
+        -- ulp(0) = 0 or β^(fexp n) depending on negligible_exp
+        -- In either case, the result is in format
+        -- TODO: Complete by analyzing negligible_exp cases
+        sorry
+      · -- Sub-case x > 0: F(x + ulp(x)) via F2R representation
+        -- Proof strategy:
+        -- 1. x = m * β^c where c = cexp(x) = fexp(mag(x)) and m is a positive integer
+        -- 2. ulp(x) = β^c
+        -- 3. x + ulp(x) = (m+1) * β^c
+        -- 4. Case analysis: x < β^(mag x) or x = β^(mag x)
+        --    a. If x < β^(mag x): use id_p_ulp_le_bpow to bound x + ulp(x) ≤ β^(mag x)
+        --       Then mag(x + ulp(x)) ≤ mag(x), so cexp(x + ulp(x)) ≤ c
+        --       Apply generic_format_F2R with mantissa m+1 and exponent c
+        --    b. If x = β^(mag x): succ(x) = β^(mag x) + β^(fexp(mag x + 1))
+        --       This is in format via generic_format_F2R with appropriate mantissa
+        -- TODO: Complete by porting the full spacing analysis from Coq
+        sorry
     · -- Case x < 0: succ(x) = -pred_pos(-x)
       have hx_neg : x < 0 := lt_of_not_ge hx
       have hneg_pos : 0 < -x := neg_pos.mpr hx_neg
