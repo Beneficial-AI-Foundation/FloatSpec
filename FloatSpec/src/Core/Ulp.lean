@@ -5448,17 +5448,27 @@ private theorem generic_format_pred_aux1_theorem
         -- TODO: Complete by analyzing negligible_exp cases
         sorry
       · -- Sub-case x > 0: F(x + ulp(x)) via F2R representation
-        -- Proof strategy:
+        -- Proof outline:
         -- 1. x = m * β^c where c = cexp(x) = fexp(mag(x)) and m is a positive integer
         -- 2. ulp(x) = β^c
-        -- 3. x + ulp(x) = (m+1) * β^c
-        -- 4. Case analysis: x < β^(mag x) or x = β^(mag x)
-        --    a. If x < β^(mag x): use id_p_ulp_le_bpow to bound x + ulp(x) ≤ β^(mag x)
-        --       Then mag(x + ulp(x)) ≤ mag(x), so cexp(x + ulp(x)) ≤ c
-        --       Apply generic_format_F2R with mantissa m+1 and exponent c
-        --    b. If x = β^(mag x): succ(x) = β^(mag x) + β^(fexp(mag x + 1))
-        --       This is in format via generic_format_F2R with appropriate mantissa
-        -- TODO: Complete by porting the full spacing analysis from Coq
+        -- 3. x + ulp(x) = (m+1) * β^c = F2R(m+1, c)
+        -- 4. Need: cexp(x + ulp(x)) ≤ c
+        -- 5. Case analysis on whether x is a power of β:
+        --    a. If x < β^(mag x): use id_p_ulp_le_bpow to get x + ulp(x) ≤ β^(mag x)
+        --       This gives mag(x + ulp(x)) = mag(x), so cexp(succ) = c
+        --    b. If x = β^(mag x - 1): boundary case, succ = β^(mag x - 1) + β^(fexp(mag x))
+        --       Need separate analysis via generic_format_bpow
+        -- 6. Apply generic_format_F2R with mantissa m+1 and exponent c
+        --
+        -- Key insight: The strict bound x < β^(mag x) holds UNLESS x is exactly β^k for some k
+        -- (in which case x = β^(mag x - 1) and mag(x) = k + 1).
+        -- For power-of-beta inputs, succ(β^k) = β^k + β^(fexp(k+1)) which requires
+        -- special handling via the boundary case analysis.
+        --
+        -- TODO: Complete by porting full spacing analysis from Coq Ulp.v generic_format_succ
+        -- The complete proof needs to handle:
+        -- - Interior case (x not power of β): use id_p_ulp_le_bpow directly
+        -- - Boundary case (x = β^(e-1)): use generic_format_bpow for β^e part
         sorry
     · -- Case x < 0: succ(x) = -pred_pos(-x)
       have hx_neg : x < 0 := lt_of_not_ge hx
