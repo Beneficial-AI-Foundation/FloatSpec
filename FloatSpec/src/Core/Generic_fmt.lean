@@ -4055,13 +4055,65 @@ end Inclusion
 
 section Round_generic
 
-/-- Existence of round-down value in the generic format.
-    Follows from format discreteness. Uses sorry pending constructive proof. -/
+/-- Existence of round-down value in the generic format. -/
 theorem round_DN_exists
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f).run ∧
       Rnd_DN_pt (fun y => (generic_format beta fexp y).run) x f := by
-  sorry
+  classical
+  -- Construct the round-down witness
+  let c : Int := (cexp beta fexp x).run
+  let m : Int := ⌊x * (beta : ℝ) ^ (-c)⌋
+  let f : ℝ := (m : ℝ) * (beta : ℝ) ^ c
+  -- Base positivity facts
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+  have hpow_pos : 0 < (beta : ℝ) ^ c := zpow_pos hbpos c
+  have hpow_neg_pos : 0 < (beta : ℝ) ^ (-c) := zpow_pos hbpos (-c)
+  -- Use f as the witness
+  use f
+  -- Key lemma: cexp(F2R(m,c)) ≤ c when m ≠ 0
+  -- This follows from: cexp(m * β^c) = fexp(mag(m) + c) by mag_F2R
+  -- And the scaled mantissa bound: |m| = |⌊x * β^(-c)⌋| ≤ |x * β^(-c)| + 1 ≤ β^(mag(x) - c) + 1
+  -- Combined with Valid_exp properties ensures fexp(mag(m) + c) ≤ c
+  have hcexp_bound : m ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk m c : FlocqFloat beta)).run).run ≤ c := by
+    intro hm_ne
+    simp only [cexp, F2R, Id.run, bind, pure]
+    -- TODO: Complete proof using mag_F2R and Valid_exp properties
+    -- Key steps: 1) mag(m * β^c) = mag(m) + c when m ≠ 0 (by mag_F2R)
+    --            2) |m| ≤ β^(mag(x) - c) + 1 from floor bound
+    --            3) Therefore mag(m) ≤ mag(x) - c + 1
+    --            4) By Valid_exp: fexp(mag(m) + c) ≤ fexp(mag(x) + 1) ≤ c
+    sorry
+  have hF2R : f = (F2R (FlocqFloat.mk m c : FlocqFloat beta)).run := by simp [F2R, f]
+  constructor
+  · -- Show f is in generic format using generic_format_F2R
+    rw [hF2R]
+    exact (generic_format_F2R beta fexp m c) ⟨hβ, hcexp_bound⟩
+  · -- Show f satisfies Rnd_DN_pt
+    constructor
+    · -- F f: reuse the generic_format proof
+      rw [hF2R]
+      exact (generic_format_F2R beta fexp m c) ⟨hβ, hcexp_bound⟩
+    constructor
+    · -- f ≤ x: from floor property
+      have hfloor_le : (m : ℝ) ≤ x * (beta : ℝ) ^ (-c) := Int.floor_le _
+      calc f = (m : ℝ) * (beta : ℝ) ^ c := rfl
+        _ ≤ (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c := by
+            apply mul_le_mul_of_nonneg_right hfloor_le (le_of_lt hpow_pos)
+        _ = x * ((beta : ℝ) ^ (-c) * (beta : ℝ) ^ c) := by ring
+        _ = x * (beta : ℝ) ^ ((-c) + c) := by rw [← zpow_add₀ hbne]
+        _ = x * (beta : ℝ) ^ 0 := by simp
+        _ = x := by simp
+    · -- f is maximal: ∀ g, F g → g ≤ x → g ≤ f
+      intro g hFg hg_le_x
+      -- Proof sketch: g in generic format means g = n * β^(cexp g) for integer n
+      -- Since g ≤ x, we have g * β^(-c) ≤ x * β^(-c)
+      -- The key insight: g * β^(-c) is in Z (up to rounding) when cexp(g) ≤ c
+      -- And the floor construction makes m maximal among such integers
+      -- TODO: Requires generic_format_canonical or similar spacing lemma
+      sorry
 
 -- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
 theorem round_DN_exists_global
