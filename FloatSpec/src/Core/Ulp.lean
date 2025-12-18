@@ -5438,15 +5438,16 @@ private theorem generic_format_pred_aux1_theorem
       rcases (eq_or_lt_of_le hx) with hx0 | hxpos
       · -- Sub-case x = 0: succ(0) = ulp(0)
         -- ulp(0) is β^(fexp n) for some n (from negligible_exp) or 0
-        -- Either way, the result is in generic format
-        -- For β^(fexp n): use generic_format_bpow'
-        -- For 0: use generic_format_0
+        -- Either way, the result is in generic format (by generic_format_ulp0_theorem)
         subst hx0
+        -- Use the established theorem: F(ulp(0))
+        have hulp0_fmt := generic_format_ulp0_theorem (beta := beta) (fexp := fexp) hβ
+        -- Reduce the Hoare triple
         simp only [wp, PostCond.noThrow, Id.run, bind, pure]
-        -- ulp(0) = 0 or β^(fexp n) depending on negligible_exp
-        -- In either case, the result is in format
-        -- TODO: Complete by analyzing negligible_exp cases
-        sorry
+        -- Simplify succ(0): the if 0 ≤ 0 branch gives ulp(0)
+        simp only [succ, Id.run, bind, pure, le_refl, ite_true, zero_add]
+        -- Now the goal is generic_format(ulp(0).run).run = hulp0_fmt
+        exact hulp0_fmt
       · -- Sub-case x > 0: F(x + ulp(x)) via F2R representation
         --
         -- DETAILED PROOF STRATEGY:
@@ -5756,11 +5757,25 @@ private theorem generic_format_pred_aux1_theorem
               -- Contradiction: x > 0 but x = 0
               linarith
         · -- Boundary case: x = β^e (x is a power of β)
-          -- Here x = β^e, and we need to show F(β^e + ulp(β^e))
-          -- ulp(β^e) = β^(fexp(mag(β^e))) = β^(fexp(e)) since mag(β^e) = e
-          -- So succ = β^e + β^(fexp(e))
-          -- If fexp(e) = e, succ = 2*β^e which needs analysis
-          -- Use generic_format_bpow or F2R structure
+          -- NOTE: This case arises because our mag definition uses ceil(log|x|/log β),
+          -- giving mag(β^e) = e. Coq's mag uses strict upper bound, giving mag(β^e) = e+1.
+          -- This semantic difference means our ulp(β^e) = β^(fexp(e)) differs from
+          -- Coq's ulp(β^e) = β^(fexp(e+1)).
+          --
+          -- For fexp(e) = e (small regime):
+          --   succ = 2β^e = F2R(2, e), and by Valid_exp: fexp(e+1) ≤ e
+          --   So cexp(2β^e) = fexp(e+1) ≤ e, hence F(2β^e) by generic_format_F2R
+          --
+          -- For fexp(e) < e (large regime):
+          --   succ = β^e + β^(fexp(e)), mag(succ) = e+1, cexp(succ) = fexp(e+1)
+          --   The scaled mantissa β^(e-fexp(e+1)) + β^(fexp(e)-fexp(e+1)) may not
+          --   be an integer for typical formats like FLT where fexp(k) = k-p.
+          --   This requires either adjusting our mag definition to match Coq's,
+          --   or a custom proof path.
+          --
+          -- TODO: Resolve by either:
+          -- 1. Fix mag to use Coq's semantics: β^(e-1) ≤ |x| < β^e (strict upper bound)
+          -- 2. Prove this case handles our semantics correctly
           sorry
     · -- Case x < 0: succ(x) = -pred_pos(-x)
       have hx_neg : x < 0 := lt_of_not_ge hx
