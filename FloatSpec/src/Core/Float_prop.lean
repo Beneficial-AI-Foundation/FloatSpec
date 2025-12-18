@@ -1540,14 +1540,10 @@ Qed.
     -- Conclude by rewriting the RHS of htrans
     simpa [hbcast_nat', hRHS_alt] using htrans
   -- Apply uniqueness of mag on (0, ∞)
-  have huniq := FloatSpec.Core.Raux.mag_unique_pos (beta := beta) x (d + e)
-  -- Provide the required precondition: 1 < beta ∧ 0 < x ∧ (b^(d+e-1) < x ∧ x ≤ b^(d+e))
-  have hpre : 1 < beta ∧ 0 < x ∧ ((b ^ (d + e - 1) < x) ∧ (x ≤ b ^ (d + e))) := by
-    exact And.intro hbeta (And.intro hx_pos (And.intro hlow_real hupp_real))
-  -- Run the spec to get the equality
-  have hspec := huniq hpre
-  -- Reduce the Hoare triple to a pure equality
-  simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run] using hspec
+  -- TODO: Update proof for new mag_unique_pos signature with Coq semantics
+  -- Old: b^(e-1) < x ∧ x ≤ b^e
+  -- New: b^(e-1) ≤ x ∧ x < b^e
+  sorry
 
 /-
 Coq original:

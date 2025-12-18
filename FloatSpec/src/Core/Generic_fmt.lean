@@ -334,8 +334,9 @@ theorem generic_format_bpow_inv'
 
   -- Compute mag on a pure power: mag beta (β^e) = e
   have hmag_pow_run : (mag beta ((beta : ℝ) ^ e)).run = e := by
+    -- TODO: Update proof for floor+1 semantics where mag_bpow now returns e + 1
     have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := e)
-    simpa [wp, PostCond.noThrow, Id.run, pure] using (htrip hβ)
+    sorry
 
   -- Expand the generic_format equality at x = (β : ℝ)^e
   have hEq0 : (beta : ℝ) ^ e
@@ -596,8 +597,9 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
 
   -- Compute mag on a pure power: mag beta (β^e) = e to obtain cexp(β^e) = fexp e
   have hmag_pow_run : (mag beta ((beta : ℝ) ^ e)).run = e := by
+    -- TODO: Update proof for floor+1 semantics where mag_bpow now returns e + 1
     have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := e)
-    simpa [wp, PostCond.noThrow, Id.run, pure] using (htrip hβ)
+    sorry
 
   -- Use the general F2R lemma with m = 1 and the derived bound on cexp
   have hbound : (1 : Int) ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk 1 e : FlocqFloat beta)).run).run ≤ e := by
@@ -623,8 +625,9 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
   rcases hpre with ⟨hβ, hfe_le⟩
   -- Compute mag on a pure power: mag beta (β^e) = e ⇒ cexp(β^e) = fexp e
   have hmag_pow_run : (mag beta ((beta : ℝ) ^ e)).run = e := by
+    -- TODO: Update proof for floor+1 semantics where mag_bpow now returns e + 1
     have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := e)
-    simpa [wp, PostCond.noThrow, Id.run, pure] using (htrip hβ)
+    sorry
 
   -- Provide the bound required by `generic_format_F2R` with mantissa m = 1
   have hbound : (1 : Int) ≠ 0 →
@@ -1464,9 +1467,9 @@ theorem scaled_mantissa_lt_bpow
       have hxpos : 0 < abs x := abs_pos.mpr hx0
       set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
       have hmageq : e = Int.ceil L := by
+        -- TODO: Update proof for floor+1 semantics - mag now uses floor+1, not ceil
         have : (mag beta x).run = Int.ceil L := by
-          unfold FloatSpec.Core.Raux.mag
-          simp [hx0, L]
+          sorry
         simpa [e] using this
       have hceil_ge : (L : ℝ) ≤ (Int.ceil L : ℝ) := by exact_mod_cast Int.le_ceil L
       have hmul_le : L * Real.log (beta : ℝ) ≤ (Int.ceil L : ℝ) * Real.log (beta : ℝ) :=
@@ -1543,8 +1546,8 @@ private theorem abs_le_bpow_mag
     have hxpos : 0 < abs x := abs_pos.mpr hx0
     set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
     have hmageq : (mag beta x).run = Int.ceil L := by
-      unfold FloatSpec.Core.Raux.mag
-      simp [hx0, L]
+      -- TODO: Update proof for floor+1 semantics - mag now uses floor+1, not ceil
+      sorry
     have hceil_ge : (L : ℝ) ≤ (Int.ceil L : ℝ) := by exact_mod_cast Int.le_ceil L
     have hmul_le : L * Real.log (beta : ℝ) ≤ (Int.ceil L : ℝ) * Real.log (beta : ℝ) :=
       mul_le_mul_of_nonneg_right hceil_ge (le_of_lt hlogβ_pos)
@@ -3902,9 +3905,10 @@ theorem generic_inclusion (e : Int) :
   classical
   -- From the tight bpow bounds with strict lower bound, deduce mag beta x = e
   have hmag_run : (mag beta x).run = e := by
+    -- TODO: Update proof for floor+1 semantics - mag_unique now expects β^(e-1) ≤ |x| (non-strict)
     have h := FloatSpec.Core.Raux.mag_unique (beta := beta) (x := x) (e := e)
     have : 1 < beta ∧ ((beta : ℝ) ^ (e - 1) < |x| ∧ |x| ≤ (beta : ℝ) ^ e) := ⟨hβ, hx⟩
-    simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.mag] using (h this)
+    sorry
   -- Pointwise inequality on the canonical exponent at x
   have hpoint : x ≠ 0 → fexp2 ((mag beta x).run) ≤ fexp1 ((mag beta x).run) := by
     intro _; simpa [hmag_run] using hle_e
@@ -4020,7 +4024,8 @@ theorem generic_inclusion_ge (e1 : Int) :
     set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
     -- Under x ≠ 0, `(mag beta x).run = ⌈L⌉`
     have hmag_run : (mag beta x).run = Int.ceil L := by
-      simp [mag, hx_ne, L]
+      -- TODO: Update proof for floor+1 semantics - mag now uses floor+1, not ceil
+      sorry
     -- Base > 1 on ℝ and hence positive; log β > 0
     have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
     have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
@@ -5046,7 +5051,8 @@ private theorem lt_of_mag_lt_pos
   -- Upper bound on |x|: |x| ≤ β^ex (from ex = ⌈Lx⌉)
   set Lx : ℝ := Real.log (abs x) / Real.log (beta : ℝ) with hLx
   have hmagx_run : (FloatSpec.Core.Raux.mag beta x).run = Int.ceil Lx := by
-    simp [FloatSpec.Core.Raux.mag, hLx, hx0]
+    -- TODO: Update proof for floor+1 semantics - mag now uses floor+1, not ceil
+    sorry
   have hLx_le_ex : Lx ≤ (ex : ℝ) := by
     have : (Int.ceil Lx : ℝ) = ex := by simpa [hmagx_run, hex]
     exact (le_trans (Int.le_ceil Lx) (le_of_eq this))
@@ -5086,7 +5092,8 @@ private theorem lt_of_mag_lt_pos
   -- Lower bound on |y|: β^(ey - 1) < |y| (from ey = ⌈Ly⌉)
   set Ly : ℝ := Real.log (abs y) / Real.log (beta : ℝ) with hLy
   have hmagy_run : (FloatSpec.Core.Raux.mag beta y).run = Int.ceil Ly := by
-    simp [FloatSpec.Core.Raux.mag, hLy, hy0]
+    -- TODO: Update proof for floor+1 semantics - mag now uses floor+1, not ceil
+    sorry
   have h_em1_lt_Ly : (ey - 1 : ℝ) < Ly := by
     -- From (ey - 1) + 1 ≤ ⌈Ly⌉, conclude (ey - 1 : ℝ) < Ly
     have hstep : (ey - 1) + 1 ≤ Int.ceil Ly := by
@@ -5346,8 +5353,8 @@ theorem cexp_fexp (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
   -- Unfold mag and set L = log(|x|)/log(beta)
   -- Prepare an explicit form for mag
   have hmageq : (mag beta x).run = Int.ceil (Real.log (abs x) / Real.log (beta : ℝ)) := by
-    unfold mag
-    simp [hx0]
+    -- TODO: Update proof for floor+1 semantics - mag now uses floor+1, not ceil
+    sorry
   set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ) with hLdef
   -- Show Int.ceil L = ex by sandwiching L between ex-1 and ex
   -- Upper bound: L ≤ ex
@@ -7271,10 +7278,9 @@ theorem cexp_le_bpow
       hβ (by simpa using ‹x ≠ 0›) hbpow_pos (le_of_lt hxlt)
   -- Compute cexp on a pure power using mag_bpow from Raux
   have hmag_bpow_run : (mag beta ((beta : ℝ) ^ e)).run = e := by
-    -- Use the Hoare-style specification `mag_bpow` to extract the run-value
+    -- TODO: Update proof for floor+1 semantics where mag_bpow now returns e + 1
     have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := e)
-    simpa [wp, PostCond.noThrow, Id.run, pure]
-      using (htrip hβ)
+    sorry
   have hcexp_bpow : (cexp beta fexp ((beta : ℝ) ^ e)).run = fexp e := by
     unfold cexp
     simp [hmag_bpow_run]
@@ -7798,20 +7804,10 @@ theorem mag_round_ZR
     have : abs r ≤ (beta : ℝ) ^ (e - c) * (beta : ℝ) ^ c := by simpa [this] using hprod_bound
     simpa [hpow_collapse] using this
   -- From |r| ≤ β^e and r ≠ 0, deduce mag r ≤ e (monotonicity of mag)
+  -- TODO: Update proof for Coq semantics where mag(β^e) = e + 1
+  -- Need to show |r| < β^e strictly, or use different approach
   have h_le : (mag beta r).run ≤ e := by
-    -- Monotonicity of mag with respect to absolute value
-    have hmag_le :=
-      (FloatSpec.Core.Raux.mag_le (beta := beta) (x := r) (y := (beta : ℝ) ^ e))
-        ⟨hβ, hr_ne, by simpa [abs_of_nonneg (le_of_lt (zpow_pos hbposR _))] using h_abs_r_le⟩
-    -- Extract the pure inequality on runs: (mag r).run ≤ (mag (β^e)).run
-    have h_runs : (mag beta r).run ≤ (mag beta ((beta : ℝ) ^ e)).run := by
-      simpa [wp, PostCond.noThrow, Id.run, pure] using hmag_le
-    -- Compute mag β^e = e
-    have hmag_bpow_run : (mag beta ((beta : ℝ) ^ e)).run = e := by
-      have htrip := (FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := e))
-      simpa [wp, PostCond.noThrow, Id.run, pure] using (htrip hβ)
-    -- Chain the inequalities
-    simpa [hmag_bpow_run] using h_runs
+    sorry
   -- Chain bounds to get equality on integers
   exact le_antisymm h_le h_ge
 
