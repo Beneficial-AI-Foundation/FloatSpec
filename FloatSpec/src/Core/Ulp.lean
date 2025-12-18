@@ -5523,10 +5523,161 @@ private theorem generic_format_pred_aux1_theorem
           -- Case split: succ < β^e or succ = β^e
           rcases (le_iff_lt_or_eq.mp hsucc_le) with hsucc_lt | hsucc_eq_be
           · -- succ < β^e: magnitude stays at e, use F2R structure
-            -- mag(succ) = e since β^(e-1) < succ < β^e
-            -- Thus cexp(succ) = fexp(e) = c, and F2R representation works
-            -- Apply grind to close the gap
-            sorry
+            -- Show β^(e-1) < succ from β^(e-1) ≤ x < succ
+            have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x)
+            have habs_x' : |x| = x := abs_of_pos hxpos
+            have hx_ge : b ^ (e - 1) ≤ x := by
+              have := hmag_lower ⟨hβ, hx_ne⟩
+              simp only [wp, PostCond.noThrow, Id.run, bind, pure,
+                         FloatSpec.Core.Raux.abs_val] at this
+              simpa [habs_x'] using this
+            -- ulp(x) > 0 for x > 0
+            have hulp_pos : 0 < (ulp beta fexp x).run := by
+              -- ulp(x) = β^(cexp(x)) for x ≠ 0, and β^k > 0 for any k
+              have hbposℤ' : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+              have hbposℝ' : (0 : ℝ) < b := by simp only [b]; exact_mod_cast hbposℤ'
+              -- ulp for nonzero x is a power of β
+              simp only [ulp, hx_ne, ↓reduceIte, FloatSpec.Core.Generic_fmt.cexp, Id.run, bind, pure]
+              exact zpow_pos hbposℝ' _
+            -- succ = x + ulp > x ≥ β^(e-1), so β^(e-1) < succ
+            have hsucc_gt_x : x < (succ beta fexp x).run := by
+              rw [hsucc_pos]
+              linarith
+            have hsucc_gt_low : b ^ (e - 1) < (succ beta fexp x).run := by
+              calc b ^ (e - 1) ≤ x := hx_ge
+                _ < (succ beta fexp x).run := hsucc_gt_x
+            -- succ is positive
+            have hsucc_pos' : 0 < (succ beta fexp x).run := by
+              rw [hsucc_pos]
+              have : 0 < (ulp beta fexp x).run := hulp_pos
+              linarith
+            -- Use mag_unique_pos: β^(e-1) < succ ≤ β^e implies mag(succ) = e
+            have hmag_succ := FloatSpec.Core.Raux.mag_unique_pos (beta := beta)
+              (x := (succ beta fexp x).run) (e := e)
+            simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hmag_succ
+            have hmag_succ_eq : (FloatSpec.Core.Raux.mag beta ((succ beta fexp x).run)).run = e := by
+              apply hmag_succ
+              exact ⟨hβ, hsucc_pos', hsucc_gt_low, le_of_lt hsucc_lt⟩
+            -- cexp(succ) = fexp(mag(succ)) = fexp(e) = c
+            have hcexp_succ : (FloatSpec.Core.Generic_fmt.cexp beta fexp ((succ beta fexp x).run)).run = c := by
+              -- cexp y = fexp (mag y), so cexp(succ) = fexp(mag(succ)) = fexp(e) = c
+              simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, Id.run, bind, pure]
+              -- Goal: fexp (Int.ceil (Real.log (succ...) / Real.log beta)) = c
+              -- hmag_succ_eq after simp: Int.ceil ... = e
+              simp only [FloatSpec.Core.Raux.mag, Id.run, bind, pure] at hmag_succ_eq
+              -- Now hmag_succ_eq : Int.ceil ... = e
+              rw [hmag_succ_eq, hc_def]
+            -- succ in format via F2R structure (succ = (m+1) * β^c)
+            -- Use generic_format_spec: F(y) ↔ y = Ztrunc(y * β^(-c)) * β^c where c = cexp(y)
+            have hspec := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta)
+              (fexp := fexp) (x := (succ beta fexp x).run)
+            simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hspec
+            -- The ↔ from spec; we prove the RHS
+            have hiff := hspec hβ
+            -- Show succ = Ztrunc(succ * β^(-c)) * β^c
+            -- This holds because succ = (m+1) * β^c where m+1 is an integer
+            -- and Ztrunc((m+1) * β^c * β^(-c)) = Ztrunc(m+1) = m+1
+
+            -- Extract x's representation from Fx: x = m * β^c where m = Ztrunc(x * β^(-c))
+            have hFx_spec := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta)
+              (fexp := fexp) (x := x)
+            simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hFx_spec
+            have hx_repr : x = (((FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp e)))).run : Int) : ℝ) * b ^ (fexp e) := by
+              have := (hFx_spec hβ).mp Fx
+              simp only [FloatSpec.Core.Defs.F2R, Id.run, bind, pure] at this
+              convert this using 2 <;> simp [b, he]
+
+            -- Define m as the scaled mantissa
+            set m : Int := (FloatSpec.Core.Raux.Ztrunc (x * b ^ (-c))).run with hm
+
+            -- Note: c = fexp e, so the representation becomes x = m * β^c
+            have hx_eq_m_bc : x = (m : ℝ) * b ^ c := by
+              convert hx_repr using 2 <;> simp [hc_def]
+
+            -- ulp(x) = β^c for x ≠ 0
+            have hulp_eq_bc : (ulp beta fexp x).run = b ^ c := by
+              simp only [ulp, hx_ne, ↓reduceIte, FloatSpec.Core.Generic_fmt.cexp, Id.run, bind, pure]
+              -- Need: β^(fexp(mag(x))) = β^c, which follows from mag(x) = e and c = fexp(e)
+              have hmag_x_eq : (FloatSpec.Core.Raux.mag beta x).run = e := he
+              simp only [FloatSpec.Core.Raux.mag, Id.run, bind, pure] at hmag_x_eq ⊢
+              simp only [hmag_x_eq, hc_def, b]
+
+            -- succ = x + ulp(x) = m * β^c + β^c = (m + 1) * β^c
+            have hsucc_eq : (succ beta fexp x).run = (m : ℝ) * b ^ c + b ^ c := by
+              rw [hsucc_pos, hulp_eq_bc, hx_eq_m_bc]
+            -- Also express as ((m + 1) : Int : ℝ) * b ^ c for later use
+            have hsucc_eq' : (succ beta fexp x).run = ((m + 1 : Int) : ℝ) * b ^ c := by
+              rw [hsucc_eq]
+              simp only [Int.cast_add, Int.cast_one]
+              ring
+
+            -- Base positivity
+            have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+            have hbpos : (0 : ℝ) < b := by simp only [b]; exact_mod_cast hbposℤ
+            have hbne : b ≠ 0 := ne_of_gt hbpos
+
+            -- succ * β^(-c) = (m + 1)
+            have hscaled_succ : (succ beta fexp x).run * b ^ (-c) = ((m + 1 : Int) : ℝ) := by
+              rw [hsucc_eq']
+              -- Need: ((m + 1 : Int) : ℝ) * b ^ c * b ^ (-c) = ((m + 1 : Int) : ℝ)
+              have hpow_cancel : b ^ c * b ^ (-c) = (1 : ℝ) := by
+                rw [← zpow_add₀ hbne c (-c), add_neg_cancel, zpow_zero]
+              calc ((m + 1 : Int) : ℝ) * b ^ c * b ^ (-c)
+                  = ((m + 1 : Int) : ℝ) * (b ^ c * b ^ (-c)) := by ring
+                _ = ((m + 1 : Int) : ℝ) * 1 := by rw [hpow_cancel]
+                _ = ((m + 1 : Int) : ℝ) := by ring
+
+            -- Ztrunc((m + 1)) = m + 1 (since m + 1 is an integer)
+            have hZtrunc_mp1 : (FloatSpec.Core.Raux.Ztrunc (((m + 1) : Int) : ℝ)).run = m + 1 :=
+              FloatSpec.Core.Generic_fmt.Ztrunc_intCast (m + 1)
+
+            -- Ztrunc(succ * β^(-c)) = m + 1
+            have hZtrunc_succ : (FloatSpec.Core.Raux.Ztrunc ((succ beta fexp x).run * b ^ (-c))).run = m + 1 := by
+              rw [hscaled_succ, hZtrunc_mp1]
+
+            -- Now prove F(succ) using hiff
+            -- hiff : F(succ).run ↔ succ = F2R(⟨Ztrunc(succ * β^(-cexp(succ))), cexp(succ)⟩)
+            -- Use hiff.mpr to prove F(succ) from the equation
+            apply hiff.mpr
+            -- Need: succ = F2R(⟨Ztrunc(succ * β^(-cexp(succ))), cexp(succ)⟩).run
+            simp only [FloatSpec.Core.Defs.F2R, FloatSpec.Core.Raux.mag, Id.run, bind, pure]
+            -- After simp, goal has fexp (Int.ceil ...) = fexp(e) = c
+            simp only [FloatSpec.Core.Raux.mag, Id.run, bind, pure] at hmag_succ_eq
+            -- hmag_succ_eq : Int.ceil ... = e, and we have fexp applied to this
+            simp only [hmag_succ_eq, hc_def]
+            -- Goal: succ = Ztrunc(succ * β^(-c)) * β^c
+            -- Use b for beta cast
+            have hb_eq : (beta : ℝ) = b := rfl
+            simp only [hb_eq]
+            -- Goal at this point: succ = Ztrunc(succ * β^(-c)) * β^c
+            -- Strategy: unfold Ztrunc to floor/ceil, show the scaled value is positive,
+            -- and use hZtrunc_succ to rewrite
+            simp only [FloatSpec.Core.Raux.Ztrunc, Id.run, bind, pure] at hZtrunc_succ ⊢
+            -- The scaled value (succ * β^(-c)) is positive (succ > 0, β^(-c) > 0)
+            have hsucc_pos_final : 0 < (succ beta fexp x).run := by
+              rw [hsucc_pos]
+              have : 0 < (ulp beta fexp x).run := by
+                simp only [ulp, hx_ne, ↓reduceIte, FloatSpec.Core.Generic_fmt.cexp, Id.run, bind, pure]
+                exact zpow_pos hbpos _
+              linarith
+            -- The goal reduces to: succ = floor(succ * β^(-c)) * β^c
+            -- We have:
+            --   hZtrunc_succ: floor(succ * β^(-c)) = m + 1  (after expanding Ztrunc for nonneg input)
+            --   hsucc_eq': succ = (m + 1) * β^c
+            --   hsucc_pos_final: 0 < succ (so the scaled value is positive, floor is used)
+            -- Goal: succ = (m + 1) * β^c, which is hsucc_eq'
+            -- The expressions are equal modulo .run coercions
+            have hscale_pos' : 0 < (succ beta fexp x).run * (beta : ℝ) ^ (-c) := by
+              have hpow_pos : 0 < (beta : ℝ) ^ (-c) := by
+                have : (0 : ℝ) < b := hbpos
+                simp only [b] at this
+                exact zpow_pos this _
+              exact mul_pos hsucc_pos_final hpow_pos
+            -- After simp, the goal and hZtrunc_succ have matching forms with the same if-condition
+            simp only [not_lt.mpr (le_of_lt hscale_pos'), ↓reduceIte, b] at hZtrunc_succ ⊢
+            -- The goal should be about .run; let's convert
+            show (succ beta fexp x).run = _
+            rw [hZtrunc_succ, hsucc_eq']
           · -- succ = β^e: use generic_format_bpow
             -- succ = β^e is in format when fexp(e+1) ≤ e
             have hvalid_exp := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
