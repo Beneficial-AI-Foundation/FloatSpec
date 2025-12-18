@@ -5488,9 +5488,86 @@ private theorem generic_format_pred_aux1_theorem
         -- The complete proof in Coq Ulp.v handles this via a unified approach using
         -- the scaled mantissa bound and Valid_exp monotonicity properties.
         --
-        -- TODO: Port the complete proof from Coq Ulp.v:generic_format_succ
-        -- Key Coq lemmas needed: generic_format_succ_aux1, succ_le_bpow, mag_succ
-        sorry
+        -- Sub-case x > 0: F(x + ulp(x)) via F2R representation
+        simp only [wp, PostCond.noThrow, Id.run, bind, pure]
+        -- Setup: x in format means x = m * β^c where c = cexp(x), m integer
+        -- ulp(x) = β^c, so succ = (m+1) * β^c = F2R(m+1, c)
+
+        -- Get the magnitude exponent e = mag(x)
+        set b : ℝ := (beta : ℝ) with hb
+        set e : Int := (FloatSpec.Core.Raux.mag beta x).run with he
+        set c : Int := (fexp e) with hc_def
+
+        -- Basic positivity
+        have hx_ne : x ≠ 0 := ne_of_gt hxpos
+
+        -- From mag definition: |x| ≤ β^e
+        have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x)
+        have habs_x : |x| = x := abs_of_pos hxpos
+        have hx_le_be : x ≤ b ^ e := by
+          have := hmag_upper ⟨hβ, hx_ne⟩
+          simp only [wp, PostCond.noThrow, Id.run, bind, pure,
+                     FloatSpec.Core.Raux.abs_val] at this
+          simpa [habs_x] using this
+
+        -- Case split: x < β^e (interior) or x = β^e (boundary)
+        rcases (le_iff_lt_or_eq.mp hx_le_be) with hx_lt | hx_eq
+        · -- Interior case: x < β^e, use id_p_ulp_le_bpow
+          have hid := id_p_ulp_le_bpow (beta := beta) (fexp := fexp)
+            (x := x) (e := e) (hx := hxpos) (Fx := Fx) (hlt := hx_lt) hβ
+          simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hid
+          -- succ = x + ulp(x) ≤ β^e
+          have hsucc_le : (succ beta fexp x).run ≤ b ^ e := by
+            simpa [hsucc_pos] using hid
+
+          -- Case split: succ < β^e or succ = β^e
+          rcases (le_iff_lt_or_eq.mp hsucc_le) with hsucc_lt | hsucc_eq_be
+          · -- succ < β^e: magnitude stays at e, use F2R structure
+            -- mag(succ) = e since β^(e-1) < succ < β^e
+            -- Thus cexp(succ) = fexp(e) = c, and F2R representation works
+            -- Apply grind to close the gap
+            sorry
+          · -- succ = β^e: use generic_format_bpow
+            -- succ = β^e is in format when fexp(e+1) ≤ e
+            have hvalid_exp := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
+            -- Case split on fexp e < e or e ≤ fexp e
+            rcases lt_or_le (fexp e) e with hfexp_lt | hfexp_ge
+            · -- fexp e < e: derive fexp(e+1) ≤ e from Valid_exp
+              have hfexp_e1_le := hvalid_exp.1 hfexp_lt
+              have hFbpow := FloatSpec.Core.Generic_fmt.generic_format_bpow
+                (beta := beta) (fexp := fexp) (e := e)
+              simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hFbpow
+              -- F(β^e) holds
+              have hF_be : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (b ^ e)).run :=
+                hFbpow ⟨hβ, hfexp_e1_le⟩
+              -- succ.run = β^e (from the case split hsucc_eq_be)
+              have hsucc_val : (succ beta fexp x).run = b ^ e := hsucc_eq_be
+              -- Show F(succ.run) using the equality
+              have hF_succ : (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+                  ((succ beta fexp x).run)).run := by
+                rw [hsucc_val]
+                exact hF_be
+              exact hF_succ
+            · -- e ≤ fexp e: contradiction (x > 0 but format forces x = 0)
+              -- Need magnitude bounds: β^(e-1) ≤ x < β^e
+              have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x)
+              have habs_x' : |x| = x := abs_of_pos hxpos
+              have hx_ge : b ^ (e - 1) ≤ x := by
+                have := hmag_lower ⟨hβ, hx_ne⟩
+                simp only [wp, PostCond.noThrow, Id.run, bind, pure,
+                           FloatSpec.Core.Raux.abs_val] at this
+                simpa [habs_x'] using this
+              -- Use mantissa_small_pos: when e ≤ fexp(e), scaled mantissa < 1
+              -- which with Ztrunc gives x = 0, contradicting x > 0
+              -- For now, leave as sorry (requires Ztrunc_floor lemma)
+              sorry
+        · -- Boundary case: x = β^e (x is a power of β)
+          -- Here x = β^e, and we need to show F(β^e + ulp(β^e))
+          -- ulp(β^e) = β^(fexp(mag(β^e))) = β^(fexp(e)) since mag(β^e) = e
+          -- So succ = β^e + β^(fexp(e))
+          -- If fexp(e) = e, succ = 2*β^e which needs analysis
+          -- Use generic_format_bpow or F2R structure
+          sorry
     · -- Case x < 0: succ(x) = -pred_pos(-x)
       have hx_neg : x < 0 := lt_of_not_ge hx
       have hneg_pos : 0 < -x := neg_pos.mpr hx_neg
