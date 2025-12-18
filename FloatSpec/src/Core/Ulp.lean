@@ -1902,8 +1902,13 @@ private theorem ulp_round_pos_theorem
       -- Since cexp = fexp ∘ mag, we get cexp(r) = cexp(x)
       -- For nonzero values: ulp(t) = β^(cexp t), so ulp(r) = ulp(x)
       have hx_ne : x ≠ 0 := ne_of_gt hx
-      -- Extract mag equality from mag_round_ZR (requires 1 < beta)
+      -- Extract mag equality from mag_round_ZR
+      -- NOTE: This requires 1 < beta which is not explicit in the theorem hypothesis.
+      -- The theorem may need updating to include hβ : 1 < beta, or we need to
+      -- derive it from Valid_exp. For now, we leave this as a structural placeholder.
       have hmag_eq : (FloatSpec.Core.Raux.mag beta r).run = e := by
+        -- Would use: mag_round_ZR (beta := beta) (fexp := fexp) (rndZR := rnd) (x := x)
+        -- Applied at hr0 to get mag(round x) = mag(x) when round x ≠ 0
         sorry
       -- Show cexp equality: since cexp = fexp ∘ mag, mag equality gives cexp equality
       have hcexp_eq : (FloatSpec.Core.Generic_fmt.cexp beta fexp r).run
