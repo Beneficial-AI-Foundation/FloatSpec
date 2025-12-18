@@ -5700,7 +5700,10 @@ private theorem generic_format_pred_aux1_theorem
                 exact hF_be
               exact hF_succ
             · -- e ≤ fexp e: contradiction (x > 0 but format forces x = 0)
-              -- Need magnitude bounds: β^(e-1) ≤ x < β^e
+              -- Strategy: mantissa_small_pos shows scaled mantissa in (0,1),
+              -- so Ztrunc = floor = 0, and x = 0 * β^c = 0, contradicting x > 0
+
+              -- Magnitude bounds: β^(e-1) ≤ x < β^e
               have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x)
               have habs_x' : |x| = x := abs_of_pos hxpos
               have hx_ge : b ^ (e - 1) ≤ x := by
@@ -5708,10 +5711,50 @@ private theorem generic_format_pred_aux1_theorem
                 simp only [wp, PostCond.noThrow, Id.run, bind, pure,
                            FloatSpec.Core.Raux.abs_val] at this
                 simpa [habs_x'] using this
-              -- Use mantissa_small_pos: when e ≤ fexp(e), scaled mantissa < 1
-              -- which with Ztrunc gives x = 0, contradicting x > 0
-              -- For now, leave as sorry (requires Ztrunc_floor lemma)
-              sorry
+
+              -- mantissa_small_pos: when e ≤ fexp(e), scaled mantissa is in (0, 1)
+              have hsmall := FloatSpec.Core.Generic_fmt.mantissa_small_pos (beta := beta)
+                (fexp := fexp) (x := x) (ex := e)
+                ⟨hx_ge, hx_lt⟩ hfexp_ge hβ
+              rcases hsmall with ⟨hscale_pos, hscale_lt1⟩
+
+              -- For positive values < 1, Zfloor is 0 (using Zfloor_imp with m = 0)
+              have hnonneg_scaled : 0 ≤ x * b ^ (-(fexp e)) := le_of_lt hscale_pos
+              have hfloor_zero :
+                  (FloatSpec.Core.Raux.Zfloor (x * b ^ (-(fexp e)))).run = 0 := by
+                simpa using
+                  (FloatSpec.Core.Raux.Zfloor_imp (x := x * b ^ (-(fexp e))) (m := 0))
+                    ⟨by simpa using hnonneg_scaled, by simpa [zero_add] using hscale_lt1⟩
+
+              -- Ztrunc of positive value = Zfloor
+              have hZtrunc_eq_floor := FloatSpec.Core.Raux.Ztrunc_floor (x := x * b ^ (-(fexp e)))
+                hnonneg_scaled
+              simp only [wp, PostCond.noThrow, Id.run, bind, pure,
+                         FloatSpec.Core.Raux.Zfloor] at hZtrunc_eq_floor
+              have hZtrunc_zero : (FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp e)))).run = 0 :=
+                hZtrunc_eq_floor.trans hfloor_zero
+
+              -- From Fx: x = Ztrunc(x * β^(-c)) * β^c where c = fexp(e)
+              have hFx_spec := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta)
+                (fexp := fexp) (x := x)
+              simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hFx_spec
+              have hx_eq := (hFx_spec hβ).mp Fx
+              simp only [FloatSpec.Core.Defs.F2R, Id.run, bind, pure] at hx_eq
+              simp only [FloatSpec.Core.Raux.mag, Id.run, bind, pure] at hx_eq he
+              -- hx_eq shows x = Ztrunc(...) * β^(fexp(mag(x))) where mag(x) = e (since he: e = mag(x).run)
+              rw [← he] at hx_eq
+              -- Now x = Ztrunc(x * β^(-fexp(e))) * β^(fexp(e))
+              simp only [b] at hZtrunc_zero
+              -- Replace Ztrunc with 0
+              have hx_eq_zero : x = 0 := by
+                have : x = (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-(fexp e)))).run : Int) : ℝ) *
+                           (beta : ℝ) ^ (fexp e) := by simpa using hx_eq
+                rw [hZtrunc_zero] at this
+                simp at this
+                exact this
+
+              -- Contradiction: x > 0 but x = 0
+              linarith
         · -- Boundary case: x = β^e (x is a power of β)
           -- Here x = β^e, and we need to show F(β^e + ulp(β^e))
           -- ulp(β^e) = β^(fexp(mag(β^e))) = β^(fexp(e)) since mag(β^e) = e
