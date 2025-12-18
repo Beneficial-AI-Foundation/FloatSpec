@@ -1874,9 +1874,53 @@ private theorem ulp_round_pos_theorem
   let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
   let e := (FloatSpec.Core.Raux.mag beta x).run
   (ulp beta fexp r).run = (ulp beta fexp x).run ∨ r = (beta : ℝ) ^ e := by
-  -- Placeholder bridge; relies on spacing lemmas proved later in this file.
-  -- This matches the reduced form used by `ulp_round_pos` below.
-  sorry
+  classical
+  -- Abbreviations for readability
+  set r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x with hr_def
+  set e := (FloatSpec.Core.Raux.mag beta x).run with he_def
+  -- Case split: either r = β^e (right disjunct) or r ≠ β^e (need ulp equality)
+  by_cases hr_eq_pow : r = (beta : ℝ) ^ e
+  · -- Right disjunct: r = β^e
+    right
+    exact hr_eq_pow
+  · -- Left disjunct: need to show ulp(r) = ulp(x)
+    left
+    -- The key insight: when r ≠ β^e and x > 0, we have cexp(r) = cexp(x),
+    -- which gives ulp(r) = ulp(x) since ulp(t) = β^(cexp t) for t ≠ 0.
+    --
+    -- Case split on r = 0
+    by_cases hr0 : r = 0
+    · -- If r = 0: Both ulp values use the zero-branch of ulp, giving equality
+      -- For x > 0, rounding to 0 means x is below the smallest representable,
+      -- and both ulp 0 and ulp x reduce to the same form via negligible_exp.
+      -- This follows from the Exp_not_FTZ property which prevents flush-to-zero.
+      simp only [ulp, hr0, Id.run, bind, pure, he_def] at *
+      -- The exact resolution depends on negligible_exp handling
+      sorry
+    · -- If r ≠ 0: Use that cexp(r) = cexp(x) from mag preservation
+      -- From mag_round_ZR: r ≠ 0 → mag(r) = mag(x)
+      -- Since cexp = fexp ∘ mag, we get cexp(r) = cexp(x)
+      -- For nonzero values: ulp(t) = β^(cexp t), so ulp(r) = ulp(x)
+      have hx_ne : x ≠ 0 := ne_of_gt hx
+      -- Extract mag equality from mag_round_ZR (requires 1 < beta)
+      have hmag_eq : (FloatSpec.Core.Raux.mag beta r).run = e := by
+        sorry
+      -- Show cexp equality: since cexp = fexp ∘ mag, mag equality gives cexp equality
+      have hcexp_eq : (FloatSpec.Core.Generic_fmt.cexp beta fexp r).run
+                    = (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run := by
+        simp only [FloatSpec.Core.Generic_fmt.cexp, Id.run, bind, pure]
+        exact congrArg fexp hmag_eq
+      -- Both ulp(r) and ulp(x) reduce to β^(cexp _) for nonzero args
+      -- Compute ulp(r).run
+      have hulp_r : (ulp beta fexp r).run
+          = (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp r).run := by
+        simp only [ulp, hr0, if_neg, not_false_eq_true, Id.run, bind, pure]
+      -- Compute ulp(x).run
+      have hulp_x : (ulp beta fexp x).run
+          = (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run := by
+        simp only [ulp, hx_ne, if_neg, not_false_eq_true, Id.run, bind, pure]
+      -- Chain the equalities
+      rw [hulp_r, hulp_x, hcexp_eq]
 
 theorem ulp_round_pos
     [Exp_not_FTZ fexp]
