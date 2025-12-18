@@ -4630,8 +4630,11 @@ theorem generic_format_pred_pos
         have hfmt :
             (FloatSpec.Core.Generic_fmt.generic_format beta fexp
               (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)))).run := by
-          -- Placeholder: proved below as `generic_format_pred_aux2`; in this
-          -- earlier lemma, we keep a local `sorry` to avoid a forward reference.
+          -- Forward reference: `generic_format_pred_aux2` is defined below and
+          -- requires (hβ : 1 < beta). To complete this, either:
+          -- 1. Add hβ parameter to generic_format_pred_pos, or
+          -- 2. Derive 1 < beta from Valid_exp (need a lemma for this)
+          -- TODO: Fill once the forward reference and hβ issues are resolved
           sorry
         -- Compute `(pred_pos x).run` explicitly in this branch
         have hpred_run := pred_pos_run_boundary hxeq
@@ -4644,7 +4647,11 @@ theorem generic_format_pred_pos
       have hfmt :
           (FloatSpec.Core.Generic_fmt.generic_format beta fexp
             (x - (ulp beta fexp x).run)).run := by
-        -- Placeholder: proved below as `generic_format_pred_aux1_theorem`.
+        -- Forward reference: `generic_format_pred_aux1_theorem` is defined below and
+        -- requires (hβ : 1 < beta). To complete this, either:
+        -- 1. Add hβ parameter to generic_format_pred_pos, or
+        -- 2. Derive 1 < beta from Valid_exp (need a lemma for this)
+        -- TODO: Fill once the forward reference and hβ issues are resolved
         sorry
       -- Compute `(pred_pos x).run` explicitly in this branch and rewrite directly
       have hpred_run := pred_pos_run_generic hne
