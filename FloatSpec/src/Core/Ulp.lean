@@ -5448,27 +5448,48 @@ private theorem generic_format_pred_aux1_theorem
         -- TODO: Complete by analyzing negligible_exp cases
         sorry
       · -- Sub-case x > 0: F(x + ulp(x)) via F2R representation
-        -- Proof outline:
-        -- 1. x = m * β^c where c = cexp(x) = fexp(mag(x)) and m is a positive integer
-        -- 2. ulp(x) = β^c
-        -- 3. x + ulp(x) = (m+1) * β^c = F2R(m+1, c)
-        -- 4. Need: cexp(x + ulp(x)) ≤ c
-        -- 5. Case analysis on whether x is a power of β:
-        --    a. If x < β^(mag x): use id_p_ulp_le_bpow to get x + ulp(x) ≤ β^(mag x)
-        --       This gives mag(x + ulp(x)) = mag(x), so cexp(succ) = c
-        --    b. If x = β^(mag x - 1): boundary case, succ = β^(mag x - 1) + β^(fexp(mag x))
-        --       Need separate analysis via generic_format_bpow
-        -- 6. Apply generic_format_F2R with mantissa m+1 and exponent c
         --
-        -- Key insight: The strict bound x < β^(mag x) holds UNLESS x is exactly β^k for some k
-        -- (in which case x = β^(mag x - 1) and mag(x) = k + 1).
-        -- For power-of-beta inputs, succ(β^k) = β^k + β^(fexp(k+1)) which requires
-        -- special handling via the boundary case analysis.
+        -- DETAILED PROOF STRATEGY:
         --
-        -- TODO: Complete by porting full spacing analysis from Coq Ulp.v generic_format_succ
-        -- The complete proof needs to handle:
-        -- - Interior case (x not power of β): use id_p_ulp_le_bpow directly
-        -- - Boundary case (x = β^(e-1)): use generic_format_bpow for β^e part
+        -- Setup: x > 0 and F(x), so x = m * β^c where:
+        --   - c = cexp(x) = fexp(e) where e = mag(x)
+        --   - m = Ztrunc(x * β^(-c)) is a positive integer (m ≥ 1)
+        --   - ulp(x) = β^c
+        --   - x + ulp(x) = (m+1) * β^c = F2R(m+1, c)
+        --
+        -- CASE SPLIT on whether x = β^e (power of β) or x < β^e (strict):
+        --
+        -- INTERIOR CASE (x < β^e, i.e., x is NOT a power of β):
+        --   Key lemma: id_p_ulp_le_bpow gives x + ulp(x) ≤ β^e
+        --   Since also x ≥ β^(e-1) and ulp(x) > 0, we have β^(e-1) < x + ulp(x) ≤ β^e
+        --   Therefore mag(x + ulp(x)) = e (by ceiling properties)
+        --   So cexp(succ) = fexp(mag(succ)) = fexp(e) = c
+        --   Apply generic_format_F2R: F2R(m+1, c) is in format since cexp ≤ c
+        --
+        -- BOUNDARY CASE (x = β^e, i.e., x IS a power of β):
+        --   Here m = 1 (since x = 1 * β^e = β^e)
+        --   succ = β^e + β^(fexp(e+1)) (not β^e + β^(fexp(e))!)
+        --   Wait - actually when x = β^e, mag(x) = e, so c = fexp(e), ulp = β^(fexp(e))
+        --   succ = β^e + β^(fexp(e))
+        --
+        --   Sub-case fexp(e) = e: succ = 2 * β^e = F2R(2, e)
+        --   Sub-case fexp(e) < e: succ = β^(fexp(e)) * (β^(e - fexp(e)) + 1)
+        --
+        --   In either case, need to show F(succ) via:
+        --   - Compute mag(succ) from bounds
+        --   - Show cexp(succ) ≤ appropriate exponent
+        --   - Apply generic_format_F2R or generic_format_bpow as needed
+        --
+        -- NOTE: The boundary case is complex because it requires analyzing:
+        --   1. The relationship between fexp(e) and e
+        --   2. Whether succ crosses into the next magnitude band
+        --   3. Valid_exp properties to bound the new canonical exponent
+        --
+        -- The complete proof in Coq Ulp.v handles this via a unified approach using
+        -- the scaled mantissa bound and Valid_exp monotonicity properties.
+        --
+        -- TODO: Port the complete proof from Coq Ulp.v:generic_format_succ
+        -- Key Coq lemmas needed: generic_format_succ_aux1, succ_le_bpow, mag_succ
         sorry
     · -- Case x < 0: succ(x) = -pred_pos(-x)
       have hx_neg : x < 0 := lt_of_not_ge hx
