@@ -2128,7 +2128,145 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
     ⦃⌜True⌝⦄
     Zscale beta (Id.run (Zscale beta n k)) l
     ⦃⇓result => ⌜∃ scaled, Zscale beta n (k + l) = pure scaled ∧ result = scaled⌝⦄ := by
-  sorry
+  intro _
+  unfold Zscale
+  simp only [Id.run, pure]
+  have hβpos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
+  have hβne : beta ≠ 0 := ne_of_gt hβpos
+  -- Case split on signs of k and l
+  by_cases hk : 0 ≤ k <;> by_cases hl : 0 ≤ l
+  · -- k ≥ 0, l ≥ 0
+    simp only [hk, hl, ite_true]
+    use n * beta ^ (k + l).natAbs
+    constructor
+    · have hkl : 0 ≤ k + l := add_nonneg hk hl
+      simp only [hkl, ite_true]
+    · -- n * β^k * β^l = n * β^(k+l)
+      have hk_nat : k.natAbs = k.toNat := Int.natAbs_of_nonneg hk
+      have hl_nat : l.natAbs = l.toNat := Int.natAbs_of_nonneg hl
+      have hkl_nonneg : 0 ≤ k + l := add_nonneg hk hl
+      have hkl_nat : (k + l).natAbs = (k + l).toNat := Int.natAbs_of_nonneg hkl_nonneg
+      have hsum : k.natAbs + l.natAbs = (k + l).natAbs := by omega
+      calc n * beta ^ k.natAbs * beta ^ l.natAbs
+          = n * (beta ^ k.natAbs * beta ^ l.natAbs) := by ring
+        _ = n * beta ^ (k.natAbs + l.natAbs) := by rw [pow_add]
+        _ = n * beta ^ (k + l).natAbs := by rw [hsum]
+  · -- k ≥ 0, l < 0
+    push_neg at hl
+    simp only [hk, hl.le, ite_true, ite_false]
+    by_cases hkl : 0 ≤ k + l
+    · -- k + l ≥ 0: result is n * β^(k+l)
+      use n * beta ^ (k + l).natAbs
+      constructor
+      · simp only [hkl, ite_true]
+      · -- (n * β^k) / β^|l| = n * β^(k+l) when k + l ≥ 0
+        -- β^k / β^|l| = β^k / β^(-l) = β^(k+l) since k ≥ 0, l < 0, k + l ≥ 0
+        have hk_nat : k.natAbs = k.toNat := Int.natAbs_of_nonneg hk
+        have hl_neg : (-l).natAbs = (-l).toNat := Int.natAbs_of_nonneg (by omega : 0 ≤ -l)
+        have hkl_nat : (k + l).natAbs = (k + l).toNat := Int.natAbs_of_nonneg hkl
+        -- Key: k.natAbs = (k + l).natAbs + (-l).natAbs since k = (k + l) + (-l)
+        have hpow_split : k.natAbs = (k + l).natAbs + (-l).natAbs := by omega
+        have hpow_eq : beta ^ k.natAbs = beta ^ (k + l).natAbs * beta ^ (-l).natAbs := by
+          rw [hpow_split, pow_add]
+        calc (n * beta ^ k.natAbs) / beta ^ (-l).natAbs
+            = (n * (beta ^ (k + l).natAbs * beta ^ (-l).natAbs)) / beta ^ (-l).natAbs := by rw [hpow_eq]
+          _ = n * beta ^ (k + l).natAbs * (beta ^ (-l).natAbs / beta ^ (-l).natAbs) := by
+              have hpow_pos : 0 < beta ^ (-l).natAbs := pow_pos hβpos (-l).natAbs
+              have hpow_ne : beta ^ (-l).natAbs ≠ 0 := ne_of_gt hpow_pos
+              rw [mul_assoc, Int.mul_ediv_assoc _ (dvd_refl _)]
+          _ = n * beta ^ (k + l).natAbs := by
+              have hpow_ne : beta ^ (-l).natAbs ≠ 0 := ne_of_gt (pow_pos hβpos (-l).natAbs)
+              simp [Int.ediv_self hpow_ne]
+    · -- k + l < 0: result is n / β^|k+l|
+      push_neg at hkl
+      use n / beta ^ (-(k + l)).natAbs
+      constructor
+      · simp only [hkl.le, ite_false]
+      · -- (n * β^k) / β^|l| = n / β^|k+l| when k + l < 0
+        -- |l| = |k+l| + k since l < 0, k + l < 0, k ≥ 0
+        have hl_split : (-l).natAbs = (-(k + l)).natAbs + k.natAbs := by omega
+        have hpow_eq : beta ^ (-l).natAbs = beta ^ (-(k + l)).natAbs * beta ^ k.natAbs := by
+          rw [hl_split, pow_add]
+        calc (n * beta ^ k.natAbs) / beta ^ (-l).natAbs
+            = (n * beta ^ k.natAbs) / (beta ^ (-(k + l)).natAbs * beta ^ k.natAbs) := by rw [hpow_eq]
+          _ = n / beta ^ (-(k + l)).natAbs := by
+              have hpow_pos : 0 < beta ^ k.natAbs := pow_pos hβpos k.natAbs
+              have hpow_ne : beta ^ k.natAbs ≠ 0 := ne_of_gt hpow_pos
+              rw [mul_comm (beta ^ (-(k+l)).natAbs) _, Int.mul_ediv_mul_of_pos_right _ _ hpow_pos]
+  · -- k < 0, l ≥ 0
+    push_neg at hk
+    simp only [hk.le, hl, ite_true, ite_false]
+    by_cases hkl : 0 ≤ k + l
+    · -- k + l ≥ 0
+      use n * beta ^ (k + l).natAbs
+      constructor
+      · simp only [hkl, ite_true]
+      · -- (n / β^|k|) * β^l = n * β^(k+l) when divisibility holds
+        have hdiv := hdiv_k hk
+        have hk_neg : (-k).natAbs = (-k).toNat := Int.natAbs_of_nonneg (by omega : 0 ≤ -k)
+        have hl_nat : l.natAbs = l.toNat := Int.natAbs_of_nonneg hl
+        have hkl_nat : (k + l).natAbs = (k + l).toNat := Int.natAbs_of_nonneg hkl
+        -- l = (k + l) + |k| since k < 0, l ≥ 0, k + l ≥ 0
+        have hl_split : l.natAbs = (k + l).natAbs + (-k).natAbs := by omega
+        have hpow_eq : beta ^ l.natAbs = beta ^ (k + l).natAbs * beta ^ (-k).natAbs := by
+          rw [hl_split, pow_add]
+        obtain ⟨q, hq⟩ := hdiv
+        calc (n / beta ^ (-k).natAbs) * beta ^ l.natAbs
+            = q * beta ^ l.natAbs := by rw [hq, Int.mul_ediv_cancel_left _ (ne_of_gt (pow_pos hβpos _))]
+          _ = q * (beta ^ (k + l).natAbs * beta ^ (-k).natAbs) := by rw [hpow_eq]
+          _ = (q * beta ^ (-k).natAbs) * beta ^ (k + l).natAbs := by ring
+          _ = n * beta ^ (k + l).natAbs := by rw [← hq]
+    · -- k + l < 0
+      push_neg at hkl
+      use n / beta ^ (-(k + l)).natAbs
+      constructor
+      · simp only [hkl.le, ite_false]
+      · -- (n / β^|k|) * β^l = n / β^|k+l| requires care
+        -- |k| = l + |k+l| since k < 0, l ≥ 0, k + l < 0
+        have hk_split : (-k).natAbs = l.natAbs + (-(k + l)).natAbs := by omega
+        have hpow_eq : beta ^ (-k).natAbs = beta ^ l.natAbs * beta ^ (-(k + l)).natAbs := by
+          rw [hk_split, pow_add]
+        have hdiv := hdiv_k hk
+        obtain ⟨q, hq⟩ := hdiv
+        have hpow_l_pos : 0 < beta ^ l.natAbs := pow_pos hβpos l.natAbs
+        have hpow_l_ne : beta ^ l.natAbs ≠ 0 := ne_of_gt hpow_l_pos
+        calc (n / beta ^ (-k).natAbs) * beta ^ l.natAbs
+            = (n / (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs)) * beta ^ l.natAbs := by rw [hpow_eq]
+          _ = ((n / beta ^ (-(k + l)).natAbs) / beta ^ l.natAbs) * beta ^ l.natAbs := by
+              rw [mul_comm, Int.ediv_ediv_eq_ediv_mul]
+          _ = (n / beta ^ (-(k + l)).natAbs) := by
+              -- Need (a / b) * b = a when b | a
+              -- This requires n / β^|k+l| to be divisible by β^l, which comes from hdiv_compose
+              have hdiv2 := hdiv_compose hk hl hkl
+              obtain ⟨q2, hq2⟩ := hdiv2
+              have hpow_kl_pos : 0 < beta ^ (-(k + l)).natAbs := pow_pos hβpos (-(k + l)).natAbs
+              have hpow_kl_ne : beta ^ (-(k + l)).natAbs ≠ 0 := ne_of_gt hpow_kl_pos
+              -- n = q2 * β^l, so n / β^|k+l| = q2 * β^l / β^|k+l|
+              -- We need to show that this is divisible by β^l
+              -- Actually, from n = q * β^|k| = q * β^l * β^|k+l|
+              -- So n / β^|k+l| = q * β^l
+              rw [hq, hpow_eq]
+              have hdvd : beta ^ l.natAbs * beta ^ (-(k + l)).natAbs ∣ q * (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs) :=
+                dvd_mul_left _ _
+              rw [Int.mul_ediv_cancel_left _ (mul_ne_zero hpow_l_ne hpow_kl_ne)]
+              rw [Int.ediv_mul_cancel (dvd_mul_left _ _)]
+  · -- k < 0, l < 0
+    push_neg at hk hl
+    simp only [hk.le, hl.le, ite_false]
+    have hkl : k + l < 0 := add_neg_of_neg_of_neg hk hl
+    use n / beta ^ (-(k + l)).natAbs
+    constructor
+    · simp only [hkl.le, ite_false]
+    · -- (n / β^|k|) / β^|l| = n / β^(|k| + |l|) = n / β^|k+l|
+      have hpow_k_pos : 0 < beta ^ (-k).natAbs := pow_pos hβpos (-k).natAbs
+      have hpow_l_pos : 0 < beta ^ (-l).natAbs := pow_pos hβpos (-l).natAbs
+      have hpow_k_ne : beta ^ (-k).natAbs ≠ 0 := ne_of_gt hpow_k_pos
+      have hpow_l_ne : beta ^ (-l).natAbs ≠ 0 := ne_of_gt hpow_l_pos
+      have hsum : (-k).natAbs + (-l).natAbs = (-(k + l)).natAbs := by omega
+      calc (n / beta ^ (-k).natAbs) / beta ^ (-l).natAbs
+          = n / (beta ^ (-k).natAbs * beta ^ (-l).natAbs) := by rw [Int.ediv_ediv_eq_ediv_mul]
+        _ = n / beta ^ ((-k).natAbs + (-l).natAbs) := by rw [pow_add]
+        _ = n / beta ^ (-(k + l)).natAbs := by rw [hsum]
 def Zslice (n k1 k2 : Int) : Id Int := do
   let scaled ← Zscale beta n (-k1)
   pure (if 0 ≤ k2 then scaled % beta ^ k2.natAbs else 0)
