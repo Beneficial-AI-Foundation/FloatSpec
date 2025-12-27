@@ -1147,7 +1147,53 @@ theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
     x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)).run) →
   mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) ≤ mag beta x ∧
     mag beta x ≤ mag beta ((F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)).run) := by
-  sorry
+  intro hm_pos ⟨hx_lo, hx_hi⟩
+  -- Basic positivity setup
+  have hβposInt : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hβposReal : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hβposInt
+  have hβ_gt1 : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hbeta
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hβ_gt1
+  have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ e := zpow_pos hβposReal e
+  -- F2R values
+  simp only [F2R, pure, Id.run, FlocqFloat.mk] at hx_lo hx_hi ⊢
+  -- Positivity of m and m+1 as reals
+  have hm_pos_real : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm_pos
+  have hm1_pos : 0 < m + 1 := lt_trans hm_pos (lt_add_one m)
+  have hm1_pos_real : (0 : ℝ) < (m + 1 : ℤ) := by exact_mod_cast hm1_pos
+  -- F2R(m,e) is positive
+  have hf_pos : 0 < (m : ℝ) * (beta : ℝ) ^ e := mul_pos hm_pos_real hpow_pos
+  have hf1_pos : 0 < ((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e := mul_pos hm1_pos_real hpow_pos
+  -- x is positive (from lower bound)
+  have hx_pos : 0 < x := lt_of_lt_of_le hf_pos hx_lo
+  -- All three values are nonzero
+  have hf_ne : (m : ℝ) * (beta : ℝ) ^ e ≠ 0 := ne_of_gt hf_pos
+  have hf1_ne : ((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e ≠ 0 := ne_of_gt hf1_pos
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  -- Unfold mag for all three
+  unfold mag
+  simp only [hf_ne, hf1_ne, hx_ne, ite_false]
+  -- Use absolute values = self since all positive
+  have habs_f : |(m : ℝ) * (beta : ℝ) ^ e| = (m : ℝ) * (beta : ℝ) ^ e := abs_of_pos hf_pos
+  have habs_f1 : |((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e| = ((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e :=
+    abs_of_pos hf1_pos
+  have habs_x : |x| = x := abs_of_pos hx_pos
+  rw [habs_f, habs_f1, habs_x]
+  -- Monotonicity of log: since f ≤ x < f1, we have log f ≤ log x < log f1
+  have hlog_lo : Real.log ((m : ℝ) * (beta : ℝ) ^ e) ≤ Real.log x :=
+    Real.log_le_log hf_pos hx_lo
+  have hlog_hi : Real.log x < Real.log (((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e) :=
+    Real.log_lt_log hx_pos hx_hi
+  -- Division by positive log β preserves inequalities
+  have hdiv_lo : Real.log ((m : ℝ) * (beta : ℝ) ^ e) / Real.log (beta : ℝ) ≤
+                 Real.log x / Real.log (beta : ℝ) :=
+    div_le_div_of_nonneg_right hlog_lo (le_of_lt hlogβ_pos)
+  have hdiv_hi : Real.log x / Real.log (beta : ℝ) <
+                 Real.log (((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e) / Real.log (beta : ℝ) :=
+    div_lt_div_of_pos_right hlog_hi hlogβ_pos
+  -- Ceiling is monotonic
+  constructor
+  · exact Int.ceil_mono hdiv_lo
+  · exact Int.ceil_mono (le_of_lt hdiv_hi)
 /-
 Coq original:
 Theorem mag_F2R : forall m e : Z,
@@ -1162,7 +1208,51 @@ Qed.
 theorem mag_F2R (m e : Int) (hbeta : 1 < beta) :
   m ≠ 0 →
   mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta)).run) = mag beta (m : ℝ) + e := by
-  sorry
+  intro hm_ne
+  -- Simplify F2R
+  simp only [F2R, pure, Id.run, FlocqFloat.mk]
+  -- Get positivity facts for beta
+  have hβposInt : (0 : Int) < beta := lt_trans (by decide) hbeta
+  have hβposReal : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hβposInt
+  have hβ_gt1 : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hbeta
+  have hβne : (beta : ℝ) ≠ 0 := ne_of_gt hβposReal
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hβ_gt1
+  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+  -- The power β^e is positive
+  have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ e := zpow_pos hβposReal e
+  have hpow_ne : (beta : ℝ) ^ e ≠ 0 := ne_of_gt hpow_pos
+  -- m ≠ 0 as real
+  have hm_ne_real : (m : ℝ) ≠ 0 := Int.cast_ne_zero.mpr hm_ne
+  -- Product is nonzero
+  have hprod_ne : (m : ℝ) * (beta : ℝ) ^ e ≠ 0 := mul_ne_zero hm_ne_real hpow_ne
+  -- Unfold mag for both sides (both are nonzero)
+  unfold mag
+  simp only [hprod_ne, hm_ne_real, ite_false]
+  -- Now need: ⌈log|m * β^e| / log β⌉ = ⌈log|m| / log β⌉ + e
+  -- Step 1: |m * β^e| = |m| * β^e (since β^e > 0)
+  have habs_prod : |((m : ℝ) * (beta : ℝ) ^ e)| = |(m : ℝ)| * (beta : ℝ) ^ e := by
+    rw [abs_mul]
+    congr 1
+    exact abs_of_pos hpow_pos
+  -- |m| > 0 since m ≠ 0
+  have habs_m_pos : 0 < |(m : ℝ)| := abs_pos.mpr hm_ne_real
+  -- Product |m| * β^e is positive
+  have habs_prod_pos : 0 < |(m : ℝ)| * (beta : ℝ) ^ e := mul_pos habs_m_pos hpow_pos
+  -- Step 2: log(|m| * β^e) = log|m| + log(β^e) = log|m| + e * log β
+  have hlog_prod : Real.log (|(m : ℝ)| * (beta : ℝ) ^ e) = Real.log |(m : ℝ)| + e * Real.log (beta : ℝ) := by
+    rw [Real.log_mul (ne_of_gt habs_m_pos) hpow_ne]
+    congr 1
+    exact Real.log_zpow (beta : ℝ) e
+  -- Step 3: Division distributes
+  have hdiv_eq : (Real.log |(m : ℝ)| + e * Real.log (beta : ℝ)) / Real.log (beta : ℝ)
+                = Real.log |(m : ℝ)| / Real.log (beta : ℝ) + e := by
+    field_simp [hlogβ_ne]
+  -- Step 4: ⌈x + n⌉ = ⌈x⌉ + n for integer n
+  have hceil_add : ⌈Real.log |(m : ℝ)| / Real.log (beta : ℝ) + e⌉
+                 = ⌈Real.log |(m : ℝ)| / Real.log (beta : ℝ)⌉ + e := by
+    exact Int.ceil_add_intCast (Real.log |(m : ℝ)| / Real.log (beta : ℝ)) e
+  -- Combine all the steps
+  rw [habs_prod, hlog_prod, hdiv_eq, hceil_add]
 /-
 Coq original:
 Theorem Zdigits_mag : forall n,
@@ -1480,6 +1570,9 @@ theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
   ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run < (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run ∧
     (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run < (F2R (FlocqFloat.mk (m1 + 1) e1 : FlocqFloat beta)).run) →
   (e2 < e1) ∧ (e1 + (Zdigits beta m1).run = e2 + mag beta (m2 : ℝ)) := by
+  intro hm1_pos ⟨hlo, hhi⟩
+  -- This theorem relates Zdigits to mag and requires careful case analysis
+  -- The Coq proof uses F2R_change_exp and mag_F2R
   sorry
 end FloatProp
 
