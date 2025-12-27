@@ -2305,7 +2305,341 @@ theorem Zdigit_slice (n k l m : Int) (h_beta : beta > 1) :
         ⌜if m < l then
             ∃ orig, Zdigit beta n (k + m) = pure orig ∧ result = orig
           else result = 0⌝⦄ := by
-  sorry
+  intro ⟨hm, hn⟩
+  unfold Zslice Zscale
+  simp only [Id.run, pure, bind]
+  have hβpos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) h_beta
+  have hβne : beta ≠ 0 := ne_of_gt hβpos
+  -- Case split on whether 0 ≤ -k (i.e., k ≤ 0)
+  by_cases hk : 0 ≤ -k
+  · -- k ≤ 0: scale up by β^|k|
+    simp only [hk, ite_true]
+    by_cases hl : 0 ≤ l
+    · -- l ≥ 0: take modulo β^l
+      simp only [hl, ite_true]
+      by_cases hml : m < l
+      · -- m < l: digit is from original
+        simp only [hml, ite_true]
+        unfold Zdigit
+        simp only [hm, ge_iff_le, ite_true]
+        -- The digit at m of (n * β^|k|) % β^l equals the digit at k+m of n
+        -- when m < l, the digit at position m is preserved from n * β^|k|
+        use (if k + m ≥ 0 then (n.tdiv (beta ^ (k + m).natAbs)) % beta else 0)
+        constructor
+        · rfl
+        · -- Need: ((n * β^|k|) % β^l).tdiv (β^m) % β = n.tdiv (β^(k+m)) % β
+          -- Since m < l, the digit at m is not affected by the modulo β^l
+          have hm_nat : m.natAbs = m.toNat := Int.natAbs_of_nonneg hm
+          have hl_nat : l.natAbs = l.toNat := Int.natAbs_of_nonneg hl
+          have hpow_m_pos : 0 < beta ^ m.natAbs := pow_pos hβpos m.natAbs
+          have hpow_l_pos : 0 < beta ^ l.natAbs := pow_pos hβpos l.natAbs
+          have hpow_l_ne : beta ^ l.natAbs ≠ 0 := ne_of_gt hpow_l_pos
+          -- The key insight: for m < l, digit m of (x % β^l) = digit m of x
+          -- because (x % β^l) preserves all digits below position l
+          have hk_neg : (-k).natAbs = (-k).toNat := Int.natAbs_of_nonneg hk
+          -- When k ≤ 0, -k ≥ 0, so n * β^|-k| shifts n up by |-k| positions
+          -- The digit at position m of (n * β^|-k|) is the digit at position m - |-k| of n
+          -- But m - |-k| = m + k since k ≤ 0
+          by_cases hkm : k + m ≥ 0
+          · simp only [hkm, ite_true]
+            -- m ≥ -k, so the digit at m comes from n
+            have hkm_nat : (k + m).natAbs = (k + m).toNat := Int.natAbs_of_nonneg hkm
+            -- Need: ((n * β^|k|) % β^l).tdiv (β^m) % β = n.tdiv (β^(k+m)) % β
+            -- For the modulo: since m < l, digit m is preserved
+            have hmod_digit : ((n * beta ^ (-k).natAbs) % beta ^ l.natAbs).tdiv (beta ^ m.natAbs) % beta =
+                              (n * beta ^ (-k).natAbs).tdiv (beta ^ m.natAbs) % beta := by
+              -- digit at position m of (x % β^l) = digit at position m of x when m < l
+              have hm_lt_l : m.natAbs < l.natAbs := by omega
+              have hpow_m1_pos : 0 < beta ^ (m.natAbs + 1) := pow_pos hβpos (m.natAbs + 1)
+              have hpow_m1_le_l : beta ^ (m.natAbs + 1) ≤ beta ^ l.natAbs := by
+                apply pow_le_pow_right (by omega : 1 ≤ beta)
+                omega
+              -- x % β^l = x % β^(m+1) when m+1 ≤ l (for digit extraction purposes)
+              -- Actually, (x % β^l) / β^m % β = x / β^m % β when m < l
+              have key : ∀ x : Int, 0 ≤ x → (x % beta ^ l.natAbs).tdiv (beta ^ m.natAbs) % beta =
+                                           x.tdiv (beta ^ m.natAbs) % beta := by
+                intro x hx
+                have hx_mod_nonneg : 0 ≤ x % beta ^ l.natAbs := Int.emod_nonneg x hpow_l_ne
+                rw [Int.tdiv_eq_ediv_of_nonneg hx_mod_nonneg (le_of_lt hpow_m_pos),
+                    Int.tdiv_eq_ediv_of_nonneg hx (le_of_lt hpow_m_pos)]
+                -- (x % β^l) / β^m % β = x / β^m % β when m < l
+                -- Since x % β^l = x - (x / β^l) * β^l
+                -- and (x % β^l) / β^m = (x - (x / β^l) * β^l) / β^m
+                --                     = x / β^m - (x / β^l) * β^(l-m)  (when m < l)
+                -- Taking mod β: the second term is divisible by β when l - m ≥ 1
+                have hdiff : l.natAbs - m.natAbs ≥ 1 := by omega
+                have hpow_diff : beta ^ (l.natAbs - m.natAbs) = beta ^ l.natAbs / beta ^ m.natAbs := by
+                  rw [Nat.sub_eq]
+                  have : beta ^ l.natAbs = beta ^ m.natAbs * beta ^ (l.natAbs - m.natAbs) := by
+                    rw [← pow_add]
+                    congr 1
+                    omega
+                  rw [this, Int.mul_ediv_cancel_left _ (ne_of_gt hpow_m_pos)]
+                -- The remainder of division distributes nicely
+                have hdist : (x % beta ^ l.natAbs) / beta ^ m.natAbs =
+                             x / beta ^ m.natAbs - (x / beta ^ l.natAbs) * beta ^ (l.natAbs - m.natAbs) := by
+                  have eq1 : x % beta ^ l.natAbs = x - (x / beta ^ l.natAbs) * beta ^ l.natAbs :=
+                    (Int.emod_add_ediv x (beta ^ l.natAbs)).symm.trans (by ring)
+                  rw [eq1]
+                  rw [Int.sub_ediv_of_dvd]
+                  · congr 1
+                    rw [← pow_add]
+                    have hsum : m.natAbs + (l.natAbs - m.natAbs) = l.natAbs := by omega
+                    rw [hsum, Int.mul_ediv_cancel_left _ (ne_of_gt hpow_m_pos)]
+                  · -- Divisibility: β^m | (x / β^l) * β^l
+                    have : beta ^ m.natAbs ∣ beta ^ l.natAbs := by
+                      apply pow_dvd_pow
+                      omega
+                    exact dvd_mul_of_dvd_right this _
+                rw [hdist]
+                -- Now: (a - b * β^(l-m)) % β = a % β when l - m ≥ 1
+                have hbeta_dvd : beta ∣ beta ^ (l.natAbs - m.natAbs) := by
+                  have : 1 ≤ l.natAbs - m.natAbs := hdiff
+                  calc beta = beta ^ 1 := (pow_one beta).symm
+                    _ ∣ beta ^ (l.natAbs - m.natAbs) := pow_dvd_pow beta this
+                rw [Int.sub_emod, Int.mul_emod, Int.emod_emod_of_dvd _ hbeta_dvd,
+                    Int.zero_mul, Int.emod_zero, Int.sub_zero]
+              have hn_scale_nonneg : 0 ≤ n * beta ^ (-k).natAbs := by
+                apply mul_nonneg hn
+                exact le_of_lt (pow_pos hβpos (-k).natAbs)
+              exact key (n * beta ^ (-k).natAbs) hn_scale_nonneg
+            rw [hmod_digit]
+            -- Now show: (n * β^|k|).tdiv (β^m) % β = n.tdiv (β^(k+m)) % β
+            have hn_scale_nonneg : 0 ≤ n * beta ^ (-k).natAbs := by
+              apply mul_nonneg hn
+              exact le_of_lt (pow_pos hβpos (-k).natAbs)
+            rw [Int.tdiv_eq_ediv_of_nonneg hn_scale_nonneg (le_of_lt hpow_m_pos),
+                Int.tdiv_eq_ediv_of_nonneg hn (le_of_lt (pow_pos hβpos (k + m).natAbs))]
+            -- (n * β^|k|) / β^m = n * β^|k| / β^m
+            -- If m ≥ |k|: = n * β^(|k| - m) = n / β^(m - |k|) when |k| < m
+            -- Actually: m - |k| = m + k (since k ≤ 0)
+            -- Key: (n * β^|k|) / β^m = n / β^(m - |k|) = n / β^(m + k)
+            have hk_neg_eq : (-k).natAbs = (-k).toNat := hk_neg
+            have hpow_negk_pos : 0 < beta ^ (-k).natAbs := pow_pos hβpos (-k).natAbs
+            by_cases hm_ge_k : m.natAbs ≥ (-k).natAbs
+            · -- m ≥ |k|: (n * β^|k|) / β^m = n / β^(m - |k|) = n / β^(m + k)
+              have hm_sub : m.natAbs - (-k).natAbs = (m + k).toNat := by omega
+              have hpow_eq : beta ^ m.natAbs = beta ^ (m.natAbs - (-k).natAbs) * beta ^ (-k).natAbs := by
+                rw [← pow_add]
+                congr 1
+                omega
+              calc (n * beta ^ (-k).natAbs) / beta ^ m.natAbs
+                  = (n * beta ^ (-k).natAbs) / (beta ^ (m.natAbs - (-k).natAbs) * beta ^ (-k).natAbs) := by
+                    rw [hpow_eq]
+                _ = n / beta ^ (m.natAbs - (-k).natAbs) := by
+                    rw [mul_comm (beta ^ _) _, Int.mul_ediv_mul_of_pos_right _ _ hpow_negk_pos]
+                _ = n / beta ^ (m + k).toNat := by rw [hm_sub]
+                _ = n / beta ^ (k + m).natAbs := by
+                    have hkm_nat : (k + m).natAbs = (k + m).toNat := hkm_nat
+                    congr 1
+                    omega
+            · -- m < |k|: (n * β^|k|) / β^m = n * β^(|k| - m)
+              push_neg at hm_ge_k
+              -- Then k + m < 0, contradicting hkm ≥ 0
+              have : (k + m).toNat < (-k).natAbs - m.natAbs := by omega
+              have hkm_neg : k + m < 0 := by omega
+              omega -- contradiction with hkm : 0 ≤ k + m
+          · -- k + m < 0: digit is 0
+            simp only [hkm, ite_false]
+            -- When k + m < 0, the digit at position m of (n * β^|k|) is 0
+            -- because n * β^|k| shifted n up, and position m is in the zero-padded region
+            have hkm_neg : k + m < 0 := not_le.mp hkm
+            -- m < |k| = -k, so the digit at position m of n * β^|-k| is 0
+            have hm_lt_k : m < -k := by omega
+            have hm_lt_k_nat : m.natAbs < (-k).natAbs := by omega
+            -- (n * β^|k|) / β^m = n * β^(|k| - m)
+            have hpow_eq : beta ^ (-k).natAbs = beta ^ ((-k).natAbs - m.natAbs) * beta ^ m.natAbs := by
+              rw [← pow_add]
+              congr 1
+              omega
+            have hpow_negk_pos : 0 < beta ^ (-k).natAbs := pow_pos hβpos (-k).natAbs
+            have hn_scale_nonneg : 0 ≤ n * beta ^ (-k).natAbs := by
+              apply mul_nonneg hn
+              exact le_of_lt hpow_negk_pos
+            have hscale_div : (n * beta ^ (-k).natAbs) / beta ^ m.natAbs =
+                              n * beta ^ ((-k).natAbs - m.natAbs) := by
+              rw [hpow_eq, mul_comm (beta ^ _) _, mul_assoc,
+                  Int.mul_ediv_cancel_left _ (ne_of_gt hpow_m_pos)]
+            have hmod_digit : ((n * beta ^ (-k).natAbs) % beta ^ l.natAbs).tdiv (beta ^ m.natAbs) % beta =
+                              (n * beta ^ (-k).natAbs).tdiv (beta ^ m.natAbs) % beta := by
+              -- Same reasoning as before: digit at m < l is preserved by mod β^l
+              have hm_lt_l : m.natAbs < l.natAbs := by omega
+              have hn_scale_nonneg' : 0 ≤ n * beta ^ (-k).natAbs := hn_scale_nonneg
+              have hx_mod_nonneg : 0 ≤ (n * beta ^ (-k).natAbs) % beta ^ l.natAbs :=
+                Int.emod_nonneg _ hpow_l_ne
+              rw [Int.tdiv_eq_ediv_of_nonneg hx_mod_nonneg (le_of_lt hpow_m_pos),
+                  Int.tdiv_eq_ediv_of_nonneg hn_scale_nonneg' (le_of_lt hpow_m_pos)]
+              -- Use the same key fact about digit preservation under modulo
+              have hdist : ((n * beta ^ (-k).natAbs) % beta ^ l.natAbs) / beta ^ m.natAbs =
+                           (n * beta ^ (-k).natAbs) / beta ^ m.natAbs -
+                           ((n * beta ^ (-k).natAbs) / beta ^ l.natAbs) * beta ^ (l.natAbs - m.natAbs) := by
+                have eq1 : (n * beta ^ (-k).natAbs) % beta ^ l.natAbs =
+                           (n * beta ^ (-k).natAbs) - ((n * beta ^ (-k).natAbs) / beta ^ l.natAbs) * beta ^ l.natAbs :=
+                  (Int.emod_add_ediv _ _).symm.trans (by ring)
+                rw [eq1]
+                rw [Int.sub_ediv_of_dvd]
+                · congr 1
+                  rw [← pow_add]
+                  have hsum : m.natAbs + (l.natAbs - m.natAbs) = l.natAbs := by omega
+                  rw [hsum, Int.mul_ediv_cancel_left _ (ne_of_gt hpow_m_pos)]
+                · have : beta ^ m.natAbs ∣ beta ^ l.natAbs := pow_dvd_pow beta (by omega : m.natAbs ≤ l.natAbs)
+                  exact dvd_mul_of_dvd_right this _
+              rw [hdist]
+              have hbeta_dvd : beta ∣ beta ^ (l.natAbs - m.natAbs) := by
+                have : 1 ≤ l.natAbs - m.natAbs := by omega
+                calc beta = beta ^ 1 := (pow_one beta).symm
+                  _ ∣ beta ^ (l.natAbs - m.natAbs) := pow_dvd_pow beta this
+              rw [Int.sub_emod, Int.mul_emod, Int.emod_emod_of_dvd _ hbeta_dvd,
+                  Int.zero_mul, Int.emod_zero, Int.sub_zero]
+            rw [hmod_digit]
+            rw [Int.tdiv_eq_ediv_of_nonneg hn_scale_nonneg (le_of_lt hpow_m_pos)]
+            rw [hscale_div]
+            -- n * β^(|k| - m) % β = 0 when |k| - m ≥ 1
+            have hdiff : (-k).natAbs - m.natAbs ≥ 1 := by omega
+            have hbeta_dvd : beta ∣ beta ^ ((-k).natAbs - m.natAbs) := by
+              calc beta = beta ^ 1 := (pow_one beta).symm
+                _ ∣ beta ^ ((-k).natAbs - m.natAbs) := pow_dvd_pow beta hdiff
+            rw [Int.mul_emod, Int.emod_emod_of_dvd _ hbeta_dvd, Int.mul_zero, Int.emod_zero]
+      · -- m ≥ l: digit is 0
+        push_neg at hml
+        simp only [hml, ite_false]
+        unfold Zdigit
+        simp only [hm, ge_iff_le, ite_true]
+        -- The digit at position m ≥ l of (x % β^l) is 0
+        have hpow_m_pos : 0 < beta ^ m.natAbs := pow_pos hβpos m.natAbs
+        have hpow_l_ne : beta ^ l.natAbs ≠ 0 := ne_of_gt (pow_pos hβpos l.natAbs)
+        have hmod_lt : (n * beta ^ (-k).natAbs) % beta ^ l.natAbs < beta ^ l.natAbs := by
+          apply Int.emod_lt_of_pos
+          exact pow_pos hβpos l.natAbs
+        have hmod_nonneg : 0 ≤ (n * beta ^ (-k).natAbs) % beta ^ l.natAbs := Int.emod_nonneg _ hpow_l_ne
+        -- x % β^l < β^l, so x % β^l / β^m = 0 when m ≥ l
+        have hpow_m_ge_l : beta ^ m.natAbs ≥ beta ^ l.natAbs := by
+          apply pow_le_pow_right (by omega : 1 ≤ beta)
+          omega
+        have hdiv_zero : ((n * beta ^ (-k).natAbs) % beta ^ l.natAbs) / beta ^ m.natAbs = 0 := by
+          apply Int.ediv_eq_zero_of_lt hmod_nonneg
+          calc (n * beta ^ (-k).natAbs) % beta ^ l.natAbs < beta ^ l.natAbs := hmod_lt
+            _ ≤ beta ^ m.natAbs := hpow_m_ge_l
+        rw [Int.tdiv_eq_ediv_of_nonneg hmod_nonneg (le_of_lt hpow_m_pos), hdiv_zero, Int.zero_emod]
+    · -- l < 0: slice is 0
+      push_neg at hl
+      simp only [hl.le, ite_false]
+      -- Zslice returns 0 when l < 0
+      unfold Zdigit
+      simp only [hm, ge_iff_le, ite_true]
+      have hpow_m_pos : 0 < beta ^ m.natAbs := pow_pos hβpos m.natAbs
+      simp only [Int.tdiv_zero, Int.zero_emod]
+      by_cases hml : m < l
+      · omega -- m < l and l < 0 and m ≥ 0 is impossible
+      · simp only [hml, ite_false]
+  · -- k > 0: scale down
+    push_neg at hk
+    simp only [hk.le, ite_false]
+    by_cases hl : 0 ≤ l
+    · simp only [hl, ite_true]
+      by_cases hml : m < l
+      · simp only [hml, ite_true]
+        unfold Zdigit
+        simp only [hm, ge_iff_le, ite_true]
+        use (if k + m ≥ 0 then (n.tdiv (beta ^ (k + m).natAbs)) % beta else 0)
+        constructor
+        · rfl
+        · -- Similar analysis but with n / β^k instead of n * β^|k|
+          have hpow_m_pos : 0 < beta ^ m.natAbs := pow_pos hβpos m.natAbs
+          have hpow_l_pos : 0 < beta ^ l.natAbs := pow_pos hβpos l.natAbs
+          have hpow_l_ne : beta ^ l.natAbs ≠ 0 := ne_of_gt hpow_l_pos
+          have hpow_negk_pos : 0 < beta ^ (-k).natAbs := pow_pos hβpos (-k).natAbs
+          -- When k > 0, -k < 0, so (-k).natAbs = k
+          have hk_abs : (-k).natAbs = k.natAbs := Int.natAbs_neg k
+          have hk_eq : k.natAbs = k.toNat := Int.natAbs_of_nonneg (by omega : 0 ≤ k)
+          have hn_div_nonneg : 0 ≤ n / beta ^ (-k).natAbs := by
+            apply Int.ediv_nonneg hn
+            exact le_of_lt hpow_negk_pos
+          -- The digit at m of (n / β^k) % β^l
+          have hmod_digit : ((n / beta ^ (-k).natAbs) % beta ^ l.natAbs).tdiv (beta ^ m.natAbs) % beta =
+                            (n / beta ^ (-k).natAbs).tdiv (beta ^ m.natAbs) % beta := by
+            have hm_lt_l : m.natAbs < l.natAbs := by omega
+            have hx_mod_nonneg : 0 ≤ (n / beta ^ (-k).natAbs) % beta ^ l.natAbs :=
+              Int.emod_nonneg _ hpow_l_ne
+            rw [Int.tdiv_eq_ediv_of_nonneg hx_mod_nonneg (le_of_lt hpow_m_pos),
+                Int.tdiv_eq_ediv_of_nonneg hn_div_nonneg (le_of_lt hpow_m_pos)]
+            have hdist : ((n / beta ^ (-k).natAbs) % beta ^ l.natAbs) / beta ^ m.natAbs =
+                         (n / beta ^ (-k).natAbs) / beta ^ m.natAbs -
+                         ((n / beta ^ (-k).natAbs) / beta ^ l.natAbs) * beta ^ (l.natAbs - m.natAbs) := by
+              have eq1 : (n / beta ^ (-k).natAbs) % beta ^ l.natAbs =
+                         (n / beta ^ (-k).natAbs) - ((n / beta ^ (-k).natAbs) / beta ^ l.natAbs) * beta ^ l.natAbs :=
+                (Int.emod_add_ediv _ _).symm.trans (by ring)
+              rw [eq1]
+              rw [Int.sub_ediv_of_dvd]
+              · congr 1
+                rw [← pow_add]
+                have hsum : m.natAbs + (l.natAbs - m.natAbs) = l.natAbs := by omega
+                rw [hsum, Int.mul_ediv_cancel_left _ (ne_of_gt hpow_m_pos)]
+              · have : beta ^ m.natAbs ∣ beta ^ l.natAbs := pow_dvd_pow beta (by omega : m.natAbs ≤ l.natAbs)
+                exact dvd_mul_of_dvd_right this _
+            rw [hdist]
+            have hbeta_dvd : beta ∣ beta ^ (l.natAbs - m.natAbs) := by
+              have : 1 ≤ l.natAbs - m.natAbs := by omega
+              calc beta = beta ^ 1 := (pow_one beta).symm
+                _ ∣ beta ^ (l.natAbs - m.natAbs) := pow_dvd_pow beta this
+            rw [Int.sub_emod, Int.mul_emod, Int.emod_emod_of_dvd _ hbeta_dvd,
+                Int.zero_mul, Int.emod_zero, Int.sub_zero]
+          rw [hmod_digit]
+          rw [Int.tdiv_eq_ediv_of_nonneg hn_div_nonneg (le_of_lt hpow_m_pos)]
+          by_cases hkm : k + m ≥ 0
+          · simp only [hkm, ite_true]
+            rw [Int.tdiv_eq_ediv_of_nonneg hn (le_of_lt (pow_pos hβpos (k + m).natAbs))]
+            -- (n / β^k) / β^m = n / β^(k+m)
+            have hpow_sum : beta ^ (-k).natAbs * beta ^ m.natAbs = beta ^ (k + m).natAbs := by
+              have hkm_nat : (k + m).natAbs = (k + m).toNat := Int.natAbs_of_nonneg hkm
+              rw [← pow_add, hk_abs]
+              congr 1
+              omega
+            calc (n / beta ^ (-k).natAbs) / beta ^ m.natAbs
+                = n / (beta ^ (-k).natAbs * beta ^ m.natAbs) := by rw [Int.ediv_ediv_eq_ediv_mul]
+              _ = n / beta ^ (k + m).natAbs := by rw [hpow_sum]
+          · simp only [hkm, ite_false]
+            -- k + m < 0, so m < -k = |k| (since k > 0)
+            -- (n / β^k) / β^m = (n / β^k) / β^m
+            -- But the digit should be 0 when k + m < 0
+            -- Actually, digit at position m of (n / β^k) when m < k is just the shifted digit
+            -- Hmm, this case is tricky. Let me reconsider.
+            -- If k + m < 0 and m ≥ 0, then m < -k, but k > 0 means -k < 0, so m < -k is impossible
+            -- for m ≥ 0. Contradiction!
+            omega
+      · -- m ≥ l: digit is 0
+        push_neg at hml
+        simp only [hml, ite_false]
+        unfold Zdigit
+        simp only [hm, ge_iff_le, ite_true]
+        have hpow_m_pos : 0 < beta ^ m.natAbs := pow_pos hβpos m.natAbs
+        have hpow_l_ne : beta ^ l.natAbs ≠ 0 := ne_of_gt (pow_pos hβpos l.natAbs)
+        have hpow_negk_pos : 0 < beta ^ (-k).natAbs := pow_pos hβpos (-k).natAbs
+        have hn_div_nonneg : 0 ≤ n / beta ^ (-k).natAbs := by
+          apply Int.ediv_nonneg hn
+          exact le_of_lt hpow_negk_pos
+        have hmod_lt : (n / beta ^ (-k).natAbs) % beta ^ l.natAbs < beta ^ l.natAbs := by
+          apply Int.emod_lt_of_pos
+          exact pow_pos hβpos l.natAbs
+        have hmod_nonneg : 0 ≤ (n / beta ^ (-k).natAbs) % beta ^ l.natAbs := Int.emod_nonneg _ hpow_l_ne
+        have hpow_m_ge_l : beta ^ m.natAbs ≥ beta ^ l.natAbs := by
+          apply pow_le_pow_right (by omega : 1 ≤ beta)
+          omega
+        have hdiv_zero : ((n / beta ^ (-k).natAbs) % beta ^ l.natAbs) / beta ^ m.natAbs = 0 := by
+          apply Int.ediv_eq_zero_of_lt hmod_nonneg
+          calc (n / beta ^ (-k).natAbs) % beta ^ l.natAbs < beta ^ l.natAbs := hmod_lt
+            _ ≤ beta ^ m.natAbs := hpow_m_ge_l
+        rw [Int.tdiv_eq_ediv_of_nonneg hmod_nonneg (le_of_lt hpow_m_pos), hdiv_zero, Int.zero_emod]
+    · -- l < 0: slice is 0
+      push_neg at hl
+      simp only [hl.le, ite_false]
+      unfold Zdigit
+      simp only [hm, ge_iff_le, ite_true]
+      have hpow_m_pos : 0 < beta ^ m.natAbs := pow_pos hβpos m.natAbs
+      simp only [Int.tdiv_zero, Int.zero_emod]
+      by_cases hml : m < l
+      · omega
+      · simp only [hml, ite_false]
 /-- Digit of slice outside range
 
 Coq theorem and proof:
