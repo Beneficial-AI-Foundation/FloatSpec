@@ -2522,6 +2522,47 @@ private theorem error_le_half_ulp_theorem
   -- midpoint/spacing toolbox is fully ported.
   sorry
 
+-- Helper: relate the chosen UP witness to the chosen DN witness at `-x`.
+-- We use UP-point uniqueness plus the DN→UP duality under negation.
+private lemma round_UP_choose_eq_neg_round_DN_choose
+    (beta : Int) (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x : ℝ) (hβ : 1 < beta) :
+    Classical.choose (round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) =
+      - Classical.choose (round_DN_exists (beta := beta) (fexp := fexp) (x := -x) (hβ := hβ)) := by
+  classical
+  -- Abbreviate the generic-format predicate.
+  let F : ℝ → Prop := fun y => (generic_format beta fexp y).run
+  set u := Classical.choose (round_UP_exists (beta := beta) (fexp := fexp)
+            (x := x) (hβ := hβ)) with hu
+  set d := Classical.choose (round_DN_exists (beta := beta) (fexp := fexp)
+            (x := -x) (hβ := hβ)) with hd
+  -- Extract UP and DN point predicates for the chosen witnesses.
+  have hUP : FloatSpec.Core.Defs.Rnd_UP_pt F x u := by
+    have h := Classical.choose_spec
+      (round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
+    exact (by simpa [hu, F] using h).2
+  have hDN : FloatSpec.Core.Defs.Rnd_DN_pt F (-x) d := by
+    have h := Classical.choose_spec
+      (round_DN_exists (beta := beta) (fexp := fexp) (x := -x) (hβ := hβ))
+    exact (by simpa [hd, F] using h).2
+  -- Closure of the format predicate under negation.
+  have hFopp : ∀ y, F y → F (-y) := by
+    intro y hy
+    have h := generic_format_opp (beta := beta) (fexp := fexp) (x := y)
+    have h' := h hy
+    simpa [F, wp, PostCond.noThrow, Id.run, bind, pure] using h'
+  -- Convert DN at -x to an UP point at x using negation duality.
+  have hUP_neg : FloatSpec.Core.Defs.Rnd_UP_pt F x (-d) := by
+    have hspec := FloatSpec.Core.Round_pred.Rnd_UP_pt_opp_spec (F := F) (-x) d
+    have h := hspec ⟨hFopp, hDN⟩
+    simpa [FloatSpec.Core.Round_pred.Rnd_UP_pt_opp_transform, pure, decide_eq_true_iff] using h
+  -- Uniqueness of UP points at x yields the desired equality.
+  have huniq := FloatSpec.Core.Round_pred.Rnd_UP_pt_unique_spec (F := F) (x := x) u (-d)
+  have : u = -d := by
+    simpa [FloatSpec.Core.Round_pred.Rnd_UP_pt_unique_check, pure, decide_eq_true_iff] using huniq ⟨hUP, hUP_neg⟩
+  simpa [u, d] using this
+
 /-
 Local bridge: ulp at the `round-to-nearest` result equals ulp at x (`run-level`).
 This isolates the cexp/adjacency reasoning for reuse in `error_le_half_ulp_round`.
