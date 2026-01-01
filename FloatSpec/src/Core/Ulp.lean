@@ -7421,6 +7421,80 @@ theorem ulp_ge_ulp_0
           exact ((zpow_right_strictMono₀ hβR).monotone hfle)
 
 /-- Coq (Ulp.v):
+Lemma `ulp_ulp_0`: `forall {H : Exp_not_FTZfexp}, ulp (ulp 0) = ulp 0.`
+-/
+private theorem ulp_ulp_0_theorem
+    (beta : Int) (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [Exp_not_FTZ fexp] :
+    (1 < beta) →
+    (ulp beta fexp ((ulp beta fexp 0).run)).run = (ulp beta fexp 0).run := by
+  intro hβ; classical
+  -- Analyze how `ulp 0` is produced via `negligible_exp`.
+  cases hopt : negligible_exp fexp with
+  | none =>
+      -- In this branch, ulp 0 = 0, so ulp (ulp 0) = ulp 0 by reflexivity.
+      simp [ulp, hopt, wp, PostCond.noThrow, Id.run, bind, pure]
+  | some n =>
+      -- Here ulp 0 = β^(fexp n) with witness n ≤ fexp n.
+      have hu0_run : (ulp beta fexp 0).run = (beta : ℝ) ^ (fexp n) := by
+        simp [ulp, hopt, wp, PostCond.noThrow, Id.run, bind, pure]
+      have hu0 : ulp beta fexp 0 = (beta : ℝ) ^ (fexp n) := by
+        simpa using hu0_run
+      -- Nonzero power: β^(fexp n) ≠ 0
+      have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hbpos : 0 < (beta : ℝ) := by exact_mod_cast hbposℤ
+      have hx_ne : ((beta : ℝ) ^ (fexp n)) ≠ 0 := by
+        exact ne_of_gt (zpow_pos hbpos _)
+      -- Compute mag on the pure power and the resulting ULP value.
+      have hmag_run : (FloatSpec.Core.Raux.mag beta ((beta : ℝ) ^ (fexp n))).run = fexp n + 1 := by
+        simpa using (mag_bpow_run (beta := beta) (e := fexp n) hβ)
+      have hmag_fexp :
+          fexp (FloatSpec.Core.Raux.mag beta ((beta : ℝ) ^ (fexp n)))
+            = fexp (fexp n + 1) := by
+        simpa using congrArg fexp hmag_run
+      have hcexp :
+          FloatSpec.Core.Generic_fmt.cexp beta fexp ((beta : ℝ) ^ (fexp n))
+            = fexp (fexp n + 1) := by
+        simpa [FloatSpec.Core.Generic_fmt.cexp, Id.run, bind, pure] using hmag_fexp
+      have hulpx_run : (ulp beta fexp ((beta : ℝ) ^ (fexp n))).run
+          = (beta : ℝ) ^ (fexp (fexp n + 1)) := by
+        simp [ulp, hx_ne, Id.run, bind, pure, hcexp]
+      -- Upper bound: ulp (β^(fexp n)) ≤ β^(fexp n) via Exp_not_FTZ.
+      have hle : (ulp beta fexp ((beta : ℝ) ^ (fexp n))).run ≤ (beta : ℝ) ^ (fexp n) := by
+        have hb_ge1R : (1 : ℝ) ≤ (beta : ℝ) := by
+          exact_mod_cast (le_of_lt hβ)
+        have hle_exp : fexp (fexp n + 1) ≤ fexp n :=
+          Exp_not_FTZ.exp_not_FTZ (fexp := fexp) n
+        have hpow_le :
+            (beta : ℝ) ^ (fexp (fexp n + 1)) ≤ (beta : ℝ) ^ (fexp n) :=
+          zpow_le_zpow_right₀ hb_ge1R hle_exp
+        calc
+          (ulp beta fexp ((beta : ℝ) ^ (fexp n))).run
+              = (beta : ℝ) ^ (fexp (fexp n + 1)) := hulpx_run
+          _ ≤ (beta : ℝ) ^ (fexp n) := hpow_le
+      -- Lower bound: ulp 0 ≤ ulp (β^(fexp n)) from `ulp_ge_ulp_0`.
+      have hge : (beta : ℝ) ^ (fexp n) ≤ (ulp beta fexp ((beta : ℝ) ^ (fexp n))).run := by
+        have h := (ulp_ge_ulp_0 (beta := beta) (fexp := fexp)
+          (x := (beta : ℝ) ^ (fexp n))) hβ
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure, ulp, hopt, hx_ne] using h
+      have h_eq : (ulp beta fexp ((beta : ℝ) ^ (fexp n))).run = (beta : ℝ) ^ (fexp n) :=
+        le_antisymm hle hge
+      simpa [hu0] using h_eq
+
+theorem ulp_ulp_0 [Exp_not_FTZ fexp] :
+    ⦃⌜1 < beta⌝⦄ do
+      let u0 ← ulp beta fexp 0
+      let uu ← ulp beta fexp u0
+      let u0' ← ulp beta fexp 0
+      pure (uu, u0')
+    ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
+  intro hβ; classical
+  -- Reduce the Hoare triple and apply the local bridge theorem
+  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  exact ulp_ulp_0_theorem (beta := beta) (fexp := fexp) hβ
+
+/-- Coq (Ulp.v):
 Lemma `not_FTZ_ulp_ge_ulp_0` :` (forall x, ulp 0 <= ulp x) -> Exp_not_FTZ fexp.`
 
 Lean (spec): If ulp is minimized at zero for all x, then not FTZ.
