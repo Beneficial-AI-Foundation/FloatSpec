@@ -4564,7 +4564,7 @@ Lemma generic_format_pred_pos: forall x, F x -> 0 < x -> F (pred_pos x).
 theorem generic_format_pred_pos
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
-    (hx : 0 < x) :
+    (hx : 0 < x) (hβ : 1 < beta) :
     ⦃⌜True⌝⦄ do
       let p ← pred_pos beta fexp x
       FloatSpec.Core.Generic_fmt.generic_format beta fexp p
@@ -4631,12 +4631,9 @@ theorem generic_format_pred_pos
         have hfmt :
             (FloatSpec.Core.Generic_fmt.generic_format beta fexp
               (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)))).run := by
-          -- Forward reference: `generic_format_pred_aux2` is defined below and
-          -- requires (hβ : 1 < beta). To complete this, either:
-          -- 1. Add hβ parameter to generic_format_pred_pos, or
-          -- 2. Derive 1 < beta from Valid_exp (need a lemma for this)
-          -- TODO: Fill once the forward reference and hβ issues are resolved
-          sorry
+          have h := generic_format_pred_aux2 (beta := beta) (fexp := fexp)
+            (x := x) (hx := hx) (hβ := hβ) (Fx := Fx) (hxe := hxeq) (hne := hz)
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h True.intro
         -- Compute `(pred_pos x).run` explicitly in this branch
         have hpred_run := pred_pos_run_boundary hxeq
         -- Rewrite the target along `hpred_run` and conclude from `hfmt`
@@ -4648,12 +4645,8 @@ theorem generic_format_pred_pos
       have hfmt :
           (FloatSpec.Core.Generic_fmt.generic_format beta fexp
             (x - (ulp beta fexp x).run)).run := by
-        -- Forward reference: `generic_format_pred_aux1_theorem` is defined below and
-        -- requires (hβ : 1 < beta). To complete this, either:
-        -- 1. Add hβ parameter to generic_format_pred_pos, or
-        -- 2. Derive 1 < beta from Valid_exp (need a lemma for this)
-        -- TODO: Fill once the forward reference and hβ issues are resolved
-        sorry
+        exact generic_format_pred_aux1_theorem (beta := beta) (fexp := fexp)
+          (x := x) (hx := hx) (Fx := Fx) (hne := hne) hβ
       -- Compute `(pred_pos x).run` explicitly in this branch and rewrite directly
       have hpred_run := pred_pos_run_generic hne
       simpa [hpred_run] using hfmt
@@ -6007,7 +6000,7 @@ private theorem generic_format_pred_aux1_theorem
           (FloatSpec.Core.Generic_fmt.generic_format beta fexp
             ((pred_pos beta fexp (-x)).run)).run := by
         have h := generic_format_pred_pos (beta := beta) (fexp := fexp)
-                    (x := -x) (Fx := Fx_neg) (hx := hneg_pos)
+                    (x := -x) (Fx := Fx_neg) (hx := hneg_pos) (hβ := hβ)
         simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
       -- F(-pred_pos(-x)) by negation closure
       have Fsucc_run :
