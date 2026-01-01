@@ -4843,7 +4843,115 @@ private theorem ulp_DN_round_bridge_pos
         (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ))).run
       = (ulp (beta := beta) (fexp := fexp)
           (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x)).run := by
-    sorry
+    classical
+    -- Name the DN witness and its properties
+    set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
+    have hDN := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)
+    rcases hDN with ⟨Fd, hdn⟩
+    rcases hdn with ⟨_Fd', hd_le_x, hmax_dn⟩
+    -- Define the model round-to-generic result
+    set r : ℝ := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x with hr
+    -- DN witness is below the rounding result (round_ge_generic)
+    have hd_le_r : d ≤ r := by
+      have h := FloatSpec.Core.Generic_fmt.round_ge_generic
+        (beta := beta) (fexp := fexp) (rnd := fun _ _ => True) (x := d) (y := x)
+        ⟨Fd, by simpa [hd] using hd_le_x⟩
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure, hr] using h
+
+    -- Notation for exponent and scaled mantissa
+    set exp : Int := (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run with hexp
+    set s : ℝ := x * (beta : ℝ) ^ (-exp) with hs
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    have hbpow_nonneg : 0 ≤ (beta : ℝ) ^ exp := le_of_lt (zpow_pos hbposR _)
+    have hs_nonneg : 0 ≤ s := by
+      have hbpow_nonneg' : 0 ≤ (beta : ℝ) ^ (-exp) := le_of_lt (zpow_pos hbposR _)
+      exact mul_nonneg (le_of_lt hx) hbpow_nonneg'
+
+    -- Ztrunc s = floor s for nonnegative s, hence Ztrunc s ≤ s
+    have hztrunc_eq : (FloatSpec.Core.Raux.Ztrunc s).run = (FloatSpec.Core.Raux.Zfloor s).run := by
+      have hz := (FloatSpec.Core.Raux.Ztrunc_floor (x := s)) hs_nonneg
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hz
+    have hfloor_le : ((FloatSpec.Core.Raux.Zfloor s).run : ℝ) ≤ s := by
+      have : ((Int.floor s : Int) : ℝ) ≤ s := Int.floor_le s
+      simpa [FloatSpec.Core.Raux.Zfloor] using this
+    have hz_le : (((FloatSpec.Core.Raux.Ztrunc s).run : Int) : ℝ) ≤ s := by
+      have hcast : ((FloatSpec.Core.Raux.Ztrunc s).run : ℝ) =
+          ((FloatSpec.Core.Raux.Zfloor s).run : ℝ) := by
+        exact_mod_cast hztrunc_eq
+      simpa [hcast] using hfloor_le
+    have hmul_le :
+        (((FloatSpec.Core.Raux.Ztrunc s).run : Int) : ℝ) * (beta : ℝ) ^ exp
+          ≤ s * (beta : ℝ) ^ exp := by
+      exact mul_le_mul_of_nonneg_right hz_le hbpow_nonneg
+
+    -- Reconstruct x = s * beta^exp
+    have hs_mul : s * (beta : ℝ) ^ exp = x := by
+      have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+      have hnepow : (beta : ℝ) ^ exp ≠ 0 := by
+        exact zpow_ne_zero _ hbne
+      calc
+        s * (beta : ℝ) ^ exp
+            = (x * (beta : ℝ) ^ (-exp)) * (beta : ℝ) ^ exp := by simpa [hs]
+        _ = x * ((beta : ℝ) ^ (-exp) * (beta : ℝ) ^ exp) := by ring
+        _ = x := by
+          simp [zpow_neg, hnepow]
+
+    -- Therefore r ≤ x
+    have hr_le_x : r ≤ x := by
+      have : r ≤ s * (beta : ℝ) ^ exp := by
+        simpa [hr, FloatSpec.Core.Generic_fmt.round_to_generic, exp, s] using hmul_le
+      simpa [hs_mul] using this
+
+    -- Show r is in generic format using the F2R characterization
+    set m : Int := (FloatSpec.Core.Raux.Ztrunc s).run with hm
+    set f : FlocqFloat beta := FlocqFloat.mk m exp with hf
+    have hr_eq : (F2R f).run = r := by
+      simp [F2R, hr, FloatSpec.Core.Generic_fmt.round_to_generic, exp, s, hm, hf]
+    have hm_nonneg_int : (0 : Int) ≤ m := by
+      have hm_eq' : m = (FloatSpec.Core.Raux.Zfloor s).run := by
+        calc
+          m = (FloatSpec.Core.Raux.Ztrunc s).run := by simpa [hm]
+          _ = (FloatSpec.Core.Raux.Zfloor s).run := hztrunc_eq
+      have hm_eq : m = Int.floor s := by
+        simpa [FloatSpec.Core.Raux.Zfloor] using hm_eq'
+      have hfloor_nonneg : (0 : Int) ≤ Int.floor s := (Int.le_floor).mpr (by simpa using hs_nonneg)
+      simpa [hm_eq] using hfloor_nonneg
+    have hr_nonneg : 0 ≤ r := by
+      have hm_nonneg : 0 ≤ ((m : Int) : ℝ) := by exact_mod_cast hm_nonneg_int
+      simpa [hr, FloatSpec.Core.Generic_fmt.round_to_generic, exp, s, hm]
+        using mul_nonneg hm_nonneg hbpow_nonneg
+    have hcexp_bound : r ≠ 0 → (FloatSpec.Core.Generic_fmt.cexp beta fexp r).run ≤ exp := by
+      intro hr_ne
+      have hr_pos : 0 < r := lt_of_le_of_ne hr_nonneg (Ne.symm hr_ne)
+      have hmagDN := (FloatSpec.Core.Generic_fmt.mag_DN (beta := beta) (fexp := fexp) (x := x)) hβ
+      have hmagDN' : 0 < r → (FloatSpec.Core.Raux.mag beta r).run = (FloatSpec.Core.Raux.mag beta x).run := by
+        simpa [wp, PostCond.noThrow, Id.run, pure, hr] using hmagDN
+      have hmag_eq := hmagDN' hr_pos
+      have hmag_eq' : fexp (FloatSpec.Core.Raux.mag beta r).run =
+          fexp (FloatSpec.Core.Raux.mag beta x).run := by
+        simpa using congrArg fexp hmag_eq
+      have hexp' : exp = fexp (FloatSpec.Core.Raux.mag beta x).run := by
+        simp [exp, FloatSpec.Core.Generic_fmt.cexp]
+      have hcexp_eq : (FloatSpec.Core.Generic_fmt.cexp beta fexp r).run = exp := by
+        calc
+          (FloatSpec.Core.Generic_fmt.cexp beta fexp r).run
+              = fexp (FloatSpec.Core.Raux.mag beta r).run := by
+                  simp [FloatSpec.Core.Generic_fmt.cexp, Id.run, bind, pure]
+          _ = fexp (FloatSpec.Core.Raux.mag beta x).run := hmag_eq'
+          _ = exp := (hexp').symm
+      exact le_of_eq hcexp_eq
+    have hr_format : (FloatSpec.Core.Generic_fmt.generic_format beta fexp r).run := by
+      have hfmt := (FloatSpec.Core.Generic_fmt.generic_format_F2R'
+          (beta := beta) (fexp := fexp) (x := r) (f := f))
+          ⟨hβ, hr_eq, hcexp_bound⟩
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hfmt
+
+    -- Maximality of DN witness yields r ≤ d
+    have hr_le_d : r ≤ d := hmax_dn r hr_format hr_le_x
+    have hdeq : d = r := le_antisymm hd_le_r hr_le_d
+    -- Conclude by rewriting
+    simpa [hd.symm, hr.symm, hdeq]
     -- -- Reduce both sides to β^(fexp (mag x)) using the positive-input round bridge.
     -- -- Apply ulp_round_pos to r := round_to_generic … x; if it hits the power, both sides are β^(fexp (mag x)).
     -- let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x
