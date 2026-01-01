@@ -4676,31 +4676,137 @@ theorem generic_format_pred_aux2
       (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)))
     ⦃⇓g => ⌜g⌝⦄ := by
   intro _; classical
-  -- Direct proof outline (breaking circular dependency with generic_format_pred_pos):
-  --
-  -- At boundary x = β^(e-1) where e = mag(x), the result is y = β^(e-1) - β^c
-  -- where c = fexp(e-1).
-  --
-  -- Key steps:
-  -- 1. Since hne says y ≠ 0, we have c = fexp(e-1) < e-1
-  --    (if c = e-1, then y = 0; if c > e-1 is vacuous for valid fexp)
-  --
-  -- 2. Let k = e-1-c > 0. Factor: y = β^c * (β^k - 1)
-  --
-  -- 3. The mantissa m = β^k - 1 is a positive integer (since k ≥ 1 and β ≥ 2)
-  --
-  -- 4. Compute mag(y) = e-1:
-  --    - Upper: y < β^c * β^k = β^(e-1)
-  --    - Lower: y ≥ β^c * β^(k-1) = β^(e-2) (since β^k - 1 ≥ β^(k-1))
-  --    So β^(e-2) ≤ y < β^(e-1), giving mag(y) = e-1
-  --
-  -- 5. Therefore cexp(y) = fexp(mag(y)) = fexp(e-1) = c
-  --
-  -- 6. Apply generic_format_F2R with y = F2R(m, c):
-  --    Need cexp(y) ≤ c, which is c ≤ c ✓
-  --
-  -- TODO: Complete this proof by porting the full calculation from Coq Ulp.v
-  sorry
+  -- Abbreviations for the boundary exponent and its fexp image
+  set e : Int := (FloatSpec.Core.Raux.mag beta x).run with he
+  have hxe' : x = (beta : ℝ) ^ (e - 1) := by
+    simpa [he] using hxe
+  set c : Int := fexp (e - 1) with hc
+  have hne' : x - (beta : ℝ) ^ c ≠ 0 := by
+    simpa [he, hc] using hne
+
+  -- From F x and x = β^(e-1), get fexp(e-1) ≤ e-1
+  have hfmt_bpow : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ (e - 1))).run := by
+    simpa [hxe'] using Fx
+  have hle_c : c ≤ e - 1 :=
+    FloatSpec.Core.Generic_fmt.generic_format_bpow_inv
+      (beta := beta) (fexp := fexp) (e := e - 1) hβ hfmt_bpow
+
+  -- hne' excludes the boundary equality c = e-1
+  have hne_c : c ≠ e - 1 := by
+    intro hceq
+    apply hne'
+    simp [hxe', hceq]
+  have hlt_c : c < e - 1 := lt_of_le_of_ne hle_c hne_c
+  have hle_c' : c ≤ e - 2 := by omega
+
+  -- Name the value we want to show is in generic format
+  set f : ℝ := x - (beta : ℝ) ^ c with hf
+
+  -- Basic positivity facts about beta
+  have hb_gt1R : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : 0 < (beta : ℝ) := lt_trans zero_lt_one hb_gt1R
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+
+  -- f is strictly positive since β^c < x = β^(e-1)
+  have hpow_lt : (beta : ℝ) ^ c < (beta : ℝ) ^ (e - 1) :=
+    zpow_lt_zpow_right₀ hb_gt1R hlt_c
+  have hf_pos : 0 < f := by
+    have hlt' : (beta : ℝ) ^ c < x := by simpa [hxe'] using hpow_lt
+    have : 0 < x - (beta : ℝ) ^ c := sub_pos.mpr hlt'
+    simpa [hf] using this
+  have h_abs_f : abs f = f := abs_of_pos hf_pos
+
+  -- Lower bound: β^(e-2) ≤ f
+  have hpow_nonneg : 0 ≤ (beta : ℝ) ^ (e - 2) := le_of_lt (zpow_pos hbpos _)
+  have hpow_le : (beta : ℝ) ^ c ≤ (beta : ℝ) ^ (e - 2) :=
+    ((zpow_right_strictMono₀ hb_gt1R).monotone hle_c')
+  have hsum_le' : (beta : ℝ) ^ (e - 2) + (beta : ℝ) ^ c ≤
+      (beta : ℝ) ^ (e - 2) + (beta : ℝ) ^ (e - 2) := by
+    have h := add_le_add_left hpow_le ((beta : ℝ) ^ (e - 2))
+    simpa [add_comm, add_left_comm, add_assoc] using h
+  have hbeta_ge2_int : (2 : Int) ≤ beta := by omega
+  have hbeta_ge2 : (2 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast hbeta_ge2_int
+  have hmul_le : (2 : ℝ) * (beta : ℝ) ^ (e - 2) ≤ (beta : ℝ) * (beta : ℝ) ^ (e - 2) :=
+    mul_le_mul_of_nonneg_right hbeta_ge2 hpow_nonneg
+  have hpow_split : (beta : ℝ) * (beta : ℝ) ^ (e - 2) = (beta : ℝ) ^ (e - 1) := by
+    have h := FloatSpec.Core.Generic_fmt.zpow_sub_add (a := (beta : ℝ)) hbne (e - 1) (1 : Int)
+    have h' : (e - 1) - 1 = e - 2 := by omega
+    have h'' : (beta : ℝ) ^ (e - 2) * (beta : ℝ) = (beta : ℝ) ^ (e - 1) := by
+      simpa [h', zpow_one] using h
+    simpa [mul_comm] using h''
+  have hsum_le2 : (beta : ℝ) ^ (e - 2) + (beta : ℝ) ^ (e - 2) ≤ (beta : ℝ) ^ (e - 1) := by
+    calc
+      (beta : ℝ) ^ (e - 2) + (beta : ℝ) ^ (e - 2)
+          = (2 : ℝ) * (beta : ℝ) ^ (e - 2) := by ring
+      _ ≤ (beta : ℝ) * (beta : ℝ) ^ (e - 2) := by exact hmul_le
+      _ = (beta : ℝ) ^ (e - 1) := by simpa [hpow_split]
+  have hsum_le : (beta : ℝ) ^ (e - 2) + (beta : ℝ) ^ c ≤ (beta : ℝ) ^ (e - 1) :=
+    le_trans hsum_le' hsum_le2
+  have hlow : (beta : ℝ) ^ (e - 2) ≤ f := by
+    have hlow' : (beta : ℝ) ^ (e - 2) ≤ (beta : ℝ) ^ (e - 1) - (beta : ℝ) ^ c := by
+      exact (le_sub_iff_add_le).2 (by simpa using hsum_le)
+    have hf' : f = (beta : ℝ) ^ (e - 1) - (beta : ℝ) ^ c := by
+      simp [hf, hxe']
+    simpa [hf'] using hlow'
+
+  -- Upper bound: f < β^(e-1)
+  have hupp : f < (beta : ℝ) ^ (e - 1) := by
+    have hpow_pos : 0 < (beta : ℝ) ^ c := zpow_pos hbpos _
+    have : x - (beta : ℝ) ^ c < x := sub_lt_self _ hpow_pos
+    simpa [hf, hxe'] using this
+
+  -- Canonical exponent of f is fexp(e-1)
+  have hlow_abs : (beta : ℝ) ^ (e - 2) ≤ abs f := by simpa [h_abs_f] using hlow
+  have hupp_abs : abs f < (beta : ℝ) ^ (e - 1) := by simpa [h_abs_f] using hupp
+  have hcexp_eq : (cexp beta fexp f).run = c := by
+    have hcexp := FloatSpec.Core.Generic_fmt.cexp_fexp beta fexp f (e - 1)
+    simp [wp, PostCond.noThrow, Id.run, pure] at hcexp
+    have hlow_abs' : (beta : ℝ) ^ ((e - 1) - 1) ≤ abs f := by
+      have hsub : (e - 1) - 1 = e - 2 := by omega
+      simpa [hsub] using hlow_abs
+    have h := hcexp ⟨hβ, hlow_abs', hupp_abs⟩
+    simpa [hc] using h
+
+  -- Express f as F2R of a float with mantissa β^(e-1-c) - 1 at exponent c
+  set m : Int := beta ^ (Int.toNat (e - 1 - c)) - 1 with hm
+  have hnonneg : 0 ≤ e - 1 - c := by
+    exact le_of_lt (sub_pos_of_lt hlt_c)
+  have hpow_nat : (beta : ℝ) ^ (e - 1 - c) = (beta : ℝ) ^ (Int.toNat (e - 1 - c)) := by
+    exact FloatSpec.Core.Generic_fmt.zpow_nonneg_toNat (a := (beta : ℝ)) (k := e - 1 - c) hnonneg
+  have hpow_cast : (beta : ℝ) ^ (e - 1 - c) = ((beta ^ (Int.toNat (e - 1 - c)) : Int) : ℝ) := by
+    calc
+      (beta : ℝ) ^ (e - 1 - c) = (beta : ℝ) ^ (Int.toNat (e - 1 - c)) := hpow_nat
+      _ = ((beta ^ (Int.toNat (e - 1 - c)) : Int) : ℝ) := by
+            simpa [Int.cast_pow]
+  have hsplit : (beta : ℝ) ^ (e - 1) = (beta : ℝ) ^ (e - 1 - c) * (beta : ℝ) ^ c := by
+    exact (FloatSpec.Core.Generic_fmt.zpow_sub_add (a := (beta : ℝ)) hbne (e - 1) c).symm
+  have hf_eq : f = (m : ℝ) * (beta : ℝ) ^ c := by
+    calc
+      f = (beta : ℝ) ^ (e - 1) - (beta : ℝ) ^ c := by
+            simp [hf, hxe']
+      _ = (beta : ℝ) ^ (e - 1 - c) * (beta : ℝ) ^ c - (beta : ℝ) ^ c := by
+            simpa [hsplit]
+      _ = ((beta : ℝ) ^ (e - 1 - c) - 1) * (beta : ℝ) ^ c := by ring
+      _ = (((beta ^ (Int.toNat (e - 1 - c)) : Int) : ℝ) - 1) * (beta : ℝ) ^ c := by
+            simp [hpow_cast]
+      _ = (m : ℝ) * (beta : ℝ) ^ c := by
+            simp [m, Int.cast_sub]
+
+  -- Apply generic_format_F2R
+  have hfmt_m : (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((m : ℝ) * (beta : ℝ) ^ c)).run := by
+    have hformat := FloatSpec.Core.Generic_fmt.generic_format_F2R beta fexp m c
+    simp [wp, PostCond.noThrow, Id.run, pure] at hformat
+    apply hformat
+    refine ⟨hβ, ?_⟩
+    intro _hm_ne0
+    have hcexp_m : (cexp beta fexp ((m : ℝ) * (beta : ℝ) ^ c)).run = c := by
+      simpa [hf_eq] using hcexp_eq
+    exact le_of_eq hcexp_m
+  have hfmt_f : (FloatSpec.Core.Generic_fmt.generic_format beta fexp f).run := by
+    simpa [hf_eq] using hfmt_m
+
+  -- Discharge the Hoare triple
+  simpa [hf, hc, he, wp, PostCond.noThrow, Id.run, bind, pure] using hfmt_f
 
 /- Coq (Ulp.v):
 Lemma generic_format_succ_aux1:
