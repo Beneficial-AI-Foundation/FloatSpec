@@ -4116,59 +4116,38 @@ private theorem ulp_succ_pos_theorem
   -- For positive x, succ x = x + ulp x
   have hsucc_pos : (succ beta fexp x) = x + (ulp beta fexp x) := by
     simp [succ, le_of_lt hx, Id.run, bind, pure]
-  -- From magnitude properties: |x| ≤ β^e (non-strict)
+  -- From magnitude properties: |x| < β^e (strict upper bound)
   have habs : |x| = x := abs_of_pos hx
   have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x)
   have hpre' : 1 < beta ∧ x ≠ 0 := ⟨hβ, hx_ne⟩
-  have hupper : |x| ≤ b ^ (FloatSpec.Core.Raux.mag beta x) := by
+  have hupper : |x| < b ^ (FloatSpec.Core.Raux.mag beta x) := by
     simpa [wp, PostCond.noThrow, Id.run, FloatSpec.Core.Raux.abs_val, b] using (hmag_upper hpre')
-  have hx_le_bpow : x ≤ b ^ e := by simpa [habs, he] using hupper
-  -- Case split: x < β^e (use id_p_ulp_le_bpow) or x = β^e (exact power case)
-  rcases (lt_or_eq_of_le hx_le_bpow) with hx_lt_bpow | hx_eq_bpow
-  -- Case 2: x = β^e (exact power) - prove first disjunct via different argument
-  case inr =>
-    -- When x = β^e, we have succ(x) = β^e + ulp(β^e) > β^e
-    -- So succ(x) ≠ β^e = β^(mag x), meaning second disjunct is false
-    -- We need to show the first disjunct: ulp(succ x) = ulp(x)
-    -- This requires proving mag(succ x) gives same fexp contribution
-    -- For now, we prove directly using the structure of exact powers
+  have hx_lt_bpow : x < b ^ e := by simpa [habs, he] using hupper
+  -- Use id_p_ulp_le_bpow: x + ulp x ≤ β^e
+  have hid_p_ulp := id_p_ulp_le_bpow (beta := beta) (fexp := fexp) (x := x) (e := e)
+    hx Fx hx_lt_bpow hβ
+  have hsucc_le : x + (ulp beta fexp x) ≤ b ^ e := by
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hid_p_ulp
+  -- Case split: succ x < β^e or succ x = β^e
+  have hsucc_le' : (succ beta fexp x) ≤ b ^ e := by
+    simpa [hsucc_pos] using hsucc_le
+  rcases (lt_or_eq_of_le hsucc_le').symm with hsucc_eq | hsucc_lt
+  · -- Case: succ x = β^e (second disjunct)
+    right; exact hsucc_eq
+  · -- Case: succ x < β^e (first disjunct: ulp unchanged)
     left
-    -- When x = β^e:
-    -- - mag(x) = e (by mag_bpow)
-    -- - ulp(x) = β^(fexp(e+1)) (since cexp(β^e) uses mag(β^e) = e)
-    -- - succ(x) = β^e + β^(fexp(e+1))
-    -- - For typical valid exponents, fexp(e+1) < e, so succ(x) < 2*β^e < β^(e+1)
-    -- - Thus mag(succ x) can be e or e+1 depending on format
-    -- Since this is complex and depends on fexp properties, we use sorry for now
-    -- This case needs careful analysis of the fexp function behavior at exact powers
-    sorry
-  -- Case 1: x < β^e (strict) - use the standard approach
-  case inl =>
-    -- Use id_p_ulp_le_bpow: x + ulp x ≤ β^e
-    have hid_p_ulp := id_p_ulp_le_bpow (beta := beta) (fexp := fexp) (x := x) (e := e)
-      hx Fx hx_lt_bpow hβ
-    have hsucc_le : x + (ulp beta fexp x) ≤ b ^ e := by
-      simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hid_p_ulp
-    -- Case split: succ x < β^e or succ x = β^e
-    have hsucc_le' : (succ beta fexp x) ≤ b ^ e := by
-      simpa [hsucc_pos] using hsucc_le
-    rcases (lt_or_eq_of_le hsucc_le').symm with hsucc_eq | hsucc_lt
-    · -- Case: succ x = β^e (second disjunct)
-      right; exact hsucc_eq
-    · -- Case: succ x < β^e (first disjunct: ulp unchanged)
-      left
-      -- When succ x < β^e, we need to show ulp(succ x) = ulp x
-      -- This follows from mag(succ x) = mag x, which holds because:
-      -- - succ x > 0 (since x > 0 and ulp x > 0)
-      -- - β^(e-1) ≤ x < succ x < β^e, so mag(succ x) = e = mag x
-      have hulp_pos : 0 < (ulp beta fexp x) := by
-        have hulp_nz := ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) trivial
-        have hulp_run : (ulp beta fexp x) = b ^ (FloatSpec.Core.Generic_fmt.cexp
-            (beta := beta) (fexp := fexp) x) := by
-          simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hulp_nz
-        have hexp_pos : 0 < b ^ (FloatSpec.Core.Generic_fmt.cexp
-            (beta := beta) (fexp := fexp) x) := zpow_pos hβposℝ _
-        simpa [hulp_run] using hexp_pos
+    -- When succ x < β^e, we need to show ulp(succ x) = ulp x
+    -- This follows from mag(succ x) = mag x, which holds because:
+    -- - succ x > 0 (since x > 0 and ulp x > 0)
+    -- - β^(e-1) ≤ x < succ x < β^e, so mag(succ x) = e = mag x
+    have hulp_pos : 0 < (ulp beta fexp x) := by
+      have hulp_nz := ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) trivial
+      have hulp_run : (ulp beta fexp x) = b ^ (FloatSpec.Core.Generic_fmt.cexp
+          (beta := beta) (fexp := fexp) x) := by
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure, b] using hulp_nz
+      have hexp_pos : 0 < b ^ (FloatSpec.Core.Generic_fmt.cexp
+          (beta := beta) (fexp := fexp) x) := zpow_pos hβposℝ _
+      simpa [hulp_run] using hexp_pos
       have hsucc_pos' : 0 < (succ beta fexp x) := by
         simpa [hsucc_pos] using (add_pos hx hulp_pos)
       have hsucc_ne : (succ beta fexp x) ≠ 0 := ne_of_gt hsucc_pos'
