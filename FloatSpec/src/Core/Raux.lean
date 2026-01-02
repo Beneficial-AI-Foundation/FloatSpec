@@ -694,7 +694,19 @@ theorem Rcompare_spec (x y : ℝ) :
     ⦃⇓result => ⌜(result = -1 ↔ x < y) ∧
                 (result = 0 ↔ x = y) ∧
                 (result = 1 ↔ y < x)⌝⦄ := by
-  sorry
+  intro _
+  -- Reduce the Hoare triple to the pure comparison statement.
+  simp [wp, PostCond.noThrow, Id.run, pureId, Rcompare]
+  by_cases hxy : x < y
+  · have hne : x ≠ y := ne_of_lt hxy
+    have hnotyx : ¬ y < x := not_lt_of_ge (le_of_lt hxy)
+    simp [hxy, hne, hnotyx]
+  · by_cases hxeq : x = y
+    · subst hxeq
+      simp [hxy]
+    · have hyx : y < x := lt_of_le_of_ne (le_of_not_gt hxy) (Ne.symm hxeq)
+      have hnotxy : ¬ x < y := hxy
+      simp [hxy, hxeq, hyx, hnotxy]
 
 /-- Rcompare is antisymmetric
 
@@ -714,7 +726,8 @@ theorem Rcompare_sym_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     pureId (Rcompare_sym x y)
     ⦃⇓result => ⌜result = -(Rcompare y x)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, Id.run, pureId, Rcompare_sym]
 
 /-- Comparison with opposites reverses order
 
@@ -3907,7 +3920,53 @@ theorem mag_mult (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ y ≠ 0⌝⦄
     pureId (mag beta (x * y), mag beta x, mag beta y)
     ⦃⇓t => ⌜t.1 ≤ t.2.1 + t.2.2 ∧ t.2.1 + t.2.2 - 1 ≤ t.1⌝⦄ := by
-  sorry
+  intro h
+  -- Unpack hypotheses and basic positivity facts
+  rcases h with ⟨hβ, hx_ne, hy_ne⟩
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : 0 < (beta : ℝ) := lt_trans zero_lt_one hβR
+  have hxy_ne : x * y ≠ 0 := mul_ne_zero hx_ne hy_ne
+  have hx_pos : 0 < |x| := abs_pos.mpr hx_ne
+  have hy_pos : 0 < |y| := abs_pos.mpr hy_ne
+  -- Reduce the `Id` program
+  simp [wp, PostCond.noThrow, Id.run, pureId, pure, mag, hxy_ne, hx_ne, hy_ne]
+  -- Shorthands for logarithmic magnitudes
+  set Lx : ℝ := Real.log (abs x) / Real.log (beta : ℝ) with hLx
+  set Ly : ℝ := Real.log (abs y) / Real.log (beta : ℝ) with hLy
+  set Lxy : ℝ := Real.log (abs (x * y)) / Real.log (beta : ℝ) with hLxy
+  have hLx' : Lx = Real.log x / Real.log (beta : ℝ) := by
+    simpa [log_abs] using hLx
+  have hLy' : Ly = Real.log y / Real.log (beta : ℝ) := by
+    simpa [log_abs] using hLy
+  -- Relation between the logs: log |xy| = log |x| + log |y|
+  have habs_mul : abs (x * y) = abs x * abs y := abs_mul x y
+  have hLxy_eq : Lxy = Lx + Ly := by
+    calc
+      Lxy = Real.log (abs (x * y)) / Real.log (beta : ℝ) := rfl
+      _ = Real.log (abs x * abs y) / Real.log (beta : ℝ) := by rw [habs_mul]
+      _ = (Real.log (abs x) + Real.log (abs y)) / Real.log (beta : ℝ) := by
+            have hx_ne' : (abs x) ≠ 0 := ne_of_gt hx_pos
+            have hy_ne' : (abs y) ≠ 0 := ne_of_gt hy_pos
+            rw [Real.log_mul hx_ne' hy_ne']
+      _ = Lx + Ly := by rw [add_div, hLx, hLy]
+  have hLxy_abs : Real.log (abs x * abs y) / Real.log (beta : ℝ) = Lxy := by
+    simpa [habs_mul] using hLxy.symm
+  have hlog_mul_abs : Real.log (abs x * abs y) / Real.log (beta : ℝ) = Lx + Ly := by
+    simpa [hLxy_eq] using hLxy_abs
+  -- Prove the inequality in terms of Lx/Ly, then rewrite back.
+  have h_goal :
+      (Int.floor (Lx + Ly) + 1 ≤ Int.floor Lx + 1 + (Int.floor Ly + 1)) ∧
+        (Int.floor Lx + 1 + (Int.floor Ly + 1) - 1 ≤ Int.floor (Lx + Ly) + 1) := by
+    constructor
+    · have h_floor_add : Int.floor (Lx + Ly) ≤ Int.floor Lx + Int.floor Ly + 1 := by
+        have := Int.le_floor_add_floor Lx Ly
+        linarith
+      linarith
+    · have h_add_floor : Int.floor Lx + Int.floor Ly ≤ Int.floor (Lx + Ly) :=
+        Int.le_floor_add Lx Ly
+      linarith
+  simpa [hlog_mul_abs, hLx', hLy', add_assoc, add_left_comm, add_comm]
+    using h_goal
 
 /-- Magnitude of a sum under positivity and ordering
 
@@ -4516,7 +4575,71 @@ theorem mag_div (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ y ≠ 0⌝⦄
     pureId (mag beta (x / y), mag beta x, mag beta y)
     ⦃⇓t => ⌜t.2.1 - t.2.2 ≤ t.1 ∧ t.1 ≤ t.2.1 - t.2.2 + 1⌝⦄ := by
-  sorry
+  intro h
+  rcases h with ⟨hβ, hx_ne, hy_ne⟩
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : 0 < (beta : ℝ) := lt_trans zero_lt_one hβR
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hβR
+  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+
+  -- x/y ≠ 0
+  have hxy_ne : x / y ≠ 0 := div_ne_zero hx_ne hy_ne
+  have hx_abs_pos : 0 < |x| := abs_pos.mpr hx_ne
+  have hy_abs_pos : 0 < |y| := abs_pos.mpr hy_ne
+
+  -- Reduce to floor expressions
+  simp [wp, PostCond.noThrow, Id.run, pureId, pure, mag, hx_ne, hy_ne, hxy_ne]
+
+  -- Set up the log expressions
+  set Lx := Real.log |x| / Real.log (beta : ℝ) with hLx
+  set Ly := Real.log |y| / Real.log (beta : ℝ) with hLy
+  set Lxy := Real.log |x / y| / Real.log (beta : ℝ) with hLxy_def
+  have hLx' : Lx = Real.log x / Real.log (beta : ℝ) := by
+    simpa [log_abs] using hLx
+  have hLy' : Ly = Real.log y / Real.log (beta : ℝ) := by
+    simpa [log_abs] using hLy
+  have hLxy' : Lxy = Real.log (x / y) / Real.log (beta : ℝ) := by
+    simpa [log_abs] using hLxy_def
+
+  -- Key: log|x/y| = log|x| - log|y|
+  have habs_div : |x / y| = |x| / |y| := abs_div x y
+  have hlog_div : Real.log |x / y| = Real.log |x| - Real.log |y| := by
+    rw [habs_div]
+    exact Real.log_div (ne_of_gt hx_abs_pos) (ne_of_gt hy_abs_pos)
+
+  -- Therefore Lxy = Lx - Ly
+  have hLxy_eq : Lxy = Lx - Ly := by
+    simp [hLxy_def, hLx, hLy, hlog_div]
+    field_simp [hlogβ_ne]
+
+  -- Floor bounds: ⌊Lx - Ly⌋ is between ⌊Lx⌋ - ⌊Ly⌋ - 1 and ⌊Lx⌋ - ⌊Ly⌋
+  have hfloor_sub_lb : Int.floor Lx - Int.floor Ly - 1 ≤ Int.floor (Lx - Ly) := by
+    have hlt : ((Int.floor Lx - Int.floor Ly - 1 : ℤ) : ℝ) < Lx - Ly := by
+      have h1 : (Int.floor Lx : ℝ) ≤ Lx := Int.floor_le Lx
+      have h2 : Ly < Int.floor Ly + 1 := Int.lt_floor_add_one Ly
+      push_cast; linarith
+    exact Int.le_floor.mpr (le_of_lt hlt)
+
+  have hfloor_sub_ub : Int.floor (Lx - Ly) ≤ Int.floor Lx - Int.floor Ly := by
+    have h1 : Lx < Int.floor Lx + 1 := Int.lt_floor_add_one Lx
+    have h2 : (Int.floor Ly : ℝ) ≤ Ly := Int.floor_le Ly
+    have hcast : Lx - Ly < ((Int.floor Lx - Int.floor Ly + 1 : ℤ) : ℝ) := by
+      simp only [Int.cast_sub, Int.cast_add, Int.cast_one]
+      linarith
+    have := Int.floor_le_sub_one_iff.mpr hcast
+    linarith
+
+  -- Prove the inequality in terms of Lx/Ly, then rewrite back.
+  have h_goal :
+      (Int.floor Lx + 1 - (Int.floor Ly + 1) ≤ Int.floor (Lx - Ly) + 1) ∧
+        (Int.floor (Lx - Ly) + 1 ≤ Int.floor Lx + 1 - (Int.floor Ly + 1) + 1) := by
+    constructor
+    · linarith [hfloor_sub_lb]
+    · linarith [hfloor_sub_ub]
+  have hlog_div_abs : Real.log (x / y) / Real.log (beta : ℝ) = Lx - Ly := by
+    simpa [hLxy_eq] using hLxy'.symm
+  simpa [hlog_div_abs, hLx', hLy', add_assoc, add_left_comm, add_comm, sub_eq_add_neg]
+    using h_goal
 
 /-- Magnitude of square root
 
