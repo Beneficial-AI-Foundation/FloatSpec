@@ -77,11 +77,10 @@ noncomputable def F2R (f : FlocqFloat beta) : ℝ :=
 @[spec]
 theorem F2R_spec (f : FlocqFloat beta) :
     ⦃⌜beta > 1⌝⦄
-    F2R f
+    (pure (F2R f) : Id ℝ)
     ⦃⇓result => ⌜result = f.Fnum * (beta : ℝ) ^ f.Fexp⌝⦄ := by
   intro _h
-  unfold F2R
-  rfl
+  simp [wp, PostCond.noThrow, F2R, pure]
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- Simp/Grind infrastructure for F2R
@@ -249,11 +248,10 @@ def Fnum_extract {beta : Int} (f : FlocqFloat beta) : Int :=
 @[spec]
 theorem Fnum_extract_spec {beta : Int} (f : FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fnum_extract f
+    (pure (Fnum_extract f) : Id Int)
     ⦃⇓result => ⌜result = f.Fnum⌝⦄ := by
   intro _
-  unfold Fnum_extract
-  rfl
+  simp [wp, PostCond.noThrow, Fnum_extract, pure]
 
 /-- Extract the exponent from a FlocqFloat
 
@@ -269,11 +267,10 @@ def Fexp_extract {beta : Int} (f : FlocqFloat beta) : Int :=
 @[spec]
 theorem Fexp_extract_spec {beta : Int} (f : FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fexp_extract f
+    (pure (Fexp_extract f) : Id Int)
     ⦃⇓result => ⌜result = f.Fexp⌝⦄ := by
   intro _
-  unfold Fexp_extract
-  rfl
+  simp [wp, PostCond.noThrow, Fexp_extract, pure]
 
 /-- Create a FlocqFloat from mantissa and exponent
 
@@ -289,11 +286,10 @@ def make_float {beta : Int} (num exp : Int) : (FlocqFloat beta) :=
 @[spec]
 theorem make_float_spec {beta : Int} (num exp : Int) :
     ⦃⌜True⌝⦄
-    make_float (beta := beta) num exp
+    (pure (make_float (beta := beta) num exp) : Id (FlocqFloat beta))
     ⦃⇓result => ⌜result.Fnum = num ∧ result.Fexp = exp⌝⦄ := by
   intro _
-  unfold make_float
-  simp [pure]
+  simp [wp, PostCond.noThrow, make_float, pure]
 
 end HelperFunctions
 
@@ -313,12 +309,11 @@ def FlocqFloat_eq {beta : Int} (f g : FlocqFloat beta) : Bool :=
 @[spec]
 theorem FlocqFloat_eq_spec {beta : Int} (f g : FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    FlocqFloat_eq f g
+    (pure (FlocqFloat_eq f g) : Id Bool)
     ⦃⇓result => ⌜result ↔ (f.Fnum = g.Fnum ∧ f.Fexp = g.Fexp)⌝⦄ := by
   intro _
-  unfold FlocqFloat_eq
   -- The boolean equality check returns true iff both components are equal
-  simp [Bool.and_eq_true]
+  simp [wp, PostCond.noThrow, FlocqFloat_eq, pure, Bool.and_eq_true]
 
 /-- Convert zero float to real
 
@@ -334,11 +329,10 @@ noncomputable def F2R_zero_float {beta : Int} : ℝ :=
 @[spec]
 theorem F2R_zero_spec {beta : Int} :
     ⦃⌜beta > 1⌝⦄
-    F2R_zero_float (beta := beta)
+    (pure (F2R_zero_float (beta := beta)) : Id ℝ)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro _h
-  unfold F2R_zero_float F2R
-  simp [pure]
+  simp [wp, PostCond.noThrow, F2R_zero_float, F2R, pure]
 
 /-- Add two floats with same exponent
 
@@ -359,16 +353,14 @@ noncomputable def F2R_add_same_exp {beta : Int} (f g : FlocqFloat beta) : (ℝ �
 @[spec]
 theorem F2R_add_same_exp_spec {beta : Int} (f g : FlocqFloat beta) :
     ⦃⌜f.Fexp = g.Fexp ∧ beta > 1⌝⦄
-    F2R_add_same_exp f g
+    (pure (F2R_add_same_exp f g) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro ⟨h_eq, _h_beta⟩
-  unfold F2R_add_same_exp
-  simp only [F2R, pure, h_eq, bind]
+  simp [wp, PostCond.noThrow, F2R_add_same_exp, F2R, h_eq, pure, Int.cast_add, add_mul]
   -- Now we have a pair where we need to prove the two components are equal
   -- The left component: (f.Fnum + g.Fnum) * beta^g.Fexp
   -- The right component: f.Fnum * beta^g.Fexp + g.Fnum * beta^g.Fexp
   -- This follows from distributivity of multiplication over addition
-  simp [add_mul]
 
 end StructuralProperties
 
