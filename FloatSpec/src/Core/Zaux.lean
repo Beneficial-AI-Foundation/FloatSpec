@@ -25,6 +25,9 @@ open Std.Do
 
 namespace FloatSpec.Core.Zaux
 
+/-- Lift a pure value into {lean}`Id` for Hoare-style specs. -/
+abbrev pureId {α} (x : α) : Id α := (pure x : Id α)
+
 section Zmissing
 
 /-- Cancellation law for opposite in integer inequalities
@@ -43,7 +46,7 @@ def Zopp_le_cancel (x y : Int) : Int :=
 @[spec]
 theorem Zopp_le_cancel_spec (x y : Int) :
     ⦃⌜-y ≤ -x⌝⦄
-    Zopp_le_cancel x y
+    pureId (Zopp_le_cancel x y)
     ⦃⇓result => ⌜result = if x ≤ y then 1 else 0⌝⦄ := by
   intro h
   unfold Zopp_le_cancel
@@ -67,7 +70,7 @@ def Zgt_not_eq (x y : Int) : Bool :=
 @[spec]
 theorem Zgt_not_eq_spec (x y : Int) :
     ⦃⌜y < x⌝⦄
-    Zgt_not_eq x y
+    pureId (Zgt_not_eq x y)
     ⦃⇓result => ⌜result = (x ≠ y)⌝⦄ := by
   intro h
   unfold Zgt_not_eq
@@ -95,7 +98,7 @@ def eqbool_irrelevance (b : Bool) (_h1 _h2 : b = true) : Bool :=
 @[spec]
 theorem eqbool_irrelevance_spec (b : Bool) (h1 h2 : b = true) :
     ⦃⌜b = true⌝⦄
-    eqbool_irrelevance b h1 h2
+    pureId (eqbool_irrelevance b h1 h2)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold eqbool_irrelevance
@@ -115,7 +118,7 @@ def Zeven_ex (x : Int) : (Int × Int) :=
 @[spec]
 theorem Zeven_ex_spec (x : Int) :
     ⦃⌜True⌝⦄
-    Zeven_ex x
+    pureId (Zeven_ex x)
     ⦃⇓result => ⌜let (p, r) := result
                 x = 2 * p + r ∧ (r = 0 ∨ r = 1)⌝⦄ := by
   intro _
@@ -150,7 +153,7 @@ def Zpower_plus (n k1 k2 : Int) : Int :=
 @[spec]
 theorem Zpower_plus_spec (n k1 k2 : Int) :
     ⦃⌜0 ≤ k1 ∧ 0 ≤ k2⌝⦄
-    Zpower_plus n k1 k2
+    pureId (Zpower_plus n k1 k2)
     ⦃⇓result => ⌜result = n^(k1.natAbs + k2.natAbs)⌝⦄ := by
   intro ⟨h1, h2⟩
   unfold Zpower_plus
@@ -189,7 +192,7 @@ def radix_val_inj_check (r1 r2 : Radix) : Bool :=
 @[spec]
 theorem radix_val_inj_spec (r1 r2 : Radix) :
     ⦃⌜True⌝⦄
-    radix_val_inj_check r1 r2
+    pureId (radix_val_inj_check r1 r2)
     ⦃⇓result => ⌜result = decide ((r1.val = r2.val) → (r1.val = r2.val))⌝⦄ := by
   intro _
   unfold radix_val_inj_check
@@ -202,7 +205,7 @@ theorem radix_val_inj_spec (r1 r2 : Radix) :
 -/
 theorem radix_val_inj (r1 r2 : Radix) :
     ⦃⌜True⌝⦄
-    radix_val_inj_check r1 r2
+    pureId (radix_val_inj_check r1 r2)
     ⦃⇓result => ⌜result = decide ((r1.val = r2.val) → (r1.val = r2.val))⌝⦄ := by
   -- Follows `radix_val_inj_spec`.
   exact radix_val_inj_spec r1 r2
@@ -214,7 +217,7 @@ def radix_gt_0_check (r : Radix) : Bool :=
 /-- Specification: Any radix is strictly positive -/
 theorem radix_gt_0_spec (r : Radix) :
     ⦃⌜True⌝⦄
-    radix_gt_0_check r
+    pureId (radix_gt_0_check r)
     ⦃⇓result => ⌜result = decide (0 < r.val)⌝⦄ := by
   intro _
   unfold radix_gt_0_check
@@ -223,7 +226,7 @@ theorem radix_gt_0_spec (r : Radix) :
 /-- Coq-compatible name: any radix is strictly positive -/
 theorem radix_gt_0 (r : Radix) :
     ⦃⌜True⌝⦄
-    radix_gt_0_check r
+    pureId (radix_gt_0_check r)
     ⦃⇓result => ⌜result = decide (0 < r.val)⌝⦄ := by
   exact radix_gt_0_spec r
 
@@ -234,7 +237,7 @@ def radix_gt_1_check (r : Radix) : Bool :=
 /-- Specification: Any radix is strictly greater than 1 -/
 theorem radix_gt_1_spec (r : Radix) :
     ⦃⌜True⌝⦄
-    radix_gt_1_check r
+    pureId (radix_gt_1_check r)
     ⦃⇓result => ⌜result = decide (1 < r.val)⌝⦄ := by
   intro _
   unfold radix_gt_1_check
@@ -243,7 +246,7 @@ theorem radix_gt_1_spec (r : Radix) :
 /-- Coq-compatible name: any radix is strictly greater than 1 -/
 theorem radix_gt_1 (r : Radix) :
     ⦃⌜True⌝⦄
-    radix_gt_1_check r
+    pureId (radix_gt_1_check r)
     ⦃⇓result => ⌜result = decide (1 < r.val)⌝⦄ := by
   exact radix_gt_1_spec r
 
@@ -260,7 +263,7 @@ def Zpower_Zpower_nat (b e : Int) : Int :=
 @[spec]
 theorem Zpower_Zpower_nat_spec (b e : Int) :
     ⦃⌜0 ≤ e⌝⦄
-    Zpower_Zpower_nat b e
+    pureId (Zpower_Zpower_nat b e)
     ⦃⇓result => ⌜result = b^e.natAbs⌝⦄ := by
   intro h
   unfold Zpower_Zpower_nat
@@ -280,7 +283,7 @@ def Zpower_nat_S (b : Int) (e : Nat) : Int :=
 @[spec]
 theorem Zpower_nat_S_spec (b : Int) (e : Nat) :
     ⦃⌜True⌝⦄
-    Zpower_nat_S b e
+    pureId (Zpower_nat_S b e)
     ⦃⇓result => ⌜result = b * b^e⌝⦄ := by
   intro _
   unfold Zpower_nat_S
@@ -302,7 +305,7 @@ def Zpower_pos_gt_0_check (b : Int) (p : Nat) : Bool :=
 -/
 theorem Zpower_pos_gt_0_spec (b : Int) (p : Nat) :
     ⦃⌜0 < b⌝⦄
-    Zpower_pos_gt_0_check b p
+    pureId (Zpower_pos_gt_0_check b p)
     ⦃⇓result => ⌜result = decide (0 < b ^ p)⌝⦄ := by
   intro _
   unfold Zpower_pos_gt_0_check
@@ -315,7 +318,7 @@ theorem Zpower_pos_gt_0_spec (b : Int) (p : Nat) :
 -/
 theorem Zpower_pos_gt_0 (b : Int) (p : Nat) :
     ⦃⌜0 < b⌝⦄
-    Zpower_pos_gt_0_check b p
+    pureId (Zpower_pos_gt_0_check b p)
     ⦃⇓result => ⌜result = decide (0 < b ^ p)⌝⦄ :=
   Zpower_pos_gt_0_spec b p
 
@@ -337,7 +340,7 @@ def Zeven_Zpower_odd_check (b e : Int) : Bool :=
 @[spec]
 theorem Zeven_Zpower_odd_spec (b e : Int) :
     ⦃⌜0 ≤ e ∧ (decide ((b % 2) = 0) = false)⌝⦄
-    Zeven_Zpower_odd_check b e
+    pureId (Zeven_Zpower_odd_check b e)
     ⦃⇓result => ⌜result = decide (((b ^ e.natAbs) % 2 ≠ 0))⌝⦄ := by
   intro _
   unfold Zeven_Zpower_odd_check
@@ -346,7 +349,7 @@ theorem Zeven_Zpower_odd_spec (b e : Int) :
 /-- Coq-compatible name: an odd base to a nonnegative exponent remains odd -/
 theorem Zeven_Zpower_odd (b e : Int) :
     ⦃⌜0 ≤ e ∧ (decide ((b % 2) = 0) = false)⌝⦄
-    Zeven_Zpower_odd_check b e
+    pureId (Zeven_Zpower_odd_check b e)
     ⦃⇓result => ⌜result = decide (((b ^ e.natAbs) % 2 ≠ 0))⌝⦄ := by
   exact Zeven_Zpower_odd_spec b e
 
@@ -364,7 +367,7 @@ def Zpower_gt_1_check (r : Radix) (p : Int) : Bool :=
 /-- Specification: Radix powers exceed 1 for positive exponents -/
 theorem Zpower_gt_1_spec (r : Radix) (p : Int) :
     ⦃⌜0 < p⌝⦄
-    Zpower_gt_1_check r p
+    pureId (Zpower_gt_1_check r p)
     ⦃⇓result => ⌜result = decide (1 < r.val ^ p.natAbs)⌝⦄ := by
   intro _
   unfold Zpower_gt_1_check
@@ -373,7 +376,7 @@ theorem Zpower_gt_1_spec (r : Radix) (p : Int) :
 /-- Coq-compatible name: power of radix greater than one for positive exponent -/
 theorem Zpower_gt_1 (r : Radix) (p : Int) :
     ⦃⌜0 < p⌝⦄
-    Zpower_gt_1_check r p
+    pureId (Zpower_gt_1_check r p)
     ⦃⇓result => ⌜result = decide (1 < r.val ^ p.natAbs)⌝⦄ := by
   exact Zpower_gt_1_spec r p
 
@@ -384,7 +387,7 @@ def Zpower_gt_0_check (r : Radix) (p : Int) : Bool :=
 /-- Specification: Any radix power with nonnegative exponent is positive -/
 theorem Zpower_gt_0_spec (r : Radix) (p : Int) :
     ⦃⌜0 ≤ p⌝⦄
-    Zpower_gt_0_check r p
+    pureId (Zpower_gt_0_check r p)
     ⦃⇓result => ⌜result = decide (0 < r.val ^ p.natAbs)⌝⦄ := by
   intro _
   unfold Zpower_gt_0_check
@@ -393,7 +396,7 @@ theorem Zpower_gt_0_spec (r : Radix) (p : Int) :
 /-- Coq-compatible name: positivity of radix powers for nonnegative exponents -/
 theorem Zpower_gt_0 (r : Radix) (p : Int) :
     ⦃⌜0 ≤ p⌝⦄
-    Zpower_gt_0_check r p
+    pureId (Zpower_gt_0_check r p)
     ⦃⇓result => ⌜result = decide (0 < r.val ^ p.natAbs)⌝⦄ := by
   exact Zpower_gt_0_spec r p
 
@@ -404,7 +407,7 @@ def Zpower_ge_0_check (r : Radix) (e : Int) : Bool :=
 /-- Specification: Any radix power is nonnegative -/
 theorem Zpower_ge_0_spec (r : Radix) (e : Int) :
     ⦃⌜True⌝⦄
-    Zpower_ge_0_check r e
+    pureId (Zpower_ge_0_check r e)
     ⦃⇓result => ⌜result = decide (0 ≤ r.val ^ e.natAbs)⌝⦄ := by
   intro _
   unfold Zpower_ge_0_check
@@ -413,7 +416,7 @@ theorem Zpower_ge_0_spec (r : Radix) (e : Int) :
 /-- Coq-compatible name: nonnegativity of radix powers -/
 theorem Zpower_ge_0 (r : Radix) (e : Int) :
     ⦃⌜True⌝⦄
-    Zpower_ge_0_check r e
+    pureId (Zpower_ge_0_check r e)
     ⦃⇓result => ⌜result = decide (0 ≤ r.val ^ e.natAbs)⌝⦄ := by
   exact Zpower_ge_0_spec r e
 
@@ -425,7 +428,7 @@ def Zpower_le (r : Radix) (e1 e2 : Int) : Bool :=
 @[spec]
 theorem Zpower_le_spec (r : Radix) (e1 e2 : Int) :
     ⦃⌜e1 ≤ e2⌝⦄
-    Zpower_le r e1 e2
+    pureId (Zpower_le r e1 e2)
     ⦃⇓result => ⌜result = decide (r.val ^ e1.natAbs ≤ r.val ^ e2.natAbs)⌝⦄ := by
   intro _
   unfold Zpower_le
@@ -439,7 +442,7 @@ def Zpower_lt_check (r : Radix) (e1 e2 : Int) : Bool :=
 @[spec]
 theorem Zpower_lt_spec (r : Radix) (e1 e2 : Int) :
     ⦃⌜0 ≤ e2 ∧ e1 < e2⌝⦄
-    Zpower_lt_check r e1 e2
+    pureId (Zpower_lt_check r e1 e2)
     ⦃⇓result => ⌜result = decide (r.val ^ e1.natAbs < r.val ^ e2.natAbs)⌝⦄ := by
   intro _
   unfold Zpower_lt_check
@@ -448,7 +451,7 @@ theorem Zpower_lt_spec (r : Radix) (e1 e2 : Int) :
 /-- Coq-compatible name: strict monotonicity of radix power in the exponent -/
 theorem Zpower_lt (r : Radix) (e1 e2 : Int) :
     ⦃⌜0 ≤ e2 ∧ e1 < e2⌝⦄
-    Zpower_lt_check r e1 e2
+    pureId (Zpower_lt_check r e1 e2)
     ⦃⇓result => ⌜result = decide (r.val ^ e1.natAbs < r.val ^ e2.natAbs)⌝⦄ := by
   exact Zpower_lt_spec r e1 e2
 
@@ -460,7 +463,7 @@ def Zpower_lt_Zpower (_r : Radix) (e1 e2 : Int) : Bool :=
 @[spec]
 theorem Zpower_lt_Zpower_spec (r : Radix) (e1 e2 : Int) :
     ⦃⌜r.val ^ (e1 - 1).natAbs < r.val ^ e2.natAbs⌝⦄
-    Zpower_lt_Zpower r e1 e2
+    pureId (Zpower_lt_Zpower r e1 e2)
     ⦃⇓result => ⌜result = decide (e1 ≤ e2)⌝⦄ := by
   intro _
   unfold Zpower_lt_Zpower
@@ -474,7 +477,7 @@ def Zpower_gt_id_check (r : Radix) (n : Int) : Bool :=
 @[spec]
 theorem Zpower_gt_id_spec (r : Radix) (n : Int) :
     ⦃⌜True⌝⦄
-    Zpower_gt_id_check r n
+    pureId (Zpower_gt_id_check r n)
     ⦃⇓result => ⌜result = decide (n < r.val ^ n.natAbs)⌝⦄ := by
   intro _
   unfold Zpower_gt_id_check
@@ -483,7 +486,7 @@ theorem Zpower_gt_id_spec (r : Radix) (n : Int) :
 /-- Coq-compatible name: radix powers dominate the index -/
 theorem Zpower_gt_id (r : Radix) (n : Int) :
     ⦃⌜True⌝⦄
-    Zpower_gt_id_check r n
+    pureId (Zpower_gt_id_check r n)
     ⦃⇓result => ⌜result = decide (n < r.val ^ n.natAbs)⌝⦄ := by
   exact Zpower_gt_id_spec r n
 
@@ -499,7 +502,7 @@ def Zmod_mod_mult (n _a b : Int) : Int :=
 @[spec]
 theorem Zmod_mod_mult_spec (n a b : Int) :
     ⦃⌜0 < a ∧ 0 ≤ b⌝⦄
-    Zmod_mod_mult n a b
+    pureId (Zmod_mod_mult n a b)
     ⦃⇓result => ⌜result = n % b⌝⦄ := by
   intro h
   unfold Zmod_mod_mult
@@ -513,7 +516,7 @@ def ZOmod_eq (a b : Int) : Int :=
 @[spec]
 theorem ZOmod_eq_spec (a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
-    ZOmod_eq a b
+    pureId (ZOmod_eq a b)
     ⦃⇓result => ⌜result = a % b⌝⦄ := by
   intro h
   unfold ZOmod_eq
@@ -530,7 +533,7 @@ def Zdiv_mod_mult (n a b : Int) : Int :=
 @[spec]
 theorem Zdiv_mod_mult_spec (n a b : Int) :
     ⦃⌜0 ≤ a ∧ 0 ≤ b⌝⦄
-    Zdiv_mod_mult n a b
+    pureId (Zdiv_mod_mult n a b)
     ⦃⇓result => ⌜result = if a = 0 || b = 0 then 0 else (n / a) % b⌝⦄ := by
   intro ⟨ha, hb⟩
   unfold Zdiv_mod_mult
@@ -572,7 +575,7 @@ def ZOmod_mod_mult (n _a b : Int) : Int :=
 @[spec]
 theorem ZOmod_mod_mult_spec (n a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
-    ZOmod_mod_mult n a b
+    pureId (ZOmod_mod_mult n a b)
     ⦃⇓result => ⌜result = n % b⌝⦄ := by
   intro h
   unfold ZOmod_mod_mult
@@ -590,7 +593,7 @@ def ZOdiv_mod_mult (n a b : Int) : Bool :=
 @[spec]
 theorem ZOdiv_mod_mult_spec (n a b : Int) :
     ⦃⌜True⌝⦄
-    ZOdiv_mod_mult n a b
+    pureId (ZOdiv_mod_mult n a b)
     ⦃⇓result => ⌜result = decide (((n % (a * b)) / a) = ((n / a) % b))⌝⦄ := by
   intro _
   unfold ZOdiv_mod_mult
@@ -607,7 +610,7 @@ def ZOdiv_small_abs_check (a b : Int) : Bool :=
 @[spec]
 theorem ZOdiv_small_abs_spec (a b : Int) :
     ⦃⌜Int.natAbs a < b.natAbs⌝⦄
-    ZOdiv_small_abs_check a b
+    pureId (ZOdiv_small_abs_check a b)
     ⦃⇓result => ⌜result = decide (a / b = 0)⌝⦄ := by
   intro _
   unfold ZOdiv_small_abs_check
@@ -616,7 +619,7 @@ theorem ZOdiv_small_abs_spec (a b : Int) :
 /-- Coq-compatible name: small-absolute-value truncated division is zero -/
 theorem ZOdiv_small_abs (a b : Int) :
     ⦃⌜Int.natAbs a < b.natAbs⌝⦄
-    ZOdiv_small_abs_check a b
+    pureId (ZOdiv_small_abs_check a b)
     ⦃⇓result => ⌜result = decide (a / b = 0)⌝⦄ := by
   exact ZOdiv_small_abs_spec a b
 
@@ -628,7 +631,7 @@ def ZOmod_small_abs_check (a b : Int) : Bool :=
 @[spec]
 theorem ZOmod_small_abs_spec (a b : Int) :
     ⦃⌜Int.natAbs a < b.natAbs⌝⦄
-    ZOmod_small_abs_check a b
+    pureId (ZOmod_small_abs_check a b)
     ⦃⇓result => ⌜result = decide (a % b = a)⌝⦄ := by
   intro _
   unfold ZOmod_small_abs_check
@@ -637,7 +640,7 @@ theorem ZOmod_small_abs_spec (a b : Int) :
 /-- Coq-compatible name: small-absolute-value modulo is identity -/
 theorem ZOmod_small_abs (a b : Int) :
     ⦃⌜Int.natAbs a < b.natAbs⌝⦄
-    ZOmod_small_abs_check a b
+    pureId (ZOmod_small_abs_check a b)
     ⦃⇓result => ⌜result = decide (a % b = a)⌝⦄ := by
   exact ZOmod_small_abs_spec a b
 
@@ -656,7 +659,7 @@ def ZOdiv_plus (a b c : Int) : Int :=
 @[spec]
 theorem ZOdiv_plus_spec (a b c : Int) :
     ⦃⌜0 ≤ a * b ∧ c ≠ 0⌝⦄
-    ZOdiv_plus a b c
+    pureId (ZOdiv_plus a b c)
     ⦃⇓result => ⌜result = a / c + b / c + ((a % c + b % c) / c)⌝⦄ := by
   intro ⟨hab, hc⟩
   unfold ZOdiv_plus
@@ -675,7 +678,7 @@ def Zsame_sign_trans_check (_v u w : Int) : Bool :=
 @[spec]
 theorem Zsame_sign_trans_spec (v u w : Int) :
     ⦃⌜v ≠ 0 ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
-    Zsame_sign_trans_check v u w
+    pureId (Zsame_sign_trans_check v u w)
     ⦃⇓result => ⌜result = decide (0 ≤ u * w)⌝⦄ := by
   intro _
   unfold Zsame_sign_trans_check
@@ -684,7 +687,7 @@ theorem Zsame_sign_trans_spec (v u w : Int) :
 /-- Coq-compatible name: transitivity of nonnegativity through a nonzero factor -/
 theorem Zsame_sign_trans (v u w : Int) :
     ⦃⌜v ≠ 0 ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
-    Zsame_sign_trans_check v u w
+    pureId (Zsame_sign_trans_check v u w)
     ⦃⇓result => ⌜result = decide (0 ≤ u * w)⌝⦄ := by
   exact Zsame_sign_trans_spec v u w
 
@@ -696,7 +699,7 @@ def Zsame_sign_trans_weak_check (_v u w : Int) : Bool :=
 @[spec]
 theorem Zsame_sign_trans_weak_spec (v u w : Int) :
     ⦃⌜(v = 0 → w = 0) ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
-    Zsame_sign_trans_weak_check v u w
+    pureId (Zsame_sign_trans_weak_check v u w)
     ⦃⇓result => ⌜result = decide (0 ≤ u * w)⌝⦄ := by
   intro _
   unfold Zsame_sign_trans_weak_check
@@ -705,7 +708,7 @@ theorem Zsame_sign_trans_weak_spec (v u w : Int) :
 /-- Coq-compatible name: weak transitivity of nonnegativity -/
 theorem Zsame_sign_trans_weak (v u w : Int) :
     ⦃⌜(v = 0 → w = 0) ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
-    Zsame_sign_trans_weak_check v u w
+    pureId (Zsame_sign_trans_weak_check v u w)
     ⦃⇓result => ⌜result = decide (0 ≤ u * w)⌝⦄ := by
   exact Zsame_sign_trans_weak_spec v u w
 
@@ -720,7 +723,7 @@ def Zsame_sign_imp (u v : Int)
 theorem Zsame_sign_imp_spec (u v : Int)
     (hp : 0 < u → 0 ≤ v) (hn : 0 < -u → 0 ≤ -v) :
     ⦃⌜True⌝⦄
-    Zsame_sign_imp u v hp hn
+    pureId (Zsame_sign_imp u v hp hn)
     ⦃⇓result => ⌜result = decide (0 ≤ u * v)⌝⦄ := by
   intro _
   unfold Zsame_sign_imp
@@ -734,7 +737,7 @@ def Zsame_sign_odiv (u v : Int) : Bool :=
 @[spec]
 theorem Zsame_sign_odiv_spec (u v : Int) :
     ⦃⌜0 ≤ v⌝⦄
-    Zsame_sign_odiv u v
+    pureId (Zsame_sign_odiv u v)
     ⦃⇓result => ⌜result = decide (0 ≤ u * (u / v))⌝⦄ := by
   intro _
   unfold Zsame_sign_odiv
@@ -761,7 +764,7 @@ def Zeq_bool (x y : Int) : Bool :=
 @[spec]
 theorem Zeq_bool_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zeq_bool x y
+    pureId (Zeq_bool x y)
     ⦃⇓result => ⌜result = decide (x = y)⌝⦄ := by
   intro _
   unfold Zeq_bool
@@ -783,7 +786,7 @@ def Zle_bool (x y : Int) : Bool :=
 @[spec]
 theorem Zle_bool_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zle_bool x y
+    pureId (Zle_bool x y)
     ⦃⇓result => ⌜result = decide (x ≤ y)⌝⦄ := by
   intro _
   unfold Zle_bool
@@ -801,7 +804,7 @@ def Zlt_bool (x y : Int) : Bool :=
 @[spec]
 theorem Zlt_bool_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zlt_bool x y
+    pureId (Zlt_bool x y)
     ⦃⇓result => ⌜result = decide (x < y)⌝⦄ := by
   intro _
   unfold Zlt_bool
@@ -815,7 +818,7 @@ def Zeq_bool_true (_ _ : Int) : Bool :=
 @[spec]
 theorem Zeq_bool_true_spec (x y : Int) :
     ⦃⌜x = y⌝⦄
-    Zeq_bool_true x y
+    pureId (Zeq_bool_true x y)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Zeq_bool_true
@@ -829,7 +832,7 @@ def Zeq_bool_false (_ _ : Int) : Bool :=
 @[spec]
 theorem Zeq_bool_false_spec (x y : Int) :
     ⦃⌜x ≠ y⌝⦄
-    Zeq_bool_false x y
+    pureId (Zeq_bool_false x y)
     ⦃⇓result => ⌜result = false⌝⦄ := by
   intro _
   unfold Zeq_bool_false
@@ -848,7 +851,7 @@ def Zeq_bool_diag (_ : Int) : Bool :=
 @[spec]
 theorem Zeq_bool_diag_spec (x : Int) :
     ⦃⌜True⌝⦄
-    Zeq_bool_diag x
+    pureId (Zeq_bool_diag x)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Zeq_bool_diag
@@ -871,7 +874,7 @@ def Zeq_bool_opp (x y : Int) : Bool :=
 @[spec]
 theorem Zeq_bool_opp_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zeq_bool_opp x y
+    pureId (Zeq_bool_opp x y)
     ⦃⇓result => ⌜result = decide ((-x = y) = (x = -y))⌝⦄ := by
   intro _
   unfold Zeq_bool_opp
@@ -893,7 +896,7 @@ def Zeq_bool_opp' (x y : Int) : Bool :=
 -/
 theorem Zeq_bool_opp'_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zeq_bool_opp' x y
+    pureId (Zeq_bool_opp' x y)
     ⦃⇓result => ⌜result = decide ((-x = -y) = (x = y))⌝⦄ := by
   intro _
   unfold Zeq_bool_opp'
@@ -912,7 +915,7 @@ def Zle_bool_true (_ _ : Int) : Bool :=
 @[spec]
 theorem Zle_bool_true_spec (x y : Int) :
     ⦃⌜x ≤ y⌝⦄
-    Zle_bool_true x y
+    pureId (Zle_bool_true x y)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Zle_bool_true
@@ -931,7 +934,7 @@ def Zle_bool_false (_ _ : Int) : Bool :=
 @[spec]
 theorem Zle_bool_false_spec (x y : Int) :
     ⦃⌜y < x⌝⦄
-    Zle_bool_false x y
+    pureId (Zle_bool_false x y)
     ⦃⇓result => ⌜result = false⌝⦄ := by
   intro _
   unfold Zle_bool_false
@@ -953,7 +956,7 @@ def Zle_bool_opp_l (x y : Int) : Bool :=
 @[spec]
 theorem Zle_bool_opp_l_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zle_bool_opp_l x y
+    pureId (Zle_bool_opp_l x y)
     ⦃⇓result => ⌜result = decide ((- x ≤ y) = (- y ≤ x))⌝⦄ := by
   intro _
   unfold Zle_bool_opp_l
@@ -975,7 +978,7 @@ def Zle_bool_opp (x y : Int) : Bool :=
 @[spec]
 theorem Zle_bool_opp_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zle_bool_opp x y
+    pureId (Zle_bool_opp x y)
     ⦃⇓result => ⌜result = decide ((- x ≤ - y) = (y ≤ x))⌝⦄ := by
   intro _
   unfold Zle_bool_opp
@@ -997,7 +1000,7 @@ def Zle_bool_opp_r (x y : Int) : Bool :=
 @[spec]
 theorem Zle_bool_opp_r_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zle_bool_opp_r x y
+    pureId (Zle_bool_opp_r x y)
     ⦃⇓result => ⌜result = decide ((x ≤ - y) = (y ≤ - x))⌝⦄ := by
   intro _
   unfold Zle_bool_opp_r
@@ -1019,7 +1022,7 @@ def negb_Zle_bool (x y : Int) : Bool :=
 @[spec]
 theorem negb_Zle_bool_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    negb_Zle_bool x y
+    pureId (negb_Zle_bool x y)
     ⦃⇓result => ⌜result = decide (!(x ≤ y) = (y < x))⌝⦄ := by
   intro _
   unfold negb_Zle_bool
@@ -1041,7 +1044,7 @@ def negb_Zlt_bool (x y : Int) : Bool :=
 @[spec]
 theorem negb_Zlt_bool_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    negb_Zlt_bool x y
+    pureId (negb_Zlt_bool x y)
     ⦃⇓result => ⌜result = decide (!(x < y) = (y ≤ x))⌝⦄ := by
   intro _
   unfold negb_Zlt_bool
@@ -1060,7 +1063,7 @@ def Zlt_bool_true (_ _ : Int) : Bool :=
 @[spec]
 theorem Zlt_bool_true_spec (x y : Int) :
     ⦃⌜x < y⌝⦄
-    Zlt_bool_true x y
+    pureId (Zlt_bool_true x y)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Zlt_bool_true
@@ -1079,7 +1082,7 @@ def Zlt_bool_false (_ _ : Int) : Bool :=
 @[spec]
 theorem Zlt_bool_false_spec (x y : Int) :
     ⦃⌜y ≤ x⌝⦄
-    Zlt_bool_false x y
+    pureId (Zlt_bool_false x y)
     ⦃⇓result => ⌜result = false⌝⦄ := by
   intro _
   unfold Zlt_bool_false
@@ -1101,7 +1104,7 @@ def Zlt_bool_opp_l (x y : Int) : Bool :=
 @[spec]
 theorem Zlt_bool_opp_l_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zlt_bool_opp_l x y
+    pureId (Zlt_bool_opp_l x y)
     ⦃⇓result => ⌜result = decide ((- x < y) = (- y < x))⌝⦄ := by
   intro _
   unfold Zlt_bool_opp_l
@@ -1123,7 +1126,7 @@ def Zlt_bool_opp_r (x y : Int) : Bool :=
 @[spec]
 theorem Zlt_bool_opp_r_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zlt_bool_opp_r x y
+    pureId (Zlt_bool_opp_r x y)
     ⦃⇓result => ⌜result = decide ((x < - y) = (y < - x))⌝⦄ := by
   intro _
   unfold Zlt_bool_opp_r
@@ -1145,7 +1148,7 @@ def Zlt_bool_opp (x y : Int) : Bool :=
 @[spec]
 theorem Zlt_bool_opp_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zlt_bool_opp x y
+    pureId (Zlt_bool_opp x y)
     ⦃⇓result => ⌜result = decide ((- x < - y) = (y < x))⌝⦄ := by
   intro _
   unfold Zlt_bool_opp
@@ -1177,7 +1180,7 @@ def Zcompare (x y : Int) : Ordering :=
 @[spec]
 theorem Zcompare_spec (x y : Int) :
     ⦃⌜True⌝⦄
-    Zcompare x y
+    pureId (Zcompare x y)
     ⦃⇓result => ⌜(result = Ordering.lt ↔ x < y) ∧
                 (result = Ordering.eq ↔ x = y) ∧
                 (result = Ordering.gt ↔ y < x)⌝⦄ := by
@@ -1285,7 +1288,7 @@ def Zcompare_Lt (_ _ : Int) : Ordering :=
 @[spec]
 theorem Zcompare_Lt_spec (x y : Int) :
     ⦃⌜x < y⌝⦄
-    Zcompare_Lt x y
+    pureId (Zcompare_Lt x y)
     ⦃⇓result => ⌜result = Ordering.lt⌝⦄ := by
   intro _
   unfold Zcompare_Lt
@@ -1307,7 +1310,7 @@ def Zcompare_Eq (_ _ : Int) : Ordering :=
 @[spec]
 theorem Zcompare_Eq_spec (x y : Int) :
     ⦃⌜x = y⌝⦄
-    Zcompare_Eq x y
+    pureId (Zcompare_Eq x y)
     ⦃⇓result => ⌜result = Ordering.eq⌝⦄ := by
   intro _
   unfold Zcompare_Eq
@@ -1329,7 +1332,7 @@ def Zcompare_Gt (_ _ : Int) : Ordering :=
 @[spec]
 theorem Zcompare_Gt_spec (x y : Int) :
     ⦃⌜y < x⌝⦄
-    Zcompare_Gt x y
+    pureId (Zcompare_Gt x y)
     ⦃⇓result => ⌜result = Ordering.gt⌝⦄ := by
   intro _
   unfold Zcompare_Gt
@@ -1359,7 +1362,7 @@ def cond_Zopp (b : Bool) (x : Int) : Int :=
 @[spec]
 theorem cond_Zopp_spec (b : Bool) (x : Int) :
     ⦃⌜True⌝⦄
-    cond_Zopp b x
+    pureId (cond_Zopp b x)
     ⦃⇓result => ⌜result = if b then -x else x⌝⦄ := by
   intro _
   unfold cond_Zopp
@@ -1372,7 +1375,7 @@ def cond_Zopp_0 (_ : Bool) : Int :=
 /-- Specification: Zero invariance under conditional opposite. -/
 theorem cond_Zopp_0_spec (sx : Bool) :
     ⦃⌜True⌝⦄
-    cond_Zopp_0 sx
+    pureId (cond_Zopp_0 sx)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro _
   unfold cond_Zopp_0
@@ -1386,7 +1389,7 @@ def cond_Zopp_negb (x : Bool) (y : Int) : Int :=
 @[spec]
 theorem cond_Zopp_negb_spec (x : Bool) (y : Int) :
     ⦃⌜True⌝⦄
-    cond_Zopp_negb x y
+    pureId (cond_Zopp_negb x y)
     ⦃⇓result => ⌜result = -(if x then -y else y)⌝⦄ := by
   intro _
   unfold cond_Zopp_negb
@@ -1400,7 +1403,7 @@ def abs_cond_Zopp (_b : Bool) (m : Int) : Int :=
 @[spec]
 theorem abs_cond_Zopp_spec (b : Bool) (m : Int) :
     ⦃⌜True⌝⦄
-    abs_cond_Zopp b m
+    pureId (abs_cond_Zopp b m)
     ⦃⇓result => ⌜result = (Int.natAbs m : Int)⌝⦄ := by
   intro _
   unfold abs_cond_Zopp
@@ -1414,7 +1417,7 @@ def cond_Zopp_Zlt_bool (m : Int) : Int :=
 @[spec]
 theorem cond_Zopp_Zlt_bool_spec (m : Int) :
     ⦃⌜True⌝⦄
-    cond_Zopp_Zlt_bool m
+    pureId (cond_Zopp_Zlt_bool m)
     ⦃⇓result => ⌜result = (Int.natAbs m : Int)⌝⦄ := by
   intro _
   unfold cond_Zopp_Zlt_bool
@@ -1436,7 +1439,7 @@ def Zeq_bool_cond_Zopp (s : Bool) (m n : Int) : Bool :=
 @[spec]
 theorem Zeq_bool_cond_Zopp_spec (s : Bool) (m n : Int) :
     ⦃⌜True⌝⦄
-    Zeq_bool_cond_Zopp s m n
+    pureId (Zeq_bool_cond_Zopp s m n)
     ⦃⇓result => ⌜result = decide (((if s then -m else m) = n) = (m = (if s then -n else n)))⌝⦄ := by
   intro _
   unfold Zeq_bool_cond_Zopp
@@ -1462,7 +1465,7 @@ def Zfast_pow_pos (v : Int) (e : Nat) : Int :=
 @[spec]
 theorem Zfast_pow_pos_spec (v : Int) (e : Nat) :
     ⦃⌜True⌝⦄
-    Zfast_pow_pos v e
+    pureId (Zfast_pow_pos v e)
     ⦃⇓result => ⌜result = v^e⌝⦄ := by
   intro _
   unfold Zfast_pow_pos
@@ -1471,7 +1474,7 @@ theorem Zfast_pow_pos_spec (v : Int) (e : Nat) :
 /-- Coq-compat name: correctness of fast exponentiation for positive exponents -/
 theorem Zfast_pow_pos_correct (v : Int) (e : Nat) :
     ⦃⌜True⌝⦄
-    Zfast_pow_pos v e
+    pureId (Zfast_pow_pos v e)
     ⦃⇓result => ⌜result = v^e⌝⦄ := by
   -- same as Zfast_pow_pos_spec
   intro _
@@ -1490,7 +1493,7 @@ def Zdiv_eucl_unique (a b : Int) : (Int × Int) :=
 @[spec]
 theorem Zdiv_eucl_unique_spec (a b : Int) :
     ⦃⌜True⌝⦄
-    Zdiv_eucl_unique a b
+    pureId (Zdiv_eucl_unique a b)
     ⦃⇓result => ⌜result = (a / b, a % b)⌝⦄ := by
   intro _
   unfold Zdiv_eucl_unique
@@ -1503,7 +1506,7 @@ def Zpos_div_eucl_aux1 (_a _b : Int) : (Int × Int) :=
 /-- Specification: Correctness of positive-aux division helper (placeholder) -/
 theorem Zpos_div_eucl_aux1_correct_spec (a b : Int) :
     ⦃⌜True⌝⦄
-    Zpos_div_eucl_aux1 a b
+    pureId (Zpos_div_eucl_aux1 a b)
     ⦃⇓result => ⌜result = (0, 0)⌝⦄ := by
   intro _
   unfold Zpos_div_eucl_aux1
@@ -1517,7 +1520,7 @@ def Zpos_div_eucl_aux (_a _b : Int) : (Int × Int) :=
 @[spec]
 theorem Zpos_div_eucl_aux_correct_spec (a b : Int) :
     ⦃⌜True⌝⦄
-    Zpos_div_eucl_aux a b
+    pureId (Zpos_div_eucl_aux a b)
     ⦃⇓result => ⌜result = (0, 0)⌝⦄ := by
   intro _
   unfold Zpos_div_eucl_aux
@@ -1526,16 +1529,16 @@ theorem Zpos_div_eucl_aux_correct_spec (a b : Int) :
 /-- Fast Euclidean division for integers. -/
 def Zfast_div_eucl (a b : Int) : (Int × Int) :=
   if b = 0 then
-    return (0, a)
+    (0, a)
   else
     -- Lean's built-in division is already Euclidean division
-    return (a / b, a % b)
+    (a / b, a % b)
 
 /-- Specification: Fast division computes correct quotient and remainder. -/
 @[spec]
 theorem Zfast_div_eucl_spec (a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
-    Zfast_div_eucl a b
+    pureId (Zfast_div_eucl a b)
     ⦃⇓result => ⌜let (q, r) := result
                 a = b * q + r ∧ 0 ≤ r ∧ r < b.natAbs⌝⦄ := by
   intro hb
@@ -1567,7 +1570,7 @@ end FasterDiv
 -- Coq-compat name: correctness of fast Euclidean division
 theorem Zfast_div_eucl_correct (a b : Int) :
     ⦃⌜b ≠ 0⌝⦄
-    Zfast_div_eucl a b
+    pureId (Zfast_div_eucl a b)
     ⦃⇓result => ⌜let (q, r) := result
                 a = b * q + r ∧ 0 ≤ r ∧ r < b.natAbs⌝⦄ := by
   -- same statement as Zfast_div_eucl_spec
@@ -1602,27 +1605,27 @@ section Iteration
 def iter_nat {A : Type} (f : A → A) (n : Nat) (x : A) : A :=
   match n with
   | 0 => x
-  | n'+1 => f (iter_nat f n' x).run
+  | n' + 1 => f (iter_nat f n' x)
 
 /-- Specification: Iteration applies function n times. -/
 @[spec]
 theorem iter_nat_spec {A : Type} (f : A → A) (n : Nat) (x : A) :
     ⦃⌜True⌝⦄
-    iter_nat f n x
+    pureId (iter_nat f n x)
     ⦃⇓result => ⌜result = f^[n] x⌝⦄ := by
   intro _
   induction n with
   | zero =>
     unfold iter_nat
-    simp [Function.iterate_zero, id_run]
+    simp [Function.iterate_zero]
   | succ n' ih =>
     unfold iter_nat
-    simp [Function.iterate_succ_apply', id_run]
-    -- Need to relate f (iter_nat f n' x).run to f (f^[n'] x)
+    simp [Function.iterate_succ_apply']
+    -- Need to relate f (iter_nat f n' x) to f (f^[n'] x)
     -- This should follow from ih
     have h : iter_nat f n' x = f^[n'] x := by
       simpa using ih
-    simp [h, id_run]
+    simp [h]
 
 /-- Successor property for iteration
 
@@ -1630,7 +1633,7 @@ theorem iter_nat_spec {A : Type} (f : A → A) (n : Nat) (x : A) :
     This is the successor case of the iteration recursion.
 -/
 def iter_nat_S {A : Type} (f : A → A) (p : Nat) (x : A) : A :=
-  f (iter_nat f p x).run
+  f (iter_nat f p x)
 
 /-- Specification: Iteration successor formula
 
@@ -1641,22 +1644,22 @@ def iter_nat_S {A : Type} (f : A → A) (p : Nat) (x : A) : A :=
 @[spec]
 theorem iter_nat_S_spec {A : Type} (f : A → A) (p : Nat) (x : A) :
     ⦃⌜True⌝⦄
-    iter_nat_S f p x
-    ⦃⇓result => ⌜result = f (iter_nat f p x).run⌝⦄ := by
+    pureId (iter_nat_S f p x)
+    ⦃⇓result => ⌜result = f (iter_nat f p x)⌝⦄ := by
   intro _
   unfold iter_nat_S
   rfl
 
 /-- Iteration addition formula. -/
 def iter_nat_plus {A : Type} (f : A → A) (p q : Nat) (x : A) : A :=
-  (iter_nat f p (iter_nat f q x).run).run
+  iter_nat f p (iter_nat f q x)
 
 /-- Specification: Iteration count addition. -/
 @[spec]
 theorem iter_nat_plus_spec {A : Type} (f : A → A) (p q : Nat) (x : A) :
     ⦃⌜True⌝⦄
-    iter_nat_plus f p q x
-    ⦃⇓result => ⌜result = (iter_nat f p (iter_nat f q x).run).run⌝⦄ := by
+    pureId (iter_nat_plus f p q x)
+    ⦃⇓result => ⌜result = iter_nat f p (iter_nat f q x)⌝⦄ := by
   intro _
   unfold iter_nat_plus
   rfl
@@ -1667,7 +1670,7 @@ theorem iter_nat_plus_spec {A : Type} (f : A → A) (p q : Nat) (x : A) :
     with conversion to natural numbers.
 -/
 def iter_pos_nat {A : Type} (f : A → A) (p : Nat) (x : A) : A :=
-  (iter_nat f p x).run
+  iter_nat f p x
 
 /-- Specification: Positive iteration via naturals
 
@@ -1678,8 +1681,8 @@ def iter_pos_nat {A : Type} (f : A → A) (p : Nat) (x : A) : A :=
 @[spec]
 theorem iter_pos_nat_spec {A : Type} (f : A → A) (p : Nat) (x : A) :
     ⦃⌜p > 0⌝⦄
-    iter_pos_nat f p x
-    ⦃⇓result => ⌜result = (iter_nat f p x).run⌝⦄ := by
+    pureId (iter_pos_nat f p x)
+    ⦃⇓result => ⌜result = iter_nat f p x⌝⦄ := by
   intro _
   unfold iter_pos_nat
   rfl
