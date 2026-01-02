@@ -2222,13 +2222,12 @@ theorem round_N_eq_UP_pt
     (Hd : FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y)) x d)
     (Hu : FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y)) x u)
     (h : ((d + u) / 2) < x) (hβ: 1 < beta) :
-    ⦃⌜True⌝⦄ do
-      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
-      pure rn
+    ⦃⌜True⌝⦄
+    (pure (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ) : Id ℝ)
     ⦃⇓r => ⌜r = u⌝⦄ := by
   intro _; classical
   -- Reduce the monadic triple to a plain equality about the returned value
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   -- Use the local bridge theorem for round-to-nearest above midpoint
   exact round_N_eq_UP_pt_theorem (beta := beta) (fexp := fexp) (hbeta := hβ)
           (choice := choice) (x := x) (d := d) (u := u) Hd Hu h
@@ -2262,15 +2261,16 @@ Lemma {coq}`round_N_plus_ulp_ge`:
 theorem round_N_plus_ulp_ge
     [Monotone_exp fexp]
     (choice1 choice2 : Int → Bool) (x : ℝ) (hβ: 1 < beta) :
-    ⦃⌜True⌝⦄ do
-      let rx ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
-      let u ← ulp beta fexp rx
-      let rn ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp (rx + u) hβ
-      pure (rx, rn)
+    ⦃⌜True⌝⦄
+    (pure
+      (let rx := FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
+       (rx,
+        FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp (rx + ulp beta fexp rx) hβ))
+      : Id (ℝ × ℝ))
     ⦃⇓r => ⌜x ≤ r.2⌝⦄ := by
   intro _; classical
   -- Reduce the Hoare triple to a pure inequality on the returned value.
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   -- Local bridge theorem mirroring the Coq proof chain
   exact round_N_plus_ulp_ge_theorem (beta := beta) (fexp := fexp) (x := x) hβ
 
@@ -2281,15 +2281,15 @@ theorem round_N_eq_ties
     (c1 c2 : Int → Bool) (x : ℝ) (hβ: 1 < beta)
     (hne : x - (FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ).run ≠
             (FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ).run - x) :
-    ⦃⌜True⌝⦄ do
-      let r1 ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
-      let r2 ← FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ
-      pure (r1, r2)
+    ⦃⌜True⌝⦄
+    (pure
+      (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ,
+       FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro _; classical
   -- `round_N_to_format` in this port does not depend on the tie-breaking choice
   -- (both calls compute the same value). Reduce the monadic program definitionally.
-  simp [wp, PostCond.noThrow, Id.run, bind, pure,
+  simp [wp, PostCond.noThrow, pure,
         FloatSpec.Core.Generic_fmt.round_N_to_format]
 
 /-- Coq (Ulp.v):
