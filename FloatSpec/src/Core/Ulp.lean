@@ -8867,7 +8867,8 @@ theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
         FloatSpec.Core.Generic_fmt.round_UP_to_format]
   -- Conclude with the pure theorem on chosen witnesses. If the goal has
   -- unfolded `ulp` to an `if`/`match`, align by rewriting `(ulp …).run`.
-  sorry
+  simpa using
+    (round_UP_DN_ulp_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
 
 /-- Coq (Ulp.v): Lemma `generic_format_ulp_0` : F (ulp 0).
 
