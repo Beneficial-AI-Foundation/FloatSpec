@@ -139,6 +139,9 @@ See the [SimplePage example](https://github.com/leanprover/verso/tree/main/test-
 Code in Verso docs is typechecked. In VS Code/Cursor:
 - F12 or Ctrl+Click on code elements to go to definition
 - Hover for type information
+- When you annotate backticked code with the correct role (e.g. {lean}/{name}/{coq}),
+  Lean's LSP can resolve it; agents can use hover/goto-definition here to reliably
+  surface context without leaving the doc comment.
 
 ### Inline Extensions
 

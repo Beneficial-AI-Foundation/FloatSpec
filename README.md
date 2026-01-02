@@ -30,14 +30,14 @@ The library is organized into layered modules. The top‑level aggregator `Float
 - Pff (`FloatSpec/src/Pff`)
   - Legacy compatibility modules and conversion helpers from an older floating‑point formalization
 
-Project configuration lives in `lakefile.lean` and `lean-toolchain` (Lean 4 v4.25.0‑rc1). The package depends on Mathlib (`v4.25.0-rc1`).
+Project configuration lives in `lakefile.lean` and `lean-toolchain` (Lean 4 `v4.27.0-rc1`). Dependencies are pinned in `lakefile.lean` (Mathlib `v4.27.0-rc1`, Verso `v4.27.0-rc1`, and `VersoCoq` on `main`).
 
 
 ## Current Progress
 
 The project is actively under development. Many modules are executable with “shape/spec” theorems in place, while a number of deep proofs are still placeholders.
 
-- Build: compiles with Lean 4 v4.25.0‑rc1 and Mathlib v4.25.0‑rc1 (warnings allowed for `sorry`).
+- Build: compiles with Lean 4 `v4.27.0-rc1` and Mathlib `v4.27.0-rc1` (warnings allowed for `sorry`).
 - Proof placeholders: a significant number of theorems are still marked `sorry` while porting and bridging lemmas are completed (notably in `Core/Generic_fmt.lean`, `Core/Ulp.lean`, IEEE 754 encodings, and Prop error‑bound files).
 - ErrorBound scaffolding: new `FloatSpec/src/ErrorBound/**` namespace has been added to prepare a VCFloat‑style error‑bound pipeline. The files currently contain stubs and compile.
 - VCFloat integration plan and tasks live in `FloatSpec/docs/vcfloat_integration/ARCHITECTURE_AND_PLAN.md` and `FloatSpec/docs/vcfloat_integration/TODOs.md`.
@@ -56,13 +56,18 @@ Version: the library exposes `FloatSpec.version = "0.7.0"` (see `FloatSpec.lean`
 
 Prerequisites
 
-- Lean 4 toolchain: `leanprover/lean4:v4.25.0-rc1` (see `lean-toolchain`)
+- Lean 4 toolchain: `leanprover/lean4:v4.27.0-rc1` (see `lean-toolchain`)
 - Lake build tool (included with the toolchain)
 
 Build locally
 
 1) Update dependencies: `lake update`
 2) Build: `lake build`
+
+Lean-level tests (smoke/property checks)
+
+- Build and run the lightweight Plausible-based tests: `lake build FloatSpecTests`
+- Or use the helper script: `./scripts/test_lean.sh`
 
 REPL and usage
 

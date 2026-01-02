@@ -147,6 +147,67 @@ example (f : Nat → Nat) (x y : Nat)
 example : ... := by grind  -- Uses my_lemma automatically
 ```
 
+## grind Attributes and Patterns
+
+### `@[grind]` Attribute
+
+Mark lemmas to be used automatically by grind:
+
+```lean
+@[grind] theorem my_useful_lemma : ... := ...
+
+example : ... := by grind  -- Uses my_useful_lemma
+```
+
+### `@[grind_eq]` - Equality Patterns
+
+For lemmas establishing equalities that should be used as rewrites:
+
+```lean
+@[grind_eq] theorem F2R_zero : F2R { Fnum := 0, Fexp := e } = 0 := ...
+```
+
+### `@[grind_cases]` - Case Split Patterns
+
+Tell grind to case split on certain conditions:
+
+```lean
+@[grind_cases] theorem sign_cases (x : ℝ) : x < 0 ∨ x = 0 ∨ x > 0 := ...
+```
+
+### Custom grind Patterns
+
+You can define patterns that guide grind's search:
+
+```lean
+-- Pattern: when grind sees `mag β x`, try these lemmas
+grind_pattern mag β x => [mag_pos, mag_neg, mag_le_bpow]
+```
+
+### Pattern Guards
+
+Pattern guards add preconditions to pattern matching:
+
+```lean
+-- Only apply lemma when condition holds
+@[grind] theorem mul_neg_of_pos_of_neg
+    (hx : 0 < x) (hy : y < 0) : x * y < 0 := ...
+
+-- grind uses this when it can prove the guards
+```
+
+### Extensibility
+
+grind can be extended with custom modules:
+
+```lean
+-- Register a custom procedure
+grind_norm [myNormalizer]  -- Use custom normalizer
+
+-- Add domain-specific reasoning
+grind_arith [myArithModule]
+```
+
 ## Troubleshooting
 
 If `grind` doesn't work:
@@ -155,7 +216,8 @@ If `grind` doesn't work:
 2. **Unfold definitions**: `grind [↓myDef]`
 3. **Split manually first**: `cases h <;> grind`
 4. **Use `grind?`** to see what lemmas might help
-5. **Fall back to manual proof** for complex cases
+5. **Check guards**: Ensure preconditions can be proved
+6. **Fall back to manual proof** for complex cases
 
 ## Integration with Verification
 
@@ -168,3 +230,9 @@ theorem program_correct : ... := by
   case goal2 => grind [specific_lemma]
   case hard_goal => -- manual proof
 ```
+
+## See Also
+
+- [simprocs.md](./simprocs.md) - Pattern-guided simplification procedures
+- [mvcgen-tactic.md](./mvcgen-tactic.md) - Verification condition generation
+- [canonical.md](./canonical.md) - Experimental brute-force proof search

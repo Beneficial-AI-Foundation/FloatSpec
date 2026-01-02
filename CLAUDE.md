@@ -338,6 +338,7 @@ This approach scales to complex imperative programs while maintaining compositio
 - Figure out the parser by interactively building up toy components.
 - [ ] install https://github.com/GasStationManager/LeanTool as mcp tool
 - Spam `lake build` to verify the pieces work and build up FUNCTORIALLY.
+- Address Verso docstring warnings (code element/code block specificity) promptly; they slow compile times.
 - **IMPORTANT**: Check compilation with `lake build` every time before marking anything as complete
 - **IMPORTANT**: In Lean 4, `Int.emod` always returns a positive value (Euclidean modulo)
 - Use compiler tooling like extensible error messages, `simproc` (pattern guided reductions), and metaprogramming for pit of success
@@ -548,9 +549,59 @@ Do NOT use the `{lit}` verso role if an identifier is missing. Use `{given
 ## Verso Docstring Roles
 
 - `{lean}` validates identifiers against global scope - metavariables like `n` will error
+- Correctly annotated backticked identifiers (e.g. `{lean}`/`{given}` roles) participate in Lean LSP hover and go-to-definition inside doc comments; agents can use this to reliably surface context.
 - `{given +show}`n : Nat`` introduces metavariables for display and subsequent `{lean}` roles
 - `{given -show}` for internal (non-displayed) variable introduction
 - Pattern: `{given +show}`n : Nat`` then `{lean}`some n`` works
 - `{coq}` role (from VersoCoq) links to Flocq documentation
 - `{lit}` for literal math notation without validation, but don't overuse for patterns with metavariables
 - `@[doc_role]` must define at root namespace for role name to match (e.g., `coq` not `VersoCoq.Roles.coq`)
+
+## Agent Handoff (2025-12-26)
+
+### Current Build Status
+
+**BUILD SUCCEEDS** (3157 jobs, 2025-12-26). Only warnings remain (sorry stubs, missing docs).
+
+### Key Patterns for Fixing `Id` Monad Issues
+
+1. **`Id α = α` definitionally, but type class instances don't transfer**
+   - `Zdigits`, `Ztrunc`, `Zfloor`, `Zceil`, `Zlt_bool` all return `Id` types
+   - Use `.run` to extract values when type classes are needed (e.g., `HAdd`)
+
+2. **`split_ifs` over `by_cases` for nested conditionals**
+   ```lean
+   -- Instead of: by_cases h : condition ...
+   simp only [Fplus, hm1, hm2, ite_false, Id.run, pure]
+   split_ifs <;> rfl
+   ```
+
+3. **`decide_eq_true`/`decide_eq_false` for boolean decisions**
+   ```lean
+   -- When h : m < 0 and goal needs decide (m < 0) = true
+   simp only [round_ZR, hb, decide_eq_true hmneg, cond_incr, ite_true]
+   ```
+
+4. **Helper lemma for `Znearest` on exact integers**
+   ```lean
+   private lemma Znearest_of_int (choice : Int → Bool) (m : Int) :
+       Znearest choice (m : ℝ) = m := by
+     unfold Znearest
+     simp only [Zfloor, Zceil, Rcompare, Id.run, pure,
+                Int.floor_intCast, Int.ceil_intCast, Int.cast_id, sub_self]
+     norm_num
+   ```
+
+5. **`simp (config := {zeta := true})` reduces let-bindings**
+
+### Files Fixed (Dec 2025 Session)
+- Ulp.lean, Round_NE.lean, FIX.lean, FLX.lean, FLT.lean, FTZ.lean, Bracket.lean
+- Round.lean (~40 errors → 0)
+- Plus.lean (3 errors → 0)
+
+### Next Steps
+
+1. **Fill sorry stubs** in IEEE754/PrimFloat.lean and other files
+2. **Add missing docstrings** (linter warnings)
+3. **Refactor**: Pure defs should not return `Id`; only specs should use `(pure ... : Id _)`
+4. Continue cleaning Verso warnings using `{name}` and `{lit}` roles
