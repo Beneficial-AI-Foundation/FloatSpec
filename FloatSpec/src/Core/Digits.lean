@@ -970,7 +970,7 @@ private lemma pow_strict_mono_int {beta : Int} (hβ : 1 < beta) {m n : Nat} (hmn
     cases Nat.eq_or_lt_of_le this with
     | inl h =>
       -- m + 1 = n'.succ, so m = n'
-      have : m = n' := by omega
+      have : m = n' := by grind
       rw [this, pow_succ]
       have hpos : 0 < beta := by linarith
       have hpow_pos : 0 < beta ^ n' := pow_pos_int hpos n'
@@ -981,9 +981,9 @@ private lemma pow_strict_mono_int {beta : Int} (hβ : 1 < beta) {m n : Nat} (hmn
           · exact hpow_pos
     | inr h =>
       -- m + 1 < n'.succ, so m < n'
-      have hmn' : m < n' := by omega
+      have hmn' : m < n' := by grind
       have hle : m ≤ n' := le_of_lt hmn'
-      have hsuc : m + 1 ≤ n' := by omega
+      have hsuc : m + 1 ≤ n' := by grind
       calc beta ^ m < beta ^ n' := ih hmn' hle hsuc
         _ ≤ beta ^ n'.succ := by
           rw [pow_succ]

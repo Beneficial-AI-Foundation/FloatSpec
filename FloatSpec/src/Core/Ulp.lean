@@ -4736,7 +4736,7 @@ theorem generic_format_pred_aux2
     apply hne'
     simp [hxe', hceq]
   have hlt_c : c < e - 1 := lt_of_le_of_ne hle_c hne_c
-  have hle_c' : c ≤ e - 2 := by omega
+  have hle_c' : c ≤ e - 2 := by grind
 
   -- Name the value we want to show is in generic format
   set f : ℝ := x - (beta : ℝ) ^ c with hf
@@ -4763,13 +4763,13 @@ theorem generic_format_pred_aux2
       (beta : ℝ) ^ (e - 2) + (beta : ℝ) ^ (e - 2) := by
     have h := add_le_add_left hpow_le ((beta : ℝ) ^ (e - 2))
     simpa [add_comm, add_left_comm, add_assoc] using h
-  have hbeta_ge2_int : (2 : Int) ≤ beta := by omega
+  have hbeta_ge2_int : (2 : Int) ≤ beta := by grind
   have hbeta_ge2 : (2 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast hbeta_ge2_int
   have hmul_le : (2 : ℝ) * (beta : ℝ) ^ (e - 2) ≤ (beta : ℝ) * (beta : ℝ) ^ (e - 2) :=
     mul_le_mul_of_nonneg_right hbeta_ge2 hpow_nonneg
   have hpow_split : (beta : ℝ) * (beta : ℝ) ^ (e - 2) = (beta : ℝ) ^ (e - 1) := by
     have h := FloatSpec.Core.Generic_fmt.zpow_sub_add (a := (beta : ℝ)) hbne (e - 1) (1 : Int)
-    have h' : (e - 1) - 1 = e - 2 := by omega
+    have h' : (e - 1) - 1 = e - 2 := by grind
     have h'' : (beta : ℝ) ^ (e - 2) * (beta : ℝ) = (beta : ℝ) ^ (e - 1) := by
       simpa [h', zpow_one] using h
     simpa [mul_comm] using h''
@@ -4801,7 +4801,7 @@ theorem generic_format_pred_aux2
     have hcexp := FloatSpec.Core.Generic_fmt.cexp_fexp beta fexp f (e - 1)
     simp [wp, PostCond.noThrow, Id.run, pure] at hcexp
     have hlow_abs' : (beta : ℝ) ^ ((e - 1) - 1) ≤ abs f := by
-      have hsub : (e - 1) - 1 = e - 2 := by omega
+      have hsub : (e - 1) - 1 = e - 2 := by grind
       simpa [hsub] using hlow_abs
     have h := hcexp ⟨hβ, hlow_abs', hupp_abs⟩
     simpa [hc] using h
@@ -8475,7 +8475,7 @@ private theorem succ_DN_eq_UP_theorem
             -- fexp ex < ex means fexp ex ≤ ex - 1 (integers)
             have hsub : (ex - 1) + 1 = ex := by ring
             rw [hsub]
-            omega
+            grind
           have hpre : beta > 1 ∧ fexp ((ex - 1) + 1) ≤ ex - 1 := ⟨hβ, hfexp_le⟩
           have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow
             (beta := beta) (fexp := fexp) (e := ex - 1) hpre

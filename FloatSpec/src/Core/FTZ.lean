@@ -87,7 +87,7 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
     have hemin_le_k : emin ≤ k := by
       by_cases h : emin ≤ k - prec
       · -- arithmetic branch at k
-        have hle' : emin + prec ≤ k := by omega
+        have hle' : emin + prec ≤ k := by grind
         have h0 : 0 ≤ prec := le_of_lt hp.out
         exact le_trans (le_add_of_nonneg_right h0) hle'
       · -- else-branch at k: fexp k = emin < k
@@ -97,7 +97,7 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
     -- Evaluate fexp at (k+1)
     by_cases h1 : emin ≤ (k + 1) - prec
     · -- fexp (k+1) = (k+1) - prec ≤ k since 1 ≤ prec
-      have : (k + 1) - prec ≤ k := by omega
+      have : (k + 1) - prec ≤ k := by grind
       simpa [FTZ_exp, h1] using this
     · -- fexp (k+1) = emin ≤ k
       simpa [FTZ_exp, h1] using hemin_le_k
@@ -127,7 +127,7 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
       have hgoal : FTZ_exp prec emin (emin + 1) ≤ emin := by
         by_cases h1 : emin ≤ (emin + 1) - prec
         · -- arithmetic branch at emin + 1
-          have hle : (emin + 1) - prec ≤ emin := by omega
+          have hle : (emin + 1) - prec ≤ emin := by grind
           simpa [FTZ_exp, h1] using hle
         · -- else-branch at (emin + 1): fexp = emin
           simp [FTZ_exp, h1]

@@ -383,7 +383,7 @@ theorem generic_format_bpow_inv'
     -- Assume for contradiction: fexp(e+1) > e
     by_contra hgt
     push_neg at hgt
-    have hexp_neg : e - fexp (e + 1) < 0 := by omega
+    have hexp_neg : e - fexp (e + 1) < 0 := by grind
     -- β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1)), and since exponent is negative:
     -- 0 < β^(e - fexp(e+1)) < 1
     have hsm_eq :
@@ -419,8 +419,8 @@ theorem generic_format_bpow_inv'
   by_contra h_not_le
   push_neg at h_not_le
   -- h_not_le : fexp e > e, so fexp e ≥ e + 1
-  have hfexp_e_ge : fexp e ≥ e + 1 := by omega
-  have he_le_fexp : e ≤ fexp e := by omega
+  have hfexp_e_ge : fexp e ≥ e + 1 := by grind
+  have he_le_fexp : e ≤ fexp e := by grind
   -- By Valid_exp at k = e, since e ≤ fexp e, we're in the small regime
   have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
   have hsmall := hpair.right he_le_fexp
@@ -429,7 +429,7 @@ theorem generic_format_bpow_inv'
   have he1_le_fexp : e + 1 ≤ fexp e := hfexp_e_ge
   have hfexp_const : fexp (e + 1) = fexp e := hconst (e + 1) he1_le_fexp
   -- But fexp(e+1) ≤ e < e + 1 ≤ fexp e = fexp(e+1), contradiction
-  omega
+  grind
 
 /-- Coq ({lit}`Generic_fmt.v`): {lit}`generic_format_bpow_inv`
 
@@ -629,7 +629,7 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
   simp [hmag']
   -- Goal: β^e = Ztrunc(β^e * β^(-fexp(e+1))) * β^(fexp(e+1))
   -- scaled_mantissa = β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1))
-  have hexp_diff : e - fexp (e + 1) ≥ 0 := by omega
+  have hexp_diff : e - fexp (e + 1) ≥ 0 := by grind
   -- Convert to natural power
   set k := (e - fexp (e + 1)).toNat with hk
   have hk_eq : e - fexp (e + 1) = (k : Int) := by
@@ -675,7 +675,7 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
       exact hpair.left hlt
     · -- Small regime: fexp(e) = e (since fexp(e) ≤ e and ¬(fexp(e) < e))
       have heq : fexp e = e := le_antisymm hfe (le_of_not_lt hlt)
-      have hsmall : e ≤ fexp e := by omega
+      have hsmall : e ≤ fexp e := by grind
       have hbound := (hpair.right hsmall).left
       -- fexp(fexp(e) + 1) ≤ fexp(e), i.e., fexp(e+1) ≤ e
       simpa [heq] using hbound
@@ -792,7 +792,7 @@ theorem canonical_unique
   · -- m1 = m2: From h : m1 * β^e1 = m2 * β^e1, cancel β^e1 (nonzero)
     simp [F2R] at h
     subst hexp
-    have hbeta_pos : (0 : ℝ) < beta := by exact_mod_cast (by omega : 0 < beta)
+    have hbeta_pos : (0 : ℝ) < beta := by exact_mod_cast (by grind : 0 < beta)
     have hne : (↑beta : ℝ) ^ e1 ≠ 0 := zpow_ne_zero e1 (ne_of_gt hbeta_pos)
     exact Int.cast_injective (mul_right_cancel₀ hne h)
   · exact hexp
@@ -4434,7 +4434,7 @@ private theorem lt_of_mag_lt_pos
     -- ey = floor(Ly) + 1, so ey - 1 = floor(Ly) ≤ Ly
     have h1 : ey - 1 = Int.floor Ly := by
       have : ey = Int.floor Ly + 1 := by simpa [hey] using hmagy_run
-      omega
+      grind
     have h2 : (Int.floor Ly : ℝ) ≤ Ly := Int.floor_le Ly
     calc (ey - 1 : ℝ) = (Int.floor Ly : ℝ) := by exact_mod_cast h1
       _ ≤ Ly := h2
@@ -4728,7 +4728,7 @@ theorem cexp_fexp (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
     apply le_antisymm
     · -- floor(L) ≤ ex - 1 follows from L < ex
       have hfl_lt : Int.floor L < ex := Int.floor_lt.mpr hL_lt_ex
-      omega
+      grind
     · -- ex - 1 ≤ floor(L) follows from ex - 1 ≤ L
       have hexm1_le_L_cast : ((ex - 1 : ℤ) : ℝ) ≤ L := by simp [hexm1_le_L]
       exact Int.le_floor.mpr hexm1_le_L_cast
@@ -7307,7 +7307,7 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
   -- With equal exponents, the difference is zero; β^0 = 1
   have hdiff_zero : ex - (cexp beta fexp r) = 0 := by
     have heq : (cexp beta fexp r) = ex := by rw [hex]; exact heq_exp
-    omega
+    grind
   have hpow_one : (beta : ℝ) ^ (ex - (cexp beta fexp r)) = 1 := by
     -- β^(ex - ex) = β^0 = 1
     rw [hdiff_zero]

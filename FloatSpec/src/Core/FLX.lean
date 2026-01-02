@@ -270,7 +270,7 @@ instance FLX_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
       (fun _ =>
         -- 0 < prec → 1 ≤ prec over ℤ
         have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr hp.out
-        have hadd : k + 1 ≤ k + prec := by omega
+        have hadd : k + 1 ≤ k + prec := by grind
         -- Convert to subtraction form: (k + 1) - prec ≤ k
         have hsub : (k + 1) - prec ≤ k := by
           -- (k + 1) - prec ≤ k ↔ k + 1 ≤ k + prec
@@ -285,7 +285,7 @@ instance FLX_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
         -- From k ≤ k - prec, deduce k + prec ≤ k
         have hk' : k + prec ≤ k := by
           calc
-            k + prec ≤ (FLX_exp prec k) + prec := by omega
+            k + prec ≤ (FLX_exp prec k) + prec := by grind
             _ = k := by simp [FLX_exp, sub_eq_add_neg]
             _ ≤ k := le_rfl
         -- But k < k + prec since 0 < prec
