@@ -8684,7 +8684,34 @@ private theorem round_UP_DN_ulp_theorem
         u' = (succ (beta := beta) (fexp := fexp) d') := by simpa [hsucc']
         _ = d' + (ulp (beta := beta) (fexp := fexp) d') := by simpa [hsucc_add']
         _ = d' + (ulp (beta := beta) (fexp := fexp) (-x)) := by simpa [hulp_stab']
-    sorry
+    -- Relate UP/DN witnesses across negation: u = -d' and u' = -d
+    have hu_eq_neg_d' :
+        u = -d' := by
+      have h := round_UP_choose_eq_neg_round_DN_choose
+        (beta := beta) (fexp := fexp) (x := x) hβ
+      simpa [u, d'] using h
+    have hu'_eq_neg_d :
+        u' = -d := by
+      have h := round_UP_choose_eq_neg_round_DN_choose
+        (beta := beta) (fexp := fexp) (x := -x) hβ
+      simpa [u', d] using h
+    -- Rewrite and solve for u in terms of d and ulp (-x)
+    have hpos_id' : -d = -u + (ulp (beta := beta) (fexp := fexp) (-x)) := by
+      simpa [hu'_eq_neg_d, hu_eq_neg_d'] using hpos_id
+    have hpos_id'' : d = u - (ulp (beta := beta) (fexp := fexp) (-x)) := by
+      have hneg := congrArg Neg.neg hpos_id'
+      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hneg
+    have hpos_id''' : u = d + (ulp (beta := beta) (fexp := fexp) (-x)) := by
+      have h := congrArg (fun z => z + (ulp (beta := beta) (fexp := fexp) (-x))) hpos_id''
+      have h' : d + (ulp (beta := beta) (fexp := fexp) (-x)) = u := by
+        simpa [sub_eq_add_neg, add_assoc, add_left_comm, add_comm] using h
+      simpa using h'.symm
+    -- Replace ulp(-x) by ulp x
+    have hulp_opp : (ulp (beta := beta) (fexp := fexp) (-x))
+        = (ulp (beta := beta) (fexp := fexp) x) := by
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+        using (ulp_opp (beta := beta) (fexp := fexp) x) True.intro
+    simpa [d, u, hulp_opp] using hpos_id'''
     -- Relate DN/UP witnesses across negation via equality bridges
     -- Show u' = -d using UP equality at -x with candidate -d
   -- have hFd_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-d)).run := by
