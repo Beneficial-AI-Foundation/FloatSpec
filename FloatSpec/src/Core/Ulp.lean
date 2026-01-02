@@ -5638,80 +5638,6 @@ theorem round_N_le_midp
   exact round_N_le_midp_theorem (beta := beta) (fexp := fexp)
     (choice := choice) (u := u) (v := v) Fu h hβ
 
-/-- Coq (Ulp.v):
-Theorem generic_format_pred: forall x, F x -> F (pred x).
--/
-theorem generic_format_pred
-    (x : ℝ)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x)) (hβ : 1 < beta):
-    ⦃⌜True⌝⦄ do
-      let p ← pred beta fexp x
-      FloatSpec.Core.Generic_fmt.generic_format beta fexp p
-    ⦃⇓g => ⌜g⌝⦄ := by
-  intro _; classical
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
-  -- Proof strategy: pred x = -(succ(-x)), so:
-  -- F x → F(-x) → F(succ(-x)) → F(-(succ(-x))) = F(pred x)
-  -- NOTE: generic_format_succ is defined later in this file, so we cannot call it directly.
-  -- This creates a forward dependency. The proof is deferred until generic_format_succ is available.
-  -- Once generic_format_succ is complete (with its sorry filled), this can be discharged.
-  sorry
-
-/-! Local bridge theorem (Coq's `generic_format_pred_aux1`):
-If x > 0 is in generic format and not at the lower boundary,
-then subtracting one ULP keeps it in the generic format.
-We place it here, after `generic_format_pred`, to avoid forward references. -/
-private theorem generic_format_pred_aux1_theorem
-    (beta : Int) (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ)
-    (hx : 0 < x)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
-    (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) (hβ : 1 < beta):
-    (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-      (x - (ulp beta fexp x))) := by
-  classical
-  -- First, obtain F (pred x) from F x.
-  have Fpred_run :
-      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-        ((pred (beta := beta) (fexp := fexp) x))) := by
-    have h := generic_format_pred (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
-    have h' := h hβ
-    -- Apply the trivial precondition witness explicitly to discharge the Hoare triple.
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
-  -- Since x > 0, we are in the positive branch of pred/succ.
-  have hneg_lt : -x < 0 := by simpa [neg_zero] using (neg_lt_neg hx)
-  have hnot : ¬ (0 ≤ -x) := not_le.mpr hneg_lt
-  have hpred_is_pos :
-      (pred (beta := beta) (fexp := fexp) x)
-        = (pred_pos (beta := beta) (fexp := fexp) x) := by
-    simp [pred, succ, hnot, Id.run, bind, pure]
-  -- Non‑boundary branch of pred_pos subtracts one ULP.
-  have hpred_pos_eval :
-      (pred_pos (beta := beta) (fexp := fexp) x)
-        = x - (ulp (beta := beta) (fexp := fexp) x) := by
-    unfold pred_pos
-    rw [if_neg hne]
-    simp [Id.run, bind, pure, sub_eq_add_neg]
-  -- Rewrite the target using the two computations above.
-  simpa [hpred_is_pos, hpred_pos_eval]
-    using Fpred_run
-
-/-- Coq (Ulp.v) {coq}`generic_format_pred_aux1` packaged as a Hoare triple wrapper. -/
-  theorem generic_format_pred_aux1
-    (x : ℝ)
-    (hx : 0 < x)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
-    (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) (hβ : 1 < beta):
-    ⦃⌜True⌝⦄
-    FloatSpec.Core.Generic_fmt.generic_format beta fexp
-      (x - (ulp beta fexp x))
-    ⦃⇓g => ⌜g⌝⦄ := by
-  intro _; classical
-  have h := generic_format_pred_aux1_theorem (beta := beta) (fexp := fexp)
-              (x := x) (hx := hx) (Fx := Fx) (hne := hne)
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h hβ
-
   /-- Coq (Ulp.v):
   Theorem {coq}`generic_format_succ`: {lit}`forall x, F x -> F (succ x)`.
   -/
@@ -6108,6 +6034,91 @@ private theorem generic_format_pred_aux1_theorem
         rw [hsucc_neg]; exact Fsucc_run
       -- Conclude the Hoare triple
       simpa [wp, PostCond.noThrow, Id.run, bind, pure] using Fsucc_at_succ
+
+
+/-- Coq (Ulp.v):
+Theorem generic_format_pred: forall x, F x -> F (pred x).
+-/
+theorem generic_format_pred
+    (x : ℝ)
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x)) (hβ : 1 < beta):
+    ⦃⌜True⌝⦄ do
+      let p ← pred beta fexp x
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp p
+    ⦃⇓g => ⌜g⌝⦄ := by
+  intro _; classical
+  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  -- Proof strategy: pred x = -(succ(-x)), so:
+  -- F x → F(-x) → F(succ(-x)) → F(-(succ(-x))) = F(pred x)
+  have Fx_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp (-x)) := by
+    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp) (x := x))
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h Fx
+  have Fsucc_neg : (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      ((succ beta fexp (-x)))) := by
+    have h := generic_format_succ (beta := beta) (fexp := fexp) (x := -x)
+      (Fx := Fx_neg) (hβ := hβ)
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h trivial
+  have Fneg_succ : (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (-((succ beta fexp (-x))))) := by
+    have h := (FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := fexp)
+      (x := (succ beta fexp (-x))))
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h Fsucc_neg
+  simpa [pred] using Fneg_succ
+
+/-! Local bridge theorem (Coq's `generic_format_pred_aux1`):
+If x > 0 is in generic format and not at the lower boundary,
+then subtracting one ULP keeps it in the generic format.
+We place it here, after `generic_format_pred`, to avoid forward references. -/
+private theorem generic_format_pred_aux1_theorem
+    (beta : Int) (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x : ℝ)
+    (hx : 0 < x)
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) (hβ : 1 < beta):
+    (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (x - (ulp beta fexp x))) := by
+  classical
+  -- First, obtain F (pred x) from F x.
+  have Fpred_run :
+      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+        ((pred (beta := beta) (fexp := fexp) x))) := by
+    have h := generic_format_pred (beta := beta) (fexp := fexp) (x := x) (Fx := Fx)
+    have h' := h hβ
+    -- Apply the trivial precondition witness explicitly to discharge the Hoare triple.
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h' trivial
+  -- Since x > 0, we are in the positive branch of pred/succ.
+  have hneg_lt : -x < 0 := by simpa [neg_zero] using (neg_lt_neg hx)
+  have hnot : ¬ (0 ≤ -x) := not_le.mpr hneg_lt
+  have hpred_is_pos :
+      (pred (beta := beta) (fexp := fexp) x)
+        = (pred_pos (beta := beta) (fexp := fexp) x) := by
+    simp [pred, succ, hnot, Id.run, bind, pure]
+  -- Non‑boundary branch of pred_pos subtracts one ULP.
+  have hpred_pos_eval :
+      (pred_pos (beta := beta) (fexp := fexp) x)
+        = x - (ulp (beta := beta) (fexp := fexp) x) := by
+    unfold pred_pos
+    rw [if_neg hne]
+    simp [Id.run, bind, pure, sub_eq_add_neg]
+  -- Rewrite the target using the two computations above.
+  simpa [hpred_is_pos, hpred_pos_eval]
+    using Fpred_run
+
+/-- Coq (Ulp.v) {coq}`generic_format_pred_aux1` packaged as a Hoare triple wrapper. -/
+  theorem generic_format_pred_aux1
+    (x : ℝ)
+    (hx : 0 < x)
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) (hβ : 1 < beta):
+    ⦃⌜True⌝⦄
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (x - (ulp beta fexp x))
+    ⦃⇓g => ⌜g⌝⦄ := by
+  intro _; classical
+  have h := generic_format_pred_aux1_theorem (beta := beta) (fexp := fexp)
+              (x := x) (hx := hx) (Fx := Fx) (hne := hne)
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h hβ
 
 -- Rounding to nearest above the lower midpoint yields a value ≥ u (bridge lemma).
 private theorem round_N_ge_midp_theorem
