@@ -24,7 +24,7 @@ def Rnd_odd_pt (x f : ℝ) : Prop :=
     ((FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x f ∨
       FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x f) ∧
      ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
-       f = (FloatSpec.Core.Defs.F2R g).run ∧
+       f = (FloatSpec.Core.Defs.F2R g) ∧
        FloatSpec.Core.Generic_fmt.canonical beta fexp g ∧
        g.Fnum % 2 ≠ 0))
 
@@ -41,20 +41,20 @@ instance : Valid_rnd (Zodd) := by sorry
 /-- If `x` is not exactly an integer (`Zfloor x`), then the result of
     rounding-to-odd (`Zodd x`) is odd. This mirrors Coq's `Zrnd_odd_Zodd`. -/
 lemma Zrnd_odd_Zodd (x : ℝ)
-  (hx : x ≠ (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ)) :
+  (hx : x ≠ (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ)) :
   (Zodd x) % 2 = 1 := by
   sorry
 
 /-- Integer floor of a translated real: `Zfloor (n + y) = n + Zfloor y`. -/
 lemma Zfloor_plus (n : Int) (y : ℝ) :
-  (FloatSpec.Core.Raux.Zfloor ((n : ℝ) + y)).run =
-    n + (FloatSpec.Core.Raux.Zfloor y).run := by
+  (FloatSpec.Core.Raux.Zfloor ((n : ℝ) + y)) =
+    n + (FloatSpec.Core.Raux.Zfloor y) := by
   sorry
 
 /-- Integer ceil of a translated real: `Zceil (n + y) = n + Zceil y`. -/
 lemma Zceil_plus (n : Int) (y : ℝ) :
-  (FloatSpec.Core.Raux.Zceil ((n : ℝ) + y)).run =
-    n + (FloatSpec.Core.Raux.Zceil y).run := by
+  (FloatSpec.Core.Raux.Zceil ((n : ℝ) + y)) =
+    n + (FloatSpec.Core.Raux.Zceil y) := by
   sorry
 
 /-- Parity is invariant by absolute value: `(abs z)` is even iff `z` is even.
@@ -66,8 +66,8 @@ lemma Zeven_abs (z : Int) :
 /-- Sum with round-to-odd at an even integer point.
     Coq counterpart: `Zrnd_odd_plus`. -/
 lemma Zrnd_odd_plus (x y : ℝ)
-  (hx : x = (((FloatSpec.Core.Raux.Zfloor x).run : Int) : ℝ))
-  (heven : ((FloatSpec.Core.Raux.Zfloor x).run : Int) % 2 = 0) :
+  (hx : x = (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ))
+  (heven : ((FloatSpec.Core.Raux.Zfloor x) : Int) % 2 = 0) :
   ((Zodd (x + y) : Int) : ℝ) = x + ((Zodd y : Int) : ℝ) := by
   sorry
 
@@ -128,14 +128,14 @@ theorem generic_format_round_odd (x : ℝ) :
 
 /-- Magnitude after round-to-odd is controlled. Coq: `mag_round_odd`. -/
 theorem mag_round_odd (x : ℝ) :
-  (FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x)).run
-    ≤ (FloatSpec.Core.Raux.mag beta x).run + 1 := by
+  (FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x))
+    ≤ (FloatSpec.Core.Raux.mag beta x) + 1 := by
   sorry
 
 /-- Exponent after round-to-odd is within one place. Coq: `fexp_round_odd`. -/
 theorem fexp_round_odd (x : ℝ) :
-  fexp ((FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x)).run)
-    ≤ (FloatSpec.Core.Raux.mag beta x).run + 1 := by
+  fexp ((FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x)))
+    ≤ (FloatSpec.Core.Raux.mag beta x) + 1 := by
   sorry
 
 
@@ -171,9 +171,9 @@ theorem Zrnd_odd_plus' (Ebeta : ∃ n : Int, beta = 2 * n)
 lemma exists_even_fexp_lt
   (c : Int → Int) (x : ℝ)
   (hx : ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
-            (FloatSpec.Core.Defs.F2R g).run = x ∧ c ((FloatSpec.Core.Raux.mag beta x).run) < g.Fexp) :
+            (FloatSpec.Core.Defs.F2R g) = x ∧ c ((FloatSpec.Core.Raux.mag beta x)) < g.Fexp) :
   ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
-    (FloatSpec.Core.Defs.F2R g).run = x ∧
+    (FloatSpec.Core.Defs.F2R g) = x ∧
     FloatSpec.Core.Generic_fmt.canonical beta c g ∧
     g.Fnum % 2 = 0 := by
   sorry
@@ -205,7 +205,7 @@ lemma d_eq (x : ℝ)
   (xPos : 0 < x) :
   F2R d =
     (FloatSpec.Core.Generic_fmt.roundR (beta := beta) (fexp := fexp)
-        (fun y => (FloatSpec.Core.Raux.Zfloor y).run) x) := by
+        (fun y => (FloatSpec.Core.Raux.Zfloor y)) x) := by
   sorry
 
 /-- Coq: `u_eq`
@@ -222,7 +222,7 @@ lemma u_eq (x : ℝ)
   (xPos : 0 < x) :
   F2R u =
     (FloatSpec.Core.Generic_fmt.roundR (beta := beta) (fexp := fexp)
-        (fun y => (FloatSpec.Core.Raux.Zceil y).run) x) := by
+        (fun y => (FloatSpec.Core.Raux.Zceil y)) x) := by
   sorry
 
 /-- Coq: `d_ge_0`
@@ -248,8 +248,8 @@ lemma mag_d (x : ℝ)
   (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
   (xPos : 0 < x)
   (dPos : 0 < F2R d) :
-  (FloatSpec.Core.Raux.mag beta (F2R d)).run
-    = (FloatSpec.Core.Raux.mag beta x).run := by
+  (FloatSpec.Core.Raux.mag beta (F2R d))
+    = (FloatSpec.Core.Raux.mag beta x) := by
   sorry
 
 /-- Midpoint between the DN/UP witnesses used in Coq's section `Fcore_rnd_odd`.
@@ -267,7 +267,7 @@ lemma Fexp_d (x : ℝ)
   (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
   (xPos : 0 < x)
   (dPos : 0 < F2R d) :
-  d.Fexp = fexp ((FloatSpec.Core.Raux.mag beta x).run) := by
+  d.Fexp = fexp ((FloatSpec.Core.Raux.mag beta x)) := by
   sorry
 
 /-- Coq: `format_bpow_x` (spec-variant). If `0 < F2R d`, then the radix-
@@ -280,7 +280,7 @@ lemma format_bpow_x (x : ℝ)
   (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
   (xPos : 0 < x)
   (dPos : 0 < F2R d) :
-  generic_format beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)) := by
+  generic_format beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x))) := by
   sorry
 
 /-- Coq: `format_bpow_d` (spec-variant). If `0 < F2R d`, then the radix-
@@ -293,7 +293,7 @@ lemma format_bpow_d (x : ℝ)
   (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
   (xPos : 0 < x)
   (dPos : 0 < F2R d) :
-  generic_format beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta (F2R d)).run)) := by
+  generic_format beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta (F2R d)))) := by
   sorry
 
 /-- Coq: `d_le_m`. The down-rounded value is below the midpoint `m`. -/
@@ -327,8 +327,8 @@ lemma mag_m (x : ℝ)
   (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
   (xPos : 0 < x)
   (dPos : 0 < F2R d) :
-  (FloatSpec.Core.Raux.mag beta (m (beta := beta) d u)).run
-    = (FloatSpec.Core.Raux.mag beta (F2R d)).run := by
+  (FloatSpec.Core.Raux.mag beta (m (beta := beta) d u))
+    = (FloatSpec.Core.Raux.mag beta (F2R d)) := by
   sorry
 
 /-- Coq: `mag_m_0`. If `F2R d = 0`, then `mag m = mag (F2R u) - 1`. -/
@@ -340,8 +340,8 @@ lemma mag_m_0 (x : ℝ)
   (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
   (xPos : 0 < x)
   (dZero : F2R d = 0) :
-  (FloatSpec.Core.Raux.mag beta (m (beta := beta) d u)).run
-    = (FloatSpec.Core.Raux.mag beta (F2R u)).run - 1 := by
+  (FloatSpec.Core.Raux.mag beta (m (beta := beta) d u))
+    = (FloatSpec.Core.Raux.mag beta (F2R u)) - 1 := by
   sorry
 
 /-- Coq: `u'_eq`. If `0 < F2R d`, there exists a float with the same
@@ -369,7 +369,7 @@ lemma m_eq (x : ℝ)
   (xPos : 0 < x)
   (dPos : 0 < F2R d) :
   ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
-    F2R f = m (beta := beta) d u ∧ f.Fexp = fexp ((FloatSpec.Core.Raux.mag beta x).run) - 1 := by
+    F2R f = m (beta := beta) d u ∧ f.Fexp = fexp ((FloatSpec.Core.Raux.mag beta x)) - 1 := by
   sorry
 
 /-- Coq: `m_eq_0`. If `F2R d = 0`, there exists a float whose value is `m`
@@ -383,7 +383,7 @@ lemma m_eq_0 (x : ℝ)
   (xPos : 0 < x)
   (dZero : F2R d = 0) :
   ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
-    F2R f = m (beta := beta) d u ∧ f.Fexp = fexp ((FloatSpec.Core.Raux.mag beta (F2R u)).run) - 1 := by
+    F2R f = m (beta := beta) d u ∧ f.Fexp = fexp ((FloatSpec.Core.Raux.mag beta (F2R u))) - 1 := by
   sorry
 
 /-- Coq: `fexp_m_eq_0`. If `F2R d = 0`, then `fexp (mag (F2R u) - 1) < fexp (mag (F2R u)) + 1`. -/
@@ -395,8 +395,8 @@ lemma fexp_m_eq_0 (x : ℝ)
   (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
   (xPos : 0 < x)
   (dZero : F2R d = 0) :
-  fexp ((FloatSpec.Core.Raux.mag beta (F2R u)).run - 1)
-    < fexp ((FloatSpec.Core.Raux.mag beta (F2R u)).run) + 1 := by
+  fexp ((FloatSpec.Core.Raux.mag beta (F2R u)) - 1)
+    < fexp ((FloatSpec.Core.Raux.mag beta (F2R u))) + 1 := by
   sorry
 
 variable (fexpe : Int → Int)

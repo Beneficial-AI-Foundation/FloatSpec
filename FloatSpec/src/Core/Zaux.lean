@@ -19,6 +19,7 @@ COPYING file for more details.
 import Std.Do.Triple
 import Std.Tactic.Do
 import Mathlib.Tactic
+import FloatSpec.src.SimprocWP
 
 open Std.Do
 
@@ -31,7 +32,7 @@ section Zmissing
     If -y ≤ -x, then x ≤ y. This is a basic property used throughout
     the formalization for manipulating integer inequalities.
 -/
-def Zopp_le_cancel (x y : Int) : Id Int :=
+def Zopp_le_cancel (x y : Int) : Int :=
   if x ≤ y then 1 else 0
 
 /-- Specification: Opposite cancellation preserves order
@@ -48,15 +49,14 @@ theorem Zopp_le_cancel_spec (x y : Int) :
   unfold Zopp_le_cancel
   -- From -y ≤ -x, we can deduce x ≤ y
   have : x ≤ y := Int.neg_le_neg_iff.mp h
-  simp [this]
-  rfl
+  simp [this, id_run]
 
 /-- Greater-than implies not equal for integers
 
     If y < x, then x ≠ y. This captures the asymmetry of the
     less-than relation on integers.
 -/
-def Zgt_not_eq (x y : Int) : Id Bool :=
+def Zgt_not_eq (x y : Int) : Bool :=
   decide (x ≠ y)
 
 /-- Specification: Strict inequality implies non-equality
@@ -73,8 +73,7 @@ theorem Zgt_not_eq_spec (x y : Int) :
   unfold Zgt_not_eq
   -- From y < x, we can deduce x ≠ y
   have : x ≠ y := ne_of_gt h
-  simp [this]
-  rfl
+  simp [this, id_run]
 
 end Zmissing
 
@@ -85,7 +84,7 @@ section ProofIrrelevance
     Establishes that all proofs of boolean equality are equal.
     This is fundamental for working with decidable propositions.
 -/
-def eqbool_irrelevance (b : Bool) (_h1 _h2 : b = true) : Id Bool :=
+def eqbool_irrelevance (b : Bool) (_h1 _h2 : b = true) : Bool :=
   true
 
 /-- Specification: Boolean proof irrelevance
@@ -107,7 +106,7 @@ end ProofIrrelevance
 section EvenOdd
 
 /-- Existence of even/odd decomposition for integers. Every integer can be written as two times a number plus a remainder 0 or 1. -/
-def Zeven_ex (x : Int) : Id (Int × Int) :=
+def Zeven_ex (x : Int) : (Int × Int) :=
   let p := x / 2
   let r := x % 2
   (p, r)
@@ -141,7 +140,7 @@ end EvenOdd
 section Zpower
 
 /-- Power addition formula for integers. -/
-def Zpower_plus (n k1 k2 : Int) : Id Int :=
+def Zpower_plus (n k1 k2 : Int) : Int :=
   if k1 ≥ 0 && k2 ≥ 0 then
     n^(k1.natAbs + k2.natAbs)
   else
@@ -155,8 +154,7 @@ theorem Zpower_plus_spec (n k1 k2 : Int) :
     ⦃⇓result => ⌜result = n^(k1.natAbs + k2.natAbs)⌝⦄ := by
   intro ⟨h1, h2⟩
   unfold Zpower_plus
-  simp [h1, h2]
-  rfl
+  simp [h1, h2, id_run]
 
 /-- Radix type for floating-point bases
 
@@ -180,11 +178,11 @@ def radix2 : Radix :=
 
 section RadixProps
 
-/-- Injectivity of `radix` from its value field
+/-- Injectivity of {lit}`radix` from its value field
 
-    If two `Radix` structures have the same `val`, they are equal.
+    If two {lean}`Radix` structures have the same {lean}`Radix.val`, they are equal.
 -/
-def radix_val_inj_check (r1 r2 : Radix) : Id Bool :=
+def radix_val_inj_check (r1 r2 : Radix) : Bool :=
   decide ((r1.val = r2.val) → (r1.val = r2.val))
 
 /-- Specification: Injectivity of radix by value -/
@@ -199,7 +197,7 @@ theorem radix_val_inj_spec (r1 r2 : Radix) :
 
 /-- Coq-compatible name: injectivity of radix from value field
 
-    This theorem uses the check function `radix_val_inj_check` and states
+    This theorem uses the check function {lean}`radix_val_inj_check` and states
     the intended Hoare-style specification under a trivial precondition.
 -/
 theorem radix_val_inj (r1 r2 : Radix) :
@@ -210,7 +208,7 @@ theorem radix_val_inj (r1 r2 : Radix) :
   exact radix_val_inj_spec r1 r2
 
 /-- Positivity of a radix value -/
-def radix_gt_0_check (r : Radix) : Id Bool :=
+def radix_gt_0_check (r : Radix) : Bool :=
   decide (0 < r.val)
 
 /-- Specification: Any radix is strictly positive -/
@@ -230,7 +228,7 @@ theorem radix_gt_0 (r : Radix) :
   exact radix_gt_0_spec r
 
 /-- Lower bound of any radix (strict): r > 1 -/
-def radix_gt_1_check (r : Radix) : Id Bool :=
+def radix_gt_1_check (r : Radix) : Bool :=
   decide (1 < r.val)
 
 /-- Specification: Any radix is strictly greater than 1 -/
@@ -252,7 +250,7 @@ theorem radix_gt_1 (r : Radix) :
 end RadixProps
 
 /-- Relationship between integer power and natural power. -/
-def Zpower_Zpower_nat (b e : Int) : Id Int :=
+def Zpower_Zpower_nat (b e : Int) : Int :=
   if e ≥ 0 then
     b^e.natAbs
   else
@@ -275,7 +273,7 @@ theorem Zpower_Zpower_nat_spec (b e : Int) :
     exact absurd h h_neg
 
 /-- Successor property for natural power. -/
-def Zpower_nat_S (b : Int) (e : Nat) : Id Int :=
+def Zpower_nat_S (b : Int) (e : Nat) : Int :=
   b * b^e
 
 /-- Specification: Successor exponent formula for natural powers. -/
@@ -295,7 +293,7 @@ theorem Zpower_nat_S_spec (b : Int) (e : Nat) :
     the power b^p is strictly positive. This is the computational
     carrier used in the hoare-style specification lemma below.
 -/
-def Zpower_pos_gt_0_check (b : Int) (p : Nat) : Id Bool :=
+def Zpower_pos_gt_0_check (b : Int) (p : Nat) : Bool :=
   decide (0 < b ^ p)
 
 /-- Specification: Positive base yields positive power
@@ -313,7 +311,7 @@ theorem Zpower_pos_gt_0_spec (b : Int) (p : Nat) :
 /-- Coq-compatible name: positive base yields positive power
 
     If 0 < b and p is a natural number, then b^p > 0.
-    This mirrors the Coq lemma `Zpower_pos_gt_0`.
+    This mirrors the Coq lemma {lit}`Zpower_pos_gt_0`.
 -/
 theorem Zpower_pos_gt_0 (b : Int) (p : Nat) :
     ⦃⌜0 < b⌝⦄
@@ -327,14 +325,14 @@ section ParityPower
 
 /-- Evenness of an odd base raised to a nonnegative exponent
 
-    If `e ≥ 0` and `b` is odd (i.e., not even), then `b^e` is odd.
+    If {lit}`e ≥ 0` and {lit}`b` is odd (i.e., not even), then {lit}`b^e` is odd.
 -/
-def Zeven_Zpower_odd_check (b e : Int) : Id Bool :=
+def Zeven_Zpower_odd_check (b e : Int) : Bool :=
   decide (((b ^ e.natAbs) % 2) ≠ 0)
 
 /-- Specification: Powers of odd remain odd for nonnegative exponents
 
-    Under `0 ≤ e` and `b` odd, `b^e` is odd (i.e., not divisible by 2).
+    Under {lit}`0 ≤ e` and {lit}`b` odd, {lit}`b^e` is odd (i.e., not divisible by 2).
 -/
 @[spec]
 theorem Zeven_Zpower_odd_spec (b e : Int) :
@@ -358,9 +356,9 @@ section RadixZpower
 
 /-- Power of radix greater than one for positive exponent
 
-    For any radix `r` and integer exponent `p > 0`, we have `1 < r^p`.
+    For any radix {lit}`r` and integer exponent {lit}`p > 0`, we have {lit}`1 < r^p`.
 -/
-def Zpower_gt_1_check (r : Radix) (p : Int) : Id Bool :=
+def Zpower_gt_1_check (r : Radix) (p : Int) : Bool :=
   decide (1 < r.val ^ p.natAbs)
 
 /-- Specification: Radix powers exceed 1 for positive exponents -/
@@ -380,7 +378,7 @@ theorem Zpower_gt_1 (r : Radix) (p : Int) :
   exact Zpower_gt_1_spec r p
 
 /-- Positivity of radix powers for nonnegative exponents -/
-def Zpower_gt_0_check (r : Radix) (p : Int) : Id Bool :=
+def Zpower_gt_0_check (r : Radix) (p : Int) : Bool :=
   decide (0 < r.val ^ p.natAbs)
 
 /-- Specification: Any radix power with nonnegative exponent is positive -/
@@ -400,7 +398,7 @@ theorem Zpower_gt_0 (r : Radix) (p : Int) :
   exact Zpower_gt_0_spec r p
 
 /-- Nonnegativity of radix powers for all integer exponents (via natAbs) -/
-def Zpower_ge_0_check (r : Radix) (e : Int) : Id Bool :=
+def Zpower_ge_0_check (r : Radix) (e : Int) : Bool :=
   decide (0 ≤ r.val ^ e.natAbs)
 
 /-- Specification: Any radix power is nonnegative -/
@@ -420,7 +418,7 @@ theorem Zpower_ge_0 (r : Radix) (e : Int) :
   exact Zpower_ge_0_spec r e
 
 /-- Monotonicity of radix power in the exponent (nondecreasing) -/
-def Zpower_le (r : Radix) (e1 e2 : Int) : Id Bool :=
+def Zpower_le (r : Radix) (e1 e2 : Int) : Bool :=
   decide (r.val ^ e1.natAbs ≤ r.val ^ e2.natAbs)
 
 /-- Specification: If e1 ≤ e2 then r^e1 ≤ r^e2 -/
@@ -434,7 +432,7 @@ theorem Zpower_le_spec (r : Radix) (e1 e2 : Int) :
   rfl
 
 /-- Strict monotonicity for positive range: if 0 ≤ e2 and e1 < e2 then r^e1 < r^e2 -/
-def Zpower_lt_check (r : Radix) (e1 e2 : Int) : Id Bool :=
+def Zpower_lt_check (r : Radix) (e1 e2 : Int) : Bool :=
   decide (r.val ^ e1.natAbs < r.val ^ e2.natAbs)
 
 /-- Specification: Strict increase over exponent when upper exponent nonnegative -/
@@ -455,7 +453,7 @@ theorem Zpower_lt (r : Radix) (e1 e2 : Int) :
   exact Zpower_lt_spec r e1 e2
 
 /-- Inversion: if r^(e1-1) < r^e2 then e1 ≤ e2 -/
-def Zpower_lt_Zpower (r : Radix) (e1 e2 : Int) : Id Bool :=
+def Zpower_lt_Zpower (_r : Radix) (e1 e2 : Int) : Bool :=
   decide (e1 ≤ e2)
 
 /-- Specification: Power inequality implies exponent inequality -/
@@ -469,7 +467,7 @@ theorem Zpower_lt_Zpower_spec (r : Radix) (e1 e2 : Int) :
   rfl
 
 /-- Radix power dominates the exponent index (coarse bound) -/
-def Zpower_gt_id_check (r : Radix) (n : Int) : Id Bool :=
+def Zpower_gt_id_check (r : Radix) (n : Int) : Bool :=
   decide (n < r.val ^ n.natAbs)
 
 /-- Specification: n < r^n for any integer n (via natAbs exponent) -/
@@ -494,7 +492,7 @@ end RadixZpower
 section DivMod
 
 /-- Modulo simplification lemma. -/
-def Zmod_mod_mult (n _a b : Int) : Id Int :=
+def Zmod_mod_mult (n _a b : Int) : Int :=
   n % b
 
 /-- Specification: Nested modulo simplifies under side conditions. -/
@@ -508,7 +506,7 @@ theorem Zmod_mod_mult_spec (n a b : Int) :
   rfl
 
 /-- Division and modulo relationship. -/
-def ZOmod_eq (a b : Int) : Id Int :=
+def ZOmod_eq (a b : Int) : Int :=
   a % b
 
 /-- Specification: Quotient and remainder decomposition. -/
@@ -522,7 +520,7 @@ theorem ZOmod_eq_spec (a b : Int) :
   rfl
 
 /-- Division of nested modulo. -/
-def Zdiv_mod_mult (n a b : Int) : Id Int :=
+def Zdiv_mod_mult (n a b : Int) : Int :=
   if a ≠ 0 && b ≠ 0 then
     (n / a) % b
   else
@@ -547,8 +545,7 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
     have hb_nonzero : b ≠ 0 := by
       simp at h_both_nonzero
       exact h_both_nonzero.2
-    simp [ha_nonzero, hb_nonzero]
-    rfl
+    simp [ha_nonzero, hb_nonzero, id_run]
   · -- Case: ¬(a ≠ 0 && b ≠ 0), which means a = 0 || b = 0
     rename_i h_some_zero
     -- When at least one is zero, a = 0 || b = 0 is true
@@ -559,17 +556,15 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
     -- We need to show: if a = 0 ∨ b = 0 then 0 else (n / a) % b = 0
     by_cases ha_zero : a = 0
     · -- Case: a = 0
-      simp [ha_zero]
-      rfl
+      simp [ha_zero, id_run]
     · -- Case: a ≠ 0, then by h_some_zero, b = 0
       have hb_zero : b = 0 := h_some_zero ha_zero
-      simp [hb_zero]
-      rfl
+      simp [hb_zero, id_run]
 
-/-- Nested modulo with multiplication: for integers `n`, `a`, `b`, the term
+/-- Nested modulo with multiplication: for integers n, a, b, the term
     {lean}`(fun (n a b : Int) => (n % (a * b)) % b)` is extensionally equal to
     {lean}`(fun (n b : Int) => n % b)` under standard side conditions. -/
-def ZOmod_mod_mult (n _a b : Int) : Id Int :=
+def ZOmod_mod_mult (n _a b : Int) : Int :=
   n % b
 
 /-- Specification: {lean}`(fun (n a b : Int) => (n % (a * b)) % b = n % b)`
@@ -588,7 +583,7 @@ theorem ZOmod_mod_mult_spec (n a b : Int) :
     Quotient distributes over remainder/multiplication in the truncated variant:
     {lean}`(n % (a*b)) / a = (n / a) % b`.
 -/
-def ZOdiv_mod_mult (n a b : Int) : Id Bool :=
+def ZOdiv_mod_mult (n a b : Int) : Bool :=
   decide (((n % (a * b)) / a) = ((n / a) % b))
 
 /-- Specification: Truncated division over remainder and multiplication -/
@@ -605,7 +600,7 @@ theorem ZOdiv_mod_mult_spec (n a b : Int) :
 
     If {lean}`|a| < b`, then {lean}`a / b = 0` in truncated division.
 -/
-def ZOdiv_small_abs_check (a b : Int) : Id Bool :=
+def ZOdiv_small_abs_check (a b : Int) : Bool :=
   decide (a / b = 0)
 
 /-- Specification: Small absolute value implies zero quotient (truncated) -/
@@ -626,7 +621,7 @@ theorem ZOdiv_small_abs (a b : Int) :
   exact ZOdiv_small_abs_spec a b
 
 /-- Small-absolute-value remainder equals the number itself (truncated) -/
-def ZOmod_small_abs_check (a b : Int) : Id Bool :=
+def ZOmod_small_abs_check (a b : Int) : Bool :=
   decide (a % b = a)
 
 /-- Specification: Small absolute value implies remainder equals dividend -/
@@ -651,7 +646,7 @@ theorem ZOmod_small_abs (a b : Int) :
     Computes quot(a+b, c) in terms of individual quotients
     and the quotient of remainders, considering signs.
 -/
-def ZOdiv_plus (a b c : Int) : Id Int :=
+def ZOdiv_plus (a b c : Int) : Int :=
   if c ≠ 0 then
     a / c + b / c + ((a % c + b % c) / c)
   else
@@ -666,15 +661,14 @@ theorem ZOdiv_plus_spec (a b c : Int) :
   intro ⟨hab, hc⟩
   unfold ZOdiv_plus
   -- Since c ≠ 0, the if condition is true
-  simp [hc]
-  rfl
+  simp [hc, id_run]
 
 end DivMod
 
 section SameSign
 
 /-- Transitivity of nonnegativity through a nonzero middle factor -/
-def Zsame_sign_trans_check (v u w : Int) : Id Bool :=
+def Zsame_sign_trans_check (_v u w : Int) : Bool :=
   decide (0 ≤ u * w)
 
 /-- Specification: If v ≠ 0 and both u·v and v·w are nonnegative, then u·w is nonnegative. -/
@@ -695,7 +689,7 @@ theorem Zsame_sign_trans (v u w : Int) :
   exact Zsame_sign_trans_spec v u w
 
 /-- Weak transitivity of nonnegativity with zero-propagation hypothesis -/
-def Zsame_sign_trans_weak_check (v u w : Int) : Id Bool :=
+def Zsame_sign_trans_weak_check (_v u w : Int) : Bool :=
   decide (0 ≤ u * w)
 
 /-- Specification: If (v = 0 → w = 0) and both u·v and v·w are nonnegative, then u·w is nonnegative. -/
@@ -718,7 +712,7 @@ theorem Zsame_sign_trans_weak (v u w : Int) :
 /-- Deriving nonnegativity of product from sign-compatibility hypotheses -/
 def Zsame_sign_imp (u v : Int)
     (_hp : 0 < u → 0 ≤ v)
-    (_hn : 0 < -u → 0 ≤ -v) : Id Bool :=
+    (_hn : 0 < -u → 0 ≤ -v) : Bool :=
   decide (0 ≤ u * v)
 
 /-- Specification: If u > 0 implies v ≥ 0 and −u > 0 implies −v ≥ 0, then 0 ≤ u·v. -/
@@ -733,7 +727,7 @@ theorem Zsame_sign_imp_spec (u v : Int)
   rfl
 
 /-- Nonnegativity of u·(u / v) when v ≥ 0 (truncated division). -/
-def Zsame_sign_odiv (u v : Int) : Id Bool :=
+def Zsame_sign_odiv (u v : Int) : Bool :=
   decide (0 ≤ u * (u / v))
 
 /-- Specification: If 0 ≤ v then 0 ≤ u·(u / v). -/
@@ -755,7 +749,7 @@ section BooleanComparisons
     Tests whether two integers are equal, returning a boolean.
     This provides a decidable equality test.
 -/
-def Zeq_bool (x y : Int) : Id Bool :=
+def Zeq_bool (x y : Int) : Bool :=
   decide (x = y)
 
 /-- Specification: Boolean equality test
@@ -778,7 +772,7 @@ theorem Zeq_bool_spec (x y : Int) :
     Tests whether x ≤ y, returning a boolean result.
     This provides a decidable ordering test.
 -/
-def Zle_bool (x y : Int) : Id Bool :=
+def Zle_bool (x y : Int) : Bool :=
   decide (x ≤ y)
 
 /-- Specification: Boolean ordering test
@@ -800,7 +794,7 @@ theorem Zle_bool_spec (x y : Int) :
     Tests whether x < y, returning a boolean result.
     This provides a decidable strict ordering test.
 -/
-def Zlt_bool (x y : Int) : Id Bool :=
+def Zlt_bool (x y : Int) : Bool :=
   decide (x < y)
 
 /-- Specification: Boolean strict ordering test -/
@@ -814,7 +808,7 @@ theorem Zlt_bool_spec (x y : Int) :
   rfl
 
 /-- Boolean equality is true when equal -/
-def Zeq_bool_true (_ _ : Int) : Id Bool :=
+def Zeq_bool_true (_ _ : Int) : Bool :=
   true
 
 /-- Specification: Equality implies true -/
@@ -828,7 +822,7 @@ theorem Zeq_bool_true_spec (x y : Int) :
   rfl
 
 /-- Boolean equality is false when not equal -/
-def Zeq_bool_false (_ _ : Int) : Id Bool :=
+def Zeq_bool_false (_ _ : Int) : Bool :=
   false
 
 /-- Specification: Inequality implies false -/
@@ -842,7 +836,7 @@ theorem Zeq_bool_false_spec (x y : Int) :
   rfl
 
 /-- Boolean equality is reflexive. -/
-def Zeq_bool_diag (_ : Int) : Id Bool :=
+def Zeq_bool_diag (_ : Int) : Bool :=
   true
 
 /-- Specification: Reflexivity of boolean equality
@@ -865,7 +859,7 @@ theorem Zeq_bool_diag_spec (x : Int) :
     Zeq_bool(-x, y) = Zeq_bool(x, -y). This shows that
     negation can be moved between arguments in equality tests.
 -/
-def Zeq_bool_opp (x y : Int) : Id Bool :=
+def Zeq_bool_opp (x y : Int) : Bool :=
   decide ((-x = y) = (x = -y))
 
 /-- Specification: Negation commutes with equality
@@ -888,7 +882,7 @@ theorem Zeq_bool_opp_spec (x y : Int) :
     Zeq_bool(-x, -y) = Zeq_bool(x, y). This shows that
     negating both arguments preserves the equality test.
 -/
-def Zeq_bool_opp' (x y : Int) : Id Bool :=
+def Zeq_bool_opp' (x y : Int) : Bool :=
   decide ((-x = -y) = (x = y))
 
 /-- Specification: Double negation preserves equality
@@ -906,7 +900,7 @@ theorem Zeq_bool_opp'_spec (x y : Int) :
   rfl
 
 /-- Boolean less-or-equal is true when satisfied. -/
-def Zle_bool_true (_ _ : Int) : Id Bool :=
+def Zle_bool_true (_ _ : Int) : Bool :=
   true
 
 /-- Specification: Less-or-equal implies true
@@ -925,7 +919,7 @@ theorem Zle_bool_true_spec (x y : Int) :
   rfl
 
 /-- Boolean less-or-equal is false when violated. -/
-def Zle_bool_false (_ _ : Int) : Id Bool :=
+def Zle_bool_false (_ _ : Int) : Bool :=
   false
 
 /-- Specification: Greater-than implies false
@@ -948,7 +942,7 @@ theorem Zle_bool_false_spec (x y : Int) :
     Zle_bool(-x, y) = Zle_bool(-y, x). This shows how
     negation on the left relates to swapping with negation.
 -/
-def Zle_bool_opp_l (x y : Int) : Id Bool :=
+def Zle_bool_opp_l (x y : Int) : Bool :=
   decide ((- x ≤ y) = (- y ≤ x))
 
 /-- Specification: Left negation swaps comparison
@@ -970,7 +964,7 @@ theorem Zle_bool_opp_l_spec (x y : Int) :
     Zle_bool(-x, -y) = Zle_bool(y, x). This shows that
     double negation reverses the comparison.
 -/
-def Zle_bool_opp (x y : Int) : Id Bool :=
+def Zle_bool_opp (x y : Int) : Bool :=
   decide ((- x ≤ - y) = (y ≤ x))
 
 /-- Specification: Double negation reverses ordering
@@ -992,7 +986,7 @@ theorem Zle_bool_opp_spec (x y : Int) :
     Zle_bool(x, -y) = Zle_bool(y, -x). This shows how
     negation on the right relates to swapping with negation.
 -/
-def Zle_bool_opp_r (x y : Int) : Id Bool :=
+def Zle_bool_opp_r (x y : Int) : Bool :=
   decide ((x ≤ - y) = (y ≤ - x))
 
 /-- Specification: Right negation swaps comparison
@@ -1014,7 +1008,7 @@ theorem Zle_bool_opp_r_spec (x y : Int) :
     Shows that negb (Zle_bool x y) = Zlt_bool y x.
     This captures the duality between ≤ and >.
 -/
-def negb_Zle_bool (x y : Int) : Id Bool :=
+def negb_Zle_bool (x y : Int) : Bool :=
   decide (!(x ≤ y) = (y < x))
 
 /-- Specification: Negated ≤ equals strict >
@@ -1036,7 +1030,7 @@ theorem negb_Zle_bool_spec (x y : Int) :
     Shows that negb (Zlt_bool x y) = Zle_bool y x.
     This captures the duality between < and ≥.
 -/
-def negb_Zlt_bool (x y : Int) : Id Bool :=
+def negb_Zlt_bool (x y : Int) : Bool :=
   decide (!(x < y) = (y ≤ x))
 
 /-- Specification: Negated < equals ≥
@@ -1054,7 +1048,7 @@ theorem negb_Zlt_bool_spec (x y : Int) :
   rfl
 
 /-- Boolean less-than is true when satisfied. -/
-def Zlt_bool_true (_ _ : Int) : Id Bool :=
+def Zlt_bool_true (_ _ : Int) : Bool :=
   true
 
 /-- Specification: Less-than implies true
@@ -1073,7 +1067,7 @@ theorem Zlt_bool_true_spec (x y : Int) :
   rfl
 
 /-- Boolean less-than is false when violated. -/
-def Zlt_bool_false (_ _ : Int) : Id Bool :=
+def Zlt_bool_false (_ _ : Int) : Bool :=
   false
 
 /-- Specification: Greater-or-equal implies false
@@ -1096,7 +1090,7 @@ theorem Zlt_bool_false_spec (x y : Int) :
     Zlt_bool(-x, y) = Zlt_bool(-y, x). This shows how
     negation on the left relates to swapping with negation.
 -/
-def Zlt_bool_opp_l (x y : Int) : Id Bool :=
+def Zlt_bool_opp_l (x y : Int) : Bool :=
   decide ((- x < y) = (- y < x))
 
 /-- Specification: Left negation swaps strict comparison
@@ -1118,7 +1112,7 @@ theorem Zlt_bool_opp_l_spec (x y : Int) :
     Zlt_bool(x, -y) = Zlt_bool(y, -x). This shows how
     negation on the right relates to swapping with negation.
 -/
-def Zlt_bool_opp_r (x y : Int) : Id Bool :=
+def Zlt_bool_opp_r (x y : Int) : Bool :=
   decide ((x < - y) = (y < - x))
 
 /-- Specification: Right negation swaps strict comparison
@@ -1140,7 +1134,7 @@ theorem Zlt_bool_opp_r_spec (x y : Int) :
     Zlt_bool(-x, -y) = Zlt_bool(y, x). This shows that
     double negation reverses the strict comparison.
 -/
-def Zlt_bool_opp (x y : Int) : Id Bool :=
+def Zlt_bool_opp (x y : Int) : Bool :=
   decide ((- x < - y) = (y < x))
 
 /-- Specification: Double negation reverses strict ordering
@@ -1166,7 +1160,7 @@ section Zcompare
     Returns Lt if x < y, Eq if x = y, and Gt if x > y.
     This provides a complete ordering comparison in one operation.
 -/
-def Zcompare (x y : Int) : Id Ordering :=
+def Zcompare (x y : Int) : Ordering :=
   if x < y then Ordering.lt
   else if x = y then Ordering.eq
   else Ordering.gt
@@ -1280,7 +1274,7 @@ theorem Zcompare_spec (x y : Int) :
     When x < y, Zcompare returns Lt. This provides
     a computational witness for the less-than relation.
 -/
-def Zcompare_Lt (_ _ : Int) : Id Ordering :=
+def Zcompare_Lt (_ _ : Int) : Ordering :=
   Ordering.lt
 
 /-- Specification: Less-than yields Lt
@@ -1302,7 +1296,7 @@ theorem Zcompare_Lt_spec (x y : Int) :
     When x = y, Zcompare returns Eq. This provides
     a computational witness for equality.
 -/
-def Zcompare_Eq (_ _ : Int) : Id Ordering :=
+def Zcompare_Eq (_ _ : Int) : Ordering :=
   Ordering.eq
 
 /-- Specification: Equality yields Eq
@@ -1324,7 +1318,7 @@ theorem Zcompare_Eq_spec (x y : Int) :
     When y < x, Zcompare returns Gt. This provides
     a computational witness for the greater-than relation.
 -/
-def Zcompare_Gt (_ _ : Int) : Id Ordering :=
+def Zcompare_Gt (_ _ : Int) : Ordering :=
   Ordering.gt
 
 /-- Specification: Greater-than yields Gt
@@ -1351,7 +1345,7 @@ section CondZopp
     This is used for conditional negation in floating-point
     sign handling.
 -/
-def cond_Zopp (b : Bool) (x : Int) : Id Int :=
+def cond_Zopp (b : Bool) (x : Int) : Int :=
   if b then -x else x
 
 /-- Specification: Conditional negation
@@ -1372,7 +1366,7 @@ theorem cond_Zopp_spec (b : Bool) (x : Int) :
   rfl
 
 /-- Conditional opposite of zero. -/
-def cond_Zopp_0 (_ : Bool) : Id Int :=
+def cond_Zopp_0 (_ : Bool) : Int :=
   0
 
 /-- Specification: Zero invariance under conditional opposite. -/
@@ -1385,7 +1379,7 @@ theorem cond_Zopp_0_spec (sx : Bool) :
   rfl
 
 /-- Negated condition flips conditional opposite. -/
-def cond_Zopp_negb (x : Bool) (y : Int) : Id Int :=
+def cond_Zopp_negb (x : Bool) (y : Int) : Int :=
   -(if x then -y else y)
 
 /-- Specification: Condition negation flips result. -/
@@ -1399,7 +1393,7 @@ theorem cond_Zopp_negb_spec (x : Bool) (y : Int) :
   rfl
 
 /-- Absolute value preservation under conditional opposite. -/
-def abs_cond_Zopp (_b : Bool) (m : Int) : Id Int :=
+def abs_cond_Zopp (_b : Bool) (m : Int) : Int :=
   (Int.natAbs m : Int)
 
 /-- Specification: Conditional opposite preserves magnitude. -/
@@ -1413,7 +1407,7 @@ theorem abs_cond_Zopp_spec (b : Bool) (m : Int) :
   rfl
 
 /-- Absolute value via conditional opposite. -/
-def cond_Zopp_Zlt_bool (m : Int) : Id Int :=
+def cond_Zopp_Zlt_bool (m : Int) : Int :=
   (Int.natAbs m : Int)
 
 /-- Specification: Absolute value computation. -/
@@ -1431,7 +1425,7 @@ theorem cond_Zopp_Zlt_bool_spec (m : Int) :
     Shows that Zeq_bool (cond_Zopp s m) n = Zeq_bool m (cond_Zopp s n).
     This demonstrates the symmetry of conditional negation in equality tests.
 -/
-def Zeq_bool_cond_Zopp (s : Bool) (m n : Int) : Id Bool :=
+def Zeq_bool_cond_Zopp (s : Bool) (m n : Int) : Bool :=
   decide (((if s then -m else m) = n) = (m = (if s then -n else n)))
 
 /-- Specification: Conditional opposite commutes with equality
@@ -1457,7 +1451,7 @@ section FastPower
     Computes v^e efficiently using repeated squaring.
     This provides O(log e) complexity instead of O(e).
 -/
-def Zfast_pow_pos (v : Int) (e : Nat) : Id Int :=
+def Zfast_pow_pos (v : Int) (e : Nat) : Int :=
   v^e  -- Lean's built-in power is already efficient
 
 /-- Specification: Fast power computes correct result
@@ -1489,10 +1483,10 @@ end FastPower
 section FasterDiv
 
 /-- Euclidean division result uniqueness as explicit pair -/
-def Zdiv_eucl_unique (a b : Int) : Id (Int × Int) :=
+def Zdiv_eucl_unique (a b : Int) : (Int × Int) :=
   (a / b, a % b)
 
-/-- Specification: `div_eucl` equals `(a/b, a%b)` -/
+/-- Specification: {lit}`div_eucl` equals (a / b, a % b). -/
 @[spec]
 theorem Zdiv_eucl_unique_spec (a b : Int) :
     ⦃⌜True⌝⦄
@@ -1503,7 +1497,7 @@ theorem Zdiv_eucl_unique_spec (a b : Int) :
   rfl
 
 /-- Auxiliary division algorithm on positive integers (placeholder) -/
-def Zpos_div_eucl_aux1 (_a _b : Int) : Id (Int × Int) :=
+def Zpos_div_eucl_aux1 (_a _b : Int) : (Int × Int) :=
   (0, 0)
 
 /-- Specification: Correctness of positive-aux division helper (placeholder) -/
@@ -1516,7 +1510,7 @@ theorem Zpos_div_eucl_aux1_correct_spec (a b : Int) :
   rfl
 
 /-- Secondary auxiliary division algorithm on positive integers (placeholder) -/
-def Zpos_div_eucl_aux (_a _b : Int) : Id (Int × Int) :=
+def Zpos_div_eucl_aux (_a _b : Int) : (Int × Int) :=
   (0, 0)
 
 /-- Specification: Correctness of secondary positive-aux division helper (placeholder) -/
@@ -1530,7 +1524,7 @@ theorem Zpos_div_eucl_aux_correct_spec (a b : Int) :
   rfl
 
 /-- Fast Euclidean division for integers. -/
-def Zfast_div_eucl (a b : Int) : Id (Int × Int) :=
+def Zfast_div_eucl (a b : Int) : (Int × Int) :=
   if b = 0 then
     return (0, a)
   else
@@ -1557,7 +1551,7 @@ theorem Zfast_div_eucl_spec (a b : Int) :
     -- Use Lean's built-in Euclidean division properties
     constructor
     · -- Prove: a = b * (a / b) + (a % b)
-      calc a = a % b + b * (a / b) := (Int.emod_add_ediv a b).symm
+      calc a = a % b + b * (a / b) := (Int.emod_add_mul_ediv a b).symm
            _ = a % b + (a / b) * b := by rw [Int.mul_comm b]
            _ = b * (a / b) + a % b := by rw [Int.add_comm, Int.mul_comm]
 
@@ -1588,7 +1582,7 @@ theorem Zfast_div_eucl_correct (a b : Int) :
     -- Use Lean's built-in Euclidean division properties
     constructor
     · -- Prove: a = b * (a / b) + (a % b)
-      calc a = a % b + b * (a / b) := (Int.emod_add_ediv a b).symm
+      calc a = a % b + b * (a / b) := (Int.emod_add_mul_ediv a b).symm
            _ = a % b + (a / b) * b := by rw [Int.mul_comm b]
            _ = b * (a / b) + a % b := by rw [Int.add_comm, Int.mul_comm]
     constructor
@@ -1605,7 +1599,7 @@ section Iteration
     This provides a generic iteration construct used
     throughout the formalization.
 -/
-def iter_nat {A : Type} (f : A → A) (n : Nat) (x : A) : Id A :=
+def iter_nat {A : Type} (f : A → A) (n : Nat) (x : A) : A :=
   match n with
   | 0 => x
   | n'+1 => f (iter_nat f n' x).run
@@ -1620,24 +1614,22 @@ theorem iter_nat_spec {A : Type} (f : A → A) (n : Nat) (x : A) :
   induction n with
   | zero =>
     unfold iter_nat
-    simp [Function.iterate_zero]
-    rfl
+    simp [Function.iterate_zero, id_run]
   | succ n' ih =>
     unfold iter_nat
-    simp [Function.iterate_succ_apply']
+    simp [Function.iterate_succ_apply', id_run]
     -- Need to relate f (iter_nat f n' x).run to f (f^[n'] x)
     -- This should follow from ih
-    have h : (iter_nat f n' x).run = f^[n'] x := by
-      exact ih
-    rw [h]
-    rfl
+    have h : iter_nat f n' x = f^[n'] x := by
+      simpa using ih
+    simp [h, id_run]
 
 /-- Successor property for iteration
 
     Shows that iter_nat f (S p) x = f (iter_nat f p x).
     This is the successor case of the iteration recursion.
 -/
-def iter_nat_S {A : Type} (f : A → A) (p : Nat) (x : A) : Id A :=
+def iter_nat_S {A : Type} (f : A → A) (p : Nat) (x : A) : A :=
   f (iter_nat f p x).run
 
 /-- Specification: Iteration successor formula
@@ -1656,7 +1648,7 @@ theorem iter_nat_S_spec {A : Type} (f : A → A) (p : Nat) (x : A) :
   rfl
 
 /-- Iteration addition formula. -/
-def iter_nat_plus {A : Type} (f : A → A) (p q : Nat) (x : A) : Id A :=
+def iter_nat_plus {A : Type} (f : A → A) (p q : Nat) (x : A) : A :=
   (iter_nat f p (iter_nat f q x).run).run
 
 /-- Specification: Iteration count addition. -/
@@ -1674,7 +1666,7 @@ theorem iter_nat_plus_spec {A : Type} (f : A → A) (p q : Nat) (x : A) :
     For positive numbers, iter_pos equals iter_nat composed
     with conversion to natural numbers.
 -/
-def iter_pos_nat {A : Type} (f : A → A) (p : Nat) (x : A) : Id A :=
+def iter_pos_nat {A : Type} (f : A → A) (p : Nat) (x : A) : A :=
   (iter_nat f p x).run
 
 /-- Specification: Positive iteration via naturals

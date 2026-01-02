@@ -26,9 +26,14 @@ private def onlyCode {M : Type → Type} [Monad M] [MonadError M] (xs : TSyntaxA
     as a hyperlink to Flocq documentation.
 -/
 @[doc_role]
-def coq (xs : TSyntaxArray `inline) : DocM (Inline ElabInline) := do
+def _root_.coq (xs : TSyntaxArray `inline) : DocM (Inline ElabInline) := do
   let s ← onlyCode xs
   let txt := TSyntax.getString s
   match VersoCoq.Flocq.inferUrl txt with
   | some url => return .link #[.code txt] url
   | none => return .code txt
+
+/-- Plain code block for non-Lean snippets in docstrings. -/
+@[doc_code_block]
+def _root_.raw (str : StrLit) : DocM (Block ElabInline ElabBlock) := do
+  return .code str.getString

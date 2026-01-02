@@ -17,6 +17,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.Data.Real.Sqrt
 import Std.Do.Triple
 import Std.Tactic.Do
+import FloatSpec.src.SimprocWP
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
 open FloatSpec.Core.Generic_fmt
@@ -33,10 +34,10 @@ section MagnitudeBounds
 
     Calculates the magnitude of the square root of a float
 -/
-noncomputable def mag_sqrt_F2R_compute (m1 e1 : Int) : Id Int :=
+noncomputable def mag_sqrt_F2R_compute (m1 e1 : Int) : Int :=
   -- Compute the magnitude of the square root directly, to match the spec.
   -- This avoids delicate arithmetical relations between Zdigits and mag.
-  let xR := (F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run
+  let xR := (F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))
   mag beta (Real.sqrt xR)
 
 /-- Specification: Square root magnitude
@@ -46,11 +47,11 @@ noncomputable def mag_sqrt_F2R_compute (m1 e1 : Int) : Id Int :=
 lemma mag_sqrt_F2R (m1 e1 : Int) (Hm1 : 0 < m1) :
     ⦃⌜0 < m1⌝⦄
     mag_sqrt_F2R_compute beta m1 e1
-    ⦃⇓result => ⌜result = (mag beta (Real.sqrt ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run))).run⌝⦄ := by
+    ⦃⇓result => ⌜result = (mag beta (Real.sqrt ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)))))⌝⦄ := by
   intro _
   -- By construction, `mag_sqrt_F2R_compute` returns exactly the requested value.
   unfold mag_sqrt_F2R_compute
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [ bind, pure]
 
 end MagnitudeBounds
 
@@ -60,7 +61,7 @@ section CoreSquareRoot
 
     Computes integer square root with remainder for location determination
 -/
-def Fsqrt_core (m1 e1 e : Int) : Id (Int × Location) :=
+def Fsqrt_core (m1 e1 e : Int) : (Int × Location) :=
   -- Note: `Zdigits beta m1` is not used in the core computation; it only
   -- influences the exponent selection in the caller. We compute directly.
   pure (
@@ -94,7 +95,7 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) :
   -- Unfold the definition and reduce the pure computation.
   unfold Fsqrt_core
   -- The program is a single `pure` returning the tuple; expose it to the post.
-  simp [wp, PostCond.noThrow, Id.run, pure]
+  simp [ pure]
 
 end CoreSquareRoot
 
@@ -104,7 +105,7 @@ section MainSquareRoot
 
     Computes the square root with automatic exponent selection
 -/
-def Fsqrt (x : FlocqFloat beta) : Id (Int × Int × Location) :=
+def Fsqrt (x : FlocqFloat beta) : (Int × Int × Location) :=
   let m1 := x.Fnum
   let e1 := x.Fexp
   Zdigits beta m1 >>= fun d =>
@@ -121,27 +122,27 @@ def Fsqrt (x : FlocqFloat beta) : Id (Int × Int × Location) :=
     bracketing properties requires additional lemmas about `inbetween` that
     live in `Bracket.lean` and are currently pending.
 -/
-theorem Fsqrt_correct (x : FlocqFloat beta) (Hx : 0 < (F2R x).run) :
-    ⦃⌜0 < (F2R x).run⌝⦄
+theorem Fsqrt_correct (x : FlocqFloat beta) (Hx : 0 < (F2R x)) :
+    ⦃⌜0 < (F2R x)⌝⦄
     Fsqrt beta fexp x
     ⦃⇓result =>
       ∃ m l,
         ⌜result = (m,
-            min (fexp (((Zdigits beta x.Fnum).run + x.Fexp + 1) / 2)) (x.Fexp / 2),
+            min (fexp (((Zdigits beta x.Fnum) + x.Fexp + 1) / 2)) (x.Fexp / 2),
             l)⌝⦄ := by
   intro _
   -- Unfold `Fsqrt` and evaluate the binds; expose the pure computation.
   unfold Fsqrt
   -- After simplifying the monadic binds, we reduce to an existential over the
   -- components returned by `Fsqrt_core` at the selected exponent.
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [ bind, pure]
   -- Provide witnesses directly as the projections of the core result; both
   -- sides compute the same tuple by construction.
   refine ⟨(match Fsqrt_core beta x.Fnum x.Fexp
-                  (min (fexp (((Zdigits beta x.Fnum).run + x.Fexp + 1) / 2)) (x.Fexp / 2)) with
+                  (min (fexp (((Zdigits beta x.Fnum) + x.Fexp + 1) / 2)) (x.Fexp / 2)) with
           | (m, _) => m),
           (match Fsqrt_core beta x.Fnum x.Fexp
-                  (min (fexp (((Zdigits beta x.Fnum).run + x.Fexp + 1) / 2)) (x.Fexp / 2)) with
+                  (min (fexp (((Zdigits beta x.Fnum) + x.Fexp + 1) / 2)) (x.Fexp / 2)) with
           | (_, l) => l), ?_⟩
   rfl
 

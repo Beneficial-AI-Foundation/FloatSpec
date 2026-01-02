@@ -50,10 +50,10 @@ theorem round_round_lt_mid_further_place
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ (FloatSpec.Core.Raux.mag beta x))
   (hx_lt : x < midp (beta := beta) fexp1 x - (1/2) * (ulp beta fexp2 x)) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -170,10 +170,10 @@ lemma round_round_mid_cases
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ (FloatSpec.Core.Raux.mag beta x))
   (Cmid : |x - midp (beta := beta) fexp1 x|
             ≤ (1/2) * (ulp beta fexp2 x) →
           FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
@@ -197,10 +197,10 @@ lemma round_round_eq_mid_beta_even
   (Ebeta : ∃ n : Int, beta = 2 * n)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ (FloatSpec.Core.Raux.mag beta x))
   (hx_mid : x = midp (beta := beta) fexp1 x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -218,8 +218,8 @@ lemma round_round_really_zero
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_f1 : (FloatSpec.Core.Raux.mag beta x).run
-            ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2) :
+  (h_f1 : (FloatSpec.Core.Raux.mag beta x)
+            ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 2) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x := by
@@ -235,9 +235,9 @@ lemma round_round_zero
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_f1 : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-            = (FloatSpec.Core.Raux.mag beta x).run + 1)
-  (hx_lt : x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)
+  (h_f1 : fexp1 ((FloatSpec.Core.Raux.mag beta x))
+            = (FloatSpec.Core.Raux.mag beta x) + 1)
+  (hx_lt : x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x))
               - (1/2) * (ulp beta fexp2 x)) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -255,38 +255,38 @@ lemma round_round_all_mid_cases
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (case1 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-              = (FloatSpec.Core.Raux.mag beta x).run + 1)
-            → (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (case1 : (fexp1 ((FloatSpec.Core.Raux.mag beta x))
+              = (FloatSpec.Core.Raux.mag beta x) + 1)
+            → (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x))
               - (1/2) * (ulp beta fexp2 x) ≤ x
             → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
                 (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
               = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
-  (case2 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (case2 : (fexp1 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ (FloatSpec.Core.Raux.mag beta x))
             → midp (beta := beta) fexp1 x - (1/2) * (ulp beta fexp2 x) ≤ x
             → x < midp (beta := beta) fexp1 x
             → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
                 (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
               = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
-  (case3 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (case3 : (fexp1 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ (FloatSpec.Core.Raux.mag beta x))
             → x = midp (beta := beta) fexp1 x
             → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
                 (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
               = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
-  (case4 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (case4 : (fexp1 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ (FloatSpec.Core.Raux.mag beta x))
             → midp (beta := beta) fexp1 x < x
             → x ≤ midp (beta := beta) fexp1 x + (1/2) * (ulp beta fexp2 x)
             → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
                 (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
               = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) x)
-  (case5 : (fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-              = (FloatSpec.Core.Raux.mag beta x).run + 1)
-            → x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)
+  (case5 : (fexp1 ((FloatSpec.Core.Raux.mag beta x))
+              = (FloatSpec.Core.Raux.mag beta x) + 1)
+            → x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x))
                 - (1/2) * (ulp beta fexp2 x)
             → FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
                 (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -302,10 +302,10 @@ lemma round_round_all_mid_cases
     We mirror the Coq statement and leave the proof as a placeholder. -/
 lemma mag_sqrt_disj (x : ℝ)
   (hx_pos : 0 < x) :
-  ((FloatSpec.Core.Raux.mag beta x).run
-      = 2 * (FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run - 1)
-  ∨ ((FloatSpec.Core.Raux.mag beta x).run
-      = 2 * (FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) := by
+  ((FloatSpec.Core.Raux.mag beta x)
+      = 2 * (FloatSpec.Core.Raux.mag beta (Real.sqrt x)) - 1)
+  ∨ ((FloatSpec.Core.Raux.mag beta x)
+      = 2 * (FloatSpec.Core.Raux.mag beta (Real.sqrt x))) := by
   sorry
 
 
@@ -329,8 +329,8 @@ lemma round_round_sqrt_aux
   (Hexp : round_round_sqrt_hyp fexp1 fexp2)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x))) - 1)
   (Fx : generic_format beta fexp1 x) :
   (1/2) * (ulp beta fexp2 (Real.sqrt x))
     < |Real.sqrt x - midp (beta := beta) fexp1 (Real.sqrt x)| := by
@@ -348,8 +348,8 @@ lemma round_round_sqrt
   (Hexp : round_round_sqrt_hyp fexp1 fexp2)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x))) - 1)
   (Fx : generic_format beta fexp1 x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (Real.sqrt x))
@@ -438,8 +438,8 @@ lemma round_round_sqrt_radix_ge_4_aux
   (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x))) - 1)
   (Fx : generic_format beta fexp1 x) :
   (1/2) * (ulp beta fexp2 (Real.sqrt x))
     < |Real.sqrt x - midp (beta := beta) fexp1 (Real.sqrt x)| := by
@@ -459,8 +459,8 @@ lemma round_round_sqrt_radix_ge_4
   (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
   (x : ℝ)
   (Fx : generic_format beta fexp1 x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)).run) - 1) :
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x)))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (Real.sqrt x))) - 1) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (Real.sqrt x))
   = FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1) (Real.sqrt x) := by
@@ -601,9 +601,9 @@ theorem round_round_lt_mid_further_place'
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (hx_lt1 : x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (hx_lt1 : x < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x))
                   - (1/2) * (ulp beta fexp2 x))
   (hx_lt2 : x < midp (beta := beta) fexp1 x
                   - (1/2) * (ulp beta fexp2 x)) :
@@ -622,8 +622,8 @@ theorem round_round_lt_mid_same_place
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_same : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              = fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
+  (h_same : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              = fexp1 ((FloatSpec.Core.Raux.mag beta x)))
   (hx_lt_mid : x < midp (beta := beta) fexp1 x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -640,13 +640,13 @@ theorem round_round_lt_mid
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place_le : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
-  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (h_place_le : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)))
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ (FloatSpec.Core.Raux.mag beta x))
   (hx_lt_mid : x < midp (beta := beta) fexp1 x)
-  (hx_cond : (fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (hx_cond : (fexp2 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
               → x < midp (beta := beta) fexp1 x - (1/2) * (ulp beta fexp2 x)) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -658,10 +658,10 @@ theorem round_round_lt_mid
     sum of magnitudes or one less. -/
 lemma mag_mult_disj (x y : ℝ)
   (hx : x ≠ 0) (hy : y ≠ 0) :
-  ((FloatSpec.Core.Raux.mag beta (x * y)).run
-      = (FloatSpec.Core.Raux.mag beta x).run + (FloatSpec.Core.Raux.mag beta y).run - 1)
-  ∨ ((FloatSpec.Core.Raux.mag beta (x * y)).run
-      = (FloatSpec.Core.Raux.mag beta x).run + (FloatSpec.Core.Raux.mag beta y).run) := by
+  ((FloatSpec.Core.Raux.mag beta (x * y))
+      = (FloatSpec.Core.Raux.mag beta x) + (FloatSpec.Core.Raux.mag beta y) - 1)
+  ∨ ((FloatSpec.Core.Raux.mag beta (x * y))
+      = (FloatSpec.Core.Raux.mag beta x) + (FloatSpec.Core.Raux.mag beta y)) := by
   sorry
 
 /-- Coq: `mag_div_disj`
@@ -669,10 +669,10 @@ lemma mag_mult_disj (x y : ℝ)
     is either `mag x - mag y` or exactly one greater. -/
 lemma mag_div_disj (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y) :
-  ((FloatSpec.Core.Raux.mag beta (x / y)).run
-      = (FloatSpec.Core.Raux.mag beta x).run - (FloatSpec.Core.Raux.mag beta y).run)
-  ∨ ((FloatSpec.Core.Raux.mag beta (x / y)).run
-      = (FloatSpec.Core.Raux.mag beta x).run - (FloatSpec.Core.Raux.mag beta y).run + 1) := by
+  ((FloatSpec.Core.Raux.mag beta (x / y))
+      = (FloatSpec.Core.Raux.mag beta x) - (FloatSpec.Core.Raux.mag beta y))
+  ∨ ((FloatSpec.Core.Raux.mag beta (x / y))
+      = (FloatSpec.Core.Raux.mag beta x) - (FloatSpec.Core.Raux.mag beta y) + 1) := by
   sorry
 
 /-- Coq: `round_round_div_hyp`
@@ -705,9 +705,9 @@ lemma round_round_div_aux0
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y)
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y)
-  (hplace : fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)).run)
-            = (FloatSpec.Core.Raux.mag beta (x / y)).run + 1) :
-  ¬ ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta (x / y)).run)
+  (hplace : fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)))
+            = (FloatSpec.Core.Raux.mag beta (x / y)) + 1) :
+  ¬ ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta (x / y)))
         - (1/2) * (ulp beta fexp2 (x / y)) ≤ x / y) := by
   sorry
 
@@ -725,8 +725,8 @@ lemma round_round_div_aux1
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y)
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y)
-  (h_f1_le : fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)).run)
-              ≤ (FloatSpec.Core.Raux.mag beta (x / y)).run) :
+  (h_f1_le : fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)))
+              ≤ (FloatSpec.Core.Raux.mag beta (x / y))) :
   ¬ (midp (beta := beta) fexp1 (x / y) - (1/2) * (ulp beta fexp2 (x / y)) ≤ x / y
       ∧ x / y < midp (beta := beta) fexp1 (x / y)) := by
   sorry
@@ -743,8 +743,8 @@ lemma round_round_div_aux2
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y)
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y)
-  (h_f1_gt : (FloatSpec.Core.Raux.mag beta (x / y)).run
-              < fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)).run)) :
+  (h_f1_gt : (FloatSpec.Core.Raux.mag beta (x / y))
+              < fexp1 ((FloatSpec.Core.Raux.mag beta (x / y)))) :
   ¬ (midp (beta := beta) fexp1 (x / y) ≤ x / y
       ∧ x / y < midp (beta := beta) fexp1 (x / y) + (1/2) * (ulp beta fexp2 (x / y))) := by
   sorry
@@ -897,8 +897,8 @@ theorem round_round_div_FTZ
     the magnitude of `x` or exactly one greater. -/
 lemma mag_plus_disj (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y ≤ x) :
-  ((FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run)
-  ∨ ((FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run + 1) := by
+  ((FloatSpec.Core.Raux.mag beta (x + y)) = (FloatSpec.Core.Raux.mag beta x))
+  ∨ ((FloatSpec.Core.Raux.mag beta (x + y)) = (FloatSpec.Core.Raux.mag beta x) + 1) := by
   sorry
 
 /-- Coq: `mag_plus_separated`
@@ -908,8 +908,8 @@ lemma mag_plus_separated (fexp : Int → Int)
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_nonneg : 0 ≤ y)
   (Fx : generic_format beta fexp x)
-  (Hsep : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run)) :
-  (FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run := by
+  (Hsep : (FloatSpec.Core.Raux.mag beta y) ≤ fexp ((FloatSpec.Core.Raux.mag beta x))) :
+  (FloatSpec.Core.Raux.mag beta (x + y)) = (FloatSpec.Core.Raux.mag beta x) := by
   sorry
 
 /-- Coq: `mag_minus_disj`
@@ -917,9 +917,9 @@ lemma mag_plus_separated (fexp : Int → Int)
     `x - y` is either `mag x` or `mag x - 1`. -/
 lemma mag_minus_disj (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y)
-  (hln : (FloatSpec.Core.Raux.mag beta y).run ≤ (FloatSpec.Core.Raux.mag beta x).run - 2) :
-  ((FloatSpec.Core.Raux.mag beta (x - y)).run = (FloatSpec.Core.Raux.mag beta x).run)
-  ∨ ((FloatSpec.Core.Raux.mag beta (x - y)).run = (FloatSpec.Core.Raux.mag beta x).run - 1) := by
+  (hln : (FloatSpec.Core.Raux.mag beta y) ≤ (FloatSpec.Core.Raux.mag beta x) - 2) :
+  ((FloatSpec.Core.Raux.mag beta (x - y)) = (FloatSpec.Core.Raux.mag beta x))
+  ∨ ((FloatSpec.Core.Raux.mag beta (x - y)) = (FloatSpec.Core.Raux.mag beta x) - 1) := by
   sorry
 
 /-- Coq: `mag_minus_separated`
@@ -929,10 +929,10 @@ lemma mag_minus_separated (fexp : Int → Int)
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y) (hy_lt_x : y < x)
-  (hx_gt_pow : (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run - 1) < x)
+  (hx_gt_pow : (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) < x)
   (Fx : generic_format beta fexp x)
-  (Ly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run)) :
-  (FloatSpec.Core.Raux.mag beta (x - y)).run = (FloatSpec.Core.Raux.mag beta x).run := by
+  (Ly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp ((FloatSpec.Core.Raux.mag beta x))) :
+  (FloatSpec.Core.Raux.mag beta (x - y)) = (FloatSpec.Core.Raux.mag beta x) := by
   sorry
 
 /-- Coq: `round_round_plus_aux0_aux_aux`
@@ -941,9 +941,9 @@ lemma mag_minus_separated (fexp : Int → Int)
     then the sum of two `fexp1`-generic numbers is `fexp2`-generic. -/
 lemma round_round_plus_aux0_aux_aux
   (fexp1 fexp2 : Int → Int) (x y : ℝ)
-  (Hxy : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
-  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
-  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
+  (Hxy : fexp1 ((FloatSpec.Core.Raux.mag beta x)) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y)))
+  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y))) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)))
+  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y))) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y)))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x + y) := by
   sorry
@@ -954,8 +954,8 @@ lemma round_round_plus_aux0_aux_aux
     the sum of two `fexp1`-generic numbers is `fexp2`-generic. -/
 lemma round_round_plus_aux0_aux
   (fexp1 fexp2 : Int → Int) (x y : ℝ)
-  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
-  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
+  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y))) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)))
+  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x + y))) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y)))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x + y) := by
   sorry
@@ -978,7 +978,7 @@ lemma round_round_plus_aux0
   (Hexp : round_round_plus_hyp fexp1 fexp2)
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y) (hyx : y ≤ x)
-  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1 ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1 ≤ (FloatSpec.Core.Raux.mag beta y))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x + y) := by
   sorry
@@ -992,12 +992,12 @@ lemma round_round_plus_aux1_aux
   (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y)
-  (Hln : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run) - k)
-  (Hlxy : (FloatSpec.Core.Raux.mag beta (x + y)).run = (FloatSpec.Core.Raux.mag beta x).run)
+  (Hln : (FloatSpec.Core.Raux.mag beta y) ≤ fexp ((FloatSpec.Core.Raux.mag beta x)) - k)
+  (Hlxy : (FloatSpec.Core.Raux.mag beta (x + y)) = (FloatSpec.Core.Raux.mag beta x))
   (Fx : generic_format beta fexp x) :
   0 < (x + y) - FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) (x + y)
     ∧ (x + y) - FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) (x + y)
-      < (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run) - k) := by
+      < (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x)) - k) := by
   sorry
 
 /-- Coq: `round_round_plus_aux1`
@@ -1012,7 +1012,7 @@ lemma round_round_plus_aux1
   (Hexp : round_round_plus_hyp fexp1 fexp2)
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y)
-  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2)
+  (Hly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 2)
   (Fx : generic_format beta fexp1 x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x + y))
@@ -1038,7 +1038,7 @@ lemma round_round_plus_radix_ge_3_aux0
   (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y ≤ x)
-  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x)) ≤ (FloatSpec.Core.Raux.mag beta y))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x + y) := by
   sorry
@@ -1056,7 +1056,7 @@ lemma round_round_plus_radix_ge_3_aux1
   (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
   (x y : ℝ)
   (hx_pos : 0 < x) (hy_pos : 0 < y)
-  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (Hly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) (x + y))
@@ -1286,7 +1286,7 @@ lemma round_round_minus_radix_ge_3_aux0
   (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y < x)
-  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x)) ≤ (FloatSpec.Core.Raux.mag beta y))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x - y) := by
   sorry
@@ -1303,8 +1303,8 @@ lemma round_round_minus_radix_ge_3_aux1
   (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y < x)
-  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (Hln' : fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Hly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (Hln' : fexp1 ((FloatSpec.Core.Raux.mag beta (x - y))) ≤ (FloatSpec.Core.Raux.mag beta y))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x - y) := by
   sorry
@@ -1323,8 +1323,8 @@ lemma round_round_minus_radix_ge_3_aux2
   (Hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y < x)
-  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (Hly' : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) - 1)
+  (Hly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (Hly' : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (x - y))) - 1)
   (Fx : generic_format beta fexp1 x)
   (Fy : generic_format beta fexp1 y) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
@@ -1440,10 +1440,10 @@ theorem round_round_gt_mid_further_place'
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
   (hx1 : FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x
-            < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run))
+            < (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x)))
   (hx2 : midp' (beta := beta) fexp1 x + (1/2) * (ulp beta fexp2 x) < x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -1460,10 +1460,10 @@ theorem round_round_gt_mid_further_place
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
-  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (h_place : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ (FloatSpec.Core.Raux.mag beta x))
   (hx2 : midp' (beta := beta) fexp1 x + (1/2) * (ulp beta fexp2 x) < x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -1480,8 +1480,8 @@ theorem round_round_gt_mid_same_place
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_same : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-              = fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
+  (h_same : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+              = fexp1 ((FloatSpec.Core.Raux.mag beta x)))
   (hx_gt_mid : midp' (beta := beta) fexp1 x < x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -1498,13 +1498,13 @@ theorem round_round_gt_mid
   (choice1 choice2 : Int → Bool)
   (x : ℝ)
   (hx_pos : 0 < x)
-  (h_place_le : fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
-  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ (FloatSpec.Core.Raux.mag beta x).run)
+  (h_place_le : fexp2 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)))
+  (h_f1_le_mag : fexp1 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ (FloatSpec.Core.Raux.mag beta x))
   (hx_gt_mid : midp' (beta := beta) fexp1 x < x)
-  (hx_cond : (fexp2 ((FloatSpec.Core.Raux.mag beta x).run)
-                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (hx_cond : (fexp2 ((FloatSpec.Core.Raux.mag beta x))
+                ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1)
               → midp' (beta := beta) fexp1 x + (1/2) * (ulp beta fexp2 x) < x) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)
     (FloatSpec.Calc.Round.round beta fexp2 (Znearest choice2) x)
@@ -1563,8 +1563,8 @@ lemma round_round_minus
 lemma round_round_minus_aux0_aux
   (fexp1 fexp2 : Int → Int)
   (x y : ℝ)
-  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x - y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run))
-  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x - y)).run) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y).run))
+  (Hlnx : fexp2 ((FloatSpec.Core.Raux.mag beta (x - y))) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)))
+  (Hlny : fexp2 ((FloatSpec.Core.Raux.mag beta (x - y))) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta y)))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x - y) := by
   sorry
@@ -1577,7 +1577,7 @@ lemma round_round_minus_aux0
   (Hexp : round_round_plus_hyp fexp1 fexp2)
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y < x)
-  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 1 ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Hln : fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 1 ≤ (FloatSpec.Core.Raux.mag beta y))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x - y) := by
   sorry
@@ -1593,8 +1593,8 @@ lemma round_round_minus_aux1
   (Hexp : round_round_plus_hyp fexp1 fexp2)
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y < x)
-  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2)
-  (Hln' : fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) - 1 ≤ (FloatSpec.Core.Raux.mag beta y).run)
+  (Hly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 2)
+  (Hln' : fexp1 ((FloatSpec.Core.Raux.mag beta (x - y))) - 1 ≤ (FloatSpec.Core.Raux.mag beta y))
   (Fx : generic_format beta fexp1 x) (Fy : generic_format beta fexp1 y) :
   generic_format beta fexp2 (x - y) := by
   sorry
@@ -1608,7 +1608,7 @@ lemma round_round_minus_aux2_aux
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y < x)
-  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp ((FloatSpec.Core.Raux.mag beta x).run) - 1)
+  (Hly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp ((FloatSpec.Core.Raux.mag beta x)) - 1)
   (Fx : generic_format beta fexp x)
   (Fy : generic_format beta fexp y) :
   FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) (x - y) - (x - y) ≤ y := by
@@ -1626,8 +1626,8 @@ lemma round_round_minus_aux2
   (Hexp : round_round_plus_hyp fexp1 fexp2)
   (x y : ℝ)
   (hy_pos : 0 < y) (hyx : y < x)
-  (Hly : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x).run) - 2)
-  (Hly' : (FloatSpec.Core.Raux.mag beta y).run ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (x - y)).run) - 2)
+  (Hly : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta x)) - 2)
+  (Hly' : (FloatSpec.Core.Raux.mag beta y) ≤ fexp1 ((FloatSpec.Core.Raux.mag beta (x - y))) - 2)
   (Fx : generic_format beta fexp1 x)
   (Fy : generic_format beta fexp1 y) :
   FloatSpec.Calc.Round.round beta fexp1 (Znearest choice1)

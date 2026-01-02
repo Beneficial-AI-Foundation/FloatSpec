@@ -69,8 +69,8 @@ theorem using the Hoare-triple style, leaving proofs as `sorry` for now.
 -/
 
 -- Coq: `round_N_opp_sym` — rounding to nearest-even is odd-symmetric
-noncomputable def round_N_opp_sym_check (emin prec : Int) (choice : Int → Bool) (x : ℝ) : Id Unit :=
-  pure ()
+noncomputable def round_N_opp_sym_check (emin prec : Int) (choice : Int → Bool) (x : ℝ) : Unit :=
+  ()
 
 /-- Coq: `round_N_opp_sym` — for any `choice` satisfying the usual symmetry,
     rounding of the negation equals the negation of rounding. We phrase the
@@ -83,8 +83,8 @@ theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Boo
   sorry
 
 -- Coq: `Fast2Sum_correct` — error-free transformation for x+y when |y| ≤ |x|
-noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Id Unit :=
-  pure ()
+noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
+  ()
 
 /-- Coq: `Fast2Sum_correct` — if `x` and `y` are in format and `|y| ≤ |x|`,
     then the two-sum algorithm reconstructs `x + y` exactly.
@@ -102,8 +102,8 @@ theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bo
   sorry
 
 -- Coq: `TwoSum_correct` — error-free transformation producing exact sum
-noncomputable def TwoSum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Id Unit :=
-  pure ()
+noncomputable def TwoSum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
+  ()
 
 /-- Coq: `TwoSum_correct` — for any `x, y` in format, the two-sum variant
     with compensated steps satisfies `a + b = x + y` exactly. -/
@@ -122,8 +122,8 @@ theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool
   sorry
 
 -- Coq: `C_format` — (β^s + 1) is in generic format for FLT(emin, prec)
-noncomputable def C_format_check (emin prec s : Int) : Id Unit :=
-  pure ()
+noncomputable def C_format_check (emin prec s : Int) : Unit :=
+  ()
 
 /-- Coq: `C_format` — under the usual small-precision side conditions,
     the real `(β^s + 1)` is representable in `generic_format β (FLT_exp emin prec)`.
@@ -136,8 +136,8 @@ theorem C_format (emin prec s : Int) [Prec_gt_0 prec] :
 
 -- Coq: `Veltkamp_Even` — specialized Veltkamp with even tie-breaking
 noncomputable def Veltkamp_Even_check (emin prec s : Int)
-    (choice : Int → Bool) (hx x : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (hx x : ℝ) : Unit :=
+  ()
 
 /-- Coq: `Veltkamp_Even` — assuming the boolean tie-breaker `choice` agrees
     with even rounding, the constructed `hx` equals rounding `x` at precision
@@ -153,8 +153,8 @@ theorem Veltkamp_Even (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)
 -- Coq: `Veltkamp` — there exists a tie-breaker `choice'` such that
 -- rounding at precision `prec - s` yields the constructed `hx`.
 noncomputable def Veltkamp_check (emin prec s : Int)
-    (choice : Int → Bool) (hx x : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (hx x : ℝ) : Unit :=
+  ()
 
 /-- Coq: `Veltkamp` — existence of a nearest-ties choice `choice'`
     for which `hx` equals rounding `x` at precision `prec - s`.
@@ -170,8 +170,8 @@ theorem Veltkamp (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)]
 
 -- Coq: `Veltkamp_tail` — decomposition x = hx + tx with tx representable
 noncomputable def Veltkamp_tail_check (emin prec s : Int)
-    (choice : Int → Bool) (hx tx x : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (hx tx x : ℝ) : Unit :=
+  ()
 
 /-- Coq: `Veltkamp_tail` — the residual `tx` is representable at `s` and
     reconstructs `x = hx + tx`. Proof deferred. -/
@@ -193,8 +193,8 @@ theorem using the Hoare-triple style, leaving the proofs as `sorry` for now.
 
 -- Coq: `underf_mult_aux` — lower bound on |x*y| implies exponent sum bound
 noncomputable def underf_mult_aux_check (emin prec e : Int)
-    (x y : PffFloat) : Id Unit :=
-  pure ()
+    (x y : PffFloat) : Unit :=
+  ()
 
 /-- Coq: `underf_mult_aux` — for `x, y` representable at `(FLT_exp emin prec)`,
     if `(beta : ℝ)^(e + 2*prec - 1) ≤ |FtoR x * FtoR y|` then
@@ -212,8 +212,8 @@ theorem underf_mult_aux (emin prec e : Int) [Prec_gt_0 prec]
 -- Coq: `underf_mult_aux'` — instantiated at `e := -dExp b` in Coq; here we
 -- keep a general statement phrased directly on `emin, prec` for compatibility.
 noncomputable def underf_mult_aux'_check (emin prec : Int)
-    (x y : PffFloat) : Id Unit :=
-  pure ()
+    (x y : PffFloat) : Unit :=
+  ()
 
 /- Coq: `underf_mult_aux'` — specialized bound using `emin` instead of an
     explicit `e`. With our simplified model, the precondition uses
@@ -240,8 +240,8 @@ the disjunction on `u1` in the postcondition. Proof is deferred.
 -/
 
 noncomputable def V1_Und3'_check (emin prec : Int)
-    (choice : Int → Bool) (a x : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (a x : ℝ) : Unit :=
+  ()
 
 /-- Coq: `V1_Und3'` — if `a*x = 0` or `(beta : ℝ)^(emin + 2*prec - 1) ≤ |a*x|`,
     then for `u1 := round beta (FLT_exp emin prec) (Znearest choice) (a*x)` we have
@@ -264,8 +264,8 @@ threshold in the postcondition: `β^(emin + prec)` instead of `β^(emin +
 -/
 
 noncomputable def V1_Und3_check (emin prec : Int)
-    (choice : Int → Bool) (a x : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (a x : ℝ) : Unit :=
+  ()
 
 /-- Coq: `V1_Und3` — if `a*x = 0` or `(beta : ℝ)^(emin + 2*prec - 1) ≤ |a*x|`,
     then for `u1 := round beta (FLT_exp emin prec) (Znearest choice) (a*x)` we have
@@ -285,8 +285,8 @@ theorem V1_Und3 (emin prec : Int) [Prec_gt_0 prec]
 -- conditional exactness and the global error bound. Proof is deferred.
 
 noncomputable def Dekker_check (emin prec s : Int)
-    (choice : Int → Bool) (x y : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (x y : ℝ) : Unit :=
+  ()
 
 /-- Coq: `Dekker` — error-free like decomposition of the product `x*y` into
     `r + t4` using a Veltkamp splitting with parameter `s`. The rounding is
@@ -306,8 +306,8 @@ theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
 
 -- Coq: `ErrFMA_bounded` — formats of r1, r2, r3 in compensated FMA scheme
 noncomputable def ErrFMA_bounded_check (emin prec : Int)
-    (choice : Int → Bool) (a x y : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (a x y : ℝ) : Unit :=
+  ()
 
 theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ) :
@@ -318,8 +318,8 @@ theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
 
 -- Coq: `ErrFMA_correct` — r1 + r2 + r3 = a*x + y
 noncomputable def ErrFMA_correct_check (emin prec : Int)
-    (choice : Int → Bool) (a x y : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (a x y : ℝ) : Unit :=
+  ()
 
 theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ) :
@@ -330,8 +330,8 @@ theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
 
 -- Coq: `ErrFMA_bounded_simpl` — simplified boundedness of r1, r2, r3
 noncomputable def ErrFMA_bounded_simpl_check (emin prec : Int)
-    (a x y : ℝ) : Id Unit :=
-  pure ()
+    (a x y : ℝ) : Unit :=
+  ()
 
 -- Coq: `ErrFMA_bounded_simpl` — in the ErrFMA V2 setting (nearest-even),
 -- the intermediate results `r1`, `r2`, `r3` are in format. We provide a
@@ -351,8 +351,8 @@ theorem ErrFMA_bounded_simpl (emin prec : Int) [Prec_gt_0 prec]
 -- `FloatSpec.Calc.Round.round` operator. The proof is deferred.
 
 noncomputable def mult_error_FLT_ge_bpow'_check (emin prec e : Int)
-    (a b : ℝ) : Id Unit :=
-  pure ()
+    (a b : ℝ) : Unit :=
+  ()
 
 /-- Coq: `mult_error_FLT_ge_bpow'` — assuming `a` and `b` are in
     `generic_format 2 (FLT_exp emin prec)` and either the product is zero or
@@ -382,8 +382,8 @@ theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
 -- Proof is deferred per the import task instructions.
 
 noncomputable def V2_Und4_check (emin prec : Int)
-    (a x y : ℝ) : Id Unit :=
-  pure ()
+    (a x y : ℝ) : Unit :=
+  ()
 
 /-- Coq: `V2_Und4` — assuming `a*x ≠ 0`, let
     `u1 := round_flt (a*x)`, `u2 := a*x - u1`, `alpha1 := round_flt (y + u2)`,
@@ -413,8 +413,8 @@ theorem V2_Und4 (emin prec : Int) [Prec_gt_0 prec]
 -- deferred per the import task instructions.
 
 noncomputable def V2_Und2_check (emin prec : Int)
-    (a x y : ℝ) : Id Unit :=
-  pure ()
+    (a x y : ℝ) : Unit :=
+  ()
 
 /-- Coq: `V2_Und2` — assuming `y ≠ 0`, let
     `u1 := round_flt (a*x)`, `u2 := a*x - u1`, and `alpha1 := round_flt (y + u2)`.
@@ -439,8 +439,8 @@ theorem V2_Und2 (emin prec : Int) [Prec_gt_0 prec]
 -- (FLT_exp emin prec) ()` (nearest-even). Proof deferred.
 
 noncomputable def V2_Und5_check (emin prec : Int)
-    (a x y : ℝ) : Id Unit :=
-  pure ()
+    (a x y : ℝ) : Unit :=
+  ()
 
 /-- Coq: `V2_Und5` — assuming `a*x ≠ 0`, let `r1 := round_flt (a*x + y)`.
     Then `r1 = 0 ∨ (beta : ℝ)^(emin + prec - 1) ≤ |r1|` with
@@ -469,8 +469,8 @@ rounding. Proof is deferred.
 -/
 
 noncomputable def U3_discri1_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `U3_discri1` — with `p := round_flt (b*b)` and `q := round_flt (a*c)`,
     assuming non-underflow side-conditions and `p - q ≠ 0`, we have the
@@ -510,8 +510,8 @@ left as `sorry` per the import process.
 -/
 
 noncomputable def U4_discri1_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `U4_discri1` — with `p := round_flt (b*b)`, `q := round_flt (a*c)`,
     `dp := b*b - p`, `dq := a*c - q`, and
@@ -552,8 +552,8 @@ with our hoare-triple style skeleton and defer the proof.
 -/
 
 noncomputable def ErrFMA_correct_simpl_check (emin prec : Int)
-    (a x y : ℝ) : Id Unit :=
-  pure ()
+    (a x y : ℝ) : Unit :=
+  ()
 
 -- Coq: `ErrFMA_correct_simpl` — simplified equality r1 + r2 + r3 = a * x + y
 -- under the ErrFMA V2 construction with ties-to-even rounding.
@@ -573,8 +573,8 @@ postcondition and leave the proof as `sorry` per the import process.
 -/
 
 noncomputable def ErrFmaAppr_correct_check (emin prec : Int)
-    (a x y : ℝ) : Id Unit :=
-  pure ()
+    (a x y : ℝ) : Unit :=
+  ()
 
 theorem ErrFmaAppr_correct (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
@@ -592,8 +592,8 @@ the local `let` bindings and asserting `generic_format` of `dp`.
 -/
 
 noncomputable def format_dp_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `format_dp` — with `p := round_flt (b*b)` and `dp := b*b - p`,
     `dp` is representable in `generic_format 2 (FLT_exp emin prec)`.
@@ -619,8 +619,8 @@ We assert `generic_format` of `dq` under the same Discri1 context assumptions.
 -/
 
 noncomputable def format_dq_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `format_dq` — with `q := round_flt (a*c)` and `dq := a*c - q`,
     `dq` is representable in `generic_format 2 (FLT_exp emin prec)`.
@@ -647,8 +647,8 @@ of either `p - q` or `round_flt (p - q) + round_flt (dp - dq)`.
 -/
 
 noncomputable def format_d_discri1_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `format_d_discri1` — with local definitions
     `p := round_flt (b*b)`, `q := round_flt (a*c)`, `dp := b*b - p`,
@@ -681,8 +681,8 @@ definitions for `p, q, dp, dq` and `d`, the value `d` is representable in
 -/
 
 noncomputable def format_d_discri2_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `format_d_discri2` — with local definitions
     `p := round_flt (b*b)`, `q := round_flt (a*c)`, `dp := b*b - p`,
@@ -716,8 +716,8 @@ smaller than `emin`, if `bpow e ≤ |x|` and `bpow e ≤ |y|` and the rounding o
 -/
 
 noncomputable def U5_discri1_aux_check (emin prec : Int)
-    (x y : ℝ) (e : Int) : Id Unit :=
-  pure ()
+    (x y : ℝ) (e : Int) : Unit :=
+  ()
 
 /-- Coq: `U5_discri1_aux` — with `round_flt := FloatSpec.Calc.Round.round 2
     (FLT_exp emin prec) ()`, assuming `generic_format` of `x` and `y`, the
@@ -746,8 +746,8 @@ lower magnitude bound `(2 : ℝ)^(emin + prec - 1)`.
 -/
 
 noncomputable def U5_discri1_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `U5_discri1` — let `p := round_flt (b*b)`, `q := round_flt (a*c)`,
     `dp := b*b - p`, `dq := a*c - q`. If `round_flt (dp - dq) ≠ dp - dq` and
@@ -790,8 +790,8 @@ Proof is deferred.
 -/
 
 noncomputable def discri_correct_test_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `discri_correct_test` — with
     `p := round_flt (b*b)`, `q := round_flt (a*c)`, `dp := b*b - p`,
@@ -831,8 +831,8 @@ compatibility `ulp` from `Compat`.
 -/
 
 noncomputable def discri_fp_test_check (emin prec : Int)
-    (a b c : ℝ) : Id Unit :=
-  pure ()
+    (a b c : ℝ) : Unit :=
+  ()
 
 /-- Coq: `discri_fp_test` — with
     `p := round_flt (b*b)`, `q := round_flt (a*c)`, `dp := b*b - p`,
@@ -873,8 +873,8 @@ theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
 -- deferred.
 
 noncomputable def Axpy_check (emin prec : Int)
-    (choice : Int → Bool) (a x y ta tx ty : ℝ) : Id Unit :=
-  pure ()
+    (choice : Int → Bool) (a x y ta tx ty : ℝ) : Unit :=
+  ()
 
 /-- Coq: `Axpy` — under the usual Axpy preconditions (precision/range side
     conditions, representability of `ta, tx, ty`, and the magnitude bounds on
@@ -898,8 +898,8 @@ theorem Axpy (emin prec : Int) [Prec_gt_0 prec]
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
             let tv := round_flt (ty + round_flt (ta * tx))
             tv = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
-                    (fun t => (FloatSpec.Core.Raux.Zfloor t).run) (y + a * x)
+                    (fun t => (FloatSpec.Core.Raux.Zfloor t)) (y + a * x)
               ∨
             tv = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
-                    (fun t => (FloatSpec.Core.Raux.Zceil t).run) (y + a * x)⌝⦄ := by
+                    (fun t => (FloatSpec.Core.Raux.Zceil t)) (y + a * x)⌝⦄ := by
   sorry

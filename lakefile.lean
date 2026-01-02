@@ -13,7 +13,13 @@ package FloatSpec where
     ⟨`linter.unusedSimpArgs, false⟩,
     -- Allow work-in-progress files that use `sorry` to compile
     ⟨`warningAsError, false⟩,
-    ⟨`doc.verso, true⟩
+    ⟨`doc.verso, true⟩,
+    -- Prefer grind over omega (weak. prefix allows setting before linter is loaded)
+    ⟨`weak.linter.preferGrind, true⟩,
+    -- Prefer simp over simp only for maintainability
+    ⟨`weak.linter.preferSimp, true⟩,
+    -- Avoid returning Id in definitions; keep Id only in mvcgen specs
+    ⟨`weak.linter.noIdReturn, true⟩
   ]
   -- Cloud release configuration for pre-built artifacts
   releaseRepo := "https://github.com/Beneficial-AI-Foundation/FloatSpec"
@@ -30,19 +36,31 @@ require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v
 -- Coq/Flocq documentation roles for literate programming
 require VersoCoq from git "https://github.com/alok/VersoCoq" @ "main"
 
-/-- Verso roles - imports VersoCoq.Roles to register {coq} doc role.
+-- Canonical proof search tactic
+require Canonical from git "https://github.com/chasenorman/CanonicalLean" @ "master"
 
-    Must compile BEFORE main library due to @[doc_role] attribute timing.
+require cslib from git "https://github.com/leanprover/cslib" @ "main"
+
+/-- Linters for FloatSpec (prefer grind over omega, etc).
+    Stdlib only, provides linter.preferGrind option.
 -/
+lean_lib FloatSpecLinter where
+  globs := #[.andSubmodules `FloatSpec.Linter]
+
+/-- Verso roles - imports VersoCoq.Roles to register {coq} doc role. -/
 lean_lib FloatSpecRoles where
   globs := #[.one `FloatSpecRoles]
 
 /-- Main library -/
 @[default_target]
 lean_lib FloatSpecLib where
-  -- Include the root module and all submodules
-  globs := #[.submodules `FloatSpec.src, .one `FloatSpec]
+  globs := #[.andSubmodules `FloatSpec.src, .one `FloatSpec, .one `FloatSpec.VersoExt]
+  needs := #[FloatSpecLinter, FloatSpecRoles]
 
+/-- Lightweight property tests (Plausible) and smoke checks. -/
+lean_lib FloatSpecTests where
+  globs := #[.andSubmodules `FloatSpec.Test]
+  needs := #[FloatSpecLib]
 
 /-- Executables -/
 lean_exe floatspec where

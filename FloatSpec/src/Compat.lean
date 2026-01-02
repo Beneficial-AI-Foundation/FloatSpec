@@ -14,30 +14,30 @@ open FloatSpec.Core.Generic_fmt
 
 /-- Bridge: Float to real as a plain ℝ (unwraps Id) -/
 noncomputable def F2R {beta : Int} (f : FlocqFloat beta) : ℝ :=
-  (FloatSpec.Core.Defs.F2R f).run
+  (FloatSpec.Core.Defs.F2R f)
 
-/-- Bridge: `generic_format` as a plain Prop (unwraps Id) -/
+/-- Bridge: {name (full := FloatSpec.Core.Generic_fmt.generic_format)}`generic_format` as a plain Prop (unwraps Id) -/
 noncomputable def generic_format (beta : Int) (fexp : Int → Int) (x : ℝ) : Prop :=
-  (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run
+  FloatSpec.Core.Generic_fmt.generic_format beta fexp x
 
 /-- Bridge: magnitude function in root namespace -/
 noncomputable def mag (beta : Int) (x : ℝ) : Int :=
-  FloatSpec.Core.Raux.mag beta x
+  (FloatSpec.Core.Raux.mag beta x)
 
 /-- Bridge: integer truncation toward zero -/
 noncomputable def Ztrunc (x : ℝ) : Int :=
-  (FloatSpec.Core.Raux.Ztrunc x).run
+  (FloatSpec.Core.Raux.Ztrunc x)
 
 /-- Fixed-exponent function: always returns the provided exponent. -/
 def FIX_exp (emin : Int) : Int → Int := fun _ => emin
 
 /-- Bridge: ulp as a plain ℝ (unwraps Id) -/
 noncomputable def ulp (beta : Int) (fexp : Int → Int) (x : ℝ) : ℝ :=
-  (FloatSpec.Core.Ulp.ulp beta fexp x).run
+  (FloatSpec.Core.Ulp.ulp beta fexp x)
 
 /-- Bridge: canonical exponent as plain Int -/
 noncomputable def cexp (beta : Int) (fexp : Int → Int) (x : ℝ) : Int :=
-  (FloatSpec.Core.Generic_fmt.cexp beta fexp x).run
+  FloatSpec.Core.Generic_fmt.cexp beta fexp x
 
 /-- Bridge: FLX exponent function in root namespace -/
 def FLX_exp (prec : Int) : Int → Int :=
@@ -80,16 +80,20 @@ instance instValidExp_FLT_Compat (beta emin prec : Int) [Prec_gt_0 prec] :
 
 -- Namespace aliases so existing references like `FloatSpec.Compat.Ztrunc` work.
 namespace FloatSpec.Compat
+/-- Namespace alias for {name}`Ztrunc`. -/
 noncomputable def Ztrunc := _root_.Ztrunc
+/-- Namespace alias for {name}`FIX_exp`. -/
 def FIX_exp := _root_.FIX_exp
 end FloatSpec.Compat
 
 /-- Stub: rounding function parameter validity (placeholder) -/
 class Valid_rnd (rnd : ℝ → Int) : Prop :=
+  /-- Trivial placeholder witness. -/
   (trivial : True := True.intro)
 
 /-- Stub: exponent monotonicity predicate (placeholder) -/
 class Monotone_exp (fexp : Int → Int) : Prop :=
+  /-- Trivial placeholder witness. -/
   (trivial : True := True.intro)
 
 /-- Stub: precision and range constraints for IEEE 754 (placeholders) -/
@@ -98,10 +102,12 @@ Coq: `Prec_gt_0 prec` asserts strictly positive precision.
 We model it as `0 < prec` so arithmetic lemmas may use it.
 -/
 class Prec_lt_emax (prec emax : Int) : Prop :=
+  /-- Trivial placeholder witness. -/
   (trivial : True := True.intro)
 
 /-- Stub: exponent function not flushing to zero (placeholder) -/
 class Exp_not_FTZ (fexp : Int → Int) : Prop :=
+  /-- Trivial placeholder witness. -/
   (trivial : True := True.intro)
 
 /-- Stub: Flocq addition on floats (placeholder) -/

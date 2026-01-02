@@ -16,6 +16,7 @@ import FloatSpec.src.Calc.Bracket
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
+import FloatSpec.src.SimprocWP
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt
 open FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
@@ -32,7 +33,7 @@ section MagnitudeBounds
 
     Calculates the exponent range for the quotient of two floats
 -/
-def mag_div_F2R_compute (m1 e1 m2 e2 : Int) : Id Int :=
+def mag_div_F2R_compute (m1 e1 m2 e2 : Int) : Int :=
   Zdigits beta m1 >>= fun d1 =>
   Zdigits beta m2 >>= fun d2 =>
   pure ((d1 + e1) - (d2 + e2))
@@ -45,21 +46,21 @@ lemma mag_div_F2R (m1 e1 m2 e2 : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
     (Hβ : 1 < beta) :
     ⦃⌜0 < m1 ∧ 0 < m2⌝⦄
     mag_div_F2R_compute beta m1 e1 m2 e2
-    ⦃⇓_ => ⌜(mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run)).run
-              - (mag beta ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)).run
-              ≤ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
-                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)).run
-          ∧ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
-                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)).run
-              ≤ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run)).run
-                - (mag beta ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)).run + 1⌝⦄ := by
+    ⦃⇓_ => ⌜(mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))))
+              - (mag beta ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))))
+              ≤ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) /
+                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))))
+          ∧ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) /
+                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))))
+              ≤ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))))
+                - (mag beta ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)))) + 1⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hm1_pos, hm2_pos⟩
   -- Reduce the computation and expose the result expression
-  simp [mag_div_F2R_compute, wp, PostCond.noThrow, Id.run]
+  simp [mag_div_F2R_compute]
   -- Abbreviations
-  set x : ℝ := (F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run
-  set y : ℝ := (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run
+  set x : ℝ := (F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))
+  set y : ℝ := (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))
   have hx_ne : x ≠ 0 := by
     have hx_pos : 0 < x := by
       simpa [FloatSpec.Core.Defs.F2R] using
@@ -75,7 +76,7 @@ lemma mag_div_F2R (m1 e1 m2 e2 : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
     (FloatSpec.Core.Raux.mag_div (beta := beta) (x := x) (y := y))
       ⟨Hβ, hx_ne, hy_ne⟩
   -- Unpack and rewrite the triple result to get the inequalities on `mag beta (x / y)`
-  simpa [x, y, FloatSpec.Core.Defs.F2R, wp, PostCond.noThrow, Id.run, pure, bind]
+  simpa [x, y, FloatSpec.Core.Defs.F2R, pure, bind]
     using hmag
 
 end MagnitudeBounds
@@ -86,8 +87,8 @@ section CoreDivision
 
     Performs division by adjusting mantissas to achieve desired exponent
 -/
-noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : Id (Int × Location) :=
-  pure (
+noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
+  (
     let (m1', m2') :=
       if e ≤ e1 - e2 then
         (m1 * beta ^ Int.natAbs (e1 - e2 - e), m2)
@@ -96,11 +97,11 @@ noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : Id (Int × Location) :=
     let q := m1' / m2'
     let r := m1' % m2'
     -- Define the real bounds and midpoint for the quotient interval
-    let dR : ℝ := (F2R (FlocqFloat.mk q e : FlocqFloat beta)).run
-    let uR : ℝ := (F2R (FlocqFloat.mk (q + 1) e : FlocqFloat beta)).run
+    let dR : ℝ := (F2R (FlocqFloat.mk q e : FlocqFloat beta))
+    let uR : ℝ := (F2R (FlocqFloat.mk (q + 1) e : FlocqFloat beta))
     let xR : ℝ :=
-      ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run) /
-      ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)
+      ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))) /
+      ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)))
     let l := if r = 0 then Location.loc_Exact
              else Location.loc_Inexact (FloatSpec.Calc.Bracket.compare xR ((dR + uR) / 2))
     (q, l))
@@ -115,12 +116,12 @@ theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
     Fdiv_core beta m1 e1 m2 e2 e
     ⦃⇓result => let (m, l) := result
                 ⌜inbetween_float beta m e
-                  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
-                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run) l⌝⦄ := by
+                  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) /
+                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))) l⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hm1_pos, hm2_pos, hele⟩
   -- Evaluate the branch selected by the precondition e ≤ e1 - e2
-  simp [Fdiv_core, hele, wp, PostCond.noThrow, Id.run, pure]
+  simp [Fdiv_core, hele, pure]
   -- Abbreviations for reals and base
   set b : ℝ := (beta : ℝ)
   have hbpos : 0 < b := by
@@ -134,11 +135,11 @@ theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
   set q : Int := m1' / m2
   set r : Int := m1' % m2
   -- Real endpoints and target value
-  set dR : ℝ := (F2R (FlocqFloat.mk q e : FlocqFloat beta)).run
-  set uR : ℝ := (F2R (FlocqFloat.mk (q + 1) e : FlocqFloat beta)).run
+  set dR : ℝ := (F2R (FlocqFloat.mk q e : FlocqFloat beta))
+  set uR : ℝ := (F2R (FlocqFloat.mk (q + 1) e : FlocqFloat beta))
   set xR : ℝ :=
-    ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run) /
-    ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)
+    ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))) /
+    ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)))
   -- Show that xR is between dR and uR, using Euclidean division properties
   have hm2R_pos : 0 < (m2 : ℝ) := by exact_mod_cast hm2_pos
   have hbpow_pos : 0 < b ^ e := zpow_pos hbpos _
@@ -339,7 +340,7 @@ section MainDivision
 
     Computes the quotient of two floats with automatic exponent selection
 -/
-noncomputable def Fdiv (x y : FlocqFloat beta) : Id (Int × Int × Location) :=
+noncomputable def Fdiv (x y : FlocqFloat beta) : (Int × Int × Location) :=
   let m1 := x.Fnum
   let e1 := x.Fexp
   let m2 := y.Fnum
@@ -357,11 +358,11 @@ noncomputable def Fdiv (x y : FlocqFloat beta) : Id (Int × Int × Location) :=
 -/
 theorem Fdiv_correct (x y : FlocqFloat beta)
     (Hβ : 1 < beta)
-    (Hx : 0 < (F2R x).run) (Hy : 0 < (F2R y).run) :
-    ⦃⌜0 < (F2R x).run ∧ 0 < (F2R y).run⌝⦄
+    (Hx : 0 < (F2R x)) (Hy : 0 < (F2R y)) :
+    ⦃⌜0 < (F2R x) ∧ 0 < (F2R y)⌝⦄
     Fdiv beta fexp x y
     ⦃⇓result => let (m, e, l) := result
-                ⌜inbetween_float beta m e ((F2R x).run / (F2R y).run) l⌝⦄ := by
+                ⌜inbetween_float beta m e ((F2R x) / (F2R y)) l⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hx_pos, hy_pos⟩
   -- Destructure inputs to access components
@@ -375,15 +376,15 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
       have hm2_pos : 0 < m2 :=
         (FloatSpec.Core.Float_prop.gt_0_F2R (beta := beta) (f := FlocqFloat.mk m2 e2) Hβ) hy_pos
       -- Reduce the Id binds of Fdiv
-      simp (config := {zeta := true}) [Fdiv, wp, PostCond.noThrow, Id.run, bind, pure]
+      simp (config := {zeta := true}) [Fdiv, bind, pure]
       -- Notations for digit counts, candidate exponent, and quotient
-      set d1 : Int := (Zdigits beta m1).run
-      set d2 : Int := (Zdigits beta m2).run
+      set d1 : Int := (Zdigits beta m1)
+      set d2 : Int := (Zdigits beta m2)
       set e' : Int := (d1 + e1) - (d2 + e2)
       set e  : Int := min (min (fexp e') (fexp (e' + 1))) (e1 - e2)
       set qR : ℝ :=
-        ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run /
-         (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run)
+        ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) /
+         (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)))
       -- Inbetween property via core correctness; precondition e ≤ e1 - e2 by construction
       have hele : e ≤ e1 - e2 := by
         have : e ≤ (e1 - e2) := min_le_right _ _
@@ -395,7 +396,7 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
           ⟨hm1_pos, hm2_pos, hele⟩
       have hinSimple : inbetween_float beta ((Fdiv_core beta m1 e1 m2 e2 e).run).fst e qR
             ((Fdiv_core beta m1 e1 m2 e2 e).run).snd := by
-        simpa [wp, PostCond.noThrow, Id.run, pure] using hinst
+        simpa [ pure] using hinst
       -- The goal matches this after rewriting the `match` structure; conclude by `simpa`.
       simpa [qR, e, e', d1, d2] using hinSimple
 

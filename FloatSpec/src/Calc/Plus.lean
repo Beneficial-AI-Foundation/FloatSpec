@@ -15,6 +15,7 @@ import FloatSpec.src.Core.Generic_fmt
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
+import FloatSpec.src.SimprocWP
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Digits FloatSpec.Core.Defs FloatSpec.Core.Generic_fmt
 open FloatSpec.Core.Generic_fmt
@@ -31,8 +32,8 @@ section CoreAddition
 
     Performs addition with specified target exponent and location tracking
 -/
-def Fplus_core (m1 e1 m2 e2 e : Int) : Id (Int × Location) :=
-  pure (
+def Fplus_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
+  (
     let k := e - e2
     let m2' := if 0 < k then m2 else m2 * beta ^ Int.natAbs (-k)
     let m1' := m1 * beta ^ Int.natAbs (e1 - e)
@@ -47,8 +48,8 @@ theorem Fplus_core_correct (m1 e1 m2 e2 e : Int) (He1 : e ≤ e1) :
     Fplus_core beta m1 e1 m2 e2 e
     ⦃⇓result => let (m, l) := result
                 ⌜inbetween_float beta m e
-                  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)).run +
-                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)).run) l⌝⦄ := by
+                  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) +
+                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))) l⌝⦄ := by
   intro hpre
   -- Extract preconditions
   have hβ : 1 < beta := hpre.1
@@ -59,7 +60,7 @@ theorem Fplus_core_correct (m1 e1 m2 e2 e : Int) (He1 : e ≤ e1) :
   -- The guard `0 < (e - e2)` is false as `e ≤ e2`
   have hk_false : ¬ (0 < e - e2) := by exact not_lt.mpr (sub_nonpos.mpr he2)
   have hlt : ¬ e2 < e := not_lt.mpr he2
-  simp [wp, PostCond.noThrow, Id.run, pure, hk_false, hlt]
+  simp [ pure, hk_false, hlt]
   -- Goal reduces to showing exact inbetween with equality at lower bound
   -- Unfold the inbetween_float wrapper
   dsimp [inbetween_float]
@@ -145,7 +146,7 @@ theorem Fplus_core_correct (m1 e1 m2 e2 e : Int) (He1 : e ≤ e1) :
     simpa using this
   -- Finish by combining the equalities
   -- Left side `x` equals the constructed lower bound
-  simpa [F2R, Id.run, b, hlt] using hR.symm
+  simpa [F2R, b, hlt] using hR.symm
 
 end CoreAddition
 
@@ -155,7 +156,7 @@ section MainAddition
 
     Adds two floats with intelligent exponent selection for precision
 -/
-def Fplus (f1 f2 : FlocqFloat beta) : Id (Int × Int × Location) :=
+def Fplus (f1 f2 : FlocqFloat beta) : (Int × Int × Location) :=
   let m1 := f1.Fnum
   let e1 := f1.Fexp
   let m2 := f2.Fnum
@@ -166,8 +167,8 @@ def Fplus (f1 f2 : FlocqFloat beta) : Id (Int × Int × Location) :=
     pure (m1, e1, Location.loc_Exact)
   else
     -- Evaluate digit counts in Id monad eagerly (Id.run is the identity)
-    let d1 := (Zdigits beta m1).run
-    let d2 := (Zdigits beta m2).run
+    let d1 := (Zdigits beta m1)
+    let d2 := (Zdigits beta m2)
     let p1 := d1 + e1
     let p2 := d2 + e2
     if 2 ≤ Int.natAbs (p1 - p2) then
@@ -187,8 +188,8 @@ private lemma Fplus_core_locExact (m1 e1 m2 e2 e : Int) :
     (Id.run (Fplus_core beta m1 e1 m2 e2 e)).2 = Location.loc_Exact := by
   unfold Fplus_core
   by_cases hk : 0 < e - e2
-  · simp [hk, Round.truncate_aux, Id.run, pure]
-  · simp [hk, Id.run, pure]
+  · simp [hk, Round.truncate_aux, pure]
+  · simp [hk, pure]
 
 -- settings in both branches (far/near cases).
 private lemma Fplus_locExact (x y : FlocqFloat beta) :
@@ -198,14 +199,14 @@ private lemma Fplus_locExact (x y : FlocqFloat beta) :
     cases y with
     | mk m2 e2 =>
       by_cases hm1 : m1 = 0
-      · simp [Fplus, hm1, Id.run, pure]
+      · simp [Fplus, hm1, pure]
       by_cases hm2 : m2 = 0
-      · simp [Fplus, hm1, hm2, Id.run, pure]
+      · simp [Fplus, hm1, hm2, pure]
       classical
-      -- Split on the far/near predicate exactly as it appears in `Fplus` and zeta-reduce lets.
-      by_cases h : 2 ≤ Int.natAbs (((Zdigits beta m1).run + e1) - ((Zdigits beta m2).run + e2))
-      · simp (config := {zeta := true}) [Fplus, hm1, hm2, h]
-      · simp (config := {zeta := true}) [Fplus, hm1, hm2, h]
+      -- The key insight is that Id.run is the identity, so (Zdigits beta m).run = Zdigits beta m
+      -- We unfold Fplus and use split_ifs to handle the nested conditionals
+      simp only [Fplus, hm1, hm2, ite_false, Id.run, pure]
+      split_ifs <;> rfl
 
 /-- Specification: Addition correctness
 
@@ -216,14 +217,14 @@ private lemma Fplus_locExact (x y : FlocqFloat beta) :
     Fplus beta fexp x y
     ⦃⇓result => let (m, e, l) := result
                 ⌜l = Location.loc_Exact ∨
-                 e ≤ (cexp beta fexp ((F2R x).run + (F2R y).run)).run ∧
-                inbetween_float beta m e ((F2R x).run + (F2R y).run) l⌝⦄ := by
+                 e ≤ cexp beta fexp ((F2R x) + (F2R y)) ∧
+                inbetween_float beta m e ((F2R x) + (F2R y)) l⌝⦄ := by
   intro _
   -- Prove the left disjunct using the helper lemma; then discharge the Hoare triple.
   have hl := Fplus_locExact (beta := beta) (fexp := fexp) x y
-  simp [wp, PostCond.noThrow, Id.run]
+  simp
   refine Or.inl ?h
-  simpa [Id.run] using hl
+  simpa using hl
 
 end MainAddition
 

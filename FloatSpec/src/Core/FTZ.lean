@@ -1,3 +1,4 @@
+import FloatSpec.Linter.OmegaLinter
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -72,7 +73,7 @@ theorem FTZ_exp_spec (e : Int) :
     This provides a floating-point format without subnormal numbers.
 -/
 def FTZ_format (beta : Int) (x : ℝ) : Prop :=
-  (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run
+  (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x)
 
 /-- `Valid_exp` instance for the FTZ exponent function. -/
 instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
@@ -165,7 +166,7 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
 theorem FTZ_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (FTZ_format prec emin beta x) : Id Prop)
-    ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄ := by
+    ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x)⌝⦄ := by
   intro _
   -- Reduce the Hoare triple on `Id`; unfold the definition of `FTZ_format`.
   simp [FTZ_format, wp, PostCond.noThrow, Id.run, bind, pure]
@@ -193,7 +194,7 @@ theorem FTZ_exp_correct_spec (e : Int) :
 -/
 noncomputable def FTZ_format_0_check (beta : Int) : Bool :=
   -- Concrete arithmetic check: Ztrunc 0 = 0
-  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int)
+  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ))) == (0 : Int)
 
 /-- Specification: Zero is in FTZ format
 
@@ -219,7 +220,7 @@ theorem FTZ_format_0_spec (beta : Int) :
 -/
 noncomputable def FTZ_format_opp_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_opp: Ztrunc(-x) + Ztrunc(x) = 0
-  ((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int)
+  ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x)) == (0 : Int)
 
 /-- Specification: FTZ format closed under negation
 
@@ -235,10 +236,12 @@ theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
   intro _
   -- Use truncation under negation: Ztrunc (-x) = - Ztrunc x
   unfold FTZ_format_opp_check
-  -- Reduce to boolean equality on integers and rewrite via Ztrunc_neg
-  -- This turns the check into ((-z + z) == 0) which simplifies to true.
-  simpa [FloatSpec.Core.Generic_fmt.Ztrunc_neg]
-    using rfl
+  simp only [wp, PostCond.noThrow, pure, PredTrans.pure, PredTrans.apply]
+  -- Use Ztrunc_neg to show Ztrunc(-x).run + Ztrunc(x).run = 0
+  have h : ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x) == (0 : Int)) = true := by
+    rw [FloatSpec.Core.Generic_fmt.Ztrunc_neg]
+    simp only [neg_add_cancel, beq_self_eq_true]
+  exact h
 
 /-- Check closure under absolute value
 
@@ -248,8 +251,8 @@ theorem FTZ_format_opp_spec (beta : Int) (x : ℝ) :
 -/
 noncomputable def FTZ_format_abs_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
-  ((FloatSpec.Core.Raux.Ztrunc (abs x)).run)
-        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs)
+  ((FloatSpec.Core.Raux.Ztrunc (abs x)))
+        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).natAbs)
 
 /-- Specification: FTZ format closed under absolute value
 
@@ -265,8 +268,8 @@ theorem FTZ_format_abs_spec (beta : Int) (x : ℝ) :
   intro _
   -- Compute Ztrunc(|x|) in terms of Ztrunc(x)
   have zabs_eq :
-      (FloatSpec.Core.Raux.Ztrunc (abs x)).run
-        = Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).run.natAbs) := by
+      (FloatSpec.Core.Raux.Ztrunc (abs x))
+        = Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).natAbs) := by
     -- Expand truncation and split on the sign of x; |x| ≥ 0 always
     simp [FloatSpec.Core.Raux.Ztrunc, not_lt.mpr (abs_nonneg x)]
     by_cases hxlt : x < 0
@@ -294,8 +297,12 @@ theorem FTZ_format_abs_spec (beta : Int) (x : ℝ) :
       simpa [hxabs, hAbsFloor, hNatAbsFloor, hxlt]
   -- Reduce the boolean equality using the computed equality
   unfold FTZ_format_abs_check
-  -- Evaluate the Id triple on Bool and discharge with zabs_eq
-  simpa [wp, PostCond.noThrow, zabs_eq]
+  simp only [wp, PostCond.noThrow, pure, PredTrans.pure, PredTrans.apply]
+  -- The goal is about comparing Ztrunc values; use the helper equality
+  have h : (((FloatSpec.Core.Raux.Ztrunc (abs x)))
+            == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).natAbs)) = true := by
+    rw [zabs_eq]; simp only [beq_self_eq_true]
+  exact h
 
 end FloatSpec.Core.FTZ
 
@@ -318,17 +325,17 @@ theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
   rcases hpre with ⟨hβ, hx_ftz⟩
   -- From FTZ_format, obtain generic_format under FTZ_exp
   have hx_gf :
-      (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run := by
+      (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x) := by
     simpa [FTZ_format]
       using hx_ftz
   -- Pointwise comparison on canonical exponents at mag x:
   -- FLX_exp m ≤ FTZ_exp m since FTZ_exp = max (emin) (m - prec)
   have hpoint :
       x ≠ 0 →
-      FloatSpec.Core.FLX.FLX_exp prec ((FloatSpec.Core.Raux.mag beta x).run)
-        ≤ FTZ_exp prec emin ((FloatSpec.Core.Raux.mag beta x).run) := by
+      FloatSpec.Core.FLX.FLX_exp prec ((FloatSpec.Core.Raux.mag beta x))
+        ≤ FTZ_exp prec emin ((FloatSpec.Core.Raux.mag beta x)) := by
     intro _
-    set m : Int := (FloatSpec.Core.Raux.mag beta x).run with hm
+    set m : Int := (FloatSpec.Core.Raux.mag beta x) with hm
     by_cases h : emin ≤ m - prec
     ·
       -- Both sides reduce to m - prec
@@ -343,7 +350,7 @@ theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
       simpa [hm] using hle'
   -- Apply inclusion-by-magnitude from FTZ_exp to FLX_exp
   have hrun :
-      (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FLX.FLX_exp prec) x).run := by
+      (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FLX.FLX_exp prec) x) := by
     exact
       (FloatSpec.Core.Generic_fmt.generic_inclusion_mag
         (beta := beta)
@@ -380,7 +387,7 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
   set e1 : Int := emin + prec - 1
   -- Provide the FLX generic_format view of the hypothesis
   have hx_gf_flx :
-      (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FLX.FLX_exp prec) x).run := by
+      (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FLX.FLX_exp prec) x) := by
     simpa [FloatSpec.Core.FLX.FLXN_format, FloatSpec.Core.FLX.FLX_format] using hx_flx
   -- Case split on whether the lower bound is strict
   by_cases hstrict : (beta : ℝ) ^ e1 < |x|
@@ -388,14 +395,14 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
     -- Strict lower bound case: use inclusion over the band (e1, M+1]
     classical
     -- Notation: M := mag beta x
-    set M : Int := (FloatSpec.Core.Raux.mag beta x).run with hM
+    set M : Int := (FloatSpec.Core.Raux.mag beta x) with hM
     -- Strict upper bound at M+1: |x| < β^(M+1)
     have hupper : |x| < (beta : ℝ) ^ (M + 1) := by
       -- Using Raux.bpow_mag_gt with e := M+1
       have hxlt :=
         (FloatSpec.Core.Raux.bpow_mag_gt (beta := beta) (x := x) (e := M + 1))
       -- Precondition: 1 < beta ∧ (mag x) < M+1
-      have hpre' : 1 < beta ∧ (FloatSpec.Core.Raux.mag beta x).run < (M + 1) := by
+      have hpre' : 1 < beta ∧ (FloatSpec.Core.Raux.mag beta x) < (M + 1) := by
         have hlt : M < M + 1 := by
           simpa [add_comm, add_left_comm, add_assoc] using
             (lt_add_of_pos_right M (by exact Int.zero_lt_one))
@@ -424,7 +431,7 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
       simpa [FTZ_exp, FloatSpec.Core.FLX.FLX_exp, hbranch]
     -- Apply inclusion on the strict band (e1, M+1]
     have hrun :
-        (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run := by
+        (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x) := by
       exact
         (FloatSpec.Core.Generic_fmt.generic_inclusion_lt_ge
           (beta := beta)
@@ -457,7 +464,7 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
       · simpa [FTZ_exp, hbranch] using hmin
     -- Apply generic_format_bpow' for FTZ_exp at exponent e1 and rewrite x by |x|
     have hfmt_ftz :
-        (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) ((beta : ℝ) ^ e1)).run := by
+        (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) ((beta : ℝ) ^ e1)) := by
       exact
         (FloatSpec.Core.Generic_fmt.generic_format_bpow'
           (beta := beta) (fexp := FTZ_exp prec emin) (e := e1))
@@ -467,16 +474,16 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
     -- Build the target by rewriting x = (sign x) * |x|, then using generic_format closure under sign.
     -- Here, we simply rewrite the goal at x using heq.
     -- generic_format is a predicate on x; equality of reals suffices.
-    have : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run := by
+    have : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x) := by
       classical
       rcases lt_trichotomy x 0 with hlt | heq0 | hgt
       · -- x < 0 ⇒ |x| = -x
         have habs : |x| = -x := by simpa using (abs_of_neg hlt)
         -- Start from generic_format at |x| = β^e1
-        have h_at_abs : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) |x|).run := by
+        have h_at_abs : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) |x|) := by
           simpa [heq.symm] using hfmt_ftz
         -- Transfer along x = -|x|
-        have hxneg : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) (-|x|)).run := by
+        have hxneg : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) (-|x|)) := by
           -- Use closure under opposite from |x| to -|x|
           have := FloatSpec.Core.Generic_fmt.generic_format_opp (beta := beta) (fexp := FTZ_exp prec emin) (x := |x|)
           simpa using this h_at_abs
@@ -492,7 +499,7 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
         exact (not_le_of_gt hbpow_pos) hle0
       · -- x > 0 ⇒ |x| = x
         have habs : |x| = x := by simpa using (abs_of_pos hgt)
-        have : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) |x|).run := by
+        have : (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) |x|) := by
           simpa [heq.symm] using hfmt_ftz
         simpa [habs] using this
     -- Conclude the Hoare triple
@@ -523,7 +530,7 @@ theorem round_FTZ_FLX (beta : Int)
   rcases hpre with ⟨hβ, hx_lb⟩
   classical
   -- Notation: M is the logarithmic magnitude of x
-  set M : Int := (FloatSpec.Core.Raux.mag beta x).run with hM
+  set M : Int := (FloatSpec.Core.Raux.mag beta x) with hM
   -- From mag bounds: β^(M - 1) ≤ |x|
   have hM_lb : (beta : ℝ) ^ (M - 1) ≤ |x| := by
     -- Use bpow lower bound at e = M
@@ -540,7 +547,7 @@ theorem round_FTZ_FLX (beta : Int)
   -- Obtain the strict upper bound |x| < β^(M + 1)
   have hx_upper : |x| < (beta : ℝ) ^ (M + 1) := by
     have h := FloatSpec.Core.Raux.bpow_mag_gt (beta := beta) (x := x) (e := M + 1)
-    have hlt : (FloatSpec.Core.Raux.mag beta x).run < M + 1 := by
+    have hlt : (FloatSpec.Core.Raux.mag beta x) < M + 1 := by
       have : M ≤ M := le_rfl
       exact (Int.lt_add_one_iff).2 this
     have hres := h ⟨hβ, hlt⟩
@@ -566,9 +573,9 @@ theorem round_FTZ_FLX (beta : Int)
   have hEqExp : FTZ_exp prec emin M = FloatSpec.Core.FLX.FLX_exp prec M := by
     simpa [FTZ_exp, FloatSpec.Core.FLX.FLX_exp, hcase]
   -- Compute both canonical exponents and conclude equality of the rounded values
-  have hcexp_FTZ : (FloatSpec.Core.Generic_fmt.cexp beta (FTZ_exp prec emin) x).run = FTZ_exp prec emin M := by
+  have hcexp_FTZ : (FloatSpec.Core.Generic_fmt.cexp beta (FTZ_exp prec emin) x) = FTZ_exp prec emin M := by
     unfold FloatSpec.Core.Generic_fmt.cexp; simp [FloatSpec.Core.Raux.mag, hM]
-  have hcexp_FLX : (FloatSpec.Core.Generic_fmt.cexp beta (FloatSpec.Core.FLX.FLX_exp prec) x).run = FloatSpec.Core.FLX.FLX_exp prec M := by
+  have hcexp_FLX : (FloatSpec.Core.Generic_fmt.cexp beta (FloatSpec.Core.FLX.FLX_exp prec) x) = FloatSpec.Core.FLX.FLX_exp prec M := by
     unfold FloatSpec.Core.Generic_fmt.cexp; simp [FloatSpec.Core.Raux.mag, hM]
   -- With identical exponents, `round_to_generic` produces identical results
   have :
@@ -577,7 +584,9 @@ theorem round_FTZ_FLX (beta : Int)
     -- Unfold the definition and rewrite the equal exponents
     unfold round_to_generic
     -- Replace both `cexp` calls by the same value and reduce
-    simp [hcexp_FTZ, hcexp_FLX, hEqExp]
+    -- Note: cexp returns Id Int, so we use Id.run to align with .run facts
+    simp only [Id.run] at hcexp_FTZ hcexp_FLX
+    simp only [Id.run, hcexp_FTZ, hcexp_FLX, hEqExp]
   -- Discharge the Hoare triple over the pure pair
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
 
@@ -615,18 +624,18 @@ theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     -- In FTZ, fexp emin = emin (else-branch) since prec > 0
     simpa [FTZ_exp, hbranch]
   have hsm_lt1 :
-      abs (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FTZ_exp prec emin) x).run < 1 := by
+      abs (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FTZ_exp prec emin) x) < 1 := by
     -- Apply the generic scaled_mantissa bound with ex = emin
     exact
       FloatSpec.Core.Generic_fmt.scaled_mantissa_lt_1
         (beta := beta) (fexp := FTZ_exp prec emin) (x := x) (ex := emin)
         hβ (by simpa using hxlt) hex_le
   -- Let sm be the scaled mantissa; from |sm| < 1 we deduce Ztrunc sm = 0
-  set sm : ℝ := (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FTZ_exp prec emin) x).run with hsm
+  set sm : ℝ := (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FTZ_exp prec emin) x) with hsm
   have hbounds : -1 < sm ∧ sm < 1 := by
     -- abs sm < 1 ↔ -1 < sm ∧ sm < 1
     simpa [hsm] using (abs_lt.mp hsm_lt1)
-  have hZtrunc_sm : (FloatSpec.Core.Raux.Ztrunc sm).run = 0 := by
+  have hZtrunc_sm : (FloatSpec.Core.Raux.Ztrunc sm) = 0 := by
     -- Split on the sign of sm and use floor/ceil characterizations
     by_cases hneg : sm < 0
     ·
@@ -658,19 +667,19 @@ theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     -- Expand definition and rewrite step-by-step without triggering zpow inversion
     classical
     unfold round_to_generic
-    set E : Int := (FloatSpec.Core.Generic_fmt.cexp beta (FTZ_exp prec emin) x).run with hE
+    set E : Int := (FloatSpec.Core.Generic_fmt.cexp beta (FTZ_exp prec emin) x) with hE
     -- Replace the argument by sm and use Ztrunc sm = 0
     set m : ℝ := x * (beta : ℝ) ^ (-E) with hm
     have hsm' : m = sm := by
       simpa [FloatSpec.Core.Generic_fmt.cexp, hE, FloatSpec.Core.Generic_fmt.scaled_mantissa, hm] using hsm.symm
-    have htrunc0' : (FloatSpec.Core.Raux.Ztrunc m).run = 0 := by
+    have htrunc0' : (FloatSpec.Core.Raux.Ztrunc m) = 0 := by
       simpa [hsm'] using hZtrunc_sm
     -- Evaluate the let-bindings to conclude
-    have htrunc0R : ((FloatSpec.Core.Raux.Ztrunc m).run : ℝ) = 0 := by simpa [htrunc0']
+    have htrunc0R : ((FloatSpec.Core.Raux.Ztrunc m) : ℝ) = 0 := by simpa [htrunc0']
     -- Compute the final value explicitly to avoid zpow inversion rewrites
     have hrw :
         round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x
-          = ((FloatSpec.Core.Raux.Ztrunc m).run : ℝ) * (beta : ℝ) ^ E := by
+          = ((FloatSpec.Core.Raux.Ztrunc m) : ℝ) * (beta : ℝ) ^ E := by
       simp [round_to_generic, hE, hm]
     -- With truncated mantissa equal to 0, the result is 0
     -- Guard against zpow inversion by proving the required Ztrunc equality directly
@@ -681,13 +690,13 @@ theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
       have : (beta : ℝ) ^ (-E) = ((beta : ℝ) ^ E)⁻¹ := by
         simpa using (zpow_neg hb_ne E)
       simpa [hm, this]
-    have hZinv : (FloatSpec.Core.Raux.Ztrunc (x * ((beta : ℝ) ^ E)⁻¹)).run = 0 := by
+    have hZinv : (FloatSpec.Core.Raux.Ztrunc (x * ((beta : ℝ) ^ E)⁻¹)) = 0 := by
       simpa [hm_inv] using htrunc0'
-    -- Conclude by rewriting the rounded value and using the casted zero equality
-    have : ((FloatSpec.Core.Raux.Ztrunc (x * ((beta : ℝ) ^ E)⁻¹)).run : ℝ) = 0 := by
-      simpa [hZinv]
-    -- Final simplification
-    simpa [hrw, this]
+    -- Rewrite using m = x * β^(-E) so we get Ztrunc(m).run = 0
+    have htrunc0R' : ((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-E))) : ℝ) = 0 := by
+      simpa [hm] using htrunc0R
+    -- Final simplification: 0 * β^E = 0
+    simp only [hrw, htrunc0R', zero_mul]
   -- Discharge the Hoare triple
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
 
@@ -716,7 +725,7 @@ Theorem FTZ_format_generic :
   forall x, generic_format beta FTZ_exp x -> FTZ_format x.
 -/
 theorem FTZ_format_generic (beta : Int) (x : ℝ) :
-    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x).run⌝⦄
+    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x)⌝⦄
     (pure (FTZ_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx

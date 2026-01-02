@@ -15,6 +15,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.Tactic
 import Std.Do.Triple
 import Std.Tactic.Do
+import FloatSpec.src.SimprocWP
 
 set_option maxRecDepth 4096
 
@@ -137,8 +138,8 @@ variable (x : ℝ)
     - Exact if x equals the lower bound d
     - Inexact with ordering information based on midpoint comparison
 -/
-noncomputable def inbetween_loc : Id Location :=
-  pure (if x > d then
+noncomputable def inbetween_loc : Location :=
+  (if x > d then
     Location.loc_Inexact (compare x ((d + u) / 2))
   else
     Location.loc_Exact)
@@ -158,22 +159,22 @@ theorem inbetween_spec (Hx : d ≤ x ∧ x < u) :
   · -- Inexact case: d < x < u and l = compare x mid
     have hdx : d < x := hx
     have hxu : x < u := Hx.2
-    simp [wp, PostCond.noThrow, Id.run, hx]
+    simp [ hx]
     refine inbetween.inbetween_Inexact (l := compare x ((d + u) / 2)) ?hb ?hc
     · exact ⟨hdx, hxu⟩
     · rfl
   · -- Exact case: x ≤ d and d ≤ x, hence x = d
     have hxd : x ≤ d := le_of_not_gt hx
     have hxeq : x = d := le_antisymm hxd Hx.1
-    simp [wp, PostCond.noThrow, Id.run, hx]
+    simp [ hx]
     exact inbetween.inbetween_Exact hxeq
 
 /-- Determine uniqueness of location
 
     Two valid locations for the same point must be equal
 -/
-def inbetween_unique_check (l l' : Location) : Id Bool :=
-  pure (l == l')
+def inbetween_unique_check (l l' : Location) : Bool :=
+  (l == l')
 
 /-- Specification: Location is unique
 
@@ -229,7 +230,7 @@ variable (Hdu : d < u)
 
     Returns whether x is within the interval bounds
 -/
-def inbetween_bounds_check (h : inbetween d u x l) : Id Unit :=
+def inbetween_bounds_check (h : inbetween d u x l) : Unit :=
   -- Computation carries no data; theorem provides the bounds.
   pure ()
 
@@ -244,7 +245,7 @@ theorem inbetween_bounds (h : inbetween d u x l) (Hdu : d < u) :
   -- Reduce the Hoare triple for a pure computation
   intro _
   unfold inbetween_bounds_check
-  simp [wp, PostCond.noThrow, Id.run]
+  simp
   -- Discharge the bounds from the inbetween hypothesis
   cases h with
   | inbetween_Exact hxeq =>
@@ -261,7 +262,7 @@ theorem inbetween_bounds (h : inbetween d u x l) (Hdu : d < u) :
     For inexact locations, x is strictly between bounds
 -/
 def inbetween_bounds_not_Eq_check (h : inbetween d u x l)
-    (hl : l ≠ Location.loc_Exact) : Id Unit :=
+    (hl : l ≠ Location.loc_Exact) : Unit :=
   -- Computation carries no data; theorem provides the strict bounds.
   pure ()
 
@@ -277,7 +278,7 @@ theorem inbetween_bounds_not_Eq (h : inbetween d u x l)
   -- Reduce to the postcondition for a pure computation
   intro _
   unfold inbetween_bounds_not_Eq_check
-  simp [wp, PostCond.noThrow, Id.run]
+  simp
   -- Use the inbetween hypothesis and non-exactness to derive strict bounds
   cases h with
   | inbetween_Exact hxeq =>
@@ -293,7 +294,7 @@ theorem inbetween_bounds_not_Eq (h : inbetween d u x l)
 
     Returns the ordering based on distances from boundaries
 -/
-def inbetween_distance_inexact_compute (ord : Ordering) : Id Ordering :=
+def inbetween_distance_inexact_compute (ord : Ordering) : Ordering :=
   -- For inexact locations, the result ordering is exactly `compare x mid`.
   -- The compute function just returns the provided ordering parameter.
   pure ord
@@ -309,7 +310,7 @@ theorem inbetween_distance_inexact (ord : Ordering)
     ⦃⇓result => ⌜compare (x - d) (u - x) = result⌝⦄ := by
   intro _
   unfold inbetween_distance_inexact_compute
-  simp [wp, PostCond.noThrow, Id.run]
+  simp
   -- Extract facts from the inexact-location hypothesis
   cases h with
   | inbetween_Inexact _ _ hc =>
@@ -343,8 +344,8 @@ theorem inbetween_distance_inexact (ord : Ordering)
 
     Uses absolute values for distance comparison
 -/
-def inbetween_distance_inexact_abs_compute (ord : Ordering) : Id Ordering :=
-  pure ord
+def inbetween_distance_inexact_abs_compute (ord : Ordering) : Ordering :=
+  ord
 
 /-- Specification: Absolute distance comparison
 
@@ -357,7 +358,7 @@ theorem inbetween_distance_inexact_abs (ord : Ordering)
     ⦃⇓result => ⌜compare (|d - x|) (|u - x|) = result⌝⦄ := by
   intro _
   unfold inbetween_distance_inexact_abs_compute
-  simp [wp, PostCond.noThrow, Id.run]
+  simp
   -- Use the inexact-location hypothesis to rewrite absolute values
   cases h with
   | inbetween_Inexact _ hbounds hcmp =>
@@ -401,7 +402,7 @@ theorem inbetween_distance_inexact_abs (ord : Ordering)
 
     Produces an x value that has the given location in `[d, u)`
 -/
-noncomputable def inbetween_ex_witness (d u : ℝ) (l : Location) (Hdu : d < u) : Id ℝ :=
+noncomputable def inbetween_ex_witness (d u : ℝ) (l : Location) (Hdu : d < u) : ℝ :=
   -- Choose a witness depending on the desired ordering:
   --  - Exact: pick the lower bound d
   --  - Inexact Lt/Eq/Gt: pick a point at 1/4, 1/2, or 3/4 within (d, u)
@@ -519,7 +520,7 @@ variable (Hstep : 0 < step)
 
     Verifies that consecutive steps are properly ordered
 -/
-def ordered_steps_check (start step : ℝ) (k : Int) : Id Unit :=
+def ordered_steps_check (start step : ℝ) (k : Int) : Unit :=
   -- Computation carries no data; theorem proves the strict inequality.
   pure ()
 
@@ -533,7 +534,7 @@ lemma ordered_steps (k : Int) :
     ⦃⇓result => ⌜start + k * step < start + (k + 1) * step⌝⦄ := by
   intro hstep
   unfold ordered_steps_check
-  simp [wp, PostCond.noThrow, Id.run]
+  simp
   -- Show that adding a positive `step` strictly increases the value.
   have hl : start + k * step < start + k * step + step := by
     simpa using (add_lt_add_left hstep (start + k * step))
@@ -545,7 +546,7 @@ lemma ordered_steps (k : Int) :
 
     Computes the midpoint of a stepped range
 -/
-noncomputable def middle_range_calc (start step : ℝ) (k : Int) : Id ℝ :=
+noncomputable def middle_range_calc (start step : ℝ) (k : Int) : ℝ :=
   -- Return the midpoint of the two consecutive stepped points explicitly.
   pure ((start + (start + k * step)) / 2)
 
@@ -560,7 +561,7 @@ lemma middle_range (k : Int) :
   -- For a pure computation, the post-condition holds by reflexivity.
   apply Std.Do.Triple.pure (m := Id)
   intro _
-  simp [middle_range_calc, wp, PostCond.noThrow, Id.run]
+  simp [middle_range_calc]
 
 variable (Hnb_steps : 1 < nb_steps)
 
@@ -568,7 +569,7 @@ variable (Hnb_steps : 1 < nb_steps)
 
     Determines location in larger interval based on step location
 -/
-noncomputable def inbetween_step_not_Eq_compute (start step : ℝ) (nb_steps : Int) (x : ℝ) (k : Int) (ord : Ordering) : Id Location :=
+noncomputable def inbetween_step_not_Eq_compute (start step : ℝ) (nb_steps : Int) (x : ℝ) (k : Int) (ord : Ordering) : Location :=
   -- For the global interval, we keep the same inexact ordering `ord`.
   pure (Location.loc_Inexact ord)
 
@@ -648,8 +649,8 @@ theorem inbetween_step_not_Eq (x : ℝ) (k : Int) (l : Location) (ord : Ordering
 
     Determines location when in lower half of range
 -/
-def inbetween_step_Lo_compute : Id Location :=
-  pure (Location.loc_Inexact Ordering.lt)
+def inbetween_step_Lo_compute : Location :=
+  (Location.loc_Inexact Ordering.lt)
 
 /-- Specification: Low step location
 
@@ -768,8 +769,8 @@ theorem inbetween_step_Lo (x : ℝ) (k : Int) (l : Location)
 
     Determines location when in upper half of range
 -/
-def inbetween_step_Hi_compute : Id Location :=
-  pure (Location.loc_Inexact Ordering.gt)
+def inbetween_step_Hi_compute : Location :=
+  (Location.loc_Inexact Ordering.gt)
 
 /-- Specification: High step location
 
@@ -871,7 +872,7 @@ theorem inbetween_step_Hi (x : ℝ) (k : Int) (l : Location)
 
     Determines location based on even number of steps
 -/
-noncomputable def new_location_even (nb_steps k : Int) (l : Location) : Id Location :=
+noncomputable def new_location_even (nb_steps k : Int) (l : Location) : Location :=
   -- Use explicit integer inequalities instead of generic `compare` to ease reasoning.
   pure (if hkz : k = 0 then
     match l with
@@ -1219,7 +1220,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
 
     Determines location based on odd number of steps
 -/
-noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Id Location :=
+noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Location :=
   -- Use explicit integer comparisons instead of a generic `compare` to ease reasoning.
   pure (if hkz : k = 0 then
     match l with
@@ -1665,7 +1666,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
 
     Main entry point choosing between even and odd step logic
 -/
-noncomputable def new_location (nb_steps k : Int) (l : Location) : Id Location :=
+noncomputable def new_location (nb_steps k : Int) (l : Location) : Location :=
   if nb_steps % 2 = 0 then
     new_location_even nb_steps k l
   else
@@ -1722,8 +1723,8 @@ end SteppingRanges
 
 /-- Helper for float location -/
 def inbetween_float (beta : Int) (m e : Int) (x : ℝ) (l : Location) : Prop :=
-  inbetween ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run)
-            ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)).run) x l
+  inbetween ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
+            ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) x l
 
 /- Additional theorems mirroring Coq counterparts that were missing in Lean. -/
 
@@ -2359,8 +2360,8 @@ variable (beta : Int)
   theorem inbetween_float_bounds
     (x : ℝ) (m e : Int) (l : Location)
     (H : inbetween_float beta m e x l) (hbeta : 1 < beta) :
-    ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run ≤ x ∧
-     x < (Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)).run) := by
+    ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)) ≤ x ∧
+     x < (Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) := by
   -- Unfold the float interval and analyze cases
   dsimp [inbetween_float] at H
   cases H with
@@ -2369,8 +2370,8 @@ variable (beta : Int)
       refine And.intro ?hle ?hlt
       · -- d ≤ x by x = d
         simpa [hxeq]
-          using (le_of_eq (rfl : (Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run
-                                   = (Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run))
+          using (le_of_eq (rfl : (Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta))
+                                   = (Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta))))
       · -- Show F2R(m,e) < F2R(m+1,e)
         -- Let p = (beta : ℝ) ^ e with p > 0 since 1 < beta
         have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
@@ -2478,7 +2479,7 @@ theorem inbetween_float_new_location
   -- Feed the triple its precondition
   have hpostR : inbetween start (start + (p : ℝ) * step) x
       (Id.run (new_location (nb_steps := p) (k := (m % p)) l)) := by
-    simpa [wp, PostCond.noThrow, Id.run] using htrip ⟨hk_bounds.1, hk_bounds.2, Hx_local⟩
+    simpa using htrip ⟨hk_bounds.1, hk_bounds.2, Hx_local⟩
   -- Simplify the program argument and rewrite the global endpoints into the float form
   -- Left global endpoint equals F2R ((m / p) * p, e) using exponent change
   -- We will rewrite the goal endpoints to
@@ -2494,7 +2495,7 @@ theorem inbetween_float_new_location
   -- Use F2R_change_exp to rewrite the target into the `inbetween` over exponent (e+k)
   -- Equality for the left bound
   have hF_left :
-      ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)).run)
+      ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)))
         = (((m / p : Int) : ℝ) * (p : ℝ)) * step := by
     -- Change exponent from e+k to e, multiplying mantissa by p = beta^|k|
     have he : e ≤ e + k := by exact Int.le_add_of_nonneg_right (le_of_lt Hk)
@@ -2513,15 +2514,15 @@ theorem inbetween_float_new_location
     -- Left equals right with mantissa multiplied by beta^|k|
     -- and exponent e
     have :
-        (Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)).run
-          = (Defs.F2R (Defs.FlocqFloat.mk ((m / p) * beta ^ Int.natAbs k) e : Defs.FlocqFloat beta)).run := by
+        (Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta))
+          = (Defs.F2R (Defs.FlocqFloat.mk ((m / p) * beta ^ Int.natAbs k) e : Defs.FlocqFloat beta)) := by
       simpa [hkabs] using hce
     -- Now unfold F2R on the RHS and simplify
     simpa [FloatSpec.Core.Defs.F2R, b, step, p, hp_def, mul_comm, mul_left_comm, mul_assoc]
       using this
   -- Equality for the right bound
   have hF_right :
-      ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta)).run)
+      ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta)))
         = ((((m / p : Int) : ℝ) * (p : ℝ)) + (p : ℝ)) * step := by
     have he : e ≤ e + k := by exact Int.le_add_of_nonneg_right (le_of_lt Hk)
     have hce := FloatSpec.Core.Float_prop.F2R_change_exp
@@ -2532,8 +2533,8 @@ theorem inbetween_float_new_location
       simpa [Int.add_comm, Int.add_left_comm, Int.sub_add_cancel] using
         (natAbs_eq_toNat_of_nonneg this)
     have :
-        (Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta)).run
-          = (Defs.F2R (Defs.FlocqFloat.mk (((m / p) + 1) * beta ^ Int.natAbs k) e : Defs.FlocqFloat beta)).run := by
+        (Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta))
+          = (Defs.F2R (Defs.FlocqFloat.mk (((m / p) + 1) * beta ^ Int.natAbs k) e : Defs.FlocqFloat beta)) := by
       simpa [hkabs] using hce
     -- Unfold and simplify, then rewrite `(a+1)*p = a*p + p`
     have htmp : (((m / p : Int) : ℝ) + 1) * (p : ℝ)
@@ -2560,33 +2561,35 @@ theorem inbetween_float_new_location
   -- Present the bounds in the same shape as `hpost` and finish.
   -- `hpost` already proves the desired `inbetween` for these bounds, so rewrite them.
   -- Rewrite left bound: F2R with exponent e+k equals `start`
-  have hleft' : ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)).run) = start := by
+  have hleft' : ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta))) = start := by
     -- From hF_left with `step = b^e` and `start` definition
     simpa [start, step] using hF_left
   -- Rewrite right bound
   have hright' : start + (p : ℝ) * step =
-      ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta)).run) := by
+      ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta))) := by
     simpa [hglobR] using hF_right.symm
   -- Combine the two to rewrite `(F2R m/p).run + p*step` to `F2R (m/p+1)`
   have hsum :
-      ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)).run)
+      ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)))
         + (p : ℝ) * step
-        = ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta)).run) := by
+        = ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta))) := by
     simpa [hleft'.symm] using hright'
   -- Conclude by rewriting the postcondition in two steps to aid simplification
   have hpostR1 :
       inbetween
-        ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)).run)
-        (((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)).run)
+        ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)))
+        (((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)))
             + (p : ℝ) * step)
         x (Id.run (new_location (nb_steps := p) (k := (m % p)) l)) := by
     simpa [hleft'.symm, hp_def] using hpostR
   have hpostR2 :
       inbetween
-        ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)).run)
-        ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta)).run)
+        ((Defs.F2R (Defs.FlocqFloat.mk (m / p) (e + k) : Defs.FlocqFloat beta)))
+        ((Defs.F2R (Defs.FlocqFloat.mk ((m / p) + 1) (e + k) : Defs.FlocqFloat beta)))
         x (Id.run (new_location (nb_steps := p) (k := (m % p)) l)) := by
-    simpa [hsum] using hpostR1
+    -- Rewrite the second bound using hsum
+    rw [← hsum]
+    exact hpostR1
   exact hpostR2
 
 theorem inbetween_float_new_location_single
@@ -2608,8 +2611,8 @@ theorem inbetween_float_ex
     (m e : Int) (l : Location) (hbeta : 1 < beta) :
     ∃ x : ℝ, inbetween_float beta m e x l := by
   -- Let d and u be the consecutive float bounds around mantissa m
-  let d : ℝ := ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run)
-  let u : ℝ := ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)).run)
+  let d : ℝ := ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
+  let u : ℝ := ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)))
   -- Show the interval is non-empty using 1 < beta ⇒ (beta : ℝ)^e > 0
   have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
   have hbpos_real : 0 < ((beta : Int) : ℝ) := by exact_mod_cast hbpos_int
@@ -2632,7 +2635,7 @@ theorem inbetween_float_ex
   have hx : inbetween d u x l := by
     -- Apply the triple with the precondition proof Hdu
     have htrip := inbetween_ex d u l Hdu
-    simpa [wp, PostCond.noThrow, Id.run] using htrip Hdu
+    simpa using htrip Hdu
   -- Conclude in terms of inbetween_float by unfolding d and u
   refine ⟨x, ?_⟩
   simpa [inbetween_float, d, u]
@@ -2653,8 +2656,8 @@ theorem inbetween_float_unique
       (H := H') (hbeta := hbeta)
   -- From F2R(m,e) ≤ x < F2R(m'+1,e), deduce F2R(m,e) < F2R(m'+1,e)
   have hlt1 :
-      ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run)
-        < ((Defs.F2R (Defs.FlocqFloat.mk (m' + 1) e : Defs.FlocqFloat beta)).run) :=
+      ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
+        < ((Defs.F2R (Defs.FlocqFloat.mk (m' + 1) e : Defs.FlocqFloat beta))) :=
     lt_of_le_of_lt Hb.1 Hb'.2
   -- Convert back to integers on mantissas
   have hm_lt : m < m' + 1 :=
@@ -2662,8 +2665,8 @@ theorem inbetween_float_unique
       hbeta hlt1
   -- Symmetric inequality gives m' < m + 1
   have hlt2 :
-      ((Defs.F2R (Defs.FlocqFloat.mk m' e : Defs.FlocqFloat beta)).run)
-        < ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)).run) :=
+      ((Defs.F2R (Defs.FlocqFloat.mk m' e : Defs.FlocqFloat beta)))
+        < ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) :=
     lt_of_le_of_lt Hb'.1 Hb.2
   have hm'_lt : m' < m + 1 :=
     FloatSpec.Core.Float_prop.F2R_lt (beta := beta) (e := e) (m1 := m') (m2 := m + 1)
@@ -2687,8 +2690,8 @@ theorem inbetween_float_unique
         | inbetween_Inexact _ hbounds _ =>
             -- Contradiction: left bound says d < x but x = d
             have hcontr :
-                ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run)
-                  < ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run) := by
+                ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
+                  < ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta))) := by
               simpa [hxeq]
                 using hbounds.1
             exact (False.elim ((lt_irrefl _) hcontr))
@@ -2697,8 +2700,8 @@ theorem inbetween_float_unique
         | inbetween_Exact hxeq =>
             -- Contradiction: left bound says d < x but x = d
             have hcontr :
-                ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run)
-                  < ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)).run) := by
+                ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
+                  < ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta))) := by
               simpa [hxeq]
                 using hbounds.1
             exact (False.elim ((lt_irrefl _) hcontr))

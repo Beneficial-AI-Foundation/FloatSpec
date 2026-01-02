@@ -1,3 +1,6 @@
+-- Project linters (prefer grind over omega, etc.)
+import FloatSpec.Linter.OmegaLinter
+
 -- Core floating-point functionality
 import FloatSpec.src.Core
 
@@ -11,6 +14,15 @@ import FloatSpec.src.ErrorBound
 
 -- IEEE 754 standard implementation
 import FloatSpec.src.IEEE754
+-- Simproc helpers for bit-level computations
+import FloatSpec.src.IEEE754.SimprocBits
+-- Simproc helpers for BinarySingleNaN classifiers
+import FloatSpec.src.IEEE754.SimprocBSN
+-- Simproc helpers for FullFloat/StandardFloat classifiers and ops
+import FloatSpec.src.IEEE754.SimprocBinary
+
+-- Simproc helpers for Id/wp Hoare triples
+import FloatSpec.src.SimprocWP
 
 -- Legacy Pff compatibility
 import FloatSpec.src.Pff

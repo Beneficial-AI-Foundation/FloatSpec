@@ -25,12 +25,12 @@ import Std.Tactic.Do
 open Real
 open Std.Do
 
-/-
-Coq typeclass: precision strictly positive.
-Placed at root so both Core and higher layers can depend on it
-without cyclic imports.
+/-- Precision is strictly positive.
+
+Placed at root so both Core and higher layers can depend on it without cyclic imports.
 -/
 class Prec_gt_0 (prec : Int) : Prop :=
+  /-- Witness that {lean}`0 < prec`. -/
   (pos : 0 < prec)
 
 namespace FloatSpec.Core.Defs
@@ -62,8 +62,8 @@ variable {beta : Int}
     as approximations of real numbers.
 -/
 
-noncomputable def F2R (f : FlocqFloat beta) : Id ℝ :=
-  pure (f.Fnum * (beta : ℝ) ^ f.Fexp)
+noncomputable def F2R (f : FlocqFloat beta) : ℝ :=
+  (f.Fnum * (beta : ℝ) ^ f.Fexp)
 
 /-- Specification: Float to real conversion
 
@@ -82,6 +82,63 @@ theorem F2R_spec (f : FlocqFloat beta) :
   intro _h
   unfold F2R
   rfl
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Simp/Grind infrastructure for F2R
+-- ═══════════════════════════════════════════════════════════════════════════
+
+/-- Unfold F2R.run to its explicit formula. -/
+@[simp] theorem F2R_run (f : FlocqFloat beta) :
+    (F2R f) = f.Fnum * (beta : ℝ) ^ f.Fexp := rfl
+
+/-- F2R of zero mantissa is zero. -/
+@[simp] theorem F2R_zero (e : Int) :
+    (F2R (FlocqFloat.mk 0 e : FlocqFloat beta)) = 0 := by simp [F2R]
+
+/-- F2R with mantissa 1 and exponent 0. -/
+@[simp] theorem F2R_one_zero :
+    (F2R (FlocqFloat.mk 1 0 : FlocqFloat beta)) = 1 := by simp [F2R]
+
+/-- F2R is positive iff mantissa is positive (for positive base and any exponent). -/
+theorem F2R_pos_iff (f : FlocqFloat beta) (hβ : 0 < beta) :
+    0 < (F2R f) ↔ 0 < f.Fnum := by
+  simp only [F2R_run]
+  have hpow : 0 < (beta : ℝ) ^ f.Fexp := zpow_pos (by exact_mod_cast hβ) f.Fexp
+  constructor
+  · intro h
+    have := (mul_pos_iff_of_pos_right hpow).mp h
+    exact_mod_cast this
+  · intro h
+    apply mul_pos
+    · exact_mod_cast h
+    · exact hpow
+
+/-- F2R is nonnegative iff mantissa is nonnegative (for positive base). -/
+theorem F2R_nonneg_iff (f : FlocqFloat beta) (hβ : 0 < beta) :
+    0 ≤ (F2R f) ↔ 0 ≤ f.Fnum := by
+  simp only [F2R_run]
+  have hpow : 0 < (beta : ℝ) ^ f.Fexp := zpow_pos (by exact_mod_cast hβ) f.Fexp
+  constructor
+  · intro h
+    have := (mul_nonneg_iff_of_pos_right hpow).mp h
+    exact_mod_cast this
+  · intro h
+    apply mul_nonneg
+    · exact_mod_cast h
+    · exact le_of_lt hpow
+
+/-- Negation of F2R. -/
+@[simp] theorem F2R_neg (f : FlocqFloat beta) :
+    (F2R (FlocqFloat.mk (-f.Fnum) f.Fexp : FlocqFloat beta)) = -(F2R f) := by
+  simp [F2R, neg_mul]
+
+/-- F2R addition with same exponent (simp version). -/
+@[simp] theorem F2R_add_same_exp' (m1 m2 e : Int) :
+    (F2R (FlocqFloat.mk m1 e : FlocqFloat beta)) +
+    (F2R (FlocqFloat.mk m2 e : FlocqFloat beta)) =
+    (F2R (FlocqFloat.mk (m1 + m2) e : FlocqFloat beta)) := by
+  simp only [F2R_run, Int.cast_add]
+  ring
 
 end BasicDefinitions
 
@@ -182,8 +239,8 @@ section HelperFunctions
 
     Simple accessor function for the mantissa field.
 -/
-def Fnum_extract {beta : Int} (f : FlocqFloat beta) : Id Int :=
-  pure f.Fnum
+def Fnum_extract {beta : Int} (f : FlocqFloat beta) : Int :=
+  f.Fnum
 
 /-- Specification: Mantissa extraction
 
@@ -202,8 +259,8 @@ theorem Fnum_extract_spec {beta : Int} (f : FlocqFloat beta) :
 
     Simple accessor function for the exponent field.
 -/
-def Fexp_extract {beta : Int} (f : FlocqFloat beta) : Id Int :=
-  pure f.Fexp
+def Fexp_extract {beta : Int} (f : FlocqFloat beta) : Int :=
+  f.Fexp
 
 /-- Specification: Exponent extraction
 
@@ -222,8 +279,8 @@ theorem Fexp_extract_spec {beta : Int} (f : FlocqFloat beta) :
 
     Constructor function for building floating-point values.
 -/
-def make_float {beta : Int} (num exp : Int) : Id (FlocqFloat beta) :=
-  pure ⟨num, exp⟩
+def make_float {beta : Int} (num exp : Int) : (FlocqFloat beta) :=
+  ⟨num, exp⟩
 
 /-- Specification: Float construction
 
@@ -237,7 +294,6 @@ theorem make_float_spec {beta : Int} (num exp : Int) :
   intro _
   unfold make_float
   simp [pure]
-  constructor <;> rfl
 
 end HelperFunctions
 
@@ -247,8 +303,8 @@ section StructuralProperties
 
     Returns true if both mantissa and exponent match.
 -/
-def FlocqFloat_eq {beta : Int} (f g : FlocqFloat beta) : Id Bool :=
-  pure (f.Fnum == g.Fnum && f.Fexp == g.Fexp)
+def FlocqFloat_eq {beta : Int} (f g : FlocqFloat beta) : Bool :=
+  (f.Fnum == g.Fnum && f.Fexp == g.Fexp)
 
 /-- Specification: Float equality
 
@@ -268,7 +324,7 @@ theorem FlocqFloat_eq_spec {beta : Int} (f g : FlocqFloat beta) :
 
     The zero float (0, 0) should convert to real zero.
 -/
-noncomputable def F2R_zero_float {beta : Int} : Id ℝ :=
+noncomputable def F2R_zero_float {beta : Int} : ℝ :=
   F2R (⟨0, 0⟩ : FlocqFloat beta)
 
 /-- Specification: F2R preserves zero
@@ -283,20 +339,18 @@ theorem F2R_zero_spec {beta : Int} :
   intro _h
   unfold F2R_zero_float F2R
   simp [pure]
-  rfl
 
 /-- Add two floats with same exponent
 
     When two floats have the same exponent, their sum
     can be computed by adding mantissas.
 -/
-noncomputable def F2R_add_same_exp {beta : Int} (f g : FlocqFloat beta) : Id (ℝ × ℝ) :=
-  do
-    let sum_float : FlocqFloat beta := ⟨f.Fnum + g.Fnum, f.Fexp⟩
-    let f_real ← F2R f
-    let g_real ← F2R g
-    let sum_real ← F2R sum_float
-    pure (sum_real, f_real + g_real)
+noncomputable def F2R_add_same_exp {beta : Int} (f g : FlocqFloat beta) : (ℝ × ℝ) :=
+  let sum_float : FlocqFloat beta := ⟨f.Fnum + g.Fnum, f.Fexp⟩
+  let f_real := F2R f
+  let g_real := F2R g
+  let sum_real := F2R sum_float
+  (sum_real, f_real + g_real)
 
 /-- Specification: F2R is additive for same exponent
 
@@ -315,7 +369,6 @@ theorem F2R_add_same_exp_spec {beta : Int} (f g : FlocqFloat beta) :
   -- The right component: f.Fnum * beta^g.Fexp + g.Fnum * beta^g.Fexp
   -- This follows from distributivity of multiplication over addition
   simp [add_mul]
-  rfl
 
 end StructuralProperties
 

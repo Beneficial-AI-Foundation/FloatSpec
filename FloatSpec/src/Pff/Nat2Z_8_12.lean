@@ -4,6 +4,7 @@
 import Std.Do.Triple
 import FloatSpec.src.Core
 import FloatSpec.src.Compat
+import FloatSpec.src.SimprocWP
 open Std.Do
 open FloatSpec.Core
 
@@ -11,7 +12,7 @@ namespace FloatSpec.Pff.Nat2Z
 
 /-- Auxiliary: return `Int.ofNat (n / m)` as an `Id` computation
     so we can state a Hoare-style specification mirroring Coq. -/
-def inj_div_eval (n m : Nat) : Id Int :=
+def inj_div_eval (n m : Nat) : Int :=
   Int.ofNat (n / m)
 
 /-- Coq lemma `Nat2Z.inj_div`:
@@ -22,7 +23,7 @@ theorem inj_div (n m : Nat) :
     ⦃⌜True⌝⦄
     inj_div_eval n m
     ⦃⇓result => ⌜result = Int.ofNat n / Int.ofNat m⌝⦄ := by
-  -- Proof deferred for later alignment with Coq’s `Nat2Z.inj_div`.
-  sorry
+  intro _
+  simp [ inj_div_eval]
 
 end FloatSpec.Pff.Nat2Z

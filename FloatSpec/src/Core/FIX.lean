@@ -22,6 +22,7 @@ import FloatSpec.src.Core.Ulp
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
+import FloatSpec.src.SimprocWP
 
 open Real
 open Std.Do
@@ -42,9 +43,9 @@ def FIX_exp (_ : Int) : Int :=
 
 /-- Check FIX format correctness
 
-    Verify the fundamental property that `FIX_exp` always
+    Verify the fundamental property that {name}`FIX_exp` always
     returns emin regardless of input. This validates
-    the `fixed-point` nature of the format.
+    the fixed-point nature of the format.
 -/
 def FIX_exp_correct_check (e : Int) : Bool :=
   -- Use boolean equality on integers to avoid Prop placeholders
@@ -76,9 +77,9 @@ theorem FIX_exp_spec (e : Int) :
     This means x = m × β^emin for some integer mantissa m.
 -/
 def FIX_format (beta : Int) (x : ℝ) : Prop :=
-  (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run
+  FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
 
-/-- `Valid_exp` instance for the fixed exponent function. -/
+/-- Exponent-validity instance for the fixed exponent function. -/
 instance FIX_exp_valid (beta : Int) :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FIX_exp emin) := by
   refine ⟨?_⟩
@@ -108,11 +109,11 @@ instance FIX_exp_valid (beta : Int) :
 theorem FIX_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (FIX_format emin beta x) : Id Prop)
-    ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄ := by
+    ⦃⇓result => ⌜result = FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x⌝⦄ := by
   intro _
   -- Directly by unfolding; both sides are the same computation
   unfold FIX_format
-  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
+  simp only [ pure, PredTrans.pure]
   trivial
 
 /-- Specification: FIX exponent function correctness
@@ -135,7 +136,7 @@ theorem FIX_exp_correct_spec (e : Int) :
 -/
 noncomputable def FIX_format_0_check (beta : Int) : Bool :=
   -- A concrete, checkable fact used by the spec proof: Ztrunc 0 = 0
-  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)).run) == (0 : Int)
+  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ))) == (0 : Int)
 
 /-- Specification: Zero is in FIX format
 
@@ -151,8 +152,13 @@ theorem FIX_format_0_spec (beta : Int) :
   intro _
   -- Reduce the Hoare triple on Id and compute the boolean
   unfold FIX_format_0_check
-  -- Apply Ztrunc_zero before eliminating Id.run to discharge the boolean
-  simp [wp, PostCond.noThrow, FloatSpec.Core.Generic_fmt.Ztrunc_zero]
+  simp only [wp, PostCond.noThrow, pure, PredTrans.pure, PredTrans.apply]
+  -- Goal: ⌜((Ztrunc 0).run == 0) = true⌝.down
+  -- Show that (Ztrunc 0).run == 0 = true using Ztrunc_zero
+  have h : ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ)) == (0 : Int)) = true := by
+    rw [FloatSpec.Core.Generic_fmt.Ztrunc_zero]
+    decide
+  exact h
 
 /-- Check closure under negation
 
@@ -161,7 +167,7 @@ theorem FIX_format_0_spec (beta : Int) :
 -/
 noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_neg: Ztrunc(-x) + Ztrunc(x) = 0
-  ((FloatSpec.Core.Raux.Ztrunc (-x)).run + (FloatSpec.Core.Raux.Ztrunc x).run) == (0 : Int)
+  ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x)) == (0 : Int)
 
 /-- Specification: FIX format closed under negation
 
@@ -175,9 +181,15 @@ theorem FIX_format_opp_spec (beta : Int) (x : ℝ) :
     (pure (FIX_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
-  unfold FIX_format_opp_check
-  -- Use Ztrunc_neg to simplify Ztrunc(-x) + Ztrunc(x)
-  simp [wp, PostCond.noThrow, FloatSpec.Core.Generic_fmt.Ztrunc_neg]
+  -- The check: ((Ztrunc (-x)).run + (Ztrunc x).run) == 0
+  -- First establish the arithmetic identity
+  have h : (FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x) = 0 := by
+    rw [FloatSpec.Core.Generic_fmt.Ztrunc_neg]; ring
+  -- Show the beq evaluates to true using h
+  have hbeq : ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x) == 0) = true := by
+    rw [h]; native_decide
+  simp only [FIX_format_opp_check, hbeq, pure, PredTrans.pure]
+  trivial
 
 /-
 Coq (FIX.v):
@@ -186,7 +198,7 @@ Theorem generic_format_FIX :
 -/
 theorem generic_format_FIX (beta : Int) (x : ℝ) :
     ⦃⌜FIX_format emin beta x⌝⦄
-    FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
+    (pure (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   simpa [FIX_format] using hx
@@ -197,7 +209,7 @@ Theorem FIX_format_generic :
   forall x, generic_format beta FIX_exp x -> FIX_format x.
 -/
 theorem FIX_format_generic (beta : Int) (x : ℝ) :
-    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x).run⌝⦄
+    ⦃⌜FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x⌝⦄
     (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
@@ -217,10 +229,10 @@ theorem FIX_format_satisfies_any (beta : Int) :
 /-- Coq (FIX.v):
 Theorem ulp_FIX : forall x, ulp beta FIX_exp x = bpow emin.
 
-Lean (spec): For any real `x`, the ULP under FIX exponent equals `β^emin`.
+Lean (spec): For any real {name}`x`, the ULP under FIX exponent equals β^emin.
 -/
 private lemma ulp_FIX_run_eq (beta : Int) (emin : Int) (x : ℝ) :
-    (FloatSpec.Core.Ulp.ulp beta (FIX_exp (emin := emin)) x).run = (beta : ℝ) ^ emin := by
+    (FloatSpec.Core.Ulp.ulp beta (FIX_exp (emin := emin)) x) = (beta : ℝ) ^ emin := by
   classical
   by_cases hx : x = 0
   · subst hx
@@ -238,7 +250,8 @@ theorem ulp_FIX (beta : Int) (x : ℝ) :
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
   intro _
   -- Reduce the Id-triple using the computed run equality
-  simpa [wp, PostCond.noThrow, ulp_FIX_run_eq (beta := beta) (emin := emin) (x := x)]
+  -- ulp_FIX_run_eq gives (.run form) so we apply it directly
+  exact ulp_FIX_run_eq (beta := beta) (emin := emin) (x := x)
 
 end FloatSpec.Core.FIX
 
@@ -255,10 +268,10 @@ canonical exponent. For {lit}`fexp` = {lean}`FIX_exp` 0 and {lit}`beta` = 2, thi
 theorem round_FIX_IZR (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int))) (mode := fun _ _ => True) x) : Id ℝ)
-    ⦃⇓r => ⌜r = ((FloatSpec.Core.Raux.Ztrunc x).run : ℝ)⌝⦄ := by
+    ⦃⇓r => ⌜r = ((FloatSpec.Core.Raux.Ztrunc x) : ℝ)⌝⦄ := by
   intro _
   -- Unfold the rounding model and compute with the constant exponent 0
-  simp [wp, PostCond.noThrow,
+  simp [
         round_to_generic,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
