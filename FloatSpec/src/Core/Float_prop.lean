@@ -83,7 +83,7 @@ Theorem Rcompare_F2R : forall e m1 m2 : Z,
   theorem Rcompare_F2R (e m1 m2 : Int) (hbeta : 1 < beta) :
     let f1 := F2R (FlocqFloat.mk m1 e : FlocqFloat beta)
     let f2 := F2R (FlocqFloat.mk m2 e : FlocqFloat beta)
-    FloatSpec.Core.Raux.Rcompare f1.run f2.run = Int.sign (m1 - m2) := by
+    FloatSpec.Core.Raux.Rcompare f1 f2 = Int.sign (m1 - m2) := by
     -- Compare via unfolding of Rcompare and integer order trichotomy
     intro f1 f2
     classical
@@ -100,14 +100,14 @@ Theorem Rcompare_F2R : forall e m1 m2 : Z,
       have hltR : (m1 : ℝ) * (beta : ℝ) ^ e < (m2 : ℝ) * (beta : ℝ) ^ e :=
         mul_lt_mul_of_pos_right (by exact_mod_cast hlt) hp_pos
       have hsign : Int.sign (m1 - m2) = -1 := Int.sign_eq_neg_one_of_neg (sub_lt_zero.mpr hlt)
-      simp [pure, hltR, hsign]
+      simp [hltR, hsign]
     · by_cases heq : m1 = m2
       · -- Equal mantissas: equal reals
         have heqR : (m1 : ℝ) * (beta : ℝ) ^ e = (m2 : ℝ) * (beta : ℝ) ^ e := by simpa [heq]
         have hsign : Int.sign (m1 - m2) = 0 := by simp [heq]
         have hltR : ¬ (m1 : ℝ) * (beta : ℝ) ^ e < (m2 : ℝ) * (beta : ℝ) ^ e := by
           simpa [heqR, not_lt.mpr (le_of_eq heqR)]
-        simp [pure, hltR, heqR, hsign]
+        simp [hltR, heqR, hsign]
       · -- Then m2 < m1, so f2 < f1
         have hne : m2 ≠ m1 := fun h => heq h.symm
         have hgt : m2 < m1 := lt_of_le_of_ne (le_of_not_lt hlt) hne
@@ -119,7 +119,7 @@ Theorem Rcompare_F2R : forall e m1 m2 : Z,
           not_lt.mpr (le_of_lt hgtR)
         have hneq : (m1 : ℝ) * (beta : ℝ) ^ e ≠ (m2 : ℝ) * (beta : ℝ) ^ e := by
           exact ne_of_gt hgtR
-        simp [pure, hnotlt, hneq, hgtR, hsign]
+        simp [hnotlt, hneq, hgtR, hsign]
 
 /-
 Coq original:
@@ -1026,7 +1026,9 @@ theorem F2R_prec_normalize (m e e' p : Int) (hbeta : 1 < beta) :
     have : (F2R (FlocqFloat.mk m e : FlocqFloat beta)) = 0 := by
       unfold FloatSpec.Core.Defs.F2R
       simpa [h, b]
-    have : |(F2R (FlocqFloat.mk m e : FlocqFloat beta))| = 0 := by simpa [this]
+    have : |(F2R (FlocqFloat.mk m e : FlocqFloat beta))| = 0 := by
+      rw [this]
+      simp
     exact lt_irrefl _ (lt_of_eq_of_lt this hF2R_pos)
   -- Show p is nonnegative: otherwise natAbs m < 1 would force m = 0
   have hp_nonneg : 0 ≤ p := by
