@@ -237,11 +237,11 @@ Lemma {coq}`ulp_neq_0` : {lit}`forall x, x <> 0%R -> ulp x = bpow (cexp beta fex
 -/
 theorem ulp_neq_0 (x : ℝ) (hx : x ≠ 0) :
     ⦃⌜True⌝⦄
-    ulp beta fexp x
+    (pure (ulp beta fexp x) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ ((FloatSpec.Core.Generic_fmt.cexp beta fexp x))⌝⦄ := by
   intro _
   unfold ulp
-  simp [wp, PostCond.noThrow, Id.run, bind, pure, hx]
+  simp [wp, PostCond.noThrow, pure, hx]
 
 /-
 Coq (Ulp.v): Theorem {coq}`pred_le`: {lit}`forall x y, F x -> F y -> x <= y -> pred x <= pred y`.
@@ -266,11 +266,11 @@ private lemma ulp_run_nonneg (hβ : 1 < beta) (x : ℝ) :
   · -- ulp 0 depends on negligible_exp: either a power of β or 0
     cases hopt : negligible_exp fexp with
     | none =>
-        simp [hx, hopt, Id.run, bind, pure]
+        simp [hx, hopt]
     | some n =>
-        simp [hx, hopt, Id.run, bind, pure, le_of_lt (zpow_pos hbpos _)]
+        simp [hx, hopt, le_of_lt (zpow_pos hbpos _)]
   · -- ulp x = β^(cexp x)
-    simp [hx, Id.run, bind, pure, le_of_lt (zpow_pos hbpos _)]
+    simp [hx, le_of_lt (zpow_pos hbpos _)]
 
 omit [Valid_exp beta fexp] in
 /-- Strict positivity of ULP for nonzero inputs: {lit}`0 < ulp x` when {lit}`x ≠ 0`.
@@ -281,7 +281,7 @@ private lemma ulp_run_pos (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
   unfold ulp
-  simp [hx, Id.run, bind, pure]
+  simp [hx]
   exact zpow_pos hbpos _
 
 private lemma pred_pos_run_le_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
