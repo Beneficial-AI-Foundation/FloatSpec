@@ -32,6 +32,9 @@ open Std.Do
 
 namespace FloatSpec.Core.Raux
 
+/-- Lift a pure value into {lean}`Id` for Hoare-style specs. -/
+abbrev pureId {α} (x : α) : Id α := (pure x : Id α)
+
 section Rmissing
 
 /-- Subtraction ordering principle
@@ -50,7 +53,7 @@ def Rle_0_minus (x y : ℝ) : ℝ :=
 @[spec]
 theorem Rle_0_minus_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    Rle_0_minus x y
+    pureId (Rle_0_minus x y)
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
   intro h
   unfold Rle_0_minus
@@ -74,7 +77,7 @@ def Rabs_eq_Rabs_case (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rabs_eq_Rabs_spec (x y : ℝ) :
     ⦃⌜|x| = |y|⌝⦄
-    Rabs_eq_Rabs_case x y
+    pureId (Rabs_eq_Rabs_case x y)
     ⦃⇓p => ⌜p.1 = p.2 ∨ p.1 = -p.2⌝⦄ := by
   intro hxy
   unfold Rabs_eq_Rabs_case
@@ -95,7 +98,7 @@ def Rabs_minus_le_val (x y : ℝ) : ℝ :=
 @[spec]
 theorem Rabs_minus_le_spec (x y : ℝ) :
     ⦃⌜0 ≤ y ∧ y ≤ 2 * x⌝⦄
-    Rabs_minus_le_val x y
+    pureId (Rabs_minus_le_val x y)
     ⦃⇓r => ⌜r ≤ x⌝⦄ := by
   intro h
   unfold Rabs_minus_le_val
@@ -128,7 +131,7 @@ def Rabs_ge_case (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rabs_ge_spec (x y : ℝ) :
     ⦃⌜y ≤ -x ∨ x ≤ y⌝⦄
-    Rabs_ge_case x y
+    pureId (Rabs_ge_case x y)
     ⦃⇓p => ⌜p.1 ≤ |p.2|⌝⦄ := by
   intro h
   unfold Rabs_ge_case
@@ -150,7 +153,7 @@ def Rabs_ge_inv_case (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rabs_ge_inv_spec (x y : ℝ) :
     ⦃⌜x ≤ |y|⌝⦄
-    Rabs_ge_inv_case x y
+    pureId (Rabs_ge_inv_case x y)
     ⦃⇓p => ⌜p.2 ≤ -p.1 ∨ p.1 ≤ p.2⌝⦄ := by
   intro hx
   unfold Rabs_ge_inv_case
@@ -175,7 +178,7 @@ def Rabs_le_inv_pair (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rabs_le_inv_spec (x y : ℝ) :
     ⦃⌜|x| ≤ y⌝⦄
-    Rabs_le_inv_pair x y
+    pureId (Rabs_le_inv_pair x y)
     ⦃⇓p => ⌜-p.2 ≤ p.1 ∧ p.1 ≤ p.2⌝⦄ := by
   intro h
   unfold Rabs_le_inv_pair
@@ -199,7 +202,7 @@ def Rmult_lt_compat (r1 r2 r3 r4 : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rmult_lt_compat_spec (r1 r2 r3 r4 : ℝ) :
     ⦃⌜0 ≤ r1 ∧ 0 ≤ r3 ∧ r1 < r2 ∧ r3 < r4⌝⦄
-    Rmult_lt_compat r1 r2 r3 r4
+    pureId (Rmult_lt_compat r1 r2 r3 r4)
     ⦃⇓result => ⌜result.1 < result.2⌝⦄ := by
   intro h
   unfold Rmult_lt_compat
@@ -227,7 +230,7 @@ def Rmult_neq_reg_r (_r1 r2 r3 : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rmult_neq_reg_r_spec (r1 r2 r3 : ℝ) :
     ⦃⌜r2 * r1 ≠ r3 * r1⌝⦄
-    Rmult_neq_reg_r r1 r2 r3
+    pureId (Rmult_neq_reg_r r1 r2 r3)
     ⦃⇓result => ⌜result.1 ≠ result.2⌝⦄ := by
   intro h
   unfold Rmult_neq_reg_r
@@ -254,7 +257,7 @@ def Rmult_neq_compat_r (r1 r2 r3 : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rmult_neq_compat_r_spec (r1 r2 r3 : ℝ) :
     ⦃⌜r1 ≠ 0 ∧ r2 ≠ r3⌝⦄
-    Rmult_neq_compat_r r1 r2 r3
+    pureId (Rmult_neq_compat_r r1 r2 r3)
     ⦃⇓result => ⌜result.1 ≠ result.2⌝⦄ := by
   intro h
   unfold Rmult_neq_compat_r
@@ -277,7 +280,7 @@ def Rmult_min_distr_r (x y z : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rmult_min_distr_r_spec (x y z : ℝ) :
     ⦃⌜0 ≤ z⌝⦄
-    Rmult_min_distr_r x y z
+    pureId (Rmult_min_distr_r x y z)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro h
   unfold Rmult_min_distr_r
@@ -300,7 +303,7 @@ def Rmult_min_distr_l (x y z : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rmult_min_distr_l_spec (x y z : ℝ) :
     ⦃⌜0 ≤ x⌝⦄
-    Rmult_min_distr_l x y z
+    pureId (Rmult_min_distr_l x y z)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro h
   unfold Rmult_min_distr_l
@@ -324,7 +327,7 @@ def Rmin_opp (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rmin_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rmin_opp x y
+    pureId (Rmin_opp x y)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   -- Precondition is trivial; name it to avoid parser confusion
   intro hTrue
@@ -348,7 +351,7 @@ def Rmax_opp (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rmax_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rmax_opp x y
+    pureId (Rmax_opp x y)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro htriv
   unfold Rmax_opp
@@ -370,7 +373,7 @@ noncomputable def exp_le_check (x _y : ℝ) : ℝ :=
 @[spec]
 theorem exp_le_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    exp_le_check x y
+    pureId (exp_le_check x y)
     ⦃⇓ex => ⌜ex ≤ Real.exp y⌝⦄ := by
   intro hxy
   unfold exp_le_check
@@ -380,7 +383,7 @@ theorem exp_le_spec (x y : ℝ) :
 /-- Coq name compatibility: {lean}`exp_le` -/
 theorem exp_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    exp_le_check x y
+    pureId (exp_le_check x y)
     ⦃⇓ex => ⌜ex ≤ Real.exp y⌝⦄ :=
   exp_le_spec x y
 
@@ -399,7 +402,7 @@ def IZR_le_lt_triple (m n p : Int) : (ℝ × ℝ × ℝ) :=
 @[spec]
 theorem IZR_le_lt_spec (m n p : Int) :
     ⦃⌜m ≤ n ∧ n < p⌝⦄
-    IZR_le_lt_triple m n p
+    pureId (IZR_le_lt_triple m n p)
     ⦃⇓t => ⌜t.1 ≤ t.2.1 ∧ t.2.1 < t.2.2⌝⦄ := by
   intro h
   unfold IZR_le_lt_triple
@@ -414,7 +417,7 @@ def le_lt_IZR_triple (m n p : Int) : (Int × Int × Int) :=
 @[spec]
 theorem le_lt_IZR_spec (m n p : Int) :
     ⦃⌜(m : ℝ) ≤ (n : ℝ) ∧ (n : ℝ) < (p : ℝ)⌝⦄
-    le_lt_IZR_triple m n p
+    pureId (le_lt_IZR_triple m n p)
     ⦃⇓t => ⌜t.1 ≤ t.2.1 ∧ t.2.1 < t.2.2⌝⦄ := by
   intro h
   unfold le_lt_IZR_triple
@@ -431,7 +434,7 @@ def neq_IZR_pair (m n : Int) : (Int × Int) :=
     {name}`neq_IZR` resolve. This is the same content as `neq_IZR_spec` below. -/
 theorem neq_IZR (m n : Int) :
     ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
-    neq_IZR_pair m n
+    pureId (neq_IZR_pair m n)
     ⦃⇓p => ⌜p.1 ≠ p.2⌝⦄ := by
   intro hmnR
   unfold neq_IZR_pair
@@ -444,7 +447,7 @@ theorem neq_IZR (m n : Int) :
 @[spec]
 theorem neq_IZR_spec (m n : Int) :
     ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
-    neq_IZR_pair m n
+    pureId (neq_IZR_pair m n)
     ⦃⇓p => ⌜p.1 ≠ p.2⌝⦄ := by
   intro hmnR
   unfold neq_IZR_pair
@@ -466,7 +469,7 @@ noncomputable def Rinv_lt_check (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rinv_lt_spec (x y : ℝ) :
     ⦃⌜0 < x ∧ x < y⌝⦄
-    Rinv_lt_check x y
+    pureId (Rinv_lt_check x y)
     ⦃⇓p => ⌜p.1 < p.2⌝⦄ := by
   intro h
   -- Standard property: for 0 < x < y, we have 1/y < 1/x
@@ -481,7 +484,7 @@ noncomputable def Rinv_le_check (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rinv_le_spec (x y : ℝ) :
     ⦃⌜0 < x ∧ x ≤ y⌝⦄
-    Rinv_le_check x y
+    pureId (Rinv_le_check x y)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro h
   -- Standard property: for 0 < x ≤ y, we have 1/y ≤ 1/x
@@ -507,7 +510,7 @@ noncomputable def sqrt_ge_0_check (x : ℝ) : ℝ :=
 @[spec]
 theorem sqrt_ge_0_spec (x : ℝ) :
     ⦃⌜0 ≤ x⌝⦄
-    sqrt_ge_0_check x
+    pureId (sqrt_ge_0_check x)
     ⦃⇓r => ⌜0 ≤ r⌝⦄ := by
   intro _
   unfold sqrt_ge_0_check
@@ -526,7 +529,7 @@ noncomputable def sqrt_neg_check (x : ℝ) : ℝ :=
 @[spec]
 theorem sqrt_neg_spec (x : ℝ) :
     ⦃⌜x ≤ 0⌝⦄
-    sqrt_neg_check x
+    pureId (sqrt_neg_check x)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   intro hx
   unfold sqrt_neg_check
@@ -539,7 +542,7 @@ theorem sqrt_neg_spec (x : ℝ) :
     Lean (spec): No precondition; sqrt is nonnegative. -/
 theorem sqrt_ge_0 (x : ℝ) :
     ⦃⌜True⌝⦄
-    sqrt_ge_0_check x
+    pureId (sqrt_ge_0_check x)
     ⦃⇓r => ⌜0 ≤ r⌝⦄ := by
   intro _
   unfold sqrt_ge_0_check
@@ -564,7 +567,7 @@ noncomputable def Rabs_eq_R0_check (x : ℝ) : Bool :=
 @[spec]
 theorem Rabs_eq_R0_spec (x : ℝ) :
     ⦃⌜True⌝⦄
-    Rabs_eq_R0_check x
+    pureId (Rabs_eq_R0_check x)
     ⦃⇓b => ⌜b ↔ x = 0⌝⦄ := by
   intro _
   unfold Rabs_eq_R0_check
@@ -589,7 +592,7 @@ noncomputable def Rsqr_le_abs_0_alt_val (x _y : ℝ) : ℝ :=
 @[spec]
 theorem Rsqr_le_abs_0_alt_spec (x y : ℝ) :
     ⦃⌜x^2 ≤ y^2⌝⦄
-    Rsqr_le_abs_0_alt_val x y
+    pureId (Rsqr_le_abs_0_alt_val x y)
     ⦃⇓r => ⌜r ≤ |y|⌝⦄ := by
   intro hxy
   -- r = x by definition
@@ -611,7 +614,7 @@ noncomputable def Rabs_lt_check (x y : ℝ) : Bool :=
 @[spec]
 theorem Rabs_lt_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rabs_lt_check x y
+    pureId (Rabs_lt_check x y)
     ⦃⇓b => ⌜b ↔ |x| < y⌝⦄ := by
   intro _
   unfold Rabs_lt_check
@@ -630,7 +633,7 @@ noncomputable def Rabs_gt_check (x y : ℝ) : Bool :=
 @[spec]
 theorem Rabs_gt_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rabs_gt_check x y
+    pureId (Rabs_gt_check x y)
     ⦃⇓b => ⌜b ↔ y < |x|⌝⦄ := by
   intro _
   unfold Rabs_gt_check
@@ -652,7 +655,7 @@ def Rabs_gt_inv_pair (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rabs_gt_inv_spec (x y : ℝ) :
     ⦃⌜y < x ∨ y < -x⌝⦄
-    Rabs_gt_inv_pair x y
+    pureId (Rabs_gt_inv_pair x y)
     ⦃⇓p => ⌜p.2 < |p.1|⌝⦄ := by
   intro h
   unfold Rabs_gt_inv_pair
@@ -687,7 +690,7 @@ noncomputable def Rcompare (x y : ℝ) : Int :=
 @[spec]
 theorem Rcompare_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare x y
+    pureId (Rcompare x y)
     ⦃⇓result => ⌜(result = -1 ↔ x < y) ∧
                 (result = 0 ↔ x = y) ∧
                 (result = 1 ↔ y < x)⌝⦄ := by
@@ -753,7 +756,7 @@ noncomputable def Rcompare_sym (x y : ℝ) : Int :=
 @[spec]
 theorem Rcompare_sym_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_sym x y
+    pureId (Rcompare_sym x y)
     ⦃⇓result => ⌜result = -(Rcompare y x)⌝⦄ := by
   intro _
   unfold Rcompare_sym
@@ -775,7 +778,7 @@ noncomputable def Rcompare_opp (x y : ℝ) : Int :=
 @[spec]
 theorem Rcompare_opp_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_opp x y
+    pureId (Rcompare_opp x y)
     ⦃⇓result => ⌜result = (Rcompare y x)⌝⦄ := by
   intro _
   unfold Rcompare_opp
@@ -797,7 +800,7 @@ noncomputable def Rcompare_plus_r (x y _z: ℝ) : Int :=
 @[spec]
 theorem Rcompare_plus_r_spec (x y z : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_plus_r x y z
+    pureId (Rcompare_plus_r x y z)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
   unfold Rcompare_plus_r
@@ -817,7 +820,7 @@ noncomputable def Rcompare_plus_l (x y _z : ℝ) : Int :=
 @[spec]
 theorem Rcompare_plus_l_spec (x y z : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_plus_l x y z
+    pureId (Rcompare_plus_l x y z)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
   unfold Rcompare_plus_l
@@ -837,7 +840,7 @@ noncomputable def Rcompare_mult_r (x y _z : ℝ) : Int :=
 @[spec]
 theorem Rcompare_mult_r_spec (x y z : ℝ) :
     ⦃⌜0 < z⌝⦄
-    Rcompare_mult_r x y z
+    pureId (Rcompare_mult_r x y z)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
   unfold Rcompare_mult_r
@@ -857,7 +860,7 @@ noncomputable def Rcompare_mult_l (x y _z : ℝ) : Int :=
 @[spec]
 theorem Rcompare_mult_l_spec (x y z : ℝ) :
     ⦃⌜0 < z⌝⦄
-    Rcompare_mult_l x y z
+    pureId (Rcompare_mult_l x y z)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
   unfold Rcompare_mult_l
@@ -887,7 +890,7 @@ noncomputable def Rcompare_val (x y : ℝ) : Int := Rcompare x y
 @[spec]
 theorem Rcompare_Lt_spec (x y : ℝ) :
     ⦃⌜x < y⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = -1⌝⦄ := by
   intro hxy
   unfold Rcompare_val Rcompare
@@ -900,7 +903,7 @@ theorem Rcompare_Lt_spec (x y : ℝ) :
 /-/ Coq-named wrapper (renamed locally to avoid clashing with the def). -/
 private theorem Rcompare_Lt_wr (x y : ℝ) :
     ⦃⌜x < y⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = -1⌝⦄ := by
   simpa using Rcompare_Lt_spec x y
 
@@ -908,7 +911,7 @@ private theorem Rcompare_Lt_wr (x y : ℝ) :
 @[spec]
 theorem Rcompare_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = -1 → x < y⌝⦄ := by
   intro _
   unfold Rcompare_val Rcompare
@@ -933,7 +936,7 @@ theorem Rcompare_Lt_inv_spec (x y : ℝ) :
 @[spec]
 theorem Rcompare_not_Lt_spec (x y : ℝ) :
     ⦃⌜y ≤ x⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ -1⌝⦄ := by
   intro hyx
   unfold Rcompare_val Rcompare
@@ -949,7 +952,7 @@ theorem Rcompare_not_Lt_spec (x y : ℝ) :
 /-- Coq-named wrapper. -/
 private theorem Rcompare_not_Lt_wr (x y : ℝ) :
     ⦃⌜y ≤ x⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ -1⌝⦄ := by
   simpa using Rcompare_not_Lt_spec x y
 
@@ -957,7 +960,7 @@ private theorem Rcompare_not_Lt_wr (x y : ℝ) :
 @[spec]
 theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ -1 → y ≤ x⌝⦄ := by
   intro _
   unfold Rcompare_val
@@ -976,7 +979,7 @@ theorem Rcompare_not_Lt_inv_spec (x y : ℝ) :
 -/
 theorem Rcompare_not_Lt_inv (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ -1 → y ≤ x⌝⦄ := by
   simpa using Rcompare_not_Lt_inv_spec x y
 
@@ -984,7 +987,7 @@ theorem Rcompare_not_Lt_inv (x y : ℝ) :
 @[spec]
 theorem Rcompare_Eq_spec (x y : ℝ) :
     ⦃⌜x = y⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   intro hxy
   unfold Rcompare_val
@@ -996,7 +999,7 @@ theorem Rcompare_Eq_spec (x y : ℝ) :
 /-  Coq-named wrapper to satisfy doc cross-references. -/
 private theorem Rcompare_Eq_wr (x y : ℝ) :
     ⦃⌜x = y⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   simpa using Rcompare_Eq_spec x y
 
@@ -1004,7 +1007,7 @@ private theorem Rcompare_Eq_wr (x y : ℝ) :
 @[spec]
 theorem Rcompare_Eq_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 0 → x = y⌝⦄ := by
   intro _
   unfold Rcompare_val
@@ -1031,7 +1034,7 @@ theorem Rcompare_Eq_inv_spec (x y : ℝ) :
 /-- Coq-named wrapper. -/
 theorem Rcompare_Eq_inv (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 0 → x = y⌝⦄ := by
   simpa using Rcompare_Eq_inv_spec x y
 
@@ -1039,7 +1042,7 @@ theorem Rcompare_Eq_inv (x y : ℝ) :
 @[spec]
 theorem Rcompare_Gt_spec (x y : ℝ) :
     ⦃⌜y < x⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 1⌝⦄ := by
   intro hyx
   unfold Rcompare_val
@@ -1054,7 +1057,7 @@ theorem Rcompare_Gt_spec (x y : ℝ) :
 /-  Coq-named wrapper. -/
 private theorem Rcompare_Gt_wr (x y : ℝ) :
     ⦃⌜y < x⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 1⌝⦄ := by
   simpa using Rcompare_Gt_spec x y
 
@@ -1062,7 +1065,7 @@ private theorem Rcompare_Gt_wr (x y : ℝ) :
 @[spec]
 theorem Rcompare_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 1 → y < x⌝⦄ := by
   intro _
   unfold Rcompare_val
@@ -1088,7 +1091,7 @@ theorem Rcompare_Gt_inv_spec (x y : ℝ) :
 /-  Coq-named wrapper. -/
 theorem Rcompare_Gt_inv (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r = 1 → y < x⌝⦄ := by
   simpa using Rcompare_Gt_inv_spec x y
 
@@ -1096,7 +1099,7 @@ theorem Rcompare_Gt_inv (x y : ℝ) :
 @[spec]
 theorem Rcompare_not_Gt_spec (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
   intro hxy
   unfold Rcompare_val Rcompare
@@ -1114,7 +1117,7 @@ theorem Rcompare_not_Gt_spec (x y : ℝ) :
 /-  Coq-named wrapper. -/
 private theorem Rcompare_not_Gt_wr (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
   simpa using Rcompare_not_Gt_spec x y
 
@@ -1122,7 +1125,7 @@ private theorem Rcompare_not_Gt_wr (x y : ℝ) :
 @[spec]
 theorem Rcompare_not_Gt_inv_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ 1 → x ≤ y⌝⦄ := by
   intro _
   unfold Rcompare_val
@@ -1144,7 +1147,7 @@ theorem Rcompare_not_Gt_inv_spec (x y : ℝ) :
 /-  Coq-named wrapper. -/
 theorem Rcompare_not_Gt_inv (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_val x y
+    pureId (Rcompare_val x y)
     ⦃⇓r => ⌜r ≠ 1 → x ≤ y⌝⦄ := by
   simpa using Rcompare_not_Gt_inv_spec x y
 
@@ -1159,8 +1162,8 @@ noncomputable def Rcompare_IZR (m n : Int) : Int := Rcompare (m : ℝ) (n : ℝ)
 @[spec]
 theorem Rcompare_IZR_spec (m n : Int) :
     ⦃⌜True⌝⦄
-    Rcompare_IZR m n
-    ⦃⇓r => ⌜r = (Zcompare_int m n).run⌝⦄ := by
+    pureId (Rcompare_IZR m n)
+    ⦃⇓r => ⌜r = (Zcompare_int m n)⌝⦄ := by
   intro _
   -- Discharge the Hoare triple by computation on both sides
   simp [Zcompare_int, Rcompare_IZR, Rcompare, wp, PostCond.noThrow, Id.run, pure]
@@ -1173,7 +1176,7 @@ noncomputable def Rcompare_middle_check (x d u : ℝ) : (Int × Int) :=
 @[spec]
 theorem Rcompare_middle_spec (x d u : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_middle_check x d u
+    pureId (Rcompare_middle_check x d u)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Rcompare_middle_check
@@ -1186,7 +1189,7 @@ noncomputable def Rcompare_half_l_check (x y : ℝ) : (Int × Int) :=
 @[spec]
 theorem Rcompare_half_l_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_half_l_check x y
+    pureId (Rcompare_half_l_check x y)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Rcompare_half_l_check
@@ -1238,7 +1241,7 @@ noncomputable def Rcompare_half_r_check (x y : ℝ) : (Int × Int) :=
 @[spec]
 theorem Rcompare_half_r_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_half_r_check x y
+    pureId (Rcompare_half_r_check x y)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Rcompare_half_r_check
@@ -1328,7 +1331,7 @@ private theorem Rcompare_sqr_run_eq (x y : ℝ) :
 @[spec]
 theorem Rcompare_sqr_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_sqr_check x y
+    pureId (Rcompare_sqr_check x y)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Rcompare_sqr_check
@@ -1344,7 +1347,7 @@ noncomputable def Rmin_compare_check (x y : ℝ) : (ℝ × Int) :=
 @[spec]
 theorem Rmin_compare_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rmin_compare_check x y
+    pureId (Rmin_compare_check x y)
     ⦃⇓p => ⌜p.1 = (if p.2 = -1 then x else if p.2 = 0 then x else y)⌝⦄ := by
   intro _
   unfold Rmin_compare_check
@@ -1387,7 +1390,7 @@ noncomputable def Rle_bool (x y : ℝ) : Bool :=
 @[spec]
 theorem Rle_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rle_bool x y
+    pureId (Rle_bool x y)
     ⦃⇓result => ⌜result = true ↔ x ≤ y⌝⦄ := by
   intro _
   unfold Rle_bool
@@ -1399,7 +1402,7 @@ theorem Rle_bool_spec (x y : ℝ) :
 /-- Monotone case: if x ≤ y then {lean}`Rle_bool x y = true` -/
 theorem Rle_bool_true (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    Rle_bool x y
+    pureId (Rle_bool x y)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro hxy
   unfold Rle_bool
@@ -1410,7 +1413,7 @@ theorem Rle_bool_true (x y : ℝ) :
 /-- Antitone case: if y < x then {lean}`Rle_bool x y = false` -/
 theorem Rle_bool_false (x y : ℝ) :
     ⦃⌜y < x⌝⦄
-    Rle_bool x y
+    pureId (Rle_bool x y)
     ⦃⇓result => ⌜result = false⌝⦄ := by
   intro hyx
   unfold Rle_bool
@@ -1434,7 +1437,7 @@ noncomputable def Rlt_bool (x y : ℝ) : Bool :=
 @[spec]
 theorem Rlt_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rlt_bool x y
+    pureId (Rlt_bool x y)
     ⦃⇓result => ⌜result = true ↔ x < y⌝⦄ := by
   intro _
   unfold Rlt_bool
@@ -1444,7 +1447,7 @@ theorem Rlt_bool_spec (x y : ℝ) :
 /-- Monotone case: if x < y then {lean}`Rlt_bool x y = true` -/
 theorem Rlt_bool_true (x y : ℝ) :
     ⦃⌜x < y⌝⦄
-    Rlt_bool x y
+    pureId (Rlt_bool x y)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro hlt
   unfold Rlt_bool
@@ -1455,7 +1458,7 @@ theorem Rlt_bool_true (x y : ℝ) :
 /-- Antitone case: if y ≤ x then {lean}`Rlt_bool x y = false` -/
 theorem Rlt_bool_false (x y : ℝ) :
     ⦃⌜y ≤ x⌝⦄
-    Rlt_bool x y
+    pureId (Rlt_bool x y)
     ⦃⇓result => ⌜result = false⌝⦄ := by
   intro hyx
   unfold Rlt_bool
@@ -1470,8 +1473,8 @@ theorem Rlt_bool_false (x y : ℝ) :
 theorem Rlt_bool_opp (x y : ℝ) :
     ⦃⌜True⌝⦄
     do
-      let a ← Rlt_bool (-x) (-y)
-      let b ← Rlt_bool y x
+      let a := Rlt_bool (-x) (-y)
+      let b := Rlt_bool y x
       pure (a, b)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
@@ -1495,7 +1498,7 @@ noncomputable def negb_Rlt_bool (x y : ℝ) : Bool :=
 @[spec]
 theorem negb_Rlt_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    negb_Rlt_bool x y
+    pureId (negb_Rlt_bool x y)
     ⦃⇓result => ⌜result ↔ y ≤ x⌝⦄ := by
   intro _
   unfold negb_Rlt_bool
@@ -1518,7 +1521,7 @@ noncomputable def negb_Rle_bool (x y : ℝ) : Bool :=
 @[spec]
 theorem negb_Rle_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    negb_Rle_bool x y
+    pureId (negb_Rle_bool x y)
     ⦃⇓result => ⌜result ↔ y < x⌝⦄ := by
   intro _
   unfold negb_Rle_bool
@@ -1542,7 +1545,7 @@ noncomputable def Req_bool (x y : ℝ) : Bool :=
 @[spec]
 theorem Req_bool_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Req_bool x y
+    pureId (Req_bool x y)
     ⦃⇓result => ⌜result = true ↔ x = y⌝⦄ := by
   intro _
   unfold Req_bool
@@ -1552,7 +1555,7 @@ theorem Req_bool_spec (x y : ℝ) :
 /-- If x = y then {lean}`Req_bool x y = true` -/
 theorem Req_bool_true (x y : ℝ) :
     ⦃⌜x = y⌝⦄
-    Req_bool x y
+    pureId (Req_bool x y)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro hxy
   unfold Req_bool
@@ -1563,7 +1566,7 @@ theorem Req_bool_true (x y : ℝ) :
 /-- If x ≠ y then {lean}`Req_bool x y = false` -/
 theorem Req_bool_false (x y : ℝ) :
     ⦃⌜x ≠ y⌝⦄
-    Req_bool x y
+    pureId (Req_bool x y)
     ⦃⇓result => ⌜result = false⌝⦄ := by
   intro hxy
   unfold Req_bool
@@ -1591,7 +1594,7 @@ def eqb_sym (a b : Bool) : (Bool × Bool) :=
 @[spec]
 theorem eqb_sym_spec (a b : Bool) :
     ⦃⌜True⌝⦄
-    eqb_sym a b
+    pureId (eqb_sym a b)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro _
   unfold eqb_sym
@@ -1606,7 +1609,7 @@ def eqb_check (a b : Bool) : Bool :=
 @[spec]
 theorem eqb_true_spec (a b : Bool) :
     ⦃⌜a = b⌝⦄
-    eqb_check a b
+    pureId (eqb_check a b)
     ⦃⇓r => ⌜r = true⌝⦄ := by
   intro hEq
   unfold eqb_check
@@ -1619,7 +1622,7 @@ theorem eqb_true_spec (a b : Bool) :
 @[spec]
 theorem eqb_false_spec (a b : Bool) :
     ⦃⌜a ≠ b⌝⦄
-    eqb_check a b
+    pureId (eqb_check a b)
     ⦃⇓r => ⌜r = false⌝⦄ := by
   intro hNe
   unfold eqb_check
@@ -1651,7 +1654,7 @@ def cond_Ropp (b : Bool) (m : ℝ) : ℝ :=
 @[spec]
 theorem cond_Ropp_spec (b : Bool) (m : ℝ) :
     ⦃⌜True⌝⦄
-    cond_Ropp b m
+    pureId (cond_Ropp b m)
     ⦃⇓result => ⌜result = if b then -m else m⌝⦄ := by
   intro _
   unfold cond_Ropp
@@ -1674,7 +1677,7 @@ def cond_Ropp_involutive (b : Bool) (m : ℝ) : ℝ :=
 @[spec]
 theorem cond_Ropp_involutive_spec (b : Bool) (m : ℝ) :
     ⦃⌜True⌝⦄
-    cond_Ropp_involutive b m
+    pureId (cond_Ropp_involutive b m)
     ⦃⇓result => ⌜result = m⌝⦄ := by
   intro _
   unfold cond_Ropp_involutive
@@ -1697,8 +1700,8 @@ def cond_Ropp_inj (_b : Bool) (m1 m2 : ℝ) : (ℝ × ℝ) :=
 -/
 @[spec]
 theorem cond_Ropp_inj_spec (b : Bool) (m1 m2 : ℝ) :
-    ⦃⌜(cond_Ropp b m1).run = (cond_Ropp b m2).run⌝⦄
-    cond_Ropp_inj b m1 m2
+    ⦃⌜(cond_Ropp b m1) = (cond_Ropp b m2)⌝⦄
+    pureId (cond_Ropp_inj b m1 m2)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
   intro h
   unfold cond_Ropp_inj
@@ -1724,7 +1727,7 @@ noncomputable def abs_cond_Ropp_check (b : Bool) (x : ℝ) : ℝ :=
 @[spec]
 theorem abs_cond_Ropp_spec (b : Bool) (x : ℝ) :
     ⦃⌜True⌝⦄
-    abs_cond_Ropp_check b x
+    pureId (abs_cond_Ropp_check b x)
     ⦃⇓r => ⌜r = |x|⌝⦄ := by
   intro _
   unfold abs_cond_Ropp_check cond_Ropp
@@ -1740,8 +1743,8 @@ noncomputable def cond_Ropp_mult_l_check (b : Bool) (x y : ℝ) : ℝ :=
 @[spec]
 theorem cond_Ropp_mult_l_spec (b : Bool) (x y : ℝ) :
     ⦃⌜True⌝⦄
-    cond_Ropp_mult_l_check b x y
-    ⦃⇓r => ⌜r = (cond_Ropp b x).run * y⌝⦄ := by
+    pureId (cond_Ropp_mult_l_check b x y)
+    ⦃⇓r => ⌜r = (cond_Ropp b x) * y⌝⦄ := by
   intro _
   unfold cond_Ropp_mult_l_check cond_Ropp
   -- Reduce the Hoare triple on Id to a pure goal
@@ -1754,8 +1757,8 @@ noncomputable def cond_Ropp_mult_r_check (b : Bool) (x y : ℝ) : ℝ :=
 @[spec]
 theorem cond_Ropp_mult_r_spec (b : Bool) (x y : ℝ) :
     ⦃⌜True⌝⦄
-    cond_Ropp_mult_r_check b x y
-    ⦃⇓r => ⌜r = x * (cond_Ropp b y).run⌝⦄ := by
+    pureId (cond_Ropp_mult_r_check b x y)
+    ⦃⇓r => ⌜r = x * (cond_Ropp b y)⌝⦄ := by
   intro _
   unfold cond_Ropp_mult_r_check cond_Ropp
   -- if b then -(x*y) else (x*y) equals x * (if b then -y else y)
@@ -1768,8 +1771,8 @@ noncomputable def cond_Ropp_plus_check (b : Bool) (x y : ℝ) : ℝ :=
 @[spec]
 theorem cond_Ropp_plus_spec (b : Bool) (x y : ℝ) :
     ⦃⌜True⌝⦄
-    cond_Ropp_plus_check b x y
-    ⦃⇓r => ⌜r = (cond_Ropp b x).run + (cond_Ropp b y).run⌝⦄ := by
+    pureId (cond_Ropp_plus_check b x y)
+    ⦃⇓r => ⌜r = (cond_Ropp b x) + (cond_Ropp b y)⌝⦄ := by
   intro _
   unfold cond_Ropp_plus_check cond_Ropp
   -- if b then -(x+y) else (x+y) equals (if b then -x else x) + (if b then -y else y)
@@ -1789,7 +1792,7 @@ noncomputable def cond_Ropp_Rlt_bool_check (b : Bool) (x y : ℝ) : Bool :=
 @[spec]
 theorem cond_Ropp_Rlt_bool_spec (b : Bool) (x y : ℝ) :
     ⦃⌜True⌝⦄
-    cond_Ropp_Rlt_bool_check b x y
+    pureId (cond_Ropp_Rlt_bool_check b x y)
     ⦃⇓r => ⌜r = true ↔ (if b then y < x else x < y)⌝⦄ := by
   intro _
   unfold cond_Ropp_Rlt_bool_check
@@ -1811,7 +1814,7 @@ noncomputable def Rlt_bool_cond_Ropp_check (b : Bool) (x y : ℝ) : Bool :=
 @[spec]
 theorem Rlt_bool_cond_Ropp_spec (b : Bool) (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Rlt_bool_cond_Ropp_check b x y
+    pureId (Rlt_bool_cond_Ropp_check b x y)
     ⦃⇓r => ⌜r = true ↔ (if b then x < -y else x < y)⌝⦄ := by
   intro _
   unfold Rlt_bool_cond_Ropp_check cond_Ropp
@@ -1832,7 +1835,7 @@ noncomputable def IZR_cond_Zopp_check (b : Bool) (m : Int) : ℝ :=
 @[spec]
 theorem IZR_cond_Zopp_spec (b : Bool) (m : Int) :
     ⦃⌜True⌝⦄
-    IZR_cond_Zopp_check b m
+    pureId (IZR_cond_Zopp_check b m)
     ⦃⇓r => ⌜r = (if b then -((m : ℝ)) else (m : ℝ))⌝⦄ := by
   intro _
   unfold IZR_cond_Zopp_check cond_Ropp
@@ -1851,7 +1854,7 @@ noncomputable def Rabs_lt_inv_pair (x y : ℝ) : (ℝ × ℝ) :=
 @[spec]
 theorem Rabs_lt_inv_spec (x y : ℝ) :
     ⦃⌜|x| < y⌝⦄
-    Rabs_lt_inv_pair x y
+    pureId (Rabs_lt_inv_pair x y)
     ⦃⇓p => ⌜-p.2 < p.1 ∧ p.1 < p.2⌝⦄ := by
   intro h
   unfold Rabs_lt_inv_pair
@@ -1881,7 +1884,7 @@ noncomputable def Ztrunc_abs_real_val (y : ℝ) : ℝ :=
 
 theorem Ztrunc_abs_real (y : ℝ) :
     ⦃⌜True⌝⦄
-    Ztrunc_abs_real_val y
+    pureId (Ztrunc_abs_real_val y)
     ⦃⇓r => ⌜r = abs (((Ztrunc y) : Int) : ℝ)⌝⦄ := by
   -- First, reduce the Hoare-style triple for `pure` to a plain goal.
   -- This turns the specification into `True → r = ...`.
@@ -1933,7 +1936,7 @@ noncomputable def Zaway (x : ℝ) : Int :=
 /-- Floor lower bound: ⌊x⌋ ≤ x -/
 theorem Zfloor_lb (x : ℝ) :
     ⦃⌜True⌝⦄
-    Zfloor x
+    pureId (Zfloor x)
     ⦃⇓z => ⌜(z : ℝ) ≤ x⌝⦄ := by
   intro _
   unfold Zfloor
@@ -1943,7 +1946,7 @@ theorem Zfloor_lb (x : ℝ) :
 /-- Floor upper bound: x < ⌊x⌋ + 1 -/
 theorem Zfloor_ub (x : ℝ) :
     ⦃⌜True⌝⦄
-    Zfloor x
+    pureId (Zfloor x)
     ⦃⇓z => ⌜x < (z : ℝ) + 1⌝⦄ := by
   intro _
   unfold Zfloor
@@ -1953,7 +1956,7 @@ theorem Zfloor_ub (x : ℝ) :
 /-- Floor greatest-lower-bound: if m ≤ x then m ≤ ⌊x⌋ -/
 theorem Zfloor_lub (x : ℝ) (m : Int) :
     ⦃⌜(m : ℝ) ≤ x⌝⦄
-    Zfloor x
+    pureId (Zfloor x)
     ⦃⇓z => ⌜m ≤ z⌝⦄ := by
   intro hm
   unfold Zfloor
@@ -1963,7 +1966,7 @@ theorem Zfloor_lub (x : ℝ) (m : Int) :
 /-- Characterization: if m ≤ x < m+1 then ⌊x⌋ = m -/
 theorem Zfloor_imp (x : ℝ) (m : Int) :
     ⦃⌜(m : ℝ) ≤ x ∧ x < (m : ℝ) + 1⌝⦄
-    Zfloor x
+    pureId (Zfloor x)
     ⦃⇓z => ⌜z = m⌝⦄ := by
   intro h
   unfold Zfloor
@@ -1973,7 +1976,7 @@ theorem Zfloor_imp (x : ℝ) (m : Int) :
 /-- Floor of an integer equals itself -/
 theorem Zfloor_IZR (m : Int) :
     ⦃⌜True⌝⦄
-    Zfloor (m : ℝ)
+    pureId (Zfloor (m : ℝ))
     ⦃⇓z => ⌜z = m⌝⦄ := by
   intro _
   unfold Zfloor
@@ -1984,8 +1987,8 @@ theorem Zfloor_IZR (m : Int) :
 theorem Zfloor_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     do
-      let a ← Zfloor x
-      let b ← Zfloor y
+      let a := Zfloor x
+      let b := Zfloor y
       pure (a, b)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
@@ -2003,7 +2006,7 @@ section IntCeil
 /-- Ceiling upper bound: x ≤ ⌈x⌉ -/
 theorem Zceil_ub (x : ℝ) :
     ⦃⌜True⌝⦄
-    Zceil x
+    pureId (Zceil x)
     ⦃⇓z => ⌜x ≤ (z : ℝ)⌝⦄ := by
   intro _
   unfold Zceil
@@ -2016,7 +2019,7 @@ theorem Zceil_ub (x : ℝ) :
 /-- Ceiling lower-neighborhood: ⌈x⌉ - 1 < x -/
 theorem Zceil_lb (x : ℝ) :
     ⦃⌜True⌝⦄
-    Zceil x
+    pureId (Zceil x)
     ⦃⇓z => ⌜(z : ℝ) - 1 < x⌝⦄ := by
   intro _
   unfold Zceil
@@ -2027,7 +2030,7 @@ theorem Zceil_lb (x : ℝ) :
 /-- Ceiling least-upper-bound: if x ≤ m then ⌈x⌉ ≤ m -/
 theorem Zceil_glb (x : ℝ) (m : Int) :
     ⦃⌜x ≤ (m : ℝ)⌝⦄
-    Zceil x
+    pureId (Zceil x)
     ⦃⇓z => ⌜z ≤ m⌝⦄ := by
   intro hx
   unfold Zceil
@@ -2037,7 +2040,7 @@ theorem Zceil_glb (x : ℝ) (m : Int) :
 /-- Characterization: if m - 1 < x ≤ m then ⌈x⌉ = m -/
 theorem Zceil_imp (x : ℝ) (m : Int) :
     ⦃⌜(m : ℝ) - 1 < x ∧ x ≤ (m : ℝ)⌝⦄
-    Zceil x
+    pureId (Zceil x)
     ⦃⇓z => ⌜z = m⌝⦄ := by
   intro h
   unfold Zceil
@@ -2047,7 +2050,7 @@ theorem Zceil_imp (x : ℝ) (m : Int) :
 /-- Ceiling of an integer equals itself -/
 theorem Zceil_IZR (m : Int) :
     ⦃⌜True⌝⦄
-    Zceil (m : ℝ)
+    pureId (Zceil (m : ℝ))
     ⦃⇓z => ⌜z = m⌝⦄ := by
   intro _
   unfold Zceil
@@ -2058,8 +2061,8 @@ theorem Zceil_IZR (m : Int) :
 theorem Zceil_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     do
-      let a ← Zceil x
-      let b ← Zceil y
+      let a := Zceil x
+      let b := Zceil y
       pure (a, b)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
@@ -2074,8 +2077,8 @@ theorem Zceil_le (x y : ℝ) :
 theorem Zceil_floor_neq (x : ℝ) :
     ⦃⌜((Zfloor x) : ℝ) ≠ x⌝⦄
     do
-      let c ← Zceil x
-      let f ← Zfloor x
+      let c := Zceil x
+      let f := Zfloor x
       pure (c, f)
     ⦃⇓p => ⌜p.1 = p.2 + 1⌝⦄ := by
   intro hne
@@ -2112,14 +2115,14 @@ section IntTrunc
 /-- Truncation at integers: Ztrunc (m) = m -/
 theorem Ztrunc_IZR (m : Int) :
     ⦃⌜True⌝⦄
-    Ztrunc (m : ℝ)
+    pureId (Ztrunc (m : ℝ))
     ⦃⇓z => ⌜z = m⌝⦄ := by
   intro _; unfold Ztrunc; by_cases h : (m : ℝ) < 0 <;> simp [h]
 
 /-- For nonnegatives: Ztrunc x = ⌊x⌋ -/
 theorem Ztrunc_floor (x : ℝ) :
     ⦃⌜0 ≤ x⌝⦄
-    Ztrunc x
+    pureId (Ztrunc x)
     ⦃⇓z => ⌜z = (Zfloor x)⌝⦄ := by
   intro hx
   unfold Ztrunc
@@ -2130,7 +2133,7 @@ theorem Ztrunc_floor (x : ℝ) :
 /-- For nonpositives: Ztrunc x = ⌈x⌉ -/
 theorem Ztrunc_ceil (x : ℝ) :
     ⦃⌜x ≤ 0⌝⦄
-    Ztrunc x
+    pureId (Ztrunc x)
     ⦃⇓z => ⌜z = (Zceil x)⌝⦄ := by
   intro hxle
   unfold Ztrunc
@@ -2146,8 +2149,8 @@ theorem Ztrunc_ceil (x : ℝ) :
 theorem Ztrunc_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     do
-      let a ← Ztrunc x
-      let b ← Ztrunc y
+      let a := Ztrunc x
+      let b := Ztrunc y
       pure (a, b)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
@@ -2186,8 +2189,8 @@ theorem Ztrunc_le (x y : ℝ) :
 theorem Ztrunc_opp (x : ℝ) :
     ⦃⌜True⌝⦄
     do
-      let a ← Ztrunc (-x)
-      let b ← Ztrunc x
+      let a := Ztrunc (-x)
+      let b := Ztrunc x
       pure (a, b)
     ⦃⇓p => ⌜p.1 = -p.2⌝⦄ := by
   intro _
@@ -2212,8 +2215,8 @@ theorem Ztrunc_opp (x : ℝ) :
 theorem Ztrunc_abs (x : ℝ) :
     ⦃⌜True⌝⦄
     do
-      let a ← Ztrunc |x|
-      let b ← Ztrunc x
+      let a := Ztrunc |x|
+      let b := Ztrunc x
       pure (a, b)
     ⦃⇓p => ⌜p.1 = Int.natAbs p.2⌝⦄ := by
   intro _
@@ -2251,7 +2254,7 @@ theorem Ztrunc_abs (x : ℝ) :
 /-- Lower bound via absolute: if n ≤ |x| then n ≤ |Ztrunc x| -/
 theorem Ztrunc_lub (n : Int) (x : ℝ) :
     ⦃⌜(n : ℝ) ≤ |x|⌝⦄
-    Ztrunc x
+    pureId (Ztrunc x)
     ⦃⇓z => ⌜n ≤ Int.natAbs z⌝⦄ := by
   intro h
   unfold Ztrunc
@@ -2326,14 +2329,14 @@ section IntAway
 /-- Away-from-zero at integers: Zaway (m) = m -/
 theorem Zaway_IZR (m : Int) :
     ⦃⌜True⌝⦄
-    Zaway (m : ℝ)
+    pureId (Zaway (m : ℝ))
     ⦃⇓z => ⌜z = m⌝⦄ := by
   intro _; unfold Zaway; by_cases h : (m : ℝ) < 0 <;> simp [h]
 
 /-- For nonnegatives: Zaway x = ⌈x⌉ -/
 theorem Zaway_ceil (x : ℝ) :
     ⦃⌜0 ≤ x⌝⦄
-    Zaway x
+    pureId (Zaway x)
     ⦃⇓z => ⌜z = (Zceil x)⌝⦄ := by
   intro hx
   unfold Zaway
@@ -2344,7 +2347,7 @@ theorem Zaway_ceil (x : ℝ) :
 /-- For nonpositives: Zaway x = ⌊x⌋ -/
 theorem Zaway_floor (x : ℝ) :
     ⦃⌜x ≤ 0⌝⦄
-    Zaway x
+    pureId (Zaway x)
     ⦃⇓z => ⌜z = (Zfloor x)⌝⦄ := by
   intro hxle
   unfold Zaway
@@ -2360,8 +2363,8 @@ theorem Zaway_floor (x : ℝ) :
 theorem Zaway_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     do
-      let a ← Zaway x
-      let b ← Zaway y
+      let a := Zaway x
+      let b := Zaway y
       pure (a, b)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
@@ -2394,8 +2397,8 @@ theorem Zaway_le (x y : ℝ) :
   theorem Zaway_opp (x : ℝ) :
       ⦃⌜True⌝⦄
       do
-        let a ← Zaway (-x)
-        let b ← Zaway x
+        let a := Zaway (-x)
+        let b := Zaway x
         pure (a, b)
       ⦃⇓p => ⌜p.1 = -p.2⌝⦄ := by
   intro _
@@ -2435,8 +2438,8 @@ theorem Zaway_le (x y : ℝ) :
 theorem Zaway_abs (x : ℝ) :
     ⦃⌜True⌝⦄
     do
-      let a ← Zaway |x|
-      let b ← Zaway x
+      let a := Zaway |x|
+      let b := Zaway x
       pure (a, b)
     ⦃⇓p => ⌜p.1 = Int.natAbs p.2⌝⦄ := by
   intro _
@@ -2475,7 +2478,7 @@ section IntDiv
 /-- Division at floors for integers: floor((x:ℝ)/(y:ℝ)) = x / y when y ≠ 0. -/
 theorem Zfloor_div (x y : Int) :
     ⦃⌜0 < y⌝⦄
-    Zfloor ((x : ℝ) / (y : ℝ))
+    pureId (Zfloor ((x : ℝ) / (y : ℝ)))
     ⦃⇓z => ⌜z = x / y⌝⦄ := by
   intro hypos
   unfold Zfloor
@@ -2527,7 +2530,7 @@ theorem Zfloor_div (x y : Int) :
 /-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, {coq}`Ztrunc` ({coq}`IZR` x / {coq}`IZR` y) equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
     ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
-    Ztrunc ((x : ℝ) / (y : ℝ))
+    pureId (Ztrunc ((x : ℝ) / (y : ℝ)))
     ⦃⇓z => ⌜z = Int.tdiv x y⌝⦄ := by
   intro hxy
   have hx_nonneg : 0 ≤ x := hxy.left
@@ -2579,7 +2582,7 @@ noncomputable def Rcompare_floor_ceil_middle_check (x : ℝ) : (Int × Int) :=
 @[spec]
 theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_floor_ceil_middle_check x
+    pureId (Rcompare_floor_ceil_middle_check x)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   -- Expand the program to equality of the two comparison codes.
@@ -2675,7 +2678,7 @@ noncomputable def Rcompare_ceil_floor_middle_check (x : ℝ) : (Int × Int) :=
 @[spec]
 theorem Rcompare_ceil_floor_middle_spec (x : ℝ) :
     ⦃⌜True⌝⦄
-    Rcompare_ceil_floor_middle_check x
+    pureId (Rcompare_ceil_floor_middle_check x)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Rcompare_ceil_floor_middle_check
@@ -2720,7 +2723,7 @@ theorem Rcompare_ceil_floor_middle_spec (x : ℝ) :
         exact congrArg (fun n : Int => (n : ℝ)) hceil_eq_floor.symm
       exact hfx.trans hcast
   -- Reduce the Hoare-style goal to a pure equality and discharge it by rewriting and cases.
-  -- Goal after simp: prove (Rcompare (↑⌈x⌉) x).run = (Rcompare x ↑⌊x⌋).run.
+  -- Goal after simp: prove (Rcompare (↑⌈x⌉) x) = (Rcompare x ↑⌊x⌋).
   -- Rewrite both sides with hL and hR, then case on x = ⌈x⌉.
   have : (Rcompare ((Int.ceil x : ℝ)) x) = (Rcompare x ((Int.floor x : ℝ))) := by
     by_cases hx : x = (Int.ceil x : ℝ)
@@ -2768,7 +2771,7 @@ noncomputable def radix_pos_check (beta : Int) : ℝ :=
 
 theorem radix_pos (beta : Int) :
     ⦃⌜1 < beta⌝⦄
-    radix_pos_check beta
+    pureId (radix_pos_check beta)
     ⦃⇓r => ⌜0 < r⌝⦄ := by
   intro hβ
   unfold radix_pos_check
@@ -2788,7 +2791,7 @@ noncomputable def IZR_Zpower_pos_check (n m : Int) : (ℝ × ℝ) :=
 
 theorem IZR_Zpower_pos (n m : Int) :
     ⦃⌜0 < m⌝⦄
-    IZR_Zpower_pos_check n m
+    pureId (IZR_Zpower_pos_check n m)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold IZR_Zpower_pos_check
@@ -2801,7 +2804,7 @@ noncomputable def bpow_powerRZ_check (beta e : Int) : (ℝ × ℝ) :=
 
 theorem bpow_powerRZ (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow_powerRZ_check beta e
+    pureId (bpow_powerRZ_check beta e)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold bpow_powerRZ_check
@@ -2811,7 +2814,7 @@ theorem bpow_powerRZ (beta e : Int) :
 /-- Nonnegativity of bpow -/
 theorem bpow_ge_0 (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow beta e
+    pureId (bpow beta e)
     ⦃⇓v => ⌜0 ≤ v⌝⦄ := by
   intro hβ
   unfold bpow
@@ -2824,7 +2827,7 @@ theorem bpow_ge_0 (beta e : Int) :
 /-- Positivity of bpow -/
 theorem bpow_gt_0 (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow beta e
+    pureId (bpow beta e)
     ⦃⇓v => ⌜0 < v⌝⦄ := by
   intro hβ
   unfold bpow
@@ -2840,7 +2843,7 @@ noncomputable def bpow_plus_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
 
 theorem bpow_plus (beta e1 e2 : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow_plus_check beta e1 e2
+    pureId (bpow_plus_check beta e1 e2)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro hβ
   -- Reduce the Hoare triple on Id to a pure equality
@@ -2859,7 +2862,7 @@ noncomputable def bpow_one_check (beta : Int) : (ℝ × ℝ) :=
 
 theorem bpow_1 (beta : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow_one_check beta
+    pureId (bpow_one_check beta)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold bpow_one_check
@@ -2872,7 +2875,7 @@ noncomputable def bpow_plus_1_check (beta e : Int) : (ℝ × ℝ) :=
 
 theorem bpow_plus_1 (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow_plus_1_check beta e
+    pureId (bpow_plus_1_check beta e)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold bpow_plus_1_check
@@ -2889,7 +2892,7 @@ noncomputable def bpow_opp_check (beta e : Int) : (ℝ × ℝ) :=
 
 theorem bpow_opp (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow_opp_check beta e
+    pureId (bpow_opp_check beta e)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold bpow_opp_check
@@ -2905,7 +2908,7 @@ noncomputable def bpow_lt_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
 
 theorem bpow_lt (beta e1 e2 : Int) :
     ⦃⌜1 < beta ∧ e1 < e2⌝⦄
-    bpow_lt_check beta e1 e2
+    pureId (bpow_lt_check beta e1 e2)
     ⦃⇓p => ⌜p.1 < p.2⌝⦄ := by
   intro h
   unfold bpow_lt_check
@@ -2923,7 +2926,7 @@ noncomputable def lt_bpow_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
 
 theorem lt_bpow (beta e1 e2 : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ e1) < ((beta : ℝ) ^ e2)⌝⦄
-    lt_bpow_check beta e1 e2
+    pureId (lt_bpow_check beta e1 e2)
     ⦃⇓_ => ⌜e1 < e2⌝⦄ := by
   intro hlt
   unfold lt_bpow_check
@@ -2943,7 +2946,7 @@ noncomputable def bpow_le_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
 
 theorem bpow_le (beta e1 e2 : Int) :
     ⦃⌜1 < beta ∧ e1 ≤ e2⌝⦄
-    bpow_le_check beta e1 e2
+    pureId (bpow_le_check beta e1 e2)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro h
   unfold bpow_le_check
@@ -2959,7 +2962,7 @@ noncomputable def le_bpow_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
 
 theorem le_bpow (beta e1 e2 : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ e1) ≤ ((beta : ℝ) ^ e2)⌝⦄
-    le_bpow_check beta e1 e2
+    pureId (le_bpow_check beta e1 e2)
     ⦃⇓_ => ⌜e1 ≤ e2⌝⦄ := by
   intro h
   unfold le_bpow_check
@@ -2985,7 +2988,7 @@ noncomputable def bpow_inj_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
 
 theorem bpow_inj (beta e1 e2 : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ e1) = ((beta : ℝ) ^ e2)⌝⦄
-    bpow_inj_check beta e1 e2
+    pureId (bpow_inj_check beta e1 e2)
     ⦃⇓_ => ⌜e1 = e2⌝⦄ := by
   intro h
   unfold bpow_inj_check
@@ -3002,7 +3005,7 @@ noncomputable def bpow_exp_check (beta e : Int) : (ℝ × ℝ) :=
 
 theorem bpow_exp (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    bpow_exp_check beta e
+    pureId (bpow_exp_check beta e)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro hβ
   unfold bpow_exp_check
@@ -3027,7 +3030,7 @@ noncomputable def bpow_lt_bpow_pair (_beta e1 e2 : Int) : (Int × Int) :=
 
 theorem bpow_lt_bpow (beta e1 e2 : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ (e1 - 1) < (beta : ℝ) ^ e2)⌝⦄
-    bpow_lt_bpow_pair beta e1 e2
+    pureId (bpow_lt_bpow_pair beta e1 e2)
     ⦃⇓_ => ⌜e1 ≤ e2⌝⦄ := by
   intro h
   unfold bpow_lt_bpow_pair
@@ -3089,7 +3092,7 @@ noncomputable def sqrt_bpow_check (beta e : Int) : (ℝ × ℝ) :=
 /-- Square-root law for even exponents: {lean}`Real.sqrt ((beta : ℝ) ^ (2 * e)) = (beta : ℝ) ^ e` -/
 theorem sqrt_bpow (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    sqrt_bpow_check beta e
+    pureId (sqrt_bpow_check beta e)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold sqrt_bpow_check
@@ -3115,7 +3118,7 @@ noncomputable def sqrt_bpow_ge_check (beta e : Int) : (ℝ × ℝ) :=
 
 theorem sqrt_bpow_ge (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    sqrt_bpow_ge_check beta e
+    pureId (sqrt_bpow_ge_check beta e)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro _
   unfold sqrt_bpow_ge_check
@@ -3174,7 +3177,7 @@ noncomputable def IZR_Zpower_nat_check (beta : Int) (e : Nat) : (ℝ × ℝ) :=
 
 theorem IZR_Zpower_nat (beta : Int) (e : Nat) :
     ⦃⌜1 < beta⌝⦄
-    IZR_Zpower_nat_check beta e
+    pureId (IZR_Zpower_nat_check beta e)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold IZR_Zpower_nat_check
@@ -3187,7 +3190,7 @@ noncomputable def IZR_Zpower_check (beta e : Int) : (ℝ × ℝ) :=
 
 theorem IZR_Zpower (beta e : Int) :
     ⦃⌜0 ≤ e⌝⦄
-    IZR_Zpower_check beta e
+    pureId (IZR_Zpower_check beta e)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold IZR_Zpower_check
@@ -3211,14 +3214,14 @@ noncomputable def LPO_min_choice (P : Nat → Prop) : (Option Nat) :=
     -- Choose the least witness when it exists
     exact
       if h : ∃ n, P n then
-        pure (some (Nat.find h))
+        some (Nat.find h)
       else
-        pure none
+        none
 
 /-- Coq (Raux.v) {coq}`LPO_min`. Lean spec uses {lean}`Option` {lean}`Nat` to encode the sum. -/
 theorem LPO_min (P : Nat → Prop) :
     ⦃⌜∀ n : Nat, P n ∨ ¬ P n⌝⦄
-    LPO_min_choice P
+    pureId (LPO_min_choice P)
     ⦃⇓r => ⌜match r with | some n => P n ∧ ∀ i, i < n → ¬ P i | none => ∀ n : Nat, ¬ P n⌝⦄ := by
   intro _
   unfold LPO_min_choice
@@ -3248,14 +3251,14 @@ noncomputable def LPO_choice (P : Nat → Prop) : (Option Nat) :=
     -- Choose a witness when it exists (take the least one), otherwise none
     exact
       if h : ∃ n, P n then
-        pure (some (Nat.find h))
+        some (Nat.find h)
       else
-        pure none
+        none
 
 /-- Coq (Raux.v) {coq}`LPO`. Lean spec: {given -show}`n : Nat` in {lean}`some n` indicates a witness satisfying the predicate; {lean}`none` indicates universal negation. -/
 theorem LPO (P : Nat → Prop) :
     ⦃⌜∀ n : Nat, P n ∨ ¬ P n⌝⦄
-    LPO_choice P
+    pureId (LPO_choice P)
     ⦃⇓r => ⌜match r with | some n => P n | none => ∀ n : Nat, ¬ P n⌝⦄ := by
   intro _
   unfold LPO_choice
@@ -3279,14 +3282,14 @@ noncomputable def LPO_Z_choice (P : Int → Prop) : (Option Int) :=
     -- Choose a witness when it exists (using classical choice), otherwise none
     exact
       if h : ∃ n, P n then
-        pure (some (Classical.choose h))
+        some (Classical.choose h)
       else
-        pure none
+        none
 
 /-- Coq (Raux.v) lemma {coq}`LPO_Z`: for any predicate on integers with decidability, either {given -show}`n : Int` satisfies it or no integer does; the Lean spec encodes this as an option meaning {lean}`some n` indicates satisfaction and {lean}`none` indicates no witness exists. -/
 theorem LPO_Z (P : Int → Prop) :
     ⦃⌜∀ n : Int, P n ∨ ¬ P n⌝⦄
-    LPO_Z_choice P
+    pureId (LPO_Z_choice P)
     ⦃⇓r => ⌜match r with | some n => P n | none => ∀ n : Int, ¬ P n⌝⦄ := by
   intro _
   unfold LPO_Z_choice
@@ -3316,7 +3319,7 @@ section Mag
 
     In Coq, {coq}`mag` is characterized by {coq}`bpow` bounds: for nonzero {lit}`x`,
     {lit}`bpow (e - 1) ≤ |x| < bpow e`, where {lit}`e = mag x`.
-    We model it as a pure computation and wrap it with `{lean}``pure`` only in specs.
+    We model it as a pure computation and wrap it with {lean}`pure` only in specs.
 
     **IMPORTANT**: We use `⌊log|x|/log β⌋ + 1` (floor + 1) to match Coq's semantics.
     This ensures `mag(β^e) = e + 1`, giving the strict upper bound `|x| < β^(mag x)`.
@@ -3332,7 +3335,7 @@ noncomputable def mag (beta : Int) (x : ℝ) : Int :=
     Note: non-strict lower bound, strict upper bound. -/
 theorem mag_unique (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| < (beta : ℝ) ^ e)⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜m = e⌝⦄ := by
   intro h
   unfold mag
@@ -3401,8 +3404,8 @@ theorem mag_unique (beta : Int) (x : ℝ) (e : Int) :
 theorem mag_opp (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
     do
-      let a ← mag beta (-x)
-      let b ← mag beta x
+      let a := mag beta (-x)
+      let b := mag beta x
       pure (a, b)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
@@ -3412,8 +3415,8 @@ theorem mag_opp (beta : Int) (x : ℝ) :
 theorem mag_abs (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
     do
-      let a ← mag beta |x|
-      let b ← mag beta x
+      let a := mag beta |x|
+      let b := mag beta x
       pure (a, b)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
@@ -3425,7 +3428,7 @@ theorem mag_abs (beta : Int) (x : ℝ) :
 -/
 theorem mag_unique_pos (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 < x ∧ ((beta : ℝ) ^ (e - 1) ≤ x ∧ x < (beta : ℝ) ^ e)⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜m = e⌝⦄ := by
   intro h
   -- Reduce to `mag_unique` by rewriting |x| to x using positivity
@@ -3441,7 +3444,7 @@ theorem mag_unique_pos (beta : Int) (x : ℝ) (e : Int) :
 /-- Bounding |x| by bpow bounds magnitude from above -/
 theorem mag_le_abs (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ |x| < (beta : ℝ) ^ e⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜m ≤ e⌝⦄ := by
   intro h
   unfold mag
@@ -3489,8 +3492,8 @@ theorem mag_le_abs (beta : Int) (x : ℝ) (e : Int) :
 theorem mag_le (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ |x| ≤ |y|⌝⦄
     do
-      let a ← mag beta x
-      let b ← mag beta y
+      let a := mag beta x
+      let b := mag beta y
       pure (a, b)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro h
@@ -3557,7 +3560,7 @@ theorem mag_le (beta : Int) (x y : ℝ) :
     This corrects the direction compared to an earlier draft. -/
 theorem lt_mag (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 < |x| ∧ |x| < (beta : ℝ) ^ e⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜m ≤ e⌝⦄ := by
   intro h
   -- Strengthen 0 < |x| to x ≠ 0 and reuse `mag_le_abs`.
@@ -3573,7 +3576,7 @@ theorem lt_mag (beta : Int) (x : ℝ) (e : Int) :
     This matches Coq: β^e ≤ β^e < β^(e+1), so mag(β^e) = e + 1. -/
 theorem mag_bpow (beta e : Int) :
     ⦃⌜1 < beta⌝⦄
-    mag beta ((beta : ℝ) ^ e)
+    pureId (mag beta ((beta : ℝ) ^ e))
     ⦃⇓m => ⌜m = e + 1⌝⦄ := by
   intro hβ
   -- Reduce the Hoare triple on `Id` to a pure equality
@@ -3607,7 +3610,7 @@ theorem mag_bpow (beta e : Int) :
 /-- Scaling by bpow shifts magnitude additively -/
 theorem mag_mult_bpow (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta⌝⦄
-    mag beta (x * (beta : ℝ) ^ e)
+    pureId (mag beta (x * (beta : ℝ) ^ e))
     ⦃⇓m => ⌜∃ k, m = k + e⌝⦄ := by
   intro _
   -- Reduce Hoare triple on Id to a pure existence over the returned value
@@ -3687,7 +3690,7 @@ theorem mag_mult_bpow (beta : Int) (x : ℝ) (e : Int) :
 /-- Upper bound: if x ≠ 0 and |x| < bpow e then mag x ≤ e -/
 theorem mag_le_bpow (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ |x| < (beta : ℝ) ^ e⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜m ≤ e⌝⦄ := by
   -- This is exactly `mag_le_abs`.
   intro h
@@ -3696,7 +3699,7 @@ theorem mag_le_bpow (beta : Int) (x : ℝ) (e : Int) :
 /-- Lower bound: if bpow (e - 1) ≤ |x| then e ≤ mag x -/
 theorem mag_gt_bpow (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ (beta : ℝ) ^ (e - 1) < |x|⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜e ≤ m⌝⦄ := by
   intro h
   -- Unpack hypotheses and derive basic positivity facts
@@ -3740,7 +3743,7 @@ theorem mag_gt_bpow (beta : Int) (x : ℝ) (e : Int) :
 /-- Combined lower bound: if bpow (e - 1) < |x| then e ≤ mag x -/
 theorem mag_ge_bpow (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ (beta : ℝ) ^ (e - 1) < |x|⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜e ≤ m⌝⦄ := by
   -- This is exactly `mag_gt_bpow`.
   exact mag_gt_bpow beta x e
@@ -3751,7 +3754,7 @@ noncomputable def abs_val (x : ℝ) : ℝ :=
 
 theorem bpow_mag_gt (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ (mag beta x) < e⌝⦄
-    abs_val x
+    pureId (abs_val x)
     ⦃⇓v => ⌜v < (beta : ℝ) ^ e⌝⦄ := by
   intro h
   unfold abs_val
@@ -3820,13 +3823,13 @@ theorem bpow_mag_gt (beta : Int) (x : ℝ) (e : Int) :
 
 /-- If e ≤ mag x then bpow (e - 1) ≤ |x|
 
-    Note: this requires {lean}`x ≠ 0`. For {lean}`x = 0`, we have {lean}`(mag beta 0).run = 0`
+    Note: this requires {lean}`x ≠ 0`. For {lean}`x = 0`, we have {lean}`(mag beta 0) = 0`
     while {lean}`(beta : ℝ) ^ (e - 1) > 0` for all integers {lean}`e` when {lean}`1 < beta`,
     so the statement would be false for {lean}`e ≤ 0`.
 -/
 theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ e ≤ (mag beta x)⌝⦄
-    abs_val x
+    pureId (abs_val x)
     ⦃⇓v => ⌜(beta : ℝ) ^ (e - 1) ≤ v⌝⦄ := by
   intro h
   unfold abs_val
@@ -3837,7 +3840,7 @@ theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
   have hx_pos : 0 < |x| := abs_pos.mpr hx_ne
   -- Abbreviation L := log |x| / log β
   set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
-  -- Evaluate `(mag beta x).run` under `x ≠ 0` (Coq semantics: floor+1)
+  -- Evaluate `(mag beta x)` under `x ≠ 0` (Coq semantics: floor+1)
   have hmag_run : (mag beta x) = Int.floor L + 1 := by
     simp [mag, hx_ne, L]
   -- log β > 0
@@ -3893,11 +3896,11 @@ theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
     This is a corollary of {lean}`bpow_mag_le` with e = mag x. -/
 theorem mag_lower_bound (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0⌝⦄
-    abs_val x
+    pureId (abs_val x)
     ⦃⇓v => ⌜(beta : ℝ) ^ ((mag beta x) - 1) ≤ v⌝⦄ := by
   intro h
   rcases h with ⟨hβ, hx_ne⟩
-  -- Apply bpow_mag_le with e = (mag beta x).run
+  -- Apply bpow_mag_le with e = (mag beta x)
   have hpre : 1 < beta ∧ x ≠ 0 ∧ (mag beta x) ≤ (mag beta x) := ⟨hβ, hx_ne, le_refl _⟩
   exact (bpow_mag_le beta x (mag beta x)) hpre
 
@@ -3906,7 +3909,7 @@ theorem mag_lower_bound (beta : Int) (x : ℝ) :
     This follows from the floor property: L < ⌊L⌋ + 1. -/
 theorem mag_upper_bound (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0⌝⦄
-    abs_val x
+    pureId (abs_val x)
     ⦃⇓v => ⌜v < (beta : ℝ) ^ (mag beta x)⌝⦄ := by
   intro h
   unfold abs_val
@@ -3916,7 +3919,7 @@ theorem mag_upper_bound (beta : Int) (x : ℝ) :
   have hx_pos : 0 < |x| := abs_pos.mpr hx_ne
   -- Abbreviation L := log |x| / log β
   set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
-  -- Evaluate `(mag beta x).run` under `x ≠ 0` (Coq semantics: floor+1)
+  -- Evaluate `(mag beta x)` under `x ≠ 0` (Coq semantics: floor+1)
   have hmag_run : (mag beta x) = Int.floor L + 1 := by simp [mag, hx_ne, L]
   -- log β > 0
   have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
@@ -3953,7 +3956,7 @@ theorem mag_upper_bound (beta : Int) (x : ℝ) :
   have hpow_pos : 0 < (beta : ℝ) ^ (Int.floor L + 1) := zpow_pos hbpos _
   have habs_lt : |x| < (beta : ℝ) ^ (Int.floor L + 1) :=
     (Real.log_lt_log_iff hx_pos hpow_pos).mp hlog_lt'
-  -- Conclude: (mag beta x).run = Int.floor L + 1
+  -- Conclude: (mag beta x) = Int.floor L + 1
   simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   have hmag : mag beta x = Int.floor L + 1 := hmag_run
   simp_rw [hmag]
@@ -3962,7 +3965,7 @@ theorem mag_upper_bound (beta : Int) (x : ℝ) :
 /-- If {lit}`1 < beta`, {lit}`0 ≤ e`, and {lit}`|x| < (beta : ℝ)^e`, then {lit}`mag beta x ≤ e`. -/
 theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 ≤ e ∧ |x| < ((beta : ℝ) ^ e)⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜m ≤ e⌝⦄ := by
   intro h
   rcases h with ⟨hβ, he_nonneg, hlt⟩
@@ -3978,7 +3981,7 @@ theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int) :
 /-- If {lean}`1 < beta` and {lean}`(beta : ℝ)^(e-1) < |x|`, then {lean}`e ≤ mag beta x`. -/
 theorem mag_gt_Zpower (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ (e - 1)) < |x|⌝⦄
-    mag beta x
+    pureId (mag beta x)
     ⦃⇓m => ⌜e ≤ m⌝⦄ := by
   intro h
   -- This matches `mag_ge_bpow` exactly.
@@ -3988,9 +3991,9 @@ theorem mag_gt_Zpower (beta : Int) (x : ℝ) (e : Int) :
 theorem mag_mult (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ y ≠ 0⌝⦄
     do
-      let a ← mag beta (x * y)
-      let b ← mag beta x
-      let c ← mag beta y
+      let a := mag beta (x * y)
+      let b := mag beta x
+      let c := mag beta y
       pure (a, b, c)
     ⦃⇓t => ⌜t.1 ≤ t.2.1 + t.2.2 ∧ t.2.1 + t.2.2 - 1 ≤ t.1⌝⦄ := by
   intro h
@@ -4044,9 +4047,9 @@ theorem mag_mult (beta : Int) (x y : ℝ) :
 theorem mag_plus (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ 0 < y ∧ y ≤ x⌝⦄
     do
-      let a ← mag beta (x + y)
-      let b ← mag beta x
-      let c ← mag beta y
+      let a := mag beta (x + y)
+      let b := mag beta x
+      let c := mag beta y
       pure (a, b, c)
     ⦃⇓t => ⌜t.2.1 ≤ t.1 ∧ t.1 ≤ t.2.1 + 1⌝⦄ := by
   intro h
@@ -4173,9 +4176,9 @@ theorem mag_plus (beta : Int) (x y : ℝ) :
 theorem mag_minus (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ 0 < y ∧ y < x⌝⦄
     do
-      let a ← mag beta (x - y)
-      let b ← mag beta x
-      let c ← mag beta y
+      let a := mag beta (x - y)
+      let b := mag beta x
+      let c := mag beta y
       pure (a, b, c)
     ⦃⇓t => ⌜t.1 ≤ t.2.1⌝⦄ := by
   intro h
@@ -4234,9 +4237,9 @@ theorem mag_minus (beta : Int) (x y : ℝ) :
 theorem mag_minus_lb (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ 0 < x ∧ 0 < y ∧ (mag beta y) ≤ (mag beta x) - 2⌝⦄
     do
-      let a ← mag beta (x - y)
-      let b ← mag beta x
-      let c ← mag beta y
+      let a := mag beta (x - y)
+      let b := mag beta x
+      let c := mag beta y
       pure (a, b, c)
     ⦃⇓t => ⌜t.2.1 - 1 ≤ t.1⌝⦄ := by
   intro h
@@ -4490,7 +4493,7 @@ theorem mag_minus_lb (beta : Int) (x y : ℝ) :
 -/
 theorem mag_plus_ge (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ (mag beta y) ≤ (mag beta x) - 2⌝⦄
-    mag beta (x + y)
+    pureId (mag beta (x + y))
     ⦃⇓m => ⌜(mag beta x) - 1 ≤ m⌝⦄ := by
   intro h
   rcases h with ⟨hβ, hx_ne, hmy_le⟩
@@ -4654,9 +4657,9 @@ theorem mag_plus_ge (beta : Int) (x y : ℝ) :
 theorem mag_div (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ y ≠ 0⌝⦄
     do
-      let a ← mag beta (x / y)
-      let b ← mag beta x
-      let c ← mag beta y
+      let a := mag beta (x / y)
+      let b := mag beta x
+      let c := mag beta y
       pure (a, b, c)
     ⦃⇓t => ⌜t.2.1 - t.2.2 ≤ t.1 ∧ t.1 ≤ t.2.1 - t.2.2 + 1⌝⦄ := by
   intro h
@@ -4729,8 +4732,8 @@ theorem mag_div (beta : Int) (x y : ℝ) :
 theorem mag_sqrt (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta ∧ 0 < x⌝⦄
     do
-      let a ← mag beta (Real.sqrt x)
-      let b ← mag beta x
+      let a := mag beta (Real.sqrt x)
+      let b := mag beta x
       pure (a, b)
     ⦃⇓p => ⌜p.1 = Int.floor ((Real.log x / Real.log (beta : ℝ)) / 2) + 1⌝⦄ := by
   intro h
@@ -4764,7 +4767,7 @@ theorem mag_sqrt (beta : Int) (x : ℝ) :
 -/
 theorem mag_1 (beta : Int) :
     ⦃⌜1 < beta⌝⦄
-    mag beta (1 : ℝ)
+    pureId (mag beta (1 : ℝ))
     ⦃⇓m => ⌜m = 1⌝⦄ := by
   intro _
   -- Direct computation from the definition of `mag`:
