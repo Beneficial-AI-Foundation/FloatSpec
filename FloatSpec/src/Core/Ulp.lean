@@ -573,7 +573,7 @@ private theorem succ_le_plus_ulp_theorem
   by_cases hx : 0 ≤ x
   · -- Nonnegative branch: succ x = x + ulp x
     have hrun : (succ beta fexp x) = x + (ulp beta fexp x) := by
-      simp [succ, hx, Id.run, bind, pure]
+      simp [succ, hx]
     exact le_of_eq hrun
   · -- Negative branch: write succ via pred_pos on -x and compare the subtracted term with ulp x
     have hxlt : x < 0 := lt_of_not_ge hx
@@ -586,31 +586,22 @@ private theorem succ_le_plus_ulp_theorem
     have hulp_neg_eq : (ulp beta fexp (-x)) = (ulp beta fexp x) := by
       -- Compute ulp on both sides directly at nonzero inputs and compare mags
       unfold ulp
-      simp [hx_ne, hx_ne', FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, hmag_eq, Id.run, bind, pure]
+      simp [hx_ne, hx_ne', FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, hmag_eq]
     -- Evaluate succ on the negative branch
     have hsucc_run : (succ beta fexp x) = - (pred_pos beta fexp (-x)) := by
-      simp [succ, hx, Id.run, bind, pure]
+      simp [succ, hx]
     -- Case analysis on the pred_pos guard at -x
     have hb_ge1R : (1 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast hβ.le
     by_cases hxeq : (-x) = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta (-x)) - 1)
     · -- Boundary case: pred_pos (-x) = -x - β^(fexp (m-1))
       set m : Int := (FloatSpec.Core.Raux.mag beta (-x)) with hm
-      have hmag_eq_x : (FloatSpec.Core.Raux.mag beta x) = m := by
-        calc
-          (FloatSpec.Core.Raux.mag beta x) = (FloatSpec.Core.Raux.mag beta (-x)) := by
-            simpa using hmag_eq.symm
-          _ = m := hm.symm
-      have hmx1 : (FloatSpec.Core.Raux.mag beta x) - 1 = m - 1 := by
-        simpa using congrArg (fun t : Int => t - 1) hmag_eq_x
-      have hmx1' : FloatSpec.Core.Raux.mag beta x - 1 = m - 1 := by
-        simpa [Id.run] using hmx1
       -- Hence succ x = x + β^(fexp (m-1))
       have hsucc_explicit : (succ beta fexp x) = x + (beta : ℝ) ^ (fexp (m - 1)) := by
         -- Cache magnitude in the convenient direction
         have hm' : (FloatSpec.Core.Raux.mag beta (-x)) = m := by simpa [hm]
         -- Combine the two evaluations step by step
         have hsucc_run' : (succ beta fexp x) = - (pred_pos beta fexp (-x)) := by
-          simp [succ, hx, Id.run, bind, pure]
+          simp [succ, hx]
         -- Align the exponent argument using cached magnitude
         have hm1 : (FloatSpec.Core.Raux.mag beta (-x)) - 1 = m - 1 := by
           simpa using congrArg (fun t : Int => t - 1) hm'
@@ -618,7 +609,7 @@ private theorem succ_le_plus_ulp_theorem
           unfold pred_pos
           rw [if_pos hxeq]
           -- Reduce the `Id` runner and rewrite the exponent index
-          simp (config := {contextual := false}) [Id.run, hm1, hmx1']
+          simp (config := {contextual := false}) [hm1]
         calc
           (succ beta fexp x)
               = - (pred_pos beta fexp (-x)) := by simpa [hsucc_run']
@@ -644,7 +635,7 @@ private theorem succ_le_plus_ulp_theorem
       -- Compute ulp (-x) at exponent fexp m and transport to ulp x
       have h_ulp_neg : (ulp beta fexp (-x)) = (beta : ℝ) ^ (fexp m) := by
         -- In the nonzero branch, ulp y = β^(cexp y) and cexp y = fexp (mag y)
-        simp [ulp, hx_ne', FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, hm, Id.run, bind, pure]
+        simp [ulp, hx_ne', FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, hm]
       have hle_to_ulp_neg : (beta : ℝ) ^ (fexp (m - 1)) ≤ (ulp beta fexp (-x)) := by
         calc
           (beta : ℝ) ^ (fexp (m - 1)) ≤ (beta : ℝ) ^ (fexp m) := hpow_le
@@ -664,7 +655,7 @@ private theorem succ_le_plus_ulp_theorem
         -- Evaluate the `else` branch explicitly
         unfold pred_pos
         rw [if_neg hxeq]
-        simp [Id.run]
+        simp
       -- Then succ x = x + ulp (-x) = x + ulp x
       have hsucc_explicit : (succ beta fexp x) = x + (ulp beta fexp x) := by
         calc
@@ -690,14 +681,12 @@ Lemma {coq}`succ_le_plus_ulp`:
 theorem succ_le_plus_ulp
     [Monotone_exp fexp]
     (x : ℝ) :
-    ⦃⌜1 < beta⌝⦄ do
-      let s ← succ beta fexp x
-      let u ← ulp beta fexp x
-      pure (s, u)
+    ⦃⌜1 < beta⌝⦄
+    (pure (succ beta fexp x, ulp beta fexp x) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 ≤ x + r.2⌝⦄ := by
   intro hβ; classical
   -- Reduce the monadic triple to a pure inequality and delegate to a local bridge theorem.
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   exact succ_le_plus_ulp_theorem (beta := beta) (fexp := fexp) (x := x) hβ
 
 /-!
