@@ -521,14 +521,12 @@ theorem succ_le_inv
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
     (h : (succ beta fexp x) ≤ (succ beta fexp y)) :
-    ⦃⌜1 < beta⌝⦄ do
-      let sx ← succ beta fexp x
-      let sy ← succ beta fexp y
-      pure (sx, sy)
+    ⦃⌜1 < beta⌝⦄
+    (pure (succ beta fexp x, succ beta fexp y) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜x ≤ r.2⌝⦄ := by
   intro hβ
   -- Reduce the Id-spec; it suffices to show x ≤ (succ y).run
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   -- From base positivity, x ≤ succ x and succ x ≤ succ y
   exact le_trans (succ_run_ge_self (beta := beta) (fexp := fexp) hβ x) h
 
@@ -543,14 +541,12 @@ theorem pred_lt
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
     (hxy : x < y) :
-    ⦃⌜1 < beta⌝⦄ do
-      let px ← pred beta fexp x
-      let py ← pred beta fexp y
-      pure (px, py)
+    ⦃⌜1 < beta⌝⦄
+    (pure (pred beta fexp x, pred beta fexp y) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 < y⌝⦄ := by
   intro hβ
   -- Reduce Id-specification; it suffices to show (pred x).run < y
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   exact lt_of_le_of_lt (pred_run_le_self (beta := beta) (fexp := fexp) hβ x) hxy
 
 /-- Coq (Ulp.v): Theorem {coq}`succ_lt`: {lit}`F x -> F y -> x < y -> succ x < succ y`. -/
@@ -559,14 +555,12 @@ theorem succ_lt
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
     (hxy : x < y) :
-    ⦃⌜1 < beta⌝⦄ do
-      let sx ← succ beta fexp x
-      let sy ← succ beta fexp y
-      pure (sx, sy)
+    ⦃⌜1 < beta⌝⦄
+    (pure (succ beta fexp x, succ beta fexp y) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜x < r.2⌝⦄ := by
   intro hβ
   -- Reduce the Id-spec; it suffices to show x < (succ y).run
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   exact lt_of_lt_of_le hxy (succ_run_ge_self (beta := beta) (fexp := fexp) hβ y)
 -- Local bridge theorem: successor is within one ULP above x (run form).
 private theorem succ_le_plus_ulp_theorem
