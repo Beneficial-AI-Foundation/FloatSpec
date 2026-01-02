@@ -43,7 +43,7 @@ def hasOnlyModifier (args : Array Syntax) : Bool :=
     match arg with
     | .atom _ val => val == "only"
     | .ident _ _ n _ => n == `only
-    | .node _ k children =>
+    | .node _ _ children =>
       -- Also check for only inside config nodes
       children.any fun c =>
         match c with

@@ -464,7 +464,7 @@ theorem cexp_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
 -/
 theorem cexp_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    cexp beta fexp (abs x)
+    (pure (cexp beta fexp (abs x)) : Id Int)
     ⦃⇓result => ⌜result = (cexp beta fexp x)⌝⦄ := by
   intro _
   unfold cexp
@@ -479,10 +479,8 @@ theorem cexp_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
 -/
 theorem canonical_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (generic_format beta fexp x)⌝⦄
-    do
-      let mantissa ← scaled_mantissa beta fexp x
-      let exp ← cexp beta fexp x
-      pure (FlocqFloat.mk (Ztrunc mantissa) exp : FlocqFloat beta)
+    (pure (FlocqFloat.mk (Ztrunc (scaled_mantissa beta fexp x))
+      (cexp beta fexp x) : FlocqFloat beta) : Id (FlocqFloat beta))
     ⦃⇓result => ⌜x = (F2R result) → canonical beta fexp result⌝⦄ := by
   intro _
   -- Unfold the computations to expose the constructed float `result`
@@ -502,10 +500,7 @@ theorem canonical_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
 -/
 theorem scaled_mantissa_mult_bpow (beta : Int) (fexp : Int → Int) (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    do
-      let sm ← scaled_mantissa beta fexp x
-      let ce ← cexp beta fexp x
-      pure (sm * (beta : ℝ) ^ ce)
+    (pure (scaled_mantissa beta fexp x * (beta : ℝ) ^ (cexp beta fexp x)) : Id ℝ)
     ⦃⇓result => ⌜result = x⌝⦄ := by
   intro hβ
   simp [scaled_mantissa, cexp]

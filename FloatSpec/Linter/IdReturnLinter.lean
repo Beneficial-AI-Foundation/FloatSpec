@@ -41,10 +41,10 @@ partial def containsId (stx : Syntax) : Bool :=
 
 /-- Find return-type syntax nodes containing {lean}`Id` in defs/abbrevs. -/
 partial def findIdReturnTypes (stx : Syntax) (acc : List Syntax) : List Syntax :=
-  if let `(command| def $_:ident $args* : $ty := $val) := stx then
+  if let `(command| def $_:ident $_* : $ty := $_) := stx then
     let acc' := if containsId ty.raw then ty.raw :: acc else acc
     acc'
-  else if let `(command| abbrev $_:ident $args* : $ty := $val) := stx then
+  else if let `(command| abbrev $_:ident $_* : $ty := $_) := stx then
     let acc' := if containsId ty.raw then ty.raw :: acc else acc
     acc'
   else
