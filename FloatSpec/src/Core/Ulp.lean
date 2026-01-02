@@ -1878,15 +1878,12 @@ private theorem ulp_ulp_0_theorem
       simpa [hu0_run] using hulpx_final
 
 theorem ulp_ulp_0 [Exp_not_FTZ fexp] :
-    ⦃⌜1 < beta⌝⦄ do
-      let u0 ← ulp beta fexp 0
-      let uu ← ulp beta fexp u0
-      let u0' ← ulp beta fexp 0
-      pure (uu, u0')
+    ⦃⌜1 < beta⌝⦄
+    (pure (ulp beta fexp (ulp beta fexp 0), ulp beta fexp 0) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
   intro hβ; classical
   -- Reduce the Hoare triple and apply the local bridge theorem
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   exact ulp_ulp_0_theorem (beta := beta) (fexp := fexp) hβ
 
 -- Moved below, after `id_p_ulp_le_bpow` and `succ_eq_pos`, to avoid forward references.
@@ -1960,12 +1957,11 @@ private theorem ulp_round_pos_theorem
 theorem ulp_round_pos
     [Exp_not_FTZ fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : 0 < x) :
-    ⦃⌜True⌝⦄ do
-      let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
-      let ur ← ulp beta fexp r
-      let ux ← ulp beta fexp x
-      let mx := (FloatSpec.Core.Raux.mag beta x)
-      pure (r, ur, ux, mx)
+    ⦃⌜True⌝⦄
+    (pure (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x,
+           ulp beta fexp (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x),
+           ulp beta fexp x,
+           (FloatSpec.Core.Raux.mag beta x)) : Id (ℝ × ℝ × ℝ × Int))
     ⦃⇓r => ⌜r.2.1 = r.2.2.1 ∨ r.1 = (beta : ℝ) ^ r.2.2.2⌝⦄ := by
   intro hβ; classical
   -- Local bridge capturing the Coq lemma shape for positive x:
@@ -1976,7 +1972,7 @@ theorem ulp_round_pos
       (ulp beta fexp r) = (ulp beta fexp x) ∨ r = (beta : ℝ) ^ e :=
     ulp_round_pos_theorem (beta := beta) (fexp := fexp) (rnd := rnd) x hx
   -- Reduce the Hoare triple on Id to the pure disjunction given by the bridge
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+  simpa [wp, PostCond.noThrow, pure]
     using hbridge
 
 -- (no where-block; theorem is declared at top-level just above)
