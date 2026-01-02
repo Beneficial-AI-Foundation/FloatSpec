@@ -5728,20 +5728,18 @@ theorem round_N_le_midp
         -- Basic positivity
         have hx_ne : x ≠ 0 := ne_of_gt hxpos
 
-        -- From mag definition: |x| ≤ β^e
+        -- From mag definition: |x| < β^e (strict upper bound)
         have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x)
         have habs_x : |x| = x := abs_of_pos hxpos
-        have hx_le_be : x ≤ b ^ e := by
+        have hx_lt_be : x < b ^ e := by
           have := hmag_upper ⟨hβ, hx_ne⟩
           simp only [wp, PostCond.noThrow, Id.run, bind, pure,
                      FloatSpec.Core.Raux.abs_val] at this
           simpa [habs_x] using this
 
-        -- Case split: x < β^e (interior) or x = β^e (boundary)
-        rcases (le_iff_lt_or_eq.mp hx_le_be) with hx_lt | hx_eq
-        · -- Interior case: x < β^e, use id_p_ulp_le_bpow
-          have hid := id_p_ulp_le_bpow (beta := beta) (fexp := fexp)
-            (x := x) (e := e) (hx := hxpos) (Fx := Fx) (hlt := hx_lt) hβ
+        -- Interior case: x < β^e, use id_p_ulp_le_bpow
+        have hid := id_p_ulp_le_bpow (beta := beta) (fexp := fexp)
+          (x := x) (e := e) (hx := hxpos) (Fx := Fx) (hlt := hx_lt_be) hβ
           simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hid
           -- succ = x + ulp(x) ≤ β^e
           have hsucc_le : (succ beta fexp x) ≤ b ^ e := by
@@ -5982,27 +5980,6 @@ theorem round_N_le_midp
 
               -- Contradiction: x > 0 but x = 0
               linarith
-        · -- Boundary case: x = β^e (x is a power of β)
-          -- NOTE: This case arises because our mag definition uses ceil(log|x|/log β),
-          -- giving mag(β^e) = e. Coq's mag uses strict upper bound, giving mag(β^e) = e+1.
-          -- This semantic difference means our ulp(β^e) = β^(fexp(e)) differs from
-          -- Coq's ulp(β^e) = β^(fexp(e+1)).
-          --
-          -- For fexp(e) = e (small regime):
-          --   succ = 2β^e = F2R(2, e), and by Valid_exp: fexp(e+1) ≤ e
-          --   So cexp(2β^e) = fexp(e+1) ≤ e, hence F(2β^e) by generic_format_F2R
-          --
-          -- For fexp(e) < e (large regime):
-          --   succ = β^e + β^(fexp(e)), mag(succ) = e+1, cexp(succ) = fexp(e+1)
-          --   The scaled mantissa β^(e-fexp(e+1)) + β^(fexp(e)-fexp(e+1)) may not
-          --   be an integer for typical formats like FLT where fexp(k) = k-p.
-          --   This requires either adjusting our mag definition to match Coq's,
-          --   or a custom proof path.
-          --
-          -- TODO: Resolve by either:
-          -- 1. Fix mag to use Coq's semantics: β^(e-1) ≤ |x| < β^e (strict upper bound)
-          -- 2. Prove this case handles our semantics correctly
-          sorry
     · -- Case x < 0: succ(x) = -pred_pos(-x)
       have hx_neg : x < 0 := lt_of_not_ge hx
       have hneg_pos : 0 < -x := neg_pos.mpr hx_neg
