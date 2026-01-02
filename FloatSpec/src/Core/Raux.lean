@@ -3314,7 +3314,7 @@ theorem mag_unique (beta : Int) (x : ℝ) (e : Int) :
     exact (lt_of_mul_lt_mul_right hmul_lt (le_of_lt hlogβ_pos))
   -- From L < e, floor(L) < e, so floor(L) ≤ e - 1
   have hfloor_lt : Int.floor L < e := Int.floor_lt.mpr hL_lt_e
-  have hfloor_le_em1 : Int.floor L ≤ e - 1 := by omega
+  have hfloor_le_em1 : Int.floor L ≤ e - 1 := by grind
   -- Lower bound: β^(e-1) ≤ |x| implies (e-1) ≤ L
   have hlog_le : Real.log ((beta : ℝ) ^ (e - 1)) ≤ Real.log (abs x) :=
     Real.log_le_log (zpow_pos hbposR (e - 1)) hlow
@@ -3332,7 +3332,7 @@ theorem mag_unique (beta : Int) (x : ℝ) (e : Int) :
   -- Combining: e - 1 ≤ floor(L) ≤ e - 1, so floor(L) = e - 1
   have hfloor_eq : Int.floor L = e - 1 := le_antisymm hfloor_le_em1 h_em1_le_floor
   -- Therefore floor(L) + 1 = e
-  have hfloor_add1_eq : Int.floor L + 1 = e := by omega
+  have hfloor_add1_eq : Int.floor L + 1 = e := by grind
   -- Finalize: discharge the conditional (x ≠ 0)
   simp only [hx0, ite_false, wp, PostCond.noThrow, Id.run, bind, pure]
   exact hfloor_add1_eq
@@ -3474,7 +3474,7 @@ theorem mag_le (beta : Int) (x y : ℝ) :
 
   -- Floor is monotone, so floor+1 is also monotone
   have hfloor : Int.floor Lx ≤ Int.floor Ly := Int.floor_mono hLx_le_Ly
-  have hfloor_add1 : Int.floor Lx + 1 ≤ Int.floor Ly + 1 := by omega
+  have hfloor_add1 : Int.floor Lx + 1 ≤ Int.floor Ly + 1 := by grind
 
   -- Now collapse the pair produced by `pure` and its projections.
   -- This makes the goal defeq to `⌊Lx⌋ + 1 ≤ ⌊Ly⌋ + 1`.
@@ -3665,7 +3665,7 @@ theorem mag_gt_bpow (beta : Int) (x : ℝ) (e : Int) :
     have h : ((e - 1 : Int) : ℝ) < L := by simpa using hlt_L
     exact Int.le_floor.mpr (le_of_lt h)
   -- Therefore e ≤ floor(L) + 1
-  have hfinal : e ≤ Int.floor L + 1 := by omega
+  have hfinal : e ≤ Int.floor L + 1 := by grind
   simpa [wp, PostCond.noThrow, Id.run, pure, mag, hx_ne, L] using hfinal
 
 /-- Combined lower bound: if bpow (e - 1) < |x| then e ≤ mag x -/
@@ -3781,7 +3781,7 @@ theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int) :
   have h_em1_le_L : (e - 1 : ℝ) ≤ L := by
     have hstep : e - 1 ≤ Int.floor L := by
       have : e ≤ Int.floor L + 1 := hmag_run ▸ he_le
-      omega
+      grind
     have hfloor_le_L : (Int.floor L : ℝ) ≤ L := Int.floor_le L
     calc (e - 1 : ℝ) ≤ Int.floor L := by exact_mod_cast hstep
       _ ≤ L := hfloor_le_L
@@ -4428,7 +4428,7 @@ theorem mag_plus_ge (beta : Int) (x y : ℝ) :
       Id.run, pure]
     show (Int.floor (Real.log |x| / Real.log ↑beta) + 1 - 1 ≤
         Int.floor (Real.log |x| / Real.log ↑beta) + 1)
-    omega
+    grind
 
   -- y ≠ 0 case
   have hx_abs_pos : 0 < |x| := abs_pos.mpr hx_ne
@@ -4453,7 +4453,7 @@ theorem mag_plus_ge (beta : Int) (x y : ℝ) :
   have hx_lb : (beta : ℝ) ^ (mx - 1) ≤ |x| := by
     have hfloor_le : (Int.floor (Real.log |x| / Real.log (beta : ℝ)) : ℝ) ≤
         Real.log |x| / Real.log (beta : ℝ) := Int.floor_le _
-    have hmul : (mx - 1 : ℤ) = Int.floor (Real.log |x| / Real.log (beta : ℝ)) := by omega
+    have hmul : (mx - 1 : ℤ) = Int.floor (Real.log |x| / Real.log (beta : ℝ)) := by grind
     have hlog_ge : (mx - 1 : ℤ) * Real.log (beta : ℝ) ≤ Real.log |x| := by
       rw [hmul]
       have := mul_le_mul_of_nonneg_right hfloor_le (le_of_lt hlogβ_pos)
@@ -4494,7 +4494,7 @@ theorem mag_plus_ge (beta : Int) (x y : ℝ) :
   -- |y| < |x| since β^(mx-2) < β^(mx-1) ≤ |x|
   have hy_lt_x : |y| < |x| := by
     have hpow_lt : (beta : ℝ) ^ (mx - 2) < (beta : ℝ) ^ (mx - 1) := by
-      have hlt : mx - 2 < mx - 1 := by omega
+      have hlt : mx - 2 < mx - 1 := by grind
       exact zpow_lt_zpow_right₀ hβR hlt
     calc |y| < (beta : ℝ) ^ (mx - 2) := hy_lt_pow
       _ < (beta : ℝ) ^ (mx - 1) := hpow_lt
@@ -4563,7 +4563,7 @@ theorem mag_plus_ge (beta : Int) (x y : ℝ) :
     have hfloor_lb : Int.floor (Real.log |x + y| / Real.log (beta : ℝ)) ≥ mx - 2 := by
       exact Int.le_floor.mpr hdiv_lb
     simp only [hmxy_def]
-    omega
+    grind
 
   -- Prove the WP goal
   simp only [wp, PostCond.noThrow, PredTrans.pure, mag, hxy_ne, ite_false, Id.run, pure,
