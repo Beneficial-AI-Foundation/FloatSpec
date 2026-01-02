@@ -331,10 +331,10 @@ private lemma pred_pos_run_lt_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
     have hpos : 0 < (ulp beta fexp x) := by
       -- Unfold ulp and use positivity of β
       unfold ulp
-      simp [hx_ne, Id.run, bind, pure]
+      simp [hx_ne]
       exact zpow_pos hbpos _
     have hlt : x - (ulp beta fexp x) < x := sub_lt_self _ hpos
-    simpa [pred_pos, if_neg hxeq, Id.run, bind, pure] using hlt
+    simpa [pred_pos, if_neg hxeq] using hlt
 
 private lemma pred_run_le_self (hβ : 1 < beta) (x : ℝ) :
     (pred beta fexp x) ≤ x := by
@@ -348,7 +348,7 @@ private lemma pred_run_le_self (hβ : 1 < beta) (x : ℝ) :
       -- Evaluate the monadic code and normalize arithmetic
       -- The final arithmetic normalization uses commutativity of addition
       -- Normalize arithmetic without relying on nonstandard lemmas
-      simp [h0, Id.run, bind, pure, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+      simp [h0, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
     -- Now apply sub_le_self with the nonnegativity of ulp (-x)
     have hnonneg := ulp_run_nonneg (beta := beta) (fexp := fexp) hβ (-x)
     have hle : x - (ulp beta fexp (-x)) ≤ x := sub_le_self _ hnonneg
@@ -362,7 +362,7 @@ private lemma pred_run_le_self (hβ : 1 < beta) (x : ℝ) :
       have : 0 < -(-x) := neg_pos.mpr hxneg
       simpa using this
     -- Evaluate pred in this branch and apply the auxiliary bound
-    simp [pred, succ, h0, Id.run, bind, pure]
+    simp [pred, succ, h0]
     exact pred_pos_run_le_self (beta := beta) (fexp := fexp) hβ x hxpos
 
 -- Strict version: on nonzero inputs, `pred` strictly decreases the value.
@@ -373,14 +373,14 @@ private lemma pred_run_lt_self (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
   · -- Then `pred x = x - ulp (-x)` and ulp (-x) is strictly positive (since x ≠ 0)
     have hpred_run : (pred beta fexp x) = x - (ulp beta fexp (-x)) := by
       unfold pred succ
-      simp [h0, Id.run, bind, pure, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+      simp [h0, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
     -- Positivity of ulp at nonzero argument requires `1 < β`
     have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
     have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
     have hx_ne' : -x ≠ 0 := by simpa using (neg_ne_zero.mpr hx)
     have hpos : 0 < (ulp beta fexp (-x)) := by
       unfold ulp
-      simp [hx_ne', Id.run, bind, pure]
+      simp [hx_ne']
       exact zpow_pos hbpos _
     have hlt : x - (ulp beta fexp (-x)) < x := sub_lt_self _ hpos
     calc
@@ -392,7 +392,7 @@ private lemma pred_run_lt_self (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
       simpa using (neg_pos.mpr hxneg)
     -- Evaluate `pred` in this branch and apply strict inequality on `pred_pos`
     have : (pred beta fexp x) = (pred_pos beta fexp x) := by
-      simp [pred, succ, h0, Id.run, bind, pure]
+      simp [pred, succ, h0]
     have hlt := pred_pos_run_lt_self (beta := beta) (fexp := fexp) hβ x hxpos
     calc
       (pred beta fexp x) = (pred_pos beta fexp x) := this
@@ -403,14 +403,12 @@ theorem pred_le
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
     (hxy : x ≤ y) :
-    ⦃⌜1 < beta⌝⦄ do
-      let px ← pred beta fexp x
-      let py ← pred beta fexp y
-      pure (px, py)
+    ⦃⌜1 < beta⌝⦄
+    (pure (pred beta fexp x, pred beta fexp y) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 ≤ y⌝⦄ := by
   intro hβ
   -- Reduce the Id-specification; we only need (pred x).run ≤ y
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   exact le_trans (pred_run_le_self (beta := beta) (fexp := fexp) hβ x) hxy
 
 /-- A basic growth property of {name}`succ`: {lit}`y ≤ succ y` (run form). -/
@@ -425,13 +423,13 @@ private lemma succ_run_ge_self (hβ : 1 < beta) (y : ℝ) :
       have : y + 0 ≤ y + (ulp beta fexp y) := by
         simpa using (add_le_add_left hnonneg y)
       simpa using this
-    simpa [succ, hy, Id.run, bind, pure] using this
+    simpa [succ, hy] using this
   · -- succ y = - pred_pos (-y) and (pred_pos (-y)).run ≤ -y
     have hypos : 0 < -y := by
       have : y < 0 := lt_of_not_ge hy
       simpa using (neg_pos.mpr this)
     -- Goal reduces to `y ≤ -(pred_pos (-y)).run`
-    simp [succ, hy, Id.run, bind, pure]
+    simp [succ, hy]
     -- From `(pred_pos (-y)).run ≤ -y`, negate both sides
     have hle : (pred_pos beta fexp (-y)) ≤ -y :=
       pred_pos_run_le_self (beta := beta) (fexp := fexp) hβ (-y) hypos
@@ -450,12 +448,12 @@ private lemma succ_run_gt_self (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
       have : x + 0 < x + (ulp beta fexp x) := by
         simpa using (add_lt_add_left hpos x)
       simpa using this
-    simpa [succ, h0, Id.run, bind, pure] using hlt
+    simpa [succ, h0] using hlt
   · -- Negative branch: succ x = -pred_pos(-x), and pred_pos(-x) < -x since -x > 0
     have hxneg : x < 0 := lt_of_not_ge h0
     have hypos : 0 < -x := by simpa using (neg_pos.mpr hxneg)
     -- Goal: x < -(pred_pos (-x)).run, equivalently (pred_pos (-x)).run < -x
-    simp [succ, h0, Id.run, bind, pure]
+    simp [succ, h0]
     -- Use strict decrease: pred_pos (-x) < -x
     have hlt : (pred_pos beta fexp (-x)) < -x :=
       pred_pos_run_lt_self (beta := beta) (fexp := fexp) hβ (-x) hypos
@@ -473,14 +471,12 @@ theorem succ_le
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
     (hxy : x ≤ y) :
-    ⦃⌜1 < beta⌝⦄ do
-      let sx ← succ beta fexp x
-      let sy ← succ beta fexp y
-      pure (sx, sy)
+    ⦃⌜1 < beta⌝⦄
+    (pure (succ beta fexp x, succ beta fexp y) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜x ≤ r.2⌝⦄ := by
   intro hβ
   -- Reduce the Id-spec; it suffices to show x ≤ (succ y).run
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   exact le_trans hxy (succ_run_ge_self (beta := beta) (fexp := fexp) hβ y)
 
 /-- Coq (Ulp.v): Theorem {coq}`pred_le_inv`: {lit}`F x -> F y -> pred x <= pred y -> x <= y`. -/
@@ -489,17 +485,16 @@ theorem pred_le_inv
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
     (h : (pred beta fexp x) ≤ (pred beta fexp y)) :
-    ⦃⌜1 < beta⌝⦄ do
-      let px ← pred beta fexp x
-      pure px
+    ⦃⌜1 < beta⌝⦄
+    (pure (pred beta fexp x) : Id ℝ)
     ⦃⇓_ => ⌜(pred beta fexp x) ≤ y⌝⦄ := by
   intro hβ
   -- Reduce the Id-specification to a pure inequality goal
-  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [wp, PostCond.noThrow, pure]
   -- Rewrite the hypothesis through the definition of
   have hneg :
       - (succ beta fexp (-x)) ≤ - (succ beta fexp (-y)) := by
-    simpa [pred, Id.run, bind, pure] using h
+    simpa [pred] using h
   -- Cancel the negations to flip the inequality
   have hsucc :
       (succ beta fexp (-y)) ≤ (succ beta fexp (-x)) := by
@@ -513,7 +508,7 @@ theorem pred_le_inv
   have hfinal : - (succ beta fexp (-x)) ≤ y := by
     simpa using (neg_le_neg hy_le_succx)
   -- Rewrite back in terms of
-  simpa [pred, Id.run, bind, pure] using hfinal
+  simpa [pred] using hfinal
 
 /-- Coq (Ulp.v): Theorem {coq}`succ_le_inv`: {lit}`F x -> F y -> succ x <= succ y -> x <= y`.
 
