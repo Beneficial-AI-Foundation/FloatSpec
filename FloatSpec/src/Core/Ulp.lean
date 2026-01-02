@@ -20,6 +20,7 @@ Based on flocq/src/Core/Ulp.v
 -/
 
 import Lean
+import FloatSpecRoles
 import FloatSpec.src.Core.Zaux
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.SimprocRaux

@@ -20,6 +20,7 @@ Based on flocq/src/Core/Round_NE.v
 -/
 
 import FloatSpec.src.Core.Zaux
+import FloatSpecRoles
 import FloatSpec.src.Core.Raux
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Round_pred
