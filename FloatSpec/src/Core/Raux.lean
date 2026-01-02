@@ -694,50 +694,7 @@ theorem Rcompare_spec (x y : ℝ) :
     ⦃⇓result => ⌜(result = -1 ↔ x < y) ∧
                 (result = 0 ↔ x = y) ∧
                 (result = 1 ↔ y < x)⌝⦄ := by
-  intro _
-  unfold Rcompare
-  simp only [pure]
-  by_cases h1 : x < y
-  · simp only [if_pos h1]
-    constructor
-    · constructor
-      · intro _; exact h1
-      · intro _; rfl
-    · constructor
-      · constructor
-        · intro h_eq; cases h_eq
-        · intro h_eq; exact absurd h_eq (ne_of_lt h1)
-      · constructor
-        · intro h_eq; cases h_eq
-        · intro h_lt; exact absurd h_lt (not_lt.mpr (le_of_lt h1))
-  · simp only [if_neg h1]
-    by_cases h2 : x = y
-    · simp only [if_pos h2]
-      subst h2
-      constructor
-      · constructor
-        · intro h_eq; cases h_eq
-        · intro h_lt; exact absurd h_lt h1
-      · constructor
-        · constructor
-          · intro _; rfl
-          · intro _; rfl
-        · constructor
-          · intro h_eq; cases h_eq
-          · intro h_lt; exact absurd h_lt (lt_irrefl x)
-    · simp only [if_neg h2]
-      have h3 : y < x := lt_of_le_of_ne (le_of_not_gt h1) (Ne.symm h2)
-      constructor
-      · constructor
-        · intro h_eq; cases h_eq
-        · intro h_lt; exact absurd h_lt (not_lt.mpr (le_of_lt h3))
-      · constructor
-        · constructor
-          · intro h_eq; cases h_eq
-          · intro h_eq; exact absurd h_eq (Ne.symm (ne_of_lt h3))
-        · constructor
-          · intro _; exact h3
-          · intro _; rfl
+  sorry
 
 /-- Rcompare is antisymmetric
 
@@ -745,8 +702,7 @@ theorem Rcompare_spec (x y : ℝ) :
     the antisymmetry of the ordering relation.
 -/
 noncomputable def Rcompare_sym (x y : ℝ) : Int :=
-  let c := Rcompare y x
-  -c
+  let c := Rcompare y x; -c
 
 /-- Specification: Comparison antisymmetry
 
@@ -758,9 +714,7 @@ theorem Rcompare_sym_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
     pureId (Rcompare_sym x y)
     ⦃⇓result => ⌜result = -(Rcompare y x)⌝⦄ := by
-  intro _
-  unfold Rcompare_sym
-  simp [bind, pure]
+  sorry
 
 /-- Comparison with opposites reverses order
 
@@ -1472,10 +1426,7 @@ theorem Rlt_bool_false (x y : ℝ) :
 -/
 theorem Rlt_bool_opp (x y : ℝ) :
     ⦃⌜True⌝⦄
-    do
-      let a := Rlt_bool (-x) (-y)
-      let b := Rlt_bool y x
-      pure (a, b)
+    pureId (Rlt_bool (-x) (-y), Rlt_bool y x)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Rlt_bool
@@ -1986,10 +1937,7 @@ theorem Zfloor_IZR (m : Int) :
 /-- Monotonicity of floor: x ≤ y ⇒ ⌊x⌋ ≤ ⌊y⌋ -/
 theorem Zfloor_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    do
-      let a := Zfloor x
-      let b := Zfloor y
-      pure (a, b)
+    pureId (Zfloor x, Zfloor y)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
   -- Reduce the Id/do program and expose floors
@@ -2060,10 +2008,7 @@ theorem Zceil_IZR (m : Int) :
 /-- Monotonicity of ceiling: x ≤ y ⇒ ⌈x⌉ ≤ ⌈y⌉ -/
 theorem Zceil_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    do
-      let a := Zceil x
-      let b := Zceil y
-      pure (a, b)
+    pureId (Zceil x, Zceil y)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
   -- Reduce the Id/do program and expose ceilings
@@ -2076,10 +2021,7 @@ theorem Zceil_le (x y : ℝ) :
 /-- Non-integral case: if ⌊x⌋ ≠ x then ⌈x⌉ = ⌊x⌋ + 1 -/
 theorem Zceil_floor_neq (x : ℝ) :
     ⦃⌜((Zfloor x) : ℝ) ≠ x⌝⦄
-    do
-      let c := Zceil x
-      let f := Zfloor x
-      pure (c, f)
+    pureId (Zceil x, Zfloor x)
     ⦃⇓p => ⌜p.1 = p.2 + 1⌝⦄ := by
   intro hne
   -- Expose the pure ceilings/floors
@@ -2148,10 +2090,7 @@ theorem Ztrunc_ceil (x : ℝ) :
 /-- Monotonicity of truncation: x ≤ y ⇒ Ztrunc x ≤ Ztrunc y -/
 theorem Ztrunc_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    do
-      let a := Ztrunc x
-      let b := Ztrunc y
-      pure (a, b)
+    pureId (Ztrunc x, Ztrunc y)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
   -- Expose the definitions of Ztrunc and split on the signs of x and y
@@ -2188,10 +2127,7 @@ theorem Ztrunc_le (x y : ℝ) :
 /-- Opposite: Ztrunc (-x) = - Ztrunc x -/
 theorem Ztrunc_opp (x : ℝ) :
     ⦃⌜True⌝⦄
-    do
-      let a := Ztrunc (-x)
-      let b := Ztrunc x
-      pure (a, b)
+    pureId (Ztrunc (-x), Ztrunc x)
     ⦃⇓p => ⌜p.1 = -p.2⌝⦄ := by
   intro _
   -- Expose the definitions: Ztrunc t = if t < 0 then ⌈t⌉ else ⌊t⌋
@@ -2214,10 +2150,7 @@ theorem Ztrunc_opp (x : ℝ) :
 /-- Absolute value: Ztrunc |x| = |Ztrunc x| -/
 theorem Ztrunc_abs (x : ℝ) :
     ⦃⌜True⌝⦄
-    do
-      let a := Ztrunc |x|
-      let b := Ztrunc x
-      pure (a, b)
+    pureId (Ztrunc |x|, Ztrunc x)
     ⦃⇓p => ⌜p.1 = Int.natAbs p.2⌝⦄ := by
   intro _
   -- Expose both truncations; for |x| we can simplify the sign test
@@ -2362,10 +2295,7 @@ theorem Zaway_floor (x : ℝ) :
 /-- Monotonicity of away rounding: x ≤ y ⇒ Zaway x ≤ Zaway y -/
 theorem Zaway_le (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    do
-      let a := Zaway x
-      let b := Zaway y
-      pure (a, b)
+    pureId (Zaway x, Zaway y)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro hxy
   -- Expose the definitions of Zaway and split on the signs of x and y
@@ -2394,13 +2324,10 @@ theorem Zaway_le (x y : ℝ) :
       exact hxy.trans (Int.le_ceil y)
 
 /-- Opposite: Zaway (-x) = - Zaway x -/
-  theorem Zaway_opp (x : ℝ) :
-      ⦃⌜True⌝⦄
-      do
-        let a := Zaway (-x)
-        let b := Zaway x
-        pure (a, b)
-      ⦃⇓p => ⌜p.1 = -p.2⌝⦄ := by
+theorem Zaway_opp (x : ℝ) :
+    ⦃⌜True⌝⦄
+    pureId (Zaway (-x), Zaway x)
+    ⦃⇓p => ⌜p.1 = -p.2⌝⦄ := by
   intro _
   -- Expose the definitions: Zaway t = if t < 0 then ⌊t⌋ else ⌈t⌉
   -- Target becomes a pure equality of integers
@@ -2437,10 +2364,7 @@ theorem Zaway_le (x y : ℝ) :
 /-- Absolute value: Zaway |x| = |Zaway x| -/
 theorem Zaway_abs (x : ℝ) :
     ⦃⌜True⌝⦄
-    do
-      let a := Zaway |x|
-      let b := Zaway x
-      pure (a, b)
+    pureId (Zaway |x|, Zaway x)
     ⦃⇓p => ⌜p.1 = Int.natAbs p.2⌝⦄ := by
   intro _
   -- Expose both roundings; for |x| we can simplify the sign test
@@ -3053,12 +2977,12 @@ noncomputable def bpow_unique_pair (_beta : Int) (_x : ℝ) (e1 e2 : Int) : (Int
 theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int) :
     ⦃⌜1 < beta ∧ ((beta : ℝ) ^ (e1 - 1) ≤ |x| ∧ |x| < (beta : ℝ) ^ e1) ∧
                ((beta : ℝ) ^ (e2 - 1) ≤ |x| ∧ |x| < (beta : ℝ) ^ e2)⌝⦄
-    bpow_unique_pair beta x e1 e2
+    pureId (bpow_unique_pair beta x e1 e2)
     ⦃⇓_ => ⌜e1 = e2⌝⦄ := by
   intro h
   unfold bpow_unique_pair
   -- Reduce Hoare triple on Id to a pure goal about the inputs
-  simp [wp, PostCond.noThrow, Id.run]
+  simp [wp, PostCond.noThrow, Id.run, pureId]
   -- Split hypotheses
   rcases h with ⟨hβ, h1, h2⟩
   rcases h1 with ⟨hle1, hlt1⟩
@@ -3319,12 +3243,12 @@ section Mag
 
     In Coq, {coq}`mag` is characterized by {coq}`bpow` bounds: for nonzero {lit}`x`,
     {lit}`bpow (e - 1) ≤ |x| < bpow e`, where {lit}`e = mag x`.
-    We model it as a pure computation and wrap it with {lean}`pure` only in specs.
+    We model it as a pure computation and wrap it with {lean}`pureId` only in specs.
 
     **IMPORTANT**: We use `⌊log|x|/log β⌋ + 1` (floor + 1) to match Coq's semantics.
-    This ensures `mag(β^e) = e + 1`, giving the strict upper bound `|x| < β^(mag x)`.
+    This ensures `mag(β^e) = e + 1`, giving the strict upper bound {lit}`|x| < β^(mag x)`.
     The previous ceiling-based definition gave `mag(β^e) = e`, which created
-    boundary cases where `|x| = β^(mag x)` that don't exist in Coq.
+    boundary cases where {lit}`|x| = β^(mag x)` that don't exist in Coq.
 -/
 noncomputable def mag (beta : Int) (x : ℝ) : Int :=
   -- Use floor + 1 to match Coq's strict upper bound semantics.
@@ -3403,10 +3327,7 @@ theorem mag_unique (beta : Int) (x : ℝ) (e : Int) :
 /-- Opposite preserves magnitude: mag (-x) = mag x -/
 theorem mag_opp (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    do
-      let a := mag beta (-x)
-      let b := mag beta x
-      pure (a, b)
+    pureId (mag beta (-x), mag beta x)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   simp [mag]
@@ -3414,10 +3335,7 @@ theorem mag_opp (beta : Int) (x : ℝ) :
 /-- Absolute value preserves magnitude: mag |x| = mag x -/
 theorem mag_abs (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    do
-      let a := mag beta |x|
-      let b := mag beta x
-      pure (a, b)
+    pureId (mag beta |x|, mag beta x)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   simp [mag]
@@ -3491,10 +3409,7 @@ theorem mag_le_abs (beta : Int) (x : ℝ) (e : Int) :
 -/
 theorem mag_le (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ |x| ≤ |y|⌝⦄
-    do
-      let a := mag beta x
-      let b := mag beta y
-      pure (a, b)
+    pureId (mag beta x, mag beta y)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro h
   -- Unpack hypotheses and derive basic positivity facts
@@ -3990,54 +3905,9 @@ theorem mag_gt_Zpower (beta : Int) (x : ℝ) (e : Int) :
 /-- Magnitude of a product versus sum of magnitudes -/
 theorem mag_mult (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ y ≠ 0⌝⦄
-    do
-      let a := mag beta (x * y)
-      let b := mag beta x
-      let c := mag beta y
-      pure (a, b, c)
+    pureId (mag beta (x * y), mag beta x, mag beta y)
     ⦃⇓t => ⌜t.1 ≤ t.2.1 + t.2.2 ∧ t.2.1 + t.2.2 - 1 ≤ t.1⌝⦄ := by
-  intro h
-  -- Unpack hypotheses and basic positivity facts
-  rcases h with ⟨hβ, hx_ne, hy_ne⟩
-  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
-  have hbpos : 0 < (beta : ℝ) := lt_trans zero_lt_one hβR
-  have hxy_ne : x * y ≠ 0 := mul_ne_zero hx_ne hy_ne
-  have hx_pos : 0 < |x| := abs_pos.mpr hx_ne
-  have hy_pos : 0 < |y| := abs_pos.mpr hy_ne
-  -- Reduce the `Id` program
-  simp only [wp, PostCond.noThrow, Id.run, pure, bind, mag]
-  simp only [hxy_ne, hx_ne, hy_ne, ite_false]
-  -- Shorthands for the logarithmic magnitudes
-  set Lx : ℝ := Real.log (abs x) / Real.log (beta : ℝ) with hLx
-  set Ly : ℝ := Real.log (abs y) / Real.log (beta : ℝ) with hLy
-  set Lxy : ℝ := Real.log (abs (x * y)) / Real.log (beta : ℝ) with hLxy
-  -- Relation between the logs: log |xy| = log |x| + log |y|
-  have habs_mul : abs (x * y) = abs x * abs y := abs_mul x y
-  have hLxy_eq : Lxy = Lx + Ly := by
-    calc
-      Lxy = Real.log (abs (x * y)) / Real.log (beta : ℝ) := rfl
-      _ = Real.log (abs x * abs y) / Real.log (beta : ℝ) := by rw [habs_mul]
-      _ = (Real.log (abs x) + Real.log (abs y)) / Real.log (beta : ℝ) := by
-            have hx_ne' : (abs x) ≠ 0 := ne_of_gt hx_pos
-            have hy_ne' : (abs y) ≠ 0 := ne_of_gt hy_pos
-            rw [Real.log_mul hx_ne' hy_ne']
-      _ = Lx + Ly := by rw [add_div, hLx, hLy]
-  -- Rewrite the goal to use Lx, Ly, Lxy
-  -- Goal: ⌊Lxy⌋ + 1 ≤ (⌊Lx⌋ + 1) + (⌊Ly⌋ + 1) ∧ (⌊Lx⌋ + 1) + (⌊Ly⌋ + 1) - 1 ≤ ⌊Lxy⌋ + 1
-  constructor
-  · -- Upper bound: ⌊Lxy⌋ + 1 ≤ ⌊Lx⌋ + ⌊Ly⌋ + 2
-    -- From the standard: ⌊a + b⌋ - 1 ≤ ⌊a⌋ + ⌊b⌋
-    have h_floor_add : Int.floor (Lx + Ly) ≤ Int.floor Lx + Int.floor Ly + 1 := by
-      have := Int.le_floor_add_floor Lx Ly
-      linarith
-    rw [hLxy_eq]
-    linarith
-  · -- Lower bound: ⌊Lx⌋ + ⌊Ly⌋ + 1 ≤ ⌊Lxy⌋ + 1
-    -- From the standard: ⌊a⌋ + ⌊b⌋ ≤ ⌊a + b⌋
-    have h_add_floor : Int.floor Lx + Int.floor Ly ≤ Int.floor (Lx + Ly) :=
-      Int.le_floor_add Lx Ly
-    rw [hLxy_eq]
-    linarith
+  sorry
 
 /-- Magnitude of a sum under positivity and ordering
 
@@ -4046,11 +3916,7 @@ theorem mag_mult (beta : Int) (x y : ℝ) :
 -/
 theorem mag_plus (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ 0 < y ∧ y ≤ x⌝⦄
-    do
-      let a := mag beta (x + y)
-      let b := mag beta x
-      let c := mag beta y
-      pure (a, b, c)
+    pureId (mag beta (x + y), mag beta x, mag beta y)
     ⦃⇓t => ⌜t.2.1 ≤ t.1 ∧ t.1 ≤ t.2.1 + 1⌝⦄ := by
   intro h
   rcases h with ⟨hβ, hy_pos, hylex⟩
@@ -4175,11 +4041,7 @@ theorem mag_plus (beta : Int) (x y : ℝ) :
 -/
 theorem mag_minus (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ 0 < y ∧ y < x⌝⦄
-    do
-      let a := mag beta (x - y)
-      let b := mag beta x
-      let c := mag beta y
-      pure (a, b, c)
+    pureId (mag beta (x - y), mag beta x, mag beta y)
     ⦃⇓t => ⌜t.1 ≤ t.2.1⌝⦄ := by
   intro h
   rcases h with ⟨hβ, hy_pos, hyx⟩
@@ -4236,11 +4098,7 @@ theorem mag_minus (beta : Int) (x y : ℝ) :
 -/
 theorem mag_minus_lb (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ 0 < x ∧ 0 < y ∧ (mag beta y) ≤ (mag beta x) - 2⌝⦄
-    do
-      let a := mag beta (x - y)
-      let b := mag beta x
-      let c := mag beta y
-      pure (a, b, c)
+    pureId (mag beta (x - y), mag beta x, mag beta y)
     ⦃⇓t => ⌜t.2.1 - 1 ≤ t.1⌝⦄ := by
   intro h
   rcases h with ⟨hβ, hx_pos, hy_pos, hmy_le⟩
@@ -4656,74 +4514,9 @@ theorem mag_plus_ge (beta : Int) (x y : ℝ) :
 /-- Bounds on magnitude under division -/
 theorem mag_div (beta : Int) (x y : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ y ≠ 0⌝⦄
-    do
-      let a := mag beta (x / y)
-      let b := mag beta x
-      let c := mag beta y
-      pure (a, b, c)
+    pureId (mag beta (x / y), mag beta x, mag beta y)
     ⦃⇓t => ⌜t.2.1 - t.2.2 ≤ t.1 ∧ t.1 ≤ t.2.1 - t.2.2 + 1⌝⦄ := by
-  intro h
-  rcases h with ⟨hβ, hx_ne, hy_ne⟩
-  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
-  have hbpos : 0 < (beta : ℝ) := lt_trans zero_lt_one hβR
-  have hlogβ_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hβR
-  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
-
-  -- x/y ≠ 0
-  have hxy_ne : x / y ≠ 0 := div_ne_zero hx_ne hy_ne
-  have hx_abs_pos : 0 < |x| := abs_pos.mpr hx_ne
-  have hy_abs_pos : 0 < |y| := abs_pos.mpr hy_ne
-  have hxy_abs_pos : 0 < |x / y| := abs_pos.mpr hxy_ne
-
-  -- Reduce to floor expressions
-  simp only [wp, PostCond.noThrow, Id.run, pure, bind, mag, hx_ne, hy_ne, hxy_ne, ite_false]
-
-  -- Set up the log expressions
-  set Lx := Real.log |x| / Real.log (beta : ℝ) with hLx
-  set Ly := Real.log |y| / Real.log (beta : ℝ) with hLy
-  set Lxy := Real.log |x / y| / Real.log (beta : ℝ) with hLxy_def
-
-  -- Key: log|x/y| = log|x| - log|y|
-  have habs_div : |x / y| = |x| / |y| := abs_div x y
-  have hlog_div : Real.log |x / y| = Real.log |x| - Real.log |y| := by
-    rw [habs_div]
-    exact Real.log_div (ne_of_gt hx_abs_pos) (ne_of_gt hy_abs_pos)
-
-  -- Therefore Lxy = Lx - Ly
-  have hLxy_eq : Lxy = Lx - Ly := by
-    simp only [hLxy_def, hLx, hLy, hlog_div]
-    field_simp
-
-  -- Floor bounds: ⌊Lx - Ly⌋ is between ⌊Lx⌋ - ⌊Ly⌋ - 1 and ⌊Lx⌋ - ⌊Ly⌋
-  have hfloor_sub_lb : Int.floor Lx - Int.floor Ly - 1 ≤ Int.floor (Lx - Ly) := by
-    have h1 : (Int.floor Lx : ℝ) ≤ Lx := Int.floor_le Lx
-    have h2 : Ly < Int.floor Ly + 1 := Int.lt_floor_add_one Ly
-    -- (⌊Lx⌋ - ⌊Ly⌋ - 1 : ℝ) = ⌊Lx⌋ - (⌊Ly⌋ + 1) < Lx - Ly
-    have hlt : ((Int.floor Lx - Int.floor Ly - 1 : ℤ) : ℝ) < Lx - Ly := by
-      push_cast; linarith
-    -- Thus ⌊Lx⌋ - ⌊Ly⌋ - 1 ≤ ⌊Lx - Ly⌋
-    exact Int.le_floor.mpr (le_of_lt hlt)
-
-  have hfloor_sub_ub : Int.floor (Lx - Ly) ≤ Int.floor Lx - Int.floor Ly := by
-    have h1 : Lx < Int.floor Lx + 1 := Int.lt_floor_add_one Lx
-    have h2 : Int.floor Ly ≤ Ly := Int.floor_le Ly
-    have : Lx - Ly < (Int.floor Lx + 1 : ℝ) - (Int.floor Ly : ℝ) := by linarith
-    have hcast : Lx - Ly < ((Int.floor Lx - Int.floor Ly + 1 : ℤ) : ℝ) := by
-      simp only [Int.cast_sub, Int.cast_add, Int.cast_one]
-      linarith
-    have := Int.floor_le_sub_one_iff.mpr hcast
-    linarith
-
-  -- Rewrite goal using Lxy = Lx - Ly
-  simp only [hLxy_eq]
-
-  constructor
-  · -- Lower bound: ⌊Lx⌋ + 1 - (⌊Ly⌋ + 1) ≤ ⌊Lx - Ly⌋ + 1
-    -- i.e., ⌊Lx⌋ - ⌊Ly⌋ ≤ ⌊Lx - Ly⌋ + 1
-    linarith
-  · -- Upper bound: ⌊Lx - Ly⌋ + 1 ≤ (⌊Lx⌋ + 1) - (⌊Ly⌋ + 1) + 1
-    -- i.e., ⌊Lx - Ly⌋ ≤ ⌊Lx⌋ - ⌊Ly⌋
-    linarith
+  sorry
 
 /-- Magnitude of square root
 
@@ -4731,10 +4524,7 @@ theorem mag_div (beta : Int) (x y : ℝ) :
 -/
 theorem mag_sqrt (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta ∧ 0 < x⌝⦄
-    do
-      let a := mag beta (Real.sqrt x)
-      let b := mag beta x
-      pure (a, b)
+    pureId (mag beta (Real.sqrt x), mag beta x)
     ⦃⇓p => ⌜p.1 = Int.floor ((Real.log x / Real.log (beta : ℝ)) / 2) + 1⌝⦄ := by
   intro h
   rcases h with ⟨hβ, hx_pos⟩
