@@ -26,6 +26,7 @@ import FloatSpec.src.Core.Round_pred
 import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.SimprocGenericFmt
 import FloatSpec.src.Core.Float_prop
+import FloatSpec.VersoExt
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 import Std.Tactic.Do
@@ -53,12 +54,12 @@ abbrev Float := Defs.FlocqFloat beta
 
 In Flocq, {name}`Exp_not_FTZ` entails stability of the exponent function on the
 "small" regime. The following idempotence on {name}`fexp` is a lightweight
-abstraction sufficient for the `ulp_ulp_0` lemma and remains local to
+abstraction sufficient for the {coq}`ulp_ulp_0` lemma and remains local to
 this file.
 -/
 -- In Coq (Generic_fmt.v), `Exp_not_FTZ` means: ∀ e, fexp (fexp e + 1) ≤ fexp e.
 -- We align the Lean port to this specification so downstream lemmas match the
--- original development (notably `generic_format_bpow` prerequisites).
+-- original development (notably {name}`generic_format_bpow` prerequisites).
 class Exp_not_FTZ (fexp : Int → Int) : Prop where
   exp_not_FTZ : ∀ e : Int, fexp (fexp e + 1) ≤ fexp e
 
@@ -74,7 +75,7 @@ class Monotone_exp (fexp : Int → Int) : Prop where
 
 /-- Negligible exponent detection (Coq: {name}`negligible_exp`).
 We follow the classical (noncomputable) choice: if there exists {given}`n : Int` such that
-{lit}`n ≤ fexp n`, we return {lean}`some n` (choosing a witness); otherwise {name}`none`.
+{lean}`n ≤ fexp n`, we return {lean}`some n` (choosing a witness); otherwise {name}`none`.
 -/
 noncomputable def negligible_exp (fexp : Int → Int) : Option Int := by
   classical
@@ -94,7 +95,7 @@ Definition ulp x := match Req_bool x 0 with
   | false  => bpow (cexp beta fexp x)
 end.
 ```
-Note: We use a simplified zero case: `bpow (fexp 1)`.
+Note: We use a simplified zero case: {lit}`bpow (fexp 1)`.
 -/
 noncomputable def ulp (x : ℝ) : Id ℝ :=
   if x = 0 then
@@ -161,7 +162,7 @@ lemma negligible_exp_spec' :
           -- `m` is definitionally the same as `n`; transport `hm` and expose the witness
           exact Or.inr ⟨n, by simpa [hopt], by simpa using hm⟩
 
-/-- Coq (Ulp.v): `fexp_negligible_exp_eq`. -/
+/-- Coq (Ulp.v): {coq}`fexp_negligible_exp_eq`. -/
 lemma fexp_negligible_exp_eq (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] (n m : Int)
     (hn : n ≤ fexp n) (hm : m ≤ fexp m) :
     fexp n = fexp m := by
@@ -185,7 +186,7 @@ lemma fexp_negligible_exp_eq (beta : Int) (fexp : Int → Int) [FloatSpec.Core.G
   -- Rewrite using h1 on the left-hand side of h2
   simpa [h1] using h2
 
-/-- Positive predecessor used by `pred`/`succ` (mirrors Coq `pred_pos`). -/
+/-- Positive predecessor used by {lit}`pred`/{lit}`succ` (mirrors Coq {coq}`pred_pos`). -/
 noncomputable def pred_pos (x : ℝ) : Id ℝ :=
   if x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x).run - 1) then
     pure (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x).run - 1)))
@@ -193,7 +194,7 @@ noncomputable def pred_pos (x : ℝ) : Id ℝ :=
     let u ← ulp beta fexp x
     pure (x - u)
 
-/-- Successor at one ULP (mirrors Coq `succ`). -/
+/-- Successor at one ULP (mirrors Coq {coq}`succ`). -/
 noncomputable def succ (x : ℝ) : Id ℝ :=
   if 0 ≤ x then
     do
@@ -204,13 +205,13 @@ noncomputable def succ (x : ℝ) : Id ℝ :=
       let px ← pred_pos beta fexp (-x)
       pure (-px)
 
-/-- Predecessor defined from `succ` (mirrors Coq `pred`). -/
+/-- Predecessor defined from {name}`succ` (mirrors Coq {coq}`pred`). -/
 noncomputable def pred (x : ℝ) : Id ℝ := do
   let s ← succ beta fexp (-x)
   pure (-s)
 
 /-- Coq (Ulp.v):
-Lemma ulp_neq_0 : forall x, x <> 0%R -> ulp x = bpow (cexp beta fexp x).
+Lemma {coq}`ulp_neq_0` : {lit}`forall x, x <> 0%R -> ulp x = bpow (cexp beta fexp x)`.
 -/
 theorem ulp_neq_0 (x : ℝ) (hx : x ≠ 0) :
     ⦃⌜True⌝⦄
@@ -221,14 +222,15 @@ theorem ulp_neq_0 (x : ℝ) (hx : x ≠ 0) :
   simp [wp, PostCond.noThrow, Id.run, bind, pure, hx]
 
 /-
-Coq (Ulp.v): Theorem pred_le: forall x y, F x -> F y -> x <= y -> pred x <= pred y.
+Coq (Ulp.v): Theorem {coq}`pred_le`: {lit}`forall x y, F x -> F y -> x <= y -> pred x <= pred y`.
 
 Port note (Lean): The original Coq proof relies on later lemmas in this file
-(`pred_ge_gt`, `generic_format_pred`, `pred_le_id`). To avoid forward
+({name}`pred_ge_gt`, {name}`generic_format_pred`, {name}`pred_le_id`). To avoid forward
 dependencies, we prove a slightly weaker, but sufficient, monotonicity:
-`pred x ≤ y` under `x ≤ y`. This uses only basic properties of `succ/pred`
-and the fact that `ulp` and powers of a positive base are nonnegative.
-We require the standard radix hypothesis `1 < beta`.
+{lit}`pred x ≤ y` under {lit}`x ≤ y`. This uses only basic properties of
+{name}`succ`/{name}`pred` and the fact that {name}`ulp` and powers of a
+positive base are nonnegative. We require the standard radix hypothesis
+{lit}`1 < beta`.
 -/
 omit [Valid_exp beta fexp] in
 private lemma ulp_run_nonneg (hβ : 1 < beta) (x : ℝ) :
@@ -249,8 +251,8 @@ private lemma ulp_run_nonneg (hβ : 1 < beta) (x : ℝ) :
     simp [hx, Id.run, bind, pure, le_of_lt (zpow_pos hbpos _)]
 
 omit [Valid_exp beta fexp] in
-/-- Strict positivity of ULP for nonzero inputs: `0 < ulp x` when `x ≠ 0`.
-    This is a key spacing lemma used to prove `succ x > x` strictly. -/
+/-- Strict positivity of ULP for nonzero inputs: {lit}`0 < ulp x` when {lit}`x ≠ 0`.
+    This is a key spacing lemma used to show {lit}`succ x > x` strictly. -/
 private lemma ulp_run_pos (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
     0 < (ulp beta fexp x).run := by
   classical
@@ -381,7 +383,7 @@ theorem pred_le
   simp [wp, PostCond.noThrow, Id.run, bind, pure]
   exact le_trans (pred_run_le_self (beta := beta) (fexp := fexp) hβ x) hxy
 
-/-- A basic growth property of `succ`: y ≤ succ y (run form). -/
+/-- A basic growth property of {name}`succ`: {lit}`y ≤ succ y` (run form). -/
 private lemma succ_run_ge_self (hβ : 1 < beta) (y : ℝ) :
     y ≤ (succ beta fexp y).run := by
   classical
@@ -406,7 +408,7 @@ private lemma succ_run_ge_self (hβ : 1 < beta) (y : ℝ) :
     -- Negating flips the inequality and rewrites `- -y` to `y`
     simpa [neg_neg] using (neg_le_neg hle)
 
-/-- Strict growth of `succ` for nonzero inputs: `x < succ x` when `x ≠ 0`.
+/-- Strict growth of {name}`succ` for nonzero inputs: {lit}`x < succ x` when {lit}`x ≠ 0`.
     This is the key spacing lemma that shows format neighbors are distinct. -/
 private lemma succ_run_gt_self (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
     x < (succ beta fexp x).run := by
@@ -430,11 +432,11 @@ private lemma succ_run_gt_self (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
     -- Negate both sides to get: -(-x) < -(pred_pos (-x)).run, i.e., x < -pred_pos(-x)
     simpa [neg_neg] using (neg_lt_neg hlt)
 
-/-- Coq (Ulp.v): Theorem `succ_le`: forall x y, F x -> F y -> x <= y -> succ x <= succ y.
+/-- Coq (Ulp.v): Theorem {coq}`succ_le`: {lit}`forall x y, F x -> F y -> x <= y -> succ x <= succ y`.
 
-Lean (adapted): strengthen the precondition to `1 < beta` and prove
-`x ≤ succ y`, which suffices for downstream ordering arguments and mirrors
-the earlier weakening done for `pred_le`.
+Lean (adapted): strengthen the precondition to {lit}`1 < beta` and prove
+{lit}`x ≤ succ y`, which suffices for downstream ordering arguments and mirrors
+the earlier weakening done for {name}`pred_le`.
 -/
 theorem succ_le
     (x y : ℝ)
@@ -451,7 +453,7 @@ theorem succ_le
   simp [wp, PostCond.noThrow, Id.run, bind, pure]
   exact le_trans hxy (succ_run_ge_self (beta := beta) (fexp := fexp) hβ y)
 
-/-- Coq (Ulp.v): Theorem pred_le_inv: F x -> F y -> pred x <= pred y -> x <= y. -/
+/-- Coq (Ulp.v): Theorem {coq}`pred_le_inv`: {lit}`F x -> F y -> pred x <= pred y -> x <= y`. -/
 theorem pred_le_inv
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
@@ -483,11 +485,11 @@ theorem pred_le_inv
   -- Rewrite back in terms of
   simpa [pred, Id.run, bind, pure] using hfinal
 
-/-- Coq (Ulp.v): Theorem succ_le_inv: F x -> F y -> succ x <= succ y -> x <= y.
+/-- Coq (Ulp.v): Theorem {coq}`succ_le_inv`: {lit}`F x -> F y -> succ x <= succ y -> x <= y`.
 
-Lean (adapted): weaken the conclusion to `x ≤ succ y` and strengthen the
-precondition to `1 < beta`. This mirrors the pattern used for `pred_le_inv`
-and suffices for downstream ordering arguments.
+Lean (adapted): weaken the conclusion to {lit}`x ≤ succ y` and strengthen the
+precondition to {lit}`1 < beta`. This mirrors the pattern used for
+{name}`pred_le_inv` and suffices for downstream ordering arguments.
 -/
 theorem succ_le_inv
     (x y : ℝ)
@@ -505,11 +507,11 @@ theorem succ_le_inv
   -- From base positivity, x ≤ succ x and succ x ≤ succ y
   exact le_trans (succ_run_ge_self (beta := beta) (fexp := fexp) hβ x) h
 
-/-- Coq (Ulp.v): Theorem `pred_lt`: F x -> F y -> x < y -> pred x < pred y.
+/-- Coq (Ulp.v): Theorem {coq}`pred_lt`: {lit}`F x -> F y -> x < y -> pred x < pred y`.
 
-Lean (adapted): strengthen the precondition to `1 < beta` and weaken the
-conclusion to `pred x < y`. This aligns with earlier adapted monotonicity
-lemmas (`pred_le`, `succ_le`) and avoids forward dependencies.
+Lean (adapted): strengthen the precondition to {lit}`1 < beta` and weaken the
+conclusion to {lit}`pred x < y`. This aligns with earlier adapted monotonicity
+lemmas ({name}`pred_le`, {name}`succ_le`) and avoids forward dependencies.
 -/
 theorem pred_lt
     (x y : ℝ)
@@ -526,7 +528,7 @@ theorem pred_lt
   simp [wp, PostCond.noThrow, Id.run, bind, pure]
   exact lt_of_le_of_lt (pred_run_le_self (beta := beta) (fexp := fexp) hβ x) hxy
 
-/-- Coq (Ulp.v): Theorem `succ_lt`: F x -> F y -> x < y -> succ x < succ y. -/
+/-- Coq (Ulp.v): Theorem {coq}`succ_lt`: {lit}`F x -> F y -> x < y -> succ x < succ y`. -/
 theorem succ_lt
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run)
@@ -644,8 +646,8 @@ private theorem succ_le_plus_ulp_theorem
       exact le_of_eq hsucc_explicit
 
 /-- Coq (Ulp.v):
-Lemma `succ_le_plus_ulp`:
-  `forall { Hm : Monotone_exp fexp } x, succ x <= x + ulp x.`
+Lemma {coq}`succ_le_plus_ulp`:
+  {lit}`forall { Hm : Monotone_exp fexp } x, succ x <= x + ulp x`.
 -/
 theorem succ_le_plus_ulp
     [Monotone_exp fexp]
@@ -1777,7 +1779,7 @@ private lemma round_to_generic_format
 -- (moved below, after `pred_ge_gt_theorem` to avoid private forward refs)
 
 /-- Coq (Ulp.v):
-Lemma `ulp_ulp_0`: `forall {H : Exp_not_FTZfexp}, ulp (ulp 0) = ulp 0.`
+Lemma {coq}`ulp_ulp_0`: {lit}`forall {H : Exp_not_FTZfexp}, ulp (ulp 0) = ulp 0`.
 -/
 private theorem ulp_ulp_0_theorem
     (beta : Int) (fexp : Int → Int)
@@ -1864,8 +1866,8 @@ theorem ulp_ulp_0 [Exp_not_FTZ fexp] :
 -- (no where-block; theorem is declared at top-level just above)
 
 /-- Coq (Ulp.v):
-Lemma `ulp_round_pos`:
-  `forall { Not_FTZ_ : Exp_not_FTZ fexp} rnd x, 0 < x -> ulp (round rnd x) = ulp x \/ round rnd x = bpow (mag x).`
+Lemma {coq}`ulp_round_pos`:
+  {lit}`forall { Not_FTZ_ : Exp_not_FTZ fexp} rnd x, 0 < x -> ulp (round rnd x) = ulp x \/ round rnd x = bpow (mag x)`.
 -/
 private theorem ulp_round_pos_theorem
   (beta : Int) (fexp : Int → Int)
@@ -1953,8 +1955,8 @@ theorem ulp_round_pos
 -- (no where-block; theorem is declared at top-level just above)
 
 /-- Coq (Ulp.v):
-Theorem `ulp_round`:
-  `forall { Not_FTZ_ : Exp_not_FTZ fexp} rnd x, ulp (round rnd x) = ulp x \/ |round rnd x| = bpow (mag x).`
+Theorem {coq}`ulp_round`:
+  {lit}`forall { Not_FTZ_ : Exp_not_FTZ fexp} rnd x, ulp (round rnd x) = ulp x \/ |round rnd x| = bpow (mag x)`.
 -/
 private theorem ulp_round_theorem
     (beta : Int) (fexp : Int → Int)
@@ -2069,11 +2071,11 @@ theorem ulp_round
   simp [wp, PostCond.noThrow, Id.run, bind, pure]
   exact ulp_round_theorem (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) hβ
 
--- (second presentation of `ulp_round_pos` removed to avoid duplication)
+-- (second presentation of {name}`ulp_round_pos` removed to avoid duplication)
 
 /-- Coq (Ulp.v):
-Lemma `succ_round_ge_id`:
-  forall rnd x, x ≤ succ (round rnd x).
+Lemma {coq}`succ_round_ge_id`:
+  {lit}`forall rnd x, x ≤ succ (round rnd x)`.
 -/
 theorem succ_round_ge_id
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
@@ -2089,8 +2091,8 @@ theorem succ_round_ge_id
   exact (succ_round_ge_id_theorem (beta := beta) (fexp := fexp) (rnd := rnd) (x := x)) hβ
 
 /-- Coq (Ulp.v):
-Lemma `pred_round_le_id`:
-  forall rnd x, pred (round rnd x) ≤ x.
+Lemma {coq}`pred_round_le_id`:
+  {lit}`forall rnd x, pred (round rnd x) ≤ x`.
 -/
 theorem pred_round_le_id
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
@@ -2161,7 +2163,7 @@ theorem round_N_eq_DN_pt
           (choice := choice) (x := x) (d := d) (u := u) hβ Hd Hu h
 
 /-- Coq (Ulp.v):
-Lemma `round_N_eq_UP`: `forall choice x, let d := round_DN x; let u := round_UP x; (d+u)/2 < x -> round_N x = u.`
+Lemma {coq}`round_N_eq_UP`: {lit}`forall choice x, let d := round_DN x; let u := round_UP x; (d+u)/2 < x -> round_N x = u`.
 -/
 theorem round_N_eq_UP
     (choice : Int → Bool) (x : ℝ) (hβ: 1 < beta)
@@ -2190,7 +2192,7 @@ theorem round_N_eq_UP
     hβ hRndDN hRndUP h
 
 /-- Coq (Ulp.v):
-Lemma `round_N_eq_UP_pt`: `forall choice x d u, Rnd_DN_pt F x d -> Rnd_UP_pt F x u -> (d+u)/2 < x -> round_N x = u.`
+Lemma {coq}`round_N_eq_UP_pt`: {lit}`forall choice x d u, Rnd_DN_pt F x d -> Rnd_UP_pt F x u -> (d+u)/2 < x -> round_N x = u`.
 -/
 theorem round_N_eq_UP_pt
     (choice : Int → Bool) (x d u : ℝ)
@@ -2210,12 +2212,12 @@ theorem round_N_eq_UP_pt
 
 /-- Local bridge theorem (nearest rounding after adding one ULP).
 
-Rationale: The Coq proof of `round_N_plus_ulp_ge` chains three facts:
-- `x ≤ succ (round x)` (growth after rounding),
-- `succ r ≤ r + ulp r` (one‑ULP step), and
-- if `r ∈ F` then `round (r + ulp r) = r + ulp r` (closure under ULP).
+Rationale: The Coq proof of {coq}`round_N_plus_ulp_ge` chains three facts:
+- {lit}`x ≤ succ (round x)` (growth after rounding),
+- {lit}`succ r ≤ r + ulp r` (one‑ULP step), and
+- if {lit}`r ∈ F` then {lit}`round (r + ulp r) = r + ulp r` (closure under ULP).
 
-In this Lean port, `round_N_to_format` is a placeholder and the spacing/closure
+In this Lean port, {name}`round_N_to_format` is a placeholder and the spacing/closure
 toolbox is deferred. This theorem captures exactly the resulting inequality on
 run‑values after reducing the Hoare‑triple and will be discharged once the
 rounding and spacing lemmas are fully ported.
@@ -2231,8 +2233,8 @@ private theorem round_N_plus_ulp_ge_theorem
   sorry
 
 /-- Coq (Ulp.v):
-Lemma `round_N_plus_ulp_ge`:
-  `forall {Hm : Monotone_exp fexp} choice1 choice2 x, let rx := round_N choice2 x in x ≤ round_N choice1 (rx + ulp rx).`
+Lemma {coq}`round_N_plus_ulp_ge`:
+  {lit}`forall {Hm : Monotone_exp fexp} choice1 choice2 x, let rx := round_N choice2 x in x ≤ round_N choice1 (rx + ulp rx)`.
 -/
 theorem round_N_plus_ulp_ge
     [Monotone_exp fexp]
@@ -2250,7 +2252,7 @@ theorem round_N_plus_ulp_ge
   exact round_N_plus_ulp_ge_theorem (beta := beta) (fexp := fexp) (x := x) hβ
 
 /-- Coq (Ulp.v):
-Lemma `round_N_eq_ties`: `forall c1 c2 x, x - round_DN x ≠ round_UP x - x -> round_N c1 x = round_N c2 x.`
+Lemma {coq}`round_N_eq_ties`: {lit}`forall c1 c2 x, x - round_DN x ≠ round_UP x - x -> round_N c1 x = round_N c2 x`.
 -/
 theorem round_N_eq_ties
     (c1 c2 : Int → Bool) (x : ℝ) (hβ: 1 < beta)
@@ -2268,8 +2270,8 @@ theorem round_N_eq_ties
         FloatSpec.Core.Generic_fmt.round_N_to_format]
 
 /-- Coq (Ulp.v):
-Theorem `error_lt_ulp_round`:
-  `forall {Hm : Monotone_exp fexp} rnd x, x <> 0 -> |round rnd x - x| < ulp (round rnd x).`
+Theorem {coq}`error_lt_ulp_round`:
+  {lit}`forall {Hm : Monotone_exp fexp} rnd x, x <> 0 -> |round rnd x - x| < ulp (round rnd x)`.
 -/
 theorem error_lt_ulp_round
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
@@ -2390,8 +2392,8 @@ theorem error_lt_ulp_round
   simpa [hulp_eq, r] using herr_x
 
 /-- Coq (Ulp.v):
-Lemma `error_le_ulp_round`:
-  `forall {Hm : Monotone_exp fexp} rnd x, |round rnd x - x| <= ulp (round rnd x).`
+Lemma {coq}`error_le_ulp_round`:
+  {lit}`forall {Hm : Monotone_exp fexp} rnd x, |round rnd x - x| <= ulp (round rnd x)`.
 -/
 theorem error_le_ulp_round
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
@@ -2668,8 +2670,8 @@ private theorem generic_format_ulp0_theorem
 
 
 /-- Coq (Ulp.v):
-Theorem `round_neq_0_negligible_exp`:
-  `negligible_exp` = None -> forall rnd x, x <> 0 -> round rnd x <> 0.
+Theorem {coq}`round_neq_0_negligible_exp`:
+  {lit}`negligible_exp = None -> forall rnd x, x <> 0 -> round rnd x <> 0`.
 -/
 theorem round_neq_0_negligible_exp
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
@@ -2695,8 +2697,8 @@ theorem round_neq_0_negligible_exp
 
 
 /-- Coq (Ulp.v):
-Theorem `error_lt_ulp`:
-  forall rnd x, x <> 0 -> |round rnd x - x| < ulp x.
+Theorem {coq}`error_lt_ulp`:
+  {lit}`forall rnd x, x <> 0 -> |round rnd x - x| < ulp x`.
 -/
 theorem error_lt_ulp
     (rnd : ℝ → ℝ → Prop) (x : ℝ) (hx : x ≠ 0) :
@@ -2718,8 +2720,8 @@ theorem error_lt_ulp
   exact h
 
 /-- Coq (Ulp.v):
-Theorem `error_le_ulp`:
-  `forall rnd x, |round rnd x - x| <= ulp x.`
+Theorem {coq}`error_le_ulp`:
+  {lit}`forall rnd x, |round rnd x - x| <= ulp x`.
 -/
 theorem error_le_ulp
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
@@ -2795,8 +2797,8 @@ private theorem pred_succ_theorem
   sorry
 
 /-- Coq (Ulp.v):
-Lemma `pred_succ_pos`:
-  forall x, F x -> 0 < x -> pred (succ x) = x.
+Lemma {coq}`pred_succ_pos`:
+  {lit}`forall x, F x -> 0 < x -> pred (succ x) = x`.
 -/
 theorem pred_succ_pos
     (x : ℝ)
@@ -2813,7 +2815,7 @@ theorem pred_succ_pos
   simp [wp, PostCond.noThrow, Id.run, bind, pure] at h
   simpa using h
 
-/-- Coq (Ulp.v): Theorem `pred_succ`: forall x, F x -> pred (succ x) = x. -/
+/-- Coq (Ulp.v): Theorem {coq}`pred_succ`: {lit}`forall x, F x -> pred (succ x) = x`. -/
 theorem pred_succ
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
@@ -2862,7 +2864,7 @@ private theorem succ_pred_theorem
   simpa [pred, Id.run, bind, pure] using congrArg Neg.neg hps_run
 
 -- Provide `succ_pred` (uses the bridge) first.
-/-- Coq (Ulp.v): Theorem `succ_pred`: forall x, F x -> succ (pred x) = x. -/
+/-- Coq (Ulp.v): Theorem {coq}`succ_pred`: {lit}`forall x, F x -> succ (pred x) = x`. -/
 theorem succ_pred
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x).run) :
@@ -2897,11 +2899,11 @@ private theorem pred_succ_pos_theorem
 
   -- (moved below, after `succ_DN_eq_UP_theorem`)
 
-/-- Bridge lemma: For non-representable `x`, the successor of `DN x` equals `UP x`.
+/-- Bridge lemma: For non-representable {lit}`x`, the successor of {lit}`DN x` equals {lit}`UP x`.
 
 This mirrors the Coq adjacency fact between the lower and upper neighbors around
-`x` when `x` is not already in the format. The proof reduces to the already
-established `pred (UP x) = DN x` and the inverse identity `succ (pred y) = y`
+{lit}`x` when {lit}`x` is not already in the format. The proof reduces to the already
+established {lit}`pred (UP x) = DN x` and the inverse identity {lit}`succ (pred y) = y`
 at format points. -/
 -- (moved later, after successor/predecessor ordering lemmas)
 
@@ -3027,7 +3029,7 @@ theorem pred_ulp_0 [Exp_not_FTZ fexp] :
   simpa [wp, PostCond.noThrow, Id.run, bind, pure]
     using h
 
-/-- Coq (Ulp.v): Theorem `succ_0`: succ 0 = ulp 0. -/
+/-- Coq (Ulp.v): Theorem {coq}`succ_0`: {lit}`succ 0 = ulp 0`. -/
 theorem succ_0 :
     ⦃⌜True⌝⦄ do
       let s ← succ beta fexp 0
@@ -3038,7 +3040,7 @@ theorem succ_0 :
   -- Unfold both sides at 0 and normalize the Id monad
   simp [wp, PostCond.noThrow, Id.run, bind, pure, succ, ulp]
 
-/-- Coq (Ulp.v): `Theorem pred_0`: pred 0 = - ulp 0. -/
+/-- Coq (Ulp.v): Theorem {coq}`pred_0`: {lit}`pred 0 = - ulp 0`. -/
 theorem pred_0 :
     ⦃⌜True⌝⦄ do
       let p ← pred beta fexp 0
@@ -3050,8 +3052,8 @@ theorem pred_0 :
   simp [wp, PostCond.noThrow, Id.run, bind, pure, pred, succ, ulp]
 
 /-- Coq (Ulp.v):
-Lemma succ_pred_pos:
-  forall x, F x -> 0 < x -> succ (pred x) = x.
+Lemma {coq}`succ_pred_pos`:
+  {lit}`forall x, F x -> 0 < x -> succ (pred x) = x`.
 -/
 theorem succ_pred_pos
     (x : ℝ)
@@ -3126,9 +3128,9 @@ theorem succ_gt_ge
 
 /-- Local bridge theorem (port): ordering with predecessor on format points.
 
-Rationale: The Coq proof of `pred_ge_gt` relies on spacing/adjacency facts
-for the generic format (that `pred y` is the greatest format value strictly
-below `y` and that `succ (pred y) = y`). While `succ_pred` is already isolated
+Rationale: The Coq proof of {coq}`pred_ge_gt` relies on spacing/adjacency facts
+for the generic format (that {lit}`pred y` is the greatest format value strictly
+below {lit}`y` and that {lit}`succ (pred y) = y`). While {name}`succ_pred` is already isolated
 as a local theorem above, the full ordering argument also uses the uniqueness
 of neighbors, which is not yet fully ported. We isolate exactly the reduced
 obligation needed here as a narrow, file‑scoped theorem.
@@ -3262,8 +3264,8 @@ theorem succ_le_lt
   -/
 
 /-- Coq (Ulp.v):
-Lemma `succ_le_lt_aux`:
-  forall x y, F x -> F y -> 0 <= x -> x < y -> succ x <= y.
+Lemma {coq}`succ_le_lt_aux`:
+  {lit}`forall x y, F x -> F y -> 0 <= x -> x < y -> succ x <= y`.
 -/
 theorem succ_le_lt_aux
     (x y : ℝ)
@@ -3501,7 +3503,7 @@ theorem pred_pos_plus_ulp_aux2
     pred_pos_plus_ulp_aux2_theorem (beta := beta) (fexp := fexp) hβ x hx Fx hxe hne
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hbridge
 
-/-- Coq (Ulp.v): Theorem `succ_opp`: forall x, succ (-x) = (- pred x). -/
+/-- Coq (Ulp.v): Theorem {coq}`succ_opp`: {lit}`forall x, succ (-x) = (- pred x)`. -/
 theorem succ_opp (x : ℝ) :
     ⦃⌜True⌝⦄ do
       let s ← succ beta fexp (-x)
@@ -3513,7 +3515,7 @@ theorem succ_opp (x : ℝ) :
   -- `pred x` is defined as `- (succ (-x))`, hence `succ (-x) = - pred x`.
   simp [wp, PostCond.noThrow, Id.run, bind, pure, pred]
 
-/-- Coq (Ulp.v): Theorem `pred_opp`: forall x, pred (-x) = (- succ x). -/
+/-- Coq (Ulp.v): Theorem {coq}`pred_opp`: {lit}`forall x, pred (-x) = (- succ x)`. -/
 theorem pred_opp (x : ℝ) :
     ⦃⌜True⌝⦄ do
       let p ← pred beta fexp (-x)
@@ -3525,7 +3527,7 @@ theorem pred_opp (x : ℝ) :
   -- `pred (-x)` is definitionally `- (succ x)`.
   simp [wp, PostCond.noThrow, Id.run, bind, pure, pred]
 
-/-- Coq (Ulp.v): Theorem `ulp_opp`: forall x, ulp (-x) = ulp x. -/
+/-- Coq (Ulp.v): Theorem {coq}`ulp_opp`: {lit}`forall x, ulp (-x) = ulp x`. -/
 theorem ulp_opp (x : ℝ) :
     ⦃⌜True⌝⦄ do
       let u1 ← ulp beta fexp (-x)
@@ -3547,7 +3549,7 @@ theorem ulp_opp (x : ℝ) :
       simp [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, abs_neg]
     simp [ulp, hx, hneg, hcexp]
 
-/-- Coq (Ulp.v): Theorem `ulp_abs`: forall x, ulp (Rabs x) = ulp x. -/
+/-- Coq (Ulp.v): Theorem {coq}`ulp_abs`: {lit}`forall x, ulp (Rabs x) = ulp x`. -/
 theorem ulp_abs (x : ℝ) :
     ⦃⌜True⌝⦄ do
       let u1 ← ulp beta fexp |x|
@@ -4316,10 +4318,11 @@ theorem generic_format_ulp
       using htrip
 
 /-- Coq (Ulp.v):
-Theorem `eq_0_round_0_negligible_exp`:
-  `negligible_exp = None -> forall rnd {Vr: Valid_rnd rnd} x, round rnd x = 0 -> x = 0.`
+Theorem {coq}`eq_0_round_0_negligible_exp`:
+  {lit}`negligible_exp = None -> forall rnd {Vr: Valid_rnd rnd} x, round rnd x = 0 -> x = 0`.
 
-Lean (adapted spec): If `negligible_exp` = none and the rounded value is zero, then x = 0.
+Lean (adapted spec): If {name}`negligible_exp` = {lit}`none` and the rounded value is zero,
+then {lit}`x = 0`.
 -/
 theorem eq_0_round_0_negligible_exp
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
@@ -4340,10 +4343,10 @@ theorem eq_0_round_0_negligible_exp
     using h
 
 /-- Coq (Ulp.v):
-Lemma pred_pos_lt_id: forall x, x ≠ 0 -> pred_pos x < x.
+Lemma {coq}`pred_pos_lt_id`: {lit}`forall x, x ≠ 0 -> pred_pos x < x`.
 
-Lean (adapted): We require the standard radix hypothesis `1 < beta` so that
-`bpow` is strictly positive. This matches Coq's `radix` assumption.
+Lean (adapted): We require the standard radix hypothesis {lit}`1 < beta` so that
+{lit}`bpow` is strictly positive. This matches Coq's `radix` assumption.
 -/
 theorem pred_pos_lt_id (x : ℝ) (hx : x ≠ 0) :
     ⦃⌜1 < beta⌝⦄ do
@@ -4382,7 +4385,7 @@ theorem pred_pos_lt_id (x : ℝ) (hx : x ≠ 0) :
     simpa using hlt
 
 /-- Coq (Ulp.v):
-Theorem succ_gt_id: forall x, x ≠ 0 -> x < succ x.
+Theorem {coq}`succ_gt_id`: {lit}`forall x, x ≠ 0 -> x < succ x`.
 -/
 theorem succ_gt_id (x : ℝ) (hx : x ≠ 0) :
     ⦃⌜1 < beta⌝⦄ do
@@ -4418,9 +4421,9 @@ theorem succ_gt_id (x : ℝ) (hx : x ≠ 0) :
       using this
 
 /-- Coq (Ulp.v):
-Theorem pred_lt_id: forall x, x ≠ 0 -> pred x < x.
+Theorem {coq}`pred_lt_id`: {lit}`forall x, x ≠ 0 -> pred x < x`.
 
-Lean (adapted): require the standard radix hypothesis `1 < beta` so that ulp is
+Lean (adapted): require the standard radix hypothesis {lit}`1 < beta` so that {name}`ulp` is
 strictly positive on nonzero inputs. This matches neighboring lemmas.
 -/
 theorem pred_lt_id (x : ℝ) (hx : x ≠ 0) :
@@ -4433,12 +4436,12 @@ theorem pred_lt_id (x : ℝ) (hx : x ≠ 0) :
   exact pred_run_lt_self (beta := beta) (fexp := fexp) hβ x hx
 
 /-- Coq (Ulp.v):
-Theorem succ_ge_id: forall x, x ≤ succ x.
+Theorem {coq}`succ_ge_id`: {lit}`forall x, x ≤ succ x`.
 
-Lean (adapted): we require the standard radix hypothesis `1 < beta` so that
-`ulp` is nonnegative and `succ x = x + ulp x` (for `x ≥ 0`) is ≥ `x`, while in
-the negative branch `succ x = -pred_pos (-x)` is ≥ `x` by the auxiliary bound
-on `pred_pos`. This matches the neighboring lemmas that assume `1 < beta`.
+Lean (adapted): we require the standard radix hypothesis {lit}`1 < beta` so that
+{name}`ulp` is nonnegative and {lit}`succ x = x + ulp x` (for {lit}`x ≥ 0`) is ≥ {lit}`x`,
+while in the negative branch {lit}`succ x = -pred_pos (-x)` is ≥ {lit}`x` by the auxiliary
+bound on {name}`pred_pos`. This matches the neighboring lemmas that assume {lit}`1 < beta`.
 -/
 theorem succ_ge_id (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
@@ -4451,7 +4454,7 @@ theorem succ_ge_id (x : ℝ) :
   exact succ_run_ge_self (beta := beta) (fexp := fexp) hβ x
 
 /-- Coq (Ulp.v):
-Theorem pred_le_id: forall x, pred x ≤ x.
+Theorem {coq}`pred_le_id`: {lit}`forall x, pred x ≤ x`.
 -/
 theorem pred_le_id (x : ℝ) :
     ⦃⌜1 < beta⌝⦄ do
@@ -4696,9 +4699,9 @@ theorem generic_format_pred_pos
     using Fpredpos
 
 /-- Coq (Ulp.v):
-Lemma `generic_format_pred_aux2`:
-  forall x, 0 < x -> F x -> let e := mag x in x = bpow (e - 1) ->
-  x - bpow (fexp (e-1)) <> 0 -> F (x - bpow (fexp (e-1))).
+Lemma {coq}`generic_format_pred_aux2`:
+  {lit}`forall x, 0 < x -> F x -> let e := mag x in x = bpow (e - 1) ->
+  x - bpow (fexp (e-1)) <> 0 -> F (x - bpow (fexp (e-1)))`.
 -/
 theorem generic_format_pred_aux2
     (x : ℝ) (hx : 0 < x) (hβ : 1 < beta)
@@ -5646,7 +5649,7 @@ private theorem generic_format_pred_aux1_theorem
   simpa [hpred_is_pos, hpred_pos_eval]
     using Fpred_run
 
-/-- Coq (Ulp.v) `generic_format_pred_aux1` packaged as a Hoare triple wrapper. -/
+/-- Coq (Ulp.v) {coq}`generic_format_pred_aux1` packaged as a Hoare triple wrapper. -/
   theorem generic_format_pred_aux1
     (x : ℝ)
     (hx : 0 < x)
@@ -5662,7 +5665,7 @@ private theorem generic_format_pred_aux1_theorem
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h hβ
 
   /-- Coq (Ulp.v):
-  Theorem generic_format_succ: forall x, F x -> F (succ x).
+  Theorem {coq}`generic_format_succ`: {lit}`forall x, F x -> F (succ x)`.
   -/
   theorem generic_format_succ
       (x : ℝ)
@@ -6222,7 +6225,7 @@ private theorem round_N_ge_midp_theorem
         simpa [hres]
 
 /-- Coq (Ulp.v):
-Theorem round_N_ge_midp: forall choice u v, F u -> (u + pred u)/2 < v -> u ≤ round_N v.
+Theorem {coq}`round_N_ge_midp`: {lit}`forall choice u v, F u -> (u + pred u)/2 < v -> u ≤ round_N v`.
 -/
 theorem round_N_ge_midp
     (choice : Int → Bool) (u v : ℝ)
@@ -6238,9 +6241,9 @@ theorem round_N_ge_midp
   exact round_N_ge_midp_theorem (beta := beta) (fexp := fexp)
     (choice := choice) (u := u) (v := v) Fu hβ h
 
-/-- Bridge lemma: If `u ∈ F` and `u ≤ round_N v`, then `v` lies on or above
-the lower midpoint `(u + pred u)/2`. Requires `1 < beta` and excludes the
-degenerate zero-adjacent case via `u ≠ 0`.
+/-- Bridge lemma: If {lit}`u ∈ F` and {lit}`u ≤ round_N v`, then {lit}`v` lies on or above
+the lower midpoint {lit}`(u + pred u)/2`. Requires {lit}`1 < beta` and excludes the
+degenerate zero-adjacent case via {lit}`u ≠ 0`.
 -/
 private theorem round_N_ge_ge_midp_theorem
     (beta : Int) (fexp : Int → Int)
@@ -6282,9 +6285,9 @@ private theorem round_N_ge_ge_midp_theorem
     pred_run_lt_self (beta := beta) (fexp := fexp) hβ u hne0
   exact (not_le_of_gt hlt_pred) hle_upred
 
-/-- Symmetric bridge lemma: If `u ∈ F` and `round_N v ≤ u`, then `v` lies on or
-below the upper midpoint `(u + succ u)/2`. Requires `1 < beta` and excludes the
-degenerate zero-adjacent case via `u ≠ 0`.
+/-- Symmetric bridge lemma: If {lit}`u ∈ F` and {lit}`round_N v ≤ u`, then {lit}`v` lies on or
+below the upper midpoint {lit}`(u + succ u)/2`. Requires {lit}`1 < beta` and excludes the
+degenerate zero-adjacent case via {lit}`u ≠ 0`.
 -/
 private theorem round_N_le_le_midp_theorem
     (beta : Int) (fexp : Int → Int)
@@ -6328,7 +6331,7 @@ private theorem round_N_le_le_midp_theorem
   exact (not_le_of_gt hsucc_gt) this
 
 /-- Coq (Ulp.v):
-Lemma `round_N_ge_ge_midp`: forall choice u v, F u -> u ≤ `round_N` v -> (u + pred u)/2 ≤ v.
+Lemma {coq}`round_N_ge_ge_midp`: {lit}`forall choice u v, F u -> u ≤ round_N v -> (u + pred u)/2 ≤ v`.
 -/
 theorem round_N_ge_ge_midp
     (choice : Int → Bool) (u v : ℝ)
@@ -6347,7 +6350,7 @@ theorem round_N_ge_ge_midp
     (choice := choice) (u := u) (v := v) Fu hβ hne0 h
 
 /-- Coq (Ulp.v):
-Lemma `round_N_le_le_midp`: forall choice u v, F u -> `round_N` v ≤ u -> v ≤ (u + succ u)/2.
+Lemma {coq}`round_N_le_le_midp`: {lit}`forall choice u v, F u -> round_N v ≤ u -> v ≤ (u + succ u)/2`.
 -/
 theorem round_N_le_le_midp
     (choice : Int → Bool) (u v : ℝ)
@@ -6366,9 +6369,9 @@ theorem round_N_le_le_midp
     (choice := choice) (u := u) (v := v) Fu hβ hne0 h
 
 /-- Coq (Ulp.v):
-Lemma `pred_pos_plus_ulp_aux3`:
-  forall x, 0 < x -> F x -> x = bpow (mag x - 1) ->
-  x - bpow (fexp (mag x - 1)) = 0 -> ulp 0 = x.
+Lemma {coq}`pred_pos_plus_ulp_aux3`:
+  {lit}`forall x, 0 < x -> F x -> x = bpow (mag x - 1) ->
+  x - bpow (fexp (mag x - 1)) = 0 -> ulp 0 = x`.
 -/
 -- Injectivity of integer exponentiation for bases > 1.
 private lemma zpow_int_inj_of_gt_one (hβ : 1 < beta) {a b : Int} :
@@ -6556,8 +6559,8 @@ private theorem pred_pos_plus_ulp_aux3_zero_bridge
   simpa [hx_pow] using this
 
 /-- Coq (Ulp.v):
-Lemma `pred_pos_plus_ulp`:
-  forall x, 0 < x -> F x -> pred_pos x + ulp (pred_pos x) = x.
+Lemma {coq}`pred_pos_plus_ulp`:
+  {lit}`forall x, 0 < x -> F x -> pred_pos x + ulp (pred_pos x) = x`.
 -/
 theorem pred_pos_plus_ulp
     (x : ℝ) (hx : 0 < x)
@@ -6622,7 +6625,7 @@ theorem pred_pos_plus_ulp
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htarget
 
 /-- Coq (Ulp.v):
-Theorem `pred_plus_ulp`: forall x, 0 < x -> F x -> pred x + ulp (pred x) = x.
+Theorem {coq}`pred_plus_ulp`: {lit}`forall x, 0 < x -> F x -> pred x + ulp (pred x) = x`.
 -/
 theorem pred_plus_ulp
     (x : ℝ) (hx : 0 < x)
@@ -6661,15 +6664,15 @@ theorem pred_plus_ulp
   simpa [hpred_run] using hdecomp
 
 /-
-Local bridge theorem for `mag_plus_eps`.
+Local bridge theorem for {coq}`mag_plus_eps`.
 
 Rationale: The Coq proof relies on spacing properties of format numbers and
-the characterization of `mag` via binade bounds. Those ingredients are being
-ported progressively across `Float_prop` and `Generic_fmt`. To keep the
+the characterization of {name}`mag` via binade bounds. Those ingredients are being
+ported progressively across {name}`Float_prop` and {name}`Generic_fmt`. To keep the
 public statement intact and unblock downstream work, we isolate here the exact
 reduced obligation on run‑values produced by the Hoare‑style specification:
-for `x > 0` in generic format and `0 ≤ eps < ulp x`, the magnitude is stable
-under `x ↦ x + eps`.
+for {lit}`x > 0` in generic format and {lit}`0 ≤ eps < ulp x`, the magnitude is stable
+under {lit}`x ↦ x + eps`.
 -/
 private theorem mag_plus_eps_theorem
     (beta : Int) (fexp : Int → Int)
@@ -6961,7 +6964,7 @@ private theorem mag_plus_eps_theorem
   simpa [hex, wp, PostCond.noThrow, Id.run, bind, pure] using hres
 
 /-- Coq (Ulp.v):
-Theorem mag_plus_eps: forall x, 0 < x -> F x -> forall eps, 0 ≤ eps < ulp x -> mag (x + eps) = mag x.
+Theorem {coq}`mag_plus_eps`: {lit}`forall x, 0 < x -> F x -> forall eps, 0 ≤ eps < ulp x -> mag (x + eps) = mag x`.
 -/
 theorem mag_plus_eps
     (x : ℝ) (hx : 0 < x)
@@ -6977,9 +6980,8 @@ theorem mag_plus_eps
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
 
 /-- Coq (Ulp.v):
-Theorem `round_DN_plus_eps_pos`:
-  forall x, 0 < x -> F x -> forall eps, 0 ≤ eps < ulp x ->
-  `round_DN` (x + eps) = x.
+Theorem {coq}`round_DN_plus_eps_pos`:
+  {lit}`forall x, 0 < x -> F x -> forall eps, 0 ≤ eps < ulp x -> round_DN (x + eps) = x`.
 -/
 theorem round_DN_plus_eps_pos
     (x : ℝ) (hx : 0 < x)
@@ -7013,9 +7015,8 @@ theorem round_DN_plus_eps_pos
   simpa
 
 /-- Coq (Ulp.v):
-Theorem `round_UP_plus_eps_pos`:
-  forall x, 0 ≤ x -> F x -> forall eps, 0 < eps ≤ ulp x ->
-  `round_UP` (x + eps) = x + ulp x.
+Theorem {coq}`round_UP_plus_eps_pos`:
+  {lit}`forall x, 0 ≤ x -> F x -> forall eps, 0 < eps ≤ ulp x -> round_UP (x + eps) = x + ulp x`.
 -/
 theorem round_UP_plus_eps_pos
     (x : ℝ) (hx : 0 ≤ x)
@@ -7075,8 +7076,8 @@ theorem round_UP_plus_eps_pos
   simpa [hsucc_run] using hup hβ
 
 /-- Coq (Ulp.v):
-Theorem round_UP_pred_plus_eps_pos:
-  forall x, 0 < x -> F x -> forall eps, 0 < eps ≤ ulp (pred x) -> round_UP (pred x + eps) = x.
+Theorem {coq}`round_UP_pred_plus_eps_pos`:
+  {lit}`forall x, 0 < x -> F x -> forall eps, 0 < eps ≤ ulp (pred x) -> round_UP (pred x + eps) = x`.
 -/
 theorem round_UP_pred_plus_eps_pos
     (x : ℝ) (hx : 0 < x)
@@ -7134,10 +7135,10 @@ theorem round_UP_pred_plus_eps_pos
     (u := x) Fx ⟨hlt_left, hle_right⟩ hβ
 
 /-- Coq (Ulp.v):
-Theorem round_UP_pred_plus_eps:
-  forall x, F x -> forall eps,
+Theorem {coq}`round_UP_pred_plus_eps`:
+  {lit}`forall x, F x -> forall eps,
   0 < eps <= (if Rle_bool x 0 then ulp x else ulp (pred x)) ->
-  round_UP (pred x + eps) = x.
+  round_UP (pred x + eps) = x`.
 -/
 -- We derive the general statement by case‑splitting on the sign of `x` using
 -- `Rle_bool` and reusing `round_UP_pred_plus_eps_pos` in the positive case,
@@ -7232,8 +7233,8 @@ theorem round_UP_pred_plus_eps
           hβ) hβ
 
 /-- Coq (Ulp.v):
-Theorem `round_DN_minus_eps_pos`:
-  forall x, 0 < x -> F x -> forall eps, 0 < eps ≤ ulp (pred x) -> `round_DN` (x - eps) = pred x.
+Theorem {coq}`round_DN_minus_eps_pos`:
+  {lit}`forall x, 0 < x -> F x -> forall eps, 0 < eps ≤ ulp (pred x) -> round_DN (x - eps) = pred x`.
 -/
 theorem round_DN_minus_eps_pos
     (x : ℝ) (hx : 0 < x)
@@ -7308,10 +7309,10 @@ theorem round_DN_minus_eps_pos
     (x := x - eps) (d := d) Fd ⟨hle_left, hlt_right⟩ hβ
 
 /-- Coq (Ulp.v):
-Theorem `round_DN_minus_eps`:
-  forall x, F x -> forall eps,
-  0 < eps <= (if `Rle_bool` x 0 then ulp x else ulp (pred x)) ->
-  `round_DN` (x - eps) = pred x.
+Theorem {coq}`round_DN_minus_eps`:
+  {lit}`forall x, F x -> forall eps,
+  0 < eps <= (if Rle_bool x 0 then ulp x else ulp (pred x)) ->
+  round_DN (x - eps) = pred x`.
 -/
 theorem round_DN_minus_eps
     (x : ℝ)
