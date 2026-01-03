@@ -8919,13 +8919,13 @@ theorem le_pred_pos_lt
 /-!
 Closure under one-ULP increment.
 
-We reintroduce `generic_format_plus_ulp` here (moved from above) so that the
+We reintroduce {lit}`generic_format_plus_ulp` here (moved from above) so that the
 proof can reuse already‑established lemmas about `succ`, `pred_pos`, and
 closure properties of the generic format. This matches the Coq proof structure:
-- if `0 ≤ x`, use `succ_eq_pos` and `generic_format_succ`;
-- if `x < 0`, expand the negative branch `succ x = - pred_pos (-x)` and use
-  `ulp` symmetry at the binade boundary to rewrite `succ x = x + ulp x`, then
-  conclude with `generic_format_succ`.
+- if {lit}`0 ≤ x`, use {name}`succ_eq_pos` and {name}`generic_format_succ`;
+- if {lit}`x < 0`, expand the negative branch {lit}`succ x = - pred_pos (-x)` and use
+  {name}`ulp` symmetry at the binade boundary to rewrite {lit}`succ x = x + ulp x`, then
+  conclude with {name}`generic_format_succ`.
 -/
 private theorem generic_format_plus_ulp_theorem
     (beta : Int) (fexp : Int → Int)
@@ -9026,7 +9026,7 @@ private theorem generic_format_plus_ulp_theorem
 
 /-- Coq (Ulp.v):
 Lemma `generic_format_plus_ulp`:
-  `forall { Hm : Monotone_exp fexp } x, F x -> F (x + ulp x).`
+  {lit}`forall { Hm : Monotone_exp fexp } x, F x -> F (x + ulp x).`
 -/
 theorem generic_format_plus_ulp
     [Monotone_exp fexp]
