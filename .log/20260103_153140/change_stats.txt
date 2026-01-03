@@ -1,0 +1,8 @@
+26e5dfa6473445ac4a4390f0f8d6ca36f535526e Ulp: add roles for succ/pred_pos mention
+
+Recent commits:
+2026-01-03 15:31:20 -0800 26e5dfa6 Ulp: add roles for succ/pred_pos mention  [Alok Singh]
+2026-01-03 15:31:09 -0800 467cd539 Calc: make Operations defs pure (remove Id bind)  [Alok Singh]
+2026-01-03 15:26:32 -0800 0993d414 Log: 938910a7  [Alok Singh]
+2026-01-03 15:26:10 -0800 938910a7 Ulp: add roles in generic_format_plus_ulp doc  [Alok Singh]
+2026-01-03 00:16:48 -0800 10d769f6 Log: b0ccb924  [Alok Singh]
