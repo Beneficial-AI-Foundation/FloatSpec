@@ -1,0 +1,57 @@
+Sat Jan 3 00:10:39 2026 -0800 3583ba60  (HEAD -> main) Ulp: fix pred_pos boundary simplifications  [Alok Singh]
+diff --git a/FloatSpec/src/Core/Ulp.lean b/FloatSpec/src/Core/Ulp.lean
+index c591153c..7f1c915b 100644
+--- a/FloatSpec/src/Core/Ulp.lean
++++ b/FloatSpec/src/Core/Ulp.lean
+@@ -8970,15 +8970,7 @@ private theorem generic_format_plus_ulp_theorem
+       have hpred_run : (pred_pos beta fexp (-x)) = (-x) - (beta : ℝ) ^ (fexp (m - 1)) := by
+         unfold pred_pos
+         -- Select the `then` branch and reduce the `Id` computation
+-        rw [if_pos hxeq]; simp [Id.run, bind, pure]
+-        -- Align the exponent argument via cached magnitude
+-        have hm1 : (FloatSpec.Core.Raux.mag beta (-x)) - 1 = m - 1 := by
+-          simpa using congrArg (fun t : Int => t - 1) hm
+-        have hfeq : fexp ((FloatSpec.Core.Raux.mag beta (-x)) - 1) = fexp (m - 1) := by
+-          simpa using congrArg fexp hm1
+-        have hxpow : (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta (-x)) - 1))
+-                    = (beta : ℝ) ^ (fexp (m - 1)) := by simpa [hfeq]
+-        simpa [hxpow]
++        rw [if_pos hxeq]
+       -- ulp at the binade boundary equals this spacing step
+       have hulp_boundary :
+           (ulp beta fexp (-x)) = (beta : ℝ) ^ (fexp (m - 1)) := by
+@@ -8986,7 +8978,11 @@ private theorem generic_format_plus_ulp_theorem
+         have hb := ulp_at_pos_boundary_theorem (beta := beta) (fexp := fexp) (x := -x)
+                     (hx := hxpos_neg) (hxeq := by simpa [hm] using hxeq)
+         have hrun := hb hβ
+-        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
++        have hrun' :
++            (ulp beta fexp (-x)) =
++              (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta (-x)) - 1)) := by
++          simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
++        simpa [hm.symm] using hrun'
+       -- Conclude: succ x = x + ulp x
+       have hsucc_eq : (succ beta fexp x) = x + (ulp beta fexp x) := by
+         calc
+@@ -9010,7 +9006,6 @@ private theorem generic_format_plus_ulp_theorem
+       have hpred_run : (pred_pos beta fexp (-x)) = (-x) - (ulp beta fexp (-x)) := by
+         unfold pred_pos
+         rw [if_neg hxeq]
+-        simp [Id.run, bind, pure]
+       have hsucc_eq : (succ beta fexp x) = x + (ulp beta fexp x) := by
+         calc
+           (succ beta fexp x)
+@@ -9037,9 +9032,10 @@ theorem generic_format_plus_ulp
+     [Monotone_exp fexp]
+     (x : ℝ)
+     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x)) :
+-    ⦃⌜1 < beta⌝⦄ do
+-      let u := ulp beta fexp x
+-      FloatSpec.Core.Generic_fmt.generic_format beta fexp (x + u)
++    ⦃⌜1 < beta⌝⦄
++      (pure
++        (let u := ulp beta fexp x
++         FloatSpec.Core.Generic_fmt.generic_format beta fexp (x + u)) : Id Prop)
+     ⦃⇓g => ⌜g⌝⦄ := by
+   intro hβ; classical
+   -- Reduce the `Id`-triple to the plain proposition that
