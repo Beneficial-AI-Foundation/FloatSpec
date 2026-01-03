@@ -651,11 +651,11 @@ def Rabs_gt_inv_pair (x y : ℝ) : (ℝ × ℝ) :=
     This is the converse direction corresponding to {lean}`Rabs_gt_spec`.
 -/
 @[spec]
-theorem Rabs_gt_inv_spec (x y : ℝ) :
-    ⦃⌜y < x ∨ y < -x⌝⦄
+theorem Rabs_gt_inv_spec (x y : ℝ) (h : y < x ∨ y < -x) :
+    ⦃⌜True⌝⦄
     (pure (Rabs_gt_inv_pair x y) : Id _)
     ⦃⇓p => ⌜p.2 < |p.1|⌝⦄ := by
-  intro h
+  intro _
   unfold Rabs_gt_inv_pair
   -- From y < x or y < -x and x ≤ |x|, -x ≤ |x| we get y < |x|
   rcases h with hxy | hxny
@@ -827,8 +827,8 @@ noncomputable def Rcompare_mult_r (x y _z : ℝ) : Int :=
     If {lean}`0<z`, then {lean}`Rcompare (x*z) (y*z) = Rcompare x y`.
 -/
 @[spec]
-theorem Rcompare_mult_r_spec (x y z : ℝ) :
-    ⦃⌜0 < z⌝⦄
+theorem Rcompare_mult_r_spec (x y z : ℝ) (_hz : 0 < z) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_mult_r x y z) : Id _)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
@@ -847,8 +847,8 @@ noncomputable def Rcompare_mult_l (x y _z : ℝ) : Int :=
     If {lean}`0<z`, then {lean}`Rcompare (z*x) (z*y) = Rcompare x y`.
 -/
 @[spec]
-theorem Rcompare_mult_l_spec (x y z : ℝ) :
-    ⦃⌜0 < z⌝⦄
+theorem Rcompare_mult_l_spec (x y z : ℝ) (_hz : 0 < z) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_mult_l x y z) : Id _)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
@@ -877,11 +877,11 @@ noncomputable def Rcompare_val (x y : ℝ) : Int := Rcompare x y
 
 /-- Coq: {lean}`Rcompare_Lt` — if {lean}`x < y` then the comparison yields the Lt code {lean}`-1`. -/
 @[spec]
-theorem Rcompare_Lt_spec (x y : ℝ) :
-    ⦃⌜x < y⌝⦄
+theorem Rcompare_Lt_spec (x y : ℝ) (hxy : x < y) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r = -1⌝⦄ := by
-  intro hxy
+  intro _
   unfold Rcompare_val Rcompare
   -- Reduce the Hoare triple to the postcondition on the pure result
   simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
@@ -890,11 +890,11 @@ theorem Rcompare_Lt_spec (x y : ℝ) :
   simp [hx, pure]
 
 /-/ Coq-named wrapper (renamed locally to avoid clashing with the def). -/
-private theorem Rcompare_Lt_wr (x y : ℝ) :
-    ⦃⌜x < y⌝⦄
+private theorem Rcompare_Lt_wr (x y : ℝ) (hxy : x < y) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r = -1⌝⦄ := by
-  simpa using Rcompare_Lt_spec x y
+  simpa using Rcompare_Lt_spec x y hxy
 
 /-- Coq: Rcompare_Lt_inv - from code Lt (-1) deduce x < y. -/
 @[spec]
