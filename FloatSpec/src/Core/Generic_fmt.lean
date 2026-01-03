@@ -1,4 +1,5 @@
-import FloatSpec.Linter.OmegaLinter
+import FloatSpec.Linter
+import FloatSpecRoles
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -268,26 +269,27 @@ theorem Ztrunc_neg_cast (x : ℝ) : (((Ztrunc (-x)) : Int) : ℝ) = -(((Ztrunc x
 theorem Ztrunc_neg_run_real (x : ℝ) : ((Ztrunc (-x)) : ℝ) = -((Ztrunc x) : ℝ) := by
   rw [Ztrunc_neg, Int.cast_neg]
 
-/-- Truncation respects negation (coercion form for post-Id.run matching):
-    Int.cast (Ztrunc(-x)) = -Int.cast (Ztrunc(x))
+/-- Truncation respects negation (coercion form for post-{name}`Id.run` matching):
+    For {given -show}`x : ℝ`, {lean}`(Int.cast (Ztrunc (-x)) : ℝ) = -(Int.cast (Ztrunc x) : ℝ)`
 
-    This is definitionally equal to `Ztrunc_neg_run_real` but simp needs this
-    form to match goals after `Id.run` simplification removes `.run`.
-    We use Int.cast explicitly to match the coercion ↑ syntax. -/
+    This is definitionally equal to {name}`Ztrunc_neg_run_real` but simp needs this
+    form to match goals after {name}`Id.run` simplification removes {lit}`.run`.
+    We use {name}`Int.cast` explicitly to match the coercion {lit}`↑` syntax. -/
 @[simp]
 theorem Ztrunc_neg_coe_real (x : ℝ) :
     (Int.cast (Ztrunc (-x)) : ℝ) = -(Int.cast (Ztrunc x) : ℝ) :=
   Ztrunc_neg_run_real x
 
-/-- Truncation of zero without `.run` for post-Id.run matching.
-    Proof is direct since Ztrunc 0 = ⌊0⌋ = 0. -/
+/-- Truncation of zero without {lit}`.run` for post-{name}`Id.run` matching.
+    Proof is direct since {name}`Ztrunc` 0 = ⌊0⌋ = 0. -/
 @[simp]
 theorem Ztrunc_zero_coe : (Int.cast (Ztrunc 0) : ℝ) = 0 := by
   simp only [Ztrunc, lt_irrefl, ite_false, pure, Int.floor_zero, Int.cast_zero]
 
-/-- For nonzero real `a`, we have `a^m * a^n = a^(m+n)`.
+/-- For nonzero real {given -show}`a : ℝ` and integers {given -show}`m : Int` and {given -show}`n : Int`,
+    we have {lean}`a^m * a^n = a^(m+n)`.
 
-This is a tiny wrapper around the Mathlib lemma `zpow_add₀`, phrased in the
+This is a tiny wrapper around the Mathlib lemma {name}`zpow_add₀`, phrased in the
 direction convenient for rewriting left-to-right in this file. -/
 theorem zpow_add_local {a : ℝ} (ha : a ≠ 0) (m n : Int) :
     a ^ m * a ^ n = a ^ (m + n) := by
@@ -377,8 +379,6 @@ theorem generic_format_bpow_inv'
     have hmag' : mag beta ((beta : ℝ) ^ e) = e + 1 := by
       simpa using hmag
     simp [hmag'] at hfmt
-    unfold FloatSpec.Core.Defs.F2R at hfmt
-    simp only [Id.run, pure] at hfmt
     -- hfmt: β^e = Ztrunc(β^e * β^(-fexp(e+1))) * β^(fexp(e+1))
     -- Assume for contradiction: fexp(e+1) > e
     by_contra hgt
@@ -450,12 +450,11 @@ theorem generic_format_bpow_inv
 -/
 theorem cexp_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    cexp beta fexp (-x)
+    (pure (cexp beta fexp (-x)) : Id Int)
     ⦃⇓result => ⌜result = (cexp beta fexp x)⌝⦄ := by
   intro _
-  unfold cexp
   -- mag depends only on |x|, so mag(-x) = mag(x)
-  simp [FloatSpec.Core.Raux.mag, abs_neg]
+  simp [wp, PostCond.noThrow, pure, cexp, FloatSpec.Core.Raux.mag, abs_neg]
 
 /-- Specification: Canonical exponent of absolute value
 
@@ -530,12 +529,12 @@ lemma Ztrunc_zero : (Ztrunc (0 : ℝ)) = 0 := by
 -/
 theorem generic_format_F2R (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (m e : Int) :
     ⦃⌜beta > 1 ∧ (m ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta))) ≤ e)⌝⦄
-    generic_format beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta))
+    (pure (generic_format beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta))) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hbound⟩
   -- Unfold the goal shape
-  simp [generic_format, scaled_mantissa, cexp, F2R]
+  simp [wp, PostCond.noThrow, pure, generic_format, scaled_mantissa, cexp, F2R]
   -- Notation: cexp for this x
   set c := fexp (mag beta ((m : ℝ) * (beta : ℝ) ^ e)) with hc
   -- Base positivity for zpow lemmas
@@ -604,7 +603,7 @@ is representable in the generic format provided {lit}`fexp (e+1) ≤ e`.
 -/
 theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
     ⦃⌜beta > 1 ∧ fexp (e + 1) ≤ e⌝⦄
-    generic_format beta fexp ((beta : ℝ) ^ e)
+    (pure (generic_format beta fexp ((beta : ℝ) ^ e)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro ⟨hβ, hfe⟩
   -- The proof shows β^e is in generic format by:
@@ -648,10 +647,8 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
   -- Ztrunc of an integer is itself
   have htrunc : Ztrunc ((beta : ℝ) ^ k) = (beta ^ k : Int) := by
     simpa [Int.cast_pow] using (Ztrunc_intCast (beta ^ k))
-  unfold FloatSpec.Core.Defs.F2R
-  simp only [Id.run, pure, htrunc]
+  simp [FloatSpec.Core.Defs.F2R, Id.run, pure, htrunc]
   -- Goal: β^e = (beta^k : ℝ) * β^(fexp(e+1))
-  rw [Int.cast_pow]
   rw [← hsm_int]
   -- β^e = β^(e - fexp(e+1)) * β^(fexp(e+1)) = β^e
   rw [zpow_sub₀ hbne]
@@ -664,7 +661,7 @@ Assumes {lean}`fexp e ≤ e`.
 -/
 theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
     ⦃⌜beta > 1 ∧ fexp e ≤ e⌝⦄
-    generic_format beta fexp ((beta : ℝ) ^ e)
+    (pure (generic_format beta fexp ((beta : ℝ) ^ e)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro ⟨hβ, hfe⟩
   -- Derive fexp(e+1) ≤ e from fexp e ≤ e using Valid_exp
@@ -689,7 +686,7 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
 -/
 theorem generic_format_F2R' (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (f : FlocqFloat beta) :
     ⦃⌜beta > 1 ∧ (F2R f) = x ∧ (x ≠ 0 → (cexp beta fexp x) ≤ f.Fexp)⌝⦄
-    generic_format beta fexp x
+    (pure (generic_format beta fexp x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx, hbound⟩
@@ -844,11 +841,10 @@ theorem generic_format_canonical
 -/
 theorem scaled_mantissa_0 (beta : Int) (fexp : Int → Int) :
     ⦃⌜True⌝⦄
-    scaled_mantissa beta fexp 0
+    (pure (scaled_mantissa beta fexp 0) : Id ℝ)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro _
-  unfold scaled_mantissa cexp
-  simp [mag]
+  simp [wp, PostCond.noThrow, pure, scaled_mantissa, cexp, mag]
 
 /-- Specification: Scaled mantissa of opposite
 
@@ -857,9 +853,10 @@ theorem scaled_mantissa_0 (beta : Int) (fexp : Int → Int) :
 -/
 theorem scaled_mantissa_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
     ⦃⌜True⌝⦄
-    scaled_mantissa beta fexp (-x)
+    (pure (scaled_mantissa beta fexp (-x)) : Id ℝ)
     ⦃⇓result => ⌜result = -((scaled_mantissa beta fexp x))⌝⦄ := by
   intro _
+  simp [wp, PostCond.noThrow, pure]
   unfold scaled_mantissa cexp
   -- Reduce the Hoare triple on Id and handle cases on x = 0
   by_cases hx : x = 0
@@ -879,7 +876,7 @@ theorem scaled_mantissa_opp (beta : Int) (fexp : Int → Int) (x : ℝ) :
 theorem scaled_mantissa_F2R_canonical
     (beta : Int) (fexp : Int → Int) (f : FlocqFloat beta) :
     ⦃⌜1 < beta ∧ canonical beta fexp f⌝⦄
-    scaled_mantissa beta fexp (F2R f)
+    (pure (scaled_mantissa beta fexp (F2R f)) : Id ℝ)
     ⦃⇓result => ⌜result = (f.Fnum : ℝ)⌝⦄ := by
   intro ⟨hβ, hcan⟩
   -- canonical: f.Fexp = fexp(mag(F2R f))
@@ -897,7 +894,6 @@ theorem scaled_mantissa_F2R_canonical
   rw [hcan']
   -- Goal: F2R(f) * β^(-f.Fexp) = f.Fnum
   unfold FloatSpec.Core.Defs.F2R
-  simp only [Id.run, pure]
   -- (f.Fnum * β^f.Fexp) * β^(-f.Fexp) = f.Fnum * (β^f.Fexp * β^(-f.Fexp)) = f.Fnum * 1 = f.Fnum
   rw [mul_assoc, zpow_neg, mul_inv_cancel₀ (zpow_ne_zero _ hbne), mul_one]
   simp
@@ -909,7 +905,7 @@ theorem scaled_mantissa_F2R_canonical
 -/
 theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    scaled_mantissa beta fexp (abs x)
+    (pure (scaled_mantissa beta fexp (abs x)) : Id ℝ)
     ⦃⇓result => ⌜result = abs (scaled_mantissa beta fexp x)⌝⦄ := by
   intro hβ
   -- mag(|x|) = mag(x) since mag uses |·| in its definition: ||x|| = |x|
@@ -932,7 +928,7 @@ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
 -/
 theorem generic_format_opp (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
-    generic_format beta fexp (-x)
+    (pure (generic_format beta fexp (-x)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   -- mag(-x) = mag(x) since mag uses abs and |-x| = |x|
@@ -967,9 +963,10 @@ theorem generic_format_opp (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
 -/
 theorem generic_format_abs (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
-    generic_format beta fexp (abs x)
+    (pure (generic_format beta fexp (abs x)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
+  simp [wp, PostCond.noThrow, pure] at hx ⊢
   -- Case split: x ≥ 0 → abs x = x, x < 0 → abs x = -x
   -- For x < 0, use generic_format_opp
   by_cases h0 : 0 ≤ x
@@ -988,9 +985,10 @@ theorem generic_format_abs (beta : Int) (fexp : Int → Int) [Valid_exp beta fex
 -/
 theorem generic_format_abs_inv (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp (abs x))⌝⦄
-    generic_format beta fexp x
+    (pure (generic_format beta fexp x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro h_abs
+  simp [wp, PostCond.noThrow, pure] at h_abs ⊢
   by_cases h0 : 0 ≤ x
   · -- x ≥ 0, so x = |x|
     have : x = abs x := (abs_of_nonneg h0).symm
@@ -1353,7 +1351,7 @@ private theorem abs_le_bpow_mag
   · -- Case x ≠ 0: Use mag_upper_bound which gives strict inequality |x| < β^(mag x)
     have hmub := FloatSpec.Core.Raux.mag_upper_bound beta x ⟨hβ, hx0⟩
     unfold FloatSpec.Core.Raux.abs_val at hmub
-    simp only [Id.run, pure] at hmub
+    simp [wp, PostCond.noThrow, Id.run] at hmub
     exact le_of_lt hmub
 
 theorem scaled_mantissa_lt_bpow
@@ -1402,9 +1400,10 @@ the canonical exponent is strictly less than {lit}`mag beta x`.
 theorem mag_generic_gt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ (generic_format beta fexp x)⌝⦄
-    cexp beta fexp x
+    (pure (cexp beta fexp x) : Id Int)
     ⦃⇓e => ⌜e ≤ (mag beta x)⌝⦄ := by
   intro hpre
+  simp [wp, PostCond.noThrow, pure] at hpre ⊢
   rcases hpre with ⟨hβ, hx_ne, hx_fmt⟩
   -- Notations for the canonical and magnitude exponents
   set M : Int := (mag beta x)
@@ -1808,7 +1807,7 @@ theorem Zrnd_DN_or_UP (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
 theorem Zrnd_ZR_or_AW (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (rnd x) : Id Int)
-    ⦃⇓z => ⌜z = (FloatSpec.Core.Raux.Ztrunc x) ∨ z = (FloatSpec.Core.Raux.Zaway x).run⌝⦄ := by
+    ⦃⇓z => ⌜z = (FloatSpec.Core.Raux.Ztrunc x) ∨ z = (FloatSpec.Core.Raux.Zaway x)⌝⦄ := by
   intro _; classical
   -- Reduce Hoare triple on Id to a pure goal about `rnd x`.
   simp [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.Ztrunc, FloatSpec.Core.Raux.Zaway]
@@ -1894,7 +1893,6 @@ theorem Znearest_eq_choice_of_eq_half
   set f := (FloatSpec.Core.Raux.Zfloor x) with hf
   have hcmp : (FloatSpec.Core.Raux.Rcompare (x - (f : ℝ)) (1/2)) = 0 := by
     unfold FloatSpec.Core.Raux.Rcompare
-    simp only [Id.run, pure]
     simp only [hmid]
     norm_num
   simp only [hcmp]
@@ -1906,8 +1904,7 @@ lemma Znearest_eq_if (choice : Int → Bool) (x : ℝ) :
       else if x - (⌊x⌋ : ℝ) = 1/2 then (if choice ⌊x⌋ then ⌈x⌉ else ⌊x⌋)
       else ⌈x⌉ := by
   unfold Znearest
-  simp only [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil, FloatSpec.Core.Raux.Rcompare,
-    Id.run, pure]
+  simp only [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil, FloatSpec.Core.Raux.Rcompare]
   norm_num
   split_ifs <;> rfl
 
@@ -1984,7 +1981,7 @@ noncomputable def Znearest_ge_floor_check (choice : Int → Bool) (x : ℝ) : (I
 -/
 theorem Znearest_ge_floor (choice : Int → Bool) (x : ℝ) :
     ⦃⌜True⌝⦄
-    Znearest_ge_floor_check choice x
+    (pure (Znearest_ge_floor_check choice x) : Id (Int × Int))
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro _
   -- ⌊x⌋ ≤ Znearest x since Znearest returns either ⌊x⌋ or ⌈x⌉, and ⌊x⌋ ≤ ⌈x⌉
@@ -2012,7 +2009,7 @@ noncomputable def Znearest_le_ceil_check (choice : Int → Bool) (x : ℝ) : (In
 -/
 theorem Znearest_le_ceil (choice : Int → Bool) (x : ℝ) :
     ⦃⌜True⌝⦄
-    Znearest_le_ceil_check choice x
+    (pure (Znearest_le_ceil_check choice x) : Id (Int × Int))
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
   intro _
   -- Znearest x ≤ ⌈x⌉ since Znearest returns either ⌊x⌋ or ⌈x⌉, and ⌊x⌋ ≤ ⌈x⌉
@@ -2043,7 +2040,7 @@ noncomputable def Znearest_N_strict_check (choice : Int → Bool) (x : ℝ) : �
 -/
 theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
     ⦃⌜x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) ≠ (1/2)⌝⦄
-    Znearest_N_strict_check choice x
+    (pure (Znearest_N_strict_check choice x) : Id ℝ)
     ⦃⇓r => ⌜r < (1/2)⌝⦄ := by
   intro _
   unfold Znearest_N_strict_check
@@ -2174,7 +2171,7 @@ noncomputable def Znearest_half_check (choice : Int → Bool) (x : ℝ) : ℝ :=
     Always {lean}`|x - ((Znearest choice x : Int) : ℝ)| ≤ (1/2)`. -/
 theorem Znearest_half_theorem (choice : Int → Bool) (x : ℝ) :
     ⦃⌜True⌝⦄
-    Znearest_half_check choice x
+    (pure (Znearest_half_check choice x) : Id ℝ)
     ⦃⇓r => ⌜r ≤ (1/2)⌝⦄ := by
   intro _
   unfold Znearest_half_check
@@ -2279,7 +2276,7 @@ noncomputable def Znearest_imp_check (choice : Int → Bool) (x : ℝ) (n : Int)
 -/
 theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
     ⦃⌜|x - ((n : Int) : ℝ)| < (1/2)⌝⦄
-    Znearest_imp_check choice x n
+    (pure (Znearest_imp_check choice x n) : Id (Int × Int))
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Znearest_imp_check
@@ -4259,30 +4256,28 @@ theorem round_N0_pt
 noncomputable def round_DN_to_format (beta : Int) (fexp : Int → Int)
   [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta) : ℝ :=
   -- Use classical choice from existence of DN rounding in generic format
-  pure (Classical.choose (round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)))
+  Classical.choose (round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
 
 /-- Choose the round-up witness in the generic format for x. -/
 noncomputable def round_UP_to_format (beta : Int) (fexp : Int → Int)
   [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta) : ℝ :=
   -- Use classical choice from existence of UP rounding in generic format
-  pure (Classical.choose (round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)))
+  Classical.choose (round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
 
 /-- Properties of the format-specific rounding helpers: both results are in the format
     and they bracket the input x. -/
 theorem round_to_format_properties (beta : Int) (fexp : Int → Int)
     [Valid_exp beta fexp] (x : ℝ) (hbeta: 1 < beta):
     ⦃⌜1 < beta⌝⦄
-    do
-      let down ← round_DN_to_format beta fexp x hbeta
-      let up ← round_UP_to_format beta fexp x hbeta
-      pure (down, up)
+    (pure (round_DN_to_format beta fexp x hbeta,
+           round_UP_to_format beta fexp x hbeta) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜let (down, up) := result;
                    (generic_format beta fexp down) ∧
                    (generic_format beta fexp up) ∧
                    down ≤ x ∧ x ≤ up⌝⦄ := by
   intro hβ
   -- Evaluate the do-block and unfold our definitions of the rounding helpers
-  simp [round_DN_to_format, round_UP_to_format]
+  simp [wp, PostCond.noThrow, round_DN_to_format, round_UP_to_format, pure]
   -- Retrieve properties of the chosen down and up values
   have hDN :=
     Classical.choose_spec (round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
@@ -4636,9 +4631,10 @@ theorem cexp_ge_bpow_ax
 -/
 theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
-    scaled_mantissa beta fexp x
+    (pure (scaled_mantissa beta fexp x) : Id ℝ)
     ⦃⇓result => ⌜result = (((Ztrunc result) : Int) : ℝ)⌝⦄ := by
   intro hx
+  simp [wp, PostCond.noThrow, pure] at hx ⊢
   unfold scaled_mantissa cexp
   simp only [Id.run, pure, Bind.bind, wp, PostCond.noThrow, PredTrans.pure]
   -- Turn the generic_format hypothesis into the reconstruction equality
@@ -4655,8 +4651,7 @@ theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp bet
   · -- Degenerate case: β^e = 0 means RHS of hx is 0, so x = 0
     have hx_zero : x = 0 := by simp only [hpow, mul_zero] at hx; exact hx
     -- Goal simplifies to True after substituting x = 0
-    simp only [hx_zero, zero_mul, Ztrunc_zero, Ztrunc_zero_coe]
-    trivial
+    simp [hx_zero, Ztrunc_zero, Ztrunc_zero_coe]
   · -- Nonzero: multiply hx by β^(-e) and simplify
     have h := congrArg (· * (beta : ℝ) ^ (-e)) hx
     simp only [mul_assoc, zpow_neg, mul_inv_cancel_right₀ hpow] at h
@@ -4672,9 +4667,10 @@ theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp bet
 -/
 theorem cexp_fexp (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : ℝ) ^ ex⌝⦄
-    cexp beta fexp x
+    (pure (cexp beta fexp x) : Id Int)
     ⦃⇓result => ⌜result = fexp ex⌝⦄ := by
   intro h
+  simp [wp, PostCond.noThrow, pure] at h ⊢
   rcases h with ⟨hβ, hlow, hupp⟩
   -- It suffices to show mag beta x = ex
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -4743,7 +4739,6 @@ theorem cexp_fexp (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
     -- Since Id α = α definitionally, mag beta x = (mag beta x).run = ex
     exact congrArg fexp hmag_ex
   -- Close the triple using the computed run-value
-  simp [wp, PostCond.noThrow, Id.run, pure]
   exact hr
 
 /-- Specification: Canonical exponent from positive bounds
@@ -4753,9 +4748,10 @@ theorem cexp_fexp (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
 -/
 theorem cexp_fexp_pos (beta : Int) (fexp : Int → Int) (x : ℝ) (ex : Int) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
-    cexp beta fexp x
+    (pure (cexp beta fexp x) : Id Int)
     ⦃⇓result => ⌜result = fexp ex⌝⦄ := by
   intro h
+  simp [wp, PostCond.noThrow, pure] at h ⊢
   rcases h with ⟨hβ, hlow, hupp⟩
   -- From beta > 1, powers are positive; with strict upper bound, x > 0 follows from lower bound
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -5153,9 +5149,10 @@ theorem fexp_monotone (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] :
 -/
 theorem generic_format_equiv (beta : Int) (x : ℝ) (e1 e2 : Int) :
     ⦃⌜1 < beta ∧ e2 ≤ e1 ∧ (generic_format beta (fun _ => e1) x)⌝⦄
-    generic_format beta (fun _ => e2) x
+    (pure (generic_format beta (fun _ => e2) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro h
+  simp [wp, PostCond.noThrow, pure] at h ⊢
   rcases h with ⟨hβ, hle, hx_fmt⟩
   -- Base positivity and nonzeroness for zpow lemmas
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -5659,8 +5656,8 @@ theorem round_ZR_or_AW
     Theorem round_ge_generic:
       forall x y, generic_format x -> x <= y -> x <= round rnd y.
 
-    Lean (existence/spec form): If `x` is in generic format and `x ≤ y`, then
-    `x ≤` the rounded value of `y` for any mode `rnd`.
+    Lean (existence/spec form): If x is in {name}`generic_format` and x ≤ y, then
+    x ≤ {name}`round_to_generic` beta fexp rnd y.
  -/
 theorem round_ge_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -5696,8 +5693,8 @@ theorem round_ge_generic
     Theorem round_le_generic:
       forall x y, generic_format y -> x <= y -> round rnd x <= y.
 
-    Lean (existence/spec form): If `y` is in generic format and `x ≤ y`, then
-    the rounded value of `x` is ≤ `y` for any mode `rnd`.
+    Lean (existence/spec form): If y is in {name}`generic_format` and x ≤ y, then
+    {name}`round_to_generic` beta fexp rnd x ≤ y.
  -/
 theorem round_le_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -5730,10 +5727,10 @@ theorem round_le_generic
   simpa [hfix]
 
 /-- Coq {lit}`Generic_fmt.v`:
-    Theorem {lit}`round_abs_abs`:
-      {lit}`∀ P, (∀ rnd x, 0 ≤ x → P x (round rnd x)) → ∀ rnd x, P |x| |round rnd x|`.
+    Theorem {coq}`round_abs_abs`:
+      ∀ P, (∀ rnd x, 0 ≤ x → P x (round rnd x)) → ∀ rnd x, P |x| |round rnd x|.
 
-    Lean (spec): Lifts absolute value through rounding for predicates {lit}`P`.
+    Lean (spec): Lifts absolute value through rounding for predicates P.
  -/
 theorem round_abs_abs
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -5755,7 +5752,8 @@ theorem round_abs_abs
 
 /-- Theorem: Absolute-value lower bound under rounding to the generic format
 
-    If `x` is already in the generic format and `x ≤ |y|`, then `x ≤ |round_to_generic y|`.
+    If x is already in the {name}`generic_format` and x ≤ |y|, then
+    x ≤ |{name}`round_to_generic` beta fexp rnd y|.
     This captures the intended monotonicity of rounding with respect to absolute values
     against representable lower bounds. -/
 theorem abs_round_ge_generic_ax
@@ -5797,11 +5795,11 @@ theorem abs_round_ge_generic_ax
 
 /-- Absolute-value upper bound under rounding to the generic format
 
-    If `y` is already in the generic format and `|x| ≤ y`, then
-    `|round_to_generic x| ≤ y`. This is the dual of
-    `abs_round_ge_generic_ax` and follows from the generic upper/lower
+    If y is already in the {name}`generic_format` and |x| ≤ y, then
+    |{name}`round_to_generic` beta fexp rnd x| ≤ y. This is the dual of
+    {name}`abs_round_ge_generic_ax` and follows from the generic upper/lower
     bound lemmas for rounding together with the absolute-value
-    characterization `|r| ≤ y ↔ -y ≤ r ∧ r ≤ y`.
+    characterization |r| ≤ y ↔ -y ≤ r ∧ r ≤ y.
 -/
 theorem abs_round_le_generic_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -6300,12 +6298,12 @@ noncomputable def round_N_to_format
   let u := Classical.choose (round_UP_exists beta fexp x hbeta)
   let mid := (d + u) / 2
   if hlt : x < mid then
-    pure d
+    d
   else if hgt : mid < x then
-    pure u
+    u
   else
     -- tie case: return UP (consistent with downstream usage)
-    pure u
+    u
 
 -- (moved earlier) round_DN_to_format, round_UP_to_format, and round_to_format_properties
 
@@ -6495,7 +6493,7 @@ theorem round_AW_DN
 -- (moved below after `round_large_pos_ge_bpow`)
 
 
-/-- Coq `Generic_fmt.v`: Theorem `mag_round_ge`.
+/-- Coq {lit}`Generic_fmt.v`: Theorem {name}`mag_round_ge`.
     If round rnd x ≠ 0, then mag x ≤ mag (round rnd x).
     Lean (spec placeholder): Magnitude does not decrease under rounding away from zero.
  -/
@@ -6584,7 +6582,6 @@ theorem subnormal_exponent
     simpa [generic_format, scaled_mantissa, cexp, F2R] using hx
   -- Rewrite the canonical exponent fexp(mag x) as fexp ex using constancy
   simp only [F2R, Id.run, hcexp_eq'] at hx_eq ⊢
-  simp only [pure]
   exact hx_eq
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`cexp_le_bpow`
@@ -6646,8 +6643,9 @@ theorem lt_cexp
   -- Conclude |x| < |y|
   exact lt_cexp_pos_ax (beta := beta) (fexp := fexp) (x := abs x) (y := abs y) hβ hy_pos hlt_abs
 
-/-- Coq `Generic_fmt.v`: Theorem `abs_round_ge_generic`.
-    If `generic_format x and x ≤ |y|, then x ≤ |round rnd y|`.
+/-- Coq {lit}`Generic_fmt.v`: Theorem {name}`abs_round_ge_generic`.
+    If {name}`generic_format` holds for x and x ≤ |y|, then
+    x ≤ |{name}`round_to_generic` beta fexp rnd y|.
     Lean (spec): Absolute value monotonicity w.r.t. a representable lower bound. -/
 theorem abs_round_ge_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -6662,8 +6660,9 @@ theorem abs_round_ge_generic
   -- Apply the absolute-value lower-bound theorem
   exact abs_round_ge_generic_ax (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) (y := y) hxF hxle
 
-/-- Coq `Generic_fmt.v`: Theorem `abs_round_le_generic`.
-    If `generic_format y and |x| ≤ y, then |round rnd x| ≤ y`.
+/-- Coq {lit}`Generic_fmt.v`: Theorem {name}`abs_round_le_generic`.
+    If {name}`generic_format` holds for y and |x| ≤ y, then
+    |{name}`round_to_generic` beta fexp rnd x| ≤ y.
     Lean (spec): Absolute value monotonicity w.r.t. a representable upper bound. -/
 theorem abs_round_le_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -6919,9 +6918,10 @@ theorem round_large_pos_ge_bpow
   -- Close the Hoare triple for the pure computation
   simpa [wp, PostCond.noThrow, Id.run, pure] using h_lower
 
-/-- Theorem: Small-range zeros imply small exponent (positive case)
-    If `x` lies in `[β^(ex-1), β^ex)` and the generic rounding returns `0`,
-    then `ex ≤ fexp ex`. This mirrors Coq's `exp_small_round_0_pos` contrapositive
+/-- Theorem: Small-range zeros imply small exponent (positive case).
+    If x lies in (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex
+    and the generic rounding returns 0,
+    then ex ≤ fexp ex. This mirrors Coq's {coq}`exp_small_round_0_pos` contrapositive
     argument via the large-regime lower bound. -/
 theorem exp_small_round_0_pos_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -7144,7 +7144,8 @@ theorem mag_round_ZR
   exact le_antisymm h_le h_ge
 
 /-- Canonical exponent does not decrease under rounding (nonzero case).
-    If `r = round_to_generic … x` and `r ≠ 0`, then `cexp x ≤ cexp r`.
+    If r is the result of {name}`round_to_generic` and r ≠ 0,
+    then {name}`cexp` does not decrease.
     We use the magnitude preservation lemma for nonzero rounds. -/
 theorem cexp_round_ge_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -7330,36 +7331,36 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
       rw [← hZ, ← hpow_collapse]
     _   = (((Ztrunc ((scaled_mantissa beta fexp x))) : Int) : ℝ) * 1 := by
       -- Note: (cexp beta fexp r).run = cexp beta fexp r by Id.run definition
-      simp only [Id.run] at hpow_one ⊢
       rw [hpow_one]
     _   = (((Ztrunc ((scaled_mantissa beta fexp x))) : Int) : ℝ) := by
               simpa
 
-/-- Coq (Generic_fmt.v):
-    Theorem mag_DN:
-      0 < round Zfloor x -> mag (round Zfloor x) = mag x.
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {coq}`mag_DN`:
+      {coq}`0 < round Zfloor x -> mag (round Zfloor x) = mag x`.
 
-    Lean (spec form, aligned with monadic encoding): Using our `round_to_generic`
+    Lean (spec form, aligned with monadic encoding): Using our {name}`round_to_generic`
     (mode-insensitive) rounding, if the rounded value is positive, its magnitude
-    equals that of the input. We require `1 < beta`, as in the Coq development. -/
+    equals that of the input. We require 1 < beta, as in the Coq development. -/
 theorem mag_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    (pure (round_to_generic beta fexp (fun _ _ => True) x) : Id ℝ)
+    (pure (round_to_generic beta fexp (fun r y => True) x) : Id ℝ)
     ⦃⇓r => ⌜0 < r → (mag beta r) = (mag beta x)⌝⦄ := by
   intro hβ
+  let rndTrue : ℝ → ℝ → Prop := fun r y => True
   -- Reduce the Id computation; denote the rounded value as r.
-  simp [wp, PostCond.noThrow, Id.run, pure]
+  simp [wp, PostCond.noThrow, Id.run, pure, rndTrue]
   intro hr_pos
   -- Specialize the ZR magnitude preservation lemma to the trivial relation; `round_to_generic`
   -- ignores the relation argument, so this is general.
   have hZR := (mag_round_ZR (beta := beta) (fexp := fexp)
-                  (rndZR := fun _ _ => True) (x := x)) hβ
+                  (rndZR := rndTrue) (x := x)) hβ
   -- Extract the implication from the Hoare triple and apply it to `hr_pos`.
   have himp :
-      round_to_generic beta fexp (fun _ _ => True) x ≠ 0 →
-      (mag beta (round_to_generic beta fexp (fun _ _ => True) x)) = (mag beta x) := by
+      round_to_generic beta fexp rndTrue x ≠ 0 →
+      (mag beta (round_to_generic beta fexp rndTrue x)) = (mag beta x) := by
     simpa [wp, PostCond.noThrow, Id.run, pure] using hZR
-  have hr_ne : round_to_generic beta fexp (fun _ _ => True) x ≠ 0 := ne_of_gt hr_pos
+  have hr_ne : round_to_generic beta fexp rndTrue x ≠ 0 := ne_of_gt hr_pos
   simpa using himp hr_ne
 
 /-- Coq (Generic_fmt.v):

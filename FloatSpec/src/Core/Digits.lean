@@ -38,9 +38,6 @@ open scoped Int
 
 namespace FloatSpec.Core.Digits
 
-/-- Lift a pure value into {lean}`Id` for Hoare-style specs. -/
-abbrev pureId {α} (x : α) : Id α := (pure x : Id α)
-
 universe u
 
 section DigitOperations
@@ -201,7 +198,7 @@ Qed.
 -/
 theorem digits2_Pnat_correct (n : Nat) :
     ⦃⌜n > 0⌝⦄
-    pureId (digits2_Pnat n)
+    (pure (digits2_Pnat n) : Id _)
     ⦃⇓d => ⌜d > 0 ∧ 2 ^ (d - 1) ≤ n ∧ n < 2 ^ d⌝⦄ := by
   intro hn
   have hb := bits_bounds n hn
@@ -237,7 +234,7 @@ Qed.
 -/
 theorem Zdigit_lt (n k : Int) :
     ⦃⌜k < 0⌝⦄
-    pureId (Zdigit beta n k)
+    (pure (Zdigit beta n k) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro hk
   unfold Zdigit
@@ -259,7 +256,7 @@ Qed.
 -/
 theorem Zdigit_0 (k : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zdigit beta 0 k)
+    (pure (Zdigit beta 0 k) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro _
   unfold Zdigit
@@ -282,7 +279,7 @@ Qed.
 -/
 theorem Zdigit_opp (n k : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zdigit beta (-n) k)
+    (pure (Zdigit beta (-n) k) : Id _)
     ⦃⇓result => ⌜∃ orig_result, Zdigit beta n k = orig_result ∧
                   result = if k ≥ 0 then (Int.tdiv (-n) (beta ^ k.natAbs)) % beta else 0⌝⦄ := by
   intro _
@@ -326,7 +323,7 @@ Qed.
 -/
 theorem Zdigit_ge_Zpower_pos (n e : Int) :
     ⦃⌜0 ≤ n ∧ n < beta ^ e.natAbs ∧ 0 ≤ e⌝⦄
-    pureId (Zdigit beta n e)
+    (pure (Zdigit beta n e) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro ⟨hn_pos, hn_bound, he_pos⟩
   unfold Zdigit
@@ -370,7 +367,7 @@ Qed.
 -/
 theorem Zdigit_ge_Zpower (n e : Int) :
     ⦃⌜Int.natAbs n < beta ^ e.natAbs ∧ 0 ≤ e⌝⦄
-    pureId (Zdigit beta n e)
+    (pure (Zdigit beta n e) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro ⟨hn_bound, he_pos⟩
   unfold Zdigit
@@ -504,7 +501,7 @@ private lemma exists_nonzero_digit (beta n : Int) (hβ : beta > 1) (hn : 0 < n) 
   sorry
 theorem Zdigit_not_0_pos (n : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 < n⌝⦄
-    pureId (Zdigit beta n 0)
+    (pure (Zdigit beta n 0) : Id _)
     ⦃⇓_ => ⌜∃ k, 0 ≤ k ∧ Zdigit beta n k ≠ 0⌝⦄ := by
   intro hn
   exact exists_nonzero_digit beta n hβ hn
@@ -535,7 +532,7 @@ Qed.
 -/
 theorem Zdigit_not_0 (n : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0⌝⦄
-    pureId (Zdigit beta n 0)
+    (pure (Zdigit beta n 0) : Id _)
     ⦃⇓_ => ⌜∃ k, 0 ≤ k ∧ Zdigit beta n k ≠ 0⌝⦄ := by
   sorry
 /-- Digit of multiplied number
@@ -585,7 +582,7 @@ Qed.
 -/
 theorem Zdigit_mul_pow (n k l : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜0 ≤ l⌝⦄
-    pureId (Zdigit beta (n * beta ^ l.natAbs) k)
+    (pure (Zdigit beta (n * beta ^ l.natAbs) k) : Id _)
     ⦃⇓result => ⌜∃ shifted, Zdigit beta n (k - l) = shifted ∧ result = shifted⌝⦄ := by
   intro hl
   -- We will produce the shifted digit explicitly and prove equality by cases
@@ -715,7 +712,7 @@ Qed.
 -/
 theorem Zdigit_div_pow (n k l : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜0 ≤ l ∧ 0 ≤ k ∧ 0 < n⌝⦄
-    pureId (Zdigit beta (n / beta ^ l.natAbs) k)
+    (pure (Zdigit beta (n / beta ^ l.natAbs) k) : Id _)
     ⦃⇓result => ⌜∃ shifted, Zdigit beta n (k + l) = shifted ∧ result = shifted⌝⦄ := by
   intro ⟨hl, hk, hn_pos⟩
   -- The digit at position k+l directly
@@ -906,7 +903,7 @@ private lemma tdiv_mod_pow_eq
 
 theorem Zdigit_mod_pow (n k l : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜0 ≤ k ∧ k < l ∧ 0 < n⌝⦄
-    pureId (Zdigit beta (n % beta ^ l.natAbs) k)
+    (pure (Zdigit beta (n % beta ^ l.natAbs) k) : Id _)
     ⦃⇓result => ⌜∃ orig, Zdigit beta n k = orig ∧ result = orig⌝⦄ := by
   intro ⟨hk_nonneg, hk_lt, hn_pos⟩
   use (Int.tdiv n (beta ^ k.natAbs)) % beta
@@ -995,7 +992,7 @@ private lemma pow_strict_mono_int {beta : Int} (hβ : 1 < beta) {m n : Nat} (hmn
 
 theorem Zdigit_mod_pow_out (n k l : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ l ∧ l ≤ k⌝⦄
-    pureId (Zdigit beta (n % beta ^ l.natAbs) k)
+    (pure (Zdigit beta (n % beta ^ l.natAbs) k) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro ⟨hl_nonneg, hl_le_k⟩
   unfold Zdigit
@@ -1094,13 +1091,13 @@ Qed.
 -/
 theorem Zsum_digit_digit (n : Int) (k : Nat) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 < n⌝⦄
-    pureId (Zsum_digit beta (fun i => Zdigit beta n i) k)
+    (pure (Zsum_digit beta (fun i => Zdigit beta n i) k) : Id _)
     ⦃⇓result => ⌜result = n % beta ^ k⌝⦄ := by
   intro _
   sorry
 theorem ZOmod_plus_pow_digit (n k : Int) (hn : 0 ≤ n) (hβ : beta > 1):
     ⦃⌜0 ≤ k⌝⦄
-    pureId (Zdigit beta n k)
+    (pure (Zdigit beta n k) : Id _)
     ⦃⇓d => ⌜n % beta ^ (k + 1).natAbs =
             n % beta ^ k.natAbs + d * beta ^ k.natAbs⌝⦄ := by
   intro hk
@@ -1226,14 +1223,14 @@ theorem ZOmod_plus_pow_digit (n k : Int) (hn : 0 ≤ n) (hβ : beta > 1):
 
 theorem Zdigit_ext_nonneg (n m : Int) (hn : 0 ≤ n) (hm : 0 ≤ m) (hβ : beta > 1 := h_beta):
     ⦃⌜∀ k, 0 ≤ k → Zdigit beta n k = Zdigit beta m k⌝⦄
-    pureId (Zdigit beta n 0)
+    (pure (Zdigit beta n 0) : Id _)
     ⦃⇓_ => ⌜n = m⌝⦄ := by
   intro _
   sorry
 theorem ZOdiv_plus_pow_digit
     (n k : Int) (hn : 0 ≤ n) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ k⌝⦄
-    pureId (Zdigit beta n k)
+    (pure (Zdigit beta n k) : Id _)
     ⦃⇓d => ⌜n / beta ^ k.natAbs =
             d + (n / beta ^ (k + 1).natAbs) * beta⌝⦄ := by
   intro hk
@@ -1295,7 +1292,7 @@ theorem ZOdiv_plus_pow_digit
 theorem Zdigit_plus_nonneg
     (n m k : Int) (hn : 0 ≤ n) (hm : 0 ≤ m) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ k⌝⦄
-    pureId (Zdigit beta (n + m) k)
+    (pure (Zdigit beta (n + m) k) : Id _)
     ⦃⇓result => ⌜∃ dn dm carry,
                   Zdigit beta n k = dn ∧
                   Zdigit beta m k = dm ∧
@@ -1513,12 +1510,12 @@ Qed.
 theorem Zdigit_scale_point
     (n k k' : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ k' ∧ (0 ≤ k ∨ 0 ≤ n)⌝⦄
-    pureId (Zdigit beta (Zscale beta n k) k')
+    (pure (Zdigit beta (Zscale beta n k) k') : Id _)
     ⦃⇓result => ⌜Zdigit beta n (k' - k) = result⌝⦄ := by
   sorry
 theorem Zscale_0 (k : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zscale beta 0 k)
+    (pure (Zscale beta 0 k) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro _
   unfold Zscale
@@ -1528,7 +1525,7 @@ theorem Zscale_0 (k : Int) :
 theorem Zsame_sign_scale
     (n k : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜True⌝⦄
-    pureId (Zscale beta n k)
+    (pure (Zscale beta n k) : Id _)
     ⦃⇓result =>
        ⌜
          ((0 < n → 0 ≤ result) ∧ (n < 0 → result ≤ 0))                                    -- (i)
@@ -1600,7 +1597,7 @@ theorem Zsame_sign_scale
 /-- Scaling and multiplication -/
 theorem Zscale_mul_pow (n k l : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜0 ≤ l⌝⦄
-    pureId (Zscale beta (n * beta ^ l.natAbs) k)
+    (pure (Zscale beta (n * beta ^ l.natAbs) k) : Id _)
     ⦃⇓result => ⌜∃ scaled, Zscale beta n (k + l) = scaled ∧ result = scaled⌝⦄ := by
   intro hl
   unfold Zscale
@@ -1739,7 +1736,7 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
     (hdiv_k : k < 0 → beta ^ (-k).natAbs ∣ n)
     (hdiv_compose : k < 0 → l ≥ 0 → k + l < 0 → beta ^ l.natAbs ∣ n) :
     ⦃⌜True⌝⦄
-    pureId (Zscale beta (Zscale beta n k) l)
+    (pure (Zscale beta (Zscale beta n k) l) : Id _)
     ⦃⇓result => ⌜∃ scaled, Zscale beta n (k + l) = scaled ∧ result = scaled⌝⦄ := by
   sorry
 def Zslice (n k1 k2 : Int) : Int :=
@@ -1775,7 +1772,7 @@ Qed.
 -/
 theorem Zdigit_slice (n k l m : Int) (h_beta : beta > 1) :
     ⦃⌜0 ≤ m ∧ 0 ≤ n⌝⦄
-    pureId (Zdigit beta ((Zslice beta n k l)) m)
+    (pure (Zdigit beta ((Zslice beta n k l)) m) : Id _)
     ⦃⇓result =>
         ⌜if m < l then
             ∃ orig, Zdigit beta n (k + m) = orig ∧ result = orig
@@ -1803,7 +1800,7 @@ Qed.
 -/
 theorem Zdigit_slice_out (n k l m : Int) (h_beta : beta > 1):
     ⦃⌜l ≤ m⌝⦄
-    pureId (Zdigit beta ((Zslice beta n k l)) m)
+    (pure (Zdigit beta ((Zslice beta n k l)) m) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   sorry
 /-- Zslice of zero is always zero
@@ -1825,7 +1822,7 @@ Qed.
 -/
 theorem Zslice_0 (k k' : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zslice beta 0 k k')
+    (pure (Zslice beta 0 k k') : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro _
   unfold Zslice Zscale
@@ -1854,7 +1851,7 @@ Qed.
 -/
 theorem Zsame_sign_slice (n k l : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ n ∧ 0 ≤ k ∧ 0 ≤ l⌝⦄
-    pureId (Zslice beta n k l)
+    (pure (Zslice beta n k l) : Id _)
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
   intro h
   rcases h with ⟨_hn, _hk, hl⟩
@@ -1906,7 +1903,7 @@ Qed.
 -/
 theorem Zslice_slice (n k1 k2 k1' k2' : Int) (h_beta : beta > 1) :
     ⦃⌜0 < n ∧ 0 ≤ k1' ∧ k1' ≤ k2⌝⦄
-    pureId (Zslice beta ((Zslice beta n k1 k2)) k1' k2')
+    (pure (Zslice beta ((Zslice beta n k1 k2)) k1' k2') : Id _)
     ⦃⇓result =>
        ⌜∃ inner_slice,
           Zslice beta n (k1 + k1') (min (k2 - k1') k2') = inner_slice ∧
@@ -1931,7 +1928,7 @@ Qed.
 -/
 theorem Zslice_mul_pow (n k k1 k2 : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ k⌝⦄
-    pureId (Zslice beta (n * beta ^ k.natAbs) k1 k2)
+    (pure (Zslice beta (n * beta ^ k.natAbs) k1 k2) : Id _)
     ⦃⇓result => ⌜∃ slice_shifted, Zslice beta n (k1 - k) k2 = slice_shifted ∧
                   result = slice_shifted⌝⦄ := by
   sorry
@@ -1958,7 +1955,7 @@ Qed.
 -/
 theorem Zslice_div_pow (n k k1 k2 : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ k ∧ 0 ≤ k1⌝⦄
-    pureId (Zslice beta (n / beta ^ k.natAbs) k1 k2)
+    (pure (Zslice beta (n / beta ^ k.natAbs) k1 k2) : Id _)
     ⦃⇓result => ⌜∃ slice_shifted, Zslice beta n (k1 + k) k2 = slice_shifted ∧
                   result = slice_shifted⌝⦄ := by
   sorry
@@ -1982,7 +1979,7 @@ Qed.
 theorem Zslice_scale (n k k1 k2 : Int) (h_beta : beta > 1)
     (hdiv_k : k < 0 → beta ^ (-k).natAbs ∣ n):
     ⦃⌜0 ≤ k1⌝⦄
-    pureId (Zslice beta (Zscale beta n k) k1 k2)
+    (pure (Zslice beta (Zscale beta n k) k1 k2) : Id _)
     ⦃⇓result => ⌜∃ slice_unscaled, Zslice beta n (k1 - k) k2 = slice_unscaled ∧
                   result = slice_unscaled⌝⦄ := by
   sorry
@@ -2097,7 +2094,7 @@ Qed.
 theorem Zslice_div_pow_scale_nonnegKp
     (n k k' k1 k2 : Int) (h_beta : beta > 1)
     : ⦃⌜0 ≤ k ∧ 0 ≤ k1 ∧ 0 ≤ k' ∧ k1 ≥ k'⌝⦄
-      pureId (Zslice beta ((n / beta ^ k.natAbs) * beta ^ k'.natAbs) k1 k2)
+      (pure (Zslice beta ((n / beta ^ k.natAbs) * beta ^ k'.natAbs) k1 k2) : Id _)
       ⦃⇓result =>
          ⌜∃ slice_combined,
             Zslice beta n (k1 + k - k') k2 = slice_combined ∧
@@ -2180,7 +2177,7 @@ Qed.
 -/
 theorem Zplus_slice (n m k l : Int) (h_beta : beta > 1) :
     ⦃⌜0 ≤ k ∧ 0 ≤ l⌝⦄
-    pureId (Zslice beta (n + m) k l)
+    (pure (Zslice beta (n + m) k l) : Id _)
     ⦃⇓result => ⌜∃ n_slice m_slice,
                   Zslice beta n k l = n_slice ∧
                   Zslice beta m k l = m_slice ∧
@@ -2332,13 +2329,13 @@ private theorem Zdigits_aux_bounds
   (hlow : beta ^ ((d - 1).natAbs) ≤ |n|)
   (hhigh : |n| < beta ^ (d.natAbs + fuel)) :
   ⦃⌜True⌝⦄
-  pureId (Zdigits_aux beta n d pow fuel)
+  (pure (Zdigits_aux beta n d pow fuel) : Id _)
   ⦃⇓r => ⌜beta ^ ((r - 1).natAbs) ≤ |n| ∧ |n| < beta ^ r.natAbs⌝⦄ := by
   sorry
 /-- Final theorem: correctness of the number of digits computed by {name}`Zdigits`. -/
 theorem Zdigits_correct (n : Int) (hβ : beta > 1) :
     ⦃⌜n ≠ 0⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜beta ^ ((d - 1).natAbs) ≤ |n| ∧ |n| < beta ^ d.natAbs⌝⦄ := by
   sorry
 
@@ -2421,7 +2418,7 @@ private lemma natAbs_sub_one_eq_add_one_of_nonpos (x : Int) (hx : x ≤ 0) :
 the {name}`Zdigits` bounds hold, then Zdigits β n = e. -/
 theorem Zdigits_unique (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ (e - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ e.natAbs⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜d = e⌝⦄ := by
   sorry
 /-- Helper lemma: {name}`Zdigits_aux` only depends on the absolute value of {name}`n`. -/
@@ -2457,7 +2454,7 @@ Qed.
 -/
 theorem Zdigits_abs (n : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zdigits beta (Int.natAbs n))
+    (pure (Zdigits beta (Int.natAbs n)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn⌝⦄ := by
   sorry
 /-- Digit count of opposite
@@ -2476,7 +2473,7 @@ Qed.
 -/
 theorem Zdigits_opp (n : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zdigits beta (-n))
+    (pure (Zdigits beta (-n)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn⌝⦄ := by
   sorry
 /-- Digit count with conditional opposite
@@ -2494,7 +2491,7 @@ Qed.
 -/
 theorem Zdigits_cond_Zopp (b : Bool) (n : Int):
     ⦃⌜True⌝⦄
-    pureId (Zdigits beta (if b then -n else n))
+    (pure (Zdigits beta (if b then -n else n)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn⌝⦄ := by
   sorry
 /-- Digit count is non-negative
@@ -2514,12 +2511,12 @@ Qed.
 -/
 theorem Zdigits_ge_0 (n : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
   sorry
 theorem Zdigits_gt_0 (n : Int) (_h_beta : beta > 1):
     ⦃⌜n ≠ 0⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓result => ⌜0 < result⌝⦄ := by
   intro hn
   -- Unfold Zdigits to see what we're working with
@@ -2567,7 +2564,7 @@ Qed.
 -/
 theorem Zdigit_out (n k : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜∃ digits_val, Zdigits beta n = digits_val ∧ digits_val ≤ k⌝⦄
-    pureId (Zdigit beta n k)
+    (pure (Zdigit beta n k) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
   intro ⟨digits_val, hdig, hle⟩
   -- Case split on whether k ≥ 0
@@ -2643,7 +2640,7 @@ theorem Zdigit_out (n k : Int) (hβ : beta > 1 := h_beta) :
 /-- Helper: Zdigits returns a positive value for non-zero n -/
 private lemma Zdigits_pos_aux (n : Int):
     ⦃⌜n ≠ 0⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜0 < d⌝⦄ := by
   intro hn
   unfold wp PostCond.noThrow Id.instWP
@@ -3152,27 +3149,27 @@ Qed.
 -/
 theorem Zdigit_digits (n : Int) (h_beta : beta > 1) :
     ⦃⌜n ≠ 0⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜Zdigit beta n (d - 1) ≠ 0⌝⦄ := by
   sorry
 theorem lt_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 < m ∧ Int.natAbs n < beta ^ m.natAbs⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜d ≤ m⌝⦄ := by
   sorry
 theorem Zdigits_le_Zpower (x e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ e ∧ Int.natAbs x < beta ^ e.natAbs⌝⦄
-    pureId (Zdigits beta x)
+    (pure (Zdigits beta x) : Id _)
     ⦃⇓d => ⌜d ≤ e⌝⦄ := by
   sorry
 theorem Zdigits_slice (n k l : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ k ∧ 0 < l⌝⦄
-    pureId (Zdigits beta ((Zslice beta n k l)))
+    (pure (Zdigits beta ((Zslice beta n k l))) : Id _)
     ⦃⇓d => ⌜d ≤ l⌝⦄ := by
   sorry
 theorem Zdigits_mult_Zpower (beta n k : Int) (h_beta : beta > 1) :
     ⦃⌜n ≠ 0 ∧ 0 ≤ k⌝⦄
-    pureId (Zdigits beta (n * beta ^ k.natAbs))
+    (pure (Zdigits beta (n * beta ^ k.natAbs)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn + k⌝⦄ := by
   sorry
 /-- Digit count of powers of beta
@@ -3193,17 +3190,17 @@ Qed.
 -/
 theorem Zdigits_Zpower (k : Int) (hβ : beta > 1) :
     ⦃⌜0 ≤ k⌝⦄
-    pureId (Zdigits beta (beta ^ k.natAbs))
+    (pure (Zdigits beta (beta ^ k.natAbs)) : Id _)
     ⦃⇓d => ⌜d = k + 1⌝⦄ := by
   sorry
 theorem Zdigits_le (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ Int.natAbs n ≤ Int.natAbs m⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = dm ∧ dn ≤ dm⌝⦄ := by
   sorry
 theorem Zpower_le_Zdigits (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ e.natAbs ≤ Int.natAbs n⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜e < d⌝⦄ := by
   sorry
 /-- Alternative digit count bound
@@ -3225,12 +3222,12 @@ Qed.
 -/
 theorem Zdigits_le_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜m ≠ 0 ∧ Int.natAbs n < Int.natAbs m⌝⦄
-    pureId (Zdigits beta n)
+    (pure (Zdigits beta n) : Id _)
     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = dm ∧ dn ≤ dm⌝⦄ := by
   sorry
 private lemma Zdigits_nonneg (x : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zdigits beta x)
+    (pure (Zdigits beta x) : Id _)
     ⦃⇓d => ⌜0 ≤ d⌝⦄ := by
   sorry
 /-- Power greater than digit count
@@ -3251,7 +3248,7 @@ Qed.
 -/
 theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜True⌝⦄
-    pureId (Zdigits beta x)
+    (pure (Zdigits beta x) : Id _)
     ⦃⇓d => ⌜d ≤ e → Int.natAbs x < beta ^ e.natAbs⌝⦄ := by
   intro _
   -- By cases on whether x = 0
@@ -3343,7 +3340,7 @@ Qed.
 -/
 theorem Zdigits_gt_Zpower (e x : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜beta ^ e.natAbs ≤ Int.natAbs x⌝⦄
-    pureId (Zdigits beta x)
+    (pure (Zdigits beta x) : Id _)
     ⦃⇓d => ⌜e < d⌝⦄ := by
   intro h_precond
   -- Use Zpower_gt_Zdigits to derive a contradiction if d ≤ e
@@ -3400,27 +3397,27 @@ private lemma Zdigits_sum_product_bound (beta : Int) (x y : Int)
   sorry
 theorem Zdigits_mult_strong (x y : Int) (hbeta : beta > 1 := h_beta) :
     ⦃⌜0 ≤ x ∧ 0 ≤ y⌝⦄
-    pureId (Zdigits beta (x + y + x * y))
+    (pure (Zdigits beta (x + y + x * y)) : Id _)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = dx ∧ Zdigits beta y = dy ∧ d ≤ dx + dy⌝⦄ := by
   sorry
 theorem Zdigits_mult (x y : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜True⌝⦄
-    pureId (Zdigits beta (x * y))
+    (pure (Zdigits beta (x * y)) : Id _)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = dx ∧ Zdigits beta y = dy ∧ d ≤ dx + dy⌝⦄ := by
   sorry
 theorem Zdigits_mult_ge (x y : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜x ≠ 0 ∧ y ≠ 0⌝⦄
-    pureId (Zdigits beta (x * y))
+    (pure (Zdigits beta (x * y)) : Id _)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = dx ∧ Zdigits beta y = dy ∧ dx + dy - 1 ≤ d⌝⦄ := by
   sorry
 theorem Zdigits_div_Zpower (m e : Int) (h_beta : beta > 1) :
     ⦃⌜0 ≤ m ∧ 0 ≤ e ∧ ∃ dm, Zdigits beta m = dm ∧ e ≤ dm⌝⦄
-    pureId (Zdigits beta (m / beta ^ e.natAbs))
+    (pure (Zdigits beta (m / beta ^ e.natAbs)) : Id _)
     ⦃⇓d => ⌜∃ dm, Zdigits beta m = dm ∧ d = dm - e⌝⦄ := by
   sorry
 theorem Zdigits_succ_le (x : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ x⌝⦄
-    pureId (Zdigits beta (x + 1))
+    (pure (Zdigits beta (x + 1)) : Id _)
     ⦃⇓d => ⌜∃ dx, Zdigits beta x = dx ∧ d ≤ dx + 1⌝⦄ := by
   sorry
 end DigitOperations
@@ -3450,7 +3447,7 @@ Qed.
 -/
 theorem Z_of_nat_S_digits2_Pnat (m : Nat) :
     ⦃⌜m > 0⌝⦄
-    pureId (Zdigits 2 m)
+    (pure (Zdigits 2 m) : Id _)
     ⦃⇓d => ⌜d = (digits2_Pnat m)⌝⦄ := by
   intro hm_pos
   -- Let d be the (Nat) result of the binary digit counter.
@@ -3552,7 +3549,7 @@ Qed.
 -/
 theorem Zpos_digits2_pos (m : Nat) :
     ⦃⌜m > 0⌝⦄
-    pureId (Zdigits 2 m)
+    (pure (Zdigits 2 m) : Id _)
     ⦃⇓d => ⌜d = (digits2_Pnat m)⌝⦄ := by
   -- Directly reuse the previous theorem (same statement in this Lean port).
   exact Z_of_nat_S_digits2_Pnat m
@@ -3571,7 +3568,7 @@ Qed.
 -/
 theorem Zdigits2_Zdigits (n : Int) :
     ⦃⌜True⌝⦄
-    pureId (Zdigits 2 n)
+    (pure (Zdigits 2 n) : Id _)
     ⦃⇓d => ⌜d = (Zdigits 2 n)⌝⦄ := by
   intro _
   -- Trivial reflexivity: running the same computation yields itself.

@@ -76,10 +76,10 @@ noncomputable def F2R (f : FlocqFloat beta) : ℝ :=
 -/
 @[spec]
 theorem F2R_spec (f : FlocqFloat beta) :
-    ⦃⌜beta > 1⌝⦄
+    ⦃⌜True⌝⦄
     (pure (F2R f) : Id ℝ)
     ⦃⇓result => ⌜result = f.Fnum * (beta : ℝ) ^ f.Fexp⌝⦄ := by
-  intro _h
+  intro _
   simp [wp, PostCond.noThrow, F2R, pure]
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -328,10 +328,10 @@ noncomputable def F2R_zero_float {beta : Int} : ℝ :=
 -/
 @[spec]
 theorem F2R_zero_spec {beta : Int} :
-    ⦃⌜beta > 1⌝⦄
+    ⦃⌜True⌝⦄
     (pure (F2R_zero_float (beta := beta)) : Id ℝ)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
-  intro _h
+  intro _
   simp [wp, PostCond.noThrow, F2R_zero_float, F2R, pure]
 
 /-- Add two floats with same exponent
@@ -351,11 +351,12 @@ noncomputable def F2R_add_same_exp {beta : Int} (f g : FlocqFloat beta) : (ℝ �
     When two floats have the same exponent, F2R distributes over addition.
 -/
 @[spec]
-theorem F2R_add_same_exp_spec {beta : Int} (f g : FlocqFloat beta) :
-    ⦃⌜f.Fexp = g.Fexp ∧ beta > 1⌝⦄
+theorem F2R_add_same_exp_spec {beta : Int} (f g : FlocqFloat beta)
+    (h_eq : f.Fexp = g.Fexp) :
+    ⦃⌜True⌝⦄
     (pure (F2R_add_same_exp f g) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  intro ⟨h_eq, _h_beta⟩
+  intro _
   simp [wp, PostCond.noThrow, F2R_add_same_exp, F2R, h_eq, pure, Int.cast_add, add_mul]
   -- Now we have a pair where we need to prove the two components are equal
   -- The left component: (f.Fnum + g.Fnum) * beta^g.Fexp
