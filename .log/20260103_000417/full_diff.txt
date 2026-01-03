@@ -1,0 +1,152 @@
+Fri Jan 2 23:59:45 2026 -0800 b0fe06e3  Add Hoare/Id linters and enable weak.linter options  [Alok Singh]
+diff --git a/FloatSpec/Linter.lean b/FloatSpec/Linter.lean
+index 0278194f..4a961715 100644
+--- a/FloatSpec/Linter.lean
++++ b/FloatSpec/Linter.lean
+@@ -1,6 +1,7 @@
+ import FloatSpec.Linter.OmegaLinter
+ import FloatSpec.Linter.SimpOnlyLinter
+ import FloatSpec.Linter.IdReturnLinter
++import FloatSpec.Linter.HoareStyleLinter
+ 
+ /-! # FloatSpec Linters
+ 
+@@ -10,6 +11,7 @@ Project-specific linters for FloatSpec development.
+ - {lit}`linter.preferGrind`: Warns when {lit}`omega` is used, suggests {lit}`grind` instead.
+ - {lit}`linter.preferSimp`: Warns when {lit}`simp only` is used, suggests {lit}`simp` instead.
+ - {lit}`linter.noIdReturn`: Warns when {lit}`def`/{lit}`abbrev` returns {lean}`Id`.
++- {lit}`linter.hoareStyle`: Warns on non-True Hoare preconditions and trivial postconditions.
+ 
+ **Disabling:** Use {lit}`set_option linter.preferGrind false` or similar.
+ -/
+diff --git a/FloatSpec/Linter/HoareStyleLinter.lean b/FloatSpec/Linter/HoareStyleLinter.lean
+new file mode 100644
+index 00000000..2433e2cb
+--- /dev/null
++++ b/FloatSpec/Linter/HoareStyleLinter.lean
+@@ -0,0 +1,85 @@
++public meta import Lean.Elab.Command
++public meta import Lean.Parser.Syntax
++public meta import Lean.Linter.Basic
++public meta import Std.Do.PostCond
++public meta import Std.Do.SPred.Notation
++public meta import Std.Do.Triple.Basic
++
++/-!
++Copyright (c) 2025 Alok Singh. All rights reserved.
++Released under Apache 2.0 license as described in the file LICENSE.
++Authors: Alok Singh
++
++Linter that warns about trivial Hoare triples:
++- preconditions that are not `True` (prefer explicit hypotheses)
++- postconditions that are `True` (trivial spec)
++-/
++module
++
++public meta section
++
++namespace FloatSpec.Linter
++open Lean Elab Command Linter
++open scoped Std.Do
++
++/-- Enables the Hoare-style linter. -/
++register_option linter.hoareStyle : Bool := {
++  defValue := true
++  descr := "warn on non-True Hoare preconditions and trivial postconditions"
++}
++
++namespace HoareStyle
++
++/-- Gets the value of the linter.hoareStyle option. -/
++def getLinterHoareStyle (o : LinterOptions) : Bool :=
++  getLinterValue linter.hoareStyle o
++
++private def isTrueAssertion (stx : Syntax) : Bool :=
++  match stx with
++  | `(term| True) => true
++  | `(term| ⌜True⌝) => true
++  | _ => false
++
++private def isTrivialPost (stx : Syntax) : Bool :=
++  match stx with
++  | `(term| ⇓ $_* => ⌜True⌝) => true
++  | `(term| ⇓ $_* => True) => true
++  | `(term| ⇓? $_* => ⌜True⌝) => true
++  | `(term| ⇓? $_* => True) => true
++  | _ => false
++
++/-- Recursively find Hoare triples in a syntax tree. -/
++partial def findHoareTriples (stx : Syntax) (acc : List (Syntax × Syntax)) :
++    List (Syntax × Syntax) :=
++  if let `(term| ⦃$P⦄ $_prog ⦃$Q⦄) := stx then
++    let acc' := (P.raw, Q.raw) :: acc
++    match stx with
++    | .node _ _ args => args.foldl (fun a s => findHoareTriples s a) acc'
++    | _ => acc'
++  else
++    match stx with
++    | .node _ _ args => args.foldl (fun a s => findHoareTriples s a) acc
++    | _ => acc
++
++/-- The Hoare-style linter. -/
++def hoareStyleLinter : Linter where run := withSetOptionIn fun stx => do
++  unless getLinterHoareStyle (← getLinterOptions) && (← getInfoState).enabled do
++    return
++  if (← get).messages.hasErrors then
++    return
++
++  for (pre, post) in findHoareTriples stx [] do
++    unless isTrueAssertion pre do
++      logLint linter.hoareStyle pre
++        "prefer `⦃⌜True⌝⦄` preconditions for mvcgen specs; move assumptions to explicit hypotheses. \
++         Disable with `set_option linter.hoareStyle false`."
++    if isTrivialPost post then
++      logLint linter.hoareStyle post
++        "postcondition is `True`; this Hoare triple is trivial. \
++         Prefer a plain lemma or strengthen the spec. \
++         Disable with `set_option linter.hoareStyle false`."
++
++initialize addLinter hoareStyleLinter
++
++end HoareStyle
++end FloatSpec.Linter
+diff --git a/FloatSpec/Linter/IdReturnLinter.lean b/FloatSpec/Linter/IdReturnLinter.lean
+index 19f4391f..2d5f3a8a 100644
+--- a/FloatSpec/Linter/IdReturnLinter.lean
++++ b/FloatSpec/Linter/IdReturnLinter.lean
+@@ -1,4 +1,8 @@
+-/-
++public meta import Lean.Elab.Command
++public meta import Lean.Parser.Syntax
++public meta import Lean.Linter.Basic
++
++/-!
+ Copyright (c) 2025 Alok Singh. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Alok Singh
+@@ -8,10 +12,6 @@ Use `Id` only in Hoare triples (mvcgen) and keep definitions pure.
+ -/
+ module
+ 
+-public meta import Lean.Elab.Command
+-public meta import Lean.Parser.Syntax
+-public meta import Lean.Linter.Basic
+-
+ public meta section
+ 
+ namespace FloatSpec.Linter
+diff --git a/lakefile.lean b/lakefile.lean
+index 0a08c100..39c46c9d 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -19,7 +19,9 @@ package FloatSpec where
+     -- Prefer simp over simp only for maintainability
+     ⟨`weak.linter.preferSimp, true⟩,
+     -- Avoid returning Id in definitions; keep Id only in mvcgen specs
+-    ⟨`weak.linter.noIdReturn, true⟩
++    ⟨`weak.linter.noIdReturn, true⟩,
++    -- Warn on non-True preconditions / trivial postconditions in Hoare triples
++    ⟨`weak.linter.hoareStyle, true⟩
+   ]
+   -- Cloud release configuration for pre-built artifacts
+   releaseRepo := "https://github.com/Beneficial-AI-Foundation/FloatSpec"
