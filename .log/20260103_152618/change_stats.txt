@@ -1,0 +1,8 @@
+938910a7eee9b2d18c181251b50bae6c38c7f93f Ulp: add roles in generic_format_plus_ulp doc
+
+Recent commits:
+2026-01-03 15:26:10 -0800 938910a7 Ulp: add roles in generic_format_plus_ulp doc  [Alok Singh]
+2026-01-03 00:16:48 -0800 10d769f6 Log: b0ccb924  [Alok Singh]
+2026-01-03 00:16:22 -0800 b0ccb924 Ulp: fix mag bound usage and indentation  [Alok Singh]
+2026-01-03 00:11:05 -0800 7f32e542 Log: 3583ba60  [Alok Singh]
+2026-01-03 00:10:39 -0800 3583ba60 Ulp: fix pred_pos boundary simplifications  [Alok Singh]
