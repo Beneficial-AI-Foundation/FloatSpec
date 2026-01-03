@@ -48,13 +48,13 @@ def Rle_0_minus (x y : ℝ) : ℝ :=
     This captures the relationship between ordering and subtraction.
 -/
 @[spec]
-theorem Rle_0_minus_spec (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+theorem Rle_0_minus_spec (x y : ℝ) (hxy : x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (Rle_0_minus x y) : Id _)
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
-  intro h
+  intro _
   unfold Rle_0_minus
-  exact sub_nonneg_of_le h
+  exact sub_nonneg_of_le hxy
 
 -- (moved/alternative specs for exponential monotonicity exist below)
 
@@ -72,11 +72,11 @@ def Rabs_eq_Rabs_case (x y : ℝ) : (ℝ × ℝ) :=
     x = y or x = -y.
 -/
 @[spec]
-theorem Rabs_eq_Rabs_spec (x y : ℝ) :
-    ⦃⌜|x| = |y|⌝⦄
+theorem Rabs_eq_Rabs_spec (x y : ℝ) (hxy : |x| = |y|) :
+    ⦃⌜True⌝⦄
     (pure (Rabs_eq_Rabs_case x y) : Id _)
     ⦃⇓p => ⌜p.1 = p.2 ∨ p.1 = -p.2⌝⦄ := by
-  intro hxy
+  intro _
   unfold Rabs_eq_Rabs_case
   -- Use the standard equivalence |x| = |y| ↔ x = y ∨ x = -y
   simpa using (abs_eq_abs.mp hxy)
@@ -93,11 +93,11 @@ def Rabs_minus_le_val (x y : ℝ) : ℝ :=
     Under {lean}`0 ≤ y` and {lean}`y ≤ 2 * x`, the value {lean}`|x - y|` is bounded by {lean}`x`.
 -/
 @[spec]
-theorem Rabs_minus_le_spec (x y : ℝ) :
-    ⦃⌜0 ≤ y ∧ y ≤ 2 * x⌝⦄
+theorem Rabs_minus_le_spec (x y : ℝ) (h : 0 ≤ y ∧ y ≤ 2 * x) :
+    ⦃⌜True⌝⦄
     (pure (Rabs_minus_le_val x y) : Id _)
     ⦃⇓r => ⌜r ≤ x⌝⦄ := by
-  intro h
+  intro _
   unfold Rabs_minus_le_val
   -- We prove |x - y| ≤ x by showing -x ≤ x - y ≤ x
   -- Upper bound: from 0 ≤ y, we get x - y ≤ x
@@ -126,11 +126,11 @@ def Rabs_ge_case (x y : ℝ) : (ℝ × ℝ) :=
   (x, y)
 
 @[spec]
-theorem Rabs_ge_spec (x y : ℝ) :
-    ⦃⌜y ≤ -x ∨ x ≤ y⌝⦄
+theorem Rabs_ge_spec (x y : ℝ) (h : y ≤ -x ∨ x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (Rabs_ge_case x y) : Id _)
     ⦃⇓p => ⌜p.1 ≤ |p.2|⌝⦄ := by
-  intro h
+  intro _
   unfold Rabs_ge_case
   rcases h with h1 | h2
   · -- Case y ≤ -x ⇒ x ≤ |y|
@@ -148,11 +148,11 @@ def Rabs_ge_inv_case (x y : ℝ) : (ℝ × ℝ) :=
   (x, y)
 
 @[spec]
-theorem Rabs_ge_inv_spec (x y : ℝ) :
-    ⦃⌜x ≤ |y|⌝⦄
+theorem Rabs_ge_inv_spec (x y : ℝ) (hx : x ≤ |y|) :
+    ⦃⌜True⌝⦄
     (pure (Rabs_ge_inv_case x y) : Id _)
     ⦃⇓p => ⌜p.2 ≤ -p.1 ∨ p.1 ≤ p.2⌝⦄ := by
-  intro hx
+  intro _
   unfold Rabs_ge_inv_case
   by_cases hy : 0 ≤ y
   · -- If y ≥ 0, then |y| = y and the goal reduces to x ≤ y
@@ -173,11 +173,11 @@ def Rabs_le_inv_pair (x y : ℝ) : (ℝ × ℝ) :=
   (x, y)
 
 @[spec]
-theorem Rabs_le_inv_spec (x y : ℝ) :
-    ⦃⌜|x| ≤ y⌝⦄
+theorem Rabs_le_inv_spec (x y : ℝ) (h : |x| ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (Rabs_le_inv_pair x y) : Id _)
     ⦃⇓p => ⌜-p.2 ≤ p.1 ∧ p.1 ≤ p.2⌝⦄ := by
-  intro h
+  intro _
   unfold Rabs_le_inv_pair
   exact (abs_le.mp h)
 
@@ -197,11 +197,12 @@ def Rmult_lt_compat (r1 r2 r3 r4 : ℝ) : (ℝ × ℝ) :=
     This property is crucial for analyzing products of bounds.
 -/
 @[spec]
-theorem Rmult_lt_compat_spec (r1 r2 r3 r4 : ℝ) :
-    ⦃⌜0 ≤ r1 ∧ 0 ≤ r3 ∧ r1 < r2 ∧ r3 < r4⌝⦄
+theorem Rmult_lt_compat_spec (r1 r2 r3 r4 : ℝ)
+    (h : 0 ≤ r1 ∧ 0 ≤ r3 ∧ r1 < r2 ∧ r3 < r4) :
+    ⦃⌜True⌝⦄
     (pure (Rmult_lt_compat r1 r2 r3 r4) : Id _)
     ⦃⇓result => ⌜result.1 < result.2⌝⦄ := by
-  intro h
+  intro _
   unfold Rmult_lt_compat
   have ⟨h1, h3, h12, h34⟩ := h
   by_cases hr3 : r3 = 0
@@ -225,11 +226,11 @@ def Rmult_neq_reg_r (_r1 r2 r3 : ℝ) : (ℝ × ℝ) :=
     This allows cancellation in multiplication inequalities.
 -/
 @[spec]
-theorem Rmult_neq_reg_r_spec (r1 r2 r3 : ℝ) :
-    ⦃⌜r2 * r1 ≠ r3 * r1⌝⦄
+theorem Rmult_neq_reg_r_spec (r1 r2 r3 : ℝ) (h : r2 * r1 ≠ r3 * r1) :
+    ⦃⌜True⌝⦄
     (pure (Rmult_neq_reg_r r1 r2 r3) : Id _)
     ⦃⇓result => ⌜result.1 ≠ result.2⌝⦄ := by
-  intro h
+  intro _
   unfold Rmult_neq_reg_r
   -- Reduce to showing r2 ≠ r3 from the hypothesis on products
   -- If r2 = r3 then r2 * r1 = r3 * r1, contradicting h
@@ -252,11 +253,11 @@ def Rmult_neq_compat_r (r1 r2 r3 : ℝ) : (ℝ × ℝ) :=
     then {lean}`r2 * r1 ≠ r3 * r1`.
 -/
 @[spec]
-theorem Rmult_neq_compat_r_spec (r1 r2 r3 : ℝ) :
-    ⦃⌜r1 ≠ 0 ∧ r2 ≠ r3⌝⦄
+theorem Rmult_neq_compat_r_spec (r1 r2 r3 : ℝ) (h : r1 ≠ 0 ∧ r2 ≠ r3) :
+    ⦃⌜True⌝⦄
     (pure (Rmult_neq_compat_r r1 r2 r3) : Id _)
     ⦃⇓result => ⌜result.1 ≠ result.2⌝⦄ := by
-  intro h
+  intro _
   unfold Rmult_neq_compat_r
   simp
   have ⟨h1_ne, h23_ne⟩ := h
@@ -275,11 +276,11 @@ def Rmult_min_distr_r (x y z : ℝ) : (ℝ × ℝ) :=
     If {lean}`0 ≤ z`, then {lean}`min (x * z) (y * z) = min x y * z`.
 -/
 @[spec]
-theorem Rmult_min_distr_r_spec (x y z : ℝ) :
-    ⦃⌜0 ≤ z⌝⦄
+theorem Rmult_min_distr_r_spec (x y z : ℝ) (h : 0 ≤ z) :
+    ⦃⌜True⌝⦄
     (pure (Rmult_min_distr_r x y z) : Id _)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  intro h
+  intro _
   unfold Rmult_min_distr_r
   -- We need to prove: min (x * z) (y * z) = min x y * z
   rw [min_mul_of_nonneg _ _ h]
@@ -298,11 +299,11 @@ def Rmult_min_distr_l (x y z : ℝ) : (ℝ × ℝ) :=
     If {lean}`0 ≤ x`, then {lean}`min (x * y) (x * z) = x * min y z`.
 -/
 @[spec]
-theorem Rmult_min_distr_l_spec (x y z : ℝ) :
-    ⦃⌜0 ≤ x⌝⦄
+theorem Rmult_min_distr_l_spec (x y z : ℝ) (h : 0 ≤ x) :
+    ⦃⌜True⌝⦄
     (pure (Rmult_min_distr_l x y z) : Id _)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  intro h
+  intro _
   unfold Rmult_min_distr_l
   -- We need to prove: min (x * y) (x * z) = x * min y z
   rw [mul_min_of_nonneg _ _ h]
@@ -368,21 +369,21 @@ noncomputable def exp_le_check (x _y : ℝ) : ℝ :=
     Given x ≤ y, the value exp x is bounded above by exp y.
 -/
 @[spec]
-theorem exp_le_spec (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+theorem exp_le_spec (x y : ℝ) (hxy : x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (exp_le_check x y) : Id _)
     ⦃⇓ex => ⌜ex ≤ Real.exp y⌝⦄ := by
-  intro hxy
+  intro _
   unfold exp_le_check
   -- Using monotonicity of exp: exp x ≤ exp y ↔ x ≤ y
   exact (Iff.mpr Real.exp_le_exp hxy)
 
 /-- Coq name compatibility: {lean}`exp_le` -/
-theorem exp_le (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+theorem exp_le (x y : ℝ) (hxy : x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (exp_le_check x y) : Id _)
     ⦃⇓ex => ⌜ex ≤ Real.exp y⌝⦄ :=
-  exp_le_spec x y
+  exp_le_spec x y hxy
 
 end Rmissing
 
@@ -397,11 +398,11 @@ def IZR_le_lt_triple (m n p : Int) : (ℝ × ℝ × ℝ) :=
     If m ≤ n < p as integers, then (m:ℝ) ≤ (n:ℝ) < (p:ℝ).
 -/
 @[spec]
-theorem IZR_le_lt_spec (m n p : Int) :
-    ⦃⌜m ≤ n ∧ n < p⌝⦄
+theorem IZR_le_lt_spec (m n p : Int) (h : m ≤ n ∧ n < p) :
+    ⦃⌜True⌝⦄
     (pure (IZR_le_lt_triple m n p) : Id _)
     ⦃⇓t => ⌜t.1 ≤ t.2.1 ∧ t.2.1 < t.2.2⌝⦄ := by
-  intro h
+  intro _
   unfold IZR_le_lt_triple
   rcases h with ⟨hmn, hnp⟩
   exact ⟨(Int.cast_mono hmn), (Int.cast_strictMono hnp)⟩
@@ -412,11 +413,11 @@ def le_lt_IZR_triple (m n p : Int) : (Int × Int × Int) :=
 
 /-- If the real casts satisfy m <= n and n < p, then m <= n < p as integers (Coq: le_lt_IZR). -/
 @[spec]
-theorem le_lt_IZR_spec (m n p : Int) :
-    ⦃⌜(m : ℝ) ≤ (n : ℝ) ∧ (n : ℝ) < (p : ℝ)⌝⦄
+theorem le_lt_IZR_spec (m n p : Int) (h : (m : ℝ) ≤ (n : ℝ) ∧ (n : ℝ) < (p : ℝ)) :
+    ⦃⌜True⌝⦄
     (pure (le_lt_IZR_triple m n p) : Id _)
     ⦃⇓t => ⌜t.1 ≤ t.2.1 ∧ t.2.1 < t.2.2⌝⦄ := by
-  intro h
+  intro _
   unfold le_lt_IZR_triple
   rcases h with ⟨hmnR, hnpR⟩
   -- Use order-reflecting casts: (m:ℝ) ≤ (n:ℝ) ↔ m ≤ n, and (n:ℝ) < (p:ℝ) ↔ n < p
@@ -429,11 +430,11 @@ def neq_IZR_pair (m n : Int) : (Int × Int) :=
 /-  If the real casts of m and n are unequal, then m and n are unequal as
     integers. Provide the Coq-named lemma so documentation cross-references like
     {name}`neq_IZR` resolve. This is the same content as `neq_IZR_spec` below. -/
-theorem neq_IZR (m n : Int) :
-    ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
+theorem neq_IZR (m n : Int) (hmnR : (m : ℝ) ≠ (n : ℝ)) :
+    ⦃⌜True⌝⦄
     (pure (neq_IZR_pair m n) : Id _)
     ⦃⇓p => ⌜p.1 ≠ p.2⌝⦄ := by
-  intro hmnR
+  intro _
   unfold neq_IZR_pair
   -- Reduce the Hoare-style triple on Id to a pure proposition
   simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
@@ -442,11 +443,11 @@ theorem neq_IZR (m n : Int) :
 
 /-- If the real casts of m and n are unequal, then m and n are unequal as integers (Coq: {lean}`neq_IZR`). -/
 @[spec]
-theorem neq_IZR_spec (m n : Int) :
-    ⦃⌜(m : ℝ) ≠ (n : ℝ)⌝⦄
+theorem neq_IZR_spec (m n : Int) (hmnR : (m : ℝ) ≠ (n : ℝ)) :
+    ⦃⌜True⌝⦄
     (pure (neq_IZR_pair m n) : Id _)
     ⦃⇓p => ⌜p.1 ≠ p.2⌝⦄ := by
-  intro hmnR
+  intro _
   unfold neq_IZR_pair
   -- Reduce the Hoare-style triple on Id to a pure proposition
   simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
@@ -464,11 +465,11 @@ noncomputable def Rinv_lt_check (x y : ℝ) : (ℝ × ℝ) :=
 
 /-- Specification: Reciprocal reverses order on positive reals -/
 @[spec]
-theorem Rinv_lt_spec (x y : ℝ) :
-    ⦃⌜0 < x ∧ x < y⌝⦄
+theorem Rinv_lt_spec (x y : ℝ) (h : 0 < x ∧ x < y) :
+    ⦃⌜True⌝⦄
     (pure (Rinv_lt_check x y) : Id _)
     ⦃⇓p => ⌜p.1 < p.2⌝⦄ := by
-  intro h
+  intro _
   -- Standard property: for 0 < x < y, we have 1/y < 1/x
   unfold Rinv_lt_check
   exact one_div_lt_one_div_of_lt h.left h.right
@@ -479,11 +480,11 @@ noncomputable def Rinv_le_check (x y : ℝ) : (ℝ × ℝ) :=
 
 /-- Specification: Reciprocal is antitone on positive reals (≤ version) -/
 @[spec]
-theorem Rinv_le_spec (x y : ℝ) :
-    ⦃⌜0 < x ∧ x ≤ y⌝⦄
+theorem Rinv_le_spec (x y : ℝ) (h : 0 < x ∧ x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (Rinv_le_check x y) : Id _)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro h
+  intro _
   -- Standard property: for 0 < x ≤ y, we have 1/y ≤ 1/x
   unfold Rinv_le_check
   exact one_div_le_one_div_of_le h.left h.right
@@ -506,7 +507,7 @@ noncomputable def sqrt_ge_0_check (x : ℝ) : ℝ :=
 -/
 @[spec]
 theorem sqrt_ge_0_spec (x : ℝ) :
-    ⦃⌜0 ≤ x⌝⦄
+    ⦃⌜True⌝⦄
     (pure (sqrt_ge_0_check x) : Id _)
     ⦃⇓r => ⌜0 ≤ r⌝⦄ := by
   intro _
@@ -524,11 +525,11 @@ noncomputable def sqrt_neg_check (x : ℝ) : ℝ :=
   Real.sqrt x
 
 @[spec]
-theorem sqrt_neg_spec (x : ℝ) :
-    ⦃⌜x ≤ 0⌝⦄
+theorem sqrt_neg_spec (x : ℝ) (hx : x ≤ 0) :
+    ⦃⌜True⌝⦄
     (pure (sqrt_neg_check x) : Id _)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
-  intro hx
+  intro _
   unfold sqrt_neg_check
   exact Real.sqrt_eq_zero_of_nonpos hx
 
@@ -587,11 +588,11 @@ noncomputable def Rsqr_le_abs_0_alt_val (x _y : ℝ) : ℝ :=
   x
 
 @[spec]
-theorem Rsqr_le_abs_0_alt_spec (x y : ℝ) :
-    ⦃⌜x^2 ≤ y^2⌝⦄
+theorem Rsqr_le_abs_0_alt_spec (x y : ℝ) (hxy : x^2 ≤ y^2) :
+    ⦃⌜True⌝⦄
     (pure (Rsqr_le_abs_0_alt_val x y) : Id _)
     ⦃⇓r => ⌜r ≤ |y|⌝⦄ := by
-  intro hxy
+  intro _
   -- r = x by definition
   unfold Rsqr_le_abs_0_alt_val
   -- From x^2 ≤ y^2 we get |x| ≤ |y| via `sq_le_sq`.
