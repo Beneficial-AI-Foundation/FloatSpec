@@ -19,7 +19,9 @@ package FloatSpec where
     -- Prefer simp over simp only for maintainability
     ⟨`weak.linter.preferSimp, true⟩,
     -- Avoid returning Id in definitions; keep Id only in mvcgen specs
-    ⟨`weak.linter.noIdReturn, true⟩
+    ⟨`weak.linter.noIdReturn, true⟩,
+    -- Warn on non-True preconditions / trivial postconditions in Hoare triples
+    ⟨`weak.linter.hoareStyle, true⟩
   ]
   -- Cloud release configuration for pre-built artifacts
   releaseRepo := "https://github.com/Beneficial-AI-Foundation/FloatSpec"
