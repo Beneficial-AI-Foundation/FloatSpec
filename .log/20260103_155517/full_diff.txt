@@ -1,0 +1,101 @@
+Sat Jan 3 15:54:44 2026 -0800 a0e71318  (HEAD -> main) Ulp: push True preconditions for ulp_0 lemmas  [Alok Singh]
+diff --git a/FloatSpec/src/Core/Ulp.lean b/FloatSpec/src/Core/Ulp.lean
+index 06154308..7843a8fa 100644
+--- a/FloatSpec/src/Core/Ulp.lean
++++ b/FloatSpec/src/Core/Ulp.lean
+@@ -8753,13 +8753,14 @@ private theorem round_UP_DN_ulp_theorem
+ theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
+     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x)) :
+     (hβ : 1 < beta) →
+-    ⦃⌜1 < beta⌝⦄ do
+-      let dn := FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
+-      let up := FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
+-      let u := ulp beta fexp x
+-      pure (up, dn, u)
++    ⦃⌜True⌝⦄
++      (pure
++        (let dn := FloatSpec.Core.Generic_fmt.round_DN_to_format beta fexp x hβ
++         let up := FloatSpec.Core.Generic_fmt.round_UP_to_format beta fexp x hβ
++         let u := ulp beta fexp x
++         (up, dn, u)) : Id _)
+     ⦃⇓r => ⌜r.1 = r.2.1 + r.2.2⌝⦄ := by
+-  intro hβ; classical
++  intro hβ _; classical
+   -- Reduce the monadic specification to a pure equality on the chosen UP/DN witnesses
+   -- and the run-value of `ulp x`.
+   -- Evaluate the Id-specifications for the DN/UP chosen values and ulp x,
+@@ -8773,23 +8774,26 @@ theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
+   simpa using
+     (round_UP_DN_ulp_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ)
+ 
+-/-- Coq (Ulp.v): Lemma `generic_format_ulp_0` : F (ulp 0).
++/-- Coq ({lit}`Ulp.v`): Lemma {coq}`generic_format_ulp_0`: {lit}`F (ulp 0)`.
+ 
+-Lean (adapted): we assume `1 < beta` (standard radix hypothesis) so we can
+-use the established generic format lemmas for `0` and for pure powers of β.
+-In the zero branch of `ulp`, the result is either `0` or `(β : ℝ)^(fexp n)`
+-for a witness `n` from `negligible_exp`. Both are representable:
++Lean (adapted): we assume {lean}`1 < beta` (standard radix hypothesis) so we can
++use the established generic format lemmas for {lit}`0` and for pure powers of β.
++In the zero branch of {name}`ulp`, the result is either {lit}`0` or
++{lit}`(β : ℝ)^(fexp n)` for a witness {given}`n`` from {name}`negligible_exp`.
++Both are representable:
+ 
+-- `0` by `generic_format_0`
+-- `(β : ℝ)^e` by `generic_format_bpow` once we instantiate the small‑regime
+-  constraint using `Valid_exp` at a witness `n` with `n ≤ fexp n`.
++- {lit}`0` by {name}`generic_format_0`
++- {lit}`(β : ℝ)^e` by {name}`generic_format_bpow` once we instantiate the small‑regime
++  constraint using {name}`Valid_exp` at a witness {lean}`n` with {lean}`n ≤ fexp n`.
+ -/
+ theorem generic_format_ulp_0 :
+-    ⦃⌜1 < beta⌝⦄ do
+-      let u := ulp beta fexp 0
+-      FloatSpec.Core.Generic_fmt.generic_format beta fexp u
++    (hβ : 1 < beta) →
++    ⦃⌜True⌝⦄
++      (pure
++        (let u := ulp beta fexp 0
++         FloatSpec.Core.Generic_fmt.generic_format beta fexp u) : Id Prop)
+     ⦃⇓g => ⌜g⌝⦄ := by
+-  intro hβ; classical
++  intro hβ _; classical
+   -- Analyze how `ulp 0` is produced
+   have H := (negligible_exp_spec' (fexp := fexp))
+   -- Split on the computed witness for the negligible exponent
+@@ -8821,14 +8825,17 @@ theorem generic_format_ulp_0 :
+           (e := fexp n) hpre)
+ 
+ /-- Coq (Ulp.v):
+-Lemma `generic_format_bpow_ge_ulp_0` : forall e, (ulp 0 <= bpow e)%R -> F (bpow e).
++Lemma {coq}`generic_format_bpow_ge_ulp_0` :
++  {lit}`forall e, (ulp 0 <= bpow e)%R -> F (bpow e)`.
+ -/
+ theorem generic_format_bpow_ge_ulp_0 (e : Int)
+     (hle : (ulp beta fexp 0) ≤ (beta : ℝ) ^ e) :
+-    ⦃⌜1 < beta⌝⦄
+-    FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ e)
++    (hβ : 1 < beta) →
++    ⦃⌜True⌝⦄
++    (pure
++      (FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ e)) : Id Prop)
+     ⦃⇓g => ⌜g⌝⦄ := by
+-  intro hβ; classical
++  intro hβ _; classical
+   -- We prove `fexp (e+1) ≤ e` and then use `generic_format_bpow`.
+   -- Analyze `negligible_exp` to understand `ulp 0`.
+   have H := (negligible_exp_spec' (fexp := fexp))
+@@ -8861,10 +8868,9 @@ theorem generic_format_bpow_ge_ulp_0 (e : Int)
+           -- Convert the power inequality to an exponent inequality using `le_bpow` (β > 1).
+           have hn_le_e : fexp m ≤ e := by
+             have hmono := FloatSpec.Core.Raux.le_bpow (beta := beta) (e1 := fexp m) (e2 := e)
+-            have : (fexp m) ≤ e := by
+-              have := (hmono ⟨hβ, hpow_le⟩)
+-              simpa [FloatSpec.Core.Raux.le_bpow_check, wp, PostCond.noThrow, Id.run, pure] using this
+-            exact this
++              hβ hpow_le
++            simpa [FloatSpec.Core.Raux.le_bpow_check, wp, PostCond.noThrow, Id.run, pure]
++              using hmono (by trivial)
+           -- From `Valid_exp` at the small‑regime witness: `fexp (fexp m + 1) ≤ fexp m`.
+           have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) m)
+           have h_small : fexp (fexp m + 1) ≤ fexp m := (pair.right hm_small).left
