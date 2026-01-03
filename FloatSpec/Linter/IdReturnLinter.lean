@@ -1,7 +1,3 @@
-public meta import Lean.Elab.Command
-public meta import Lean.Parser.Syntax
-public meta import Lean.Linter.Basic
-
 /-!
 Copyright (c) 2025 Alok Singh. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
@@ -11,6 +7,10 @@ Linter that warns when `def`/`abbrev` returns `Id _`.
 Use `Id` only in Hoare triples (mvcgen) and keep definitions pure.
 -/
 module
+
+public meta import Lean.Elab.Command
+public meta import Lean.Parser.Syntax
+public meta import Lean.Linter.Basic
 
 public meta section
 
