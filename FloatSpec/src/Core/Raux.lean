@@ -923,11 +923,11 @@ theorem Rcompare_Lt_inv_spec (x y : ℝ) :
 
 /-/ Coq: Rcompare_not_Lt - if y ≤ x then comparison is not Lt (-1). -/
 @[spec]
-theorem Rcompare_not_Lt_spec (x y : ℝ) :
-    ⦃⌜y ≤ x⌝⦄
+theorem Rcompare_not_Lt_spec (x y : ℝ) (hyx : y ≤ x) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r ≠ -1⌝⦄ := by
-  intro hyx
+  intro _
   unfold Rcompare_val Rcompare
   -- Reduce Hoare triple on Id to a pure goal
   simp [wp, PostCond.noThrow, Id.run, PredTrans.pure]
@@ -939,11 +939,11 @@ theorem Rcompare_not_Lt_spec (x y : ℝ) :
   · simpa [hnot, hxy]
 
 /-- Coq-named wrapper. -/
-private theorem Rcompare_not_Lt_wr (x y : ℝ) :
-    ⦃⌜y ≤ x⌝⦄
+private theorem Rcompare_not_Lt_wr (x y : ℝ) (hyx : y ≤ x) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r ≠ -1⌝⦄ := by
-  simpa using Rcompare_not_Lt_spec x y
+  simpa using Rcompare_not_Lt_spec x y hyx
 
 /-- Coq: Rcompare\_not\_Lt\_inv. -/
 @[spec]
@@ -974,11 +974,11 @@ theorem Rcompare_not_Lt_inv (x y : ℝ) :
 
 /-/ Coq: {lit}`Rcompare_Eq` — if {lean}`x = y` then comparison yields Eq {lean}`0`. -/
 @[spec]
-theorem Rcompare_Eq_spec (x y : ℝ) :
-    ⦃⌜x = y⌝⦄
+theorem Rcompare_Eq_spec (x y : ℝ) (hxy : x = y) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
-  intro hxy
+  intro _
   unfold Rcompare_val
   -- Reduce the Hoare triple to the postcondition on the pure result
   unfold Rcompare
@@ -986,11 +986,11 @@ theorem Rcompare_Eq_spec (x y : ℝ) :
   simp [wp, PostCond.noThrow, Id.run, pure, hEq]
 
 /-  Coq-named wrapper to satisfy doc cross-references. -/
-private theorem Rcompare_Eq_wr (x y : ℝ) :
-    ⦃⌜x = y⌝⦄
+private theorem Rcompare_Eq_wr (x y : ℝ) (hxy : x = y) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
-  simpa using Rcompare_Eq_spec x y
+  simpa using Rcompare_Eq_spec x y hxy
 
 /-/ Coq: {lean}`Rcompare_Eq_inv` - from code Eq {lean}`0` deduce {lean}`x = y`. -/
 @[spec]
@@ -1029,11 +1029,11 @@ theorem Rcompare_Eq_inv (x y : ℝ) :
 
 /-/ Coq: {lean}`Rcompare_Gt` — if {lean}`y < x` then comparison yields Gt {lean}`1`. -/
 @[spec]
-theorem Rcompare_Gt_spec (x y : ℝ) :
-    ⦃⌜y < x⌝⦄
+theorem Rcompare_Gt_spec (x y : ℝ) (hyx : y < x) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r = 1⌝⦄ := by
-  intro hyx
+  intro _
   unfold Rcompare_val
   -- Reduce the Hoare triple to a pure goal about the returned code
   unfold Rcompare
@@ -1044,11 +1044,11 @@ theorem Rcompare_Gt_spec (x y : ℝ) :
   simp [hnotlt, hneq]
 
 /-  Coq-named wrapper. -/
-private theorem Rcompare_Gt_wr (x y : ℝ) :
-    ⦃⌜y < x⌝⦄
+private theorem Rcompare_Gt_wr (x y : ℝ) (hyx : y < x) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r = 1⌝⦄ := by
-  simpa using Rcompare_Gt_spec x y
+  simpa using Rcompare_Gt_spec x y hyx
 
 /-- Coq: Rcompare_Gt_inv — from code Gt 1, deduce y < x. -/
 @[spec]
@@ -1086,11 +1086,11 @@ theorem Rcompare_Gt_inv (x y : ℝ) :
 
 /-/ Coq: {lean}`Rcompare_not_Gt` — if {lean}`x ≤ y` then comparison is not Gt {lean}`1`. -/
 @[spec]
-theorem Rcompare_not_Gt_spec (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+theorem Rcompare_not_Gt_spec (x y : ℝ) (hxy : x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
-  intro hxy
+  intro _
   unfold Rcompare_val Rcompare
   -- Reduce Hoare triple on Id to a pure goal
   simp [wp, PostCond.noThrow, Id.run]
@@ -1104,11 +1104,11 @@ theorem Rcompare_not_Gt_spec (x y : ℝ) :
     simp [hEq, pure]
 
 /-  Coq-named wrapper. -/
-private theorem Rcompare_not_Gt_wr (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+private theorem Rcompare_not_Gt_wr (x y : ℝ) (hxy : x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (Rcompare_val x y) : Id _)
     ⦃⇓r => ⌜r ≠ 1⌝⦄ := by
-  simpa using Rcompare_not_Gt_spec x y
+  simpa using Rcompare_not_Gt_spec x y hxy
 
 /-- Coq theorem Rcompare\_not\_Gt\_inv. -/
 @[spec]
@@ -1411,22 +1411,22 @@ theorem Rle_bool_spec (x y : ℝ) :
   -- Goal is solved by simp
 
 /-- Monotone case: if x ≤ y then {lean}`Rle_bool x y = true` -/
-theorem Rle_bool_true (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+theorem Rle_bool_true (x y : ℝ) (hxy : x ≤ y) :
+    ⦃⌜True⌝⦄
     (pure (Rle_bool x y) : Id _)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro hxy
+  intro _
   unfold Rle_bool
   -- Reduce Hoare triple to a pure goal and apply decidability
   simp [wp, PostCond.noThrow, Id.run, pure]
   exact hxy
 
 /-- Antitone case: if y < x then {lean}`Rle_bool x y = false` -/
-theorem Rle_bool_false (x y : ℝ) :
-    ⦃⌜y < x⌝⦄
+theorem Rle_bool_false (x y : ℝ) (hyx : y < x) :
+    ⦃⌜True⌝⦄
     (pure (Rle_bool x y) : Id _)
     ⦃⇓result => ⌜result = false⌝⦄ := by
-  intro hyx
+  intro _
   unfold Rle_bool
   -- Follows from decidability of (≤) on ℝ and `¬(x ≤ y)` from `y < x`
   simp [wp, PostCond.noThrow, Id.run, pure]
@@ -1478,22 +1478,22 @@ theorem Rlt_bool_spec (x y : ℝ) :
   simp [wp, PostCond.noThrow, pure, decide_eq_true_iff]
 
 /-- Monotone case: if x < y then {lean}`Rlt_bool x y = true` -/
-theorem Rlt_bool_true (x y : ℝ) :
-    ⦃⌜x < y⌝⦄
+theorem Rlt_bool_true (x y : ℝ) (hlt : x < y) :
+    ⦃⌜True⌝⦄
     (pure (Rlt_bool x y) : Id _)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro hlt
+  intro _
   unfold Rlt_bool
   -- Follows from decidability of (<) on ℝ
   simp [wp, PostCond.noThrow, Id.run, pure]
   exact hlt
 
 /-- Antitone case: if y ≤ x then {lean}`Rlt_bool x y = false` -/
-theorem Rlt_bool_false (x y : ℝ) :
-    ⦃⌜y ≤ x⌝⦄
+theorem Rlt_bool_false (x y : ℝ) (hyx : y ≤ x) :
+    ⦃⌜True⌝⦄
     (pure (Rlt_bool x y) : Id _)
     ⦃⇓result => ⌜result = false⌝⦄ := by
-  intro hyx
+  intro _
   unfold Rlt_bool
   -- Follows from decidability of (<) on ℝ and `¬ (x < y)` from `y ≤ x`
   simp [wp, PostCond.noThrow, Id.run, pure, not_lt.mpr hyx]
@@ -1604,22 +1604,22 @@ theorem Req_bool_spec (x y : ℝ) :
   simp [wp, PostCond.noThrow, pure, decide_eq_true_iff]
 
 /-- If x = y then {lean}`Req_bool x y = true` -/
-theorem Req_bool_true (x y : ℝ) :
-    ⦃⌜x = y⌝⦄
+theorem Req_bool_true (x y : ℝ) (hxy : x = y) :
+    ⦃⌜True⌝⦄
     (pure (Req_bool x y) : Id _)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro hxy
+  intro _
   unfold Req_bool
   -- Reduce Hoare triple to a pure goal and apply decidability
   simp [wp, PostCond.noThrow, Id.run, pure]
   exact hxy
 
 /-- If x ≠ y then {lean}`Req_bool x y = false` -/
-theorem Req_bool_false (x y : ℝ) :
-    ⦃⌜x ≠ y⌝⦄
+theorem Req_bool_false (x y : ℝ) (hxy : x ≠ y) :
+    ⦃⌜True⌝⦄
     (pure (Req_bool x y) : Id _)
     ⦃⇓result => ⌜result = false⌝⦄ := by
-  intro hxy
+  intro _
   unfold Req_bool
   -- Reduce the Hoare triple to a pure boolean equality via wp for Id
   simp [wp, PostCond.noThrow, Id.run, pure]
@@ -1658,11 +1658,11 @@ def eqb_check (a b : Bool) : Bool :=
 
 /-- If a = b then (a == b) = true -/
 @[spec]
-theorem eqb_true_spec (a b : Bool) :
-    ⦃⌜a = b⌝⦄
+theorem eqb_true_spec (a b : Bool) (hEq : a = b) :
+    ⦃⌜True⌝⦄
     (pure (eqb_check a b) : Id _)
     ⦃⇓r => ⌜r = true⌝⦄ := by
-  intro hEq
+  intro _
   unfold eqb_check
   -- Follows from Bool equality
   -- Reduce to the reflexive cases using the hypothesis a = b
@@ -1671,11 +1671,11 @@ theorem eqb_true_spec (a b : Bool) :
 
 /-- If a ≠ b then (a == b) = false -/
 @[spec]
-theorem eqb_false_spec (a b : Bool) :
-    ⦃⌜a ≠ b⌝⦄
+theorem eqb_false_spec (a b : Bool) (hNe : a ≠ b) :
+    ⦃⌜True⌝⦄
     (pure (eqb_check a b) : Id _)
     ⦃⇓r => ⌜r = false⌝⦄ := by
-  intro hNe
+  intro _
   unfold eqb_check
   -- Follows from Bool disequality
   -- Exhaust over a,b and use the contradiction for equal cases
@@ -1750,11 +1750,12 @@ def cond_Ropp_inj (_b : Bool) (m1 m2 : ℝ) : (ℝ × ℝ) :=
     If cond_Ropp b m1 = cond_Ropp b m2, then m1 = m2.
 -/
 @[spec]
-theorem cond_Ropp_inj_spec (b : Bool) (m1 m2 : ℝ) :
-    ⦃⌜(cond_Ropp b m1) = (cond_Ropp b m2)⌝⦄
+theorem cond_Ropp_inj_spec (b : Bool) (m1 m2 : ℝ)
+    (h : (cond_Ropp b m1) = (cond_Ropp b m2)) :
+    ⦃⌜True⌝⦄
     (pure (cond_Ropp_inj b m1 m2) : Id _)
     ⦃⇓result => ⌜result.1 = result.2⌝⦄ := by
-  intro h
+  intro _
   unfold cond_Ropp_inj
   -- h states that cond_Ropp b m1 = cond_Ropp b m2
   -- We need to prove m1 = m2
@@ -1903,11 +1904,11 @@ noncomputable def Rabs_lt_inv_pair (x y : ℝ) : (ℝ × ℝ) :=
 
 /-- Specification: From {lit}`|x| < y` derive the two-sided strict bound {lit}`-y < x < y`. -/
 @[spec]
-theorem Rabs_lt_inv_spec (x y : ℝ) :
-    ⦃⌜|x| < y⌝⦄
+theorem Rabs_lt_inv_spec (x y : ℝ) (h : |x| < y) :
+    ⦃⌜True⌝⦄
     (pure (Rabs_lt_inv_pair x y) : Id _)
     ⦃⇓p => ⌜-p.2 < p.1 ∧ p.1 < p.2⌝⦄ := by
-  intro h
+  intro _
   unfold Rabs_lt_inv_pair
   -- Standard equivalence for real absolute value
   simpa using (abs_lt.mp h)
@@ -2006,20 +2007,22 @@ theorem Zfloor_ub (x : ℝ) :
 
 /-- Floor greatest-lower-bound: if m ≤ x then m ≤ ⌊x⌋ -/
 theorem Zfloor_lub (x : ℝ) (m : Int) :
-    ⦃⌜(m : ℝ) ≤ x⌝⦄
+    (hm : (m : ℝ) ≤ x) →
+    ⦃⌜True⌝⦄
     (pure (Zfloor x) : Id _)
     ⦃⇓z => ⌜m ≤ z⌝⦄ := by
-  intro hm
+  intro hm _
   unfold Zfloor
   -- Greatest lower bound property for floor: m ≤ ⌊x⌋ ↔ (m : ℝ) ≤ x
   exact (Int.le_floor).mpr hm
 
 /-- Characterization: if m ≤ x < m+1 then ⌊x⌋ = m -/
 theorem Zfloor_imp (x : ℝ) (m : Int) :
-    ⦃⌜(m : ℝ) ≤ x ∧ x < (m : ℝ) + 1⌝⦄
+    (h : (m : ℝ) ≤ x ∧ x < (m : ℝ) + 1) →
+    ⦃⌜True⌝⦄
     (pure (Zfloor x) : Id _)
     ⦃⇓z => ⌜z = m⌝⦄ := by
-  intro h
+  intro h _
   unfold Zfloor
   -- Characterization of floor by the half-open interval [m, m+1)
   simpa using ((Int.floor_eq_iff).2 h)
@@ -2036,10 +2039,11 @@ theorem Zfloor_IZR (m : Int) :
 
 /-- Monotonicity of floor: x ≤ y ⇒ ⌊x⌋ ≤ ⌊y⌋ -/
 theorem Zfloor_le (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+    (hxy : x ≤ y) →
+    ⦃⌜True⌝⦄
     (pure (Zfloor x, Zfloor y) : Id _)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro hxy
+  intro hxy _
   -- Reduce the Id/do program and expose floors
   simp [Zfloor]  -- goal becomes: ⌊x⌋ ≤ ⌊y⌋
   -- Use the GLB property of floor with m := ⌊x⌋ and r := y
@@ -2077,20 +2081,22 @@ theorem Zceil_lb (x : ℝ) :
 
 /-- Ceiling least-upper-bound: if x ≤ m then ⌈x⌉ ≤ m -/
 theorem Zceil_glb (x : ℝ) (m : Int) :
-    ⦃⌜x ≤ (m : ℝ)⌝⦄
+    (hx : x ≤ (m : ℝ)) →
+    ⦃⌜True⌝⦄
     (pure (Zceil x) : Id _)
     ⦃⇓z => ⌜z ≤ m⌝⦄ := by
-  intro hx
+  intro hx _
   unfold Zceil
   -- Least upper bound property for ceiling: ⌈x⌉ ≤ m ↔ x ≤ m
   exact (Int.ceil_le).mpr hx
 
 /-- Characterization: if m - 1 < x ≤ m then ⌈x⌉ = m -/
 theorem Zceil_imp (x : ℝ) (m : Int) :
-    ⦃⌜(m : ℝ) - 1 < x ∧ x ≤ (m : ℝ)⌝⦄
+    (h : (m : ℝ) - 1 < x ∧ x ≤ (m : ℝ)) →
+    ⦃⌜True⌝⦄
     (pure (Zceil x) : Id _)
     ⦃⇓z => ⌜z = m⌝⦄ := by
-  intro h
+  intro h _
   unfold Zceil
   -- Characterization of ceiling by the half-open interval (m-1, m]
   simpa using ((Int.ceil_eq_iff).2 h)
@@ -2107,10 +2113,11 @@ theorem Zceil_IZR (m : Int) :
 
 /-- Monotonicity of ceiling: x ≤ y ⇒ ⌈x⌉ ≤ ⌈y⌉ -/
 theorem Zceil_le (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+    (hxy : x ≤ y) →
+    ⦃⌜True⌝⦄
     (pure (Zceil x, Zceil y) : Id _)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro hxy
+  intro hxy _
   -- Reduce the Id/do program and expose ceilings
   simp [Zceil]
   -- Use the characterization of ceiling via upper bounds:
@@ -2120,10 +2127,11 @@ theorem Zceil_le (x y : ℝ) :
 
 /-- Non-integral case: if ⌊x⌋ ≠ x then ⌈x⌉ = ⌊x⌋ + 1 -/
 theorem Zceil_floor_neq (x : ℝ) :
-    ⦃⌜((Zfloor x) : ℝ) ≠ x⌝⦄
+    (hne : ((Zfloor x) : ℝ) ≠ x) →
+    ⦃⌜True⌝⦄
     (pure (Zceil x, Zfloor x) : Id _)
     ⦃⇓p => ⌜p.1 = p.2 + 1⌝⦄ := by
-  intro hne
+  intro hne _
   -- Expose the pure ceilings/floors
   simp [Zceil, Zfloor] at *
   -- Let f := ⌊x⌋ and c := ⌈x⌉
@@ -2163,10 +2171,11 @@ theorem Ztrunc_IZR (m : Int) :
 
 /-- For nonnegatives: Ztrunc x = ⌊x⌋ -/
 theorem Ztrunc_floor (x : ℝ) :
-    ⦃⌜0 ≤ x⌝⦄
+    (hx : 0 ≤ x) →
+    ⦃⌜True⌝⦄
     (pure (Ztrunc x) : Id _)
     ⦃⇓z => ⌜z = (Zfloor x)⌝⦄ := by
-  intro hx
+  intro hx _
   unfold Ztrunc
   -- Under 0 ≤ x, the truncation takes the floor branch
   have hx_nlt : ¬ x < 0 := not_lt.mpr hx
@@ -2174,10 +2183,11 @@ theorem Ztrunc_floor (x : ℝ) :
 
 /-- For nonpositives: Ztrunc x = ⌈x⌉ -/
 theorem Ztrunc_ceil (x : ℝ) :
-    ⦃⌜x ≤ 0⌝⦄
+    (hxle : x ≤ 0) →
+    ⦃⌜True⌝⦄
     (pure (Ztrunc x) : Id _)
     ⦃⇓z => ⌜z = (Zceil x)⌝⦄ := by
-  intro hxle
+  intro hxle _
   unfold Ztrunc
   by_cases hlt : x < 0
   · -- Negative case: Ztrunc takes the ceiling branch
@@ -2189,10 +2199,11 @@ theorem Ztrunc_ceil (x : ℝ) :
 
 /-- Monotonicity of truncation: x ≤ y ⇒ Ztrunc x ≤ Ztrunc y -/
 theorem Ztrunc_le (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+    (hxy : x ≤ y) →
+    ⦃⌜True⌝⦄
     (pure (Ztrunc x, Ztrunc y) : Id _)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro hxy
+  intro hxy _
   -- Expose the definitions of Ztrunc and split on the signs of x and y
   by_cases hx : x < 0
   · by_cases hy : y < 0
@@ -2286,10 +2297,11 @@ theorem Ztrunc_abs (x : ℝ) :
 
 /-- Lower bound via absolute: if n ≤ |x| then n ≤ |Ztrunc x| -/
 theorem Ztrunc_lub (n : Int) (x : ℝ) :
-    ⦃⌜(n : ℝ) ≤ |x|⌝⦄
+    (h : (n : ℝ) ≤ |x|) →
+    ⦃⌜True⌝⦄
     (pure (Ztrunc x) : Id _)
     ⦃⇓z => ⌜n ≤ Int.natAbs z⌝⦄ := by
-  intro h
+  intro h _
   unfold Ztrunc
   by_cases hxlt : x < 0
   · -- Negative case: z = ⌈x⌉ and |x| = -x
@@ -2368,10 +2380,11 @@ theorem Zaway_IZR (m : Int) :
 
 /-- For nonnegatives: Zaway x = ⌈x⌉ -/
 theorem Zaway_ceil (x : ℝ) :
-    ⦃⌜0 ≤ x⌝⦄
+    (hx : 0 ≤ x) →
+    ⦃⌜True⌝⦄
     (pure (Zaway x) : Id _)
     ⦃⇓z => ⌜z = (Zceil x)⌝⦄ := by
-  intro hx
+  intro hx _
   unfold Zaway
   -- Under 0 ≤ x, we have ¬ x < 0, so Zaway takes the ceil branch
   have hx_nlt : ¬ x < 0 := not_lt.mpr hx
@@ -2379,10 +2392,11 @@ theorem Zaway_ceil (x : ℝ) :
 
 /-- For nonpositives: Zaway x = ⌊x⌋ -/
 theorem Zaway_floor (x : ℝ) :
-    ⦃⌜x ≤ 0⌝⦄
+    (hxle : x ≤ 0) →
+    ⦃⌜True⌝⦄
     (pure (Zaway x) : Id _)
     ⦃⇓z => ⌜z = (Zfloor x)⌝⦄ := by
-  intro hxle
+  intro hxle _
   unfold Zaway
   by_cases hlt : x < 0
   · -- Negative case: Zaway takes the floor branch
@@ -2394,10 +2408,11 @@ theorem Zaway_floor (x : ℝ) :
 
 /-- Monotonicity of away rounding: x ≤ y ⇒ Zaway x ≤ Zaway y -/
 theorem Zaway_le (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+    (hxy : x ≤ y) →
+    ⦃⌜True⌝⦄
     (pure (Zaway x, Zaway y) : Id _)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro hxy
+  intro hxy _
   -- Expose the definitions of Zaway and split on the signs of x and y
   by_cases hx : x < 0
   · by_cases hy : y < 0
@@ -2501,10 +2516,11 @@ section IntDiv
 
 /-- Division at floors for integers: floor((x:ℝ)/(y:ℝ)) = x / y when y ≠ 0. -/
 theorem Zfloor_div (x y : Int) :
-    ⦃⌜0 < y⌝⦄
+    (hypos : 0 < y) →
+    ⦃⌜True⌝⦄
     (pure (Zfloor ((x : ℝ) / (y : ℝ))) : Id _)
     ⦃⇓z => ⌜z = x / y⌝⦄ := by
-  intro hypos
+  intro hypos _
   unfold Zfloor
   -- We prove ⌊(x : ℝ) / (y : ℝ)⌋ = x / y by the floor characterization
   -- using the Euclidean division x = y * (x / y) + x % y and
@@ -2553,10 +2569,11 @@ theorem Zfloor_div (x y : Int) :
 
 /-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, {coq}`Ztrunc` ({coq}`IZR` x / {coq}`IZR` y) equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
 theorem Ztrunc_div (x y : Int) :
-    ⦃⌜0 ≤ x ∧ 0 < y⌝⦄
+    (hxy : 0 ≤ x ∧ 0 < y) →
+    ⦃⌜True⌝⦄
     (pure (Ztrunc ((x : ℝ) / (y : ℝ))) : Id _)
     ⦃⇓z => ⌜z = Int.tdiv x y⌝⦄ := by
-  intro hxy
+  intro hxy _
   have hx_nonneg : 0 ≤ x := hxy.left
   have hy_pos : 0 < y := hxy.right
   unfold Ztrunc
@@ -2793,11 +2810,11 @@ section PowBasics
 noncomputable def radix_pos_check (beta : Int) : ℝ :=
   (beta : ℝ)
 
-theorem radix_pos (beta : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem radix_pos (beta : Int) (hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (radix_pos_check beta) : Id _)
     ⦃⇓r => ⌜0 < r⌝⦄ := by
-  intro hβ
+  intro _
   unfold radix_pos_check
   -- From 1 < beta in ℤ, we get (1 : ℝ) < (beta : ℝ) by monotone casting,
   -- hence 0 < (beta : ℝ) by transitivity with 0 < 1.
@@ -2813,8 +2830,8 @@ noncomputable def bpow (beta e : Int) : ℝ :=
 noncomputable def IZR_Zpower_pos_check (n m : Int) : (ℝ × ℝ) :=
   (((n : ℝ) ^ m, (n : ℝ) ^ m))
 
-theorem IZR_Zpower_pos (n m : Int) :
-    ⦃⌜0 < m⌝⦄
+theorem IZR_Zpower_pos (n m : Int) (_hm : 0 < m) :
+    ⦃⌜True⌝⦄
     (pure (IZR_Zpower_pos_check n m) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
@@ -2826,8 +2843,8 @@ theorem IZR_Zpower_pos (n m : Int) :
 noncomputable def bpow_powerRZ_check (beta e : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e, (beta : ℝ) ^ e))
 
-theorem bpow_powerRZ (beta e : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_powerRZ (beta e : Int) (_hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow_powerRZ_check beta e) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
@@ -2836,11 +2853,11 @@ theorem bpow_powerRZ (beta e : Int) :
   rfl
 
 /-- Nonnegativity of bpow -/
-theorem bpow_ge_0 (beta e : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_ge_0 (beta e : Int) (hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow beta e) : Id _)
     ⦃⇓v => ⌜0 ≤ v⌝⦄ := by
-  intro hβ
+  intro _
   unfold bpow
   -- From 1 < beta in ℤ, we get (1 : ℝ) < (beta : ℝ), hence 0 < (beta : ℝ)
   have h1β : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
@@ -2849,11 +2866,11 @@ theorem bpow_ge_0 (beta e : Int) :
   exact le_of_lt (zpow_pos hbpos e)
 
 /-- Positivity of bpow -/
-theorem bpow_gt_0 (beta e : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_gt_0 (beta e : Int) (hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow beta e) : Id _)
     ⦃⇓v => ⌜0 < v⌝⦄ := by
-  intro hβ
+  intro _
   unfold bpow
   -- From 1 < beta in ℤ, get (beta : ℝ) > 1, hence positive
   have h1β : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
@@ -2865,11 +2882,11 @@ theorem bpow_gt_0 (beta e : Int) :
 noncomputable def bpow_plus_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ (e1 + e2), ((beta : ℝ) ^ e1) * ((beta : ℝ) ^ e2)))
 
-theorem bpow_plus (beta e1 e2 : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_plus (beta e1 e2 : Int) (hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow_plus_check beta e1 e2) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
-  intro hβ
+  intro _
   -- Reduce the Hoare triple on Id to a pure equality
   unfold bpow_plus_check
   simp [wp, PostCond.noThrow, Id.run, pure]
@@ -2884,8 +2901,8 @@ theorem bpow_plus (beta e1 e2 : Int) :
 noncomputable def bpow_one_check (beta : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ (1 : Int), (beta : ℝ)))
 
-theorem bpow_1 (beta : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_1 (beta : Int) (_hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow_one_check beta) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
@@ -2897,14 +2914,14 @@ theorem bpow_1 (beta : Int) :
 noncomputable def bpow_plus_1_check (beta e : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ (e + 1), (beta : ℝ) * ((beta : ℝ) ^ e)))
 
-theorem bpow_plus_1 (beta e : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_plus_1 (beta e : Int) (hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow_plus_1_check beta e) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold bpow_plus_1_check
   -- zpow addition specialized to 1; use zpow_add₀ for nonzero base
-  have h1β : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast ‹1 < beta›
+  have h1β : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := lt_trans zero_lt_one h1β
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
   -- Rearrange to match the target `(beta : ℝ) * (beta : ℝ) ^ e`
@@ -2914,8 +2931,8 @@ theorem bpow_plus_1 (beta e : Int) :
 noncomputable def bpow_opp_check (beta e : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ (-e), 1 / ((beta : ℝ) ^ e)))
 
-theorem bpow_opp (beta e : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_opp (beta e : Int) (_hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow_opp_check beta e) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
@@ -2930,13 +2947,12 @@ theorem bpow_opp (beta e : Int) :
 noncomputable def bpow_lt_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e1, (beta : ℝ) ^ e2))
 
-theorem bpow_lt (beta e1 e2 : Int) :
-    ⦃⌜1 < beta ∧ e1 < e2⌝⦄
+theorem bpow_lt (beta e1 e2 : Int) (hβ : 1 < beta) (hlt : e1 < e2) :
+    ⦃⌜True⌝⦄
     (pure (bpow_lt_check beta e1 e2) : Id _)
     ⦃⇓p => ⌜p.1 < p.2⌝⦄ := by
-  intro h
+  intro _
   unfold bpow_lt_check
-  rcases h with ⟨hβ, hlt⟩
   -- Transport base inequality to ℝ and apply strict monotonicity of zpow in the exponent
   have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
   exact (zpow_lt_zpow_right₀ hβR hlt)
@@ -2948,18 +2964,17 @@ theorem bpow_lt (beta e1 e2 : Int) :
 noncomputable def lt_bpow_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e1, (beta : ℝ) ^ e2))
 
-theorem lt_bpow (beta e1 e2 : Int) :
-    ⦃⌜1 < beta ∧ ((beta : ℝ) ^ e1) < ((beta : ℝ) ^ e2)⌝⦄
+theorem lt_bpow (beta e1 e2 : Int)
+    (hβ : 1 < beta) (hbpowlt : (beta : ℝ) ^ e1 < (beta : ℝ) ^ e2) :
+    ⦃⌜True⌝⦄
     (pure (lt_bpow_check beta e1 e2) : Id _)
     ⦃⇓_ => ⌜e1 < e2⌝⦄ := by
-  intro hlt
+  intro _
   unfold lt_bpow_check
   -- Reduce Hoare triple on Id to a pure goal about the inputs
   simp [wp, PostCond.noThrow, Id.run, pure]
   -- Use strict monotonicity of zpow in the exponent for bases > 1
   -- to transport the inequality back to the exponents.
-  -- Split the precondition
-  rcases hlt with ⟨hβ, hbpowlt⟩
   have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
   -- Strict monotonicity gives: (beta:ℝ)^e1 < (beta:ℝ)^e2 ↔ e1 < e2
   exact ((zpow_right_strictMono₀ hβR).lt_iff_lt).1 hbpowlt
@@ -2968,13 +2983,12 @@ theorem lt_bpow (beta e1 e2 : Int) :
 noncomputable def bpow_le_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e1, (beta : ℝ) ^ e2))
 
-theorem bpow_le (beta e1 e2 : Int) :
-    ⦃⌜1 < beta ∧ e1 ≤ e2⌝⦄
+theorem bpow_le (beta e1 e2 : Int) (hβ : 1 < beta) (hle : e1 ≤ e2) :
+    ⦃⌜True⌝⦄
     (pure (bpow_le_check beta e1 e2) : Id _)
     ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro h
+  intro _
   unfold bpow_le_check
-  rcases h with ⟨hβ, hle⟩
   -- Transport base inequality to ℝ
   have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
   -- Strict monotonicity in the exponent for bases > 1 yields monotonicity (≤)
@@ -2984,16 +2998,15 @@ theorem bpow_le (beta e1 e2 : Int) :
 noncomputable def le_bpow_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e1, (beta : ℝ) ^ e2))
 
-theorem le_bpow (beta e1 e2 : Int) :
-    ⦃⌜1 < beta ∧ ((beta : ℝ) ^ e1) ≤ ((beta : ℝ) ^ e2)⌝⦄
+theorem le_bpow (beta e1 e2 : Int)
+    (hβ : 1 < beta) (hle_pow : (beta : ℝ) ^ e1 ≤ (beta : ℝ) ^ e2) :
+    ⦃⌜True⌝⦄
     (pure (le_bpow_check beta e1 e2) : Id _)
     ⦃⇓_ => ⌜e1 ≤ e2⌝⦄ := by
-  intro h
+  intro _
   unfold le_bpow_check
   -- Reduce the Hoare triple on Id to a pure goal
   simp [wp, PostCond.noThrow, Id.run, pure]
-  -- Split the precondition
-  rcases h with ⟨hβ, hle_pow⟩
   -- Transport 1 < beta to ℝ
   have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
   -- Prove by contradiction: assume ¬ e1 ≤ e2, i.e. e2 < e1
@@ -3010,15 +3023,15 @@ theorem le_bpow (beta e1 e2 : Int) :
 noncomputable def bpow_inj_check (beta e1 e2 : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e1, (beta : ℝ) ^ e2))
 
-theorem bpow_inj (beta e1 e2 : Int) :
-    ⦃⌜1 < beta ∧ ((beta : ℝ) ^ e1) = ((beta : ℝ) ^ e2)⌝⦄
+theorem bpow_inj (beta e1 e2 : Int)
+    (hβ : 1 < beta) (heq : (beta : ℝ) ^ e1 = (beta : ℝ) ^ e2) :
+    ⦃⌜True⌝⦄
     (pure (bpow_inj_check beta e1 e2) : Id _)
     ⦃⇓_ => ⌜e1 = e2⌝⦄ := by
-  intro h
+  intro _
   unfold bpow_inj_check
   -- Reduce to a pure goal about the inputs
   simp [wp, PostCond.noThrow, Id.run, pure]
-  rcases h with ⟨hβ, heq⟩
   have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
   -- Strict monotonicity in the exponent implies injectivity
   exact (zpow_right_strictMono₀ hβR).injective heq
@@ -3027,11 +3040,11 @@ theorem bpow_inj (beta e1 e2 : Int) :
 noncomputable def bpow_exp_check (beta e : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e, Real.exp ((e : ℝ) * Real.log (beta : ℝ))))
 
-theorem bpow_exp (beta e : Int) :
-    ⦃⌜1 < beta⌝⦄
+theorem bpow_exp (beta e : Int) (hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
     (pure (bpow_exp_check beta e) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
-  intro hβ
+  intro _
   unfold bpow_exp_check
   -- From 1 < beta (as an integer), we get positivity on ℝ
   have hbposℤ : (0 : Int) < beta := lt_trans (by decide) hβ
