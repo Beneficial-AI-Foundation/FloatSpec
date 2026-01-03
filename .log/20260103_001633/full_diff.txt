@@ -1,0 +1,116 @@
+Sat Jan 3 00:16:22 2026 -0800 b0ccb924  (HEAD -> main) Ulp: fix mag bound usage and indentation  [Alok Singh]
+diff --git a/FloatSpec/src/Core/Ulp.lean b/FloatSpec/src/Core/Ulp.lean
+index 7f1c915b..5244a6e6 100644
+--- a/FloatSpec/src/Core/Ulp.lean
++++ b/FloatSpec/src/Core/Ulp.lean
+@@ -4006,10 +4006,10 @@ private theorem ulp_succ_pos_theorem
+     simp [succ, le_of_lt hx, Id.run, bind, pure]
+   -- From magnitude properties: |x| < β^e (strict upper bound)
+   have habs : |x| = x := abs_of_pos hx
+-  have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x)
+-  have hpre' : 1 < beta ∧ x ≠ 0 := ⟨hβ, hx_ne⟩
++  have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x) hβ hx_ne
+   have hupper : |x| < b ^ (FloatSpec.Core.Raux.mag beta x) := by
+-    simpa [wp, PostCond.noThrow, Id.run, FloatSpec.Core.Raux.abs_val, b] using (hmag_upper hpre')
++    have hrun := hmag_upper True.intro
++    simpa [wp, PostCond.noThrow, Id.run, bind, pure, FloatSpec.Core.Raux.abs_val, b] using hrun
+   have hx_lt_bpow : x < b ^ e := by simpa [habs, he] using hupper
+   -- Use id_p_ulp_le_bpow: x + ulp x ≤ β^e
+   have hid_p_ulp := id_p_ulp_le_bpow (beta := beta) (fexp := fexp) (x := x) (e := e)
+@@ -4036,16 +4036,16 @@ private theorem ulp_succ_pos_theorem
+       have hexp_pos : 0 < b ^ (FloatSpec.Core.Generic_fmt.cexp
+           (beta := beta) (fexp := fexp) x) := zpow_pos hβposℝ _
+       simpa [hulp_run] using hexp_pos
+-      have hsucc_pos' : 0 < (succ beta fexp x) := by
+-        simpa [hsucc_pos] using (add_pos hx hulp_pos)
+-      have hsucc_ne : (succ beta fexp x) ≠ 0 := ne_of_gt hsucc_pos'
+-      -- Lower bound: x ≥ β^(e-1) implies succ x ≥ β^(e-1)
+-      have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x)
+-      have hpre_lower : 1 < beta ∧ x ≠ 0 := ⟨hβ, hx_ne⟩
+-      have hlower : b ^ (e - 1) ≤ |x| := by
+-        simpa [wp, PostCond.noThrow, Id.run, FloatSpec.Core.Raux.abs_val, b, he]
+-          using (hmag_lower hpre_lower)
+-      have hx_ge : b ^ (e - 1) ≤ x := by simpa [abs_of_pos hx] using hlower
++    have hsucc_pos' : 0 < (succ beta fexp x) := by
++      simpa [hsucc_pos] using (add_pos hx hulp_pos)
++    have hsucc_ne : (succ beta fexp x) ≠ 0 := ne_of_gt hsucc_pos'
++    -- Lower bound: x ≥ β^(e-1) implies succ x ≥ β^(e-1)
++    have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x) hβ hx_ne
++    have hlower : b ^ (e - 1) ≤ |x| := by
++      have hrun := hmag_lower True.intro
++      simpa [wp, PostCond.noThrow, Id.run, bind, pure,
++             FloatSpec.Core.Raux.abs_val, b, he] using hrun
++    have hx_ge : b ^ (e - 1) ≤ x := by simpa [abs_of_pos hx] using hlower
+       have hsucc_ge : b ^ (e - 1) ≤ (succ beta fexp x) := by
+         calc b ^ (e - 1) ≤ x := hx_ge
+           _ ≤ x + (ulp beta fexp x) := le_add_of_nonneg_right (le_of_lt hulp_pos)
+@@ -5635,33 +5635,33 @@ theorem round_N_le_midp
+         have hx_ne : x ≠ 0 := ne_of_gt hxpos
+ 
+         -- From mag definition: |x| < β^e (strict upper bound)
+-        have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x)
++        have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x) hβ hx_ne
+         have habs_x : |x| = x := abs_of_pos hxpos
+         have hx_lt_be : x < b ^ e := by
+-          have := hmag_upper ⟨hβ, hx_ne⟩
+-          simp only [wp, PostCond.noThrow, Id.run, bind, pure,
+-                     FloatSpec.Core.Raux.abs_val] at this
+-          simpa [habs_x] using this
++          have hrun := hmag_upper True.intro
++          simp [wp, PostCond.noThrow, Id.run, bind, pure,
++                FloatSpec.Core.Raux.abs_val] at hrun
++          simpa [habs_x, hb.symm, he.symm] using hrun
+ 
+         -- Interior case: x < β^e, use id_p_ulp_le_bpow
+         have hid := id_p_ulp_le_bpow (beta := beta) (fexp := fexp)
+           (x := x) (e := e) (hx := hxpos) (Fx := Fx) (hlt := hx_lt_be) hβ
+-          simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hid
+-          -- succ = x + ulp(x) ≤ β^e
+-          have hsucc_le : (succ beta fexp x) ≤ b ^ e := by
+-            simpa [hsucc_pos] using hid
++        simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hid
++        -- succ = x + ulp(x) ≤ β^e
++        have hsucc_le : (succ beta fexp x) ≤ b ^ e := by
++          simpa [hsucc_pos] using hid
+ 
+-          -- Case split: succ < β^e or succ = β^e
+-          rcases (le_iff_lt_or_eq.mp hsucc_le) with hsucc_lt | hsucc_eq_be
+-          · -- succ < β^e: magnitude stays at e, use F2R structure
++        -- Case split: succ < β^e or succ = β^e
++        rcases (le_iff_lt_or_eq.mp hsucc_le) with hsucc_lt | hsucc_eq_be
++        · -- succ < β^e: magnitude stays at e, use F2R structure
+             -- Show β^(e-1) < succ from β^(e-1) ≤ x < succ
+-            have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x)
++            have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x) hβ hx_ne
+             have habs_x' : |x| = x := abs_of_pos hxpos
+             have hx_ge : b ^ (e - 1) ≤ x := by
+-              have := hmag_lower ⟨hβ, hx_ne⟩
+-              simp only [wp, PostCond.noThrow, Id.run, bind, pure,
+-                         FloatSpec.Core.Raux.abs_val] at this
+-              simpa [habs_x'] using this
++              have hrun := hmag_lower True.intro
++              simp [wp, PostCond.noThrow, Id.run, bind, pure,
++                    FloatSpec.Core.Raux.abs_val] at hrun
++              simpa [habs_x', hb.symm, he.symm] using hrun
+             -- ulp(x) > 0 for x > 0
+             have hulp_pos : 0 < (ulp beta fexp x) := by
+               -- ulp(x) = β^(cexp(x)) for x ≠ 0, and β^k > 0 for any k
+@@ -5835,13 +5835,13 @@ theorem round_N_le_midp
+               -- so Ztrunc = floor = 0, and x = 0 * β^c = 0, contradicting x > 0
+ 
+               -- Magnitude bounds: β^(e-1) ≤ x < β^e
+-              have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x)
++              have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x) hβ hx_ne
+               have habs_x' : |x| = x := abs_of_pos hxpos
+               have hx_ge : b ^ (e - 1) ≤ x := by
+-                have := hmag_lower ⟨hβ, hx_ne⟩
+-                simp only [wp, PostCond.noThrow, Id.run, bind, pure,
+-                           FloatSpec.Core.Raux.abs_val] at this
+-                simpa [habs_x'] using this
++                have hrun := hmag_lower True.intro
++                simp [wp, PostCond.noThrow, Id.run, bind, pure,
++                      FloatSpec.Core.Raux.abs_val] at hrun
++                simpa [habs_x', hb.symm, he.symm] using hrun
+ 
+               -- mantissa_small_pos: when e ≤ fexp(e), scaled mantissa is in (0, 1)
+               have hsmall := FloatSpec.Core.Generic_fmt.mantissa_small_pos (beta := beta)
