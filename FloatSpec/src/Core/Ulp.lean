@@ -8920,7 +8920,7 @@ theorem le_pred_pos_lt
 Closure under one-ULP increment.
 
 We reintroduce {lit}`generic_format_plus_ulp` here (moved from above) so that the
-proof can reuse already‑established lemmas about `succ`, `pred_pos`, and
+proof can reuse already‑established lemmas about {name}`succ`, {name}`pred_pos`, and
 closure properties of the generic format. This matches the Coq proof structure:
 - if {lit}`0 ≤ x`, use {name}`succ_eq_pos` and {name}`generic_format_succ`;
 - if {lit}`x < 0`, expand the negative branch {lit}`succ x = - pred_pos (-x)` and use
@@ -9025,7 +9025,7 @@ private theorem generic_format_plus_ulp_theorem
       simpa [hsucc_eq] using Fsucc
 
 /-- Coq (Ulp.v):
-Lemma `generic_format_plus_ulp`:
+Lemma {lit}`generic_format_plus_ulp`:
   {lit}`forall { Hm : Monotone_exp fexp } x, F x -> F (x + ulp x).`
 -/
 theorem generic_format_plus_ulp
