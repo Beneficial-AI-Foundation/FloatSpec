@@ -1,0 +1,21 @@
+Sat Jan 3 00:03:52 2026 -0800 84427e66  (HEAD -> main) Fix linter comment style for imports  [Alok Singh]
+diff --git a/FloatSpec/Linter/HoareStyleLinter.lean b/FloatSpec/Linter/HoareStyleLinter.lean
+index 998a3592..f4065a14 100644
+--- a/FloatSpec/Linter/HoareStyleLinter.lean
++++ b/FloatSpec/Linter/HoareStyleLinter.lean
+@@ -1,4 +1,4 @@
+-/-!
++/-
+ Copyright (c) 2025 Alok Singh. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Alok Singh
+diff --git a/FloatSpec/Linter/IdReturnLinter.lean b/FloatSpec/Linter/IdReturnLinter.lean
+index 9bd811fc..19f4391f 100644
+--- a/FloatSpec/Linter/IdReturnLinter.lean
++++ b/FloatSpec/Linter/IdReturnLinter.lean
+@@ -1,4 +1,4 @@
+-/-!
++/-
+ Copyright (c) 2025 Alok Singh. All rights reserved.
+ Released under Apache 2.0 license as described in the file LICENSE.
+ Authors: Alok Singh
