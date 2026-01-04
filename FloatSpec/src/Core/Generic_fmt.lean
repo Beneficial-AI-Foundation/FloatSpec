@@ -3459,11 +3459,47 @@ theorem generic_inclusion_ge (e1 : Int) :
       (generic_format beta fexp1 x) →
       (generic_format beta fexp2 x) := by
   intro hβ hle x habs_bound hfmt1
-  -- From |x| ≥ β^e1, we get mag(x) ≥ e1 + 1
-  -- Then fexp2(mag x) ≤ fexp1(mag x) from the hypothesis
-  -- Conclude by generic_inclusion_mag
-  -- API changes in mag_ge_bpow and simpa patterns require adjustment
-  sorry
+  classical
+  -- Positivity of the base on ℝ
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  -- From |x| ≥ β^e1 and positivity, deduce x ≠ 0
+  have hx_ne : x ≠ 0 := by
+    have hpos : 0 < |x| := lt_of_lt_of_le (zpow_pos hbposR e1) habs_bound
+    exact (abs_pos.mp hpos)
+  -- Establish the lower bound e1 ≤ mag x
+  have hmag_ge : e1 ≤ (mag beta x) := by
+    rcases lt_or_eq_of_le habs_bound with hlt | heq
+    · -- Strict case: |x| > β^e1 gives e1 + 1 ≤ mag x
+      have hlt' : (beta : ℝ) ^ ((e1 + 1) - 1) < |x| := by
+        have hshift : (e1 + 1 - 1 : Int) = e1 := by ring
+        simpa [hshift] using hlt
+      have htrip := FloatSpec.Core.Raux.mag_ge_bpow (beta := beta) (x := x) (e := e1 + 1)
+        hβ hlt'
+      have hrun : (e1 + 1) ≤ (mag beta x) := by
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip (by trivial)
+      have he1_le : e1 ≤ e1 + 1 := by linarith
+      exact le_trans he1_le hrun
+    · -- Equality case: |x| = β^e1 implies mag x = e1 + 1
+      have hmag_abs := FloatSpec.Core.Raux.mag_abs (beta := beta) (x := x) hβ
+      have hmag_abs_run : mag beta |x| = mag beta x := by
+        simpa [wp, PostCond.noThrow, Id.run, pure] using hmag_abs (by trivial)
+      have hmag_bpow := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := e1) hβ
+      have hmag_bpow_run : mag beta ((beta : ℝ) ^ e1) = e1 + 1 := by
+        simpa [wp, PostCond.noThrow, Id.run, pure] using hmag_bpow (by trivial)
+      have hmag_x : mag beta x = e1 + 1 := by
+        calc
+          mag beta x = mag beta |x| := by simpa using hmag_abs_run.symm
+          _ = mag beta ((beta : ℝ) ^ e1) := by simpa [heq]
+          _ = e1 + 1 := hmag_bpow_run
+      have he1_le : e1 ≤ e1 + 1 := by linarith
+      exact le_trans he1_le (by simpa [hmag_x] using (le_rfl : e1 + 1 ≤ e1 + 1))
+  -- Pointwise exponent comparison for the magnitude
+  have hpoint : x ≠ 0 → fexp2 ((mag beta x)) ≤ fexp1 ((mag beta x)) := by
+    intro _; exact hle _ hmag_ge
+  -- Conclude by inclusion-by-magnitude
+  exact (generic_inclusion_mag (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2) (x := x))
+    hβ hpoint hfmt1
 
 end Inclusion
 
