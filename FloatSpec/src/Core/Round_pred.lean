@@ -1691,7 +1691,9 @@ theorem Rnd_N_pt_ge_0_spec (F : ℝ → Prop) (x f : ℝ) :
 
 /-- Check nonpositivity of nearest rounding for nonpositive inputs
 
-    If `x ≤ 0` and `Rnd_N_pt F x f`, then `f ≤ 0`.
+    If {given -show}``F : ℝ → Prop`` and {given -show}``x : ℝ`` and
+    {given -show}``f : ℝ`` satisfy
+    {lean}``x ≤ 0`` and {lean}``Rnd_N_pt F x f``, then {lean}``f ≤ 0``.
 -/
 noncomputable def Rnd_N_pt_le_0_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
   by
@@ -1700,7 +1702,8 @@ noncomputable def Rnd_N_pt_le_0_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
 
 /-- Specification: Nonpositivity preserved by nearest rounding
 
-    With `F 0`, from `x ≤ 0` and `Rnd_N_pt F x f`, deduce `f ≤ 0`.
+    With {lean}``F 0``, from {lean}``x ≤ 0`` and {lean}``Rnd_N_pt F x f``,
+    deduce {lean}``f ≤ 0``.
 -/
 @[spec]
 theorem Rnd_N_pt_le_0_spec (F : ℝ → Prop) (x f : ℝ) :
@@ -1738,8 +1741,10 @@ theorem Rnd_N_pt_le_0_spec (F : ℝ → Prop) (x f : ℝ) :
 
 /-- Check absolute-value stability for nearest rounding
 
-    If `F` is closed under negation and `0 ∈ F`, then rounding preserves
-    absolute values: nearest at `x` maps to nearest at `|x|`.
+    If {given -show}``F : ℝ → Prop`` and {given -show}``x : ℝ`` and
+    {given -show}``f : ℝ`` satisfy
+    {lean}``(∀ y, F y → F (-y))`` and {lean}``F 0``, then rounding preserves
+    absolute values: {lean}``Rnd_N_pt F x f`` implies {lean}``Rnd_N_pt F |x| |f|``.
 -/
 noncomputable def Rnd_N_pt_abs_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
   by
@@ -1748,8 +1753,8 @@ noncomputable def Rnd_N_pt_abs_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
 
 /-- Specification: Nearest rounding respects absolute value
 
-    From `F 0`, closure of `F` under negation, and `Rnd_N_pt F x f`,
-    deduce `Rnd_N_pt F |x| |f|`.
+    From {lean}``F 0``, closure of {lean}``F`` under negation, and
+    {lean}``Rnd_N_pt F x f``, deduce {lean}``Rnd_N_pt F |x| |f|``.
 -/
 @[spec]
 theorem Rnd_N_pt_abs_spec (F : ℝ → Prop) (x f : ℝ) :
