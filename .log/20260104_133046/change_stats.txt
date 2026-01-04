@@ -1,0 +1,8 @@
+a22238a022d84a0c43195ca07cb784be8f2f62fa Generic_fmt: document rounding abbrevs and prove inclusion
+
+Recent commits:
+2026-01-04 13:30:02 -0800 a22238a0 Generic_fmt: document rounding abbrevs and prove inclusion  [Alok Singh]
+2026-01-04 04:57:47 -0800 c3c13835 Log: 89e1eb26  [Alok Singh]
+2026-01-04 04:56:46 -0800 89e1eb26 Round_pred: add Verso roles for nearest-rounding docs  [Alok Singh]
+2026-01-04 04:42:02 -0800 16a60c5e Log: 472ed79b  [Alok Singh]
+2026-01-04 04:41:46 -0800 472ed79b Round_pred: clarify Verso roles in rounding docs  [Alok Singh]
