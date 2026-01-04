@@ -648,71 +648,64 @@ noncomputable def Rnd_DN_pt_opp_transform (F : ℝ → Prop) (x f : ℝ) : Bool 
     negation, providing implementation flexibility.
 -/
 @[spec]
-theorem Rnd_DN_pt_opp_spec (F : ℝ → Prop) (x f : ℝ) :
-    ⦃⌜(∀ y, F y → F (-y)) ∧ Rnd_UP_pt F x f⌝⦄
-    Rnd_DN_pt_opp_transform F x f
+theorem Rnd_DN_pt_opp_spec (F : ℝ → Prop) (x f : ℝ)
+    (hFopp : ∀ y, F y → F (-y)) (hUP : Rnd_UP_pt F x f) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_DN_pt_opp_transform F x f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold Rnd_DN_pt_opp_transform
   classical
-  -- Reduce to proving the dual DN-point predicate holds
-  simp [ pure]
-  rcases ‹(∀ y, F y → F (-y)) ∧ Rnd_UP_pt F x f› with ⟨hFopp, hUP⟩
   rcases hUP with ⟨Hf, hxle_f, hmin⟩
-  -- Goal: Rnd_DN_pt F (-x) (-f)
-  refine And.intro (hFopp _ Hf) ?_
-  -- Inequality: from x ≤ f, we get -f ≤ -x
-  refine And.intro (by simpa using (neg_le_neg hxle_f)) ?_
-  -- Maximality: if g ≤ -x and F g, then g ≤ -f
-  intro g HgF Hg_le_negx
-  have hx_le_negg : x ≤ -g := by
-    have := neg_le_neg Hg_le_negx
-    simpa [neg_neg] using this
-  have H_F_negg : F (-g) := hFopp _ HgF
-  have hf_le_negg : f ≤ -g := hmin (-g) H_F_negg hx_le_negg
-  have hneg : -f ≥ g := by
-    have := neg_le_neg hf_le_negg
-    simpa [neg_neg] using this
-  exact hneg
+  -- Build the dual DN-point predicate.
+  have hDN : Rnd_DN_pt F (-x) (-f) := by
+    refine And.intro (hFopp _ Hf) ?_
+    -- Inequality: from x ≤ f, we get -f ≤ -x
+    refine And.intro (by simpa using (neg_le_neg hxle_f)) ?_
+    -- Maximality: if g ≤ -x and F g, then g ≤ -f
+    intro g HgF Hg_le_negx
+    have hx_le_negg : x ≤ -g := by
+      have := neg_le_neg Hg_le_negx
+      simpa [neg_neg] using this
+    have H_F_negg : F (-g) := hFopp _ HgF
+    have hf_le_negg : f ≤ -g := hmin (-g) H_F_negg hx_le_negg
+    have hneg : -f ≥ g := by
+      have := neg_le_neg hf_le_negg
+      simpa [neg_neg] using this
+    exact hneg
+  simp [wp, PostCond.noThrow, pure, hDN]
 
 /-/ Transform round-down and round-up functions under negation
 
-    If `rnd1` rounds down and `rnd2` rounds up for the same
-    format, then `rnd1 (-x) = - rnd2 x`. This expresses the
+    {given -show}`rnd1 : ℝ → ℝ` {given -show}`rnd2 : ℝ → ℝ` {given -show}`x : ℝ`.
+    If {lean}`rnd1` rounds down and {lean}`rnd2` rounds up for the same
+    format, then {lean}`rnd1 (-x) = - rnd2 x`. This expresses the
     function-level duality via negation.
 -/
 noncomputable def Rnd_DN_opp_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Bool :=
   by
     classical
-    exact pure (decide (rnd1 (-x) = - rnd2 x))
+    exact decide (rnd1 (-x) = - rnd2 x)
 
 /-- Specification: Round-down vs round-up under negation
 
-    Under the assumption that `F` is closed under negation and
-    that `rnd1` satisfies `Rnd_DN` while `rnd2` satisfies `Rnd_UP`,
-    the relation `rnd1 (-x) = - rnd2 x` holds for all `x`.
+    {given -show}`F : ℝ → Prop` {given -show}`rnd1 : ℝ → ℝ`
+    {given -show}`rnd2 : ℝ → ℝ` {given -show}`x : ℝ`.
+    Under the assumption that {lean}`F` is closed under negation and
+    that {lean}`rnd1` satisfies {name}`Rnd_DN` while {lean}`rnd2` satisfies {name}`Rnd_UP`,
+    the relation {lean}`rnd1 (-x) = - rnd2 x` holds for all {lean}`x`.
 -/
 @[spec]
-theorem Rnd_DN_opp_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
-    ⦃⌜(∀ y, F y → F (-y)) ∧ (∃ p1 p2, Rnd_DN F rnd1 = pure p1 ∧ Rnd_UP F rnd2 = pure p2 ∧ p1 ∧ p2)⌝⦄
-    Rnd_DN_opp_check F rnd1 rnd2 x
+theorem Rnd_DN_opp_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ)
+    (hFopp : ∀ y, F y → F (-y))
+    (Hdn : ∀ y : ℝ, Rnd_DN_pt F y (rnd1 y))
+    (Hup : ∀ y : ℝ, Rnd_UP_pt F y (rnd2 y)) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_DN_opp_check F rnd1 rnd2 x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold Rnd_DN_opp_check
   classical
-  -- Reduce the Hoare triple to a pure equality goal on this input `x`.
-  simp [ pure]
-  -- Unpack assumptions: closure under negation and packaged DN/UP properties.
-  rcases h with ⟨hFopp, ⟨p1, p2, hDN, hUP, Hp1, Hp2⟩⟩
-  -- Project the underlying propositions from the `Id`-packed specs.
-  have hDN_run : (∀ y : ℝ, Rnd_DN_pt F y (rnd1 y)) = p1 := by
-    simpa [Rnd_DN] using congrArg Id.run hDN
-  have hUP_run : (∀ y : ℝ, Rnd_UP_pt F y (rnd2 y)) = p2 := by
-    simpa [Rnd_UP] using congrArg Id.run hUP
-  have Hdn : ∀ y : ℝ, Rnd_DN_pt F y (rnd1 y) := by
-    simpa [hDN_run] using Hp1
-  have Hup : ∀ y : ℝ, Rnd_UP_pt F y (rnd2 y) := by
-    simpa [hUP_run] using Hp2
   -- Show that y ↦ -rnd1 (-y) also rounds up by duality on points.
   -- Instantiate at the particular `x`.
   have Hd_at_negx : Rnd_DN_pt F (-x) (rnd1 (-x)) := Hdn (-x)
@@ -743,102 +736,115 @@ theorem Rnd_DN_opp_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
   -- We proved `-rnd1 (-x) = rnd2 x`; negate both sides to match the target.
   have hEq_neg : - rnd1 (-x) = rnd2 x := le_antisymm le1 le2
   have := congrArg (fun t => -t) hEq_neg
-  simpa [neg_neg] using this
+  have hEq : rnd1 (-x) = - rnd2 x := by
+    simpa [neg_neg] using this
+  simp [wp, PostCond.noThrow, pure, hEq]
 
 /-/ DN/UP split at a point
 
-    If `d` is the DN-point and `u` is the UP-point for `x`,
-    then any representable `f` lies either below `d` or above `u`.
+    {given -show}`x : ℝ` {given -show}`d : ℝ` {given -show}`u : ℝ` {given -show}`f : ℝ`.
+    If {lean}`d` is the DN-point and {lean}`u` is the UP-point for {lean}`x`,
+    then any representable {lean}`f` lies either below {lean}`d` or above {lean}`u`.
 -/
 noncomputable def Rnd_DN_UP_pt_split_check (F : ℝ → Prop) (x d u f : ℝ) : Bool :=
   by
     -- Encode the split as a decidable boolean; the spec proves it is `true`.
     classical
-    exact pure (decide ((f ≤ d) ∨ (u ≤ f)))
+    exact decide ((f ≤ d) ∨ (u ≤ f))
 
 /-- Specification: DN/UP split covers all representables
 
-    Given `Rnd_DN_pt F x d`, `Rnd_UP_pt F x u`, and `F f`,
-    we have `(f ≤ d) ∨ (u ≤ f)`.
+    {given -show}`F : ℝ → Prop` {given -show}`x : ℝ` {given -show}`d : ℝ`
+    {given -show}`u : ℝ` {given -show}`f : ℝ`.
+    Given {lean}`Rnd_DN_pt F x d`, {lean}`Rnd_UP_pt F x u`, and {lean}`F f`,
+    we have {lean}`(f ≤ d) ∨ (u ≤ f)`.
 -/
 @[spec]
-theorem Rnd_DN_UP_pt_split_spec (F : ℝ → Prop) (x d u f : ℝ) :
-    ⦃⌜Rnd_DN_pt F x d ∧ Rnd_UP_pt F x u ∧ F f⌝⦄
-    Rnd_DN_UP_pt_split_check F x d u f
+theorem Rnd_DN_UP_pt_split_spec (F : ℝ → Prop) (x d u f : ℝ)
+    (hDN : Rnd_DN_pt F x d) (hUP : Rnd_UP_pt F x u) (hFf : F f) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_DN_UP_pt_split_check F x d u f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold Rnd_DN_UP_pt_split_check
   classical
   -- Reduce to the underlying propositional statement
-  simp [ pure]
-  rcases h with ⟨hDN, hUP, hFf⟩
   -- Totality on ℝ: either f ≤ x or x ≤ f
-  cases le_total f x with
-  | inl hfxle =>
-      -- In the ≤ x branch, DN maximality gives f ≤ d
-      left
-      exact hDN.2.2 f hFf hfxle
-  | inr hxlef =>
-      -- In the x ≤ branch, UP minimality gives u ≤ f
-      right
-      exact hUP.2.2 f hFf hxlef
+  have hSplit : (f ≤ d) ∨ (u ≤ f) := by
+    cases le_total f x with
+    | inl hfxle =>
+        -- In the ≤ x branch, DN maximality gives f ≤ d
+        left
+        exact hDN.2.2 f hFf hfxle
+    | inr hxlef =>
+        -- In the x ≤ branch, UP minimality gives u ≤ f
+        right
+        exact hUP.2.2 f hFf hxlef
+  simp [wp, PostCond.noThrow, pure, hSplit]
 
 /-- Coq-compatible name: DN/UP split covers all representables -/
-theorem Rnd_DN_UP_pt_split (F : ℝ → Prop) (x d u f : ℝ) :
-    ⦃⌜Rnd_DN_pt F x d ∧ Rnd_UP_pt F x u ∧ F f⌝⦄
-    Rnd_DN_UP_pt_split_check F x d u f
+theorem Rnd_DN_UP_pt_split (F : ℝ → Prop) (x d u f : ℝ)
+    (hDN : Rnd_DN_pt F x d) (hUP : Rnd_UP_pt F x u) (hFf : F f) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_DN_UP_pt_split_check F x d u f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  exact Rnd_DN_UP_pt_split_spec F x d u f
+  exact Rnd_DN_UP_pt_split_spec F x d u f hDN hUP hFf
 
-/-- Exclusivity: representable within `[dn, up]` is at an endpoint
+/-- Exclusivity: representable between DN/UP endpoints
 
-    If `fd` and `fu` are the DN/UP points for `x` and `f` is representable
-    and lies between them, then `f` must be equal to one of the endpoints.
+    {given -show}`x : ℝ` {given -show}`fd : ℝ` {given -show}`fu : ℝ` {given -show}`f : ℝ`.
+    If {lean}`fd` and {lean}`fu` are the DN/UP points for {lean}`x` and {lean}`f` is representable
+    and lies between them, then {lean}`f` must be equal to one of the endpoints.
 -/
 noncomputable def Only_DN_or_UP_check (F : ℝ → Prop) (x fd fu f : ℝ) : Bool :=
   by
     classical
-    exact pure (decide (f = fd ∨ f = fu))
+    exact decide (f = fd ∨ f = fu)
 
 /-- Specification: Only DN or UP when bounded between them
 
-    Given `Rnd_DN_pt F x fd`, `Rnd_UP_pt F x fu`, `F f`, and `fd ≤ f ≤ fu`,
-    the value `f` equals `fd` or `fu`.
+    {given -show}`F : ℝ → Prop` {given -show}`x : ℝ` {given -show}`fd : ℝ`
+    {given -show}`fu : ℝ` {given -show}`f : ℝ`.
+    Given {lean}`Rnd_DN_pt F x fd`, {lean}`Rnd_UP_pt F x fu`, {lean}`F f`,
+    and {lean}`fd ≤ f` and {lean}`f ≤ fu`, the value {lean}`f` equals {lean}`fd` or {lean}`fu`.
 -/
 @[spec]
-theorem Only_DN_or_UP_spec (F : ℝ → Prop) (x fd fu f : ℝ) :
-    ⦃⌜Rnd_DN_pt F x fd ∧ Rnd_UP_pt F x fu ∧ F f ∧ fd ≤ f ∧ f ≤ fu⌝⦄
-    Only_DN_or_UP_check F x fd fu f
+theorem Only_DN_or_UP_spec (F : ℝ → Prop) (x fd fu f : ℝ)
+    (hDN : Rnd_DN_pt F x fd) (hUP : Rnd_UP_pt F x fu) (hFf : F f)
+    (hfdle : fd ≤ f) (hlefu : f ≤ fu) :
+    ⦃⌜True⌝⦄
+    (pure (Only_DN_or_UP_check F x fd fu f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold Only_DN_or_UP_check
   classical
-  -- Reduce to the underlying propositional goal
-  simp [ pure]
-  rcases h with ⟨hDN, hUP, hFf, hfdle, hlefu⟩
   -- Split on whether x ≤ f or f < x
-  by_cases hx : x ≤ f
-  · -- In the x ≤ f branch, UP minimality gives fu ≤ f, hence f = fu
-    right
-    apply le_antisymm hlefu
-    exact hUP.2.2 f hFf hx
-  · -- Otherwise, by totality we have f ≤ x; DN maximality gives f ≤ fd, hence f = fd
-    left
-    have hfxle : f ≤ x := by
-      -- From totality, either f ≤ x or x ≤ f; the latter contradicts ¬(x ≤ f)
-      cases le_total f x with
-      | inl h => exact h
-      | inr hxle => exact (False.elim (hx hxle))
-    -- From DN maximality: f ≤ fd
-    have hlefd : f ≤ fd := hDN.2.2 f hFf hfxle
-    exact le_antisymm hlefd hfdle
+  have hEq : f = fd ∨ f = fu := by
+    by_cases hx : x ≤ f
+    · -- In the x ≤ f branch, UP minimality gives fu ≤ f, hence f = fu
+      right
+      apply le_antisymm hlefu
+      exact hUP.2.2 f hFf hx
+    · -- Otherwise, by totality we have f ≤ x; DN maximality gives f ≤ fd, hence f = fd
+      left
+      have hfxle : f ≤ x := by
+        -- From totality, either f ≤ x or x ≤ f; the latter contradicts ¬(x ≤ f)
+        cases le_total f x with
+        | inl h => exact h
+        | inr hxle => exact (False.elim (hx hxle))
+      -- From DN maximality: f ≤ fd
+      have hlefd : f ≤ fd := hDN.2.2 f hFf hfxle
+      exact le_antisymm hlefd hfdle
+  simp [wp, PostCond.noThrow, pure, hEq]
 
 /-- Coq-compatible name: only DN or UP when bounded between them -/
-theorem Only_DN_or_UP (F : ℝ → Prop) (x fd fu f : ℝ) :
-    ⦃⌜Rnd_DN_pt F x fd ∧ Rnd_UP_pt F x fu ∧ F f ∧ fd ≤ f ∧ f ≤ fu⌝⦄
-    Only_DN_or_UP_check F x fd fu f
+theorem Only_DN_or_UP (F : ℝ → Prop) (x fd fu f : ℝ)
+    (hDN : Rnd_DN_pt F x fd) (hUP : Rnd_UP_pt F x fu) (hFf : F f)
+    (hfdle : fd ≤ f) (hlefu : f ≤ fu) :
+    ⦃⌜True⌝⦄
+    (pure (Only_DN_or_UP_check F x fd fu f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  exact Only_DN_or_UP_spec F x fd fu f
+  exact Only_DN_or_UP_spec F x fd fu f hDN hUP hFf hfdle hlefu
 
 end DualityProperties
 
@@ -1059,56 +1065,58 @@ section RoundTowardZeroMonotone
 
 /-- Check monotonicity of round-toward-zero predicate
 
-    With 0 representable, the predicate `Rnd_ZR_pt F` is monotone.
+    {given -show}`F : ℝ → Prop`.
+    With 0 representable, the predicate {lean}`Rnd_ZR_pt F` is monotone.
 -/
 noncomputable def Rnd_ZR_pt_monotone_check (F : ℝ → Prop) : Bool :=
   by
     -- Decide the monotonicity proposition; the spec below proves it holds.
     classical
-    exact pure (decide (round_pred_monotone (Rnd_ZR_pt F)))
+    exact decide (round_pred_monotone (Rnd_ZR_pt F))
 
 /-- Specification: Round toward zero is monotone when 0 ∈ F
 
-    Assuming `F 0`, the rounding-toward-zero predicate preserves
+    {given -show}`F : ℝ → Prop`.
+    Assuming {lean}`F 0`, the rounding-toward-zero predicate preserves
     order: it is a monotone rounding predicate.
 -/
 @[spec]
-theorem Rnd_ZR_pt_monotone_spec (F : ℝ → Prop) :
-    ⦃⌜F 0⌝⦄
-    Rnd_ZR_pt_monotone_check F
+theorem Rnd_ZR_pt_monotone_spec (F : ℝ → Prop) (hF0 : F 0) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_ZR_pt_monotone_check F) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro hF0
+  intro _
   unfold Rnd_ZR_pt_monotone_check
   classical
-  -- Reduce to the monotonicity property for `Rnd_ZR_pt F`.
-  simp [ pure, round_pred_monotone]
   -- Prove monotonicity of `Rnd_ZR_pt F` assuming `F 0`.
-  intro x y f g hx hy hxy
-  -- Split on the sign of x
-  by_cases hx0 : 0 ≤ x
-  · -- x ≥ 0: both sides are DN-points (since y ≥ x ≥ 0)
-    have hDNx : Rnd_DN_pt F x f := (hx.1) hx0
-    have hy0 : 0 ≤ y := le_trans hx0 hxy
-    have hDNy : Rnd_DN_pt F y g := (hy.1) hy0
-    -- Use maximality at y with candidate f
-    exact hDNy.2.2 f hDNx.1 (le_trans hDNx.2.1 hxy)
-  · -- x < 0: `hx` gives an UP-point at x
-    have hUPx : Rnd_UP_pt F x f := (hx.2) (le_of_lt (lt_of_not_ge hx0))
-    -- Split on the sign of y
-    by_cases hy0 : 0 ≤ y
-    · -- x < 0 ≤ y: compare via 0 using `F 0`
+  have hmono : round_pred_monotone (Rnd_ZR_pt F) := by
+    intro x y f g hx hy hxy
+    -- Split on the sign of x
+    by_cases hx0 : 0 ≤ x
+    · -- x ≥ 0: both sides are DN-points (since y ≥ x ≥ 0)
+      have hDNx : Rnd_DN_pt F x f := (hx.1) hx0
+      have hy0 : 0 ≤ y := le_trans hx0 hxy
       have hDNy : Rnd_DN_pt F y g := (hy.1) hy0
-      -- From UP minimality at x with g = 0 and x ≤ 0
-      have hxle0 : x ≤ 0 := le_of_lt (lt_of_not_ge hx0)
-      have hfle0 : f ≤ 0 := hUPx.2.2 0 hF0 hxle0
-      -- From DN maximality at y with g = 0 and 0 ≤ y
-      have h0leg : 0 ≤ g := hDNy.2.2 0 hF0 hy0
-      exact le_trans hfle0 h0leg
-    · -- y < 0: both sides are UP-points
-      have hUPy : Rnd_UP_pt F y g := (hy.2) (le_of_lt (lt_of_not_ge hy0))
-      -- Use minimality at x with candidate g, from x ≤ y ≤ g
-      have hxleg : x ≤ g := le_trans hxy hUPy.2.1
-      exact hUPx.2.2 g hUPy.1 hxleg
+      -- Use maximality at y with candidate f
+      exact hDNy.2.2 f hDNx.1 (le_trans hDNx.2.1 hxy)
+    · -- x < 0: `hx` gives an UP-point at x
+      have hUPx : Rnd_UP_pt F x f := (hx.2) (le_of_lt (lt_of_not_ge hx0))
+      -- Split on the sign of y
+      by_cases hy0 : 0 ≤ y
+      · -- x < 0 ≤ y: compare via 0 using `F 0`
+        have hDNy : Rnd_DN_pt F y g := (hy.1) hy0
+        -- From UP minimality at x with g = 0 and x ≤ 0
+        have hxle0 : x ≤ 0 := le_of_lt (lt_of_not_ge hx0)
+        have hfle0 : f ≤ 0 := hUPx.2.2 0 hF0 hxle0
+        -- From DN maximality at y with g = 0 and 0 ≤ y
+        have h0leg : 0 ≤ g := hDNy.2.2 0 hF0 hy0
+        exact le_trans hfle0 h0leg
+      · -- y < 0: both sides are UP-points
+        have hUPy : Rnd_UP_pt F y g := (hy.2) (le_of_lt (lt_of_not_ge hy0))
+        -- Use minimality at x with candidate g, from x ≤ y ≤ g
+        have hxleg : x ≤ g := le_trans hxy hUPy.2.1
+        exact hUPx.2.2 g hUPy.1 hxleg
+  simp [wp, PostCond.noThrow, pure, hmono]
 
 end RoundTowardZeroMonotone
 
@@ -1122,157 +1130,161 @@ noncomputable def Rnd_N_pt_DN_or_UP_check (F : ℝ → Prop) (x f : ℝ) : Bool 
   by
     -- Encode the DN/UP disjunction; the spec will prove it's `true`.
     classical
-    exact pure (decide (Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f))
+    exact decide (Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f)
 
 /-- Specification: Nearest point is DN or UP
 
-    From `Rnd_N_pt F x f`, we conclude `f` is either a DN-point or
-    an UP-point for `x`.
+    {given -show}`F : ℝ → Prop` {given -show}`x : ℝ` {given -show}`f : ℝ`.
+    From {lean}`Rnd_N_pt F x f`, we conclude {lean}`f` is either a DN-point or
+    an UP-point for {lean}`x`.
 -/
 @[spec]
-theorem Rnd_N_pt_DN_or_UP_spec (F : ℝ → Prop) (x f : ℝ) :
-    ⦃⌜Rnd_N_pt F x f⌝⦄
-    Rnd_N_pt_DN_or_UP_check F x f
+theorem Rnd_N_pt_DN_or_UP_spec (F : ℝ → Prop) (x f : ℝ) (hN : Rnd_N_pt F x f) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_N_pt_DN_or_UP_check F x f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold Rnd_N_pt_DN_or_UP_check
   classical
-  -- Reduce Hoare triple to proving the DN/UP disjunction
-  simp [ pure]
-  rcases h with ⟨HfF, Hmin⟩
+  rcases hN with ⟨HfF, Hmin⟩
   -- Split on whether f ≤ x or x ≤ f
-  cases le_total f x with
-  | inl hfxle =>
-    -- DN case: F f ∧ f ≤ x ∧ ∀ g, F g → g ≤ x → g ≤ f
-    left
-    refine And.intro HfF ?_
-    refine And.intro hfxle ?_
-    intro g HgF hglex
-    -- Use minimality: |x - f| ≤ |x - g|, with both x - f, x - g ≥ 0
-    have hxmf_nonneg : 0 ≤ x - f := sub_nonneg.mpr hfxle
-    have hxmg_nonneg : 0 ≤ x - g := sub_nonneg.mpr hglex
-    -- Apply minimality at g and rewrite absolutes into linear inequalities
-    have h_abs : |x - f| ≤ |x - g| := by
-      simpa [abs_sub_comm] using (Hmin g HgF)
-    have h_sub : x - f ≤ x - g := by
-      simpa [abs_of_nonneg hxmf_nonneg, abs_of_nonneg hxmg_nonneg] using h_abs
-    -- x - f ≤ x - g ⇒ g ≤ f, by adding -x and using neg_le_neg_iff
-    have hneg : -f ≤ -g := by
-      have h' := add_le_add_left h_sub (-x)
-      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
-    exact (neg_le_neg_iff).1 hneg
-  | inr hxlef =>
-    -- UP case: F f ∧ x ≤ f ∧ ∀ g, F g → x ≤ g → f ≤ g
-    right
-    refine And.intro HfF ?_
-    refine And.intro hxlef ?_
-    intro g HgF hxleg
-    -- Use minimality: |x - f| ≤ |x - g|, with x - f ≤ 0 and x - g ≤ 0
-    have hxmf_nonpos : x - f ≤ 0 := sub_nonpos.mpr hxlef
-    have hxmg_nonpos : x - g ≤ 0 := sub_nonpos.mpr hxleg
-    -- Apply minimality at g and rewrite absolutes into linear inequalities
-    have h_abs : |x - f| ≤ |x - g| := by
-      simpa [abs_sub_comm] using (Hmin g HgF)
-    have h_sub : f - x ≤ g - x := by
-      simpa [abs_of_nonpos hxmf_nonpos, abs_of_nonpos hxmg_nonpos, neg_sub] using h_abs
-    -- f - x ≤ g - x ⇒ f ≤ g, by adding x on both sides
-    have h' := add_le_add_right h_sub x
-    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
+  have hSplit : Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f := by
+    cases le_total f x with
+    | inl hfxle =>
+        -- DN case: F f ∧ f ≤ x ∧ ∀ g, F g → g ≤ x → g ≤ f
+        left
+        refine And.intro HfF ?_
+        refine And.intro hfxle ?_
+        intro g HgF hglex
+        -- Use minimality: |x - f| ≤ |x - g|, with both x - f, x - g ≥ 0
+        have hxmf_nonneg : 0 ≤ x - f := sub_nonneg.mpr hfxle
+        have hxmg_nonneg : 0 ≤ x - g := sub_nonneg.mpr hglex
+        -- Apply minimality at g and rewrite absolutes into linear inequalities
+        have h_abs : |x - f| ≤ |x - g| := by
+          simpa [abs_sub_comm] using (Hmin g HgF)
+        have h_sub : x - f ≤ x - g := by
+          simpa [abs_of_nonneg hxmf_nonneg, abs_of_nonneg hxmg_nonneg] using h_abs
+        -- x - f ≤ x - g ⇒ g ≤ f, by adding -x and using neg_le_neg_iff
+        have hneg : -f ≤ -g := by
+          have h' := add_le_add_left h_sub (-x)
+          simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
+        exact (neg_le_neg_iff).1 hneg
+    | inr hxlef =>
+        -- UP case: F f ∧ x ≤ f ∧ ∀ g, F g → x ≤ g → f ≤ g
+        right
+        refine And.intro HfF ?_
+        refine And.intro hxlef ?_
+        intro g HgF hxleg
+        -- Use minimality: |x - f| ≤ |x - g|, with x - f ≤ 0 and x - g ≤ 0
+        have hxmf_nonpos : x - f ≤ 0 := sub_nonpos.mpr hxlef
+        have hxmg_nonpos : x - g ≤ 0 := sub_nonpos.mpr hxleg
+        -- Apply minimality at g and rewrite absolutes into linear inequalities
+        have h_abs : |x - f| ≤ |x - g| := by
+          simpa [abs_sub_comm] using (Hmin g HgF)
+        have h_sub : f - x ≤ g - x := by
+          simpa [abs_of_nonpos hxmf_nonpos, abs_of_nonpos hxmg_nonpos, neg_sub] using h_abs
+        -- f - x ≤ g - x ⇒ f ≤ g, by adding x on both sides
+        have h' := add_le_add_right h_sub x
+        simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
+  simp [wp, PostCond.noThrow, pure, hSplit]
 
 /-- Coq-compatible name: nearest point is DN or UP -/
-theorem Rnd_N_pt_DN_or_UP (F : ℝ → Prop) (x f : ℝ) :
-    ⦃⌜Rnd_N_pt F x f⌝⦄
-    Rnd_N_pt_DN_or_UP_check F x f
+theorem Rnd_N_pt_DN_or_UP (F : ℝ → Prop) (x f : ℝ) (hN : Rnd_N_pt F x f) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_N_pt_DN_or_UP_check F x f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  exact Rnd_N_pt_DN_or_UP_spec F x f
+  exact Rnd_N_pt_DN_or_UP_spec F x f hN
 
 /-- Check that nearest point among DN/UP equals one of them
 
-    If `d` and `u` are the DN/UP points and `f` is nearest, then
-    `f` equals either `d` or `u`.
+    {given -show}`x : ℝ` {given -show}`d : ℝ` {given -show}`u : ℝ` {given -show}`f : ℝ`.
+    If {lean}`d` and {lean}`u` are the DN/UP points and {lean}`f` is nearest, then
+    {lean}`f` equals either {lean}`d` or {lean}`u`.
 -/
 noncomputable def Rnd_N_pt_DN_or_UP_eq_check (F : ℝ → Prop) (x d u f : ℝ) : Bool :=
   by
     -- Encode the disjunction `f = d ∨ f = u`; the spec will prove it's `true`.
     classical
-    exact pure (decide (f = d ∨ f = u))
+    exact decide (f = d ∨ f = u)
 
 /-- Specification: Nearest equals DN or UP under DN/UP existence
 
-    Given `Rnd_DN_pt F x d`, `Rnd_UP_pt F x u`, and `Rnd_N_pt F x f`,
-    we have `f = d ∨ f = u`.
+    {given -show}`F : ℝ → Prop` {given -show}`x : ℝ` {given -show}`d : ℝ`
+    {given -show}`u : ℝ` {given -show}`f : ℝ`.
+    Given {lean}`Rnd_DN_pt F x d`, {lean}`Rnd_UP_pt F x u`, and {lean}`Rnd_N_pt F x f`,
+    we have {lean}`f = d ∨ f = u`.
 -/
 @[spec]
-theorem Rnd_N_pt_DN_or_UP_eq_spec (F : ℝ → Prop) (x d u f : ℝ) :
-    ⦃⌜Rnd_DN_pt F x d ∧ Rnd_UP_pt F x u ∧ Rnd_N_pt F x f⌝⦄
-    Rnd_N_pt_DN_or_UP_eq_check F x d u f
+theorem Rnd_N_pt_DN_or_UP_eq_spec (F : ℝ → Prop) (x d u f : ℝ)
+    (Hd : Rnd_DN_pt F x d) (Hu : Rnd_UP_pt F x u) (Hn : Rnd_N_pt F x f) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_N_pt_DN_or_UP_eq_check F x d u f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold Rnd_N_pt_DN_or_UP_eq_check
   classical
-  -- Reduce to proving the propositional disjunction.
-  simp [ pure]
-  -- Unpack the hypotheses.
-  rcases h with ⟨Hd, Hu, Hf⟩
-  rcases Hf with ⟨HfF, Hmin⟩
+  rcases Hn with ⟨HfF, Hmin⟩
   -- Split on order between f and x.
-  cases le_total f x with
-  | inl hfxle =>
-    -- Show that f is a DN-point, then conclude f = d by uniqueness.
-    have HfDN : Rnd_DN_pt F x f := by
-      refine And.intro HfF ?_
-      refine And.intro hfxle ?_
-      intro g HgF hglex
-      -- Use minimality: |x - f| ≤ |x - g| and rewrite absolutes.
-      have hxmf_nonneg : 0 ≤ x - f := sub_nonneg.mpr hfxle
-      have hxmg_nonneg : 0 ≤ x - g := sub_nonneg.mpr hglex
-      have h_abs : |x - f| ≤ |x - g| := by
-        simpa [abs_sub_comm] using (Hmin g HgF)
-      have h_sub : x - f ≤ x - g := by
-        simpa [abs_of_nonneg hxmf_nonneg, abs_of_nonneg hxmg_nonneg] using h_abs
-      -- x - f ≤ x - g ⇒ g ≤ f
-      have hneg : -f ≤ -g := by
-        have h' := add_le_add_left h_sub (-x)
+  have hEq : f = d ∨ f = u := by
+    cases le_total f x with
+    | inl hfxle =>
+      -- Show that f is a DN-point, then conclude f = d by uniqueness.
+      have HfDN : Rnd_DN_pt F x f := by
+        refine And.intro HfF ?_
+        refine And.intro hfxle ?_
+        intro g HgF hglex
+        -- Use minimality: |x - f| ≤ |x - g| and rewrite absolutes.
+        have hxmf_nonneg : 0 ≤ x - f := sub_nonneg.mpr hfxle
+        have hxmg_nonneg : 0 ≤ x - g := sub_nonneg.mpr hglex
+        have h_abs : |x - f| ≤ |x - g| := by
+          simpa [abs_sub_comm] using (Hmin g HgF)
+        have h_sub : x - f ≤ x - g := by
+          simpa [abs_of_nonneg hxmf_nonneg, abs_of_nonneg hxmg_nonneg] using h_abs
+        -- x - f ≤ x - g ⇒ g ≤ f
+        have hneg : -f ≤ -g := by
+          have h' := add_le_add_left h_sub (-x)
+          simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
+        exact (neg_le_neg_iff).1 hneg
+      -- From DN uniqueness at x, f = d.
+      have le_df : d ≤ f := by
+        have := HfDN.2.2 d Hd.1 Hd.2.1
+        simpa using this
+      have le_fd : f ≤ d := by
+        have := Hd.2.2 f HfF hfxle
+        simpa using this
+      exact Or.inl (le_antisymm le_fd le_df)
+    | inr hxlef =>
+      -- Show that f is an UP-point, then conclude f = u by uniqueness.
+      have HfUP : Rnd_UP_pt F x f := by
+        refine And.intro HfF ?_
+        refine And.intro hxlef ?_
+        intro g HgF hxleg
+        -- Use minimality: |x - f| ≤ |x - g| and rewrite absolutes.
+        have hxmf_nonpos : x - f ≤ 0 := sub_nonpos.mpr hxlef
+        have hxmg_nonpos : x - g ≤ 0 := sub_nonpos.mpr hxleg
+        have h_abs : |x - f| ≤ |x - g| := by
+          simpa [abs_sub_comm] using (Hmin g HgF)
+        have h_sub : f - x ≤ g - x := by
+          simpa [abs_of_nonpos hxmf_nonpos, abs_of_nonpos hxmg_nonpos, neg_sub] using h_abs
+        have h' := add_le_add_right h_sub x
         simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
-      exact (neg_le_neg_iff).1 hneg
-    -- From DN uniqueness at x, f = d.
-    have le_df : d ≤ f := by
-      have := HfDN.2.2 d Hd.1 Hd.2.1
-      simpa using this
-    have le_fd : f ≤ d := by
-      have := Hd.2.2 f HfF hfxle
-      simpa using this
-    exact Or.inl (le_antisymm le_fd le_df)
-  | inr hxlef =>
-    -- Show that f is an UP-point, then conclude f = u by uniqueness.
-    have HfUP : Rnd_UP_pt F x f := by
-      refine And.intro HfF ?_
-      refine And.intro hxlef ?_
-      intro g HgF hxleg
-      -- Use minimality: |x - f| ≤ |x - g| and rewrite absolutes.
-      have hxmf_nonpos : x - f ≤ 0 := sub_nonpos.mpr hxlef
-      have hxmg_nonpos : x - g ≤ 0 := sub_nonpos.mpr hxleg
-      have h_abs : |x - f| ≤ |x - g| := by
-        simpa [abs_sub_comm] using (Hmin g HgF)
-      have h_sub : f - x ≤ g - x := by
-        simpa [abs_of_nonpos hxmf_nonpos, abs_of_nonpos hxmg_nonpos, neg_sub] using h_abs
-      have h' := add_le_add_right h_sub x
-      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
-    -- From UP uniqueness at x, f = u.
-    have le_fu : f ≤ u := by
-      have := HfUP.2.2 u Hu.1 Hu.2.1
-      simpa using this
-    have le_uf : u ≤ f := by
-      have := Hu.2.2 f HfF hxlef
-      simpa using this
-    exact Or.inr (le_antisymm le_fu le_uf)
+      -- From UP uniqueness at x, f = u.
+      have le_fu : f ≤ u := by
+        have := HfUP.2.2 u Hu.1 Hu.2.1
+        simpa using this
+      have le_uf : u ≤ f := by
+        have := Hu.2.2 f HfF hxlef
+        simpa using this
+      exact Or.inr (le_antisymm le_fu le_uf)
+  simp [wp, PostCond.noThrow, pure, hEq]
 
 /-- Coq-compatible name: nearest equals DN or UP -/
-theorem Rnd_N_pt_DN_or_UP_eq (F : ℝ → Prop) (x d u f : ℝ) :
-    ⦃⌜Rnd_DN_pt F x d ∧ Rnd_UP_pt F x u ∧ Rnd_N_pt F x f⌝⦄
-    Rnd_N_pt_DN_or_UP_eq_check F x d u f
+theorem Rnd_N_pt_DN_or_UP_eq (F : ℝ → Prop) (x d u f : ℝ)
+    (Hd : Rnd_DN_pt F x d) (Hu : Rnd_UP_pt F x u) (Hn : Rnd_N_pt F x f) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_N_pt_DN_or_UP_eq_check F x d u f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  exact Rnd_N_pt_DN_or_UP_eq_spec F x d u f
+  exact Rnd_N_pt_DN_or_UP_eq_spec F x d u f Hd Hu Hn
 
 end RoundNearestBasic
 
@@ -1282,156 +1294,163 @@ noncomputable section
 
 /-- Check opposite invariance for nearest rounding
 
-    If `F` is closed under negation and `(-x,-f)` is a nearest pair,
-    then `(x,f)` is also a nearest pair.
+    {given -show}`F : ℝ → Prop` {given -show}`x : ℝ` {given -show}`f : ℝ`.
+    If {lean}`F` is closed under negation and {lean}`Rnd_N_pt F (-x) (-f)` holds,
+    then {lean}`Rnd_N_pt F x f` also holds.
 -/
 noncomputable def Rnd_N_pt_opp_inv_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
   by
     -- We encode the target proposition as a decidable boolean.
     -- The specification below will establish it holds.
     classical
-    exact pure (decide (Rnd_N_pt F x f))
+    exact decide (Rnd_N_pt F x f)
 
 /-- Specification: Nearest invariant under negation (inverse)
 
-    Assuming `(∀ y, F y → F (-y))` and `Rnd_N_pt F (-x) (-f)`, infer
-    `Rnd_N_pt F x f`.
+    {given -show}`F : ℝ → Prop` {given -show}`x : ℝ` {given -show}`f : ℝ`.
+    Assuming {lean}`∀ y, F y → F (-y)` and {lean}`Rnd_N_pt F (-x) (-f)`, infer
+    {lean}`Rnd_N_pt F x f`.
 -/
 @[spec]
-theorem Rnd_N_pt_opp_inv_spec (F : ℝ → Prop) (x f : ℝ) :
-    ⦃⌜(∀ y, F y → F (-y)) ∧ Rnd_N_pt F (-x) (-f)⌝⦄
-    Rnd_N_pt_opp_inv_check F x f
+theorem Rnd_N_pt_opp_inv_spec (F : ℝ → Prop) (x f : ℝ)
+    (hFopp : ∀ y, F y → F (-y)) (hNearestNeg : Rnd_N_pt F (-x) (-f)) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_N_pt_opp_inv_check F x f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold Rnd_N_pt_opp_inv_check
   classical
-  -- Reduce the Hoare triple to proving the target proposition.
-  simp [ pure]
-  rcases h with ⟨hFopp, hNearestNeg⟩
   rcases hNearestNeg with ⟨Hf_neg, Hmin_neg⟩
   -- Show `F f` using closure under negation from `F (-f)`.
   have Hf : F f := by
     -- from F (-f) and closure: F f = F (-(-f))
     simpa [neg_neg] using hFopp (-f) Hf_neg
   -- Show minimality at `x` from minimality at `-x` by rewriting via negations.
-  refine And.intro Hf ?_
-  intro g HgF
-  -- Use candidate `-g` on the `-x` side; closure gives `F (-g)`.
-  have Hg_neg : F (-g) := hFopp g HgF
-  -- From minimality at -x and symmetry of |·|, derive the desired inequality at x.
-  have hneg := Hmin_neg (-g) Hg_neg
-  have h1 : |x - f| ≤ |x - g| := by
-    simpa [sub_eq_add_neg, add_comm] using hneg
-  have h2 : |f - x| ≤ |g - x| := by
-    simpa [abs_sub_comm] using h1
-  exact h2
+  have hNearest : Rnd_N_pt F x f := by
+    refine And.intro Hf ?_
+    intro g HgF
+    -- Use candidate `-g` on the `-x` side; closure gives `F (-g)`.
+    have Hg_neg : F (-g) := hFopp g HgF
+    -- From minimality at -x and symmetry of |·|, derive the desired inequality at x.
+    have hneg := Hmin_neg (-g) Hg_neg
+    have h1 : |x - f| ≤ |x - g| := by
+      simpa [sub_eq_add_neg, add_comm] using hneg
+    have h2 : |f - x| ≤ |g - x| := by
+      simpa [abs_sub_comm] using h1
+    exact h2
+  simp [wp, PostCond.noThrow, pure, hNearest]
 
 /-- Coq-compatible name: nearest invariant under negation -/
-theorem Rnd_N_pt_opp_inv (F : ℝ → Prop) (x f : ℝ) :
-    ⦃⌜(∀ y, F y → F (-y)) ∧ Rnd_N_pt F (-x) (-f)⌝⦄
-    Rnd_N_pt_opp_inv_check F x f
+theorem Rnd_N_pt_opp_inv (F : ℝ → Prop) (x f : ℝ)
+    (hFopp : ∀ y, F y → F (-y)) (hNearestNeg : Rnd_N_pt F (-x) (-f)) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_N_pt_opp_inv_check F x f) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  exact Rnd_N_pt_opp_inv_spec F x f
+  exact Rnd_N_pt_opp_inv_spec F x f hFopp hNearestNeg
 
 /-- Check monotonicity for nearest rounding predicate
 
-    If `x < y` and both are rounded to nearest, then `f ≤ g`.
+    {given -show}`F : ℝ → Prop` {given -show}`x : ℝ` {given -show}`y : ℝ`
+    {given -show}`f : ℝ` {given -show}`g : ℝ`.
+    If {lean}`x < y` and both are rounded to nearest, then {lean}`f ≤ g`.
 -/
 noncomputable def Rnd_N_pt_monotone_check (F : ℝ → Prop) (x y f g : ℝ) : Bool :=
   by
     -- Encode the monotonicity goal `f ≤ g` as a decidable boolean.
     classical
-    exact pure (decide (f ≤ g))
+    exact decide (f ≤ g)
 
 /-- Specification: Nearest rounding is monotone
 
     From `Rnd_N_pt F x f`, `Rnd_N_pt F y g`, and `x < y`, deduce `f ≤ g`.
 -/
 @[spec]
-theorem Rnd_N_pt_monotone_spec (F : ℝ → Prop) (x y f g : ℝ) :
-    ⦃⌜Rnd_N_pt F x f ∧ Rnd_N_pt F y g ∧ x < y⌝⦄
-    Rnd_N_pt_monotone_check F x y f g
+theorem Rnd_N_pt_monotone_spec (F : ℝ → Prop) (x y f g : ℝ)
+    (Hxf : Rnd_N_pt F x f) (Hyg : Rnd_N_pt F y g) (hxy : x < y) :
+    ⦃⌜True⌝⦄
+    (pure (Rnd_N_pt_monotone_check F x y f g) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold Rnd_N_pt_monotone_check
   classical
-  -- Reduce to proving the pure inequality `f ≤ g`.
-  simp [ pure]
-  rcases h with ⟨Hxf, Hyg, hxy⟩
-  rcases Hxf with ⟨HfF, Hxmin⟩
-  rcases Hyg with ⟨HgF, Hymin⟩
-  -- By contradiction, assume `g < f`.
-  by_contra hle
-  have hgf : g < f := lt_of_not_ge hle
-  -- From minimality at x and y (in the definition order |f - x| ≤ |g - x|)
-  have Hfgx : |f - x| ≤ |g - x| := Hxmin g HgF
-  have Hgfy : |g - y| ≤ |f - y| := Hymin f HfF
-  -- Split on the order between x and g
-  by_cases hxg : x ≤ g
-  · -- Case 1: x ≤ g < f. Then |x - f| = f - x and |x - g| = g - x, contradicting g < f.
-    have hxlt_f : x < f := lt_of_le_of_lt hxg hgf
-    have hxmf_pos : 0 < f - x := sub_pos.mpr hxlt_f
-    have hxmg_nonneg : 0 ≤ g - x := sub_nonneg.mpr hxg
-    have Hfgx' : |f - x| ≤ |g - x| := by simpa [abs_sub_comm] using Hfgx
-    have Hfgx'' : f - x ≤ g - x := by
-      simpa [abs_of_nonneg (le_of_lt hxmf_pos), abs_of_nonneg hxmg_nonneg] using Hfgx'
-    have : ¬ f - x ≤ g - x := by
-      have h := sub_lt_sub_right hgf x
-      exact not_le.mpr h
-    exact this Hfgx''
-  · -- Case 2: g < x. Then g < y by transitivity with x < y.
-    have hgx : g < x := lt_of_not_ge hxg
-    have hgy : g < y := lt_trans hgx hxy
-    -- Subcase 2a: f ≤ y. Then |y - g| = y - g and |y - f| = y - f, contradicting g < f.
-    by_cases hfy : f ≤ y
-    · have hy_mg_pos : 0 < y - g := sub_pos.mpr hgy
-      have hy_mf_nonneg : 0 ≤ y - f := sub_nonneg.mpr hfy
-      have Hgfy' : |y - g| ≤ |y - f| := by
-        simpa [abs_sub_comm] using Hgfy
-      have Hgfy'' : y - g ≤ y - f := by
-        simpa [abs_of_nonneg (le_of_lt hy_mg_pos), abs_of_nonneg hy_mf_nonneg] using Hgfy'
-      have : ¬ y - g ≤ y - f := by
-        have h := sub_lt_sub_left hgf y
-        -- From g < f, we have y - f < y - g, contradicting the above ≤
+  -- Prove the pure inequality `f ≤ g` from the nearest-point hypotheses.
+  have hle : f ≤ g := by
+    rcases Hxf with ⟨HfF, Hxmin⟩
+    rcases Hyg with ⟨HgF, Hymin⟩
+    -- By contradiction, assume `g < f`.
+    by_contra hle
+    have hgf : g < f := lt_of_not_ge hle
+    -- From minimality at x and y (in the definition order |f - x| ≤ |g - x|)
+    have Hfgx : |f - x| ≤ |g - x| := Hxmin g HgF
+    have Hgfy : |g - y| ≤ |f - y| := Hymin f HfF
+    -- Split on the order between x and g
+    by_cases hxg : x ≤ g
+    · -- Case 1: x ≤ g < f. Then |x - f| = f - x and |x - g| = g - x, contradicting g < f.
+      have hxlt_f : x < f := lt_of_le_of_lt hxg hgf
+      have hxmf_pos : 0 < f - x := sub_pos.mpr hxlt_f
+      have hxmg_nonneg : 0 ≤ g - x := sub_nonneg.mpr hxg
+      have Hfgx' : |f - x| ≤ |g - x| := by simpa [abs_sub_comm] using Hfgx
+      have Hfgx'' : f - x ≤ g - x := by
+        simpa [abs_of_nonneg (le_of_lt hxmf_pos), abs_of_nonneg hxmg_nonneg] using Hfgx'
+      have : ¬ f - x ≤ g - x := by
+        have h := sub_lt_sub_right hgf x
         exact not_le.mpr h
-      exact this Hgfy''
-    · -- Subcase 2b: y < f. Use both minimalities and a rearrangement argument.
-      have hy_lt_f : y < f := lt_of_not_ge hfy
-      -- Rewrite Hfgx and Hgfy without absolutes using sign information.
-      have hxmg_pos : 0 < x - g := sub_pos.mpr hgx
-      -- From x < y < f, we get 0 < f - x
-      have hxmf_pos : 0 < f - x := sub_pos.mpr (lt_trans hxy hy_lt_f)
-      have hymg_pos : 0 < y - g := sub_pos.mpr hgy
-      have hymf_neg : y - f < 0 := sub_neg.mpr hy_lt_f
-      -- |x - f| = f - x and |x - g| = x - g
-      have Hfgx' : f - x ≤ x - g := by
-        have := Hfgx
-        have : |f - x| ≤ |x - g| := by simpa [abs_sub_comm] using this
-        simpa [abs_of_pos hxmf_pos, abs_of_pos hxmg_pos] using this
-      -- |y - g| = y - g and |y - f| = f - y
-      have Hgfy' : y - g ≤ f - y := by
-        have habs : |y - g| ≤ |y - f| := by
+      exact this Hfgx''
+    · -- Case 2: g < x. Then g < y by transitivity with x < y.
+      have hgx : g < x := lt_of_not_ge hxg
+      have hgy : g < y := lt_trans hgx hxy
+      -- Subcase 2a: f ≤ y. Then |y - g| = y - g and |y - f| = y - f, contradicting g < f.
+      by_cases hfy : f ≤ y
+      · have hy_mg_pos : 0 < y - g := sub_pos.mpr hgy
+        have hy_mf_nonneg : 0 ≤ y - f := sub_nonneg.mpr hfy
+        have Hgfy' : |y - g| ≤ |y - f| := by
           simpa [abs_sub_comm] using Hgfy
-        simpa [abs_of_pos hymg_pos, abs_of_neg hymf_neg] using habs
-      -- Sum inequalities: (f - x) + (y - g) ≤ (x - g) + (f - y)
-      have Hsum : (f - x) + (y - g) ≤ (x - g) + (f - y) := add_le_add Hfgx' Hgfy'
-      -- But (x - g) + (f - y) = (x - y) + (f - g)
-      have hL : (x - g) + (f - y) = (x - y) + (f - g) := by
-        simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
-      -- and (f - x) + (y - g) = (y - x) + (f - g)
-      have hR : (f - x) + (y - g) = (y - x) + (f - g) := by
-        simp [sub_eq_add_neg, add_left_comm, add_assoc]
-      -- Since y - x > 0, we have (x - y) < (y - x), hence L < R after adding (f - g)
-      have hyx_pos : 0 < y - x := sub_pos.mpr hxy
-      have hxmy_lt_hyx : (x - y) < (y - x) := by
-        -- Since 0 < y - x, we have -(y - x) < (y - x); note x - y = -(y - x).
-        have : -(y - x) < (y - x) := neg_lt_self hyx_pos
-        simpa [neg_sub, sub_eq_add_neg] using this
-      have hStrict : (x - y) + (f - g) < (y - x) + (f - g) := by
-        simpa only [add_comm (f - g)] using add_lt_add_right hxmy_lt_hyx (f - g)
-      -- Combine with Hsum rewritten via hL and hR to reach a contradiction
-      have : (y - x) + (f - g) ≤ (x - y) + (f - g) := by simpa [hL, hR, add_comm, add_left_comm, add_assoc] using Hsum
-      exact (not_le_of_gt hStrict) this
+        have Hgfy'' : y - g ≤ y - f := by
+          simpa [abs_of_nonneg (le_of_lt hy_mg_pos), abs_of_nonneg hy_mf_nonneg] using Hgfy'
+        have : ¬ y - g ≤ y - f := by
+          have h := sub_lt_sub_left hgf y
+          -- From g < f, we have y - f < y - g, contradicting the above ≤
+          exact not_le.mpr h
+        exact this Hgfy''
+      · -- Subcase 2b: y < f. Use both minimalities and a rearrangement argument.
+        have hy_lt_f : y < f := lt_of_not_ge hfy
+        -- Rewrite Hfgx and Hgfy without absolutes using sign information.
+        have hxmg_pos : 0 < x - g := sub_pos.mpr hgx
+        -- From x < y < f, we get 0 < f - x
+        have hxmf_pos : 0 < f - x := sub_pos.mpr (lt_trans hxy hy_lt_f)
+        have hymg_pos : 0 < y - g := sub_pos.mpr hgy
+        have hymf_neg : y - f < 0 := sub_neg.mpr hy_lt_f
+        -- |x - f| = f - x and |x - g| = x - g
+        have Hfgx' : f - x ≤ x - g := by
+          have := Hfgx
+          have : |f - x| ≤ |x - g| := by simpa [abs_sub_comm] using this
+          simpa [abs_of_pos hxmf_pos, abs_of_pos hxmg_pos] using this
+        -- |y - g| = y - g and |y - f| = f - y
+        have Hgfy' : y - g ≤ f - y := by
+          have habs : |y - g| ≤ |y - f| := by
+            simpa [abs_sub_comm] using Hgfy
+          simpa [abs_of_pos hymg_pos, abs_of_neg hymf_neg] using habs
+        -- Sum inequalities: (f - x) + (y - g) ≤ (x - g) + (f - y)
+        have Hsum : (f - x) + (y - g) ≤ (x - g) + (f - y) := add_le_add Hfgx' Hgfy'
+        -- But (x - g) + (f - y) = (x - y) + (f - g)
+        have hL : (x - g) + (f - y) = (x - y) + (f - g) := by
+          simp [sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+        -- and (f - x) + (y - g) = (y - x) + (f - g)
+        have hR : (f - x) + (y - g) = (y - x) + (f - g) := by
+          simp [sub_eq_add_neg, add_left_comm, add_assoc]
+        -- Since y - x > 0, we have (x - y) < (y - x), hence L < R after adding (f - g)
+        have hyx_pos : 0 < y - x := sub_pos.mpr hxy
+        have hxmy_lt_hyx : (x - y) < (y - x) := by
+          -- Since 0 < y - x, we have -(y - x) < (y - x); note x - y = -(y - x).
+          have : -(y - x) < (y - x) := neg_lt_self hyx_pos
+          simpa [neg_sub, sub_eq_add_neg] using this
+        have hStrict : (x - y) + (f - g) < (y - x) + (f - g) := by
+          simpa only [add_comm (f - g)] using add_lt_add_right hxmy_lt_hyx (f - g)
+        -- Combine with Hsum rewritten via hL and hR to reach a contradiction
+        have : (y - x) + (f - g) ≤ (x - y) + (f - g) := by
+          simpa [hL, hR, add_comm, add_left_comm, add_assoc] using Hsum
+        exact (not_le_of_gt hStrict) this
+  simp [wp, PostCond.noThrow, pure, hle]
 
 /-- Check uniqueness for nearest rounding under asymmetry
 
