@@ -18,6 +18,21 @@ dsimproc [simp] reduceWpId (_) := fun e => do
   let expr ← mkAppM ``Std.Do.PredTrans.pure #[run]
   return .done expr
 
+/-- Defeq simproc: reduce {name}`wp` on {name}`Id` + {name}`PostCond.noThrow` to the postcondition. -/
+dsimproc [simp] reduceWpIdNoThrow (_) := fun e => do
+  unless e.isAppOfArity ``Std.Do.wp 2 do
+    return .continue
+  let args := e.getAppArgs
+  let x := args[0]!
+  let pc := args[1]!
+  unless pc.isAppOfArity ``Std.Do.PostCond.noThrow 1 do
+    return .continue
+  let xTy ← inferType x
+  let_expr Id _ := xTy | return .continue
+  let Q := pc.appArg!
+  let run := mkApp (mkConst ``Id.run) x
+  return .done (mkApp Q run)
+
 /-- Defeq simproc: unfold {name}`PostCond.noThrow`. -/
 dsimproc [simp] reducePostCondNoThrow (PostCond.noThrow _) := fun e => do
   unless e.isAppOfArity ``Std.Do.PostCond.noThrow 1 do
