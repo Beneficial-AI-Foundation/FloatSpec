@@ -3330,35 +3330,60 @@ theorem generic_inclusion (e : Int) :
       (generic_format beta fexp2 x) := by
   intro hβ hle_e x hx hfmt1
   classical
-  -- From the tight bpow bounds with strict lower bound, deduce mag beta x = e
-  have hmag_run : (mag beta x) = e := by
-    -- Case split: |x| < β^e (strict) or |x| = β^e (exact)
-    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-    have hx_ne : x ≠ 0 := by
-      have h1 : 0 < |x| := lt_trans (zpow_pos hbposR (e - 1)) hx.left
-      exact fun hx0 => (ne_of_gt h1) (by simp [hx0])
-    by_cases hlt : |x| < (beta : ℝ) ^ e
-    · -- Case |x| < β^e: use mag_unique with weak lower + strict upper
+  -- Case split on the upper bound: strict (<) vs boundary (=).
+  by_cases hlt : |x| < (beta : ℝ) ^ e
+  · -- Strict case: mag x = e, then apply inclusion-by-magnitude.
+    have hmag_run : (mag beta x) = e := by
       have h := FloatSpec.Core.Raux.mag_unique (beta := beta) (x := x) (e := e)
         hβ (le_of_lt hx.left) hlt
       simpa [wp, PostCond.noThrow, Id.run, pure] using h (by trivial)
-    · -- Case |x| = β^e: use mag_bpow
-      have heq : |x| = (beta : ℝ) ^ e := le_antisymm hx.right (le_of_not_lt hlt)
-      -- When |x| = β^e, mag = e + 1, but we need mag = e...
-      -- This is actually the boundary case that requires mag = e + 1.
-      -- The theorem statement may be incorrect for this edge case.
-      -- For now, we can use that x being in generic_format constrains this.
-      -- Actually, if |x| = β^e exactly and x is in generic_format, we need
-      -- scaled_mantissa to be an integer, which constrains fexp.
-      -- This is complex - use sorry for this edge case pending deeper analysis.
-      sorry
-  -- Pointwise inequality on the canonical exponent at x
-  have hpoint : x ≠ 0 → fexp2 ((mag beta x)) ≤ fexp1 ((mag beta x)) := by
-    intro _; simp only [hmag_run]; exact hle_e
-  -- Conclude by the inclusion-by-magnitude lemma
-  exact (generic_inclusion_mag (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2) (x := x))
-    hβ hpoint hfmt1
+    have hpoint : x ≠ 0 → fexp2 ((mag beta x)) ≤ fexp1 ((mag beta x)) := by
+      intro _; simpa [hmag_run] using hle_e
+    exact (generic_inclusion_mag (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2) (x := x))
+      hβ hpoint hfmt1
+  · -- Boundary case: |x| = β^e. Use bpow inversion + validity to show both formats hold.
+    have heq : |x| = (beta : ℝ) ^ e := le_antisymm hx.right (le_of_not_gt hlt)
+    -- First, show β^e is in generic format for fexp1.
+    have hfmt1_bpow : generic_format beta fexp1 ((beta : ℝ) ^ e) := by
+      by_cases hx_nonneg : 0 ≤ x
+      · have hx_eq : x = (beta : ℝ) ^ e := by
+          calc
+            x = |x| := by simp [abs_of_nonneg hx_nonneg]
+            _ = (beta : ℝ) ^ e := heq
+        simpa [hx_eq] using hfmt1
+      · have hx_neg : x < 0 := lt_of_not_ge hx_nonneg
+        have hx_eq : x = - (beta : ℝ) ^ e := by
+          have habs : |x| = -x := abs_of_neg hx_neg
+          have hneg : -x = (beta : ℝ) ^ e := by simpa [habs] using heq
+          simpa using congrArg Neg.neg hneg
+        have hfmt1_neg : generic_format beta fexp1 (-(beta : ℝ) ^ e) := by
+          simpa [hx_eq] using hfmt1
+        have hfmt1_bpow' :=
+          generic_format_opp (beta := beta) (fexp := fexp1) (x := (-(beta : ℝ) ^ e)) hfmt1_neg
+        simpa using hfmt1_bpow'
+    -- Extract the exponent bound from generic_format on β^e.
+    have hfe1_le : fexp1 e ≤ e :=
+      generic_format_bpow_inv (beta := beta) (fexp := fexp1) (e := e) hβ hfmt1_bpow
+    have hfe2_le : fexp2 e ≤ e := le_trans hle_e hfe1_le
+    -- Show β^e is in generic format for fexp2.
+    have hgen2 := generic_format_bpow' (beta := beta) (fexp := fexp2) (e := e) ⟨hβ, hfe2_le⟩
+    have hgen2_run : generic_format beta fexp2 ((beta : ℝ) ^ e) := by
+      simpa [wp, PostCond.noThrow, Id.run] using hgen2
+    -- Transfer to x using its sign.
+    by_cases hx_nonneg : 0 ≤ x
+    · have hx_eq : x = (beta : ℝ) ^ e := by
+        calc
+          x = |x| := by simp [abs_of_nonneg hx_nonneg]
+          _ = (beta : ℝ) ^ e := heq
+      simpa [hx_eq] using hgen2_run
+    · have hx_neg : x < 0 := lt_of_not_ge hx_nonneg
+      have hx_eq : x = - (beta : ℝ) ^ e := by
+        have habs : |x| = -x := abs_of_neg hx_neg
+        have hneg : -x = (beta : ℝ) ^ e := by simpa [habs] using heq
+        simpa using congrArg Neg.neg hneg
+      have hgen2_neg :=
+        generic_format_opp (beta := beta) (fexp := fexp2) (x := ((beta : ℝ) ^ e)) hgen2_run
+      simpa [hx_eq] using hgen2_neg
 
 /-- Coq ({lit}`Generic_fmt.v`):
     Theorem {lit}`generic_inclusion_le_ge`:
