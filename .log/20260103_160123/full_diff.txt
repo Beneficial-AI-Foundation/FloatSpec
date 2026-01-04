@@ -1,0 +1,55 @@
+Sat Jan 3 16:01:17 2026 -0800 765fdf8a  (HEAD -> main) Ulp: simplify pred_pos_run helpers  [Alok Singh]
+diff --git a/FloatSpec/src/Core/Ulp.lean b/FloatSpec/src/Core/Ulp.lean
+index 7843a8fa..f595a1c8 100644
+--- a/FloatSpec/src/Core/Ulp.lean
++++ b/FloatSpec/src/Core/Ulp.lean
+@@ -4574,26 +4574,20 @@ theorem generic_format_pred_pos
+       (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+         ((pred_pos (beta := beta) (fexp := fexp) x))) := by
+     -- Local rewriting tools for `(pred_pos … x).run` in the two cases
+-    have pred_pos_run_boundary :
+-        x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
+-        (pred_pos (beta := beta) (fexp := fexp) x) =
+-          x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
+-      intro hx
+-      -- Unfold and evaluate the if-branch directly
+-      unfold pred_pos
+-      rw [if_pos hx]
+-      -- For the `Id` monad, both `run` and `pure` are definitional identities.
+-      -- Make this explicit so the equation reduces to reflexivity.
+-      simp [Id.run, pure]
+-    have pred_pos_run_generic :
+-        x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
+-        (pred_pos (beta := beta) (fexp := fexp) x) =
+-          x - (ulp (beta := beta) (fexp := fexp) x) := by
+-      intro hx
+-      -- Unfold and evaluate the else-branch directly
+-      unfold pred_pos
+-      rw [if_neg hx]
+-      simp [Id.run, bind, pure]
++      have pred_pos_run_boundary :
++          x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
++          (pred_pos (beta := beta) (fexp := fexp) x) =
++            x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
++        intro hx
++        -- Unfold and evaluate the if-branch directly.
++        simp [pred_pos, hx, Id.run, pure]
++      have pred_pos_run_generic :
++          x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
++          (pred_pos (beta := beta) (fexp := fexp) x) =
++            x - (ulp (beta := beta) (fexp := fexp) x) := by
++        intro hx
++        -- Unfold and evaluate the else-branch directly.
++        simp [pred_pos, hx, Id.run, bind, pure]
+     -- Split on the boundary case x = β^(mag x - 1)
+     by_cases hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)
+     · -- Boundary branch: goal is F (x - β^(fexp (mag x - 1)))
+@@ -8779,7 +8773,7 @@ theorem round_UP_DN_ulp [Exp_not_FTZ fexp] (x : ℝ)
+ Lean (adapted): we assume {lean}`1 < beta` (standard radix hypothesis) so we can
+ use the established generic format lemmas for {lit}`0` and for pure powers of β.
+ In the zero branch of {name}`ulp`, the result is either {lit}`0` or
+-{lit}`(β : ℝ)^(fexp n)` for a witness {given}`n`` from {name}`negligible_exp`.
++{lit}`(β : ℝ)^(fexp n)` for a witness {given}`n` from {name}`negligible_exp`.
+ Both are representable:
+ 
+ - {lit}`0` by {name}`generic_format_0`
