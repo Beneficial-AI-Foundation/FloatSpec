@@ -3778,8 +3778,10 @@ section MonotoneImplications
 
 /-- Check nonnegativity from rounding predicate monotonicity
 
-    If a rounding predicate is monotone and maps 0 to 0, then `0 ≤ x`
-    implies `0 ≤ f` when `P x f` holds.
+    For {given +show}``P : ℝ → ℝ → Prop`` and {given +show}``x : ℝ`` and
+    {given +show}``f : ℝ``,
+    if a rounding predicate is monotone and maps 0 to 0, then {lean}``0 ≤ x``
+    implies {lean}``0 ≤ f`` when {lean}``P x f`` holds.
 -/
 noncomputable def round_pred_ge_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
   by
@@ -3788,7 +3790,10 @@ noncomputable def round_pred_ge_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) :
 
 /-- Specification: Monotone predicate preserves nonnegativity
 
-    From `round_pred_monotone P`, `P 0 0`, `P x f`, and `0 ≤ x`, deduce `0 ≤ f`.
+    For {given +show}``P : ℝ → ℝ → Prop`` and {given +show}``x : ℝ`` and
+    {given +show}``f : ℝ``,
+    from {lean}``round_pred_monotone P``, {lean}``P 0 0``, {lean}``P x f``,
+    and {lean}``0 ≤ x``, deduce {lean}``0 ≤ f``.
 -/
 @[spec]
 theorem round_pred_ge_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
@@ -3807,8 +3812,10 @@ theorem round_pred_ge_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
 
 /-- Check positivity implication from monotonicity
 
-    If a rounding predicate is monotone and maps 0 to 0, then `0 < f`
-    implies `0 < x` when `P x f` holds.
+    For {given +show}``P : ℝ → ℝ → Prop`` and {given +show}``x : ℝ`` and
+    {given +show}``f : ℝ``,
+    if a rounding predicate is monotone and maps 0 to 0, then {lean}``0 < f``
+    implies {lean}``0 < x`` when {lean}``P x f`` holds.
 -/
 noncomputable def round_pred_gt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
   by
@@ -3817,7 +3824,10 @@ noncomputable def round_pred_gt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) :
 
 /-- Specification: Positivity transfers back via monotonicity
 
-    From `round_pred_monotone P`, `P 0 0`, `P x f`, and `0 < f`, deduce `0 < x`.
+    For {given +show}``P : ℝ → ℝ → Prop`` and {given +show}``x : ℝ`` and
+    {given +show}``f : ℝ``,
+    from {lean}``round_pred_monotone P``, {lean}``P 0 0``, {lean}``P x f``,
+    and {lean}``0 < f``, deduce {lean}``0 < x``.
 -/
 @[spec]
 theorem round_pred_gt_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
@@ -3840,8 +3850,10 @@ theorem round_pred_gt_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
 
 /-- Check nonpositivity from rounding predicate monotonicity
 
-    If a rounding predicate is monotone and maps 0 to 0, then `x ≤ 0`
-    implies `f ≤ 0` when `P x f` holds.
+    For {given +show}``P : ℝ → ℝ → Prop`` and {given +show}``x : ℝ`` and
+    {given +show}``f : ℝ``,
+    if a rounding predicate is monotone and maps 0 to 0, then {lean}``x ≤ 0``
+    implies {lean}``f ≤ 0`` when {lean}``P x f`` holds.
 -/
 noncomputable def round_pred_le_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
   by
@@ -3850,7 +3862,10 @@ noncomputable def round_pred_le_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) :
 
 /-- Specification: Monotone predicate preserves nonpositivity
 
-    From `round_pred_monotone P`, `P 0 0`, `P x f`, and `x ≤ 0`, deduce `f ≤ 0`.
+    For {given +show}``P : ℝ → ℝ → Prop`` and {given +show}``x : ℝ`` and
+    {given +show}``f : ℝ``,
+    from {lean}``round_pred_monotone P``, {lean}``P 0 0``, {lean}``P x f``,
+    and {lean}``x ≤ 0``, deduce {lean}``f ≤ 0``.
 -/
 @[spec]
 theorem round_pred_le_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
@@ -3869,8 +3884,10 @@ theorem round_pred_le_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
 
 /-- Check negativity implication from monotonicity
 
-    If a rounding predicate is monotone and maps 0 to 0, then `f < 0`
-    implies `x < 0` when `P x f` holds.
+    For {given +show}``P : ℝ → ℝ → Prop`` and {given +show}``x : ℝ`` and
+    {given +show}``f : ℝ``,
+    if a rounding predicate is monotone and maps 0 to 0, then {lean}``f < 0``
+    implies {lean}``x < 0`` when {lean}``P x f`` holds.
 -/
 noncomputable def round_pred_lt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
   by
