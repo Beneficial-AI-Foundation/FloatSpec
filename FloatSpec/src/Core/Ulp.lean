@@ -4520,132 +4520,6 @@ Lemma generic_format_pred_aux2:
 --   forall x, 0 < x -> F x -> x <> bpow (mag x - 1) -> F (x - ulp x).
 -- (moved) `generic_format_pred_aux1` is defined later, after `generic_format_pred`.
 
-/-- Coq (Ulp.v) {coq}`generic_format_pred_aux2` (early placeholder).
-
-    This local stub avoids forward-reference errors in `generic_format_pred_pos`.
-    A full proof is provided later in the file.
--/
-private theorem generic_format_pred_aux2_early
-    (beta : Int) (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ) (hx : 0 < x) (hβ : 1 < beta)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
-    (hxe : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1))
-    (hne : x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) ≠ 0) :
-    ⦃⌜True⌝⦄
-    (pure
-      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-        (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)))) : Id Prop)
-    ⦃⇓g => ⌜g⌝⦄ := by
-  sorry
-
-/-! Local bridge theorem (Coq's `generic_format_pred_aux1`) (early placeholder).
-
-    This local stub avoids forward-reference errors in `generic_format_pred_pos`.
-    A full proof is provided later in the file.
--/
-private theorem generic_format_pred_aux1_theorem_early
-    (beta : Int) (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (x : ℝ)
-    (hx : 0 < x)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
-    (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) (hβ : 1 < beta):
-    (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-      (x - (ulp beta fexp x))) := by
-  sorry
-
-/-- Coq (Ulp.v):
-Lemma generic_format_pred_pos: forall x, F x -> 0 < x -> F (pred_pos x).
--/
-theorem generic_format_pred_pos
-    (x : ℝ)
-    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
-    (hx : 0 < x) (hβ : 1 < beta) :
-    ⦃⌜True⌝⦄
-    (pure
-      (let p := pred_pos beta fexp x
-       FloatSpec.Core.Generic_fmt.generic_format beta fexp p) : Id Prop)
-    ⦃⇓g => ⌜g⌝⦄ := by
-  intro _; classical
-  -- We prove the underlying plain statement and then discharge the triple.
-  -- Target plain goal: (generic_format beta fexp ((pred_pos x).run)).run
-  have Fpredpos :
-      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-        ((pred_pos (beta := beta) (fexp := fexp) x))) := by
-    -- Local rewriting tools for `(pred_pos … x).run` in the two cases
-      have pred_pos_run_boundary :
-          x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
-          (pred_pos (beta := beta) (fexp := fexp) x) =
-            x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
-        intro hx
-        -- Unfold and evaluate the if-branch directly.
-        simp [pred_pos, hx, Id.run, pure]
-      have pred_pos_run_generic :
-          x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
-          (pred_pos (beta := beta) (fexp := fexp) x) =
-            x - (ulp (beta := beta) (fexp := fexp) x) := by
-        intro hx
-        -- Unfold and evaluate the else-branch directly.
-        simp [pred_pos, hx, Id.run, bind, pure]
-    -- Split on the boundary case x = β^(mag x - 1)
-    by_cases hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)
-    · -- Boundary branch: goal is F (x - β^(fexp (mag x - 1)))
-      -- Further split on whether the subtraction is zero
-      by_cases hz :
-          x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) = 0
-      · -- Zero subtraction: (pred_pos x).run = 0, so reduce to F 0
-        have hpred0 : (pred_pos (beta := beta) (fexp := fexp) x) = 0 := by
-          unfold pred_pos
-          rw [if_pos hxeq]
-          change x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) = 0
-          exact hz
-        -- Discharge F 0 using a lightweight computation of the predicate
-        -- Avoid heavy unfolding chains: compute the `Id` program at `x = 0`
-        have F0 : (FloatSpec.Core.Generic_fmt.generic_format beta fexp 0) := by
-          -- Unfold the predicate at x = 0 and compute directly
-          unfold FloatSpec.Core.Generic_fmt.generic_format
-          -- For x = 0, scaled mantissa is 0 and truncation yields 0; reconstruction is 0
-          -- `mag` at 0 returns 0 by definition in Raux.lean
-          simp [FloatSpec.Core.Generic_fmt.scaled_mantissa,
-                FloatSpec.Core.Generic_fmt.cexp,
-                FloatSpec.Core.Raux.mag,
-                FloatSpec.Core.Defs.F2R,
-                FloatSpec.Core.Raux.Ztrunc,
-                Id.run, bind, pure]
-        -- Transport along `hpred0`
-        have Fpred0 :
-            (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-              ((pred_pos (beta := beta) (fexp := fexp) x))) := by
-          simpa [hpred0] using F0
-        exact Fpred0
-      · -- Nonzero subtraction: use a local bridge (postponed proof)
-        have hfmt :
-            (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-              (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)))) := by
-          have h := generic_format_pred_aux2_early (beta := beta) (fexp := fexp)
-            (x := x) (hx := hx) (hβ := hβ) (Fx := Fx) (hxe := hxeq) (hne := hz)
-          simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h True.intro
-        -- Compute `(pred_pos x).run` explicitly in this branch
-        have hpred_run := pred_pos_run_boundary hxeq
-        -- Rewrite the target along `hpred_run` and conclude from `hfmt`
-        simpa [hpred_run] using hfmt
-    · -- Generic branch: pred_pos x = x - ulp x
-      have hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) := by
-        simpa using hxeq
-      -- Apply the non-boundary bridge (postponed proof)
-      have hfmt :
-          (FloatSpec.Core.Generic_fmt.generic_format beta fexp
-            (x - (ulp beta fexp x))) := by
-        exact generic_format_pred_aux1_theorem_early (beta := beta) (fexp := fexp)
-          (x := x) (hx := hx) (Fx := Fx) (hne := hne) hβ
-      -- Compute `(pred_pos x).run` explicitly in this branch and rewrite directly
-      have hpred_run := pred_pos_run_generic hne
-      simpa [hpred_run] using hfmt
-  -- Discharge the Hoare-style triple to the plain proposition proven above
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-    using Fpredpos
-
 /-- Coq (Ulp.v):
 Lemma {coq}`generic_format_pred_aux2`:
   {lit}`forall x, 0 < x -> F x -> let e := mag x in x = bpow (e - 1) ->
@@ -4793,6 +4667,113 @@ theorem generic_format_pred_aux2
 
   -- Discharge the Hoare triple
   simpa [hf, hc, he, wp, PostCond.noThrow, Id.run, bind, pure] using hfmt_f
+
+/-! Local bridge theorem (Coq's `generic_format_pred_aux1`) (early placeholder).
+
+    This local stub avoids forward-reference errors in `generic_format_pred_pos`.
+    A full proof is provided later in the file.
+-/
+private theorem generic_format_pred_aux1_theorem_early
+    (beta : Int) (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x : ℝ)
+    (hx : 0 < x)
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) (hβ : 1 < beta):
+    (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (x - (ulp beta fexp x))) := by
+  sorry
+
+/-- Coq (Ulp.v):
+Lemma generic_format_pred_pos: forall x, F x -> 0 < x -> F (pred_pos x).
+-/
+theorem generic_format_pred_pos
+    (x : ℝ)
+    (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (hx : 0 < x) (hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
+    (pure
+      (let p := pred_pos beta fexp x
+       FloatSpec.Core.Generic_fmt.generic_format beta fexp p) : Id Prop)
+    ⦃⇓g => ⌜g⌝⦄ := by
+  intro _; classical
+  -- We prove the underlying plain statement and then discharge the triple.
+  -- Target plain goal: (generic_format beta fexp ((pred_pos x).run)).run
+  have Fpredpos :
+      (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+        ((pred_pos (beta := beta) (fexp := fexp) x))) := by
+    -- Local rewriting tools for `(pred_pos … x).run` in the two cases
+      have pred_pos_run_boundary :
+          x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
+          (pred_pos (beta := beta) (fexp := fexp) x) =
+            x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
+        intro hx
+        -- Unfold and evaluate the if-branch directly.
+        simp [pred_pos, hx, Id.run, pure]
+      have pred_pos_run_generic :
+          x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
+          (pred_pos (beta := beta) (fexp := fexp) x) =
+            x - (ulp (beta := beta) (fexp := fexp) x) := by
+        intro hx
+        -- Unfold and evaluate the else-branch directly.
+        simp [pred_pos, hx, Id.run, bind, pure]
+    -- Split on the boundary case x = β^(mag x - 1)
+    by_cases hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)
+    · -- Boundary branch: goal is F (x - β^(fexp (mag x - 1)))
+      -- Further split on whether the subtraction is zero
+      by_cases hz :
+          x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) = 0
+      · -- Zero subtraction: (pred_pos x).run = 0, so reduce to F 0
+        have hpred0 : (pred_pos (beta := beta) (fexp := fexp) x) = 0 := by
+          unfold pred_pos
+          rw [if_pos hxeq]
+          change x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) = 0
+          exact hz
+        -- Discharge F 0 using a lightweight computation of the predicate
+        -- Avoid heavy unfolding chains: compute the `Id` program at `x = 0`
+        have F0 : (FloatSpec.Core.Generic_fmt.generic_format beta fexp 0) := by
+          -- Unfold the predicate at x = 0 and compute directly
+          unfold FloatSpec.Core.Generic_fmt.generic_format
+          -- For x = 0, scaled mantissa is 0 and truncation yields 0; reconstruction is 0
+          -- `mag` at 0 returns 0 by definition in Raux.lean
+          simp [FloatSpec.Core.Generic_fmt.scaled_mantissa,
+                FloatSpec.Core.Generic_fmt.cexp,
+                FloatSpec.Core.Raux.mag,
+                FloatSpec.Core.Defs.F2R,
+                FloatSpec.Core.Raux.Ztrunc,
+                Id.run, bind, pure]
+        -- Transport along `hpred0`
+        have Fpred0 :
+            (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+              ((pred_pos (beta := beta) (fexp := fexp) x))) := by
+          simpa [hpred0] using F0
+        exact Fpred0
+      · -- Nonzero subtraction: use a local bridge (postponed proof)
+        have hfmt :
+            (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+              (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)))) := by
+          have h := generic_format_pred_aux2 (beta := beta) (fexp := fexp)
+            (x := x) (hx := hx) (hβ := hβ) (Fx := Fx) (hxe := hxeq) (hne := hz)
+          simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h True.intro
+        -- Compute `(pred_pos x).run` explicitly in this branch
+        have hpred_run := pred_pos_run_boundary hxeq
+        -- Rewrite the target along `hpred_run` and conclude from `hfmt`
+        simpa [hpred_run] using hfmt
+    · -- Generic branch: pred_pos x = x - ulp x
+      have hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) := by
+        simpa using hxeq
+      -- Apply the non-boundary bridge (postponed proof)
+      have hfmt :
+          (FloatSpec.Core.Generic_fmt.generic_format beta fexp
+            (x - (ulp beta fexp x))) := by
+        exact generic_format_pred_aux1_theorem_early (beta := beta) (fexp := fexp)
+          (x := x) (hx := hx) (Fx := Fx) (hne := hne) hβ
+      -- Compute `(pred_pos x).run` explicitly in this branch and rewrite directly
+      have hpred_run := pred_pos_run_generic hne
+      simpa [hpred_run] using hfmt
+  -- Discharge the Hoare-style triple to the plain proposition proven above
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+    using Fpredpos
 
 /- Coq (Ulp.v):
 Lemma generic_format_succ_aux1:
