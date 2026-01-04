@@ -1,0 +1,8 @@
+89e1eb267af55400e89fed8867eceea35fe8d2e6 Round_pred: add Verso roles for nearest-rounding docs
+
+Recent commits:
+2026-01-04 04:56:46 -0800 89e1eb26 Round_pred: add Verso roles for nearest-rounding docs  [Alok Singh]
+2026-01-04 04:42:02 -0800 16a60c5e Log: 472ed79b  [Alok Singh]
+2026-01-04 04:41:46 -0800 472ed79b Round_pred: clarify Verso roles in rounding docs  [Alok Singh]
+2026-01-04 04:32:48 -0800 0295729d Log: 492d2e58  [Alok Singh]
+2026-01-04 04:30:18 -0800 492d2e58 Fix Verso roles in Round_pred docs  [Alok Singh]
