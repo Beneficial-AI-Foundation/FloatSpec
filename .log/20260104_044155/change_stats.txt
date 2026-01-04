@@ -1,0 +1,8 @@
+472ed79bfa827f5f5d51649b1a0232ebee88a693 Round_pred: clarify Verso roles in rounding docs
+
+Recent commits:
+2026-01-04 04:41:46 -0800 472ed79b Round_pred: clarify Verso roles in rounding docs  [Alok Singh]
+2026-01-04 04:32:48 -0800 0295729d Log: 492d2e58  [Alok Singh]
+2026-01-04 04:30:18 -0800 492d2e58 Fix Verso roles in Round_pred docs  [Alok Singh]
+2026-01-03 16:22:32 -0800 677c1969 Ulp: move generic_format_pred_aux2 earlier  [Alok Singh]
+2026-01-03 16:19:36 -0800 1f15aa28 SimprocWP: simplify wp for Id noThrow  [Alok Singh]
