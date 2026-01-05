@@ -1755,7 +1755,39 @@ theorem Zdigit_scale_point
     ⦃⌜0 ≤ k' ∧ (0 ≤ k ∨ 0 ≤ n)⌝⦄
     (pure (Zdigit beta (Zscale beta n k) k') : Id _)
     ⦃⇓result => ⌜Zdigit beta n (k' - k) = result⌝⦄ := by
-  sorry
+  intro hpre
+  rcases hpre with ⟨hk', hk_or⟩
+  by_cases hk : 0 ≤ k
+  · -- k ≥ 0: use Zdigit_mul_pow
+    have h := (Zdigit_mul_pow (beta := beta) (n := n) (k := k') (l := k) hβ) hk
+    have h' :
+        ∃ shifted,
+          Zdigit beta n (k' - k) = shifted ∧
+          Zdigit beta (n * beta ^ k.natAbs) k' = shifted := by
+      simpa [wp, PostCond.noThrow, pure] using h
+    rcases h' with ⟨shifted, hshifted, hres⟩
+    simpa [Zscale, hk, hshifted, hres]
+  · -- k < 0: use Zdigit_div_pow (need n ≥ 0)
+    have hklt : k < 0 := lt_of_not_ge hk
+    have hn_nonneg : 0 ≤ n := by
+      cases hk_or with
+      | inl hk_ge => exact (False.elim (hk hk_ge))
+      | inr hn => exact hn
+    by_cases hn0 : n = 0
+    · simp [Zscale, hk, hn0, Zdigit]
+    · have hnpos : 0 < n := lt_of_le_of_ne hn_nonneg (Ne.symm hn0)
+      have hl : 0 ≤ -k := neg_nonneg.mpr (le_of_lt hklt)
+      have h :=
+        (Zdigit_div_pow (beta := beta) (n := n) (k := k') (l := -k) hβ) ⟨hl, hk', hnpos⟩
+      have h' :
+          ∃ shifted,
+            Zdigit beta n (k' + -k) = shifted ∧
+            Zdigit beta (n / beta ^ (-k).natAbs) k' = shifted := by
+        simpa [wp, PostCond.noThrow, pure] using h
+      rcases h' with ⟨shifted, hshifted, hres⟩
+      have hres' : Zdigit beta (n / beta ^ k.natAbs) k' = shifted := by
+        simpa using hres
+      simpa [Zscale, hk, sub_eq_add_neg, hshifted, hres']
 theorem Zscale_0 (k : Int) :
     ⦃⌜True⌝⦄
     (pure (Zscale beta 0 k) : Id _)
