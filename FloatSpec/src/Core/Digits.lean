@@ -2232,7 +2232,97 @@ theorem Zdigit_slice (n k l m : Int) (h_beta : beta > 1) :
         ⌜if m < l then
             ∃ orig, Zdigit beta n (k + m) = orig ∧ result = orig
           else result = 0⌝⦄ := by
-  sorry
+  intro ⟨hm_nonneg, hn_nonneg⟩
+  simp [wp, PostCond.noThrow, pure]
+  by_cases hl : 0 ≤ l
+  · -- l ≥ 0
+    by_cases hml : m < l
+    · -- m < l
+      simp [hml]
+      by_cases hn0 : n = 0
+      · -- n = 0, both sides are zero
+        simp [Zslice, hl, hn0, Zscale, Zdigit]
+      · have hnpos : 0 < n := lt_of_le_of_ne hn_nonneg (Ne.symm hn0)
+        -- get nonnegativity of the scaled value via Zsame_sign_scale
+        have hsign :
+            (0 < n → 0 ≤ Zscale beta n (-k)) ∧ (n < 0 → Zscale beta n (-k) ≤ 0) := by
+          have h :=
+            (Zsame_sign_scale (beta := beta) (n := n) (k := -k) h_beta) (by trivial)
+          have h' :
+              ((0 < n → 0 ≤ Zscale beta n (-k)) ∧ (n < 0 → Zscale beta n (-k) ≤ 0))
+                ∧ (0 ≤ -k →
+                    ((0 < n → 0 < Zscale beta n (-k)) ∧ (n < 0 → Zscale beta n (-k) < 0)))
+                ∧ (-k < 0 →
+                    (Zscale beta n (-k) = 0 ↔ (0 ≤ n ∧ |n| < beta ^ (-(-k)).natAbs))) := by
+            simpa [wp, PostCond.noThrow, pure] using h
+          exact h'.1
+        have hscale_nonneg : 0 ≤ Zscale beta n (-k) := hsign.1 hnpos
+        by_cases hscaled0 : Zscale beta n (-k) = 0
+        · -- scaled = 0
+          have hpre_scale : 0 ≤ m ∧ (0 ≤ -k ∨ 0 ≤ n) := ⟨hm_nonneg, Or.inr hn_nonneg⟩
+          have hscale_eq :
+              Zdigit beta n (m - (-k)) = Zdigit beta (Zscale beta n (-k)) m := by
+            simpa [wp, PostCond.noThrow, pure] using
+              (Zdigit_scale_point (beta := beta) (n := n) (k := -k) (k' := m) h_beta)
+                hpre_scale
+          have hscale_eq' :
+              Zdigit beta n (k + m) = Zdigit beta (Zscale beta n (-k)) m := by
+            simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hscale_eq
+          have hkm : Zdigit beta n (k + m) = 0 := by
+            have : Zdigit beta (Zscale beta n (-k)) m = 0 := by
+              simp [hscaled0, Zdigit]
+            simpa [hscale_eq'] using this
+          calc
+            Zdigit beta (Zslice beta n k l) m = 0 := by
+              simp [Zslice, hl, hscaled0, Zdigit]
+            _ = Zdigit beta n (k + m) := by symm; exact hkm
+        · -- scaled ≠ 0
+          have hscaled_pos : 0 < Zscale beta n (-k) :=
+            lt_of_le_of_ne hscale_nonneg (Ne.symm hscaled0)
+          have hmod :=
+            (Zdigit_mod_pow (beta := beta) (n := Zscale beta n (-k)) (k := m) (l := l) h_beta)
+              ⟨hm_nonneg, hml, hscaled_pos⟩
+          have hmod' :
+              ∃ orig,
+                Zdigit beta (Zscale beta n (-k)) m = orig ∧
+                Zdigit beta (Zscale beta n (-k) % beta ^ l.natAbs) m = orig := by
+            simpa [wp, PostCond.noThrow, pure] using hmod
+          rcases hmod' with ⟨orig, horig, hres⟩
+          have hpre_scale : 0 ≤ m ∧ (0 ≤ -k ∨ 0 ≤ n) := ⟨hm_nonneg, Or.inr hn_nonneg⟩
+          have hscale_eq :
+              Zdigit beta n (m - (-k)) = Zdigit beta (Zscale beta n (-k)) m := by
+            simpa [wp, PostCond.noThrow, pure] using
+              (Zdigit_scale_point (beta := beta) (n := n) (k := -k) (k' := m) h_beta)
+                hpre_scale
+          have hscale_eq' :
+              Zdigit beta n (k + m) = Zdigit beta (Zscale beta n (-k)) m := by
+            simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hscale_eq
+          have hmod_eq :
+              Zdigit beta (Zscale beta n (-k) % beta ^ l.natAbs) m =
+                Zdigit beta (Zscale beta n (-k)) m := by
+            simpa [horig] using hres
+          calc
+            Zdigit beta (Zslice beta n k l) m
+                = Zdigit beta (Zscale beta n (-k) % beta ^ l.natAbs) m := by
+                  simp [Zslice, hl]
+            _ = Zdigit beta (Zscale beta n (-k)) m := hmod_eq
+            _ = Zdigit beta n (k + m) := by symm; exact hscale_eq'
+    · -- m ≥ l
+      have hle : l ≤ m := le_of_not_gt (by simpa using hml)
+      have hmod :=
+        (Zdigit_mod_pow_out (beta := beta) (n := Zscale beta n (-k)) (k := m) (l := l) h_beta)
+          ⟨hl, hle⟩
+      have hmod' :
+          Zdigit beta (Zscale beta n (-k) % beta ^ l.natAbs) m = 0 := by
+        simpa [wp, PostCond.noThrow, pure] using hmod
+      simpa [hml, Zslice, hl] using hmod'
+  · -- l < 0
+    have hl_lt : l < 0 := lt_of_not_ge hl
+    have hml : ¬ m < l := by
+      have hl_le0 : l ≤ 0 := le_of_lt hl_lt
+      have hl_le_m : l ≤ m := le_trans hl_le0 hm_nonneg
+      exact not_lt.mpr hl_le_m
+    simp [Zslice, hl, hml, Zdigit]
 /-- Digit of slice outside range
 
 Coq theorem and proof:
@@ -2257,7 +2347,17 @@ theorem Zdigit_slice_out (n k l m : Int) (h_beta : beta > 1):
     ⦃⌜l ≤ m⌝⦄
     (pure (Zdigit beta ((Zslice beta n k l)) m) : Id _)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
-  sorry
+  intro hlm
+  simp [wp, PostCond.noThrow, pure]
+  by_cases hl : 0 ≤ l
+  · have hmod :=
+      (Zdigit_mod_pow_out (beta := beta) (n := Zscale beta n (-k)) (k := m) (l := l) h_beta)
+        ⟨hl, hlm⟩
+    have hmod' :
+        Zdigit beta (Zscale beta n (-k) % beta ^ l.natAbs) m = 0 := by
+      simpa [wp, PostCond.noThrow, pure] using hmod
+    simpa [Zslice, hl] using hmod'
+  · simp [Zslice, hl, Zdigit]
 /-- Zslice of zero is always zero
 
 Coq theorem and proof:
