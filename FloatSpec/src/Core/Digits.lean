@@ -1739,6 +1739,8 @@ theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
     (pure (Zscale beta (Zscale beta n k) l) : Id _)
     ⦃⇓result => ⌜∃ scaled, Zscale beta n (k + l) = scaled ∧ result = scaled⌝⦄ := by
   sorry
+/-- Slice digits: scale by {name}`Zscale` with exponent -k1, then take the
+remainder modulo beta^k2 when 0 ≤ k2 (otherwise 0). -/
 def Zslice (n k1 k2 : Int) : Int :=
   let scaled := Zscale beta n (-k1)
   if 0 ≤ k2 then scaled % beta ^ k2.natAbs else 0
@@ -2184,6 +2186,7 @@ theorem Zplus_slice (n m k l : Int) (h_beta : beta > 1) :
                   (result = (n_slice + m_slice) % beta ^ l.natAbs ∨
                    result = (n_slice + m_slice + 1) % beta ^ l.natAbs)⌝⦄ := by
   sorry
+/-- Fuel-bounded digit counter helper for Zdigits. -/
 def Zdigits_aux (n d pow : Int) : Nat → Int
   | 0        => d
   | fuel+1   => if Int.natAbs n < pow then d
@@ -2456,7 +2459,31 @@ theorem Zdigits_abs (n : Int) :
     ⦃⌜True⌝⦄
     (pure (Zdigits beta (Int.natAbs n)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn⌝⦄ := by
-  sorry
+  intro _
+  -- Reduce the Hoare triple for `pure` to a plain existence goal.
+  simp [wp, PostCond.noThrow, pure]
+  -- Show Zdigits |n| = Zdigits n by splitting on the sign of n.
+  by_cases hneg : n < 0
+  · have hneq : n ≠ 0 := ne_of_lt hneg
+    have hneq' : -n ≠ 0 := by simpa using (neg_ne_zero.mpr hneq)
+    have h_abs : Int.natAbs n = Int.natAbs (-n) := by
+      simpa using (Int.natAbs_neg n)
+    -- Zdigits is invariant under negation when natAbs agrees.
+    have haux :=
+      Zdigits_aux_abs_eq (beta := beta) (n := n) (d := 1) (pow := beta)
+        (fuel := (Int.natAbs n).succ) h_abs
+    have hneg_eq : Zdigits beta (-n) = Zdigits beta n := by
+      -- Unfold and reduce the if-branches; then apply the aux equality.
+      unfold Zdigits
+      simp only [hneq, hneq']
+      -- Align the fuel using h_abs, then close with haux.
+      have h_abs_succ : (Int.natAbs (-n)).succ = (Int.natAbs n).succ := by
+        exact congrArg Nat.succ h_abs.symm
+      simpa [h_abs_succ] using haux.symm
+    -- Replace |n| with -n and conclude.
+    simpa [abs_of_neg hneg] using hneg_eq
+  · have hnonneg : 0 ≤ n := le_of_not_gt hneg
+    simpa [abs_of_nonneg hnonneg]
 /-- Digit count of opposite
 
 Coq theorem and proof:
@@ -2475,7 +2502,21 @@ theorem Zdigits_opp (n : Int) :
     ⦃⌜True⌝⦄
     (pure (Zdigits beta (-n)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure]
+  by_cases hn : n = 0
+  · simp [Zdigits, hn]
+  · have hneg : -n ≠ 0 := by simpa using (neg_ne_zero.mpr hn)
+    have h_abs : Int.natAbs n = Int.natAbs (-n) := by
+      simpa using (Int.natAbs_neg n)
+    have haux :=
+      Zdigits_aux_abs_eq (beta := beta) (n := n) (d := 1) (pow := beta)
+        (fuel := (Int.natAbs n).succ) h_abs
+    unfold Zdigits
+    simp only [hn, hneg]
+    have h_abs_succ : (Int.natAbs (-n)).succ = (Int.natAbs n).succ := by
+      exact congrArg Nat.succ h_abs.symm
+    simpa [h_abs_succ] using haux.symm
 /-- Digit count with conditional opposite
 
 Coq theorem and proof:
@@ -2493,7 +2534,14 @@ theorem Zdigits_cond_Zopp (b : Bool) (n : Int):
     ⦃⌜True⌝⦄
     (pure (Zdigits beta (if b then -n else n)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure]
+  by_cases hb : b
+  · have h := (Zdigits_opp (beta := beta) (n := n)) (by trivial)
+    have h' : Zdigits beta (-n) = Zdigits beta n := by
+      simpa [wp, PostCond.noThrow, pure] using h
+    simpa [hb] using h'
+  · simp [hb]
 /-- Digit count is non-negative
 
 Coq theorem and proof:
