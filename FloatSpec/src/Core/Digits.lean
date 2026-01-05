@@ -2486,7 +2486,23 @@ theorem Zslice_mul_pow (n k k1 k2 : Int) (h_beta : beta > 1):
     (pure (Zslice beta (n * beta ^ k.natAbs) k1 k2) : Id _)
     ⦃⇓result => ⌜∃ slice_shifted, Zslice beta n (k1 - k) k2 = slice_shifted ∧
                   result = slice_shifted⌝⦄ := by
-  sorry
+  intro hk
+  simp [wp, PostCond.noThrow, pure]
+  -- relate the scaled terms via Zscale_mul_pow
+  have h :=
+    (Zscale_mul_pow (beta := beta) (n := n) (k := -k1) (l := k) h_beta) hk
+  have h' :
+      ∃ scaled,
+        Zscale beta n (-k1 + k) = scaled ∧
+        Zscale beta (n * beta ^ k.natAbs) (-k1) = scaled := by
+    simpa [wp, PostCond.noThrow, pure] using h
+  rcases h' with ⟨scaled, hscaled, hres⟩
+  have hscale_eq :
+      Zscale beta (n * beta ^ k.natAbs) (-k1) = Zscale beta n (-k1 + k) := by
+    simpa [hres] using hscaled.symm
+  by_cases hk2 : 0 ≤ k2
+  · simp [Zslice, hk2, hscale_eq, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  · simp [Zslice, hk2, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
 /-- Zslice and division by power of beta
 
 Coq theorem and proof:
@@ -2513,7 +2529,58 @@ theorem Zslice_div_pow (n k k1 k2 : Int) (h_beta : beta > 1):
     (pure (Zslice beta (n / beta ^ k.natAbs) k1 k2) : Id _)
     ⦃⇓result => ⌜∃ slice_shifted, Zslice beta n (k1 + k) k2 = slice_shifted ∧
                   result = slice_shifted⌝⦄ := by
-  sorry
+  intro ⟨hk, hk1⟩
+  simp [wp, PostCond.noThrow, pure]
+  -- show the slices coincide
+  have hscale_eq :
+      Zscale beta (n / beta ^ k.natAbs) (-k1) =
+        Zscale beta n (-(k1 + k)) := by
+    by_cases hk1' : 0 ≤ -k1
+    · -- k1 = 0
+      have hk1zero : k1 = 0 := by linarith [hk1, hk1']
+      subst hk1zero
+      by_cases hk0 : k = 0
+      · simp [Zscale, hk0]
+      · have hkpos : 0 < k := lt_of_le_of_ne hk (Ne.symm hk0)
+        have hkneg : ¬ 0 ≤ -k := by linarith [hkpos]
+        have hk_not_le : ¬ k ≤ 0 := by linarith [hkpos]
+        simp [Zscale, hkneg, hk_not_le, hk0]
+    · -- k1 > 0, both scales are divisions
+      have hk1pos : 0 < k1 := lt_of_le_of_ne hk1 (Ne.symm (by
+        intro hk1zero
+        subst hk1zero
+        exact hk1' (by decide : 0 ≤ (0 : Int))))
+      have hsum_neg : ¬ 0 ≤ -(k1 + k) := by linarith [hk1pos, hk]
+      have hk1_not_le : ¬ k1 ≤ 0 := by linarith [hk1pos]
+      have hsum_not_le : ¬ k1 + k ≤ 0 := by linarith [hk1pos, hk]
+      have hk1_le_negk : ¬ k1 ≤ -k := by linarith [hk1pos, hk]
+      have hβpos : 0 < beta := by linarith [h_beta]
+      have hb_nonneg : 0 ≤ beta ^ k.natAbs := le_of_lt (pow_pos hβpos _)
+      have h_ediv :
+          (n / beta ^ k.natAbs) / beta ^ k1.natAbs =
+            n / (beta ^ k.natAbs * beta ^ k1.natAbs) := by
+        simpa using (Int.ediv_ediv_of_nonneg hb_nonneg)
+      have hkabs : (k.natAbs : Int) = k := Int.natAbs_of_nonneg hk
+      have hk1abs : (k1.natAbs : Int) = k1 := Int.natAbs_of_nonneg hk1
+      have hsumabs : ((k + k1).natAbs : Int) = k + k1 :=
+        Int.natAbs_of_nonneg (add_nonneg hk hk1)
+      have hnat : k.natAbs + k1.natAbs = (k + k1).natAbs := by
+        have eq_as_int :
+            (k.natAbs : Int) + (k1.natAbs : Int) = ((k + k1).natAbs : Int) := by
+          simp [hkabs, hk1abs, hsumabs]
+        exact Nat.cast_injective eq_as_int
+      have hpow :
+          beta ^ k.natAbs * beta ^ k1.natAbs = beta ^ (k + k1).natAbs := by
+        calc
+          beta ^ k.natAbs * beta ^ k1.natAbs
+              = beta ^ (k.natAbs + k1.natAbs) := by rw [pow_add]
+          _ = beta ^ (k + k1).natAbs := by simpa [hnat]
+      -- now simplify the Zscale definitions
+      simp [Zscale, hk1', hsum_neg, hk1_not_le, hsum_not_le,
+        hk1_le_negk, h_ediv, hpow, add_comm, add_left_comm, add_assoc]
+  by_cases hk2 : 0 ≤ k2
+  · simp [Zslice, hk2, hscale_eq, add_comm, add_left_comm, add_assoc]
+  · simp [Zslice, hk2, add_comm, add_left_comm, add_assoc]
 /-- Zslice and scaling
 
 Coq theorem and proof:
@@ -2537,7 +2604,31 @@ theorem Zslice_scale (n k k1 k2 : Int) (h_beta : beta > 1)
     (pure (Zslice beta (Zscale beta n k) k1 k2) : Id _)
     ⦃⇓result => ⌜∃ slice_unscaled, Zslice beta n (k1 - k) k2 = slice_unscaled ∧
                   result = slice_unscaled⌝⦄ := by
-  sorry
+  intro hk1
+  simp [wp, PostCond.noThrow, pure]
+  have hdiv_compose :
+      k < 0 → -k1 ≥ 0 → k + -k1 < 0 → beta ^ (-k1).natAbs ∣ n := by
+    intro hklt hl hkl
+    have hk1le : k1 ≤ 0 := by
+      simpa using (neg_nonneg.mp hl)
+    have hk1zero : k1 = 0 := le_antisymm hk1le hk1
+    subst hk1zero
+    simp
+  have h :=
+    (Zscale_scale (beta := beta) (h_beta := h_beta) (n := n) (k := k) (l := -k1)
+      (hβ := h_beta) hdiv_k hdiv_compose) (by trivial)
+  have h' :
+      ∃ scaled,
+        Zscale beta n (k + -k1) = scaled ∧
+        Zscale beta (Zscale beta n k) (-k1) = scaled := by
+    simpa [wp, PostCond.noThrow, pure] using h
+  rcases h' with ⟨scaled, hscaled, hres⟩
+  have hscale_eq :
+      Zscale beta (Zscale beta n k) (-k1) = Zscale beta n (k + -k1) := by
+    simpa [hres] using hscaled.symm
+  by_cases hk2 : 0 ≤ k2
+  · simp [Zslice, hk2, hscale_eq, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
+  · simp [Zslice, hk2, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
 private lemma div_mul_pow_eq_div_sub
     (n a b : Int) (beta : Int) (h_beta : beta > 1)
     (ha : 0 ≤ a) (hb : 0 ≤ b) (hab : b ≤ a)
