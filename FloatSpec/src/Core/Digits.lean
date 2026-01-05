@@ -2009,11 +2009,189 @@ private lemma zscale_div_exact (n d : Int) (_hd : d > 0) (hdiv : d ∣ n) :
     normalized mantissas. -/
 theorem Zscale_scale (n k l : Int) (hβ : beta > 1 := h_beta)
     (hdiv_k : k < 0 → beta ^ (-k).natAbs ∣ n)
-    (hdiv_compose : k < 0 → l ≥ 0 → k + l < 0 → beta ^ l.natAbs ∣ n) :
+    (_hdiv_compose : k < 0 → l ≥ 0 → k + l < 0 → beta ^ l.natAbs ∣ n) :
     ⦃⌜True⌝⦄
     (pure (Zscale beta (Zscale beta n k) l) : Id _)
     ⦃⇓result => ⌜∃ scaled, Zscale beta n (k + l) = scaled ∧ result = scaled⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure]
+  by_cases hk : 0 ≤ k
+  · -- k ≥ 0: reduce to Zscale_mul_pow
+    have h :=
+      (Zscale_mul_pow (beta := beta) (n := n) (k := l) (l := k) hβ) hk
+    have h' :
+        ∃ scaled,
+          Zscale beta n (l + k) = scaled ∧
+          Zscale beta (n * beta ^ k.natAbs) l = scaled := by
+      simpa [wp, PostCond.noThrow, pure] using h
+    rcases h' with ⟨scaled, hscaled, hres⟩
+    calc
+      Zscale beta (Zscale beta n k) l
+          = Zscale beta (n * beta ^ k.natAbs) l := by simp [Zscale, hk]
+      _ = scaled := hres
+      _ = Zscale beta n (l + k) := by symm; exact hscaled
+      _ = Zscale beta n (k + l) := by simp [add_comm]
+  · -- k < 0
+    have hklt : k < 0 := lt_of_not_ge hk
+    have hβpos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
+    have hk_nonneg : 0 ≤ -k := neg_nonneg.mpr (le_of_lt hklt)
+    have hkabs : ((-k).natAbs : Int) = -k := Int.natAbs_of_nonneg hk_nonneg
+    have hdpos : 0 < beta ^ (-k).natAbs := pow_pos hβpos _
+    have hdiv_d : beta ^ (-k).natAbs ∣ n := hdiv_k hklt
+    by_cases hl : 0 ≤ l
+    · -- l ≥ 0
+      have hlabs : (l.natAbs : Int) = l := Int.natAbs_of_nonneg hl
+      by_cases hsum : 0 ≤ k + l
+      · -- k + l ≥ 0
+        have hklabs : ((k + l).natAbs : Int) = k + l := Int.natAbs_of_nonneg hsum
+        have hdiv_exact :
+              (n / beta ^ (-k).natAbs) * beta ^ (-k).natAbs = n := by
+            exact zscale_div_exact n (beta ^ (-k).natAbs) hdpos hdiv_d
+        have hnat :
+            l.natAbs = (-k).natAbs + (k + l).natAbs := by
+          have eq_as_int :
+              (l.natAbs : Int) =
+                ((-k).natAbs : Int) + ((k + l).natAbs : Int) := by
+            calc (l.natAbs : Int)
+                = l := hlabs
+            _ = -k + (k + l) := by ring
+            _ = ((-k).natAbs : Int) + ((k + l).natAbs : Int) := by
+                rw [hkabs, hklabs]
+          exact Nat.cast_injective eq_as_int
+        have hpow :
+            beta ^ l.natAbs =
+              beta ^ (-k).natAbs * beta ^ (k + l).natAbs := by
+          rw [hnat, pow_add]
+        calc
+          Zscale beta (Zscale beta n k) l
+              = (n / beta ^ (-k).natAbs) * beta ^ l.natAbs := by
+                simp [Zscale, hk, hl]
+          _ =
+              (n / beta ^ (-k).natAbs) *
+                (beta ^ (-k).natAbs * beta ^ (k + l).natAbs) := by
+                simp [hpow]
+          _ =
+              ((n / beta ^ (-k).natAbs) * beta ^ (-k).natAbs) *
+                beta ^ (k + l).natAbs := by
+                ac_rfl
+          _ = n * beta ^ (k + l).natAbs := by
+                rw [hdiv_exact]
+          _ = Zscale beta n (k + l) := by
+                simp [Zscale, hsum]
+      · -- k + l < 0
+        have hqlt : k + l < 0 := lt_of_not_ge hsum
+        have hq_nonneg : 0 ≤ -(k + l) := neg_nonneg.mpr (le_of_lt hqlt)
+        have hqabs : ((-(k + l)).natAbs : Int) = -(k + l) :=
+          Int.natAbs_of_nonneg hq_nonneg
+        have hnat :
+              (-k).natAbs = l.natAbs + (-(k + l)).natAbs := by
+            have eq_as_int :
+                ((-k).natAbs : Int) =
+                  (l.natAbs : Int) + ((-(k + l)).natAbs : Int) := by
+              calc ((-k).natAbs : Int)
+                  = -k := hkabs
+              _ = l + (-(k + l)) := by ring
+              _ = (l.natAbs : Int) + ((-(k + l)).natAbs : Int) := by
+                  rw [hlabs, hqabs]
+            exact Nat.cast_injective eq_as_int
+        have hpow :
+            beta ^ (-k).natAbs =
+              beta ^ l.natAbs * beta ^ (-(k + l)).natAbs := by
+          rw [hnat, pow_add]
+        have hdiv_de :
+            beta ^ (-(k + l)).natAbs ∣ beta ^ (-k).natAbs := by
+          refine ⟨beta ^ l.natAbs, ?_⟩
+          rw [hpow]
+          simp [mul_comm]
+        have hdiv_exact :
+            (n / beta ^ (-k).natAbs) * beta ^ (-k).natAbs = n := by
+          exact zscale_div_exact n (beta ^ (-k).natAbs) hdpos hdiv_d
+        have hmul_assoc :
+            ((n / beta ^ (-k).natAbs) * beta ^ (-k).natAbs) /
+                beta ^ (-(k + l)).natAbs
+              = (n / beta ^ (-k).natAbs) *
+                  (beta ^ (-k).natAbs / beta ^ (-(k + l)).natAbs) := by
+          simpa using
+            (Int.mul_ediv_assoc (n / beta ^ (-k).natAbs) hdiv_de)
+        have hratio :
+            beta ^ (-k).natAbs / beta ^ (-(k + l)).natAbs =
+              beta ^ l.natAbs := by
+          have hne : beta ^ (-(k + l)).natAbs ≠ 0 :=
+            ne_of_gt (pow_pos hβpos _)
+          calc
+            beta ^ (-k).natAbs / beta ^ (-(k + l)).natAbs
+                = (beta ^ l.natAbs * beta ^ (-(k + l)).natAbs) /
+                    beta ^ (-(k + l)).natAbs := by
+                      rw [hpow]
+            _ = (beta ^ (-(k + l)).natAbs * beta ^ l.natAbs) /
+                    beta ^ (-(k + l)).natAbs := by
+                      simp [mul_comm]
+            _ = beta ^ l.natAbs := by
+                      simpa using
+                        (Int.mul_ediv_cancel_left
+                          (a := beta ^ (-(k + l)).natAbs)
+                          (b := beta ^ l.natAbs)
+                          hne)
+        have hmain :
+            n / beta ^ (-(k + l)).natAbs =
+              (n / beta ^ (-k).natAbs) * beta ^ l.natAbs := by
+          calc
+            n / beta ^ (-(k + l)).natAbs
+                = ((n / beta ^ (-k).natAbs) * beta ^ (-k).natAbs) /
+                    beta ^ (-(k + l)).natAbs := by
+                      rw [hdiv_exact]
+            _ = (n / beta ^ (-k).natAbs) *
+                  (beta ^ (-k).natAbs / beta ^ (-(k + l)).natAbs) := hmul_assoc
+            _ = (n / beta ^ (-k).natAbs) * beta ^ l.natAbs := by
+                      rw [hratio]
+        calc
+          Zscale beta (Zscale beta n k) l
+              = (n / beta ^ (-k).natAbs) * beta ^ l.natAbs := by
+                simp [Zscale, hk, hl]
+          _ = n / beta ^ (-(k + l)).natAbs := by
+                symm; exact hmain
+          _ = Zscale beta n (k + l) := by
+                simp [Zscale, hsum]
+    · -- l < 0
+      have hl_neg : l < 0 := lt_of_not_ge hl
+      have hsum : k + l < 0 := by linarith
+      have hsum_nonneg : 0 ≤ -(k + l) := neg_nonneg.mpr (le_of_lt hsum)
+      have hkabs' : ((-k).natAbs : Int) = -k := hkabs
+      have hlabs : ((-l).natAbs : Int) = -l :=
+        Int.natAbs_of_nonneg (neg_nonneg.mpr (le_of_lt hl_neg))
+      have hsumabs : ((-(k + l)).natAbs : Int) = -(k + l) :=
+        Int.natAbs_of_nonneg hsum_nonneg
+      have hnat :
+            (-k).natAbs + (-l).natAbs = (-(k + l)).natAbs := by
+        have eq_as_int :
+            ((-k).natAbs : Int) + ((-l).natAbs : Int)
+              = ((-(k + l)).natAbs : Int) := by
+          calc ((-k).natAbs : Int) + ((-l).natAbs : Int)
+              = -k + -l := by rw [hkabs', hlabs]
+          _ = -(k + l) := by ring
+          _ = ((-(k + l)).natAbs : Int) := by
+              rw [hsumabs]
+        exact Nat.cast_injective eq_as_int
+      have hpow :
+          beta ^ (-k).natAbs * beta ^ (-l).natAbs =
+            beta ^ (-(k + l)).natAbs := by
+        -- rearrange pow_add
+        have := congrArg (fun t => beta ^ t) hnat
+        simpa [pow_add, mul_comm, mul_left_comm, mul_assoc] using this
+      have hdiv_assoc :
+          (n / beta ^ (-k).natAbs) / beta ^ (-l).natAbs
+            = n / (beta ^ (-k).natAbs * beta ^ (-l).natAbs) := by
+        have hb_nonneg : 0 ≤ beta ^ (-k).natAbs := le_of_lt hdpos
+        simpa using (Int.ediv_ediv_of_nonneg hb_nonneg)
+      calc
+        Zscale beta (Zscale beta n k) l
+            = (n / beta ^ (-k).natAbs) / beta ^ (-l).natAbs := by
+              simp [Zscale, hk, hl]
+        _ = n / (beta ^ (-k).natAbs * beta ^ (-l).natAbs) := hdiv_assoc
+        _ = n / beta ^ (-(k + l)).natAbs := by
+              rw [hpow]
+        _ = Zscale beta n (k + l) := by
+              simp [Zscale, hsum]
 /-- Slice digits: scale by {name}`Zscale` with exponent -k1, then take the
 remainder modulo beta^k2 when 0 ≤ k2 (otherwise 0). -/
 def Zslice (n k1 k2 : Int) : Int :=
