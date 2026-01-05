@@ -2463,7 +2463,94 @@ theorem Zslice_slice (n k1 k2 k1' k2' : Int) (h_beta : beta > 1) :
        ⌜∃ inner_slice,
           Zslice beta n (k1 + k1') (min (k2 - k1') k2') = inner_slice ∧
           result = inner_slice⌝⦄ := by
-  sorry
+  intro ⟨hnpos, hk1'_nonneg, hk1'_le⟩
+  have hn_nonneg : 0 ≤ n := le_of_lt hnpos
+  simp [wp, PostCond.noThrow, pure]
+  by_cases hk2' : 0 ≤ k2'
+  · have hβpos : 0 < beta := lt_trans (show (0 : Int) < 1 by decide) h_beta
+    have hslice_nonneg : ∀ n k1 k2, 0 ≤ Zslice beta n k1 k2 := by
+      intro n k1 k2
+      by_cases hk2 : 0 ≤ k2
+      · have hpowpos : 0 < beta ^ k2.natAbs := pow_pos hβpos _
+        simpa [Zslice, hk2] using
+          (Int.emod_nonneg (Zscale beta n (-k1)) (ne_of_gt hpowpos))
+      · simp [Zslice, hk2]
+    have hleft_nonneg : 0 ≤ Zslice beta (Zslice beta n k1 k2) k1' k2' := by
+      have hpowpos : 0 < beta ^ k2'.natAbs := pow_pos hβpos _
+      simpa [Zslice, hk2'] using
+        (Int.emod_nonneg (Zscale beta (Zslice beta n k1 k2) (-k1')) (ne_of_gt hpowpos))
+    have hk2m_nonneg : 0 ≤ k2 - k1' := sub_nonneg.mpr hk1'_le
+    have hmin_nonneg : 0 ≤ min (k2 - k1') k2' := le_min hk2m_nonneg hk2'
+    have hright_nonneg :
+        0 ≤ Zslice beta n (k1 + k1') (min (k2 - k1') k2') := by
+      have hpowpos : 0 < beta ^ (min (k2 - k1') k2').natAbs := pow_pos hβpos _
+      simpa [Zslice, hmin_nonneg] using
+        (Int.emod_nonneg (Zscale beta n (-(k1 + k1'))) (ne_of_gt hpowpos))
+    have hdigit_slice_eq :
+        ∀ n k l m, 0 ≤ n → 0 ≤ m →
+          Zdigit beta (Zslice beta n k l) m =
+            if m < l then Zdigit beta n (k + m) else 0 := by
+      intro n k l m hn hm
+      have h :=
+        (Zdigit_slice (beta := beta) (n := n) (k := k) (l := l) (m := m) h_beta)
+          ⟨hm, hn⟩
+      by_cases hml : m < l
+      · have h' :
+            ∃ orig,
+              Zdigit beta n (k + m) = orig ∧ Zdigit beta (Zslice beta n k l) m = orig := by
+          simpa [wp, PostCond.noThrow, pure, hml] using h
+        rcases h' with ⟨orig, horig, hres⟩
+        have h'' : Zdigit beta (Zslice beta n k l) m = Zdigit beta n (k + m) := by
+          calc
+            Zdigit beta (Zslice beta n k l) m = orig := hres
+            _ = Zdigit beta n (k + m) := by symm; exact horig
+        simpa [hml] using h''
+      · have h' : Zdigit beta (Zslice beta n k l) m = 0 := by
+          simpa [wp, PostCond.noThrow, pure, hml] using h
+        simpa [hml] using h'
+    apply (Zdigit_ext_nonneg (beta := beta) (h_beta := h_beta)
+            (n := Zslice beta (Zslice beta n k1 k2) k1' k2')
+            (m := Zslice beta n (k1 + k1') (min (k2 - k1') k2'))
+            hleft_nonneg hright_nonneg)
+    intro k hk_nonneg
+    have hleft :=
+      hdigit_slice_eq (n := Zslice beta n k1 k2) (k := k1') (l := k2') (m := k)
+        (hslice_nonneg n k1 k2) hk_nonneg
+    have hinner :=
+      hdigit_slice_eq (n := n) (k := k1) (l := k2) (m := k1' + k)
+        hn_nonneg (add_nonneg hk1'_nonneg hk_nonneg)
+    have hright :=
+      hdigit_slice_eq (n := n) (k := k1 + k1') (l := min (k2 - k1') k2') (m := k)
+        hn_nonneg hk_nonneg
+    simp_rw [hleft, hinner, hright]
+    by_cases hklt : k < k2'
+    · by_cases hk2lt : k1' + k < k2
+      · have hkmin : k < min (k2 - k1') k2' := by
+          apply (lt_min_iff.mpr)
+          refine ⟨?_, hklt⟩
+          linarith
+        simp [hklt, hk2lt, hkmin, add_assoc, add_left_comm, add_comm]
+      · have hkmin : ¬ k < min (k2 - k1') k2' := by
+          intro hkmin
+          have hk2lt' : k1' + k < k2 := by
+            have hk2' : k < k2 - k1' := (lt_min_iff.mp hkmin).1
+            linarith
+          exact hk2lt hk2lt'
+        simp [hklt, hk2lt, hkmin]
+    · have hkmin : ¬ k < min (k2 - k1') k2' := by
+        intro hkmin
+        have hklt' : k < k2' := (lt_min_iff.mp hkmin).2
+        exact hklt hklt'
+      simp [hklt, hkmin]
+  · have hk2'lt : k2' < 0 := lt_of_not_ge hk2'
+    have hk2m_nonneg : 0 ≤ k2 - k1' := sub_nonneg.mpr hk1'_le
+    have hmin_eq : min (k2 - k1') k2' = k2' := by
+      apply min_eq_right
+      have : k2' ≤ k2 - k1' := by
+        have : k2' ≤ 0 := le_of_lt hk2'lt
+        exact le_trans this hk2m_nonneg
+      exact this
+    simp [Zslice, hk2', hmin_eq]
 /-- Zslice and multiplication by power of beta
 
 Coq theorem and proof:
@@ -2829,7 +2916,115 @@ theorem Zplus_slice (n m k l : Int) (h_beta : beta > 1) :
                   Zslice beta m k l = m_slice ∧
                   (result = (n_slice + m_slice) % beta ^ l.natAbs ∨
                    result = (n_slice + m_slice + 1) % beta ^ l.natAbs)⌝⦄ := by
-  sorry
+  intro ⟨hk_nonneg, hl_nonneg⟩
+  simp [wp, PostCond.noThrow, pure]
+  set d : Int := beta ^ k.natAbs
+  set L : Int := beta ^ l.natAbs
+  have hβpos : 0 < beta := lt_trans (show (0 : Int) < 1 by decide) h_beta
+  have hd_pos : 0 < d := by
+    simpa [d] using (pow_pos hβpos k.natAbs)
+  have hd_ne : d ≠ 0 := ne_of_gt hd_pos
+  have hscale_div : ∀ t, Zscale beta t (-k) = t / d := by
+    intro t
+    by_cases hk0 : k = 0
+    · subst hk0
+      simp [Zscale, d]
+    · have hkpos : 0 < k := lt_of_le_of_ne hk_nonneg (Ne.symm hk0)
+      have hkneg : ¬ 0 ≤ -k := by linarith
+      have hk_not_le : ¬ k ≤ 0 := by linarith [hkpos]
+      simp [Zscale, hkneg, hk_not_le, d]
+  have hslice_n : Zslice beta n k l = (n / d) % L := by
+    simp [Zslice, hl_nonneg, hscale_div, d, L]
+  have hslice_m : Zslice beta m k l = (m / d) % L := by
+    simp [Zslice, hl_nonneg, hscale_div, d, L]
+  have hslice_sum : Zslice beta (n + m) k l = ((n + m) / d) % L := by
+    simp [Zslice, hl_nonneg, hscale_div, d, L]
+  set a : Int := n / d
+  set b : Int := m / d
+  set rn : Int := n % d
+  set rm : Int := m % d
+  set carry : Int := (rn + rm) / d
+  have hsum_div : (n + m) / d = a + b + carry := by
+    have hn : n = rn + d * a := by
+      simpa [a, rn, add_comm, add_left_comm, add_assoc, mul_comm, mul_left_comm, mul_assoc] using
+        (Int.emod_add_mul_ediv n d).symm
+    have hm : m = rm + d * b := by
+      simpa [b, rm, add_comm, add_left_comm, add_assoc, mul_comm, mul_left_comm, mul_assoc] using
+        (Int.emod_add_mul_ediv m d).symm
+    have hsum : n + m = (rn + rm) + d * (a + b) := by
+      calc
+        n + m = (rn + d * a) + (rm + d * b) := by simpa [hn, hm]
+        _ = (rn + rm) + d * (a + b) := by ring
+    calc
+      (n + m) / d = ((rn + rm) + d * (a + b)) / d := by simpa [hsum]
+      _ = (rn + rm) / d + (a + b) := by
+            simpa [add_comm, add_left_comm, add_assoc, mul_comm, mul_left_comm, mul_assoc] using
+              (Int.add_mul_ediv_left (a := rn + rm) (b := d) (c := a + b) hd_ne)
+      _ = a + b + carry := by
+            simp [carry, add_comm, add_left_comm, add_assoc]
+  have hcarry : carry = 0 ∨ carry = 1 := by
+    have hrn_nonneg : 0 ≤ rn := by
+      simpa [rn] using (Int.emod_nonneg n hd_ne)
+    have hrm_nonneg : 0 ≤ rm := by
+      simpa [rm] using (Int.emod_nonneg m hd_ne)
+    have hrn_lt : rn < d := by
+      have := Int.emod_lt n hd_ne
+      simpa [rn, abs_of_pos hd_pos] using this
+    have hrm_lt : rm < d := by
+      have := Int.emod_lt m hd_ne
+      simpa [rm, abs_of_pos hd_pos] using this
+    have hsum_nonneg : 0 ≤ rn + rm := by linarith
+    have hsum_lt2 : rn + rm < d + d := by linarith
+    by_cases hsum_lt : rn + rm < d
+    · have hcarry0 : (rn + rm) / d = 0 := by
+        have hlt_abs : rn + rm < |d| := by simpa [abs_of_pos hd_pos] using hsum_lt
+        exact Int.ediv_eq_zero_of_lt_abs hsum_nonneg hlt_abs
+      left
+      simpa [carry] using hcarry0
+    · have hsum_ge : d ≤ rn + rm := le_of_not_gt hsum_lt
+      have hrem_nonneg : 0 ≤ rn + rm - d := by linarith
+      have hrem_lt : rn + rm - d < d := by linarith
+      have hrem_lt_abs : rn + rm - d < |d| := by
+        simpa [abs_of_pos hd_pos] using hrem_lt
+      have hdiv_zero : (rn + rm - d) / d = 0 :=
+        Int.ediv_eq_zero_of_lt_abs hrem_nonneg hrem_lt_abs
+      have hdiv_one : (rn + rm) / d = (rn + rm - d) / d + 1 := by
+        have h := Int.add_mul_ediv_left (a := rn + rm - d) (b := d) (c := 1) hd_ne
+        calc
+          (rn + rm) / d = ((rn + rm - d) + d * 1) / d := by ring_nf
+          _ = (rn + rm - d) / d + 1 := h
+      have hcarry1 : (rn + rm) / d = 1 := by
+        calc
+          (rn + rm) / d = (rn + rm - d) / d + 1 := hdiv_one
+          _ = 0 + 1 := by simp [hdiv_zero]
+          _ = 1 := by simp
+      right
+      simpa [carry] using hcarry1
+  rcases hcarry with hcarry0 | hcarry1
+  · left
+    calc
+      Zslice beta (n + m) k l = ((n + m) / d) % L := hslice_sum
+      _ = (a + b + carry) % L := by simpa [hsum_div]
+      _ = (a + b) % L := by simp [hcarry0]
+      _ = (a % L + b % L) % L := by
+            simpa [Int.add_emod]
+      _ = (Zslice beta n k l + Zslice beta m k l) % L := by
+            simp [hslice_n, hslice_m, a, b]
+  · right
+    calc
+      Zslice beta (n + m) k l = ((n + m) / d) % L := hslice_sum
+      _ = (a + b + carry) % L := by simpa [hsum_div]
+      _ = (a + b + 1) % L := by simp [hcarry1]
+      _ = ((a + b) % L + 1 % L) % L := by
+            rw [Int.add_emod]
+      _ = (((a % L + b % L) % L) + 1 % L) % L := by
+            rw [Int.add_emod]
+            simp [Int.emod_emod]
+      _ = (a % L + b % L + 1) % L := by
+            have := (Int.add_emod (a % L + b % L) 1 L).symm
+            simpa [add_assoc, add_left_comm, add_comm] using this
+      _ = (Zslice beta n k l + Zslice beta m k l + 1) % L := by
+            simp [hslice_n, hslice_m, a, b, add_assoc, add_left_comm, add_comm]
 /-- Fuel-bounded digit counter helper for Zdigits. -/
 def Zdigits_aux (n d pow : Int) : Nat → Int
   | 0        => d
