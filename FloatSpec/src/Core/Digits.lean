@@ -494,11 +494,123 @@ private lemma tdiv_pow_succ_assoc
     _   = Int.tdiv (Int.tdiv n beta) (beta ^ k) := by
       simpa using hR.symm
 
+-- Base monotonicity of powers for nonnegative integers.
+private lemma pow_base_mono (k : Nat) {a b : Int} (ha : 0 ≤ a) (hab : a ≤ b) :
+    a ^ k ≤ b ^ k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    have ha_pow : 0 ≤ a ^ k := by
+      have : 0 ≤ a := ha
+      simpa using pow_nonneg this _
+    have hb_nonneg : 0 ≤ b := le_trans ha hab
+    have hb_pow : 0 ≤ b ^ k := by
+      simpa using pow_nonneg hb_nonneg _
+    calc
+      a ^ (k + 1) = a ^ k * a := by rw [pow_succ]
+      _ ≤ a ^ k * b := by exact mul_le_mul_of_nonneg_left hab ha_pow
+      _ ≤ b ^ k * b := by exact mul_le_mul_of_nonneg_right ih (le_trans ha hab)
+      _ = b ^ (k + 1) := by rw [pow_succ]
+
+/-- For beta ≥ 2 and n ≠ 0, we have |n| < beta^(1 + natAbs n). -/
+private lemma abs_lt_beta_pow_succ_natAbs (n : Int) (hβ : beta > 1) (_hn : n ≠ 0) :
+    |n| < beta ^ (1 + n.natAbs) := by
+  have hβge2 : (2 : Int) ≤ beta := by linarith
+  have h_two : (n.natAbs : Int) < (2 : Int) ^ n.natAbs := by
+    have : n.natAbs < 2 ^ n.natAbs := n.natAbs.lt_two_pow_self
+    simpa using Int.ofNat_lt.mpr this
+  have h_mono : (2 : Int) ^ n.natAbs ≤ beta ^ n.natAbs := by
+    have h2_nonneg : 0 ≤ (2 : Int) := by decide
+    exact pow_base_mono n.natAbs h2_nonneg hβge2
+  have h_abs_nat : (n.natAbs : Int) = |n| := Int.natCast_natAbs n
+  have h0 : |n| < beta ^ n.natAbs := by
+    exact lt_of_lt_of_le (by simpa [h_abs_nat] using h_two) h_mono
+  have hb_pos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
+  have pow_pos : 0 < beta ^ n.natAbs := pow_pos hb_pos _
+  have step : beta ^ n.natAbs < beta ^ n.natAbs * beta := by
+    have := mul_lt_mul_of_pos_left hβ pow_pos
+    simpa using this
+  have : |n| < beta ^ n.natAbs * beta := lt_trans h0 step
+  simpa [pow_succ, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, mul_comm]
+    using this
+
 
 /-- Helper lemma: For positive n, there exists k ≥ 0 such that Zdigit beta n k ≠ 0 -/
 private lemma exists_nonzero_digit (beta n : Int) (hβ : beta > 1) (hn : 0 < n) :
     ∃ k, 0 ≤ k ∧ Zdigit beta n k ≠ 0 := by
-  sorry
+  have hbpos : 0 < beta := beta_pos hβ
+  have hn_nonneg : 0 ≤ n := le_of_lt hn
+  have hneq : n ≠ 0 := ne_of_gt hn
+  -- Pick a large enough power so truncated division is zero.
+  have hlt : n < beta ^ (1 + n.natAbs) := by
+    have h := abs_lt_beta_pow_succ_natAbs (beta := beta) (n := n) hβ hneq
+    simpa [abs_of_nonneg hn_nonneg] using h
+  have hex : ∃ k : Nat, Int.tdiv n (beta ^ k) = 0 := by
+    exact ⟨1 + n.natAbs, Int.tdiv_eq_zero_of_lt hn_nonneg hlt⟩
+  let k0 := Nat.find hex
+  have hk0 : Int.tdiv n (beta ^ k0) = 0 := Nat.find_spec hex
+  have hk0_ne : k0 ≠ 0 := by
+    intro hk0_zero
+    have : n = 0 := by
+      simpa [hk0_zero] using hk0
+    exact hneq this
+  obtain ⟨k, hk0_eq⟩ := Nat.exists_eq_succ_of_ne_zero hk0_ne
+  have hk_lt : k < k0 := by
+    simpa [hk0_eq] using Nat.lt_succ_self k
+  have hk_not_zero : Int.tdiv n (beta ^ k) ≠ 0 := by
+    have hmin := Nat.find_min hex hk_lt
+    simpa using hmin
+  set q : Int := Int.tdiv n (beta ^ k) with hq
+  have hpow_nonneg : 0 ≤ beta ^ k := by
+    have hb_nonneg : 0 ≤ beta := le_of_lt hbpos
+    exact pow_nonneg hb_nonneg _
+  have hq_nonneg : 0 ≤ q := by
+    simpa [hq] using (Int.tdiv_nonneg hn_nonneg hpow_nonneg)
+  have hk0' : Int.tdiv n (beta ^ (k + 1)) = 0 := by
+    simpa [hk0_eq] using hk0
+  -- Associate division by beta^(k+1) as division by beta^k then beta.
+  have h_assoc : Int.tdiv n (beta ^ (k + 1)) = Int.tdiv q beta := by
+    have hL : Int.tdiv n (beta ^ (k + 1)) = n / (beta ^ (k + 1)) := by
+      simpa using (Int.tdiv_eq_ediv_of_nonneg hn_nonneg :
+        Int.tdiv n (beta ^ (k + 1)) = n / (beta ^ (k + 1)))
+    have h_tdiv_eq : Int.tdiv n (beta ^ k) = n / (beta ^ k) := by
+      simpa using (Int.tdiv_eq_ediv_of_nonneg hn_nonneg :
+        Int.tdiv n (beta ^ k) = n / (beta ^ k))
+    have hq_nonneg' : 0 ≤ n / (beta ^ k) := by
+      simpa [h_tdiv_eq, hq] using hq_nonneg
+    have hR : Int.tdiv q beta = (n / (beta ^ k)) / beta := by
+      have hR' : Int.tdiv (n / (beta ^ k)) beta = (n / (beta ^ k)) / beta := by
+        simpa using (Int.tdiv_eq_ediv_of_nonneg hq_nonneg')
+      simpa [hq, h_tdiv_eq] using hR'
+    have h_ediv_assoc : (n / (beta ^ k)) / beta = n / (beta ^ (k + 1)) := by
+      have htmp : (n / (beta ^ k)) / beta = n / (beta ^ k * beta) := by
+        simpa using (Int.ediv_ediv_of_nonneg hpow_nonneg :
+          (n / (beta ^ k)) / beta = n / (beta ^ k * beta))
+      simpa [pow_succ, mul_comm, mul_left_comm, mul_assoc] using htmp
+    calc
+      Int.tdiv n (beta ^ (k + 1)) = n / (beta ^ (k + 1)) := hL
+      _ = (n / (beta ^ k)) / beta := h_ediv_assoc.symm
+      _ = Int.tdiv q beta := by simpa [hR]
+  have hq_div_zero : Int.tdiv q beta = 0 := by
+    simpa [h_assoc] using hk0'
+  have hq_lt : q < beta :=
+    (tdiv_zero_iff_lt_of_nonneg_pos hq_nonneg hbpos).1 hq_div_zero
+  have hq_mod : q % beta = q := Int.emod_eq_of_lt hq_nonneg hq_lt
+  have hq_ne : q ≠ 0 := by
+    simpa [hq] using hk_not_zero
+  refine ⟨(k : Int), ?_, ?_⟩
+  · exact Int.natCast_nonneg k
+  · have hk_nonneg : 0 ≤ (k : Int) := by
+      exact Int.natCast_nonneg k
+    have hzd : Zdigit beta n (k : Int) = q % beta := by
+      simpa [hq] using
+        (Zdigit_eval_nonneg (beta := beta) (n := n) (k := (k : Int))
+          hn_nonneg hbpos hk_nonneg)
+    intro hzero
+    have hq_zero : q = 0 := by
+      have : q % beta = 0 := by simpa [hzd] using hzero
+      simpa [hq_mod] using this
+    exact hq_ne hq_zero
 theorem Zdigit_not_0_pos (n : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 < n⌝⦄
     (pure (Zdigit beta n 0) : Id _)
@@ -2200,7 +2312,7 @@ def Zdigits (n : Int) : Int :=
     let fuel := (Int.natAbs n).succ
     Zdigits_aux beta n 1 beta fuel
 
-/-- Correctness of digit count bounds
+/- Correctness of digit count bounds
 
 Coq theorem and proof:
 ```raw
@@ -2264,59 +2376,6 @@ apply Zle_succ_le with (1 := Hv).
 Qed.
 ```
 -/
--- Helper lemma: sufficient fuel ensures we find the answer
-private lemma pow_base_mono
-  {a b : Int} (k : Nat) (ha : 0 ≤ a) (hab : a ≤ b) :
-  a ^ k ≤ b ^ k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    have ha_pow : 0 ≤ a ^ k := by
-      -- a ≥ 0 ⇒ a^k ≥ 0
-      have : 0 ≤ a := ha
-      simpa using pow_nonneg this _
-    have hb_nonneg : 0 ≤ b := le_trans ha hab
-    have hb_pow : 0 ≤ b ^ k := by
-      simpa using pow_nonneg hb_nonneg _
-    -- a^k * a ≤ a^k * b ≤ b^k * b
-    calc
-      a ^ (k + 1) = a ^ k * a := by rw [pow_succ]
-      _ ≤ a ^ k * b := by exact mul_le_mul_of_nonneg_left hab ha_pow
-      _ ≤ b ^ k * b := by exact mul_le_mul_of_nonneg_right ih (le_trans ha hab)
-      _ = b ^ (k + 1) := by rw [pow_succ]
-
-/-- For beta ≥ 2 and n ≠ 0, we have |n| < beta^(1 + natAbs n). -/
-private lemma abs_lt_beta_pow_succ_natAbs (n : Int) (hβ : beta > 1) (_hn : n ≠ 0) :
-  |n| < beta ^ (1 + n.natAbs) := by
-  have hβge2 : (2 : Int) ≤ beta := by linarith
-  -- 2^|n| > |n| (as integers)
-  have h_two : (n.natAbs : Int) < (2 : Int) ^ n.natAbs := by
-    -- `Nat.lt_two_pow_self` then cast
-    have : n.natAbs < 2 ^ n.natAbs := n.natAbs.lt_two_pow_self
-    simpa using Int.ofNat_lt.mpr this
-  -- β^|n| ≥ 2^|n|
-  have h_mono : (2 : Int) ^ n.natAbs ≤ beta ^ n.natAbs := by
-    have h2_nonneg : 0 ≤ (2 : Int) := by decide
-    exact pow_base_mono n.natAbs h2_nonneg hβge2
-  -- |n| = ↑|n|_nat
-  have h_abs_nat : (n.natAbs : Int) = |n| := Int.natCast_natAbs n
-  -- chain: |n| < β^|n|
-  have h0 : |n| < beta ^ n.natAbs := by
-    have := lt_of_lt_of_le (by simpa [h_abs_nat] using h_two) h_mono
-    exact this
-  -- multiply once by β (> 1)
-  have hb_pos : 0 < beta := lt_trans (by decide : (0 : Int) < 1) hβ
-  have hb_gt1 : 1 < beta := hβ
-  have pow_pos : 0 < beta ^ n.natAbs := pow_pos hb_pos _
-  have step : beta ^ n.natAbs < beta ^ n.natAbs * beta := by
-    -- from 1 < β ⇒ (β^k) < (β^k)*β (since β^k > 0)
-    have := mul_lt_mul_of_pos_left hb_gt1 pow_pos
-    simpa using this
-  have : |n| < beta ^ n.natAbs * beta := lt_trans h0 step
-  -- rewrite β^(|n|+1)
-  simpa [pow_succ, Nat.add_comm, Nat.add_left_comm, Nat.add_assoc, mul_comm]
-    using this
-
 /-- Main bound-and-termination lemma for {name}`Zdigits_aux`.
 
 If we start at exponent d > 0 with the correct power pow = β^d,
