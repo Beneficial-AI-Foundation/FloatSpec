@@ -1376,8 +1376,100 @@ theorem Zdigit_ext_nonneg (n m : Int) (hn : 0 ≤ n) (hm : 0 ≤ m) (hβ : beta 
     ⦃⌜∀ k, 0 ≤ k → Zdigit beta n k = Zdigit beta m k⌝⦄
     (pure (Zdigit beta n 0) : Id _)
     ⦃⇓_ => ⌜n = m⌝⦄ := by
-  intro _
-  sorry
+  intro hdigits
+  by_cases hn0 : n = 0
+  · have hm0 : m = 0 := by
+      by_contra hm0
+      have hmpos : 0 < m := lt_of_le_of_ne hm (Ne.symm hm0)
+      obtain ⟨k, hk_nonneg, hk_ne⟩ := exists_nonzero_digit beta m hβ hmpos
+      have hkm := hdigits k hk_nonneg
+      have hzero : Zdigit beta n k = 0 := by simp [hn0, Zdigit]
+      have hmzero : Zdigit beta m k = 0 := by simpa [hzero] using hkm.symm
+      exact hk_ne hmzero
+    simpa [hn0, hm0]
+  · have hnpos : 0 < n := lt_of_le_of_ne hn (Ne.symm hn0)
+    have hm0 : m ≠ 0 := by
+      intro hm0
+      obtain ⟨k, hk_nonneg, hk_ne⟩ := exists_nonzero_digit beta n hβ hnpos
+      have hkm := hdigits k hk_nonneg
+      have hzero : Zdigit beta m k = 0 := by simp [hm0, Zdigit]
+      have hnzero : Zdigit beta n k = 0 := by simpa [hzero] using hkm
+      exact hk_ne hnzero
+    have hmpos : 0 < m := lt_of_le_of_ne hm (Ne.symm hm0)
+
+    -- Equal digit sums for all k.
+    have hsum_eq :
+        ∀ k : Nat,
+          Zsum_digit beta (fun i => Zdigit beta n i) k =
+          Zsum_digit beta (fun i => Zdigit beta m i) k := by
+      intro k
+      induction k with
+      | zero => simp [Zsum_digit]
+      | succ k ih =>
+          have hk_nonneg : 0 ≤ (k : Int) := Int.natCast_nonneg k
+          have hdig := hdigits (k : Int) hk_nonneg
+          simp [Zsum_digit, ih, hdig]
+
+    have hmod_eq : ∀ k : Nat, n % beta ^ k = m % beta ^ k := by
+      intro k
+      have hsum_n :
+          Zsum_digit beta (fun i => Zdigit beta n i) k = n % beta ^ k := by
+        have h := (Zsum_digit_digit (beta := beta) (n := n) (k := k) hβ) hnpos
+        simpa [wp, PostCond.noThrow, pure] using h
+      have hsum_m :
+          Zsum_digit beta (fun i => Zdigit beta m i) k = m % beta ^ k := by
+        have h := (Zsum_digit_digit (beta := beta) (n := m) (k := k) hβ) hmpos
+        simpa [wp, PostCond.noThrow, pure] using h
+      calc
+        n % beta ^ k = Zsum_digit beta (fun i => Zdigit beta n i) k := by
+          simpa using hsum_n.symm
+        _ = Zsum_digit beta (fun i => Zdigit beta m i) k := hsum_eq k
+        _ = m % beta ^ k := hsum_m
+
+    -- Choose a large enough exponent so both are below the modulus.
+    let kN : Nat := 1 + n.natAbs
+    let kM : Nat := 1 + m.natAbs
+    let K  : Nat := kN + kM
+    have hb1 : 1 ≤ beta := le_of_lt hβ
+    have hbpos : 0 < beta := beta_pos hβ
+
+    have pow_succ_ge_local : ∀ t : Nat, (beta : Int) ^ t ≤ beta ^ (t + 1) := by
+      intro t
+      have hnonneg : 0 ≤ (beta : Int) ^ t := by
+        have hb_nonneg : 0 ≤ (beta : Int) := le_trans (by decide) hb1
+        exact pow_nonneg hb_nonneg _
+      have := mul_le_mul_of_nonneg_left hb1 hnonneg
+      simpa [pow_succ, mul_comm] using this
+
+    have pow_le_pow_add : ∀ a b : Nat, (beta : Int) ^ a ≤ beta ^ (a + b) := by
+      intro a b
+      induction b with
+      | zero => simp
+      | succ b ih =>
+          have hstep : (beta : Int) ^ (a + b) ≤ beta ^ (a + (b + 1)) := by
+            simpa [Nat.add_assoc] using (pow_succ_ge_local (a + b))
+          exact le_trans ih hstep
+
+    have hNlt : n < beta ^ kN := by
+      have h := abs_lt_beta_pow_succ_natAbs (beta := beta) (n := n) hβ hn0
+      simpa [kN, abs_of_nonneg hn] using h
+    have hMlt : m < beta ^ kM := by
+      have h := abs_lt_beta_pow_succ_natAbs (beta := beta) (n := m) hβ hm0
+      simpa [kM, abs_of_nonneg hm] using h
+    have hNltK : n < beta ^ K := lt_of_lt_of_le hNlt (pow_le_pow_add kN kM)
+    have hMltK : m < beta ^ K := by
+      have h := pow_le_pow_add kM kN
+      exact lt_of_lt_of_le hMlt (by simpa [K, Nat.add_comm] using h)
+
+    have hmod_n : n % beta ^ K = n := by
+      exact Int.emod_eq_of_lt hn hNltK
+    have hmod_m : m % beta ^ K = m := by
+      exact Int.emod_eq_of_lt hm hMltK
+    have hmodK := hmod_eq K
+    calc
+      n = n % beta ^ K := by symm; exact hmod_n
+      _ = m % beta ^ K := hmodK
+      _ = m := hmod_m
 theorem ZOdiv_plus_pow_digit
     (n k : Int) (hn : 0 ≤ n) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ k⌝⦄
