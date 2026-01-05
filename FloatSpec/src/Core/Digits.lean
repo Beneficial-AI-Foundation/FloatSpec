@@ -646,7 +646,29 @@ theorem Zdigit_not_0 (n : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0⌝⦄
     (pure (Zdigit beta n 0) : Id _)
     ⦃⇓_ => ⌜∃ k, 0 ≤ k ∧ Zdigit beta n k ≠ 0⌝⦄ := by
-  sorry
+  intro hn0
+  by_cases hnn : 0 ≤ n
+  · have hnpos : 0 < n := lt_of_le_of_ne hnn (Ne.symm hn0)
+    exact exists_nonzero_digit beta n hβ hnpos
+  · have hneg : n < 0 := lt_of_not_ge hnn
+    have hpos : 0 < -n := by exact neg_pos.mpr hneg
+    obtain ⟨k, hk_nonneg, hk_ne⟩ := exists_nonzero_digit beta (-n) hβ hpos
+    refine ⟨k, hk_nonneg, ?_⟩
+    intro hzero
+    have hk_ge : 0 ≤ k := hk_nonneg
+    have hzero' : (Int.tdiv n (beta ^ k.natAbs)) % beta = 0 := by
+      simpa [Zdigit, hk_ge] using hzero
+    have hdiv : beta ∣ Int.tdiv n (beta ^ k.natAbs) := by
+      exact (Int.dvd_iff_emod_eq_zero).2 hzero'
+    have hdiv_neg : beta ∣ -Int.tdiv n (beta ^ k.natAbs) := by
+      exact (Int.dvd_neg).2 hdiv
+    have hzero_neg : (Int.tdiv (-n) (beta ^ k.natAbs)) % beta = 0 := by
+      have hzero_q : (-Int.tdiv n (beta ^ k.natAbs)) % beta = 0 :=
+        Int.emod_eq_zero_of_dvd hdiv_neg
+      simpa [Int.neg_tdiv] using hzero_q
+    have hz_neg : Zdigit beta (-n) k = 0 := by
+      simpa [Zdigit, hk_ge] using hzero_neg
+    exact hk_ne hz_neg
 /-- Digit of multiplied number
 
 Coq theorem and proof:
@@ -1171,42 +1193,6 @@ def Zsum_digit (f : Int → Int) : Nat → Int
     let prev := Zsum_digit f n
     prev + f n * beta ^ n
 
-/-- Sum reconstructs from digits
-
-Coq theorem and proof:
-```raw
-Theorem Zsum_digit_digit :
-  forall n k,
-  Zsum_digit (Zdigit n) k = Z.rem n (Zpower beta (Z_of_nat k)).
-Proof.
-intros n.
-induction k.
-apply sym_eq.
-apply Z.rem_1_r.
-simpl Zsum_digit.
-rewrite IHk.
-unfold Zdigit.
-rewrite <- ZOdiv_mod_mult.
-rewrite <- (ZOmod_mod_mult n beta).
-rewrite Zmult_comm.
-replace (beta ^ Z_of_nat k * beta)%Z with (Zpower beta (Z_of_nat (S k))).
-rewrite Zplus_comm, Zmult_comm.
-apply sym_eq.
-apply Z.quot_rem'.
-rewrite inj_S.
-rewrite <- (Zmult_1_r beta) at 3.
-apply Zpower_plus.
-apply Zle_0_nat.
-easy.
-Qed.
-```
--/
-theorem Zsum_digit_digit (n : Int) (k : Nat) (hβ : beta > 1 := h_beta) :
-    ⦃⌜0 < n⌝⦄
-    (pure (Zsum_digit beta (fun i => Zdigit beta n i) k) : Id _)
-    ⦃⇓result => ⌜result = n % beta ^ k⌝⦄ := by
-  intro _
-  sorry
 theorem ZOmod_plus_pow_digit (n k : Int) (hn : 0 ≤ n) (hβ : beta > 1):
     ⦃⌜0 ≤ k⌝⦄
     (pure (Zdigit beta n k) : Id _)
@@ -1332,6 +1318,59 @@ theorem ZOmod_plus_pow_digit (n k : Int) (hn : 0 ≤ n) (hβ : beta > 1):
 
   -- now both sides match by rewriting b = beta ^ k.natAbs and the two facts above
   simp [hb, hk', htdiv_pow]
+
+/-- Sum reconstructs from digits
+
+Coq theorem and proof:
+```raw
+Theorem Zsum_digit_digit :
+  forall n k,
+  Zsum_digit (Zdigit n) k = Z.rem n (Zpower beta (Z_of_nat k)).
+Proof.
+intros n.
+induction k.
+apply sym_eq.
+apply Z.rem_1_r.
+simpl Zsum_digit.
+rewrite IHk.
+unfold Zdigit.
+rewrite <- ZOdiv_mod_mult.
+rewrite <- (ZOmod_mod_mult n beta).
+rewrite Zmult_comm.
+replace (beta ^ Z_of_nat k * beta)%Z with (Zpower beta (Z_of_nat (S k))).
+rewrite Zplus_comm, Zmult_comm.
+apply sym_eq.
+apply Z.quot_rem'.
+rewrite inj_S.
+rewrite <- (Zmult_1_r beta) at 3.
+apply Zpower_plus.
+apply Zle_0_nat.
+easy.
+Qed.
+```
+-/
+theorem Zsum_digit_digit (n : Int) (k : Nat) (hβ : beta > 1 := h_beta) :
+    ⦃⌜0 < n⌝⦄
+    (pure (Zsum_digit beta (fun i => Zdigit beta n i) k) : Id _)
+    ⦃⇓result => ⌜result = n % beta ^ k⌝⦄ := by
+  intro hn
+  have hn_nonneg : 0 ≤ n := le_of_lt hn
+  induction k with
+  | zero =>
+      simp [Zsum_digit]
+  | succ k ih =>
+      -- Use the modular decomposition for the (k : Int) digit.
+      have hmod :
+          n % beta ^ ((k : Int) + 1).natAbs =
+            n % beta ^ (k : Int).natAbs + Zdigit beta n (k : Int) * beta ^ (k : Int).natAbs := by
+        have h := (ZOmod_plus_pow_digit (beta := beta) (n := n) (k := (k : Int)) hn_nonneg hβ)
+          (Int.natCast_nonneg k)
+        simpa [wp, PostCond.noThrow, pure] using h
+      -- Unfold the sum and rewrite using the inductive hypothesis.
+      have ih' : Zsum_digit beta (fun i => Zdigit beta n i) k = n % beta ^ k := by
+        simpa [wp, PostCond.noThrow, pure] using ih
+      simp [wp, PostCond.noThrow, pure, Zsum_digit, ih']
+      simpa using hmod.symm
 
 theorem Zdigit_ext_nonneg (n m : Int) (hn : 0 ≤ n) (hm : 0 ≤ m) (hβ : beta > 1 := h_beta):
     ⦃⌜∀ k, 0 ≤ k → Zdigit beta n k = Zdigit beta m k⌝⦄
