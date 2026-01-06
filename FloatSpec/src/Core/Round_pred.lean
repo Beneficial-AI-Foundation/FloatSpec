@@ -62,11 +62,10 @@ def Rnd_DN (F : ℝ → Prop) (rnd : ℝ → ℝ) : Prop :=
 @[spec]
 theorem Rnd_DN_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⌜True⌝⦄
-    Rnd_DN F rnd
+    (pure (Rnd_DN F rnd) : Id Prop)
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_DN_pt F x (rnd x))⌝⦄ := by
-  intro h
-  unfold Rnd_DN
-  rfl
+  intro _
+  simp [wp, PostCond.noThrow, pure, Rnd_DN]
 
 /-- Rounding up property for functions
 
@@ -86,11 +85,10 @@ def Rnd_UP (F : ℝ → Prop) (rnd : ℝ → ℝ) : Prop :=
 @[spec]
 theorem Rnd_UP_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⌜True⌝⦄
-    Rnd_UP F rnd
+    (pure (Rnd_UP F rnd) : Id Prop)
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_UP_pt F x (rnd x))⌝⦄ := by
   intro _
-  unfold Rnd_UP
-  rfl
+  simp [wp, PostCond.noThrow, pure, Rnd_UP]
 
 /-- Rounding toward zero property for functions
 
@@ -100,7 +98,7 @@ theorem Rnd_UP_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
 -/
 def Rnd_ZR (F : ℝ → Prop) (rnd : ℝ → ℝ) : Prop :=
   -- Use the Coq-accurate predicate from Defs to ensure both directions (x ≥ 0 and x ≤ 0)
-  pure (∀ x : ℝ, FloatSpec.Core.Defs.Rnd_ZR_pt F x (rnd x))
+  (∀ x : ℝ, FloatSpec.Core.Defs.Rnd_ZR_pt F x (rnd x))
 
 /-- Specification: Round toward zero function property
 
@@ -111,11 +109,10 @@ def Rnd_ZR (F : ℝ → Prop) (rnd : ℝ → ℝ) : Prop :=
 @[spec]
 theorem Rnd_ZR_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⌜True⌝⦄
-    Rnd_ZR F rnd
+    (pure (Rnd_ZR F rnd) : Id Prop)
     ⦃⇓result => ⌜result = (∀ x : ℝ, FloatSpec.Core.Defs.Rnd_ZR_pt F x (rnd x))⌝⦄ := by
   intro _
-  unfold Rnd_ZR
-  rfl
+  simp [wp, PostCond.noThrow, pure, Rnd_ZR]
 
 /-- Round to nearest property for functions
 
@@ -135,11 +132,10 @@ def Rnd_N (F : ℝ → Prop) (rnd : ℝ → ℝ) : Prop :=
 @[spec]
 theorem Rnd_N_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⌜True⌝⦄
-    Rnd_N F rnd
+    (pure (Rnd_N F rnd) : Id Prop)
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_N_pt F x (rnd x))⌝⦄ := by
   intro _
-  unfold Rnd_N
-  rfl
+  simp [wp, PostCond.noThrow, pure, Rnd_N]
 
 /-- Generic rounding property with tie-breaking predicate
 
@@ -159,11 +155,10 @@ def Rnd_NG (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (rnd : ℝ → ℝ) : P
 @[spec]
 theorem Rnd_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⌜True⌝⦄
-    Rnd_NG F P rnd
+    (pure (Rnd_NG F P rnd) : Id Prop)
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_NG_pt F P x (rnd x))⌝⦄ := by
   intro _
-  unfold Rnd_NG
-  rfl
+  simp [wp, PostCond.noThrow, pure, Rnd_NG]
 
 /-- Round ties away from zero property
 
@@ -183,11 +178,10 @@ def Rnd_NA (F : ℝ → Prop) (rnd : ℝ → ℝ) : Prop :=
 @[spec]
 theorem Rnd_NA_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⌜True⌝⦄
-    Rnd_NA F rnd
+    (pure (Rnd_NA F rnd) : Id Prop)
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_NA_pt F x (rnd x))⌝⦄ := by
   intro _
-  unfold Rnd_NA
-  rfl
+  simp [wp, PostCond.noThrow, pure, Rnd_NA]
 
 /-- Round ties toward zero property
 
@@ -207,11 +201,10 @@ def Rnd_N0 (F : ℝ → Prop) (rnd : ℝ → ℝ) : Prop :=
 @[spec]
 theorem Rnd_N0_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
     ⦃⌜True⌝⦄
-    Rnd_N0 F rnd
+    (pure (Rnd_N0 F rnd) : Id Prop)
     ⦃⇓result => ⌜result = (∀ x : ℝ, Rnd_N0_pt F x (rnd x))⌝⦄ := by
   intro _
-  unfold Rnd_N0
-  rfl
+  simp [wp, PostCond.noThrow, pure, Rnd_N0]
 
 end RoundingFunctionProperties
 
@@ -228,8 +221,8 @@ noncomputable def round_val_of_pred (rnd : ℝ → ℝ → Prop) (x : ℝ) : ℝ
     classical
     -- Choose any value satisfying the predicate when it exists; default to 0 otherwise.
     by_cases h : ∃ f : ℝ, rnd x f
-    · exact pure (Classical.choose h)
-    · exact pure 0
+    · exact Classical.choose h
+    · exact 0
 
 /-- Specification: Value existence from round predicate
 
@@ -240,16 +233,17 @@ noncomputable def round_val_of_pred (rnd : ℝ → ℝ → Prop) (x : ℝ) : ℝ
 @[spec]
 theorem round_val_of_pred_spec (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜round_pred rnd⌝⦄
-    round_val_of_pred rnd x
+    (pure (round_val_of_pred rnd x) : Id ℝ)
     ⦃⇓f => ⌜rnd x f⌝⦄ := by
   intro h
+  simp [wp, PostCond.noThrow, pure]
   unfold round_val_of_pred
   classical
   -- From totality, obtain a witness for `rnd x f`.
   have hx : ∃ f : ℝ, rnd x f := (And.left h) x
-  -- Reduce the Hoare triple to a pure postcondition on the result of `Id.run`.
   -- The definition selects `Classical.choose hx` in this case.
-  simpa [ pure, hx] using Classical.choose_spec hx
+  simp [hx]
+  exact Classical.choose_spec hx
 
 /-- Extract rounding function from predicate
 
@@ -261,7 +255,7 @@ noncomputable def round_fun_of_pred (rnd : ℝ → ℝ → Prop) : (ℝ → ℝ)
   by
     classical
     -- Build a function selecting, for each x, some f with rnd x f (defaulting to 0 if none).
-    exact pure (fun x => if h : ∃ f : ℝ, rnd x f then Classical.choose h else 0)
+    exact fun x => if h : ∃ f : ℝ, rnd x f then Classical.choose h else 0
 
 /-- Specification: Function existence from round predicate
 
@@ -272,19 +266,19 @@ noncomputable def round_fun_of_pred (rnd : ℝ → ℝ → Prop) : (ℝ → ℝ)
 @[spec]
 theorem round_fun_of_pred_spec (rnd : ℝ → ℝ → Prop) :
     ⦃⌜round_pred rnd⌝⦄
-    round_fun_of_pred rnd
+    (pure (round_fun_of_pred rnd) : Id (ℝ → ℝ))
     ⦃⇓f => ⌜∀ x, rnd x (f x)⌝⦄ := by
   intro h
+  simp [wp, PostCond.noThrow, pure]
   unfold round_fun_of_pred
   classical
   -- Reduce the Hoare triple on `Id` to a pure goal about the returned function.
   -- It suffices to show that for every `x`, the chosen branch yields a witness.
-  have hx_all : ∀ x, rnd x ((fun x => if h' : ∃ f : ℝ, rnd x f then Classical.choose h' else 0) x) := by
-    intro x
-    have hx : ∃ f : ℝ, rnd x f := (And.left h) x
-    -- In the total case, the `if` picks `Classical.choose hx`, whose spec gives `rnd x _`.
-    simpa [hx] using Classical.choose_spec hx
-  simpa [ pure] using hx_all
+  intro x
+  have hx : ∃ f : ℝ, rnd x f := (And.left h) x
+  -- In the total case, the `if` picks `Classical.choose hx`, whose spec gives `rnd x _`.
+  simp [hx]
+  exact Classical.choose_spec hx
 
 /-- Check uniqueness of rounding result
 
@@ -297,7 +291,7 @@ noncomputable def round_unique_check (rnd : ℝ → ℝ → Prop) (x f1 f2 : ℝ
     -- Decide equality of the two candidates; the spec will prove this is `true`
     -- under `round_pred_monotone rnd` with `rnd x f1` and `rnd x f2`.
     classical
-    exact pure (decide (f1 = f2))
+    exact (pure (decide (f1 = f2)) : Id Bool)
 
 /-- Specification: Uniqueness of rounding result
 
@@ -308,7 +302,7 @@ noncomputable def round_unique_check (rnd : ℝ → ℝ → Prop) (x f1 f2 : ℝ
 @[spec]
 theorem round_unique_spec (rnd : ℝ → ℝ → Prop) (x f1 f2 : ℝ) :
     ⦃⌜round_pred_monotone rnd ∧ rnd x f1 ∧ rnd x f2⌝⦄
-    round_unique_check rnd x f1 f2
+    (pure (round_unique_check rnd x f1 f2) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro h
   unfold round_unique_check
@@ -333,10 +327,10 @@ section RoundDownProperties
 -/
 -- We expose the monotonicity property for DN-points via a boolean
 -- check. Its specification below proves it always evaluates to `true`.
-noncomputable def Rnd_DN_pt_monotone_check (F : ℝ → Prop) : Bool := by
+noncomputable def Rnd_DN_pt_monotone_check (F : ℝ → Prop) : Id Bool := by
   -- Decide the monotonicity proposition; the spec below proves it holds.
   classical
-  exact pure (decide (round_pred_monotone (Rnd_DN_pt F)))
+  exact (pure (decide (round_pred_monotone (Rnd_DN_pt F))) : Id Bool)
 
 /-- Specification: Round down is monotone
 
@@ -369,12 +363,12 @@ theorem Rnd_DN_pt_monotone_spec (F : ℝ → Prop) :
     any given input. This ensures deterministic behavior
     of the downward rounding operation.
 -/
-noncomputable def Rnd_DN_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Bool :=
+noncomputable def Rnd_DN_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
   by
     -- We return whether the two candidates are equal; the spec
     -- will establish this equality from the DN-point property.
     classical
-    exact pure (decide (f1 = f2))
+    exact (pure (decide (f1 = f2)) : Id Bool)
 
 /-- Specification: Round down point is unique
 
@@ -408,10 +402,10 @@ theorem Rnd_DN_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
     functions both satisfy the round down property,
     they produce identical results on all inputs.
 -/
-noncomputable def Rnd_DN_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Bool :=
+noncomputable def Rnd_DN_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (rnd1 x = rnd2 x))
+    exact (pure (decide (rnd1 x = rnd2 x)) : Id Bool)
 
 /-- Specification: Round down function is unique
 
@@ -421,30 +415,19 @@ noncomputable def Rnd_DN_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → �
 -/
 @[spec]
 theorem Rnd_DN_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
-    ⦃⌜∃ p1 p2, Rnd_DN F rnd1 = pure p1 ∧ Rnd_DN F rnd2 = pure p2 ∧ p1 ∧ p2⌝⦄
+    ⦃⌜Rnd_DN F rnd1 ∧ Rnd_DN F rnd2⌝⦄
     Rnd_DN_unique_check F rnd1 rnd2 x
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro h
   unfold Rnd_DN_unique_check
   classical
   -- Reduce the Hoare triple to a pure equality goal on functions at x
-  simp [ pure]
-  -- Extract the DN properties for rnd1 and rnd2 from the given existential packaging
-  rcases h with ⟨p1, p2, hEq1, hEq2, Hp1, Hp2⟩
-  -- Use that `Id.run` is injective to identify the propositions
-  have h1run : (∀ y : ℝ, Rnd_DN_pt F y (rnd1 y)) = p1 := by
-    -- Rnd_DN is definitionally `pure (∀ y, ...)`; projecting with `Id.run` removes `pure`.
-    simpa [Rnd_DN] using congrArg Id.run hEq1
-  have h2run : (∀ y : ℝ, Rnd_DN_pt F y (rnd2 y)) = p2 := by
-    simpa [Rnd_DN] using congrArg Id.run hEq2
-  -- Turn the packaged proofs `Hp1 : p1` and `Hp2 : p2` into the desired shapes
-  have H1' : (∀ y : ℝ, Rnd_DN_pt F y (rnd1 y)) := by
-    simpa [h1run] using Hp1
-  have H2' : (∀ y : ℝ, Rnd_DN_pt F y (rnd2 y)) := by
-    simpa [h2run] using Hp2
+  simp [pure]
+  -- Extract the DN properties for rnd1 and rnd2
+  rcases h with ⟨H1, H2⟩
   -- Apply DN-point uniqueness at the particular x
-  have Hd1 : Rnd_DN_pt F x (rnd1 x) := H1' x
-  have Hd2 : Rnd_DN_pt F x (rnd2 x) := H2' x
+  have Hd1 : Rnd_DN_pt F x (rnd1 x) := H1 x
+  have Hd2 : Rnd_DN_pt F x (rnd2 x) := H2 x
   -- Use maximality of DN-points to derive equality
   have le12 : rnd1 x ≤ rnd2 x := by
     have := Hd2.2.2 (rnd1 x) Hd1.1 Hd1.2.1
@@ -466,10 +449,10 @@ section RoundUpProperties
 -/
 -- We expose the monotonicity property for UP-points via a boolean
 -- check. Its specification below proves it always evaluates to `true`.
-noncomputable def Rnd_UP_pt_monotone_check (F : ℝ → Prop) : Bool := by
+noncomputable def Rnd_UP_pt_monotone_check (F : ℝ → Prop) : Id Bool := by
   -- Decide the monotonicity proposition; the spec below proves it holds.
   classical
-  exact pure (decide (round_pred_monotone (Rnd_UP_pt F)))
+  exact (pure (decide (round_pred_monotone (Rnd_UP_pt F))) : Id Bool)
 
 /-- Specification: Round up is monotone
 
@@ -498,12 +481,12 @@ theorem Rnd_UP_pt_monotone_spec (F : ℝ → Prop) :
     Each input has exactly one correct round up value
     in the given format.
 -/
-noncomputable def Rnd_UP_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Bool := by
+noncomputable def Rnd_UP_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool := by
   -- We encode uniqueness by returning whether `f1 = f2`.
   -- The spec will prove this evaluates to `true` under the
   -- hypotheses `Rnd_UP_pt F x f1` and `Rnd_UP_pt F x f2`.
   classical
-  exact pure (decide (f1 = f2))
+  exact (pure (decide (f1 = f2)) : Id Bool)
 
 /-- Specification: Round up point is unique
 
@@ -528,17 +511,26 @@ theorem Rnd_UP_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
   · exact hmin1 f2 Ff2 hxle_f2
   · exact hmin2 f1 Ff1 hxle_f1
 
+/-- Pure version: Round up point is unique -/
+lemma Rnd_UP_pt_unique_pure (F : ℝ → Prop) (x f1 f2 : ℝ)
+    (hf1 : Rnd_UP_pt F x f1) (hf2 : Rnd_UP_pt F x f2) : f1 = f2 := by
+  rcases hf1 with ⟨Ff1, hxle_f1, hmin1⟩
+  rcases hf2 with ⟨Ff2, hxle_f2, hmin2⟩
+  apply le_antisymm
+  · exact hmin1 f2 Ff2 hxle_f2
+  · exact hmin2 f1 Ff1 hxle_f1
+
 /-- Check uniqueness of round up function
 
     Verify that round up functions are uniquely determined.
     The specification completely characterizes the
     implementation, ensuring no ambiguity.
 -/
-noncomputable def Rnd_UP_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Bool :=
+noncomputable def Rnd_UP_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
   by
     classical
     -- Encode pointwise equality; the spec proves this reduces to `true`.
-    exact pure (decide (rnd1 x = rnd2 x))
+    exact (pure (decide (rnd1 x = rnd2 x)) : Id Bool)
 
 /-- Specification: Round up function is unique
 
@@ -548,29 +540,19 @@ noncomputable def Rnd_UP_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → �
 -/
 @[spec]
 theorem Rnd_UP_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
-    ⦃⌜∃ p1 p2, Rnd_UP F rnd1 = pure p1 ∧ Rnd_UP F rnd2 = pure p2 ∧ p1 ∧ p2⌝⦄
+    ⦃⌜Rnd_UP F rnd1 ∧ Rnd_UP F rnd2⌝⦄
     Rnd_UP_unique_check F rnd1 rnd2 x
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro h
   unfold Rnd_UP_unique_check
   classical
   -- Reduce the Hoare triple to a pure equality goal on functions at x
-  simp [ pure]
-  -- Extract the UP properties for rnd1 and rnd2 from the given existential packaging
-  rcases h with ⟨p1, p2, hEq1, hEq2, Hp1, Hp2⟩
-  -- `Rnd_UP` is definitionally `pure (∀ y, Rnd_UP_pt F y (rnd1 y))`.
-  have h1run : (∀ y : ℝ, Rnd_UP_pt F y (rnd1 y)) = p1 := by
-    simpa [Rnd_UP] using congrArg Id.run hEq1
-  have h2run : (∀ y : ℝ, Rnd_UP_pt F y (rnd2 y)) = p2 := by
-    simpa [Rnd_UP] using congrArg Id.run hEq2
-  -- Coerce the packed booleans back to the intended propositions
-  have H1' : (∀ y : ℝ, Rnd_UP_pt F y (rnd1 y)) := by
-    simpa [h1run] using Hp1
-  have H2' : (∀ y : ℝ, Rnd_UP_pt F y (rnd2 y)) := by
-    simpa [h2run] using Hp2
+  simp [pure]
+  -- Extract the UP properties for rnd1 and rnd2
+  rcases h with ⟨H1, H2⟩
   -- Apply UP-point uniqueness at the particular x using minimality of UP-points
-  have Hu1 : Rnd_UP_pt F x (rnd1 x) := H1' x
-  have Hu2 : Rnd_UP_pt F x (rnd2 x) := H2' x
+  have Hu1 : Rnd_UP_pt F x (rnd1 x) := H1 x
+  have Hu2 : Rnd_UP_pt F x (rnd2 x) := H2 x
   -- From minimality: both directions of ≤, hence equality
   have le12 : rnd1 x ≤ rnd2 x := by
     exact Hu1.2.2 (rnd2 x) Hu2.1 Hu2.2.1
@@ -588,12 +570,12 @@ section DualityProperties
     of -x. This duality property connects upward and
     downward rounding through sign changes.
 -/
-noncomputable def Rnd_UP_pt_opp_transform (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_UP_pt_opp_transform (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- We encode the duality property by deciding the target predicate.
     -- The accompanying specification proves this decision is `true`.
     classical
-    exact pure (decide (Rnd_UP_pt F (-x) (-f)))
+    exact (pure (decide (Rnd_UP_pt F (-x) (-f))) : Id Bool)
 
 /-- Specification: Round up from round down with opposite
 
@@ -629,17 +611,33 @@ theorem Rnd_UP_pt_opp_spec (F : ℝ → Prop) (x f : ℝ) :
   have := neg_le_neg H_le_f
   simpa [neg_neg] using this
 
+/-- Pure version: From DN-point at x, get UP-point at -x via negation -/
+lemma Rnd_UP_pt_opp_pure (F : ℝ → Prop) (x f : ℝ)
+    (hFopp : ∀ y, F y → F (-y)) (hDN : Rnd_DN_pt F x f) :
+    Rnd_UP_pt F (-x) (-f) := by
+  rcases hDN with ⟨Hf, Hfx, Hmax⟩
+  refine And.intro (hFopp _ Hf) ?_
+  refine And.intro (by simpa using (neg_le_neg Hfx)) ?_
+  intro g HgF Hlexg
+  have Hg_le_x : -g ≤ x := by
+    have := neg_le_neg Hlexg
+    simpa [neg_neg] using this
+  have Hneg_g : F (-g) := hFopp _ HgF
+  have H_le_f : -g ≤ f := Hmax (-g) Hneg_g Hg_le_x
+  have := neg_le_neg H_le_f
+  simpa [neg_neg] using this
+
 /-- Transform round up to round down via negation
 
     If f is the round up of x, then -f is the round down
     of -x. This is the reverse duality that completes
     the bidirectional relationship.
 -/
-noncomputable def Rnd_DN_pt_opp_transform (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_DN_pt_opp_transform (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- Decide the target predicate; the spec establishes it holds.
     classical
-    exact pure (decide (Rnd_DN_pt F (-x) (-f)))
+    exact (pure (decide (Rnd_DN_pt F (-x) (-f))) : Id Bool)
 
 /-- Specification: Round down from round up with opposite
 
@@ -682,10 +680,10 @@ theorem Rnd_DN_pt_opp_spec (F : ℝ → Prop) (x f : ℝ)
     format, then {lean}`rnd1 (-x) = - rnd2 x`. This expresses the
     function-level duality via negation.
 -/
-noncomputable def Rnd_DN_opp_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Bool :=
+noncomputable def Rnd_DN_opp_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
   by
     classical
-    exact decide (rnd1 (-x) = - rnd2 x)
+    exact (pure (decide (rnd1 (-x) = - rnd2 x)) : Id Bool)
 
 /-- Specification: Round-down vs round-up under negation
 
@@ -746,11 +744,11 @@ theorem Rnd_DN_opp_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ)
     If {lean}`d` is the DN-point and {lean}`u` is the UP-point for {lean}`x`,
     then any representable {lean}`f` lies either below {lean}`d` or above {lean}`u`.
 -/
-noncomputable def Rnd_DN_UP_pt_split_check (F : ℝ → Prop) (x d u f : ℝ) : Bool :=
+noncomputable def Rnd_DN_UP_pt_split_check (F : ℝ → Prop) (x d u f : ℝ) : Id Bool :=
   by
     -- Encode the split as a decidable boolean; the spec proves it is `true`.
     classical
-    exact decide ((f ≤ d) ∨ (u ≤ f))
+    exact (pure (decide ((f ≤ d) ∨ (u ≤ f))) : Id Bool)
 
 /-- Specification: DN/UP split covers all representables
 
@@ -796,10 +794,10 @@ theorem Rnd_DN_UP_pt_split (F : ℝ → Prop) (x d u f : ℝ)
     If {lean}`fd` and {lean}`fu` are the DN/UP points for {lean}`x` and {lean}`f` is representable
     and lies between them, then {lean}`f` must be equal to one of the endpoints.
 -/
-noncomputable def Only_DN_or_UP_check (F : ℝ → Prop) (x fd fu f : ℝ) : Bool :=
+noncomputable def Only_DN_or_UP_check (F : ℝ → Prop) (x fd fu f : ℝ) : Id Bool :=
   by
     classical
-    exact decide (f = fd ∨ f = fu)
+    exact (pure (decide (f = fd ∨ f = fu)) : Id Bool)
 
 /-- Specification: Only DN or UP when bounded between them
 
@@ -856,12 +854,12 @@ section ReflexivityAndIdempotency
     then rounding down x yields x itself.
     This captures the exactness property.
 -/
-noncomputable def Rnd_DN_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Bool := by
+noncomputable def Rnd_DN_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool := by
   -- Encode the DN-point reflexivity as a decidable boolean.
   -- The accompanying specification will prove it evaluates to `true`
   -- under the assumption `F x`.
   classical
-  exact pure (decide (Rnd_DN_pt F x x))
+  exact (pure (decide (Rnd_DN_pt F x x)) : Id Bool)
 
 /-- Specification: Round down is reflexive
 
@@ -892,11 +890,11 @@ theorem Rnd_DN_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     value returns that same value. This ensures
     stability under repeated rounding.
 -/
-noncomputable def Rnd_DN_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_DN_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- Encode idempotency as decidable equality; the spec proves this is `true`.
     classical
-    exact pure (decide (f = x))
+    exact (pure (decide (f = x)) : Id Bool)
 
 /-- Specification: Round down is idempotent
 
@@ -927,12 +925,12 @@ theorem Rnd_DN_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     Like round down, representable inputs should
     remain unchanged.
 -/
-noncomputable def Rnd_UP_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Bool :=
+noncomputable def Rnd_UP_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
   by
     -- Encode the UP-point reflexivity as a decidable boolean.
     -- The specification below proves it evaluates to `true` under `F x`.
     classical
-    exact pure (decide (Rnd_UP_pt F x x))
+    exact (pure (decide (Rnd_UP_pt F x x)) : Id Bool)
 
 /-- Specification: Round up is reflexive
 
@@ -962,11 +960,11 @@ theorem Rnd_UP_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
     Verify that round up is idempotent on representable
     values, mirroring the round down idempotency property.
 -/
-noncomputable def Rnd_UP_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_UP_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- Encode idempotency as decidable equality; the spec proves this is `true`.
     classical
-    exact pure (decide (f = x))
+    exact (pure (decide (f = x)) : Id Bool)
 
 /-- Specification: Round up is idempotent
 
@@ -1001,11 +999,11 @@ section RoundTowardZeroProperties
     the absolute value: |round_toward_zero(x)| ≤ |x|.
     This captures the truncation property.
 -/
-noncomputable def Rnd_ZR_abs_check (F : ℝ → Prop) (rnd : ℝ → ℝ) (x : ℝ) : Bool :=
+noncomputable def Rnd_ZR_abs_check (F : ℝ → Prop) (rnd : ℝ → ℝ) (x : ℝ) : Id Bool :=
   by
     -- Boolean check encoding |rnd x| ≤ |x|; proved correct in the spec below.
     classical
-    exact pure (decide (|rnd x| ≤ |x|))
+    exact (pure (decide (|rnd x| ≤ |x|)) : Id Bool)
 
 /-- Specification: Round toward zero absolute value bound
 
@@ -1015,20 +1013,16 @@ noncomputable def Rnd_ZR_abs_check (F : ℝ → Prop) (rnd : ℝ → ℝ) (x : �
 -/
 @[spec]
 theorem Rnd_ZR_abs_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) (x : ℝ) :
-    ⦃⌜∃ p, Rnd_ZR F rnd = pure p ∧ p⌝⦄
+    ⦃⌜Rnd_ZR F rnd⌝⦄
     Rnd_ZR_abs_check F rnd x
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro hZR_pre
   unfold Rnd_ZR_abs_check
   classical
   -- Reduce Hoare triple on Id to the pure inequality goal |rnd x| ≤ |x|
-  simp [ pure]
-  -- Unpack the packaged Rnd_ZR property and project it from Id
-  rcases h with ⟨p, hEq, hp⟩
-  have hrun : (∀ y : ℝ, FloatSpec.Core.Defs.Rnd_ZR_pt F y (rnd y)) = p := by
-    simpa [Rnd_ZR] using congrArg Id.run hEq
-  have hZR : ∀ y : ℝ, FloatSpec.Core.Defs.Rnd_ZR_pt F y (rnd y) := by
-    simpa [hrun] using hp
+  simp [pure]
+  -- Unpack the Rnd_ZR property
+  have hZR : ∀ y : ℝ, FloatSpec.Core.Defs.Rnd_ZR_pt F y (rnd y) := hZR_pre
   -- Show that 0 is representable and rnd 0 = 0
   have h0_DN : FloatSpec.Core.Defs.Rnd_DN_pt F 0 (rnd 0) := (hZR 0).1 le_rfl
   have h0_UP : FloatSpec.Core.Defs.Rnd_UP_pt F 0 (rnd 0) := (hZR 0).2 le_rfl
@@ -1068,11 +1062,11 @@ section RoundTowardZeroMonotone
     {given -show}`F : ℝ → Prop`.
     With 0 representable, the predicate {lean}`Rnd_ZR_pt F` is monotone.
 -/
-noncomputable def Rnd_ZR_pt_monotone_check (F : ℝ → Prop) : Bool :=
+noncomputable def Rnd_ZR_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
   by
     -- Decide the monotonicity proposition; the spec below proves it holds.
     classical
-    exact decide (round_pred_monotone (Rnd_ZR_pt F))
+    exact (pure (decide (round_pred_monotone (Rnd_ZR_pt F))) : Id Bool)
 
 /-- Specification: Round toward zero is monotone when 0 ∈ F
 
@@ -1126,11 +1120,11 @@ section RoundNearestBasic
 
     Any nearest rounding point is either a DN-point or an UP-point.
 -/
-noncomputable def Rnd_N_pt_DN_or_UP_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_DN_or_UP_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- Encode the DN/UP disjunction; the spec will prove it's `true`.
     classical
-    exact decide (Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f)
+    exact (pure (decide (Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f)) : Id Bool)
 
 /-- Specification: Nearest point is DN or UP
 
@@ -1195,17 +1189,51 @@ theorem Rnd_N_pt_DN_or_UP (F : ℝ → Prop) (x f : ℝ) (hN : Rnd_N_pt F x f) :
     ⦃⇓result => ⌜result = true⌝⦄ := by
   exact Rnd_N_pt_DN_or_UP_spec F x f hN
 
+/-- Pure lemma: nearest point is DN or UP (direct disjunction form) -/
+private lemma Rnd_N_pt_DN_or_UP_disj (F : ℝ → Prop) (x f : ℝ) (hN : Rnd_N_pt F x f) :
+    Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f := by
+  rcases hN with ⟨HfF, Hmin⟩
+  cases le_total f x with
+  | inl hfxle =>
+      left
+      refine And.intro HfF ?_
+      refine And.intro hfxle ?_
+      intro g HgF hglex
+      have hxmf_nonneg : 0 ≤ x - f := sub_nonneg.mpr hfxle
+      have hxmg_nonneg : 0 ≤ x - g := sub_nonneg.mpr hglex
+      have h_abs : |x - f| ≤ |x - g| := by
+        simpa [abs_sub_comm] using (Hmin g HgF)
+      have h_sub : x - f ≤ x - g := by
+        simpa [abs_of_nonneg hxmf_nonneg, abs_of_nonneg hxmg_nonneg] using h_abs
+      have hneg : -f ≤ -g := by
+        have h' := add_le_add_left h_sub (-x)
+        simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
+      exact (neg_le_neg_iff).1 hneg
+  | inr hxlef =>
+      right
+      refine And.intro HfF ?_
+      refine And.intro hxlef ?_
+      intro g HgF hxleg
+      have hxmf_nonpos : x - f ≤ 0 := sub_nonpos.mpr hxlef
+      have hxmg_nonpos : x - g ≤ 0 := sub_nonpos.mpr hxleg
+      have h_abs : |x - f| ≤ |x - g| := by
+        simpa [abs_sub_comm] using (Hmin g HgF)
+      have h_sub : f - x ≤ g - x := by
+        simpa [abs_of_nonpos hxmf_nonpos, abs_of_nonpos hxmg_nonpos, neg_sub] using h_abs
+      have h' := add_le_add_right h_sub x
+      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using h'
+
 /-- Check that nearest point among DN/UP equals one of them
 
     {given -show}`x : ℝ` {given -show}`d : ℝ` {given -show}`u : ℝ` {given -show}`f : ℝ`.
     If {lean}`d` and {lean}`u` are the DN/UP points and {lean}`f` is nearest, then
     {lean}`f` equals either {lean}`d` or {lean}`u`.
 -/
-noncomputable def Rnd_N_pt_DN_or_UP_eq_check (F : ℝ → Prop) (x d u f : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_DN_or_UP_eq_check (F : ℝ → Prop) (x d u f : ℝ) : Id Bool :=
   by
     -- Encode the disjunction `f = d ∨ f = u`; the spec will prove it's `true`.
     classical
-    exact decide (f = d ∨ f = u)
+    exact (pure (decide (f = d ∨ f = u)) : Id Bool)
 
 /-- Specification: Nearest equals DN or UP under DN/UP existence
 
@@ -1298,12 +1326,12 @@ noncomputable section
     If {lean}`F` is closed under negation and {lean}`Rnd_N_pt F (-x) (-f)` holds,
     then {lean}`Rnd_N_pt F x f` also holds.
 -/
-noncomputable def Rnd_N_pt_opp_inv_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_opp_inv_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- We encode the target proposition as a decidable boolean.
     -- The specification below will establish it holds.
     classical
-    exact decide (Rnd_N_pt F x f)
+    exact (pure (decide (Rnd_N_pt F x f)) : Id Bool)
 
 /-- Specification: Nearest invariant under negation (inverse)
 
@@ -1354,11 +1382,11 @@ theorem Rnd_N_pt_opp_inv (F : ℝ → Prop) (x f : ℝ)
     {given -show}`f : ℝ` {given -show}`g : ℝ`.
     If {lean}`x < y` and both are rounded to nearest, then {lean}`f ≤ g`.
 -/
-noncomputable def Rnd_N_pt_monotone_check (F : ℝ → Prop) (x y f g : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_monotone_check (F : ℝ → Prop) (x y f g : ℝ) : Id Bool :=
   by
     -- Encode the monotonicity goal `f ≤ g` as a decidable boolean.
     classical
-    exact decide (f ≤ g)
+    exact (pure (decide (f ≤ g)) : Id Bool)
 
 /-- Specification: Nearest rounding is monotone
 
@@ -1456,11 +1484,11 @@ theorem Rnd_N_pt_monotone_spec (F : ℝ → Prop) (x y f g : ℝ)
 
     If `x - d ≠ u - x`, then the nearest point is unique.
 -/
-def Rnd_N_pt_unique_check (F : ℝ → Prop) (x d u f1 f2 : ℝ) : Bool :=
+def Rnd_N_pt_unique_check (F : ℝ → Prop) (x d u f1 f2 : ℝ) : Id Bool :=
   by
     -- Encode uniqueness by deciding equality; the spec proves it's `true`.
     classical
-    exact pure (decide (f1 = f2))
+    exact (pure (decide (f1 = f2)) : Id Bool)
 
 /-- Specification: Uniqueness of nearest rounding
 
@@ -1479,14 +1507,14 @@ theorem Rnd_N_pt_unique_spec (F : ℝ → Prop) (x d u f1 f2 : ℝ) :
   simp [ pure]
   rcases h with ⟨Hd, Hu, hneq, Hf1, Hf2⟩
   -- Each nearest point is either a DN- or an UP-point.
-  have Hclass1 := Rnd_N_pt_DN_or_UP_eq_spec F x d u f1
-  have Hclass2 := Rnd_N_pt_DN_or_UP_eq_spec F x d u f2
+  have Hclass1 := Rnd_N_pt_DN_or_UP_eq_spec F x d u f1 Hd Hu Hf1
+  have Hclass2 := Rnd_N_pt_DN_or_UP_eq_spec F x d u f2 Hd Hu Hf2
   have h1 : f1 = d ∨ f1 = u := by
     simpa [Rnd_N_pt_DN_or_UP_eq_check, pure, decide_eq_true_iff]
-      using Hclass1 ⟨Hd, Hu, Hf1⟩
+      using Hclass1 trivial
   have h2 : f2 = d ∨ f2 = u := by
     simpa [Rnd_N_pt_DN_or_UP_eq_check, pure, decide_eq_true_iff]
-      using Hclass2 ⟨Hd, Hu, Hf2⟩
+      using Hclass2 trivial
   -- Analyze the four cases.
   cases h1 with
   | inl h1d =>
@@ -1543,11 +1571,11 @@ theorem Rnd_N_pt_unique_spec (F : ℝ → Prop) (x d u f1 f2 : ℝ) :
 
     If `x` is representable, then it is its own nearest rounding.
 -/
-def Rnd_N_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Bool :=
+def Rnd_N_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
   by
     -- Encode the proposition `Rnd_N_pt F x x` as a decidable boolean.
     classical
-    exact pure (decide (Rnd_N_pt F x x))
+    exact (pure (decide (Rnd_N_pt F x x)) : Id Bool)
 
 /-- Specification: Nearest rounding is reflexive on representables
 
@@ -1577,11 +1605,11 @@ theorem Rnd_N_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
 
     If `x` is representable and `f` is nearest to `x`, then `f = x`.
 -/
-def Rnd_N_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+def Rnd_N_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- Encode idempotency as decidable equality; the spec will prove this is `true`.
     classical
-    exact pure (decide (f = x))
+    exact (pure (decide (f = x)) : Id Bool)
 
 /-- Specification: Nearest rounding is idempotent on representables
 
@@ -1617,11 +1645,11 @@ section RoundNearestAuxiliary
 
     If `0 ∈ F`, then `Rnd_N_pt F 0 0`.
 -/
-noncomputable def Rnd_N_pt_0_check (F : ℝ → Prop) : Bool :=
+noncomputable def Rnd_N_pt_0_check (F : ℝ → Prop) : Id Bool :=
   -- Decide the proposition `Rnd_N_pt F 0 0`; the spec proves it holds under `F 0`.
   by
     classical
-    exact pure (decide (Rnd_N_pt F 0 0))
+    exact (pure (decide (Rnd_N_pt F 0 0)) : Id Bool)
 
 /-- Specification: Nearest at zero
 
@@ -1648,10 +1676,10 @@ theorem Rnd_N_pt_0_spec (F : ℝ → Prop) :
 
     If `0 ≤ x` and `Rnd_N_pt F x f`, then `0 ≤ f`.
 -/
-noncomputable def Rnd_N_pt_ge_0_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_ge_0_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (0 ≤ f))
+    exact (pure (decide (0 ≤ f)) : Id Bool)
 
 /-- Specification: Nonnegativity preserved by nearest rounding
 
@@ -1695,10 +1723,10 @@ theorem Rnd_N_pt_ge_0_spec (F : ℝ → Prop) (x f : ℝ) :
     {given -show}``f : ℝ`` satisfy
     {lean}``x ≤ 0`` and {lean}``Rnd_N_pt F x f``, then {lean}``f ≤ 0``.
 -/
-noncomputable def Rnd_N_pt_le_0_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_le_0_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (f ≤ 0))
+    exact (pure (decide (f ≤ 0)) : Id Bool)
 
 /-- Specification: Nonpositivity preserved by nearest rounding
 
@@ -1746,10 +1774,10 @@ theorem Rnd_N_pt_le_0_spec (F : ℝ → Prop) (x f : ℝ) :
     {lean}``(∀ y, F y → F (-y))`` and {lean}``F 0``, then rounding preserves
     absolute values: {lean}``Rnd_N_pt F x f`` implies {lean}``Rnd_N_pt F |x| |f|``.
 -/
-noncomputable def Rnd_N_pt_abs_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_abs_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_N_pt F |x| |f|))
+    exact (pure (decide (Rnd_N_pt F |x| |f|)) : Id Bool)
 
 /-- Specification: Nearest rounding respects absolute value
 
@@ -1837,10 +1865,10 @@ theorem Rnd_N_pt_abs_spec (F : ℝ → Prop) (x f : ℝ) :
     If a representable `f` is within both DN and UP distances, then `f` is
     a nearest rounding of `x`.
 -/
-noncomputable def Rnd_N_pt_DN_UP_check (F : ℝ → Prop) (x d u f : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_DN_UP_check (F : ℝ → Prop) (x d u f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_N_pt F x f))
+    exact (pure (decide (Rnd_N_pt F x f)) : Id Bool)
 
 /-- Specification: Construct nearest from DN/UP bounds
 
@@ -1883,10 +1911,10 @@ theorem Rnd_N_pt_DN_UP_spec (F : ℝ → Prop) (x d u f : ℝ) :
 
     If `x - d ≤ u - x`, then `d` is the nearest rounding of `x`.
 -/
-noncomputable def Rnd_N_pt_DN_check (F : ℝ → Prop) (x d u : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_DN_check (F : ℝ → Prop) (x d u : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_N_pt F x d))
+    exact (pure (decide (Rnd_N_pt F x d)) : Id Bool)
 
 /-- Specification: DN is nearest under left-smaller distance
 
@@ -1935,10 +1963,10 @@ theorem Rnd_N_pt_DN_spec (F : ℝ → Prop) (x d u : ℝ) :
 
     If `u - x ≤ x - d`, then `u` is the nearest rounding of `x`.
 -/
-noncomputable def Rnd_N_pt_UP_check (F : ℝ → Prop) (x d u : ℝ) : Bool :=
+noncomputable def Rnd_N_pt_UP_check (F : ℝ → Prop) (x d u : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_N_pt F x u))
+    exact (pure (decide (Rnd_N_pt F x u)) : Id Bool)
 
 /-- Specification: UP is nearest under right-smaller distance
 
@@ -1994,10 +2022,10 @@ noncomputable section
     Under a uniqueness property on ties, the NG-point is unique.
 -/
 def Rnd_NG_pt_unique_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
-    (x f1 f2 : ℝ) : Bool :=
+    (x f1 f2 : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (f1 = f2))
+    exact (pure (decide (f1 = f2)) : Id Bool)
 
 /-- Specification: Uniqueness of NG-point under tie uniqueness
 
@@ -2033,14 +2061,10 @@ theorem Rnd_NG_pt_unique_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
           exact huniq2 f1 hN1
       | inl hP2 =>
           -- Both satisfy P and are nearest. Classify each as DN or UP.
-          have hClass1 := Rnd_N_pt_DN_or_UP_spec F x f1
-          have hClass2 := Rnd_N_pt_DN_or_UP_spec F x f2
-          have hDU1 : Rnd_DN_pt F x f1 ∨ Rnd_UP_pt F x f1 := by
-            simpa [Rnd_N_pt_DN_or_UP_check, pure,
-              decide_eq_true_iff] using hClass1 hN1
-          have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := by
-            simpa [Rnd_N_pt_DN_or_UP_check, pure,
-              decide_eq_true_iff] using hClass2 hN2
+          have hDU1 : Rnd_DN_pt F x f1 ∨ Rnd_UP_pt F x f1 :=
+            Rnd_N_pt_DN_or_UP_disj F x f1 hN1
+          have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 :=
+            Rnd_N_pt_DN_or_UP_disj F x f2 hN2
           -- Analyze the four cases.
           cases hDU1 with
           | inl hDN1 =>
@@ -2073,10 +2097,10 @@ theorem Rnd_NG_pt_unique_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
 
     With the uniqueness property on ties, `Rnd_NG_pt F P` is monotone.
 -/
-noncomputable def Rnd_NG_pt_monotone_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Bool :=
+noncomputable def Rnd_NG_pt_monotone_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred_monotone (Rnd_NG_pt F P)))
+    exact (pure (decide (round_pred_monotone (Rnd_NG_pt F P))) : Id Bool)
 
 /-- Specification: NG-point rounding is monotone (with tie uniqueness)
 
@@ -2266,10 +2290,10 @@ theorem Rnd_NG_pt_monotone_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) :
 
     A representable `x` is its own NG-point for any `P`.
 -/
-def Rnd_NG_pt_refl_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x : ℝ) : Bool :=
+def Rnd_NG_pt_refl_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_NG_pt F P x x))
+    exact (pure (decide (Rnd_NG_pt F P x x)) : Id Bool)
 
 /-- Specification: NG-point is reflexive
 
@@ -2314,10 +2338,10 @@ theorem Rnd_NG_pt_refl_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) (x : �
     invariant under negation.
 -/
 def Rnd_NG_pt_opp_inv_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
-    (x f : ℝ) : Bool :=
+    (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_NG_pt F P x f))
+    exact (pure (decide (Rnd_NG_pt F P x f)) : Id Bool)
 
 /-- Specification: NG-point invariance under negation
 
@@ -2341,7 +2365,7 @@ theorem Rnd_NG_pt_opp_inv_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
   have hN : Rnd_N_pt F x f := by
     -- Use the existing nearest opp-inv specification.
     simpa [Rnd_N_pt_opp_inv_check, pure,
-      decide_eq_true_iff] using (Rnd_N_pt_opp_inv_spec F x f ⟨hFopp, hN_neg⟩)
+      decide_eq_true_iff] using (Rnd_N_pt_opp_inv_spec F x f hFopp hN_neg trivial)
   -- Establish the tie-breaking side.
   refine And.intro hN ?tie
   cases hTie_neg with
@@ -2356,11 +2380,10 @@ theorem Rnd_NG_pt_opp_inv_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
       intro f2 hNf2
       -- Apply the opp-inv lemma with (x,f) := (-x,-f2) to get nearest at -x.
       have hNf2_neg : Rnd_N_pt F (-x) (-f2) := by
-        have hpre : (∀ y, F y → F (-y)) ∧ Rnd_N_pt F (-(-x)) (-(-f2)) := by
-          exact And.intro hFopp (by simpa [neg_neg] using hNf2)
+        have hNf2_neg' : Rnd_N_pt F (-(-x)) (-(-f2)) := by simpa [neg_neg] using hNf2
         simpa [Rnd_N_pt_opp_inv_check, pure,
           decide_eq_true_iff] using
-          (Rnd_N_pt_opp_inv_spec F (-x) (-f2) hpre)
+          (Rnd_N_pt_opp_inv_spec F (-x) (-f2) hFopp hNf2_neg' trivial)
       -- Use uniqueness at -x and cancel the negations.
       have hneg_eq : -f2 = -f := huniq_neg (-f2) hNf2_neg
       have : f2 = f := by
@@ -2381,10 +2404,10 @@ theorem Rnd_NG_pt_opp_inv (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     Under the uniqueness property, two NG-based rounding functions coincide.
 -/
 def Rnd_NG_unique_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
-    (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Bool :=
+    (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (rnd1 x = rnd2 x))
+    exact (pure (decide (rnd1 x = rnd2 x)) : Id Bool)
 
 /-- Specification: Function-level uniqueness for NG rounding
 
@@ -2398,25 +2421,16 @@ theorem Rnd_NG_unique_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
           Rnd_DN_pt F x d → Rnd_N_pt F x d →
           Rnd_UP_pt F x u → Rnd_N_pt F x u →
           P x d → P x u → d = u) ∧
-        (∃ p1 p2, Rnd_NG F P rnd1 = pure p1 ∧ Rnd_NG F P rnd2 = pure p2 ∧ p1 ∧ p2)⌝⦄
+        Rnd_NG F P rnd1 ∧ Rnd_NG F P rnd2⌝⦄
     Rnd_NG_unique_check F P rnd1 rnd2 x
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro h
   unfold Rnd_NG_unique_check
   classical
   -- Reduce to a pure equality on pointwise values at x.
-  simp [ pure]
-  -- Unpack tie uniqueness and packaged NG properties for both functions.
-  rcases h with ⟨hTie, ⟨p1, p2, hEq1, hEq2, Hp1, Hp2⟩⟩
-  -- Project underlying propositions from the Id-wrapped equalities.
-  have h1run : (∀ y : ℝ, Rnd_NG_pt F P y (rnd1 y)) = p1 := by
-    simpa [Rnd_NG] using congrArg Id.run hEq1
-  have h2run : (∀ y : ℝ, Rnd_NG_pt F P y (rnd2 y)) = p2 := by
-    simpa [Rnd_NG] using congrArg Id.run hEq2
-  have H1 : ∀ y : ℝ, Rnd_NG_pt F P y (rnd1 y) := by
-    simpa [h1run] using Hp1
-  have H2 : ∀ y : ℝ, Rnd_NG_pt F P y (rnd2 y) := by
-    simpa [h2run] using Hp2
+  simp [pure]
+  -- Unpack tie uniqueness and NG properties for both functions.
+  rcases h with ⟨hTie, H1, H2⟩
   -- Apply point-level uniqueness at x.
   have huniq := Rnd_NG_pt_unique_spec F P x (rnd1 x) (rnd2 x)
   simpa [Rnd_NG_pt_unique_check, pure, decide_eq_true_iff]
@@ -2433,11 +2447,11 @@ section RoundNearestTies
     With `0 ∈ F`, `Rnd_NA_pt` is equivalent to `Rnd_NG_pt` with
     predicate `fun x f => |x| ≤ |f|`.
 -/
-noncomputable def Rnd_NA_NG_pt_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_NA_NG_pt_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- Equivalence between NA and NG with predicate |x| ≤ |f|.
     classical
-    exact pure (decide (Rnd_NA_pt F x f ↔ Rnd_NG_pt F (fun x f => |x| ≤ |f|) x f))
+    exact (pure (decide (Rnd_NA_pt F x f ↔ Rnd_NG_pt F (fun x f => |x| ≤ |f|) x f)) : Id Bool)
 
 /-- Specification: NA equals NG with abs-based tie predicate
 
@@ -2626,14 +2640,14 @@ theorem Rnd_NA_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
 
     The NA tie-breaking relation yields uniqueness under `F 0`.
 -/
-noncomputable def Rnd_NA_pt_unique_prop_check (F : ℝ → Prop) : Bool :=
+noncomputable def Rnd_NA_pt_unique_prop_check (F : ℝ → Prop) : Id Bool :=
   by
     -- Uniqueness of tie-breaking for NA predicate (auxiliary property).
     classical
-    exact pure (decide (∀ x d u,
+    exact (pure (decide (∀ x d u,
       Rnd_DN_pt F x d → Rnd_N_pt F x d →
       Rnd_UP_pt F x u → Rnd_N_pt F x u →
-      |x| ≤ |d| → |x| ≤ |u| → d = u))
+      |x| ≤ |d| → |x| ≤ |u| → d = u)) : Id Bool)
 
 /-- Specification: NA tie uniqueness property holds
 
@@ -2702,10 +2716,10 @@ theorem Rnd_NA_pt_unique_prop_spec (F : ℝ → Prop) :
 
     With `F 0`, the NA-point is unique.
 -/
-noncomputable def Rnd_NA_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Bool :=
+noncomputable def Rnd_NA_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (f1 = f2))
+    exact (pure (decide (f1 = f2)) : Id Bool)
 
 /-- Specification: NA-point uniqueness
 
@@ -2754,11 +2768,11 @@ theorem Rnd_NA_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
 
     If `Rnd_N_pt F x f` and `|x| ≤ |f|` with `F 0`, then `Rnd_NA_pt F x f`.
 -/
-noncomputable def Rnd_NA_pt_N_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_NA_pt_N_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- From nearest with |f| ≤ |x| to NA-point.
     classical
-    exact pure (decide (Rnd_NA_pt F x f))
+    exact (pure (decide (Rnd_NA_pt F x f)) : Id Bool)
 
 /-- Specification: From nearest with abs bound to NA-point
 
@@ -2788,10 +2802,10 @@ theorem Rnd_NA_pt_N_spec (F : ℝ → Prop) (x f : ℝ) :
 
     If both functions satisfy `Rnd_NA`, they agree pointwise.
 -/
-noncomputable def Rnd_NA_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Bool :=
+noncomputable def Rnd_NA_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (rnd1 x = rnd2 x))
+    exact (pure (decide (rnd1 x = rnd2 x)) : Id Bool)
 
 /-- Specification: Function-level uniqueness for NA rounding
 
@@ -2799,25 +2813,15 @@ noncomputable def Rnd_NA_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → �
 -/
 @[spec]
 theorem Rnd_NA_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
-    ⦃⌜F 0 ∧ (∃ p1 p2, Rnd_NA F rnd1 = pure p1 ∧ Rnd_NA F rnd2 = pure p2 ∧ p1 ∧ p2)⌝⦄
+    ⦃⌜F 0 ∧ Rnd_NA F rnd1 ∧ Rnd_NA F rnd2⌝⦄
     Rnd_NA_unique_check F rnd1 rnd2 x
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro h
   unfold Rnd_NA_unique_check
   classical
   -- Reduce Hoare triple to a boolean equality on the pointwise values.
-  simp [ pure]
-  rcases h with ⟨hF0, hpack⟩
-  rcases hpack with ⟨p1, p2, hEq1, hEq2, Hp1, Hp2⟩
-  -- Unpack the function-level NA properties for rnd1 and rnd2.
-  have h1run : (∀ y : ℝ, Rnd_NA_pt F y (rnd1 y)) = p1 := by
-    simpa [Rnd_NA] using congrArg Id.run hEq1
-  have h2run : (∀ y : ℝ, Rnd_NA_pt F y (rnd2 y)) = p2 := by
-    simpa [Rnd_NA] using congrArg Id.run hEq2
-  have H1 : ∀ y : ℝ, Rnd_NA_pt F y (rnd1 y) := by
-    simpa [h1run] using Hp1
-  have H2 : ∀ y : ℝ, Rnd_NA_pt F y (rnd2 y) := by
-    simpa [h2run] using Hp2
+  simp [pure]
+  rcases h with ⟨hF0, H1, H2⟩
   -- Apply NA-point uniqueness at the specific input x.
   have huniq := Rnd_NA_pt_unique_spec F x (rnd1 x) (rnd2 x)
   -- Its postcondition states exactly that `decide (rnd1 x = rnd2 x) = true`.
@@ -2828,10 +2832,10 @@ theorem Rnd_NA_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ
 
     With `F 0`, the NA-point rounding predicate is monotone.
 -/
-noncomputable def Rnd_NA_pt_monotone_check (F : ℝ → Prop) : Bool :=
+noncomputable def Rnd_NA_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred_monotone (Rnd_NA_pt F)))
+    exact (pure (decide (round_pred_monotone (Rnd_NA_pt F))) : Id Bool)
 
 /-- Specification: NA-point is monotone
 
@@ -3074,10 +3078,10 @@ theorem Rnd_NA_pt_monotone_spec (F : ℝ → Prop) :
 
     Representable values are fixed by NA-point rounding.
 -/
-noncomputable def Rnd_NA_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Bool :=
+noncomputable def Rnd_NA_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_NA_pt F x x))
+    exact (pure (decide (Rnd_NA_pt F x x)) : Id Bool)
 
 /-- Specification: NA-point reflexivity on representables
 
@@ -3121,10 +3125,10 @@ theorem Rnd_NA_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
 
     If `Rnd_NA_pt F x f` and `F x`, then `f = x`.
 -/
-noncomputable def Rnd_NA_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_NA_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (f = x))
+    exact (pure (decide (f = x)) : Id Bool)
 
 /-- Specification: NA-point idempotency on representables
 
@@ -3155,11 +3159,11 @@ theorem Rnd_NA_pt_idempotent_spec (F : ℝ → Prop) (x f : ℝ) :
     With `0 ∈ F`, `Rnd_N0_pt` is equivalent to `Rnd_NG_pt` with
     predicate `fun x f => |f| ≤ |x|`.
 -/
-noncomputable def Rnd_N0_NG_pt_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N0_NG_pt_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- Equivalence between N0 and NG with predicate |f| ≤ |x|.
     classical
-    exact pure (decide (Rnd_N0_pt F x f ↔ Rnd_NG_pt F (fun x f => |f| ≤ |x|) x f))
+    exact (pure (decide (Rnd_N0_pt F x f ↔ Rnd_NG_pt F (fun x f => |f| ≤ |x|) x f)) : Id Bool)
 
 /-- Specification: N0 equals NG with abs-based tie predicate
 
@@ -3183,10 +3187,7 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
       intro hN0
       rcases hN0 with ⟨hN, hMinAbs⟩
       -- Classification of f as DN/UP for x using nearest property
-      have hClass := Rnd_N_pt_DN_or_UP_spec F x f
-      have hDU : Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f := by
-        simpa [Rnd_N_pt_DN_or_UP_check, pure,
-          decide_eq_true_iff] using hClass hN
+      have hDU : Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f := Rnd_N_pt_DN_or_UP_disj F x f hN
       -- From nearest at nonnegative x, deduce f ≥ 0
       have h0le_f : 0 ≤ f := by
         -- Minimality vs g = 0 gives |x - f| ≤ |x|
@@ -3221,10 +3222,7 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
           intro f2 hN2
           -- Use the N0 minimal-abs property and classify f2
           have hMin : |f| ≤ |f2| := hMinAbs f2 hN2
-          have hClass2 := Rnd_N_pt_DN_or_UP_spec F x f2
-          have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := by
-            simpa [Rnd_N_pt_DN_or_UP_check, pure,
-              decide_eq_true_iff] using hClass2 hN2
+          have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := Rnd_N_pt_DN_or_UP_disj F x f2 hN2
           -- Also f2 ≥ 0 under 0 ≤ x
           have h0le_f2 : 0 ≤ f2 := by
             -- As above, use minimality vs 0 and contradict f2 < 0
@@ -3298,10 +3296,7 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
         have hx_lt_x : x < x := by simpa [abs_of_nonneg hx] using hx_lt_abs'
         exact (lt_irrefl _ hx_lt_x)
       -- Classify f2 as DN or UP
-      have hClass2 := Rnd_N_pt_DN_or_UP_spec F x f2
-      have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := by
-        simpa [Rnd_N_pt_DN_or_UP_check, pure,
-          decide_eq_true_iff] using hClass2 hN2
+      have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := Rnd_N_pt_DN_or_UP_disj F x f2 hN2
       -- Use the tie information
       cases hTie with
       | inl hP =>
@@ -3328,10 +3323,7 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
       intro hN0
       rcases hN0 with ⟨hN, hMinAbs⟩
       -- Classification of f as DN/UP for x using nearest property
-      have hClass := Rnd_N_pt_DN_or_UP_spec F x f
-      have hDU : Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f := by
-        simpa [Rnd_N_pt_DN_or_UP_check, pure,
-          decide_eq_true_iff] using hClass hN
+      have hDU : Rnd_DN_pt F x f ∨ Rnd_UP_pt F x f := Rnd_N_pt_DN_or_UP_disj F x f hN
       -- From nearest at nonpositive x, deduce f ≤ 0
       have hf_le0 : f ≤ 0 := by
         -- Minimality vs g = 0 gives |f - x| ≤ | -x | = -x
@@ -3359,10 +3351,7 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
           intro f2 hN2
           -- Use the N0 minimal-abs property and classify f2
           have hMin : |f| ≤ |f2| := hMinAbs f2 hN2
-          have hClass2 := Rnd_N_pt_DN_or_UP_spec F x f2
-          have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := by
-            simpa [Rnd_N_pt_DN_or_UP_check, pure,
-              decide_eq_true_iff] using hClass2 hN2
+          have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := Rnd_N_pt_DN_or_UP_disj F x f2 hN2
           -- Also f2 ≤ 0 under x ≤ 0
           have hf2_le0 : f2 ≤ 0 := by
             -- Analogous argument for f2
@@ -3441,10 +3430,7 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
           simpa [abs_of_pos hpos] using this
         exact (lt_irrefl _ (lt_of_lt_of_le hx_abs_gt hmin0))
       -- Classify f2 as DN or UP
-      have hClass2 := Rnd_N_pt_DN_or_UP_spec F x f2
-      have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := by
-        simpa [Rnd_N_pt_DN_or_UP_check, pure,
-          decide_eq_true_iff] using hClass2 hN2
+      have hDU2 : Rnd_DN_pt F x f2 ∨ Rnd_UP_pt F x f2 := Rnd_N_pt_DN_or_UP_disj F x f2 hN2
       -- Use the tie information
       cases hTie with
       | inl hP =>
@@ -3473,13 +3459,13 @@ theorem Rnd_N0_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
 
     The N0 tie-breaking relation yields uniqueness under `F 0`.
 -/
-noncomputable def Rnd_N0_pt_unique_prop_check (F : ℝ → Prop) : Bool :=
+noncomputable def Rnd_N0_pt_unique_prop_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (∀ x d u,
+    exact (pure (decide (∀ x d u,
       Rnd_DN_pt F x d → Rnd_N_pt F x d →
       Rnd_UP_pt F x u → Rnd_N_pt F x u →
-      |d| ≤ |x| → |u| ≤ |x| → d = u))
+      |d| ≤ |x| → |u| ≤ |x| → d = u)) : Id Bool)
 
 /-- Specification: N0 tie uniqueness property holds
 
@@ -3545,10 +3531,10 @@ theorem Rnd_N0_pt_unique_prop_spec (F : ℝ → Prop) :
 
     With `F 0`, the N0-point is unique.
 -/
-noncomputable def Rnd_N0_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Bool :=
+noncomputable def Rnd_N0_pt_unique_check (F : ℝ → Prop) (x f1 f2 : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (f1 = f2))
+    exact (pure (decide (f1 = f2)) : Id Bool)
 
 /-- Specification: N0-point uniqueness
 
@@ -3597,11 +3583,11 @@ theorem Rnd_N0_pt_unique_spec (F : ℝ → Prop) (x f1 f2 : ℝ) :
 
     If `Rnd_N_pt F x f` and `|f| ≤ |x|` with `F 0`, then `Rnd_N0_pt F x f`.
 -/
-noncomputable def Rnd_N0_pt_N_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N0_pt_N_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     -- From nearest with |f| ≤ |x| to N0-point.
     classical
-    exact pure (decide (Rnd_N0_pt F x f))
+    exact (pure (decide (Rnd_N0_pt F x f)) : Id Bool)
 
 /-- Specification: From nearest with abs bound to N0-point
 
@@ -3632,10 +3618,10 @@ theorem Rnd_N0_pt_N_spec (F : ℝ → Prop) (x f : ℝ) :
 
     If both functions satisfy `Rnd_N0`, they agree pointwise.
 -/
-noncomputable def Rnd_N0_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Bool :=
+noncomputable def Rnd_N0_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (rnd1 x = rnd2 x))
+    exact (pure (decide (rnd1 x = rnd2 x)) : Id Bool)
 
 /-- Specification: Function-level uniqueness for N0 rounding
 
@@ -3643,25 +3629,15 @@ noncomputable def Rnd_N0_unique_check (F : ℝ → Prop) (rnd1 rnd2 : ℝ → �
 -/
 @[spec]
 theorem Rnd_N0_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ) :
-    ⦃⌜F 0 ∧ (∃ p1 p2, Rnd_N0 F rnd1 = pure p1 ∧ Rnd_N0 F rnd2 = pure p2 ∧ p1 ∧ p2)⌝⦄
+    ⦃⌜F 0 ∧ Rnd_N0 F rnd1 ∧ Rnd_N0 F rnd2⌝⦄
     Rnd_N0_unique_check F rnd1 rnd2 x
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro h
   unfold Rnd_N0_unique_check
   classical
   -- Reduce Hoare triple to a boolean equality on the pointwise values.
-  simp [ pure]
-  rcases h with ⟨hF0, hpack⟩
-  rcases hpack with ⟨p1, p2, hEq1, hEq2, Hp1, Hp2⟩
-  -- Unpack the function-level N0 properties for rnd1 and rnd2.
-  have h1run : (∀ y : ℝ, Rnd_N0_pt F y (rnd1 y)) = p1 := by
-    simpa [Rnd_N0] using congrArg Id.run hEq1
-  have h2run : (∀ y : ℝ, Rnd_N0_pt F y (rnd2 y)) = p2 := by
-    simpa [Rnd_N0] using congrArg Id.run hEq2
-  have H1 : ∀ y : ℝ, Rnd_N0_pt F y (rnd1 y) := by
-    simpa [h1run] using Hp1
-  have H2 : ∀ y : ℝ, Rnd_N0_pt F y (rnd2 y) := by
-    simpa [h2run] using Hp2
+  simp [pure]
+  rcases h with ⟨hF0, H1, H2⟩
   -- Apply N0-point uniqueness at the specific input x.
   have huniq := Rnd_N0_pt_unique_spec F x (rnd1 x) (rnd2 x)
   -- Its postcondition states exactly that `decide (rnd1 x = rnd2 x) = true`.
@@ -3672,10 +3648,10 @@ theorem Rnd_N0_unique_spec (F : ℝ → Prop) (rnd1 rnd2 : ℝ → ℝ) (x : ℝ
 
     With `F 0`, the N0-point rounding predicate is monotone.
 -/
-noncomputable def Rnd_N0_pt_monotone_check (F : ℝ → Prop) : Bool :=
+noncomputable def Rnd_N0_pt_monotone_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred_monotone (Rnd_N0_pt F)))
+    exact (pure (decide (round_pred_monotone (Rnd_N0_pt F))) : Id Bool)
 
 /-- Specification: N0-point is monotone
 
@@ -3726,10 +3702,10 @@ theorem Rnd_N0_pt_monotone_spec (F : ℝ → Prop) :
 
     Representable values are fixed by N0-point rounding.
 -/
-noncomputable def Rnd_N0_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Bool :=
+noncomputable def Rnd_N0_pt_refl_check (F : ℝ → Prop) (x : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_N0_pt F x x))
+    exact (pure (decide (Rnd_N0_pt F x x)) : Id Bool)
 
 /-- Specification: N0-point reflexivity on representables
 
@@ -3766,10 +3742,10 @@ theorem Rnd_N0_pt_refl_spec (F : ℝ → Prop) (x : ℝ) :
 
     If `Rnd_N0_pt F x f` and `F x`, then `f = x`.
 -/
-noncomputable def Rnd_N0_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def Rnd_N0_pt_idempotent_check (F : ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (f = x))
+    exact (pure (decide (f = x)) : Id Bool)
 
 /-- Specification: N0-point idempotency on representables
 
@@ -3807,10 +3783,10 @@ section MonotoneImplications
     if a rounding predicate is monotone and maps 0 to 0, then {lean}``0 ≤ x``
     implies {lean}``0 ≤ f`` when {lean}``P x f`` holds.
 -/
-noncomputable def round_pred_ge_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def round_pred_ge_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (0 ≤ f))
+    exact (pure (decide (0 ≤ f)) : Id Bool)
 
 /-- Specification: Monotone predicate preserves nonnegativity
 
@@ -3841,10 +3817,10 @@ theorem round_pred_ge_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     if a rounding predicate is monotone and maps 0 to 0, then {lean}``0 < f``
     implies {lean}``0 < x`` when {lean}``P x f`` holds.
 -/
-noncomputable def round_pred_gt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def round_pred_gt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (0 < x))
+    exact (pure (decide (0 < x)) : Id Bool)
 
 /-- Specification: Positivity transfers back via monotonicity
 
@@ -3879,10 +3855,10 @@ theorem round_pred_gt_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     if a rounding predicate is monotone and maps 0 to 0, then {lean}``x ≤ 0``
     implies {lean}``f ≤ 0`` when {lean}``P x f`` holds.
 -/
-noncomputable def round_pred_le_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def round_pred_le_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (f ≤ 0))
+    exact (pure (decide (f ≤ 0)) : Id Bool)
 
 /-- Specification: Monotone predicate preserves nonpositivity
 
@@ -3913,10 +3889,10 @@ theorem round_pred_le_0_spec (P : ℝ → ℝ → Prop) (x f : ℝ) :
     if a rounding predicate is monotone and maps 0 to 0, then {lean}``f < 0``
     implies {lean}``x < 0`` when {lean}``P x f`` holds.
 -/
-noncomputable def round_pred_lt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Bool :=
+noncomputable def round_pred_lt_0_check (P : ℝ → ℝ → Prop) (x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (x < 0))
+    exact (pure (decide (x < 0)) : Id Bool)
 
 /-- Specification: Negativity transfers back via monotonicity
 
@@ -3950,10 +3926,10 @@ section FormatEquivalence
     If two formats agree on `[a,b]`, DN-points computed in `F1` on that
     interval are also DN-points in `F2`.
 -/
-noncomputable def Rnd_DN_pt_equiv_format_check (F1 F2 : ℝ → Prop) (a b x f : ℝ) : Bool :=
+noncomputable def Rnd_DN_pt_equiv_format_check (F1 F2 : ℝ → Prop) (a b x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_DN_pt F2 x f))
+    exact (pure (decide (Rnd_DN_pt F2 x f)) : Id Bool)
 
 /-- Specification: DN-point equivalence under format agreement
 
@@ -4001,10 +3977,10 @@ theorem Rnd_DN_pt_equiv_format_spec (F1 F2 : ℝ → Prop) (a b x f : ℝ) :
     If two formats agree on `[a,b]`, UP-points computed in `F1` on that
     interval are also UP-points in `F2`.
 -/
-noncomputable def Rnd_UP_pt_equiv_format_check (F1 F2 : ℝ → Prop) (a b x f : ℝ) : Bool :=
+noncomputable def Rnd_UP_pt_equiv_format_check (F1 F2 : ℝ → Prop) (a b x f : ℝ) : Id Bool :=
   by
     classical
-    exact pure (decide (Rnd_UP_pt F2 x f))
+    exact (pure (decide (Rnd_UP_pt F2 x f)) : Id Bool)
 
 /-- Specification: UP-point equivalence under format agreement
 
@@ -4054,17 +4030,17 @@ section SatisfiesAnyConsequences
 
     Placeholder equivalence/characterization for `satisfies_any`.
 -/
-noncomputable def satisfies_any_eq_check (F : ℝ → Prop) : Bool :=
+noncomputable def satisfies_any_eq_check (F : ℝ → Prop) : Id Bool :=
   by
     -- A usable consequence: formats equivalent pointwise preserve `satisfies_any`.
     -- This matches Coq's `satisfies_any_eq` theorem.
     classical
     exact
-      pure
+      (pure
         (decide
           (∀ (F1 F2 : ℝ → Prop), (∀ x, F1 x ↔ F2 x) →
             FloatSpec.Core.Generic_fmt.satisfies_any F1 →
-            FloatSpec.Core.Generic_fmt.satisfies_any F2))
+            FloatSpec.Core.Generic_fmt.satisfies_any F2)) : Id Bool)
 
 /-- Specification: `satisfies_any` alternative characterization
 
@@ -4089,11 +4065,11 @@ theorem satisfies_any_eq_spec (F : ℝ → Prop) :
 
     If a format `satisfies_any`, DN rounding is total.
 -/
-noncomputable def satisfies_any_imp_DN_check (F : ℝ → Prop) : Bool :=
+noncomputable def satisfies_any_imp_DN_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
     -- Totality of DN rounding as a round_pred property.
-    exact pure (decide (round_pred (Rnd_DN_pt F)))
+    exact (pure (decide (round_pred (Rnd_DN_pt F))) : Id Bool)
 
 /-- Specification: `satisfies_any` implies DN rounding exists
 
@@ -4124,10 +4100,10 @@ theorem satisfies_any_imp_DN_spec (F : ℝ → Prop) :
 
     If a format `satisfies_any`, UP rounding is total.
 -/
-noncomputable def satisfies_any_imp_UP_check (F : ℝ → Prop) : Bool :=
+noncomputable def satisfies_any_imp_UP_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred (Rnd_UP_pt F)))
+    exact (pure (decide (round_pred (Rnd_UP_pt F))) : Id Bool)
 
 /-- Specification: `satisfies_any` implies UP rounding exists
 
@@ -4158,10 +4134,10 @@ theorem satisfies_any_imp_UP_spec (F : ℝ → Prop) :
 
     If a format `satisfies_any`, ZR rounding is total.
 -/
-noncomputable def satisfies_any_imp_ZR_check (F : ℝ → Prop) : Bool :=
+noncomputable def satisfies_any_imp_ZR_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred (FloatSpec.Core.Defs.Rnd_ZR_pt F)))
+    exact (pure (decide (round_pred (FloatSpec.Core.Defs.Rnd_ZR_pt F))) : Id Bool)
 
 /-- Specification: `satisfies_any` implies ZR rounding exists
 
@@ -4217,10 +4193,10 @@ theorem satisfies_any_imp_ZR_spec (F : ℝ → Prop) :
 
     If a format `satisfies_any`, NG rounding is total.
 -/
-noncomputable def satisfies_any_imp_NG_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Bool :=
+noncomputable def satisfies_any_imp_NG_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred (Rnd_NG_pt F P)))
+    exact (pure (decide (round_pred (Rnd_NG_pt F P))) : Id Bool)
 
 /-- Specification: `satisfies_any` implies NG rounding exists
 
@@ -4255,10 +4231,10 @@ theorem satisfies_any_imp_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) 
 
     If a format `satisfies_any`, NA rounding is total.
 -/
-noncomputable def satisfies_any_imp_NA_check (F : ℝ → Prop) : Bool :=
+noncomputable def satisfies_any_imp_NA_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred (Rnd_NA_pt F)))
+    exact (pure (decide (round_pred (Rnd_NA_pt F))) : Id Bool)
 
 /-- Specification: `satisfies_any` implies NA rounding exists
 
@@ -4286,10 +4262,10 @@ theorem satisfies_any_imp_NA_spec (F : ℝ → Prop) :
 
     If a format `satisfies_any`, N0 rounding is total.
 -/
-noncomputable def satisfies_any_imp_N0_check (F : ℝ → Prop) : Bool :=
+noncomputable def satisfies_any_imp_N0_check (F : ℝ → Prop) : Id Bool :=
   by
     classical
-    exact pure (decide (round_pred (Rnd_N0_pt F)))
+    exact (pure (decide (round_pred (Rnd_N0_pt F))) : Id Bool)
 
 /-- Specification: `satisfies_any` implies N0 rounding exists
 
