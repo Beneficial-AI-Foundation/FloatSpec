@@ -3120,13 +3120,127 @@ private theorem Zdigits_aux_bounds
   ⦃⌜True⌝⦄
   (pure (Zdigits_aux beta n d pow fuel) : Id _)
   ⦃⇓r => ⌜beta ^ ((r - 1).natAbs) ≤ |n| ∧ |n| < beta ^ r.natAbs⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  have hβpos : 0 < beta := lt_trans (by norm_num : (0 : Int) < 1) _hβ
+  have hβ_ge1 : 1 ≤ beta := le_of_lt _hβ
+  induction fuel generalizing d pow with
+  | zero =>
+    -- Base case: fuel = 0, result is d
+    simp only [Zdigits_aux]
+    constructor
+    · exact hlow
+    · simpa using hhigh
+  | succ fuel' ih =>
+    -- Inductive case
+    simp only [Zdigits_aux]
+    have hd_nonneg : 0 ≤ d := le_of_lt hd_pos
+    have hd_toNat : d.natAbs = d.toNat := by
+      have h1 : (d.natAbs : Int) = d := Int.natAbs_of_nonneg hd_nonneg
+      have h2 : (d.toNat : Int) = d := Int.toNat_of_nonneg hd_nonneg
+      omega
+    by_cases hcond : n.natAbs < pow
+    · -- |n| < pow = β^d, so return d
+      simp only [hcond, ↓reduceIte]
+      constructor
+      · exact hlow
+      · -- Need |n| < β^d, but we have |n| < pow = β^d
+        -- hcond : n.natAbs < pow where the comparison is in Int (Nat < Int)
+        have habs_eq : |n| = (n.natAbs : Int) := Int.abs_eq_natAbs n
+        calc |n| = (n.natAbs : Int) := habs_eq
+          _ < pow := hcond
+          _ = beta ^ d.natAbs := hpow
+    · -- |n| ≥ pow = β^d, so recurse
+      simp only [hcond, ↓reduceIte]
+      -- Apply IH with d+1, beta*pow, fuel'
+      have hd1_pos : 0 < d + 1 := by linarith
+      have hd1_nonneg : 0 ≤ d + 1 := by linarith
+      have hd1_toNat : (d + 1).natAbs = (d + 1).toNat := by
+        have h1 : ((d + 1).natAbs : Int) = d + 1 := Int.natAbs_of_nonneg hd1_nonneg
+        have h2 : ((d + 1).toNat : Int) = d + 1 := Int.toNat_of_nonneg hd1_nonneg
+        omega
+      have hpow' : beta * pow = beta ^ (d + 1).natAbs := by
+        rw [hpow, hd_toNat, hd1_toNat]
+        have htoNat_succ : (d + 1).toNat = d.toNat + 1 := by
+          have h1 : ((d + 1).toNat : Int) = d + 1 := Int.toNat_of_nonneg hd1_nonneg
+          have h2 : (d.toNat : Int) = d := Int.toNat_of_nonneg hd_nonneg
+          omega
+        rw [htoNat_succ, pow_succ, mul_comm]
+      have hlow' : beta ^ ((d + 1 - 1).natAbs) ≤ |n| := by
+        -- Need β^d ≤ |n|, we have ¬(|n| < pow) i.e. pow ≤ |n|
+        have hge : pow ≤ (n.natAbs : Int) := le_of_not_lt hcond
+        have hge_int : pow ≤ |n| := by
+          rw [Int.abs_eq_natAbs]
+          exact hge
+        simp only [add_sub_cancel_right]
+        calc beta ^ d.natAbs = pow := hpow.symm
+          _ ≤ |n| := hge_int
+      have hhigh' : |n| < beta ^ ((d + 1).natAbs + fuel') := by
+        rw [hd_toNat] at hhigh
+        rw [hd1_toNat]
+        have h1 : d.toNat + Nat.succ fuel' = (d + 1).toNat + fuel' := by
+          have h1 : ((d + 1).toNat : Int) = d + 1 := Int.toNat_of_nonneg hd1_nonneg
+          have h2 : (d.toNat : Int) = d := Int.toNat_of_nonneg hd_nonneg
+          omega
+        rw [← h1]
+        exact hhigh
+      exact ih (d + 1) (beta * pow) hpow' hd1_pos hlow' hhigh'
 /-- Final theorem: correctness of the number of digits computed by {name}`Zdigits`. -/
 theorem Zdigits_correct (n : Int) (hβ : beta > 1) :
     ⦃⌜n ≠ 0⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜beta ^ ((d - 1).natAbs) ≤ |n| ∧ |n| < beta ^ d.natAbs⌝⦄ := by
-  sorry
+  intro hn'
+  simp only [wp, PostCond.noThrow, pure, Zdigits]
+  -- hn' : ⌜n ≠ 0⌝.down, need to extract n ≠ 0
+  have hn : n ≠ 0 := hn'
+  simp only [hn, ↓reduceDIte, Id.run]
+  -- Now goal is about Zdigits_aux beta n 1 beta (n.natAbs.succ)
+  have hβpos : 0 < beta := lt_trans (by norm_num : (0 : Int) < 1) hβ
+  have hβ_ge1 : 1 ≤ beta := le_of_lt hβ
+  -- Apply Zdigits_aux_bounds with d=1, pow=beta, fuel=n.natAbs.succ
+  have hpow : beta = beta ^ (1 : Int).natAbs := by simp
+  have hd_pos : 0 < (1 : Int) := by norm_num
+  have hlow : beta ^ ((1 - 1 : Int).natAbs) ≤ |n| := by
+    simp only [sub_self, Int.natAbs_zero, pow_zero]
+    -- Need 1 ≤ |n|
+    have hna : n.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr hn
+    have hna_pos : 0 < n.natAbs := Nat.pos_of_ne_zero hna
+    have : (1 : Int) ≤ n.natAbs := by omega
+    rw [Int.abs_eq_natAbs]
+    exact this
+  have hhigh : |n| < beta ^ ((1 : Int).natAbs + n.natAbs.succ) := by
+    -- Need |n| < β^(1 + n.natAbs + 1) = β^(n.natAbs + 2)
+    -- We have |n| = n.natAbs and β ≥ 2, so β^(n.natAbs+1) > n.natAbs
+    simp only [Int.natAbs_one]
+    have habs : |n| = n.natAbs := Int.abs_eq_natAbs n
+    rw [habs]
+    -- Goal: n.natAbs < β^(1 + n.natAbs.succ) = β^(n.natAbs + 2)
+    have hexp : 1 + n.natAbs.succ = n.natAbs + 2 := by omega
+    rw [hexp]
+    -- Use that β^(k+1) > k for β ≥ 2, k ≥ 0
+    have hβ2 : 2 ≤ beta := hβ
+    have h2pow : ∀ k : Nat, k < (2 : Int) ^ (k + 1) := by
+      intro k
+      induction k with
+      | zero => norm_num
+      | succ k' ih =>
+        calc (k' + 1 : Int) = k' + 1 := rfl
+          _ < 2 ^ (k' + 1) + 1 := by linarith
+          _ ≤ 2 ^ (k' + 1) + 2 ^ (k' + 1) := by
+              have : (1 : Int) ≤ 2 ^ (k' + 1) := by
+                have := pow_pos (by norm_num : (0 : Int) < 2) (k' + 1)
+                linarith
+              linarith
+          _ = 2 * 2 ^ (k' + 1) := by ring
+          _ = 2 ^ (k' + 2) := by rw [pow_succ 2 (k' + 1)]; ring
+    calc (n.natAbs : Int) < 2 ^ (n.natAbs + 1) := h2pow n.natAbs
+      _ ≤ beta ^ (n.natAbs + 1) := by
+          apply pow_le_pow_left₀ (by norm_num : (0 : Int) ≤ 2) hβ2
+      _ < beta ^ (n.natAbs + 2) := by
+          apply Int.pow_lt_pow_of_lt hβ
+          omega
+  exact Zdigits_aux_bounds beta n hβ 1 beta n.natAbs.succ hpow hd_pos hlow hhigh trivial
 
 /-- Unique characterization of digit count
 
