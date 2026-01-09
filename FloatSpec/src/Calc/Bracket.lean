@@ -151,22 +151,23 @@ noncomputable def inbetween_loc : Location :=
 @[spec]
 theorem inbetween_spec (Hx : d ≤ x ∧ x < u) :
     ⦃⌜d ≤ x ∧ x < u⌝⦄
-    inbetween_loc d u x
+    (pure (inbetween_loc d u x) : Id Location)
     ⦃⇓result => ⌜inbetween d u x result⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold inbetween_loc
   by_cases hx : x > d
   · -- Inexact case: d < x < u and l = compare x mid
     have hdx : d < x := hx
     have hxu : x < u := Hx.2
-    simp [ hx]
+    simp [hx]
     refine inbetween.inbetween_Inexact (l := compare x ((d + u) / 2)) ?hb ?hc
     · exact ⟨hdx, hxu⟩
     · rfl
   · -- Exact case: x ≤ d and d ≤ x, hence x = d
     have hxd : x ≤ d := le_of_not_gt hx
     have hxeq : x = d := le_antisymm hxd Hx.1
-    simp [ hx]
+    simp [hx]
     exact inbetween.inbetween_Exact hxeq
 
 /-- Determine uniqueness of location
@@ -183,11 +184,10 @@ def inbetween_unique_check (l l' : Location) : Bool :=
 theorem inbetween_unique (l l' : Location)
     (Hl : inbetween d u x l) (Hl' : inbetween d u x l') :
     ⦃⌜inbetween d u x l ∧ inbetween d u x l'⌝⦄
-    inbetween_unique_check l l'
+    (pure (inbetween_unique_check l l') : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  -- Use Triple.pure to discharge the Hoare triple for a pure computation
-  apply Std.Do.Triple.pure (m := Id) (a := (l == l'))
   intro _
+  simp only [wp, PostCond.noThrow, pure, inbetween_unique_check]
   -- Prove locations must be equal, then conclude by rewriting to `true`
   have hEq : l = l' := by
     cases Hl with
@@ -232,7 +232,7 @@ variable (Hdu : d < u)
 -/
 def inbetween_bounds_check (h : inbetween d u x l) : Unit :=
   -- Computation carries no data; theorem provides the bounds.
-  pure ()
+  ()
 
 /-- Specification: Bounds are satisfied
 
@@ -240,12 +240,10 @@ def inbetween_bounds_check (h : inbetween d u x l) : Unit :=
 -/
 theorem inbetween_bounds (h : inbetween d u x l) (Hdu : d < u) :
     ⦃⌜inbetween d u x l⌝⦄
-    inbetween_bounds_check d u x l h
+    (pure (inbetween_bounds_check d u x l h) : Id Unit)
     ⦃⇓result => ⌜d ≤ x ∧ x < u⌝⦄ := by
-  -- Reduce the Hoare triple for a pure computation
   intro _
-  unfold inbetween_bounds_check
-  simp
+  simp only [wp, PostCond.noThrow, pure, inbetween_bounds_check]
   -- Discharge the bounds from the inbetween hypothesis
   cases h with
   | inbetween_Exact hxeq =>
@@ -264,7 +262,7 @@ theorem inbetween_bounds (h : inbetween d u x l) (Hdu : d < u) :
 def inbetween_bounds_not_Eq_check (h : inbetween d u x l)
     (hl : l ≠ Location.loc_Exact) : Unit :=
   -- Computation carries no data; theorem provides the strict bounds.
-  pure ()
+  ()
 
 /-- Specification: Strict bounds for inexact locations
 
@@ -273,12 +271,10 @@ def inbetween_bounds_not_Eq_check (h : inbetween d u x l)
 theorem inbetween_bounds_not_Eq (h : inbetween d u x l)
     (hl : l ≠ Location.loc_Exact) :
     ⦃⌜inbetween d u x l ∧ l ≠ Location.loc_Exact⌝⦄
-    inbetween_bounds_not_Eq_check d u x l h hl
+    (pure (inbetween_bounds_not_Eq_check d u x l h hl) : Id Unit)
     ⦃⇓result => ⌜d < x ∧ x < u⌝⦄ := by
-  -- Reduce to the postcondition for a pure computation
   intro _
-  unfold inbetween_bounds_not_Eq_check
-  simp
+  simp only [wp, PostCond.noThrow, pure, inbetween_bounds_not_Eq_check]
   -- Use the inbetween hypothesis and non-exactness to derive strict bounds
   cases h with
   | inbetween_Exact hxeq =>
@@ -297,7 +293,7 @@ theorem inbetween_bounds_not_Eq (h : inbetween d u x l)
 def inbetween_distance_inexact_compute (ord : Ordering) : Ordering :=
   -- For inexact locations, the result ordering is exactly `compare x mid`.
   -- The compute function just returns the provided ordering parameter.
-  pure ord
+  ord
 
 /-- Specification: Distance comparison for inexact locations
 
@@ -306,11 +302,10 @@ def inbetween_distance_inexact_compute (ord : Ordering) : Ordering :=
 theorem inbetween_distance_inexact (ord : Ordering)
     (h : inbetween d u x (Location.loc_Inexact ord)) :
     ⦃⌜inbetween d u x (Location.loc_Inexact ord)⌝⦄
-    inbetween_distance_inexact_compute ord
+    (pure (inbetween_distance_inexact_compute ord) : Id Ordering)
     ⦃⇓result => ⌜compare (x - d) (u - x) = result⌝⦄ := by
   intro _
-  unfold inbetween_distance_inexact_compute
-  simp
+  simp only [wp, PostCond.noThrow, pure, inbetween_distance_inexact_compute]
   -- Extract facts from the inexact-location hypothesis
   cases h with
   | inbetween_Inexact _ _ hc =>
@@ -354,11 +349,10 @@ def inbetween_distance_inexact_abs_compute (ord : Ordering) : Ordering :=
 theorem inbetween_distance_inexact_abs (ord : Ordering)
     (h : inbetween d u x (Location.loc_Inexact ord)) :
     ⦃⌜inbetween d u x (Location.loc_Inexact ord)⌝⦄
-    inbetween_distance_inexact_abs_compute ord
+    (pure (inbetween_distance_inexact_abs_compute ord) : Id Ordering)
     ⦃⇓result => ⌜compare (|d - x|) (|u - x|) = result⌝⦄ := by
   intro _
-  unfold inbetween_distance_inexact_abs_compute
-  simp
+  simp only [wp, PostCond.noThrow, pure, inbetween_distance_inexact_abs_compute]
   -- Use the inexact-location hypothesis to rewrite absolute values
   cases h with
   | inbetween_Inexact _ hbounds hcmp =>
@@ -406,14 +400,14 @@ noncomputable def inbetween_ex_witness (d u : ℝ) (l : Location) (Hdu : d < u) 
   -- Choose a witness depending on the desired ordering:
   --  - Exact: pick the lower bound d
   --  - Inexact Lt/Eq/Gt: pick a point at 1/4, 1/2, or 3/4 within (d, u)
-  pure (match l with
+  match l with
   | Location.loc_Exact => d
   | Location.loc_Inexact ord =>
       let w := match ord with
         | Ordering.lt => (1 : ℝ) / 4
         | Ordering.eq => (2 : ℝ) / 4
         | Ordering.gt => (3 : ℝ) / 4
-      d + w * (u - d))
+      d + w * (u - d)
 
 /-- Specification: Location existence
 
@@ -421,11 +415,10 @@ noncomputable def inbetween_ex_witness (d u : ℝ) (l : Location) (Hdu : d < u) 
 -/
 theorem inbetween_ex (d u : ℝ) (l : Location) (Hdu : d < u) :
     ⦃⌜d < u⌝⦄
-    inbetween_ex_witness d u l Hdu
+    (pure (inbetween_ex_witness d u l Hdu) : Id ℝ)
     ⦃⇓x => ⌜inbetween d u x l⌝⦄ := by
-  -- Discharge the Hoare triple for a pure computation first.
-  apply Std.Do.Triple.pure (m := Id)
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Now prove the postcondition on the concrete returned value.
   cases l with
   | loc_Exact =>
@@ -522,7 +515,7 @@ variable (Hstep : 0 < step)
 -/
 def ordered_steps_check (start step : ℝ) (k : Int) : Unit :=
   -- Computation carries no data; theorem proves the strict inequality.
-  pure ()
+  ()
 
 /-- Specification: Steps are ordered
 
@@ -530,11 +523,10 @@ def ordered_steps_check (start step : ℝ) (k : Int) : Unit :=
 -/
 lemma ordered_steps (k : Int) :
     ⦃⌜0 < step⌝⦄
-    ordered_steps_check start step k
+    (pure (ordered_steps_check start step k) : Id Unit)
     ⦃⇓result => ⌜start + k * step < start + (k + 1) * step⌝⦄ := by
   intro hstep
-  unfold ordered_steps_check
-  simp
+  simp only [wp, PostCond.noThrow, pure, ordered_steps_check]
   -- Show that adding a positive `step` strictly increases the value.
   have hl : start + k * step < start + k * step + step := by
     simpa using (add_lt_add_left hstep (start + k * step))
@@ -548,7 +540,7 @@ lemma ordered_steps (k : Int) :
 -/
 noncomputable def middle_range_calc (start step : ℝ) (k : Int) : ℝ :=
   -- Return the midpoint of the two consecutive stepped points explicitly.
-  pure ((start + (start + k * step)) / 2)
+  (start + (start + k * step)) / 2
 
 /-- Specification: Middle range calculation
 
@@ -556,7 +548,7 @@ noncomputable def middle_range_calc (start step : ℝ) (k : Int) : ℝ :=
 -/
 lemma middle_range (k : Int) :
     ⦃⌜True⌝⦄
-    middle_range_calc start step k
+    (pure (middle_range_calc start step k) : Id ℝ)
     ⦃⇓result => ⌜(start + (start + k * step)) / 2 = result⌝⦄ := by
   -- For a pure computation, the post-condition holds by reflexivity.
   apply Std.Do.Triple.pure (m := Id)
@@ -571,7 +563,7 @@ variable (Hnb_steps : 1 < nb_steps)
 -/
 noncomputable def inbetween_step_not_Eq_compute (start step : ℝ) (nb_steps : Int) (x : ℝ) (k : Int) (ord : Ordering) : Location :=
   -- For the global interval, we keep the same inexact ordering `ord`.
-  pure (Location.loc_Inexact ord)
+  Location.loc_Inexact ord
 
 /-- Specification: Step location transformation
 
@@ -585,7 +577,7 @@ theorem inbetween_step_not_Eq (x : ℝ) (k : Int) (l : Location) (ord : Ordering
     ⦃⌜inbetween (start + k * step) (start + (k + 1) * step) x l ∧
       0 < k ∧ k < nb_steps ∧
       compare x (start + (nb_steps / 2 * step)) = ord⌝⦄
-    inbetween_step_not_Eq_compute start step nb_steps x k ord
+    (pure (inbetween_step_not_Eq_compute start step nb_steps x k ord) : Id Location)
     ⦃⇓result => ⌜inbetween start (start + nb_steps * step) x result⌝⦄ := by
   -- Discharge the Hoare triple for a pure computation
   apply Std.Do.Triple.pure (m := Id)
@@ -661,7 +653,7 @@ theorem inbetween_step_Lo (x : ℝ) (k : Int) (l : Location)
     (Hk1 : 0 < k) (Hk2 : 2 * k + 1 < nb_steps) (Hstep : 0 < step) :
     ⦃⌜inbetween (start + k * step) (start + (k + 1) * step) x l ∧
       0 < k ∧ 2 * k + 1 < nb_steps⌝⦄
-    inbetween_step_Lo_compute
+    (pure inbetween_step_Lo_compute : Id Location)
     ⦃⇓result => ⌜inbetween start (start + nb_steps * step) x result⌝⦄ := by
   -- Discharge the Hoare triple for a pure computation
   apply Std.Do.Triple.pure (m := Id)
@@ -781,7 +773,7 @@ theorem inbetween_step_Hi (x : ℝ) (k : Int) (l : Location)
     (Hk1 : nb_steps < 2 * k) (Hk2 : k < nb_steps) (Hstep : 0 < step) :
     ⦃⌜inbetween (start + k * step) (start + (k + 1) * step) x l ∧
       nb_steps < 2 * k ∧ k < nb_steps⌝⦄
-    inbetween_step_Hi_compute
+    (pure inbetween_step_Hi_compute : Id Location)
     ⦃⇓result => ⌜inbetween start (start + nb_steps * step) x result⌝⦄ := by
   -- Discharge the Hoare triple for a pure computation
   apply Std.Do.Triple.pure (m := Id)
@@ -874,7 +866,7 @@ theorem inbetween_step_Hi (x : ℝ) (k : Int) (l : Location)
 -/
 noncomputable def new_location_even (nb_steps k : Int) (l : Location) : Location :=
   -- Use explicit integer inequalities instead of generic `compare` to ease reasoning.
-  pure (if hkz : k = 0 then
+  if hkz : k = 0 then
     match l with
     | Location.loc_Exact => l
     | _ => Location.loc_Inexact Ordering.lt
@@ -886,7 +878,7 @@ noncomputable def new_location_even (nb_steps k : Int) (l : Location) : Location
       | Location.loc_Exact => Location.loc_Inexact Ordering.eq
       | _ => Location.loc_Inexact Ordering.gt
     else
-      Location.loc_Inexact Ordering.gt)
+      Location.loc_Inexact Ordering.gt
 
 /-- Specification: Even step location is correct
 
@@ -897,7 +889,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
     ⦃⌜nb_steps % 2 = 0 ∧ 0 ≤ k ∧ k < nb_steps ∧
       inbetween (start + k * step) (start + (k + 1) * step) x l⌝⦄
-    new_location_even nb_steps k l
+    (pure (new_location_even nb_steps k l) : Id Location)
     ⦃⇓result => ⌜inbetween start (start + nb_steps * step) x result⌝⦄ := by
   -- Pure computation proof
   apply Std.Do.Triple.pure (m := Id)
@@ -1222,7 +1214,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
 -/
 noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Location :=
   -- Use explicit integer comparisons instead of a generic `compare` to ease reasoning.
-  pure (if hkz : k = 0 then
+  if hkz : k = 0 then
     match l with
     | Location.loc_Exact => l
     | Location.loc_Inexact ord =>
@@ -1236,7 +1228,7 @@ noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Location 
       | Location.loc_Inexact ord => Location.loc_Inexact ord
       | Location.loc_Exact => Location.loc_Inexact Ordering.lt
     else
-      Location.loc_Inexact Ordering.gt)
+      Location.loc_Inexact Ordering.gt
 
 /-- Specification: Odd step location is correct
 
@@ -1247,7 +1239,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
     ⦃⌜nb_steps % 2 = 1 ∧ 0 ≤ k ∧ k < nb_steps ∧
       inbetween (start + k * step) (start + (k + 1) * step) x l⌝⦄
-    new_location_odd nb_steps k l
+    (pure (new_location_odd nb_steps k l) : Id Location)
     ⦃⇓result => ⌜inbetween start (start + nb_steps * step) x result⌝⦄ := by
   -- Pure computation proof
   apply Std.Do.Triple.pure (m := Id)
@@ -1682,7 +1674,7 @@ theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
     (Hstep : 0 < step) :
     ⦃⌜0 ≤ k ∧ k < nb_steps ∧
       inbetween (start + k * step) (start + (k + 1) * step) x l⌝⦄
-    new_location nb_steps k l
+    (pure (new_location nb_steps k l) : Id Location)
     ⦃⇓result => ⌜inbetween start (start + nb_steps * step) x result⌝⦄ := by
   -- Split on parity and reuse the corresponding correctness lemmas
   by_cases He : nb_steps % 2 = 0
@@ -2708,7 +2700,10 @@ theorem inbetween_float_unique
         | inbetween_Inexact ord' _ hcmp' =>
             -- Same midpoint, compare is deterministic ⇒ orderings equal
             have hord : ord = ord' := by
-              simpa [hcmp] using hcmp'
+              -- Both hcmp and hcmp' have form `compare x mid = _`
+              -- Use transitivity: ord = compare x mid = ord'
+              have := hcmp.symm.trans hcmp'
+              exact this
             simpa [hord]
   exact And.intro hmeq hleq
 

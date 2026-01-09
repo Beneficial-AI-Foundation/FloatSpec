@@ -7575,7 +7575,7 @@ theorem ulp_le
   -- Apply the monotone lemma on nonnegative inputs to |x| ≤ |y|.
   have hpos := (ulp_le_pos (beta := beta) (fexp := fexp)
                   (x := |x|) (y := |y|)
-                  (hx := abs_nonneg x) (hxy := hxy)) hβ
+                  (hx := abs_nonneg x) (hxy := hxy)) hβ True.intro
   have hpos_run : (ulp beta fexp |x|) ≤ (ulp beta fexp |y|) := by
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hpos
   -- Transport along ulp_abs equalities.
@@ -8385,9 +8385,8 @@ private theorem round_UP_DN_ulp_theorem
         · set m : Int := (FloatSpec.Core.Raux.mag beta (-d')) with hm
           have hpred_run' : (pred_pos (beta := beta) (fexp := fexp) (-d'))
                 = (-d') - (beta : ℝ) ^ (fexp (m - 1)) := by
-            unfold pred_pos; rw [if_pos hboundary']
-            have hm1 : (FloatSpec.Core.Raux.mag beta (-d')) - 1 = m - 1 := by simp [hm]
-            simp [hm1]
+            unfold pred_pos
+            rw [if_pos hboundary']
           have hulp_boundary' :
               (ulp (beta := beta) (fexp := fexp) (-d')) = (beta : ℝ) ^ (fexp (m - 1)) := by
             have hb := ulp_at_pos_boundary_theorem (beta := beta) (fexp := fexp)
@@ -8395,7 +8394,12 @@ private theorem round_UP_DN_ulp_theorem
                             have : d' < 0 := lt_of_not_ge hd0'
                             simpa using (neg_pos.mpr this)) (hxeq := by simpa [hm] using hboundary')
             have hrun := hb hβ
-            simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
+            -- mag beta (-d') = mag beta d' by definition, and m = mag beta (-d')
+            have hm_eq : FloatSpec.Core.Raux.mag beta d' = m := by
+              simp only [hm, FloatSpec.Core.Raux.mag, abs_neg]
+              simp only [neg_eq_zero]
+            simp only [wp, PostCond.noThrow, Id.run, bind, pure, hm_eq] at hrun
+            exact hrun
           have hulp_opp' : (ulp (beta := beta) (fexp := fexp) (-d'))
                 = (ulp (beta := beta) (fexp := fexp) d') := by
             simpa [wp, PostCond.noThrow, Id.run, bind, pure]
@@ -8411,7 +8415,8 @@ private theorem round_UP_DN_ulp_theorem
             _ = d' + (ulp (beta := beta) (fexp := fexp) d') := by simpa [hulp_opp']
         · have hpred_run' : (pred_pos (beta := beta) (fexp := fexp) (-d'))
                 = (-d') - (ulp (beta := beta) (fexp := fexp) (-d')) := by
-            unfold pred_pos; rw [if_neg hboundary']; simp [Id.run, bind, pure]
+            unfold pred_pos
+            rw [if_neg hboundary']
           have hulp_opp' : (ulp (beta := beta) (fexp := fexp) (-d'))
                 = (ulp (beta := beta) (fexp := fexp) d') := by
             simpa [wp, PostCond.noThrow, Id.run, bind, pure]

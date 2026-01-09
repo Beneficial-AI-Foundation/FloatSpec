@@ -319,9 +319,10 @@ base and precision.
 -/
 theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta ∧ FTZ_format prec emin beta x⌝⦄
-    FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x
+    (pure (FloatSpec.Core.FLX.FLXN_format (prec := prec) beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   rcases hpre with ⟨hβ, hx_ftz⟩
   -- From FTZ_format, obtain generic_format under FTZ_exp
   have hx_gf :
@@ -408,7 +409,7 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
             (lt_add_of_pos_right M (by exact Int.zero_lt_one))
         simpa [hM] using And.intro hβ hlt
       -- Discharge the Hoare triple and get the raw inequality
-      simpa [FloatSpec.Core.Raux.abs_val] using (hxlt hpre')
+      simpa [FloatSpec.Core.Raux.abs_val] using (hxlt hpre'.1 hpre'.2 trivial)
     -- Pointwise exponent inequality on (e1, M+1]: FTZ_exp e = FLX_exp e
     have hle_band : ∀ e : Int, e1 < e ∧ e ≤ (M + 1) →
         FTZ_exp prec emin e ≤ FloatSpec.Core.FLX.FLX_exp prec e := by
@@ -541,7 +542,7 @@ theorem round_FTZ_FLX (beta : Int)
     have hpow_pos : 0 < (beta : ℝ) ^ (emin + prec) := zpow_pos hbposR _
     have hx_pos : 0 < |x| := lt_of_lt_of_le hpow_pos hx_lb
     have hx_ne : x ≠ 0 := (abs_pos).1 hx_pos
-    have hcall := h ⟨hβ, hx_ne, le_rfl⟩
+    have hcall := h hβ hx_ne le_rfl trivial
     simpa [FloatSpec.Core.Raux.abs_val, hM, wp, PostCond.noThrow, Id.run, pure, sub_eq_add_neg]
       using hcall
   -- Obtain the strict upper bound |x| < β^(M + 1)
@@ -550,7 +551,7 @@ theorem round_FTZ_FLX (beta : Int)
     have hlt : (FloatSpec.Core.Raux.mag beta x) < M + 1 := by
       have : M ≤ M := le_rfl
       exact (Int.lt_add_one_iff).2 this
-    have hres := h ⟨hβ, hlt⟩
+    have hres := h hβ hlt trivial
     simpa [FloatSpec.Core.Raux.abs_val, FloatSpec.Core.Raux.mag, hM, wp, PostCond.noThrow, Id.run, pure]
       using hres
   -- Now compare powers: β^(emin+prec) < β^(M+1) ⇒ emin+prec + 1 ≤ M+1 ⇒ emin+prec ≤ M
@@ -559,7 +560,7 @@ theorem round_FTZ_FLX (beta : Int)
   have hE_le_Mp1 : (emin + prec + 1) ≤ (M + 1) := by
     -- Use the calibrated comparison lemma on powers
     have h := FloatSpec.Core.Raux.bpow_lt_bpow (beta := beta) (e1 := (emin + prec + 1)) (e2 := (M + 1))
-    have hres := h ⟨hβ, by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt_pow'⟩
+    have hres := h hβ (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt_pow') trivial
     simpa [FloatSpec.Core.Raux.bpow_lt_bpow_pair, wp, PostCond.noThrow, Id.run, pure]
       using hres
   have hE_le_M : (emin + prec) ≤ M := by
@@ -713,7 +714,7 @@ Theorem generic_format_FTZ :
 -/
 theorem generic_format_FTZ (beta : Int) (x : ℝ) :
     ⦃⌜FTZ_format prec emin beta x⌝⦄
-    FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x
+    (pure (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure, FTZ_format] at hx ⊢
@@ -761,7 +762,7 @@ Lean (spec): The ULP under FTZ at 0 equals {lit}`β^emin`.
 -/
 theorem ulp_FTZ_0 (beta : Int) :
     ⦃⌜True⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0
+    (pure (FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
   intro _
   classical
@@ -801,7 +802,7 @@ theorem ulp_FTZ_0 (beta : Int) :
         (beta := beta) (fexp := FTZ_exp prec emin) (n := n) (m := emin)
         hnle h_le_wit)
   -- Compute ulp at 0 using the `some` branch and rewrite the exponent.
-  have : FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0 = pure ((beta : ℝ) ^ emin) := by
+  have : FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0 = ((beta : ℝ) ^ emin) := by
     unfold FloatSpec.Core.Ulp.ulp
     -- Select the `some n` branch and rewrite its exponent to `emin`.
     simpa [hneg_eq, hfexp_eq, hfexp_emin]

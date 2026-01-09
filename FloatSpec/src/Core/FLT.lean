@@ -420,9 +420,10 @@ Theorem generic_format_FLT_FLX :
 -/
 theorem generic_format_FLT_FLX (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec) ≤ |x| ∧ (generic_format beta (FLX.FLX_exp prec) x)⌝⦄
-    generic_format beta (FLT_exp prec emin) x
+    (pure (generic_format beta (FLT_exp prec emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hx_lb, hx_fmt⟩
   -- Use the generic inclusion principle with a global lower bound e1 := emin + prec
   -- For e ≥ emin + prec, we have FLT_exp e = e - prec = FLX_exp prec e
@@ -453,31 +454,38 @@ Theorem cexp_FLT_FLX :
 -/
 theorem cexp_FLT_FLX (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec) ≤ |x|⌝⦄
-    FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x
+    (pure (FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x) : Id ℤ)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.cexp beta (FLX.FLX_exp prec) x)⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hx_lb⟩
   -- Notation for the logarithmic magnitude
   set M : Int := (FloatSpec.Core.Raux.mag beta x) with hM
   -- Strict upper bound from magnitude: |x| < β^(M + 1)
   have hx_upper : |x| < (beta : ℝ) ^ (M + 1) := by
-    -- Precondition for `bpow_mag_gt` with e := M + 1
-    have hlt : (FloatSpec.Core.Raux.mag beta x) < M + 1 := by
-      -- M < M + 1 holds trivially
-      have : M ≤ M := le_rfl
-      exact (Int.lt_add_one_iff).2 this
-    have h := FloatSpec.Core.Raux.bpow_mag_gt (beta := beta) (x := x) (e := M + 1) ⟨hβ, hlt⟩
-    simpa [FloatSpec.Core.Raux.abs_val, FloatSpec.Core.Raux.mag, M, wp, PostCond.noThrow, Id.run, pure]
-      using h
+    -- Get the Hoare triple with separate arguments for beta > 1 and mag < e
+    have hlt_M : (FloatSpec.Core.Raux.mag beta x) < (M + 1) := by
+      have : M < M + 1 := by
+        simpa [add_comm, add_left_comm, add_assoc] using
+          (lt_add_of_pos_right M (by exact Int.zero_lt_one))
+      simpa [hM] using this
+    have hxlt := FloatSpec.Core.Raux.bpow_mag_gt (beta := beta) (x := x) (e := M + 1) hβ hlt_M
+    -- Apply with trivial precondition and unwrap the Hoare triple
+    have hxlt' := hxlt trivial
+    simpa [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, pure] using hxlt'
   -- Combine the given lower bound with the strict upper bound to compare powers
   have hpow_strict : (beta : ℝ) ^ (emin + prec) < (beta : ℝ) ^ (M + 1) :=
     lt_of_le_of_lt hx_lb hx_upper
   -- From β^(e1) < β^(M+1), deduce (e1 + 1) ≤ (M + 1) ⇒ e1 ≤ M
   have h_e1p1_le_Mp1 : (emin + prec + 1) ≤ (M + 1) := by
-    have h := FloatSpec.Core.Raux.bpow_lt_bpow (beta := beta) (e1 := (emin + prec + 1)) (e2 := (M + 1))
-    have := h ⟨hβ, by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hpow_strict⟩
-    simpa [FloatSpec.Core.Raux.bpow_lt_bpow_pair, wp, PostCond.noThrow, Id.run, pure]
-      using this
+    -- bpow_lt_bpow requires (beta : ℝ) ^ (e1 - 1) < (beta : ℝ) ^ e2
+    -- We need: (emin + prec + 1 - 1) = emin + prec, which matches hpow_strict
+    have hpow_adj : (beta : ℝ) ^ ((emin + prec + 1) - 1) < (beta : ℝ) ^ (M + 1) := by
+      simp only [add_sub_cancel_right]
+      exact hpow_strict
+    have h := FloatSpec.Core.Raux.bpow_lt_bpow (beta := beta) (e1 := (emin + prec + 1)) (e2 := (M + 1)) hβ hpow_adj
+    have h' := h trivial
+    simpa [wp, PostCond.noThrow, pure] using h'
   have h_e1_le_M : (emin + prec) ≤ M := by
     -- Subtract 1 on both sides
     have := sub_le_sub_right h_e1p1_le_Mp1 (1 : Int)
@@ -569,9 +577,10 @@ Theorem generic_format_FIX_FLT :
 -/
 theorem generic_format_FIX_FLT (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (generic_format beta (FLT_exp prec emin) x)⌝⦄
-    generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x
+    (pure (generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hx⟩
   classical
   -- Expand the hypothesis to the canonical F2R representation under FLT_exp
@@ -647,9 +656,10 @@ Theorem generic_format_FLT_FIX :
 -/
 theorem generic_format_FLT_FIX (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ |x| ≤ (beta : ℝ) ^ (emin + prec) ∧ (generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x)⌝⦄
-    generic_format beta (FLT_exp prec emin) x
+    (pure (generic_format beta (FLT_exp prec emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hx_le, hx_fmt⟩
   -- Use inclusion under an upper bound with e2 := emin + prec
   have hle_all : ∀ e : Int, e ≤ (emin + prec) → (FLT_exp prec emin e) ≤ (FloatSpec.Core.FIX.FIX_exp (emin := emin) e) := by
@@ -684,9 +694,10 @@ Lean (spec): The ULP under FLT at 0 equals {lit}`β^emin`.
 -/
 theorem ulp_FLT_0 (beta : Int) :
     ⦃⌜True⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) 0
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) 0) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   classical
   -- From FLT, `negligible_exp` always returns a witness `n` with `n ≤ emin`.
   have ⟨n, hsome, hn_le_emin⟩ :=
@@ -695,7 +706,7 @@ theorem ulp_FLT_0 (beta : Int) :
   -- Under the `some` branch, ulp 0 = β^(fexp n).
   have :
       (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) 0)
-        = pure ((beta : ℝ) ^ (FLT_exp prec emin n)) := by
+        = ((beta : ℝ) ^ (FLT_exp prec emin n)) := by
     simp [FloatSpec.Core.Ulp.ulp, hsome]
   -- Show that for any `n ≤ emin`, FLT_exp n = emin.
   have h_fexp_n_eq : FLT_exp prec emin n = emin := by
@@ -718,9 +729,10 @@ Lean (spec): If {lit}`|x| < β^(emin+prec)`, then ULP under FLT at x equals {lit
 -/
 theorem ulp_FLT_small (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ |x| < (beta : ℝ) ^ (emin + prec)⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hx_lt⟩
   classical
   by_cases hx0 : x = 0
@@ -752,9 +764,9 @@ theorem ulp_FLT_small (beta : Int) (x : ℝ) :
     set M : Int := (FloatSpec.Core.Raux.mag beta x) with hM
     -- From |x| < β^(emin+prec), deduce mag x ≤ emin + prec.
     have hM_le : M ≤ (emin + prec) := by
-      -- Use `mag_le_bpow` and unwrap the Hoare triple.
-      have := FloatSpec.Core.Raux.mag_le_bpow (beta := beta) (x := x) (e := (emin + prec))
-      have hcall := this ⟨hβ, hx_ne, hx_lt⟩
+      -- Use `mag_le_bpow` with separate arguments and unwrap the Hoare triple.
+      have hspec := FloatSpec.Core.Raux.mag_le_bpow (beta := beta) (x := x) (e := (emin + prec)) hβ hx_ne hx_lt
+      have hcall := hspec trivial
       simpa [FloatSpec.Core.Raux.mag, hM, wp, PostCond.noThrow, Id.run, pure]
         using hcall
     -- Hence M - prec ≤ emin, so FLT_exp M = emin.
@@ -775,11 +787,12 @@ theorem ulp_FLT_small (beta : Int) (x : ℝ) :
         using hfexp_eq
     have hxrun : (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x) = (beta : ℝ) ^ emin := by
       unfold FloatSpec.Core.Ulp.ulp
-      -- Use Id.run to align cexp
+      -- Use transitivity to show cexp = emin
       have hcexp_eq : FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x = emin := by
-        simp only [Id.run] at hcexp_run hfexp_mag_eq
-        simp only [← hM, hfexp_mag_eq] at hcexp_run
-        exact hcexp_run
+        calc FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x
+          = FLT_exp prec emin (FloatSpec.Core.Raux.mag beta x) := hcexp_run
+          _ = FLT_exp prec emin M := by rw [hM]
+          _ = emin := hfexp_eq
       simp [hx_ne, hcexp_eq]
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hxrun
 
@@ -792,9 +805,10 @@ Theorem cexp_FLT_FIX :
 -/
 theorem cexp_FLT_FIX (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ |x| < (beta : ℝ) ^ (emin + prec)⌝⦄
-    FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x
+    (pure (FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x) : Id ℤ)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.cexp beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x)⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hx_ne, hx_lt⟩
   classical
   -- Let M be the logarithmic magnitude of x
@@ -802,7 +816,8 @@ theorem cexp_FLT_FIX (beta : Int) (x : ℝ) :
   -- From |x| < β^(emin+prec), deduce mag x ≤ emin + prec
   have hM_le : M ≤ (emin + prec) := by
     have := FloatSpec.Core.Raux.mag_le_bpow (beta := beta) (x := x) (e := (emin + prec))
-    have hcall := this ⟨hβ, hx_ne, hx_lt⟩
+    have hspec := this hβ hx_ne hx_lt
+    have hcall := hspec trivial
     simpa [FloatSpec.Core.Raux.mag, hM, wp, PostCond.noThrow, Id.run, pure] using hcall
   -- Hence M - prec ≤ emin, so FLT_exp M = emin
   have hsub_le : M - prec ≤ emin := by
@@ -841,9 +856,10 @@ Theorem generic_format_FLT_1 :
 -/
 theorem generic_format_FLT_1 (beta : Int) :
     ⦃⌜beta > 1 ∧ emin ≤ 0⌝⦄
-    generic_format beta (FLT_exp prec emin) 1
+    (pure (generic_format beta (FLT_exp prec emin) 1) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hemin_le_zero⟩
   -- We will use `generic_format_bpow` at exponent e = 0.
   -- It requires `FLT_exp (0+1) ≤ 0`, which follows from `prec > 0` and `emin ≤ 0`.
@@ -871,9 +887,10 @@ Theorem generic_format_FLX_FLT :
 -/
 theorem generic_format_FLX_FLT (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (generic_format beta (FLT_exp prec emin) x)⌝⦄
-    generic_format beta (FLX.FLX_exp prec) x
+    (pure (generic_format beta (FLX.FLX_exp prec) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
+  simp only [wp, PostCond.noThrow, pure]
   rcases hpre with ⟨hβ, hx⟩
   -- Use the generic inclusion on magnitude: FLX_exp ≤ FLT_exp pointwise
   have hpoint : x ≠ 0 →
@@ -908,7 +925,7 @@ Theorem ulp_FLT_le:
 -/
 theorem ulp_FLT_le (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec - 1) ≤ |x|⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x) : Id ℝ)
     ⦃⇓r => ⌜r ≤ |x| * (beta : ℝ) ^ (1 - prec)⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_lb⟩
@@ -956,9 +973,8 @@ theorem ulp_FLT_le (beta : Int) (x : ℝ) :
       have hfexp_eq : FLT_exp prec emin M = M - prec := by
         simpa [FLT_exp, max_eq_left hcase]
       -- From `mag` lower bound: β^(M - 1) ≤ |x|
-      -- From `mag` lower bound: β^(M - 1) ≤ |x|
       have hcall :=
-        (FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := M)) ⟨hβ, hx_ne, le_rfl⟩
+        (FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := M) hβ hx_ne le_rfl) trivial
       -- Simplify the returned triple and rewrite the exponent
       have hM_lb : (beta : ℝ) ^ (M - 1) ≤ |x| := by
         simpa [FloatSpec.Core.Raux.abs_val, hM, wp, PostCond.noThrow, Id.run, pure, sub_eq_add_neg]
@@ -996,7 +1012,7 @@ Theorem ulp_FLT_gt:
 -/
 theorem ulp_FLT_gt (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x) : Id ℝ)
     ⦃⇓r => ⌜|x| * (beta : ℝ) ^ (-prec) ≤ r⌝⦄ := by
   intro hβ
   classical
@@ -1126,9 +1142,9 @@ Lemma ulp_FLT_exact_shift:
 theorem ulp_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ emin + prec ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) ≤ e⌝⦄
     (do
-      let u1 ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
-      let u2 ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x
-      pure (u1, u2))
+      let u1 ← pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
+      let u2 ← pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x)
+      pure (u1, u2) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_ne, hMx_lb, hshift⟩
@@ -1312,7 +1328,7 @@ theorem round_FLT_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     have hpow_pos : 0 < (beta : ℝ) ^ (emin + prec) := zpow_pos hbposR _
     have hx_pos : 0 < |x| := lt_of_lt_of_le hpow_pos hx_lb
     have hx_ne : x ≠ 0 := (abs_pos).1 hx_pos
-    have hcall := h ⟨hβ, hx_ne, le_rfl⟩
+    have hcall := h hβ hx_ne le_rfl trivial
     simpa [FloatSpec.Core.Raux.abs_val, hM, wp, PostCond.noThrow, Id.run, pure, sub_eq_add_neg]
       using hcall
   -- Obtain the strict upper bound |x| < β^(M + 1)
@@ -1321,18 +1337,18 @@ theorem round_FLT_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     have hlt : (FloatSpec.Core.Raux.mag beta x) < M + 1 := by
       have : M ≤ M := le_rfl
       exact (Int.lt_add_one_iff).2 this
-    have hres := h ⟨hβ, hlt⟩
+    have hres := h hβ hlt
     simpa [FloatSpec.Core.Raux.abs_val, FloatSpec.Core.Raux.mag, hM, wp, PostCond.noThrow, Id.run, pure]
-      using hres
+      using (hres trivial)
   -- Now we can compare powers: β^(emin+prec) < β^(M+1) ⇒ emin+prec + 1 ≤ M+1 ⇒ emin+prec ≤ M
   have hlt_pow' : (beta : ℝ) ^ (emin + prec) < (beta : ℝ) ^ (M + 1) :=
     lt_of_le_of_lt hx_lb hx_upper
   have hE_le_Mp1 : (emin + prec + 1) ≤ (M + 1) := by
     -- Use the calibrated comparison lemma on powers
     have h := FloatSpec.Core.Raux.bpow_lt_bpow (beta := beta) (e1 := (emin + prec + 1)) (e2 := (M + 1))
-    have hres := h ⟨hβ, by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt_pow'⟩
+    have hres := h hβ (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt_pow')
     simpa [FloatSpec.Core.Raux.bpow_lt_bpow_pair, wp, PostCond.noThrow, Id.run, pure]
-      using hres
+      using (hres trivial)
   have hE_le_M : (emin + prec) ≤ M := by
     -- Subtract 1 on both sides of the previous inequality
     have := sub_le_sub_right hE_le_Mp1 (1 : Int)
@@ -1378,9 +1394,9 @@ Lemma succ_FLT_exact_shift_pos:
 theorem succ_FLT_exact_shift_pos (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ 0 < x ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
-      let s1 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
-      let s2 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) x
-      pure (s1, s2))
+      let s1 ← pure (FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
+      let s2 ← pure (FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) x)
+      pure (s1, s2) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_pos, hMx_lb1, hshift1⟩
@@ -1456,9 +1472,9 @@ Lemma succ_FLT_exact_shift:
 private theorem pred_FLT_exact_shift_pos_aux (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ 0 < x ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
-      let p1 ← FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
-      let p2 ← FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x
-      pure (p1, p2))
+      let p1 ← pure (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
+      let p2 ← pure (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x)
+      pure (p1, p2) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_pos, hMx_lb1, hshift1⟩
@@ -1512,9 +1528,9 @@ private theorem pred_FLT_exact_shift_pos_aux (beta : Int) (x : ℝ) (e : Int) :
 theorem succ_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
-      let s1 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
-      let s2 ← FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) x
-      pure (s1, s2))
+      let s1 ← pure (FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
+      let s2 ← pure (FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) x)
+      pure (s1, s2) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_ne, hMx_lb1, hshift1⟩
@@ -1543,7 +1559,6 @@ theorem succ_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
         simp only [FloatSpec.Core.Raux.mag, Id.run, abs_neg, hxne, hnxne, ite_false]
       have hpos_pre : beta > 1 ∧ 0 < -x ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta (-x)) ∧
                       emin + prec - (FloatSpec.Core.Raux.mag beta (-x)) + 1 ≤ e := by
-        simp only [Id.run] at hMx_lb1 hshift1 ⊢
         rw [hmag_eq]
         exact ⟨hβ, hxneg_pos, hMx_lb1, hshift1⟩
       have := pred_FLT_exact_shift_pos_aux (prec := prec) (emin := emin) (beta := beta) (-x) e hpos_pre
@@ -1576,9 +1591,9 @@ Lemma pred_FLT_exact_shift:
 theorem pred_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
-      let p1 ← FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e)
-      let p2 ← FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x
-      pure (p1, p2))
+      let p1 ← pure (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
+      let p2 ← pure (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x)
+      pure (p1, p2) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hx_ne, hMx_lb1, hshift1⟩
@@ -1612,7 +1627,6 @@ theorem pred_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
       simp only [FloatSpec.Core.Raux.mag, Id.run, abs_neg, hxne, hnxne, ite_false]
     have hpos_pre : beta > 1 ∧ 0 < -x ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta (-x)) ∧
                     emin + prec - (FloatSpec.Core.Raux.mag beta (-x)) + 1 ≤ e := by
-      simp only [Id.run] at hMx_lb1 hshift1 ⊢
       rw [hmag_eq]
       exact ⟨hβ, hxneg_pos, hMx_lb1, hshift1⟩
     have hsucc_pos :
@@ -1641,9 +1655,9 @@ Theorem ulp_FLT_pred_pos:
 theorem ulp_FLT_pred_pos (beta : Int) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (FloatSpec.Core.Generic_fmt.generic_format beta (FLT_exp prec emin) x) ∧ 0 ≤ x⌝⦄
     (do
-      let up ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) ((FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x))
-      let ux ← FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x
-      pure (up, ux))
+      let up ← pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) ((FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x)))
+      let ux ← pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x)
+      pure (up, ux) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 ∨ (x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) ∧ p.1 = p.2 / (beta : ℝ))⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, Fx, hx0⟩

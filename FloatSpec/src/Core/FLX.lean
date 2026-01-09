@@ -67,11 +67,11 @@ def FLX_exp_correct_check (e : Int) : Bool :=
 @[spec]
 theorem FLX_exp_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FLX_exp_correct_check prec e
+    (pure (FLX_exp_correct_check prec e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Unfold and compute: FLX_exp prec e = e - prec by definition
-  simp [FLX_exp_correct_check, FLX_exp]
+  simp [wp, PostCond.noThrow, pure, FLX_exp_correct_check, FLX_exp]
 
 /-- Fixed-precision format predicate
 
@@ -100,13 +100,13 @@ def FLXN_format (beta : Int) (x : ℝ) : Prop :=
 @[spec]
 theorem FLX_format_spec (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
-    FLX_format prec beta x
+    (pure (FLX_format prec beta x) : Id Prop)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x)⌝⦄ := by
   intro _
   -- By definition, `FLX_format` is `generic_format beta (FLX_exp prec)`
   unfold FLX_format
   -- Reduce the Id-triple and compute both sides to the same run
-  simp [wp, PostCond.noThrow, Id.run]
+  simp [wp, PostCond.noThrow, pure, Id.run]
 
 /-- Specification: FLX exponent function correctness
 
@@ -117,10 +117,10 @@ theorem FLX_format_spec (beta : Int) (x : ℝ) :
 @[spec]
 theorem FLX_exp_correct_spec (e : Int) :
     ⦃⌜True⌝⦄
-    FLX_exp_correct_check prec e
+    (pure (FLX_exp_correct_check prec e) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
-  simp [FLX_exp_correct_check, FLX_exp]
+  simp [wp, PostCond.noThrow, pure, FLX_exp_correct_check, FLX_exp]
 
 /-- Check if zero is in FLX format
 
@@ -130,7 +130,7 @@ theorem FLX_exp_correct_spec (e : Int) :
 -/
 noncomputable def FLX_format_0_check (beta : Int) : Bool :=
   -- Concrete arithmetic check: Ztrunc 0 = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (0 : ℝ))) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ))) == (0 : Int)
 
 /-- Specification: Zero is in FLX format
 
@@ -141,7 +141,7 @@ noncomputable def FLX_format_0_check (beta : Int) : Bool :=
 @[spec]
 theorem FLX_format_0_spec (beta : Int) :
     ⦃⌜beta > 1⌝⦄
-    FLX_format_0_check beta
+    (pure (FLX_format_0_check beta) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FLX_format_0_check
@@ -158,7 +158,7 @@ theorem FLX_format_0_spec (beta : Int) :
 -/
 noncomputable def FLX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_opp: Ztrunc(-x) + Ztrunc(x) = 0
-  pure (((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x)) == (0 : Int))
+  ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x)) == (0 : Int)
 
 /-- Specification: FLX format closed under negation
 
@@ -168,8 +168,8 @@ noncomputable def FLX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
 -/
 @[spec]
 theorem FLX_format_opp_spec (beta : Int) (x : ℝ) :
-    ⦃⌜(FLX_format prec beta x).run⌝⦄
-    FLX_format_opp_check beta x
+    ⦃⌜FLX_format prec beta x⌝⦄
+    (pure (FLX_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   unfold FLX_format_opp_check
@@ -188,8 +188,8 @@ theorem FLX_format_opp_spec (beta : Int) (x : ℝ) :
 -/
 noncomputable def FLX_format_abs_check (beta : Int) (x : ℝ) : Bool :=
   -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
-  pure (((FloatSpec.Core.Raux.Ztrunc (abs x)))
-        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).natAbs))
+  ((FloatSpec.Core.Raux.Ztrunc (abs x)))
+        == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).natAbs)
 
 /-- Specification: FLX format closed under absolute value
 
@@ -199,8 +199,8 @@ noncomputable def FLX_format_abs_check (beta : Int) (x : ℝ) : Bool :=
 -/
 @[spec]
 theorem FLX_format_abs_spec (beta : Int) (x : ℝ) :
-    ⦃⌜(FLX_format prec beta x).run⌝⦄
-    FLX_format_abs_check beta x
+    ⦃⌜FLX_format prec beta x⌝⦄
+    (pure (FLX_format_abs_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   -- Local helper: compute Ztrunc(|x|) in terms of Ztrunc(x).
@@ -307,11 +307,12 @@ Theorem generic_format_FLX :
   forall x, FLX_format x -> generic_format beta FLX_exp x.
 -/
 theorem generic_format_FLX (beta : Int) (x : ℝ) :
-    ⦃⌜(FLX_format prec beta x).run⌝⦄
-    FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+    ⦃⌜FLX_format prec beta x⌝⦄
+    (pure (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simpa [FLX_format]
+  simp only [wp, PostCond.noThrow, pure]
+  simpa [FLX_format] using hx
 
 end FloatSpec.Core.FLX
 
@@ -325,11 +326,12 @@ Theorem generic_format_FLXN:
   forall x, FLXN_format x -> generic_format beta FLX_exp x.
 -/
 theorem generic_format_FLXN (beta : Int) (x : ℝ) :
-    ⦃⌜(FLXN_format prec beta x).run⌝⦄
-    FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+    ⦃⌜FLXN_format prec beta x⌝⦄
+    (pure (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
-  simpa [FLXN_format, FLX_format]
+  simp only [wp, PostCond.noThrow, pure]
+  simpa [FLXN_format, FLX_format] using hx
 
 /-
 Coq (FLX.v):
@@ -337,10 +339,11 @@ Theorem FLXN_format_generic:
   forall x, generic_format beta FLX_exp x -> FLXN_format x.
 -/
 theorem FLXN_format_generic (beta : Int) (x : ℝ) :
-    ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x)⌝⦄
-    FLXN_format prec beta x
+    ⦃⌜FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x⌝⦄
+    (pure (FLXN_format prec beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
+  simp only [wp, PostCond.noThrow, pure]
   simpa [FLXN_format, FLX_format] using hx
 
 /-
@@ -355,7 +358,7 @@ Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FLX_format,
 then x is in FIX_format with minimal exponent (e - prec).
 -/
 theorem FIX_format_FLX (beta : Int) (x : ℝ) (e : Int) :
-    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) < |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ (FLX_format prec beta x).run⌝⦄
+    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) < |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ FLX_format prec beta x⌝⦄
     (pure (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
@@ -437,7 +440,7 @@ Theorem FLXN_format_satisfies_any :
 theorem FLXN_format_satisfies_any (beta : Int)
     [Valid_exp beta (FLX_exp prec)] :
     FloatSpec.Core.Generic_fmt.satisfies_any
-      (fun y => (FLXN_format prec beta y).run) := by
+      (fun y => FLXN_format prec beta y) := by
   simpa [FLXN_format, FLX_format]
     using
       FloatSpec.Core.Generic_fmt.generic_format_satisfies_any
@@ -458,7 +461,7 @@ Theorem FLX_format_satisfies_any :
 -/
 theorem FLX_format_satisfies_any (beta : Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)] :
-    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => (FLX_format prec beta y).run) := by
+    FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FLX_format prec beta y) := by
   simpa [FLX_format]
     using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLX_exp prec)
 
@@ -476,9 +479,10 @@ so {lit}`ulp` at zero evaluates to 0.
 -/
 theorem ulp_FLX_0 (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜True⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) 0
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) 0) : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   intro _; classical
+  simp only [wp, PostCond.noThrow, pure]
   -- Show that `negligible_exp (FLX_exp prec) = none` when `0 < prec`.
   have hprec : 0 < prec := (Prec_gt_0.pos : 0 < prec)
   -- Use the specification lemma for `negligible_exp`.
@@ -501,7 +505,7 @@ theorem ulp_FLX_0 (beta : Int) [Prec_gt_0 prec] :
         cases (lt_irrefl (a := n)) (lt_of_le_of_lt hnle (hlt_all n))
   -- Evaluate `ulp` at zero using the computed `none` branch.
   unfold FloatSpec.Core.Ulp.ulp
-  simp [wp, PostCond.noThrow, Id.run, bind, pure, hnone]
+  simp [Id.run, bind, pure, hnone]
 
 /-- Coq ({lit}`FLX.v`):
 Lemma {lit}`ulp_FLX_1`: {lit}`ulp beta FLX_exp 1 = bpow (-prec + 1)`.
@@ -510,9 +514,10 @@ Lean (spec): The ULP under FLX at 1 equals {lit}`β^(1 - prec)`.
 -/
 theorem ulp_FLX_1 (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜1 < beta⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) 1
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) 1) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ (1 - prec)⌝⦄ := by
   intro hβ; classical
+  simp only [wp, PostCond.noThrow, pure]
   -- Provide the bridge from `[Prec_gt_0 prec]` to `Fact (0 < prec)` for `Valid_exp`.
   have _instPrec : Fact (0 < prec) := ⟨(Prec_gt_0.pos : 0 < prec)⟩
   -- Evaluate `ulp` at a nonzero input: `1 ≠ 0`.
@@ -530,7 +535,7 @@ theorem ulp_FLX_1 (beta : Int) [Prec_gt_0 prec] :
   have hmag1 : (FloatSpec.Core.Raux.mag beta 1) = 1 := by
     have hmag_pow0 := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := 0)
     have hrun : (FloatSpec.Core.Raux.mag beta ((beta : ℝ) ^ 0)) = 0 + 1 := by
-      simpa [wp, PostCond.noThrow, Id.run, pure] using (hmag_pow0 hβ)
+      simpa [wp, PostCond.noThrow, Id.run, pure] using (hmag_pow0 hβ) True.intro
     simp only [zpow_zero, zero_add] at hrun
     exact hrun
   -- Hence `cexp … 1 = FLX_exp prec 1 = 1 - prec`.
@@ -546,8 +551,7 @@ theorem ulp_FLX_1 (beta : Int) [Prec_gt_0 prec] :
   -- Use that cexp ... 1 = 1 - prec
   have hcexp_Id : FloatSpec.Core.Generic_fmt.cexp (beta := beta) (fexp := FLX_exp prec) 1
                 = (1 - prec : Int) := by
-    show (FloatSpec.Core.Generic_fmt.cexp beta (FLX_exp prec) 1) = (1 - prec)
-    ext; exact hcexp_eq
+    exact hcexp_eq
   rw [hcexp_Id]
 
 /-- Coq ({lit}`FLX.v`):
@@ -558,9 +562,10 @@ Lean (spec): ULP under FLX is bounded above by {lit}`|x| * β^(1 - prec)`.
 -/
 theorem ulp_FLX_le (beta : Int) [Prec_gt_0 prec] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x) : Id ℝ)
     ⦃⇓r => ⌜r ≤ |x| * (beta : ℝ) ^ (1 - prec)⌝⦄ := by
   intro hβ; classical
+  simp only [wp, PostCond.noThrow, pure]
   -- Positivity facts for the radix
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
@@ -603,7 +608,7 @@ theorem ulp_FLX_le (beta : Int) [Prec_gt_0 prec] (x : ℝ) :
     have hlow : (beta : ℝ) ^ (m - 1) ≤ |x| := by
       have htr := FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := m)
       simpa [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run, hm, sub_eq_add_neg]
-        using htr ⟨hβ, hxne, le_rfl⟩
+        using htr hβ hxne le_rfl True.intro
     -- Multiply both sides by β^(-(prec - 1)) (positive), then rewrite
     have hnonneg : 0 ≤ (beta : ℝ) ^ (-(prec - 1)) := le_of_lt (zpow_pos hbpos (-(prec - 1)))
     have hmul :
@@ -638,9 +643,10 @@ Lean (spec): ULP under FLX is bounded below by `|x| * β^(-prec)`.
 -/
 theorem ulp_FLX_ge (beta : Int) (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x) : Id ℝ)
     ⦃⇓r => ⌜|x| * (beta : ℝ) ^ (-prec) ≤ r⌝⦄ := by
   intro hβ; classical
+  simp only [wp, PostCond.noThrow, pure]
   -- Base positivity facts from 1 < beta
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
@@ -760,10 +766,8 @@ Lean (spec): ULP under FLX scales exactly under multiplication by β^e.
 -/
 theorem ulp_FLX_exact_shift (beta : Int) [Prec_gt_0 prec] (x : ℝ) (e : Int) :
     ⦃⌜1 < beta⌝⦄
-    (do
-      let u1 ← FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
-      let u2 ← FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x
-      pure (u1, u2))
+    (pure (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e),
+           FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hβ; classical
   -- Basic facts about the base β
@@ -935,9 +939,10 @@ Theorem FLX_format_generic :
 -/
 theorem FLX_format_generic (beta : Int) (x : ℝ) :
     ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x)⌝⦄
-    FLX_format prec beta x
+    (pure (FLX_format prec beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
+  simp only [wp, PostCond.noThrow, pure]
   simpa [FLX_format] using hx
 
 end FloatSpec.Core.FLX
@@ -982,9 +987,10 @@ Theorem generic_format_FLX_1 :
 -/
 theorem generic_format_FLX_1 (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜1 < beta⌝⦄
-    FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) 1
+    (pure (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) 1) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hβ; classical
+  simp only [wp, PostCond.noThrow, pure]
   -- Bridge `Prec_gt_0` to a `Fact (0 < prec)` to enable `[Valid_exp]`.
   have _instPrec : Fact (0 < prec) := ⟨(Prec_gt_0.pos : 0 < prec)⟩
   -- Use the generic `generic_format_bpow'` at exponent 0 (since 1 = β^0).
@@ -1013,11 +1019,12 @@ Lean (spec): The successor at 1 under FLX equals `1 + β^(1 - prec)`.
 -/
 theorem succ_FLX_1 (beta : Int) [Prec_gt_0 prec] :
     ⦃⌜1 < beta⌝⦄
-    FloatSpec.Core.Ulp.succ beta (FLX_exp prec) 1
+    (pure (FloatSpec.Core.Ulp.succ beta (FLX_exp prec) 1) : Id ℝ)
     ⦃⇓r => ⌜r = 1 + (beta : ℝ) ^ (1 - prec)⌝⦄ := by
   intro hβ; classical
+  simp only [wp, PostCond.noThrow, pure]
   -- Evaluate `succ` at a nonnegative input (here 0 ≤ 1)
-  simp [FloatSpec.Core.Ulp.succ, wp, PostCond.noThrow, Id.run, bind, pure]
+  simp [FloatSpec.Core.Ulp.succ, Id.run, bind, pure]
   -- Reduce to rewriting `ulp` at x = 1 using `ulp_FLX_1`.
   have hulp := (ulp_FLX_1 (prec := prec) (beta := beta)) hβ
   simpa [wp, PostCond.noThrow] using hulp
@@ -1116,10 +1123,8 @@ Lean (spec): Successor under FLX scales exactly under multiplication by β^e.
 private theorem pred_FLX_exact_shift_pos_aux (beta : Int) [Prec_gt_0 prec]
     (x : ℝ) (e : Int) :
     ⦃⌜1 < beta ∧ 0 < x⌝⦄
-    (do
-      let p1 ← FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
-      let p2 ← FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x
-      pure (p1, p2))
+    (pure (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e),
+           FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hpre; classical
   rcases hpre with ⟨hβ, hx_pos⟩
@@ -1168,10 +1173,8 @@ private theorem pred_FLX_exact_shift_pos_aux (beta : Int) [Prec_gt_0 prec]
 
 theorem succ_FLX_exact_shift (beta : Int) [Prec_gt_0 prec] (x : ℝ) (e : Int) :
     ⦃⌜1 < beta⌝⦄
-    (do
-      let s1 ← FloatSpec.Core.Ulp.succ beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
-      let s2 ← FloatSpec.Core.Ulp.succ beta (FLX_exp prec) x
-      pure (s1, s2))
+    (pure (FloatSpec.Core.Ulp.succ beta (FLX_exp prec) (x * (beta : ℝ) ^ e),
+           FloatSpec.Core.Ulp.succ beta (FLX_exp prec) x) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hβ; classical
   -- Ensure `[Valid_exp]` is available
@@ -1307,10 +1310,8 @@ Lean (spec): Predecessor under FLX scales exactly under multiplication by β^e.
 -/
 theorem pred_FLX_exact_shift (beta : Int) [Prec_gt_0 prec] (x : ℝ) (e : Int) :
     ⦃⌜1 < beta⌝⦄
-    (do
-      let p1 ← FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
-      let p2 ← FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x
-      pure (p1, p2))
+    (pure (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e),
+           FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hβ; classical
   -- Rewrite `pred` via `succ` and use the exact-shift lemma for `succ` applied to `-x`.

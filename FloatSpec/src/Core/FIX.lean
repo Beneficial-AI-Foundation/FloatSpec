@@ -246,11 +246,10 @@ private lemma ulp_FIX_run_eq (beta : Int) (emin : Int) (x : ℝ) :
 
 theorem ulp_FIX (beta : Int) (x : ℝ) :
     ⦃⌜True⌝⦄
-    FloatSpec.Core.Ulp.ulp beta (FIX_exp emin) x
+    (pure (FloatSpec.Core.Ulp.ulp beta (FIX_exp emin) x) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
   intro _
-  -- Reduce the Id-triple using the computed run equality
-  -- ulp_FIX_run_eq gives (.run form) so we apply it directly
+  simp [wp, PostCond.noThrow, pure]
   exact ulp_FIX_run_eq (beta := beta) (emin := emin) (x := x)
 
 end FloatSpec.Core.FIX
