@@ -34,9 +34,9 @@ section MagnitudeBounds
     Calculates the exponent range for the quotient of two floats
 -/
 def mag_div_F2R_compute (m1 e1 m2 e2 : Int) : Int :=
-  Zdigits beta m1 >>= fun d1 =>
-  Zdigits beta m2 >>= fun d2 =>
-  pure ((d1 + e1) - (d2 + e2))
+  let d1 := Zdigits beta m1
+  let d2 := Zdigits beta m2
+  (d1 + e1) - (d2 + e2)
 
 /-- Specification: Division magnitude bounds
 
@@ -45,7 +45,7 @@ def mag_div_F2R_compute (m1 e1 m2 e2 : Int) : Int :=
 lemma mag_div_F2R (m1 e1 m2 e2 : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
     (Hβ : 1 < beta) :
     ⦃⌜0 < m1 ∧ 0 < m2⌝⦄
-    mag_div_F2R_compute beta m1 e1 m2 e2
+    (pure (mag_div_F2R_compute beta m1 e1 m2 e2) : Id Int)
     ⦃⇓_ => ⌜(mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))))
               - (mag beta ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))))
               ≤ (mag beta ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) /
@@ -73,11 +73,12 @@ lemma mag_div_F2R (m1 e1 m2 e2 : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
     exact ne_of_gt hy_pos
   -- Use generic magnitude bound under division from Core.Raux
   have hmag :=
-    (FloatSpec.Core.Raux.mag_div (beta := beta) (x := x) (y := y))
-      ⟨Hβ, hx_ne, hy_ne⟩
+    (FloatSpec.Core.Raux.mag_div (beta := beta) (x := x) (y := y) Hβ hx_ne hy_ne) trivial
   -- Unpack and rewrite the triple result to get the inequalities on `mag beta (x / y)`
-  simpa [x, y, FloatSpec.Core.Defs.F2R, pure, bind]
-    using hmag
+  -- hmag gives us: t.2.1 - t.2.2 ≤ t.1 ∧ t.1 ≤ t.2.1 - t.2.2 + 1
+  -- where t = (mag β (x/y), mag β x, mag β y)
+  simp only [x, y, FloatSpec.Core.Defs.F2R, pure, bind] at hmag ⊢
+  simpa [wp, PostCond.noThrow, pure] using hmag
 
 end MagnitudeBounds
 
@@ -113,7 +114,7 @@ noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
 theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
     (Hβ : 1 < beta) :
     ⦃⌜0 < m1 ∧ 0 < m2 ∧ e ≤ e1 - e2⌝⦄
-    Fdiv_core beta m1 e1 m2 e2 e
+    (pure (Fdiv_core beta m1 e1 m2 e2 e) : Id _)
     ⦃⇓result => let (m, l) := result
                 ⌜inbetween_float beta m e
                   ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) /
@@ -345,12 +346,12 @@ noncomputable def Fdiv (x y : FlocqFloat beta) : (Int × Int × Location) :=
   let e1 := x.Fexp
   let m2 := y.Fnum
   let e2 := y.Fexp
-  Zdigits beta m1 >>= fun d1 =>
-  Zdigits beta m2 >>= fun d2 =>
+  let d1 := Zdigits beta m1
+  let d2 := Zdigits beta m2
   let e' := (d1 + e1) - (d2 + e2)
   let e := min (min (fexp e') (fexp (e' + 1))) (e1 - e2)
-  Fdiv_core beta m1 e1 m2 e2 e >>= fun (m, l) =>
-  pure (m, e, l)
+  let (m, l) := Fdiv_core beta m1 e1 m2 e2 e
+  (m, e, l)
 
 /-- Specification: Division correctness
 
@@ -360,7 +361,7 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
     (Hβ : 1 < beta)
     (Hx : 0 < (F2R x)) (Hy : 0 < (F2R y)) :
     ⦃⌜0 < (F2R x) ∧ 0 < (F2R y)⌝⦄
-    Fdiv beta fexp x y
+    (pure (Fdiv beta fexp x y) : Id _)
     ⦃⇓result => let (m, e, l) := result
                 ⌜inbetween_float beta m e ((F2R x) / (F2R y)) l⌝⦄ := by
   intro hpre
@@ -394,9 +395,9 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
         (Fdiv_core_correct (beta := beta) (m1 := m1) (e1 := e1)
           (m2 := m2) (e2 := e2) (e := e) (Hm1 := hm1_pos) (Hm2 := hm2_pos) (Hβ := Hβ))
           ⟨hm1_pos, hm2_pos, hele⟩
-      have hinSimple : inbetween_float beta ((Fdiv_core beta m1 e1 m2 e2 e).run).fst e qR
-            ((Fdiv_core beta m1 e1 m2 e2 e).run).snd := by
-        simpa [ pure] using hinst
+      have hinSimple : inbetween_float beta (Fdiv_core beta m1 e1 m2 e2 e).fst e qR
+            (Fdiv_core beta m1 e1 m2 e2 e).snd := by
+        simpa [wp, PostCond.noThrow, pure] using hinst
       -- The goal matches this after rewriting the `match` structure; conclude by `simpa`.
       simpa [qR, e, e', d1, d2] using hinSimple
 
