@@ -25,7 +25,7 @@ noncomputable def prim_sqrt (x : PrimFloat) : PrimFloat := Real.sqrt x
 -- Exponent scaling on primitive floats (Coq: Z.ldexp)
 -- We mirror the intended semantics using `bpow 2 e` from Core.Raux.
 noncomputable def prim_ldexp (x : PrimFloat) (e : Int) : PrimFloat :=
-  x * (FloatSpec.Core.Raux.bpow 2 e).run
+  x * FloatSpec.Core.Raux.bpow 2 e
 
 -- Comparison operations
 noncomputable def prim_eq (x y : PrimFloat) : Bool := decide (x = y)
@@ -86,7 +86,7 @@ theorem ldexp_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) (e : Int) :
   ⦃⌜True⌝⦄
-  ldexp_equiv_check prec emax x e
+  (pure (ldexp_equiv_check prec emax x e) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
               (prim_to_binary prec emax x) e)⌝⦄ := by
@@ -102,10 +102,10 @@ def B2SF_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax
 theorem B2SF_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  B2SF_Prim2B_check prec emax x
+  (pure (B2SF_Prim2B_check prec emax x) : Id StandardFloat)
   ⦃⇓result => ⌜result = Prim2SF prec emax x⌝⦄ := by
   intro _
-  simp [B2SF_Prim2B_check, Prim2SF]
+  simp [wp, PostCond.noThrow, pure, B2SF_Prim2B_check, Prim2SF]
 
 -- Coq: Prim2SF_B2Prim — standard view of Binary→Prim equals direct B2SF
 noncomputable def Prim2SF_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
@@ -115,7 +115,7 @@ noncomputable def Prim2SF_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_
 theorem Prim2SF_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  Prim2SF_B2Prim_check prec emax x
+  (pure (Prim2SF_B2Prim_check prec emax x) : Id StandardFloat)
   ⦃⇓result => ⌜result = B2SF (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `Prim2SF_B2Prim` lemma.
@@ -132,7 +132,7 @@ noncomputable def compare_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_l
 theorem compare_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) :
   ⦃⌜True⌝⦄
-  compare_equiv_check prec emax x y
+  (pure (compare_equiv_check prec emax x y) : Id (Option Int))
   ⦃⇓result => ⌜result =
       (Bcompare_check (prec:=prec) (emax:=emax)
         (prim_to_binary prec emax x) (prim_to_binary prec emax y))⌝⦄ := by
@@ -148,7 +148,7 @@ noncomputable def B2Prim_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_l
 theorem B2Prim_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  B2Prim_Prim2B_check prec emax x
+  (pure (B2Prim_Prim2B_check prec emax x) : Id PrimFloat)
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
   -- Proof deferred; relies on intended equivalence between Prim and Binary.
@@ -162,7 +162,7 @@ def opp_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
 theorem opp_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  opp_equiv_check prec emax x
+  (pure (opp_equiv_check prec emax x) : Id FullFloat)
   ⦃⇓result => ⌜result = Bopp (B2FF (prim_to_binary prec emax x))⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `opp_equiv` using bridge lemmas.
@@ -176,7 +176,7 @@ noncomputable def Prim2B_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_l
 theorem Prim2B_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  Prim2B_B2Prim_check prec emax x
+  (pure (Prim2B_B2Prim_check prec emax x) : Id (Binary754 prec emax))
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
   -- Proof deferred; relies on intended equivalence between Prim and Binary.
@@ -191,7 +191,7 @@ theorem Prim2B_inj (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat)
   (h : prim_to_binary prec emax x = prim_to_binary prec emax y) :
   ⦃⌜True⌝⦄
-  Prim2B_inj_check prec emax x y
+  (pure (Prim2B_inj_check prec emax x y) : Id Unit)
   ⦃⇓_ => ⌜x = y⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's Prim2B_inj using roundtrip lemmas.
@@ -206,7 +206,7 @@ theorem B2Prim_inj (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : Binary754 prec emax)
   (h : binary_to_prim prec emax x = binary_to_prim prec emax y) :
   ⦃⌜True⌝⦄
-  B2Prim_inj_check prec emax x y
+  (pure (B2Prim_inj_check prec emax x y) : Id Unit)
   ⦃⇓_ => ⌜x = y⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's B2Prim_inj using roundtrip lemmas.
@@ -220,7 +220,7 @@ def abs_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
 theorem abs_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  abs_equiv_check prec emax x
+  (pure (abs_equiv_check prec emax x) : Id FullFloat)
   ⦃⇓result => ⌜result = Babs (B2FF (prim_to_binary prec emax x))⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `abs_equiv` using bridge lemmas.
@@ -234,7 +234,7 @@ noncomputable def div_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_em
 theorem div_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) :
   ⦃⌜True⌝⦄
-  div_equiv_check prec emax x y
+  (pure (div_equiv_check prec emax x y) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (binary_div (prec:=prec) (emax:=emax)
               (prim_to_binary prec emax x)
@@ -253,7 +253,7 @@ theorem ldshiftexp_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) (e : Int) :
   ⦃⌜True⌝⦄
-  ldshiftexp_equiv_check prec emax x e
+  (pure (ldshiftexp_equiv_check prec emax x e) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
               (prim_to_binary prec emax x) (e - 1))⌝⦄ := by
@@ -271,7 +271,7 @@ theorem frexp_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  frexp_equiv_check prec emax x
+  (pure (frexp_equiv_check prec emax x) : Id ((Binary754 prec emax) × Int))
   ⦃⇓result => ⌜result = Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `frexp_equiv` relating decompositions.
@@ -287,7 +287,7 @@ theorem frshiftexp_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  frshiftexp_equiv_check prec emax x
+  (pure (frshiftexp_equiv_check prec emax x) : Id ((Binary754 prec emax) × Int))
   ⦃⇓result => ⌜result = Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's `frshiftexp_equiv` structure.
@@ -301,7 +301,7 @@ def sub_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
 theorem sub_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) :
   ⦃⌜True⌝⦄
-  sub_equiv_check prec emax x y
+  (pure (sub_equiv_check prec emax x y) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (binary_sub (prec:=prec) (emax:=emax)
               (prim_to_binary prec emax x)
@@ -318,7 +318,7 @@ noncomputable def sqrt_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_e
 theorem sqrt_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  sqrt_equiv_check prec emax x
+  (pure (sqrt_equiv_check prec emax x) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (binary_sqrt (prec:=prec) (emax:=emax)
               (prim_to_binary prec emax x))⌝⦄ := by
@@ -333,10 +333,10 @@ noncomputable def infinity_equiv_check (prec emax : Int)
 
 theorem infinity_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   ⦃⌜True⌝⦄
-  infinity_equiv_check prec emax
+  (pure (infinity_equiv_check prec emax) : Id PrimFloat)
   ⦃⇓result => ⌜result = prim_infinity⌝⦄ := by
   intro _
-  simp [infinity_equiv_check, binary_to_prim, B2R, FF2R, prim_infinity]
+  simp only [wp, PostCond.noThrow, pure, infinity_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_infinity]
   rfl
 
 -- Coq: neg_infinity_equiv — primitive −∞ corresponds to Binary −∞
@@ -346,10 +346,10 @@ noncomputable def neg_infinity_equiv_check (prec emax : Int)
 
 theorem neg_infinity_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   ⦃⌜True⌝⦄
-  neg_infinity_equiv_check prec emax
+  (pure (neg_infinity_equiv_check prec emax) : Id PrimFloat)
   ⦃⇓result => ⌜result = prim_infinity⌝⦄ := by
   intro _
-  simp [neg_infinity_equiv_check, binary_to_prim, B2R, FF2R, prim_infinity]
+  simp only [wp, PostCond.noThrow, pure, neg_infinity_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_infinity]
   rfl
 
 -- Coq: nan_equiv — primitive NaN corresponds to Binary NaN
@@ -359,10 +359,10 @@ noncomputable def nan_equiv_check (prec emax : Int)
 
 theorem nan_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   ⦃⌜True⌝⦄
-  nan_equiv_check prec emax
+  (pure (nan_equiv_check prec emax) : Id PrimFloat)
   ⦃⇓result => ⌜result = prim_nan⌝⦄ := by
   intro _
-  simp [nan_equiv_check, binary_to_prim, B2R, FF2R, prim_nan]
+  simp only [wp, PostCond.noThrow, pure, nan_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_nan]
   rfl
 
 -- Coq: zero_equiv — primitive +0 corresponds to Binary zero
@@ -372,10 +372,10 @@ noncomputable def zero_equiv_check (prec emax : Int)
 
 theorem zero_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   ⦃⌜True⌝⦄
-  zero_equiv_check prec emax
+  (pure (zero_equiv_check prec emax) : Id PrimFloat)
   ⦃⇓result => ⌜result = prim_zero⌝⦄ := by
   intro _
-  simp [zero_equiv_check, binary_to_prim, B2R, FF2R, prim_zero]
+  simp only [wp, PostCond.noThrow, pure, zero_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_zero]
   rfl
 
 -- Coq: neg_zero_equiv — primitive −0 corresponds to Binary −0
@@ -385,10 +385,10 @@ noncomputable def neg_zero_equiv_check (prec emax : Int)
 
 theorem neg_zero_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   ⦃⌜True⌝⦄
-  neg_zero_equiv_check prec emax
+  (pure (neg_zero_equiv_check prec emax) : Id PrimFloat)
   ⦃⇓result => ⌜result = prim_zero⌝⦄ := by
   intro _
-  simp [neg_zero_equiv_check, binary_to_prim, B2R, FF2R, prim_zero]
+  simp only [wp, PostCond.noThrow, pure, neg_zero_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_zero]
   rfl
 
 -- Coq: one_equiv — primitive one corresponds to Binary constant one
@@ -398,10 +398,11 @@ noncomputable def one_equiv_check (prec emax : Int)
 
 theorem one_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   ⦃⌜True⌝⦄
-  one_equiv_check prec emax
+  (pure (one_equiv_check prec emax) : Id PrimFloat)
   ⦃⇓result => ⌜result = 1⌝⦄ := by
   intro _
-  simp [one_equiv_check, binary_to_prim, B2R, binary_one, FF2B, FF2R, F2R, FloatSpec.Core.Defs.F2R]
+  simp only [wp, PostCond.noThrow, pure, one_equiv_check, binary_to_prim, B2R, binary_one, FF2B, FF2R, F2R, FloatSpec.Core.Defs.F2R]
+  norm_num
 
 -- Coq: two_equiv — primitive two corresponds to Binary plus one one
 noncomputable def two_equiv_check (prec emax : Int)
@@ -413,7 +414,7 @@ noncomputable def two_equiv_check (prec emax : Int)
 
 theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
   ⦃⌜True⌝⦄
-  two_equiv_check prec emax
+  (pure (two_equiv_check prec emax) : Id PrimFloat)
   ⦃⇓result => ⌜result = 2⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `two_equiv`.
@@ -424,13 +425,13 @@ noncomputable def ulp_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) : FullFloat :=
   -- Placeholder: bridge through Binary `Bulp'` once available.
-  pure (B2FF (prim_to_binary prec emax (prim_ldexp 1 (0)) ))
+  B2FF (prim_to_binary prec emax (prim_ldexp 1 (0)))
 
 theorem ulp_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  ulp_equiv_check prec emax x
+  (pure (ulp_equiv_check prec emax x) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (prim_to_binary prec emax (prim_ldexp 1 (0)))⌝⦄ := by
   intro _
@@ -447,7 +448,7 @@ theorem next_up_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  next_up_equiv_check prec emax x
+  (pure (next_up_equiv_check prec emax x) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (Bsucc (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))⌝⦄ := by
   intro _
@@ -464,7 +465,7 @@ theorem next_down_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  next_down_equiv_check prec emax x
+  (pure (next_down_equiv_check prec emax x) : Id FullFloat)
   ⦃⇓result => ⌜result =
       B2FF (Bpred (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))⌝⦄ := by
   intro _
@@ -481,7 +482,7 @@ theorem is_nan_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  is_nan_equiv_check prec emax x
+  (pure (is_nan_equiv_check prec emax x) : Id Bool)
   ⦃⇓result => ⌜result = is_nan_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
   intro _
   -- Proof deferred; follows via `B2SF_Prim2B` cases.
@@ -497,7 +498,7 @@ theorem is_zero_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  is_zero_equiv_check prec emax x
+  (pure (is_zero_equiv_check prec emax x) : Id Bool)
   ⦃⇓result => ⌜result = decide (B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero false ∨
                                    B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero true)⌝⦄ := by
   intro _
@@ -514,7 +515,7 @@ theorem of_int63_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (z : Int) :
   ⦃⌜True⌝⦄
-  of_int63_equiv_check prec emax z
+  (pure (of_int63_equiv_check prec emax z) : Id PrimFloat)
   ⦃⇓result => ⌜result =
       binary_to_prim prec emax (prim_to_binary prec emax (z))⌝⦄ := by
   intro _
@@ -531,7 +532,7 @@ theorem is_infinity_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  is_infinity_equiv_check prec emax x
+  (pure (is_infinity_equiv_check prec emax x) : Id Bool)
   ⦃⇓result => ⌜result = decide (∃ s, B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_infinity s)⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's infinity predicate equivalence.
@@ -547,7 +548,7 @@ theorem is_finite_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  is_finite_equiv_check prec emax x
+  (pure (is_finite_equiv_check prec emax x) : Id Bool)
   ⦃⇓result => ⌜result = is_finite_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
   intro _
   -- Proof deferred; aligns with Coq's `is_finite_equiv`.
@@ -563,7 +564,7 @@ theorem get_sign_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
-  get_sign_equiv_check prec emax x
+  (pure (get_sign_equiv_check prec emax x) : Id Bool)
   ⦃⇓result => ⌜result = Bsign (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
   intro _
   -- Proof deferred; aligns with Coq's `get_sign_equiv` via `B2SF_Prim2B`.
@@ -593,7 +594,7 @@ theorem Beqb_correct (prec emax : Int)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
   ⦃⌜True⌝⦄
-  Beqb_correct_check prec emax x y
+  (pure (Beqb_correct_check prec emax x y) : Id Bool)
   ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x = B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `Beqb_correct` via `Bcompare_correct`.
@@ -625,7 +626,7 @@ theorem Beqb_refl (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  Beqb_refl_check prec emax x
+  (pure (Beqb_refl_check prec emax x) : Id Bool)
   ⦃⇓result => ⌜result = bnot (is_nan_B (prec:=prec) (emax:=emax) x)⌝⦄ := by
   intro _
   -- Proof deferred; follows Coq's `Beqb_refl` by case analysis.
@@ -643,7 +644,7 @@ theorem Bltb_correct (prec emax : Int)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
   ⦃⌜True⌝⦄
-  Bltb_correct_check prec emax x y
+  (pure (Bltb_correct_check prec emax x y) : Id Bool)
   ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x < B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `Bltb_correct` via `Bcompare_correct` and `Rcompare`.
@@ -661,7 +662,7 @@ theorem Bleb_correct (prec emax : Int)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
   ⦃⌜True⌝⦄
-  Bleb_correct_check prec emax x y
+  (pure (Bleb_correct_check prec emax x y) : Id Bool)
   ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x ≤ B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
   intro _
   -- Proof deferred; mirrors Coq's `Bleb_correct` via `Bcompare_correct` and `Rcompare`.
@@ -677,7 +678,7 @@ theorem eqb_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) :
   ⦃⌜True⌝⦄
-  eqb_equiv_check prec emax x y
+  (pure (eqb_equiv_check prec emax x y) : Id Bool)
   ⦃⇓result => ⌜result =
       Beqb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
   intro _
@@ -694,7 +695,7 @@ theorem ltb_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) :
   ⦃⌜True⌝⦄
-  ltb_equiv_check prec emax x y
+  (pure (ltb_equiv_check prec emax x y) : Id Bool)
   ⦃⇓result => ⌜result =
       Bltb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
   intro _
@@ -711,7 +712,7 @@ theorem leb_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) :
   ⦃⌜True⌝⦄
-  leb_equiv_check prec emax x y
+  (pure (leb_equiv_check prec emax x y) : Id Bool)
   ⦃⇓result => ⌜result =
       Bleb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
   intro _

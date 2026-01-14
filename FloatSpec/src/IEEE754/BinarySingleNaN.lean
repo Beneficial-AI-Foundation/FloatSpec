@@ -57,7 +57,6 @@ def SF2B (x : StandardFloat) : B754 :=
 def match_SF2B_check {T : Type}
   (fz : Bool → T) (fi : Bool → T) (fn : T) (ff : Bool → Nat → Int → T)
   (x : StandardFloat) : T :=
-  <|
     match x with
     | StandardFloat.S754_zero sx => fz sx
     | StandardFloat.S754_infinity sx => fi sx
@@ -68,7 +67,7 @@ theorem match_SF2B {T : Type}
   (fz : Bool → T) (fi : Bool → T) (fn : T) (ff : Bool → Nat → Int → T)
   (x : StandardFloat) :
   ⦃⌜True⌝⦄
-  match_SF2B_check fz fi fn ff x
+  (pure (match_SF2B_check fz fi fn ff x) : Id T)
   ⦃⇓result => ⌜result =
       (match SF2B x with
        | B754.B754_zero sx => fz sx
@@ -76,6 +75,7 @@ theorem match_SF2B {T : Type}
        | B754.B754_nan => fn
        | B754.B754_finite sx mx ex => ff sx mx ex)⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold match_SF2B_check SF2B
   cases x <;> rfl
 
@@ -89,10 +89,11 @@ theorem canonical_canonical_mantissa_bsn
   (sx : Bool) (mx : Nat) (ex : Int)
   (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
   ⦃⌜True⌝⦄
-  canonical_canonical_mantissa_bsn_check sx mx ex
+  (pure (canonical_canonical_mantissa_bsn_check sx mx ex) : Id Unit)
   ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
             (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; aligns with Coq's canonical_canonical_mantissa.
   exact sorry
 
@@ -104,9 +105,10 @@ theorem canonical_bounded
   (sx : Bool) (mx : Nat) (ex : Int)
   (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
   ⦃⌜True⌝⦄
-  canonical_bounded_check sx mx ex
+  (pure (canonical_bounded_check sx mx ex) : Id Unit)
   ⦃⇓_ => ⌜bounded (prec:=prec) (emax:=emax) mx ex = true⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; follows from `canonical_canonical_mantissa_bsn` and Coq's lemma.
   exact sorry
 
@@ -116,9 +118,10 @@ def B2SF_SF2B_check (x : StandardFloat) : StandardFloat :=
 
 theorem B2SF_SF2B (x : StandardFloat) :
   ⦃⌜True⌝⦄
-  B2SF_SF2B_check x
+  (pure (B2SF_SF2B_check x) : Id StandardFloat)
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Follows by cases on x; mirroring Coq's SF2B/B2SF roundtrip.
   exact sorry
 
@@ -153,9 +156,10 @@ def B2SF_B2BSN_check {prec emax} (x : Binary754 prec emax) : StandardFloat :=
 
 theorem B2SF_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  B2SF_B2BSN_check (prec:=prec) (emax:=emax) x
+  (pure (B2SF_B2BSN_check (prec:=prec) (emax:=emax) x) : Id StandardFloat)
   ⦃⇓result => ⌜result = B2SF (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   exact sorry
 
 -- Coq: is_finite_B2BSN — finiteness preserved by the bridge
@@ -164,9 +168,10 @@ def is_finite_B2BSN_check {prec emax} (x : Binary754 prec emax) : Bool :=
 
 theorem is_finite_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  is_finite_B2BSN_check (prec:=prec) (emax:=emax) x
+  (pure (is_finite_B2BSN_check (prec:=prec) (emax:=emax) x) : Id Bool)
   ⦃⇓result => ⌜result = is_finite_B (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   exact sorry
 
 -- Strict finiteness (finite-but-not-zero) classifiers, used for missing Coq theorems.
@@ -186,9 +191,10 @@ def is_finite_strict_B2BSN_check {prec emax} (x : Binary754 prec emax) : Bool :=
 
 theorem is_finite_strict_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  is_finite_strict_B2BSN_check (prec:=prec) (emax:=emax) x
+  (pure (is_finite_strict_B2BSN_check (prec:=prec) (emax:=emax) x) : Id Bool)
   ⦃⇓result => ⌜result = is_finite_strict_B (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; follows by cases on `x.val`.
   exact sorry
 
@@ -198,9 +204,10 @@ def is_nan_B2BSN_check {prec emax} (x : Binary754 prec emax) : Bool :=
 
 theorem is_nan_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  is_nan_B2BSN_check (prec:=prec) (emax:=emax) x
+  (pure (is_nan_B2BSN_check (prec:=prec) (emax:=emax) x) : Id Bool)
   ⦃⇓result => ⌜result = is_nan_B (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   exact sorry
 
 -- Coq: Bsign_B2BSN — sign preserved by the bridge
@@ -209,9 +216,10 @@ def Bsign_B2BSN_check {prec emax} (x : Binary754 prec emax) : Bool :=
 
 theorem Bsign_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  Bsign_B2BSN_check (prec:=prec) (emax:=emax) x
+  (pure (Bsign_B2BSN_check (prec:=prec) (emax:=emax) x) : Id Bool)
   ⦃⇓result => ⌜result = Bsign (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   exact sorry
 
 -- Coq: B2R_B2BSN — real semantics commutes with bridge to single-NaN
@@ -220,9 +228,10 @@ noncomputable def B2R_B2BSN_check {prec emax} (x : Binary754 prec emax) : ℝ :=
 
 theorem B2R_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
-  B2R_B2BSN_check (prec:=prec) (emax:=emax) x
+  (pure (B2R_B2BSN_check (prec:=prec) (emax:=emax) x) : Id ℝ)
   ⦃⇓result => ⌜result = B2R (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   exact sorry
 
 -- Coq: emin_lt_emax — the minimal exponent is strictly less than emax
@@ -232,9 +241,10 @@ def emin_lt_emax_check : Unit :=
 
 theorem emin_lt_emax :
   ⦃⌜True⌝⦄
-  emin_lt_emax_check
+  (pure emin_lt_emax_check : Id Unit)
   ⦃⇓_ => ⌜(3 - emax - prec) < emax⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; follows from the `Prec_lt_emax` assumption.
   exact sorry
 
@@ -246,9 +256,10 @@ def is_finite_strict_B2R_check (x : B754) : Bool :=
 theorem is_finite_strict_B2R (x : B754)
   (h : B754_to_R x ≠ 0) :
   ⦃⌜True⌝⦄
-  is_finite_strict_B2R_check x
+  (pure (is_finite_strict_B2R_check x) : Id Bool)
   ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; by cases on `x` and using `h` to exclude zero cases.
   exact sorry
 
@@ -259,9 +270,10 @@ noncomputable def SF2R_B2SF_check (x : B754) : ℝ :=
 
 theorem SF2R_B2SF (x : B754) :
   ⦃⌜True⌝⦄
-  SF2R_B2SF_check x
+  (pure (SF2R_B2SF_check x) : Id ℝ)
   ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Structure follows the hoare-triple pattern used in this project.
   -- Proof deferred.
   exact sorry
@@ -272,9 +284,10 @@ def SF2B_B2SF_check (x : B754) : B754 :=
 
 theorem SF2B_B2SF (x : B754) :
   ⦃⌜True⌝⦄
-  SF2B_B2SF_check x
+  (pure (SF2B_B2SF_check x) : Id B754)
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- By cases on x; definitionally equal.
   exact sorry
 
@@ -284,9 +297,10 @@ def valid_binary_B2SF_check {prec emax : Int} (x : B754) : Bool :=
 
 theorem valid_binary_B2SF {prec emax} (x : B754) :
   ⦃⌜True⌝⦄
-  valid_binary_B2SF_check (prec:=prec) (emax:=emax) x
+  (pure (valid_binary_B2SF_check (prec:=prec) (emax:=emax) x) : Id Bool)
   ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Holds by the current definition of valid_binary_SF.
   unfold valid_binary_B2SF_check
   rfl
@@ -297,9 +311,10 @@ def SF2B_B2SF_valid_check (x : B754) : B754 :=
 
 theorem SF2B_B2SF_valid (x : B754) :
   ⦃⌜True⌝⦄
-  SF2B_B2SF_valid_check x
+  (pure (SF2B_B2SF_valid_check x) : Id B754)
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Same computation as SF2B_B2SF.
   unfold SF2B_B2SF_valid_check
   -- Proof deferred.
@@ -311,9 +326,10 @@ def is_finite_strict_SF2B_check (x : StandardFloat) : Bool :=
 
 theorem is_finite_strict_SF2B (x : StandardFloat) :
   ⦃⌜True⌝⦄
-  is_finite_strict_SF2B_check x
+  (pure (is_finite_strict_SF2B_check x) : Id Bool)
   ⦃⇓result => ⌜result = is_finite_strict_SF x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; by cases on x.
   exact sorry
 
@@ -348,9 +364,10 @@ def B2BSN_BSN2B_check {prec emax : Int} (s : Bool) (payload : Nat) (x : B754) : 
 
 theorem B2BSN_BSN2B {prec emax : Int} (s : Bool) (payload : Nat) (x : B754) :
   ⦃⌜True⌝⦄
-  B2BSN_BSN2B_check (prec:=prec) (emax:=emax) s payload x
+  (pure (B2BSN_BSN2B_check (prec:=prec) (emax:=emax) s payload x) : Id B754)
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold B2BSN_BSN2B_check BSN2B B2BSN FF2B
   cases x <;> rfl
 
@@ -361,9 +378,10 @@ def Bsign_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Bool :=
 theorem Bsign_BSN2B (s : Bool) (payload : Nat) (x : B754)
   (nx : BSN_is_nan x = false) :
   ⦃⌜True⌝⦄
-  Bsign_BSN2B_check s payload x
+  (pure (Bsign_BSN2B_check s payload x) : Id Bool)
   ⦃⇓result => ⌜result = BSN_sign x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; by cases on x using nx to exclude NaN case
   exact sorry
 
@@ -387,9 +405,10 @@ theorem B2BSN_lift {prec emax : Int}
   (x : FullFloat) (y : B754)
   (Ny : BSN_is_nan y = is_nan_FF x) :
   ⦃⌜True⌝⦄
-  B2BSN_lift_check (prec:=prec) (emax:=emax) x y Ny
+  (pure (B2BSN_lift_check (prec:=prec) (emax:=emax) x y Ny) : Id B754)
   ⦃⇓result => ⌜result = y⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; follows Coq's `B2BSN_lift` by cases on `is_nan_FF x`.
   exact sorry
 
@@ -401,9 +420,10 @@ def B2BSN_BSN2B'_check {prec emax : Int} (x : B754)
 theorem B2BSN_BSN2B' {prec emax : Int} (x : B754)
   (nx : BSN_is_nan x = false) :
   ⦃⌜True⌝⦄
-  B2BSN_BSN2B'_check (prec:=prec) (emax:=emax) x nx
+  (pure (B2BSN_BSN2B'_check (prec:=prec) (emax:=emax) x nx) : Id B754)
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold B2BSN_BSN2B'_check BSN2B' B2BSN FF2B
   cases x <;> simp [BSN_is_nan] at nx <;> rfl
 
@@ -415,9 +435,10 @@ noncomputable def B2R_BSN2B'_check (x : B754)
 theorem B2R_BSN2B' (x : B754)
   (nx : BSN_is_nan x = false) :
   ⦃⌜True⌝⦄
-  B2R_BSN2B'_check x nx
+  (pure (B2R_BSN2B'_check x nx) : Id ℝ)
   ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold B2R_BSN2B'_check BSN2B'
   cases x <;> simp [B754_to_R, BSN_is_nan] at nx <;> rfl
 
@@ -429,9 +450,10 @@ def B2FF_BSN2B'_check {prec emax : Int} (x : B754)
 theorem B2FF_BSN2B' {prec emax : Int} (x : B754)
   (nx : BSN_is_nan x = false) :
   ⦃⌜True⌝⦄
-  B2FF_BSN2B'_check (prec:=prec) (emax:=emax) x nx
+  (pure (B2FF_BSN2B'_check (prec:=prec) (emax:=emax) x nx) : Id FullFloat)
   ⦃⇓result => ⌜result = SF2FF (B2SF_BSN x)⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold B2FF_BSN2B'_check BSN2B' B2SF_BSN
   cases x <;> simp [BSN_is_nan] at nx <;> rfl
 
@@ -443,9 +465,10 @@ def Bsign_BSN2B'_check (x : B754)
 theorem Bsign_BSN2B' (x : B754)
   (nx : BSN_is_nan x = false) :
   ⦃⌜True⌝⦄
-  Bsign_BSN2B'_check x nx
+  (pure (Bsign_BSN2B'_check x nx) : Id Bool)
   ⦃⇓result => ⌜result = BSN_sign x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold Bsign_BSN2B'_check BSN2B'
   cases x <;> simp [BSN_is_nan, BSN_sign] at nx <;> rfl
 
@@ -457,9 +480,10 @@ def is_finite_BSN2B'_check (x : B754)
 theorem is_finite_BSN2B' (x : B754)
   (nx : BSN_is_nan x = false) :
   ⦃⌜True⌝⦄
-  is_finite_BSN2B'_check x nx
+  (pure (is_finite_BSN2B'_check x nx) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_finite x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold is_finite_BSN2B'_check BSN2B'
   cases x <;> simp [BSN_is_nan, BSN_is_finite] at nx <;> rfl
 
@@ -471,9 +495,10 @@ def is_nan_BSN2B'_check (x : B754)
 theorem is_nan_BSN2B' (x : B754)
   (nx : BSN_is_nan x = false) :
   ⦃⌜True⌝⦄
-  is_nan_BSN2B'_check x nx
+  (pure (is_nan_BSN2B'_check x nx) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold is_nan_BSN2B'_check BSN2B'
   cases x <;> simp [BSN_is_nan] at nx <;> rfl
 
@@ -483,9 +508,10 @@ noncomputable def B2R_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : ℝ :=
 
 theorem B2R_BSN2B (s : Bool) (payload : Nat) (x : B754) :
   ⦃⌜True⌝⦄
-  B2R_BSN2B_check s payload x
+  (pure (B2R_BSN2B_check s payload x) : Id ℝ)
   ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof follows by cases on x; deferred.
   exact sorry
 
@@ -495,9 +521,10 @@ noncomputable def B2R_SF2B_check (x : StandardFloat) : ℝ :=
 
 theorem B2R_SF2B (x : StandardFloat) :
   ⦃⌜True⌝⦄
-  B2R_SF2B_check x
+  (pure (B2R_SF2B_check x) : Id ℝ)
   ⦃⇓result => ⌜result = SF2R 2 x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Case split on x; follows definitions.
   exact sorry
 
@@ -507,9 +534,10 @@ def is_nan_SF_B2SF_check (x : B754) : Bool :=
 
 theorem is_nan_SF_B2SF (x : B754) :
   ⦃⌜True⌝⦄
-  is_nan_SF_B2SF_check x
+  (pure (is_nan_SF_B2SF_check x) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; by cases on `x`.
   exact sorry
 
@@ -519,9 +547,10 @@ def is_finite_SF_B2SF_check (x : B754) : Bool :=
 
 theorem is_finite_SF_B2SF (x : B754) :
   ⦃⌜True⌝⦄
-  is_finite_SF_B2SF_check x
+  (pure (is_finite_SF_B2SF_check x) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_finite x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; by cases on `x`.
   exact sorry
 
@@ -531,9 +560,10 @@ def is_finite_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Bool :=
 
 theorem is_finite_BSN2B (s : Bool) (payload : Nat) (x : B754) :
   ⦃⌜True⌝⦄
-  is_finite_BSN2B_check s payload x
+  (pure (is_finite_BSN2B_check s payload x) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_finite x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof by cases on x; deferred.
   exact sorry
 
@@ -543,9 +573,10 @@ def is_nan_BSN2B_check (s : Bool) (payload : Nat) (x : B754) : Bool :=
 
 theorem is_nan_BSN2B (s : Bool) (payload : Nat) (x : B754) :
   ⦃⌜True⌝⦄
-  is_nan_BSN2B_check s payload x
+  (pure (is_nan_BSN2B_check s payload x) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof by cases on x; deferred.
   exact sorry
 
@@ -630,9 +661,10 @@ def is_nan_Bldexp_check (mode : RoundingMode) (x : B754) (e : Int) : Bool :=
 -- Coq: is_nan_Bldexp — exponent scaling preserves NaN-ness
 theorem is_nan_Bldexp (mode : RoundingMode) (x : B754) (e : Int) :
   ⦃⌜True⌝⦄
-  is_nan_Bldexp_check mode x e
+  (pure (is_nan_Bldexp_check mode x e) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; corresponds to Coq's `is_nan_Bldexp`.
   exact sorry
 
@@ -651,9 +683,10 @@ def Bldexp_Bopp_NE_check (x : B754) (e : Int) : B754 :=
 -- Coq: Bldexp_Bopp_NE — ldexp at nearest-even commutes with negation
 theorem Bldexp_Bopp_NE (x : B754) (e : Int) :
   ⦃⌜True⌝⦄
-  Bldexp_Bopp_NE_check x e
+  (pure (Bldexp_Bopp_NE_check x e) : Id B754)
   ⦃⇓result => ⌜result = Bopp_bsn (Bldexp RoundingMode.RNE x e)⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; mirrors Coq's `Bldexp_Bopp_NE`.
   exact sorry
 
@@ -668,9 +701,10 @@ def is_nan_Bfrexp_check (x : B754) : Bool :=
 -- Coq: is_nan_Bfrexp — NaN-ness preserved for the significand of Bfrexp
 theorem is_nan_Bfrexp (x : B754) :
   ⦃⌜True⌝⦄
-  is_nan_Bfrexp_check x
+  (pure (is_nan_Bfrexp_check x) : Id Bool)
   ⦃⇓result => ⌜result = BSN_is_nan x⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; immediate by the placeholder definition of `Bfrexp`.
   exact sorry
 
@@ -688,7 +722,7 @@ noncomputable def Bdiv_correct_aux_check {prec emax : Int}
   (sy : Bool) (my : Nat) (ey : Int) : StandardFloat :=
   -- Placeholder: actual Coq builds via SFdiv_core_binary then binary_round_aux.
   -- We return the overflow shape as a representative value.
-  pure (bsn_binary_overflow mode (bxor sx sy))
+  (bsn_binary_overflow mode (bxor sx sy))
 
 theorem Bdiv_correct_aux {prec emax : Int}
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
@@ -697,7 +731,7 @@ theorem Bdiv_correct_aux {prec emax : Int}
   (sx : Bool) (mx : Nat) (ex : Int)
   (sy : Bool) (my : Nat) (ey : Int) :
   ⦃⌜True⌝⦄
-  Bdiv_correct_aux_check (prec:=prec) (emax:=emax) mode sx mx ex sy my ey
+  (pure (Bdiv_correct_aux_check (prec:=prec) (emax:=emax) mode sx mx ex sy my ey) : Id StandardFloat)
   ⦃⇓z => ⌜
       let x := SF2R 2 (StandardFloat.S754_finite sx mx ex)
       let y := SF2R 2 (StandardFloat.S754_finite sy my ey)
@@ -707,6 +741,7 @@ theorem Bdiv_correct_aux {prec emax : Int}
         ∧ is_finite_SF z = true ∧ sign_SF z = bxor sx sy)
         ∨ z = bsn_binary_overflow mode (bxor sx sy))⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   -- Proof deferred; mirrors Coq's `Bdiv_correct_aux` by case analysis
   -- on the overflow guard and using properties of `SF2R` and rounding.
   exact sorry
@@ -729,7 +764,7 @@ theorem Bfrexp_correct_aux
       valid_binary_SF (prec:=prec) (emax:=emax) z = true ∧
       ((2 : Int) < emax → ((1 : ℝ) / 2 ≤ |SF2R 2 z| ∧ |SF2R 2 z| < 1)) ∧
       SF2R 2 (StandardFloat.S754_finite sx mx ex)
-        = SF2R 2 z * (FloatSpec.Core.Raux.bpow 2 e).run⌝⦄ := by
+        = SF2R 2 z * FloatSpec.Core.Raux.bpow 2 e⌝⦄ := by
   intro _
   -- Proof deferred; aligns with Coq's `Bfrexp_correct_aux` structure.
   exact sorry

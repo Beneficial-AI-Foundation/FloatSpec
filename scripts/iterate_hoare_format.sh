@@ -17,7 +17,9 @@ file_list=(
   # Ulp.lean
   
   # Core
-  Calc
+  # Calc
+  IEEE754
+  Pff
 )
 hours=(
 #   2
@@ -25,6 +27,7 @@ hours=(
   # 4
   # 2
   # 2
+  6
   6
   # 0
 )

@@ -566,9 +566,10 @@ def binary_float_of_bits_aux (bits : Int) : (Binary754 prec emax) :=
 -- We state it in hoare-triple style around the pure computation above.
 theorem binary_float_of_bits_aux_correct (bits : Int) :
   ⦃⌜True⌝⦄
-  binary_float_of_bits_aux (prec:=prec) (emax:=emax) bits
+  (pure (binary_float_of_bits_aux (prec:=prec) (emax:=emax) bits) : Id (Binary754 prec emax))
   ⦃⇓result => ⌜result = bits_to_binary prec emax bits⌝⦄ := by
   intro _
+  simp only [wp, PostCond.noThrow, pure]
   unfold binary_float_of_bits_aux
   rfl
 

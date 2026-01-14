@@ -51,7 +51,7 @@ noncomputable def Even_0_check : Unit :=
 /-- Coq: `Even_0` — 0 is even. -/
 theorem Even_0 :
     ⦃⌜True⌝⦄
-    Even_0_check
+    (pure Even_0_check : Id Unit)
     ⦃⇓_ => ⌜nat_even 0⌝⦄ := by
   sorry
 
@@ -61,7 +61,7 @@ noncomputable def Even_1_check : Unit :=
 /-- Coq: `Even_1` — 1 is not even. -/
 theorem Even_1 :
     ⦃⌜True⌝⦄
-    Even_1_check
+    (pure Even_1_check : Id Unit)
     ⦃⇓_ => ⌜¬ nat_even 1⌝⦄ := by
   sorry
 
@@ -71,7 +71,7 @@ noncomputable def Odd_0_check : Unit :=
 /-- Coq: `Odd_0` — 0 is not odd. -/
 theorem Odd_0 :
     ⦃⌜True⌝⦄
-    Odd_0_check
+    (pure Odd_0_check : Id Unit)
     ⦃⇓_ => ⌜¬ nat_odd 0⌝⦄ := by
   sorry
 
@@ -81,7 +81,7 @@ noncomputable def Odd_1_check : Unit :=
 /-- Coq: `Odd_1` — 1 is odd. -/
 theorem Odd_1 :
     ⦃⌜True⌝⦄
-    Odd_1_check
+    (pure Odd_1_check : Id Unit)
     ⦃⇓_ => ⌜nat_odd 1⌝⦄ := by
   sorry
 
@@ -1592,7 +1592,7 @@ theorem ClosestMaxEq {beta : Int}
         isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
         _root_.F2R min + _root_.F2R max < 2 * r ∧
         Closest (beta:=beta) bo radixR r p⌝⦄
-    ClosestMaxEq_check (beta:=beta) bo radixR r min max p
+    (pure (ClosestMaxEq_check (beta:=beta) bo radixR r min max p) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R max⌝⦄ := by
   sorry
 
@@ -1606,7 +1606,7 @@ noncomputable def ClosestMonotone_check {beta : Int}
 theorem ClosestMonotone {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜True⌝⦄
-    ClosestMonotone_check (beta:=beta) bo radix
+    (pure (ClosestMonotone_check (beta:=beta) bo radix) : Id Unit)
     ⦃⇓_ => ⌜MonotoneP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
@@ -1621,7 +1621,7 @@ noncomputable def ClosestRoundedModeP_check {beta : Int}
 theorem ClosestRoundedModeP {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜True⌝⦄
-    ClosestRoundedModeP_check (beta:=beta) bo radix
+    (pure (ClosestRoundedModeP_check (beta:=beta) bo radix) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
@@ -1637,7 +1637,7 @@ theorem ClosestOpp {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
-    ClosestOpp_check (beta:=beta) bo radix p r
+    (pure (ClosestOpp_check (beta:=beta) bo radix p r) : Id Unit)
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (-r) (Fopp p)⌝⦄ := by
   sorry
 
@@ -1653,7 +1653,7 @@ theorem ClosestFabs {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
-    ClosestFabs_check (beta:=beta) bo radix p r
+    (pure (ClosestFabs_check (beta:=beta) bo radix p r) : Id Unit)
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (|r|) (Fabs p)⌝⦄ := by
   sorry
 
@@ -1670,7 +1670,7 @@ theorem ClosestUlp {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix p q⌝⦄
-    ClosestUlp_check (beta:=beta) bo radix p q
+    (pure (ClosestUlp_check (beta:=beta) bo radix p q) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -1686,7 +1686,7 @@ theorem ClosestExp {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : Int) (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix x q ∧ (2 * |x - _root_.F2R q| : ℝ) ≤ (beta : ℝ) ^ p⌝⦄
-    ClosestExp_check (beta:=beta) bo radix p x q
+    (pure (ClosestExp_check (beta:=beta) bo radix p x q) : Id Unit)
     ⦃⇓_ => ⌜(beta : ℝ) ^ p ≤ (beta : ℝ) ^ (q.Fexp)⌝⦄ := by
   sorry
 
@@ -1702,7 +1702,7 @@ theorem ClosestErrorExpStrict {beta : Int}
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Fbounded (beta:=beta) bo q ∧
         Closest (beta:=beta) bo radix x p ∧ _root_.F2R q = x - _root_.F2R p ∧
         _root_.F2R q ≠ 0⌝⦄
-    ClosestErrorExpStrict_check (beta:=beta) bo radix p q x
+    (pure (ClosestErrorExpStrict_check (beta:=beta) bo radix p q x) : Id Unit)
     ⦃⇓_ => ⌜q.Fexp < p.Fexp⌝⦄ := by
   sorry
 
@@ -1716,7 +1716,7 @@ theorem ClosestIdem {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix (_root_.F2R p) q⌝⦄
-    ClosestIdem_check (beta:=beta) bo radix p q
+    (pure (ClosestIdem_check (beta:=beta) bo radix p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
   sorry
 
@@ -1735,7 +1735,7 @@ theorem ClosestErrorBound {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix x p ∧
         _root_.F2R q = x - _root_.F2R p⌝⦄
-    ClosestErrorBound_check (beta:=beta) bo radix p q x
+    (pure (ClosestErrorBound_check (beta:=beta) bo radix p q x) : Id Unit)
     ⦃⇓_ => ⌜|_root_.F2R q| ≤
             _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) * (1 / 2 : ℝ)⌝⦄ := by
   sorry
@@ -1750,7 +1750,7 @@ theorem FmultRadixInv {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (x z : FloatSpec.Core.Defs.FlocqFloat beta) (y : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo x ∧ Closest (beta:=beta) bo radix y z ∧ (1/2 : ℝ) * _root_.F2R x < y⌝⦄
-    FmultRadixInv_check (beta:=beta) bo radix x z y
+    (pure (FmultRadixInv_check (beta:=beta) bo radix x z y) : Id Unit)
     ⦃⇓_ => ⌜(1/2 : ℝ) * _root_.F2R x ≤ _root_.F2R z⌝⦄ := by
   sorry
 
@@ -1769,7 +1769,7 @@ def SymmetricP {beta : Int}
 theorem ClosestSymmetric {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜True⌝⦄
-    ClosestSymmetric_check (beta:=beta) bo radix
+    (pure (ClosestSymmetric_check (beta:=beta) bo radix) : Id Unit)
     ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
@@ -1792,7 +1792,7 @@ theorem ClosestZero1 {beta : Int}
         _root_.F2R f = 0 ∧
         r = _root_.F2R g ∧
         (-bo.dExp : Int) ≤ g.Fexp⌝⦄
-    ClosestZero1_check (beta:=beta) bo radix r f g
+    (pure (ClosestZero1_check (beta:=beta) bo radix r f g) : Id Unit)
     ⦃⇓_ => ⌜r = 0⌝⦄ := by
   sorry
 
@@ -1817,7 +1817,7 @@ theorem div2IsBetweenPos {beta : Int}
         Fbounded (beta:=beta) b p ∧
         isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) min ∧
         isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max⌝⦄
-    div2IsBetweenPos_check (beta:=beta) b radix p min max
+    (pure (div2IsBetweenPos_check (beta:=beta) b radix p min max) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min + _root_.F2R max⌝⦄ := by
   sorry
 
@@ -1833,7 +1833,7 @@ theorem div2IsBetween {beta : Int}
     ⦃⌜Fbounded (beta:=beta) b p ∧
         isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) min ∧
         isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max⌝⦄
-    div2IsBetween_check (beta:=beta) b radix p min max
+    (pure (div2IsBetween_check (beta:=beta) b radix p min max) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min + _root_.F2R max⌝⦄ := by
   sorry
 
@@ -1846,7 +1846,7 @@ noncomputable def EvenClosestCompatible_check {beta : Int}
 theorem EvenClosestCompatible {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
-    EvenClosestCompatible_check (beta:=beta) b radix precision
+    (pure (EvenClosestCompatible_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
@@ -1858,7 +1858,7 @@ noncomputable def EvenClosestMinOrMax_check {beta : Int}
 theorem EvenClosestMinOrMax {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
-    EvenClosestMinOrMax_check (beta:=beta) b radix precision
+    (pure (EvenClosestMinOrMax_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜MinOrMaxP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
@@ -1870,7 +1870,7 @@ noncomputable def EvenClosestMonotone_check {beta : Int}
 theorem EvenClosestMonotone {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
-    EvenClosestMonotone_check (beta:=beta) b radix precision
+    (pure (EvenClosestMonotone_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜MonotoneP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
@@ -1887,7 +1887,7 @@ theorem EvenClosestMonotone2 {beta : Int}
     ⦃⌜p ≤ q ∧
         EvenClosest (beta:=beta) b radixR precision p p' ∧
         EvenClosest (beta:=beta) b radixR precision q q'⌝⦄
-    EvenClosestMonotone2_check (beta:=beta) b radixR precision p q p' q'
+    (pure (EvenClosestMonotone2_check (beta:=beta) b radixR precision p q p' q') : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p' ≤ _root_.F2R (beta:=beta) q'⌝⦄ := by
   sorry
 
@@ -1901,7 +1901,7 @@ noncomputable def EvenClosestSymmetric_check {beta : Int}
 theorem EvenClosestSymmetric {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
-    EvenClosestSymmetric_check (beta:=beta) b radix precision
+    (pure (EvenClosestSymmetric_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜SymmetricP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
@@ -1913,7 +1913,7 @@ noncomputable def EvenClosestRoundedModeP_check {beta : Int}
 theorem EvenClosestRoundedModeP {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
-    EvenClosestRoundedModeP_check (beta:=beta) b radix precision
+    (pure (EvenClosestRoundedModeP_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
@@ -1925,7 +1925,7 @@ noncomputable def EvenClosestUniqueP_check {beta : Int}
 theorem EvenClosestUniqueP {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
-    EvenClosestUniqueP_check (beta:=beta) b radix precision
+    (pure (EvenClosestUniqueP_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜UniqueP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
   sorry
 
@@ -1944,7 +1944,7 @@ theorem FexpGeUnderf {beta : Int}
     (bo : Fbound_skel) (precision e : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) bo f ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f|⌝⦄
-    FexpGeUnderf_check (beta:=beta) bo precision e f
+    (pure (FexpGeUnderf_check (beta:=beta) bo precision e f) : Id Unit)
     ⦃⇓_ => ⌜e - precision + 1 ≤ f.Fexp⌝⦄ := by
   sorry
 
@@ -1962,7 +1962,7 @@ theorem AddExpGeUnderf {beta : Int}
     ⦃⌜Closest (beta:=beta) bo radix (_root_.F2R f1 + _root_.F2R f2) g ∧
         Fbounded (beta:=beta) bo f1 ∧ Fbounded (beta:=beta) bo f2 ∧
         (beta : ℝ) ^ e ≤ |_root_.F2R f1| ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f2|⌝⦄
-    AddExpGeUnderf_check (beta:=beta) bo precision e radix f1 f2 g
+    (pure (AddExpGeUnderf_check (beta:=beta) bo precision e radix f1 f2 g) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R g = 0 ∨ (beta : ℝ) ^ (e - precision + 1) ≤ |_root_.F2R g|⌝⦄ := by
   sorry
 
@@ -1973,7 +1973,7 @@ noncomputable def RoundedModeP_inv2_check {α : Type}
 
 theorem RoundedModeP_inv2 {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
-    RoundedModeP_inv2_check P
+    (pure (RoundedModeP_inv2_check P) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP P⌝⦄ := by
   sorry
 
@@ -1984,7 +1984,7 @@ noncomputable def RoundedModeP_inv4_check {α : Type}
 
 theorem RoundedModeP_inv4 {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
-    RoundedModeP_inv4_check P
+    (pure (RoundedModeP_inv4_check P) : Id Unit)
     ⦃⇓_ => ⌜MonotoneP P⌝⦄ := by
   sorry
 
@@ -1995,7 +1995,7 @@ noncomputable def RoundedProjector_check {α : Type}
 
 theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
-    RoundedProjector_check P
+    (pure (RoundedProjector_check P) : Id Unit)
     ⦃⇓_ => ⌜ProjectorP P⌝⦄ := by
   sorry
 
@@ -2011,7 +2011,7 @@ theorem RoundedModeProjectorIdem {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p⌝⦄
-    RoundedModeProjectorIdem_check (beta:=beta) b radix P p
+    (pure (RoundedModeProjectorIdem_check (beta:=beta) b radix P p) : Id Unit)
     ⦃⇓_ => ⌜P (_root_.F2R p) p⌝⦄ := by
   sorry
 
@@ -2027,7 +2027,7 @@ theorem RoundedModeBounded {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜RoundedModeP P ∧ P r q⌝⦄
-    RoundedModeBounded_check (beta:=beta) b radix P r q
+    (pure (RoundedModeBounded_check (beta:=beta) b radix P r q) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
   sorry
 
@@ -2049,7 +2049,7 @@ theorem PminPos {beta : Int}
     ⦃⌜0 ≤ _root_.F2R p ∧
         Fbounded (beta:=beta) b p ∧
         isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1 / 2 : ℝ) * _root_.F2R p) min⌝⦄
-    PminPos_check (beta:=beta) b radix p min
+    (pure (PminPos_check (beta:=beta) b radix p min) : Id Unit)
     ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
             Fbounded (beta:=beta) b c ∧
             _root_.F2R c = _root_.F2R p - _root_.F2R min⌝⦄ := by
@@ -2067,7 +2067,7 @@ theorem RoundedModeProjectorIdemEq {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧ P (_root_.F2R p) q⌝⦄
-    RoundedModeProjectorIdemEq_check (beta:=beta) b radix P p q
+    (pure (RoundedModeProjectorIdemEq_check (beta:=beta) b radix P p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
   sorry
 
@@ -2083,7 +2083,7 @@ theorem RoundedModeUlp {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜RoundedModeP P ∧ P p q⌝⦄
-    RoundedModeUlp_check (beta:=beta) b radix P p q
+    (pure (RoundedModeUlp_check (beta:=beta) b radix P p q) : Id Unit)
     ⦃⇓_ => ⌜|p - _root_.F2R q| < Fulp (beta:=beta) q⌝⦄ := by
   sorry
 
@@ -2099,7 +2099,7 @@ theorem RoundedModeMult {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ r ≤ radix * _root_.F2R q'⌝⦄
-    RoundedModeMult_check (beta:=beta) b radix P r q q'
+    (pure (RoundedModeMult_check (beta:=beta) b radix P r q q') : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R q ≤ radix * _root_.F2R q'⌝⦄ := by
   sorry
 
@@ -2115,7 +2115,7 @@ theorem RoundedModeMultLess {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ radix * _root_.F2R q' ≤ r⌝⦄
-    RoundedModeMultLess_check (beta:=beta) b radix P r q q'
+    (pure (RoundedModeMultLess_check (beta:=beta) b radix P r q q') : Id Unit)
     ⦃⇓_ => ⌜radix * _root_.F2R q' ≤ _root_.F2R q⌝⦄ := by
   sorry
 
@@ -2131,7 +2131,7 @@ theorem FnormalBounded {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    FnormalBounded_check (beta:=beta) b radix p
+    (pure (FnormalBounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
   sorry
 
@@ -2148,7 +2148,7 @@ theorem FnormalNotZero {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    FnormalNotZero_check (beta:=beta) b radix p
+    (pure (FnormalNotZero_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜¬ is_Fzero p⌝⦄ := by
   sorry
 
@@ -2163,7 +2163,7 @@ theorem FnormalFop {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    FnormalFop_check (beta:=beta) b radix p
+    (pure (FnormalFop_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
   sorry
 
@@ -2178,7 +2178,7 @@ theorem FnormalFabs {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    FnormalFabs_check (beta:=beta) b radix p
+    (pure (FnormalFabs_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (Fabs (beta:=beta) p)⌝⦄ := by
   sorry
 
@@ -2194,7 +2194,7 @@ theorem FsubnormalFbounded {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    FsubnormalFbounded_check (beta:=beta) b radix p
+    (pure (FsubnormalFbounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
   sorry
 
@@ -2210,7 +2210,7 @@ theorem FsubnormalFexp {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    FsubnormalFexp_check (beta:=beta) b radix p
+    (pure (FsubnormalFexp_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜p.Fexp = -b.dExp⌝⦄ := by
   sorry
 
@@ -2225,7 +2225,7 @@ theorem FsubnormFopp {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    FsubnormFopp_check (beta:=beta) b radix p
+    (pure (FsubnormFopp_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fsubnormal (beta:=beta) radix b
             (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
   sorry
@@ -2241,7 +2241,7 @@ theorem FsubnormFabs {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    FsubnormFabs_check (beta:=beta) b radix p
+    (pure (FsubnormFabs_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fsubnormal (beta:=beta) radix b
             (FloatSpec.Calc.Operations.Fabs (beta:=beta) p)⌝⦄ := by
   sorry
@@ -2260,7 +2260,7 @@ theorem FsubnormalUnique {beta : Int}
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
         Fsubnormal (beta:=beta) radix b q ∧
         _root_.F2R (beta:=beta) p = _root_.F2R (beta:=beta) q⌝⦄
-    FsubnormalUnique_check (beta:=beta) b radix p q
+    (pure (FsubnormalUnique_check (beta:=beta) b radix p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   sorry
 
@@ -2278,7 +2278,7 @@ theorem FsubnormalLt {beta : Int}
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
         Fsubnormal (beta:=beta) radix b q ∧
         _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
-    FsubnormalLt_check (beta:=beta) b radix p q
+    (pure (FsubnormalLt_check (beta:=beta) b radix p q) : Id Unit)
     ⦃⇓_ => ⌜p.Fnum < q.Fnum⌝⦄ := by
   sorry
 
@@ -2298,7 +2298,7 @@ theorem RleRoundedAbs {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (p : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜Closest (beta:=beta) bo radix r f ∧ Fnormal (beta:=beta) radix bo f ∧ (-bo.dExp < f.Fexp)⌝⦄
-    RleRoundedAbs_check (beta:=beta) bo radix p f r
+    (pure (RleRoundedAbs_check (beta:=beta) bo radix p f r) : Id Unit)
     ⦃⇓_ => ⌜((radix ^ (p - 1) + - (1 / (2 * radix))) * (radix ^ (f.Fexp)) ≤ |r|)⌝⦄ := by
   sorry
 
@@ -2318,7 +2318,7 @@ theorem RoundedModeMultAbs {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ |r| ≤ radix * _root_.F2R q'⌝⦄
-    RoundedModeMultAbs_check (beta:=beta) b radix P r q q'
+    (pure (RoundedModeMultAbs_check (beta:=beta) b radix P r q q') : Id Unit)
     ⦃⇓_ => ⌜|_root_.F2R q| ≤ radix * _root_.F2R q'⌝⦄ := by
   sorry
 
@@ -2329,7 +2329,7 @@ noncomputable def MinCompatible_check {α : Type}
 
 theorem MinCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    MinCompatible_check (α:=α) b radix
+    (pure (MinCompatible_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (isMin (α:=α) b radix)⌝⦄ := by
   sorry
 
@@ -2340,7 +2340,7 @@ noncomputable def MinRoundedModeP_check {α : Type}
 
 theorem MinRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    MinRoundedModeP_check (α:=α) b radix
+    (pure (MinRoundedModeP_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (isMin (α:=α) b radix)⌝⦄ := by
   sorry
 
@@ -2351,7 +2351,7 @@ noncomputable def MaxCompatible_check {α : Type}
 
 theorem MaxCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    MaxCompatible_check (α:=α) b radix
+    (pure (MaxCompatible_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (isMax (α:=α) b radix)⌝⦄ := by
   sorry
 
@@ -2362,7 +2362,7 @@ noncomputable def MaxRoundedModeP_check {α : Type}
 
 theorem MaxRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    MaxRoundedModeP_check (α:=α) b radix
+    (pure (MaxRoundedModeP_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (isMax (α:=α) b radix)⌝⦄ := by
   sorry
 
@@ -2376,7 +2376,7 @@ theorem RleMinR0 {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (min : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ r ∧ isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min⌝⦄
-    RleMinR0_check (beta:=beta) b radix r min
+    (pure (RleMinR0_check (beta:=beta) b radix r min) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ _root_.F2R min⌝⦄ := by
   sorry
 
@@ -2390,7 +2390,7 @@ theorem RleRoundedR0 {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜RoundedModeP P ∧ P r p ∧ 0 ≤ r⌝⦄
-    RleRoundedR0_check (beta:=beta) P p r
+    (pure (RleRoundedR0_check (beta:=beta) P p r) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ _root_.F2R p⌝⦄ := by
   sorry
 
@@ -2404,7 +2404,7 @@ theorem RleMaxR0 {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (max : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜r ≤ 0 ∧ isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max⌝⦄
-    RleMaxR0_check (beta:=beta) b radix r max
+    (pure (RleMaxR0_check (beta:=beta) b radix r max) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R max ≤ 0⌝⦄ := by
   sorry
 
@@ -2418,7 +2418,7 @@ theorem RleRoundedLessR0 {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜RoundedModeP P ∧ P r p ∧ r ≤ 0⌝⦄
-    RleRoundedLessR0_check (beta:=beta) P p r
+    (pure (RleRoundedLessR0_check (beta:=beta) P p r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p ≤ 0⌝⦄ := by
   sorry
 
@@ -2429,7 +2429,7 @@ noncomputable def MinUniqueP_check {α : Type}
 
 theorem MinUniqueP {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    MinUniqueP_check (α:=α) b radix
+    (pure (MinUniqueP_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜UniqueP (isMin (α:=α) b radix)⌝⦄ := by
   sorry
 
@@ -2440,7 +2440,7 @@ noncomputable def MaxUniqueP_check {α : Type}
 
 theorem MaxUniqueP {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    MaxUniqueP_check (α:=α) b radix
+    (pure (MaxUniqueP_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜UniqueP (isMax (α:=α) b radix)⌝⦄ := by
   sorry
 
@@ -2454,7 +2454,7 @@ noncomputable def MinOrMaxRep_check {beta : Int}
 theorem MinOrMaxRep {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
     ⦃⌜MinOrMaxP P⌝⦄
-    MinOrMaxRep_check (beta:=beta) P
+    (pure (MinOrMaxRep_check (beta:=beta) P) : Id Unit)
     ⦃⇓_ => ⌜∀ r (p q : FloatSpec.Core.Defs.FlocqFloat beta),
             P r q → ∃ m : Int, q = ⟨m, p.Fexp⟩⌝⦄ := by
   sorry
@@ -2473,7 +2473,7 @@ Coq's exact bound `Float (Zpos (vNum b)) (Fexp p)` via the skeleton float
 theorem MaxFloat {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
-    MaxFloat_check (beta:=beta) b p z
+    (pure (MaxFloat_check (beta:=beta) b p z) : Id Unit)
     ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
             _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
   sorry
@@ -2494,7 +2494,7 @@ This mirrors the Coq intent with our simplified bound structure. -/
 theorem maxMax {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
-    maxMax_check (beta:=beta) b p z
+    (pure (maxMax_check (beta:=beta) b p z) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) <
             _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
   sorry
@@ -2512,7 +2512,7 @@ with the canonical unit mantissa `⟨1, z⟩`. Proof deferred per import policy.
 theorem maxMax1 {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
-    maxMax1_check (beta:=beta) b p z
+    (pure (maxMax1_check (beta:=beta) b p z) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) ≤
             _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
   sorry
@@ -2523,7 +2523,7 @@ the simplified bound skeleton employed throughout this section. -/
 theorem maxMaxBis {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp < z⌝⦄
-    maxMax1_check (beta:=beta) b p z
+    (pure (maxMax1_check (beta:=beta) b p z) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) <
             _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
   sorry
@@ -2541,7 +2541,7 @@ noncomputable def eqExpLess_check {beta : Int}
 theorem eqExpLess {beta : Int}
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ _root_.F2R p = _root_.F2R q⌝⦄
-    eqExpLess_check (beta:=beta) b p q
+    (pure (eqExpLess_check (beta:=beta) b p q) : Id Unit)
     ⦃⇓_ => ⌜∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
               Fbounded (beta:=beta) b r ∧
               _root_.F2R r = _root_.F2R q ∧
@@ -2565,7 +2565,7 @@ theorem FboundedShiftLess {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) :
     ⦃⌜m ≤ n ∧ Fbounded (beta:=beta) b (Fshift (beta:=beta) radix n f)⌝⦄
-    FboundedShiftLess_check (beta:=beta) b radix f n m
+    (pure (FboundedShiftLess_check (beta:=beta) b radix f n m) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fshift (beta:=beta) radix m f)⌝⦄ := by
   sorry
 
@@ -2581,7 +2581,7 @@ theorem eqExpMax {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
         |_root_.F2R p| ≤ _root_.F2R q⌝⦄
-    eqExpMax_check (beta:=beta) b p q
+    (pure (eqExpMax_check (beta:=beta) b p q) : Id Unit)
     ⦃⇓_ => ⌜∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
               Fbounded (beta:=beta) b r ∧
               _root_.F2R r = _root_.F2R p ∧
@@ -2596,7 +2596,7 @@ noncomputable def RoundedModeRep_check {beta : Int}
 theorem RoundedModeRep {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
-    RoundedModeRep_check (beta:=beta) P
+    (pure (RoundedModeRep_check (beta:=beta) P) : Id Unit)
     ⦃⇓_ => ⌜∀ r (p q : FloatSpec.Core.Defs.FlocqFloat beta),
             P r q → ∃ m : Int, q = ⟨m, p.Fexp⟩⌝⦄ := by
   sorry
@@ -2607,7 +2607,7 @@ noncomputable def pow_NR0_check (e : ℝ) (n : Nat) : Unit :=
 
 theorem pow_NR0 (e : ℝ) (n : Nat) :
     ⦃⌜e ≠ 0⌝⦄
-    pow_NR0_check e n
+    (pure (pow_NR0_check e n) : Id Unit)
     ⦃⇓_ => ⌜e ^ n ≠ 0⌝⦄ := by
   sorry
 
@@ -2618,7 +2618,7 @@ noncomputable def pow_add_compat_check (e : ℝ) (n m : Nat) : Unit :=
 -- Renamed to avoid clashing with Mathlib's `pow_add`
 theorem pow_add_compat (e : ℝ) (n m : Nat) :
     ⦃⌜True⌝⦄
-    pow_add_compat_check e n m
+    (pure (pow_add_compat_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ (n + m) = e ^ n * e ^ m⌝⦄ := by
   sorry
 
@@ -2628,7 +2628,7 @@ noncomputable def pow_RN_plus_check (e : ℝ) (n m : Nat) : Unit :=
 
 theorem pow_RN_plus (e : ℝ) (n m : Nat) :
     ⦃⌜e ≠ 0⌝⦄
-    pow_RN_plus_check e n m
+    (pure (pow_RN_plus_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n = e ^ (n + m) * (e ^ m)⁻¹⌝⦄ := by
   sorry
 
@@ -2638,7 +2638,7 @@ noncomputable def pow_lt_check (e : ℝ) (n : Nat) : Unit :=
 
 theorem pow_lt (e : ℝ) (n : Nat) :
     ⦃⌜0 < e⌝⦄
-    pow_lt_check e n
+    (pure (pow_lt_check e n) : Id Unit)
     ⦃⇓_ => ⌜0 < e ^ n⌝⦄ := by
   sorry
 
@@ -2648,7 +2648,7 @@ noncomputable def Rlt_pow_R1_check (e : ℝ) (n : Nat) : Unit :=
 
 theorem Rlt_pow_R1 (e : ℝ) (n : Nat) :
     ⦃⌜1 < e ∧ 0 < n⌝⦄
-    Rlt_pow_R1_check e n
+    (pure (Rlt_pow_R1_check e n) : Id Unit)
     ⦃⇓_ => ⌜1 < e ^ n⌝⦄ := by
   sorry
 
@@ -2658,7 +2658,7 @@ noncomputable def Rlt_pow_check (e : ℝ) (n m : Nat) : Unit :=
 
 theorem Rlt_pow (e : ℝ) (n m : Nat) :
     ⦃⌜1 < e ∧ n < m⌝⦄
-    Rlt_pow_check e n m
+    (pure (Rlt_pow_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n < e ^ m⌝⦄ := by
   sorry
 
@@ -2668,7 +2668,7 @@ noncomputable def pow_R1_check (r : ℝ) (n : Nat) : Unit :=
 
 theorem pow_R1 (r : ℝ) (n : Nat) :
     ⦃⌜r ^ n = 1⌝⦄
-    pow_R1_check r n
+    (pure (pow_R1_check r n) : Id Unit)
     ⦃⇓_ => ⌜|r| = 1 ∨ n = 0⌝⦄ := by
   sorry
 
@@ -2680,7 +2680,7 @@ noncomputable def Rle_Fexp_eq_Zle_check {beta : Int}
 theorem Rle_Fexp_eq_Zle {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x ≤ _root_.F2R y ∧ x.Fexp = y.Fexp⌝⦄
-    Rle_Fexp_eq_Zle_check (beta:=beta) x y
+    (pure (Rle_Fexp_eq_Zle_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum ≤ y.Fnum⌝⦄ := by
   sorry
 
@@ -2690,7 +2690,7 @@ noncomputable def powerRZ_O_check (e : ℝ) : Unit :=
 
 theorem powerRZ_O (e : ℝ) :
     ⦃⌜True⌝⦄
-    powerRZ_O_check e
+    (pure (powerRZ_O_check e) : Id Unit)
     ⦃⇓_ => ⌜e ^ (0 : Int) = (1 : ℝ)⌝⦄ := by
   sorry
 
@@ -2700,7 +2700,7 @@ noncomputable def Zpower_NR0_check (e : Int) (n : Nat) : Unit :=
 
 theorem Zpower_NR0 (e : Int) (n : Nat) :
     ⦃⌜0 ≤ e⌝⦄
-    Zpower_NR0_check e n
+    (pure (Zpower_NR0_check e n) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ (e : Int) ^ n⌝⦄ := by
   sorry
 
@@ -2710,7 +2710,7 @@ noncomputable def Zpower_NR1_check (e : Int) (n : Nat) : Unit :=
 
 theorem Zpower_NR1 (e : Int) (n : Nat) :
     ⦃⌜1 ≤ e⌝⦄
-    Zpower_NR1_check e n
+    (pure (Zpower_NR1_check e n) : Id Unit)
     ⦃⇓_ => ⌜1 ≤ (e : Int) ^ n⌝⦄ := by
   sorry
 
@@ -2720,7 +2720,7 @@ noncomputable def powerRZ_1_check (e : ℝ) : Unit :=
 
 theorem powerRZ_1 (e : ℝ) :
     ⦃⌜True⌝⦄
-    powerRZ_1_check e
+    (pure (powerRZ_1_check e) : Id Unit)
     ⦃⇓_ => ⌜e ^ (1 : Int) = e⌝⦄ := by
   sorry
 
@@ -2730,7 +2730,7 @@ noncomputable def powerRZ_R1_check (n : Int) : Unit :=
 
 theorem powerRZ_R1 (n : Int) :
     ⦃⌜True⌝⦄
-    powerRZ_R1_check n
+    (pure (powerRZ_R1_check n) : Id Unit)
     ⦃⇓_ => ⌜(1 : ℝ) ^ n = (1 : ℝ)⌝⦄ := by
   sorry
 
@@ -2740,7 +2740,7 @@ noncomputable def powerRZ_add_check (e : ℝ) (m n : Int) : Unit :=
 
 theorem powerRZ_add (e : ℝ) (m n : Int) :
     ⦃⌜True⌝⦄
-    powerRZ_add_check e m n
+    (pure (powerRZ_add_check e m n) : Id Unit)
     ⦃⇓_ => ⌜e ^ (m + n) = e ^ m * e ^ n⌝⦄ := by
   sorry
 
@@ -2750,7 +2750,7 @@ noncomputable def powerRZ_Zopp_check (e : ℝ) (z : Int) : Unit :=
 
 theorem powerRZ_Zopp (e : ℝ) (z : Int) :
     ⦃⌜e ≠ 0⌝⦄
-    powerRZ_Zopp_check e z
+    (pure (powerRZ_Zopp_check e z) : Id Unit)
     ⦃⇓_ => ⌜e ^ (-z) = (e ^ z)⁻¹⌝⦄ := by
   sorry
 
@@ -2760,7 +2760,7 @@ noncomputable def powerRZ_Zs_check (e : ℝ) (n : Int) : Unit :=
 
 theorem powerRZ_Zs (e : ℝ) (n : Int) :
     ⦃⌜e ≠ 0⌝⦄
-    powerRZ_Zs_check e n
+    (pure (powerRZ_Zs_check e n) : Id Unit)
     ⦃⇓_ => ⌜e ^ (Int.succ n) = e * e ^ n⌝⦄ := by
   sorry
 
@@ -2773,7 +2773,7 @@ noncomputable def Zpower_nat_Z_powerRZ_check (n : Int) (m : Nat) : Unit :=
 
 theorem Zpower_nat_Z_powerRZ (n : Int) (m : Nat) :
     ⦃⌜True⌝⦄
-    Zpower_nat_Z_powerRZ_check n m
+    (pure (Zpower_nat_Z_powerRZ_check n m) : Id Unit)
     ⦃⇓_ => ⌜(Zpower_nat n m : ℝ) = ( (n : ℝ) ^ (m : Int) )⌝⦄ := by
   sorry
 
@@ -2783,7 +2783,7 @@ noncomputable def powerRZ_lt_check (e : ℝ) (z : Int) : Unit :=
 
 theorem powerRZ_lt (e : ℝ) (z : Int) :
     ⦃⌜0 < e⌝⦄
-    powerRZ_lt_check e z
+    (pure (powerRZ_lt_check e z) : Id Unit)
     ⦃⇓_ => ⌜0 < e ^ z⌝⦄ := by
   sorry
 
@@ -2793,7 +2793,7 @@ noncomputable def powerRZ_le_check (e : ℝ) (z : Int) : Unit :=
 
 theorem powerRZ_le (e : ℝ) (z : Int) :
     ⦃⌜0 < e⌝⦄
-    powerRZ_le_check e z
+    (pure (powerRZ_le_check e z) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ e ^ z⌝⦄ := by
   sorry
 
@@ -2803,7 +2803,7 @@ noncomputable def Rlt_powerRZ_check (e : ℝ) (n m : Int) : Unit :=
 
 theorem Rlt_powerRZ (e : ℝ) (n m : Int) :
     ⦃⌜1 < e ∧ n < m⌝⦄
-    Rlt_powerRZ_check e n m
+    (pure (Rlt_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n < e ^ m⌝⦄ := by
   sorry
 
@@ -2813,7 +2813,7 @@ noncomputable def Zpower_nat_powerRZ_absolu_check (n m : Int) : Unit :=
 
 theorem Zpower_nat_powerRZ_absolu (n m : Int) :
     ⦃⌜0 ≤ m⌝⦄
-    Zpower_nat_powerRZ_absolu_check n m
+    (pure (Zpower_nat_powerRZ_absolu_check n m) : Id Unit)
     ⦃⇓_ => ⌜(Zpower_nat n (Int.toNat (Int.natAbs m)) : ℝ) = (n : ℝ) ^ m⌝⦄ := by
   sorry
 
@@ -2823,7 +2823,7 @@ noncomputable def Rle_powerRZ_check (e : ℝ) (n m : Int) : Unit :=
 
 theorem Rle_powerRZ (e : ℝ) (n m : Int) :
     ⦃⌜1 ≤ e ∧ n ≤ m⌝⦄
-    Rle_powerRZ_check e n m
+    (pure (Rle_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n ≤ e ^ m⌝⦄ := by
   sorry
 
@@ -2833,7 +2833,7 @@ noncomputable def Zlt_powerRZ_check (e : ℝ) (n m : Int) : Unit :=
 
 theorem Zlt_powerRZ (e : ℝ) (n m : Int) :
     ⦃⌜1 ≤ e ∧ e ^ n < e ^ m⌝⦄
-    Zlt_powerRZ_check e n m
+    (pure (Zlt_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜n < m⌝⦄ := by
   sorry
 
@@ -2843,7 +2843,7 @@ noncomputable def Rlt_monotony_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : U
 
 theorem Rlt_monotony_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     ⦃⌜x < y⌝⦄
-    Rlt_monotony_exp_check radix x y z
+    (pure (Rlt_monotony_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x * radix ^ z < y * radix ^ z⌝⦄ := by
   sorry
 
@@ -2853,7 +2853,7 @@ noncomputable def Rle_monotone_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : U
 
 theorem Rle_monotone_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     ⦃⌜x ≤ y⌝⦄
-    Rle_monotone_exp_check radix x y z
+    (pure (Rle_monotone_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x * radix ^ z ≤ y * radix ^ z⌝⦄ := by
   sorry
 
@@ -2863,7 +2863,7 @@ noncomputable def Rlt_monotony_contra_exp_check (radix : ℝ) (x y : ℝ) (z : I
 
 theorem Rlt_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     ⦃⌜x * radix ^ z < y * radix ^ z⌝⦄
-    Rlt_monotony_contra_exp_check radix x y z
+    (pure (Rlt_monotony_contra_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x < y⌝⦄ := by
   sorry
 
@@ -2873,7 +2873,7 @@ noncomputable def Rle_monotony_contra_exp_check (radix : ℝ) (x y : ℝ) (z : I
 
 theorem Rle_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     ⦃⌜x * radix ^ z ≤ y * radix ^ z⌝⦄
-    Rle_monotony_contra_exp_check radix x y z
+    (pure (Rle_monotony_contra_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
   sorry
 
@@ -2885,7 +2885,7 @@ noncomputable def FtoREqInv2_check {beta : Int}
 theorem FtoREqInv2 {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R p = _root_.F2R q ∧ p.Fexp = q.Fexp⌝⦄
-    FtoREqInv2_check (beta:=beta) p q
+    (pure (FtoREqInv2_check (beta:=beta) p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   sorry
 
@@ -2897,7 +2897,7 @@ noncomputable def sameExpEq_check {beta : Int}
 theorem sameExpEq {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R p = _root_.F2R q ∧ p.Fexp = q.Fexp⌝⦄
-    sameExpEq_check (beta:=beta) p q
+    (pure (sameExpEq_check (beta:=beta) p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   -- Mirrors Coq `sameExpEq`; see also `FtoREqInv2`.
   sorry
@@ -2909,7 +2909,7 @@ noncomputable def Rlt_Float_Zlt_check {beta : Int} (p q r : Int) : Unit :=
 theorem Rlt_Float_Zlt {beta : Int} (p q r : Int) :
     ⦃⌜_root_.F2R (⟨p, r⟩ : FloatSpec.Core.Defs.FlocqFloat beta) <
          _root_.F2R (⟨q, r⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄
-    Rlt_Float_Zlt_check (beta:=beta) p q r
+    (pure (Rlt_Float_Zlt_check (beta:=beta) p q r) : Id Unit)
     ⦃⇓_ => ⌜p < q⌝⦄ := by
   sorry
 
@@ -2919,7 +2919,7 @@ noncomputable def oneExp_le_check {beta : Int} (x y : Int) : Unit :=
 
 theorem oneExp_le {beta : Int} (x y : Int) :
     ⦃⌜x ≤ y⌝⦄
-    oneExp_le_check (beta:=beta) x y
+    (pure (oneExp_le_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (⟨1, x⟩ : FloatSpec.Core.Defs.FlocqFloat beta)
             ≤ _root_.F2R (⟨1, y⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄ := by
   sorry
@@ -2931,7 +2931,7 @@ noncomputable def oneExp_Zlt_check {beta : Int} (x y : Int) : Unit :=
 theorem oneExp_Zlt {beta : Int} (x y : Int) :
     ⦃⌜_root_.F2R (⟨1, x⟩ : FloatSpec.Core.Defs.FlocqFloat beta) <
          _root_.F2R (⟨1, y⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄
-    oneExp_Zlt_check (beta:=beta) x y
+    (pure (oneExp_Zlt_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜x < y⌝⦄ := by
   sorry
 
@@ -2941,7 +2941,7 @@ noncomputable def Zle_powerRZ_check (e : ℝ) (n m : Int) : Unit :=
 
 theorem Zle_powerRZ (e : ℝ) (n m : Int) :
     ⦃⌜1 < e ∧ e ^ n ≤ e ^ m⌝⦄
-    Zle_powerRZ_check e n m
+    (pure (Zle_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜n ≤ m⌝⦄ := by
   sorry
 
@@ -2951,7 +2951,7 @@ noncomputable def Rinv_powerRZ_check (e : ℝ) (n : Int) : Unit :=
 
 theorem Rinv_powerRZ (e : ℝ) (n : Int) :
     ⦃⌜e ≠ 0⌝⦄
-    Rinv_powerRZ_check e n
+    (pure (Rinv_powerRZ_check e n) : Id Unit)
     ⦃⇓_ => ⌜(e ^ n)⁻¹ = e ^ (-n)⌝⦄ := by
   sorry
 
@@ -2961,7 +2961,7 @@ noncomputable def Rledouble_check (r : ℝ) : Unit :=
 
 theorem Rledouble (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    Rledouble_check r
+    (pure (Rledouble_check r) : Id Unit)
     ⦃⇓_ => ⌜r ≤ 2 * r⌝⦄ := by
   sorry
 
@@ -2971,7 +2971,7 @@ noncomputable def Rltdouble_check (r : ℝ) : Unit :=
 
 theorem Rltdouble (r : ℝ) :
     ⦃⌜0 < r⌝⦄
-    Rltdouble_check r
+    (pure (Rltdouble_check r) : Id Unit)
     ⦃⇓_ => ⌜r < 2 * r⌝⦄ := by
   sorry
 
@@ -2981,7 +2981,7 @@ noncomputable def powerRZ_NOR_check (e : ℝ) (n : Int) : Unit :=
 
 theorem powerRZ_NOR (e : ℝ) (n : Int) :
     ⦃⌜e ≠ 0⌝⦄
-    powerRZ_NOR_check e n
+    (pure (powerRZ_NOR_check e n) : Id Unit)
     ⦃⇓_ => ⌜e ^ n ≠ 0⌝⦄ := by
   sorry
 
@@ -2991,7 +2991,7 @@ noncomputable def Rle_Rinv_check (x y : ℝ) : Unit :=
 
 theorem Rle_Rinv (x y : ℝ) :
     ⦃⌜0 < x ∧ x ≤ y⌝⦄
-    Rle_Rinv_check x y
+    (pure (Rle_Rinv_check x y) : Id Unit)
     ⦃⇓_ => ⌜y⁻¹ ≤ x⁻¹⌝⦄ := by
   sorry
 
@@ -3001,7 +3001,7 @@ noncomputable def min_or_check (n m : Nat) : Unit :=
 
 theorem min_or (n m : Nat) :
     ⦃⌜True⌝⦄
-    min_or_check n m
+    (pure (min_or_check n m) : Id Unit)
     ⦃⇓_ => ⌜(Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n)⌝⦄ := by
   sorry
 
@@ -3011,7 +3011,7 @@ noncomputable def ZmaxSym_check (a b : Int) : Unit :=
 
 theorem ZmaxSym (a b : Int) :
     ⦃⌜True⌝⦄
-    ZmaxSym_check a b
+    (pure (ZmaxSym_check a b) : Id Unit)
     ⦃⇓_ => ⌜max a b = max b a⌝⦄ := by
   sorry
 
@@ -3021,7 +3021,7 @@ noncomputable def ZmaxLe1_check (a b : Int) : Unit :=
 
 theorem ZmaxLe1 (a b : Int) :
     ⦃⌜True⌝⦄
-    ZmaxLe1_check a b
+    (pure (ZmaxLe1_check a b) : Id Unit)
     ⦃⇓_ => ⌜a ≤ max a b⌝⦄ := by
   sorry
 
@@ -3031,7 +3031,7 @@ noncomputable def ZmaxLe2_check (a b : Int) : Unit :=
 
 theorem ZmaxLe2 (a b : Int) :
     ⦃⌜True⌝⦄
-    ZmaxLe2_check a b
+    (pure (ZmaxLe2_check a b) : Id Unit)
     ⦃⇓_ => ⌜b ≤ max a b⌝⦄ := by
   sorry
 
@@ -3040,7 +3040,7 @@ noncomputable def ZleLe_check (x y : Nat) : Unit :=
 
 theorem ZleLe (x y : Nat) :
     ⦃⌜(Int.ofNat x ≤ Int.ofNat y)⌝⦄
-    ZleLe_check x y
+    (pure (ZleLe_check x y) : Id Unit)
     ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
   sorry
 
@@ -3050,7 +3050,7 @@ noncomputable def Zlt_Zopp_check (x y : Int) : Unit :=
 
 theorem Zlt_Zopp (x y : Int) :
     ⦃⌜x < y⌝⦄
-    Zlt_Zopp_check x y
+    (pure (Zlt_Zopp_check x y) : Id Unit)
     ⦃⇓_ => ⌜-y < -x⌝⦄ := by
   sorry
 
@@ -3060,7 +3060,7 @@ noncomputable def Zle_Zopp_check (x y : Int) : Unit :=
 
 theorem Zle_Zopp (x y : Int) :
     ⦃⌜x ≤ y⌝⦄
-    Zle_Zopp_check x y
+    (pure (Zle_Zopp_check x y) : Id Unit)
     ⦃⇓_ => ⌜-y ≤ -x⌝⦄ := by
   sorry
 
@@ -3070,7 +3070,7 @@ noncomputable def Zabs_absolu_check (z : Int) : Unit :=
 
 theorem Zabs_absolu (z : Int) :
     ⦃⌜True⌝⦄
-    Zabs_absolu_check z
+    (pure (Zabs_absolu_check z) : Id Unit)
     ⦃⇓_ => ⌜|z| = Int.ofNat (Int.natAbs z)⌝⦄ := by
   sorry
 
@@ -3080,7 +3080,7 @@ noncomputable def Zpower_nat_O_check (z : Int) : Unit :=
 
 theorem Zpower_nat_O (z : Int) :
     ⦃⌜True⌝⦄
-    Zpower_nat_O_check z
+    (pure (Zpower_nat_O_check z) : Id Unit)
     ⦃⇓_ => ⌜z^0 = (1 : Int)⌝⦄ := by
   sorry
 
@@ -3090,7 +3090,7 @@ noncomputable def Zpower_nat_1_check (z : Int) : Unit :=
 
 theorem Zpower_nat_1 (z : Int) :
     ⦃⌜True⌝⦄
-    Zpower_nat_1_check z
+    (pure (Zpower_nat_1_check z) : Id Unit)
     ⦃⇓_ => ⌜z^1 = z⌝⦄ := by
   sorry
 
@@ -3100,7 +3100,7 @@ noncomputable def Zmin_Zmax_check (z1 z2 : Int) : Unit :=
 
 theorem Zmin_Zmax (z1 z2 : Int) :
     ⦃⌜True⌝⦄
-    Zmin_Zmax_check z1 z2
+    (pure (Zmin_Zmax_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜min z1 z2 ≤ max z1 z2⌝⦄ := by
   sorry
 
@@ -3110,7 +3110,7 @@ noncomputable def Zeq_Zs_check (p q : Int) : Unit :=
 
 theorem Zeq_Zs (p q : Int) :
     ⦃⌜p ≤ q ∧ q < Int.succ p⌝⦄
-    Zeq_Zs_check p q
+    (pure (Zeq_Zs_check p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   sorry
 
@@ -3120,7 +3120,7 @@ noncomputable def Zopp_Zpred_Zs_check (z : Int) : Unit :=
 
 theorem Zopp_Zpred_Zs (z : Int) :
     ⦃⌜True⌝⦄
-    Zopp_Zpred_Zs_check z
+    (pure (Zopp_Zpred_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜-(Int.pred z) = Int.succ (-z)⌝⦄ := by
   sorry
 
@@ -3130,7 +3130,7 @@ noncomputable def Zmin_Zle_check (z1 z2 z3 : Int) : Unit :=
 
 theorem Zmin_Zle (z1 z2 z3 : Int) :
     ⦃⌜z1 ≤ z2 ∧ z1 ≤ z3⌝⦄
-    Zmin_Zle_check z1 z2 z3
+    (pure (Zmin_Zle_check z1 z2 z3) : Id Unit)
     ⦃⇓_ => ⌜z1 ≤ min z2 z3⌝⦄ := by
   sorry
 
@@ -3140,7 +3140,7 @@ noncomputable def Zmin_Zlt_check (z1 z2 z3 : Int) : Unit :=
 
 theorem Zmin_Zlt (z1 z2 z3 : Int) :
     ⦃⌜z1 < z2 ∧ z1 < z3⌝⦄
-    Zmin_Zlt_check z1 z2 z3
+    (pure (Zmin_Zlt_check z1 z2 z3) : Id Unit)
     ⦃⇓_ => ⌜z1 < min z2 z3⌝⦄ := by
   sorry
 
@@ -3150,7 +3150,7 @@ noncomputable def Zpred_Zopp_Zs_check (z : Int) : Unit :=
 
 theorem Zpred_Zopp_Zs (z : Int) :
     ⦃⌜True⌝⦄
-    Zpred_Zopp_Zs_check z
+    (pure (Zpred_Zopp_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜Int.pred (-z) = -(Int.succ z)⌝⦄ := by
   sorry
 
@@ -3160,7 +3160,7 @@ noncomputable def Zle_Zmult_comp_r_check (x y z : Int) : Unit :=
 
 theorem Zle_Zmult_comp_r (x y z : Int) :
     ⦃⌜0 ≤ z ∧ x ≤ y⌝⦄
-    Zle_Zmult_comp_r_check x y z
+    (pure (Zle_Zmult_comp_r_check x y z) : Id Unit)
     ⦃⇓_ => ⌜x * z ≤ y * z⌝⦄ := by
   sorry
 
@@ -3170,7 +3170,7 @@ noncomputable def Zle_Zmult_comp_l_check (x y z : Int) : Unit :=
 
 theorem Zle_Zmult_comp_l (x y z : Int) :
     ⦃⌜0 ≤ z ∧ x ≤ y⌝⦄
-    Zle_Zmult_comp_l_check x y z
+    (pure (Zle_Zmult_comp_l_check x y z) : Id Unit)
     ⦃⇓_ => ⌜z * x ≤ z * y⌝⦄ := by
   sorry
 
@@ -3180,7 +3180,7 @@ noncomputable def absolu_Zs_check (z : Int) : Unit :=
 
 theorem absolu_Zs (z : Int) :
     ⦃⌜0 ≤ z⌝⦄
-    absolu_Zs_check z
+    (pure (absolu_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜Int.natAbs (Int.succ z) = Nat.succ (Int.natAbs z)⌝⦄ := by
   sorry
 
@@ -3190,7 +3190,7 @@ noncomputable def Zlt_next_check (n m : Int) : Unit :=
 
 theorem Zlt_next (n m : Int) :
     ⦃⌜n < m⌝⦄
-    Zlt_next_check n m
+    (pure (Zlt_next_check n m) : Id Unit)
     ⦃⇓_ => ⌜m = Int.succ n ∨ Int.succ n < m⌝⦄ := by
   sorry
 
@@ -3200,7 +3200,7 @@ noncomputable def Zle_next_check (n m : Int) : Unit :=
 
 theorem Zle_next (n m : Int) :
     ⦃⌜n ≤ m⌝⦄
-    Zle_next_check n m
+    (pure (Zle_next_check n m) : Id Unit)
     ⦃⇓_ => ⌜m = n ∨ Int.succ n ≤ m⌝⦄ := by
   sorry
 
@@ -3210,7 +3210,7 @@ noncomputable def inj_pred_check (n : Nat) : Unit :=
 
 theorem inj_pred (n : Nat) :
     ⦃⌜n ≠ 0⌝⦄
-    inj_pred_check n
+    (pure (inj_pred_check n) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (Nat.pred n) = Int.pred (Int.ofNat n)⌝⦄ := by
   sorry
 
@@ -3220,7 +3220,7 @@ noncomputable def Zle_abs_check (p : Int) : Unit :=
 
 theorem Zle_abs (p : Int) :
     ⦃⌜True⌝⦄
-    Zle_abs_check p
+    (pure (Zle_abs_check p) : Id Unit)
     ⦃⇓_ => ⌜p ≤ Int.ofNat (Int.natAbs p)⌝⦄ := by
   sorry
 
@@ -3230,7 +3230,7 @@ noncomputable def inj_abs_check (x : Int) : Unit :=
 
 theorem inj_abs (x : Int) :
     ⦃⌜0 ≤ x⌝⦄
-    inj_abs_check x
+    (pure (inj_abs_check x) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (Int.natAbs x) = x⌝⦄ := by
   sorry
 
@@ -3261,7 +3261,7 @@ noncomputable def Pdiv_correct_check (p q : Positive) : Unit :=
 
 theorem Pdiv_correct (p q : Positive) :
     ⦃⌜True⌝⦄
-    Pdiv_correct_check p q
+    (pure (Pdiv_correct_check p q) : Id Unit)
     ⦃⇓_ => ⌜nat_of_P p = oZ (Prod.fst (Pdiv p q)) * nat_of_P q + oZ (Prod.snd (Pdiv p q)) ∧
             oZ (Prod.snd (Pdiv p q)) < nat_of_P q⌝⦄ := by
   sorry
@@ -3278,7 +3278,7 @@ noncomputable def inj_oZ1_check (z : Option Positive) : Unit :=
 
 theorem inj_oZ1 (z : Option Positive) :
     ⦃⌜True⌝⦄
-    inj_oZ1_check z
+    (pure (inj_oZ1_check z) : Id Unit)
     ⦃⇓_ => ⌜oZ1 z = Int.ofNat (oZ z)⌝⦄ := by
   sorry
 
@@ -3292,7 +3292,7 @@ noncomputable def ZquotientProp_check (m n : Int) : Unit :=
 
 theorem ZquotientProp (m n : Int) :
     ⦃⌜n ≠ 0⌝⦄
-    ZquotientProp_check m n
+    (pure (ZquotientProp_check m n) : Id Unit)
     ⦃⇓_ => ⌜∃ r : Int,
             m = Zquotient m n * n + r ∧
             |Zquotient m n * n| ≤ |m| ∧
@@ -3309,7 +3309,7 @@ noncomputable def ZdividesZquotient_check (n m : Int) : Unit :=
 
 theorem ZdividesZquotient (n m : Int) :
     ⦃⌜m ≠ 0 ∧ Zdivides n m⌝⦄
-    ZdividesZquotient_check n m
+    (pure (ZdividesZquotient_check n m) : Id Unit)
     ⦃⇓_ => ⌜n = Zquotient n m * m⌝⦄ := by
   sorry
 
@@ -3319,7 +3319,7 @@ noncomputable def ZdividesZquotientInv_check (n m : Int) : Unit :=
 
 theorem ZdividesZquotientInv (n m : Int) :
     ⦃⌜n = Zquotient n m * m⌝⦄
-    ZdividesZquotientInv_check n m
+    (pure (ZdividesZquotientInv_check n m) : Id Unit)
     ⦃⇓_ => ⌜Zdivides n m⌝⦄ := by
   sorry
 
@@ -3329,7 +3329,7 @@ noncomputable def ZdividesMult_check (n m p : Int) : Unit :=
 
 theorem ZdividesMult (n m p : Int) :
     ⦃⌜Zdivides n m⌝⦄
-    ZdividesMult_check n m p
+    (pure (ZdividesMult_check n m p) : Id Unit)
     ⦃⇓_ => ⌜Zdivides (p * n) (p * m)⌝⦄ := by
   sorry
 
@@ -3339,7 +3339,7 @@ noncomputable def Zeq_mult_simpl_check (a b c : Int) : Unit :=
 
 theorem Zeq_mult_simpl (a b c : Int) :
     ⦃⌜c ≠ 0 ∧ a * c = b * c⌝⦄
-    Zeq_mult_simpl_check a b c
+    (pure (Zeq_mult_simpl_check a b c) : Id Unit)
     ⦃⇓_ => ⌜a = b⌝⦄ := by
   sorry
 
@@ -3349,7 +3349,7 @@ noncomputable def ZdividesDiv_check (n m p : Int) : Unit :=
 
 theorem ZdividesDiv (n m p : Int) :
     ⦃⌜p ≠ 0 ∧ Zdivides (p * n) (p * m)⌝⦄
-    ZdividesDiv_check n m p
+    (pure (ZdividesDiv_check n m p) : Id Unit)
     ⦃⇓_ => ⌜Zdivides n m⌝⦄ := by
   sorry
 
@@ -3359,7 +3359,7 @@ noncomputable def Zdivides1_check (m : Int) : Unit :=
 
 theorem Zdivides1 (m : Int) :
     ⦃⌜True⌝⦄
-    Zdivides1_check m
+    (pure (Zdivides1_check m) : Id Unit)
     ⦃⇓_ => ⌜Zdivides m 1⌝⦄ := by
   sorry
 
@@ -3370,7 +3370,7 @@ noncomputable def ZDividesLe_check (n m : Int) : Unit :=
 /-- Coq: `ZDividesLe` — divisibility bounds the absolute value. -/
 theorem ZDividesLe (n m : Int) :
     ⦃⌜n ≠ 0 ∧ Zdivides n m⌝⦄
-    ZDividesLe_check n m
+    (pure (ZDividesLe_check n m) : Id Unit)
     ⦃⇓_ => ⌜|m| ≤ |n|⌝⦄ := by
   sorry
 
@@ -3387,7 +3387,7 @@ noncomputable def digitPredVNumiSPrecision_check
 theorem digitPredVNumiSPrecision
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⌜precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision⌝⦄
-    digitPredVNumiSPrecision_check radix b precision
+    (pure (digitPredVNumiSPrecision_check radix b precision) : Id Unit)
     ⦃⇓_ => ⌜digit radix (Int.pred b.vNum) = precision⌝⦄ := by
   intro _
   -- Statement imported from Coq; proof pending
@@ -3402,7 +3402,7 @@ noncomputable def digitVNumiSPrecision_check
 theorem digitVNumiSPrecision
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⌜precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision⌝⦄
-    digitVNumiSPrecision_check radix b precision
+    (pure (digitVNumiSPrecision_check radix b precision) : Id Unit)
     ⦃⇓_ => ⌜digit radix b.vNum = Nat.succ precision⌝⦄ := by
   intro _
   -- Statement imported from Coq; proof pending
@@ -3418,7 +3418,7 @@ theorem pGivesDigit {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    pGivesDigit_check (beta:=beta) radix b precision p
+    (pure (pGivesDigit_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix p ≤ precision⌝⦄ := by
   intro _
   -- Placeholder for Coq proof port
@@ -3434,7 +3434,7 @@ theorem digitGivesBoundedNum {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fdigit (beta:=beta) radix p ≤ precision⌝⦄
-    digitGivesBoundedNum_check (beta:=beta) radix b precision p
+    (pure (digitGivesBoundedNum_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜|p.Fnum| < b.vNum⌝⦄ := by
   intro _
   -- Placeholder for Coq proof port
@@ -3450,7 +3450,7 @@ theorem FnormalPrecision {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    FnormalPrecision_check (beta:=beta) radix b precision p
+    (pure (FnormalPrecision_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix p = precision⌝⦄ := by
   intro _
   -- Imported statement; proof pending porting from Coq
@@ -3467,7 +3467,7 @@ noncomputable def nNormPos_check (radix : Int) (precision : Nat) : Unit :=
 /-- Coq: `nNormPos` — minimal normal mantissa is strictly positive. -/
 theorem nNormPos (radix : Int) (precision : Nat) :
     ⦃⌜True⌝⦄
-    nNormPos_check radix precision
+    (pure (nNormPos_check radix precision) : Id Unit)
     ⦃⇓_ => ⌜0 < nNormMin radix precision⌝⦄ := by
   intro _
   -- Proof port pending from Coq
@@ -3479,7 +3479,7 @@ noncomputable def digitnNormMin_check (radix : Int) (precision : Nat) : Unit :=
 /-- Coq: `digitnNormMin` — `digit radix nNormMin = precision`. -/
 theorem digitnNormMin (radix : Int) (precision : Nat) :
     ⦃⌜True⌝⦄
-    digitnNormMin_check radix precision
+    (pure (digitnNormMin_check radix precision) : Id Unit)
     ⦃⇓_ => ⌜digit radix (nNormMin radix precision) = precision⌝⦄ := by
   intro _
   -- Proof port pending from Coq
@@ -3493,7 +3493,7 @@ and nonzero `precision`, the bound exceeds 1. -/
 theorem vNumbMoreThanOne
     (b : Fbound_skel) (radix : Int) (precision : Nat) :
     ⦃⌜precision ≠ 0 ∧ 1 < radix ∧ b.vNum = Zpower_nat radix precision⌝⦄
-    vNumbMoreThanOne_check b radix precision
+    (pure (vNumbMoreThanOne_check b radix precision) : Id Unit)
     ⦃⇓_ => ⌜(1 : Int) < b.vNum⌝⦄ := by
   intro h
   rcases h with ⟨hp, hr, hv⟩
@@ -3509,7 +3509,7 @@ noncomputable def nNrMMimLevNum_check
 /-- Coq: `nNrMMimLevNum` — minimal mantissa bounded by `vNum` under standard relation. -/
 theorem nNrMMimLevNum (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⌜b.vNum = Zpower_nat radix precision⌝⦄
-    nNrMMimLevNum_check radix b precision
+    (pure (nNrMMimLevNum_check radix b precision) : Id Unit)
     ⦃⇓_ => ⌜nNormMin radix precision ≤ b.vNum⌝⦄ := by
   sorry
 
@@ -3523,7 +3523,7 @@ noncomputable def firstNormalPosNormal_check
 theorem firstNormalPosNormal {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⌜True⌝⦄
-    firstNormalPosNormal_check (beta:=beta) radix b precision
+    (pure (firstNormalPosNormal_check (beta:=beta) radix b precision) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (firstNormalPos (beta:=beta) radix b precision)⌝⦄ := by
   intro _
   -- Proof port pending from Coq
@@ -3539,7 +3539,7 @@ theorem pNormal_absolu_min {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
-    pNormal_absolu_min_check (beta:=beta) radix b precision p
+    (pure (pNormal_absolu_min_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜nNormMin radix precision ≤ |p.Fnum|⌝⦄ := by
   intro _
   -- Proof port pending from Coq
@@ -3556,7 +3556,7 @@ theorem FnormalLtFirstNormalPos {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧ 0 ≤ _root_.F2R (beta:=beta) p⌝⦄
-    FnormalLtFirstNormalPos_check (beta:=beta) radix b precision p
+    (pure (FnormalLtFirstNormalPos_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta)
             (firstNormalPos (beta:=beta) radix b precision)
             ≤ _root_.F2R (beta:=beta) p⌝⦄ := by
@@ -3575,7 +3575,7 @@ theorem FsubnormalDigit {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    FsubnormalDigit_check (beta:=beta) radix b precision p
+    (pure (FsubnormalDigit_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix p < precision⌝⦄ := by
   intro _
   -- Imported from Coq; proof to be filled when the arithmetic lemmas land
@@ -3593,7 +3593,7 @@ theorem pSubnormal_absolu_min {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
-    pSubnormal_absolu_min_check (beta:=beta) radix b precision p
+    (pure (pSubnormal_absolu_min_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜|p.Fnum| < nNormMin radix precision⌝⦄ := by
   intro _
   -- Proof deferred to a future ported development step
@@ -3611,7 +3611,7 @@ theorem FsubnormalLtFirstNormalPos {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
         0 ≤ _root_.F2R (beta:=beta) p⌝⦄
-    FsubnormalLtFirstNormalPos_check (beta:=beta) radix b precision p
+    (pure (FsubnormalLtFirstNormalPos_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p <
             _root_.F2R (beta:=beta)
               (firstNormalPos (beta:=beta) radix b precision)⌝⦄ := by
@@ -3633,7 +3633,7 @@ theorem FsubnormalnormalLtPos {beta : Int}
         Fnormal (beta:=beta) radix b q ∧
         0 ≤ _root_.F2R (beta:=beta) p ∧
         0 ≤ _root_.F2R (beta:=beta) q⌝⦄
-    FsubnormalnormalLtPos_check (beta:=beta) radix b p q
+    (pure (FsubnormalnormalLtPos_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p <
             _root_.F2R (beta:=beta) q⌝⦄ := by
   intro _
@@ -3654,7 +3654,7 @@ theorem FsubnormalnormalLtNeg {beta : Int}
         Fnormal (beta:=beta) radix b q ∧
         _root_.F2R (beta:=beta) p ≤ 0 ∧
         _root_.F2R (beta:=beta) q ≤ 0⌝⦄
-    FsubnormalnormalLtNeg_check (beta:=beta) radix b p q
+    (pure (FsubnormalnormalLtNeg_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) q <
             _root_.F2R (beta:=beta) p⌝⦄ := by
   intro _
@@ -3673,7 +3673,7 @@ theorem FnormalUnique {beta : Int}
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
         Fnormal (beta:=beta) radix b q ∧
         _root_.F2R (beta:=beta) p = _root_.F2R (beta:=beta) q⌝⦄
-    FnormalUnique_check (beta:=beta) radix b p q
+    (pure (FnormalUnique_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ :=
   sorry
 
@@ -3693,7 +3693,7 @@ theorem FnormalLtPos {beta : Int}
         Fnormal (beta:=beta) radix b q ∧
         0 ≤ _root_.F2R (beta:=beta) p ∧
         _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
-    FnormalLtPos_check (beta:=beta) radix b p q
+    (pure (FnormalLtPos_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜p.Fexp < q.Fexp ∨
             (p.Fexp = q.Fexp ∧ p.Fnum < q.Fnum)⌝⦄ :=
   sorry
@@ -3708,7 +3708,7 @@ noncomputable def vNumPrecision_check
 theorem vNumPrecision
     (b : Fbound_skel) (radix : Int) (precision : Nat) (n : Int) :
     ⦃⌜digit radix n ≤ precision⌝⦄
-    vNumPrecision_check b radix precision n
+    (pure (vNumPrecision_check b radix precision n) : Id Unit)
     ⦃⇓_ => ⌜|n| < b.vNum⌝⦄ := by
   sorry
 
@@ -3719,7 +3719,7 @@ noncomputable def NotDividesDigit_check (r v : Int) : Unit :=
 /-- Coq: `NotDividesDigit` — no divisibility at the digit boundary. -/
 theorem NotDividesDigit (r v : Int) :
     ⦃⌜1 < r ∧ v ≠ 0⌝⦄
-    NotDividesDigit_check r v
+    (pure (NotDividesDigit_check r v) : Id Unit)
     ⦃⇓_ => ⌜¬ Zdivides v (Zpower_nat r (digit r v))⌝⦄ := by
   sorry
 
@@ -3730,7 +3730,7 @@ noncomputable def ZquotientPos_check (z1 z2 : Int) : Unit :=
 /-- Coq: `ZquotientPos` — positivity of quotient under nonnegativity hypotheses. -/
 theorem ZquotientPos (z1 z2 : Int) :
     ⦃⌜0 ≤ z1 ∧ 0 ≤ z2⌝⦄
-    ZquotientPos_check z1 z2
+    (pure (ZquotientPos_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ Zquotient z1 z2⌝⦄ := by
   sorry
 
@@ -3740,7 +3740,7 @@ noncomputable def inject_nat_convert_check (p : Int) (q : Positive) : Unit :=
 
 theorem inject_nat_convert (p : Int) (q : Positive) :
     ⦃⌜p = Int.ofNat (nat_of_P q)⌝⦄
-    inject_nat_convert_check p q
+    (pure (inject_nat_convert_check p q) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (nat_of_P q) = p⌝⦄ := by
   -- Trivial restatement in Lean; Coq version states for Zpos q.
   sorry
@@ -3751,7 +3751,7 @@ noncomputable def Zabs_eq_opp_check (x : Int) : Unit :=
 
 theorem Zabs_eq_opp (x : Int) :
     ⦃⌜x ≤ 0⌝⦄
-    Zabs_eq_opp_check x
+    (pure (Zabs_eq_opp_check x) : Id Unit)
     ⦃⇓_ => ⌜|x| = -x⌝⦄ := by
   sorry
 
@@ -3761,7 +3761,7 @@ noncomputable def Zabs_Zs_check (z : Int) : Unit :=
 
 theorem Zabs_Zs (z : Int) :
     ⦃⌜True⌝⦄
-    Zabs_Zs_check z
+    (pure (Zabs_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜|Int.succ z| ≤ Int.succ |z|⌝⦄ := by
   sorry
 
@@ -3771,7 +3771,7 @@ noncomputable def lt_Zlt_inv_check (n m : Nat) : Unit :=
 
 theorem lt_Zlt_inv (n m : Nat) :
     ⦃⌜Int.ofNat n < Int.ofNat m⌝⦄
-    lt_Zlt_inv_check n m
+    (pure (lt_Zlt_inv_check n m) : Id Unit)
     ⦃⇓_ => ⌜n < m⌝⦄ := by
   sorry
 
@@ -3781,7 +3781,7 @@ noncomputable def Zle_Zpred_check (x y : Int) : Unit :=
 
 theorem Zle_Zpred (x y : Int) :
     ⦃⌜x < y⌝⦄
-    Zle_Zpred_check x y
+    (pure (Zle_Zpred_check x y) : Id Unit)
     ⦃⇓_ => ⌜x ≤ Int.pred y⌝⦄ := by
   sorry
 
@@ -3791,7 +3791,7 @@ noncomputable def NconvertO_check (p : Positive) : Unit :=
 
 theorem NconvertO (p : Positive) :
     ⦃⌜True⌝⦄
-    NconvertO_check p
+    (pure (NconvertO_check p) : Id Unit)
     ⦃⇓_ => ⌜nat_of_P p ≠ 0⌝⦄ := by
   sorry
 
@@ -3801,7 +3801,7 @@ noncomputable def convert_not_O_check (p : Positive) : Unit :=
 
 theorem convert_not_O (p : Positive) :
     ⦃⌜True⌝⦄
-    convert_not_O_check p
+    (pure (convert_not_O_check p) : Id Unit)
     ⦃⇓_ => ⌜nat_of_P p ≠ 0⌝⦄ := by
   -- Mirrors `NconvertO`; proof deferred per import task.
   sorry
@@ -3812,7 +3812,7 @@ noncomputable def Zle_Zabs_check (z : Int) : Unit :=
 
 theorem Zle_Zabs (z : Int) :
     ⦃⌜True⌝⦄
-    Zle_Zabs_check z
+    (pure (Zle_Zabs_check z) : Id Unit)
     ⦃⇓_ => ⌜z ≤ |z|⌝⦄ := by
   sorry
 
@@ -3824,7 +3824,7 @@ noncomputable def absolu_lt_nz_check (z : Int) : Unit :=
 
 theorem absolu_lt_nz (z : Int) :
     ⦃⌜z ≠ 0⌝⦄
-    absolu_lt_nz_check z
+    (pure (absolu_lt_nz_check z) : Id Unit)
     ⦃⇓_ => ⌜0 < Int.natAbs z⌝⦄ := by
   sorry
 
@@ -3848,7 +3848,7 @@ noncomputable def mZlist_aux_correct_check (n : Nat) (p q : Int) : Unit :=
 We mirror the statement using the project's hoare-triple style; proof deferred. -/
 theorem mZlist_aux_correct (n : Nat) (p q : Int) :
     ⦃⌜p ≤ q ∧ q ≤ p + Int.ofNat n⌝⦄
-    mZlist_aux_correct_check n p q
+    (pure (mZlist_aux_correct_check n p q) : Id Unit)
     ⦃⇓_ => ⌜List.Mem q (mZlist_aux p n)⌝⦄ := by
   sorry
 
@@ -3859,7 +3859,7 @@ noncomputable def mZlist_aux_correct_rev1_check (n : Nat) (p q : Int) : Unit :=
 Hoare-triple wrapper; proof deferred. -/
 theorem mZlist_aux_correct_rev1 (n : Nat) (p q : Int) :
     ⦃⌜List.Mem q (mZlist_aux p n)⌝⦄
-    mZlist_aux_correct_rev1_check n p q
+    (pure (mZlist_aux_correct_rev1_check n p q) : Id Unit)
     ⦃⇓_ => ⌜p ≤ q⌝⦄ := by
   sorry
 
@@ -3870,7 +3870,7 @@ noncomputable def mZlist_aux_correct_rev2_check (n : Nat) (p q : Int) : Unit :=
 Hoare-triple wrapper; proof deferred. -/
 theorem mZlist_aux_correct_rev2 (n : Nat) (p q : Int) :
     ⦃⌜List.Mem q (mZlist_aux p n)⌝⦄
-    mZlist_aux_correct_rev2_check n p q
+    (pure (mZlist_aux_correct_rev2_check n p q) : Id Unit)
     ⦃⇓_ => ⌜q ≤ p + Int.ofNat n⌝⦄ := by
   sorry
 
@@ -3890,7 +3890,7 @@ noncomputable def mZlist_correct_check (p q r : Int) : Unit :=
 Hoare-triple wrapper; proof deferred. -/
 theorem mZlist_correct (p q r : Int) :
     ⦃⌜p ≤ r ∧ r ≤ q⌝⦄
-    mZlist_correct_check p q r
+    (pure (mZlist_correct_check p q r) : Id Unit)
     ⦃⇓_ => ⌜List.Mem r (mZlist p q)⌝⦄ := by
   sorry
 
@@ -3900,7 +3900,7 @@ noncomputable def mZlist_correct_rev1_check (p q r : Int) : Unit :=
 /-- Coq: `mZlist_correct_rev1` — membership implies lower bound `p ≤ r`. -/
 theorem mZlist_correct_rev1 (p q r : Int) :
     ⦃⌜List.Mem r (mZlist p q)⌝⦄
-    mZlist_correct_rev1_check p q r
+    (pure (mZlist_correct_rev1_check p q r) : Id Unit)
     ⦃⇓_ => ⌜p ≤ r⌝⦄ := by
   sorry
 
@@ -3910,7 +3910,7 @@ noncomputable def mZlist_correct_rev2_check (p q r : Int) : Unit :=
 /-- Coq: `mZlist_correct_rev2` — membership implies upper bound `r ≤ q`. -/
 theorem mZlist_correct_rev2 (p q r : Int) :
     ⦃⌜List.Mem r (mZlist p q)⌝⦄
-    mZlist_correct_rev2_check p q r
+    (pure (mZlist_correct_rev2_check p q r) : Id Unit)
     ⦃⇓_ => ⌜r ≤ q⌝⦄ := by
   sorry
 
@@ -3928,7 +3928,7 @@ noncomputable def mProd_correct_check {A B : Type}
 theorem mProd_correct {A B : Type}
     (l1 : List A) (l2 : List B) (a : A) (b : B) :
     ⦃⌜List.Mem a l1 ∧ List.Mem b l2⌝⦄
-    mProd_correct_check l1 l2 a b
+    (pure (mProd_correct_check l1 l2 a b) : Id Unit)
     ⦃⇓_ => ⌜List.Mem (a, b) (mProd l1 l2)⌝⦄ := by
   sorry
 
@@ -3940,7 +3940,7 @@ noncomputable def mProd_correct_rev1_check {A B : Type}
 theorem mProd_correct_rev1 {A B : Type}
     (l1 : List A) (l2 : List B) (a : A) (b : B) :
     ⦃⌜List.Mem (a, b) (mProd l1 l2)⌝⦄
-    mProd_correct_rev1_check l1 l2 a b
+    (pure (mProd_correct_rev1_check l1 l2 a b) : Id Unit)
     ⦃⇓_ => ⌜List.Mem a l1⌝⦄ := by
   sorry
 
@@ -3952,7 +3952,7 @@ noncomputable def mProd_correct_rev2_check {A B : Type}
 theorem mProd_correct_rev2 {A B : Type}
     (l1 : List A) (l2 : List B) (a : A) (b : B) :
     ⦃⌜List.Mem (a, b) (mProd l1 l2)⌝⦄
-    mProd_correct_rev2_check l1 l2 a b
+    (pure (mProd_correct_rev2_check l1 l2 a b) : Id Unit)
     ⦃⇓_ => ⌜List.Mem b l2⌝⦄ := by
   sorry
 
@@ -3964,7 +3964,7 @@ noncomputable def in_map_inv_check {A B : Type}
 theorem in_map_inv {A B : Type}
     (f : A → B) (l : List A) (x : A) :
     ⦃⌜(∀ a b, f a = f b → a = b) ∧ List.Mem (f x) (l.map f)⌝⦄
-    in_map_inv_check f l x
+    (pure (in_map_inv_check f l x) : Id Unit)
     ⦃⇓_ => ⌜List.Mem x l⌝⦄ := by
   sorry
 
@@ -3984,7 +3984,7 @@ noncomputable def floatEq_check {beta : Int}
 theorem floatEq {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜p.Fnum = q.Fnum ∧ p.Fexp = q.Fexp⌝⦄
-    floatEq_check p q
+    (pure (floatEq_check p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   sorry
 
@@ -3996,7 +3996,7 @@ noncomputable def floatDec_check {beta : Int}
 theorem floatDec {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    floatDec_check x y
+    (pure (floatDec_check x y) : Id Unit)
     ⦃⇓_ => ⌜x = y ∨ x ≠ y⌝⦄ := by
   sorry
 
@@ -4020,7 +4020,7 @@ noncomputable def FzeroisReallyZero_check {beta : Int} (z : Int) : Unit :=
 
 theorem FzeroisReallyZero {beta : Int} (z : Int) :
     ⦃⌜True⌝⦄
-    FzeroisReallyZero_check (beta:=beta) z
+    (pure (FzeroisReallyZero_check (beta:=beta) z) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fzero beta z) = 0⌝⦄ := by
   sorry
 
@@ -4032,7 +4032,7 @@ noncomputable def FzeroisZero_check {beta : Int}
 theorem FzeroisZero {beta : Int}
     (b : Fbound_skel) :
     ⦃⌜True⌝⦄
-    FzeroisZero_check (beta:=beta) b
+    (pure (FzeroisZero_check (beta:=beta) b) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fzero beta (- b.dExp)) = 0⌝⦄ := by
   sorry
 
@@ -4044,7 +4044,7 @@ noncomputable def FboundedFzero_check {beta : Int}
 theorem FboundedFzero {beta : Int}
     (b : Fbound_skel) :
     ⦃⌜True⌝⦄
-    FboundedFzero_check (beta:=beta) b
+    (pure (FboundedFzero_check (beta:=beta) b) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (- b.dExp))⌝⦄ := by
   sorry
 
@@ -4056,7 +4056,7 @@ noncomputable def FboundedZeroSameExp_check {beta : Int}
 theorem FboundedZeroSameExp {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    FboundedZeroSameExp_check (beta:=beta) b p
+    (pure (FboundedZeroSameExp_check (beta:=beta) b p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (p.Fexp))⌝⦄ := by
   sorry
 
@@ -4068,7 +4068,7 @@ noncomputable def FBoundedScale_check {beta : Int}
 theorem FBoundedScale {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    FBoundedScale_check (beta:=beta) b p n
+    (pure (FBoundedScale_check (beta:=beta) b p n) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩⌝⦄ := by
   sorry
 
@@ -4080,7 +4080,7 @@ noncomputable def FvalScale_check {beta : Int}
 theorem FvalScale (beta : Int)
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜True⌝⦄
-    FvalScale_check (beta:=beta) b p n
+    (pure (FvalScale_check (beta:=beta) b p n) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩ =
             ((beta : ℝ) ^ (Int.ofNat n)) * _root_.F2R (beta:=beta) p⌝⦄ := by
   sorry
@@ -4097,7 +4097,7 @@ noncomputable def maxFbounded_check {beta : Int}
 theorem maxFbounded {beta : Int}
     (b : Fbound_skel) (z : Int) :
     ⦃⌜- b.dExp ≤ z⌝⦄
-    maxFbounded_check (beta:=beta) b z
+    (pure (maxFbounded_check (beta:=beta) b z) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 z)⌝⦄ := by
   sorry
 
@@ -4109,7 +4109,7 @@ noncomputable def oppBounded_check {beta : Int}
 theorem oppBounded {beta : Int}
     (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b x⌝⦄
-    oppBounded_check (beta:=beta) b x
+    (pure (oppBounded_check (beta:=beta) b x) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄ := by
   sorry
 
@@ -4123,7 +4123,7 @@ noncomputable def oppBoundedInv_check {beta : Int}
 theorem oppBoundedInv {beta : Int}
     (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄
-    oppBoundedInv_check (beta:=beta) b x
+    (pure (oppBoundedInv_check (beta:=beta) b x) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b x⌝⦄ := by
   sorry
 
@@ -4137,7 +4137,7 @@ noncomputable def absFBounded_check {beta : Int}
 theorem absFBounded {beta : Int}
     (b : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b f⌝⦄
-    absFBounded_check (beta:=beta) b f
+    (pure (absFBounded_check (beta:=beta) b f) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fabs f)⌝⦄ := by
   sorry
 
@@ -4151,7 +4151,7 @@ noncomputable def FboundedEqExp_check {beta : Int}
 theorem FboundedEqExp {beta : Int}
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ _root_.F2R p = _root_.F2R q ∧ p.Fexp ≤ q.Fexp⌝⦄
-    FboundedEqExp_check (beta:=beta) b p q
+    (pure (FboundedEqExp_check (beta:=beta) b p q) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
   sorry
 
@@ -4163,7 +4163,7 @@ noncomputable def is_Fzero_rep1_check {beta : Int}
 theorem is_Fzero_rep1 {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜is_Fzero x⌝⦄
-    is_Fzero_rep1_check x
+    (pure (is_Fzero_rep1_check x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R x = 0⌝⦄ := by
   sorry
 
@@ -4175,7 +4175,7 @@ noncomputable def is_Fzero_rep2_check {beta : Int}
 theorem is_Fzero_rep2 {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x = 0⌝⦄
-    is_Fzero_rep2_check x
+    (pure (is_Fzero_rep2_check x) : Id Unit)
     ⦃⇓_ => ⌜is_Fzero x⌝⦄ := by
   sorry
 
@@ -4187,7 +4187,7 @@ noncomputable def NisFzeroComp_check {beta : Int}
 theorem NisFzeroComp {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
-    NisFzeroComp_check x y
+    (pure (NisFzeroComp_check x y) : Id Unit)
     ⦃⇓_ => ⌜¬ is_Fzero y⌝⦄ := by
   sorry
 
@@ -4200,7 +4200,7 @@ noncomputable def Fle_Zle_check (beta : Int) (n1 n2 d : Int) : Unit :=
 
 theorem Fle_Zle (beta : Int) (n1 n2 d : Int) :
     ⦃⌜n1 ≤ n2⌝⦄
-    Fle_Zle_check beta n1 n2 d
+    (pure (Fle_Zle_check beta n1 n2 d) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (pff_to_flocq beta { mantissa := n1, exponent := d, sign := false })
             ≤ _root_.F2R (pff_to_flocq beta { mantissa := n2, exponent := d, sign := false })⌝⦄ := by
   sorry
@@ -4213,7 +4213,7 @@ noncomputable def Rlt_Fexp_eq_Zlt_check {beta : Int}
 theorem Rlt_Fexp_eq_Zlt {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x < _root_.F2R y ∧ x.Fexp = y.Fexp⌝⦄
-    Rlt_Fexp_eq_Zlt_check (beta:=beta) x y
+    (pure (Rlt_Fexp_eq_Zlt_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum < y.Fnum⌝⦄ := by
   sorry
 
@@ -4225,7 +4225,7 @@ noncomputable def Fopp_correct_check {beta : Int}
 theorem Fopp_correct {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fopp_correct_check (beta:=beta) x
+    (pure (Fopp_correct_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Calc.Operations.Fopp (beta:=beta) x) = - _root_.F2R x⌝⦄ := by
   sorry
 
@@ -4237,7 +4237,7 @@ noncomputable def Fplus_correct_check {beta : Int}
 theorem Fplus_correct {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fplus_correct_check (beta:=beta) x y
+    (pure (Fplus_correct_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fplus (beta:=beta) x y) = _root_.F2R x + _root_.F2R y⌝⦄ := by
   sorry
 
@@ -4249,7 +4249,7 @@ noncomputable def Fminus_correct_check {beta : Int}
 theorem Fminus_correct {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fminus_correct_check (beta:=beta) x y
+    (pure (Fminus_correct_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y) =
             _root_.F2R x - _root_.F2R y⌝⦄ := by
   sorry
@@ -4262,7 +4262,7 @@ noncomputable def Fopp_Fopp_check {beta : Int}
 theorem Fopp_Fopp {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fopp_Fopp_check (beta:=beta) p
+    (pure (Fopp_Fopp_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜Fopp (beta:=beta) (Fopp (beta:=beta) p) = p⌝⦄ := by
   sorry
 
@@ -4274,7 +4274,7 @@ noncomputable def Fopp_Fminus_check {beta : Int}
 theorem Fopp_Fminus {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fopp_Fminus_check (beta:=beta) p q
+    (pure (Fopp_Fminus_check (beta:=beta) p q) : Id Unit)
     ⦃⇓_ => ⌜Fopp (beta:=beta)
               (FloatSpec.Calc.Operations.Fminus (beta:=beta) p q) =
             FloatSpec.Calc.Operations.Fminus (beta:=beta) q p⌝⦄ := by
@@ -4288,7 +4288,7 @@ noncomputable def Fdigit_opp_check {beta : Int}
 theorem Fdigit_opp {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fdigit_opp_check (beta:=beta) radix x
+    (pure (Fdigit_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fopp x) = Fdigit (beta:=beta) radix x⌝⦄ := by
   sorry
 
@@ -4300,7 +4300,7 @@ noncomputable def Fopp_Fminus_dist_check {beta : Int}
 theorem Fopp_Fminus_dist {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fopp_Fminus_dist_check (beta:=beta) p q
+    (pure (Fopp_Fminus_dist_check (beta:=beta) p q) : Id Unit)
     ⦃⇓_ => ⌜Fopp (beta:=beta)
               (FloatSpec.Calc.Operations.Fminus (beta:=beta) p q) =
             FloatSpec.Calc.Operations.Fminus (beta:=beta)
@@ -4329,7 +4329,7 @@ theorem SterbenzAux {beta : Int}
         Fbounded (beta:=beta) b y ∧
         (_root_.F2R y) ≤ (_root_.F2R x) ∧
         (_root_.F2R x) ≤ 2 * (_root_.F2R y)⌝⦄
-    SterbenzAux_check (beta:=beta) b x y
+    (pure (SterbenzAux_check (beta:=beta) b x y) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
   sorry
 
@@ -4348,7 +4348,7 @@ theorem Sterbenz {beta : Int}
         Fbounded (beta:=beta) b y ∧
         ((1/2 : ℝ) * (_root_.F2R y)) ≤ (_root_.F2R x) ∧
         (_root_.F2R x) ≤ 2 * (_root_.F2R y)⌝⦄
-    Sterbenz_check (beta:=beta) b x y
+    (pure (Sterbenz_check (beta:=beta) b x y) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
   sorry
 
@@ -4360,7 +4360,7 @@ noncomputable def Fdigit_abs_check {beta : Int}
 theorem Fdigit_abs {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fdigit_abs_check (beta:=beta) radix x
+    (pure (Fdigit_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fabs (beta:=beta) x) = Fdigit (beta:=beta) radix x⌝⦄ := by
   sorry
 
@@ -4372,7 +4372,7 @@ noncomputable def Fabs_correct1_check {beta : Int}
 theorem Fabs_correct1 {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ _root_.F2R x⌝⦄
-    Fabs_correct1_check (beta:=beta) x
+    (pure (Fabs_correct1_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = _root_.F2R x⌝⦄ := by
   sorry
 
@@ -4384,7 +4384,7 @@ noncomputable def Fabs_correct2_check {beta : Int}
 theorem Fabs_correct2 {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x ≤ 0⌝⦄
-    Fabs_correct2_check (beta:=beta) x
+    (pure (Fabs_correct2_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = - _root_.F2R x⌝⦄ := by
   sorry
 
@@ -4396,7 +4396,7 @@ noncomputable def Fabs_correct_check {beta : Int}
 theorem Fabs_correct {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    Fabs_correct_check (beta:=beta) x
+    (pure (Fabs_correct_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = |_root_.F2R x|⌝⦄ := by
   sorry
 
@@ -4408,7 +4408,7 @@ noncomputable def RleFexpFabs_check {beta : Int}
 theorem RleFexpFabs {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R p ≠ 0⌝⦄
-    RleFexpFabs_check (beta:=beta) p
+    (pure (RleFexpFabs_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp)
             ≤ _root_.F2R (Fabs (beta:=beta) p)⌝⦄ := by
   sorry
@@ -4421,7 +4421,7 @@ noncomputable def Fabs_Fzero_check {beta : Int}
 theorem Fabs_Fzero {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜¬ is_Fzero x⌝⦄
-    Fabs_Fzero_check (beta:=beta) x
+    (pure (Fabs_Fzero_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜¬ is_Fzero (Fabs (beta:=beta) x)⌝⦄ := by
   sorry
 
@@ -4469,7 +4469,7 @@ noncomputable def FshiftFdigit_check {beta : Int}
 theorem FshiftFdigit {beta : Int}
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜¬ is_Fzero x⌝⦄
-    FshiftFdigit_check (beta:=beta) radix n x
+    (pure (FshiftFdigit_check (beta:=beta) radix n x) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fshift (beta:=beta) radix n x) =
             Fdigit (beta:=beta) radix x + n⌝⦄ := by
   sorry
@@ -4482,7 +4482,7 @@ noncomputable def FshiftCorrect_check {beta : Int}
 theorem FshiftCorrect {beta : Int}
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    FshiftCorrect_check (beta:=beta) radix n x
+    (pure (FshiftCorrect_check (beta:=beta) radix n x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fshift (beta:=beta) radix n x) = _root_.F2R x⌝⦄ := by
   sorry
 
@@ -4496,7 +4496,7 @@ theorem FshiftCorrectInv {beta : Int}
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x = _root_.F2R y ∧ x.Fexp ≤ y.Fexp⌝⦄
-    FshiftCorrectInv_check (beta:=beta) radix x y
+    (pure (FshiftCorrectInv_check (beta:=beta) radix x y) : Id Unit)
     ⦃⇓_ => ⌜Fshift (beta:=beta) radix (Int.natAbs (y.Fexp - x.Fexp)) y = x⌝⦄ := by
   sorry
 
@@ -4508,7 +4508,7 @@ noncomputable def FshiftO_check {beta : Int}
 theorem FshiftO {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    FshiftO_check (beta:=beta) radix x
+    (pure (FshiftO_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜Fshift (beta:=beta) radix 0 x = x ⌝⦄ := by
   sorry
 
@@ -4520,7 +4520,7 @@ noncomputable def FshiftCorrectSym_check {beta : Int}
 theorem FshiftCorrectSym {beta : Int}
     (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x = _root_.F2R y⌝⦄
-    FshiftCorrectSym_check (beta:=beta) radix x y
+    (pure (FshiftCorrectSym_check (beta:=beta) radix x y) : Id Unit)
     ⦃⇓_ => ⌜∃ n m : Nat, Fshift (beta:=beta) radix n x = Fshift (beta:=beta) radix m y⌝⦄ := by
   sorry
 
@@ -4533,7 +4533,7 @@ theorem FdigitEq {beta : Int}
     (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y ∧
         Fdigit (beta:=beta) radix x = Fdigit (beta:=beta) radix y⌝⦄
-    FdigitEq_check (beta:=beta) radix x y
+    (pure (FdigitEq_check (beta:=beta) radix x y) : Id Unit)
     ⦃⇓_ => ⌜x = y⌝⦄ := by
   sorry
 
@@ -4550,7 +4550,7 @@ noncomputable def LSB_shift_check {beta : Int}
 theorem LSB_shift {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜¬ is_Fzero x⌝⦄
-    LSB_shift_check (beta:=beta) radix x n
+    (pure (LSB_shift_check (beta:=beta) radix x n) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fshift (beta:=beta) radix n x)⌝⦄ := by
   sorry
 
@@ -4560,7 +4560,7 @@ noncomputable def maxDivLess_check (v : Int) (p : Nat) : Unit :=
 
 theorem maxDivLess (v : Int) (p : Nat) :
     ⦃⌜True⌝⦄
-    maxDivLess_check v p
+    (pure (maxDivLess_check v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv v p ≤ p⌝⦄ := by
   sorry
 
@@ -4574,7 +4574,7 @@ theorem LSB_comp {beta : Int}
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
-    LSB_comp_check (beta:=beta) radix x y n
+    (pure (LSB_comp_check (beta:=beta) radix x y n) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix y⌝⦄ := by
   sorry
 
@@ -4586,7 +4586,7 @@ noncomputable def maxDivCorrect_check (radix : Int) (v : Int) (p : Nat) : Unit :
 `v` divides `radix^(maxDiv v p)`. We only state the property here. -/
 theorem maxDivCorrect (radix : Int) (v : Int) (p : Nat) :
     ⦃⌜True⌝⦄
-    maxDivCorrect_check radix v p
+    (pure (maxDivCorrect_check radix v p) : Id Unit)
     ⦃⇓_ => ⌜Zdivides v (Zpower_nat radix (maxDiv v p))⌝⦄ := by
   sorry
 
@@ -4598,7 +4598,7 @@ noncomputable def maxDivLt_check (radix : Int) (v : Int) (p : Nat) : Unit :=
 exponent `maxDiv v p` is strictly less than `p`. Statement only. -/
 theorem maxDivLt (radix : Int) (v : Int) (p : Nat) :
     ⦃⌜¬ Zdivides v (Zpower_nat radix p)⌝⦄
-    maxDivLt_check radix v p
+    (pure (maxDivLt_check radix v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv v p < p⌝⦄ := by
   sorry
 
@@ -4608,7 +4608,7 @@ noncomputable def maxDiv_opp_check (v : Int) (p : Nat) : Unit :=
 
 theorem maxDiv_opp (v : Int) (p : Nat) :
     ⦃⌜True⌝⦄
-    maxDiv_opp_check v p
+    (pure (maxDiv_opp_check v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv v p = maxDiv (-v) p⌝⦄ := by
   sorry
 
@@ -4620,7 +4620,7 @@ noncomputable def LSB_opp_check {beta : Int}
 theorem LSB_opp {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    LSB_opp_check (beta:=beta) radix x
+    (pure (LSB_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fopp x)⌝⦄ := by
   sorry
 
@@ -4630,7 +4630,7 @@ noncomputable def maxDiv_abs_check (v : Int) (p : Nat) : Unit :=
 
 theorem maxDiv_abs (v : Int) (p : Nat) :
     ⦃⌜True⌝⦄
-    maxDiv_abs_check v p
+    (pure (maxDiv_abs_check v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv v p = maxDiv |v| p⌝⦄ := by
   sorry
 
@@ -4642,7 +4642,7 @@ noncomputable def LSB_abs_check {beta : Int}
 theorem LSB_abs {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    LSB_abs_check (beta:=beta) radix x
+    (pure (LSB_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fabs x)⌝⦄ := by
   sorry
 
@@ -4659,7 +4659,7 @@ noncomputable def MSB_shift_check {beta : Int}
 theorem MSB_shift {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜¬ is_Fzero x⌝⦄
-    MSB_shift_check (beta:=beta) radix x n
+    (pure (MSB_shift_check (beta:=beta) radix x n) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fshift (beta:=beta) radix n x)⌝⦄ := by
   sorry
 
@@ -4673,7 +4673,7 @@ theorem MSB_comp {beta : Int}
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
-    MSB_comp_check (beta:=beta) radix x y n
+    (pure (MSB_comp_check (beta:=beta) radix x y n) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix y⌝⦄ := by
   sorry
 
@@ -4685,7 +4685,7 @@ noncomputable def MSB_opp_check {beta : Int}
 theorem MSB_opp {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    MSB_opp_check (beta:=beta) radix x
+    (pure (MSB_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fopp x)⌝⦄ := by
   sorry
 
@@ -4697,7 +4697,7 @@ noncomputable def MSB_abs_check {beta : Int}
 theorem MSB_abs {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    MSB_abs_check (beta:=beta) radix x
+    (pure (MSB_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fabs x)⌝⦄ := by
   sorry
 
@@ -4709,7 +4709,7 @@ noncomputable def LSB_le_MSB_check {beta : Int}
 theorem LSB_le_MSB {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜¬ is_Fzero x⌝⦄
-    LSB_le_MSB_check (beta:=beta) radix x
+    (pure (LSB_le_MSB_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x ≤ MSB (beta:=beta) radix x⌝⦄ := by
   sorry
 
@@ -4719,7 +4719,7 @@ noncomputable def Zlt_mult_simpl_l_check (a b c : Int) : Unit :=
 
 theorem Zlt_mult_simpl_l (a b c : Int) :
     ⦃⌜0 < c ∧ c * a < c * b⌝⦄
-    Zlt_mult_simpl_l_check a b c
+    (pure (Zlt_mult_simpl_l_check a b c) : Id Unit)
     ⦃⇓_ => ⌜a < b⌝⦄ := by
   sorry
 
@@ -4731,7 +4731,7 @@ noncomputable def Z_eq_bool_correct_check (p q : Int) : Unit :=
 
 theorem Z_eq_bool_correct (p q : Int) :
     ⦃⌜True⌝⦄
-    Z_eq_bool_correct_check p q
+    (pure (Z_eq_bool_correct_check p q) : Id Unit)
     ⦃⇓_ => ⌜(if Z_eq_bool p q then p = q else p ≠ q)⌝⦄ := by
   sorry
 
@@ -4744,7 +4744,7 @@ noncomputable def Zcompare_correct_check (p q : Int) : Unit :=
 
 theorem Zcompare_correct (p q : Int) :
     ⦃⌜True⌝⦄
-    Zcompare_correct_check p q
+    (pure (Zcompare_correct_check p q) : Id Unit)
     ⦃⇓_ => ⌜match Zcompare p q with
             | Ordering.gt => q < p
             | Ordering.lt => p < q
@@ -4757,7 +4757,7 @@ noncomputable def Zabs_Zopp_check (z : Int) : Unit :=
 
 theorem Zabs_Zopp (z : Int) :
     ⦃⌜True⌝⦄
-    Zabs_Zopp_check z
+    (pure (Zabs_Zopp_check z) : Id Unit)
     ⦃⇓_ => ⌜|-z| = |z|⌝⦄ := by
   sorry
 
@@ -4767,7 +4767,7 @@ noncomputable def Zle_Zpred_Zpred_check (z1 z2 : Int) : Unit :=
 
 theorem Zle_Zpred_Zpred (z1 z2 : Int) :
     ⦃⌜z1 ≤ z2⌝⦄
-    Zle_Zpred_Zpred_check z1 z2
+    (pure (Zle_Zpred_Zpred_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜Int.pred z1 ≤ Int.pred z2⌝⦄ := by
   sorry
 
@@ -4777,7 +4777,7 @@ noncomputable def Zle_n_Zpred_check (z1 z2 : Int) : Unit :=
 
 theorem Zle_n_Zpred (z1 z2 : Int) :
     ⦃⌜Int.pred z1 ≤ Int.pred z2⌝⦄
-    Zle_n_Zpred_check z1 z2
+    (pure (Zle_n_Zpred_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
   sorry
 
@@ -4787,7 +4787,7 @@ noncomputable def Zlt_1_O_check (z : Int) : Unit :=
 
 theorem Zlt_1_O (z : Int) :
     ⦃⌜1 ≤ z⌝⦄
-    Zlt_1_O_check z
+    (pure (Zlt_1_O_check z) : Id Unit)
     ⦃⇓_ => ⌜0 < z⌝⦄ := by
   sorry
 
@@ -4798,7 +4798,7 @@ noncomputable def LtR0Fnum_check {beta : Int}
 theorem LtR0Fnum {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 < _root_.F2R x⌝⦄
-    LtR0Fnum_check (beta:=beta) x
+    (pure (LtR0Fnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 < x.Fnum⌝⦄ := by
   sorry
 
@@ -4810,7 +4810,7 @@ noncomputable def LeR0Fnum_check {beta : Int}
 theorem LeR0Fnum {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ _root_.F2R x⌝⦄
-    LeR0Fnum_check (beta:=beta) x
+    (pure (LeR0Fnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ x.Fnum⌝⦄ := by
   sorry
 
@@ -4822,7 +4822,7 @@ noncomputable def LeFnumZERO_check {beta : Int}
 theorem LeFnumZERO {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ x.Fnum⌝⦄
-    LeFnumZERO_check (beta:=beta) x
+    (pure (LeFnumZERO_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ _root_.F2R x⌝⦄ := by
   sorry
 
@@ -4834,7 +4834,7 @@ noncomputable def R0LtFnum_check {beta : Int}
 theorem R0LtFnum {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x < 0⌝⦄
-    R0LtFnum_check (beta:=beta) x
+    (pure (R0LtFnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum < 0⌝⦄ := by
   sorry
 
@@ -4846,7 +4846,7 @@ noncomputable def R0LeFnum_check {beta : Int}
 theorem R0LeFnum {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x ≤ 0⌝⦄
-    R0LeFnum_check (beta:=beta) x
+    (pure (R0LeFnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum ≤ 0⌝⦄ := by
   sorry
 
@@ -4858,7 +4858,7 @@ noncomputable def LeZEROFnum_check {beta : Int}
 theorem LeZEROFnum {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜x.Fnum ≤ 0⌝⦄
-    LeZEROFnum_check (beta:=beta) x
+    (pure (LeZEROFnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R x ≤ 0⌝⦄ := by
   sorry
 
@@ -4870,7 +4870,7 @@ noncomputable def LtFnumZERO_check {beta : Int}
 theorem LtFnumZERO {beta : Int}
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 < x.Fnum⌝⦄
-    LtFnumZERO_check (beta:=beta) x
+    (pure (LtFnumZERO_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 < _root_.F2R x⌝⦄ := by
   sorry
 
@@ -4880,7 +4880,7 @@ noncomputable def Zlt_Zabs_inv1_check (z1 z2 : Int) : Unit :=
 
 theorem Zlt_Zabs_inv1 (z1 z2 : Int) :
     ⦃⌜|z1| < z2⌝⦄
-    Zlt_Zabs_inv1_check z1 z2
+    (pure (Zlt_Zabs_inv1_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜-z2 < z1⌝⦄ := by
   sorry
 
@@ -4890,7 +4890,7 @@ noncomputable def Zle_Zabs_inv1_check (z1 z2 : Int) : Unit :=
 
 theorem Zle_Zabs_inv1 (z1 z2 : Int) :
     ⦃⌜|z1| ≤ z2⌝⦄
-    Zle_Zabs_inv1_check z1 z2
+    (pure (Zle_Zabs_inv1_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜-z2 ≤ z1⌝⦄ := by
   sorry
 
@@ -4900,7 +4900,7 @@ noncomputable def Zle_Zabs_inv2_check (z1 z2 : Int) : Unit :=
 
 theorem Zle_Zabs_inv2 (z1 z2 : Int) :
     ⦃⌜|z1| ≤ z2⌝⦄
-    Zle_Zabs_inv2_check z1 z2
+    (pure (Zle_Zabs_inv2_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
   sorry
 
@@ -4910,7 +4910,7 @@ noncomputable def Zlt_Zabs_Zpred_check (z1 z2 : Int) : Unit :=
 
 theorem Zlt_Zabs_Zpred (z1 z2 : Int) :
     ⦃⌜|z1| < z2 ∧ z1 ≠ Int.pred z2⌝⦄
-    Zlt_Zabs_Zpred_check z1 z2
+    (pure (Zlt_Zabs_Zpred_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜|Int.succ z1| < z2⌝⦄ := by
   sorry
 
@@ -4922,7 +4922,7 @@ noncomputable def Zlt_not_eq_rev_check (p q : Int) : Unit :=
 
 theorem Zlt_not_eq_rev (p q : Int) :
     ⦃⌜q < p⌝⦄
-    Zlt_not_eq_rev_check p q
+    (pure (Zlt_not_eq_rev_check p q) : Id Unit)
     ⦃⇓_ => ⌜p ≠ q⌝⦄ := by
   sorry
 
@@ -4932,7 +4932,7 @@ noncomputable def Zle_Zpred_inv_check (z1 z2 : Int) : Unit :=
 
 theorem Zle_Zpred_inv (z1 z2 : Int) :
     ⦃⌜z1 ≤ Int.pred z2⌝⦄
-    Zle_Zpred_inv_check z1 z2
+    (pure (Zle_Zpred_inv_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜z1 < z2⌝⦄ := by
   sorry
 
@@ -4942,7 +4942,7 @@ noncomputable def Zabs_intro_check (P : Int → Prop) (z : Int) : Unit :=
 
 theorem Zabs_intro (P : Int → Prop) (z : Int) :
     ⦃⌜P (-z) ∧ P z⌝⦄
-    Zabs_intro_check P z
+    (pure (Zabs_intro_check P z) : Id Unit)
     ⦃⇓_ => ⌜P (|z|)⌝⦄ := by
   sorry
 
@@ -4952,7 +4952,7 @@ noncomputable def Zpred_Zle_Zabs_intro_check (z1 z2 : Int) : Unit :=
 
 theorem Zpred_Zle_Zabs_intro (z1 z2 : Int) :
     ⦃⌜-Int.pred z2 ≤ z1 ∧ z1 ≤ Int.pred z2⌝⦄
-    Zpred_Zle_Zabs_intro_check z1 z2
+    (pure (Zpred_Zle_Zabs_intro_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜|z1| < z2⌝⦄ := by
   sorry
 
@@ -4962,7 +4962,7 @@ noncomputable def Zlt_Zabs_intro_check (z1 z2 : Int) : Unit :=
 
 theorem Zlt_Zabs_intro (z1 z2 : Int) :
     ⦃⌜-z2 < z1 ∧ z1 < z2⌝⦄
-    Zlt_Zabs_intro_check z1 z2
+    (pure (Zlt_Zabs_intro_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜|z1| < z2⌝⦄ := by
   sorry
 
@@ -4972,7 +4972,7 @@ noncomputable def Zpower_nat_less_check (n : Int) (q : Nat) : Unit :=
 
 theorem Zpower_nat_less (n : Int) (q : Nat) :
     ⦃⌜0 < q⌝⦄
-    Zpower_nat_less_check n q
+    (pure (Zpower_nat_less_check n q) : Id Unit)
     ⦃⇓_ => ⌜0 < n ^ q⌝⦄ := by
   sorry
 
@@ -4982,7 +4982,7 @@ noncomputable def Zpower_nat_monotone_S_check (n : Int) (q : Nat) : Unit :=
 
 theorem Zpower_nat_monotone_S (n : Int) (q : Nat) :
     ⦃⌜1 ≤ n⌝⦄
-    Zpower_nat_monotone_S_check n q
+    (pure (Zpower_nat_monotone_S_check n q) : Id Unit)
     ⦃⇓_ => ⌜n ^ q ≤ n ^ (q+1)⌝⦄ := by
   sorry
 
@@ -4992,7 +4992,7 @@ noncomputable def Zpower_nat_monotone_lt_check (n : Int) (q : Nat) : Unit :=
 
 theorem Zpower_nat_monotone_lt (n : Int) (q : Nat) :
     ⦃⌜1 < n⌝⦄
-    Zpower_nat_monotone_lt_check n q
+    (pure (Zpower_nat_monotone_lt_check n q) : Id Unit)
     ⦃⇓_ => ⌜n ^ q < n ^ (q+1)⌝⦄ := by
   sorry
 
@@ -5002,7 +5002,7 @@ noncomputable def Zpower_nat_anti_monotone_lt_check (n : Int) (q : Nat) : Unit :
 
 theorem Zpower_nat_anti_monotone_lt (n : Int) (q : Nat) :
     ⦃⌜0 ≤ n ∧ n < 1⌝⦄
-    Zpower_nat_anti_monotone_lt_check n q
+    (pure (Zpower_nat_anti_monotone_lt_check n q) : Id Unit)
     ⦃⇓_ => ⌜n ^ (q+1) < n ^ q⌝⦄ := by
   sorry
 
@@ -5012,7 +5012,7 @@ noncomputable def Zpower_nat_monotone_le_check (n : Int) (q r : Nat) : Unit :=
 
 theorem Zpower_nat_monotone_le (n : Int) (q r : Nat) :
     ⦃⌜1 ≤ n ∧ q ≤ r⌝⦄
-    Zpower_nat_monotone_le_check n q r
+    (pure (Zpower_nat_monotone_le_check n q r) : Id Unit)
     ⦃⇓_ => ⌜n ^ q ≤ n ^ r⌝⦄ := by
   sorry
 
@@ -5025,7 +5025,7 @@ noncomputable def digitAux1_check (n : Int) (p : Nat) (r : Int) : Unit :=
 
 theorem digitAux1 (n : Int) (p : Nat) (r : Int) :
     ⦃⌜True⌝⦄
-    digitAux1_check n p r
+    (pure (digitAux1_check n p r) : Id Unit)
     ⦃⇓_ => ⌜Zpower_nat n (Nat.succ p) * r = Zpower_nat n p * (n * r)⌝⦄ := by
   sorry
 
@@ -5039,7 +5039,7 @@ noncomputable def digitAuxLess_check (n : Int) (v r : Int) (q : Positive) : Unit
 
 theorem digitAuxLess (n : Int) (v r : Int) (q : Positive) :
     ⦃⌜True⌝⦄
-    digitAuxLess_check n v r q
+    (pure (digitAuxLess_check n v r q) : Id Unit)
     ⦃⇓_ => ⌜match digitAux n v r q with
             | Nat.succ r' => Zpower_nat n r' * r ≤ v
             | 0 => True⌝⦄ := by
@@ -5053,7 +5053,7 @@ noncomputable def digitLess_check (n : Int) (q : Int) : Unit :=
 
 theorem digitLess (n : Int) (q : Int) :
     ⦃⌜q ≠ 0⌝⦄
-    digitLess_check n q
+    (pure (digitLess_check n q) : Id Unit)
     ⦃⇓_ => ⌜Zpower_nat n (Nat.pred (digit n q)) ≤ |q|⌝⦄ := by
   sorry
 
@@ -5066,7 +5066,7 @@ noncomputable def pos_length_pow_check (n : Int) (p : Positive) : Unit :=
 
 theorem pos_length_pow (n : Int) (p : Positive) :
     ⦃⌜True⌝⦄
-    pos_length_pow_check n p
+    (pure (pos_length_pow_check n p) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (nat_of_P p) < Zpower_nat n (Nat.succ (pos_length p))⌝⦄ := by
   sorry
 
@@ -5076,7 +5076,7 @@ noncomputable def digitMore_check (n : Int) (q : Int) : Unit :=
 
 theorem digitMore (n : Int) (q : Int) :
     ⦃⌜True⌝⦄
-    digitMore_check n q
+    (pure (digitMore_check n q) : Id Unit)
     ⦃⇓_ => ⌜|q| < Zpower_nat n (digit n q)⌝⦄ := by
   sorry
 
@@ -5086,7 +5086,7 @@ noncomputable def digitAuxMore_check (n : Int) (v r : Int) (p : Positive) : Unit
 
 theorem digitAuxMore (n : Int) (v r : Int) (p : Positive) :
     ⦃⌜True⌝⦄
-    digitAuxMore_check n v r p
+    (pure (digitAuxMore_check n v r p) : Id Unit)
     ⦃⇓_ => ⌜match digitAux n v r p with
             | Nat.succ r' => v < Zpower_nat n r' * r
             | 0 => True⌝⦄ := by
@@ -5098,7 +5098,7 @@ noncomputable def digitInv_check (n : Int) (q : Int) (r : Nat) : Unit :=
 
 theorem digitInv (n : Int) (q : Int) (r : Nat) :
     ⦃⌜Zpower_nat n (Nat.pred r) ≤ |q| ∧ |q| < Zpower_nat n r⌝⦄
-    digitInv_check n q r
+    (pure (digitInv_check n q r) : Id Unit)
     ⦃⇓_ => ⌜digit n q = r⌝⦄ := by
   sorry
 
@@ -5108,7 +5108,7 @@ noncomputable def digit_monotone_check (n : Int) (p q : Int) : Unit :=
 
 theorem digit_monotone (n : Int) (p q : Int) :
     ⦃⌜|p| ≤ |q|⌝⦄
-    digit_monotone_check n p q
+    (pure (digit_monotone_check n p q) : Id Unit)
     ⦃⇓_ => ⌜digit n p ≤ digit n q⌝⦄ := by
   sorry
 
@@ -5118,7 +5118,7 @@ noncomputable def digitNotZero_check (n : Int) (q : Int) : Unit :=
 
 theorem digitNotZero (n : Int) (q : Int) :
     ⦃⌜q ≠ 0⌝⦄
-    digitNotZero_check n q
+    (pure (digitNotZero_check n q) : Id Unit)
     ⦃⇓_ => ⌜0 < digit n q⌝⦄ := by
   sorry
 
@@ -5128,7 +5128,7 @@ noncomputable def digitAdd_check (n : Int) (q : Int) (r : Nat) : Unit :=
 
 theorem digitAdd (n : Int) (q : Int) (r : Nat) :
     ⦃⌜q ≠ 0⌝⦄
-    digitAdd_check n q r
+    (pure (digitAdd_check n q r) : Id Unit)
     ⦃⇓_ => ⌜digit n (q * Zpower_nat n r) = digit n q + r⌝⦄ := by
   sorry
 
@@ -5138,7 +5138,7 @@ noncomputable def maxDivPlus_check (radix : Int) (v : Int) (n : Nat) : Unit :=
 
 theorem maxDivPlus (radix : Int) (v : Int) (n : Nat) :
     ⦃⌜v ≠ 0⌝⦄
-    maxDivPlus_check radix v n
+    (pure (maxDivPlus_check radix v n) : Id Unit)
     ⦃⇓_ => ⌜maxDiv (v * Zpower_nat radix n) (digit radix v + n) =
             maxDiv v (digit radix v) + n⌝⦄ := by
   sorry
@@ -5149,7 +5149,7 @@ noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
 
 theorem digit_abs (n : Int) (p : Int) :
     ⦃⌜True⌝⦄
-    digit_abs_check n p
+    (pure (digit_abs_check n p) : Id Unit)
     ⦃⇓_ => ⌜digit n (|p|) = digit n p⌝⦄ := by
   sorry
 
@@ -5159,6 +5159,6 @@ noncomputable def digit_anti_monotone_lt_check (n : Int) (p q : Int) : Unit :=
 
 theorem digit_anti_monotone_lt (n : Int) (p q : Int) :
     ⦃⌜1 < n ∧ digit n p < digit n q⌝⦄
-    digit_anti_monotone_lt_check n p q
+    (pure (digit_anti_monotone_lt_check n p q) : Id Unit)
     ⦃⇓_ => ⌜|p| < |q|⌝⦄ := by
   sorry
