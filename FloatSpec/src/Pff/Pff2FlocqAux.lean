@@ -58,8 +58,8 @@ noncomputable def bsingle : Fbound := make_bound radix2 24 (-149)
 noncomputable def bdouble : Fbound := make_bound radix2 53 1074
 
 -- First missing theorem: make_bound_Emin
-noncomputable def make_bound_Emin_check (beta p E : Int) : Unit :=
-  ()
+noncomputable def make_bound_Emin_check (beta p E : Int) : Id Unit :=
+  pure ()
 
 /-- Coq: `make_bound_Emin` — if `E ≤ 0`, then `(dExp (make_bound beta p E)) = -E`. -/
 theorem make_bound_Emin (beta p E : Int) :
@@ -67,17 +67,15 @@ theorem make_bound_Emin (beta p E : Int) :
     make_bound_Emin_check beta p E
     ⦃⇓_ => ⌜(make_bound beta p E).dExp = -E⌝⦄ := by
   intro hE
-  -- `simp` reduces the goal to the "else" branch implication; the precondition
-  -- rules that branch out by contradiction.
-  simp [ make_bound_Emin_check, pure, make_bound, Bound]
+  simp [wp, PostCond.noThrow, make_bound_Emin_check, pure, make_bound, Bound]
   intro hpos
   exfalso
   exact not_lt_of_ge hE hpos
 
 
 -- Second missing theorem: make_bound_p
-noncomputable def make_bound_p_check (beta p E : Int) : Unit :=
-  ()
+noncomputable def make_bound_p_check (beta p E : Int) : Id Unit :=
+  pure ()
 
 /-- Coq: `make_bound_p` — the `vNum` of `make_bound` equals `Zpower_nat beta (Z.abs_nat p)`.
 In this Lean port, `vNum` is stored as an `Int`, and `Z.abs_nat p` corresponds
@@ -87,11 +85,11 @@ theorem make_bound_p (beta p E : Int) :
     make_bound_p_check beta p E
     ⦃⇓_ => ⌜(make_bound beta p E).vNum = Zpower_nat beta (Int.toNat (Int.natAbs p))⌝⦄ := by
   intro _
-  simp [ make_bound_p_check, pure, make_bound, Bound]
+  simp [wp, PostCond.noThrow, make_bound_p_check, pure, make_bound, Bound]
 
 -- Third missing theorem: psGivesBound
-noncomputable def psGivesBound_check : Unit :=
-  ()
+noncomputable def psGivesBound_check : Id Unit :=
+  pure ()
 
 /-- Coq: `psGivesBound` — the bound for single precision gives 2^24. -/
 theorem psGivesBound :
@@ -99,11 +97,11 @@ theorem psGivesBound :
     psGivesBound_check
     ⦃⇓_ => ⌜bsingle.vNum = Zpower_nat 2 24⌝⦄ := by
   intro _
-  simp [ psGivesBound_check, pure, bsingle, bdouble, make_bound, Bound, radix2]
+  simp [wp, PostCond.noThrow, psGivesBound_check, pure, bsingle, bdouble, make_bound, Bound, radix2]
 
 -- Fourth missing theorem: pdGivesBound
-noncomputable def pdGivesBound_check : Unit :=
-  ()
+noncomputable def pdGivesBound_check : Id Unit :=
+  pure ()
 
 /-- Coq: `pdGivesBound` — the bound for double precision gives 2^53. -/
 theorem pdGivesBound :
@@ -111,7 +109,7 @@ theorem pdGivesBound :
     pdGivesBound_check
     ⦃⇓_ => ⌜bdouble.vNum = Zpower_nat 2 53⌝⦄ := by
   intro _
-  simp [ pdGivesBound_check, pure, bdouble, make_bound, Bound, radix2]
+  simp [wp, PostCond.noThrow, pdGivesBound_check, pure, bdouble, make_bound, Bound, radix2]
 
 -- Format bridging lemmas (Coq: format_is_pff_format' and variants)
 
@@ -122,8 +120,8 @@ noncomputable def mk_from_generic (beta : Int) (b : Fbound) (p : Int) (r : ℝ) 
     , exponent := cexp beta (FLT_exp (-b.dExp) p) r
     , sign := false }
 
-noncomputable def format_is_pff_format'_check (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : Unit :=
-  ()
+noncomputable def format_is_pff_format'_check (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : Id Unit :=
+  pure ()
 
 /-- Coq: `format_is_pff_format'` — from `generic_format`, construct a bounded Pff float. -/
 theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
@@ -131,7 +129,7 @@ theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜PFbounded b (mk_from_generic beta b p r)⌝⦄ := by
   intro _
-  simp [ format_is_pff_format'_check, pure, PFbounded]
+  simp [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded]
 
 /-- Coq: `format_is_pff_format` — from `generic_format` derive the existence of a bounded Pff float
     whose real value is the given real. This is the existential variant used by later lemmas. -/
@@ -142,8 +140,8 @@ theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
   sorry
 
 -- Next missing theorem: pff_format_is_format
-noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Unit :=
-  ()
+noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
 
 /-- Coq: `pff_format_is_format` — from `Fbounded b f`, obtain `generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`.
 We phrase it using the project's hoare triple style and the `pff_to_R` bridge. -/
@@ -154,8 +152,8 @@ theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) 
   sorry
 
 -- Bridge for Coq's boolean evenness to existential parity on integers
-noncomputable def equiv_RNDs_aux_check (z : Int) : Unit :=
-  ()
+noncomputable def equiv_RNDs_aux_check (z : Int) : Id Unit :=
+  pure ()
 
 /-- Coq: `equiv_RNDs_aux` — if `Z.even z = true` then `Even z`.
     We model `Even z` as existence of an integer half: `∃ k, z = 2*k`. -/
@@ -164,7 +162,7 @@ theorem equiv_RNDs_aux (z : Int) :
     equiv_RNDs_aux_check z
     ⦃⇓_ => ⌜∃ k : Int, z = 2 * k⌝⦄ := by
   intro hz
-  simp [ equiv_RNDs_aux_check, pure]
+  simp [wp, PostCond.noThrow, equiv_RNDs_aux_check, pure]
   refine ⟨z / 2, ?_⟩
   have hz' : z % 2 = 0 := hz
   have h : 2 * (z / 2) + z % 2 = z := Int.mul_ediv_add_emod z 2
@@ -174,8 +172,8 @@ theorem equiv_RNDs_aux (z : Int) :
 
 /-- Coq: `pff_canonic_is_canonic` — canonical in Pff implies `canonical` in Flocq sense
     for the corresponding `pff_to_flocq` float, assuming nonzero value. -/
-noncomputable def pff_canonic_is_canonic_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Unit :=
-  ()
+noncomputable def pff_canonic_is_canonic_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
 
 theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFcanonic beta b f ∧ pff_to_R beta f ≠ 0⌝⦄
@@ -273,8 +271,8 @@ theorem using Hoare-triple syntax, leaving the proof as `sorry`.
 -/
 
 -- Exponent lower bound from magnitude lower bound
-noncomputable def FloatFexp_gt_check (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) : Unit :=
-  ()
+noncomputable def FloatFexp_gt_check (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) : Id Unit :=
+  pure ()
 
 /-- Coq: `FloatFexp_gt` — if `f` is bounded and `(beta : ℝ)^(e+p) ≤ |FtoR f|`,
     then `e < Fexp f`. Here we use `pff_to_R` for `FtoR` and the `exponent`
@@ -286,8 +284,8 @@ theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
   sorry
 
 -- From canonicity and a magnitude lower bound, derive normality
-noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Unit :=
-  ()
+noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
 
 /-- Coq: `CanonicGeNormal` — if `f` is canonical and `β^(-dExp b + p - 1) ≤ |FtoR f|`,
     then `f` is normal (in the Pff sense). We phrase normality as a Prop `True`
@@ -297,11 +295,11 @@ theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     CanonicGeNormal_check beta b p f
     ⦃⇓_ => ⌜True⌝⦄ := by
   intro _
-  simp [ CanonicGeNormal_check, pure]
+  simp [wp, PostCond.noThrow, CanonicGeNormal_check, pure]
 
 -- Ulp for canonical/bounded matches Core.ulps
-noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Unit :=
-  ()
+noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
 
 /-- Coq: `Fulp_ulp_aux` — for canonical `f`, `Fulp` equals `ulp` at `(FLT_exp (-dExp b) p)`.
     We express `Fulp` via the Compat.lean `ulp` bridge on reals. -/
@@ -310,10 +308,10 @@ theorem Fulp_ulp_aux (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     Fulp_ulp_aux_check beta b p f
     ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
   intro _
-  simp [ Fulp_ulp_aux_check, pure]
+  simp [wp, PostCond.noThrow, Fulp_ulp_aux_check, pure]
 
-noncomputable def Fulp_ulp_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Unit :=
-  ()
+noncomputable def Fulp_ulp_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+  pure ()
 
 /-- Coq: `Fulp_ulp` — same as `Fulp_ulp_aux` but from `Fbounded` via normalization. -/
 theorem Fulp_ulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
@@ -321,11 +319,11 @@ theorem Fulp_ulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     Fulp_ulp_check beta b p f
     ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
   intro _
-  simp [ Fulp_ulp_check, pure]
+  simp [wp, PostCond.noThrow, Fulp_ulp_check, pure]
 
 -- Instances for single/double rounding to nearest even
-noncomputable def round_NE_is_pff_round_b32_check (r : ℝ) : Unit :=
-  ()
+noncomputable def round_NE_is_pff_round_b32_check (r : ℝ) : Id Unit :=
+  pure ()
 
 theorem round_NE_is_pff_round_b32 (r : ℝ) [Prec_gt_0 24] :
     ⦃⌜True⌝⦄
@@ -333,8 +331,8 @@ theorem round_NE_is_pff_round_b32 (r : ℝ) [Prec_gt_0 24] :
     ⦃⇓_ => ⌜∃ f : PffFloat, True ∧ True ∧ pff_to_R 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-149) 24) () r⌝⦄ := by
   sorry
 
-noncomputable def round_NE_is_pff_round_b64_check (r : ℝ) : Unit :=
-  ()
+noncomputable def round_NE_is_pff_round_b64_check (r : ℝ) : Id Unit :=
+  pure ()
 
 theorem round_NE_is_pff_round_b64 (r : ℝ) [Prec_gt_0 53] :
     ⦃⌜True⌝⦄

@@ -77,7 +77,7 @@ noncomputable def round_N_opp_sym_check (emin prec : Int) (choice : Int → Bool
     statement using the rounding operator from Compat/Core. -/
 theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool) (x : ℝ) :
     ⦃⌜∀ t : Int, choice t = ! choice (-(t + 1))⌝⦄
-    round_N_opp_sym_check emin prec choice x
+    (pure (round_N_opp_sym_check emin prec choice x) : Id Unit)
     ⦃⇓_ => ⌜FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (-x)
             = - FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () x⌝⦄ := by
   sorry
@@ -93,7 +93,7 @@ noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Boo
 theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool)
     (x y : ℝ) :
     ⦃⌜generic_format 2 (FLT_exp emin prec) x ∧ generic_format 2 (FLT_exp emin prec) y ∧ |y| ≤ |x|⌝⦄
-    Fast2Sum_correct_check emin prec choice x y
+    (pure (Fast2Sum_correct_check emin prec choice x y) : Id Unit)
     ⦃⇓_ =>
       ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
         let a := round_flt (x + y)
@@ -110,7 +110,7 @@ noncomputable def TwoSum_correct_check (emin prec : Int) (choice : Int → Bool)
 theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool)
     (x y : ℝ) :
     ⦃⌜generic_format 2 (FLT_exp emin prec) x ∧ generic_format 2 (FLT_exp emin prec) y⌝⦄
-    TwoSum_correct_check emin prec choice x y
+    (pure (TwoSum_correct_check emin prec choice x y) : Id Unit)
     ⦃⇓_ =>
       ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
         let a  := round_flt (x + y)
@@ -130,7 +130,7 @@ noncomputable def C_format_check (emin prec s : Int) : Unit :=
     We capture the side conditions in the Hoare precondition. -/
 theorem C_format (emin prec s : Int) [Prec_gt_0 prec] :
     ⦃⌜(2 ≤ s) ∧ (s ≤ prec - 2) ∧ (emin ≤ 0)⌝⦄
-    C_format_check emin prec s
+    (pure (C_format_check emin prec s) : Id Unit)
     ⦃⇓_ => ⌜generic_format 2 (FLT_exp emin prec) ((2 : ℝ) ^ (Int.toNat s) + 1)⌝⦄ := by
   sorry
 
@@ -146,7 +146,7 @@ noncomputable def Veltkamp_Even_check (emin prec s : Int)
 theorem Veltkamp_Even (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)]
     (choice : Int → Bool) (hx x : ℝ) :
     ⦃⌜choice = fun z => ! decide (z % 2 = 0)⌝⦄
-    Veltkamp_Even_check emin prec s choice hx x
+    (pure (Veltkamp_Even_check emin prec s choice hx x) : Id Unit)
     ⦃⇓_ => ⌜hx = FloatSpec.Calc.Round.round 2 (FLT_exp emin (prec - s)) () x⌝⦄ := by
   sorry
 
@@ -163,7 +163,7 @@ noncomputable def Veltkamp_check (emin prec s : Int)
 theorem Veltkamp (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)]
     (choice : Int → Bool) (hx x : ℝ) :
     ⦃⌜True⌝⦄
-    Veltkamp_check emin prec s choice hx x
+    (pure (Veltkamp_check emin prec s choice hx x) : Id Unit)
     ⦃⇓_ => ⌜∃ choice' : Int → Bool,
               hx = FloatSpec.Calc.Round.round 2 (FLT_exp emin (prec - s)) (Znearest choice') x⌝⦄ := by
   sorry
@@ -178,7 +178,7 @@ noncomputable def Veltkamp_tail_check (emin prec s : Int)
 theorem Veltkamp_tail (emin prec s : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (hx tx x : ℝ) :
     ⦃⌜True⌝⦄
-    Veltkamp_tail_check emin prec s choice hx tx x
+    (pure (Veltkamp_tail_check emin prec s choice hx tx x) : Id Unit)
     ⦃⇓_ => ⌜x = hx + tx ∧ generic_format 2 (FLT_exp emin s) tx⌝⦄ := by
   sorry
 
@@ -205,7 +205,7 @@ theorem underf_mult_aux (emin prec e : Int) [Prec_gt_0 prec]
     ⦃⌜generic_format beta (FLT_exp emin prec) (pff_to_R beta x) ∧
         generic_format beta (FLT_exp emin prec) (pff_to_R beta y) ∧
         (beta : ℝ) ^ (e + 2 * prec - 1) ≤ |pff_to_R beta x * pff_to_R beta y|⌝⦄
-    underf_mult_aux_check emin prec e x y
+    (pure (underf_mult_aux_check emin prec e x y) : Id Unit)
     ⦃⇓_ => ⌜e ≤ x.exponent + y.exponent⌝⦄ := by
   sorry
 
@@ -223,7 +223,7 @@ theorem underf_mult_aux' (emin prec : Int) [Prec_gt_0 prec]
     ⦃⌜generic_format beta (FLT_exp emin prec) (pff_to_R beta x) ∧
         generic_format beta (FLT_exp emin prec) (pff_to_R beta y) ∧
         (beta : ℝ) ^ (-emin + 2 * prec - 1) ≤ |pff_to_R beta x * pff_to_R beta y|⌝⦄
-    underf_mult_aux'_check emin prec x y
+    (pure (underf_mult_aux'_check emin prec x y) : Id Unit)
     ⦃⇓_ => ⌜-emin ≤ x.exponent + y.exponent⌝⦄ := by
   sorry
 -- (we will add `underf_mult_aux'` after verifying `underf_mult_aux` compiles)
@@ -249,7 +249,7 @@ noncomputable def V1_Und3'_check (emin prec : Int)
 theorem V1_Und3' (emin prec : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (a x : ℝ) :
     ⦃⌜(a * x = 0) ∨ ((beta : ℝ) ^ (emin + 2 * prec - 1) ≤ |a * x|)⌝⦄
-    V1_Und3'_check emin prec choice a x
+    (pure (V1_Und3'_check emin prec choice a x) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
             let u1 := round_flt (a * x)
             u1 = 0 ∨ ((beta : ℝ) ^ (emin + 2 * prec - 1) ≤ |u1|)⌝⦄ := by
@@ -273,7 +273,7 @@ noncomputable def V1_Und3_check (emin prec : Int)
 theorem V1_Und3 (emin prec : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (a x : ℝ) :
     ⦃⌜(a * x = 0) ∨ ((beta : ℝ) ^ (emin + 2 * prec - 1) ≤ |a * x|)⌝⦄
-    V1_Und3_check emin prec choice a x
+    (pure (V1_Und3_check emin prec choice a x) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
             let u1 := round_flt (a * x)
             u1 = 0 ∨ ((beta : ℝ) ^ (emin + prec) ≤ |u1|)⌝⦄ := by
@@ -298,7 +298,7 @@ noncomputable def Dekker_check (emin prec s : Int)
 theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (x y : ℝ) :
     ⦃⌜True⌝⦄
-    Dekker_check emin prec s choice x y
+    (pure (Dekker_check emin prec s choice x y) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -312,7 +312,7 @@ noncomputable def ErrFMA_bounded_check (emin prec : Int)
 theorem ErrFMA_bounded (emin prec : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ) :
     ⦃⌜True⌝⦄
-    ErrFMA_bounded_check emin prec choice a x y
+    (pure (ErrFMA_bounded_check emin prec choice a x y) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -324,7 +324,7 @@ noncomputable def ErrFMA_correct_check (emin prec : Int)
 theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ) :
     ⦃⌜True⌝⦄
-    ErrFMA_correct_check emin prec choice a x y
+    (pure (ErrFMA_correct_check emin prec choice a x y) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -339,7 +339,7 @@ noncomputable def ErrFMA_bounded_simpl_check (emin prec : Int)
 theorem ErrFMA_bounded_simpl (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜True⌝⦄
-    ErrFMA_bounded_simpl_check emin prec a x y
+    (pure (ErrFMA_bounded_simpl_check emin prec a x y) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -366,7 +366,7 @@ theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
     ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
         generic_format 2 (FLT_exp emin prec) b ∧
         (a * b = 0 ∨ (2 : ℝ) ^ e ≤ |a * b|)⌝⦄
-    mult_error_FLT_ge_bpow'_check emin prec e a b
+    (pure (mult_error_FLT_ge_bpow'_check emin prec e a b) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let err := a * b - round_flt (a * b)
             err = 0 ∨ (2 : ℝ) ^ (e + 1 - 2 * prec) ≤ |err|⌝⦄ := by
@@ -394,7 +394,7 @@ noncomputable def V2_Und4_check (emin prec : Int)
 theorem V2_Und4 (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜a * x ≠ 0⌝⦄
-    V2_Und4_check emin prec a x y
+    (pure (V2_Und4_check emin prec a x y) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let u1 := round_flt (a * x)
             let u2 := a * x - u1
@@ -424,7 +424,7 @@ noncomputable def V2_Und2_check (emin prec : Int)
 theorem V2_Und2 (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜y ≠ 0⌝⦄
-    V2_Und2_check emin prec a x y
+    (pure (V2_Und2_check emin prec a x y) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let u1 := round_flt (a * x)
             let u2 := a * x - u1
@@ -449,7 +449,7 @@ noncomputable def V2_Und5_check (emin prec : Int)
 theorem V2_Und5 (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜a * x ≠ 0⌝⦄
-    V2_Und5_check emin prec a x y
+    (pure (V2_Und5_check emin prec a x y) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let r1 := round_flt (a * x + y)
             r1 = 0 ∨ (beta : ℝ) ^ (emin + prec - 1) ≤ |r1|⌝⦄ := by
@@ -489,7 +489,7 @@ theorem U3_discri1 (emin prec : Int) [Prec_gt_0 prec]
          let p := round_flt (b * b)
          let q := round_flt (a * c)
          True ∧ p - q ≠ 0)⌝⦄
-    U3_discri1_check emin prec a b c
+    (pure (U3_discri1_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let q := round_flt (a * c)
@@ -531,7 +531,7 @@ theorem U4_discri1 (emin prec : Int) [Prec_gt_0 prec]
          let p := round_flt (b * b)
          let q := round_flt (a * c)
          True ∧ p - q ≠ 0)⌝⦄
-    U4_discri1_check emin prec a b c
+    (pure (U4_discri1_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let q := round_flt (a * c)
@@ -560,7 +560,7 @@ noncomputable def ErrFMA_correct_simpl_check (emin prec : Int)
 theorem ErrFMA_correct_simpl (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜True⌝⦄
-    ErrFMA_correct_simpl_check emin prec a x y
+    (pure (ErrFMA_correct_simpl_check emin prec a x y) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -579,7 +579,7 @@ noncomputable def ErrFmaAppr_correct_check (emin prec : Int)
 theorem ErrFmaAppr_correct (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜True⌝⦄
-    ErrFmaAppr_correct_check emin prec a x y
+    (pure (ErrFmaAppr_correct_check emin prec a x y) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -604,7 +604,7 @@ theorem format_dp (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) b ∧
         generic_format 2 (FLT_exp emin prec) c ∧
         (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|)⌝⦄
-    format_dp_check emin prec a b c
+    (pure (format_dp_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let dp := b * b - p
@@ -631,7 +631,7 @@ theorem format_dq (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) b ∧
         generic_format 2 (FLT_exp emin prec) c ∧
         (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|)⌝⦄
-    format_dq_check emin prec a b c
+    (pure (format_dq_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let q := round_flt (a * c)
             let dq := a * c - q
@@ -660,7 +660,7 @@ noncomputable def format_d_discri1_check (emin prec : Int)
 theorem format_d_discri1 (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
-    format_d_discri1_check emin prec a b c
+    (pure (format_d_discri1_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let q := round_flt (a * c)
@@ -695,7 +695,7 @@ noncomputable def format_d_discri2_check (emin prec : Int)
 theorem format_d_discri2 (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
-    format_d_discri2_check emin prec a b c
+    (pure (format_d_discri2_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let q := round_flt (a * c)
@@ -732,7 +732,7 @@ theorem U5_discri1_aux (emin prec : Int) [Prec_gt_0 prec]
         (2 : ℝ) ^ e ≤ |x| ∧ (2 : ℝ) ^ e ≤ |y| ∧
         (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
          round_flt (x + y) ≠ x + y)⌝⦄
-    U5_discri1_aux_check emin prec x y e
+    (pure (U5_discri1_aux_check emin prec x y e) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             (2 : ℝ) ^ e ≤ |round_flt (x + y)|⌝⦄ := by
   sorry
@@ -767,7 +767,7 @@ theorem U5_discri1 (emin prec : Int) [Prec_gt_0 prec]
          let dp := b * b - p
          let dq := a * c - q
          True ∧ round_flt (dp - dq) ≠ dp - dq)⌝⦄
-    U5_discri1_check emin prec a b c
+    (pure (U5_discri1_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let q := round_flt (a * c)
@@ -805,7 +805,7 @@ noncomputable def discri_correct_test_check (emin prec : Int)
 theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
-    discri_correct_test_check emin prec a b c
+    (pure (discri_correct_test_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let q := round_flt (a * c)
@@ -847,7 +847,7 @@ noncomputable def discri_fp_test_check (emin prec : Int)
 theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
-    discri_fp_test_check emin prec a b c
+    (pure (discri_fp_test_check emin prec a b c) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
             let p := round_flt (b * b)
             let q := round_flt (a * c)
@@ -894,7 +894,7 @@ theorem Axpy (emin prec : Int) [Prec_gt_0 prec]
         (|y - ty| + |a * x - ta * tx|
            ≤ (2 : ℝ) ^ (-prec - 2) * (1 - (2 : ℝ) ^ (1 - prec)) * |ty|
              - (2 : ℝ) ^ (-prec - 2) * |ta * tx| - (2 : ℝ) ^ (emin - 2))⌝⦄
-    Axpy_check emin prec choice a x y ta tx ty
+    (pure (Axpy_check emin prec choice a x y ta tx ty) : Id Unit)
     ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
             let tv := round_flt (ty + round_flt (ta * tx))
             tv = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)

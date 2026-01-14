@@ -24,10 +24,12 @@ theorem even_0 : nat_even 0 := ⟨0, rfl⟩
 theorem odd_1 : nat_odd 1 := ⟨0, rfl⟩
 
 theorem not_even_1 : ¬nat_even 1 := by
-  sorry
+  intro ⟨k, hk⟩
+  omega
 
 theorem not_odd_0 : ¬nat_odd 0 := by
-  sorry
+  intro ⟨k, hk⟩
+  omega
 
 -- Double operation
 def nat_double (n : Nat) : Nat := 2 * n
@@ -37,10 +39,22 @@ def nat_div2 (n : Nat) : Nat := n / 2
 
 -- Even/Odd characterization
 theorem even_iff_double (n : Nat) : nat_even n ↔ n = nat_double (nat_div2 n) := by
-  sorry
+  constructor
+  · intro ⟨k, hk⟩
+    simp only [nat_double, nat_div2]
+    omega
+  · intro h
+    simp only [nat_double, nat_div2] at h
+    exact ⟨n / 2, h⟩
 
 theorem odd_iff_double (n : Nat) : nat_odd n ↔ n = nat_double (nat_div2 n) + 1 := by
-  sorry
+  constructor
+  · intro ⟨k, hk⟩
+    simp only [nat_double, nat_div2]
+    omega
+  · intro h
+    simp only [nat_double, nat_div2] at h
+    exact ⟨n / 2, h⟩
 
 -- ---------------------------------------------------------------------------
 -- Missing parity lemmas over Nat (Coq compatibility)
@@ -53,7 +67,9 @@ theorem Even_0 :
     ⦃⌜True⌝⦄
     (pure Even_0_check : Id Unit)
     ⦃⇓_ => ⌜nat_even 0⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, Even_0_check]
+  exact even_0
 
 noncomputable def Even_1_check : Unit :=
   ()
@@ -63,7 +79,9 @@ theorem Even_1 :
     ⦃⌜True⌝⦄
     (pure Even_1_check : Id Unit)
     ⦃⇓_ => ⌜¬ nat_even 1⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, Even_1_check]
+  exact not_even_1
 
 noncomputable def Odd_0_check : Unit :=
   ()
@@ -73,7 +91,9 @@ theorem Odd_0 :
     ⦃⌜True⌝⦄
     (pure Odd_0_check : Id Unit)
     ⦃⇓_ => ⌜¬ nat_odd 0⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, Odd_0_check]
+  exact not_odd_0
 
 noncomputable def Odd_1_check : Unit :=
   ()
@@ -83,7 +103,9 @@ theorem Odd_1 :
     ⦃⌜True⌝⦄
     (pure Odd_1_check : Id Unit)
     ⦃⇓_ => ⌜nat_odd 1⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, Odd_1_check]
+  exact odd_1
 
 -- Legacy tactical support (simplified)
 section LegacyTactics
@@ -101,15 +123,15 @@ end LegacyTactics
 -- Power operations compatibility
 theorem pow_inv (r : ℝ) (n : Nat) (h : r ≠ 0) :
   (r^n)⁻¹ = r⁻¹^n := by
-  sorry
+  exact (inv_pow r n).symm
 
 theorem pow_neg (r : ℝ) (z : Int) :
   r^(-z) = (r^z)⁻¹ := by
-  sorry
+  exact zpow_neg r z
 
 -- Real number compatibility
 theorem abs_inv_compat (r : ℝ) : |r⁻¹| = |r|⁻¹ := by
-  sorry
+  exact abs_inv r
 
 -- Coq compat: `powerRZ_inv` — (r^z)⁻¹ = r^(-z)
 noncomputable def powerRZ_inv_check (r : ℝ) (z : Int) : Unit :=
@@ -117,9 +139,11 @@ noncomputable def powerRZ_inv_check (r : ℝ) (z : Int) : Unit :=
 
 theorem powerRZ_inv (r : ℝ) (z : Int) :
     ⦃⌜True⌝⦄
-    powerRZ_inv_check r z
+    (pure (powerRZ_inv_check r z) : Id Unit)
     ⦃⇓_ => ⌜(r ^ z)⁻¹ = r ^ (-z)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, powerRZ_inv_check]
+  exact (zpow_neg r z).symm
 
 -- Coq compat: `powerRZ_neg` — r^(-z) = (r^z)⁻¹
 noncomputable def powerRZ_neg_check (r : ℝ) (z : Int) : Unit :=
@@ -127,17 +151,19 @@ noncomputable def powerRZ_neg_check (r : ℝ) (z : Int) : Unit :=
 
 theorem powerRZ_neg (r : ℝ) (z : Int) :
     ⦃⌜True⌝⦄
-    powerRZ_neg_check r z
+    (pure (powerRZ_neg_check r z) : Id Unit)
     ⦃⇓_ => ⌜r ^ (-z) = (r ^ z)⁻¹⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, powerRZ_neg_check]
+  exact zpow_neg r z
 
 -- (reserved for future compatibility lemmas)
 
 -- ---------------------------------------------------------------------------
 -- Integer rounding down by 1 (IRNDD) and basic properties (Coq alignment)
 
--- Coq: `IRNDD (r) = Z.pred (up r)`; we provide a simple placeholder.
-noncomputable def IRNDD (r : ℝ) : Int := 0
+-- Coq: `IRNDD (r) = Z.pred (up r)`; predecessor of ceiling function
+noncomputable def IRNDD (r : ℝ) : Int := Int.ceil r - 1
 
 noncomputable def IRNDD_correct1_check (r : ℝ) : Unit :=
   ()
@@ -145,9 +171,17 @@ noncomputable def IRNDD_correct1_check (r : ℝ) : Unit :=
 /-- Coq: `IRNDD_correct1` — IRNDD r ≤ r. -/
 theorem IRNDD_correct1 (r : ℝ) :
     ⦃⌜True⌝⦄
-    IRNDD_correct1_check r
+    (pure (IRNDD_correct1_check r) : Id Unit)
     ⦃⇓_ => ⌜(IRNDD r : ℝ) ≤ r⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, IRNDD_correct1_check, IRNDD]
+  -- Goal: (Int.ceil r - 1 : ℝ) ≤ r
+  -- Use: ⌈r⌉ - 1 ≤ ⌊r⌋ ≤ r
+  have h : (Int.ceil r : ℝ) - 1 ≤ (Int.floor r : ℝ) := by
+    have hc := Int.ceil_le_floor_add_one r
+    have hc' : (Int.ceil r : ℝ) ≤ (Int.floor r : ℝ) + 1 := by exact_mod_cast hc
+    linarith
+  linarith [Int.floor_le r]
 
 noncomputable def IRNDD_correct2_check (r : ℝ) : Unit :=
   ()
@@ -155,9 +189,14 @@ noncomputable def IRNDD_correct2_check (r : ℝ) : Unit :=
 /-- Coq: `IRNDD_correct2` — r < succ (IRNDD r). -/
 theorem IRNDD_correct2 (r : ℝ) :
     ⦃⌜True⌝⦄
-    IRNDD_correct2_check r
+    (pure (IRNDD_correct2_check r) : Id Unit)
     ⦃⇓_ => ⌜r < ((Int.succ (IRNDD r)) : ℝ)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, IRNDD_correct2_check, IRNDD, Int.succ]
+  -- Goal: r < (Int.ceil r - 1 + 1 : ℝ) = r < Int.ceil r
+  have h : (Int.ceil r - 1 + 1 : Int) = Int.ceil r := by ring
+  rw [h]
+  exact Int.lt_ceil.mpr (le_refl r)
 
 noncomputable def IRNDD_correct3_check (r : ℝ) : Unit :=
   ()
@@ -165,9 +204,17 @@ noncomputable def IRNDD_correct3_check (r : ℝ) : Unit :=
 /-- Coq: `IRNDD_correct3` — r - 1 < IRNDD r. -/
 theorem IRNDD_correct3 (r : ℝ) :
     ⦃⌜True⌝⦄
-    IRNDD_correct3_check r
+    (pure (IRNDD_correct3_check r) : Id Unit)
     ⦃⇓_ => ⌜r - 1 < (IRNDD r : ℝ)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, IRNDD_correct3_check, IRNDD]
+  -- Goal: r - 1 < (Int.ceil r - 1 : ℝ)
+  -- Use: r - 1 < ⌊r⌋ (Int.sub_one_lt_floor) and ⌈r⌉ - 1 ≤ ⌊r⌋
+  calc r - 1
+      < (Int.floor r : ℝ) := Int.sub_one_lt_floor r
+    _ ≥ (Int.ceil r : ℝ) - 1 := by
+        have h := Int.ceil_le_floor_add_one r
+        linarith [Int.cast_le.mpr h]
 
 noncomputable def IRNDD_pos_check (r : ℝ) : Unit :=
   ()
@@ -175,7 +222,7 @@ noncomputable def IRNDD_pos_check (r : ℝ) : Unit :=
 /-- Coq: `IRNDD_pos` — 0 ≤ r → 0 ≤ IRNDD r. -/
 theorem IRNDD_pos (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    IRNDD_pos_check r
+    (pure (IRNDD_pos_check r) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ IRNDD r⌝⦄ := by
   sorry
 
@@ -185,7 +232,7 @@ noncomputable def IRNDD_eq_check (r : ℝ) (z : Int) : Unit :=
 /-- Coq: `IRNDD_eq` — if z ≤ r < succ z then IRNDD r = z. -/
 theorem IRNDD_eq (r : ℝ) (z : Int) :
     ⦃⌜(z : ℝ) ≤ r ∧ r < ((Int.succ z) : ℝ)⌝⦄
-    IRNDD_eq_check r z
+    (pure (IRNDD_eq_check r z) : Id Unit)
     ⦃⇓_ => ⌜IRNDD r = z⌝⦄ := by
   sorry
 
@@ -195,7 +242,7 @@ noncomputable def IRNDD_projector_check (z : Int) : Unit :=
 /-- Coq: `IRNDD_projector` — IRNDD z = z for integer inputs. -/
 theorem IRNDD_projector (z : Int) :
     ⦃⌜True⌝⦄
-    IRNDD_projector_check z
+    (pure (IRNDD_projector_check z) : Id Unit)
     ⦃⇓_ => ⌜IRNDD (z : ℝ) = z⌝⦄ := by
   sorry
 
@@ -211,7 +258,7 @@ noncomputable def ln_radix_pos_check (radix : ℝ) : Unit :=
 /-- Coq: `ln_radix_pos` — 0 < ln radix. -/
 theorem ln_radix_pos (radix : ℝ) :
     ⦃⌜True⌝⦄
-    ln_radix_pos_check radix
+    (pure (ln_radix_pos_check radix) : Id Unit)
     ⦃⇓_ => ⌜0 < Real.log radix⌝⦄ := by
   sorry
 
@@ -221,7 +268,7 @@ noncomputable def exp_ln_powerRZ_check (u v : Int) : Unit :=
 
 theorem exp_ln_powerRZ (u v : Int) :
     ⦃⌜0 < u⌝⦄
-    exp_ln_powerRZ_check u v
+    (pure (exp_ln_powerRZ_check u v) : Id Unit)
     ⦃⇓_ => ⌜Real.exp (Real.log (u : ℝ) * (v : ℝ)) = (u : ℝ) ^ v⌝⦄ := by
   sorry
 
@@ -231,7 +278,7 @@ noncomputable def exp_le_inv_check (x y : ℝ) : Unit :=
 
 theorem exp_le_inv (x y : ℝ) :
     ⦃⌜Real.exp x ≤ Real.exp y⌝⦄
-    exp_le_inv_check x y
+    (pure (exp_le_inv_check x y) : Id Unit)
     ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
   sorry
 
@@ -241,7 +288,7 @@ noncomputable def exp_monotone_check (x y : ℝ) : Unit :=
 
 theorem exp_monotone (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
-    exp_monotone_check x y
+    (pure (exp_monotone_check x y) : Id Unit)
     ⦃⇓_ => ⌜Real.exp x ≤ Real.exp y⌝⦄ := by
   sorry
 
@@ -251,9 +298,11 @@ noncomputable def OddSEven_check (n : Int) : Unit :=
 
 theorem OddSEven (n : Int) :
     ⦃⌜Odd n⌝⦄
-    OddSEven_check n
+    (pure (OddSEven_check n) : Id Unit)
     ⦃⇓_ => ⌜Even (Int.succ n)⌝⦄ := by
-  sorry
+  intro h
+  simp only [wp, PostCond.noThrow, pure, OddSEven_check, Int.succ]
+  exact Odd.add_one h
 
 -- Coq: `EvenSOdd` — if n is even then succ n is odd
 noncomputable def EvenSOdd_check (n : Int) : Unit :=
@@ -261,9 +310,11 @@ noncomputable def EvenSOdd_check (n : Int) : Unit :=
 
 theorem EvenSOdd (n : Int) :
     ⦃⌜Even n⌝⦄
-    EvenSOdd_check n
+    (pure (EvenSOdd_check n) : Id Unit)
     ⦃⇓_ => ⌜Odd (Int.succ n)⌝⦄ := by
-  sorry
+  intro h
+  simp only [wp, PostCond.noThrow, pure, EvenSOdd_check, Int.succ]
+  exact Even.add_one h
 
 -- Coq: `OddSEvenInv` — if succ n is odd then n is even
 noncomputable def OddSEvenInv_check (n : Int) : Unit :=
@@ -271,7 +322,7 @@ noncomputable def OddSEvenInv_check (n : Int) : Unit :=
 
 theorem OddSEvenInv (n : Int) :
     ⦃⌜Odd (Int.succ n)⌝⦄
-    OddSEvenInv_check n
+    (pure (OddSEvenInv_check n) : Id Unit)
     ⦃⇓_ => ⌜Even n⌝⦄ := by
   sorry
 
@@ -281,7 +332,7 @@ noncomputable def EvenSOddInv_check (n : Int) : Unit :=
 
 theorem EvenSOddInv (n : Int) :
     ⦃⌜Even (Int.succ n)⌝⦄
-    EvenSOddInv_check n
+    (pure (EvenSOddInv_check n) : Id Unit)
     ⦃⇓_ => ⌜Odd n⌝⦄ := by
   sorry
 
@@ -293,7 +344,7 @@ noncomputable def Odd1_check : Unit :=
 
 theorem Odd1 :
     ⦃⌜True⌝⦄
-    Odd1_check
+    (pure Odd1_check : Id Unit)
     ⦃⇓_ => ⌜Odd (1 : Int)⌝⦄ := by
   sorry
 
@@ -303,7 +354,7 @@ noncomputable def EvenO_check : Unit :=
 
 theorem EvenO :
     ⦃⌜True⌝⦄
-    EvenO_check
+    (pure (EvenO_check) : Id Unit)
   ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
   sorry
 
@@ -313,7 +364,7 @@ noncomputable def OddOpp_check (z : Int) : Unit :=
 
 theorem OddOpp (z : Int) :
     ⦃⌜Odd z⌝⦄
-    OddOpp_check z
+    (pure (OddOpp_check z) : Id Unit)
     ⦃⇓_ => ⌜Odd (-z)⌝⦄ := by
   sorry
 
@@ -323,7 +374,7 @@ noncomputable def EvenOpp_check (z : Int) : Unit :=
 
 theorem EvenOpp (z : Int) :
     ⦃⌜Even z⌝⦄
-    EvenOpp_check z
+    (pure (EvenOpp_check z) : Id Unit)
     ⦃⇓_ => ⌜Even (-z)⌝⦄ := by
   sorry
 
@@ -333,7 +384,7 @@ noncomputable def OddEvenDec_check (n : Int) : Unit :=
 
 theorem OddEvenDec (n : Int) :
     ⦃⌜True⌝⦄
-    OddEvenDec_check n
+    (pure (OddEvenDec_check n) : Id Unit)
     ⦃⇓_ => ⌜Odd n ∨ Even n⌝⦄ := by
   sorry
 
@@ -343,7 +394,7 @@ noncomputable def OddNEven_check (n : Int) : Unit :=
 
 theorem OddNEven (n : Int) :
     ⦃⌜Odd n⌝⦄
-    OddNEven_check n
+    (pure (OddNEven_check n) : Id Unit)
     ⦃⇓_ => ⌜¬ Even n⌝⦄ := by
   sorry
 
@@ -353,7 +404,7 @@ noncomputable def EvenNOdd_check (n : Int) : Unit :=
 
 theorem EvenNOdd (n : Int) :
     ⦃⌜Even n⌝⦄
-    EvenNOdd_check n
+    (pure (EvenNOdd_check n) : Id Unit)
     ⦃⇓_ => ⌜¬ Odd n⌝⦄ := by
   sorry
 
@@ -363,7 +414,7 @@ noncomputable def EvenPlus1_check (n m : Int) : Unit :=
 
 theorem EvenPlus1 (n m : Int) :
     ⦃⌜Even n ∧ Even m⌝⦄
-    EvenPlus1_check n m
+    (pure (EvenPlus1_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even (n + m)⌝⦄ := by
   sorry
 
@@ -373,7 +424,7 @@ noncomputable def OddPlus2_check (n m : Int) : Unit :=
 
 theorem OddPlus2 (n m : Int) :
     ⦃⌜Even n ∧ Odd m⌝⦄
-    OddPlus2_check n m
+    (pure (OddPlus2_check n m) : Id Unit)
     ⦃⇓_ => ⌜Odd (n + m)⌝⦄ := by
   sorry
 
@@ -383,7 +434,7 @@ noncomputable def EvenMult1_check (n m : Int) : Unit :=
 
 theorem EvenMult1 (n m : Int) :
     ⦃⌜Even n⌝⦄
-    EvenMult1_check n m
+    (pure (EvenMult1_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even (n * m)⌝⦄ := by
   sorry
 
@@ -393,7 +444,7 @@ noncomputable def EvenMult2_check (n m : Int) : Unit :=
 
 theorem EvenMult2 (n m : Int) :
     ⦃⌜Even m⌝⦄
-    EvenMult2_check n m
+    (pure (EvenMult2_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even (n * m)⌝⦄ := by
   sorry
 
@@ -403,7 +454,7 @@ noncomputable def OddMult_check (n m : Int) : Unit :=
 
 theorem OddMult (n m : Int) :
     ⦃⌜Odd n ∧ Odd m⌝⦄
-    OddMult_check n m
+    (pure (OddMult_check n m) : Id Unit)
     ⦃⇓_ => ⌜Odd (n * m)⌝⦄ := by
   sorry
 
@@ -413,7 +464,7 @@ noncomputable def EvenMultInv_check (n m : Int) : Unit :=
 
 theorem EvenMultInv (n m : Int) :
     ⦃⌜Even (n * m) ∧ Odd n⌝⦄
-    EvenMultInv_check n m
+    (pure (EvenMultInv_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even m⌝⦄ := by
   sorry
 
@@ -426,7 +477,7 @@ noncomputable def EvenExp_check (n : Int) (m : Nat) : Unit :=
 
 theorem EvenExp (n : Int) (m : Nat) :
     ⦃⌜Even n⌝⦄
-    EvenExp_check n m
+    (pure (EvenExp_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even (Zpower_nat_int n (Nat.succ m))⌝⦄ := by
   sorry
 
@@ -436,7 +487,7 @@ noncomputable def OddExp_check (n : Int) (m : Nat) : Unit :=
 
 theorem OddExp (n : Int) (m : Nat) :
     ⦃⌜Odd n⌝⦄
-    OddExp_check n m
+    (pure (OddExp_check n m) : Id Unit)
     ⦃⇓_ => ⌜Odd (Zpower_nat_int n m)⌝⦄ := by
   sorry
 
@@ -456,7 +507,7 @@ noncomputable def FevenOrFodd_check {beta : Int}
 theorem FevenOrFodd {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    FevenOrFodd_check (beta:=beta) p
+    (pure (FevenOrFodd_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜Feven (beta:=beta) p ∨ Fodd (beta:=beta) p⌝⦄ := by
   sorry
 
@@ -534,7 +585,7 @@ theorem RleBoundRoundl {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧
         (_root_.F2R (beta:=beta) p ≤ r) ∧ P r q⌝⦄
-    RleBoundRoundl_check (beta:=beta) b radix P p q r
+    (pure (RleBoundRoundl_check (beta:=beta) b radix P p q r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p ≤ _root_.F2R (beta:=beta) q⌝⦄ := by
   sorry
 
@@ -552,7 +603,7 @@ theorem RleBoundRoundr {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧
         (r ≤ _root_.F2R (beta:=beta) p) ∧ P r q⌝⦄
-    RleBoundRoundr_check (beta:=beta) b radix P p q r
+    (pure (RleBoundRoundr_check (beta:=beta) b radix P p q r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) q ≤ _root_.F2R (beta:=beta) p⌝⦄ := by
   sorry
 
@@ -576,7 +627,7 @@ noncomputable def firstNormalPos_eq_check {beta : Int}
 theorem firstNormalPos_eq {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⌜True⌝⦄
-    firstNormalPos_eq_check (beta:=beta) radix b precision
+    (pure (firstNormalPos_eq_check (beta:=beta) radix b precision) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b precision)
             = (nNormMin radix precision : ℝ) * (radix : ℝ) ^ (-b.dExp)⌝⦄ := by
   sorry
@@ -640,7 +691,7 @@ theorem FevenSucProp {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    FevenSucProp_check (beta:=beta) b radix precision p
+    (pure (FevenSucProp_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜(Fodd (beta:=beta) p →
     Feven (beta:=beta) (FNSucc (beta:=beta) b radix precision p)) ∧
             (Feven (beta:=beta) p →
@@ -658,7 +709,7 @@ theorem FoddSuc {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fodd (beta:=beta) p⌝⦄
-    FoddSuc_check (beta:=beta) b radix precision p
+    (pure (FoddSuc_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜Feven (beta:=beta) (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
   sorry
 
@@ -672,7 +723,7 @@ theorem FevenSuc {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Feven (beta:=beta) p⌝⦄
-    FevenSuc_check (beta:=beta) b radix precision p
+    (pure (FevenSuc_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜Fodd (beta:=beta) (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
   sorry
 
@@ -704,7 +755,7 @@ theorem FcanonicBound {beta : Int}
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
-    FcanonicBound_check (beta:=beta) radix b p
+    (pure (FcanonicBound_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
   sorry
 
@@ -718,7 +769,7 @@ theorem FcanonicFopp {beta : Int}
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
-    FcanonicFopp_check (beta:=beta) radix b p
+    (pure (FcanonicFopp_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (Fopp p)⌝⦄ := by
   sorry
 
@@ -732,7 +783,7 @@ theorem FcanonicFabs {beta : Int}
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
-    FcanonicFabs_check (beta:=beta) radix b p
+    (pure (FcanonicFabs_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (Fabs p)⌝⦄ := by
   sorry
 
@@ -753,7 +804,7 @@ theorem FcanonicLtPos {beta : Int}
         Fcanonic (beta:=beta) radix b q ∧
         0 ≤ _root_.F2R (beta:=beta) p ∧
         _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
-    FcanonicLtPos_check (beta:=beta) radix b p q
+    (pure (FcanonicLtPos_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜p.Fexp < q.Fexp ∨
             (p.Fexp = q.Fexp ∧ p.Fnum < q.Fnum)⌝⦄ := by
   sorry
@@ -772,7 +823,7 @@ theorem Fcanonic_Rle_Zle {beta : Int}
         Fcanonic (beta:=beta) radix b y ∧
         |_root_.F2R (beta:=beta) x|
           ≤ |_root_.F2R (beta:=beta) y|⌝⦄
-    Fcanonic_Rle_Zle_check (beta:=beta) radix b x y
+    (pure (Fcanonic_Rle_Zle_check (beta:=beta) radix b x y) : Id Unit)
     ⦃⇓_ => ⌜x.Fexp ≤ y.Fexp⌝⦄ := by
   sorry
 
@@ -792,7 +843,7 @@ theorem FcanonicLtNeg {beta : Int}
         Fcanonic (beta:=beta) radix b q ∧
         _root_.F2R (beta:=beta) q ≤ 0 ∧
         _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
-    FcanonicLtNeg_check (beta:=beta) radix b p q
+    (pure (FcanonicLtNeg_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜q.Fexp < p.Fexp ∨
             (p.Fexp = q.Fexp ∧ p.Fnum < q.Fnum)⌝⦄ := by
   sorry
@@ -827,7 +878,7 @@ theorem FnormalizeCorrect {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    FnormalizeCorrect_check (beta:=beta) radix b precision p
+    (pure (FnormalizeCorrect_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta)
             (Fnormalize (beta:=beta) radix b precision p) =
             _root_.F2R (beta:=beta) p⌝⦄ := by
@@ -845,7 +896,7 @@ theorem FnormalizeBounded {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    FnormalizeBounded_check (beta:=beta) radix b precision p
+    (pure (FnormalizeBounded_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b
             (Fnormalize (beta:=beta) radix b precision p)⌝⦄ := by
   intro hb
@@ -862,7 +913,7 @@ theorem FnormalizeCanonic {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    FnormalizeCanonic_check (beta:=beta) radix b precision p
+    (pure (FnormalizeCanonic_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b
             (Fnormalize (beta:=beta) radix b precision p)⌝⦄ := by
   intro _
@@ -879,7 +930,7 @@ theorem FcanonicFnormalizeEq {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
-    FcanonicFnormalizeEq_check (beta:=beta) radix b precision p
+    (pure (FcanonicFnormalizeEq_check (beta:=beta) radix b precision p) : Id Unit)
     ⦃⇓_ => ⌜Fnormalize (beta:=beta) radix b precision p = p⌝⦄ := by
   intro _
   unfold Fnormalize
@@ -900,7 +951,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
         0 ≤ _root_.F2R (beta:=beta) x ∧
         0 ≤ _root_.F2R (beta:=beta) y ∧
         x.Fexp < y.Fexp⌝⦄
-    FcanonicPosFexpRlt_check (beta:=beta) radix b x y
+    (pure (FcanonicPosFexpRlt_check (beta:=beta) radix b x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) x < _root_.F2R (beta:=beta) y⌝⦄ := by
   sorry
 
@@ -919,7 +970,7 @@ theorem FcanonicNegFexpRlt {beta : Int}
         _root_.F2R (beta:=beta) x ≤ 0 ∧
         _root_.F2R (beta:=beta) y ≤ 0 ∧
         x.Fexp < y.Fexp⌝⦄
-    FcanonicNegFexpRlt_check (beta:=beta) radix b x y
+    (pure (FcanonicNegFexpRlt_check (beta:=beta) radix b x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) y < _root_.F2R (beta:=beta) x⌝⦄ := by
   sorry
 
@@ -935,7 +986,7 @@ theorem NormalAndSubNormalNotEq {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
         Fsubnormal (beta:=beta) radix b q⌝⦄
-    NormalAndSubNormalNotEq_check (beta:=beta) radix b p q
+    (pure (NormalAndSubNormalNotEq_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p ≠ _root_.F2R (beta:=beta) q⌝⦄ := by
   sorry
 
@@ -952,7 +1003,7 @@ theorem FcanonicUnique {beta : Int}
     ⦃⌜Fcanonic (beta:=beta) radix b p ∧
         Fcanonic (beta:=beta) radix b q ∧
         _root_.F2R (beta:=beta) p = _root_.F2R (beta:=beta) q⌝⦄
-    FcanonicUnique_check (beta:=beta) radix b p q
+    (pure (FcanonicUnique_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   sorry
 
@@ -969,7 +1020,7 @@ theorem FcanonicLeastExp {beta : Int}
     ⦃⌜_root_.F2R (beta:=beta) x = _root_.F2R (beta:=beta) y ∧
         Fbounded (beta:=beta) b x ∧
         Fcanonic (beta:=beta) radix b y⌝⦄
-    FcanonicLeastExp_check (beta:=beta) radix b x y
+    (pure (FcanonicLeastExp_check (beta:=beta) radix b x y) : Id Unit)
     ⦃⇓_ => ⌜y.Fexp ≤ x.Fexp⌝⦄ := by
   sorry
 
@@ -983,7 +1034,7 @@ noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
 theorem RND_Min_Pos_bounded_aux {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    RND_Min_Pos_bounded_aux_check (beta:=beta) b radix p r
+    (pure (RND_Min_Pos_bounded_aux_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -996,7 +1047,7 @@ noncomputable def RND_Min_Pos_canonic_check {beta : Int}
 theorem RND_Min_Pos_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    RND_Min_Pos_canonic_check (beta:=beta) b radix p r
+    (pure (RND_Min_Pos_canonic_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -1010,7 +1061,7 @@ noncomputable def RND_Min_Pos_Rle_check {beta : Int}
 theorem RND_Min_Pos_Rle {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    RND_Min_Pos_Rle_check (beta:=beta) b radix p r
+    (pure (RND_Min_Pos_Rle_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r) ≤ r⌝⦄ := by
   sorry
 
@@ -1026,7 +1077,7 @@ noncomputable def RND_Min_Pos_monotone_check {beta : Int}
 theorem RND_Min_Pos_monotone {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r₁ r₂ : ℝ) :
     ⦃⌜0 ≤ r₁ ∧ r₁ ≤ r₂⌝⦄
-    RND_Min_Pos_monotone_check (beta:=beta) b radix p r₁ r₂
+    (pure (RND_Min_Pos_monotone_check (beta:=beta) b radix p r₁ r₂) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₁)
             ≤ _root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₂)⌝⦄ := by
   sorry
@@ -1044,7 +1095,7 @@ theorem RND_Min_Pos_projector {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ _root_.F2R f ∧ Fcanonic (beta:=beta) radix b f⌝⦄
-    RND_Min_Pos_projector_check (beta:=beta) b radix p f
+    (pure (RND_Min_Pos_projector_check (beta:=beta) b radix p f) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p (_root_.F2R f))
             = _root_.F2R f⌝⦄ := by
   sorry
@@ -1065,7 +1116,7 @@ noncomputable def RND_Min_canonic_check {beta : Int}
 theorem RND_Min_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜True⌝⦄
-    RND_Min_canonic_check (beta:=beta) b radix p r
+    (pure (RND_Min_canonic_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -1086,7 +1137,7 @@ noncomputable def RND_Max_Pos_canonic_check {beta : Int}
 theorem RND_Max_Pos_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    RND_Max_Pos_canonic_check (beta:=beta) b radix p r
+    (pure (RND_Max_Pos_canonic_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -1100,7 +1151,7 @@ noncomputable def RND_Min_Pos_correct_check {beta : Int}
 theorem RND_Min_Pos_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    RND_Min_Pos_correct_check (beta:=beta) b radix p r
+    (pure (RND_Min_Pos_correct_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r
               (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
@@ -1115,7 +1166,7 @@ noncomputable def RND_Max_Pos_Rle_check {beta : Int}
 theorem RND_Max_Pos_Rle {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    RND_Max_Pos_Rle_check (beta:=beta) b radix p r
+    (pure (RND_Max_Pos_Rle_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜r ≤ _root_.F2R (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -1129,7 +1180,7 @@ noncomputable def RND_Max_Pos_correct_check {beta : Int}
 theorem RND_Max_Pos_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
-    RND_Max_Pos_correct_check (beta:=beta) b radix p r
+    (pure (RND_Max_Pos_correct_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r
               (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
   sorry
@@ -1150,7 +1201,7 @@ noncomputable def RND_Max_canonic_check {beta : Int}
 theorem RND_Max_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜True⌝⦄
-    RND_Max_canonic_check (beta:=beta) b radix p r
+    (pure (RND_Max_canonic_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Max (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -1164,7 +1215,7 @@ noncomputable def RND_Min_correct_check {beta : Int}
 theorem RND_Min_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜True⌝⦄
-    RND_Min_correct_check (beta:=beta) b radix p r
+    (pure (RND_Min_correct_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r (RND_Min (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -1178,7 +1229,7 @@ noncomputable def RND_Max_correct_check {beta : Int}
 theorem RND_Max_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜True⌝⦄
-    RND_Max_correct_check (beta:=beta) b radix p r
+    (pure (RND_Max_correct_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r (RND_Max (beta:=beta) b radix p r)⌝⦄ := by
   sorry
 
@@ -1193,7 +1244,7 @@ theorem RND_EvenClosest_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) :
     ⦃⌜True⌝⦄
-    RND_EvenClosest_canonic_check (beta:=beta) b radix precision r
+    (pure (RND_EvenClosest_canonic_check (beta:=beta) b radix precision r) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min (beta:=beta) b radix (Int.ofNat precision) r)⌝⦄ := by
   sorry
 
@@ -1208,7 +1259,7 @@ theorem RND_EvenClosest_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) :
     ⦃⌜True⌝⦄
-    RND_EvenClosest_correct_check (beta:=beta) b radix precision r
+    (pure (RND_EvenClosest_correct_check (beta:=beta) b radix precision r) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
   sorry
 
@@ -1221,7 +1272,7 @@ noncomputable def EvenClosestTotal_check {beta : Int}
 theorem EvenClosestTotal {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) :
     ⦃⌜True⌝⦄
-    EvenClosestTotal_check (beta:=beta) b radix precision r
+    (pure (EvenClosestTotal_check (beta:=beta) b radix precision r) : Id Unit)
     ⦃⇓_ => ⌜∃ p : FloatSpec.Core.Defs.FlocqFloat beta,
             EvenClosest (beta:=beta) b radix precision r p⌝⦄ := by
   sorry
@@ -1235,7 +1286,7 @@ noncomputable def FevenFop_check {beta : Int}
 theorem FevenFop {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Feven (beta:=beta) p⌝⦄
-    FevenFop_check (beta:=beta) p
+    (pure (FevenFop_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜Feven (beta:=beta) (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
   sorry
 
@@ -1252,7 +1303,7 @@ theorem FNoddEq {beta : Int}
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b f1 ∧ Fbounded (beta:=beta) b f2 ∧
         _root_.F2R f1 = _root_.F2R f2 ∧ FNodd (beta:=beta) b radix precision f1⌝⦄
-    FNoddEq_check (beta:=beta) b radix precision f1 f2
+    (pure (FNoddEq_check (beta:=beta) b radix precision f1 f2) : Id Unit)
     ⦃⇓_ => ⌜FNodd (beta:=beta) b radix precision f2⌝⦄ := by
   sorry
 
@@ -1269,7 +1320,7 @@ theorem FNevenEq {beta : Int}
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b f1 ∧ Fbounded (beta:=beta) b f2 ∧
         _root_.F2R f1 = _root_.F2R f2 ∧ FNeven (beta:=beta) b radix precision f1⌝⦄
-    FNevenEq_check (beta:=beta) b radix precision f1 f2
+    (pure (FNevenEq_check (beta:=beta) b radix precision f1 f2) : Id Unit)
     ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision f2⌝⦄ := by
   sorry
 
@@ -1284,7 +1335,7 @@ theorem FNevenFop {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜FNeven (beta:=beta) b radix precision p⌝⦄
-    FNevenFop_check (beta:=beta) b radix precision p
+    (pure (FNevenFop_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
   sorry
 
@@ -1299,7 +1350,7 @@ theorem FNoddSuc {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ FNodd (beta:=beta) b radix precision p⌝⦄
-    FNoddSuc_check (beta:=beta) b radix precision p
+    (pure (FNoddSuc_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
   sorry
 
@@ -1313,7 +1364,7 @@ theorem FNevenSuc {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ FNeven (beta:=beta) b radix precision p⌝⦄
-    FNevenSuc_check (beta:=beta) b radix precision p
+    (pure (FNevenSuc_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜FNodd (beta:=beta) b radix precision (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
   sorry
 
@@ -1327,7 +1378,7 @@ theorem FNevenOrFNodd {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
-    FNevenOrFNodd_check (beta:=beta) b radix precision p
+    (pure (FNevenOrFNodd_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜FNeven (beta:=beta) b radix precision p ∨ FNodd (beta:=beta) b radix precision p⌝⦄ := by
   sorry
 
@@ -1341,7 +1392,7 @@ theorem FnOddNEven {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (n : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜FNodd (beta:=beta) b radix precision n⌝⦄
-    FnOddNEven_check (beta:=beta) b radix precision n
+    (pure (FnOddNEven_check (beta:=beta) b radix precision n) : Id Unit)
     ⦃⇓_ => ⌜¬ FNeven (beta:=beta) b radix precision n⌝⦄ := by
   sorry
 
@@ -1356,7 +1407,7 @@ noncomputable def ClosestTotal_check {beta : Int}
 theorem ClosestTotal {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ) :
     ⦃⌜True⌝⦄
-    ClosestTotal_check (beta:=beta) bo radix r
+    (pure (ClosestTotal_check (beta:=beta) bo radix r) : Id Unit)
     ⦃⇓_ => ⌜∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
             Closest (beta:=beta) bo radix r f⌝⦄ := by
   sorry
@@ -1371,7 +1422,7 @@ noncomputable def ClosestCompatible_check {beta : Int}
 theorem ClosestCompatible {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜True⌝⦄
-    ClosestCompatible_check (beta:=beta) bo radix
+    (pure (ClosestCompatible_check (beta:=beta) bo radix) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (Closest (beta:=beta) bo radix)⌝⦄ := by
   sorry
 
@@ -1391,7 +1442,7 @@ theorem ClosestMin {beta : Int}
     ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r min ∧
         isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
         2 * r ≤ _root_.F2R min + _root_.F2R max⌝⦄
-    ClosestMin_check (beta:=beta) bo radixR r min max
+    (pure (ClosestMin_check (beta:=beta) bo radixR r min max) : Id Unit)
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r min⌝⦄ := by
   sorry
 
@@ -1411,7 +1462,7 @@ theorem ClosestMax {beta : Int}
     ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r min ∧
         isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
         _root_.F2R min + _root_.F2R max ≤ 2 * r⌝⦄
-    ClosestMax_check (beta:=beta) bo radixR r min max
+    (pure (ClosestMax_check (beta:=beta) bo radixR r min max) : Id Unit)
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r max⌝⦄ := by
   sorry
 
@@ -1425,7 +1476,7 @@ noncomputable def ClosestMinOrMax_check {beta : Int}
 theorem ClosestMinOrMax {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ) :
     ⦃⌜True⌝⦄
-    ClosestMinOrMax_check (beta:=beta) bo radixR
+    (pure (ClosestMinOrMax_check (beta:=beta) bo radixR) : Id Unit)
     ⦃⇓_ => ⌜MinOrMaxP (Closest (beta:=beta) bo radixR)⌝⦄ := by
   sorry
 
@@ -1442,7 +1493,7 @@ theorem ClosestZero {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix r x ∧ r = 0⌝⦄
-    ClosestZero_check (beta:=beta) bo radix r x
+    (pure (ClosestZero_check (beta:=beta) bo radix r x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R x = 0⌝⦄ := by
   sorry
 
@@ -1468,7 +1519,7 @@ theorem FboundedMboundPos {beta : Int}
     ⦃⌜0 ≤ m ∧
         m ≤ Zpower_nat_int radix precision ∧
         - b.dExp ≤ z⌝⦄
-    FboundedMboundPos_check (beta:=beta) b radix z m
+    (pure (FboundedMboundPos_check (beta:=beta) b radix z m) : Id Unit)
     ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
         Fbounded b c ∧
         _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
@@ -1487,7 +1538,7 @@ theorem FboundedMbound {beta : Int}
     (z m : Int) :
     ⦃⌜|m| ≤ Zpower_nat_int radix precision ∧
         - b.dExp ≤ z⌝⦄
-    FboundedMbound_check (beta:=beta) b radix z m
+    (pure (FboundedMbound_check (beta:=beta) b radix z m) : Id Unit)
     ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
         Fbounded b c ∧
         _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
@@ -1510,7 +1561,7 @@ noncomputable def MinExList_check {beta : Int}
 theorem MinExList {beta : Int}
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) :
     ⦃⌜True⌝⦄
-    MinExList_check (beta:=beta) r L
+    (pure (MinExList_check (beta:=beta) r L) : Id Unit)
     ⦃⇓_ => ⌜(∀ f, f ∈ L → r < _root_.F2R f) ∨
             (∃ min, min ∈ L ∧ _root_.F2R min ≤ r ∧
               ∀ f, f ∈ L → _root_.F2R f ≤ r → _root_.F2R f ≤ _root_.F2R min)⌝⦄ := by
@@ -1532,7 +1583,7 @@ noncomputable def MinEx_check {beta : Int}
 theorem MinEx {beta : Int}
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     ⦃⌜True⌝⦄
-    MinEx_check (beta:=beta) b radix r
+    (pure (MinEx_check (beta:=beta) b radix r) : Id Unit)
     ⦃⇓_ => ⌜∃ min : FloatSpec.Core.Defs.FlocqFloat beta,
               isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min⌝⦄ := by
   sorry
@@ -1549,7 +1600,7 @@ noncomputable def MaxEx_check {beta : Int}
 theorem MaxEx {beta : Int}
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     ⦃⌜True⌝⦄
-    MaxEx_check (beta:=beta) b radix r
+    (pure (MaxEx_check (beta:=beta) b radix r) : Id Unit)
     ⦃⇓_ => ⌜∃ max : FloatSpec.Core.Defs.FlocqFloat beta,
               isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max⌝⦄ := by
   sorry
@@ -1571,7 +1622,7 @@ theorem ClosestMinEq {beta : Int}
         isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
         2 * r < _root_.F2R min + _root_.F2R max ∧
         Closest (beta:=beta) bo radixR r p⌝⦄
-    ClosestMinEq_check (beta:=beta) bo radixR r min max p
+    (pure (ClosestMinEq_check (beta:=beta) bo radixR r min max p) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min⌝⦄ := by
   sorry
 

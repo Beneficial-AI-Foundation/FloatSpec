@@ -10,20 +10,24 @@ open FloatSpec.Core
 
 namespace FloatSpec.Pff.Nat2Z
 
-/-- Auxiliary: return `Int.ofNat (n / m)` as an `Id` computation
-    so we can state a Hoare-style specification mirroring Coq. -/
+/-- Auxiliary: return {lit}`Int.ofNat (n / m)` as an {name}`Id` computation
+    so we can state a Hoare-style specification mirroring Coq.
+
+-/
 def inj_div_eval (n m : Nat) : Int :=
   Int.ofNat (n / m)
 
-/-- Coq lemma `Nat2Z.inj_div`:
-    `Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
+/-- Coq lemma {lit}`Nat2Z.inj_div`:
+    {lit}`Z.of_nat (n / m) = (Z.of_nat n / Z.of_nat m)`
 
-    We express it with the project’s Hoare triple style. -/
+    We express it with the project's Hoare triple style.
+
+-/
 theorem inj_div (n m : Nat) :
     ⦃⌜True⌝⦄
-    inj_div_eval n m
+    (pure (inj_div_eval n m) : Id Int)
     ⦃⇓result => ⌜result = Int.ofNat n / Int.ofNat m⌝⦄ := by
   intro _
-  simp [ inj_div_eval]
+  simp [wp, PostCond.noThrow, pure, inj_div_eval]
 
 end FloatSpec.Pff.Nat2Z
