@@ -163,7 +163,11 @@ theorem powerRZ_neg (r : ℝ) (z : Int) :
 -- Integer rounding down by 1 (IRNDD) and basic properties (Coq alignment)
 
 -- Coq: `IRNDD (r) = Z.pred (up r)`; predecessor of ceiling function
-noncomputable def IRNDD (r : ℝ) : Int := Int.ceil r - 1
+-- In Coq, `up r` is the smallest integer strictly greater than r.
+-- This equals floor(r) in all cases:
+--   - When r is not integer: up r = ceil r, so pred(up r) = ceil r - 1 = floor r
+--   - When r IS integer: up r = r + 1, so pred(up r) = r = floor r
+noncomputable def IRNDD (r : ℝ) : Int := Int.floor r
 
 noncomputable def IRNDD_correct1_check (r : ℝ) : Unit :=
   ()
@@ -175,13 +179,8 @@ theorem IRNDD_correct1 (r : ℝ) :
     ⦃⇓_ => ⌜(IRNDD r : ℝ) ≤ r⌝⦄ := by
   intro _
   simp [wp, PostCond.noThrow, pure, IRNDD_correct1_check, IRNDD]
-  -- Goal: (Int.ceil r - 1 : ℝ) ≤ r
-  -- Use: ⌈r⌉ - 1 ≤ ⌊r⌋ ≤ r
-  have h : (Int.ceil r : ℝ) - 1 ≤ (Int.floor r : ℝ) := by
-    have hc := Int.ceil_le_floor_add_one r
-    have hc' : (Int.ceil r : ℝ) ≤ (Int.floor r : ℝ) + 1 := by exact_mod_cast hc
-    linarith
-  linarith [Int.floor_le r]
+  -- Goal: (Int.floor r : ℝ) ≤ r
+  exact Int.floor_le r
 
 noncomputable def IRNDD_correct2_check (r : ℝ) : Unit :=
   ()
@@ -192,11 +191,7 @@ theorem IRNDD_correct2 (r : ℝ) :
     (pure (IRNDD_correct2_check r) : Id Unit)
     ⦃⇓_ => ⌜r < ((Int.succ (IRNDD r)) : ℝ)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, IRNDD_correct2_check, IRNDD, Int.succ]
-  -- Goal: r < (Int.ceil r - 1 + 1 : ℝ) = r < Int.ceil r
-  have h : (Int.ceil r - 1 + 1 : Int) = Int.ceil r := by ring
-  rw [h]
-  exact Int.lt_ceil.mpr (le_refl r)
+  simp [wp, PostCond.noThrow, pure, IRNDD_correct2_check, IRNDD, Int.succ]
 
 noncomputable def IRNDD_correct3_check (r : ℝ) : Unit :=
   ()
@@ -208,13 +203,8 @@ theorem IRNDD_correct3 (r : ℝ) :
     ⦃⇓_ => ⌜r - 1 < (IRNDD r : ℝ)⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure, IRNDD_correct3_check, IRNDD]
-  -- Goal: r - 1 < (Int.ceil r - 1 : ℝ)
-  -- Use: r - 1 < ⌊r⌋ (Int.sub_one_lt_floor) and ⌈r⌉ - 1 ≤ ⌊r⌋
-  calc r - 1
-      < (Int.floor r : ℝ) := Int.sub_one_lt_floor r
-    _ ≥ (Int.ceil r : ℝ) - 1 := by
-        have h := Int.ceil_le_floor_add_one r
-        linarith [Int.cast_le.mpr h]
+  -- Goal: r - 1 < ↑⌊r⌋
+  exact Int.sub_one_lt_floor r
 
 noncomputable def IRNDD_pos_check (r : ℝ) : Unit :=
   ()
@@ -224,7 +214,9 @@ theorem IRNDD_pos (r : ℝ) :
     ⦃⌜0 ≤ r⌝⦄
     (pure (IRNDD_pos_check r) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ IRNDD r⌝⦄ := by
-  sorry
+  intro hr
+  simp [wp, PostCond.noThrow, pure, IRNDD_pos_check, IRNDD]
+  exact Int.floor_nonneg.mpr hr
 
 noncomputable def IRNDD_eq_check (r : ℝ) (z : Int) : Unit :=
   ()
@@ -234,7 +226,15 @@ theorem IRNDD_eq (r : ℝ) (z : Int) :
     ⦃⌜(z : ℝ) ≤ r ∧ r < ((Int.succ z) : ℝ)⌝⦄
     (pure (IRNDD_eq_check r z) : Id Unit)
     ⦃⇓_ => ⌜IRNDD r = z⌝⦄ := by
-  sorry
+  intro ⟨hz_le, hz_lt⟩
+  simp only [wp, PostCond.noThrow, pure, IRNDD_eq_check, IRNDD]
+  -- Goal: Int.floor r = z
+  -- Use Int.floor_eq_iff: ⌊a⌋ = z ↔ z ≤ a ∧ a < z + 1
+  rw [Int.floor_eq_iff]
+  constructor
+  · exact hz_le
+  · simp only [Int.succ, Int.cast_add, Int.cast_one] at hz_lt
+    exact hz_lt
 
 noncomputable def IRNDD_projector_check (z : Int) : Unit :=
   ()
@@ -244,7 +244,10 @@ theorem IRNDD_projector (z : Int) :
     ⦃⌜True⌝⦄
     (pure (IRNDD_projector_check z) : Id Unit)
     ⦃⇓_ => ⌜IRNDD (z : ℝ) = z⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, IRNDD_projector_check, IRNDD]
+  -- Goal: Int.floor (z : ℝ) = z
+  exact Int.floor_intCast z
 
 -- ---------------------------------------------------------------------------
 -- Integer parity lemmas (aligned with Coq: Odd/Even over Z)
