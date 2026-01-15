@@ -572,14 +572,30 @@ theorem B2R_inj {prec emax} (x y : Binary754 prec emax)
     have hmx_eq : mx = my := Nat.cast_injective hmx_eq_my
     simp only [hsx, hsy, hmx_eq]
 
+-- Convert FullFloat.F754_finite to FlocqFloat for canonical representation
+-- The signed mantissa is negated if the sign bit is true
+def FF_to_FlocqFloat (f : FullFloat) : FloatSpec.Core.Defs.FlocqFloat 2 :=
+  match f with
+  | FullFloat.F754_finite s m e =>
+    FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e
+  | _ => FloatSpec.Core.Defs.FlocqFloat.mk 0 0
+
+-- Canonical representation for FullFloat: the underlying FlocqFloat is canonical
+def canonical_FF {prec emax : Int} (f : FullFloat) : Prop :=
+  FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec) (FF_to_FlocqFloat f)
+
 -- Coq: B2R_Bsign_inj — injectivity using semantics plus sign
--- Note: This theorem requires validity of the float values (mantissa > 0 for finite floats)
--- to match the Coq behavior where B754_finite uses `positive` type for mantissa.
+-- Note: This theorem requires canonical representation of the float values
+-- to match the Coq behavior where B754_finite embeds a bounded proof.
+-- Without canonical representation, different (m,e) pairs can have the same B2R value
+-- (e.g., 4*2^1 = 2*2^2 = 8), so the theorem would be unprovable.
 theorem B2R_Bsign_inj {prec emax} (x y : Binary754 prec emax)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hy : is_finite_B (prec:=prec) (emax:=emax) y = true)
   (hvx : valid_FF x.val)
   (hvy : valid_FF y.val)
+  (hcx : canonical_FF (prec:=prec) (emax:=emax) x.val)
+  (hcy : canonical_FF (prec:=prec) (emax:=emax) y.val)
   (hR : B2R (prec:=prec) (emax:=emax) x = B2R (prec:=prec) (emax:=emax) y)
   (hs : Bsign (prec:=prec) (emax:=emax) x = Bsign (prec:=prec) (emax:=emax) y) :
   x = y := by
@@ -652,22 +668,39 @@ theorem B2R_Bsign_inj {prec emax} (x y : Binary754 prec emax)
     | F754_infinity sy => simp at hy
     | F754_nan sy my => simp at hy
     | F754_finite sy my ey =>
-      -- Both finite: use B2R and sign equality
+      -- Both finite: use B2R and sign equality plus canonical representation
       simp only [sign_FF] at hs
       simp only [FF2R, F2R, FloatSpec.Core.Defs.F2R] at hR
       -- Equal signs
       subst hs
       -- Now both have same sign sx
+      -- Use canonical_unique to prove equality of underlying FlocqFloats
+      simp only [canonical_FF, FF_to_FlocqFloat] at hcx hcy
+      -- Convert hR to F2R equality for FlocqFloats
       -- hR: (if sx then -mx else mx) * 2^ex = (if sx then -my else my) * 2^ey
-      -- With canonical representation (enforced by valid_binary in Coq),
-      -- equal real values imply equal mantissa and exponent.
-      -- For now, we assume canonical representation via bounded predicate.
-      -- The full proof requires showing that canonical floats with equal
-      -- B2R values have equal (m, e) pairs.
-      simp only [valid_FF] at hvx hvy
-      -- This requires canonical representation which is enforced by bounded
-      -- For the stub, we note that the Coq proof handles this via FLT_format
-      sorry
+      have hF2R_eq : F2R (beta := 2) (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)
+                   = F2R (beta := 2) (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(my : Int) else (my : Int)) ey) := by
+        simp only [F2R, FloatSpec.Core.Defs.F2R]
+        exact hR
+      -- Apply canonical_unique
+      have heq := FloatSpec.Core.Generic_fmt.canonical_unique 2 (by norm_num : (1 : Int) < 2)
+        (FLT_exp (3 - emax - prec) prec)
+        (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)
+        (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(my : Int) else (my : Int)) ey)
+        hcx hcy hF2R_eq
+      -- Extract mantissa and exponent equality from FlocqFloat equality
+      simp only [FloatSpec.Core.Defs.FlocqFloat.mk.injEq] at heq
+      obtain ⟨hm_eq, he_eq⟩ := heq
+      -- From mantissa equality, extract mx = my
+      cases sx with
+      | false =>
+        simp only [Bool.false_eq_true, ↓reduceIte] at hm_eq
+        have hmx_eq_my : mx = my := Int.ofNat_inj.mp hm_eq
+        rw [hmx_eq_my, he_eq]
+      | true =>
+        simp only [↓reduceIte, neg_inj] at hm_eq
+        have hmx_eq_my : mx = my := Int.ofNat_inj.mp hm_eq
+        rw [hmx_eq_my, he_eq]
 
 -- (reserved) Coq counterparts `valid_binary_B2FF` and `FF2B_B2FF_valid`
 -- will be introduced in hoare-triple form after aligning specs.
@@ -753,8 +786,25 @@ theorem match_FF2B {T : Type} (fz : Bool → T) (fi : Bool → T)
   rfl
 
 -- Standard IEEE 754 operations
-def binary_add (x y : Binary754 prec emax) : Binary754 prec emax :=
-  x
+-- Helper: convert a rounded real to a FullFloat (internal helper)
+-- Given a real x that is already in the generic format (i.e., x = m * β^e where m is integral),
+-- construct the corresponding FullFloat.
+noncomputable def real_to_FullFloat (x : ℝ) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp 2 fexp] : FullFloat :=
+  if x = 0 then FullFloat.F754_zero false
+  else
+    let exp := FloatSpec.Core.Generic_fmt.cexp 2 fexp x
+    let mantissa := FloatSpec.Core.Raux.Ztrunc (x * (2 : ℝ) ^ (-exp))
+    let sign := mantissa < 0
+    FullFloat.F754_finite sign mantissa.natAbs exp
+
+-- binary_add: Computes the rounded sum of two binary floats.
+-- The result's real value equals round(FF2R x + FF2R y) by construction.
+noncomputable def binary_add (x y : Binary754 prec emax)
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
+  let sum := FF2R 2 x.val + FF2R 2 y.val
+  let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) sum
+  FF2B (real_to_FullFloat rounded fexp)
 
 def binary_sub (x y : Binary754 prec emax) : Binary754 prec emax :=
   x
@@ -765,12 +815,21 @@ def binary_mul (x y : Binary754 prec emax) : Binary754 prec emax :=
 -- (reserved) Decomposition theorem (Coq: Bfrexp) will be added later
 
 -- Decomposition (Coq: Bfrexp)
--- We expose a placeholder implementation returning a mantissa-like binary
--- float together with an exponent, and state the Coq theorem in
--- Hoare‑triple style. Proof is deferred.
-def Bfrexp (x : Binary754 prec emax) : (Binary754 prec emax) × Int :=
-  -- Placeholder: actual implementation exists in Coq and relates to the BSN layer.
-  (x, 0)
+-- We expose a noncomputable implementation that properly computes the
+-- normalized mantissa and exponent, following Coq's specification.
+-- For a strictly finite x with B2R x ≠ 0, we compute e = mag 2 (B2R x)
+-- and return z such that B2R z = B2R x / 2^e, which satisfies |B2R z| ∈ [1/2, 1).
+noncomputable def Bfrexp (x : Binary754 prec emax) : (Binary754 prec emax) × Int :=
+  let rx := B2R (prec:=prec) (emax:=emax) x
+  let e := FloatSpec.Core.Raux.mag 2 rx
+  -- The normalized mantissa z has B2R z = rx / 2^e
+  -- We construct it by adjusting the exponent of x
+  match x.val with
+  | FullFloat.F754_finite s m ex =>
+    -- Adjust exponent: new_ex = ex - e keeps the value rx / 2^e
+    let new_ex := ex - e
+    (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_finite s m new_ex), e)
+  | _ => (x, 0)
 
 -- Local strict-finiteness classifier for Binary754 (finite and nonzero semantics).
 -- Coq uses a positive mantissa, so finite implies nonzero. Our Lean stub keeps
@@ -787,8 +846,10 @@ noncomputable def Bfrexp_correct_check (x : Binary754 prec emax) :
 -- Coq: Bfrexp_correct
 -- For strictly finite inputs, Bfrexp decomposes x = z * 2^e with |B2R z| in [1/2,1)
 -- and e = mag 2 (B2R x).
+-- Note: valid_FF ensures the mantissa is positive, matching Coq's use of `positive` type.
 theorem Bfrexp_correct (x : Binary754 prec emax)
-  (hx : is_finite_strict_Bin (prec:=prec) (emax:=emax) x = true) :
+  (hx : is_finite_strict_Bin (prec:=prec) (emax:=emax) x = true)
+  (hvalid : valid_FF x.val) :
   ⦃⌜True⌝⦄
   (pure (Bfrexp_correct_check (prec:=prec) (emax:=emax) x) : Id ((Binary754 prec emax) × Int))
   ⦃⇓result => ⌜
@@ -800,8 +861,134 @@ theorem Bfrexp_correct (x : Binary754 prec emax)
       e = (FloatSpec.Core.Raux.mag 2 (B2R (prec:=prec) (emax:=emax) x))⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; follows Coq via the BSN bridge (BinarySingleNaN.Bfrexp_correct)
-  exact sorry
+  -- Extract the finite form from hx
+  unfold is_finite_strict_Bin at hx
+  -- Analyze x.val
+  match hval : x.val with
+  | FullFloat.F754_zero s => simp [hval] at hx
+  | FullFloat.F754_infinity s => simp [hval] at hx
+  | FullFloat.F754_nan s m' => simp [hval] at hx
+  | FullFloat.F754_finite s m ex =>
+    -- x is finite with sign s, mantissa m, exponent ex
+    simp only [Bfrexp_correct_check, Bfrexp, B2R, B2FF, FF2B, FF2R, hval, Id.run]
+    -- Set up the result
+    set rx := F2R (⟨if s then -↑m else ↑m, ex⟩ : FloatSpec.Core.Defs.FlocqFloat 2) with hrx_def
+    set e := FloatSpec.Core.Raux.mag 2 rx with he_def
+    set new_ex := ex - e with hnew_ex_def
+    set rz := F2R (⟨if s then -↑m else ↑m, new_ex⟩ : FloatSpec.Core.Defs.FlocqFloat 2) with hrz_def
+    -- The goal decomposes into four parts
+    refine ⟨⟨?bound1, ?bound2⟩, ⟨?eq_value, ?eq_mag⟩⟩
+    case eq_mag =>
+      -- e = mag 2 (B2R x) is immediate from definition
+      rfl
+    case eq_value =>
+      -- B2R x = B2R z * bpow 2 e
+      -- rx = m * 2^ex, rz = m * 2^(ex - e)
+      -- rz * 2^e = m * 2^(ex - e + e) = m * 2^ex = rx
+      simp only [FloatSpec.Core.Raux.bpow]
+      set mag_val := FloatSpec.Core.Raux.mag 2 (F2R { Fnum := if s = true then -↑m else ↑m, Fexp := ex })
+      -- Unfold both F2R wrappers to the Core definition and then to the formula
+      unfold F2R FloatSpec.Core.Defs.F2R
+      -- Goal: (if s then -↑m else ↑m) * 2^ex = (if s then -↑m else ↑m) * 2^(ex - mag_val) * 2^mag_val
+      rw [mul_assoc]
+      congr 1
+      -- Simplify the Fexp field accessors to get ex and (ex - mag_val)
+      simp only [FloatSpec.Core.Defs.FlocqFloat.Fexp]
+      -- Now we have (↑2 : ℝ)^ex = (↑2 : ℝ)^(ex - mag_val) * (↑2 : ℝ)^mag_val
+      -- Prove by showing RHS = 2^((ex - mag_val) + mag_val) = 2^ex
+      have h2ne : (2 : ℝ) ≠ 0 := by norm_num
+      calc (↑2 : ℝ) ^ ex
+          = (2 : ℝ) ^ ((ex - mag_val) + mag_val) := by ring_nf
+        _ = (2 : ℝ) ^ (ex - mag_val) * (2 : ℝ) ^ mag_val := by rw [zpow_add₀ h2ne]
+    case bound1 =>
+      -- 1/2 ≤ |rz|
+      -- rz = rx / 2^e where e = mag 2 rx
+      -- By mag bounds: 2^(e-1) ≤ |rx|
+      -- So 1/2 = 2^(e-1) / 2^e ≤ |rx| / 2^e = |rz|
+      -- First simplify the goal to be about rz
+      simp only [he_def, hrx_def]
+      -- Need to show rx ≠ 0 for mag bounds
+      have hm_pos : 0 < m := by
+        -- From valid_FF, the mantissa is positive for finite floats
+        simp only [valid_FF, hval] at hvalid
+        exact hvalid
+      have hrx_ne : rx ≠ 0 := by
+        simp only [hrx_def, F2R, FloatSpec.Core.Defs.F2R]
+        have h2pos : (0 : ℝ) < (2 : ℝ) ^ ex := by positivity
+        have hm_real_ne : (m : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.pos_iff_ne_zero.mp hm_pos)
+        cases s <;> simp [mul_ne_zero, h2pos.ne', hm_real_ne, neg_ne_zero]
+      -- Get the mag lower bound: 2^(e-1) ≤ |rx|
+      have h2gt1 : (1 : Int) < 2 := by norm_num
+      have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := 2) (x := rx) h2gt1 hrx_ne
+      have hlower : (2 : ℝ) ^ (e - 1) ≤ |rx| := by
+        have hrun := hmag_lower True.intro
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure, FloatSpec.Core.Raux.abs_val] using hrun
+      -- Now relate |rz| to |rx| / 2^e
+      have hrz_eq : rz = rx * (2 : ℝ) ^ (-e) := by
+        simp only [hrz_def, hrx_def, F2R, FloatSpec.Core.Defs.F2R]
+        -- Goal: ↑(if s then -↑m else ↑m) * ↑2 ^ new_ex = ↑(if s then -↑m else ↑m) * ↑2 ^ ex * 2 ^ (-e)
+        -- where new_ex = ex - e, and ↑2 is (2 : ℤ) coerced to ℝ
+        have h2ne : ((2 : ℤ) : ℝ) ≠ 0 := by norm_num
+        have hnew : new_ex = ex + (-e) := by simp only [hnew_ex_def]; ring
+        rw [hnew, zpow_add₀ h2ne, mul_assoc]
+        -- Normalize ↑2 to 2 in the goal
+        norm_cast
+      have habs_rz : |rz| = |rx| * (2 : ℝ) ^ (-e) := by
+        rw [hrz_eq]
+        have h2neg_pos : (0 : ℝ) < (2 : ℝ) ^ (-e) := by positivity
+        rw [abs_mul, abs_of_pos h2neg_pos]
+      -- 1/2 = 2^(e-1) / 2^e = 2^(e-1) * 2^(-e) = 2^(-1)
+      have h_half : (1 : ℝ) / 2 = (2 : ℝ) ^ (-1 : Int) := by norm_num
+      rw [h_half, habs_rz]
+      -- |rx| * 2^(-e) ≥ 2^(e-1) * 2^(-e) = 2^(-1)
+      have h2neg_pos : (0 : ℝ) < (2 : ℝ) ^ (-e) := by positivity
+      have hexp_neg1 : e - 1 + (-e) = -1 := by ring
+      calc (2 : ℝ) ^ (-1 : Int)
+          = (2 : ℝ) ^ (e - 1 + (-e)) := by rw [hexp_neg1]
+        _ = (2 : ℝ) ^ (e - 1) * (2 : ℝ) ^ (-e) := by rw [zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+        _ ≤ |rx| * (2 : ℝ) ^ (-e) := by nlinarith [hlower, h2neg_pos]
+    case bound2 =>
+      -- |rz| < 1
+      -- By mag bounds: |rx| < 2^e
+      -- So |rz| = |rx| / 2^e < 1
+      simp only [he_def, hrx_def]
+      -- Need to show rx ≠ 0 for mag bounds
+      have hm_pos : 0 < m := by
+        -- From valid_FF, the mantissa is positive for finite floats
+        simp only [valid_FF, hval] at hvalid
+        exact hvalid
+      have hrx_ne : rx ≠ 0 := by
+        simp only [hrx_def, F2R, FloatSpec.Core.Defs.F2R]
+        have h2pos : (0 : ℝ) < (2 : ℝ) ^ ex := by positivity
+        have hm_real_ne : (m : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr (Nat.pos_iff_ne_zero.mp hm_pos)
+        cases s <;> simp [mul_ne_zero, h2pos.ne', hm_real_ne, neg_ne_zero]
+      -- Get the mag upper bound: |rx| < 2^e
+      have h2gt1 : (1 : Int) < 2 := by norm_num
+      have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := 2) (x := rx) h2gt1 hrx_ne
+      have hupper : |rx| < (2 : ℝ) ^ e := by
+        have hrun := hmag_upper True.intro
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure, FloatSpec.Core.Raux.abs_val] using hrun
+      -- Now relate |rz| to |rx| / 2^e
+      have hrz_eq : rz = rx * (2 : ℝ) ^ (-e) := by
+        simp only [hrz_def, hrx_def, F2R, FloatSpec.Core.Defs.F2R]
+        -- Goal: ↑(if s then -↑m else ↑m) * ↑2 ^ new_ex = ↑(if s then -↑m else ↑m) * ↑2 ^ ex * 2 ^ (-e)
+        -- where new_ex = ex - e, and ↑2 is (2 : ℤ) coerced to ℝ
+        have h2ne : ((2 : ℤ) : ℝ) ≠ 0 := by norm_num
+        have hnew : new_ex = ex + (-e) := by simp only [hnew_ex_def]; ring
+        rw [hnew, zpow_add₀ h2ne, mul_assoc]
+        -- Normalize ↑2 to 2 in the goal
+        norm_cast
+      have habs_rz : |rz| = |rx| * (2 : ℝ) ^ (-e) := by
+        rw [hrz_eq]
+        have h2neg_pos : (0 : ℝ) < (2 : ℝ) ^ (-e) := by positivity
+        rw [abs_mul, abs_of_pos h2neg_pos]
+      -- |rx| * 2^(-e) < 2^e * 2^(-e) = 1
+      have h2neg_pos : (0 : ℝ) < (2 : ℝ) ^ (-e) := by positivity
+      have hexp_zero : e + (-e) = 0 := by ring
+      have h_one : (1 : ℝ) = (2 : ℝ) ^ e * (2 : ℝ) ^ (-e) := by
+        rw [← zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0), hexp_zero, zpow_zero]
+      rw [habs_rz, h_one]
+      exact mul_lt_mul_of_pos_right hupper h2neg_pos
 
 def binary_div (x y : Binary754 prec emax) : Binary754 prec emax :=
   x
@@ -861,8 +1048,20 @@ theorem fexp_emax :
   (pure fexp_emax_check : Id Unit)
   ⦃⇓_ => ⌜(FLT_exp (3 - emax - prec) prec) emax = emax - prec⌝⦄ := by
   intro _
-  -- Proof deferred; unfolds `FLT_exp` and simplifies arithmetic.
-  exact sorry
+  simp only [wp, PostCond.noThrow, pure, fexp_emax_check, Id.run, PredTrans.pure, PredTrans.apply]
+  -- Unfold FLT_exp: FLT_exp emin prec e = max (e - prec) emin
+  -- Here: FLT_exp (3 - emax - prec) prec emax = max (emax - prec) (3 - emax - prec)
+  unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+  -- Show max (emax - prec) (3 - emax - prec) = emax - prec
+  -- This requires (3 - emax - prec) ≤ (emax - prec), i.e., 3 - emax ≤ emax, i.e., 3 ≤ 2*emax
+  -- From Prec_lt_emax we have emax ≥ 2, so 2*emax ≥ 4 > 3
+  have ⟨_, hemax⟩ := (inferInstance : Prec_lt_emax prec emax)
+  have h : 3 - emax - prec ≤ emax - prec := by
+    -- Simplify to 3 - emax ≤ emax, i.e., 3 ≤ 2*emax
+    have h2emax : 4 ≤ 2 * emax := by linarith
+    linarith
+  simp only [max_eq_left h]
+  trivial
 
 -- Binary format properties
 theorem binary_add_correct (mode : RoundingMode) (x y : Binary754 prec emax) :
@@ -1157,7 +1356,17 @@ theorem emin_lt_emax_B :
   ⦃⌜True⌝⦄
   (pure emin_lt_emax_check_B : Id Unit)
   ⦃⇓_ => ⌜(3 - emax - prec) < emax⌝⦄ := by
-  intro _; exact sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, emin_lt_emax_check_B, Id.run, PredTrans.pure, PredTrans.apply]
+  -- From Prec_lt_emax we have prec < emax and emax ≥ 2
+  have ⟨hprec, hemax⟩ := (inferInstance : Prec_lt_emax prec emax)
+  -- Goal: 3 - emax - prec < emax
+  -- Rearranging: 3 - prec < 2 * emax
+  -- Since prec > 0 (from Prec_gt_0), we have 3 - prec < 3
+  -- Since emax ≥ 2, we have 2 * emax ≥ 4 > 3 > 3 - prec
+  have hprec_pos := (inferInstance : Prec_gt_0 prec).pos
+  have h : (3 - emax - prec) < emax := by linarith
+  trivial
 
 -- Coq: Bcompare_correct
 -- We expose a comparison wrapper that, under finiteness of both operands,

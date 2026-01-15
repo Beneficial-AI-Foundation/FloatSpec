@@ -102,8 +102,10 @@ Coq: `Prec_gt_0 prec` asserts strictly positive precision.
 We model it as `0 < prec` so arithmetic lemmas may use it.
 -/
 class Prec_lt_emax (prec emax : Int) : Prop :=
-  /-- Trivial placeholder witness. -/
-  (trivial : True := True.intro)
+  /-- Precision is strictly less than emax (IEEE 754 constraint) -/
+  (prec_lt_emax : prec < emax)
+  /-- emax is large enough for the exponent formula to work (emax ≥ 2) -/
+  (emax_ge_2 : 2 ≤ emax)
 
 /-- Stub: exponent function not flushing to zero (placeholder) -/
 class Exp_not_FTZ (fexp : Int → Int) : Prop :=
