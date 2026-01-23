@@ -3000,6 +3000,161 @@ theorem cexp_mono_pos_ax
 
 -- (moved below, after `round_DN_exists`)
 
+-- round_to_generic always produces values in generic_format
+theorem round_to_generic_generic
+    (beta : Int) (fexp : Int → Int)
+    [Valid_exp beta fexp]
+    [Monotone_exp fexp]
+    (rnd : ℝ → ℝ → Prop) (x : ℝ)
+    (hβ : 1 < beta := by decide) :
+    generic_format beta fexp (round_to_generic beta fexp rnd x) := by
+  -- The proof shows that rounding any real number to the generic format produces
+  -- a value that is indeed in the generic format.
+  -- Use generic_format_F2R with the scaled mantissa construction
+
+  unfold round_to_generic
+
+  -- round_to_generic returns F2R(Ztrunc(scaled_mantissa x e), e) where e = cexp x
+  let exp := (cexp beta fexp x)
+  let mantissa := (FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-exp)))
+
+  -- Apply generic_format_F2R
+  have h_format := generic_format_F2R beta fexp mantissa exp
+  simp [wp, PostCond.noThrow, Id.run, pure] at h_format
+  apply h_format
+  constructor
+  · exact hβ
+  · -- Show: mantissa ≠ 0 → cexp(F2R(mantissa, exp)) ≤ exp
+    intro h_m_ne_zero
+    -- By construction, exp = cexp(x), and the key property is that
+    -- when we truncate the scaled mantissa, the canonical exponent doesn't increase
+    -- This is a fundamental property of the rounding process
+
+    -- Since exp = cexp(x) = fexp(mag(x)), and cexp(F2R(m,e)) = fexp(mag(F2R(m,e))),
+    -- we need to show: fexp(mag(F2R(mantissa, exp))) ≤ fexp(mag(x))
+    -- By monotonicity of fexp, it suffices to show: mag(F2R(mantissa, exp)) ≤ mag(x)
+
+    have hexp_def : exp = fexp ((FloatSpec.Core.Raux.mag beta x)) := by
+      simp [exp, cexp]
+
+    -- Use monotonicity of fexp
+    have h_mono : ∀ ex1 ex2, ex1 ≤ ex2 → fexp ex1 ≤ fexp ex2 := by
+      intros ex1 ex2 h
+      exact Monotone_exp.mono h
+
+    -- Goal reduces to showing mag(F2R(mantissa, exp)) ≤ mag(x)
+    apply h_mono
+
+    -- We need: mag(mantissa * β^exp) ≤ mag(x)
+    -- Since mantissa = Ztrunc(x * β^(-exp)), this follows from the fact that
+    -- truncation and rescaling preserve magnitude bounds
+
+    by_cases hx : x = 0
+    · -- If x = 0, then mantissa = 0, contradiction with h_m_ne_zero
+      have : mantissa = 0 := by
+        have h_zero_mul : x * (beta : ℝ) ^ (-exp) = 0 := by simp [hx]
+        have h_trunc_zero : (FloatSpec.Core.Raux.Ztrunc 0) = 0 := by
+          simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure]
+        unfold mantissa
+        rw [h_zero_mul, h_trunc_zero]
+      contradiction
+    · -- When x ≠ 0, use the magnitude relationship
+      -- F2R(mantissa, exp) = mantissa * β^exp
+      -- = Ztrunc(x * β^(-exp)) * β^exp
+      -- ≈ x (with controlled rounding error)
+
+      -- The key is that |Ztrunc(y)| ≤ |y| for any real y
+      -- We need to prove this ourselves since there's no direct lemma
+      have h_trunc_bound : |(mantissa : ℝ)| ≤ |x * (beta : ℝ) ^ (-exp)| := by
+        -- For any y, if y ≥ 0 then Ztrunc(y) = floor(y) ≤ y
+        -- and if y < 0 then Ztrunc(y) = ceil(y) ≥ y
+        -- So |Ztrunc(y)| ≤ |y| always holds
+        unfold mantissa
+        let y := x * (beta : ℝ) ^ (-exp)
+        by_cases hy : y < 0
+        · -- y < 0: Ztrunc(y) = ceil(y) ≥ y, and since y < 0, |ceil(y)| ≤ |y|
+          have h_ztrunc : (FloatSpec.Core.Raux.Ztrunc y) = Int.ceil y := by
+            simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure, hy]
+          rw [h_ztrunc]
+          have h_ceil_ge : y ≤ (↑(Int.ceil y) : ℝ) := Int.le_ceil y
+          have h_y_neg : y ≤ 0 := le_of_lt hy
+          have h_ceil_le0 : (↑(Int.ceil y) : ℝ) ≤ 0 := by
+            have : Int.ceil y ≤ Int.ceil (0 : ℝ) := Int.ceil_mono h_y_neg
+            simp at this
+            exact_mod_cast this
+          rw [abs_of_nonpos h_ceil_le0, abs_of_nonpos h_y_neg]
+          linarith
+        · -- y ≥ 0: Ztrunc(y) = floor(y) ≤ y, so |floor(y)| ≤ |y|
+          push_neg at hy
+          have h_ztrunc : (FloatSpec.Core.Raux.Ztrunc y) = Int.floor y := by
+            simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure, hy]
+          rw [h_ztrunc]
+          have h_floor_le : (↑(Int.floor y) : ℝ) ≤ y := Int.floor_le y
+          have h_floor_ge0 : 0 ≤ (↑(Int.floor y) : ℝ) := by
+            have : Int.floor (0 : ℝ) ≤ Int.floor y := Int.floor_mono hy
+            simp at this
+            exact_mod_cast this
+          rw [abs_of_nonneg h_floor_ge0, abs_of_nonneg hy]
+          exact h_floor_le
+
+      -- Compute |F2R(mantissa, exp)| = |mantissa| * β^exp
+      have hF2R_abs : |(FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk mantissa exp : FloatSpec.Core.Defs.FlocqFloat beta))|
+                     = |(mantissa : ℝ)| * (beta : ℝ) ^ exp := by
+        simp only [FloatSpec.Core.Defs.F2R, Id.run, pure]
+        rw [abs_mul]
+        have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hβ
+        have hbposR : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
+        have : 0 ≤ (beta : ℝ) ^ exp := le_of_lt (zpow_pos hbposR _)
+        rw [abs_of_nonneg this]
+
+      -- So |F2R(mantissa, exp)| ≤ |x * β^(-exp)| * β^exp = |x|
+      have hF2R_bound : |(FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk mantissa exp : FloatSpec.Core.Defs.FlocqFloat beta))| ≤ |x| := by
+        rw [hF2R_abs]
+        calc |(mantissa : ℝ)| * (beta : ℝ) ^ exp
+            ≤ |x * (beta : ℝ) ^ (-exp)| * (beta : ℝ) ^ exp := by
+              apply mul_le_mul_of_nonneg_right h_trunc_bound
+              have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hβ
+              have hbposR : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
+              exact le_of_lt (zpow_pos hbposR _)
+            _ = |x| * |(beta : ℝ) ^ (-exp)| * (beta : ℝ) ^ exp := by
+              rw [abs_mul]
+            _ = |x| * (beta : ℝ) ^ (-exp) * (beta : ℝ) ^ exp := by
+              have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hβ
+              have hbposR : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
+              have : 0 ≤ (beta : ℝ) ^ (-exp) := le_of_lt (zpow_pos hbposR _)
+              rw [abs_of_nonneg this]
+            _ = |x| * ((beta : ℝ) ^ (-exp) * (beta : ℝ) ^ exp) := by ring
+            _ = |x| * (beta : ℝ) ^ (-exp + exp) := by
+              have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hβ
+              have hbposR : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
+              rw [← zpow_add₀ (ne_of_gt hbposR)]
+            _ = |x| * (beta : ℝ) ^ 0 := by simp
+            _ = |x| * 1 := by simp
+            _ = |x| := by simp
+
+      -- Apply mag_le to conclude mag(F2R) ≤ mag(x)
+      have h_mag_le := FloatSpec.Core.Raux.mag_le beta
+          (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk mantissa exp : FloatSpec.Core.Defs.FlocqFloat beta)) x
+      -- Show F2R ≠ 0 (follows from mantissa ≠ 0)
+      have hF2R_ne_zero : (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk mantissa exp : FloatSpec.Core.Defs.FlocqFloat beta)) ≠ 0 := by
+        simp only [FloatSpec.Core.Defs.F2R, Id.run, pure]
+        have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hβ
+        have hbposR : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
+        intro h_eq_zero
+        have : (mantissa : ℝ) * (beta : ℝ) ^ exp = 0 := h_eq_zero
+        cases' (mul_eq_zero.mp this) with hm hb
+        · have : mantissa = 0 := by exact_mod_cast hm
+          exact h_m_ne_zero this
+        · have : (beta : ℝ) ^ exp = 0 := hb
+          have : 0 < (beta : ℝ) ^ exp := zpow_pos hbposR _
+          linarith
+      have hmag_le' :
+          (FloatSpec.Core.Raux.mag beta
+            (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk mantissa exp : FloatSpec.Core.Defs.FlocqFloat beta)))
+            ≤ (FloatSpec.Core.Raux.mag beta x) := by
+        have htrip := h_mag_le hβ hF2R_ne_zero hF2R_bound
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htrip True.intro
+      exact hmag_le'
 
 /-- Choice function for round-to-nearest, ties toward zero. -/
 noncomputable def Znearest0 := fun t : Int => decide (t < 0)

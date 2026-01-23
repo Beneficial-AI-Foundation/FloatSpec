@@ -171,7 +171,9 @@ private lemma mag_sqrt_eq_div2 (x : ℝ) (hx_pos : 0 < x) (hβ : 1 < beta) :
  Uses Raux.mag (floor+1 definition) which correctly matches Zdigits bounds.
  Note: Float_prop.mag uses ceiling which does NOT match Zdigits for exact powers of beta.
 -/
-private lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
+/-- For a positive integer m, Raux.mag beta (m : ℝ) = Zdigits beta m.
+    This uses the floor+1 based mag definition which correctly matches Zdigits bounds. -/
+lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
     FloatSpec.Core.Raux.mag beta (m : ℝ) = Zdigits beta m := by
   -- Get bounds from Zdigits_correct
   have hm_ne : m ≠ 0 := ne_of_gt hm_pos
@@ -228,7 +230,7 @@ private lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
 /-
  Helper lemma: mag(x * β^e) = mag(x) + e for nonzero x.
 -/
-private lemma mag_mult_bpow_eq (x : ℝ) (e : Int) (hx : x ≠ 0) (hβ : 1 < beta) :
+lemma mag_mult_bpow_eq (x : ℝ) (e : Int) (hx : x ≠ 0) (hβ : 1 < beta) :
     FloatSpec.Core.Raux.mag beta (x * (beta : ℝ) ^ e) =
     FloatSpec.Core.Raux.mag beta x + e := by
   -- Unfold mag for both sides

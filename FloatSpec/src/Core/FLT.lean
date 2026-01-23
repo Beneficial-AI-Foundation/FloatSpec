@@ -146,6 +146,13 @@ instance FLT_exp_valid (beta : Int) [Prec_gt_0 prec] :
       -- Conclude fexp l = fexp k
       simpa [hfk_eq, hfl]
 
+instance FLT_exp_mono :
+    Monotone_exp (FLT_exp prec emin) :=
+  ⟨by
+    intro a b hab
+    simp only [FLT_exp]
+    exact max_le_max (sub_le_sub_right hab prec) le_rfl⟩
+
 /-- Specification: FLT format using generic format
 
     The FLT format combines the benefits of fixed-precision
