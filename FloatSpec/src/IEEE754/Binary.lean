@@ -1376,6 +1376,19 @@ theorem Bldexp_correct
 -- We expose placeholders for the operations and their correctness theorems
 -- in hoare‑triple style, mirroring the Coq statements via the BSN bridge.
 
+/-- Predicate capturing when a Binary754 float is in generic format.
+    For finite floats, this requires the canonical exponent to be at most the float's exponent.
+    This is the key constraint that Coq's `bounded mx ex = true` proof provides. -/
+noncomputable def Binary754_in_generic_format {prec emax : Int} (x : Binary754 prec emax) : Prop :=
+  match x.val with
+  | FullFloat.F754_zero _ => True
+  | FullFloat.F754_infinity _ => True
+  | FullFloat.F754_nan _ _ => True
+  | FullFloat.F754_finite s m e =>
+    let fnum : Int := if s then -(m : Int) else (m : Int)
+    let f : FloatSpec.Core.Defs.FlocqFloat 2 := FloatSpec.Core.Defs.FlocqFloat.mk fnum e
+    fnum ≠ 0 → FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp (3 - emax - prec) prec) (F2R f) ≤ e
+
 -- Noncomputable successor using ULP
 -- Returns the successor value, or infinity on overflow
 noncomputable def Bsucc (x : Binary754 prec emax)
@@ -1394,7 +1407,8 @@ noncomputable def Bsucc_correct_check (x : Binary754 prec emax) : ℝ :=
 
 -- Coq: Bsucc_correct — either steps by one ULP or overflows to +∞
 theorem Bsucc_correct (x : Binary754 prec emax)
-  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true) :
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
+  (hformat : Binary754_in_generic_format (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
   (pure (Bsucc_correct_check (prec:=prec) (emax:=emax) x) : Id ℝ)
   ⦃⇓result => ⌜
@@ -1413,20 +1427,71 @@ theorem Bsucc_correct (x : Binary754 prec emax)
   · -- Case: no overflow (if-condition is true)
     left
     simp only [FF2B, B2FF]
-    sorry
+    -- Goal: FF2R 2 (real_to_FullFloat (succ 2 fexp (B2R x)) fexp) = succ 2 fexp (B2R x)
+    -- Use FF2R_real_to_FullFloat which requires generic_format (succ ... (B2R x))
+    -- First, get generic_format (B2R x) - this follows from generic_format_B2R
+    have hgf_B2R : FloatSpec.Core.Generic_fmt.generic_format 2 (FLT_exp (3 - emax - prec) prec) (B2R x) := by
+      -- Prove generic_format for B2R x by case analysis
+      simp only [B2R, FF2R]
+      cases x with | mk xval xvalid =>
+      simp only [is_finite_B, is_finite_FF] at hx
+      cases xval with
+      | F754_zero s =>
+        exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp (3 - emax - prec) prec)
+      | F754_infinity s => simp at hx
+      | F754_nan s m => simp at hx
+      | F754_finite s m e =>
+        by_cases hm : m = 0
+        · simp only [hm]
+          have h_f2r_zero : F2R (⟨if s = true then -↑(0 : Nat) else ↑(0 : Nat), e⟩ : FloatSpec.Core.Defs.FlocqFloat 2) = 0 := by
+            simp only [F2R, FloatSpec.Core.Defs.F2R]
+            cases s <;> simp
+          rw [h_f2r_zero]
+          exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp (3 - emax - prec) prec)
+        · -- Non-zero mantissa case: use generic_format_F2R
+          have h_format := FloatSpec.Core.Generic_fmt.generic_format_F2R 2 (FLT_exp (3 - emax - prec) prec)
+            (if s then -(m : Int) else (m : Int)) e
+          simp only [wp, PostCond.noThrow, Id.run, pure] at h_format
+          apply h_format
+          constructor
+          · norm_num  -- prove 2 > 1
+          · intro hm_ne
+            -- Use hformat which provides cexp ≤ e for finite floats with non-zero mantissa
+            simp only [Binary754_in_generic_format] at hformat
+            exact hformat hm_ne
+    -- Use generic_format_succ to get generic_format (succ ... (B2R x))
+    have hgf_succ : FloatSpec.Core.Generic_fmt.generic_format 2 (FLT_exp (3 - emax - prec) prec)
+        (FloatSpec.Core.Ulp.succ 2 (FLT_exp (3 - emax - prec) prec) (B2R x)) := by
+      have h := FloatSpec.Core.Ulp.generic_format_succ 2 (FLT_exp (3 - emax - prec) prec)
+        (B2R x) hgf_B2R (by norm_num : (1 : Int) < 2)
+      simpa [wp, PostCond.noThrow, Id.run, pure] using h trivial
+    -- Apply FF2R_real_to_FullFloat
+    exact FF2R_real_to_FullFloat _ _ hgf_succ
   · -- Case: overflow (if-condition is false)
     right
     simp only [B2FF, FF2B]
 
-def Bpred (x : Binary754 prec emax) : Binary754 prec emax :=
-  x
+-- Noncomputable predecessor using ULP
+-- Returns the predecessor value, or negative infinity on underflow
+noncomputable def Bpred (x : Binary754 prec emax)
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)] : Binary754 prec emax :=
+  let fexp := FLT_exp (3 - emax - prec) prec
+  let rx := B2R (prec:=prec) (emax:=emax) x
+  let pred_rx := FloatSpec.Core.Ulp.pred 2 fexp rx
+  -- Check for underflow: if predecessor > -bpow emax, return the result
+  if -FloatSpec.Core.Raux.bpow 2 emax < pred_rx then
+    FF2B (prec:=prec) (emax:=emax) (real_to_FullFloat pred_rx fexp)
+  else
+    FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_infinity true)
 
-noncomputable def Bpred_correct_check (x : Binary754 prec emax) : ℝ :=
+noncomputable def Bpred_correct_check (x : Binary754 prec emax)
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)] : ℝ :=
   (FF2R 2 ((Bpred (prec:=prec) (emax:=emax) x).val))
 
 -- Coq: Bpred_correct — either steps by one ULP or overflows to −∞
 theorem Bpred_correct (x : Binary754 prec emax)
-  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true) :
+  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
+  (hformat : Binary754_in_generic_format (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
   (pure (Bpred_correct_check (prec:=prec) (emax:=emax) x) : Id ℝ)
   ⦃⇓result => ⌜
@@ -1435,7 +1500,59 @@ theorem Bpred_correct (x : Binary754 prec emax)
           (B2R (prec:=prec) (emax:=emax) x)) ∨
       B2FF (prec:=prec) (emax:=emax) (Bpred (prec:=prec) (emax:=emax) x)
         = FullFloat.F754_infinity true⌝⦄ := by
-  intro _; exact sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, Bpred_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
+  -- Unfold Bpred and reduce let/have bindings
+  unfold Bpred
+  dsimp only []
+  -- Case split on the underflow condition
+  split
+  · -- Case: no underflow (if-condition is true)
+    left
+    simp only [FF2B, B2FF]
+    -- Goal: FF2R 2 (real_to_FullFloat (pred 2 fexp (B2R x)) fexp) = pred 2 fexp (B2R x)
+    -- Use FF2R_real_to_FullFloat which requires generic_format (pred ... (B2R x))
+    -- First, get generic_format (B2R x) - this follows from generic_format_B2R
+    have hgf_B2R : FloatSpec.Core.Generic_fmt.generic_format 2 (FLT_exp (3 - emax - prec) prec) (B2R x) := by
+      -- Prove generic_format for B2R x by case analysis
+      simp only [B2R, FF2R]
+      cases x with | mk xval xvalid =>
+      simp only [is_finite_B, is_finite_FF] at hx
+      cases xval with
+      | F754_zero s =>
+        exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp (3 - emax - prec) prec)
+      | F754_infinity s => simp at hx
+      | F754_nan s m => simp at hx
+      | F754_finite s m e =>
+        by_cases hm : m = 0
+        · simp only [hm]
+          have h_f2r_zero : F2R (⟨if s = true then -↑(0 : Nat) else ↑(0 : Nat), e⟩ : FloatSpec.Core.Defs.FlocqFloat 2) = 0 := by
+            simp only [F2R, FloatSpec.Core.Defs.F2R]
+            cases s <;> simp
+          rw [h_f2r_zero]
+          exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp (3 - emax - prec) prec)
+        · -- Non-zero mantissa case: use generic_format_F2R
+          have h_format := FloatSpec.Core.Generic_fmt.generic_format_F2R 2 (FLT_exp (3 - emax - prec) prec)
+            (if s then -(m : Int) else (m : Int)) e
+          simp only [wp, PostCond.noThrow, Id.run, pure] at h_format
+          apply h_format
+          constructor
+          · norm_num  -- prove 2 > 1
+          · intro hm_ne
+            -- Use hformat which provides cexp ≤ e for finite floats with non-zero mantissa
+            simp only [Binary754_in_generic_format] at hformat
+            exact hformat hm_ne
+    -- Use generic_format_pred to get generic_format (pred ... (B2R x))
+    have hgf_pred : FloatSpec.Core.Generic_fmt.generic_format 2 (FLT_exp (3 - emax - prec) prec)
+        (FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) (B2R x)) := by
+      have h := FloatSpec.Core.Ulp.generic_format_pred 2 (FLT_exp (3 - emax - prec) prec)
+        (B2R x) hgf_B2R (by norm_num : (1 : Int) < 2)
+      simpa [wp, PostCond.noThrow, Id.run, pure] using h trivial
+    -- Apply FF2R_real_to_FullFloat
+    exact FF2R_real_to_FullFloat _ _ hgf_pred
+  · -- Case: underflow (if-condition is false)
+    right
+    simp only [B2FF, FF2B]
 
 -- Constant one (Coq: Bone)
 def binary_one : Binary754 prec emax :=
@@ -1536,14 +1653,75 @@ def canonical_canonical_mantissa_check {prec emax : Int}
   ()
 
 theorem canonical_canonical_mantissa (sx : Bool) (mx : Nat) (ex : Int)
+  (hmx_pos : 0 < mx)  -- IEEE 754: finite floats have positive mantissa; zero is F754_zero
   (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
   ⦃⌜True⌝⦄
   (pure (canonical_canonical_mantissa_check (prec:=prec) (emax:=emax) sx mx ex) : Id Unit)
   ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
             (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
   intro _
-  -- Proof deferred; will be aligned with Coq's canonical_canonical_mantissa
-  sorry
+  simp only [wp, PostCond.noThrow, pure]
+  -- Extract equality from boolean hypothesis
+  have heq : ex = FLT_exp (3 - emax - prec) prec (FloatSpec.Core.Digits.Zdigits 2 mx + ex) :=
+    eq_of_beq h
+  -- Unfold canonical to show the goal is about F2R and mag
+  unfold FloatSpec.Core.Generic_fmt.canonical
+  simp only [FloatSpec.Core.Defs.FlocqFloat.Fexp]
+  -- Goal: ex = FLT_exp ... (mag 2 (F2R f)) where f.Fnum = if sx then -mx else mx
+  -- We need to show mag 2 (F2R f) = Zdigits 2 mx + ex
+  -- F2R f = (signed mantissa) * 2^ex
+  -- By mag_mult_bpow_eq: mag 2 (m * 2^ex) = mag 2 m + ex
+  -- And mag 2 (±mx) = mag 2 mx = Zdigits 2 mx (for mx > 0)
+  -- With hmx_pos : 0 < mx, we go directly to the non-zero case
+  have hmx : mx ≠ 0 := Nat.pos_iff_ne_zero.mp hmx_pos
+  have hmx_int_pos : (0 : Int) < (mx : Int) := Nat.cast_pos.mpr hmx_pos
+  have hmx_real_ne : ((mx : Int) : ℝ) ≠ 0 := Int.cast_ne_zero.mpr (Int.ofNat_ne_zero.mpr hmx)
+  -- Get mag 2 mx = Zdigits 2 mx
+  have h2gt1 : (1 : Int) < 2 := by norm_num
+  have hmag_eq := FloatSpec.Calc.Sqrt.mag_eq_Zdigits 2 (mx : Int) hmx_int_pos h2gt1
+  -- Show signed mantissa ≠ 0
+  have hsigned_ne : (if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) ≠ 0 := by
+    cases sx <;> simp [hmx_real_ne, hmx]
+  -- Use mag_mult_bpow_eq: mag 2 (m * 2^ex) = mag 2 m + ex
+  have hmag_mult := FloatSpec.Calc.Sqrt.mag_mult_bpow_eq 2
+    (if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) ex hsigned_ne h2gt1
+  -- Rewrite F2R
+  simp only [F2R, FloatSpec.Core.Defs.F2R, FloatSpec.Core.Defs.FlocqFloat.Fnum,
+             FloatSpec.Core.Defs.FlocqFloat.Fexp]
+  -- Normalize coercions: push Int cast inside the if expression to match hmag_mult pattern
+  simp only [Int.cast_ite, Int.cast_neg, Int.cast_natCast]
+  -- Establish mag of signed mantissa equals Zdigits
+  have hmag_signed : FloatSpec.Core.Raux.mag 2
+      (if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) =
+      FloatSpec.Core.Digits.Zdigits 2 (mx : Int) := by
+    cases sx
+    · -- sx = false: straightforward
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      exact hmag_eq
+    · -- sx = true: use mag(-x) = mag(x)
+      simp only [↓reduceIte]
+      -- mag 2 (-mx) = mag 2 mx
+      unfold FloatSpec.Core.Raux.mag
+      -- Explicitly prove -↑↑mx ≠ 0 so simp can eliminate the if-condition
+      have hmx_neg_ne : -((mx : Int) : ℝ) ≠ 0 := neg_ne_zero.mpr hmx_real_ne
+      simp only [hmx_neg_ne, ↓reduceIte, abs_neg]
+      -- Now both sides simplify to the same thing
+      unfold FloatSpec.Core.Raux.mag at hmag_eq
+      simp only [hmx_real_ne, ↓reduceIte] at hmag_eq
+      exact hmag_eq
+  -- Now build the full magnitude equation
+  -- Note: hmag_mult uses ↑2 ^ ex (Int 2 cast to ℝ), so we state hmag_full the same way
+  have hmag_full : FloatSpec.Core.Raux.mag 2
+      ((if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) * ((2 : Int) : ℝ) ^ ex) =
+      FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex := by
+    rw [hmag_mult, hmag_signed]
+  -- The goal is: ex = FLT_exp ... (mag 2 ((if sx then -↑mx else ↑mx) * 2^ex))
+  -- We need to show this equals heq: ex = FLT_exp ... (Zdigits 2 mx + ex)
+  -- First convert the goal to use our magnitude equation
+  calc ex = FLT_exp (3 - emax - prec) prec (FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex) := heq
+    _ = FLT_exp (3 - emax - prec) prec (FloatSpec.Core.Raux.mag 2
+          ((if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) * ((2 : Int) : ℝ) ^ ex)) := by
+      rw [hmag_full]
 
 -- Coq: generic_format_B2R
 -- Generic-format property of the real semantics of a binary float.
@@ -1552,7 +1730,8 @@ def generic_format_B2R_check {prec emax : Int} (x : Binary754 prec emax) : Unit 
   ()
 
 theorem generic_format_B2R {prec emax : Int} [Prec_gt_0 prec]
-  (x : Binary754 prec emax) :
+  (x : Binary754 prec emax)
+  (hformat : Binary754_in_generic_format (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
   (pure (generic_format_B2R_check (prec:=prec) (emax:=emax) x) : Id Unit)
   ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.generic_format 2 (FLT_exp (3 - emax - prec) prec) (B2R (prec:=prec) (emax:=emax) x)⌝⦄ := by
@@ -1583,7 +1762,16 @@ theorem generic_format_B2R {prec emax : Int} [Prec_gt_0 prec]
         cases s <;> simp
       rw [h_f2r_zero]
       exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp (3 - emax - prec) prec)
-    · sorry
+    · -- Non-zero mantissa case: use generic_format_F2R
+      have h_format := FloatSpec.Core.Generic_fmt.generic_format_F2R 2 (FLT_exp (3 - emax - prec) prec)
+        (if s then -(m : Int) else (m : Int)) e
+      simp only [wp, PostCond.noThrow, Id.run, pure] at h_format
+      apply h_format
+      constructor
+      · norm_num  -- prove 2 > 1
+      · intro hm_ne
+        simp only [Binary754_in_generic_format] at hformat
+        exact hformat hm_ne
 
 -- Coq: FLT_format_B2R
 -- FLT-format property of the real semantics of a binary float.

@@ -760,11 +760,13 @@ theorem is_infinity_equiv (prec emax : Int)
   -- prim_is_infinite always returns false, and prim_to_binary returns FF2B (F754_zero false)
   -- B2SF of that is S754_zero false, which is not S754_infinity s for any s
   simp only [wp, PostCond.noThrow, pure, is_infinity_equiv_check, prim_is_infinite,
-    prim_to_binary, B2SF, FF2B, FF2SF]
+    prim_to_binary, B2SF, FF2B, FF2SF, Id.run, PredTrans.pure, PredTrans.apply]
   -- Both sides are false: LHS = false, RHS = decide (∃ s, S754_zero false = S754_infinity s) = false
-  simp only [decide_eq_false_iff_not, not_exists]
-  intro s
-  cases s <;> simp only [StandardFloat.S754_zero.injEq, reduceCtorEq, not_false_eq_true]
+  -- Provide a Decidable instance for the existential and show equality
+  haveI : Decidable (∃ s, StandardFloat.S754_zero false = StandardFloat.S754_infinity s) :=
+    isFalse (fun ⟨s, h⟩ => by cases h)
+  -- With the isFalse instance, decide evaluates to false, making both sides false
+  exact ⟨rfl⟩
 
 -- Coq: is_finite_equiv — finiteness classifier correspondence
 noncomputable def is_finite_equiv_check (prec emax : Int)
