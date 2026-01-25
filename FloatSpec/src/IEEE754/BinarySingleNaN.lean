@@ -4,6 +4,7 @@
 import FloatSpec.src.IEEE754.Binary
 import FloatSpec.src.Compat
 import FloatSpec.src.Calc.Round
+import FloatSpec.src.Calc.Sqrt
 import Std.Do.Triple
 import Std.Tactic.Do
 import Mathlib.Data.Real.Basic
@@ -87,6 +88,7 @@ def canonical_canonical_mantissa_bsn_check
 
 theorem canonical_canonical_mantissa_bsn
   (sx : Bool) (mx : Nat) (ex : Int)
+  (hmx_pos : 0 < mx)  -- IEEE 754: finite floats have positive mantissa; zero is B754_zero
   (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
   ⦃⌜True⌝⦄
   (pure (canonical_canonical_mantissa_bsn_check sx mx ex) : Id Unit)
@@ -94,8 +96,67 @@ theorem canonical_canonical_mantissa_bsn
             (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; aligns with Coq's canonical_canonical_mantissa.
-  exact sorry
+  -- Extract equality from boolean hypothesis
+  have heq : ex = FLT_exp (3 - emax - prec) prec (FloatSpec.Core.Digits.Zdigits 2 mx + ex) :=
+    eq_of_beq h
+  -- Unfold canonical to show the goal is about F2R and mag
+  unfold FloatSpec.Core.Generic_fmt.canonical
+  simp only [FloatSpec.Core.Defs.FlocqFloat.Fexp]
+  -- Goal: ex = FLT_exp ... (mag 2 (F2R f)) where f.Fnum = if sx then -mx else mx
+  -- We need to show mag 2 (F2R f) = Zdigits 2 mx + ex
+  -- F2R f = (signed mantissa) * 2^ex
+  -- By mag_mult_bpow_eq: mag 2 (m * 2^ex) = mag 2 m + ex
+  -- And mag 2 (±mx) = mag 2 mx = Zdigits 2 mx (for mx > 0)
+  -- With hmx_pos : 0 < mx, we go directly to the non-zero case
+  have hmx : mx ≠ 0 := Nat.pos_iff_ne_zero.mp hmx_pos
+  have hmx_int_pos : (0 : Int) < (mx : Int) := Nat.cast_pos.mpr hmx_pos
+  have hmx_real_ne : ((mx : Int) : ℝ) ≠ 0 := Int.cast_ne_zero.mpr (Int.ofNat_ne_zero.mpr hmx)
+  -- Get mag 2 mx = Zdigits 2 mx
+  have h2gt1 : (1 : Int) < 2 := by norm_num
+  have hmag_eq := FloatSpec.Calc.Sqrt.mag_eq_Zdigits 2 (mx : Int) hmx_int_pos h2gt1
+  -- Show signed mantissa ≠ 0
+  have hsigned_ne : (if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) ≠ 0 := by
+    cases sx <;> simp [hmx_real_ne, hmx]
+  -- Use mag_mult_bpow_eq: mag 2 (m * 2^ex) = mag 2 m + ex
+  have hmag_mult := FloatSpec.Calc.Sqrt.mag_mult_bpow_eq 2
+    (if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) ex hsigned_ne h2gt1
+  -- Rewrite F2R
+  simp only [F2R, FloatSpec.Core.Defs.F2R, FloatSpec.Core.Defs.FlocqFloat.Fnum,
+             FloatSpec.Core.Defs.FlocqFloat.Fexp]
+  -- Normalize coercions: push Int cast inside the if expression to match hmag_mult pattern
+  simp only [Int.cast_ite, Int.cast_neg, Int.cast_natCast]
+  -- Establish mag of signed mantissa equals Zdigits
+  have hmag_signed : FloatSpec.Core.Raux.mag 2
+      (if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) =
+      FloatSpec.Core.Digits.Zdigits 2 (mx : Int) := by
+    cases sx
+    · -- sx = false: straightforward
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      exact hmag_eq
+    · -- sx = true: use mag(-x) = mag(x)
+      simp only [↓reduceIte]
+      -- mag 2 (-mx) = mag 2 mx
+      unfold FloatSpec.Core.Raux.mag
+      -- Explicitly prove -↑↑mx ≠ 0 so simp can eliminate the if-condition
+      have hmx_neg_ne : -((mx : Int) : ℝ) ≠ 0 := neg_ne_zero.mpr hmx_real_ne
+      simp only [hmx_neg_ne, ↓reduceIte, abs_neg]
+      -- Now both sides simplify to the same thing
+      unfold FloatSpec.Core.Raux.mag at hmag_eq
+      simp only [hmx_real_ne, ↓reduceIte] at hmag_eq
+      exact hmag_eq
+  -- Now build the full magnitude equation
+  -- Note: hmag_mult uses ↑2 ^ ex (Int 2 cast to ℝ), so we state hmag_full the same way
+  have hmag_full : FloatSpec.Core.Raux.mag 2
+      ((if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) * ((2 : Int) : ℝ) ^ ex) =
+      FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex := by
+    rw [hmag_mult, hmag_signed]
+  -- The goal is: ex = FLT_exp ... (mag 2 ((if sx then -↑mx else ↑mx) * 2^ex))
+  -- We need to show this equals heq: ex = FLT_exp ... (Zdigits 2 mx + ex)
+  -- First convert the goal to use our magnitude equation
+  calc ex = FLT_exp (3 - emax - prec) prec (FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex) := heq
+    _ = FLT_exp (3 - emax - prec) prec (FloatSpec.Core.Raux.mag 2
+          ((if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) * ((2 : Int) : ℝ) ^ ex)) := by
+      rw [hmag_full]
 
 -- Coq: canonical_bounded — canonical mantissa implies boundedness of (mx, ex)
 def canonical_bounded_check (sx : Bool) (mx : Nat) (ex : Int) : Unit :=
@@ -109,8 +170,9 @@ theorem canonical_bounded
   ⦃⇓_ => ⌜bounded (prec:=prec) (emax:=emax) mx ex = true⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; follows from `canonical_canonical_mantissa_bsn` and Coq's lemma.
-  exact sorry
+  -- bounded is currently a placeholder that always returns true
+  unfold bounded
+  rfl
 
 -- Coq: B2SF_SF2B — standard view after SF2B is identity
 def B2SF_SF2B_check (x : StandardFloat) : StandardFloat :=
@@ -122,8 +184,8 @@ theorem B2SF_SF2B (x : StandardFloat) :
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Follows by cases on x; mirroring Coq's SF2B/B2SF roundtrip.
-  exact sorry
+  unfold B2SF_SF2B_check
+  cases x <;> rfl
 
 -- Finite/NaN/sign classifiers on the BinarySingleNaN side
 def BSN_is_finite (x : B754) : Bool :=
@@ -160,7 +222,8 @@ theorem B2SF_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⇓result => ⌜result = B2SF (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  exact sorry
+  unfold B2SF_B2BSN_check B2BSN B2SF_BSN B2SF FF2SF
+  cases x.val <;> rfl
 
 -- Coq: is_finite_B2BSN — finiteness preserved by the bridge
 def is_finite_B2BSN_check {prec emax} (x : Binary754 prec emax) : Bool :=
@@ -172,7 +235,8 @@ theorem is_finite_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⇓result => ⌜result = is_finite_B (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  exact sorry
+  unfold is_finite_B2BSN_check BSN_is_finite B2BSN is_finite_B is_finite_FF
+  cases x.val <;> rfl
 
 -- Strict finiteness (finite-but-not-zero) classifiers, used for missing Coq theorems.
 def BSN_is_finite_strict (x : B754) : Bool :=
@@ -195,8 +259,8 @@ theorem is_finite_strict_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⇓result => ⌜result = is_finite_strict_B (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; follows by cases on `x.val`.
-  exact sorry
+  unfold is_finite_strict_B2BSN_check BSN_is_finite_strict B2BSN is_finite_strict_B
+  cases x.val <;> rfl
 
 -- Coq: is_nan_B2BSN — NaN preserved by the bridge
 def is_nan_B2BSN_check {prec emax} (x : Binary754 prec emax) : Bool :=
@@ -208,19 +272,22 @@ theorem is_nan_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⇓result => ⌜result = is_nan_B (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  exact sorry
+  unfold is_nan_B2BSN_check BSN_is_nan B2BSN is_nan_B is_nan_FF
+  cases x.val <;> rfl
 
--- Coq: Bsign_B2BSN — sign preserved by the bridge
+-- Coq: Bsign_B2BSN — sign preserved by the bridge (for non-NaN values)
 def Bsign_B2BSN_check {prec emax} (x : Binary754 prec emax) : Bool :=
   (BSN_sign (B2BSN (prec:=prec) (emax:=emax) x))
 
-theorem Bsign_B2BSN {prec emax} (x : Binary754 prec emax) :
+theorem Bsign_B2BSN {prec emax} (x : Binary754 prec emax)
+  (hx : is_nan_B (prec:=prec) (emax:=emax) x = false) :
   ⦃⌜True⌝⦄
   (pure (Bsign_B2BSN_check (prec:=prec) (emax:=emax) x) : Id Bool)
   ⦃⇓result => ⌜result = Bsign (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  exact sorry
+  unfold Bsign_B2BSN_check BSN_sign B2BSN Bsign sign_FF
+  cases h : x.val <;> simp_all [is_nan_B, is_nan_FF]
 
 -- Coq: B2R_B2BSN — real semantics commutes with bridge to single-NaN
 noncomputable def B2R_B2BSN_check {prec emax} (x : Binary754 prec emax) : ℝ :=
@@ -232,7 +299,8 @@ theorem B2R_B2BSN {prec emax} (x : Binary754 prec emax) :
   ⦃⇓result => ⌜result = B2R (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  exact sorry
+  unfold B2R_B2BSN_check B754_to_R B2BSN B2R FF2R
+  cases x.val <;> rfl
 
 -- Coq: emin_lt_emax — the minimal exponent is strictly less than emax
 -- We state it using the hoare‑triple style used throughout this project.
@@ -244,9 +312,11 @@ theorem emin_lt_emax :
   (pure emin_lt_emax_check : Id Unit)
   ⦃⇓_ => ⌜(3 - emax - prec) < emax⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; follows from the `Prec_lt_emax` assumption.
-  exact sorry
+  simp only [wp, PostCond.noThrow, pure, emin_lt_emax_check, Id.run, PredTrans.pure, PredTrans.apply]
+  have ⟨hprec, hemax⟩ := (inferInstance : Prec_lt_emax prec emax)
+  have hprec_pos := (inferInstance : Prec_gt_0 prec).pos
+  have h : (3 - emax - prec) < emax := by linarith
+  trivial
 
 -- Coq: is_finite_strict_B2R — nonzero real semantics implies strict finiteness
 -- Stated for the single-NaN binary `B754` using `B754_to_R` as semantics.
@@ -260,8 +330,14 @@ theorem is_finite_strict_B2R (x : B754)
   ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; by cases on `x` and using `h` to exclude zero cases.
-  exact sorry
+  -- Case split on x; non-finite cases have B754_to_R = 0, contradicting h
+  cases x with
+  | B754_zero s => simp [B754_to_R] at h
+  | B754_infinity s => simp [B754_to_R] at h
+  | B754_nan => simp [B754_to_R] at h
+  | B754_finite s m e =>
+    -- BSN_is_finite_strict (B754_finite s m e) = true by definition
+    simp [is_finite_strict_B2R_check, BSN_is_finite_strict]
 
 -- Coq: SF2R_B2SF — Real semantics after mapping to StandardFloat
 -- We state it in hoare-triple style around a pure computation.
@@ -274,9 +350,8 @@ theorem SF2R_B2SF (x : B754) :
   ⦃⇓result => ⌜result = B754_to_R x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Structure follows the hoare-triple pattern used in this project.
-  -- Proof deferred.
-  exact sorry
+  unfold SF2R_B2SF_check B2SF_BSN SF2R B754_to_R
+  cases x <;> rfl
 
 -- Coq: SF2B_B2SF — roundtrip from B2SF back to B754 via SF2B
 def SF2B_B2SF_check (x : B754) : B754 :=
@@ -288,8 +363,8 @@ theorem SF2B_B2SF (x : B754) :
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- By cases on x; definitionally equal.
-  exact sorry
+  unfold SF2B_B2SF_check SF2B B2SF_BSN
+  cases x <;> rfl
 
 -- Coq: valid_binary_B2SF — validity of `B2SF` image
 def valid_binary_B2SF_check {prec emax : Int} (x : B754) : Bool :=
@@ -316,9 +391,8 @@ theorem SF2B_B2SF_valid (x : B754) :
   intro _
   simp only [wp, PostCond.noThrow, pure]
   -- Same computation as SF2B_B2SF.
-  unfold SF2B_B2SF_valid_check
-  -- Proof deferred.
-  exact sorry
+  unfold SF2B_B2SF_valid_check SF2B B2SF_BSN
+  cases x <;> rfl
 
 -- Coq: is_finite_strict_SF2B — strict finiteness preserved by SF2B
 def is_finite_strict_SF2B_check (x : StandardFloat) : Bool :=
@@ -330,8 +404,8 @@ theorem is_finite_strict_SF2B (x : StandardFloat) :
   ⦃⇓result => ⌜result = is_finite_strict_SF x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; by cases on x.
-  exact sorry
+  unfold is_finite_strict_SF2B_check BSN_is_finite_strict SF2B is_finite_strict_SF
+  cases x <;> rfl
 
 -- Coq: B2SF_inj — injectivity of B2SF on non-NaN values
 theorem B2SF_inj (x y : B754)
@@ -339,7 +413,9 @@ theorem B2SF_inj (x y : B754)
   (hy : BSN_is_nan y = false)
   (h : B2SF_BSN x = B2SF_BSN y) : x = y := by
   -- Proof by cases on x and y; NaN excluded by hypotheses.
-  exact sorry
+  -- Cases with NaN lead to contradiction via hx/hy; different constructors
+  -- lead to contradiction via h being an impossible equality.
+  cases x <;> cases y <;> simp_all [BSN_is_nan, B2SF_BSN]
 
 -- Bridge back from single-NaN view to FullFloat (Coq: BSN2B)
 def BSN2B (s : Bool) (payload : Nat) (x : B754) : FullFloat :=
@@ -382,8 +458,8 @@ theorem Bsign_BSN2B (s : Bool) (payload : Nat) (x : B754)
   ⦃⇓result => ⌜result = BSN_sign x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; by cases on x using nx to exclude NaN case
-  exact sorry
+  unfold Bsign_BSN2B_check
+  cases x <;> simp [BSN_is_nan, BSN2B, sign_FF, BSN_sign] at nx ⊢
 
 -- A lifting combinator mirroring Coq's `lift` (Binary.v)
 -- If `x` is NaN, return `x`; otherwise, rebuild a full float from `y`.
@@ -409,8 +485,36 @@ theorem B2BSN_lift {prec emax : Int}
   ⦃⇓result => ⌜result = y⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
-  -- Proof deferred; follows Coq's `B2BSN_lift` by cases on `is_nan_FF x`.
-  exact sorry
+  unfold B2BSN_lift_check lift
+  split
+  · -- Case is_nan_FF x = true: lift returns x
+    rename_i h_nan
+    -- From Ny and h_nan, y must be B754_nan
+    -- First case on x to get its NaN form
+    cases hx : x with
+    | F754_zero s => simp only [hx, is_nan_FF] at h_nan; exact absurd h_nan Bool.false_ne_true
+    | F754_infinity s => simp only [hx, is_nan_FF] at h_nan; exact absurd h_nan Bool.false_ne_true
+    | F754_nan s pl =>
+      -- x is NaN, so by Ny, y must also be NaN
+      simp only [hx] at Ny
+      cases y with
+      | B754_zero s => simp [BSN_is_nan, is_nan_FF] at Ny
+      | B754_infinity s => simp [BSN_is_nan, is_nan_FF] at Ny
+      | B754_nan => simp [B2BSN, FF2B, hx]
+      | B754_finite s m e => simp [BSN_is_nan, is_nan_FF] at Ny
+    | F754_finite s m e => simp only [hx, is_nan_FF] at h_nan; exact absurd h_nan Bool.false_ne_true
+  · -- Case is_nan_FF x = false: lift returns BSN2B' y nx
+    rename_i h_not_nan
+    unfold BSN2B' B2BSN FF2B
+    cases y with
+    | B754_zero s => rfl
+    | B754_infinity s => rfl
+    | B754_nan =>
+      -- Contradiction: BSN_is_nan B754_nan = true but is_nan_FF x = false
+      simp [BSN_is_nan] at Ny
+      rw [Ny] at h_not_nan
+      simp at h_not_nan
+    | B754_finite s m e => rfl
 
 -- Coq: B2BSN_BSN2B' — roundtrip through the non-NaN bridge
 def B2BSN_BSN2B'_check {prec emax : Int} (x : B754)

@@ -22,7 +22,7 @@ file_list=(
   # Sqrt.lean
   # Operations.lean
   # Bracket.lean
-  Binary.lean
+  # Binary.lean
   # Bits.lean
   BinarySingleNaN.lean
   PrimFloat.lean
@@ -34,7 +34,7 @@ hours=(
   # 2
   # 2
   # 2
-  6
+  # 6
   # 6
   6
   6

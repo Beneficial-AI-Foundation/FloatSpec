@@ -1574,7 +1574,16 @@ theorem generic_format_B2R {prec emax : Int} [Prec_gt_0 prec]
   | F754_finite s m e =>
     -- For finite floats, F2R of a FlocqFloat is in generic format
     -- This requires showing the value is representable in FLT format
-    sorry
+    simp only [FloatSpec.Core.Defs.FlocqFloat.mk.injEq]
+    by_cases hm : m = 0
+    · simp only [hm]
+      -- F2R with Fnum = 0 equals 0 (since 0 * β^e = 0)
+      have h_f2r_zero : F2R (⟨if s = true then -↑(0 : Nat) else ↑(0 : Nat), e⟩ : FloatSpec.Core.Defs.FlocqFloat 2) = 0 := by
+        simp only [F2R, FloatSpec.Core.Defs.F2R]
+        cases s <;> simp
+      rw [h_f2r_zero]
+      exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp (3 - emax - prec) prec)
+    · sorry
 
 -- Coq: FLT_format_B2R
 -- FLT-format property of the real semantics of a binary float.
