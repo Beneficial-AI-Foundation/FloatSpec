@@ -265,6 +265,102 @@ theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Boo
 noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
   ()
 
+/-- Helper lemma: Rounding error of a sum is in format (forward direction).
+
+    This is the core mathematical result needed for error-free transformations.
+    It states that {lit}`round(x+y) - (x+y)` is in generic format when x and y are.
+
+    The proof structure follows Coq {lit}`errorBoundedPlus` (Pff.v lines 10109-10165):
+    1. Express x and y at common exponent {lit}`e_min = min(cexp x, cexp y)`
+    2. Show {lit}`x + y = M * 2^e_min` for some integer M
+    3. Show the error is {lit}`R * 2^e_min` for some integer R
+    4. Apply {lit}`generic_format_F2R` to conclude
+
+    This requires the {lit}`ex_shift` lemma and cexp monotonicity properties. -/
+private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
+    (hx : generic_format 2 (FLT_exp emin prec) x)
+    (hy : generic_format 2 (FLT_exp emin prec) y) :
+    let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+    let a := round_flt (x + y)
+    generic_format 2 (FLT_exp emin prec) (a - (x + y)) := by
+  intro round_flt a
+
+  -- Key notation
+  set ex := FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) x with hex_def
+  set ey := FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) y with hey_def
+  set e_min := min ex ey with he_min_def
+
+  -- Handle the zero case
+  by_cases h_zero : a - (x + y) = 0
+  · -- Error is zero, which is in format
+    rw [h_zero]
+    exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp emin prec)
+  ·
+    -- Nonzero error case
+    -- The error a - (x+y) = round(x+y) - (x+y) can be expressed as R * 2^e_min
+    -- for some integer R.
+    --
+    -- Mathematical structure:
+    -- From hx: x = Ztrunc(x * 2^(-ex)) * 2^ex = mx * 2^ex
+    -- From hy: y = Ztrunc(y * 2^(-ey)) * 2^ey = my * 2^ey
+    --
+    -- At common exponent e_min:
+    --   x = mx * 2^(ex - e_min) * 2^e_min = Mx * 2^e_min
+    --   y = my * 2^(ey - e_min) * 2^e_min = My * 2^e_min
+    --   x + y = (Mx + My) * 2^e_min = M * 2^e_min
+    --
+    -- The rounded value:
+    --   a = round(x+y) = Ztrunc((x+y) * 2^(-e)) * 2^e where e = cexp(x+y)
+    --   Since e ≥ e_min (by Valid_exp properties), let d = e - e_min ≥ 0
+    --   a = Ztrunc(M * 2^(-d)) * 2^(e_min + d)
+    --
+    -- The error:
+    --   a - (x+y) = Ztrunc(M * 2^(-d)) * 2^(e_min + d) - M * 2^e_min
+    --             = (Ztrunc(M * 2^(-d)) * 2^d - M) * 2^e_min
+    --             = R * 2^e_min  where R is an integer
+    --
+    -- By generic_format_F2R, F2R(R, e_min) is in format if cexp(error) ≤ e_min.
+    -- The bound cexp(error) ≤ e_min follows from:
+    --   |error| ≤ min(|x|, |y|) (by plus_error_le)
+    --   cexp is monotone with respect to magnitude
+    --
+    -- Full formalization requires:
+    -- 1. ex_shift to express x, y at common exponent
+    -- 2. Constructing R explicitly
+    -- 3. cexp monotonicity
+    --
+    -- The proof follows Coq errorBoundedPlus (Pff.v lines 10109-10165).
+    --
+    -- Step 1: Extract F2R representations from hx and hy
+    -- By definition of generic_format:
+    --   x = Ztrunc(x * 2^(-ex)) * 2^ex = F2R(mx, ex)
+    --   y = Ztrunc(y * 2^(-ey)) * 2^ey = F2R(my, ey)
+    --
+    -- Step 2: Express at common exponent e_min = min(ex, ey)
+    --   x = Mx * 2^e_min where Mx = mx * 2^(ex - e_min) is an integer
+    --   y = My * 2^e_min where My = my * 2^(ey - e_min) is an integer
+    --   x + y = (Mx + My) * 2^e_min = M * 2^e_min
+    --
+    -- Step 3: The error as an integer multiple of 2^e_min
+    --   a = round(x + y) = Ztrunc((x+y) * 2^(-e)) * 2^e where e = cexp(x+y)
+    --   Since e ≥ e_min (by FLT_exp properties), let d = e - e_min ≥ 0
+    --   a = Ztrunc(M / 2^d) * 2^d * 2^e_min
+    --   error = a - (x+y) = (Ztrunc(M / 2^d) * 2^d - M) * 2^e_min = R * 2^e_min
+    --   where R = Ztrunc(M / 2^d) * 2^d - M is an integer
+    --
+    -- Step 4: Apply generic_format_F2R
+    --   The error F2R(R, e_min) is in format if cexp(error) ≤ e_min
+    --   This follows from |error| ≤ min(|x|, |y|) and cexp monotonicity
+    --
+    -- The full formalization requires:
+    -- 1. ex_shift lemma to express x, y at common exponent
+    -- 2. Explicit construction of the integer R
+    -- 3. cexp_mono_pos for the exponent bound
+    --
+    -- These lemmas exist in the codebase but with incomplete proofs.
+    -- See Plus_error.lean:plus_error and Coq errorBoundedPlus.
+    sorry
+
 /-- ErrorBoundedIplus: The rounding error {lit}`x + y - round(x + y)` is representable in format.
 
     This is Coq {lit}`ErrorBoundedIplus` from Pff.v lines 23077-23089.
@@ -277,172 +373,23 @@ private lemma error_bounded_iplus (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
     let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
     let a := round_flt (x + y)
     generic_format 2 (FLT_exp emin prec) (x + y - a) := by
-  -- The rounding error of the sum is representable.
-  -- This is a fundamental property in floating-point error analysis.
-  --
-  -- Mathematical insight:
-  -- If x and y are in format, they can be written as mx * 2^ex and my * 2^ey
-  -- for integers mx, my. With e_min = min(ex, ey):
-  --   x + y = M * 2^e_min for some integer M
-  -- The rounded value a = Ztrunc((x+y) * 2^(-ea)) * 2^ea where ea ≥ e_min.
-  -- The error x + y - a = R * 2^e_min where R is an integer (the remainder).
-  -- Therefore the error is representable at exponent e_min.
-  --
-  -- This proof uses the same structure as Coq's errorBoundedPlus.
-  -- Full formal proof requires F2R representation infrastructure.
-  -- See Coq ErrorBoundedIplus theorem in Pff.v lines 23077-23089
   intro round_flt a
-  -- The core insight is that x + y - round(x+y) = -(round(x+y) - (x+y))
-  -- and both x, y are in format, so the error is representable.
-  -- We show that the error is the negation of what plus_error provides,
-  -- and generic_format is preserved under negation.
+  -- The key insight is that x + y - a = -(a - (x + y))
+  -- We show a - (x + y) is in format using rounding_error_in_format,
+  -- then use negation closure.
 
-  -- First handle the zero case
-  by_cases h_err : x + y - a = 0
-  · -- Case: error is zero
-    rw [h_err]
-    exact FloatSpec.Core.Generic_fmt.generic_format_0_run 2 (FLT_exp emin prec)
-  ·
-    -- For nonzero error, we use the fundamental property that the rounding
-    -- error of a sum of two format numbers is itself in format.
-    -- This is Coq's errorBoundedPlus theorem.
-    --
-    -- The key mathematical insight is:
-    -- 1. x = mx * 2^ex and y = my * 2^ey for integers mx, my (by hx, hy)
-    -- 2. At exponent e_min = min(ex, ey), x + y = M * 2^e_min for integer M
-    -- 3. round(x+y) = Ztrunc(M * 2^(e_min - ea)) * 2^ea for ea = cexp(x+y)
-    -- 4. Since ea ≥ e_min (by Valid_exp), let d = ea - e_min ≥ 0
-    -- 5. Error = (M - Ztrunc(M / 2^d) * 2^d) * 2^e_min = R * 2^e_min
-    -- 6. R = M mod 2^d is an integer, so error is in format at exponent e_min
-    --
-    -- The proof requires showing that the error is F2R of a float with appropriate exponent.
-    -- We use the structure:
-    --   error = x + y - a
-    --         = (scaled_mantissa(x+y) - Ztrunc(scaled_mantissa(x+y))) * 2^(cexp(x+y))
-    --
-    -- For this to be in generic_format, we need to find an integer mantissa and exponent.
-    -- The key insight is that when x and y are in format, they can be written with
-    -- integer mantissas at a common exponent, and the error inherits this structure.
+  -- Step 1: Express the error as a negation
+  have h_neg : x + y - a = -(a - (x + y)) := by ring
+  rw [h_neg]
 
-    -- Set up notations for the exponents
-    set e := FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) (x + y) with he_def
-    set ex := FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) x with hex_def
-    set ey := FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) y with hey_def
+  -- Step 2: Use generic_format_opp to show negation preserves format
+  have h_opp := FloatSpec.Core.Generic_fmt.generic_format_opp
+    (beta := 2) (fexp := FLT_exp emin prec) (x := a - (x + y))
+  simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at h_opp
+  apply h_opp
 
-    -- The error is the difference between the exact sum and the rounded sum.
-    -- By definition of round_to_generic:
-    --   a = Ztrunc((x+y) * 2^(-e)) * 2^e
-    -- So:
-    --   x + y - a = (x + y) - Ztrunc((x+y) * 2^(-e)) * 2^e
-    --             = ((x+y) * 2^(-e) - Ztrunc((x+y) * 2^(-e))) * 2^e
-
-    -- The proof that x + y - a is in generic_format requires showing it can be
-    -- represented as F2R of a float with exponent at least cexp(error).
-    --
-    -- Key mathematical structure:
-    -- Let ex = cexp(x), ey = cexp(y), e_min = min(ex, ey).
-    -- Since x, y are in format:
-    --   x = Ztrunc(x * 2^(-ex)) * 2^ex = mx * 2^ex
-    --   y = Ztrunc(y * 2^(-ey)) * 2^ey = my * 2^ey
-    -- At the common exponent e_min:
-    --   x = mx * 2^(ex - e_min) * 2^e_min = Mx * 2^e_min
-    --   y = my * 2^(ey - e_min) * 2^e_min = My * 2^e_min
-    --   x + y = (Mx + My) * 2^e_min = M * 2^e_min
-    -- where Mx, My, M are all integers.
-    --
-    -- The rounded sum a = Ztrunc((x+y) * 2^(-ea)) * 2^ea where ea = cexp(x+y).
-    -- If ea ≥ e_min, let d = ea - e_min ≥ 0. Then:
-    --   a = Ztrunc(M * 2^(-d)) * 2^(e_min + d)
-    -- The error:
-    --   x + y - a = M * 2^e_min - Ztrunc(M * 2^(-d)) * 2^ea
-    --             = (M - Ztrunc(M / 2^d) * 2^d) * 2^e_min
-    --             = R * 2^e_min
-    -- where R = M mod 2^d is an integer.
-    --
-    -- Therefore error = F2R(R, e_min), and by generic_format_F2R it suffices to show
-    -- cexp(error) ≤ e_min (which follows from |error| ≤ |x|, |y| by plus_error_le).
-    --
-    -- This is Coq's errorBoundedPlus theorem (Pff.v lines 10190-10211).
-
-    -- Define the minimum exponent
-    set e_min := min ex ey with he_min_def
-
-    -- By generic_format, x and y can be written as F2R with integer mantissas:
-    -- x = Ztrunc(x * 2^(-ex)) * 2^ex
-    -- y = Ztrunc(y * 2^(-ey)) * 2^ey
-    --
-    -- To show the error is in format, we need to construct its F2R representation.
-    -- The proof requires:
-    -- 1. Showing x + y can be written with exponent e_min
-    -- 2. Showing the error is an integer multiple of 2^e_min
-    -- 3. Applying generic_format_F2R with the constructed mantissa and e_min
-    --
-    -- This requires the F2R shift lemma (ex_shift from Plus_error.lean) and
-    -- the exponent bound lemma (cexp of error ≤ e_min).
-    --
-    -- We will construct the integer mantissa and show the exponent bound.
-    -- The key is to use generic_format_F2R with the error represented at e_min.
-
-    -- First, establish β = 2 > 1 for various lemmas
-    have h2gt1 : (2 : Int) > 1 := by norm_num
-    have h2pos : (0 : ℝ) < 2 := by norm_num
-    have h2ne : (2 : ℝ) ≠ 0 := by norm_num
-
-    -- Extract the integer mantissa representations from hx and hy using generic_format
-    -- By definition of generic_format:
-    --   x = Ztrunc(x * 2^(-ex)) * 2^ex
-    --   y = Ztrunc(y * 2^(-ey)) * 2^ey
-
-    -- Define the integer mantissas
-    set mx := FloatSpec.Core.Raux.Ztrunc (x * (2 : ℝ) ^ (-ex)) with hmx_def
-    set my := FloatSpec.Core.Raux.Ztrunc (y * (2 : ℝ) ^ (-ey)) with hmy_def
-
-    -- From hx and hy, derive the F2R equalities
-    -- The generic_format definition is:
-    --   x = Ztrunc(scaled_mantissa x) * β^(cexp x)
-    -- where scaled_mantissa x = x * β^(-cexp x)
-
-    -- For the full proof, we would need to:
-    -- 1. Unfold generic_format to get x = Ztrunc(x * 2^(-ex)) * 2^ex
-    -- 2. Similarly for y
-    -- 3. Show x + y = (Mx + My) * 2^e_min where Mx, My are integers
-    -- 4. Show the error is R * 2^e_min for some integer R
-    -- 5. Apply generic_format_F2R
-
-    -- At the common exponent e_min, we can write x + y as an integer multiple
-    -- This requires: Mx = mx * 2^(ex - e_min), My = my * 2^(ey - e_min)
-    -- where (ex - e_min) ≥ 0 and (ey - e_min) ≥ 0 by definition of min.
-
-    -- The proof that the error is in generic_format follows from:
-    -- 1. error = x + y - a = R * 2^e_min for some integer R (the remainder)
-    -- 2. By generic_format_F2R, if cexp(error) ≤ e_min, then error is in format
-    -- 3. Since |error| ≤ min(|x|, |y|) (by plus_error_le), and cexp is monotone,
-    --    we have cexp(error) ≤ e_min.
-
-    -- The full proof requires formalizing steps 1-3 with the F2R arithmetic.
-    -- This is Coq's errorBoundedPlus theorem.
-    --
-    -- Strategy: Use generic_format_F2R' by constructing a float f such that:
-    -- 1. F2R(f) = error = x + y - a
-    -- 2. cexp(error) ≤ f.Fexp = e_min
-    --
-    -- The construction:
-    -- Define R := (M - Ztrunc(M/2^d) * 2^d) where:
-    --   M := Mx * 2^(ex - e_min) + My * 2^(ey - e_min)  (sum at common exponent)
-    --   d := e - e_min                                   (exponent difference)
-    -- Then error = R * 2^e_min = F2R(R, e_min)
-    --
-    -- The exponent bound cexp(error) ≤ e_min follows from:
-    --   |error| ≤ min(|x|, |y|) (since error is bounded by the smaller operand)
-    --   and cexp is monotone with respect to magnitude.
-    --
-    -- Full formalization deferred pending:
-    -- 1. ex_shift lemma to write x, y at common exponent
-    -- 2. Error bound lemma (plus_error_le_l/r from Plus_error.lean)
-    -- 3. cexp monotonicity with respect to magnitude
-    --
-    -- See Coq errorBoundedPlus (Pff.v lines 10190-10211) for the complete proof.
-    sorry
+  -- Step 3: Apply rounding_error_in_format to show a - (x + y) is in format
+  exact rounding_error_in_format emin prec x y hx hy
 
 /-- MDekker lemma: When {lit}`|y| ≤ |x|`, the subtraction {lit}`round(x+y) - x` is exact.
 
