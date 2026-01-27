@@ -277,7 +277,16 @@ theorem exp_ln_powerRZ (u v : Int) :
     ⦃⌜0 < u⌝⦄
     (pure (exp_ln_powerRZ_check u v) : Id Unit)
     ⦃⇓_ => ⌜Real.exp (Real.log (u : ℝ) * (v : ℝ)) = (u : ℝ) ^ v⌝⦄ := by
-  sorry
+  intro hu
+  simp only [wp, PostCond.noThrow, pure, exp_ln_powerRZ_check]
+  -- Goal: Real.exp (Real.log (u : ℝ) * (v : ℝ)) = (u : ℝ) ^ v
+  -- Use Real.rpow_def_of_pos: for 0 < x, x ^ y = exp(log x * y)
+  -- Then use Real.rpow_intCast: x ^ (n : ℝ) = x ^ n
+  have hu_pos : (0 : ℝ) < (u : ℝ) := by exact Int.cast_pos.mpr hu
+  rw [← Real.rpow_intCast]
+  rw [Real.rpow_def_of_pos hu_pos]
+  ring_nf
+  trivial
 
 -- Coq: `exp_le_inv` — if exp x ≤ exp y then x ≤ y
 noncomputable def exp_le_inv_check (x y : ℝ) : Unit :=
