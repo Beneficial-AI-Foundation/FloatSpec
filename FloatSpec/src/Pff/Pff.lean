@@ -4652,8 +4652,13 @@ inductive PffRounding where
   | RM : PffRounding  -- Round toward minus infinity
 
 -- Convert Pff rounding to Flocq rounding
-def pff_to_flocq_rnd (mode : PffRounding) : ℝ → Int := by
-  sorry
+-- Maps PffRounding modes to their corresponding Flocq integer rounding functions
+noncomputable def pff_to_flocq_rnd (mode : PffRounding) : ℝ → Int :=
+  match mode with
+  | PffRounding.RN => fun x => FloatSpec.Core.Generic_fmt.Znearest (fun _ => true) x  -- Round to nearest (ties to +inf)
+  | PffRounding.RZ => FloatSpec.Core.Raux.Ztrunc  -- Round toward zero
+  | PffRounding.RP => FloatSpec.Core.Raux.Zceil   -- Round toward plus infinity
+  | PffRounding.RM => FloatSpec.Core.Raux.Zfloor  -- Round toward minus infinity
 
 -- ---------------------------------------------------------------
 -- Minimal LSB/MSB infrastructure (placeholders for compatibility)

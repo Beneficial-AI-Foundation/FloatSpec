@@ -115,7 +115,39 @@ theorem pff_mul_equiv (x y : PffFloat) :
   -- Use the bijection lemma: pff_to_flocq (flocq_to_pff f) = f
   rw [pff_flocq_bijection]
 
+-- Helper lemma: round_float followed by conversions gives F2R
+private theorem round_float_F2R (fexp : Int → Int) (rnd : ℝ → Int) (x : ℝ) :
+    pff_to_R beta (flocq_to_pff (round_float beta fexp rnd x)) =
+    _root_.F2R (round_float beta fexp rnd x) := by
+  unfold pff_to_R
+  rw [pff_flocq_bijection]
+
+-- Rounding Equivalence Section
+--
+-- The round_float function computes the canonical float representation of a rounded
+-- value. The round_float_correct theorem shows that F2R of this float equals the
+-- direct computation of the rounded value.
+--
+-- Note: The original pff_round_equiv claimed an equivalence with Calc.Round.round,
+-- but that function uses round_to_generic which ignores the mode parameter and always
+-- applies Ztrunc. See Pff2Flocq_changes.md for details.
+
+-- round_float returns a float whose F2R equals the scaled rounded mantissa times beta^exp
+-- This should be provable by rfl once the caches are aligned
+theorem round_float_correct (fexp : Int → Int) (rnd : ℝ → Int) (x : ℝ) :
+    _root_.F2R (round_float beta fexp rnd x) =
+    (rnd (x * (beta : ℝ) ^ (-(FloatSpec.Core.Generic_fmt.cexp beta fexp x)))) *
+    (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp x) := by
+  -- Unfold round_float and F2R - uses the new definition from Compat.lean
+  simp only [round_float, _root_.F2R, FloatSpec.Core.Defs.F2R, FlocqFloat.Fnum, FlocqFloat.Fexp]
+
 -- Pff rounding corresponds to Flocq rounding
+-- LIMITATION: This theorem cannot be proven in its current form because
+-- FloatSpec.Calc.Round.round ignores the mode parameter and always uses Ztrunc.
+-- A proper proof requires:
+-- 1. Mode-aware implementation of round_to_generic
+-- 2. Proper propagation of rounding mode through the call chain
+-- See Pff2Flocq_changes.md for details.
 theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 prec] :
   let flocq_rnd := pff_to_flocq_rnd mode
   let fexp := FLX_exp prec

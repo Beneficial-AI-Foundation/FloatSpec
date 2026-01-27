@@ -124,9 +124,15 @@ def Fabs {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta := x
 /-- Stub: Flocq opposite on floats (placeholder) -/
 def Fopp {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta := x
 
-/-- Stub: Flocq rounding to a float value (placeholder) -/
+/-- Flocq rounding to a float value
+
+    Given a rounding function rnd (like Ztrunc, Zfloor, Zceil, Znearest),
+    computes the canonical floating-point representation of the rounded value. -/
 noncomputable def round_float (beta : Int) (fexp : Int → Int) (rnd : ℝ → Int) (x : ℝ) : FlocqFloat beta :=
-  FlocqFloat.mk 0 0
+  let exp := FloatSpec.Core.Generic_fmt.cexp beta fexp x
+  let mantissa := x * (beta : ℝ) ^ (-exp)
+  let rounded_mantissa := rnd mantissa
+  FlocqFloat.mk rounded_mantissa exp
 
 /-- Helper: a trivial nearest-ties mode to satisfy signatures that use it -/
 def Znearest (_choice : Int → Bool) : FloatSpec.Calc.Round.Mode := ()
