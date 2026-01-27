@@ -265,6 +265,105 @@ theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Boo
 noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
   ()
 
+/-- ErrorBoundedIplus: The rounding error {lit}`x + y - round(x + y)` is representable in format.
+
+    This is Coq {lit}`ErrorBoundedIplus` from Pff.v lines 23077-23089.
+
+    The error from rounding the sum of two format numbers is itself in format.
+    This is a fundamental property used in error-free transformation algorithms. -/
+private lemma error_bounded_iplus (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
+    (hx : generic_format 2 (FLT_exp emin prec) x)
+    (hy : generic_format 2 (FLT_exp emin prec) y) :
+    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    let a := round_flt (x + y)
+    generic_format 2 (FLT_exp emin prec) (x + y - a) := by
+  -- The rounding error of the sum is representable.
+  -- This is a fundamental property in floating-point error analysis.
+  -- Proof requires: error representation lemmas from Flocq/Pff infrastructure
+  -- See Coq ErrorBoundedIplus theorem in Pff.v
+  sorry
+
+/-- MDekker lemma: When {lit}`|y| ≤ |x|`, the subtraction {lit}`round(x+y) - x` is exact.
+
+    This is the first key step of Dekker's Fast Two Sum.
+    In Coq Pff.v this is {lit}`MDekker` (lines 23313-23357).
+
+    The proof requires case analysis on signs and uses Sterbenz condition. -/
+private lemma mdekker_exact_subtraction (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
+    (hx : generic_format 2 (FLT_exp emin prec) x)
+    (hy : generic_format 2 (FLT_exp emin prec) y)
+    (habs : |y| ≤ |x|) :
+    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    let a := round_flt (x + y)
+    round_flt (a - x) = a - x := by
+  -- This follows from the fact that a and x satisfy Sterbenz-like conditions:
+  -- When |y| ≤ |x|, we have |a - (x+y)| ≤ |y| (error bounded by smaller operand)
+  -- This means a is between x and x + 2y, satisfying Sterbenz for subtraction from x
+  -- Requires: sterbenz lemma and plus_error bounds
+  sorry
+
+/-- MDekkerAux1 lemma: Given that {lit}`round(a - x) = a - x`, then
+    {lit}`round(y - round(a - x)) = x + y - a`.
+
+    This is Coq {lit}`MDekkerAux1` from Pff.v lines 23133-23152.
+
+    The key insight is that {lit}`y - (a - x) = x + y - a = -(a - (x+y))` which
+    is the negation of the rounding error. Since the error is in format
+    (by error representability), rounding it gives itself. -/
+private lemma mdekker_aux1 (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
+    (hx : generic_format 2 (FLT_exp emin prec) x)
+    (hy : generic_format 2 (FLT_exp emin prec) y)
+    (habs : |y| ≤ |x|)
+    (hmdekker : let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+                let a := round_flt (x + y)
+                round_flt (a - x) = a - x) :
+    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    let a := round_flt (x + y)
+    round_flt (y - round_flt (a - x)) = x + y - a := by
+  -- Using hmdekker: round(a - x) = a - x
+  -- So: y - round(a - x) = y - (a - x) = y - a + x = x + y - a
+  intro round_flt a
+  -- Step 1: Use hmdekker to substitute round(a - x) = a - x
+  have h_exact : round_flt (a - x) = a - x := hmdekker
+  -- Step 2: Rewrite the argument of round
+  have h_arg : y - round_flt (a - x) = y - (a - x) := by rw [h_exact]
+  rw [h_arg]
+  -- Step 3: Simplify y - (a - x) = x + y - a algebraically
+  have h_simp : y - (a - x) = x + y - a := by ring
+  rw [h_simp]
+  -- Step 4: The key insight is that x + y - a is the rounding error, which is in format.
+  -- By error_bounded_iplus (sorry), the error is representable.
+  -- By round_generic_identity, rounding a format number gives itself.
+  -- The proof requires:
+  -- 1. error_bounded_iplus to show x + y - a is in generic_format
+  -- 2. round_generic_identity to show round(x + y - a) = x + y - a
+  -- Both steps connect through the Hoare triple mechanism.
+  -- Since error_bounded_iplus is sorry, we leave this sorry here.
+  -- See Coq MDekkerAux1 (Pff.v lines 23133-23152) for the full proof structure.
+  sorry
+
+/-- Dekker's Fast Two Sum core lemma: For FLT format with base 2,
+    if x and y are in format with {lit}`|y| ≤ |x|`, then the compensated
+    subtraction recovers the rounding error exactly.
+
+    Specifically: {lit}`round(y - round(round(x+y) - x)) = x + y - round(x+y)`
+
+    This is the key property underlying the Fast2Sum algorithm.
+    Translated from Coq {lit}`Pff.Dekker_FTS` (Pff.v lines 23359-23368).
+
+    The proof combines {name}`mdekker_exact_subtraction` and {name}`mdekker_aux1`. -/
+private lemma dekker_fts_core (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
+    (hx : generic_format 2 (FLT_exp emin prec) x)
+    (hy : generic_format 2 (FLT_exp emin prec) y)
+    (habs : |y| ≤ |x|) :
+    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    let a := round_flt (x + y)
+    round_flt (y - round_flt (a - x)) = x + y - a := by
+  -- Step 1: Apply mdekker_exact_subtraction to get round(a - x) = a - x
+  have hmdekker := mdekker_exact_subtraction (beta := beta) emin prec x y hx hy habs
+  -- Step 2: Apply mdekker_aux1 to get the final result
+  exact mdekker_aux1 (beta := beta) emin prec x y hx hy habs hmdekker
+
 /-- Coq: `Fast2Sum_correct` — if `x` and `y` are in format and `|y| ≤ |x|`,
     then the two-sum algorithm reconstructs `x + y` exactly.
     We state it using the rounding operator from `Calc.Round` and the
@@ -278,7 +377,48 @@ theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bo
         let a := round_flt (x + y)
         let b := round_flt (y + round_flt (x - a))
         a + b = x + y⌝⦄ := by
-  sorry
+  -- Apply the Hoare triple for pure computations
+  apply Std.Do.Triple.pure
+  simp only [Fast2Sum_correct_check, PostCond.noThrow]
+  -- Extract the precondition components
+  intro ⟨hx, hy, habs⟩
+  -- Set up the round function for clarity
+  set round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () with hround
+  set a := round_flt (x + y) with ha_def
+  set b := round_flt (y + round_flt (x - a)) with hb_def
+  -- Key insight: x - a = -(a - x), so round(x - a) = -round(a - x) by symmetry of rounding
+  -- Therefore: y + round(x - a) = y - round(a - x)
+  -- Apply Dekker's FTS core lemma
+  have hdekker := dekker_fts_core (beta := beta) emin prec x y hx hy habs
+  -- Simplify using the round symmetry: round(-z) = -round(z)
+  -- For our Ztrunc-based model, this follows from Ztrunc_neg_eq
+  have hround_neg : ∀ z, round_flt (-z) = -round_flt z := by
+    intro z
+    -- Unfold round_flt through the local definition
+    simp only [hround]
+    -- Now unfold the rounding operations
+    unfold FloatSpec.Calc.Round.round FloatSpec.Core.Generic_fmt.round_to_generic
+    -- Use cexp(-z) = cexp(z) and Ztrunc(-x) = -Ztrunc(x)
+    simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag,
+               abs_neg, neg_eq_zero, neg_mul,
+               FloatSpec.Core.Generic_fmt.Ztrunc_neg_coe_real, mul_neg]
+  -- x - a = -(a - x)
+  have hxa : x - a = -(a - x) := by ring
+  -- round(x - a) = round(-(a - x)) = -round(a - x)
+  have hround_xa : round_flt (x - a) = -round_flt (a - x) := by
+    rw [hxa, hround_neg]
+  -- Therefore: y + round(x - a) = y - round(a - x)
+  have hb_eq : y + round_flt (x - a) = y - round_flt (a - x) := by
+    rw [hround_xa]; ring
+  -- Substitute into b's definition
+  rw [hb_eq] at hb_def
+  -- Now apply Dekker's core lemma: round(y - round(a - x)) = x + y - a
+  have hb_val : b = x + y - a := by
+    rw [← hdekker]
+    exact hb_def
+  -- Final calculation: a + b = a + (x + y - a) = x + y
+  calc a + b = a + (x + y - a) := by rw [hb_val]
+    _ = x + y := by ring
 
 -- Coq: `TwoSum_correct` — error-free transformation producing exact sum
 noncomputable def TwoSum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
