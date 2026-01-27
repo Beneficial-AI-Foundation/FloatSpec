@@ -860,7 +860,10 @@ theorem FoddSuc {beta : Int}
     ⦃⌜Fodd (beta:=beta) p⌝⦄
     (pure (FoddSuc_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜Feven (beta:=beta) (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
-  sorry
+  intro hodd
+  simp only [wp, PostCond.noThrow, pure, FoddSuc_check, Fodd, Feven, FNSucc,
+             FloatSpec.Core.Defs.FlocqFloat.Fnum] at *
+  exact hodd.add_one
 
 noncomputable def FevenSuc_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
