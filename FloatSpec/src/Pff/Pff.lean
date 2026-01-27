@@ -385,7 +385,7 @@ theorem EvenO :
     ⦃⌜True⌝⦄
     (pure (EvenO_check) : Id Unit)
   ⦃⇓_ => ⌜Even (0 : Int)⌝⦄ := by
-  sorry
+  intro _; simp [wp, PostCond.noThrow, pure, EvenO_check]
 
 -- Coq: `OddOpp` — odd is preserved by integer negation
 noncomputable def OddOpp_check (z : Int) : Unit :=
