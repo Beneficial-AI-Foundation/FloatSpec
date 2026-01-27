@@ -208,12 +208,58 @@ noncomputable def round_N_opp_sym_check (emin prec : Int) (choice : Int → Bool
 /-- Coq: `round_N_opp_sym` — for any `choice` satisfying the usual symmetry,
     rounding of the negation equals the negation of rounding. We phrase the
     statement using the rounding operator from Compat/Core. -/
+-- Helper lemma: Ztrunc is odd-symmetric
+private lemma Ztrunc_neg_eq (y : ℝ) : FloatSpec.Core.Raux.Ztrunc (-y) = -FloatSpec.Core.Raux.Ztrunc y := by
+  unfold FloatSpec.Core.Raux.Ztrunc
+  by_cases hy : 0 < y
+  · -- y > 0: Ztrunc(-y) uses ceil branch (since -y < 0), Ztrunc(y) uses floor branch
+    have h_neg_lt : (-y) < 0 := neg_lt_zero.mpr hy
+    have h_not_neg_pos : ¬ (0 < -y) := not_lt.mpr (le_of_lt h_neg_lt)
+    have h_not_y_neg : ¬ (y < 0) := not_lt.mpr (le_of_lt hy)
+    simp only [h_neg_lt, h_not_neg_pos, ite_false, hy, h_not_y_neg, ite_true]
+    rw [Int.ceil_neg]
+  · -- y ≤ 0: split on y < 0 or y = 0
+    push_neg at hy
+    by_cases hy0 : y < 0
+    · -- y < 0: Ztrunc(-y) uses floor branch (since -y > 0), Ztrunc(y) uses ceil branch
+      have h_neg_pos : 0 < -y := neg_pos.mpr hy0
+      have h_not_neg_lt : ¬ ((-y) < 0) := not_lt.mpr (le_of_lt h_neg_pos)
+      simp only [h_neg_pos, ite_true, hy0, h_not_neg_lt, ite_false]
+      rw [Int.floor_neg]
+    · -- y = 0
+      have hy_eq : y = 0 := le_antisymm hy (le_of_not_gt hy0)
+      simp only [hy_eq, neg_zero]
+      -- if 0 < 0 then ... else ... evaluates to the else branch
+      have h_not_lt : ¬ (0 : ℝ) < 0 := lt_irrefl 0
+      simp only [h_not_lt, ite_false, Int.floor_zero, neg_zero]
+
+-- Helper lemma: cexp(-x) = cexp(x)
+private lemma cexp_neg_eq (b emin prec : Int) (x : ℝ) :
+    FloatSpec.Core.Generic_fmt.cexp b (FLT_exp emin prec) (-x)
+    = FloatSpec.Core.Generic_fmt.cexp b (FLT_exp emin prec) x := by
+  simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, abs_neg]
+  -- The if condition uses -x = 0 iff x = 0
+  congr 1
+  simp only [neg_eq_zero]
+
 theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool) (x : ℝ) :
     ⦃⌜∀ t : Int, choice t = ! choice (-(t + 1))⌝⦄
     (pure (round_N_opp_sym_check emin prec choice x) : Id Unit)
     ⦃⇓_ => ⌜FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (-x)
             = - FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () x⌝⦄ := by
-  sorry
+  apply Std.Do.Triple.pure
+  simp only [round_N_opp_sym_check, PostCond.noThrow]
+  intro _
+  -- Unfold round and round_to_generic
+  unfold FloatSpec.Calc.Round.round FloatSpec.Core.Generic_fmt.round_to_generic
+  -- Substitute cexp(-x) = cexp(x)
+  simp only [cexp_neg_eq, neg_mul]
+  -- Apply Ztrunc(-y) = -Ztrunc(y)
+  rw [Ztrunc_neg_eq]
+  -- Goal: (-Ztrunc(x*...)) * β^e = -(Ztrunc(x*...) * β^e)
+  simp only [Int.cast_neg]
+  ring_nf
+  trivial
 
 -- Coq: `Fast2Sum_correct` — error-free transformation for x+y when |y| ≤ |x|
 noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
