@@ -446,7 +446,9 @@ theorem EvenPlus1 (n m : Int) :
     ⦃⌜Even n ∧ Even m⌝⦄
     (pure (EvenPlus1_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even (n + m)⌝⦄ := by
-  sorry
+  intro ⟨hn, hm⟩
+  simp only [wp, PostCond.noThrow, pure, EvenPlus1_check]
+  exact Even.add hn hm
 
 -- Coq: `OddPlus2` — if n is even and m is odd then n + m is odd
 noncomputable def OddPlus2_check (n m : Int) : Unit :=
