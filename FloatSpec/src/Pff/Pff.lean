@@ -360,7 +360,10 @@ theorem EvenSOddInv (n : Int) :
     ⦃⌜Even (Int.succ n)⌝⦄
     (pure (EvenSOddInv_check n) : Id Unit)
     ⦃⇓_ => ⌜Odd n⌝⦄ := by
-  sorry
+  intro h
+  simp only [wp, PostCond.noThrow, pure, EvenSOddInv_check, Int.succ]
+  have h2 : ¬Even n := Int.even_add_one.mp h
+  exact Int.not_even_iff_odd.mp h2
 
 
 
