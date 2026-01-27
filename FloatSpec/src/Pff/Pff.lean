@@ -738,14 +738,31 @@ noncomputable def firstNormalPos_eq_check {beta : Int}
 
 /-- Coq: `firstNormalPos_eq` — interpreting the `firstNormalPos` float at
     base `radix` equals the real value `(nNormMin radix precision : ℝ) * (radix : ℝ) ^ (-b.dExp)`.
-    Following the file's Hoare-triple convention; proof deferred. -/
+    Following the file's Hoare-triple convention.
+
+    Note: Requires `beta = radix` since F2R uses the type-level `beta` as base,
+    while `firstNormalPos` constructs the mantissa using `radix`. -/
 theorem firstNormalPos_eq {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    ⦃⌜True⌝⦄
+    ⦃⌜beta = radix⌝⦄
     (pure (firstNormalPos_eq_check (beta:=beta) radix b precision) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b precision)
             = (nNormMin radix precision : ℝ) * (radix : ℝ) ^ (-b.dExp)⌝⦄ := by
-  sorry
+  intro hBetaEqRadix
+  simp only [wp, PostCond.noThrow, pure, firstNormalPos_eq_check,
+             _root_.F2R, firstNormalPos, nNormMin,
+             FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp,
+             FloatSpec.Core.Defs.F2R]
+  -- The goal is: (radix ^ (precision - 1) : ℝ) * (beta : ℝ) ^ (-b.dExp) =
+  --              (radix ^ (precision - 1) : ℝ) * (radix : ℝ) ^ (-b.dExp)
+  -- Since beta = radix (from hBetaEqRadix which is ⌜beta = radix⌝.down), this follows
+  -- Extract the underlying Int equality from the lifted proposition
+  have hEq : beta = radix := hBetaEqRadix
+  -- Convert Int equality to Real equality using congruence
+  have hEqReal : (beta : ℝ) = (radix : ℝ) := congrArg (Int.cast) hEq
+  rw [hEqReal]
+  -- Goal is now reflexive: a = a
+  rfl
 
 -- ---------------------------------------------------------------------------
 -- Closest/Normal placeholders (from Pff.v sections)
