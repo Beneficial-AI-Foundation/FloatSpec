@@ -436,7 +436,7 @@ theorem EvenNOdd (n : Int) :
     ⦃⌜Even n⌝⦄
     (pure (EvenNOdd_check n) : Id Unit)
     ⦃⇓_ => ⌜¬ Odd n⌝⦄ := by
-  sorry
+  intro h; simp only [wp, PostCond.noThrow, pure, EvenNOdd_check]; exact Int.not_odd_iff_even.mpr h
 
 -- Coq: `EvenPlus1` — if n and m are even then n + m is even
 noncomputable def EvenPlus1_check (n m : Int) : Unit :=
