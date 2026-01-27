@@ -346,7 +346,11 @@ theorem OddSEvenInv (n : Int) :
     ⦃⌜Odd (Int.succ n)⌝⦄
     (pure (OddSEvenInv_check n) : Id Unit)
     ⦃⇓_ => ⌜Even n⌝⦄ := by
-  sorry
+  intro h
+  simp only [wp, PostCond.noThrow, pure, OddSEvenInv_check, Int.succ]
+  have h2 : ¬Even (n + 1) := Int.not_even_iff_odd.mpr h
+  have h3 : ¬¬Even n := mt Int.even_add_one.mpr h2
+  exact not_not.mp h3
 
 -- Coq: `EvenSOddInv` — if succ n is even then n is odd
 noncomputable def EvenSOddInv_check (n : Int) : Unit :=
