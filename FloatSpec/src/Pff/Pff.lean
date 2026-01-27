@@ -912,7 +912,8 @@ theorem FcanonicBound {beta : Int}
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
     (pure (FcanonicBound_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, FcanonicBound_check, ULift.down_up, Fbounded] at *
 
 noncomputable def FcanonicFopp_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
