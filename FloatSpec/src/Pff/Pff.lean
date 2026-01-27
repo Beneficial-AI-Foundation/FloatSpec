@@ -500,7 +500,9 @@ theorem EvenMultInv (n m : Int) :
     ⦃⌜Even (n * m) ∧ Odd n⌝⦄
     (pure (EvenMultInv_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even m⌝⦄ := by
-  sorry
+  intro ⟨hev, hodd⟩
+  simp only [wp, PostCond.noThrow, pure, EvenMultInv_check]
+  exact (Int.even_mul.mp hev).resolve_left (Int.not_even_iff_odd.mpr hodd)
 
 -- Integer power on Int for natural exponent (compat with Coq Zpower_nat)
 noncomputable def Zpower_nat_int (n : Int) (k : Nat) : Int := n ^ k
