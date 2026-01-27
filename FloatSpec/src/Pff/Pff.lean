@@ -405,7 +405,7 @@ theorem EvenOpp (z : Int) :
     ⦃⌜Even z⌝⦄
     (pure (EvenOpp_check z) : Id Unit)
     ⦃⇓_ => ⌜Even (-z)⌝⦄ := by
-  sorry
+  intro h; simp only [wp, PostCond.noThrow, pure, EvenOpp_check]; exact Even.neg h
 
 -- Coq: `OddEvenDec` — for any integer, it is either odd or even
 noncomputable def OddEvenDec_check (n : Int) : Unit :=
