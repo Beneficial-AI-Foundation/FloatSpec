@@ -470,7 +470,7 @@ theorem EvenMult1 (n m : Int) :
     ⦃⌜Even n⌝⦄
     (pure (EvenMult1_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even (n * m)⌝⦄ := by
-  sorry
+  intro hn; simp only [wp, PostCond.noThrow, pure, EvenMult1_check]; exact hn.mul_right m
 
 -- Coq: `EvenMult2` — if m is even then n*m is even
 noncomputable def EvenMult2_check (n m : Int) : Unit :=
