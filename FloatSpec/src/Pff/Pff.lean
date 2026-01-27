@@ -309,7 +309,10 @@ theorem exp_monotone (x y : ℝ) :
     ⦃⌜x ≤ y⌝⦄
     (pure (exp_monotone_check x y) : Id Unit)
     ⦃⇓_ => ⌜Real.exp x ≤ Real.exp y⌝⦄ := by
-  sorry
+  intro h
+  simp only [wp, PostCond.noThrow, pure, exp_monotone_check]
+  rw [Real.exp_le_exp]
+  exact h
 
 -- Coq: `OddSEven` — if n is odd then succ n is even
 noncomputable def OddSEven_check (n : Int) : Unit :=
