@@ -158,21 +158,26 @@ theorem canonical_canonical_mantissa_bsn
           ((if sx = true then -((mx : Int) : ℝ) else ((mx : Int) : ℝ)) * ((2 : Int) : ℝ) ^ ex)) := by
       rw [hmag_full]
 
--- Coq: canonical_bounded — canonical mantissa implies boundedness of (mx, ex)
+-- Coq: canonical_bounded — boundedness implies canonical format
+-- NOTE: In Coq's SpecFloat, bounded = canonical_mantissa && (ex ≤ emax - prec),
+-- so bounded implies canonical_mantissa. However, in our Lean implementation,
+-- bounded checks mx < 2^prec, emin ≤ ex, ex ≤ emax - prec, which does NOT include
+-- canonical_mantissa. So this theorem requires BOTH bounded AND canonical_mantissa
+-- as hypotheses, unlike Coq where bounded alone suffices.
 def canonical_bounded_check (sx : Bool) (mx : Nat) (ex : Int) : Unit :=
   ()
 
 theorem canonical_bounded
   (sx : Bool) (mx : Nat) (ex : Int)
-  (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
+  (hmx_pos : 0 < mx)
+  (h_bounded : bounded (prec:=prec) (emax:=emax) mx ex = true)
+  (h_canonical : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
   ⦃⌜True⌝⦄
   (pure (canonical_bounded_check sx mx ex) : Id Unit)
-  ⦃⇓_ => ⌜bounded (prec:=prec) (emax:=emax) mx ex = true⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure]
-  -- bounded is currently a placeholder that always returns true
-  unfold bounded
-  rfl
+  ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
+            (FloatSpec.Core.Defs.FlocqFloat.mk (if sx then -(mx : Int) else (mx : Int)) ex)⌝⦄ := by
+  -- Reuse canonical_canonical_mantissa_bsn which proves the same goal
+  exact canonical_canonical_mantissa_bsn (prec:=prec) (emax:=emax) sx mx ex hmx_pos h_canonical
 
 -- Coq: B2SF_SF2B — standard view after SF2B is identity
 def B2SF_SF2B_check (x : StandardFloat) : StandardFloat :=
