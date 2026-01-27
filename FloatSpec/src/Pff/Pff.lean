@@ -296,7 +296,10 @@ theorem exp_le_inv (x y : ℝ) :
     ⦃⌜Real.exp x ≤ Real.exp y⌝⦄
     (pure (exp_le_inv_check x y) : Id Unit)
     ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
-  sorry
+  intro h
+  simp only [wp, PostCond.noThrow, pure, exp_le_inv_check]
+  rw [Real.exp_le_exp] at h
+  exact h
 
 -- Coq: `exp_monotone` — if x ≤ y then exp x ≤ exp y
 noncomputable def exp_monotone_check (x y : ℝ) : Unit :=
