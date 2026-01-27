@@ -47,9 +47,56 @@ theorem pff_flocq_bijection (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     · -- Fexp part is trivially equal
       trivial
 
-theorem flocq_pff_bijection (f : PffFloat) :
+/-- A well-formed PffFloat has non-negative mantissa and consistent sign:
+    - mantissa ≥ 0 (sign-magnitude representation uses absolute value)
+    - if sign is true (negative), mantissa must be positive (no negative zero ambiguity) -/
+def PffFloat.wellFormed (f : PffFloat) : Prop :=
+  f.mantissa ≥ 0 ∧ (f.sign = true → f.mantissa > 0)
+
+theorem flocq_pff_bijection (f : PffFloat) (hwf : f.wellFormed) :
   flocq_to_pff (pff_to_flocq beta f) = f := by
-  sorry
+  -- Extract wellFormed conditions
+  obtain ⟨h_mant_nonneg, h_sign_pos⟩ := hwf
+  -- Unfold the conversion functions
+  simp only [flocq_to_pff, pff_to_flocq]
+  -- We need to show three field equalities
+  cases f with
+  | mk mantissa exponent sign =>
+    simp only [PffFloat.mk.injEq]
+    -- Goal: ↑(if sign = true then -mantissa else mantissa).natAbs = mantissa ∧
+    --       True ∧ decide ((if sign = true then -mantissa else mantissa) < 0) = sign
+    -- Simplify the hypotheses
+    simp only [PffFloat.mantissa, PffFloat.sign] at h_mant_nonneg h_sign_pos
+    refine ⟨?mant, trivial, ?sign⟩
+    case mant =>
+      -- mantissa field: Int.natAbs (if sign then -mantissa else mantissa) = mantissa
+      cases hsign : sign with
+      | true =>
+        simp only [↓reduceIte]
+        -- -mantissa, and we need Int.natAbs (-mantissa) = mantissa
+        -- Since mantissa > 0 (from h_sign_pos), -mantissa < 0
+        have h_pos : mantissa > 0 := h_sign_pos hsign
+        rw [Int.natAbs_neg]
+        exact Int.natAbs_of_nonneg (le_of_lt h_pos)
+      | false =>
+        -- if false = true then -mantissa else mantissa simplifies to mantissa
+        simp only [Bool.false_eq_true, ↓reduceIte]
+        -- mantissa ≥ 0, so Int.natAbs mantissa = mantissa
+        exact Int.natAbs_of_nonneg h_mant_nonneg
+    case sign =>
+      -- sign field: decide ((if sign then -mantissa else mantissa) < 0) = sign
+      cases hsign : sign with
+      | true =>
+        simp only [↓reduceIte]
+        -- Need: decide (-mantissa < 0) = true
+        have h_pos : mantissa > 0 := h_sign_pos hsign
+        simp only [Left.neg_neg_iff, h_pos, decide_true]
+      | false =>
+        -- if false = true then -mantissa else mantissa simplifies to mantissa
+        simp only [Bool.false_eq_true, ↓reduceIte]
+        -- Need: decide (mantissa < 0) = false
+        have h_nn : ¬(mantissa < 0) := not_lt.mpr h_mant_nonneg
+        simp only [h_nn, decide_false]
 
 -- Pff operations match Flocq operations
 theorem pff_add_equiv (x y : PffFloat) :
