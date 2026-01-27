@@ -192,7 +192,7 @@ theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 p
 -- Error bounds are preserved
 theorem pff_error_bound_equiv (prec : Int) :
   pff_error_bound prec = (2 : ℝ)^(-prec) := by
-  sorry
+  rfl
 
 /-!
 Missing theorems imported from Coq Pff2Flocq.v
