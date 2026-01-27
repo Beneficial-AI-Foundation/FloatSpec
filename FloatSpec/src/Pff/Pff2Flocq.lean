@@ -359,6 +359,33 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
     --
     -- These lemmas exist in the codebase but with incomplete proofs.
     -- See Plus_error.lean:plus_error and Coq errorBoundedPlus.
+    --
+    -- PROOF STRATEGY (following Coq errorBoundedPlus):
+    --
+    -- 1. Express x and y at common exponent e_min = min(cexp x, cexp y):
+    --    x = Mx * 2^e_min where Mx = mantissa(x) * 2^(cexp(x) - e_min) is integer
+    --    y = My * 2^e_min where My = mantissa(y) * 2^(cexp(y) - e_min) is integer
+    --    So x + y = M * 2^e_min where M = Mx + My is integer
+    --
+    -- 2. The rounded value a = round(x+y):
+    --    a = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r where e_r = cexp(x+y) ≥ e_min
+    --    Let d = e_r - e_min ≥ 0, then:
+    --    a = Ztrunc(M / 2^d) * 2^d * 2^e_min
+    --
+    -- 3. The error:
+    --    error = a - (x+y) = (Ztrunc(M / 2^d) * 2^d - M) * 2^e_min = R * 2^e_min
+    --    where R = Ztrunc(M / 2^d) * 2^d - M is an integer
+    --
+    -- 4. Apply generic_format_F2R:
+    --    error = F2R(R, e_min) is in format if cexp(error) ≤ e_min
+    --    This follows from |error| ≤ min(|x|, |y|) and cexp monotonicity
+    --
+    -- The full formalization requires:
+    -- - ex_shift lemma (Plus_error.lean - has sorry)
+    -- - Proper cexp monotonicity analysis
+    --
+    -- These are mathematically proven in Coq but not yet fully translated.
+    -- The core theorem is valid (Coq proof exists).
     sorry
 
 /-- ErrorBoundedIplus: The rounding error {lit}`x + y - round(x + y)` is representable in format.
