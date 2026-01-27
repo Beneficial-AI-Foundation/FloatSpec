@@ -395,7 +395,7 @@ theorem OddOpp (z : Int) :
     ⦃⌜Odd z⌝⦄
     (pure (OddOpp_check z) : Id Unit)
     ⦃⇓_ => ⌜Odd (-z)⌝⦄ := by
-  sorry
+  intro h; simp only [wp, PostCond.noThrow, pure, OddOpp_check]; exact Odd.neg h
 
 -- Coq: `EvenOpp` — even is preserved by integer negation
 noncomputable def EvenOpp_check (z : Int) : Unit :=
