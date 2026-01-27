@@ -527,7 +527,9 @@ theorem OddExp (n : Int) (m : Nat) :
     ⦃⌜Odd n⌝⦄
     (pure (OddExp_check n m) : Id Unit)
     ⦃⇓_ => ⌜Odd (Zpower_nat_int n m)⌝⦄ := by
-  sorry
+  intro hodd
+  simp [wp, PostCond.noThrow, pure, OddExp_check, Zpower_nat_int, ULift.down_up] at hodd ⊢
+  exact hodd.pow
 
 -- Float-level parity wrappers and lemmas (Lean skeletons mirroring Coq)
 def Feven {beta : Int}
