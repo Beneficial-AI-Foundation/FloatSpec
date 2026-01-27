@@ -4633,8 +4633,9 @@ theorem Fabs_Fzero {beta : Int}
   sorry
 
 -- Compatibility operations
-def pff_add (x y : PffFloat) : PffFloat := by
-  sorry
+-- pff_add: Add two PffFloats by converting through FlocqFloat and using Calc.Operations.Fplus
+def pff_add (beta : Int) (x y : PffFloat) : PffFloat :=
+  flocq_to_pff (FloatSpec.Calc.Operations.Fplus beta (pff_to_flocq beta x) (pff_to_flocq beta y))
 
 def pff_mul (x y : PffFloat) : PffFloat := by
   sorry

@@ -28,14 +28,40 @@ theorem pff_flocq_equiv (f : PffFloat) :
   pff_to_R beta f = _root_.F2R (pff_to_flocq beta f) := by
   rfl
 
--- Pff operations match Flocq operations
-theorem pff_add_equiv (x y : PffFloat) :
-  pff_to_R beta (pff_add x y) = 
-  _root_.F2R (Fplus (pff_to_flocq beta x) (pff_to_flocq beta y)) := by
+-- Conversion is bijective for valid inputs
+theorem pff_flocq_bijection (f : FloatSpec.Core.Defs.FlocqFloat beta) :
+  pff_to_flocq beta (flocq_to_pff f) = f := by
+  cases f with
+  | mk Fnum Fexp =>
+    simp only [flocq_to_pff, pff_to_flocq, FloatSpec.Core.Defs.FlocqFloat.mk.injEq]
+    constructor
+    · -- Fnum part
+      by_cases h : Fnum < 0
+      · -- Fnum < 0 case: sign = true, so we negate |Fnum| = -Fnum back to Fnum
+        simp only [h, decide_true, ↓reduceIte]
+        omega
+      · -- Fnum ≥ 0 case: sign = false, so |Fnum| = Fnum
+        simp only [h, decide_false, ↓reduceIte]
+        push_neg at h
+        exact Int.natAbs_of_nonneg h
+    · -- Fexp part is trivially equal
+      trivial
+
+theorem flocq_pff_bijection (f : PffFloat) :
+  flocq_to_pff (pff_to_flocq beta f) = f := by
   sorry
 
+-- Pff operations match Flocq operations
+theorem pff_add_equiv (x y : PffFloat) :
+  pff_to_R beta (pff_add beta x y) =
+  _root_.F2R (FloatSpec.Calc.Operations.Fplus beta (pff_to_flocq beta x) (pff_to_flocq beta y)) := by
+  -- Unfold pff_to_R and pff_add
+  unfold pff_to_R pff_add
+  -- Use the bijection lemma: pff_to_flocq (flocq_to_pff f) = f
+  rw [pff_flocq_bijection]
+
 theorem pff_mul_equiv (x y : PffFloat) :
-  pff_to_R beta (pff_mul x y) = 
+  pff_to_R beta (pff_mul x y) =
   _root_.F2R (Fmult (pff_to_flocq beta x) (pff_to_flocq beta y)) := by
   sorry
 
@@ -43,22 +69,13 @@ theorem pff_mul_equiv (x y : PffFloat) :
 theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 prec] :
   let flocq_rnd := pff_to_flocq_rnd mode
   let fexp := FLX_exp prec
-  pff_to_R beta (flocq_to_pff (round_float beta fexp flocq_rnd x)) = 
+  pff_to_R beta (flocq_to_pff (round_float beta fexp flocq_rnd x)) =
   FloatSpec.Calc.Round.round beta fexp () x := by
   sorry
 
 -- Error bounds are preserved
 theorem pff_error_bound_equiv (prec : Int) :
   pff_error_bound prec = (2 : ℝ)^(-prec) := by
-  sorry
-
--- Conversion is bijective for valid inputs
-theorem pff_flocq_bijection (f : FloatSpec.Core.Defs.FlocqFloat beta) :
-  pff_to_flocq beta (flocq_to_pff f) = f := by
-  sorry
-
-theorem flocq_pff_bijection (f : PffFloat) :
-  flocq_to_pff (pff_to_flocq beta f) = f := by
   sorry
 
 /-!
