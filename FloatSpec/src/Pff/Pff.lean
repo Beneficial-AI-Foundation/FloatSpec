@@ -877,7 +877,10 @@ theorem FevenSuc {beta : Int}
     ⦃⌜Feven (beta:=beta) p⌝⦄
     (pure (FevenSuc_check (beta:=beta) b radix precision p) : Id Unit)
     ⦃⇓_ => ⌜Fodd (beta:=beta) (FNSucc (beta:=beta) b radix precision p)⌝⦄ := by
-  sorry
+  intro heven
+  simp only [wp, PostCond.noThrow, pure, FevenSuc_check, Fodd, Feven, FNSucc,
+             FloatSpec.Core.Defs.FlocqFloat.Fnum] at *
+  exact heven.add_one
 
 -- EvenClosest: closest rounding with tie-breaking toward even (or uniqueness)
 def EvenClosest {beta : Int}
