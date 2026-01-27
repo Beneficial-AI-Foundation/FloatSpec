@@ -426,7 +426,7 @@ theorem OddNEven (n : Int) :
     ⦃⌜Odd n⌝⦄
     (pure (OddNEven_check n) : Id Unit)
     ⦃⇓_ => ⌜¬ Even n⌝⦄ := by
-  sorry
+  intro h; simp only [wp, PostCond.noThrow, pure, OddNEven_check]; exact Int.not_even_iff_odd.mpr h
 
 -- Coq: `EvenNOdd` — even numbers are not odd
 noncomputable def EvenNOdd_check (n : Int) : Unit :=
