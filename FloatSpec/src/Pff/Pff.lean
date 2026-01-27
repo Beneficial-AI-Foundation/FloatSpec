@@ -549,7 +549,9 @@ theorem FevenOrFodd {beta : Int}
     ⦃⌜True⌝⦄
     (pure (FevenOrFodd_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜Feven (beta:=beta) p ∨ Fodd (beta:=beta) p⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, FevenOrFodd_check, Feven, Fodd]
+  exact Int.even_or_odd p.Fnum
 
 -- ---------------------------------------------------------------------------
 -- Rounded-mode predicate framework (Coq FRound section, minimized shell)
