@@ -691,16 +691,36 @@ noncomputable def RleBoundRoundr_check {beta : Int}
   ()
 
 /-- Coq: `RleBoundRoundr` — if `P` forms a rounded mode and `r ≤ _root_.F2R p`,
-    any `q` produced by rounding `r` also satisfies `_root_.F2R q ≤ _root_.F2R p`. -/
+    any `q` produced by rounding `r` also satisfies `_root_.F2R q ≤ _root_.F2R p`.
+
+    Note: We use `RoundedModeP_full` which includes the float-specific
+    monotonicity and projector properties needed for this proof (matching RleBoundRoundl). -/
 theorem RleBoundRoundr {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧
+    ⦃⌜RoundedModeP_full (beta:=beta) b P ∧ Fbounded (beta:=beta) b p ∧
         (r ≤ _root_.F2R (beta:=beta) p) ∧ P r q⌝⦄
     (pure (RleBoundRoundr_check (beta:=beta) b radix P p q r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) q ≤ _root_.F2R (beta:=beta) p⌝⦄ := by
-  sorry
+  intro ⟨hRoundedMode, hBounded, hLeq, hPrq⟩
+  simp only [wp, PostCond.noThrow, pure, RleBoundRoundr_check]
+  -- Unpack RoundedModeP_full: TotalP P ∧ CompatibleP P ∧ MonotoneP_float P ∧
+  --                           ProjectorP_float b P ∧ ProjectorEqP_float b P
+  obtain ⟨_, _, hMono, hProj, hProjEq⟩ := hRoundedMode
+  -- Case split: either r < F2R p or r = F2R p
+  rcases hLeq.lt_or_eq with hLt | hEq
+  · -- Case: r < F2R p
+    -- By ProjectorP_float: P (F2R p) p (bounded floats round to themselves)
+    have hPpp : P (_root_.F2R p) p := hProj p hBounded
+    -- By MonotoneP_float: if r < F2R p and P r q and P (F2R p) p, then F2R q ≤ F2R p
+    exact hMono r (_root_.F2R p) q p hLt hPrq hPpp
+  · -- Case: r = F2R p
+    -- By ProjectorEqP_float: if Fbounded p and P (F2R p) q, then F2R p = F2R q
+    -- Since r = F2R p, we have P r q = P (F2R p) q
+    have hP_F2R_q : P (_root_.F2R p) q := by rw [← hEq]; exact hPrq
+    have hEqReal : _root_.F2R p = _root_.F2R q := hProjEq p q hBounded hP_F2R_q
+    exact le_of_eq hEqReal.symm
 
 /-- Minimal normal mantissa (`nNormMin`) defined using a positive-exponent power. -/
 noncomputable def nNormMin (radix : Int) (precision : Nat) : Int :=
