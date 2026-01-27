@@ -490,7 +490,7 @@ theorem OddMult (n m : Int) :
     ⦃⌜Odd n ∧ Odd m⌝⦄
     (pure (OddMult_check n m) : Id Unit)
     ⦃⇓_ => ⌜Odd (n * m)⌝⦄ := by
-  sorry
+  intro ⟨hn, hm⟩; simp only [wp, PostCond.noThrow, pure, OddMult_check]; exact hn.mul hm
 
 -- Coq: `EvenMultInv` — if n*m is even and n is odd then m is even
 noncomputable def EvenMultInv_check (n m : Int) : Unit :=
