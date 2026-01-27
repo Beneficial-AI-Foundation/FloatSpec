@@ -38,8 +38,10 @@ theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 p
 1. Implemented `pff_to_flocq_rnd` in Pff.lean (was previously `sorry`)
 2. Implemented `round_float` in Compat.lean (was previously a stub returning 0)
 3. Added helper lemma `round_float_F2R`
-4. Added `pff_round_equiv_RZ` (currently sorry due to build issues)
-5. Added detailed comments explaining the limitation
+4. **Added and PROVED `pff_round_equiv_RZ`** (2025-01-28): Fully proved theorem for RZ mode
+   - Uses bijection `pff_flocq_bijection` and unfolds definitions
+   - Proof works because both sides use `Ztrunc`
+5. Kept `pff_round_equiv` as sorry stub with documentation explaining the limitation
 
 ## Files Modified
 

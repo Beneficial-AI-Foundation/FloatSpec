@@ -142,17 +142,39 @@ theorem round_float_correct (fexp : Int → Int) (rnd : ℝ → Int) (x : ℝ) :
   simp only [round_float, _root_.F2R, FloatSpec.Core.Defs.F2R, FlocqFloat.Fnum, FlocqFloat.Fexp]
 
 -- Pff rounding corresponds to Flocq rounding
--- LIMITATION: This theorem cannot be proven in its current form because
--- FloatSpec.Calc.Round.round ignores the mode parameter and always uses Ztrunc.
--- A proper proof requires:
--- 1. Mode-aware implementation of round_to_generic
--- 2. Proper propagation of rounding mode through the call chain
+-- LIMITATION: The current FloatSpec.Calc.Round.round ignores the mode parameter
+-- and always uses Ztrunc. Therefore, we only prove equivalence for the RZ
+-- (round toward zero) mode, which matches the Ztrunc-based implementation.
+-- For other modes, a proper proof requires mode-aware round_to_generic.
 -- See Pff2Flocq_changes.md for details.
+theorem pff_round_equiv_RZ (x : ℝ) (prec : Int) [Prec_gt_0 prec] :
+  let flocq_rnd := pff_to_flocq_rnd PffRounding.RZ
+  let fexp := FLX_exp prec
+  pff_to_R beta (flocq_to_pff (round_float beta fexp flocq_rnd x)) =
+  FloatSpec.Calc.Round.round beta fexp () x := by
+  -- Both sides compute Ztrunc(x * beta^(-cexp)) * beta^cexp
+  -- LHS: pff_to_R (flocq_to_pff (round_float ...)) = F2R (round_float ...) by bijection
+  -- RHS: round = round_to_generic which uses Ztrunc
+  simp only []
+  -- Unfold pff_to_R and use the bijection
+  unfold pff_to_R
+  rw [pff_flocq_bijection]
+  -- Now both sides are in terms of F2R (round_float ...) and round_to_generic
+  -- Unfold definitions to show equality
+  unfold FloatSpec.Calc.Round.round FloatSpec.Core.Generic_fmt.round_to_generic
+  unfold round_float _root_.F2R FloatSpec.Core.Defs.F2R
+  -- The flocq_rnd for RZ mode is Ztrunc
+  simp only [pff_to_flocq_rnd, FlocqFloat.Fnum, FlocqFloat.Fexp, Id.run]
+
+-- Original general theorem (cannot be proven without mode-aware rounding)
+-- Keeping as a sorry stub for documentation purposes
 theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 prec] :
   let flocq_rnd := pff_to_flocq_rnd mode
   let fexp := FLX_exp prec
   pff_to_R beta (flocq_to_pff (round_float beta fexp flocq_rnd x)) =
   FloatSpec.Calc.Round.round beta fexp () x := by
+  -- This cannot be proven in full generality because round_to_generic always uses Ztrunc
+  -- while pff_to_flocq_rnd may use different rounding modes (Zceil, Zfloor, Znearest)
   sorry
 
 -- Error bounds are preserved
