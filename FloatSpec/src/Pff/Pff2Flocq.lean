@@ -108,9 +108,12 @@ theorem pff_add_equiv (x y : PffFloat) :
   rw [pff_flocq_bijection]
 
 theorem pff_mul_equiv (x y : PffFloat) :
-  pff_to_R beta (pff_mul x y) =
-  _root_.F2R (Fmult (pff_to_flocq beta x) (pff_to_flocq beta y)) := by
-  sorry
+  pff_to_R beta (pff_mul beta x y) =
+  _root_.F2R (FloatSpec.Calc.Operations.Fmult beta (pff_to_flocq beta x) (pff_to_flocq beta y)) := by
+  -- Unfold pff_to_R and pff_mul
+  unfold pff_to_R pff_mul
+  -- Use the bijection lemma: pff_to_flocq (flocq_to_pff f) = f
+  rw [pff_flocq_bijection]
 
 -- Pff rounding corresponds to Flocq rounding
 theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 prec] :

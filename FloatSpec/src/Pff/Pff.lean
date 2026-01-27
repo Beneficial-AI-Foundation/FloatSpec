@@ -4637,8 +4637,8 @@ theorem Fabs_Fzero {beta : Int}
 def pff_add (beta : Int) (x y : PffFloat) : PffFloat :=
   flocq_to_pff (FloatSpec.Calc.Operations.Fplus beta (pff_to_flocq beta x) (pff_to_flocq beta y))
 
-def pff_mul (x y : PffFloat) : PffFloat := by
-  sorry
+def pff_mul (beta : Int) (x y : PffFloat) : PffFloat :=
+  flocq_to_pff (FloatSpec.Calc.Operations.Fmult beta (pff_to_flocq beta x) (pff_to_flocq beta y))
 
 -- Error bounds compatibility
 noncomputable def pff_error_bound (prec : Int) : ℝ :=
