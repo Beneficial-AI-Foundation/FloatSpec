@@ -375,7 +375,7 @@ theorem Odd1 :
     ⦃⌜True⌝⦄
     (pure Odd1_check : Id Unit)
     ⦃⇓_ => ⌜Odd (1 : Int)⌝⦄ := by
-  sorry
+  intro _; simp [wp, PostCond.noThrow, pure, Odd1_check]
 
 -- Coq: `EvenO` — zero is even (integer parity)
 noncomputable def EvenO_check : Unit :=
