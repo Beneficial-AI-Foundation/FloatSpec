@@ -415,7 +415,8 @@ theorem OddEvenDec (n : Int) :
     ⦃⌜True⌝⦄
     (pure (OddEvenDec_check n) : Id Unit)
     ⦃⇓_ => ⌜Odd n ∨ Even n⌝⦄ := by
-  sorry
+  intro _; simp only [wp, PostCond.noThrow, pure, OddEvenDec_check]
+  exact (Int.even_or_odd n).symm
 
 -- Coq: `OddNEven` — odd numbers are not even
 noncomputable def OddNEven_check (n : Int) : Unit :=
