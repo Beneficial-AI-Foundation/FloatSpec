@@ -258,12 +258,16 @@ theorem IRNDD_projector (z : Int) :
 noncomputable def ln_radix_pos_check (radix : ℝ) : Unit :=
   ()
 
-/-- Coq: `ln_radix_pos` — 0 < ln radix. -/
+/-- Coq: `ln_radix_pos` — 0 < ln radix. Requires radix > 1. -/
 theorem ln_radix_pos (radix : ℝ) :
-    ⦃⌜True⌝⦄
+    ⦃⌜1 < radix⌝⦄
     (pure (ln_radix_pos_check radix) : Id Unit)
     ⦃⇓_ => ⌜0 < Real.log radix⌝⦄ := by
-  sorry
+  intro hradix
+  simp only [wp, PostCond.noThrow, pure, ln_radix_pos_check]
+  -- Goal: 0 < Real.log radix
+  -- Since radix > 1, log radix > log 1 = 0
+  exact Real.log_pos hradix
 
 -- Coq: `exp_ln_powerRZ` — exp (ln u * v) = u^v for integer u>0, v:Z
 noncomputable def exp_ln_powerRZ_check (u v : Int) : Unit :=
