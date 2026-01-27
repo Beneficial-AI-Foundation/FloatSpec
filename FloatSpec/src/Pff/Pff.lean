@@ -515,7 +515,9 @@ theorem EvenExp (n : Int) (m : Nat) :
     ⦃⌜Even n⌝⦄
     (pure (EvenExp_check n m) : Id Unit)
     ⦃⇓_ => ⌜Even (Zpower_nat_int n (Nat.succ m))⌝⦄ := by
-  sorry
+  intro hev
+  simp only [wp, PostCond.noThrow, pure, EvenExp_check, Zpower_nat_int]
+  exact hev.pow_of_ne_zero (Nat.succ_ne_zero m)
 
 -- Coq: `OddExp` — if n is odd then n^m is odd (nat exponent)
 noncomputable def OddExp_check (n : Int) (m : Nat) : Unit :=
