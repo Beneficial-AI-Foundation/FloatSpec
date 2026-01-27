@@ -26,7 +26,7 @@ noncomputable def pff_to_R (f : PffFloat) : ℝ :=
 -- Conversion preserves value
 theorem pff_flocq_equiv (f : PffFloat) :
   pff_to_R beta f = _root_.F2R (pff_to_flocq beta f) := by
-  sorry
+  rfl
 
 -- Pff operations match Flocq operations
 theorem pff_add_equiv (x y : PffFloat) :
