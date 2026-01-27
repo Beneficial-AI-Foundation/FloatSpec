@@ -567,7 +567,19 @@ def TotalP {α : Type} (P : ℝ → α → Prop) : Prop :=
 def CompatibleP {α : Type} (P : ℝ → α → Prop) : Prop :=
   ∀ r1 r2 : ℝ, ∀ p q : α, P r1 p → r1 = r2 → p = q → P r2 q
 
--- Monotonicity placeholder (kept abstract for now)
+-- Monotonicity: if p < q (reals) and P p p', P q q' then F2R p' ≤ F2R q'.
+-- For a generic type α, we require a coercion to ℝ.
+-- Coq definition: ∀ (p q : R) (p' q' : float), p < q → P p p' → P q q' → p' ≤ q'
+-- where p' ≤ q' is interpreted as FtoR radix p' ≤ FtoR radix q'.
+-- For genericity, we parameterize over a function toReal : α → ℝ.
+def MonotoneP_with {α : Type} (toReal : α → ℝ) (P : ℝ → α → Prop) : Prop :=
+  ∀ (p q : ℝ) (p' q' : α), p < q → P p p' → P q q' → toReal p' ≤ toReal q'
+
+-- For FlocqFloat, the natural toReal is F2R
+def MonotoneP_float {beta : Int} (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
+  MonotoneP_with (_root_.F2R (beta := beta)) P
+
+-- Backward-compatible placeholder for generic α (kept abstract for now)
 def MonotoneP {α : Type} (P : ℝ → α → Prop) : Prop := True
 
 -- Min/Max disjunction placeholder (kept abstract for now)
@@ -604,6 +616,27 @@ def Fbounded {beta : Int}
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
 
 -- ---------------------------------------------------------------------------
+-- Float-specific rounding properties (matching Coq Pff semantics)
+
+-- Projector property for floats: bounded floats round to themselves
+def ProjectorP_float {beta : Int} (b : Fbound_skel)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
+  ∀ p : FloatSpec.Core.Defs.FlocqFloat beta,
+    Fbounded b p → P (_root_.F2R p) p
+
+-- Projector equality: if P (F2R p) q for bounded p, then F2R p = F2R q
+def ProjectorEqP_float {beta : Int} (b : Fbound_skel)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
+  ∀ p q : FloatSpec.Core.Defs.FlocqFloat beta,
+    Fbounded b p → P (_root_.F2R p) q → _root_.F2R p = _root_.F2R q
+
+-- Full rounded-mode package for floats with all required properties
+def RoundedModeP_full {beta : Int} (b : Fbound_skel)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
+  TotalP P ∧ CompatibleP P ∧ MonotoneP_float P ∧
+  ProjectorP_float b P ∧ ProjectorEqP_float b P
+
+-- ---------------------------------------------------------------------------
 -- Ulp placeholder (Coq-style `Fulp` on floats)
 
 /-- Coq compatibility: abstract ulp on a float. In detailed developments,
@@ -620,16 +653,36 @@ noncomputable def RleBoundRoundl_check {beta : Int}
   ()
 
 /-- Coq: `RleBoundRoundl` — if `P` forms a rounded mode and `p ≤ r`, then
-    any `q` produced by rounding `r` also satisfies `p ≤ q`. -/
+    any `q` produced by rounding `r` also satisfies `p ≤ q`.
+
+    Note: We use `RoundedModeP_full` which includes the float-specific
+    monotonicity and projector properties needed for this proof. -/
 theorem RleBoundRoundl {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧
+    ⦃⌜RoundedModeP_full (beta:=beta) b P ∧ Fbounded (beta:=beta) b p ∧
         (_root_.F2R (beta:=beta) p ≤ r) ∧ P r q⌝⦄
     (pure (RleBoundRoundl_check (beta:=beta) b radix P p q r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p ≤ _root_.F2R (beta:=beta) q⌝⦄ := by
-  sorry
+  intro ⟨hRoundedMode, hBounded, hLeq, hPrq⟩
+  simp only [wp, PostCond.noThrow, pure, RleBoundRoundl_check]
+  -- Unpack RoundedModeP_full: TotalP P ∧ CompatibleP P ∧ MonotoneP_float P ∧
+  --                           ProjectorP_float b P ∧ ProjectorEqP_float b P
+  obtain ⟨_, _, hMono, hProj, hProjEq⟩ := hRoundedMode
+  -- Case split: either F2R p < r or F2R p = r
+  rcases hLeq.lt_or_eq with hLt | hEq
+  · -- Case: F2R p < r
+    -- By ProjectorP_float: P (F2R p) p (bounded floats round to themselves)
+    have hPpp : P (_root_.F2R p) p := hProj p hBounded
+    -- By MonotoneP_float: if F2R p < r and P (F2R p) p and P r q, then F2R p ≤ F2R q
+    exact hMono (_root_.F2R p) r p q hLt hPpp hPrq
+  · -- Case: F2R p = r
+    -- By ProjectorEqP_float: if Fbounded p and P (F2R p) q, then F2R p = F2R q
+    -- Since F2R p = r, we have P (F2R p) q = P r q = hPrq
+    have hP_F2R_q : P (_root_.F2R p) q := by rw [hEq]; exact hPrq
+    have hEqReal : _root_.F2R p = _root_.F2R q := hProjEq p q hBounded hP_F2R_q
+    exact le_of_eq hEqReal
 
 noncomputable def RleBoundRoundr_check {beta : Int}
     (b : Fbound_skel) (radix : Int)
