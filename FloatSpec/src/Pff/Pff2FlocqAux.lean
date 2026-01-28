@@ -287,13 +287,16 @@ theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     exact le_max_right _ _
 
 /-- Coq: `format_is_pff_format` — from `generic_format` derive the existence of a bounded Pff float
-    whose real value is the given real. This is the existential variant used by later lemmas. -/
+    whose real value is the given real. This is the existential variant used by later lemmas.
+
+    Note: In Coq, `beta : radix` automatically implies `1 < beta`. We add this hypothesis
+    explicitly since Lean's `Int` type does not carry this constraint. -/
 theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
-    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p⌝⦄
+    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p ∧ 1 < beta⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFbounded b f⌝⦄ := by
   intro hpre
-  obtain ⟨hfmt, hbound, hprec⟩ := hpre
+  obtain ⟨hfmt, hbound, hprec, hβ⟩ := hpre
   simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded]
   -- We use mk_from_generic as the witness
   use mk_from_generic beta b p r
@@ -306,11 +309,13 @@ theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
                FloatSpec.Core.Generic_fmt.cexp] at hfmt'
     exact hfmt'.symm
   · -- Show PFbounded b (mk_from_generic beta b p r)
-    -- This requires the same bound reasoning as format_is_pff_format'
-    simp only [mk_from_generic, Bool.false_eq_true, ↓reduceIte, Int.natAbs_neg, Int.natAbs_natCast]
-    constructor
-    · sorry
-    · sorry
+    -- Use format_is_pff_format' which has the full proof
+    have hpre' : generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p ∧ 1 < beta :=
+      ⟨hfmt, hbound, hprec, hβ⟩
+    have h_bounded := format_is_pff_format' beta b p r hpre'
+    simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded, mk_from_generic,
+               Bool.false_eq_true, ↓reduceIte, Int.natAbs_neg, Int.natAbs_natCast] at h_bounded
+    exact h_bounded
 
 -- Next missing theorem: pff_format_is_format
 noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
