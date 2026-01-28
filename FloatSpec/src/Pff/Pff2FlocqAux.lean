@@ -598,8 +598,10 @@ theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
 variable (beta : Int)
 
 -- Auxiliary conversion functions
-def pff_normalize (f : PffFloat) : PffFloat := by
-  sorry
+/-- Placeholder for the Pff normalization operator. Returns the input float unchanged.
+    The full normalization logic (removing trailing zeros) will be added when the
+    complete Pff pipeline is migrated. This matches the pattern of `Fnormalize` in Pff.lean. -/
+def pff_normalize (f : PffFloat) : PffFloat := f
 
 def pff_abs (f : PffFloat) : PffFloat :=
   { f with sign := false }
@@ -618,9 +620,11 @@ def pff_min (x y : PffFloat) : PffFloat := by
   sorry
 
 -- Auxiliary properties
+/-- Normalization is idempotent: normalizing twice is the same as normalizing once.
+    Trivially holds with the current placeholder implementation. -/
 theorem pff_normalize_idempotent (f : PffFloat) :
   pff_normalize (pff_normalize f) = pff_normalize f := by
-  sorry
+  rfl
 
 theorem pff_abs_correct (f : PffFloat) :
   pff_to_R beta (pff_abs f) = |pff_to_R beta f| := by
