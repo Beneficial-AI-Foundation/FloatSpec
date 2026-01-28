@@ -610,10 +610,17 @@ def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
 def isMax {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
   fun _ _ => True
 
--- Coq-style boundedness predicate (placeholder)
+-- Coq-style boundedness predicate (placeholder for type compatibility)
 def Fbounded {beta : Int}
     (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+-- Proper Coq-matching boundedness predicate for canonical forms
+-- Coq: Fbounded b d := (Z.abs (Fnum d) < Zpos (vNum b))%Z /\ (- dExp b <= Fexp d)%Z
+def Fbounded' {beta : Int}
+    (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  |f.Fnum| < bo.vNum ∧ -bo.dExp ≤ f.Fexp
 
 -- ---------------------------------------------------------------------------
 -- Float-specific rounding properties (matching Coq Pff semantics)
@@ -772,14 +779,29 @@ def Closest {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
 
--- Coq-style normality predicate (placeholder)
+-- Coq-style normality predicate (placeholder for type compatibility)
 def Fnormal {beta : Int}
     (radix : ℝ) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
 
+-- Coq-style subnormality predicate (placeholder for type compatibility)
 def Fsubnormal {beta : Int}
     (radix : ℝ) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+-- Proper Coq-matching normality predicate for canonical forms
+-- Coq: Fnormal p := Fbounded b p /\ (Zpos (vNum b) <= Z.abs (radix * Fnum p))%Z
+def Fnormal' {beta : Int}
+    (radix : Int) (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fbounded' bo f ∧ bo.vNum ≤ |radix * f.Fnum|
+
+-- Proper Coq-matching subnormality predicate for canonical forms
+-- Coq: Fsubnormal p := Fbounded b p /\ Fexp p = (- dExp b)%Z /\ (Z.abs (radix * Fnum p) < Zpos (vNum b))%Z
+def Fsubnormal' {beta : Int}
+    (radix : Int) (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fbounded' bo f ∧ f.Fexp = -bo.dExp ∧ |radix * f.Fnum| < bo.vNum
 
 -- Minimal placeholder for the Coq `digit` function used in later statements.
 noncomputable def Fdigit {beta : Int}
@@ -895,10 +917,17 @@ def EvenClosest {beta : Int}
 -- ---------------------------------------------------------------------------
 -- Rounding operators (RND_*) and canonicity (skeletons to mirror Coq Pff.v)
 
--- Minimal placeholder: canonicity predicate used by RND_* theorems
+-- Canonicity predicate used by RND_* theorems (placeholder for type compatibility)
 def Fcanonic {beta : Int}
     (radix : Int) (b : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+-- Proper Coq-matching canonicity predicate for canonical forms
+-- Coq: Fcanonic a := Fnormal a \/ Fsubnormal a
+def Fcanonic' {beta : Int}
+    (radix : Int) (b : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fnormal' radix b f ∨ Fsubnormal' radix b f
 
 noncomputable def FcanonicBound_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
@@ -954,18 +983,93 @@ noncomputable def FcanonicLtPos_check {beta : Int}
 /-- Coq: `FcanonicLtPos` — for canonical floats `p` and `q`, if
 `0 ≤ F2R p < F2R q`, then either the exponent of `p` is strictly
 smaller than that of `q`, or the exponents match and the mantissa of `p`
-is strictly smaller. -/
+is strictly smaller.
+
+Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+This theorem requires the canonical form structure to be meaningful.
+Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
 theorem FcanonicLtPos {beta : Int}
     (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b p ∧
-        Fcanonic (beta:=beta) radix b q ∧
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hβ : 1 < beta)
+    (hradix : radix = beta) :
+    ⦃⌜Fcanonic' (beta:=beta) radix b p ∧
+        Fcanonic' (beta:=beta) radix b q ∧
         0 ≤ _root_.F2R (beta:=beta) p ∧
         _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
     (pure (FcanonicLtPos_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜p.Fexp < q.Fexp ∨
             (p.Fexp = q.Fexp ∧ p.Fnum < q.Fnum)⌝⦄ := by
-  sorry
+  intro ⟨hcanP, hcanQ, hPos, hLt⟩
+  simp only [wp, PostCond.noThrow, pure, FcanonicLtPos_check, ULift.down_up]
+  -- Derive beta > 0 from 1 < beta
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) := by
+    have : (0 : Int) < beta := lt_trans (by norm_num : (0 : Int) < 1) hβ
+    exact Int.cast_pos.mpr this
+  -- Unfold F2R to get: p.Fnum * beta ^ p.Fexp < q.Fnum * beta ^ q.Fexp
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R] at hLt hPos
+  -- Case split on exponent comparison
+  by_cases hexp : p.Fexp < q.Fexp
+  · left; exact hexp
+  · -- p.Fexp ≥ q.Fexp
+    push_neg at hexp
+    by_cases hexp_eq : p.Fexp = q.Fexp
+    · -- Exponents equal: compare mantissas
+      right
+      constructor
+      · exact hexp_eq
+      · -- Need to show p.Fnum < q.Fnum given F2R p < F2R q and p.Fexp = q.Fexp
+        rw [hexp_eq] at hLt
+        -- Now hLt : p.Fnum * beta ^ q.Fexp < q.Fnum * beta ^ q.Fexp
+        -- Since beta > 0, beta ^ q.Fexp > 0, so we can divide
+        have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
+        -- Divide both sides by the positive power
+        have hpow_ne : (beta : ℝ) ^ q.Fexp ≠ 0 := ne_of_gt hpow_pos
+        have h : (p.Fnum : ℝ) < (q.Fnum : ℝ) := by
+          calc (p.Fnum : ℝ) = (p.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp / (beta : ℝ) ^ q.Fexp := by
+                field_simp
+            _ < (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp / (beta : ℝ) ^ q.Fexp := by
+                apply div_lt_div_of_pos_right hLt hpow_pos
+            _ = (q.Fnum : ℝ) := by field_simp
+        exact Int.cast_lt.mp h
+    · -- p.Fexp > q.Fexp: use the case analysis from Coq proof
+      -- The Coq proof uses FnormalLtPos, FsubnormalnormalLtPos, FsubnormalLt
+      -- For canonical floats with 0 ≤ F2R p and F2R p < F2R q, when p.Fexp > q.Fexp,
+      -- we need to show this leads to one of the disjuncts being true
+      have hexp_gt : q.Fexp < p.Fexp := lt_of_le_of_ne hexp (Ne.symm hexp_eq)
+      -- Case analysis on whether p and q are normal or subnormal
+      rcases hcanP with ⟨hbP, hvnumP⟩ | ⟨hbP, hexpP, hvnumP⟩
+      <;> rcases hcanQ with ⟨hbQ, hvnumQ⟩ | ⟨hbQ, hexpQ, hvnumQ⟩
+      -- Case 1: Both normal - contradiction via FnormalLtPos logic
+      · -- Both normal with p.Fexp > q.Fexp, 0 ≤ F2R p, F2R p < F2R q
+        -- This requires detailed analysis of normal float bounds
+        -- Coq proof uses FnormalLtPos helper lemma
+        -- Key insight: b.vNum ≤ |radix * Fnum| constrains mantissa from below
+        -- With radix = beta, the exponent difference dominates
+        exfalso
+        rw [hradix] at hvnumP hvnumQ
+        -- This case needs detailed mathematical analysis
+        -- The normal float bounds combined with exp difference
+        -- make F2R p ≥ F2R q, contradicting hLt
+        -- TODO: Complete proof requires translating FnormalLtPos from Coq
+        sorry
+      -- Case 2: p normal, q subnormal
+      · -- p normal, q subnormal: q.Fexp = -b.dExp (minimal)
+        -- This leads to contradiction via FsubnormalnormalLtPos logic
+        -- The subnormal q has smaller magnitude than any normal at higher exp
+        exfalso; sorry
+      -- Case 3: p subnormal, q normal
+      · -- p subnormal, q normal: p.Fexp = -b.dExp ≤ q.Fexp
+        -- This contradicts hexp_gt: q.Fexp < p.Fexp
+        have hpExp : p.Fexp = -b.dExp := hexpP
+        have hq_lb := hbQ.2  -- -b.dExp ≤ q.Fexp
+        omega
+      -- Case 4: Both subnormal
+      · -- Both subnormal: p.Fexp = q.Fexp = -b.dExp
+        have hpExp : p.Fexp = -b.dExp := hexpP
+        have hqExp : q.Fexp = -b.dExp := hexpQ
+        -- This contradicts hexp_gt: q.Fexp < p.Fexp
+        omega
 
 noncomputable def Fcanonic_Rle_Zle_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
