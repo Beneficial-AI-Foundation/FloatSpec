@@ -123,6 +123,87 @@ theorem pdGivesBound :
 
 -- Format bridging lemmas (Coq: format_is_pff_format' and variants)
 
+/-- FLT_exp lower bound: k - p ≤ FLT_exp emin p k. -/
+private lemma FLT_exp_ge_mag_sub_p (emin p k : Int) :
+    k - p ≤ FLT_exp emin p k := by
+  unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+  exact le_max_left _ _
+
+/-- Helper: Ztrunc 0 = 0 -/
+private lemma Ztrunc_zero : Ztrunc 0 = 0 := by
+  unfold Ztrunc FloatSpec.Core.Raux.Ztrunc
+  simp only [lt_irrefl, ↓reduceIte, Int.floor_zero]
+
+/-- Helper: For a number in generic_format for FLT, the absolute value of the mantissa
+    (Ztrunc of scaled_mantissa) is bounded by beta^p.
+    This follows from |x| < beta^(mag x) and the FLT exponent structure. -/
+private lemma FLT_mantissa_bound (beta emin p : Int) (x : ℝ)
+    (hβ : 1 < beta) (hfmt : generic_format beta (FLT_exp emin p) x) :
+    (|Ztrunc (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FLT_exp emin p) x)| : ℝ)
+      < (beta : ℝ) ^ p := by
+  -- Abbreviations
+  set fexp := FLT_exp emin p with hfexp
+  set sm := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
+  set ex := FloatSpec.Core.Generic_fmt.cexp beta fexp x with hex
+  set mx := Ztrunc sm with hmx
+  -- Basic positivity
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hb_ne_zero : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  have hb_ge1 : (1 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast le_of_lt hβ
+  -- Handle x = 0 separately
+  by_cases hx0 : x = 0
+  · -- Case x = 0: scaled_mantissa = 0, Ztrunc 0 = 0, so |mx| = 0 < beta^p
+    subst hx0
+    -- scaled_mantissa(0) = 0 * beta^(-e) = 0
+    have h_sm_zero : sm = 0 := by
+      unfold FloatSpec.Core.Generic_fmt.scaled_mantissa at hsm
+      simp only [hsm, zero_mul, Id.run, pure]
+    have h_mx_zero : mx = 0 := by rw [hmx, h_sm_zero, Ztrunc_zero]
+    simp only [h_mx_zero, Int.cast_zero, abs_zero]
+    exact zpow_pos hbposR p
+  · -- Case x ≠ 0
+    -- From generic_format, x = mx * beta^ex
+    have hx_eq : x = (mx : ℝ) * (beta : ℝ) ^ ex := by
+      have hfmt' := hfmt
+      -- generic_format says x = F2R (FlocqFloat.mk (Ztrunc sm) ex), where F2R f = f.Fnum * β^f.Fexp
+      unfold generic_format FloatSpec.Core.Generic_fmt.generic_format at hfmt'
+      simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+                 Ztrunc, FloatSpec.Core.Raux.Ztrunc] at hfmt'
+      unfold FloatSpec.Core.Defs.F2R at hfmt'
+      simp only [FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp] at hfmt'
+      convert hfmt' using 1
+    -- Therefore |x| = |mx| * beta^ex (since beta^ex > 0)
+    have h_pow_pos : (0 : ℝ) < (beta : ℝ) ^ ex := zpow_pos hbposR ex
+    have h_abs_x : |x| = |(mx : ℝ)| * (beta : ℝ) ^ ex := by
+      rw [hx_eq, abs_mul, abs_of_pos h_pow_pos]
+    -- From mag, |x| < beta^(mag x) for x ≠ 0
+    have hmag_bound := FloatSpec.Core.Raux.mag_upper_bound beta x hβ hx0
+    simp only [wp, PostCond.noThrow, Id.run, pure] at hmag_bound
+    have h_abs_x_lt : |x| < (beta : ℝ) ^ (mag beta x) := by
+      unfold FloatSpec.Core.Raux.abs_val at hmag_bound
+      exact hmag_bound trivial
+    -- Thus |mx| * beta^ex < beta^(mag x)
+    -- Dividing by beta^ex: |mx| < beta^(mag x - ex)
+    have h_mx_lt_pow : |(mx : ℝ)| < (beta : ℝ) ^ (mag beta x - ex) := by
+      rw [h_abs_x] at h_abs_x_lt
+      -- |mx| * beta^ex < beta^(mag x)
+      -- => |mx| < beta^(mag x - ex)
+      rw [zpow_sub₀ hb_ne_zero]
+      exact (lt_div_iff₀ h_pow_pos).mpr h_abs_x_lt
+    -- Now we need: mag x - ex ≤ p
+    -- ex = fexp (mag x) = FLT_exp emin p (mag x) = max (mag x - p) emin
+    -- So mag x - p ≤ ex, hence mag x - ex ≤ p
+    have hex_eq : ex = FLT_exp emin p (mag beta x) := rfl
+    have h_mag_sub_p_le_ex : (mag beta x) - p ≤ ex := by
+      rw [hex_eq]
+      exact FLT_exp_ge_mag_sub_p emin p (mag beta x)
+    have h_mag_sub_ex_le_p : (mag beta x) - ex ≤ p := by linarith
+    -- Therefore |mx| < beta^(mag x - ex) ≤ beta^p
+    have h_pow_le : (beta : ℝ) ^ (mag beta x - ex) ≤ (beta : ℝ) ^ p :=
+      zpow_le_zpow_right₀ hb_ge1 h_mag_sub_ex_le_p
+    exact lt_of_lt_of_le h_mx_lt_pow h_pow_le
+
 -- Build a Pff-style float from a real known to be in generic_format
 noncomputable def mk_from_generic (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : PffFloat :=
   { mantissa :=
@@ -135,28 +216,75 @@ noncomputable def format_is_pff_format'_check (beta : Int) (b : Fbound) (p : Int
 
 /-- Coq: `format_is_pff_format'` — from `generic_format`, construct a bounded Pff float.
     Note: This theorem requires `pGivesBound` and `precisionNotZero` hypotheses which are
-    present in the Coq section context. For now we weaken the postcondition to not require
-    actual bounds since proving them requires more infrastructure about FLT bounds. -/
+    present in the Coq section context. We also require `1 < beta` which in Coq comes
+    from the `radix` type. -/
 theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
-    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p⌝⦄
+    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p ∧ 1 < beta⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜PFbounded b (mk_from_generic beta b p r)⌝⦄ := by
   intro hpre
   simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded, mk_from_generic]
   -- Extract the hypotheses
-  obtain ⟨hfmt, hbound, hprec⟩ := hpre
+  obtain ⟨hfmt, hbound, hprec, hβ⟩ := hpre
   constructor
   · -- Need to show |mantissa| < b.vNum
     -- The mantissa is Ztrunc(scaled_mantissa...) and sign is false,
     -- so effective mantissa is just the Ztrunc value
     simp only [Bool.false_eq_true, ↓reduceIte, Int.natAbs_neg, Int.natAbs_natCast]
-    -- The FLT property gives |Ztrunc(scaled_mantissa)| < beta^p = b.vNum
-    -- This follows from the definition of generic_format and FLT_exp bounds
-    sorry
+    -- Use hbound to convert b.vNum to beta^p
+    rw [hbound]
+    unfold Zpower_nat
+    -- p > 1 implies p > 0
+    have hp_pos : 0 < p := lt_trans Int.zero_lt_one hprec
+    have hp_nonneg : 0 ≤ p := le_of_lt hp_pos
+    -- (↑p.natAbs : Int).toNat = p.natAbs since p.natAbs ≥ 0
+    have hp_cast_back : (↑(p.natAbs) : Int).toNat = p.natAbs := Int.toNat_natCast p.natAbs
+    rw [hp_cast_back]
+    -- From FLT_mantissa_bound: |Ztrunc (sm)| < (beta : ℝ)^p
+    have hbound_real := FLT_mantissa_bound beta (-b.dExp) p r hβ hfmt
+    -- Goal: (Ztrunc sm).natAbs < beta ^ p.natAbs (where both sides are Int)
+    -- We have: |Ztrunc sm : ℝ| < (beta : ℝ)^p
+    -- For p ≥ 0, (p.natAbs : Int) = p
+    have hp_natAbs_cast : (p.natAbs : Int) = p := Int.natAbs_of_nonneg hp_nonneg
+    -- Let m = Ztrunc (scaled_mantissa...)
+    set m := Ztrunc (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FLT_exp (-b.dExp) p) r) with hm_def
+    -- We need: (m.natAbs : Int) < beta^p.natAbs
+    -- Equivalent to: (m.natAbs : ℝ) < (beta^p.natAbs : ℝ)
+    -- From hbound_real: |(m : ℝ)| < (beta : ℝ)^p
+    -- |(m : ℝ)| = (m.natAbs : ℝ)
+    have h_abs_eq : |(m : ℝ)| = (m.natAbs : ℝ) := by
+      rw [← Int.cast_abs]
+      congr 1
+      exact Int.abs_eq_natAbs m
+    -- (beta : ℝ)^p = (beta^p.natAbs : ℝ) since (p.natAbs : Int) = p
+    have h_pow_eq : (beta : ℝ) ^ p = (beta ^ p.natAbs : ℝ) := by
+      have : (p : Int) = (p.natAbs : Int) := hp_natAbs_cast.symm
+      rw [this]
+      rfl
+    rw [h_abs_eq, h_pow_eq] at hbound_real
+    -- hbound_real : (m.natAbs : ℝ) < (beta : ℝ) ^ p.natAbs
+    -- Goal: (m.natAbs : Int) < (beta : Int) ^ p.natAbs
+    -- Convert the real inequality to an integer inequality
+    -- Note: (beta : ℝ)^p.natAbs = ((beta^p.natAbs : Int) : ℝ)
+    have h_rhs_cast : (beta : ℝ) ^ p.natAbs = ((beta ^ p.natAbs : Int) : ℝ) := by norm_cast
+    rw [h_rhs_cast] at hbound_real
+    -- hbound_real : (m.natAbs : ℝ) < ((beta^p.natAbs : Int) : ℝ)
+    -- Now use Int.cast_lt to convert to integer comparison
+    have h_lhs_int : (m.natAbs : ℝ) = ((m.natAbs : Int) : ℝ) := by
+      simp only [Int.cast_natCast]
+    rw [h_lhs_int] at hbound_real
+    -- hbound_real : ((m.natAbs : Int) : ℝ) < ((beta^p.natAbs : Int) : ℝ)
+    have h_int_ineq : (m.natAbs : Int) < (beta ^ p.natAbs : Int) := by
+      exact_mod_cast hbound_real
+    exact h_int_ineq
   · -- Need to show -b.dExp ≤ cexp(...)
     -- By definition of FLT_exp, cexp = max(mag - p, emin) where emin = -b.dExp
     -- So cexp ≥ emin = -b.dExp
-    sorry
+    -- cexp beta fexp r = fexp (mag beta r) = FLT_exp (-b.dExp) p (mag beta r)
+    -- FLT_exp emin prec e = FloatSpec.Core.FLT.FLT_exp prec emin e = max (e - prec) emin
+    -- So FLT_exp (-b.dExp) p (mag beta r) = max (mag beta r - p) (-b.dExp) ≥ -b.dExp
+    unfold cexp FLT_exp FloatSpec.Core.FLT.FLT_exp
+    exact le_max_right _ _
 
 /-- Coq: `format_is_pff_format` — from `generic_format` derive the existence of a bounded Pff float
     whose real value is the given real. This is the existential variant used by later lemmas. -/
