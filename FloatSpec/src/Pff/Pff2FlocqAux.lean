@@ -137,7 +137,23 @@ theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFbounded b f⌝⦄ := by
-  sorry
+  intro hfmt
+  simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded, and_true]
+  -- We use mk_from_generic as the witness
+  use mk_from_generic beta b p r
+  -- Show pff_to_R beta (mk_from_generic beta b p r) = r
+  -- By generic_format, r = F2R { Fnum := Ztrunc(scaled_mantissa...), Fexp := cexp... }
+  -- mk_from_generic creates exactly those components with sign = false
+  unfold pff_to_R pff_to_flocq mk_from_generic
+  simp only [Bool.false_eq_true, ↓reduceIte]
+  -- Now the goal is: F2R { Fnum := Ztrunc(scaled_mantissa...), Fexp := cexp... } = r
+  -- And hfmt : ⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝.down
+  -- First, extract hfmt from the pure wrapper
+  have hfmt' : generic_format beta (FLT_exp (-b.dExp) p) r := hfmt
+  -- generic_format says: r = F2R { Fnum := Ztrunc(scaled_mantissa...), Fexp := cexp... }
+  simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+             FloatSpec.Core.Generic_fmt.cexp] at hfmt'
+  exact hfmt'.symm
 
 -- Next missing theorem: pff_format_is_format
 noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
