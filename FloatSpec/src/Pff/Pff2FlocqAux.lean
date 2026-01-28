@@ -896,7 +896,42 @@ theorem round_NE_is_pff_round_b32 (r : ℝ) [Prec_gt_0 24] :
     ⦃⌜True⌝⦄
     round_NE_is_pff_round_b32_check r
     ⦃⇓_ => ⌜∃ f : PffFloat, True ∧ True ∧ pff_to_R 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-149) 24) () r⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, round_NE_is_pff_round_b32_check, pure]
+
+  -- Bridge instance: Monotone_exp for the Compat FLT_exp alias
+  haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (-149) 24) := by
+    simp only [FLT_exp]
+    exact FloatSpec.Core.FLT.FLT_exp_mono (prec := 24) (emin := -149)
+
+  -- The rounded value
+  let rnd_val := FloatSpec.Calc.Round.round 2 (FLT_exp (-149) 24) () r
+  -- Use mk_from_generic to construct the PffFloat witness
+  use mk_from_generic 2 bsingle 24 rnd_val
+  constructor
+  · trivial
+  constructor
+  · trivial
+  · -- Need to show: pff_to_R 2 (mk_from_generic 2 bsingle 24 rnd_val) = rnd_val
+    -- First, show bsingle.dExp = 149
+    have h_bsingle_dExp : bsingle.dExp = 149 := by
+      unfold bsingle make_bound Bound
+      decide
+    -- rnd_val is in generic_format by round_to_generic_generic
+    have h_rnd_fmt : generic_format 2 (FLT_exp (-149) 24) rnd_val := by
+      unfold rnd_val FloatSpec.Calc.Round.round
+      exact FloatSpec.Core.Generic_fmt.round_to_generic_generic
+              (beta := 2) (fexp := FLT_exp (-149) 24)
+              (rnd := fun _ _ => True) (x := r) (hβ := by decide)
+    -- By generic_format, rnd_val = F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val))
+    unfold pff_to_R pff_to_flocq mk_from_generic
+    simp only [Bool.false_eq_true, ↓reduceIte]
+    rw [h_bsingle_dExp]
+    -- The goal now is: F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val)) = rnd_val
+    -- which is exactly generic_format.symm
+    simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+               FloatSpec.Core.Generic_fmt.cexp] at h_rnd_fmt
+    exact h_rnd_fmt.symm
 
 noncomputable def round_NE_is_pff_round_b64_check (r : ℝ) : Id Unit :=
   pure ()
