@@ -52,10 +52,10 @@ def PFbounded (b : Fbound) (f : PffFloat) : Prop :=
   let effectiveMantissa := if f.sign then -f.mantissa else f.mantissa
   (effectiveMantissa.natAbs : Int) < b.vNum ∧ -b.dExp ≤ f.exponent
 
-/-- A PffFloat is canonical if it is bounded and its mantissa is normalized.
-    For now, we use a placeholder since the full canonical definition
-    requires more infrastructure. -/
-def PFcanonic (_beta : Int) (_b : Fbound) (_f : PffFloat) : Prop := True
+/-- A PffFloat is canonical in the context of a Fbound if its exponent
+    equals the canonical Flocq exponent for its real value. -/
+noncomputable def PFcanonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Prop :=
+  f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta f))
 
 -- Minimal `make_bound` used in Coq proofs
 noncomputable def make_bound (beta p E : Int) : Fbound :=
@@ -534,10 +534,28 @@ noncomputable def pff_canonic_is_canonic_check (beta : Int) (b : Fbound) (p : In
   pure ()
 
 theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜PFcanonic beta b f ∧ pff_to_R beta f ≠ 0⌝⦄
+    ⦃⌜PFcanonic beta b p f ∧ pff_to_R beta f ≠ 0⌝⦄
     pff_canonic_is_canonic_check beta b p f
     ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp (-b.dExp) p) (pff_to_flocq beta f)⌝⦄ := by
-  sorry
+  intro ⟨hcan, _⟩
+  simp only [wp, PostCond.noThrow, pff_canonic_is_canonic_check, pure]
+  -- Goal: canonical beta (FLT_exp (-b.dExp) p) (pff_to_flocq beta f)
+  -- Unfold canonical: (pff_to_flocq beta f).Fexp = FLT_exp (-b.dExp) p (mag beta (F2R (pff_to_flocq beta f)))
+  unfold FloatSpec.Core.Generic_fmt.canonical
+  -- By definition, pff_to_flocq beta f has Fexp = f.exponent
+  -- and F2R (pff_to_flocq beta f) = pff_to_R beta f
+  have h_fexp : (pff_to_flocq beta f).Fexp = f.exponent := rfl
+  rw [h_fexp]
+  -- Now we need: f.exponent = FLT_exp (-b.dExp) p (mag beta (F2R (pff_to_flocq beta f)))
+  -- From the definition of PFcanonic: f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta f))
+  -- We need: F2R (pff_to_flocq beta f) = pff_to_R beta f
+  have h_pff_to_R_eq : FloatSpec.Core.Defs.F2R (pff_to_flocq beta f) = pff_to_R beta f := by
+    unfold pff_to_R pff_to_flocq FloatSpec.Core.Defs.F2R
+    simp only [FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rfl
+  rw [h_pff_to_R_eq]
+  -- Now the goal is exactly the PFcanonic hypothesis
+  exact hcan
 
 /-- Coq: `format_is_pff_format_can` — from `generic_format`, produce a canonical Pff float.
     We use the same checker as `format_is_pff_format'` and return existence of a
@@ -545,7 +563,7 @@ theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat
 theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
-    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFcanonic beta b f⌝⦄ := by
+    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFcanonic beta b p f⌝⦄ := by
   sorry
 
 variable (beta : Int)
@@ -649,7 +667,7 @@ noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f :
     then `f` is normal (in the Pff sense). We phrase normality as a Prop `True`
     placeholder associated to `Fbounded`/`Fcanonic` in this port. -/
 theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜PFcanonic beta b f ∧ (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R beta f|⌝⦄
+    ⦃⌜PFcanonic beta b p f ∧ (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R beta f|⌝⦄
     CanonicGeNormal_check beta b p f
     ⦃⇓_ => ⌜True⌝⦄ := by
   intro _
@@ -662,7 +680,7 @@ noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : Pf
 /-- Coq: `Fulp_ulp_aux` — for canonical `f`, `Fulp` equals `ulp` at `(FLT_exp (-dExp b) p)`.
     We express `Fulp` via the Compat.lean `ulp` bridge on reals. -/
 theorem Fulp_ulp_aux (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜PFcanonic beta b f⌝⦄
+    ⦃⌜PFcanonic beta b p f⌝⦄
     Fulp_ulp_aux_check beta b p f
     ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
   intro _
