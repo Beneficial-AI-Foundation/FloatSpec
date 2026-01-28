@@ -610,14 +610,29 @@ def pff_opp (f : PffFloat) : PffFloat :=
   { f with sign := !f.sign }
 
 -- Auxiliary operations
-def pff_compare (x y : PffFloat) : Int := by
-  sorry
+/-- Compare two PffFloats, returning:
+    - negative if x < y
+    - 0 if x = y
+    - positive if x > y
+    This comparison uses the effective signed mantissas scaled to a common exponent. -/
+def pff_compare (x y : PffFloat) : Int :=
+  let x_signed := if x.sign then -x.mantissa else x.mantissa
+  let y_signed := if y.sign then -y.mantissa else y.mantissa
+  let min_exp := min x.exponent y.exponent
+  -- Scale both to the minimum exponent
+  let x_scaled := x_signed * Zpower_nat beta (Int.toNat (x.exponent - min_exp))
+  let y_scaled := y_signed * Zpower_nat beta (Int.toNat (y.exponent - min_exp))
+  if x_scaled < y_scaled then -1
+  else if x_scaled > y_scaled then 1
+  else 0
 
-def pff_max (x y : PffFloat) : PffFloat := by
-  sorry
+/-- Maximum of two PffFloats based on their real values. -/
+def pff_max (x y : PffFloat) : PffFloat :=
+  if pff_compare x y beta ≥ 0 then x else y
 
-def pff_min (x y : PffFloat) : PffFloat := by
-  sorry
+/-- Minimum of two PffFloats based on their real values. -/
+def pff_min (x y : PffFloat) : PffFloat :=
+  if pff_compare x y beta ≤ 0 then x else y
 
 -- Auxiliary properties
 /-- Normalization is idempotent: normalizing twice is the same as normalizing once.
@@ -626,13 +641,31 @@ theorem pff_normalize_idempotent (f : PffFloat) :
   pff_normalize (pff_normalize f) = pff_normalize f := by
   rfl
 
-theorem pff_abs_correct (f : PffFloat) :
+theorem pff_abs_correct (f : PffFloat) (hbeta : beta > 0) (hmant : f.mantissa ≥ 0) :
   pff_to_R beta (pff_abs f) = |pff_to_R beta f| := by
-  sorry
+  simp only [pff_to_R, pff_abs, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  simp only [Bool.false_eq_true, ↓reduceIte]
+  by_cases h : f.sign = true <;> simp only [h, ↓reduceIte]
+  · -- sign = true: original value is -(f.mantissa) * beta^exp
+    -- pff_abs value is f.mantissa * beta^exp
+    -- |-(f.mantissa) * beta^exp| = |-(f.mantissa)| * |beta^exp| = f.mantissa * beta^exp
+    rw [Int.cast_neg, abs_mul, abs_neg]
+    have h1 : (0 : ℝ) ≤ (f.mantissa : ℝ) := Int.cast_nonneg_iff.mpr hmant
+    have h2 : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hbeta
+    rw [abs_of_nonneg h1, abs_zpow, abs_of_pos h2]
+  · -- sign = false: original value is f.mantissa * beta^exp
+    -- pff_abs value is f.mantissa * beta^exp
+    -- |f.mantissa * beta^exp| = f.mantissa * beta^exp (since both are non-negative)
+    simp only [Bool.false_eq_true, ↓reduceIte]
+    have h1 : (0 : ℝ) ≤ (f.mantissa : ℝ) := Int.cast_nonneg_iff.mpr hmant
+    have h2 : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hbeta
+    rw [abs_mul, abs_of_nonneg h1, abs_zpow, abs_of_pos h2]
 
 theorem pff_opp_correct (f : PffFloat) :
   pff_to_R beta (pff_opp f) = -(pff_to_R beta f) := by
-  sorry
+  simp only [pff_to_R, pff_opp, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  by_cases h : f.sign = true <;> simp only [h, Bool.not_true, Bool.false_eq_true, Bool.not_false,
+    ↓reduceIte, Int.cast_neg, neg_neg, neg_mul]
 
 -- Compatibility with Flocq operations
 theorem pff_abs_flocq_equiv (f : PffFloat) :
@@ -644,15 +677,43 @@ theorem pff_opp_flocq_equiv (f : PffFloat) :
   rfl
 
 -- Helper lemmas for conversion correctness
-lemma pff_sign_correct (f : PffFloat) :
+/-- The sign of a PffFloat determines the sign of its real value,
+    provided the mantissa is positive and beta is positive. -/
+lemma pff_sign_correct (f : PffFloat) (hbeta : beta > 0) (hmant : f.mantissa > 0) :
   (pff_to_R beta f < 0) ↔ f.sign := by
-  sorry
+  simp only [pff_to_R, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hbeta
+  have hbeta_zpow_pos : (0 : ℝ) < (beta : ℝ) ^ f.exponent := zpow_pos hbeta_pos f.exponent
+  have hmant_pos : (0 : ℝ) < (f.mantissa : ℝ) := Int.cast_pos.mpr hmant
+  by_cases h : f.sign = true
+  · -- f.sign = true: signed mantissa is -f.mantissa, which is < 0
+    simp only [h, ↓reduceIte, Int.cast_neg]
+    constructor
+    · intro _; trivial
+    · intro _
+      exact mul_neg_of_neg_of_pos (neg_neg_of_pos hmant_pos) hbeta_zpow_pos
+  · -- f.sign = false: signed mantissa is f.mantissa, which is > 0
+    simp only [h, Bool.false_eq_true, ↓reduceIte]
+    constructor
+    · intro hlt
+      have hpos : (0 : ℝ) < (f.mantissa : ℝ) * (beta : ℝ) ^ f.exponent := mul_pos hmant_pos hbeta_zpow_pos
+      linarith
+    · simp only [IsEmpty.forall_iff]
 
 lemma pff_mantissa_bounds (f : PffFloat) (prec : Int) :
-  0 ≤ f.mantissa ∧ f.mantissa < (2 : Int) ^ (Int.toNat prec) → 
-  0 ≤ Int.natAbs (pff_to_flocq beta f).Fnum ∧ 
+  0 ≤ f.mantissa ∧ f.mantissa < (2 : Int) ^ (Int.toNat prec) →
+  0 ≤ Int.natAbs (pff_to_flocq beta f).Fnum ∧
   Int.natAbs (pff_to_flocq beta f).Fnum < (2 : Int) ^ (Int.toNat prec) := by
-  sorry
+  intro ⟨hmant_nonneg, hmant_bound⟩
+  simp only [pff_to_flocq]
+  -- Fnum = if f.sign then -f.mantissa else f.mantissa
+  -- In both cases, natAbs (Fnum) = natAbs (f.mantissa)
+  constructor
+  · -- natAbs is always non-negative (as a coerced Int)
+    exact Nat.cast_nonneg _
+  · -- natAbs (if f.sign then -f.mantissa else f.mantissa) = natAbs f.mantissa < 2^prec
+    by_cases h : f.sign = true <;> simp only [h, Bool.false_eq_true, ↓reduceIte, Int.natAbs_neg]
+    all_goals rw [Int.natAbs_of_nonneg hmant_nonneg]; exact hmant_bound
 
 -- Auxiliary arithmetic operations
 def pff_shift_exp (f : PffFloat) (n : Int) : PffFloat :=
@@ -662,15 +723,24 @@ def pff_shift_mant (f : PffFloat) (n : Int) : PffFloat :=
   { f with mantissa := f.mantissa * ((2 : Int) ^ (Int.toNat n)) }
 
 -- Shifting properties
-theorem pff_shift_exp_correct (f : PffFloat) (n : Int) :
-  pff_to_R beta (pff_shift_exp f n) = 
+theorem pff_shift_exp_correct (f : PffFloat) (n : Int) (hbeta : beta ≠ 0) :
+  pff_to_R beta (pff_shift_exp f n) =
   pff_to_R beta f * (beta : ℝ)^n := by
-  sorry
+  simp only [pff_to_R, pff_shift_exp, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  -- Goal: m * beta^(e+n) = m * beta^e * beta^n
+  have hbeta_ne : (beta : ℝ) ≠ 0 := Int.cast_ne_zero.mpr hbeta
+  rw [zpow_add₀ hbeta_ne, mul_assoc]
 
-theorem pff_shift_mant_correct (f : PffFloat) (n : Int) :
-  pff_to_R beta (pff_shift_mant f n) = 
+theorem pff_shift_mant_correct (f : PffFloat) (n : Int) (hn : n ≥ 0) :
+  pff_to_R beta (pff_shift_mant f n) =
   pff_to_R beta f * (2 : ℝ) ^ n := by
-  sorry
+  simp only [pff_to_R, pff_shift_mant, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  -- Goal: (signed_m * 2^(toNat n)) * beta^e = signed_m * beta^e * 2^n
+  -- Use n ≥ 0 to relate zpow and pow
+  have h_n_eq : n = n.toNat := (Int.toNat_of_nonneg hn).symm
+  conv_rhs => rw [h_n_eq, zpow_natCast]
+  by_cases h : f.sign = true <;> simp only [h, Bool.false_eq_true, ↓reduceIte, Int.cast_neg, Int.cast_mul, Int.cast_pow, Int.cast_ofNat]
+  all_goals ring
 
 /-!
 Missing theorems from Coq Pff2FlocqAux.v
