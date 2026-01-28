@@ -564,7 +564,36 @@ theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFcanonic beta b p f⌝⦄ := by
-  sorry
+  intro hfmt
+  simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+  -- Use mk_from_generic as the witness
+  use mk_from_generic beta b p r
+  constructor
+  · -- Show pff_to_R beta (mk_from_generic beta b p r) = r
+    unfold pff_to_R pff_to_flocq mk_from_generic
+    simp only [Bool.false_eq_true, ↓reduceIte]
+    -- From generic_format, we have r = F2R {Ztrunc(sm), cexp}
+    simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+               FloatSpec.Core.Generic_fmt.cexp] at hfmt
+    exact hfmt.symm
+  · -- Show PFcanonic beta b p (mk_from_generic beta b p r)
+    -- PFcanonic: f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta f))
+    unfold PFcanonic
+    -- f.exponent = cexp beta (FLT_exp (-b.dExp) p) r
+    -- We need: cexp beta (FLT_exp (-b.dExp) p) r = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta (mk_from_generic...)))
+    -- First show pff_to_R beta (mk_from_generic...) = r
+    have h_val_eq : pff_to_R beta (mk_from_generic beta b p r) = r := by
+      unfold pff_to_R pff_to_flocq mk_from_generic
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+                 FloatSpec.Core.Generic_fmt.cexp] at hfmt
+      exact hfmt.symm
+    -- Goal is (mk_from_generic beta b p r).exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta (mk_from_generic beta b p r)))
+    rw [h_val_eq]
+    -- Now goal: (mk_from_generic beta b p r).exponent = FLT_exp (-b.dExp) p (mag beta r)
+    -- By definition, mk_from_generic.exponent = cexp beta (FLT_exp (-b.dExp) p) r = fexp (mag beta r)
+    unfold mk_from_generic cexp FloatSpec.Core.Generic_fmt.cexp
+    rfl
 
 variable (beta : Int)
 
