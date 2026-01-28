@@ -615,7 +615,7 @@ def pff_opp (f : PffFloat) : PffFloat :=
     - 0 if x = y
     - positive if x > y
     This comparison uses the effective signed mantissas scaled to a common exponent. -/
-def pff_compare (x y : PffFloat) : Int :=
+noncomputable def pff_compare (x y : PffFloat) : Int :=
   let x_signed := if x.sign then -x.mantissa else x.mantissa
   let y_signed := if y.sign then -y.mantissa else y.mantissa
   let min_exp := min x.exponent y.exponent
@@ -627,12 +627,12 @@ def pff_compare (x y : PffFloat) : Int :=
   else 0
 
 /-- Maximum of two PffFloats based on their real values. -/
-def pff_max (x y : PffFloat) : PffFloat :=
-  if pff_compare x y beta ≥ 0 then x else y
+noncomputable def pff_max (x y : PffFloat) : PffFloat :=
+  if pff_compare beta x y ≥ 0 then x else y
 
 /-- Minimum of two PffFloats based on their real values. -/
-def pff_min (x y : PffFloat) : PffFloat :=
-  if pff_compare x y beta ≤ 0 then x else y
+noncomputable def pff_min (x y : PffFloat) : PffFloat :=
+  if pff_compare beta x y ≤ 0 then x else y
 
 -- Auxiliary properties
 /-- Normalization is idempotent: normalizing twice is the same as normalizing once.
@@ -757,10 +757,98 @@ noncomputable def FloatFexp_gt_check (beta : Int) (b : Fbound) (p e : Int) (f : 
     then `e < Fexp f`. Here we use `pff_to_R` for `FtoR` and the `exponent`
     field of `PffFloat` for `Fexp`. -/
 theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
-    ⦃⌜pGivesBound beta b p ∧ PFbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R beta f|⌝⦄
+    ⦃⌜pGivesBound beta b p ∧ PFbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R beta f| ∧ (1 : Int) < beta ∧ p > 0⌝⦄
     FloatFexp_gt_check beta b p e f
     ⦃⇓_ => ⌜e < f.exponent⌝⦄ := by
-  sorry
+  intro ⟨hpGives, hbounded, hmag_le, hbeta_gt_1, hp_pos⟩
+  simp only [wp, PostCond.noThrow, FloatFexp_gt_check, pure]
+  -- Key insight: |pff_to_R beta f| = |signed_mantissa| * beta^f.exponent
+  -- From PFbounded: |signed_mantissa| < b.vNum = beta^p (by pGivesBound)
+  -- So |pff_to_R beta f| < beta^p * beta^f.exponent = beta^(p + f.exponent)
+  -- From hypothesis: beta^(e + p) ≤ |pff_to_R beta f| < beta^(p + f.exponent)
+  -- Therefore: beta^(e + p) < beta^(p + f.exponent)
+  -- Since beta > 1: e + p < p + f.exponent, hence e < f.exponent
+
+  -- First, get the structure of pff_to_R
+  unfold pff_to_R pff_to_flocq _root_.F2R FloatSpec.Core.Defs.F2R at hmag_le
+
+  -- Get beta > 1 as a real number fact
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) := by
+    have h0 : (0 : Int) < beta := by omega
+    exact Int.cast_pos.mpr h0
+  have hbeta_gt_1_real : (1 : ℝ) < (beta : ℝ) := by
+    have h1 : ((1 : Int) : ℝ) < ((beta : Int) : ℝ) := Int.cast_lt.mpr hbeta_gt_1
+    simp only [Int.cast_one] at h1
+    exact h1
+
+  -- From PFbounded, extract the mantissa bound
+  unfold PFbounded at hbounded
+  simp only at hbounded
+  obtain ⟨hmant_bound, hexp_bound⟩ := hbounded
+
+  -- From pGivesBound, we get b.vNum = beta^|p|
+  unfold pGivesBound at hpGives
+  have hp_nonneg : 0 ≤ p := le_of_lt hp_pos
+
+  -- The signed mantissa is bounded by b.vNum
+  let signed_m := if f.sign then -f.mantissa else f.mantissa
+  have h_signed_abs : |signed_m| < b.vNum := by
+    rw [Int.abs_eq_natAbs]
+    exact hmant_bound
+
+  -- |pff_to_R beta f| = |signed_m| * beta^f.exponent
+  have h_pff_to_R : |(signed_m : ℝ) * (beta : ℝ) ^ f.exponent| = |(signed_m : ℝ)| * (beta : ℝ) ^ f.exponent := by
+    rw [abs_mul, abs_zpow, abs_of_pos hbeta_pos]
+
+  -- Prove b.vNum = beta^p as reals
+  have hvNum_eq : (b.vNum : ℝ) = (beta : ℝ) ^ p := by
+    rw [hpGives]
+    simp only [Zpower_nat]
+    push_cast
+    rw [← zpow_natCast]
+    congr 1
+    -- Goal: ↑|p|.toNat = p  (in ℤ)
+    -- Since p ≥ 0: |p| = p, so |p|.toNat = p.toNat
+    -- And p.toNat cast to ℤ is p (since p ≥ 0)
+    rw [abs_of_nonneg hp_nonneg]
+    exact Int.toNat_of_nonneg hp_nonneg
+
+  -- Get |signed_m| < beta^p as reals
+  have h_signed_lt_betap : (|(signed_m : ℝ)|) < (beta : ℝ) ^ p := by
+    -- |(signed_m : ℝ)| = (|signed_m| : ℝ) by Int.cast_abs
+    rw [← Int.cast_abs]
+    -- Now goal: ↑|signed_m| < ↑beta ^ p
+    -- Use Int.cast_lt directly on h_signed_abs
+    have h1 := Int.cast_lt (R := ℝ) |>.mpr h_signed_abs  -- ↑|signed_m| < ↑b.vNum
+    linarith [hvNum_eq]
+
+  -- |pff_to_R beta f| < beta^p * beta^f.exponent = beta^(p + f.exponent)
+  have h_upper : |(signed_m : ℝ) * (beta : ℝ) ^ f.exponent| < (beta : ℝ) ^ (p + f.exponent) := by
+    rw [h_pff_to_R]
+    have hexp_pos : (0 : ℝ) < (beta : ℝ) ^ f.exponent := zpow_pos hbeta_pos f.exponent
+    calc |(signed_m : ℝ)| * (beta : ℝ) ^ f.exponent
+        < (beta : ℝ) ^ p * (beta : ℝ) ^ f.exponent := mul_lt_mul_of_pos_right h_signed_lt_betap hexp_pos
+      _ = (beta : ℝ) ^ (p + f.exponent) := by rw [← zpow_add₀ (ne_of_gt hbeta_pos)]
+
+  -- The hypothesis gives beta^(e + p) ≤ |pff_to_R beta f|
+  have hmag_le' : (beta : ℝ) ^ (e + p) ≤ |(signed_m : ℝ) * (beta : ℝ) ^ f.exponent| := by
+    simp only [FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp] at hmag_le
+    convert hmag_le using 2
+
+  -- Combine: beta^(e + p) < beta^(p + f.exponent)
+  have h_lt : (beta : ℝ) ^ (e + p) < (beta : ℝ) ^ (p + f.exponent) :=
+    lt_of_le_of_lt hmag_le' h_upper
+
+  -- From beta^(e + p) < beta^(p + f.exponent) with beta > 1, get e + p < p + f.exponent
+  have h_exp_ineq : e + p < p + f.exponent := by
+    -- h_lt : (beta : ℝ) ^ (e + p) < (beta : ℝ) ^ (p + f.exponent)
+    exact (zpow_lt_zpow_iff_right₀ hbeta_gt_1_real).mp h_lt
+
+  -- Therefore e < f.exponent (from e + p < p + f.exponent by subtracting p from both sides)
+  have h_goal : e < f.exponent := by linarith
+  -- Now close the WP goal
+  simp only [PredTrans.pure, Id.run, wp, PostCond.noThrow, PLift.up, h_goal]
+  trivial
 
 -- From canonicity and a magnitude lower bound, derive normality
 noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
