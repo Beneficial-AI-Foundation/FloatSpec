@@ -27,9 +27,9 @@ file_list=(
   # BinarySingleNaN.lean
   # PrimFloat.lean
   Pff.lean
-  Pff2Flocq.lean
-  Pff2FlocqAux.lean
-  Nat2Z_8_12.lean
+  # Pff2Flocq.lean
+  # Pff2FlocqAux.lean
+  # Nat2Z_8_12.lean
 )
 hours=(
 #   2
@@ -38,10 +38,7 @@ hours=(
   # 2
   # 2
   # 2
-  6
-  6
-  6
-  6
+  24
   
 )
 
