@@ -942,7 +942,8 @@ theorem FcanonicFabs {beta : Int}
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
     (pure (FcanonicFabs_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (Fabs p)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, FcanonicFabs_check, ULift.down_up, Fcanonic] at *
 
 -- Relative ordering of canonical floats (Coq: `FcanonicLtPos`)
 noncomputable def FcanonicLtPos_check {beta : Int}
