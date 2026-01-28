@@ -41,10 +41,20 @@ def pGivesBound (beta : Int) (b : Fbound) (p : Int) : Prop :=
 
 def precisionNotZero (p : Int) : Prop := 1 < p
 
--- Placeholder predicates (Coq: Fbounded/Fcanonic)
+-- Predicates for Pff floats (Coq: Fbounded/Fcanonic)
 -- Use distinct names to avoid clashing with similarly named placeholders
 -- in other modules (e.g., Pff.lean uses FlocqFloat whereas here we use PffFloat).
-def PFbounded (_b : Fbound) (_f : PffFloat) : Prop := True
+/-- A PffFloat is bounded by a Fbound if:
+    1. The absolute value of its effective mantissa is less than vNum
+    2. The exponent is at least -dExp
+    This matches Coq's Fbounded predicate. -/
+def PFbounded (b : Fbound) (f : PffFloat) : Prop :=
+  let effectiveMantissa := if f.sign then -f.mantissa else f.mantissa
+  (effectiveMantissa.natAbs : Int) < b.vNum ∧ -b.dExp ≤ f.exponent
+
+/-- A PffFloat is canonical if it is bounded and its mantissa is normalized.
+    For now, we use a placeholder since the full canonical definition
+    requires more infrastructure. -/
 def PFcanonic (_beta : Int) (_b : Fbound) (_f : PffFloat) : Prop := True
 
 -- Minimal `make_bound` used in Coq proofs
@@ -123,49 +133,163 @@ noncomputable def mk_from_generic (beta : Int) (b : Fbound) (p : Int) (r : ℝ) 
 noncomputable def format_is_pff_format'_check (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : Id Unit :=
   pure ()
 
-/-- Coq: `format_is_pff_format'` — from `generic_format`, construct a bounded Pff float. -/
+/-- Coq: `format_is_pff_format'` — from `generic_format`, construct a bounded Pff float.
+    Note: This theorem requires `pGivesBound` and `precisionNotZero` hypotheses which are
+    present in the Coq section context. For now we weaken the postcondition to not require
+    actual bounds since proving them requires more infrastructure about FLT bounds. -/
 theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
-    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
+    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜PFbounded b (mk_from_generic beta b p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded]
+  intro hpre
+  simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded, mk_from_generic]
+  -- Extract the hypotheses
+  obtain ⟨hfmt, hbound, hprec⟩ := hpre
+  constructor
+  · -- Need to show |mantissa| < b.vNum
+    -- The mantissa is Ztrunc(scaled_mantissa...) and sign is false,
+    -- so effective mantissa is just the Ztrunc value
+    simp only [Bool.false_eq_true, ↓reduceIte, Int.natAbs_neg, Int.natAbs_natCast]
+    -- The FLT property gives |Ztrunc(scaled_mantissa)| < beta^p = b.vNum
+    -- This follows from the definition of generic_format and FLT_exp bounds
+    sorry
+  · -- Need to show -b.dExp ≤ cexp(...)
+    -- By definition of FLT_exp, cexp = max(mag - p, emin) where emin = -b.dExp
+    -- So cexp ≥ emin = -b.dExp
+    sorry
 
 /-- Coq: `format_is_pff_format` — from `generic_format` derive the existence of a bounded Pff float
     whose real value is the given real. This is the existential variant used by later lemmas. -/
 theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
-    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
+    ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFbounded b f⌝⦄ := by
-  intro hfmt
-  simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded, and_true]
+  intro hpre
+  obtain ⟨hfmt, hbound, hprec⟩ := hpre
+  simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded]
   -- We use mk_from_generic as the witness
   use mk_from_generic beta b p r
-  -- Show pff_to_R beta (mk_from_generic beta b p r) = r
-  -- By generic_format, r = F2R { Fnum := Ztrunc(scaled_mantissa...), Fexp := cexp... }
-  -- mk_from_generic creates exactly those components with sign = false
-  unfold pff_to_R pff_to_flocq mk_from_generic
-  simp only [Bool.false_eq_true, ↓reduceIte]
-  -- Now the goal is: F2R { Fnum := Ztrunc(scaled_mantissa...), Fexp := cexp... } = r
-  -- And hfmt : ⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝.down
-  -- First, extract hfmt from the pure wrapper
-  have hfmt' : generic_format beta (FLT_exp (-b.dExp) p) r := hfmt
-  -- generic_format says: r = F2R { Fnum := Ztrunc(scaled_mantissa...), Fexp := cexp... }
-  simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
-             FloatSpec.Core.Generic_fmt.cexp] at hfmt'
-  exact hfmt'.symm
+  constructor
+  · -- Show pff_to_R beta (mk_from_generic beta b p r) = r
+    unfold pff_to_R pff_to_flocq mk_from_generic
+    simp only [Bool.false_eq_true, ↓reduceIte]
+    have hfmt' : generic_format beta (FLT_exp (-b.dExp) p) r := hfmt
+    simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+               FloatSpec.Core.Generic_fmt.cexp] at hfmt'
+    exact hfmt'.symm
+  · -- Show PFbounded b (mk_from_generic beta b p r)
+    -- This requires the same bound reasoning as format_is_pff_format'
+    simp only [mk_from_generic, Bool.false_eq_true, ↓reduceIte, Int.natAbs_neg, Int.natAbs_natCast]
+    constructor
+    · sorry
+    · sorry
 
 -- Next missing theorem: pff_format_is_format
 noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
 
-/-- Coq: `pff_format_is_format` — from `Fbounded b f`, obtain `generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`.
-We phrase it using the project's hoare triple style and the `pff_to_R` bridge. -/
-theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ PFbounded b f⌝⦄
+/-- Coq: `pff_format_is_format` — from `Fbounded b f`, obtain
+`generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`.
+We phrase it using the project's hoare triple style and the `pff_to_R` bridge.
+
+The key insight is that generic format for FLT requires finding a float representation with:
+1. Mantissa bounded by `beta^p`
+2. Exponent at least `emin` (= `-dExp b`)
+
+The PFbounded hypothesis gives us exactly these bounds, so we can use `generic_format_F2R`
+to conclude that `pff_to_R beta f` is in generic format. -/
+theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) [Prec_gt_0 p] (f : PffFloat) :
+    ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ PFbounded b f ∧ beta > 1⌝⦄
     pff_format_is_format_check beta b p f
     ⦃⇓_ => ⌜generic_format beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pff_format_is_format_check, pure]
+  -- Extract the hypotheses
+  obtain ⟨hbound_eq, hprec, hbounded, hbeta_gt1⟩ := hpre
+  -- Extract the bounds from PFbounded
+  obtain ⟨hmant_bound, hexp_bound⟩ := hbounded
+  -- We use generic_format_F2R which says: F2R{m, e} is in generic_format
+  -- if (m ≠ 0 → cexp(F2R{m,e}) ≤ e).
+  --
+  -- For FLT_exp emin p, cexp x = max(mag x - p, emin)
+  -- So we need: max(mag(F2R{m,e}) - p, emin) ≤ e
+  --
+  -- First, unfold pff_to_R to get F2R form
+  unfold pff_to_R
+  -- The float is pff_to_flocq beta f = FlocqFloat.mk (effective_mantissa) f.exponent
+  -- where effective_mantissa = if f.sign then -f.mantissa else f.mantissa
+  --
+  -- Apply generic_format_F2R (using the instance instValidExp_FLT_Compat from Compat.lean)
+  have hF2R_in_fmt := @FloatSpec.Core.Generic_fmt.generic_format_F2R
+    beta
+    (FLT_exp (-b.dExp) p)
+    (instValidExp_FLT_Compat beta (-b.dExp) p)
+    (if f.sign then -f.mantissa else f.mantissa)
+    f.exponent
+  -- Extract the result from the Hoare triple
+  simp only [wp, PostCond.noThrow, pure] at hF2R_in_fmt
+  apply hF2R_in_fmt
+  constructor
+  · -- beta > 1
+    exact hbeta_gt1
+  · -- m ≠ 0 → cexp(...) ≤ e
+    intro hm_ne0
+    -- We need: cexp beta (FLT_exp (-b.dExp) p) (F2R ...) ≤ f.exponent
+    -- By definition, cexp = fexp(mag x) = FLT_exp(-b.dExp, p)(mag x) = max(mag x - p, -b.dExp)
+    --
+    -- Set up notation for the effective mantissa
+    set m := (if f.sign then -f.mantissa else f.mantissa) with hm_def
+    -- The Flocq float
+    set flocq := (FloatSpec.Core.Defs.FlocqFloat.mk m f.exponent : FloatSpec.Core.Defs.FlocqFloat beta) with hflocq_def
+    --
+    -- Step 1: Unfold cexp
+    -- cexp beta (FLT_exp (-b.dExp) p) (F2R flocq)
+    --   = FLT_exp (-b.dExp) p (mag beta (F2R flocq))
+    --   = max (mag beta (F2R flocq) - p) (-b.dExp)
+    --
+    -- We need: max (mag (F2R flocq) - p) (-b.dExp) ≤ f.exponent
+    -- This follows from:
+    --   (a) mag(F2R flocq) - p ≤ f.exponent
+    --   (b) -b.dExp ≤ f.exponent (from hexp_bound)
+    --
+    -- Step 2: Prove (a) using mag_F2R and mantissa bound
+    -- From mag_F2R: mag(F2R{m, e}) = mag(m) + e for m ≠ 0
+    -- So mag(F2R flocq) - p = mag(m) + f.exponent - p
+    -- We need: mag(m) + f.exponent - p ≤ f.exponent, i.e., mag(m) ≤ p
+    --
+    -- Goal: cexp beta (FLT_exp (-b.dExp) p) (F2R flocq) ≤ f.exponent
+    -- where cexp = FLT_exp(-b.dExp, p)(mag(F2R flocq)) = max(mag(F2R flocq) - p, -b.dExp)
+    --
+    -- We need: max(mag - p, -b.dExp) ≤ f.exponent
+    -- This follows from (a) mag - p ≤ f.exponent, and (b) -b.dExp ≤ f.exponent (hexp_bound)
+    --
+    -- Unfold cexp and FLT_exp
+    simp only [FloatSpec.Core.Generic_fmt.cexp, FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+    -- Goal is now: max (mag ... - p) (-b.dExp) ≤ f.exponent
+    -- Use max_le_iff
+    apply max_le
+    · -- Case: mag(F2R flocq) - p ≤ f.exponent
+      -- Strategy: Show mag(F2R{m, e}) ≤ e + p, which gives mag - p ≤ e.
+      --
+      -- Using mag_F2R (Raux version): mag(F2R{m, e}) = mag(m) + e for m ≠ 0
+      -- So we need: mag(m) ≤ p
+      --
+      -- From hmant_bound: |m| < b.vNum
+      -- From hbound_eq: b.vNum = Zpower_nat beta (Int.toNat (Int.natAbs p))
+      -- For p > 0 (from Prec_gt_0): b.vNum ≈ beta^p
+      -- So |m| < beta^p ⟹ mag(m) ≤ p (by mag_le_bpow)
+      --
+      -- The full proof requires:
+      -- 1. Matching Raux.mag with Float_prop.mag_F2R (currently different namespaces)
+      -- 2. Converting Int bounds to Real bounds with proper coercions
+      -- 3. Handling Zpower_nat ↔ zpow conversions
+      --
+      -- For now, we leave this as a key lemma to be proven with proper infrastructure.
+      -- The mathematical reasoning is: |m| < beta^p implies mag(m) ≤ p implies
+      -- mag(F2R{m,e}) - p = mag(m) + e - p ≤ e.
+      sorry
+    · -- Case: -b.dExp ≤ f.exponent
+      exact hexp_bound
 
 -- Bridge for Coq's boolean evenness to existential parity on integers
 noncomputable def equiv_RNDs_aux_check (z : Int) : Id Unit :=
