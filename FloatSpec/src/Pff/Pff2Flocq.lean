@@ -265,6 +265,60 @@ theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Boo
 noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
   ()
 
+-- Helper: Express a generic format value at a smaller exponent.
+-- Given x in generic format with canonical exponent c = cexp(x),
+-- for any e at most c there exists integer m such that x = m * 2^e.
+-- This is specialized to beta = 2 for easier power arithmetic.
+private lemma ex_shift_2 (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp 2 fexp]
+    (x : ℝ) (e : Int)
+    (hx : _root_.generic_format 2 fexp x) (h_exp : e ≤ _root_.cexp 2 fexp x) :
+    ∃ m : Int, x = (m : ℝ) * (2 : ℝ) ^ e := by
+  classical
+  by_cases hx0 : x = 0
+  · use 0; simp [hx0]
+  · -- x ≠ 0: extract the representation from generic_format
+    set c := _root_.cexp 2 fexp x with hc_def
+    set sm := FloatSpec.Core.Raux.Ztrunc (x * (2 : ℝ) ^ (-c)) with hsm_def
+    -- From generic_format: x = sm * 2^c
+    have hx_repr : x = (sm : ℝ) * (2 : ℝ) ^ c := by
+      unfold _root_.generic_format FloatSpec.Core.Generic_fmt.generic_format at hx
+      unfold FloatSpec.Core.Generic_fmt.scaled_mantissa FloatSpec.Core.Generic_fmt.cexp at hx
+      simp only [_root_.F2R, Id.run, pure, Bind.bind] at hx
+      exact hx
+    -- Express x at exponent e: x = (sm * 2^(c-e)) * 2^e
+    have hd_nonneg : 0 ≤ c - e := by omega
+    use sm * 2 ^ (c - e).toNat
+    rw [hx_repr]
+    -- Convert Int cast and powers
+    rw [Int.cast_mul, Int.cast_pow, Int.cast_ofNat]
+    have h2 : (2 : ℝ) ≠ 0 := by norm_num
+    have hc_split : c = (c - e) + e := by omega
+    conv_lhs => rw [hc_split, zpow_add₀ h2]
+    -- Goal: (2 : ℝ) ^ (c - e) * (2 : ℝ) ^ e * ↑sm = (2 : ℝ) ^ (c - e).toNat * ↑sm * (2 : ℝ) ^ e
+    have hd_eq : (c - e).toNat = (c - e) := by omega
+    rw [← zpow_natCast]
+    simp only [hd_eq]
+    ring
+
+/-- Helper: cexp of error at given exponent is bounded. -/
+private lemma cexp_error_bound_aux (emin prec : Int) [Prec_gt_0 prec]
+    (R : Int) (e : Int) (hR_ne : R ≠ 0)
+    (h_emin_le : emin ≤ e)
+    (h_mag_bound : FloatSpec.Core.Raux.mag 2 ((R : ℝ) * (2 : ℝ) ^ e) ≤ e + prec) :
+    FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) ((R : ℝ) * (2 : ℝ) ^ e) ≤ e := by
+  -- cexp(R * 2^e) = FLT_exp(mag(R * 2^e)) = max(mag(R * 2^e) - prec, emin)
+  -- By h_mag_bound: mag(R * 2^e) ≤ e + prec, so mag - prec ≤ e
+  -- By h_emin_le: emin ≤ e
+  -- Therefore: max(mag - prec, emin) ≤ e
+  simp only [FloatSpec.Core.Generic_fmt.cexp, FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+  -- Goal: max(max(mag - prec, emin), mag - prec) ≤ e
+  -- This simplifies to max(mag - prec, emin) ≤ e
+  apply max_le
+  · -- mag - prec ≤ e
+    omega
+  · -- emin ≤ e
+    exact h_emin_le
+
 /-- Helper lemma: Rounding error of a sum is in format (forward direction).
 
     This is the core mathematical result needed for error-free transformations.
@@ -284,6 +338,12 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
     let a := round_flt (x + y)
     generic_format 2 (FLT_exp emin prec) (a - (x + y)) := by
   intro round_flt a
+
+  -- Bridge instance: Monotone_exp for the Compat FLT_exp alias
+  -- FLT_exp emin prec = FloatSpec.Core.FLT.FLT_exp prec emin (note swapped arguments)
+  haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp emin prec) := by
+    simp only [FLT_exp]
+    exact FloatSpec.Core.FLT.FLT_exp_mono (prec := prec) (emin := emin)
 
   -- Key notation
   set ex := FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) x with hex_def
@@ -380,13 +440,456 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
     --    error = F2R(R, e_min) is in format if cexp(error) ≤ e_min
     --    This follows from |error| ≤ min(|x|, |y|) and cexp monotonicity
     --
-    -- The full formalization requires:
-    -- - ex_shift lemma (Plus_error.lean - has sorry)
-    -- - Proper cexp monotonicity analysis
+    -- Use ex_shift_2 to express x and y at common exponent e_min
+    have he_min_le_ex : e_min ≤ ex := min_le_left ex ey
+    have he_min_le_ey : e_min ≤ ey := min_le_right ex ey
+
+    -- Express x and y at exponent e_min
+    have ⟨Mx, hx_repr⟩ := ex_shift_2 (FLT_exp emin prec) x e_min hx he_min_le_ex
+    have ⟨My, hy_repr⟩ := ex_shift_2 (FLT_exp emin prec) y e_min hy he_min_le_ey
+
+    -- Sum: x + y = (Mx + My) * 2^e_min
+    have hsum : x + y = ((Mx + My) : ℝ) * (2 : ℝ) ^ e_min := by
+      rw [hx_repr, hy_repr]
+      ring
+
+    -- The rounded value a = round(x+y) is computed with cexp(x+y) ≥ e_min
+    -- by the construction of round_to_generic.
+    -- The error a - (x+y) = R * 2^e_min for some integer R.
+
+    -- Key insight: Both a and (x+y) can be expressed as integer multiples
+    -- of some power of 2. The error is thus also an integer multiple.
+
+    -- For now, apply the generic_format_F2R structure
+    -- The full proof requires showing that the error has cexp ≤ e_min
+    -- which follows from the error being bounded by min(|x|, |y|)
+
+    -- Apply the F2R structure to conclude
+    -- The error is: a - (x+y) where a = round(x+y)
+    -- By construction of round_to_generic:
+    --   a = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r where e_r = cexp(x+y)
+    -- Since x+y = M * 2^e_min and e_r = cexp(M * 2^e_min) ≥ e_min,
+    -- let d = e_r - e_min ≥ 0, then:
+    --   (x+y) * 2^(-e_r) = M * 2^(e_min - e_r) = M * 2^(-d) = M / 2^d
+    --   a = Ztrunc(M / 2^d) * 2^e_r = Ztrunc(M / 2^d) * 2^d * 2^e_min
+    -- The error:
+    --   a - (x+y) = Ztrunc(M / 2^d) * 2^d * 2^e_min - M * 2^e_min
+    --             = (Ztrunc(M / 2^d) * 2^d - M) * 2^e_min
+    --             = R * 2^e_min  where R is an integer
     --
-    -- These are mathematically proven in Coq but not yet fully translated.
-    -- The core theorem is valid (Coq proof exists).
-    sorry
+    -- By generic_format_F2R, F2R(R, e_min) is in format if cexp(error) ≤ e_min.
+    -- The bound cexp(error) ≤ e_min follows from:
+    --   |error| ≤ min(|x|, |y|) (by plus_error_le)
+    --   and the monotonicity of cexp with respect to magnitude.
+
+    -- This structural proof is complete but requires the helper lemmas
+    -- for cexp bounds. The core mathematical result is valid.
+
+    -- Define e_r = cexp(x + y), the canonical exponent of the sum
+    set e_r := FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) (x + y) with he_r_def
+
+    -- The rounded value is: a = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
+    -- In our definition: round_to_generic computes this
+    have ha_def : a = round_flt (x + y) := rfl
+
+    -- Key step: Define M = Mx + My (the integer mantissa at e_min)
+    set M : Int := Mx + My with hM_def
+
+    -- For the proof, we need to show e_r ≥ e_min to express a as an integer multiple of 2^e_min
+    --
+    -- The relationship between e_r and e_min depends on:
+    -- 1. e_r = FLT_exp(mag(x+y))
+    -- 2. e_min = min(cexp(x), cexp(y)) where cexp(z) = FLT_exp(mag(z))
+    --
+    -- When |x+y| > 0, we have mag(x+y) which determines e_r.
+    -- The key insight is that for the FLT format with Monotone_exp,
+    -- when the sum is nonzero, either:
+    -- (a) |x+y| ≤ max(|x|, |y|) in which case e_r ≤ max(ex, ey)
+    -- (b) The sum may be larger but the exponent is still bounded
+    --
+    -- For the error a - (x+y) to be in format:
+    -- The Coq proof uses that rounding F2R(m, e) gives F2R(m', e) when e ≤ cexp(input).
+    -- This is the key "round_repr_same_exp" lemma.
+    --
+    -- Alternative approach: Use that a is in generic format (by round_to_generic_generic)
+    -- and show the difference of two format values with controlled exponents is in format.
+
+    -- Apply round_to_generic_generic to show a is in format
+    have ha_format : generic_format 2 (FLT_exp emin prec) a := by
+      -- unfold a and round_flt
+      simp only [ha_def]
+      -- round_to_generic always produces format values
+      have h2gt1 : (1 : Int) < 2 := by decide
+      -- FloatSpec.Calc.Round.round uses (fun _ _ => True) as the rounding relation
+      -- round_flt = FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+      -- which equals round_to_generic 2 (FLT_exp emin prec) (fun _ _ => True)
+      have hround_eq : round_flt (x + y) =
+          FloatSpec.Core.Generic_fmt.round_to_generic 2 (FLT_exp emin prec) (fun _ _ => True) (x + y) := rfl
+      rw [hround_eq]
+      exact FloatSpec.Core.Generic_fmt.round_to_generic_generic
+        (beta := 2) (fexp := FLT_exp emin prec)
+        (rnd := fun _ _ => True) (x := x + y) h2gt1
+
+    -- Now we need to show that a - (x + y) is in format
+    -- Both a and (x+y) can be expressed as integer multiples of 2^e_min
+
+    -- For (x + y): already have hsum : x + y = M * 2^e_min
+
+    -- For a: We need to show a can be expressed as N * 2^e_min for some integer N
+    -- This follows from the structure of round_to_generic and the fact that
+    -- x + y = M * 2^e_min with e_min ≤ cexp(x+y).
+    --
+    -- By round_to_generic:
+    --   a = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
+    -- Substituting x+y = M * 2^e_min:
+    --   a = Ztrunc(M * 2^(e_min - e_r)) * 2^e_r
+    --
+    -- If e_r ≥ e_min (which we need to establish), let d = e_r - e_min ≥ 0:
+    --   a = Ztrunc(M * 2^(-d)) * 2^(e_min + d)
+    --   a = Ztrunc(M / 2^d) * 2^d * 2^e_min
+    --
+    -- The integer N = Ztrunc(M / 2^d) * 2^d gives a = N * 2^e_min
+    --
+    -- The error: a - (x+y) = N * 2^e_min - M * 2^e_min = (N - M) * 2^e_min
+    -- where R = N - M is an integer.
+
+    -- For this proof, we use the fact that both x and y are format values
+    -- and apply the general principle that the error is at the minimum exponent.
+    --
+    -- The key is using generic_format_F2R: F2R(R, e_min) is in format if
+    -- cexp(F2R(R, e_min)) ≤ e_min.
+    --
+    -- For the FLT format: cexp(z) = FLT_exp(mag(z)) = max(mag(z) - prec, emin)
+    --
+    -- We need: max(mag(error) - prec, emin) ≤ e_min
+    -- which requires: mag(error) ≤ e_min + prec and emin ≤ e_min
+    --
+    -- The bound mag(error) ≤ e_min + prec follows from:
+    -- 1. |error| ≤ min(|x|, |y|) (classic error bound)
+    -- 2. For format values, |z| < 2^(cexp(z) + prec) (ulp bound)
+    -- 3. So |error| < 2^(e_min + prec), hence mag(error) ≤ e_min + prec
+
+    -- For now, use the construction approach:
+    -- Express the error as F2R(R, e_min) and apply generic_format_F2R
+
+    -- The error is: a - (x+y) where a = round(x+y)
+    -- Using hsum: x + y = M * 2^e_min, the error = a - M * 2^e_min
+
+    -- Use the F2R structure
+    -- To apply generic_format_F2R, we need to construct the integer R such that
+    -- error = R * 2^e_min = F2R(R, e_min)
+
+    -- The key insight: by round_to_generic definition,
+    -- a = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
+    -- = Ztrunc(M * 2^(e_min - e_r)) * 2^e_r
+    --
+    -- If d := e_r - e_min ≥ 0:
+    --   a = Ztrunc(M * 2^(-d)) * 2^(e_min + d)
+    --
+    -- The error:
+    --   a - (x+y) = Ztrunc(M * 2^(-d)) * 2^(e_min + d) - M * 2^e_min
+    --   = 2^e_min * (Ztrunc(M * 2^(-d)) * 2^d - M)
+    --   = R * 2^e_min where R = Ztrunc(M * 2^(-d)) * 2^d - M
+
+    -- Apply generic_format_F2R'
+    have h2gt1 : (1 : Int) < 2 := by decide
+
+    -- Construct the F2R representation
+    -- error = a - (x+y)
+    -- We need to express this as F2R(R, e_min) for some integer R
+
+    -- Use the fact that both a and x+y are in generic format and share
+    -- a common representation structure.
+
+    -- For the FLT format specifically, we use the cexp monotonicity properties.
+
+    -- The most direct approach: show error = F2R(R, e) for appropriate R and e,
+    -- then show cexp(error) ≤ e.
+
+    -- Given the complexity of the full proof, we focus on the key structural step:
+    -- The error can be expressed as an integer multiple of 2^e_min.
+
+    -- Let's use a direct calculation approach.
+    -- By the definition of round and the sum representation:
+
+    -- First, establish that e_r ≥ e_min or handle the case analysis
+    by_cases h_er_ge : e_r ≥ e_min
+    case pos =>
+      -- Case: e_r ≥ e_min
+      -- Define d = e_r - e_min ≥ 0
+      set d := e_r - e_min with hd_def
+      have hd_nonneg : 0 ≤ d := by omega
+
+      -- The error can be expressed as R * 2^e_min for integer R
+      -- R = Ztrunc(M / 2^d) * 2^d - M
+
+      -- For the final step, we use the F2R characterization
+      -- error = F2R(R, e_min) where R is an integer
+
+      -- By the representation theorem, this is in generic format if
+      -- cexp(error) ≤ e_min
+
+      -- Apply the format lemma
+      have hF2R := FloatSpec.Core.Generic_fmt.generic_format_F2R' (beta := 2)
+        (fexp := FLT_exp emin prec) (x := a - (x + y))
+
+      -- The F2R representation of the error
+      -- We need to find the appropriate float f such that F2R(f) = error
+
+      -- For the error structure, note that:
+      -- error = a - (x+y) = round(x+y) - (x+y)
+      --
+      -- By the round_to_generic definition:
+      -- a = Ztrunc(scaled_mantissa(x+y)) * 2^(cexp(x+y))
+      --   = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
+      --
+      -- With x+y = M * 2^e_min:
+      -- a = Ztrunc(M * 2^(e_min - e_r)) * 2^e_r
+      --   = Ztrunc(M * 2^(-d)) * 2^(e_min + d)
+
+      -- The integer mantissa for the rounded value at e_min:
+      -- Since d ≥ 0, 2^(-d) is potentially not an integer.
+      -- Let T = Ztrunc(M * 2^(-d)), then:
+      -- a = T * 2^(e_min + d) = T * 2^d * 2^e_min
+
+      -- So a = (T * 2^d) * 2^e_min where T * 2^d is an integer (since d ≥ 0)
+
+      -- Error = a - (x+y) = T * 2^d * 2^e_min - M * 2^e_min
+      --       = (T * 2^d - M) * 2^e_min
+      --       = R * 2^e_min where R = T * 2^d - M is an integer
+
+      -- Now we construct R explicitly
+      set T := FloatSpec.Core.Raux.Ztrunc (M * (2 : ℝ) ^ (-d)) with hT_def
+      set R := T * 2^d.toNat - M with hR_def
+
+      -- Verify the error representation
+      have herror_repr : a - (x + y) = (R : ℝ) * (2 : ℝ) ^ e_min := by
+        -- Need to show: a - (x+y) = (T * 2^d - M) * 2^e_min
+        -- We have: x + y = M * 2^e_min (from hsum)
+
+        -- For a, we use the round_to_generic definition
+        -- a = round_flt (x + y) = round_to_generic 2 (FLT_exp emin prec) () (x + y)
+        -- = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
+
+        -- First establish the scaled mantissa relation
+        have hscale : (x + y) * (2 : ℝ) ^ (-e_r) = (M : ℝ) * (2 : ℝ) ^ (-d) := by
+          rw [hsum]
+          simp only [hM_def, Int.cast_add]
+          have h2ne : (2 : ℝ) ≠ 0 := by norm_num
+          -- (Mx + My) * 2^e_min * 2^(-e_r) = (Mx + My) * 2^(e_min - e_r) = (Mx + My) * 2^(-d)
+          have hexp_eq : e_min + -e_r = -d := by omega
+          calc ((Mx : ℝ) + (My : ℝ)) * (2 : ℝ) ^ e_min * (2 : ℝ) ^ (-e_r)
+              = ((Mx : ℝ) + (My : ℝ)) * ((2 : ℝ) ^ e_min * (2 : ℝ) ^ (-e_r)) := by ring
+            _ = ((Mx : ℝ) + (My : ℝ)) * (2 : ℝ) ^ (e_min + -e_r) := by rw [← zpow_add₀ h2ne]
+            _ = ((Mx : ℝ) + (My : ℝ)) * (2 : ℝ) ^ (-d) := by rw [hexp_eq]
+
+        -- Unfold the definition of a
+        have ha_unfold : a = (T : ℝ) * (2 : ℝ) ^ e_r := by
+          -- a = round_flt (x + y) = round_to_generic = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
+          simp only [a, round_flt, FloatSpec.Calc.Round.round,
+                     FloatSpec.Core.Generic_fmt.round_to_generic]
+          -- e_r = cexp 2 (FLT_exp emin prec) (x + y) by definition
+          -- Goal: Ztrunc((x+y) * 2^(-e_r)) * 2^e_r = T * 2^e_r
+          -- We need to show: Ztrunc((x+y) * 2^(-e_r)) = T = Ztrunc(M * 2^(-d))
+          -- Using hscale: (x+y) * 2^(-e_r) = M * 2^(-d)
+          congr 2
+          -- Show: Ztrunc((x+y) * ↑2^(-cexp...)) = T
+          -- First convert cexp to e_r
+          have he_r_eq : FloatSpec.Core.Generic_fmt.cexp 2 (FLT_exp emin prec) (x + y) = e_r := rfl
+          simp only [he_r_eq]
+          -- Now we need: Ztrunc((x+y) * ↑2^(-e_r)) = T
+          -- But the goal has ↑2 and hscale has 2
+          -- These should be definitionally equal for Int coercion to ℝ
+          have h_cast_eq : ((2 : Int) : ℝ) = (2 : ℝ) := by norm_num
+          simp only [h_cast_eq, hscale]
+          -- T = Ztrunc(M * 2^(-d)) by definition
+          rfl
+
+        -- Now we have a = T * 2^e_r and x + y = M * 2^e_min
+        -- error = a - (x+y) = T * 2^e_r - M * 2^e_min
+        --       = T * 2^(e_min + d) - M * 2^e_min
+        --       = T * 2^d * 2^e_min - M * 2^e_min
+        --       = (T * 2^d - M) * 2^e_min = R * 2^e_min
+
+        rw [ha_unfold, hsum]
+        -- Goal: T * 2^e_r - (Mx + My) * 2^e_min = R * 2^e_min
+        simp only [hR_def, hM_def]
+        -- e_r = e_min + d
+        have he_r_split : e_r = e_min + d := by omega
+        rw [he_r_split]
+        have h2ne : (2 : ℝ) ≠ 0 := by norm_num
+        rw [zpow_add₀ h2ne]
+        -- T * (2^e_min * 2^d) - (Mx + My) * 2^e_min = (T * 2^d.toNat - (Mx + My)) * 2^e_min
+        -- Convert 2^d to 2^d.toNat since d ≥ 0
+        have hd_nat : (2 : ℝ) ^ d = (2 : ℝ) ^ d.toNat := by
+          rw [← zpow_natCast]
+          congr 1
+          exact (Int.toNat_of_nonneg hd_nonneg).symm
+        rw [hd_nat]
+        -- Push the Int cast inside
+        push_cast
+        ring
+
+      -- Now apply generic_format_F2R
+      -- To show F2R(R, e_min) is in generic format, we need:
+      -- 1. beta > 1 (trivially 2 > 1)
+      -- 2. R ≠ 0 → cexp(F2R(R, e_min)) ≤ e_min
+
+      -- The cexp bound follows from:
+      -- cexp(error) = FLT_exp(mag(error))
+      -- |error| ≤ |x| or |error| ≤ |y| (by rounding error bounds)
+      -- So mag(error) ≤ mag(x) or mag(error) ≤ mag(y)
+      -- Hence cexp(error) ≤ cexp(x) or cexp(error) ≤ cexp(y)
+      -- Thus cexp(error) ≤ min(cexp(x), cexp(y)) = e_min
+
+      rw [herror_repr]
+
+      -- Apply generic_format_F2R
+      have hF2R_apply := FloatSpec.Core.Generic_fmt.generic_format_F2R (beta := 2)
+        (fexp := FLT_exp emin prec) (m := R) (e := e_min)
+      simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hF2R_apply
+
+      -- The error as F2R
+      have hR_as_F2R : (R : ℝ) * (2 : ℝ) ^ e_min =
+          _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta := 2) R e_min) := by
+        simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, Id.run, pure]
+        -- Need: ↑R * 2 ^ e_min = ↑R * ↑2 ^ e_min
+        -- The issue is that (2 : ℝ) and (↑2 : ℝ) are the same
+        norm_cast
+
+      rw [hR_as_F2R]
+      apply hF2R_apply
+      constructor
+      · exact h2gt1
+      · -- Need: R ≠ 0 → cexp(F2R(R, e_min)) ≤ e_min
+        intro hR_ne
+
+        -- Key bound: cexp(F2R(R, e_min)) = cexp(error) ≤ e_min
+        --
+        -- The proof follows Coq Plus_error.v lines 107-116:
+        -- 1. By round_N_pt (nearest rounding property), for any format g:
+        --    |round(x+y) - (x+y)| ≤ |g - (x+y)|
+        -- 2. Choosing g = x (which is in format):
+        --    |error| ≤ |x - (x+y)| = |y|
+        -- 3. Since e_min ≤ ey = cexp(y), and cexp is monotone in magnitude,
+        --    we have cexp(error) ≤ cexp(y) = ey
+        -- 4. Similarly, choosing g = y gives |error| ≤ |x|, so cexp(error) ≤ ex
+        -- 5. Therefore cexp(error) ≤ min(ex, ey) = e_min
+        --
+        -- This requires plus_error_le (which is stubbed in Plus_error.lean).
+        -- The bound |error| ≤ min(|x|, |y|) is the fundamental nearest-rounding property.
+        --
+        -- DEPENDENCY: plus_error_le_l / plus_error_le_r from Plus_error.lean (currently sorry)
+        -- Once those are proved, this follows from cexp_mono_pos_ax.
+
+        -- For now, we establish the bound emin ≤ e_min (required for FLT_exp)
+        have hemin_le_e_min : emin ≤ e_min := by
+          simp only [he_min_def]
+          have hex_ge : emin ≤ ex := by
+            simp only [hex_def, FloatSpec.Core.Generic_fmt.cexp, FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+            exact le_max_right _ _
+          have hey_ge : emin ≤ ey := by
+            simp only [hey_def, FloatSpec.Core.Generic_fmt.cexp, FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+            exact le_max_right _ _
+          exact le_min hex_ge hey_ge
+
+        -- The full cexp bound requires the error bound from plus_error_le.
+        -- This is a fundamental result that depends on nearest-rounding properties.
+        -- See Plus_error.lean:plus_error_le_l/plus_error_le_r (currently sorry).
+        sorry
+
+    case neg =>
+      -- Case: e_r < e_min
+      -- In this case, we work at exponent e_r instead of e_min.
+      -- Since e_r < e_min ≤ ex and e_r < e_min ≤ ey, we can express
+      -- both x and y at exponent e_r using ex_shift_2.
+      -- The error is then an integer multiple of 2^e_r.
+      push_neg at h_er_ge
+      -- h_er_ge : e_r < e_min
+
+      -- We have: e_r < e_min ≤ ex and e_r < e_min ≤ ey
+      have he_r_le_ex : e_r ≤ ex := le_trans (le_of_lt h_er_ge) he_min_le_ex
+      have he_r_le_ey : e_r ≤ ey := le_trans (le_of_lt h_er_ge) he_min_le_ey
+
+      -- Express x and y at exponent e_r
+      have ⟨Mx', hx_repr'⟩ := ex_shift_2 (FLT_exp emin prec) x e_r hx he_r_le_ex
+      have ⟨My', hy_repr'⟩ := ex_shift_2 (FLT_exp emin prec) y e_r hy he_r_le_ey
+
+      -- Sum: x + y = (Mx' + My') * 2^e_r
+      have hsum' : x + y = ((Mx' + My') : ℝ) * (2 : ℝ) ^ e_r := by
+        rw [hx_repr', hy_repr']
+        ring
+
+      -- Express a at exponent e_r (using ha_format and e_r ≤ cexp(a) = e_r)
+      -- Actually, for a = round(x+y), we have cexp(a) = e_r by construction
+      -- So we can express a at its own canonical exponent e_r
+
+      -- a = round_to_generic(x+y) = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r = T' * 2^e_r
+      set M' : Int := Mx' + My' with hM'_def
+      set T' := FloatSpec.Core.Raux.Ztrunc ((x + y) * (2 : ℝ) ^ (-e_r)) with hT'_def
+
+      have ha_repr : a = (T' : ℝ) * (2 : ℝ) ^ e_r := by
+        simp only [a, round_flt, FloatSpec.Calc.Round.round,
+                   FloatSpec.Core.Generic_fmt.round_to_generic]
+        rfl
+
+      -- The error: a - (x+y) = T' * 2^e_r - M' * 2^e_r = (T' - M') * 2^e_r
+      set R' := T' - M' with hR'_def
+
+      have herror_repr' : a - (x + y) = (R' : ℝ) * (2 : ℝ) ^ e_r := by
+        rw [ha_repr, hsum']
+        simp only [hR'_def, hM'_def]
+        push_cast
+        ring
+
+      -- Now apply generic_format_F2R at exponent e_r
+      rw [herror_repr']
+
+      have hF2R_apply' := FloatSpec.Core.Generic_fmt.generic_format_F2R (beta := 2)
+        (fexp := FLT_exp emin prec) (m := R') (e := e_r)
+      simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hF2R_apply'
+
+      have hR'_as_F2R : (R' : ℝ) * (2 : ℝ) ^ e_r =
+          _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta := 2) R' e_r) := by
+        simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, Id.run, pure]
+        norm_cast
+
+      rw [hR'_as_F2R]
+      apply hF2R_apply'
+      constructor
+      · exact h2gt1
+      · -- Need: R' ≠ 0 → cexp(F2R(R', e_r)) ≤ e_r
+        intro hR'_ne
+        -- Actually, R' = 0 in this case, which contradicts hR'_ne.
+        -- From hsum': x + y = M' * 2^e_r, so (x + y) * 2^(-e_r) = M'
+        -- Then T' = Ztrunc(M') = M', hence R' = T' - M' = 0.
+        exfalso
+        apply hR'_ne
+        -- Show R' = 0
+        simp only [hR'_def]
+        -- Need: T' - M' = 0, i.e., T' = M'
+        -- We have: T' = Ztrunc((x + y) * 2^(-e_r))
+        -- From hsum': x + y = M' * 2^e_r
+        -- So (x + y) * 2^(-e_r) = M' (an integer)
+        have h_scaled : (x + y) * (2 : ℝ) ^ (-e_r) = (M' : ℝ) := by
+          rw [hsum']
+          have h2ne : (2 : ℝ) ≠ 0 := by norm_num
+          simp only [hM'_def, Int.cast_add]
+          -- Goal: (↑Mx' + ↑My') * 2 ^ e_r * 2 ^ (-e_r) = ↑Mx' + ↑My'
+          calc ((Mx' : ℝ) + (My' : ℝ)) * (2 : ℝ) ^ e_r * (2 : ℝ) ^ (-e_r)
+              = ((Mx' : ℝ) + (My' : ℝ)) * ((2 : ℝ) ^ e_r * (2 : ℝ) ^ (-e_r)) := by ring
+            _ = ((Mx' : ℝ) + (My' : ℝ)) * (2 : ℝ) ^ (e_r + (-e_r)) := by rw [← zpow_add₀ h2ne]
+            _ = ((Mx' : ℝ) + (My' : ℝ)) * (2 : ℝ) ^ (0 : Int) := by simp
+            _ = ((Mx' : ℝ) + (My' : ℝ)) * 1 := by norm_num
+            _ = (Mx' : ℝ) + (My' : ℝ) := by ring
+        -- T' = Ztrunc(M') = M' by Ztrunc_IZR
+        have hT'_eq : T' = M' := by
+          simp only [hT'_def, h_scaled]
+          -- Ztrunc (M' : ℝ) = M'
+          have h := FloatSpec.Core.Raux.Ztrunc_IZR M'
+          simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at h
+          exact h trivial
+        omega
 
 /-- ErrorBoundedIplus: The rounding error {lit}`x + y - round(x + y)` is representable in format.
 
