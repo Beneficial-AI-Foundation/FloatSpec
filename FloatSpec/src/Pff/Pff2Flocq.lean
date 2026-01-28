@@ -793,9 +793,36 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
             exact le_max_right _ _
           exact le_min hex_ge hey_ge
 
-        -- The full cexp bound requires the error bound from plus_error_le.
-        -- This is a fundamental result that depends on nearest-rounding properties.
-        -- See Plus_error.lean:plus_error_le_l/plus_error_le_r (currently sorry).
+        -- BLOCKER: The cexp bound requires d < prec where d = e_r - e_min.
+        --
+        -- Mathematical analysis (verified):
+        -- 1. From Ztrunc property: |R| < 2^d (via abs_Ztrunc_sub_lt_one)
+        -- 2. For cexp(R * 2^e_min) ≤ e_min, we need mag(R) ≤ prec
+        -- 3. From |R| < 2^d and R ≠ 0: mag(R) ≤ d
+        -- 4. So we need: d ≤ prec, i.e., e_r ≤ e_min + prec
+        --
+        -- When does this fail? When e_r = mag(x+y) - prec and:
+        --   mag(x+y) > e_min + 2*prec
+        --
+        -- From format bounds: mag(x+y) ≤ prec + 1 + |ex - ey| + e_min
+        -- So the constraint e_r ≤ e_min + prec holds when |ex - ey| ≤ prec - 1.
+        --
+        -- When |ex - ey| ≥ prec (exponents differ significantly):
+        -- - For Znearest: |error| ≤ min(|x|, |y|) still guarantees the bound
+        -- - For Ztrunc: The error can be as large as ulp(x+y), which may exceed min(|x|, |y|)
+        --
+        -- FUNDAMENTAL ISSUE: The theorem requires nearest-rounding properties,
+        -- but `FloatSpec.Calc.Round.round` uses Ztrunc (round-toward-zero).
+        --
+        -- The bound |error| ≤ min(|x|, |y|) does NOT hold for Ztrunc when
+        -- operand magnitudes differ significantly (|ex - ey| ≥ prec).
+        --
+        -- RESOLUTION OPTIONS:
+        -- 1. Fix rounding: Make round_to_generic mode-aware (use Znearest for mode = Znearest)
+        -- 2. Add constraint: Prove weaker version with hypothesis |ex - ey| < prec
+        -- 3. Use axiom: Accept plus_error_le_l/r as axioms
+        --
+        -- See Plus_error.lean:171-180 for the sorry stubs that this depends on.
         sorry
 
     case neg =>
