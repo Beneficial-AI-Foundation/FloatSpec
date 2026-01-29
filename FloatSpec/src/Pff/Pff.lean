@@ -2808,20 +2808,162 @@ theorem FcanonicNegFexpRlt {beta : Int}
       omega
 
 noncomputable def NormalAndSubNormalNotEq_check {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
+    (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `NormalAndSubNormalNotEq` — a normal float and a subnormal float
-represent different real numbers. -/
+represent different real numbers.
+
+Note: Uses `Fnormal'` and `Fsubnormal'` (proper Coq definitions) instead of
+placeholder `Fnormal`/`Fsubnormal`. Requires `radix = beta` and `1 < beta`. -/
 theorem NormalAndSubNormalNotEq {beta : Int}
-    (radix : ℝ) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fnormal (beta:=beta) radix b p ∧
-        Fsubnormal (beta:=beta) radix b q⌝⦄
+    (radix : Int) (b : Fbound_skel)
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hβ : 1 < beta)
+    (hradix : radix = beta) :
+    ⦃⌜Fnormal' (beta:=beta) radix b p ∧
+        Fsubnormal' (beta:=beta) radix b q⌝⦄
     (pure (NormalAndSubNormalNotEq_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p ≠ _root_.F2R (beta:=beta) q⌝⦄ := by
-  sorry
+  intro ⟨hNormal, hSubnormal⟩
+  simp only [wp, PostCond.noThrow, pure, NormalAndSubNormalNotEq_check, ULift.down_up]
+  -- Unfold the definitions
+  -- Fnormal' p: Fbounded' b p ∧ vNum ≤ |radix * p.Fnum|
+  -- Fsubnormal' q: Fbounded' b q ∧ q.Fexp = -dExp ∧ |radix * q.Fnum| < vNum
+  obtain ⟨hBoundedP, hvNumP⟩ := hNormal
+  obtain ⟨hBoundedQ, hExpQ, hvNumQ⟩ := hSubnormal
+  -- From Fbounded': |p.Fnum| < vNum ∧ -dExp ≤ p.Fexp
+  obtain ⟨hFnumP_lt, hExpP_ge⟩ := hBoundedP
+  obtain ⟨hFnumQ_lt, _⟩ := hBoundedQ
+  -- Key: |radix * q.Fnum| < vNum ≤ |radix * p.Fnum|
+  have h_radix_pos : (0 : ℤ) < radix := by rw [hradix]; omega
+  have h_radix_ne_zero : radix ≠ 0 := ne_of_gt h_radix_pos
+  have h_beta_pos_int : (0 : ℤ) < beta := lt_trans (by norm_num : (0 : ℤ) < 1) hβ
+  have h_beta_pos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast h_beta_pos_int
+  have h_beta_gt_one : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  -- The core inequality: |radix * q.Fnum| < |radix * p.Fnum|
+  have hcore : |radix * q.Fnum| < |radix * p.Fnum| := lt_of_lt_of_le hvNumQ hvNumP
+  -- Prove F2R p ≠ F2R q by showing they can't be equal
+  intro heq
+  -- F2R p = p.Fnum * beta^p.Fexp and F2R q = q.Fnum * beta^q.Fexp
+  unfold _root_.F2R at heq
+  -- From p.Fexp ≥ -dExp = q.Fexp
+  have hExpP_ge_Q : p.Fexp ≥ q.Fexp := by rw [hExpQ]; exact hExpP_ge
+  -- Case split: p.Fexp = q.Fexp or p.Fexp > q.Fexp
+  rcases eq_or_lt_of_le hExpP_ge_Q with hExpEq | hExpLt
+  · -- Case: p.Fexp = q.Fexp
+    -- Then p.Fnum * beta^e = q.Fnum * beta^e, so p.Fnum = q.Fnum
+    have h_pow_eq : (beta : ℝ) ^ p.Fexp = (beta : ℝ) ^ q.Fexp := by rw [hExpEq]
+    have h_pow_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos h_beta_pos q.Fexp
+    have h_pow_ne : (beta : ℝ) ^ q.Fexp ≠ 0 := ne_of_gt h_pow_pos
+    have hFnumEq : (p.Fnum : ℝ) = (q.Fnum : ℝ) := by
+      have h1 : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp = (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp := heq
+      rw [h_pow_eq] at h1
+      exact mul_right_cancel₀ h_pow_ne h1
+    have hFnumEqInt : p.Fnum = q.Fnum := by exact_mod_cast hFnumEq
+    -- But then |radix * p.Fnum| = |radix * q.Fnum|
+    have h_abs_eq : |radix * p.Fnum| = |radix * q.Fnum| := by rw [hFnumEqInt]
+    -- This contradicts |radix * q.Fnum| < |radix * p.Fnum|
+    omega
+  · -- Case: p.Fexp > q.Fexp (i.e., q.Fexp < p.Fexp)
+    -- Let d = p.Fexp - q.Fexp > 0
+    -- From heq: p.Fnum * beta^p.Fexp = q.Fnum * beta^q.Fexp
+    -- So: p.Fnum * beta^d = q.Fnum (after dividing by beta^q.Fexp)
+    have hd_pos : p.Fexp - q.Fexp > 0 := by omega
+    have hd_ge_one : p.Fexp - q.Fexp ≥ 1 := by omega
+    have h_pow_q_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos h_beta_pos q.Fexp
+    have h_pow_q_ne : (beta : ℝ) ^ q.Fexp ≠ 0 := ne_of_gt h_pow_q_pos
+    have h_pow_d_pos : (0 : ℝ) < (beta : ℝ) ^ (p.Fexp - q.Fexp) := zpow_pos h_beta_pos (p.Fexp - q.Fexp)
+    have h_pow_d_ge_beta : (beta : ℝ) ^ (p.Fexp - q.Fexp) ≥ (beta : ℝ) := by
+      have h1 : (beta : ℝ) ^ (p.Fexp - q.Fexp) ≥ (beta : ℝ) ^ (1 : ℤ) := by
+        apply zpow_le_zpow_right₀ (le_of_lt h_beta_gt_one) hd_ge_one
+      simp only [zpow_one] at h1
+      exact h1
+    have h_pow_d_gt_one : (beta : ℝ) ^ (p.Fexp - q.Fexp) > 1 := by linarith
+    -- Rewrite heq to get relationship between Fnum values
+    have hFnumRel : (p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - q.Fexp) = (q.Fnum : ℝ) := by
+      have h1 : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp = (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp := heq
+      have h2 : (beta : ℝ) ^ p.Fexp = (beta : ℝ) ^ (p.Fexp - q.Fexp) * (beta : ℝ) ^ q.Fexp := by
+        rw [← zpow_add₀ (ne_of_gt h_beta_pos)]
+        ring_nf
+      rw [h2] at h1
+      have h3 : (p.Fnum : ℝ) * ((beta : ℝ) ^ (p.Fexp - q.Fexp) * (beta : ℝ) ^ q.Fexp) =
+                (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp := h1
+      have h4 : (p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - q.Fexp) * (beta : ℝ) ^ q.Fexp =
+                (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp := by ring_nf; ring_nf at h3; exact h3
+      exact mul_right_cancel₀ h_pow_q_ne h4
+    -- From hFnumRel: |p.Fnum| * beta^d = |q.Fnum| (taking absolute values)
+    -- Note: |a * b| = |a| * |b| for reals, and beta^d > 0
+    have h_abs_rel : |(p.Fnum : ℝ)| * (beta : ℝ) ^ (p.Fexp - q.Fexp) = |(q.Fnum : ℝ)| := by
+      have h_pow_nonneg : (0 : ℝ) ≤ (beta : ℝ) ^ (p.Fexp - q.Fexp) := le_of_lt h_pow_d_pos
+      -- |p.Fnum * beta^d| = |p.Fnum| * |beta^d| = |p.Fnum| * beta^d (since beta^d ≥ 0)
+      have h1 : |(p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - q.Fexp)| =
+                |(p.Fnum : ℝ)| * |(beta : ℝ) ^ (p.Fexp - q.Fexp)| := abs_mul _ _
+      have h2 : |(beta : ℝ) ^ (p.Fexp - q.Fexp)| = (beta : ℝ) ^ (p.Fexp - q.Fexp) :=
+        abs_of_nonneg h_pow_nonneg
+      rw [h2] at h1
+      rw [hFnumRel] at h1
+      exact h1.symm
+    -- Since beta^d > 1, we have |p.Fnum| < |q.Fnum| (unless p.Fnum = 0)
+    -- But from hvNumP: vNum ≤ |radix * p.Fnum|, so p.Fnum ≠ 0 if radix ≠ 0 and vNum > 0
+    -- And from hvNumQ: |radix * q.Fnum| < vNum
+    -- So |radix * q.Fnum| < |radix * p.Fnum| (from hcore)
+    -- But |p.Fnum| * beta^d = |q.Fnum| and beta^d ≥ beta > 1
+    -- So |q.Fnum| = |p.Fnum| * beta^d ≥ |p.Fnum| * beta
+    -- Thus |radix * q.Fnum| = |radix| * |q.Fnum| ≥ |radix| * |p.Fnum| * beta = |radix * p.Fnum| * beta
+    -- But |radix * q.Fnum| < vNum ≤ |radix * p.Fnum|, contradiction if |p.Fnum| ≠ 0
+    -- And if |p.Fnum| = 0, then vNum ≤ |radix * 0| = 0, so vNum ≤ 0
+    -- But vNum is from Fbound_skel, which should be positive (from vNum ≤ |radix * p.Fnum| and |q.Fnum| < vNum)
+    by_cases hp_zero : p.Fnum = 0
+    · -- If p.Fnum = 0, then |radix * p.Fnum| = 0, so vNum ≤ 0
+      -- But |q.Fnum| < vNum from hFnumQ_lt, so vNum > 0 if q.Fnum ≠ 0
+      -- And from hFnumRel: 0 * beta^d = q.Fnum, so q.Fnum = 0
+      -- Then |radix * q.Fnum| = 0 < vNum, so vNum > 0
+      -- But vNum ≤ |radix * p.Fnum| = 0, contradiction
+      have hp_radix_zero : |radix * p.Fnum| = 0 := by simp [hp_zero]
+      have hvNum_le_zero : (b.vNum : ℤ) ≤ 0 := by
+        calc (b.vNum : ℤ) ≤ |radix * p.Fnum| := hvNumP
+             _ = 0 := hp_radix_zero
+      have hq_zero : q.Fnum = 0 := by
+        have h1 : (p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - q.Fexp) = (q.Fnum : ℝ) := hFnumRel
+        simp only [hp_zero, Int.cast_zero, zero_mul] at h1
+        exact_mod_cast h1.symm
+      have hq_radix_zero : |radix * q.Fnum| = 0 := by simp [hq_zero]
+      have hvNum_pos : (0 : ℤ) < b.vNum := by
+        have h1 : |radix * q.Fnum| < b.vNum := hvNumQ
+        rw [hq_radix_zero] at h1
+        exact h1
+      omega
+    · -- p.Fnum ≠ 0
+      -- From h_abs_rel: |p.Fnum| * beta^d = |q.Fnum|
+      -- Since beta^d ≥ beta > 1, we have |q.Fnum| > |p.Fnum|
+      have hp_abs_pos : (0 : ℝ) < |(p.Fnum : ℝ)| := by
+        rw [abs_pos]
+        exact_mod_cast hp_zero
+      have hq_abs_gt : |(q.Fnum : ℝ)| > |(p.Fnum : ℝ)| := by
+        rw [← h_abs_rel]
+        have h1 : |(p.Fnum : ℝ)| * (beta : ℝ) ^ (p.Fexp - q.Fexp) > |(p.Fnum : ℝ)| * 1 := by
+          apply mul_lt_mul_of_pos_left h_pow_d_gt_one hp_abs_pos
+        simp at h1
+        exact h1
+      -- Now: |radix * q.Fnum| = |radix| * |q.Fnum| > |radix| * |p.Fnum| = |radix * p.Fnum|
+      have h_radix_abs : (|radix| : ℤ) = radix := abs_of_pos h_radix_pos
+      have h1 : |radix * q.Fnum| = |radix| * |q.Fnum| := abs_mul radix q.Fnum
+      have h2 : |radix * p.Fnum| = |radix| * |p.Fnum| := abs_mul radix p.Fnum
+      have hq_gt_p : |radix * q.Fnum| > |radix * p.Fnum| := by
+        rw [h1, h2, h_radix_abs]
+        have h3 : (radix : ℤ) * |q.Fnum| > radix * |p.Fnum| := by
+          apply mul_lt_mul_of_pos_left _ h_radix_pos
+          have hq_abs_gt_int : |q.Fnum| > |p.Fnum| := by
+            have h4 : |(q.Fnum : ℝ)| > |(p.Fnum : ℝ)| := hq_abs_gt
+            -- Convert |(x : ℝ)| to (|x| : ℝ) using Int.cast_abs: ↑|a| = |↑a|
+            rw [← Int.cast_abs (R := ℝ), ← Int.cast_abs (R := ℝ)] at h4
+            exact_mod_cast h4
+          exact hq_abs_gt_int
+        exact h3
+      -- But hcore says |radix * q.Fnum| < |radix * p.Fnum|
+      omega
 
 noncomputable def FcanonicUnique_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
