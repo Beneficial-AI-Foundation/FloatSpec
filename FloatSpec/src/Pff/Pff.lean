@@ -3344,7 +3344,8 @@ theorem RND_Min_Pos_bounded_aux {beta : Int}
     ⦃⌜0 ≤ r⌝⦄
     (pure (RND_Min_Pos_bounded_aux_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, RND_Min_Pos_bounded_aux_check, ULift.down_up, Fbounded]
 
 noncomputable def RND_Min_Pos_canonic_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
