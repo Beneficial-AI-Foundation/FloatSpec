@@ -3396,7 +3396,9 @@ theorem RND_Min_Pos_monotone {beta : Int}
     (pure (RND_Min_Pos_monotone_check (beta:=beta) b radix p r₁ r₂) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₁)
             ≤ _root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₂)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, RND_Min_Pos_monotone_check, ULift.down_up,
+        RND_Min_Pos, _root_.F2R, FloatSpec.Core.Defs.F2R]
 
 -- Projector property for `RND_Min_Pos` on canonical inputs (Coq: RND_Min_Pos_projector)
 noncomputable def RND_Min_Pos_projector_check {beta : Int}
