@@ -2490,18 +2490,322 @@ noncomputable def FcanonicNegFexpRlt_check {beta : Int}
   ()
 
 /-- Coq: `FcanonicNegFexpRlt` — among nonpositive canonical floats, a strictly
-larger exponent forces a strictly smaller real value. -/
+larger exponent forces a strictly smaller real value.
+
+Note: Uses `Fcanonic'` (proper Coq definition) instead of placeholder `Fcanonic`.
+Requires `radix = beta` and `1 < beta` for the mantissa bounds to imply the result. -/
 theorem FcanonicNegFexpRlt {beta : Int}
     (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b x ∧
-        Fcanonic (beta:=beta) radix b y ∧
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hβ : 1 < beta)
+    (hradix : radix = beta) :
+    ⦃⌜Fcanonic' (beta:=beta) radix b x ∧
+        Fcanonic' (beta:=beta) radix b y ∧
         _root_.F2R (beta:=beta) x ≤ 0 ∧
         _root_.F2R (beta:=beta) y ≤ 0 ∧
         x.Fexp < y.Fexp⌝⦄
     (pure (FcanonicNegFexpRlt_check (beta:=beta) radix b x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) y < _root_.F2R (beta:=beta) x⌝⦄ := by
-  sorry
+  intro ⟨hcanX, hcanY, hNegX, hNegY, hExpLt⟩
+  simp only [wp, PostCond.noThrow, pure, FcanonicNegFexpRlt_check, ULift.down_up]
+  -- Prove by contradiction: assume F2R x ≤ F2R y
+  by_contra h_not_lt
+  have h_not_lt' : _root_.F2R (beta:=beta) x ≤ _root_.F2R (beta:=beta) y := le_of_not_lt h_not_lt
+  -- Case split: F2R x < F2R y or F2R x = F2R y
+  rcases lt_or_eq_of_le h_not_lt' with h_lt | h_eq
+  · -- Case: F2R x < F2R y (with both ≤ 0)
+    -- Apply FcanonicLtNeg with p = x, q = y to get: y.Fexp < x.Fexp ∨ (x.Fexp = y.Fexp ∧ x.Fnum < y.Fnum)
+    -- But we have x.Fexp < y.Fexp, so both alternatives give contradiction
+    have hLtNegResult : y.Fexp < x.Fexp ∨ (x.Fexp = y.Fexp ∧ x.Fnum < y.Fnum) := by
+      -- Extract the result from FcanonicLtNeg
+      have hpre : Fcanonic' (beta:=beta) radix b x ∧
+                  Fcanonic' (beta:=beta) radix b y ∧
+                  _root_.F2R (beta:=beta) y ≤ 0 ∧
+                  _root_.F2R (beta:=beta) x < _root_.F2R (beta:=beta) y := ⟨hcanX, hcanY, hNegY, h_lt⟩
+      have hspec := FcanonicLtNeg (beta:=beta) radix b x y hβ hradix
+      simp only [wp, PostCond.noThrow, pure, FcanonicLtNeg_check, ULift.down_up] at hspec
+      exact hspec hpre
+    rcases hLtNegResult with hexp_lt | ⟨hexp_eq, _⟩
+    · -- y.Fexp < x.Fexp contradicts x.Fexp < y.Fexp
+      omega
+    · -- x.Fexp = y.Fexp contradicts x.Fexp < y.Fexp
+      omega
+  · -- Case: F2R x = F2R y
+    -- Use FcanonicUnique': canonical floats with same F2R value are equal
+    -- So x = y, but then x.Fexp = y.Fexp, contradicting x.Fexp < y.Fexp
+    -- For now, derive contradiction from the canonical structure directly
+    -- Since F2R x = F2R y and both are canonical with x.Fexp < y.Fexp,
+    -- we need to show this is impossible
+    have hbeta_pos : (0 : ℝ) < (beta : ℝ) := by
+      have : (0 : Int) < beta := lt_trans (by norm_num : (0 : Int) < 1) hβ
+      exact Int.cast_pos.mpr this
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R] at h_eq hNegX hNegY
+    -- h_eq: x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+    -- With x.Fexp < y.Fexp and both values ≤ 0
+    -- Case analysis on canonical forms
+    rcases hcanX with ⟨hbX, hvnumX⟩ | ⟨hbX, hexpX, hvnumX⟩
+    <;> rcases hcanY with ⟨hbY, hvnumY⟩ | ⟨hbY, hexpY, hvnumY⟩
+    -- Case 1: Both normal
+    · exfalso
+      rw [hradix] at hvnumX hvnumY
+      have hpow_x_pos : (0 : ℝ) < (beta : ℝ) ^ x.Fexp := zpow_pos hbeta_pos x.Fexp
+      have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
+      -- From F2R x ≤ 0 and beta^x.Fexp > 0: x.Fnum ≤ 0
+      have hx_fnum_nonpos : x.Fnum ≤ (0 : ℤ) := by
+        by_contra hcontra
+        push_neg at hcontra
+        have hx_pos : (x.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
+        have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp > 0 := mul_pos hx_pos hpow_x_pos
+        linarith
+      have hy_fnum_nonpos : y.Fnum ≤ (0 : ℤ) := by
+        by_contra hcontra
+        push_neg at hcontra
+        have hy_pos : (y.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
+        have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp > 0 := mul_pos hy_pos hpow_y_pos
+        linarith
+      -- If x.Fnum = 0, then F2R x = 0, so F2R y = 0, so y.Fnum = 0
+      -- But normal requires vNum ≤ |beta * Fnum|, so Fnum ≠ 0
+      have hbeta_pos_int : (0 : ℤ) < beta := lt_trans (by norm_num : (0 : ℤ) < 1) hβ
+      have hvnum_pos : (0 : ℤ) < b.vNum := by
+        -- Use the bound |x.Fnum| < b.vNum from Fbounded'
+        have hbound := hbX.1
+        have habs_nonneg : (0 : ℤ) ≤ |x.Fnum| := abs_nonneg _
+        omega
+      -- Both x.Fnum and y.Fnum are negative (not zero, by normal bound)
+      have hx_fnum_neg : x.Fnum < 0 := by
+        rcases eq_or_lt_of_le hx_fnum_nonpos with hxz | hxneg
+        · exfalso
+          simp only [hxz, mul_zero, abs_zero] at hvnumX
+          -- hvnumX: b.vNum ≤ 0, but hvnum_pos: 0 < b.vNum
+          linarith
+        · exact hxneg
+      have hy_fnum_neg : y.Fnum < 0 := by
+        rcases eq_or_lt_of_le hy_fnum_nonpos with hyz | hyneg
+        · exfalso
+          simp only [hyz, mul_zero, abs_zero] at hvnumY
+          -- hvnumY: b.vNum ≤ 0, but hvnum_pos: 0 < b.vNum
+          linarith
+        · exact hyneg
+      -- F2R x = F2R y with x.Fexp < y.Fexp
+      -- x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+      -- Let d = y.Fexp - x.Fexp > 0
+      -- y.Fnum * beta^y.Fexp = y.Fnum * beta^(x.Fexp + d) = y.Fnum * beta^d * beta^x.Fexp
+      -- So x.Fnum = y.Fnum * beta^d
+      -- Since y.Fnum < 0 and beta^d > 0, x.Fnum < 0 ✓
+      -- |x.Fnum| = |y.Fnum| * beta^d
+      -- For normal: vNum ≤ beta * |x.Fnum| and |x.Fnum| < vNum
+      -- So vNum ≤ beta * |x.Fnum| < beta * vNum
+      -- Also: |x.Fnum| = |y.Fnum| * beta^d ≥ |y.Fnum| * beta (since d ≥ 1)
+      -- And: vNum ≤ beta * |y.Fnum|, so |y.Fnum| ≥ vNum / beta
+      -- Hmm, let's try: |x.Fnum| = |y.Fnum| * beta^d
+      -- From |x.Fnum| < vNum: |y.Fnum| * beta^d < vNum
+      -- From vNum ≤ beta * |y.Fnum|: vNum / beta ≤ |y.Fnum|
+      -- So vNum / beta * beta^d < vNum, i.e., beta^(d-1) < 1
+      -- But d ≥ 1, so beta^(d-1) ≥ beta^0 = 1, contradiction when d > 1
+      -- When d = 1: beta^0 = 1 < 1 is false
+      -- Wait, need d ≥ 1 strictly. We have x.Fexp < y.Fexp, so d = y.Fexp - x.Fexp ≥ 1
+      have hd_ge_one : y.Fexp - x.Fexp ≥ 1 := by omega
+      have hpow_ne_x : (beta : ℝ) ^ x.Fexp ≠ 0 := ne_of_gt hpow_x_pos
+      -- From h_eq: x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+      have h_fnum_eq : (x.Fnum : ℝ) = (y.Fnum : ℝ) * (beta : ℝ) ^ (y.Fexp - x.Fexp) := by
+        have h1 : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp = (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp := h_eq
+        have h2 : (beta : ℝ) ^ y.Fexp = (beta : ℝ) ^ (y.Fexp - x.Fexp) * (beta : ℝ) ^ x.Fexp := by
+          rw [← zpow_add₀ (ne_of_gt hbeta_pos)]
+          ring_nf
+        rw [h2] at h1
+        field_simp at h1
+        linarith
+      -- |x.Fnum| = |y.Fnum| * beta^(y.Fexp - x.Fexp) since both negative and beta^d > 0
+      have hpow_d_pos : (0 : ℝ) < (beta : ℝ) ^ (y.Fexp - x.Fexp) :=
+        zpow_pos hbeta_pos (y.Fexp - x.Fexp)
+      have h_abs_eq : |(x.Fnum : ℝ)| = |(y.Fnum : ℝ)| * (beta : ℝ) ^ (y.Fexp - x.Fexp) := by
+        have hx_neg_real : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hx_fnum_neg
+        have hy_neg_real : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hy_fnum_neg
+        rw [abs_of_neg hx_neg_real, abs_of_neg hy_neg_real]
+        rw [h_fnum_eq]
+        ring
+      -- From normal x: |x.Fnum| < vNum and vNum ≤ beta * |x.Fnum|
+      have hx_abs_lt : (|x.Fnum| : ℤ) < b.vNum := hbX.1
+      have hx_vnum_le : (b.vNum : ℤ) ≤ |beta * x.Fnum| := hvnumX
+      have hx_vnum_le' : (b.vNum : ℤ) ≤ beta * |x.Fnum| := by
+        have h1 : |beta * x.Fnum| = beta * |x.Fnum| := by
+          rw [abs_mul, abs_of_pos hbeta_pos_int]
+        rw [h1] at hx_vnum_le; exact hx_vnum_le
+      -- From normal y: vNum ≤ beta * |y.Fnum|
+      have hy_vnum_le : (b.vNum : ℤ) ≤ |beta * y.Fnum| := hvnumY
+      have hy_vnum_le' : (b.vNum : ℤ) ≤ beta * |y.Fnum| := by
+        have h1 : |beta * y.Fnum| = beta * |y.Fnum| := by
+          rw [abs_mul, abs_of_pos hbeta_pos_int]
+        rw [h1] at hy_vnum_le; exact hy_vnum_le
+      -- vNum ≤ beta * |y.Fnum| and |x.Fnum| = |y.Fnum| * beta^d
+      -- So |x.Fnum| ≥ |y.Fnum| * beta ≥ vNum (when d ≥ 1)
+      -- But |x.Fnum| < vNum, contradiction
+      have hbeta_ge_one : (1 : ℝ) ≤ (beta : ℝ) := by
+        have h1le : (1 : ℤ) ≤ beta := le_of_lt hβ
+        exact_mod_cast h1le
+      have hpow_ge_beta : (beta : ℝ) ^ (y.Fexp - x.Fexp) ≥ (beta : ℝ) := by
+        have h1 : (beta : ℝ) ^ (y.Fexp - x.Fexp) ≥ (beta : ℝ) ^ (1 : ℤ) := by
+          apply zpow_le_zpow_right₀ hbeta_ge_one hd_ge_one
+        simp only [zpow_one] at h1
+        exact h1
+      have h_yfnum_abs_pos : (0 : ℝ) < |(y.Fnum : ℝ)| := by
+        have hy_neg_real : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hy_fnum_neg
+        rw [abs_of_neg hy_neg_real]
+        linarith
+      have h_abs_ge : |(x.Fnum : ℝ)| ≥ |(y.Fnum : ℝ)| * (beta : ℝ) := by
+        rw [h_abs_eq]
+        apply mul_le_mul_of_nonneg_left hpow_ge_beta (le_of_lt h_yfnum_abs_pos)
+      -- From hy_vnum_le': vNum ≤ beta * |y.Fnum|
+      have h_vnum_le_real : (b.vNum : ℝ) ≤ (beta : ℝ) * |(y.Fnum : ℝ)| := by
+        have hy_neg_real : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hy_fnum_neg
+        rw [abs_of_neg hy_neg_real]
+        have h := hy_vnum_le'
+        have hy_abs_int : |y.Fnum| = -y.Fnum := abs_of_neg hy_fnum_neg
+        rw [hy_abs_int] at h
+        have h' : (b.vNum : ℝ) ≤ (beta : ℝ) * ((-y.Fnum) : ℝ) := by exact_mod_cast h
+        simp only [Int.cast_neg] at h'
+        exact h'
+      -- So |x.Fnum| ≥ |y.Fnum| * beta ≥ vNum
+      have h_abs_ge_vnum : |(x.Fnum : ℝ)| ≥ (b.vNum : ℝ) := by
+        calc |(x.Fnum : ℝ)| ≥ |(y.Fnum : ℝ)| * (beta : ℝ) := h_abs_ge
+          _ = (beta : ℝ) * |(y.Fnum : ℝ)| := by ring
+          _ ≥ (b.vNum : ℝ) := h_vnum_le_real
+      -- But |x.Fnum| < vNum
+      have h_abs_lt_vnum : |(x.Fnum : ℝ)| < (b.vNum : ℝ) := by
+        have h := hx_abs_lt
+        have hx_neg_real : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hx_fnum_neg
+        rw [abs_of_neg hx_neg_real]
+        have hx_abs_int : |x.Fnum| = -x.Fnum := abs_of_neg hx_fnum_neg
+        rw [hx_abs_int] at h
+        have h' : ((-x.Fnum) : ℝ) < (b.vNum : ℝ) := by exact_mod_cast h
+        simp only [Int.cast_neg] at h'
+        exact h'
+      linarith
+    -- Case 2: x normal, y subnormal
+    · exfalso
+      -- y subnormal means y.Fexp = -b.dExp
+      -- x normal means x.Fexp ≥ -b.dExp
+      -- But we have x.Fexp < y.Fexp = -b.dExp, contradiction
+      have hy_exp : y.Fexp = -b.dExp := hexpY
+      have hx_exp_ge : -b.dExp ≤ x.Fexp := hbX.2
+      omega
+    -- Case 3: x subnormal, y normal
+    · exfalso
+      rw [hradix] at hvnumX hvnumY
+      have hpow_x_pos : (0 : ℝ) < (beta : ℝ) ^ x.Fexp := zpow_pos hbeta_pos x.Fexp
+      have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
+      have hx_fnum_nonpos : x.Fnum ≤ (0 : ℤ) := by
+        by_contra hcontra
+        push_neg at hcontra
+        have hx_pos : (x.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
+        have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp > 0 := mul_pos hx_pos hpow_x_pos
+        linarith
+      have hy_fnum_nonpos : y.Fnum ≤ (0 : ℤ) := by
+        by_contra hcontra
+        push_neg at hcontra
+        have hy_pos : (y.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
+        have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp > 0 := mul_pos hy_pos hpow_y_pos
+        linarith
+      have hbeta_pos_int : (0 : ℤ) < beta := lt_trans (by norm_num : (0 : ℤ) < 1) hβ
+      -- x subnormal: |beta * x.Fnum| < vNum
+      -- y normal: vNum ≤ |beta * y.Fnum|
+      -- So |beta * x.Fnum| < |beta * y.Fnum|, i.e., |x.Fnum| < |y.Fnum|
+      have h_abs_lt : |beta * x.Fnum| < |beta * y.Fnum| := lt_of_lt_of_le hvnumX hvnumY
+      have h_abs_fnum_lt : |x.Fnum| < |y.Fnum| := by
+        simp only [abs_mul, abs_of_pos hbeta_pos_int] at h_abs_lt
+        exact Int.lt_of_mul_lt_mul_left h_abs_lt (le_of_lt hbeta_pos_int)
+      -- If F2R x = F2R y and x.Fexp < y.Fexp
+      -- x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+      -- Both nonpositive, so if either is 0, both are 0
+      -- But y normal requires y.Fnum ≠ 0 (vNum ≤ |beta * y.Fnum| with vNum > 0)
+      have hvnum_pos : (0 : ℤ) < b.vNum := by
+        -- From hbY.1: |y.Fnum| < b.vNum
+        -- Since |y.Fnum| ≥ 0, we have 0 ≤ |y.Fnum| < b.vNum, so 0 < b.vNum
+        have hbound := hbY.1
+        have h_abs_nonneg : (0 : ℤ) ≤ |y.Fnum| := abs_nonneg _
+        omega
+      have hy_fnum_neg : y.Fnum < 0 := by
+        rcases eq_or_lt_of_le hy_fnum_nonpos with hyz | hyneg
+        · simp only [hyz, mul_zero, abs_zero] at hvnumY; omega
+        · exact hyneg
+      -- x subnormal means x.Fexp = -b.dExp
+      have hx_exp : x.Fexp = -b.dExp := hexpX
+      -- y normal means y.Fexp ≥ -b.dExp
+      have hy_exp_ge : -b.dExp ≤ y.Fexp := hbY.2
+      -- We have x.Fexp < y.Fexp, so -b.dExp < y.Fexp
+      have hexp_strict : -b.dExp < y.Fexp := by omega
+      -- F2R x = x.Fnum * beta^(-b.dExp)
+      -- F2R y = y.Fnum * beta^y.Fexp with y.Fexp > -b.dExp
+      -- So F2R y = y.Fnum * beta^y.Fexp
+      -- If F2R x = F2R y:
+      -- x.Fnum * beta^(-b.dExp) = y.Fnum * beta^y.Fexp
+      -- x.Fnum = y.Fnum * beta^(y.Fexp - (-b.dExp)) = y.Fnum * beta^(y.Fexp + b.dExp)
+      -- y.Fexp + b.dExp > 0, so beta^(y.Fexp + b.dExp) > 1
+      -- |x.Fnum| = |y.Fnum| * beta^(y.Fexp + b.dExp) > |y.Fnum|
+      -- But we showed |x.Fnum| < |y.Fnum|, contradiction
+      have hd_pos : y.Fexp + b.dExp > 0 := by omega
+      have hpow_ne_x : (beta : ℝ) ^ x.Fexp ≠ 0 := ne_of_gt hpow_x_pos
+      have h_fnum_eq : (x.Fnum : ℝ) = (y.Fnum : ℝ) * (beta : ℝ) ^ (y.Fexp - x.Fexp) := by
+        have h1 : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp = (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp := h_eq
+        have h2 : (beta : ℝ) ^ y.Fexp = (beta : ℝ) ^ (y.Fexp - x.Fexp) * (beta : ℝ) ^ x.Fexp := by
+          rw [← zpow_add₀ (ne_of_gt hbeta_pos)]
+          ring_nf
+        rw [h2] at h1
+        field_simp at h1
+        linarith
+      have hd_ge_one : y.Fexp - x.Fexp ≥ 1 := by omega
+      have hpow_d_gt_one : (beta : ℝ) ^ (y.Fexp - x.Fexp) > 1 := by
+        have hbeta_gt_one : (beta : ℝ) > 1 := by exact_mod_cast hβ
+        have h1 : (beta : ℝ) ^ (y.Fexp - x.Fexp) ≥ (beta : ℝ) ^ (1 : ℤ) := by
+          apply zpow_le_zpow_right₀ (le_of_lt hbeta_gt_one) hd_ge_one
+        simp only [zpow_one] at h1
+        linarith
+      -- x.Fnum ≤ 0, so either x.Fnum = 0 or x.Fnum < 0
+      rcases eq_or_lt_of_le hx_fnum_nonpos with hxz | hx_fnum_neg
+      · -- x.Fnum = 0, so F2R x = 0, so F2R y = 0, so y.Fnum = 0
+        -- But y normal requires vNum ≤ |beta * y.Fnum|, contradiction
+        simp only [hxz, Int.cast_zero, zero_mul] at h_eq
+        -- h_eq: 0 = y.Fnum * beta^y.Fexp with beta^y.Fexp > 0, so y.Fnum = 0
+        have hy_fnum_zero : (y.Fnum : ℝ) = 0 := by
+          have hpow_ne : (beta : ℝ) ^ y.Fexp ≠ 0 := ne_of_gt hpow_y_pos
+          have h_eq' : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp = 0 := h_eq.symm
+          exact (mul_eq_zero.mp h_eq').resolve_right hpow_ne
+        have hy_fnum_zero_int : y.Fnum = 0 := by exact_mod_cast hy_fnum_zero
+        linarith
+      · -- x.Fnum < 0
+        have hx_neg_real : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hx_fnum_neg
+        have hy_neg_real : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hy_fnum_neg
+        have h_abs_eq : |(x.Fnum : ℝ)| = |(y.Fnum : ℝ)| * (beta : ℝ) ^ (y.Fexp - x.Fexp) := by
+          rw [abs_of_neg hx_neg_real, abs_of_neg hy_neg_real]
+          rw [h_fnum_eq]
+          ring
+        have h_yfnum_abs_pos : (0 : ℝ) < |(y.Fnum : ℝ)| := by
+          rw [abs_of_neg hy_neg_real]
+          linarith
+        have h_abs_gt : |(x.Fnum : ℝ)| > |(y.Fnum : ℝ)| := by
+          rw [h_abs_eq]
+          have h1 : |(y.Fnum : ℝ)| * (beta : ℝ) ^ (y.Fexp - x.Fexp) > |(y.Fnum : ℝ)| * 1 := by
+            apply mul_lt_mul_of_pos_left hpow_d_gt_one h_yfnum_abs_pos
+          simp at h1
+          exact h1
+        -- But we have |x.Fnum| < |y.Fnum|
+        have h_abs_lt_real : |(x.Fnum : ℝ)| < |(y.Fnum : ℝ)| := by
+          have h := h_abs_fnum_lt
+          rw [abs_of_neg hx_neg_real, abs_of_neg hy_neg_real]
+          have hx_abs_int : |x.Fnum| = -x.Fnum := abs_of_neg hx_fnum_neg
+          have hy_abs_int : |y.Fnum| = -y.Fnum := abs_of_neg hy_fnum_neg
+          rw [hx_abs_int, hy_abs_int] at h
+          have h' : ((-x.Fnum) : ℝ) < ((-y.Fnum) : ℝ) := by exact_mod_cast h
+          simp only [Int.cast_neg] at h'
+          exact h'
+        linarith
+    -- Case 4: Both subnormal
+    · exfalso
+      -- Both subnormal: x.Fexp = -b.dExp and y.Fexp = -b.dExp
+      -- But we have x.Fexp < y.Fexp, contradiction
+      have hx_exp : x.Fexp = -b.dExp := hexpX
+      have hy_exp : y.Fexp = -b.dExp := hexpY
+      omega
 
 noncomputable def NormalAndSubNormalNotEq_check {beta : Int}
     (radix : ℝ) (b : Fbound_skel)
