@@ -3165,16 +3165,172 @@ noncomputable def FcanonicLeastExp_check {beta : Int}
   ()
 
 /-- Coq: `FcanonicLeastExp` — a canonical float with the same value as a
-bounded float has exponent no larger than the bounded one. -/
+bounded float has exponent no larger than the bounded one.
+
+Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+Requires `1 < beta` and `radix = beta` for the mantissa/exponent relationship to work.
+Also requires `0 < b.vNum` for the Normal case to be non-vacuous. -/
 theorem FcanonicLeastExp {beta : Int}
     (radix : Int) (b : Fbound_skel)
-    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hβ : 1 < beta)
+    (hradix : radix = beta)
+    (hvNum_pos : 0 < b.vNum) :
     ⦃⌜_root_.F2R (beta:=beta) x = _root_.F2R (beta:=beta) y ∧
-        Fbounded (beta:=beta) b x ∧
-        Fcanonic (beta:=beta) radix b y⌝⦄
+        Fbounded' b x ∧
+        Fcanonic' (beta:=beta) radix b y⌝⦄
     (pure (FcanonicLeastExp_check (beta:=beta) radix b x y) : Id Unit)
     ⦃⇓_ => ⌜y.Fexp ≤ x.Fexp⌝⦄ := by
-  sorry
+  intro ⟨hF2Req, hBoundedX, hCanY⟩
+  simp only [wp, PostCond.noThrow, pure, FcanonicLeastExp_check, ULift.down_up]
+  -- Derive useful facts about beta
+  have hbeta_pos_int : (0 : ℤ) < beta := lt_trans (by norm_num : (0 : ℤ) < 1) hβ
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hbeta_pos_int
+  have hbeta_ne_zero : (beta : ℝ) ≠ 0 := ne_of_gt hbeta_pos
+  have hbeta_ge_one : (1 : ℝ) ≤ (beta : ℝ) := le_of_lt (by exact_mod_cast hβ : (1 : ℝ) < beta)
+  -- Key: if F2R x = F2R y, then x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R] at hF2Req
+  -- If y.Fnum = 0, then F2R y = 0, so F2R x = 0, so x.Fnum = 0
+  -- In this case, any exponent comparison is valid, but let's handle it
+  by_cases hy_zero : y.Fnum = 0
+  · -- y.Fnum = 0 means F2R y = 0
+    simp only [hy_zero, Int.cast_zero, zero_mul] at hF2Req
+    -- So F2R x = 0, meaning x.Fnum * beta^x.Fexp = 0
+    -- Since beta^x.Fexp > 0, we have x.Fnum = 0
+    have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ x.Fexp := zpow_pos hbeta_pos x.Fexp
+    have hx_fnum_zero : (x.Fnum : ℝ) = 0 := by
+      -- hF2Req : x.Fnum * beta^x.Fexp = 0
+      have hmul_zero : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp = 0 := hF2Req
+      rcases mul_eq_zero.mp hmul_zero with h | h
+      · exact h
+      · exfalso; exact ne_of_gt hpow_pos h
+    -- For canonical y with Fnum = 0:
+    -- If subnormal, y.Fexp = -dExp (minimum)
+    -- x is bounded, so x.Fexp ≥ -dExp
+    rcases hCanY with ⟨hbY, hvnumY⟩ | ⟨hbY, hexpY, _⟩
+    · -- Normal with Fnum = 0: impossible since vNum > 0 but |radix * 0| = 0
+      rw [hy_zero, mul_zero, abs_zero] at hvnumY
+      -- hvnumY : vNum ≤ 0, but hvNum_pos : 0 < vNum
+      have : b.vNum ≤ 0 := hvnumY
+      linarith
+    · -- Subnormal: y.Fexp = -dExp
+      -- x is bounded, so x.Fexp ≥ -dExp
+      have hx_exp_ge : -b.dExp ≤ x.Fexp := hBoundedX.2
+      -- y.Fexp = -dExp and x.Fexp ≥ -dExp implies y.Fexp ≤ x.Fexp
+      rw [hexpY]
+      exact hx_exp_ge
+  · -- y.Fnum ≠ 0
+    -- Similarly check if x.Fnum = 0
+    by_cases hx_zero : x.Fnum = 0
+    · -- x.Fnum = 0 means F2R x = 0
+      simp only [hx_zero, Int.cast_zero, zero_mul] at hF2Req
+      -- So F2R y = 0, meaning y.Fnum * beta^y.Fexp = 0
+      have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
+      have hy_fnum_zero : (y.Fnum : ℝ) = 0 := by
+        -- hF2Req : 0 = y.Fnum * beta^y.Fexp
+        have hmul_zero : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp = 0 := hF2Req.symm
+        rcases mul_eq_zero.mp hmul_zero with h | h
+        · exact h
+        · exfalso; exact ne_of_gt hpow_pos h
+      -- But we assumed y.Fnum ≠ 0
+      simp only [Int.cast_eq_zero] at hy_fnum_zero
+      contradiction
+    · -- Both x.Fnum ≠ 0 and y.Fnum ≠ 0
+      -- From hF2Req: x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+      -- Rearranging: x.Fnum / y.Fnum = beta^(y.Fexp - x.Fexp)
+      -- For canonical y, |y.Fnum| is maximized (bounded below by vNum/radix for normal)
+      -- The canonical representation has the smallest possible exponent
+      -- We prove by showing x.Fexp < y.Fexp leads to contradiction
+      -- First, show y.Fexp ≤ x.Fexp by analyzing the cases
+      -- Use decidable on integers
+      by_cases hexp_le : y.Fexp ≤ x.Fexp
+      · exact hexp_le
+      · -- So x.Fexp < y.Fexp
+        push_neg at hexp_le
+        have hexp_lt : x.Fexp < y.Fexp := hexp_le
+        -- From F2R equality: x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+        -- So: x.Fnum = y.Fnum * beta^(y.Fexp - x.Fexp)
+        have hexp_diff_pos : 0 < y.Fexp - x.Fexp := by omega
+        have hexp_diff_nonneg : 0 ≤ y.Fexp - x.Fexp := le_of_lt hexp_diff_pos
+        -- Convert the positive integer difference to a natural number
+        set n := (y.Fexp - x.Fexp).toNat with hn_def
+        have hn_pos : n > 0 := by
+          simp only [gt_iff_lt, hn_def]
+          omega
+        have hn_eq : y.Fexp - x.Fexp = (n : ℤ) := by
+          simp only [hn_def]
+          exact (Int.toNat_of_nonneg hexp_diff_nonneg).symm
+        -- x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
+        -- x.Fnum = y.Fnum * beta^(y.Fexp - x.Fexp)
+        have hfnum_rel : (x.Fnum : ℝ) = (y.Fnum : ℝ) * (beta : ℝ) ^ (y.Fexp - x.Fexp) := by
+          have hpow_x_pos : (0 : ℝ) < (beta : ℝ) ^ x.Fexp := zpow_pos hbeta_pos x.Fexp
+          have hpow_x_ne : (beta : ℝ) ^ x.Fexp ≠ 0 := ne_of_gt hpow_x_pos
+          have h1 : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp = (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp := hF2Req
+          have h2 : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp =
+                    (y.Fnum : ℝ) * (beta : ℝ) ^ (y.Fexp - x.Fexp) * (beta : ℝ) ^ x.Fexp := by
+            rw [mul_assoc, ← zpow_add₀ hbeta_ne_zero]
+            ring_nf
+          calc (x.Fnum : ℝ) = (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp / (beta : ℝ) ^ x.Fexp := by
+                field_simp
+              _ = (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp / (beta : ℝ) ^ x.Fexp := by rw [h1]
+              _ = (y.Fnum : ℝ) * (beta : ℝ) ^ (y.Fexp - x.Fexp) * (beta : ℝ) ^ x.Fexp / (beta : ℝ) ^ x.Fexp := by
+                  rw [h2]
+              _ = (y.Fnum : ℝ) * (beta : ℝ) ^ (y.Fexp - x.Fexp) := by field_simp
+        -- So |x.Fnum| = |y.Fnum| * beta^(y.Fexp - x.Fexp)
+        have habs_rel : |(x.Fnum : ℝ)| = |(y.Fnum : ℝ)| * (beta : ℝ) ^ (y.Fexp - x.Fexp) := by
+          rw [hfnum_rel, abs_mul]
+          congr 1
+          exact abs_of_pos (zpow_pos hbeta_pos _)
+        -- Since n > 0, beta^n ≥ beta
+        have hpow_ge_beta : (beta : ℝ) ^ (y.Fexp - x.Fexp) ≥ beta := by
+          rw [hn_eq, zpow_natCast]
+          have h1 : (beta : ℝ) ^ n ≥ (beta : ℝ) ^ 1 := by
+            gcongr
+            exact hbeta_ge_one
+            omega
+          simp only [pow_one] at h1
+          exact h1
+        -- So |x.Fnum| ≥ |y.Fnum| * beta
+        have habs_ge : |(x.Fnum : ℝ)| ≥ |(y.Fnum : ℝ)| * beta := by
+          calc |(x.Fnum : ℝ)| = |(y.Fnum : ℝ)| * (beta : ℝ) ^ (y.Fexp - x.Fexp) := habs_rel
+            _ ≥ |(y.Fnum : ℝ)| * beta := by
+                apply mul_le_mul_of_nonneg_left hpow_ge_beta (abs_nonneg _)
+        -- For x bounded: |x.Fnum| < vNum
+        have hx_fnum_bdd : |x.Fnum| < b.vNum := hBoundedX.1
+        -- Convert to real
+        have hx_fnum_bdd_real : |(x.Fnum : ℝ)| < (b.vNum : ℝ) := by
+          rw [← Int.cast_abs]
+          exact Int.cast_lt.mpr hx_fnum_bdd
+        -- For canonical y (normal case): vNum ≤ |radix * y.Fnum|
+        rcases hCanY with ⟨_, hvnumY⟩ | ⟨_, hexpY, hvnumY⟩
+        · -- Normal: vNum ≤ |radix * y.Fnum| = |radix| * |y.Fnum|
+          rw [hradix] at hvnumY
+          have hbeta_abs : |beta| = beta := abs_of_pos hbeta_pos_int
+          rw [abs_mul, hbeta_abs] at hvnumY
+          -- So vNum ≤ beta * |y.Fnum|
+          -- Therefore |y.Fnum| ≥ vNum / beta
+          -- And |x.Fnum| ≥ |y.Fnum| * beta ≥ vNum
+          have hy_fnum_ne_zero_real : (y.Fnum : ℝ) ≠ 0 := by
+            simp only [ne_eq, Int.cast_eq_zero]
+            exact hy_zero
+          have hy_abs_pos : 0 < |(y.Fnum : ℝ)| := abs_pos.mpr hy_fnum_ne_zero_real
+          have hvNum_le_real : (b.vNum : ℝ) ≤ (beta : ℝ) * |(y.Fnum : ℝ)| := by
+            calc (b.vNum : ℝ) ≤ (beta * |y.Fnum| : ℤ) := Int.cast_le.mpr hvnumY
+              _ = (beta : ℝ) * (|y.Fnum| : ℝ) := by simp [Int.cast_mul, Int.cast_abs]
+              _ = (beta : ℝ) * |(y.Fnum : ℝ)| := by rw [← Int.cast_abs]
+          -- So |x.Fnum| ≥ |y.Fnum| * beta ≥ vNum
+          have hcontra : |(x.Fnum : ℝ)| ≥ (b.vNum : ℝ) := by
+            calc |(x.Fnum : ℝ)| ≥ |(y.Fnum : ℝ)| * beta := habs_ge
+              _ = beta * |(y.Fnum : ℝ)| := by ring
+              _ ≥ (b.vNum : ℝ) := hvNum_le_real
+          -- But |x.Fnum| < vNum, contradiction
+          linarith
+        · -- Subnormal: y.Fexp = -dExp (minimum exponent)
+          -- x is bounded, so x.Fexp ≥ -dExp
+          have hx_exp_ge : -b.dExp ≤ x.Fexp := hBoundedX.2
+          -- But we have x.Fexp < y.Fexp = -dExp
+          rw [hexpY] at hexp_lt
+          omega
 
 -- Auxiliary boundedness of `RND_Min_Pos` on nonnegative reals (Coq: RND_Min_Pos_bounded_aux)
 noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
