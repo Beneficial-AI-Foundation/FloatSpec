@@ -1837,11 +1837,17 @@ theorem FcanonicLtNeg {beta : Int}
         omega
 
 -- Placeholders for rounding operators on nonnegative reals and their variants
-def RND_Min_Pos {beta : Int}
+noncomputable def RND_Min_Pos {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
-  -- Skeleton: return an arbitrary float; semantics deferred
-  ⟨0, 0⟩
+  let firstNormPosValue : ℝ := _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat)
+  if firstNormPosValue ≤ r then
+    -- Normal case: compute exponent dynamically
+    let e : Int := IRNDD (Real.log r / Real.log radix + (-(p - 1)))
+    ⟨IRNDD (r * (radix : ℝ) ^ (-e)), e⟩
+  else
+    -- Subnormal case: fixed exponent
+    ⟨IRNDD (r * (radix : ℝ) ^ (b.dExp)), -b.dExp⟩
 
 -- ---------------------------------------------------------------------------
 -- Normalization helper (Coq: Fnormalize) and its basic properties
@@ -3370,16 +3376,61 @@ noncomputable def RND_Min_Pos_Rle_check {beta : Int}
     `RND_Min_Pos r` (interpreted in ℝ) is less than or equal to `r`. -/
 theorem RND_Min_Pos_Rle {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜0 ≤ r⌝⦄
+    ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix⌝⦄
     (pure (RND_Min_Pos_Rle_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r) ≤ r⌝⦄ := by
-  intro hr
-  simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_Rle_check, ULift.down_up]
-  -- RND_Min_Pos returns ⟨0, 0⟩, so F2R gives 0 * beta^0 = 0
-  -- We need to show 0 ≤ r, which is exactly the precondition hr
-  simp only [RND_Min_Pos, _root_.F2R, FloatSpec.Core.Defs.F2R]
-  simp only [zpow_zero, mul_one, Int.cast_zero]
-  exact hr
+  intro ⟨hr, hBetaEq, hRadixGt1⟩
+  simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_Rle_check, ULift.down_up,
+             RND_Min_Pos, _root_.F2R, FloatSpec.Core.Defs.F2R,
+             FloatSpec.Core.Defs.FlocqFloat.Fnum,
+             FloatSpec.Core.Defs.FlocqFloat.Fexp,
+             PredTrans.pure, PredTrans.apply, Id.run]
+  -- Split on normal vs subnormal case
+  split_ifs with hNormal
+  · -- Normal case: F2R ⟨IRNDD(r * radix^(-e)), e⟩ ≤ r
+    -- where e = IRNDD (log r / log radix - (p-1))
+    simp only [hBetaEq]
+    -- The key: IRNDD(r * radix^(-e)) * radix^e ≤ r
+    -- Because IRNDD(x) ≤ x, we have IRNDD(r * radix^(-e)) ≤ r * radix^(-e)
+    -- So IRNDD(r * radix^(-e)) * radix^e ≤ r * radix^(-e) * radix^e = r
+    have hRadixPos : (0 : ℝ) < radix := by
+      have h1 : (1 : ℤ) < radix := hRadixGt1
+      have h2 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr h1
+      simp only [Int.cast_one] at h2
+      linarith
+    have hRadixNe0 : (radix : ℝ) ≠ 0 := ne_of_gt hRadixPos
+    let e := IRNDD (Real.log r / Real.log (radix : ℝ) + (-(p - 1)))
+    have hFloorLe : (IRNDD (r * (radix : ℝ) ^ (-e)) : ℝ) ≤ r * (radix : ℝ) ^ (-e) := by
+      simp only [IRNDD]
+      exact Int.floor_le _
+    -- radix^e > 0 since radix > 0
+    have hRadixPowPos : (0 : ℝ) < (radix : ℝ) ^ e := zpow_pos hRadixPos e
+    calc (IRNDD (r * (radix : ℝ) ^ (-e)) : ℝ) * (radix : ℝ) ^ e
+        ≤ (r * (radix : ℝ) ^ (-e)) * (radix : ℝ) ^ e := by
+          apply mul_le_mul_of_nonneg_right hFloorLe (le_of_lt hRadixPowPos)
+      _ = r * ((radix : ℝ) ^ (-e) * (radix : ℝ) ^ e) := by ring
+      _ = r * (radix : ℝ) ^ ((-e) + e) := by rw [← zpow_add₀ hRadixNe0]
+      _ = r * 1 := by simp only [neg_add_cancel, zpow_zero]
+      _ = r := mul_one r
+  · -- Subnormal case: F2R ⟨IRNDD(r * radix^(dExp b)), -dExp b⟩ ≤ r
+    simp only [hBetaEq]
+    have hRadixPos : (0 : ℝ) < radix := by
+      have h1 : (1 : ℤ) < radix := hRadixGt1
+      have h2 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr h1
+      simp only [Int.cast_one] at h2
+      linarith
+    have hRadixNe0 : (radix : ℝ) ≠ 0 := ne_of_gt hRadixPos
+    have hFloorLe : (IRNDD (r * (radix : ℝ) ^ b.dExp) : ℝ) ≤ r * (radix : ℝ) ^ b.dExp := by
+      simp only [IRNDD]
+      exact Int.floor_le _
+    have hRadixPowPos : (0 : ℝ) < (radix : ℝ) ^ (-b.dExp) := zpow_pos hRadixPos (-b.dExp)
+    calc (IRNDD (r * (radix : ℝ) ^ b.dExp) : ℝ) * (radix : ℝ) ^ (-b.dExp)
+        ≤ (r * (radix : ℝ) ^ b.dExp) * (radix : ℝ) ^ (-b.dExp) := by
+          apply mul_le_mul_of_nonneg_right hFloorLe (le_of_lt hRadixPowPos)
+      _ = r * ((radix : ℝ) ^ b.dExp * (radix : ℝ) ^ (-b.dExp)) := by ring
+      _ = r * (radix : ℝ) ^ (b.dExp + (-b.dExp)) := by rw [← zpow_add₀ hRadixNe0]
+      _ = r * 1 := by simp only [add_neg_cancel, zpow_zero]
+      _ = r := mul_one r
 
 -- Monotonicity of `RND_Min_Pos` w.r.t. the real input (Coq: RND_Min_Pos_monotone)
 noncomputable def RND_Min_Pos_monotone_check {beta : Int}
@@ -3397,8 +3448,11 @@ theorem RND_Min_Pos_monotone {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₁)
             ≤ _root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₂)⌝⦄ := by
   intro _
-  simp [wp, PostCond.noThrow, pure, RND_Min_Pos_monotone_check, ULift.down_up,
+  simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_monotone_check, ULift.down_up,
         RND_Min_Pos, _root_.F2R, FloatSpec.Core.Defs.F2R]
+  -- Monotonicity requires showing floor-based rounding preserves order
+  -- This is complex and deferred
+  sorry
 
 -- Projector property for `RND_Min_Pos` on canonical inputs (Coq: RND_Min_Pos_projector)
 noncomputable def RND_Min_Pos_projector_check {beta : Int}
@@ -3408,18 +3462,119 @@ noncomputable def RND_Min_Pos_projector_check {beta : Int}
 
 /-- Coq: `RND_Min_Pos_projector` — for a canonical nonnegative float `f`,
     rounding the real value of `f` with `RND_Min_Pos` projects back to `f`.
-    We state this equality at the real level via `F2R` and leave the proof sorry. -/
+    We state this equality at the real level via `F2R`.
+
+    Note: The Lean version uses `Fcanonic'` which matches the proper Coq `Fcanonic`
+    definition (Fnormal \/ Fsubnormal), rather than the placeholder `Fcanonic = True`. -/
 theorem RND_Min_Pos_projector {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜0 ≤ _root_.F2R f ∧ Fcanonic (beta:=beta) radix b f⌝⦄
+    ⦃⌜0 ≤ _root_.F2R f ∧ Fcanonic' (beta:=beta) radix b f ∧ beta = radix ∧ 1 < radix ∧ 1 ≤ p⌝⦄
     (pure (RND_Min_Pos_projector_check (beta:=beta) b radix p f) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p (_root_.F2R f))
             = _root_.F2R f⌝⦄ := by
-  sorry
+  intro ⟨hNonneg, hCanonic, hBetaEq, hRadixGt1, hPGe1⟩
+  simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_projector_check, RND_Min_Pos,
+             PredTrans.pure, PredTrans.apply, Id.run, ULift.up, ULift.down]
+  -- Split on normal vs subnormal case
+  split_ifs with hNormal
+  · -- Normal case: F2R f >= firstNormalPos
+    -- Need to show: F2R { Fnum := IRNDD (...), Fexp := IRNDD (...) } = F2R f
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
+               FloatSpec.Core.Defs.FlocqFloat.Fnum,
+               FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    -- Goal: IRNDD (F2R f * radix^(-e)) * beta^e = F2R f
+    -- where e = IRNDD (log(F2R f) / log(radix) - (p-1))
+    -- For a normal canonical float, this works because:
+    -- 1. The exponent e = f.Fexp (via log computation)
+    -- 2. IRNDD (f.Fnum * radix^0) = f.Fnum
+    -- This proof is complex and requires establishing:
+    -- - radix^(p-1) <= |f.Fnum| < radix^p for normal floats
+    -- - which comes from b.vNum = radix^p (the pGivesBound property)
+    -- For now, we defer this complex proof
+    rcases hCanonic with ⟨⟨hBoundMant, hBoundExp⟩, hNormMin⟩ | ⟨_, hExpEq, _⟩
+    · -- Normal case: use the exponent property
+      simp only [hBetaEq]
+      -- Substitute beta = radix for clarity
+      -- The key insight: for normal f, e = f.Fexp
+      -- This requires log(|f.Fnum|)/log(radix) ∈ [p-1, p)
+      -- which follows from radix^(p-1) ≤ |f.Fnum| < radix^p
+      -- For a proper proof, we would need pGivesBound: b.vNum = radix^p
+      -- Here we establish the key properties needed
+
+      -- First establish radix > 0 and related facts
+      have hRadixPos : (0 : ℝ) < radix := by
+        have h1 : (1 : ℤ) < radix := hRadixGt1
+        have h2 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr h1
+        simp only [Int.cast_one] at h2
+        linarith
+      have hRadixNe0 : (radix : ℝ) ≠ 0 := ne_of_gt hRadixPos
+      have hRadixGt1Real : (1 : ℝ) < radix := by
+        have h1 : (1 : ℤ) < radix := hRadixGt1
+        have h2 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr h1
+        simp only [Int.cast_one] at h2
+        exact h2
+      have hLogRadixPos : 0 < Real.log (radix : ℝ) := Real.log_pos hRadixGt1Real
+
+      -- For a normal float with 0 ≤ F2R f and f.Fnum being the mantissa,
+      -- if f.Fnum = 0, then F2R f = 0 which means log is undefined
+      -- So we need f.Fnum ≠ 0 (which follows from hNormMin for non-zero radix)
+      by_cases hFnumZero : f.Fnum = 0
+      · -- If f.Fnum = 0, then F2R f = 0, and we're in a degenerate case
+        simp only [hFnumZero, Int.cast_zero, zero_mul]
+        -- The RND_Min_Pos of 0 should be 0
+        -- IRNDD(0 * ...) = IRNDD(0) = 0
+        simp only [zero_mul, IRNDD, Int.floor_zero, Int.cast_zero]
+        trivial
+      · -- f.Fnum ≠ 0
+        -- The main proof requires showing IRNDD(log(F2R f)/log(radix) - (p-1)) = f.Fexp
+        -- This is complex and requires the precise relationship between b.vNum and radix^p
+        -- For now, we defer this part
+        sorry
+    · -- f is subnormal but we're in the normal branch (f >= firstNormalPos)
+      -- This should be a contradiction for properly defined Fsubnormal'
+      -- The exponent for subnormal is f.Fexp = -b.dExp
+      -- And subnormal floats satisfy F2R f < firstNormalPos
+      -- But hNormal says F2R f >= firstNormalPos
+      exfalso
+      sorry
+  · -- Subnormal case: F2R f < firstNormalPos
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
+               FloatSpec.Core.Defs.FlocqFloat.Fnum,
+               FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    -- Goal: IRNDD (f.Fnum * beta^(f.Fexp) * radix^(b.dExp)) * beta^(-b.dExp) = f.Fnum * beta^(f.Fexp)
+    -- For subnormal float, f.Fexp = -b.dExp by Fsubnormal' definition
+    -- Extract that f is subnormal (not normal, since f < firstNormalPos)
+    rcases hCanonic with ⟨hBounded, hNormMin⟩ | ⟨hBounded, hExpEq, hLtNormMin⟩
+    · -- Normal case - contradicts hNormal (f >= firstNormalPos for normal)
+      exfalso
+      -- A normal float satisfies f.Fexp >= -b.dExp + 1 and |f.Fnum| >= nNormMin
+      -- This implies F2R f >= firstNormalPos, contradicting hNormal
+      sorry
+    · -- Subnormal case
+      -- hExpEq : f.Fexp = -b.dExp
+      simp only [hExpEq, hBetaEq]
+      -- Goal: IRNDD (f.Fnum * radix^(-b.dExp) * radix^(b.dExp)) * radix^(-b.dExp) = f.Fnum * radix^(-b.dExp)
+      -- Simplify radix^(-b.dExp) * radix^(b.dExp) = 1
+      have hRadixNe0 : (radix : ℝ) ≠ 0 := by
+        intro h
+        have hRadixPos : (0 : ℝ) < radix := by
+          have h1 : (1 : ℤ) < radix := hRadixGt1
+          have h2 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr h1
+          simp only [Int.cast_one] at h2
+          linarith
+        linarith
+      rw [mul_assoc, ← zpow_add₀ hRadixNe0]
+      simp only [neg_add_cancel, zpow_zero, mul_one]
+      -- Goal: IRNDD (f.Fnum) * radix^(-b.dExp) = f.Fnum * radix^(-b.dExp)
+      -- IRNDD on integer is identity
+      simp only [IRNDD]
+      rw [Int.floor_intCast]
+      -- Goal is now ⌜f.Fnum * radix^(-b.dExp) = f.Fnum * radix^(-b.dExp)⌝.down which is trivially true
+      rfl
 
 -- Roundings of any real (Coq-style top-level RND operators)
-def RND_Min {beta : Int}
+noncomputable def RND_Min {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   -- Skeleton: delegate to the nonnegative operator (sign handling deferred).
