@@ -2971,16 +2971,193 @@ noncomputable def FcanonicUnique_check {beta : Int}
   ()
 
 /-- Coq: `FcanonicUnique` — canonical floats that represent the same real
-number are equal as floats. -/
+number are equal as floats.
+
+Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+This theorem requires the canonical form structure to be meaningful.
+Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
 theorem FcanonicUnique {beta : Int}
     (radix : Int) (b : Fbound_skel)
-    (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fcanonic (beta:=beta) radix b p ∧
-        Fcanonic (beta:=beta) radix b q ∧
+    (p q : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hβ : 1 < beta)
+    (hradix : radix = beta) :
+    ⦃⌜Fcanonic' (beta:=beta) radix b p ∧
+        Fcanonic' (beta:=beta) radix b q ∧
         _root_.F2R (beta:=beta) p = _root_.F2R (beta:=beta) q⌝⦄
     (pure (FcanonicUnique_check (beta:=beta) radix b p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
-  sorry
+  intro ⟨hcanP, hcanQ, heqF2R⟩
+  simp only [wp, PostCond.noThrow, pure, FcanonicUnique_check, ULift.down_up]
+  -- Derive beta > 0 from 1 < beta
+  have hbeta_pos_int : (0 : ℤ) < beta := lt_trans (by norm_num : (0 : ℤ) < 1) hβ
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hbeta_pos_int
+  have hbeta_ne_zero : (beta : ℝ) ≠ 0 := ne_of_gt hbeta_pos
+  have hbeta_gt_one : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  -- Unfold F2R in heqF2R
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R] at heqF2R
+  -- heqF2R : p.Fnum * beta ^ p.Fexp = q.Fnum * beta ^ q.Fexp
+  -- Case analysis on canonical form of p and q
+  rcases hcanP with ⟨hbP, hvnumP⟩ | ⟨hbP, hexpP, hvnumP⟩
+  <;> rcases hcanQ with ⟨hbQ, hvnumQ⟩ | ⟨hbQ, hexpQ, hvnumQ⟩
+  -- Case 1: p normal, q normal
+  · -- Both normal: use NormalAndSubNormalNotEq logic in reverse
+    -- Normal: vNum ≤ |radix * Fnum| and Fbounded'
+    rw [hradix] at hvnumP hvnumQ
+    -- Need to show p.Fexp = q.Fexp and p.Fnum = q.Fnum
+    -- First, show p.Fexp = q.Fexp
+    have hexp_eq : p.Fexp = q.Fexp := by
+      by_contra hne
+      rcases Ne.lt_or_lt hne with hlt | hgt
+      · -- p.Fexp < q.Fexp
+        -- From heqF2R: p.Fnum * beta^p.Fexp = q.Fnum * beta^q.Fexp
+        -- Rearranging: p.Fnum = q.Fnum * beta^(q.Fexp - p.Fexp)
+        have hd_pos : q.Fexp - p.Fexp > 0 := by omega
+        have hd_ge_one : q.Fexp - p.Fexp ≥ 1 := by omega
+        have hpow_p_pos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hbeta_pos p.Fexp
+        have hpow_p_ne : (beta : ℝ) ^ p.Fexp ≠ 0 := ne_of_gt hpow_p_pos
+        have hpow_d_pos : (0 : ℝ) < (beta : ℝ) ^ (q.Fexp - p.Fexp) := zpow_pos hbeta_pos (q.Fexp - p.Fexp)
+        have hpow_d_ge_beta : (beta : ℝ) ^ (q.Fexp - p.Fexp) ≥ (beta : ℝ) := by
+          have h1 : (beta : ℝ) ^ (q.Fexp - p.Fexp) ≥ (beta : ℝ) ^ (1 : ℤ) :=
+            zpow_le_zpow_right₀ (le_of_lt hbeta_gt_one) hd_ge_one
+          simp only [zpow_one] at h1
+          exact h1
+        -- From heqF2R: p.Fnum * beta^p.Fexp = q.Fnum * beta^q.Fexp
+        -- Divide by beta^p.Fexp: p.Fnum = q.Fnum * beta^(q.Fexp - p.Fexp)
+        have hrel : (p.Fnum : ℝ) = (q.Fnum : ℝ) * (beta : ℝ) ^ (q.Fexp - p.Fexp) := by
+          have h1 : (beta : ℝ) ^ q.Fexp = (beta : ℝ) ^ (q.Fexp - p.Fexp) * (beta : ℝ) ^ p.Fexp := by
+            rw [← zpow_add₀ hbeta_ne_zero]
+            ring_nf
+          have h2 : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp =
+                    (q.Fnum : ℝ) * ((beta : ℝ) ^ (q.Fexp - p.Fexp) * (beta : ℝ) ^ p.Fexp) := by
+            rw [h1]
+          rw [h2] at heqF2R
+          -- heqF2R : p.Fnum * beta^p.Fexp = q.Fnum * (beta^d * beta^p.Fexp)
+          have h3 : (q.Fnum : ℝ) * ((beta : ℝ) ^ (q.Fexp - p.Fexp) * (beta : ℝ) ^ p.Fexp) =
+                    (q.Fnum : ℝ) * (beta : ℝ) ^ (q.Fexp - p.Fexp) * (beta : ℝ) ^ p.Fexp := by ring
+          rw [h3] at heqF2R
+          exact mul_right_cancel₀ hpow_p_ne heqF2R
+        -- Now |p.Fnum| = |q.Fnum| * beta^(q.Fexp - p.Fexp) ≥ |q.Fnum| * beta
+        have habs_rel : |(p.Fnum : ℝ)| = |(q.Fnum : ℝ)| * (beta : ℝ) ^ (q.Fexp - p.Fexp) := by
+          rw [hrel, abs_mul, abs_of_pos hpow_d_pos]
+        -- From boundedness: |p.Fnum| < vNum
+        have hp_abs_bound : |p.Fnum| < (b.vNum : ℤ) := hbP.1
+        -- From normality of q: vNum ≤ |beta * q.Fnum|
+        have hq_vnum_le : (b.vNum : ℤ) ≤ |beta * q.Fnum| := hvnumQ
+        -- So |p.Fnum| < vNum ≤ |beta * q.Fnum| = beta * |q.Fnum| (since beta > 0)
+        have hbeta_abs : |beta| = beta := abs_of_pos hbeta_pos_int
+        have hq_abs_le : (b.vNum : ℤ) ≤ beta * |q.Fnum| := by
+          calc (b.vNum : ℤ) ≤ |beta * q.Fnum| := hq_vnum_le
+            _ = |beta| * |q.Fnum| := abs_mul beta q.Fnum
+            _ = beta * |q.Fnum| := by rw [hbeta_abs]
+        -- So |p.Fnum| < beta * |q.Fnum|
+        have hp_lt_beta_q : |p.Fnum| < beta * |q.Fnum| := lt_of_lt_of_le hp_abs_bound hq_abs_le
+        -- But from habs_rel: |p.Fnum| = |q.Fnum| * beta^d ≥ |q.Fnum| * beta
+        have hp_ge_q_beta : |(p.Fnum : ℝ)| ≥ |(q.Fnum : ℝ)| * (beta : ℝ) := by
+          rw [habs_rel]
+          apply mul_le_mul_of_nonneg_left hpow_d_ge_beta (abs_nonneg _)
+        -- Contradiction: |p.Fnum| < beta * |q.Fnum| but |p.Fnum| ≥ |q.Fnum| * beta
+        have hp_lt_real : |(p.Fnum : ℝ)| < (beta : ℝ) * |(q.Fnum : ℝ)| := by
+          have h1 : (|p.Fnum| : ℝ) < ((beta * |q.Fnum|) : ℤ) := by exact_mod_cast hp_lt_beta_q
+          simp only [Int.cast_mul, Int.cast_abs] at h1
+          exact h1
+        have hp_ge_real' : |(p.Fnum : ℝ)| ≥ (beta : ℝ) * |(q.Fnum : ℝ)| := by
+          rw [mul_comm] at hp_ge_q_beta
+          exact hp_ge_q_beta
+        linarith
+      · -- q.Fexp < p.Fexp: symmetric argument
+        have hd_pos : p.Fexp - q.Fexp > 0 := by omega
+        have hd_ge_one : p.Fexp - q.Fexp ≥ 1 := by omega
+        have hpow_q_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
+        have hpow_q_ne : (beta : ℝ) ^ q.Fexp ≠ 0 := ne_of_gt hpow_q_pos
+        have hpow_d_pos : (0 : ℝ) < (beta : ℝ) ^ (p.Fexp - q.Fexp) := zpow_pos hbeta_pos (p.Fexp - q.Fexp)
+        have hpow_d_ge_beta : (beta : ℝ) ^ (p.Fexp - q.Fexp) ≥ (beta : ℝ) := by
+          have h1 : (beta : ℝ) ^ (p.Fexp - q.Fexp) ≥ (beta : ℝ) ^ (1 : ℤ) :=
+            zpow_le_zpow_right₀ (le_of_lt hbeta_gt_one) hd_ge_one
+          simp only [zpow_one] at h1
+          exact h1
+        -- From heqF2R: q.Fnum = p.Fnum * beta^(p.Fexp - q.Fexp)
+        have hrel : (q.Fnum : ℝ) = (p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - q.Fexp) := by
+          have h1 : (beta : ℝ) ^ p.Fexp = (beta : ℝ) ^ (p.Fexp - q.Fexp) * (beta : ℝ) ^ q.Fexp := by
+            rw [← zpow_add₀ hbeta_ne_zero]
+            ring_nf
+          have h2 : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp =
+                    (p.Fnum : ℝ) * ((beta : ℝ) ^ (p.Fexp - q.Fexp) * (beta : ℝ) ^ q.Fexp) := by
+            rw [h1]
+          rw [h2] at heqF2R
+          -- heqF2R : p.Fnum * (beta^d * beta^q.Fexp) = q.Fnum * beta^q.Fexp
+          have h3 : (p.Fnum : ℝ) * ((beta : ℝ) ^ (p.Fexp - q.Fexp) * (beta : ℝ) ^ q.Fexp) =
+                    (p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - q.Fexp) * (beta : ℝ) ^ q.Fexp := by ring
+          rw [h3] at heqF2R
+          -- heqF2R : p.Fnum * beta^d * beta^q.Fexp = q.Fnum * beta^q.Fexp
+          have h4 := mul_right_cancel₀ hpow_q_ne heqF2R
+          -- h4 : p.Fnum * beta^d = q.Fnum
+          exact h4.symm
+        -- Now |q.Fnum| = |p.Fnum| * beta^d ≥ |p.Fnum| * beta
+        have habs_rel : |(q.Fnum : ℝ)| = |(p.Fnum : ℝ)| * (beta : ℝ) ^ (p.Fexp - q.Fexp) := by
+          rw [hrel, abs_mul, abs_of_pos hpow_d_pos]
+        -- From boundedness: |q.Fnum| < vNum
+        have hq_abs_bound : |q.Fnum| < (b.vNum : ℤ) := hbQ.1
+        -- From normality of p: vNum ≤ |beta * p.Fnum|
+        have hp_vnum_le : (b.vNum : ℤ) ≤ |beta * p.Fnum| := hvnumP
+        have hbeta_abs : |beta| = beta := abs_of_pos hbeta_pos_int
+        have hp_abs_le : (b.vNum : ℤ) ≤ beta * |p.Fnum| := by
+          calc (b.vNum : ℤ) ≤ |beta * p.Fnum| := hp_vnum_le
+            _ = |beta| * |p.Fnum| := abs_mul beta p.Fnum
+            _ = beta * |p.Fnum| := by rw [hbeta_abs]
+        have hq_lt_beta_p : |q.Fnum| < beta * |p.Fnum| := lt_of_lt_of_le hq_abs_bound hp_abs_le
+        have hq_ge_p_beta : |(q.Fnum : ℝ)| ≥ |(p.Fnum : ℝ)| * (beta : ℝ) := by
+          rw [habs_rel]
+          apply mul_le_mul_of_nonneg_left hpow_d_ge_beta (abs_nonneg _)
+        have hq_lt_real : |(q.Fnum : ℝ)| < (beta : ℝ) * |(p.Fnum : ℝ)| := by
+          have h1 : (|q.Fnum| : ℝ) < ((beta * |p.Fnum|) : ℤ) := by exact_mod_cast hq_lt_beta_p
+          simp only [Int.cast_mul, Int.cast_abs] at h1
+          exact h1
+        have hq_ge_real' : |(q.Fnum : ℝ)| ≥ (beta : ℝ) * |(p.Fnum : ℝ)| := by
+          rw [mul_comm] at hq_ge_p_beta
+          exact hq_ge_p_beta
+        linarith
+    -- Now p.Fexp = q.Fexp, derive p.Fnum = q.Fnum from heqF2R
+    have hfnum_eq : p.Fnum = q.Fnum := by
+      have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
+      have hpow_ne : (beta : ℝ) ^ q.Fexp ≠ 0 := ne_of_gt hpow_pos
+      rw [hexp_eq] at heqF2R
+      have h : (p.Fnum : ℝ) = (q.Fnum : ℝ) := mul_right_cancel₀ hpow_ne heqF2R
+      exact_mod_cast h
+    -- Conclude p = q using structure equality
+    cases p
+    cases q
+    simp only [FloatSpec.Core.Defs.FlocqFloat.mk.injEq]
+    exact ⟨hfnum_eq, hexp_eq⟩
+  -- Case 2: p normal, q subnormal - contradiction
+  · exfalso
+    -- Use NormalAndSubNormalNotEq: normal and subnormal can't have same F2R
+    have hneq := NormalAndSubNormalNotEq radix b p q hβ hradix
+    simp only [wp, PostCond.noThrow, pure, NormalAndSubNormalNotEq_check, ULift.down_up] at hneq
+    have hP_normal : Fnormal' radix b p := ⟨hbP, hvnumP⟩
+    have hQ_subnormal : Fsubnormal' radix b q := ⟨hbQ, hexpQ, hvnumQ⟩
+    exact hneq ⟨hP_normal, hQ_subnormal⟩ heqF2R
+  -- Case 3: p subnormal, q normal - contradiction
+  · exfalso
+    -- By symmetry with case 2
+    have hneq := NormalAndSubNormalNotEq radix b q p hβ hradix
+    simp only [wp, PostCond.noThrow, pure, NormalAndSubNormalNotEq_check, ULift.down_up] at hneq
+    have hQ_normal : Fnormal' radix b q := ⟨hbQ, hvnumQ⟩
+    have hP_subnormal : Fsubnormal' radix b p := ⟨hbP, hexpP, hvnumP⟩
+    exact hneq ⟨hQ_normal, hP_subnormal⟩ heqF2R.symm
+  -- Case 4: p subnormal, q subnormal
+  · -- Both subnormal: p.Fexp = q.Fexp = -dExp
+    have hexp_eq : p.Fexp = q.Fexp := by rw [hexpP, hexpQ]
+    have hfnum_eq : p.Fnum = q.Fnum := by
+      have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
+      have hpow_ne : (beta : ℝ) ^ q.Fexp ≠ 0 := ne_of_gt hpow_pos
+      rw [hexp_eq] at heqF2R
+      have h : (p.Fnum : ℝ) = (q.Fnum : ℝ) := mul_right_cancel₀ hpow_ne heqF2R
+      exact_mod_cast h
+    -- Conclude p = q using structure equality
+    cases p
+    cases q
+    simp only [FloatSpec.Core.Defs.FlocqFloat.mk.injEq]
+    exact ⟨hfnum_eq, hexp_eq⟩
 
 noncomputable def FcanonicLeastExp_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
