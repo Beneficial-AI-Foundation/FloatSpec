@@ -3432,6 +3432,49 @@ theorem RND_Min_Pos_Rle {beta : Int}
       _ = r * 1 := by simp only [add_neg_cancel, zpow_zero]
       _ = r := mul_one r
 
+-- Helper lemma: monotonicity of IRNDD (floor)
+private lemma IRNDD_monotone {x y : ℝ} (h : x ≤ y) : IRNDD x ≤ IRNDD y := by
+  simp only [IRNDD]
+  exact Int.floor_le_floor h
+
+-- Helper: for positive base and exponent, zpow is positive
+private lemma radix_zpow_pos {radix : ℤ} (hRadix : (1 : ℤ) < radix) (e : ℤ) :
+    (0 : ℝ) < (radix : ℝ) ^ e := by
+  have hRadixPos : (0 : ℝ) < radix := by
+    have h1 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr hRadix
+    simp only [Int.cast_one] at h1
+    linarith
+  exact zpow_pos hRadixPos e
+
+-- Helper: floor scaled by positive power preserves inequality in real value when exponents match
+private lemma floor_scaled_mono {radix : ℤ} (hRadix : (1 : ℤ) < radix) (e : ℤ) {x y : ℝ}
+    (h : x ≤ y) :
+    (IRNDD x : ℝ) * (radix : ℝ) ^ e ≤ (IRNDD y : ℝ) * (radix : ℝ) ^ e := by
+  have hPowPos : (0 : ℝ) < (radix : ℝ) ^ e := radix_zpow_pos hRadix e
+  exact mul_le_mul_of_nonneg_right (Int.cast_le.mpr (IRNDD_monotone h)) (le_of_lt hPowPos)
+
+-- Helper: log is monotone for positive values
+private lemma log_div_log_mono {radix : ℤ} (hRadix : (1 : ℤ) < radix) {r₁ r₂ : ℝ}
+    (hr₁_pos : 0 < r₁) (h : r₁ ≤ r₂) :
+    Real.log r₁ / Real.log radix ≤ Real.log r₂ / Real.log radix := by
+  have hRadixReal : (1 : ℝ) < radix := by
+    have h1 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr hRadix
+    simp only [Int.cast_one] at h1
+    exact h1
+  have hLogRadixPos : 0 < Real.log radix := Real.log_pos hRadixReal
+  apply div_le_div_of_nonneg_right _ (le_of_lt hLogRadixPos)
+  exact Real.log_le_log hr₁_pos h
+
+-- Helper: exponent calculation is monotone for positive values
+private lemma exponent_mono {radix p : ℤ} (hRadix : (1 : ℤ) < radix) {r₁ r₂ : ℝ}
+    (hr₁_pos : 0 < r₁) (h : r₁ ≤ r₂) :
+    IRNDD (Real.log r₁ / Real.log radix + (-(p - 1))) ≤
+    IRNDD (Real.log r₂ / Real.log radix + (-(p - 1))) := by
+  apply IRNDD_monotone
+  have hlog : Real.log r₁ / Real.log radix ≤ Real.log r₂ / Real.log radix :=
+    log_div_log_mono hRadix hr₁_pos h
+  linarith
+
 -- Monotonicity of `RND_Min_Pos` w.r.t. the real input (Coq: RND_Min_Pos_monotone)
 noncomputable def RND_Min_Pos_monotone_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r₁ r₂ : ℝ) : Unit :=
@@ -3440,19 +3483,173 @@ noncomputable def RND_Min_Pos_monotone_check {beta : Int}
 /-- Coq: `RND_Min_Pos_monotone` — for nonnegative `r₁ ≤ r₂`, the lower rounding
     on nonnegative reals is monotone in the sense that the real value of
     `RND_Min_Pos r₁` is less than or equal to that of `RND_Min_Pos r₂`.
-    We mirror the statement using the hoare-triple style and defer the proof. -/
+    We mirror the statement using the hoare-triple style.
+
+    Note: The Coq version has implicit hypotheses from Section:
+    - radix > 1
+    - beta = radix (so the base used in F2R matches the base in RND_Min_Pos)
+    These are now explicit in the precondition. -/
 theorem RND_Min_Pos_monotone {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r₁ r₂ : ℝ) :
-    ⦃⌜0 ≤ r₁ ∧ r₁ ≤ r₂⌝⦄
+    ⦃⌜0 ≤ r₁ ∧ r₁ ≤ r₂ ∧ beta = radix ∧ 1 < radix⌝⦄
     (pure (RND_Min_Pos_monotone_check (beta:=beta) b radix p r₁ r₂) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₁)
             ≤ _root_.F2R (RND_Min_Pos (beta:=beta) b radix p r₂)⌝⦄ := by
-  intro _
+  intro ⟨hR1Pos, hR12, hBetaEq, hRadixGt1⟩
   simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_monotone_check, ULift.down_up,
         RND_Min_Pos, _root_.F2R, FloatSpec.Core.Defs.F2R]
-  -- Monotonicity requires showing floor-based rounding preserves order
-  -- This is complex and deferred
-  sorry
+  -- Derive key positivity facts
+  have hRadixPos : (0 : ℝ) < radix := by
+    have h1 : ((1 : ℤ) : ℝ) < ((radix : ℤ) : ℝ) := Int.cast_lt.mpr hRadixGt1
+    simp only [Int.cast_one] at h1
+    linarith
+  have hRadixNe0 : (radix : ℝ) ≠ 0 := ne_of_gt hRadixPos
+  have hBetaPos : (0 : ℝ) < beta := by rw [hBetaEq]; exact hRadixPos
+  -- Let firstNP denote the first normal position threshold
+  set firstNP := (↑(firstNormalPos radix b p.toNat).Fnum : ℝ) *
+                  (beta : ℝ) ^ (firstNormalPos radix b p.toNat).Fexp with hFirstNP
+  -- Case analysis on whether r₁ and r₂ are normal or subnormal
+  by_cases h1 : firstNP ≤ r₁
+  · -- Case 1: r₁ is normal (and hence r₂ is also normal since r₁ ≤ r₂)
+    have h2 : firstNP ≤ r₂ := le_trans h1 hR12
+    simp only [h1, h2, ite_true, PredTrans.pure, PredTrans.apply, Id.run, ULift.up, ULift.down]
+    -- Both are normal; need to show the F2R values are ordered
+    -- Define exponents for clarity
+    set e₁ := IRNDD (Real.log r₁ / Real.log radix + (-(p - 1))) with he₁
+    set e₂ := IRNDD (Real.log r₂ / Real.log radix + (-(p - 1))) with he₂
+    -- Define mantissas
+    set m₁ := IRNDD (r₁ * (radix : ℝ) ^ (-e₁)) with hm₁
+    set m₂ := IRNDD (r₂ * (radix : ℝ) ^ (-e₂)) with hm₂
+    -- Goal: m₁ * beta^e₁ ≤ m₂ * beta^e₂
+    -- Since beta = radix, this is: m₁ * radix^e₁ ≤ m₂ * radix^e₂
+    -- First, we need r₁ > 0 for log to be defined (follows from h1 and firstNP > 0)
+    have hFirstNPPos : 0 < firstNP := by
+      simp only [hFirstNP, firstNormalPos, nNormMin,
+                 FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+      -- Goal: 0 < (radix^(p.toNat - 1) : ℝ) * beta^(-b.dExp)
+      -- Both radix^(p.toNat - 1) > 0 (since radix > 1) and beta^(-b.dExp) > 0 (since beta > 0)
+      apply mul_pos
+      · -- radix^(p.toNat - 1) > 0
+        apply Int.cast_pos.mpr
+        apply Int.pow_pos
+        omega
+      · -- beta^(-b.dExp) > 0
+        exact zpow_pos hBetaPos _
+    have hr₁_pos : 0 < r₁ := lt_of_lt_of_le hFirstNPPos h1
+    have hr₂_pos : 0 < r₂ := lt_of_lt_of_le hFirstNPPos h2
+    -- Key property: e₁ ≤ e₂ (exponent monotonicity)
+    have hExpMono : e₁ ≤ e₂ := exponent_mono hRadixGt1 hr₁_pos hR12
+    -- The round-down values satisfy: m₁ * radix^e₁ ≤ r₁ and m₂ * radix^e₂ ≤ r₂
+    -- Also: r₁ < (m₁ + 1) * radix^e₁ and r₂ < (m₂ + 1) * radix^e₂
+    -- Since r₁ ≤ r₂ and these are floor-based approximations...
+    -- The proof is complex when e₁ < e₂ because we need to account for the binade structure
+    -- For e₁ = e₂, the proof is straightforward via floor monotonicity
+    by_cases hExpEq : e₁ = e₂
+    · -- Same exponent case: direct floor monotonicity
+      rw [hExpEq]
+      -- Since e₁ = e₂, m₁ = IRNDD(r₁ * radix^(-e₁)) = IRNDD(r₁ * radix^(-e₂))
+      have hm₁_eq : m₁ = IRNDD (r₁ * (radix : ℝ) ^ (-e₂)) := by
+        simp only [hm₁, hExpEq]
+      have hScaled : r₁ * (radix : ℝ) ^ (-e₂) ≤ r₂ * (radix : ℝ) ^ (-e₂) := by
+        have hPowPos : (0 : ℝ) < (radix : ℝ) ^ (-e₂) := zpow_pos hRadixPos (-e₂)
+        exact mul_le_mul_of_nonneg_right hR12 (le_of_lt hPowPos)
+      have hFloorMono : m₁ ≤ m₂ := by
+        rw [hm₁_eq, hm₂]
+        exact IRNDD_monotone hScaled
+      have hBetaPowPos : (0 : ℝ) < (beta : ℝ) ^ e₂ := zpow_pos hBetaPos e₂
+      exact mul_le_mul_of_nonneg_right (Int.cast_le.mpr hFloorMono) (le_of_lt hBetaPowPos)
+    · -- Different exponent case: e₁ < e₂
+      -- This is the complex case requiring the binade structure
+      -- m₁ * radix^e₁ ≤ r₁ ≤ r₂
+      -- Since e₁ < e₂, r₁ is in a lower binade than r₂
+      -- The upper bound of binade e₁ is radix^(e₁+p) (approximately)
+      -- And r₂ is at least at the boundary radix^(e₂+p-1)
+      -- So m₁ * radix^e₁ < radix^(e₁+p) ≤ radix^(e₂+p-1) ≤ m₂ * radix^e₂
+      have hExpLt : e₁ < e₂ := lt_of_le_of_ne hExpMono hExpEq
+      -- Key insight: m₁ * radix^e₁ ≤ r₁ ≤ r₂, and m₂ is the floor of r₂ * radix^(-e₂)
+      -- Since e₁ < e₂, we have e₂ - e₁ ≥ 1
+      -- m₁ * radix^e₁ ≤ r₁ ≤ r₂
+      -- m₂ * radix^e₂ ≤ r₂ < (m₂ + 1) * radix^e₂
+      -- We need: m₁ * radix^e₁ ≤ m₂ * radix^e₂
+      -- Rewrite as: m₁ ≤ m₂ * radix^(e₂ - e₁)
+      -- Since m₂ ≥ radix^(p-1) (normal float), m₂ * radix^(e₂-e₁) ≥ radix^(p-1+e₂-e₁)
+      -- And m₁ < radix^p (bounded mantissa)
+      -- If e₂ - e₁ ≥ 1, then radix^(p-1+1) = radix^p > m₁, so m₁ < radix^p ≤ m₂ * radix^(e₂-e₁)
+      -- This works when m₂ ≥ radix^(p-1)
+
+      -- Use transitivity: m₁ * radix^e₁ ≤ r₁ ≤ r₂, and we need to compare with m₂ * radix^e₂
+      -- Since m₁ * radix^e₁ ≤ r₁ (floor property) and r₁ ≤ r₂ ≤ m₂ * radix^e₂ + something
+      -- Actually, the floor satisfies: m₂ * radix^e₂ ≤ r₂
+      -- So we need: m₁ * radix^e₁ ≤ m₂ * radix^e₂
+      -- Given: m₁ * radix^e₁ ≤ r₁ ≤ r₂
+      -- And: m₂ * radix^e₂ ≤ r₂
+
+      -- The key is that for normal floats, the mantissa m satisfies radix^(p-1) ≤ m < radix^p
+      -- So m₁ < radix^p and m₂ ≥ radix^(p-1)
+      -- Thus: m₁ * radix^e₁ < radix^p * radix^e₁ = radix^(p+e₁)
+      -- And: m₂ * radix^e₂ ≥ radix^(p-1) * radix^e₂ = radix^(p-1+e₂)
+      -- Since e₁ < e₂, we have p + e₁ < p + e₂, so radix^(p+e₁) ≤ radix^(p-1+e₂) when e₂ ≥ e₁ + 1
+      -- Therefore: m₁ * radix^e₁ < radix^(p+e₁) ≤ radix^(p-1+e₂) ≤ m₂ * radix^e₂
+
+      -- However, proving the mantissa bounds requires more infrastructure about IRNDD
+      -- The Coq proof uses FPredProp which encapsulates this
+      -- For a complete proof, we would need lemmas like:
+      -- - IRNDD(r * radix^(-e)) < radix^p when r < radix^(e+p)
+      -- - IRNDD(r * radix^(-e)) ≥ radix^(p-1) when r ≥ radix^(e+p-1) (normal case)
+      -- These follow from the definition of the exponent e via log
+
+      -- For now, defer this complex case
+      -- The proof would follow the Coq's FPredProp approach
+      sorry
+  · -- Case 2: r₁ is subnormal
+    by_cases h2 : firstNP ≤ r₂
+    · -- Case 2a: r₁ is subnormal, r₂ is normal
+      simp only [h1, h2, ite_false, ite_true, PredTrans.pure, PredTrans.apply, Id.run, ULift.up, ULift.down]
+      -- Goal: IRNDD(r₁ * radix^dExp) * beta^(-dExp) ≤ IRNDD(r₂ * radix^(-e₂)) * beta^e₂
+      -- where e₂ = IRNDD(log(r₂)/log(radix) - (p-1))
+
+      -- Key insight: subnormal_round(r₁) < firstNP ≤ normal_round(r₂)?
+      -- Not quite - normal_round(r₂) could be less than r₂
+      -- But: subnormal_round(r₁) ≤ r₁ < firstNP and normal_round(r₂) is at least some positive value
+
+      -- Let's use the round-down property:
+      -- subnormal_round(r₁) = ⌊r₁ * radix^dExp⌋ * radix^(-dExp) ≤ r₁
+      -- normal_round(r₂) = ⌊r₂ * radix^(-e₂)⌋ * radix^e₂ ≤ r₂
+
+      -- The challenge is relating these different representations
+      -- For now, we use transitivity through r₁ and r₂
+      -- subnormal_round(r₁) ≤ r₁ ≤ r₂
+
+      -- Actually, the key is that for r₂ ≥ firstNP:
+      -- normal_round(r₂) ≥ firstNP - ulp(firstNP) > 0
+      -- And subnormal_round(r₁) ≤ r₁ < firstNP
+
+      -- More precisely: since r₁ < firstNP and r₂ ≥ firstNP:
+      -- subnormal_round(r₁) ≤ r₁ < firstNP ≤ r₂
+      -- But normal_round(r₂) ≤ r₂, so we can't directly conclude
+
+      -- The Coq proof uses: RND_Min_Pos is the largest representable float ≤ r
+      -- This is encapsulated in FPredProp
+      -- Without this infrastructure, we defer this case
+      sorry
+    · -- Case 2b: Both r₁ and r₂ are subnormal
+      simp only [h1, h2, ite_false]
+      -- Same exponent (-b.dExp), just need floor monotonicity
+      -- Goal: IRNDD (r₁ * radix^dExp) * beta^(-dExp) ≤ IRNDD (r₂ * radix^dExp) * beta^(-dExp)
+      -- Since beta = radix and radix > 1, beta^(-dExp) > 0
+      have hBetaPowPos : (0 : ℝ) < (beta : ℝ) ^ (-b.dExp) := zpow_pos hBetaPos (-b.dExp)
+      have hRadixPowPos : (0 : ℝ) < (radix : ℝ) ^ b.dExp := zpow_pos hRadixPos b.dExp
+      -- r₁ * radix^dExp ≤ r₂ * radix^dExp (since r₁ ≤ r₂ and radix^dExp > 0)
+      have hScaled : r₁ * (radix : ℝ) ^ b.dExp ≤ r₂ * (radix : ℝ) ^ b.dExp :=
+        mul_le_mul_of_nonneg_right hR12 (le_of_lt hRadixPowPos)
+      -- Floor is monotone
+      have hFloorMono : IRNDD (r₁ * (radix : ℝ) ^ b.dExp) ≤ IRNDD (r₂ * (radix : ℝ) ^ b.dExp) :=
+        IRNDD_monotone hScaled
+      -- Multiply by positive power
+      have hResult : (IRNDD (r₁ * (radix : ℝ) ^ b.dExp) : ℝ) * (beta : ℝ) ^ (-b.dExp) ≤
+                     (IRNDD (r₂ * (radix : ℝ) ^ b.dExp) : ℝ) * (beta : ℝ) ^ (-b.dExp) :=
+        mul_le_mul_of_nonneg_right (Int.cast_le.mpr hFloorMono) (le_of_lt hBetaPowPos)
+      exact hResult
 
 -- Projector property for `RND_Min_Pos` on canonical inputs (Coq: RND_Min_Pos_projector)
 noncomputable def RND_Min_Pos_projector_check {beta : Int}
