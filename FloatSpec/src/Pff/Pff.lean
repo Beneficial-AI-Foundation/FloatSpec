@@ -3373,7 +3373,13 @@ theorem RND_Min_Pos_Rle {beta : Int}
     ⦃⌜0 ≤ r⌝⦄
     (pure (RND_Min_Pos_Rle_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (RND_Min_Pos (beta:=beta) b radix p r) ≤ r⌝⦄ := by
-  sorry
+  intro hr
+  simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_Rle_check, ULift.down_up]
+  -- RND_Min_Pos returns ⟨0, 0⟩, so F2R gives 0 * beta^0 = 0
+  -- We need to show 0 ≤ r, which is exactly the precondition hr
+  simp only [RND_Min_Pos, _root_.F2R, FloatSpec.Core.Defs.F2R]
+  simp only [zpow_zero, mul_one, Int.cast_zero]
+  exact hr
 
 -- Monotonicity of `RND_Min_Pos` w.r.t. the real input (Coq: RND_Min_Pos_monotone)
 noncomputable def RND_Min_Pos_monotone_check {beta : Int}
