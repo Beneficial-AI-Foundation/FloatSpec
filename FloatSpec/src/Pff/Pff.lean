@@ -3358,7 +3358,8 @@ theorem RND_Min_Pos_canonic {beta : Int}
     ⦃⌜0 ≤ r⌝⦄
     (pure (RND_Min_Pos_canonic_check (beta:=beta) b radix p r) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, RND_Min_Pos_canonic_check, ULift.down_up, Fcanonic]
 
 -- Lower rounding on nonnegative reals is ≤ the input (Coq: RND_Min_Pos_Rle)
 noncomputable def RND_Min_Pos_Rle_check {beta : Int}
