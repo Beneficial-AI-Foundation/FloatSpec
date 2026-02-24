@@ -5730,8 +5730,15 @@ noncomputable def ClosestZero1_check {beta : Int}
   ()
 
 /-- Coq: `ClosestZero1` — under the stated conditions, the rounded value `r`
-    must be zero. We mirror the statement using the project Hoare-triple style
-    and leave the proof as a placeholder. -/
+    must be zero. We mirror the statement using the project Hoare-triple style.
+
+    Note: Since `Closest` is currently a placeholder (= True), we add explicit
+    hypotheses matching Coq's `Closest` definition:
+    - `Fbounded' bo f`: the float `f` is bounded
+    - `hClosestProp`: `f` minimizes distance to `r` among bounded floats
+    - `1 < (beta : ℝ)`: radix is at least 2
+    - `bo.vNum > 1`: needed to construct bounded witness floats
+    These make the theorem provable and match the original Coq semantics. -/
 theorem ClosestZero1 {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (r : ℝ)
@@ -5739,10 +5746,89 @@ theorem ClosestZero1 {beta : Int}
     ⦃⌜Closest (beta:=beta) bo radix r f ∧
         _root_.F2R f = 0 ∧
         r = _root_.F2R g ∧
-        (-bo.dExp : Int) ≤ g.Fexp⌝⦄
+        (-bo.dExp : Int) ≤ g.Fexp ∧
+        Fbounded' bo f ∧
+        (∀ h : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' bo h → |_root_.F2R f - r| ≤ |_root_.F2R h - r|) ∧
+        (1 : ℝ) < (beta : ℝ) ∧
+        bo.vNum > 1⌝⦄
     (pure (ClosestZero1_check (beta:=beta) bo radix r f g) : Id Unit)
     ⦃⇓_ => ⌜r = 0⌝⦄ := by
-  sorry
+  intro ⟨_, hF2Rf, hRG, hExpG, _, hMin, hBetaGt1, hVNumGt1⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestZero1_check, PredTrans.pure, PredTrans.apply,
+             Id.run, ULift.down_up]
+  -- We have F2R f = 0, so |F2R f - r| = |r|
+  rw [hF2Rf, zero_sub] at hMin
+  -- Convert goal from ⌜r = 0⌝.down to r = 0
+  show r = 0
+  -- By contradiction: assume r ≠ 0
+  by_contra hr
+  -- Since r = F2R g and r ≠ 0, g.Fnum ≠ 0
+  have hGnum : g.Fnum ≠ 0 := by
+    intro hgz
+    exact hr (by rw [hRG, _root_.F2R, FloatSpec.Core.Defs.F2R, hgz, Int.cast_zero, zero_mul])
+  -- |g.Fnum| ≥ 1
+  have hGnumAbs : (1 : ℤ) ≤ |g.Fnum| := Int.one_le_abs hGnum
+  -- β > 0
+  have hBetaPos : (0 : ℝ) < (beta : ℝ) := by linarith
+  -- β^(-dExp bo) > 0
+  have hPowPos : (0 : ℝ) < (beta : ℝ) ^ (-bo.dExp : ℤ) := zpow_pos hBetaPos _
+  -- |r| ≥ β^(-dExp bo)
+  have hRabs : (beta : ℝ) ^ (-bo.dExp : ℤ) ≤ |r| := by
+    rw [hRG, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    rw [abs_mul]
+    calc (beta : ℝ) ^ (-bo.dExp : ℤ)
+        = 1 * (beta : ℝ) ^ (-bo.dExp : ℤ) := by ring
+      _ ≤ |(g.Fnum : ℝ)| * |(beta : ℝ) ^ g.Fexp| := by
+          apply mul_le_mul
+          · exact_mod_cast hGnumAbs
+          · rw [abs_of_pos (zpow_pos hBetaPos _)]
+            exact zpow_right_mono₀ (le_of_lt hBetaGt1) hExpG
+          · exact le_of_lt hPowPos
+          · exact abs_nonneg _
+  -- Now: construct a bounded float close to r to get contradiction
+  -- Consider two cases: r > 0 or r < 0
+  rcases ne_iff_lt_or_gt.mp hr with hr_neg | hr_pos
+  · -- Case r < 0: use Float (-1) (-dExp bo)
+    let witness : FloatSpec.Core.Defs.FlocqFloat beta := ⟨-1, -bo.dExp⟩
+    have hWBounded : Fbounded' (beta:=beta) bo witness := by
+      refine ⟨?_, le_refl _⟩
+      show |(-1 : ℤ)| < bo.vNum
+      norm_num
+      exact hVNumGt1
+    have hWF2R : _root_.F2R witness = -(beta : ℝ) ^ (-bo.dExp : ℤ) := by
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, witness]
+      push_cast
+      ring
+    specialize hMin witness hWBounded
+    rw [hWF2R] at hMin
+    have hRneg : r ≤ -(beta : ℝ) ^ (-bo.dExp : ℤ) := by
+      have := abs_of_neg hr_neg
+      linarith
+    have : |-(beta : ℝ) ^ (-bo.dExp : ℤ) - r| = -(beta : ℝ) ^ (-bo.dExp : ℤ) - r := by
+      rw [abs_of_nonneg]; linarith
+    rw [this, abs_neg, abs_of_neg hr_neg] at hMin
+    linarith
+  · -- Case r > 0: use Float 1 (-dExp bo)
+    let witness : FloatSpec.Core.Defs.FlocqFloat beta := ⟨1, -bo.dExp⟩
+    have hWBounded : Fbounded' (beta:=beta) bo witness := by
+      refine ⟨?_, le_refl _⟩
+      show |(1 : ℤ)| < bo.vNum
+      simp only [abs_one]
+      exact hVNumGt1
+    have hWF2R : _root_.F2R witness = (beta : ℝ) ^ (-bo.dExp : ℤ) := by
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, witness]
+      push_cast
+      ring
+    specialize hMin witness hWBounded
+    rw [hWF2R] at hMin
+    have hRpos_ge : (beta : ℝ) ^ (-bo.dExp : ℤ) ≤ r := by
+      have := abs_of_pos hr_pos
+      linarith
+    have : |(beta : ℝ) ^ (-bo.dExp : ℤ) - r| = r - (beta : ℝ) ^ (-bo.dExp : ℤ) := by
+      rw [abs_of_nonpos]; ring; linarith
+    rw [this, abs_neg, abs_of_pos hr_pos] at hMin
+    linarith
 
 /-!
 Div-by-2 midpoint characterizations (ported from Coq Pff.v)
