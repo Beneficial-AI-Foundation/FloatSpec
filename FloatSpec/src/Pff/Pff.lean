@@ -5955,7 +5955,13 @@ theorem EvenClosestCompatible {beta : Int}
     ⦃⌜True⌝⦄
     (pure (EvenClosestCompatible_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, EvenClosestCompatible_check, PredTrans.pure, PredTrans.apply,
+             Id.run, ULift.down]
+  show CompatibleP (EvenClosest (beta:=beta) b radix precision)
+  intro r1 r2 p q hec hr hpq
+  subst hr; subst hpq
+  exact hec
 
 -- Min-or-max disjunction for `EvenClosest` (Coq: `EvenClosestMinOrMax`)
 noncomputable def EvenClosestMinOrMax_check {beta : Int}
