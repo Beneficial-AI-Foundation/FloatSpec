@@ -6039,7 +6039,10 @@ theorem EvenClosestSymmetric {beta : Int}
     ⦃⌜True⌝⦄
     (pure (EvenClosestSymmetric_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜SymmetricP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, EvenClosestSymmetric_check, PredTrans.pure,
+             PredTrans.apply, Id.run, ULift.down]
+  simp [SymmetricP, EvenClosest, Closest, Fopp]
 
 -- Rounded-mode packaging for `EvenClosest` (Coq: `EvenClosestRoundedModeP`)
 noncomputable def EvenClosestRoundedModeP_check {beta : Int}
