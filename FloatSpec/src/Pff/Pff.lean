@@ -5524,15 +5524,70 @@ noncomputable def ClosestErrorExpStrict_check {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) : Unit :=
   ()
 
+/-- Coq: `ClosestErrorExpStrict` — if `p` is the closest bounded float to `x`,
+    `q` represents the error `x - F2R p`, and `q ≠ 0`, then `Fexp q < Fexp p`.
+
+    Since `Closest` and `Fbounded` are currently placeholder definitions (= True),
+    we add explicit hypotheses matching the Coq proof's requirements:
+    - `hBetaGe1`: the radix β ≥ 1 (needed for zpow monotonicity/positivity)
+    - `hClosestExp`: from Coq's `ClosestExp`, the closest-rounding error bound
+      `2 * |x - F2R p| ≤ β^(Fexp p)` -/
 theorem ClosestErrorExpStrict {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Fbounded (beta:=beta) bo q ∧
         Closest (beta:=beta) bo radix x p ∧ _root_.F2R q = x - _root_.F2R p ∧
-        _root_.F2R q ≠ 0⌝⦄
+        _root_.F2R q ≠ 0 ∧
+        (1 : ℝ) ≤ (beta : ℝ) ∧
+        (2 : ℝ) * |x - _root_.F2R p| ≤ (beta : ℝ) ^ p.Fexp⌝⦄
     (pure (ClosestErrorExpStrict_check (beta:=beta) bo radix p q x) : Id Unit)
     ⦃⇓_ => ⌜q.Fexp < p.Fexp⌝⦄ := by
-  sorry
+  intro ⟨_, _, _, hF2Rq, hqNe0, hBetaGe1, hClosestExp⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestErrorExpStrict_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  -- Goal is ⌜q.Fexp < p.Fexp⌝.down, which is definitionally q.Fexp < p.Fexp
+  show q.Fexp < p.Fexp
+  -- Prove by contradiction: assume ¬(q.Fexp < p.Fexp), i.e., p.Fexp ≤ q.Fexp
+  by_contra h
+  push_neg at h
+  -- h : p.Fexp ≤ q.Fexp
+  -- Step 1: β > 0 and β^e > 0 for all e
+  have hBetaPos : (0 : ℝ) < (beta : ℝ) := lt_of_lt_of_le one_pos hBetaGe1
+  have hPowPos : ∀ e : Int, (0 : ℝ) < (beta : ℝ) ^ e :=
+    fun e => zpow_pos hBetaPos e
+  -- Step 2: From F2R q ≠ 0, deduce q.Fnum ≠ 0
+  have hFnumNe0 : q.Fnum ≠ 0 := by
+    intro hc
+    apply hqNe0
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, hc, Int.cast_zero, zero_mul]
+  -- Step 3: |q.Fnum| ≥ 1
+  have hFnumGe1 : (1 : ℝ) ≤ |(q.Fnum : ℝ)| := by
+    rw [← Int.cast_abs]
+    exact_mod_cast Int.one_le_abs hFnumNe0
+  -- Step 4: |F2R q| = |q.Fnum| * β^(q.Fexp), so |F2R q| ≥ β^(q.Fexp)
+  have hF2Rabs : |_root_.F2R q| = |(q.Fnum : ℝ)| * (beta : ℝ) ^ q.Fexp := by
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+    rw [abs_mul, abs_of_pos (hPowPos q.Fexp)]
+  have hF2RqGe : (beta : ℝ) ^ q.Fexp ≤ |_root_.F2R q| := by
+    rw [hF2Rabs]
+    calc (beta : ℝ) ^ q.Fexp
+        = 1 * (beta : ℝ) ^ q.Fexp := by ring
+      _ ≤ |(q.Fnum : ℝ)| * (beta : ℝ) ^ q.Fexp :=
+          mul_le_mul_of_nonneg_right hFnumGe1 (le_of_lt (hPowPos q.Fexp))
+  -- Step 5: β^(p.Fexp) ≤ β^(q.Fexp) (power mono, since p.Fexp ≤ q.Fexp and β ≥ 1)
+  have hPowMono : (beta : ℝ) ^ p.Fexp ≤ (beta : ℝ) ^ q.Fexp :=
+    zpow_right_mono₀ hBetaGe1 h
+  -- Step 6: |F2R q| = |x - F2R p|
+  have hAbsEq : |_root_.F2R q| = |x - _root_.F2R p| := by rw [hF2Rq]
+  -- Step 7: Chain: 2 * β^(q.Fexp) ≤ 2 * |F2R q| ≤ β^(p.Fexp) ≤ β^(q.Fexp)
+  have hContra : 2 * (beta : ℝ) ^ q.Fexp ≤ (beta : ℝ) ^ q.Fexp := calc
+    2 * (beta : ℝ) ^ q.Fexp
+      ≤ 2 * |_root_.F2R q| := by linarith [hF2RqGe]
+    _ = 2 * |x - _root_.F2R p| := by rw [hAbsEq]
+    _ ≤ (beta : ℝ) ^ p.Fexp := hClosestExp
+    _ ≤ (beta : ℝ) ^ q.Fexp := hPowMono
+  -- Step 8: This means β^(q.Fexp) ≤ 0, contradicting positivity
+  linarith [hPowPos q.Fexp]
 
 -- Idempotence property for Closest (Coq: `ClosestIdem`)
 noncomputable def ClosestIdem_check {beta : Int}
