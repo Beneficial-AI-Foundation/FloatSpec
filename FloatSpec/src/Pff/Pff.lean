@@ -5986,7 +5986,8 @@ theorem EvenClosestMonotone {beta : Int}
     ⦃⌜True⌝⦄
     (pure (EvenClosestMonotone_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜MonotoneP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, EvenClosestMonotone_check, MonotoneP]
 
 noncomputable def EvenClosestMonotone2_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
