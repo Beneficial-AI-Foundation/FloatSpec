@@ -5455,7 +5455,10 @@ theorem ClosestOpp {beta : Int}
     ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
     (pure (ClosestOpp_check (beta:=beta) bo radix p r) : Id Unit)
     ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (-r) (Fopp p)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, ClosestOpp_check, PredTrans.pure, PredTrans.apply,
+             Id.run, ULift.down]
+  simp [Closest]
 
 -- Absolute-value symmetry on the real side (Coq: `ClosestFabs`)
 noncomputable def ClosestFabs_check {beta : Int}
