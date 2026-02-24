@@ -5436,7 +5436,10 @@ theorem ClosestRoundedModeP {beta : Int}
     ⦃⌜True⌝⦄
     (pure (ClosestRoundedModeP_check (beta:=beta) bo radix) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (Closest (beta:=beta) bo radix)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check, RoundedModeP,
+        TotalP, CompatibleP, MinOrMaxP, MonotoneP, Closest]
+  exact ⟨fun _ => ⟨⟨0, 0⟩, trivial⟩, fun _ _ _ _ _ _ _ => trivial, trivial, trivial⟩
 
 -- Symmetry under negation on the real side (Coq: `ClosestOpp`)
 noncomputable def ClosestOpp_check {beta : Int}
