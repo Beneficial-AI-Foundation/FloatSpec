@@ -5305,7 +5305,9 @@ theorem MinEx {beta : Int}
     (pure (MinEx_check (beta:=beta) b radix r) : Id Unit)
     ⦃⇓_ => ⌜∃ min : FloatSpec.Core.Defs.FlocqFloat beta,
               isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, MinEx_check, ULift.down_up, isMin]
+  exact ⟨FloatSpec.Core.Defs.FlocqFloat.mk 0 0⟩
 
 /-!
 Coq: `MaxEx`
