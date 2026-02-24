@@ -6054,7 +6054,22 @@ theorem EvenClosestRoundedModeP {beta : Int}
     ⦃⌜True⌝⦄
     (pure (EvenClosestRoundedModeP_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, EvenClosestRoundedModeP_check, PredTrans.pure,
+             PredTrans.apply, Id.run, ULift.down]
+  show RoundedModeP (EvenClosest (beta:=beta) b radix precision)
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · -- TotalP: ∀ r, ∃ p, EvenClosest ... r p
+    intro r
+    exact ⟨⟨0, 0⟩, trivial, Or.inl Even.zero⟩
+  · -- CompatibleP: substitution under equality
+    intro r1 r2 p q hec hr hpq
+    subst hr; subst hpq
+    exact hec
+  · -- MinOrMaxP: True
+    trivial
+  · -- MonotoneP: True
+    trivial
 
 -- Uniqueness for `EvenClosest` (Coq: `EvenClosestUniqueP`)
 noncomputable def EvenClosestUniqueP_check {beta : Int}
