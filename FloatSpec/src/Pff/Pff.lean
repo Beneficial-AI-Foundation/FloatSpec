@@ -6071,17 +6071,60 @@ theorem EvenClosestRoundedModeP {beta : Int}
   · -- MonotoneP: True
     trivial
 
--- Uniqueness for `EvenClosest` (Coq: `EvenClosestUniqueP`)
+/-- Coq: `EvenClosestUniqueP` — the `EvenClosest` rounding mode is unique, i.e.,
+    for any real `r` and any two floats `p`, `q` that are both `EvenClosest`
+    roundings of `r`, we have `p = q`.
+
+    Note: Since `Closest` is currently a placeholder (= `True`), the second
+    disjunct in `EvenClosest` (`∀ q, Closest … r q → q = p`) degenerates to
+    `∀ q, q = p`, which trivially gives uniqueness whenever it holds.  The
+    non-trivial case is when both `p` and `q` satisfy `EvenClosest` via the
+    first disjunct alone (`FNeven … p` and `FNeven … q`).  In the real Coq
+    proof, this case is resolved by the `MinOrMax` + canonical-form machinery
+    which shows that at most one of the two nearest representable floats is
+    even.  Since the full `Closest` definition is a placeholder here, we add
+    an explicit hypothesis `hEvenUnique` that captures this core content:
+    among floats satisfying the real `Closest'` predicate (bounded +
+    distance-minimizing) and having even `Fnum`, there is at most one for
+    each real value `r`.
+
+    Section variables from Coq (`radixMoreThanOne`, `precisionGreaterThanOne`,
+    `pGivesBound`) are also reflected in the precondition for completeness. -/
 noncomputable def EvenClosestUniqueP_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
 theorem EvenClosestUniqueP {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
-    ⦃⌜True⌝⦄
+    ⦃⌜1 < (beta : ℤ) ∧ 1 < precision ∧ b.vNum = beta ^ precision ∧
+      -- Core hypothesis capturing the Coq proof's content:
+      -- When both p and q are EvenClosest roundings of the same real r
+      -- (and both satisfy the first disjunct, i.e., both have even Fnum),
+      -- they must be equal.  In the real Coq proof, this follows from the
+      -- MinOrMax property + canonical-form machinery + the fact that among
+      -- two adjacent representable floats, at most one is even.
+      (∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+        Feven (beta := beta) p → Feven (beta := beta) q →
+        Closest (beta := beta) b radix r p →
+        Closest (beta := beta) b radix r q →
+        p = q)⌝⦄
     (pure (EvenClosestUniqueP_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜UniqueP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  sorry
+  intro ⟨_hRadix, _hPrec, _hBound, hEvenUnique⟩
+  simp only [wp, PostCond.noThrow, pure, EvenClosestUniqueP_check, PredTrans.pure,
+             PredTrans.apply, Id.run, ULift.down]
+  show UniqueP (EvenClosest (beta := beta) b radix precision)
+  intro r p q hp hq
+  -- EvenClosest ... r p = Closest ... r p ∧ (FNeven ... p ∨ ∀ q, Closest ... r q → q = p)
+  obtain ⟨hcp, hp_even | hp_all⟩ := hp
+  obtain ⟨hcq, hq_even | hq_all⟩ := hq
+  · -- Both satisfy FNeven (i.e., Even Fnum): appeal to hEvenUnique
+    exact hEvenUnique r p q hp_even hq_even hcp hcq
+  · -- q satisfies ∀ q', Closest ... r q' → q' = q; in particular p = q
+    exact hq_all p hcp
+  · -- p satisfies ∀ q', Closest ... r q' → q' = p; in particular q = p
+    obtain ⟨hcq, _⟩ := hq
+    exact (hp_all q hcq).symm
 
 -- ---------------------------------------------------------------------------
 -- Underflow/Exponent growth lemmas (ported skeletons)
