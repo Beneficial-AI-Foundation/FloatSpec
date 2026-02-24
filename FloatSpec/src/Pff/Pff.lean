@@ -5420,7 +5420,8 @@ theorem ClosestMonotone {beta : Int}
     ⦃⌜True⌝⦄
     (pure (ClosestMonotone_check (beta:=beta) bo radix) : Id Unit)
     ⦃⇓_ => ⌜MonotoneP (Closest (beta:=beta) bo radix)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, ClosestMonotone_check, MonotoneP]
 
 -- Rounded-mode packaging for `Closest` (Coq: `ClosestRoundedModeP`)
 noncomputable def ClosestRoundedModeP_check {beta : Int}
