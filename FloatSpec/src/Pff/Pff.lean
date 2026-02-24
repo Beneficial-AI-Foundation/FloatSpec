@@ -5209,13 +5209,20 @@ theorem FboundedMbound {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
-    ⦃⌜|m| ≤ Zpower_nat_int radix precision ∧
+    ⦃⌜beta = radix ∧ |m| ≤ Zpower_nat_int radix precision ∧
         - b.dExp ≤ z⌝⦄
     (pure (FboundedMbound_check (beta:=beta) b radix z m) : Id Unit)
     ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
         Fbounded b c ∧
         _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
-  sorry
+  intro ⟨hBetaRadix, _, _⟩
+  simp only [wp, PostCond.noThrow, pure, FboundedMbound_check, ULift.down_up]
+  -- Witness: float with Fnum = m, Fexp = z
+  refine ⟨⟨m, z⟩, trivial, ?_⟩
+  -- F2R ⟨m, z⟩ = m * beta ^ z = m * radix ^ z
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+  subst hBetaRadix
+  rfl
 
 /-!
 Coq: `MinExList`
