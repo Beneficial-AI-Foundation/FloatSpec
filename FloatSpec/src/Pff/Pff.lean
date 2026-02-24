@@ -5716,7 +5716,10 @@ theorem ClosestSymmetric {beta : Int}
     ⦃⌜True⌝⦄
     (pure (ClosestSymmetric_check (beta:=beta) bo radix) : Id Unit)
     ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, ClosestSymmetric_check, PredTrans.pure, PredTrans.apply,
+             Id.run, ULift.down]
+  simp [SymmetricP, Closest]
 
 -- Coq: `ClosestZero1` — if `Closest r f`, `F2R f = 0`, `r = F2R g`, and
 -- `-dExp bo ≤ Fexp g`, then `r = 0`.
