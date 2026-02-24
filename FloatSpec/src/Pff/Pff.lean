@@ -5230,10 +5230,47 @@ Coq: `MinExList`
 For any real `r` and finite list `L` of floats, either every element of `L`
 has value strictly greater than `r`, or there exists an element `min ∈ L`
 such that `F2R min ≤ r` and it is minimal among those at most `r`.
-
-We state this property over the project float representation and leave the
-proof as `sorry`, following the hoare-triple pattern used across this file.
 -/
+
+/-- Helper: the pure mathematical content of `MinExList`, proved by induction on the list. -/
+private lemma minExList_aux {beta : Int}
+    (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) :
+    (∀ f, f ∈ L → r < _root_.F2R f) ∨
+    (∃ min, min ∈ L ∧ _root_.F2R min ≤ r ∧
+      ∀ f, f ∈ L → _root_.F2R f ≤ r → _root_.F2R f ≤ _root_.F2R min) := by
+  induction L with
+  | nil => left; intro f hf; exact absurd hf (List.not_mem_nil)
+  | cons hd tl ih =>
+    by_cases h : _root_.F2R hd ≤ r
+    · right
+      rcases ih with hall | ⟨min, hmin_mem, hmin_le, hmin_max⟩
+      · exact ⟨hd, List.mem_cons_self, h, fun f hf hfr => by
+          rcases List.mem_cons.mp hf with heq | hmem
+          · exact heq ▸ le_refl _
+          · exact absurd hfr (not_le.mpr (hall f hmem))⟩
+      · by_cases hcmp : _root_.F2R hd ≤ _root_.F2R min
+        · exact ⟨min, List.mem_cons_of_mem _ hmin_mem, hmin_le, fun f hf hfr => by
+            rcases List.mem_cons.mp hf with heq | hmem
+            · exact heq ▸ hcmp
+            · exact hmin_max f hmem hfr⟩
+        · push_neg at hcmp
+          exact ⟨hd, List.mem_cons_self, h, fun f hf hfr => by
+            rcases List.mem_cons.mp hf with heq | hmem
+            · exact heq ▸ le_refl _
+            · exact le_trans (hmin_max f hmem hfr) (le_of_lt hcmp)⟩
+    · push_neg at h
+      rcases ih with hall | ⟨min, hmin_mem, hmin_le, hmin_max⟩
+      · left
+        intro f hf
+        rcases List.mem_cons.mp hf with heq | hmem
+        · exact heq ▸ h
+        · exact hall f hmem
+      · right
+        exact ⟨min, List.mem_cons_of_mem _ hmin_mem, hmin_le, fun f hf hfr => by
+          rcases List.mem_cons.mp hf with heq | hmem
+          · exact absurd hfr (not_le.mpr (heq ▸ h))
+          · exact hmin_max f hmem hfr⟩
+
 noncomputable def MinExList_check {beta : Int}
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) : Unit :=
   ()
@@ -5245,7 +5282,9 @@ theorem MinExList {beta : Int}
     ⦃⇓_ => ⌜(∀ f, f ∈ L → r < _root_.F2R f) ∨
             (∃ min, min ∈ L ∧ _root_.F2R min ≤ r ∧
               ∀ f, f ∈ L → _root_.F2R f ≤ r → _root_.F2R f ≤ _root_.F2R min)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, MinExList_check, ULift.down_up]
+  exact minExList_aux r L
 
 /-!
 Coq: `MinEx`
