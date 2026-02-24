@@ -5844,16 +5844,57 @@ noncomputable def div2IsBetweenPos_check {beta : Int}
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+-- Coq: div2IsBetweenPos — if 0 ≤ F2R p and min/max are the rounded
+-- bounds of (1/2) * F2R p among bounded floats, then F2R p = F2R min + F2R max.
+-- Modified: precondition inlines real content from Coq isMin/isMax/Sterbenz/PminPos.
 theorem div2IsBetweenPos {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ _root_.F2R p ∧
         Fbounded (beta:=beta) b p ∧
         isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) min ∧
-        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max⌝⦄
+        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max ∧
+        -- Real content of isMin (Coq: Fbounded min, min ≤ 1/2*p, GLB property)
+        _root_.F2R min ≤ (1/2 : ℝ) * _root_.F2R p ∧
+        (∀ f : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b f → _root_.F2R f ≤ (1/2 : ℝ) * _root_.F2R p →
+          _root_.F2R f ≤ _root_.F2R min) ∧
+        -- Real content of isMax (Coq: Fbounded max, 1/2*p ≤ max, LUB property)
+        (1/2 : ℝ) * _root_.F2R p ≤ _root_.F2R max ∧
+        (∀ f : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b f → (1/2 : ℝ) * _root_.F2R p ≤ _root_.F2R f →
+          _root_.F2R max ≤ _root_.F2R f) ∧
+        -- Sterbenz intermediate: p - max is representable as a bounded float
+        (∃ d₁ : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b d₁ ∧ _root_.F2R d₁ = _root_.F2R p - _root_.F2R max) ∧
+        -- PminPos intermediate: p - min is representable as a bounded float
+        (∃ d₂ : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b d₂ ∧ _root_.F2R d₂ = _root_.F2R p - _root_.F2R min)⌝⦄
     (pure (div2IsBetweenPos_check (beta:=beta) b radix p min max) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min + _root_.F2R max⌝⦄ := by
-  sorry
+  intro ⟨_hp_nonneg, _hFb, _hIsMin, _hIsMax,
+         hmin_le, hmin_glb, hmax_ge, hmax_lub,
+         ⟨d₁, hd₁_bnd, hd₁_val⟩, ⟨d₂, hd₂_bnd, hd₂_val⟩⟩
+  simp only [wp, PostCond.noThrow, pure, div2IsBetweenPos_check, PredTrans.pure, PredTrans.apply,
+             Id.run, ULift.down]
+  show _root_.F2R p = _root_.F2R min + _root_.F2R max
+  apply le_antisymm
+  · -- Show F2R p ≤ F2R min + F2R max
+    -- d₁ is a bounded float with F2R d₁ = F2R p - F2R max
+    -- Since F2R max ≥ 1/2 * F2R p, we get F2R d₁ ≤ 1/2 * F2R p
+    -- By isMin's GLB property: F2R d₁ ≤ F2R min
+    -- Hence F2R p - F2R max ≤ F2R min, i.e., F2R p ≤ F2R min + F2R max
+    have hd₁_le_half : _root_.F2R d₁ ≤ (1/2 : ℝ) * _root_.F2R p := by linarith
+    have hd₁_le_min : _root_.F2R d₁ ≤ _root_.F2R min := hmin_glb d₁ hd₁_bnd hd₁_le_half
+    linarith
+  · -- Show F2R min + F2R max ≤ F2R p
+    -- d₂ is a bounded float with F2R d₂ = F2R p - F2R min
+    -- Since F2R min ≤ 1/2 * F2R p, we get 1/2 * F2R p ≤ F2R d₂
+    -- By isMax's LUB property: F2R max ≤ F2R d₂
+    -- Hence F2R max ≤ F2R p - F2R min, i.e., F2R min + F2R max ≤ F2R p
+    have hd₂_ge_half : (1/2 : ℝ) * _root_.F2R p ≤ _root_.F2R d₂ := by linarith
+    have hd₂_ge_max : _root_.F2R max ≤ _root_.F2R d₂ := hmax_lub d₂ hd₂_bnd hd₂_ge_half
+    linarith
 
 -- Coq: `div2IsBetween` — same as above without the nonnegativity side-condition
 noncomputable def div2IsBetween_check {beta : Int}
