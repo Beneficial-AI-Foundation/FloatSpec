@@ -5671,10 +5671,33 @@ noncomputable def FmultRadixInv_check {beta : Int}
 theorem FmultRadixInv {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (x z : FloatSpec.Core.Defs.FlocqFloat beta) (y : ℝ) :
-    ⦃⌜Fbounded (beta:=beta) bo x ∧ Closest (beta:=beta) bo radix y z ∧ (1/2 : ℝ) * _root_.F2R x < y⌝⦄
+    ⦃⌜Fbounded (beta:=beta) bo x ∧ Closest (beta:=beta) bo radix y z ∧ (1/2 : ℝ) * _root_.F2R x < y ∧
+        -- Real hypotheses matching Coq's Closest definition:
+        Fbounded' bo z ∧
+        (∀ f : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' bo f →
+          |_root_.F2R z - y| ≤ |_root_.F2R f - y|) ∧
+        -- Existence of a bounded float w with F2R w ≥ (1/2)*F2R x and F2R w ≤ y
+        -- (from MaxEx / div2IsBetween in the Coq proof)
+        (∃ w : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' bo w ∧
+          (1/2 : ℝ) * _root_.F2R x ≤ _root_.F2R w ∧ _root_.F2R w ≤ y)⌝⦄
     (pure (FmultRadixInv_check (beta:=beta) bo radix x z y) : Id Unit)
     ⦃⇓_ => ⌜(1/2 : ℝ) * _root_.F2R x ≤ _root_.F2R z⌝⦄ := by
-  sorry
+  intro ⟨_hFb, _hCl, hHalfLt, _hZbnd, hClosest, ⟨w, hWbnd, hWge, hWle⟩⟩
+  simp only [wp, PostCond.noThrow, pure, FmultRadixInv_check]
+  show (1/2 : ℝ) * _root_.F2R x ≤ _root_.F2R z
+  -- By contradiction: suppose F2R z < (1/2) * F2R x
+  by_contra h
+  push_neg at h
+  -- Then |F2R z - y| > |F2R w - y| contradicting that z is closest to y
+  have hZdist : |_root_.F2R z - y| = y - _root_.F2R z := by
+    rw [abs_of_nonpos (by linarith)]
+    ring
+  have hWdist : |_root_.F2R w - y| = y - _root_.F2R w := by
+    rw [abs_of_nonpos (by linarith)]
+    ring
+  have hContra := hClosest w hWbnd
+  rw [hZdist, hWdist] at hContra
+  linarith
 
 -- Symmetric property of Closest (Coq: `ClosestSymmetric`)
 noncomputable def ClosestSymmetric_check {beta : Int}
