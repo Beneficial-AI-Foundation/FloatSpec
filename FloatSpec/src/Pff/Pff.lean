@@ -5324,7 +5324,9 @@ theorem MaxEx {beta : Int}
     (pure (MaxEx_check (beta:=beta) b radix r) : Id Unit)
     ⦃⇓_ => ⌜∃ max : FloatSpec.Core.Defs.FlocqFloat beta,
               isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, MaxEx_check, ULift.down_up, isMax]
+  exact ⟨FloatSpec.Core.Defs.FlocqFloat.mk 0 0⟩
 
 -- Equality under strict-leaning midpoint toward min (Coq: `ClosestMinEq`)
 noncomputable def ClosestMinEq_check {beta : Int}
