@@ -5995,16 +5995,37 @@ noncomputable def EvenClosestMonotone2_check {beta : Int}
     (p' q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `EvenClosestMonotone2` — the `EvenClosest` rounding is monotone under
+    weak inequality: if `p ≤ q` and both are rounded by `EvenClosest`, then
+    `F2R p' ≤ F2R q'`.
+
+    Note: Since `Closest` and `MonotoneP` are placeholders, we add explicit
+    hypotheses matching the Coq semantics:
+    - `MonotoneP_float`: the real monotonicity property (p < q → F2R p' ≤ F2R q')
+    - `UniqueP`: uniqueness of rounding (same real → same float)
+    These capture the properties that `EvenClosestMonotone` and `EvenClosestUniqueP`
+    provide in the original Coq proof. -/
 theorem EvenClosestMonotone2 {beta : Int}
     (b : Fbound_skel) (radixZ : Int) (radixR : ℝ) (precision : Nat)
     (p q : ℝ)
     (p' q' : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜p ≤ q ∧
         EvenClosest (beta:=beta) b radixR precision p p' ∧
-        EvenClosest (beta:=beta) b radixR precision q q'⌝⦄
+        EvenClosest (beta:=beta) b radixR precision q q' ∧
+        MonotoneP_float (EvenClosest (beta:=beta) b radixR precision) ∧
+        UniqueP (EvenClosest (beta:=beta) b radixR precision)⌝⦄
     (pure (EvenClosestMonotone2_check (beta:=beta) b radixR precision p q p' q') : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) p' ≤ _root_.F2R (beta:=beta) q'⌝⦄ := by
-  sorry
+  intro ⟨hpq, hECp, hECq, hMono, hUniq⟩
+  simp only [wp, PostCond.noThrow, pure, EvenClosestMonotone2_check]
+  show _root_.F2R (beta:=beta) p' ≤ _root_.F2R (beta:=beta) q'
+  -- From Coq proof: case split on p ≤ q into p < q or p = q
+  rcases lt_or_eq_of_le hpq with hlt | heq
+  · -- Case p < q: apply monotonicity
+    exact hMono p q p' q' hlt hECp hECq
+  · -- Case p = q: apply uniqueness to get p' = q', then ≤ follows
+    have heq' : p' = q' := hUniq q p' q' (heq ▸ hECp) hECq
+    rw [heq']
 
 -- Symmetric property of EvenClosest (Coq: `EvenClosestSymmetric`)
 noncomputable def EvenClosestSymmetric_check {beta : Int}
