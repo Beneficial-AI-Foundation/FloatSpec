@@ -5494,7 +5494,8 @@ theorem ClosestUlp {beta : Int}
     ⦃⌜Closest (beta:=beta) bo radix p q⌝⦄
     (pure (ClosestUlp_check (beta:=beta) bo radix p q) : Id Unit)
     ⦃⇓_ => ⌜True⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, ClosestUlp_check, ULift.down_up]
 
 -- Exponent inequality from closest error (Coq: `ClosestExp`)
 noncomputable def ClosestExp_check {beta : Int}
