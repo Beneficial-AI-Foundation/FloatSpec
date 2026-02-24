@@ -5973,7 +5973,8 @@ theorem EvenClosestMinOrMax {beta : Int}
     ⦃⌜True⌝⦄
     (pure (EvenClosestMinOrMax_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜MinOrMaxP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, EvenClosestMinOrMax_check, MinOrMaxP]
 
 -- Monotonicity for `EvenClosest` (Coq: `EvenClosestMonotone`)
 noncomputable def EvenClosestMonotone_check {beta : Int}
