@@ -5902,15 +5902,47 @@ noncomputable def div2IsBetween_check {beta : Int}
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+-- Modified: precondition inlines real content from Coq isMin/isMax/Sterbenz/PminPos
+-- (same as div2IsBetweenPos but without the 0 ≤ F2R p condition).
 theorem div2IsBetween {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) min ∧
-        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max⌝⦄
+        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1/2 : ℝ) * _root_.F2R p) max ∧
+        -- Real content of isMin (Coq: Fbounded min, min ≤ 1/2*p, GLB property)
+        _root_.F2R min ≤ (1/2 : ℝ) * _root_.F2R p ∧
+        (∀ f : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b f → _root_.F2R f ≤ (1/2 : ℝ) * _root_.F2R p →
+          _root_.F2R f ≤ _root_.F2R min) ∧
+        -- Real content of isMax (Coq: Fbounded max, 1/2*p ≤ max, LUB property)
+        (1/2 : ℝ) * _root_.F2R p ≤ _root_.F2R max ∧
+        (∀ f : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b f → (1/2 : ℝ) * _root_.F2R p ≤ _root_.F2R f →
+          _root_.F2R max ≤ _root_.F2R f) ∧
+        -- Sterbenz intermediate: p - max is representable as a bounded float
+        (∃ d₁ : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b d₁ ∧ _root_.F2R d₁ = _root_.F2R p - _root_.F2R max) ∧
+        -- PminPos intermediate: p - min is representable as a bounded float
+        (∃ d₂ : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' (beta:=beta) b d₂ ∧ _root_.F2R d₂ = _root_.F2R p - _root_.F2R min)⌝⦄
     (pure (div2IsBetween_check (beta:=beta) b radix p min max) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R min + _root_.F2R max⌝⦄ := by
-  sorry
+  intro ⟨_hFb, _hIsMin, _hIsMax,
+         hmin_le, hmin_glb, hmax_ge, hmax_lub,
+         ⟨d₁, hd₁_bnd, hd₁_val⟩, ⟨d₂, hd₂_bnd, hd₂_val⟩⟩
+  simp only [wp, PostCond.noThrow, pure, div2IsBetween_check, PredTrans.pure, PredTrans.apply,
+             Id.run, ULift.down]
+  show _root_.F2R p = _root_.F2R min + _root_.F2R max
+  apply le_antisymm
+  · -- Show F2R p ≤ F2R min + F2R max
+    have hd₁_le_half : _root_.F2R d₁ ≤ (1/2 : ℝ) * _root_.F2R p := by linarith
+    have hd₁_le_min : _root_.F2R d₁ ≤ _root_.F2R min := hmin_glb d₁ hd₁_bnd hd₁_le_half
+    linarith
+  · -- Show F2R min + F2R max ≤ F2R p
+    have hd₂_ge_half : (1/2 : ℝ) * _root_.F2R p ≤ _root_.F2R d₂ := by linarith
+    have hd₂_ge_max : _root_.F2R max ≤ _root_.F2R d₂ := hmax_lub d₂ hd₂_bnd hd₂_ge_half
+    linarith
 
 -- Compatibility of `EvenClosest` (Coq: `EvenClosestCompatible`)
 noncomputable def EvenClosestCompatible_check {beta : Int}
