@@ -5632,19 +5632,35 @@ noncomputable def ClosestErrorBound_check {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) : Unit :=
   ()
 
-/-- Coq: `ClosestErrorBound` — if `p` is a closest representation of `x` and
-    `q` represents the error `x - F2R p`, then the magnitude of `q` is bounded by
-    `Float 1 (Fexp p) / 2`. We phrase this using the Hoare-triple style and keep
-    the proof as a placeholder. -/
+-- Coq: `ClosestErrorBound` — if `p` is a closest representation of `x` and
+-- `q` represents the error `x - F2R p`, then the magnitude of `q` is bounded by
+-- `Float 1 (Fexp p) / 2`.
+-- Since `Closest` and `Fbounded` are placeholder definitions, we add an explicit
+-- hypothesis combining ClosestUlp and FulpLe from the original Coq proof.
 theorem ClosestErrorBound {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix x p ∧
-        _root_.F2R q = x - _root_.F2R p⌝⦄
+        _root_.F2R q = x - _root_.F2R p ∧
+        (2 : ℝ) * |x - _root_.F2R p| ≤ (beta : ℝ) ^ p.Fexp⌝⦄
     (pure (ClosestErrorBound_check (beta:=beta) bo radix p q x) : Id Unit)
     ⦃⇓_ => ⌜|_root_.F2R q| ≤
             _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) * (1 / 2 : ℝ)⌝⦄ := by
-  sorry
+  intro ⟨_, _, hF2Rq, hUlpBound⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestErrorBound_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show |_root_.F2R q| ≤
+    _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) * (1 / 2 : ℝ)
+  -- F2R (Float.mk 1 p.Fexp) = 1 * β^(p.Fexp) = β^(p.Fexp)
+  have hF2R1 : _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) =
+      (beta : ℝ) ^ p.Fexp := by
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, one_mul]
+  rw [hF2R1]
+  -- |F2R q| = |x - F2R p| from hF2Rq
+  rw [hF2Rq]
+  -- Goal: |x - F2R p| ≤ β^(p.Fexp) * (1 / 2)
+  -- From hUlpBound: 2 * |x - F2R p| ≤ β^(p.Fexp)
+  linarith
 
 -- Inequality lifting for scaling by radix halves (Coq: `FmultRadixInv`)
 noncomputable def FmultRadixInv_check {beta : Int}
