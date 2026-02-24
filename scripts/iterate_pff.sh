@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Use GNU timeout if available; on macOS prefer gtimeout (coreutils)
-TIMEOUT_BIN="${TIMEOUT_BIN:-timeout}"
-command -v "$TIMEOUT_BIN" >/dev/null 2>&1 || TIMEOUT_BIN="gtimeout"
-if ! command -v "$TIMEOUT_BIN" >/dev/null 2>&1; then
-  echo "warning: timeout/gtimeout not found; running without a time limit" >&2
-  TIMEOUT_BIN=""
-fi
-
 # Files to process and per-file run time (in hours)
 file_list=(
 #   Float_prop.lean
@@ -148,13 +140,14 @@ EOF
   # Export environment variable for sandbox mode
   export IS_SANDBOX=1
 
-  # Create .log directory if it doesn't exist
-  mkdir -p .log
+  # Create log directory for Claude output if it doesn't exist
+  mkdir -p .claude_logs
 
   end=$(( $(date +%s) + t*60*60 ))
   while [[ $(date +%s) -lt $end ]]; do
     timestamp=$(date +%Y%m%d_%H%M%S)
-    log_dir=".log"
+    log_dir=".claude_logs"
+    log_file="$log_dir/claude_${f%.lean}_${timestamp}.log"
     
     # Replace placeholders with actual values
     current_msg="${msg//__PLACEHOLDER__/$f}"
@@ -163,11 +156,8 @@ EOF
     # Update command with the message containing replaced placeholders
     cmd=(claude -p "$current_msg" --dangerously-skip-permissions)
     
-    if [[ -n "$TIMEOUT_BIN" ]]; then
-      "$TIMEOUT_BIN" 7200 "${cmd[@]}" 2>&1 || true
-    else
-      "${cmd[@]}" 2>&1 || true
-    fi
+    # Stream output to terminal while writing to timestamped log file.
+    "${cmd[@]}" 2>&1 | tee -a "$log_file" || true
     git add .
     git commit -m "Update $f at $timestamp after an agent round" || true
   done

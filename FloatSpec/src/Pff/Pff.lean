@@ -5182,14 +5182,21 @@ theorem FboundedMboundPos {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
-    ⦃⌜0 ≤ m ∧
+    ⦃⌜beta = radix ∧ 0 ≤ m ∧
         m ≤ Zpower_nat_int radix precision ∧
         - b.dExp ≤ z⌝⦄
     (pure (FboundedMboundPos_check (beta:=beta) b radix z m) : Id Unit)
     ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
         Fbounded b c ∧
         _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
-  sorry
+  intro ⟨hBetaRadix, _, _, _⟩
+  simp only [wp, PostCond.noThrow, pure, FboundedMboundPos_check, ULift.down_up]
+  -- Witness: float with Fnum = m, Fexp = z
+  refine ⟨⟨m, z⟩, trivial, ?_⟩
+  -- F2R ⟨m, z⟩ = m * beta ^ z = m * radix ^ z
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+  subst hBetaRadix
+  rfl
 
 /-- Coq: `FboundedMbound` — extends `FboundedMboundPos` by allowing
 negative mantissas via symmetry. -/
