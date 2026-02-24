@@ -5595,13 +5595,36 @@ noncomputable def ClosestIdem_check {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `ClosestIdem` — if `p` is bounded and `q` is a closest rounding of
+    `F2R p`, then `F2R p = F2R q`.
+
+    Note: Since `Closest` is currently a placeholder (= True), we add explicit
+    hypotheses matching Coq's `Closest` definition:
+    - `Fbounded' bo p`: `p` is bounded
+    - `Fbounded' bo q`: `q` is bounded (part of `Closest`)
+    - `hClosestProp`: `q` minimizes distance to `F2R p` among bounded floats
+    These make the theorem provable and match the original Coq semantics. -/
 theorem ClosestIdem {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix (_root_.F2R p) q⌝⦄
+    ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix (_root_.F2R p) q ∧
+        Fbounded' bo p ∧ Fbounded' bo q ∧
+        (∀ g : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' bo g → |_root_.F2R q - _root_.F2R p| ≤ |_root_.F2R g - _root_.F2R p|)⌝⦄
     (pure (ClosestIdem_check (beta:=beta) bo radix p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
-  sorry
+  intro ⟨_hFb, _hClosest, hBoundedP, _hBoundedQ, hMin⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestIdem_check]
+  -- Instantiate the minimality condition with p itself
+  have h := hMin p hBoundedP
+  -- |F2R q - F2R p| ≤ |F2R p - F2R p| = 0
+  rw [sub_self, abs_zero] at h
+  -- So |F2R q - F2R p| = 0, hence F2R q = F2R p
+  have hAbs0 : |_root_.F2R q - _root_.F2R p| = 0 :=
+    le_antisymm h (abs_nonneg _)
+  rw [abs_eq_zero, sub_eq_zero] at hAbs0
+  show _root_.F2R p = _root_.F2R q
+  exact hAbs0.symm
 
 -- Error bound for closest rounding (Coq: `ClosestErrorBound`)
 noncomputable def ClosestErrorBound_check {beta : Int}
