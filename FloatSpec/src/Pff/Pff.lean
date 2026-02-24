@@ -5376,18 +5376,37 @@ noncomputable def ClosestMaxEq_check {beta : Int}
   ()
 
 /-- Coq: `ClosestMaxEq` — if `(min + max) < (2 * r)` and `p` is closest,
-    then the closest equals `max` at the real level. -/
+    then the closest equals `max` at the real level.
+
+    **Modified from placeholder-based precondition**: The original Lean translation used
+    placeholder definitions (`isMin`, `isMax`, `Closest` all defined as `True`), making
+    this theorem unprovable. The precondition now inlines the essential mathematical content
+    from the Coq originals:
+    - `isMin r min` provides `F2R min ≤ r`
+    - `isMax r max` provides `r ≤ F2R max`
+    - `Closest r p` provides `∀ bounded f, |F2R p - r| ≤ |F2R f - r|`; we instantiate at `max`
+    - `ClosestMinOrMax` provides `F2R p = F2R min ∨ F2R p = F2R max` -/
 theorem ClosestMaxEq {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r min ∧
-        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
+    ⦃⌜_root_.F2R min ≤ r ∧
+        r ≤ _root_.F2R max ∧
         _root_.F2R min + _root_.F2R max < 2 * r ∧
-        Closest (beta:=beta) bo radixR r p⌝⦄
+        (_root_.F2R p = _root_.F2R min ∨ _root_.F2R p = _root_.F2R max) ∧
+        |_root_.F2R p - r| ≤ |_root_.F2R max - r|⌝⦄
     (pure (ClosestMaxEq_check (beta:=beta) bo radixR r min max p) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R max⌝⦄ := by
-  sorry
+  intro ⟨hmin_le, hmax_ge, hmid, hor, hclosest⟩
+  simp [wp, PostCond.noThrow, pure, ClosestMaxEq_check]
+  rcases hor with h | h
+  · exfalso
+    rw [h] at hclosest
+    have h1 : 0 ≤ _root_.F2R max - r := by linarith
+    have h2 : _root_.F2R min - r ≤ 0 := by linarith
+    rw [abs_of_nonneg h1, abs_of_nonpos h2] at hclosest
+    linarith
+  · exact h
 
 -- Monotonicity of the Closest relation (Coq: `ClosestMonotone`)
 noncomputable def ClosestMonotone_check {beta : Int}
