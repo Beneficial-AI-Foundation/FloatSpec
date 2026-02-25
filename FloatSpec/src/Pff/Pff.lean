@@ -7432,13 +7432,45 @@ noncomputable def RleMaxR0_check {beta : Int}
     (r : ℝ) (max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `RleMaxR0` — if r ≤ 0 and max is the isMax witness for r, then F2R max ≤ 0.
+
+    Since `isMax` is a placeholder `True` definition, we add explicit hypotheses
+    matching Coq's actual `isMax` definition:
+    - `Fbounded' b max`: max is bounded
+    - `r ≤ F2R max`: r is below max
+    - Minimality: for any bounded f with r ≤ F2R f, we have F2R max ≤ F2R f
+    - `0 < b.vNum`: needed to construct the zero float as a bounded witness -/
 theorem RleMaxR0 {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (max : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜r ≤ 0 ∧ isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max⌝⦄
+    ⦃⌜r ≤ 0 ∧ isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max ∧
+        Fbounded' b max ∧
+        r ≤ _root_.F2R max ∧
+        (∀ f : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' b f → r ≤ _root_.F2R f → _root_.F2R max ≤ _root_.F2R f) ∧
+        0 < b.vNum⌝⦄
     (pure (RleMaxR0_check (beta:=beta) b radix r max) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R max ≤ 0⌝⦄ := by
-  sorry
+  intro ⟨hr0, _, _, _, hMinimal, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, RleMaxR0_check]
+  show _root_.F2R max ≤ 0
+  -- Construct the zero float ⟨0, -b.dExp⟩ which is bounded and has F2R = 0
+  let zeroFloat : FloatSpec.Core.Defs.FlocqFloat beta := ⟨0, -b.dExp⟩
+  have hZeroBounded : Fbounded' b zeroFloat := by
+    constructor
+    · show |zeroFloat.Fnum| < b.vNum
+      simp only [zeroFloat, abs_zero]
+      exact hvNum
+    · show -b.dExp ≤ zeroFloat.Fexp
+      rfl
+  have hZeroF2R : _root_.F2R zeroFloat = 0 := by
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R zeroFloat
+    ring
+  -- Since r ≤ 0 = F2R(zeroFloat), by minimality: F2R max ≤ F2R zeroFloat = 0
+  have hrLeZero : r ≤ _root_.F2R zeroFloat := by rw [hZeroF2R]; exact hr0
+  have hMaxLeZero : _root_.F2R max ≤ _root_.F2R zeroFloat := hMinimal zeroFloat hZeroBounded hrLeZero
+  rw [hZeroF2R] at hMaxLeZero
+  exact hMaxLeZero
 
 -- Coq: `RleRoundedLessR0` — under RoundedModeP P, if P r p and r ≤ 0 then F2R p ≤ 0
 noncomputable def RleRoundedLessR0_check {beta : Int}
