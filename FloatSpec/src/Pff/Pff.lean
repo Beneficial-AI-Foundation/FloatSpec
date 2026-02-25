@@ -6714,7 +6714,8 @@ theorem FnormalFop {beta : Int}
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
     (pure (FnormalFop_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, FnormalFop_check, ULift.down_up, Fnormal] at *
 
 -- Coq: `FnormalFabs` — normality is preserved by float absolute value
 noncomputable def FnormalFabs_check {beta : Int}
