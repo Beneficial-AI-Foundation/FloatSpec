@@ -6663,7 +6663,8 @@ theorem FnormalBounded {beta : Int}
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
     (pure (FnormalBounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, FnormalBounded_check, ULift.down_up, Fbounded] at *
 
 -- Coq: `FnormalNotZero` — normal floats are not the zero float
 noncomputable def FnormalNotZero_check {beta : Int}
