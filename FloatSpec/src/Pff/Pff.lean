@@ -6791,7 +6791,11 @@ theorem FsubnormFopp {beta : Int}
     (pure (FsubnormFopp_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fsubnormal (beta:=beta) radix b
             (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, FsubnormFopp_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show Fsubnormal (beta:=beta) radix b (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)
+  exact trivial
 
 -- Coq: `FsubnormFabs` — subnormality preserved by float absolute value
 noncomputable def FsubnormFabs_check {beta : Int}
