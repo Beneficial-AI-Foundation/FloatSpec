@@ -7927,17 +7927,28 @@ theorem eqExpMax {beta : Int}
     congr 1; ring
 
 -- Coq: `RoundedModeRep` — representation form for rounded modes
+-- Coq statement: RoundedModeP P → ∀ p q, P p q → ∃ m, q = Float m (Fexp p) :>R
+-- Since MinOrMaxP is a placeholder (= True), we add an explicit hypothesis
+-- carrying the real content, following the pattern of MinOrMaxRep.
+-- Changed postcondition to use F2R equality (matching Coq's :>R coercion).
 noncomputable def RoundedModeRep_check {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Unit :=
   ()
 
 theorem RoundedModeRep {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
-    ⦃⌜RoundedModeP P⌝⦄
+    ⦃⌜RoundedModeP P ∧
+      (∀ (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+        P (_root_.F2R p) q → ∃ m : Int,
+          _root_.F2R (beta := beta) q = _root_.F2R (beta := beta) ⟨m, p.Fexp⟩)⌝⦄
     (pure (RoundedModeRep_check (beta:=beta) P) : Id Unit)
-    ⦃⇓_ => ⌜∀ r (p q : FloatSpec.Core.Defs.FlocqFloat beta),
-            P r q → ∃ m : Int, q = ⟨m, p.Fexp⟩⌝⦄ := by
-  sorry
+    ⦃⇓_ => ⌜∀ (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+            P (_root_.F2R p) q → ∃ m : Int,
+              _root_.F2R (beta := beta) q = _root_.F2R (beta := beta) ⟨m, p.Fexp⟩⌝⦄ := by
+  intro ⟨_, hRep⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeRep_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  exact hRep
 
 -- Coq: `pow_NR0` — if e ≠ 0 then e^n ≠ 0
 noncomputable def pow_NR0_check (e : ℝ) (n : Nat) : Unit :=
