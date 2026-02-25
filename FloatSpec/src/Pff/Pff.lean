@@ -610,6 +610,22 @@ def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
 def isMax {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
   fun _ _ => True
 
+-- Proper Coq-matching isMin predicate for floats
+-- Coq: isMin r min := Fbounded b min ∧ (min ≤ r) ∧ (∀ f, Fbounded b f → (f ≤ r) → (f ≤ min))
+def isMin' {beta : Int} (b : Fbound_skel) (radix : Int) :
+    ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop :=
+  fun r min => Fbounded' b min ∧
+    (_root_.F2R min ≤ r) ∧
+    (∀ f : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' b f → _root_.F2R f ≤ r → _root_.F2R f ≤ _root_.F2R min)
+
+-- Proper Coq-matching isMax predicate for floats
+-- Coq: isMax r max := Fbounded b max ∧ (r ≤ max) ∧ (∀ f, Fbounded b f → (r ≤ f) → (max ≤ f))
+def isMax' {beta : Int} (b : Fbound_skel) (radix : Int) :
+    ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop :=
+  fun r max => Fbounded' b max ∧
+    (r ≤ _root_.F2R max) ∧
+    (∀ f : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' b f → r ≤ _root_.F2R f → _root_.F2R max ≤ _root_.F2R f)
+
 -- Coq-style boundedness predicate (placeholder for type compatibility)
 def Fbounded {beta : Int}
     (bo : Fbound_skel)
@@ -7512,15 +7528,32 @@ theorem RleRoundedLessR0 {beta : Int}
     linarith
 
 -- Coq: `MinUniqueP` — uniqueness for isMin
-noncomputable def MinUniqueP_check {α : Type}
+-- Note: Since isMin is a placeholder (= True), we add explicit isMin' hypotheses
+-- matching Coq's real isMin definition, and conclude F2R equality (matching Coq's :>R).
+noncomputable def MinUniqueP_check {beta : Int}
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
-theorem MinUniqueP {α : Type} (b : Fbound_skel) (radix : Int) :
+/-- Coq: `MinUniqueP` — if two floats are both `isMin'` for the same real,
+    their real values are equal. This is the core uniqueness lemma for isMin.
+    Since `isMin` is placeholder `True`, we use `isMin'` (the real Coq definition)
+    in explicit hypotheses, following the ClosestZero pattern. -/
+theorem MinUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    (pure (MinUniqueP_check (α:=α) b radix) : Id Unit)
-    ⦃⇓_ => ⌜UniqueP (isMin (α:=α) b radix)⌝⦄ := by
-  sorry
+    (pure (MinUniqueP_check (beta:=beta) b radix) : Id Unit)
+    ⦃⇓_ => ⌜∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+        isMin' b radix r p → isMin' b radix r q →
+        _root_.F2R p = _root_.F2R q⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, MinUniqueP_check, PredTrans.pure_apply]
+  show ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+      isMin' b radix r p → isMin' b radix r q → _root_.F2R p = _root_.F2R q
+  intro r p q ⟨hBp, hLep, hGLBp⟩ ⟨hBq, hLeq, hGLBq⟩
+  apply le_antisymm
+  · -- F2R p ≤ F2R q: by q's GLB property, since p is bounded and F2R p ≤ r
+    exact hGLBq p hBp hLep
+  · -- F2R q ≤ F2R p: by p's GLB property, since q is bounded and F2R q ≤ r
+    exact hGLBp q hBq hLeq
 
 -- Coq: `MaxUniqueP` — uniqueness for isMax
 noncomputable def MaxUniqueP_check {α : Type}
