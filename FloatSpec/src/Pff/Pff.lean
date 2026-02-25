@@ -7861,7 +7861,9 @@ theorem eqExpLess {beta : Int}
               Fbounded (beta:=beta) b r ∧
               _root_.F2R r = _root_.F2R q ∧
               q.Fexp ≤ r.Fexp⌝⦄ := by
-  sorry
+  intro ⟨hBounded, hEq⟩
+  show ∃ r : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded b r ∧ _root_.F2R r = _root_.F2R q ∧ q.Fexp ≤ r.Fexp
+  exact ⟨q, trivial, rfl, le_refl _⟩
 
 -- Shift operation on floats (placeholder, no-op). We place it early so that
 -- subsequent lemmas can reference it.
