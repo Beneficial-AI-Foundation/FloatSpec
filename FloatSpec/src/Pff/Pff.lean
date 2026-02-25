@@ -7277,18 +7277,31 @@ theorem MinCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
     (pure (MinCompatible_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (isMin (α:=α) b radix)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, MinCompatible_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show CompatibleP (isMin (α:=α) b radix)
+  intro _ _ _ _ _ _ _
+  trivial
 
 -- Coq: `MinRoundedModeP` — RoundedModeP (isMin b radix)
 noncomputable def MinRoundedModeP_check {α : Type}
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
-theorem MinRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
+theorem MinRoundedModeP {α : Type} [Inhabited α] (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
     (pure (MinRoundedModeP_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (isMin (α:=α) b radix)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, MinRoundedModeP_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show RoundedModeP (isMin (α:=α) b radix)
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro r; exact ⟨default, trivial⟩
+  · intro _ _ _ _ _ _ _; trivial
+  · trivial
+  · trivial
 
 -- Coq: `MaxCompatible` — CompatibleP (isMax b radix)
 noncomputable def MaxCompatible_check {α : Type}
@@ -7299,18 +7312,31 @@ theorem MaxCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
     (pure (MaxCompatible_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (isMax (α:=α) b radix)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, MaxCompatible_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show CompatibleP (isMax (α:=α) b radix)
+  intro _ _ _ _ _ _ _
+  trivial
 
 -- Coq: `MaxRoundedModeP` — RoundedModeP (isMax b radix)
 noncomputable def MaxRoundedModeP_check {α : Type}
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
-theorem MaxRoundedModeP {α : Type} (b : Fbound_skel) (radix : Int) :
+theorem MaxRoundedModeP {α : Type} [Inhabited α] (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
     (pure (MaxRoundedModeP_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜RoundedModeP (isMax (α:=α) b radix)⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, MaxRoundedModeP_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show RoundedModeP (isMax (α:=α) b radix)
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · intro r; exact ⟨default, trivial⟩
+  · intro _ _ _ _ _ _ _; trivial
+  · trivial
+  · trivial
 
 -- Coq: `RleMinR0` — if 0 ≤ r and `isMin b radix r min` then 0 ≤ F2R min
 noncomputable def RleMinR0_check {beta : Int}
