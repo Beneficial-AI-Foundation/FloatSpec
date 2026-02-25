@@ -6730,7 +6730,8 @@ theorem FnormalFabs {beta : Int}
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
     (pure (FnormalFabs_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (Fabs (beta:=beta) p)⌝⦄ := by
-  sorry
+  intro _
+  simp [wp, PostCond.noThrow, pure, FnormalFabs_check, ULift.down_up, Fnormal] at *
 
 -- Coq: `FsubnormalFbounded` — subnormal floats are bounded
 noncomputable def FsubnormalFbounded_check {beta : Int}
