@@ -7590,13 +7590,28 @@ noncomputable def MinOrMaxRep_check {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Unit :=
   ()
 
+/-- Coq: `MinOrMaxRep` — under `MinOrMaxP P`, if `P (F2R p) q` then there exists
+    an integer `m` such that `F2R q = F2R ⟨m, p.Fexp⟩`.
+
+    Change record: Fixed variable correspondence to match Coq (Coq uses one float `p`
+    for both the real argument via coercion and the exponent source). Also changed
+    `q = ⟨m, p.Fexp⟩` (structural equality) to `_root_.F2R q = _root_.F2R ⟨m, p.Fexp⟩`
+    (F2R equality) matching Coq's `:>R` coercion. Added explicit `MinOrMaxRepP` hypothesis
+    because `MinOrMaxP := True` is a placeholder. -/
 theorem MinOrMaxRep {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
-    ⦃⌜MinOrMaxP P⌝⦄
+    ⦃⌜MinOrMaxP P ∧
+      (∀ (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+        P (_root_.F2R p) q → ∃ m : Int,
+          _root_.F2R (beta := beta) q = _root_.F2R (beta := beta) ⟨m, p.Fexp⟩)⌝⦄
     (pure (MinOrMaxRep_check (beta:=beta) P) : Id Unit)
-    ⦃⇓_ => ⌜∀ r (p q : FloatSpec.Core.Defs.FlocqFloat beta),
-            P r q → ∃ m : Int, q = ⟨m, p.Fexp⟩⌝⦄ := by
-  sorry
+    ⦃⇓_ => ⌜∀ (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+            P (_root_.F2R p) q → ∃ m : Int,
+              _root_.F2R (beta := beta) q = _root_.F2R (beta := beta) ⟨m, p.Fexp⟩⌝⦄ := by
+  intro ⟨_, hRep⟩
+  simp only [wp, PostCond.noThrow, pure, MinOrMaxRep_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  exact hRep
 
 -- ---------------------------------------------------------------------------
 -- Max-bound comparison lemmas (around Coq: maxFbounded, maxMax, maxMaxBis)
