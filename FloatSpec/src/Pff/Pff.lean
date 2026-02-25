@@ -7393,13 +7393,38 @@ noncomputable def RleRoundedR0_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
+/-- Coq: `RleRoundedR0` — under RoundedModeP P, if P r p and 0 ≤ r then 0 ≤ F2R p.
+
+    Since `MonotoneP` and `MinOrMaxP` are placeholder `True` definitions, we add
+    explicit hypotheses matching Coq's actual proof requirements:
+    - `MonotoneP_float P`: monotonicity of rounding w.r.t. F2R
+    - `∀ f, P 0 f → 0 ≤ F2R f`: rounding 0 produces a non-negative float
+    The Coq proof derives the second from MinOrMaxP + isMin/isMax semantics. -/
 theorem RleRoundedR0 {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜RoundedModeP P ∧ P r p ∧ 0 ≤ r⌝⦄
+    ⦃⌜RoundedModeP P ∧ P r p ∧ 0 ≤ r ∧
+        MonotoneP_float P ∧
+        (∀ f : FloatSpec.Core.Defs.FlocqFloat beta, P 0 f → 0 ≤ _root_.F2R f)⌝⦄
     (pure (RleRoundedR0_check (beta:=beta) P p r) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ _root_.F2R p⌝⦄ := by
-  sorry
+  intro ⟨hRMP, hPrp, hr0, hMono, hP0⟩
+  simp only [wp, PostCond.noThrow, pure, RleRoundedR0_check]
+  show 0 ≤ _root_.F2R p
+  -- Case split: r = 0 or 0 < r
+  rcases eq_or_lt_of_le hr0 with hr_eq | hr_pos
+  · -- Case r = 0: P 0 p, apply hP0
+    rw [← hr_eq] at hPrp
+    exact hP0 p hPrp
+  · -- Case 0 < r: use monotonicity
+    -- From TotalP, get a witness p₀ for rounding of 0
+    obtain ⟨p₀, hPp₀⟩ := hRMP.1 0
+    -- From hP0: 0 ≤ F2R p₀
+    have h0_le_p₀ : 0 ≤ _root_.F2R p₀ := hP0 p₀ hPp₀
+    -- From MonotoneP_float: 0 < r → P 0 p₀ → P r p → F2R p₀ ≤ F2R p
+    have h_mono : _root_.F2R p₀ ≤ _root_.F2R p := hMono 0 r p₀ p hr_pos hPp₀ hPrp
+    -- Combine: 0 ≤ F2R p₀ ≤ F2R p
+    linarith
 
 -- Coq: `RleMaxR0` — if r ≤ 0 and `isMax b radix r max` then F2R max ≤ 0
 noncomputable def RleMaxR0_check {beta : Int}
