@@ -6305,7 +6305,10 @@ theorem RoundedModeP_inv2 {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
     (pure (RoundedModeP_inv2_check P) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP P⌝⦄ := by
-  sorry
+  intro ⟨_, hCompat, _, _⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeP_inv2_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  exact hCompat
 
 -- Fourth projection: RoundedModeP -> MonotoneP
 noncomputable def RoundedModeP_inv4_check {α : Type}
