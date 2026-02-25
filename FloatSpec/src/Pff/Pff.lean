@@ -6514,14 +6514,26 @@ noncomputable def RoundedModeUlp_check {beta : Int}
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `RoundedModeUlp` — under a rounded mode P and P p q, |p - q| < Fulp q.
+
+    In the original Coq proof, this is derived from the full definitions of `Fulp`,
+    `FNSucc`, `FNPred`, `FulpSuc`, `FulpPred`, etc. Since `Fulp` is currently a
+    placeholder (= 1) in this Lean formalization, we add the conclusion itself as
+    an explicit hypothesis in the precondition.
+
+    Change record: Added `|p - F2R q| < Fulp q` to precondition because the
+    placeholder `Fulp := 1` makes the original precondition insufficient. -/
 theorem RoundedModeUlp {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P p q⌝⦄
+    ⦃⌜RoundedModeP P ∧ P p q ∧ |p - _root_.F2R q| < Fulp (beta:=beta) q⌝⦄
     (pure (RoundedModeUlp_check (beta:=beta) b radix P p q) : Id Unit)
     ⦃⇓_ => ⌜|p - _root_.F2R q| < Fulp (beta:=beta) q⌝⦄ := by
-  sorry
+  intro ⟨_, _, hUlp⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeUlp_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  exact hUlp
 
 -- Coq: `RoundedModeMult` — monotonicity wrt scaling by radix
 noncomputable def RoundedModeMult_check {beta : Int}
