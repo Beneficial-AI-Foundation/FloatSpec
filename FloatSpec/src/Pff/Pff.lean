@@ -6414,7 +6414,67 @@ theorem PminPos {beta : Int}
     ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
             Fbounded (beta:=beta) b c ∧
             _root_.F2R c = _root_.F2R p - _root_.F2R min⌝⦄ := by
-  sorry
+  intro ⟨_, _, _⟩
+  simp only [wp, PostCond.noThrow, pure, PminPos_check, PredTrans.pure_apply, Id.run,
+             ULift.up_down]
+  show ∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
+    Fbounded (beta := beta) b c ∧ _root_.F2R c = _root_.F2R p - _root_.F2R min
+  -- Since Fbounded is True, we just need to find c with F2R c = F2R p - F2R min.
+  -- Strategy: use min.Fexp as the common exponent, put all terms over that base.
+  -- Witness: c = ⟨p.Fnum * beta^(p.Fexp - min.Fexp) - min.Fnum, min.Fexp⟩
+  -- when p.Fexp ≥ min.Fexp, and symmetrically otherwise.
+  -- But since Fbounded is True, we can simplify by using p itself.
+  -- Actually, the simplest witness: Fshift-style alignment.
+  -- We use e = min.Fexp (wlog) and note p.Fexp ≥ e or not.
+  -- Simplest: just use Fexp = 0 and note that F2R ⟨n, 0⟩ = n, so we need n = F2R p - F2R min.
+  -- But n : ℤ and F2R p - F2R min : ℝ, so this doesn't work unless it's an integer.
+  -- Best approach: factor out common part.
+  by_cases hb : (beta : ℤ) = 0
+  · -- beta = 0: F2R f = f.Fnum * (0:ℝ)^f.Fexp
+    have hb_real : (beta : ℝ) = 0 := by exact_mod_cast hb
+    by_cases hp0 : p.Fexp = 0 <;> by_cases hm0 : min.Fexp = 0
+    · -- Both exponents 0: F2R f = f.Fnum
+      refine ⟨⟨p.Fnum - min.Fnum, 0⟩, trivial, ?_⟩
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, hp0, hm0, zpow_zero, mul_one, Int.cast_sub]
+    · -- p.Fexp = 0, min.Fexp ≠ 0
+      refine ⟨⟨p.Fnum, 0⟩, trivial, ?_⟩
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, hp0, hm0, zpow_zero, mul_one, hb_real]
+      rw [zero_zpow min.Fexp hm0, mul_zero, sub_zero]
+    · -- p.Fexp ≠ 0, min.Fexp = 0
+      refine ⟨⟨-min.Fnum, 0⟩, trivial, ?_⟩
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, hp0, hm0, zpow_zero, mul_one,
+                  Int.cast_neg, hb_real]
+      rw [zero_zpow p.Fexp hp0, mul_zero, zero_sub]
+    · -- Both exponents nonzero
+      refine ⟨⟨0, 0⟩, trivial, ?_⟩
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, zpow_zero, mul_one, Int.cast_zero, hb_real]
+      rw [zero_zpow p.Fexp hp0, mul_zero,
+          zero_zpow min.Fexp hm0, mul_zero, sub_self]
+  · -- beta ≠ 0: use zpow_add₀
+    have hb_real : (beta : ℝ) ≠ 0 := by exact_mod_cast hb
+    set e := Min.min p.Fexp min.Fexp with he_def
+    have hpe : p.Fexp - e ≥ 0 := by omega
+    have hme : min.Fexp - e ≥ 0 := by omega
+    refine ⟨⟨p.Fnum * (beta : ℤ) ^ (p.Fexp - e).toNat -
+             min.Fnum * (beta : ℤ) ^ (min.Fexp - e).toNat, e⟩, trivial, ?_⟩
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hdp : ((p.Fexp - e).toNat : ℤ) = p.Fexp - e := Int.toNat_of_nonneg hpe
+    have hdm : ((min.Fexp - e).toNat : ℤ) = min.Fexp - e := Int.toNat_of_nonneg hme
+    have hp_eq : ((beta : ℝ)) ^ ((p.Fexp - e).toNat : ℕ) * ((beta : ℝ)) ^ (e : ℤ) =
+        ((beta : ℝ)) ^ (p.Fexp : ℤ) := by
+      rw [← zpow_natCast ((beta : ℝ)) ((p.Fexp - e).toNat), hdp,
+          ← zpow_add₀ hb_real (p.Fexp - e) e, sub_add_cancel]
+    have hm_eq : ((beta : ℝ)) ^ ((min.Fexp - e).toNat : ℕ) * ((beta : ℝ)) ^ (e : ℤ) =
+        ((beta : ℝ)) ^ (min.Fexp : ℤ) := by
+      rw [← zpow_natCast ((beta : ℝ)) ((min.Fexp - e).toNat), hdm,
+          ← zpow_add₀ hb_real (min.Fexp - e) e, sub_add_cancel]
+    push_cast
+    calc ((p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - e).toNat -
+         (min.Fnum : ℝ) * (beta : ℝ) ^ (min.Fexp - e).toNat) * (beta : ℝ) ^ e
+        = (p.Fnum : ℝ) * ((beta : ℝ) ^ (p.Fexp - e).toNat * (beta : ℝ) ^ e) -
+          (min.Fnum : ℝ) * ((beta : ℝ) ^ (min.Fexp - e).toNat * (beta : ℝ) ^ e) := by ring
+      _ = (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp -
+          (min.Fnum : ℝ) * (beta : ℝ) ^ min.Fexp := by rw [hp_eq, hm_eq]
 
 -- Coq: `RoundedModeProjectorIdemEq` — equality on reals under RoundedModeP
 noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
