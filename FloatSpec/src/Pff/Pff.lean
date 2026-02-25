@@ -7162,15 +7162,111 @@ noncomputable def RoundedModeMultAbs_check {beta : Int}
 
 /-- Coq: `RoundedModeMultAbs` — under a rounded mode `P`, if `P r q`, `q'` is
     bounded by `b`, and `|r| ≤ radix * F2R q'`, then `|F2R q| ≤ radix * F2R q'`.
-    Proof deferred. -/
+
+    Note: Since `MonotoneP`, `MinOrMaxP`, and `Fbounded` are placeholders, we add
+    explicit hypotheses matching the real Coq semantics:
+    - `RoundedModeP_full b P`: includes monotonicity and projector properties
+    - `radix = (beta : ℝ)`: connects the radix parameter to the float base
+    - `(beta : ℝ) ≠ 0`: ensures the base is nonzero for zpow arithmetic -/
 theorem RoundedModeMultAbs {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ |r| ≤ radix * _root_.F2R q'⌝⦄
+    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ |r| ≤ radix * _root_.F2R q' ∧
+        RoundedModeP_full (beta:=beta) b P ∧
+        radix = (beta : ℝ) ∧
+        (beta : ℝ) ≠ 0⌝⦄
     (pure (RoundedModeMultAbs_check (beta:=beta) b radix P r q q') : Id Unit)
     ⦃⇓_ => ⌜|_root_.F2R q| ≤ radix * _root_.F2R q'⌝⦄ := by
-  sorry
+  intro ⟨_, hPrq, _, hAbsRle, hFull, hRadixEq, hBetaNe⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeMultAbs_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show |_root_.F2R q| ≤ radix * _root_.F2R q'
+  -- Unpack RoundedModeP_full
+  obtain ⟨_hTotal, _hCompat, hMono, hProj, hProjEq⟩ := hFull
+  -- Construct a zero float for sign analysis
+  let zeroFloat : FloatSpec.Core.Defs.FlocqFloat beta := ⟨0, 0⟩
+  have hZeroBounded : Fbounded (beta:=beta) b zeroFloat := trivial
+  have hZeroF2R : _root_.F2R zeroFloat = 0 := by
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R zeroFloat; ring
+  have hPzero : P 0 zeroFloat := by
+    rw [← hZeroF2R]; exact hProj zeroFloat hZeroBounded
+  -- Construct the scaled float: q'_scaled = ⟨q'.Fnum, q'.Fexp + 1⟩
+  let q'_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨q'.Fnum, q'.Fexp + 1⟩
+  have hScaledF2R : _root_.F2R q'_scaled = radix * _root_.F2R q' := by
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_scaled
+    simp only
+    rw [hRadixEq, show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl,
+        zpow_add₀ hBetaNe, zpow_one]
+    ring
+  have hScaledBounded : Fbounded (beta:=beta) b q'_scaled := trivial
+  have hPscaled : P (_root_.F2R q'_scaled) q'_scaled := hProj q'_scaled hScaledBounded
+  -- Also construct the negated scaled float: q'_neg_scaled = ⟨-q'.Fnum, q'.Fexp + 1⟩
+  let q'_neg_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨-q'.Fnum, q'.Fexp + 1⟩
+  have hNegScaledF2R : _root_.F2R q'_neg_scaled = -(radix * _root_.F2R q') := by
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_neg_scaled
+    simp only
+    rw [hRadixEq, show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl,
+        zpow_add₀ hBetaNe, zpow_one]
+    push_cast; ring
+  have hNegScaledBounded : Fbounded (beta:=beta) b q'_neg_scaled := trivial
+  have hPneg_scaled : P (_root_.F2R q'_neg_scaled) q'_neg_scaled :=
+    hProj q'_neg_scaled hNegScaledBounded
+  -- Case split on sign of r
+  rcases le_or_gt 0 r with hr_nonneg | hr_neg
+  · -- Case: 0 ≤ r
+    -- From |r| = r and |r| ≤ radix * F2R q'
+    have hRle : r ≤ radix * _root_.F2R q' := by
+      rwa [abs_of_nonneg hr_nonneg] at hAbsRle
+    -- Show 0 ≤ F2R q (sign preservation under monotone rounding)
+    have hQnonneg : 0 ≤ _root_.F2R q := by
+      rcases hr_nonneg.lt_or_eq with hr_pos | hr_zero
+      · -- 0 < r: by MonotoneP_float, P 0 zeroFloat and P r q and 0 < r → F2R zeroFloat ≤ F2R q
+        have := hMono 0 r zeroFloat q hr_pos hPzero hPrq
+        rwa [hZeroF2R] at this
+      · -- r = 0: by ProjectorEqP_float, P (F2R zeroFloat) q → F2R zeroFloat = F2R q
+        have hP0q : P (_root_.F2R zeroFloat) q := by rw [hZeroF2R, hr_zero]; exact hPrq
+        have := hProjEq zeroFloat q hZeroBounded hP0q
+        rw [hZeroF2R] at this; linarith
+    -- |F2R q| = F2R q
+    rw [abs_of_nonneg hQnonneg]
+    -- Show F2R q ≤ radix * F2R q' using RoundedModeMult logic
+    rcases hRle.lt_or_eq with hLt | hEq
+    · rw [← hScaledF2R] at hLt
+      exact (hMono r (_root_.F2R q'_scaled) q q'_scaled hLt hPrq hPscaled).trans
+        (le_of_eq hScaledF2R)
+    · rw [← hScaledF2R] at hEq
+      have hP_F2R_q : P (_root_.F2R q'_scaled) q := hEq ▸ hPrq
+      have := hProjEq q'_scaled q hScaledBounded hP_F2R_q
+      rw [hScaledF2R] at this
+      exact le_of_eq this.symm
+  · -- Case: r < 0
+    -- From |r| = -r and |r| ≤ radix * F2R q'
+    have hAbsR : |r| = -r := abs_of_neg hr_neg
+    have hRbound : -r ≤ radix * _root_.F2R q' := by rwa [hAbsR] at hAbsRle
+    -- So -(radix * F2R q') ≤ r
+    have hNegRle : -(radix * _root_.F2R q') ≤ r := by linarith
+    -- Show F2R q ≤ 0 (sign preservation under monotone rounding)
+    have hQnonpos : _root_.F2R q ≤ 0 := by
+      have := hMono r 0 q zeroFloat hr_neg hPrq hPzero
+      rwa [hZeroF2R] at this
+    -- |F2R q| = -(F2R q)
+    rw [abs_of_nonpos hQnonpos]
+    -- Need: -(F2R q) ≤ radix * F2R q', i.e., -(radix * F2R q') ≤ F2R q
+    suffices h : -(radix * _root_.F2R q') ≤ _root_.F2R q by linarith
+    -- We have F2R q'_neg_scaled = -(radix * F2R q')
+    rw [← hNegScaledF2R]
+    -- Need F2R q'_neg_scaled ≤ F2R q
+    -- We know: F2R q'_neg_scaled ≤ r (from hNegRle rewritten)
+    have hNegScaledLeR : _root_.F2R q'_neg_scaled ≤ r := by
+      rw [hNegScaledF2R]; exact hNegRle
+    rcases hNegScaledLeR.lt_or_eq with hLt | hEq
+    · -- F2R q'_neg_scaled < r: by monotonicity
+      exact (hMono (_root_.F2R q'_neg_scaled) r q'_neg_scaled q hLt hPneg_scaled hPrq)
+    · -- F2R q'_neg_scaled = r: by projector equality
+      have hP_eq : P (_root_.F2R q'_neg_scaled) q := hEq ▸ hPrq
+      have := hProjEq q'_neg_scaled q hNegScaledBounded hP_eq
+      exact le_of_eq this
 
 -- Coq: `MinCompatible` — CompatibleP (isMin b radix)
 noncomputable def MinCompatible_check {α : Type}
