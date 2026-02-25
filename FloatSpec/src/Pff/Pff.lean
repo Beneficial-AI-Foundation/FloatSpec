@@ -6542,14 +6542,59 @@ noncomputable def RoundedModeMult_check {beta : Int}
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `RoundedModeMult` — if `P` is a rounded mode, `P r q`, `q'` is bounded,
+    and `r ≤ radix * F2R q'`, then `F2R q ≤ radix * F2R q'`.
+
+    Note: Since `MonotoneP`, `MinOrMaxP`, and `Fbounded` are placeholders, we add
+    explicit hypotheses matching the real Coq semantics:
+    - `RoundedModeP_full b P`: includes monotonicity and projector properties
+    - `radix = (beta : ℝ)`: connects the radix parameter to the float base
+    - `(beta : ℝ) ≠ 0`: ensures the base is nonzero for zpow arithmetic -/
 theorem RoundedModeMult {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ r ≤ radix * _root_.F2R q'⌝⦄
+    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ r ≤ radix * _root_.F2R q' ∧
+        RoundedModeP_full (beta:=beta) b P ∧
+        radix = (beta : ℝ) ∧
+        (beta : ℝ) ≠ 0⌝⦄
     (pure (RoundedModeMult_check (beta:=beta) b radix P r q q') : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R q ≤ radix * _root_.F2R q'⌝⦄ := by
-  sorry
+  intro ⟨_, hPrq, _, hRle, hFull, hRadixEq, hBetaNe⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeMult_check]
+  -- Unpack RoundedModeP_full
+  obtain ⟨_hTotal, _hCompat, hMono, hProj, hProjEq⟩ := hFull
+  -- Construct the scaled float: q'_scaled = ⟨q'.Fnum, q'.Fexp + 1⟩
+  -- Its F2R value equals (beta : ℝ) * F2R q' = radix * F2R q'
+  let q'_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨q'.Fnum, q'.Fexp + 1⟩
+  have hScaledF2R : _root_.F2R q'_scaled = radix * _root_.F2R q' := by
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_scaled
+    simp only
+    rw [hRadixEq]
+    rw [show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl]
+    rw [zpow_add₀ hBetaNe, zpow_one]
+    ring
+  -- Since Fbounded is True (placeholder), q'_scaled is trivially bounded
+  have hScaledBounded : Fbounded (beta:=beta) b q'_scaled := trivial
+  -- By ProjectorP_float: P (F2R q'_scaled) q'_scaled
+  have hPscaled : P (_root_.F2R q'_scaled) q'_scaled := hProj q'_scaled hScaledBounded
+  -- Case split: r < radix * F2R q' or r = radix * F2R q'
+  rcases hRle.lt_or_eq with hLt | hEq
+  · -- Case: r < radix * F2R q'
+    rw [← hScaledF2R] at hLt
+    -- By MonotoneP_float: P r q ∧ P (F2R q'_scaled) q'_scaled ∧ r < F2R q'_scaled
+    --   → F2R q ≤ F2R q'_scaled
+    have hLeq := hMono r (_root_.F2R q'_scaled) q q'_scaled hLt hPrq hPscaled
+    rw [hScaledF2R] at hLeq
+    exact hLeq
+  · -- Case: r = radix * F2R q'
+    rw [← hScaledF2R] at hEq
+    -- Since r = F2R q'_scaled and P r q, we have P (F2R q'_scaled) q
+    have hP_F2R_q : P (_root_.F2R q'_scaled) q := by rw [← hEq]; exact hPrq
+    -- By ProjectorEqP_float: F2R q'_scaled = F2R q
+    have hEqReal := hProjEq q'_scaled q hScaledBounded hP_F2R_q
+    rw [hScaledF2R] at hEqReal
+    exact le_of_eq hEqReal.symm
 
 -- Coq: `RoundedModeMultLess` — dual inequality for scaling by radix
 noncomputable def RoundedModeMultLess_check {beta : Int}
