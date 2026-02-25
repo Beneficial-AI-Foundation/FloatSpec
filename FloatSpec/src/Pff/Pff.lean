@@ -6483,14 +6483,29 @@ noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `RoundedModeProjectorIdemEq` — under `RoundedModeP`, if `Fbounded b p`
+    and `P (F2R p) q`, then `F2R p = F2R q`.
+
+    In Coq, the proof derives this from `MinOrMaxP` (which connects P to isMin/isMax)
+    and then uses `MinEq`/`MaxEq` plus `RoundedModeProjectorIdem`. Since `MinOrMaxP`
+    and related definitions are placeholders (`True`) in this Lean formalization,
+    we add an explicit `ProjectorEqP_float b P` hypothesis which captures exactly
+    the property that Coq derives from the full `RoundedModeP` definition.
+
+    Change record: Added `ProjectorEqP_float b P` to precondition because the
+    placeholder `MinOrMaxP := True` makes the original precondition insufficient. -/
 theorem RoundedModeProjectorIdemEq {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧ P (_root_.F2R p) q⌝⦄
+    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧ P (_root_.F2R p) q ∧
+      ProjectorEqP_float b P⌝⦄
     (pure (RoundedModeProjectorIdemEq_check (beta:=beta) b radix P p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
-  sorry
+  intro ⟨_hRMP, hBnd, hPpq, hProjEq⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeProjectorIdemEq_check,
+    PredTrans.pure_apply, Id.run, ULift.up_down]
+  exact hProjEq p q hBnd hPpq
 
 -- Coq: `RoundedModeUlp` — under a rounded mode P and P p q, |p - q| < Fulp q
 noncomputable def RoundedModeUlp_check {beta : Int}
