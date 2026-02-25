@@ -7620,17 +7620,37 @@ noncomputable def MaxFloat_check {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) : Unit :=
   ()
 
-/-- Coq: `MaxFloat` — if a float `p` is bounded by `b` and `p.Fexp ≤ z`, then
-`|F2R p|` remains below the canonical representative `⟨1, z⟩`. We approximate
-Coq's exact bound `Float (Zpos (vNum b)) (Fexp p)` via the skeleton float
-`⟨(1 : Int), z⟩`. Proof deferred per import policy. -/
+/-- Coq: `MaxFloat` — if a float `p` is bounded by `b`, then
+`|F2R p| < F2R ⟨b.vNum, p.Fexp⟩`.
+
+Coq statement: `Fbounded b x → (Rabs x < Float (Zpos (vNum b)) (Fexp x))%R`.
+
+Since `Fbounded` is a placeholder (= True), we add explicit `Fbounded'` and
+`beta > 1` hypotheses matching the Coq section assumptions. The `z` parameter
+is kept for compatibility with downstream callers but the bound uses `b.vNum`
+at `p.Fexp` per Coq's original. -/
 theorem MaxFloat {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
+    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
+        Fbounded' b p ∧ 1 < beta⌝⦄
     (pure (MaxFloat_check (beta:=beta) b p z) : Id Unit)
     ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
-            _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
-  sorry
+            _root_.F2R (beta:=beta) ⟨b.vNum, p.Fexp⟩⌝⦄ := by
+  intro ⟨_, _, hBdd, hBeta⟩
+  simp only [wp, PostCond.noThrow, pure, MaxFloat_check, PredTrans.pure_apply,
+             Id.run, ULift.up_down]
+  -- F2R p = p.Fnum * β^p.Fexp
+  -- F2R ⟨b.vNum, p.Fexp⟩ = b.vNum * β^p.Fexp
+  -- From Fbounded': |p.Fnum| < b.vNum, and β^p.Fexp > 0 (since β > 1 > 0)
+  have hBetaPos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Int.lt_trans Int.zero_lt_one hBeta
+  have hExpPos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hBetaPos p.Fexp
+  show |_root_.F2R p| < _root_.F2R ⟨b.vNum, p.Fexp⟩
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+  rw [abs_mul, abs_of_pos hExpPos]
+  apply mul_lt_mul_of_pos_right _ hExpPos
+  -- Need: |(p.Fnum : ℝ)| < (b.vNum : ℝ)
+  rw [← Int.cast_abs]
+  exact_mod_cast hBdd.1
 
 
 
