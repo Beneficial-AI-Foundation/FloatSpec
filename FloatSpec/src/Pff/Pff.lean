@@ -6387,7 +6387,10 @@ theorem RoundedModeBounded {beta : Int}
     ⦃⌜RoundedModeP P ∧ P r q⌝⦄
     (pure (RoundedModeBounded_check (beta:=beta) b radix P r q) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
-  sorry
+  intro ⟨_, _⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeBounded_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  exact trivial
 
 
 -- ---------------------------------------------------------------------------
