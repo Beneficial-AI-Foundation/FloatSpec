@@ -7760,15 +7760,88 @@ theorem maxMax1 {beta : Int}
         mul_le_mul_of_nonneg_left hExpMono hPredNonneg
 
 /-- Coq: `maxMaxBis` — bounded floats with exponent strictly below `z` stay
-below the canonical representative `⟨1, z⟩`. Mirrors the Coq semantics using
-the simplified bound skeleton employed throughout this section. -/
+below `nNormMin * β^z`. Mirrors the Coq semantics:
+`Fbounded b p → Fexp p < z → Fabs p < Float nNormMin z`.
+
+Change record: Fixed postcondition from `F2R (Fabs p) < F2R ⟨1, z⟩` to
+`|F2R p| < F2R ⟨nNormMin beta precision, z⟩` to match Coq's
+`Fabs p < Float nNormMin z`. Added `Fbounded'`, `1 < beta`, `precision`,
+and `pGivesBound` hypotheses since `Fbounded` is placeholder True and
+`Fabs` is placeholder identity. Uses `|F2R p|` instead of `F2R (Fabs p)`. -/
 theorem maxMaxBis {beta : Int}
-    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp < z⌝⦄
+    (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int)
+    (precision : Nat) :
+    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp < z ∧
+        Fbounded' b p ∧ 1 < beta ∧
+        b.vNum = beta ^ precision⌝⦄
     (pure (maxMax1_check (beta:=beta) b p z) : Id Unit)
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) <
-            _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
-  sorry
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
+            _root_.F2R (beta:=beta) ⟨nNormMin beta precision, z⟩⌝⦄ := by
+  intro ⟨_, hExpLt, hBdd, hBeta, hPGB⟩
+  simp only [wp, PostCond.noThrow, pure, maxMax1_check, PredTrans.pure_apply,
+             Id.run, ULift.up_down]
+  show |_root_.F2R p| < _root_.F2R ⟨nNormMin beta precision, z⟩
+  have hBetaPos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Int.lt_trans Int.zero_lt_one hBeta
+  have hBetaGe1 : (1 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast Int.le_of_lt hBeta
+  have hBetaNe0 : (beta : ℝ) ≠ 0 := ne_of_gt hBetaPos
+  have hNumBound : |p.Fnum| < b.vNum := hBdd.1
+  have hExpPos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hBetaPos p.Fexp
+  -- |F2R p| = |p.Fnum| * β^p.Fexp
+  have hAbsF2R : |_root_.F2R (beta:=beta) p| = |↑p.Fnum| * (beta : ℝ) ^ p.Fexp := by
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+    rw [abs_mul, abs_of_pos hExpPos]
+  -- F2R ⟨nNormMin, z⟩ = nNormMin * β^z
+  have hRHS : _root_.F2R (beta:=beta) ⟨nNormMin beta precision, z⟩ =
+              (nNormMin beta precision : ℝ) * (beta : ℝ) ^ z := by
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+  -- Handle precision = 0 separately (degenerate: b.vNum = 1, so p.Fnum = 0)
+  by_cases hp : precision = 0
+  · -- precision = 0: b.vNum = beta^0 = 1
+    have hvNum1 : b.vNum = 1 := by simp [hPGB, hp]
+    have hFnum0 : p.Fnum = 0 := by
+      have h1 : |p.Fnum| < 1 := hvNum1 ▸ hNumBound
+      have h2 := abs_nonneg p.Fnum
+      have h3 : |p.Fnum| = 0 := by omega
+      exact abs_eq_zero.mp h3
+    rw [hAbsF2R]
+    simp [hFnum0]
+    rw [hRHS]
+    -- nNormMin beta 0 = beta^(0-1) = beta^0 = 1 (since 0-1=0 in ℕ)
+    have hNM : nNormMin beta 0 = 1 := by simp [nNormMin]
+    rw [hp, hNM]
+    simp
+    exact zpow_pos hBetaPos z
+  · -- precision ≥ 1: use transitivity through F2R ⟨b.vNum, z - 1⟩
+    have hExpLe : p.Fexp ≤ z - 1 := Int.le_sub_one_of_lt hExpLt
+    have hExpMono : (beta : ℝ) ^ p.Fexp ≤ (beta : ℝ) ^ (z - 1) :=
+      zpow_right_mono₀ hBetaGe1 hExpLe
+    have hvNumPos : (0 : ℝ) < (b.vNum : ℝ) :=
+      Int.cast_pos.mpr (Int.lt_of_le_of_lt (abs_nonneg p.Fnum) hNumBound)
+    have hNumLtR : |↑p.Fnum| < (b.vNum : ℝ) := by
+      rw [← Int.cast_abs]; exact_mod_cast hNumBound
+    -- Step 1: |F2R p| < b.vNum * β^(z-1)
+    have hStep1 : |_root_.F2R p| < (b.vNum : ℝ) * (beta : ℝ) ^ (z - 1) := by
+      rw [hAbsF2R]
+      calc |↑p.Fnum| * (beta : ℝ) ^ p.Fexp
+          < (b.vNum : ℝ) * (beta : ℝ) ^ p.Fexp :=
+            mul_lt_mul_of_pos_right hNumLtR hExpPos
+        _ ≤ (b.vNum : ℝ) * (beta : ℝ) ^ (z - 1) :=
+            mul_le_mul_of_nonneg_left hExpMono (le_of_lt hvNumPos)
+    -- Step 2: b.vNum * β^(z-1) = nNormMin * β^z
+    -- b.vNum = β^precision, nNormMin = β^(precision-1)
+    -- β^precision * β^(z-1) = β^(precision-1) * β * β^(z-1) = β^(precision-1) * β^z
+    have hp1 : precision - 1 + 1 = precision := Nat.succ_pred hp
+    have hEq : (b.vNum : ℝ) * (beta : ℝ) ^ (z - 1) =
+               (nNormMin beta precision : ℝ) * (beta : ℝ) ^ z := by
+      simp only [nNormMin, hPGB]
+      push_cast
+      -- Goal: (↑beta) ^ precision * (↑beta) ^ (z - 1) = (↑beta) ^ (precision - 1) * (↑beta) ^ z
+      rw [← zpow_natCast (beta : ℝ) precision, ← zpow_natCast (beta : ℝ) (precision - 1)]
+      rw [← zpow_add₀ hBetaNe0, ← zpow_add₀ hBetaNe0]
+      congr 1
+      omega
+    rw [hRHS]
+    linarith
 
 -- ---------------------------------------------------------------------------
 -- Exponent comparison helper lemmas (around Coq: eqExpLess, FboundedShiftLess...)
