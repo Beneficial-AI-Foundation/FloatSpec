@@ -6188,6 +6188,17 @@ theorem FexpGeUnderf {beta : Int}
 -- Coq: `AddExpGeUnderf` — if `g` is a closest rounding of `f1+f2` and both `f1`
 -- and `f2` are sufficiently large in magnitude, then `g` is either zero or has
 -- magnitude at least `β^(e-precision+1)`.
+--
+-- Note: Since `Closest` and `Fbounded` are currently placeholders (= True), we add
+-- explicit hypotheses matching Coq's section context and the key content of
+-- `plusExactExp` (which is not yet ported to Lean):
+-- - `hBeta`: the radix is at least 2
+-- - `hPrec`: precision is at least 1
+-- - `hBound`: `bo.vNum = beta ^ precision` (Coq's `pGivesBound`)
+-- - `hFb1`, `hFb2`: real boundedness of `f1` and `f2`
+-- - `hPlusExact`: key content of Coq's `plusExactExp` — if g is nonzero, there
+--   exists a bounded float `g'` with `F2R g' = F2R g` and whose exponent is at
+--   least `min(Fexp f1, Fexp f2)`.
 noncomputable def AddExpGeUnderf_check {beta : Int}
     (bo : Fbound_skel) (precision e : Int) (radix : ℝ)
     (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -6198,10 +6209,92 @@ theorem AddExpGeUnderf {beta : Int}
     (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix (_root_.F2R f1 + _root_.F2R f2) g ∧
         Fbounded (beta:=beta) bo f1 ∧ Fbounded (beta:=beta) bo f2 ∧
-        (beta : ℝ) ^ e ≤ |_root_.F2R f1| ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f2|⌝⦄
+        (beta : ℝ) ^ e ≤ |_root_.F2R f1| ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f2| ∧
+        -- Additional real hypotheses (placeholders make Closest/Fbounded trivial)
+        (1 < beta) ∧ (1 ≤ precision) ∧ ((bo.vNum : ℝ) = (beta : ℝ) ^ precision) ∧
+        Fbounded' bo f1 ∧ Fbounded' bo f2 ∧
+        -- Key content of plusExactExp: if g ≠ 0, there exists g' with F2R g' = F2R g
+        -- and Fexp g' ≥ min(Fexp f1, Fexp f2) and g' is bounded
+        (_root_.F2R g ≠ 0 →
+          ∃ g' : FloatSpec.Core.Defs.FlocqFloat beta,
+            Fbounded' bo g' ∧ _root_.F2R g' = _root_.F2R g ∧
+            min f1.Fexp f2.Fexp ≤ g'.Fexp)⌝⦄
     (pure (AddExpGeUnderf_check (beta:=beta) bo precision e radix f1 f2 g) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R g = 0 ∨ (beta : ℝ) ^ (e - precision + 1) ≤ |_root_.F2R g|⌝⦄ := by
-  sorry
+  intro ⟨_, _, _, hMag1, hMag2, hBeta, hPrec, hBound, hFb1, hFb2, hPlusExact⟩
+  simp only [wp, PostCond.noThrow, pure, AddExpGeUnderf_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show _root_.F2R g = 0 ∨ (beta : ℝ) ^ (e - precision + 1) ≤ |_root_.F2R g|
+  -- Case split: either F2R g = 0 or F2R g ≠ 0
+  by_cases hg : _root_.F2R g = 0
+  · exact Or.inl hg
+  · right
+    -- Get g' from plusExactExp hypothesis
+    obtain ⟨g', hg'Bd, hg'Eq, hg'Exp⟩ := hPlusExact hg
+    -- Setup: β > 1 as real, β > 0, β ≠ 0
+    have hBetaR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hBeta
+    have hBetaPos : (0 : ℝ) < (beta : ℝ) := by linarith
+    have hBetaNe : (beta : ℝ) ≠ 0 := ne_of_gt hBetaPos
+    -- From FexpGeUnderf applied to f1: e - precision + 1 ≤ Fexp f1
+    have hExpF1 : e - precision + 1 ≤ f1.Fexp := by
+      suffices h : e < f1.Fexp + precision by omega
+      rw [show f1.Fexp + precision = precision + f1.Fexp from by ring]
+      rw [← zpow_lt_zpow_iff_right₀ hBetaR]
+      calc (beta : ℝ) ^ e
+        _ ≤ |_root_.F2R f1| := hMag1
+        _ < (beta : ℝ) ^ (precision + f1.Fexp) := by
+          have hExpPos : (0 : ℝ) < (beta : ℝ) ^ f1.Fexp := zpow_pos hBetaPos f1.Fexp
+          rw [_root_.F2R, FloatSpec.Core.Defs.F2R]
+          rw [abs_mul, abs_of_pos hExpPos]
+          have hNumBd : |((f1.Fnum : ℤ) : ℝ)| < (beta : ℝ) ^ precision := by
+            have h1 := hFb1.1
+            have h2 : (↑|f1.Fnum| : ℝ) < (bo.vNum : ℝ) := by exact_mod_cast h1
+            rwa [Int.cast_abs, hBound] at h2
+          rw [zpow_add₀ hBetaNe]
+          exact mul_lt_mul_of_pos_right hNumBd hExpPos
+    -- From FexpGeUnderf applied to f2: e - precision + 1 ≤ Fexp f2
+    have hExpF2 : e - precision + 1 ≤ f2.Fexp := by
+      suffices h : e < f2.Fexp + precision by omega
+      rw [show f2.Fexp + precision = precision + f2.Fexp from by ring]
+      rw [← zpow_lt_zpow_iff_right₀ hBetaR]
+      calc (beta : ℝ) ^ e
+        _ ≤ |_root_.F2R f2| := hMag2
+        _ < (beta : ℝ) ^ (precision + f2.Fexp) := by
+          have hExpPos : (0 : ℝ) < (beta : ℝ) ^ f2.Fexp := zpow_pos hBetaPos f2.Fexp
+          rw [_root_.F2R, FloatSpec.Core.Defs.F2R]
+          rw [abs_mul, abs_of_pos hExpPos]
+          have hNumBd : |((f2.Fnum : ℤ) : ℝ)| < (beta : ℝ) ^ precision := by
+            have h1 := hFb2.1
+            have h2 : (↑|f2.Fnum| : ℝ) < (bo.vNum : ℝ) := by exact_mod_cast h1
+            rwa [Int.cast_abs, hBound] at h2
+          rw [zpow_add₀ hBetaNe]
+          exact mul_lt_mul_of_pos_right hNumBd hExpPos
+    -- From the above: e - precision + 1 ≤ min(Fexp f1, Fexp f2)
+    have hExpMin : e - precision + 1 ≤ min f1.Fexp f2.Fexp := by
+      simp [le_min_iff]; exact ⟨hExpF1, hExpF2⟩
+    -- Therefore e - precision + 1 ≤ Fexp g'
+    have hExpG' : e - precision + 1 ≤ g'.Fexp := le_trans hExpMin hg'Exp
+    -- Since F2R g' ≠ 0, g'.Fnum ≠ 0, so |g'.Fnum| ≥ 1
+    have hg'Ne : _root_.F2R g' ≠ 0 := hg'Eq ▸ hg
+    have hFnumNe : g'.Fnum ≠ 0 := by
+      intro h
+      apply hg'Ne
+      unfold _root_.F2R FloatSpec.Core.Defs.F2R
+      simp [h]
+    have hFnumAbs : 1 ≤ |g'.Fnum| := Int.one_le_abs hFnumNe
+    -- |F2R g| = |F2R g'| = |g'.Fnum| * β^(g'.Fexp) ≥ 1 * β^(g'.Fexp) = β^(g'.Fexp) ≥ β^(e-precision+1)
+    rw [← hg'Eq]
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R
+    rw [abs_mul]
+    have hExpPos : (0 : ℝ) < (beta : ℝ) ^ g'.Fexp := zpow_pos hBetaPos g'.Fexp
+    rw [abs_of_pos hExpPos]
+    calc (beta : ℝ) ^ (e - precision + 1)
+      _ ≤ (beta : ℝ) ^ g'.Fexp := by
+          exact zpow_right_mono₀ hBetaR.le hExpG'
+      _ = 1 * (beta : ℝ) ^ g'.Fexp := by ring
+      _ ≤ |((g'.Fnum : ℤ) : ℝ)| * (beta : ℝ) ^ g'.Fexp := by
+          apply mul_le_mul_of_nonneg_right _ hExpPos.le
+          exact_mod_cast hFnumAbs
 
 -- First projection: RoundedModeP -> CompatibleP
 noncomputable def RoundedModeP_inv2_check {α : Type}
