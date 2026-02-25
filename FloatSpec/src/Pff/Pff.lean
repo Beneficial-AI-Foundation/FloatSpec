@@ -6319,7 +6319,10 @@ theorem RoundedModeP_inv4 {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
     (pure (RoundedModeP_inv4_check P) : Id Unit)
     ⦃⇓_ => ⌜MonotoneP P⌝⦄ := by
-  sorry
+  intro ⟨_, _, _, hMono⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeP_inv4_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  exact hMono
 
 -- Projection to a projector property (placeholder)
 noncomputable def RoundedProjector_check {α : Type}
