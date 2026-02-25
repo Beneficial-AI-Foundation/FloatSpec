@@ -7663,15 +7663,51 @@ noncomputable def maxMax_check {beta : Int}
   ()
 
 /-- Coq: `maxMax` — if `p` is bounded and `p.Fexp ≤ z`, then
-`F2R (Fabs p) < F2R ⟨1, z⟩` (skeleton version).
-This mirrors the Coq intent with our simplified bound structure. -/
+`|F2R p| < F2R ⟨b.vNum, z⟩`.
+
+Coq statement: `Fbounded b p -> (Fexp p <= z)%Z -> (Fabs p < Float (Zpos (vNum b)) z)%R`.
+
+Since `Fbounded` is a placeholder (= True), we add explicit `Fbounded'` and
+`beta > 1` hypotheses matching the Coq section assumptions, following the MaxFloat pattern.
+Since `Fabs` is a placeholder identity, we use `|F2R p|` directly in the conclusion
+instead of `F2R (Fabs p)`.
+
+Change record: Fixed RHS from `⟨1, z⟩` to `⟨b.vNum, z⟩` to match Coq's
+`Float (Zpos (vNum b)) z`. Used `|F2R p|` instead of `F2R (Fabs p)` because
+`Fabs` is a placeholder identity function in Compat.lean. -/
 theorem maxMax {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
+    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
+        Fbounded' b p ∧ 1 < beta⌝⦄
     (pure (maxMax_check (beta:=beta) b p z) : Id Unit)
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) <
-            _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
-  sorry
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
+            _root_.F2R (beta:=beta) ⟨b.vNum, z⟩⌝⦄ := by
+  intro ⟨_, hExpLe, hBdd, hBeta⟩
+  simp only [wp, PostCond.noThrow, pure, maxMax_check, PredTrans.pure_apply,
+             Id.run, ULift.up_down]
+  show |_root_.F2R p| < _root_.F2R ⟨b.vNum, z⟩
+  have hBetaPos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Int.lt_trans Int.zero_lt_one hBeta
+  have hExpPos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hBetaPos p.Fexp
+  have hNumBound : |p.Fnum| < b.vNum := hBdd.1
+  have hBetaGe1 : (1 : ℝ) ≤ (beta : ℝ) := by
+    have : (1 : ℤ) < beta := hBeta
+    exact_mod_cast Int.le_of_lt this
+  have hExpMono : (beta : ℝ) ^ p.Fexp ≤ (beta : ℝ) ^ z :=
+    zpow_right_mono₀ hBetaGe1 hExpLe
+  have hvNumPos : (0 : ℝ) < (b.vNum : ℝ) :=
+    Int.cast_pos.mpr (Int.lt_of_le_of_lt (abs_nonneg p.Fnum) hNumBound)
+  -- |F2R p| = |p.Fnum * β^p.Fexp| = |p.Fnum| * β^p.Fexp (since β^e > 0)
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+  rw [abs_mul, abs_of_pos hExpPos]
+  -- Goal: |↑p.Fnum| * β^p.Fexp < b.vNum * β^z
+  have hNumLtR : |↑p.Fnum| < (b.vNum : ℝ) := by
+    rw [← Int.cast_abs]
+    exact_mod_cast hNumBound
+  calc |↑p.Fnum| * (beta : ℝ) ^ p.Fexp
+      < (b.vNum : ℝ) * (beta : ℝ) ^ p.Fexp :=
+        mul_lt_mul_of_pos_right hNumLtR hExpPos
+    _ ≤ (b.vNum : ℝ) * (beta : ℝ) ^ z :=
+        mul_le_mul_of_nonneg_left hExpMono (le_of_lt hvNumPos)
 
 /-- Helper computation for `maxMax1`. Mirrors the Hoare-style pipeline used in
 `maxMax` but records the weaker (non-strict) inequality variant from Coq. -/
