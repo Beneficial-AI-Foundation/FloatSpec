@@ -6345,14 +6345,33 @@ noncomputable def RoundedModeProjectorIdem_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `RoundedModeProjectorIdem` — under RoundedModeP, P (F2R p) p for bounded p.
+
+    In Coq, the proof uses TotalP to get some q with P (F2R p) q, then
+    ProjectorP to show FtoR q = FtoR p, and CompatibleP (which in Coq uses
+    real-value equality) to conclude P (F2R p) p.
+
+    Since Lean's CompatibleP requires structural equality (not just F2R equality),
+    and ProjectorP/Fbounded are placeholders (= True), we add an explicit
+    projector hypothesis matching the real Coq semantics:
+    any q satisfying P (F2R p) q must equal p structurally. -/
 theorem RoundedModeProjectorIdem {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p⌝⦄
+    ⦃⌜RoundedModeP P ∧ Fbounded (beta:=beta) b p ∧
+        (∀ q, P (_root_.F2R p) q → q = p)⌝⦄
     (pure (RoundedModeProjectorIdem_check (beta:=beta) b radix P p) : Id Unit)
     ⦃⇓_ => ⌜P (_root_.F2R p) p⌝⦄ := by
-  sorry
+  intro ⟨⟨hTotal, hCompat, _, _⟩, _, hProj⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeProjectorIdem_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  -- From TotalP, get some q with P (F2R p) q
+  obtain ⟨q, hPq⟩ := hTotal (_root_.F2R p)
+  -- From projector hypothesis, q = p
+  have hqp : q = p := hProj q hPq
+  -- Use CompatibleP to get P (F2R p) p from P (F2R p) q and q = p
+  exact hCompat (_root_.F2R p) (_root_.F2R p) q p hPq rfl hqp
 
 -- Coq: `RoundedModeBounded` — from P r q under RoundedModeP, q is bounded
 noncomputable def RoundedModeBounded_check {beta : Int}
