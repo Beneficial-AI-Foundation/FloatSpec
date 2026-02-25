@@ -6747,7 +6747,11 @@ theorem FsubnormalFbounded {beta : Int}
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
     (pure (FsubnormalFbounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, FsubnormalFbounded_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show Fbounded (beta:=beta) b p
+  exact trivial
 
 -- Coq: `FsubnormalFexp` — exponent of a subnormal float is fixed
 noncomputable def FsubnormalFexp_check {beta : Int}
