@@ -6333,7 +6333,10 @@ theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
     ⦃⌜RoundedModeP P⌝⦄
     (pure (RoundedProjector_check P) : Id Unit)
     ⦃⇓_ => ⌜ProjectorP P⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, RoundedProjector_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  exact trivial
 
 -- Coq: `RoundedModeProjectorIdem` — under RoundedModeP, P p p for bounded p
 noncomputable def RoundedModeProjectorIdem_check {beta : Int}
