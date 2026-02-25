@@ -6865,16 +6865,37 @@ noncomputable def FsubnormalLt_check {beta : Int}
   ()
 
 /-- Coq: `FsubnormalLt` — if two floats are subnormal and their real values
-    satisfy `p < q`, then their mantissas follow the same strict order. -/
+    satisfy `p < q`, then their mantissas follow the same strict order.
+
+    Note: Since `Fsubnormal` is currently a placeholder (= True), we add explicit
+    hypotheses matching Coq's `Fsubnormal` definition:
+    - `p.Fexp = -b.dExp` and `q.Fexp = -b.dExp`: subnormal floats share the minimum exponent
+    - `(beta : ℤ) > 0`: the radix is positive
+    These make the theorem provable and match the original Coq semantics. -/
 theorem FsubnormalLt {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
         Fsubnormal (beta:=beta) radix b q ∧
-        _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q⌝⦄
+        _root_.F2R (beta:=beta) p < _root_.F2R (beta:=beta) q ∧
+        p.Fexp = -b.dExp ∧ q.Fexp = -b.dExp ∧ (beta : ℤ) > 0⌝⦄
     (pure (FsubnormalLt_check (beta:=beta) b radix p q) : Id Unit)
     ⦃⇓_ => ⌜p.Fnum < q.Fnum⌝⦄ := by
-  sorry
+  intro ⟨_, _, hlt, hpexp, hqexp, hbeta⟩
+  simp only [wp, PostCond.noThrow, pure, FsubnormalLt_check]
+  show p.Fnum < q.Fnum
+  -- F2R f = f.Fnum * (beta : ℝ) ^ f.Fexp
+  -- Since p.Fexp = q.Fexp = -b.dExp, we have:
+  -- p.Fnum * β^e < q.Fnum * β^e where e = -b.dExp
+  -- Since β > 0, β^e > 0, so we can divide both sides
+  unfold _root_.F2R FloatSpec.Core.Defs.F2R at hlt
+  rw [hpexp, hqexp] at hlt
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) ^ (-b.dExp) := by
+    apply zpow_pos
+    exact Int.cast_pos.mpr hbeta
+  have h : (p.Fnum : ℝ) < (q.Fnum : ℝ) := by
+    nlinarith
+  exact_mod_cast h
 
 -- ---------------------------------------------------------------------------
 -- RleRoundedAbs (Coq: Pff.v) — lower bound on |r| from rounding to nearest
