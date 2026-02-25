@@ -6607,10 +6607,47 @@ theorem RoundedModeMultLess {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ radix * _root_.F2R q' ≤ r⌝⦄
+    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ radix * _root_.F2R q' ≤ r ∧
+        RoundedModeP_full (beta:=beta) b P ∧
+        radix = (beta : ℝ) ∧
+        (beta : ℝ) ≠ 0⌝⦄
     (pure (RoundedModeMultLess_check (beta:=beta) b radix P r q q') : Id Unit)
     ⦃⇓_ => ⌜radix * _root_.F2R q' ≤ _root_.F2R q⌝⦄ := by
-  sorry
+  intro ⟨_, hPrq, _, hRle, hFull, hRadixEq, hBetaNe⟩
+  simp only [wp, PostCond.noThrow, pure, RoundedModeMultLess_check]
+  -- Unpack RoundedModeP_full
+  obtain ⟨_hTotal, _hCompat, hMono, hProj, hProjEq⟩ := hFull
+  -- Construct the scaled float: q'_scaled = ⟨q'.Fnum, q'.Fexp + 1⟩
+  -- Its F2R value equals (beta : ℝ) * F2R q' = radix * F2R q'
+  let q'_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨q'.Fnum, q'.Fexp + 1⟩
+  have hScaledF2R : _root_.F2R q'_scaled = radix * _root_.F2R q' := by
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_scaled
+    simp only
+    rw [hRadixEq]
+    rw [show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl]
+    rw [zpow_add₀ hBetaNe, zpow_one]
+    ring
+  -- Since Fbounded is True (placeholder), q'_scaled is trivially bounded
+  have hScaledBounded : Fbounded (beta:=beta) b q'_scaled := trivial
+  -- By ProjectorP_float: P (F2R q'_scaled) q'_scaled
+  have hPscaled : P (_root_.F2R q'_scaled) q'_scaled := hProj q'_scaled hScaledBounded
+  -- Case split: radix * F2R q' < r or radix * F2R q' = r
+  rcases hRle.lt_or_eq with hLt | hEq
+  · -- Case: radix * F2R q' < r
+    rw [← hScaledF2R] at hLt
+    -- By MonotoneP_float: P (F2R q'_scaled) q'_scaled ∧ P r q ∧ F2R q'_scaled < r
+    --   → F2R q'_scaled ≤ F2R q
+    have hLeq := hMono (_root_.F2R q'_scaled) r q'_scaled q hLt hPscaled hPrq
+    rw [hScaledF2R] at hLeq
+    exact hLeq
+  · -- Case: radix * F2R q' = r
+    rw [← hScaledF2R] at hEq
+    -- Since F2R q'_scaled = r and P r q, we have P (F2R q'_scaled) q
+    have hP_F2R_q : P (_root_.F2R q'_scaled) q := hEq ▸ hPrq
+    -- By ProjectorEqP_float: F2R q'_scaled = F2R q
+    have hEqReal := hProjEq q'_scaled q hScaledBounded hP_F2R_q
+    rw [hScaledF2R] at hEqReal
+    exact le_of_eq hEqReal
 
 -- Coq: `FnormalBounded` — normal floats are bounded
 noncomputable def FnormalBounded_check {beta : Int}
