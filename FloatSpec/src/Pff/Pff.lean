@@ -7344,13 +7344,48 @@ noncomputable def RleMinR0_check {beta : Int}
     (r : ℝ) (min : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
+/-- Coq: `RleMinR0` — if `0 ≤ r` and `min` is the minimum rounding of `r`,
+    then `0 ≤ F2R min`.
+
+    Note: Since `isMin` is currently a placeholder (= True), we add explicit
+    hypotheses matching Coq's `isMin` definition:
+    - `Fbounded' b min`: the float is bounded
+    - `_root_.F2R min ≤ r`: min is below r
+    - maximality: min is the greatest bounded float ≤ r
+    - `0 < b.vNum`: needed to construct the zero witness float
+    These make the theorem provable and match the original Coq semantics. -/
 theorem RleMinR0 {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (min : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜0 ≤ r ∧ isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min⌝⦄
+    ⦃⌜0 ≤ r ∧ isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min
+      -- Real hypotheses matching Coq's isMin definition:
+      ∧ Fbounded' b min
+      ∧ (_root_.F2R min ≤ r)
+      ∧ (∀ f : FloatSpec.Core.Defs.FlocqFloat beta,
+          Fbounded' b f → _root_.F2R f ≤ r → _root_.F2R f ≤ _root_.F2R min)
+      ∧ (0 < b.vNum)⌝⦄
     (pure (RleMinR0_check (beta:=beta) b radix r min) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ _root_.F2R min⌝⦄ := by
-  sorry
+  intro ⟨hr, _, _, _, hMax, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, RleMinR0_check, PredTrans.pure_apply,
+    Id.run, ULift.up_down]
+  show 0 ≤ _root_.F2R min
+  -- The zero float ⟨0, -b.dExp⟩ is bounded and has F2R = 0
+  let zeroFloat : FloatSpec.Core.Defs.FlocqFloat beta := ⟨0, -b.dExp⟩
+  have hZeroBounded : Fbounded' (beta:=beta) b zeroFloat := by
+    constructor
+    · show |zeroFloat.Fnum| < b.vNum
+      simp only [zeroFloat, abs_zero]
+      exact hvNum
+    · rfl
+  have hZeroF2R : _root_.F2R zeroFloat = 0 := by
+    unfold _root_.F2R FloatSpec.Core.Defs.F2R zeroFloat
+    ring
+  -- Since 0 = F2R(zeroFloat) ≤ r, by maximality of min: F2R(zeroFloat) ≤ F2R(min)
+  have h0LeR : _root_.F2R zeroFloat ≤ r := by rw [hZeroF2R]; exact hr
+  have h0LeMin : _root_.F2R zeroFloat ≤ _root_.F2R min := hMax zeroFloat hZeroBounded h0LeR
+  rw [hZeroF2R] at h0LeMin
+  exact h0LeMin
 
 -- Coq: `RleRoundedR0` — under RoundedModeP P, if P r p and 0 ≤ r then 0 ≤ F2R p
 noncomputable def RleRoundedR0_check {beta : Int}
