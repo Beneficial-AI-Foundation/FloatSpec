@@ -8061,10 +8061,30 @@ noncomputable def Rle_Fexp_eq_Zle_check {beta : Int}
 
 theorem Rle_Fexp_eq_Zle {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜_root_.F2R x ≤ _root_.F2R y ∧ x.Fexp = y.Fexp⌝⦄
+    ⦃⌜_root_.F2R x ≤ _root_.F2R y ∧ x.Fexp = y.Fexp ∧ (1 : Int) < beta⌝⦄
     (pure (Rle_Fexp_eq_Zle_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum ≤ y.Fnum⌝⦄ := by
-  sorry
+  intro ⟨hle, hexp, hβ⟩
+  simp only [wp, PostCond.noThrow, pure, Rle_Fexp_eq_Zle_check, PredTrans.pure_apply, Id.run,
+    ULift.up_down]
+  show x.Fnum ≤ y.Fnum
+  -- F2R x = x.Fnum * β^(x.Fexp), F2R y = y.Fnum * β^(y.Fexp)
+  -- Since x.Fexp = y.Fexp, we have x.Fnum * β^e ≤ y.Fnum * β^e
+  -- β > 0 (from 1 < beta), so β^e > 0, and we can cancel it
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) := by
+    have : (0 : Int) < beta := lt_trans (by norm_num : (0 : Int) < 1) hβ
+    exact_mod_cast this
+  have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ x.Fexp := zpow_pos hbeta_pos x.Fexp
+  -- From F2R x ≤ F2R y: x.Fnum * β^(x.Fexp) ≤ y.Fnum * β^(y.Fexp)
+  -- Rewrite using x.Fexp = y.Fexp
+  have hle' : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp ≤ (y.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp := by
+    have := hle
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R] at this
+    rwa [← hexp] at this
+  -- Cancel β^(x.Fexp) > 0
+  have hle_cast : (x.Fnum : ℝ) ≤ (y.Fnum : ℝ) :=
+    le_of_mul_le_mul_of_pos_right hle' hpow_pos
+  exact_mod_cast hle_cast
 
 -- Coq: `powerRZ_O` — e^0 = 1 (integer exponent)
 noncomputable def powerRZ_O_check (e : ℝ) : Unit :=
