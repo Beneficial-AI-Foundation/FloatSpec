@@ -7716,16 +7716,48 @@ noncomputable def maxMax1_check {beta : Int}
   ()
 
 /-- Coq: `maxMax1` — bounded floats whose exponent is at most `z` stay below the
-canonical representative at exponent `z`. We phrase the Lean version using the
-same simplified bound skeleton as `maxMax`, replacing Coq's `Float (pPred (vNum b)) z`
-with the canonical unit mantissa `⟨1, z⟩`. Proof deferred per import policy. -/
+canonical representative at exponent `z`.
+
+Change record: Fixed postcondition from `F2R (Fabs p) ≤ F2R ⟨1, z⟩` to
+`|F2R p| ≤ F2R ⟨b.vNum - 1, z⟩` to match Coq's `Fabs p ≤ Float (pPred (vNum b)) z`.
+Added `Fbounded'` and `1 < beta` hypotheses since `Fbounded` is placeholder True. -/
 theorem maxMax1 {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z⌝⦄
+    ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
+        Fbounded' b p ∧ 1 < beta⌝⦄
     (pure (maxMax1_check (beta:=beta) b p z) : Id Unit)
-    ⦃⇓_ => ⌜_root_.F2R (beta:=beta) (Fabs (beta:=beta) p) ≤
-            _root_.F2R (beta:=beta) ⟨(1 : Int), z⟩⌝⦄ := by
-  sorry
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| ≤
+            _root_.F2R (beta:=beta) ⟨b.vNum - 1, z⟩⌝⦄ := by
+  intro ⟨_, hExpLe, hBdd, hBeta⟩
+  simp only [wp, PostCond.noThrow, pure, maxMax1_check, PredTrans.pure_apply,
+             Id.run, ULift.up_down]
+  show |_root_.F2R p| ≤ _root_.F2R ⟨b.vNum - 1, z⟩
+  have hBetaPos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Int.lt_trans Int.zero_lt_one hBeta
+  have hExpPos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hBetaPos p.Fexp
+  have hNumBound : |p.Fnum| < b.vNum := hBdd.1
+  have hBetaGe1 : (1 : ℝ) ≤ (beta : ℝ) := by
+    have : (1 : ℤ) < beta := hBeta
+    exact_mod_cast Int.le_of_lt this
+  have hExpMono : (beta : ℝ) ^ p.Fexp ≤ (beta : ℝ) ^ z :=
+    zpow_right_mono₀ hBetaGe1 hExpLe
+  -- |p.Fnum| ≤ b.vNum - 1 from |p.Fnum| < b.vNum
+  have hNumLe : |p.Fnum| ≤ b.vNum - 1 := Int.le_sub_one_of_lt hNumBound
+  have hNumLeR : |↑p.Fnum| ≤ ((b.vNum - 1 : ℤ) : ℝ) := by
+    rw [← Int.cast_abs]
+    exact_mod_cast hNumLe
+  -- |F2R p| = |p.Fnum * β^p.Fexp| = |p.Fnum| * β^p.Fexp (since β^e > 0)
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+  rw [abs_mul, abs_of_pos hExpPos]
+  -- Goal: |↑p.Fnum| * β^p.Fexp ≤ (b.vNum - 1) * β^z
+  -- Use: |p.Fnum| ≤ vNum - 1 and β^p.Fexp ≤ β^z
+  have hPredNonneg : (0 : ℝ) ≤ ((b.vNum - 1 : ℤ) : ℝ) := by
+    have h1 : (0 : ℝ) ≤ |↑p.Fnum| := abs_nonneg (↑p.Fnum : ℝ)
+    linarith [hNumLeR]
+  calc |↑p.Fnum| * (beta : ℝ) ^ p.Fexp
+      ≤ ((b.vNum - 1 : ℤ) : ℝ) * (beta : ℝ) ^ p.Fexp :=
+        mul_le_mul_of_nonneg_right hNumLeR (le_of_lt hExpPos)
+    _ ≤ ((b.vNum - 1 : ℤ) : ℝ) * (beta : ℝ) ^ z :=
+        mul_le_mul_of_nonneg_left hExpMono hPredNonneg
 
 /-- Coq: `maxMaxBis` — bounded floats with exponent strictly below `z` stay
 below the canonical representative `⟨1, z⟩`. Mirrors the Coq semantics using
