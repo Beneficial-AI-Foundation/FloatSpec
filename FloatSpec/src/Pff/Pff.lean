@@ -604,6 +604,18 @@ structure Fbound_skel where
   dExp : Int := 0
   vNum : Int := 1
 
+-- Coq-style boundedness predicate (placeholder for type compatibility)
+def Fbounded {beta : Int}
+    (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+
+-- Proper Coq-matching boundedness predicate for canonical forms
+-- Coq: Fbounded b d := (Z.abs (Fnum d) < Zpos (vNum b))%Z /\ (- dExp b <= Fexp d)%Z
+def Fbounded' {beta : Int}
+    (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  |f.Fnum| < bo.vNum ∧ -bo.dExp ≤ f.Fexp
+
 def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
   fun _ _ => True
 
@@ -625,18 +637,6 @@ def isMax' {beta : Int} (b : Fbound_skel) (radix : Int) :
   fun r max => Fbounded' b max ∧
     (r ≤ _root_.F2R max) ∧
     (∀ f : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' b f → r ≤ _root_.F2R f → _root_.F2R max ≤ _root_.F2R f)
-
--- Coq-style boundedness predicate (placeholder for type compatibility)
-def Fbounded {beta : Int}
-    (bo : Fbound_skel)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
-
--- Proper Coq-matching boundedness predicate for canonical forms
--- Coq: Fbounded b d := (Z.abs (Fnum d) < Zpos (vNum b))%Z /\ (- dExp b <= Fexp d)%Z
-def Fbounded' {beta : Int}
-    (bo : Fbound_skel)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
-  |f.Fnum| < bo.vNum ∧ -bo.dExp ≤ f.Fexp
 
 -- ---------------------------------------------------------------------------
 -- Float-specific rounding properties (matching Coq Pff semantics)
@@ -7556,15 +7556,32 @@ theorem MinUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
     exact hGLBp q hBq hLeq
 
 -- Coq: `MaxUniqueP` — uniqueness for isMax
-noncomputable def MaxUniqueP_check {α : Type}
+-- Note: Since isMax is a placeholder (= True), we add explicit isMax' hypotheses
+-- matching Coq's real isMax definition, and conclude F2R equality (matching Coq's :>R).
+noncomputable def MaxUniqueP_check {beta : Int}
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
-theorem MaxUniqueP {α : Type} (b : Fbound_skel) (radix : Int) :
+/-- Coq: `MaxUniqueP` — if two floats are both `isMax'` for the same real,
+    their real values are equal. This is the core uniqueness lemma for isMax.
+    Since `isMax` is placeholder `True`, we use `isMax'` (the real Coq definition)
+    in explicit hypotheses, following the MinUniqueP pattern. -/
+theorem MaxUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
-    (pure (MaxUniqueP_check (α:=α) b radix) : Id Unit)
-    ⦃⇓_ => ⌜UniqueP (isMax (α:=α) b radix)⌝⦄ := by
-  sorry
+    (pure (MaxUniqueP_check (beta:=beta) b radix) : Id Unit)
+    ⦃⇓_ => ⌜∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+        isMax' b radix r p → isMax' b radix r q →
+        _root_.F2R p = _root_.F2R q⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, MaxUniqueP_check, PredTrans.pure_apply]
+  show ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
+      isMax' b radix r p → isMax' b radix r q → _root_.F2R p = _root_.F2R q
+  intro r p q ⟨hBp, hLep, hLUBp⟩ ⟨hBq, hLeq, hLUBq⟩
+  apply le_antisymm
+  · -- F2R p ≤ F2R q: by p's LUB property, since q is bounded and r ≤ F2R q
+    exact hLUBp q hBq hLeq
+  · -- F2R q ≤ F2R p: by q's LUB property, since p is bounded and r ≤ F2R p
+    exact hLUBq p hBp hLep
 
 -- (Next missing theorems will be added one-by-one after validation.)
 
