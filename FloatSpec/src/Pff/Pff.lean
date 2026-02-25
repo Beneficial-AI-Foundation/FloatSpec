@@ -8310,10 +8310,14 @@ noncomputable def Rlt_monotony_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : U
   ()
 
 theorem Rlt_monotony_exp (radix : ℝ) (x y : ℝ) (z : Int) :
-    ⦃⌜x < y⌝⦄
+    ⦃⌜0 < radix ∧ x < y⌝⦄
     (pure (Rlt_monotony_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x * radix ^ z < y * radix ^ z⌝⦄ := by
-  sorry
+  intro ⟨hradix, hxy⟩
+  simp only [wp, PostCond.noThrow, pure, Rlt_monotony_exp_check, PredTrans.pure_apply, Id.run,
+    ULift.up_down]
+  show x * radix ^ z < y * radix ^ z
+  exact mul_lt_mul_of_pos_right hxy (zpow_pos hradix z)
 
 -- Coq: `Rle_monotone_exp` — multiply preserves ≤ with positive factor (power)
 noncomputable def Rle_monotone_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Unit :=
