@@ -1,9 +1,6 @@
 /-
-FloatSpec documentation extensions.
+FloatSpec documentation extensions (stubbed).
 
-Import this module in files with Verso/Lean docstrings that use FloatSpec's
-custom documentation roles (e.g. `{coq}` for Flocq references).
+Verso doc-role infrastructure has been removed in this fork.
+This file is kept as a stub so existing `import FloatSpec.VersoExt` lines compile.
 -/
-
-import FloatSpecRoles
-

@@ -3168,7 +3168,7 @@ private theorem Zdigits_aux_bounds
         rw [htoNat_succ, pow_succ, mul_comm]
       have hlow' : beta ^ ((d + 1 - 1).natAbs) ≤ |n| := by
         -- Need β^d ≤ |n|, we have ¬(|n| < pow) i.e. pow ≤ |n|
-        have hge : pow ≤ (n.natAbs : Int) := le_of_not_lt hcond
+        have hge : pow ≤ (n.natAbs : Int) := not_lt.mp hcond
         have hge_int : pow ≤ |n| := by
           rw [Int.abs_eq_natAbs]
           exact hge

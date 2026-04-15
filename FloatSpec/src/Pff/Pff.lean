@@ -11,6 +11,10 @@ import FloatSpec.src.SimprocWP
 open Real
 open Std.Do
 
+@[simp] private theorem PredTrans.pure_apply
+    {ps : PostShape} {α : Type*} (a : α) (Q : PostCond α ps) :
+    (PredTrans.pure a).apply Q = Q.1 a := rfl
+
 -- Compatibility definitions for Pff legacy support
 
 -- Even number properties
@@ -1978,7 +1982,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
   simp only [wp, PostCond.noThrow, pure, FcanonicPosFexpRlt_check, ULift.down_up]
   -- Prove by contradiction: assume F2R y ≤ F2R x
   by_contra h_not_lt
-  have h_not_lt' : _root_.F2R (beta:=beta) y ≤ _root_.F2R (beta:=beta) x := le_of_not_lt h_not_lt
+  have h_not_lt' : _root_.F2R (beta:=beta) y ≤ _root_.F2R (beta:=beta) x := not_lt.mp h_not_lt
   -- Case split: F2R y < F2R x or F2R y = F2R x
   rcases lt_or_eq_of_le h_not_lt' with h_lt | h_eq
   · -- Case: F2R y < F2R x (with F2R y ≥ 0)
@@ -2538,7 +2542,7 @@ theorem FcanonicNegFexpRlt {beta : Int}
   simp only [wp, PostCond.noThrow, pure, FcanonicNegFexpRlt_check, ULift.down_up]
   -- Prove by contradiction: assume F2R x ≤ F2R y
   by_contra h_not_lt
-  have h_not_lt' : _root_.F2R (beta:=beta) x ≤ _root_.F2R (beta:=beta) y := le_of_not_lt h_not_lt
+  have h_not_lt' : _root_.F2R (beta:=beta) x ≤ _root_.F2R (beta:=beta) y := not_lt.mp h_not_lt
   -- Case split: F2R x < F2R y or F2R x = F2R y
   rcases lt_or_eq_of_le h_not_lt' with h_lt | h_eq
   · -- Case: F2R x < F2R y (with both ≤ 0)
@@ -3035,7 +3039,7 @@ theorem FcanonicUnique {beta : Int}
     -- First, show p.Fexp = q.Fexp
     have hexp_eq : p.Fexp = q.Fexp := by
       by_contra hne
-      rcases Ne.lt_or_lt hne with hlt | hgt
+      rcases Ne.lt_or_gt hne with hlt | hgt
       · -- p.Fexp < q.Fexp
         -- From heqF2R: p.Fnum * beta^p.Fexp = q.Fnum * beta^q.Fexp
         -- Rearranging: p.Fnum = q.Fnum * beta^(q.Fexp - p.Fexp)
@@ -10954,7 +10958,7 @@ theorem Zlt_Zabs_Zpred (z1 z2 : Int) :
   simp only [Int.succ, Int.pred] at *
   have hab := neg_abs_le z1
   have hab2 := le_abs_self z1
-  rcases le_or_lt 0 (z1 + 1) with h | h
+  rcases le_or_gt 0 (z1 + 1) with h | h
   · rw [abs_of_nonneg h]; omega
   · rw [abs_of_neg h]; omega
 
@@ -11002,7 +11006,7 @@ theorem Zabs_intro (P : Int → Prop) (z : Int) :
   simp only [wp, PostCond.noThrow, pure, Zabs_intro_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show P |z|
-  rcases le_or_lt 0 z with hz | hz
+  rcases le_or_gt 0 z with hz | hz
   · rwa [abs_of_nonneg hz]
   · rwa [abs_of_neg hz]
 
@@ -11021,7 +11025,7 @@ theorem Zpred_Zle_Zabs_intro (z1 z2 : Int) :
   have h1' : -Int.pred z2 ≤ z1 := h1
   have h2' : z1 ≤ Int.pred z2 := h2
   simp only [Int.pred] at h1' h2'
-  rcases le_or_lt 0 z1 with hz | hz
+  rcases le_or_gt 0 z1 with hz | hz
   · rw [abs_of_nonneg hz]; omega
   · rw [abs_of_neg hz]; omega
 
@@ -11039,7 +11043,7 @@ theorem Zlt_Zabs_intro (z1 z2 : Int) :
   show |z1| < z2
   have h1' : -z2 < z1 := h1
   have h2' : z1 < z2 := h2
-  rcases le_or_lt 0 z1 with hz | hz
+  rcases le_or_gt 0 z1 with hz | hz
   · rw [abs_of_nonneg hz]; omega
   · rw [abs_of_neg hz]; omega
 

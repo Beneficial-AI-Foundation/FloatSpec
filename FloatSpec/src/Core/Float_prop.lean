@@ -110,7 +110,7 @@ Theorem Rcompare_F2R : forall e m1 m2 : Z,
         simp [hltR, heqR, hsign]
       · -- Then m2 < m1, so f2 < f1
         have hne : m2 ≠ m1 := fun h => heq h.symm
-        have hgt : m2 < m1 := lt_of_le_of_ne (le_of_not_lt hlt) hne
+        have hgt : m2 < m1 := lt_of_le_of_ne (not_lt.mp hlt) hne
         have hgtR : (m2 : ℝ) * (beta : ℝ) ^ e < (m1 : ℝ) * (beta : ℝ) ^ e :=
           mul_lt_mul_of_pos_right (by exact_mod_cast hgt) hp_pos
         have hsign : Int.sign (m1 - m2) = 1 := Int.sign_eq_one_of_pos (sub_pos.mpr hgt)
