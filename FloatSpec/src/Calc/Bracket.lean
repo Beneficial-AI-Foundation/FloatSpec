@@ -1091,7 +1091,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
           classical
           simpa [compare, hx_lt_mid_avg]
         simpa [hmid_eq] using this
-    · have hgt_or_eq : nb_steps ≤ 2 * k := le_of_not_lt hlt
+    · have hgt_or_eq : nb_steps ≤ 2 * k := not_lt.mp hlt
       by_cases heq : 2 * k = nb_steps
       · -- Middle case: result depends on local exactness
         simp [hkz, hlt, heq]

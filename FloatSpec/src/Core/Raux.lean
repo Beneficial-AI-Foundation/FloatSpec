@@ -4098,16 +4098,9 @@ theorem mag_mult (beta : Int) (x y : ℝ)
     simpa [hLxy_eq] using hLxy_abs
   -- Prove the inequality in terms of Lx/Ly, then rewrite back.
   have h_goal :
-      (Int.floor (Lx + Ly) + 1 ≤ Int.floor Lx + 1 + (Int.floor Ly + 1)) ∧
-        (Int.floor Lx + 1 + (Int.floor Ly + 1) - 1 ≤ Int.floor (Lx + Ly) + 1) := by
-    constructor
-    · have h_floor_add : Int.floor (Lx + Ly) ≤ Int.floor Lx + Int.floor Ly + 1 := by
-        have := Int.le_floor_add_floor Lx Ly
-        linarith
-      linarith
-    · have h_add_floor : Int.floor Lx + Int.floor Ly ≤ Int.floor (Lx + Ly) :=
-        Int.le_floor_add Lx Ly
-      linarith
+      (Int.floor (Lx + Ly) < 1 + (1 + (Int.floor Lx + Int.floor Ly))) ∧
+        (Int.floor Lx + Int.floor Ly ≤ Int.floor (Lx + Ly)) := by
+    exact ⟨by linarith [Int.le_floor_add_floor Lx Ly], Int.le_floor_add Lx Ly⟩
   simpa [hlog_mul_abs, hLx', hLy', add_assoc, add_left_comm, add_comm]
     using h_goal
 
@@ -4780,16 +4773,13 @@ theorem mag_div (beta : Int) (x y : ℝ)
     have hcast : Lx - Ly < ((Int.floor Lx - Int.floor Ly + 1 : ℤ) : ℝ) := by
       simp only [Int.cast_sub, Int.cast_add, Int.cast_one]
       linarith
-    have := Int.floor_le_sub_one_iff.mpr hcast
+    have := Int.floor_lt.mpr hcast
     linarith
 
-  -- Prove the inequality in terms of Lx/Ly, then rewrite back.
   have h_goal :
-      (Int.floor Lx + 1 - (Int.floor Ly + 1) ≤ Int.floor (Lx - Ly) + 1) ∧
-        (Int.floor (Lx - Ly) + 1 ≤ Int.floor Lx + 1 - (Int.floor Ly + 1) + 1) := by
-    constructor
-    · linarith [hfloor_sub_lb]
-    · linarith [hfloor_sub_ub]
+      (Int.floor Lx < 1 + (1 + (Int.floor Ly + Int.floor (Lx - Ly)))) ∧
+        (Int.floor Ly + Int.floor (Lx - Ly) ≤ Int.floor Lx) := by
+    exact ⟨by linarith [hfloor_sub_lb], by linarith [hfloor_sub_ub]⟩
   have hlog_div_abs : Real.log (x / y) / Real.log (beta : ℝ) = Lx - Ly := by
     simpa [hLxy_eq] using hLxy'.symm
   simpa [hlog_div_abs, hLx', hLy', add_assoc, add_left_comm, add_comm, sub_eq_add_neg]

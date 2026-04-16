@@ -13,7 +13,6 @@ package FloatSpec where
     ⟨`linter.unusedSimpArgs, false⟩,
     -- Allow work-in-progress files that use `sorry` to compile
     ⟨`warningAsError, false⟩,
-    ⟨`doc.verso, true⟩,
     -- Prefer grind over omega (weak. prefix allows setting before linter is loaded)
     ⟨`weak.linter.preferGrind, true⟩,
     -- Prefer simp over simp only for maintainability
@@ -26,22 +25,13 @@ package FloatSpec where
   -- Cloud release configuration for pre-built artifacts
   releaseRepo := "https://github.com/Beneficial-AI-Foundation/FloatSpec"
   buildArchive := "FloatSpec-{OS}-{ARCH}.tar.gz"
-  preferReleaseBuild := true
+  preferReleaseBuild := false
 
-/-! Dependencies (order matters for compilation) -/
+/-! Dependencies -/
 
--- Used for documentation generation
-require verso from git "https://github.com/leanprover/verso" @ "v4.27.0-rc1"
+require cslib from git "https://github.com/leanprover/cslib" @ "v4.29.0"
 
-require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.27.0-rc1"
-
--- Coq/Flocq documentation roles for literate programming
-require VersoCoq from git "https://github.com/alok/VersoCoq" @ "main"
-
--- Canonical proof search tactic
-require Canonical from git "https://github.com/chasenorman/CanonicalLean" @ "master"
-
-require cslib from git "https://github.com/leanprover/cslib" @ "main"
+require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.29.0"
 
 /-- Linters for FloatSpec (prefer grind over omega, etc).
     Stdlib only, provides linter.preferGrind option.
@@ -49,7 +39,7 @@ require cslib from git "https://github.com/leanprover/cslib" @ "main"
 lean_lib FloatSpecLinter where
   globs := #[.andSubmodules `FloatSpec.Linter]
 
-/-- Verso roles - imports VersoCoq.Roles to register {coq} doc role. -/
+/-- Stub for doc-role registration (Verso/VersoCoq removed in this fork). -/
 lean_lib FloatSpecRoles where
   globs := #[.one `FloatSpecRoles]
 

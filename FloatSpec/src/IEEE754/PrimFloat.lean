@@ -1043,8 +1043,8 @@ theorem Bleb_correct (prec emax : Int)
       · by_cases heq : B2R x = B2R y
         · simp [hlt, heq]
         · -- x ≤ y but not x < y and not x = y is a contradiction
-          have hgt : B2R y < B2R x := lt_of_le_of_ne (le_of_not_lt hlt) (Ne.symm heq)
-          exact absurd hgt (not_lt_of_le hle)
+          have hgt : B2R y < B2R x := lt_of_le_of_ne (not_lt.mp hlt) (Ne.symm heq)
+          exact absurd hgt (not_lt_of_ge hle)
   -- Convert the iff to decide equality
   have hdec : decide (FloatSpec.Core.Raux.Rcompare (B2R x) (B2R y) ≠ 1) =
               decide (B2R x ≤ B2R y) := by

@@ -5809,7 +5809,7 @@ theorem round_N_le_midp
             -- succ = β^e is in format when fexp(e+1) ≤ e
             have hvalid_exp := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
             -- Case split on fexp e < e or e ≤ fexp e
-            rcases lt_or_le (fexp e) e with hfexp_lt | hfexp_ge
+            rcases lt_or_ge (fexp e) e with hfexp_lt | hfexp_ge
             · -- fexp e < e: derive fexp(e+1) ≤ e from Valid_exp
               have hfexp_e1_le := hvalid_exp.1 hfexp_lt
               have hFbpow := FloatSpec.Core.Generic_fmt.generic_format_bpow

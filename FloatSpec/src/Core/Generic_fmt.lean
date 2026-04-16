@@ -652,20 +652,17 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
         (beta : ℝ) ^ (e - fexp (e + 1)) := by
     simpa [zpow_neg, Int.sub_eq_add_neg] using
       (zpow_add₀ hbne e (-(fexp (e + 1)))).symm
-  rw [hmul_pow]
+  simp only [hmul_pow]
   -- β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1))
   -- Ztrunc(β^(e - fexp(e+1))) = β^(e - fexp(e+1)) since it's a positive integer
   have hsm_int : (beta : ℝ) ^ (e - fexp (e + 1)) = ((beta : Int) ^ k : ℝ) := by
     rw [hk_eq, zpow_natCast, ← Int.cast_pow]
-  rw [hsm_int]
+  simp only [hsm_int]
   -- Ztrunc of an integer is itself
   have htrunc : Ztrunc ((beta : ℝ) ^ k) = (beta ^ k : Int) := by
     simpa [Int.cast_pow] using (Ztrunc_intCast (beta ^ k))
-  simp [FloatSpec.Core.Defs.F2R, Id.run, pure, htrunc]
-  -- Goal: β^e = (beta^k : ℝ) * β^(fexp(e+1))
-  rw [← hsm_int]
-  -- β^e = β^(e - fexp(e+1)) * β^(fexp(e+1)) = β^e
-  rw [zpow_sub₀ hbne]
+  change (beta : ℝ) ^ e = ↑(Ztrunc ((beta : ℝ) ^ k)) * (beta : ℝ) ^ fexp (e + 1)
+  rw [htrunc, Int.cast_pow, ← hsm_int, zpow_sub₀ hbne]
   simp [div_eq_mul_inv, inv_mul_cancel_right₀ (zpow_ne_zero _ hbne)]
 
 /--
@@ -685,7 +682,7 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
     · -- Large regime: fexp(e) < e implies fexp(e+1) ≤ e
       exact hpair.left hlt
     · -- Small regime: fexp(e) = e (since fexp(e) ≤ e and ¬(fexp(e) < e))
-      have heq : fexp e = e := le_antisymm hfe (le_of_not_lt hlt)
+      have heq : fexp e = e := le_antisymm hfe (not_lt.mp hlt)
       have hsmall : e ≤ fexp e := by grind
       have hbound := (hpair.right hsmall).left
       -- fexp(fexp(e) + 1) ≤ fexp(e), i.e., fexp(e+1) ≤ e
@@ -898,19 +895,15 @@ theorem scaled_mantissa_F2R_canonical
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
-  -- Unfold definitions
   unfold scaled_mantissa cexp
   simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind]
-  -- canonical means f.Fexp = fexp(mag(F2R f))
   unfold canonical at hcan
-  have hcan' : fexp (mag beta (F2R f)) = f.Fexp := by
-    simpa using hcan.symm
+  have hcan' : fexp (mag beta (F2R f)) = f.Fexp := by simpa using hcan.symm
   rw [hcan']
-  -- Goal: F2R(f) * β^(-f.Fexp) = f.Fnum
   unfold FloatSpec.Core.Defs.F2R
-  -- (f.Fnum * β^f.Fexp) * β^(-f.Fexp) = f.Fnum * (β^f.Fexp * β^(-f.Fexp)) = f.Fnum * 1 = f.Fnum
   rw [mul_assoc, zpow_neg, mul_inv_cancel₀ (zpow_ne_zero _ hbne), mul_one]
-  simp
+  change (↑f.Fnum : ℝ) = ↑f.Fnum
+  rfl
 
 /-- Specification: Scaled mantissa of absolute value
 
@@ -922,18 +915,14 @@ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
     (pure (scaled_mantissa beta fexp (abs x)) : Id ℝ)
     ⦃⇓result => ⌜result = abs (scaled_mantissa beta fexp x)⌝⦄ := by
   intro hβ
-  -- mag(|x|) = mag(x) since mag uses |·| in its definition: ||x|| = |x|
-  -- |x| * β^(-e) = |x * β^(-e)| since β^(-e) > 0
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-  -- Unfold definitions
   unfold scaled_mantissa cexp
   simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind, reduceMagAbs]
-  -- Now goal: |x| * β^(-e) = |x * β^(-e)|
-  set e := fexp (mag beta x) with he
-  have hpow_pos : 0 < (beta : ℝ) ^ (-e) := zpow_pos hbposR _
+  have hpow_pos : 0 < (beta : ℝ) ^ (-fexp (mag beta x)) := zpow_pos hbposR _
   rw [abs_mul, abs_of_pos hpow_pos]
-  simp
+  change |x| * (beta : ℝ) ^ (-fexp (mag beta x)) = |x| * (beta : ℝ) ^ (-fexp (mag beta x))
+  rfl
 -- Section: Generic format closure properties
 
 /-- Specification: Generic format opposite
@@ -2009,10 +1998,14 @@ theorem Znearest_ge_floor (choice : Int → Bool) (x : ℝ) :
       Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
         Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := hz
   rcases hz with hfloor | hceil
-  · simpa [hfloor]
+  · simp only [hfloor] at *
+    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zfloor x
+    exact le_refl _
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
-    simpa [hceil] using hle
+    simp only [hceil] at *
+    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zceil x
+    exact hle
 
 /-- Check pair for Znearest_le_ceil: returns (Znearest x, ⌈x⌉). -/
 noncomputable def Znearest_le_ceil_check (choice : Int → Bool) (x : ℝ) : (Int × Int) :=
@@ -2039,8 +2032,12 @@ theorem Znearest_le_ceil (choice : Int → Bool) (x : ℝ) :
   rcases hz with hfloor | hceil
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
-    simpa [hfloor] using hle
-  · simpa [hceil]
+    simp only [hfloor] at *
+    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zceil x
+    exact hle
+  · simp only [hceil] at *
+    change FloatSpec.Core.Raux.Zceil x ≤ FloatSpec.Core.Raux.Zceil x
+    exact le_refl _
 
 /- Additional Znearest lemmas from Coq (placeholders, to be filled iteratively):
    Znearest_le_ceil, Znearest_N_strict, Znearest_half, Znearest_imp, Znearest_opp.
@@ -2114,7 +2111,7 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
       -- From ¬(x - f < 1/2), get (1/2) ≤ (x - f); combined with ≠ yields strict
       have hxge : (2⁻¹) ≤ x - (f : ℝ) := by
         -- rewrite 2⁻¹ as (1/2) to use hlt
-        simpa [hhalf_id.symm] using (le_of_not_lt hlt)
+        simpa [hhalf_id.symm] using (not_lt.mp hlt)
       -- turn ≠ into ≠ after rewriting 2⁻¹ ↔ 1/2
       have hx_ne' : x - (f : ℝ) ≠ (2⁻¹) := by simpa [hhalf_id.symm] using hx_ne
       exact lt_of_le_of_ne hxge (Ne.symm hx_ne')
@@ -3854,7 +3851,7 @@ theorem round_NA_pt
         -- First, f2 cannot be on the right of x (would give distance ≥ b > a)
         have hf2_le_x : f2 ≤ x := by
           by_contra hxle
-          have hx_le_f2 : x ≤ f2 := le_of_not_le hxle
+          have hx_le_f2 : x ≤ f2 := (not_le.mp hxle).le
           -- From UP minimality, xup ≤ f2, hence |x - f2| ≥ b
           have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hx_le_f2
           have hge_b : |x - f2| ≥ b := by
@@ -3922,7 +3919,7 @@ theorem round_NA_pt
             -- f2 cannot be on the left of x (distance ≥ a > b)
             have hx_le_f2 : x ≤ f2 := by
               by_contra h_not
-              have hf2_le_x : f2 ≤ x := le_of_not_le h_not
+              have hf2_le_x : f2 ≤ x := (not_le.mp h_not).le
               -- From DN maximality, f2 ≤ xdn ⇒ |x - f2| ≥ a
               have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hf2_le_x
               have hge_a : |x - f2| ≥ a := by
@@ -4757,7 +4754,7 @@ theorem lt_cexp_pos_ax
     by_contra hnot
     have hle : (FloatSpec.Core.Raux.mag beta y) ≤ (FloatSpec.Core.Raux.mag beta x) := le_of_not_gt hnot
     have hmono := Monotone_exp.mono (fexp := fexp) hle
-    exact (not_lt_of_le hmono) hfe
+    exact (not_lt.mpr hmono) hfe
   -- Translate mag inequality on positive y to x < y
   exact lt_of_mag_lt_pos (beta := beta) (x := x) (y := y) hβ hy hmag_lt
 
