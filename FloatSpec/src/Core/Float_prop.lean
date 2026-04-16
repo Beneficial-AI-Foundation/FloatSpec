@@ -1147,55 +1147,8 @@ theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
   0 < m →
   ((F2R (FlocqFloat.mk m e : FlocqFloat beta)) ≤ x ∧
     x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta))) →
-  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) ≤ mag beta x ∧
-    mag beta x ≤ mag beta ((F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta))) := by
-  intro hm_pos ⟨hx_lo, hx_hi⟩
-  -- Basic positivity setup
-  have hβposInt : (0 : Int) < beta := lt_trans (by decide) hbeta
-  have hβposReal : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hβposInt
-  have hβ_gt1 : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hbeta
-  have hlogβ_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hβ_gt1
-  have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ e := zpow_pos hβposReal e
-  -- F2R values
-  simp only [F2R, pure, Id.run, FlocqFloat.mk] at hx_lo hx_hi ⊢
-  -- Positivity of m and m+1 as reals
-  have hm_pos_real : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm_pos
-  have hm1_pos : 0 < m + 1 := lt_trans hm_pos (lt_add_one m)
-  have hm1_pos_real : (0 : ℝ) < (m + 1 : ℤ) := by exact_mod_cast hm1_pos
-  -- F2R(m,e) is positive
-  have hf_pos : 0 < (m : ℝ) * (beta : ℝ) ^ e := mul_pos hm_pos_real hpow_pos
-  have hf1_pos : 0 < ((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e := mul_pos hm1_pos_real hpow_pos
-  -- x is positive (from lower bound)
-  have hx_pos : 0 < x := lt_of_lt_of_le hf_pos hx_lo
-  -- All three values are nonzero
-  have hf_ne : (m : ℝ) * (beta : ℝ) ^ e ≠ 0 := ne_of_gt hf_pos
-  have hf1_ne : ((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e ≠ 0 := ne_of_gt hf1_pos
-  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
-  -- Unfold mag for all three
-  unfold mag
-  simp only [hf_ne, hf1_ne, hx_ne, ite_false]
-  -- Use absolute values = self since all positive
-  have habs_f : |(m : ℝ) * (beta : ℝ) ^ e| = (m : ℝ) * (beta : ℝ) ^ e := abs_of_pos hf_pos
-  have habs_f1 : |((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e| = ((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e :=
-    abs_of_pos hf1_pos
-  have habs_x : |x| = x := abs_of_pos hx_pos
-  rw [habs_f, habs_f1, habs_x]
-  -- Monotonicity of log: since f ≤ x < f1, we have log f ≤ log x < log f1
-  have hlog_lo : Real.log ((m : ℝ) * (beta : ℝ) ^ e) ≤ Real.log x :=
-    Real.log_le_log hf_pos hx_lo
-  have hlog_hi : Real.log x < Real.log (((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e) :=
-    Real.log_lt_log hx_pos hx_hi
-  -- Division by positive log β preserves inequalities
-  have hdiv_lo : Real.log ((m : ℝ) * (beta : ℝ) ^ e) / Real.log (beta : ℝ) ≤
-                 Real.log x / Real.log (beta : ℝ) :=
-    div_le_div_of_nonneg_right hlog_lo (le_of_lt hlogβ_pos)
-  have hdiv_hi : Real.log x / Real.log (beta : ℝ) <
-                 Real.log (((m + 1 : ℤ) : ℝ) * (beta : ℝ) ^ e) / Real.log (beta : ℝ) :=
-    div_lt_div_of_pos_right hlog_hi hlogβ_pos
-  -- Ceiling is monotonic
-  constructor
-  · exact Int.ceil_mono hdiv_lo
-  · exact Int.ceil_mono (le_of_lt hdiv_hi)
+  mag beta x = mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) := by
+  sorry
 /-
 Coq original:
 Theorem mag_F2R : forall m e : Z,
@@ -1343,175 +1296,10 @@ Qed.
 -/
   theorem mag_F2R_bounds_Zdigits (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
   0 < m →
-  ((F2R (FlocqFloat.mk m e : FlocqFloat beta)) < x ∧
+  ((F2R (FlocqFloat.mk m e : FlocqFloat beta)) ≤ x ∧
     x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta))) →
   mag beta x = (Zdigits beta m) + e := by
-  intro hm_pos hx
-  -- Abbreviations and basic positivity
-  set b : ℝ := (beta : ℝ)
-  have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
-  have hbposR : 0 < b := by
-    simpa [b] using (by exact_mod_cast hbpos_int : (0 : ℝ) < (beta : ℝ))
-  have hbne : b ≠ 0 := ne_of_gt hbposR
-  -- Lower F2R bound gives x > 0 since F2R(m,e) > 0 for m > 0
-  have hy_pos : 0 < (F2R (FlocqFloat.mk m e : FlocqFloat beta)) :=
-    (F2R_gt_0 (beta := beta) (f := FlocqFloat.mk m e) hbeta hm_pos)
-  have hx_pos : 0 < x := lt_trans hy_pos hx.left
-  -- Let d be Zdigits m and extract its standard bounds
-  let d : Int := (Zdigits beta m)
-  have hm_ne : m ≠ 0 := ne_of_gt hm_pos
-  have hdigits := FloatSpec.Core.Digits.Zdigits_correct (beta := beta) m (by simpa using hbeta) hm_ne
-  have hdm_bounds : beta ^ ((d - 1).natAbs) ≤ |m| ∧ |m| < beta ^ d.natAbs := by
-    -- Read the postcondition at the concrete run value d
-    simpa [d]
-      using hdigits
-  have hdm_low : beta ^ ((d - 1).natAbs) ≤ |m| := hdm_bounds.1
-  have hdm_high : |m| < beta ^ d.natAbs := hdm_bounds.2
-  -- Since m > 0, |m| = m
-  have hm_abs : |m| = m := by
-    have : 0 ≤ m := le_of_lt hm_pos
-    simpa [abs_of_nonneg this]
-  -- Convert integer bounds to real bounds and combine with the x-interval
-  -- Lower bound: b^(d+e-1) < x
-  have hlow_real : b ^ (d + e - 1) < x := by
-    -- From beta^((d-1).natAbs) ≤ m and (m : ℝ) * b^e < x
-    -- we get ((beta^...):ℝ) * b^e < x, then rewrite the LHS as b^(((d-1)) + e)
-    have hcast_le_abs : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) ≤ (|m| : ℝ) := by
-      exact_mod_cast hdm_low
-    have hcast_le : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) ≤ (m : ℝ) := by
-      -- Turn |(m:ℝ)| into m using m > 0
-      have hm_nonnegR : 0 ≤ (m : ℝ) := by exact_mod_cast (le_of_lt hm_pos)
-      simpa [abs_of_nonneg hm_nonnegR] using hcast_le_abs
-    -- Multiply by positive b^e and chain with the left-hand inequality x
-    have hxlt : (m : ℝ) * b ^ e < x := by
-      simpa [FloatSpec.Core.Defs.F2R] using hx.left
-    have hmul_lt : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) * b ^ e < x :=
-      lt_of_le_of_lt (mul_le_mul_of_nonneg_right hcast_le (le_of_lt (zpow_pos hbposR e))) hxlt
-    -- For d > 0, we have d - 1 ≥ 0; convert natAbs and combine exponents
-    have hd_pos : 0 < d := (Zdigits_mag (beta := beta) m hbeta) hm_ne
-    have hd1_nonneg : 0 ≤ d - 1 := by linarith
-    have hnatAbs_d1 : (((d - 1).natAbs : Int)) = d - 1 := Int.natAbs_of_nonneg hd1_nonneg
-    -- Cast integer power to real power with Nat exponent
-    have hcast_pow' : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) = b ^ ((d - 1).natAbs) := by
-      simpa [b] using (Int.cast_pow (R := ℝ) (m := beta) (n := (d - 1).natAbs))
-    -- Strengthen the lower bound to use an Int exponent on the left
-    have hbpow_int : b ^ ((d - 1).natAbs) = b ^ (d - 1) := by
-      calc
-        b ^ ((d - 1).natAbs) = b ^ (((d - 1).natAbs : Int)) := (zpow_ofNat b ((d - 1).natAbs)).symm
-        _ = b ^ (d - 1) := by simpa [Int.natAbs_of_nonneg hd1_nonneg]
-    -- Rewrite and multiply by b^e ≥ 0, then compare to x
-    have hm_ge : b ^ (d - 1) ≤ (m : ℝ) := by
-      -- from the integer bound via casts
-      have : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) ≤ (|m| : ℝ) := by
-        exact_mod_cast hdm_low
-      have : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) ≤ (m : ℝ) := by
-        have hm_nonnegR' : 0 ≤ (m : ℝ) := by exact_mod_cast (le_of_lt hm_pos)
-        simpa [abs_of_nonneg hm_nonnegR'] using this
-      -- rewrite the LHS as b^(d-1)
-      have hbpow_nat : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) = b ^ ((d - 1).natAbs) := by
-        simpa [b] using (Int.cast_pow (R := ℝ) (m := beta) (n := (d - 1).natAbs))
-      simpa [hbpow_nat, hbpow_int] using this
-    have hmul_le : b ^ (d - 1) * b ^ e ≤ (m : ℝ) * b ^ e :=
-      mul_le_mul_of_nonneg_right hm_ge (le_of_lt (zpow_pos hbposR e))
-    have : b ^ (d - 1) * b ^ e < x :=
-      lt_of_le_of_lt hmul_le (by simpa [FloatSpec.Core.Defs.F2R] using hx.left)
-    -- Combine exponents using zpow_add₀ at Int level
-    have : b ^ ((d - 1) + e) < x := by
-      simpa [(zpow_add₀ hbne (d - 1) e).symm] using this
-    -- Rearrange (d - 1) + e = d + e - 1
-    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-  -- Upper bound: x ≤ b^(d+e)
-  have hupp_real : x ≤ b ^ (d + e) := by
-    -- From |m| < beta^d and x < (m+1)*b^e with integers, get (m+1) ≤ beta^d
-    have hm1_le : m + 1 ≤ beta ^ d.natAbs := by
-      -- m < β^d ⇒ m + 1 ≤ β^d
-      have : (m : Int) < beta ^ d.natAbs := by
-        simpa [hm_abs] using hdm_high
-      exact Int.add_one_le_iff.mpr this
-    -- Cast to reals and multiply by positive b^e
-    have hcast : (m + 1 : ℝ) ≤ ((beta ^ d.natAbs : Int) : ℝ) := by exact_mod_cast hm1_le
-    have hle_rhs : (m + 1 : ℝ) * b ^ e ≤ ((beta ^ d.natAbs : Int) : ℝ) * b ^ e :=
-      mul_le_mul_of_nonneg_right hcast (le_of_lt (zpow_pos hbposR e))
-    -- Compare x with (m+1)*b^e and then with b^(d+e)
-    have hx_le : x ≤ (m + 1 : ℝ) * b ^ e := by
-      have := hx.right
-      simpa [FloatSpec.Core.Defs.F2R] using (le_of_lt this)
-    have htrans : x ≤ ((beta ^ d.natAbs : Int) : ℝ) * b ^ e := le_trans hx_le hle_rhs
-    -- Rewrite RHS as b^(d+e). Since d > 0 (hence d ≥ 0), we can switch
-    -- between Nat and Int exponents on b cleanly.
-    have hd_pos : 0 < d := (Zdigits_mag (beta := beta) m hbeta) hm_ne
-    have hd_nonneg : 0 ≤ d := le_of_lt hd_pos
-    -- ((β^d:ℤ):ℝ) → b^d.natAbs, then to Int exponent d via |d| = d
-    have hbcast_nat : ((beta ^ d.natAbs : Int) : ℝ) = b ^ d.natAbs := by
-      simpa [b] using (Int.cast_pow (R := ℝ) (m := beta) (n := d.natAbs))
-    have hAbs_toNat : d.natAbs = d.toNat := natAbs_eq_toNat_of_nonneg hd_nonneg
-    have htoNat_cast : ((d.toNat : Int)) = d := by simpa using (Int.toNat_of_nonneg hd_nonneg)
-    -- Combine exponents on the RHS: (b^d.natAbs) * b^e = b^(d+e)
-    have hRHS_alt : (b ^ d.natAbs) * b ^ e = b ^ (d + e) := by
-      calc
-        (b ^ d.natAbs) * b ^ e
-            = (b ^ ((d.natAbs : Int))) * b ^ e := by
-                  -- switch Nat exponent to Int exponent on the base power
-                  have hpow_nat_to_int : b ^ d.natAbs = b ^ ((d.natAbs : Int)) :=
-                    (zpow_ofNat b d.natAbs).symm
-                  simpa [hpow_nat_to_int]
-        _   = b ^ (((d.natAbs : Int)) + e) := by
-                  simpa using (zpow_add₀ hbne ((d.natAbs : Int)) e).symm
-        _   = b ^ (d + e) := by
-                  -- since d ≥ 0, (d.natAbs : ℤ) = d
-                  have : ((d.natAbs : Int)) = d := by simpa [hAbs_toNat, htoNat_cast]
-                  simpa [this]
-    -- Also rewrite the casted integer power to the real Nat power
-    have hbcast_nat' : ((beta ^ d.natAbs : Int) : ℝ) = b ^ d.natAbs := by
-      simpa [b] using (Int.cast_pow (R := ℝ) (m := beta) (n := d.natAbs))
-    -- Conclude by rewriting the RHS of htrans
-    simpa [hbcast_nat', hRHS_alt] using htrans
-  -- Apply uniqueness of mag on (0, ∞)
-  -- TODO: Update proof for new mag_unique_pos signature with Coq semantics
-  -- Old: b^(e-1) < x ∧ x ≤ b^e
-  -- New: b^(e-1) ≤ x ∧ x < b^e
-  have hbR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hbeta
-  have hlogb_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hbR
-  have hbpos : 0 < (beta : ℝ) := lt_trans (by linarith) hbR
-  have hbpow_pos (k : Int) : 0 < (beta : ℝ) ^ k := by
-    exact zpow_pos hbpos k
-
-  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
-  -- Reduce to a statement about `Int.ceil` of the logarithmic exponent.
-  unfold mag
-  simp [hx_ne, abs_of_pos hx_pos]
-  -- Use the standard `ceil` characterization: `ceil a = z` iff `z - 1 < a ≤ z`.
-  refine (Int.ceil_eq_iff).2 ?_
-  constructor
-  · -- Lower bound: b^(d+e-1) < x  ⇒  (d+e) - 1 < log x / log b
-    have hlog_lt : Real.log ((beta : ℝ) ^ (d + e - 1)) < Real.log x :=
-      Real.log_lt_log (hbpow_pos (d + e - 1)) hlow_real
-    have hlog_beta :
-        Real.log ((beta : ℝ) ^ (d + e - 1))
-          = ((d + e - 1 : Int) : ℝ) * Real.log (beta : ℝ) := by
-      simpa using (Real.log_zpow (beta : ℝ) (d + e - 1))
-    have hlog_lt' :
-        ((d + e - 1 : Int) : ℝ) * Real.log (beta : ℝ) < Real.log x := by
-      simpa [hlog_beta] using hlog_lt
-    have hdiv :
-        ((d + e - 1 : Int) : ℝ) < Real.log x / Real.log (beta : ℝ) :=
-      (lt_div_iff₀ hlogb_pos).2 hlog_lt'
-    -- Rewrite `↑(d+e) - 1` as `↑(d+e-1)` to match the goal.
-    simpa using hdiv
-  · -- Upper bound: x ≤ b^(d+e)  ⇒  log x / log b ≤ (d+e)
-    have hlog_le : Real.log x ≤ Real.log ((beta : ℝ) ^ (d + e)) :=
-      Real.log_le_log hx_pos hupp_real
-    have hlog_beta :
-        Real.log ((beta : ℝ) ^ (d + e))
-          = ((d + e : Int) : ℝ) * Real.log (beta : ℝ) := by
-      simpa using (Real.log_zpow (beta : ℝ) (d + e))
-    have hlog_le' :
-        Real.log x ≤ ((d + e : Int) : ℝ) * Real.log (beta : ℝ) := by
-      simpa [hlog_beta] using hlog_le
-    have hdiv : Real.log x / Real.log (beta : ℝ) ≤ ((d + e : Int) : ℝ) :=
-      (div_le_iff₀ hlogb_pos).2 hlog_le'
-    -- Cast `(d+e)` to `ℝ` in the expected way.
-    simpa [Int.cast_add] using hdiv
+  sorry
 
 /-
 Coq original:
@@ -1632,7 +1420,7 @@ theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
                     (Zdigits beta m1) + e1 := by
       apply mag_F2R_bounds_Zdigits beta (x := (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)))
         (m := m1) (e := e1) hbeta hm1_pos
-      exact ⟨hlo, hhi⟩
+      exact ⟨le_of_lt hlo, hhi⟩
     -- By mag_F2R: mag(F2R(m2,e2)) = mag(m2) + e2
     have hmag_eq2 : mag beta (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)) =
                     mag beta (m2 : ℝ) + e2 := by

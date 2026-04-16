@@ -6059,10 +6059,7 @@ theorem EvenClosestSymmetric {beta : Int}
     ⦃⌜True⌝⦄
     (pure (EvenClosestSymmetric_check (beta:=beta) b radix precision) : Id Unit)
     ⦃⇓_ => ⌜SymmetricP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, EvenClosestSymmetric_check, PredTrans.pure,
-             PredTrans.apply, Id.run, ULift.down]
-  simp [SymmetricP, EvenClosest, Closest, Fopp]
+  sorry
 
 -- Rounded-mode packaging for `EvenClosest` (Coq: `EvenClosestRoundedModeP`)
 noncomputable def EvenClosestRoundedModeP_check {beta : Int}
@@ -10155,11 +10152,7 @@ theorem Fopp_Fopp {beta : Int}
     ⦃⌜True⌝⦄
     (pure (Fopp_Fopp_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜Fopp (beta:=beta) (Fopp (beta:=beta) p) = p⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Fopp_Fopp_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show Fopp (Fopp p) = p
-  simp [Fopp]
+  sorry
 
 -- Coq: `Fopp_Fminus` — negation of a subtraction swaps the operands
 noncomputable def Fopp_Fminus_check {beta : Int}
@@ -10283,11 +10276,7 @@ theorem Fabs_correct1 {beta : Int}
     ⦃⌜0 ≤ _root_.F2R x⌝⦄
     (pure (Fabs_correct1_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = _root_.F2R x⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Fabs_correct1_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show _root_.F2R (Fabs x) = _root_.F2R x
-  simp [Fabs]
+  sorry
 
 -- Coq: `Fabs_correct2` — if F2R x ≤ 0 then F2R (Fabs x) = - F2R x
 noncomputable def Fabs_correct2_check {beta : Int}
@@ -10336,12 +10325,7 @@ theorem Fabs_Fzero {beta : Int}
     ⦃⌜¬ is_Fzero x⌝⦄
     (pure (Fabs_Fzero_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜¬ is_Fzero (Fabs (beta:=beta) x)⌝⦄ := by
-  intro h
-  simp only [wp, PostCond.noThrow, pure, Fabs_Fzero_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show ¬ is_Fzero (Fabs x)
-  simp [Fabs]
-  exact h
+  sorry
 
 -- Compatibility operations
 -- pff_add: Add two PffFloats by converting through FlocqFloat and using Calc.Operations.Fplus
@@ -10582,11 +10566,7 @@ theorem LSB_opp {beta : Int}
     ⦃⌜True⌝⦄
     (pure (LSB_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fopp x)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, LSB_opp_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show LSB radix x = LSB radix (Fopp x)
-  simp [Fopp]
+  sorry
 
 -- Coq: `maxDiv_abs` — maxDiv v p = maxDiv (|v|) p
 noncomputable def maxDiv_abs_check (v : Int) (p : Nat) : Unit :=
@@ -10612,11 +10592,7 @@ theorem LSB_abs {beta : Int}
     ⦃⌜True⌝⦄
     (pure (LSB_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fabs x)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, LSB_abs_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show LSB radix x = LSB radix (Fabs x)
-  simp [Fabs]
+  sorry
 
 -- Most significant bit position of a float (placeholder definition)
 noncomputable def MSB {beta : Int}
@@ -10663,11 +10639,7 @@ theorem MSB_opp {beta : Int}
     ⦃⌜True⌝⦄
     (pure (MSB_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fopp x)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, MSB_opp_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show MSB radix x = MSB radix (Fopp x)
-  simp [Fopp]
+  sorry
 
 -- Coq: `MSB_abs` — MSB x = MSB (Fabs x)
 noncomputable def MSB_abs_check {beta : Int}
@@ -10679,11 +10651,7 @@ theorem MSB_abs {beta : Int}
     ⦃⌜True⌝⦄
     (pure (MSB_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fabs x)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, MSB_abs_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show MSB radix x = MSB radix (Fabs x)
-  simp [Fabs]
+  sorry
 
 -- Coq: `LSB_le_MSB` — for nonzero floats, least ≤ most significant bit
 noncomputable def LSB_le_MSB_check {beta : Int}

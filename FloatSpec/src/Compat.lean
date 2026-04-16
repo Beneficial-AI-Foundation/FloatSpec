@@ -6,11 +6,15 @@ import FloatSpec.src.Core.FLT
 import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Calc.Round
+import FloatSpec.src.Calc.Operations
 import Mathlib.Data.Real.Basic
 
 open FloatSpec.Core
 open FloatSpec.Core.Defs
 open FloatSpec.Core.Generic_fmt
+
+export FloatSpec.Core.Generic_fmt (Valid_rnd Monotone_exp)
+export FloatSpec.Core.Ulp (Exp_not_FTZ)
 
 /-- Bridge the duplicated monotonicity classes in `Generic_fmt` and `Ulp`.
 This keeps downstream files from having to pick one local definition too early. -/
@@ -99,43 +103,32 @@ noncomputable def Ztrunc := _root_.Ztrunc
 def FIX_exp := _root_.FIX_exp
 end FloatSpec.Compat
 
-/-- Stub: rounding function parameter validity (placeholder) -/
-class Valid_rnd (rnd : ℝ → Int) : Prop :=
-  /-- Trivial placeholder witness. -/
-  (trivial : True := True.intro)
-
-/-- Stub: exponent monotonicity predicate (placeholder) -/
-class Monotone_exp (fexp : Int → Int) : Prop :=
-  /-- Trivial placeholder witness. -/
-  (trivial : True := True.intro)
-
 /-- Stub: precision and range constraints for IEEE 754 (placeholders) -/
 /-
 Coq: `Prec_gt_0 prec` asserts strictly positive precision.
 We model it as `0 < prec` so arithmetic lemmas may use it.
 -/
-class Prec_lt_emax (prec emax : Int) : Prop :=
+class Prec_lt_emax (prec emax : Int) : Prop where
   /-- Precision is strictly less than emax (IEEE 754 constraint) -/
   (prec_lt_emax : prec < emax)
   /-- emax is large enough for the exponent formula to work (emax ≥ 2) -/
   (emax_ge_2 : 2 ≤ emax)
 
-/-- Stub: exponent function not flushing to zero (placeholder) -/
-class Exp_not_FTZ (fexp : Int → Int) : Prop :=
-  /-- Trivial placeholder witness. -/
-  (trivial : True := True.intro)
+/-- Flocq addition on floats: aligns exponents and adds mantissas. -/
+def Fplus {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fplus beta x y
 
-/-- Stub: Flocq addition on floats (placeholder) -/
-def Fplus {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta := x
+/-- Flocq multiplication on floats: multiplies mantissas, adds exponents. -/
+def Fmult {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fmult beta x y
 
-/-- Stub: Flocq multiplication on floats (placeholder) -/
-def Fmult {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta := x
+/-- Flocq absolute value on floats: takes absolute value of mantissa. -/
+def Fabs {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fabs beta x
 
-/-- Stub: Flocq absolute on floats (placeholder) -/
-def Fabs {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta := x
-
-/-- Stub: Flocq opposite on floats (placeholder) -/
-def Fopp {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta := x
+/-- Flocq opposite on floats: negates the mantissa. -/
+def Fopp {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fopp beta x
 
 /-- Flocq rounding to a float value
 
