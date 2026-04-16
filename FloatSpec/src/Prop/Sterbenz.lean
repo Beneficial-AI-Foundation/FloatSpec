@@ -10,12 +10,12 @@ open Real
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-variable [Monotone_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 /-- Generic format plus exact under magnitude condition -/
 theorem generic_format_plus (x y : ℝ)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) 
-  (h_bound : |x + y| ≤ (Int.natAbs beta : ℝ) ^ (Int.natAbs (min (mag beta x) (mag beta y)) : Nat)) :
+  (h_bound : |x + y| ≤ FloatSpec.Core.Raux.bpow beta (min (mag beta x) (mag beta y))) :
   generic_format beta fexp (x + y) := by
   sorry
 

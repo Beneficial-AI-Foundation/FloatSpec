@@ -26,12 +26,14 @@ namespace FloatSpec.Calc.Round
 variable (beta : Int)
 variable (fexp : Int → Int)
 
-/-- Placeholder types - these should be properly defined in Core -/
-def Mode : Type := Unit  -- Placeholder for mode; ignored by `round` wrapper
--- Bridge Calc.round to Core's `round_to_generic` (mode is ignored in Core model)
+/-- Bridge Calc.Round to Core's rounding infrastructure.
+    Takes a rounding function `rnd : ℝ → Int` (e.g. `Ztrunc`, `Zfloor`, `Zceil`,
+    `Znearest choice`) matching Flocq's `round rnd x`. -/
 noncomputable def round (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (mode : Mode) (x : ℝ) : ℝ :=
-  FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x
+    (rnd : ℝ → Int) (x : ℝ) : ℝ :=
+  let exp := FloatSpec.Core.Generic_fmt.cexp beta fexp x
+  let mantissa := x * (beta : ℝ) ^ (-exp)
+  ((rnd mantissa : Int) : ℝ) * (beta : ℝ) ^ exp
 
 section Truncation
 
@@ -73,19 +75,19 @@ end Truncation
 
 section MainRounding
 
-/-- Rounding at zero: bridge to Core's `round_to_generic` result. -/
-theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] (mode : Mode) :
+/-- Rounding at zero: any valid rounding function sends zero to zero. -/
+theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] :
     ⦃⌜True⌝⦄
-    (pure (round beta fexp mode 0) : Id ℝ)
+    (pure (round beta fexp rnd 0) : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
-  -- Pure computation; discharge Hoare triple via `pure` and evaluate
-  apply Std.Do.Triple.pure (m := Id) (a := round beta fexp mode 0)
+  apply Std.Do.Triple.pure (m := Id) (a := round beta fexp rnd 0)
   intro _
-  -- Unfold to the Core model and use its lemma
-  simp only [round, FloatSpec.Core.Generic_fmt.round_to_generic,
-        FloatSpec.Core.Generic_fmt.Ztrunc_zero, FloatSpec.Core.Generic_fmt.Ztrunc_zero_coe,
-        Int.cast_zero, zero_mul, Id.run]
-  trivial
+  simp only [round, zero_mul]
+  have : rnd (0 : ℝ) = (0 : Int) := by
+    have := FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int)
+    simpa using this
+  simp [this]
 
 end MainRounding
 

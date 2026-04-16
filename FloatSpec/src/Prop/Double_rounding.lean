@@ -15,12 +15,11 @@ variable (beta : Int)
 
 -- Midpoint helpers (spec-variant of Coq's midp/midp')
 noncomputable def midp (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] (x : ℝ) : ℝ :=
-  -- We use the Calc.Round wrapper; mode is ignored in our model.
-  FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) x
+  FloatSpec.Calc.Round.round beta fexp FloatSpec.Core.Raux.Zfloor x
     + (1/2) * (ulp beta fexp x)
 
 noncomputable def midp' (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] (x : ℝ) : ℝ :=
-  FloatSpec.Calc.Round.round beta fexp (Znearest (fun _ => false)) x
+  FloatSpec.Calc.Round.round beta fexp FloatSpec.Core.Raux.Zceil x
     - (1/2) * (ulp beta fexp x)
 
 /-- Double rounding with two different precisions -/
@@ -93,14 +92,15 @@ theorem round_round_mult
   (fexp1 fexp2 : Int → Int)
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
-  (mode : FloatSpec.Calc.Round.Mode)
+  (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
   (Hh : round_round_mult_hyp fexp1 fexp2)
   (x y : ℝ)
   (Fx : generic_format beta fexp1 x)
   (Fy : generic_format beta fexp1 y) :
-  FloatSpec.Calc.Round.round beta fexp1 mode
-      (FloatSpec.Calc.Round.round beta fexp2 mode (x * y))
-  = FloatSpec.Calc.Round.round beta fexp1 mode (x * y) := by
+  FloatSpec.Calc.Round.round beta fexp1 rnd
+      (FloatSpec.Calc.Round.round beta fexp2 rnd (x * y))
+  = FloatSpec.Calc.Round.round beta fexp1 rnd (x * y) := by
   sorry
 
 /-- Coq: `round_round_mult_FLX`
@@ -110,14 +110,15 @@ theorem round_round_mult_FLX
   (prec prec' : Int) [Prec_gt_0 prec] [Prec_gt_0 prec']
   [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
   [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec')]
-  (mode : FloatSpec.Calc.Round.Mode)
+  (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
   (x y : ℝ)
   (hprec : 2 * prec ≤ prec')
   (Fx : generic_format beta (FLX_exp prec) x)
   (Fy : generic_format beta (FLX_exp prec) y) :
-  FloatSpec.Calc.Round.round beta (FLX_exp prec) mode
-    (FloatSpec.Calc.Round.round beta (FLX_exp prec') mode (x * y))
-  = FloatSpec.Calc.Round.round beta (FLX_exp prec) mode (x * y) := by
+  FloatSpec.Calc.Round.round beta (FLX_exp prec) rnd
+    (FloatSpec.Calc.Round.round beta (FLX_exp prec') rnd (x * y))
+  = FloatSpec.Calc.Round.round beta (FLX_exp prec) rnd (x * y) := by
   sorry
 
 /-- Coq: `round_round_mult_FLT`
@@ -128,14 +129,15 @@ theorem round_round_mult_FLT
   [Prec_gt_0 prec] [Prec_gt_0 prec']
   [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec)]
   [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin' prec')]
-  (mode : FloatSpec.Calc.Round.Mode)
+  (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
   (x y : ℝ)
   (Hemin : emin' ≤ 2 * emin) (Hprec : 2 * prec ≤ prec')
   (Fx : generic_format beta (FLT_exp emin prec) x)
   (Fy : generic_format beta (FLT_exp emin prec) y) :
-  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) mode
-    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') mode (x * y))
-  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) mode (x * y) := by
+  FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd
+    (FloatSpec.Calc.Round.round beta (FLT_exp emin' prec') rnd (x * y))
+  = FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd (x * y) := by
   sorry
 
 /-- Coq: `round_round_mult_FTZ`
@@ -146,14 +148,15 @@ theorem round_round_mult_FTZ
   [Prec_gt_0 prec] [Prec_gt_0 prec']
   [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin prec)]
   [FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp emin' prec')]
-  (mode : FloatSpec.Calc.Round.Mode)
+  (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
   (x y : ℝ)
   (Hemin : emin' + prec' ≤ 2 * emin + prec) (Hprec : 2 * prec ≤ prec')
   (Fx : generic_format beta (FTZ_exp emin prec) x)
   (Fy : generic_format beta (FTZ_exp emin prec) y) :
-  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) mode
-    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') mode (x * y))
-  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) mode (x * y) := by
+  FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) rnd
+    (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') rnd (x * y))
+  = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) rnd (x * y) := by
   sorry
 
 

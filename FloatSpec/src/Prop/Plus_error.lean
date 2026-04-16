@@ -17,12 +17,13 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 -- Section: Plus error representability
 
 /-- Round representation with same exponent -/
-theorem round_repr_same_exp (rnd : ℝ → Int) [Valid_rnd rnd] (m e : Int) :
-  ∃ m', FloatSpec.Calc.Round.round beta fexp () (_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)) = 
+theorem round_repr_same_exp (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (m e : Int) :
+  ∃ m', FloatSpec.Calc.Round.round beta fexp rnd (_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)) = 
         _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e : FloatSpec.Core.Defs.FlocqFloat beta) := by
   sorry
 
-variable [Monotone_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 variable (choice : Int → Bool)
 
 /-- Plus error auxiliary lemma -/
@@ -40,27 +41,30 @@ theorem plus_error (x y : ℝ)
 
 -- Section: Plus zero properties
 
-variable [Exp_not_FTZ fexp]
+variable [FloatSpec.Core.Ulp.Exp_not_FTZ fexp]
 
 /-- Round plus not equal to zero auxiliary -/
-lemma round_plus_neq_0_aux (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+lemma round_plus_neq_0_aux (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (h_exp : cexp beta fexp x ≤ cexp beta fexp y)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
   (h_pos : 0 < x + y) :
-  FloatSpec.Calc.Round.round beta fexp () (x + y) ≠ 0 := by
+  FloatSpec.Calc.Round.round beta fexp rnd (x + y) ≠ 0 := by
   sorry
 
 /-- rnd(x+y)=0 → x+y ≠ 0 (provided this is not a FTZ format) -/
-theorem round_plus_neq_0 (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+theorem round_plus_neq_0 (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
   (h_nonzero : x + y ≠ 0) :
-  FloatSpec.Calc.Round.round beta fexp () (x + y) ≠ 0 := by
+  FloatSpec.Calc.Round.round beta fexp rnd (x + y) ≠ 0 := by
   sorry
 
 /-- rnd(x+y)=0 → x+y = 0 -/
-theorem round_plus_eq_0 (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+theorem round_plus_eq_0 (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
-  (h_zero : FloatSpec.Calc.Round.round beta fexp () (x + y) = 0) :
+  (h_zero : FloatSpec.Calc.Round.round beta fexp rnd (x + y) = 0) :
   x + y = 0 := by
   sorry
 
@@ -73,7 +77,7 @@ variable [Prec_gt_0 prec]
 theorem FLT_format_plus_small (x y : ℝ)
   (hx : generic_format beta (FLT_exp emin prec) x)
   (hy : generic_format beta (FLT_exp emin prec) y)
-  (h_bound : |x + y| ≤ (Int.natAbs beta : ℝ) ^ (Int.natAbs (prec + emin) : Nat)) :
+  (h_bound : |x + y| ≤ FloatSpec.Core.Raux.bpow beta (prec + emin)) :
   generic_format beta (FLT_exp emin prec) (x + y) := by
   sorry
 
@@ -96,7 +100,7 @@ lemma FLT_plus_error_N_round_ex (x y : ℝ)
 -- Section: Plus mult ulp properties
 
 variable (rnd : ℝ → Int)
-variable [Valid_rnd rnd]
+variable [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
 
 /-- Existence of shift representation -/
 lemma ex_shift (x : ℝ) (e : Int)
@@ -119,17 +123,17 @@ lemma mag_minus1 (z : ℝ) (h_nonzero : z ≠ 0) :
 /-- Round plus F2R representation -/
 theorem round_plus_F2R (x y : ℝ) 
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) (h_nonzero : x ≠ 0) :
-  ∃ m : Int, FloatSpec.Calc.Round.round beta fexp () (x + y) = 
+  ∃ m : Int, FloatSpec.Calc.Round.round beta fexp rnd (x + y) = 
     _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m (cexp beta fexp (x / (beta : ℝ))) : FloatSpec.Core.Defs.FlocqFloat beta) := by
   sorry
 
-variable [Exp_not_FTZ fexp]
+variable [FloatSpec.Core.Ulp.Exp_not_FTZ fexp]
 
 /-- Round plus greater equal ulp -/
 theorem round_plus_ge_ulp (x y : ℝ)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
-  (h_nonzero : FloatSpec.Calc.Round.round beta fexp () (x + y) ≠ 0) :
-  ulp beta fexp (x / (beta : ℝ)) ≤ |FloatSpec.Calc.Round.round beta fexp () (x + y)| := by
+  (h_nonzero : FloatSpec.Calc.Round.round beta fexp rnd (x + y) ≠ 0) :
+  ulp beta fexp (x / (beta : ℝ)) ≤ |FloatSpec.Calc.Round.round beta fexp rnd (x + y)| := by
   sorry
 
 -- Section: FLT plus bounds
@@ -138,31 +142,31 @@ theorem round_plus_ge_ulp (x y : ℝ)
 theorem round_FLT_plus_ge (x y : ℝ) (e : Int)
   (hx : generic_format beta (FLT_exp emin prec) x)
   (hy : generic_format beta (FLT_exp emin prec) y)
-  (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + prec) : Nat) ≤ |x|)
-  (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
-    |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y)| := by
+  (h_bound : FloatSpec.Core.Raux.bpow beta (e + prec) ≤ |x|)
+  (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd (x + y) ≠ 0) :
+  FloatSpec.Core.Raux.bpow beta e ≤
+    |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd (x + y)| := by
   sorry
 
 /-- Round FLT plus greater equal bound (alternative) -/
 lemma round_FLT_plus_ge' (x y : ℝ) (e : Int)
   (hx : generic_format beta (FLT_exp emin prec) x)
   (hy : generic_format beta (FLT_exp emin prec) y)
-  (h1 : x ≠ 0 → (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + prec) : Nat) ≤ |x|)
-  (h2 : x = 0 → y ≠ 0 → (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ |y|)
-  (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
-    |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y)| := by
+  (h1 : x ≠ 0 → FloatSpec.Core.Raux.bpow beta (e + prec) ≤ |x|)
+  (h2 : x = 0 → y ≠ 0 → FloatSpec.Core.Raux.bpow beta e ≤ |y|)
+  (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd (x + y) ≠ 0) :
+  FloatSpec.Core.Raux.bpow beta e ≤
+    |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd (x + y)| := by
   sorry
 
 /-- Round FLX plus greater equal bound -/
 theorem round_FLX_plus_ge (x y : ℝ) (e : Int)
   (hx : generic_format beta (FLX_exp prec) x)
   (hy : generic_format beta (FLX_exp prec) y)
-  (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + prec) : Nat) ≤ |x|)
-  (h_nonzero : FloatSpec.Calc.Round.round beta (FLX_exp prec) () (x + y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
-    |FloatSpec.Calc.Round.round beta (FLX_exp prec) () (x + y)| := by
+  (h_bound : FloatSpec.Core.Raux.bpow beta (e + prec) ≤ |x|)
+  (h_nonzero : FloatSpec.Calc.Round.round beta (FLX_exp prec) rnd (x + y) ≠ 0) :
+  FloatSpec.Core.Raux.bpow beta e ≤
+    |FloatSpec.Calc.Round.round beta (FLX_exp prec) rnd (x + y)| := by
   sorry
 
 -- Section: Plus error bounds

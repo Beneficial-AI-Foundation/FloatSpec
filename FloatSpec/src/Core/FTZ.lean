@@ -75,6 +75,77 @@ theorem FTZ_exp_spec (e : Int) :
 def FTZ_format (beta : Int) (x : ℝ) : Prop :=
   (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x)
 
+/-- Integer rounding with flush-to-zero behavior.
+
+Values with magnitude less than 1 are rounded to 0, otherwise we reuse the
+underlying integer rounding `rnd`. -/
+noncomputable def Zrnd_FTZ (rnd : ℝ → Int) (x : ℝ) : Int :=
+  if FloatSpec.Core.Raux.Rle_bool 1 |x| then rnd x else 0
+
+/-- `Zrnd_FTZ` preserves the basic rounding-function laws required by Flocq. -/
+instance valid_rnd_FTZ (rnd : ℝ → Int) [Valid_rnd rnd] : Valid_rnd (Zrnd_FTZ rnd) := by
+  refine ⟨?_, ?_⟩
+  · intro x y hxy
+    unfold Zrnd_FTZ
+    by_cases hx : 1 ≤ |x|
+    · by_cases hy : 1 ≤ |y|
+      · simp [FloatSpec.Core.Raux.Rle_bool, hx, hy]
+        exact Valid_rnd.Zrnd_le (rnd := rnd) x y hxy
+      · have hx_nonpos : x ≤ 0 := by
+          by_contra hx_pos
+          have hx_pos' : 0 < x := lt_of_not_ge hx_pos
+          have h1x : 1 ≤ x := by
+            simpa [abs_of_pos hx_pos'] using hx
+          have h1y : 1 ≤ y := le_trans h1x hxy
+          have h1abs_y : 1 ≤ |y| := by
+            have hy_nonneg : 0 ≤ y := le_trans (by positivity) h1y
+            simpa [abs_of_nonneg hy_nonneg] using h1y
+          exact hy h1abs_y
+        simp [FloatSpec.Core.Raux.Rle_bool, hx, hy]
+        have hle : rnd x ≤ rnd 0 :=
+          Valid_rnd.Zrnd_le (rnd := rnd) x 0 hx_nonpos
+        have hzero : rnd 0 = 0 := by
+          simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+        simpa [hzero] using hle
+    · by_cases hy : 1 ≤ |y|
+      · have hy_nonneg : 0 ≤ y := by
+          by_contra hy_neg
+          have hy_neg' : y < 0 := lt_of_not_ge hy_neg
+          have hy_le_neg1 : y ≤ -1 := by
+            have h1 : 1 ≤ -y := by
+              simpa [abs_of_nonpos (le_of_lt hy_neg')] using hy
+            linarith
+          have hx_le_neg1 : x ≤ -1 := le_trans hxy hy_le_neg1
+          have h1abs_x : 1 ≤ |x| := by
+            have hx_nonpos : x ≤ 0 := by linarith
+            have h1 : 1 ≤ -x := by linarith
+            simpa [abs_of_nonpos hx_nonpos] using h1
+          exact hx h1abs_x
+        simp [FloatSpec.Core.Raux.Rle_bool, hx, hy]
+        have hle : rnd 0 ≤ rnd y :=
+          Valid_rnd.Zrnd_le (rnd := rnd) 0 y hy_nonneg
+        have hzero : rnd 0 = 0 := by
+          simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+        simpa [hzero] using hle
+      · simp [FloatSpec.Core.Raux.Rle_bool, hx, hy]
+  · intro n
+    unfold Zrnd_FTZ
+    by_cases h : 1 ≤ |(n : ℝ)|
+    · simp [FloatSpec.Core.Raux.Rle_bool, h, Valid_rnd.Zrnd_IZR (rnd := rnd) n]
+    · have hlt : |(n : ℝ)| < 1 := lt_of_not_ge h
+      have h_abs_natAbs : (Int.natAbs n : ℝ) = |(n : ℝ)| := by
+        simpa [Nat.cast_natAbs, Int.cast_abs]
+      have hnat_lt1 : (Int.natAbs n : ℝ) < 1 := by
+        simpa [h_abs_natAbs] using hlt
+      have hnat_zero : Int.natAbs n = 0 := by
+        by_contra hne
+        have hpos : 0 < Int.natAbs n := Nat.pos_of_ne_zero hne
+        have hge1 : (1 : ℝ) ≤ (Int.natAbs n : ℝ) := by
+          exact_mod_cast (Nat.succ_le_of_lt hpos)
+        exact (not_lt_of_ge hge1) hnat_lt1
+      have hn : n = 0 := Int.natAbs_eq_zero.mp hnat_zero
+      simp [FloatSpec.Core.Raux.Rle_bool, h, hn, Valid_rnd.Zrnd_IZR (rnd := rnd) 0]
+
 /-- `Valid_exp` instance for the FTZ exponent function. -/
 instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp prec emin) := by
