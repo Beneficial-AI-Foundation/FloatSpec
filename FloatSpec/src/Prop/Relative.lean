@@ -21,7 +21,31 @@ lemma relative_error_lt_conversion (rnd : ℝ → Int)
   (h_pos : 0 < b)
   (h_bound : x ≠ 0 → |FloatSpec.Calc.Round.round beta fexp rnd x - x| < b * |x|) :
   ∃ eps, |eps| < b ∧ FloatSpec.Calc.Round.round beta fexp rnd x = x * (1 + eps) := by
-  sorry
+  by_cases hx : x = 0
+  · refine ⟨0, ?_, ?_⟩
+    · simpa using h_pos
+    · have h_rnd0 : rnd (0 : ℝ) = 0 := by
+        simpa using (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+      have hr0 : FloatSpec.Calc.Round.round beta fexp rnd 0 = 0 := by
+        simp [FloatSpec.Calc.Round.round, h_rnd0]
+      simpa [hx, hr0]
+  · refine ⟨(FloatSpec.Calc.Round.round beta fexp rnd x - x) / x, ?_, ?_⟩
+    · have hxabs_pos : 0 < |x| := abs_pos.mpr hx
+      calc
+        |(FloatSpec.Calc.Round.round beta fexp rnd x - x) / x|
+            = |FloatSpec.Calc.Round.round beta fexp rnd x - x| * |x|⁻¹ := by
+                rw [div_eq_mul_inv, abs_mul, abs_inv]
+        _ < (b * |x|) * |x|⁻¹ := by
+              exact mul_lt_mul_of_pos_right (h_bound hx) (inv_pos.mpr hxabs_pos)
+        _ = b * (|x| * |x|⁻¹) := by ring
+        _ = b := by
+              field_simp [ne_of_gt hxabs_pos]
+    · have h_eq :
+          x * (1 + (FloatSpec.Calc.Round.round beta fexp rnd x - x) / x) =
+            FloatSpec.Calc.Round.round beta fexp rnd x := by
+        field_simp [hx]
+        ring
+      exact h_eq.symm
 
 /-- Relative error less than or equal conversion -/
 lemma relative_error_le_conversion (rnd : ℝ → Int)
@@ -29,21 +53,57 @@ lemma relative_error_le_conversion (rnd : ℝ → Int)
   (h_nonneg : 0 ≤ b)
   (h_bound : |FloatSpec.Calc.Round.round beta fexp rnd x - x| ≤ b * |x|) :
   ∃ eps, |eps| ≤ b ∧ FloatSpec.Calc.Round.round beta fexp rnd x = x * (1 + eps) := by
-  sorry
+  by_cases hx : x = 0
+  · refine ⟨0, ?_, ?_⟩
+    · simpa using h_nonneg
+    · have h_rnd0 : rnd (0 : ℝ) = 0 := by
+        simpa using (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+      have hr0 : FloatSpec.Calc.Round.round beta fexp rnd 0 = 0 := by
+        simp [FloatSpec.Calc.Round.round, h_rnd0]
+      simpa [hx, hr0]
+  · refine ⟨(FloatSpec.Calc.Round.round beta fexp rnd x - x) / x, ?_, ?_⟩
+    · have hxabs_pos : 0 < |x| := abs_pos.mpr hx
+      calc
+        |(FloatSpec.Calc.Round.round beta fexp rnd x - x) / x|
+            = |FloatSpec.Calc.Round.round beta fexp rnd x - x| * |x|⁻¹ := by
+                rw [div_eq_mul_inv, abs_mul, abs_inv]
+        _ ≤ (b * |x|) * |x|⁻¹ := by
+              exact mul_le_mul_of_nonneg_right h_bound (inv_nonneg.mpr (le_of_lt hxabs_pos))
+        _ = b * (|x| * |x|⁻¹) := by ring
+        _ = b := by
+              field_simp [ne_of_gt hxabs_pos]
+    · have h_eq :
+          x * (1 + (FloatSpec.Calc.Round.round beta fexp rnd x - x) / x) =
+            FloatSpec.Calc.Round.round beta fexp rnd x := by
+        field_simp [hx]
+        ring
+      exact h_eq.symm
 
 /-- Relative error less than or equal conversion inverse -/
 lemma relative_error_le_conversion_inv (rnd : ℝ → Int)
   [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ FloatSpec.Calc.Round.round beta fexp rnd x = x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp rnd x - x| ≤ b * |x| := by
-  sorry
+  rcases h_exists with ⟨eps, h_eps, h_round⟩
+  rw [h_round]
+  have h_rewrite : x * (1 + eps) - x = eps * x := by ring
+  rw [h_rewrite, abs_mul]
+  exact mul_le_mul_of_nonneg_right h_eps (abs_nonneg x)
 
 /-- Relative error less than or equal conversion round inverse -/
 lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int)
   [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ x = FloatSpec.Calc.Round.round beta fexp rnd x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp rnd x - x| ≤ b * |FloatSpec.Calc.Round.round beta fexp rnd x| := by
-  sorry
+  rcases h_exists with ⟨eps, h_eps, h_round⟩
+  set rx := FloatSpec.Calc.Round.round beta fexp rnd x
+  have h_round' : x = rx * (1 + eps) := by
+    simpa [rx] using h_round
+  change |rx - x| ≤ b * |rx|
+  rw [h_round']
+  have h_rewrite : rx - rx * (1 + eps) = -(eps * rx) := by ring
+  rw [h_rewrite, abs_neg, abs_mul]
+  exact mul_le_mul_of_nonneg_right h_eps (abs_nonneg rx)
 
 -- Section: Generic relative error
 

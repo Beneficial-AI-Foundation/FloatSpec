@@ -22,9 +22,12 @@ import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Digits
 import Mathlib.Data.Real.Basic
 import Mathlib.Data.Int.Basic
+import Std.Do.Triple
+import Std.Tactic.Do
 import FloatSpec.src.SimprocWP
 
 open Real
+open Std.Do
 open FloatSpec.Core.Defs
 open FloatSpec.Core.Digits
 
@@ -58,12 +61,11 @@ private lemma natAbs_eq_toNat_of_nonneg {z : Int} (hz : 0 ≤ z) :
 
 /-- Magnitude function for real numbers
 
-    Returns the exponent such that beta^(mag-1) ≤ |x| < beta^mag.
-    For x = 0, returns an arbitrary value (typically 0).
+    Alias of `FloatSpec.Core.Raux.mag`, using the Coq-compatible floor+1
+    semantics: for nonzero `x`, `beta^(mag-1) ≤ |x| < beta^mag`.
 -/
 noncomputable def mag (beta : Int) (x : ℝ) : Int :=
-  if x = 0 then 0
-  else ⌈Real.log (abs x) / Real.log (beta : ℝ)⌉
+  FloatSpec.Core.Raux.mag beta x
 
 
 -- Comparison theorems
@@ -1143,12 +1145,101 @@ Proof.
   now apply F2R_p1_le_bpow.
 Qed.
 -/
+private lemma mag_mult_bpow_eq (x : ℝ) (e : Int) (hx : x ≠ 0) (hβ : 1 < beta) :
+    mag beta (x * (beta : ℝ) ^ e) = mag beta x + e := by
+  unfold mag FloatSpec.Core.Raux.mag
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := lt_trans zero_lt_one hβR
+  have hbpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbpos e
+  have hbpow_ne : (beta : ℝ) ^ e ≠ 0 := ne_of_gt hbpow_pos
+  have hxmul_ne : x * (beta : ℝ) ^ e ≠ 0 := mul_ne_zero hx hbpow_ne
+  simp only [hxmul_ne, hx, ite_false]
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
+    have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
+      Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbpos)
+    exact this.mpr hβR
+  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+  have habs_prod : |x * (beta : ℝ) ^ e| = |x| * (beta : ℝ) ^ e := by
+    rw [abs_mul, abs_of_pos hbpow_pos]
+  have hxabs_pos : 0 < |x| := abs_pos.mpr hx
+  have hlog_prod : Real.log (|x| * (beta : ℝ) ^ e) =
+      Real.log |x| + (e : ℝ) * Real.log (beta : ℝ) := by
+    rw [Real.log_mul (ne_of_gt hxabs_pos) hbpow_ne]
+    rw [Real.log_zpow (beta : ℝ) e]
+  have hdiv : (Real.log |x| + (e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) =
+      Real.log |x| / Real.log (beta : ℝ) + (e : ℝ) := by
+    field_simp [hlogβ_ne]
+  have hquot : Real.log |x * (beta : ℝ) ^ e| / Real.log (beta : ℝ) =
+      Real.log |x| / Real.log (beta : ℝ) + (e : ℝ) := by
+    rw [habs_prod, hlog_prod, hdiv]
+  rw [hquot]
+  rw [Int.floor_add_intCast]
+  ring
+
+private lemma mag_eq_Zdigits_of_pos (m : Int) (hβ : 1 < beta) (hm_pos : 0 < m) :
+    mag beta (m : ℝ) = Zdigits beta m := by
+  have hm_ne : m ≠ 0 := ne_of_gt hm_pos
+  have hdig := Zdigits_correct beta m hβ hm_ne
+  simp only [wp, PostCond.noThrow, pure, PredTrans.pure] at hdig
+  obtain ⟨hlow_int, hupp_int⟩ := hdig
+  set d := Zdigits beta m with hd_def
+  have hm_abs : |m| = m := abs_of_pos hm_pos
+  rw [hm_abs] at hlow_int hupp_int
+  have hm_real_pos : (0 : ℝ) < (m : ℝ) := Int.cast_pos.mpr hm_pos
+  have hd_pos : 0 < d := by
+    have h := Zdigits_gt_0 beta m hβ hm_ne
+    simp only [wp, PostCond.noThrow, pure, PredTrans.pure] at h
+    exact h
+  have hd_nonneg : 0 ≤ d := le_of_lt hd_pos
+  have hd_sub_nonneg : 0 ≤ d - 1 := by linarith
+  have hd_natAbs : (d.natAbs : Int) = d := Int.natAbs_of_nonneg hd_nonneg
+  have hd_sub_natAbs : ((d - 1).natAbs : Int) = d - 1 := Int.natAbs_of_nonneg hd_sub_nonneg
+  have hlow_real : (beta : ℝ) ^ (d - 1) ≤ (m : ℝ) := by
+    have hpow : (beta : ℝ) ^ (d - 1) = (beta : ℝ) ^ ((d - 1).natAbs : ℤ) := by
+      rw [hd_sub_natAbs]
+    rw [hpow, zpow_natCast]
+    have hcast : ((beta ^ (d - 1).natAbs : Int) : ℝ) ≤ (m : ℝ) := Int.cast_le.mpr hlow_int
+    convert hcast using 1
+    simp only [Int.cast_pow]
+  have hupp_real : (m : ℝ) < (beta : ℝ) ^ d := by
+    have hpow : (beta : ℝ) ^ d = (beta : ℝ) ^ (d.natAbs : ℤ) := by
+      rw [hd_natAbs]
+    rw [hpow, zpow_natCast]
+    have hcast : (m : ℝ) < ((beta ^ d.natAbs : Int) : ℝ) := Int.cast_lt.mpr hupp_int
+    convert hcast using 2
+    simp only [Int.cast_pow]
+  have hmag := FloatSpec.Core.Raux.mag_unique_pos beta (m : ℝ) d
+  simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hmag
+  simpa [mag, hd_def] using hmag hβ hm_real_pos hlow_real hupp_real trivial
+
 theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
   0 < m →
   ((F2R (FlocqFloat.mk m e : FlocqFloat beta)) ≤ x ∧
     x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta))) →
   mag beta x = mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) := by
-  sorry
+  intro hm_pos ⟨hlo, hhi⟩
+  set y : ℝ := F2R (FlocqFloat.mk m e : FlocqFloat beta)
+  have hy_pos : 0 < y := by
+    simpa [y] using (F2R_gt_0 (beta := beta) (f := FlocqFloat.mk m e) hbeta hm_pos)
+  have hy_ne : y ≠ 0 := ne_of_gt hy_pos
+  have hx_pos : 0 < x := lt_of_lt_of_le hy_pos hlo
+  have hy_lower : (beta : ℝ) ^ (mag beta y - 1) ≤ y := by
+    have h := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := y) hbeta hy_ne
+    simpa [mag, wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val, abs_of_pos hy_pos]
+      using h (by trivial)
+  have hx_lower : (beta : ℝ) ^ (mag beta y - 1) ≤ x := le_trans hy_lower hlo
+  have hy_upper : y < (beta : ℝ) ^ (mag beta y) := by
+    have h := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := y) hbeta hy_ne
+    simpa [mag, wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val, abs_of_pos hy_pos]
+      using h (by trivial)
+  have hsucc_le :
+      F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta) ≤ (beta : ℝ) ^ (mag beta y) :=
+    F2R_p1_le_bpow (beta := beta) m e (mag beta y) hbeta hm_pos hy_upper
+  have hx_upper : x < (beta : ℝ) ^ (mag beta y) := lt_of_lt_of_le hhi hsucc_le
+  have hmag :=
+    FloatSpec.Core.Raux.mag_unique_pos (beta := beta) (x := x) (e := mag beta y)
+      hbeta hx_pos hx_lower hx_upper
+  simpa [mag, y, wp, PostCond.noThrow, Id.run, pure] using hmag (by trivial)
 /-
 Coq original:
 Theorem mag_F2R : forall m e : Z,
@@ -1164,50 +1255,9 @@ theorem mag_F2R (m e : Int) (hbeta : 1 < beta) :
   m ≠ 0 →
   mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) = mag beta (m : ℝ) + e := by
   intro hm_ne
-  -- Simplify F2R
-  simp only [F2R, pure, Id.run, FlocqFloat.mk]
-  -- Get positivity facts for beta
-  have hβposInt : (0 : Int) < beta := lt_trans (by decide) hbeta
-  have hβposReal : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hβposInt
-  have hβ_gt1 : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hbeta
-  have hβne : (beta : ℝ) ≠ 0 := ne_of_gt hβposReal
-  have hlogβ_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hβ_gt1
-  have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
-  -- The power β^e is positive
-  have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ e := zpow_pos hβposReal e
-  have hpow_ne : (beta : ℝ) ^ e ≠ 0 := ne_of_gt hpow_pos
-  -- m ≠ 0 as real
-  have hm_ne_real : (m : ℝ) ≠ 0 := Int.cast_ne_zero.mpr hm_ne
-  -- Product is nonzero
-  have hprod_ne : (m : ℝ) * (beta : ℝ) ^ e ≠ 0 := mul_ne_zero hm_ne_real hpow_ne
-  -- Unfold mag for both sides (both are nonzero)
-  unfold mag
-  simp only [hprod_ne, hm_ne_real, ite_false]
-  -- Now need: ⌈log|m * β^e| / log β⌉ = ⌈log|m| / log β⌉ + e
-  -- Step 1: |m * β^e| = |m| * β^e (since β^e > 0)
-  have habs_prod : |((m : ℝ) * (beta : ℝ) ^ e)| = |(m : ℝ)| * (beta : ℝ) ^ e := by
-    rw [abs_mul]
-    congr 1
-    exact abs_of_pos hpow_pos
-  -- |m| > 0 since m ≠ 0
-  have habs_m_pos : 0 < |(m : ℝ)| := abs_pos.mpr hm_ne_real
-  -- Product |m| * β^e is positive
-  have habs_prod_pos : 0 < |(m : ℝ)| * (beta : ℝ) ^ e := mul_pos habs_m_pos hpow_pos
-  -- Step 2: log(|m| * β^e) = log|m| + log(β^e) = log|m| + e * log β
-  have hlog_prod : Real.log (|(m : ℝ)| * (beta : ℝ) ^ e) = Real.log |(m : ℝ)| + e * Real.log (beta : ℝ) := by
-    rw [Real.log_mul (ne_of_gt habs_m_pos) hpow_ne]
-    congr 1
-    exact Real.log_zpow (beta : ℝ) e
-  -- Step 3: Division distributes
-  have hdiv_eq : (Real.log |(m : ℝ)| + e * Real.log (beta : ℝ)) / Real.log (beta : ℝ)
-                = Real.log |(m : ℝ)| / Real.log (beta : ℝ) + e := by
-    field_simp [hlogβ_ne]
-  -- Step 4: ⌈x + n⌉ = ⌈x⌉ + n for integer n
-  have hceil_add : ⌈Real.log |(m : ℝ)| / Real.log (beta : ℝ) + e⌉
-                 = ⌈Real.log |(m : ℝ)| / Real.log (beta : ℝ)⌉ + e := by
-    exact Int.ceil_add_intCast (Real.log |(m : ℝ)| / Real.log (beta : ℝ)) e
-  -- Combine all the steps
-  rw [habs_prod, hlog_prod, hdiv_eq, hceil_add]
+  have hm_real_ne : (m : ℝ) ≠ 0 := Int.cast_ne_zero.mpr hm_ne
+  simpa [F2R, FlocqFloat.mk] using
+    (mag_mult_bpow_eq (beta := beta) (x := (m : ℝ)) (e := e) hm_real_ne hbeta)
 /-
 Coq original:
 Theorem Zdigits_mag : forall n,
@@ -1229,31 +1279,33 @@ Proof.
 Qed.
 -/
 /-
-Note on the Lean port:
+Port note:
 
-In this file, `mag` is defined as an integer valued function
-  `mag beta x := if x = 0 then 0 else ⌈log |x| / log beta⌉`.
-This corresponds to the characterization
-  `β^(e-1) < |x| ≤ β^e` for `e = mag beta x`.
-
-On the other hand, `Zdigits` satisfies the bounds from `Zdigits_correct`:
-  `β^(d-1) ≤ |n| < β^d` where `d = (Zdigits beta n).run`.
-
-These characterizations differ only on the exact powers of `β`.
-Consequently, for nonzero integers `n`, we always have
-  `(Zdigits beta n).run = mag beta (n : ℝ)` or
-  `(Zdigits beta n).run = mag beta (n : ℝ) + 1`.
-We state and prove this disjunction here; downstream lemmas that need the
-exact equality can recover it by imposing the usual normalization side
-conditions, or by case analysis on whether `|n|` is an exact power of `β`.
+`Float_prop.mag` is now aligned with `Raux.mag`, so the original Flocq
+equalities with `Zdigits` hold exactly.
 -/
 theorem Zdigits_mag (n : Int) (hbeta : 1 < beta) :
-  n ≠ 0 → (Zdigits beta n) > 0 := by
+  n ≠ 0 → Zdigits beta n = mag beta (n : ℝ) := by
   intro hn
-  -- Direct consequence of `Zdigits_gt_0` from `Digits.lean`.
-  have := FloatSpec.Core.Digits.Zdigits_gt_0 (beta := beta) n (by simpa using hbeta) hn
-  simpa
-    using this
+  by_cases hn_pos : 0 < n
+  · simpa using (mag_eq_Zdigits_of_pos (beta := beta) (m := n) hbeta hn_pos).symm
+  · have hn_nonpos : n ≤ 0 := not_lt.mp hn_pos
+    have hn_lt : n < 0 := lt_of_le_of_ne hn_nonpos hn
+    have hneg_pos : 0 < -n := by simpa using neg_pos.mpr hn_lt
+    have hzd_opp_raw := FloatSpec.Core.Digits.Zdigits_opp (beta := beta) (n := n) (by trivial)
+    simp only [wp, PostCond.noThrow, pure] at hzd_opp_raw
+    obtain ⟨dn, hdn, hdn_neg⟩ := hzd_opp_raw
+    have hzd_opp : Zdigits beta (-n) = Zdigits beta n := by
+      have hdn_neg' : Zdigits beta (-n) = dn := by simpa using hdn_neg
+      rw [hdn_neg', hdn]
+    have hmag_opp := FloatSpec.Core.Raux.mag_opp (beta := beta) (x := (n : ℝ)) hbeta
+    have hmag_opp' : mag beta ((-n : Int) : ℝ) = mag beta (n : ℝ) := by
+      simpa [mag, wp, PostCond.noThrow, Id.run, pure] using hmag_opp (by trivial)
+    calc
+      Zdigits beta n = Zdigits beta (-n) := hzd_opp.symm
+      _ = mag beta ((-n : Int) : ℝ) := by
+        simpa using (mag_eq_Zdigits_of_pos (beta := beta) (m := -n) hbeta hneg_pos).symm
+      _ = mag beta (n : ℝ) := hmag_opp'
 
 /-
 Coq original:
@@ -1267,19 +1319,11 @@ Proof.
   now apply Zdigits_mag.
 Qed.
 -/
-/-
-Port note: In our Lean port, `mag` is defined directly from logarithms.
-For nonzero mantissas, we can always rewrite the magnitude of a float as
-`mag beta (m : ℝ) + e`. This is the version we use here under the name
-`mag_F2R_Zdigits` to keep downstream references stable. The connection to
-`Zdigits` is captured separately in surrounding comments and lemmas.
--/
 theorem mag_F2R_Zdigits (m e : Int) (hbeta : 1 < beta) :
   m ≠ 0 →
-  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) = mag beta (m : ℝ) + e := by
-  -- This is exactly `mag_F2R` proved above.
+  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) = Zdigits beta m + e := by
   intro hm
-  simpa using (mag_F2R (beta := beta) m e hbeta hm)
+  rw [mag_F2R (beta := beta) m e hbeta hm, ← Zdigits_mag (beta := beta) (n := m) hbeta hm]
 
 /-
 Coq original:
@@ -1299,7 +1343,13 @@ Qed.
   ((F2R (FlocqFloat.mk m e : FlocqFloat beta)) ≤ x ∧
     x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta))) →
   mag beta x = (Zdigits beta m) + e := by
-  sorry
+  intro hm_pos hbounds
+  have hm_ne : m ≠ 0 := ne_of_gt hm_pos
+  calc
+    mag beta x = mag beta (F2R (FlocqFloat.mk m e : FlocqFloat beta)) :=
+      mag_F2R_bounds (beta := beta) (x := x) (m := m) (e := e) hbeta hm_pos hbounds
+    _ = Zdigits beta m + e :=
+      mag_F2R_Zdigits (beta := beta) m e hbeta hm_ne
 
 /-
 Coq original:

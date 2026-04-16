@@ -92,7 +92,9 @@ def flipSign (w : UInt64) : UInt64 := w ^^^ signBitMask
 This holds because `bits_to_binary` decodes the sign from bit 63, and XOR with the
 sign-bit mask toggles exactly that bit without affecting the exponent or mantissa fields. -/
 theorem toReal_neg (w : UInt64) : toReal (flipSign w) = -toReal w := by
-  sorry
+  unfold toReal flipSign ofBits signBitMask
+  simp [UInt64.toNat_xor, bits_to_binary, split_bits, mant_width, exp_width, B2R, FF2R, Bopp,
+    bnot, _root_.F2R]
 
 end Binary64
 
