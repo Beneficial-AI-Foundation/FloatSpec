@@ -10152,7 +10152,11 @@ theorem Fopp_Fopp {beta : Int}
     ⦃⌜True⌝⦄
     (pure (Fopp_Fopp_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜Fopp (beta:=beta) (Fopp (beta:=beta) p) = p⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure, Fopp_Fopp_check, PredTrans.pure_apply, Id.run,
+    ULift.up_down]
+  cases p
+  simp [Fopp, FloatSpec.Calc.Operations.Fopp]
 
 -- Coq: `Fopp_Fminus` — negation of a subtraction swaps the operands
 noncomputable def Fopp_Fminus_check {beta : Int}

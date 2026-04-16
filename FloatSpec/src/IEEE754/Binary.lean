@@ -1135,13 +1135,24 @@ lemma FF2R_real_to_FullFloat (x : ℝ) (fexp : Int → Int) [FloatSpec.Core.Gene
       FloatSpec.Core.Defs.F2R, FloatSpec.Core.Generic_fmt.cexp]
     norm_cast
 
-theorem binary_add_correct (mode : RoundingMode) (rnd : ℝ → Int) (x y : Binary754 prec emax)
+theorem binary_add_correct (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   FF2R 2 ((binary_add (prec:=prec) (emax:=emax) x y).val) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) rnd
+  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+    FloatSpec.Core.Raux.Ztrunc
     (FF2R 2 x.val + FF2R 2 y.val) := by
-  sorry
+  let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
+  let sum := FF2R 2 x.val + FF2R 2 y.val
+  have h_generic :
+      FloatSpec.Core.Generic_fmt.generic_format 2 fexp
+        (FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) sum) := by
+    exact FloatSpec.Core.Generic_fmt.round_to_generic_generic 2 fexp (fun _ _ => True) sum
+  simpa [binary_add, fexp, sum, FloatSpec.Calc.Round.round,
+    FloatSpec.Core.Generic_fmt.round_to_generic] using
+    (FF2R_real_to_FullFloat
+      (x := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) sum)
+      (fexp := fexp) h_generic)
 
 theorem binary_mul_correct (mode : RoundingMode) (rnd : ℝ → Int) (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
