@@ -69,7 +69,7 @@ def Zle_bool_opp (x y : Int) : Id Bool := decide ((- x ≤ - y) = (y ≤ x))
 ### 5. Type-Checking Hints
 
 When Lean reports type mismatches involving `Bool` and `Prop`:
-- If comparing booleans with propositions, use `decide` 
+- If comparing booleans with propositions, use `decide`
 - If the function returns `Bool` but you're asserting a `Prop`, wrap with `decide`
 - Remember: `decide : Prop → Bool` for decidable propositions
 
@@ -97,7 +97,7 @@ The `⇓result =>` binds the computation's result for use in the postcondition.
 
 For more complex proofs (like `Zfast_div_eucl_spec`), additional tactics may be needed:
 - `split` for case analysis on if-then-else
-- `have` for intermediate results  
+- `have` for intermediate results
 - `calc` for calculation chains
 - `simp` for simplification
 - Named hypothesis introduction with `intro h` instead of `intro _`

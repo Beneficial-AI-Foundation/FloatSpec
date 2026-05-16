@@ -467,8 +467,8 @@ def render_pdf(entries: list[dict], out: Path) -> None:
     right_secs = L["right_secs"]
     width = float(L["width"])  # points
     height = float(L["height"])  # points
-    x_left = float(L["x_left"]) 
-    x_right = float(L["x_right"]) 
+    x_left = float(L["x_left"])
+    x_right = float(L["x_right"])
 
     c = canvas.Canvas(str(out), pagesize=(width, height))
 

@@ -353,7 +353,7 @@ def bits_to_binary (bits : Int) : Binary754 prec emax :=
     FF2B (prec:=prec) (emax:=emax)
       (FullFloat.F754_finite s (Int.toNat (mm + mField)) ((eField - emax) - (mw : Int)))
 
-theorem bits_binary_roundtrip (bits : Int) 
+theorem bits_binary_roundtrip (bits : Int)
   (h_valid : 0 ≤ bits ∧ bits < (2 : Int) ^ (mant_width prec + exp_width emax + 1)) :
   binary_to_bits prec emax (bits_to_binary prec emax bits) = bits := by
   classical
@@ -602,11 +602,11 @@ def is_zero_bits (prec emax : Int) (bits : Int) : Bool :=
   extract_exponent prec emax bits = 0 ∧ extract_mantissa prec bits = 0
 
 def is_infinity_bits (prec emax : Int) (bits : Int) : Bool :=
-  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧ 
+  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧
   extract_mantissa prec bits = 0
 
 def is_nan_bits (prec emax : Int) (bits : Int) : Bool :=
-  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧ 
+  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧
   extract_mantissa prec bits ≠ 0
 
 end IEEE754_Bits

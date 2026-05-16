@@ -32,7 +32,7 @@ Favor statically typed functional programming but use mutability where it makes 
 
 Key commands:
 - `just build` - Build Lean project
-- `just test` - Run the Python test suite  
+- `just test` - Run the Python test suite
 - `just bootstrap` - Bootstrap developer environment (Rust, Elan, UV)
 
 You can also run underlying tools directly:
@@ -380,7 +380,7 @@ Based on the dependency analysis in `Deps/flocq_dependency_graph.dot`, the prope
 4. **Digits.lean** - Digit manipulation (62 defs)
    - Depends on: Zaux
    - Required by: Float_prop, Generic_fmt, and higher-level operations
-5. **Float_prop.lean** - Basic float properties (36 defs)  
+5. **Float_prop.lean** - Basic float properties (36 defs)
    - Depends on: Defs, Digits, Raux, Zaux
    - Required by: Most formatting and rounding operations
 
@@ -394,7 +394,7 @@ Based on the dependency analysis in `Deps/flocq_dependency_graph.dot`, the prope
 
 #### **Phase 4: Precision Systems (After Phase 3)**
 8. **Ulp.lean** - Unit in the last place (116 defs)
-9. **Round_NE.lean** - Nearest-even rounding (99 defs) 
+9. **Round_NE.lean** - Nearest-even rounding (99 defs)
 10. **FIX.lean** - Fixed-point format (7 defs)
 11. **FLX.lean** - Fixed-precision format (23 defs)
 12. **FLT.lean** - Floating-point format (25 defs)
@@ -490,7 +490,7 @@ Add these settings:
 [git]
 auto-local-bookmark = true  # Import all remote bookmarks automatically
 
-[snapshot]  
+[snapshot]
 auto-update-stale = true    # Auto-update stale working copies when switching contexts
 ```
 

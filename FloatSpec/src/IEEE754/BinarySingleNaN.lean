@@ -26,7 +26,7 @@ inductive B754 where
 -- Conversion to real number
 noncomputable def B754_to_R (x : B754) : ℝ :=
   match x with
-  | B754.B754_finite s m e => 
+  | B754.B754_finite s m e =>
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat 2)
   | _ => 0
 
@@ -692,7 +692,7 @@ theorem is_nan_BSN2B (s : Bool) (payload : Nat) (x : B754) :
 -- Valid B754 predicate
 def validB754 (x : B754) : Prop :=
   match x with
-  | B754.B754_finite s m e => 
+  | B754.B754_finite s m e =>
     -- Mantissa in range and exponent constraints
     (1 ≤ m : Prop) ∧ (m < 2^(Int.natAbs (prec - 1) : Nat) : Prop) ∧
     (3 - emax - prec ≤ e : Prop) ∧ (e ≤ emax - prec : Prop)
