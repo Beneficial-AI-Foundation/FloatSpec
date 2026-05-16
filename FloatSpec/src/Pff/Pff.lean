@@ -1,12 +1,20 @@
+module
+
+
 -- Legacy Pff library compatibility layer
 -- Translated from Coq file: flocq/src/Pff/Pff.v
 
-import Std.Do.Triple
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import Mathlib.Data.Real.Basic
-import FloatSpec.src.Calc.Operations
-import FloatSpec.src.SimprocWP
+public import Std.Do.Triple
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Calc.Operations
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -11294,3 +11302,5 @@ theorem digit_anti_monotone_lt (n : Int) (p q : Int) :
   show |p| < |q|
   -- digit is placeholder 0, so precondition is 0 < 0 = False
   exfalso; simp [digit] at hlt
+
+end

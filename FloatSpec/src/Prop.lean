@@ -1,3 +1,6 @@
+module
+prelude
+
 -- import FloatSpec.src.Prop.Relative
 -- import FloatSpec.src.Prop.Plus_error
 -- import FloatSpec.src.Prop.Mult_error

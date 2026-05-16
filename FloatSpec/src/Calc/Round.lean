@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -6,17 +9,22 @@ Helper functions and theorems for rounding floating-point numbers
 Translated from Coq file: flocq/src/Calc/Round.v
 -/
 
-import FloatSpec.src.Core
-import FloatSpec.src.Calc.Bracket
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Digits
-import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Raux
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Int.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core
+public import FloatSpec.src.Calc.Bracket
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Digits
+public import FloatSpec.src.Core.Generic_fmt
+public import FloatSpec.src.Core.Raux
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Data.Int.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs
 open Std.Do
@@ -2120,3 +2128,5 @@ theorem truncate_FIX_correct
 end CoqTheoremsPlaceholders
 
 end FloatSpec.Calc.Round
+
+end

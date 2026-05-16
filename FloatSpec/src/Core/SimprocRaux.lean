@@ -1,45 +1,53 @@
-import Lean
-import Mathlib.Algebra.Order.Floor.Ring
-import FloatSpec.src.Core.Raux
-import Std.Do.Triple
+module
+
+
+public import Lean
+public import Mathlib.Algebra.Order.Floor.Ring
+public import FloatSpec.src.Core.Raux
+public import Std.Do.Triple
+
+
+
+
+@[expose] public section
 
 open Lean Meta Simp
 open Std.Do
 open FloatSpec.Core.Raux
 
-private def getNegArg? (e : Expr) : Option Expr :=
+private meta def getNegArg? (e : Expr) : Option Expr :=
   if e.getAppFn.isConstOf ``Neg.neg then
     e.getAppArgs.back?
   else
     none
 
-private def getAbsArg? (e : Expr) : Option Expr :=
+private meta def getAbsArg? (e : Expr) : Option Expr :=
   if e.getAppFn.isConstOf ``abs then
     e.getAppArgs.back?
   else
     none
 
-private def getIntCastArg? (e : Expr) : Option Expr :=
+private meta def getIntCastArg? (e : Expr) : Option Expr :=
   if e.getAppFn.isConstOf ``Int.cast then
     e.getAppArgs.back?
   else
     none
 
-private theorem Ztrunc_int_val (z : Int) : Ztrunc (z : ℝ) = z := by
+theorem Ztrunc_int_val (z : Int) : Ztrunc (z : ℝ) = z := by
   unfold Ztrunc
   by_cases h : (z : ℝ) < 0
   · simp [h, Int.ceil_intCast]
   · simp [h, Int.floor_intCast]
 
-private theorem Zfloor_int_val (z : Int) : Zfloor (z : ℝ) = z := by
+theorem Zfloor_int_val (z : Int) : Zfloor (z : ℝ) = z := by
   unfold Zfloor
   simp [Int.floor_intCast]
 
-private theorem Zceil_int_val (z : Int) : Zceil (z : ℝ) = z := by
+theorem Zceil_int_val (z : Int) : Zceil (z : ℝ) = z := by
   unfold Zceil
   simp [Int.ceil_intCast]
 
-private theorem Ztrunc_neg_val (x : ℝ) :
+theorem Ztrunc_neg_val (x : ℝ) :
     Ztrunc (-x) = (-((Ztrunc x)) : Int) := by
   unfold Ztrunc
   by_cases hx : x < 0
@@ -59,10 +67,10 @@ private theorem Ztrunc_neg_val (x : ℝ) :
         exact le_antisymm hx_le hx'
       simp [hx0]
 
-private theorem mag_neg_eq (beta : Int) (x : ℝ) : mag beta (-x) = mag beta x := by
+theorem mag_neg_eq (beta : Int) (x : ℝ) : mag beta (-x) = mag beta x := by
   simp [mag, abs_neg]
 
-private theorem mag_abs_eq (beta : Int) (x : ℝ) : mag beta (abs x) = mag beta x := by
+theorem mag_abs_eq (beta : Int) (x : ℝ) : mag beta (abs x) = mag beta x := by
   simp [mag, abs_abs]
 
 @[simp] theorem mag_bpow_run (beta e : Int) (hβ : 1 < beta) :
@@ -133,3 +141,5 @@ simproc [simp] reduceMagAbs (mag _ _) := fun e => do
   let expr := mkApp2 (mkConst ``mag) beta x
   let proof := mkApp2 (mkConst ``mag_abs_eq) beta x
   return .done { expr := expr, proof? := some proof }
+
+end

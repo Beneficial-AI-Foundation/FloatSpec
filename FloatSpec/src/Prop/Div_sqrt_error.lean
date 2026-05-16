@@ -1,13 +1,21 @@
+module
+
+
 -- Remainder of the division and square root are in the FLX format
 -- Translated from Coq file: flocq/src/Prop/Div_sqrt_error.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Prop.Relative
-import FloatSpec.src.Prop.Sterbenz
-import FloatSpec.src.Prop.Mult_error
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Prop.Relative
+public import FloatSpec.src.Prop.Sterbenz
+public import FloatSpec.src.Prop.Mult_error
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 
@@ -195,3 +203,5 @@ theorem sqrt_error_FLT (emin : Int) (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ
   (h_no_underflow : (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + 2 * prec - 1) : Nat) ≤ |Real.sqrt x|) :
   generic_format beta (FLT_exp emin prec) (x - (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (Real.sqrt x))^2) := by
   sorry
+
+end

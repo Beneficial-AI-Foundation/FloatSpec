@@ -1,13 +1,21 @@
+module
+
+
 -- Binary single NaN operations
 -- Translated from Coq file: flocq/src/IEEE754/BinarySingleNaN.v
 
-import FloatSpec.src.IEEE754.Binary
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Calc.Sqrt
-import Std.Do.Triple
-import Std.Tactic.Do
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.IEEE754.Binary
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Calc.Sqrt
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -1038,3 +1046,5 @@ theorem Bsqrt_correct_aux {prec emax : Int}
     rfl
   · -- sign_SF z = false (sign is false in S754_finite false mx ex)
     rfl
+
+end

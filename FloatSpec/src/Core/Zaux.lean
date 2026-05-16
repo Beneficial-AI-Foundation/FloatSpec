@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -16,10 +19,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import Std.Do.Triple
-import Std.Tactic.Do
-import Mathlib.Tactic
-import FloatSpec.src.SimprocWP
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import Mathlib.Tactic
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Std.Do
 
@@ -1687,3 +1695,5 @@ theorem iter_pos_nat_spec {A : Type} (f : A → A) (p : Nat) (x : A) :
 end Iteration
 
 end FloatSpec.Core.Zaux
+
+end

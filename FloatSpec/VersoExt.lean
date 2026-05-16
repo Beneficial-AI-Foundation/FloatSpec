@@ -1,3 +1,4 @@
+module
 /-
 FloatSpec documentation extensions (stubbed).
 

@@ -1,12 +1,20 @@
+module
+
+
 -- Double rounding properties
 -- Translated from Coq file: flocq/src/Prop/Double_rounding.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.FTZ
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Core.Generic_fmt
+public import FloatSpec.src.Core.FTZ
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.FTZ
@@ -1826,3 +1834,5 @@ theorem round_round_minus_FTZ
     (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') (Znearest choice2) (x - y))
   = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1) (x - y) := by
   sorry
+
+end

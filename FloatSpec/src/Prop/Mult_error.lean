@@ -1,11 +1,19 @@
+module
+
+
 -- Error of the multiplication is in the FLX/FLT format
 -- Translated from Coq file: flocq/src/Prop/Mult_error.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Prop.Plus_error
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Prop.Plus_error
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.Defs
@@ -79,3 +87,5 @@ lemma mult_bpow_pos_exact_FLT (x : ℝ) (e : Int)
   (h_nonneg : 0 ≤ e) :
   generic_format beta (FLT_exp emin prec) (x * (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat)) := by
   sorry
+
+end

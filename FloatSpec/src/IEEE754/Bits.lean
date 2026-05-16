@@ -1,11 +1,19 @@
+module
+
+
 -- IEEE-754 encoding of binary floating-point data
 -- Translated from Coq file: flocq/src/IEEE754/Bits.v
 
-import FloatSpec.src.Core
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.IEEE754.Binary
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.IEEE754.Binary
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -844,3 +852,5 @@ theorem split_bits_inj (x y : Int)
           simpa [hxy]
     _ = y := by
           simpa using hy_join
+
+end

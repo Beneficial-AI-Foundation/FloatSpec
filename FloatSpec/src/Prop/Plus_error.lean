@@ -1,11 +1,19 @@
+module
+
+
 -- Error of the rounded-to-nearest addition is representable
 -- Translated from Coq file: flocq/src/Prop/Plus_error.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Prop.Relative
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Prop.Relative
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.Defs
@@ -178,3 +186,5 @@ lemma plus_error_le_r (x y : ℝ)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
   |FloatSpec.Calc.Round.round beta fexp (Znearest choice) (x + y) - (x + y)| ≤ |y| := by
   sorry
+
+end

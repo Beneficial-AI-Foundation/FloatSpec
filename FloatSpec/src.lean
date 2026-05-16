@@ -1,3 +1,7 @@
+module
+prelude
+
+
 -- Top-level src module aggregating all FloatSpec.src submodules
 
 -- Core floating-point functionality
@@ -23,4 +27,3 @@ import FloatSpec.src.Pff
 
 -- Simproc helpers
 import FloatSpec.src.SimprocWP
-

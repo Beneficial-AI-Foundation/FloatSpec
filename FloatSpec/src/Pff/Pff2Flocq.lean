@@ -1,11 +1,19 @@
+module
+
+
 -- Conversion from Pff to Flocq formats
 -- Translated from Coq file: flocq/src/Pff/Pff2Flocq.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Pff.Pff
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Pff.Pff
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+
+
+
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.Defs
@@ -1887,3 +1895,5 @@ theorem Axpy (emin prec : Int) [Prec_gt_0 prec]
             tv = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
                     (fun t => (FloatSpec.Core.Raux.Zceil t)) (y + a * x)⌝⦄ := by
   sorry
+
+end

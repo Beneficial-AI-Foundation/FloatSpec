@@ -1,5 +1,8 @@
-import FloatSpec.Linter
-import FloatSpecRoles
+module
+
+
+public import FloatSpec.Linter
+public import FloatSpecRoles
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -21,17 +24,22 @@ Generic floating-point format definitions and properties
 Based on flocq/src/Core/Generic_fmt.v
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.SimprocRaux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Float_prop
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.SimprocRaux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Float_prop
 -- import FloatSpec.src.Core.Digits
 -- import Mathlib.Data.Real.Basic
 -- import Mathlib.Data.Int.Basic
 -- import Mathlib.Tactic
-import Std.Do.Triple
-import Std.Tactic.Do
+public import Std.Do.Triple
+public import Std.Tactic.Do
+
+
+
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -7649,3 +7657,5 @@ theorem mag_round
 end Round_generic
 
 end FloatSpec.Core.Generic_fmt
+
+end

@@ -1,5 +1,13 @@
-import Lean
-import FloatSpec.src.Core.Generic_fmt
+module
+
+
+public import Lean
+public import FloatSpec.src.Core.Generic_fmt
+
+
+
+
+@[expose] public section
 
 open Lean Meta Simp
 
@@ -18,3 +26,5 @@ dsimproc [simp] reduceScaledMantissa (FloatSpec.Core.Generic_fmt.scaled_mantissa
     return .continue
   let e' ← whnf e
   return .done e'
+
+end

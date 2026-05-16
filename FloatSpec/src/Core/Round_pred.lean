@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -16,13 +19,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
 -- import Mathlib.Data.Real.Basic
-import FloatSpec.src.Core.Generic_fmt
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core.Generic_fmt
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -4292,3 +4300,5 @@ theorem satisfies_any_imp_N0_spec (F : ℝ → Prop) :
 end SatisfiesAnyConsequences
 
 end FloatSpec.Core.Round_pred
+
+end

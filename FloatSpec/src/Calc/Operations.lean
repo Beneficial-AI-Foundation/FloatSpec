@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -6,14 +9,19 @@ Basic operations on floats: alignment, addition, multiplication
 Translated from Coq file: flocq/src/Calc/Operations.v
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Float_prop
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Float_prop
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Real FloatSpec.Core.Defs
 open Std.Do
@@ -520,3 +528,5 @@ theorem F2R_mult (f1 f2 : FlocqFloat beta) :
 end FloatMultiplication
 
 end FloatSpec.Calc.Operations
+
+end

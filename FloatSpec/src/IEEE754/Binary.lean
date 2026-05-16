@@ -1,13 +1,21 @@
+module
+
+
 -- IEEE-754 binary arithmetic
 -- Translated from Coq file: flocq/src/IEEE754/Binary.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -2995,3 +3003,5 @@ theorem binary_round_aux_correct (mode : RoundingMode)
   simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct_check, binary_round_aux]
   right
   rfl
+
+end

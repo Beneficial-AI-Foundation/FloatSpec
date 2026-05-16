@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -19,19 +22,24 @@ Rounding to nearest, ties to even: existence, unicity...
 Based on flocq/src/Core/Round_NE.v
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpecRoles
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Round_pred
-import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Float_prop
-import FloatSpec.src.Core.Ulp
-import FloatSpec.VersoExt
+public import FloatSpec.src.Core.Zaux
+public import FloatSpecRoles
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Round_pred
+public import FloatSpec.src.Core.Generic_fmt
+public import FloatSpec.src.Core.Float_prop
+public import FloatSpec.src.Core.Ulp
+public import FloatSpec.VersoExt
 -- import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -1658,3 +1666,5 @@ theorem Rnd_NE_pt_minimal_error (x f : ℝ) :
 end ErrorBounds
 
 end FloatSpec.Core.RoundNE
+
+end

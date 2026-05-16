@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -16,13 +19,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Digits
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Int.Basic
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Digits
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Data.Int.Basic
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.Defs
@@ -1645,3 +1653,5 @@ theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
 end FloatProp
 
 end FloatSpec.Core.Float_prop
+
+end

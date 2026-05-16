@@ -1,10 +1,18 @@
+module
+
+
 -- Relative error of the roundings
 -- Translated from Coq file: flocq/src/Prop/Relative.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 
@@ -371,3 +379,5 @@ theorem error_N_FLT (emin prec : Int) [Prec_gt_0 prec] (h_pos : 0 < prec) (choic
   haveI : Prec_gt_0 prec := ⟨h_pos⟩
   have _ := (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec))
   sorry
+
+end

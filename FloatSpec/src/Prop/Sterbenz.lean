@@ -1,9 +1,17 @@
+module
+
+
 -- Sterbenz conditions for exact subtraction
 -- Translated from Coq file: flocq/src/Prop/Sterbenz.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import Mathlib.Data.Real.Basic
+
+
+
+
+@[expose] public section
 
 open Real
 
@@ -39,3 +47,5 @@ theorem sterbenz (x y : ℝ)
   (h_bound : y / 2 ≤ x ∧ x ≤ 2 * y) :
   generic_format beta fexp (x - y) := by
   sorry
+
+end
