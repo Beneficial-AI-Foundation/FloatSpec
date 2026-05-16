@@ -29,9 +29,8 @@ package FloatSpec where
 
 /-! Dependencies -/
 
-require cslib from git "https://github.com/leanprover/cslib" @ "v4.30.0-rc2"
-
-require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "v4.30.0-rc2"
+require "leanprover" / "cslib" -- @ git "v4.30.0-rc2"
+require "leanprover-community" / "mathlib" -- @ git "v4.30.0-rc2"
 
 /-- Linters for FloatSpec (prefer grind over omega, etc).
     Stdlib only, provides linter.preferGrind option.
