@@ -15,7 +15,7 @@ file_list=(
 #   Raux.lean
   # Round_generic.lean
   # Ulp.lean
-  
+
   # Div.lean
   # Plus.lean
   # Round.lean
@@ -32,7 +32,7 @@ hours=(
   # 2
   6
   # 4
-  
+
 )
 
 # Sanity check: arrays must match
@@ -56,7 +56,7 @@ Please ensure your implementation Always Works™ for:
 
 ## Scope
 
-theorems: Fix the first (only the very first, work really hard on it and don't care about others) theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the line number and the error type you need to fix using lake build (the very first incomplete proof within the target file). If there is error inside FloatSpec/src/Calc/__PLACEHOLDER__, locate the error with the smallest line number and deal with that theorem; if there is not error (or error is in files that is other than FloatSpec/src/Calc/__PLACEHOLDER__ and is not a dependency of FloatSpec/src/Calc/__PLACEHOLDER__, e.g., Prop, Pff, IEEE754, ...), search for the very first sorry and deal with that theorem; if the sorry appears inside a function, go search for it's original definition in /home/hantao/code/flocq/src/Calc, transform it into lean4, and fix the corresponding theorems and proof accordingly; if no sorry or error appear in this file, just report this process and end. Then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
+theorems: Fix the first (only the very first, work really hard on it and don't care about others) theorem without a full proof \(sorry and/or error and/or unsolved goals, whatever make the proof incomplete\) in the function. First locate the line number and the error type you need to fix using lake build (the very first incomplete proof within the target file). If there is error inside FloatSpec/src/Calc/__PLACEHOLDER__, locate the error with the smallest line number and deal with that theorem; if there is not error (or error is in files that is other than FloatSpec/src/Calc/__PLACEHOLDER__ and is not a dependency of FloatSpec/src/Calc/__PLACEHOLDER__, e.g., Prop, Pff, IEEE754, ...), search for the very first sorry and deal with that theorem; if the sorry appears inside a function, go search for it's original definition in /home/hantao/code/flocq/src/Calc, transform it into lean4, and fix the corresponding theorems and proof accordingly; if no sorry or error appear in this file, just report this process and end. Then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file.
 
 ### Prerequisites
 
@@ -148,14 +148,14 @@ EOF
   while [[ $(date +%s) -lt $end ]]; do
     timestamp=$(date +%Y%m%d_%H%M%S)
     log_dir=".log"
-    
+
     # Replace placeholders with actual values
     current_msg="${msg//__PLACEHOLDER__/$f}"
     current_msg="${current_msg//__LOG_DIR__/$log_dir}"
-    
+
     # Update command with the message containing replaced placeholders
     cmd=(claude -p "$current_msg" --dangerously-skip-permissions)
-    
+
     if [[ -n "$TIMEOUT_BIN" ]]; then
       "$TIMEOUT_BIN" 7200 "${cmd[@]}" 2>&1 || true
     else

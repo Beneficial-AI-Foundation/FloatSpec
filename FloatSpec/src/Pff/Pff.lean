@@ -1038,7 +1038,7 @@ theorem FcanonicLtPos {beta : Int}
   by_cases hexp : p.Fexp < q.Fexp
   · left; exact hexp
   · -- p.Fexp ≥ q.Fexp
-    push_neg at hexp
+    push Not at hexp
     by_cases hexp_eq : p.Fexp = q.Fexp
     · -- Exponents equal: compare mantissas
       right
@@ -1078,7 +1078,7 @@ theorem FcanonicLtPos {beta : Int}
         have hpow_p_pos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hbeta_pos p.Fexp
         have hp_fnum_nonneg : (0 : ℤ) ≤ p.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hneg : (p.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp < 0 :=
             mul_neg_of_neg_of_pos hneg hpow_p_pos
@@ -1148,14 +1148,14 @@ theorem FcanonicLtPos {beta : Int}
         have hpow_q_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
         have hp_fnum_nonneg : (0 : ℤ) ≤ p.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hneg : (p.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp < 0 :=
             mul_neg_of_neg_of_pos hneg hpow_p_pos
           linarith
         have hq_fnum_nonneg : (0 : ℤ) ≤ q.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hneg : (q.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have hF2Rq_neg : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp < 0 :=
             mul_neg_of_neg_of_pos hneg hpow_q_pos
@@ -1482,7 +1482,7 @@ theorem FcanonicLtNeg {beta : Int}
   by_cases hexp : q.Fexp < p.Fexp
   · left; exact hexp
   · -- q.Fexp ≥ p.Fexp
-    push_neg at hexp
+    push Not at hexp
     by_cases hexp_eq : p.Fexp = q.Fexp
     · -- Exponents equal: compare mantissas
       right
@@ -1514,7 +1514,7 @@ theorem FcanonicLtNeg {beta : Int}
         have hpow_q_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
         have hq_fnum_nonpos : q.Fnum ≤ (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (q.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
           have : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp > 0 :=
             mul_pos hpos hpow_q_pos
@@ -1523,7 +1523,7 @@ theorem FcanonicLtNeg {beta : Int}
         have hpow_p_pos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hbeta_pos p.Fexp
         have hp_fnum_neg : p.Fnum < (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (p.Fnum : ℝ) ≥ 0 := Int.cast_nonneg hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp ≥ 0 :=
             mul_nonneg hpos (le_of_lt hpow_p_pos)
@@ -1620,14 +1620,14 @@ theorem FcanonicLtNeg {beta : Int}
         -- Since F2R q ≤ 0 and beta^q.Fexp > 0, we have q.Fnum ≤ 0
         have hq_fnum_nonpos : q.Fnum ≤ (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (q.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
           have : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp > 0 := mul_pos hpos hpow_q_pos
           linarith
         -- Since F2R p < F2R q ≤ 0, we have p.Fnum < 0
         have hp_fnum_neg : p.Fnum < (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (p.Fnum : ℝ) ≥ 0 := Int.cast_nonneg hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp ≥ 0 := mul_nonneg hpos (le_of_lt hpow_p_pos)
           linarith
@@ -1758,14 +1758,14 @@ theorem FcanonicLtNeg {beta : Int}
         -- Since F2R q ≤ 0 and beta^q.Fexp > 0, we have q.Fnum ≤ 0
         have hq_fnum_nonpos : q.Fnum ≤ (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (q.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
           have : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp > 0 := mul_pos hpos hpow_q_pos
           linarith
         -- Since F2R p < F2R q ≤ 0, we have p.Fnum < 0
         have hp_fnum_neg : p.Fnum < (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (p.Fnum : ℝ) ≥ 0 := Int.cast_nonneg hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp ≥ 0 := mul_nonneg hpos (le_of_lt hpow_p_pos)
           linarith
@@ -2020,13 +2020,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
         -- From 0 ≤ x.Fnum * beta^x.Fexp and beta^x.Fexp > 0: x.Fnum ≥ 0
         have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
           linarith
         have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
           linarith
@@ -2080,7 +2080,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
           -- Actually vNum > 0 should be an axiom from the structure
           -- For now assume vNum > 0 from beta > 1 and the bounds
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hvNum_nonpos : b.vNum ≤ 0 := hcontra
           have hcontra2 : (b.vNum : ℤ) ≤ beta * y.Fnum := hvnumY'
           have hcontra3 : beta * y.Fnum < beta * (b.vNum : ℤ) := by
@@ -2148,13 +2148,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
         have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
         have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
           linarith
         have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
           linarith
@@ -2178,13 +2178,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
         have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
         have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
           linarith
         have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
           linarith
@@ -2236,7 +2236,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
           -- Since beta > 1 and y.Fnum < vNum, we have vNum ≤ beta * (vNum - 1)
           -- This requires vNum > 0
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have : (b.vNum : ℤ) ≤ 0 := hcontra
           have h3 : (b.vNum : ℤ) ≤ beta * y.Fnum := hvnumY'
           have h4 : beta * y.Fnum ≥ 0 := mul_nonneg (le_of_lt (lt_trans (by norm_num : (0 : ℤ) < 1) hβ)) hy_fnum_nonneg
@@ -2308,13 +2308,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
     have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
     have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
       by_contra hcontra
-      push_neg at hcontra
+      push Not at hcontra
       have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
       have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
       linarith
     have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
       by_contra hcontra
-      push_neg at hcontra
+      push Not at hcontra
       have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
       have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
       linarith
@@ -2501,7 +2501,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
             -- If vNum ≤ 0 and x.Fnum ≥ 0, beta > 0, then beta * x.Fnum ≥ 0 > vNum
             -- Contradiction with hvnumX': beta * x.Fnum < vNum
             by_contra hcontra
-            push_neg at hcontra
+            push Not at hcontra
             have hvNum_nonpos : (b.vNum : ℝ) ≤ 0 := hcontra
             have hvNum_nonpos' : (b.vNum : ℤ) ≤ 0 := by exact_mod_cast hvNum_nonpos
             have hbeta_x_nonneg : (0 : ℤ) ≤ beta * x.Fnum := mul_nonneg (le_of_lt (lt_trans (by norm_num : (0 : ℤ) < 1) hβ)) hx_fnum_nonneg
@@ -2585,13 +2585,13 @@ theorem FcanonicNegFexpRlt {beta : Int}
       -- From F2R x ≤ 0 and beta^x.Fexp > 0: x.Fnum ≤ 0
       have hx_fnum_nonpos : x.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hx_pos : (x.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp > 0 := mul_pos hx_pos hpow_x_pos
         linarith
       have hy_fnum_nonpos : y.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hy_pos : (y.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp > 0 := mul_pos hy_pos hpow_y_pos
         linarith
@@ -2728,13 +2728,13 @@ theorem FcanonicNegFexpRlt {beta : Int}
       have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
       have hx_fnum_nonpos : x.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hx_pos : (x.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp > 0 := mul_pos hx_pos hpow_x_pos
         linarith
       have hy_fnum_nonpos : y.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hy_pos : (y.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp > 0 := mul_pos hy_pos hpow_y_pos
         linarith
@@ -3278,7 +3278,7 @@ theorem FcanonicLeastExp {beta : Int}
       by_cases hexp_le : y.Fexp ≤ x.Fexp
       · exact hexp_le
       · -- So x.Fexp < y.Fexp
-        push_neg at hexp_le
+        push Not at hexp_le
         have hexp_lt : x.Fexp < y.Fexp := hexp_le
         -- From F2R equality: x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
         -- So: x.Fnum = y.Fnum * beta^(y.Fexp - x.Fexp)
@@ -3318,7 +3318,6 @@ theorem FcanonicLeastExp {beta : Int}
           rw [hn_eq, zpow_natCast]
           have h1 : (beta : ℝ) ^ n ≥ (beta : ℝ) ^ 1 := by
             gcongr
-            exact hbeta_ge_one
             omega
           simp only [pow_one] at h1
           exact h1
@@ -3752,7 +3751,7 @@ theorem RND_Min_Pos_monotone {beta : Int}
           rw [hIsInt]
           exact Int.cast_le.mpr hFloorMono
         · -- p - 1 < 0: This case is impossible since hPGe1 says 1 ≤ p, so p - 1 ≥ 0
-          push_neg at hp
+          push Not at hp
           -- hp : p - 1 < 0 but hPGe1 : 1 ≤ p, so p - 1 ≥ 0
           -- This is a contradiction
           have hContra : p - 1 ≥ 0 := by omega
@@ -4140,7 +4139,7 @@ theorem RND_Min_Pos_monotone {beta : Int}
             rw [hZpowNat, ← Int.cast_pow radix (p - 1).toNat, Int.floor_intCast]
           rw [hIsInt]
           exact Int.cast_le.mpr hFloorMono
-        · push_neg at hp
+        · push Not at hp
           have hContra : p - 1 ≥ 0 := by omega
           exact absurd hContra (not_le.mpr hp)
 
@@ -5178,7 +5177,7 @@ theorem ClosestZero {beta : Int}
     exact abs_eq_zero.mp (le_antisymm hMin (abs_nonneg _))
   · -- Case: bo.vNum ≤ 0, so no float is bounded (Fbounded' is vacuously false)
     -- But we have Fbounded' bo x from hClosest, contradiction
-    push_neg at hvNum
+    push Not at hvNum
     obtain ⟨hNumBound, _⟩ := hBounded
     have : |x.Fnum| ≥ 0 := abs_nonneg _
     omega
@@ -5273,12 +5272,12 @@ private lemma minExList_aux {beta : Int}
             rcases List.mem_cons.mp hf with heq | hmem
             · exact heq ▸ hcmp
             · exact hmin_max f hmem hfr⟩
-        · push_neg at hcmp
+        · push Not at hcmp
           exact ⟨hd, List.mem_cons_self, h, fun f hf hfr => by
             rcases List.mem_cons.mp hf with heq | hmem
             · exact heq ▸ le_refl _
             · exact le_trans (hmin_max f hmem hfr) (le_of_lt hcmp)⟩
-    · push_neg at h
+    · push Not at h
       rcases ih with hall | ⟨min, hmin_mem, hmin_le, hmin_max⟩
       · left
         intro f hf
@@ -5569,7 +5568,7 @@ theorem ClosestErrorExpStrict {beta : Int}
   show q.Fexp < p.Fexp
   -- Prove by contradiction: assume ¬(q.Fexp < p.Fexp), i.e., p.Fexp ≤ q.Fexp
   by_contra h
-  push_neg at h
+  push Not at h
   -- h : p.Fexp ≤ q.Fexp
   -- Step 1: β > 0 and β^e > 0 for all e
   have hBetaPos : (0 : ℝ) < (beta : ℝ) := lt_of_lt_of_le one_pos hBetaGe1
@@ -5707,7 +5706,7 @@ theorem FmultRadixInv {beta : Int}
   show (1/2 : ℝ) * _root_.F2R x ≤ _root_.F2R z
   -- By contradiction: suppose F2R z < (1/2) * F2R x
   by_contra h
-  push_neg at h
+  push Not at h
   -- Then |F2R z - y| > |F2R w - y| contradicting that z is closest to y
   have hZdist : |_root_.F2R z - y| = y - _root_.F2R z := by
     rw [abs_of_nonpos (by linarith)]
@@ -6992,7 +6991,7 @@ theorem RleRoundedAbs {beta : Int}
       _ ≤ |_root_.F2R f| := hF2R_lower
       _ ≤ |r| := hRgeF
   · -- Case 2: |r| < |F2R f|
-    push_neg at hRgeF
+    push Not at hRgeF
     set u := _root_.F2R f - r with hu_def
     -- F2R f has the same sign as f.Fnum
     have hF2R_sign : (0 < f.Fnum → 0 < _root_.F2R f) ∧ (f.Fnum < 0 → _root_.F2R f < 0) := by
@@ -7079,7 +7078,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta = (beta : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
           by_cases hud : u ≤ delta
           · rw [abs_of_nonpos (by linarith)] at hMinG'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonneg (by linarith)] at hMinG'; linarith
+          · push Not at hud; rw [abs_of_nonneg (by linarith)] at hMinG'; linarith
         · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
           have hu_neg : u ≤ 0 := le_of_lt (hu_sign.2 hfn)
           have hdelta_neg : delta < 0 := by
@@ -7088,7 +7087,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta = -(beta : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
           by_cases hud : delta ≤ u
           · rw [abs_of_nonneg (by linarith)] at hMinG'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonpos (by linarith)] at hMinG'; linarith
+          · push Not at hud; rw [abs_of_nonpos (by linarith)] at hMinG'; linarith
       -- Final inequality for Case A
       have hIntGapR : |(f.Fnum : ℝ)| ≥ (beta : ℝ) ^ (p - 1) + 1 := by rwa [hRadixEq] at hIntGap
       have h1over2beta : 1 / (2 * (beta : ℝ)) ≤ 1 / 2 := by
@@ -7104,7 +7103,7 @@ theorem RleRoundedAbs {beta : Int}
         _ = |_root_.F2R f| - (beta : ℝ) ^ f.Fexp / 2 := by rw [hF2R_abs]
         _ ≤ |r| := by linarith [hTriangle, hErrBound]
     · -- Case B: |f.Fnum| = radix^(p-1) exactly (minimum normal mantissa)
-      push_neg at hFnumStrict
+      push Not at hFnumStrict
       have hFnumExact : |(f.Fnum : ℝ)| = radix ^ (p - 1) := le_antisymm hFnumStrict hFnumBound
       -- Use predecessor at lower exponent: g₂ = ⟨f.Fnum * beta - sign(f.Fnum), f.Fexp - 1⟩
       let g₂ : FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -7154,7 +7153,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta₂ = (beta : ℝ) ^ (f.Fexp - 1) := by simp [hdelta₂_def, hs]
           by_cases hud : u ≤ delta₂
           · rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith
+          · push Not at hud; rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith
         · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
           have hu_neg : u ≤ 0 := le_of_lt (hu_sign.2 hfn)
           have hdelta_neg : delta₂ < 0 := by
@@ -7163,7 +7162,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta₂ = -(beta : ℝ) ^ (f.Fexp - 1) := by simp [hdelta₂_def, hs]
           by_cases hud : delta₂ ≤ u
           · rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith
+          · push Not at hud; rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith
       -- Final calc for Case B
       calc (radix ^ (p - 1) + -(1 / (2 * radix))) * radix ^ f.Fexp
           = radix ^ (p - 1) * radix ^ f.Fexp - 1 / (2 * radix) * radix ^ f.Fexp := by ring
@@ -7919,7 +7918,7 @@ theorem eqExpMax {beta : Int}
     Fbounded b r ∧ _root_.F2R r = _root_.F2R p ∧ r.Fexp ≤ q.Fexp
   by_cases h : p.Fexp ≤ q.Fexp
   · exact ⟨p, trivial, rfl, h⟩
-  · push_neg at h
+  · push Not at h
     set d := (p.Fexp - q.Fexp).toNat with hd_def
     have hd_nonneg : 0 ≤ p.Fexp - q.Fexp := by omega
     have hb : (beta : ℝ) ≠ 0 := by exact_mod_cast (show (beta : ℤ) ≠ 0 by omega)
@@ -7928,7 +7927,7 @@ theorem eqExpMax {beta : Int}
     push_cast
     have hd_eq : (d : ℤ) = p.Fexp - q.Fexp := Int.toNat_of_nonneg hd_nonneg
     rw [mul_assoc, ← zpow_natCast (beta : ℝ) d, hd_eq, ← zpow_add₀ hb]
-    congr 1; ring
+    congr 1; ring_nf
 
 -- Coq: `RoundedModeRep` — representation form for rounded modes
 -- Coq statement: RoundedModeP P → ∀ p q, P p q → ∃ m, q = Float m (Fexp p) :>R
@@ -8511,7 +8510,7 @@ theorem min_or (n m : Nat) :
   show (Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n)
   by_cases h : n ≤ m
   · left; exact ⟨Nat.min_eq_left h, h⟩
-  · right; push_neg at h; exact ⟨Nat.min_eq_right (Nat.le_of_lt h), h⟩
+  · right; push Not at h; exact ⟨Nat.min_eq_right (Nat.le_of_lt h), h⟩
 
 -- Coq: `ZmaxSym` — symmetry of integer max
 noncomputable def ZmaxSym_check (a b : Int) : Unit :=
@@ -10553,7 +10552,7 @@ theorem maxDivLt (radix : Int) (v : Int) (p : Nat) :
   -- So ¬Zdivides v (Zpower_nat radix 0) is False, contradicting hypothesis.
   have h' : ¬ Zdivides v (Zpower_nat radix p) := h
   by_contra hp
-  push_neg at hp
+  push Not at hp
   have hp0 : p = 0 := by omega
   subst hp0
   exact h' ⟨v, by simp [Zpower_nat]⟩

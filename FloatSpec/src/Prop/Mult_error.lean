@@ -47,7 +47,7 @@ variable (emin : Int)
 /-- Error of the multiplication in FLT with underflow requirements -/
 theorem mult_error_FLT (x y : ℝ)
   (hx : generic_format beta (FLT_exp emin prec) x) (hy : generic_format beta (FLT_exp emin prec) y)
-  (h_underflow : x * y ≠ 0 → 
+  (h_underflow : x * y ≠ 0 →
     (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + 2 * prec - 1) : Nat) ≤ |x * y|) :
   generic_format beta (FLT_exp emin prec) (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x * y) - (x * y)) := by
   sorry
@@ -62,7 +62,7 @@ theorem mult_error_FLT_ge_bpow (x y : ℝ) (e : Int)
   (hx : generic_format beta (FLT_exp emin prec) x) (hy : generic_format beta (FLT_exp emin prec) y)
   (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + 2 * prec - 1) : Nat) ≤ |x * y|)
   (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x * y) - (x * y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
+  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤
     |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x * y) - (x * y)| := by
   sorry
 

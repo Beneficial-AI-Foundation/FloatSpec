@@ -15,7 +15,7 @@ file_list=(
 #   Raux.lean
   # Round_generic.lean
   # Ulp.lean
-  
+
   # Core
   # Calc
   IEEE754
@@ -60,7 +60,7 @@ Please ensure your implementation Always Works™ for:
    - Fix docstring formatting issues before proceeding to proof fixes
    - See "Verso Documentation Formatting Rules" section below for details
 
-2. **Then fix proofs/theorems**: After confirming there are no Verso formatting errors (i.e., when the file has no verso formatting errors), fix buggy proofs. Fix `sorry` statements, compilation errors, unsolved goals, and other proof issues - all of these are considered proof/theorem errors that need to be addressed. Fix the first (only the very first, work really hard on it and don't care about others) theorem with a buggy proof (sorry and/or error and/or unsolved goals, whatever make the proof incomplete) in the function. First locate the line number and the error type you need to fix using lake build (the very first incomplete proof within the target file). If there is error, locate the error with the smallest line number and deal with that theorem; if there is no error, search for the very first sorry and deal with that theorem; if there are unsolved goals, fix the proof with unsolved goals; if the buggy proof appears inside a function, go search for it's original definition in /home/hantao/code/flocq/src/Calc, transform it into lean4, and fix the corresponding theorems and proof accordingly; if no errors, sorry, or unsolved goals appear in this file, just report this process and end. Then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file. 
+2. **Then fix proofs/theorems**: After confirming there are no Verso formatting errors (i.e., when the file has no verso formatting errors), fix buggy proofs. Fix `sorry` statements, compilation errors, unsolved goals, and other proof issues - all of these are considered proof/theorem errors that need to be addressed. Fix the first (only the very first, work really hard on it and don't care about others) theorem with a buggy proof (sorry and/or error and/or unsolved goals, whatever make the proof incomplete) in the function. First locate the line number and the error type you need to fix using lake build (the very first incomplete proof within the target file). If there is error, locate the error with the smallest line number and deal with that theorem; if there is no error, search for the very first sorry and deal with that theorem; if there are unsolved goals, fix the proof with unsolved goals; if the buggy proof appears inside a function, go search for it's original definition in /home/hantao/code/flocq/src/Calc, transform it into lean4, and fix the corresponding theorems and proof accordingly; if no errors, sorry, or unsolved goals appear in this file, just report this process and end. Then think in detail about the mistake, and work really hard to solve it. You can use exisiting lemma to assist your proof or create new private lemma to assist your proof. If you think the original theorem is inadequate, you might revise it, but in a very cautious way and record every those changes in a markdown file.
 
 ### Prerequisites
 
@@ -117,7 +117,7 @@ Please ensure your implementation Always Works™ for:
 
 **CRITICAL**: When encountering `@[spec]` errors like:
 - `Type of X is not a type application: Prop`
-- `Type of X is not a type application: Bool`  
+- `Type of X is not a type application: Bool`
 - `Type of X is not a type application: ℝ` (or any non-monadic type)
 - `Invalid 'spec': target was neither a Hoare triple specification nor a 'simp' lemma`
 
@@ -133,7 +133,7 @@ Please ensure your implementation Always Works™ for:
        ⦃⌜True⌝⦄
        Rnd_DN F rnd  -- ERROR: Prop, not monadic
        ⦃⇓result => ...⦄ := by
-   
+
    -- CORRECT:
    @[spec]
    theorem my_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
@@ -150,7 +150,7 @@ Please ensure your implementation Always Works™ for:
        ⦃⌜True⌝⦄
        Rnd_DN_pt_check F x y  -- ERROR: Bool, not monadic
        ⦃⇓result => ...⦄ := by
-   
+
    -- CORRECT:
    @[spec]
    theorem check_spec (x y : ℝ) :
@@ -167,7 +167,7 @@ Please ensure your implementation Always Works™ for:
        ⦃⌜True⌝⦄
        round_val_of_pred rnd x  -- ERROR: ℝ, not monadic
        ⦃⇓result => ...⦄ := by
-   
+
    -- CORRECT:
    @[spec]
    theorem calc_spec (x : ℝ) :
@@ -227,7 +227,7 @@ Please ensure your implementation Always Works™ for:
    - Example of CORRECT format:
      ```lean
      /-- Description of the function
-     
+
          More detailed explanation here.
      -/
      def myFunction ...
@@ -258,10 +258,10 @@ Please ensure your implementation Always Works™ for:
         /-- Old (incorrect):
             Content here.
         -/
-        
+
         /-- New (correct):
             Content here.
-        
+
         -/
         ```
 
@@ -322,7 +322,7 @@ EOF
   while [[ $(date +%s) -lt $end ]]; do
     timestamp=$(date +%Y%m%d_%H%M%S)
     log_file=".log/${timestamp}_verso_${f}.log"
-    
+
     if [[ -n "$TIMEOUT_BIN" ]]; then
       "$TIMEOUT_BIN" 3600 "${cmd[@]}" 2>&1 | tee "$log_file" || true
     else

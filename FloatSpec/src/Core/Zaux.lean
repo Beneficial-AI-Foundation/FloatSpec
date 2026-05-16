@@ -551,7 +551,7 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
     -- When at least one is zero, a = 0 || b = 0 is true
     -- So if a = 0 || b = 0 then 0 else (n / a) % b reduces to 0
     simp at h_some_zero
-    push_neg at h_some_zero
+    push Not at h_some_zero
     -- h_some_zero : a ≠ 0 → b = 0, which is equivalent to a = 0 ∨ b = 0
     -- We need to show: if a = 0 ∨ b = 0 then 0 else (n / a) % b = 0
     by_cases ha_zero : a = 0

@@ -14,7 +14,7 @@ variable [Monotone_exp fexp]
 
 /-- Generic format plus exact under magnitude condition -/
 theorem generic_format_plus (x y : ℝ)
-  (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) 
+  (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
   (h_bound : |x + y| ≤ (Int.natAbs beta : ℝ) ^ (Int.natAbs (min (mag beta x) (mag beta y)) : Nat)) :
   generic_format beta fexp (x + y) := by
   sorry

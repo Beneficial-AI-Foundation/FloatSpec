@@ -336,7 +336,7 @@ lemma round_round_sqrt_aux
     < |Real.sqrt x - midp (beta := beta) fexp1 (Real.sqrt x)| := by
   sorry
 
-/-- Coq: `round_round_sqrt` 
+/-- Coq: `round_round_sqrt`
     If `round_round_sqrt_hyp` holds and `x` is `fexp1`-generic with the
     place relation at `mag (sqrt x)`, then nearest-on-nearest double
     rounding of `sqrt x` from `fexp2` to `fexp1` is innocuous. -/

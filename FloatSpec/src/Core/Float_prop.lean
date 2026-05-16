@@ -393,7 +393,7 @@ theorem ge_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
   -- From f.Fnum * beta^f.Fexp ≥ 0 and beta^f.Fexp > 0, we get f.Fnum ≥ 0
   have hfnum_real_nn := nonneg_of_mul_nonneg_left h hpow_pos
   by_contra hcontra
-  push_neg at hcontra
+  push Not at hcontra
   have : (f.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
   exact not_lt.mpr hfnum_real_nn this
 /-
@@ -434,7 +434,7 @@ theorem le_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
   have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ f.Fexp := zpow_pos hβpos f.Fexp
   -- From f.Fnum * beta^f.Fexp ≤ 0 and beta^f.Fexp > 0, we get f.Fnum ≤ 0
   by_contra hcontra
-  push_neg at hcontra
+  push Not at hcontra
   have hfnum_pos : (f.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
   have hprod_pos : (f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp > 0 := mul_pos hfnum_pos hpow_pos
   exact not_lt.mpr h hprod_pos
@@ -494,7 +494,7 @@ theorem lt_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
     exact Int.cast_pos.mpr this
   have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ f.Fexp := zpow_pos hβpos f.Fexp
   by_contra hcontra
-  push_neg at hcontra
+  push Not at hcontra
   have hfnum_nn : (f.Fnum : ℝ) ≥ 0 := by
     have : (0 : ℤ) ≤ f.Fnum := hcontra
     exact_mod_cast this
@@ -1590,7 +1590,7 @@ theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
   constructor
   -- Part 1: Prove e2 < e1 by contradiction
   · by_contra h_not_lt
-    push_neg at h_not_lt -- h_not_lt : e1 ≤ e2
+    push Not at h_not_lt -- h_not_lt : e1 ≤ e2
     -- Using F2R_change_exp, rewrite F2R(m2,e2) with exponent e1
     -- F2R(m2,e2) = F2R(m2 * β^(e2-e1), e1) when e1 ≤ e2
     have he1_le : e1 ≤ e2 := h_not_lt

@@ -95,7 +95,7 @@ theorem max_spec (a : Array Int) (h : a.size > 0) :
 
     Returns the largest element in the vector. For vectors containing
     multiple occurrences of the maximum value, any of them may be returned.
-    
+
     The type Vector Int (n + 1) ensures the vector is non-empty at compile time,
     eliminating the need for runtime checks.
 -/
@@ -108,7 +108,7 @@ def max {n : Nat} (a : Vector Int (n + 1)) : Id Int :=
     1. The returned value exists in the vector (witness: index i)
     2. No element in the vector is larger than the returned value
     3. The operation is well-defined for non-empty vectors (enforced by type)
-    
+
     Note: When multiple elements equal the maximum, any valid index may be chosen.
 -/
 theorem max_spec {n : Nat} (a : Vector Int (n + 1)) :
@@ -139,7 +139,7 @@ For each file:
    ```lean
    import Std.Do.Triple
    import Std.Tactic.Do
-   
+
    open Std.Do
    ```
 
@@ -171,7 +171,7 @@ For each file:
     - Addition: f(x, y) = x + y
     - Multiplication: f(x, y) = x * y
     - Maximum: f(x, y) = max(x, y)
-    
+
     The type system ensures both input vectors have identical length.
 -/
 def op {n : Nat} (a b : Vector T n) : Id (Vector R n) :=
@@ -183,7 +183,7 @@ def op {n : Nat} (a b : Vector T n) : Id (Vector R n) :=
     1. Each output element is computed by applying f to corresponding inputs
     2. Output vector has the same length as inputs (type-enforced)
     3. The operation is deterministic and pure
-    
+
     This pattern captures most Coq binary function behavior.
 -/
 theorem op_spec {n : Nat} (a b : Vector T n) :
@@ -199,7 +199,7 @@ theorem op_spec {n : Nat} (a b : Vector T n) :
 
     Performs integer division a[i] / b[i] for each element.
     Requires all divisors to be non-zero to avoid undefined behavior.
-    
+
     In Lean, integer division rounds towards negative infinity (floor division),
     matching Python's // operator rather than C's truncation behavior.
 -/
@@ -212,10 +212,10 @@ def divide {n : Nat} (a b : Vector Int n) : Id (Vector Int n) :=
     1. Each result element is the integer quotient of corresponding inputs
     2. Precondition enforces all divisors are non-zero
     3. Division semantics follow Lean's floor division rules
-    
+
     For example: (-7) / 3 = -3 (not -2 as in truncating division)
 -/
-theorem divide_spec {n : Nat} (a b : Vector Int n) 
+theorem divide_spec {n : Nat} (a b : Vector Int n)
     (h_nonzero : ∀ i : Fin n, b.get i ≠ 0) :
     ⦃⌜∀ i : Fin n, b.get i ≠ 0⌝⦄
     divide a b
@@ -229,7 +229,7 @@ theorem divide_spec {n : Nat} (a b : Vector Int n)
 
     Returns the index of the first element that equals the maximum value.
     For vectors with multiple maxima, returns the smallest valid index.
-    
+
     This matches Coq's behavior of returning the first occurrence
     when scanning from index 0.
 -/
@@ -242,13 +242,13 @@ def argmax {n : Nat} (a : Vector Float (n + 1)) : Id (Fin (n + 1)) :=
     1. The element at the returned index equals the maximum value
     2. All elements before the returned index are strictly smaller
     3. This guarantees we return the first occurrence of the maximum
-    
+
     This specification captures Coq's left-to-right scanning behavior.
 -/
 theorem argmax_spec {n : Nat} (a : Vector Float (n + 1)) :
     ⦃⌜True⌝⦄
     argmax a
-    ⦃⇓idx => a.get idx = max a ∧ 
+    ⦃⇓idx => a.get idx = max a ∧
             ∀ j : Fin (n + 1), j < idx → a.get j < a.get idx⦄ := by
   sorry
 ```
@@ -282,11 +282,11 @@ theorem argmax_spec {n : Nat} (a : Vector Float (n + 1)) :
     Converts a matrix of shape (rows × cols) into a vector of length rows*cols.
     Elements are arranged in row-major order (C-style), meaning we traverse
     all columns of row 0, then all columns of row 1, etc.
-    
+
     For a 2×3 matrix [[a,b,c], [d,e,f]], the result is [a,b,c,d,e,f].
 -/
-def flatten {rows cols : Nat} 
-    (mat : Vector (Vector Int cols) rows) : 
+def flatten {rows cols : Nat}
+    (mat : Vector (Vector Int cols) rows) :
     Id (Vector Int (rows * cols)) :=
   sorry
 
@@ -296,7 +296,7 @@ def flatten {rows cols : Nat}
     1. Element at position (i,j) in the matrix appears at position i*cols + j
     2. All elements are preserved without duplication or loss
     3. The output length equals rows × cols
-    
+
     This matches Coq's default 'C' order flattening behavior.
 -/
 theorem flatten_spec {rows cols : Nat}
@@ -314,7 +314,7 @@ theorem flatten_spec {rows cols : Nat}
 
     Creates a vector of n values starting at 'start', incrementing by 'step',
     where n is determined by the formula: floor((stop - start) / step).
-    
+
     Similar to Coq's arange but with size specified at type level.
     The last value is start + (n-1)*step, which is less than stop.
 -/
@@ -328,10 +328,10 @@ def arange {n : Nat} (start stop step : Float) : Id (Vector Float n) :=
     2. Each subsequent element increases by step
     3. All generated values are less than stop
     4. The number of elements matches the computed size
-    
+
     For example: arange(0, 5, 1.5) produces [0, 1.5, 3, 4.5]
 -/
-theorem arange_spec {n : Nat} (start stop step : Float) 
+theorem arange_spec {n : Nat} (start stop step : Float)
     (h_size : n = ((stop - start)/step).floor.toUInt64.toNat)
     (h_step_pos : step > 0) :
     ⦃⌜n = ((stop - start)/step).floor.toUInt64.toNat ∧ step > 0⌝⦄
@@ -499,7 +499,7 @@ theorem fft_spec {n : Nat} (a : Vector Complex n) (h : n > 0) :
         -- FFT preserves the DC component (k=0) correctly
         (n > 0 → result.get ⟨0, h⟩ = complexSum (fun j => a.get j)) ∧
         -- FFT satisfies the fundamental DFT property for each frequency component
-        (∀ k : Fin n, ∃ (sum : Complex), 
+        (∀ k : Fin n, ∃ (sum : Complex),
             sum = complexSum (fun j => a.get j * cexp (-2 * (3.14159265358979323846 : Float) * (k.val.toFloat * j.val.toFloat) / n.toFloat)) ∧
             result.get k = sum)⌝⦄ := by
   sorry
@@ -535,7 +535,7 @@ open Std.Do
     Scans the vector from left to right and returns the index of the first
     element that equals the maximum value. This matches Coq's behavior
     where ties are broken by returning the smallest index.
-    
+
     The parameter h : n > 0 ensures the vector is non-empty, making the
     operation well-defined. The return type Fin n guarantees the index
     is valid for the given vector.
@@ -550,7 +550,7 @@ def argmax {n : Nat} (arr : Vector Float n) (h : n > 0) : Id (Fin n) :=
     2. First occurrence: All elements before the returned index are strictly
        less than the maximum (ensuring we return the first occurrence)
     3. Existence: The returned index is valid (guaranteed by type Fin n)
-    
+
     This specification precisely captures Coq's argmax behavior for 1D arrays,
     including the tie-breaking rule that favors smaller indices.
 -/
@@ -607,7 +607,7 @@ def reduce {n : Nat} (arr : Vector T (n + 1)) : Id T :=
     - Sum: result = arr[0] + arr[1] + ... + arr[n]
     - Max: result ≥ all elements, and result ∈ arr
     - Product: result = arr[0] * arr[1] * ... * arr[n]
-    
+
     Non-empty vectors ensure the reduction is always defined.
 -/
 theorem reduce_spec {n : Nat} (arr : Vector T (n + 1)) :
@@ -635,7 +635,7 @@ def argop {n : Nat} (arr : Vector T n) (h : n > 0) : Id (Fin n) :=
     - argmax: arr[idx] is maximal, first occurrence for ties
     - argmin: arr[idx] is minimal, first occurrence for ties
     - argsort: returns permutation indices for sorted order
-    
+
     The specification must capture both the extremal property and
     the tie-breaking behavior (usually first occurrence).
 -/
@@ -667,7 +667,7 @@ def generate (n : Nat) (params...) : Id (Vector T n) :=
     - ones: arr[i] = 1
     - arange(start, step): arr[i] = start + i * step
     - linspace(start, stop, n): arr[i] = start + i * (stop - start) / (n - 1)
-    
+
     The specification captures the generation formula precisely.
 -/
 theorem generate_spec (n : Nat) (params...) :
@@ -679,7 +679,7 @@ theorem generate_spec (n : Nat) (params...) :
 
 ## Key Decisions When Generating
 
-1. **Parameter Selection**: 
+1. **Parameter Selection**:
    - Ignore `axis`, `out`, `keepdims` for 1D specifications
    - Focus on core mathematical behavior
 
@@ -772,15 +772,15 @@ Before writing formal proofs, always verify the function implementation:
      -- Step 1: Unfold definitions
      unfold my_function
      -- Check goal state with lean_goal
-     
+
      -- Step 2: Apply relevant lemmas
      apply some_lemma
      -- Check new goal state
-     
+
      -- Step 3: Simplify
      simp
      -- Check if solved or what remains
-     
+
      sorry  -- For remaining goals
    ```
 
@@ -805,10 +805,10 @@ Before writing formal proofs, always verify the function implementation:
    ```lean
    -- For integer division/modulo
    use Int.emod_add_ediv, Int.ediv_add_emod
-   
+
    -- For real number properties
    use Real.sqrt_sq, Real.sq_sqrt
-   
+
    -- For inequalities
    use linarith, omega
    ```
@@ -819,7 +819,7 @@ Before writing formal proofs, always verify the function implementation:
    induction n with
    | zero => sorry
    | succ n ih => sorry
-   
+
    -- For lists/vectors
    induction v with
    | nil => sorry
@@ -914,7 +914,7 @@ theorem conditional_spec (args) :
     -- Prove the condition holds and simplify
     simp [h_true]
     rfl
-  · -- False case  
+  · -- False case
     rename_i h_false
     -- Prove the condition fails and simplify
     simp [h_false]
@@ -932,7 +932,7 @@ have h_cond : actual_condition := by
 
 ### Common Pitfalls and Solutions
 
-1. **Unsolved Goals with `simp`**: 
+1. **Unsolved Goals with `simp`**:
    - Problem: `simp [h]` doesn't always work, especially with complex conditions
    - Solution: Use `split` to case-split, then handle each branch explicitly
 
@@ -941,7 +941,7 @@ have h_cond : actual_condition := by
    - Solution: Use `simp` to convert to logical form, then extract components
 
 3. **Negation of Conjunctions**:
-   - Problem: After `push_neg`, `¬(a ≠ 0 && b ≠ 0)` becomes `a ≠ 0 → b = 0`
+   - Problem: After `push Not`, `¬(a ≠ 0 && b ≠ 0)` becomes `a ≠ 0 → b = 0`
    - Solution: Use `by_cases` to handle the implication:
    ```lean
    by_cases ha : a = 0
@@ -956,7 +956,7 @@ have h_cond : actual_condition := by
 
 ### Proof Strategy Checklist
 
-1. **Understand the Function**: 
+1. **Understand the Function**:
    - Check the exact if-conditions
    - Note whether conditions use `&&`, `||`, or implications
    - Verify the return values match the specification

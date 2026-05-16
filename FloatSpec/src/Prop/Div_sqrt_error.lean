@@ -16,7 +16,7 @@ variable (prec : Int)
 variable [Prec_gt_0 prec]
 
 /-- Generic format plus with precision bound -/
-lemma generic_format_plus_prec (fexp : Int → Int) 
+lemma generic_format_plus_prec (fexp : Int → Int)
   (h_bound : ∀ e, fexp e ≤ e - prec)
   (x y : ℝ) (fx fy : FloatSpec.Core.Defs.FlocqFloat beta)
   (hx : x = _root_.F2R fx) (hy : y = _root_.F2R fy)

@@ -180,9 +180,9 @@ Update the change status file `/data/hantao/FloatSpec/FloatSpec/src/Core/Status.
 Compile again. Double check the log and the proof body itself:
 If the full proof is completed (which means no sorry in its proof and the helper lemmas you added), change the 'Status' to `finished` for the target theorem. You should be extremely cautious to ensure that the proof is indeed complete before changing the status to `finished`. (which means at least double-check).
 If you could not finish the full proof, but you made some progress, update the 'Status' to `in progress` or `could not be finished now` (choose one that best describes the current state) for the target theorem. If you did not make any progress on the target theorem, do not change its status.
-Specifically, if your attempts on the target theorem is more than 3, you should change the 'Status' to `could not be finished now` for the target theorem. 
+Specifically, if your attempts on the target theorem is more than 3, you should change the 'Status' to `could not be finished now` for the target theorem.
 
-Update the 'Reason' to reflect the current state (e.g., `Made an task list, among them A, B, C is finished, and next we should focus on D, E, F`, `in progress: lemma X added`, `fixed error: ...`, `could not be finished now: ...`). If the 'Status' is changed to `finished`, the 'Reason' must explain how the proof was completed, referencing Coq source lines where relevant. 
+Update the 'Reason' to reflect the current state (e.g., `Made an task list, among them A, B, C is finished, and next we should focus on D, E, F`, `in progress: lemma X added`, `fixed error: ...`, `could not be finished now: ...`). If the 'Status' is changed to `finished`, the 'Reason' must explain how the proof was completed, referencing Coq source lines where relevant.
 
 Update the 'Attempt' to log the number of attempts you made on this theorem. If this is your first attempt, set it to 1. If you have made previous attempts, increment the count by 1.
 

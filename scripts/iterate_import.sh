@@ -39,7 +39,7 @@ hours=(
   12
   # 5
   # 4
-  
+
 )
 
 round_num=10
@@ -81,7 +81,7 @@ Introduce missing theorems in the directory. You can find the record of missing 
     - Fix any errors before proceeding to next theorem
     - Never batch multiple theorems without checking
 3. After writing each theorem, check whether they are aligned with the Coq implementation. If so, mark them as complete in the record file.
-4. After completing the theorem, check whether the file is complete by running `lake build` and `mcp` to make sure there are no errors or 'pure true' statements. 
+4. After completing the theorem, check whether the file is complete by running `lake build` and `mcp` to make sure there are no errors or 'pure true' statements.
 5. If the compile is not succeedssful, fix the errors one by one until the compile is clean.
 6. Update the record markdown file after completing each theorem! Change the status of the theorem to complete if it is already implemented, and add corresponding correspondences between Lean and Coq to verify.
 7. Repeat the above process until all theorems are imported and the file compiles cleanly.
