@@ -3318,7 +3318,6 @@ theorem FcanonicLeastExp {beta : Int}
           rw [hn_eq, zpow_natCast]
           have h1 : (beta : ℝ) ^ n ≥ (beta : ℝ) ^ 1 := by
             gcongr
-            exact hbeta_ge_one
             omega
           simp only [pow_one] at h1
           exact h1
@@ -7928,7 +7927,7 @@ theorem eqExpMax {beta : Int}
     push_cast
     have hd_eq : (d : ℤ) = p.Fexp - q.Fexp := Int.toNat_of_nonneg hd_nonneg
     rw [mul_assoc, ← zpow_natCast (beta : ℝ) d, hd_eq, ← zpow_add₀ hb]
-    congr 1; ring
+    congr 1; ring_nf
 
 -- Coq: `RoundedModeRep` — representation form for rounded modes
 -- Coq statement: RoundedModeP P → ∀ p q, P p q → ∃ m, q = Float m (Fexp p) :>R
