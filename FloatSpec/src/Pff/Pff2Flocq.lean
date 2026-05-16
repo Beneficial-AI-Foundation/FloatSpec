@@ -42,7 +42,7 @@ theorem pff_flocq_bijection (f : FloatSpec.Core.Defs.FlocqFloat beta) :
         omega
       · -- Fnum ≥ 0 case: sign = false, so |Fnum| = Fnum
         simp only [h, decide_false, ↓reduceIte]
-        push_neg at h
+        push Not at h
         exact Int.natAbs_of_nonneg h
     · -- Fexp part is trivially equal
       trivial
@@ -219,7 +219,7 @@ private lemma Ztrunc_neg_eq (y : ℝ) : FloatSpec.Core.Raux.Ztrunc (-y) = -Float
     simp only [h_neg_lt, h_not_neg_pos, ite_false, hy, h_not_y_neg, ite_true]
     rw [Int.ceil_neg]
   · -- y ≤ 0: split on y < 0 or y = 0
-    push_neg at hy
+    push Not at hy
     by_cases hy0 : y < 0
     · -- y < 0: Ztrunc(-y) uses floor branch (since -y > 0), Ztrunc(y) uses ceil branch
       have h_neg_pos : 0 < -y := neg_pos.mpr hy0
@@ -831,7 +831,7 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
       -- Since e_r < e_min ≤ ex and e_r < e_min ≤ ey, we can express
       -- both x and y at exponent e_r using ex_shift_2.
       -- The error is then an integer multiple of 2^e_r.
-      push_neg at h_er_ge
+      push Not at h_er_ge
       -- h_er_ge : e_r < e_min
 
       -- We have: e_r < e_min ≤ ex and e_r < e_min ≤ ey

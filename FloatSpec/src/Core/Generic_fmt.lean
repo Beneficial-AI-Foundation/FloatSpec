@@ -396,7 +396,7 @@ theorem generic_format_bpow_inv'
     -- hfmt: β^e = Ztrunc(β^e * β^(-fexp(e+1))) * β^(fexp(e+1))
     -- Assume for contradiction: fexp(e+1) > e
     by_contra hgt
-    push_neg at hgt
+    push Not at hgt
     have hexp_neg : e - fexp (e + 1) < 0 := by grind
     -- β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1)), and since exponent is negative:
     -- 0 < β^(e - fexp(e+1)) < 1
@@ -431,7 +431,7 @@ theorem generic_format_bpow_inv'
   -- Since e + 1 ≤ fexp(e), we'd have fexp(e+1) = fexp(e) ≥ e + 1 > e
   -- But fexp(e+1) ≤ e, contradiction
   by_contra h_not_le
-  push_neg at h_not_le
+  push Not at h_not_le
   -- h_not_le : fexp e > e, so fexp e ≥ e + 1
   have hfexp_e_ge : fexp e ≥ e + 1 := by grind
   have he_le_fexp : e ≤ fexp e := by grind
@@ -759,7 +759,7 @@ theorem canonical_abs (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonic
     simp only [abs_of_nonneg hm]
     exact h
   · -- m < 0: |m| = -m
-    push_neg at hm
+    push Not at hm
     simp only [abs_of_neg hm]
     exact canonical_opp beta fexp m e h
 
@@ -2421,7 +2421,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
         by_cases hc : choice (-1 + -f) = true
         · simp only [hc, Bool.not_true, h_half_irrefl, Bool.false_eq_true, if_true, if_false,
             neg_neg]
-        · push_neg at hc
+        · push Not at hc
           simp only [hc, Bool.not_false, h_half_irrefl, Bool.false_eq_true, if_false, if_true,
             neg_add_rev]
       · -- Case: d > 1/2 (since ¬(d < 1/2) and d ≠ 1/2)
@@ -3082,7 +3082,7 @@ theorem round_to_generic_generic
           rw [abs_of_nonpos h_ceil_le0, abs_of_nonpos h_y_neg]
           linarith
         · -- y ≥ 0: Ztrunc(y) = floor(y) ≤ y, so |floor(y)| ≤ |y|
-          push_neg at hy
+          push Not at hy
           have h_ztrunc : (FloatSpec.Core.Raux.Ztrunc y) = Int.floor y := by
             simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure, hy]
           rw [h_ztrunc]
