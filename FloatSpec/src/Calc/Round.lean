@@ -1795,8 +1795,7 @@ theorem truncate_correct_format (m e : Int) (hm : m ≠ 0)
     let m' := r.1; let e' := r.2.1;
     x = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e' : FloatSpec.Core.Defs.FlocqFloat beta)) ∧
     e' = e := by
-  -- All let-bound names reduce by computation since `truncate_triple` is identity here.
-  intro x; intro r; intro m'; intro e'
+  intro x r m' e'
   classical
   -- Compute the result triple and project its components
   have hr : r = (m, e, Location.loc_Exact) := by

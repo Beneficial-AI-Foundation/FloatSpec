@@ -1472,7 +1472,7 @@ theorem mag_generic_gt
       exact_mod_cast (Nat.succ_le_of_lt hnat_pos)
     -- Relate |(n : ℝ)| to (Int.natAbs n : ℝ)
     have h_abs_natAbs : (Int.natAbs n : ℝ) = |(n : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     simpa [hn, h_abs_natAbs] using hnat_ge1
   have h_le_abs : (beta : ℝ) ^ (fexp M) ≤ abs x := by
     -- |x| = |m| * β^(fexp M) with |m| ≥ 1 and β^(fexp M) > 0
@@ -2362,7 +2362,7 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
     -- Relate |z| to natAbs z for integers z
     have h_eq_abs : ((Int.natAbs ((Znearest choice x) - n)) : ℝ)
                       = |(((Znearest choice x) - n : Int) : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     have : (1 : ℝ) ≤ |(((Znearest choice x) - n : Int) : ℝ)| := by simpa [h_eq_abs] using hge1
     -- Relate to the bound on |(Z : ℝ) - (n : ℝ)| using casts
     have hcast : |(((Znearest choice x) - n : Int) : ℝ)|
@@ -6535,7 +6535,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     -- Rewrite base (β : ℝ) as ((natAbs β) : ℝ) since β > 0
     have hbeta_cast_eq : ((Int.natAbs beta : Nat) : ℝ) = (beta : ℝ) := by
       have : ((Int.natAbs beta : Nat) : ℝ) = abs (beta : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [abs_of_pos hbposR] using this
     -- Convert the RHS to a casted Nat power
     have hRHS_cast : (beta : ℝ) ^ (Int.toNat (k - e))
@@ -6547,7 +6547,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     have hcast_ineq : (Int.natAbs m : ℝ) ≤ ((Int.natAbs beta ^ Int.toNat (k - e) : Nat) : ℝ) := by
       -- Use ((natAbs m) : ℝ) = |(m : ℝ)| and rewrite the RHS using hzpow_toNat and hRHS_cast
       have hLHS : (Int.natAbs m : ℝ) = abs (m : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [hLHS, hzpow_toNat, hRHS_cast] using h_abs_m_le
     -- Coercion monotonicity gives the required Nat inequality
     exact (by exact_mod_cast hcast_ineq)

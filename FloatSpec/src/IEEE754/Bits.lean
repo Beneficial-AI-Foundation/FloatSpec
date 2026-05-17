@@ -273,7 +273,7 @@ theorem join_split_bits (x : Int) (hx : 0 ≤ x ∧ x < (2 : Int) ^ (mw + ew + 1
           = (em + x / mm % em) * mm + x % mm := by simp [hsign]
       _ = (x / mm) * mm + x % mm := by simp [hexp]
       _ = mm * (x / mm) + x % mm := by simp [mul_comm, mul_left_comm, mul_assoc]
-      _ = x := by simpa using (Int.ediv_add_emod x mm)
+      _ = x := by simpa using (Int.mul_ediv_add_emod x mm)
   · have hx_lt : x < em * mm := by
       have : x < mm * em := lt_of_not_ge hsign
       simpa [mul_comm, mul_left_comm, mul_assoc] using this
@@ -288,7 +288,7 @@ theorem join_split_bits (x : Int) (hx : 0 ≤ x ∧ x < (2 : Int) ^ (mw + ew + 1
           = (0 + x / mm % em) * mm + x % mm := by simp [hsign]
       _ = (x / mm) * mm + x % mm := by simp [hexp]
       _ = mm * (x / mm) + x % mm := by simp [mul_comm, mul_left_comm, mul_assoc]
-      _ = x := by simpa using (Int.ediv_add_emod x mm)
+      _ = x := by simpa using (Int.mul_ediv_add_emod x mm)
 
 -- IEEE 754 bit-level operations
 section IEEE754_Bits

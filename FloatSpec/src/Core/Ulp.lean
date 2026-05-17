@@ -5241,7 +5241,7 @@ theorem ulp_DN [Exp_not_FTZ fexp] (x : ℝ) (hx : 0 ≤ x) :
        let u2 := ulp beta fexp x
        (u1, u2)) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
-  intro hβ; intro _; classical
+  intro hβ _; classical
   -- Reduce the monadic triple to a run‑level equality goal and close by the bridge lemma.
   -- First, normalize the Hoare‑style goal to a pure proposition
   simp [wp, PostCond.noThrow, Id.run, bind, pure,

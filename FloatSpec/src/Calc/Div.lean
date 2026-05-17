@@ -186,7 +186,7 @@ theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
   -- Use Euclidean division decomposition at integers: m1' = m2 * q + r
   have hdecompZ : m2 * q + r = m1 * beta ^ Int.natAbs (e1 - e2 - e) := by
     -- Euclidean division decomposition for integers
-    have := Int.ediv_add_emod m1' m2
+    have := Int.mul_ediv_add_emod m1' m2
     -- Unfold m1'
     simpa [m1'] using this
   -- Cast to reals and divide by m2
