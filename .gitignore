@@ -7,3 +7,4 @@ fwOut.txt
 /.claude_logs
 __pycache__/
 *.pyc.claude/
+.DS_Store
