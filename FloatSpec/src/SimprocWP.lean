@@ -10,6 +10,8 @@ public import Std.Do.PostCond
 
 
 
+set_option linter.unusedSimpArgs false
+
 @[expose] public section
 
 open Lean Meta Simp

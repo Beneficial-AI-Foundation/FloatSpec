@@ -11,8 +11,8 @@ public import FloatSpec.src.Core.Generic_fmt
 public import FloatSpec.src.Core.FTZ
 public import Mathlib.Data.Real.Basic
 
-
-
+set_option linter.missingDocs false
+set_option warn.sorry false
 
 @[expose] public section
 

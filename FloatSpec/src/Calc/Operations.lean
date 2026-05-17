@@ -21,6 +21,9 @@ public import FloatSpec.src.SimprocWP
 
 
 
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+
 @[expose] public section
 
 open Real FloatSpec.Core.Defs

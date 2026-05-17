@@ -10,8 +10,13 @@ public import Std.Tactic.Do
 public import FloatSpec.src.IEEE754.Binary
 public import Mathlib.Data.Real.Basic
 
-
-
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedSectionVars false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
 
 @[expose] public section
 

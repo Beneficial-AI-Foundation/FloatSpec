@@ -24,6 +24,10 @@ public import FloatSpec.src.SimprocWP
 
 
 
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+
 @[expose] public section
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs FloatSpec.Core.Digits FloatSpec.Core.Generic_fmt

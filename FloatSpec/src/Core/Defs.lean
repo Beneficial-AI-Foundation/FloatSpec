@@ -28,6 +28,8 @@ public import Std.Tactic.Do
 
 
 
+set_option linter.deprecated false
+
 @[expose] public section
 
 open Real

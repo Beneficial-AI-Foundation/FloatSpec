@@ -30,8 +30,9 @@ public import FloatSpecRoles  -- Register {coq} doc role
 public import Std.Do.Triple
 public import Std.Tactic.Do
 
-
-
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
 
 @[expose] public section
 

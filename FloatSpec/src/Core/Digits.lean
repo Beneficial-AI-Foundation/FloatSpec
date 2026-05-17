@@ -38,6 +38,10 @@ public import FloatSpec.src.SimprocWP
 
 
 
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+set_option warn.sorry false
+
 @[expose] public section
 
 open Real

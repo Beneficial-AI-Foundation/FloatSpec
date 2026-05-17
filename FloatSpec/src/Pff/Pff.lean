@@ -11,8 +11,12 @@ public import Mathlib.Data.Real.Basic
 public import FloatSpec.src.Calc.Operations
 public import FloatSpec.src.SimprocWP
 
-
-
+set_option linter.missingDocs false
+set_option linter.preferGrind false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
+set_option warn.sorry false
 
 @[expose] public section
 

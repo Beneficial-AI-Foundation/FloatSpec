@@ -14,6 +14,9 @@ public import Mathlib.Data.Real.Basic
 
 
 
+set_option linter.deprecated false
+set_option linter.unusedVariables false
+
 @[expose] public section
 
 open FloatSpec.Core

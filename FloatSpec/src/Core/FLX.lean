@@ -33,6 +33,12 @@ public import FloatSpec.src.Core.FIX
 
 
 
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
+
 @[expose] public section
 
 -- Avoid `simp` from eagerly using `neg_mul`, which in this file

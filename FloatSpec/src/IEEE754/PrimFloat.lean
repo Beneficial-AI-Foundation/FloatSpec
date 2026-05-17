@@ -11,8 +11,9 @@ public import Mathlib.Data.Real.Basic
 public import Std.Do.Triple
 public import Std.Tactic.Do
 
-
-
+set_option linter.missingDocs false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
 
 @[expose] public section
 

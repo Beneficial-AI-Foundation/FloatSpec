@@ -12,6 +12,8 @@ public import Mathlib.Data.Real.Basic
 
 
 
+set_option warn.sorry false
+
 @[expose] public section
 
 open Real

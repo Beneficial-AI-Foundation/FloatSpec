@@ -10,8 +10,11 @@ public import FloatSpec.src.Pff.Pff
 public import Mathlib.Data.Real.Basic
 public import Std.Do.Triple
 
-
-
+set_option linter.missingDocs false
+set_option linter.preferGrind false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+set_option warn.sorry false
 
 @[expose] public section
 

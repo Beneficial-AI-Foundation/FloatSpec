@@ -12,8 +12,12 @@ public import Std.Do.Triple
 public import Std.Tactic.Do
 public import FloatSpec.src.SimprocWP
 
-
-
+set_option linter.missingDocs false
+set_option linter.preferGrind false
+set_option linter.unnecessarySeqFocus false
+set_option linter.unusedSectionVars false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
 
 @[expose] public section
 
