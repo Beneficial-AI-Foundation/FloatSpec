@@ -1,12 +1,21 @@
+module
+
+
 -- Primitive floating-point operations
 -- Translated from Coq file: flocq/src/IEEE754/PrimFloat.v
 
-import FloatSpec.src.IEEE754.Binary
-import FloatSpec.src.IEEE754.Bits
-import FloatSpec.src.SimprocWP
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
+public import FloatSpec.src.IEEE754.Binary
+public import FloatSpec.src.IEEE754.Bits
+public import FloatSpec.src.SimprocWP
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+
+set_option linter.missingDocs false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real
 open Classical
@@ -1134,3 +1143,5 @@ theorem leb_equiv (prec emax : Int)
   simp only [FloatSpec.Core.Raux.Rcompare, lt_irrefl, ↓reduceIte,
     ne_eq, one_ne_zero, not_false_eq_true, decide_true, Id.run, PredTrans.pure, PredTrans.apply]
   trivial
+
+end

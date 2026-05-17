@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -6,16 +9,26 @@ Locations: where a real number is positioned with respect to its rounded-down va
 Translated from Coq file: flocq/src/Calc/Bracket.v
 -/
 
-import FloatSpec.src.Core
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Float_prop
-import Mathlib.Data.Real.Basic
-import Mathlib.Tactic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Float_prop
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Tactic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 set_option maxRecDepth 4096
 
@@ -2710,3 +2723,5 @@ theorem inbetween_float_unique
 end ExtraCoqTheorems
 
 end FloatSpec.Calc.Bracket
+
+end

@@ -1,3 +1,5 @@
+module
+
 /-
 FloatSpec - Docstring Role Registration (stubbed)
 

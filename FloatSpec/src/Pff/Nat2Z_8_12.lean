@@ -1,10 +1,18 @@
+module
+
+
 -- Mirror of Coq file: flocq/src/Pff/Nat2Z_8_12.v
 -- Provides Nat → Int compatibility lemma for division.
 
-import Std.Do.Triple
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.SimprocWP
+public import Std.Do.Triple
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.SimprocWP
+
+
+
+@[expose] public section
+
 open Std.Do
 open FloatSpec.Core
 
@@ -31,3 +39,5 @@ theorem inj_div (n m : Nat) :
   simp [wp, PostCond.noThrow, pure, inj_div_eval]
 
 end FloatSpec.Pff.Nat2Z
+
+end

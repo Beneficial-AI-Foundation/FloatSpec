@@ -1,13 +1,23 @@
+module
+
+
 -- Binary single NaN operations
 -- Translated from Coq file: flocq/src/IEEE754/BinarySingleNaN.v
 
-import FloatSpec.src.IEEE754.Binary
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Calc.Sqrt
-import Std.Do.Triple
-import Std.Tactic.Do
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.IEEE754.Binary
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Calc.Sqrt
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import Mathlib.Data.Real.Basic
+
+set_option linter.missingDocs false
+set_option linter.unusedSectionVars false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -26,7 +36,7 @@ inductive B754 where
 -- Conversion to real number
 noncomputable def B754_to_R (x : B754) : ℝ :=
   match x with
-  | B754.B754_finite s m e => 
+  | B754.B754_finite s m e =>
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat 2)
   | _ => 0
 
@@ -692,7 +702,7 @@ theorem is_nan_BSN2B (s : Bool) (payload : Nat) (x : B754) :
 -- Valid B754 predicate
 def validB754 (x : B754) : Prop :=
   match x with
-  | B754.B754_finite s m e => 
+  | B754.B754_finite s m e =>
     -- Mantissa in range and exponent constraints
     (1 ≤ m : Prop) ∧ (m < 2^(Int.natAbs (prec - 1) : Nat) : Prop) ∧
     (3 - emax - prec ≤ e : Prop) ∧ (e ≤ emax - prec : Prop)
@@ -1038,3 +1048,5 @@ theorem Bsqrt_correct_aux {prec emax : Int}
     rfl
   · -- sign_SF z = false (sign is false in S754_finite false mx ex)
     rfl
+
+end

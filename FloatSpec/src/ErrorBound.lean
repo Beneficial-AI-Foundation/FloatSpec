@@ -1,9 +1,13 @@
+module
+prelude
+
+
+
 -- Top-level ErrorBound module importing all error-bound components
 
-import FloatSpec.src.ErrorBound.Types
-import FloatSpec.src.ErrorBound.RExpr
-import FloatSpec.src.ErrorBound.MakeRounding
-import FloatSpec.src.ErrorBound.Absolute
-import FloatSpec.src.ErrorBound.Compose
-import FloatSpec.src.ErrorBound.Examples.FPBench
-
+public import FloatSpec.src.ErrorBound.Types
+public import FloatSpec.src.ErrorBound.RExpr
+public import FloatSpec.src.ErrorBound.MakeRounding
+public import FloatSpec.src.ErrorBound.Absolute
+public import FloatSpec.src.ErrorBound.Compose
+public import FloatSpec.src.ErrorBound.Examples.FPBench

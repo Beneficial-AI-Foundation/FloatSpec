@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -16,10 +19,15 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import Std.Do.Triple
-import Std.Tactic.Do
-import Mathlib.Tactic
-import FloatSpec.src.SimprocWP
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import Mathlib.Tactic
+public import FloatSpec.src.SimprocWP
+
+
+
+
+@[expose] public section
 
 open Std.Do
 
@@ -551,7 +559,7 @@ theorem Zdiv_mod_mult_spec (n a b : Int) :
     -- When at least one is zero, a = 0 || b = 0 is true
     -- So if a = 0 || b = 0 then 0 else (n / a) % b reduces to 0
     simp at h_some_zero
-    push_neg at h_some_zero
+    push Not at h_some_zero
     -- h_some_zero : a ≠ 0 → b = 0, which is equivalent to a = 0 ∨ b = 0
     -- We need to show: if a = 0 ∨ b = 0 then 0 else (n / a) % b = 0
     by_cases ha_zero : a = 0
@@ -1687,3 +1695,5 @@ theorem iter_pos_nat_spec {A : Type} (f : A → A) (p : Nat) (x : A) :
 end Iteration
 
 end FloatSpec.Core.Zaux
+
+end

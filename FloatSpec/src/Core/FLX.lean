@@ -1,4 +1,7 @@
-import FloatSpec.Linter.OmegaLinter
+module
+
+
+public import FloatSpec.Linter.OmegaLinter
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -17,15 +20,26 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Generic_fmt
-import Mathlib.Data.Real.Basic
-import Mathlib.Algebra.Ring.Defs
-import Mathlib.Algebra.Ring.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.Core.Ulp
-import FloatSpec.src.Core.FIX
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Generic_fmt
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Algebra.Ring.Defs
+public import Mathlib.Algebra.Ring.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.Core.Ulp
+public import FloatSpec.src.Core.FIX
+
+
+
+
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 -- Avoid `simp` from eagerly using `neg_mul`, which in this file
 -- triggers deep typeclass search for `HasDistribNeg` on ℝ.
@@ -1386,3 +1400,5 @@ theorem pred_FLX_exact_shift (beta : Int) [Prec_gt_0 prec] (x : ℝ) (e : Int) :
   trivial
 
 end FloatSpec.Core.FLX
+
+end

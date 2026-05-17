@@ -1,4 +1,7 @@
-import FloatSpec.Linter
+module
+
+
+public import FloatSpec.Linter
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -17,15 +20,21 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpecRoles  -- Register {coq} doc role
+public import FloatSpec.src.Core.Zaux
+public import FloatSpecRoles  -- Register {coq} doc role
 -- import Mathlib.Data.Real.Basic
 -- import Mathlib.Data.Real.Sqrt
 -- import Mathlib.Analysis.SpecialFunctions.Log.Basic
 -- import Mathlib.Data.Nat.Find
 -- import Mathlib.Tactic
-import Std.Do.Triple
-import Std.Tactic.Do
+public import Std.Do.Triple
+public import Std.Tactic.Do
+
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -4835,3 +4844,5 @@ theorem mag_1 (beta : Int) (_hβ : 1 < beta) :
 end Mag
 
 end FloatSpec.Core.Raux
+
+end

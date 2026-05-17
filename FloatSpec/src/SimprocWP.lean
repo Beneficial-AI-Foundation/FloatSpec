@@ -1,8 +1,18 @@
-import Lean
-import Std.Do.Triple
-import Std.Do.WP
-import Std.Do.PredTrans
-import Std.Do.PostCond
+module
+
+
+public import Lean
+public import Std.Do.Triple
+public import Std.Do.WP
+public import Std.Do.PredTrans
+public import Std.Do.PostCond
+
+
+
+
+set_option linter.unusedSimpArgs false
+
+@[expose] public section
 
 open Lean Meta Simp
 open Std.Do
@@ -78,3 +88,5 @@ example :
 
 /-- {name}`bind` for {name}`Id` is definitional; keep it in simp. -/
 @[simp] theorem id_bind (x : α) (f : α → Id β) : (x >>= f) = f x := rfl
+
+end

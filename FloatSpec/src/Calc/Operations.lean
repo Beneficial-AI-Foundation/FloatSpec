@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -6,14 +9,22 @@ Basic operations on floats: alignment, addition, multiplication
 Translated from Coq file: flocq/src/Calc/Operations.v
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Float_prop
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Float_prop
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+
+
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+
+@[expose] public section
 
 open Real FloatSpec.Core.Defs
 open Std.Do
@@ -80,7 +91,7 @@ theorem Falign_spec (f1 f2 : FlocqFloat beta) :
       rw [mul_assoc, ← zpow_add₀ hβne, sub_add_cancel]
   · -- Case: e1 > e2, common exponent is e2
     simp only [hle, ite_false]
-    push_neg at hle
+    push Not at hle
     have hbeta_pos : 1 < beta := hbeta
     have hpos : 0 < beta := lt_trans (by decide : (0:Int) < 1) hbeta_pos
     have hle' : f2.Fexp ≤ f1.Fexp := le_of_lt hle
@@ -520,3 +531,5 @@ theorem F2R_mult (f1 f2 : FlocqFloat beta) :
 end FloatMultiplication
 
 end FloatSpec.Calc.Operations
+
+end

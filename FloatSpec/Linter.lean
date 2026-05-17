@@ -1,3 +1,7 @@
+module
+prelude
+
+
 import FloatSpec.Linter.OmegaLinter
 import FloatSpec.Linter.SimpOnlyLinter
 import FloatSpec.Linter.IdReturnLinter

@@ -4,7 +4,7 @@ import FloatSpec.Linter.OmegaLinter
 -- Core floating-point functionality
 import FloatSpec.src.Core
 
--- Calculation modules  
+-- Calculation modules
 import FloatSpec.src.Calc
 
 -- Property analysis and error bounds
@@ -30,7 +30,7 @@ Transformed from the Flocq floating-point library
 This library provides:
 - Core floating-point functionality and generic formats
 - Calculation operations (addition, multiplication, division, square root)
-- Property analysis and error bounds 
+- Property analysis and error bounds
 - Full IEEE 754 standard implementation
 - Legacy Pff compatibility layer
 -/

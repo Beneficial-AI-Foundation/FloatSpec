@@ -1,13 +1,25 @@
+module
+
+
 -- IEEE-754 binary arithmetic
 -- Translated from Coq file: flocq/src/IEEE754/Binary.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+set_option linter.missingDocs false
+set_option linter.preferGrind false
+set_option linter.unnecessarySeqFocus false
+set_option linter.unusedSectionVars false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -1119,7 +1131,7 @@ lemma FF2R_real_to_FullFloat (x : ℝ) (fexp : Int → Int) [FloatSpec.Core.Gene
       by_cases hmpos : mantissa < 0
       · simp only [decide_eq_true hmpos, ↓reduceIte]
         exact (Int.eq_neg_natAbs_of_nonpos (le_of_lt hmpos)).symm
-      · push_neg at hmpos
+      · push Not at hmpos
         simp only [decide_eq_false (not_lt.mpr hmpos), Bool.false_eq_true, ↓reduceIte]
         exact Int.natAbs_of_nonneg hmpos
     -- Rewrite using hmant_eq
@@ -1915,12 +1927,12 @@ theorem bounded_le_emax_minus_prec {prec emax : Int} [Prec_gt_0 prec]
     have hpow_gt_one : 1 < (2 : Nat) ^ prec.toNat := Nat.lt_of_le_of_lt hmx_ge_one hmx_lt
     have hprec_toNat_pos : 0 < prec.toNat := by
       by_contra h_contra
-      push_neg at h_contra
+      push Not at h_contra
       interval_cases prec.toNat
       simp only [pow_zero, lt_self_iff_false] at hpow_gt_one
     have hprec_nonneg : 0 ≤ prec := by
       by_contra h_contra
-      push_neg at h_contra
+      push Not at h_contra
       have : prec.toNat = 0 := Int.toNat_eq_zero.mpr (le_of_lt h_contra)
       omega
     have hprec_pos : 0 < prec := by
@@ -2018,12 +2030,12 @@ theorem bounded_lt_emax {prec emax : Int}
     have hpow_gt_one : 1 < (2 : Nat) ^ prec.toNat := Nat.lt_of_le_of_lt hmx_ge_one hmx_lt
     have hprec_toNat_pos : 0 < prec.toNat := by
       by_contra h_contra
-      push_neg at h_contra
+      push Not at h_contra
       interval_cases prec.toNat
       simp only [pow_zero, lt_self_iff_false] at hpow_gt_one
     have hprec_nonneg : 0 ≤ prec := by
       by_contra h_contra
-      push_neg at h_contra
+      push Not at h_contra
       have : prec.toNat = 0 := Int.toNat_eq_zero.mpr (le_of_lt h_contra)
       omega
     -- Key: mx < 2^prec.toNat = 2^prec (since prec ≥ 0)
@@ -2512,7 +2524,7 @@ theorem bounded_canonical_lt_emax {prec emax : Int}
       exact Nat.cast_lt.mp hhi'
 
     · -- Subnormal case: M - prec < emin, so ex = emin
-      push_neg at hnormal
+      push Not at hnormal
       have hex_subnormal : ex = emin := by
         rw [hex_eq]
         exact max_eq_right (le_of_lt hnormal)
@@ -2648,7 +2660,7 @@ private lemma Zdigits_pos_of_ne_zero (n : Int) (hn : n ≠ 0) :
   have ⟨hlow, hupp⟩ := Zdigits_bounds_2 n hn
   set d := FloatSpec.Core.Digits.Zdigits 2 n with hd_def
   by_contra hd_nonpos
-  push_neg at hd_nonpos
+  push Not at hd_nonpos
   have hn_abs_pos : |n| ≥ 1 := Int.one_le_abs hn
   rcases (eq_or_lt_of_le hd_nonpos) with hd_zero | hd_neg
   · rw [hd_zero] at hupp; simp at hupp; omega
@@ -2669,7 +2681,7 @@ private lemma Zdigits_unique_2 (n e : Int) (hn : n ≠ 0)
   have hd_pos : d > 0 := Zdigits_pos_of_ne_zero n hn
   have he_pos : e > 0 := by
     by_contra he_nonpos
-    push_neg at he_nonpos
+    push Not at he_nonpos
     have hn_abs_pos : |n| ≥ 1 := Int.one_le_abs hn
     rcases (eq_or_lt_of_le he_nonpos) with he_zero | he_neg
     · rw [he_zero] at hupp; simp at hupp; omega
@@ -2689,13 +2701,13 @@ private lemma Zdigits_unique_2 (n e : Int) (hn : n ≠ 0)
   have hlow' : (2 : Int) ^ (e - 1).toNat ≤ |n| := by rwa [he1_natabs] at hlow
   have hupp' : |n| < (2 : Int) ^ e.toNat := by rwa [he_natabs] at hupp
   have h_e_le_d : e ≤ d := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have h' : d.toNat ≤ (e - 1).toNat := by omega
     have h2pow_mono : (2 : Int) ^ d.toNat ≤ 2 ^ (e - 1).toNat := by
       apply pow_le_pow_right₀ (by norm_num : (1 : Int) ≤ 2) h'
     linarith
   have h_d_le_e : d ≤ e := by
-    by_contra h; push_neg at h
+    by_contra h; push Not at h
     have h' : e.toNat ≤ (d - 1).toNat := by omega
     have h2pow_mono : (2 : Int) ^ e.toNat ≤ 2 ^ (d - 1).toNat := by
       apply pow_le_pow_right₀ (by norm_num : (1 : Int) ≤ 2) h'
@@ -2995,3 +3007,5 @@ theorem binary_round_aux_correct (mode : RoundingMode)
   simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct_check, binary_round_aux]
   right
   rfl
+
+end

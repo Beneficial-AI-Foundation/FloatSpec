@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -16,13 +19,19 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
 -- import Mathlib.Data.Real.Basic
-import FloatSpec.src.Core.Generic_fmt
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core.Generic_fmt
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -2478,7 +2487,7 @@ theorem Rnd_NA_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
     · -- There exists f2 ≠ f that is also nearest; prove |x| ≤ |f|
       rcases not_forall.mp huniq with ⟨f2, hnot⟩
       have hN2 : Rnd_N_pt F x f2 ∧ f2 ≠ f := by
-        exact _root_.not_imp.mp hnot
+        exact Classical.not_imp.mp hnot
       have hN2' : Rnd_N_pt F x f2 := hN2.1
       have hneq : f2 ≠ f := hN2.2
       -- Equal distances to x for two nearest points
@@ -4292,3 +4301,5 @@ theorem satisfies_any_imp_N0_spec (F : ℝ → Prop) :
 end SatisfiesAnyConsequences
 
 end FloatSpec.Core.Round_pred
+
+end

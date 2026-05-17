@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -16,13 +19,22 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Digits
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Int.Basic
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Digits
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Data.Int.Basic
+public import FloatSpec.src.SimprocWP
+
+
+
+
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.Defs
@@ -281,7 +293,7 @@ theorem F2R_Zabs (f : FlocqFloat beta) (hbeta : 1 < beta) :
   -- Reduce to |m| = natAbs m over ℝ
   have h_abs_natAbs : (Int.natAbs f.Fnum : ℝ) = |(f.Fnum : ℝ)| := by
     -- Standard lemma relating casts and absolute values
-    simpa [Int.cast_natAbs, Int.cast_abs]
+    simpa [Nat.cast_natAbs, Int.cast_abs]
   -- |m * p| = |m| * p and |p| = p (since p ≥ 0)
   have : |(f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp| = (Int.natAbs f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp := by
     simpa [abs_mul, abs_of_nonneg hp_nonneg, h_abs_natAbs]
@@ -393,7 +405,7 @@ theorem ge_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
   -- From f.Fnum * beta^f.Fexp ≥ 0 and beta^f.Fexp > 0, we get f.Fnum ≥ 0
   have hfnum_real_nn := nonneg_of_mul_nonneg_left h hpow_pos
   by_contra hcontra
-  push_neg at hcontra
+  push Not at hcontra
   have : (f.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
   exact not_lt.mpr hfnum_real_nn this
 /-
@@ -434,7 +446,7 @@ theorem le_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
   have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ f.Fexp := zpow_pos hβpos f.Fexp
   -- From f.Fnum * beta^f.Fexp ≤ 0 and beta^f.Fexp > 0, we get f.Fnum ≤ 0
   by_contra hcontra
-  push_neg at hcontra
+  push Not at hcontra
   have hfnum_pos : (f.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
   have hprod_pos : (f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp > 0 := mul_pos hfnum_pos hpow_pos
   exact not_lt.mpr h hprod_pos
@@ -494,7 +506,7 @@ theorem lt_0_F2R (f : FlocqFloat beta) (hbeta : 1 < beta) :
     exact Int.cast_pos.mpr this
   have hpow_pos : (0 : ℝ) < (beta : ℝ) ^ f.Fexp := zpow_pos hβpos f.Fexp
   by_contra hcontra
-  push_neg at hcontra
+  push Not at hcontra
   have hfnum_nn : (f.Fnum : ℝ) ≥ 0 := by
     have : (0 : ℤ) ≤ f.Fnum := hcontra
     exact_mod_cast this
@@ -1058,10 +1070,10 @@ theorem F2R_prec_normalize (m e e' p : Int) (hbeta : 1 < beta) :
       simpa [hpow_cast] using hcast'
     -- (Int.natAbs m : ℝ) = |(m : ℝ)| and (Int.natAbs beta : ℝ) = |(beta : ℝ)| = b
     have h_abs_m : (Int.natAbs m : ℝ) = |(m : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     have hb_abs : (Int.natAbs beta : ℝ) = b := by
       have h1 : (Int.natAbs beta : ℝ) = |(beta : ℝ)| := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       have h2 : |(beta : ℝ)| = (beta : ℝ) := abs_of_nonneg (le_of_lt hbpos)
       simpa [b, h1] using h2
     simpa [h_abs_m, hb_abs] using hcast
@@ -1590,7 +1602,7 @@ theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
   constructor
   -- Part 1: Prove e2 < e1 by contradiction
   · by_contra h_not_lt
-    push_neg at h_not_lt -- h_not_lt : e1 ≤ e2
+    push Not at h_not_lt -- h_not_lt : e1 ≤ e2
     -- Using F2R_change_exp, rewrite F2R(m2,e2) with exponent e1
     -- F2R(m2,e2) = F2R(m2 * β^(e2-e1), e1) when e1 ≤ e2
     have he1_le : e1 ≤ e2 := h_not_lt
@@ -1645,3 +1657,5 @@ theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
 end FloatProp
 
 end FloatSpec.Core.Float_prop
+
+end

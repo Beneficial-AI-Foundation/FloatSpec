@@ -1,11 +1,24 @@
+module
+
+
 -- IEEE-754 encoding of binary floating-point data
 -- Translated from Coq file: flocq/src/IEEE754/Bits.v
 
-import FloatSpec.src.Core
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.IEEE754.Binary
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.IEEE754.Binary
+public import Mathlib.Data.Real.Basic
+
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedSectionVars false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -260,7 +273,7 @@ theorem join_split_bits (x : Int) (hx : 0 ≤ x ∧ x < (2 : Int) ^ (mw + ew + 1
           = (em + x / mm % em) * mm + x % mm := by simp [hsign]
       _ = (x / mm) * mm + x % mm := by simp [hexp]
       _ = mm * (x / mm) + x % mm := by simp [mul_comm, mul_left_comm, mul_assoc]
-      _ = x := by simpa using (Int.ediv_add_emod x mm)
+      _ = x := by simpa using (Int.mul_ediv_add_emod x mm)
   · have hx_lt : x < em * mm := by
       have : x < mm * em := lt_of_not_ge hsign
       simpa [mul_comm, mul_left_comm, mul_assoc] using this
@@ -275,7 +288,7 @@ theorem join_split_bits (x : Int) (hx : 0 ≤ x ∧ x < (2 : Int) ^ (mw + ew + 1
           = (0 + x / mm % em) * mm + x % mm := by simp [hsign]
       _ = (x / mm) * mm + x % mm := by simp [hexp]
       _ = mm * (x / mm) + x % mm := by simp [mul_comm, mul_left_comm, mul_assoc]
-      _ = x := by simpa using (Int.ediv_add_emod x mm)
+      _ = x := by simpa using (Int.mul_ediv_add_emod x mm)
 
 -- IEEE 754 bit-level operations
 section IEEE754_Bits
@@ -353,7 +366,7 @@ def bits_to_binary (bits : Int) : Binary754 prec emax :=
     FF2B (prec:=prec) (emax:=emax)
       (FullFloat.F754_finite s (Int.toNat (mm + mField)) ((eField - emax) - (mw : Int)))
 
-theorem bits_binary_roundtrip (bits : Int) 
+theorem bits_binary_roundtrip (bits : Int)
   (h_valid : 0 ≤ bits ∧ bits < (2 : Int) ^ (mant_width prec + exp_width emax + 1)) :
   binary_to_bits prec emax (bits_to_binary prec emax bits) = bits := by
   classical
@@ -602,11 +615,11 @@ def is_zero_bits (prec emax : Int) (bits : Int) : Bool :=
   extract_exponent prec emax bits = 0 ∧ extract_mantissa prec bits = 0
 
 def is_infinity_bits (prec emax : Int) (bits : Int) : Bool :=
-  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧ 
+  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧
   extract_mantissa prec bits = 0
 
 def is_nan_bits (prec emax : Int) (bits : Int) : Bool :=
-  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧ 
+  extract_exponent prec emax bits = ((2 : Int) ^ (exp_width emax)) - 1 ∧
   extract_mantissa prec bits ≠ 0
 
 end IEEE754_Bits
@@ -844,3 +857,5 @@ theorem split_bits_inj (x y : Int)
           simpa [hxy]
     _ = y := by
           simpa using hy_join
+
+end

@@ -1,11 +1,21 @@
+module
+
+
 -- Error of the rounded-to-nearest addition is representable
 -- Translated from Coq file: flocq/src/Prop/Plus_error.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Prop.Relative
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Prop.Relative
+public import Mathlib.Data.Real.Basic
+
+
+
+
+set_option warn.sorry false
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.Defs
@@ -18,7 +28,7 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Round representation with same exponent -/
 theorem round_repr_same_exp (rnd : ℝ → Int) [Valid_rnd rnd] (m e : Int) :
-  ∃ m', FloatSpec.Calc.Round.round beta fexp () (_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)) = 
+  ∃ m', FloatSpec.Calc.Round.round beta fexp () (_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)) =
         _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e : FloatSpec.Core.Defs.FlocqFloat beta) := by
   sorry
 
@@ -26,7 +36,7 @@ variable [Monotone_exp fexp]
 variable (choice : Int → Bool)
 
 /-- Plus error auxiliary lemma -/
-lemma plus_error_aux (x y : ℝ) 
+lemma plus_error_aux (x y : ℝ)
   (h_exp : cexp beta fexp x ≤ cexp beta fexp y)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
   generic_format beta fexp (FloatSpec.Calc.Round.round beta fexp (Znearest choice) (x + y) - (x + y)) := by
@@ -117,9 +127,9 @@ lemma mag_minus1 (z : ℝ) (h_nonzero : z ≠ 0) :
   sorry
 
 /-- Round plus F2R representation -/
-theorem round_plus_F2R (x y : ℝ) 
+theorem round_plus_F2R (x y : ℝ)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) (h_nonzero : x ≠ 0) :
-  ∃ m : Int, FloatSpec.Calc.Round.round beta fexp () (x + y) = 
+  ∃ m : Int, FloatSpec.Calc.Round.round beta fexp () (x + y) =
     _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m (cexp beta fexp (x / (beta : ℝ))) : FloatSpec.Core.Defs.FlocqFloat beta) := by
   sorry
 
@@ -140,7 +150,7 @@ theorem round_FLT_plus_ge (x y : ℝ) (e : Int)
   (hy : generic_format beta (FLT_exp emin prec) y)
   (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + prec) : Nat) ≤ |x|)
   (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
+  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤
     |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y)| := by
   sorry
 
@@ -151,7 +161,7 @@ lemma round_FLT_plus_ge' (x y : ℝ) (e : Int)
   (h1 : x ≠ 0 → (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + prec) : Nat) ≤ |x|)
   (h2 : x = 0 → y ≠ 0 → (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ |y|)
   (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
+  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤
     |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x + y)| := by
   sorry
 
@@ -161,7 +171,7 @@ theorem round_FLX_plus_ge (x y : ℝ) (e : Int)
   (hy : generic_format beta (FLX_exp prec) y)
   (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + prec) : Nat) ≤ |x|)
   (h_nonzero : FloatSpec.Calc.Round.round beta (FLX_exp prec) () (x + y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
+  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤
     |FloatSpec.Calc.Round.round beta (FLX_exp prec) () (x + y)| := by
   sorry
 
@@ -178,3 +188,5 @@ lemma plus_error_le_r (x y : ℝ)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
   |FloatSpec.Calc.Round.round beta fexp (Znearest choice) (x + y) - (x + y)| ≤ |y| := by
   sorry
+
+end

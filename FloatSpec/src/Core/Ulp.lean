@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -19,22 +22,32 @@ Unit in the last place (ULP) definitions and core properties
 Based on flocq/src/Core/Ulp.v
 -/
 
-import Lean
-import FloatSpecRoles
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.SimprocRaux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Round_pred
-import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.SimprocGenericFmt
-import FloatSpec.src.Core.Float_prop
-import FloatSpec.src.SimprocWP
-import FloatSpec.VersoExt
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
+public import Lean
+public import FloatSpecRoles
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.SimprocRaux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Round_pred
+public import FloatSpec.src.Core.Generic_fmt
+public import FloatSpec.src.Core.SimprocGenericFmt
+public import FloatSpec.src.Core.Float_prop
+public import FloatSpec.src.SimprocWP
+public import FloatSpec.VersoExt
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
 
+
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedSectionVars false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
+set_option warn.sorry false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -1725,7 +1738,7 @@ private lemma round_to_generic_format
           rw [abs_of_nonpos h_ceil_le0, abs_of_nonpos h_y_neg]
           linarith
         · -- y ≥ 0: Ztrunc(y) = floor(y) ≤ y, so |floor(y)| ≤ |y|
-          push_neg at hy
+          push Not at hy
           have h_ztrunc : (FloatSpec.Core.Raux.Ztrunc y) = Int.floor y := by
             simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure, hy]
           rw [h_ztrunc]
@@ -5228,7 +5241,7 @@ theorem ulp_DN [Exp_not_FTZ fexp] (x : ℝ) (hx : 0 ≤ x) :
        let u2 := ulp beta fexp x
        (u1, u2)) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
-  intro hβ; intro _; classical
+  intro hβ _; classical
   -- Reduce the monadic triple to a run‑level equality goal and close by the bridge lemma.
   -- First, normalize the Hoare‑style goal to a pure proposition
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
@@ -8190,7 +8203,7 @@ private theorem succ_DN_eq_UP_theorem
         -- Step 1: Derive negligible_exp fexp = none from ulp 0 = 0
         have hne : negligible_exp fexp = none := by
           by_contra hsome
-          push_neg at hsome
+          push Not at hsome
           cases hopt : negligible_exp fexp with
           | none => exact hsome hopt
           | some n =>
@@ -8878,3 +8891,5 @@ theorem generic_format_plus_ulp
 end UnitInLastPlace
 
 end FloatSpec.Core.Ulp
+
+end

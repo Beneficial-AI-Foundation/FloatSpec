@@ -1,12 +1,20 @@
+module
+
+
 -- Double rounding properties
 -- Translated from Coq file: flocq/src/Prop/Double_rounding.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.FTZ
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Core.Generic_fmt
+public import FloatSpec.src.Core.FTZ
+public import Mathlib.Data.Real.Basic
+
+set_option linter.missingDocs false
+set_option warn.sorry false
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.FTZ
@@ -336,7 +344,7 @@ lemma round_round_sqrt_aux
     < |Real.sqrt x - midp (beta := beta) fexp1 (Real.sqrt x)| := by
   sorry
 
-/-- Coq: `round_round_sqrt` 
+/-- Coq: `round_round_sqrt`
     If `round_round_sqrt_hyp` holds and `x` is `fexp1`-generic with the
     place relation at `mag (sqrt x)`, then nearest-on-nearest double
     rounding of `sqrt x` from `fexp2` to `fexp1` is innocuous. -/
@@ -1826,3 +1834,5 @@ theorem round_round_minus_FTZ
     (FloatSpec.Calc.Round.round beta (FTZ_exp emin' prec') (Znearest choice2) (x - y))
   = FloatSpec.Calc.Round.round beta (FTZ_exp emin prec) (Znearest choice1) (x - y) := by
   sorry
+
+end

@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -16,21 +19,30 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 COPYING file for more details.
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpecRoles
-import FloatSpec.VersoExt
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Int.Basic
-import Mathlib.Data.Nat.Digits.Defs
-import Mathlib.Data.Nat.Log
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic
-import Mathlib.Algebra.Divisibility.Basic
-import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core.Zaux
+public import FloatSpecRoles
+public import FloatSpec.VersoExt
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Data.Int.Basic
+public import Mathlib.Data.Nat.Digits.Defs
+public import Mathlib.Data.Nat.Log
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic
+public import Mathlib.Algebra.Divisibility.Basic
+public import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+
+
+
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+set_option warn.sorry false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -765,7 +777,7 @@ theorem Zdigit_mul_pow (n k l : Int) (hβ : beta > 1 := h_beta):
         exact absurd h_absurd (not_lt.mpr hle)
       · -- Case k < l: then k - l < 0, so RHS is 0. LHS quotient is a multiple of beta hence 0 mod beta
         have hneg : ¬(k - l ≥ 0) := by
-          push_neg
+          push Not
           exact sub_neg.mpr (lt_of_not_ge hle)
         -- show that (tdiv ((n * β^l)) (β^k)) % β = 0 by showing the quotient is a multiple of β
         have hk_nonneg : 0 ≤ k := hk
@@ -819,7 +831,7 @@ theorem Zdigit_mul_pow (n k l : Int) (hβ : beta > 1 := h_beta):
     · -- k < 0: both are zero since l ≥ 0 implies k - l < 0
       have hklt : k < 0 := lt_of_not_ge hk
       have hkl_neg : ¬ (k - l ≥ 0) := by
-        push_neg
+        push Not
         have : k - l ≤ k := sub_le_self k hl
         exact lt_of_le_of_lt this hklt
       simp [show ¬ (k ≥ 0) from not_le.mpr hklt]
@@ -3647,7 +3659,7 @@ private lemma tdiv_lower_bound (a b : Int) (hb : 0 < b) (h : b ≤ |a|) :
     · exact this
     · exact Int.tdiv_nonneg ha (le_of_lt hb)
   · -- a < 0 case
-    push_neg at ha
+    push Not at ha
     rw [abs_of_neg ha] at h
     have : a.tdiv b ≤ -1 := by
       -- For negative a with |a| ≥ b, tdiv gives ≤ -1
@@ -3687,7 +3699,7 @@ private lemma tdiv_upper_bound (a b c : Int) (hb : 0 < b) (h : |a| < b * c) (_hc
     rw [mul_comm]
     exact h
   · -- a < 0 case
-    push_neg at ha
+    push Not at ha
     rw [abs_of_neg ha] at h
     have : |(-a).tdiv b| < c := by
       rw [abs_of_nonneg (Int.tdiv_nonneg (le_of_lt (neg_pos.mpr ha)) (le_of_lt hb))]
@@ -3779,7 +3791,7 @@ private lemma digit_nonzero_at_boundary (beta n k : Int) (h_beta : beta > 1)
     exact h_div_lt
   have : |k| < 1 := by
     by_contra h
-    push_neg at h
+    push Not at h
     have : beta ≤ |k| * beta := by
       calc beta = 1 * beta := by ring
            _ ≤ |k| * beta := by apply mul_le_mul_of_nonneg_right h (le_of_lt h_beta_pos)
@@ -3820,7 +3832,7 @@ private lemma digit_sum_bound (beta n k : Int) (h_beta : beta > 1)
 
   -- By contrapositive: suppose |n| ≥ beta^(k+1)
   by_contra h_not_lt
-  push_neg at h_not_lt
+  push Not at h_not_lt
 
   -- Then NOT (|n| < beta^(k+1) ∧ k+1 ≥ 0)
   have h_neg_precond : ¬(|n| < beta ^ ((k + 1).natAbs) ∧ 0 ≤ k + 1) := by
@@ -3879,7 +3891,7 @@ private lemma digit_sum_bound (beta n k : Int) (h_beta : beta > 1)
   -- First, let's assume d ≤ k + 1 and derive a contradiction
   have h_not : d ≤ k + 1 := by
     by_contra h_gt
-    push_neg at h_gt
+    push Not at h_gt
     -- h_gt: d > k + 1
     -- This means d ≥ k + 2, so d - 1 ≥ k + 1 > k
     have : d - 1 > k := by linarith
@@ -3956,7 +3968,7 @@ private lemma highest_nonzero_digit_bound (beta n k : Int) (h_beta : beta > 1)
   -- First, we need k ≥ 0 (since a non-zero digit exists at position k)
   have hk_nonneg : 0 ≤ k := by
     by_contra h_neg
-    push_neg at h_neg
+    push Not at h_neg
     -- If k < 0, then Zdigit n k = 0 by Zdigit_lt
     have hzero := Zdigit_lt beta n k
     have : (Zdigit beta n k) = 0 := by
@@ -3980,7 +3992,7 @@ private lemma highest_nonzero_digit_bound (beta n k : Int) (h_beta : beta > 1)
   -- By Zdigit_ge_Zpower, if |n| ≥ beta^(k+1), then Zdigit n (k+1) ≠ 0
   -- Since Zdigit n (k+1) = 0, we must have |n| < beta^(k+1)
   by_contra h_not_lt
-  push_neg at h_not_lt
+  push Not at h_not_lt
 
   -- If |n| ≥ beta^(k+1), then by Zdigit_ge_Zpower, Zdigit n (k+1) ≠ 0
   have h_ge_pow : Int.natAbs n ≥ beta ^ (k + 1).natAbs := by
@@ -4008,7 +4020,7 @@ private lemma highest_nonzero_digit_bound (beta n k : Int) (h_beta : beta > 1)
   have highest_at_k : ∀ j, (Zdigit beta n j) ≠ 0 → j ≤ k := by
     intro j hj
     by_contra h_not_le
-    push_neg at h_not_le
+    push Not at h_not_le
     have := h_higher_zero j h_not_le
     contradiction
 
@@ -4525,3 +4537,5 @@ theorem Zdigits2_Zdigits (n : Int) :
 end Zdigits2
 
 end FloatSpec.Core.Digits
+
+end

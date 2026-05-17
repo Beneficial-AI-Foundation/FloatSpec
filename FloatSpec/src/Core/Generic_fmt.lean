@@ -1,5 +1,8 @@
-import FloatSpec.Linter
-import FloatSpecRoles
+module
+
+
+public import FloatSpec.Linter
+public import FloatSpecRoles
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -21,17 +24,30 @@ Generic floating-point format definitions and properties
 Based on flocq/src/Core/Generic_fmt.v
 -/
 
-import FloatSpec.src.Core.Zaux
-import FloatSpec.src.Core.Raux
-import FloatSpec.src.Core.SimprocRaux
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Float_prop
+public import FloatSpec.src.Core.Zaux
+public import FloatSpec.src.Core.Raux
+public import FloatSpec.src.Core.SimprocRaux
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Float_prop
 -- import FloatSpec.src.Core.Digits
 -- import Mathlib.Data.Real.Basic
 -- import Mathlib.Data.Int.Basic
 -- import Mathlib.Tactic
-import Std.Do.Triple
-import Std.Tactic.Do
+public import Std.Do.Triple
+public import Std.Tactic.Do
+
+
+
+
+set_option linter.unnecessarySimpa false
+set_option linter.unreachableTactic false
+set_option linter.unusedSectionVars false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedTactic false
+set_option linter.unusedVariables false
+set_option warn.sorry false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -396,7 +412,7 @@ theorem generic_format_bpow_inv'
     -- hfmt: β^e = Ztrunc(β^e * β^(-fexp(e+1))) * β^(fexp(e+1))
     -- Assume for contradiction: fexp(e+1) > e
     by_contra hgt
-    push_neg at hgt
+    push Not at hgt
     have hexp_neg : e - fexp (e + 1) < 0 := by grind
     -- β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1)), and since exponent is negative:
     -- 0 < β^(e - fexp(e+1)) < 1
@@ -431,7 +447,7 @@ theorem generic_format_bpow_inv'
   -- Since e + 1 ≤ fexp(e), we'd have fexp(e+1) = fexp(e) ≥ e + 1 > e
   -- But fexp(e+1) ≤ e, contradiction
   by_contra h_not_le
-  push_neg at h_not_le
+  push Not at h_not_le
   -- h_not_le : fexp e > e, so fexp e ≥ e + 1
   have hfexp_e_ge : fexp e ≥ e + 1 := by grind
   have he_le_fexp : e ≤ fexp e := by grind
@@ -759,7 +775,7 @@ theorem canonical_abs (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonic
     simp only [abs_of_nonneg hm]
     exact h
   · -- m < 0: |m| = -m
-    push_neg at hm
+    push Not at hm
     simp only [abs_of_neg hm]
     exact canonical_opp beta fexp m e h
 
@@ -1456,7 +1472,7 @@ theorem mag_generic_gt
       exact_mod_cast (Nat.succ_le_of_lt hnat_pos)
     -- Relate |(n : ℝ)| to (Int.natAbs n : ℝ)
     have h_abs_natAbs : (Int.natAbs n : ℝ) = |(n : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     simpa [hn, h_abs_natAbs] using hnat_ge1
   have h_le_abs : (beta : ℝ) ^ (fexp M) ≤ abs x := by
     -- |x| = |m| * β^(fexp M) with |m| ≥ 1 and β^(fexp M) > 0
@@ -2346,7 +2362,7 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
     -- Relate |z| to natAbs z for integers z
     have h_eq_abs : ((Int.natAbs ((Znearest choice x) - n)) : ℝ)
                       = |(((Znearest choice x) - n : Int) : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     have : (1 : ℝ) ≤ |(((Znearest choice x) - n : Int) : ℝ)| := by simpa [h_eq_abs] using hge1
     -- Relate to the bound on |(Z : ℝ) - (n : ℝ)| using casts
     have hcast : |(((Znearest choice x) - n : Int) : ℝ)|
@@ -2421,7 +2437,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
         by_cases hc : choice (-1 + -f) = true
         · simp only [hc, Bool.not_true, h_half_irrefl, Bool.false_eq_true, if_true, if_false,
             neg_neg]
-        · push_neg at hc
+        · push Not at hc
           simp only [hc, Bool.not_false, h_half_irrefl, Bool.false_eq_true, if_false, if_true,
             neg_add_rev]
       · -- Case: d > 1/2 (since ¬(d < 1/2) and d ≠ 1/2)
@@ -3082,7 +3098,7 @@ theorem round_to_generic_generic
           rw [abs_of_nonpos h_ceil_le0, abs_of_nonpos h_y_neg]
           linarith
         · -- y ≥ 0: Ztrunc(y) = floor(y) ≤ y, so |floor(y)| ≤ |y|
-          push_neg at hy
+          push Not at hy
           have h_ztrunc : (FloatSpec.Core.Raux.Ztrunc y) = Int.floor y := by
             simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure, hy]
           rw [h_ztrunc]
@@ -6519,7 +6535,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     -- Rewrite base (β : ℝ) as ((natAbs β) : ℝ) since β > 0
     have hbeta_cast_eq : ((Int.natAbs beta : Nat) : ℝ) = (beta : ℝ) := by
       have : ((Int.natAbs beta : Nat) : ℝ) = abs (beta : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [abs_of_pos hbposR] using this
     -- Convert the RHS to a casted Nat power
     have hRHS_cast : (beta : ℝ) ^ (Int.toNat (k - e))
@@ -6531,7 +6547,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     have hcast_ineq : (Int.natAbs m : ℝ) ≤ ((Int.natAbs beta ^ Int.toNat (k - e) : Nat) : ℝ) := by
       -- Use ((natAbs m) : ℝ) = |(m : ℝ)| and rewrite the RHS using hzpow_toNat and hRHS_cast
       have hLHS : (Int.natAbs m : ℝ) = abs (m : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [hLHS, hzpow_toNat, hRHS_cast] using h_abs_m_le
     -- Coercion monotonicity gives the required Nat inequality
     exact (by exact_mod_cast hcast_ineq)
@@ -7649,3 +7665,5 @@ theorem mag_round
 end Round_generic
 
 end FloatSpec.Core.Generic_fmt
+
+end

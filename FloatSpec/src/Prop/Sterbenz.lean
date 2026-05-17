@@ -1,9 +1,19 @@
+module
+
+
 -- Sterbenz conditions for exact subtraction
 -- Translated from Coq file: flocq/src/Prop/Sterbenz.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import Mathlib.Data.Real.Basic
+
+
+
+
+set_option warn.sorry false
+
+@[expose] public section
 
 open Real
 
@@ -14,7 +24,7 @@ variable [Monotone_exp fexp]
 
 /-- Generic format plus exact under magnitude condition -/
 theorem generic_format_plus (x y : ℝ)
-  (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) 
+  (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
   (h_bound : |x + y| ≤ (Int.natAbs beta : ℝ) ^ (Int.natAbs (min (mag beta x) (mag beta y)) : Nat)) :
   generic_format beta fexp (x + y) := by
   sorry
@@ -39,3 +49,5 @@ theorem sterbenz (x y : ℝ)
   (h_bound : y / 2 ≤ x ∧ x ≤ 2 * y) :
   generic_format beta fexp (x - y) := by
   sorry
+
+end

@@ -1,3 +1,6 @@
+module
+
+
 /-
 This file is part of the Flocq formalization of floating-point
 arithmetic in Lean 4, ported from Coq: https://flocq.gitlabpages.inria.fr/
@@ -6,17 +9,24 @@ Helper functions and theorems for rounding floating-point numbers
 Translated from Coq file: flocq/src/Calc/Round.v
 -/
 
-import FloatSpec.src.Core
-import FloatSpec.src.Calc.Bracket
-import FloatSpec.src.Core.Defs
-import FloatSpec.src.Core.Digits
-import FloatSpec.src.Core.Generic_fmt
-import FloatSpec.src.Core.Raux
-import Mathlib.Data.Real.Basic
-import Mathlib.Data.Int.Basic
-import Std.Do.Triple
-import Std.Tactic.Do
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Core
+public import FloatSpec.src.Calc.Bracket
+public import FloatSpec.src.Core.Defs
+public import FloatSpec.src.Core.Digits
+public import FloatSpec.src.Core.Generic_fmt
+public import FloatSpec.src.Core.Raux
+public import Mathlib.Data.Real.Basic
+public import Mathlib.Data.Int.Basic
+public import Std.Do.Triple
+public import Std.Tactic.Do
+public import FloatSpec.src.SimprocWP
+
+set_option linter.missingDocs false
+set_option linter.unnecessarySimpa false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real FloatSpec.Calc.Bracket FloatSpec.Core.Defs
 open Std.Do
@@ -1785,8 +1795,7 @@ theorem truncate_correct_format (m e : Int) (hm : m ≠ 0)
     let m' := r.1; let e' := r.2.1;
     x = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e' : FloatSpec.Core.Defs.FlocqFloat beta)) ∧
     e' = e := by
-  -- All let-bound names reduce by computation since `truncate_triple` is identity here.
-  intro x; intro r; intro m'; intro e'
+  intro x r m' e'
   classical
   -- Compute the result triple and project its components
   have hr : r = (m, e, Location.loc_Exact) := by
@@ -2120,3 +2129,5 @@ theorem truncate_FIX_correct
 end CoqTheoremsPlaceholders
 
 end FloatSpec.Calc.Round
+
+end

@@ -1,12 +1,22 @@
+module
+
+
 -- Auxiliary functions for Pff to Flocq conversion
 -- Translated from Coq file: flocq/src/Pff/Pff2FlocqAux.v
 
-import FloatSpec.src.Pff.Pff2Flocq
-import FloatSpec.src.Pff.Pff
-import FloatSpec.src.Compat
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import FloatSpec.src.SimprocWP
+public import FloatSpec.src.Pff.Pff2Flocq
+public import FloatSpec.src.Pff.Pff
+public import FloatSpec.src.Compat
+public import Mathlib.Data.Real.Basic
+public import Std.Do.Triple
+public import FloatSpec.src.SimprocWP
+
+set_option linter.missingDocs false
+set_option linter.preferGrind false
+set_option linter.unusedSimpArgs false
+set_option linter.unusedVariables false
+
+@[expose] public section
 
 open Real
 open Std.Do
@@ -976,3 +986,5 @@ theorem round_NE_is_pff_round_b64 (r : ℝ) [Prec_gt_0 53] :
     simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
                FloatSpec.Core.Generic_fmt.cexp] at h_rnd_fmt
     exact h_rnd_fmt.symm
+
+end

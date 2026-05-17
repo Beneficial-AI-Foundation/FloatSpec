@@ -1,11 +1,21 @@
+module
+
+
 -- Error of the multiplication is in the FLX/FLT format
 -- Translated from Coq file: flocq/src/Prop/Mult_error.v
 
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Prop.Plus_error
-import Mathlib.Data.Real.Basic
+public import FloatSpec.src.Core
+public import FloatSpec.src.Compat
+public import FloatSpec.src.Calc.Round
+public import FloatSpec.src.Prop.Plus_error
+public import Mathlib.Data.Real.Basic
+
+
+
+
+set_option warn.sorry false
+
+@[expose] public section
 
 open Real
 open FloatSpec.Core.Defs
@@ -47,7 +57,7 @@ variable (emin : Int)
 /-- Error of the multiplication in FLT with underflow requirements -/
 theorem mult_error_FLT (x y : ℝ)
   (hx : generic_format beta (FLT_exp emin prec) x) (hy : generic_format beta (FLT_exp emin prec) y)
-  (h_underflow : x * y ≠ 0 → 
+  (h_underflow : x * y ≠ 0 →
     (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + 2 * prec - 1) : Nat) ≤ |x * y|) :
   generic_format beta (FLT_exp emin prec) (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x * y) - (x * y)) := by
   sorry
@@ -62,7 +72,7 @@ theorem mult_error_FLT_ge_bpow (x y : ℝ) (e : Int)
   (hx : generic_format beta (FLT_exp emin prec) x) (hy : generic_format beta (FLT_exp emin prec) y)
   (h_bound : (Int.natAbs beta : ℝ) ^ (Int.natAbs (e + 2 * prec - 1) : Nat) ≤ |x * y|)
   (h_nonzero : FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x * y) - (x * y) ≠ 0) :
-  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤ 
+  (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat) ≤
     |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x * y) - (x * y)| := by
   sorry
 
@@ -79,3 +89,5 @@ lemma mult_bpow_pos_exact_FLT (x : ℝ) (e : Int)
   (h_nonneg : 0 ≤ e) :
   generic_format beta (FLT_exp emin prec) (x * (Int.natAbs beta : ℝ) ^ (Int.natAbs e : Nat)) := by
   sorry
+
+end
