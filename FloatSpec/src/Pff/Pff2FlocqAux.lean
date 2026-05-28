@@ -1,3 +1,11 @@
+/-!
+Tier 1 Scaffold / Tier 3 Excluded.
+
+This auxiliary Pff bridge leaf preserves translated names for audit and future
+porting. It is not re-exported by `FloatSpec.src.Pff` and is not part of the
+trusted FloatSpec aggregate.
+-/
+
 -- Auxiliary functions for Pff to Flocq conversion
 -- Translated from Coq file: flocq/src/Pff/Pff2FlocqAux.v
 
