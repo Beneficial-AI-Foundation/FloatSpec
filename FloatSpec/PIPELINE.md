@@ -4,6 +4,33 @@
 
 This document provides a systematic process for generating Vector-based Lean 4 specifications with Hoare triple syntax from Flocq function documentation and source code. The pipeline produces formal specifications that capture the mathematical properties of Flocq operations.
 
+## Proof-Trust Gates
+
+For FloatSpec proof repair, build success is not the same thing as proof trust.
+Every agent attempt should run the repository gates described in
+`FloatSpec/docs/PIPELINE_IMPROVEMENTS_FROM_VERINA.md` and
+`FloatSpec/docs/TRUST_TIERS.md`.
+
+Required commands:
+
+```bash
+scripts/audit_placeholders.sh --json FloatSpec
+scripts/status_report.sh --write
+scripts/check_diff_trust.sh
+scripts/classify_attempt.py --target <file:line> --reason <reason> --result <proved|blocked|failed|no_action>
+```
+
+For Codex-backed attempts, prefer the harness:
+
+```bash
+scripts/codex_attempt.sh --target <file:line> --reason <reason>
+```
+
+The harness writes a status snapshot, Codex transcript, trust-gate output, and
+`attempt.json` under `.change_log/`. If a target is blocked by a missing
+foundational theorem, the correct outcome is a blocker report, not a weakened
+statement or semantic placeholder.
+
 ## Essential Concepts
 
 ### 1. Hoare Triple Syntax in Lean 4
