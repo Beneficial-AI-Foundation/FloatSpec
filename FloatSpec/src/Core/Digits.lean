@@ -4194,7 +4194,7 @@ private lemma Zdigits_nonneg (x : Int) :
     ⦃⌜True⌝⦄
     (pure (Zdigits beta x) : Id _)
     ⦃⇓d => ⌜0 ≤ d⌝⦄ := by
-  sorry
+  exact Zdigits_ge_0 (beta := beta) x
 /-- Power greater than digit count
 
 Coq theorem and proof:
