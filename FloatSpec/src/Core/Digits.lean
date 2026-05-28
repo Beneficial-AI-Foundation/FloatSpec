@@ -4659,7 +4659,93 @@ theorem Zdigits_div_Zpower (m e : Int) (h_beta : beta > 1) :
     ⦃⌜0 ≤ m ∧ 0 ≤ e ∧ ∃ dm, Zdigits beta m = dm ∧ e ≤ dm⌝⦄
     (pure (Zdigits beta (m / beta ^ e.natAbs)) : Id _)
     ⦃⇓d => ⌜∃ dm, Zdigits beta m = dm ∧ d = dm - e⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hm_nonneg, he_nonneg, dm, hdm, he_le_dm⟩
+  refine ⟨dm, hdm, ?_⟩
+  by_cases hm_zero : m = 0
+  · have hdm_zero : dm = 0 := by
+      simpa [Zdigits, hm_zero] using hdm.symm
+    have he_zero : e = 0 := by omega
+    subst dm
+    subst e
+    simp [Zdigits, hm_zero]
+  · have hβpos : 0 < beta := lt_trans (show (0 : Int) < 1 by decide) h_beta
+    have hdm_pos : 0 < dm := by
+      have h := Zdigits_gt_0 beta m h_beta hm_zero
+      simpa [hdm] using h
+    have hdm_nonneg : 0 ≤ dm := le_of_lt hdm_pos
+    have hpow_e_pos : 0 < beta ^ e.natAbs := pow_pos hβpos _
+    have hbounds := Zdigits_correct beta m h_beta hm_zero
+    have hlow_m : beta ^ (dm - 1).natAbs ≤ m := by
+      have h := hbounds.1
+      simpa [hdm, abs_of_nonneg hm_nonneg] using h
+    have hupp_m : m < beta ^ dm.natAbs := by
+      have h := hbounds.2
+      simpa [hdm, abs_of_nonneg hm_nonneg] using h
+    by_cases he_eq_dm : e = dm
+    · have hquot_zero : m / beta ^ e.natAbs = 0 := by
+        apply Int.ediv_eq_zero_of_lt hm_nonneg
+        simpa [he_eq_dm] using hupp_m
+      calc
+        Zdigits beta (m / beta ^ e.natAbs) = Zdigits beta 0 := by rw [hquot_zero]
+        _ = 0 := by simp [Zdigits]
+        _ = dm - e := by omega
+    · have he_lt_dm : e < dm := lt_of_le_of_ne he_le_dm he_eq_dm
+      have hdm_sub_e_pos : 0 < dm - e := by omega
+      have hdm_sub_e_nonneg : 0 ≤ dm - e := le_of_lt hdm_sub_e_pos
+      have hdm_sub_e_sub_one_nonneg : 0 ≤ dm - e - 1 := by omega
+      have hdm_sub_one_nonneg : 0 ≤ dm - 1 := by omega
+      have hdm_natAbs :
+          dm.natAbs = (dm - e).natAbs + e.natAbs := by
+        apply Nat.cast_injective (R := Int)
+        rw [Nat.cast_add, Int.natAbs_of_nonneg hdm_nonneg,
+          Int.natAbs_of_nonneg hdm_sub_e_nonneg,
+          Int.natAbs_of_nonneg he_nonneg]
+        ring
+      have hdm_sub_one_natAbs :
+          (dm - 1).natAbs = (dm - e - 1).natAbs + e.natAbs := by
+        apply Nat.cast_injective (R := Int)
+        rw [Nat.cast_add, Int.natAbs_of_nonneg hdm_sub_one_nonneg,
+          Int.natAbs_of_nonneg hdm_sub_e_sub_one_nonneg,
+          Int.natAbs_of_nonneg he_nonneg]
+        ring
+      have hpow_dm :
+          beta ^ dm.natAbs =
+            beta ^ (dm - e).natAbs * beta ^ e.natAbs := by
+        rw [hdm_natAbs, pow_add]
+      have hpow_dm_sub_one :
+          beta ^ (dm - 1).natAbs =
+            beta ^ (dm - e - 1).natAbs * beta ^ e.natAbs := by
+        rw [hdm_sub_one_natAbs, pow_add]
+      set q : Int := m / beta ^ e.natAbs with hq
+      have hlow_q : beta ^ (dm - e - 1).natAbs ≤ q := by
+        rw [hq, Int.le_ediv_iff_mul_le hpow_e_pos]
+        calc
+          beta ^ (dm - e - 1).natAbs * beta ^ e.natAbs
+              = beta ^ (dm - 1).natAbs := hpow_dm_sub_one.symm
+          _ ≤ m := hlow_m
+      have hupp_q : q < beta ^ (dm - e).natAbs := by
+        rw [hq]
+        apply Int.ediv_lt_of_lt_mul hpow_e_pos
+        calc
+          m < beta ^ dm.natAbs := hupp_m
+          _ = beta ^ (dm - e).natAbs * beta ^ e.natAbs := hpow_dm
+      have hlow_pow_pos : 0 < beta ^ (dm - e - 1).natAbs := pow_pos hβpos _
+      have hq_pos : 0 < q := lt_of_lt_of_le hlow_pow_pos hlow_q
+      have hq_ne : q ≠ 0 := ne_of_gt hq_pos
+      have hq_nonneg : 0 ≤ q := le_of_lt hq_pos
+      have hlow_q_abs :
+          beta ^ (dm - e - 1).natAbs ≤ Int.natAbs q := by
+        simpa [Int.natAbs_of_nonneg hq_nonneg] using hlow_q
+      have hupp_q_abs :
+          (Int.natAbs q : Int) < beta ^ (dm - e).natAbs := by
+        simpa [Int.natAbs_of_nonneg hq_nonneg] using hupp_q
+      have hunique :=
+        (Zdigits_unique (beta := beta) (h_beta := h_beta)
+          (n := q) (e := dm - e) (hβ := h_beta))
+          ⟨hq_ne, hlow_q_abs, hupp_q_abs⟩
+      simpa [q] using hunique
 theorem Zdigits_succ_le (x : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ x⌝⦄
     (pure (Zdigits beta (x + 1)) : Id _)
