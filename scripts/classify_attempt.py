@@ -31,12 +31,39 @@ def git_changed_files() -> list[str]:
 def count_target_sorry(target: str | None) -> int | None:
     if not target:
         return None
-    path_text = target.split(":", 1)[0]
+    path_text, _, line_text = target.partition(":")
     path = pathlib.Path(path_text)
     if not path.exists() or path.suffix != ".lean":
         return None
     text = path.read_text(encoding="utf-8", errors="replace")
-    return len(re.findall(r"\bsorry\b", text))
+    if not line_text.isdigit():
+        return len(re.findall(r"\bsorry\b", text))
+
+    target_line = int(line_text)
+    starts = list(
+        re.finditer(
+            r"^(?:(?:private|protected|noncomputable|unsafe)\s+)*"
+            r"(?:theorem|lemma|def|instance|axiom)\s+\S+",
+            text,
+            flags=re.MULTILINE,
+        )
+    )
+    if not starts:
+        return len(re.findall(r"\bsorry\b", text))
+
+    line_starts = [(text.count("\n", 0, m.start()) + 1, i) for i, m in enumerate(starts)]
+    chosen_index = None
+    for line, index in line_starts:
+        if line <= target_line:
+            chosen_index = index
+        else:
+            break
+    if chosen_index is None:
+        return None
+
+    start = starts[chosen_index].start()
+    end = starts[chosen_index + 1].start() if chosen_index + 1 < len(starts) else len(text)
+    return len(re.findall(r"\bsorry\b", text[start:end]))
 
 
 def scan_diff_trust() -> tuple[bool, str]:
