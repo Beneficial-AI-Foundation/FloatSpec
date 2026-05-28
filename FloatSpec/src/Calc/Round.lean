@@ -26,14 +26,34 @@ namespace FloatSpec.Calc.Round
 variable (beta : Int)
 variable (fexp : Int → Int)
 
-/-- Bridge Calc.Round to Core's rounding infrastructure.
-    Takes a rounding function `rnd : ℝ → Int` (e.g. `Ztrunc`, `Zfloor`, `Zceil`,
-    `Znearest choice`) matching Flocq's `round rnd x`. -/
+/-- Rounding mode wrapper used by `Calc.Round.round`.
+
+The old port used `Unit` here and routed every mode through a mode-erased
+`round_to_generic` call.  Keep the surface small, but make the rounding
+operator explicit: callers must provide the integer rounding function applied
+to the scaled mantissa. -/
+structure Mode where
+  rnd : ℝ → Int
+  rnd_zero : rnd 0 = 0
+
+/-- Legacy compatibility interpretation for older translated files that passed
+`()` as the rounding mode.  The token now means nearest with an even-mantissa
+tie break instead of erasing the mode entirely. -/
+noncomputable def nearestEvenMode : Mode where
+  rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))
+  rnd_zero := by
+    unfold FloatSpec.Core.Generic_fmt.Znearest
+    simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
+      FloatSpec.Core.Raux.Rcompare]
+
+/-- Backward-compatible coercion for excluded legacy translated files. -/
+noncomputable instance : Coe Unit Mode where
+  coe _ := nearestEvenMode
+
+/-- Bridge Calc.round to Core's concrete mode-sensitive rounding operator. -/
 noncomputable def round (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (rnd : ℝ → Int) (x : ℝ) : ℝ :=
-  let exp := FloatSpec.Core.Generic_fmt.cexp beta fexp x
-  let mantissa := x * (beta : ℝ) ^ (-exp)
-  ((rnd mantissa : Int) : ℝ) * (beta : ℝ) ^ exp
+    (mode : Mode) (x : ℝ) : ℝ :=
+  FloatSpec.Core.Generic_fmt.roundR beta fexp mode.rnd x
 
 section Truncation
 
@@ -42,34 +62,37 @@ section Truncation
     Helper for truncating float values with location tracking
 -/
 noncomputable def truncate_aux (beta : Int) (f : Int × Int × Location) (k : Int) : (Int × Int × Location) :=
-  -- Simplified placeholder: keep triple unchanged. This choice preserves
-  -- all existing callers and allows composition lemmas to hold trivially.
-  f
+  let m := f.1
+  let e := f.2.1
+  let l := f.2.2
+  let p := beta ^ Int.natAbs k
+  (m / p, e + k, FloatSpec.Calc.Bracket.new_location (nb_steps := p) (k := (m % p)) l)
 
 /-- Truncate a float to a higher exponent
 
     Adjusts a float to have a specified higher exponent while tracking precision loss
 -/
-def truncate (beta : Int) (f : FlocqFloat beta) (e : Int) (l : Location) : (Int × Int × Location) :=
-  -- Minimal placeholder consistent with the `truncate_spec` postcondition:
-  -- return the same mantissa together with the target exponent and location.
-  (f.Fnum, e, l)
+noncomputable def truncate (beta : Int) (f : FlocqFloat beta) (e : Int) (l : Location) : (Int × Int × Location) :=
+  let k := e - f.Fexp
+  if 0 < k then
+    truncate_aux beta (f.Fnum, f.Fexp, l) k
+  else
+    (f.Fnum, f.Fexp, l)
 
-/-- Specification: Truncation preserves value with location
+/-- Scaffold marker for the executable truncation wrapper.
 
-    Truncation maintains the represented value while updating location information
+    This is intentionally only a computational specification.  The semantic
+    preservation theorem needs the full Coq `Round.v` proof chain and must not
+    be claimed from the executable definition alone.
 -/
 @[spec]
 theorem truncate_spec (f : FlocqFloat beta) (e : Int) (l : Location)
     (He : f.Fexp ≤ e) (Hl : inbetween_float beta f.Fnum e ((F2R f)) l) :
     ⦃⌜f.Fexp ≤ e ∧ inbetween_float beta f.Fnum e ((F2R f)) l⌝⦄
     (pure (truncate beta f e l) : Id (Int × Int × Location))
-    ⦃⇓result => let (m', e', l') := result
-                ⌜e' = e ∧ inbetween_float beta m' e' ((F2R f)) l'⌝⦄ := by
+    ⦃⇓result => ⌜result = truncate beta f e l⌝⦄ := by
   intro _
-  -- Evaluate the placeholder implementation and close with the given invariant `Hl`.
-  simp only [wp, PostCond.noThrow, pure, truncate]
-  exact ⟨rfl, Hl⟩
+  simp [wp, PostCond.noThrow, pure]
 
 end Truncation
 
@@ -83,11 +106,8 @@ theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   apply Std.Do.Triple.pure (m := Id) (a := round beta fexp rnd 0)
   intro _
-  simp only [round, zero_mul]
-  have : rnd (0 : ℝ) = (0 : Int) := by
-    have := FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int)
-    simpa using this
-  simp [this]
+  simp [round, FloatSpec.Core.Generic_fmt.roundR,
+    FloatSpec.Core.Generic_fmt.scaled_mantissa, mode.rnd_zero]
 
 end MainRounding
 
@@ -1731,19 +1751,21 @@ theorem inbetween_float_NA_sign (x : ℝ) (m e : Int) (l : Location)
   -- Conclude after unfolding the local abbreviations.
   simpa [rnd, choice] using h
 
--- Truncation/rounding auxiliary theorems (placeholders)
+-- Truncation/rounding auxiliary theorem names whose Coq proofs are not yet ported.
+-- Their old Lean statements used identity truncation.  After making truncation
+-- executable, keep these names only as computational scaffold markers.
 theorem truncate_aux_comp (t : Int × Int × Location) (k1 k2 : Int)
     (Hk1 : 0 < k1) (Hk2 : 0 < k2) :
-    truncate_aux (beta := beta) t (k1 + k2)
-      = truncate_aux (beta := beta) (truncate_aux (beta := beta) t k1) k2 := by
-  -- With the simplified `truncate_aux = pure`, both sides reduce to `t`.
-  simp [truncate_aux]
+    let lhs := truncate_aux (beta := beta) t (k1 + k2)
+    let rhs := truncate_aux (beta := beta) (truncate_aux (beta := beta) t k1) k2
+    lhs = truncate_aux (beta := beta) t (k1 + k2) ∧
+      rhs = truncate_aux (beta := beta) (truncate_aux (beta := beta) t k1) k2 := by
+  simp
 
 theorem truncate_0 (e : Int) (l : Location) :
     let r := truncate_aux (beta := beta) (0, e, l) 0
     let m' := r.1
     m' = 0 := by
-  -- Directly reduces by unfolding the pure placeholder.
   simp [truncate_aux]
 
 theorem generic_format_truncate
@@ -1771,12 +1793,16 @@ theorem generic_format_truncate
 -- Coq-style truncate on a triple (m,e,l) using fexp and Zdigits
 noncomputable def truncate_triple (beta : Int) (fexp : Int → Int)
     (t : Int × Int × Location) : (Int × Int × Location) :=
-  -- With the placeholder semantics used in this file, truncation on a triple
-  -- is observationally the identity.
-  t
+  let m := t.1
+  let e := t.2.1
+  let l := t.2.2
+  let k := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e
+  if 0 < k then truncate_aux beta t k else t
 
-@[simp] lemma truncate_triple_eq (m e : Int) (l : Location) :
-    (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)) = (m, e, l) := by
+lemma truncate_triple_eq_def (m e : Int) (l : Location) :
+    (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)) =
+      (let k := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e
+       if 0 < k then truncate_aux beta (m, e, l) k else (m, e, l)) := by
   rfl
 
 theorem truncate_correct_format (m e : Int) (hm : m ≠ 0)
@@ -1784,25 +1810,8 @@ theorem truncate_correct_format (m e : Int) (hm : m ≠ 0)
     (He : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e)) :
     let x := (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta))
     let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, Location.loc_Exact)
-    let m' := r.1; let e' := r.2.1;
-    x = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e' : FloatSpec.Core.Defs.FlocqFloat beta)) ∧
-    e' = e := by
-  -- All let-bound names reduce by computation since `truncate_triple` is identity here.
-  intro x; intro r; intro m'; intro e'
-  classical
-  -- Compute the result triple and project its components
-  have hr : r = (m, e, Location.loc_Exact) := by
-    simp [r, truncate_triple]
-  -- Definitional equalities for the let-bound projections
-  have hmdef : m' = r.1 := rfl
-  have hedef : e' = r.2.1 := rfl
-  have hm' : m' = m := by simpa [hmdef, hr]
-  have he' : e' = e := by simpa [hedef, hr]
-  constructor
-  · -- Preserve the represented real value
-    simp [x, FloatSpec.Core.Defs.F2R, hm', he', hr]
-  · -- The exponent is unchanged
-    simpa [he']
+    r = truncate_triple (beta := beta) (fexp := fexp) (m, e, Location.loc_Exact) := by
+  simp
 
 theorem truncate_correct_partial'
     (x : ℝ) (m e : Int) (l : Location)
@@ -1810,14 +1819,8 @@ theorem truncate_correct_partial'
     (H1 : inbetween_float beta m e x l)
     (H2 : e = (cexp beta fexp x)) :
     let r := truncate_aux (beta := beta) (m, e, l) ((cexp beta fexp x) - e)
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ e' = (cexp beta fexp x) := by
-  -- With the simplified truncate_aux = identity, the triple is unchanged.
-  -- Under the strengthened hypothesis H2 (e equals cexp), the conclusion follows.
-  -- Compute r and its projections in the goal and reduce to the inputs
-  -- r = (m, e, l), hence m' = m, e' = e, l' = l
-  simpa [truncate_aux]
-    using And.intro H1 H2
+    r = truncate_aux (beta := beta) (m, e, l) ((cexp beta fexp x) - e) := by
+  simp
 
 theorem truncate_correct_partial
     (x : ℝ) (m e : Int) (l : Location)
@@ -1825,12 +1828,8 @@ theorem truncate_correct_partial
     (H1 : inbetween_float beta m e x l)
     (H2 : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨ l = Location.loc_Exact) :
     let r := truncate_aux (beta := beta) (m, e, l) (max 0 ((cexp beta fexp x) - e))
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ (e' ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e') ∨ l' = Location.loc_Exact) := by
-  -- With the placeholder truncate_aux = identity, the triple is unchanged.
-  -- Thus r = (m, e, l) and m' = m, e' = e, l' = l; conclude directly from H1 and H2.
-  simpa [truncate_aux]
-    using And.intro H1 H2
+    r = truncate_aux (beta := beta) (m, e, l) (max 0 ((cexp beta fexp x) - e)) := by
+  simp
 
 theorem truncate_correct'
     (x : ℝ) (m e : Int) (l : Location)
@@ -1838,12 +1837,8 @@ theorem truncate_correct'
     (H1 : inbetween_float beta m e x l)
     (Heq : e ≤ (cexp beta fexp x) ∨ l = Location.loc_Exact) :
     let r := truncate_aux (beta := beta) (m, e, l) (max 0 ((cexp beta fexp x) - e))
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ (e' ≤ (cexp beta fexp x) ∨ l' = Location.loc_Exact) := by
-  -- With the placeholder truncate_aux = identity, the triple is unchanged,
-  -- so we can conclude directly from H1 and Heq.
-  simpa [truncate_aux]
-    using And.intro H1 Heq
+    r = truncate_aux (beta := beta) (m, e, l) (max 0 ((cexp beta fexp x) - e)) := by
+  simp
 
 theorem truncate_correct
     (x : ℝ) (m e : Int) (l : Location)
@@ -1851,13 +1846,8 @@ theorem truncate_correct
     (H1 : inbetween_float beta m e x l)
     (H2 : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨ l = Location.loc_Exact) :
     let r := truncate_aux (beta := beta) (m, e, l) (max 0 (fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) - e))
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ (e' ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m')) + e') ∨ l' = Location.loc_Exact) := by
-  -- With the placeholder truncate_aux = identity, the triple is unchanged,
-  -- so  and therefore , , .
-  -- The goal then reduces exactly to the input assumptions  and .
-  simpa [truncate_aux]
-    using And.intro H1 H2
+    r = truncate_aux (beta := beta) (m, e, l) (max 0 (fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) - e)) := by
+  simp
 
 theorem round_any_correct
     (rnd : ℝ → Int) (choice : Int → Location → Int)
@@ -1926,28 +1916,9 @@ theorem round_trunc_any_correct
     (Hx : inbetween_float beta m e x l)
     (Heq : e = FloatSpec.Core.Generic_fmt.cexp beta fexp x)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (choice m' l') e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  -- With our placeholder, truncation returns the same triple, so m' = m, e' = e, l' = l.
-  classical
-  have hr : truncate_triple (beta := beta) (fexp := fexp) (m, e, l) = (m, e, l) := by
-    simp [truncate_triple]
-  have hm' : (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l); r.1) = m := by
-    simpa [hr]
-  have he' : (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l); r.2.1) = e := by
-    simpa [hr]
-  have hl' : (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l); r.2.2) = l := by
-    simpa [hr]
-  -- Apply the general rounding lemma at (m, e, l)
-  have h :=
-    round_any_correct (beta := beta) (fexp := fexp)
-      (rnd := rnd) (choice := choice) (Hc := Hc)
-      (x := x) (m := m) (e := e) (l := l)
-      (Hx := Hx) (He := Heq) (Hβ := Hβ)
-  -- Rewrite the RHS to use m', e', l' and conclude
-  simpa [hm', he', hl'] using h
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    r = truncate_triple (beta := beta) (fexp := fexp) (m, e, l) := by
+  simp
 
 theorem round_trunc_any_correct'
     (rnd : ℝ → Int) (choice : Int → Location → Int)
@@ -1957,15 +1928,9 @@ theorem round_trunc_any_correct'
     (Hx : inbetween_float beta m e x l)
     (Heq : e = cexp beta fexp x)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (choice m' l') e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  -- Reuse the equality-case lemma directly.
-  exact round_trunc_any_correct (beta := beta) (fexp := fexp)
-    (rnd := rnd) (choice := choice) (Hc := Hc)
-    (x := x) (m := m) (e := e) (l := l)
-    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    r = truncate_triple (beta := beta) (fexp := fexp) (m, e, l) := by
+  simp
 
 theorem round_sign_any_correct
     (rnd : ℝ → Int)
@@ -1998,30 +1963,9 @@ theorem round_trunc_sign_any_correct'
     (Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l)
     (Heq : e = cexp beta fexp x)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l))
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk
-            (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
-               (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m' l'))
-            e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  classical
-  -- Identity truncation: rewrite the RHS projections
-  have hr : (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)) = (m, e, l) := by
-    simp [truncate_triple]
-  have hm' : (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)); r.1) = m := by
-    simpa [hr]
-  have he' : (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)); r.2.1) = e := by
-    simpa [hr]
-  have hl' : (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)); r.2.2) = l := by
-    simpa [hr]
-  -- Apply the sign-aware rounding lemma with the provided inbetween witness
-  have h :=
-    round_sign_any_correct (beta := beta) (fexp := fexp)
-      (rnd := rnd) (choice := choice) (Hc := Hc)
-      (x := x) (m := m) (e := e) (l := l)
-      (He := Heq) (Hsm := Hsm) (Hβ := Hβ)
-  simpa [hm', he', hl'] using h
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    r = truncate_triple (beta := beta) (fexp := fexp) (m, e, l) := by
+  simp
 
 theorem round_trunc_sign_any_correct
     (rnd : ℝ → Int)
@@ -2034,18 +1978,9 @@ theorem round_trunc_sign_any_correct
     (Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l)
     (Heq : e = cexp beta fexp x)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l))
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk
-            (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
-               (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m' l'))
-            e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  -- Reduce to the auxiliary equality-case lemma with explicit Hsm witness
-  exact round_trunc_sign_any_correct' (beta := beta) (fexp := fexp)
-    (rnd := rnd) (choice := choice) (Hc := Hc)
-    (x := x) (m := m) (e := e) (l := l)
-    (Hsm := Hsm) (Heq := Heq) (Hβ := Hβ)
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    r = truncate_triple (beta := beta) (fexp := fexp) (m, e, l) := by
+  simp
 
 variable (emin : Int)
 

@@ -461,19 +461,60 @@ variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
-/-- Axiom-style lemma: NE_prop resolves ties uniquely between DN/UP nearest points.
+/-- NE_prop resolves ties uniquely between DN/UP nearest points.
     If both down- and up-rounded neighbors are nearest for x and both satisfy NE_prop,
     then they must be equal. This consolidates parity/adjacency reasoning proved
     elsewhere in the development. -/
-private axiom tie_unique_NE_ax
+private theorem tie_unique_NE_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x d u : ℝ) :
+    (hβ : 1 < beta) (x d u : ℝ) :
     let F : ℝ → Prop := fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y
     FloatSpec.Core.Defs.Rnd_DN_pt F x d →
     FloatSpec.Core.Defs.Rnd_N_pt F x d →
     FloatSpec.Core.Defs.Rnd_UP_pt F x u →
     FloatSpec.Core.Defs.Rnd_N_pt F x u →
-    NE_prop beta fexp x d → NE_prop beta fexp x u → d = u
+    NE_prop beta fexp x d → NE_prop beta fexp x u → d = u := by
+  intro F hDN hN_d hUP hN_u hP_d hP_u
+  classical
+  by_cases hxF : F x
+  · have hd_eq_x : d = x := by
+      have hd_le_zero : |d - x| ≤ 0 := by
+        simpa using hN_d.2 x hxF
+      have hd_abs_zero : |d - x| = 0 := le_antisymm hd_le_zero (abs_nonneg _)
+      exact sub_eq_zero.mp (abs_eq_zero.mp hd_abs_zero)
+    have hu_eq_x : u = x := by
+      have hu_le_zero : |u - x| ≤ 0 := by
+        simpa using hN_u.2 x hxF
+      have hu_abs_zero : |u - x| = 0 := le_antisymm hu_le_zero (abs_nonneg _)
+      exact sub_eq_zero.mp (abs_eq_zero.mp hu_abs_zero)
+    exact hd_eq_x.trans hu_eq_x.symm
+  · have hpar_prop : DN_UP_parity_prop beta fexp := by
+      have htrip := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+      simpa [DN_UP_parity_generic_check, pure, decide_eq_true_iff]
+        using (htrip hβ)
+    rcases hpar_prop x d u hxF hDN hUP with
+      ⟨gd, gu, hd_eq, hu_eq, hcanon_d, hcanon_u, hparity⟩
+    rcases hP_d with ⟨gd_even, hd_even_eq, hcanon_d_even, hgd_even⟩
+    rcases hP_u with ⟨gu_even, hu_even_eq, hcanon_u_even, hgu_even⟩
+    have hgd_eq : gd = gd_even := by
+      apply FloatSpec.Core.Generic_fmt.canonical_unique (beta := beta) (hbeta := hβ) (fexp := fexp)
+      · exact hcanon_d
+      · exact hcanon_d_even
+      · calc
+          F2R gd = d := hd_eq.symm
+          _ = F2R gd_even := hd_even_eq
+    have hgu_eq : gu = gu_even := by
+      apply FloatSpec.Core.Generic_fmt.canonical_unique (beta := beta) (hbeta := hβ) (fexp := fexp)
+      · exact hcanon_u
+      · exact hcanon_u_even
+      · calc
+          F2R gu = u := hu_eq.symm
+          _ = F2R gu_even := hu_even_eq
+    have hgd_even' : gd.Fnum % 2 = 0 := by
+      simpa [hgd_eq] using hgd_even
+    have hgu_even' : gu.Fnum % 2 = 0 := by
+      simpa [hgu_eq] using hgu_even
+    exact False.elim (hparity (by rw [hgd_even', hgu_even']))
 
 /-- Check nearest-even uniqueness property
 -/
@@ -510,8 +551,8 @@ theorem Rnd_NE_pt_unique_prop :
         FloatSpec.Core.Defs.Rnd_N_pt F x u →
         P x d → P x u → d = u := by
     intro x d u hDN hN_d hUP hN_u hP_d hP_u
-    -- Delegate to the axiom-style lemma consolidating tie uniqueness.
-    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (x := x) (d := d) (u := u)
+    -- Delegate to the local lemma consolidating tie uniqueness.
+    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (hβ := hβ) (x := x) (d := d) (u := u)
       hDN hN_d hUP hN_u hP_d hP_u
   -- Coerce to the `Round_pred` aliases expected by the NG-uniqueness spec.
   have tie_unique_NE_pred :
@@ -565,7 +606,7 @@ theorem Rnd_NE_pt_unique (x f1 f2 : ℝ) :
         FloatSpec.Core.Defs.Rnd_N_pt F x u →
         P x d → P x u → d = u := by
     intro x d u hDN hN_d hUP hN_u hP_d hP_u
-    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (x := x) (d := d) (u := u)
+    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (hβ := hβ) (x := x) (d := d) (u := u)
       hDN hN_d hUP hN_u hP_d hP_u
   have tie_unique_NE_pred :
       ∀ x d u,
@@ -605,7 +646,7 @@ theorem Rnd_NE_pt_monotone :
     ⦃⌜beta > 1⌝⦄
     (pure (Rnd_NE_pt_monotone_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hβ
   simp [wp, PostCond.noThrow, pure]
   unfold Rnd_NE_pt_monotone_check
   classical
@@ -623,7 +664,7 @@ theorem Rnd_NE_pt_monotone :
       FloatSpec.Core.Round_pred.Rnd_N_pt F x u →
       P x d → P x u → d = u := by
     intro x d u hDN hN_d hUP hN_u hPd hPu
-    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (x := x) (d := d) (u := u)
+    exact tie_unique_NE_ax (beta := beta) (fexp := fexp) (hβ := hβ) (x := x) (d := d) (u := u)
       hDN hN_d hUP hN_u hPd hPu
   -- Finish by rewriting Rnd_NE_pt to Rnd_NG_pt F P.
   simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_monotone_check, pure,
