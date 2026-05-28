@@ -4192,7 +4192,33 @@ theorem lt_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 < m ∧ Int.natAbs n < beta ^ m.natAbs⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜d ≤ m⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hm_pos, hn_lt_pow⟩
+  by_cases hn : n = 0
+  · simp [Zdigits, hn]
+    linarith
+  · have hbounds := Zdigits_correct beta n hβ hn
+    set d := Zdigits beta n with hd
+    have hlow : beta ^ ((d - 1).natAbs) ≤ |n| := by
+      simpa [d, hd] using hbounds.1
+    have hn_lt_pow_abs : |n| < beta ^ m.natAbs := by
+      rw [Int.abs_eq_natAbs]
+      exact hn_lt_pow
+    have hd_pos : 0 < d := by
+      have := Zdigits_gt_0 beta n hβ hn
+      simpa [d, hd] using this
+    by_contra hnot
+    have hmd : m < d := lt_of_not_ge hnot
+    have hm_nonneg : 0 ≤ m := le_of_lt hm_pos
+    have hd1_nonneg : 0 ≤ d - 1 := by linarith
+    have hm_natabs : m.natAbs = m.toNat := by omega
+    have hd1_natabs : (d - 1).natAbs = (d - 1).toNat := by omega
+    have hexp : m.toNat ≤ (d - 1).toNat := by omega
+    have hpow_mono : beta ^ m.natAbs ≤ beta ^ (d - 1).natAbs := by
+      rw [hm_natabs, hd1_natabs]
+      exact pow_le_pow_exponent beta (le_of_lt hβ) hexp
+    linarith
 theorem Zdigits_le_Zpower (x e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ e ∧ Int.natAbs x < beta ^ e.natAbs⌝⦄
     (pure (Zdigits beta x) : Id _)
