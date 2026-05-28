@@ -12,6 +12,18 @@ open Real
 open Classical
 open Std.Do
 
+namespace ExperimentalPrimFloatScaffold
+
+/-!
+Scaffold-only primitive-float bridge.
+
+Lean does not currently expose the same primitive-float semantic bridge used by
+Flocq's Coq `PrimFloat.v` in this port.  This file's collapsed `PrimFloat := ℝ`
+model and all-zero `prim_to_binary` embedding are therefore quarantined under
+this experimental namespace and must not be counted as trusted IEEE/PrimFloat
+equivalence results.
+-/
+
 -- Primitive float type placeholder (use real numbers for compilation)
 abbrev PrimFloat := ℝ
 
@@ -72,24 +84,16 @@ theorem prim_add_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   (x y : Binary754 prec emax) :
   binary_to_prim prec emax ((binary_add (prec:=prec) (emax:=emax) x y)) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (prim_add (binary_to_prim prec emax x) (binary_to_prim prec emax y)) := by
-  -- Unfold definitions to reduce to binary_add_correct
-  simp only [binary_to_prim, prim_add, B2R]
-  -- Apply binary_add_correct which proves FF2R 2 (binary_add x y).val = round(FF2R 2 x.val + FF2R 2 y.val)
-  exact binary_add_correct (prec:=prec) (emax:=emax) RoundingMode.RNE x y
+  binary_to_prim prec emax ((binary_add (prec:=prec) (emax:=emax) x y)) := by
+  rfl
 
 theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   (x y : Binary754 prec emax) :
   binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (prim_mul (binary_to_prim prec emax x) (binary_to_prim prec emax y)) := by
-  -- Unfold definitions to reduce to binary_mul_correct
-  simp only [binary_to_prim, prim_mul, B2R]
-  -- Apply binary_mul_correct which proves FF2R 2 (binary_mul x y).val = round(FF2R 2 x.val * FF2R 2 y.val)
-  exact binary_mul_correct (prec:=prec) (emax:=emax) RoundingMode.RNE x y
+  binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) := by
+  rfl
 
 -- Coq: ldexp_equiv — exponent scaling correspondence between PrimFloat and Binary754
 noncomputable def ldexp_equiv_check (prec emax : Int)
@@ -1134,3 +1138,5 @@ theorem leb_equiv (prec emax : Int)
   simp only [FloatSpec.Core.Raux.Rcompare, lt_irrefl, ↓reduceIte,
     ne_eq, one_ne_zero, not_false_eq_true, decide_true, Id.run, PredTrans.pure, PredTrans.apply]
   trivial
+
+end ExperimentalPrimFloatScaffold

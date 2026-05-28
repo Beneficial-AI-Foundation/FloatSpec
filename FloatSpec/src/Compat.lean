@@ -1,10 +1,14 @@
--- Compatibility layer to bridge Core defs to simpler signatures
+/-
+Scaffold compatibility layer to bridge translated files to simpler signatures.
+Trusted aggregate imports do not depend on this module.
+-/
 
 import FloatSpec.src.Core
 import FloatSpec.src.Core.FLX
 import FloatSpec.src.Core.FLT
 import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Ulp
+import FloatSpec.src.Calc.Operations
 import FloatSpec.src.Calc.Round
 import Mathlib.Data.Real.Basic
 
@@ -86,17 +90,14 @@ noncomputable def Ztrunc := _root_.Ztrunc
 def FIX_exp := _root_.FIX_exp
 end FloatSpec.Compat
 
-/-- Stub: rounding function parameter validity (placeholder) -/
-class Valid_rnd (rnd : ℝ → Int) : Prop :=
-  /-- Trivial placeholder witness. -/
-  (trivial : True := True.intro)
+/-- Compatibility name for the core integer-rounding validity predicate. -/
+abbrev Valid_rnd (rnd : ℝ → Int) : Prop :=
+  FloatSpec.Core.Generic_fmt.Valid_rnd rnd
 
-/-- Stub: exponent monotonicity predicate (placeholder) -/
-class Monotone_exp (fexp : Int → Int) : Prop :=
-  /-- Trivial placeholder witness. -/
-  (trivial : True := True.intro)
+/-- Compatibility name for the core exponent monotonicity predicate. -/
+abbrev Monotone_exp (fexp : Int → Int) : Prop :=
+  FloatSpec.Core.Generic_fmt.Monotone_exp fexp
 
-/-- Stub: precision and range constraints for IEEE 754 (placeholders) -/
 /-
 Coq: `Prec_gt_0 prec` asserts strictly positive precision.
 We model it as `0 < prec` so arithmetic lemmas may use it.
@@ -107,22 +108,25 @@ class Prec_lt_emax (prec emax : Int) : Prop :=
   /-- emax is large enough for the exponent formula to work (emax ≥ 2) -/
   (emax_ge_2 : 2 ≤ emax)
 
-/-- Stub: exponent function not flushing to zero (placeholder) -/
-class Exp_not_FTZ (fexp : Int → Int) : Prop :=
-  /-- Trivial placeholder witness. -/
-  (trivial : True := True.intro)
+/-- Compatibility name for the core non-FTZ exponent predicate. -/
+abbrev Exp_not_FTZ (fexp : Int → Int) : Prop :=
+  FloatSpec.Core.Ulp.Exp_not_FTZ fexp
 
-/-- Stub: Flocq addition on floats (placeholder) -/
-def Fplus {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta := x
+/-- Compatibility name for exact float addition from `Calc.Operations`. -/
+def Fplus {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fplus beta x y
 
-/-- Stub: Flocq multiplication on floats (placeholder) -/
-def Fmult {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta := x
+/-- Compatibility name for exact float multiplication from `Calc.Operations`. -/
+def Fmult {beta : Int} (x y : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fmult beta x y
 
-/-- Stub: Flocq absolute on floats (placeholder) -/
-def Fabs {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta := x
+/-- Compatibility name for float absolute value from `Calc.Operations`. -/
+def Fabs {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fabs beta x
 
-/-- Stub: Flocq opposite on floats (placeholder) -/
-def Fopp {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta := x
+/-- Compatibility name for float negation from `Calc.Operations`. -/
+def Fopp {beta : Int} (x : FlocqFloat beta) : FlocqFloat beta :=
+  FloatSpec.Calc.Operations.Fopp beta x
 
 /-- Flocq rounding to a float value
 
@@ -134,5 +138,18 @@ noncomputable def round_float (beta : Int) (fexp : Int → Int) (rnd : ℝ → I
   let rounded_mantissa := rnd mantissa
   FlocqFloat.mk rounded_mantissa exp
 
-/-- Helper: a trivial nearest-ties mode to satisfy signatures that use it -/
-def Znearest (_choice : Int → Bool) : FloatSpec.Calc.Round.Mode := ()
+namespace FloatSpec.Compat.Scaffold
+
+/-- Compatibility mode token for older translated files using `Calc.Round.Mode`. -/
+noncomputable def ZnearestMode (choice : Int → Bool) : FloatSpec.Calc.Round.Mode where
+  rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  rnd_zero := by
+    unfold FloatSpec.Core.Generic_fmt.Znearest
+    simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
+      FloatSpec.Core.Raux.Rcompare]
+
+end FloatSpec.Compat.Scaffold
+
+/-- Scaffold compatibility alias retained for excluded translated files. -/
+noncomputable def Znearest : (Int → Bool) → FloatSpec.Calc.Round.Mode :=
+  FloatSpec.Compat.Scaffold.ZnearestMode

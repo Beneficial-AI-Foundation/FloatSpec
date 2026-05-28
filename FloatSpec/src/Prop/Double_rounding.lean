@@ -1,3 +1,11 @@
+/-!
+Tier 1 Scaffold / Tier 3 Excluded.
+
+This property-analysis leaf preserves translated names for audit and future
+porting. It is not re-exported by `FloatSpec.src.Prop` and is not part of the
+trusted FloatSpec aggregate.
+-/
+
 -- Double rounding properties
 -- Translated from Coq file: flocq/src/Prop/Double_rounding.v
 

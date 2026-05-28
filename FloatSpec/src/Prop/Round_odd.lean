@@ -1,3 +1,11 @@
+/-!
+Tier 1 Scaffold / Tier 3 Excluded.
+
+This property-analysis leaf preserves translated names for audit and future
+porting. It is not re-exported by `FloatSpec.src.Prop` and is not part of the
+trusted FloatSpec aggregate.
+-/
+
 -- Round to odd properties
 -- Translated from Coq file: flocq/src/Prop/Round_odd.v
 
@@ -61,7 +69,15 @@ lemma Zceil_plus (n : Int) (y : ℝ) :
     Coq counterpart: `Zeven_abs`. -/
 lemma Zeven_abs (z : Int) :
   ((Int.ofNat (Int.natAbs z)) % 2 = 0) ↔ (z % 2 = 0) := by
-  sorry
+  calc
+    ((Int.ofNat (Int.natAbs z)) % 2 = 0) ↔
+        (2 : Int) ∣ Int.ofNat (Int.natAbs z) := by
+      exact (Int.dvd_iff_emod_eq_zero
+        (a := (2 : Int)) (b := Int.ofNat (Int.natAbs z))).symm
+    _ ↔ (2 : Int) ∣ z := by
+      exact Int.dvd_natAbs (a := (2 : Int)) (b := z)
+    _ ↔ z % 2 = 0 := by
+      exact Int.dvd_iff_emod_eq_zero (a := (2 : Int)) (b := z)
 
 /-- Sum with round-to-odd at an even integer point.
     Coq counterpart: `Zrnd_odd_plus`. -/

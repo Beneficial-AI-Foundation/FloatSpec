@@ -1,7 +1,5 @@
--- Top-level IEEE754 module importing all IEEE 754 implementation files
--- Full IEEE 754 binary floating-point arithmetic
-
-import FloatSpec.src.IEEE754.Binary
-import FloatSpec.src.IEEE754.Bits
-import FloatSpec.src.IEEE754.BinarySingleNaN
-import FloatSpec.src.IEEE754.PrimFloat
+/-!
+The IEEE754 layer is outside the trusted aggregate until its arithmetic and
+normalization definitions are connected to the core model. Import leaf files
+directly when working on that layer.
+-/

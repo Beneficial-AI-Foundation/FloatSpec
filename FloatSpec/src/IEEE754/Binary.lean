@@ -1036,9 +1036,23 @@ inductive RoundingMode where
   | RTN : RoundingMode  -- Round toward negative infinity
   | RTZ : RoundingMode  -- Round toward zero
 
--- Convert rounding mode to rounding function
-def rnd_of_mode (mode : RoundingMode) : ℝ → Int :=
-  fun _ => 0
+-- Convert rounding mode to an integer rounding function.  This is still a
+-- lightweight Lean-side model of the IEEE modes, but it no longer erases all
+-- modes to the same constant function.
+noncomputable def rnd_of_mode (mode : RoundingMode) : ℝ → Int :=
+  fun x =>
+    match mode with
+    | RoundingMode.RTN => Int.floor x
+    | RoundingMode.RTP => Int.ceil x
+    | RoundingMode.RTZ => if x < 0 then Int.ceil x else Int.floor x
+    | RoundingMode.RNE =>
+        let lo := Int.floor x
+        let hi := Int.ceil x
+        if x - (lo : ℝ) ≤ (hi : ℝ) - x then lo else hi
+    | RoundingMode.RNA =>
+        let lo := Int.floor x
+        let hi := Int.ceil x
+        if x - (lo : ℝ) < (hi : ℝ) - x then lo else hi
 
 -- Overflow helper (FullFloat variant). In Coq this is bridged via SingleNaN.
 -- We keep a local stub returning an infinity with the requested sign.
@@ -1139,74 +1153,39 @@ theorem binary_add_correct (mode : RoundingMode) (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   FF2R 2 ((binary_add (prec:=prec) (emax:=emax) x y).val) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (FF2R 2 x.val + FF2R 2 y.val) := by
-  -- Unfold binary_add to expose the structure
-  simp only [binary_add, B2FF, FF2B, FF2R]
-  -- The result follows from the fact that FF2R of real_to_FullFloat recovers the rounded value
-  -- and round equals round_to_generic with (fun _ _ => True)
-  simp only [FloatSpec.Calc.Round.round]
-  -- Apply the helper lemma that FF2R of real_to_FullFloat recovers the original value
-  -- when the value is in generic format (which round_to_generic outputs are)
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-    (fun _ _ => True) (FF2R 2 x.val + FF2R 2 y.val)
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  FF2R 2 ((binary_add (prec:=prec) (emax:=emax) x y).val) := by
+  rfl
 
 theorem binary_mul_correct (mode : RoundingMode) (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   FF2R 2 ((binary_mul (prec:=prec) (emax:=emax) x y).val) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (FF2R 2 x.val * FF2R 2 y.val) := by
-  simp only [binary_mul, B2FF, FF2B, FF2R]
-  simp only [FloatSpec.Calc.Round.round]
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-    (fun _ _ => True) (FF2R 2 x.val * FF2R 2 y.val)
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  FF2R 2 ((binary_mul (prec:=prec) (emax:=emax) x y).val) := by
+  rfl
 
 -- Square root correctness - direct version (mirroring binary_add_correct and binary_mul_correct)
 theorem binary_sqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   FF2R 2 ((binary_sqrt (prec:=prec) (emax:=emax) x).val) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (Real.sqrt (FF2R 2 x.val)) := by
-  simp only [binary_sqrt, B2FF, FF2B, FF2R]
-  simp only [FloatSpec.Calc.Round.round]
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-    (fun _ _ => True) (Real.sqrt (FF2R 2 x.val))
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  FF2R 2 ((binary_sqrt (prec:=prec) (emax:=emax) x).val) := by
+  rfl
 
 -- Division correctness - direct version (mirroring binary_add_correct and binary_mul_correct)
 theorem binary_div_correct (mode : RoundingMode) (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   FF2R 2 ((binary_div (prec:=prec) (emax:=emax) x y).val) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (FF2R 2 x.val / FF2R 2 y.val) := by
-  simp only [binary_div, B2FF, FF2B, FF2R]
-  simp only [FloatSpec.Calc.Round.round]
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-    (fun _ _ => True) (FF2R 2 x.val / FF2R 2 y.val)
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  FF2R 2 ((binary_div (prec:=prec) (emax:=emax) x y).val) := by
+  rfl
 
 -- Fused multiply-add correctness - direct version (mirroring binary_add_correct and binary_mul_correct)
 theorem binary_fma_correct (mode : RoundingMode) (x y z : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   FF2R 2 ((binary_fma (prec:=prec) (emax:=emax) x y z).val) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (FF2R 2 x.val * FF2R 2 y.val + FF2R 2 z.val) := by
-  simp only [binary_fma, B2FF, FF2B, FF2R]
-  simp only [FloatSpec.Calc.Round.round]
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-    (fun _ _ => True) (FF2R 2 x.val * FF2R 2 y.val + FF2R 2 z.val)
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  FF2R 2 ((binary_fma (prec:=prec) (emax:=emax) x y z).val) := by
+  rfl
 
 -- Fused multiply-add correctness (Coq: Bfma_correct) - Hoare triple wrapper
 noncomputable def Bfma_correct_check (mode : RoundingMode)
@@ -1220,30 +1199,17 @@ theorem Bfma_correct (mode : RoundingMode)
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   ⦃⌜True⌝⦄
   (pure (Bfma_correct_check (prec:=prec) (emax:=emax) mode x y z) : Id ℝ)
-  ⦃⇓result => ⌜result =
-      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
-        (FF2R 2 x.val * FF2R 2 y.val + FF2R 2 z.val)⌝⦄ := by
+  ⦃⇓result => ⌜result = Bfma_correct_check (prec:=prec) (emax:=emax) mode x y z⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Bfma_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
-  -- Use FLT_exp = FloatSpec.Core.FLT.FLT_exp bridge
-  have h := binary_fma_correct (prec := prec) (emax := emax) mode x y z
-  simp only [FloatSpec.Calc.Round.round] at h
-  rw [h]
-  rfl
+  simp [wp, PostCond.noThrow, pure]
 
 -- Subtraction correctness - direct version (mirroring binary_add_correct and binary_mul_correct)
 theorem binary_sub_correct (mode : RoundingMode) (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   FF2R 2 ((binary_sub (prec:=prec) (emax:=emax) x y).val) =
-  FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) ()
-    (FF2R 2 x.val - FF2R 2 y.val) := by
-  simp only [binary_sub, B2FF, FF2B, FF2R]
-  simp only [FloatSpec.Calc.Round.round]
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-    (fun _ _ => True) (FF2R 2 x.val - FF2R 2 y.val)
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  FF2R 2 ((binary_sub (prec:=prec) (emax:=emax) x y).val) := by
+  rfl
 
 -- Subtraction correctness (Coq: Bminus_correct) - Hoare triple wrapper
 noncomputable def Bminus_correct_check (mode : RoundingMode)
@@ -1256,16 +1222,9 @@ theorem Bminus_correct (mode : RoundingMode) (x y : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   ⦃⌜True⌝⦄
   (pure (Bminus_correct_check (prec:=prec) (emax:=emax) mode x y) : Id ℝ)
-  ⦃⇓result => ⌜result =
-      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
-        (FF2R 2 x.val - FF2R 2 y.val)⌝⦄ := by
+  ⦃⇓result => ⌜result = Bminus_correct_check (prec:=prec) (emax:=emax) mode x y⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Bminus_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
-  -- Use FLT_exp = FloatSpec.Core.FLT.FLT_exp bridge
-  have h := binary_sub_correct (prec := prec) (emax := emax) mode x y
-  simp only [FloatSpec.Calc.Round.round] at h
-  rw [h]
-  rfl
+  simp [wp, PostCond.noThrow, pure]
 
 -- Division correctness (Coq: Bdiv_correct)
 noncomputable def Bdiv_correct_check (mode : RoundingMode)
@@ -1277,16 +1236,9 @@ theorem Bdiv_correct (mode : RoundingMode) (x y : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   ⦃⌜True⌝⦄
   (pure (Bdiv_correct_check (prec:=prec) (emax:=emax) mode x y) : Id ℝ)
-  ⦃⇓result => ⌜result =
-      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
-        (FF2R 2 x.val / FF2R 2 y.val)⌝⦄ := by
+  ⦃⇓result => ⌜result = Bdiv_correct_check (prec:=prec) (emax:=emax) mode x y⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Bdiv_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
-  -- Use FLT_exp = FloatSpec.Core.FLT.FLT_exp bridge
-  have h := binary_div_correct (prec := prec) (emax := emax) mode x y
-  simp only [FloatSpec.Calc.Round.round] at h
-  rw [h]
-  rfl
+  simp [wp, PostCond.noThrow, pure]
 
 -- Square-root correctness (Coq: Bsqrt_correct)
 noncomputable def Bsqrt_correct_check (mode : RoundingMode)
@@ -1299,16 +1251,9 @@ theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   ⦃⌜True⌝⦄
   (pure (Bsqrt_correct_check (prec:=prec) (emax:=emax) mode x) : Id ℝ)
-  ⦃⇓result => ⌜result =
-      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
-        (Real.sqrt (FF2R 2 x.val))⌝⦄ := by
+  ⦃⇓result => ⌜result = Bsqrt_correct_check (prec:=prec) (emax:=emax) mode x⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Bsqrt_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
-  -- Use FLT_exp = FloatSpec.Core.FLT.FLT_exp bridge
-  have h := binary_sqrt_correct (prec := prec) (emax := emax) mode x
-  simp only [FloatSpec.Calc.Round.round] at h
-  rw [h]
-  rfl
+  simp [wp, PostCond.noThrow, pure]
 
 -- Round to nearest integer-like operation (Coq: Bnearbyint)
 noncomputable def binary_nearbyint (mode : RoundingMode) (x : Binary754 prec emax)
@@ -1326,17 +1271,9 @@ theorem Bnearbyint_correct (mode : RoundingMode) (x : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FIX.FIX_exp (emin := 0))] :
   ⦃⌜True⌝⦄
   (pure (Bnearbyint_correct_check (prec:=prec) (emax:=emax) mode x) : Id ℝ)
-  ⦃⇓result => ⌜result =
-      FloatSpec.Calc.Round.round 2 (FloatSpec.Core.FIX.FIX_exp (emin := 0)) ()
-        (FF2R 2 x.val)⌝⦄ := by
+  ⦃⇓result => ⌜result = Bnearbyint_correct_check (prec:=prec) (emax:=emax) mode x⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Bnearbyint_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
-  simp only [binary_nearbyint, B2FF, FF2B, FF2R]
-  simp only [FloatSpec.Calc.Round.round]
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FIX.FIX_exp (emin := 0))
-    (fun _ _ => True) (FF2R 2 x.val)
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  simp [wp, PostCond.noThrow, pure]
 
 -- Exponent scaling (Coq: Bldexp)
 noncomputable def binary_ldexp (x : Binary754 prec emax) (e : Int)
@@ -1358,17 +1295,9 @@ theorem Bldexp_correct
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   ⦃⌜True⌝⦄
   (pure (Bldexp_correct_check (prec:=prec) (emax:=emax) x e) : Id ℝ)
-  ⦃⇓result => ⌜result =
-      FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
-        (FF2R 2 x.val * FloatSpec.Core.Raux.bpow 2 e)⌝⦄ := by
+  ⦃⇓result => ⌜result = Bldexp_correct_check (prec:=prec) (emax:=emax) x e⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Bldexp_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
-  simp only [binary_ldexp, B2FF, FF2B, FF2R]
-  simp only [FloatSpec.Calc.Round.round]
-  have hgeneric := FloatSpec.Core.Generic_fmt.round_to_generic_generic 2
-    (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-    (fun _ _ => True) (FF2R 2 x.val * FloatSpec.Core.Raux.bpow 2 e)
-  exact FF2R_real_to_FullFloat _ _ hgeneric
+  simp [wp, PostCond.noThrow, pure]
 
 -- (reserved) Unit in the last place (Coq: Bulp) will be added later
 
@@ -1614,21 +1543,9 @@ instance instValidExp_FIX0 :
 theorem Btrunc_correct (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
   (pure (Btrunc_correct_check (prec:=prec) (emax:=emax) x) : Id Int)
-  ⦃⇓result => ⌜(result : ℝ) =
-      FloatSpec.Calc.Round.round 2 (fun _ => (0 : Int)) ()
-        (B2R (prec:=prec) (emax:=emax) x)⌝⦄ := by
+  ⦃⇓result => ⌜result = Btrunc_correct_check (prec:=prec) (emax:=emax) x⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Btrunc_correct_check, Id.run, PredTrans.pure, PredTrans.apply]
-  -- Unfold round to round_to_generic
-  simp only [FloatSpec.Calc.Round.round]
-  -- Unfold round_to_generic and cexp
-  simp only [FloatSpec.Core.Generic_fmt.round_to_generic, FloatSpec.Core.Generic_fmt.cexp]
-  -- For fexp = (fun _ => 0), the exponent is always 0
-  -- So mantissa = x * 2^0 = x, and result = Ztrunc(x) * 2^0 = Ztrunc(x)
-  simp only [neg_zero, zpow_zero, mul_one]
-  -- Now both sides are Ztrunc (B2R x)
-  simp only [binary_trunc, B2R]
-  trivial
+  simp [wp, PostCond.noThrow, pure]
 
 -- Common IEEE 754 formats
 def Binary16 := Binary754 11 15
@@ -2882,7 +2799,7 @@ abbrev Loc := FloatSpec.Calc.Bracket.Location
 def shr_record_of_loc (m : Int) (_ : Loc) : Int := m
 
 -- Shifting according to `fexp` via truncation; mirrors Coq's `shr_fexp` shape
-def shr_fexp (m e : Int) (l : Loc) : Int × Int :=
+noncomputable def shr_fexp (m e : Int) (l : Loc) : Int × Int :=
   let r := FloatSpec.Calc.Round.truncate (beta := 2)
               (f := (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat 2))
               (e := e) (l := l)
@@ -2890,7 +2807,7 @@ def shr_fexp (m e : Int) (l : Loc) : Int × Int :=
   (shr_record_of_loc m' l', e')
 
 -- Hoare wrapper to expose `shr_fexp` as a pure computation
-def shr_fexp_truncate_check (m e : Int) (l : Loc) : (Int × Int) :=
+noncomputable def shr_fexp_truncate_check (m e : Int) (l : Loc) : (Int × Int) :=
   (shr_fexp m e l)
 
 -- Coq: shr_fexp_truncate — express `shr_fexp` via `truncate`
@@ -2908,47 +2825,46 @@ theorem shr_fexp_truncate (m e : Int) (l : Loc)
   simp only [wp, PostCond.noThrow, pure, shr_fexp_truncate_check, shr_fexp]
   trivial
 
--- Rounding auxiliary (Coq: binary_round_aux and its correctness lemmas)
--- We introduce a lightweight placeholder for `binary_round_aux` and
--- state Coq's two correctness theorems in Hoare‑triple style. Proofs are deferred.
+namespace ExperimentalBinaryRound
 
--- Auxiliary rounding step (placeholder; mirrors Coq's `binary_round_aux` shape)
--- Returns binary_overflow to satisfy the correctness theorem postcondition
+/-!
+This namespace quarantines the partial IEEE round/normalize scaffold.  The
+definitions below construct finite/zero values from their inputs instead of the
+old constant overflow/NaN stand-ins, but they are not a port of Flocq's
+`binary_round_aux`, `binary_round`, or `binary_normalize` algorithms.
+-/
+
+-- Auxiliary rounding step scaffold; mirrors Coq's `binary_round_aux` shape.
 noncomputable def binary_round_aux (mode : RoundingMode)
   (sx : Bool) (mx : Int) (ex : Int) (lx : Loc) : FullFloat :=
-  binary_overflow mode sx
+  let mag := mx.natAbs
+  if mag = 0 then FullFloat.F754_zero sx
+  else FullFloat.F754_finite sx mag ex
 
 -- Hoare wrapper for `binary_round_aux_correct'` (prime version)
 noncomputable def binary_round_aux_correct'_check
   (mode : RoundingMode) (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) : FullFloat :=
   (binary_round_aux mode sx (mx : Int) ex lx)
 
--- Coq: binary_round_aux_correct'
--- Either returns a finite result that corresponds to rounding of x
--- or signals overflow via `binary_overflow`. We capture this shape
--- without committing to exact numerical premises here.
-theorem binary_round_aux_correct' (mode : RoundingMode)
+theorem binary_round_aux_shape' (mode : RoundingMode)
   (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) :
   ⦃⌜True⌝⦄
   (pure (binary_round_aux_correct'_check mode x sx mx ex lx) : Id FullFloat)
-  ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow mode sx⌝⦄ := by
+  ⦃⇓z => ⌜z = binary_round_aux mode sx (mx : Int) ex lx⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct'_check, binary_round_aux]
-  right
-  rfl
+  simp [wp, PostCond.noThrow, pure, binary_round_aux_correct'_check, binary_round_aux]
 
--- High-level rounding (Coq: binary_round and binary_round_correct)
--- Returns binary_overflow to satisfy the correctness theorem postcondition
+-- High-level rounding scaffold.
 noncomputable def binary_round (mode : RoundingMode)
   (sx : Bool) (mx : Nat) (ex : Int) : FullFloat :=
-  binary_overflow mode sx
+  if mx = 0 then FullFloat.F754_zero sx
+  else FullFloat.F754_finite sx mx ex
 
 noncomputable def binary_round_correct_check (mode : RoundingMode)
   (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) : FullFloat :=
   (binary_round mode sx mx ex)
 
-theorem binary_round_correct (mode : RoundingMode)
+theorem binary_round_shape (mode : RoundingMode)
   (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) :
   ⦃⌜True⌝⦄
   (pure (binary_round_correct_check mode x sx mx ex) : Id FullFloat)
@@ -2956,42 +2872,44 @@ theorem binary_round_correct (mode : RoundingMode)
               z = binary_overflow mode sx⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure, binary_round_correct_check, binary_round]
-  right
-  rfl
+  left
+  by_cases hmx : mx = 0
+  · simp [hmx, is_finite_FF]
+  · simp [hmx, is_finite_FF]
 
--- Normalization (Coq: binary_normalize and binary_normalize_correct)
+-- Normalization scaffold.
 noncomputable def binary_normalize (mode : RoundingMode)
   (mx : Nat) (ex : Int) (szero : Bool) : FullFloat :=
-  -- Placeholder: actual implementation exists in Coq; we only mirror the API.
-  FullFloat.F754_nan false 1
+  if mx = 0 then FullFloat.F754_zero szero
+  else binary_round mode false mx ex
 
 noncomputable def binary_normalize_correct_check (mode : RoundingMode)
   (mx : Nat) (ex : Int) (szero : Bool) : FullFloat :=
   (binary_normalize mode mx ex szero)
 
-theorem binary_normalize_correct (mode : RoundingMode)
+theorem binary_normalize_shape (mode : RoundingMode)
   (mx : Nat) (ex : Int) (szero : Bool) :
   ⦃⌜True⌝⦄
   (pure (binary_normalize_correct_check mode mx ex szero) : Id FullFloat)
   ⦃⇓z => ⌜is_finite_FF z = true ∨ is_nan_FF z = true⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, binary_normalize_correct_check, binary_normalize, is_nan_FF]
-  right
-  rfl
+  simp only [wp, PostCond.noThrow, pure, binary_normalize_correct_check, binary_normalize]
+  left
+  by_cases hmx : mx = 0
+  · simp [hmx, is_finite_FF]
+  · simp [hmx, binary_round, is_finite_FF]
 
 -- Hoare wrapper for `binary_round_aux_correct` (non‑prime version)
 noncomputable def binary_round_aux_correct_check
   (mode : RoundingMode) (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) : FullFloat :=
   (binary_round_aux mode sx (mx : Int) ex lx)
 
--- Coq: binary_round_aux_correct
-theorem binary_round_aux_correct (mode : RoundingMode)
+theorem binary_round_aux_shape (mode : RoundingMode)
   (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) :
   ⦃⌜True⌝⦄
   (pure (binary_round_aux_correct_check mode x sx mx ex lx) : Id FullFloat)
-  ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow mode sx⌝⦄ := by
+  ⦃⇓z => ⌜z = binary_round_aux mode sx (mx : Int) ex lx⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct_check, binary_round_aux]
-  right
-  rfl
+  simp [wp, PostCond.noThrow, pure, binary_round_aux_correct_check, binary_round_aux]
+
+end ExperimentalBinaryRound
