@@ -4701,7 +4701,65 @@ theorem Zdigits_mult (x y : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜True⌝⦄
     (pure (Zdigits beta (x * y)) : Id _)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = dx ∧ Zdigits beta y = dy ∧ d ≤ dx + dy⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  refine ⟨Zdigits beta x, Zdigits beta y, rfl, rfl, ?_⟩
+  by_cases hxy_zero : x * y = 0
+  · have hx_nonneg := Zdigits_ge_0 beta x trivial
+    have hy_nonneg := Zdigits_ge_0 beta y trivial
+    simp only [wp, PostCond.noThrow, pure] at hx_nonneg hy_nonneg
+    rw [hxy_zero]
+    simp [Zdigits]
+    exact Int.add_nonneg hx_nonneg hy_nonneg
+  · let ax : Int := Int.natAbs x
+    let ay : Int := Int.natAbs y
+    let big : Int := ax + ay + ax * ay
+    have hax_nonneg : 0 ≤ ax := by
+      simpa [ax] using Int.ofNat_nonneg (Int.natAbs x)
+    have hay_nonneg : 0 ≤ ay := by
+      simpa [ay] using Int.ofNat_nonneg (Int.natAbs y)
+    have hbig_nonneg : 0 ≤ big := by
+      nlinarith
+    have h_abs_x : Zdigits beta ax = Zdigits beta x := by
+      have h := (Zdigits_abs (beta := beta) (n := x)) trivial
+      simpa [wp, PostCond.noThrow, pure, ax] using h
+    have h_abs_y : Zdigits beta ay = Zdigits beta y := by
+      have h := (Zdigits_abs (beta := beta) (n := y)) trivial
+      simpa [wp, PostCond.noThrow, pure, ay] using h
+    have h_abs_xy : Zdigits beta (Int.natAbs (x * y)) = Zdigits beta (x * y) := by
+      have h := (Zdigits_abs (beta := beta) (n := x * y)) trivial
+      simpa [wp, PostCond.noThrow, pure] using h
+    have h_abs_prod_int : ((Int.natAbs (x * y) : Nat) : Int) = ax * ay := by
+      simp [ax, ay, Int.natAbs_mul]
+    have hn_nonneg : 0 ≤ ((Int.natAbs (x * y) : Nat) : Int) := by
+      exact Int.ofNat_nonneg (Int.natAbs (x * y))
+    have hn_le_big_int : ((Int.natAbs (x * y) : Nat) : Int) ≤ big := by
+      rw [h_abs_prod_int]
+      nlinarith
+    have hn_le_big_abs :
+        Int.natAbs ((Int.natAbs (x * y) : Nat) : Int) ≤ Int.natAbs big := by
+      apply Int.ofNat_le.mp
+      rw [Int.natAbs_of_nonneg hn_nonneg, Int.natAbs_of_nonneg hbig_nonneg]
+      exact hn_le_big_int
+    have hn_ne : ((Int.natAbs (x * y) : Nat) : Int) ≠ 0 := by
+      intro h
+      apply hxy_zero
+      exact Int.natAbs_eq_zero.mp (Int.ofNat_eq_zero.mp h)
+    have hprod_le_big :
+        Zdigits beta (x * y) ≤ Zdigits beta big := by
+      have hle :=
+        (Zdigits_le (beta := beta) (h_beta := h_beta)
+          (n := ((Int.natAbs (x * y) : Nat) : Int)) (m := big) (hβ := hβ))
+          ⟨hn_ne, hn_le_big_abs⟩
+      rcases hle with ⟨dbig, hdbig, hle_dbig⟩
+      rw [← h_abs_xy]
+      simpa [hdbig] using hle_dbig
+    have hbig_le_sum :
+        Zdigits beta big ≤ Zdigits beta x + Zdigits beta y := by
+      have h :=
+        Zdigits_sum_product_bound beta ax ay hβ hax_nonneg hay_nonneg
+      simpa [big, h_abs_x, h_abs_y] using h
+    exact le_trans hprod_le_big hbig_le_sum
 theorem Zdigits_mult_ge (x y : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜x ≠ 0 ∧ y ≠ 0⌝⦄
     (pure (Zdigits beta (x * y)) : Id _)
