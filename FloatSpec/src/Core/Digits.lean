@@ -4248,7 +4248,67 @@ theorem Zdigits_mult_Zpower (beta n k : Int) (h_beta : beta > 1) :
     ⦃⌜n ≠ 0 ∧ 0 ≤ k⌝⦄
     (pure (Zdigits beta (n * beta ^ k.natAbs)) : Id _)
     ⦃⇓d => ⌜∃ dn, Zdigits beta n = dn ∧ d = dn + k⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hn, hk⟩
+  set dn := Zdigits beta n with hdn
+  refine ⟨dn, hdn.symm, ?_⟩
+  have hβpos : 0 < beta := lt_trans (show (0 : Int) < 1 by decide) h_beta
+  have hpow_pos : 0 < beta ^ k.natAbs := pow_pos hβpos _
+  have hpow_nonneg : 0 ≤ beta ^ k.natAbs := le_of_lt hpow_pos
+  have hpow_ne : beta ^ k.natAbs ≠ 0 := ne_of_gt hpow_pos
+  have hprod_ne : n * beta ^ k.natAbs ≠ 0 := Int.mul_ne_zero hn hpow_ne
+  have hbounds := Zdigits_correct beta n h_beta hn
+  have hdn_pos : 0 < dn := by
+    simpa [dn, hdn] using Zdigits_gt_0 beta n h_beta hn
+  have hdn_nonneg : 0 ≤ dn := le_of_lt hdn_pos
+  have hdn_sub_nonneg : 0 ≤ dn - 1 := by omega
+  have hdnk_nonneg : 0 ≤ dn + k := by omega
+  have hdnk_sub_nonneg : 0 ≤ dn + k - 1 := by omega
+  have hdnk_natAbs : (dn + k).natAbs = dn.natAbs + k.natAbs := by
+    apply Nat.cast_injective (R := Int)
+    rw [Nat.cast_add, Int.natAbs_of_nonneg hdnk_nonneg,
+      Int.natAbs_of_nonneg hdn_nonneg, Int.natAbs_of_nonneg hk]
+  have hdnk_sub_natAbs : (dn + k - 1).natAbs = (dn - 1).natAbs + k.natAbs := by
+    apply Nat.cast_injective (R := Int)
+    rw [Nat.cast_add, Int.natAbs_of_nonneg hdnk_sub_nonneg,
+      Int.natAbs_of_nonneg hdn_sub_nonneg, Int.natAbs_of_nonneg hk]
+    ring
+  have hprod_abs :
+      (Int.natAbs (n * beta ^ k.natAbs) : Int) =
+        (Int.natAbs n : Int) * beta ^ k.natAbs := by
+    rw [Int.natAbs_mul, Nat.cast_mul, Int.natAbs_of_nonneg hpow_nonneg]
+  have hlow_n : beta ^ (dn - 1).natAbs ≤ (Int.natAbs n : Int) := by
+    rw [← Int.abs_eq_natAbs]
+    simpa [dn, hdn] using hbounds.1
+  have hupp_n : (Int.natAbs n : Int) < beta ^ dn.natAbs := by
+    rw [← Int.abs_eq_natAbs]
+    simpa [dn, hdn] using hbounds.2
+  have hlow_prod :
+      beta ^ (dn + k - 1).natAbs ≤
+        (Int.natAbs (n * beta ^ k.natAbs) : Int) := by
+    calc
+      beta ^ (dn + k - 1).natAbs
+          = beta ^ ((dn - 1).natAbs + k.natAbs) := by rw [hdnk_sub_natAbs]
+      _ = beta ^ (dn - 1).natAbs * beta ^ k.natAbs := by rw [pow_add]
+      _ ≤ (Int.natAbs n : Int) * beta ^ k.natAbs :=
+          mul_le_mul_of_nonneg_right hlow_n hpow_nonneg
+      _ = (Int.natAbs (n * beta ^ k.natAbs) : Int) := hprod_abs.symm
+  have hupp_prod :
+      (Int.natAbs (n * beta ^ k.natAbs) : Int) <
+        beta ^ (dn + k).natAbs := by
+    calc
+      (Int.natAbs (n * beta ^ k.natAbs) : Int)
+          = (Int.natAbs n : Int) * beta ^ k.natAbs := hprod_abs
+      _ < beta ^ dn.natAbs * beta ^ k.natAbs :=
+          mul_lt_mul_of_pos_right hupp_n hpow_pos
+      _ = beta ^ (dn.natAbs + k.natAbs) := by rw [pow_add]
+      _ = beta ^ (dn + k).natAbs := by rw [hdnk_natAbs]
+  have hunique :=
+    (Zdigits_unique (beta := beta) (h_beta := h_beta)
+      (n := n * beta ^ k.natAbs) (e := dn + k) (hβ := h_beta))
+      ⟨hprod_ne, hlow_prod, hupp_prod⟩
+  exact hunique
 /-- Digit count of powers of beta
 
 Coq theorem and proof:
