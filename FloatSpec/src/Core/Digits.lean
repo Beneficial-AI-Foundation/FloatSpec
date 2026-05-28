@@ -4241,7 +4241,27 @@ theorem Zdigits_slice (n k l : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ k ∧ 0 < l⌝⦄
     (pure (Zdigits beta ((Zslice beta n k l))) : Id _)
     ⦃⇓d => ⌜d ≤ l⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨_hk_nonneg, hl_pos⟩
+  have hl_nonneg : 0 ≤ l := le_of_lt hl_pos
+  have hβpos : 0 < beta := lt_trans (show (0 : Int) < 1 by decide) h_beta
+  have hpowpos : 0 < beta ^ l.natAbs := pow_pos hβpos _
+  set scaled := Zscale beta n (-k) with hscaled
+  have hslice_eq : Zslice beta n k l = scaled % beta ^ l.natAbs := by
+    simp [Zslice, hl_nonneg, scaled]
+  have hmod_nonneg : 0 ≤ scaled % beta ^ l.natAbs :=
+    Int.emod_nonneg scaled (ne_of_gt hpowpos)
+  have hmod_lt : scaled % beta ^ l.natAbs < beta ^ l.natAbs :=
+    Int.emod_lt_of_pos scaled hpowpos
+  have hslice_lt : (Int.natAbs (Zslice beta n k l) : Int) < beta ^ l.natAbs := by
+    rw [hslice_eq]
+    rw [← Int.abs_eq_natAbs]
+    simpa [abs_of_nonneg hmod_nonneg] using hmod_lt
+  exact
+    (Zdigits_le_Zpower (beta := beta) (h_beta := h_beta)
+      (x := Zslice beta n k l) (e := l) (hβ := h_beta))
+      ⟨hl_nonneg, hslice_lt⟩
 theorem Zdigits_mult_Zpower (beta n k : Int) (h_beta : beta > 1) :
     ⦃⌜n ≠ 0 ∧ 0 ≤ k⌝⦄
     (pure (Zdigits beta (n * beta ^ k.natAbs)) : Id _)
