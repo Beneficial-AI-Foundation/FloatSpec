@@ -4528,13 +4528,14 @@ theorem Zpower_gt_Zdigits (e x : Int) (hβ : beta > 1 := h_beta) :
 
       have h_natAbs_le : ((Zdigits beta x)).natAbs ≤ e.natAbs := by
         -- Since d ≤ e and 0 ≤ d and 0 ≤ e, we have d.natAbs ≤ e.natAbs
-        have d_eq : ↑((Zdigits beta x)).natAbs = (Zdigits beta x) := by
+        have h_digits_natAbs :
+            ↑((Zdigits beta x)).natAbs = (Zdigits beta x) := by
           exact Int.natAbs_of_nonneg d_nonneg
         have e_eq : ↑e.natAbs = e := by
           exact Int.natAbs_of_nonneg he
         -- Convert the inequality from Int to Nat
         have : (Zdigits beta x) ≤ e := hde
-        rw [← d_eq, ← e_eq] at this
+        rw [← h_digits_natAbs, ← e_eq] at this
         exact Nat.cast_le.mp this
 
       -- Now we need: |x| < beta ^ e.natAbs
@@ -4764,7 +4765,55 @@ theorem Zdigits_mult_ge (x y : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜x ≠ 0 ∧ y ≠ 0⌝⦄
     (pure (Zdigits beta (x * y)) : Id _)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = dx ∧ Zdigits beta y = dy ∧ dx + dy - 1 ≤ d⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hx, hy⟩
+  refine ⟨Zdigits beta x, Zdigits beta y, rfl, rfl, ?_⟩
+  set dx := Zdigits beta x with hdx
+  set dy := Zdigits beta y with hdy
+  have hdx_pos : 0 < dx := by
+    simpa [dx, hdx] using Zdigits_gt_0 beta x hβ hx
+  have hdy_pos : 0 < dy := by
+    simpa [dy, hdy] using Zdigits_gt_0 beta y hβ hy
+  have hdxm_nonneg : 0 ≤ dx - 1 := by omega
+  have hdym_nonneg : 0 ≤ dy - 1 := by omega
+  have hbounds_x := Zdigits_correct beta x hβ hx
+  have hbounds_y := Zdigits_correct beta y hβ hy
+  have hx_low : beta ^ (dx - 1).natAbs ≤ (Int.natAbs x : Int) := by
+    rw [← Int.abs_eq_natAbs]
+    simpa [dx, hdx] using hbounds_x.1
+  have hy_low : beta ^ (dy - 1).natAbs ≤ (Int.natAbs y : Int) := by
+    rw [← Int.abs_eq_natAbs]
+    simpa [dy, hdy] using hbounds_y.1
+  have hpow_nonneg_y : 0 ≤ beta ^ (dy - 1).natAbs := by
+    exact pow_nonneg (by linarith : 0 ≤ beta) _
+  have hmul_low :
+      beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs ≤
+        (Int.natAbs x : Int) * (Int.natAbs y : Int) :=
+    mul_le_mul hx_low hy_low hpow_nonneg_y (Int.natCast_nonneg _)
+  have hpow_split :
+      beta ^ ((dx - 1) + (dy - 1)).natAbs =
+        beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs :=
+    pow_add_split beta (dx - 1) (dy - 1) hβ hdxm_nonneg hdym_nonneg
+  have hprod_abs :
+      (Int.natAbs (x * y) : Int) =
+        (Int.natAbs x : Int) * (Int.natAbs y : Int) := by
+    rw [Int.natAbs_mul, Nat.cast_mul]
+  have hpre_pow :
+      beta ^ ((dx - 1) + (dy - 1)).natAbs ≤ Int.natAbs (x * y) := by
+    calc
+      beta ^ ((dx - 1) + (dy - 1)).natAbs
+          = beta ^ (dx - 1).natAbs * beta ^ (dy - 1).natAbs := hpow_split
+      _ ≤ (Int.natAbs x : Int) * (Int.natAbs y : Int) := hmul_low
+      _ = Int.natAbs (x * y) := hprod_abs.symm
+  have hlt :
+      (dx - 1) + (dy - 1) < Zdigits beta (x * y) := by
+    exact
+      (Zdigits_gt_Zpower (beta := beta) (h_beta := h_beta)
+        (e := (dx - 1) + (dy - 1)) (x := x * y) (hβ := hβ))
+        hpre_pow
+  have hfinal : dx + dy - 1 ≤ Zdigits beta (x * y) := by omega
+  simpa [dx, dy, hdx, hdy] using hfinal
 theorem Zdigits_div_Zpower (m e : Int) (h_beta : beta > 1) :
     ⦃⌜0 ≤ m ∧ 0 ≤ e ∧ ∃ dm, Zdigits beta m = dm ∧ e ≤ dm⌝⦄
     (pure (Zdigits beta (m / beta ^ e.natAbs)) : Id _)
