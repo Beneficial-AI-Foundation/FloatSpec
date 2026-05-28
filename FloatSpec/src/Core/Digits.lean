@@ -4341,7 +4341,23 @@ theorem Zdigits_le_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜m ≠ 0 ∧ Int.natAbs n < Int.natAbs m⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = dm ∧ dn ≤ dm⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hm, hn_lt_m⟩
+  refine ⟨Zdigits beta m, rfl, ?_⟩
+  have hbounds_m := Zdigits_correct beta m hβ hm
+  have hdm_pos : 0 < Zdigits beta m :=
+    Zdigits_gt_0 beta m hβ hm
+  have hm_lt_pow : (Int.natAbs m : Int) < beta ^ (Zdigits beta m).natAbs := by
+    rw [← Int.abs_eq_natAbs]
+    exact hbounds_m.2
+  have hn_lt_pow : (Int.natAbs n : Int) < beta ^ (Zdigits beta m).natAbs := by
+    have hn_lt_m_int : (Int.natAbs n : Int) < (Int.natAbs m : Int) := by
+      exact_mod_cast hn_lt_m
+    exact lt_trans hn_lt_m_int hm_lt_pow
+  exact
+    (lt_Zdigits (beta := beta) (h_beta := h_beta) (n := n) (m := Zdigits beta m)
+        (hβ := hβ)) ⟨hdm_pos, hn_lt_pow⟩
 private lemma Zdigits_nonneg (x : Int) :
     ⦃⌜True⌝⦄
     (pure (Zdigits beta x) : Id _)
