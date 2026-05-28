@@ -4700,7 +4700,151 @@ private theorem generic_format_pred_aux1_theorem_early
     (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) (hβ : 1 < beta):
     (FloatSpec.Core.Generic_fmt.generic_format beta fexp
       (x - (ulp beta fexp x))) := by
-  sorry
+  classical
+  set b : ℝ := (beta : ℝ)
+  set e : Int := FloatSpec.Core.Raux.mag beta x with he
+  set c : Int := fexp e with hc
+  have hb_gt1 : (1 : ℝ) < b := by
+    simpa [b] using (by exact_mod_cast hβ : (1 : ℝ) < (beta : ℝ))
+  have hbpos : 0 < b := lt_trans zero_lt_one hb_gt1
+  have hbne : b ≠ 0 := ne_of_gt hbpos
+  have hx_ne : x ≠ 0 := ne_of_gt hx
+
+  have hmag_lower := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x) hβ hx_ne
+  have hx_ge : b ^ (e - 1) ≤ x := by
+    have hrun := hmag_lower True.intro
+    have hx_abs : |x| = x := abs_of_pos hx
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure,
+      FloatSpec.Core.Raux.abs_val, b, he, hx_abs] using hrun
+  have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x) hβ hx_ne
+  have hx_lt : x < b ^ e := by
+    have hrun := hmag_upper True.intro
+    have hx_abs : |x| = x := abs_of_pos hx
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure,
+      FloatSpec.Core.Raux.abs_val, b, he, hx_abs] using hrun
+  have hne_e : x ≠ b ^ (e - 1) := by
+    simpa [b, he] using hne
+  have hx_gt : b ^ (e - 1) < x := lt_of_le_of_ne hx_ge (Ne.symm hne_e)
+
+  have hulprun : (ulp (beta := beta) (fexp := fexp) x) = b ^ c := by
+    have h := ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx_ne) True.intro
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure,
+      FloatSpec.Core.Generic_fmt.cexp, b, he, hc] using h
+
+  set m : Int :=
+    FloatSpec.Core.Raux.Ztrunc (x * b ^ (-(fexp (FloatSpec.Core.Raux.mag beta x)))) with hm
+  have hx_repr : x = (m : ℝ) * b ^ c := by
+    have hspec := FloatSpec.Core.Generic_fmt.generic_format_spec (beta := beta) (fexp := fexp) (x := x)
+    have hiff : FloatSpec.Core.Generic_fmt.generic_format beta fexp x ↔
+        x = FloatSpec.Core.Defs.F2R
+          (FlocqFloat.mk
+            (FloatSpec.Core.Raux.Ztrunc
+              (x * (beta : ℝ) ^ (-(fexp (FloatSpec.Core.Raux.mag beta x)))))
+            (fexp (FloatSpec.Core.Raux.mag beta x)) : FlocqFloat beta) := by
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure,
+        FloatSpec.Core.Defs.F2R, FloatSpec.Core.Raux.mag,
+        FloatSpec.Core.Raux.Ztrunc] using hspec hβ
+    have hxF := hiff.mp Fx
+    simpa [FloatSpec.Core.Defs.F2R, b, he, hc, hm] using hxF
+
+  have hbpc_pos : 0 < b ^ c := zpow_pos hbpos c
+  have hm_pos : 0 < m := by
+    have hF2R_pos : 0 < FloatSpec.Core.Defs.F2R (FlocqFloat.mk m c : FlocqFloat beta) := by
+      simpa [FloatSpec.Core.Defs.F2R, hx_repr] using hx
+    exact FloatSpec.Core.Float_prop.gt_0_F2R
+      (beta := beta) (f := (FlocqFloat.mk m c : FlocqFloat beta)) hβ hF2R_pos
+
+  have hc_lt_e : c < e := by
+    by_contra hnot
+    have he_le_c : e ≤ c := le_of_not_gt hnot
+    have hfloor0 :
+        Int.floor (x * (beta : ℝ) ^ (-(fexp e))) = 0 :=
+      FloatSpec.Core.Generic_fmt.mantissa_DN_small_pos
+        (beta := beta) (fexp := fexp) (x := x) (ex := e)
+        ⟨by simpa [b] using hx_ge, by simpa [b] using hx_lt⟩ he_le_c hβ
+    have hscaled_nonneg : 0 ≤ x * b ^ (-c) := by
+      exact le_of_lt (mul_pos hx (zpow_pos hbpos _))
+    have hztrunc0 : FloatSpec.Core.Raux.Ztrunc (x * b ^ (-c)) = 0 := by
+      unfold FloatSpec.Core.Raux.Ztrunc
+      rw [if_neg (not_lt.mpr hscaled_nonneg)]
+      simpa [b, hc] using hfloor0
+    have hm_zero : m = 0 := by
+      simpa [hm, he, hc] using hztrunc0
+    have hx_zero : x = 0 := by
+      simpa [FloatSpec.Core.Defs.F2R, hx_repr, hm_zero] using hx_repr
+    exact (ne_of_gt hx) hx_zero
+
+  set y : ℝ := x - ulp beta fexp x with hy
+  have hy_repr : y = ((m - 1 : Int) : ℝ) * b ^ c := by
+    calc
+      y = x - b ^ c := by simpa [hy, hulprun]
+      _ = (m : ℝ) * b ^ c - b ^ c := by rw [hx_repr]
+      _ = ((m : ℝ) - 1) * b ^ c := by ring
+      _ = ((m - 1 : Int) : ℝ) * b ^ c := by simp [Int.cast_sub]
+
+  have hdiff_nonneg : 0 ≤ e - 1 - c := by
+    exact sub_nonneg.mpr (Int.le_sub_one_of_lt hc_lt_e)
+  set n : Int := beta ^ Int.toNat (e - 1 - c) with hn
+  have hpow_nat : b ^ (e - 1 - c) = b ^ Int.toNat (e - 1 - c) := by
+    exact FloatSpec.Core.Generic_fmt.zpow_nonneg_toNat (a := b) (k := e - 1 - c) hdiff_nonneg
+  have hpow_cast : b ^ (e - 1 - c) = (n : ℝ) := by
+    calc
+      b ^ (e - 1 - c) = b ^ Int.toNat (e - 1 - c) := hpow_nat
+      _ = ((beta ^ Int.toNat (e - 1 - c) : Int) : ℝ) := by
+        simp [b, Int.cast_pow]
+      _ = (n : ℝ) := by simp [hn]
+  have hsplit_lower : b ^ (e - 1) = b ^ (e - 1 - c) * b ^ c := by
+    exact (FloatSpec.Core.Generic_fmt.zpow_sub_add (a := b) hbne (e - 1) c).symm
+  have hn_lt_m_real : (n : ℝ) < (m : ℝ) := by
+    have hmul_lt : b ^ (e - 1 - c) * b ^ c < (m : ℝ) * b ^ c := by
+      simpa [hsplit_lower, hx_repr] using hx_gt
+    have hlt := lt_of_mul_lt_mul_right hmul_lt (le_of_lt hbpc_pos)
+    simpa [hpow_cast] using hlt
+  have hn_lt_m : n < m := by
+    exact_mod_cast hn_lt_m_real
+  have hn_le_m_sub : n ≤ m - 1 := by
+    omega
+  have hy_ge : b ^ (e - 1) ≤ y := by
+    have hreal : (n : ℝ) ≤ ((m - 1 : Int) : ℝ) := by
+      exact_mod_cast hn_le_m_sub
+    have hmul := mul_le_mul_of_nonneg_right hreal (le_of_lt hbpc_pos)
+    simpa [hsplit_lower, hpow_cast, hy_repr] using hmul
+  have hy_pos : 0 < y := lt_of_lt_of_le (zpow_pos hbpos (e - 1)) hy_ge
+  have hy_lt : y < b ^ e := by
+    have hsub_lt : x - b ^ c < x := sub_lt_self x hbpc_pos
+    exact lt_trans (by simpa [hy, hulprun] using hsub_lt) hx_lt
+
+  have hcexp_y : FloatSpec.Core.Generic_fmt.cexp beta fexp y = c := by
+    have hcexp := FloatSpec.Core.Generic_fmt.cexp_fexp beta fexp y e
+    have hy_abs : |y| = y := abs_of_pos hy_pos
+    have h := hcexp ⟨hβ, by simpa [b, hy_abs] using hy_ge,
+      by simpa [b, hy_abs] using hy_lt⟩
+    simpa [wp, PostCond.noThrow, Id.run, pure, hc] using h
+
+  have hfmt_y_repr :
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp
+        (((m - 1 : Int) : ℝ) * b ^ c) := by
+    have hpre :
+        1 < beta ∧
+          ((m - 1 : Int) ≠ 0 →
+            FloatSpec.Core.Generic_fmt.cexp beta fexp
+              (FloatSpec.Core.Defs.F2R
+                (FlocqFloat.mk (m - 1) c : FlocqFloat beta)) ≤ c) := by
+      refine ⟨hβ, ?_⟩
+      intro _hm_ne
+      have hcexp_repr :
+          FloatSpec.Core.Generic_fmt.cexp beta fexp
+            (((m - 1 : Int) : ℝ) * b ^ c) = c := by
+        simpa [hy_repr] using hcexp_y
+      simpa [FloatSpec.Core.Defs.F2R, b] using le_of_eq hcexp_repr
+    have hformat :=
+      FloatSpec.Core.Generic_fmt.generic_format_F2R beta fexp (m - 1) c hpre
+    simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Defs.F2R, b] using hformat
+
+  have hfmt_y :
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp y := by
+    simpa [hy_repr] using hfmt_y_repr
+  simpa [hy] using hfmt_y
 
 /-- Coq (Ulp.v):
 Lemma generic_format_pred_pos: forall x, F x -> 0 < x -> F (pred_pos x).
