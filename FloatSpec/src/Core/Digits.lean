@@ -4269,7 +4269,32 @@ theorem Zdigits_Zpower (k : Int) (hβ : beta > 1) :
     ⦃⌜0 ≤ k⌝⦄
     (pure (Zdigits beta (beta ^ k.natAbs)) : Id _)
     ⦃⇓d => ⌜d = k + 1⌝⦄ := by
-  sorry
+  intro hk
+  simp only [wp, PostCond.noThrow, pure]
+  have hβpos : 0 < beta := lt_trans (show (0 : Int) < 1 by decide) hβ
+  have hpow_pos : 0 < beta ^ k.natAbs := pow_pos hβpos _
+  have hpow_ne : beta ^ k.natAbs ≠ 0 := ne_of_gt hpow_pos
+  have hk_nonneg : 0 ≤ k := hk
+  have hk1_nonneg : 0 ≤ k + 1 := by omega
+  have hk_succ_natAbs : (k + 1).natAbs = k.natAbs + 1 := by
+    have hk_abs : (k.natAbs : Int) = k := Int.natAbs_of_nonneg hk_nonneg
+    have hk1_abs : ((k + 1).natAbs : Int) = k + 1 :=
+      Int.natAbs_of_nonneg hk1_nonneg
+    apply Nat.cast_injective (R := Int)
+    rw [Nat.cast_add, Nat.cast_one, hk_abs, hk1_abs]
+  have hlow :
+      beta ^ ((k + 1 - 1).natAbs) ≤ Int.natAbs (beta ^ k.natAbs) := by
+    rw [show k + 1 - 1 = k by ring]
+    rw [Int.natAbs_of_nonneg (le_of_lt hpow_pos)]
+  have hupp :
+      Int.natAbs (beta ^ k.natAbs) < beta ^ (k + 1).natAbs := by
+    rw [Int.natAbs_of_nonneg (le_of_lt hpow_pos), hk_succ_natAbs]
+    simpa [pow_succ] using
+      (lt_mul_of_one_lt_right hpow_pos hβ)
+  exact
+    (Zdigits_unique (beta := beta) (h_beta := hβ)
+      (n := beta ^ k.natAbs) (e := k + 1) (hβ := hβ))
+      ⟨hpow_ne, hlow, hupp⟩
 theorem Zdigits_le (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ Int.natAbs n ≤ Int.natAbs m⌝⦄
     (pure (Zdigits beta n) : Id _)
