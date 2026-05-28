@@ -4205,7 +4205,20 @@ theorem Zdigits_le_Zpower (x e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 ≤ e ∧ Int.natAbs x < beta ^ e.natAbs⌝⦄
     (pure (Zdigits beta x) : Id _)
     ⦃⇓d => ⌜d ≤ e⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨he_nonneg, hx_lt_pow⟩
+  rcases lt_or_eq_of_le he_nonneg with he_pos | he_zero
+  · have h :=
+      (lt_Zdigits (beta := beta) (h_beta := h_beta) (n := x) (m := e) (hβ := hβ))
+        ⟨he_pos, hx_lt_pow⟩
+    simpa [wp, PostCond.noThrow, pure] using h
+  · have hx_lt_one : (Int.natAbs x : Int) < 1 := by
+      simpa [he_zero.symm] using hx_lt_pow
+    have hx_natAbs_zero : Int.natAbs x = 0 := by
+      omega
+    have hx_zero : x = 0 := Int.natAbs_eq_zero.mp hx_natAbs_zero
+    simp [Zdigits, hx_zero, he_zero.symm]
 theorem Zdigits_slice (n k l : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ k ∧ 0 < l⌝⦄
     (pure (Zdigits beta ((Zslice beta n k l))) : Id _)
