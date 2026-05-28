@@ -220,6 +220,22 @@ if [[ ( "$result" == "proved" || "$result" == "no_action" ) && -f "$target_path"
   fi
 fi
 
+if [[ "$result" == "blocked" && -z "$blocker" && -f "$codex_last" ]]; then
+  blocker="$(
+    python3 - "$codex_last" <<'PY'
+import pathlib
+import sys
+
+text = pathlib.Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace").strip()
+lines = [line.strip() for line in text.splitlines()]
+if lines and lines[0].lower() == "blocked":
+    lines = lines[1:]
+summary = " ".join(line for line in lines if line)
+print(summary[:1200])
+PY
+  )"
+fi
+
 scripts/classify_attempt.py \
   --target "$target" \
   --reason "$reason" \
