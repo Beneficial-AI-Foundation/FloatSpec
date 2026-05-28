@@ -4123,7 +4123,8 @@ theorem Zdigit_digits (n : Int) (h_beta : beta > 1) :
     ⦃⌜n ≠ 0⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜Zdigit beta n (d - 1) ≠ 0⌝⦄ := by
-  sorry
+  intro hn
+  exact Zdigits_implies_nonzero_digit beta n (Zdigits beta n) h_beta hn rfl
 theorem lt_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜0 < m ∧ Int.natAbs n < beta ^ m.natAbs⌝⦄
     (pure (Zdigits beta n) : Id _)
