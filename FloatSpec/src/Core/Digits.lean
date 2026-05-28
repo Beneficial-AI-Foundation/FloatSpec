@@ -4292,7 +4292,29 @@ theorem Zdigits_le (n m : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ Int.natAbs n ≤ Int.natAbs m⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓dn => ⌜∃ dm, Zdigits beta m = dm ∧ dn ≤ dm⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hn, hn_le_m⟩
+  refine ⟨Zdigits beta m, rfl, ?_⟩
+  have hm : m ≠ 0 := by
+    intro hm0
+    have hm_abs_zero : Int.natAbs m = 0 := by simp [hm0]
+    have hn_abs_zero : Int.natAbs n = 0 := by
+      exact Nat.eq_zero_of_le_zero (by simpa [hm_abs_zero] using hn_le_m)
+    exact hn (Int.natAbs_eq_zero.mp hn_abs_zero)
+  have hbounds_m := Zdigits_correct beta m hβ hm
+  have hdm_pos : 0 < Zdigits beta m :=
+    Zdigits_gt_0 beta m hβ hm
+  have hm_lt_pow : (Int.natAbs m : Int) < beta ^ (Zdigits beta m).natAbs := by
+    rw [← Int.abs_eq_natAbs]
+    exact hbounds_m.2
+  have hn_lt_pow : (Int.natAbs n : Int) < beta ^ (Zdigits beta m).natAbs := by
+    have hn_le_m_int : (Int.natAbs n : Int) ≤ (Int.natAbs m : Int) := by
+      exact_mod_cast hn_le_m
+    exact lt_of_le_of_lt hn_le_m_int hm_lt_pow
+  exact
+    (lt_Zdigits (beta := beta) (h_beta := h_beta) (n := n) (m := Zdigits beta m)
+        (hβ := hβ)) ⟨hdm_pos, hn_lt_pow⟩
 theorem Zpower_le_Zdigits (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ e.natAbs ≤ Int.natAbs n⌝⦄
     (pure (Zdigits beta n) : Id _)
