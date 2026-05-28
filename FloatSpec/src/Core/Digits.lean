@@ -4621,7 +4621,55 @@ private lemma Zdigits_sum_product_bound (beta : Int) (x y : Int)
     (hbeta : beta > 1) (hx : 0 ≤ x) (hy : 0 ≤ y) :
     (Zdigits beta (x + y + x * y)) ≤
     (Zdigits beta x) + (Zdigits beta y) := by
-  sorry
+  let dx := Zdigits beta x
+  let dy := Zdigits beta y
+  have hdx_nonneg : 0 ≤ dx := by
+    simpa [dx] using (Zdigits_ge_0 beta x trivial)
+  have hdy_nonneg : 0 ≤ dy := by
+    simpa [dy] using (Zdigits_ge_0 beta y trivial)
+  have hsum_nonneg : 0 ≤ dx + dy := Int.add_nonneg hdx_nonneg hdy_nonneg
+  have hβ_nonneg : 0 ≤ beta := by linarith
+  have hx_succ_le : x + 1 ≤ beta ^ dx.natAbs := by
+    by_cases hx_zero : x = 0
+    · simp [dx, Zdigits, hx_zero]
+    · have hbounds := Zdigits_correct beta x hbeta hx_zero
+      have hx_lt_pow : x < beta ^ dx.natAbs := by
+        have h := hbounds.2
+        simpa [dx, abs_of_nonneg hx] using h
+      omega
+  have hy_succ_le : y + 1 ≤ beta ^ dy.natAbs := by
+    by_cases hy_zero : y = 0
+    · simp [dy, Zdigits, hy_zero]
+    · have hbounds := Zdigits_correct beta y hbeta hy_zero
+      have hy_lt_pow : y < beta ^ dy.natAbs := by
+        have h := hbounds.2
+        simpa [dy, abs_of_nonneg hy] using h
+      omega
+  have hpow_dx_nonneg : 0 ≤ beta ^ dx.natAbs := pow_nonneg hβ_nonneg _
+  have hpow_dy_nonneg : 0 ≤ beta ^ dy.natAbs := pow_nonneg hβ_nonneg _
+  have hprod_le_pow :
+      (x + 1) * (y + 1) ≤ beta ^ dx.natAbs * beta ^ dy.natAbs := by
+    nlinarith
+  have hpow_split :
+      beta ^ (dx + dy).natAbs = beta ^ dx.natAbs * beta ^ dy.natAbs :=
+    pow_add_split beta dx dy hbeta hdx_nonneg hdy_nonneg
+  have hs_nonneg : 0 ≤ x + y + x * y := by
+    nlinarith
+  have hs_lt_pow : x + y + x * y < beta ^ (dx + dy).natAbs := by
+    calc
+      x + y + x * y < (x + 1) * (y + 1) :=
+        product_upper_bound x y hx hy
+      _ ≤ beta ^ dx.natAbs * beta ^ dy.natAbs := hprod_le_pow
+      _ = beta ^ (dx + dy).natAbs := hpow_split.symm
+  have hs_abs_lt_pow :
+      ((x + y + x * y).natAbs : Int) < beta ^ (dx + dy).natAbs := by
+    rw [Int.natAbs_of_nonneg hs_nonneg]
+    exact hs_lt_pow
+  have hle :=
+    (Zdigits_le_Zpower (beta := beta) (h_beta := hbeta)
+      (x := x + y + x * y) (e := dx + dy) (hβ := hbeta))
+      ⟨hsum_nonneg, hs_abs_lt_pow⟩
+  simpa [dx, dy] using hle
 theorem Zdigits_mult_strong (x y : Int) (hbeta : beta > 1 := h_beta) :
     ⦃⌜0 ≤ x ∧ 0 ≤ y⌝⦄
     (pure (Zdigits beta (x + y + x * y)) : Id _)
