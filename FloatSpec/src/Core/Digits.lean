@@ -3461,7 +3461,24 @@ theorem Zdigits_ge_0 (n : Int) :
     ⦃⌜True⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
-  sorry
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  by_cases hn : n = 0
+  · simp [Zdigits, hn]
+  · unfold Zdigits
+    simp [hn]
+    have h_aux_nonneg : ∀ m d pow fuel, 0 ≤ d →
+        0 ≤ Zdigits_aux beta m d pow fuel := by
+      intro m d pow fuel hd
+      induction fuel generalizing d pow with
+      | zero =>
+          simp [Zdigits_aux, hd]
+      | succ fuel' ih =>
+          simp only [Zdigits_aux]
+          split_ifs
+          · exact hd
+          · exact ih (d + 1) (beta * pow) (by linarith)
+    exact h_aux_nonneg n 1 beta n.natAbs.succ (by norm_num)
 theorem Zdigits_gt_0 (n : Int) (_h_beta : beta > 1):
     ⦃⌜n ≠ 0⌝⦄
     (pure (Zdigits beta n) : Id _)
