@@ -4664,7 +4664,34 @@ theorem Zdigits_succ_le (x : Int) (h_beta : beta > 1):
     ⦃⌜0 ≤ x⌝⦄
     (pure (Zdigits beta (x + 1)) : Id _)
     ⦃⇓d => ⌜∃ dx, Zdigits beta x = dx ∧ d ≤ dx + 1⌝⦄ := by
-  sorry
+  intro hx
+  simp only [wp, PostCond.noThrow, pure]
+  refine ⟨Zdigits beta x, rfl, ?_⟩
+  by_cases hx0 : x = 0
+  · subst x
+    have hle :=
+      (Zdigits_le_Zpower (beta := beta) (h_beta := h_beta)
+        (x := (1 : Int)) (e := (1 : Int)) (hβ := h_beta))
+        ⟨by norm_num, by simpa using h_beta⟩
+    simpa [Zdigits] using hle
+  · have hx_pos : 0 < x := lt_of_le_of_ne hx (Ne.symm hx0)
+    have hmult :=
+      (Zdigits_mult_Zpower (beta := beta) (n := x) (k := 1) (h_beta := h_beta))
+        ⟨hx0, by norm_num⟩
+    rcases hmult with ⟨dx, hdx, hmul⟩
+    have hmul' : Zdigits beta (x * beta) = Zdigits beta x + 1 := by
+      simpa [hdx, Int.natAbs_one] using hmul
+    have hle_to_mul :=
+      (Zdigits_le (beta := beta) (h_beta := h_beta)
+        (n := x + 1) (m := x * beta) (hβ := h_beta))
+        ⟨by omega, ?_⟩
+    · simpa [hmul'] using hle_to_mul
+    · have hx1_nonneg : 0 ≤ x + 1 := by omega
+      have hmul_nonneg : 0 ≤ x * beta := by
+        exact mul_nonneg hx (le_of_lt (lt_trans (by norm_num : (0 : Int) < 1) h_beta))
+      apply Int.ofNat_le.mp
+      rw [Int.natAbs_of_nonneg hx1_nonneg, Int.natAbs_of_nonneg hmul_nonneg]
+      nlinarith [h_beta, hx_pos]
 end DigitOperations
 
 section Zdigits2
