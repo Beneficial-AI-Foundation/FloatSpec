@@ -3552,6 +3552,36 @@ private theorem ulp_bpow_early (e : Int) :
 Positive boundary: if x > 0 and x = β^(mag x - 1) then
 ulp x = β^(fexp (mag x - 1)).
 -/
+private theorem ulp_at_pos_boundary_aligned
+    (beta : Int) (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x : ℝ) (hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (ulp beta fexp x) : Id ℝ)
+    ⦃⇓u => ⌜u = (beta : ℝ) ^ (fexp (FloatSpec.Core.Raux.mag beta x))⌝⦄ := by
+  intro hβ; classical
+  have h := ulp_bpow_early (beta := beta) (fexp := fexp)
+      (e := (FloatSpec.Core.Raux.mag beta x) - 1)
+  have hrun := h hβ
+  have hexp :
+      ((FloatSpec.Core.Raux.mag beta x) - 1 + 1) =
+        FloatSpec.Core.Raux.mag beta x := by
+    ring
+  have hpow :
+      (ulp beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1))) =
+        (beta : ℝ) ^ (fexp (((FloatSpec.Core.Raux.mag beta x) - 1) + 1)) := by
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
+  have htarget :
+      (ulp beta fexp x) = (beta : ℝ) ^ (fexp (FloatSpec.Core.Raux.mag beta x)) := by
+    calc
+      (ulp beta fexp x)
+          = ulp beta fexp ((beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
+              exact congrArg (fun y : ℝ => ulp beta fexp y) hxeq
+      _ = (beta : ℝ) ^ (fexp (((FloatSpec.Core.Raux.mag beta x) - 1) + 1)) := hpow
+      _ = (beta : ℝ) ^ (fexp (FloatSpec.Core.Raux.mag beta x)) := by
+              simp [hexp]
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htarget
+
   private theorem ulp_at_pos_boundary_theorem
       (beta : Int) (fexp : Int → Int)
       [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
@@ -3563,6 +3593,33 @@ ulp x = β^(fexp (mag x - 1)).
   sorry
 
 --
+/-- Coq (Ulp.v): Theorem `pred_eq_pos`: `0 ≤ x -> pred x = pred_pos x`.
+
+This is the Flocq-aligned positive predecessor reduction. The older theorem
+named `pred_eq_pos` below is a stronger local statement and is intentionally
+left untouched in this pass so existing callers can be migrated separately.
+-/
+theorem pred_eq_pos_flocq (x : ℝ) (hx : 0 ≤ x) :
+    ⦃⌜1 < beta⌝⦄
+    (pure
+      (let p := pred beta fexp x
+       let pp := pred_pos beta fexp x
+       (p, pp)) : Id (ℝ × ℝ))
+    ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
+  intro hβ; classical
+  simp [wp, PostCond.noThrow, Id.run, bind, pure]
+  change (pred beta fexp x) = pred_pos beta fexp x
+  by_cases hneg : 0 ≤ -x
+  · have hx0 : x = 0 := by
+      exact le_antisymm (neg_nonneg.mp hneg) hx
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    have hboundary_false :
+        ¬ (0 : ℝ) = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta 0) - 1) := by
+      exact ne_of_lt (zpow_pos hbpos _)
+    simp [pred, succ, pred_pos, hx0, hboundary_false, Id.run, bind, pure]
+  · simp [pred, succ, hneg, Id.run, bind, pure]
+
 /-- Coq (Ulp.v): Theorem pred_eq_pos: forall x, 0 ≤ x -> pred x = x - ulp x. -/
 theorem pred_eq_pos (x : ℝ) (hx : 0 ≤ x) :
     ⦃⌜1 < beta⌝⦄
