@@ -4301,7 +4301,34 @@ theorem Zpower_le_Zdigits (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ e.natAbs ≤ Int.natAbs n⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜e < d⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hn, hpow_le_abs⟩
+  set d := Zdigits beta n with hd
+  have hbounds := Zdigits_correct beta n hβ hn
+  simp only [wp, PostCond.noThrow, pure] at hbounds
+  have hd_pos : 0 < d := by
+    simpa [d, hd] using Zdigits_gt_0 beta n hβ hn
+  by_cases he_nonneg : 0 ≤ e
+  · by_contra hnot
+    have hd_le_e : d ≤ e := le_of_not_gt hnot
+    have hd_nonneg : 0 ≤ d := le_of_lt hd_pos
+    have h_natAbs_le : d.natAbs ≤ e.natAbs := by
+      have hd_abs : (d.natAbs : Int) = d := Int.natAbs_of_nonneg hd_nonneg
+      have he_abs : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he_nonneg
+      have h_cast : (d.natAbs : Int) ≤ e.natAbs := by
+        rw [hd_abs, he_abs]
+        exact hd_le_e
+      exact Nat.cast_le.mp h_cast
+    have h_pow_mono : beta ^ d.natAbs ≤ beta ^ e.natAbs :=
+      pow_mono_int (beta := beta) hβ h_natAbs_le
+    have h_upper : (Int.natAbs n : Int) < beta ^ d.natAbs := by
+      have : |n| < beta ^ d.natAbs := by simpa [d, hd] using hbounds.2
+      rw [Int.abs_eq_natAbs] at this
+      exact this
+    linarith
+  · have he_neg : e < 0 := lt_of_not_ge he_nonneg
+    exact lt_trans he_neg hd_pos
 /-- Alternative digit count bound
 
 Coq theorem and proof:
