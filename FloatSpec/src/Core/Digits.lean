@@ -3323,7 +3323,70 @@ theorem Zdigits_unique (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ (e - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ e.natAbs⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜d = e⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hn, hlow_e_abs, hupp_e_abs⟩
+  have hβpos : 0 < beta := lt_trans (by norm_num : (0 : Int) < 1) hβ
+  have hβ_ge1 : 1 ≤ beta := le_of_lt hβ
+  have hbounds_d := Zdigits_correct beta n hβ hn
+  set d := Zdigits beta n with hd_def
+  have hlow_d : beta ^ ((d - 1).natAbs) ≤ |n| := by
+    simpa [d, hd_def] using hbounds_d.1
+  have hupp_d : |n| < beta ^ d.natAbs := by
+    simpa [d, hd_def] using hbounds_d.2
+  have hlow_e : beta ^ ((e - 1).natAbs) ≤ |n| := by
+    rw [Int.abs_eq_natAbs]
+    exact hlow_e_abs
+  have hupp_e : |n| < beta ^ e.natAbs := by
+    rw [Int.abs_eq_natAbs]
+    exact hupp_e_abs
+  have hpos_of_bounds :
+      ∀ x : Int, beta ^ ((x - 1).natAbs) ≤ |n| → |n| < beta ^ x.natAbs → 0 < x := by
+    intro x hx_low hx_high
+    by_contra hx_not_pos
+    push_neg at hx_not_pos
+    have hn_abs_pos : (1 : Int) ≤ |n| := Int.one_le_abs hn
+    rcases eq_or_lt_of_le hx_not_pos with hx_zero | hx_neg
+    · rw [hx_zero] at hx_high
+      simp at hx_high
+      omega
+    · have hx_le_zero : x ≤ 0 := le_of_lt hx_neg
+      have hx_sub : (x - 1).natAbs = x.natAbs + 1 :=
+        natAbs_sub_one_eq_add_one_of_nonpos x hx_le_zero
+      rw [hx_sub, pow_succ] at hx_low
+      have hpow_pos : 0 < beta ^ x.natAbs := pow_pos hβpos _
+      have hpow_lt_mul : beta ^ x.natAbs < beta ^ x.natAbs * beta := by
+        nlinarith
+      linarith
+  have hd_pos : 0 < d := hpos_of_bounds d hlow_d hupp_d
+  have he_pos : 0 < e := hpos_of_bounds e hlow_e hupp_e
+  have hd_natabs : d.natAbs = d.toNat := by omega
+  have he_natabs : e.natAbs = e.toNat := by omega
+  have hd1_natabs : (d - 1).natAbs = (d - 1).toNat := by omega
+  have he1_natabs : (e - 1).natAbs = (e - 1).toNat := by omega
+  have hlow_d' : beta ^ (d - 1).toNat ≤ |n| := by
+    rwa [hd1_natabs] at hlow_d
+  have hupp_d' : |n| < beta ^ d.toNat := by
+    rwa [hd_natabs] at hupp_d
+  have hlow_e' : beta ^ (e - 1).toNat ≤ |n| := by
+    rwa [he1_natabs] at hlow_e
+  have hupp_e' : |n| < beta ^ e.toNat := by
+    rwa [he_natabs] at hupp_e
+  have h_e_le_d : e ≤ d := by
+    by_contra h
+    push_neg at h
+    have hexp : d.toNat ≤ (e - 1).toNat := by omega
+    have hpow_mono : beta ^ d.toNat ≤ beta ^ (e - 1).toNat :=
+      pow_le_pow_exponent beta hβ_ge1 hexp
+    linarith
+  have h_d_le_e : d ≤ e := by
+    by_contra h
+    push_neg at h
+    have hexp : e.toNat ≤ (d - 1).toNat := by omega
+    have hpow_mono : beta ^ e.toNat ≤ beta ^ (d - 1).toNat :=
+      pow_le_pow_exponent beta hβ_ge1 hexp
+    linarith
+  exact hd_def.symm.trans (le_antisymm h_d_le_e h_e_le_d)
 /-- Helper lemma: {name}`Zdigits_aux` only depends on the absolute value of {name}`n`. -/
 private lemma Zdigits_aux_abs_eq (n : Int) (d pow : Int) (fuel : Nat) :
     Int.natAbs n = Int.natAbs (-n) →
