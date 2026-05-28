@@ -4674,7 +4674,11 @@ theorem Zdigits_mult_strong (x y : Int) (hbeta : beta > 1 := h_beta) :
     ⦃⌜0 ≤ x ∧ 0 ≤ y⌝⦄
     (pure (Zdigits beta (x + y + x * y)) : Id _)
     ⦃⇓d => ⌜∃ dx dy, Zdigits beta x = dx ∧ Zdigits beta y = dy ∧ d ≤ dx + dy⌝⦄ := by
-  sorry
+  intro hpre
+  simp only [wp, PostCond.noThrow, pure]
+  rcases hpre with ⟨hx, hy⟩
+  exact ⟨Zdigits beta x, Zdigits beta y, rfl, rfl,
+    Zdigits_sum_product_bound beta x y hbeta hx hy⟩
 theorem Zdigits_mult (x y : Int) (hβ : beta > 1 := h_beta):
     ⦃⌜True⌝⦄
     (pure (Zdigits beta (x * y)) : Id _)
