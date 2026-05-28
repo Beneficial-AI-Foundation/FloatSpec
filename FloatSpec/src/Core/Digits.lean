@@ -3814,7 +3814,14 @@ private lemma digit_nonzero_at_boundary (beta n k : Int) (h_beta : beta > 1)
 private lemma Zdigits_implies_nonzero_digit (beta n d : Int) (h_beta : beta > 1)
     (hn : n ≠ 0) (hd : (Zdigits beta n) = d) :
     (Zdigit beta n (d - 1)) ≠ 0 := by
-  sorry
+  have hbounds := Zdigits_correct beta n h_beta hn
+  rw [hd] at hbounds
+  obtain ⟨hlower, hupper⟩ := hbounds
+  have hd_pos : 0 < d := by
+    have h := Zdigits_gt_0 beta n h_beta hn
+    rwa [hd] at h
+  exact digit_nonzero_at_boundary beta n (d - 1) h_beta (by linarith) hlower (by
+    simpa [sub_add_cancel] using hupper)
 private lemma digit_sum_bound (beta n k : Int) (h_beta : beta > 1)
     (hk : 0 ≤ k)
     (h_higher_zero : ∀ j > k, (Zdigit beta n j) = 0) :
