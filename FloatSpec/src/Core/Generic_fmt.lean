@@ -2445,6 +2445,36 @@ noncomputable def roundR (beta : Int) (fexp : Int → Int)
   let e  := (cexp beta fexp x)
   (((rnd sm : Int) : ℝ) * (beta : ℝ) ^ e)
 
+/-- Interpretation of translated rounding-mode arguments as the integer
+rounding function used on the scaled mantissa.
+
+Flocq's `round` is parameterized by `rnd : R -> Z`. Some early translated
+FloatSpec files instead passed a relation-shaped rounding argument
+`ℝ → ℝ → Prop`; that legacy case is interpreted as truncation so those files
+continue to compile while they are migrated to concrete integer roundings. -/
+class RoundModeLike (Mode : Type u) where
+  toRnd : Mode → ℝ → Int
+
+instance roundModeLikeInt : RoundModeLike (ℝ → Int) where
+  toRnd rnd := rnd
+
+noncomputable instance roundModeLikeRelation : RoundModeLike (ℝ → ℝ → Prop) where
+  toRnd _ := FloatSpec.Core.Raux.Ztrunc
+
+@[simp] theorem RoundModeLike.toRnd_int (rnd : ℝ → Int) :
+    RoundModeLike.toRnd rnd = rnd := rfl
+
+@[simp] theorem RoundModeLike.toRnd_relation (rnd : ℝ → ℝ → Prop) :
+    RoundModeLike.toRnd rnd = FloatSpec.Core.Raux.Ztrunc := rfl
+
+@[simp] theorem RoundModeLike.toRnd_relation_apply (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    RoundModeLike.toRnd rnd x = FloatSpec.Core.Raux.Ztrunc x := rfl
+
+/-- Relation-shaped truncation mode for legacy statements that still use the
+old translated `ℝ → ℝ → Prop` rounding argument shape. -/
+noncomputable def Ztrunc_rel (x y : ℝ) : Prop :=
+  y = (((FloatSpec.Core.Raux.Ztrunc x) : Int) : ℝ)
+
 /-- Coq {lit}`Generic_fmt.v`: {lean}`round_N_middle`
 
     If x is exactly in the middle between its down- and up-rounded values,
@@ -2948,16 +2978,34 @@ theorem roundR_bounded_large_pos
 
   exact ⟨hlower, hupper⟩
 
-/-- Generic format from rounding (simple truncation-based model).
-    Defined early so it is available to theorems below. -/
+/-- Generic format from rounding.
+
+    For Flocq-aligned callers, `mode` should be a concrete integer rounding
+    function `ℝ → Int`, interpreted through `RoundModeLike` and applied to the
+    scaled mantissa by `roundR`. Legacy relation-shaped translated modes still
+    compile through a truncation fallback, but new results should avoid that
+    compatibility path. -/
 noncomputable def round_to_generic (beta : Int) (fexp : Int → Int)
-    [Valid_exp beta fexp] (mode : ℝ → ℝ → Prop) (x : ℝ) : ℝ :=
-  -- Return the rounded value in generic format using canonical exponent
-  -- and truncation of the scaled mantissa (mode is ignored in this model).
+    [Valid_exp beta fexp] {Mode : Type u} [RoundModeLike Mode]
+    (mode : Mode) (x : ℝ) : ℝ :=
   let exp := (cexp beta fexp x)
   let mantissa := x * (beta : ℝ) ^ (-exp)
-  let rounded_mantissa : Int := (Ztrunc mantissa)
+  let rounded_mantissa : Int := RoundModeLike.toRnd mode mantissa
   (rounded_mantissa : ℝ) * (beta : ℝ) ^ exp
+
+theorem round_to_generic_relation_eq
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (mode : ℝ → ℝ → Prop) (x : ℝ) :
+    round_to_generic beta fexp mode x =
+      (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp x)))) : Int) : ℝ)
+        * (beta : ℝ) ^ (cexp beta fexp x) := by
+  simp [round_to_generic]
+
+theorem round_to_generic_int_eq_roundR
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) (x : ℝ) :
+    round_to_generic beta fexp rnd x = roundR beta fexp rnd x := by
+  simp [round_to_generic, roundR, scaled_mantissa]
 
 /-- Choice function for round-to-nearest, ties away from zero.
 
@@ -5604,7 +5652,7 @@ theorem round_to_generic_abs
           = (((Ztrunc ((abs x) * (beta : ℝ) ^ (-e))) : Int) : ℝ) * (beta : ℝ) ^ e := by
       -- Expand and substitute using hf_abs'
       unfold round_to_generic cexp
-      simp only [Id.run, pure, Bind.bind, hf_abs']
+      simp only [RoundModeLike.toRnd_relation_apply, Id.run, pure, Bind.bind, hf_abs']
     -- Convert to the ((β^e)⁻¹) form used by simp elsewhere
     have hbne : (beta : ℝ) ≠ 0 := by exact_mod_cast (ne_of_gt hbposℤ)
     have hzpow_neg : (beta : ℝ) ^ (-e) = ((beta : ℝ) ^ e)⁻¹ := by simpa [zpow_neg]
@@ -5688,7 +5736,7 @@ theorem round_to_generic_abs
       have hLneg : round_to_generic beta fexp rnd (-x)
             = (((Ztrunc ((-x) * (beta : ℝ) ^ (-e))) : Int) : ℝ) * (beta : ℝ) ^ e := by
         unfold round_to_generic cexp
-        simp only [Id.run, pure, Bind.bind, hf_neg']
+        simp only [RoundModeLike.toRnd_relation_apply, Id.run, pure, Bind.bind, hf_neg']
       have hZreal : (((Ztrunc ((-x) * (beta : ℝ) ^ (-e))) : Int) : ℝ)
                         = -(((Ztrunc s) : Int) : ℝ) := by
         have harg : (-x) * (beta : ℝ) ^ (-e) = -s := hs_neg
@@ -5929,7 +5977,7 @@ theorem round_opp
   -- Also, `cexp` depends on `|x|`, hence `cexp (-x) = cexp x`.
   -- Using `Ztrunc_neg` on the scaled mantissa yields the negation law.
   -- Note: -x = 0 ↔ x = 0, so the conditions are equivalent
-  simp only [round_to_generic,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6115,7 +6163,7 @@ theorem abs_round_ge_generic_ax
           (x := x) (y := -y) ⟨hxF, hxle'⟩)
     have h_opp : round_to_generic beta fexp rnd (-y)
                 = - round_to_generic beta fexp rnd y := by
-      simp only [round_to_generic,
+      simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
             FloatSpec.Core.Generic_fmt.cexp,
             FloatSpec.Core.Raux.mag,
             abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6233,7 +6281,7 @@ theorem round_0 (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (rnd : �
   intro _
   -- Direct computation: scaled mantissa at 0 is 0, so rounding yields 0.
   -- Apply zero_mul first to reduce 0 * β^(-e) to 0, then Ztrunc_zero_coe after Id.run
-  simp only [round_to_generic, wp, PostCond.noThrow, PredTrans.pure, pure, Bind.bind,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation, wp, PostCond.noThrow, PredTrans.pure, pure, Bind.bind,
              zero_mul, Id.run, Ztrunc_zero_coe, Int.cast_zero, zero_mul]
   trivial
 
@@ -6659,7 +6707,7 @@ theorem round_DN_opp
   -- `round_to_generic` ignores the rounding relation argument and
   -- reconstruction uses `cexp` which depends on `|x|`, so `cexp (-x) = cexp x`.
   -- Using `Ztrunc_neg` on the scaled mantissa yields the negation law.
-  simp only [round_to_generic,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6679,7 +6727,7 @@ theorem round_UP_opp
     ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
   intro _
   -- Same computation as in round_DN_opp; rounding mode is ignored.
-  simp only [round_to_generic,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6699,7 +6747,7 @@ theorem round_ZR_opp
     ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
   intro _
   -- Same computation; mode argument is ignored.
-  simp only [round_to_generic,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6740,7 +6788,7 @@ theorem round_AW_opp
   -- `round_to_generic` ignores the rounding relation argument and
   -- reconstruction uses `cexp` which depends on `|x|`, so `cexp (-x) = cexp x`.
   -- Using `Ztrunc_neg` on the scaled mantissa yields the negation law.
-  simp only [round_to_generic,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -7136,7 +7184,7 @@ theorem round_bounded_large_pos
       (x := x) (y := (beta : ℝ) ^ ex) hgen_up_run hle_abs
   -- Show round result is nonnegative using monotonicity and round 0 = 0
   have hr0 : round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) 0 = 0 := by
-    simp only [round_to_generic]
+    simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation]
     simp only [zero_mul, Ztrunc_zero, Int.cast_zero, zero_mul]
   have hr_nonneg : 0 ≤ round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x := by
     have hmono := round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd)
@@ -7336,7 +7384,7 @@ theorem exp_small_round_0
     -- Use hcexp_eq to rewrite the (-x)-branch and Ztrunc_neg for negation
     simp only [hcexp_eq]
     -- -x * β^(-e) = -(x * β^(-e)), so Ztrunc(-(x * ...)) = -(Ztrunc(x * ...))
-    simp only [neg_mul, Ztrunc_neg, Int.cast_neg, neg_mul]
+    simp only [RoundModeLike.toRnd_relation_apply, neg_mul, Ztrunc_neg, Int.cast_neg, neg_mul]
   -- Split on the sign of x and reduce to the positive case
   by_cases hx_nonneg : 0 ≤ x
   · -- abs x = x
@@ -7563,7 +7611,7 @@ theorem cexp_round_ge_ax
 theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     [Valid_exp beta fexp] [Monotone_exp fexp] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    (pure (round_to_generic beta fexp (fun _ _ => True) x) : Id ℝ)
+    (pure (round_to_generic beta fexp Ztrunc_rel x) : Id ℝ)
     ⦃⇓r => ⌜0 < r → (scaled_mantissa beta fexp r) = (((Ztrunc ((scaled_mantissa beta fexp x))) : Int) : ℝ)⌝⦄ := by
   intro hβ
   -- Reduce the computation to bind-free form and introduce the positivity premise.
@@ -7573,7 +7621,7 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
   -- Notation for the rounded value and exponents
   set ex : Int := (cexp beta fexp x) with hex
   set s : ℝ := (scaled_mantissa beta fexp x) with hs
-  set r : ℝ := round_to_generic beta fexp (fun _ _ => True) x with hrdef
+  set r : ℝ := round_to_generic beta fexp Ztrunc_rel x with hrdef
   -- Normalize the goal to an equality of real numbers (eliminate the Id wrapper)
   -- Adjust only the goal; no hypotheses need changing here.
   change (scaled_mantissa beta fexp r) =
@@ -7668,14 +7716,15 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     -- From the localized theorem for round-to-generic, applied to our `r`
     have hr_ne : r ≠ 0 := ne_of_gt hr_pos_r
     -- Make `r` syntactically match the theorem's `round_to_generic` result
-    have hr_eq : round_to_generic (beta := beta) (fexp := fexp) (mode := fun _ _ => True) x = r := by
+    have hr_eq : round_to_generic (beta := beta) (fexp := fexp)
+        (mode := Ztrunc_rel) x = r := by
       simp [round_to_generic,
             FloatSpec.Core.Generic_fmt.cexp,
             hrdef]
     -- Rewrite the target and use the theorem
     simpa [hr_eq] using
       (cexp_round_ge_ax (beta := beta) (fexp := fexp)
-        (rnd := fun _ _ => True) (x := x) hβ r hr_eq.symm hr_ne)
+        (rnd := Ztrunc_rel) (x := x) hβ r hr_eq.symm hr_ne)
   have heq_exp : (cexp beta fexp r) = (cexp beta fexp x) := le_antisymm hle1 hle2
   -- Base nonnegativity facts from 1 < beta
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -7732,23 +7781,22 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     equals that of the input. We require 1 < beta, as in the Coq development. -/
 theorem mag_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    (pure (round_to_generic beta fexp (fun r y => True) x) : Id ℝ)
+    (pure (round_to_generic beta fexp Ztrunc_rel x) : Id ℝ)
     ⦃⇓r => ⌜0 < r → (mag beta r) = (mag beta x)⌝⦄ := by
   intro hβ
-  let rndTrue : ℝ → ℝ → Prop := fun r y => True
+  let rndTrunc : ℝ → ℝ → Prop := Ztrunc_rel
   -- Reduce the Id computation; denote the rounded value as r.
-  simp [wp, PostCond.noThrow, Id.run, pure, rndTrue]
+  simp [wp, PostCond.noThrow, Id.run, pure, rndTrunc]
   intro hr_pos
-  -- Specialize the ZR magnitude preservation lemma to the trivial relation; `round_to_generic`
-  -- ignores the relation argument, so this is general.
+  -- Specialize the ZR magnitude preservation lemma to the truncation relation.
   have hZR := (mag_round_ZR (beta := beta) (fexp := fexp)
-                  (rndZR := rndTrue) (x := x)) hβ
+                  (rndZR := rndTrunc) (x := x)) hβ
   -- Extract the implication from the Hoare triple and apply it to `hr_pos`.
   have himp :
-      round_to_generic beta fexp rndTrue x ≠ 0 →
-      (mag beta (round_to_generic beta fexp rndTrue x)) = (mag beta x) := by
+      round_to_generic beta fexp rndTrunc x ≠ 0 →
+      (mag beta (round_to_generic beta fexp rndTrunc x)) = (mag beta x) := by
     simpa [wp, PostCond.noThrow, Id.run, pure] using hZR
-  have hr_ne : round_to_generic beta fexp rndTrue x ≠ 0 := ne_of_gt hr_pos
+  have hr_ne : round_to_generic beta fexp rndTrunc x ≠ 0 := ne_of_gt hr_pos
   simpa using himp hr_ne
 
 /-- Coq (Generic_fmt.v):
