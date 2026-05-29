@@ -7384,12 +7384,65 @@ theorem mag_round_ZR
   -- We need |r| < β^e. The key insight is that r ≠ 0 implies we can use the
   -- strict inequality from mag_upper_bound on r itself.
   have h_abs_r_lt : abs r < (beta : ℝ) ^ e := by
-    -- Since r ≠ 0, the bound is strict. The proof uses:
-    -- 1. |r| ≤ β^e (from h_abs_r_le)
-    -- 2. r ≠ 0 and r is a scaled integer, so |r| is in the generic format
-    -- 3. Generic format values satisfy |r| < β^(mag r), and mag r ≤ e gives |r| < β^e
-    -- This requires careful reasoning about generic format bounds
-    sorry
+    have h_abs_r_le_x : abs r ≤ abs x := by
+      have hpow_nonneg : 0 ≤ (beta : ℝ) ^ c := le_of_lt (zpow_pos hbposR _)
+      have htr_le :
+          abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+            ≤ abs (x * (beta : ℝ) ^ (-c)) := by
+        simpa using abs_Ztrunc_le_abs (y := x * (beta : ℝ) ^ (-c))
+      have h_abs_eq :
+          abs r =
+            abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+              * (beta : ℝ) ^ c := by
+        have hpow_abs : abs ((beta : ℝ) ^ c) = (beta : ℝ) ^ c :=
+          abs_of_nonneg hpow_nonneg
+        simpa [hr_explicit, abs_mul, hpow_abs]
+      have hmul_le :
+          abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+              * (beta : ℝ) ^ c
+            ≤ abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c :=
+        mul_le_mul_of_nonneg_right htr_le hpow_nonneg
+      have hscaled :
+          abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c = abs x := by
+        have hpow_pos_neg : 0 < (beta : ℝ) ^ (-c) := zpow_pos hbposR _
+        have hpow_abs_neg : abs ((beta : ℝ) ^ (-c)) = (beta : ℝ) ^ (-c) :=
+          abs_of_pos hpow_pos_neg
+        have hpow_cancel : (beta : ℝ) ^ (-c) * (beta : ℝ) ^ c = 1 := by
+          calc
+            (beta : ℝ) ^ (-c) * (beta : ℝ) ^ c
+                = (beta : ℝ) ^ ((-c) + c) := by rw [← zpow_add₀ hbneR]
+            _ = (beta : ℝ) ^ 0 := by
+                  have hsum : (-c) + c = 0 := by ring
+                  rw [hsum]
+                  rfl
+            _ = 1 := zpow_zero (beta : ℝ)
+        calc
+          abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c
+              = (abs x * abs ((beta : ℝ) ^ (-c))) * (beta : ℝ) ^ c := by
+                  rw [abs_mul]
+          _ = (abs x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c := by
+                  rw [hpow_abs_neg]
+          _ = abs x * ((beta : ℝ) ^ (-c) * (beta : ℝ) ^ c) := by ring
+          _ = abs x * 1 := by
+                  rw [hpow_cancel]
+          _ = abs x := by ring
+      calc
+        abs r
+            = abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+                * (beta : ℝ) ^ c := h_abs_eq
+        _ ≤ abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c := hmul_le
+        _ = abs x := hscaled
+    have hx_ne : x ≠ 0 := by
+      intro hx0
+      have h_abs_r_zero : abs r = 0 := by
+        have : abs r ≤ 0 := by simpa [hx0] using h_abs_r_le_x
+        exact le_antisymm this (abs_nonneg r)
+      exact hr_ne (abs_eq_zero.mp h_abs_r_zero)
+    have hx_upper : abs x < (beta : ℝ) ^ e := by
+      have hmub := FloatSpec.Core.Raux.mag_upper_bound beta x hβ hx_ne
+      unfold FloatSpec.Core.Raux.abs_val at hmub
+      simpa [wp, PostCond.noThrow, Id.run, pure, e] using hmub (by trivial)
+    exact lt_of_le_of_lt h_abs_r_le_x hx_upper
   -- Now use mag_le_abs
   have h_le : (mag beta r) ≤ e := by
     have htrip := FloatSpec.Core.Raux.mag_le_abs beta r e hβ hr_ne h_abs_r_lt
