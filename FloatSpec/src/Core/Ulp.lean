@@ -4973,7 +4973,8 @@ private theorem ulp_DN_round_bridge_pos
     (ulp (beta := beta) (fexp := fexp)
         (Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ)))
       = (ulp (beta := beta) (fexp := fexp)
-          (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x)) := by
+          (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
+            FloatSpec.Core.Generic_fmt.Ztrunc_rel x)) := by
     classical
     -- Name the DN witness and its properties
     set d : ℝ := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists beta fexp x hβ) with hd
@@ -4981,11 +4982,13 @@ private theorem ulp_DN_round_bridge_pos
     rcases hDN with ⟨Fd, hdn⟩
     rcases hdn with ⟨_Fd', hd_le_x, hmax_dn⟩
     -- Define the model round-to-generic result
-    set r : ℝ := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x with hr
+    set r : ℝ := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
+      FloatSpec.Core.Generic_fmt.Ztrunc_rel x with hr
     -- DN witness is below the rounding result (round_ge_generic)
     have hd_le_r : d ≤ r := by
       have h := FloatSpec.Core.Generic_fmt.round_ge_generic
-        (beta := beta) (fexp := fexp) (rnd := fun _ _ => True) (x := d) (y := x)
+        (beta := beta) (fexp := fexp)
+        (rnd := FloatSpec.Core.Generic_fmt.Ztrunc_rel) (x := d) (y := x)
         ⟨Fd, by simpa [hd] using hd_le_x⟩
       simpa [wp, PostCond.noThrow, Id.run, bind, pure, hr] using h
 
@@ -5334,11 +5337,12 @@ private theorem ulp_DN_run_theorem
     have hx_ne : x ≠ 0 := hx0
     have hx_pos : 0 < x := lt_of_le_of_ne hx (Ne.symm hx_ne)
     -- Define r = round_to_generic beta fexp DN x
-    let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp (fun _ _ => True) x
+    let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
+      FloatSpec.Core.Generic_fmt.Ztrunc_rel x
     -- Apply the positive-rounding lemma
     have hpos :=
       ulp_round_pos (beta := beta) (fexp := fexp)
-        (rnd := fun _ _ => True) (x := x) (hx := hx_pos)
+        (rnd := FloatSpec.Core.Generic_fmt.Ztrunc_rel) (x := x) (hx := hx_pos)
     -- Unpack the Hoare-style result
     have hdisj :
         (ulp (beta := beta) (fexp := fexp) r) = (ulp (beta := beta) (fexp := fexp) x) ∨

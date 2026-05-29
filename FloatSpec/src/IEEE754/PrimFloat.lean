@@ -613,11 +613,16 @@ theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
     rw [← hbpow]
     exact FloatSpec.Core.Generic_fmt.generic_format_bpow' (beta := 2) (fexp := fexp) (e := 1) ⟨h2gt1, hfexp_le⟩
   -- Prove round_to_generic 2 fexp _ 2 = 2 since 2 is already in generic format
-  have hround_eq : FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) 2 = 2 := by
-    have h := FloatSpec.Core.Generic_fmt.round_generic_identity 2 (by norm_num : (1:Int) < 2) fexp (fun _ _ => True) 2 h2_generic
-    simpa [wp, PostCond.noThrow, Id.run, pure] using h
-  rw [hround_eq]
-  exact FF2R_real_to_FullFloat _ _ h2_generic
+  have hround_eq : FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp
+      FloatSpec.Core.Raux.Ztrunc 2 = 2 := by
+    have h := FloatSpec.Core.Generic_fmt.round_generic_identity 2 (by norm_num : (1:Int) < 2) fexp
+      FloatSpec.Core.Generic_fmt.Ztrunc_rel 2 h2_generic
+    simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Generic_fmt.round_to_generic] using h
+  have hround_eq' :
+      FloatSpec.Core.Generic_fmt.round_to_generic 2
+        (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)) FloatSpec.Core.Raux.Ztrunc 2 = 2 := by
+    simpa [hfexp_def] using hround_eq
+  simpa [hround_eq', hfexp_def] using FF2R_real_to_FullFloat (2 : ℝ) fexp h2_generic
 
 -- Coq: ulp_equiv — ulp correspondence via Binary side
 noncomputable def ulp_equiv_check (prec emax : Int)

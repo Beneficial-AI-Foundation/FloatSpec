@@ -528,15 +528,16 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
       simp only [ha_def]
       -- round_to_generic always produces format values
       have h2gt1 : (1 : Int) < 2 := by decide
-      -- FloatSpec.Calc.Round.round uses (fun _ _ => True) as the rounding relation
+      -- FloatSpec.Calc.Round.round uses concrete truncation at the scaled mantissa
       -- round_flt = FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
-      -- which equals round_to_generic 2 (FLT_exp emin prec) (fun _ _ => True)
+      -- which equals round_to_generic 2 (FLT_exp emin prec) Ztrunc
       have hround_eq : round_flt (x + y) =
-          FloatSpec.Core.Generic_fmt.round_to_generic 2 (FLT_exp emin prec) (fun _ _ => True) (x + y) := rfl
+          FloatSpec.Core.Generic_fmt.round_to_generic 2 (FLT_exp emin prec)
+            FloatSpec.Core.Raux.Ztrunc (x + y) := rfl
       rw [hround_eq]
       exact FloatSpec.Core.Generic_fmt.round_to_generic_generic
         (beta := 2) (fexp := FLT_exp emin prec)
-        (rnd := fun _ _ => True) (x := x + y) h2gt1
+        (rnd := FloatSpec.Core.Generic_fmt.Ztrunc_rel) (x := x + y) h2gt1
 
     -- Now we need to show that a - (x + y) is in format
     -- Both a and (x+y) can be expressed as integer multiples of 2^e_min
