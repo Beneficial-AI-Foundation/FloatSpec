@@ -768,7 +768,8 @@ theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     have htrunc0R' : ((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-E))) : ℝ) = 0 := by
       simpa [hm] using htrunc0R
     -- Final simplification: 0 * β^E = 0
-    simp only [hrw, htrunc0R', zero_mul]
+    simp only [FloatSpec.Core.Generic_fmt.RoundModeLike.toRnd_relation_apply,
+      hrw, htrunc0R', zero_mul]
   -- Discharge the Hoare triple
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
 

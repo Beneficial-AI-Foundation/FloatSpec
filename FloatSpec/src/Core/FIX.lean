@@ -266,7 +266,8 @@ canonical exponent. For {lit}`fexp` = {lean}`FIX_exp` 0 and {lit}`beta` = 2, thi
 -/
 theorem round_FIX_IZR (x : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int))) (mode := fun _ _ => True) x) : Id ℝ)
+    (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int)))
+      (mode := FloatSpec.Core.Raux.Ztrunc) x) : Id ℝ)
     ⦃⇓r => ⌜r = ((FloatSpec.Core.Raux.Ztrunc x) : ℝ)⌝⦄ := by
   intro _
   -- Unfold the rounding model and compute with the constant exponent 0

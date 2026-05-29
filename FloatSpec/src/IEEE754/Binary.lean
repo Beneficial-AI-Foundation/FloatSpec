@@ -803,7 +803,7 @@ noncomputable def binary_add (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
   let sum := FF2R 2 x.val + FF2R 2 y.val
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) sum
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc sum
   FF2B (real_to_FullFloat rounded fexp)
 
 -- binary_sub: Computes the rounded difference of two binary floats.
@@ -812,7 +812,7 @@ noncomputable def binary_sub (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
   let diff := FF2R 2 x.val - FF2R 2 y.val
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) diff
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc diff
   FF2B (real_to_FullFloat rounded fexp)
 
 -- binary_mul: Computes the rounded product of two binary floats.
@@ -821,7 +821,7 @@ noncomputable def binary_mul (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
   let prod := FF2R 2 x.val * FF2R 2 y.val
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) prod
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc prod
   FF2B (real_to_FullFloat rounded fexp)
 
 -- (reserved) Decomposition theorem (Coq: Bfrexp) will be added later
@@ -1008,7 +1008,7 @@ noncomputable def binary_div (x y : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
   let quot := FF2R 2 x.val / FF2R 2 y.val
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) quot
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc quot
   FF2B (real_to_FullFloat rounded fexp)
 
 -- binary_sqrt: Computes the rounded square root of a binary float.
@@ -1017,7 +1017,7 @@ noncomputable def binary_sqrt (x : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
   let sqrt_val := Real.sqrt (FF2R 2 x.val)
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) sqrt_val
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc sqrt_val
   FF2B (real_to_FullFloat rounded fexp)
 
 -- Fused multiply-add
@@ -1025,7 +1025,7 @@ noncomputable def binary_fma (x y z : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
   let fma_val := FF2R 2 x.val * FF2R 2 y.val + FF2R 2 z.val
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) fma_val
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc fma_val
   FF2B (real_to_FullFloat rounded fexp)
 
 -- IEEE 754 rounding modes
@@ -1258,7 +1258,7 @@ theorem Bsqrt_correct (mode : RoundingMode) (rnd : ℝ → Int) (x : Binary754 p
 -- Round to nearest integer-like operation (Coq: Bnearbyint)
 noncomputable def binary_nearbyint (mode : RoundingMode) (x : Binary754 prec emax)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FIX.FIX_exp (emin := 0))] : Binary754 prec emax :=
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 (FloatSpec.Core.FIX.FIX_exp (emin := 0)) (fun _ _ => True) (FF2R 2 x.val)
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 (FloatSpec.Core.FIX.FIX_exp (emin := 0)) FloatSpec.Core.Raux.Ztrunc (FF2R 2 x.val)
   FF2B (real_to_FullFloat rounded (FloatSpec.Core.FIX.FIX_exp (emin := 0)))
 
 noncomputable def Bnearbyint_correct_check (mode : RoundingMode)
@@ -1280,7 +1280,7 @@ noncomputable def binary_ldexp (x : Binary754 prec emax) (e : Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : Binary754 prec emax :=
   let scaled := FF2R 2 x.val * FloatSpec.Core.Raux.bpow 2 e
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (fun _ _ => True) scaled
+  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc scaled
   FF2B (real_to_FullFloat rounded fexp)
 
 noncomputable def Bldexp_correct_check
