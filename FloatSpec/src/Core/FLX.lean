@@ -1087,7 +1087,7 @@ theorem gt_0_round_gt_0_FLX
     simp [round_to_generic, FloatSpec.Core.Generic_fmt.Ztrunc_zero]
   have hmono :=
     round_to_generic_monotone
-      (beta := beta) (fexp := FLX_exp prec) (rnd := rnd)
+      (beta := beta) (fexp := FLX_exp prec) (rnd := rnd) hβ
   have hr_nonneg :
       0 ≤ round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x := by
     have :

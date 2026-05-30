@@ -4989,7 +4989,7 @@ private theorem ulp_DN_round_bridge_pos
       have h := FloatSpec.Core.Generic_fmt.round_ge_generic
         (beta := beta) (fexp := fexp)
         (rnd := FloatSpec.Core.Generic_fmt.Ztrunc_rel) (x := d) (y := x)
-        ⟨Fd, by simpa [hd] using hd_le_x⟩
+        ⟨hβ, Fd, by simpa [hd] using hd_le_x⟩
       simpa [wp, PostCond.noThrow, Id.run, bind, pure, hr] using h
 
     -- Notation for exponent and scaled mantissa
