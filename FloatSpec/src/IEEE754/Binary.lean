@@ -2728,7 +2728,7 @@ theorem shl_align_fexp_correct {prec emax : Int}
       simp only [Id.run]
       -- The key insight from Coq: when mx ≠ 0 and k ≥ 0,
       -- Zdigits 2 (mx * 2^k) = Zdigits 2 mx + k
-      -- This relies on Zdigits_mult_Zpower which has sorry in Digits.lean.
+      -- This relies on the pending Zdigits_mult_Zpower proof in Digits.lean.
       -- For now, we use the algebraic fact that:
       -- Zdigits 2 (mx * 2^(ex - target_exp).toNat) + target_exp = Zdigits 2 mx + ex
       -- when mx ≠ 0 and ex - target_exp ≥ 0

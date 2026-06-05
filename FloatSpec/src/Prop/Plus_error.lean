@@ -1,3 +1,9 @@
+import FloatSpec.src.Core
+import FloatSpec.src.Compat
+import FloatSpec.src.Calc.Round
+import FloatSpec.src.Prop.Relative
+import Mathlib.Data.Real.Basic
+
 /-!
 Tier 1 Scaffold / Tier 3 Excluded.
 
@@ -8,12 +14,6 @@ trusted FloatSpec aggregate.
 
 -- Error of the rounded-to-nearest addition is representable
 -- Translated from Coq file: flocq/src/Prop/Plus_error.v
-
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import FloatSpec.src.Prop.Relative
-import Mathlib.Data.Real.Basic
 
 open Real
 open FloatSpec.Core.Defs
