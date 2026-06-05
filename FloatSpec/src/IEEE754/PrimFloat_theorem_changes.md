@@ -20,7 +20,7 @@ theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
   (x y : Binary754 prec emax) :
   binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) =
   prim_mul (binary_to_prim prec emax x) (binary_to_prim prec emax y) := by
-  sorry
+  -- proof omitted in this historical note
 ```
 
 **Corrected Specification**:
@@ -61,7 +61,7 @@ theorem compare_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax
       (Bcompare_check (prec:=prec) (emax:=emax)
         (prim_to_binary prec emax x) (prim_to_binary prec emax y))⌝⦄ := by
   intro _
-  exact sorry
+  -- proof omitted in this historical note
 ```
 
 **Corrected Specification**:

@@ -1,3 +1,8 @@
+import FloatSpec.src.Core
+import FloatSpec.src.Compat
+import FloatSpec.src.Calc.Round
+import Mathlib.Data.Real.Basic
+
 /-!
 Tier 1 Scaffold / Tier 3 Excluded.
 
@@ -8,11 +13,6 @@ trusted FloatSpec aggregate.
 
 -- Relative error of the roundings
 -- Translated from Coq file: flocq/src/Prop/Relative.v
-
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Calc.Round
-import Mathlib.Data.Real.Basic
 
 open Real
 
@@ -28,26 +28,75 @@ lemma relative_error_lt_conversion (rnd : ℝ → Int) [Valid_rnd rnd] (x b : �
   (h_pos : 0 < b)
   (h_bound : x ≠ 0 → |FloatSpec.Calc.Round.round beta fexp () x - x| < b * |x|) :
   ∃ eps, |eps| < b ∧ FloatSpec.Calc.Round.round beta fexp () x = x * (1 + eps) := by
-  sorry
+  by_cases hx : x = 0
+  · refine ⟨0, ?_, ?_⟩
+    · simpa using h_pos
+    · subst x
+      have hround0 :
+          FloatSpec.Calc.Round.round beta fexp FloatSpec.Calc.Round.nearestEvenMode 0 = 0 := by
+        simp [FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
+          FloatSpec.Core.Generic_fmt.scaled_mantissa,
+          FloatSpec.Calc.Round.nearestEvenMode.rnd_zero]
+      simpa using hround0
+  · refine ⟨(FloatSpec.Calc.Round.round beta fexp () x - x) / x, ?_, ?_⟩
+    · have h := h_bound hx
+      have hx_abs_pos : 0 < |x| := abs_pos.mpr hx
+      have hdiv := div_lt_div_of_pos_right h hx_abs_pos
+      have hrhs : (b * |x|) / |x| = b := by
+        field_simp [ne_of_gt hx_abs_pos]
+      simpa [abs_div, hrhs] using hdiv
+    · field_simp [hx]
+      ring
 
 /-- Relative error less than or equal conversion -/
 lemma relative_error_le_conversion (rnd : ℝ → Int) [Valid_rnd rnd] (x b : ℝ)
   (h_nonneg : 0 ≤ b)
   (h_bound : |FloatSpec.Calc.Round.round beta fexp () x - x| ≤ b * |x|) :
   ∃ eps, |eps| ≤ b ∧ FloatSpec.Calc.Round.round beta fexp () x = x * (1 + eps) := by
-  sorry
+  by_cases hx : x = 0
+  · refine ⟨0, ?_, ?_⟩
+    · simpa using h_nonneg
+    · subst x
+      have hround0 :
+          FloatSpec.Calc.Round.round beta fexp FloatSpec.Calc.Round.nearestEvenMode 0 = 0 := by
+        simp [FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
+          FloatSpec.Core.Generic_fmt.scaled_mantissa,
+          FloatSpec.Calc.Round.nearestEvenMode.rnd_zero]
+      simpa using hround0
+  · refine ⟨(FloatSpec.Calc.Round.round beta fexp () x - x) / x, ?_, ?_⟩
+    · have hx_abs_pos : 0 < |x| := abs_pos.mpr hx
+      have hdiv := div_le_div_of_nonneg_right h_bound (le_of_lt hx_abs_pos)
+      have hrhs : (b * |x|) / |x| = b := by
+        field_simp [ne_of_gt hx_abs_pos]
+      simpa [abs_div, hrhs] using hdiv
+    · field_simp [hx]
+      ring
 
 /-- Relative error less than or equal conversion inverse -/
 lemma relative_error_le_conversion_inv (rnd : ℝ → Int) [Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ FloatSpec.Calc.Round.round beta fexp () x = x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp () x - x| ≤ b * |x| := by
-  sorry
+  rcases h_exists with ⟨eps, heps, hround⟩
+  rw [hround]
+  have hcalc : x * (1 + eps) - x = eps * x := by ring
+  rw [hcalc]
+  rw [abs_mul]
+  exact mul_le_mul_of_nonneg_right heps (abs_nonneg x)
 
 /-- Relative error less than or equal conversion round inverse -/
 lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int) [Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ x = FloatSpec.Calc.Round.round beta fexp () x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp () x - x| ≤ b * |FloatSpec.Calc.Round.round beta fexp () x| := by
-  sorry
+  rcases h_exists with ⟨eps, heps, hx⟩
+  set rx : ℝ := FloatSpec.Calc.Round.round beta fexp () x with hrx
+  have hx' : x = rx * (1 + eps) := by
+    simpa [hrx] using hx
+  rw [hx']
+  have hcalc : rx - rx * (1 + eps) = -(eps * rx) := by ring
+  rw [hcalc]
+  rw [abs_neg, abs_mul]
+  simpa [mul_comm, mul_left_comm, mul_assoc] using
+    mul_le_mul_of_nonneg_right heps (abs_nonneg rx)
 
 -- Section: Generic relative error
 
@@ -157,7 +206,7 @@ variable [Prec_gt_0 prec]
 
 /-- FLX relative error auxiliary -/
 lemma relative_error_FLX_aux (k : Int) : prec ≤ k - FLX_exp prec k := by
-  sorry
+  simp [FLX_exp, FloatSpec.Core.FLX.FLX_exp]
 
 /-- FLX relative error -/
 theorem relative_error_FLX (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (h_nonzero : x ≠ 0) :
@@ -179,17 +228,79 @@ theorem relative_error_FLX_round (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (
   sorry
 
 /-- FLX relative error nearest -/
-theorem relative_error_N_FLX (x : ℝ) :
+theorem relative_error_N_FLX (hβ : 1 < beta) (x : ℝ) :
   |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| ≤ 
-    (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) * |x| := by
-  sorry
+    (1/2) * (beta : ℝ) ^ (-prec + 1) * |x| := by
+  classical
+  by_cases hx : x = 0
+  · subst x
+    have hZ0 : FloatSpec.Core.Generic_fmt.Znearest choice 0 = 0 := by
+      unfold FloatSpec.Core.Generic_fmt.Znearest
+      simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Rcompare]
+    simp [FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
+      FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
+      FloatSpec.Compat.Scaffold.ZnearestMode, hZ0]
+  · set fexpFLX : Int → Int := FLX_exp prec
+    set e : Int := FloatSpec.Core.Generic_fmt.cexp beta fexpFLX x
+    set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexpFLX x
+    set zn : Int := FloatSpec.Core.Generic_fmt.Znearest choice sm
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    have hpow_nonneg : 0 ≤ (beta : ℝ) ^ e := le_of_lt (zpow_pos hbposR e)
+    have hscaled : sm * (beta : ℝ) ^ e = x := by
+      have h :=
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa_mult_bpow
+          (beta := beta) (fexp := fexpFLX) (x := x)) hβ
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, sm, e] using h
+    have hround :
+        FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x =
+          (zn : ℝ) * (beta : ℝ) ^ e := by
+      simp [FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
+        FloatSpec.Compat.Scaffold.ZnearestMode, fexpFLX, e, sm, zn]
+    have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
+      have h :=
+        (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
+      simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
+        FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, zn, abs_sub_comm,
+        Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using h
+    have hlocal :
+        |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| ≤
+          (1 / 2 : ℝ) * (beta : ℝ) ^ e := by
+      have hdiff :
+          FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x =
+            ((zn : ℝ) - sm) * (beta : ℝ) ^ e := by
+        rw [hround, ← hscaled]
+        ring
+      rw [hdiff, abs_mul, abs_of_nonneg hpow_nonneg]
+      exact mul_le_mul_of_nonneg_right hnearest hpow_nonneg
+    have hulp_run :
+        FloatSpec.Core.Ulp.ulp beta fexpFLX x = (beta : ℝ) ^ e := by
+      unfold FloatSpec.Core.Ulp.ulp
+      simp [hx, e]
+    have hulp_le :
+        FloatSpec.Core.Ulp.ulp beta fexpFLX x ≤ |x| * (beta : ℝ) ^ (1 - prec) := by
+      have h :=
+        (FloatSpec.Core.FLX.ulp_FLX_le (prec := prec) (beta := beta) (x := x)) hβ
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, fexpFLX] using h
+    have hpow_le : (beta : ℝ) ^ e ≤ (beta : ℝ) ^ (-prec + 1) * |x| := by
+      have hpow_le' : (beta : ℝ) ^ e ≤ |x| * (beta : ℝ) ^ (1 - prec) := by
+        simpa [hulp_run] using hulp_le
+      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc, mul_comm,
+        mul_left_comm, mul_assoc] using hpow_le'
+    exact le_trans hlocal
+      (by
+        have hhalf_nonneg : 0 ≤ (1 / 2 : ℝ) := by norm_num
+        simpa [mul_assoc] using
+          (mul_le_mul_of_nonneg_left hpow_le hhalf_nonneg))
 
 /-- Unit roundoff -/
 noncomputable def u_ro : ℝ := (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat)
 
 /-- Unit roundoff is positive -/
 lemma u_ro_pos : 0 ≤ u_ro beta prec := by
-  sorry
+  unfold u_ro
+  positivity
 
 /-- Unit roundoff is less than 1 -/
 lemma u_ro_lt_1 : u_ro beta prec < 1 := by
@@ -197,11 +308,15 @@ lemma u_ro_lt_1 : u_ro beta prec < 1 := by
 
 -- Unit roundoff divided by (1 + u_ro) is positive
 lemma u_rod1pu_ro_pos : 0 ≤ u_ro beta prec / (1 + u_ro beta prec) := by
-  sorry
+  exact div_nonneg (u_ro_pos beta prec) (by linarith [u_ro_pos beta prec])
 
 /-- Unit roundoff divided by (1 + u_ro) is less than or equal to u_ro -/
 lemma u_rod1pu_ro_le_u_ro : u_ro beta prec / (1 + u_ro beta prec) ≤ u_ro beta prec := by
-  sorry
+  have hu : 0 ≤ u_ro beta prec := u_ro_pos beta prec
+  have hle_den : 1 ≤ 1 + u_ro beta prec := by linarith
+  have hdiv_le : u_ro beta prec / (1 + u_ro beta prec) ≤ u_ro beta prec / 1 := by
+    exact div_le_div_of_nonneg_left hu (by norm_num) hle_den
+  simpa using hdiv_le
 
 /-- FLX relative error nearest alternative -/
 theorem relative_error_N_FLX' (x : ℝ) :
@@ -210,10 +325,44 @@ theorem relative_error_N_FLX' (x : ℝ) :
   sorry
 
 /-- FLX relative error nearest existence -/
-theorem relative_error_N_FLX_ex (x : ℝ) :
-  ∃ eps, |eps| ≤ (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) ∧
+theorem relative_error_N_FLX_ex (hβ : 1 < beta) (x : ℝ) :
+  ∃ eps, |eps| ≤ (1/2) * (beta : ℝ) ^ (-prec + 1) ∧
     FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x = x * (1 + eps) := by
-  sorry
+  let b : ℝ := (1 / 2) * (beta : ℝ) ^ (-prec + 1)
+  have hb_nonneg : 0 ≤ b := by
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    exact mul_nonneg (by norm_num) (le_of_lt (zpow_pos hbposℝ (-prec + 1)))
+  have hbound :
+      |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| ≤
+        b * |x| := by
+    simpa [b] using
+      (relative_error_N_FLX (beta := beta) (choice := choice) (prec := prec) hβ x)
+  by_cases hx : x = 0
+  · refine ⟨0, ?_, ?_⟩
+    · simpa [b] using hb_nonneg
+    · subst x
+      have hZ0 : FloatSpec.Core.Generic_fmt.Znearest choice 0 = 0 := by
+        unfold FloatSpec.Core.Generic_fmt.Znearest
+        simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Rcompare]
+      simp [FloatSpec.Calc.Round.round, FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
+        FloatSpec.Compat.Scaffold.ZnearestMode, hZ0]
+  · refine ⟨(FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x) / x,
+      ?_, ?_⟩
+    · have hx_abs_pos : 0 < |x| := abs_pos.mpr hx
+      have hdiv := div_le_div_of_nonneg_right hbound (le_of_lt hx_abs_pos)
+      have hrhs : (b * |x|) / |x| = b := by
+        field_simp [ne_of_gt hx_abs_pos]
+      have hratio :
+          |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| / |x| ≤ b := by
+        calc
+          |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| / |x|
+              ≤ (b * |x|) / |x| := hdiv
+          _ = b := hrhs
+      simpa [abs_div, b] using hratio
+    · field_simp [hx]
+      ring
 
 /-- FLX relative error nearest alternative existence -/
 theorem relative_error_N_FLX'_ex (x : ℝ) :
@@ -247,7 +396,8 @@ variable (emin : Int)
 /-- FLT relative error auxiliary -/
 lemma relative_error_FLT_aux (k : Int) (h_bound : emin + prec - 1 < k) : 
   prec ≤ k - FLT_exp emin prec k := by
-  sorry
+  simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+  omega
 
 /-- FLT relative error -/
 theorem relative_error_FLT (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)

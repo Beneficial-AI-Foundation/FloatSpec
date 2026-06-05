@@ -1,3 +1,7 @@
+import FloatSpec.src.Core
+import FloatSpec.src.Compat
+import Mathlib.Data.Real.Basic
+
 /-!
 Tier 1 Scaffold / Tier 3 Excluded.
 
@@ -8,10 +12,6 @@ trusted FloatSpec aggregate.
 
 -- Sterbenz conditions for exact subtraction
 -- Translated from Coq file: flocq/src/Prop/Sterbenz.v
-
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import Mathlib.Data.Real.Basic
 
 open Real
 
