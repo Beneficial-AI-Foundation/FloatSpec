@@ -114,7 +114,7 @@ end MainRounding
 /-
   Placeholders for Coq Round.v theorems that have no Lean counterparts yet.
   These mirror the statement intent and reference existing Core/Bracket defs.
-  All are stubbed with `sorry` so they can be proven incrementally.
+  The remaining proof gaps can be discharged incrementally.
 -/
 
 section CoqTheoremsPlaceholders

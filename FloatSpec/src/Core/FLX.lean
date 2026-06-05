@@ -1128,47 +1128,191 @@ private theorem pred_FLX_exact_shift_pos_aux (beta : Int) [Prec_gt_0 prec]
     ⦃⇓p => ⌜p.1 = p.2 * (beta : ℝ) ^ e⌝⦄ := by
   intro hpre; classical
   rcases hpre with ⟨hβ, hx_pos⟩
-  -- Provide bridge instance for `[Valid_exp]`
   have _instPrec : Fact (0 < prec) := ⟨(Prec_gt_0.pos : 0 < prec)⟩
-  -- Evaluate `pred` via `pred_eq_pos` on nonnegative inputs
-  have hy_nonneg : 0 ≤ x * (beta : ℝ) ^ e := by
-    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-    exact le_of_lt (mul_pos hx_pos (zpow_pos hbposR e))
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  have hpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbposR e
+  have hpow_ne : (beta : ℝ) ^ e ≠ 0 := ne_of_gt hpow_pos
+  set y : ℝ := x * (beta : ℝ) ^ e with hy
+  have hy_pos : 0 < y := by
+    simpa [hy] using mul_pos hx_pos hpow_pos
+  have hy_nonneg : 0 ≤ y := le_of_lt hy_pos
   have hx_nonneg : 0 ≤ x := le_of_lt hx_pos
-  have hpred_y_run :
-      (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e))
-        = x * (beta : ℝ) ^ e - (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e)) := by
+  set M : Int := FloatSpec.Core.Raux.mag beta x with hM
+  set N : Int := FloatSpec.Core.Raux.mag beta y with hN
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  have hy_ne : y ≠ 0 := ne_of_gt hy_pos
+  have hN_eq : N = M + e := by
+    set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
+    have hM_run : M = Int.floor L + 1 := by
+      simp only [FloatSpec.Core.Raux.mag, hM, hx_ne, if_false, Id.run, pure, L]
+    have hxabs_pos : 0 < |x| := abs_pos.mpr hx_ne
+    have hbpow_abs_pos : 0 < |(beta : ℝ) ^ e| := abs_pos.mpr hpow_ne
+    have hlog_prod :
+        Real.log (|x| * |(beta : ℝ) ^ e|)
+          = Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ) := by
+      calc
+        Real.log (|x| * |(beta : ℝ) ^ e|)
+            = Real.log (|x|) + Real.log (|(beta : ℝ) ^ e|) := by
+                  simpa using Real.log_mul (ne_of_gt hxabs_pos) (ne_of_gt hbpow_abs_pos)
+        _   = Real.log (|x|) + Real.log ((beta : ℝ) ^ e) := by
+                  simpa [abs_of_nonneg (le_of_lt hpow_pos)]
+        _   = Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ) := by
+                  simpa using Real.log_zpow hbposR e
+    have habs_mul : abs y = |x| * |(beta : ℝ) ^ e| := by
+      have hbnonneg : 0 ≤ (beta : ℝ) ^ e := le_of_lt hpow_pos
+      simp [hy, abs_mul, abs_of_nonneg hbnonneg]
+    have hlogβ_pos : 0 < Real.log (beta : ℝ) :=
+      (Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbposR)).mpr (by exact_mod_cast hβ)
+    have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
+    have hdiv :
+        Real.log (abs y) / Real.log (beta : ℝ)
+          = L + (e : ℝ) := by
+      calc
+        Real.log (abs y) / Real.log (beta : ℝ)
+            = Real.log (|x| * |(beta : ℝ) ^ e|) / Real.log (beta : ℝ) := by
+                simpa [habs_mul]
+        _   = (Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
+                rw [hlog_prod]
+        _   = Real.log (|x|) / Real.log (beta : ℝ)
+                + ((e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
+                simpa using (add_div (Real.log (|x|)) ((e : ℝ) * Real.log (beta : ℝ)) (Real.log (beta : ℝ)))
+        _   = L + (e : ℝ) := by
+                simpa [L, hlogβ_ne] using (congrArg id (by
+                  simpa [hlogβ_ne] using (mul_div_cancel' (e : ℝ) (Real.log (beta : ℝ)))))
+    have hN_run : N = Int.floor (L + (e : ℝ)) + 1 := by
+      have hfloor_div :
+          Int.floor (Real.log (abs y) / Real.log (beta : ℝ))
+            = Int.floor (L + (e : ℝ)) := by
+        simpa using congrArg Int.floor hdiv
+      have : FloatSpec.Core.Raux.mag beta y = Int.floor (L + (e : ℝ)) + 1 := by
+        simp only [FloatSpec.Core.Raux.mag, hy_ne, if_false, Id.run, pure]
+        rw [hfloor_div]
+      simpa [hN] using this
+    have hfloor_add : Int.floor (L + (e : ℝ)) = Int.floor L + e :=
+      Int.floor_add_intCast L e
+    have : N = (Int.floor L + 1) + e := by
+      simp only [hN_run, hfloor_add]
+      ring
+    simpa [hM_run] using this
+  have hpred_y_pos :
+      FloatSpec.Core.Ulp.pred beta (FLX_exp prec) y =
+        FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) y := by
     have h := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLX_exp prec)
-                (x := x * (beta : ℝ) ^ e) (hx := hy_nonneg)
+                (x := y) (hx := hy_nonneg)
     have hrun := h hβ
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
-  have hpred_x_run :
-      (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x)
-        = x - (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x) := by
+  have hpred_x_pos :
+      FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x =
+        FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) x := by
     have h := FloatSpec.Core.Ulp.pred_eq_pos (beta := beta) (fexp := FLX_exp prec)
                 (x := x) (hx := hx_nonneg)
     have hrun := h hβ
     simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hrun
-  -- ULP scales exactly under β^e in FLX
-  have hulp_shift :
-      (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e))
-        = (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x) * (beta : ℝ) ^ e := by
-    have := ulp_FLX_exact_shift (prec := prec) (beta := beta) (x := x) (e := e)
-    have := this hβ
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
-  -- Factor out the common `(β^e)`
+  have hboundary_y_of_x :
+      x = (beta : ℝ) ^ (M - 1) →
+        y = (beta : ℝ) ^ (N - 1) := by
+    intro hxB
+    have hExp : (M - 1) + e = N - 1 := by omega
+    calc
+      y = x * (beta : ℝ) ^ e := hy
+      _ = (beta : ℝ) ^ (M - 1) * (beta : ℝ) ^ e := by rw [hxB]
+      _ = (beta : ℝ) ^ ((M - 1) + e) := by rw [zpow_add₀ hbne]
+      _ = (beta : ℝ) ^ (N - 1) := by rw [hExp]
+  have hboundary_x_of_y :
+      y = (beta : ℝ) ^ (N - 1) →
+        x = (beta : ℝ) ^ (M - 1) := by
+    intro hyB
+    have hExp : N - 1 = (M - 1) + e := by omega
+    have hmul :
+        x * (beta : ℝ) ^ e = (beta : ℝ) ^ (M - 1) * (beta : ℝ) ^ e := by
+      calc
+        x * (beta : ℝ) ^ e = y := hy.symm
+        _ = (beta : ℝ) ^ (N - 1) := hyB
+        _ = (beta : ℝ) ^ ((M - 1) + e) := by rw [hExp]
+        _ = (beta : ℝ) ^ (M - 1) * (beta : ℝ) ^ e := by rw [zpow_add₀ hbne]
+    exact mul_right_cancel₀ hpow_ne hmul
   have hrunEq :
-      (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e))
+      (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) y)
         = ((FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x)) * (beta : ℝ) ^ e := by
-    calc (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e))
-        = x * (beta : ℝ) ^ e - (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) (x * (beta : ℝ) ^ e)) := hpred_y_run
-      _ = x * (beta : ℝ) ^ e - (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x) * (beta : ℝ) ^ e := by
-          rw [hulp_shift]
-      _ = (x - (FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x)) * (beta : ℝ) ^ e := by ring
-      _ = (FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x) * (beta : ℝ) ^ e := by rw [hpred_x_run]
+    by_cases hxB : x = (beta : ℝ) ^ (M - 1)
+    · have hyB : y = (beta : ℝ) ^ (N - 1) := hboundary_y_of_x hxB
+      have hpredpos_x :
+          FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) x =
+            x - (beta : ℝ) ^ (FLX_exp prec (M - 1)) := by
+        have hxB' : x = (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x - 1) := by
+          simpa [← hM] using hxB
+        unfold FloatSpec.Core.Ulp.pred_pos
+        rw [if_pos hxB']
+      have hpredpos_y :
+          FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) y =
+            y - (beta : ℝ) ^ (FLX_exp prec (N - 1)) := by
+        have hyB' : y = (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta y - 1) := by
+          simpa [← hN] using hyB
+        unfold FloatSpec.Core.Ulp.pred_pos
+        rw [if_pos hyB']
+      have hExp : FLX_exp prec (N - 1) = FLX_exp prec (M - 1) + e := by
+        unfold FLX_exp
+        omega
+      have hpow_shift :
+          (beta : ℝ) ^ (FLX_exp prec (N - 1)) =
+            (beta : ℝ) ^ (FLX_exp prec (M - 1)) * (beta : ℝ) ^ e := by
+        have := congrArg (fun t : Int => (beta : ℝ) ^ t) hExp
+        simpa [zpow_add₀ hbne] using this
+      calc
+        FloatSpec.Core.Ulp.pred beta (FLX_exp prec) y
+            = FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) y := hpred_y_pos
+        _ = y - (beta : ℝ) ^ (FLX_exp prec (N - 1)) := hpredpos_y
+        _ = (x - (beta : ℝ) ^ (FLX_exp prec (M - 1))) * (beta : ℝ) ^ e := by
+              rw [hy, hpow_shift]
+              ring
+        _ = FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) x * (beta : ℝ) ^ e := by
+              rw [hpredpos_x]
+        _ = FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x * (beta : ℝ) ^ e := by
+              rw [hpred_x_pos]
+    · have hyB_not : y ≠ (beta : ℝ) ^ (N - 1) := by
+        intro hyB
+        exact hxB (hboundary_x_of_y hyB)
+      have hpredpos_x :
+          FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) x =
+            x - FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x := by
+        have hxB' : x ≠ (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x - 1) := by
+          intro h
+          exact hxB (by simpa [← hM] using h)
+        unfold FloatSpec.Core.Ulp.pred_pos
+        rw [if_neg hxB']
+      have hpredpos_y :
+          FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) y =
+            y - FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) y := by
+        have hyB_not' : y ≠ (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta y - 1) := by
+          intro h
+          exact hyB_not (by simpa [← hN] using h)
+        unfold FloatSpec.Core.Ulp.pred_pos
+        rw [if_neg hyB_not']
+      have hulp_shift :
+          FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) y =
+            FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x * (beta : ℝ) ^ e := by
+        have h := ulp_FLX_exact_shift (prec := prec) (beta := beta) (x := x) (e := e)
+        have hrun := h hβ
+        simpa [wp, PostCond.noThrow, Id.run, bind, pure, hy] using hrun
+      calc
+        FloatSpec.Core.Ulp.pred beta (FLX_exp prec) y
+            = FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) y := hpred_y_pos
+        _ = y - FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) y := hpredpos_y
+        _ = (x - FloatSpec.Core.Ulp.ulp beta (FLX_exp prec) x) * (beta : ℝ) ^ e := by
+              rw [hy, hulp_shift]
+              ring
+        _ = FloatSpec.Core.Ulp.pred_pos beta (FLX_exp prec) x * (beta : ℝ) ^ e := by
+              rw [hpredpos_x]
+        _ = FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x * (beta : ℝ) ^ e := by
+              rw [hpred_x_pos]
+  have hrunEq' :
+      FloatSpec.Core.Ulp.pred beta (FLX_exp prec) (x * (beta : ℝ) ^ e)
+        = FloatSpec.Core.Ulp.pred beta (FLX_exp prec) x * (beta : ℝ) ^ e := by
+    simpa [hy] using hrunEq
   simp only [wp, PostCond.noThrow, Id.run, bind, pure, PredTrans.pure,
-             PredTrans.bind, PredTrans.apply, hrunEq]
+             PredTrans.bind, PredTrans.apply, hrunEq']
   trivial
 
 theorem succ_FLX_exact_shift (beta : Int) [Prec_gt_0 prec] (x : ℝ) (e : Int) :
