@@ -255,7 +255,7 @@ private lemma znearest_abs_sub_le_ceil_gap (choice : Int → Bool) (s : ℝ) :
         sub_nonneg.mpr hceil_ge
       simpa [hz, abs_of_nonneg hnonneg]
 
-private theorem roundR_Znearest_N_pt (x : ℝ) (hβ : 1 < beta) :
+theorem roundR_Znearest_N_pt (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Defs.Rnd_N_pt
       (fun y => generic_format beta fexp y) x
       (FloatSpec.Core.Generic_fmt.roundR beta fexp
@@ -404,7 +404,7 @@ private theorem roundR_Znearest_N_pt (x : ℝ) (hβ : 1 < beta) :
   simpa [F, hround_near] using hN
 
 omit [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] [Monotone_exp fexp] in
-private lemma generic_format_shift (x : ℝ) (e : Int)
+theorem generic_format_shift (x : ℝ) (e : Int)
   (hβ : 1 < beta)
   (hx : generic_format beta fexp x) (h_exp : e ≤ cexp beta fexp x) :
   ∃ m : Int, x = (m : ℝ) * (beta : ℝ) ^ e := by
@@ -730,11 +730,11 @@ lemma FLT_plus_error_N_ex (x y : ℝ)
     FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (x + y) = (x + y) * (1 + eps) := by
   classical
   have hpos : 0 ≤ u_ro beta prec / (1 + u_ro beta prec) :=
-    u_rod1pu_ro_pos (beta := beta) (prec := prec)
+    u_rod1pu_ro_pos (beta := beta) (prec := prec) hbeta
   by_cases hlarge :
       FloatSpec.Core.Raux.bpow beta (emin + prec) ≤ |x + y|
   · rcases relative_error_N_FLX'_ex (beta := beta) (choice := choice)
-      (prec := prec) (x := x + y) with ⟨eps, heps, hround_flx⟩
+      (prec := prec) hbeta (x := x + y) with ⟨eps, heps, hround_flx⟩
     refine ⟨eps, heps, ?_⟩
     have hcexp :
         FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp emin prec) (x + y) =
@@ -786,6 +786,7 @@ lemma FLT_plus_error_N_round_ex (x y : ℝ)
     (beta := beta) (prec := prec)
     (x := x + y)
     (rx := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (x + y))
+    hbeta
     (FLT_plus_error_N_ex (beta := beta) (choice := choice)
       (emin := emin) (prec := prec) x y hbeta hx hy)
 

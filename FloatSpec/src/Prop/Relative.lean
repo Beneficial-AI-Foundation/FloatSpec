@@ -295,31 +295,47 @@ theorem relative_error_N_FLX (hβ : 1 < beta) (x : ℝ) :
           (mul_le_mul_of_nonneg_left hpow_le hhalf_nonneg))
 
 /-- Unit roundoff -/
-noncomputable def u_ro : ℝ := (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat)
+noncomputable def u_ro : ℝ := (1/2) * (beta : ℝ) ^ (-prec + 1)
 
 /-- Unit roundoff is positive -/
-lemma u_ro_pos : 0 ≤ u_ro beta prec := by
+lemma u_ro_pos (hβ : 1 < beta) : 0 ≤ u_ro beta prec := by
   unfold u_ro
-  positivity
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  exact mul_nonneg (by norm_num) (le_of_lt (zpow_pos hbposℝ (-prec + 1)))
 
 /-- Unit roundoff is less than 1 -/
-lemma u_ro_lt_1 : u_ro beta prec < 1 := by
-  sorry
+lemma u_ro_lt_1 (hβ : 1 < beta) : u_ro beta prec < 1 := by
+  unfold u_ro
+  have hbge1ℝ : (1 : ℝ) ≤ (beta : ℝ) := by
+    have hbge1ℤ : (1 : Int) ≤ beta := le_of_lt hβ
+    exact_mod_cast hbge1ℤ
+  have hexp_nonpos : -prec + 1 ≤ 0 := by
+    have hp : 1 ≤ prec := Int.add_one_le_iff.mpr (Prec_gt_0.pos : 0 < prec)
+    omega
+  have hpow_le_one : (beta : ℝ) ^ (-prec + 1) ≤ 1 := by
+    simpa using
+      (zpow_le_zpow_right₀ hbge1ℝ hexp_nonpos :
+        (beta : ℝ) ^ (-prec + 1) ≤ (beta : ℝ) ^ (0 : Int))
+  have hhalf_le : (1 / 2 : ℝ) * (beta : ℝ) ^ (-prec + 1) ≤ (1 / 2 : ℝ) * 1 := by
+    exact mul_le_mul_of_nonneg_left hpow_le_one (by norm_num)
+  nlinarith
 
 -- Unit roundoff divided by (1 + u_ro) is positive
-lemma u_rod1pu_ro_pos : 0 ≤ u_ro beta prec / (1 + u_ro beta prec) := by
-  exact div_nonneg (u_ro_pos beta prec) (by linarith [u_ro_pos beta prec])
+lemma u_rod1pu_ro_pos (hβ : 1 < beta) : 0 ≤ u_ro beta prec / (1 + u_ro beta prec) := by
+  exact div_nonneg (u_ro_pos (beta := beta) (prec := prec) hβ)
+    (by linarith [u_ro_pos (beta := beta) (prec := prec) hβ])
 
 /-- Unit roundoff divided by (1 + u_ro) is less than or equal to u_ro -/
-lemma u_rod1pu_ro_le_u_ro : u_ro beta prec / (1 + u_ro beta prec) ≤ u_ro beta prec := by
-  have hu : 0 ≤ u_ro beta prec := u_ro_pos beta prec
+lemma u_rod1pu_ro_le_u_ro (hβ : 1 < beta) : u_ro beta prec / (1 + u_ro beta prec) ≤ u_ro beta prec := by
+  have hu : 0 ≤ u_ro beta prec := u_ro_pos (beta := beta) (prec := prec) hβ
   have hle_den : 1 ≤ 1 + u_ro beta prec := by linarith
   have hdiv_le : u_ro beta prec / (1 + u_ro beta prec) ≤ u_ro beta prec / 1 := by
     exact div_le_div_of_nonneg_left hu (by norm_num) hle_den
   simpa using hdiv_le
 
 /-- FLX relative error nearest alternative -/
-theorem relative_error_N_FLX' (x : ℝ) :
+theorem relative_error_N_FLX' (hβ : 1 < beta) (x : ℝ) :
   |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| ≤ 
     u_ro beta prec / (1 + u_ro beta prec) * |x| := by
   sorry
@@ -365,27 +381,28 @@ theorem relative_error_N_FLX_ex (hβ : 1 < beta) (x : ℝ) :
       ring
 
 /-- FLX relative error nearest alternative existence -/
-theorem relative_error_N_FLX'_ex (x : ℝ) :
+theorem relative_error_N_FLX'_ex (hβ : 1 < beta) (x : ℝ) :
   ∃ eps, |eps| ≤ u_ro beta prec / (1 + u_ro beta prec) ∧
     FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x = x * (1 + eps) := by
   sorry
 
 /-- Relative error nearest round derivation -/
 lemma relative_error_N_round_ex_derive (x rx : ℝ)
+  (hβ : 1 < beta)
   (h_exists : ∃ eps, |eps| ≤ u_ro beta prec / (1 + u_ro beta prec) ∧ rx = x * (1 + eps)) :
   ∃ eps, |eps| ≤ u_ro beta prec ∧ x = rx * (1 + eps) := by
   sorry
 
 /-- FLX relative error nearest round existence -/
-theorem relative_error_N_FLX_round_ex (x : ℝ) :
+theorem relative_error_N_FLX_round_ex (hβ : 1 < beta) (x : ℝ) :
   ∃ eps, |eps| ≤ u_ro beta prec ∧
     x = FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x * (1 + eps) := by
   sorry
 
 /-- FLX relative error nearest round -/
-theorem relative_error_N_FLX_round (x : ℝ) :
+theorem relative_error_N_FLX_round (hβ : 1 < beta) (x : ℝ) :
   |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| ≤ 
-    (1/2) * (Int.natAbs beta : ℝ) ^ (Int.natAbs (-prec + 1) : Nat) * 
+    u_ro beta prec *
     |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x| := by
   sorry
 
