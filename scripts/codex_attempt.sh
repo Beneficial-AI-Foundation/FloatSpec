@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/codex_attempt.sh --target TARGET [--reason REASON] [--timeout-sec N] [--model MODEL] [--reasoning-effort LEVEL] [--build] [--smoke]
+Usage: scripts/codex_attempt.sh --target TARGET [--reason REASON] [--timeout-sec N] [--model MODEL] [--reasoning-effort LEVEL] [--provider MODE] [--build] [--smoke]
 
 Run one Codex proof/pipeline attempt with structured artifacts.
 
@@ -14,6 +14,19 @@ Options:
   --model MODEL     Codex model to use, e.g. gpt-5.5. Default: config default.
   --reasoning-effort LEVEL
                    Model reasoning effort, e.g. high. Default: config default.
+  --provider MODE   Codex auth/provider path: config, subscription, or api.
+                   Default: config.
+  --api-base-url URL
+                   API base URL for --provider api. Default: https://api3.xhub.chat/v1.
+  --api-env-key NAME
+                   Environment variable holding the API key for --provider api.
+                   Default: XHUB_API_KEY.
+  --api-wire-api API
+                   Codex wire API for --provider api, e.g. responses or messages.
+                   Default: responses.
+  --api-provider-id ID
+                   Temporary Codex provider id for --provider api.
+                   Default: floatspec_api.
   --build           Run lake build after Codex and record the build gate.
   --smoke           Do not allow edits; ask Codex only to run/read pipeline tools.
   -h,--help         Show this help.
@@ -27,6 +40,11 @@ reason="unspecified"
 timeout_sec=1800
 model=""
 reasoning_effort=""
+provider="config"
+api_base_url="https://api3.xhub.chat/v1"
+api_env_key="XHUB_API_KEY"
+api_wire_api="responses"
+api_provider_id="floatspec_api"
 run_build=false
 smoke=false
 
@@ -50,6 +68,26 @@ while [[ $# -gt 0 ]]; do
       ;;
     --reasoning-effort)
       reasoning_effort="${2:-}"
+      shift 2
+      ;;
+    --provider)
+      provider="${2:-}"
+      shift 2
+      ;;
+    --api-base-url)
+      api_base_url="${2:-}"
+      shift 2
+      ;;
+    --api-env-key)
+      api_env_key="${2:-}"
+      shift 2
+      ;;
+    --api-wire-api)
+      api_wire_api="${2:-}"
+      shift 2
+      ;;
+    --api-provider-id)
+      api_provider_id="${2:-}"
       shift 2
       ;;
     --build)
@@ -78,6 +116,26 @@ if [[ -z "$target" ]]; then
   exit 2
 fi
 
+case "$provider" in
+  config|subscription|api)
+    ;;
+  *)
+    echo "--provider must be one of: config, subscription, api" >&2
+    exit 2
+    ;;
+esac
+
+if [[ "$provider" == "api" ]]; then
+  if [[ -z "$api_base_url" || -z "$api_env_key" || -z "$api_wire_api" || -z "$api_provider_id" ]]; then
+    echo "--provider api requires non-empty --api-base-url, --api-env-key, --api-wire-api, and --api-provider-id" >&2
+    exit 2
+  fi
+  if [[ -z "${!api_env_key:-}" ]]; then
+    echo "--provider api requires environment variable ${api_env_key} to be set" >&2
+    exit 2
+  fi
+fi
+
 timestamp="$(date +%Y%m%d_%H%M%S)"
 attempt_dir=".change_log/codex_attempt_${timestamp}"
 mkdir -p "$attempt_dir"
@@ -87,6 +145,7 @@ git status --porcelain=v1 --untracked-files=all | LC_ALL=C sort >"${attempt_dir}
 
 prompt_file="${attempt_dir}/prompt.md"
 codex_log="${attempt_dir}/codex.jsonl"
+codex_stderr="${attempt_dir}/codex.stderr.log"
 codex_last="${attempt_dir}/codex_last_message.md"
 build_log="${attempt_dir}/build.log"
 trust_log="${attempt_dir}/trust_gate.log"
@@ -96,6 +155,7 @@ target_before="${attempt_dir}/target_before.lean"
 target_after="${attempt_dir}/target_after.lean"
 target_diff="${attempt_dir}/target_diff.patch"
 deps_log="${attempt_dir}/sorry_dependency_audit.json"
+provider_log="${attempt_dir}/codex_provider.txt"
 
 if [[ -f "$target_path" ]]; then
   cp "$target_path" "$target_before"
@@ -145,6 +205,37 @@ fi
 if [[ -n "$reasoning_effort" ]]; then
   codex_cmd+=(-c "model_reasoning_effort=\"$reasoning_effort\"")
 fi
+case "$provider" in
+  config)
+    ;;
+  subscription)
+    codex_cmd+=(-c 'model_provider="openai"')
+    ;;
+  api)
+    codex_cmd+=(
+      -c "model_provider=\"${api_provider_id}\""
+      -c "model_providers.${api_provider_id}.name=\"FloatSpec API Provider\""
+      -c "model_providers.${api_provider_id}.base_url=\"${api_base_url}\""
+      -c "model_providers.${api_provider_id}.env_key=\"${api_env_key}\""
+      -c "model_providers.${api_provider_id}.wire_api=\"${api_wire_api}\""
+    )
+    ;;
+esac
+
+{
+  printf 'provider_mode=%s\n' "$provider"
+  printf 'model=%s\n' "${model:-config_default}"
+  printf 'reasoning_effort=%s\n' "${reasoning_effort:-config_default}"
+  if [[ "$provider" == "api" ]]; then
+    printf 'api_provider_id=%s\n' "$api_provider_id"
+    printf 'api_base_url=%s\n' "$api_base_url"
+    printf 'api_env_key=%s\n' "$api_env_key"
+    printf 'api_env_key_set=%s\n' "yes"
+    printf 'api_wire_api=%s\n' "$api_wire_api"
+  elif [[ "$provider" == "subscription" ]]; then
+    printf 'forced_model_provider=%s\n' "openai"
+  fi
+} >"$provider_log"
 
 timeout "$timeout_sec" \
   "${codex_cmd[@]}" \
@@ -152,7 +243,7 @@ timeout "$timeout_sec" \
     --json \
     --output-last-message "$codex_last" \
     --dangerously-bypass-approvals-and-sandbox \
-    "$(cat "$prompt_file")" >"$codex_log" || true
+    "$(cat "$prompt_file")" >"$codex_log" 2>"$codex_stderr" || true
 
 git status --porcelain=v1 --untracked-files=all | LC_ALL=C sort >"${attempt_dir}/git_status_after.txt"
 python3 - "${attempt_dir}/git_status_before.txt" "${attempt_dir}/git_status_after.txt" "${attempt_dir}/changed_during_attempt.txt" <<'PY'
@@ -236,7 +327,7 @@ PY
   )"
 fi
 
-scripts/classify_attempt.py \
+classify_cmd=(scripts/classify_attempt.py
   --target "$target" \
   --reason "$reason" \
   --result "$result" \
@@ -246,8 +337,18 @@ scripts/classify_attempt.py \
   --coq-alignment not_checked \
   --model "${model:-config_default}" \
   --reasoning-effort "${reasoning_effort:-config_default}" \
+  --provider-mode "$provider" \
   --changed-files-file "${attempt_dir}/changed_during_attempt.txt" \
-  --output "$attempt_json" >"${attempt_dir}/attempt.stdout.json"
+  --output "$attempt_json")
+if [[ "$provider" == "api" ]]; then
+  classify_cmd+=(
+    --api-provider-id "$api_provider_id"
+    --api-base-url "$api_base_url"
+    --api-env-key "$api_env_key"
+    --api-wire-api "$api_wire_api"
+  )
+fi
+"${classify_cmd[@]}" >"${attempt_dir}/attempt.stdout.json"
 
 scripts/status_report.sh --json >"${attempt_dir}/status_after.json"
 

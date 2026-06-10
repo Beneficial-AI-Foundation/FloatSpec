@@ -26,10 +26,34 @@ For Codex-backed attempts, prefer the harness:
 scripts/codex_attempt.sh --target <file:line> --reason <reason>
 ```
 
-The harness writes a status snapshot, Codex transcript, trust-gate output, and
-`attempt.json` under `.change_log/`. If a target is blocked by a missing
-foundational theorem, the correct outcome is a blocker report, not a weakened
-statement or semantic placeholder.
+The harness can force either Codex auth/provider path instead of relying on the
+ambient `~/.codex/config.toml` default:
+
+```bash
+# Use ChatGPT/Codex subscription auth through the built-in OpenAI provider.
+scripts/codex_attempt.sh --provider subscription --target <file:line> --reason <reason>
+
+# Use an API-compatible provider. The key must live in the named env var.
+export XHUB_API_KEY=...
+scripts/codex_attempt.sh \
+  --provider api \
+  --api-base-url https://api3.xhub.chat/v1 \
+  --api-env-key XHUB_API_KEY \
+  --api-wire-api responses \
+  --model gpt-5.5 \
+  --target <file:line> \
+  --reason <reason>
+```
+
+Each attempt records the requested provider mode in `attempt.json` and writes a
+sanitized `.change_log/codex_attempt_<timestamp>/codex_provider.txt` sidecar with
+the base URL, env var name, and wire API. The sidecar records whether the env
+var was present, but never records the secret value.
+
+The harness writes a status snapshot, Codex JSONL transcript, Codex stderr,
+trust-gate output, and `attempt.json` under `.change_log/`. If a target is
+blocked by a missing foundational theorem, the correct outcome is a blocker
+report, not a weakened statement or semantic placeholder.
 
 ## Essential Concepts
 
