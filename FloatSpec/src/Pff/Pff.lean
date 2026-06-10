@@ -12658,9 +12658,10 @@ private lemma maxDiv_ge_of_dvd (radix v : Int) (k p : Nat)
       subst k
       simp [maxDiv]
   | succ p ih =>
+      letI : Decidable (Zdivides v (Zpower_nat radix (Nat.succ p))) :=
+        Classical.propDecidable (Zdivides v (Zpower_nat radix (Nat.succ p)))
       by_cases htop : Zdivides v (Zpower_nat radix (Nat.succ p))
-      · simp [maxDiv, htop]
-        exact hkp
+      · simp [maxDiv, htop, hkp]
       · simp [maxDiv, htop]
         have hk_le_p : k ≤ p := by
           by_contra hnot

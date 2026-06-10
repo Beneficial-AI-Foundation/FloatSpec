@@ -21,6 +21,12 @@ def run(cmd: list[str]) -> tuple[int, str]:
     return proc.returncode, proc.stdout
 
 
+def strip_comments(text: str) -> str:
+    text = re.sub(r"/-.*?-/", "", text, flags=re.DOTALL)
+    text = re.sub(r"--.*", "", text)
+    return text
+
+
 def git_changed_files() -> list[str]:
     code, out = run(["git", "diff", "--name-only"])
     if code != 0:
@@ -37,7 +43,7 @@ def count_target_sorry(target: str | None) -> int | None:
         return None
     text = path.read_text(encoding="utf-8", errors="replace")
     if not line_text.isdigit():
-        return len(re.findall(r"\bsorry\b", text))
+        return len(re.findall(r"\bsorry\b", strip_comments(text)))
 
     target_line = int(line_text)
     starts = list(
@@ -63,7 +69,7 @@ def count_target_sorry(target: str | None) -> int | None:
 
     start = starts[chosen_index].start()
     end = starts[chosen_index + 1].start() if chosen_index + 1 < len(starts) else len(text)
-    return len(re.findall(r"\bsorry\b", text[start:end]))
+    return len(re.findall(r"\bsorry\b", strip_comments(text[start:end])))
 
 
 def scan_diff_trust() -> tuple[bool, str]:
