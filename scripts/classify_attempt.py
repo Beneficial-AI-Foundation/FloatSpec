@@ -100,6 +100,11 @@ def main() -> int:
     parser.add_argument("--coq-alignment", choices=["checked", "not_checked", "not_applicable"], default="not_checked")
     parser.add_argument("--model", default="not_recorded")
     parser.add_argument("--reasoning-effort", default="not_recorded")
+    parser.add_argument("--provider-mode", choices=["config", "subscription", "api"], default="config")
+    parser.add_argument("--api-provider-id", default=None)
+    parser.add_argument("--api-base-url", default=None)
+    parser.add_argument("--api-env-key", default=None)
+    parser.add_argument("--api-wire-api", default=None)
     parser.add_argument("--statement-changed", action="store_true")
     parser.add_argument("--changed-files-file", default=None)
     parser.add_argument("--output", default=None)
@@ -129,6 +134,11 @@ def main() -> int:
         "build_log": args.build_log,
         "model": args.model,
         "reasoning_effort": args.reasoning_effort,
+        "provider_mode": args.provider_mode,
+        "api_provider_id": args.api_provider_id,
+        "api_base_url": args.api_base_url,
+        "api_env_key": args.api_env_key,
+        "api_wire_api": args.api_wire_api,
         "local_target_gate": "unknown" if target_sorry_count is None else ("pass" if target_sorry_count == 0 else "fail"),
         "trust_gate": "pass" if trust_ok else "fail",
         "trust_gate_output": trust_output.strip(),
