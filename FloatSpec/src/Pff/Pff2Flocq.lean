@@ -1,3 +1,9 @@
+import FloatSpec.src.Core
+import FloatSpec.src.Compat
+import FloatSpec.src.Pff.Pff
+import Mathlib.Data.Real.Basic
+import Std.Do.Triple
+
 /-!
 Tier 1 Scaffold / Tier 3 Excluded.
 
@@ -8,12 +14,6 @@ trusted FloatSpec aggregate.
 
 -- Conversion from Pff to Flocq formats
 -- Translated from Coq file: flocq/src/Pff/Pff2Flocq.v
-
-import FloatSpec.src.Core
-import FloatSpec.src.Compat
-import FloatSpec.src.Pff.Pff
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
 
 open Real
 open FloatSpec.Core.Defs

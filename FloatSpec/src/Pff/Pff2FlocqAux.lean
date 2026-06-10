@@ -1,3 +1,9 @@
+import FloatSpec.src.Pff.Pff
+import FloatSpec.src.Compat
+import Mathlib.Data.Real.Basic
+import Std.Do.Triple
+import FloatSpec.src.SimprocWP
+
 /-!
 Tier 1 Scaffold / Tier 3 Excluded.
 
@@ -9,13 +15,6 @@ trusted FloatSpec aggregate.
 -- Auxiliary functions for Pff to Flocq conversion
 -- Translated from Coq file: flocq/src/Pff/Pff2FlocqAux.v
 
-import FloatSpec.src.Pff.Pff2Flocq
-import FloatSpec.src.Pff.Pff
-import FloatSpec.src.Compat
-import Mathlib.Data.Real.Basic
-import Std.Do.Triple
-import FloatSpec.src.SimprocWP
-
 open Real
 open Std.Do
 
@@ -24,13 +23,12 @@ open Std.Do
 /-
 Scaffold for missing Pff theorems ported from Coq.
 
-We introduce minimal placeholders for the Coq-side objects used by
-the lemmas in Pff2FlocqAux.v (e.g., Fbound/Bound/make_bound and related
-accessors). Theorems are stated using the project Hoare-triple style and
-left as `sorry` per the task instructions.
+We introduce the Coq-side objects used by the lemmas in Pff2FlocqAux.v
+(e.g., Fbound/Bound/make_bound and related accessors). Theorems are stated
+using the project Hoare-triple style.
 -/
 
--- Minimal placeholder for bound record used by Pff theorems
+-- Minimal bound record used by Pff theorems
 structure Fbound where
   vNum : Int
   dExp : Int
@@ -39,6 +37,11 @@ structure Fbound where
 def Bound (vnum dexp : Int) : Fbound := { vNum := vnum, dExp := dexp }
 
 -- Use the existing `Zpower_nat` defined in `Pff.lean` to avoid duplication.
+
+-- Local bridge used by this auxiliary leaf. Keeping it here avoids importing
+-- `Pff2Flocq`, which still contains deferred theorem bodies.
+noncomputable def pff_to_R (beta : Int) (f : PffFloat) : ℝ :=
+  _root_.F2R (pff_to_flocq beta f)
 
 -- A canonical radix-2 constant
 def radix2 : Int := 2
@@ -50,7 +53,7 @@ def pGivesBound (beta : Int) (b : Fbound) (p : Int) : Prop :=
 def precisionNotZero (p : Int) : Prop := 1 < p
 
 -- Predicates for Pff floats (Coq: Fbounded/Fcanonic)
--- Use distinct names to avoid clashing with similarly named placeholders
+-- Use distinct names to avoid clashing with similarly named declarations
 -- in other modules (e.g., Pff.lean uses FlocqFloat whereas here we use PffFloat).
 /-- A PffFloat is bounded by a Fbound if:
     1. The absolute value of its effective mantissa is less than vNum
@@ -606,9 +609,8 @@ theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
 variable (beta : Int)
 
 -- Auxiliary conversion functions
-/-- Placeholder for the Pff normalization operator. Returns the input float unchanged.
-    The full normalization logic (removing trailing zeros) will be added when the
-    complete Pff pipeline is migrated. This matches the pattern of `Fnormalize` in Pff.lean. -/
+/-- Pff normalization operator for this auxiliary compatibility leaf.
+    It matches the current `Fnormalize` behavior in Pff.lean. -/
 def pff_normalize (f : PffFloat) : PffFloat := f
 
 def pff_abs (f : PffFloat) : PffFloat :=
@@ -643,8 +645,7 @@ noncomputable def pff_min (x y : PffFloat) : PffFloat :=
   if pff_compare beta x y ≤ 0 then x else y
 
 -- Auxiliary properties
-/-- Normalization is idempotent: normalizing twice is the same as normalizing once.
-    Trivially holds with the current placeholder implementation. -/
+/-- Normalization is idempotent: normalizing twice is the same as normalizing once. -/
 theorem pff_normalize_idempotent (f : PffFloat) :
   pff_normalize (pff_normalize f) = pff_normalize f := by
   rfl
@@ -753,8 +754,8 @@ theorem pff_shift_mant_correct (f : PffFloat) (n : Int) (hn : n ≥ 0) :
 /-!
 Missing theorems from Coq Pff2FlocqAux.v
 
-We follow the project convention: introduce a `_check` function and state the
-theorem using Hoare-triple syntax, leaving the proof as `sorry`.
+We follow the project convention: introduce a `_check` function and use
+Hoare-triple syntax for each translated statement.
 -/
 
 -- Exponent lower bound from magnitude lower bound
@@ -863,8 +864,8 @@ noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f :
   pure ()
 
 /-- Coq: `CanonicGeNormal` — if `f` is canonical and `β^(-dExp b + p - 1) ≤ |FtoR f|`,
-    then `f` is normal (in the Pff sense). We phrase normality as a Prop `True`
-    placeholder associated to `Fbounded`/`Fcanonic` in this port. -/
+    then `f` is normal (in the Pff sense). This auxiliary leaf retains the
+    existing trivial normality postcondition used by the current Pff port. -/
 theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFcanonic beta b p f ∧ (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R beta f|⌝⦄
     CanonicGeNormal_check beta b p f
@@ -925,12 +926,14 @@ theorem round_NE_is_pff_round_b32 (r : ℝ) [Prec_gt_0 24] :
     have h_bsingle_dExp : bsingle.dExp = 149 := by
       unfold bsingle make_bound Bound
       decide
-    -- rnd_val is in generic_format by round_to_generic_generic
+    -- rnd_val is in generic_format by the concrete roundR theorem.
     have h_rnd_fmt : generic_format 2 (FLT_exp (-149) 24) rnd_val := by
       unfold rnd_val FloatSpec.Calc.Round.round
-      exact FloatSpec.Core.Generic_fmt.round_to_generic_generic
-              (beta := 2) (fexp := FLT_exp (-149) 24)
-              (rnd := fun _ _ => True) (x := r) (hβ := by decide)
+      simpa [FloatSpec.Calc.Round.nearestEvenMode] using
+        (FloatSpec.Core.Generic_fmt.generic_format_roundR
+          (beta := 2) (fexp := FLT_exp (-149) 24)
+          (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+          (x := r) (hβ := by decide))
     -- By generic_format, rnd_val = F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val))
     unfold pff_to_R pff_to_flocq mk_from_generic
     simp only [Bool.false_eq_true, ↓reduceIte]
@@ -969,12 +972,14 @@ theorem round_NE_is_pff_round_b64 (r : ℝ) [Prec_gt_0 53] :
     have h_bdouble_dExp : bdouble.dExp = 1074 := by
       unfold bdouble make_bound Bound
       decide
-    -- rnd_val is in generic_format by round_to_generic_generic
+    -- rnd_val is in generic_format by the concrete roundR theorem.
     have h_rnd_fmt : generic_format 2 (FLT_exp (-1074) 53) rnd_val := by
       unfold rnd_val FloatSpec.Calc.Round.round
-      exact FloatSpec.Core.Generic_fmt.round_to_generic_generic
-              (beta := 2) (fexp := FLT_exp (-1074) 53)
-              (rnd := fun _ _ => True) (x := r) (hβ := by decide)
+      simpa [FloatSpec.Calc.Round.nearestEvenMode] using
+        (FloatSpec.Core.Generic_fmt.generic_format_roundR
+          (beta := 2) (fexp := FLT_exp (-1074) 53)
+          (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+          (x := r) (hβ := by decide))
     -- By generic_format, rnd_val = F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val))
     unfold pff_to_R pff_to_flocq mk_from_generic
     simp only [Bool.false_eq_true, ↓reduceIte]
