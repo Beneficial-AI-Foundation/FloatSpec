@@ -147,6 +147,7 @@ prompt_file="${attempt_dir}/prompt.md"
 codex_log="${attempt_dir}/codex.jsonl"
 codex_stderr="${attempt_dir}/codex.stderr.log"
 codex_last="${attempt_dir}/codex_last_message.md"
+codex_exit_log="${attempt_dir}/codex_exit_status.txt"
 build_log="${attempt_dir}/build.log"
 trust_log="${attempt_dir}/trust_gate.log"
 attempt_json="${attempt_dir}/attempt.json"
@@ -237,13 +238,35 @@ esac
   fi
 } >"$provider_log"
 
-timeout "$timeout_sec" \
-  "${codex_cmd[@]}" \
-    --cd "$PWD" \
-    --json \
-    --output-last-message "$codex_last" \
-    --dangerously-bypass-approvals-and-sandbox \
-    "$(cat "$prompt_file")" >"$codex_log" 2>"$codex_stderr" || true
+codex_status=0
+max_codex_attempts=2
+for codex_try in $(seq 1 "$max_codex_attempts"); do
+  if [[ "$codex_try" -gt 1 ]]; then
+    mv "$codex_log" "${codex_log}.${codex_try}.prev" 2>/dev/null || true
+    mv "$codex_stderr" "${codex_stderr}.${codex_try}.prev" 2>/dev/null || true
+    rm -f "$codex_last"
+  fi
+  set +e
+  timeout "$timeout_sec" \
+    "${codex_cmd[@]}" \
+      --cd "$PWD" \
+      --json \
+      --output-last-message "$codex_last" \
+      --dangerously-bypass-approvals-and-sandbox \
+      "$(cat "$prompt_file")" >"$codex_log" 2>"$codex_stderr"
+  codex_status=$?
+  set -e
+  if [[ "$codex_status" -eq 0 ]] && [[ -f "$codex_last" ]]; then
+    break
+  fi
+  if ! rg -q 'invalid_encrypted_content' "$codex_log" "$codex_stderr" 2>/dev/null; then
+    break
+  fi
+  if [[ "$codex_try" -lt "$max_codex_attempts" ]]; then
+    printf 'retrying codex exec after invalid_encrypted_content (attempt %s/%s)\n' "$codex_try" "$max_codex_attempts" >>"$provider_log"
+  fi
+done
+printf '%s\n' "$codex_status" >"$codex_exit_log"
 
 git status --porcelain=v1 --untracked-files=all | LC_ALL=C sort >"${attempt_dir}/git_status_after.txt"
 python3 - "${attempt_dir}/git_status_before.txt" "${attempt_dir}/git_status_after.txt" "${attempt_dir}/changed_during_attempt.txt" <<'PY'
@@ -300,6 +323,19 @@ elif [[ -f "$codex_last" ]]; then
   elif rg -i "^failed\\b" "$codex_last" >/dev/null 2>&1; then
     result="failed"
   fi
+elif [[ "$codex_status" -ne 0 ]] || rg -q '"turn.failed"|invalid_encrypted_content|Transport error' "$codex_log" "$codex_stderr" 2>/dev/null; then
+  result="failed"
+  blocker="$(
+    {
+      tail -n 40 "$codex_stderr" 2>/dev/null || true
+      tail -n 20 "$codex_log" 2>/dev/null || true
+    } | python3 - <<'PY'
+import sys
+
+text = sys.stdin.read().strip().replace("\n", " ")
+print(text[:1200])
+PY
+  )"
 fi
 
 if [[ ( "$result" == "proved" || "$result" == "no_action" ) && -f "$target_path" && -x scripts/sorry_dependency_audit.py ]]; then
