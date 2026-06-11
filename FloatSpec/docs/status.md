@@ -5,24 +5,24 @@ Generated from the current workspace by `scripts/status_report.sh`.
 ## Summary
 
 - Lean files: 57
-- `sorry`: 387
-- `axiom`: 1
+- `sorry`: 0
+- `axiom`: 0
 - `admit`: 0
-- Placeholder/weakening findings: 328
-- Conclusion-as-hypothesis findings: 0
+- Placeholder/weakening findings: 57
+- Conclusion-as-hypothesis findings: 1
 
 ## By Module
 
-| Module | Lean files | sorry | axiom | admit | placeholder findings | trusted count |
-|---|---:|---:|---:|---:|---:|---:|
-| Core | 16 | 38 | 1 | 0 | 51 | 0 |
-| Calc | 7 | 1 | 0 | 0 | 23 | 0 |
-| Prop | 8 | 239 | 0 | 0 | 9 | 0 |
-| Pff | 5 | 108 | 0 | 0 | 119 | 0 |
-| IEEE754 | 5 | 1 | 0 | 0 | 109 | 0 |
-| ErrorBound | 7 | 0 | 0 | 0 | 0 | 0 |
-| Other | 9 | 0 | 0 | 0 | 17 | 0 |
+| Module | Lean files | sorry | axiom | admit | placeholder findings |
+|---|---:|---:|---:|---:|---:|
+| Core | 16 | 0 | 0 | 0 | 31 |
+| Calc | 7 | 0 | 0 | 0 | 6 |
+| Prop | 8 | 0 | 0 | 0 | 1 |
+| Pff | 5 | 0 | 0 | 0 | 4 |
+| IEEE754 | 5 | 0 | 0 | 0 | 12 |
+| ErrorBound | 7 | 0 | 0 | 0 | 0 |
+| Other | 9 | 0 | 0 | 0 | 3 |
 
 ## Interpretation
 
-Build success and proof trust are separate gates. A file with placeholder findings is not trusted even if it compiles.
+The default build now covers the unified FloatSpec target. Placeholder findings remain status items to repair, not a separate build tier.

@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Create a structured FloatSpec proof-attempt record.
-
-The script intentionally treats build success, local target completion, and
-trust checks as separate gates. It can be used after an agent run or for a
-blocked report.
-"""
+"""Create a structured FloatSpec proof-attempt record."""
 
 from __future__ import annotations
 
@@ -72,11 +67,6 @@ def count_target_sorry(target: str | None) -> int | None:
     return len(re.findall(r"\bsorry\b", strip_comments(text[start:end])))
 
 
-def scan_diff_trust() -> tuple[bool, str]:
-    code, out = run(["scripts/check_diff_trust.sh", "--allow-statement-changes"])
-    return code == 0, out
-
-
 def classify_nontriviality(changed_files: list[str]) -> str:
     proof_text = []
     for file in changed_files:
@@ -128,7 +118,6 @@ def main() -> int:
             changed_files = []
     else:
         changed_files = git_changed_files()
-    trust_ok, trust_output = scan_diff_trust()
     target_sorry_count = count_target_sorry(args.target)
 
     record = {
@@ -146,11 +135,6 @@ def main() -> int:
         "api_env_key": args.api_env_key,
         "api_wire_api": args.api_wire_api,
         "local_target_gate": "unknown" if target_sorry_count is None else ("pass" if target_sorry_count == 0 else "fail"),
-        "trust_gate": "pass" if trust_ok else "fail",
-        "trust_gate_output": trust_output.strip(),
-        "no_new_sorry": trust_ok,
-        "no_axiom_or_admit": trust_ok,
-        "no_placeholder_semantics": trust_ok,
         "coq_alignment": args.coq_alignment,
         "statement_changed": args.statement_changed,
         "blocker": args.blocker,

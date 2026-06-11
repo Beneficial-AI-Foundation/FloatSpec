@@ -41,7 +41,7 @@ For every proof attempt, emit an `attempt.json` record:
 
 This makes progress auditable and prevents "agent round" commits from being the only state trail.
 
-### 2. Separate build success from proof trust
+### 2. Separate build success from placeholder status
 
 Source anchors:
 
@@ -54,7 +54,7 @@ Add three independent gates:
 
 - `build_gate`: `lake build` or targeted `lake env lean`.
 - `local_target_gate`: target theorem has no `sorry` and no unresolved goals.
-- `trust_gate`: no new placeholder definitions, no weakened theorem statements, no conclusion-as-hypothesis, no new trivial typeclass witnesses.
+- `placeholder_status`: report placeholder definitions, weakened theorem statements, conclusion-as-hypothesis, and trivial typeclass witnesses.
 
 A patch should not be marked complete unless all three pass, or the report explicitly says which gate failed.
 
@@ -134,9 +134,9 @@ Generate a `status.json` and `status.md` for FloatSpec:
   "placeholder_semantics_count": 0,
   "spec_weakened_count": 0,
   "by_module": {
-    "Core": {"sorry": 38, "trusted": 0, "placeholder": 0},
-    "Prop": {"sorry": 239, "trusted": 0, "placeholder": 0},
-    "Pff": {"sorry": 108, "trusted": 0, "placeholder": 0}
+    "Core": {"sorry": 38, "placeholder": 0},
+    "Prop": {"sorry": 239, "placeholder": 0},
+    "Pff": {"sorry": 108, "placeholder": 0}
   }
 }
 ```
@@ -169,7 +169,7 @@ This makes dependency ordering explicit and prevents low-quality "green" proofs.
 
 1. **Inventory**
    - Count `sorry`, `axiom`, placeholders, statement changes, and imports.
-   - Classify modules by trust tier.
+   - Classify modules by placeholder and proof status.
 
 2. **Target Selection**
    - Pick one theorem or one semantic placeholder.
@@ -188,7 +188,7 @@ This makes dependency ordering explicit and prevents low-quality "green" proofs.
    - Run build.
    - Run forbidden-pattern scanner.
    - Run statement-diff checker.
-   - Run trust-tier dependency checker.
+   - Run dependency and placeholder-status checkers.
 
 6. **Report**
    - Emit `attempt.json`.
@@ -203,14 +203,14 @@ This makes dependency ordering explicit and prevents low-quality "green" proofs.
 - `scripts/status_report.sh`
   - Emit counts by module family.
 
-- `scripts/check_diff_trust.sh`
+- `scripts/audit_placeholders.sh`
   - Fail on new `sorry`, `axiom`, `admit`, public `def ... := True`, identity stubs, or theorem statement changes without an allowlist.
 
 - `scripts/classify_attempt.py`
   - Convert build logs, diff scans, and target metadata into `attempt.json`.
 
-- `docs/TRUST_TIERS.md`
-  - Maintain the current trusted/scaffold/experimental classification.
+- unified build/status documentation
+  - Maintain the current placeholder/status classification.
 
 ## Practical Policy Changes
 

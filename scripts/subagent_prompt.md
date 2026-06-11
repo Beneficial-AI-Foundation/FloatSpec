@@ -133,7 +133,7 @@ If the file had no target (no errors, no `sorry`), write a brief “No-action re
 * [ ] Read PIPELINE/CLAUDE docs.
 * [ ] Implemented proof (or minimal Coq-aligned spec tweak).
 * [ ] No `axiom`/`admit`/`pure true`; no new `sorry`. Check by searching the diff to make sure you did not introduce any of these. If you did introduce any of these, revert all the related changes and work from beginning.
-* [ ] Ran `scripts/check_diff_trust.sh` and recorded the result.
+* [ ] Ran `scripts/audit_placeholders.sh --json FloatSpec` and recorded the result.
 * [ ] Emitted or updated a structured attempt record with `scripts/classify_attempt.py`.
 * [ ] `lake build` succeeds without error.
 * [ ] Change log entry added with Coq references.

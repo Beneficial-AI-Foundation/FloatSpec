@@ -5,7 +5,7 @@ usage() {
   cat <<'USAGE'
 Usage: scripts/audit_placeholders.sh [--json] [--diff] [PATH...]
 
-Scan Lean sources for proof-trust hazards: sorry/admit/axiom, True
+Scan Lean sources for placeholder hazards: sorry/admit/axiom, True
 placeholders, placeholder comments, identity/constant stubs, and common
 semantic-weakening markers.
 
