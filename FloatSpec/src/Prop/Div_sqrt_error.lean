@@ -82,7 +82,7 @@ lemma generic_format_plus_prec (fexp : Int → Int)
 variable (choice : Int → Bool)
 
 /-- Remainder of the division in FLX -/
-theorem div_error_FLX (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+theorem div_error_FLX (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta (FLX_exp prec) x) (hy : generic_format beta (FLX_exp prec) y) :
   generic_format beta (FLX_exp prec)
@@ -1096,7 +1096,7 @@ theorem sqrt_error_N_FLX (x : ℝ)
       have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow'
         (beta := beta) (fexp := fexp) (e := e)
       simpa [wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip ⟨hβ, hpre⟩
-    haveI : Monotone_exp fexp := by
+    haveI : FloatSpec.Core.Generic_fmt.Monotone_exp fexp := by
       refine ⟨?_⟩
       intro a b hab
       simp [fexp, FLX_exp, FloatSpec.Core.FLX.FLX_exp]
@@ -1623,7 +1623,7 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 private lemma valid_rnd_abs_sub_le_one
-  (rnd : ℝ → Int) [Valid_rnd rnd] (z : ℝ) :
+  (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (z : ℝ) :
   |((rnd z : Int) : ℝ) - z| ≤ (1 : ℝ) := by
   classical
   set k : Int := Int.floor z with hk
@@ -1843,7 +1843,7 @@ theorem format_REM
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
   generic_format beta fexp (x - ((rnd (x / y) : Int) : ℝ) * y) := by
   have Hpos :
-      ∀ (rnd' : ℝ → Int), Valid_rnd rnd' →
+      ∀ (rnd' : ℝ → Int), FloatSpec.Core.Generic_fmt.Valid_rnd rnd' →
       ∀ x y : ℝ,
         (|x / y| < (1 / 2 : ℝ) → rnd' (x / y) = 0) →
         generic_format beta fexp x →

@@ -2478,7 +2478,7 @@ theorem Rnd_NA_NG_pt_spec (F : ℝ → Prop) (x f : ℝ) :
     · -- There exists f2 ≠ f that is also nearest; prove |x| ≤ |f|
       rcases not_forall.mp huniq with ⟨f2, hnot⟩
       have hN2 : Rnd_N_pt F x f2 ∧ f2 ≠ f := by
-        exact _root_.not_imp.mp hnot
+        exact Classical.not_imp.mp hnot
       have hN2' : Rnd_N_pt F x f2 := hN2.1
       have hneq : f2 ≠ f := hN2.2
       -- Equal distances to x for two nearest points

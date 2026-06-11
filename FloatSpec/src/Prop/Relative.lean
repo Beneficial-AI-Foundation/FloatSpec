@@ -16,7 +16,7 @@ variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 /-- Relative error less than conversion -/
-lemma relative_error_lt_conversion (rnd : ℝ → Int) [Valid_rnd rnd] (x b : ℝ)
+lemma relative_error_lt_conversion (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_pos : 0 < b)
   (h_bound : x ≠ 0 → |FloatSpec.Calc.Round.round beta fexp () x - x| < b * |x|) :
   ∃ eps, |eps| < b ∧ FloatSpec.Calc.Round.round beta fexp () x = x * (1 + eps) := by
@@ -41,7 +41,7 @@ lemma relative_error_lt_conversion (rnd : ℝ → Int) [Valid_rnd rnd] (x b : �
       ring
 
 /-- Relative error less than or equal conversion -/
-lemma relative_error_le_conversion (rnd : ℝ → Int) [Valid_rnd rnd] (x b : ℝ)
+lemma relative_error_le_conversion (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_nonneg : 0 ≤ b)
   (h_bound : |FloatSpec.Calc.Round.round beta fexp () x - x| ≤ b * |x|) :
   ∃ eps, |eps| ≤ b ∧ FloatSpec.Calc.Round.round beta fexp () x = x * (1 + eps) := by
@@ -65,7 +65,7 @@ lemma relative_error_le_conversion (rnd : ℝ → Int) [Valid_rnd rnd] (x b : �
       ring
 
 /-- Relative error less than or equal conversion inverse -/
-lemma relative_error_le_conversion_inv (rnd : ℝ → Int) [Valid_rnd rnd] (x b : ℝ)
+lemma relative_error_le_conversion_inv (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ FloatSpec.Calc.Round.round beta fexp () x = x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp () x - x| ≤ b * |x| := by
   rcases h_exists with ⟨eps, heps, hround⟩
@@ -76,7 +76,7 @@ lemma relative_error_le_conversion_inv (rnd : ℝ → Int) [Valid_rnd rnd] (x b 
   exact mul_le_mul_of_nonneg_right heps (abs_nonneg x)
 
 /-- Relative error less than or equal conversion round inverse -/
-lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int) [Valid_rnd rnd] (x b : ℝ)
+lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ x = FloatSpec.Calc.Round.round beta fexp () x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp () x - x| ≤ b * |FloatSpec.Calc.Round.round beta fexp () x| := by
   rcases h_exists with ⟨eps, heps, hx⟩
@@ -95,7 +95,7 @@ lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int) [Valid_rnd rnd]
 variable (emin p : Int)
 variable (h_min : ∀ k, emin < k → p ≤ k - fexp k)
 
-private lemma valid_rnd_error_lt_one (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
+private lemma valid_rnd_error_lt_one (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     |((rnd x : Int) : ℝ) - x| < (1 : ℝ) := by
   classical
   have hcases : rnd x = Int.floor x ∨ rnd x = Int.ceil x := by
@@ -134,7 +134,7 @@ private lemma valid_rnd_error_lt_one (rnd : ℝ → Int) [Valid_rnd rnd] (x : �
       linarith
 
 /-- Relative error bound -/
-theorem relative_error (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem relative_error (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hβ : 1 < beta)
   (h_min : ∀ k, emin < k → p ≤ k - fexp k)
   (h_bound : (beta : ℝ) ^ emin ≤ |x|) :
@@ -153,8 +153,8 @@ theorem relative_error (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
     let sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x
     let actualRnd : ℝ → Int := FloatSpec.Calc.Round.nearestEvenMode.rnd
     let rz : Int := actualRnd sm
-    haveI : Valid_rnd actualRnd := by
-      change Valid_rnd
+    haveI : FloatSpec.Core.Generic_fmt.Valid_rnd actualRnd := by
+      change FloatSpec.Core.Generic_fmt.Valid_rnd
         (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
       infer_instance
     have hbpos_int : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -239,7 +239,7 @@ theorem relative_error (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
       _ ≤ (beta : ℝ) ^ (-p + 1) * |x| := hpow_le
 
 /-- Relative error existence -/
-theorem relative_error_ex (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem relative_error_ex (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hβ : 1 < beta)
   (h_min : ∀ k, emin < k → p ≤ k - fexp k)
   (h_bound : (beta : ℝ) ^ emin ≤ |x|) :
@@ -253,7 +253,7 @@ theorem relative_error_ex (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
       rnd x hβ h_min h_bound)
 
 /-- Relative error F2R emin -/
-theorem relative_error_F2R_emin (rnd : ℝ → Int) [Valid_rnd rnd] (m : Int)
+theorem relative_error_F2R_emin (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (m : Int)
   (hβ : 1 < beta)
   (h_min : ∀ k, emin < k → p ≤ k - fexp k)
   (h_nonzero : F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta) ≠ 0) :
@@ -292,7 +292,7 @@ theorem relative_error_F2R_emin (rnd : ℝ → Int) [Valid_rnd rnd] (m : Int)
     rnd x hβ h_min h_bound
 
 /-- Relative error F2R emin existence -/
-theorem relative_error_F2R_emin_ex (rnd : ℝ → Int) [Valid_rnd rnd] (m : Int)
+theorem relative_error_F2R_emin_ex (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (m : Int)
   (hβ : 1 < beta)
   (h_min : ∀ k, emin < k → p ≤ k - fexp k) :
   ∃ eps, |eps| < (beta : ℝ) ^ (-p + 1) ∧
@@ -753,7 +753,7 @@ theorem relative_error_N_round_F2R_emin (h_pos : 0 < p) (m : Int) (hβ : 1 < bet
         (choice := choice) h_pos x hβ h_min h_bound
 
 /-- Relative error round -/
-theorem relative_error_round (rnd : ℝ → Int) [Valid_rnd rnd] (h_pos : 0 < p) (x : ℝ)
+theorem relative_error_round (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (h_pos : 0 < p) (x : ℝ)
   (hβ : 1 < beta)
   (h_min : ∀ k, emin < k → p ≤ k - fexp k)
   (h_bound : (beta : ℝ) ^ emin ≤ |x|) :
@@ -798,7 +798,7 @@ theorem relative_error_round (rnd : ℝ → Int) [Valid_rnd rnd] (h_pos : 0 < p)
           nlinarith
 
 /-- Relative error round F2R emin -/
-theorem relative_error_round_F2R_emin (rnd : ℝ → Int) [Valid_rnd rnd] (h_pos : 0 < p) (m : Int)
+theorem relative_error_round_F2R_emin (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (h_pos : 0 < p) (m : Int)
   (hβ : 1 < beta)
   (h_min : ∀ k, emin < k → p ≤ k - fexp k)
   (h_nonzero : F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta) ≠ 0) :
@@ -846,7 +846,7 @@ lemma relative_error_FLX_aux (k : Int) : prec ≤ k - FLX_exp prec k := by
   simp [FLX_exp, FloatSpec.Core.FLX.FLX_exp]
 
 /-- FLX relative error -/
-theorem relative_error_FLX (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem relative_error_FLX (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hβ : 1 < beta) (h_nonzero : x ≠ 0) :
   |FloatSpec.Calc.Round.round beta (FLX_exp prec) () x - x| <
     (beta : ℝ) ^ (-prec + 1) * |x| := by
@@ -865,7 +865,7 @@ theorem relative_error_FLX (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
       (p := prec) (rnd := rnd) x hβ hmin hlow)
 
 /-- FLX relative error existence -/
-theorem relative_error_FLX_ex (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+theorem relative_error_FLX_ex (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
   ∃ eps, |eps| < (beta : ℝ) ^ (-prec + 1) ∧
     FloatSpec.Calc.Round.round beta (FLX_exp prec) () x = x * (1 + eps) := by
   have hbpos_int : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -875,7 +875,7 @@ theorem relative_error_FLX_ex (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ
     (fun hne => relative_error_FLX (beta := beta) (prec := prec) rnd x hβ hne)
 
 /-- FLX relative error round -/
-theorem relative_error_FLX_round (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem relative_error_FLX_round (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hβ : 1 < beta) (h_nonzero : x ≠ 0) :
   |FloatSpec.Calc.Round.round beta (FLX_exp prec) () x - x| <
     (beta : ℝ) ^ (-prec + 1) *
@@ -1455,7 +1455,7 @@ private lemma round_FLT_FLX_nearest (x : ℝ) (hβ : 1 < beta)
   simp [FloatSpec.Core.Generic_fmt.scaled_mantissa, hcexp]
 
 /-- FLT relative error -/
-theorem relative_error_FLT (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem relative_error_FLT (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hβ : 1 < beta)
   (h_bound : (beta : ℝ) ^ (emin + prec - 1) ≤ |x|) :
   |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () x - x| <
@@ -1467,7 +1467,7 @@ theorem relative_error_FLT (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
     (emin := emin + prec - 1) (p := prec) (rnd := rnd) x hβ hmin h_bound
 
 /-- FLT relative error F2R emin -/
-theorem relative_error_FLT_F2R_emin (rnd : ℝ → Int) [Valid_rnd rnd] (m : Int)
+theorem relative_error_FLT_F2R_emin (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (m : Int)
   (hβ : 1 < beta)
   (h_nonzero : F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta) ≠ 0) :
   |FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta)) -
@@ -1528,7 +1528,7 @@ theorem relative_error_FLT_F2R_emin (rnd : ℝ → Int) [Valid_rnd rnd] (m : Int
       rnd x hβ hbound
 
 /-- FLT relative error F2R emin existence -/
-theorem relative_error_FLT_F2R_emin_ex (rnd : ℝ → Int) [Valid_rnd rnd] (m : Int)
+theorem relative_error_FLT_F2R_emin_ex (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (m : Int)
   (hβ : 1 < beta) :
   ∃ eps, |eps| < (beta : ℝ) ^ (-prec + 1) ∧
     FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m emin : FloatSpec.Core.Defs.FlocqFloat beta)) =
@@ -1542,7 +1542,7 @@ theorem relative_error_FLT_F2R_emin_ex (rnd : ℝ → Int) [Valid_rnd rnd] (m : 
       (prec := prec) rnd m hβ hne)
 
 /-- FLT relative error existence -/
-theorem relative_error_FLT_ex (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem relative_error_FLT_ex (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hβ : 1 < beta)
   (h_bound : (beta : ℝ) ^ (emin + prec - 1) ≤ |x|) :
   ∃ eps, |eps| < (beta : ℝ) ^ (-prec + 1) ∧

@@ -53,19 +53,7 @@ lean_lib FloatSpecRoles where
 /-- Main library. -/
 @[default_target]
 lean_lib FloatSpecLib where
-  globs := #[
-    .one `FloatSpec,
-    .one `FloatSpec.VersoExt,
-    .one `FloatSpec.src,
-    .one `FloatSpec.src.SimprocWP,
-    .one `FloatSpec.src.ErrorBound,
-    .one `FloatSpec.src.Compat,
-    .andSubmodules `FloatSpec.src.Core,
-    .andSubmodules `FloatSpec.src.Calc,
-    .andSubmodules `FloatSpec.src.Prop,
-    .andSubmodules `FloatSpec.src.Pff,
-    .andSubmodules `FloatSpec.src.IEEE754
-  ]
+  globs := #[.andSubmodules `FloatSpec.src, .one `FloatSpec, .one `FloatSpec.VersoExt]
   needs := #[FloatSpecLinter, FloatSpecRoles]
 
 /-- Lightweight property tests (Plausible) and smoke checks. -/

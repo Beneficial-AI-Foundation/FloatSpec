@@ -11,7 +11,7 @@ open Std.Do
 variable (beta : Int)
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-variable [Monotone_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 /-- Generic format plus exact under magnitude condition -/
 theorem generic_format_plus (x y : ℝ)
