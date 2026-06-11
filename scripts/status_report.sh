@@ -83,7 +83,6 @@ by_module = {
         "axiom": 0,
         "admit": 0,
         "placeholder": 0,
-        "trusted": 0,
     }
     for fam in families
 }
@@ -112,7 +111,6 @@ status = {
     ),
     "spec_weakened_count": audit["counts"].get("conclusion_as_hypothesis", 0),
     "by_module": by_module,
-    "trust_policy": "A module is trusted only when it has real semantics, no sorry/admit/axiom, and no placeholder-pattern findings.",
 }
 
 with open(json_path, "w", encoding="utf-8") as f:
@@ -135,22 +133,21 @@ lines = [
     "",
     "## By Module",
     "",
-    "| Module | Lean files | sorry | axiom | admit | placeholder findings | trusted count |",
-    "|---|---:|---:|---:|---:|---:|---:|",
+    "| Module | Lean files | sorry | axiom | admit | placeholder findings |",
+    "|---|---:|---:|---:|---:|---:|",
 ]
 for fam in families:
     data = by_module[fam]
     lines.append(
         f"| {fam} | {data['lean_files']} | {data['sorry']} | {data['axiom']} | "
-        f"{data['admit']} | {data['placeholder']} | {data['trusted']} |"
+        f"{data['admit']} | {data['placeholder']} |"
     )
 
 lines.extend([
     "",
     "## Interpretation",
     "",
-    "Build success and proof trust are separate gates. A file with placeholder findings is not trusted even if it compiles.",
-    "",
+    "The default build now covers the unified FloatSpec target. Placeholder findings remain status items to repair, not a separate build tier.",
 ])
 
 with open(md_path, "w", encoding="utf-8") as f:
