@@ -7,27 +7,37 @@ import FloatSpec.src.Core
 -- Calculation modules  
 import FloatSpec.src.Calc
 
+-- Compatibility layer
+import FloatSpec.src.Compat
+
+-- Property analysis and error bounds
+import FloatSpec.src.Prop
+
 -- VCFloat-style error bound support
 import FloatSpec.src.ErrorBound
+
+-- IEEE 754 standard implementation
+import FloatSpec.src.IEEE754
 
 -- Simproc helpers for Id/wp Hoare triples
 import FloatSpec.src.SimprocWP
 
+-- Legacy Pff compatibility
+import FloatSpec.src.Pff
+
 /-!
 # FloatSpec
 
-Core floating-point formalization in Lean 4
+Complete floating-point formalization in Lean 4
 Transformed from the Flocq floating-point library
 
 This library provides:
 - Core floating-point functionality and generic formats
 - Calculation operations (addition, multiplication, division, square root)
+- Property analysis and error bounds
 - VCFloat-style error-bound support
-
-The translated `Prop`, `Pff`, and `IEEE754` layers are built by the explicit
-`FloatSpecAudit` target while their Flocq alignment is checked separately from
-this trusted aggregate. Import their leaf modules directly when working on
-their ports.
+- IEEE 754 standard implementation
+- Legacy Pff compatibility layer
 -/
 
 /-- Version string for the FloatSpec library -/

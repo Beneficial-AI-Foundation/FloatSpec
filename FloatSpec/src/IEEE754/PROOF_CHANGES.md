@@ -17,4 +17,4 @@ The current policy is:
   definitions, not as Hoare triples with trivial postconditions.
 
 The authoritative checks are the Lean files themselves plus `lake build
-FloatSpecAudit`.
+the unified FloatSpec build`.

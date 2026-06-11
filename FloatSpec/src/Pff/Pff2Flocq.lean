@@ -6,14 +6,6 @@ import FloatSpec.src.Prop.Plus_error
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
 
-/-!
-Tier 1 Scaffold / Tier 3 Excluded.
-
-This Pff-to-Flocq bridge leaf preserves translated names for audit and future
-porting. It is not re-exported by `FloatSpec.src.Pff` and is not part of the
-trusted FloatSpec aggregate.
--/
-
 -- Conversion from Pff to Flocq formats
 -- Translated from Coq file: flocq/src/Pff/Pff2Flocq.v
 

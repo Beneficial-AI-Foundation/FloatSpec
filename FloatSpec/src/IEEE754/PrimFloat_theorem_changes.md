@@ -15,4 +15,4 @@ Consequences for proof repair:
   be kept as ordinary theorems when they state that exact definitional behavior.
 
 The current product boundary is controlled by `FloatSpecLib`; the broader
-translated layers, including IEEE754, are checked by `FloatSpecAudit`.
+translated layers, including IEEE754, are checked by the unified FloatSpec build.

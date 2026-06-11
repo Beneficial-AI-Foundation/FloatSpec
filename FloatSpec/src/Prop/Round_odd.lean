@@ -3,14 +3,6 @@ import FloatSpec.src.Compat
 import FloatSpec.src.Calc.Round
 import Mathlib.Data.Real.Basic
 
-/-!
-Tier 1 Scaffold / Tier 3 Excluded.
-
-This property-analysis leaf preserves translated names for audit and future
-porting. It is not re-exported by `FloatSpec.src.Prop` and is not part of the
-trusted FloatSpec aggregate.
--/
-
 -- Round to odd properties
 -- Translated from Coq file: flocq/src/Prop/Round_odd.v
 

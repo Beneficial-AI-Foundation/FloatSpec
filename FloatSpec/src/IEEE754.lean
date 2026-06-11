@@ -1,5 +1,6 @@
-/-!
-The IEEE754 layer is outside the trusted aggregate until its arithmetic and
-normalization definitions are connected to the core model. Import leaf files
-directly when working on that layer.
--/
+-- IEEE 754 binary floating-point modules.
+
+import FloatSpec.src.IEEE754.Binary
+import FloatSpec.src.IEEE754.Bits
+import FloatSpec.src.IEEE754.BinarySingleNaN
+import FloatSpec.src.IEEE754.PrimFloat

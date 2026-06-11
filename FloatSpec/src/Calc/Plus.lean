@@ -48,7 +48,7 @@ noncomputable def Fplus_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
 
     The executable `Fplus_core` now follows the upstream truncation structure.
     The full semantic inbetween theorem is not ported here; this theorem is
-    intentionally only a computational marker rather than a trusted correctness
+    intentionally only a computational marker rather than a correctness
     claim.
 -/
 theorem Fplus_core_correct (m1 e1 m2 e2 e : Int) (He1 : e ≤ e1) :
@@ -111,7 +111,7 @@ def Fplus_correct_obligation (x y : FlocqFloat beta) : Prop :=
     The old proof closed by showing `Fplus` always returned `loc_Exact`.
     `Fplus_core` now uses real truncation, so that argument is gone.  The
     inbetween proof is still an explicit obligation (`Fplus_correct_obligation`)
-    rather than a trusted theorem.
+    rather than a correctness theorem.
 -/
 theorem Fplus_correct (x y : FlocqFloat beta) :
     ⦃⌜True⌝⦄

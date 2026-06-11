@@ -8,14 +8,6 @@ import FloatSpec.src.Prop.Mult_error
 import FloatSpec.src.Prop.Plus_error
 import Mathlib.Data.Real.Basic
 
-/-!
-Tier 1 Scaffold / Tier 3 Excluded.
-
-This property-analysis leaf preserves translated names for audit and future
-porting. It is not re-exported by `FloatSpec.src.Prop` and is not part of the
-trusted FloatSpec aggregate.
--/
-
 -- Remainder of the division and square root are in the FLX format
 -- Translated from Coq file: flocq/src/Prop/Div_sqrt_error.v
 

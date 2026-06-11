@@ -2788,7 +2788,7 @@ theorem shr_fexp_truncate (m e : Int) (l : Loc)
 namespace ExperimentalBinaryRound
 
 /-!
-This namespace quarantines partial IEEE round/normalize audit helpers.  The
+This namespace contains partial IEEE round/normalize audit helpers.  The
 definitions below construct finite/zero values from their inputs instead of the
 old constant overflow/NaN stand-ins, but they are not a port of Flocq's
 `binary_round_aux`, `binary_round`, or `binary_normalize` algorithms.

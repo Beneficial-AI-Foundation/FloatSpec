@@ -59,7 +59,7 @@ lean_lib FloatSpecLinter where
 lean_lib FloatSpecRoles where
   globs := #[.one `FloatSpecRoles]
 
-/-- Main library -/
+/-- Main library. -/
 @[default_target]
 lean_lib FloatSpecLib where
   globs := #[
@@ -70,26 +70,12 @@ lean_lib FloatSpecLib where
     .one `FloatSpec.src.ErrorBound,
     .one `FloatSpec.src.Compat,
     .andSubmodules `FloatSpec.src.Core,
-    .andSubmodules `FloatSpec.src.Calc
+    .andSubmodules `FloatSpec.src.Calc,
+    .andSubmodules `FloatSpec.src.Prop,
+    .andSubmodules `FloatSpec.src.Pff,
+    .andSubmodules `FloatSpec.src.IEEE754
   ]
   needs := #[FloatSpecLinter, FloatSpecRoles]
-
-/-- Explicit translated layers outside the default product target.
-
-These modules are intentionally outside the default product target while their
-Flocq alignment is audited separately from the trusted `FloatSpecLib` surface.
-Build this target explicitly when working on `Prop`, `Pff`, or `IEEE754` ports.
--/
-lean_lib FloatSpecAudit where
-  globs := #[
-    .one `FloatSpec.src.Prop,
-    .one `FloatSpec.src.Pff,
-    .one `FloatSpec.src.IEEE754,
-    .andSubmodules `FloatSpec.src.IEEE754,
-    .andSubmodules `FloatSpec.src.Prop,
-    .andSubmodules `FloatSpec.src.Pff
-  ]
-  needs := #[FloatSpecLib]
 
 /-- Lightweight property tests (Plausible) and smoke checks. -/
 lean_lib FloatSpecTests where
