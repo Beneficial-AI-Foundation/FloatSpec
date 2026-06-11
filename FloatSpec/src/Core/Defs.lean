@@ -29,7 +29,7 @@ open Std.Do
 
 Placed at root so both Core and higher layers can depend on it without cyclic imports.
 -/
-class Prec_gt_0 (prec : Int) : Prop :=
+class Prec_gt_0 (prec : Int) : Prop where
   /-- Witness that {lean}`0 < prec`. -/
   (pos : 0 < prec)
 

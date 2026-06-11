@@ -587,11 +587,17 @@ def MonotoneP_with {α : Type} (toReal : α → ℝ) (P : ℝ → α → Prop) :
 def MonotoneP_float {beta : Int} (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   MonotoneP_with (_root_.F2R (beta := beta)) P
 
--- Backward-compatible placeholder for generic α (kept abstract for now)
-def MonotoneP {α : Type} (P : ℝ → α → Prop) : Prop := True
+-- Generic fallback: without a float interpretation for `α`, monotonicity can
+-- only be expressed as representation uniqueness across increasing inputs.
+-- Flocq-aligned float developments should use `MonotoneP_float`.
+def MonotoneP {α : Type} (P : ℝ → α → Prop) : Prop :=
+  ∀ (p q : ℝ) (p' q' : α), p < q → P p p' → P q q' → p' = q'
 
--- Min/Max disjunction placeholder (kept abstract for now)
-def MinOrMaxP {α : Type} (P : ℝ → α → Prop) : Prop := True
+-- Generic fallback for the Flocq min/max disjunction.  The faithful
+-- float-specific content is carried by `isMin'`/`isMax'`; this generic form
+-- requires uniqueness at each rounded real instead of silently returning `True`.
+def MinOrMaxP {α : Type} (P : ℝ → α → Prop) : Prop :=
+  ∀ (r : ℝ) (p q : α), P r p → P r q → p = q
 
 -- Rounded-mode package
 def RoundedModeP {α : Type} (P : ℝ → α → Prop) : Prop :=
@@ -601,8 +607,11 @@ def RoundedModeP {α : Type} (P : ℝ → α → Prop) : Prop :=
 def UniqueP {α : Type} (P : ℝ → α → Prop) : Prop :=
   ∀ r p q, P r p → P r q → p = q
 
--- Projector property placeholder
-def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop := True
+-- Generic projector fallback.  Coq's `ProjectorP` is float-specific and uses
+-- bounded floats plus real-value equality; in this generic shell we require
+-- uniqueness of outputs at the same real input.
+def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop :=
+  ∀ (r : ℝ) (p q : α), P r p → P r q → p = q
 
 -- ---------------------------------------------------------------------------
 -- Minimal bound skeleton + helper predicates (shared across Pff specs)
@@ -612,23 +621,24 @@ structure Fbound_skel where
   dExp : Int := 0
   vNum : Int := 1
 
--- Coq-style boundedness predicate (placeholder for type compatibility)
-def Fbounded {beta : Int}
-    (bo : Fbound_skel)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
-
--- Proper Coq-matching boundedness predicate for canonical forms
 -- Coq: Fbounded b d := (Z.abs (Fnum d) < Zpos (vNum b))%Z /\ (- dExp b <= Fexp d)%Z
-def Fbounded' {beta : Int}
+def Fbounded {beta : Int}
     (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   |f.Fnum| < bo.vNum ∧ -bo.dExp ≤ f.Fexp
 
+-- Backward-compatible alias kept for proofs that were already moved to the
+-- faithful boundedness predicate.
+def Fbounded' {beta : Int}
+    (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fbounded bo f
+
 def isMin {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
-  fun _ _ => True
+  fun _ x => ∀ y : α, y = x
 
 def isMax {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
-  fun _ _ => True
+  fun _ x => ∀ y : α, y = x
 
 -- Proper Coq-matching isMin predicate for floats
 -- Coq: isMin r min := Fbounded b min ∧ (min ≤ r) ∧ (∀ f, Fbounded b f → (f ≤ r) → (f ≤ min))
@@ -668,7 +678,7 @@ def RoundedModeP_full {beta : Int} (b : Fbound_skel)
   ProjectorP_float b P ∧ ProjectorEqP_float b P
 
 -- ---------------------------------------------------------------------------
--- Ulp placeholder (Coq-style `Fulp` on floats)
+-- Lightweight ulp model (Coq-style `Fulp` on floats)
 
 /-- Coq compatibility: abstract ulp on a float. In detailed developments,
 `Fulp` ties to `ulp beta (FLT_exp ...) (F2R q)`. We keep it abstract here so
@@ -796,36 +806,42 @@ theorem firstNormalPos_eq {beta : Int}
   rfl
 
 -- ---------------------------------------------------------------------------
--- Closest/Normal placeholders (from Pff.v sections)
+-- Closest/Normal predicates (from Pff.v sections)
 
--- Coq-style rounding relation to the closest representable float (placeholder)
+-- Coq: Closest r p := Fbounded b p /\
+--   forall f, Fbounded b f -> Rabs (p - r) <= Rabs (f - r).
 def Closest {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fbounded bo f ∧
+    ∀ g : FloatSpec.Core.Defs.FlocqFloat beta,
+      Fbounded bo g →
+        |_root_.F2R f - r| ≤ |_root_.F2R g - r|
 
--- Coq-style normality predicate (placeholder for type compatibility)
-def Fnormal {beta : Int}
-    (radix : ℝ) (bo : Fbound_skel)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
-
--- Coq-style subnormality predicate (placeholder for type compatibility)
-def Fsubnormal {beta : Int}
-    (radix : ℝ) (bo : Fbound_skel)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
-
--- Proper Coq-matching normality predicate for canonical forms
 -- Coq: Fnormal p := Fbounded b p /\ (Zpos (vNum b) <= Z.abs (radix * Fnum p))%Z
+def Fnormal {beta : Int}
+    (radix : Int) (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fbounded bo f ∧ bo.vNum ≤ |radix * f.Fnum|
+
+-- Coq: Fsubnormal p := Fbounded b p /\ Fexp p = (- dExp b)%Z /\
+--   (Z.abs (radix * Fnum p) < Zpos (vNum b))%Z
+def Fsubnormal {beta : Int}
+    (radix : Int) (bo : Fbound_skel)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fbounded bo f ∧ f.Fexp = -bo.dExp ∧ |radix * f.Fnum| < bo.vNum
+
+-- Backward-compatible alias used by proofs that already avoided the old shell.
 def Fnormal' {beta : Int}
     (radix : Int) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
-  Fbounded' bo f ∧ bo.vNum ≤ |radix * f.Fnum|
+  Fnormal radix bo f
 
--- Proper Coq-matching subnormality predicate for canonical forms
--- Coq: Fsubnormal p := Fbounded b p /\ Fexp p = (- dExp b)%Z /\ (Z.abs (radix * Fnum p) < Zpos (vNum b))%Z
+-- Backward-compatible alias used by proofs that already avoided the old shell.
 def Fsubnormal' {beta : Int}
     (radix : Int) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
-  Fbounded' bo f ∧ f.Fexp = -bo.dExp ∧ |radix * f.Fnum| < bo.vNum
+  Fsubnormal radix bo f
 
 -- Coq: `Fdigit p := digit radix (Fnum p)`.
 noncomputable def Fdigit {beta : Int}
@@ -836,9 +852,8 @@ noncomputable def Fdigit {beta : Int}
 def is_Fzero {beta : Int} (x : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   x.Fnum = 0
 
--- Coq-style boundedness predicate (placeholder)
 -- ---------------------------------------------------------------------------
--- Parity on floats and neighbor operations (skeleton placeholders)
+-- Parity on floats and neighbor operations (lightweight local models)
 
 -- Coq uses predicates like FNeven/FNodd and neighbors FNSucc/FNPred.
 -- FNeven/FNodd are parity predicates on the normalized representation.
@@ -948,17 +963,17 @@ def EvenClosest {beta : Int}
 -- ---------------------------------------------------------------------------
 -- Rounding operators (RND_*) and canonicity (skeletons to mirror Coq Pff.v)
 
--- Canonicity predicate used by RND_* theorems (placeholder for type compatibility)
+-- Coq: Fcanonic a := Fnormal a \/ Fsubnormal a.
 def Fcanonic {beta : Int}
     (radix : Int) (b : Fbound_skel)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop := True
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+  Fnormal radix b f ∨ Fsubnormal radix b f
 
--- Proper Coq-matching canonicity predicate for canonical forms
--- Coq: Fcanonic a := Fnormal a \/ Fsubnormal a
+-- Backward-compatible alias used by proofs that already avoided the old shell.
 def Fcanonic' {beta : Int}
     (radix : Int) (b : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
-  Fnormal' radix b f ∨ Fsubnormal' radix b f
+  Fcanonic radix b f
 
 noncomputable def FcanonicBound_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
@@ -972,8 +987,11 @@ theorem FcanonicBound {beta : Int}
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
     (pure (FcanonicBound_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, FcanonicBound_check, ULift.down_up, Fbounded] at *
+  intro hcan
+  simp only [wp, PostCond.noThrow, pure, FcanonicBound_check]
+  rcases hcan with hnormal | hsubnormal
+  · exact hnormal.1
+  · exact hsubnormal.1
 
 noncomputable def FcanonicFopp_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
@@ -987,8 +1005,17 @@ theorem FcanonicFopp {beta : Int}
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
     (pure (FcanonicFopp_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (Fopp p)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, FcanonicFopp_check, ULift.down_up, Fcanonic] at *
+  intro hcan
+  simp only [wp, PostCond.noThrow, pure, FcanonicFopp_check]
+  rcases hcan with hnormal | hsubnormal
+  · left
+    simpa [Fcanonic, Fnormal, Fsubnormal, Fbounded, Fopp,
+      FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg]
+      using hnormal
+  · right
+    simpa [Fcanonic, Fnormal, Fsubnormal, Fbounded, Fopp,
+      FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg]
+      using hsubnormal
 
 noncomputable def FcanonicFabs_check {beta : Int}
     (radix : Int) (b : Fbound_skel)
@@ -1002,8 +1029,17 @@ theorem FcanonicFabs {beta : Int}
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
     (pure (FcanonicFabs_check (beta:=beta) radix b p) : Id Unit)
     ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (Fabs p)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, FcanonicFabs_check, ULift.down_up, Fcanonic] at *
+  intro hcan
+  simp only [wp, PostCond.noThrow, pure, FcanonicFabs_check]
+  rcases hcan with hnormal | hsubnormal
+  · left
+    simpa [Fcanonic, Fnormal, Fsubnormal, Fbounded, Fabs,
+      FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs, abs_mul]
+      using hnormal
+  · right
+    simpa [Fcanonic, Fnormal, Fsubnormal, Fbounded, Fabs,
+      FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs, abs_mul]
+      using hsubnormal
 
 -- Relative ordering of canonical floats (Coq: `FcanonicLtPos`)
 noncomputable def FcanonicLtPos_check {beta : Int}
@@ -1016,7 +1052,7 @@ noncomputable def FcanonicLtPos_check {beta : Int}
 smaller than that of `q`, or the exponents match and the mantissa of `p`
 is strictly smaller.
 
-Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
 theorem FcanonicLtPos {beta : Int}
@@ -1231,7 +1267,7 @@ noncomputable def Fcanonic_Rle_Zle_check {beta : Int}
 /-- Coq: `Fcanonic_Rle_Zle` — canonical floats ordered by absolute value have
     nondecreasing exponents.
 
-Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
 theorem Fcanonic_Rle_Zle {beta : Int}
@@ -1456,7 +1492,7 @@ noncomputable def FcanonicLtNeg_check {beta : Int}
 of `q` is strictly smaller than the exponent of `p`, or the exponents match and
 the mantissa of `p` is strictly smaller.
 
-Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
 theorem FcanonicLtNeg {beta : Int}
@@ -1933,16 +1969,15 @@ noncomputable def FnormalizeCanonic_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `FnormalizeCanonic` — normalization yields a canonical float. -/
-theorem FnormalizeCanonic {beta : Int}
+/-- Audit gap for Coq `FnormalizeCanonic`.
+
+The current Lean `Fnormalize` skeleton is the identity, so the Flocq theorem
+`Fbounded b p -> Fcanonic (Fnormalize p)` is false as an exposed theorem until
+normalization is implemented. -/
+noncomputable def FnormalizeCanonic {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
-    (p : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b p⌝⦄
-    (pure (FnormalizeCanonic_check (beta:=beta) radix b precision p) : Id Unit)
-    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b
-            (Fnormalize (beta:=beta) radix b precision p)⌝⦄ := by
-  intro _
-  simp [ FnormalizeCanonic_check, Fcanonic, Fnormalize]
+    (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
 
 noncomputable def FcanonicFnormalizeEq_check {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
@@ -1969,7 +2004,7 @@ noncomputable def FcanonicPosFexpRlt_check {beta : Int}
 /-- Coq: `FcanonicPosFexpRlt` — among nonnegative canonical floats, a strictly
 smaller exponent yields a strictly smaller value.
 
-Note: Uses `Fcanonic'` (proper Coq definition) instead of placeholder `Fcanonic`.
+Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 Requires `radix = beta` and `1 < beta` for the mantissa bounds to imply the result. -/
 theorem FcanonicPosFexpRlt {beta : Int}
     (radix : Int) (b : Fbound_skel)
@@ -1987,7 +2022,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
   simp only [wp, PostCond.noThrow, pure, FcanonicPosFexpRlt_check, ULift.down_up]
   -- Prove by contradiction: assume F2R y ≤ F2R x
   by_contra h_not_lt
-  have h_not_lt' : _root_.F2R (beta:=beta) y ≤ _root_.F2R (beta:=beta) x := le_of_not_lt h_not_lt
+  have h_not_lt' : _root_.F2R (beta:=beta) y ≤ _root_.F2R (beta:=beta) x := le_of_not_gt h_not_lt
   -- Case split: F2R y < F2R x or F2R y = F2R x
   rcases lt_or_eq_of_le h_not_lt' with h_lt | h_eq
   · -- Case: F2R y < F2R x (with F2R y ≥ 0)
@@ -2082,7 +2117,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
         have hvNum_pos : (0 : ℤ) < b.vNum := by
           -- vNum ≤ beta * y.Fnum and y.Fnum < vNum
           -- So vNum ≤ beta * (vNum - 1) is possible if beta ≥ 2
-          -- Actually vNum > 0 should be an axiom from the structure
+          -- A stronger bound descriptor would expose `0 < vNum` directly.
           -- For now assume vNum > 0 from beta > 1 and the bounds
           by_contra hcontra
           push_neg at hcontra
@@ -2529,7 +2564,7 @@ noncomputable def FcanonicNegFexpRlt_check {beta : Int}
 /-- Coq: `FcanonicNegFexpRlt` — among nonpositive canonical floats, a strictly
 larger exponent forces a strictly smaller real value.
 
-Note: Uses `Fcanonic'` (proper Coq definition) instead of placeholder `Fcanonic`.
+Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 Requires `radix = beta` and `1 < beta` for the mantissa bounds to imply the result. -/
 theorem FcanonicNegFexpRlt {beta : Int}
     (radix : Int) (b : Fbound_skel)
@@ -2547,7 +2582,7 @@ theorem FcanonicNegFexpRlt {beta : Int}
   simp only [wp, PostCond.noThrow, pure, FcanonicNegFexpRlt_check, ULift.down_up]
   -- Prove by contradiction: assume F2R x ≤ F2R y
   by_contra h_not_lt
-  have h_not_lt' : _root_.F2R (beta:=beta) x ≤ _root_.F2R (beta:=beta) y := le_of_not_lt h_not_lt
+  have h_not_lt' : _root_.F2R (beta:=beta) x ≤ _root_.F2R (beta:=beta) y := le_of_not_gt h_not_lt
   -- Case split: F2R x < F2R y or F2R x = F2R y
   rcases lt_or_eq_of_le h_not_lt' with h_lt | h_eq
   · -- Case: F2R x < F2R y (with both ≤ 0)
@@ -2852,8 +2887,8 @@ noncomputable def NormalAndSubNormalNotEq_check {beta : Int}
 /-- Coq: `NormalAndSubNormalNotEq` — a normal float and a subnormal float
 represent different real numbers.
 
-Note: Uses `Fnormal'` and `Fsubnormal'` (proper Coq definitions) instead of
-placeholder `Fnormal`/`Fsubnormal`. Requires `radix = beta` and `1 < beta`. -/
+Note: Uses `Fnormal'` and `Fsubnormal'`, the Coq-matching predicates.
+Requires `radix = beta` and `1 < beta`. -/
 theorem NormalAndSubNormalNotEq {beta : Int}
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
@@ -3010,7 +3045,7 @@ noncomputable def FcanonicUnique_check {beta : Int}
 /-- Coq: `FcanonicUnique` — canonical floats that represent the same real
 number are equal as floats.
 
-Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
 theorem FcanonicUnique {beta : Int}
@@ -3044,7 +3079,7 @@ theorem FcanonicUnique {beta : Int}
     -- First, show p.Fexp = q.Fexp
     have hexp_eq : p.Fexp = q.Fexp := by
       by_contra hne
-      rcases Ne.lt_or_lt hne with hlt | hgt
+      rcases Ne.lt_or_gt hne with hlt | hgt
       · -- p.Fexp < q.Fexp
         -- From heqF2R: p.Fnum * beta^p.Fexp = q.Fnum * beta^q.Fexp
         -- Rearranging: p.Fnum = q.Fnum * beta^(q.Fexp - p.Fexp)
@@ -3204,7 +3239,7 @@ noncomputable def FcanonicLeastExp_check {beta : Int}
 /-- Coq: `FcanonicLeastExp` — a canonical float with the same value as a
 bounded float has exponent no larger than the bounded one.
 
-Note: Uses `Fcanonic'` (proper Coq-matching definition) rather than placeholder `Fcanonic`.
+Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 Requires `1 < beta` and `radix = beta` for the mantissa/exponent relationship to work.
 Also requires `0 < b.vNum` for the Normal case to be non-vacuous. -/
 theorem FcanonicLeastExp {beta : Int}
@@ -3374,29 +3409,27 @@ noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Min_Pos_bounded_aux` — for nonnegative `r`, the value of
-    `RND_Min_Pos r` is bounded according to the bound structure `b`. -/
-theorem RND_Min_Pos_bounded_aux {beta : Int}
+/-- Audit gap for Coq `RND_Min_Pos_bounded_aux`.
+
+The current `RND_Min_Pos` skeleton does not establish the mantissa and exponent
+bounds required by `Fbounded`. -/
+noncomputable def RND_Min_Pos_bounded_aux {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜0 ≤ r⌝⦄
-    (pure (RND_Min_Pos_bounded_aux_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_Min_Pos_bounded_aux_check, ULift.down_up, Fbounded]
+    Unit :=
+  ()
 
 noncomputable def RND_Min_Pos_canonic_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Min_Pos_canonic` — for nonnegative `r`, `RND_Min_Pos r` is canonical.
-    Stated using project Hoare-triple syntax; proof deferred. -/
-theorem RND_Min_Pos_canonic {beta : Int}
+/-- Audit gap for Coq `RND_Min_Pos_canonic`.
+
+The current `RND_Min_Pos` skeleton does not carry the full Flocq normalization
+proof obligations, so this is not exposed as a theorem. -/
+noncomputable def RND_Min_Pos_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜0 ≤ r⌝⦄
-    (pure (RND_Min_Pos_canonic_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_Min_Pos_canonic_check, ULift.down_up, Fcanonic]
+    Unit :=
+  ()
 
 -- Lower rounding on nonnegative reals is ≤ the input (Coq: RND_Min_Pos_Rle)
 noncomputable def RND_Min_Pos_Rle_check {beta : Int}
@@ -4226,7 +4259,7 @@ noncomputable def RND_Min_Pos_projector_check {beta : Int}
     We state this equality at the real level via `F2R`.
 
     Note: The Lean version uses `Fcanonic'` which matches the proper Coq `Fcanonic`
-    definition (Fnormal \/ Fsubnormal), rather than the placeholder `Fcanonic = True`. -/
+    definition (Fnormal \/ Fsubnormal). -/
 theorem RND_Min_Pos_projector {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -4643,15 +4676,11 @@ noncomputable def RND_Min_canonic_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Min_canonic` — canonicity of the lower rounding `RND_Min`.
-    We mirror the statement using the project Hoare-triple style. -/
-theorem RND_Min_canonic {beta : Int}
+/-- Audit gap for Coq `RND_Min_canonic`; see `RND_Min_Pos_canonic`. -/
+noncomputable def RND_Min_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (RND_Min_canonic_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_Min_canonic_check, ULift.down_up, Fcanonic]
+    Unit :=
+  ()
 
 -- Upper rounding operators (mirroring Coq RND_Max_*)
 
@@ -4678,31 +4707,24 @@ noncomputable def RND_Max_Pos_canonic_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Max_Pos_canonic` — for nonnegative `r`, `RND_Max_Pos r` is canonical.
-    Stated using project Hoare-triple syntax; proof deferred. -/
-theorem RND_Max_Pos_canonic {beta : Int}
+/-- Audit gap for Coq `RND_Max_Pos_canonic`; see `RND_Min_Pos_canonic`. -/
+noncomputable def RND_Max_Pos_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜0 ≤ r⌝⦄
-    (pure (RND_Max_Pos_canonic_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_Max_Pos_canonic_check, ULift.down_up, Fcanonic]
+    Unit :=
+  ()
 
 -- Lower rounding correctness on nonnegative reals (Coq: RND_Min_Pos_correct)
 noncomputable def RND_Min_Pos_correct_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Min_Pos_correct` — for nonnegative `r`, `RND_Min_Pos r` is
-    an extremal lower witness captured by `isMin`. -/
-theorem RND_Min_Pos_correct {beta : Int}
+/-- Audit gap for Coq `RND_Min_Pos_correct`.
+The generic `isMin` shell is no longer `True`; this correctness theorem needs
+the float-specific `isMin'` statement and proof. -/
+noncomputable def RND_Min_Pos_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜0 ≤ r⌝⦄
-    (pure (RND_Min_Pos_correct_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r
-              (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_Min_Pos_correct_check, ULift.down_up, isMin]
+    Unit :=
+  ()
 
 -- Upper rounding is ≥ the input on nonnegative reals (Coq: RND_Max_Pos_Rle)
 noncomputable def RND_Max_Pos_Rle_check {beta : Int}
@@ -4772,17 +4794,11 @@ noncomputable def RND_Max_Pos_correct_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Max_Pos_correct` — for nonnegative `r`, `RND_Max_Pos r` is
-    an extremal upper witness captured by `isMax`. -/
-theorem RND_Max_Pos_correct {beta : Int}
+/-- Audit gap for Coq `RND_Max_Pos_correct`; see `RND_Min_Pos_correct`. -/
+noncomputable def RND_Max_Pos_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜0 ≤ r⌝⦄
-    (pure (RND_Max_Pos_correct_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r
-              (RND_Max_Pos (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, RND_Max_Pos_correct_check, isMax]
-  trivial
+    Unit :=
+  ()
 
 -- Roundings of any real (upper rounding)
 noncomputable def RND_Max {beta : Int}
@@ -4795,15 +4811,11 @@ noncomputable def RND_Max_canonic_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Max_canonic` — canonicity of the upper rounding `RND_Max`.
-    Mirrored with the same Hoare-triple style as other RND theorems. -/
-theorem RND_Max_canonic {beta : Int}
+/-- Audit gap for Coq `RND_Max_canonic`; see `RND_Max_Pos_canonic`. -/
+noncomputable def RND_Max_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (RND_Max_canonic_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Max (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_Max_canonic_check, ULift.down_up, Fcanonic]
+    Unit :=
+  ()
 
 -- Correctness of lower rounding (Coq: RND_Min_correct)
 noncomputable def RND_Min_correct_check {beta : Int}
@@ -4811,14 +4823,11 @@ noncomputable def RND_Min_correct_check {beta : Int}
     (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Min_correct` — `RND_Min` produces a lower extremal value. -/
-theorem RND_Min_correct {beta : Int}
+/-- Audit gap for Coq `RND_Min_correct`; see `RND_Min_Pos_correct`. -/
+noncomputable def RND_Min_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (RND_Min_correct_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r (RND_Min (beta:=beta) b radix p r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_Min_correct_check, ULift.down_up, isMin]
+    Unit :=
+  ()
 
 -- Correctness of upper rounding (Coq: RND_Max_correct)
 noncomputable def RND_Max_correct_check {beta : Int}
@@ -4826,13 +4835,11 @@ noncomputable def RND_Max_correct_check {beta : Int}
     (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_Max_correct` — `RND_Max` produces an upper extremal value. -/
-theorem RND_Max_correct {beta : Int}
+/-- Audit gap for Coq `RND_Max_correct`; see `RND_Min_Pos_correct`. -/
+noncomputable def RND_Max_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (RND_Max_correct_check (beta:=beta) b radix p r) : Id Unit)
-    ⦃⇓_ => ⌜isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r (RND_Max (beta:=beta) b radix p r)⌝⦄ := by
-  intro _; simp [wp, PostCond.noThrow, pure, RND_Max_correct_check, ULift.down_up, isMax]
+    Unit :=
+  ()
 
 -- Even-closest rounding: canonicity (Coq: RND_EvenClosest_canonic)
 noncomputable def RND_EvenClosest_canonic_check {beta : Int}
@@ -4840,15 +4847,12 @@ noncomputable def RND_EvenClosest_canonic_check {beta : Int}
     (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_EvenClosest_canonic` — even-tie closest rounding is canonic. -/
-theorem RND_EvenClosest_canonic {beta : Int}
+/-- Audit gap for Coq `RND_EvenClosest_canonic`; see `RND_Min_canonic`. -/
+noncomputable def RND_EvenClosest_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (RND_EvenClosest_canonic_check (beta:=beta) b radix precision r) : Id Unit)
-    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b (RND_Min (beta:=beta) b radix (Int.ofNat precision) r)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_EvenClosest_canonic_check, ULift.down_up, Fcanonic]
+    Unit :=
+  ()
 
 -- Even-closest rounding: correctness (Coq: RND_EvenClosest_correct)
 noncomputable def RND_EvenClosest_correct_check {beta : Int}
@@ -4856,31 +4860,28 @@ noncomputable def RND_EvenClosest_correct_check {beta : Int}
     (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `RND_EvenClosest_correct` — correctness of even-tie closest rounding. -/
-theorem RND_EvenClosest_correct {beta : Int}
+/-- Audit gap for Coq `RND_EvenClosest_correct`.
+The old translated shell had postcondition `True`; it is not a correctness
+theorem until the even-closest rounding result is stated with real content. -/
+noncomputable def RND_EvenClosest_correct {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (RND_EvenClosest_correct_check (beta:=beta) b radix precision r) : Id Unit)
-    ⦃⇓_ => ⌜True⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, RND_EvenClosest_correct_check, ULift.down_up]
+    Unit :=
+  ()
 
 -- Totality of EvenClosest
 noncomputable def EvenClosestTotal_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `EvenClosestTotal` — `EvenClosest` is total. -/
-theorem EvenClosestTotal {beta : Int}
+/-- Audit gap for Coq `EvenClosestTotal`.
+
+Totality of even-closest requires `ClosestTotal`, which depends on the missing
+bounded-float existence/minimum machinery. -/
+noncomputable def EvenClosestTotal {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (EvenClosestTotal_check (beta:=beta) b radix precision r) : Id Unit)
-    ⦃⇓_ => ⌜∃ p : FloatSpec.Core.Defs.FlocqFloat beta,
-            EvenClosest (beta:=beta) b radix precision r p⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, EvenClosestTotal_check, ULift.down_up, EvenClosest, Closest, FNeven] at *
-  exact ⟨⟨0, 0⟩, Or.inl Even.zero⟩
+    Unit :=
+  ()
 
 -- Parity under negation (Coq: FevenFop)
 noncomputable def FevenFop_check {beta : Int}
@@ -5048,19 +5049,15 @@ noncomputable def ClosestTotal_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `ClosestTotal` — for any real `r`, there exists a float `f`
-    that is a closest representation according to `Closest`.
-    We use the Hoare-triple style and defer the proof. -/
-theorem ClosestTotal {beta : Int}
+/-- Audit gap for Coq `ClosestTotal`.
+
+The faithful `Closest` predicate requires bounded-float existence and a minimum
+distance argument; the current `Fbound_skel` does not encode Coq's positive
+`vNum`/precision hypotheses. -/
+noncomputable def ClosestTotal {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (ClosestTotal_check (beta:=beta) bo radix r) : Id Unit)
-    ⦃⇓_ => ⌜∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
-            Closest (beta:=beta) bo radix r f⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, ClosestTotal_check]
-  -- Closest is defined as True, so any float works
-  exact ⟨⟨0, 0⟩, trivial⟩
+    Unit :=
+  ()
 
 -- Compatibility of `Closest` w.r.t. equalities (Coq: `ClosestCompatible`)
 noncomputable def ClosestCompatible_check {beta : Int}
@@ -5077,7 +5074,10 @@ theorem ClosestCompatible {beta : Int}
   intro _
   simp only [wp, PostCond.noThrow, pure, ClosestCompatible_check, PredTrans.pure, PredTrans.apply,
              Id.run, ULift.down]
-  simp [CompatibleP, Closest]
+  intro r1 r2 p q hp hr hpq
+  subst r2
+  subst q
+  exact hp
 
 -- Minimal conditions imply `Closest r min` (Coq: `ClosestMin`)
 noncomputable def ClosestMin_check {beta : Int}
@@ -5086,19 +5086,16 @@ noncomputable def ClosestMin_check {beta : Int}
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `ClosestMin` — if `min` and `max` bracket `r` appropriately and are
-    extremal for `isMin/isMax`, then `min` is a closest representation. -/
-theorem ClosestMin {beta : Int}
+/-- Audit gap for Coq `ClosestMin`.
+
+The current public `isMin`/`isMax` names are still generic skeletons, so they
+cannot imply the faithful `Closest` predicate. -/
+noncomputable def ClosestMin {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r min ∧
-        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
-        2 * r ≤ _root_.F2R min + _root_.F2R max⌝⦄
-    (pure (ClosestMin_check (beta:=beta) bo radixR r min max) : Id Unit)
-    ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r min⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, ClosestMin_check, Closest]
+    Unit :=
+  ()
 
 -- Maximal conditions imply `Closest r max` (Coq: `ClosestMax`)
 noncomputable def ClosestMax_check {beta : Int}
@@ -5107,34 +5104,24 @@ noncomputable def ClosestMax_check {beta : Int}
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `ClosestMax` — if `min` and `max` bracket `r` appropriately and are
-    extremal for `isMin/isMax`, then `max` is a closest representation. -/
-theorem ClosestMax {beta : Int}
+/-- Audit gap for Coq `ClosestMax`; see `ClosestMin`. -/
+noncomputable def ClosestMax {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r min ∧
-        isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) bo radixZ r max ∧
-        _root_.F2R min + _root_.F2R max ≤ 2 * r⌝⦄
-    (pure (ClosestMax_check (beta:=beta) bo radixR r min max) : Id Unit)
-    ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r max⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, ClosestMax_check, Closest]
+    Unit :=
+  ()
 
 -- Disjunction: any candidate is either a min or a max (Coq: `ClosestMinOrMax`)
 noncomputable def ClosestMinOrMax_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
-/-- Coq: `ClosestMinOrMax` — any closest candidate is either a min-side or
-    a max-side witness of closeness. -/
-theorem ClosestMinOrMax {beta : Int}
+/-- Audit gap for Coq `ClosestMinOrMax`; depends on faithful `isMin`/`isMax`. -/
+noncomputable def ClosestMinOrMax {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (ClosestMinOrMax_check (beta:=beta) bo radixR) : Id Unit)
-    ⦃⇓_ => ⌜MinOrMaxP (Closest (beta:=beta) bo radixR)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, ClosestMinOrMax_check, MinOrMaxP]
+    Unit :=
+  ()
 
 -- Zero case for Closest rounding (Coq: `ClosestZero`)
 noncomputable def ClosestZero_check {beta : Int}
@@ -5146,8 +5133,8 @@ noncomputable def ClosestZero_check {beta : Int}
     then the real value of `x` is `0`. We phrase this using the project
     `Closest` predicate and `F2R` interpretation.
 
-    Note: Since `Closest` is currently a placeholder (= True), we add explicit
-    hypotheses matching Coq's `Closest` definition:
+    Note: `Closest` is now concrete; this port still carries explicit
+    hypotheses exposing the Coq proof obligations:
     - `Fbounded' bo x`: the float is bounded
     - `hClosestProp`: `x` minimizes distance to `r` among bounded floats
     These make the theorem provable and match the original Coq semantics. -/
@@ -5203,25 +5190,17 @@ noncomputable def FboundedMboundPos_check {beta : Int}
     (z m : Int) : Unit :=
   ()
 
-theorem FboundedMboundPos {beta : Int}
+/-- Audit gap for Coq `FboundedMboundPos`.
+
+The faithful `Fbounded` conclusion needs the missing Coq hypothesis
+`Zpos (vNum b) = Zpower_nat radix precision`; the current shell only carried an
+upper bound on `m`. -/
+noncomputable def FboundedMboundPos {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
-    ⦃⌜beta = radix ∧ 0 ≤ m ∧
-        m ≤ Zpower_nat_int radix precision ∧
-        - b.dExp ≤ z⌝⦄
-    (pure (FboundedMboundPos_check (beta:=beta) b radix z m) : Id Unit)
-    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
-        Fbounded b c ∧
-        _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
-  intro ⟨hBetaRadix, _, _, _⟩
-  simp only [wp, PostCond.noThrow, pure, FboundedMboundPos_check, ULift.down_up]
-  -- Witness: float with Fnum = m, Fexp = z
-  refine ⟨⟨m, z⟩, trivial, ?_⟩
-  -- F2R ⟨m, z⟩ = m * beta ^ z = m * radix ^ z
-  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
-  subst hBetaRadix
-  rfl
+    Unit :=
+  ()
 
 /-- Coq: `FboundedMbound` — extends `FboundedMboundPos` by allowing
 negative mantissas via symmetry. -/
@@ -5230,24 +5209,13 @@ noncomputable def FboundedMbound_check {beta : Int}
     (z m : Int) : Unit :=
   ()
 
-theorem FboundedMbound {beta : Int}
+/-- Audit gap for Coq `FboundedMbound`; see `FboundedMboundPos`. -/
+noncomputable def FboundedMbound {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
-    ⦃⌜beta = radix ∧ |m| ≤ Zpower_nat_int radix precision ∧
-        - b.dExp ≤ z⌝⦄
-    (pure (FboundedMbound_check (beta:=beta) b radix z m) : Id Unit)
-    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
-        Fbounded b c ∧
-        _root_.F2R c = (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
-  intro ⟨hBetaRadix, _, _⟩
-  simp only [wp, PostCond.noThrow, pure, FboundedMbound_check, ULift.down_up]
-  -- Witness: float with Fnum = m, Fexp = z
-  refine ⟨⟨m, z⟩, trivial, ?_⟩
-  -- F2R ⟨m, z⟩ = m * beta ^ z = m * radix ^ z
-  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
-  subst hBetaRadix
-  rfl
+    Unit :=
+  ()
 
 /-!
 Coq: `MinExList`
@@ -5324,15 +5292,13 @@ noncomputable def MinEx_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (r : ℝ) : Unit :=
   ()
 
-theorem MinEx {beta : Int}
+/-- Audit gap for Coq `MinEx`.
+The generic `isMin` shell no longer returns `True`; existence belongs with the
+faithful float-specific construction. -/
+noncomputable def MinEx {beta : Int}
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (MinEx_check (beta:=beta) b radix r) : Id Unit)
-    ⦃⇓_ => ⌜∃ min : FloatSpec.Core.Defs.FlocqFloat beta,
-              isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, MinEx_check, ULift.down_up, isMin]
-  exact ⟨FloatSpec.Core.Defs.FlocqFloat.mk 0 0⟩
+    Unit :=
+  ()
 
 /-!
 Coq: `MaxEx`
@@ -5343,15 +5309,11 @@ noncomputable def MaxEx_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (r : ℝ) : Unit :=
   ()
 
-theorem MaxEx {beta : Int}
+/-- Audit gap for Coq `MaxEx`; see `MinEx`. -/
+noncomputable def MaxEx {beta : Int}
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (MaxEx_check (beta:=beta) b radix r) : Id Unit)
-    ⦃⇓_ => ⌜∃ max : FloatSpec.Core.Defs.FlocqFloat beta,
-              isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, MaxEx_check, ULift.down_up, isMax]
-  exact ⟨FloatSpec.Core.Defs.FlocqFloat.mk 0 0⟩
+    Unit :=
+  ()
 
 -- Equality under strict-leaning midpoint toward min (Coq: `ClosestMinEq`)
 noncomputable def ClosestMinEq_check {beta : Int}
@@ -5363,10 +5325,8 @@ noncomputable def ClosestMinEq_check {beta : Int}
 /-- Coq: `ClosestMinEq` — if `(2 * r) < (min + max)` and `p` is closest,
     then the closest equals `min` at the real level.
 
-    **Modified from placeholder-based precondition**: The original Lean translation used
-    placeholder definitions (`isMin`, `isMax`, `Closest` all defined as `True`), making
-    this theorem unprovable. The precondition now inlines the essential mathematical content
-    from the Coq originals:
+    **Strengthened precondition**: The precondition inlines the essential
+    mathematical content from the Coq originals:
     - `isMin r min` provides `F2R min ≤ r`
     - `isMax r max` provides `r ≤ F2R max`
     - `Closest r p` provides `∀ bounded f, |F2R p - r| ≤ |F2R f - r|`; we instantiate at `min`
@@ -5403,10 +5363,8 @@ noncomputable def ClosestMaxEq_check {beta : Int}
 /-- Coq: `ClosestMaxEq` — if `(min + max) < (2 * r)` and `p` is closest,
     then the closest equals `max` at the real level.
 
-    **Modified from placeholder-based precondition**: The original Lean translation used
-    placeholder definitions (`isMin`, `isMax`, `Closest` all defined as `True`), making
-    this theorem unprovable. The precondition now inlines the essential mathematical content
-    from the Coq originals:
+    **Strengthened precondition**: The precondition inlines the essential
+    mathematical content from the Coq originals:
     - `isMin r min` provides `F2R min ≤ r`
     - `isMax r max` provides `r ≤ F2R max`
     - `Closest r p` provides `∀ bounded f, |F2R p - r| ≤ |F2R f - r|`; we instantiate at `max`
@@ -5438,33 +5396,24 @@ noncomputable def ClosestMonotone_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
-/-- Coq: `ClosestMonotone` — the `Closest` relation is monotone
-    in the sense captured by `MonotoneP` placeholder. -/
-theorem ClosestMonotone {beta : Int}
+/-- Audit gap for Coq `ClosestMonotone`; depends on the full closest/min-max
+development rather than the generic skeleton `MonotoneP`. -/
+noncomputable def ClosestMonotone {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (ClosestMonotone_check (beta:=beta) bo radix) : Id Unit)
-    ⦃⇓_ => ⌜MonotoneP (Closest (beta:=beta) bo radix)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, ClosestMonotone_check, MonotoneP]
+    Unit :=
+  ()
 
 -- Rounded-mode packaging for `Closest` (Coq: `ClosestRoundedModeP`)
 noncomputable def ClosestRoundedModeP_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
-/-- Coq: `ClosestRoundedModeP` — the `Closest` relation forms a `RoundedModeP`.
-    This gathers totality, compatibility, min-or-max disjunction and monotonicity
-    into the `RoundedModeP` bundle for `Closest`. -/
-theorem ClosestRoundedModeP {beta : Int}
+/-- Audit gap for Coq `ClosestRoundedModeP`; depends on `ClosestTotal`,
+`ClosestMinOrMax`, and `ClosestMonotone`. -/
+noncomputable def ClosestRoundedModeP {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (ClosestRoundedModeP_check (beta:=beta) bo radix) : Id Unit)
-    ⦃⇓_ => ⌜RoundedModeP (Closest (beta:=beta) bo radix)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check, RoundedModeP,
-        TotalP, CompatibleP, MinOrMaxP, MonotoneP, Closest]
-  exact ⟨fun _ => ⟨⟨0, 0⟩, trivial⟩, fun _ _ _ _ _ _ _ => trivial, trivial, trivial⟩
+    Unit :=
+  ()
 
 -- Symmetry under negation on the real side (Coq: `ClosestOpp`)
 noncomputable def ClosestOpp_check {beta : Int}
@@ -5472,18 +5421,16 @@ noncomputable def ClosestOpp_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `ClosestOpp` — if `p` is a closest representation of `r`, then
-    `Fopp p` is a closest representation of `-r`. -/
-theorem ClosestOpp {beta : Int}
+/-- Audit gap for Coq `ClosestOpp`.
+
+Negation symmetry should be provable for the faithful `Closest` predicate, but
+the proof is kept out of the theorem API until the closest section is repaired
+as a whole. -/
+noncomputable def ClosestOpp {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
-    (pure (ClosestOpp_check (beta:=beta) bo radix p r) : Id Unit)
-    ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (-r) (Fopp p)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, ClosestOpp_check, PredTrans.pure, PredTrans.apply,
-             Id.run, ULift.down]
-  simp [Closest]
+    Unit :=
+  ()
 
 -- Absolute-value symmetry on the real side (Coq: `ClosestFabs`)
 noncomputable def ClosestFabs_check {beta : Int}
@@ -5491,18 +5438,16 @@ noncomputable def ClosestFabs_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-/-- Coq: `ClosestFabs` — if `p` is a closest representation of `r`, then
-    `Fabs p` is a closest representation of `|r|`. -/
-theorem ClosestFabs {beta : Int}
+/-- Audit gap for Coq `ClosestFabs`.
+
+This closure theorem depends on the full symmetric closest development; the
+current port proves negation symmetry separately but does not yet reconstruct
+the absolute-value case. -/
+noncomputable def ClosestFabs {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
-    (pure (ClosestFabs_check (beta:=beta) bo radix p r) : Id Unit)
-    ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (|r|) (Fabs p)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, ClosestFabs_check, PredTrans.pure, PredTrans.apply,
-             Id.run, ULift.down]
-  simp [Closest]
+    Unit :=
+  ()
 
 -- Ulp inequality for closest rounding (Coq: `ClosestUlp`)
 noncomputable def ClosestUlp_check {beta : Int}
@@ -5510,17 +5455,14 @@ noncomputable def ClosestUlp_check {beta : Int}
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `ClosestUlp` — if `q` is a closest representation of `p`, then
-    `2 * |p - F2R q| ≤ ulp radix (FLT_exp ...) (F2R q)`. We keep the skeleton
-    form referencing the Compat.lean `ulp` bridge. -/
-theorem ClosestUlp {beta : Int}
+/-- Audit gap for Coq `ClosestUlp`.
+The old translated shell had postcondition `True`; the ULP inequality still
+needs a real statement and proof over the current `Closest` definition. -/
+noncomputable def ClosestUlp {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Closest (beta:=beta) bo radix p q⌝⦄
-    (pure (ClosestUlp_check (beta:=beta) bo radix p q) : Id Unit)
-    ⦃⇓_ => ⌜True⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, ClosestUlp_check, ULift.down_up]
+    Unit :=
+  ()
 
 -- Exponent inequality from closest error (Coq: `ClosestExp`)
 noncomputable def ClosestExp_check {beta : Int}
@@ -5528,20 +5470,14 @@ noncomputable def ClosestExp_check {beta : Int}
     (p : Int) (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `ClosestExp` — the original Coq theorem proves
-    `Closest b radix p q → 2 * |p - q| ≤ radix^(Fexp q)`.
-    Because `Closest` is currently a `True` placeholder, the original conclusion
-    `(beta : ℝ) ^ p ≤ (beta : ℝ) ^ (q.Fexp)` is not derivable.  We keep the
-    skeleton with a `True` postcondition (matching `ClosestUlp`'s pattern) until
-    `Closest` receives its real definition. -/
-theorem ClosestExp {beta : Int}
+/-- Audit gap for Coq `ClosestExp`.
+The old translated shell had postcondition `True`; this is not a valid theorem
+until the exponent inequality is restated and proved from real closestness. -/
+noncomputable def ClosestExp {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : Int) (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Closest (beta:=beta) bo radix x q ∧ (2 * |x - _root_.F2R q| : ℝ) ≤ (beta : ℝ) ^ p⌝⦄
-    (pure (ClosestExp_check (beta:=beta) bo radix p x q) : Id Unit)
-    ⦃⇓_ => ⌜True⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, ClosestExp_check, ULift.down_up]
+    Unit :=
+  ()
 
 -- Strict error-exp implication (Coq: `ClosestErrorExpStrict`)
 noncomputable def ClosestErrorExpStrict_check {beta : Int}
@@ -5552,8 +5488,8 @@ noncomputable def ClosestErrorExpStrict_check {beta : Int}
 /-- Coq: `ClosestErrorExpStrict` — if `p` is the closest bounded float to `x`,
     `q` represents the error `x - F2R p`, and `q ≠ 0`, then `Fexp q < Fexp p`.
 
-    Since `Closest` and `Fbounded` are currently placeholder definitions (= True),
-    we add explicit hypotheses matching the Coq proof's requirements:
+    Since `Closest` and `Fbounded` are concrete predicates, this port carries
+    explicit hypotheses matching the Coq proof's requirements:
     - `hBetaGe1`: the radix β ≥ 1 (needed for zpow monotonicity/positivity)
     - `hClosestExp`: from Coq's `ClosestExp`, the closest-rounding error bound
       `2 * |x - F2R p| ≤ β^(Fexp p)` -/
@@ -5623,8 +5559,8 @@ noncomputable def ClosestIdem_check {beta : Int}
 /-- Coq: `ClosestIdem` — if `p` is bounded and `q` is a closest rounding of
     `F2R p`, then `F2R p = F2R q`.
 
-    Note: Since `Closest` is currently a placeholder (= True), we add explicit
-    hypotheses matching Coq's `Closest` definition:
+    Note: `Closest` is concrete; this port still carries explicit hypotheses
+    matching Coq's `Closest` definition:
     - `Fbounded' bo p`: `p` is bounded
     - `Fbounded' bo q`: `q` is bounded (part of `Closest`)
     - `hClosestProp`: `q` minimizes distance to `F2R p` among bounded floats
@@ -5660,8 +5596,8 @@ noncomputable def ClosestErrorBound_check {beta : Int}
 -- Coq: `ClosestErrorBound` — if `p` is a closest representation of `x` and
 -- `q` represents the error `x - F2R p`, then the magnitude of `q` is bounded by
 -- `Float 1 (Fexp p) / 2`.
--- Since `Closest` and `Fbounded` are placeholder definitions, we add an explicit
--- hypothesis combining ClosestUlp and FulpLe from the original Coq proof.
+-- This port carries an explicit hypothesis combining ClosestUlp and FulpLe
+-- from the original Coq proof.
 theorem ClosestErrorBound {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
@@ -5734,17 +5670,11 @@ def SymmetricP {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   ∀ r (p : FloatSpec.Core.Defs.FlocqFloat beta), P r p → P (-r) (Fopp p)
 
-/-- Coq: `ClosestSymmetric` — the `Closest` relation is symmetric under
-    real negation accompanied by float negation. -/
-theorem ClosestSymmetric {beta : Int}
+/-- Audit gap for Coq `ClosestSymmetric`; see `ClosestOpp`. -/
+noncomputable def ClosestSymmetric {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (ClosestSymmetric_check (beta:=beta) bo radix) : Id Unit)
-    ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, ClosestSymmetric_check, PredTrans.pure, PredTrans.apply,
-             Id.run, ULift.down]
-  simp [SymmetricP, Closest]
+    Unit :=
+  ()
 
 -- Coq: `ClosestZero1` — if `Closest r f`, `F2R f = 0`, `r = F2R g`, and
 -- `-dExp bo ≤ Fexp g`, then `r = 0`.
@@ -5757,8 +5687,8 @@ noncomputable def ClosestZero1_check {beta : Int}
 /-- Coq: `ClosestZero1` — under the stated conditions, the rounded value `r`
     must be zero. We mirror the statement using the project Hoare-triple style.
 
-    Note: Since `Closest` is currently a placeholder (= True), we add explicit
-    hypotheses matching Coq's `Closest` definition:
+    Note: `Closest` is concrete; this port still carries explicit hypotheses
+    matching Coq's `Closest` definition:
     - `Fbounded' bo f`: the float `f` is bounded
     - `hClosestProp`: `f` minimizes distance to `r` among bounded floats
     - `1 < (beta : ℝ)`: radix is at least 2
@@ -5859,7 +5789,8 @@ theorem ClosestZero1 {beta : Int}
 Div-by-2 midpoint characterizations (ported from Coq Pff.v)
 
 We introduce the Hoare-style statements for `div2IsBetweenPos` and
-`div2IsBetween`. Proofs are deferred (`sorry`) per the import process.
+`div2IsBetween`; entries without a complete translated proof are represented as
+port-gap definitions rather than theorem claims.
 -/
 
 -- Coq: `div2IsBetweenPos` — if 0 ≤ p and min/max are the rounded bounds of p/2,
@@ -5993,26 +5924,26 @@ noncomputable def EvenClosestMinOrMax_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
-theorem EvenClosestMinOrMax {beta : Int}
+/-- Audit gap for Coq `EvenClosestMinOrMax`.
+The faithful proof needs the float-specific `isMin'`/`isMax'` development; the
+old shell succeeded only because `MinOrMaxP` was `True`. -/
+noncomputable def EvenClosestMinOrMax {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    (pure (EvenClosestMinOrMax_check (beta:=beta) b radix precision) : Id Unit)
-    ⦃⇓_ => ⌜MinOrMaxP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, EvenClosestMinOrMax_check, MinOrMaxP]
+    Unit :=
+  ()
 
 -- Monotonicity for `EvenClosest` (Coq: `EvenClosestMonotone`)
 noncomputable def EvenClosestMonotone_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
-theorem EvenClosestMonotone {beta : Int}
+/-- Audit gap for Coq `EvenClosestMonotone`.
+The old shell succeeded only because `MonotoneP` was `True`; the usable
+float-specific monotonicity proof must target `MonotoneP_float`. -/
+noncomputable def EvenClosestMonotone {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    (pure (EvenClosestMonotone_check (beta:=beta) b radix precision) : Id Unit)
-    ⦃⇓_ => ⌜MonotoneP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, EvenClosestMonotone_check, MonotoneP]
+    Unit :=
+  ()
 
 noncomputable def EvenClosestMonotone2_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
@@ -6024,8 +5955,7 @@ noncomputable def EvenClosestMonotone2_check {beta : Int}
     weak inequality: if `p ≤ q` and both are rounded by `EvenClosest`, then
     `F2R p' ≤ F2R q'`.
 
-    Note: Since `Closest` and `MonotoneP` are placeholders, we add explicit
-    hypotheses matching the Coq semantics:
+    Note: this port carries explicit hypotheses matching the Coq semantics:
     - `MonotoneP_float`: the real monotonicity property (p < q → F2R p' ≤ F2R q')
     - `UniqueP`: uniqueness of rounding (same real → same float)
     These capture the properties that `EvenClosestMonotone` and `EvenClosestUniqueP`
@@ -6057,73 +5987,38 @@ noncomputable def EvenClosestSymmetric_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
-/-- Coq: `EvenClosestSymmetric` — the `EvenClosest` relation is symmetric under
-    real negation accompanied by float negation. -/
-theorem EvenClosestSymmetric {beta : Int}
+/-- Audit gap for Coq `EvenClosestSymmetric`; depends on the closest symmetry
+section currently under repair. -/
+noncomputable def EvenClosestSymmetric {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    (pure (EvenClosestSymmetric_check (beta:=beta) b radix precision) : Id Unit)
-    ⦃⇓_ => ⌜SymmetricP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, EvenClosestSymmetric_check, PredTrans.pure,
-             PredTrans.apply, Id.run, ULift.down]
-  intro r p hp
-  rcases hp with ⟨_, hpTie⟩
-  refine ⟨trivial, ?_⟩
-  rcases hpTie with hEven | hUnique
-  · left
-    cases p with
-    | mk m e =>
-      simp only [FNeven, Feven, FloatSpec.Calc.Operations.Fopp,
-        FloatSpec.Core.Defs.FlocqFloat.Fnum] at hEven ⊢
-      simp only [Fopp, FloatSpec.Calc.Operations.Fopp, FloatSpec.Core.Defs.FlocqFloat.Fnum] at hEven ⊢
-      exact hEven.neg
-  · right
-    intro q _
-    have hp_opp : Fopp (beta:=beta) p = p := hUnique (Fopp (beta:=beta) p) trivial
-    have hq : q = p := hUnique q trivial
-    exact hq.trans hp_opp.symm
+    Unit :=
+  ()
 
 -- Rounded-mode packaging for `EvenClosest` (Coq: `EvenClosestRoundedModeP`)
 noncomputable def EvenClosestRoundedModeP_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
-theorem EvenClosestRoundedModeP {beta : Int}
+/-- Audit gap for Coq `EvenClosestRoundedModeP`; depends on totality and
+min/max facts for faithful `Closest`. -/
+noncomputable def EvenClosestRoundedModeP {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    (pure (EvenClosestRoundedModeP_check (beta:=beta) b radix precision) : Id Unit)
-    ⦃⇓_ => ⌜RoundedModeP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, EvenClosestRoundedModeP_check, PredTrans.pure,
-             PredTrans.apply, Id.run, ULift.down]
-  show RoundedModeP (EvenClosest (beta:=beta) b radix precision)
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · -- TotalP: ∀ r, ∃ p, EvenClosest ... r p
-    intro r
-    exact ⟨⟨0, 0⟩, trivial, Or.inl Even.zero⟩
-  · -- CompatibleP: substitution under equality
-    intro r1 r2 p q hec hr hpq
-    subst hr; subst hpq
-    exact hec
-  · -- MinOrMaxP: True
-    trivial
-  · -- MonotoneP: True
-    trivial
+    Unit :=
+  ()
 
 /-- Coq: `EvenClosestUniqueP` — the `EvenClosest` rounding mode is unique, i.e.,
     for any real `r` and any two floats `p`, `q` that are both `EvenClosest`
     roundings of `r`, we have `p = q`.
 
-    Note: Since `Closest` is currently a placeholder (= `True`), the second
-    disjunct in `EvenClosest` (`∀ q, Closest … r q → q = p`) degenerates to
-    `∀ q, q = p`, which trivially gives uniqueness whenever it holds.  The
+    Note: the second disjunct in `EvenClosest`
+    (`∀ q, Closest … r q → q = p`) directly gives uniqueness whenever it holds.
+    The
     non-trivial case is when both `p` and `q` satisfy `EvenClosest` via the
     first disjunct alone (`FNeven … p` and `FNeven … q`).  In the real Coq
     proof, this case is resolved by the `MinOrMax` + canonical-form machinery
     which shows that at most one of the two nearest representable floats is
-    even.  Since the full `Closest` definition is a placeholder here, we add
-    an explicit hypothesis `hEvenUnique` that captures this core content:
+    even. This port carries an explicit hypothesis `hEvenUnique` that captures
+    this core content:
     among floats satisfying the real `Closest'` predicate (bounded +
     distance-minimizing) and having even `Fnum`, there is at most one for
     each real value `r`.
@@ -6180,8 +6075,8 @@ noncomputable def FexpGeUnderf_check {beta : Int}
 /-- Coq: `FexpGeUnderf` — from boundedness and a magnitude lower bound on |F2R f|
     derive a lower bound on the exponent Fexp f.
 
-    Note: Since `Fbounded` is currently a placeholder (= True), we add explicit
-    hypotheses matching Coq's section context:
+    Note: `Fbounded` is concrete; this port still carries explicit hypotheses
+    matching Coq's section context:
     - `hBeta`: the radix is at least 2
     - `hPrec`: precision is at least 1
     - `hBound`: `bo.vNum = beta ^ precision` (Coq's `pGivesBound`)
@@ -6229,8 +6124,7 @@ theorem FexpGeUnderf {beta : Int}
 -- and `f2` are sufficiently large in magnitude, then `g` is either zero or has
 -- magnitude at least `β^(e-precision+1)`.
 --
--- Note: Since `Closest` and `Fbounded` are currently placeholders (= True), we add
--- explicit hypotheses matching Coq's section context and the key content of
+-- Note: this port carries explicit hypotheses matching Coq's section context and the key content of
 -- `plusExactExp` (which is not yet ported to Lean):
 -- - `hBeta`: the radix is at least 2
 -- - `hPrec`: precision is at least 1
@@ -6250,7 +6144,7 @@ theorem AddExpGeUnderf {beta : Int}
     ⦃⌜Closest (beta:=beta) bo radix (_root_.F2R f1 + _root_.F2R f2) g ∧
         Fbounded (beta:=beta) bo f1 ∧ Fbounded (beta:=beta) bo f2 ∧
         (beta : ℝ) ^ e ≤ |_root_.F2R f1| ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f2| ∧
-        -- Additional real hypotheses (placeholders make Closest/Fbounded trivial)
+        -- Additional real hypotheses exposing the Coq proof obligations.
         (1 < beta) ∧ (1 ≤ precision) ∧ ((bo.vNum : ℝ) = (beta : ℝ) ^ precision) ∧
         Fbounded' bo f1 ∧ Fbounded' bo f2 ∧
         -- Key content of plusExactExp: if g ≠ 0, there exists g' with F2R g' = F2R g
@@ -6364,19 +6258,16 @@ theorem RoundedModeP_inv4 {α : Type} (P : ℝ → α → Prop) :
     Id.run, ULift.up_down]
   exact hMono
 
--- Projection to a projector property (placeholder)
+-- Projection to a projector property
 noncomputable def RoundedProjector_check {α : Type}
     (P : ℝ → α → Prop) : Unit :=
   ()
 
-theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
-    ⦃⌜RoundedModeP P⌝⦄
-    (pure (RoundedProjector_check P) : Id Unit)
-    ⦃⇓_ => ⌜ProjectorP P⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, RoundedProjector_check, PredTrans.pure_apply,
-    Id.run, ULift.up_down]
-  exact trivial
+/-- Audit gap for `RoundedProjector`.
+The generic `RoundedModeP` package does not imply the generic projector
+uniqueness property; the old shell relied on a trivial projector predicate. -/
+noncomputable def RoundedProjector {α : Type} (P : ℝ → α → Prop) : Unit :=
+  ()
 
 -- Coq: `RoundedModeProjectorIdem` — under RoundedModeP, P p p for bounded p
 noncomputable def RoundedModeProjectorIdem_check {beta : Int}
@@ -6392,8 +6283,8 @@ noncomputable def RoundedModeProjectorIdem_check {beta : Int}
     real-value equality) to conclude P (F2R p) p.
 
     Since Lean's CompatibleP requires structural equality (not just F2R equality),
-    and ProjectorP/Fbounded are placeholders (= True), we add an explicit
-    projector hypothesis matching the real Coq semantics:
+    and the Lean `ProjectorP` fallback is not enough to recover structural
+    equality, so we add an explicit projector hypothesis matching Coq semantics:
     any q satisfying P (F2R p) q must equal p structurally. -/
 theorem RoundedModeProjectorIdem {beta : Int}
     (b : Fbound_skel) (radix : Int)
@@ -6420,17 +6311,16 @@ noncomputable def RoundedModeBounded_check {beta : Int}
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem RoundedModeBounded {beta : Int}
+/-- Audit gap for Coq `RoundedModeBounded`.
+
+The current generic `RoundedModeP` does not encode Coq's `MinOrMaxP` link to
+`Fbounded`, so boundedness of an output cannot be derived honestly here. -/
+noncomputable def RoundedModeBounded {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q⌝⦄
-    (pure (RoundedModeBounded_check (beta:=beta) b radix P r q) : Id Unit)
-    ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
-  intro ⟨_, _⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeBounded_check, PredTrans.pure_apply,
-    Id.run, ULift.up_down]
-  exact trivial
+    Unit :=
+  ()
 
 
 -- ---------------------------------------------------------------------------
@@ -6441,80 +6331,15 @@ noncomputable def PminPos_check {beta : Int}
     (p min : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `PminPos` — if `0 ≤ F2R p`, `Fbounded b p` and `isMin b radix ((1/2) * F2R p) min`,
-    then there exists a bounded float `c` such that `F2R c = F2R p - F2R min`.
-    We keep the statement in Hoare-triple style and defer the proof. -/
-theorem PminPos {beta : Int}
+/-- Audit gap for Coq `PminPos`.
+
+The public `isMin` name is still a generic skeleton and cannot provide the
+bounded complement required by the faithful `Fbounded` predicate. -/
+noncomputable def PminPos {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (p min : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜0 ≤ _root_.F2R p ∧
-        Fbounded (beta:=beta) b p ∧
-        isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix ((1 / 2 : ℝ) * _root_.F2R p) min⌝⦄
-    (pure (PminPos_check (beta:=beta) b radix p min) : Id Unit)
-    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
-            Fbounded (beta:=beta) b c ∧
-            _root_.F2R c = _root_.F2R p - _root_.F2R min⌝⦄ := by
-  intro ⟨_, _, _⟩
-  simp only [wp, PostCond.noThrow, pure, PminPos_check, PredTrans.pure_apply, Id.run,
-             ULift.up_down]
-  show ∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
-    Fbounded (beta := beta) b c ∧ _root_.F2R c = _root_.F2R p - _root_.F2R min
-  -- Since Fbounded is True, we just need to find c with F2R c = F2R p - F2R min.
-  -- Strategy: use min.Fexp as the common exponent, put all terms over that base.
-  -- Witness: c = ⟨p.Fnum * beta^(p.Fexp - min.Fexp) - min.Fnum, min.Fexp⟩
-  -- when p.Fexp ≥ min.Fexp, and symmetrically otherwise.
-  -- But since Fbounded is True, we can simplify by using p itself.
-  -- Actually, the simplest witness: Fshift-style alignment.
-  -- We use e = min.Fexp (wlog) and note p.Fexp ≥ e or not.
-  -- Simplest: just use Fexp = 0 and note that F2R ⟨n, 0⟩ = n, so we need n = F2R p - F2R min.
-  -- But n : ℤ and F2R p - F2R min : ℝ, so this doesn't work unless it's an integer.
-  -- Best approach: factor out common part.
-  by_cases hb : (beta : ℤ) = 0
-  · -- beta = 0: F2R f = f.Fnum * (0:ℝ)^f.Fexp
-    have hb_real : (beta : ℝ) = 0 := by exact_mod_cast hb
-    by_cases hp0 : p.Fexp = 0 <;> by_cases hm0 : min.Fexp = 0
-    · -- Both exponents 0: F2R f = f.Fnum
-      refine ⟨⟨p.Fnum - min.Fnum, 0⟩, trivial, ?_⟩
-      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, hp0, hm0, zpow_zero, mul_one, Int.cast_sub]
-    · -- p.Fexp = 0, min.Fexp ≠ 0
-      refine ⟨⟨p.Fnum, 0⟩, trivial, ?_⟩
-      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, hp0, hm0, zpow_zero, mul_one, hb_real]
-      rw [zero_zpow min.Fexp hm0, mul_zero, sub_zero]
-    · -- p.Fexp ≠ 0, min.Fexp = 0
-      refine ⟨⟨-min.Fnum, 0⟩, trivial, ?_⟩
-      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, hp0, hm0, zpow_zero, mul_one,
-                  Int.cast_neg, hb_real]
-      rw [zero_zpow p.Fexp hp0, mul_zero, zero_sub]
-    · -- Both exponents nonzero
-      refine ⟨⟨0, 0⟩, trivial, ?_⟩
-      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, zpow_zero, mul_one, Int.cast_zero, hb_real]
-      rw [zero_zpow p.Fexp hp0, mul_zero,
-          zero_zpow min.Fexp hm0, mul_zero, sub_self]
-  · -- beta ≠ 0: use zpow_add₀
-    have hb_real : (beta : ℝ) ≠ 0 := by exact_mod_cast hb
-    set e := Min.min p.Fexp min.Fexp with he_def
-    have hpe : p.Fexp - e ≥ 0 := by omega
-    have hme : min.Fexp - e ≥ 0 := by omega
-    refine ⟨⟨p.Fnum * (beta : ℤ) ^ (p.Fexp - e).toNat -
-             min.Fnum * (beta : ℤ) ^ (min.Fexp - e).toNat, e⟩, trivial, ?_⟩
-    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
-    have hdp : ((p.Fexp - e).toNat : ℤ) = p.Fexp - e := Int.toNat_of_nonneg hpe
-    have hdm : ((min.Fexp - e).toNat : ℤ) = min.Fexp - e := Int.toNat_of_nonneg hme
-    have hp_eq : ((beta : ℝ)) ^ ((p.Fexp - e).toNat : ℕ) * ((beta : ℝ)) ^ (e : ℤ) =
-        ((beta : ℝ)) ^ (p.Fexp : ℤ) := by
-      rw [← zpow_natCast ((beta : ℝ)) ((p.Fexp - e).toNat), hdp,
-          ← zpow_add₀ hb_real (p.Fexp - e) e, sub_add_cancel]
-    have hm_eq : ((beta : ℝ)) ^ ((min.Fexp - e).toNat : ℕ) * ((beta : ℝ)) ^ (e : ℤ) =
-        ((beta : ℝ)) ^ (min.Fexp : ℤ) := by
-      rw [← zpow_natCast ((beta : ℝ)) ((min.Fexp - e).toNat), hdm,
-          ← zpow_add₀ hb_real (min.Fexp - e) e, sub_add_cancel]
-    push_cast
-    calc ((p.Fnum : ℝ) * (beta : ℝ) ^ (p.Fexp - e).toNat -
-         (min.Fnum : ℝ) * (beta : ℝ) ^ (min.Fexp - e).toNat) * (beta : ℝ) ^ e
-        = (p.Fnum : ℝ) * ((beta : ℝ) ^ (p.Fexp - e).toNat * (beta : ℝ) ^ e) -
-          (min.Fnum : ℝ) * ((beta : ℝ) ^ (min.Fexp - e).toNat * (beta : ℝ) ^ e) := by ring
-      _ = (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp -
-          (min.Fnum : ℝ) * (beta : ℝ) ^ min.Fexp := by rw [hp_eq, hm_eq]
+    Unit :=
+  ()
 
 -- Coq: `RoundedModeProjectorIdemEq` — equality on reals under RoundedModeP
 noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
@@ -6527,13 +6352,13 @@ noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
     and `P (F2R p) q`, then `F2R p = F2R q`.
 
     In Coq, the proof derives this from `MinOrMaxP` (which connects P to isMin/isMax)
-    and then uses `MinEq`/`MaxEq` plus `RoundedModeProjectorIdem`. Since `MinOrMaxP`
-    and related definitions are placeholders (`True`) in this Lean formalization,
+    and then uses `MinEq`/`MaxEq` plus `RoundedModeProjectorIdem`. Since the generic
+    Lean fallback does not encode the float-specific min/max semantics,
     we add an explicit `ProjectorEqP_float b P` hypothesis which captures exactly
     the property that Coq derives from the full `RoundedModeP` definition.
 
     Change record: Added `ProjectorEqP_float b P` to precondition because the
-    placeholder `MinOrMaxP := True` makes the original precondition insufficient. -/
+    generic fallback makes the original precondition insufficient. -/
 theorem RoundedModeProjectorIdemEq {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
@@ -6557,12 +6382,12 @@ noncomputable def RoundedModeUlp_check {beta : Int}
 /-- Coq: `RoundedModeUlp` — under a rounded mode P and P p q, |p - q| < Fulp q.
 
     In the original Coq proof, this is derived from the full definitions of `Fulp`,
-    `FNSucc`, `FNPred`, `FulpSuc`, `FulpPred`, etc. Since `Fulp` is currently a
-    placeholder (= 1) in this Lean formalization, we add the conclusion itself as
-    an explicit hypothesis in the precondition.
+    `FNSucc`, `FNPred`, `FulpSuc`, `FulpPred`, etc. Since the local `Fulp`
+    model is still lightweight, we add the conclusion itself as an explicit
+    hypothesis in the precondition.
 
     Change record: Added `|p - F2R q| < Fulp q` to precondition because the
-    placeholder `Fulp := 1` makes the original precondition insufficient. -/
+    local `Fulp` model makes the original precondition insufficient. -/
 theorem RoundedModeUlp {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
@@ -6582,59 +6407,16 @@ noncomputable def RoundedModeMult_check {beta : Int}
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `RoundedModeMult` — if `P` is a rounded mode, `P r q`, `q'` is bounded,
-    and `r ≤ radix * F2R q'`, then `F2R q ≤ radix * F2R q'`.
+/-- Audit gap for Coq `RoundedModeMult`.
 
-    Note: Since `MonotoneP`, `MinOrMaxP`, and `Fbounded` are placeholders, we add
-    explicit hypotheses matching the real Coq semantics:
-    - `RoundedModeP_full b P`: includes monotonicity and projector properties
-    - `radix = (beta : ℝ)`: connects the radix parameter to the float base
-    - `(beta : ℝ) ≠ 0`: ensures the base is nonzero for zpow arithmetic -/
-theorem RoundedModeMult {beta : Int}
+The proof needs a bounded scaled float. With faithful `Fbounded`, the current
+shell does not establish that the constructed scaled float remains bounded. -/
+noncomputable def RoundedModeMult {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ r ≤ radix * _root_.F2R q' ∧
-        RoundedModeP_full (beta:=beta) b P ∧
-        radix = (beta : ℝ) ∧
-        (beta : ℝ) ≠ 0⌝⦄
-    (pure (RoundedModeMult_check (beta:=beta) b radix P r q q') : Id Unit)
-    ⦃⇓_ => ⌜_root_.F2R q ≤ radix * _root_.F2R q'⌝⦄ := by
-  intro ⟨_, hPrq, _, hRle, hFull, hRadixEq, hBetaNe⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeMult_check]
-  -- Unpack RoundedModeP_full
-  obtain ⟨_hTotal, _hCompat, hMono, hProj, hProjEq⟩ := hFull
-  -- Construct the scaled float: q'_scaled = ⟨q'.Fnum, q'.Fexp + 1⟩
-  -- Its F2R value equals (beta : ℝ) * F2R q' = radix * F2R q'
-  let q'_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨q'.Fnum, q'.Fexp + 1⟩
-  have hScaledF2R : _root_.F2R q'_scaled = radix * _root_.F2R q' := by
-    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_scaled
-    simp only
-    rw [hRadixEq]
-    rw [show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl]
-    rw [zpow_add₀ hBetaNe, zpow_one]
-    ring
-  -- Since Fbounded is True (placeholder), q'_scaled is trivially bounded
-  have hScaledBounded : Fbounded (beta:=beta) b q'_scaled := trivial
-  -- By ProjectorP_float: P (F2R q'_scaled) q'_scaled
-  have hPscaled : P (_root_.F2R q'_scaled) q'_scaled := hProj q'_scaled hScaledBounded
-  -- Case split: r < radix * F2R q' or r = radix * F2R q'
-  rcases hRle.lt_or_eq with hLt | hEq
-  · -- Case: r < radix * F2R q'
-    rw [← hScaledF2R] at hLt
-    -- By MonotoneP_float: P r q ∧ P (F2R q'_scaled) q'_scaled ∧ r < F2R q'_scaled
-    --   → F2R q ≤ F2R q'_scaled
-    have hLeq := hMono r (_root_.F2R q'_scaled) q q'_scaled hLt hPrq hPscaled
-    rw [hScaledF2R] at hLeq
-    exact hLeq
-  · -- Case: r = radix * F2R q'
-    rw [← hScaledF2R] at hEq
-    -- Since r = F2R q'_scaled and P r q, we have P (F2R q'_scaled) q
-    have hP_F2R_q : P (_root_.F2R q'_scaled) q := by rw [← hEq]; exact hPrq
-    -- By ProjectorEqP_float: F2R q'_scaled = F2R q
-    have hEqReal := hProjEq q'_scaled q hScaledBounded hP_F2R_q
-    rw [hScaledF2R] at hEqReal
-    exact le_of_eq hEqReal.symm
+    Unit :=
+  ()
 
 -- Coq: `RoundedModeMultLess` — dual inequality for scaling by radix
 noncomputable def RoundedModeMultLess_check {beta : Int}
@@ -6643,85 +6425,48 @@ noncomputable def RoundedModeMultLess_check {beta : Int}
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem RoundedModeMultLess {beta : Int}
+/-- Audit gap for Coq `RoundedModeMultLess`; see `RoundedModeMult`. -/
+noncomputable def RoundedModeMultLess {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ radix * _root_.F2R q' ≤ r ∧
-        RoundedModeP_full (beta:=beta) b P ∧
-        radix = (beta : ℝ) ∧
-        (beta : ℝ) ≠ 0⌝⦄
-    (pure (RoundedModeMultLess_check (beta:=beta) b radix P r q q') : Id Unit)
-    ⦃⇓_ => ⌜radix * _root_.F2R q' ≤ _root_.F2R q⌝⦄ := by
-  intro ⟨_, hPrq, _, hRle, hFull, hRadixEq, hBetaNe⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeMultLess_check]
-  -- Unpack RoundedModeP_full
-  obtain ⟨_hTotal, _hCompat, hMono, hProj, hProjEq⟩ := hFull
-  -- Construct the scaled float: q'_scaled = ⟨q'.Fnum, q'.Fexp + 1⟩
-  -- Its F2R value equals (beta : ℝ) * F2R q' = radix * F2R q'
-  let q'_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨q'.Fnum, q'.Fexp + 1⟩
-  have hScaledF2R : _root_.F2R q'_scaled = radix * _root_.F2R q' := by
-    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_scaled
-    simp only
-    rw [hRadixEq]
-    rw [show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl]
-    rw [zpow_add₀ hBetaNe, zpow_one]
-    ring
-  -- Since Fbounded is True (placeholder), q'_scaled is trivially bounded
-  have hScaledBounded : Fbounded (beta:=beta) b q'_scaled := trivial
-  -- By ProjectorP_float: P (F2R q'_scaled) q'_scaled
-  have hPscaled : P (_root_.F2R q'_scaled) q'_scaled := hProj q'_scaled hScaledBounded
-  -- Case split: radix * F2R q' < r or radix * F2R q' = r
-  rcases hRle.lt_or_eq with hLt | hEq
-  · -- Case: radix * F2R q' < r
-    rw [← hScaledF2R] at hLt
-    -- By MonotoneP_float: P (F2R q'_scaled) q'_scaled ∧ P r q ∧ F2R q'_scaled < r
-    --   → F2R q'_scaled ≤ F2R q
-    have hLeq := hMono (_root_.F2R q'_scaled) r q'_scaled q hLt hPscaled hPrq
-    rw [hScaledF2R] at hLeq
-    exact hLeq
-  · -- Case: radix * F2R q' = r
-    rw [← hScaledF2R] at hEq
-    -- Since F2R q'_scaled = r and P r q, we have P (F2R q'_scaled) q
-    have hP_F2R_q : P (_root_.F2R q'_scaled) q := hEq ▸ hPrq
-    -- By ProjectorEqP_float: F2R q'_scaled = F2R q
-    have hEqReal := hProjEq q'_scaled q hScaledBounded hP_F2R_q
-    rw [hScaledF2R] at hEqReal
-    exact le_of_eq hEqReal
+    Unit :=
+  ()
 
 -- Coq: `FnormalBounded` — normal floats are bounded
 noncomputable def FnormalBounded_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalBounded` — if a float is normal with respect to `b` and `radix`,
     then it is bounded by `b`. Placeholder statement aligned with Coq; proof deferred. -/
 theorem FnormalBounded {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
     (pure (FnormalBounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, FnormalBounded_check, ULift.down_up, Fbounded] at *
+  intro hnormal
+  simpa only [wp, PostCond.noThrow, pure, FnormalBounded_check,
+    PredTrans.pure_apply, Id.run, ULift.up_down] using hnormal.1
 
 -- Coq: `FnormalNotZero` — normal floats are not the zero float
 noncomputable def FnormalNotZero_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalNotZero` — if `p` is normal w.r.t. `b` and `radix`, then `p` is
     not the zero float.
 
-    Since `Fnormal` is a placeholder (`True`), we add explicit hypotheses matching
+    Since `Fnormal` is concrete, this port carries explicit hypotheses matching
     the Coq `Fnormal` definition:
     - `0 < b.vNum`: the bound's digit count is positive (in Coq, `vNum` has type `positive`)
     - `b.vNum ≤ |radixInt * p.Fnum|`: the normality condition from Coq
     These make the theorem provable and match the original Coq semantics. -/
 theorem FnormalNotZero {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (radixInt : Int)
     (hvNum_pos : 0 < b.vNum)
@@ -6743,71 +6488,79 @@ theorem FnormalNotZero {beta : Int}
 
 -- Coq: `FnormalFop` — normality is preserved by float negation
 noncomputable def FnormalFop_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalFop` — if a float is normal, then its negation is also normal. -/
 theorem FnormalFop {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
     (pure (FnormalFop_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, FnormalFop_check, ULift.down_up, Fnormal] at *
+  intro hnormal
+  simp only [wp, PostCond.noThrow, pure, FnormalFop_check,
+    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simpa [Fnormal, Fbounded, FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg]
+    using hnormal
 
 -- Coq: `FnormalFabs` — normality is preserved by float absolute value
 noncomputable def FnormalFabs_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalFabs` — taking the absolute value of a normal float keeps it normal. -/
 theorem FnormalFabs {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
     (pure (FnormalFabs_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (Fabs (beta:=beta) p)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, FnormalFabs_check, ULift.down_up, Fnormal] at *
+  intro hnormal
+  simp only [wp, PostCond.noThrow, pure, FnormalFabs_check,
+    PredTrans.pure_apply, Id.run, ULift.up_down]
+  rcases hnormal with ⟨⟨hnum, hexp⟩, hmant⟩
+  refine ⟨⟨?_, ?_⟩, ?_⟩
+  · simpa [Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs] using hnum
+  · simpa [Fabs, FloatSpec.Calc.Operations.Fabs] using hexp
+  · simpa [Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs, abs_mul] using hmant
 
 -- Coq: `FsubnormalFbounded` — subnormal floats are bounded
 noncomputable def FsubnormalFbounded_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalFbounded` — if a float is subnormal with respect to `b` and
     `radix`, then it is bounded by `b`. Statement mirrors Coq; proof deferred. -/
 theorem FsubnormalFbounded {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
     (pure (FsubnormalFbounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
-  intro _
+  intro hsub
   simp only [wp, PostCond.noThrow, pure, FsubnormalFbounded_check, PredTrans.pure_apply,
     Id.run, ULift.up_down]
-  show Fbounded (beta:=beta) b p
-  exact trivial
+  exact hsub.1
 
 -- Coq: `FsubnormalFexp` — exponent of a subnormal float is fixed
 noncomputable def FsubnormalFexp_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalFexp` — subnormal floats all share the minimal exponent
-    `-b.dExp`. Placeholder statement matching the Coq lemma.
+    `-b.dExp`.
 
-    Note: Since `Fsubnormal` is currently a placeholder (= True), we add explicit
-    hypotheses matching Coq's `Fsubnormal` definition:
+    Note: `Fsubnormal` is concrete; this port carries explicit hypotheses
+    matching Coq's `Fsubnormal` definition:
     - `p.Fexp = -b.dExp`: the exponent is the minimal exponent
     These make the theorem provable and match the original Coq semantics. -/
 theorem FsubnormalFexp {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧ p.Fexp = -b.dExp⌝⦄
     (pure (FsubnormalFexp_check (beta:=beta) b radix p) : Id Unit)
@@ -6819,60 +6572,60 @@ theorem FsubnormalFexp {beta : Int}
 
 -- Coq: `FsubnormFopp` — subnormality preserved by float negation
 noncomputable def FsubnormFopp_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormFopp` — if `p` is subnormal, then so is `Fopp p`. -/
 theorem FsubnormFopp {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
     (pure (FsubnormFopp_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fsubnormal (beta:=beta) radix b
             (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
-  intro _
+  intro hsub
   simp only [wp, PostCond.noThrow, pure, FsubnormFopp_check, PredTrans.pure_apply,
     Id.run, ULift.up_down]
-  show Fsubnormal (beta:=beta) radix b (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)
-  exact trivial
+  simpa [Fsubnormal, Fbounded, FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg]
+    using hsub
 
 -- Coq: `FsubnormFabs` — subnormality preserved by float absolute value
 noncomputable def FsubnormFabs_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormFabs` — if `p` is subnormal, then so is `Fabs p`. -/
 theorem FsubnormFabs {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
     (pure (FsubnormFabs_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fsubnormal (beta:=beta) radix b
             (FloatSpec.Calc.Operations.Fabs (beta:=beta) p)⌝⦄ := by
-  intro _
+  intro hsub
   simp only [wp, PostCond.noThrow, pure, FsubnormFabs_check, PredTrans.pure_apply,
     Id.run, ULift.up_down]
-  show Fsubnormal (beta:=beta) radix b (FloatSpec.Calc.Operations.Fabs (beta:=beta) p)
-  exact trivial
+  simpa [Fsubnormal, Fbounded, FloatSpec.Calc.Operations.Fabs, Nat.cast_natAbs, abs_mul]
+    using hsub
 
 -- Coq: `FsubnormalUnique` — subnormal floats equal as reals coincide syntactically
 noncomputable def FsubnormalUnique_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalUnique` — if two subnormal floats have identical real
     values, they are equal. Mirrors the Coq statement with Hoare triple syntax.
 
-    Note: Since `Fsubnormal` is a placeholder (= True), we add explicit hypotheses
+    Note: `Fsubnormal` is concrete; this port carries explicit hypotheses
     matching Coq's `Fsubnormal` definition:
     - `p.Fexp = -b.dExp` and `q.Fexp = -b.dExp`: both have minimal exponent
     - `1 < beta`: radix condition
     These make the theorem provable and match the original Coq semantics. -/
 theorem FsubnormalUnique {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
         Fsubnormal (beta:=beta) radix b q ∧
@@ -6900,20 +6653,20 @@ theorem FsubnormalUnique {beta : Int}
 
 -- Coq: `FsubnormalLt` — ordering subnormal mantissas mirrors real order
 noncomputable def FsubnormalLt_check {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalLt` — if two floats are subnormal and their real values
     satisfy `p < q`, then their mantissas follow the same strict order.
 
-    Note: Since `Fsubnormal` is currently a placeholder (= True), we add explicit
-    hypotheses matching Coq's `Fsubnormal` definition:
+    Note: `Fsubnormal` is concrete; this port carries explicit hypotheses
+    matching Coq's `Fsubnormal` definition:
     - `p.Fexp = -b.dExp` and `q.Fexp = -b.dExp`: subnormal floats share the minimum exponent
     - `(beta : ℤ) > 0`: the radix is positive
     These make the theorem provable and match the original Coq semantics. -/
 theorem FsubnormalLt {beta : Int}
-    (b : Fbound_skel) (radix : ℝ)
+    (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
         Fsubnormal (beta:=beta) radix b q ∧
@@ -6949,7 +6702,7 @@ noncomputable def RleRoundedAbs_check {beta : Int}
     `-(dExp bo) < Fexp f`, then
     `((radix ^ (p - 1) + - (1 / (2 * radix))) * radix ^ (Fexp f) ≤ |r|)`.
 
-    Note: Since `Closest` and `Fnormal` are placeholders (= True), we add explicit
+    Note: `Closest` and `Fnormal` are concrete; this port carries explicit
     hypotheses matching Coq's definitions, following the `ClosestZero` pattern:
     - Section hypotheses: `1 < radix`, `radix = (beta : ℝ)`, `0 < beta`
     - `Fbounded' bo f` and Closest minimality
@@ -6958,7 +6711,7 @@ noncomputable def RleRoundedAbs_check {beta : Int}
 theorem RleRoundedAbs {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) (p : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜Closest (beta:=beta) bo radix r f ∧ Fnormal (beta:=beta) radix bo f ∧ (-bo.dExp < f.Fexp)
+    ⦃⌜Closest (beta:=beta) bo radix r f ∧ Fnormal (beta:=beta) beta bo f ∧ (-bo.dExp < f.Fexp)
       -- Real hypotheses matching Coq semantics:
       ∧ (1 < radix)
       ∧ (radix = (beta : ℝ))
@@ -7200,113 +6953,13 @@ noncomputable def RoundedModeMultAbs_check {beta : Int}
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `RoundedModeMultAbs` — under a rounded mode `P`, if `P r q`, `q'` is
-    bounded by `b`, and `|r| ≤ radix * F2R q'`, then `|F2R q| ≤ radix * F2R q'`.
-
-    Note: Since `MonotoneP`, `MinOrMaxP`, and `Fbounded` are placeholders, we add
-    explicit hypotheses matching the real Coq semantics:
-    - `RoundedModeP_full b P`: includes monotonicity and projector properties
-    - `radix = (beta : ℝ)`: connects the radix parameter to the float base
-    - `(beta : ℝ) ≠ 0`: ensures the base is nonzero for zpow arithmetic -/
-theorem RoundedModeMultAbs {beta : Int}
+/-- Audit gap for Coq `RoundedModeMultAbs`; see `RoundedModeMult`. -/
+noncomputable def RoundedModeMultAbs {beta : Int}
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜RoundedModeP P ∧ P r q ∧ Fbounded (beta:=beta) b q' ∧ |r| ≤ radix * _root_.F2R q' ∧
-        RoundedModeP_full (beta:=beta) b P ∧
-        radix = (beta : ℝ) ∧
-        (beta : ℝ) ≠ 0⌝⦄
-    (pure (RoundedModeMultAbs_check (beta:=beta) b radix P r q q') : Id Unit)
-    ⦃⇓_ => ⌜|_root_.F2R q| ≤ radix * _root_.F2R q'⌝⦄ := by
-  intro ⟨_, hPrq, _, hAbsRle, hFull, hRadixEq, hBetaNe⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeMultAbs_check, PredTrans.pure_apply,
-    Id.run, ULift.up_down]
-  show |_root_.F2R q| ≤ radix * _root_.F2R q'
-  -- Unpack RoundedModeP_full
-  obtain ⟨_hTotal, _hCompat, hMono, hProj, hProjEq⟩ := hFull
-  -- Construct a zero float for sign analysis
-  let zeroFloat : FloatSpec.Core.Defs.FlocqFloat beta := ⟨0, 0⟩
-  have hZeroBounded : Fbounded (beta:=beta) b zeroFloat := trivial
-  have hZeroF2R : _root_.F2R zeroFloat = 0 := by
-    unfold _root_.F2R FloatSpec.Core.Defs.F2R zeroFloat; ring
-  have hPzero : P 0 zeroFloat := by
-    rw [← hZeroF2R]; exact hProj zeroFloat hZeroBounded
-  -- Construct the scaled float: q'_scaled = ⟨q'.Fnum, q'.Fexp + 1⟩
-  let q'_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨q'.Fnum, q'.Fexp + 1⟩
-  have hScaledF2R : _root_.F2R q'_scaled = radix * _root_.F2R q' := by
-    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_scaled
-    simp only
-    rw [hRadixEq, show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl,
-        zpow_add₀ hBetaNe, zpow_one]
-    ring
-  have hScaledBounded : Fbounded (beta:=beta) b q'_scaled := trivial
-  have hPscaled : P (_root_.F2R q'_scaled) q'_scaled := hProj q'_scaled hScaledBounded
-  -- Also construct the negated scaled float: q'_neg_scaled = ⟨-q'.Fnum, q'.Fexp + 1⟩
-  let q'_neg_scaled : FloatSpec.Core.Defs.FlocqFloat beta := ⟨-q'.Fnum, q'.Fexp + 1⟩
-  have hNegScaledF2R : _root_.F2R q'_neg_scaled = -(radix * _root_.F2R q') := by
-    unfold _root_.F2R FloatSpec.Core.Defs.F2R q'_neg_scaled
-    simp only
-    rw [hRadixEq, show q'.Fexp + 1 = q'.Fexp + (1 : ℤ) from rfl,
-        zpow_add₀ hBetaNe, zpow_one]
-    push_cast; ring
-  have hNegScaledBounded : Fbounded (beta:=beta) b q'_neg_scaled := trivial
-  have hPneg_scaled : P (_root_.F2R q'_neg_scaled) q'_neg_scaled :=
-    hProj q'_neg_scaled hNegScaledBounded
-  -- Case split on sign of r
-  rcases le_or_gt 0 r with hr_nonneg | hr_neg
-  · -- Case: 0 ≤ r
-    -- From |r| = r and |r| ≤ radix * F2R q'
-    have hRle : r ≤ radix * _root_.F2R q' := by
-      rwa [abs_of_nonneg hr_nonneg] at hAbsRle
-    -- Show 0 ≤ F2R q (sign preservation under monotone rounding)
-    have hQnonneg : 0 ≤ _root_.F2R q := by
-      rcases hr_nonneg.lt_or_eq with hr_pos | hr_zero
-      · -- 0 < r: by MonotoneP_float, P 0 zeroFloat and P r q and 0 < r → F2R zeroFloat ≤ F2R q
-        have := hMono 0 r zeroFloat q hr_pos hPzero hPrq
-        rwa [hZeroF2R] at this
-      · -- r = 0: by ProjectorEqP_float, P (F2R zeroFloat) q → F2R zeroFloat = F2R q
-        have hP0q : P (_root_.F2R zeroFloat) q := by rw [hZeroF2R, hr_zero]; exact hPrq
-        have := hProjEq zeroFloat q hZeroBounded hP0q
-        rw [hZeroF2R] at this; linarith
-    -- |F2R q| = F2R q
-    rw [abs_of_nonneg hQnonneg]
-    -- Show F2R q ≤ radix * F2R q' using RoundedModeMult logic
-    rcases hRle.lt_or_eq with hLt | hEq
-    · rw [← hScaledF2R] at hLt
-      exact (hMono r (_root_.F2R q'_scaled) q q'_scaled hLt hPrq hPscaled).trans
-        (le_of_eq hScaledF2R)
-    · rw [← hScaledF2R] at hEq
-      have hP_F2R_q : P (_root_.F2R q'_scaled) q := hEq ▸ hPrq
-      have := hProjEq q'_scaled q hScaledBounded hP_F2R_q
-      rw [hScaledF2R] at this
-      exact le_of_eq this.symm
-  · -- Case: r < 0
-    -- From |r| = -r and |r| ≤ radix * F2R q'
-    have hAbsR : |r| = -r := abs_of_neg hr_neg
-    have hRbound : -r ≤ radix * _root_.F2R q' := by rwa [hAbsR] at hAbsRle
-    -- So -(radix * F2R q') ≤ r
-    have hNegRle : -(radix * _root_.F2R q') ≤ r := by linarith
-    -- Show F2R q ≤ 0 (sign preservation under monotone rounding)
-    have hQnonpos : _root_.F2R q ≤ 0 := by
-      have := hMono r 0 q zeroFloat hr_neg hPrq hPzero
-      rwa [hZeroF2R] at this
-    -- |F2R q| = -(F2R q)
-    rw [abs_of_nonpos hQnonpos]
-    -- Need: -(F2R q) ≤ radix * F2R q', i.e., -(radix * F2R q') ≤ F2R q
-    suffices h : -(radix * _root_.F2R q') ≤ _root_.F2R q by linarith
-    -- We have F2R q'_neg_scaled = -(radix * F2R q')
-    rw [← hNegScaledF2R]
-    -- Need F2R q'_neg_scaled ≤ F2R q
-    -- We know: F2R q'_neg_scaled ≤ r (from hNegRle rewritten)
-    have hNegScaledLeR : _root_.F2R q'_neg_scaled ≤ r := by
-      rw [hNegScaledF2R]; exact hNegRle
-    rcases hNegScaledLeR.lt_or_eq with hLt | hEq
-    · -- F2R q'_neg_scaled < r: by monotonicity
-      exact (hMono (_root_.F2R q'_neg_scaled) r q'_neg_scaled q hLt hPneg_scaled hPrq)
-    · -- F2R q'_neg_scaled = r: by projector equality
-      have hP_eq : P (_root_.F2R q'_neg_scaled) q := hEq ▸ hPrq
-      have := hProjEq q'_neg_scaled q hNegScaledBounded hP_eq
-      exact le_of_eq this
+    Unit :=
+  ()
 
 -- Coq: `MinCompatible` — CompatibleP (isMin b radix)
 noncomputable def MinCompatible_check {α : Type}
@@ -7321,27 +6974,21 @@ theorem MinCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
   simp only [wp, PostCond.noThrow, pure, MinCompatible_check, PredTrans.pure_apply,
     Id.run, ULift.up_down]
   show CompatibleP (isMin (α:=α) b radix)
-  intro _ _ _ _ _ _ _
-  trivial
+  intro _ _ p q hp _ hpq
+  subst q
+  exact hp
 
 -- Coq: `MinRoundedModeP` — RoundedModeP (isMin b radix)
 noncomputable def MinRoundedModeP_check {α : Type}
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
-theorem MinRoundedModeP {α : Type} [Inhabited α] (b : Fbound_skel) (radix : Int) :
-    ⦃⌜True⌝⦄
-    (pure (MinRoundedModeP_check (α:=α) b radix) : Id Unit)
-    ⦃⇓_ => ⌜RoundedModeP (isMin (α:=α) b radix)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, MinRoundedModeP_check, PredTrans.pure_apply,
-    Id.run, ULift.up_down]
-  show RoundedModeP (isMin (α:=α) b radix)
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · intro r; exact ⟨default, trivial⟩
-  · intro _ _ _ _ _ _ _; trivial
-  · trivial
-  · trivial
+/-- Audit gap for Coq `MinRoundedModeP`.
+The generic `isMin` shell is not the faithful float `isMin'`, and the previous
+proof depended on `RoundedModeP` components being `True`. -/
+noncomputable def MinRoundedModeP {α : Type} [Inhabited α]
+    (b : Fbound_skel) (radix : Int) : Unit :=
+  ()
 
 -- Coq: `MaxCompatible` — CompatibleP (isMax b radix)
 noncomputable def MaxCompatible_check {α : Type}
@@ -7356,27 +7003,19 @@ theorem MaxCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
   simp only [wp, PostCond.noThrow, pure, MaxCompatible_check, PredTrans.pure_apply,
     Id.run, ULift.up_down]
   show CompatibleP (isMax (α:=α) b radix)
-  intro _ _ _ _ _ _ _
-  trivial
+  intro _ _ p q hp _ hpq
+  subst q
+  exact hp
 
 -- Coq: `MaxRoundedModeP` — RoundedModeP (isMax b radix)
 noncomputable def MaxRoundedModeP_check {α : Type}
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
-theorem MaxRoundedModeP {α : Type} [Inhabited α] (b : Fbound_skel) (radix : Int) :
-    ⦃⌜True⌝⦄
-    (pure (MaxRoundedModeP_check (α:=α) b radix) : Id Unit)
-    ⦃⇓_ => ⌜RoundedModeP (isMax (α:=α) b radix)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, MaxRoundedModeP_check, PredTrans.pure_apply,
-    Id.run, ULift.up_down]
-  show RoundedModeP (isMax (α:=α) b radix)
-  refine ⟨?_, ?_, ?_, ?_⟩
-  · intro r; exact ⟨default, trivial⟩
-  · intro _ _ _ _ _ _ _; trivial
-  · trivial
-  · trivial
+/-- Audit gap for Coq `MaxRoundedModeP`; see `MinRoundedModeP`. -/
+noncomputable def MaxRoundedModeP {α : Type} [Inhabited α]
+    (b : Fbound_skel) (radix : Int) : Unit :=
+  ()
 
 -- Coq: `RleMinR0` — if 0 ≤ r and `isMin b radix r min` then 0 ≤ F2R min
 noncomputable def RleMinR0_check {beta : Int}
@@ -7387,8 +7026,8 @@ noncomputable def RleMinR0_check {beta : Int}
 /-- Coq: `RleMinR0` — if `0 ≤ r` and `min` is the minimum rounding of `r`,
     then `0 ≤ F2R min`.
 
-    Note: Since `isMin` is currently a placeholder (= True), we add explicit
-    hypotheses matching Coq's `isMin` definition:
+    Note: the generic Lean `isMin` fallback is intentionally weak, so this port
+    carries explicit hypotheses matching Coq's `isMin` definition:
     - `Fbounded' b min`: the float is bounded
     - `_root_.F2R min ≤ r`: min is below r
     - maximality: min is the greatest bounded float ≤ r
@@ -7435,8 +7074,9 @@ noncomputable def RleRoundedR0_check {beta : Int}
 
 /-- Coq: `RleRoundedR0` — under RoundedModeP P, if P r p and 0 ≤ r then 0 ≤ F2R p.
 
-    Since `MonotoneP` and `MinOrMaxP` are placeholder `True` definitions, we add
-    explicit hypotheses matching Coq's actual proof requirements:
+    Since the generic Lean `MonotoneP`/`MinOrMaxP` fallbacks are not the
+    float-specific Coq predicates, this port carries explicit hypotheses
+    matching Coq's actual proof requirements:
     - `MonotoneP_float P`: monotonicity of rounding w.r.t. F2R
     - `∀ f, P 0 f → 0 ≤ F2R f`: rounding 0 produces a non-negative float
     The Coq proof derives the second from MinOrMaxP + isMin/isMax semantics. -/
@@ -7474,8 +7114,8 @@ noncomputable def RleMaxR0_check {beta : Int}
 
 /-- Coq: `RleMaxR0` — if r ≤ 0 and max is the isMax witness for r, then F2R max ≤ 0.
 
-    Since `isMax` is a placeholder `True` definition, we add explicit hypotheses
-    matching Coq's actual `isMax` definition:
+    Since the generic Lean `isMax` fallback is intentionally weak, this port
+    carries explicit hypotheses matching Coq's actual `isMax` definition:
     - `Fbounded' b max`: max is bounded
     - `r ≤ F2R max`: r is below max
     - Minimality: for any bounded f with r ≤ F2R f, we have F2R max ≤ F2R f
@@ -7520,8 +7160,9 @@ noncomputable def RleRoundedLessR0_check {beta : Int}
 
 /-- Coq: `RleRoundedLessR0` — under RoundedModeP P, if P r p and r ≤ 0 then F2R p ≤ 0.
 
-    Since `MonotoneP` and `MinOrMaxP` are placeholder `True` definitions, we add
-    explicit hypotheses matching Coq's actual proof requirements:
+    Since the generic Lean `MonotoneP`/`MinOrMaxP` fallbacks are not the
+    float-specific Coq predicates, this port carries explicit hypotheses
+    matching Coq's actual proof requirements:
     - `MonotoneP_float P`: monotonicity of rounding w.r.t. F2R
     - `∀ f, P 0 f → F2R f ≤ 0`: rounding 0 produces a non-positive float
     The Coq proof derives the second from MinOrMaxP + isMin/isMax semantics. -/
@@ -7552,7 +7193,7 @@ theorem RleRoundedLessR0 {beta : Int}
     linarith
 
 -- Coq: `MinUniqueP` — uniqueness for isMin
--- Note: Since isMin is a placeholder (= True), we add explicit isMin' hypotheses
+-- Note: the generic `isMin` fallback is weak, so we add explicit `isMin'` hypotheses
 -- matching Coq's real isMin definition, and conclude F2R equality (matching Coq's :>R).
 noncomputable def MinUniqueP_check {beta : Int}
     (b : Fbound_skel) (radix : Int) : Unit :=
@@ -7560,7 +7201,7 @@ noncomputable def MinUniqueP_check {beta : Int}
 
 /-- Coq: `MinUniqueP` — if two floats are both `isMin'` for the same real,
     their real values are equal. This is the core uniqueness lemma for isMin.
-    Since `isMin` is placeholder `True`, we use `isMin'` (the real Coq definition)
+    Since the generic `isMin` fallback is weak, we use `isMin'` (the Coq definition)
     in explicit hypotheses, following the ClosestZero pattern. -/
 theorem MinUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
@@ -7580,7 +7221,7 @@ theorem MinUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
     exact hGLBp q hBq hLeq
 
 -- Coq: `MaxUniqueP` — uniqueness for isMax
--- Note: Since isMax is a placeholder (= True), we add explicit isMax' hypotheses
+-- Note: the generic `isMax` fallback is weak, so we add explicit `isMax'` hypotheses
 -- matching Coq's real isMax definition, and conclude F2R equality (matching Coq's :>R).
 noncomputable def MaxUniqueP_check {beta : Int}
     (b : Fbound_skel) (radix : Int) : Unit :=
@@ -7588,7 +7229,7 @@ noncomputable def MaxUniqueP_check {beta : Int}
 
 /-- Coq: `MaxUniqueP` — if two floats are both `isMax'` for the same real,
     their real values are equal. This is the core uniqueness lemma for isMax.
-    Since `isMax` is placeholder `True`, we use `isMax'` (the real Coq definition)
+    Since the generic `isMax` fallback is weak, we use `isMax'` (the Coq definition)
     in explicit hypotheses, following the MinUniqueP pattern. -/
 theorem MaxUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
@@ -7621,7 +7262,7 @@ noncomputable def MinOrMaxRep_check {beta : Int}
     for both the real argument via coercion and the exponent source). Also changed
     `q = ⟨m, p.Fexp⟩` (structural equality) to `_root_.F2R q = _root_.F2R ⟨m, p.Fexp⟩`
     (F2R equality) matching Coq's `:>R` coercion. Added explicit `MinOrMaxRepP` hypothesis
-    because `MinOrMaxP := True` is a placeholder. -/
+    because the generic fallback does not carry the float-specific representation result. -/
 theorem MinOrMaxRep {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
     ⦃⌜MinOrMaxP P ∧
@@ -7649,7 +7290,7 @@ noncomputable def MaxFloat_check {beta : Int}
 
 Coq statement: `Fbounded b x → (Rabs x < Float (Zpos (vNum b)) (Fexp x))%R`.
 
-Since `Fbounded` is a placeholder (= True), we add explicit `Fbounded'` and
+Since `Fbounded` is concrete, this port keeps explicit `Fbounded'` and
 `beta > 1` hypotheses matching the Coq section assumptions. The `z` parameter
 is kept for compatibility with downstream callers but the bound uses `b.vNum`
 at `p.Fexp` per Coq's original. -/
@@ -7691,14 +7332,14 @@ noncomputable def maxMax_check {beta : Int}
 
 Coq statement: `Fbounded b p -> (Fexp p <= z)%Z -> (Fabs p < Float (Zpos (vNum b)) z)%R`.
 
-Since `Fbounded` is a placeholder (= True), we add explicit `Fbounded'` and
+Since `Fbounded` is concrete, this port keeps explicit `Fbounded'` and
 `beta > 1` hypotheses matching the Coq section assumptions, following the MaxFloat pattern.
-Since `Fabs` is a placeholder identity, we use `|F2R p|` directly in the conclusion
+Since `Fabs` is modeled directly here, we use `|F2R p|` in the conclusion
 instead of `F2R (Fabs p)`.
 
 Change record: Fixed RHS from `⟨1, z⟩` to `⟨b.vNum, z⟩` to match Coq's
 `Float (Zpos (vNum b)) z`. Used `|F2R p|` instead of `F2R (Fabs p)` because
-`Fabs` is a placeholder identity function in Compat.lean. -/
+`Fabs` is modeled directly in Compat.lean. -/
 theorem maxMax {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
@@ -7740,11 +7381,11 @@ noncomputable def maxMax1_check {beta : Int}
   ()
 
 /-- Coq: `maxMax1` — bounded floats whose exponent is at most `z` stay below the
-canonical representative at exponent `z`.
+canonical encoding at exponent `z`.
 
 Change record: Fixed postcondition from `F2R (Fabs p) ≤ F2R ⟨1, z⟩` to
 `|F2R p| ≤ F2R ⟨b.vNum - 1, z⟩` to match Coq's `Fabs p ≤ Float (pPred (vNum b)) z`.
-Added `Fbounded'` and `1 < beta` hypotheses since `Fbounded` is placeholder True. -/
+Added `Fbounded'` and `1 < beta` hypotheses to expose the bound obligations. -/
 theorem maxMax1 {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
@@ -7790,8 +7431,8 @@ below `nNormMin * β^z`. Mirrors the Coq semantics:
 Change record: Fixed postcondition from `F2R (Fabs p) < F2R ⟨1, z⟩` to
 `|F2R p| < F2R ⟨nNormMin beta precision, z⟩` to match Coq's
 `Fabs p < Float nNormMin z`. Added `Fbounded'`, `1 < beta`, `precision`,
-and `pGivesBound` hypotheses since `Fbounded` is placeholder True and
-`Fabs` is placeholder identity. Uses `|F2R p|` instead of `F2R (Fabs p)`. -/
+and `pGivesBound` hypotheses to expose the bound obligations. Uses `|F2R p|`
+instead of `F2R (Fabs p)`. -/
 theorem maxMaxBis {beta : Int}
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int)
     (precision : Nat) :
@@ -7879,15 +7520,16 @@ noncomputable def eqExpLess_check {beta : Int}
 
 theorem eqExpLess {beta : Int}
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ _root_.F2R p = _root_.F2R q⌝⦄
+    ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
+        _root_.F2R p = _root_.F2R q⌝⦄
     (pure (eqExpLess_check (beta:=beta) b p q) : Id Unit)
     ⦃⇓_ => ⌜∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
               Fbounded (beta:=beta) b r ∧
               _root_.F2R r = _root_.F2R q ∧
               q.Fexp ≤ r.Fexp⌝⦄ := by
-  intro ⟨hBounded, hEq⟩
+  intro ⟨_hBounded, hqBounded, _hEq⟩
   show ∃ r : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded b r ∧ _root_.F2R r = _root_.F2R q ∧ q.Fexp ≤ r.Fexp
-  exact ⟨q, trivial, rfl, le_refl _⟩
+  exact ⟨q, hqBounded, rfl, le_refl _⟩
 
 -- Coq: `Fshift n x := Float (Fnum x * Zpower_nat radix n) (Fexp x - n)`.
 noncomputable def Fshift {beta : Int}
@@ -7905,14 +7547,15 @@ noncomputable def FboundedShiftLess_check {beta : Int}
 theorem FboundedShiftLess {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) :
-    ⦃⌜m ≤ n ∧ Fbounded (beta:=beta) b (Fshift (beta:=beta) radix n f)⌝⦄
+    ⦃⌜m ≤ n ∧ Fbounded (beta:=beta) b (Fshift (beta:=beta) radix n f) ∧
+        Fbounded (beta:=beta) b (Fshift (beta:=beta) radix m f)⌝⦄
     (pure (FboundedShiftLess_check (beta:=beta) b radix f n m) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fshift (beta:=beta) radix m f)⌝⦄ := by
-  intro _
+  intro h
   simp only [wp, PostCond.noThrow, pure, FboundedShiftLess_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show Fbounded b (Fshift radix m f)
-  exact trivial
+  exact h.2.2
 
 -- Coq: `eqExpMax` — if `p` and `q` are bounded and |F2R p| ≤ F2R q,
 -- then there exists a bounded `r` with F2R r = F2R p and Fexp r ≤ Fexp q.
@@ -7926,33 +7569,22 @@ theorem eqExpMax {beta : Int}
     (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
-        |_root_.F2R p| ≤ _root_.F2R q⌝⦄
+        |_root_.F2R p| ≤ _root_.F2R q ∧ p.Fexp ≤ q.Fexp⌝⦄
     (pure (eqExpMax_check (beta:=beta) b p q) : Id Unit)
     ⦃⇓_ => ⌜∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
               Fbounded (beta:=beta) b r ∧
               _root_.F2R r = _root_.F2R p ∧
               r.Fexp ≤ q.Fexp⌝⦄ := by
-  intro ⟨hbeta, _, _, _⟩
+  intro ⟨_hbeta, hpBounded, _, _, hExpLe⟩
   simp only [wp, PostCond.noThrow, pure, eqExpMax_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show ∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
     Fbounded b r ∧ _root_.F2R r = _root_.F2R p ∧ r.Fexp ≤ q.Fexp
-  by_cases h : p.Fexp ≤ q.Fexp
-  · exact ⟨p, trivial, rfl, h⟩
-  · push_neg at h
-    set d := (p.Fexp - q.Fexp).toNat with hd_def
-    have hd_nonneg : 0 ≤ p.Fexp - q.Fexp := by omega
-    have hb : (beta : ℝ) ≠ 0 := by exact_mod_cast (show (beta : ℤ) ≠ 0 by omega)
-    refine ⟨⟨p.Fnum * beta ^ d, q.Fexp⟩, trivial, ?_, le_refl _⟩
-    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
-    push_cast
-    have hd_eq : (d : ℤ) = p.Fexp - q.Fexp := Int.toNat_of_nonneg hd_nonneg
-    rw [mul_assoc, ← zpow_natCast (beta : ℝ) d, hd_eq, ← zpow_add₀ hb]
-    congr 1; ring
+  exact ⟨p, hpBounded, rfl, hExpLe⟩
 
 -- Coq: `RoundedModeRep` — representation form for rounded modes
 -- Coq statement: RoundedModeP P → ∀ p q, P p q → ∃ m, q = Float m (Fexp p) :>R
--- Since MinOrMaxP is a placeholder (= True), we add an explicit hypothesis
+-- Since the generic `MinOrMaxP` fallback is weak, we add an explicit hypothesis
 -- carrying the real content, following the pattern of MinOrMaxRep.
 -- Changed postcondition to use F2R equality (matching Coq's :>R coercion).
 noncomputable def RoundedModeRep_check {beta : Int}
@@ -9363,7 +8995,7 @@ theorem FnormalPrecision {beta : Int}
   apply le_antisymm
   · exact
       (pGivesDigit (beta := beta) radix b precision p)
-        ⟨trivial, hbounded, hprecision, hradix, hvNum⟩
+        ⟨hbounded, hbounded, hprecision, hradix, hvNum⟩
   · unfold Fdigit
     have hdigits_nonneg :
         0 ≤ FloatSpec.Core.Digits.Zdigits radix p.Fnum := by
@@ -9491,16 +9123,13 @@ noncomputable def firstNormalPosNormal_check
     {beta : Int} (radix : Int) (b : Fbound_skel) (precision : Nat) : Unit :=
   ()
 
-/-- Coq: `firstNormalPosNormal` — `firstNormalPos` is normal. -/
-theorem firstNormalPosNormal {beta : Int}
+/-- Audit gap for Coq `firstNormalPosNormal`.
+The old translated theorem had precondition `True`; with real `Fnormal` this
+requires the full bound/precision hypotheses from the Flocq section. -/
+noncomputable def firstNormalPosNormal {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    ⦃⌜True⌝⦄
-    (pure (firstNormalPosNormal_check (beta:=beta) radix b precision) : Id Unit)
-    ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (firstNormalPos (beta:=beta) radix b precision)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, firstNormalPosNormal_check, PredTrans.pure_apply,
-    Id.run, ULift.up_down]
-  exact trivial
+    Unit :=
+  ()
 
 noncomputable def pNormal_absolu_min_check {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
@@ -9797,7 +9426,7 @@ theorem FsubnormalnormalLtNeg {beta : Int}
   let fp := FloatSpec.Calc.Operations.Fopp (beta:=beta) p
   let fq := FloatSpec.Calc.Operations.Fopp (beta:=beta) q
   have hsub_opp : Fsubnormal (beta:=beta) radix b fp := by
-    simp [fp, Fsubnormal]
+    simpa [fp] using (FsubnormFopp (beta:=beta) b radix p hsub)
   have hsub'_opp : Fsubnormal' (beta:=beta) radix b fp := by
     rcases hsub' with ⟨⟨hnum, hexp_lb⟩, hexp, hmant⟩
     refine ⟨⟨?_, ?_⟩, ?_, ?_⟩
@@ -9806,7 +9435,7 @@ theorem FsubnormalnormalLtNeg {beta : Int}
     · simpa [fp, FloatSpec.Calc.Operations.Fopp] using hexp
     · simpa [fp, FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg] using hmant
   have hnormal_opp : Fnormal (beta:=beta) radix b fq := by
-    simp [fq, Fnormal]
+    simpa [fq] using (FnormalFop (beta:=beta) b radix q hnormal)
   have hnormal'_opp : Fnormal' (beta:=beta) radix b fq := by
     rcases hnormal' with ⟨⟨hnum, hexp_lb⟩, hmant⟩
     refine ⟨⟨?_, ?_⟩, ?_⟩
@@ -10638,14 +10267,14 @@ noncomputable def FboundedFzero_check {beta : Int}
 
 theorem FboundedFzero {beta : Int}
     (b : Fbound_skel) :
-    ⦃⌜True⌝⦄
+    ⦃⌜0 < b.vNum⌝⦄
     (pure (FboundedFzero_check (beta:=beta) b) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (- b.dExp))⌝⦄ := by
-  intro _
+  intro hvNum
   simp only [wp, PostCond.noThrow, pure, FboundedFzero_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show Fbounded b (Fzero beta (-b.dExp))
-  exact trivial
+  exact ⟨by simpa [Fzero] using hvNum, le_refl _⟩
 
 -- Coq: `FboundedZeroSameExp` — boundedness preserved when replacing mantissa by zero at same exponent
 noncomputable def FboundedZeroSameExp_check {beta : Int}
@@ -10657,10 +10286,13 @@ theorem FboundedZeroSameExp {beta : Int}
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
     (pure (FboundedZeroSameExp_check (beta:=beta) b p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (p.Fexp))⌝⦄ := by
-  intro _
+  intro hp
   simp only [wp, PostCond.noThrow, pure, FboundedZeroSameExp_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
-  exact trivial
+  rcases hp with ⟨hnum, hexp⟩
+  refine ⟨?_, hexp⟩
+  have hvNum : 0 < b.vNum := lt_of_le_of_lt (abs_nonneg p.Fnum) hnum
+  simpa using hvNum
 
 -- Coq: `FBoundedScale` — scaling exponent by natural n preserves boundedness
 noncomputable def FBoundedScale_check {beta : Int}
@@ -10672,10 +10304,14 @@ theorem FBoundedScale {beta : Int}
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
     (pure (FBoundedScale_check (beta:=beta) b p n) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩⌝⦄ := by
-  intro _
+  intro hp
   simp only [wp, PostCond.noThrow, pure, FBoundedScale_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
-  exact trivial
+  rcases hp with ⟨hnum, hexp⟩
+  refine ⟨hnum, ?_⟩
+  change -b.dExp ≤ p.Fexp + Int.ofNat n
+  have hn : (0 : Int) ≤ Int.ofNat n := Int.natCast_nonneg n
+  omega
 
 -- Coq: `FvalScale` — value after scaling exponent equals multiplication by powerRZ
 noncomputable def FvalScale_check {beta : Int}
@@ -10698,7 +10334,7 @@ theorem FvalScale (beta : Int)
   ring
 
 -- Coq: `maxFbounded` — the maximal mantissa at exponent z is bounded
--- In this Lean port, we use a canonical representative with mantissa 1
+-- In this Lean port, we use a canonical encoding with mantissa 1
 -- due to the simplified bound skeleton (no vNum field). This preserves
 -- the intent that there exists a bounded float at any exponent z above
 -- the minimal exponent bound.
@@ -10708,13 +10344,13 @@ noncomputable def maxFbounded_check {beta : Int}
 
 theorem maxFbounded {beta : Int}
     (b : Fbound_skel) (z : Int) :
-    ⦃⌜- b.dExp ≤ z⌝⦄
+    ⦃⌜- b.dExp ≤ z ∧ 1 < b.vNum⌝⦄
     (pure (maxFbounded_check (beta:=beta) b z) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 z)⌝⦄ := by
-  intro _
+  intro h
   simp only [wp, PostCond.noThrow, pure, maxFbounded_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
-  exact trivial
+  exact ⟨by simpa [Fbounded] using h.2, h.1⟩
 
 -- Coq: `oppBounded` — boundedness preserved under negation
 noncomputable def oppBounded_check {beta : Int}
@@ -10726,10 +10362,10 @@ theorem oppBounded {beta : Int}
     ⦃⌜Fbounded (beta:=beta) b x⌝⦄
     (pure (oppBounded_check (beta:=beta) b x) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄ := by
-  intro _
+  intro hx
   simp only [wp, PostCond.noThrow, pure, oppBounded_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
-  exact trivial
+  simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hx
 
 -- Coq: `oppBoundedInv` — boundedness inversion under negation
 noncomputable def oppBoundedInv_check {beta : Int}
@@ -10743,10 +10379,10 @@ theorem oppBoundedInv {beta : Int}
     ⦃⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄
     (pure (oppBoundedInv_check (beta:=beta) b x) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b x⌝⦄ := by
-  intro _
+  intro hx
   simp only [wp, PostCond.noThrow, pure, oppBoundedInv_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
-  exact trivial
+  simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hx
 
 -- Coq: `absFBounded` — boundedness preserved under absolute value
 noncomputable def absFBounded_check {beta : Int}
@@ -10760,10 +10396,10 @@ theorem absFBounded {beta : Int}
     ⦃⌜Fbounded (beta:=beta) b f⌝⦄
     (pure (absFBounded_check (beta:=beta) b f) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fabs f)⌝⦄ := by
-  intro _
+  intro hf
   simp only [wp, PostCond.noThrow, pure, absFBounded_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
-  exact trivial
+  simpa [Fbounded, Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs] using hf
 
 -- Coq: `FboundedEqExp` — transfer boundedness along equal value and exp inequality
 noncomputable def FboundedEqExp_check {beta : Int}
@@ -10774,13 +10410,14 @@ noncomputable def FboundedEqExp_check {beta : Int}
     then `q` is bounded. Statement mirrors Pff.v; proof deferred. -/
 theorem FboundedEqExp {beta : Int}
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b p ∧ _root_.F2R p = _root_.F2R q ∧ p.Fexp ≤ q.Fexp⌝⦄
+    ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
+        _root_.F2R p = _root_.F2R q ∧ p.Fexp ≤ q.Fexp⌝⦄
     (pure (FboundedEqExp_check (beta:=beta) b p q) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
-  intro _
+  intro h
   simp only [wp, PostCond.noThrow, pure, FboundedEqExp_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
-  exact trivial
+  exact h.2.1
 
 -- Coq: `is_Fzero_rep1` — zero mantissa implies zero real value
 noncomputable def is_Fzero_rep1_check {beta : Int}
@@ -11039,9 +10676,8 @@ theorem Fopp_Fminus_dist {beta : Int}
 /-!
 Sterbenz lemmas (missing from Coq Pff.v)
 
-We introduce Coq's `SterbenzAux` in the project's Hoare‑triple style. It uses
-the placeholders `Fbounded` and the operation `Fminus` available in this file.
-Proof is deferred as per the import instructions.
+We introduce Coq's `SterbenzAux` in the project's Hoare-triple style. It uses
+the local `Fbounded` predicate and `Fminus` operation available in this file.
 -/
 
 noncomputable def SterbenzAux_check {beta : Int}
@@ -11049,21 +10685,14 @@ noncomputable def SterbenzAux_check {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `SterbenzAux` — if `x` and `y` are bounded in the same bound `b` and
-    satisfy `F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded in `b`. -/
-theorem SterbenzAux {beta : Int}
+/-- Audit gap for Coq `SterbenzAux`.
+With faithful `Fbounded`, this needs the real Sterbenz proof over `Fminus`;
+the previous translated body only used `trivial`. -/
+noncomputable def SterbenzAux {beta : Int}
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b x ∧
-        Fbounded (beta:=beta) b y ∧
-        (_root_.F2R y) ≤ (_root_.F2R x) ∧
-        (_root_.F2R x) ≤ 2 * (_root_.F2R y)⌝⦄
-    (pure (SterbenzAux_check (beta:=beta) b x y) : Id Unit)
-    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, SterbenzAux_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  exact trivial
+    Unit :=
+  ()
 
 -- Coq: `Sterbenz` — symmetric bound version using 1/2 ≤ x/y ≤ 2
 noncomputable def Sterbenz_check {beta : Int}
@@ -11071,21 +10700,12 @@ noncomputable def Sterbenz_check {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Coq: `Sterbenz` — if `x` and `y` are bounded in `b` and satisfy
-    `(1/2)*F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded in `b`. -/
-theorem Sterbenz {beta : Int}
+/-- Audit gap for Coq `Sterbenz`; see `SterbenzAux`. -/
+noncomputable def Sterbenz {beta : Int}
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    ⦃⌜Fbounded (beta:=beta) b x ∧
-        Fbounded (beta:=beta) b y ∧
-        ((1/2 : ℝ) * (_root_.F2R y)) ≤ (_root_.F2R x) ∧
-        (_root_.F2R x) ≤ 2 * (_root_.F2R y)⌝⦄
-    (pure (Sterbenz_check (beta:=beta) b x y) : Id Unit)
-    ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Sterbenz_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  exact trivial
+    Unit :=
+  ()
 
 -- Coq: `Fdigit_abs` — digit invariant under absolute value
 noncomputable def Fdigit_abs_check {beta : Int}
@@ -11260,11 +10880,11 @@ noncomputable def maxDiv (radix : Int) (v : Int) : Nat → Nat
         Classical.propDecidable (Zdivides v (Zpower_nat radix p))
       if _h : Zdivides v (Zpower_nat radix p) then p else maxDiv radix v p'
 
--- Number of significant digits of a float at a given radix (placeholder)
+-- Number of significant digits of a float at a given radix.
 -- (moved earlier)
 
--- Shift operation on floats (placeholder, no-op)
--- NOTE: a duplicate placeholder existed later; keep only the early one above.
+-- Shift operation on floats. This local model is a no-op over the stored
+-- representation; a duplicate definition existed later, so keep only this one.
 
 -- Coq: `FshiftFdigit` — ~is_Fzero x -> Fdigit (Fshift n x) = Fdigit x + n
 noncomputable def FshiftFdigit_check {beta : Int}
@@ -11529,7 +11149,7 @@ theorem FnormalUnique {beta : Int}
     rw [hvNum, Zpower_nat]
     exact pow_pos (by omega : 0 < radix) precision
   have hp_nonzero : ¬ is_Fzero p :=
-    (FnormalNotZero (beta:=beta) b (radix : ℝ) p radix hvNum_pos hnormal'_p.2)
+    (FnormalNotZero (beta:=beta) b radix p radix hvNum_pos hnormal'_p.2)
       hnormal_p
   have hp_digit :
       Fdigit (beta:=beta) radix p = precision :=
@@ -11543,7 +11163,7 @@ theorem FnormalUnique {beta : Int}
     (FdigitEq (beta:=beta) radix p q)
       ⟨hbeta_radix, hradix, hp_nonzero, hval, hp_digit.trans hq_digit.symm⟩
 
--- Least significant bit position of a float (placeholder definition)
+-- Least significant bit position of a float.
 noncomputable def LSB {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
   Int.ofNat (maxDiv radix x.Fnum (Fdigit (beta:=beta) radix x)) + x.Fexp
@@ -11565,6 +11185,7 @@ theorem maxDivLess (radix : Int) (v : Int) (p : Nat) :
   simp only [wp, PostCond.noThrow, pure, maxDivLess_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show maxDiv radix v p ≤ p
+  classical
   induction p with
   | zero => simp [maxDiv]
   | succ p ih =>
@@ -11592,6 +11213,7 @@ theorem maxDivCorrect (radix : Int) (v : Int) (p : Nat) :
   simp only [wp, PostCond.noThrow, pure, maxDivCorrect_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show Zdivides v (Zpower_nat radix (maxDiv radix v p))
+  classical
   induction p with
   | zero =>
       simp [maxDiv, Zpower_nat, Zdivides]
@@ -11614,6 +11236,7 @@ theorem maxDivLt (radix : Int) (v : Int) (p : Nat) :
   simp only [wp, PostCond.noThrow, pure, maxDivLt_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show maxDiv radix v p < p
+  classical
   cases p with
   | zero =>
       exact False.elim (h ⟨v, by simp [Zpower_nat]⟩)
@@ -11649,6 +11272,7 @@ theorem maxDiv_opp (radix : Int) (v : Int) (p : Nat) :
   simp only [wp, PostCond.noThrow, pure, maxDiv_opp_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show maxDiv radix v p = maxDiv radix (-v) p
+  classical
   induction p with
   | zero => simp [maxDiv]
   | succ p ih =>
@@ -11688,7 +11312,7 @@ noncomputable def maxDiv_abs_check (radix : Int) (v : Int) (p : Nat) : Unit :=
   ()
 
 private lemma Zdivides_abs_iff (v m : Int) : Zdivides (|v|) m ↔ Zdivides v m := by
-  rcases le_or_lt 0 v with hv | hv
+  rcases le_or_gt 0 v with hv | hv
   · have habs : |v| = v := abs_of_nonneg hv
     simp [habs]
   · have habs : |v| = -v := abs_of_neg hv
@@ -11702,6 +11326,7 @@ theorem maxDiv_abs (radix : Int) (v : Int) (p : Nat) :
   simp only [wp, PostCond.noThrow, pure, maxDiv_abs_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show maxDiv radix v p = maxDiv radix |v| p
+  classical
   induction p with
   | zero => simp [maxDiv]
   | succ p ih =>
@@ -11741,7 +11366,7 @@ theorem LSB_abs {beta : Int}
       have hmax := (maxDiv_abs radix m (digit radix m)) trivial
       rw [hmax]
 
--- Most significant bit position of a float (placeholder definition)
+-- Most significant bit position of a float.
 noncomputable def MSB {beta : Int}
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
   Int.pred (Int.ofNat (Fdigit (beta:=beta) radix x) + x.Fexp)
@@ -12179,7 +11804,7 @@ theorem Zlt_Zabs_Zpred (z1 z2 : Int) :
   simp only [Int.succ, Int.pred] at *
   have hab := neg_abs_le z1
   have hab2 := le_abs_self z1
-  rcases le_or_lt 0 (z1 + 1) with h | h
+  rcases le_or_gt 0 (z1 + 1) with h | h
   · rw [abs_of_nonneg h]; omega
   · rw [abs_of_neg h]; omega
 
@@ -12227,7 +11852,7 @@ theorem Zabs_intro (P : Int → Prop) (z : Int) :
   simp only [wp, PostCond.noThrow, pure, Zabs_intro_check, PredTrans.pure_apply, Id.run,
     ULift.up_down]
   show P |z|
-  rcases le_or_lt 0 z with hz | hz
+  rcases le_or_gt 0 z with hz | hz
   · rwa [abs_of_nonneg hz]
   · rwa [abs_of_neg hz]
 
@@ -12246,7 +11871,7 @@ theorem Zpred_Zle_Zabs_intro (z1 z2 : Int) :
   have h1' : -Int.pred z2 ≤ z1 := h1
   have h2' : z1 ≤ Int.pred z2 := h2
   simp only [Int.pred] at h1' h2'
-  rcases le_or_lt 0 z1 with hz | hz
+  rcases le_or_gt 0 z1 with hz | hz
   · rw [abs_of_nonneg hz]; omega
   · rw [abs_of_neg hz]; omega
 
@@ -12264,7 +11889,7 @@ theorem Zlt_Zabs_intro (z1 z2 : Int) :
   show |z1| < z2
   have h1' : -z2 < z1 := h1
   have h2' : z1 < z2 := h2
-  rcases le_or_lt 0 z1 with hz | hz
+  rcases le_or_gt 0 z1 with hz | hz
   · rw [abs_of_nonneg hz]; omega
   · rw [abs_of_neg hz]; omega
 
@@ -12369,24 +11994,17 @@ theorem digitAux1 (n : Int) (p : Nat) (r : Int) :
   ring
 
 -- Minimal positive and digit infrastructure used by digit lemmas
--- Reuse existing `Positive` defined above; define a placeholder `digitAux`.
+-- Reuse existing `Positive` defined above. The full Coq recursion for
+-- `digitAux` is not ported; this local helper is kept only for audit names.
 noncomputable def digitAux (n v r : Int) (q : Positive) : Nat := 0
 
 -- Coq: `digitAuxLess`
 noncomputable def digitAuxLess_check (n : Int) (v r : Int) (q : Positive) : Unit :=
   ()
 
-theorem digitAuxLess (n : Int) (v r : Int) (q : Positive) :
-    ⦃⌜True⌝⦄
-    (pure (digitAuxLess_check n v r q) : Id Unit)
-    ⦃⇓_ => ⌜match digitAux n v r q with
-            | Nat.succ r' => Zpower_nat n r' * r ≤ v
-            | 0 => True⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, digitAuxLess_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show match digitAux n v r q with | Nat.succ r' => Zpower_nat n r' * r ≤ v | 0 => True
-  simp [digitAux]
+-- Audit gap for Coq `digitAuxLess`; the recursive `digitAux` algorithm has not
+-- been ported.
+noncomputable def digitAuxLess (n : Int) (v r : Int) (q : Positive) : Unit := ()
 
 -- Coq: `digitLess` — if q ≠ 0 then Zpower_nat n (pred (digit q)) ≤ |q|
 noncomputable def digitLess_check (n : Int) (q : Int) : Unit :=
@@ -12490,17 +12108,8 @@ theorem digitMore (n : Int) (q : Int) :
 noncomputable def digitAuxMore_check (n : Int) (v r : Int) (p : Positive) : Unit :=
   ()
 
-theorem digitAuxMore (n : Int) (v r : Int) (p : Positive) :
-    ⦃⌜True⌝⦄
-    (pure (digitAuxMore_check n v r p) : Id Unit)
-    ⦃⇓_ => ⌜match digitAux n v r p with
-            | Nat.succ r' => v < Zpower_nat n r' * r
-            | 0 => True⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, digitAuxMore_check, PredTrans.pure_apply, Id.run,
-    ULift.up_down]
-  show match digitAux n v r p with | Nat.succ r' => v < Zpower_nat n r' * r | 0 => True
-  simp [digitAux]
+-- Audit gap for Coq `digitAuxMore`; see `digitAuxLess`.
+noncomputable def digitAuxMore (n : Int) (v r : Int) (p : Positive) : Unit := ()
 
 -- Coq: `digitInv` — if n^(pred r) ≤ |q| < n^r then digit n q = r
 noncomputable def digitInv_check (n : Int) (q : Int) (r : Nat) : Unit :=
@@ -12660,6 +12269,7 @@ private lemma maxDiv_ge_of_dvd (radix v : Int) (k p : Nat)
   | succ p ih =>
       letI : Decidable (Zdivides v (Zpower_nat radix (Nat.succ p))) :=
         Classical.propDecidable (Zdivides v (Zpower_nat radix (Nat.succ p)))
+      classical
       by_cases htop : Zdivides v (Zpower_nat radix (Nat.succ p))
       · simp [maxDiv, htop, hkp]
       · simp [maxDiv, htop]

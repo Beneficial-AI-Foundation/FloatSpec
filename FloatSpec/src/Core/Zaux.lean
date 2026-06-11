@@ -1496,31 +1496,31 @@ theorem Zdiv_eucl_unique_spec (a b : Int) :
   unfold Zdiv_eucl_unique
   rfl
 
-/-- Auxiliary division algorithm on positive integers (placeholder) -/
-def Zpos_div_eucl_aux1 (_a _b : Int) : (Int × Int) :=
-  (0, 0)
+/-- Auxiliary division algorithm on positive integers. -/
+def Zpos_div_eucl_aux1 (a b : Int) : (Int × Int) :=
+  (a / b, a % b)
 
-/-- Specification: Correctness of positive-aux division helper (placeholder) -/
+/-- Specification: correctness of positive-aux division helper. -/
 theorem Zpos_div_eucl_aux1_correct_spec (a b : Int) :
     ⦃⌜True⌝⦄
     (pure (Zpos_div_eucl_aux1 a b) : Id _)
-    ⦃⇓result => ⌜result = (0, 0)⌝⦄ := by
+    ⦃⇓result => ⌜result = (a / b, a % b)⌝⦄ := by
   intro _
   unfold Zpos_div_eucl_aux1
   rfl
 
-/-- Secondary auxiliary division algorithm on positive integers (placeholder) -/
-def Zpos_div_eucl_aux (_a _b : Int) : (Int × Int) :=
-  (0, 0)
+/-- Secondary auxiliary division algorithm on positive integers. -/
+def Zpos_div_eucl_aux (a b : Int) : (Int × Int) :=
+  Zpos_div_eucl_aux1 a b
 
-/-- Specification: Correctness of secondary positive-aux division helper (placeholder) -/
+/-- Specification: correctness of secondary positive-aux division helper. -/
 @[spec]
 theorem Zpos_div_eucl_aux_correct_spec (a b : Int) :
     ⦃⌜True⌝⦄
     (pure (Zpos_div_eucl_aux a b) : Id _)
-    ⦃⇓result => ⌜result = (0, 0)⌝⦄ := by
+    ⦃⇓result => ⌜result = (a / b, a % b)⌝⦄ := by
   intro _
-  unfold Zpos_div_eucl_aux
+  unfold Zpos_div_eucl_aux Zpos_div_eucl_aux1
   rfl
 
 /-- Fast Euclidean division for integers. -/
