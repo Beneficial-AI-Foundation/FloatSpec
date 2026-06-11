@@ -827,7 +827,7 @@ lemma sqrt_error_N_FLX_aux2 (x : ℝ)
         (beta := beta) (fexp := FLX_exp prec) (x := 1) (y := x)
         hF1 hx hx_gt1
       simpa [hsucc1, wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip hβ
-    rcases le_or_lt x (1 + 2 * u_ro beta prec) with hx_le_mid | hx_gt_mid
+    rcases le_or_gt x (1 + 2 * u_ro beta prec) with hx_le_mid | hx_gt_mid
     · left
       exact le_antisymm hx_le_mid hfirst_lower
     · right
@@ -1735,7 +1735,7 @@ theorem format_REM_aux
           nlinarith
       have hfmt : generic_format beta fexp (x - y) :=
         sterbenz (beta := beta) (fexp := fexp) (x := x) (y := y)
-          hx hy hbounds
+          hx hy hβ hbounds
       have htarget :
           x - ((rnd (x / y) : Int) : ℝ) * y = x - y := by
         rw [hrnd1]

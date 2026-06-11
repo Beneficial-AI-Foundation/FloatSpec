@@ -1000,7 +1000,7 @@ theorem round_plus_ge_ulp (x y : ℝ)
         have hm_abs_pos : 0 < Int.natAbs m := Int.natAbs_pos.mpr hm0
         have : (1 : Nat) ≤ Int.natAbs m := Nat.succ_le_of_lt hm_abs_pos
         have hcast : (1 : ℝ) ≤ (Int.natAbs m : ℝ) := by exact_mod_cast this
-        simpa [Int.cast_natAbs, Int.cast_abs] using hcast
+        simpa [Nat.cast_natAbs, Int.cast_abs] using hcast
       have hmul :
           (beta : ℝ) ^ e ≤ |(m : ℝ)| * (beta : ℝ) ^ e := by
         have h := mul_le_mul_of_nonneg_right hm_abs_ge_one hpow_nonneg

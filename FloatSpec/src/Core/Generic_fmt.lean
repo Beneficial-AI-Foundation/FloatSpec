@@ -652,17 +652,20 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
         (beta : ℝ) ^ (e - fexp (e + 1)) := by
     simpa [zpow_neg, Int.sub_eq_add_neg] using
       (zpow_add₀ hbne e (-(fexp (e + 1)))).symm
-  simp only [hmul_pow]
+  rw [hmul_pow]
   -- β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1))
   -- Ztrunc(β^(e - fexp(e+1))) = β^(e - fexp(e+1)) since it's a positive integer
   have hsm_int : (beta : ℝ) ^ (e - fexp (e + 1)) = ((beta : Int) ^ k : ℝ) := by
     rw [hk_eq, zpow_natCast, ← Int.cast_pow]
-  simp only [hsm_int]
+  rw [hsm_int]
   -- Ztrunc of an integer is itself
   have htrunc : Ztrunc ((beta : ℝ) ^ k) = (beta ^ k : Int) := by
     simpa [Int.cast_pow] using (Ztrunc_intCast (beta ^ k))
-  change (beta : ℝ) ^ e = ↑(Ztrunc ((beta : ℝ) ^ k)) * (beta : ℝ) ^ fexp (e + 1)
-  rw [htrunc, Int.cast_pow, ← hsm_int, zpow_sub₀ hbne]
+  simp [FloatSpec.Core.Defs.F2R, Id.run, pure, htrunc]
+  -- Goal: β^e = (beta^k : ℝ) * β^(fexp(e+1))
+  rw [← hsm_int]
+  -- β^e = β^(e - fexp(e+1)) * β^(fexp(e+1)) = β^e
+  rw [zpow_sub₀ hbne]
   simp [div_eq_mul_inv, inv_mul_cancel_right₀ (zpow_ne_zero _ hbne)]
 
 /--
@@ -682,7 +685,7 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
     · -- Large regime: fexp(e) < e implies fexp(e+1) ≤ e
       exact hpair.left hlt
     · -- Small regime: fexp(e) = e (since fexp(e) ≤ e and ¬(fexp(e) < e))
-      have heq : fexp e = e := le_antisymm hfe (not_lt.mp hlt)
+      have heq : fexp e = e := le_antisymm hfe (le_of_not_gt hlt)
       have hsmall : e ≤ fexp e := by grind
       have hbound := (hpair.right hsmall).left
       -- fexp(fexp(e) + 1) ≤ fexp(e), i.e., fexp(e+1) ≤ e
@@ -895,15 +898,19 @@ theorem scaled_mantissa_F2R_canonical
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  -- Unfold definitions
   unfold scaled_mantissa cexp
   simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind]
+  -- canonical means f.Fexp = fexp(mag(F2R f))
   unfold canonical at hcan
-  have hcan' : fexp (mag beta (F2R f)) = f.Fexp := by simpa using hcan.symm
+  have hcan' : fexp (mag beta (F2R f)) = f.Fexp := by
+    simpa using hcan.symm
   rw [hcan']
+  -- Goal: F2R(f) * β^(-f.Fexp) = f.Fnum
   unfold FloatSpec.Core.Defs.F2R
+  -- (f.Fnum * β^f.Fexp) * β^(-f.Fexp) = f.Fnum * (β^f.Fexp * β^(-f.Fexp)) = f.Fnum * 1 = f.Fnum
   rw [mul_assoc, zpow_neg, mul_inv_cancel₀ (zpow_ne_zero _ hbne), mul_one]
-  change (↑f.Fnum : ℝ) = ↑f.Fnum
-  rfl
+  simp
 
 /-- Specification: Scaled mantissa of absolute value
 
@@ -915,14 +922,18 @@ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
     (pure (scaled_mantissa beta fexp (abs x)) : Id ℝ)
     ⦃⇓result => ⌜result = abs (scaled_mantissa beta fexp x)⌝⦄ := by
   intro hβ
+  -- mag(|x|) = mag(x) since mag uses |·| in its definition: ||x|| = |x|
+  -- |x| * β^(-e) = |x * β^(-e)| since β^(-e) > 0
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  -- Unfold definitions
   unfold scaled_mantissa cexp
   simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind, reduceMagAbs]
-  have hpow_pos : 0 < (beta : ℝ) ^ (-fexp (mag beta x)) := zpow_pos hbposR _
+  -- Now goal: |x| * β^(-e) = |x * β^(-e)|
+  set e := fexp (mag beta x) with he
+  have hpow_pos : 0 < (beta : ℝ) ^ (-e) := zpow_pos hbposR _
   rw [abs_mul, abs_of_pos hpow_pos]
-  change |x| * (beta : ℝ) ^ (-fexp (mag beta x)) = |x| * (beta : ℝ) ^ (-fexp (mag beta x))
-  rfl
+  simp
 -- Section: Generic format closure properties
 
 /-- Specification: Generic format opposite
@@ -1456,7 +1467,7 @@ theorem mag_generic_gt
       exact_mod_cast (Nat.succ_le_of_lt hnat_pos)
     -- Relate |(n : ℝ)| to (Int.natAbs n : ℝ)
     have h_abs_natAbs : (Int.natAbs n : ℝ) = |(n : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     simpa [hn, h_abs_natAbs] using hnat_ge1
   have h_le_abs : (beta : ℝ) ^ (fexp M) ≤ abs x := by
     -- |x| = |m| * β^(fexp M) with |m| ≥ 1 and β^(fexp M) > 0
@@ -2008,14 +2019,10 @@ theorem Znearest_ge_floor (choice : Int → Bool) (x : ℝ) :
       Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
         Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := hz
   rcases hz with hfloor | hceil
-  · simp only [hfloor] at *
-    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zfloor x
-    exact le_refl _
+  · simpa [hfloor]
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
-    simp only [hceil] at *
-    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zceil x
-    exact hle
+    simpa [hceil] using hle
 
 /-- Check pair for Znearest_le_ceil: returns (Znearest x, ⌈x⌉). -/
 noncomputable def Znearest_le_ceil_check (choice : Int → Bool) (x : ℝ) : (Int × Int) :=
@@ -2042,12 +2049,8 @@ theorem Znearest_le_ceil (choice : Int → Bool) (x : ℝ) :
   rcases hz with hfloor | hceil
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
-    simp only [hfloor] at *
-    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zceil x
-    exact hle
-  · simp only [hceil] at *
-    change FloatSpec.Core.Raux.Zceil x ≤ FloatSpec.Core.Raux.Zceil x
-    exact le_refl _
+    simpa [hfloor] using hle
+  · simpa [hceil]
 
 /-- Coq `Generic_fmt.v`: instance `valid_rnd_N`.
 
@@ -2281,7 +2284,7 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
       -- From ¬(x - f < 1/2), get (1/2) ≤ (x - f); combined with ≠ yields strict
       have hxge : (2⁻¹) ≤ x - (f : ℝ) := by
         -- rewrite 2⁻¹ as (1/2) to use hlt
-        simpa [hhalf_id.symm] using (not_lt.mp hlt)
+        simpa [hhalf_id.symm] using (le_of_not_gt hlt)
       -- turn ≠ into ≠ after rewriting 2⁻¹ ↔ 1/2
       have hx_ne' : x - (f : ℝ) ≠ (2⁻¹) := by simpa [hhalf_id.symm] using hx_ne
       exact lt_of_le_of_ne hxge (Ne.symm hx_ne')
@@ -2516,7 +2519,7 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
     -- Relate |z| to natAbs z for integers z
     have h_eq_abs : ((Int.natAbs ((Znearest choice x) - n)) : ℝ)
                       = |(((Znearest choice x) - n : Int) : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     have : (1 : ℝ) ≤ |(((Znearest choice x) - n : Int) : ℝ)| := by simpa [h_eq_abs] using hge1
     -- Relate to the bound on |(Z : ℝ) - (n : ℝ)| using casts
     have hcast : |(((Znearest choice x) - n : Int) : ℝ)|
@@ -4591,7 +4594,7 @@ theorem round_NA_pt
         -- First, f2 cannot be on the right of x (would give distance ≥ b > a)
         have hf2_le_x : f2 ≤ x := by
           by_contra hxle
-          have hx_le_f2 : x ≤ f2 := (not_le.mp hxle).le
+          have hx_le_f2 : x ≤ f2 := le_of_not_ge hxle
           -- From UP minimality, xup ≤ f2, hence |x - f2| ≥ b
           have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hx_le_f2
           have hge_b : |x - f2| ≥ b := by
@@ -4659,7 +4662,7 @@ theorem round_NA_pt
             -- f2 cannot be on the left of x (distance ≥ a > b)
             have hx_le_f2 : x ≤ f2 := by
               by_contra h_not
-              have hf2_le_x : f2 ≤ x := (not_le.mp h_not).le
+              have hf2_le_x : f2 ≤ x := le_of_not_ge h_not
               -- From DN maximality, f2 ≤ xdn ⇒ |x - f2| ≥ a
               have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hf2_le_x
               have hge_a : |x - f2| ≥ a := by
@@ -5516,7 +5519,7 @@ theorem lt_cexp_pos_ax
     by_contra hnot
     have hle : (FloatSpec.Core.Raux.mag beta y) ≤ (FloatSpec.Core.Raux.mag beta x) := le_of_not_gt hnot
     have hmono := Monotone_exp.mono (fexp := fexp) hle
-    exact (not_lt.mpr hmono) hfe
+    exact (not_lt_of_ge hmono) hfe
   -- Translate mag inequality on positive y to x < y
   exact lt_of_mag_lt_pos (beta := beta) (x := x) (y := y) hβ hy hmag_lt
 
@@ -7367,7 +7370,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     -- Rewrite base (β : ℝ) as ((natAbs β) : ℝ) since β > 0
     have hbeta_cast_eq : ((Int.natAbs beta : Nat) : ℝ) = (beta : ℝ) := by
       have : ((Int.natAbs beta : Nat) : ℝ) = abs (beta : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [abs_of_pos hbposR] using this
     -- Convert the RHS to a casted Nat power
     have hRHS_cast : (beta : ℝ) ^ (Int.toNat (k - e))
@@ -7379,7 +7382,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     have hcast_ineq : (Int.natAbs m : ℝ) ≤ ((Int.natAbs beta ^ Int.toNat (k - e) : Nat) : ℝ) := by
       -- Use ((natAbs m) : ℝ) = |(m : ℝ)| and rewrite the RHS using hzpow_toNat and hRHS_cast
       have hLHS : (Int.natAbs m : ℝ) = abs (m : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [hLHS, hzpow_toNat, hRHS_cast] using h_abs_m_le
     -- Coercion monotonicity gives the required Nat inequality
     exact (by exact_mod_cast hcast_ineq)

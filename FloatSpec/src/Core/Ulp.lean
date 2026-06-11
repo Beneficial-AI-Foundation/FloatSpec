@@ -5784,7 +5784,7 @@ theorem ulp_DN [Exp_not_FTZ fexp] (x : ℝ) (hx : 0 ≤ x) :
        let u2 := ulp beta fexp x
        (u1, u2)) : Id (ℝ × ℝ))
     ⦃⇓r => ⌜r.1 = r.2⌝⦄ := by
-  intro hβ; intro _; classical
+  intro hβ _; classical
   -- Reduce the monadic triple to a run‑level equality goal and close by the bridge lemma.
   -- First, normalize the Hoare‑style goal to a pure proposition
   simp [wp, PostCond.noThrow, Id.run, bind, pure,
@@ -8468,20 +8468,102 @@ Lemma not_FTZ_generic_format_ulp : (forall x,  F (ulp x)) -> Exp_not_FTZ fexp.
 
 Lean (spec): If ulp x is always representable, the exponent is not FTZ.
 -/
+private theorem generic_format_bpow_inv_shift
+    (e : Int)
+    (hβ : 1 < beta)
+    (hfmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ e)) :
+    fexp (e + 1) ≤ e := by
+  have hfe : fexp e ≤ e :=
+    FloatSpec.Core.Generic_fmt.generic_format_bpow_inv'
+      (beta := beta) (fexp := fexp) (e := e) hβ hfmt
+  have hvalid :=
+    FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
+  by_cases hlarge : fexp e < e
+  · exact hvalid.left hlarge
+  · have hsmall : e ≤ fexp e := le_of_not_gt hlarge
+    have heq : fexp e = e := le_antisymm hfe hsmall
+    have hbound : fexp (fexp e + 1) ≤ fexp e := (hvalid.right hsmall).left
+    simpa [heq] using hbound
+
+private theorem ulp_bpow_plain
+    (e : Int)
+    (hβ : 1 < beta) :
+    ulp beta fexp ((beta : ℝ) ^ e) = (beta : ℝ) ^ (fexp (e + 1)) := by
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hx_ne : ((beta : ℝ) ^ e) ≠ 0 := ne_of_gt (zpow_pos hbpos e)
+  have hspec := ulp_neq_0 (beta := beta) (fexp := fexp)
+    (x := (beta : ℝ) ^ e) (hx := hx_ne)
+  have hmag_bpow : FloatSpec.Core.Raux.mag beta ((beta : ℝ) ^ e) = e + 1 := by
+    have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := e) hβ
+    simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+  have hcexp :
+      FloatSpec.Core.Generic_fmt.cexp beta fexp ((beta : ℝ) ^ e) = fexp (e + 1) := by
+    unfold FloatSpec.Core.Generic_fmt.cexp
+    simpa [hmag_bpow]
+  have hrun :
+      ulp beta fexp ((beta : ℝ) ^ e) =
+        (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp ((beta : ℝ) ^ e)) := by
+    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hspec True.intro
+  simpa [hcexp] using hrun
+
+private theorem generic_format_bpow_ge_ulp_0_plain
+    (e : Int)
+    (hle : ulp beta fexp 0 ≤ (beta : ℝ) ^ e)
+    (hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ e) := by
+  classical
+  have H := negligible_exp_spec' (fexp := fexp)
+  have h_e1_le : fexp (e + 1) ≤ e := by
+    cases hopt : negligible_exp fexp with
+    | none =>
+        rcases H with Hnone | Hsome
+        · exact Int.lt_add_one_iff.mp (Hnone.2 (e + 1))
+        · rcases Hsome with ⟨n, hnopt, _⟩
+          cases ((Eq.symm hopt).trans hnopt)
+    | some n =>
+        rcases H with Hnone | Hsome
+        · cases ((Eq.symm hopt).trans Hnone.1)
+        · rcases Hsome with ⟨m, hmopt, hm_small⟩
+          have hpow_le : (beta : ℝ) ^ (fexp m) ≤ (beta : ℝ) ^ e := by
+            simpa [ulp, hmopt, Id.run, bind, pure] using hle
+          have hfm_le_e : fexp m ≤ e := by
+            have hmono := FloatSpec.Core.Raux.le_bpow (beta := beta)
+              (e1 := fexp m) (e2 := e) hβ hpow_le
+            simpa [FloatSpec.Core.Raux.le_bpow_check, wp, PostCond.noThrow, Id.run, pure]
+              using hmono True.intro
+          have pair :=
+            FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) m
+          have hsmall : fexp (fexp m + 1) ≤ fexp m := (pair.right hm_small).left
+          have hlt_k : fexp (fexp m + 1) < fexp m + 1 :=
+            lt_of_le_of_lt hsmall (lt_add_of_pos_right _ Int.zero_lt_one)
+          have hlt_e1 : fexp (e + 1) < e + 1 :=
+            FloatSpec.Core.Generic_fmt.valid_exp_large (beta := beta) (fexp := fexp)
+              (k := fexp m + 1) (l := e + 1) hlt_k (by omega)
+          exact Int.lt_add_one_iff.mp hlt_e1
+  have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow
+    (beta := beta) (fexp := fexp) (e := e) ⟨hβ, h_e1_le⟩
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htrip
+
 theorem not_FTZ_generic_format_ulp :
     (∀ x : ℝ, FloatSpec.Core.Generic_fmt.generic_format beta fexp (ulp beta fexp x)) →
-    ⦃⌜True⌝⦄
-    (pure (let _ := ulp beta fexp 0; True) : Id Prop)
-    ⦃⇓_ => ⌜True⌝⦄ := by
-  intro _; classical
-  -- Split on the `ulp 0` branch to discharge the internal match.
-  cases hopt : negligible_exp fexp with
-  | none =>
-      -- ulp 0 evaluates to `pure 0`; the program returns `True` trivially
-      intro _; simp [wp, PostCond.noThrow, Id.run, bind, pure, ulp, hopt]
-  | some n =>
-      -- ulp 0 evaluates to a pure power of β; the program still returns `True`
-      intro _; simp [wp, PostCond.noThrow, Id.run, bind, pure, ulp, hopt]
+    (hβ : 1 < beta) →
+    Exp_not_FTZ fexp := by
+  intro hfmt_ulp hβ
+  refine ⟨?_⟩
+  intro e
+  have hrun :
+      ulp beta fexp ((beta : ℝ) ^ (e - 1)) = (beta : ℝ) ^ (fexp e) := by
+    have hraw :
+        ulp beta fexp ((beta : ℝ) ^ (e - 1)) =
+          (beta : ℝ) ^ (fexp ((e - 1) + 1)) :=
+      ulp_bpow_plain (beta := beta) (fexp := fexp) (e := e - 1) hβ
+    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hraw
+  have hfmt_pow :
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ (fexp e)) := by
+    simpa [hrun] using hfmt_ulp ((beta : ℝ) ^ (e - 1))
+  exact generic_format_bpow_inv_shift (beta := beta) (fexp := fexp)
+    (e := fexp e) hβ hfmt_pow
 
 /-
 Coq (Ulp.v):
@@ -8642,18 +8724,26 @@ Lean (spec): If ulp is minimized at zero for all x, then not FTZ.
 -/
 theorem not_FTZ_ulp_ge_ulp_0 :
     (∀ x : ℝ, ulp beta fexp 0 ≤ ulp beta fexp x) →
-    ⦃⌜True⌝⦄
-    (pure (let _ := ulp beta fexp 0; True) : Id Prop)
-    ⦃⇓_ => ⌜True⌝⦄ := by
-  intro _; classical
-  -- Reduce the Hoare triple; split on the `ulp 0` branch to discharge the match.
-  cases hopt : negligible_exp fexp with
-  | none =>
-      -- ulp 0 evaluates to `pure 0`; the program returns `True` trivially
-      intro _; simp [wp, PostCond.noThrow, Id.run, bind, pure, ulp, hopt]
-  | some n =>
-      -- ulp 0 evaluates to a pure power of β; the program still returns `True`
-      intro _; simp [wp, PostCond.noThrow, Id.run, bind, pure, ulp, hopt]
+    (hβ : 1 < beta) →
+    Exp_not_FTZ fexp := by
+  intro hulp_min hβ
+  refine ⟨?_⟩
+  intro e
+  have hrun :
+      ulp beta fexp ((beta : ℝ) ^ (e - 1)) = (beta : ℝ) ^ (fexp e) := by
+    have hraw :
+        ulp beta fexp ((beta : ℝ) ^ (e - 1)) =
+          (beta : ℝ) ^ (fexp ((e - 1) + 1)) :=
+      ulp_bpow_plain (beta := beta) (fexp := fexp) (e := e - 1) hβ
+    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hraw
+  have hle : ulp beta fexp 0 ≤ (beta : ℝ) ^ (fexp e) := by
+    simpa [hrun] using hulp_min ((beta : ℝ) ^ (e - 1))
+  have hfmt_pow :
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp ((beta : ℝ) ^ (fexp e)) :=
+    generic_format_bpow_ge_ulp_0_plain (beta := beta) (fexp := fexp)
+      (e := fexp e) hle hβ
+  exact generic_format_bpow_inv_shift (beta := beta) (fexp := fexp)
+    (e := fexp e) hβ hfmt_pow
 
 /-- Coq (Ulp.v):
 Lemma `ulp_le_pos` : `forall {Hm : Monotone_exp fexp} x y, 0 ≤ x → x ≤ y → ulp x ≤ ulp y.`
