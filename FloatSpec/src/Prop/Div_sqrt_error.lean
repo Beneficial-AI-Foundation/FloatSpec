@@ -20,23 +20,25 @@ lemma generic_format_plus_prec (fexp : Int → Int)
   (h_bound : ∀ e, fexp e ≤ e - prec)
   (x y : ℝ) (fx fy : FloatSpec.Core.Defs.FlocqFloat beta)
   (hx : x = _root_.F2R fx) (hy : y = _root_.F2R fy)
-  (h1 : |x + y| < (Int.natAbs beta : ℝ) ^ (Int.natAbs (prec + fx.Fexp) : Nat))
-  (h2 : |x + y| < (Int.natAbs beta : ℝ) ^ (Int.natAbs (prec + fy.Fexp) : Nat)) :
+  (h1 : |x + y| < FloatSpec.Core.Raux.bpow beta (prec + fx.Fexp))
+  (h2 : |x + y| < FloatSpec.Core.Raux.bpow beta (prec + fy.Fexp)) :
   generic_format beta fexp (x + y) := by
   sorry
 
 variable (choice : Int → Bool)
 
 /-- Remainder of the division in FLX -/
-theorem div_error_FLX (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+theorem div_error_FLX (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hx : generic_format beta (FLX_exp prec) x) (hy : generic_format beta (FLX_exp prec) y) :
-  generic_format beta (FLX_exp prec) (x - FloatSpec.Calc.Round.round beta (FLX_exp prec) () (x / y) * y) := by
+  generic_format beta (FLX_exp prec) (x - FloatSpec.Calc.Round.round beta (FLX_exp prec) rnd (x / y) * y) := by
   sorry
 
 /-- Square root error in FLX -/
-theorem sqrt_error_FLX (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem sqrt_error_FLX (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hx : generic_format beta (FLX_exp prec) x) :
-  generic_format beta (FLX_exp prec) (x - (FloatSpec.Calc.Round.round beta (FLX_exp prec) () (Real.sqrt x))^2) := by
+  generic_format beta (FLX_exp prec) (x - (FloatSpec.Calc.Round.round beta (FLX_exp prec) rnd (Real.sqrt x))^2) := by
   sorry
 
 /-- Remainder of the square in FLX (with p > 1) and rounding to nearest -/
@@ -140,11 +142,11 @@ theorem sqrt_error_N_FLT_round_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - p
 section FormatREM
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-variable [Monotone_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 /-- Auxiliary remainder formatting under generic exponent function. -/
 theorem format_REM_aux
-  (rnd : ℝ → Int) [Valid_rnd rnd]
+  (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
   (x y : ℝ)
   (hx : generic_format beta fexp x)
   (hy : generic_format beta fexp y)
@@ -156,7 +158,7 @@ theorem format_REM_aux
 
 /-- Remainder formatting under a small-argument rounding hypothesis. -/
 theorem format_REM
-  (rnd : ℝ → Int) [Valid_rnd rnd]
+  (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
   (x y : ℝ)
   (Hrnd0 : |x / y| < (1/2 : ℝ) → rnd (x / y) = 0)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y) :
@@ -183,15 +185,17 @@ end FormatREM
 
 
 /-- Division error in FLT -/
-theorem div_error_FLT (emin : Int) (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+theorem div_error_FLT (emin : Int) (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hx : generic_format beta (FLT_exp emin prec) x) (hy : generic_format beta (FLT_exp emin prec) y)
-  (h_no_underflow : (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + 2 * prec - 1) : Nat) ≤ |x / y|) :
-  generic_format beta (FLT_exp emin prec) (x - FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (x / y) * y) := by
+  (h_no_underflow : FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤ |x / y|) :
+  generic_format beta (FLT_exp emin prec) (x - FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd (x / y) * y) := by
   sorry
 
 /-- Square root error in FLT -/
-theorem sqrt_error_FLT (emin : Int) (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+theorem sqrt_error_FLT (emin : Int) (rnd : ℝ → Int)
+  [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ)
   (hx : generic_format beta (FLT_exp emin prec) x)
-  (h_no_underflow : (Int.natAbs beta : ℝ) ^ (Int.natAbs (emin + 2 * prec - 1) : Nat) ≤ |Real.sqrt x|) :
-  generic_format beta (FLT_exp emin prec) (x - (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (Real.sqrt x))^2) := by
+  (h_no_underflow : FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤ |Real.sqrt x|) :
+  generic_format beta (FLT_exp emin prec) (x - (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) rnd (Real.sqrt x))^2) := by
   sorry

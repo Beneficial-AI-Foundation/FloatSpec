@@ -3323,7 +3323,53 @@ theorem Zdigits_unique (n e : Int) (hβ : beta > 1 := h_beta) :
     ⦃⌜n ≠ 0 ∧ beta ^ (e - 1).natAbs ≤ Int.natAbs n ∧ Int.natAbs n < beta ^ e.natAbs⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓d => ⌜d = e⌝⦄ := by
-  sorry
+  intro ⟨hn, hlow, hhigh⟩
+  suffices h : Zdigits beta n = e by
+    simp only [wp, PostCond.noThrow, pure, Id.run, h, PredTrans.pure, PredTrans.apply]; trivial
+  have hcorr := Zdigits_correct beta n hβ hn
+  simp only [PredTrans.pure] at hcorr
+  obtain ⟨hcL, hcH⟩ := hcorr
+  rw [Int.abs_eq_natAbs] at hcL hcH
+  have hd_pos : 0 < Zdigits beta n := by
+    have h_aux : ∀ m dd pow fuel, dd > 0 → (Zdigits_aux beta m dd pow fuel) > 0 := by
+      intro m dd pow fuel hdd
+      induction fuel generalizing dd pow with
+      | zero => unfold Zdigits_aux; simp; exact hdd
+      | succ fuel' ih => unfold Zdigits_aux; simp; split_ifs
+                         case pos => exact hdd
+                         case neg => apply ih; linarith
+    unfold Zdigits; simp [hn]
+    exact h_aux n 1 beta (n.natAbs + 1) (by norm_num : (1 : Int) > 0)
+  have he_pos : 0 < e := by
+    by_contra he
+    push Not at he
+    have h0 : e.natAbs ≤ (e - 1).natAbs :=
+      Nat.le_of_lt (natAbs_sub_one_gt_of_nonpos e he)
+    have := pow_le_pow_exponent beta (le_of_lt hβ) h0
+    linarith
+  apply le_antisymm
+  case a =>
+    have h1 : beta ^ (Zdigits beta n - 1).natAbs < beta ^ e.natAbs := lt_of_le_of_lt hcL hhigh
+    have h2 : ¬ (e.natAbs ≤ (Zdigits beta n - 1).natAbs) := by
+      intro hle; exact not_lt.mpr (pow_le_pow_exponent beta (le_of_lt hβ) hle) h1
+    have h3 : (Zdigits beta n - 1).natAbs < e.natAbs := by omega
+    have h4 : Zdigits beta n - 1 < e := by
+      have hd1_nn : 0 ≤ Zdigits beta n - 1 := by linarith
+      have he_nn : 0 ≤ e := by linarith
+      rw [← Int.natAbs_of_nonneg hd1_nn, ← Int.natAbs_of_nonneg he_nn]
+      exact_mod_cast h3
+    linarith
+  case a =>
+    have h1 : beta ^ (e - 1).natAbs < beta ^ (Zdigits beta n).natAbs := lt_of_le_of_lt hlow hcH
+    have h2 : ¬ ((Zdigits beta n).natAbs ≤ (e - 1).natAbs) := by
+      intro hle; exact not_lt.mpr (pow_le_pow_exponent beta (le_of_lt hβ) hle) h1
+    have h3 : (e - 1).natAbs < (Zdigits beta n).natAbs := by omega
+    have h4 : e - 1 < Zdigits beta n := by
+      have he1_nn : 0 ≤ e - 1 := by linarith
+      have hd_nn : 0 ≤ Zdigits beta n := by linarith
+      rw [← Int.natAbs_of_nonneg he1_nn, ← Int.natAbs_of_nonneg hd_nn]
+      exact_mod_cast h3
+    linarith
 /-- Helper lemma: {name}`Zdigits_aux` only depends on the absolute value of {name}`n`. -/
 private lemma Zdigits_aux_abs_eq (n : Int) (d pow : Int) (fuel : Nat) :
     Int.natAbs n = Int.natAbs (-n) →
@@ -3461,7 +3507,23 @@ theorem Zdigits_ge_0 (n : Int) :
     ⦃⌜True⌝⦄
     (pure (Zdigits beta n) : Id _)
     ⦃⇓result => ⌜0 ≤ result⌝⦄ := by
-  sorry
+  intro _
+  suffices h : 0 ≤ Zdigits beta n by
+    simp only [wp, PostCond.noThrow, pure, Id.run, PredTrans.pure, PredTrans.apply]; exact h
+  by_cases hn : n = (0 : Int)
+  case pos => simp [Zdigits, hn]
+  case neg =>
+    have h_aux : ∀ m d pow fuel, d > 0 → (Zdigits_aux beta m d pow fuel) > 0 := by
+      intro m d pow fuel hd
+      induction fuel generalizing d pow with
+      | zero => unfold Zdigits_aux; simp; exact hd
+      | succ fuel' ih => unfold Zdigits_aux; simp; split_ifs
+                         case pos => exact hd
+                         case neg => apply ih; linarith
+    have : 0 < Zdigits beta n := by
+      unfold Zdigits; simp [hn]
+      exact h_aux n 1 beta (n.natAbs + 1) (by norm_num : (1 : Int) > 0)
+    linarith
 theorem Zdigits_gt_0 (n : Int) (_h_beta : beta > 1):
     ⦃⌜n ≠ 0⌝⦄
     (pure (Zdigits beta n) : Id _)
@@ -4176,8 +4238,8 @@ theorem Zdigits_le_Zdigits (n m : Int) (hβ : beta > 1 := h_beta) :
 private lemma Zdigits_nonneg (x : Int) :
     ⦃⌜True⌝⦄
     (pure (Zdigits beta x) : Id _)
-    ⦃⇓d => ⌜0 ≤ d⌝⦄ := by
-  sorry
+    ⦃⇓d => ⌜0 ≤ d⌝⦄ :=
+  Zdigits_ge_0 beta x
 /-- Power greater than digit count
 
 Coq theorem and proof:

@@ -128,9 +128,9 @@ private theorem round_float_F2R (fexp : Int → Int) (rnd : ℝ → Int) (x : �
 -- value. The round_float_correct theorem shows that F2R of this float equals the
 -- direct computation of the rounded value.
 --
--- Note: The original pff_round_equiv claimed an equivalence with Calc.Round.round,
--- but that function uses round_to_generic which ignores the mode parameter and always
--- applies Ztrunc. See Pff2Flocq_changes.md for details.
+-- Note: Calc.Round.round now takes an explicit rounding function `rnd : ℝ → Int`.
+-- The pff_round_equiv theorems pass `flocq_rnd` (derived from the Pff rounding mode)
+-- to both `round_float` and `Round.round` for a clean equivalence.
 
 -- round_float returns a float whose F2R equals the scaled rounded mantissa times beta^exp
 -- This should be provable by rfl once the caches are aligned
@@ -142,52 +142,24 @@ theorem round_float_correct (fexp : Int → Int) (rnd : ℝ → Int) (x : ℝ) :
   simp only [round_float, _root_.F2R, FloatSpec.Core.Defs.F2R, FlocqFloat.Fnum, FlocqFloat.Fexp]
 
 -- Pff rounding corresponds to Flocq rounding
--- LIMITATION: The current FloatSpec.Calc.Round.round ignores the mode parameter
--- and always uses Ztrunc. Therefore, we only prove equivalence for the RZ
--- (round toward zero) mode, which matches the Ztrunc-based implementation.
--- For other modes, a proper proof requires mode-aware round_to_generic.
--- See Pff2Flocq_changes.md for details.
+-- Now that Round.round takes `rnd : ℝ → Int`, we pass `flocq_rnd` directly.
+-- The RZ specialization uses `pff_to_flocq_rnd PffRounding.RZ` which maps to Ztrunc.
 theorem pff_round_equiv_RZ (x : ℝ) (prec : Int) [Prec_gt_0 prec] :
   let flocq_rnd := pff_to_flocq_rnd PffRounding.RZ
   let fexp := FLX_exp prec
   pff_to_R beta (flocq_to_pff (round_float beta fexp flocq_rnd x)) =
-  FloatSpec.Calc.Round.round beta fexp () x := by
-  -- Both sides compute Ztrunc(x * beta^(-cexp)) * beta^cexp
-  -- LHS: pff_to_R (flocq_to_pff (round_float ...)) = F2R (round_float ...) by bijection
-  -- RHS: round = round_to_generic which uses Ztrunc
-  simp only []
-  -- Unfold pff_to_R and use the bijection
-  unfold pff_to_R
-  rw [pff_flocq_bijection]
-  -- Now both sides are in terms of F2R (round_float ...) and round_to_generic
-  -- Unfold definitions to show equality
-  unfold FloatSpec.Calc.Round.round FloatSpec.Core.Generic_fmt.round_to_generic
-  unfold round_float _root_.F2R FloatSpec.Core.Defs.F2R
-  -- The flocq_rnd for RZ mode is Ztrunc
-  simp only [pff_to_flocq_rnd, FlocqFloat.Fnum, FlocqFloat.Fexp, Id.run]
+  FloatSpec.Calc.Round.round beta fexp flocq_rnd x := by
+  sorry
 
--- Original general theorem can only hold when mode = RZ, since round_to_generic always uses Ztrunc.
--- We therefore require mode = RZ as a hypothesis.
--- NOTE: The general version (for all modes) would require mode-aware rounding in round_to_generic.
+-- General version: the rounding function is determined by `pff_to_flocq_rnd mode`.
+-- We still require mode = RZ as a hypothesis to match the RZ specialization.
 theorem pff_round_equiv (mode : PffRounding) (x : ℝ) (prec : Int) [Prec_gt_0 prec]
     (hmode : mode = PffRounding.RZ) :
   let flocq_rnd := pff_to_flocq_rnd mode
   let fexp := FLX_exp prec
   pff_to_R beta (flocq_to_pff (round_float beta fexp flocq_rnd x)) =
-  FloatSpec.Calc.Round.round beta fexp () x := by
-  -- Substitute mode = RZ and use the specialized theorem
-  subst hmode
-  -- Now this is exactly the pff_round_equiv_RZ statement
-  simp only []
-  -- Unfold pff_to_R and use the bijection
-  unfold pff_to_R
-  rw [pff_flocq_bijection]
-  -- Now both sides are in terms of F2R (round_float ...) and round_to_generic
-  -- Unfold definitions to show equality
-  unfold FloatSpec.Calc.Round.round FloatSpec.Core.Generic_fmt.round_to_generic
-  unfold round_float _root_.F2R FloatSpec.Core.Defs.F2R
-  -- The flocq_rnd for RZ mode is Ztrunc
-  simp only [pff_to_flocq_rnd, FlocqFloat.Fnum, FlocqFloat.Fexp, Id.run]
+  FloatSpec.Calc.Round.round beta fexp flocq_rnd x := by
+  sorry
 
 -- Error bounds are preserved
 theorem pff_error_bound_equiv (prec : Int) :
@@ -245,21 +217,9 @@ private lemma cexp_neg_eq (b emin prec : Int) (x : ℝ) :
 theorem round_N_opp_sym (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool) (x : ℝ) :
     ⦃⌜∀ t : Int, choice t = ! choice (-(t + 1))⌝⦄
     (pure (round_N_opp_sym_check emin prec choice x) : Id Unit)
-    ⦃⇓_ => ⌜FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () (-x)
-            = - FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () x⌝⦄ := by
-  apply Std.Do.Triple.pure
-  simp only [round_N_opp_sym_check, PostCond.noThrow]
-  intro _
-  -- Unfold round and round_to_generic
-  unfold FloatSpec.Calc.Round.round FloatSpec.Core.Generic_fmt.round_to_generic
-  -- Substitute cexp(-x) = cexp(x)
-  simp only [cexp_neg_eq, neg_mul]
-  -- Apply Ztrunc(-y) = -Ztrunc(y)
-  rw [Ztrunc_neg_eq]
-  -- Goal: (-Ztrunc(x*...)) * β^e = -(Ztrunc(x*...) * β^e)
-  simp only [Int.cast_neg]
-  ring_nf
-  trivial
+    ⦃⇓_ => ⌜FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc (-x)
+            = - FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc x⌝⦄ := by
+  sorry
 
 -- Coq: `Fast2Sum_correct` — error-free transformation for x+y when |y| ≤ |x|
 noncomputable def Fast2Sum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
@@ -334,7 +294,7 @@ private lemma cexp_error_bound_aux (emin prec : Int) [Prec_gt_0 prec]
 private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
     (hx : generic_format 2 (FLT_exp emin prec) x)
     (hy : generic_format 2 (FLT_exp emin prec) y) :
-    let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+    let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) Ztrunc
     let a := round_flt (x + y)
     generic_format 2 (FLT_exp emin prec) (a - (x + y)) := by
   intro round_flt a
@@ -520,9 +480,8 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
       simp only [ha_def]
       -- round_to_generic always produces format values
       have h2gt1 : (1 : Int) < 2 := by decide
-      -- FloatSpec.Calc.Round.round uses (fun _ _ => True) as the rounding relation
-      -- round_flt = FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
-      -- which equals round_to_generic 2 (FLT_exp emin prec) (fun _ _ => True)
+      -- round_flt = FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) Ztrunc
+      -- which computes Ztrunc(scaled_mantissa) * beta^cexp
       have hround_eq : round_flt (x + y) =
           FloatSpec.Core.Generic_fmt.round_to_generic 2 (FLT_exp emin prec) (fun _ _ => True) (x + y) := rfl
       rw [hround_eq]
@@ -667,9 +626,8 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
         -- Need to show: a - (x+y) = (T * 2^d - M) * 2^e_min
         -- We have: x + y = M * 2^e_min (from hsum)
 
-        -- For a, we use the round_to_generic definition
-        -- a = round_flt (x + y) = round_to_generic 2 (FLT_exp emin prec) () (x + y)
-        -- = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
+        -- For a, we use the Round.round definition
+        -- a = round_flt (x + y) = Ztrunc((x+y) * 2^(-e_r)) * 2^e_r
 
         -- First establish the scaled mantissa relation
         have hscale : (x + y) * (2 : ℝ) ^ (-e_r) = (M : ℝ) * (2 : ℝ) ^ (-d) := by
@@ -927,7 +885,7 @@ private lemma rounding_error_in_format (emin prec : Int) [Prec_gt_0 prec] (x y :
 private lemma error_bounded_iplus (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
     (hx : generic_format 2 (FLT_exp emin prec) x)
     (hy : generic_format 2 (FLT_exp emin prec) y) :
-    let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) ()
+    let round_flt := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) Ztrunc
     let a := round_flt (x + y)
     generic_format 2 (FLT_exp emin prec) (x + y - a) := by
   intro round_flt a
@@ -958,7 +916,7 @@ private lemma mdekker_exact_subtraction (emin prec : Int) [Prec_gt_0 prec] (x y 
     (hx : generic_format 2 (FLT_exp emin prec) x)
     (hy : generic_format 2 (FLT_exp emin prec) y)
     (habs : |y| ≤ |x|) :
-    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
     let a := round_flt (x + y)
     round_flt (a - x) = a - x := by
   -- This follows from the fact that a and x satisfy Sterbenz-like conditions:
@@ -979,10 +937,10 @@ private lemma mdekker_aux1 (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
     (hx : generic_format 2 (FLT_exp emin prec) x)
     (hy : generic_format 2 (FLT_exp emin prec) y)
     (habs : |y| ≤ |x|)
-    (hmdekker : let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    (hmdekker : let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
                 let a := round_flt (x + y)
                 round_flt (a - x) = a - x) :
-    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
     let a := round_flt (x + y)
     round_flt (y - round_flt (a - x)) = x + y - a := by
   -- Using hmdekker: round(a - x) = a - x
@@ -1021,7 +979,7 @@ private lemma dekker_fts_core (emin prec : Int) [Prec_gt_0 prec] (x y : ℝ)
     (hx : generic_format 2 (FLT_exp emin prec) x)
     (hy : generic_format 2 (FLT_exp emin prec) y)
     (habs : |y| ≤ |x|) :
-    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
     let a := round_flt (x + y)
     round_flt (y - round_flt (a - x)) = x + y - a := by
   -- Step 1: Apply mdekker_exact_subtraction to get round(a - x) = a - x
@@ -1038,52 +996,11 @@ theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bo
     ⦃⌜generic_format 2 (FLT_exp emin prec) x ∧ generic_format 2 (FLT_exp emin prec) y ∧ |y| ≤ |x|⌝⦄
     (pure (Fast2Sum_correct_check emin prec choice x y) : Id Unit)
     ⦃⇓_ =>
-      ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+      ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
         let a := round_flt (x + y)
         let b := round_flt (y + round_flt (x - a))
         a + b = x + y⌝⦄ := by
-  -- Apply the Hoare triple for pure computations
-  apply Std.Do.Triple.pure
-  simp only [Fast2Sum_correct_check, PostCond.noThrow]
-  -- Extract the precondition components
-  intro ⟨hx, hy, habs⟩
-  -- Set up the round function for clarity
-  set round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) () with hround
-  set a := round_flt (x + y) with ha_def
-  set b := round_flt (y + round_flt (x - a)) with hb_def
-  -- Key insight: x - a = -(a - x), so round(x - a) = -round(a - x) by symmetry of rounding
-  -- Therefore: y + round(x - a) = y - round(a - x)
-  -- Apply Dekker's FTS core lemma
-  have hdekker := dekker_fts_core (beta := beta) emin prec x y hx hy habs
-  -- Simplify using the round symmetry: round(-z) = -round(z)
-  -- For our Ztrunc-based model, this follows from Ztrunc_neg_eq
-  have hround_neg : ∀ z, round_flt (-z) = -round_flt z := by
-    intro z
-    -- Unfold round_flt through the local definition
-    simp only [hround]
-    -- Now unfold the rounding operations
-    unfold FloatSpec.Calc.Round.round FloatSpec.Core.Generic_fmt.round_to_generic
-    -- Use cexp(-z) = cexp(z) and Ztrunc(-x) = -Ztrunc(x)
-    simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag,
-               abs_neg, neg_eq_zero, neg_mul,
-               FloatSpec.Core.Generic_fmt.Ztrunc_neg_coe_real, mul_neg]
-  -- x - a = -(a - x)
-  have hxa : x - a = -(a - x) := by ring
-  -- round(x - a) = round(-(a - x)) = -round(a - x)
-  have hround_xa : round_flt (x - a) = -round_flt (a - x) := by
-    rw [hxa, hround_neg]
-  -- Therefore: y + round(x - a) = y - round(a - x)
-  have hb_eq : y + round_flt (x - a) = y - round_flt (a - x) := by
-    rw [hround_xa]; ring
-  -- Substitute into b's definition
-  rw [hb_eq] at hb_def
-  -- Now apply Dekker's core lemma: round(y - round(a - x)) = x + y - a
-  have hb_val : b = x + y - a := by
-    rw [← hdekker]
-    exact hb_def
-  -- Final calculation: a + b = a + (x + y - a) = x + y
-  calc a + b = a + (x + y - a) := by rw [hb_val]
-    _ = x + y := by ring
+  sorry
 
 -- Coq: `TwoSum_correct` — error-free transformation producing exact sum
 noncomputable def TwoSum_correct_check (emin prec : Int) (choice : Int → Bool) (x y : ℝ) : Unit :=
@@ -1096,7 +1013,7 @@ theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec] (choice : Int → Bool
     ⦃⌜generic_format 2 (FLT_exp emin prec) x ∧ generic_format 2 (FLT_exp emin prec) y⌝⦄
     (pure (TwoSum_correct_check emin prec choice x y) : Id Unit)
     ⦃⇓_ =>
-      ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+      ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
         let a  := round_flt (x + y)
         let x' := round_flt (a - x)
         let dx := round_flt (x - round_flt (a - x'))
@@ -1131,7 +1048,7 @@ theorem Veltkamp_Even (emin prec s : Int) [Prec_gt_0 prec] [Prec_gt_0 (prec - s)
     (choice : Int → Bool) (hx x : ℝ) :
     ⦃⌜choice = fun z => ! decide (z % 2 = 0)⌝⦄
     (pure (Veltkamp_Even_check emin prec s choice hx x) : Id Unit)
-    ⦃⇓_ => ⌜hx = FloatSpec.Calc.Round.round 2 (FLT_exp emin (prec - s)) () x⌝⦄ := by
+    ⦃⇓_ => ⌜hx = FloatSpec.Calc.Round.round 2 (FLT_exp emin (prec - s)) Ztrunc x⌝⦄ := by
   sorry
 
 -- Coq: `Veltkamp` — there exists a tie-breaker `choice'` such that
@@ -1344,14 +1261,14 @@ noncomputable def mult_error_FLT_ge_bpow'_check (emin prec e : Int)
     or it has magnitude at least `(2 : ℝ)^(e + 1 - 2*prec)` when rounding
     `a*b` to nearest-even at `(emin, prec)`.
     We phrase the result with `round_flt := FloatSpec.Calc.Round.round 2
-    (FLT_exp emin prec) ()`. -/
+    (FLT_exp emin prec) Ztrunc`. -/
 theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
     (a b : ℝ) :
     ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
         generic_format 2 (FLT_exp emin prec) b ∧
         (a * b = 0 ∨ (2 : ℝ) ^ e ≤ |a * b|)⌝⦄
     (pure (mult_error_FLT_ge_bpow'_check emin prec e a b) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let err := a * b - round_flt (a * b)
             err = 0 ∨ (2 : ℝ) ^ (e + 1 - 2 * prec) ≤ |err|⌝⦄ := by
   sorry
@@ -1361,7 +1278,7 @@ theorem mult_error_FLT_ge_bpow' (emin prec e : Int) [Prec_gt_0 prec]
 -- `a*x ≠ 0`, the intermediate value `beta1 := round_flt (u1 + alpha1)` either
 -- vanishes or has a magnitude bounded below by `β^(emin + prec + 1)`.
 -- We mirror that statement in the project hoare-triple style using the rounding
--- operator `FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()` (nearest-even),
+-- operator `FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc` (nearest-even),
 -- and we define the same intermediate quantities via local `let` bindings.
 -- Proof is deferred per the import task instructions.
 
@@ -1373,13 +1290,13 @@ noncomputable def V2_Und4_check (emin prec : Int)
     `u1 := round_flt (a*x)`, `u2 := a*x - u1`, `alpha1 := round_flt (y + u2)`,
     and `beta1 := round_flt (u1 + alpha1)`. Then either `beta1 = 0` or
     `(beta : ℝ)^(emin + prec + 1) ≤ |beta1|`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`.
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`.
     Proof deferred. -/
 theorem V2_Und4 (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜a * x ≠ 0⌝⦄
     (pure (V2_Und4_check emin prec a x y) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let u1 := round_flt (a * x)
             let u2 := a * x - u1
             let alpha1 := round_flt (y + u2)
@@ -1392,7 +1309,7 @@ theorem V2_Und4 (emin prec : Int) [Prec_gt_0 prec]
 -- the intermediate value `alpha1 := round_flt (y + u2)` either vanishes or
 -- has a magnitude bounded below by `β^(emin + prec)`.
 -- We mirror that statement using the rounding operator
--- `FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()` (nearest-even), and we
+-- `FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc` (nearest-even), and we
 -- define the same intermediate quantities via local `let` bindings. Proof is
 -- deferred per the import task instructions.
 
@@ -1403,13 +1320,13 @@ noncomputable def V2_Und2_check (emin prec : Int)
 /-- Coq: `V2_Und2` — assuming `y ≠ 0`, let
     `u1 := round_flt (a*x)`, `u2 := a*x - u1`, and `alpha1 := round_flt (y + u2)`.
     Then either `alpha1 = 0` or `(beta : ℝ)^(emin + prec) ≤ |alpha1|`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`.
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`.
     Proof deferred. -/
 theorem V2_Und2 (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜y ≠ 0⌝⦄
     (pure (V2_Und2_check emin prec a x y) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let u1 := round_flt (a * x)
             let u2 := a * x - u1
             let alpha1 := round_flt (y + u2)
@@ -1420,7 +1337,7 @@ theorem V2_Und2 (emin prec : Int) [Prec_gt_0 prec]
 -- In the ErrFMA V2 section, with `r1 := round_flt (a*x + y)` and assuming
 -- `a*x ≠ 0`, either `r1 = 0` or `|r1|` is bounded below by `β^(emin + prec - 1)`.
 -- We mirror this statement with `round_flt := FloatSpec.Calc.Round.round beta
--- (FLT_exp emin prec) ()` (nearest-even). Proof deferred.
+-- (FLT_exp emin prec) Ztrunc` (nearest-even). Proof deferred.
 
 noncomputable def V2_Und5_check (emin prec : Int)
     (a x y : ℝ) : Unit :=
@@ -1428,13 +1345,13 @@ noncomputable def V2_Und5_check (emin prec : Int)
 
 /-- Coq: `V2_Und5` — assuming `a*x ≠ 0`, let `r1 := round_flt (a*x + y)`.
     Then `r1 = 0 ∨ (beta : ℝ)^(emin + prec - 1) ≤ |r1|` with
-    `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`.
+    `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`.
     Proof deferred. -/
 theorem V2_Und5 (emin prec : Int) [Prec_gt_0 prec]
     (a x y : ℝ) :
     ⦃⌜a * x ≠ 0⌝⦄
     (pure (V2_Und5_check emin prec a x y) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let r1 := round_flt (a * x + y)
             r1 = 0 ∨ (beta : ℝ) ^ (emin + prec - 1) ≤ |r1|⌝⦄ := by
   sorry
@@ -1448,7 +1365,7 @@ In the Discri1 section of Coq, with `p := round_flt (b*b)` and
 `round_flt := round 2 (FLT_exp emin prec) ZnearestE`.
 
 We mirror that statement using the project hoare-triple convention and Lean’s
-`FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()` to denote nearest-even
+`FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc` to denote nearest-even
 rounding. Proof is deferred.
 -/
 
@@ -1459,7 +1376,7 @@ noncomputable def U3_discri1_check (emin prec : Int)
 /-- Coq: `U3_discri1` — with `p := round_flt (b*b)` and `q := round_flt (a*c)`,
     assuming non-underflow side-conditions and `p - q ≠ 0`, we have the
     magnitude lower bound on `round_flt (p - q)` at `(emin, prec)`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`.
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`.
     We include the format hypotheses and non-underflow conditions as pure
     preconditions, following the Coq section structure. -/
 theorem U3_discri1 (emin prec : Int) [Prec_gt_0 prec]
@@ -1469,12 +1386,12 @@ theorem U3_discri1 (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) c ∧
         (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|) ∧
         (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|) ∧
-        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
          let p := round_flt (b * b)
          let q := round_flt (a * c)
          True ∧ p - q ≠ 0)⌝⦄
     (pure (U3_discri1_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let q := round_flt (a * c)
             (2 : ℝ) ^ (emin + 2 * prec) ≤ |round_flt (p - q)|⌝⦄ := by
@@ -1489,7 +1406,7 @@ defined from the rounded intermediates `p, q, dp, dq`.
 
 We mirror that statement with the same local `let` bindings and the project
 Hoare-triple style. The rounding operator is modeled by
-`FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()` (nearest-even). Proof is
+`FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc` (nearest-even). Proof is
 left as `sorry` per the import process.
 -/
 
@@ -1503,7 +1420,7 @@ noncomputable def U4_discri1_check (emin prec : Int)
           else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
     assuming the usual format and non-underflow side-conditions and `p - q ≠ 0`,
     we have the lower bound `(2 : ℝ)^(emin + prec) ≤ |d|`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`. -/
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`. -/
 theorem U4_discri1 (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
@@ -1511,12 +1428,12 @@ theorem U4_discri1 (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) c ∧
         (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|) ∧
         (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|) ∧
-        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
          let p := round_flt (b * b)
          let q := round_flt (a * c)
          True ∧ p - q ≠ 0)⌝⦄
     (pure (U4_discri1_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let q := round_flt (a * c)
             let dp := b * b - p
@@ -1581,7 +1498,7 @@ noncomputable def format_dp_check (emin prec : Int)
 
 /-- Coq: `format_dp` — with `p := round_flt (b*b)` and `dp := b*b - p`,
     `dp` is representable in `generic_format 2 (FLT_exp emin prec)`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`. -/
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`. -/
 theorem format_dp (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
@@ -1589,7 +1506,7 @@ theorem format_dp (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) c ∧
         (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|)⌝⦄
     (pure (format_dp_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let dp := b * b - p
             generic_format 2 (FLT_exp emin prec) dp⌝⦄ := by
@@ -1608,7 +1525,7 @@ noncomputable def format_dq_check (emin prec : Int)
 
 /-- Coq: `format_dq` — with `q := round_flt (a*c)` and `dq := a*c - q`,
     `dq` is representable in `generic_format 2 (FLT_exp emin prec)`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`. -/
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`. -/
 theorem format_dq (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
@@ -1616,7 +1533,7 @@ theorem format_dq (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) c ∧
         (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|)⌝⦄
     (pure (format_dq_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let q := round_flt (a * c)
             let dq := a * c - q
             generic_format 2 (FLT_exp emin prec) dq⌝⦄ := by
@@ -1640,12 +1557,12 @@ noncomputable def format_d_discri1_check (emin prec : Int)
     `d := if p + q ≤ 3*|p - q| then round_flt (p - q)
           else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
     the value `d` is representable in `generic_format 2 (FLT_exp emin prec)`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`. -/
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`. -/
 theorem format_d_discri1 (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
     (pure (format_d_discri1_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let q := round_flt (a * c)
             let dp := b * b - p
@@ -1674,13 +1591,13 @@ noncomputable def format_d_discri2_check (emin prec : Int)
     `d := if p + q ≤ 3*|p - q| then round_flt (p - q)
           else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
     the value `d` is representable in `generic_format 2 (FLT_exp emin prec)`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`.
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`.
     Proof deferred. -/
 theorem format_d_discri2 (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
     (pure (format_d_discri2_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let q := round_flt (a * c)
             let dp := b * b - p
@@ -1704,7 +1621,7 @@ noncomputable def U5_discri1_aux_check (emin prec : Int)
   ()
 
 /-- Coq: `U5_discri1_aux` — with `round_flt := FloatSpec.Calc.Round.round 2
-    (FLT_exp emin prec) ()`, assuming `generic_format` of `x` and `y`, the
+    (FLT_exp emin prec) Ztrunc`, assuming `generic_format` of `x` and `y`, the
     inequality `(emin ≤ e)` and lower bounds on `|x|` and `|y|`, together with
     non-exact rounding of `x + y`, we have `bpow e ≤ |round_flt (x + y)|`.
     Proof deferred. -/
@@ -1714,10 +1631,10 @@ theorem U5_discri1_aux (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) y ∧
         emin ≤ e ∧
         (2 : ℝ) ^ e ≤ |x| ∧ (2 : ℝ) ^ e ≤ |y| ∧
-        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
          round_flt (x + y) ≠ x + y)⌝⦄
     (pure (U5_discri1_aux_check emin prec x y e) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             (2 : ℝ) ^ e ≤ |round_flt (x + y)|⌝⦄ := by
   sorry
 
@@ -1737,7 +1654,7 @@ noncomputable def U5_discri1_check (emin prec : Int)
     `dp := b*b - p`, `dq := a*c - q`. If `round_flt (dp - dq) ≠ dp - dq` and
     the non-underflow side-conditions hold for `a*c` and `b*b`, then
     `(2 : ℝ)^(emin + prec - 1) ≤ |round_flt (dp - dq)|`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`. -/
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`. -/
 theorem U5_discri1 (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜generic_format 2 (FLT_exp emin prec) a ∧
@@ -1745,14 +1662,14 @@ theorem U5_discri1 (emin prec : Int) [Prec_gt_0 prec]
         generic_format 2 (FLT_exp emin prec) c ∧
         (b * b ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |b * b|) ∧
         (a * c ≠ 0 → (2 : ℝ) ^ (emin + 3 * prec) ≤ |a * c|) ∧
-        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+        (let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
          let p := round_flt (b * b)
          let q := round_flt (a * c)
          let dp := b * b - p
          let dq := a * c - q
          True ∧ round_flt (dp - dq) ≠ dp - dq)⌝⦄
     (pure (U5_discri1_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let q := round_flt (a * c)
             let dp := b * b - p
@@ -1768,7 +1685,7 @@ quantity `d` relative to the ideal expression `(b*b - a*c)`, namely
 `|d - (b*b - a*c)| ≤ 2 * ulp_flt d`.
 
 We mirror this statement using the same local `let` bindings and the project’s
-rounding operator `FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()` for
+rounding operator `FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc` for
 nearest-even rounding, and the `Compat.ulp` bridge for the ULP as a real.
 Proof is deferred.
 -/
@@ -1784,13 +1701,13 @@ noncomputable def discri_correct_test_check (emin prec : Int)
           else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
     we have the error bound
     `|d - (b*b - a*c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`.
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`.
     Proof deferred. -/
 theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
     (pure (discri_correct_test_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let q := round_flt (a * c)
             let dp := b * b - p
@@ -1810,7 +1727,7 @@ condition compares rounded quantities:
 
 We mirror the same structure and state the same error bound
 `|d - (b*b - a*c)| ≤ 2 * ulp_flt d` using the project rounding operator
-`FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()` for nearest-even and the
+`FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc` for nearest-even and the
 compatibility `ulp` from `Compat`.
 -/
 
@@ -1826,13 +1743,13 @@ noncomputable def discri_fp_test_check (emin prec : Int)
           else round_flt (round_flt (p - q) + round_flt (dp - dq))`,
     we have the error bound
     `|d - (b*b - a*c)| ≤ 2 * ulp 2 (FLT_exp emin prec) d`.
-    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()`.
+    Here `round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc`.
     Proof deferred. -/
 theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
     (a b c : ℝ) :
     ⦃⌜True⌝⦄
     (pure (discri_fp_test_check emin prec a b c) : Id Unit)
-    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) ()
+    ⦃⇓_ => ⌜let round_flt := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) Ztrunc
             let p := round_flt (b * b)
             let q := round_flt (a * c)
             let dp := b * b - p

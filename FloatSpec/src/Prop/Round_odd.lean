@@ -36,7 +36,8 @@ noncomputable def Zodd : ℝ → Int := fun x =>
   else n
 
 /-- Round to odd is a valid rounding -/
-instance : Valid_rnd (Zodd) := by sorry
+instance : FloatSpec.Core.Generic_fmt.Valid_rnd Zodd := by
+  sorry
 
 /-- If `x` is not exactly an integer (`Zfloor x`), then the result of
     rounding-to-odd (`Zodd x`) is odd. This mirrors Coq's `Zrnd_odd_Zodd`. -/
@@ -78,17 +79,17 @@ theorem Rnd_odd_pt_opp_inv (x f : ℝ) :
   Rnd_odd_pt (beta := beta) (fexp := fexp) x f := by
   sorry
 
-/-- Negation commutes with round-to-odd (mode `()` in this file).
+/-- Negation commutes with round-to-odd.
     Coq counterpart: `round_odd_opp`. -/
 theorem round_odd_opp (x : ℝ) :
-  FloatSpec.Calc.Round.round beta fexp () (-x)
-  = - FloatSpec.Calc.Round.round beta fexp () x := by
+  FloatSpec.Calc.Round.round beta fexp Zodd (-x)
+  = - FloatSpec.Calc.Round.round beta fexp Zodd x := by
   sorry
 
-/-- Pointwise round-to-odd witness for `round beta fexp () x`.
+/-- Pointwise round-to-odd witness for `round beta fexp Zodd x`.
     Coq counterpart: `round_odd_pt`. -/
 theorem round_odd_pt (x : ℝ) :
-  Rnd_odd_pt (beta := beta) (fexp := fexp) x (FloatSpec.Calc.Round.round beta fexp () x) := by
+  Rnd_odd_pt (beta := beta) (fexp := fexp) x (FloatSpec.Calc.Round.round beta fexp Zodd x) := by
   sorry
 
 /-- Uniqueness of the round-to-odd witness.
@@ -108,7 +109,7 @@ theorem Rnd_odd_pt_monotone :
 /-- Round to odd properties -/
 theorem round_odd_ge_ulp (x : ℝ) :
   generic_format beta fexp x ∨
-  ulp beta fexp x ≤ |FloatSpec.Calc.Round.round beta fexp () x - x| := by
+  ulp beta fexp x ≤ |FloatSpec.Calc.Round.round beta fexp Zodd x - x| := by
   sorry
 
 /-- Round to odd for double rounding -/
@@ -117,24 +118,24 @@ theorem round_odd_double_round (fexp1 fexp2 : Int → Int)
   [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
   (choice : Int → Bool) (x : ℝ)
   (h_precision : ∀ e, fexp2 e ≤ fexp1 e) :
-  FloatSpec.Calc.Round.round beta fexp2 (Znearest choice) (FloatSpec.Calc.Round.round beta fexp1 () x) =
+  FloatSpec.Calc.Round.round beta fexp2 (Znearest choice) (FloatSpec.Calc.Round.round beta fexp1 Zodd x) =
   FloatSpec.Calc.Round.round beta fexp2 (Znearest choice) x := by
   sorry
 
 /-- Round to odd maintains format when appropriate -/
 theorem generic_format_round_odd (x : ℝ) :
-  generic_format beta fexp (FloatSpec.Calc.Round.round beta fexp () x) := by
+  generic_format beta fexp (FloatSpec.Calc.Round.round beta fexp Zodd x) := by
   sorry
 
 /-- Magnitude after round-to-odd is controlled. Coq: `mag_round_odd`. -/
 theorem mag_round_odd (x : ℝ) :
-  (FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x))
+  (FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp Zodd x))
     ≤ (FloatSpec.Core.Raux.mag beta x) + 1 := by
   sorry
 
 /-- Exponent after round-to-odd is within one place. Coq: `fexp_round_odd`. -/
 theorem fexp_round_odd (x : ℝ) :
-  fexp ((FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp () x)))
+  fexp ((FloatSpec.Core.Raux.mag beta (FloatSpec.Calc.Round.round beta fexp Zodd x)))
     ≤ (FloatSpec.Core.Raux.mag beta x) + 1 := by
   sorry
 
@@ -475,7 +476,7 @@ theorem round_N_odd_pos (choice : Int → Bool) (x : ℝ)
   (xPos : 0 < x)
   (Hrel : ∀ e, fexpe e ≤ fexp e - 2) :
   FloatSpec.Calc.Round.round beta fexp (Znearest choice)
-      (FloatSpec.Calc.Round.round beta fexpe () x)
+      (FloatSpec.Calc.Round.round beta fexpe Zodd x)
     = FloatSpec.Calc.Round.round beta fexp (Znearest choice) x := by
   sorry
 
@@ -485,6 +486,6 @@ theorem round_N_odd_pos (choice : Int → Bool) (x : ℝ)
 theorem round_N_odd (choice : Int → Bool)
   (Hrel : ∀ e, fexpe e ≤ fexp e - 2) (x : ℝ) :
   FloatSpec.Calc.Round.round beta fexp (Znearest choice)
-      (FloatSpec.Calc.Round.round beta fexpe () x)
+      (FloatSpec.Calc.Round.round beta fexpe Zodd x)
     = FloatSpec.Calc.Round.round beta fexp (Znearest choice) x := by
   sorry
