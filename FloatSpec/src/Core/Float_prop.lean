@@ -110,7 +110,7 @@ Theorem Rcompare_F2R : forall e m1 m2 : Z,
         simp [hltR, heqR, hsign]
       · -- Then m2 < m1, so f2 < f1
         have hne : m2 ≠ m1 := fun h => heq h.symm
-        have hgt : m2 < m1 := lt_of_le_of_ne (le_of_not_lt hlt) hne
+        have hgt : m2 < m1 := lt_of_le_of_ne (le_of_not_gt hlt) hne
         have hgtR : (m2 : ℝ) * (beta : ℝ) ^ e < (m1 : ℝ) * (beta : ℝ) ^ e :=
           mul_lt_mul_of_pos_right (by exact_mod_cast hgt) hp_pos
         have hsign : Int.sign (m1 - m2) = 1 := Int.sign_eq_one_of_pos (sub_pos.mpr hgt)
@@ -281,7 +281,7 @@ theorem F2R_Zabs (f : FlocqFloat beta) (hbeta : 1 < beta) :
   -- Reduce to |m| = natAbs m over ℝ
   have h_abs_natAbs : (Int.natAbs f.Fnum : ℝ) = |(f.Fnum : ℝ)| := by
     -- Standard lemma relating casts and absolute values
-    simpa [Int.cast_natAbs, Int.cast_abs]
+    simpa [Nat.cast_natAbs, Int.cast_abs]
   -- |m * p| = |m| * p and |p| = p (since p ≥ 0)
   have : |(f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp| = (Int.natAbs f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp := by
     simpa [abs_mul, abs_of_nonneg hp_nonneg, h_abs_natAbs]
@@ -1058,10 +1058,10 @@ theorem F2R_prec_normalize (m e e' p : Int) (hbeta : 1 < beta) :
       simpa [hpow_cast] using hcast'
     -- (Int.natAbs m : ℝ) = |(m : ℝ)| and (Int.natAbs beta : ℝ) = |(beta : ℝ)| = b
     have h_abs_m : (Int.natAbs m : ℝ) = |(m : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     have hb_abs : (Int.natAbs beta : ℝ) = b := by
       have h1 : (Int.natAbs beta : ℝ) = |(beta : ℝ)| := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       have h2 : |(beta : ℝ)| = (beta : ℝ) := abs_of_nonneg (le_of_lt hbpos)
       simpa [b, h1] using h2
     simpa [h_abs_m, hb_abs] using hcast

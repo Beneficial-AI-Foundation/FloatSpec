@@ -3965,7 +3965,7 @@ theorem Rnd_DN_pt_equiv_format_spec (F1 F2 : ℝ → Prop) (a b x f : ℝ) :
   · -- If k < a ≤ f then k ≤ f immediately.
     exact le_trans (le_of_lt hk_lt_a) ha_le_f
   · -- Otherwise a ≤ k; also k ≤ b since k ≤ x ≤ b.
-    have hk_ge_a : a ≤ k := le_of_not_lt hk_lt_a
+    have hk_ge_a : a ≤ k := le_of_not_gt hk_lt_a
     have hk_le_b : k ≤ b := le_trans hk_le_x hxb
     have hk_interval : a ≤ k ∧ k ≤ b := ⟨hk_ge_a, hk_le_b⟩
     -- Transfer membership to F1 and apply maximality there.

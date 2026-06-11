@@ -685,7 +685,7 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
     · -- Large regime: fexp(e) < e implies fexp(e+1) ≤ e
       exact hpair.left hlt
     · -- Small regime: fexp(e) = e (since fexp(e) ≤ e and ¬(fexp(e) < e))
-      have heq : fexp e = e := le_antisymm hfe (le_of_not_lt hlt)
+      have heq : fexp e = e := le_antisymm hfe (le_of_not_gt hlt)
       have hsmall : e ≤ fexp e := by grind
       have hbound := (hpair.right hsmall).left
       -- fexp(fexp(e) + 1) ≤ fexp(e), i.e., fexp(e+1) ≤ e
@@ -1467,7 +1467,7 @@ theorem mag_generic_gt
       exact_mod_cast (Nat.succ_le_of_lt hnat_pos)
     -- Relate |(n : ℝ)| to (Int.natAbs n : ℝ)
     have h_abs_natAbs : (Int.natAbs n : ℝ) = |(n : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     simpa [hn, h_abs_natAbs] using hnat_ge1
   have h_le_abs : (beta : ℝ) ^ (fexp M) ≤ abs x := by
     -- |x| = |m| * β^(fexp M) with |m| ≥ 1 and β^(fexp M) > 0
@@ -2284,7 +2284,7 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
       -- From ¬(x - f < 1/2), get (1/2) ≤ (x - f); combined with ≠ yields strict
       have hxge : (2⁻¹) ≤ x - (f : ℝ) := by
         -- rewrite 2⁻¹ as (1/2) to use hlt
-        simpa [hhalf_id.symm] using (le_of_not_lt hlt)
+        simpa [hhalf_id.symm] using (le_of_not_gt hlt)
       -- turn ≠ into ≠ after rewriting 2⁻¹ ↔ 1/2
       have hx_ne' : x - (f : ℝ) ≠ (2⁻¹) := by simpa [hhalf_id.symm] using hx_ne
       exact lt_of_le_of_ne hxge (Ne.symm hx_ne')
@@ -2519,7 +2519,7 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
     -- Relate |z| to natAbs z for integers z
     have h_eq_abs : ((Int.natAbs ((Znearest choice x) - n)) : ℝ)
                       = |(((Znearest choice x) - n : Int) : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     have : (1 : ℝ) ≤ |(((Znearest choice x) - n : Int) : ℝ)| := by simpa [h_eq_abs] using hge1
     -- Relate to the bound on |(Z : ℝ) - (n : ℝ)| using casts
     have hcast : |(((Znearest choice x) - n : Int) : ℝ)|
@@ -4594,7 +4594,7 @@ theorem round_NA_pt
         -- First, f2 cannot be on the right of x (would give distance ≥ b > a)
         have hf2_le_x : f2 ≤ x := by
           by_contra hxle
-          have hx_le_f2 : x ≤ f2 := le_of_not_le hxle
+          have hx_le_f2 : x ≤ f2 := le_of_not_ge hxle
           -- From UP minimality, xup ≤ f2, hence |x - f2| ≥ b
           have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hx_le_f2
           have hge_b : |x - f2| ≥ b := by
@@ -4662,7 +4662,7 @@ theorem round_NA_pt
             -- f2 cannot be on the left of x (distance ≥ a > b)
             have hx_le_f2 : x ≤ f2 := by
               by_contra h_not
-              have hf2_le_x : f2 ≤ x := le_of_not_le h_not
+              have hf2_le_x : f2 ≤ x := le_of_not_ge h_not
               -- From DN maximality, f2 ≤ xdn ⇒ |x - f2| ≥ a
               have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hf2_le_x
               have hge_a : |x - f2| ≥ a := by
@@ -5519,7 +5519,7 @@ theorem lt_cexp_pos_ax
     by_contra hnot
     have hle : (FloatSpec.Core.Raux.mag beta y) ≤ (FloatSpec.Core.Raux.mag beta x) := le_of_not_gt hnot
     have hmono := Monotone_exp.mono (fexp := fexp) hle
-    exact (not_lt_of_le hmono) hfe
+    exact (not_lt_of_ge hmono) hfe
   -- Translate mag inequality on positive y to x < y
   exact lt_of_mag_lt_pos (beta := beta) (x := x) (y := y) hβ hy hmag_lt
 
@@ -7370,7 +7370,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     -- Rewrite base (β : ℝ) as ((natAbs β) : ℝ) since β > 0
     have hbeta_cast_eq : ((Int.natAbs beta : Nat) : ℝ) = (beta : ℝ) := by
       have : ((Int.natAbs beta : Nat) : ℝ) = abs (beta : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [abs_of_pos hbposR] using this
     -- Convert the RHS to a casted Nat power
     have hRHS_cast : (beta : ℝ) ^ (Int.toNat (k - e))
@@ -7382,7 +7382,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     have hcast_ineq : (Int.natAbs m : ℝ) ≤ ((Int.natAbs beta ^ Int.toNat (k - e) : Nat) : ℝ) := by
       -- Use ((natAbs m) : ℝ) = |(m : ℝ)| and rewrite the RHS using hzpow_toNat and hRHS_cast
       have hLHS : (Int.natAbs m : ℝ) = abs (m : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [hLHS, hzpow_toNat, hRHS_cast] using h_abs_m_le
     -- Coercion monotonicity gives the required Nat inequality
     exact (by exact_mod_cast hcast_ineq)

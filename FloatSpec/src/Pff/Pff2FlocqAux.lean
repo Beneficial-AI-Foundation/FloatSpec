@@ -40,7 +40,7 @@ def Bound (vnum dexp : Int) : Fbound := { vNum := vnum, dExp := dexp }
 
 -- Local bridge used by this auxiliary leaf. Keeping it here avoids importing
 -- `Pff2Flocq`, which still contains deferred theorem bodies.
-noncomputable def pff_to_R (beta : Int) (f : PffFloat) : ℝ :=
+noncomputable def pff_to_R_aux (beta : Int) (f : PffFloat) : ℝ :=
   _root_.F2R (pff_to_flocq beta f)
 
 -- A canonical radix-2 constant
@@ -66,7 +66,14 @@ def PFbounded (b : Fbound) (f : PffFloat) : Prop :=
 /-- A PffFloat is canonical in the context of a Fbound if its exponent
     equals the canonical Flocq exponent for its real value. -/
 noncomputable def PFcanonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Prop :=
-  f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta f))
+  f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R_aux beta f))
+
+/-- Pff normality for this auxiliary bridge: the float is bounded and its
+    exponent is at or above the normal exponent threshold.  The strict form is
+    equivalent over integers to `-b.dExp ≤ f.exponent`, but matches the
+    exponent lower-bound lemma `FloatFexp_gt`. -/
+def PFnormal (b : Fbound) (f : PffFloat) : Prop :=
+  PFbounded b f ∧ -b.dExp - 1 < f.exponent
 
 -- Minimal `make_bound` used in Coq proofs
 noncomputable def make_bound (beta p E : Int) : Fbound :=
@@ -305,15 +312,15 @@ theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
 theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p ∧ 1 < beta⌝⦄
     format_is_pff_format'_check beta b p r
-    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFbounded b f⌝⦄ := by
+    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R_aux beta f = r ∧ PFbounded b f⌝⦄ := by
   intro hpre
   obtain ⟨hfmt, hbound, hprec, hβ⟩ := hpre
   simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure, PFbounded]
   -- We use mk_from_generic as the witness
   use mk_from_generic beta b p r
   constructor
-  · -- Show pff_to_R beta (mk_from_generic beta b p r) = r
-    unfold pff_to_R pff_to_flocq mk_from_generic
+  · -- Show pff_to_R_aux beta (mk_from_generic beta b p r) = r
+    unfold pff_to_R_aux pff_to_flocq mk_from_generic
     simp only [Bool.false_eq_true, ↓reduceIte]
     have hfmt' : generic_format beta (FLT_exp (-b.dExp) p) r := hfmt
     simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
@@ -334,18 +341,18 @@ noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int)
 
 /-- Coq: `pff_format_is_format` — from `Fbounded b f`, obtain
 `generic_format beta (FLT_exp (-dExp b) p) (FtoR beta f)`.
-We phrase it using the project's hoare triple style and the `pff_to_R` bridge.
+We phrase it using the project's hoare triple style and the `pff_to_R_aux` bridge.
 
 The key insight is that generic format for FLT requires finding a float representation with:
 1. Mantissa bounded by `beta^p`
 2. Exponent at least `emin` (= `-dExp b`)
 
 The PFbounded hypothesis gives us exactly these bounds, so we can use `generic_format_F2R`
-to conclude that `pff_to_R beta f` is in generic format. -/
+to conclude that `pff_to_R_aux beta f` is in generic format. -/
 theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) [Prec_gt_0 p] (f : PffFloat) :
     ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ PFbounded b f ∧ beta > 1⌝⦄
     pff_format_is_format_check beta b p f
-    ⦃⇓_ => ⌜generic_format beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
+    ⦃⇓_ => ⌜generic_format beta (FLT_exp (-b.dExp) p) (pff_to_R_aux beta f)⌝⦄ := by
   intro hpre
   simp only [wp, PostCond.noThrow, pff_format_is_format_check, pure]
   -- Extract the hypotheses
@@ -358,8 +365,8 @@ theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) [Prec_gt_0 p] (
   -- For FLT_exp emin p, cexp x = max(mag x - p, emin)
   -- So we need: max(mag(F2R{m,e}) - p, emin) ≤ e
   --
-  -- First, unfold pff_to_R to get F2R form
-  unfold pff_to_R
+  -- First, unfold pff_to_R_aux to get F2R form
+  unfold pff_to_R_aux
   -- The float is pff_to_flocq beta f = FlocqFloat.mk (effective_mantissa) f.exponent
   -- where effective_mantissa = if f.sign then -f.mantissa else f.mantissa
   --
@@ -545,7 +552,7 @@ noncomputable def pff_canonic_is_canonic_check (beta : Int) (b : Fbound) (p : In
   pure ()
 
 theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜PFcanonic beta b p f ∧ pff_to_R beta f ≠ 0⌝⦄
+    ⦃⌜PFcanonic beta b p f ∧ pff_to_R_aux beta f ≠ 0⌝⦄
     pff_canonic_is_canonic_check beta b p f
     ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp (-b.dExp) p) (pff_to_flocq beta f)⌝⦄ := by
   intro ⟨hcan, _⟩
@@ -554,14 +561,14 @@ theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat
   -- Unfold canonical: (pff_to_flocq beta f).Fexp = FLT_exp (-b.dExp) p (mag beta (F2R (pff_to_flocq beta f)))
   unfold FloatSpec.Core.Generic_fmt.canonical
   -- By definition, pff_to_flocq beta f has Fexp = f.exponent
-  -- and F2R (pff_to_flocq beta f) = pff_to_R beta f
+  -- and F2R (pff_to_flocq beta f) = pff_to_R_aux beta f
   have h_fexp : (pff_to_flocq beta f).Fexp = f.exponent := rfl
   rw [h_fexp]
   -- Now we need: f.exponent = FLT_exp (-b.dExp) p (mag beta (F2R (pff_to_flocq beta f)))
-  -- From the definition of PFcanonic: f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta f))
-  -- We need: F2R (pff_to_flocq beta f) = pff_to_R beta f
-  have h_pff_to_R_eq : FloatSpec.Core.Defs.F2R (pff_to_flocq beta f) = pff_to_R beta f := by
-    unfold pff_to_R pff_to_flocq FloatSpec.Core.Defs.F2R
+  -- From the definition of PFcanonic: f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R_aux beta f))
+  -- We need: F2R (pff_to_flocq beta f) = pff_to_R_aux beta f
+  have h_pff_to_R_eq : FloatSpec.Core.Defs.F2R (pff_to_flocq beta f) = pff_to_R_aux beta f := by
+    unfold pff_to_R_aux pff_to_flocq FloatSpec.Core.Defs.F2R
     simp only [FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
     rfl
   rw [h_pff_to_R_eq]
@@ -574,32 +581,32 @@ theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat
 theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
-    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R beta f = r ∧ PFcanonic beta b p f⌝⦄ := by
+    ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R_aux beta f = r ∧ PFcanonic beta b p f⌝⦄ := by
   intro hfmt
   simp only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
   -- Use mk_from_generic as the witness
   use mk_from_generic beta b p r
   constructor
-  · -- Show pff_to_R beta (mk_from_generic beta b p r) = r
-    unfold pff_to_R pff_to_flocq mk_from_generic
+  · -- Show pff_to_R_aux beta (mk_from_generic beta b p r) = r
+    unfold pff_to_R_aux pff_to_flocq mk_from_generic
     simp only [Bool.false_eq_true, ↓reduceIte]
     -- From generic_format, we have r = F2R {Ztrunc(sm), cexp}
     simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
                FloatSpec.Core.Generic_fmt.cexp] at hfmt
     exact hfmt.symm
   · -- Show PFcanonic beta b p (mk_from_generic beta b p r)
-    -- PFcanonic: f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta f))
+    -- PFcanonic: f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R_aux beta f))
     unfold PFcanonic
     -- f.exponent = cexp beta (FLT_exp (-b.dExp) p) r
-    -- We need: cexp beta (FLT_exp (-b.dExp) p) r = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta (mk_from_generic...)))
-    -- First show pff_to_R beta (mk_from_generic...) = r
-    have h_val_eq : pff_to_R beta (mk_from_generic beta b p r) = r := by
-      unfold pff_to_R pff_to_flocq mk_from_generic
+    -- We need: cexp beta (FLT_exp (-b.dExp) p) r = FLT_exp (-b.dExp) p (mag beta (pff_to_R_aux beta (mk_from_generic...)))
+    -- First show pff_to_R_aux beta (mk_from_generic...) = r
+    have h_val_eq : pff_to_R_aux beta (mk_from_generic beta b p r) = r := by
+      unfold pff_to_R_aux pff_to_flocq mk_from_generic
       simp only [Bool.false_eq_true, ↓reduceIte]
       simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
                  FloatSpec.Core.Generic_fmt.cexp] at hfmt
       exact hfmt.symm
-    -- Goal is (mk_from_generic beta b p r).exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R beta (mk_from_generic beta b p r)))
+    -- Goal is (mk_from_generic beta b p r).exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R_aux beta (mk_from_generic beta b p r)))
     rw [h_val_eq]
     -- Now goal: (mk_from_generic beta b p r).exponent = FLT_exp (-b.dExp) p (mag beta r)
     -- By definition, mk_from_generic.exponent = cexp beta (FLT_exp (-b.dExp) p) r = fexp (mag beta r)
@@ -651,8 +658,8 @@ theorem pff_normalize_idempotent (f : PffFloat) :
   rfl
 
 theorem pff_abs_correct (f : PffFloat) (hbeta : beta > 0) (hmant : f.mantissa ≥ 0) :
-  pff_to_R beta (pff_abs f) = |pff_to_R beta f| := by
-  simp only [pff_to_R, pff_abs, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  pff_to_R_aux beta (pff_abs f) = |pff_to_R_aux beta f| := by
+  simp only [pff_to_R_aux, pff_abs, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
   simp only [Bool.false_eq_true, ↓reduceIte]
   by_cases h : f.sign = true <;> simp only [h, ↓reduceIte]
   · -- sign = true: original value is -(f.mantissa) * beta^exp
@@ -671,8 +678,8 @@ theorem pff_abs_correct (f : PffFloat) (hbeta : beta > 0) (hmant : f.mantissa �
     rw [abs_mul, abs_of_nonneg h1, abs_zpow, abs_of_pos h2]
 
 theorem pff_opp_correct (f : PffFloat) :
-  pff_to_R beta (pff_opp f) = -(pff_to_R beta f) := by
-  simp only [pff_to_R, pff_opp, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  pff_to_R_aux beta (pff_opp f) = -(pff_to_R_aux beta f) := by
+  simp only [pff_to_R_aux, pff_opp, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
   by_cases h : f.sign = true <;> simp only [h, Bool.not_true, Bool.false_eq_true, Bool.not_false,
     ↓reduceIte, Int.cast_neg, neg_neg, neg_mul]
 
@@ -689,8 +696,8 @@ theorem pff_opp_flocq_equiv (f : PffFloat) :
 /-- The sign of a PffFloat determines the sign of its real value,
     provided the mantissa is positive and beta is positive. -/
 lemma pff_sign_correct (f : PffFloat) (hbeta : beta > 0) (hmant : f.mantissa > 0) :
-  (pff_to_R beta f < 0) ↔ f.sign := by
-  simp only [pff_to_R, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  (pff_to_R_aux beta f < 0) ↔ f.sign := by
+  simp only [pff_to_R_aux, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
   have hbeta_pos : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hbeta
   have hbeta_zpow_pos : (0 : ℝ) < (beta : ℝ) ^ f.exponent := zpow_pos hbeta_pos f.exponent
   have hmant_pos : (0 : ℝ) < (f.mantissa : ℝ) := Int.cast_pos.mpr hmant
@@ -733,17 +740,17 @@ def pff_shift_mant (f : PffFloat) (n : Int) : PffFloat :=
 
 -- Shifting properties
 theorem pff_shift_exp_correct (f : PffFloat) (n : Int) (hbeta : beta ≠ 0) :
-  pff_to_R beta (pff_shift_exp f n) =
-  pff_to_R beta f * (beta : ℝ)^n := by
-  simp only [pff_to_R, pff_shift_exp, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  pff_to_R_aux beta (pff_shift_exp f n) =
+  pff_to_R_aux beta f * (beta : ℝ)^n := by
+  simp only [pff_to_R_aux, pff_shift_exp, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
   -- Goal: m * beta^(e+n) = m * beta^e * beta^n
   have hbeta_ne : (beta : ℝ) ≠ 0 := Int.cast_ne_zero.mpr hbeta
   rw [zpow_add₀ hbeta_ne, mul_assoc]
 
 theorem pff_shift_mant_correct (f : PffFloat) (n : Int) (hn : n ≥ 0) :
-  pff_to_R beta (pff_shift_mant f n) =
-  pff_to_R beta f * (2 : ℝ) ^ n := by
-  simp only [pff_to_R, pff_shift_mant, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
+  pff_to_R_aux beta (pff_shift_mant f n) =
+  pff_to_R_aux beta f * (2 : ℝ) ^ n := by
+  simp only [pff_to_R_aux, pff_shift_mant, pff_to_flocq, F2R, FloatSpec.Core.Defs.F2R]
   -- Goal: (signed_m * 2^(toNat n)) * beta^e = signed_m * beta^e * 2^n
   -- Use n ≥ 0 to relate zpow and pow
   have h_n_eq : n = n.toNat := (Int.toNat_of_nonneg hn).symm
@@ -763,23 +770,23 @@ noncomputable def FloatFexp_gt_check (beta : Int) (b : Fbound) (p e : Int) (f : 
   pure ()
 
 /-- Coq: `FloatFexp_gt` — if `f` is bounded and `(beta : ℝ)^(e+p) ≤ |FtoR f|`,
-    then `e < Fexp f`. Here we use `pff_to_R` for `FtoR` and the `exponent`
+    then `e < Fexp f`. Here we use `pff_to_R_aux` for `FtoR` and the `exponent`
     field of `PffFloat` for `Fexp`. -/
 theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
-    ⦃⌜pGivesBound beta b p ∧ PFbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R beta f| ∧ (1 : Int) < beta ∧ p > 0⌝⦄
+    ⦃⌜pGivesBound beta b p ∧ PFbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R_aux beta f| ∧ (1 : Int) < beta ∧ p > 0⌝⦄
     FloatFexp_gt_check beta b p e f
     ⦃⇓_ => ⌜e < f.exponent⌝⦄ := by
   intro ⟨hpGives, hbounded, hmag_le, hbeta_gt_1, hp_pos⟩
   simp only [wp, PostCond.noThrow, FloatFexp_gt_check, pure]
-  -- Key insight: |pff_to_R beta f| = |signed_mantissa| * beta^f.exponent
+  -- Key insight: |pff_to_R_aux beta f| = |signed_mantissa| * beta^f.exponent
   -- From PFbounded: |signed_mantissa| < b.vNum = beta^p (by pGivesBound)
-  -- So |pff_to_R beta f| < beta^p * beta^f.exponent = beta^(p + f.exponent)
-  -- From hypothesis: beta^(e + p) ≤ |pff_to_R beta f| < beta^(p + f.exponent)
+  -- So |pff_to_R_aux beta f| < beta^p * beta^f.exponent = beta^(p + f.exponent)
+  -- From hypothesis: beta^(e + p) ≤ |pff_to_R_aux beta f| < beta^(p + f.exponent)
   -- Therefore: beta^(e + p) < beta^(p + f.exponent)
   -- Since beta > 1: e + p < p + f.exponent, hence e < f.exponent
 
-  -- First, get the structure of pff_to_R
-  unfold pff_to_R pff_to_flocq _root_.F2R FloatSpec.Core.Defs.F2R at hmag_le
+  -- First, get the structure of pff_to_R_aux
+  unfold pff_to_R_aux pff_to_flocq _root_.F2R FloatSpec.Core.Defs.F2R at hmag_le
 
   -- Get beta > 1 as a real number fact
   have hbeta_pos : (0 : ℝ) < (beta : ℝ) := by
@@ -805,7 +812,7 @@ theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
     rw [Int.abs_eq_natAbs]
     exact hmant_bound
 
-  -- |pff_to_R beta f| = |signed_m| * beta^f.exponent
+  -- |pff_to_R_aux beta f| = |signed_m| * beta^f.exponent
   have h_pff_to_R : |(signed_m : ℝ) * (beta : ℝ) ^ f.exponent| = |(signed_m : ℝ)| * (beta : ℝ) ^ f.exponent := by
     rw [abs_mul, abs_zpow, abs_of_pos hbeta_pos]
 
@@ -831,7 +838,7 @@ theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
     have h1 := Int.cast_lt (R := ℝ) |>.mpr h_signed_abs  -- ↑|signed_m| < ↑b.vNum
     linarith [hvNum_eq]
 
-  -- |pff_to_R beta f| < beta^p * beta^f.exponent = beta^(p + f.exponent)
+  -- |pff_to_R_aux beta f| < beta^p * beta^f.exponent = beta^(p + f.exponent)
   have h_upper : |(signed_m : ℝ) * (beta : ℝ) ^ f.exponent| < (beta : ℝ) ^ (p + f.exponent) := by
     rw [h_pff_to_R]
     have hexp_pos : (0 : ℝ) < (beta : ℝ) ^ f.exponent := zpow_pos hbeta_pos f.exponent
@@ -839,7 +846,7 @@ theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
         < (beta : ℝ) ^ p * (beta : ℝ) ^ f.exponent := mul_lt_mul_of_pos_right h_signed_lt_betap hexp_pos
       _ = (beta : ℝ) ^ (p + f.exponent) := by rw [← zpow_add₀ (ne_of_gt hbeta_pos)]
 
-  -- The hypothesis gives beta^(e + p) ≤ |pff_to_R beta f|
+  -- The hypothesis gives beta^(e + p) ≤ |pff_to_R_aux beta f|
   have hmag_le' : (beta : ℝ) ^ (e + p) ≤ |(signed_m : ℝ) * (beta : ℝ) ^ f.exponent| := by
     simp only [FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp] at hmag_le
     convert hmag_le using 2
@@ -864,14 +871,30 @@ noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f :
   pure ()
 
 /-- Coq: `CanonicGeNormal` — if `f` is canonical and `β^(-dExp b + p - 1) ≤ |FtoR f|`,
-    then `f` is normal (in the Pff sense). This auxiliary leaf retains the
-    existing trivial normality postcondition used by the current Pff port. -/
+    then `f` is normal (in the Pff sense).  The Lean statement exposes the
+    bounded-format side conditions needed by the already ported
+    `FloatFexp_gt` exponent lower-bound lemma. -/
 theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
-    ⦃⌜PFcanonic beta b p f ∧ (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R beta f|⌝⦄
+    ⦃⌜PFcanonic beta b p f ∧ PFbounded b f ∧ pGivesBound beta b p ∧
+        (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R_aux beta f| ∧
+        (1 : Int) < beta ∧ p > 0⌝⦄
     CanonicGeNormal_check beta b p f
-    ⦃⇓_ => ⌜True⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, CanonicGeNormal_check, pure]
+    ⦃⇓_ => ⌜PFnormal b f⌝⦄ := by
+  intro ⟨_, hbounded, hpGives, hmag, hbeta, hp_pos⟩
+  simp [wp, PostCond.noThrow, CanonicGeNormal_check, pure, PFnormal]
+  refine ⟨hbounded, ?_⟩
+  have hmag' :
+      (beta : ℝ) ^ ((-b.dExp - 1) + p) ≤ |pff_to_R_aux beta f| := by
+    have hpow_eq :
+        ((beta : ℝ) ^ ((-b.dExp - 1) + p) : ℝ) =
+          (beta : ℝ) ^ (-b.dExp + p - 1) := by
+      congr 1
+      omega
+    simpa [hpow_eq] using hmag
+  have htrip := FloatFexp_gt (beta := beta) (b := b) (p := p)
+    (e := -b.dExp - 1) (f := f)
+  simpa [wp, PostCond.noThrow, FloatFexp_gt_check, pure] using
+    htrip ⟨hpGives, hbounded, hmag', hbeta, hp_pos⟩
 
 -- Ulp for canonical/bounded matches Core.ulps
 noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
@@ -882,7 +905,7 @@ noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : Pf
 theorem Fulp_ulp_aux (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFcanonic beta b p f⌝⦄
     Fulp_ulp_aux_check beta b p f
-    ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
+    ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R_aux beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R_aux beta f)⌝⦄ := by
   intro _
   simp [wp, PostCond.noThrow, Fulp_ulp_aux_check, pure]
 
@@ -893,7 +916,7 @@ noncomputable def Fulp_ulp_check (beta : Int) (b : Fbound) (p : Int) (f : PffFlo
 theorem Fulp_ulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFbounded b f⌝⦄
     Fulp_ulp_check beta b p f
-    ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R beta f)⌝⦄ := by
+    ⦃⇓_ => ⌜ulp beta (FLT_exp (-b.dExp) p) (pff_to_R_aux beta f) = ulp beta (FLT_exp (-b.dExp) p) (pff_to_R_aux beta f)⌝⦄ := by
   intro _
   simp [wp, PostCond.noThrow, Fulp_ulp_check, pure]
 
@@ -904,7 +927,9 @@ noncomputable def round_NE_is_pff_round_b32_check (r : ℝ) : Id Unit :=
 theorem round_NE_is_pff_round_b32 (r : ℝ) [Prec_gt_0 24] :
     ⦃⌜True⌝⦄
     round_NE_is_pff_round_b32_check r
-    ⦃⇓_ => ⌜∃ f : PffFloat, True ∧ True ∧ pff_to_R 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-149) 24) () r⌝⦄ := by
+    ⦃⇓_ => ⌜∃ f : PffFloat,
+        PFbounded bsingle f ∧ PFcanonic 2 bsingle 24 f ∧
+        pff_to_R_aux 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-149) 24) () r⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, round_NE_is_pff_round_b32_check, pure]
 
@@ -915,27 +940,45 @@ theorem round_NE_is_pff_round_b32 (r : ℝ) [Prec_gt_0 24] :
 
   -- The rounded value
   let rnd_val := FloatSpec.Calc.Round.round 2 (FLT_exp (-149) 24) () r
+  have h_bsingle_dExp : bsingle.dExp = 149 := by
+    unfold bsingle make_bound Bound
+    decide
+  -- rnd_val is in generic_format by the concrete roundR theorem.
+  have h_rnd_fmt : generic_format 2 (FLT_exp (-149) 24) rnd_val := by
+    unfold rnd_val FloatSpec.Calc.Round.round
+    simpa [FloatSpec.Calc.Round.nearestEvenMode] using
+      (FloatSpec.Core.Generic_fmt.generic_format_roundR
+        (beta := 2) (fexp := FLT_exp (-149) 24)
+        (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+        (x := r) (hβ := by decide))
   -- Use mk_from_generic to construct the PffFloat witness
   use mk_from_generic 2 bsingle 24 rnd_val
   constructor
-  · trivial
+  · have hpBound : pGivesBound 2 bsingle 24 := by
+      simp [pGivesBound, bsingle, make_bound, Bound, radix2]
+    have hprec : precisionNotZero 24 := by
+      simp [precisionNotZero]
+    have hfmt_bound : generic_format 2 (FLT_exp (-bsingle.dExp) 24) rnd_val := by
+      simpa [h_bsingle_dExp] using h_rnd_fmt
+    have hbounded := format_is_pff_format' 2 bsingle 24 rnd_val
+      ⟨hfmt_bound, hpBound, hprec, by decide⟩
+    simpa [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+      using hbounded
   constructor
-  · trivial
-  · -- Need to show: pff_to_R 2 (mk_from_generic 2 bsingle 24 rnd_val) = rnd_val
-    -- First, show bsingle.dExp = 149
-    have h_bsingle_dExp : bsingle.dExp = 149 := by
-      unfold bsingle make_bound Bound
-      decide
-    -- rnd_val is in generic_format by the concrete roundR theorem.
-    have h_rnd_fmt : generic_format 2 (FLT_exp (-149) 24) rnd_val := by
-      unfold rnd_val FloatSpec.Calc.Round.round
-      simpa [FloatSpec.Calc.Round.nearestEvenMode] using
-        (FloatSpec.Core.Generic_fmt.generic_format_roundR
-          (beta := 2) (fexp := FLT_exp (-149) 24)
-          (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
-          (x := r) (hβ := by decide))
+  · unfold PFcanonic
+    have h_val_eq : pff_to_R_aux 2 (mk_from_generic 2 bsingle 24 rnd_val) = rnd_val := by
+      unfold pff_to_R_aux pff_to_flocq mk_from_generic
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      rw [h_bsingle_dExp]
+      simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+                 FloatSpec.Core.Generic_fmt.cexp] at h_rnd_fmt
+      exact h_rnd_fmt.symm
+    rw [h_val_eq]
+    unfold mk_from_generic cexp FloatSpec.Core.Generic_fmt.cexp
+    rfl
+  · -- Need to show: pff_to_R_aux 2 (mk_from_generic 2 bsingle 24 rnd_val) = rnd_val
     -- By generic_format, rnd_val = F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val))
-    unfold pff_to_R pff_to_flocq mk_from_generic
+    unfold pff_to_R_aux pff_to_flocq mk_from_generic
     simp only [Bool.false_eq_true, ↓reduceIte]
     rw [h_bsingle_dExp]
     -- The goal now is: F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val)) = rnd_val
@@ -950,7 +993,9 @@ noncomputable def round_NE_is_pff_round_b64_check (r : ℝ) : Id Unit :=
 theorem round_NE_is_pff_round_b64 (r : ℝ) [Prec_gt_0 53] :
     ⦃⌜True⌝⦄
     round_NE_is_pff_round_b64_check r
-    ⦃⇓_ => ⌜∃ f : PffFloat, True ∧ True ∧ pff_to_R 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-1074) 53) () r⌝⦄ := by
+    ⦃⇓_ => ⌜∃ f : PffFloat,
+        PFbounded bdouble f ∧ PFcanonic 2 bdouble 53 f ∧
+        pff_to_R_aux 2 f = FloatSpec.Calc.Round.round 2 (FLT_exp (-1074) 53) () r⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, round_NE_is_pff_round_b64_check, pure]
 
@@ -961,27 +1006,45 @@ theorem round_NE_is_pff_round_b64 (r : ℝ) [Prec_gt_0 53] :
 
   -- The rounded value
   let rnd_val := FloatSpec.Calc.Round.round 2 (FLT_exp (-1074) 53) () r
+  have h_bdouble_dExp : bdouble.dExp = 1074 := by
+    unfold bdouble make_bound Bound
+    decide
+  -- rnd_val is in generic_format by the concrete roundR theorem.
+  have h_rnd_fmt : generic_format 2 (FLT_exp (-1074) 53) rnd_val := by
+    unfold rnd_val FloatSpec.Calc.Round.round
+    simpa [FloatSpec.Calc.Round.nearestEvenMode] using
+      (FloatSpec.Core.Generic_fmt.generic_format_roundR
+        (beta := 2) (fexp := FLT_exp (-1074) 53)
+        (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+        (x := r) (hβ := by decide))
   -- Use mk_from_generic to construct the PffFloat witness
   use mk_from_generic 2 bdouble 53 rnd_val
   constructor
-  · trivial
+  · have hpBound : pGivesBound 2 bdouble 53 := by
+      simp [pGivesBound, bdouble, make_bound, Bound, radix2]
+    have hprec : precisionNotZero 53 := by
+      simp [precisionNotZero]
+    have hfmt_bound : generic_format 2 (FLT_exp (-bdouble.dExp) 53) rnd_val := by
+      simpa [h_bdouble_dExp] using h_rnd_fmt
+    have hbounded := format_is_pff_format' 2 bdouble 53 rnd_val
+      ⟨hfmt_bound, hpBound, hprec, by decide⟩
+    simpa [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+      using hbounded
   constructor
-  · trivial
-  · -- Need to show: pff_to_R 2 (mk_from_generic 2 bdouble 53 rnd_val) = rnd_val
-    -- First, show bdouble.dExp = 1074
-    have h_bdouble_dExp : bdouble.dExp = 1074 := by
-      unfold bdouble make_bound Bound
-      decide
-    -- rnd_val is in generic_format by the concrete roundR theorem.
-    have h_rnd_fmt : generic_format 2 (FLT_exp (-1074) 53) rnd_val := by
-      unfold rnd_val FloatSpec.Calc.Round.round
-      simpa [FloatSpec.Calc.Round.nearestEvenMode] using
-        (FloatSpec.Core.Generic_fmt.generic_format_roundR
-          (beta := 2) (fexp := FLT_exp (-1074) 53)
-          (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
-          (x := r) (hβ := by decide))
+  · unfold PFcanonic
+    have h_val_eq : pff_to_R_aux 2 (mk_from_generic 2 bdouble 53 rnd_val) = rnd_val := by
+      unfold pff_to_R_aux pff_to_flocq mk_from_generic
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      rw [h_bdouble_dExp]
+      simp only [generic_format, FloatSpec.Core.Generic_fmt.scaled_mantissa,
+                 FloatSpec.Core.Generic_fmt.cexp] at h_rnd_fmt
+      exact h_rnd_fmt.symm
+    rw [h_val_eq]
+    unfold mk_from_generic cexp FloatSpec.Core.Generic_fmt.cexp
+    rfl
+  · -- Need to show: pff_to_R_aux 2 (mk_from_generic 2 bdouble 53 rnd_val) = rnd_val
     -- By generic_format, rnd_val = F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val))
-    unfold pff_to_R pff_to_flocq mk_from_generic
+    unfold pff_to_R_aux pff_to_flocq mk_from_generic
     simp only [Bool.false_eq_true, ↓reduceIte]
     rw [h_bdouble_dExp]
     -- The goal now is: F2R(Ztrunc(sm(rnd_val)), cexp(rnd_val)) = rnd_val

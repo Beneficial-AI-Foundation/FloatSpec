@@ -3168,7 +3168,7 @@ private theorem Zdigits_aux_bounds
         rw [htoNat_succ, pow_succ, mul_comm]
       have hlow' : beta ^ ((d + 1 - 1).natAbs) ≤ |n| := by
         -- Need β^d ≤ |n|, we have ¬(|n| < pow) i.e. pow ≤ |n|
-        have hge : pow ≤ (n.natAbs : Int) := le_of_not_lt hcond
+        have hge : pow ≤ (n.natAbs : Int) := le_of_not_gt hcond
         have hge_int : pow ≤ |n| := by
           rw [Int.abs_eq_natAbs]
           exact hge
@@ -4716,9 +4716,9 @@ theorem Zdigits_mult (x y : Int) (hβ : beta > 1 := h_beta):
     let ay : Int := Int.natAbs y
     let big : Int := ax + ay + ax * ay
     have hax_nonneg : 0 ≤ ax := by
-      simpa [ax] using Int.ofNat_nonneg (Int.natAbs x)
+      simpa [ax] using Int.natCast_nonneg (Int.natAbs x)
     have hay_nonneg : 0 ≤ ay := by
-      simpa [ay] using Int.ofNat_nonneg (Int.natAbs y)
+      simpa [ay] using Int.natCast_nonneg (Int.natAbs y)
     have hbig_nonneg : 0 ≤ big := by
       nlinarith
     have h_abs_x : Zdigits beta ax = Zdigits beta x := by
@@ -4733,7 +4733,7 @@ theorem Zdigits_mult (x y : Int) (hβ : beta > 1 := h_beta):
     have h_abs_prod_int : ((Int.natAbs (x * y) : Nat) : Int) = ax * ay := by
       simp [ax, ay, Int.natAbs_mul]
     have hn_nonneg : 0 ≤ ((Int.natAbs (x * y) : Nat) : Int) := by
-      exact Int.ofNat_nonneg (Int.natAbs (x * y))
+      exact Int.natCast_nonneg (Int.natAbs (x * y))
     have hn_le_big_int : ((Int.natAbs (x * y) : Nat) : Int) ≤ big := by
       rw [h_abs_prod_int]
       nlinarith

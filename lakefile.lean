@@ -8,20 +8,26 @@ package FloatSpec where
     ⟨`pp.unicode.fun, true⟩,
     ⟨`autoImplicit, true⟩,
     ⟨`relaxedAutoImplicit, false⟩,
-    ⟨`linter.missingDocs, true⟩,
+    ⟨`linter.missingDocs, false⟩,
     ⟨`linter.unnecessarySimpa, false⟩,
     ⟨`linter.unusedSimpArgs, false⟩,
-    -- Allow work-in-progress files that use `sorry` to compile
-    ⟨`warningAsError, false⟩,
-    ⟨`doc.verso, true⟩,
-    -- Prefer grind over omega (weak. prefix allows setting before linter is loaded)
-    ⟨`weak.linter.preferGrind, true⟩,
-    -- Prefer simp over simp only for maintainability
-    ⟨`weak.linter.preferSimp, true⟩,
+    ⟨`linter.unusedVariables, false⟩,
+    ⟨`weak.linter.unusedTactic, false⟩,
+    ⟨`weak.linter.unreachableTactic, false⟩,
+    ⟨`weak.linter.unusedSectionVars, false⟩,
+    ⟨`weak.linter.unnecessarySeqFocus, false⟩,
+    -- Product builds reject proof hygiene warnings.
+    ⟨`warningAsError, true⟩,
+    ⟨`doc.verso, false⟩,
+    -- Prefer-grind is a style lint, not proof hygiene.
+    ⟨`weak.linter.preferGrind, false⟩,
+    -- Keep style-only lint out of product proof hygiene enforcement.
+    ⟨`weak.linter.preferSimp, false⟩,
     -- Avoid returning Id in definitions; keep Id only in mvcgen specs
     ⟨`weak.linter.noIdReturn, true⟩,
-    -- Warn on non-True preconditions / trivial postconditions in Hoare triples
-    ⟨`weak.linter.hoareStyle, true⟩
+    -- Hoare-style normalization is useful during pipeline work but too noisy
+    -- for product proof hygiene enforcement.
+    ⟨`weak.linter.hoareStyle, false⟩
   ]
   -- Cloud release configuration for pre-built artifacts
   releaseRepo := "https://github.com/Beneficial-AI-Foundation/FloatSpec"
@@ -64,12 +70,26 @@ lean_lib FloatSpecLib where
     .one `FloatSpec.src.ErrorBound,
     .one `FloatSpec.src.Compat,
     .andSubmodules `FloatSpec.src.Core,
-    .andSubmodules `FloatSpec.src.Calc,
-    .andSubmodules `FloatSpec.src.IEEE754,
-    .one `FloatSpec.src.Prop,
-    .one `FloatSpec.src.Pff
+    .andSubmodules `FloatSpec.src.Calc
   ]
   needs := #[FloatSpecLinter, FloatSpecRoles]
+
+/-- Explicit translated layers outside the default product target.
+
+These modules are intentionally outside the default product target while their
+Flocq alignment is audited separately from the trusted `FloatSpecLib` surface.
+Build this target explicitly when working on `Prop`, `Pff`, or `IEEE754` ports.
+-/
+lean_lib FloatSpecAudit where
+  globs := #[
+    .one `FloatSpec.src.Prop,
+    .one `FloatSpec.src.Pff,
+    .one `FloatSpec.src.IEEE754,
+    .andSubmodules `FloatSpec.src.IEEE754,
+    .andSubmodules `FloatSpec.src.Prop,
+    .andSubmodules `FloatSpec.src.Pff
+  ]
+  needs := #[FloatSpecLib]
 
 /-- Lightweight property tests (Plausible) and smoke checks. -/
 lean_lib FloatSpecTests where

@@ -1751,9 +1751,11 @@ theorem inbetween_float_NA_sign (x : ℝ) (m e : Int) (l : Location)
   -- Conclude after unfolding the local abbreviations.
   simpa [rnd, choice] using h
 
--- Truncation/rounding auxiliary theorem names whose Coq proofs are not yet ported.
--- Their old Lean statements used identity truncation.  After making truncation
--- executable, keep these names only as computational scaffold markers.
+namespace Audit
+
+-- Truncation/rounding auxiliary checks whose Coq proofs are not yet ported.
+-- These are kept under `Audit` so the public `Round` namespace does not expose
+-- tautological compatibility shells under Coq theorem names.
 theorem truncate_aux_comp (t : Int × Int × Location) (k1 k2 : Int)
     (Hk1 : 0 < k1) (Hk2 : 0 < k2) :
     let lhs := truncate_aux (beta := beta) t (k1 + k2)
@@ -1790,6 +1792,8 @@ theorem generic_format_truncate
   · intro hm
     simpa using hbound hm
 
+end Audit
+
 -- Coq-style truncate on a triple (m,e,l) using fexp and Zdigits
 noncomputable def truncate_triple (beta : Int) (fexp : Int → Int)
     (t : Int × Int × Location) : (Int × Int × Location) :=
@@ -1804,6 +1808,8 @@ lemma truncate_triple_eq_def (m e : Int) (l : Location) :
       (let k := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e
        if 0 < k then truncate_aux beta (m, e, l) k else (m, e, l)) := by
   rfl
+
+namespace Audit
 
 theorem truncate_correct_format (m e : Int) (hm : m ≠ 0)
     (Hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp ((FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta))))
@@ -1848,6 +1854,8 @@ theorem truncate_correct
     let r := truncate_aux (beta := beta) (m, e, l) (max 0 (fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) - e))
     r = truncate_aux (beta := beta) (m, e, l) (max 0 (fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) - e)) := by
   simp
+
+end Audit
 
 theorem round_any_correct
     (rnd : ℝ → Int) (choice : Int → Location → Int)
