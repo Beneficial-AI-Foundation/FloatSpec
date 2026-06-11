@@ -20,7 +20,7 @@ Experimental primitive-float bridge.
 Lean does not currently expose the same primitive-float semantic bridge used by
 Flocq's Coq `PrimFloat.v` in this port.  This file therefore uses an opaque
 wrapper carrying a real projection for audit experiments.  It must not be
-counted as a trusted IEEE/PrimFloat equivalence result.
+counted as a faithful IEEE/PrimFloat equivalence result.
 -/
 
 structure PrimFloat where
@@ -143,8 +143,8 @@ theorem B2SF_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   simp [wp, PostCond.noThrow, pure, B2SF_Prim2B_check, Prim2SF]
 
 -- Coq: Prim2SF_B2Prim — standard view of Binary→Prim equals direct B2SF.
--- The bridge stores a real value, so Binary→Prim→Binary is not claimed as a
--- trusted inverse. This check records the binary-side view directly.
+-- The bridge stores a real value, so Binary→Prim→Binary is not claimed as an
+-- inverse. This check records the binary-side view directly.
 noncomputable def Prim2SF_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax) : StandardFloat :=
   B2SF (prec:=prec) (emax:=emax) x
@@ -200,7 +200,7 @@ noncomputable def B2Prim_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_l
   (x : PrimFloat) : PrimFloat :=
   (binary_to_prim prec emax (prim_to_binary prec emax x))
 
--- Bridge note: the current `ℝ` model does not provide a trusted
+-- Bridge note: the current `ℝ` model does not provide a faithful
 -- Prim→Binary→Prim inverse; the theorem exposes the computed binary roundtrip.
 theorem B2Prim_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat)
@@ -228,7 +228,7 @@ theorem opp_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   rfl
 
 -- Coq: Prim2B_B2Prim — roundtrip Binary → Prim → Binary
--- Bridge note: the current `ℝ` model does not provide a trusted
+-- Bridge note: the current `ℝ` model does not provide a faithful
 -- Binary→Prim→Binary inverse; the theorem exposes the computed roundtrip.
 noncomputable def Prim2B_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax) : (Binary754 prec emax) :=
@@ -476,7 +476,7 @@ noncomputable def one_equiv_check (prec emax : Int)
   (binary_to_prim prec emax (binary_one (prec:=prec) (emax:=emax)))
 
 /-- Port gap for Coq `one_equiv`.
-The primitive-float wrapper is not a trusted primitive-float semantic bridge, so
+The primitive-float wrapper is not a faithful primitive-float semantic bridge, so
 constant equivalence shells are kept out of theorem form. -/
 noncomputable def one_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
     Unit :=

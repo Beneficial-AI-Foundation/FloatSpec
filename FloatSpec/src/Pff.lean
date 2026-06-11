@@ -1,7 +1,6 @@
-/-!
-Tier 3 Excluded.
+-- Legacy compatibility with the Pff floating-point library.
 
-The legacy Pff layer is outside the trusted aggregate for the current milestone.
-Its leaf modules remain available for audit and future porting work, but this
-barrel intentionally re-exports none of them.
--/
+import FloatSpec.src.Pff.Pff
+import FloatSpec.src.Pff.Pff2Flocq
+import FloatSpec.src.Pff.Pff2FlocqAux
+import FloatSpec.src.Pff.Nat2Z_8_12

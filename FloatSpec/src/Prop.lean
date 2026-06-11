@@ -1,7 +1,9 @@
-/-!
-Tier 3 Excluded.
+-- Property analysis and error-bound modules.
 
-The heavy property-analysis layer is outside the trusted aggregate for the
-current milestone. Its leaf modules remain available for audit and future
-porting work, but this barrel intentionally re-exports none of them.
--/
+import FloatSpec.src.Prop.Relative
+import FloatSpec.src.Prop.Plus_error
+import FloatSpec.src.Prop.Mult_error
+import FloatSpec.src.Prop.Div_sqrt_error
+import FloatSpec.src.Prop.Sterbenz
+import FloatSpec.src.Prop.Double_rounding
+import FloatSpec.src.Prop.Round_odd

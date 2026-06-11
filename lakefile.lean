@@ -50,7 +50,7 @@ lean_lib FloatSpecLinter where
 lean_lib FloatSpecRoles where
   globs := #[.one `FloatSpecRoles]
 
-/-- Main library -/
+/-- Main library. -/
 @[default_target]
 lean_lib FloatSpecLib where
   globs := #[
