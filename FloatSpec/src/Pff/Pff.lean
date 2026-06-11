@@ -5,14 +5,6 @@ import Mathlib.Data.Real.Basic
 import FloatSpec.src.Calc.Operations
 import FloatSpec.src.SimprocWP
 
-/-!
-Tier 1 Scaffold / Tier 3 Excluded.
-
-This legacy Pff leaf preserves translated names for audit and future porting.
-It is not re-exported by `FloatSpec.src.Pff` and is not part of the trusted
-FloatSpec aggregate.
--/
-
 -- Legacy Pff library compatibility layer
 -- Translated from Coq file: flocq/src/Pff/Pff.v
 

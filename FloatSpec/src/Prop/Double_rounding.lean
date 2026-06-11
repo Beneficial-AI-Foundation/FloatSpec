@@ -3,16 +3,6 @@ import FloatSpec.src.Compat
 import FloatSpec.src.Calc.Round
 import Mathlib.Data.Real.Basic
 
-/-!
-Tier 1 Scaffold / Tier 3 Excluded.
-
-This property-analysis leaf keeps the concrete helper definitions from the
-translated Flocq double-rounding development. The former theorem shells in this
-file were not re-exported by `FloatSpec.src.Prop`, were not referenced by other
-modules, and still required the larger Flocq proof context, so they have been
-removed instead of retained as unproved compatibility declarations.
--/
-
 -- Double rounding properties
 -- Translated from Coq file: flocq/src/Prop/Double_rounding.v
 
