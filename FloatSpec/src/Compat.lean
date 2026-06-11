@@ -167,6 +167,6 @@ noncomputable def ZnearestMode (choice : Int → Bool) : FloatSpec.Calc.Round.Mo
 
 end FloatSpec.Compat.Scaffold
 
-/-- Scaffold compatibility alias retained for excluded translated files. -/
+/-- Scaffold compatibility alias retained for legacy translated files. -/
 noncomputable def Znearest : (Int → Bool) → FloatSpec.Calc.Round.Mode :=
   FloatSpec.Compat.Scaffold.ZnearestMode

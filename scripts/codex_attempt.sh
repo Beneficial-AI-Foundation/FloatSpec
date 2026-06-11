@@ -149,7 +149,7 @@ codex_stderr="${attempt_dir}/codex.stderr.log"
 codex_last="${attempt_dir}/codex_last_message.md"
 codex_exit_log="${attempt_dir}/codex_exit_status.txt"
 build_log="${attempt_dir}/build.log"
-trust_log="${attempt_dir}/trust_gate.log"
+audit_log="${attempt_dir}/placeholder_audit.json"
 attempt_json="${attempt_dir}/attempt.json"
 target_path="${target%%:*}"
 target_before="${attempt_dir}/target_before.lean"
@@ -173,10 +173,9 @@ Run or inspect these commands/files only:
 
 - \`scripts/status_report.sh --markdown\`
 - \`scripts/audit_placeholders.sh --json FloatSpec\`
-- \`FloatSpec/docs/TRUST_TIERS.md\`
 - \`FloatSpec/docs/PIPELINE_IMPROVEMENTS_FROM_VERINA.md\`
 
-Report whether the tools are callable and whether the trust/status separation is visible.
+Report whether the tools are callable and whether the unified build/status flow is visible.
 EOF
 else
   cat >"$prompt_file" <<EOF
@@ -187,13 +186,13 @@ Reason: \`${reason}\`
 
 Follow these mandatory pipeline rules:
 
-1. Read \`FloatSpec/docs/TRUST_TIERS.md\` and \`FloatSpec/docs/PIPELINE_IMPROVEMENTS_FROM_VERINA.md\`.
+1. Read \`FloatSpec/PIPELINE.md\` and \`FloatSpec/docs/PIPELINE_IMPROVEMENTS_FROM_VERINA.md\`.
 2. Repair only the target item. Do not broaden scope.
 3. Compare against upstream Flocq when changing a statement or definition.
 4. Do not add \`sorry\`, \`axiom\`, \`admit\`, \`:= True\`, \`fun _ _ => True\`, identity stubs, conclusion-as-hypothesis patches, or mode-erased placeholders.
 5. If the target is blocked by a missing foundational theorem, stop with a blocker report instead of weakening semantics.
-6. Run \`scripts/check_diff_trust.sh\` before finishing.
-7. If you changed code, explain the build command used and the remaining gate status.
+6. Run \`lake build\` before finishing when code changed.
+7. If you changed code, explain the build command used and any remaining placeholder/status findings.
 
 The final answer must say one of: proved, blocked, failed, or no_action.
 EOF
@@ -305,7 +304,7 @@ if "$run_build"; then
   fi
 fi
 
-if scripts/check_diff_trust.sh --allow-statement-changes >"$trust_log" 2>&1; then
+if scripts/audit_placeholders.sh --json FloatSpec >"$audit_log" 2>&1; then
   :
 else
   :

@@ -46,7 +46,7 @@ noncomputable def nearestEvenMode : Mode where
     simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
       FloatSpec.Core.Raux.Rcompare]
 
-/-- Backward-compatible coercion for excluded legacy translated files. -/
+/-- Backward-compatible coercion for legacy translated files. -/
 noncomputable instance : Coe Unit Mode where
   coe _ := nearestEvenMode
 
