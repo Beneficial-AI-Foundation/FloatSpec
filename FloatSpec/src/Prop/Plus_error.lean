@@ -20,7 +20,7 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
 Upstream Flocq states this under `beta : radix`; in this Lean port that
 radix invariant is the explicit hypothesis `hβ`. -/
-theorem round_repr_same_exp (rnd : ℝ → Int) [Valid_rnd rnd] (hβ : 1 < beta) (m e : Int) :
+theorem round_repr_same_exp (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (hβ : 1 < beta) (m e : Int) :
   ∃ m', FloatSpec.Core.Generic_fmt.roundR beta fexp rnd (_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)) =
         _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e : FloatSpec.Core.Defs.FlocqFloat beta) := by
   classical
@@ -77,7 +77,7 @@ theorem round_repr_same_exp (rnd : ℝ → Int) [Valid_rnd rnd] (hβ : 1 < beta)
               FloatSpec.Core.Defs.FlocqFloat beta) := by
               simpa [_root_.F2R] using hchange'
 
-variable [Monotone_exp fexp]
+variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 variable (hβ : 1 < beta)
 variable (choice : Int → Bool)
 
@@ -395,7 +395,7 @@ theorem roundR_Znearest_N_pt (x : ℝ) (hβ : 1 < beta) :
       decide_eq_true_iff] using hspec ⟨hFf, hDN, hUP, hbdL, hbdR⟩
   simpa [F, hround_near] using hN
 
-omit [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] [Monotone_exp fexp] in
+omit [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] [FloatSpec.Core.Generic_fmt.Monotone_exp fexp] in
 theorem generic_format_shift (x : ℝ) (e : Int)
   (hβ : 1 < beta)
   (hx : generic_format beta fexp x) (h_exp : e ≤ cexp beta fexp x) :
@@ -522,10 +522,10 @@ theorem plus_error (x y : ℝ)
 
 -- Section: Plus zero properties
 
-variable [Exp_not_FTZ fexp]
+variable [FloatSpec.Core.Ulp.Exp_not_FTZ fexp]
 
 /-- Round plus not equal to zero auxiliary -/
-lemma round_plus_neq_0_aux (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+lemma round_plus_neq_0_aux (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hβ : 1 < beta)
   (h_exp : cexp beta fexp x ≤ cexp beta fexp y)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
@@ -578,7 +578,7 @@ lemma round_plus_neq_0_aux (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
   exact (not_lt_of_ge this) hpow_pos
 
 /-- rnd(x+y)=0 → x+y ≠ 0 (provided this is not a FTZ format) -/
-theorem round_plus_neq_0 (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+theorem round_plus_neq_0 (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
   (h_nonzero : x + y ≠ 0) :
@@ -649,7 +649,7 @@ theorem round_plus_neq_0 (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
     simp
 
 /-- rnd(x+y)=0 → x+y = 0 -/
-theorem round_plus_eq_0 (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+theorem round_plus_eq_0 (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta fexp x) (hy : generic_format beta fexp y)
   (h_zero : FloatSpec.Core.Generic_fmt.roundR beta fexp rnd (x + y) = 0) :
@@ -785,7 +785,7 @@ lemma FLT_plus_error_N_round_ex (x y : ℝ)
 -- Section: Plus mult ulp properties
 
 variable (rnd : ℝ → Int)
-variable [Valid_rnd rnd]
+variable [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
 
 /-- Existence of shift representation -/
 lemma ex_shift (x : ℝ) (e : Int)
@@ -937,7 +937,7 @@ theorem round_plus_F2R (x y : ℝ)
       simpa [_root_.F2R, FloatSpec.Core.Defs.F2R] using h
     exact hround_c.trans hchange
 
-variable [Exp_not_FTZ fexp]
+variable [FloatSpec.Core.Ulp.Exp_not_FTZ fexp]
 
 /-- Round plus greater equal ulp -/
 theorem round_plus_ge_ulp (x y : ℝ)
@@ -1017,7 +1017,7 @@ theorem round_FLT_plus_ge (x y : ℝ) (e : Int)
   FloatSpec.Core.Raux.bpow beta e ≤
     |FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x + y)| := by
   classical
-  haveI : Exp_not_FTZ (FLT_exp emin prec) := by
+  haveI : FloatSpec.Core.Ulp.Exp_not_FTZ (FLT_exp emin prec) := by
     refine ⟨?_⟩
     intro k
     have hprec : 0 < prec := (Prec_gt_0.pos : 0 < prec)
@@ -1071,9 +1071,9 @@ theorem round_FLT_plus_ge (x y : ℝ) (e : Int)
     have h := FloatSpec.Core.Raux.bpow_le beta e
       (cexp beta (FLT_exp emin prec) (x / (beta : ℝ))) hβ he_cexp
     simpa [FloatSpec.Core.Raux.bpow, hulp] using h True.intro
-  haveI : Monotone_exp (FLT_exp emin prec) := by
+  haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp emin prec) := by
     simpa [FLT_exp] using
-      (inferInstance : Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec emin))
+      (inferInstance : FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec emin))
   exact le_trans hbpow_le_ulp
     (round_plus_ge_ulp (beta := beta) (fexp := FLT_exp emin prec)
       (rnd := rnd) (x := x) (y := y) hβ hx hy h_nonzero)
@@ -1115,7 +1115,7 @@ theorem round_FLX_plus_ge (x y : ℝ) (e : Int)
   FloatSpec.Core.Raux.bpow beta e ≤
     |FloatSpec.Core.Generic_fmt.roundR beta (FLX_exp prec) rnd (x + y)| := by
   classical
-  haveI : Exp_not_FTZ (FLX_exp prec) := by
+  haveI : FloatSpec.Core.Ulp.Exp_not_FTZ (FLX_exp prec) := by
     refine ⟨?_⟩
     intro k
     have hprec : 0 < prec := (Prec_gt_0.pos : 0 < prec)
@@ -1166,9 +1166,9 @@ theorem round_FLX_plus_ge (x y : ℝ) (e : Int)
     have h := FloatSpec.Core.Raux.bpow_le beta e
       (cexp beta (FLX_exp prec) (x / (beta : ℝ))) hβ he_cexp
     simpa [FloatSpec.Core.Raux.bpow, hulp] using h True.intro
-  haveI : Monotone_exp (FLX_exp prec) := by
+  haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLX_exp prec) := by
     simpa [FLX_exp] using
-      (inferInstance : Monotone_exp (FloatSpec.Core.FLX.FLX_exp prec))
+      (inferInstance : FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLX.FLX_exp prec))
   exact le_trans hbpow_le_ulp
     (round_plus_ge_ulp (beta := beta) (fexp := FLX_exp prec)
       (rnd := rnd) (x := x) (y := y) hβ hx hy h_nonzero)

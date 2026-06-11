@@ -1713,7 +1713,7 @@ private lemma round_to_generic_format
           rw [abs_of_nonpos h_ceil_le0, abs_of_nonpos h_y_neg]
           linarith
         · -- y ≥ 0: Ztrunc(y) = floor(y) ≤ y, so |floor(y)| ≤ |y|
-          push_neg at hy
+          push Not at hy
           have h_ztrunc : (FloatSpec.Core.Raux.Ztrunc y) = Int.floor y := by
             simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure, hy]
           rw [h_ztrunc]
@@ -9459,7 +9459,7 @@ private theorem succ_DN_eq_UP_theorem
         -- Step 1: Derive negligible_exp fexp = none from ulp 0 = 0
         have hne : negligible_exp fexp = none := by
           by_contra hsome
-          push_neg at hsome
+          push Not at hsome
           cases hopt : negligible_exp fexp with
           | none => exact hsome hopt
           | some n =>

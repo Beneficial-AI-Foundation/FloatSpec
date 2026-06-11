@@ -1071,7 +1071,7 @@ theorem FcanonicLtPos {beta : Int}
   by_cases hexp : p.Fexp < q.Fexp
   · left; exact hexp
   · -- p.Fexp ≥ q.Fexp
-    push_neg at hexp
+    push Not at hexp
     by_cases hexp_eq : p.Fexp = q.Fexp
     · -- Exponents equal: compare mantissas
       right
@@ -1111,7 +1111,7 @@ theorem FcanonicLtPos {beta : Int}
         have hpow_p_pos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hbeta_pos p.Fexp
         have hp_fnum_nonneg : (0 : ℤ) ≤ p.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hneg : (p.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp < 0 :=
             mul_neg_of_neg_of_pos hneg hpow_p_pos
@@ -1181,14 +1181,14 @@ theorem FcanonicLtPos {beta : Int}
         have hpow_q_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
         have hp_fnum_nonneg : (0 : ℤ) ≤ p.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hneg : (p.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp < 0 :=
             mul_neg_of_neg_of_pos hneg hpow_p_pos
           linarith
         have hq_fnum_nonneg : (0 : ℤ) ≤ q.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hneg : (q.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have hF2Rq_neg : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp < 0 :=
             mul_neg_of_neg_of_pos hneg hpow_q_pos
@@ -1515,7 +1515,7 @@ theorem FcanonicLtNeg {beta : Int}
   by_cases hexp : q.Fexp < p.Fexp
   · left; exact hexp
   · -- q.Fexp ≥ p.Fexp
-    push_neg at hexp
+    push Not at hexp
     by_cases hexp_eq : p.Fexp = q.Fexp
     · -- Exponents equal: compare mantissas
       right
@@ -1547,7 +1547,7 @@ theorem FcanonicLtNeg {beta : Int}
         have hpow_q_pos : (0 : ℝ) < (beta : ℝ) ^ q.Fexp := zpow_pos hbeta_pos q.Fexp
         have hq_fnum_nonpos : q.Fnum ≤ (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (q.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
           have : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp > 0 :=
             mul_pos hpos hpow_q_pos
@@ -1556,7 +1556,7 @@ theorem FcanonicLtNeg {beta : Int}
         have hpow_p_pos : (0 : ℝ) < (beta : ℝ) ^ p.Fexp := zpow_pos hbeta_pos p.Fexp
         have hp_fnum_neg : p.Fnum < (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (p.Fnum : ℝ) ≥ 0 := Int.cast_nonneg hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp ≥ 0 :=
             mul_nonneg hpos (le_of_lt hpow_p_pos)
@@ -1653,14 +1653,14 @@ theorem FcanonicLtNeg {beta : Int}
         -- Since F2R q ≤ 0 and beta^q.Fexp > 0, we have q.Fnum ≤ 0
         have hq_fnum_nonpos : q.Fnum ≤ (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (q.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
           have : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp > 0 := mul_pos hpos hpow_q_pos
           linarith
         -- Since F2R p < F2R q ≤ 0, we have p.Fnum < 0
         have hp_fnum_neg : p.Fnum < (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (p.Fnum : ℝ) ≥ 0 := Int.cast_nonneg hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp ≥ 0 := mul_nonneg hpos (le_of_lt hpow_p_pos)
           linarith
@@ -1791,14 +1791,14 @@ theorem FcanonicLtNeg {beta : Int}
         -- Since F2R q ≤ 0 and beta^q.Fexp > 0, we have q.Fnum ≤ 0
         have hq_fnum_nonpos : q.Fnum ≤ (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (q.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
           have : (q.Fnum : ℝ) * (beta : ℝ) ^ q.Fexp > 0 := mul_pos hpos hpow_q_pos
           linarith
         -- Since F2R p < F2R q ≤ 0, we have p.Fnum < 0
         have hp_fnum_neg : p.Fnum < (0 : ℤ) := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hpos : (p.Fnum : ℝ) ≥ 0 := Int.cast_nonneg hcontra
           have : (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp ≥ 0 := mul_nonneg hpos (le_of_lt hpow_p_pos)
           linarith
@@ -2052,13 +2052,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
         -- From 0 ≤ x.Fnum * beta^x.Fexp and beta^x.Fexp > 0: x.Fnum ≥ 0
         have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
           linarith
         have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
           linarith
@@ -2112,7 +2112,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
           -- A stronger bound descriptor would expose `0 < vNum` directly.
           -- For now assume vNum > 0 from beta > 1 and the bounds
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hvNum_nonpos : b.vNum ≤ 0 := hcontra
           have hcontra2 : (b.vNum : ℤ) ≤ beta * y.Fnum := hvnumY'
           have hcontra3 : beta * y.Fnum < beta * (b.vNum : ℤ) := by
@@ -2180,13 +2180,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
         have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
         have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
           linarith
         have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
           linarith
@@ -2210,13 +2210,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
         have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
         have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
           linarith
         have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
           have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
           linarith
@@ -2268,7 +2268,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
           -- Since beta > 1 and y.Fnum < vNum, we have vNum ≤ beta * (vNum - 1)
           -- This requires vNum > 0
           by_contra hcontra
-          push_neg at hcontra
+          push Not at hcontra
           have : (b.vNum : ℤ) ≤ 0 := hcontra
           have h3 : (b.vNum : ℤ) ≤ beta * y.Fnum := hvnumY'
           have h4 : beta * y.Fnum ≥ 0 := mul_nonneg (le_of_lt (lt_trans (by norm_num : (0 : ℤ) < 1) hβ)) hy_fnum_nonneg
@@ -2340,13 +2340,13 @@ theorem FcanonicPosFexpRlt {beta : Int}
     have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
     have hx_fnum_nonneg : (0 : ℤ) ≤ x.Fnum := by
       by_contra hcontra
-      push_neg at hcontra
+      push Not at hcontra
       have hx_neg : (x.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
       have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp < 0 := mul_neg_of_neg_of_pos hx_neg hpow_x_pos
       linarith
     have hy_fnum_nonneg : (0 : ℤ) ≤ y.Fnum := by
       by_contra hcontra
-      push_neg at hcontra
+      push Not at hcontra
       have hy_neg : (y.Fnum : ℝ) < 0 := Int.cast_lt_zero.mpr hcontra
       have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp < 0 := mul_neg_of_neg_of_pos hy_neg hpow_y_pos
       linarith
@@ -2533,7 +2533,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
             -- If vNum ≤ 0 and x.Fnum ≥ 0, beta > 0, then beta * x.Fnum ≥ 0 > vNum
             -- Contradiction with hvnumX': beta * x.Fnum < vNum
             by_contra hcontra
-            push_neg at hcontra
+            push Not at hcontra
             have hvNum_nonpos : (b.vNum : ℝ) ≤ 0 := hcontra
             have hvNum_nonpos' : (b.vNum : ℤ) ≤ 0 := by exact_mod_cast hvNum_nonpos
             have hbeta_x_nonneg : (0 : ℤ) ≤ beta * x.Fnum := mul_nonneg (le_of_lt (lt_trans (by norm_num : (0 : ℤ) < 1) hβ)) hx_fnum_nonneg
@@ -2617,13 +2617,13 @@ theorem FcanonicNegFexpRlt {beta : Int}
       -- From F2R x ≤ 0 and beta^x.Fexp > 0: x.Fnum ≤ 0
       have hx_fnum_nonpos : x.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hx_pos : (x.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp > 0 := mul_pos hx_pos hpow_x_pos
         linarith
       have hy_fnum_nonpos : y.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hy_pos : (y.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp > 0 := mul_pos hy_pos hpow_y_pos
         linarith
@@ -2760,13 +2760,13 @@ theorem FcanonicNegFexpRlt {beta : Int}
       have hpow_y_pos : (0 : ℝ) < (beta : ℝ) ^ y.Fexp := zpow_pos hbeta_pos y.Fexp
       have hx_fnum_nonpos : x.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hx_pos : (x.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (x.Fnum : ℝ) * (beta : ℝ) ^ x.Fexp > 0 := mul_pos hx_pos hpow_x_pos
         linarith
       have hy_fnum_nonpos : y.Fnum ≤ (0 : ℤ) := by
         by_contra hcontra
-        push_neg at hcontra
+        push Not at hcontra
         have hy_pos : (y.Fnum : ℝ) > 0 := Int.cast_pos.mpr hcontra
         have : (y.Fnum : ℝ) * (beta : ℝ) ^ y.Fexp > 0 := mul_pos hy_pos hpow_y_pos
         linarith
@@ -3310,7 +3310,7 @@ theorem FcanonicLeastExp {beta : Int}
       by_cases hexp_le : y.Fexp ≤ x.Fexp
       · exact hexp_le
       · -- So x.Fexp < y.Fexp
-        push_neg at hexp_le
+        push Not at hexp_le
         have hexp_lt : x.Fexp < y.Fexp := hexp_le
         -- From F2R equality: x.Fnum * beta^x.Fexp = y.Fnum * beta^y.Fexp
         -- So: x.Fnum = y.Fnum * beta^(y.Fexp - x.Fexp)
@@ -3782,7 +3782,7 @@ theorem RND_Min_Pos_monotone {beta : Int}
           rw [hIsInt]
           exact Int.cast_le.mpr hFloorMono
         · -- p - 1 < 0: This case is impossible since hPGe1 says 1 ≤ p, so p - 1 ≥ 0
-          push_neg at hp
+          push Not at hp
           -- hp : p - 1 < 0 but hPGe1 : 1 ≤ p, so p - 1 ≥ 0
           -- This is a contradiction
           have hContra : p - 1 ≥ 0 := by omega
@@ -4170,7 +4170,7 @@ theorem RND_Min_Pos_monotone {beta : Int}
             rw [hZpowNat, ← Int.cast_pow radix (p - 1).toNat, Int.floor_intCast]
           rw [hIsInt]
           exact Int.cast_le.mpr hFloorMono
-        · push_neg at hp
+        · push Not at hp
           have hContra : p - 1 ≥ 0 := by omega
           exact absurd hContra (not_le.mpr hp)
 
@@ -5162,7 +5162,7 @@ theorem ClosestZero {beta : Int}
     exact abs_eq_zero.mp (le_antisymm hMin (abs_nonneg _))
   · -- Case: bo.vNum ≤ 0, so no float is bounded (Fbounded' is vacuously false)
     -- But we have Fbounded' bo x from hClosest, contradiction
-    push_neg at hvNum
+    push Not at hvNum
     obtain ⟨hNumBound, _⟩ := hBounded
     have : |x.Fnum| ≥ 0 := abs_nonneg _
     omega
@@ -5238,12 +5238,12 @@ private lemma minExList_aux {beta : Int}
             rcases List.mem_cons.mp hf with heq | hmem
             · exact heq ▸ hcmp
             · exact hmin_max f hmem hfr⟩
-        · push_neg at hcmp
+        · push Not at hcmp
           exact ⟨hd, List.mem_cons_self, h, fun f hf hfr => by
             rcases List.mem_cons.mp hf with heq | hmem
             · exact heq ▸ le_refl _
             · exact le_trans (hmin_max f hmem hfr) (le_of_lt hcmp)⟩
-    · push_neg at h
+    · push Not at h
       rcases ih with hall | ⟨min, hmin_mem, hmin_le, hmin_max⟩
       · left
         intro f hf
@@ -5496,13 +5496,13 @@ theorem ClosestErrorExpStrict {beta : Int}
     (pure (ClosestErrorExpStrict_check (beta:=beta) bo radix p q x) : Id Unit)
     ⦃⇓_ => ⌜q.Fexp < p.Fexp⌝⦄ := by
   intro ⟨_, _, _, hF2Rq, hqNe0, hBetaGe1, hClosestExp⟩
-  simp only [wp, PostCond.noThrow, pure, ClosestErrorExpStrict_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, ClosestErrorExpStrict_check,
     Id.run, ULift.up_down]
   -- Goal is ⌜q.Fexp < p.Fexp⌝.down, which is definitionally q.Fexp < p.Fexp
   show q.Fexp < p.Fexp
   -- Prove by contradiction: assume ¬(q.Fexp < p.Fexp), i.e., p.Fexp ≤ q.Fexp
   by_contra h
-  push_neg at h
+  push Not at h
   -- h : p.Fexp ≤ q.Fexp
   -- Step 1: β > 0 and β^e > 0 for all e
   have hBetaPos : (0 : ℝ) < (beta : ℝ) := lt_of_lt_of_le one_pos hBetaGe1
@@ -5600,7 +5600,7 @@ theorem ClosestErrorBound {beta : Int}
     ⦃⇓_ => ⌜|_root_.F2R q| ≤
             _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) * (1 / 2 : ℝ)⌝⦄ := by
   intro ⟨_, _, hF2Rq, hUlpBound⟩
-  simp only [wp, PostCond.noThrow, pure, ClosestErrorBound_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, ClosestErrorBound_check,
     Id.run, ULift.up_down]
   show |_root_.F2R q| ≤
     _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) * (1 / 2 : ℝ)
@@ -5640,7 +5640,7 @@ theorem FmultRadixInv {beta : Int}
   show (1/2 : ℝ) * _root_.F2R x ≤ _root_.F2R z
   -- By contradiction: suppose F2R z < (1/2) * F2R x
   by_contra h
-  push_neg at h
+  push Not at h
   -- Then |F2R z - y| > |F2R w - y| contradicting that z is closest to y
   have hZdist : |_root_.F2R z - y| = y - _root_.F2R z := by
     rw [abs_of_nonpos (by linarith)]
@@ -6083,7 +6083,7 @@ theorem FexpGeUnderf {beta : Int}
     (pure (FexpGeUnderf_check (beta:=beta) bo precision e f) : Id Unit)
     ⦃⇓_ => ⌜e - precision + 1 ≤ f.Fexp⌝⦄ := by
   intro ⟨_, hMag, hBeta, _hPrec, hBound, hFb⟩
-  simp only [wp, PostCond.noThrow, pure, FexpGeUnderf_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FexpGeUnderf_check,
     Id.run, ULift.up_down]
   show e - precision + 1 ≤ f.Fexp
   -- Equivalently e < f.Fexp + precision
@@ -6148,7 +6148,7 @@ theorem AddExpGeUnderf {beta : Int}
     (pure (AddExpGeUnderf_check (beta:=beta) bo precision e radix f1 f2 g) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R g = 0 ∨ (beta : ℝ) ^ (e - precision + 1) ≤ |_root_.F2R g|⌝⦄ := by
   intro ⟨_, _, _, hMag1, hMag2, hBeta, hPrec, hBound, hFb1, hFb2, hPlusExact⟩
-  simp only [wp, PostCond.noThrow, pure, AddExpGeUnderf_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, AddExpGeUnderf_check,
     Id.run, ULift.up_down]
   show _root_.F2R g = 0 ∨ (beta : ℝ) ^ (e - precision + 1) ≤ |_root_.F2R g|
   -- Case split: either F2R g = 0 or F2R g ≠ 0
@@ -6232,7 +6232,7 @@ theorem RoundedModeP_inv2 {α : Type} (P : ℝ → α → Prop) :
     (pure (RoundedModeP_inv2_check P) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP P⌝⦄ := by
   intro ⟨_, hCompat, _, _⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeP_inv2_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, RoundedModeP_inv2_check,
     Id.run, ULift.up_down]
   exact hCompat
 
@@ -6246,7 +6246,7 @@ theorem RoundedModeP_inv4 {α : Type} (P : ℝ → α → Prop) :
     (pure (RoundedModeP_inv4_check P) : Id Unit)
     ⦃⇓_ => ⌜MonotoneP P⌝⦄ := by
   intro ⟨_, _, _, hMono⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeP_inv4_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, RoundedModeP_inv4_check,
     Id.run, ULift.up_down]
   exact hMono
 
@@ -6287,7 +6287,7 @@ theorem RoundedModeProjectorIdem {beta : Int}
     (pure (RoundedModeProjectorIdem_check (beta:=beta) b radix P p) : Id Unit)
     ⦃⇓_ => ⌜P (_root_.F2R p) p⌝⦄ := by
   intro ⟨⟨hTotal, hCompat, _, _⟩, _, hProj⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeProjectorIdem_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, RoundedModeProjectorIdem_check,
     Id.run, ULift.up_down]
   -- From TotalP, get some q with P (F2R p) q
   obtain ⟨q, hPq⟩ := hTotal (_root_.F2R p)
@@ -6360,8 +6360,7 @@ theorem RoundedModeProjectorIdemEq {beta : Int}
     (pure (RoundedModeProjectorIdemEq_check (beta:=beta) b radix P p q) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R p = _root_.F2R q⌝⦄ := by
   intro ⟨_hRMP, hBnd, hPpq, hProjEq⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeProjectorIdemEq_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, RoundedModeProjectorIdemEq_check, Id.run, ULift.up_down]
   exact hProjEq p q hBnd hPpq
 
 -- Coq: `RoundedModeUlp` — under a rounded mode P and P p q, |p - q| < Fulp q
@@ -6388,7 +6387,7 @@ theorem RoundedModeUlp {beta : Int}
     (pure (RoundedModeUlp_check (beta:=beta) b radix P p q) : Id Unit)
     ⦃⇓_ => ⌜|p - _root_.F2R q| < Fulp (beta:=beta) q⌝⦄ := by
   intro ⟨_, _, hUlp⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeUlp_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, RoundedModeUlp_check,
     Id.run, ULift.up_down]
   exact hUlp
 
@@ -6440,8 +6439,7 @@ theorem FnormalBounded {beta : Int}
     (pure (FnormalBounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
   intro hnormal
-  simpa only [wp, PostCond.noThrow, pure, FnormalBounded_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down] using hnormal.1
+  simpa only [wp, PostCond.noThrow, pure, FnormalBounded_check, Id.run, ULift.up_down] using hnormal.1
 
 -- Coq: `FnormalNotZero` — normal floats are not the zero float
 noncomputable def FnormalNotZero_check {beta : Int}
@@ -6492,8 +6490,7 @@ theorem FnormalFop {beta : Int}
     (pure (FnormalFop_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
   intro hnormal
-  simp only [wp, PostCond.noThrow, pure, FnormalFop_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, FnormalFop_check, Id.run, ULift.up_down]
   simpa [Fnormal, Fbounded, FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg]
     using hnormal
 
@@ -6511,8 +6508,7 @@ theorem FnormalFabs {beta : Int}
     (pure (FnormalFabs_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b (Fabs (beta:=beta) p)⌝⦄ := by
   intro hnormal
-  simp only [wp, PostCond.noThrow, pure, FnormalFabs_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, FnormalFabs_check, Id.run, ULift.up_down]
   rcases hnormal with ⟨⟨hnum, hexp⟩, hmant⟩
   refine ⟨⟨?_, ?_⟩, ?_⟩
   · simpa [Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs] using hnum
@@ -6534,7 +6530,7 @@ theorem FsubnormalFbounded {beta : Int}
     (pure (FsubnormalFbounded_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b p⌝⦄ := by
   intro hsub
-  simp only [wp, PostCond.noThrow, pure, FsubnormalFbounded_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FsubnormalFbounded_check,
     Id.run, ULift.up_down]
   exact hsub.1
 
@@ -6558,7 +6554,7 @@ theorem FsubnormalFexp {beta : Int}
     (pure (FsubnormalFexp_check (beta:=beta) b radix p) : Id Unit)
     ⦃⇓_ => ⌜p.Fexp = -b.dExp⌝⦄ := by
   intro ⟨_, hExp⟩
-  simp only [wp, PostCond.noThrow, pure, FsubnormalFexp_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FsubnormalFexp_check,
     Id.run, ULift.up_down]
   exact hExp
 
@@ -6577,7 +6573,7 @@ theorem FsubnormFopp {beta : Int}
     ⦃⇓_ => ⌜Fsubnormal (beta:=beta) radix b
             (FloatSpec.Calc.Operations.Fopp (beta:=beta) p)⌝⦄ := by
   intro hsub
-  simp only [wp, PostCond.noThrow, pure, FsubnormFopp_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FsubnormFopp_check,
     Id.run, ULift.up_down]
   simpa [Fsubnormal, Fbounded, FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg]
     using hsub
@@ -6597,7 +6593,7 @@ theorem FsubnormFabs {beta : Int}
     ⦃⇓_ => ⌜Fsubnormal (beta:=beta) radix b
             (FloatSpec.Calc.Operations.Fabs (beta:=beta) p)⌝⦄ := by
   intro hsub
-  simp only [wp, PostCond.noThrow, pure, FsubnormFabs_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FsubnormFabs_check,
     Id.run, ULift.up_down]
   simpa [Fsubnormal, Fbounded, FloatSpec.Calc.Operations.Fabs, Nat.cast_natAbs, abs_mul]
     using hsub
@@ -6626,7 +6622,7 @@ theorem FsubnormalUnique {beta : Int}
     (pure (FsubnormalUnique_check (beta:=beta) b radix p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   intro ⟨_, _, hF2R, hpe, hqe, hβ⟩
-  simp only [wp, PostCond.noThrow, pure, FsubnormalUnique_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FsubnormalUnique_check,
     Id.run, ULift.up_down]
   show p = q
   -- F2R p = p.Fnum * β ^ p.Fexp, F2R q = q.Fnum * β ^ q.Fexp
@@ -6757,7 +6753,7 @@ theorem RleRoundedAbs {beta : Int}
       _ ≤ |_root_.F2R f| := hF2R_lower
       _ ≤ |r| := hRgeF
   · -- Case 2: |r| < |F2R f|
-    push_neg at hRgeF
+    push Not at hRgeF
     set u := _root_.F2R f - r with hu_def
     -- F2R f has the same sign as f.Fnum
     have hF2R_sign : (0 < f.Fnum → 0 < _root_.F2R f) ∧ (f.Fnum < 0 → _root_.F2R f < 0) := by
@@ -6844,7 +6840,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta = (beta : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
           by_cases hud : u ≤ delta
           · rw [abs_of_nonpos (by linarith)] at hMinG'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonneg (by linarith)] at hMinG'; linarith
+          · push Not at hud; rw [abs_of_nonneg (by linarith)] at hMinG'; linarith
         · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
           have hu_neg : u ≤ 0 := le_of_lt (hu_sign.2 hfn)
           have hdelta_neg : delta < 0 := by
@@ -6853,7 +6849,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta = -(beta : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
           by_cases hud : delta ≤ u
           · rw [abs_of_nonneg (by linarith)] at hMinG'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonpos (by linarith)] at hMinG'; linarith
+          · push Not at hud; rw [abs_of_nonpos (by linarith)] at hMinG'; linarith
       -- Final inequality for Case A
       have hIntGapR : |(f.Fnum : ℝ)| ≥ (beta : ℝ) ^ (p - 1) + 1 := by rwa [hRadixEq] at hIntGap
       have h1over2beta : 1 / (2 * (beta : ℝ)) ≤ 1 / 2 := by
@@ -6869,7 +6865,7 @@ theorem RleRoundedAbs {beta : Int}
         _ = |_root_.F2R f| - (beta : ℝ) ^ f.Fexp / 2 := by rw [hF2R_abs]
         _ ≤ |r| := by linarith [hTriangle, hErrBound]
     · -- Case B: |f.Fnum| = radix^(p-1) exactly (minimum normal mantissa)
-      push_neg at hFnumStrict
+      push Not at hFnumStrict
       have hFnumExact : |(f.Fnum : ℝ)| = radix ^ (p - 1) := le_antisymm hFnumStrict hFnumBound
       -- Use predecessor at lower exponent: g₂ = ⟨f.Fnum * beta - sign(f.Fnum), f.Fexp - 1⟩
       let g₂ : FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -6919,7 +6915,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta₂ = (beta : ℝ) ^ (f.Fexp - 1) := by simp [hdelta₂_def, hs]
           by_cases hud : u ≤ delta₂
           · rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith
+          · push Not at hud; rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith
         · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
           have hu_neg : u ≤ 0 := le_of_lt (hu_sign.2 hfn)
           have hdelta_neg : delta₂ < 0 := by
@@ -6928,7 +6924,7 @@ theorem RleRoundedAbs {beta : Int}
           have hdelta_eq : delta₂ = -(beta : ℝ) ^ (f.Fexp - 1) := by simp [hdelta₂_def, hs]
           by_cases hud : delta₂ ≤ u
           · rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith [hdelta_eq]
-          · push_neg at hud; rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith
+          · push Not at hud; rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith
       -- Final calc for Case B
       calc (radix ^ (p - 1) + -(1 / (2 * radix))) * radix ^ f.Fexp
           = radix ^ (p - 1) * radix ^ f.Fexp - 1 / (2 * radix) * radix ^ f.Fexp := by ring
@@ -6963,7 +6959,7 @@ theorem MinCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
     (pure (MinCompatible_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (isMin (α:=α) b radix)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, MinCompatible_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, MinCompatible_check,
     Id.run, ULift.up_down]
   show CompatibleP (isMin (α:=α) b radix)
   intro _ _ p q hp _ hpq
@@ -6992,7 +6988,7 @@ theorem MaxCompatible {α : Type} (b : Fbound_skel) (radix : Int) :
     (pure (MaxCompatible_check (α:=α) b radix) : Id Unit)
     ⦃⇓_ => ⌜CompatibleP (isMax (α:=α) b radix)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, MaxCompatible_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, MaxCompatible_check,
     Id.run, ULift.up_down]
   show CompatibleP (isMax (α:=α) b radix)
   intro _ _ p q hp _ hpq
@@ -7038,7 +7034,7 @@ theorem RleMinR0 {beta : Int}
     (pure (RleMinR0_check (beta:=beta) b radix r min) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ _root_.F2R min⌝⦄ := by
   intro ⟨hr, _, _, _, hMax, hvNum⟩
-  simp only [wp, PostCond.noThrow, pure, RleMinR0_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, RleMinR0_check,
     Id.run, ULift.up_down]
   show 0 ≤ _root_.F2R min
   -- The zero float ⟨0, -b.dExp⟩ is bounded and has F2R = 0
@@ -7202,7 +7198,7 @@ theorem MinUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
         isMin' b radix r p → isMin' b radix r q →
         _root_.F2R p = _root_.F2R q⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, MinUniqueP_check, PredTrans.pure_apply]
+  simp only [wp, PostCond.noThrow, pure, MinUniqueP_check]
   show ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
       isMin' b radix r p → isMin' b radix r q → _root_.F2R p = _root_.F2R q
   intro r p q ⟨hBp, hLep, hGLBp⟩ ⟨hBq, hLeq, hGLBq⟩
@@ -7230,7 +7226,7 @@ theorem MaxUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
         isMax' b radix r p → isMax' b radix r q →
         _root_.F2R p = _root_.F2R q⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, MaxUniqueP_check, PredTrans.pure_apply]
+  simp only [wp, PostCond.noThrow, pure, MaxUniqueP_check]
   show ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
       isMax' b radix r p → isMax' b radix r q → _root_.F2R p = _root_.F2R q
   intro r p q ⟨hBp, hLep, hLUBp⟩ ⟨hBq, hLeq, hLUBq⟩
@@ -7266,7 +7262,7 @@ theorem MinOrMaxRep {beta : Int}
             P (_root_.F2R p) q → ∃ m : Int,
               _root_.F2R (beta := beta) q = _root_.F2R (beta := beta) ⟨m, p.Fexp⟩⌝⦄ := by
   intro ⟨_, hRep⟩
-  simp only [wp, PostCond.noThrow, pure, MinOrMaxRep_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, MinOrMaxRep_check,
     Id.run, ULift.up_down]
   exact hRep
 
@@ -7294,7 +7290,7 @@ theorem MaxFloat {beta : Int}
     ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
             _root_.F2R (beta:=beta) ⟨b.vNum, p.Fexp⟩⌝⦄ := by
   intro ⟨_, _, hBdd, hBeta⟩
-  simp only [wp, PostCond.noThrow, pure, MaxFloat_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, MaxFloat_check,
              Id.run, ULift.up_down]
   -- F2R p = p.Fnum * β^p.Fexp
   -- F2R ⟨b.vNum, p.Fexp⟩ = b.vNum * β^p.Fexp
@@ -7340,7 +7336,7 @@ theorem maxMax {beta : Int}
     ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
             _root_.F2R (beta:=beta) ⟨b.vNum, z⟩⌝⦄ := by
   intro ⟨_, hExpLe, hBdd, hBeta⟩
-  simp only [wp, PostCond.noThrow, pure, maxMax_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, maxMax_check,
              Id.run, ULift.up_down]
   show |_root_.F2R p| < _root_.F2R ⟨b.vNum, z⟩
   have hBetaPos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Int.lt_trans Int.zero_lt_one hBeta
@@ -7386,7 +7382,7 @@ theorem maxMax1 {beta : Int}
     ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| ≤
             _root_.F2R (beta:=beta) ⟨b.vNum - 1, z⟩⌝⦄ := by
   intro ⟨_, hExpLe, hBdd, hBeta⟩
-  simp only [wp, PostCond.noThrow, pure, maxMax1_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, maxMax1_check,
              Id.run, ULift.up_down]
   show |_root_.F2R p| ≤ _root_.F2R ⟨b.vNum - 1, z⟩
   have hBetaPos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Int.lt_trans Int.zero_lt_one hBeta
@@ -7435,7 +7431,7 @@ theorem maxMaxBis {beta : Int}
     ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) p| <
             _root_.F2R (beta:=beta) ⟨nNormMin beta precision, z⟩⌝⦄ := by
   intro ⟨_, hExpLt, hBdd, hBeta, hPGB⟩
-  simp only [wp, PostCond.noThrow, pure, maxMax1_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, maxMax1_check,
              Id.run, ULift.up_down]
   show |_root_.F2R p| < _root_.F2R ⟨nNormMin beta precision, z⟩
   have hBetaPos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Int.lt_trans Int.zero_lt_one hBeta
@@ -7544,7 +7540,7 @@ theorem FboundedShiftLess {beta : Int}
     (pure (FboundedShiftLess_check (beta:=beta) b radix f n m) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fshift (beta:=beta) radix m f)⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, FboundedShiftLess_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FboundedShiftLess_check, Id.run,
     ULift.up_down]
   show Fbounded b (Fshift radix m f)
   exact h.2.2
@@ -7568,7 +7564,7 @@ theorem eqExpMax {beta : Int}
               _root_.F2R r = _root_.F2R p ∧
               r.Fexp ≤ q.Fexp⌝⦄ := by
   intro ⟨_hbeta, hpBounded, _, _, hExpLe⟩
-  simp only [wp, PostCond.noThrow, pure, eqExpMax_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, eqExpMax_check, Id.run,
     ULift.up_down]
   show ∃ r : FloatSpec.Core.Defs.FlocqFloat beta,
     Fbounded b r ∧ _root_.F2R r = _root_.F2R p ∧ r.Fexp ≤ q.Fexp
@@ -7594,7 +7590,7 @@ theorem RoundedModeRep {beta : Int}
             P (_root_.F2R p) q → ∃ m : Int,
               _root_.F2R (beta := beta) q = _root_.F2R (beta := beta) ⟨m, p.Fexp⟩⌝⦄ := by
   intro ⟨_, hRep⟩
-  simp only [wp, PostCond.noThrow, pure, RoundedModeRep_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, RoundedModeRep_check,
     Id.run, ULift.up_down]
   exact hRep
 
@@ -7607,7 +7603,7 @@ theorem pow_NR0 (e : ℝ) (n : Nat) :
     (pure (pow_NR0_check e n) : Id Unit)
     ⦃⇓_ => ⌜e ^ n ≠ 0⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, pow_NR0_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, pow_NR0_check, Id.run,
     ULift.up_down]
   show e ^ n ≠ 0
   exact pow_ne_zero n he
@@ -7622,7 +7618,7 @@ theorem pow_add_compat (e : ℝ) (n m : Nat) :
     (pure (pow_add_compat_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ (n + m) = e ^ n * e ^ m⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, pow_add_compat_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, pow_add_compat_check, Id.run,
     ULift.up_down]
   show e ^ (n + m) = e ^ n * e ^ m
   exact pow_add e n m
@@ -7636,7 +7632,7 @@ theorem pow_RN_plus (e : ℝ) (n m : Nat) :
     (pure (pow_RN_plus_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n = e ^ (n + m) * (e ^ m)⁻¹⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, pow_RN_plus_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, pow_RN_plus_check, Id.run,
     ULift.up_down]
   show e ^ n = e ^ (n + m) * (e ^ m)⁻¹
   rw [pow_add]
@@ -7651,7 +7647,7 @@ theorem pow_lt (e : ℝ) (n : Nat) :
     (pure (pow_lt_check e n) : Id Unit)
     ⦃⇓_ => ⌜0 < e ^ n⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, pow_lt_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, pow_lt_check, Id.run,
     ULift.up_down]
   show 0 < e ^ n
   exact pow_pos he n
@@ -7665,7 +7661,7 @@ theorem Rlt_pow_R1 (e : ℝ) (n : Nat) :
     (pure (Rlt_pow_R1_check e n) : Id Unit)
     ⦃⇓_ => ⌜1 < e ^ n⌝⦄ := by
   intro ⟨he, hn⟩
-  simp only [wp, PostCond.noThrow, pure, Rlt_pow_R1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rlt_pow_R1_check, Id.run,
     ULift.up_down]
   show 1 < e ^ n
   exact one_lt_pow₀ he hn.ne'
@@ -7679,7 +7675,7 @@ theorem Rlt_pow (e : ℝ) (n m : Nat) :
     (pure (Rlt_pow_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n < e ^ m⌝⦄ := by
   intro ⟨he, hnm⟩
-  simp only [wp, PostCond.noThrow, pure, Rlt_pow_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rlt_pow_check, Id.run,
     ULift.up_down]
   show e ^ n < e ^ m
   exact pow_lt_pow_right₀ he hnm
@@ -7693,7 +7689,7 @@ theorem pow_R1 (r : ℝ) (n : Nat) :
     (pure (pow_R1_check r n) : Id Unit)
     ⦃⇓_ => ⌜|r| = 1 ∨ n = 0⌝⦄ := by
   intro hrn
-  simp only [wp, PostCond.noThrow, pure, pow_R1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, pow_R1_check, Id.run,
     ULift.up_down]
   show |r| = 1 ∨ n = 0
   by_cases hn : n = 0
@@ -7713,7 +7709,7 @@ theorem Rle_Fexp_eq_Zle {beta : Int}
     (pure (Rle_Fexp_eq_Zle_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum ≤ y.Fnum⌝⦄ := by
   intro ⟨hle, hexp, hβ⟩
-  simp only [wp, PostCond.noThrow, pure, Rle_Fexp_eq_Zle_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rle_Fexp_eq_Zle_check, Id.run,
     ULift.up_down]
   show x.Fnum ≤ y.Fnum
   -- F2R x = x.Fnum * β^(x.Fexp), F2R y = y.Fnum * β^(y.Fexp)
@@ -7743,7 +7739,7 @@ theorem powerRZ_O (e : ℝ) :
     (pure (powerRZ_O_check e) : Id Unit)
     ⦃⇓_ => ⌜e ^ (0 : Int) = (1 : ℝ)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, powerRZ_O_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_O_check, Id.run,
     ULift.up_down]
   show e ^ (0 : Int) = (1 : ℝ)
   exact zpow_zero e
@@ -7757,7 +7753,7 @@ theorem Zpower_NR0 (e : Int) (n : Nat) :
     (pure (Zpower_NR0_check e n) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ (e : Int) ^ n⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, Zpower_NR0_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_NR0_check, Id.run,
     ULift.up_down]
   show 0 ≤ (e : Int) ^ n
   exact pow_nonneg he n
@@ -7771,7 +7767,7 @@ theorem Zpower_NR1 (e : Int) (n : Nat) :
     (pure (Zpower_NR1_check e n) : Id Unit)
     ⦃⇓_ => ⌜1 ≤ (e : Int) ^ n⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, Zpower_NR1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_NR1_check, Id.run,
     ULift.up_down]
   show 1 ≤ (e : Int) ^ n
   exact one_le_pow₀ he
@@ -7785,7 +7781,7 @@ theorem powerRZ_1 (e : ℝ) :
     (pure (powerRZ_1_check e) : Id Unit)
     ⦃⇓_ => ⌜e ^ (1 : Int) = e⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, powerRZ_1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_1_check, Id.run,
     ULift.up_down]
   show e ^ (1 : Int) = e
   exact zpow_one e
@@ -7799,7 +7795,7 @@ theorem powerRZ_R1 (n : Int) :
     (pure (powerRZ_R1_check n) : Id Unit)
     ⦃⇓_ => ⌜(1 : ℝ) ^ n = (1 : ℝ)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, powerRZ_R1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_R1_check, Id.run,
     ULift.up_down]
   show (1 : ℝ) ^ n = (1 : ℝ)
   exact one_zpow n
@@ -7814,7 +7810,7 @@ theorem powerRZ_add (e : ℝ) (m n : Int) :
     (pure (powerRZ_add_check e m n) : Id Unit)
     ⦃⇓_ => ⌜e ^ (m + n) = e ^ m * e ^ n⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, powerRZ_add_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_add_check, Id.run,
     ULift.up_down]
   show e ^ (m + n) = e ^ m * e ^ n
   exact zpow_add₀ he m n
@@ -7828,7 +7824,7 @@ theorem powerRZ_Zopp (e : ℝ) (z : Int) :
     (pure (powerRZ_Zopp_check e z) : Id Unit)
     ⦃⇓_ => ⌜e ^ (-z) = (e ^ z)⁻¹⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, powerRZ_Zopp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_Zopp_check, Id.run,
     ULift.up_down]
   show e ^ (-z) = (e ^ z)⁻¹
   exact zpow_neg e z
@@ -7842,7 +7838,7 @@ theorem powerRZ_Zs (e : ℝ) (n : Int) :
     (pure (powerRZ_Zs_check e n) : Id Unit)
     ⦃⇓_ => ⌜e ^ (Int.succ n) = e * e ^ n⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, powerRZ_Zs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_Zs_check, Id.run,
     ULift.up_down]
   show e ^ (Int.succ n) = e * e ^ n
   unfold Int.succ
@@ -7860,7 +7856,7 @@ theorem Zpower_nat_Z_powerRZ (n : Int) (m : Nat) :
     (pure (Zpower_nat_Z_powerRZ_check n m) : Id Unit)
     ⦃⇓_ => ⌜(Zpower_nat n m : ℝ) = ( (n : ℝ) ^ (m : Int) )⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_Z_powerRZ_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_Z_powerRZ_check, Id.run,
     ULift.up_down]
   show (Zpower_nat n m : ℝ) = (↑n : ℝ) ^ (↑m : Int)
   simp [Zpower_nat, zpow_natCast, Int.cast_pow]
@@ -7874,7 +7870,7 @@ theorem powerRZ_lt (e : ℝ) (z : Int) :
     (pure (powerRZ_lt_check e z) : Id Unit)
     ⦃⇓_ => ⌜0 < e ^ z⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, powerRZ_lt_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_lt_check, Id.run,
     ULift.up_down]
   show 0 < e ^ z
   exact zpow_pos he z
@@ -7888,7 +7884,7 @@ theorem powerRZ_le (e : ℝ) (z : Int) :
     (pure (powerRZ_le_check e z) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ e ^ z⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, powerRZ_le_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_le_check, Id.run,
     ULift.up_down]
   show 0 ≤ e ^ z
   exact le_of_lt (zpow_pos he z)
@@ -7902,7 +7898,7 @@ theorem Rlt_powerRZ (e : ℝ) (n m : Int) :
     (pure (Rlt_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n < e ^ m⌝⦄ := by
   intro ⟨he, hnm⟩
-  simp only [wp, PostCond.noThrow, pure, Rlt_powerRZ_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rlt_powerRZ_check, Id.run,
     ULift.up_down]
   show e ^ n < e ^ m
   exact zpow_lt_zpow_right₀ he hnm
@@ -7916,7 +7912,7 @@ theorem Zpower_nat_powerRZ_absolu (n m : Int) :
     (pure (Zpower_nat_powerRZ_absolu_check n m) : Id Unit)
     ⦃⇓_ => ⌜(Zpower_nat n (Int.toNat (Int.natAbs m)) : ℝ) = (n : ℝ) ^ m⌝⦄ := by
   intro hm
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_powerRZ_absolu_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_powerRZ_absolu_check,
     Id.run, ULift.up_down]
   show (Zpower_nat n (Int.toNat (Int.natAbs m)) : ℝ) = (↑n : ℝ) ^ m
   have hm0 : (0 : ℤ) ≤ m := hm
@@ -7932,7 +7928,7 @@ theorem Rle_powerRZ (e : ℝ) (n m : Int) :
     (pure (Rle_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜e ^ n ≤ e ^ m⌝⦄ := by
   intro ⟨he, hnm⟩
-  simp only [wp, PostCond.noThrow, pure, Rle_powerRZ_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rle_powerRZ_check, Id.run,
     ULift.up_down]
   show e ^ n ≤ e ^ m
   exact zpow_right_mono₀ he hnm
@@ -7946,7 +7942,7 @@ theorem Zlt_powerRZ (e : ℝ) (n m : Int) :
     (pure (Zlt_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜n < m⌝⦄ := by
   intro ⟨he, hlt⟩
-  simp only [wp, PostCond.noThrow, pure, Zlt_powerRZ_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_powerRZ_check, Id.run,
     ULift.up_down]
   show n < m
   rcases eq_or_lt_of_le he with rfl | he'
@@ -7962,7 +7958,7 @@ theorem Rlt_monotony_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     (pure (Rlt_monotony_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x * radix ^ z < y * radix ^ z⌝⦄ := by
   intro ⟨hradix, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, Rlt_monotony_exp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rlt_monotony_exp_check, Id.run,
     ULift.up_down]
   show x * radix ^ z < y * radix ^ z
   exact mul_lt_mul_of_pos_right hxy (zpow_pos hradix z)
@@ -7976,7 +7972,7 @@ theorem Rle_monotone_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     (pure (Rle_monotone_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x * radix ^ z ≤ y * radix ^ z⌝⦄ := by
   intro ⟨hradix, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, Rle_monotone_exp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rle_monotone_exp_check, Id.run,
     ULift.up_down]
   show x * radix ^ z ≤ y * radix ^ z
   exact mul_le_mul_of_nonneg_right hxy (le_of_lt (zpow_pos hradix z))
@@ -7990,8 +7986,7 @@ theorem Rlt_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     (pure (Rlt_monotony_contra_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x < y⌝⦄ := by
   intro ⟨hradix, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, Rlt_monotony_contra_exp_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, Rlt_monotony_contra_exp_check, Id.run, ULift.up_down]
   show x < y
   exact lt_of_mul_lt_mul_right hxy (le_of_lt (zpow_pos hradix z))
 
@@ -8004,8 +7999,7 @@ theorem Rle_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
     (pure (Rle_monotony_contra_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
   intro ⟨hradix, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, Rle_monotony_contra_exp_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, Rle_monotony_contra_exp_check, Id.run, ULift.up_down]
   show x ≤ y
   exact le_of_mul_le_mul_right hxy (zpow_pos hradix z)
 
@@ -8020,7 +8014,7 @@ theorem FtoREqInv2 {beta : Int}
     (pure (FtoREqInv2_check (beta:=beta) p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   intro ⟨hval, hexp, hβ⟩
-  simp only [wp, PostCond.noThrow, pure, FtoREqInv2_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FtoREqInv2_check, Id.run,
     ULift.up_down]
   cases p with
   | mk pn pe =>
@@ -8049,7 +8043,7 @@ theorem sameExpEq {beta : Int}
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   -- Mirrors Coq `sameExpEq`; see also `FtoREqInv2`.
   intro h
-  simp only [wp, PostCond.noThrow, pure, sameExpEq_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, sameExpEq_check, Id.run,
     ULift.up_down]
   exact (FtoREqInv2 (beta := beta) p q) h
 
@@ -8063,7 +8057,7 @@ theorem Rlt_Float_Zlt {beta : Int} (p q r : Int) :
     (pure (Rlt_Float_Zlt_check (beta:=beta) p q r) : Id Unit)
     ⦃⇓_ => ⌜p < q⌝⦄ := by
   intro ⟨hβ, hlt⟩
-  simp only [wp, PostCond.noThrow, pure, Rlt_Float_Zlt_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rlt_Float_Zlt_check, Id.run,
     ULift.up_down]
   simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, FloatSpec.Core.Defs.FlocqFloat.Fnum,
     FloatSpec.Core.Defs.FlocqFloat.Fexp] at hlt
@@ -8083,7 +8077,7 @@ theorem oneExp_le {beta : Int} (x y : Int) :
     ⦃⇓_ => ⌜_root_.F2R (⟨1, x⟩ : FloatSpec.Core.Defs.FlocqFloat beta)
             ≤ _root_.F2R (⟨1, y⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄ := by
   intro ⟨hβ, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, oneExp_le_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, oneExp_le_check, Id.run,
     ULift.up_down]
   simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, FloatSpec.Core.Defs.FlocqFloat.Fnum,
     FloatSpec.Core.Defs.FlocqFloat.Fexp, Int.cast_one, one_mul]
@@ -8100,7 +8094,7 @@ theorem oneExp_Zlt {beta : Int} (x y : Int) :
     (pure (oneExp_Zlt_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜x < y⌝⦄ := by
   intro ⟨hβ, hlt⟩
-  simp only [wp, PostCond.noThrow, pure, oneExp_Zlt_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, oneExp_Zlt_check, Id.run,
     ULift.up_down]
   simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, FloatSpec.Core.Defs.FlocqFloat.Fnum,
     FloatSpec.Core.Defs.FlocqFloat.Fexp, Int.cast_one, one_mul] at hlt
@@ -8116,7 +8110,7 @@ theorem Zle_powerRZ (e : ℝ) (n m : Int) :
     (pure (Zle_powerRZ_check e n m) : Id Unit)
     ⦃⇓_ => ⌜n ≤ m⌝⦄ := by
   intro ⟨he, hle⟩
-  simp only [wp, PostCond.noThrow, pure, Zle_powerRZ_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_powerRZ_check, Id.run,
     ULift.up_down]
   show n ≤ m
   exact (zpow_right_strictMono₀ he).le_iff_le.mp hle
@@ -8130,7 +8124,7 @@ theorem Rinv_powerRZ (e : ℝ) (n : Int) :
     (pure (Rinv_powerRZ_check e n) : Id Unit)
     ⦃⇓_ => ⌜(e ^ n)⁻¹ = e ^ (-n)⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, Rinv_powerRZ_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rinv_powerRZ_check, Id.run,
     ULift.up_down]
   show (e ^ n)⁻¹ = e ^ (-n)
   rw [zpow_neg e n]
@@ -8144,7 +8138,7 @@ theorem Rledouble (r : ℝ) :
     (pure (Rledouble_check r) : Id Unit)
     ⦃⇓_ => ⌜r ≤ 2 * r⌝⦄ := by
   intro hr
-  simp only [wp, PostCond.noThrow, pure, Rledouble_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rledouble_check, Id.run,
     ULift.up_down]
   show r ≤ 2 * r
   have hr' : 0 ≤ r := hr
@@ -8159,7 +8153,7 @@ theorem Rltdouble (r : ℝ) :
     (pure (Rltdouble_check r) : Id Unit)
     ⦃⇓_ => ⌜r < 2 * r⌝⦄ := by
   intro hr
-  simp only [wp, PostCond.noThrow, pure, Rltdouble_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rltdouble_check, Id.run,
     ULift.up_down]
   show r < 2 * r
   have hr' : 0 < r := hr
@@ -8174,7 +8168,7 @@ theorem powerRZ_NOR (e : ℝ) (n : Int) :
     (pure (powerRZ_NOR_check e n) : Id Unit)
     ⦃⇓_ => ⌜e ^ n ≠ 0⌝⦄ := by
   intro he
-  simp only [wp, PostCond.noThrow, pure, powerRZ_NOR_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, powerRZ_NOR_check, Id.run,
     ULift.up_down]
   show e ^ n ≠ 0
   exact zpow_ne_zero n he
@@ -8188,7 +8182,7 @@ theorem Rle_Rinv (x y : ℝ) :
     (pure (Rle_Rinv_check x y) : Id Unit)
     ⦃⇓_ => ⌜y⁻¹ ≤ x⁻¹⌝⦄ := by
   intro ⟨hx, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, Rle_Rinv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Rle_Rinv_check, Id.run,
     ULift.up_down]
   show y⁻¹ ≤ x⁻¹
   exact inv_anti₀ hx hxy
@@ -8202,12 +8196,12 @@ theorem min_or (n m : Nat) :
     (pure (min_or_check n m) : Id Unit)
     ⦃⇓_ => ⌜(Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, min_or_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, min_or_check, Id.run,
     ULift.up_down]
   show (Nat.min n m = n ∧ n ≤ m) ∨ (Nat.min n m = m ∧ m < n)
   by_cases h : n ≤ m
   · left; exact ⟨Nat.min_eq_left h, h⟩
-  · right; push_neg at h; exact ⟨Nat.min_eq_right (Nat.le_of_lt h), h⟩
+  · right; push Not at h; exact ⟨Nat.min_eq_right (Nat.le_of_lt h), h⟩
 
 -- Coq: `ZmaxSym` — symmetry of integer max
 noncomputable def ZmaxSym_check (a b : Int) : Unit :=
@@ -8218,7 +8212,7 @@ theorem ZmaxSym (a b : Int) :
     (pure (ZmaxSym_check a b) : Id Unit)
     ⦃⇓_ => ⌜max a b = max b a⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, ZmaxSym_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZmaxSym_check, Id.run,
     ULift.up_down]
   show max a b = max b a
   exact max_comm a b
@@ -8232,7 +8226,7 @@ theorem ZmaxLe1 (a b : Int) :
     (pure (ZmaxLe1_check a b) : Id Unit)
     ⦃⇓_ => ⌜a ≤ max a b⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, ZmaxLe1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZmaxLe1_check, Id.run,
     ULift.up_down]
   show a ≤ max a b
   exact le_max_left a b
@@ -8246,7 +8240,7 @@ theorem ZmaxLe2 (a b : Int) :
     (pure (ZmaxLe2_check a b) : Id Unit)
     ⦃⇓_ => ⌜b ≤ max a b⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, ZmaxLe2_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZmaxLe2_check, Id.run,
     ULift.up_down]
   show b ≤ max a b
   exact le_max_right a b
@@ -8259,7 +8253,7 @@ theorem ZleLe (x y : Nat) :
     (pure (ZleLe_check x y) : Id Unit)
     ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, ZleLe_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZleLe_check, Id.run,
     ULift.up_down]
   show x ≤ y
   exact Int.ofNat_le.mp h
@@ -8273,7 +8267,7 @@ theorem Zlt_Zopp (x y : Int) :
     (pure (Zlt_Zopp_check x y) : Id Unit)
     ⦃⇓_ => ⌜-y < -x⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zlt_Zopp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_Zopp_check, Id.run,
     ULift.up_down]
   show -y < -x
   exact Int.neg_lt_neg h
@@ -8287,7 +8281,7 @@ theorem Zle_Zopp (x y : Int) :
     (pure (Zle_Zopp_check x y) : Id Unit)
     ⦃⇓_ => ⌜-y ≤ -x⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_Zopp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zopp_check, Id.run,
     ULift.up_down]
   show -y ≤ -x
   exact Int.neg_le_neg h
@@ -8301,7 +8295,7 @@ theorem Zabs_absolu (z : Int) :
     (pure (Zabs_absolu_check z) : Id Unit)
     ⦃⇓_ => ⌜|z| = Int.ofNat (Int.natAbs z)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zabs_absolu_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zabs_absolu_check, Id.run,
     ULift.up_down]
   show |z| = Int.ofNat (Int.natAbs z)
   exact Int.abs_eq_natAbs z
@@ -8315,7 +8309,7 @@ theorem Zpower_nat_O (z : Int) :
     (pure (Zpower_nat_O_check z) : Id Unit)
     ⦃⇓_ => ⌜z^0 = (1 : Int)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_O_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_O_check, Id.run,
     ULift.up_down]
   show z ^ 0 = (1 : Int)
   exact pow_zero z
@@ -8329,7 +8323,7 @@ theorem Zpower_nat_1 (z : Int) :
     (pure (Zpower_nat_1_check z) : Id Unit)
     ⦃⇓_ => ⌜z^1 = z⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_1_check, Id.run,
     ULift.up_down]
   show z ^ 1 = z
   exact pow_one z
@@ -8343,7 +8337,7 @@ theorem Zmin_Zmax (z1 z2 : Int) :
     (pure (Zmin_Zmax_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜min z1 z2 ≤ max z1 z2⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zmin_Zmax_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zmin_Zmax_check, Id.run,
     ULift.up_down]
   show min z1 z2 ≤ max z1 z2
   exact min_le_max
@@ -8357,7 +8351,7 @@ theorem Zeq_Zs (p q : Int) :
     (pure (Zeq_Zs_check p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   intro ⟨hle, hlt⟩
-  simp only [wp, PostCond.noThrow, pure, Zeq_Zs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zeq_Zs_check, Id.run,
     ULift.up_down]
   show p = q
   simp only [Int.succ] at hlt; omega
@@ -8371,7 +8365,7 @@ theorem Zopp_Zpred_Zs (z : Int) :
     (pure (Zopp_Zpred_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜-(Int.pred z) = Int.succ (-z)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zopp_Zpred_Zs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zopp_Zpred_Zs_check, Id.run,
     ULift.up_down]
   show -(Int.pred z) = Int.succ (-z)
   simp only [Int.pred, Int.succ]; omega
@@ -8385,7 +8379,7 @@ theorem Zmin_Zle (z1 z2 z3 : Int) :
     (pure (Zmin_Zle_check z1 z2 z3) : Id Unit)
     ⦃⇓_ => ⌜z1 ≤ min z2 z3⌝⦄ := by
   intro ⟨h2, h3⟩
-  simp only [wp, PostCond.noThrow, pure, Zmin_Zle_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zmin_Zle_check, Id.run,
     ULift.up_down]
   show z1 ≤ min z2 z3
   exact le_min h2 h3
@@ -8399,7 +8393,7 @@ theorem Zmin_Zlt (z1 z2 z3 : Int) :
     (pure (Zmin_Zlt_check z1 z2 z3) : Id Unit)
     ⦃⇓_ => ⌜z1 < min z2 z3⌝⦄ := by
   intro ⟨h2, h3⟩
-  simp only [wp, PostCond.noThrow, pure, Zmin_Zlt_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zmin_Zlt_check, Id.run,
     ULift.up_down]
   show z1 < min z2 z3
   exact lt_min h2 h3
@@ -8413,7 +8407,7 @@ theorem Zpred_Zopp_Zs (z : Int) :
     (pure (Zpred_Zopp_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜Int.pred (-z) = -(Int.succ z)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zpred_Zopp_Zs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpred_Zopp_Zs_check, Id.run,
     ULift.up_down]
   show Int.pred (-z) = -(Int.succ z)
   simp only [Int.pred, Int.succ]; omega
@@ -8427,7 +8421,7 @@ theorem Zle_Zmult_comp_r (x y z : Int) :
     (pure (Zle_Zmult_comp_r_check x y z) : Id Unit)
     ⦃⇓_ => ⌜x * z ≤ y * z⌝⦄ := by
   intro ⟨hz, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, Zle_Zmult_comp_r_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zmult_comp_r_check, Id.run,
     ULift.up_down]
   show x * z ≤ y * z
   exact Int.mul_le_mul_of_nonneg_right hxy hz
@@ -8441,7 +8435,7 @@ theorem Zle_Zmult_comp_l (x y z : Int) :
     (pure (Zle_Zmult_comp_l_check x y z) : Id Unit)
     ⦃⇓_ => ⌜z * x ≤ z * y⌝⦄ := by
   intro ⟨hz, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, Zle_Zmult_comp_l_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zmult_comp_l_check, Id.run,
     ULift.up_down]
   show z * x ≤ z * y
   exact Int.mul_le_mul_of_nonneg_left hxy hz
@@ -8455,7 +8449,7 @@ theorem absolu_Zs (z : Int) :
     (pure (absolu_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜Int.natAbs (Int.succ z) = Nat.succ (Int.natAbs z)⌝⦄ := by
   intro hz
-  simp only [wp, PostCond.noThrow, pure, absolu_Zs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, absolu_Zs_check, Id.run,
     ULift.up_down]
   show Int.natAbs (Int.succ z) = Nat.succ (Int.natAbs z)
   have hz' : 0 ≤ z := hz
@@ -8474,7 +8468,7 @@ theorem Zlt_next (n m : Int) :
     (pure (Zlt_next_check n m) : Id Unit)
     ⦃⇓_ => ⌜m = Int.succ n ∨ Int.succ n < m⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zlt_next_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_next_check, Id.run,
     ULift.up_down]
   show m = Int.succ n ∨ Int.succ n < m
   have h' : n < m := h
@@ -8490,7 +8484,7 @@ theorem Zle_next (n m : Int) :
     (pure (Zle_next_check n m) : Id Unit)
     ⦃⇓_ => ⌜m = n ∨ Int.succ n ≤ m⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_next_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_next_check, Id.run,
     ULift.up_down]
   show m = n ∨ Int.succ n ≤ m
   have h' : n ≤ m := h
@@ -8506,7 +8500,7 @@ theorem inj_pred (n : Nat) :
     (pure (inj_pred_check n) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (Nat.pred n) = Int.pred (Int.ofNat n)⌝⦄ := by
   intro hn
-  simp only [wp, PostCond.noThrow, pure, inj_pred_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, inj_pred_check, Id.run,
     ULift.up_down]
   show Int.ofNat (Nat.pred n) = Int.pred (Int.ofNat n)
   simp only [Int.pred]
@@ -8523,7 +8517,7 @@ theorem Zle_abs (p : Int) :
     (pure (Zle_abs_check p) : Id Unit)
     ⦃⇓_ => ⌜p ≤ Int.ofNat (Int.natAbs p)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zle_abs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_abs_check, Id.run,
     ULift.up_down]
   show p ≤ Int.ofNat (Int.natAbs p)
   exact Int.le_natAbs
@@ -8537,7 +8531,7 @@ theorem inj_abs (x : Int) :
     (pure (inj_abs_check x) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (Int.natAbs x) = x⌝⦄ := by
   intro hx
-  simp only [wp, PostCond.noThrow, pure, inj_abs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, inj_abs_check, Id.run,
     ULift.up_down]
   show Int.ofNat (Int.natAbs x) = x
   exact Int.natAbs_of_nonneg hx
@@ -8581,7 +8575,7 @@ theorem Pdiv_correct (p q : Positive) :
     ⦃⇓_ => ⌜nat_of_P p = oZ (Prod.fst (Pdiv p q)) * nat_of_P q + oZ (Prod.snd (Pdiv p q)) ∧
             oZ (Prod.snd (Pdiv p q)) < nat_of_P q⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Pdiv_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Pdiv_correct_check, Id.run,
     ULift.up_down]
   show nat_of_P p =
       oZ (Prod.fst (Pdiv p q)) * nat_of_P q + oZ (Prod.snd (Pdiv p q)) ∧
@@ -8611,7 +8605,7 @@ theorem inj_oZ1 (z : Option Positive) :
     (pure (inj_oZ1_check z) : Id Unit)
     ⦃⇓_ => ⌜oZ1 z = Int.ofNat (oZ z)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, inj_oZ1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, inj_oZ1_check, Id.run,
     ULift.up_down]
   show oZ1 z = Int.ofNat (oZ z)
   cases z with
@@ -8633,7 +8627,7 @@ theorem ZquotientProp (m n : Int) :
             |Zquotient m n * n| ≤ |m| ∧
             |r| < |n|⌝⦄ := by
   intro hn
-  simp only [wp, PostCond.noThrow, pure, ZquotientProp_check, PredTrans.pure_apply, Id.run]
+  simp only [wp, PostCond.noThrow, pure, ZquotientProp_check, Id.run]
   refine ⟨m.tmod n, ?_, ?_, ?_⟩
   · rw [Zquotient]
     calc
@@ -8662,7 +8656,7 @@ theorem ZdividesZquotient (n m : Int) :
     (pure (ZdividesZquotient_check n m) : Id Unit)
     ⦃⇓_ => ⌜n = Zquotient n m * m⌝⦄ := by
   intro ⟨hm, q, hq⟩
-  simp only [wp, PostCond.noThrow, pure, ZdividesZquotient_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZdividesZquotient_check, Id.run,
     ULift.up_down]
   show n = Zquotient n m * m
   subst n
@@ -8678,7 +8672,7 @@ theorem ZdividesZquotientInv (n m : Int) :
     (pure (ZdividesZquotientInv_check n m) : Id Unit)
     ⦃⇓_ => ⌜Zdivides n m⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, ZdividesZquotientInv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZdividesZquotientInv_check, Id.run,
     ULift.up_down]
   show Zdivides n m
   have h' : n = Zquotient n m * m := h
@@ -8695,7 +8689,7 @@ theorem ZdividesMult (n m p : Int) :
     (pure (ZdividesMult_check n m p) : Id Unit)
     ⦃⇓_ => ⌜Zdivides (p * n) (p * m)⌝⦄ := by
   intro ⟨q, hq⟩
-  simp only [wp, PostCond.noThrow, pure, ZdividesMult_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZdividesMult_check, Id.run,
     ULift.up_down]
   show Zdivides (p * n) (p * m)
   exact ⟨q, by rw [hq]; ring⟩
@@ -8709,7 +8703,7 @@ theorem Zeq_mult_simpl (a b c : Int) :
     (pure (Zeq_mult_simpl_check a b c) : Id Unit)
     ⦃⇓_ => ⌜a = b⌝⦄ := by
   intro ⟨hc, h⟩
-  simp only [wp, PostCond.noThrow, pure, Zeq_mult_simpl_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zeq_mult_simpl_check, Id.run,
     ULift.up_down]
   show a = b
   exact mul_right_cancel₀ hc h
@@ -8723,7 +8717,7 @@ theorem ZdividesDiv (n m p : Int) :
     (pure (ZdividesDiv_check n m p) : Id Unit)
     ⦃⇓_ => ⌜Zdivides n m⌝⦄ := by
   intro ⟨hp, q, hq⟩
-  simp only [wp, PostCond.noThrow, pure, ZdividesDiv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZdividesDiv_check, Id.run,
     ULift.up_down]
   show Zdivides n m
   exact ⟨q, mul_left_cancel₀ hp (by rw [hq]; ring)⟩
@@ -8737,7 +8731,7 @@ theorem Zdivides1 (m : Int) :
     (pure (Zdivides1_check m) : Id Unit)
     ⦃⇓_ => ⌜Zdivides m 1⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zdivides1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zdivides1_check, Id.run,
     ULift.up_down]
   show Zdivides m 1
   exact ⟨m, by ring⟩
@@ -8752,7 +8746,7 @@ theorem ZDividesLe (n m : Int) :
     (pure (ZDividesLe_check n m) : Id Unit)
     ⦃⇓_ => ⌜|m| ≤ |n|⌝⦄ := by
   intro ⟨hn, q, hq⟩
-  simp only [wp, PostCond.noThrow, pure, ZDividesLe_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZDividesLe_check, Id.run,
     ULift.up_down]
   show |m| ≤ |n|
   by_cases hm : m = 0
@@ -8772,14 +8766,14 @@ noncomputable def digit (n : Int) (q : Int) : Nat :=
 private lemma digit_neg (n p : Int) : digit n (-p) = digit n p := by
   unfold digit
   have h := FloatSpec.Core.Digits.Zdigits_opp (beta := n) (n := p) (by trivial)
-  simp only [wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] at h
+  simp only [wp, PostCond.noThrow, pure, Id.run] at h
   rcases h with ⟨dn, hdn, hd⟩
   exact congrArg Int.toNat (hd.trans hdn.symm)
 
 private lemma digit_abs_eq (n p : Int) : digit n (|p|) = digit n p := by
   unfold digit
   have h := FloatSpec.Core.Digits.Zdigits_abs (beta := n) (n := p) (by trivial)
-  simp only [wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] at h
+  simp only [wp, PostCond.noThrow, pure, Id.run] at h
   rcases h with ⟨dn, hdn, hd⟩
   have heq_abs : (|p| : Int) = (p.natAbs : Int) := by
     rw [Int.abs_eq_natAbs]
@@ -8802,8 +8796,7 @@ theorem digitPredVNumiSPrecision
     ⦃⇓_ => ⌜digit radix (Int.pred b.vNum) = precision⌝⦄ := by
   intro h
   rcases h with ⟨hprecision, hradix, hvNum⟩
-  simp only [wp, PostCond.noThrow, pure, digitPredVNumiSPrecision_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, digitPredVNumiSPrecision_check, Id.run, ULift.up_down]
   unfold digit
   have hpred_eq : Int.pred b.vNum = radix ^ precision - 1 := by
     rw [hvNum]
@@ -8850,7 +8843,7 @@ theorem digitPredVNumiSPrecision
     have hunique := FloatSpec.Core.Digits.Zdigits_unique
       (beta := radix) (h_beta := hradix) (n := Int.pred b.vNum) (e := (precision : Int))
       (hβ := hradix) hpre
-    simp only [wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] at hunique
+    simp only [wp, PostCond.noThrow, pure, Id.run] at hunique
     exact hunique
   rw [hzdigits]
   simp
@@ -8868,8 +8861,7 @@ theorem digitVNumiSPrecision
     ⦃⇓_ => ⌜digit radix b.vNum = Nat.succ precision⌝⦄ := by
   intro h
   rcases h with ⟨_hprecision, hradix, hvNum⟩
-  simp only [wp, PostCond.noThrow, pure, digitVNumiSPrecision_check,
-    PredTrans.pure_apply, Id.run]
+  simp only [wp, PostCond.noThrow, pure, digitVNumiSPrecision_check, Id.run]
   unfold digit
   have hzdigits :
       FloatSpec.Core.Digits.Zdigits radix b.vNum = (precision : Int) + 1 := by
@@ -8897,8 +8889,7 @@ theorem pGivesDigit {beta : Int}
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix p ≤ precision⌝⦄ := by
   intro h
   rcases h with ⟨_, hbounded, _hprecision, hradix, hvNum⟩
-  simp only [wp, PostCond.noThrow, pure, pGivesDigit_check,
-    PredTrans.pure_apply, Id.run]
+  simp only [wp, PostCond.noThrow, pure, pGivesDigit_check, Id.run]
   unfold Fdigit
   have hnum_lt : (p.Fnum.natAbs : Int) < radix ^ precision := by
     have hnum_bound : |p.Fnum| < b.vNum := hbounded.1
@@ -8917,7 +8908,7 @@ theorem pGivesDigit {beta : Int}
       (FloatSpec.Core.Digits.Zdigits_le_Zpower
         (beta := radix) (h_beta := hradix)
         (x := p.Fnum) (e := (precision : Int)) (hβ := hradix)) hpre
-    simpa only [wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] using h
+    simpa only [wp, PostCond.noThrow, pure, Id.run] using h
   exact Int.toNat_le.mpr hdigits_int
 
 noncomputable def digitGivesBoundedNum_check {beta : Int}
@@ -8935,8 +8926,7 @@ theorem digitGivesBoundedNum {beta : Int}
     ⦃⇓_ => ⌜|p.Fnum| < b.vNum⌝⦄ := by
   intro h
   rcases h with ⟨_hprecision, hradix, hvNum, hdigit⟩
-  simp only [wp, PostCond.noThrow, pure, digitGivesBoundedNum_check,
-    PredTrans.pure_apply, Id.run]
+  simp only [wp, PostCond.noThrow, pure, digitGivesBoundedNum_check, Id.run]
   unfold Fdigit at hdigit
   have hdigits_bound :
       FloatSpec.Core.Digits.Zdigits radix p.Fnum ≤ (precision : Int) := by
@@ -8945,7 +8935,7 @@ theorem digitGivesBoundedNum {beta : Int}
       have hge :=
         FloatSpec.Core.Digits.Zdigits_ge_0
           (beta := radix) (n := p.Fnum) trivial
-      simpa only [wp, PostCond.noThrow, pure, PredTrans.pure_apply,
+      simpa only [wp, PostCond.noThrow, pure,
         Id.run] using hge
     have hdigit_int :
         ((Int.toNat (FloatSpec.Core.Digits.Zdigits radix p.Fnum) : Nat) : Int)
@@ -8959,7 +8949,7 @@ theorem digitGivesBoundedNum {beta : Int}
         (beta := radix) (h_beta := hradix)
         (e := (precision : Int)) (x := p.Fnum) (hβ := hradix)
         trivial
-    simpa only [wp, PostCond.noThrow, pure, PredTrans.pure_apply,
+    simpa only [wp, PostCond.noThrow, pure,
       Id.run] using hpow hdigits_bound
   rw [hvNum]
   simpa [Zpower_nat, Int.natAbs_of_nonneg
@@ -8982,8 +8972,7 @@ theorem FnormalPrecision {beta : Int}
   intro h
   rcases h with ⟨_, hnormal, hprecision, hradix, hvNum⟩
   rcases hnormal with ⟨hbounded, hnormal_num⟩
-  simp only [wp, PostCond.noThrow, pure, FnormalPrecision_check,
-    PredTrans.pure_apply, Id.run]
+  simp only [wp, PostCond.noThrow, pure, FnormalPrecision_check, Id.run]
   apply le_antisymm
   · exact
       (pGivesDigit (beta := beta) radix b precision p)
@@ -9043,7 +9032,7 @@ theorem nNormPos (radix : Int) (precision : Nat) :
     (pure (nNormPos_check radix precision) : Id Unit)
     ⦃⇓_ => ⌜0 < nNormMin radix precision⌝⦄ := by
   intro hr
-  simp only [wp, PostCond.noThrow, pure, nNormPos_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, nNormPos_check, Id.run,
     ULift.up_down]
   show 0 < nNormMin radix precision
   simp [nNormMin]
@@ -9058,7 +9047,7 @@ theorem digitnNormMin (radix : Int) (precision : Nat) :
     (pure (digitnNormMin_check radix precision) : Id Unit)
     ⦃⇓_ => ⌜digit radix (nNormMin radix precision) = precision⌝⦄ := by
   intro ⟨hprecision, hradix⟩
-  simp only [wp, PostCond.noThrow, pure, digitnNormMin_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, digitnNormMin_check,
     Id.run, ULift.up_down]
   unfold digit nNormMin
   have hzdigits :
@@ -9102,7 +9091,7 @@ theorem nNrMMimLevNum (radix : Int) (b : Fbound_skel) (precision : Nat) :
     (pure (nNrMMimLevNum_check radix b precision) : Id Unit)
     ⦃⇓_ => ⌜nNormMin radix precision ≤ b.vNum⌝⦄ := by
   intro ⟨hr, hb⟩
-  simp only [wp, PostCond.noThrow, pure, nNrMMimLevNum_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, nNrMMimLevNum_check, Id.run,
     ULift.up_down]
   show nNormMin radix precision ≤ b.vNum
   rw [hb]
@@ -9140,8 +9129,7 @@ theorem pNormal_absolu_min {beta : Int}
   intro h
   rcases h with ⟨_, hnormal, hprecision, hradix, hvNum⟩
   rcases hnormal with ⟨_, hnormal_num⟩
-  simp only [wp, PostCond.noThrow, pure, pNormal_absolu_min_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, pNormal_absolu_min_check, Id.run, ULift.up_down]
   show nNormMin radix precision ≤ |p.Fnum|
   have hradix_pos : 0 < radix := by omega
   have hpow_prec_le : radix ^ precision ≤ |radix * p.Fnum| := by
@@ -9181,8 +9169,7 @@ theorem FnormalLtFirstNormalPos {beta : Int}
   rcases h with ⟨hnormal, hnormal', hprecision, hbeta_radix, hradix, hvNum, hp_nonneg⟩
   rcases hnormal' with ⟨hbounded, hnormal_num⟩
   rcases hbounded with ⟨hnum_bound, hexp_lb⟩
-  simp only [wp, PostCond.noThrow, pure, FnormalLtFirstNormalPos_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, FnormalLtFirstNormalPos_check, Id.run, ULift.up_down]
   show _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b precision)
       ≤ _root_.F2R (beta:=beta) p
   have hbeta : 1 < beta := by omega
@@ -9231,7 +9218,7 @@ theorem FsubnormalDigit {beta : Int}
   intro h
   rcases h with ⟨_, hsub, hprecision, hradix, hvNum⟩
   rcases hsub with ⟨_, _hexp, hnum⟩
-  simp only [wp, PostCond.noThrow, pure, FsubnormalDigit_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FsubnormalDigit_check,
     Id.run, ULift.up_down]
   unfold Fdigit
   have hradix_pos : 0 < radix := by omega
@@ -9289,8 +9276,7 @@ theorem pSubnormal_absolu_min {beta : Int}
   intro h
   rcases h with ⟨_, hsub, hprecision, hradix, hvNum⟩
   rcases hsub with ⟨_, _hexp, hnum⟩
-  simp only [wp, PostCond.noThrow, pure, pSubnormal_absolu_min_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, pSubnormal_absolu_min_check, Id.run, ULift.up_down]
   show |p.Fnum| < nNormMin radix precision
   have hradix_pos : 0 < radix := by omega
   have hpow_succ : radix ^ precision = radix * radix ^ (precision - 1) := by
@@ -9328,8 +9314,7 @@ theorem FsubnormalLtFirstNormalPos {beta : Int}
   rcases h with ⟨hsub, hsubPrime, hprecision, hbeta_radix, hradix, hvNum, hp_nonneg⟩
   have hsubPrime_full := hsubPrime
   rcases hsubPrime with ⟨_hbounded, hexp, _hnum⟩
-  simp only [wp, PostCond.noThrow, pure, FsubnormalLtFirstNormalPos_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, FsubnormalLtFirstNormalPos_check, Id.run, ULift.up_down]
   show _root_.F2R (beta:=beta) p <
       _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b precision)
   have hbeta : 1 < beta := by omega
@@ -9374,8 +9359,7 @@ theorem FsubnormalnormalLtPos {beta : Int}
   rcases h with
     ⟨hsub, hsub', hnormal, hnormal', hprecision, hbeta_radix, hradix, hvNum, hp_nonneg,
       hq_nonneg⟩
-  simp only [wp, PostCond.noThrow, pure, FsubnormalnormalLtPos_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, FsubnormalnormalLtPos_check, Id.run, ULift.up_down]
   have hp_lt_first :
       _root_.F2R (beta:=beta) p <
         _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b precision) :=
@@ -9413,8 +9397,7 @@ theorem FsubnormalnormalLtNeg {beta : Int}
   rcases h with
     ⟨hsub, hsub', hnormal, hnormal', hprecision, hbeta_radix, hradix, hvNum,
       hp_nonpos, hq_nonpos⟩
-  simp only [wp, PostCond.noThrow, pure, FsubnormalnormalLtNeg_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, FsubnormalnormalLtNeg_check, Id.run, ULift.up_down]
   let fp := FloatSpec.Calc.Operations.Fopp (beta:=beta) p
   let fq := FloatSpec.Calc.Operations.Fopp (beta:=beta) q
   have hsub_opp : Fsubnormal (beta:=beta) radix b fp := by
@@ -9439,14 +9422,14 @@ theorem FsubnormalnormalLtNeg {beta : Int}
         _root_.F2R (beta:=beta) fp = - _root_.F2R (beta:=beta) p :=
       by
         have h := (FloatSpec.Calc.Operations.F2R_opp (beta := beta) p) trivial
-        simpa [fp, wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] using h
+        simpa [fp, wp, PostCond.noThrow, pure, Id.run] using h
     linarith
   have hq_opp_nonneg : 0 ≤ _root_.F2R (beta:=beta) fq := by
     have hq_eq :
         _root_.F2R (beta:=beta) fq = - _root_.F2R (beta:=beta) q :=
       by
         have h := (FloatSpec.Calc.Operations.F2R_opp (beta := beta) q) trivial
-        simpa [fq, wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] using h
+        simpa [fq, wp, PostCond.noThrow, pure, Id.run] using h
     linarith
   have hopp_lt :
       _root_.F2R (beta:=beta) fp < _root_.F2R (beta:=beta) fq :=
@@ -9457,12 +9440,12 @@ theorem FsubnormalnormalLtNeg {beta : Int}
       _root_.F2R (beta:=beta) fp = - _root_.F2R (beta:=beta) p :=
     by
       have h := (FloatSpec.Calc.Operations.F2R_opp (beta := beta) p) trivial
-      simpa [fp, wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] using h
+      simpa [fp, wp, PostCond.noThrow, pure, Id.run] using h
   have hq_eq :
       _root_.F2R (beta:=beta) fq = - _root_.F2R (beta:=beta) q :=
     by
       have h := (FloatSpec.Calc.Operations.F2R_opp (beta := beta) q) trivial
-      simpa [fq, wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] using h
+      simpa [fq, wp, PostCond.noThrow, pure, Id.run] using h
   have hneg_lt :
       - _root_.F2R (beta:=beta) p < - _root_.F2R (beta:=beta) q := by
     rw [← hp_eq, ← hq_eq]
@@ -9508,7 +9491,7 @@ theorem FnormalLtPos {beta : Int}
   rcases h with
     ⟨hnormal_p, hnormal'_p, hnormal_q, hnormal'_q, hprecision, hbeta_radix,
       hradix, hvNum, hp_nonneg, hp_lt_q⟩
-  simp only [wp, PostCond.noThrow, pure, FnormalLtPos_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FnormalLtPos_check,
     Id.run, ULift.up_down]
   have hbeta : 1 < beta := by omega
   have hbeta_pos : (0 : ℝ) < (beta : ℝ) := by
@@ -9675,7 +9658,7 @@ theorem vNumPrecision
     (pure (vNumPrecision_check b radix precision n) : Id Unit)
     ⦃⇓_ => ⌜|n| < b.vNum⌝⦄ := by
   intro ⟨hradix, hvNum, hdigit⟩
-  simp only [wp, PostCond.noThrow, pure, vNumPrecision_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, vNumPrecision_check,
     Id.run, ULift.up_down]
   unfold digit at hdigit
   have hdigits_nonneg :
@@ -9697,7 +9680,7 @@ theorem vNumPrecision
         (beta := radix) (h_beta := hradix)
         (e := (precision : Int)) (x := n) (hβ := hradix)
         trivial
-    simpa only [wp, PostCond.noThrow, pure, PredTrans.pure_apply,
+    simpa only [wp, PostCond.noThrow, pure,
       Id.run] using hpow hdigits_bound
   rw [hvNum]
   simpa [Zpower_nat, Int.natAbs_of_nonneg
@@ -9713,7 +9696,7 @@ theorem NotDividesDigit (r v : Int) :
     (pure (NotDividesDigit_check r v) : Id Unit)
     ⦃⇓_ => ⌜¬ Zdivides v (Zpower_nat r (digit r v))⌝⦄ := by
   intro ⟨hr, hv⟩
-  simp only [wp, PostCond.noThrow, pure, NotDividesDigit_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, NotDividesDigit_check,
     Id.run, ULift.up_down]
   intro hdiv
   have hdiv_le :
@@ -9751,7 +9734,7 @@ theorem ZquotientPos (z1 z2 : Int) :
     (pure (ZquotientPos_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ Zquotient z1 z2⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, ZquotientPos_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, ZquotientPos_check, Id.run,
     ULift.up_down]
   show 0 ≤ Zquotient z1 z2
   exact Int.tdiv_nonneg h.1 h.2
@@ -9765,7 +9748,7 @@ theorem inject_nat_convert (p : Int) (q : Positive) :
     (pure (inject_nat_convert_check p q) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (nat_of_P q) = p⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, inject_nat_convert_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, inject_nat_convert_check, Id.run,
     ULift.up_down]
   show Int.ofNat (nat_of_P q) = p
   exact h.symm
@@ -9779,7 +9762,7 @@ theorem Zabs_eq_opp (x : Int) :
     (pure (Zabs_eq_opp_check x) : Id Unit)
     ⦃⇓_ => ⌜|x| = -x⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zabs_eq_opp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zabs_eq_opp_check, Id.run,
     ULift.up_down]
   show |x| = -x
   exact abs_of_nonpos h
@@ -9793,7 +9776,7 @@ theorem Zabs_Zs (z : Int) :
     (pure (Zabs_Zs_check z) : Id Unit)
     ⦃⇓_ => ⌜|Int.succ z| ≤ Int.succ |z|⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zabs_Zs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zabs_Zs_check, Id.run,
     ULift.up_down]
   show |Int.succ z| ≤ Int.succ |z|
   simp only [Int.succ]
@@ -9809,7 +9792,7 @@ theorem lt_Zlt_inv (n m : Nat) :
     (pure (lt_Zlt_inv_check n m) : Id Unit)
     ⦃⇓_ => ⌜n < m⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, lt_Zlt_inv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, lt_Zlt_inv_check, Id.run,
     ULift.up_down]
   show n < m
   exact Int.ofNat_lt.mp h
@@ -9823,7 +9806,7 @@ theorem Zle_Zpred (x y : Int) :
     (pure (Zle_Zpred_check x y) : Id Unit)
     ⦃⇓_ => ⌜x ≤ Int.pred y⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_Zpred_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zpred_check, Id.run,
     ULift.up_down]
   show x ≤ Int.pred y
   have h' : x < y := h
@@ -9838,7 +9821,7 @@ theorem NconvertO (p : Positive) :
     (pure (NconvertO_check p) : Id Unit)
     ⦃⇓_ => ⌜nat_of_P p ≠ 0⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, NconvertO_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, NconvertO_check, Id.run,
     ULift.up_down]
   show nat_of_P p ≠ 0
   simp [nat_of_P]
@@ -9852,7 +9835,7 @@ theorem convert_not_O (p : Positive) :
     (pure (convert_not_O_check p) : Id Unit)
     ⦃⇓_ => ⌜nat_of_P p ≠ 0⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, convert_not_O_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, convert_not_O_check, Id.run,
     ULift.up_down]
   show nat_of_P p ≠ 0
   simp [nat_of_P]
@@ -9866,7 +9849,7 @@ theorem Zle_Zabs (z : Int) :
     (pure (Zle_Zabs_check z) : Id Unit)
     ⦃⇓_ => ⌜z ≤ |z|⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zle_Zabs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zabs_check, Id.run,
     ULift.up_down]
   show z ≤ |z|
   exact le_abs_self z
@@ -9882,7 +9865,7 @@ theorem absolu_lt_nz (z : Int) :
     (pure (absolu_lt_nz_check z) : Id Unit)
     ⦃⇓_ => ⌜0 < Int.natAbs z⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, absolu_lt_nz_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, absolu_lt_nz_check, Id.run,
     ULift.up_down]
   show 0 < Int.natAbs z
   exact Int.natAbs_pos.mpr h
@@ -9940,7 +9923,7 @@ theorem mZlist_aux_correct (n : Nat) (p q : Int) :
     (pure (mZlist_aux_correct_check n p q) : Id Unit)
     ⦃⇓_ => ⌜List.Mem q (mZlist_aux p n)⌝⦄ := by
   intro ⟨hpq, hqpn⟩
-  simp only [wp, PostCond.noThrow, pure, mZlist_aux_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, mZlist_aux_correct_check, Id.run,
     ULift.up_down]
   show List.Mem q (mZlist_aux p n)
   exact mZlist_aux_mem n p q hpq hqpn
@@ -9955,7 +9938,7 @@ theorem mZlist_aux_correct_rev1 (n : Nat) (p q : Int) :
     (pure (mZlist_aux_correct_rev1_check n p q) : Id Unit)
     ⦃⇓_ => ⌜p ≤ q⌝⦄ := by
   intro hmem
-  simp only [wp, PostCond.noThrow, pure, mZlist_aux_correct_rev1_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, mZlist_aux_correct_rev1_check,
     Id.run, ULift.up_down]
   show p ≤ q
   exact mZlist_aux_lower n p q hmem
@@ -9970,7 +9953,7 @@ theorem mZlist_aux_correct_rev2 (n : Nat) (p q : Int) :
     (pure (mZlist_aux_correct_rev2_check n p q) : Id Unit)
     ⦃⇓_ => ⌜q ≤ p + Int.ofNat n⌝⦄ := by
   intro hmem
-  simp only [wp, PostCond.noThrow, pure, mZlist_aux_correct_rev2_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, mZlist_aux_correct_rev2_check,
     Id.run, ULift.up_down]
   show q ≤ p + Int.ofNat n
   exact mZlist_aux_upper n p q hmem
@@ -10026,7 +10009,7 @@ theorem mZlist_correct (p q r : Int) :
     (pure (mZlist_correct_check p q r) : Id Unit)
     ⦃⇓_ => ⌜List.Mem r (mZlist p q)⌝⦄ := by
   intro ⟨hpr, hrq⟩
-  simp only [wp, PostCond.noThrow, pure, mZlist_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, mZlist_correct_check, Id.run,
     ULift.up_down]
   show List.Mem r (mZlist p q)
   exact mZlist_mem p q r hpr hrq
@@ -10040,7 +10023,7 @@ theorem mZlist_correct_rev1 (p q r : Int) :
     (pure (mZlist_correct_rev1_check p q r) : Id Unit)
     ⦃⇓_ => ⌜p ≤ r⌝⦄ := by
   intro hmem
-  simp only [wp, PostCond.noThrow, pure, mZlist_correct_rev1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, mZlist_correct_rev1_check, Id.run,
     ULift.up_down]
   show p ≤ r
   exact mZlist_lower p q r hmem
@@ -10054,7 +10037,7 @@ theorem mZlist_correct_rev2 (p q r : Int) :
     (pure (mZlist_correct_rev2_check p q r) : Id Unit)
     ⦃⇓_ => ⌜r ≤ q⌝⦄ := by
   intro hmem
-  simp only [wp, PostCond.noThrow, pure, mZlist_correct_rev2_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, mZlist_correct_rev2_check, Id.run,
     ULift.up_down]
   show r ≤ q
   exact mZlist_upper p q r hmem
@@ -10111,7 +10094,7 @@ theorem mProd_correct {A B : Type}
     (pure (mProd_correct_check l1 l2 a b) : Id Unit)
     ⦃⇓_ => ⌜List.Mem (a, b) (mProd l1 l2)⌝⦄ := by
   intro ⟨ha, hb⟩
-  simp only [wp, PostCond.noThrow, pure, mProd_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, mProd_correct_check, Id.run,
     ULift.up_down]
   show List.Mem (a, b) (mProd l1 l2)
   exact mProd_mem l1 l2 a b ha hb
@@ -10127,7 +10110,7 @@ theorem mProd_correct_rev1 {A B : Type}
     (pure (mProd_correct_rev1_check l1 l2 a b) : Id Unit)
     ⦃⇓_ => ⌜List.Mem a l1⌝⦄ := by
   intro hmem
-  simp only [wp, PostCond.noThrow, pure, mProd_correct_rev1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, mProd_correct_rev1_check, Id.run,
     ULift.up_down]
   show List.Mem a l1
   exact mProd_fst l1 l2 a b hmem
@@ -10143,7 +10126,7 @@ theorem mProd_correct_rev2 {A B : Type}
     (pure (mProd_correct_rev2_check l1 l2 a b) : Id Unit)
     ⦃⇓_ => ⌜List.Mem b l2⌝⦄ := by
   intro hmem
-  simp only [wp, PostCond.noThrow, pure, mProd_correct_rev2_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, mProd_correct_rev2_check, Id.run,
     ULift.up_down]
   show List.Mem b l2
   exact mProd_snd l1 l2 a b hmem
@@ -10159,7 +10142,7 @@ theorem in_map_inv {A B : Type}
     (pure (in_map_inv_check f l x) : Id Unit)
     ⦃⇓_ => ⌜List.Mem x l⌝⦄ := by
   intro ⟨hinj, hmem⟩
-  simp only [wp, PostCond.noThrow, pure, in_map_inv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, in_map_inv_check, Id.run,
     ULift.up_down]
   show List.Mem x l
   have hinj' : ∀ a b, f a = f b → a = b := hinj
@@ -10187,7 +10170,7 @@ theorem floatEq {beta : Int}
     (pure (floatEq_check p q) : Id Unit)
     ⦃⇓_ => ⌜p = q⌝⦄ := by
   intro ⟨hnum, hexp⟩
-  simp only [wp, PostCond.noThrow, pure, floatEq_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, floatEq_check, Id.run,
     ULift.up_down]
   show p = q
   cases p; cases q; simp_all
@@ -10203,7 +10186,7 @@ theorem floatDec {beta : Int}
     (pure (floatDec_check x y) : Id Unit)
     ⦃⇓_ => ⌜x = y ∨ x ≠ y⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, floatDec_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, floatDec_check, Id.run,
     ULift.up_down]
   show x = y ∨ x ≠ y
   exact eq_or_ne x y
@@ -10231,7 +10214,7 @@ theorem FzeroisReallyZero {beta : Int} (z : Int) :
     (pure (FzeroisReallyZero_check (beta:=beta) z) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fzero beta z) = 0⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, FzeroisReallyZero_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FzeroisReallyZero_check, Id.run,
     ULift.up_down]
   show _root_.F2R (Fzero beta z) = 0
   simp [Fzero, _root_.F2R, FloatSpec.Core.Defs.F2R]
@@ -10247,7 +10230,7 @@ theorem FzeroisZero {beta : Int}
     (pure (FzeroisZero_check (beta:=beta) b) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fzero beta (- b.dExp)) = 0⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, FzeroisZero_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FzeroisZero_check, Id.run,
     ULift.up_down]
   show _root_.F2R (Fzero beta (- b.dExp)) = 0
   simp [Fzero, _root_.F2R, FloatSpec.Core.Defs.F2R]
@@ -10263,7 +10246,7 @@ theorem FboundedFzero {beta : Int}
     (pure (FboundedFzero_check (beta:=beta) b) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (- b.dExp))⌝⦄ := by
   intro hvNum
-  simp only [wp, PostCond.noThrow, pure, FboundedFzero_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FboundedFzero_check, Id.run,
     ULift.up_down]
   show Fbounded b (Fzero beta (-b.dExp))
   exact ⟨by simpa [Fzero] using hvNum, le_refl _⟩
@@ -10279,7 +10262,7 @@ theorem FboundedZeroSameExp {beta : Int}
     (pure (FboundedZeroSameExp_check (beta:=beta) b p) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fzero beta (p.Fexp))⌝⦄ := by
   intro hp
-  simp only [wp, PostCond.noThrow, pure, FboundedZeroSameExp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FboundedZeroSameExp_check, Id.run,
     ULift.up_down]
   rcases hp with ⟨hnum, hexp⟩
   refine ⟨?_, hexp⟩
@@ -10297,7 +10280,7 @@ theorem FBoundedScale {beta : Int}
     (pure (FBoundedScale_check (beta:=beta) b p n) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩⌝⦄ := by
   intro hp
-  simp only [wp, PostCond.noThrow, pure, FBoundedScale_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FBoundedScale_check, Id.run,
     ULift.up_down]
   rcases hp with ⟨hnum, hexp⟩
   refine ⟨hnum, ?_⟩
@@ -10317,7 +10300,7 @@ theorem FvalScale (beta : Int)
     ⦃⇓_ => ⌜_root_.F2R (beta:=beta) ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩ =
             ((beta : ℝ) ^ (Int.ofNat n)) * _root_.F2R (beta:=beta) p⌝⦄ := by
   intro hb
-  simp only [wp, PostCond.noThrow, pure, FvalScale_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FvalScale_check, Id.run,
     ULift.up_down]
   show _root_.F2R (beta:=beta) ⟨p.Fnum, p.Fexp + (Int.ofNat n)⟩ =
        ((beta : ℝ) ^ (Int.ofNat n)) * _root_.F2R (beta:=beta) p
@@ -10340,7 +10323,7 @@ theorem maxFbounded {beta : Int}
     (pure (maxFbounded_check (beta:=beta) b z) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 z)⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, maxFbounded_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, maxFbounded_check, Id.run,
     ULift.up_down]
   exact ⟨by simpa [Fbounded] using h.2, h.1⟩
 
@@ -10355,7 +10338,7 @@ theorem oppBounded {beta : Int}
     (pure (oppBounded_check (beta:=beta) b x) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄ := by
   intro hx
-  simp only [wp, PostCond.noThrow, pure, oppBounded_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, oppBounded_check, Id.run,
     ULift.up_down]
   simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hx
 
@@ -10372,7 +10355,7 @@ theorem oppBoundedInv {beta : Int}
     (pure (oppBoundedInv_check (beta:=beta) b x) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b x⌝⦄ := by
   intro hx
-  simp only [wp, PostCond.noThrow, pure, oppBoundedInv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, oppBoundedInv_check, Id.run,
     ULift.up_down]
   simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hx
 
@@ -10389,7 +10372,7 @@ theorem absFBounded {beta : Int}
     (pure (absFBounded_check (beta:=beta) b f) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b (Fabs f)⌝⦄ := by
   intro hf
-  simp only [wp, PostCond.noThrow, pure, absFBounded_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, absFBounded_check, Id.run,
     ULift.up_down]
   simpa [Fbounded, Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs] using hf
 
@@ -10407,7 +10390,7 @@ theorem FboundedEqExp {beta : Int}
     (pure (FboundedEqExp_check (beta:=beta) b p q) : Id Unit)
     ⦃⇓_ => ⌜Fbounded (beta:=beta) b q⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, FboundedEqExp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FboundedEqExp_check, Id.run,
     ULift.up_down]
   exact h.2.1
 
@@ -10422,7 +10405,7 @@ theorem is_Fzero_rep1 {beta : Int}
     (pure (is_Fzero_rep1_check x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R x = 0⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check, Id.run,
     ULift.up_down]
   show _root_.F2R x = 0
   have hfz : x.Fnum = 0 := h
@@ -10439,7 +10422,7 @@ theorem is_Fzero_rep2 {beta : Int}
     (pure (is_Fzero_rep2_check x) : Id Unit)
     ⦃⇓_ => ⌜is_Fzero x⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, is_Fzero_rep2_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, is_Fzero_rep2_check, Id.run,
     ULift.up_down]
   show is_Fzero x
   exact FloatSpec.Core.Float_prop.eq_0_F2R (beta:=beta) x hβ hx
@@ -10455,7 +10438,7 @@ theorem NisFzeroComp {beta : Int}
     (pure (NisFzeroComp_check x y) : Id Unit)
     ⦃⇓_ => ⌜¬ is_Fzero y⌝⦄ := by
   intro ⟨hβ, hx_ne, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, NisFzeroComp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, NisFzeroComp_check, Id.run,
     ULift.up_down]
   show ¬ is_Fzero y
   intro hy
@@ -10479,7 +10462,7 @@ theorem Fle_Zle (beta : Int) (n1 n2 d : Int) :
     ⦃⇓_ => ⌜_root_.F2R (pff_to_flocq beta { mantissa := n1, exponent := d, sign := false })
             ≤ _root_.F2R (pff_to_flocq beta { mantissa := n2, exponent := d, sign := false })⌝⦄ := by
   intro ⟨hβ, hn⟩
-  simp only [wp, PostCond.noThrow, pure, Fle_Zle_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fle_Zle_check, Id.run,
     ULift.up_down]
   simp only [pff_to_flocq, _root_.F2R, FloatSpec.Core.Defs.F2R,
     FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
@@ -10500,7 +10483,7 @@ theorem Rlt_Fexp_eq_Zlt {beta : Int}
     (pure (Rlt_Fexp_eq_Zlt_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum < y.Fnum⌝⦄ := by
   intro ⟨hβ, hlt, hexp⟩
-  simp only [wp, PostCond.noThrow, pure, Rlt_Fexp_eq_Zlt_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, Rlt_Fexp_eq_Zlt_check,
     Id.run, ULift.up_down]
   show x.Fnum < y.Fnum
   simp only [_root_.F2R, FloatSpec.Core.Defs.F2R] at hlt
@@ -10523,7 +10506,7 @@ theorem Fopp_correct {beta : Int}
     (pure (Fopp_correct_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Calc.Operations.Fopp (beta:=beta) x) = - _root_.F2R x⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Fopp_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
     ULift.up_down]
   show _root_.F2R (FloatSpec.Calc.Operations.Fopp (beta:=beta) x) = - _root_.F2R x
   simp [_root_.F2R, FloatSpec.Core.Defs.F2R, FloatSpec.Calc.Operations.Fopp, neg_mul]
@@ -10539,7 +10522,7 @@ theorem Fplus_correct {beta : Int}
     (pure (Fplus_correct_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fplus (beta:=beta) x y) = _root_.F2R x + _root_.F2R y⌝⦄ := by
   intro hβ
-  simp only [wp, PostCond.noThrow, pure, Fplus_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fplus_correct_check, Id.run,
     ULift.up_down]
   show _root_.F2R (Fplus x y) = _root_.F2R x + _root_.F2R y
   have h := FloatSpec.Calc.Operations.F2R_plus (beta:=beta) x y hβ
@@ -10557,7 +10540,7 @@ theorem Fminus_correct {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y) =
             _root_.F2R x - _root_.F2R y⌝⦄ := by
   intro hβ
-  simp only [wp, PostCond.noThrow, pure, Fminus_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fminus_correct_check, Id.run,
     ULift.up_down]
   show _root_.F2R (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y) =
       _root_.F2R x - _root_.F2R y
@@ -10575,7 +10558,7 @@ theorem Fopp_Fopp {beta : Int}
     (pure (Fopp_Fopp_check (beta:=beta) p) : Id Unit)
     ⦃⇓_ => ⌜Fopp (beta:=beta) (Fopp (beta:=beta) p) = p⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Fopp_Fopp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fopp_Fopp_check, Id.run,
     ULift.up_down]
   show Fopp (Fopp p) = p
   cases p
@@ -10594,7 +10577,7 @@ theorem Fopp_Fminus {beta : Int}
               (FloatSpec.Calc.Operations.Fminus (beta:=beta) p q) =
             FloatSpec.Calc.Operations.Fminus (beta:=beta) q p⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Fopp_Fminus_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fopp_Fminus_check, Id.run,
     ULift.up_down]
   show Fopp (FloatSpec.Calc.Operations.Fminus (beta:=beta) p q) =
       FloatSpec.Calc.Operations.Fminus (beta:=beta) q p
@@ -10626,7 +10609,7 @@ theorem Fdigit_opp {beta : Int}
     (pure (Fdigit_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fopp x) = Fdigit (beta:=beta) radix x⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Fdigit_opp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fdigit_opp_check, Id.run,
     ULift.up_down]
   show Fdigit radix (Fopp x) = Fdigit radix x
   cases x with
@@ -10648,7 +10631,7 @@ theorem Fopp_Fminus_dist {beta : Int}
             FloatSpec.Calc.Operations.Fminus (beta:=beta)
               (Fopp (beta:=beta) p) (Fopp (beta:=beta) q)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Fopp_Fminus_dist_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, Fopp_Fminus_dist_check,
     Id.run, ULift.up_down]
   show Fopp (FloatSpec.Calc.Operations.Fminus (beta:=beta) p q) =
       FloatSpec.Calc.Operations.Fminus (beta:=beta) (Fopp p) (Fopp q)
@@ -10710,7 +10693,7 @@ theorem Fdigit_abs {beta : Int}
     (pure (Fdigit_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fabs (beta:=beta) x) = Fdigit (beta:=beta) radix x⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Fdigit_abs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fdigit_abs_check, Id.run,
     ULift.up_down]
   show Fdigit radix (Fabs x) = Fdigit radix x
   cases x with
@@ -10735,7 +10718,7 @@ theorem Fabs_correct1 {beta : Int}
     (pure (Fabs_correct1_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = _root_.F2R x⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, Fabs_correct1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fabs_correct1_check, Id.run,
     ULift.up_down]
   show _root_.F2R (Fabs x) = _root_.F2R x
   have hnum : 0 ≤ x.Fnum := FloatSpec.Core.Float_prop.ge_0_F2R (beta:=beta) x hβ hx
@@ -10756,7 +10739,7 @@ theorem Fabs_correct2 {beta : Int}
     (pure (Fabs_correct2_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = - _root_.F2R x⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, Fabs_correct2_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fabs_correct2_check, Id.run,
     ULift.up_down]
   show _root_.F2R (Fabs x) = - _root_.F2R x
   have habs := FloatSpec.Calc.Operations.F2R_abs (beta:=beta) x hβ
@@ -10777,7 +10760,7 @@ theorem Fabs_correct {beta : Int}
     (pure (Fabs_correct_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fabs (beta:=beta) x) = |_root_.F2R x|⌝⦄ := by
   intro hβ
-  simp only [wp, PostCond.noThrow, pure, Fabs_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fabs_correct_check, Id.run,
     ULift.up_down]
   show _root_.F2R (Fabs x) = |_root_.F2R x|
   have habs := FloatSpec.Calc.Operations.F2R_abs (beta:=beta) x hβ
@@ -10795,7 +10778,7 @@ theorem RleFexpFabs {beta : Int}
     ⦃⇓_ => ⌜_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp)
             ≤ _root_.F2R (Fabs (beta:=beta) p)⌝⦄ := by
   intro ⟨hβ, hp_ne⟩
-  simp only [wp, PostCond.noThrow, pure, RleFexpFabs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, RleFexpFabs_check, Id.run,
     ULift.up_down]
   show _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=beta) 1 p.Fexp) ≤
       _root_.F2R (Fabs (beta:=beta) p)
@@ -10824,7 +10807,7 @@ theorem Fabs_Fzero {beta : Int}
     (pure (Fabs_Fzero_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜¬ is_Fzero (Fabs (beta:=beta) x)⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Fabs_Fzero_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Fabs_Fzero_check, Id.run,
     ULift.up_down]
   show ¬ is_Fzero (Fabs x)
   cases x with
@@ -10890,7 +10873,7 @@ theorem FshiftFdigit {beta : Int}
     ⦃⇓_ => ⌜Fdigit (beta:=beta) radix (Fshift (beta:=beta) radix n x) =
             Fdigit (beta:=beta) radix x + n⌝⦄ := by
   intro ⟨hradix, hx_nonzero⟩
-  simp only [wp, PostCond.noThrow, pure, FshiftFdigit_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FshiftFdigit_check,
     Id.run, ULift.up_down]
   unfold Fdigit Fshift is_Fzero at *
   have hn_nonneg : 0 ≤ (n : Int) := by exact_mod_cast Nat.zero_le n
@@ -10926,7 +10909,7 @@ theorem FshiftCorrect {beta : Int}
     (pure (FshiftCorrect_check (beta:=beta) radix n x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fshift (beta:=beta) radix n x) = _root_.F2R x⌝⦄ := by
   intro ⟨hbeta_radix, hradix⟩
-  simp only [wp, PostCond.noThrow, pure, FshiftCorrect_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FshiftCorrect_check,
     Id.run, ULift.up_down]
   subst beta
   have hradix_pos_real : (0 : ℝ) < (radix : ℝ) := by
@@ -10962,7 +10945,7 @@ theorem FshiftCorrectInv {beta : Int}
     (pure (FshiftCorrectInv_check (beta:=beta) radix x y) : Id Unit)
     ⦃⇓_ => ⌜Fshift (beta:=beta) radix (Int.natAbs (y.Fexp - x.Fexp)) y = x⌝⦄ := by
   intro ⟨hbeta_radix, hradix, hxy, hexp_le⟩
-  simp only [wp, PostCond.noThrow, pure, FshiftCorrectInv_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FshiftCorrectInv_check,
     Id.run, ULift.up_down]
   have hshift_val :
       _root_.F2R (Fshift (beta:=beta) radix (Int.natAbs (y.Fexp - x.Fexp)) y) =
@@ -11000,7 +10983,7 @@ theorem FshiftO {beta : Int}
     (pure (FshiftO_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜Fshift (beta:=beta) radix 0 x = x ⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, FshiftO_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FshiftO_check, Id.run,
     ULift.up_down]
   show Fshift radix 0 x = x
   simp [Fshift]
@@ -11016,7 +10999,7 @@ theorem FshiftCorrectSym {beta : Int}
     (pure (FshiftCorrectSym_check (beta:=beta) radix x y) : Id Unit)
     ⦃⇓_ => ⌜∃ n m : Nat, Fshift (beta:=beta) radix n x = Fshift (beta:=beta) radix m y⌝⦄ := by
   intro ⟨hbeta_radix, hradix, hxy⟩
-  simp [wp, PostCond.noThrow, pure, FshiftCorrectSym_check, PredTrans.pure_apply]
+  simp [wp, PostCond.noThrow, pure, FshiftCorrectSym_check]
   rcases le_or_gt x.Fexp y.Fexp with hle | hgt
   · refine ⟨0, Int.natAbs (y.Fexp - x.Fexp), ?_⟩
     have hx0 : Fshift (beta:=beta) radix 0 x = x :=
@@ -11048,7 +11031,7 @@ theorem FdigitEq {beta : Int}
     (pure (FdigitEq_check (beta:=beta) radix x y) : Id Unit)
     ⦃⇓_ => ⌜x = y⌝⦄ := by
   intro ⟨hbeta_radix, hradix, hx_nonzero, hxy, hdigit⟩
-  simp only [wp, PostCond.noThrow, pure, FdigitEq_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, FdigitEq_check, Id.run,
     ULift.up_down]
   have hbeta : 1 < beta := by omega
   have hy_nonzero : ¬ is_Fzero y :=
@@ -11135,7 +11118,7 @@ theorem FnormalUnique {beta : Int}
   rcases h with
     ⟨hnormal_p, hnormal'_p, hnormal_q, hnormal'_q, hprecision, hbeta_radix,
       hradix, hvNum, hval⟩
-  simp only [wp, PostCond.noThrow, pure, FnormalUnique_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, FnormalUnique_check,
     Id.run, ULift.up_down]
   have hvNum_pos : 0 < b.vNum := by
     rw [hvNum, Zpower_nat]
@@ -11174,7 +11157,7 @@ theorem maxDivLess (radix : Int) (v : Int) (p : Nat) :
     (pure (maxDivLess_check radix v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv radix v p ≤ p⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, maxDivLess_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, maxDivLess_check, Id.run,
     ULift.up_down]
   show maxDiv radix v p ≤ p
   classical
@@ -11202,7 +11185,7 @@ theorem maxDivCorrect (radix : Int) (v : Int) (p : Nat) :
     (pure (maxDivCorrect_check radix v p) : Id Unit)
     ⦃⇓_ => ⌜Zdivides v (Zpower_nat radix (maxDiv radix v p))⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, maxDivCorrect_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, maxDivCorrect_check, Id.run,
     ULift.up_down]
   show Zdivides v (Zpower_nat radix (maxDiv radix v p))
   classical
@@ -11225,7 +11208,7 @@ theorem maxDivLt (radix : Int) (v : Int) (p : Nat) :
     (pure (maxDivLt_check radix v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv radix v p < p⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, maxDivLt_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, maxDivLt_check, Id.run,
     ULift.up_down]
   show maxDiv radix v p < p
   classical
@@ -11261,7 +11244,7 @@ theorem maxDiv_opp (radix : Int) (v : Int) (p : Nat) :
     (pure (maxDiv_opp_check radix v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv radix v p = maxDiv radix (-v) p⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, maxDiv_opp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, maxDiv_opp_check, Id.run,
     ULift.up_down]
   show maxDiv radix v p = maxDiv radix (-v) p
   classical
@@ -11288,7 +11271,7 @@ theorem LSB_opp {beta : Int}
     (pure (LSB_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fopp x)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, LSB_opp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LSB_opp_check, Id.run,
     ULift.up_down]
   show LSB radix x = LSB radix (Fopp x)
   cases x with
@@ -11315,7 +11298,7 @@ theorem maxDiv_abs (radix : Int) (v : Int) (p : Nat) :
     (pure (maxDiv_abs_check radix v p) : Id Unit)
     ⦃⇓_ => ⌜maxDiv radix v p = maxDiv radix |v| p⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, maxDiv_abs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, maxDiv_abs_check, Id.run,
     ULift.up_down]
   show maxDiv radix v p = maxDiv radix |v| p
   classical
@@ -11342,7 +11325,7 @@ theorem LSB_abs {beta : Int}
     (pure (LSB_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fabs x)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, LSB_abs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LSB_abs_check, Id.run,
     ULift.up_down]
   show LSB radix x = LSB radix (Fabs x)
   cases x with
@@ -11374,7 +11357,7 @@ theorem MSB_shift {beta : Int}
     (pure (MSB_shift_check (beta:=beta) radix x n) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fshift (beta:=beta) radix n x)⌝⦄ := by
   intro ⟨hradix, hx_nonzero⟩
-  simp only [wp, PostCond.noThrow, pure, MSB_shift_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, MSB_shift_check, Id.run,
     ULift.up_down]
   show MSB radix x = MSB radix (Fshift radix n x)
   unfold MSB
@@ -11408,7 +11391,7 @@ theorem MSB_comp {beta : Int}
     (pure (MSB_comp_check (beta:=beta) radix x y n) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix y⌝⦄ := by
   intro ⟨hbeta_radix, hradix, hx_nonzero, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, MSB_comp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, MSB_comp_check, Id.run,
     ULift.up_down]
   have hbeta : 1 < beta := by omega
   have hy_nonzero : ¬ is_Fzero y :=
@@ -11437,7 +11420,7 @@ theorem MSB_opp {beta : Int}
     (pure (MSB_opp_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fopp x)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, MSB_opp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, MSB_opp_check, Id.run,
     ULift.up_down]
   show MSB radix x = MSB radix (Fopp x)
   cases x with
@@ -11457,7 +11440,7 @@ theorem MSB_abs {beta : Int}
     (pure (MSB_abs_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜MSB (beta:=beta) radix x = MSB (beta:=beta) radix (Fabs x)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, MSB_abs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, MSB_abs_check, Id.run,
     ULift.up_down]
   show MSB radix x = MSB radix (Fabs x)
   cases x with
@@ -11482,14 +11465,14 @@ theorem LSB_le_MSB {beta : Int}
     (pure (LSB_le_MSB_check (beta:=beta) radix x) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x ≤ MSB (beta:=beta) radix x⌝⦄ := by
   intro ⟨hradix, hx_nonzero⟩
-  simp only [wp, PostCond.noThrow, pure, LSB_le_MSB_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LSB_le_MSB_check, Id.run,
     ULift.up_down]
   have hxnum : x.Fnum ≠ 0 := by
     simpa [is_Fzero] using hx_nonzero
   have hnot :
       ¬ Zdivides x.Fnum (Zpower_nat radix (Fdigit (beta:=beta) radix x)) := by
     have h := (NotDividesDigit radix x.Fnum) ⟨hradix, hxnum⟩
-    simpa [wp, PostCond.noThrow, pure, NotDividesDigit_check, PredTrans.pure_apply,
+    simpa [wp, PostCond.noThrow, pure, NotDividesDigit_check,
       Id.run, ULift.up_down, Fdigit, digit] using h
   have hlt :
       maxDiv radix x.Fnum (Fdigit (beta:=beta) radix x) <
@@ -11523,7 +11506,7 @@ theorem Zlt_mult_simpl_l (a b c : Int) :
     (pure (Zlt_mult_simpl_l_check a b c) : Id Unit)
     ⦃⇓_ => ⌜a < b⌝⦄ := by
   intro ⟨hc, hab⟩
-  simp only [wp, PostCond.noThrow, pure, Zlt_mult_simpl_l_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_mult_simpl_l_check, Id.run,
     ULift.up_down]
   show a < b
   exact lt_of_mul_lt_mul_left hab (le_of_lt hc)
@@ -11539,7 +11522,7 @@ theorem Z_eq_bool_correct (p q : Int) :
     (pure (Z_eq_bool_correct_check p q) : Id Unit)
     ⦃⇓_ => ⌜(if Z_eq_bool p q then p = q else p ≠ q)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Z_eq_bool_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Z_eq_bool_correct_check, Id.run,
     ULift.up_down]
   show if Z_eq_bool p q then p = q else p ≠ q
   simp [Z_eq_bool]
@@ -11559,7 +11542,7 @@ theorem Zcompare_correct (p q : Int) :
             | Ordering.lt => p < q
             | Ordering.eq => p = q⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zcompare_correct_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zcompare_correct_check, Id.run,
     ULift.up_down]
   show match Zcompare p q with
        | Ordering.gt => q < p
@@ -11580,7 +11563,7 @@ theorem Zabs_Zopp (z : Int) :
     (pure (Zabs_Zopp_check z) : Id Unit)
     ⦃⇓_ => ⌜|-z| = |z|⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, Zabs_Zopp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zabs_Zopp_check, Id.run,
     ULift.up_down]
   show |-z| = |z|
   exact abs_neg z
@@ -11594,7 +11577,7 @@ theorem Zle_Zpred_Zpred (z1 z2 : Int) :
     (pure (Zle_Zpred_Zpred_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜Int.pred z1 ≤ Int.pred z2⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_Zpred_Zpred_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zpred_Zpred_check, Id.run,
     ULift.up_down]
   show Int.pred z1 ≤ Int.pred z2
   have h' : z1 ≤ z2 := h
@@ -11609,7 +11592,7 @@ theorem Zle_n_Zpred (z1 z2 : Int) :
     (pure (Zle_n_Zpred_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_n_Zpred_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_n_Zpred_check, Id.run,
     ULift.up_down]
   show z1 ≤ z2
   have h' : Int.pred z1 ≤ Int.pred z2 := h
@@ -11624,7 +11607,7 @@ theorem Zlt_1_O (z : Int) :
     (pure (Zlt_1_O_check z) : Id Unit)
     ⦃⇓_ => ⌜0 < z⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zlt_1_O_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_1_O_check, Id.run,
     ULift.up_down]
   show 0 < z
   have h' : 1 ≤ z := h; omega
@@ -11639,7 +11622,7 @@ theorem LtR0Fnum {beta : Int}
     (pure (LtR0Fnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 < x.Fnum⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, LtR0Fnum_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LtR0Fnum_check, Id.run,
     ULift.up_down]
   exact FloatSpec.Core.Float_prop.gt_0_F2R (beta:=beta) x hβ hx
 
@@ -11654,7 +11637,7 @@ theorem LeR0Fnum {beta : Int}
     (pure (LeR0Fnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ x.Fnum⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, LeR0Fnum_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LeR0Fnum_check, Id.run,
     ULift.up_down]
   exact FloatSpec.Core.Float_prop.ge_0_F2R (beta:=beta) x hβ hx
 
@@ -11669,7 +11652,7 @@ theorem LeFnumZERO {beta : Int}
     (pure (LeFnumZERO_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 ≤ _root_.F2R x⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, LeFnumZERO_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LeFnumZERO_check, Id.run,
     ULift.up_down]
   exact FloatSpec.Core.Float_prop.F2R_ge_0 (beta:=beta) x hβ hx
 
@@ -11684,7 +11667,7 @@ theorem R0LtFnum {beta : Int}
     (pure (R0LtFnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum < 0⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, R0LtFnum_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, R0LtFnum_check, Id.run,
     ULift.up_down]
   exact FloatSpec.Core.Float_prop.lt_0_F2R (beta:=beta) x hβ hx
 
@@ -11699,7 +11682,7 @@ theorem R0LeFnum {beta : Int}
     (pure (R0LeFnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜x.Fnum ≤ 0⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, R0LeFnum_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, R0LeFnum_check, Id.run,
     ULift.up_down]
   exact FloatSpec.Core.Float_prop.le_0_F2R (beta:=beta) x hβ hx
 
@@ -11714,7 +11697,7 @@ theorem LeZEROFnum {beta : Int}
     (pure (LeZEROFnum_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R x ≤ 0⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, LeZEROFnum_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LeZEROFnum_check, Id.run,
     ULift.up_down]
   exact FloatSpec.Core.Float_prop.F2R_le_0 (beta:=beta) x hβ hx
 
@@ -11729,7 +11712,7 @@ theorem LtFnumZERO {beta : Int}
     (pure (LtFnumZERO_check (beta:=beta) x) : Id Unit)
     ⦃⇓_ => ⌜0 < _root_.F2R x⌝⦄ := by
   intro ⟨hβ, hx⟩
-  simp only [wp, PostCond.noThrow, pure, LtFnumZERO_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LtFnumZERO_check, Id.run,
     ULift.up_down]
   exact FloatSpec.Core.Float_prop.F2R_gt_0 (beta:=beta) x hβ hx
 
@@ -11742,7 +11725,7 @@ theorem Zlt_Zabs_inv1 (z1 z2 : Int) :
     (pure (Zlt_Zabs_inv1_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜-z2 < z1⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zlt_Zabs_inv1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_Zabs_inv1_check, Id.run,
     ULift.up_down]
   show -z2 < z1
   have h' : |z1| < z2 := h
@@ -11758,7 +11741,7 @@ theorem Zle_Zabs_inv1 (z1 z2 : Int) :
     (pure (Zle_Zabs_inv1_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜-z2 ≤ z1⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_Zabs_inv1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zabs_inv1_check, Id.run,
     ULift.up_down]
   show -z2 ≤ z1
   have h' : |z1| ≤ z2 := h
@@ -11773,7 +11756,7 @@ theorem Zle_Zabs_inv2 (z1 z2 : Int) :
     (pure (Zle_Zabs_inv2_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜z1 ≤ z2⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_Zabs_inv2_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zabs_inv2_check, Id.run,
     ULift.up_down]
   show z1 ≤ z2
   have h' : |z1| ≤ z2 := h
@@ -11788,7 +11771,7 @@ theorem Zlt_Zabs_Zpred (z1 z2 : Int) :
     (pure (Zlt_Zabs_Zpred_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜|Int.succ z1| < z2⌝⦄ := by
   intro ⟨h1, h2⟩
-  simp only [wp, PostCond.noThrow, pure, Zlt_Zabs_Zpred_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_Zabs_Zpred_check, Id.run,
     ULift.up_down]
   show |Int.succ z1| < z2
   have h1' : |z1| < z2 := h1
@@ -11811,7 +11794,7 @@ theorem Zlt_not_eq_rev (p q : Int) :
     (pure (Zlt_not_eq_rev_check p q) : Id Unit)
     ⦃⇓_ => ⌜p ≠ q⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zlt_not_eq_rev_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_not_eq_rev_check, Id.run,
     ULift.up_down]
   show p ≠ q
   have h' : q < p := h
@@ -11826,7 +11809,7 @@ theorem Zle_Zpred_inv (z1 z2 : Int) :
     (pure (Zle_Zpred_inv_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜z1 < z2⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zle_Zpred_inv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zle_Zpred_inv_check, Id.run,
     ULift.up_down]
   show z1 < z2
   have h' : z1 ≤ Int.pred z2 := h
@@ -11841,7 +11824,7 @@ theorem Zabs_intro (P : Int → Prop) (z : Int) :
     (pure (Zabs_intro_check P z) : Id Unit)
     ⦃⇓_ => ⌜P (|z|)⌝⦄ := by
   intro ⟨hneg, hpos⟩
-  simp only [wp, PostCond.noThrow, pure, Zabs_intro_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zabs_intro_check, Id.run,
     ULift.up_down]
   show P |z|
   rcases le_or_gt 0 z with hz | hz
@@ -11857,7 +11840,7 @@ theorem Zpred_Zle_Zabs_intro (z1 z2 : Int) :
     (pure (Zpred_Zle_Zabs_intro_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜|z1| < z2⌝⦄ := by
   intro ⟨h1, h2⟩
-  simp only [wp, PostCond.noThrow, pure, Zpred_Zle_Zabs_intro_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpred_Zle_Zabs_intro_check, Id.run,
     ULift.up_down]
   show |z1| < z2
   have h1' : -Int.pred z2 ≤ z1 := h1
@@ -11876,7 +11859,7 @@ theorem Zlt_Zabs_intro (z1 z2 : Int) :
     (pure (Zlt_Zabs_intro_check z1 z2) : Id Unit)
     ⦃⇓_ => ⌜|z1| < z2⌝⦄ := by
   intro ⟨h1, h2⟩
-  simp only [wp, PostCond.noThrow, pure, Zlt_Zabs_intro_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zlt_Zabs_intro_check, Id.run,
     ULift.up_down]
   show |z1| < z2
   have h1' : -z2 < z1 := h1
@@ -11894,7 +11877,7 @@ theorem Zpower_nat_less (n : Int) (q : Nat) :
     (pure (Zpower_nat_less_check n q) : Id Unit)
     ⦃⇓_ => ⌜0 < n ^ q⌝⦄ := by
   intro ⟨hn, _hq⟩
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_less_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_less_check,
     Id.run, ULift.up_down]
   exact pow_pos hn q
 
@@ -11907,7 +11890,7 @@ theorem Zpower_nat_monotone_S (n : Int) (q : Nat) :
     (pure (Zpower_nat_monotone_S_check n q) : Id Unit)
     ⦃⇓_ => ⌜n ^ q ≤ n ^ (q+1)⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_S_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_S_check, Id.run,
     ULift.up_down]
   show n ^ q ≤ n ^ (q+1)
   have hn : 1 ≤ n := h
@@ -11925,7 +11908,7 @@ theorem Zpower_nat_monotone_lt (n : Int) (q : Nat) :
     (pure (Zpower_nat_monotone_lt_check n q) : Id Unit)
     ⦃⇓_ => ⌜n ^ q < n ^ (q+1)⌝⦄ := by
   intro h
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_lt_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_lt_check, Id.run,
     ULift.up_down]
   show n ^ q < n ^ (q+1)
   have hn : 1 < n := h
@@ -11943,8 +11926,7 @@ theorem Zpower_nat_anti_monotone_lt (n : Int) (p q : Nat) :
     (pure (Zpower_nat_anti_monotone_lt_check n p q) : Id Unit)
     ⦃⇓_ => ⌜p < q⌝⦄ := by
   intro ⟨hn, hpq⟩
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_anti_monotone_lt_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_anti_monotone_lt_check, Id.run, ULift.up_down]
   by_contra hnot
   have hqp : q ≤ p := Nat.le_of_not_gt hnot
   have hn_le : (1 : Int) ≤ n := le_of_lt hn
@@ -11960,7 +11942,7 @@ theorem Zpower_nat_monotone_le (n : Int) (q r : Nat) :
     (pure (Zpower_nat_monotone_le_check n q r) : Id Unit)
     ⦃⇓_ => ⌜n ^ q ≤ n ^ r⌝⦄ := by
   intro ⟨hn, hqr⟩
-  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_le_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, Zpower_nat_monotone_le_check, Id.run,
     ULift.up_down]
   show n ^ q ≤ n ^ r
   have hn' : 1 ≤ n := hn
@@ -11979,7 +11961,7 @@ theorem digitAux1 (n : Int) (p : Nat) (r : Int) :
     (pure (digitAux1_check n p r) : Id Unit)
     ⦃⇓_ => ⌜Zpower_nat n (Nat.succ p) * r = Zpower_nat n p * (n * r)⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, digitAux1_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digitAux1_check, Id.run,
     ULift.up_down]
   show Zpower_nat n (Nat.succ p) * r = Zpower_nat n p * (n * r)
   simp [Zpower_nat, pow_succ]
@@ -12009,7 +11991,7 @@ theorem digitLess (n : Int) (q : Int) :
     (pure (digitLess_check n q) : Id Unit)
     ⦃⇓_ => ⌜Zpower_nat n (Nat.pred (digit n q)) ≤ |q|⌝⦄ := by
   intro ⟨hn, hq⟩
-  simp only [wp, PostCond.noThrow, pure, digitLess_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digitLess_check, Id.run,
     ULift.up_down]
   have hbounds := FloatSpec.Core.Digits.Zdigits_correct n q hn hq
   let d := FloatSpec.Core.Digits.Zdigits n q
@@ -12044,7 +12026,7 @@ theorem pos_length_pow (n : Int) (p : Positive) :
     (pure (pos_length_pow_check n p) : Id Unit)
     ⦃⇓_ => ⌜Int.ofNat (nat_of_P p) < Zpower_nat n (Nat.succ (pos_length p))⌝⦄ := by
   intro hn
-  simp only [wp, PostCond.noThrow, pure, pos_length_pow_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, pos_length_pow_check,
     Id.run, ULift.up_down]
   unfold pos_length
   set k := nat_of_P p
@@ -12081,7 +12063,7 @@ theorem digitMore (n : Int) (q : Int) :
     (pure (digitMore_check n q) : Id Unit)
     ⦃⇓_ => ⌜|q| < Zpower_nat n (digit n q)⌝⦄ := by
   intro hn
-  simp only [wp, PostCond.noThrow, pure, digitMore_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digitMore_check, Id.run,
     ULift.up_down]
   by_cases hq : q = 0
   · subst q
@@ -12112,7 +12094,7 @@ theorem digitInv (n : Int) (q : Int) (r : Nat) :
     (pure (digitInv_check n q r) : Id Unit)
     ⦃⇓_ => ⌜digit n q = r⌝⦄ := by
   intro ⟨hn, hlow, hupp⟩
-  simp only [wp, PostCond.noThrow, pure, digitInv_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digitInv_check, Id.run,
     ULift.up_down]
   by_cases hr0 : r = 0
   · subst r
@@ -12154,7 +12136,7 @@ theorem digitInv (n : Int) (q : Int) (r : Nat) :
     have hzd :=
       (FloatSpec.Core.Digits.Zdigits_unique
         (beta := n) (h_beta := hn) (n := q) (e := (r : Int)) (hβ := hn)) hpre
-    simp only [wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] at hzd
+    simp only [wp, PostCond.noThrow, pure, Id.run] at hzd
     unfold digit
     rw [hzd]
     simp
@@ -12168,7 +12150,7 @@ theorem digit_monotone (n : Int) (p q : Int) :
     (pure (digit_monotone_check n p q) : Id Unit)
     ⦃⇓_ => ⌜digit n p ≤ digit n q⌝⦄ := by
   intro ⟨hn, hpq⟩
-  simp only [wp, PostCond.noThrow, pure, digit_monotone_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digit_monotone_check, Id.run,
     ULift.up_down]
   by_cases hp0 : p = 0
   · subst p
@@ -12181,7 +12163,7 @@ theorem digit_monotone (n : Int) (p q : Int) :
     have hle_pack :=
       (FloatSpec.Core.Digits.Zdigits_le
         (beta := n) (h_beta := hn) (n := p) (m := q) (hβ := hn)) hpre
-    simp only [wp, PostCond.noThrow, pure, PredTrans.pure_apply, Id.run] at hle_pack
+    simp only [wp, PostCond.noThrow, pure, Id.run] at hle_pack
     rcases hle_pack with ⟨dq, hdq, hle_int⟩
     have hp_nonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits n p :=
       FloatSpec.Core.Digits.Zdigits_ge_0 n p trivial
@@ -12204,7 +12186,7 @@ theorem digitNotZero (n : Int) (q : Int) :
     (pure (digitNotZero_check n q) : Id Unit)
     ⦃⇓_ => ⌜0 < digit n q⌝⦄ := by
   intro ⟨hn, hq⟩
-  simp only [wp, PostCond.noThrow, pure, digitNotZero_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digitNotZero_check, Id.run,
     ULift.up_down]
   unfold digit
   have hgt : 0 < FloatSpec.Core.Digits.Zdigits n q :=
@@ -12229,7 +12211,7 @@ theorem digitAdd (n : Int) (q : Int) (r : Nat) :
     (pure (digitAdd_check n q r) : Id Unit)
     ⦃⇓_ => ⌜digit n (q * Zpower_nat n r) = digit n q + r⌝⦄ := by
   intro ⟨hn, hq⟩
-  simp only [wp, PostCond.noThrow, pure, digitAdd_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digitAdd_check, Id.run,
     ULift.up_down]
   unfold digit
   have hr_nonneg : 0 ≤ (r : Int) := by exact_mod_cast Nat.zero_le r
@@ -12331,7 +12313,7 @@ theorem maxDivPlus (radix : Int) (v : Int) (n : Nat) :
     ⦃⇓_ => ⌜maxDiv radix (v * Zpower_nat radix n) (digit radix v + n) =
             maxDiv radix v (digit radix v) + n⌝⦄ := by
   intro ⟨hradix, hv⟩
-  simp only [wp, PostCond.noThrow, pure, maxDivPlus_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, maxDivPlus_check, Id.run,
     ULift.up_down]
   set d := digit radix v
   set md := maxDiv radix v d
@@ -12385,7 +12367,7 @@ theorem LSB_shift {beta : Int}
     (pure (LSB_shift_check (beta:=beta) radix x n) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix (Fshift (beta:=beta) radix n x)⌝⦄ := by
   intro ⟨_hradix, hx_nonzero⟩
-  simp only [wp, PostCond.noThrow, pure, LSB_shift_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LSB_shift_check, Id.run,
     ULift.up_down]
   show LSB radix x = LSB radix (Fshift radix n x)
   cases x with
@@ -12413,7 +12395,7 @@ theorem LSB_comp {beta : Int}
     (pure (LSB_comp_check (beta:=beta) radix x y n) : Id Unit)
     ⦃⇓_ => ⌜LSB (beta:=beta) radix x = LSB (beta:=beta) radix y⌝⦄ := by
   intro ⟨hbeta_radix, hradix, hx_nonzero, hxy⟩
-  simp only [wp, PostCond.noThrow, pure, LSB_comp_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, LSB_comp_check, Id.run,
     ULift.up_down]
   have hbeta : 1 < beta := by omega
   have hy_nonzero : ¬ is_Fzero y :=
@@ -12440,7 +12422,7 @@ theorem digit_abs (n : Int) (p : Int) :
     (pure (digit_abs_check n p) : Id Unit)
     ⦃⇓_ => ⌜digit n (|p|) = digit n p⌝⦄ := by
   intro _
-  simp only [wp, PostCond.noThrow, pure, digit_abs_check, PredTrans.pure_apply, Id.run,
+  simp only [wp, PostCond.noThrow, pure, digit_abs_check, Id.run,
     ULift.up_down]
   show digit n (|p|) = digit n p
   exact digit_abs_eq n p
@@ -12454,11 +12436,10 @@ theorem digit_anti_monotone_lt (n : Int) (p q : Int) :
     (pure (digit_anti_monotone_lt_check n p q) : Id Unit)
     ⦃⇓_ => ⌜|p| < |q|⌝⦄ := by
   intro ⟨hn, hlt_digits⟩
-  simp only [wp, PostCond.noThrow, pure, digit_anti_monotone_lt_check,
-    PredTrans.pure_apply, Id.run, ULift.up_down]
+  simp only [wp, PostCond.noThrow, pure, digit_anti_monotone_lt_check, Id.run, ULift.up_down]
   by_contra hnot
   have hle_abs : |q| ≤ |p| := le_of_not_gt hnot
   have hmon := (digit_monotone n q p) ⟨hn, hle_abs⟩
-  simp only [wp, PostCond.noThrow, pure, digit_monotone_check, PredTrans.pure_apply,
+  simp only [wp, PostCond.noThrow, pure, digit_monotone_check,
     Id.run, ULift.up_down] at hmon
   exact (not_lt_of_ge hmon) hlt_digits

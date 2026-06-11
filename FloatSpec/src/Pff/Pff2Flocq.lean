@@ -44,7 +44,7 @@ theorem pff_flocq_bijection (f : FloatSpec.Core.Defs.FlocqFloat beta) :
         omega
       · -- Fnum ≥ 0 case: sign = false, so |Fnum| = Fnum
         simp only [h, decide_false, ↓reduceIte]
-        push_neg at h
+        push Not at h
         exact Int.natAbs_of_nonneg h
     · -- Fexp part is trivially equal
       trivial
@@ -203,7 +203,7 @@ private lemma Ztrunc_neg_eq (y : ℝ) : FloatSpec.Core.Raux.Ztrunc (-y) = -Float
     simp only [h_neg_lt, h_not_neg_pos, ite_false, hy, h_not_y_neg, ite_true]
     rw [Int.ceil_neg]
   · -- y ≤ 0: split on y < 0 or y = 0
-    push_neg at hy
+    push Not at hy
     by_cases hy0 : y < 0
     · -- y < 0: Ztrunc(-y) uses floor branch (since -y > 0), Ztrunc(y) uses ceil branch
       have h_neg_pos : 0 < -y := neg_pos.mpr hy0

@@ -80,7 +80,7 @@ theorem Falign_spec (f1 f2 : FlocqFloat beta) :
       rw [mul_assoc, ← zpow_add₀ hβne, sub_add_cancel]
   · -- Case: e1 > e2, common exponent is e2
     simp only [hle, ite_false]
-    push_neg at hle
+    push Not at hle
     have hbeta_pos : 1 < beta := hbeta
     have hpos : 0 < beta := lt_trans (by decide : (0:Int) < 1) hbeta_pos
     have hle' : f2.Fexp ≤ f1.Fexp := le_of_lt hle

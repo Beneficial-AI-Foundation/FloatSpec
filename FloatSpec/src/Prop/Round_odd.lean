@@ -230,7 +230,7 @@ private lemma Zodd_opp (x : ℝ) : Zodd (-x) = -Zodd x := by
       rw [hnegz, hxz, hceil_neg]
 
 /-- Round to odd is a valid rounding -/
-instance : Valid_rnd (Zodd) := by
+instance : FloatSpec.Core.Generic_fmt.Valid_rnd (Zodd) := by
   refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
   · intro x y hxy
     exact Zodd_monotone x y hxy

@@ -19,7 +19,7 @@ variable [Prec_gt_0 prec]
 -- Section: FLX multiplication error
 
 variable (rnd : ℝ → Int)
-variable [Valid_rnd rnd]
+variable [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
 
 private lemma valid_rnd_abs_sub_lt_one (t : ℝ) :
     |((rnd t : Int) : ℝ) - t| < 1 := by
