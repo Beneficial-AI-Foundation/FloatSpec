@@ -9826,9 +9826,100 @@ theorem error_le_half_ulp (choice : Int → Bool)
        let u := ulp beta fexp x
        (abs (rn - x), u)) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜p.1 ≤ (1/2) * p.2⌝⦄ := by
-  intro hβ; classical
+  intro _; classical
   have h := error_le_half_ulp_theorem (beta := beta) (fexp := fexp)
     (choice := choice) (x := x) hβ
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
+
+/-- Coq (Ulp.v): concrete `round` bridge for `error_le_half_ulp`.
+
+This is the mode-sensitive counterpart of `error_le_half_ulp` for the
+Flocq-style concrete rounding operator.  It uses
+`roundR beta fexp (Znearest choice)` directly, rather than the older
+`round_N_to_format` neighbor chooser. -/
+theorem error_le_half_ulp_roundR (choice : Int → Bool)
+    (x : ℝ) (hβ : 1 < beta) :
+    |FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x - x|
+      ≤ (1 / 2) * ulp beta fexp x := by
+  classical
+  by_cases hx0 : x = 0
+  · have hr0 :
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest choice) x = 0 := by
+      subst x
+      simp [FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa,
+        FloatSpec.Core.Generic_fmt.Znearest,
+        FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
+        FloatSpec.Core.Raux.Rcompare]
+    rw [hr0, hx0]
+    simp [abs_zero]
+    exact ulp_run_nonneg (beta := beta) (fexp := fexp) hβ 0
+  · set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
+    set e : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    have hpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbposR e
+    have hscaled : sm * (beta : ℝ) ^ e = x := by
+      have htrip := FloatSpec.Core.Generic_fmt.scaled_mantissa_mult_bpow
+        (beta := beta) (fexp := fexp) (x := x)
+      simpa [wp, PostCond.noThrow, Id.run, pure, sm, hsm, e, he] using htrip hβ
+    have hr_eval :
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest choice) x =
+          (((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) *
+            (beta : ℝ) ^ e) := by
+      simp [FloatSpec.Core.Generic_fmt.roundR, sm, hsm, e, he]
+    have hnear₁ :
+        |sm - (((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ))|
+          ≤ (1 / 2 : ℝ) := by
+      have h := (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
+      simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
+        FloatSpec.Core.Generic_fmt.Znearest_N_strict_check,
+        wp, PostCond.noThrow, Id.run, pure] using h
+    have hnear :
+        |(((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) - sm)|
+          ≤ (1 / 2 : ℝ) := by
+      simpa [abs_sub_comm] using hnear₁
+    have hdiff :
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest choice) x - x =
+          (((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) - sm) *
+            (beta : ℝ) ^ e := by
+      rw [hr_eval, ← hscaled]
+      ring
+    have habs :
+        |FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest choice) x - x| =
+          |(((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) - sm)| *
+            (beta : ℝ) ^ e := by
+      rw [hdiff, abs_mul, abs_of_pos hpow_pos]
+    have hulp_x : ulp beta fexp x = (beta : ℝ) ^ e := by
+      have h := (ulp_neq_0 (beta := beta) (fexp := fexp) (x := x) (hx := hx0))
+        True.intro
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure, e, he] using h
+    have hscaled_le :=
+      mul_le_mul_of_nonneg_right hnear (le_of_lt hpow_pos)
+    simpa [habs, hulp_x] using hscaled_le
+
+/-- Hoare-triple wrapper for the concrete `roundR` nearest half-ULP error bound.
+
+`FloatSpec.Calc.Round.round beta fexp (Znearest choice) x` unfolds to this
+same `roundR` expression, but `Core.Ulp` cannot import `Calc.Round` without an
+import cycle. -/
+theorem error_le_half_ulp_roundR_spec (choice : Int → Bool)
+    (x : ℝ) (hβ : 1 < beta) :
+    ⦃⌜1 < beta⌝⦄
+    (pure
+      (let rn := FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Znearest choice) x
+       let u := ulp beta fexp x
+       (abs (rn - x), u)) : Id (ℝ × ℝ))
+    ⦃⇓p => ⌜p.1 ≤ (1 / 2) * p.2⌝⦄ := by
+  intro hβ'
+  have h := error_le_half_ulp_roundR (beta := beta) (fexp := fexp)
+    (choice := choice) (x := x) hβ'
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using h
 
 private theorem Rnd_DN_pt_unique_pure_for_roundR

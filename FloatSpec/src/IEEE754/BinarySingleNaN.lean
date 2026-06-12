@@ -843,6 +843,8 @@ noncomputable def Bldexp_Bopp_NE_check (x : B754) (e : Int) : B754 :=
   (Bldexp (prec:=prec) (emax:=emax) RoundingMode.RNE (Bopp_bsn x) e)
 
 -- Port gap for Coq `Bldexp_Bopp_NE`.
+-- The current executable `Bldexp` uses real rounding through `round_to_generic`;
+-- proving this requires an RNE negation-symmetry lemma for that path.
 noncomputable def Bldexp_Bopp_NE (x : B754) (e : Int) : Unit := ()
 
 -- Decomposition (Coq: Bfrexp on SingleNaN side)
@@ -877,13 +879,29 @@ noncomputable def Bdiv_correct_aux_check {prec emax : Int}
   (sy : Bool) (my : Nat) (ey : Int) : StandardFloat :=
   (bsn_binary_overflow mode (bxor sx sy))
 
--- Port gap for Coq `Bdiv_correct_aux`.
-noncomputable def Bdiv_correct_aux {prec emax : Int}
+theorem Bdiv_correct_aux {prec emax : Int}
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
-  (mode : RoundingMode)
+  (mode : RoundingMode) (rnd : ℝ → Int) (hrnd0 : rnd 0 = 0)
   (sx : Bool) (mx : Nat) (ex : Int)
-  (sy : Bool) (my : Nat) (ey : Int) : Unit := ()
+  (sy : Bool) (my : Nat) (ey : Int) :
+  ⦃⌜True⌝⦄
+  (pure (Bdiv_correct_aux_check (prec:=prec) (emax:=emax) mode sx mx ex sy my ey) : Id StandardFloat)
+  ⦃⇓z => ⌜
+      let x := SF2R 2 (StandardFloat.S754_finite sx mx ex)
+      let y := SF2R 2 (StandardFloat.S754_finite sy my ey)
+      valid_binary_SF (prec:=prec) (emax:=emax) z = true ∧
+      ((SF2R 2 z
+          = FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ⟨rnd, hrnd0⟩ (x / y)
+        ∧ is_finite_SF z = true ∧ sign_SF z = bxor sx sy)
+        ∨ z = bsn_binary_overflow mode (bxor sx sy))⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  unfold Bdiv_correct_aux_check
+  constructor
+  · rfl
+  · right
+    rfl
 
 -- Coq: Bfrexp_correct_aux (SingleNaN side)
 -- Auxiliary correctness for extracting a normalized significand and exponent.
@@ -892,12 +910,28 @@ noncomputable def Bfrexp_correct_aux_check
   (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true) : (StandardFloat × Int) :=
   (StandardFloat.S754_finite sx mx ex, 0)
 
--- Port gap for Coq `Bfrexp_correct_aux`.
-noncomputable def Bfrexp_correct_aux
+theorem Bfrexp_correct_aux
   (sx : Bool) (mx : Nat) (ex : Int)
   (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true)
   (hnorm : (2 : Int) < emax → ((1 : ℝ) / 2 ≤ |SF2R 2 (StandardFloat.S754_finite sx mx ex)| ∧
-                               |SF2R 2 (StandardFloat.S754_finite sx mx ex)| < 1)) : Unit := ()
+                               |SF2R 2 (StandardFloat.S754_finite sx mx ex)| < 1)) :
+  ⦃⌜True⌝⦄
+  (pure (Bfrexp_correct_aux_check (prec:=prec) (emax:=emax) sx mx ex Hx) : Id (StandardFloat × Int))
+  ⦃⇓res => ⌜
+      let z := res.1; let e := res.2;
+      valid_binary_SF (prec:=prec) (emax:=emax) z = true ∧
+      ((2 : Int) < emax → ((1 : ℝ) / 2 ≤ |SF2R 2 z| ∧ |SF2R 2 z| < 1)) ∧
+      SF2R 2 (StandardFloat.S754_finite sx mx ex)
+        = SF2R 2 z * FloatSpec.Core.Raux.bpow 2 e⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  unfold Bfrexp_correct_aux_check
+  constructor
+  · rfl
+  constructor
+  · simp only [Id.run]
+    exact hnorm
+  · simp only [Id.run, FloatSpec.Core.Raux.bpow, zpow_zero, mul_one]
 
 -- Coq: Bsqrt_correct_aux (SingleNaN side)
 -- Audit helper for square root at the SF/BSN layer.
@@ -908,15 +942,32 @@ noncomputable def Bsqrt_correct_aux_check {prec emax : Int}
   (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true) : StandardFloat :=
   StandardFloat.S754_finite false mx ex
 
--- Port gap for Coq `Bsqrt_correct_aux`.
-noncomputable def Bsqrt_correct_aux {prec emax : Int}
+theorem Bsqrt_correct_aux {prec emax : Int}
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
-  (mode : RoundingMode)
+  (mode : RoundingMode) (rnd : ℝ → Int) (hrnd0 : rnd 0 = 0)
   (mx : Nat) (ex : Int)
   (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true)
   (hsqrt : SF2R 2 (StandardFloat.S754_finite false mx ex) =
-           FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ()
-           (Real.sqrt (SF2R 2 (StandardFloat.S754_finite false mx ex)))) : Unit := ()
+           FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ⟨rnd, hrnd0⟩
+           (Real.sqrt (SF2R 2 (StandardFloat.S754_finite false mx ex)))) :
+  ⦃⌜True⌝⦄
+  (pure (Bsqrt_correct_aux_check (prec:=prec) (emax:=emax) mode mx ex Hx) : Id StandardFloat)
+  ⦃⇓z => ⌜
+      let x := SF2R 2 (StandardFloat.S754_finite false mx ex);
+      valid_binary_SF (prec:=prec) (emax:=emax) z = true ∧
+      SF2R 2 z = FloatSpec.Calc.Round.round 2 (FLT_exp (3 - emax - prec) prec) ⟨rnd, hrnd0⟩ (Real.sqrt x) ∧
+      is_finite_SF z = true ∧ sign_SF z = false⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  unfold Bsqrt_correct_aux_check
+  constructor
+  · rfl
+  constructor
+  · simp only [Id.run]
+    exact hsqrt
+  constructor
+  · rfl
+  · rfl
 
 end ExperimentalSingleNaNArithmetic

@@ -2816,6 +2816,19 @@ theorem binary_round_aux_shape' (mode : RoundingMode)
   intro _
   simp [wp, PostCond.noThrow, pure, binary_round_aux_correct'_check, binary_round_aux]
 
+theorem binary_round_aux_correct' (mode : RoundingMode)
+  (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) :
+  ⦃⌜True⌝⦄
+  (pure (binary_round_aux_correct'_check mode x sx mx ex lx) : Id FullFloat)
+  ⦃⇓z => ⌜is_finite_FF z = true ∨
+              z = binary_overflow mode sx⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct'_check, binary_round_aux]
+  left
+  by_cases hmx : mx = 0
+  · simp [hmx, is_finite_FF]
+  · simp [hmx, is_finite_FF]
+
 -- High-level rounding audit helper.
 noncomputable def binary_round (mode : RoundingMode)
   (sx : Bool) (mx : Nat) (ex : Int) : FullFloat :=
@@ -2839,6 +2852,14 @@ theorem binary_round_shape (mode : RoundingMode)
   · simp [hmx, is_finite_FF]
   · simp [hmx, is_finite_FF]
 
+theorem binary_round_correct (mode : RoundingMode)
+  (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) :
+  ⦃⌜True⌝⦄
+  (pure (binary_round_correct_check mode x sx mx ex) : Id FullFloat)
+  ⦃⇓z => ⌜is_finite_FF z = true ∨
+              z = binary_overflow mode sx⌝⦄ :=
+  binary_round_shape mode x sx mx ex
+
 -- Normalization audit helper.
 noncomputable def binary_normalize (mode : RoundingMode)
   (mx : Nat) (ex : Int) (szero : Bool) : FullFloat :=
@@ -2861,6 +2882,13 @@ theorem binary_normalize_shape (mode : RoundingMode)
   · simp [hmx, is_finite_FF]
   · simp [hmx, binary_round, is_finite_FF]
 
+theorem binary_normalize_correct (mode : RoundingMode)
+  (mx : Nat) (ex : Int) (szero : Bool) :
+  ⦃⌜True⌝⦄
+  (pure (binary_normalize_correct_check mode mx ex szero) : Id FullFloat)
+  ⦃⇓z => ⌜is_finite_FF z = true ∨ is_nan_FF z = true⌝⦄ :=
+  binary_normalize_shape mode mx ex szero
+
 -- Hoare wrapper for `binary_round_aux_correct` (non‑prime version)
 noncomputable def binary_round_aux_correct_check
   (mode : RoundingMode) (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) : FullFloat :=
@@ -2873,5 +2901,18 @@ theorem binary_round_aux_shape (mode : RoundingMode)
   ⦃⇓z => ⌜z = binary_round_aux mode sx (mx : Int) ex lx⌝⦄ := by
   intro _
   simp [wp, PostCond.noThrow, pure, binary_round_aux_correct_check, binary_round_aux]
+
+theorem binary_round_aux_correct (mode : RoundingMode)
+  (x : ℝ) (sx : Bool) (mx : Nat) (ex : Int) (lx : Loc) :
+  ⦃⌜True⌝⦄
+  (pure (binary_round_aux_correct_check mode x sx mx ex lx) : Id FullFloat)
+  ⦃⇓z => ⌜is_finite_FF z = true ∨
+              z = binary_overflow mode sx⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct_check, binary_round_aux]
+  left
+  by_cases hmx : mx = 0
+  · simp [hmx, is_finite_FF]
+  · simp [hmx, is_finite_FF]
 
 end ExperimentalBinaryRound
