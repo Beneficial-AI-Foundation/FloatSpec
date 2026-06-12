@@ -475,12 +475,20 @@ noncomputable def one_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax] : PrimFloat :=
   (binary_to_prim prec emax (binary_one (prec:=prec) (emax:=emax)))
 
-/-- Port gap for Coq `one_equiv`.
-The primitive-float wrapper is not a faithful primitive-float semantic bridge, so
-constant equivalence shells are kept out of theorem form. -/
-noncomputable def one_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-    Unit :=
-  ()
+theorem one_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
+  ⦃⌜True⌝⦄
+  (pure (one_equiv_check prec emax) : Id PrimFloat)
+  ⦃⇓result => ⌜result = 1⌝⦄ := by
+  intro _
+  simp [wp, PostCond.noThrow, pure, one_equiv_check, binary_to_prim,
+    B2R, binary_one, FF2B, FF2R, F2R, FloatSpec.Core.Defs.F2R,
+    PrimFloat.ofReal]
+  change ({ toReal := (1 : ℝ) } : PrimFloat) =
+    (@OfNat.ofNat PrimFloat 1 (PrimFloat.instOfNat 1))
+  unfold OfNat.ofNat PrimFloat.instOfNat PrimFloat.ofReal
+  congr
+  change (1 : ℝ) = ((1 : Nat) : ℝ)
+  norm_num
 
 -- Helper lemma: FF2R of the canonical one representation equals 1
 private lemma FF2R_finite_one : FF2R 2 (FullFloat.F754_finite false 1 0) = 1 := by
@@ -496,12 +504,55 @@ noncomputable def two_equiv_check (prec emax : Int)
             (binary_one (prec:=prec) (emax:=emax))
             (binary_one (prec:=prec) (emax:=emax))))
 
-/-- Port gap for Coq `two_equiv`; see `one_equiv`. -/
-noncomputable def two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
-    [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
-    Unit :=
-  ()
+theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
+  [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
+  ⦃⌜True⌝⦄
+  (pure (two_equiv_check prec emax) : Id PrimFloat)
+  ⦃⇓result => ⌜result = 2⌝⦄ := by
+  intro _
+  let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
+  have hemin_le_one : 3 - emax - prec ≤ (1 : Int) := by
+    have hprec_pos : 0 < prec := Prec_gt_0.pos
+    have hemax_ge_two : 2 ≤ emax := (inferInstance : Prec_lt_emax prec emax).emax_ge_2
+    omega
+  have hgf_two : FloatSpec.Core.Generic_fmt.generic_format 2 fexp (2 : ℝ) := by
+    have hbpow := FloatSpec.Core.FLT.FLT_format_bpow
+      (prec := prec) (emin := 3 - emax - prec) (beta := 2) (e := 1)
+    have hrun := hbpow ⟨by norm_num, hemin_le_one⟩
+    simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure,
+      FloatSpec.Core.FLT.FLT_format] at hrun
+    simpa [fexp] using hrun
+  have hround_two :
+      FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc (2 : ℝ) = 2 := by
+    simpa [FloatSpec.Core.Generic_fmt.round_to_generic,
+      FloatSpec.Core.Generic_fmt.generic_format,
+      FloatSpec.Core.Generic_fmt.scaled_mantissa,
+      FloatSpec.Core.Defs.F2R] using hgf_two.symm
+  have hff_two : FF2R 2 (real_to_FullFloat (2 : ℝ) fexp) = 2 :=
+    FF2R_real_to_FullFloat (x := (2 : ℝ)) (fexp := fexp) hgf_two
+  have hround_two_explicit :
+      FloatSpec.Core.Generic_fmt.round_to_generic 2
+        (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+        FloatSpec.Core.Raux.Ztrunc (2 : ℝ) = 2 := by
+    simpa [fexp] using hround_two
+  have hff_two_explicit :
+      FF2R 2 (real_to_FullFloat (2 : ℝ)
+        (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))) = 2 := by
+    simpa [fexp] using hff_two
+  simp [wp, PostCond.noThrow, pure, two_equiv_check, binary_to_prim, B2R,
+    binary_add, binary_one, FF2B, FF2R_finite_one, PrimFloat.ofReal]
+  change PrimFloat.ofReal
+      (FF2R 2 (real_to_FullFloat
+        (FloatSpec.Core.Generic_fmt.round_to_generic 2
+          (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+          FloatSpec.Core.Raux.Ztrunc ((1 : ℝ) + 1))
+        (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)))) =
+    (2 : PrimFloat)
+  have hsum : (1 : ℝ) + 1 = 2 := by norm_num
+  rw [hsum, hround_two_explicit, hff_two_explicit]
+  change PrimFloat.ofReal (2 : ℝ) = PrimFloat.ofReal (2 : ℝ)
+  rfl
 
 -- Coq: ulp_equiv — ulp correspondence via Binary side
 noncomputable def ulp_equiv_check (prec emax : Int)

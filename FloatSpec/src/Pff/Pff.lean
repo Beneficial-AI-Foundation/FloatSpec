@@ -505,7 +505,9 @@ theorem EvenMultInv (n m : Int) :
   exact (Int.even_mul.mp hev).resolve_left (Int.not_even_iff_odd.mpr hodd)
 
 -- Integer power on Int for natural exponent (compat with Coq Zpower_nat)
-noncomputable def Zpower_nat_int (n : Int) (k : Nat) : Int := n ^ k
+noncomputable def Zpower_nat (n : Int) (k : Nat) : Int := n ^ k
+
+noncomputable def Zpower_nat_int (n : Int) (k : Nat) : Int := Zpower_nat n k
 
 -- Coq: `EvenExp` — if n is even then n^(S m) is even (nat exponent)
 noncomputable def EvenExp_check (n : Int) (m : Nat) : Unit :=
@@ -647,6 +649,13 @@ def isMax' {beta : Int} (b : Fbound_skel) (radix : Int) :
   fun r max => Fbounded' b max ∧
     (r ≤ _root_.F2R max) ∧
     (∀ f : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' b f → r ≤ _root_.F2R f → _root_.F2R max ≤ _root_.F2R f)
+
+-- Float-specific Coq-matching min/max disjunction.
+-- Coq: MinOrMaxP P := ∀ r p, P r p -> isMin r p \/ isMax r p.
+def MinOrMaxP_float {beta : Int} (b : Fbound_skel) (radix : Int)
+    (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
+  ∀ (r : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta),
+    P r p → isMin' (beta:=beta) b radix r p ∨ isMax' (beta:=beta) b radix r p
 
 -- ---------------------------------------------------------------------------
 -- Float-specific rounding properties (matching Coq Pff semantics)
@@ -3398,30 +3407,350 @@ theorem FcanonicLeastExp {beta : Int}
 
 -- Auxiliary boundedness of `RND_Min_Pos` on nonnegative reals (Coq: RND_Min_Pos_bounded_aux)
 noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
-    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
+    (b : Fbound_skel) (radix : Int) (p e : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `RND_Min_Pos_bounded_aux`.
+/-- Coq: `RND_Min_Pos_bounded_aux`.
 
-The current `RND_Min_Pos` skeleton does not establish the mantissa and exponent
-bounds required by `Fbounded`. -/
-noncomputable def RND_Min_Pos_bounded_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    Unit :=
-  ()
+The Coq section assumptions `radixMoreThanOne`, `pGreaterThanOne`, and
+`pGivesBound` are explicit in the precondition because this Lean port keeps
+`radix`, precision, and `Fbound_skel` as ordinary parameters. -/
+theorem RND_Min_Pos_bounded_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (p e : Int) (r : ℝ) :
+    ⦃⌜0 ≤ r ∧ 1 < radix ∧ 1 < p ∧
+        b.vNum = Zpower_nat radix p.toNat ∧
+        -b.dExp ≤ e ∧ r < (radix : ℝ) ^ (e + p)⌝⦄
+    (pure (RND_Min_Pos_bounded_aux_check (beta:=beta) b radix p e r) : Id Unit)
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (IRNDD (r * (radix : ℝ) ^ (-e))) e)⌝⦄ := by
+  intro h
+  rcases h with ⟨hr_nonneg, hradix_gt, hp_gt, hvNum, he_lb, hr_lt⟩
+  simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_bounded_aux_check,
+    Id.run, ULift.up_down]
+  let scaled : ℝ := r * (radix : ℝ) ^ (-e)
+  have hradix_pos_int : (0 : Int) < radix := lt_trans (by decide) hradix_gt
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix_pos_int
+  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+  have hscale_nonneg : 0 ≤ scaled := by
+    dsimp [scaled]
+    exact mul_nonneg hr_nonneg (le_of_lt (zpow_pos hradix_pos (-e)))
+  have hfloor_nonneg : 0 ≤ IRNDD scaled := by
+    simp [IRNDD]
+    exact Int.floor_nonneg.mpr hscale_nonneg
+  constructor
+  · have habs : |IRNDD scaled| = IRNDD scaled := abs_of_nonneg hfloor_nonneg
+    rw [habs, hvNum]
+    have hpow_e_pos : 0 < (radix : ℝ) ^ e := zpow_pos hradix_pos e
+    have hfloor_le : ((IRNDD scaled : Int) : ℝ) ≤ scaled := by
+      simpa [IRNDD] using Int.floor_le scaled
+    have hscaled_mul : scaled * (radix : ℝ) ^ e = r := by
+      dsimp [scaled]
+      calc
+        r * (radix : ℝ) ^ (-e) * (radix : ℝ) ^ e =
+            r * ((radix : ℝ) ^ (-e) * (radix : ℝ) ^ e) := by ring
+        _ = r * (radix : ℝ) ^ ((-e) + e) := by
+            rw [← zpow_add₀ hradix_ne]
+        _ = r := by simp
+    have hfloor_mul_lt :
+        ((IRNDD scaled : Int) : ℝ) * (radix : ℝ) ^ e <
+          (radix : ℝ) ^ (e + p) := by
+      calc
+        ((IRNDD scaled : Int) : ℝ) * (radix : ℝ) ^ e ≤
+            scaled * (radix : ℝ) ^ e := by
+              exact mul_le_mul_of_nonneg_right hfloor_le (le_of_lt hpow_e_pos)
+        _ = r := hscaled_mul
+        _ < (radix : ℝ) ^ (e + p) := hr_lt
+    have hfloor_lt_real : ((IRNDD scaled : Int) : ℝ) < (radix : ℝ) ^ p := by
+      apply lt_of_mul_lt_mul_right
+      · calc
+          ((IRNDD scaled : Int) : ℝ) * (radix : ℝ) ^ e <
+              (radix : ℝ) ^ (e + p) := hfloor_mul_lt
+          _ = (radix : ℝ) ^ e * (radix : ℝ) ^ p := by
+              rw [zpow_add₀ hradix_ne]
+          _ = (radix : ℝ) ^ p * (radix : ℝ) ^ e := by ring
+      · exact le_of_lt hpow_e_pos
+    have hp_nonneg : (0 : Int) ≤ p := by omega
+    have hp_toNat : (p.toNat : Int) = p := Int.toNat_of_nonneg hp_nonneg
+    have hp_zpow :
+        (radix : ℝ) ^ p = ((Zpower_nat radix p.toNat : Int) : ℝ) := by
+      calc
+        (radix : ℝ) ^ p = (radix : ℝ) ^ ((p.toNat : Nat) : Int) := by
+          rw [hp_toNat]
+        _ = (radix : ℝ) ^ p.toNat := zpow_ofNat (radix : ℝ) p.toNat
+        _ = ((radix ^ p.toNat : Int) : ℝ) := by
+          exact (Int.cast_pow radix p.toNat).symm
+        _ = ((Zpower_nat radix p.toNat : Int) : ℝ) := by rfl
+    exact Int.cast_lt.mp (by simpa [hp_zpow] using hfloor_lt_real)
+  · exact he_lb
 
 noncomputable def RND_Min_Pos_canonic_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `RND_Min_Pos_canonic`.
+/-- Coq: `RND_Min_Pos_canonic`.
 
-The current `RND_Min_Pos` skeleton does not carry the full Flocq normalization
-proof obligations, so this is not exposed as a theorem. -/
-noncomputable def RND_Min_Pos_canonic {beta : Int}
+The Lean statement makes the Coq section assumptions explicit: the binary
+radix used by `F2R` agrees with the Pff radix, the radix and precision are
+strictly greater than one, and the bound skeleton has the expected mantissa
+bound. -/
+theorem RND_Min_Pos_canonic {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
-    Unit :=
-  ()
+    ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix ∧ 1 < p ∧
+        b.vNum = Zpower_nat radix p.toNat⌝⦄
+    (pure (RND_Min_Pos_canonic_check (beta:=beta) b radix p r) : Id Unit)
+    ⦃⇓_ => ⌜Fcanonic (beta:=beta) radix b
+        (RND_Min_Pos (beta:=beta) b radix p r)⌝⦄ := by
+  intro h
+  rcases h with ⟨hr_nonneg, hbeta_eq, hradix_gt, hp_gt, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_canonic_check,
+    Id.run, ULift.up_down]
+  unfold RND_Min_Pos
+  have hradix_pos_int : (0 : Int) < radix := by omega
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix_pos_int
+  have hradix_one : (1 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix_gt
+  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+  have hlog_pos : 0 < Real.log (radix : ℝ) := Real.log_pos hradix_one
+  have hp_nonneg : (0 : Int) ≤ p := by omega
+  have hp_toNat : (p.toNat : Int) = p := Int.toNat_of_nonneg hp_nonneg
+  have hp_toNat_pos : 0 < p.toNat := by
+    have h : (0 : Int) < (p.toNat : Int) := by
+      rw [hp_toNat]
+      omega
+    exact_mod_cast h
+  have hp_toNat_pred_cast : ((p.toNat - 1 : Nat) : Int) = p - 1 := by
+    have hle : 1 ≤ p.toNat := by omega
+    rw [Int.natCast_sub hle, hp_toNat]
+    omega
+  have hfirst_value :
+      _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat) =
+        (radix : ℝ) ^ (p - 1) * (radix : ℝ) ^ (-b.dExp) := by
+    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, firstNormalPos, nNormMin,
+      FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rw [hbeta_eq]
+    have hpow_cast :
+        ((radix ^ (p.toNat - 1) : Int) : ℝ) = (radix : ℝ) ^ (p - 1) := by
+      rw [Int.cast_pow]
+      calc
+        (radix : ℝ) ^ (p.toNat - 1) =
+            (radix : ℝ) ^ ((p.toNat - 1 : Nat) : Int) := by
+              rw [zpow_natCast]
+        _ = (radix : ℝ) ^ (p - 1) := by rw [hp_toNat_pred_cast]
+    rw [hpow_cast]
+  by_cases hnormal_branch :
+      _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat) ≤ r
+  · simp only [hnormal_branch, ite_true]
+    left
+    set e : Int := IRNDD (Real.log r / Real.log (radix : ℝ) + (-(p - 1))) with he
+    set m : Int := IRNDD (r * (radix : ℝ) ^ (-e)) with hm
+    have hfirst_pos :
+        0 < _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat) := by
+      rw [hfirst_value]
+      exact mul_pos (zpow_pos hradix_pos _) (zpow_pos hradix_pos _)
+    have hr_pos : 0 < r := lt_of_lt_of_le hfirst_pos hnormal_branch
+    have he_lower : -b.dExp ≤ e := by
+      have hlog_first_le : Real.log
+            (_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat))
+          ≤ Real.log r := Real.log_le_log hfirst_pos hnormal_branch
+      have hlog_first :
+          Real.log (_root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat))
+            = ((p - 1 - b.dExp : Int) : ℝ) * Real.log (radix : ℝ) := by
+          rw [hfirst_value]
+          have hcombine :
+              (radix : ℝ) ^ (p - 1) * (radix : ℝ) ^ (-b.dExp) =
+                (radix : ℝ) ^ (p - 1 + -b.dExp) := by
+            rw [zpow_add₀ hradix_ne]
+          rw [hcombine, Real.log_zpow]
+          ring
+      have hreal :
+          ((-b.dExp : Int) : ℝ) ≤
+            Real.log r / Real.log (radix : ℝ) + (-(p - 1)) := by
+        rw [hlog_first] at hlog_first_le
+        have hdiv :
+            ((p - 1 - b.dExp : Int) : ℝ) ≤
+              Real.log r / Real.log (radix : ℝ) := by
+          rw [le_div_iff₀ hlog_pos]
+          simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlog_first_le
+        norm_num at hdiv ⊢
+        linarith
+      rw [he]
+      exact Int.le_floor.mpr hreal
+    have he_upper_real :
+        Real.log r / Real.log (radix : ℝ) + (-(p - 1)) < ((e + 1 : Int) : ℝ) := by
+      rw [he]
+      simpa [IRNDD, Int.cast_add, Int.cast_one] using
+        Int.lt_floor_add_one
+          (Real.log r / Real.log (radix : ℝ) + (-(p - 1)))
+    have hr_upper : r < (radix : ℝ) ^ (e + p) := by
+      have hlog_lt : Real.log r < ((e + p : Int) : ℝ) * Real.log (radix : ℝ) := by
+        have htmp : Real.log r / Real.log (radix : ℝ) < ((e + p : Int) : ℝ) := by
+          norm_num at he_upper_real ⊢
+          linarith
+        calc
+          Real.log r = (Real.log r / Real.log (radix : ℝ)) * Real.log (radix : ℝ) := by
+            field_simp [ne_of_gt hlog_pos]
+          _ < ((e + p : Int) : ℝ) * Real.log (radix : ℝ) := by
+            exact mul_lt_mul_of_pos_right htmp hlog_pos
+      exact Real.lt_zpow_of_log_lt hradix_pos hlog_lt
+    have hbounded : Fbounded (beta:=beta) b
+        (FloatSpec.Core.Defs.FlocqFloat.mk m e) := by
+      have hspec := RND_Min_Pos_bounded_aux (beta:=beta) b radix p e r
+      simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_bounded_aux_check,
+        Id.run, ULift.up_down] at hspec
+      have hpre : 0 ≤ r ∧ 1 < radix ∧ 1 < p ∧
+          b.vNum = Zpower_nat radix p.toNat ∧ -b.dExp ≤ e ∧
+          r < (radix : ℝ) ^ (e + p) :=
+        ⟨hr_nonneg, hradix_gt, hp_gt, hvNum, he_lower, hr_upper⟩
+      simpa [m, e, hm, he] using hspec hpre
+    have hm_lower : (radix : ℝ) ^ (p - 1) ≤ (m : ℝ) := by
+      have he_floor_le :
+          (e : ℝ) ≤ Real.log r / Real.log (radix : ℝ) + (-(p - 1)) := by
+        rw [he]
+        exact Int.floor_le _
+      have hlog_lower :
+          ((e + p - 1 : Int) : ℝ) * Real.log (radix : ℝ) ≤ Real.log r := by
+        have htmp : ((e + p - 1 : Int) : ℝ) ≤ Real.log r / Real.log (radix : ℝ) := by
+          norm_num at he_floor_le ⊢
+          linarith
+        calc
+          ((e + p - 1 : Int) : ℝ) * Real.log (radix : ℝ) ≤
+              (Real.log r / Real.log (radix : ℝ)) * Real.log (radix : ℝ) := by
+                exact mul_le_mul_of_nonneg_right htmp (le_of_lt hlog_pos)
+          _ = Real.log r := by field_simp [ne_of_gt hlog_pos]
+      have hpow_le_r : (radix : ℝ) ^ (e + p - 1) ≤ r := by
+        exact (Real.zpow_le_iff_le_log hradix_pos hr_pos).2 hlog_lower
+      have hscale_le : (radix : ℝ) ^ (p - 1) ≤ r * (radix : ℝ) ^ (-e) := by
+        have hpow_pos_e : 0 < (radix : ℝ) ^ (-e) := zpow_pos hradix_pos _
+        have hmul := mul_le_mul_of_nonneg_right hpow_le_r (le_of_lt hpow_pos_e)
+        calc
+          (radix : ℝ) ^ (p - 1) =
+              (radix : ℝ) ^ (e + p - 1) * (radix : ℝ) ^ (-e) := by
+                rw [← zpow_add₀ hradix_ne]
+                ring_nf
+          _ ≤ r * (radix : ℝ) ^ (-e) := hmul
+      rw [hm]
+      have hpow_pred_cast :
+          ((radix ^ (p.toNat - 1) : Int) : ℝ) = (radix : ℝ) ^ (p - 1) := by
+        rw [Int.cast_pow]
+        calc
+          (radix : ℝ) ^ (p.toNat - 1) =
+              (radix : ℝ) ^ ((p.toNat - 1 : Nat) : Int) := by
+                rw [zpow_natCast]
+          _ = (radix : ℝ) ^ (p - 1) := by rw [hp_toNat_pred_cast]
+      have hint :
+          (radix ^ (p.toNat - 1) : Int) ≤
+            IRNDD (r * (radix : ℝ) ^ (-e)) := by
+        exact Int.le_floor.mpr (by simpa [hpow_pred_cast] using hscale_le)
+      have hcast :
+          ((radix ^ (p.toNat - 1) : Int) : ℝ) ≤
+            ((IRNDD (r * (radix : ℝ) ^ (-e)) : Int) : ℝ) := by
+        exact_mod_cast hint
+      simpa [hpow_pred_cast] using hcast
+    constructor
+    · exact hbounded
+    · rw [hvNum]
+      have hm_nonneg : 0 ≤ m := by
+        have hscale_nonneg : 0 ≤ r * (radix : ℝ) ^ (-e) :=
+          mul_nonneg hr_nonneg (le_of_lt (zpow_pos hradix_pos _))
+        rw [hm, IRNDD]
+        exact Int.floor_nonneg.mpr hscale_nonneg
+      have hradix_m_pos : 0 ≤ radix * m := by nlinarith
+      rw [abs_of_nonneg hradix_m_pos]
+      have hpow_cast :
+          ((Zpower_nat radix p.toNat : Int) : ℝ) = (radix : ℝ) ^ p := by
+        rw [Zpower_nat, Int.cast_pow, ← zpow_natCast, hp_toNat]
+      have hgoal_real : ((Zpower_nat radix p.toNat : Int) : ℝ) ≤ ((radix * m : Int) : ℝ) := by
+        rw [hpow_cast, Int.cast_mul]
+        have hmul := mul_le_mul_of_nonneg_left hm_lower (le_of_lt hradix_pos)
+        calc
+          (radix : ℝ) ^ p =
+              (radix : ℝ) * (radix : ℝ) ^ (p - 1) := by
+                calc
+                  (radix : ℝ) ^ p =
+                      (radix : ℝ) ^ ((1 : Int) + (p - 1)) := by
+                        congr 1
+                        omega
+                  _ = (radix : ℝ) ^ (1 : Int) * (radix : ℝ) ^ (p - 1) := by
+                        rw [zpow_add₀ hradix_ne]
+                  _ = (radix : ℝ) * (radix : ℝ) ^ (p - 1) := by simp
+          _ ≤ (radix : ℝ) * (m : ℝ) := hmul
+      exact Int.cast_le.mp hgoal_real
+  · simp only [hnormal_branch, ite_false]
+    right
+    have hr_lt_first :
+        r < _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat) :=
+      lt_of_not_ge hnormal_branch
+    set m : Int := IRNDD (r * (radix : ℝ) ^ b.dExp) with hm
+    have hfirst_upper :
+        _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat) ≤
+          (radix : ℝ) ^ (-b.dExp + p) := by
+      rw [hfirst_value]
+      calc
+        (radix : ℝ) ^ (p - 1) * (radix : ℝ) ^ (-b.dExp)
+            = (radix : ℝ) ^ (p - 1 + -b.dExp) := by
+                rw [zpow_add₀ hradix_ne]
+        _ ≤ (radix : ℝ) ^ (-b.dExp + p) := by
+              apply zpow_le_zpow_right₀ (le_of_lt hradix_one)
+              omega
+    have hr_upper : r < (radix : ℝ) ^ (-b.dExp + p) :=
+      lt_of_lt_of_le hr_lt_first hfirst_upper
+    have hbounded : Fbounded (beta:=beta) b
+        (FloatSpec.Core.Defs.FlocqFloat.mk m (-b.dExp)) := by
+      have hspec := RND_Min_Pos_bounded_aux (beta:=beta) b radix p (-b.dExp) r
+      simp only [wp, PostCond.noThrow, pure, RND_Min_Pos_bounded_aux_check,
+        Id.run, ULift.up_down] at hspec
+      have hpre : 0 ≤ r ∧ 1 < radix ∧ 1 < p ∧
+          b.vNum = Zpower_nat radix p.toNat ∧ -b.dExp ≤ -b.dExp ∧
+          r < (radix : ℝ) ^ (-b.dExp + p) :=
+        ⟨hr_nonneg, hradix_gt, hp_gt, hvNum, le_rfl, hr_upper⟩
+      simpa [m, hm] using hspec hpre
+    refine ⟨hbounded, rfl, ?_⟩
+    rw [hvNum]
+    have hscale_lt : (m : ℝ) < (radix : ℝ) ^ (p - 1) := by
+      have hfirst_value' :
+          _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat) =
+            (radix : ℝ) ^ (p - 1 + -b.dExp) := by
+        rw [hfirst_value, zpow_add₀ hradix_ne]
+      have hmul_lt : r * (radix : ℝ) ^ b.dExp < (radix : ℝ) ^ (p - 1) := by
+        have hpow_pos : 0 < (radix : ℝ) ^ b.dExp := zpow_pos hradix_pos _
+        have hmul := mul_lt_mul_of_pos_right hr_lt_first hpow_pos
+        rw [hfirst_value'] at hmul
+        calc
+          r * (radix : ℝ) ^ b.dExp <
+              (radix : ℝ) ^ (p - 1 + -b.dExp) * (radix : ℝ) ^ b.dExp := hmul
+          _ = (radix : ℝ) ^ (p - 1) := by
+              rw [← zpow_add₀ hradix_ne]
+              ring_nf
+      rw [hm, IRNDD]
+      exact lt_of_le_of_lt (Int.floor_le _) hmul_lt
+    have hm_nonneg : 0 ≤ m := by
+      have hscale_nonneg : 0 ≤ r * (radix : ℝ) ^ b.dExp :=
+        mul_nonneg hr_nonneg (le_of_lt (zpow_pos hradix_pos _))
+      rw [hm, IRNDD]
+      exact Int.floor_nonneg.mpr hscale_nonneg
+    have hradix_m_nonneg : 0 ≤ radix * m := by nlinarith
+    rw [abs_of_nonneg hradix_m_nonneg]
+    have hpow_cast :
+        ((Zpower_nat radix p.toNat : Int) : ℝ) = (radix : ℝ) ^ p := by
+      rw [Zpower_nat, Int.cast_pow, ← zpow_natCast, hp_toNat]
+    have hgoal_real : ((radix * m : Int) : ℝ) < ((Zpower_nat radix p.toNat : Int) : ℝ) := by
+      rw [Int.cast_mul, hpow_cast]
+      have hmul : (radix : ℝ) * (m : ℝ) <
+          (radix : ℝ) * (radix : ℝ) ^ (p - 1) := by
+        exact mul_lt_mul_of_pos_left hscale_lt hradix_pos
+      calc
+        (radix : ℝ) * (m : ℝ) <
+            (radix : ℝ) * (radix : ℝ) ^ (p - 1) := hmul
+        _ = (radix : ℝ) ^ p := by
+            calc
+              (radix : ℝ) * (radix : ℝ) ^ (p - 1) =
+                  (radix : ℝ) ^ (1 : Int) * (radix : ℝ) ^ (p - 1) := by simp
+              _ = (radix : ℝ) ^ ((1 : Int) + (p - 1)) := by
+                    rw [zpow_add₀ hradix_ne]
+              _ = (radix : ℝ) ^ p := by
+                    congr 1
+                    omega
+    exact Int.cast_lt.mp hgoal_real
 
 -- Lower rounding on nonnegative reals is ≤ the input (Coq: RND_Min_Pos_Rle)
 noncomputable def RND_Min_Pos_Rle_check {beta : Int}
@@ -5078,16 +5407,44 @@ noncomputable def ClosestMin_check {beta : Int}
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Audit gap for Coq `ClosestMin`.
-
-The current public `isMin`/`isMax` names are still generic skeletons, so they
-cannot imply the faithful `Closest` predicate. -/
-noncomputable def ClosestMin {beta : Int}
+/-- Coq: `ClosestMin` — if `min` is the greatest bounded float below `r`,
+    `max` is the least bounded float above `r`, and the midpoint leans toward
+    `min`, then `min` is a closest bounded float to `r`. -/
+theorem ClosestMin {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
-    Unit :=
-  ()
+    ⦃⌜isMin' (beta:=beta) bo radixZ r min ∧
+        isMax' (beta:=beta) bo radixZ r max ∧
+        2 * r ≤ _root_.F2R (beta:=beta) min + _root_.F2R (beta:=beta) max⌝⦄
+    (pure (ClosestMin_check (beta:=beta) bo radixR r min max) : Id Unit)
+    ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r min⌝⦄ := by
+  intro h
+  rcases h with ⟨hmin, hmax, hmid⟩
+  rcases hmin with ⟨hminBounded, hmin_le, hminGreatest⟩
+  rcases hmax with ⟨_hmaxBounded, _hr_le_max, hmaxLeast⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestMin_check, Id.run, ULift.up_down]
+  constructor
+  · exact hminBounded
+  · intro f hfBounded
+    by_cases hf_le : _root_.F2R (beta:=beta) f ≤ r
+    · have hf_min : _root_.F2R (beta:=beta) f ≤ _root_.F2R (beta:=beta) min :=
+        hminGreatest f hfBounded hf_le
+      have hmin_sub_nonpos : _root_.F2R (beta:=beta) min - r ≤ 0 := by
+        linarith
+      have hf_sub_nonpos : _root_.F2R (beta:=beta) f - r ≤ 0 := by
+        linarith
+      rw [abs_of_nonpos hmin_sub_nonpos, abs_of_nonpos hf_sub_nonpos]
+      linarith
+    · have hr_le_f : r ≤ _root_.F2R (beta:=beta) f := le_of_lt (lt_of_not_ge hf_le)
+      have hmax_f : _root_.F2R (beta:=beta) max ≤ _root_.F2R (beta:=beta) f :=
+        hmaxLeast f hfBounded hr_le_f
+      have hmin_sub_nonpos : _root_.F2R (beta:=beta) min - r ≤ 0 := by
+        linarith
+      have hf_sub_nonneg : 0 ≤ _root_.F2R (beta:=beta) f - r := by
+        linarith
+      rw [abs_of_nonpos hmin_sub_nonpos, abs_of_nonneg hf_sub_nonneg]
+      linarith
 
 -- Maximal conditions imply `Closest r max` (Coq: `ClosestMax`)
 noncomputable def ClosestMax_check {beta : Int}
@@ -5096,24 +5453,80 @@ noncomputable def ClosestMax_check {beta : Int}
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Audit gap for Coq `ClosestMax`; see `ClosestMin`. -/
-noncomputable def ClosestMax {beta : Int}
+/-- Coq: `ClosestMax` — if `min` is the greatest bounded float below `r`,
+    `max` is the least bounded float above `r`, and the midpoint leans toward
+    `max`, then `max` is a closest bounded float to `r`. -/
+theorem ClosestMax {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
-    Unit :=
-  ()
+    ⦃⌜isMin' (beta:=beta) bo radixZ r min ∧
+        isMax' (beta:=beta) bo radixZ r max ∧
+        _root_.F2R (beta:=beta) min + _root_.F2R (beta:=beta) max ≤ 2 * r⌝⦄
+    (pure (ClosestMax_check (beta:=beta) bo radixR r min max) : Id Unit)
+    ⦃⇓_ => ⌜Closest (beta:=beta) bo radixR r max⌝⦄ := by
+  intro h
+  rcases h with ⟨hmin, hmax, hmid⟩
+  rcases hmin with ⟨_hminBounded, _hmin_le, hminGreatest⟩
+  rcases hmax with ⟨hmaxBounded, hr_le_max, hmaxLeast⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestMax_check, Id.run, ULift.up_down]
+  constructor
+  · exact hmaxBounded
+  · intro f hfBounded
+    by_cases hr_le_f : r ≤ _root_.F2R (beta:=beta) f
+    · have hmax_f : _root_.F2R (beta:=beta) max ≤ _root_.F2R (beta:=beta) f :=
+        hmaxLeast f hfBounded hr_le_f
+      have hmax_sub_nonneg : 0 ≤ _root_.F2R (beta:=beta) max - r := by
+        linarith
+      have hf_sub_nonneg : 0 ≤ _root_.F2R (beta:=beta) f - r := by
+        linarith
+      rw [abs_of_nonneg hmax_sub_nonneg, abs_of_nonneg hf_sub_nonneg]
+      linarith
+    · have hf_le_r : _root_.F2R (beta:=beta) f ≤ r := le_of_lt (lt_of_not_ge hr_le_f)
+      have hf_min : _root_.F2R (beta:=beta) f ≤ _root_.F2R (beta:=beta) min :=
+        hminGreatest f hfBounded hf_le_r
+      have hmax_sub_nonneg : 0 ≤ _root_.F2R (beta:=beta) max - r := by
+        linarith
+      have hf_sub_nonpos : _root_.F2R (beta:=beta) f - r ≤ 0 := by
+        linarith
+      rw [abs_of_nonneg hmax_sub_nonneg, abs_of_nonpos hf_sub_nonpos]
+      linarith
 
 -- Disjunction: any candidate is either a min or a max (Coq: `ClosestMinOrMax`)
 noncomputable def ClosestMinOrMax_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `ClosestMinOrMax`; depends on faithful `isMin`/`isMax`. -/
-noncomputable def ClosestMinOrMax {beta : Int}
+/-- Coq: `ClosestMinOrMax` — every closest rounded float is either the
+    greatest bounded float below `r` or the least bounded float above `r`. -/
+theorem ClosestMinOrMax {beta : Int}
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ) :
-    Unit :=
-  ()
+    ⦃⌜True⌝⦄
+    (pure (ClosestMinOrMax_check (beta:=beta) bo radixR) : Id Unit)
+    ⦃⇓_ => ⌜MinOrMaxP_float (beta:=beta) bo radixZ
+      (Closest (beta:=beta) bo radixR)⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check, Id.run, ULift.up_down]
+  intro r p hp
+  rcases hp with ⟨hpBounded, hpClosest⟩
+  by_cases hp_le : _root_.F2R (beta:=beta) p ≤ r
+  · left
+    refine ⟨hpBounded, hp_le, ?_⟩
+    intro f hfBounded hf_le
+    have hdist := hpClosest f hfBounded
+    have hp_nonpos : _root_.F2R (beta:=beta) p - r ≤ 0 := by linarith
+    have hf_nonpos : _root_.F2R (beta:=beta) f - r ≤ 0 := by linarith
+    rw [abs_of_nonpos hp_nonpos, abs_of_nonpos hf_nonpos] at hdist
+    linarith
+  · right
+    have hr_le_p : r ≤ _root_.F2R (beta:=beta) p := le_of_lt (lt_of_not_ge hp_le)
+    refine ⟨hpBounded, hr_le_p, ?_⟩
+    intro f hfBounded hr_le_f
+    have hdist := hpClosest f hfBounded
+    have hp_nonneg : 0 ≤ _root_.F2R (beta:=beta) p - r := by linarith
+    have hf_nonneg : 0 ≤ _root_.F2R (beta:=beta) f - r := by linarith
+    rw [abs_of_nonneg hp_nonneg, abs_of_nonneg hf_nonneg] at hdist
+    linarith
 
 -- Zero case for Closest rounding (Coq: `ClosestZero`)
 noncomputable def ClosestZero_check {beta : Int}
@@ -5182,17 +5595,88 @@ noncomputable def FboundedMboundPos_check {beta : Int}
     (z m : Int) : Unit :=
   ()
 
-/-- Audit gap for Coq `FboundedMboundPos`.
+/-- Coq: `FboundedMboundPos`.
 
-The faithful `Fbounded` conclusion needs the missing Coq hypothesis
-`Zpos (vNum b) = Zpower_nat radix precision`; the current shell only carried an
-upper bound on `m`. -/
-noncomputable def FboundedMboundPos {beta : Int}
+The original theorem lives under the Pff section assumptions connecting the
+float radix to `radix` and `b.vNum` to `Zpower_nat radix precision`; those
+assumptions are explicit here. -/
+theorem FboundedMboundPos {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
-    Unit :=
-  ()
+    ⦃⌜beta = radix ∧ 1 < radix ∧ 0 < precision ∧
+        b.vNum = Zpower_nat radix precision ∧
+        0 ≤ m ∧ m ≤ Zpower_nat radix precision ∧
+        -b.dExp ≤ z⌝⦄
+    (pure (FboundedMboundPos_check (beta:=beta) b radix z m) : Id Unit)
+    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
+        Fbounded (beta:=beta) b c ∧
+        _root_.F2R (beta:=beta) c =
+          (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
+  intro h
+  rcases h with ⟨hbeta, hradix_gt, hprec_pos, hvNum, hm_nonneg, hm_le, hz⟩
+  simp only [wp, PostCond.noThrow, pure, FboundedMboundPos_check, Id.run,
+    ULift.up_down]
+  have hradix_pos_int : (0 : Int) < radix := lt_trans (by decide) hradix_gt
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix_pos_int
+  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+  have hbound_nonneg : 0 ≤ Zpower_nat radix precision := by
+    unfold Zpower_nat
+    exact pow_nonneg (le_of_lt hradix_pos_int) precision
+  rcases lt_or_eq_of_le hm_le with hm_lt | hm_eq
+  · refine ⟨⟨m, z⟩, ?_, ?_⟩
+    · constructor
+      · have habs : |m| = m := abs_of_nonneg hm_nonneg
+        simpa [Fbounded, hvNum, habs] using hm_lt
+      · exact hz
+    · subst beta
+      simp [_root_.F2R, FloatSpec.Core.Defs.F2R]
+  · let mant : Int := radix ^ (precision - 1)
+    refine ⟨⟨mant, z + 1⟩, ?_, ?_⟩
+    · constructor
+      · have hmant_pos : 0 < mant := by
+          dsimp [mant]
+          exact pow_pos hradix_pos_int (precision - 1)
+        have hsucc : Nat.succ (precision - 1) = precision := by
+          omega
+        have hbound_eq : Zpower_nat radix precision = mant * radix := by
+          dsimp [mant]
+          unfold Zpower_nat
+          calc
+            radix ^ precision = radix ^ Nat.succ (precision - 1) := by rw [hsucc]
+            _ = radix ^ (precision - 1) * radix := by rw [pow_succ]
+        have hmant_lt : mant < Zpower_nat radix precision := by
+          rw [hbound_eq]
+          nlinarith
+        have habs : |mant| = mant := abs_of_nonneg (le_of_lt hmant_pos)
+        simpa [Fbounded, hvNum, habs] using hmant_lt
+      · change -b.dExp ≤ z + 1
+        omega
+    · subst beta
+      have hsucc : Nat.succ (precision - 1) = precision := by
+        omega
+      have hpow_real :
+          ((Zpower_nat radix precision : Int) : ℝ) =
+            (mant : ℝ) * (radix : ℝ) := by
+        dsimp [mant]
+        unfold Zpower_nat
+        calc
+          ((radix ^ precision : Int) : ℝ) =
+              ((radix ^ Nat.succ (precision - 1) : Int) : ℝ) := by rw [hsucc]
+          _ = ((radix ^ (precision - 1) * radix : Int) : ℝ) := by rw [pow_succ]
+          _ = ((radix ^ (precision - 1) : Int) : ℝ) * (radix : ℝ) := by
+                rw [Int.cast_mul, Int.cast_pow]
+      calc
+        _root_.F2R (beta:=radix) (FloatSpec.Core.Defs.FlocqFloat.mk mant (z + 1)) =
+            (mant : ℝ) * (radix : ℝ) ^ (z + 1) := by
+              simp [_root_.F2R, FloatSpec.Core.Defs.F2R]
+        _ = (mant : ℝ) * ((radix : ℝ) ^ z * (radix : ℝ)) := by
+              rw [zpow_add₀ hradix_ne, zpow_one]
+        _ = ((Zpower_nat radix precision : Int) : ℝ) * (radix : ℝ) ^ z := by
+              rw [hpow_real]
+              ring
+        _ = (m : ℝ) * (radix : ℝ) ^ z := by
+              rw [hm_eq]
 
 /-- Coq: `FboundedMbound` — extends `FboundedMboundPos` by allowing
 negative mantissas via symmetry. -/
@@ -5201,13 +5685,54 @@ noncomputable def FboundedMbound_check {beta : Int}
     (z m : Int) : Unit :=
   ()
 
-/-- Audit gap for Coq `FboundedMbound`; see `FboundedMboundPos`. -/
-noncomputable def FboundedMbound {beta : Int}
+/-- Coq: `FboundedMbound` — construct a bounded float for any signed
+    mantissa whose absolute value is within the precision bound. -/
+theorem FboundedMbound {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
-    Unit :=
-  ()
+    ⦃⌜beta = radix ∧ 1 < radix ∧ 0 < precision ∧
+        b.vNum = Zpower_nat radix precision ∧
+        |m| ≤ Zpower_nat radix precision ∧
+        -b.dExp ≤ z⌝⦄
+    (pure (FboundedMbound_check (beta:=beta) b radix z m) : Id Unit)
+    ⦃⇓_ => ⌜∃ c : FloatSpec.Core.Defs.FlocqFloat beta,
+        Fbounded (beta:=beta) b c ∧
+        _root_.F2R (beta:=beta) c =
+          (m : ℝ) * (radix : ℝ) ^ z⌝⦄ := by
+  intro h
+  rcases h with ⟨hbeta, hradix_gt, hprec_pos, hvNum, hm_abs_le, hz⟩
+  simp only [wp, PostCond.noThrow, pure, FboundedMbound_check, Id.run,
+    ULift.up_down]
+  by_cases hm_nonneg : 0 ≤ m
+  · have hm_abs : |m| = m := abs_of_nonneg hm_nonneg
+    have hpos := FboundedMboundPos (beta:=beta) b radix precision z m
+    have hres := hpos ⟨hbeta, hradix_gt, hprec_pos, hvNum, hm_nonneg, by
+      simpa [hm_abs] using hm_abs_le, hz⟩
+    simpa [wp, PostCond.noThrow, pure, FboundedMboundPos_check] using hres
+  · have hm_neg : m < 0 := lt_of_not_ge hm_nonneg
+    have hm_abs : |m| = -m := abs_of_neg hm_neg
+    have hm_pos_nonneg : 0 ≤ -m := by omega
+    have hm_pos_le : -m ≤ Zpower_nat radix precision := by
+      simpa [hm_abs] using hm_abs_le
+    have hpos := FboundedMboundPos (beta:=beta) b radix precision z (-m)
+    have hres := hpos ⟨hbeta, hradix_gt, hprec_pos, hvNum, hm_pos_nonneg, hm_pos_le, hz⟩
+    rcases hres with ⟨c, hcBounded, hcVal⟩
+    refine ⟨Fopp (beta:=beta) c, ?_, ?_⟩
+    · simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hcBounded
+    · have hFopp :
+          _root_.F2R (beta:=beta) (Fopp (beta:=beta) c) =
+            - _root_.F2R (beta:=beta) c := by
+        simp [_root_.F2R, FloatSpec.Core.Defs.F2R, Fopp,
+          FloatSpec.Calc.Operations.Fopp, neg_mul]
+      calc
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) c) =
+            - _root_.F2R (beta:=beta) c := hFopp
+        _ = - ((-m : Int) : ℝ) * (radix : ℝ) ^ z := by
+              rw [hcVal]
+              ring
+        _ = (m : ℝ) * (radix : ℝ) ^ z := by
+              norm_num
 
 /-!
 Coq: `MinExList`
@@ -5388,12 +5913,51 @@ noncomputable def ClosestMonotone_check {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `ClosestMonotone`; depends on the full closest/min-max
-development rather than the generic skeleton `MonotoneP`. -/
-noncomputable def ClosestMonotone {beta : Int}
+/-- Coq: `ClosestMonotone` — closest rounding is monotone in real value.
+
+The Lean statement targets the float-specific monotonicity predicate; the
+generic `MonotoneP` fallback is representation equality and is not the Flocq
+payload. -/
+theorem ClosestMonotone {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
-    Unit :=
-  ()
+    ⦃⌜True⌝⦄
+    (pure (ClosestMonotone_check (beta:=beta) bo radix) : Id Unit)
+    ⦃⇓_ => ⌜MonotoneP_float (Closest (beta:=beta) bo radix)⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, ClosestMonotone_check, Id.run,
+    ULift.up_down]
+  intro p q p' q' hpq hp' hq'
+  show _root_.F2R (beta:=beta) p' ≤ _root_.F2R (beta:=beta) q'
+  by_contra hnot
+  have hq'p' : _root_.F2R (beta:=beta) q' < _root_.F2R (beta:=beta) p' :=
+    lt_of_not_ge hnot
+  rcases hp' with ⟨hp'Bounded, hp'Closest⟩
+  rcases hq' with ⟨hq'Bounded, hq'Closest⟩
+  have hA :
+      |_root_.F2R (beta:=beta) p' - p| ≤
+        |_root_.F2R (beta:=beta) q' - p| :=
+    hp'Closest q' hq'Bounded
+  have hB :
+      |_root_.F2R (beta:=beta) q' - q| ≤
+        |_root_.F2R (beta:=beta) p' - q| :=
+    hq'Closest p' hp'Bounded
+  have hA2 :
+      (_root_.F2R (beta:=beta) p' - p)^2 ≤
+        (_root_.F2R (beta:=beta) q' - p)^2 := by
+    have h := sq_le_sq.mpr hA
+    simpa [sq_abs] using h
+  have hB2 :
+      (_root_.F2R (beta:=beta) q' - q)^2 ≤
+        (_root_.F2R (beta:=beta) p' - q)^2 := by
+    have h := sq_le_sq.mpr hB
+    simpa [sq_abs] using h
+  have hsum_le :
+      _root_.F2R (beta:=beta) p' + _root_.F2R (beta:=beta) q' ≤ 2 * p := by
+    nlinarith
+  have hsum_ge :
+      2 * q ≤ _root_.F2R (beta:=beta) p' + _root_.F2R (beta:=beta) q' := by
+    nlinarith
+  nlinarith
 
 -- Rounded-mode packaging for `Closest` (Coq: `ClosestRoundedModeP`)
 noncomputable def ClosestRoundedModeP_check {beta : Int}
@@ -5413,16 +5977,48 @@ noncomputable def ClosestOpp_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `ClosestOpp`.
-
-Negation symmetry should be provable for the faithful `Closest` predicate, but
-the proof is kept out of the theorem API until the closest section is repaired
-as a whole. -/
-noncomputable def ClosestOpp {beta : Int}
+/-- Coq: `ClosestOpp` — negation preserves closestness. -/
+theorem ClosestOpp {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    Unit :=
-  ()
+    ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
+    (pure (ClosestOpp_check (beta:=beta) bo radix p r) : Id Unit)
+    ⦃⇓_ => ⌜Closest (beta:=beta) bo radix (-r) (Fopp p)⌝⦄ := by
+  intro hp
+  simp only [wp, PostCond.noThrow, pure, ClosestOpp_check,
+    Id.run, ULift.up_down]
+  rcases hp with ⟨hpBounded, hpClosest⟩
+  constructor
+  · simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hpBounded
+  · intro f hfBounded
+    have hFoppFBounded : Fbounded (beta:=beta) bo (Fopp f) := by
+      simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hfBounded
+    have hClosest := hpClosest (Fopp f) hFoppFBounded
+    have hpOpp :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) p) = - _root_.F2R (beta:=beta) p := by
+      have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=beta) p) trivial
+      simpa [Fopp, _root_.F2R] using h
+    have hfOpp :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) f) = - _root_.F2R (beta:=beta) f := by
+      have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=beta) f) trivial
+      simpa [Fopp, _root_.F2R] using h
+    calc
+      |_root_.F2R (beta:=beta) (Fopp (beta:=beta) p) - -r|
+          = |_root_.F2R (beta:=beta) p - r| := by
+            have harg :
+                _root_.F2R (beta:=beta) (Fopp (beta:=beta) p) - -r =
+                  - (_root_.F2R (beta:=beta) p - r) := by
+              rw [hpOpp]
+              ring
+            rw [harg, abs_neg]
+      _ ≤ |_root_.F2R (beta:=beta) (Fopp (beta:=beta) f) - r| := hClosest
+      _ = |_root_.F2R (beta:=beta) f - -r| := by
+            have harg :
+                _root_.F2R (beta:=beta) (Fopp (beta:=beta) f) - r =
+                  - (_root_.F2R (beta:=beta) f - -r) := by
+              rw [hfOpp]
+              ring
+            rw [harg, abs_neg]
 
 -- Absolute-value symmetry on the real side (Coq: `ClosestFabs`)
 noncomputable def ClosestFabs_check {beta : Int}
@@ -5430,16 +6026,66 @@ noncomputable def ClosestFabs_check {beta : Int}
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `ClosestFabs`.
-
-This closure theorem depends on the full symmetric closest development; the
-current port proves negation symmetry separately but does not yet reconstruct
-the absolute-value case. -/
-noncomputable def ClosestFabs {beta : Int}
+/-- Coq: `ClosestFabs` — absolute value preserves closestness. -/
+theorem ClosestFabs {beta : Int}
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    Unit :=
-  ()
+    ⦃⌜1 < beta ∧ Closest (beta:=beta) bo radix r p⌝⦄
+    (pure (ClosestFabs_check (beta:=beta) bo radix p r) : Id Unit)
+    ⦃⇓_ => ⌜Closest (beta:=beta) bo radix |r| (Fabs p)⌝⦄ := by
+  intro ⟨hβ, hp⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestFabs_check, Id.run,
+    ULift.up_down]
+  rcases hp with ⟨hpBounded, hpClosest⟩
+  have hFabsBounded : Fbounded (beta:=beta) bo (Fabs (beta:=beta) p) := by
+    simpa [Fbounded, Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs]
+      using hpBounded
+  have hFabsVal :
+      _root_.F2R (beta:=beta) (Fabs (beta:=beta) p) =
+        |_root_.F2R (beta:=beta) p| := by
+    have h := FloatSpec.Calc.Operations.F2R_abs (beta:=beta) p hβ
+    simpa [Fabs, _root_.F2R] using h
+  constructor
+  · exact hFabsBounded
+  · intro g hg
+    by_cases hr : 0 ≤ r
+    · have hr_abs : |r| = r := abs_of_nonneg hr
+      calc
+        |(_root_.F2R (beta:=beta) (Fabs (beta:=beta) p)) - (|r|)| =
+            |(|_root_.F2R (beta:=beta) p|) - (|r|)| := by rw [hFabsVal]
+        _ ≤ |_root_.F2R (beta:=beta) p - r| :=
+            abs_abs_sub_abs_le_abs_sub _ _
+        _ ≤ |_root_.F2R (beta:=beta) g - r| :=
+            hpClosest g hg
+        _ = |(_root_.F2R (beta:=beta) g) - (|r|)| := by rw [hr_abs]
+    · have hr_lt : r < 0 := lt_of_not_ge hr
+      have hr_abs : |r| = -r := abs_of_neg hr_lt
+      have hFoppBounded : Fbounded (beta:=beta) bo (Fopp (beta:=beta) g) := by
+        simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hg
+      have hFoppVal :
+          _root_.F2R (beta:=beta) (Fopp (beta:=beta) g) =
+            - _root_.F2R (beta:=beta) g := by
+        have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=beta) g) trivial
+        simpa [Fopp, _root_.F2R] using h
+      calc
+        |(_root_.F2R (beta:=beta) (Fabs (beta:=beta) p)) - (|r|)| =
+            |(|_root_.F2R (beta:=beta) p|) - (|r|)| := by rw [hFabsVal]
+        _ ≤ |_root_.F2R (beta:=beta) p - r| :=
+            abs_abs_sub_abs_le_abs_sub _ _
+        _ ≤ |_root_.F2R (beta:=beta) (Fopp (beta:=beta) g) - r| :=
+            hpClosest (Fopp (beta:=beta) g) hFoppBounded
+        _ = |(_root_.F2R (beta:=beta) g) - (|r|)| := by
+            rw [hFoppVal, hr_abs]
+            have harg :
+                - _root_.F2R (beta:=beta) g - r =
+                  - (_root_.F2R (beta:=beta) g + r) := by
+              ring
+            rw [harg, abs_neg]
+            have htarget :
+                _root_.F2R (beta:=beta) g + r =
+                  _root_.F2R (beta:=beta) g - -r := by
+              ring
+            rw [htarget]
 
 -- Ulp inequality for closest rounding (Coq: `ClosestUlp`)
 noncomputable def ClosestUlp_check {beta : Int}
@@ -5662,11 +6308,49 @@ def SymmetricP {beta : Int}
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   ∀ r (p : FloatSpec.Core.Defs.FlocqFloat beta), P r p → P (-r) (Fopp p)
 
-/-- Audit gap for Coq `ClosestSymmetric`; see `ClosestOpp`. -/
-noncomputable def ClosestSymmetric {beta : Int}
+/-- Coq: `ClosestSymmetric` — the `Closest` relation is symmetric under
+    real negation accompanied by float negation. -/
+theorem ClosestSymmetric {beta : Int}
     (bo : Fbound_skel) (radix : ℝ) :
-    Unit :=
-  ()
+    ⦃⌜True⌝⦄
+    (pure (ClosestSymmetric_check (beta:=beta) bo radix) : Id Unit)
+    ⦃⇓_ => ⌜SymmetricP (Closest (beta:=beta) bo radix)⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, ClosestSymmetric_check,
+    Id.run, ULift.up_down]
+  intro r p hp
+  rcases hp with ⟨hpBounded, hpClosest⟩
+  constructor
+  · simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hpBounded
+  · intro f hfBounded
+    have hFoppFBounded : Fbounded (beta:=beta) bo (Fopp f) := by
+      simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hfBounded
+    have hClosest := hpClosest (Fopp f) hFoppFBounded
+    have hpOpp :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) p) = - _root_.F2R (beta:=beta) p := by
+      have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=beta) p) trivial
+      simpa [Fopp, _root_.F2R] using h
+    have hfOpp :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) f) = - _root_.F2R (beta:=beta) f := by
+      have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=beta) f) trivial
+      simpa [Fopp, _root_.F2R] using h
+    calc
+      |_root_.F2R (beta:=beta) (Fopp (beta:=beta) p) - -r|
+          = |_root_.F2R (beta:=beta) p - r| := by
+            have harg :
+                _root_.F2R (beta:=beta) (Fopp (beta:=beta) p) - -r =
+                  - (_root_.F2R (beta:=beta) p - r) := by
+              rw [hpOpp]
+              ring
+            rw [harg, abs_neg]
+      _ ≤ |_root_.F2R (beta:=beta) (Fopp (beta:=beta) f) - r| := hClosest
+      _ = |_root_.F2R (beta:=beta) f - -r| := by
+            have harg :
+                _root_.F2R (beta:=beta) (Fopp (beta:=beta) f) - r =
+                  - (_root_.F2R (beta:=beta) f - -r) := by
+              rw [hfOpp]
+              ring
+            rw [harg, abs_neg]
 
 -- Coq: `ClosestZero1` — if `Closest r f`, `F2R f = 0`, `r = F2R g`, and
 -- `-dExp bo ≤ Fexp g`, then `r = 0`.
@@ -5929,13 +6613,25 @@ noncomputable def EvenClosestMonotone_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
-/-- Audit gap for Coq `EvenClosestMonotone`.
-The old shell succeeded only because `MonotoneP` was `True`; the usable
-float-specific monotonicity proof must target `MonotoneP_float`. -/
-noncomputable def EvenClosestMonotone {beta : Int}
+/-- Coq: `EvenClosestMonotone` — even-closest rounding is monotone.
+
+The Coq proof applies `ClosestMonotone` after unpacking the two
+`EvenClosest` hypotheses; the Lean statement uses the float-specific
+`MonotoneP_float` payload. -/
+theorem EvenClosestMonotone {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
-    Unit :=
-  ()
+    ⦃⌜True⌝⦄
+    (pure (EvenClosestMonotone_check (beta:=beta) b radix precision) : Id Unit)
+    ⦃⇓_ => ⌜MonotoneP_float (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, EvenClosestMonotone_check, Id.run,
+    ULift.up_down]
+  have hClosestMono : MonotoneP_float (Closest (beta:=beta) b radix) := by
+    have h := ClosestMonotone (beta:=beta) b radix True.intro
+    simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check, Id.run,
+      ULift.up_down] using h
+  intro p q p' q' hpq hp' hq'
+  exact hClosestMono p q p' q' hpq hp'.1 hq'.1
 
 noncomputable def EvenClosestMonotone2_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
@@ -5979,12 +6675,42 @@ noncomputable def EvenClosestSymmetric_check {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
-/-- Audit gap for Coq `EvenClosestSymmetric`; depends on the closest symmetry
-section currently under repair. -/
-noncomputable def EvenClosestSymmetric {beta : Int}
+/-- Coq: `EvenClosestSymmetric` — even tie-breaking is symmetric under negation. -/
+theorem EvenClosestSymmetric {beta : Int}
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
-    Unit :=
-  ()
+    ⦃⌜True⌝⦄
+    (pure (EvenClosestSymmetric_check (beta:=beta) b radix precision) : Id Unit)
+    ⦃⇓_ => ⌜SymmetricP (EvenClosest (beta:=beta) b radix precision)⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, EvenClosestSymmetric_check,
+    Id.run, ULift.up_down]
+  have hClosestSym : SymmetricP (Closest (beta:=beta) b radix) := by
+    have h := ClosestSymmetric (beta:=beta) b radix True.intro
+    simpa only [wp, PostCond.noThrow, pure, ClosestSymmetric_check,
+      Id.run, ULift.up_down] using h
+  intro r p hp
+  rcases hp with ⟨hClosest, hTie⟩
+  constructor
+  · exact hClosestSym r p hClosest
+  ·
+    rcases hTie with hEven | hUnique
+    · left
+      have h := FNevenFop (beta:=beta) b radix precision p hEven
+      simpa only [wp, PostCond.noThrow, pure, FNevenFop_check,
+        Id.run, ULift.up_down] using h
+    · right
+      intro q hq
+      have hqOppClosest : Closest (beta:=beta) b radix r (Fopp q) := by
+        simpa using hClosestSym (-r) q hq
+      have hFoppq_eq_p : Fopp (beta:=beta) q = p :=
+        hUnique (Fopp q) hqOppClosest
+      have hFoppFopp : Fopp (beta:=beta) (Fopp (beta:=beta) q) = q := by
+        cases q
+        simp [Fopp, FloatSpec.Calc.Operations.Fopp]
+      have h := congrArg (fun x => Fopp (beta:=beta) x) hFoppq_eq_p
+      change Fopp (beta:=beta) (Fopp (beta:=beta) q) = Fopp (beta:=beta) p at h
+      rw [hFoppFopp] at h
+      exact h
 
 -- Rounded-mode packaging for `EvenClosest` (Coq: `EvenClosestRoundedModeP`)
 noncomputable def EvenClosestRoundedModeP_check {beta : Int}
@@ -6255,11 +6981,18 @@ noncomputable def RoundedProjector_check {α : Type}
     (P : ℝ → α → Prop) : Unit :=
   ()
 
-/-- Audit gap for `RoundedProjector`.
-The generic `RoundedModeP` package does not imply the generic projector
-uniqueness property; the old shell relied on a trivial projector predicate. -/
-noncomputable def RoundedProjector {α : Type} (P : ℝ → α → Prop) : Unit :=
-  ()
+/-- Coq: `RoundedProjector` — a rounded-mode relation is a projector.
+
+For the generic Lean fallback, `ProjectorP` is the same same-input uniqueness
+property carried by `MinOrMaxP`, the third component of `RoundedModeP`. -/
+theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
+    ⦃⌜RoundedModeP P⌝⦄
+    (pure (RoundedProjector_check P) : Id Unit)
+    ⦃⇓_ => ⌜ProjectorP P⌝⦄ := by
+  intro hRounded
+  simp only [wp, PostCond.noThrow, pure, RoundedProjector_check,
+    Id.run, ULift.up_down]
+  exact hRounded.2.2.1
 
 -- Coq: `RoundedModeProjectorIdem` — under RoundedModeP, P p p for bounded p
 noncomputable def RoundedModeProjectorIdem_check {beta : Int}
@@ -7845,8 +8578,6 @@ theorem powerRZ_Zs (e : ℝ) (n : Int) :
   rw [zpow_add₀ he, zpow_one, mul_comm]
 
 -- Coq: `Zpower_nat_Z_powerRZ` — bridge between integer and real powers
--- Alias for Coq's Zpower_nat on integers (placed early for downstream uses)
-noncomputable def Zpower_nat (n : Int) (q : Nat) : Int := n ^ q
 
 noncomputable def Zpower_nat_Z_powerRZ_check (n : Int) (m : Nat) : Unit :=
   ()
@@ -9104,13 +9835,40 @@ noncomputable def firstNormalPosNormal_check
     {beta : Int} (radix : Int) (b : Fbound_skel) (precision : Nat) : Unit :=
   ()
 
-/-- Audit gap for Coq `firstNormalPosNormal`.
-The old translated theorem had precondition `True`; with real `Fnormal` this
-requires the full bound/precision hypotheses from the Flocq section. -/
-noncomputable def firstNormalPosNormal {beta : Int}
+/-- Coq: `firstNormalPosNormal` — the first positive normal float is normal. -/
+theorem firstNormalPosNormal {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
-    Unit :=
-  ()
+    ⦃⌜1 < radix ∧ 1 < precision ∧ b.vNum = Zpower_nat radix precision⌝⦄
+    (pure (firstNormalPosNormal_check (beta:=beta) radix b precision) : Id Unit)
+    ⦃⇓_ => ⌜Fnormal (beta:=beta) radix b
+        (firstNormalPos (beta:=beta) radix b precision)⌝⦄ := by
+  intro ⟨hradix, hprecision, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, firstNormalPosNormal_check,
+    Id.run, ULift.up_down]
+  show Fnormal (beta:=beta) radix b
+    (firstNormalPos (beta:=beta) radix b precision)
+  have hradix_pos : 0 < radix := by omega
+  have hpow_pos : 0 < radix ^ (precision - 1) := pow_pos hradix_pos _
+  have hsucc : Nat.succ (precision - 1) = precision := by omega
+  have hpow_succ : radix ^ precision = radix * radix ^ (precision - 1) := by
+    calc
+      radix ^ precision = radix ^ Nat.succ (precision - 1) := by rw [hsucc]
+      _ = radix ^ (precision - 1) * radix := by rw [pow_succ]
+      _ = radix * radix ^ (precision - 1) := by ring
+  constructor
+  · constructor
+    · rw [hvNum]
+      simp only [firstNormalPos, nNormMin, Zpower_nat,
+        FloatSpec.Core.Defs.FlocqFloat.Fnum]
+      rw [abs_of_pos hpow_pos]
+      rw [hpow_succ]
+      nlinarith
+    · simp [firstNormalPos]
+  · rw [hvNum]
+    simp only [firstNormalPos, nNormMin, Zpower_nat,
+      FloatSpec.Core.Defs.FlocqFloat.Fnum]
+    rw [hpow_succ]
+    rw [abs_of_pos (mul_pos hradix_pos hpow_pos)]
 
 noncomputable def pNormal_absolu_min_check {beta : Int}
     (radix : Int) (b : Fbound_skel) (precision : Nat)
@@ -10660,14 +11418,105 @@ noncomputable def SterbenzAux_check {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Audit gap for Coq `SterbenzAux`.
-With faithful `Fbounded`, this needs the real Sterbenz proof over `Fminus`;
-the previous translated body only used `trivial`. -/
-noncomputable def SterbenzAux {beta : Int}
+/-- Coq: `SterbenzAux` — if `x` and `y` are bounded in the same bound `b` and
+    satisfy `F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded in `b`. -/
+theorem SterbenzAux {beta : Int}
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    Unit :=
-  ()
+    ⦃⌜1 < beta ∧
+        Fbounded (beta:=beta) b x ∧
+        Fbounded (beta:=beta) b y ∧
+        (_root_.F2R (beta:=beta) y) ≤ (_root_.F2R (beta:=beta) x) ∧
+        (_root_.F2R (beta:=beta) x) ≤ 2 * (_root_.F2R (beta:=beta) y)⌝⦄
+    (pure (SterbenzAux_check (beta:=beta) b x y) : Id Unit)
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b
+        (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
+  intro h
+  rcases h with ⟨hβ, hxBounded, hyBounded, hyx, hx2y⟩
+  simp only [wp, PostCond.noThrow, pure, SterbenzAux_check, Id.run,
+    ULift.up_down]
+  let d := FloatSpec.Calc.Operations.Fminus (beta:=beta) x y
+  have hdVal : _root_.F2R (beta:=beta) d =
+      _root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) y := by
+    have hminus := Fminus_correct (beta:=beta) x y
+    simpa [d, wp, PostCond.noThrow, pure, Fminus_correct_check] using hminus hβ
+  have hyNonneg : 0 ≤ _root_.F2R (beta:=beta) y := by
+    have hy_le_2y : _root_.F2R (beta:=beta) y ≤
+        2 * _root_.F2R (beta:=beta) y := le_trans hyx hx2y
+    nlinarith
+  have hsubNonneg :
+      0 ≤ _root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) y := by
+    nlinarith
+  have hdNonneg : 0 ≤ _root_.F2R (beta:=beta) d := by
+    rw [hdVal]
+    exact hsubNonneg
+  have hdLeX : _root_.F2R (beta:=beta) d ≤ _root_.F2R (beta:=beta) x := by
+    rw [hdVal]
+    nlinarith
+  have hdLeY : _root_.F2R (beta:=beta) d ≤ _root_.F2R (beta:=beta) y := by
+    rw [hdVal]
+    nlinarith
+  have hdFnum_nonneg : 0 ≤ d.Fnum := by
+    let z : FloatSpec.Core.Defs.FlocqFloat beta := ⟨0, d.Fexp⟩
+    have hzVal : _root_.F2R (beta:=beta) z = 0 := by
+      simp [z, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hnum := Rle_Fexp_eq_Zle (beta:=beta) z d
+      ⟨by simpa [hzVal] using hdNonneg, rfl, hβ⟩
+    simpa [z] using hnum
+  constructor
+  · by_cases hexp : x.Fexp ≤ y.Fexp
+    · have hdExp : d.Fexp = x.Fexp := by
+        cases x with
+        | mk mx ex =>
+          cases y with
+          | mk my ey =>
+            simp [d, FloatSpec.Calc.Operations.Fminus,
+              FloatSpec.Calc.Operations.Fplus, FloatSpec.Calc.Operations.Falign,
+              FloatSpec.Calc.Operations.Fopp, hexp]
+      have hdFnum_le_x : d.Fnum ≤ x.Fnum := by
+        have hnum := Rle_Fexp_eq_Zle (beta:=beta) d x ⟨hdLeX, hdExp, hβ⟩
+        simpa using hnum
+      have hdAbs_le_xAbs : |d.Fnum| ≤ |x.Fnum| := by
+        rw [abs_of_nonneg hdFnum_nonneg]
+        exact le_trans hdFnum_le_x (le_abs_self x.Fnum)
+      exact lt_of_le_of_lt hdAbs_le_xAbs hxBounded.1
+    · have hyxExp : y.Fexp ≤ x.Fexp := le_of_lt (lt_of_not_ge hexp)
+      have hdExp : d.Fexp = y.Fexp := by
+        cases x with
+        | mk mx ex =>
+          cases y with
+          | mk my ey =>
+            simp [d, FloatSpec.Calc.Operations.Fminus,
+              FloatSpec.Calc.Operations.Fplus, FloatSpec.Calc.Operations.Falign,
+              FloatSpec.Calc.Operations.Fopp, hexp]
+      have hdFnum_le_y : d.Fnum ≤ y.Fnum := by
+        have hnum := Rle_Fexp_eq_Zle (beta:=beta) d y ⟨hdLeY, hdExp, hβ⟩
+        simpa using hnum
+      have hdAbs_le_yAbs : |d.Fnum| ≤ |y.Fnum| := by
+        rw [abs_of_nonneg hdFnum_nonneg]
+        exact le_trans hdFnum_le_y (le_abs_self y.Fnum)
+      exact lt_of_le_of_lt hdAbs_le_yAbs hyBounded.1
+  · by_cases hexp : x.Fexp ≤ y.Fexp
+    · have hdExp : d.Fexp = x.Fexp := by
+        cases x with
+        | mk mx ex =>
+          cases y with
+          | mk my ey =>
+            simp [d, FloatSpec.Calc.Operations.Fminus,
+              FloatSpec.Calc.Operations.Fplus, FloatSpec.Calc.Operations.Falign,
+              FloatSpec.Calc.Operations.Fopp, hexp]
+      rw [hdExp]
+      exact hxBounded.2
+    · have hdExp : d.Fexp = y.Fexp := by
+        cases x with
+        | mk mx ex =>
+          cases y with
+          | mk my ey =>
+            simp [d, FloatSpec.Calc.Operations.Fminus,
+              FloatSpec.Calc.Operations.Fplus, FloatSpec.Calc.Operations.Falign,
+              FloatSpec.Calc.Operations.Fopp, hexp]
+      rw [hdExp]
+      exact hyBounded.2
 
 -- Coq: `Sterbenz` — symmetric bound version using 1/2 ≤ x/y ≤ 2
 noncomputable def Sterbenz_check {beta : Int}
@@ -10675,12 +11524,56 @@ noncomputable def Sterbenz_check {beta : Int}
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-/-- Audit gap for Coq `Sterbenz`; see `SterbenzAux`. -/
-noncomputable def Sterbenz {beta : Int}
+/-- Coq: `Sterbenz` — if `x` and `y` are bounded in the same bound `b` and
+    satisfy `1/2 * F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded. -/
+theorem Sterbenz {beta : Int}
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
-    Unit :=
-  ()
+    ⦃⌜1 < beta ∧
+        Fbounded (beta:=beta) b x ∧
+        Fbounded (beta:=beta) b y ∧
+        (1 / 2 : ℝ) * (_root_.F2R (beta:=beta) y) ≤
+          (_root_.F2R (beta:=beta) x) ∧
+        (_root_.F2R (beta:=beta) x) ≤ 2 * (_root_.F2R (beta:=beta) y)⌝⦄
+    (pure (Sterbenz_check (beta:=beta) b x y) : Id Unit)
+    ⦃⇓_ => ⌜Fbounded (beta:=beta) b
+        (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)⌝⦄ := by
+  intro h
+  rcases h with ⟨hβ, hxBounded, hyBounded, hhalf, hx2y⟩
+  simp only [wp, PostCond.noThrow, pure, Sterbenz_check, Id.run,
+    ULift.up_down]
+  by_cases hyx : _root_.F2R (beta:=beta) y ≤ _root_.F2R (beta:=beta) x
+  · have haux := SterbenzAux (beta:=beta) b x y
+    simpa [wp, PostCond.noThrow, pure, SterbenzAux_check] using
+      haux ⟨hβ, hxBounded, hyBounded, hyx, hx2y⟩
+  · have hxy : _root_.F2R (beta:=beta) x ≤ _root_.F2R (beta:=beta) y :=
+      le_of_lt (lt_of_not_ge hyx)
+    have hy2x : _root_.F2R (beta:=beta) y ≤ 2 * _root_.F2R (beta:=beta) x := by
+      nlinarith
+    have haux := SterbenzAux (beta:=beta) b y x
+    have hyxMinusBounded :
+        Fbounded (beta:=beta) b
+          (FloatSpec.Calc.Operations.Fminus (beta:=beta) y x) := by
+      simpa [wp, PostCond.noThrow, pure, SterbenzAux_check] using
+        haux ⟨hβ, hyBounded, hxBounded, hxy, hy2x⟩
+    have hswap :
+        Fopp (beta:=beta)
+            (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y) =
+          FloatSpec.Calc.Operations.Fminus (beta:=beta) y x := by
+      have hswapTrip := Fopp_Fminus (beta:=beta) x y
+      simpa [wp, PostCond.noThrow, pure, Fopp_Fminus_check] using
+        hswapTrip trivial
+    have hoppBounded :
+        Fbounded (beta:=beta) b
+          (Fopp (beta:=beta)
+            (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)) := by
+      rw [hswap]
+      exact hyxMinusBounded
+    have hinv :=
+      oppBoundedInv (beta:=beta) b
+        (FloatSpec.Calc.Operations.Fminus (beta:=beta) x y)
+    simpa [wp, PostCond.noThrow, pure, oppBoundedInv_check] using
+      hinv hoppBounded
 
 -- Coq: `Fdigit_abs` — digit invariant under absolute value
 noncomputable def Fdigit_abs_check {beta : Int}
@@ -11967,18 +12860,61 @@ theorem digitAux1 (n : Int) (p : Nat) (r : Int) :
   simp [Zpower_nat, pow_succ]
   ring
 
--- Minimal positive and digit infrastructure used by digit lemmas
--- Reuse existing `Positive` defined above. The full Coq recursion for
--- `digitAux` is not ported; this local helper is kept only for audit names.
-noncomputable def digitAux (n v r : Int) (q : Positive) : Nat := 0
+-- Minimal positive and digit infrastructure used by digit lemmas.
+-- The Lean `Positive` compatibility wrapper stores a unary countdown rather
+-- than Coq's binary `positive`; this fuel recursion mirrors the Coq
+-- stop/continue condition over that available representation.
+noncomputable def pos_length (p : Positive) : Nat := nat_of_P p
+
+noncomputable def digitAuxFuel (n v : Int) : Int → Nat → Nat
+  | r, 0 => 0
+  | r, Nat.succ q =>
+      if r > v then 0 else Nat.succ (digitAuxFuel n v (n * r) q)
+
+noncomputable def digitAux (n v r : Int) (q : Positive) : Nat :=
+  digitAuxFuel n v r (pos_length q)
+
+private theorem digitAuxFuel_less (n v r : Int) (q : Nat) :
+    match digitAuxFuel n v r q with
+    | Nat.succ r' => Zpower_nat n r' * r ≤ v
+    | 0 => True := by
+  induction q generalizing r with
+  | zero =>
+      simp [digitAuxFuel]
+  | succ q ih =>
+      simp only [digitAuxFuel]
+      by_cases hgt : r > v
+      · simp [hgt]
+      · simp [hgt]
+        cases haux : digitAuxFuel n v (n * r) q with
+        | zero =>
+            simp [Zpower_nat]
+            omega
+        | succ r' =>
+            have hrec :
+                Zpower_nat n r' * (n * r) ≤ v := by
+              simpa [haux] using ih (n * r)
+            have hpow :
+                Zpower_nat n (Nat.succ r') * r =
+                  Zpower_nat n r' * (n * r) := by
+              simp [Zpower_nat, pow_succ]
+              ring
+            simpa [hpow] using hrec
 
 -- Coq: `digitAuxLess`
 noncomputable def digitAuxLess_check (n : Int) (v r : Int) (q : Positive) : Unit :=
   ()
 
--- Audit gap for Coq `digitAuxLess`; the recursive `digitAux` algorithm has not
--- been ported.
-noncomputable def digitAuxLess (n : Int) (v r : Int) (q : Positive) : Unit := ()
+theorem digitAuxLess (n : Int) (v r : Int) (q : Positive) :
+    ⦃⌜True⌝⦄
+    (pure (digitAuxLess_check n v r q) : Id Unit)
+    ⦃⇓_ => ⌜match digitAux n v r q with
+            | Nat.succ r' => Zpower_nat n r' * r ≤ v
+            | 0 => True⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure, digitAuxLess_check, Id.run,
+    ULift.up_down]
+  simpa [digitAux] using digitAuxFuel_less n v r (pos_length q)
 
 -- Coq: `digitLess` — if q ≠ 0 then Zpower_nat n (pred (digit q)) ≤ |q|
 noncomputable def digitLess_check (n : Int) (q : Int) : Unit :=
@@ -12013,9 +12949,6 @@ theorem digitLess (n : Int) (q : Int) :
     rw [Int.natAbs_of_nonneg (by omega : 0 ≤ d - 1)]
     exact hpred_cast.symm
   simpa [digit, Zpower_nat, d, hpred] using hbounds.1
-
--- Length measure for the local unary `Positive` compatibility wrapper.
-noncomputable def pos_length (p : Positive) : Nat := nat_of_P p
 
 -- Coq: `pos_length_pow` — Zpos p < Zpower_nat n (S (pos_length p))
 noncomputable def pos_length_pow_check (n : Int) (p : Positive) : Unit :=
@@ -12078,12 +13011,48 @@ theorem digitMore (n : Int) (q : Int) :
       rw [Int.natAbs_of_nonneg hnonneg, Int.toNat_of_nonneg hnonneg]
     simpa [digit, Zpower_nat, hnat] using hbounds.2
 
+private theorem digitAuxFuel_more (n v r : Int) (q : Nat)
+    (hn : 1 < n) (hr : 0 < r)
+    (hbound : v < Zpower_nat n q * r) :
+    v < Zpower_nat n (digitAuxFuel n v r q) * r := by
+  induction q generalizing r with
+  | zero =>
+      simpa [digitAuxFuel] using hbound
+  | succ q ih =>
+      simp only [digitAuxFuel]
+      by_cases hgt : r > v
+      · simp [hgt, Zpower_nat]
+      · simp [hgt]
+        have hr_le : r ≤ v := by omega
+        have hn_pos : 0 < n := by omega
+        have hnr : 0 < n * r := by nlinarith
+        have hbound' : v < Zpower_nat n q * (n * r) := by
+          have hpow :
+              Zpower_nat n (Nat.succ q) * r =
+                Zpower_nat n q * (n * r) := by
+            simp [Zpower_nat, pow_succ]
+            ring
+          simpa [hpow] using hbound
+        have hrec := ih (n * r) hnr hbound'
+        have hpow :
+            Zpower_nat n (Nat.succ (digitAuxFuel n v (n * r) q)) * r =
+              Zpower_nat n (digitAuxFuel n v (n * r) q) * (n * r) := by
+          simp [Zpower_nat, pow_succ]
+          ring
+        simpa [hpow] using hrec
+
 -- Coq: `digitAuxMore` — complementary case for digit auxiliary
 noncomputable def digitAuxMore_check (n : Int) (v r : Int) (p : Positive) : Unit :=
   ()
 
--- Audit gap for Coq `digitAuxMore`; see `digitAuxLess`.
-noncomputable def digitAuxMore (n : Int) (v r : Int) (p : Positive) : Unit := ()
+theorem digitAuxMore (n : Int) (v r : Int) (p : Positive) :
+    ⦃⌜1 < n ∧ 0 < r ∧ v < Zpower_nat n (pos_length p) * r⌝⦄
+    (pure (digitAuxMore_check n v r p) : Id Unit)
+    ⦃⇓_ => ⌜v < Zpower_nat n (digitAux n v r p) * r⌝⦄ := by
+  intro ⟨hn, hr, hbound⟩
+  simp only [wp, PostCond.noThrow, pure, digitAuxMore_check, Id.run,
+    ULift.up_down]
+  simpa [digitAux] using digitAuxFuel_more n v r (pos_length p) hn hr hbound
 
 -- Coq: `digitInv` — if n^(pred r) ≤ |q| < n^r then digit n q = r
 noncomputable def digitInv_check (n : Int) (q : Int) (r : Nat) : Unit :=

@@ -26,7 +26,7 @@
     "IEEE754": {
       "admit": 0,
       "axiom": 0,
-      "lean_files": 5,
+      "lean_files": 6,
       "placeholder": 12,
       "sorry": 0
     },
@@ -34,26 +34,26 @@
       "admit": 0,
       "axiom": 0,
       "lean_files": 9,
-      "placeholder": 3,
+      "placeholder": 5,
       "sorry": 0
     },
     "Pff": {
       "admit": 0,
       "axiom": 0,
       "lean_files": 5,
-      "placeholder": 4,
+      "placeholder": 5,
       "sorry": 0
     },
     "Prop": {
       "admit": 0,
       "axiom": 0,
       "lean_files": 8,
-      "placeholder": 1,
+      "placeholder": 0,
       "sorry": 0
     }
   },
-  "lean_files": 57,
-  "placeholder_semantics_count": 57,
+  "lean_files": 58,
+  "placeholder_semantics_count": 59,
   "sorry_count": 0,
-  "spec_weakened_count": 1
+  "spec_weakened_count": 0
 }
