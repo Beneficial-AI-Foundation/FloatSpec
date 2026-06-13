@@ -50,8 +50,7 @@ payload-free definitions.
     `Veltkamp_tail`
   - `Dekker`, `ErrFMA_bounded`, `ErrFMA_correct`
   - `ErrFMA_bounded_simpl`, `V2_Und5`
-  - `ErrFMA_correct_simpl`, `ErrFmaAppr_correct`, `U5_discri1_aux`,
-    `U5_discri1`, `discri_correct_test`
+  - `ErrFMA_correct_simpl`, `ErrFmaAppr_correct`, `discri_correct_test`
   - `discri_fp_test`, `Axpy`
 - `FloatSpec/src/Prop/Double_rounding.lean`:
   - `round_round_sqrt_FLX`, `round_round_sqrt_FLT`,
@@ -417,6 +416,14 @@ declarations, the current branch, and the local Flocq clone.
   75 exact revert targets. The theorem proves the upstream Discri1 lower bound
   for the final branch value `d`, using `U3_discri1` and
   `round_FLT_plus_ge`.
+- After restoring `U5_discri1_aux` and `U5_discri1` in `Pff2Flocq.lean`, the
+  active list contains 73 exact revert targets. The auxiliary theorem follows
+  the upstream proof split: if `|x + y|` is already large, monotonicity of
+  rounding gives the rounded lower bound; otherwise the small-sum case would
+  make `x + y` formatted by the restored `generic_format_plus_weak`, contrary
+  to the non-exact-rounding hypothesis. The specialized theorem applies this
+  auxiliary result to `dp` and `-dq`, using the restored multiplication-error
+  lower-bound theorem for each product residual.
 
 The earlier explanatory sections also mentioned Lean-local wrappers and support
 facts. Those are not Flocq revert targets and are kept only when they identify a

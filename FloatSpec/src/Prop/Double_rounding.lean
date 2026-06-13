@@ -1518,6 +1518,815 @@ def round_round_plus_hyp (fexp1 fexp2 : Int → Int) : Prop :=
   (∀ ex ey, fexp1 ex - 1 ≤ ey → fexp2 ex ≤ fexp1 ey) ∧
   (∀ ex ey, ex - 1 ≤ ey → fexp2 ex ≤ fexp1 ey)
 
+/-- Coq: `mag_plus_disj`. -/
+theorem mag_plus_disj (x y : ℝ)
+    (hβ : 1 < beta)
+    (hy_pos : 0 < y)
+    (hylex : y ≤ x) :
+    FloatSpec.Core.Raux.mag beta (x + y) = FloatSpec.Core.Raux.mag beta x ∨
+      FloatSpec.Core.Raux.mag beta (x + y) = FloatSpec.Core.Raux.mag beta x + 1 := by
+  have htrip := FloatSpec.Core.Raux.mag_plus (beta := beta) (x := x) (y := y)
+    hβ hy_pos hylex
+  have hbounds :
+      FloatSpec.Core.Raux.mag beta x ≤ FloatSpec.Core.Raux.mag beta (x + y) ∧
+        FloatSpec.Core.Raux.mag beta (x + y) ≤ FloatSpec.Core.Raux.mag beta x + 1 := by
+    simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+  omega
+
+/-- Coq: `mag_plus_separated`. -/
+theorem mag_plus_separated (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (x y : ℝ)
+    (hβ : 1 < beta)
+    (hx_pos : 0 < x)
+    (hy_nonneg : 0 ≤ y)
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (hsep : FloatSpec.Core.Raux.mag beta y ≤ fexp (FloatSpec.Core.Raux.mag beta x)) :
+    FloatSpec.Core.Raux.mag beta (x + y) = FloatSpec.Core.Raux.mag beta x := by
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  have hy_lt_ulp : y < FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x := by
+    have hulp := FloatSpec.Core.Ulp.ulp_neq_0
+      (beta := beta) (fexp := fexp) (x := x) hx_ne
+    have hulp_eq :
+        FloatSpec.Core.Ulp.ulp (beta := beta) (fexp := fexp) x =
+          (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp x) := by
+      simpa [wp, PostCond.noThrow, Id.run, pure] using hulp True.intro
+    by_cases hy0 : y = 0
+    · have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+      have hpow_pos :
+          0 < (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp x) :=
+        zpow_pos hbposR _
+      simpa [hy0, hulp_eq]
+        using hpow_pos
+    · have hy_abs : |y| = y := abs_of_nonneg hy_nonneg
+      have hmag_upper := FloatSpec.Core.Raux.mag_upper_bound
+        (beta := beta) (x := y) hβ hy0
+      have hy_lt_mag :
+          y < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta y) := by
+        simpa [FloatSpec.Core.Raux.abs_val, hy_abs, wp, PostCond.noThrow, Id.run, pure]
+          using hmag_upper True.intro
+      have hbpow_le := FloatSpec.Core.Raux.bpow_le beta
+        (FloatSpec.Core.Raux.mag beta y)
+        (fexp (FloatSpec.Core.Raux.mag beta x)) hβ hsep
+      have hpow_le :
+          (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta y) ≤
+            (beta : ℝ) ^ (fexp (FloatSpec.Core.Raux.mag beta x)) := by
+        simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run, pure]
+          using hbpow_le True.intro
+      have hy_lt_bpow :
+          y < (beta : ℝ) ^ (fexp (FloatSpec.Core.Raux.mag beta x)) :=
+        lt_of_lt_of_le hy_lt_mag hpow_le
+      simpa [FloatSpec.Core.Generic_fmt.cexp, hulp_eq] using hy_lt_bpow
+  have hmag := FloatSpec.Core.Ulp.mag_plus_eps
+    (beta := beta) (fexp := fexp) (x := x) hx_pos hx_fmt
+    (eps := y) ⟨hy_nonneg, hy_lt_ulp⟩
+  simpa [wp, PostCond.noThrow, Id.run, pure] using hmag hβ
+
+/-- Coq: `round_round_plus_aux0_aux_aux`.
+
+If the canonical exponents of two formatted addends are ordered and the target
+format is coarse enough at the sum magnitude for both addends, then the sum is
+representable in the target format.
+-/
+theorem round_round_plus_aux0_aux_aux (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    (x y : ℝ)
+    (hβ : 1 < beta)
+    (hxy :
+      fexp1 (FloatSpec.Core.Raux.mag beta x) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hlnx :
+      fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta x))
+    (hlny :
+      fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) := by
+  classical
+  by_cases hx0 : x = 0
+  · have hy_to_fexp2 :
+        FloatSpec.Core.Generic_fmt.generic_format beta fexp2 y :=
+      FloatSpec.Core.Generic_fmt.generic_inclusion_mag
+        (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2)
+        (x := y) hβ (by
+          intro hy_ne
+          simpa [hx0] using hlny) hy_fmt
+    simpa [hx0] using hy_to_fexp2
+  · by_cases hy0 : y = 0
+    · have hx_to_fexp2 :
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp2 x :=
+        FloatSpec.Core.Generic_fmt.generic_inclusion_mag
+          (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2)
+          (x := x) hβ (by
+            intro hx_ne
+            simpa [hy0] using hlnx) hx_fmt
+      simpa [hy0] using hx_to_fexp2
+    · let mx : Int :=
+        FloatSpec.Core.Raux.Ztrunc
+          (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp1 x)
+      let my : Int :=
+        FloatSpec.Core.Raux.Ztrunc
+          (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp1 y)
+      let ex : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp1 x
+      let ey : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp1 y
+      let fxy : FloatSpec.Core.Defs.FlocqFloat beta :=
+        { Fnum := mx + my * beta ^ Int.toNat (ey - ex), Fexp := ex }
+      have hx_eq : x = FloatSpec.Core.Defs.F2R
+          ({ Fnum := mx, Fexp := ex } : FloatSpec.Core.Defs.FlocqFloat beta) := by
+        simpa [FloatSpec.Core.Generic_fmt.generic_format, mx, ex] using hx_fmt
+      have hy_eq : y = FloatSpec.Core.Defs.F2R
+          ({ Fnum := my, Fexp := ey } : FloatSpec.Core.Defs.FlocqFloat beta) := by
+        simpa [FloatSpec.Core.Generic_fmt.generic_format, my, ey] using hy_fmt
+      have hdiff_nonneg : 0 ≤ ey - ex := by
+        simpa [FloatSpec.Core.Generic_fmt.cexp, ex, ey] using hxy
+      have hpow_toNat :
+          (beta : ℝ) ^ (ey - ex) =
+            (beta : ℝ) ^ Int.toNat (ey - ex) :=
+        FloatSpec.Core.Generic_fmt.zpow_nonneg_toNat
+          (a := (beta : ℝ)) (k := ey - ex) hdiff_nonneg
+      have hpow_cast :
+          (beta : ℝ) ^ Int.toNat (ey - ex) =
+            ((beta ^ Int.toNat (ey - ex) : Int) : ℝ) := by
+        simpa using (Int.cast_pow (R := ℝ) (x := beta) (n := Int.toNat (ey - ex)))
+      have hpow_split :
+          ((beta : ℝ) ^ Int.toNat (ey - ex)) * (beta : ℝ) ^ ex =
+            (beta : ℝ) ^ ey := by
+        have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+        have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+        have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+        calc
+          ((beta : ℝ) ^ Int.toNat (ey - ex)) * (beta : ℝ) ^ ex
+              = ((beta : ℝ) ^ (ey - ex)) * (beta : ℝ) ^ ex := by
+                rw [hpow_toNat]
+          _ = (beta : ℝ) ^ ((ey - ex) + ex) := by
+                rw [← zpow_add₀ hbne]
+          _ = (beta : ℝ) ^ ey := by ring_nf
+      have hxy_eq : FloatSpec.Core.Defs.F2R fxy = x + y := by
+        calc
+          FloatSpec.Core.Defs.F2R fxy
+              =
+                ((mx : ℝ) + ((my : ℝ) * (beta : ℝ) ^ Int.toNat (ey - ex))) *
+                  (beta : ℝ) ^ ex := by
+                    simp only [fxy, FloatSpec.Core.Defs.F2R, Int.cast_add,
+                      Int.cast_mul, Int.cast_pow]
+          _ =
+                (mx : ℝ) * (beta : ℝ) ^ ex +
+                  (my : ℝ) * ((beta : ℝ) ^ Int.toNat (ey - ex) *
+                    (beta : ℝ) ^ ex) := by
+                    ring
+          _ =
+                FloatSpec.Core.Defs.F2R
+                    ({ Fnum := mx, Fexp := ex } : FloatSpec.Core.Defs.FlocqFloat beta) +
+                  FloatSpec.Core.Defs.F2R
+                    ({ Fnum := my, Fexp := ey } : FloatSpec.Core.Defs.FlocqFloat beta) := by
+                    simp [FloatSpec.Core.Defs.F2R, hpow_split]
+          _ = x + y := by rw [← hx_eq, ← hy_eq]
+      have hbound :
+          x + y ≠ 0 →
+            FloatSpec.Core.Generic_fmt.cexp beta fexp2 (x + y) ≤ fxy.Fexp := by
+        intro hsum_ne
+        simpa [FloatSpec.Core.Generic_fmt.cexp, fxy, ex] using hlnx
+      have hpre :
+          beta > 1 ∧ FloatSpec.Core.Defs.F2R fxy = x + y ∧
+            (x + y ≠ 0 →
+              FloatSpec.Core.Generic_fmt.cexp beta fexp2 (x + y) ≤ fxy.Fexp) :=
+        ⟨hβ, hxy_eq, hbound⟩
+      have htrip := FloatSpec.Core.Generic_fmt.generic_format_F2R'
+        (beta := beta) (fexp := fexp2) (x := x + y) (f := fxy)
+      simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hpre
+
+/-- Coq: `round_round_plus_aux0_aux`. -/
+theorem round_round_plus_aux0_aux (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    (x y : ℝ)
+    (hβ : 1 < beta)
+    (hlnx :
+      fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta x))
+    (hlny :
+      fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) := by
+  classical
+  by_cases hxy :
+      fexp1 (FloatSpec.Core.Raux.mag beta x) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta y)
+  · exact round_round_plus_aux0_aux_aux (beta := beta)
+      (fexp1 := fexp1) (fexp2 := fexp2) (x := x) (y := y)
+      hβ hxy hlnx hlny hx_fmt hy_fmt
+  · have hyx :
+        fexp1 (FloatSpec.Core.Raux.mag beta y) ≤
+          fexp1 (FloatSpec.Core.Raux.mag beta x) := le_of_lt (not_le.mp hxy)
+    have hlny_comm :
+        fexp2 (FloatSpec.Core.Raux.mag beta (y + x)) ≤
+          fexp1 (FloatSpec.Core.Raux.mag beta y) := by
+      simpa [add_comm] using hlny
+    have hlnx_comm :
+        fexp2 (FloatSpec.Core.Raux.mag beta (y + x)) ≤
+          fexp1 (FloatSpec.Core.Raux.mag beta x) := by
+      simpa [add_comm] using hlnx
+    have hfmt_comm :
+        FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (y + x) :=
+      round_round_plus_aux0_aux_aux (beta := beta)
+        (fexp1 := fexp1) (fexp2 := fexp2) (x := y) (y := x)
+        (hβ := hβ) (hxy := hyx) (hlnx := hlny_comm)
+        (hlny := hlnx_comm) (hx_fmt := hy_fmt) (hy_fmt := hx_fmt)
+    simpa [add_comm] using hfmt_comm
+
+/-- Coq: `round_round_plus_aux0`. -/
+theorem round_round_plus_aux0 (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    (hβ : 1 < beta)
+    (hexp : round_round_plus_hyp fexp1 fexp2)
+    (x y : ℝ)
+    (hx_pos : 0 < x)
+    (hy_pos : 0 < y)
+    (hyx : y ≤ x)
+    (hln : fexp1 (FloatSpec.Core.Raux.mag beta x) - 1 ≤
+      FloatSpec.Core.Raux.mag beta y)
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) := by
+  classical
+  rcases hexp with ⟨_, hsmall, hsame, hmag⟩
+  have hy_nonneg : 0 ≤ y := le_of_lt hy_pos
+  by_cases hle_sep :
+      FloatSpec.Core.Raux.mag beta y ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta x)
+  · have hsum_mag :
+        FloatSpec.Core.Raux.mag beta (x + y) =
+          FloatSpec.Core.Raux.mag beta x :=
+      mag_plus_separated (beta := beta) (fexp := fexp1)
+        (x := x) (y := y) hβ hx_pos hy_nonneg hx_fmt hle_sep
+    apply round_round_plus_aux0_aux (beta := beta)
+      (fexp1 := fexp1) (fexp2 := fexp2) (x := x) (y := y) hβ
+    · rw [hsum_mag]
+      exact hmag (FloatSpec.Core.Raux.mag beta x)
+        (FloatSpec.Core.Raux.mag beta x) (by omega)
+    · rw [hsum_mag]
+      exact hsame (FloatSpec.Core.Raux.mag beta x)
+        (FloatSpec.Core.Raux.mag beta y) hln
+    · exact hx_fmt
+    · exact hy_fmt
+  · have hgt_sep :
+        fexp1 (FloatSpec.Core.Raux.mag beta x) <
+          FloatSpec.Core.Raux.mag beta y := not_le.mp hle_sep
+    have hmag_y_le_x :
+        FloatSpec.Core.Raux.mag beta y ≤
+          FloatSpec.Core.Raux.mag beta x := by
+      have hxy_abs : |y| ≤ |x| := by
+        simpa [abs_of_nonneg hy_nonneg, abs_of_nonneg (le_of_lt hx_pos)]
+          using hyx
+      have htrip := FloatSpec.Core.Raux.mag_le (beta := beta)
+        (x := y) (y := x) hβ (ne_of_gt hy_pos) hxy_abs
+      simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+    apply round_round_plus_aux0_aux (beta := beta)
+      (fexp1 := fexp1) (fexp2 := fexp2) (x := x) (y := y) hβ
+    · rcases mag_plus_disj (beta := beta) (x := x) (y := y)
+        hβ hy_pos hyx with hsum_mag | hsum_mag
+      · rw [hsum_mag]
+        exact hmag (FloatSpec.Core.Raux.mag beta x)
+          (FloatSpec.Core.Raux.mag beta x) (by omega)
+      · rw [hsum_mag]
+        exact hsmall (FloatSpec.Core.Raux.mag beta x + 1)
+          (FloatSpec.Core.Raux.mag beta x) (by
+            have hfx_add_one_le_y :
+                fexp1 (FloatSpec.Core.Raux.mag beta x) + 1 ≤
+                  FloatSpec.Core.Raux.mag beta y :=
+              Int.add_one_le_iff.mpr hgt_sep
+            have hfx_add_one_le_x :
+                fexp1 (FloatSpec.Core.Raux.mag beta x) + 1 ≤
+                  FloatSpec.Core.Raux.mag beta x :=
+              le_trans hfx_add_one_le_y hmag_y_le_x
+            simpa using hfx_add_one_le_x)
+    · rcases mag_plus_disj (beta := beta) (x := x) (y := y)
+        hβ hy_pos hyx with hsum_mag | hsum_mag
+      · rw [hsum_mag]
+        exact hsame (FloatSpec.Core.Raux.mag beta x)
+          (FloatSpec.Core.Raux.mag beta y) hln
+      · rw [hsum_mag]
+        exact hsmall (FloatSpec.Core.Raux.mag beta x + 1)
+          (FloatSpec.Core.Raux.mag beta y) (by
+            have hfx_add_one_le_y :
+                fexp1 (FloatSpec.Core.Raux.mag beta x) + 1 ≤
+                  FloatSpec.Core.Raux.mag beta y :=
+              Int.add_one_le_iff.mpr hgt_sep
+            simpa using hfx_add_one_le_y)
+    · exact hx_fmt
+    · exact hy_fmt
+
+/-- Coq: `round_round_plus_aux1_aux`.
+
+If `y` is at least `k` beta-exponent places below `x`, then the floor-rounding
+gap of `x + y` in the `fexp` format is strictly positive and bounded by the
+corresponding beta power.
+-/
+theorem round_round_plus_aux1_aux (k : Int)
+    (hk : 0 < k)
+    (fexp : Int → Int)
+    (x y : ℝ)
+    (hβ : 1 < beta)
+    (hx_pos : 0 < x)
+    (hy_pos : 0 < y)
+    (hln :
+      FloatSpec.Core.Raux.mag beta y ≤
+        fexp (FloatSpec.Core.Raux.mag beta x) - k)
+    (hsum_mag :
+      FloatSpec.Core.Raux.mag beta (x + y) =
+        FloatSpec.Core.Raux.mag beta x)
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x) :
+    0 <
+        (x + y) -
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_floor (x + y) ∧
+      (x + y) -
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_floor (x + y) <
+        (beta : ℝ) ^ (fexp (FloatSpec.Core.Raux.mag beta x) - k) := by
+  classical
+  let ex : Int := fexp (FloatSpec.Core.Raux.mag beta x)
+  let mx : Int :=
+    FloatSpec.Core.Raux.Ztrunc
+      (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)
+  have hcexp_sum :
+      FloatSpec.Core.Generic_fmt.cexp beta fexp (x + y) = ex := by
+    simp [FloatSpec.Core.Generic_fmt.cexp, ex, hsum_mag]
+  have hround_eval :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor (x + y) =
+        ((mx : ℝ) * (beta : ℝ) ^ ex) := by
+    have hsm_sum :
+        FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp (x + y) =
+          (mx : ℝ) + y * (beta : ℝ) ^ (-ex) := by
+      have hx_eq :
+          x = (mx : ℝ) * (beta : ℝ) ^ ex := by
+        simpa [FloatSpec.Core.Generic_fmt.generic_format,
+          FloatSpec.Core.Generic_fmt.scaled_mantissa,
+          FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Defs.F2R,
+          ex, mx] using hx_fmt
+      have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+      have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+      have hpow_cancel : (beta : ℝ) ^ ex * (beta : ℝ) ^ (-ex) = 1 := by
+        calc
+          (beta : ℝ) ^ ex * (beta : ℝ) ^ (-ex)
+              = (beta : ℝ) ^ (ex + (-ex)) := by
+                rw [← zpow_add₀ hbne]
+          _ = 1 := by simp
+      calc
+        FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp (x + y)
+            = (x + y) * (beta : ℝ) ^ (-ex) := by
+              simp [FloatSpec.Core.Generic_fmt.scaled_mantissa, hcexp_sum]
+        _ = ((mx : ℝ) * (beta : ℝ) ^ ex + y) * (beta : ℝ) ^ (-ex) := by
+              rw [hx_eq]
+        _ = (mx : ℝ) + y * (beta : ℝ) ^ (-ex) := by
+              rw [add_mul, mul_assoc, hpow_cancel, mul_one]
+    have hscaled_y_pos : 0 < y * (beta : ℝ) ^ (-ex) := by
+      have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+      exact mul_pos hy_pos (zpow_pos hbposR (-ex))
+    have hscaled_y_lt_one : y * (beta : ℝ) ^ (-ex) < 1 := by
+      have hy_ne : y ≠ 0 := ne_of_gt hy_pos
+      have hy_lt_mag :
+          y < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta y) := by
+        have htrip := FloatSpec.Core.Raux.mag_upper_bound
+          (beta := beta) (x := y) hβ hy_ne
+        simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hy_pos, wp,
+          PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hbpow_le := FloatSpec.Core.Raux.bpow_le beta
+        (FloatSpec.Core.Raux.mag beta y) (ex - k) hβ (by
+          simpa [ex] using hln)
+      have hy_lt_ex_sub_k : y < (beta : ℝ) ^ (ex - k) := by
+        exact lt_of_lt_of_le hy_lt_mag
+          (by
+            simpa [FloatSpec.Core.Raux.bpow_le_check, wp,
+              PostCond.noThrow, Id.run, pure] using hbpow_le True.intro)
+      have hpow_cancel :
+          (beta : ℝ) ^ (ex - k) * (beta : ℝ) ^ (-ex) =
+            (beta : ℝ) ^ (-k) := by
+        have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+        have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+        have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+        calc
+          (beta : ℝ) ^ (ex - k) * (beta : ℝ) ^ (-ex)
+              = (beta : ℝ) ^ ((ex - k) + (-ex)) := by
+                rw [← zpow_add₀ hbne]
+          _ = (beta : ℝ) ^ (-k) := by ring_nf
+      have hbpow_neg_k_le_one : (beta : ℝ) ^ (-k) ≤ 1 := by
+        have hle := FloatSpec.Core.Raux.bpow_le beta (-k) 0 hβ (by omega)
+        simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run,
+          pure, zpow_zero] using hle True.intro
+      have hscale_pos : 0 < (beta : ℝ) ^ (-ex) := by
+        have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+        have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+        exact zpow_pos hbposR (-ex)
+      have hy_scaled_lt :
+          y * (beta : ℝ) ^ (-ex) <
+            (beta : ℝ) ^ (ex - k) * (beta : ℝ) ^ (-ex) :=
+        mul_lt_mul_of_pos_right hy_lt_ex_sub_k hscale_pos
+      calc
+        y * (beta : ℝ) ^ (-ex)
+            < (beta : ℝ) ^ (ex - k) * (beta : ℝ) ^ (-ex) := hy_scaled_lt
+        _ = (beta : ℝ) ^ (-k) := hpow_cancel
+        _ ≤ 1 := hbpow_neg_k_le_one
+    have hfloor :
+        FloatSpec.Core.Generic_fmt.rnd_floor
+            ((mx : ℝ) + y * (beta : ℝ) ^ (-ex)) = mx := by
+      unfold FloatSpec.Core.Generic_fmt.rnd_floor FloatSpec.Core.Raux.Zfloor
+      exact (Int.floor_eq_iff).2
+        ⟨by linarith [hscaled_y_pos],
+         by linarith [hscaled_y_lt_one]⟩
+    calc
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor (x + y)
+          =
+            ((FloatSpec.Core.Generic_fmt.rnd_floor
+                (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp (x + y)) :
+              Int) : ℝ) * (beta : ℝ) ^ ex := by
+              simp [FloatSpec.Core.Generic_fmt.roundR, hcexp_sum]
+      _ =
+            ((FloatSpec.Core.Generic_fmt.rnd_floor
+                ((mx : ℝ) + y * (beta : ℝ) ^ (-ex)) : Int) : ℝ) *
+              (beta : ℝ) ^ ex := by
+              rw [hsm_sum]
+      _ = (mx : ℝ) * (beta : ℝ) ^ ex := by
+              rw [hfloor]
+  have hdiff_eq :
+      (x + y) -
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_floor (x + y) = y := by
+    have hx_eq :
+        x = (mx : ℝ) * (beta : ℝ) ^ ex := by
+      simpa [FloatSpec.Core.Generic_fmt.generic_format,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa,
+        FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Defs.F2R,
+        ex, mx] using hx_fmt
+    rw [hround_eval, hx_eq]
+    ring
+  constructor
+  · simpa [hdiff_eq] using hy_pos
+  · have hy_ne : y ≠ 0 := ne_of_gt hy_pos
+    have hy_lt_mag :
+        y < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta y) := by
+      have htrip := FloatSpec.Core.Raux.mag_upper_bound
+        (beta := beta) (x := y) hβ hy_ne
+      simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hy_pos, wp,
+        PostCond.noThrow, Id.run, pure] using htrip True.intro
+    have hbpow_le := FloatSpec.Core.Raux.bpow_le beta
+      (FloatSpec.Core.Raux.mag beta y) (ex - k) hβ (by
+        simpa [ex] using hln)
+    have hy_lt_bound : y < (beta : ℝ) ^ (ex - k) :=
+      lt_of_lt_of_le hy_lt_mag
+        (by
+          simpa [FloatSpec.Core.Raux.bpow_le_check, wp,
+            PostCond.noThrow, Id.run, pure] using hbpow_le True.intro)
+    simpa [hdiff_eq, ex] using hy_lt_bound
+
+/-- Coq: `round_round_plus_aux1`.
+
+If `y` is at least two beta-exponent places below a positive formatted `x`, then
+rounding `x + y` to the coarser format after the finer nearest rounding agrees
+with direct nearest rounding to the coarser format.
+-/
+theorem round_round_plus_aux1 (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    (choice1 choice2 : Int → Bool)
+    (hβ : 1 < beta)
+    (hexp : round_round_plus_hyp fexp1 fexp2)
+    (x y : ℝ)
+    (hx_pos : 0 < x)
+    (hy_pos : 0 < y)
+    (hln :
+      FloatSpec.Core.Raux.mag beta y ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta x) - 2)
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x) :
+    round_round_eq beta fexp1 fexp2 choice1 choice2 (x + y) := by
+  classical
+  let e : Int := fexp1 (FloatSpec.Core.Raux.mag beta x)
+  have hsum_pos : 0 < x + y := add_pos hx_pos hy_pos
+  have hsum_ne : x + y ≠ 0 := ne_of_gt hsum_pos
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  have hsum_mag :
+      FloatSpec.Core.Raux.mag beta (x + y) =
+        FloatSpec.Core.Raux.mag beta x := by
+    apply mag_plus_separated (beta := beta) (fexp := fexp1)
+      (x := x) (y := y) hβ hx_pos (le_of_lt hy_pos) hx_fmt
+    omega
+  rcases hexp with ⟨_, _, _, hmag⟩
+  have hf21 :
+      fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta (x + y)) := by
+    rw [hsum_mag]
+    exact hmag (FloatSpec.Core.Raux.mag beta x)
+      (FloatSpec.Core.Raux.mag beta x) (by omega)
+  have hf1_le_mag :
+      fexp1 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+        FloatSpec.Core.Raux.mag beta (x + y) := by
+    have htrip := FloatSpec.Core.Generic_fmt.mag_generic_gt
+      (beta := beta) (fexp := fexp1) x
+    have hx_cexp_le :
+        FloatSpec.Core.Generic_fmt.cexp beta fexp1 x ≤
+          FloatSpec.Core.Raux.mag beta x := by
+      simpa [wp, PostCond.noThrow, Id.run, pure] using
+        htrip ⟨hβ, hx_ne, hx_fmt⟩
+    simpa [FloatSpec.Core.Generic_fmt.cexp, hsum_mag] using hx_cexp_le
+  have hgap := round_round_plus_aux1_aux (beta := beta) (k := 2)
+    (hk := by omega) (fexp := fexp1) (x := x) (y := y)
+    (hβ := hβ) (hx_pos := hx_pos) (hy_pos := hy_pos)
+    (hln := hln) (hsum_mag := hsum_mag) (hx_fmt := hx_fmt)
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  have hb2ℤ : (2 : Int) ≤ beta := by omega
+  have hb2R : (2 : ℝ) ≤ (beta : ℝ) := by exact_mod_cast hb2ℤ
+  have hpow_two_nonneg : 0 ≤ (beta : ℝ) ^ (e - 2) :=
+    le_of_lt (zpow_pos hbposR (e - 2))
+  have hpow_two_to_half :
+      (beta : ℝ) ^ (e - 2) ≤
+        (1 / 2 : ℝ) * ((beta : ℝ) ^ e) := by
+    have hbeta_sq_ge_two : (2 : ℝ) ≤ (beta : ℝ) ^ (2 : Int) := by
+      norm_num [zpow_ofNat]
+      nlinarith
+    have hneg_two_le_half :
+        (beta : ℝ) ^ (-(2 : Int)) ≤ (1 / 2 : ℝ) := by
+      have hinv_le :
+          1 / ((beta : ℝ) ^ (2 : Int)) ≤ (1 / 2 : ℝ) :=
+        one_div_le_one_div_of_le (by norm_num) hbeta_sq_ge_two
+      simpa [one_div, zpow_neg] using hinv_le
+    have hpow_cancel :
+        (beta : ℝ) ^ (e - 2) =
+          (beta : ℝ) ^ e * (beta : ℝ) ^ (-(2 : Int)) := by
+      calc
+        (beta : ℝ) ^ (e - 2)
+            = (beta : ℝ) ^ (e + (-(2 : Int))) := by ring_nf
+        _ = (beta : ℝ) ^ e * (beta : ℝ) ^ (-(2 : Int)) := by
+              rw [zpow_add₀ hbne]
+    rw [hpow_cancel]
+    have hmul := mul_le_mul_of_nonneg_left hneg_two_le_half
+      (le_of_lt (zpow_pos hbposR e))
+    nlinarith
+  have hpow_two_to_half_diff :
+      (beta : ℝ) ^ (e - 2) ≤
+        (1 / 2 : ℝ) * ((beta : ℝ) ^ e - (beta : ℝ) ^ (e - 1)) := by
+    have hpow_e_split :
+        (beta : ℝ) ^ e =
+          (beta : ℝ) ^ (e - 2) * (beta : ℝ) ^ (2 : Int) := by
+      calc
+        (beta : ℝ) ^ e = (beta : ℝ) ^ ((e - 2) + 2) := by ring_nf
+        _ = (beta : ℝ) ^ (e - 2) * (beta : ℝ) ^ (2 : Int) := by
+              rw [zpow_add₀ hbne]
+    have hpow_em1_split :
+        (beta : ℝ) ^ (e - 1) =
+          (beta : ℝ) ^ (e - 2) * (beta : ℝ) := by
+      calc
+        (beta : ℝ) ^ (e - 1) = (beta : ℝ) ^ ((e - 2) + 1) := by ring_nf
+        _ = (beta : ℝ) ^ (e - 2) * (beta : ℝ) ^ (1 : Int) := by
+              rw [zpow_add₀ hbne]
+        _ = (beta : ℝ) ^ (e - 2) * (beta : ℝ) := by simp
+    have hfactor : (1 : ℝ) ≤ (1 / 2 : ℝ) *
+        ((beta : ℝ) ^ (2 : Int) - (beta : ℝ)) := by
+      norm_num [zpow_ofNat]
+      nlinarith
+    have hmul := mul_le_mul_of_nonneg_left hfactor hpow_two_nonneg
+    rw [hpow_e_split, hpow_em1_split]
+    nlinarith
+  have hulp1 :
+      ulp beta fexp1 (x + y) = (beta : ℝ) ^ e := by
+    have htrip := FloatSpec.Core.Ulp.ulp_neq_0
+      (beta := beta) (fexp := fexp1) (x := x + y) hsum_ne
+    simpa [e, hsum_mag, FloatSpec.Core.Generic_fmt.cexp, wp,
+      PostCond.noThrow, Id.run, pure] using htrip True.intro
+  have hx_mid :
+      x + y < midp beta fexp1 (x + y) := by
+    have hgap_half :
+        (x + y) -
+            FloatSpec.Core.Generic_fmt.roundR beta fexp1
+              FloatSpec.Core.Generic_fmt.rnd_floor (x + y) <
+          (1 / 2 : ℝ) * ulp beta fexp1 (x + y) :=
+      lt_of_lt_of_le hgap.2 (by simpa [hulp1, e] using hpow_two_to_half)
+    unfold midp
+    linarith
+  apply round_round_lt_mid (beta := beta)
+    (fexp1 := fexp1) (fexp2 := fexp2)
+    (choice1 := choice1) (choice2 := choice2) (x := x + y) hβ
+  · exact hsum_pos
+  · exact hf21
+  · exact hf1_le_mag
+  · exact hx_mid
+  · intro hfurther
+    let e2 : Int := fexp2 (FloatSpec.Core.Raux.mag beta (x + y))
+    have hulp2 :
+        ulp beta fexp2 (x + y) = (beta : ℝ) ^ e2 := by
+      have htrip := FloatSpec.Core.Ulp.ulp_neq_0
+        (beta := beta) (fexp := fexp2) (x := x + y) hsum_ne
+      simpa [e2, FloatSpec.Core.Generic_fmt.cexp, wp,
+        PostCond.noThrow, Id.run, pure] using htrip True.intro
+    have hpow_e2_le :
+        (beta : ℝ) ^ e2 ≤ (beta : ℝ) ^ (e - 1) := by
+      have htrip := FloatSpec.Core.Raux.bpow_le (beta := beta)
+        (e1 := e2) (e2 := e - 1) hβ (by simpa [e, e2, hsum_mag] using hfurther)
+      simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run,
+        pure] using htrip True.intro
+    have hpow_to_diff :
+        (beta : ℝ) ^ (e - 2) ≤
+          (1 / 2 : ℝ) * ((beta : ℝ) ^ e - (beta : ℝ) ^ e2) := by
+      have hsub :
+          (beta : ℝ) ^ e - (beta : ℝ) ^ (e - 1) ≤
+            (beta : ℝ) ^ e - (beta : ℝ) ^ e2 := by
+        linarith
+      have hhalf := mul_le_mul_of_nonneg_left hsub (by norm_num : (0 : ℝ) ≤ 1 / 2)
+      exact le_trans hpow_two_to_half_diff (by exact hhalf)
+    have hgap_further :
+        (x + y) -
+            FloatSpec.Core.Generic_fmt.roundR beta fexp1
+              FloatSpec.Core.Generic_fmt.rnd_floor (x + y) <
+          (1 / 2 : ℝ) * (ulp beta fexp1 (x + y) - ulp beta fexp2 (x + y)) := by
+      exact lt_of_lt_of_le hgap.2 (by
+        simpa [hulp1, hulp2, e] using hpow_to_diff)
+    unfold midp
+    linarith
+
+/-- Coq: `round_round_plus_aux2`.
+
+Combines the separated small-addend case `round_round_plus_aux1` with the exact
+addition case `round_round_plus_aux0`.
+-/
+theorem round_round_plus_aux2 (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    (choice1 choice2 : Int → Bool)
+    (hβ : 1 < beta)
+    (hexp : round_round_plus_hyp fexp1 fexp2)
+    (x y : ℝ)
+    (hx_pos : 0 < x)
+    (hy_pos : 0 < y)
+    (hyx : y ≤ x)
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    round_round_eq beta fexp1 fexp2 choice1 choice2 (x + y) := by
+  classical
+  by_cases hsmall :
+      FloatSpec.Core.Raux.mag beta y ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta x) - 2
+  · exact round_round_plus_aux1 (beta := beta)
+      (fexp1 := fexp1) (fexp2 := fexp2)
+      (choice1 := choice1) (choice2 := choice2) (hβ := hβ)
+      (hexp := hexp) (x := x) (y := y) (hx_pos := hx_pos)
+      (hy_pos := hy_pos) (hln := hsmall) (hx_fmt := hx_fmt)
+  · have hlarge :
+        fexp1 (FloatSpec.Core.Raux.mag beta x) - 1 ≤
+          FloatSpec.Core.Raux.mag beta y := by
+      omega
+    have hsum_fmt :
+        FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) :=
+      round_round_plus_aux0 (beta := beta)
+        (fexp1 := fexp1) (fexp2 := fexp2) (hβ := hβ)
+        (hexp := hexp) (x := x) (y := y) (hx_pos := hx_pos)
+        (hy_pos := hy_pos) (hyx := hyx) (hln := hlarge)
+        (hx_fmt := hx_fmt) (hy_fmt := hy_fmt)
+    have hinner :
+        FloatSpec.Core.Generic_fmt.roundR beta fexp2
+            (FloatSpec.Core.Generic_fmt.Znearest choice2) (x + y) =
+          x + y := by
+      exact FloatSpec.Core.Generic_fmt.roundR_generic
+        (beta := beta) (fexp := fexp2)
+        (rnd := FloatSpec.Core.Generic_fmt.Znearest choice2)
+        (x := x + y) hβ hsum_fmt
+    simpa [round_round_eq, hinner]
+
+/-- Coq: `round_round_plus_aux`.
+
+Nonnegative-input wrapper around `round_round_plus_aux2`; exact zero addends
+are handled by inclusion into the coarser format.
+-/
+theorem round_round_plus_aux (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    (choice1 choice2 : Int → Bool)
+    (hβ : 1 < beta)
+    (hexp : round_round_plus_hyp fexp1 fexp2)
+    (x y : ℝ)
+    (hx_nonneg : 0 ≤ x)
+    (hy_nonneg : 0 ≤ y)
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    round_round_eq beta fexp1 fexp2 choice1 choice2 (x + y) := by
+  classical
+  rcases hexp with ⟨hplus, hminus, hsame, hmag⟩
+  by_cases hx0 : x = 0
+  · have hy_fmt2 :
+        FloatSpec.Core.Generic_fmt.generic_format beta fexp2 y :=
+      FloatSpec.Core.Generic_fmt.generic_inclusion_mag
+        (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2)
+        (x := y) hβ (by
+          intro hy_ne
+          exact hmag (FloatSpec.Core.Raux.mag beta y)
+            (FloatSpec.Core.Raux.mag beta y) (by omega)) hy_fmt
+    have hinner :
+        FloatSpec.Core.Generic_fmt.roundR beta fexp2
+            (FloatSpec.Core.Generic_fmt.Znearest choice2) y = y :=
+      FloatSpec.Core.Generic_fmt.roundR_generic
+        (beta := beta) (fexp := fexp2)
+        (rnd := FloatSpec.Core.Generic_fmt.Znearest choice2)
+        (x := y) hβ hy_fmt2
+    simpa [round_round_eq, hx0, hinner]
+  · by_cases hy0 : y = 0
+    · have hx_fmt2 :
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp2 x :=
+        FloatSpec.Core.Generic_fmt.generic_inclusion_mag
+          (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2)
+          (x := x) hβ (by
+            intro hx_ne
+            exact hmag (FloatSpec.Core.Raux.mag beta x)
+              (FloatSpec.Core.Raux.mag beta x) (by omega)) hx_fmt
+      have hinner :
+          FloatSpec.Core.Generic_fmt.roundR beta fexp2
+              (FloatSpec.Core.Generic_fmt.Znearest choice2) x = x :=
+        FloatSpec.Core.Generic_fmt.roundR_generic
+          (beta := beta) (fexp := fexp2)
+          (rnd := FloatSpec.Core.Generic_fmt.Znearest choice2)
+          (x := x) hβ hx_fmt2
+      simpa [round_round_eq, hy0, hinner]
+    · have hx_pos : 0 < x := lt_of_le_of_ne hx_nonneg (Ne.symm hx0)
+      have hy_pos : 0 < y := lt_of_le_of_ne hy_nonneg (Ne.symm hy0)
+      by_cases hxy : x < y
+      · have hres := round_round_plus_aux2 (beta := beta)
+          (fexp1 := fexp1) (fexp2 := fexp2)
+          (choice1 := choice1) (choice2 := choice2) (hβ := hβ)
+          (hexp := ⟨hplus, hminus, hsame, hmag⟩)
+          (x := y) (y := x) (hx_pos := hy_pos) (hy_pos := hx_pos)
+          (hyx := le_of_lt hxy) (hx_fmt := hy_fmt) (hy_fmt := hx_fmt)
+        simpa [add_comm] using hres
+      · exact round_round_plus_aux2 (beta := beta)
+          (fexp1 := fexp1) (fexp2 := fexp2)
+          (choice1 := choice1) (choice2 := choice2) (hβ := hβ)
+          (hexp := ⟨hplus, hminus, hsame, hmag⟩)
+          (x := x) (y := y) (hx_pos := hx_pos) (hy_pos := hy_pos)
+          (hyx := le_of_not_gt hxy) (hx_fmt := hx_fmt) (hy_fmt := hy_fmt)
+
+/-- Coq: `round_round_minus_aux0_aux`. -/
+theorem round_round_minus_aux0_aux (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    (x y : ℝ)
+    (hβ : 1 < beta)
+    (hlnx :
+      fexp2 (FloatSpec.Core.Raux.mag beta (x - y)) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta x))
+    (hlny :
+      fexp2 (FloatSpec.Core.Raux.mag beta (x - y)) ≤
+        fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x - y) := by
+  have hmag_opp :
+      FloatSpec.Core.Raux.mag beta (-y) = FloatSpec.Core.Raux.mag beta y := by
+    have htrip := FloatSpec.Core.Raux.mag_opp (beta := beta) (x := y) hβ
+    simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+  have hy_opp_fmt :
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp1 (-y) := by
+    have htrip := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := fexp1) (x := y)
+    simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hy_fmt
+  have hfmt_add :
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + (-y)) :=
+    round_round_plus_aux0_aux (beta := beta) (fexp1 := fexp1)
+      (fexp2 := fexp2) (x := x) (y := -y) (hβ := hβ)
+      (hlnx := by simpa [sub_eq_add_neg] using hlnx)
+      (hlny := by simpa [sub_eq_add_neg, hmag_opp] using hlny)
+      (hx_fmt := hx_fmt) (hy_fmt := hy_opp_fmt)
+  simpa [sub_eq_add_neg] using hfmt_add
+
+/-- Coq: `FLX_round_round_plus_hyp`. -/
+theorem FLX_round_round_plus_hyp (prec prec' : Int)
+    [Prec_gt_0 prec] [Prec_gt_0 prec']
+    (hprec : 2 * prec + 1 ≤ prec') :
+    round_round_plus_hyp
+      (FloatSpec.Core.FLX.FLX_exp prec)
+      (FloatSpec.Core.FLX.FLX_exp prec') := by
+  have hprec_pos : 0 < prec := (Prec_gt_0.pos : 0 < prec)
+  unfold round_round_plus_hyp FloatSpec.Core.FLX.FLX_exp
+  constructor
+  · intro ex ey _
+    grind
+  constructor
+  · intro ex ey _
+    grind
+  constructor
+  · intro ex ey _
+    grind
+  · intro ex ey _
+    grind
+
 /-- Coq: `round_round_plus_radix_ge_3_hyp`. -/
 def round_round_plus_radix_ge_3_hyp (fexp1 fexp2 : Int → Int) : Prop :=
   (∀ ex ey, fexp1 (ex + 1) ≤ ey → fexp2 ex ≤ fexp1 ey) ∧
