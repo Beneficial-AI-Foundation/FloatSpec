@@ -713,6 +713,69 @@ noncomputable def B754_round_real (mode : RoundingMode) (x : ℝ) : B754 :=
   let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (rnd_of_mode mode) x
   B2BSN (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) (real_to_FullFloat rounded fexp))
 
+noncomputable def B754_round_real_signed_zero (mode : RoundingMode) (s : Bool) (x : ℝ) : B754 :=
+  let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
+  match mode with
+  | RoundingMode.RNE =>
+      let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (rnd_of_mode mode) |x|
+      if rounded = 0 then
+        B754.B754_zero s
+      else
+        let exp := FloatSpec.Core.Generic_fmt.cexp 2 fexp rounded
+        let mantissa := FloatSpec.Core.Raux.Ztrunc (rounded * (2 : ℝ) ^ (-exp))
+        B754.B754_finite s mantissa.natAbs exp
+  | _ =>
+      let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (rnd_of_mode mode) x
+      if rounded = 0 then
+        B754.B754_zero s
+      else
+        let exp := FloatSpec.Core.Generic_fmt.cexp 2 fexp rounded
+        let mantissa := FloatSpec.Core.Raux.Ztrunc (rounded * (2 : ℝ) ^ (-exp))
+        let sign := mantissa < 0
+        B754.B754_finite (decide sign) mantissa.natAbs exp
+
+private theorem BSN_is_nan_B754_round_real_signed_zero
+    (mode : RoundingMode) (s : Bool) (x : ℝ) :
+    BSN_is_nan (B754_round_real_signed_zero (prec:=prec) (emax:=emax) mode s x) = false := by
+  unfold B754_round_real_signed_zero
+  cases mode
+  · by_cases h :
+        FloatSpec.Core.Generic_fmt.round_to_generic 2
+          (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+          (rnd_of_mode RoundingMode.RNE) |x| = 0
+    · simp [h, BSN_is_nan]
+    · simp [h, BSN_is_nan]
+  · by_cases h :
+        FloatSpec.Core.Generic_fmt.round_to_generic 2
+          (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+          (rnd_of_mode RoundingMode.RNA) x = 0
+    · simp [h, BSN_is_nan]
+    · simp [h, BSN_is_nan]
+  · by_cases h :
+        FloatSpec.Core.Generic_fmt.round_to_generic 2
+          (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+          (rnd_of_mode RoundingMode.RTP) x = 0
+    · simp [h, BSN_is_nan]
+    · simp [h, BSN_is_nan]
+  · by_cases h :
+        FloatSpec.Core.Generic_fmt.round_to_generic 2
+          (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+          (rnd_of_mode RoundingMode.RTN) x = 0
+    · simp [h, BSN_is_nan]
+    · simp [h, BSN_is_nan]
+  · by_cases h :
+        FloatSpec.Core.Generic_fmt.round_to_generic 2
+          (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+          (rnd_of_mode RoundingMode.RTZ) x = 0
+    · simp [h, BSN_is_nan]
+    · simp [h, BSN_is_nan]
+
+private theorem abs_F2R_neg_mantissa_eq (m : Nat) (e : Int) :
+    |F2R ({ Fnum := -(m : Int), Fexp := e } : FloatSpec.Core.Defs.FlocqFloat 2)|
+      = |F2R ({ Fnum := (m : Int), Fexp := e } : FloatSpec.Core.Defs.FlocqFloat 2)| := by
+  unfold F2R FloatSpec.Core.Defs.F2R
+  simp [abs_mul]
+
 def B754_has_nan (x y : B754) : Bool :=
   match x, y with
   | B754.B754_nan, _ => true
@@ -802,8 +865,8 @@ noncomputable def Bldexp (mode : RoundingMode) (x : B754) (e : Int) : B754 :=
   | B754.B754_nan => B754.B754_nan
   | B754.B754_zero s => B754.B754_zero s
   | B754.B754_infinity s => B754.B754_infinity s
-  | B754.B754_finite _ _ _ =>
-      B754_round_real (prec:=prec) (emax:=emax) mode
+  | B754.B754_finite s _ _ =>
+      B754_round_real_signed_zero (prec:=prec) (emax:=emax) mode s
         (B754_to_R x * FloatSpec.Core.Raux.bpow 2 e)
 
 noncomputable def is_nan_Bldexp_check (mode : RoundingMode) (x : B754) (e : Int) : Bool :=
@@ -821,14 +884,9 @@ theorem is_nan_Bldexp (mode : RoundingMode) (x : B754) (e : Int) :
   | B754_infinity s => rfl
   | B754_nan => rfl
   | B754_finite s m e₀ =>
-      unfold is_nan_Bldexp_check Bldexp BSN_is_nan B754_round_real B2BSN FF2B real_to_FullFloat
-      by_cases hround :
-          FloatSpec.Core.Generic_fmt.round_to_generic 2
-              (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-              (rnd_of_mode mode)
-              (B754_to_R (B754.B754_finite s m e₀) * FloatSpec.Core.Raux.bpow 2 e) = 0
-      · simp [hround]
-      · simp [hround]
+      unfold is_nan_Bldexp_check Bldexp
+      exact BSN_is_nan_B754_round_real_signed_zero (prec:=prec) (emax:=emax) mode s
+        (B754_to_R (B754.B754_finite s m e₀) * FloatSpec.Core.Raux.bpow 2 e)
 
 -- Negation on SingleNaN binary floats (Coq: Bopp on B754)
 def Bopp_bsn (x : B754) : B754 :=
@@ -842,10 +900,32 @@ def Bopp_bsn (x : B754) : B754 :=
 noncomputable def Bldexp_Bopp_NE_check (x : B754) (e : Int) : B754 :=
   (Bldexp (prec:=prec) (emax:=emax) RoundingMode.RNE (Bopp_bsn x) e)
 
--- Port gap for Coq `Bldexp_Bopp_NE`.
--- The current executable `Bldexp` uses real rounding through `round_to_generic`;
--- proving this requires an RNE negation-symmetry lemma for that path.
-noncomputable def Bldexp_Bopp_NE (x : B754) (e : Int) : Unit := ()
+-- Coq: Bldexp_Bopp_NE
+theorem Bldexp_Bopp_NE (x : B754) (e : Int) :
+  ⦃⌜True⌝⦄
+  (pure (Bldexp_Bopp_NE_check (prec:=prec) (emax:=emax) x e) : Id B754)
+  ⦃⇓result => ⌜result = Bopp_bsn (Bldexp (prec:=prec) (emax:=emax) RoundingMode.RNE x e)⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  cases x with
+  | B754_zero s =>
+      simp [Bldexp_Bopp_NE_check, Bldexp, Bopp_bsn]
+  | B754_infinity s =>
+      simp [Bldexp_Bopp_NE_check, Bldexp, Bopp_bsn]
+  | B754_nan =>
+      simp [Bldexp_Bopp_NE_check, Bldexp, Bopp_bsn]
+  | B754_finite s m e₀ =>
+      unfold Bldexp_Bopp_NE_check Bldexp Bopp_bsn B754_round_real_signed_zero B754_to_R
+      simp only [FloatSpec.Core.Defs.F2R, Bool.not_eq_eq_eq_not]
+      have hbpow_nonneg : 0 ≤ (2 : ℝ) ^ e := le_of_lt (zpow_pos (by norm_num : (0 : ℝ) < 2) e)
+      have habs : |F2R ({ Fnum := -(m : Int), Fexp := e₀ } : FloatSpec.Core.Defs.FlocqFloat 2)|
+          = |F2R ({ Fnum := (m : Int), Fexp := e₀ } : FloatSpec.Core.Defs.FlocqFloat 2)| :=
+        abs_F2R_neg_mantissa_eq m e₀
+      cases s
+      · simp [habs.symm, abs_mul, abs_of_nonneg hbpow_nonneg]
+        split <;> rfl
+      · simp [habs, abs_mul, abs_of_nonneg hbpow_nonneg]
+        split <;> rfl
 
 -- Decomposition (Coq: Bfrexp on SingleNaN side)
 def Bfrexp_bsn (x : B754) : B754 × Int :=

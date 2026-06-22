@@ -16,7 +16,7 @@ Audit basis:
 - Compared against current `origin/main` after the PR #3 rebase:
   `bb9d513511a5ae4e945eebe0b48ba58afbc831f5`
 - Current checked head for this audit:
-  `aae0e712807b0088cf52335046ac868cec388748`
+  `8e667d622c3c24640e6427d48435495bd8b129a6`
 - Flocq source checked locally under `/mnt2/users/kaile/hantao/flocq-upstream`.
 
 I rechecked the branch-diff list against current `origin/main`, the current
@@ -26,30 +26,13 @@ theorem or lemma in the current branch. They should be restored as theorem
 declarations with real proofs, not as `Unit`, `True`, `by trivial`, or other
 payload-free definitions.
 
-- `FloatSpec/src/IEEE754/Binary.lean`:
-  - `Bfma_correct`
-  - `Bminus_correct`, `Bdiv_correct`, `Bsqrt_correct`, `Bnearbyint_correct`,
-    `Bldexp_correct`
-- `FloatSpec/src/IEEE754/BinarySingleNaN.lean`:
-  - `Bldexp_Bopp_NE`
-- `FloatSpec/src/Pff/Pff.lean`:
-  - `FnormalizeCanonic`, `RND_Min_canonic`, `RND_Max_Pos_canonic`,
-    `RND_Min_Pos_correct`
-  - `RND_Max_Pos_correct`, `RND_Max_canonic`, `RND_Min_correct`,
-    `RND_Max_correct`, `RND_EvenClosest_canonic`,
-    `RND_EvenClosest_correct`
-  - `EvenClosestTotal`, `ClosestTotal`
-  - `MinEx`, `MaxEx`, `ClosestRoundedModeP`
-  - `ClosestUlp`, `ClosestExp`, `EvenClosestMinOrMax`
-  - `EvenClosestRoundedModeP`, `RoundedModeBounded`, `PminPos`,
-    `RoundedModeMult`
-  - `RoundedModeMultLess`, `RoundedModeMultAbs`, `MinRoundedModeP`,
-    `MaxRoundedModeP`
+Current live split after the latest re-audit: 19 exact active names remain.
+Of those 19, 4 are still same-name scaffold definitions and 15 are absent
+declarations.
+
 - `FloatSpec/src/Pff/Pff2Flocq.lean`:
-  - `Fast2Sum_correct`, `TwoSum_correct`, `Veltkamp_Even`, `Veltkamp`,
-    `Veltkamp_tail`
-  - `Dekker`, `ErrFMA_bounded`, `ErrFMA_correct`
-  - `ErrFMA_bounded_simpl`, `V2_Und5`
+  - `Veltkamp_Even`, `Veltkamp`, `Veltkamp_tail`
+  - `Dekker`, `ErrFMA_correct`
   - `ErrFMA_correct_simpl`, `ErrFmaAppr_correct`, `discri_correct_test`
   - `discri_fp_test`, `Axpy`
 - `FloatSpec/src/Prop/Double_rounding.lean`:
@@ -59,70 +42,354 @@ payload-free definitions.
     `round_round_sqrt_radix_ge_4_FTZ`
   - `round_round_div_FLX`, `round_round_div_FLT`,
     `round_round_div_FTZ`
-  - `round_round_plus_radix_ge_3_FLX`,
-    `round_round_minus_radix_ge_3_FLX`,
-    `round_round_plus_radix_ge_3_FLT`,
-    `round_round_minus_radix_ge_3_FLT`,
-    `round_round_plus_radix_ge_3_FTZ`,
-    `round_round_minus_radix_ge_3_FTZ`
-  - `round_round_plus_FLX`, `round_round_minus_FLX`,
-    `round_round_plus_FLT`, `round_round_minus_FLT`,
-    `round_round_plus_FTZ`, `round_round_minus_FTZ`
-- `FloatSpec/src/Prop/Round_odd.lean`:
-  - `mag_round_odd`, `fexp_round_odd`
-  - `round_N_odd_pos`, `round_N_odd`
 
 Current restore blockers found by pipeline attempts:
 
-- `round_N_odd_pos`: the upstream proof depends on the `Odd_prop_aux`
-  midpoint stack (`mag_m`, `mag_m_0`, `m_eq`, `m_eq_0`, `fexp_m_eq_0`,
-  `Fm`, and `Zm`). These were present only as `sorry`-based spec variants in
-  `origin/main`, and are absent as proved Lean declarations on this branch. The
-  theorem should stay listed until that stack is ported with real proofs.
-- `Bldexp_Bopp_NE`: the Flocq theorem is over finite constructors whose
-  mantissa is positive. The current Lean `B754` type admits
-  `B754_finite _ 0 _`; with that widened model, `Bldexp RNE (Bopp x) e =
-  Bopp (Bldexp RNE x e)` is not valid for all local `B754` values because
-  zero-sign behavior can diverge after `real_to_FullFloat`. The proper fix is
-  to restore the positive-mantissa invariant in the `B754` model or add an
-  equivalent validity precondition before proving the Flocq payload.
-- `FnormalizeCanonic`: upstream Flocq's `Fnormalize` maps zero to
-  `Float 0 (-dExp b)` and otherwise shifts by
-  `min (precision - Fdigit radix p) (Z.abs_nat (dExp b + Fexp p))`. The
-  current Lean `Fnormalize` is still identity, so `Fbounded b p ->
-  Fcanonic (Fnormalize p)` is false; for example `b = { dExp := 0,
-  vNum := 10 }`, `radix = 2`, and `p = ⟨1, 1⟩` is bounded but not canonical.
-  The correct fix is to port the real `Fnormalize`/`Fshift` boundedness stack
-  (`FnormalizeBounded`, `pGivesDigit`, `digitGivesBoundedNum`,
-  `FshiftFdigit`, `FshiftCorrect`, and `FboundedShiftLess`) before proving this
-  theorem.
-- `ClosestUlp`: upstream Flocq proves this from `ClosestMinOrMax`,
-  canonical successor/predecessor facts (`FNSuccCanonic`, `FNPredCanonic`) and
-  the real `FulpSuc`/`FulpPred` stack. The current Lean file has
-  `FNSucc`/`FNPred` as mantissa `+/- 1` sketches and `Fulp` as the constant
-  `1`, so the faithful theorem should remain listed until the normalized
-  neighbor and ulp infrastructure is ported.
-- `Fast2Sum_correct`: upstream Flocq's theorem is stated in the `FTS` section
-  with local algorithm bindings `a := round_flt (x + y)` and
-  `b := round_flt (y + round_flt (x - a))`, then proves
-  `Rabs y <= Rabs x -> a + b = x + y`. The current Lean file has no local
-  `Fast2Sum`/`Fast2Sum_correct` binding, and the upstream proof depends on the
-  generic Pff nearest-rounding bridge `pff_round_N_is_round`, `RND_Closest`,
-  `RND_Closest_correct`, `RND_Closest_canonic`, and `Pff.Dekker_FTS`. The
-  specialized b32/b64 bridges in `Pff2FlocqAux.lean` are not enough to recover
-  the generic `emin`/`prec`/`choice` theorem.
-- `V2_Und5`: the pipeline attempt restored the surrounding V2 lemmas
-  (`mult_error_FLT_ge_bpow'`, `V2_Und2`, and `V2_Und4`) but this final V2
-  lower-bound lemma remains blocked on the hard branch where `y ≠ 0`, `u2 ≠ 0`,
-  and `u1 + y ≠ 0`. Upstream Flocq uses `F2R_plus`, `Fexp_Fplus`, `F2R_ge`,
-  and `cexp_ge_bpow` to propagate a lower bound through nested exact float
-  additions before the final round. The local Lean port has low-level pieces,
-  but no roundR-facing theorem packaging that nested `Fplus` exponent/lower
-  bound propagation. Do not replace this by a weaker theorem; restore the
-  float-addition propagation stack first.
-
+- No exact active names remain in `FloatSpec/src/IEEE754/Binary.lean`.
+- `Veltkamp_Even`, `Veltkamp`, and `Veltkamp_tail`: these
+  are absent as real Lean theorems, and the same-name declarations in
+  `origin/main` were only `sorry` shells. Upstream `Pff2Flocq.v` proves them by
+  importing the Pff algorithm payloads (`VeltkampEven`, `Veltkamp`,
+  `Veltkamp_tail`) through the generic nearest-rounding bridge and canonicity
+  facts. The generic nearest-rounding equality bridge is now present in
+  `Pff2FlocqAux.lean`, and `Fast2Sum_correct` now shows the wrapper pattern.
+  As lower unblock steps,
+  `IplusCorrectEq`, `IminusCorrectEq`, `IplusOl`, and `IminusOp` are now
+  restored in `Pff.lean`; `MKnuth`, `MKnuth1`, `MKnuth2`, `MKnuth3`,
+  `MKnuth4`, `MKnuth6`, and `MKnuthOpp` are now also restored as real theorems after
+  `errorBoundedPlus`. The `s - c` exactness subgoal is now factored as
+  `MKnuth5_s_minus_c_exact` through `minusRoundRep`, and the `q <= c`
+  Sterbenz branch of upstream `MKnuth5` is now factored as `MKnuth5_q_le_c`.
+  The easy branches of upstream `ExactMinusIntervalAux1` are also packaged as
+  `ExactMinusIntervalAux1_from_hard_branch`, so the remaining exact-minus work
+  is localized to the hard branch where both `2*p < q` and `2*p < r`.
+  The sign split from upstream `MKnuth7` is now packaged as
+  `MKnuth7_from_MKnuth5`, so once the positive `MKnuth5` payload is available
+  the nonpositive cases no longer block the final theorem. The remaining Knuth
+  payload also has the upstream `ExactMinusInterval` normalization wrapper
+  factored as `ExactMinusInterval_from_Aux1`, so bounded inputs can be reduced
+  to the canonical interval payload without repeating normalization
+  bookkeeping. The hard-branch induction is now also factored as
+  `ExactMinusIntervalAux_from_pred_step` using `FinductNeg`; the remaining
+  work is the concrete predecessor-step arithmetic inside upstream
+  `ExactMinusIntervalAux`. The normalization/radix-range setup for that step is
+  now packaged as `ExactMinusIntervalAux_pred_setup`. The boundary subcase where
+  `FPred r <= 2*p` is packaged as
+  `ExactMinusIntervalAux_pred_sterbenz_case`, and `FPredBounded` packages the
+  canonicity-to-boundedness fact needed by both predecessor branches, so the
+  remaining predecessor step is the strictly-above-boundary arithmetic.
+  `ExactMinusIntervalAux_pred_same_exp_case` now packages the first constructive
+  branch of that arithmetic: when the normalized representative of `r - p` has
+  the same exponent as `r` and `FPred r` is one ulp below `r` in that exponent,
+  decrementing the representative mantissa gives a bounded representative of
+  `FPred r - p`. `ExactMinusIntervalAux_pred_one_ulp_case` factors that
+  decrement step, and the adjacent-exponent normal-boundary branch using
+  `FPredSimpl2` is now packaged as
+  `ExactMinusIntervalAux_pred_adjacent_normmin_case`. The non-boundary
+  adjacent branch using `FPredSimpl4` is now packaged through
+  `ExactMinusIntervalAux_pred_beta_ulp_case` and
+  `ExactMinusIntervalAux_pred_adjacent_non_normmin_case`, where decrementing
+  the representative mantissa by `beta` gives the bounded representative. The
+  same-exponent `FPredSimpl4` and `FPredSimpl3` branches are now packaged as
+  `ExactMinusIntervalAux_pred_same_exp_non_normmin_case` and
+  `ExactMinusIntervalAux_pred_same_exp_normmin_minexp_case`. The four
+  branch helpers are now composed by
+  `ExactMinusIntervalAux_pred_constructive_cases`, which dispatches over the
+  same/adjacent exponent split and the normal-boundary cases without adding a
+  public wrapper shell. The normalization/radix-range facts from
+  `ExactMinusIntervalAux_pred_setup` are now plugged into that dispatcher by
+  `ExactMinusIntervalAux_pred_constructive_from_setup`. The remaining
+  same-exponent normal-boundary contradiction is now packaged as
+  `ExactMinusIntervalAux_same_exp_normmin_non_minexp_contradiction`, using
+  `FcanonicLtPos` and `pNormal_absolu_min`. The predecessor induction and
+  interval stack are now closed: `ExactMinusIntervalAux_from_hard_pred_step`
+  packages the Coq predicate `2*p < r -> exists r', r' = r - p`,
+  `ExactMinusIntervalAux` closes the hard branch, `ExactMinusIntervalAux1`
+  adds the easy Sterbenz branches, and `ExactMinusInterval` restores the
+  bounded-input theorem through the normalization wrapper. With that payload
+  available, the explicit interval premise has also been discharged from the
+  Knuth chain: `MKnuth5`, `MKnuth7`, and `Knuth` now have direct theorem
+  declarations and proofs, while the older `*_from_interval` helpers remain as
+  internal factored wrappers. `TwoSum_correct` is now restored using that
+  `Knuth` payload through the Pff-to-Flocq wrapper and nearest-rounding bridge.
+  A 2026-06-22 XHub harness attempt on `ExactMinusIntervalAux_pred_setup`
+  reached the local target gate but produced no patch because the supplied API
+  token returned 401 quota exhausted. A later 2026-06-22 XHub API attempt on
+  composing the restored predecessor branch helpers likewise produced no patch:
+  `.change_log/codex_attempt_20260622_051815` records `provider_mode=api`,
+  `api_wire_api=responses`, `local_target_gate=pass`, and the same
+  quota-exhausted 401 from `/models`.
+  Restoring the Pff2Flocq wrappers before that would either be circular or
+  payload-free.
+- `Axpy`: upstream Flocq proves this from Pff's `Axpy_opt` plus the min/max
+  rounding infrastructure (`MinOrMax`, `MinUniqueP`, `MaxUniqueP`,
+  `RND_Min_correct`, `RND_Max_correct`, and the Pff-to-Flocq DN/UP rounding
+  bridges). The current Lean file does not yet have that generic Pff min/max
+  payload; local `roundR` floor/ceil facts alone only say how a rounded real
+  behaves, not that the Pff-computed `tv` is the DN/UP rounded value of
+  `y + a*x`.
+- `ErrFMA_correct` and `ErrFMA_correct_simpl`: XHub pipeline attempts
+  `.change_log/codex_attempt_20260620_013323` and
+  `.change_log/codex_attempt_20260620_012353` checked the upstream
+  `Pff2Flocq.v` proofs and left these blocked.  Upstream `ErrFMA_correct`
+  uses the Pff-level reconstruction theorem `FmaErr` after converting all
+  rounded intermediates through the generic nearest-rounding bridge
+  `round_N_is_pff_round`; `ErrFMA_correct_simpl` then depends on
+  `ErrFMA_correct` after discharging the V2 non-underflow hypotheses.  The
+  generic `round_N_is_pff_round` witness bridge is now present in
+  `Pff2FlocqAux.lean`, and the current Lean tree has the V2 helpers, but it
+  still lacks the Pff reconstruction theorem `FmaErr`. Restoring these wrappers
+  first would require a weakened theorem or a payload-free proof. The correct
+  order is to port `FmaErr`, then restore the ErrFMA wrappers.
+- `discri_correct_test` and `discri_fp_test`: the current branch has restored
+  several discriminant lower-bound helpers (`format_dp`, `format_dq`,
+  `U3_discri1`, `U4_discri1`, `format_d_discri1`, `format_d_discri2`,
+  `U5_discri1_aux`, `U5_discri1`, and the `Fulp_ulp_aux`/`Fulp_ulp` bridge in
+  `Pff2FlocqAux.lean`), but the final upstream theorems also depend on Pff's
+  `discri` theorem and the remaining generic Pff-to-Flocq bridges
+  (`format_is_pff_format`, `round_NE_is_pff_round`, `EvenClosestCompatible`,
+  `RND_EvenClosest_correct`, and canonic/bounded facts). Those dependencies are
+  still scaffolded or absent locally, so the final wrappers remain listed.
+- `round_round_sqrt_*` and `round_round_div_*`: the FLX sqrt side-condition
+  helpers, the generic midpoint case split, and the sqrt magnitude disjunction
+  have been restored, but the public wrapper family still depends on
+  the generic Flocq double-rounding stacks for square root and division
+  (`round_round_sqrt_aux`, `round_round_sqrt`, and the `round_round_div_aux*`
+  lemmas). The old
+  `origin/main` names were `sorry` theorem shells, not recoverable proofs.
+  XHub pipeline attempt `.change_log/codex_attempt_20260618_173418` confirmed
+  the same blocker for the division family: `FLX_round_round_div_hyp`
+  typechecks, but faithful restoration of `round_round_div_FLX` first requires
+  porting the generic `round_round_div_aux0`, `round_round_div_aux1`,
+  `round_round_div_aux2`, `round_round_div_aux`, and `round_round_div` stack.
 Entries removed by this re-audit:
 
+- `Fast2Sum_correct`: this now has a theorem declaration and real proof in
+  `Pff2Flocq.lean`. The statement uses the upstream section assumptions
+  (`precisionNotZero`, `emin <= 0`, nearest-choice symmetry, FLT generic-format
+  inputs, and `|y| <= |x|`) and proves the Fast2Sum equation through
+  `Dekker_FTS_closed`, the restored closest-rounding bridge
+  `pff_round_N_is_round`, format-to-bounded witnesses from
+  `format_is_flocq_bounded`, and `round_N_opp_sym`.
+- `TwoSum_correct`: this now has a theorem declaration and real proof in
+  `Pff2Flocq.lean`. The proof converts the two FLT-format inputs to bounded Pff
+  floats, instantiates the abstract Pff `Knuth` theorem with closest-rounding
+  plus/minus operators, uses the restored nearest-rounding bridge for each
+  arithmetic step, and rewrites the resulting Pff equality back to the
+  Flocq-style TwoSum equation.
+- `Bnearbyint_correct`: this now has a theorem declaration and real proof in
+  `Binary.lean`. The proof uses `valid_rnd_of_mode` for all five local IEEE
+  modes, proves the rounded value and finiteness payload through
+  `Bnearbyint_value_finite`, and closes the non-NaN sign postcondition through
+  sign preservation of `binary_nearbyint`.
+- `Bldexp_correct`: this now has a theorem declaration and real proof in
+  `Binary.lean`. The local `binary_ldexp` preserves NaN, infinity, and signed
+  zero directly, rounds finite scaled values with `rnd_of_mode`, returns a
+  signed zero when the rounded finite value is zero, and overflows to
+  `binary_overflow` when the rounded magnitude reaches `bpow emax`. The theorem
+  proves the rounded finite-result, finiteness, sign, and overflow
+  postconditions for this local IEEE model.
+- `Bsqrt_correct`: this now has a theorem declaration and real proof in
+  `Binary.lean`. The local `binary_sqrt` preserves signed zero, returns NaN for
+  NaN, infinity, and negative finite inputs, and rounds nonnegative finite
+  square roots with `rnd_of_mode`. The theorem proves the same three observable
+  clauses as upstream `Binary.Bsqrt_correct` for this local IEEE model: rounded
+  real value, finite-result classification, and sign preservation when the
+  result is not NaN.
+- `Bminus_correct`: this now has a theorem declaration and real proof in
+  `Binary.lean`. The local `binary_sub` rounds `B2R x - B2R y` with
+  `rnd_of_mode`, returns signed zero according to the upstream subtraction
+  zero-sign convention when the rounded value is zero, and overflows to
+  `binary_overflow` when the rounded magnitude reaches `bpow emax`. The theorem
+  proves the rounded finite-result value, finiteness, sign, and overflow
+  constructor clauses for this local IEEE model.
+- `Bdiv_correct`: this now has a theorem declaration and real proof in
+  `Binary.lean`. The local `binary_div` now handles nonfinite numerators,
+  zero/invalid denominators, signed zero quotients, finite rounded quotients,
+  and overflow with the Flocq sign convention `Bsign x xor Bsign y`. The theorem
+  assumes `B2R y ≠ 0` and proves the upstream-shaped finite-result value,
+  finiteness, non-NaN sign, and overflow constructor clauses for this local
+  IEEE model.
+- `Bfma_correct`: this now has a theorem declaration and real proof in
+  `Binary.lean`. The local `binary_fma` now rounds the exact fused expression
+  `B2R x * B2R y + B2R z` with `rnd_of_mode`, returns a signed zero using the
+  upstream `Bfma_szero` convention only in the exact-zero case, preserves the
+  exact-result sign when a nonzero result rounds to zero, and overflows to
+  `binary_overflow` with sign `res < 0`. The theorem assumes all three inputs
+  are finite and proves the upstream-shaped finite-result value, finiteness,
+  sign, and overflow constructor clauses for this local IEEE model.
+- `FnormalizeCanonic`: this now has a theorem declaration and real proof in
+  `Pff.lean`. The restored `Fnormalize` maps zero to `Float 0 (-dExp b)` and
+  otherwise shifts by
+  `min (precision - Fdigit radix p) (Z.abs_nat (dExp b + Fexp p))`.
+  `FnormalizeCorrect`, `FnormalizeBounded`, and `FnormalizeCanonic` compile with
+  explicit Lean-side assumptions for the Flocq section context (`beta = radix`
+  where real-value preservation needs it, `1 < radix`, nonzero precision, and
+  `b.vNum = Zpower_nat radix precision` where needed). The canonicity proof
+  follows the upstream split: the precision-limited branch is normal, and the
+  exponent-limited branch is subnormal.
+- Source-level alignment fix, not an active-list removal: `RND_Min` and
+  `RND_Max` now follow Flocq's signed definitions. `RND_Min r` uses
+  `RND_Min_Pos r` for nonnegative `r` and `Fopp (RND_Max_Pos (-r))` for
+  negative `r`; `RND_Max` uses the dual branch. This removes a real blocker
+  beneath the listed positive-correctness items.
+- Source-level max-rounding fix, not an active-list removal:
+  `RND_Max_Pos` now follows Flocq's definition exactly: it returns
+  `RND_Min_Pos r` when `r` is represented by that lower rounded value, and
+  otherwise returns `FSucc (RND_Min_Pos r)`. This replaces the previous
+  Lean-local ceiling algorithm and removes the binade-boundary mismatch at its
+  source.
+- `RND_Max_Pos_canonic`: this now has a theorem declaration and proof in
+  `Pff.lean`. The proof follows the restored Flocq successor-of-min definition,
+  using `RND_Min_Pos_canonic` in the represented branch and `FSuccCanonic` in
+  the successor branch.
+- `PminPos`: this now has a theorem declaration and real proof in `Pff.lean`.
+  The proof follows the upstream split: when `min = p/2`, `min` itself is the
+  bounded residual; otherwise `eqExpMax` aligns the minimum exponent with `p`,
+  `FboundNext` constructs the bounded successor, and the concrete `isMin'`
+  greatest-lower-bound property forces that successor to represent exactly
+  `p - min`. The Lean statement exposes the usual section hypotheses
+  (`beta = radix`, `1 < radix`, nonzero precision, and
+  `b.vNum = radix^precision`) instead of using a payload-free definition.
+- `RND_Max_Pos_Rle` and `RND_Max_Pos_correct`: these now have theorem
+  declarations and proofs in `Pff.lean`. `RND_Max_Pos_Rle` follows the upstream
+  argument from `RND_Min_Pos_correct`, `FBoundedSuc`, and `FSuccLt`.
+  `RND_Max_Pos_correct` proves the full `isMax'` payload: boundedness from
+  canonicity, the upper-bound side from `RND_Max_Pos_Rle`, and minimality by
+  normalizing an arbitrary bounded upper candidate and applying the restored
+  successor gap machinery (`FSuccPropPos`) to rule out a canonical float between
+  `RND_Min_Pos r` and its successor.
+- `RND_Min_correct` and `RND_Max_correct`: these now have theorem declarations
+  and proofs in `Pff.lean`. They follow the upstream Flocq sign split over the
+  repaired `RND_Min`/`RND_Max` definitions. The positive min/max correctness
+  payloads are now restored. The negative branches are proved by duality under
+  `Fopp`.
+- `RND_Min_Pos_correct`: this now has a theorem declaration and proof in
+  `Pff.lean`. The proof follows the upstream Flocq structure: canonicity gives
+  boundedness, `RND_Min_Pos_Rle` gives the lower-bound side, and every bounded
+  candidate below `r` is either negative (hence below the nonnegative rounded
+  value) or is normalized, projected, and compared by `RND_Min_Pos_monotone`.
+  The Lean statement keeps the Flocq section assumptions explicit (`beta =
+  radix`, `1 < radix`, `1 < p`, and the mantissa bound).
+- `RND_Min_canonic` and `RND_Max_canonic`: these now have theorem declarations
+  and proofs in `Pff.lean`. They follow the upstream Flocq sign split over the
+  repaired `RND_Min`/`RND_Max` definitions and prove the negative branches by
+  `FcanonicFopp`. The positive branch payloads remain explicit dependencies
+  because these signed wrappers do not carry the section assumptions needed to
+  call the positive canonicity theorems directly.
+- `RND_EvenClosest_canonic`: this now has a theorem declaration and proof in
+  `Pff.lean`. It follows the upstream Flocq case split over whether
+  even-closest returns `RND_Max` or `RND_Min`; the signed canonicity payloads are
+  explicit dependencies until the remaining positive canonic stack is restored.
+- `RND_EvenClosest_correct`: this now has a same-name theorem declaration and
+  proof in `Pff.lean`. The proof closes the section-context wrapper from the
+  restored signed `RND_Min`/`RND_Max` correctness and canonicity theorems, uses
+  `ClosestMinOrMax`, `MinEq`, and `MaxEq` for uniqueness, and handles the exact
+  odd lower-endpoint branch by showing both extrema denote the selected upper
+  endpoint.
+- `EvenClosestTotal`: this now has a theorem declaration and proof in
+  `Pff.lean`. The proof follows the upstream `MinEx`/`MaxEx` distance split,
+  and in the odd midpoint branch it chooses `FNSucc min` directly, using
+  `MinMax` and `FNoddSuc`. The local theorem keeps the finite-bound-box side
+  condition explicit because the current `MinEx`/`MaxEx` statements require it.
+- `EvenClosestRoundedModeP`: this now has a theorem declaration and proof in
+  `Pff.lean`. The restored statement packages the same four upstream fields:
+  `EvenClosestTotal`, `EvenClosestCompatible`, `EvenClosestMinOrMax`, and
+  `EvenClosestMonotone`. Because the local generic `RoundedModeP` is
+  representation-based and `RoundedModeP_full` includes extra projector
+  fields, the theorem targets the Flocq-facing `RoundedModeP_float` package.
+  The local `EvenClosestTotal` theorem now supplies the totality payload under
+  the same explicit bound-box side condition used by `MinEx`/`MaxEx`.
+- `ClosestTotal`: this now has a theorem declaration and proof in `Pff.lean`.
+  It follows the upstream construction after `MinEx` and `MaxEx`: take lower
+  and upper extremal witnesses, compare the two distances to `r`, then use
+  `ClosestMin` or `ClosestMax`. `MinEx` and `MaxEx` are restored, but this
+  wrapper still takes the extremal-existence payloads as explicit
+  `TotalP isMin'`/`TotalP isMax'` preconditions.
+- `MinEx`: this now has a same-name theorem declaration and proof in `Pff.lean`
+  that derives the negative-sentinel and finite-box split locally from
+  `boundRCorrect1`, `boundRCorrect2`, `mBFadic_correct1`,
+  `mBFadic_correct3`, and `mBFadic_correct4`. It is no longer active in the
+  exact missing-item list.
+- `MaxEx`: this now has a same-name theorem declaration and proof in `Pff.lean`
+  that derives the positive-sentinel and finite-box split locally from
+  `boundRCorrect1`, `mBFadic_correct1`, `mBFadic_correct2`, and
+  `mBFadic_correct4`. It is no longer active in the exact missing-item list.
+- `round_N_odd_pos` and `round_N_odd`: these now have theorem declarations and
+  real proofs in `Round_odd.lean`. `round_N_odd_pos` ports the midpoint
+  round-to-odd core using the restored `Odd_prop_aux` stack; `round_N_odd`
+  follows the upstream sign split, using `round_N_opp`/`round_odd_opp` in the
+  negative branch, `round_0` behavior at zero, and the positive theorem on
+  canonical DN/UP witnesses.
+- `mag_round_odd` and `fexp_round_odd`: these now have theorem declarations and
+  real proofs in `Round_odd.lean`. `mag_round_odd` ports the upstream
+  FLT-specific magnitude-preservation theorem with the even-radix and
+  `prec > 1` section hypotheses explicit in Lean. `fexp_round_odd` follows the
+  upstream split: zero by direct odd-rounding evaluation, small magnitudes via
+  the minimum FLT ULP and `succ 0`, and large magnitudes via `mag_round_odd`.
+- `MinRoundedModeP` and `MaxRoundedModeP`: these now have theorem declarations
+  and proofs in `Pff.lean`. The statements target the faithful float-specific
+  predicates `isMin'` and `isMax'`; both totality payloads are represented here
+  as explicit `TotalP` dependencies.
+  Compatibility, monotonicity, projector, and projector-equality components are
+  proved directly from the concrete min/max predicates.
+- `RoundedModeMultAbs`: this now has a theorem declaration and proof in
+  `Pff.lean`. It restores the upstream wrapper shape by splitting on the sign
+  of `r`, using directional scaling payloads corresponding to
+  `RoundedModeMult` and `RoundedModeMultLess` as explicit dependencies, and
+  deriving the absolute-value conclusion without a trivial postcondition.
+- `RoundedModeMult` and `RoundedModeMultLess`: these now have theorem
+  declarations and proofs in `Pff.lean`. They restore the upstream directional
+  scaling inequalities over `RoundedModeP_full`. Because the local
+  `FBoundedScale`/`FvalScale` infrastructure is not yet ported, the scaled
+  float's boundedness and real-value equality are explicit hypotheses rather
+  than hidden `Unit` scaffolds.
+- `ClosestExp`: this now has a theorem declaration and proof in `Pff.lean`.
+  It restores the upstream wrapper shape: `ClosestUlp` supplies
+  `2 * |x - q| ≤ Fulp q`, `FulpLe` supplies `Fulp q ≤ beta^Fexp(q)`, and the
+  proof composes those inequalities.
+- `ClosestUlp`: this now has a theorem declaration and proof in `Pff.lean`.
+  The proof follows the upstream min/max split through `ClosestMinOrMax`,
+  instantiates closestness at the normalized successor/predecessor of the
+  selected endpoint, and closes with the restored `FulpSuc`/`FulpPred`
+  inequalities. The Lean statement exposes the standard Pff section assumptions
+  used by those normalized-neighbor lemmas (`beta = radix`, `1 < radix`,
+  nonzero precision, and `b.vNum = Zpower_nat radix precision`), while preserving
+  the Flocq payload `2 * |p - q| <= Fulp q`.
+- `V2_Und5`: this now has a theorem declaration and proof in
+  `Pff2Flocq.lean`. The proof ports the upstream hard branch by packaging
+  canonical exact `Fplus` addition (`F2R_plus`, `Fexp_Fplus`, `F2R_ge`) and by
+  correcting the local `cexp_ge_bpow` statement to match Flocq's non-strict
+  lower-bound hypothesis.
+- `ErrFMA_bounded`: this now has a theorem declaration and proof in
+  `Pff2Flocq.lean`. The proof follows the upstream V1 boundedness argument:
+  `r1` and `r2` are formatted by `generic_format_roundR`, `u2` is formatted by
+  `mult_error_FLT` plus `generic_format_opp` using the V1 product
+  non-underflow hypothesis, and `alpha2`/`r3` are formatted by `plus_error`
+  plus `generic_format_opp`.
+- `ErrFMA_bounded_simpl`: this now has a theorem declaration and proof in
+  `Pff2Flocq.lean`. The proof follows upstream Flocq's V2 wrapper: instantiate
+  `ErrFMA_bounded` with nearest-even rounding and weaken the V2 product
+  non-underflow hypothesis from exponent `emin + 4 * prec - 3` to the V1
+  exponent `emin + 2 * prec - 1` using monotonicity of `bpow`.
+- `RoundedModeBounded`: this now has a theorem declaration and proof in
+  `Pff.lean`. Because the local generic `RoundedModeP` no longer carries
+  Coq's float-specific `MinOrMaxP` payload, the restored theorem makes that
+  dependency explicit as `MinOrMaxP_float`; the proof then follows the Coq
+  argument by taking the `Fbounded` component from the `isMin'`/`isMax'`
+  branch.
+- `ClosestRoundedModeP`: this now has a theorem declaration and proof in
+  `Pff.lean`. Since the local generic `RoundedModeP` is not the Coq
+  float-specific package, the restored theorem targets `RoundedModeP_full`.
+  `ClosestTotal` remains an explicit precondition because bounded closest-point
+  existence is still an active construction; the compatible, monotone,
+  projector, and projector-equality components are proved from the concrete
+  `Closest` predicate.
+- `EvenClosestMinOrMax`: this now has a theorem declaration and proof in
+  `Pff.lean`. The proof follows the Coq dependency shape directly:
+  `EvenClosest r p` contains `Closest r p`, and the restored
+  `ClosestMinOrMax` theorem supplies the float-specific `isMin'`/`isMax'`
+  disjunction.
 - `one_equiv` and `two_equiv`: these now have theorem declarations in
   `PrimFloat.lean`, so they are no longer missing revert targets.
 - `binary_round_aux_correct'`, `binary_round_correct`,
@@ -131,8 +398,11 @@ Entries removed by this re-audit:
   infrastructure, but no longer belong in the removed-theorem revert list.
 - `Bdiv_correct_aux`, `Bfrexp_correct_aux`, and `Bsqrt_correct_aux`: these
   correspond to Flocq `BinarySingleNaN.v` auxiliary lemmas and now have theorem
-  declarations in `BinarySingleNaN.lean`. `Bldexp_Bopp_NE` remains listed
-  because it is still a `Unit` port gap.
+  declarations in `BinarySingleNaN.lean`.
+- `Bldexp_Bopp_NE`: this now has a theorem declaration and proof in
+  `BinarySingleNaN.lean`. The local executable `Bldexp` now preserves the
+  finite input sign for RNE scaling, including rounded-zero results, so the
+  upstream negation symmetry theorem is no longer a `Unit` port gap.
 - `binary_add_correct`, `binary_mul_correct`, `binary_sqrt_correct`,
   `binary_div_correct`, `binary_fma_correct`, and `binary_sub_correct`: these
   are Lean-local wrapper names from the earlier translation, not Flocq theorem
@@ -312,14 +582,38 @@ Entries removed by this re-audit:
   explicit, and proves the upstream `emin' + prec' <= 2 * emin + prec` and
   `2 * prec <= prec'` exponent side-conditions by splitting the `FTZ_exp`
   cutoff branches and discharging the integer arithmetic.
+- `FTZ_exp`, `round_FTZ_small`, and `ulp_FTZ_0`: the core FTZ exponent function
+  is now aligned with Flocq's branch `if e - prec < emin then emin + prec - 1
+  else e - prec`. The local `round_FTZ_small` and `ulp_FTZ_0` specs were updated
+  to the Flocq threshold `emin + prec - 1`; the previous `emin` threshold was a
+  Lean-side translation bug and made the FTZ sqrt side-condition lemmas false.
 - `FLX_round_round_sqrt_hyp` and
   `FLX_round_round_sqrt_radix_ge_4_hyp`: these now have theorem declarations
   and proofs in `Double_rounding.lean`. They restore the upstream FLX
   arithmetic side conditions for the blocked sqrt double-rounding family, with
   the Coq `Prec_gt_0 prec` section assumption explicit. The active
   `round_round_sqrt_*` targets remain listed because the generic
-  `round_round_mid_cases`, `mag_sqrt_disj`, `round_round_sqrt_aux`, and
-  `round_round_sqrt` stack is still absent as proved Lean infrastructure.
+  `round_round_sqrt_aux` and `round_round_sqrt` stack is still absent as proved
+  Lean infrastructure.
+- `round_round_mid_cases`: this upstream helper now has a theorem declaration
+  and proof in `Double_rounding.lean`. The Lean proof avoids adding the
+  `Exp_not_FTZ` assumption required by the public `Ulp.round_UP_DN_ulp` wrapper
+  by proving the needed positive floor/ceil spacing directly from the concrete
+  `roundR` formula and non-integrality of the scaled mantissa. The active
+  sqrt/div public wrappers remain listed because `round_round_sqrt_aux`,
+  `round_round_sqrt`, and the `round_round_div_aux*` stack are still absent.
+- `mag_sqrt_disj`: this upstream helper now has a theorem declaration and proof
+  in `Double_rounding.lean`. The proof uses the local `Raux.mag_sqrt` theorem
+  and integer parity decomposition of `floor(log x / log beta)`; the branch
+  order follows this Lean port's `mag = floor(log) + 1` convention.
+- `FLT_round_round_sqrt_hyp`, `FTZ_round_round_sqrt_hyp`,
+  `FLT_round_round_sqrt_radix_ge_4_hyp`,
+  `FTZ_round_round_sqrt_radix_ge_4_hyp`, `FLX_round_round_div_hyp`,
+  `FLT_round_round_div_hyp`, and `FTZ_round_round_div_hyp`: these upstream
+  exponent side-condition lemmas are restored with proofs in
+  `Double_rounding.lean`. They remove the arithmetic blocker for the sqrt/div
+  wrapper families; the public wrappers remain listed until the generic
+  midpoint/sqrt/div proof stacks are restored.
 
 The following removed declarations should not be blindly reverted:
 
@@ -588,9 +882,39 @@ Flocq-style error bounds or IEEE operation correctness.
 
 The following Pff items remain lightweight or port-gap infrastructure:
 
-- `Fulp`: currently a lightweight ulp model for floats.
-- `Fnormalize`: identity-style normalization skeleton.
-- `Fshift`: no-op local model over the stored representation.
+- `Fulp`: now has the Flocq-shaped bound/radix/precision-indexed normalized
+  exponent definition in `Pff.lean`, and `CanonicFulp`, `Fulp_zero`,
+  `FulpComp`, `FulpLe`, `FulpSucCan`, `FulpPredCan`, `FulpSuc`, and
+  `FulpPred` have been restored. `FulpSuc`/`FulpPred` are stated over the
+  expanded normalized-neighbor expressions `FSucc (Fnormalize p)` and
+  `FPred (Fnormalize p)`. The `FSucc` parity facts have also been restored
+  over the boundary-aware successor. `FNSuccCanonic`, `FNSuccLt`, and
+  `FNSuccProp` are now restored as public normalized-neighbor wrappers over
+  `FnormalizeCanonic`, `FnormalizeCorrect`, `FSuccCanonic`, `FSuccLt`, and
+  the all-sign `FSuccProp`. `MinMax` is also restored as the strict-minimum to
+  normalized-successor maximum step.
+- `Fnormalize`: real Coq-shaped construction is present, including
+  `FnormalizeCorrect`, `FnormalizeBounded`, and `FnormalizeCanonic`; remaining
+  work is downstream endpoint parity/totality use rather than the
+  normalized-neighbor order stack itself.
+- `Fshift`: Coq-shaped mantissa/exponent shift is present and connected to the
+  restored normalizer for `FnormalizeCorrect`/`FnormalizeBounded`.
+- `RND_Closest`, `RND_Closest_canonic`, and `RND_Closest_correct`: the generic
+  arbitrary-tie closest-rounding layer from `Pff2FlocqAux.v` is now present and
+  compiles in `Pff.lean`; the DN/UP/N equality bridge to Flocq `roundR`
+  (`pff_round_DN_is_round`, `pff_round_UP_is_round`,
+  `pff_round_N_is_round`, and `round_N_is_pff_round`) is now present and
+  compiles in `Pff2FlocqAux.lean`.
+- `Fulp_ulp_aux` and `Fulp_ulp`: now use a real auxiliary `PFulp` quantity and
+  prove `PFulp = ulp beta (FLT_exp ...) ...` under the same explicit radix and
+  positive-precision side conditions that are section assumptions upstream.
+- `round_NE_is_pff_round_generic`: a generic PffFloat witness/equality bridge
+  is now present in `Pff2FlocqAux.lean`, extending the earlier binary32/64-only
+  bridges to arbitrary bounds and precision under an explicit `Valid_exp`
+  side condition. The arbitrary-choice `round_N_is_pff_round` bridge is also
+  restored. Remaining nearest-even work is specific to the upstream
+  `round_NE_is_pff_round` payload and its Pff `EvenClosest` compatibility
+  component.
 - `digitAux`: now a fuel recursion over the unary `Positive` compatibility
   wrapper, but still not a literal port of Coq's binary-`positive` recursion.
 - public generic skeletons around `isMin`, `isMax`, `MonotoneP`, and
@@ -602,26 +926,19 @@ theorems can be trusted as translations rather than executable sketches.
 
 ## IEEE Infrastructure
 
-The IEEE layer still has explicit port-gap definitions for correctness payloads.
+The exact active branch-diff names in the IEEE layer have been restored.
+The IEEE layer still has local non-Flocq port-gap definitions for broader
+correctness payloads.
 
 `Binary.lean`:
 
-- `Bfma_correct`
-- `Bminus_correct`
-- `Bdiv_correct`
-- `Bsqrt_correct`
-- `Bnearbyint_correct`
-- `Bldexp_correct`
-
-`BinarySingleNaN.lean`:
-
-- `Bldexp_Bopp_NE`
+- No exact active branch-diff names remain.
 
 The old local wrappers `binary_*_correct`, `B754_plus_correct`, and
 `B754_mult_correct` are not exact Flocq names, so they are not revert targets.
 They still point at real IEEE port gaps: the corresponding upstream payloads are
-the `Bplus_correct`, `Bmult_correct`, `Bsqrt_correct`, `Bdiv_correct`,
-`Bfma_correct`, and `Bminus_correct` families. `Bplus_correct` and
+the `Bplus_correct`, `Bmult_correct`, `Bdiv_correct`, and `Bfma_correct`
+families. `Bplus_correct` and
 `Bmult_correct` are not in the branch-diff revert list because the branch base
 exposed them through local wrapper names rather than exact Flocq theorem names.
 

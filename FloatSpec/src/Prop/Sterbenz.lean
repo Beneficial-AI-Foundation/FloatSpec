@@ -53,14 +53,14 @@ theorem generic_format_plus (x y : ℝ)
           have h :=
             FloatSpec.Core.Generic_fmt.mag_generic_gt (beta := beta) (fexp := fexp) x
               ⟨hβ, hx0, by simpa [generic_format] using hx⟩
-          simpa [Std.Do.PostCond.noThrow, wp, pure] using h
+          simpa [Std.Do.PostCond.noThrow, wp, pure] using (le_of_lt h)
         simpa [e, he, hmin, FloatSpec.Core.Generic_fmt.cexp] using hx_cexp_le
       · have hy_cexp_le :
             FloatSpec.Core.Generic_fmt.cexp beta fexp y ≤ mag beta y := by
           have h :=
             FloatSpec.Core.Generic_fmt.mag_generic_gt (beta := beta) (fexp := fexp) y
               ⟨hβ, hy0, by simpa [generic_format] using hy⟩
-          simpa [Std.Do.PostCond.noThrow, wp, pure] using h
+          simpa [Std.Do.PostCond.noThrow, wp, pure] using (le_of_lt h)
         simpa [e, he, hmin, FloatSpec.Core.Generic_fmt.cexp] using hy_cexp_le
     have h :=
       FloatSpec.Core.Generic_fmt.generic_format_bpow' (beta := beta) (fexp := fexp) e

@@ -116,7 +116,7 @@ theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
 noncomputable def ldexp_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) (e : Int) : FullFloat :=
-  B2FF (binary_ldexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) e)
+  B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE (prim_to_binary prec emax x) e)
 
 theorem ldexp_equiv (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
@@ -124,7 +124,7 @@ theorem ldexp_equiv (prec emax : Int)
   ⦃⌜True⌝⦄
   (pure (ldexp_equiv_check prec emax x e) : Id FullFloat)
   ⦃⇓result => ⌜result =
-      B2FF (binary_ldexp (prec:=prec) (emax:=emax)
+      B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
               (prim_to_binary prec emax x) e)⌝⦄ := by
   intro _
   rfl
@@ -311,7 +311,7 @@ theorem abs_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
 -- Coq: div_equiv — division correspondence between PrimFloat and Flocq Binary
 noncomputable def div_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : FullFloat :=
-  B2FF (binary_div (prec:=prec) (emax:=emax)
+  B2FF (binary_div (prec:=prec) (emax:=emax) RoundingMode.RNE
     (prim_to_binary prec emax x) (prim_to_binary prec emax y))
 
 theorem div_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
@@ -319,7 +319,7 @@ theorem div_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   ⦃⌜True⌝⦄
   (pure (div_equiv_check prec emax x y) : Id FullFloat)
   ⦃⇓result => ⌜result =
-      B2FF (binary_div (prec:=prec) (emax:=emax)
+      B2FF (binary_div (prec:=prec) (emax:=emax) RoundingMode.RNE
               (prim_to_binary prec emax x)
               (prim_to_binary prec emax y))⌝⦄ := by
   intro _
@@ -329,7 +329,7 @@ theorem div_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
 noncomputable def ldshiftexp_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) (e : Int) : FullFloat :=
-  B2FF (binary_ldexp (prec:=prec) (emax:=emax)
+  B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
     (prim_to_binary prec emax x) (e - 1))
 
 theorem ldshiftexp_equiv (prec emax : Int)
@@ -338,7 +338,7 @@ theorem ldshiftexp_equiv (prec emax : Int)
   ⦃⌜True⌝⦄
   (pure (ldshiftexp_equiv_check prec emax x e) : Id FullFloat)
   ⦃⇓result => ⌜result =
-      B2FF (binary_ldexp (prec:=prec) (emax:=emax)
+      B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
               (prim_to_binary prec emax x) (e - 1))⌝⦄ := by
   intro _
   rfl
@@ -376,7 +376,7 @@ theorem frshiftexp_equiv (prec emax : Int)
 -- Coq: sub_equiv — subtraction correspondence between PrimFloat and Flocq Binary
 noncomputable def sub_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x y : PrimFloat) : FullFloat :=
-  B2FF (binary_sub (prec:=prec) (emax:=emax)
+  B2FF (binary_sub (prec:=prec) (emax:=emax) RoundingMode.RNE
     (prim_to_binary prec emax x) (prim_to_binary prec emax y))
 
 theorem sub_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
@@ -384,7 +384,7 @@ theorem sub_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   ⦃⌜True⌝⦄
   (pure (sub_equiv_check prec emax x y) : Id FullFloat)
   ⦃⇓result => ⌜result =
-      B2FF (binary_sub (prec:=prec) (emax:=emax)
+      B2FF (binary_sub (prec:=prec) (emax:=emax) RoundingMode.RNE
               (prim_to_binary prec emax x)
               (prim_to_binary prec emax y))⌝⦄ := by
   intro _
@@ -393,14 +393,14 @@ theorem sub_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
 -- Coq: sqrt_equiv — square-root correspondence between PrimFloat and Flocq Binary
 noncomputable def sqrt_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) : FullFloat :=
-  B2FF (binary_sqrt (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
+  B2FF (binary_sqrt (prec:=prec) (emax:=emax) RoundingMode.RNE (prim_to_binary prec emax x))
 
 theorem sqrt_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : PrimFloat) :
   ⦃⌜True⌝⦄
   (pure (sqrt_equiv_check prec emax x) : Id FullFloat)
   ⦃⇓result => ⌜result =
-      B2FF (binary_sqrt (prec:=prec) (emax:=emax)
+      B2FF (binary_sqrt (prec:=prec) (emax:=emax) RoundingMode.RNE
               (prim_to_binary prec emax x))⌝⦄ := by
   intro _
   rfl

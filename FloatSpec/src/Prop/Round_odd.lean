@@ -561,6 +561,72 @@ lemma generic_format_fexpe_fexp
       omega)
     hx
 
+/-- Coq: `exists_even_fexp_lt`.
+
+    If `x` has a float representative whose exponent is strictly above
+    `c (mag beta x)`, and the radix is even, then `x` has a canonical
+    representative at exponent `c (mag beta x)` with an even mantissa. -/
+lemma exists_even_fexp_lt
+  (Ebeta : ∃ n : Int, beta = 2 * n)
+  (hβ : 1 < beta)
+  (c : Int → Int) (x : ℝ)
+  (h : ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+      F2R g = x ∧ c (FloatSpec.Core.Raux.mag beta x) < g.Fexp) :
+  ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R f = x ∧
+      FloatSpec.Core.Generic_fmt.canonical beta c f ∧ f.Fnum % 2 = 0 := by
+  classical
+  rcases h with ⟨g, hgx, hlt_exp⟩
+  let e0 : Int := c (FloatSpec.Core.Raux.mag beta x)
+  let k : Nat := Int.toNat (g.Fexp - e0)
+  have hdiff_pos : 0 < g.Fexp - e0 := by omega
+  have hdiff_nonneg : 0 ≤ g.Fexp - e0 := le_of_lt hdiff_pos
+  have hk_cast : (k : Int) = g.Fexp - e0 := by
+    simpa [k] using Int.toNat_of_nonneg hdiff_nonneg
+  let f : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FloatSpec.Core.Defs.FlocqFloat.mk (g.Fnum * beta ^ k) e0
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbneℝ : (beta : ℝ) ≠ 0 := ne_of_gt hbposℝ
+  have hf_val : F2R f = x := by
+    calc
+      F2R f
+          = (((g.Fnum * beta ^ k : Int) : ℝ) * (beta : ℝ) ^ e0) := by
+              rfl
+      _ = ((g.Fnum : ℝ) * (beta : ℝ) ^ (k : Int) *
+            (beta : ℝ) ^ e0) := by
+              simp [f, Int.cast_mul, Int.cast_pow, zpow_natCast]
+      _ = ((g.Fnum : ℝ) * (beta : ℝ) ^ (g.Fexp - e0) *
+            (beta : ℝ) ^ e0) := by
+              rw [hk_cast]
+      _ = (g.Fnum : ℝ) * ((beta : ℝ) ^ (g.Fexp - e0) *
+            (beta : ℝ) ^ e0) := by ring
+      _ = (g.Fnum : ℝ) * (beta : ℝ) ^ ((g.Fexp - e0) + e0) := by
+              rw [zpow_add₀ hbneℝ]
+      _ = F2R g := by
+              simp [F2R, sub_add_cancel]
+      _ = x := hgx
+  refine ⟨f, hf_val, ?_, ?_⟩
+  · change e0 = c (FloatSpec.Core.Raux.mag beta (F2R f))
+    rw [hf_val]
+  · rcases Ebeta with ⟨b, hb⟩
+    have hk_pos : 0 < k := by
+      have hcast_pos : (0 : Int) < (k : Int) := by
+        simpa [hk_cast] using hdiff_pos
+      exact Nat.cast_pos.mp hcast_pos
+    obtain ⟨q, hq⟩ : ∃ q : Nat, k = q + 1 := by
+      exact ⟨k - 1, (Nat.succ_pred_eq_of_pos hk_pos).symm⟩
+    have hpow_even : beta ^ k % 2 = 0 := by
+      rw [hq, pow_succ, hb]
+      have hmod : (2 * (b * (2 * b) ^ q)) % 2 = 0 :=
+        Int.mul_emod_right 2 (b * (2 * b) ^ q)
+      simpa [mul_comm, mul_left_comm, mul_assoc] using hmod
+    have hmulmod :
+        (g.Fnum * beta ^ k) % 2 =
+          ((g.Fnum % 2) * ((beta ^ k) % 2)) % 2 := by
+      simpa using (Int.mul_emod g.Fnum (beta ^ k) 2)
+    simp [f, hmulmod, hpow_even]
+
 /-- Zodd summation at even-base aligned points.
     Coq counterpart: `Zrnd_odd_plus'`.
 
@@ -708,6 +774,201 @@ private lemma roundR_ceil_UP_pt_local
       FloatSpec.Core.Generic_fmt.roundR_le_generic
         (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_ceil)
         (x := x) (y := g) hβ hgF hx_le_g
+
+private lemma roundR_nearest_eq_DN_of_lt_mid
+  (choice : Int → Bool) (x d u : ℝ)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x u)
+  (hβ : 1 < beta)
+  (hmid : x < (d + u) / 2) :
+  FloatSpec.Core.Generic_fmt.roundR beta fexp
+      (FloatSpec.Core.Generic_fmt.Znearest choice) x = d := by
+  classical
+  let dn := FloatSpec.Core.Generic_fmt.roundR beta fexp
+    FloatSpec.Core.Generic_fmt.rnd_floor x
+  let up := FloatSpec.Core.Generic_fmt.roundR beta fexp
+    FloatSpec.Core.Generic_fmt.rnd_ceil x
+  have hDN_round : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x dn := by
+    simpa [dn, FloatSpec.Core.Generic_fmt.rnd_floor] using
+      roundR_floor_DN_pt_local (beta := beta) (fexp := fexp) x hβ
+  have hUP_round : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x up := by
+    simpa [up, FloatSpec.Core.Generic_fmt.rnd_ceil] using
+      roundR_ceil_UP_pt_local (beta := beta) (fexp := fexp) x hβ
+  have hdn_eq : dn = d :=
+    Rnd_DN_pt_unique_pure (generic_format beta fexp) x dn d hDN_round Hd
+  have hup_eq : up = u :=
+    FloatSpec.Core.Round_pred.Rnd_UP_pt_unique_pure
+      (generic_format beta fexp) x up u hUP_round Hu
+  set e : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he
+  set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
+  set n : Int := FloatSpec.Core.Raux.Zfloor sm with hn
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbposR e
+  have hscaled : sm * (beta : ℝ) ^ e = x := by
+    have htrip := FloatSpec.Core.Generic_fmt.scaled_mantissa_mult_bpow
+      (beta := beta) (fexp := fexp) (x := x)
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, sm, hsm, e, he]
+      using htrip hβ
+  have hdn_eval : dn = (n : ℝ) * (beta : ℝ) ^ e := by
+    simpa [dn, FloatSpec.Core.Generic_fmt.roundR, FloatSpec.Core.Generic_fmt.rnd_floor,
+      sm, hsm, e, he, n, hn]
+  have hup_eval : up = ((FloatSpec.Core.Raux.Zceil sm : Int) : ℝ) * (beta : ℝ) ^ e := by
+    simpa [up, FloatSpec.Core.Generic_fmt.roundR, FloatSpec.Core.Generic_fmt.rnd_ceil,
+      sm, hsm, e, he]
+  have hmid_round : x < (dn + up) / 2 := by
+    simpa [hdn_eq, hup_eq] using hmid
+  have hfloor_le : (n : ℝ) ≤ sm := by
+    simpa [n, hn, FloatSpec.Core.Raux.Zfloor] using Int.floor_le sm
+  have hnonneg : 0 ≤ sm - (n : ℝ) := sub_nonneg.mpr hfloor_le
+  have hceil_le_floor_add_one :
+      FloatSpec.Core.Raux.Zceil sm ≤ n + 1 := by
+    have hsm_lt : sm < (n : ℝ) + 1 := by
+      simpa [n, hn, FloatSpec.Core.Raux.Zfloor] using Int.lt_floor_add_one sm
+    exact Int.ceil_le.mpr (by simpa [Int.cast_add, Int.cast_one] using le_of_lt hsm_lt)
+  have hgap_le :
+      up - dn ≤ (beta : ℝ) ^ e := by
+    have hceil_cast :
+        ((FloatSpec.Core.Raux.Zceil sm : Int) : ℝ) ≤ (n : ℝ) + 1 := by
+      exact_mod_cast hceil_le_floor_add_one
+    have hdiff_le :
+        ((FloatSpec.Core.Raux.Zceil sm : Int) : ℝ) - (n : ℝ) ≤ 1 := by
+      linarith
+    have hmul := mul_le_mul_of_nonneg_right hdiff_le (le_of_lt hpow_pos)
+    calc
+      up - dn =
+          (((FloatSpec.Core.Raux.Zceil sm : Int) : ℝ) - (n : ℝ)) *
+            (beta : ℝ) ^ e := by
+              rw [hup_eval, hdn_eval]
+              ring
+      _ ≤ 1 * (beta : ℝ) ^ e := hmul
+      _ = (beta : ℝ) ^ e := by ring
+  have hdist_lt : |sm - (n : ℝ)| < (1 / 2 : ℝ) := by
+    have hx_minus_dn_lt : x - dn < (up - dn) / 2 := by
+      linarith [hmid_round]
+    have hx_minus_dn_scaled :
+        x - dn = (sm - (n : ℝ)) * (beta : ℝ) ^ e := by
+      rw [← hscaled, hdn_eval]
+      ring
+    have hlt_scaled :
+        (sm - (n : ℝ)) * (beta : ℝ) ^ e < (1 / 2) * (beta : ℝ) ^ e := by
+      nlinarith [hpow_pos, hgap_le, hx_minus_dn_lt, hx_minus_dn_scaled]
+    have hlt : sm - (n : ℝ) < (1 / 2 : ℝ) := by
+      nlinarith [hpow_pos, hlt_scaled]
+    simpa [abs_of_nonneg hnonneg] using hlt
+  have hZ :
+      FloatSpec.Core.Generic_fmt.Znearest choice sm = n := by
+    have h := FloatSpec.Core.Generic_fmt.Znearest_imp choice sm n hdist_lt
+    simpa [FloatSpec.Core.Generic_fmt.Znearest_imp_check, Std.Do.wp,
+      Std.Do.PostCond.noThrow, Id.run, pure] using h
+  calc
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x
+        = ((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) *
+            (beta : ℝ) ^ e := by
+              simp [FloatSpec.Core.Generic_fmt.roundR, sm, hsm, e, he]
+    _ = (n : ℝ) * (beta : ℝ) ^ e := by rw [hZ]
+    _ = dn := hdn_eval.symm
+    _ = d := hdn_eq
+
+private lemma roundR_nearest_eq_UP_of_mid_lt
+  (choice : Int → Bool) (x d u : ℝ)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x u)
+  (hβ : 1 < beta)
+  (hmid : (d + u) / 2 < x) :
+  FloatSpec.Core.Generic_fmt.roundR beta fexp
+      (FloatSpec.Core.Generic_fmt.Znearest choice) x = u := by
+  classical
+  let dn := FloatSpec.Core.Generic_fmt.roundR beta fexp
+    FloatSpec.Core.Generic_fmt.rnd_floor x
+  let up := FloatSpec.Core.Generic_fmt.roundR beta fexp
+    FloatSpec.Core.Generic_fmt.rnd_ceil x
+  have hDN_round : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x dn := by
+    simpa [dn, FloatSpec.Core.Generic_fmt.rnd_floor] using
+      roundR_floor_DN_pt_local (beta := beta) (fexp := fexp) x hβ
+  have hUP_round : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x up := by
+    simpa [up, FloatSpec.Core.Generic_fmt.rnd_ceil] using
+      roundR_ceil_UP_pt_local (beta := beta) (fexp := fexp) x hβ
+  have hdn_eq : dn = d :=
+    Rnd_DN_pt_unique_pure (generic_format beta fexp) x dn d hDN_round Hd
+  have hup_eq : up = u :=
+    FloatSpec.Core.Round_pred.Rnd_UP_pt_unique_pure
+      (generic_format beta fexp) x up u hUP_round Hu
+  set e : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he
+  set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
+  set n : Int := FloatSpec.Core.Raux.Zceil sm with hn
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbposR e
+  have hscaled : sm * (beta : ℝ) ^ e = x := by
+    have htrip := FloatSpec.Core.Generic_fmt.scaled_mantissa_mult_bpow
+      (beta := beta) (fexp := fexp) (x := x)
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, sm, hsm, e, he]
+      using htrip hβ
+  have hdn_eval :
+      dn = ((FloatSpec.Core.Raux.Zfloor sm : Int) : ℝ) * (beta : ℝ) ^ e := by
+    simpa [dn, FloatSpec.Core.Generic_fmt.roundR, FloatSpec.Core.Generic_fmt.rnd_floor,
+      sm, hsm, e, he]
+  have hup_eval : up = (n : ℝ) * (beta : ℝ) ^ e := by
+    simpa [up, FloatSpec.Core.Generic_fmt.roundR, FloatSpec.Core.Generic_fmt.rnd_ceil,
+      sm, hsm, e, he, n, hn]
+  have hmid_round : (dn + up) / 2 < x := by
+    simpa [hdn_eq, hup_eq] using hmid
+  have hceil_ge : sm ≤ (n : ℝ) := by
+    simpa [n, hn, FloatSpec.Core.Raux.Zceil] using Int.le_ceil sm
+  have hnonneg : 0 ≤ (n : ℝ) - sm := sub_nonneg.mpr hceil_ge
+  have hceil_le_floor_add_one :
+      n ≤ FloatSpec.Core.Raux.Zfloor sm + 1 := by
+    have hsm_lt : sm < ((FloatSpec.Core.Raux.Zfloor sm : Int) : ℝ) + 1 := by
+      simpa [FloatSpec.Core.Raux.Zfloor] using Int.lt_floor_add_one sm
+    exact Int.ceil_le.mpr (by simpa [Int.cast_add, Int.cast_one] using le_of_lt hsm_lt)
+  have hgap_le :
+      up - dn ≤ (beta : ℝ) ^ e := by
+    have hceil_cast :
+        (n : ℝ) ≤ ((FloatSpec.Core.Raux.Zfloor sm : Int) : ℝ) + 1 := by
+      exact_mod_cast hceil_le_floor_add_one
+    have hdiff_le :
+        (n : ℝ) - ((FloatSpec.Core.Raux.Zfloor sm : Int) : ℝ) ≤ 1 := by
+      linarith
+    have hmul := mul_le_mul_of_nonneg_right hdiff_le (le_of_lt hpow_pos)
+    calc
+      up - dn =
+          ((n : ℝ) - ((FloatSpec.Core.Raux.Zfloor sm : Int) : ℝ)) *
+            (beta : ℝ) ^ e := by
+              rw [hup_eval, hdn_eval]
+              ring
+      _ ≤ 1 * (beta : ℝ) ^ e := hmul
+      _ = (beta : ℝ) ^ e := by ring
+  have hdist_lt : |sm - (n : ℝ)| < (1 / 2 : ℝ) := by
+    have hup_minus_x_lt : up - x < (up - dn) / 2 := by
+      linarith [hmid_round]
+    have hup_minus_x_scaled :
+        up - x = ((n : ℝ) - sm) * (beta : ℝ) ^ e := by
+      rw [← hscaled, hup_eval]
+      ring
+    have hlt_scaled :
+        ((n : ℝ) - sm) * (beta : ℝ) ^ e < (1 / 2) * (beta : ℝ) ^ e := by
+      nlinarith [hpow_pos, hgap_le, hup_minus_x_lt, hup_minus_x_scaled]
+    have hlt : (n : ℝ) - sm < (1 / 2 : ℝ) := by
+      nlinarith [hpow_pos, hlt_scaled]
+    have hdist : |(n : ℝ) - sm| < (1 / 2 : ℝ) := by
+      simpa [abs_of_nonneg hnonneg] using hlt
+    simpa [abs_sub_comm] using hdist
+  have hZ :
+      FloatSpec.Core.Generic_fmt.Znearest choice sm = n := by
+    have h := FloatSpec.Core.Generic_fmt.Znearest_imp choice sm n hdist_lt
+    simpa [FloatSpec.Core.Generic_fmt.Znearest_imp_check, Std.Do.wp,
+      Std.Do.PostCond.noThrow, Id.run, pure] using h
+  calc
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x
+        = ((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) *
+            (beta : ℝ) ^ e := by
+              simp [FloatSpec.Core.Generic_fmt.roundR, sm, hsm, e, he]
+    _ = (n : ℝ) * (beta : ℝ) ^ e := by rw [hZ]
+    _ = up := hup_eval.symm
+    _ = u := hup_eq
 
 /-- Positive-input core of Coq's `round_odd_pt`.
 
@@ -990,6 +1251,121 @@ lemma d_ge_0 (x : ℝ)
   have hzero_le_x : (0 : ℝ) ≤ x := le_of_lt xPos
   exact Hd.2.2 0 hzero_fmt hzero_le_x
 
+/-- Coq: `mag_d`.
+    A positive DN witness has the same magnitude as the rounded input. -/
+lemma mag_d (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hd_pos : 0 < F2R d) :
+  FloatSpec.Core.Raux.mag beta (F2R d) = FloatSpec.Core.Raux.mag beta x := by
+  have hdn := d_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+  have hdn_floor :
+      F2R d =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor x := by
+    simpa [FloatSpec.Core.Generic_fmt.rnd_floor] using hdn
+  have hmag := (FloatSpec.Core.Generic_fmt.mag_DN
+    (beta := beta) (fexp := fexp) (x := x)) hβ
+  have himp :
+      0 < FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor x →
+      FloatSpec.Core.Raux.mag beta
+          (FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_floor x) =
+        FloatSpec.Core.Raux.mag beta x := by
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using hmag
+  have hpos_round :
+      0 < FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor x := by
+    simpa [← hdn_floor] using hd_pos
+  simpa [← hdn_floor] using himp hpos_round
+
+/-- Coq: `Fexp_d`.
+    A positive canonical DN witness has exponent `fexp (mag beta x)`. -/
+lemma Fexp_d (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hd_pos : 0 < F2R d) :
+  d.Fexp = fexp (FloatSpec.Core.Raux.mag beta x) := by
+  have hmag := mag_d (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+  unfold FloatSpec.Core.Generic_fmt.canonical at Cd
+  calc
+    d.Fexp = fexp (FloatSpec.Core.Raux.mag beta (F2R d)) := Cd
+    _ = fexp (FloatSpec.Core.Raux.mag beta x) := by rw [hmag]
+
+/-- Coq: `format_bpow_x`.
+    If the DN witness is positive, the power at `mag beta x` is in the
+    generic format. -/
+lemma format_bpow_x (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hd_pos : 0 < F2R d) :
+  generic_format beta fexp ((beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x)) := by
+  have hmag := mag_d (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+  have hfmt_d : generic_format beta fexp (F2R d) :=
+    FloatSpec.Core.Generic_fmt.generic_format_canonical
+      (beta := beta) (fexp := fexp) (f := d) Cd
+  have hmg := (FloatSpec.Core.Generic_fmt.mag_generic_gt
+    (beta := beta) (fexp := fexp) (x := F2R d)) ⟨hβ, ne_of_gt hd_pos, hfmt_d⟩
+  have hcexp_le :
+      FloatSpec.Core.Generic_fmt.cexp beta fexp (F2R d) ≤
+        FloatSpec.Core.Raux.mag beta (F2R d) := by
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using (le_of_lt hmg)
+  have hfe_le_d :
+      fexp (FloatSpec.Core.Raux.mag beta (F2R d)) ≤
+        FloatSpec.Core.Raux.mag beta (F2R d) := by
+    simpa [FloatSpec.Core.Generic_fmt.cexp] using hcexp_le
+  have hfe_le :
+      fexp (FloatSpec.Core.Raux.mag beta x) ≤
+        FloatSpec.Core.Raux.mag beta x := by
+    simpa [hmag] using hfe_le_d
+  have hpow := (FloatSpec.Core.Generic_fmt.generic_format_bpow'
+    (beta := beta) (fexp := fexp) (e := FloatSpec.Core.Raux.mag beta x))
+      ⟨hβ, hfe_le⟩
+  simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using hpow
+
+/-- Coq: `format_bpow_d`.
+    If the DN witness is positive, the power at `mag beta (F2R d)` is in the
+    generic format. -/
+lemma format_bpow_d (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hd_pos : 0 < F2R d) :
+  generic_format beta fexp ((beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta (F2R d))) := by
+  have hfmt_d : generic_format beta fexp (F2R d) :=
+    FloatSpec.Core.Generic_fmt.generic_format_canonical
+      (beta := beta) (fexp := fexp) (f := d) Cd
+  have hmg := (FloatSpec.Core.Generic_fmt.mag_generic_gt
+    (beta := beta) (fexp := fexp) (x := F2R d)) ⟨hβ, ne_of_gt hd_pos, hfmt_d⟩
+  have hcexp_le :
+      FloatSpec.Core.Generic_fmt.cexp beta fexp (F2R d) ≤
+        FloatSpec.Core.Raux.mag beta (F2R d) := by
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using (le_of_lt hmg)
+  have hfe_le :
+      fexp (FloatSpec.Core.Raux.mag beta (F2R d)) ≤
+        FloatSpec.Core.Raux.mag beta (F2R d) := by
+    simpa [FloatSpec.Core.Generic_fmt.cexp] using hcexp_le
+  have hpow := (FloatSpec.Core.Generic_fmt.generic_format_bpow'
+    (beta := beta) (fexp := fexp) (e := FloatSpec.Core.Raux.mag beta (F2R d)))
+      ⟨hβ, hfe_le⟩
+  simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using hpow
+
 /-- Midpoint between the DN/UP witnesses used in Coq's section `Fcore_rnd_odd`.
     We keep it as a plain real number constructed from `d` and `u`. -/
 noncomputable def m (d u : FloatSpec.Core.Defs.FlocqFloat beta) : ℝ :=
@@ -1020,6 +1396,615 @@ lemma m_le_u (x : ℝ)
   have hdu : F2R d ≤ F2R u := le_trans Hd.2.1 Hu.2.1
   unfold m
   linarith
+
+/-- Coq: `mag_m`.
+    If the DN witness is positive, the midpoint has the same magnitude as the
+    DN witness. -/
+lemma mag_m (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hd_pos : 0 < F2R d) :
+  FloatSpec.Core.Raux.mag beta (m (beta := beta) d u) =
+    FloatSpec.Core.Raux.mag beta (F2R d) := by
+  let md := FloatSpec.Core.Raux.mag beta (F2R d)
+  have hmd_lower : (beta : ℝ) ^ (md - 1) ≤ F2R d := by
+    have htrip := FloatSpec.Core.Raux.mag_lower_bound
+      (beta := beta) (x := F2R d) hβ (ne_of_gt hd_pos)
+    have h : (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta (F2R d) - 1) ≤
+        abs (F2R d) := by
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+        FloatSpec.Core.Raux.abs_val] using htrip True.intro
+    simpa [md, abs_of_pos hd_pos] using h
+  have hmd_upper : F2R d < (beta : ℝ) ^ md := by
+    have htrip := FloatSpec.Core.Raux.mag_upper_bound
+      (beta := beta) (x := F2R d) hβ (ne_of_gt hd_pos)
+    have h : abs (F2R d) < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta (F2R d)) := by
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+        FloatSpec.Core.Raux.abs_val] using htrip True.intro
+    simpa [md, abs_of_pos hd_pos] using h
+  have hdm : F2R d ≤ m (beta := beta) d u :=
+    d_le_m (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos
+  have hmu : m (beta := beta) d u ≤ F2R u :=
+    m_le_u (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos
+  have hfmt_bpow_d :
+      generic_format beta fexp ((beta : ℝ) ^ md) := by
+    simpa [md] using
+      format_bpow_d (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+  have hx_le_bpow : x ≤ (beta : ℝ) ^ md := by
+    by_contra hx_not
+    have hbpow_lt_x : (beta : ℝ) ^ md < x := lt_of_not_ge hx_not
+    have hround_ge :=
+      FloatSpec.Core.Generic_fmt.roundR_ge_generic
+        (beta := beta) (fexp := fexp)
+        (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+        ((beta : ℝ) ^ md) x hβ hfmt_bpow_d (le_of_lt hbpow_lt_x)
+    have hdn_floor :
+        F2R d =
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_floor x := by
+      have hdn := d_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+      simpa [FloatSpec.Core.Generic_fmt.rnd_floor] using hdn
+    have hbpow_le_d : (beta : ℝ) ^ md ≤ F2R d := by
+      simpa [← hdn_floor] using hround_ge
+    exact (not_le_of_gt hmd_upper) hbpow_le_d
+  have hu_le_bpow : F2R u ≤ (beta : ℝ) ^ md := by
+    have hround_le :=
+      FloatSpec.Core.Generic_fmt.roundR_le_generic
+        (beta := beta) (fexp := fexp)
+        (rnd := FloatSpec.Core.Generic_fmt.rnd_ceil)
+        x ((beta : ℝ) ^ md) hβ hfmt_bpow_d hx_le_bpow
+    have hu_ceil :
+        F2R u =
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_ceil x := by
+      have hu_eq := u_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+      simpa [FloatSpec.Core.Generic_fmt.rnd_ceil] using hu_eq
+    simpa [← hu_ceil] using hround_le
+  have hm_pos : 0 < m (beta := beta) d u := lt_of_lt_of_le hd_pos hdm
+  have hm_lower : (beta : ℝ) ^ (md - 1) ≤ m (beta := beta) d u :=
+    le_trans hmd_lower hdm
+  have hm_upper : m (beta := beta) d u < (beta : ℝ) ^ md :=
+    by
+      unfold m
+      linarith
+  have huniq := FloatSpec.Core.Raux.mag_unique_pos
+    (beta := beta) (x := m (beta := beta) d u) (e := md)
+    hβ hm_pos hm_lower hm_upper
+  simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, md] using huniq True.intro
+
+/-- Coq: `u'_eq`.
+    In the positive-DN branch, the UP value has a float representative using
+    the DN exponent. -/
+lemma u'_eq (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hd_pos : 0 < F2R d) :
+  ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R f = F2R u ∧ f.Fexp = d.Fexp := by
+  let f : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FloatSpec.Core.Defs.FlocqFloat.mk
+      (FloatSpec.Core.Generic_fmt.rnd_ceil
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x))
+      d.Fexp
+  refine ⟨f, ?_, rfl⟩
+  have hu_ceil := u_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+  have hd_exp := Fexp_d (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+  have hcexp : FloatSpec.Core.Generic_fmt.cexp beta fexp x = d.Fexp := by
+    simpa [FloatSpec.Core.Generic_fmt.cexp] using hd_exp.symm
+  calc
+    F2R f
+        = ((FloatSpec.Core.Generic_fmt.rnd_ceil
+              (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) : Int) : ℝ)
+            * (beta : ℝ) ^ d.Fexp := by
+            rfl
+    _ = FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_ceil x := by
+            simp [FloatSpec.Core.Generic_fmt.roundR,
+              FloatSpec.Core.Generic_fmt.scaled_mantissa, hcexp]
+    _ = F2R u := by
+            simpa [FloatSpec.Core.Generic_fmt.rnd_ceil] using hu_ceil.symm
+
+/-- Coq: `m_eq`.
+    In the positive-DN branch, the midpoint is representable one exponent below
+    `fexp (mag beta x)`. -/
+lemma m_eq (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hd_pos : 0 < F2R d) :
+  ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R f = m (beta := beta) d u ∧
+      f.Fexp = fexp (FloatSpec.Core.Raux.mag beta x) - 1 := by
+  classical
+  rcases Ebeta with ⟨b, hb⟩
+  rcases u'_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos with
+    ⟨u', hu'_val, hu'_exp⟩
+  let f : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FloatSpec.Core.Defs.FlocqFloat.mk (b * (d.Fnum + u'.Fnum)) (d.Fexp - 1)
+  have hd_exp := Fexp_d (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbneℝ : (beta : ℝ) ≠ 0 := ne_of_gt hbposℝ
+  have hpow_split :
+      (beta : ℝ) ^ d.Fexp = (beta : ℝ) ^ (d.Fexp - 1) * (beta : ℝ) := by
+    have h := zpow_add₀ hbneℝ (d.Fexp - 1) (1 : Int)
+    simpa [sub_add_cancel, zpow_one] using h
+  have hb_real : (beta : ℝ) = 2 * (b : ℝ) := by
+    exact_mod_cast hb
+  have hb_half : (b : ℝ) = (beta : ℝ) / 2 := by
+    nlinarith
+  have hu'_val_exp : F2R u' = (u'.Fnum : ℝ) * (beta : ℝ) ^ d.Fexp := by
+    rw [show d.Fexp = u'.Fexp from hu'_exp.symm]
+    rfl
+  refine ⟨f, ?_, ?_⟩
+  · calc
+      F2R f
+          = ((b * (d.Fnum + u'.Fnum) : Int) : ℝ) *
+              (beta : ℝ) ^ (d.Fexp - 1) := by
+                rfl
+      _ = ((b : ℝ) * ((d.Fnum : ℝ) + (u'.Fnum : ℝ))) *
+              (beta : ℝ) ^ (d.Fexp - 1) := by
+                simp [Int.cast_mul, Int.cast_add]
+      _ = (((d.Fnum : ℝ) + (u'.Fnum : ℝ)) *
+              (((beta : ℝ) ^ (d.Fexp - 1) * (beta : ℝ)) / 2)) := by
+                rw [hb_half]
+                ring
+      _ = (((d.Fnum : ℝ) + (u'.Fnum : ℝ)) *
+              ((beta : ℝ) ^ d.Fexp / 2)) := by
+                rw [hpow_split]
+      _ = (((d.Fnum : ℝ) * (beta : ℝ) ^ d.Fexp +
+              (u'.Fnum : ℝ) * (beta : ℝ) ^ d.Fexp) / 2) := by
+                ring
+      _ = (F2R d + F2R u') / 2 := by
+                rw [hu'_val_exp]
+                rfl
+      _ = (F2R d + F2R u) / 2 := by
+                rw [hu'_val]
+      _ = m (beta := beta) d u := by
+                rfl
+  · simp [f, hd_exp]
+
+/-- Coq: `m_eq_0`.
+    In the zero-DN branch, the midpoint is representable one exponent below
+    the UP witness's canonical exponent. -/
+lemma m_eq_0 (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hd_zero : 0 = F2R d) :
+  ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R f = m (beta := beta) d u ∧
+      f.Fexp = fexp (FloatSpec.Core.Raux.mag beta (F2R u)) - 1 := by
+  classical
+  rcases Ebeta with ⟨b, hb⟩
+  let f : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FloatSpec.Core.Defs.FlocqFloat.mk (b * u.Fnum) (u.Fexp - 1)
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbneℝ : (beta : ℝ) ≠ 0 := ne_of_gt hbposℝ
+  have hpow_split :
+      (beta : ℝ) ^ u.Fexp = (beta : ℝ) ^ (u.Fexp - 1) * (beta : ℝ) := by
+    have h := zpow_add₀ hbneℝ (u.Fexp - 1) (1 : Int)
+    simpa [sub_add_cancel, zpow_one] using h
+  have hb_real : (beta : ℝ) = 2 * (b : ℝ) := by
+    exact_mod_cast hb
+  have hb_half : (b : ℝ) = (beta : ℝ) / 2 := by
+    nlinarith
+  have hd_zero' : F2R d = 0 := hd_zero.symm
+  refine ⟨f, ?_, ?_⟩
+  · calc
+      F2R f
+          = ((b * u.Fnum : Int) : ℝ) *
+              (beta : ℝ) ^ (u.Fexp - 1) := by
+                rfl
+      _ = ((b : ℝ) * (u.Fnum : ℝ)) *
+              (beta : ℝ) ^ (u.Fexp - 1) := by
+                simp [Int.cast_mul]
+      _ = (u.Fnum : ℝ) *
+              (((beta : ℝ) ^ (u.Fexp - 1) * (beta : ℝ)) / 2) := by
+                rw [hb_half]
+                ring
+      _ = ((u.Fnum : ℝ) * (beta : ℝ) ^ u.Fexp) / 2 := by
+                rw [hpow_split]
+                ring
+      _ = F2R u / 2 := by
+                rfl
+      _ = (F2R d + F2R u) / 2 := by
+                rw [hd_zero']
+                ring
+      _ = m (beta := beta) d u := by
+                rfl
+  · simp [f]
+    exact Cu
+
+/-- Coq: `fexp_m_eq_0`.
+    In the zero-DN branch, the UP power sits in the small exponent plateau used
+    by the midpoint witness. -/
+lemma fexp_m_eq_0 (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta fexp)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hd_zero : 0 = F2R d) :
+  fexp (FloatSpec.Core.Raux.mag beta (F2R u) - 1) <
+    fexp (FloatSpec.Core.Raux.mag beta (F2R u)) + 1 := by
+  classical
+  haveI : FloatSpec.Core.RoundNE.Exists_NE beta fexp := hNE
+  let e := FloatSpec.Core.Raux.mag beta x
+  have hx_ne : x ≠ 0 := ne_of_gt xPos
+  have hmag_bounds :
+      (beta : ℝ) ^ (e - 1) ≤ x ∧ x < (beta : ℝ) ^ e := by
+    have hlow := FloatSpec.Core.Raux.mag_lower_bound
+      (beta := beta) (x := x) hβ hx_ne
+    have hhigh := FloatSpec.Core.Raux.mag_upper_bound
+      (beta := beta) (x := x) hβ hx_ne
+    constructor
+    · have h : (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x - 1) ≤ abs x := by
+        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+          FloatSpec.Core.Raux.abs_val] using hlow True.intro
+      simpa [e, abs_of_pos xPos] using h
+    · have h : abs x < (beta : ℝ) ^ FloatSpec.Core.Raux.mag beta x := by
+        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+          FloatSpec.Core.Raux.abs_val] using hhigh True.intro
+      simpa [e, abs_of_pos xPos] using h
+  have hdn_floor :
+      F2R d =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor x := by
+    have hdn := d_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+    simpa [FloatSpec.Core.Generic_fmt.rnd_floor] using hdn
+  have hfloor_zero :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+        FloatSpec.Core.Generic_fmt.rnd_floor x = 0 := by
+    simpa [hdn_floor] using hd_zero.symm
+  have hsmall : e ≤ fexp e := by
+    by_contra hnot
+    have hlarge : fexp e < e := lt_of_not_ge hnot
+    have hfe_le : fexp e ≤ e - 1 := Int.le_sub_one_iff.mpr hlarge
+    have hfmt_bpow :
+        generic_format beta fexp ((beta : ℝ) ^ (e - 1)) := by
+      have hfe_le' : fexp (e - 1 + 1) ≤ e - 1 := by
+        simpa [sub_add_cancel] using hfe_le
+      have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow
+        (beta := beta) (fexp := fexp) (e := e - 1)
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+        using htrip ⟨hβ, hfe_le'⟩
+    have hle_round :
+        (beta : ℝ) ^ (e - 1) ≤
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_floor x :=
+      FloatSpec.Core.Generic_fmt.roundR_ge_generic
+        (beta := beta) (fexp := fexp)
+        (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+        ((beta : ℝ) ^ (e - 1)) x hβ hfmt_bpow hmag_bounds.1
+    have hle0 : (beta : ℝ) ^ (e - 1) ≤ 0 := by
+      simpa [hfloor_zero] using hle_round
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    exact (not_le_of_gt (zpow_pos hbposℝ (e - 1))) hle0
+  have hup_ceil :
+      F2R u =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_ceil x := by
+    have hu := u_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+    simpa [FloatSpec.Core.Generic_fmt.rnd_ceil] using hu
+  have hup_small_tg :
+      FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
+        FloatSpec.Core.Generic_fmt.rnd_ceil x = (beta : ℝ) ^ (fexp e) := by
+    have htrip := FloatSpec.Core.Generic_fmt.round_UP_small_pos
+      (beta := beta) (fexp := fexp) (x := x) (ex := e)
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+      using htrip ⟨hβ, hsmall, hmag_bounds⟩
+  have hup_pow :
+      F2R u = (beta : ℝ) ^ (fexp e) := by
+    calc
+      F2R u =
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_ceil x := hup_ceil
+      _ = FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_ceil x := by
+              exact (FloatSpec.Core.Generic_fmt.round_to_generic_int_eq_roundR
+                (beta := beta) (fexp := fexp)
+                (rnd := FloatSpec.Core.Generic_fmt.rnd_ceil) (x := x)).symm
+      _ = (beta : ℝ) ^ (fexp e) := hup_small_tg
+  have hmag_u :
+      FloatSpec.Core.Raux.mag beta (F2R u) = fexp e + 1 := by
+    rw [hup_pow]
+    have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := fexp e) hβ
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip True.intro
+  have hself : fexp (fexp e) = fexp e := by
+    have hpair := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
+      (beta := beta) (fexp := fexp) e
+    exact (hpair.right hsmall).right (fexp e) le_rfl
+  have hnext : fexp (fexp e + 1) = fexp e := by
+    rcases FloatSpec.Core.RoundNE.Exists_NE.exists_ne (beta := beta) (fexp := fexp) with hodd | heven
+    · rcases Ebeta with ⟨b, hb⟩
+      have hmod : beta % 2 = 0 := by
+        rw [hb]
+        exact Int.mul_emod_right 2 b
+      exact False.elim (hodd hmod)
+    · exact (heven e).right hsmall
+  rw [hmag_u]
+  have : fexp (fexp e) < fexp (fexp e + 1) + 1 := by
+    rw [hself, hnext]
+    omega
+  simpa [sub_eq_add_neg, add_assoc] using this
+
+/-- Coq: `mag_m_0`.
+    In the zero-DN branch, the midpoint is one binade below the UP witness. -/
+lemma mag_m_0 (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta fexp)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hd_zero : 0 = F2R d) :
+  FloatSpec.Core.Raux.mag beta (m (beta := beta) d u) =
+    FloatSpec.Core.Raux.mag beta (F2R u) - 1 := by
+  classical
+  haveI : FloatSpec.Core.RoundNE.Exists_NE beta fexp := hNE
+  let e := FloatSpec.Core.Raux.mag beta x
+  have hx_ne : x ≠ 0 := ne_of_gt xPos
+  have hmag_bounds :
+      (beta : ℝ) ^ (e - 1) ≤ x ∧ x < (beta : ℝ) ^ e := by
+    have hlow := FloatSpec.Core.Raux.mag_lower_bound
+      (beta := beta) (x := x) hβ hx_ne
+    have hhigh := FloatSpec.Core.Raux.mag_upper_bound
+      (beta := beta) (x := x) hβ hx_ne
+    constructor
+    · have h : (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x - 1) ≤ abs x := by
+        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+          FloatSpec.Core.Raux.abs_val] using hlow True.intro
+      simpa [e, abs_of_pos xPos] using h
+    · have h : abs x < (beta : ℝ) ^ FloatSpec.Core.Raux.mag beta x := by
+        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+          FloatSpec.Core.Raux.abs_val] using hhigh True.intro
+      simpa [e, abs_of_pos xPos] using h
+  have hdn_floor :
+      F2R d =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor x := by
+    have hdn := d_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+    simpa [FloatSpec.Core.Generic_fmt.rnd_floor] using hdn
+  have hfloor_zero :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+        FloatSpec.Core.Generic_fmt.rnd_floor x = 0 := by
+    simpa [hdn_floor] using hd_zero.symm
+  have hsmall : e ≤ fexp e := by
+    by_contra hnot
+    have hlarge : fexp e < e := lt_of_not_ge hnot
+    have hfe_le : fexp e ≤ e - 1 := Int.le_sub_one_iff.mpr hlarge
+    have hfmt_bpow :
+        generic_format beta fexp ((beta : ℝ) ^ (e - 1)) := by
+      have hfe_le' : fexp (e - 1 + 1) ≤ e - 1 := by
+        simpa [sub_add_cancel] using hfe_le
+      have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow
+        (beta := beta) (fexp := fexp) (e := e - 1)
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+        using htrip ⟨hβ, hfe_le'⟩
+    have hle_round :
+        (beta : ℝ) ^ (e - 1) ≤
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_floor x :=
+      FloatSpec.Core.Generic_fmt.roundR_ge_generic
+        (beta := beta) (fexp := fexp)
+        (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+        ((beta : ℝ) ^ (e - 1)) x hβ hfmt_bpow hmag_bounds.1
+    have hle0 : (beta : ℝ) ^ (e - 1) ≤ 0 := by
+      simpa [hfloor_zero] using hle_round
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    exact (not_le_of_gt (zpow_pos hbposℝ (e - 1))) hle0
+  have hup_ceil :
+      F2R u =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_ceil x := by
+    have hu := u_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ
+    simpa [FloatSpec.Core.Generic_fmt.rnd_ceil] using hu
+  have hup_small_tg :
+      FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
+        FloatSpec.Core.Generic_fmt.rnd_ceil x = (beta : ℝ) ^ (fexp e) := by
+    have htrip := FloatSpec.Core.Generic_fmt.round_UP_small_pos
+      (beta := beta) (fexp := fexp) (x := x) (ex := e)
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+      using htrip ⟨hβ, hsmall, hmag_bounds⟩
+  have hup_pow :
+      F2R u = (beta : ℝ) ^ (fexp e) := by
+    calc
+      F2R u =
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_ceil x := hup_ceil
+      _ = FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
+            FloatSpec.Core.Generic_fmt.rnd_ceil x := by
+              exact (FloatSpec.Core.Generic_fmt.round_to_generic_int_eq_roundR
+                (beta := beta) (fexp := fexp)
+                (rnd := FloatSpec.Core.Generic_fmt.rnd_ceil) (x := x)).symm
+      _ = (beta : ℝ) ^ (fexp e) := hup_small_tg
+  have hmag_u :
+      FloatSpec.Core.Raux.mag beta (F2R u) = fexp e + 1 := by
+    rw [hup_pow]
+    have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := fexp e) hβ
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip True.intro
+  let em := fexp e
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbneℝ : (beta : ℝ) ≠ 0 := ne_of_gt hbposℝ
+  have hbeta_ge_two : (2 : ℝ) ≤ (beta : ℝ) := by
+    exact_mod_cast (Int.add_one_le_iff.mpr hβ : (2 : Int) ≤ beta)
+  have hpow_split :
+      (beta : ℝ) ^ em = (beta : ℝ) ^ (em - 1) * (beta : ℝ) := by
+    have h := zpow_add₀ hbneℝ (em - 1) (1 : Int)
+    simpa [em, sub_add_cancel, zpow_one] using h
+  have hm_eq_half : m (beta := beta) d u = (beta : ℝ) ^ em / 2 := by
+    unfold m
+    rw [hd_zero.symm, hup_pow]
+    ring
+  have hm_pos : 0 < m (beta := beta) d u := by
+    rw [hm_eq_half]
+    positivity
+  have hm_lower : (beta : ℝ) ^ (em - 1) ≤ m (beta := beta) d u := by
+    have hpow_pos : 0 < (beta : ℝ) ^ (em - 1) := zpow_pos hbposℝ _
+    rw [hm_eq_half]
+    have hmul_le :
+        (beta : ℝ) ^ (em - 1) * 2 ≤
+          (beta : ℝ) ^ (em - 1) * (beta : ℝ) :=
+      mul_le_mul_of_nonneg_left hbeta_ge_two (le_of_lt hpow_pos)
+    have hle : (beta : ℝ) ^ (em - 1) ≤
+        ((beta : ℝ) ^ (em - 1) * (beta : ℝ)) / 2 := by
+      nlinarith
+    simpa [← hpow_split] using hle
+  have hm_upper : m (beta := beta) d u < (beta : ℝ) ^ em := by
+    rw [hm_eq_half]
+    have hpow_pos : 0 < (beta : ℝ) ^ em := zpow_pos hbposℝ _
+    nlinarith
+  have huniq := FloatSpec.Core.Raux.mag_unique_pos
+    (beta := beta) (x := m (beta := beta) d u) (e := em)
+    hβ hm_pos hm_lower hm_upper
+  have hmag_m : FloatSpec.Core.Raux.mag beta (m (beta := beta) d u) = em := by
+    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, em] using huniq True.intro
+  rw [hmag_m, hmag_u]
+  omega
+
+/-- Coq: `Fm`.
+    The midpoint belongs to the auxiliary generic format. -/
+lemma Fm (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta fexp)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hrel : ∀ e, fexpe e ≤ fexp e - 2) :
+  generic_format beta fexpe (m (beta := beta) d u) := by
+  classical
+  have hd_nonneg := d_ge_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos
+  by_cases hd_pos : 0 < F2R d
+  · rcases m_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ Ebeta hd_pos with
+      ⟨g, hg_val, hg_exp⟩
+    have hfmt := FloatSpec.Core.Generic_fmt.generic_format_F2R'
+      (beta := beta) (fexp := fexpe) (x := m (beta := beta) d u) (f := g)
+    have hbound :
+        m (beta := beta) d u ≠ 0 →
+          FloatSpec.Core.Generic_fmt.cexp beta fexpe (m (beta := beta) d u) ≤ g.Fexp := by
+      intro _hm_ne
+      have hmag := mag_m (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+      have hmagd := mag_d (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+      have hrel_d := hrel (FloatSpec.Core.Raux.mag beta (F2R d))
+      have hrel_x :
+          fexpe (FloatSpec.Core.Raux.mag beta x) ≤
+            fexp (FloatSpec.Core.Raux.mag beta x) - 2 := by
+        simpa [hmagd] using hrel_d
+      unfold FloatSpec.Core.Generic_fmt.cexp
+      rw [hmag, hmagd, hg_exp]
+      change fexpe (FloatSpec.Core.Raux.mag beta x) ≤
+        fexp (FloatSpec.Core.Raux.mag beta x) - 1
+      omega
+    have hrun : generic_format beta fexpe (m (beta := beta) d u) := by
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+        using hfmt ⟨hβ, hg_val, hbound⟩
+    exact hrun
+  · have hd_eq : F2R d = 0 := le_antisymm (le_of_not_gt hd_pos) hd_nonneg
+    have hd_zero : 0 = F2R d := hd_eq.symm
+    rcases m_eq_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ Ebeta hd_zero with
+      ⟨g, hg_val, hg_exp⟩
+    have hfmt := FloatSpec.Core.Generic_fmt.generic_format_F2R'
+      (beta := beta) (fexp := fexpe) (x := m (beta := beta) d u) (f := g)
+    have hbound :
+        m (beta := beta) d u ≠ 0 →
+          FloatSpec.Core.Generic_fmt.cexp beta fexpe (m (beta := beta) d u) ≤ g.Fexp := by
+      intro _hm_ne
+      have hmag0 := mag_m_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hNE Ebeta hd_zero
+      have hfexp0 := fexp_m_eq_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hNE Ebeta hd_zero
+      have hrel_m := hrel (FloatSpec.Core.Raux.mag beta (F2R u) - 1)
+      have hfexp0_le :
+          fexp (FloatSpec.Core.Raux.mag beta (F2R u) - 1) ≤
+            fexp (FloatSpec.Core.Raux.mag beta (F2R u)) := by
+        omega
+      unfold FloatSpec.Core.Generic_fmt.cexp
+      rw [hmag0, hg_exp]
+      change fexpe (FloatSpec.Core.Raux.mag beta (F2R u) - 1) ≤
+        fexp (FloatSpec.Core.Raux.mag beta (F2R u)) - 1
+      omega
+    have hrun : generic_format beta fexpe (m (beta := beta) d u) := by
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+        using hfmt ⟨hβ, hg_val, hbound⟩
+    exact hrun
+
+/-- Coq: `Zm`.
+    The midpoint has an even canonical representative in the auxiliary format. -/
+lemma Zm (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta fexp)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hrel : ∀ e, fexpe e ≤ fexp e - 2) :
+  ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+    F2R g = m (beta := beta) d u ∧
+      FloatSpec.Core.Generic_fmt.canonical beta fexpe g ∧ g.Fnum % 2 = 0 := by
+  classical
+  have hd_nonneg := d_ge_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos
+  by_cases hd_pos : 0 < F2R d
+  · rcases m_eq (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ Ebeta hd_pos with
+      ⟨g, hg_val, hg_exp⟩
+    apply exists_even_fexp_lt (beta := beta) Ebeta hβ fexpe (m (beta := beta) d u)
+    refine ⟨g, hg_val, ?_⟩
+    have hmag := mag_m (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+    have hmagd := mag_d (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hd_pos
+    have hrel_d := hrel (FloatSpec.Core.Raux.mag beta (F2R d))
+    have hrel_x :
+        fexpe (FloatSpec.Core.Raux.mag beta x) ≤
+          fexp (FloatSpec.Core.Raux.mag beta x) - 2 := by
+      simpa [hmagd] using hrel_d
+    rw [hmag, hmagd, hg_exp]
+    change fexpe (FloatSpec.Core.Raux.mag beta x) <
+      fexp (FloatSpec.Core.Raux.mag beta x) - 1
+    omega
+  · have hd_eq : F2R d = 0 := le_antisymm (le_of_not_gt hd_pos) hd_nonneg
+    have hd_zero : 0 = F2R d := hd_eq.symm
+    rcases m_eq_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ Ebeta hd_zero with
+      ⟨g, hg_val, hg_exp⟩
+    apply exists_even_fexp_lt (beta := beta) Ebeta hβ fexpe (m (beta := beta) d u)
+    refine ⟨g, hg_val, ?_⟩
+    have hmag0 := mag_m_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hNE Ebeta hd_zero
+    have hfexp0 := fexp_m_eq_0 (beta := beta) (fexp := fexp) x d u Hd Cd Hu Cu xPos hβ hNE Ebeta hd_zero
+    have hrel_m := hrel (FloatSpec.Core.Raux.mag beta (F2R u) - 1)
+    have hfexp0_le :
+        fexp (FloatSpec.Core.Raux.mag beta (F2R u) - 1) ≤
+          fexp (FloatSpec.Core.Raux.mag beta (F2R u)) := by
+      omega
+    rw [hmag0, hg_exp]
+    change fexpe (FloatSpec.Core.Raux.mag beta (F2R u) - 1) <
+      fexp (FloatSpec.Core.Raux.mag beta (F2R u)) - 1
+    omega
 
 /-- Coq: `DN_odd_d_aux`.
     For any `z` between `F2R d` and `F2R u`, the DN rounding predicate
@@ -1060,3 +2045,727 @@ lemma UP_odd_d_aux (x z : ℝ)
     linarith
   · have hxg : x ≤ g := le_of_lt (lt_of_not_ge hgx)
     exact Hu.2.2 g hg hxg
+
+/-- Coq: `round_N_odd_pos`.
+    Positive core of round-to-nearest after round-to-odd double rounding. -/
+theorem round_N_odd_pos (choice : Int → Bool) (x : ℝ)
+  (d u : FloatSpec.Core.Defs.FlocqFloat beta)
+  (Hd : FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) x (F2R d))
+  (Cd : FloatSpec.Core.Generic_fmt.canonical beta fexp d)
+  (Hu : FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) x (F2R u))
+  (Cu : FloatSpec.Core.Generic_fmt.canonical beta fexp u)
+  (xPos : 0 < x) (hβ : 1 < beta)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta fexp)
+  (hNEe : FloatSpec.Core.RoundNE.Exists_NE beta fexpe)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hrel : ∀ e, fexpe e ≤ fexp e - 2) :
+  FloatSpec.Core.Generic_fmt.roundR beta fexp
+      (FloatSpec.Core.Generic_fmt.Znearest choice)
+      (FloatSpec.Calc.Round.round beta fexpe oddMode x) =
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+      (FloatSpec.Core.Generic_fmt.Znearest choice) x := by
+  classical
+  haveI : FloatSpec.Core.RoundNE.Exists_NE beta fexp := hNE
+  haveI : FloatSpec.Core.RoundNE.Exists_NE beta fexpe := hNEe
+  let o : ℝ := FloatSpec.Calc.Round.round beta fexpe oddMode x
+  by_cases hx_fmt : generic_format beta fexp x
+  · have ho_eq_x : o = x := by
+      have hx_fexpe : generic_format beta fexpe x :=
+        generic_format_fexpe_fexp (beta := beta) (fexp := fexp)
+          (fexpe := fexpe) hβ hrel x hx_fmt
+      have hfix := FloatSpec.Core.Generic_fmt.roundR_generic
+        (beta := beta) (fexp := fexpe) (rnd := Zodd) (x := x) hβ hx_fexpe
+      simpa [o, FloatSpec.Calc.Round.round, oddMode] using hfix
+    simp [o, ho_eq_x]
+  · have hd_fmt_fexpe : generic_format beta fexpe (F2R d) :=
+      generic_format_fexpe_fexp (beta := beta) (fexp := fexp)
+        (fexpe := fexpe) hβ hrel (F2R d) Hd.1
+    have hu_fmt_fexpe : generic_format beta fexpe (F2R u) :=
+      generic_format_fexpe_fexp (beta := beta) (fexp := fexp)
+        (fexpe := fexpe) hβ hrel (F2R u) Hu.1
+    have ho_ge_d : F2R d ≤ o := by
+      simpa [o, FloatSpec.Calc.Round.round, oddMode] using
+        FloatSpec.Core.Generic_fmt.roundR_ge_generic
+          (beta := beta) (fexp := fexpe) (rnd := Zodd)
+          (x := F2R d) (y := x) hβ hd_fmt_fexpe Hd.2.1
+    have ho_le_u : o ≤ F2R u := by
+      simpa [o, FloatSpec.Calc.Round.round, oddMode] using
+        FloatSpec.Core.Generic_fmt.roundR_le_generic
+          (beta := beta) (fexp := fexpe) (rnd := Zodd)
+          (x := x) (y := F2R u) hβ hu_fmt_fexpe Hu.2.1
+    have hodd_o : Rnd_odd_pt (beta := beta) (fexp := fexpe) x o := by
+      simpa [o] using round_odd_pt (beta := beta) (fexp := fexpe) x hNEe hβ
+    have ho_mid_false_of_x_ne
+        (hx_ne_m : x ≠ m (beta := beta) d u)
+        (ho_mid : o = m (beta := beta) d u) : False := by
+      rcases hodd_o with ⟨_, hodd_cases⟩
+      rcases hodd_cases with ho_eq_x | ⟨_, g, hg_val, hg_can, hg_odd⟩
+      · exact hx_ne_m (ho_eq_x.symm.trans ho_mid)
+      · rcases Zm (beta := beta) (fexp := fexp) (fexpe := fexpe) x d u
+          Hd Cd Hu Cu xPos hβ hNE Ebeta hrel with
+          ⟨g', hg'_val, hg'_can, hg'_even⟩
+        have hg_eq : g = g' := by
+          apply FloatSpec.Core.Generic_fmt.canonical_unique
+            (beta := beta) (hbeta := hβ) (fexp := fexpe)
+          · exact hg_can
+          · exact hg'_can
+          · calc
+              F2R g = o := hg_val.symm
+              _ = m (beta := beta) d u := ho_mid
+              _ = F2R g' := hg'_val.symm
+        exact hg_odd (by simpa [hg_eq] using hg'_even)
+    rcases lt_or_eq_of_le ho_ge_d with hd_lt_o | ho_eq_d
+    · rcases lt_or_eq_of_le ho_le_u with ho_lt_u | ho_eq_u
+      · by_cases hxm : x ≤ m (beta := beta) d u
+        · rcases lt_or_eq_of_le hxm with hx_lt_m | hx_eq_m
+          · have ho_le_m : o ≤ m (beta := beta) d u := by
+              have hfmt_m := Fm (beta := beta) (fexp := fexp) (fexpe := fexpe) x d u
+                Hd Cd Hu Cu xPos hβ hNE Ebeta hrel
+              simpa [o, FloatSpec.Calc.Round.round, oddMode] using
+                FloatSpec.Core.Generic_fmt.roundR_le_generic
+                  (beta := beta) (fexp := fexpe) (rnd := Zodd)
+                  (x := x) (y := m (beta := beta) d u) hβ hfmt_m (le_of_lt hx_lt_m)
+            have ho_lt_m : o < m (beta := beta) d u :=
+              lt_of_le_of_ne ho_le_m
+                (fun ho_mid => ho_mid_false_of_x_ne (ne_of_lt hx_lt_m) ho_mid)
+            calc
+              FloatSpec.Core.Generic_fmt.roundR beta fexp
+                  (FloatSpec.Core.Generic_fmt.Znearest choice) o = F2R d := by
+                exact roundR_nearest_eq_DN_of_lt_mid
+                  (beta := beta) (fexp := fexp) choice o (F2R d) (F2R u)
+                  (DN_odd_d_aux (beta := beta) (fexp := fexp) x o d u Hd Cd Hu Cu xPos
+                    ⟨le_of_lt hd_lt_o, ho_lt_u⟩)
+                  (UP_odd_d_aux (beta := beta) (fexp := fexp) x o d u Hd Cd Hu Cu xPos
+                    ⟨hd_lt_o, le_of_lt ho_lt_u⟩)
+                  hβ ho_lt_m
+              _ = FloatSpec.Core.Generic_fmt.roundR beta fexp
+                  (FloatSpec.Core.Generic_fmt.Znearest choice) x := by
+                symm
+                exact roundR_nearest_eq_DN_of_lt_mid
+                  (beta := beta) (fexp := fexp) choice x (F2R d) (F2R u)
+                  Hd Hu hβ hx_lt_m
+          · have hfmt_m := Fm (beta := beta) (fexp := fexp) (fexpe := fexpe) x d u
+              Hd Cd Hu Cu xPos hβ hNE Ebeta hrel
+            have hx_fexpe : generic_format beta fexpe x := by
+              simpa [hx_eq_m] using hfmt_m
+            have hfix := FloatSpec.Core.Generic_fmt.roundR_generic
+              (beta := beta) (fexp := fexpe) (rnd := Zodd) (x := x) hβ hx_fexpe
+            have hround_eq_x :
+                FloatSpec.Calc.Round.round beta fexpe oddMode x = x := by
+              simpa [FloatSpec.Calc.Round.round, oddMode] using hfix
+            simpa [hround_eq_x]
+        · have hm_lt_x : m (beta := beta) d u < x := lt_of_not_ge hxm
+          have hm_le_o : m (beta := beta) d u ≤ o := by
+            have hfmt_m := Fm (beta := beta) (fexp := fexp) (fexpe := fexpe) x d u
+              Hd Cd Hu Cu xPos hβ hNE Ebeta hrel
+            simpa [o, FloatSpec.Calc.Round.round, oddMode] using
+              FloatSpec.Core.Generic_fmt.roundR_ge_generic
+                (beta := beta) (fexp := fexpe) (rnd := Zodd)
+                (x := m (beta := beta) d u) (y := x) hβ hfmt_m (le_of_lt hm_lt_x)
+          have hm_lt_o : m (beta := beta) d u < o :=
+            lt_of_le_of_ne hm_le_o
+              (fun hm_eq_o => ho_mid_false_of_x_ne (ne_of_gt hm_lt_x) hm_eq_o.symm)
+          calc
+            FloatSpec.Core.Generic_fmt.roundR beta fexp
+                (FloatSpec.Core.Generic_fmt.Znearest choice) o = F2R u := by
+              exact roundR_nearest_eq_UP_of_mid_lt
+                (beta := beta) (fexp := fexp) choice o (F2R d) (F2R u)
+                (DN_odd_d_aux (beta := beta) (fexp := fexp) x o d u Hd Cd Hu Cu xPos
+                  ⟨le_of_lt hd_lt_o, ho_lt_u⟩)
+                (UP_odd_d_aux (beta := beta) (fexp := fexp) x o d u Hd Cd Hu Cu xPos
+                  ⟨hd_lt_o, le_of_lt ho_lt_u⟩)
+                hβ hm_lt_o
+            _ = FloatSpec.Core.Generic_fmt.roundR beta fexp
+                (FloatSpec.Core.Generic_fmt.Znearest choice) x := by
+              symm
+              exact roundR_nearest_eq_UP_of_mid_lt
+                (beta := beta) (fexp := fexp) choice x (F2R d) (F2R u)
+                Hd Hu hβ hm_lt_x
+      · have ho_fmt : generic_format beta fexp o := by
+          simpa [ho_eq_u] using Hu.1
+        have hfalse : False := by
+          rcases hodd_o with ⟨_, hodd_cases⟩
+          rcases hodd_cases with ho_eq_x | ⟨_, g, hg_val, hg_can, hg_odd⟩
+          · exact hx_fmt (by simpa [ho_eq_x] using ho_fmt)
+          · let g' : FloatSpec.Core.Defs.FlocqFloat beta :=
+              FloatSpec.Core.Defs.FlocqFloat.mk
+                (FloatSpec.Core.Raux.Ztrunc
+                  (o * (beta : ℝ) ^
+                    (-(FloatSpec.Core.Generic_fmt.cexp beta fexp o))))
+                (FloatSpec.Core.Generic_fmt.cexp beta fexp o)
+            have hg'_val : F2R g' = o := by
+              simpa [g', FloatSpec.Core.Generic_fmt.generic_format,
+                FloatSpec.Core.Generic_fmt.scaled_mantissa] using ho_fmt.symm
+            have hg'_exp :
+                fexpe (FloatSpec.Core.Raux.mag beta o) < g'.Fexp := by
+              simp [g', FloatSpec.Core.Generic_fmt.cexp]
+              have h := hrel (FloatSpec.Core.Raux.mag beta o)
+              omega
+            rcases exists_even_fexp_lt (beta := beta) Ebeta hβ fexpe o
+              ⟨g', hg'_val, hg'_exp⟩ with
+              ⟨g'', hg''_val, hg''_can, hg''_even⟩
+            have hg_eq : g = g'' := by
+              apply FloatSpec.Core.Generic_fmt.canonical_unique
+                (beta := beta) (hbeta := hβ) (fexp := fexpe)
+              · exact hg_can
+              · exact hg''_can
+              · calc
+                  F2R g = o := hg_val.symm
+                  _ = F2R g'' := hg''_val.symm
+            exact hg_odd (by simpa [hg_eq] using hg''_even)
+        exact False.elim hfalse
+    · have ho_fmt : generic_format beta fexp o := by
+        simpa [← ho_eq_d] using Hd.1
+      have hfalse : False := by
+        rcases hodd_o with ⟨_, hodd_cases⟩
+        rcases hodd_cases with ho_eq_x | ⟨_, g, hg_val, hg_can, hg_odd⟩
+        · exact hx_fmt (by simpa [ho_eq_x] using ho_fmt)
+        · let g' : FloatSpec.Core.Defs.FlocqFloat beta :=
+            FloatSpec.Core.Defs.FlocqFloat.mk
+              (FloatSpec.Core.Raux.Ztrunc
+                (o * (beta : ℝ) ^
+                  (-(FloatSpec.Core.Generic_fmt.cexp beta fexp o))))
+              (FloatSpec.Core.Generic_fmt.cexp beta fexp o)
+          have hg'_val : F2R g' = o := by
+            simpa [g', FloatSpec.Core.Generic_fmt.generic_format,
+              FloatSpec.Core.Generic_fmt.scaled_mantissa] using ho_fmt.symm
+          have hg'_exp :
+              fexpe (FloatSpec.Core.Raux.mag beta o) < g'.Fexp := by
+            simp [g', FloatSpec.Core.Generic_fmt.cexp]
+            have h := hrel (FloatSpec.Core.Raux.mag beta o)
+            omega
+          rcases exists_even_fexp_lt (beta := beta) Ebeta hβ fexpe o
+            ⟨g', hg'_val, hg'_exp⟩ with
+            ⟨g'', hg''_val, hg''_can, hg''_even⟩
+          have hg_eq : g = g'' := by
+            apply FloatSpec.Core.Generic_fmt.canonical_unique
+              (beta := beta) (hbeta := hβ) (fexp := fexpe)
+            · exact hg_can
+            · exact hg''_can
+            · calc
+                F2R g = o := hg_val.symm
+                _ = F2R g'' := hg''_val.symm
+          exact hg_odd (by simpa [hg_eq] using hg''_even)
+      exact False.elim hfalse
+
+/-- Coq: `round_N_odd`.
+    Rounding a round-to-odd result to the coarser nearest format is the same as
+    rounding the original value directly. -/
+theorem round_N_odd (choice : Int → Bool) (x : ℝ)
+  (hβ : 1 < beta)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta fexp)
+  (hNEe : FloatSpec.Core.RoundNE.Exists_NE beta fexpe)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hrel : ∀ e, fexpe e ≤ fexp e - 2) :
+  FloatSpec.Core.Generic_fmt.roundR beta fexp
+      (FloatSpec.Core.Generic_fmt.Znearest choice)
+      (FloatSpec.Calc.Round.round beta fexpe oddMode x) =
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+      (FloatSpec.Core.Generic_fmt.Znearest choice) x := by
+  classical
+  let cf : ℝ → FloatSpec.Core.Defs.FlocqFloat beta := fun y =>
+    FloatSpec.Core.Defs.FlocqFloat.mk
+      (FloatSpec.Core.Raux.Ztrunc
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp y))
+      (FloatSpec.Core.Generic_fmt.cexp beta fexp y)
+  have cf_val : ∀ {y : ℝ}, generic_format beta fexp y → F2R (cf y) = y := by
+    intro y hy
+    simpa [cf, FloatSpec.Core.Generic_fmt.generic_format] using hy.symm
+  have cf_can : ∀ {y : ℝ}, generic_format beta fexp y →
+      FloatSpec.Core.Generic_fmt.canonical beta fexp (cf y) := by
+    intro y hy
+    have hspec :=
+      FloatSpec.Core.Generic_fmt.canonical_generic_format
+        (beta := beta) (fexp := fexp) (x := y)
+    have hpost :
+        y = F2R (cf y) →
+          FloatSpec.Core.Generic_fmt.canonical beta fexp (cf y) := by
+      simpa [cf, Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using
+        hspec ⟨hβ, hy⟩
+    exact hpost (cf_val hy).symm
+  have dn_data : ∀ y : ℝ,
+      let dReal := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists
+        (beta := beta) (fexp := fexp) (x := y) (hβ := hβ))
+      FloatSpec.Core.Defs.Rnd_DN_pt (generic_format beta fexp) y (F2R (cf dReal)) ∧
+        FloatSpec.Core.Generic_fmt.canonical beta fexp (cf dReal) := by
+    intro y
+    dsimp
+    have hspec := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_DN_exists
+      (beta := beta) (fexp := fexp) (x := y) (hβ := hβ))
+    constructor
+    · simpa [cf_val hspec.1] using hspec.2
+    · exact cf_can hspec.1
+  have up_data : ∀ y : ℝ,
+      let uReal := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists
+        (beta := beta) (fexp := fexp) (x := y) (hβ := hβ))
+      FloatSpec.Core.Defs.Rnd_UP_pt (generic_format beta fexp) y (F2R (cf uReal)) ∧
+        FloatSpec.Core.Generic_fmt.canonical beta fexp (cf uReal) := by
+    intro y
+    dsimp
+    have hspec := Classical.choose_spec (FloatSpec.Core.Generic_fmt.round_UP_exists
+      (beta := beta) (fexp := fexp) (x := y) (hβ := hβ))
+    constructor
+    · simpa [cf_val hspec.1] using hspec.2
+    · exact cf_can hspec.1
+  rcases lt_trichotomy x 0 with hxneg | hxzero | hxpos
+  · set dn := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists
+      (beta := beta) (fexp := fexp) (x := -x) (hβ := hβ)) with hdn
+    set up := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists
+      (beta := beta) (fexp := fexp) (x := -x) (hβ := hβ)) with hup
+    have hd := (dn_data (-x))
+    have hu := (up_data (-x))
+    let choice' : Int → Bool := fun t => ! choice (-(t + 1))
+    have hpos := round_N_odd_pos (beta := beta) (fexp := fexp) (fexpe := fexpe)
+      choice' (-x)
+      (cf dn) (cf up)
+      (by simpa [hdn] using hd.1) (by simpa [hdn] using hd.2)
+      (by simpa [hup] using hu.1) (by simpa [hup] using hu.2)
+      (by simpa using neg_pos.mpr hxneg) hβ hNE hNEe Ebeta hrel
+    have hodd_opp := round_odd_opp (beta := beta) (fexp := fexpe) (x := x) hβ
+    have hnearest_opp_o :=
+      FloatSpec.Core.Generic_fmt.round_N_opp
+        (beta := beta) (fexp := fexp) (choice := choice)
+        (x := -(FloatSpec.Calc.Round.round beta fexpe oddMode x))
+    have hnearest_opp_x :=
+      FloatSpec.Core.Generic_fmt.round_N_opp
+        (beta := beta) (fexp := fexp) (choice := choice) (x := -x)
+    calc
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Znearest choice)
+          (FloatSpec.Calc.Round.round beta fexpe oddMode x)
+          =
+        - FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Znearest choice')
+          (-(FloatSpec.Calc.Round.round beta fexpe oddMode x)) := by
+            simpa [choice'] using hnearest_opp_o
+      _ =
+        - FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Znearest choice')
+          (FloatSpec.Calc.Round.round beta fexpe oddMode (-x)) := by
+            rw [hodd_opp]
+      _ =
+        - FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Znearest choice') (-x) := by
+            rw [hpos]
+      _ =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Znearest choice) x := by
+            simpa [choice'] using hnearest_opp_x.symm
+  · subst hxzero
+    have hround0 :
+        FloatSpec.Calc.Round.round beta fexpe oddMode 0 = 0 := by
+      simp [FloatSpec.Calc.Round.round, oddMode, FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa, Zodd, FloatSpec.Core.Raux.Zfloor]
+    simp [hround0]
+  · set dn := Classical.choose (FloatSpec.Core.Generic_fmt.round_DN_exists
+      (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) with hdn
+    set up := Classical.choose (FloatSpec.Core.Generic_fmt.round_UP_exists
+      (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) with hup
+    have hd := (dn_data x)
+    have hu := (up_data x)
+    exact round_N_odd_pos (beta := beta) (fexp := fexp) (fexpe := fexpe)
+      choice x
+      (cf dn) (cf up)
+      (by simpa [hdn] using hd.1) (by simpa [hdn] using hd.2)
+      (by simpa [hup] using hu.1) (by simpa [hup] using hu.2)
+      hxpos hβ hNE hNEe Ebeta hrel
+
+private theorem abs_roundR_ge_generic_local
+  (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
+  (x y : ℝ) (hβ : 1 < beta)
+  (hxF : generic_format beta fexp x)
+  (hxle : x ≤ |y|) :
+  x ≤ |FloatSpec.Core.Generic_fmt.roundR beta fexp rnd y| := by
+  classical
+  by_cases hy : 0 ≤ y
+  · have hy_abs : |y| = y := abs_of_nonneg hy
+    have hxle' : x ≤ y := by simpa [hy_abs] using hxle
+    have hx_le_r : x ≤ FloatSpec.Core.Generic_fmt.roundR beta fexp rnd y :=
+      FloatSpec.Core.Generic_fmt.roundR_ge_generic
+        (beta := beta) (fexp := fexp) (rnd := rnd)
+        (x := x) (y := y) hβ hxF hxle'
+    exact le_trans hx_le_r (le_abs_self _)
+  · have hy' : y ≤ 0 := le_of_not_ge hy
+    have hy_abs : |y| = -y := abs_of_nonpos hy'
+    have hxle' : x ≤ -y := by simpa [hy_abs] using hxle
+    have hx_le_rneg :
+        x ≤ FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Zrnd_opp rnd) (-y) :=
+      FloatSpec.Core.Generic_fmt.roundR_ge_generic
+        (beta := beta) (fexp := fexp)
+        (rnd := FloatSpec.Core.Generic_fmt.Zrnd_opp rnd)
+        (x := x) (y := -y) hβ hxF hxle'
+    have h_opp : FloatSpec.Core.Generic_fmt.roundR beta fexp rnd y =
+        - FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Zrnd_opp rnd) (-y) := by
+      have h := FloatSpec.Core.Generic_fmt.roundR_opp
+        (beta := beta) (fexp := fexp) (rnd := rnd) (x := -y) hβ
+      simpa [neg_neg] using h
+    have hx_le_abs :
+        x ≤ |FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Zrnd_opp rnd) (-y)| :=
+      le_trans hx_le_rneg (le_abs_self _)
+    simpa [h_opp, abs_neg] using hx_le_abs
+
+private theorem abs_roundR_le_generic_local
+  (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
+  (x y : ℝ) (hβ : 1 < beta)
+  (hyF : generic_format beta fexp y)
+  (hxy : |x| ≤ y) :
+  |FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x| ≤ y := by
+  classical
+  have hbounds : -y ≤ x ∧ x ≤ y := abs_le.mp hxy
+  have hnegF : generic_format beta fexp (-y) :=
+    FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := fexp) y hyF
+  have hlo : -y ≤ FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x :=
+    FloatSpec.Core.Generic_fmt.roundR_ge_generic
+      (beta := beta) (fexp := fexp) (rnd := rnd)
+      (x := -y) (y := x) hβ hnegF hbounds.left
+  have hhi : FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x ≤ y :=
+    FloatSpec.Core.Generic_fmt.roundR_le_generic
+      (beta := beta) (fexp := fexp) (rnd := rnd)
+      (x := x) (y := y) hβ hyF hbounds.right
+  exact abs_le.mpr ⟨hlo, hhi⟩
+
+/-- Coq: `mag_round_odd`.
+
+    For FLT round-to-odd, if `x` is above the underflow threshold, rounding
+    preserves its magnitude. The `Exists_NE` hypothesis is explicit in Lean
+    because the local port keeps nearest-even existence as a typeclass rather
+    than deriving it globally for every FLT exponent. -/
+theorem mag_round_odd
+  (emin prec : Int) [Prec_gt_0 prec]
+  (hβ : 1 < beta)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp emin prec))
+  (x : ℝ)
+  (hprec : 1 < prec)
+  (hxmag : emin < FloatSpec.Core.Raux.mag beta x) :
+  FloatSpec.Core.Raux.mag beta
+      (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) oddMode x) =
+    FloatSpec.Core.Raux.mag beta x := by
+  classical
+  haveI : FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp emin prec) := hNE
+  let e : Int := FloatSpec.Core.Raux.mag beta x
+  let r : ℝ := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) oddMode x
+  by_cases hx0 : x = 0
+  · subst hx0
+    have hround0 : r = 0 := by
+      simp [r, FloatSpec.Calc.Round.round, oddMode, FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa, Zodd, FloatSpec.Core.Raux.Zfloor]
+    simp [r, hround0]
+  have hlow_x : (beta : ℝ) ^ (e - 1) ≤ |x| := by
+    have htrip := FloatSpec.Core.Raux.mag_lower_bound
+      (beta := beta) (x := x) hβ hx0
+    have h : (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x - 1) ≤ |x| := by
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+        FloatSpec.Core.Raux.abs_val] using htrip True.intro
+    simpa [e] using h
+  have hupp_x : |x| < (beta : ℝ) ^ e := by
+    have htrip := FloatSpec.Core.Raux.mag_upper_bound
+      (beta := beta) (x := x) hβ hx0
+    have h : |x| < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x) := by
+      simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+        FloatSpec.Core.Raux.abs_val] using htrip True.intro
+    simpa [e] using h
+  have hfmt_lower :
+      generic_format beta (FLT_exp emin prec) ((beta : ℝ) ^ (e - 1)) := by
+    have htrip := FloatSpec.Core.FLT.generic_format_FLT_bpow
+      (prec := prec) (emin := emin) (beta := beta) (e := e - 1)
+    have hemin_le : emin ≤ e - 1 := by
+      have : emin + 1 ≤ e := Int.add_one_le_iff.mpr (by simpa [e] using hxmag)
+      omega
+    simpa [FLT_exp] using htrip ⟨hβ, hemin_le⟩
+  have hlow_r :
+      (beta : ℝ) ^ (e - 1) ≤ |r| := by
+    simpa [r, FloatSpec.Calc.Round.round, oddMode] using
+      abs_roundR_ge_generic_local
+        (beta := beta) (fexp := FLT_exp emin prec)
+        (rnd := Zodd) (x := (beta : ℝ) ^ (e - 1)) (y := x)
+        hβ hfmt_lower hlow_x
+  have hfmt_upper :
+      generic_format beta (FLT_exp emin prec) ((beta : ℝ) ^ e) := by
+    have htrip := FloatSpec.Core.FLT.generic_format_FLT_bpow
+      (prec := prec) (emin := emin) (beta := beta) (e := e)
+    have hemin_le : emin ≤ e := le_of_lt (by simpa [e] using hxmag)
+    simpa [FLT_exp] using htrip ⟨hβ, hemin_le⟩
+  have hupper_r_le :
+      |r| ≤ (beta : ℝ) ^ e := by
+    simpa [r, FloatSpec.Calc.Round.round, oddMode] using
+      abs_roundR_le_generic_local
+        (beta := beta) (fexp := FLT_exp emin prec)
+        (rnd := Zodd) (x := x) (y := (beta : ℝ) ^ e)
+        hβ hfmt_upper (le_of_lt hupp_x)
+  have hupper_r : |r| < (beta : ℝ) ^ e := by
+    rcases lt_or_eq_of_le hupper_r_le with hlt | heq
+    · exact hlt
+    have hodd : Rnd_odd_pt (beta := beta) (fexp := FLT_exp emin prec) x r := by
+      simpa [r] using
+        round_odd_pt
+          (beta := beta) (fexp := FLT_exp emin prec) x hNE hβ
+    rcases hodd with ⟨_, hcases⟩
+    rcases hcases with hr_eq_x | ⟨_, g, hg_val, hg_can, hg_odd⟩
+    · have : ¬ ((beta : ℝ) ^ e ≤ |x|) := not_le_of_gt hupp_x
+      exact False.elim (this (by simpa [r, hr_eq_x] using heq.symm.le))
+    · let gg : FloatSpec.Core.Defs.FlocqFloat beta :=
+        FloatSpec.Core.Defs.FlocqFloat.mk
+          (beta ^ Int.toNat (e - FLT_exp emin prec (e + 1)))
+          (FLT_exp emin prec (e + 1))
+      have hdiff_nonneg : 0 ≤ e - FLT_exp emin prec (e + 1) := by
+        have hp_ge_two : (2 : Int) ≤ prec := Int.add_one_le_iff.mpr hprec
+        have hleft : e + 1 - prec ≤ e := by omega
+        have hright : emin ≤ e := le_of_lt (by simpa [e] using hxmag)
+        simpa [FLT_exp, FloatSpec.Core.FLT.FLT_exp] using
+          (max_le_iff.mpr ⟨hleft, hright⟩)
+      have hdiff_cast :
+          (Int.toNat (e - FLT_exp emin prec (e + 1)) : Int) =
+            e - FLT_exp emin prec (e + 1) := by
+        simpa using Int.toNat_of_nonneg hdiff_nonneg
+      have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hbposℝ : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+      have hbneℝ : (beta : ℝ) ≠ 0 := ne_of_gt hbposℝ
+      have hgg_val : F2R gg = (beta : ℝ) ^ e := by
+        calc
+          F2R gg
+              = ((beta ^ Int.toNat (e - FLT_exp emin prec (e + 1)) : Int) : ℝ) *
+                  (beta : ℝ) ^ (FLT_exp emin prec (e + 1)) := by
+                    rfl
+          _ = (beta : ℝ) ^ (Int.toNat (e - FLT_exp emin prec (e + 1))) *
+                  (beta : ℝ) ^ (FLT_exp emin prec (e + 1)) := by
+                    simp [Int.cast_pow]
+          _ = (beta : ℝ) ^ ((Int.toNat (e - FLT_exp emin prec (e + 1)) : Int)) *
+                  (beta : ℝ) ^ (FLT_exp emin prec (e + 1)) := by
+                    rw [zpow_natCast]
+          _ = (beta : ℝ) ^ (e - FLT_exp emin prec (e + 1)) *
+                  (beta : ℝ) ^ (FLT_exp emin prec (e + 1)) := by
+                    rw [hdiff_cast]
+          _ = (beta : ℝ) ^ ((e - FLT_exp emin prec (e + 1)) +
+                  FLT_exp emin prec (e + 1)) := by
+                    rw [zpow_add₀ hbneℝ]
+          _ = (beta : ℝ) ^ e := by ring_nf
+      have hgg_can :
+          FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp emin prec) gg := by
+        have hmag := FloatSpec.Core.Raux.mag_bpow beta e hβ
+        have hmag_eq :
+            FloatSpec.Core.Raux.mag beta ((beta : ℝ) ^ e) = e + 1 := by
+          simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+            using hmag True.intro
+        unfold FloatSpec.Core.Generic_fmt.canonical
+        change gg.Fexp = FLT_exp emin prec (FloatSpec.Core.Raux.mag beta (F2R gg))
+        rw [hgg_val, hmag_eq]
+      have habs_val :
+          F2R
+            (FloatSpec.Core.Defs.FlocqFloat.mk (Int.ofNat (Int.natAbs g.Fnum)) g.Fexp :
+              FloatSpec.Core.Defs.FlocqFloat beta) =
+            (beta : ℝ) ^ e := by
+        have hFabs := FloatSpec.Core.Float_prop.F2R_Zabs
+          (beta := beta) g hβ
+        calc
+          F2R
+              (FloatSpec.Core.Defs.FlocqFloat.mk (Int.ofNat (Int.natAbs g.Fnum)) g.Fexp :
+                FloatSpec.Core.Defs.FlocqFloat beta)
+              = |F2R g| := hFabs.symm
+          _ = |r| := by rw [hg_val]; rfl
+          _ = (beta : ℝ) ^ e := heq
+      have hg_abs_can :
+          FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp emin prec)
+            (FloatSpec.Core.Defs.FlocqFloat.mk (Int.ofNat (Int.natAbs g.Fnum)) g.Fexp) := by
+        simpa using FloatSpec.Core.Generic_fmt.canonical_abs
+          (beta := beta) (fexp := FLT_exp emin prec) g.Fnum g.Fexp hg_can
+      have huniq :
+          gg =
+            (FloatSpec.Core.Defs.FlocqFloat.mk (Int.ofNat (Int.natAbs g.Fnum)) g.Fexp :
+              FloatSpec.Core.Defs.FlocqFloat beta) := by
+        apply FloatSpec.Core.Generic_fmt.canonical_unique
+          (beta := beta) (hbeta := hβ) (fexp := FLT_exp emin prec)
+        · exact hgg_can
+        · exact hg_abs_can
+        · calc
+            FloatSpec.Core.Defs.F2R gg = (beta : ℝ) ^ e := by
+              simpa using hgg_val
+            _ = FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk (Int.ofNat (Int.natAbs g.Fnum)) g.Fexp :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := by
+              exact habs_val.symm
+      have hgg_even : gg.Fnum % 2 = 0 := by
+        have hpow_exp_pos :
+            0 < Int.toNat (e - FLT_exp emin prec (e + 1)) := by
+          have hp_ge_two : (2 : Int) ≤ prec := Int.add_one_le_iff.mpr hprec
+          have hflt_lt : FLT_exp emin prec (e + 1) < e := by
+            have hleft : e + 1 - prec < e := by omega
+            have hright : emin < e := by simpa [e] using hxmag
+            simpa [FLT_exp, FloatSpec.Core.FLT.FLT_exp] using
+              (max_lt_iff.mpr ⟨hleft, hright⟩)
+          have hcast_pos :
+              (0 : Int) < (Int.toNat (e - FLT_exp emin prec (e + 1)) : Int) := by
+            simpa [hdiff_cast] using sub_pos.mpr hflt_lt
+          exact Nat.cast_pos.mp hcast_pos
+        obtain ⟨q, hq⟩ :
+            ∃ q : Nat, Int.toNat (e - FLT_exp emin prec (e + 1)) = q + 1 :=
+          ⟨Int.toNat (e - FLT_exp emin prec (e + 1)) - 1,
+            (Nat.succ_pred_eq_of_pos hpow_exp_pos).symm⟩
+        change (beta ^ Int.toNat (e - FLT_exp emin prec (e + 1))) % 2 = 0
+        rw [hq, pow_succ]
+        have hdiv_beta : (2 : Int) ∣ beta := by
+          rcases Ebeta with ⟨b, hb⟩
+          exact ⟨b, hb⟩
+        have hdiv_prod : (2 : Int) ∣ beta ^ q * beta :=
+          dvd_mul_of_dvd_right hdiv_beta (beta ^ q)
+        exact (Int.dvd_iff_emod_eq_zero (a := (2 : Int))
+          (b := beta ^ q * beta)).mp hdiv_prod
+      have hg_abs_even :
+          (Int.ofNat (Int.natAbs g.Fnum)) % 2 = 0 := by
+        simpa [huniq] using hgg_even
+      exact False.elim (hg_odd ((Zeven_abs g.Fnum).mp hg_abs_even))
+  have hmag_r := FloatSpec.Core.Raux.mag_unique
+    (beta := beta) (x := r) (e := e) hβ hlow_r hupper_r
+  simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, e, r]
+    using hmag_r True.intro
+
+/-- Coq: `fexp_round_odd`.
+
+    FLT round-to-odd preserves the canonical exponent. -/
+theorem fexp_round_odd
+  (emin prec : Int) [Prec_gt_0 prec]
+  (hβ : 1 < beta)
+  (Ebeta : ∃ b : Int, beta = 2 * b)
+  (hNE : FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp emin prec))
+  (x : ℝ)
+  (hprec : 1 < prec) :
+  FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp emin prec)
+      (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) oddMode x) =
+    FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp emin prec) x := by
+  classical
+  haveI : FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp emin prec) := hNE
+  let r : ℝ := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) oddMode x
+  by_cases hx0 : x = 0
+  · subst hx0
+    have hround0 : r = 0 := by
+      simp [r, FloatSpec.Calc.Round.round, oddMode, FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa, Zodd, FloatSpec.Core.Raux.Zfloor]
+    simp [r, hround0, FloatSpec.Core.Generic_fmt.cexp]
+  by_cases hsmall : FloatSpec.Core.Raux.mag beta x ≤ emin
+  · have hx_abs_lt_emin : |x| < (beta : ℝ) ^ emin := by
+      have htrip := FloatSpec.Core.Raux.mag_upper_bound
+        (beta := beta) (x := x) hβ hx0
+      have hx_upper : |x| < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x) := by
+        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure,
+          FloatSpec.Core.Raux.abs_val] using htrip True.intro
+      have hbpos : (0 : ℝ) < (beta : ℝ) := by
+        exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+      have hbase_ge_one : (1 : ℝ) ≤ (beta : ℝ) := le_of_lt (by exact_mod_cast hβ)
+      have hmag_le : (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x) ≤
+          (beta : ℝ) ^ emin := zpow_le_zpow_right₀ hbase_ge_one hsmall
+      exact lt_of_lt_of_le hx_upper hmag_le
+    have hfmt_min :
+        generic_format beta (FLT_exp emin prec) ((beta : ℝ) ^ emin) := by
+      have htrip := FloatSpec.Core.FLT.generic_format_FLT_bpow
+        (prec := prec) (emin := emin) (beta := beta) (e := emin)
+      simpa [FLT_exp] using htrip ⟨hβ, le_rfl⟩
+    have hr_abs_le :
+        |r| ≤ (beta : ℝ) ^ emin := by
+      simpa [r, FloatSpec.Calc.Round.round, oddMode] using
+        abs_roundR_le_generic_local
+          (beta := beta) (fexp := FLT_exp emin prec)
+          (rnd := Zodd) (x := x) (y := (beta : ℝ) ^ emin)
+          hβ hfmt_min (le_of_lt hx_abs_lt_emin)
+    have hr_ne : r ≠ 0 := by
+      have hodd : Rnd_odd_pt (beta := beta) (fexp := FLT_exp emin prec) x r := by
+        simpa [r] using
+          round_odd_pt
+            (beta := beta) (fexp := FLT_exp emin prec) x hNE hβ
+      rcases hodd with ⟨_, hcases⟩
+      rcases hcases with hr_eq_x | ⟨_, g, hg_val, _hg_can, hg_odd⟩
+      · exact by
+          intro hr0
+          exact hx0 (by simpa [r, hr_eq_x] using hr0)
+      · intro hr0
+        have hg_val_zero : FloatSpec.Core.Defs.F2R g = 0 := by
+          rw [← hg_val]
+          exact hr0
+        have hg_zero : g.Fnum = 0 := by
+          exact FloatSpec.Core.Float_prop.eq_0_F2R
+            (beta := beta) g hβ hg_val_zero
+        have hg_even : g.Fnum % 2 = 0 := by simp [hg_zero]
+        exact hg_odd hg_even
+    have hr_abs_pos : 0 < |r| := abs_pos.mpr hr_ne
+    have hr_abs_eq : |r| = (beta : ℝ) ^ emin := by
+      have hmin_pos : 0 < (beta : ℝ) ^ emin := by
+        have hbpos : (0 : ℝ) < (beta : ℝ) := by
+          exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+        exact zpow_pos hbpos emin
+      refine le_antisymm hr_abs_le ?_
+      by_contra hlt_not
+      have hlt : |r| < (beta : ℝ) ^ emin := lt_of_not_ge hlt_not
+      have hsucc_le : FloatSpec.Core.Ulp.succ beta (FLT_exp emin prec) 0 ≤ |r| := by
+        have hfmt_abs_r :
+            generic_format beta (FLT_exp emin prec) |r| := by
+          have hfmt_r :
+              generic_format beta (FLT_exp emin prec) r := by
+            simpa [r, FloatSpec.Calc.Round.round, oddMode] using
+              FloatSpec.Core.Generic_fmt.generic_format_roundR
+                (beta := beta) (fexp := FLT_exp emin prec)
+                (rnd := Zodd) x hβ
+          simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using
+            (FloatSpec.Core.Generic_fmt.generic_format_abs
+              (beta := beta) (fexp := FLT_exp emin prec) r hfmt_r)
+        have hfmt0 : generic_format beta (FLT_exp emin prec) (0 : ℝ) :=
+          FloatSpec.Core.Generic_fmt.generic_format_0_run
+            (beta := beta) (fexp := FLT_exp emin prec)
+        have htrip := FloatSpec.Core.Ulp.succ_le_lt
+          (beta := beta) (fexp := FLT_exp emin prec)
+          (x := 0) (y := |r|) hfmt0 hfmt_abs_r hr_abs_pos
+        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+          using htrip hβ
+      have hsucc0 :
+          FloatSpec.Core.Ulp.succ beta (FLT_exp emin prec) 0 =
+            FloatSpec.Core.Ulp.ulp beta (FLT_exp emin prec) 0 := by
+        have htrip := FloatSpec.Core.Ulp.succ_0
+          (beta := beta) (fexp := FLT_exp emin prec)
+        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+          using htrip True.intro
+      have hulp0 :
+          FloatSpec.Core.Ulp.ulp beta (FLT_exp emin prec) 0 =
+            (beta : ℝ) ^ emin := by
+        have htrip := FloatSpec.Core.FLT.ulp_FLT_small
+          (prec := prec) (emin := emin) (beta := beta) (x := 0)
+        have hsmall0 : |(0 : ℝ)| < (beta : ℝ) ^ (emin + prec) := by
+          have hbpos : (0 : ℝ) < (beta : ℝ) := by
+            exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+          simpa using (zpow_pos hbpos (emin + prec))
+        simpa [FLT_exp, Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+          using htrip ⟨hβ, hsmall0⟩
+      have : (beta : ℝ) ^ emin ≤ |r| := by simpa [hsucc0, hulp0] using hsucc_le
+      exact not_lt_of_ge this hlt
+    have hmag_abs_r :
+        FloatSpec.Core.Raux.mag beta |r| = emin + 1 := by
+      have htrip := FloatSpec.Core.Raux.mag_bpow (beta := beta) (e := emin) hβ
+      simpa [hr_abs_eq, Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
+        using htrip True.intro
+    have hmag_r :
+        FloatSpec.Core.Raux.mag beta r = emin + 1 := by
+      have htrip := FloatSpec.Core.Raux.mag_abs (beta := beta) (x := r) hβ
+      have h := htrip True.intro
+      exact Eq.trans h.symm hmag_abs_r
+    have hcexp_r :
+        FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp emin prec) r = emin := by
+      have hsub_le : emin + 1 - prec ≤ emin := by
+        have hp_ge_one : (1 : Int) ≤ prec :=
+          Int.add_one_le_iff.mpr (Prec_gt_0.pos : 0 < prec)
+        omega
+      simp [FloatSpec.Core.Generic_fmt.cexp, hmag_r, FLT_exp,
+        FloatSpec.Core.FLT.FLT_exp, hsub_le]
+    have hcexp_x :
+        FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp emin prec) x = emin := by
+      have hsub_le : FloatSpec.Core.Raux.mag beta x - prec ≤ emin := by
+        have hprec_nonneg : (0 : Int) ≤ prec := le_of_lt (Prec_gt_0.pos : 0 < prec)
+        omega
+      simp [FloatSpec.Core.Generic_fmt.cexp, FLT_exp,
+        FloatSpec.Core.FLT.FLT_exp, hsub_le]
+    simpa [r, hcexp_r, hcexp_x]
+  · have hxmag : emin < FloatSpec.Core.Raux.mag beta x := lt_of_not_ge hsmall
+    have hmag := mag_round_odd
+      (beta := beta) (emin := emin) (prec := prec)
+      hβ Ebeta hNE x hprec hxmag
+    simp [FloatSpec.Core.Generic_fmt.cexp, r, hmag]

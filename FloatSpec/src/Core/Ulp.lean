@@ -5409,10 +5409,12 @@ private theorem ulp_DN_round_bridge_pos
     have hcexp_bound : r ≠ 0 → (FloatSpec.Core.Generic_fmt.cexp beta fexp r) ≤ exp := by
       intro hr_ne
       have hr_pos : 0 < r := lt_of_le_of_ne hr_nonneg (Ne.symm hr_ne)
-      have hmagDN := (FloatSpec.Core.Generic_fmt.mag_DN (beta := beta) (fexp := fexp) (x := x)) hβ
-      have hmagDN' : 0 < r → (FloatSpec.Core.Raux.mag beta r) = (FloatSpec.Core.Raux.mag beta x) := by
+      have hmagDN := (FloatSpec.Core.Generic_fmt.mag_round_ZR
+        (beta := beta) (fexp := fexp)
+        (rndZR := FloatSpec.Core.Generic_fmt.Ztrunc_rel) (x := x)) hβ
+      have hmagDN' : r ≠ 0 → (FloatSpec.Core.Raux.mag beta r) = (FloatSpec.Core.Raux.mag beta x) := by
         simpa [wp, PostCond.noThrow, Id.run, pure, hr] using hmagDN
-      have hmag_eq := hmagDN' hr_pos
+      have hmag_eq := hmagDN' hr_ne
       have hmag_eq' : fexp (FloatSpec.Core.Raux.mag beta r) =
           fexp (FloatSpec.Core.Raux.mag beta x) := by
         simpa using congrArg fexp hmag_eq
