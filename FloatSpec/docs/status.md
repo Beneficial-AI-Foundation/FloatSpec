@@ -8,15 +8,15 @@ Generated from the current workspace by `scripts/status_report.sh`.
 - `sorry`: 0
 - `axiom`: 0
 - `admit`: 0
-- Placeholder/weakening findings: 58
+- Placeholder/weakening findings: 56
 - Conclusion-as-hypothesis findings: 0
 
 ## By Module
 
 | Module | Lean files | sorry | axiom | admit | placeholder findings |
 |---|---:|---:|---:|---:|---:|
-| Core | 16 | 0 | 0 | 0 | 31 |
-| Calc | 7 | 0 | 0 | 0 | 6 |
+| Core | 16 | 0 | 0 | 0 | 30 |
+| Calc | 7 | 0 | 0 | 0 | 5 |
 | Prop | 8 | 0 | 0 | 0 | 0 |
 | Pff | 5 | 0 | 0 | 0 | 5 |
 | IEEE754 | 6 | 0 | 0 | 0 | 11 |

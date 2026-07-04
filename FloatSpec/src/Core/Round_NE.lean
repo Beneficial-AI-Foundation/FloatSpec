@@ -853,18 +853,9 @@ theorem DN_UP_parity_generic_pos :
     have hxd_floor : xd = roundR beta fexp rnd_floor x :=
       Rnd_DN_pt_unique_pure F x xd (roundR beta fexp rnd_floor x)
         (by simpa [F] using hDN) hDN_floor
-    have hdn_small_to_generic :
-        round_to_generic beta fexp rnd_floor x = 0 := by
-      have htrip := round_DN_small_pos (beta := beta) (fexp := fexp)
-        (x := x) (ex := ex)
-      simpa [wp, PostCond.noThrow, Id.run, pure]
-        using htrip ⟨hβ, hsmall, hlow, hhigh⟩
     have hdn_small : roundR beta fexp rnd_floor x = 0 := by
-      calc
-        roundR beta fexp rnd_floor x = round_to_generic beta fexp rnd_floor x := by
-          exact (round_to_generic_int_eq_roundR
-            (beta := beta) (fexp := fexp) (rnd := rnd_floor) (x := x)).symm
-        _ = 0 := hdn_small_to_generic
+      exact round_DN_small_pos (beta := beta) (fexp := fexp)
+        (x := x) (ex := ex) ⟨hlow, hhigh⟩ hsmall hβ
     have hxd_zero : xd = 0 := by simpa [hdn_small] using hxd_floor
     have hgd_num : gd.Fnum = 0 := by
       apply canonical_zero_mantissa (beta := beta) (fexp := fexp) (g := gd) hβ
@@ -1192,6 +1183,566 @@ theorem DN_UP_parity_generic :
   -- Reduce its triple-form statement to the same `decide` goal and finish by rewriting.
   simpa [DN_UP_parity_aux_check, pure, decide_eq_true_iff]
     using (haux ⟨hβ, hpos⟩)
+
+/-- Local bridge from the DN/UP parity theorem to the nearest-even tie payload.
+
+When a non-representable value has concrete down/up neighbors, at least one of
+those neighbors satisfies `NE_prop`; the parity theorem says their canonical
+mantissas have different residues mod 2, so one residue is zero. -/
+theorem DN_UP_NE_prop
+    (hβ : 1 < beta) (x xd xu : ℝ)
+    (hnotFmt : ¬FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (hDN : FloatSpec.Core.Round_pred.Rnd_DN_pt
+      (fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y) x xd)
+    (hUP : FloatSpec.Core.Round_pred.Rnd_UP_pt
+      (fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y) x xu) :
+    NE_prop beta fexp x xd ∨ NE_prop beta fexp x xu := by
+  classical
+  have hpar : DN_UP_parity_prop beta fexp := by
+    have htrip := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+    simpa [DN_UP_parity_generic_check, pure, decide_eq_true_iff]
+      using htrip hβ
+  rcases hpar x xd xu hnotFmt hDN hUP with
+    ⟨gd, gu, hxd_eq, hxu_eq, hcan_d, hcan_u, hparity⟩
+  have hgd_even_or_gu_even : gd.Fnum % 2 = 0 ∨ gu.Fnum % 2 = 0 := by
+    rcases Int.emod_two_eq_zero_or_one gd.Fnum with hgd0 | hgd1
+    · exact Or.inl hgd0
+    · rcases Int.emod_two_eq_zero_or_one gu.Fnum with hgu0 | hgu1
+      · exact Or.inr hgu0
+      · have : gd.Fnum % 2 = gu.Fnum % 2 := by simpa [hgd1, hgu1]
+        exact (hparity this).elim
+  cases hgd_even_or_gu_even with
+  | inl hEven =>
+      exact Or.inl ⟨gd, by simpa using hxd_eq, hcan_d, by simpa using hEven⟩
+  | inr hEven =>
+      exact Or.inr ⟨gu, by simpa using hxu_eq, hcan_u, by simpa using hEven⟩
+
+omit [Exists_NE beta fexp] in
+/-- Off-midpoint bridge for the concrete nearest-even integer choice.
+
+If the concrete down/up neighbors are not equidistant from `x`, nearest
+rounding is unique. Therefore the concrete `ZnearestE` result satisfies the
+nearest-even NG predicate through its uniqueness branch; the only remaining
+case for the full Flocq `round_NE_pt` theorem is the exact midpoint tie. -/
+theorem round_NE_pt_of_ne_mid
+    (hβ : 1 < beta) (x : ℝ)
+    (hneq :
+      x - FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x ≠
+        FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x - x) :
+    Rnd_NE_pt beta fexp x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) x) := by
+  classical
+  let F : ℝ → Prop := fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y
+  let choice : Int → Bool := fun t => !(decide (2 ∣ t))
+  let d : ℝ := FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x
+  let u : ℝ := FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x
+  let r : ℝ := FloatSpec.Core.Generic_fmt.roundR beta fexp (FloatSpec.Core.Generic_fmt.Znearest choice) x
+  have hN : FloatSpec.Core.Defs.Rnd_N_pt F x r := by
+    simpa [F, r, choice] using
+      (FloatSpec.Core.Generic_fmt.round_N_pt (beta := beta) (fexp := fexp)
+        (choice := choice) (x := x) hβ)
+  have hDN : FloatSpec.Core.Defs.Rnd_DN_pt F x d := by
+    simpa [F, d] using
+      (FloatSpec.Core.Generic_fmt.round_DN_pt (beta := beta) (fexp := fexp)
+        (x := x) hβ)
+  have hUP : FloatSpec.Core.Defs.Rnd_UP_pt F x u := by
+    simpa [F, u] using
+      (FloatSpec.Core.Generic_fmt.round_UP_pt (beta := beta) (fexp := fexp)
+        (x := x) hβ)
+  have hneq' : x - d ≠ u - x := by
+    simpa [d, u] using hneq
+  have huniq : ∀ f2 : ℝ, FloatSpec.Core.Defs.Rnd_N_pt F x f2 → f2 = r := by
+    intro f2 hf2
+    have hspec := FloatSpec.Core.Round_pred.Rnd_N_pt_unique_spec
+      (F := F) (x := x) (d := d) (u := u) (f1 := r) (f2 := f2)
+    have hres := hspec ⟨hDN, hUP, hneq', hN, hf2⟩
+    have hr_eq_f2 : r = f2 := by
+      simpa [FloatSpec.Core.Round_pred.Rnd_N_pt_unique_check, pure,
+        decide_eq_true_iff] using hres
+    exact hr_eq_f2.symm
+  exact ⟨by simpa [F, r, choice] using hN, Or.inr huniq⟩
+
+/-- At an exact half-integer, the nearest-even integer choice returns an even
+integer. This is the integer-side payload needed by the concrete midpoint
+branch of Flocq's `round_NE_pt`. -/
+theorem ZnearestE_half_even (x : ℝ)
+    (hmid :
+      x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) = (1 / 2 : ℝ)) :
+    (FloatSpec.Core.Generic_fmt.Znearest
+      (fun t : Int => !(decide (2 ∣ t))) x) % 2 = 0 := by
+  classical
+  let choice : Int → Bool := fun t : Int => !(decide (2 ∣ t))
+  set f : Int := FloatSpec.Core.Raux.Zfloor x with hf
+  have hmid_f : x - (f : ℝ) = (1 / 2 : ℝ) := by
+    simpa [hf] using hmid
+  have hnot_f : x ≠ (f : ℝ) := by
+    intro hx
+    linarith
+  have hnot_int : x ≠ ((Int.floor x : Int) : ℝ) := by
+    simpa [hf, FloatSpec.Core.Raux.Zfloor] using hnot_f
+  have hceil :
+      FloatSpec.Core.Raux.Zceil x = f + 1 := by
+    have hceil_floor := FloatSpec.Core.Generic_fmt.ceil_eq_floor_add_one
+      (x := x) hnot_int
+    simpa [hf, FloatSpec.Core.Raux.Zceil, FloatSpec.Core.Raux.Zfloor]
+      using hceil_floor
+  have hZraw :
+      FloatSpec.Core.Generic_fmt.Znearest choice x =
+        (if choice (FloatSpec.Core.Raux.Zfloor x)
+         then FloatSpec.Core.Raux.Zceil x
+         else FloatSpec.Core.Raux.Zfloor x) := by
+    simpa [choice] using
+      (FloatSpec.Core.Generic_fmt.Znearest_eq_choice_of_eq_half choice x hmid)
+  rcases Int.emod_two_eq_zero_or_one f with hf0 | hf1
+  · have hdiv_f : 2 ∣ f := Int.dvd_of_emod_eq_zero (by simpa using hf0)
+    have hchoice : choice f = false := by
+      simp [choice, hdiv_f]
+    have hchoice_floor : choice (FloatSpec.Core.Raux.Zfloor x) = false := by
+      simpa [hf] using hchoice
+    have hZ_floor :
+        FloatSpec.Core.Generic_fmt.Znearest choice x = f := by
+      have hZ_floor_raw :
+          FloatSpec.Core.Generic_fmt.Znearest choice x =
+            FloatSpec.Core.Raux.Zfloor x := by
+        simpa [hchoice_floor] using hZraw
+      simpa [hf] using hZ_floor_raw
+    simpa [choice, hZ_floor] using hf0
+  · have hndiv_f : ¬ 2 ∣ f := by
+      intro hdiv
+      have hzero : f % 2 = 0 :=
+        Int.emod_eq_zero_of_dvd (a := 2) (b := f) hdiv
+      have : (1 : Int) = 0 := by simpa [hf1] using hzero
+      norm_num at this
+    have hchoice : choice f = true := by
+      simp [choice, hndiv_f]
+    have hchoice_floor : choice (FloatSpec.Core.Raux.Zfloor x) = true := by
+      simpa [hf] using hchoice
+    have hZ_ceil :
+        FloatSpec.Core.Generic_fmt.Znearest choice x =
+          FloatSpec.Core.Raux.Zceil x := by
+      simpa [hchoice_floor] using hZraw
+    have hadd :
+        (f + 1) % 2 = ((f % 2) + (1 % 2)) % 2 := by
+      simpa using (Int.add_emod f 1 2)
+    have h1mod : (1 % 2 : Int) = 1 := by decide
+    have h11 : ((1 + 1) % 2 : Int) = 0 := by decide
+    have hsucc_even : (f + 1) % 2 = 0 := by
+      simpa [hadd, hf1, h1mod] using h11
+    simpa [choice, hZ_ceil, hceil] using hsucc_even
+
+omit [Exists_NE beta fexp] in
+/-- Concrete nearest-even rounding fixes representable values as an
+`Rnd_NE_pt`. This is the generic-format branch of Flocq's `round_NE_pt`. -/
+theorem round_NE_pt_of_generic
+    (hβ : 1 < beta) (x : ℝ)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x) :
+    Rnd_NE_pt beta fexp x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) x) := by
+  classical
+  let F : ℝ → Prop := fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  let choice : Int → Bool := fun t : Int => !(decide (2 ∣ t))
+  have hfix :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x = x := by
+    exact FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta := beta) (fexp := fexp)
+      (rnd := FloatSpec.Core.Generic_fmt.Znearest choice) (x := x) hβ hx
+  have hrefl := FloatSpec.Core.Round_pred.Rnd_NG_pt_refl_spec
+    (F := F) (P := P) (x := x)
+  have hNGx : FloatSpec.Core.Defs.Rnd_NG_pt F P x x := by
+    simpa [FloatSpec.Core.Round_pred.Rnd_NG_pt_refl_check, pure,
+      decide_eq_true_iff, F, P] using hrefl hx
+  simpa [F, P, choice, hfix] using hNGx
+
+omit [Exists_NE beta fexp] in
+/-- Concrete nearest-even rounding is already proved except for the single
+non-generic exact-midpoint case. -/
+theorem round_NE_pt_of_generic_or_ne_mid
+    (hβ : 1 < beta) (x : ℝ)
+    (hcase :
+      FloatSpec.Core.Generic_fmt.generic_format beta fexp x ∨
+        x - FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x ≠
+          FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x - x) :
+    Rnd_NE_pt beta fexp x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) x) := by
+  cases hcase with
+  | inl hx =>
+      exact round_NE_pt_of_generic (beta := beta) (fexp := fexp) hβ x hx
+  | inr hneq =>
+      exact round_NE_pt_of_ne_mid (beta := beta) (fexp := fexp) hβ x hneq
+
+omit [Exists_NE beta fexp] in
+/-- Midpoint bridge for concrete nearest rounding.
+
+At an exact midpoint, `round_N_middle` rewrites the concrete nearest result to
+the endpoint selected by the integer choice function.  Thus the remaining
+midpoint obligation for Flocq's `round_NE_pt` is precisely to prove that this
+selected endpoint satisfies `NE_prop`. -/
+theorem round_NE_pt_of_midpoint_choice
+    (hβ : 1 < beta) (choice : Int → Bool) (x : ℝ)
+    (hmid :
+      x - FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x - x)
+    (hNE :
+      NE_prop beta fexp x
+        (if choice (FloatSpec.Core.Raux.Zfloor
+              (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x))
+         then FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x
+         else FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x)) :
+    Rnd_NE_pt beta fexp x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x) := by
+  let F : ℝ → Prop := fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y
+  let P : ℝ → ℝ → Prop := NE_prop beta fexp
+  have hN : FloatSpec.Core.Defs.Rnd_N_pt F x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x) := by
+    simpa [F] using
+      (FloatSpec.Core.Generic_fmt.round_N_pt (beta := beta) (fexp := fexp)
+        (choice := choice) (x := x) hβ)
+  have hmiddle :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+          (FloatSpec.Core.Generic_fmt.Znearest choice) x =
+        (if choice (FloatSpec.Core.Raux.Zfloor
+              (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x))
+         then FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x
+         else FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x) := by
+    simpa [FloatSpec.Core.Generic_fmt.rnd_floor, FloatSpec.Core.Generic_fmt.rnd_ceil] using
+      (FloatSpec.Core.Generic_fmt.round_N_middle (beta := beta) (fexp := fexp)
+        (choice := choice) (x := x) hβ hmid)
+  exact ⟨by simpa [F] using hN, Or.inl (by simpa [P, hmiddle] using hNE)⟩
+
+omit [Exists_NE beta fexp] in
+/-- Build the nearest-even tie payload from the canonical mantissa of a
+generic-format value.
+
+This is the witness construction used in Flocq's midpoint branch for
+`round_NE_pt`: the canonical float
+`(Ztrunc (scaled_mantissa r), cexp r)` represents `r`, and evenness of that
+mantissa supplies `NE_prop`. -/
+theorem NE_prop_of_generic_even_mantissa
+    (hβ : 1 < beta) (x r : ℝ)
+    (hr : FloatSpec.Core.Generic_fmt.generic_format beta fexp r)
+    (heven :
+      FloatSpec.Core.Raux.Ztrunc
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r) % 2 = 0) :
+    NE_prop beta fexp x r := by
+  let g : FlocqFloat beta :=
+    ⟨FloatSpec.Core.Raux.Ztrunc
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r),
+      FloatSpec.Core.Generic_fmt.cexp beta fexp r⟩
+  have hcanTrip := FloatSpec.Core.Generic_fmt.canonical_generic_format
+    (beta := beta) (fexp := fexp) (x := r)
+  have hcan : FloatSpec.Core.Generic_fmt.canonical beta fexp g := by
+    have hpost :
+        r = F2R g → FloatSpec.Core.Generic_fmt.canonical beta fexp g := by
+      simpa [g, wp, PostCond.noThrow, Id.run, pure] using hcanTrip ⟨hβ, hr⟩
+    exact hpost hr
+  exact ⟨g, by simpa [g] using hr, hcan, by simpa [g] using heven⟩
+
+omit [Exists_NE beta fexp] in
+/-- Concrete nearest rounding becomes nearest-even once its canonical mantissa
+is known to be even. This isolates the remaining midpoint work for
+`round_NE_pt` to a parity statement about the rounded value itself. -/
+theorem round_NE_pt_of_canonical_even
+    (hβ : 1 < beta) (choice : Int → Bool) (x : ℝ)
+    (heven :
+      FloatSpec.Core.Raux.Ztrunc
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp
+          (FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest choice) x)) % 2 = 0) :
+    Rnd_NE_pt beta fexp x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x) := by
+  let F : ℝ → Prop := fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y
+  let r : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+      (FloatSpec.Core.Generic_fmt.Znearest choice) x
+  have hN : FloatSpec.Core.Defs.Rnd_N_pt F x r := by
+    simpa [F, r] using
+      (FloatSpec.Core.Generic_fmt.round_N_pt (beta := beta) (fexp := fexp)
+        (choice := choice) (x := x) hβ)
+  have hNE : NE_prop beta fexp x r :=
+    NE_prop_of_generic_even_mantissa (beta := beta) (fexp := fexp)
+      hβ x r (by simpa [F] using hN.1) (by simpa [r] using heven)
+  exact ⟨by simpa [F, r] using hN, Or.inl hNE⟩
+
+omit [Exists_NE beta fexp] in
+/-- Floor endpoint parity bridge for the positive midpoint branch.
+
+If positive `x` is rounded downward and the original scaled floor mantissa is
+even, then the canonical mantissa of the down-rounded value is even.  This is
+the floor-selected half of Flocq's midpoint proof for `round_NE_pt_pos`. -/
+theorem round_DN_canonical_even_of_floor_even
+    (hβ : 1 < beta) (x : ℝ) (hx : 0 < x)
+    (heven_floor :
+      FloatSpec.Core.Generic_fmt.rnd_floor
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) % 2 = 0) :
+    FloatSpec.Core.Raux.Ztrunc
+      (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp
+        (FloatSpec.Core.Generic_fmt.roundR beta fexp
+          FloatSpec.Core.Generic_fmt.rnd_floor x)) % 2 = 0 := by
+  classical
+  let sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x
+  let e : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x
+  let r : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x
+  have hr_nonneg : 0 ≤ r := by
+    exact FloatSpec.Core.Generic_fmt.roundR_nonneg_of_nonneg
+      (beta := beta) (fexp := fexp)
+      (rnd := FloatSpec.Core.Generic_fmt.rnd_floor) (x := x) hβ (le_of_lt hx)
+  by_cases hr0 : r = 0
+  · have hsm0 :
+        FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r = 0 := by
+      simp [hr0, FloatSpec.Core.Generic_fmt.scaled_mantissa]
+    simp [r, hsm0, FloatSpec.Core.Raux.Ztrunc]
+  · have hrpos : 0 < r := lt_of_le_of_ne hr_nonneg (Ne.symm hr0)
+    have hcexp : FloatSpec.Core.Generic_fmt.cexp beta fexp r =
+        FloatSpec.Core.Generic_fmt.cexp beta fexp x := by
+      have htrip := FloatSpec.Core.Generic_fmt.cexp_DN
+        (beta := beta) (fexp := fexp) (x := x)
+      have himp :
+          0 < FloatSpec.Core.Generic_fmt.roundR beta fexp
+              FloatSpec.Core.Generic_fmt.rnd_floor x →
+            FloatSpec.Core.Generic_fmt.cexp beta fexp
+                (FloatSpec.Core.Generic_fmt.roundR beta fexp
+                  FloatSpec.Core.Generic_fmt.rnd_floor x) =
+              FloatSpec.Core.Generic_fmt.cexp beta fexp x := by
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hβ
+      simpa [r] using himp hrpos
+    have hbpos : (0 : ℝ) < (beta : ℝ) := by
+      exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+    have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+    have hr_eval :
+        r =
+          (((FloatSpec.Core.Generic_fmt.rnd_floor sm : Int) : ℝ) *
+            (beta : ℝ) ^ e) := by
+      simp [r, sm, e, FloatSpec.Core.Generic_fmt.roundR]
+    have hcexp_e : FloatSpec.Core.Generic_fmt.cexp beta fexp r = e := by
+      simpa [e] using hcexp
+    have hpows : (beta : ℝ) ^ e * (beta : ℝ) ^ (-e) = 1 := by
+      rw [← zpow_add₀ hbne e (-e)]
+      simp
+    have hsm_r :
+        FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r =
+          ((FloatSpec.Core.Generic_fmt.rnd_floor sm : Int) : ℝ) := by
+      calc
+        FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r
+            = r * (beta : ℝ) ^ (-(FloatSpec.Core.Generic_fmt.cexp beta fexp r)) := by
+                rfl
+        _ = (((FloatSpec.Core.Generic_fmt.rnd_floor sm : Int) : ℝ) *
+              (beta : ℝ) ^ e) * (beta : ℝ) ^ (-e) := by
+                rw [hcexp_e, hr_eval]
+        _ = ((FloatSpec.Core.Generic_fmt.rnd_floor sm : Int) : ℝ) *
+              ((beta : ℝ) ^ e * (beta : ℝ) ^ (-e)) := by ring
+        _ = ((FloatSpec.Core.Generic_fmt.rnd_floor sm : Int) : ℝ) * 1 := by
+                rw [hpows]
+        _ = ((FloatSpec.Core.Generic_fmt.rnd_floor sm : Int) : ℝ) := by ring
+    have htrunc :
+        FloatSpec.Core.Raux.Ztrunc
+          (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r) =
+            FloatSpec.Core.Generic_fmt.rnd_floor sm := by
+      rw [hsm_r]
+      exact FloatSpec.Core.Generic_fmt.Ztrunc_intCast _
+    simpa [r, sm, htrunc] using heven_floor
+
+omit [Exists_NE beta fexp] in
+/-- Canonical parity bridge for the down-rounded endpoint.
+
+For positive `x`, any canonical float representing the concrete downward
+rounding has the same mantissa parity as the original scaled floor mantissa.
+This is the missing odd-floor half needed by the exact midpoint branch of
+Flocq's `round_NE_pt`: if the floor mantissa is odd, `DN_UP_parity_prop` can
+force the upward endpoint to be even. -/
+theorem round_DN_canonical_parity_of_floor
+    (hβ : 1 < beta) (x : ℝ) (hx : 0 < x)
+    (gd : FlocqFloat beta)
+    (hgd_val :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp
+        FloatSpec.Core.Generic_fmt.rnd_floor x = F2R gd)
+    (hcanon_gd : canonical beta fexp gd) :
+    gd.Fnum % 2 =
+      FloatSpec.Core.Generic_fmt.rnd_floor
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) % 2 := by
+  classical
+  set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
+  set e : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he
+  set mf : Int := FloatSpec.Core.Generic_fmt.rnd_floor sm with hmf
+  set rd : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+      FloatSpec.Core.Generic_fmt.rnd_floor x with hrd
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hpow_e_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbposR e
+  have hsm_pos : 0 < sm := by
+    have hpow_neg_pos : 0 < (beta : ℝ) ^ (-(e)) := zpow_pos hbposR _
+    have hsm_def : sm = x * (beta : ℝ) ^ (-(e)) := by
+      simp [sm, hsm, e, he, FloatSpec.Core.Generic_fmt.scaled_mantissa]
+    rw [hsm_def]
+    exact mul_pos hx hpow_neg_pos
+  have hmf_nonneg : (0 : Int) ≤ mf := by
+    rw [hmf]
+    exact Int.floor_nonneg.mpr (le_of_lt hsm_pos)
+  have hrd_eval : rd = ((mf : Int) : ℝ) * (beta : ℝ) ^ e := by
+    simp [rd, hrd, FloatSpec.Core.Generic_fmt.roundR, sm, hsm, e, he, mf, hmf]
+  by_cases hmf0 : mf = 0
+  · let gz : FlocqFloat beta := ⟨0, fexp (FloatSpec.Core.Raux.mag beta 0)⟩
+    have Cgz : canonical beta fexp gz := by
+      simpa [gz] using
+        FloatSpec.Core.Generic_fmt.canonical_0 (beta := beta) (fexp := fexp)
+    have hrd0 : rd = 0 := by
+      simp [hrd_eval, hmf0]
+    have hgd_eq : gd = gz := by
+      apply FloatSpec.Core.Generic_fmt.canonical_unique
+        (beta := beta) (hbeta := hβ) (fexp := fexp)
+      · exact hcanon_gd
+      · exact Cgz
+      · calc
+          F2R gd = rd := by simpa [rd, hrd] using hgd_val.symm
+          _ = 0 := hrd0
+          _ = F2R gz := by simp [gz, FloatSpec.Core.Defs.F2R]
+    simp [hgd_eq, gz, hmf0, mf, hmf]
+  · have hmf_pos : 0 < mf := lt_of_le_of_ne hmf_nonneg (Ne.symm hmf0)
+    have hrd_pos : 0 < rd := by
+      have hmf_posR : 0 < ((mf : Int) : ℝ) := by exact_mod_cast hmf_pos
+      simpa [hrd_eval] using mul_pos hmf_posR hpow_e_pos
+    let gf : FlocqFloat beta := ⟨mf, e⟩
+    have hgf_val : F2R gf = rd := by
+      simpa [gf, FloatSpec.Core.Defs.F2R, hrd_eval]
+    have hcexp_rd :
+        FloatSpec.Core.Generic_fmt.cexp beta fexp rd = e := by
+      have htrip := FloatSpec.Core.Generic_fmt.cexp_DN
+        (beta := beta) (fexp := fexp) (x := x)
+      have himp :
+          0 < FloatSpec.Core.Generic_fmt.roundR beta fexp
+              FloatSpec.Core.Generic_fmt.rnd_floor x →
+            FloatSpec.Core.Generic_fmt.cexp beta fexp
+                (FloatSpec.Core.Generic_fmt.roundR beta fexp
+                  FloatSpec.Core.Generic_fmt.rnd_floor x) =
+              FloatSpec.Core.Generic_fmt.cexp beta fexp x := by
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hβ
+      simpa [rd, hrd, e, he] using himp (by simpa [rd, hrd] using hrd_pos)
+    have Cgf : canonical beta fexp gf := by
+      simpa [gf, FloatSpec.Core.Generic_fmt.canonical,
+        FloatSpec.Core.Generic_fmt.cexp, hgf_val, hcexp_rd] using hcexp_rd.symm
+    have hgd_eq : gd = gf := by
+      apply FloatSpec.Core.Generic_fmt.canonical_unique
+        (beta := beta) (hbeta := hβ) (fexp := fexp)
+      · exact hcanon_gd
+      · exact Cgf
+      · calc
+          F2R gd = rd := by simpa [rd, hrd] using hgd_val.symm
+          _ = F2R gf := hgf_val.symm
+    simp [hgd_eq, gf, mf, hmf]
+
+/-- Positive-input branch of Flocq's concrete `round_NE_pt`.
+
+For positive values, the generic case, non-midpoint case, and midpoint parity
+case are all discharged for the concrete nearest-even choice.  The remaining
+public wrapper work is sign/zero plumbing around this theorem. -/
+theorem round_NE_pt_pos_exact
+    (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
+    Rnd_NE_pt beta fexp x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) x) := by
+  classical
+  let choice : Int → Bool := fun t => !(decide (2 ∣ t))
+  let F : ℝ → Prop := fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y
+  let d : ℝ := FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x
+  let u : ℝ := FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x
+  let sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x
+  by_cases hxFmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x
+  · exact round_NE_pt_of_generic (beta := beta) (fexp := fexp) hβ x hxFmt
+  · by_cases hmid : x - d = u - x
+    · by_cases hfloor_even :
+          FloatSpec.Core.Generic_fmt.rnd_floor sm % 2 = 0
+      · have hchoice_false : choice (FloatSpec.Core.Raux.Zfloor sm) = false := by
+          have hdiv : 2 ∣ FloatSpec.Core.Raux.Zfloor sm :=
+            Int.dvd_of_emod_eq_zero
+              (by simpa [FloatSpec.Core.Generic_fmt.rnd_floor] using hfloor_even)
+          simp [choice, hdiv]
+        have hfmt_d : FloatSpec.Core.Generic_fmt.generic_format beta fexp d := by
+          simpa [F, d] using
+            FloatSpec.Core.Generic_fmt.generic_format_roundR
+              (beta := beta) (fexp := fexp)
+              (rnd := FloatSpec.Core.Generic_fmt.rnd_floor) (x := x) hβ
+        have heven_d :
+            FloatSpec.Core.Raux.Ztrunc
+              (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp d) % 2 = 0 := by
+          simpa [d, sm] using
+            round_DN_canonical_even_of_floor_even
+              (beta := beta) (fexp := fexp) hβ x hx hfloor_even
+        have hNEd : NE_prop beta fexp x d :=
+          NE_prop_of_generic_even_mantissa (beta := beta) (fexp := fexp)
+            hβ x d hfmt_d heven_d
+        have hselected :
+            NE_prop beta fexp x
+              (if choice (FloatSpec.Core.Raux.Zfloor
+                    (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x))
+               then FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x
+               else FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x) := by
+          simpa [choice, d, u, sm, hchoice_false] using hNEd
+        exact
+          round_NE_pt_of_midpoint_choice (beta := beta) (fexp := fexp)
+            hβ choice x (by simpa [d, u] using hmid) hselected
+      · have hchoice_true : choice (FloatSpec.Core.Raux.Zfloor sm) = true := by
+          have hndiv : ¬2 ∣ FloatSpec.Core.Raux.Zfloor sm := by
+            intro hdiv
+            exact hfloor_even
+              (by
+                simpa [FloatSpec.Core.Generic_fmt.rnd_floor] using
+                  (Int.emod_eq_zero_of_dvd
+                    (a := 2) (b := FloatSpec.Core.Raux.Zfloor sm) hdiv))
+          simp [choice, hndiv]
+        have hDN : FloatSpec.Core.Round_pred.Rnd_DN_pt F x d := by
+          simpa [F, d] using
+            FloatSpec.Core.Generic_fmt.round_DN_pt
+              (beta := beta) (fexp := fexp) (x := x) hβ
+        have hUP : FloatSpec.Core.Round_pred.Rnd_UP_pt F x u := by
+          simpa [F, u] using
+            FloatSpec.Core.Generic_fmt.round_UP_pt
+              (beta := beta) (fexp := fexp) (x := x) hβ
+        have hpar : DN_UP_parity_prop beta fexp := by
+          have htrip := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+          simpa [DN_UP_parity_generic_check, pure, decide_eq_true_iff]
+            using htrip hβ
+        rcases hpar x d u hxFmt hDN hUP with
+          ⟨gd, gu, hgd_val, hgu_val, hcanon_d, hcanon_u, hparity⟩
+        have hgd_floor :
+            gd.Fnum % 2 = FloatSpec.Core.Generic_fmt.rnd_floor sm % 2 := by
+          exact
+            round_DN_canonical_parity_of_floor
+              (beta := beta) (fexp := fexp) hβ x hx gd
+              (by simpa [d] using hgd_val) hcanon_d
+        have hgd_odd : gd.Fnum % 2 ≠ 0 := by
+          intro hgd_even
+          exact hfloor_even (by simpa [hgd_floor] using hgd_even)
+        have hgd_one : gd.Fnum % 2 = 1 := by
+          rcases Int.emod_two_eq_zero_or_one gd.Fnum with h0 | h1
+          · exact False.elim (hgd_odd h0)
+          · exact h1
+        have hgu_even : gu.Fnum % 2 = 0 := by
+          rcases Int.emod_two_eq_zero_or_one gu.Fnum with h0 | h1
+          · exact h0
+          · exact False.elim (hparity (by rw [hgd_one, h1]))
+        have hNEu : NE_prop beta fexp x u :=
+          ⟨gu, by simpa using hgu_val, hcanon_u, hgu_even⟩
+        have hselected :
+            NE_prop beta fexp x
+              (if choice (FloatSpec.Core.Raux.Zfloor
+                    (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x))
+               then FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x
+               else FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x) := by
+          simpa [choice, d, u, sm, hchoice_true] using hNEu
+        exact
+          round_NE_pt_of_midpoint_choice (beta := beta) (fexp := fexp)
+            hβ choice x (by simpa [d, u] using hmid) hselected
+    · exact round_NE_pt_of_ne_mid (beta := beta) (fexp := fexp) hβ x
+        (by simpa [d, u] using hmid)
 
 end ParityAuxiliary
 
@@ -2352,35 +2903,142 @@ theorem round_NE_abs (x : ℝ) :
   -- Conclude the NG predicate at absolute values.
   exact And.intro hNabs hTieAbs
 
-/-- Check predicate holds at rounded value -/
-noncomputable def round_NE_pt_check : Bool :=
+private lemma ZnearestE_choice_transform (t : Int) :
+    decide (2 ∣ (-(t + 1) : Int)) = !(decide (2 ∣ t)) := by
+  have hsame : (-(t + 1) : Int) = -1 + -t := by ring
+  rw [hsame]
+  by_cases ht : 2 ∣ t
+  · have hnot : ¬ 2 ∣ (-1 + -t : Int) := by
+      intro h
+      have hsum : 2 ∣ t + (-1 + -t) := dvd_add ht h
+      have hminus : t + (-1 + -t) = -1 := by ring
+      have hneg1 : 2 ∣ (-1 : Int) := by simpa [hminus] using hsum
+      norm_num at hneg1
+    simp [ht, hnot]
+  · have htmod : t % 2 = 1 := by
+      rcases Int.emod_two_eq_zero_or_one t with h0 | h1
+      · exact False.elim (ht (Int.dvd_of_emod_eq_zero h0))
+      · exact h1
+    have hdiv : 2 ∣ (-1 + -t : Int) := by
+      have ht1 : (t + 1) % 2 = 0 := by
+        have hadd : (t + 1) % 2 = ((t % 2) + (1 % 2)) % 2 := by
+          simpa using (Int.add_emod t 1 2)
+        norm_num [hadd, htmod]
+      have hneg : 2 ∣ -(t + 1) := dvd_neg.mpr (Int.dvd_of_emod_eq_zero ht1)
+      have heq : -(t + 1) = (-1 + -t : Int) := by ring
+      simpa [heq] using hneg
+    simp [ht, hdiv]
+
+private lemma ZnearestE_opp (x : ℝ) :
+    FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t))) (-x) =
+      -FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t))) x := by
+  classical
+  let choice : Int → Bool := fun t => !(decide (2 ∣ t))
+  have h := FloatSpec.Core.Generic_fmt.Znearest_opp choice x
+  have hchoice :
+      (fun t : Int => ! choice (-(t + 1))) = choice := by
+    funext t
+    simpa [choice] using ZnearestE_choice_transform t
+  rw [hchoice] at h
+  simpa [choice] using h
+
+private lemma roundR_ZnearestE_opp
+    (hβ : 1 < beta) (x : ℝ) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) (-x) =
+      -FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) x := by
+  classical
+  let choice : Int → Bool := fun t => !(decide (2 ∣ t))
+  have hself :
+      FloatSpec.Core.Generic_fmt.Zrnd_opp
+          (FloatSpec.Core.Generic_fmt.Znearest choice) =
+        FloatSpec.Core.Generic_fmt.Znearest choice := by
+    funext y
+    unfold FloatSpec.Core.Generic_fmt.Zrnd_opp
+    have h := ZnearestE_opp y
+    simpa [choice] using congrArg Neg.neg h
+  have h := FloatSpec.Core.Generic_fmt.roundR_opp
+    (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest choice) (x := x) hβ
+  simpa [choice, hself] using h
+
+/-- Check predicate holds at the concrete nearest-even rounded value. -/
+noncomputable def round_NE_pt_check (x : ℝ) : Bool :=
   by
     classical
-    -- Decide totality: every input admits an NE-rounded value.
-    exact @decide (∀ x : ℝ, ∃ f : ℝ, Rnd_NE_pt beta fexp x f) (Classical.dec _)
+    exact
+      @decide
+        (Rnd_NE_pt beta fexp x
+          (FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) x))
+        (Classical.dec _)
 
-
-/-- Coq:
-    Theorem round_NE_pt :
-      forall x,
-      Rnd_NE_pt x (round beta fexp ZnearestE x).
-
-    The rounded value under nearest-even satisfies the rounding predicate.
--/
 theorem round_NE_pt (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
-    (pure (round_NE_pt_check beta fexp) : Id Bool)
+    (pure (round_NE_pt_check beta fexp x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro _
+  intro hβ
   unfold round_NE_pt_check
   classical
-  -- Reduce to the propositional totality statement for NE rounding.
-  simp [ pure, decide_eq_true_iff]
-  -- Use totality established earlier to produce a nearest-even point for any x.
-  intro x
-  have hTot : ∀ y : ℝ, ∃ f : ℝ, Rnd_NE_pt beta fexp y f :=
-    Rnd_NE_pt_total_prop (beta := beta) (fexp := fexp) (by assumption)
-  exact hTot x
+  simp [pure, decide_eq_true_iff]
+  by_cases hxpos : 0 < x
+  · exact round_NE_pt_pos_exact (beta := beta) (fexp := fexp) hβ x hxpos
+  · by_cases hx0 : x = 0
+    · have hround0 :
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))) x = 0 := by
+        have hz :
+            FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t))) 0 = 0 := by
+          norm_num [FloatSpec.Core.Generic_fmt.Znearest, FloatSpec.Core.Raux.Rcompare,
+            FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil]
+        simp [hx0, FloatSpec.Core.Generic_fmt.roundR,
+          FloatSpec.Core.Generic_fmt.scaled_mantissa, hz]
+      have hfmt0 : FloatSpec.Core.Generic_fmt.generic_format beta fexp 0 := by
+        have h := FloatSpec.Core.Generic_fmt.generic_format_0 (beta := beta) (fexp := fexp)
+        simpa using h hβ
+      have hrefl := Rnd_NE_pt_refl (beta := beta) (fexp := fexp) (x := 0)
+      have hrefl_prop :
+          ∀ y : ℝ, FloatSpec.Core.Generic_fmt.generic_format beta fexp y →
+            Rnd_NE_pt beta fexp y y := by
+        simpa [Rnd_NE_pt_refl_check, pure, decide_eq_true_iff] using
+          hrefl ⟨hβ, hfmt0⟩
+      have hNE0 : Rnd_NE_pt beta fexp 0 0 := by
+        exact hrefl_prop 0 hfmt0
+      rw [hround0, hx0]
+      exact hNE0
+    · have hxneg : x < 0 := lt_of_le_of_ne (le_of_not_gt hxpos) hx0
+      have hxneg_pos : 0 < -x := neg_pos.mpr hxneg
+      let choice : Int → Bool := fun t => !(decide (2 ∣ t))
+      have hNE_neg :
+          Rnd_NE_pt beta fexp (-x)
+            (FloatSpec.Core.Generic_fmt.roundR beta fexp
+              (FloatSpec.Core.Generic_fmt.Znearest choice) (-x)) := by
+        simpa [choice] using
+          round_NE_pt_pos_exact (beta := beta) (fexp := fexp) hβ (-x) hxneg_pos
+      have hopp_eq :
+          FloatSpec.Core.Generic_fmt.roundR beta fexp
+              (FloatSpec.Core.Generic_fmt.Znearest choice) (-x) =
+            -FloatSpec.Core.Generic_fmt.roundR beta fexp
+              (FloatSpec.Core.Generic_fmt.Znearest choice) x := by
+        simpa [choice] using roundR_ZnearestE_opp (beta := beta) (fexp := fexp) hβ x
+      have hopp_prop :
+          ∀ y f : ℝ, Rnd_NE_pt beta fexp y f ↔ Rnd_NE_pt beta fexp (-y) (-f) := by
+        have h := round_NE_opp (beta := beta) (fexp := fexp) (x := x)
+        simpa [round_NE_opp_check, pure, decide_eq_true_iff] using h hβ
+      have hright :
+          Rnd_NE_pt beta fexp (-x)
+            (-(FloatSpec.Core.Generic_fmt.roundR beta fexp
+              (FloatSpec.Core.Generic_fmt.Znearest choice) x)) := by
+        simpa [hopp_eq] using hNE_neg
+      have hmain :
+          Rnd_NE_pt beta fexp x
+            (FloatSpec.Core.Generic_fmt.roundR beta fexp
+              (FloatSpec.Core.Generic_fmt.Znearest choice) x) :=
+        (hopp_prop x
+          (FloatSpec.Core.Generic_fmt.roundR beta fexp
+            (FloatSpec.Core.Generic_fmt.Znearest choice) x)).mpr hright
+      simpa [choice] using hmain
 
 end ParityProperties
 

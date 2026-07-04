@@ -9876,10 +9876,8 @@ theorem error_le_half_ulp_roundR (choice : Int → Bool)
     have hnear₁ :
         |sm - (((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ))|
           ≤ (1 / 2 : ℝ) := by
-      have h := (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
-      simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-        FloatSpec.Core.Generic_fmt.Znearest_N_strict_check,
-        wp, PostCond.noThrow, Id.run, pure] using h
+      have h := (FloatSpec.Core.Generic_fmt.Znearest_half choice sm)
+      simpa [wp, PostCond.noThrow, Id.run, pure] using h
     have hnear :
         |(((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) - sm)|
           ≤ (1 / 2 : ℝ) := by
@@ -10050,6 +10048,202 @@ private theorem roundR_ceil_eq_UP_choose_for_ulp
   exact FloatSpec.Core.Round_pred.Rnd_UP_pt_unique_pure F x _ _ hround hchoose
 
 /-- Coq (Ulp.v):
+Theorem {coq}`succ_DN_eq_UP`:
+  {lit}`forall x, x <> round beta fexp Zfloor x ->
+  succ (round beta fexp Zfloor x) = round beta fexp Zceil x`.
+-/
+theorem succ_DN_eq_UP
+    [Exp_not_FTZ fexp]
+    (x : ℝ) (hβ : 1 < beta)
+    (Hx : x ≠
+      FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x) :
+    succ beta fexp
+        (FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x)
+      =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x := by
+  classical
+  have Fx : ¬ FloatSpec.Core.Generic_fmt.generic_format beta fexp x := by
+    intro hx
+    have hfix :
+        FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x = x :=
+      FloatSpec.Core.Generic_fmt.roundR_generic
+        (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+        (x := x) hβ hx
+    exact Hx hfix.symm
+  have hfloor :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x =
+        Classical.choose
+          (FloatSpec.Core.Generic_fmt.round_DN_exists
+            (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) :=
+    roundR_floor_eq_DN_choose_for_ulp (beta := beta) (fexp := fexp) (x := x) hβ
+  have hceil :
+      FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x =
+        Classical.choose
+          (FloatSpec.Core.Generic_fmt.round_UP_exists
+            (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) :=
+    roundR_ceil_eq_UP_choose_for_ulp (beta := beta) (fexp := fexp) (x := x) hβ
+  have hadj :
+      succ beta fexp
+          (Classical.choose
+            (FloatSpec.Core.Generic_fmt.round_DN_exists
+              (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)))
+        =
+          Classical.choose
+            (FloatSpec.Core.Generic_fmt.round_UP_exists
+              (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) :=
+    succ_DN_eq_UP_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
+  calc
+    succ beta fexp
+        (FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x)
+        = succ beta fexp
+            (Classical.choose
+              (FloatSpec.Core.Generic_fmt.round_DN_exists
+                (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))) := by
+            rw [hfloor]
+    _ = Classical.choose
+          (FloatSpec.Core.Generic_fmt.round_UP_exists
+            (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) := hadj
+    _ = FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x :=
+          hceil.symm
+
+/-- Coq (Ulp.v):
+Theorem {coq}`pred_UP_le_DN`:
+  {lit}`forall x, pred (round beta fexp Zceil x) <= round beta fexp Zfloor x`.
+-/
+theorem pred_UP_le_DN
+    [Exp_not_FTZ fexp]
+    (x : ℝ) (hβ : 1 < beta) :
+    pred beta fexp
+        (FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x)
+      ≤
+        FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x := by
+  classical
+  set dn : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x with hdn
+  set up : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x with hup
+  have Fdn : FloatSpec.Core.Generic_fmt.generic_format beta fexp dn := by
+    simpa [dn, hdn] using
+      FloatSpec.Core.Generic_fmt.generic_format_roundR
+        (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+        (x := x) hβ
+  by_cases Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x
+  · have hdn_eq : dn = x := by
+      simpa [dn, hdn] using
+        FloatSpec.Core.Generic_fmt.roundR_generic
+          (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+          (x := x) hβ Fx
+    have hup_eq : up = x := by
+      simpa [up, hup] using
+        FloatSpec.Core.Generic_fmt.roundR_generic
+          (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_ceil)
+          (x := x) hβ Fx
+    have hpred : pred beta fexp x ≤ x :=
+      pred_run_le_self (beta := beta) (fexp := fexp) hβ x
+    simpa [dn, up, hdn, hup, hdn_eq, hup_eq] using hpred
+  · have hx_ne_dn : x ≠ dn := by
+      intro hx_eq
+      have hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x := by
+        simpa [hx_eq] using Fdn
+      exact Fx hx_fmt
+    have hsucc : succ beta fexp dn = up := by
+      simpa [dn, up, hdn, hup] using
+        succ_DN_eq_UP (beta := beta) (fexp := fexp) (x := x) hβ
+          (by simpa [dn, hdn] using hx_ne_dn)
+    have hpred_succ : pred beta fexp (succ beta fexp dn) = dn :=
+      pred_succ_theorem (beta := beta) (fexp := fexp) (x := dn) Fdn hβ
+    calc
+      pred beta fexp up = pred beta fexp (succ beta fexp dn) := by rw [hsucc]
+      _ = dn := hpred_succ
+      _ ≤ dn := le_rfl
+
+/-- Coq (Ulp.v):
+Theorem {coq}`UP_le_succ_DN`:
+  {lit}`forall x, round beta fexp Zceil x <= succ (round beta fexp Zfloor x)`.
+-/
+theorem UP_le_succ_DN
+    [Exp_not_FTZ fexp]
+    (x : ℝ) (hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x
+      ≤
+        succ beta fexp
+          (FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x) := by
+  classical
+  set dn : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x with hdn
+  set up : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x with hup
+  by_cases Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x
+  · have hdn_eq : dn = x := by
+      simpa [dn, hdn] using
+        FloatSpec.Core.Generic_fmt.roundR_generic
+          (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+          (x := x) hβ Fx
+    have hup_eq : up = x := by
+      simpa [up, hup] using
+        FloatSpec.Core.Generic_fmt.roundR_generic
+          (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_ceil)
+          (x := x) hβ Fx
+    have hsucc : x ≤ succ beta fexp x :=
+      succ_run_ge_self (beta := beta) (fexp := fexp) hβ x
+    simpa [dn, up, hdn, hup, hdn_eq, hup_eq] using hsucc
+  · have Fdn : FloatSpec.Core.Generic_fmt.generic_format beta fexp dn := by
+      simpa [dn, hdn] using
+        FloatSpec.Core.Generic_fmt.generic_format_roundR
+          (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+          (x := x) hβ
+    have hx_ne_dn : x ≠ dn := by
+      intro hx_eq
+      have hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x := by
+        simpa [hx_eq] using Fdn
+      exact Fx hx_fmt
+    have hsucc : succ beta fexp dn = up := by
+      simpa [dn, up, hdn, hup] using
+        succ_DN_eq_UP (beta := beta) (fexp := fexp) (x := x) hβ
+          (by simpa [dn, hdn] using hx_ne_dn)
+    calc
+      up = succ beta fexp dn := hsucc.symm
+      _ ≤ succ beta fexp dn := le_rfl
+
+/-- Coq (Ulp.v):
+Theorem {coq}`pred_UP_eq_DN`:
+  {lit}`forall x, ~ F x -> pred (round beta fexp Zceil x) =
+  round beta fexp Zfloor x`.
+-/
+theorem pred_UP_eq_DN
+    [Exp_not_FTZ fexp]
+    (x : ℝ) (hβ : 1 < beta)
+    (Fx : ¬ FloatSpec.Core.Generic_fmt.generic_format beta fexp x) :
+    pred beta fexp
+        (FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x)
+      =
+        FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x := by
+  classical
+  set dn : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x with hdn
+  set up : ℝ :=
+    FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x with hup
+  have Fdn : FloatSpec.Core.Generic_fmt.generic_format beta fexp dn := by
+    simpa [dn, hdn] using
+      FloatSpec.Core.Generic_fmt.generic_format_roundR
+        (beta := beta) (fexp := fexp) (rnd := FloatSpec.Core.Generic_fmt.rnd_floor)
+        (x := x) hβ
+  have hx_ne_dn : x ≠ dn := by
+    intro hx_eq
+    have hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x := by
+      simpa [hx_eq] using Fdn
+    exact Fx hx_fmt
+  have hsucc : succ beta fexp dn = up := by
+    simpa [dn, up, hdn, hup] using
+      succ_DN_eq_UP (beta := beta) (fexp := fexp) (x := x) hβ
+        (by simpa [dn, hdn] using hx_ne_dn)
+  have hpred_succ : pred beta fexp (succ beta fexp dn) = dn :=
+    pred_succ_theorem (beta := beta) (fexp := fexp) (x := dn) Fdn hβ
+  calc
+    pred beta fexp up = pred beta fexp (succ beta fexp dn) := by rw [hsucc]
+    _ = dn := hpred_succ
+
+/-- Coq (Ulp.v):
 Theorem error_le_half_ulp_round :
   {lit}`forall {Hm : Monotone_exp fexp} choice x,
   |round_N choice x - x| <= /2 * ulp (round_N choice x)`.
@@ -10098,10 +10292,8 @@ theorem error_le_half_ulp_round
       have hnear₁ :
           |sm - (((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ))|
             ≤ (1 / 2 : ℝ) := by
-        have h := (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
-        simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-          FloatSpec.Core.Generic_fmt.Znearest_N_strict_check,
-          wp, PostCond.noThrow, Id.run, pure] using h
+        have h := (FloatSpec.Core.Generic_fmt.Znearest_half choice sm)
+        simpa [wp, PostCond.noThrow, Id.run, pure] using h
       have hnear :
           |(((FloatSpec.Core.Generic_fmt.Znearest choice sm : Int) : ℝ) - sm)|
             ≤ (1 / 2 : ℝ) := by
@@ -10146,9 +10338,6 @@ theorem error_le_half_ulp_round
   have hd_le_x : d ≤ x := by simpa [d, hd] using hdn.2.1
   have hx_le_u : x ≤ u := by simpa [u, hu] using hup.2.1
   have hround_cases : r = d ∨ r = u := by
-    have hz_raw :=
-      (FloatSpec.Core.Generic_fmt.Znearest_DN_or_UP choice
-        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)) True.intro
     have hz :
         FloatSpec.Core.Generic_fmt.Znearest choice
             (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)
@@ -10157,8 +10346,9 @@ theorem error_le_half_ulp_round
         FloatSpec.Core.Generic_fmt.Znearest choice
             (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)
           = FloatSpec.Core.Raux.Zceil
-            (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) := by
-      simpa [wp, PostCond.noThrow, Id.run, pure] using hz_raw
+            (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) :=
+      FloatSpec.Core.Generic_fmt.Znearest_DN_or_UP choice
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)
     have hfloor_eq :
         FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x = d := by
       simpa [d, hd] using
@@ -10624,6 +10814,26 @@ theorem generic_format_plus_ulp
   -- `x + ulp x` is in generic format, then apply the local theorem.
   simp [wp, PostCond.noThrow, Id.run, bind, pure]
   exact generic_format_plus_ulp_theorem (beta := beta) (fexp := fexp) x Fx hβ
+
+/-- Coq (Ulp.v):
+Lemma {coq}`generic_format_succ_aux1`:
+  {lit}`forall x, 0 < x -> F x -> F (x + ulp x)`.
+-/
+theorem generic_format_succ_aux1
+    (x : ℝ) (hx : 0 < x)
+    (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp (x + ulp beta fexp x) := by
+  classical
+  have hsucc_eq : succ beta fexp x = x + ulp beta fexp x := by
+    simp [succ, le_of_lt hx, Id.run, bind, pure]
+  have Fsucc : FloatSpec.Core.Generic_fmt.generic_format beta fexp (succ beta fexp x) := by
+    have h := generic_format_succ (beta := beta) (fexp := fexp) (x := x) (Fx := Fx) hβ
+    have h' := by
+      simpa [wp, PostCond.noThrow, Id.run, bind, pure]
+        using h
+    exact h' trivial
+  simpa [hsucc_eq] using Fsucc
 
 /-- Monotone valid exponents satisfy the non-FTZ exponent condition used by
 the DN/UP adjacency bridge. -/

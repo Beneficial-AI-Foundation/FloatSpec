@@ -1991,16 +1991,11 @@ theorem ceil_eq_floor_add_one {x : ℝ} (hx : x ≠ (⌊x⌋ : ℝ)) : ⌈x⌉ =
     For any {given -show}``choice : Int → Bool`` and {given -show}``x : ℝ``,
     {lean}``Znearest choice x`` is either {lean}``FloatSpec.Core.Raux.Zfloor x`` or
     {lean}``FloatSpec.Core.Raux.Zceil x`` (depending on the comparison and the
-    tie-breaking choice). We state it using the
-    Hoare-triple style around the pure computation of {name}``Znearest``.
+    tie-breaking choice).
 -/
 theorem Znearest_DN_or_UP (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest choice x) : Id Int)
-    ⦃⇓z => ⌜z = (FloatSpec.Core.Raux.Zfloor x) ∨ z = (FloatSpec.Core.Raux.Zceil x)⌝⦄ := by
-  intro _
-  -- Znearest compares x - floor(x) with 1/2 and returns either floor or ceil
-  simp only [wp, PostCond.noThrow, PredTrans.pure, pure]
+    Znearest choice x = FloatSpec.Core.Raux.Zfloor x ∨
+      Znearest choice x = FloatSpec.Core.Raux.Zceil x := by
   unfold Znearest
   set f := (FloatSpec.Core.Raux.Zfloor x) with hf
   set c := (FloatSpec.Core.Raux.Zceil x) with hc
@@ -2041,58 +2036,32 @@ theorem Znearest_DN_or_UP (choice : Int → Bool) (x : ℝ) :
           right
           simp [hcmp]
 
-/-- Check pair for Znearest_ge_floor: returns (⌊x⌋, Znearest x) -/
-noncomputable def Znearest_ge_floor_check (choice : Int → Bool) (x : ℝ) : (Int × Int) :=
-  let f := FloatSpec.Core.Raux.Zfloor x
-  (f, Znearest choice x)
-
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_ge_floor`
 
     Always floor x ≤ Znearest x.
 -/
 theorem Znearest_ge_floor (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest_ge_floor_check choice x) : Id (Int × Int))
-    ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro _
-  -- ⌊x⌋ ≤ Znearest x since Znearest returns either ⌊x⌋ or ⌈x⌉, and ⌊x⌋ ≤ ⌈x⌉
-  simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Znearest_ge_floor_check,
-             Bind.bind]
-  change FloatSpec.Core.Raux.Zfloor x ≤ Znearest choice x
-  have hz := (Znearest_DN_or_UP choice x) True.intro
-  simp [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure] at hz
+    FloatSpec.Core.Raux.Zfloor x ≤ Znearest choice x := by
   have hz :
       Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
-        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := hz
+        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) :=
+    Znearest_DN_or_UP choice x
   rcases hz with hfloor | hceil
   · simpa [hfloor]
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
     simpa [hceil] using hle
 
-/-- Check pair for Znearest_le_ceil: returns (Znearest x, ⌈x⌉). -/
-noncomputable def Znearest_le_ceil_check (choice : Int → Bool) (x : ℝ) : (Int × Int) :=
-  let c := FloatSpec.Core.Raux.Zceil x
-  (Znearest choice x, c)
-
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_le_ceil`
 
     Always Znearest x ≤ ceil x.
 -/
 theorem Znearest_le_ceil (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest_le_ceil_check choice x) : Id (Int × Int))
-    ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro _
-  -- Znearest x ≤ ⌈x⌉ since Znearest returns either ⌊x⌋ or ⌈x⌉, and ⌊x⌋ ≤ ⌈x⌉
-  simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Znearest_le_ceil_check,
-             Bind.bind]
-  change Znearest choice x ≤ FloatSpec.Core.Raux.Zceil x
-  have hz := (Znearest_DN_or_UP choice x) True.intro
-  simp [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure] at hz
+    Znearest choice x ≤ FloatSpec.Core.Raux.Zceil x := by
   have hz :
       Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
-        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := hz
+        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) :=
+    Znearest_DN_or_UP choice x
   rcases hz with hfloor | hceil
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
@@ -2109,15 +2078,13 @@ noncomputable instance valid_rnd_N (choice : Int → Bool) :
   · intro x y hxy
     by_cases hceilx_le_y : ((FloatSpec.Core.Raux.Zceil x : Int) : ℝ) ≤ y
     · have hx_to_ceil : Znearest choice x ≤ FloatSpec.Core.Raux.Zceil x := by
-        have h := (Znearest_le_ceil choice x) True.intro
-        simpa [Znearest_le_ceil_check, wp, PostCond.noThrow, Id.run, pure] using h
+        exact Znearest_le_ceil choice x
       have hceil_floor_y : FloatSpec.Core.Raux.Zceil x ≤ FloatSpec.Core.Raux.Zfloor y := by
         have htrip := FloatSpec.Core.Raux.Zfloor_lub (x := y)
           (m := FloatSpec.Core.Raux.Zceil x) hceilx_le_y
         simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
       have hy_from_floor : FloatSpec.Core.Raux.Zfloor y ≤ Znearest choice y := by
-        have h := (Znearest_ge_floor choice y) True.intro
-        simpa [Znearest_ge_floor_check, wp, PostCond.noThrow, Id.run, pure] using h
+        exact Znearest_ge_floor choice y
       exact le_trans hx_to_ceil (le_trans hceil_floor_y hy_from_floor)
     · have hy_lt_ceilx : y < (FloatSpec.Core.Raux.Zceil x : ℝ) := lt_of_not_ge hceilx_le_y
       have hfloor_y_eq_x : FloatSpec.Core.Raux.Zfloor y = FloatSpec.Core.Raux.Zfloor x := by
@@ -2143,8 +2110,7 @@ noncomputable instance valid_rnd_N (choice : Int → Bool) :
           (m := FloatSpec.Core.Raux.Zfloor x) ⟨hlow, hhigh⟩
         simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
       have hfloor_le_near_y : FloatSpec.Core.Raux.Zfloor y ≤ Znearest choice y := by
-        have h := (Znearest_ge_floor choice y) True.intro
-        simpa [Znearest_ge_floor_check, wp, PostCond.noThrow, Id.run, pure] using h
+        exact Znearest_ge_floor choice y
       have hceilx_le_ceily : FloatSpec.Core.Raux.Zceil x ≤ FloatSpec.Core.Raux.Zceil y := by
         have htrip := FloatSpec.Core.Raux.Zceil_le (x := x) (y := y) hxy
         simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
@@ -2260,25 +2226,17 @@ noncomputable instance valid_rnd_N (choice : Int → Bool) :
       FloatSpec.Core.Raux.Rcompare]
 
 /- Additional Znearest lemmas from Coq (placeholders, to be filled iteratively):
-   Znearest_le_ceil, Znearest_N_strict, Znearest_half, Znearest_imp, Znearest_opp.
+   Znearest_opp.
    We add them one-by-one following the pipeline instructions. -/
-
-/-- Check value for {lit}`Znearest_N_strict`: {lean}`|x - (((Znearest choice x) : Int) : ℝ)|`. -/
-noncomputable def Znearest_N_strict_check (choice : Int → Bool) (x : ℝ) : ℝ :=
-  (|x - (((Znearest choice x) : Int) : ℝ)|)
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_N_strict`
 
     If (x - floor x) ≠ 1/2 then |x - IZR (Znearest x)| < 1/2.
 -/
 theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) ≠ (1/2)⌝⦄
-    (pure (Znearest_N_strict_check choice x) : Id ℝ)
-    ⦃⇓r => ⌜r < (1/2)⌝⦄ := by
-  intro _
-  unfold Znearest_N_strict_check
-  -- Reduce the Hoare triple on Id to a pure goal
-  simp [wp, PostCond.noThrow, Id.run, pure]
+    x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) ≠ (1/2) →
+      |x - (((Znearest choice x) : Int) : ℝ)| < (1/2) := by
+  intro hnot_mid
   -- Notations for floor/ceil
   set f : Int := (FloatSpec.Core.Raux.Zfloor x) with hf
   set c : Int := (FloatSpec.Core.Raux.Zceil x) with hc
@@ -2293,8 +2251,7 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
   -- Exclude the tie: (x - f) ≠ 1/2, so split on < or >
   have hx_ne : x - (f : ℝ) ≠ (1/2) := by
     -- Goal precondition is exactly this after unfolding casts
-    simpa [hf] using
-      (show x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) ≠ (1/2) from ‹_›)
+    simpa [hf] using hnot_mid
   -- Bridge lemma for the half constant: for ℝ, 2⁻¹ = 1/2
   have hhalf_id : (2⁻¹ : ℝ) = (1/2) := by
     -- Use zpow_neg_one to turn 2⁻¹ into (2)⁻¹, then 1/2
@@ -2396,20 +2353,10 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
     have : |x - (c : ℝ)| < (2⁻¹) := by simpa [habs] using this
     simpa [habs_near]
 
-/-- Check value for {lit}`Znearest_half`: {lean}`|x - ((Znearest choice x : Int) : ℝ)|`. -/
-noncomputable def Znearest_half_check (choice : Int → Bool) (x : ℝ) : ℝ :=
-  Znearest_N_strict_check choice x
-
 /-- Coq {lit}`Generic_fmt.v`: {lit}`Znearest_half`.
     Always {lean}`|x - ((Znearest choice x : Int) : ℝ)| ≤ (1/2)`. -/
-theorem Znearest_half_theorem (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest_half_check choice x) : Id ℝ)
-    ⦃⇓r => ⌜r ≤ (1/2)⌝⦄ := by
-  intro _
-  unfold Znearest_half_check
-  -- Reduce to the absolute-distance bound for Znearest
-  simp [Znearest_N_strict_check, wp, PostCond.noThrow, Id.run, pure]
+theorem Znearest_half (choice : Int → Bool) (x : ℝ) :
+    |x - (((Znearest choice x) : Int) : ℝ)| ≤ (1/2) := by
   classical
   -- Notations for floor/ceil as integers
   set f : Int := (FloatSpec.Core.Raux.Zfloor x) with hf
@@ -2478,54 +2425,37 @@ theorem Znearest_half_theorem (choice : Int → Bool) (x : ℝ) :
     -- Znearest is either floor or ceil; finish by cases
     have hdisj :
         Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
-        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := by
-      have h := (Znearest_DN_or_UP choice x) True.intro
-      simpa [wp, PostCond.noThrow, Id.run, pure] using h
+        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) :=
+      Znearest_DN_or_UP choice x
     rcases hdisj with hZ | hZ
     · -- nearest = floor
       simpa [hZ, hf] using (le_of_eq h_to_floor)
     · -- nearest = ceil
       simpa [hZ, hc, abs_sub_comm] using h_to_ceil_le
   · -- Off the midpoint, invoke the strict bound and relax to ≤
-    have hstrict := (Znearest_N_strict choice x) (by
+    have hstrict : |x - (((Znearest choice x) : Int) : ℝ)| < (1/2) :=
+      Znearest_N_strict choice x (by
       -- Precondition for the strict lemma: x - ⌊x⌋ ≠ 1/2
       simpa [hf] using hmid)
-    have hlt : |x - (((Znearest choice x) : Int) : ℝ)| < (1/2) := by
-      simpa [Znearest_N_strict_check, wp, PostCond.noThrow, Id.run, pure]
-        using hstrict
-    -- Convert to the 2⁻¹ form if needed and relax to ≤
-    have hlt' : |x - (((Znearest choice x) : Int) : ℝ)| < (2⁻¹ : ℝ) := by
-      simpa [zpow_neg_one, one_div] using hlt
-    exact le_of_lt hlt'
-
-
-/-- {lit}`Check pair for Znearest_imp: returns (Znearest choice x, n)` -/
-noncomputable def Znearest_imp_check (choice : Int → Bool) (x : ℝ) (n : Int) : (Int × Int) :=
-  (Znearest choice x, n)
+    exact le_of_lt hstrict
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_imp`
 
     If |x - IZR n| < 1/2 then Znearest x = n.
 -/
 theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
-    ⦃⌜|x - ((n : Int) : ℝ)| < (1/2)⌝⦄
-    (pure (Znearest_imp_check choice x n) : Id (Int × Int))
-    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
-  intro _
-  unfold Znearest_imp_check
-  -- Reduce to a pure equality on Id
-  simp [wp, PostCond.noThrow, Id.run, pure]
+    |x - ((n : Int) : ℝ)| < (1/2) →
+      Znearest choice x = n := by
+  intro hdist
   classical
-  -- From Znearest_half_theorem: |x - Znearest x| ≤ 1/2
+  -- From Znearest_half: |x - Znearest x| ≤ 1/2
   have hZ_le : |x - (((Znearest choice x) : Int) : ℝ)| ≤ (1/2) := by
-    have h := (Znearest_half_theorem choice x) True.intro
-    simpa [Znearest_half_check, Znearest_N_strict_check, wp, PostCond.noThrow, Id.run, pure] using h
+    exact Znearest_half choice x
   -- Triangle inequality to compare the two integers Znearest and n
   have hsum_lt : |x - ((n : Int) : ℝ)| + |x - (((Znearest choice x) : Int) : ℝ)| < 1 := by
     -- Combine as: (|x-n| < 1/2) and (|x-Z| ≤ 1/2) ⇒ sum < 1
     have h1 : |x - ((n : Int) : ℝ)| + |x - (((Znearest choice x) : Int) : ℝ)|
                 < (1/2) + |x - (((Znearest choice x) : Int) : ℝ)| := by
-      have hlt := ‹|x - ((n : Int) : ℝ)| < (1/2)›
       linarith
     have h2 : (1/2) + |x - (((Znearest choice x) : Int) : ℝ)|
                 ≤ (1/2) + (1/2) := by linarith
@@ -2665,6 +2595,14 @@ noncomputable def roundR (beta : Int) (fexp : Int → Int)
   let e  := (cexp beta fexp x)
   (((rnd sm : Int) : ℝ) * (beta : ℝ) ^ e)
 
+/-- Coq (`Generic_fmt.v`): `Definition round`.
+
+This is the public Flocq-name wrapper around the concrete Lean rounding
+operator used throughout the port. -/
+noncomputable def round (beta : Int) (fexp : Int → Int)
+    (rnd : ℝ → Int) (x : ℝ) : ℝ :=
+  roundR beta fexp rnd x
+
 /-- Interpretation of translated rounding-mode arguments as the integer
 rounding function used on the scaled mantissa.
 
@@ -2749,10 +2687,8 @@ theorem round_N_middle
     · -- Integer mantissa: floor = ceil and both branches agree
       have hcf : c = f := by
         simp [c, hsm_int, FloatSpec.Core.Raux.Zceil, Id.run, pure, Int.ceil_intCast]
-      have hz := (Znearest_DN_or_UP choice sm) True.intro
-      simp [wp, PostCond.noThrow, PredTrans.pure, pure] at hz
       have hz' : Znearest choice sm = f ∨ Znearest choice sm = c := by
-        simpa [f, c] using hz
+        simpa [f, c] using Znearest_DN_or_UP choice sm
       have hzn : Znearest choice sm = f := by
         rcases hz' with h | h
         · exact h
@@ -6195,31 +6131,27 @@ theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp be
     Theorem {lean}`round_DN_pt`:
     {lit}`∀ x, Rnd_DN_pt format x (round Zfloor x)`.
 
-    Lean (existence form): There exists a down-rounded value in the
-    generic format for any real x. This mirrors the Coq statement
-    using our pointwise predicate rather than a concrete round.
+    The concrete floor-rounded value is a down-rounding point for the generic
+    format.
 -/
 theorem round_DN_pt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f := by
-  -- Directly reuse the DN existence result established above.
-  -- Requires beta > 1 in the Coq development; we keep existence here.
-  -- One can retrieve such a witness from `generic_format_round_DN` when beta > 1.
-  exact round_DN_exists beta fexp x hbeta
+    Rnd_DN_pt (fun y => (generic_format beta fexp y)) x
+      (roundR beta fexp rnd_floor x) := by
+  exact roundR_DN_pt (beta := beta) (fexp := fexp) (x := x) hbeta
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_UP_pt`:
     {lit}`∀ x, Rnd_UP_pt format x (round Zceil x)`.
 
-    Lean (existence form): There exists an up-rounded value in the
-    generic format for any real x, stated with the pointwise predicate.
+    The concrete ceiling-rounded value is an up-rounding point for the generic
+    format.
 -/
 theorem round_UP_pt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      Rnd_UP_pt (fun y => (generic_format beta fexp y)) x f := by
-  exact round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hbeta)
+    Rnd_UP_pt (fun y => (generic_format beta fexp y)) x
+      (roundR beta fexp rnd_ceil x) := by
+  exact roundR_UP_pt (beta := beta) (fexp := fexp) (x := x) hbeta
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_ZR_pt`:
@@ -6277,135 +6209,139 @@ theorem round_ZR_pt
     Theorem {lean}`round_N_pt`,
     {lit}`∀ x, Rnd_N_pt format x (round Znearest x)`.
 
-    Lean (existence form): There exists a nearest-rounded value in the
-    generic format for any real x, stated with the pointwise predicate.
-    This mirrors the Coq statement without committing to a particular
-    tie-breaking strategy.
+    The concrete nearest-rounded value is a nearest point for the generic
+    format.
 -/
 theorem round_N_pt
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      Rnd_N_pt (fun y => (generic_format beta fexp y)) x f := by
-  -- Let F denote the generic-format predicate
-  let F := fun y => (generic_format beta fexp y)
-  -- Get down- and up-rounded witnesses bracketing x
-  rcases round_DN_exists beta fexp x hbeta with ⟨xdn, hFdn, hdn⟩
-  rcases round_UP_exists beta fexp x hbeta with ⟨xup, hFup, hup⟩
-  rcases hdn with ⟨hFxdn, hxdn_le_x, hmax_dn⟩
-  rcases hup with ⟨hFxup, hx_le_xup, hmin_up⟩
-  -- Define distances to the bracketing points
-  let a := x - xdn
-  let b := xup - x
-  have ha_nonneg : 0 ≤ a := by
-    have : xdn ≤ x := hxdn_le_x
-    simpa [a] using sub_nonneg.mpr this
-  have hb_nonneg : 0 ≤ b := by
-    have : x ≤ xup := hx_le_xup
-    simpa [b] using sub_nonneg.mpr this
-  -- Choose the closer of xdn and xup
-  by_cases hchoose : a ≤ b
-  · -- Use xdn as nearest
-    refine ⟨xdn, hFdn, ?_⟩
-    -- Show nearest property
-    refine And.intro hFxdn ?_
-    intro g hFg
-    have htotal := le_total g x
-    -- Distance to xdn equals a
-    have habs_f : |x - xdn| = a := by
-      have : 0 ≤ x - xdn := by
-        have : xdn ≤ x := hxdn_le_x
-        simpa using sub_nonneg.mpr this
-      simpa [a] using abs_of_nonneg this
-    -- For any g in F, compare |x - g| by cases on position of g
-    cases htotal with
-    | inl hgle =>
-        -- g ≤ x ⇒ g ≤ xdn by maximality; hence x - g ≥ a
-        have hgle_dn : g ≤ xdn := hmax_dn g hFg hgle
-        have hxg_nonneg : 0 ≤ x - g := by simpa using sub_nonneg.mpr hgle
-        have hxg_ge_a : x - g ≥ a := by
-          -- x - g ≥ x - xdn since g ≤ xdn
-          have : x - g ≥ x - xdn := by exact sub_le_sub_left hgle_dn x
-          simpa [a] using this
-        -- Conclude using absolute values
-        have : |x - g| = x - g := by simpa using abs_of_nonneg hxg_nonneg
-        have : a ≤ |x - g| := by simpa [this] using hxg_ge_a
-        -- Since a ≤ b by choice, |xdn - x| = a ≤ |g - x| (by symmetry of |·| on subtraction)
-        simpa [habs_f, abs_sub_comm] using this
-    | inr hxle =>
-        -- x ≤ g ⇒ xup ≤ g by minimality; hence g - x ≥ b ≥ a
-        have hxup_le_g : xup ≤ g := hmin_up g hFg hxle
-        have hxg_nonpos : x - g ≤ 0 := by simpa using sub_nonpos.mpr hxle
-        have h_abs_xg : |x - g| = g - x := by
-          have : x - g ≤ 0 := hxg_nonpos
-          simpa [sub_eq_add_neg] using (abs_of_nonpos this)
-        have hge_b : g - x ≥ b := by
-          -- g - x ≥ xup - x since xup ≤ g
-          have : g - x ≥ xup - x := by exact sub_le_sub_right hxup_le_g x
-          simpa [b] using this
-        have h_a_le_b : a ≤ b := hchoose
-        have : a ≤ |x - g| := by
-          -- |x - g| = g - x ≥ b ≥ a
-          have : |x - g| ≥ b := by simpa [h_abs_xg] using hge_b
-          exact le_trans h_a_le_b this
-        simpa [habs_f, abs_sub_comm] using this
-  · -- Use xup as nearest
-    -- From not (a ≤ b), we get b < a hence b ≤ a
-    have hb_le_a : b ≤ a := (lt_of_not_ge hchoose).le
-    refine ⟨xup, hFup, ?_⟩
-    -- Show nearest property
-    refine And.intro hFxup ?_
-    intro g hFg
-    have htotal := le_total g x
-    -- Distance to xup equals b
-    have habs_f : |x - xup| = b := by
-      have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
-      simpa [b, sub_eq_add_neg] using abs_of_nonpos this
-    -- For any g in F, compare |x - g|
-    cases htotal with
-    | inl hgle =>
-        -- g ≤ x ⇒ g ≤ xdn; hence x - g ≥ a ≥ b
-        have hgle_dn : g ≤ xdn := hmax_dn g hFg hgle
-        have hxg_nonneg : 0 ≤ x - g := by simpa using sub_nonneg.mpr hgle
-        have hxg_ge_a : x - g ≥ a := by
-          have : x - g ≥ x - xdn := sub_le_sub_left hgle_dn x
-          simpa [a] using this
-        have : |x - g| = x - g := by simpa using abs_of_nonneg hxg_nonneg
-        have hge_b : |x - g| ≥ b := by
-          have hge_min : a ≤ |x - g| := by simpa [this] using hxg_ge_a
-          exact le_trans hb_le_a hge_min
-        -- Conclude |xup - x| = b ≤ |g - x| (by symmetry of |·| on subtraction)
-        have : b ≤ |x - g| := hge_b
-        simpa [habs_f, abs_sub_comm] using this
-    | inr hxle =>
-        -- x ≤ g ⇒ xup ≤ g; hence g - x ≥ b directly
-        have hxup_le_g : xup ≤ g := hmin_up g hFg hxle
-        have hxg_nonpos : x - g ≤ 0 := by simpa using sub_nonpos.mpr hxle
-        have h_abs_xg : |x - g| = g - x := by
-          simpa [sub_eq_add_neg] using abs_of_nonpos hxg_nonpos
-        have hge_b : g - x ≥ b := by
-          have : g - x ≥ xup - x := sub_le_sub_right hxup_le_g x
-          simpa [b] using this
-        have : b ≤ |x - g| := by simpa [h_abs_xg] using hge_b
-        simpa [habs_f, abs_sub_comm] using this
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (choice : Int → Bool) (x : ℝ) (hbeta : 1 < beta) :
+    Rnd_N_pt (fun y => generic_format beta fexp y) x
+      (roundR beta fexp (Znearest choice) x) := by
+  classical
+  let F : ℝ → Prop := fun y => generic_format beta fexp y
+  let dn : ℝ := roundR beta fexp rnd_floor x
+  let up : ℝ := roundR beta fexp rnd_ceil x
+  let rn : ℝ := roundR beta fexp (Znearest choice) x
+  have hDN : Rnd_DN_pt F x dn := by
+    simpa [F, dn] using round_DN_pt (beta := beta) (fexp := fexp) (x := x) hbeta
+  have hUP : Rnd_UP_pt F x up := by
+    simpa [F, up] using round_UP_pt (beta := beta) (fexp := fexp) (x := x) hbeta
+  have hcases :
+      rn = dn ∨ rn = up := by
+    rcases Znearest_DN_or_UP choice (scaled_mantissa beta fexp x) with h | h
+    · left
+      simp [rn, dn, roundR, rnd_floor, h]
+    · right
+      simp [rn, up, roundR, rnd_ceil, h]
+  rcases hcases with hrn_dn | hrn_up
+  · have hnot_up_closer : ¬ |up - x| < |dn - x| := by
+      intro hclose
+      have hsel :
+          rn = up := by
+        simpa [rn, dn, up] using
+          (round_N_eq_UP (beta := beta) (fexp := fexp)
+            (choice := choice) (x := x) hbeta (by simpa [dn, up] using hclose))
+      have hdn_up : dn = up := hrn_dn.symm.trans hsel
+      have : |dn - x| < |dn - x| := by
+        simpa [hdn_up] using hclose
+      exact lt_irrefl _ this
+    have hdist : x - dn ≤ up - x := by
+      have hle_abs : |dn - x| ≤ |up - x| := le_of_not_gt hnot_up_closer
+      have hdn_le_x : dn ≤ x := hDN.2.1
+      have hx_le_up : x ≤ up := hUP.2.1
+      simpa [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hdn_le_x),
+        abs_of_nonneg (sub_nonneg.mpr hx_le_up)] using hle_abs
+    have hdn_nearest : Rnd_N_pt F x dn := by
+      refine ⟨hDN.1, ?_⟩
+      intro g hFg
+      cases le_total g x with
+      | inl hgle =>
+          have h_g_le_dn : g ≤ dn := hDN.2.2 g hFg hgle
+          have hsub : x - dn ≤ x - g := sub_le_sub_left h_g_le_dn x
+          have h_abs_dn : |dn - x| = x - dn := by
+            have : dn - x ≤ 0 := sub_nonpos.mpr hDN.2.1
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          have h_abs_g : |g - x| = x - g := by
+            have : g - x ≤ 0 := sub_nonpos.mpr hgle
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          simpa [h_abs_dn, h_abs_g] using hsub
+      | inr hxle =>
+          have h_up_le_g : up ≤ g := hUP.2.2 g hFg hxle
+          have hsub : up - x ≤ g - x := sub_le_sub_right h_up_le_g x
+          have hchain : x - dn ≤ g - x := le_trans hdist hsub
+          have h_abs_dn : |dn - x| = x - dn := by
+            have : dn - x ≤ 0 := sub_nonpos.mpr hDN.2.1
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          have h_abs_g : |g - x| = g - x := by
+            have : 0 ≤ g - x := sub_nonneg.mpr hxle
+            simpa using abs_of_nonneg this
+          simpa [h_abs_dn, h_abs_g] using hchain
+    simpa [F, rn, hrn_dn] using hdn_nearest
+  · have hnot_dn_closer : ¬ |dn - x| < |up - x| := by
+      intro hclose
+      have hsel :
+          rn = dn := by
+        simpa [rn, dn, up] using
+          (round_N_eq_DN (beta := beta) (fexp := fexp)
+            (choice := choice) (x := x) hbeta (by simpa [dn, up] using hclose))
+      have hup_dn : up = dn := hrn_up.symm.trans hsel
+      have : |up - x| < |up - x| := by
+        simpa [hup_dn] using hclose
+      exact lt_irrefl _ this
+    have hdist : up - x ≤ x - dn := by
+      have hle_abs : |up - x| ≤ |dn - x| := le_of_not_gt hnot_dn_closer
+      have hdn_le_x : dn ≤ x := hDN.2.1
+      have hx_le_up : x ≤ up := hUP.2.1
+      simpa [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hdn_le_x),
+        abs_of_nonneg (sub_nonneg.mpr hx_le_up)] using hle_abs
+    have hup_nearest : Rnd_N_pt F x up := by
+      refine ⟨hUP.1, ?_⟩
+      intro g hFg
+      cases le_total g x with
+      | inl hgle =>
+          have h_g_le_dn : g ≤ dn := hDN.2.2 g hFg hgle
+          have hsub : x - dn ≤ x - g := sub_le_sub_left h_g_le_dn x
+          have hchain : up - x ≤ x - g := le_trans hdist hsub
+          have h_abs_up : |up - x| = up - x := by
+            have : 0 ≤ up - x := sub_nonneg.mpr hUP.2.1
+            simpa using abs_of_nonneg this
+          have h_abs_g : |g - x| = x - g := by
+            have : g - x ≤ 0 := sub_nonpos.mpr hgle
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          simpa [h_abs_up, h_abs_g] using hchain
+      | inr hxle =>
+          have h_up_le_g : up ≤ g := hUP.2.2 g hFg hxle
+          have hsub : up - x ≤ g - x := sub_le_sub_right h_up_le_g x
+          have h_abs_up : |up - x| = up - x := by
+            have : 0 ≤ up - x := sub_nonneg.mpr hUP.2.1
+            simpa using abs_of_nonneg this
+          have h_abs_g : |g - x| = g - x := by
+            have : 0 ≤ g - x := sub_nonneg.mpr hxle
+            simpa using abs_of_nonneg this
+          simpa [h_abs_up, h_abs_g] using hsub
+    simpa [F, rn, hrn_up] using hup_nearest
 
 /-- Coq (Generic_fmt.v):
     Theorem round_DN_or_UP:
       forall x, round rnd x = round Zfloor x \/ round rnd x = round Zceil x.
 
-    Lean (existence/predicate form): For any x there exists a representable
-    rounding that is either a round-down or a round-up point. -/
+    Any concrete rounding produced by a valid integer rounding function agrees
+    with either the concrete floor or ceiling rounding at the same input. -/
 theorem round_DN_or_UP
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      (Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f ∨
-       Rnd_UP_pt (fun y => (generic_format beta fexp y)) x f) := by
-  -- This follows from the separate existence of DN and UP points.
-  -- A deterministic equality with a specific `round` function
-  -- requires additional infrastructure not yet ported.
-  -- We directly use the DN existence theorem to produce a witness,
-  -- then inject it into the left disjunct.
-  rcases round_DN_exists beta fexp x hbeta with ⟨f, hF, hDN⟩
-  exact ⟨f, hF, Or.inl hDN⟩
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
+    roundR beta fexp rnd x = roundR beta fexp rnd_floor x ∨
+      roundR beta fexp rnd x = roundR beta fexp rnd_ceil x := by
+  classical
+  let sm := scaled_mantissa beta fexp x
+  have hdisj : rnd sm = Int.floor sm ∨ rnd sm = Int.ceil sm := by
+    have h := (Zrnd_DN_or_UP (rnd := rnd) sm) True.intro
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h
+  rcases hdisj with hfloor | hceil
+  · left
+    simp [roundR, sm, hfloor, rnd_floor, FloatSpec.Core.Raux.Zfloor]
+  · right
+    simp [roundR, sm, hceil, rnd_ceil, FloatSpec.Core.Raux.Zceil]
 
 -- moved below, after `mag_DN`, to use that lemma
 
@@ -7006,34 +6942,30 @@ theorem round_to_generic_spec (beta : Int) (fexp : Int → Int) [Valid_exp beta 
 
 /-- Coq (Generic_fmt.v):
     Theorem round_generic:
-    For any rounding relation and real x, rounding to the generic
-    format produces a value in the generic format. -/
+    If x is already in the generic format, then rounding x returns x unchanged. -/
 theorem round_generic
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
-    ⦃⇓r => ⌜(generic_format beta fexp r)⌝⦄ := by
+    ⦃⇓r => ⌜r = x⌝⦄ := by
   intro hx
-  -- Use closure of the generic format under rounding (fexp preserved).
-  -- This is a direct specialization of `generic_round_generic` with `fexp1 = fexp2 = fexp`.
-  -- Evaluate the pure computation and apply the predicate-level result.
-  simpa using
-    (generic_round_generic (rnd := rnd) (x := x) (beta := beta)
-      (fexp1 := fexp) (fexp2 := fexp) rfl hx)
+  have hx_eq : x
+      = (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp x)))) : Int) : ℝ)
+          * (beta : ℝ) ^ (cexp beta fexp x) := by
+    simpa [generic_format, scaled_mantissa, cexp, FloatSpec.Core.Defs.F2R]
+      using hx
+  simpa [round_to_generic] using hx_eq.symm
 
 /-- Coq (Generic_fmt.v):
     Theorem generic_format_round:
       forall rnd x, generic_format (round rnd x).
-
-    Lean (spec alias): Same as {name}`round_generic`, provided for Coq-name compatibility. -/
+ -/
 theorem generic_format_round
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜(generic_format beta fexp x)⌝⦄
-    (pure (round_to_generic beta fexp rnd x) : Id ℝ)
-    ⦃⇓r => ⌜(generic_format beta fexp r)⌝⦄ :=
-  round_generic (beta := beta) (fexp := fexp) (rnd := rnd) (x := x)
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    generic_format beta fexp (roundR beta fexp rnd x) :=
+  generic_format_roundR (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) hβ
 
 /-- Coq (Generic_fmt.v):
     Theorem round_ext:
@@ -7066,19 +6998,9 @@ theorem round_generic_identity
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
-    ⦃⇓r => ⌜r = x⌝⦄ := by
-  intro hx
-  -- Expand the hypothesis that x is in the generic format to its reconstruction equality.
-  have hx_eq : x
-      = (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp x)))) : Int) : ℝ)
-          * (beta : ℝ) ^ (cexp beta fexp x) := by
-    -- Unfold the generic_format predicate at x
-    simpa [generic_format, scaled_mantissa, cexp, FloatSpec.Core.Defs.F2R]
-      using hx
-  -- Evaluate the pure computation defining round_to_generic and use the equality above.
-  have hx_eq' := hx_eq.symm
-  simpa [round_to_generic]
-    using hx_eq'
+    ⦃⇓r => ⌜r = x⌝⦄ :=
+  round_generic (beta := beta) (hbeta := hbeta) (fexp := fexp)
+    (rnd := rnd) (x := x)
 
 /-- Coq (Generic_fmt.v):
     Theorem round_opp:
@@ -7815,27 +7737,17 @@ noncomputable def round_N_to_format
 
 /-- Coq Generic_fmt.v: Theorem round_DN_opp.
     Statement: ∀ x, round Zfloor (-x) = - round Zceil x.
-    Lean (spec placeholder): Specializes round_opp for DN/UP relations. -/
+    Concrete floor rounding commutes with negation as ceiling rounding. -/
 theorem round_DN_opp
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rndDN rndUP : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (do
-      let a := round_to_generic beta fexp rndDN (-x)
-      let b := round_to_generic beta fexp rndUP x
-      pure (a, b) : Id (ℝ × ℝ))
-    ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
-  intro _
-  -- `round_to_generic` ignores the rounding relation argument and
-  -- reconstruction uses `cexp` which depends on `|x|`, so `cexp (-x) = cexp x`.
-  -- Using `Ztrunc_neg` on the scaled mantissa yields the negation law.
-  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
-        FloatSpec.Core.Generic_fmt.cexp,
-        FloatSpec.Core.Raux.mag,
-        abs_neg, neg_eq_zero, pure, Bind.bind,
-        wp, PostCond.noThrow, PredTrans.pure,
-        neg_mul, mul_neg, Id.run, Ztrunc_neg_coe_real, Int.cast_neg]
-  trivial
+    (x : ℝ) (hβ : 1 < beta) :
+    roundR beta fexp rnd_floor (-x) = - roundR beta fexp rnd_ceil x := by
+  have hopp_fun : Zrnd_opp rnd_floor = rnd_ceil := by
+    funext y
+    simp [Zrnd_opp, rnd_floor, rnd_ceil, FloatSpec.Core.Raux.Zfloor,
+      FloatSpec.Core.Raux.Zceil, Int.floor_neg]
+  have h := roundR_opp (beta := beta) (fexp := fexp) (rnd := rnd_floor) (x := x) hβ
+  simpa [hopp_fun] using h
 
 -- Coq (Generic_fmt.v): round_UP_opp
 theorem round_UP_opp
@@ -8349,30 +8261,23 @@ theorem round_le_pos
  -/
 theorem round_DN_small_pos
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x : ℝ) (ex : Int) :
-    ⦃⌜1 < beta ∧ ex ≤ fexp ex ∧ (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
-    (pure (round_to_generic beta fexp rnd_floor x) : Id ℝ)
-    ⦃⇓r => ⌜r = 0⌝⦄ := by
-  intro hpre
-  rcases hpre with ⟨hβ, he, hx_low, hx_high⟩
-  simp [wp, PostCond.noThrow, Id.run, pure]
+    (x : ℝ) (ex : Int)
+    (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
+    (he : ex ≤ fexp ex) (hβ : 1 < beta) :
+    roundR beta fexp rnd_floor x = 0 := by
   have hcexp : cexp beta fexp x = fexp ex := by
     have h := cexp_fexp_pos (beta := beta) (fexp := fexp) (x := x) (ex := ex)
     simpa [wp, PostCond.noThrow, Id.run, pure]
-      using h ⟨hβ, hx_low, hx_high⟩
+      using h ⟨hβ, hx.1, hx.2⟩
   have hfloor :
       Int.floor (x * (beta : ℝ) ^ (-(fexp ex))) = 0 :=
     mantissa_DN_small_pos (beta := beta) (fexp := fexp) (x := x) (ex := ex)
-      ⟨hx_low, hx_high⟩ he hβ
+      hx he hβ
   have hrnd :
       rnd_floor (scaled_mantissa beta fexp x) = 0 := by
     simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor, scaled_mantissa, hcexp]
       using hfloor
-  calc
-    round_to_generic beta fexp rnd_floor x = roundR beta fexp rnd_floor x := by
-      exact round_to_generic_int_eq_roundR (beta := beta) (fexp := fexp) (rnd := rnd_floor) (x := x)
-    _ = 0 := by
-      simp [roundR, hrnd]
+  simp [roundR, hrnd]
 
 /-- Coq (Generic_fmt.v):
     Lemma round_UP_small_pos:
@@ -8406,28 +8311,27 @@ theorem round_UP_small_pos
       simp [roundR, hrnd, hcexp]
 
 /-- Coq (Generic_fmt.v):
-    Lemma round_DN_UP_lt:
-      For DN/UP points d,u at x with d < u, any f in format satisfies f ≤ d ∨ u ≤ f.
+    Theorem round_DN_UP_lt:
+      If x is not in the generic format, it lies strictly between its concrete
+      floor and ceiling roundings.
  -/
 theorem round_DN_UP_lt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x d u f : ℝ) :
-    Rnd_DN_pt (fun y => (generic_format beta fexp y)) x d →
-    Rnd_UP_pt (fun y => (generic_format beta fexp y)) x u →
-    (generic_format beta fexp f) → d < u → (f ≤ d ∨ u ≤ f) := by
-  intro hdn hup hfF _
-  rcases hdn with ⟨hFd, hd_le_x, hmax⟩
-  rcases hup with ⟨hFu, hx_le_u, hmin⟩
-  -- Totality of ≤ on ℝ gives cases f ≤ x or x ≤ f
-  cases le_total f x with
-  | inl hf_le_x =>
-      -- If f ≤ x, maximality of d among F-values ≤ x gives f ≤ d
-      left
-      exact hmax f hfF hf_le_x
-  | inr hx_le_f =>
-      -- If x ≤ f, minimality of u among F-values ≥ x gives u ≤ f
-      right
-      exact hmin f hfF hx_le_f
+    (x : ℝ) (hβ : 1 < beta) (hxF : ¬ generic_format beta fexp x) :
+    roundR beta fexp rnd_floor x < x ∧ x < roundR beta fexp rnd_ceil x := by
+  have hdn := round_DN_pt (beta := beta) (fexp := fexp) (x := x) hβ
+  have hup := round_UP_pt (beta := beta) (fexp := fexp) (x := x) hβ
+  rcases hdn with ⟨hFd, hd_le_x, _⟩
+  rcases hup with ⟨hFu, hx_le_u, _⟩
+  constructor
+  · exact lt_of_le_of_ne hd_le_x (by
+      intro h_eq
+      apply hxF
+      simpa [h_eq] using hFd)
+  · exact lt_of_le_of_ne hx_le_u (by
+      intro h_eq
+      apply hxF
+      simpa [← h_eq] using hFu)
 
 /-- Coq {lit}`Generic_fmt.v`:
     Lemma {lean}`round_large_pos_ge_bpow`:
@@ -8764,6 +8668,22 @@ theorem cexp_round_ge_ax
     simpa [FloatSpec.Core.Generic_fmt.cexp] using hfx
   -- Conclude inequality as equality
   rw [hcexp_eq]
+
+/-- Coq (`Generic_fmt.v`): `Theorem cexp_round_ge`.
+
+For concrete Flocq-style integer roundings, a nonzero rounded result cannot
+have a smaller canonical exponent. -/
+theorem cexp_round_ge
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] [Monotone_exp fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    round beta fexp rnd x ≠ 0 →
+      cexp beta fexp x ≤ cexp beta fexp (round beta fexp rnd x) := by
+  intro hround_ne
+  have hmag :
+      mag beta x ≤ mag beta (roundR beta fexp rnd x) := by
+    exact (mag_roundR_ge (beta := beta) (fexp := fexp) (rnd := rnd)
+      (x := x) hβ) (by simpa [round] using hround_ne)
+  simpa [cexp, round] using (Monotone_exp.mono (fexp := fexp) hmag)
 
 theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     [Valid_exp beta fexp] [Monotone_exp fexp] (x : ℝ) :

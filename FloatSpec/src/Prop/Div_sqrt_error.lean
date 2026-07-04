@@ -421,9 +421,8 @@ theorem sqrt_error_FLX_N (h_gt1 : 1 < prec) (x : ℝ)
           simp [r, FloatSpec.Core.Generic_fmt.roundR, sm, hsm, e, he, zn, hzn]
         have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
           have htrip :=
-            (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
-          simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-            FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, zn, hzn,
+            (FloatSpec.Core.Generic_fmt.Znearest_half choice sm)
+          simpa [zn, hzn,
             abs_sub_comm, wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip
         have hlocal :
             |r - Real.sqrt x| ≤ (1 / 2 : ℝ) * (beta : ℝ) ^ e := by
@@ -1221,9 +1220,8 @@ theorem sqrt_error_N_FLX (x : ℝ)
             simp [rt, FloatSpec.Core.Generic_fmt.roundR, rnd, sm, hsm, ce, hce, zn, hzn]
           have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
             have htrip :=
-              (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
-            simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-              FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, rnd, zn, hzn,
+              (FloatSpec.Core.Generic_fmt.Znearest_half choice sm)
+            simpa [rnd, zn, hzn,
               abs_sub_comm, wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip
           have hdiff : rt - t = ((zn : ℝ) - sm) * (beta : ℝ) ^ ce := by
             rw [hround, ← hscaled]

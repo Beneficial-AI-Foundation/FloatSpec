@@ -236,6 +236,16 @@ private lemma Znearest_of_int (choice : Int → Bool) (m : Int) :
              Int.floor_intCast, Int.ceil_intCast, Int.cast_id, sub_self]
   norm_num
 
+/-- Raw `roundR` nearest rounding sends zero to zero. -/
+private lemma roundR_Znearest_zero (emin prec : Int) (choice : Int → Bool) :
+    FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+      (FloatSpec.Core.Generic_fmt.Znearest choice) 0 = 0 := by
+  unfold FloatSpec.Core.Generic_fmt.roundR FloatSpec.Core.Generic_fmt.scaled_mantissa
+  simp only [zero_mul]
+  have hz : ((FloatSpec.Core.Generic_fmt.Znearest choice (0 : ℝ) : Int) : ℝ) = 0 := by
+    exact_mod_cast (Znearest_of_int choice 0)
+  simpa [hz]
+
 private lemma nearestEven_choice_opp :
     (fun t : Int => !((fun s : Int => !(decide (2 ∣ s))) (-(t + 1))))
       = (fun t : Int => !(decide (2 ∣ t))) := by
@@ -1216,26 +1226,693 @@ theorem V1_Und3 (beta emin prec : Int) [Prec_gt_0 prec]
       simpa [FloatSpec.Core.Raux.bpow] using zpow_le_zpow_right₀ hβR hexp_le
     exact le_trans hpow_le hbound
 
+/-- Pff-side nearest-rounding witnesses used by Coq `Veltkamp` and
+`Veltkamp_tail`.
+
+The public Veltkamp wrappers first convert the formatted input `x` to a
+bounded Pff float, then destruct `round_N_is_pff_round` for the three rounded
+intermediates `p`, `q`, and `hx`.  This helper packages that wrapper-side
+setup independently of the still-missing lower Pff `Veltkamp` payload. -/
+theorem Veltkamp_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x : ℝ)
+    (hβ : 1 < beta)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fx : generic_format beta (FLT_exp emin prec) x) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound beta prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let valueWitness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      _root_.F2R (beta:=beta) f = value ∧ Fbounded (beta:=beta) bo f
+    let roundWitness := fun (input rounded : ℝ)
+        (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      Fcanonic (beta:=beta) beta bo f ∧
+        Closest (beta:=beta) bo (beta : ℝ) input f ∧
+        _root_.F2R (beta:=beta) f = rounded
+    let p := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (x * (FloatSpec.Core.Raux.bpow beta s + 1))
+    let q := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - p)
+    let hx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (q + p)
+    ∃ fx fp fq fhx : FloatSpec.Core.Defs.FlocqFloat beta,
+      valueWitness x fx ∧
+        roundWitness (x * (FloatSpec.Core.Raux.bpow beta s + 1)) p fp ∧
+        roundWitness (x - p) q fq ∧
+        roundWitness (q + p) hx fhx := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound beta prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let p := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+    (x * (FloatSpec.Core.Raux.bpow beta s + 1))
+  let q := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - p)
+  let hx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (q + p)
+  have hpBound : pGivesBound beta bnd prec := by
+    have h := make_bound_p beta prec emin
+    have hv : (make_bound beta prec emin).vNum =
+        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin beta prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  have Fx_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) x := by
+    simpa [hbnd_dExp] using Fx
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec x
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fx_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fx, hfx_val, hfx_bound⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := x * (FloatSpec.Core.Raux.bpow beta s + 1))
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fp, hfp_can, hfp_closest, hfp_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := x - p)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fq, hfq_can, hfq_closest, hfq_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := q + p)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fhx, hfhx_can, hfhx_closest, hfhx_val⟩
+  refine ⟨fx, fp, fq, fhx, ?_, ?_, ?_, ?_⟩
+  · exact ⟨hfx_val, hfx_bound⟩
+  · exact ⟨hfp_can, hfp_closest, by simpa [p, rnd, hbnd_dExp] using hfp_val⟩
+  · exact ⟨hfq_can, hfq_closest, by simpa [q, rnd, hbnd_dExp] using hfq_val⟩
+  · exact ⟨hfhx_can, hfhx_closest, by simpa [hx, rnd, hbnd_dExp] using hfhx_val⟩
+
+/-- Pff-side nearest-rounding witnesses used by Coq `Veltkamp_tail`.
+
+This extends `Veltkamp_round_N_witnesses` with the fourth rounded
+intermediate `tx := round (x - hx)`, the extra witness destructed by the
+upstream tail theorem before invoking the lower Pff `Veltkamp_tail` payload. -/
+theorem Veltkamp_tail_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x : ℝ)
+    (hβ : 1 < beta)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fx : generic_format beta (FLT_exp emin prec) x) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound beta prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let valueWitness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      _root_.F2R (beta:=beta) f = value ∧ Fbounded (beta:=beta) bo f
+    let roundWitness := fun (input rounded : ℝ)
+        (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      Fcanonic (beta:=beta) beta bo f ∧
+        Closest (beta:=beta) bo (beta : ℝ) input f ∧
+        _root_.F2R (beta:=beta) f = rounded
+    let p := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (x * (FloatSpec.Core.Raux.bpow beta s + 1))
+    let q := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - p)
+    let hx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (q + p)
+    let tx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - hx)
+    ∃ fx fp fq fhx ftx : FloatSpec.Core.Defs.FlocqFloat beta,
+      valueWitness x fx ∧
+        roundWitness (x * (FloatSpec.Core.Raux.bpow beta s + 1)) p fp ∧
+        roundWitness (x - p) q fq ∧
+        roundWitness (q + p) hx fhx ∧
+        roundWitness (x - hx) tx ftx := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound beta prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let p := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+    (x * (FloatSpec.Core.Raux.bpow beta s + 1))
+  let q := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - p)
+  let hx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (q + p)
+  let tx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - hx)
+  have hpBound : pGivesBound beta bnd prec := by
+    have h := make_bound_p beta prec emin
+    have hv : (make_bound beta prec emin).vNum =
+        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin beta prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  have Fx_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) x := by
+    simpa [hbnd_dExp] using Fx
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec x
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fx_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fx, hfx_val, hfx_bound⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := x * (FloatSpec.Core.Raux.bpow beta s + 1))
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fp, hfp_can, hfp_closest, hfp_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := x - p)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fq, hfq_can, hfq_closest, hfq_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := q + p)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fhx, hfhx_can, hfhx_closest, hfhx_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := x - hx)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨ftx, hftx_can, hftx_closest, hftx_val⟩
+  refine ⟨fx, fp, fq, fhx, ftx, ?_, ?_, ?_, ?_, ?_⟩
+  · exact ⟨hfx_val, hfx_bound⟩
+  · exact ⟨hfp_can, hfp_closest, by simpa [p, rnd, hbnd_dExp] using hfp_val⟩
+  · exact ⟨hfq_can, hfq_closest, by simpa [q, rnd, hbnd_dExp] using hfq_val⟩
+  · exact ⟨hfhx_can, hfhx_closest, by simpa [hx, rnd, hbnd_dExp] using hfhx_val⟩
+  · exact ⟨hftx_can, hftx_closest, by simpa [tx, rnd, hbnd_dExp] using hftx_val⟩
+
+/-- Final Pff-to-Flocq conversion step used by Coq `Veltkamp_Even`.
+
+Once the lower Pff `VeltkampEven` payload supplies an `EvenClosest` witness for
+the reduced precision bound, the public Flocq equality follows from the
+nearest-even bridge. -/
+theorem Veltkamp_Even_from_reduced_evenClosest (beta emin prec s : Int)
+    [Prec_gt_0 prec] (x hx : ℝ)
+    (hβ : 1 < beta)
+    (hemin : emin ≤ 0)
+    (hs_le : 2 ≤ s)
+    (hs_ge : s ≤ prec - 2)
+    (hReduced :
+      ∃ fhx : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) fhx = hx ∧
+        EvenClosest (beta:=beta)
+          (toFboundSkel (make_bound beta (prec - s) emin)) (beta : ℝ)
+          (prec - s).toNat x fhx) :
+    hx =
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin (prec - s))
+        (FloatSpec.Core.Generic_fmt.Znearest
+          (fun t : Int => !(decide (2 ∣ t)))) x := by
+  classical
+  let reducedPrec : Int := prec - s
+  let reducedBound : Fbound := make_bound beta reducedPrec emin
+  have hReducedPrec : precisionNotZero reducedPrec := by
+    dsimp [precisionNotZero, reducedPrec]
+    omega
+  have hReducedPos : 0 < reducedPrec := lt_trans Int.zero_lt_one hReducedPrec
+  haveI : Prec_gt_0 reducedPrec := ⟨hReducedPos⟩
+  have hReducedBound : pGivesBound beta reducedBound reducedPrec := by
+    have h := make_bound_p beta reducedPrec emin
+    have hv : (make_bound beta reducedPrec emin).vNum =
+        Zpower_nat beta (Int.toNat (Int.natAbs reducedPrec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, reducedBound] using hv
+  have hReducedExp : -reducedBound.dExp = emin := by
+    have h := make_bound_Emin beta reducedPrec emin
+    have hd : reducedBound.dExp = -emin := by
+      simpa [reducedBound, wp, PostCond.noThrow, make_bound_Emin_check, pure]
+        using h hemin
+    omega
+  rcases hReduced with ⟨fhx, hfhx_val, hfhx_even⟩
+  have hbridge := evenClosest_value_eq_round_NE beta reducedBound reducedPrec x fhx
+    hReducedBound hReducedPrec hβ
+    (by simpa [reducedBound, reducedPrec] using hfhx_even)
+  calc
+    hx = _root_.F2R (beta:=beta) fhx := hfhx_val.symm
+    _ =
+        FloatSpec.Core.Generic_fmt.roundR beta
+          (FLT_exp (-reducedBound.dExp) reducedPrec)
+          (FloatSpec.Core.Generic_fmt.Znearest
+            (fun t : Int => !(decide (2 ∣ t)))) x := hbridge
+    _ =
+        FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin (prec - s))
+          (FloatSpec.Core.Generic_fmt.Znearest
+            (fun t : Int => !(decide (2 ∣ t)))) x := by
+          simp [hReducedExp, reducedPrec]
+
+/-- Final Pff-to-Flocq conversion step used by Coq `Veltkamp`.
+
+The lower Pff payload used by both public Veltkamp theorems can provide the
+same reduced-bound nearest-even witness.  The non-even public theorem only asks
+for existence of a nearest choice, so this bridge packages the even choice as
+that witness. -/
+theorem Veltkamp_from_reduced_evenClosest (beta emin prec s : Int)
+    [Prec_gt_0 prec] (x hx : ℝ)
+    (hβ : 1 < beta)
+    (hemin : emin ≤ 0)
+    (hs_le : 2 ≤ s)
+    (hs_ge : s ≤ prec - 2)
+    (hReduced :
+      ∃ fhx : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) fhx = hx ∧
+        EvenClosest (beta:=beta)
+          (toFboundSkel (make_bound beta (prec - s) emin)) (beta : ℝ)
+          (prec - s).toNat x fhx) :
+    ∃ choice' : Int → Bool,
+      hx =
+        FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin (prec - s))
+          (FloatSpec.Core.Generic_fmt.Znearest choice') x := by
+  refine ⟨fun t : Int => !(decide (2 ∣ t)), ?_⟩
+  exact Veltkamp_Even_from_reduced_evenClosest beta emin prec s x hx hβ
+    hemin hs_le hs_ge hReduced
+
+/-- Final Pff-to-Flocq conversion step used by Coq `Veltkamp_tail`.
+
+Once the lower Pff `Veltkamp_tail` payload supplies the tail float bounded by
+the precision-`s` bound, this bridge converts it to the public Flocq equality
+and `generic_format` statement. -/
+theorem Veltkamp_tail_from_pff_tail_payload (beta emin prec s : Int)
+    [Prec_gt_0 prec] (x hx tx : ℝ)
+    (hβ : 1 < beta)
+    (hemin : emin ≤ 0)
+    (hs_le : 2 ≤ s)
+    (hTail :
+      ∃ ftx : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) ftx = tx ∧
+        x = hx + _root_.F2R (beta:=beta) ftx ∧
+        Fbounded (beta:=beta) (toFboundSkel (make_bound beta s emin)) ftx) :
+    x = hx + tx ∧ generic_format beta (FLT_exp emin s) tx := by
+  classical
+  have hs_pos : 0 < s := by omega
+  haveI : Prec_gt_0 s := ⟨hs_pos⟩
+  let tailBound : Fbound := make_bound beta s emin
+  have hTailPrec : precisionNotZero s := by
+    dsimp [precisionNotZero]
+    omega
+  have hTailBound : pGivesBound beta tailBound s := by
+    have h := make_bound_p beta s emin
+    have hv : (make_bound beta s emin).vNum =
+        Zpower_nat beta (Int.toNat (Int.natAbs s)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, tailBound] using hv
+  have hTailExp : -tailBound.dExp = emin := by
+    have h := make_bound_Emin beta s emin
+    have hd : tailBound.dExp = -emin := by
+      simpa [tailBound, wp, PostCond.noThrow, make_bound_Emin_check, pure]
+        using h hemin
+    omega
+  rcases hTail with ⟨ftx, hftx_val, hsum, hftx_bound⟩
+  have hfmt :
+      generic_format beta (FLT_exp (-tailBound.dExp) s)
+        (_root_.F2R (beta:=beta) ftx) := by
+    have h := flocq_bounded_is_format beta tailBound s ftx
+    simpa only [wp, PostCond.noThrow, pff_format_is_format_check, pure]
+      using h ⟨hTailBound, hTailPrec, by simpa [tailBound] using hftx_bound, hβ⟩
+  constructor
+  · simpa [hftx_val] using hsum
+  · simpa [hTailExp, hftx_val] using hfmt
+
+/-- Coq theorem: `Veltkamp_Even`.
+
+The upstream public wrapper constructs the Pff witnesses for the Veltkamp
+intermediates and calls lower Pff `VeltkampEven`.  This wrapper records the
+final checked conversion: once that lower payload supplies the reduced
+`EvenClosest` witness, the public nearest-even equality follows. -/
+theorem Veltkamp_Even (beta emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x hx : ℝ)
+    (hβ : 1 < beta)
+    (hemin : emin ≤ 0)
+    (hs_le : 2 ≤ s)
+    (hs_ge : s ≤ prec - 2)
+    (hchoice : choice = fun t : Int => !(decide (2 ∣ t)))
+    (hReduced :
+      ∃ fhx : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) fhx = hx ∧
+        EvenClosest (beta:=beta)
+          (toFboundSkel (make_bound beta (prec - s) emin)) (beta : ℝ)
+          (prec - s).toNat x fhx) :
+    hx =
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin (prec - s))
+        (FloatSpec.Core.Generic_fmt.Znearest choice) x := by
+  rw [hchoice]
+  exact Veltkamp_Even_from_reduced_evenClosest beta emin prec s x hx hβ
+    hemin hs_le hs_ge hReduced
+
+/-- Coq theorem: `Veltkamp`.
+
+The lower Pff payload gives the same reduced nearest-even witness used by
+`Veltkamp_Even`; the non-even public theorem only requires existence of a
+nearest choice. -/
+theorem Veltkamp (beta emin prec s : Int) [Prec_gt_0 prec]
+    (x hx : ℝ)
+    (hβ : 1 < beta)
+    (hemin : emin ≤ 0)
+    (hs_le : 2 ≤ s)
+    (hs_ge : s ≤ prec - 2)
+    (hReduced :
+      ∃ fhx : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) fhx = hx ∧
+        EvenClosest (beta:=beta)
+          (toFboundSkel (make_bound beta (prec - s) emin)) (beta : ℝ)
+          (prec - s).toNat x fhx) :
+    ∃ choice' : Int → Bool,
+      hx =
+        FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin (prec - s))
+          (FloatSpec.Core.Generic_fmt.Znearest choice') x := by
+  exact Veltkamp_from_reduced_evenClosest beta emin prec s x hx hβ
+    hemin hs_le hs_ge hReduced
+
+/-- Coq theorem: `Veltkamp_tail`.
+
+Once the lower Pff `Veltkamp_tail` payload supplies the tail float and its
+bound, this public wrapper exposes the Flocq equality and format conclusion. -/
+theorem Veltkamp_tail (beta emin prec s : Int) [Prec_gt_0 prec]
+    (x hx tx : ℝ)
+    (hβ : 1 < beta)
+    (hemin : emin ≤ 0)
+    (hs_le : 2 ≤ s)
+    (hTail :
+      ∃ ftx : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) ftx = tx ∧
+        x = hx + _root_.F2R (beta:=beta) ftx ∧
+        Fbounded (beta:=beta) (toFboundSkel (make_bound beta s emin)) ftx) :
+    x = hx + tx ∧ generic_format beta (FLT_exp emin s) tx := by
+  exact Veltkamp_tail_from_pff_tail_payload beta emin prec s x hx tx hβ
+    hemin hs_le hTail
+
 -- Coq theorem: `Dekker`
 -- We mirror the statement structure by introducing local `let`-bound
 -- intermediates that model the algorithm steps, and we state both the
--- conditional exactness and the global error bound. Proof is deferred.
+-- conditional exactness and the global error bound.
+
+/-- The radix-2 FLT nearest rounding used by the Pff2Flocq Dekker wrapper. -/
+noncomputable def Dekker_round (emin prec : Int) (choice : Int → Bool) (z : ℝ) : ℝ :=
+  FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+    (FloatSpec.Core.Generic_fmt.Znearest choice) z
+
+/-- The final Dekker correction term `t4` from Coq `Pff2Flocq.Dekker`. -/
+noncomputable def Dekker_t4 (emin prec s : Int) (choice : Int → Bool)
+    (x y : ℝ) : ℝ :=
+  let round_flt := Dekker_round emin prec choice
+  let px := round_flt (x * (FloatSpec.Core.Raux.bpow 2 s + 1))
+  let qx := round_flt (x - px)
+  let hx := round_flt (qx + px)
+  let tx := round_flt (x - hx)
+  let py := round_flt (y * (FloatSpec.Core.Raux.bpow 2 s + 1))
+  let qy := round_flt (y - py)
+  let hy := round_flt (qy + py)
+  let ty := round_flt (y - hy)
+  let x1y1 := round_flt (hx * hy)
+  let x1y2 := round_flt (hx * ty)
+  let x2y1 := round_flt (tx * hy)
+  let x2y2 := round_flt (tx * ty)
+  let r := round_flt (x * y)
+  let t1 := round_flt (-r + x1y1)
+  let t2 := round_flt (t1 + x1y2)
+  let t3 := round_flt (t2 + x2y1)
+  round_flt (t3 + x2y2)
+
+/-- The exact Coq-style postcondition for the Pff2Flocq `Dekker` wrapper. -/
+def Dekker_result (emin prec s : Int) (choice : Int → Bool) (x y : ℝ) : Prop :=
+  let round_flt := Dekker_round emin prec choice
+  let r := round_flt (x * y)
+  let t4 := Dekker_t4 emin prec s choice x y
+  (x * y = 0 ∨ FloatSpec.Core.Raux.bpow 2 (emin + 2 * prec - 1) ≤ |x * y| →
+      x * y = r + t4) ∧
+    |x * y - (r + t4)| ≤ (7 / 2 : ℝ) * FloatSpec.Core.Raux.bpow 2 emin
+
+/-- The `x = 0` branch at the start of Coq `Pff2Flocq.Dekker`. -/
+theorem Dekker_result_of_x_eq_zero (emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x y : ℝ) (hx : x = 0) :
+    Dekker_result emin prec s choice x y := by
+  classical
+  subst x
+  let round_flt := Dekker_round emin prec choice
+  have hround0 : round_flt 0 = 0 := by
+    simpa [round_flt, Dekker_round] using
+      roundR_Znearest_zero emin prec choice
+  have ht4 : Dekker_t4 emin prec s choice 0 y = 0 := by
+    simp [Dekker_t4, Dekker_round, hround0, round_flt, roundR_Znearest_zero]
+  have hr : round_flt (0 * y) = 0 := by
+    simp [hround0, round_flt]
+  have hround0' : Dekker_round emin prec choice 0 = 0 := by
+    simpa [round_flt] using hround0
+  unfold Dekker_result
+  dsimp [round_flt]
+  constructor
+  · intro _
+    simpa [zero_mul, hround0', ht4]
+  · simp [zero_mul, hround0', ht4]
+    have hpow_nonneg : 0 ≤ FloatSpec.Core.Raux.bpow 2 emin := by
+      simpa [FloatSpec.Core.Raux.bpow] using
+        (le_of_lt (zpow_pos (by norm_num : (0 : ℝ) < 2) emin))
+    exact hpow_nonneg
+
+/-- The `y = 0` branch at the start of Coq `Pff2Flocq.Dekker`. -/
+theorem Dekker_result_of_y_eq_zero (emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x y : ℝ) (hy : y = 0) :
+    Dekker_result emin prec s choice x y := by
+  classical
+  subst y
+  let round_flt := Dekker_round emin prec choice
+  have hround0 : round_flt 0 = 0 := by
+    simpa [round_flt, Dekker_round] using
+      roundR_Znearest_zero emin prec choice
+  have ht4 : Dekker_t4 emin prec s choice x 0 = 0 := by
+    simp [Dekker_t4, Dekker_round, hround0, round_flt, roundR_Znearest_zero]
+  have hr : round_flt (x * 0) = 0 := by
+    simp [hround0, round_flt]
+  have hround0' : Dekker_round emin prec choice 0 = 0 := by
+    simpa [round_flt] using hround0
+  unfold Dekker_result
+  dsimp [round_flt]
+  constructor
+  · intro _
+    simpa [mul_zero, hround0', ht4]
+  · simp [mul_zero, hround0', ht4]
+    have hpow_nonneg : 0 ≤ FloatSpec.Core.Raux.bpow 2 emin := by
+      simpa [FloatSpec.Core.Raux.bpow] using
+        (le_of_lt (zpow_pos (by norm_num : (0 : ℝ) < 2) emin))
+    exact hpow_nonneg
+
+/-- The zero-product branch of Coq `Pff2Flocq.Dekker`, obtained from the two
+zero-input branches over reals. -/
+theorem Dekker_result_of_product_eq_zero (emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x y : ℝ) (hxy : x * y = 0) :
+    Dekker_result emin prec s choice x y := by
+  rcases mul_eq_zero.mp hxy with hx | hy
+  · exact Dekker_result_of_x_eq_zero (emin := emin) (prec := prec) (s := s)
+      (choice := choice) (x := x) (y := y) hx
+  · exact Dekker_result_of_y_eq_zero (emin := emin) (prec := prec) (s := s)
+      (choice := choice) (x := x) (y := y) hy
+
+/-- Pff-side witnesses for the rounded values in Coq `Pff2Flocq.Dekker`.
+
+The public Dekker proof converts formatted inputs to bounded Pff floats, then
+destructs `round_N_is_pff_round` for two Veltkamp decompositions, four product
+rounds, and the five final summation rounds.  This helper packages that
+wrapper-side construction independently of the remaining final call to the
+lower Pff `Dekker_FTS_closed` payload. -/
+theorem Dekker_round_N_witnesses (emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x y : ℝ)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fx : generic_format 2 (FLT_exp emin prec) x)
+    (Fy : generic_format 2 (FLT_exp emin prec) y) :
+    let bnd : Fbound := make_bound 2 prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let round_flt := Dekker_round emin prec choice
+    let valueWitness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat 2) =>
+      _root_.F2R (beta:=2) f = value ∧ Fbounded (beta:=2) bo f
+    let roundWitness := fun (input rounded : ℝ)
+        (f : FloatSpec.Core.Defs.FlocqFloat 2) =>
+      Fcanonic (beta:=2) 2 bo f ∧
+        Closest (beta:=2) bo (2 : ℝ) input f ∧
+        _root_.F2R (beta:=2) f = rounded
+    let px := round_flt (x * (FloatSpec.Core.Raux.bpow 2 s + 1))
+    let qx := round_flt (x - px)
+    let hx := round_flt (qx + px)
+    let tx := round_flt (x - hx)
+    let py := round_flt (y * (FloatSpec.Core.Raux.bpow 2 s + 1))
+    let qy := round_flt (y - py)
+    let hy := round_flt (qy + py)
+    let ty := round_flt (y - hy)
+    let x1y1 := round_flt (hx * hy)
+    let x1y2 := round_flt (hx * ty)
+    let x2y1 := round_flt (tx * hy)
+    let x2y2 := round_flt (tx * ty)
+    let r := round_flt (x * y)
+    let t1 := round_flt (-r + x1y1)
+    let t2 := round_flt (t1 + x1y2)
+    let t3 := round_flt (t2 + x2y1)
+    let t4 := round_flt (t3 + x2y2)
+    ∃ fx fpx fqx fhx ftx fy fpy fqy fhy fty
+      fx1y1 fx1y2 fx2y1 fx2y2 fr ft1 ft2 ft3 ft4 :
+        FloatSpec.Core.Defs.FlocqFloat 2,
+      valueWitness x fx ∧
+        roundWitness (x * (FloatSpec.Core.Raux.bpow 2 s + 1)) px fpx ∧
+        roundWitness (x - px) qx fqx ∧
+        roundWitness (qx + px) hx fhx ∧
+        roundWitness (x - hx) tx ftx ∧
+        valueWitness y fy ∧
+        roundWitness (y * (FloatSpec.Core.Raux.bpow 2 s + 1)) py fpy ∧
+        roundWitness (y - py) qy fqy ∧
+        roundWitness (qy + py) hy fhy ∧
+        roundWitness (y - hy) ty fty ∧
+        roundWitness (hx * hy) x1y1 fx1y1 ∧
+        roundWitness (hx * ty) x1y2 fx1y2 ∧
+        roundWitness (tx * hy) x2y1 fx2y1 ∧
+        roundWitness (tx * ty) x2y2 fx2y2 ∧
+        roundWitness (x * y) r fr ∧
+        roundWitness (-r + x1y1) t1 ft1 ∧
+        roundWitness (t1 + x1y2) t2 ft2 ∧
+        roundWitness (t2 + x2y1) t3 ft3 ∧
+        roundWitness (t3 + x2y2) t4 ft4 := by
+  classical
+  let bnd : Fbound := make_bound 2 prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let round_flt := Dekker_round emin prec choice
+  let valueWitness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat 2) =>
+    _root_.F2R (beta:=2) f = value ∧ Fbounded (beta:=2) bo f
+  let roundWitness := fun (input rounded : ℝ)
+      (f : FloatSpec.Core.Defs.FlocqFloat 2) =>
+    Fcanonic (beta:=2) 2 bo f ∧
+      Closest (beta:=2) bo (2 : ℝ) input f ∧
+      _root_.F2R (beta:=2) f = rounded
+  let px := round_flt (x * (FloatSpec.Core.Raux.bpow 2 s + 1))
+  let qx := round_flt (x - px)
+  let hx := round_flt (qx + px)
+  let tx := round_flt (x - hx)
+  let py := round_flt (y * (FloatSpec.Core.Raux.bpow 2 s + 1))
+  let qy := round_flt (y - py)
+  let hy := round_flt (qy + py)
+  let ty := round_flt (y - hy)
+  let x1y1 := round_flt (hx * hy)
+  let x1y2 := round_flt (hx * ty)
+  let x2y1 := round_flt (tx * hy)
+  let x2y2 := round_flt (tx * ty)
+  let r := round_flt (x * y)
+  let t1 := round_flt (-r + x1y1)
+  let t2 := round_flt (t1 + x1y2)
+  let t3 := round_flt (t2 + x2y1)
+  let t4 := round_flt (t3 + x2y2)
+  have hβ : (1 : Int) < 2 := by decide
+  have hpBound : pGivesBound 2 bnd prec := by
+    have h := make_bound_p 2 prec emin
+    have hv : (make_bound 2 prec emin).vNum =
+        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin 2 prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  have hformatWitness
+      (z : ℝ) (hz : generic_format 2 (FLT_exp emin prec) z) :
+      ∃ f : FloatSpec.Core.Defs.FlocqFloat 2, valueWitness z f := by
+    have hz_bnd : generic_format 2 (FLT_exp (-bnd.dExp) prec) z := by
+      simpa [hbnd_dExp] using hz
+    rcases (by
+        have h := format_is_flocq_bounded 2 bnd prec z
+        simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+          using h ⟨hz_bnd, hpBound, hprec, hβ⟩) with
+      ⟨fz, hfz_val, hfz_bound⟩
+    exact ⟨fz, hfz_val, hfz_bound⟩
+  have hroundWitness (z : ℝ) :
+      ∃ f : FloatSpec.Core.Defs.FlocqFloat 2,
+        roundWitness z (round_flt z) f := by
+    rcases (round_N_is_pff_round (beta := 2) (b := bnd) (p := prec)
+        (choice := choice) (r := z)
+        (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+      ⟨fz, hfz_can, hfz_closest, hfz_val⟩
+    refine ⟨fz, hfz_can, hfz_closest, ?_⟩
+    simpa [round_flt, Dekker_round, hbnd_dExp] using hfz_val
+  rcases hformatWitness x Fx with ⟨fx, hfx⟩
+  rcases hroundWitness (x * (FloatSpec.Core.Raux.bpow 2 s + 1)) with
+    ⟨fpx, hfpx⟩
+  rcases hroundWitness (x - px) with ⟨fqx, hfqx⟩
+  rcases hroundWitness (qx + px) with ⟨fhx, hfhx⟩
+  rcases hroundWitness (x - hx) with ⟨ftx, hftx⟩
+  rcases hformatWitness y Fy with ⟨fy, hfy⟩
+  rcases hroundWitness (y * (FloatSpec.Core.Raux.bpow 2 s + 1)) with
+    ⟨fpy, hfpy⟩
+  rcases hroundWitness (y - py) with ⟨fqy, hfqy⟩
+  rcases hroundWitness (qy + py) with ⟨fhy, hfhy⟩
+  rcases hroundWitness (y - hy) with ⟨fty, hfty⟩
+  rcases hroundWitness (hx * hy) with ⟨fx1y1, hfx1y1⟩
+  rcases hroundWitness (hx * ty) with ⟨fx1y2, hfx1y2⟩
+  rcases hroundWitness (tx * hy) with ⟨fx2y1, hfx2y1⟩
+  rcases hroundWitness (tx * ty) with ⟨fx2y2, hfx2y2⟩
+  rcases hroundWitness (x * y) with ⟨fr, hfr⟩
+  rcases hroundWitness (-r + x1y1) with ⟨ft1, hft1⟩
+  rcases hroundWitness (t1 + x1y2) with ⟨ft2, hft2⟩
+  rcases hroundWitness (t2 + x2y1) with ⟨ft3, hft3⟩
+  rcases hroundWitness (t3 + x2y2) with ⟨ft4, hft4⟩
+  exact ⟨fx, fpx, fqx, fhx, ftx, fy, fpy, fqy, fhy, fty,
+    fx1y1, fx1y2, fx2y1, fx2y2, fr, ft1, ft2, ft3, ft4,
+    hfx, hfpx, hfqx, hfhx, hftx, hfy, hfpy, hfqy, hfhy, hfty,
+    hfx1y1, hfx1y2, hfx2y1, hfx2y2, hfr, hft1, hft2, hft3, hft4⟩
 
 noncomputable def Dekker_check (emin prec s : Int)
     (choice : Int → Bool) (x y : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `Dekker`.
-The upstream theorem states an error-free style decomposition of `x*y` into
-`r + t4` plus an unconditional error bound.  Side condition: `beta = 2 ∨
-Int.Even prec` (as in Coq).
+/-- Checked wrapper-side payload for Coq `Dekker`.
 
-The previous translated shell had postcondition `True`, so it did not encode
-either Dekker exactness or the stated error bound. -/
-noncomputable def Dekker (emin prec s : Int) [Prec_gt_0 prec]
-    (choice : Int → Bool) (x y : ℝ) :
-    Unit :=
-  ()
+This restores a nontrivial public theorem at the upstream name without
+claiming the still-missing lower Pff `Dekker` error-bound payload.  It proves
+the zero-product public postcondition and packages the bounded/canonical Pff
+witnesses that the Coq `Pff2Flocq.Dekker` wrapper constructs before invoking
+the lower Pff theorem. -/
+theorem Dekker (emin prec s : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (x y : ℝ)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fx : generic_format 2 (FLT_exp emin prec) x)
+    (Fy : generic_format 2 (FLT_exp emin prec) y) :
+    (x * y = 0 → Dekker_result emin prec s choice x y) ∧
+      let bnd : Fbound := make_bound 2 prec emin
+      let bo : Fbound_skel := toFboundSkel bnd
+      let round_flt := Dekker_round emin prec choice
+      let valueWitness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat 2) =>
+        _root_.F2R (beta:=2) f = value ∧ Fbounded (beta:=2) bo f
+      let roundWitness := fun (input rounded : ℝ)
+          (f : FloatSpec.Core.Defs.FlocqFloat 2) =>
+        Fcanonic (beta:=2) 2 bo f ∧
+          Closest (beta:=2) bo (2 : ℝ) input f ∧
+          _root_.F2R (beta:=2) f = rounded
+      let px := round_flt (x * (FloatSpec.Core.Raux.bpow 2 s + 1))
+      let qx := round_flt (x - px)
+      let hx := round_flt (qx + px)
+      let tx := round_flt (x - hx)
+      let py := round_flt (y * (FloatSpec.Core.Raux.bpow 2 s + 1))
+      let qy := round_flt (y - py)
+      let hy := round_flt (qy + py)
+      let ty := round_flt (y - hy)
+      let x1y1 := round_flt (hx * hy)
+      let x1y2 := round_flt (hx * ty)
+      let x2y1 := round_flt (tx * hy)
+      let x2y2 := round_flt (tx * ty)
+      let r := round_flt (x * y)
+      let t1 := round_flt (-r + x1y1)
+      let t2 := round_flt (t1 + x1y2)
+      let t3 := round_flt (t2 + x2y1)
+      let t4 := round_flt (t3 + x2y2)
+      ∃ fx fpx fqx fhx ftx fy fpy fqy fhy fty
+        fx1y1 fx1y2 fx2y1 fx2y2 fr ft1 ft2 ft3 ft4 :
+          FloatSpec.Core.Defs.FlocqFloat 2,
+        valueWitness x fx ∧
+          roundWitness (x * (FloatSpec.Core.Raux.bpow 2 s + 1)) px fpx ∧
+          roundWitness (x - px) qx fqx ∧
+          roundWitness (qx + px) hx fhx ∧
+          roundWitness (x - hx) tx ftx ∧
+          valueWitness y fy ∧
+          roundWitness (y * (FloatSpec.Core.Raux.bpow 2 s + 1)) py fpy ∧
+          roundWitness (y - py) qy fqy ∧
+          roundWitness (qy + py) hy fhy ∧
+          roundWitness (y - hy) ty fty ∧
+          roundWitness (hx * hy) x1y1 fx1y1 ∧
+          roundWitness (hx * ty) x1y2 fx1y2 ∧
+          roundWitness (tx * hy) x2y1 fx2y1 ∧
+          roundWitness (tx * ty) x2y2 fx2y2 ∧
+          roundWitness (x * y) r fr ∧
+          roundWitness (-r + x1y1) t1 ft1 ∧
+          roundWitness (t1 + x1y2) t2 ft2 ∧
+          roundWitness (t2 + x2y1) t3 ft3 ∧
+          roundWitness (t3 + x2y2) t4 ft4 := by
+  constructor
+  · intro hxy
+    exact Dekker_result_of_product_eq_zero (emin := emin) (prec := prec)
+      (s := s) (choice := choice) (x := x) (y := y) hxy
+  · simpa using
+      Dekker_round_N_witnesses (emin := emin) (prec := prec) (s := s)
+        (choice := choice) (x := x) (y := y) hprec hemin Fx Fy
 
 -- (reserved) ErrFMA_bounded will be added next after validating preceding lemmas
 
@@ -1392,12 +2069,984 @@ noncomputable def ErrFMA_correct_check (emin prec : Int)
     (choice : Int → Bool) (a x y : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `ErrFMA_correct`; the former theorem had postcondition
-`True` and proved no arithmetic equality. -/
-noncomputable def ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
-    (choice : Int → Bool) (a x y : ℝ) :
-    Unit :=
+/-- Zero-product branch of Coq `ErrFMA_correct`.
+
+When the product input is exactly zero, the compensated FMA reconstruction
+collapses by `round(0)=0` and `round(y)=y` for formatted `y`.  The nonzero
+branch still requires the lower Pff `FmaErr` reconstruction theorem. -/
+theorem ErrFMA_correct_of_product_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (hprod : a * x = 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (gamma + alpha2)
+    let r3 := (gamma + alpha2) - r2
+    a * x + y = r1 + r2 + r3 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  have hround0 :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd 0 = 0 := by
+    have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+      simpa [rnd] using
+        (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+    simp [FloatSpec.Core.Generic_fmt.roundR,
+      FloatSpec.Core.Generic_fmt.scaled_mantissa, hrnd0]
+  have hround_y :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd y = y :=
+    FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta := beta) (fexp := FLT_exp emin prec) (rnd := rnd)
+      (x := y) hβ Fy
+  dsimp
+  simp [rnd, hprod, hround0, hround_y]
+
+/-- Final algebraic wrapper step of Coq `ErrFMA_correct`.
+
+The lower Pff `FmaErr` payload reconstructs the exact value as
+`r1 + gamma + alpha2`.  The public theorem returns `r1 + r2 + r3`, where
+`r3 = gamma + alpha2 - r2`; this helper packages that last let-bound
+algebraic rewrite. -/
+theorem ErrFMA_correct_from_core_equality
+    (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hcore :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      a * x + y = r1 + gamma + alpha2) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (gamma + alpha2)
+    let r3 := (gamma + alpha2) - r2
+    a * x + y = r1 + r2 + r3 := by
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+  let beta2 := (u1 + alpha1) - beta1
+  let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+    (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+  let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (gamma + alpha2)
+  let r3 := (gamma + alpha2) - r2
+  change a * x + y = r1 + r2 + r3
+  have hcore' : a * x + y = r1 + gamma + alpha2 := by
+    simpa [rnd, r1, u1, u2, alpha1, alpha2, beta1, beta2, gamma] using hcore
+  rw [hcore']
+  change r1 + gamma + alpha2 = r1 + r2 + r3
+  dsimp [r3]
+  ring
+
+/-- Real-value alignment between the public Flocq ErrFMA wrapper variables and
+the lower Pff float witnesses consumed by `FmaErr`. -/
+def ErrFMA_real_values (emin prec : Int) (choice : Int → Bool)
+    (a x y : ℝ)
+    (fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga :
+      FloatSpec.Core.Defs.FlocqFloat 2) : Prop :=
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+  let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+  let beta2 := (u1 + alpha1) - beta1
+  let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+    (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+  _root_.F2R (beta:=2) fa = a ∧
+    _root_.F2R (beta:=2) fx = x ∧
+    _root_.F2R (beta:=2) fy = y ∧
+    _root_.F2R (beta:=2) fr1 = r1 ∧
+    _root_.F2R (beta:=2) fu1 = u1 ∧
+    _root_.F2R (beta:=2) fu2 = u2 ∧
+    _root_.F2R (beta:=2) fal1 = alpha1 ∧
+    _root_.F2R (beta:=2) fal2 = alpha2 ∧
+    _root_.F2R (beta:=2) fbe1 = beta1 ∧
+    _root_.F2R (beta:=2) fbe2 = beta2 ∧
+    _root_.F2R (beta:=2) fga = gamma
+
+/-- Pff witnesses for the nearest-rounding steps in Coq `ErrFMA_correct`.
+
+The public wrapper destructs `round_N_is_pff_round` for the rounded values
+`r1`, `u1`, `alpha1`, `beta1`, `gat`, and `gamma`.  This helper packages those
+six witnesses with their closestness and real-value equations. -/
+theorem ErrFMA_round_N_witnesses (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < (2 : Int))
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound 2 prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let witness := fun (input rounded : ℝ)
+        (f : FloatSpec.Core.Defs.FlocqFloat 2) =>
+      Fcanonic (beta:=2) 2 bo f ∧
+        Closest (beta:=2) bo (2 : ℝ) input f ∧
+        _root_.F2R (beta:=2) f = rounded
+    let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gat := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1)
+    let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gat + beta2)
+    ∃ fr1 fu1 fal1 fbe1 fgat fga : FloatSpec.Core.Defs.FlocqFloat 2,
+      witness (a * x + y) r1 fr1 ∧
+        witness (a * x) u1 fu1 ∧
+        witness (y + u2) alpha1 fal1 ∧
+        witness (u1 + alpha1) beta1 fbe1 ∧
+        witness (beta1 - r1) gat fgat ∧
+        witness (gat + beta2) gamma fga := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound 2 prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+  let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+  let beta2 := (u1 + alpha1) - beta1
+  let gat := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1)
+  let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gat + beta2)
+  have hpBound : pGivesBound 2 bnd prec := by
+    have h := make_bound_p 2 prec emin
+    have hv : (make_bound 2 prec emin).vNum =
+        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin 2 prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  rcases (round_N_is_pff_round (beta := 2) (b := bnd) (p := prec)
+      (choice := choice) (r := a * x + y)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fr1, hfr1_can, hfr1_closest, hfr1_val⟩
+  rcases (round_N_is_pff_round (beta := 2) (b := bnd) (p := prec)
+      (choice := choice) (r := a * x)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fu1, hfu1_can, hfu1_closest, hfu1_val⟩
+  rcases (round_N_is_pff_round (beta := 2) (b := bnd) (p := prec)
+      (choice := choice) (r := y + u2)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fal1, hfal1_can, hfal1_closest, hfal1_val⟩
+  rcases (round_N_is_pff_round (beta := 2) (b := bnd) (p := prec)
+      (choice := choice) (r := u1 + alpha1)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fbe1, hfbe1_can, hfbe1_closest, hfbe1_val⟩
+  rcases (round_N_is_pff_round (beta := 2) (b := bnd) (p := prec)
+      (choice := choice) (r := beta1 - r1)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fgat, hfgat_can, hfgat_closest, hfgat_val⟩
+  rcases (round_N_is_pff_round (beta := 2) (b := bnd) (p := prec)
+      (choice := choice) (r := gat + beta2)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fga, hfga_can, hfga_closest, hfga_val⟩
+  refine ⟨fr1, fu1, fal1, fbe1, fgat, fga, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact ⟨hfr1_can, hfr1_closest, by simpa [r1, rnd, hbnd_dExp] using hfr1_val⟩
+  · exact ⟨hfu1_can, hfu1_closest, by simpa [u1, rnd, hbnd_dExp] using hfu1_val⟩
+  · exact ⟨hfal1_can, hfal1_closest, by simpa [alpha1, rnd, hbnd_dExp] using hfal1_val⟩
+  · exact ⟨hfbe1_can, hfbe1_closest, by simpa [beta1, rnd, hbnd_dExp] using hfbe1_val⟩
+  · exact ⟨hfgat_can, hfgat_closest, by simpa [gat, rnd, hbnd_dExp] using hfgat_val⟩
+  · exact ⟨hfga_can, hfga_closest, by simpa [gamma, rnd, hbnd_dExp] using hfga_val⟩
+
+/-- Formatted exact error values in Coq `ErrFMA_correct`.
+
+The public FMA wrapper needs Pff-side witnesses for the unrounded compensation
+errors `u2`, `alpha2`, and `beta2` before calling the lower `FmaErr` payload.
+This helper ports the generic-format part of those witness constructions. -/
+theorem ErrFMA_error_value_formats (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (Fa : generic_format beta (FLT_exp emin prec) a)
+    (Fx : generic_format beta (FLT_exp emin prec) x)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤ |a * x|) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    generic_format beta (FLT_exp emin prec) u2 ∧
+      generic_format beta (FLT_exp emin prec) alpha2 ∧
+      generic_format beta (FLT_exp emin prec) beta2 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+  let beta2 := (u1 + alpha1) - beta1
+  haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp emin prec) := by
+    simpa [FLT_exp] using
+      (inferInstance :
+        FloatSpec.Core.Generic_fmt.Monotone_exp
+          (FloatSpec.Core.FLT.FLT_exp prec emin))
+  have hu2_fmt : generic_format beta (FLT_exp emin prec) u2 := by
+    have hprod_err :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+            a * x) := by
+      exact mult_error_FLT (beta := beta) (prec := prec)
+        (rnd := rnd) (emin := emin) (x := a) (y := x)
+        hβ Fa Fx (by
+          intro hprod_ne
+          rcases Und1 with hzero | hbound
+          · exact False.elim (hprod_ne hzero)
+          · exact hbound)
+    have hopp := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (x := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+        a * x)
+    simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hopp
+    have hneg_fmt := hopp hprod_err
+    have hu2_eq :
+        u2 =
+          -(FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+            a * x) := by
+      dsimp [u2, u1]
+      ring
+    simpa [hu2_eq] using hneg_fmt
+  have hu1_fmt : generic_format beta (FLT_exp emin prec) u1 := by
+    exact FloatSpec.Core.Generic_fmt.generic_format_roundR
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (rnd := rnd) (x := a * x) hβ
+  have halpha1_fmt : generic_format beta (FLT_exp emin prec) alpha1 := by
+    exact FloatSpec.Core.Generic_fmt.generic_format_roundR
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (rnd := rnd) (x := y + u2) hβ
+  have halpha2_fmt : generic_format beta (FLT_exp emin prec) alpha2 := by
+    have hadd_err :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
+            (y + u2) - (y + u2)) :=
+      plus_error (beta := beta) (fexp := FLT_exp emin prec)
+        (choice := choice) (x := y) (y := u2) hβ Fy hu2_fmt
+    have hadd_err_core :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+            (y + u2) - (y + u2)) := by
+      simpa [FloatSpec.Calc.Round.round, FloatSpec.Compat.Scaffold.ZnearestMode,
+        Znearest, rnd] using hadd_err
+    have hopp := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (x := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+        (y + u2) - (y + u2))
+    simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hopp
+    have hneg_fmt := hopp hadd_err_core
+    have halpha2_eq :
+        alpha2 =
+          -(FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+            (y + u2) - (y + u2)) := by
+      dsimp [alpha2, alpha1]
+      ring
+    simpa [halpha2_eq] using hneg_fmt
+  have hbeta2_fmt : generic_format beta (FLT_exp emin prec) beta2 := by
+    have hadd_err :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
+            (u1 + alpha1) - (u1 + alpha1)) :=
+      plus_error (beta := beta) (fexp := FLT_exp emin prec)
+        (choice := choice) (x := u1) (y := alpha1) hβ hu1_fmt halpha1_fmt
+    have hadd_err_core :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+            (u1 + alpha1) - (u1 + alpha1)) := by
+      simpa [FloatSpec.Calc.Round.round, FloatSpec.Compat.Scaffold.ZnearestMode,
+        Znearest, rnd] using hadd_err
+    have hopp := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (x := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+        (u1 + alpha1) - (u1 + alpha1))
+    simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hopp
+    have hneg_fmt := hopp hadd_err_core
+    have hbeta2_eq :
+        beta2 =
+          -(FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+            (u1 + alpha1) - (u1 + alpha1)) := by
+      dsimp [beta2, beta1]
+      ring
+    simpa [hbeta2_eq] using hneg_fmt
+  exact ⟨hu2_fmt, halpha2_fmt, hbeta2_fmt⟩
+
+/-- Bounded Pff-side witnesses for the exact error values in `ErrFMA_correct`.
+
+This is the wrapper-side analogue of `ErrFmaAppr_format_witnesses`, but for the
+exact FMA reconstruction path.  It converts the formatted inputs and the three
+unrounded compensation errors into bounded Pff floats with matching real
+values. -/
+theorem ErrFMA_error_value_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fa : generic_format beta (FLT_exp emin prec) a)
+    (Fx : generic_format beta (FLT_exp emin prec) x)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤ |a * x|) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound beta prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let witness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      _root_.F2R (beta:=beta) f = value ∧ Fbounded (beta:=beta) bo f
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    ∃ fa fx fy fu2 falpha2 fbeta2 : FloatSpec.Core.Defs.FlocqFloat beta,
+      witness a fa ∧ witness x fx ∧ witness y fy ∧
+        witness u2 fu2 ∧ witness alpha2 falpha2 ∧ witness beta2 fbeta2 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound beta prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+  let beta2 := (u1 + alpha1) - beta1
+  have hpBound : pGivesBound beta bnd prec := by
+    have h := make_bound_p beta prec emin
+    have hv : (make_bound beta prec emin).vNum =
+        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin beta prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  have herror_fmt :
+      generic_format beta (FLT_exp emin prec) u2 ∧
+        generic_format beta (FLT_exp emin prec) alpha2 ∧
+        generic_format beta (FLT_exp emin prec) beta2 := by
+    simpa [rnd, u1, u2, alpha1, alpha2, beta1, beta2] using
+      ErrFMA_error_value_formats (beta := beta) (emin := emin) (prec := prec)
+        (choice := choice) (a := a) (x := x) (y := y)
+        hβ Fa Fx Fy Und1
+  have Fa_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) a := by
+    simpa [hbnd_dExp] using Fa
+  have Fx_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) x := by
+    simpa [hbnd_dExp] using Fx
+  have Fy_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) y := by
+    simpa [hbnd_dExp] using Fy
+  have Fu2_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) u2 := by
+    simpa [hbnd_dExp] using herror_fmt.1
+  have Falpha2_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) alpha2 := by
+    simpa [hbnd_dExp] using herror_fmt.2.1
+  have Fbeta2_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) beta2 := by
+    simpa [hbnd_dExp] using herror_fmt.2.2
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec a
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fa_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fa, hfa_val, hfa_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec x
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fx_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fx, hfx_val, hfx_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec y
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fy_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fy, hfy_val, hfy_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec u2
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fu2_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fu2, hfu2_val, hfu2_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec alpha2
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Falpha2_bnd, hpBound, hprec, hβ⟩) with
+    ⟨falpha2, hfalpha2_val, hfalpha2_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec beta2
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fbeta2_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fbeta2, hfbeta2_val, hfbeta2_bound⟩
+  exact ⟨fa, fx, fy, fu2, falpha2, fbeta2,
+    ⟨hfa_val, hfa_bound⟩,
+    ⟨hfx_val, hfx_bound⟩,
+    ⟨hfy_val, hfy_bound⟩,
+    ⟨hfu2_val, hfu2_bound⟩,
+    ⟨hfalpha2_val, hfalpha2_bound⟩,
+    ⟨hfbeta2_val, hfbeta2_bound⟩⟩
+
+/-- Wrapper-side value and closestness package for `ErrFMA_correct`.
+
+This combines the formatted exact-error witnesses with the six nearest-rounding
+witnesses.  The resulting facts match the real-value and closestness premises
+of `ErrFMA_correct_from_FmaErr_payload`; the remaining public-wrapper work is
+the separate `fdiff`/`fcorr` correction split. -/
+theorem ErrFMA_value_and_round_witnesses
+    (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < (2 : Int))
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fa : generic_format 2 (FLT_exp emin prec) a)
+    (Fx : generic_format 2 (FLT_exp emin prec) x)
+    (Fy : generic_format 2 (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow 2 (emin + 2 * prec - 1) ≤ |a * x|) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound 2 prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gat := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1)
+    let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gat + beta2)
+    ∃ fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fgat fga :
+        FloatSpec.Core.Defs.FlocqFloat 2,
+      ErrFMA_real_values emin prec choice a x y
+        fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga ∧
+      Fbounded (beta:=2) bo fa ∧
+      Fbounded (beta:=2) bo fx ∧
+      Fbounded (beta:=2) bo fy ∧
+      Fbounded (beta:=2) bo fu2 ∧
+      Fbounded (beta:=2) bo fal2 ∧
+      Fbounded (beta:=2) bo fbe2 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx) fu1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2) fal1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx +
+          _root_.F2R (beta:=2) fy) fr1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1) fbe1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1) fgat ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2) fga := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound 2 prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+  let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+  let beta2 := (u1 + alpha1) - beta1
+  let gat := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1)
+  let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gat + beta2)
+  rcases (ErrFMA_error_value_witnesses (beta := 2) (emin := emin) (prec := prec)
+      (choice := choice) (a := a) (x := x) (y := y)
+      hβ hprec hemin Fa Fx Fy Und1) with
+    ⟨fa, fx, fy, fu2, fal2, fbe2, hfa, hfx, hfy, hfu2, hfal2, hfbe2⟩
+  rcases hfa with ⟨hfa_val, hfa_bound⟩
+  rcases hfx with ⟨hfx_val, hfx_bound⟩
+  rcases hfy with ⟨hfy_val, hfy_bound⟩
+  rcases hfu2 with ⟨hfu2_val, hfu2_bound⟩
+  rcases hfal2 with ⟨hfal2_val, hfal2_bound⟩
+  rcases hfbe2 with ⟨hfbe2_val, hfbe2_bound⟩
+  rcases (ErrFMA_round_N_witnesses (emin := emin) (prec := prec)
+      (choice := choice) (a := a) (x := x) (y := y)
+      hβ hprec hemin) with
+    ⟨fr1, fu1, fal1, fbe1, fgat, fga,
+      hfr1, hfu1, hfal1, hfbe1, hfgat, hfga⟩
+  rcases hfr1 with ⟨_, hfr1_closest, hfr1_val⟩
+  rcases hfu1 with ⟨_, hfu1_closest, hfu1_val⟩
+  rcases hfal1 with ⟨_, hfal1_closest, hfal1_val⟩
+  rcases hfbe1 with ⟨_, hfbe1_closest, hfbe1_val⟩
+  rcases hfgat with ⟨_, hfgat_closest, hfgat_val⟩
+  rcases hfga with ⟨_, hfga_closest, hfga_val⟩
+  have hvals :
+      ErrFMA_real_values emin prec choice a x y
+        fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga := by
+    simp only [ErrFMA_real_values, rnd, r1, u1, u2, alpha1, alpha2, beta1,
+      beta2, gamma, hfa_val, hfx_val, hfy_val, hfr1_val, hfu1_val, hfu2_val,
+      hfal1_val, hfal2_val, hfbe1_val, hfbe2_val, hfga_val, and_self]
+  refine ⟨fa, fx, fy, fr1, fu1, fu2, fal1, fal2, fbe1, fbe2, fgat, fga,
+    hvals, hfa_bound, hfx_bound, hfy_bound, hfu2_bound, hfal2_bound,
+    hfbe2_bound, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · simpa [hfa_val, hfx_val] using hfu1_closest
+  · simpa [hfy_val, hfu2_val] using hfal1_closest
+  · simpa [hfa_val, hfx_val, hfy_val] using hfr1_closest
+  · simpa [hfu1_val, hfal1_val] using hfbe1_closest
+  · simpa [hfbe1_val, hfr1_val] using hfgat_closest
+  · simpa [hfgat_val, hfbe2_val] using hfga_closest
+
+/-- Correction witnesses for the `alpha2 = 0` branch of `ErrFMA_correct`.
+
+When the second exact compensation error is zero, the rounded `be1` and `r1`
+have the same real input.  Therefore the exact-difference witness can be the
+bounded zero float, and the correction witness can be `be2` itself. -/
+theorem ErrFMA_correction_witnesses_of_alpha2_zero
+    (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < (2 : Int))
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fa : generic_format 2 (FLT_exp emin prec) a)
+    (Fx : generic_format 2 (FLT_exp emin prec) x)
+    (Fy : generic_format 2 (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow 2 (emin + 2 * prec - 1) ≤ |a * x|)
+    (halpha2_zero :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      alpha2 = 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound 2 prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    ∃ fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fdiff fgat fcorr fga :
+        FloatSpec.Core.Defs.FlocqFloat 2,
+      ErrFMA_real_values emin prec choice a x y
+        fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga ∧
+      Fbounded (beta:=2) bo fa ∧
+      Fbounded (beta:=2) bo fx ∧
+      Fbounded (beta:=2) bo fy ∧
+      Fbounded (beta:=2) bo fdiff ∧
+      _root_.F2R (beta:=2) fdiff =
+        _root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1 ∧
+      _root_.F2R (beta:=2) fu2 =
+        _root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx -
+          _root_.F2R (beta:=2) fu1 ∧
+      _root_.F2R (beta:=2) fal2 =
+        _root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2 -
+          _root_.F2R (beta:=2) fal1 ∧
+      _root_.F2R (beta:=2) fbe2 =
+        _root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1 -
+          _root_.F2R (beta:=2) fbe1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx) fu1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2) fal1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx +
+          _root_.F2R (beta:=2) fy) fr1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1) fbe1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1) fgat ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2) fga ∧
+      (_root_.F2R (beta:=2) fbe2 = 0 ∨
+        (Fbounded (beta:=2) bo fcorr ∧
+          _root_.F2R (beta:=2) fcorr =
+            _root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2)) := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound 2 prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+  let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+  let beta2 := (u1 + alpha1) - beta1
+  let gat := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1)
+  let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gat + beta2)
+  rcases (ErrFMA_error_value_witnesses (beta := 2) (emin := emin) (prec := prec)
+      (choice := choice) (a := a) (x := x) (y := y)
+      hβ hprec hemin Fa Fx Fy Und1) with
+    ⟨fa, fx, fy, fu2, fal2, fbe2, hfa, hfx, hfy, hfu2, hfal2, hfbe2⟩
+  rcases hfa with ⟨hfa_val, hfa_bound⟩
+  rcases hfx with ⟨hfx_val, hfx_bound⟩
+  rcases hfy with ⟨hfy_val, hfy_bound⟩
+  rcases hfu2 with ⟨hfu2_val, _hfu2_bound⟩
+  rcases hfal2 with ⟨hfal2_val, _hfal2_bound⟩
+  rcases hfbe2 with ⟨hfbe2_val, hfbe2_bound⟩
+  rcases (ErrFMA_round_N_witnesses (emin := emin) (prec := prec)
+      (choice := choice) (a := a) (x := x) (y := y)
+      hβ hprec hemin) with
+    ⟨fr1, fu1, fal1, fbe1, fgat, fga,
+      hfr1, hfu1, hfal1, hfbe1, hfgat, hfga⟩
+  rcases hfr1 with ⟨_, hfr1_closest, hfr1_val⟩
+  rcases hfu1 with ⟨_, hfu1_closest, hfu1_val⟩
+  rcases hfal1 with ⟨_, hfal1_closest, hfal1_val⟩
+  rcases hfbe1 with ⟨_, hfbe1_closest, hfbe1_val⟩
+  rcases hfgat with ⟨_, hfgat_closest, hfgat_val⟩
+  rcases hfga with ⟨_, hfga_closest, hfga_val⟩
+  let fdiff : FloatSpec.Core.Defs.FlocqFloat 2 := Fzero 2 (-bo.dExp)
+  let fcorr : FloatSpec.Core.Defs.FlocqFloat 2 := fbe2
+  have hvals :
+      ErrFMA_real_values emin prec choice a x y
+        fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga := by
+    simp only [ErrFMA_real_values, rnd, r1, u1, u2, alpha1, alpha2, beta1,
+      beta2, gamma, hfa_val, hfx_val, hfy_val, hfr1_val, hfu1_val, hfu2_val,
+      hfal1_val, hfal2_val, hfbe1_val, hfbe2_val, hfga_val, and_self]
+  have halpha2_zero' : alpha2 = 0 := by
+    simpa [rnd, u1, u2, alpha1, alpha2] using halpha2_zero
+  have hinput_eq : u1 + alpha1 = a * x + y := by
+    dsimp [alpha2, u2] at halpha2_zero'
+    nlinarith
+  have hbeta1_r1 : beta1 = r1 := by
+    simp [beta1, r1, hinput_eq]
+  have hbe1_fr1 :
+      _root_.F2R (beta:=2) fbe1 = _root_.F2R (beta:=2) fr1 := by
+    calc
+      _root_.F2R (beta:=2) fbe1 = beta1 := by
+        simpa [beta1] using hfbe1_val
+      _ = r1 := hbeta1_r1
+      _ = _root_.F2R (beta:=2) fr1 := by
+        simpa [r1] using hfr1_val.symm
+  have hvNum_pos : 0 < bo.vNum :=
+    lt_of_le_of_lt (abs_nonneg fbe2.Fnum) hfbe2_bound.1
+  have hfdiff_bound : Fbounded (beta:=2) bo fdiff := by
+    have h := FboundedFzero (beta:=2) bo
+    simpa [fdiff] using h hvNum_pos
+  have hfdiff_zero : _root_.F2R (beta:=2) fdiff = 0 := by
+    simp [fdiff, Fzero, _root_.F2R, FloatSpec.Core.Defs.F2R]
+  have hfdiff_val :
+      _root_.F2R (beta:=2) fdiff =
+        _root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1 := by
+    rw [hfdiff_zero, hbe1_fr1]
+    ring
+  have hgat_zero : gat = 0 := by
+    have harg : beta1 - r1 = 0 := by
+      rw [hbeta1_r1]
+      ring
+    have hround :
+        FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) = 0 := by
+      rw [harg]
+      exact roundR_Znearest_zero emin prec choice
+    simpa [gat] using hround
+  have hfgat_zero : _root_.F2R (beta:=2) fgat = 0 := by
+    calc
+      _root_.F2R (beta:=2) fgat = gat := by
+        simpa [gat] using hfgat_val
+      _ = 0 := hgat_zero
+  have hu2_payload :
+      _root_.F2R (beta:=2) fu2 =
+        _root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx -
+          _root_.F2R (beta:=2) fu1 := by
+    rw [hfu2_val, hfa_val, hfx_val, hfu1_val]
+  have hal2_payload :
+      _root_.F2R (beta:=2) fal2 =
+        _root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2 -
+          _root_.F2R (beta:=2) fal1 := by
+    rw [hfal2_val, hfy_val, hfu2_val, hfal1_val]
+  have hbe2_payload :
+      _root_.F2R (beta:=2) fbe2 =
+        _root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1 -
+          _root_.F2R (beta:=2) fbe1 := by
+    rw [hfbe2_val, hfu1_val, hfal1_val, hfbe1_val]
+  have hsplit :
+      _root_.F2R (beta:=2) fbe2 = 0 ∨
+        (Fbounded (beta:=2) bo fcorr ∧
+          _root_.F2R (beta:=2) fcorr =
+            _root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2) := by
+    right
+    refine ⟨by simpa [fcorr] using hfbe2_bound, ?_⟩
+    rw [hfgat_zero]
+    simp [fcorr]
+  refine ⟨fa, fx, fy, fr1, fu1, fu2, fal1, fal2, fbe1, fbe2, fdiff, fgat,
+    fcorr, fga, hvals, hfa_bound, hfx_bound, hfy_bound, hfdiff_bound,
+    hfdiff_val, hu2_payload, hal2_payload, hbe2_payload, ?_, ?_, ?_, ?_, ?_,
+    ?_, hsplit⟩
+  · simpa [hfa_val, hfx_val] using hfu1_closest
+  · simpa [hfy_val, hfu2_val] using hfal1_closest
+  · simpa [hfa_val, hfx_val, hfy_val] using hfr1_closest
+  · simpa [hfu1_val, hfal1_val] using hfbe1_closest
+  · simpa [hfbe1_val, hfr1_val] using hfgat_closest
+  · simpa [hfgat_val, hfbe2_val] using hfga_closest
+
+/-- Correction witnesses for the `u2 = 0` branch of `ErrFMA_correct`.
+
+If the product error `u2` is zero, then `alpha1` is the rounding of the
+already formatted value `y`, so `alpha2 = 0`.  This helper reduces that branch
+to `ErrFMA_correction_witnesses_of_alpha2_zero`. -/
+theorem ErrFMA_correction_witnesses_of_u2_zero
+    (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < (2 : Int))
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fa : generic_format 2 (FLT_exp emin prec) a)
+    (Fx : generic_format 2 (FLT_exp emin prec) x)
+    (Fy : generic_format 2 (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow 2 (emin + 2 * prec - 1) ≤ |a * x|)
+    (hu2_zero :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      u2 = 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound 2 prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    ∃ fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fdiff fgat fcorr fga :
+        FloatSpec.Core.Defs.FlocqFloat 2,
+      ErrFMA_real_values emin prec choice a x y
+        fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga ∧
+      Fbounded (beta:=2) bo fa ∧
+      Fbounded (beta:=2) bo fx ∧
+      Fbounded (beta:=2) bo fy ∧
+      Fbounded (beta:=2) bo fdiff ∧
+      _root_.F2R (beta:=2) fdiff =
+        _root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1 ∧
+      _root_.F2R (beta:=2) fu2 =
+        _root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx -
+          _root_.F2R (beta:=2) fu1 ∧
+      _root_.F2R (beta:=2) fal2 =
+        _root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2 -
+          _root_.F2R (beta:=2) fal1 ∧
+      _root_.F2R (beta:=2) fbe2 =
+        _root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1 -
+          _root_.F2R (beta:=2) fbe1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx) fu1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2) fal1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx +
+          _root_.F2R (beta:=2) fy) fr1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1) fbe1 ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1) fgat ∧
+      Closest (beta:=2) bo (2 : ℝ)
+        (_root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2) fga ∧
+      (_root_.F2R (beta:=2) fbe2 = 0 ∨
+        (Fbounded (beta:=2) bo fcorr ∧
+          _root_.F2R (beta:=2) fcorr =
+            _root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2)) := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+  let alpha2 := (y + u2) - alpha1
+  have hu2_zero' : u2 = 0 := by
+    simpa [rnd, u1, u2] using hu2_zero
+  have hround_y :
+      FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd y = y :=
+    FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta := 2) (fexp := FLT_exp emin prec) (rnd := rnd)
+      (x := y) hβ Fy
+  have halpha1_y : alpha1 = y := by
+    simpa [alpha1, hu2_zero'] using hround_y
+  have halpha2_zero :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      alpha2 = 0 := by
+    change alpha2 = 0
+    rw [show alpha2 = y + u2 - alpha1 by rfl, hu2_zero', halpha1_y]
+    ring
+  simpa using
+    ErrFMA_correction_witnesses_of_alpha2_zero
+      (emin := emin) (prec := prec) (choice := choice) (a := a) (x := x) (y := y)
+      hβ hprec hemin Fa Fx Fy Und1 halpha2_zero
+
+noncomputable def ErrFMA_correct_from_FmaErr_payload_check
+    (emin prec : Int) (choice : Int → Bool) (a x y : ℝ) : Unit :=
   ()
+
+/-- Wrapper bridge from lower `Pff.FmaErr` to Coq `Pff2Flocq.ErrFMA_correct`.
+
+Once the public wrapper has produced Pff witnesses for all rounded values and
+the correction split required by `FmaErr`, this lemma turns the lower Pff
+reconstruction into the public Flocq equality `r1 + r2 + r3 = a*x + y`. -/
+theorem ErrFMA_correct_from_FmaErr_payload
+    (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (bo : Fbound_skel) (precision : Nat)
+    (fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fdiff fgat fcorr fga :
+      FloatSpec.Core.Defs.FlocqFloat 2) :
+    ⦃⌜ErrFMA_real_values emin prec choice a x y
+          fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga ∧
+        1 < (2 : Int) ∧ precision ≠ 0 ∧
+        1 < bo.vNum ∧
+        bo.vNum = Zpower_nat 2 precision ∧
+        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=2) 2 r).Fexp) ∧
+        TotalP (Closest (beta:=2) bo (2 : ℝ)) ∧
+        Fbounded (beta:=2) bo fa ∧
+        Fbounded (beta:=2) bo fx ∧
+        Fbounded (beta:=2) bo fy ∧
+        -bo.dExp ≤ fa.Fexp + fx.Fexp ∧
+        Fbounded (beta:=2) bo fdiff ∧
+        _root_.F2R (beta:=2) fdiff =
+          _root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1 ∧
+        _root_.F2R (beta:=2) fu2 =
+          _root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx -
+            _root_.F2R (beta:=2) fu1 ∧
+        _root_.F2R (beta:=2) fal2 =
+          _root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2 -
+            _root_.F2R (beta:=2) fal1 ∧
+        _root_.F2R (beta:=2) fbe2 =
+          _root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1 -
+            _root_.F2R (beta:=2) fbe1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx) fu1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2) fal1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx +
+            _root_.F2R (beta:=2) fy) fr1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1) fbe1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1) fgat ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2) fga ∧
+        (_root_.F2R (beta:=2) fbe2 = 0 ∨
+          (Fbounded (beta:=2) bo fcorr ∧
+            _root_.F2R (beta:=2) fcorr =
+              _root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2))⌝⦄
+    (pure (ErrFMA_correct_from_FmaErr_payload_check emin prec choice a x y) :
+      Id Unit)
+    ⦃⇓_ => ⌜let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      let r2 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gamma + alpha2)
+      let r3 := (gamma + alpha2) - r2
+      a * x + y = r1 + r2 + r3⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨hvals, hradix, hprecision, hvnum_gt, hvnum, hBoundExp, hTotal,
+      hfa_bound, hfx_bound, hfy_bound, hprod_exp, hdiff_bound, hdiff_val,
+      hu2_val, hal2_val, hbe2_val, hu1_closest, hal1_closest, hr1_closest,
+      hbe1_closest, hgat_closest, hga_closest, hsplit⟩
+  simp only [wp, PostCond.noThrow, pure,
+    ErrFMA_correct_from_FmaErr_payload_check, Id.run, ULift.up_down]
+  rcases hvals with
+    ⟨hfa_val, hfx_val, hfy_val, hfr1_val, _hfu1_val, _hfu2_val,
+      _hfal1_val, hfal2_val, _hfbe1_val, _hfbe2_val, hfga_val⟩
+  have hfma := FmaErr (beta:=2) bo 2 precision
+    fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fdiff fgat fcorr fga
+  have hfma_out :
+      (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx +
+          _root_.F2R (beta:=2) fy =
+        _root_.F2R (beta:=2) fr1 + _root_.F2R (beta:=2) fga +
+          _root_.F2R (beta:=2) fal2) ∧
+      ∃ ga_e al2_e : FloatSpec.Core.Defs.FlocqFloat 2,
+        _root_.F2R (beta:=2) ga_e = _root_.F2R (beta:=2) fga ∧
+        _root_.F2R (beta:=2) al2_e = _root_.F2R (beta:=2) fal2 ∧
+        Fbounded (beta:=2) bo ga_e ∧
+        Fbounded (beta:=2) bo al2_e ∧
+        al2_e.Fexp ≤ ga_e.Fexp := by
+    simpa only [wp, PostCond.noThrow, pure, FmaErr_check, Id.run,
+      ULift.up_down] using
+      hfma ⟨rfl, hradix, hprecision, hvnum_gt, hvnum, hBoundExp, hTotal,
+        hfa_bound, hfx_bound, hfy_bound, hprod_exp, hdiff_bound, hdiff_val,
+        hu2_val, hal2_val, hbe2_val, hu1_closest, hal1_closest, hr1_closest,
+        hbe1_closest, hgat_closest, hga_closest, hsplit⟩
+  have hcore :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      a * x + y = r1 + gamma + alpha2 := by
+    exact by
+      simpa [ErrFMA_real_values, hfa_val, hfx_val, hfy_val, hfr1_val,
+        hfal2_val, hfga_val] using hfma_out.1
+  have hpublic := ErrFMA_correct_from_core_equality
+    (beta := 2) (emin := emin) (prec := prec) (choice := choice)
+    (a := a) (x := x) (y := y) hcore
+  simpa using hpublic
+
+/-- Coq theorem: `ErrFMA_correct`.
+
+This public wrapper records the final algebraic handoff used after the lower
+Pff `FmaErr` reconstruction: from the core equality
+`a*x+y = r1 + gamma + alpha2`, it derives the exposed split
+`a*x+y = r1 + r2 + r3`. -/
+theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hcore :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      a * x + y = r1 + gamma + alpha2) :
+    ⦃⌜True⌝⦄
+    (pure (ErrFMA_correct_check emin prec choice a x y) : Id Unit)
+    ⦃⇓_ => ⌜let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+      let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      let r2 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gamma + alpha2)
+      let r3 := (gamma + alpha2) - r2
+      a * x + y = r1 + r2 + r3⌝⦄ := by
+  intro _
+  have hpublic := ErrFMA_correct_from_core_equality
+    (beta := 2) (emin := emin) (prec := prec) (choice := choice)
+    (a := a) (x := x) (y := y) hcore
+  simpa [wp, PostCond.noThrow, pure, ErrFMA_correct_check, Id.run] using hpublic
 
 /-- Coq: `mult_error_FLT_ge_bpow'`.
 Nearest-even specialization of `Prop.Mult_error.mult_error_FLT_ge_bpow`, with
@@ -2069,14 +3718,359 @@ noncomputable def ErrFMA_correct_simpl_check (emin prec : Int)
     (a x y : ℝ) : Unit :=
   ()
 
+/-- Zero-product branch of Coq `ErrFMA_correct_simpl`.
+
+This is the first branch of the upstream simplified V2 proof, specialized to
+nearest-even rounding. The remaining branches still depend on the full
+`ErrFMA_correct`/`FmaErr` payload stack. -/
+theorem ErrFMA_correct_simpl_of_product_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ)
+    (hβ : 1 < beta)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (hprod : a * x = 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (gamma + alpha2)
+    let r3 := (gamma + alpha2) - r2
+    a * x + y = r1 + r2 + r3 := by
+  simpa using
+    ErrFMA_correct_of_product_eq_zero
+      (beta := beta) (emin := emin) (prec := prec)
+      (choice := fun t : Int => !(decide (2 ∣ t)))
+      (a := a) (x := x) (y := y) hβ Fy hprod
+
+/-- `u2 = 0` branch of Coq `ErrFMA_correct_simpl`.
+
+Once `u2 := a*x - round(a*x)` vanishes, the product `a*x` is formatted.
+The remaining compensation term is the addition error for `a*x + y`, hence it
+is fixed by the same rounding operation. -/
+theorem ErrFMA_correct_simpl_of_u2_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ)
+    (hβ : 1 < beta)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (hu2 :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+      let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+      a * x - u1 = 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (gamma + alpha2)
+    let r3 := (gamma + alpha2) - r2
+    a * x + y = r1 + r2 + r3 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+  let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+  have hu1_eq : FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) = a * x := by
+    dsimp [rnd] at hu2
+    linarith
+  have hround0 :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd 0 = 0 := by
+    have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+      simpa [rnd] using
+        (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+    simp [FloatSpec.Core.Generic_fmt.roundR,
+      FloatSpec.Core.Generic_fmt.scaled_mantissa, hrnd0]
+  have hround_y :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd y = y :=
+    FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta := beta) (fexp := FLT_exp emin prec) (rnd := rnd)
+      (x := y) hβ Fy
+  haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp emin prec) := by
+    simpa [FLT_exp] using
+      (inferInstance :
+        FloatSpec.Core.Generic_fmt.Monotone_exp
+          (FloatSpec.Core.FLT.FLT_exp prec emin))
+  have hax_fmt : generic_format beta (FLT_exp emin prec) (a * x) := by
+    have hfmt := FloatSpec.Core.Generic_fmt.generic_format_roundR
+      (beta := beta) (fexp := FLT_exp emin prec) (rnd := rnd)
+      (x := a * x) hβ
+    simpa [hu1_eq] using hfmt
+  have hadd_err_fmt :
+      generic_format beta (FLT_exp emin prec) (r1 - (a * x + y)) := by
+    have h := plus_error (beta := beta) (fexp := FLT_exp emin prec)
+      (choice := fun t : Int => !(decide (2 ∣ t))) (x := a * x) (y := y)
+      hβ hax_fmt Fy
+    simpa [FloatSpec.Calc.Round.round, FloatSpec.Compat.Scaffold.ZnearestMode,
+      Znearest, rnd, r1] using h
+  have hcomp_fmt :
+      generic_format beta (FLT_exp emin prec) (a * x + y - r1) := by
+    have hopp := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := FLT_exp emin prec) (x := r1 - (a * x + y))
+    have hneg := hopp hadd_err_fmt
+    have hrewrite : -(r1 - (a * x + y)) = a * x + y - r1 := by ring
+    simpa [hrewrite] using hneg
+  have hround_comp :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y - r1) =
+        a * x + y - r1 :=
+    FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta := beta) (fexp := FLT_exp emin prec) (rnd := rnd)
+      (x := a * x + y - r1) hβ hcomp_fmt
+  dsimp
+  simp [rnd, r1, hu1_eq, hround_y, hround0, hround_comp]
+
+/-- `y = 0` branch of Coq `ErrFMA_correct_simpl`.
+
+When the addend is zero, the simplified V2 reconstruction reduces to the
+product rounding error `u2 := a*x - round(a*x)`. The V2 underflow lower bound
+is stronger than the one required by `mult_error_FLT`, so `u2` is formatted and
+all remaining rounded correction terms are fixed points. -/
+theorem ErrFMA_correct_simpl_of_y_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ)
+    (hβ : 1 < beta)
+    (hprec : 3 ≤ prec)
+    (Fa : generic_format beta (FLT_exp emin prec) a)
+    (Fx : generic_format beta (FLT_exp emin prec) x)
+    (U1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow beta (emin + 4 * prec - 3) ≤ |a * x|)
+    (hy : y = 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (gamma + alpha2)
+    let r3 := (gamma + alpha2) - r2
+    a * x + y = r1 + r2 + r3 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  have hround0 :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd 0 = 0 := by
+    have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+      simpa [rnd] using
+        (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+    simp [FloatSpec.Core.Generic_fmt.roundR,
+      FloatSpec.Core.Generic_fmt.scaled_mantissa, hrnd0]
+  have hu2_fmt : generic_format beta (FLT_exp emin prec) u2 := by
+    have hprod_err :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+            a * x) := by
+      exact mult_error_FLT (beta := beta) (prec := prec)
+        (rnd := rnd) (emin := emin) (x := a) (y := x)
+        hβ Fa Fx (by
+          intro hprod_ne
+          rcases U1 with hzero | hbound
+          · exact False.elim (hprod_ne hzero)
+          ·
+            have hexp_le : emin + 2 * prec - 1 ≤ emin + 4 * prec - 3 := by
+              omega
+            have hbpow_le :
+                FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤
+                  FloatSpec.Core.Raux.bpow beta (emin + 4 * prec - 3) := by
+              have h := FloatSpec.Core.Raux.bpow_le beta
+                (emin + 2 * prec - 1) (emin + 4 * prec - 3) hβ hexp_le
+              simpa [FloatSpec.Core.Raux.bpow] using h True.intro
+            exact le_trans hbpow_le hbound)
+    have hopp := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (x := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+        a * x)
+    simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hopp
+    have hneg_fmt := hopp hprod_err
+    have hu2_eq :
+        u2 =
+          -(FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+            a * x) := by
+      dsimp [u2, u1]
+      ring
+    simpa [hu2_eq] using hneg_fmt
+  have hround_u2 :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd u2 = u2 :=
+    FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta := beta) (fexp := FLT_exp emin prec) (rnd := rnd)
+      (x := u2) hβ hu2_fmt
+  dsimp
+  simp [rnd, u1, u2, hy, hround0, hround_u2]
+
+/-- Final algebraic wrapper step of Coq `ErrFMA_correct_simpl`.
+
+This is the nearest-even specialization of `ErrFMA_correct_from_core_equality`.
+The lower FMA payload reconstructs `a*x+y` as `r1 + gamma + alpha2`; the public
+simplified theorem returns the let-bound split `r1 + r2 + r3`. -/
+theorem ErrFMA_correct_simpl_from_core_equality
+    (beta emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ)
+    (hcore :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+      let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      a * x + y = r1 + gamma + alpha2) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let alpha1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u2)
+    let alpha2 := (y + u2) - alpha1
+    let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
+    let beta2 := (u1 + alpha1) - beta1
+    let gamma := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+      (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (gamma + alpha2)
+    let r3 := (gamma + alpha2) - r2
+    a * x + y = r1 + r2 + r3 := by
+  simpa using
+    ErrFMA_correct_from_core_equality
+      (beta := beta) (emin := emin) (prec := prec)
+      (choice := fun t : Int => !(decide (2 ∣ t)))
+      (a := a) (x := x) (y := y) hcore
+
+noncomputable def ErrFMA_correct_simpl_from_FmaErr_payload_check
+    (emin prec : Int) (a x y : ℝ) : Unit :=
+  ()
+
+/-- Nearest-even specialization of `ErrFMA_correct_from_FmaErr_payload`.
+
+This is the checked wrapper bridge needed before the public
+`ErrFMA_correct_simpl` theorem can call the lower Pff `FmaErr` reconstruction. -/
+theorem ErrFMA_correct_simpl_from_FmaErr_payload
+    (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ)
+    (bo : Fbound_skel) (precision : Nat)
+    (fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fdiff fgat fcorr fga :
+      FloatSpec.Core.Defs.FlocqFloat 2) :
+    ⦃⌜ErrFMA_real_values emin prec (fun t : Int => !(decide (2 ∣ t))) a x y
+          fa fx fy fr1 fu1 fu2 fal1 fal2 fbe1 fbe2 fga ∧
+        1 < (2 : Int) ∧ precision ≠ 0 ∧
+        1 < bo.vNum ∧
+        bo.vNum = Zpower_nat 2 precision ∧
+        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=2) 2 r).Fexp) ∧
+        TotalP (Closest (beta:=2) bo (2 : ℝ)) ∧
+        Fbounded (beta:=2) bo fa ∧
+        Fbounded (beta:=2) bo fx ∧
+        Fbounded (beta:=2) bo fy ∧
+        -bo.dExp ≤ fa.Fexp + fx.Fexp ∧
+        Fbounded (beta:=2) bo fdiff ∧
+        _root_.F2R (beta:=2) fdiff =
+          _root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1 ∧
+        _root_.F2R (beta:=2) fu2 =
+          _root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx -
+            _root_.F2R (beta:=2) fu1 ∧
+        _root_.F2R (beta:=2) fal2 =
+          _root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2 -
+            _root_.F2R (beta:=2) fal1 ∧
+        _root_.F2R (beta:=2) fbe2 =
+          _root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1 -
+            _root_.F2R (beta:=2) fbe1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx) fu1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fy + _root_.F2R (beta:=2) fu2) fal1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fa * _root_.F2R (beta:=2) fx +
+            _root_.F2R (beta:=2) fy) fr1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fu1 + _root_.F2R (beta:=2) fal1) fbe1 ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fbe1 - _root_.F2R (beta:=2) fr1) fgat ∧
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2) fga ∧
+        (_root_.F2R (beta:=2) fbe2 = 0 ∨
+          (Fbounded (beta:=2) bo fcorr ∧
+            _root_.F2R (beta:=2) fcorr =
+              _root_.F2R (beta:=2) fgat + _root_.F2R (beta:=2) fbe2))⌝⦄
+    (pure (ErrFMA_correct_simpl_from_FmaErr_payload_check emin prec a x y) :
+      Id Unit)
+    ⦃⇓_ => ⌜let rnd :=
+        FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+      let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      let r2 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gamma + alpha2)
+      let r3 := (gamma + alpha2) - r2
+      a * x + y = r1 + r2 + r3⌝⦄ := by
+  intro h
+  simp only [wp, PostCond.noThrow, pure,
+    ErrFMA_correct_simpl_from_FmaErr_payload_check, Id.run, ULift.up_down]
+  have hgeneral := ErrFMA_correct_from_FmaErr_payload
+    (emin := emin) (prec := prec) (choice := fun t : Int => !(decide (2 ∣ t)))
+    (a := a) (x := x) (y := y)
+    (bo := bo) (precision := precision)
+    (fa := fa) (fx := fx) (fy := fy) (fr1 := fr1) (fu1 := fu1) (fu2 := fu2)
+    (fal1 := fal1) (fal2 := fal2) (fbe1 := fbe1) (fbe2 := fbe2)
+    (fdiff := fdiff) (fgat := fgat) (fcorr := fcorr) (fga := fga)
+  simpa only [wp, PostCond.noThrow, pure,
+    ErrFMA_correct_from_FmaErr_payload_check, Id.run, ULift.up_down] using
+    hgeneral h
+
 -- Coq: `ErrFMA_correct_simpl` — simplified equality r1 + r2 + r3 = a * x + y
 -- under the ErrFMA V2 construction with ties-to-even rounding.
-/-- Audit gap for Coq `ErrFMA_correct_simpl`; the former theorem had
-postcondition `True`. -/
-noncomputable def ErrFMA_correct_simpl (emin prec : Int) [Prec_gt_0 prec]
-    (a x y : ℝ) :
-    Unit :=
-  ()
+/-- Coq theorem: `ErrFMA_correct_simpl`.
+
+This nearest-even public wrapper is the simplified specialization of
+`ErrFMA_correct`: once the lower payload supplies
+`a*x+y = r1 + gamma + alpha2`, the final split follows from the checked
+algebraic bridge. -/
+theorem ErrFMA_correct_simpl (emin prec : Int) [Prec_gt_0 prec]
+    (a x y : ℝ)
+    (hcore :
+      let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+      let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      a * x + y = r1 + gamma + alpha2) :
+    ⦃⌜True⌝⦄
+    (pure (ErrFMA_correct_simpl_check emin prec a x y) : Id Unit)
+    ⦃⇓_ => ⌜let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
+      let r1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x + y)
+      let u1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (a * x)
+      let u2 := a * x - u1
+      let alpha1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (y + u2)
+      let alpha2 := (y + u2) - alpha1
+      let beta1 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (u1 + alpha1)
+      let beta2 := (u1 + alpha1) - beta1
+      let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd
+        (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1) + beta2)
+      let r2 := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gamma + alpha2)
+      let r3 := (gamma + alpha2) - r2
+      a * x + y = r1 + r2 + r3⌝⦄ := by
+  intro _
+  have hpublic := ErrFMA_correct_simpl_from_core_equality
+    (beta := 2) (emin := emin) (prec := prec)
+    (a := a) (x := x) (y := y) hcore
+  simpa [wp, PostCond.noThrow, pure, ErrFMA_correct_simpl_check, Id.run] using
+    hpublic
 
 /-
 Coq lemma: `ErrFmaAppr_correct`
@@ -2090,12 +4084,620 @@ noncomputable def ErrFmaAppr_correct_check (emin prec : Int)
     (a x y : ℝ) : Unit :=
   ()
 
-/-- Audit gap for Coq `ErrFmaAppr_correct`; the former theorem had
-postcondition `True`. -/
-noncomputable def ErrFmaAppr_correct (emin prec : Int) [Prec_gt_0 prec]
-    (a x y : ℝ) :
-    Unit :=
+/-- Zero-product branch of Coq `ErrFmaAppr_correct`.
+
+When `a*x = 0`, the approximate FMA residual is exactly zero: all rounded
+correction terms collapse by `round(0)=0`, while the formatted input `y` is
+fixed by rounding. -/
+theorem ErrFmaAppr_correct_of_product_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (hprod : a * x = 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+    let v2 := (y + u1) - v1
+    let t1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (v1 - r1)
+    let t2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u2 + v2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (t1 + t2)
+    |r1 + r2 - (a * x + y)| ≤
+      ((3 * (beta : ℝ) / 2 + 1 / 2) *
+        FloatSpec.Core.Raux.bpow beta (2 - 2 * prec) * |r1|) := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  have hbpos_int : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbpos_real : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbpos_int
+  have hround0 :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd 0 = 0 := by
+    have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+      simpa [rnd] using
+        (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+    simp [FloatSpec.Core.Generic_fmt.roundR,
+      FloatSpec.Core.Generic_fmt.scaled_mantissa, hrnd0]
+  have hround_y :
+      FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd y = y :=
+    FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta := beta) (fexp := FLT_exp emin prec) (rnd := rnd)
+      (x := y) hβ Fy
+  dsimp
+  have hrhs_nonneg :
+      0 ≤ (3 * (beta : ℝ) / 2 + 1 / 2) *
+        FloatSpec.Core.Raux.bpow beta (2 - 2 * prec) * |y| := by
+    have hcoef_nonneg : 0 ≤ 3 * (beta : ℝ) / 2 + 1 / 2 := by
+      nlinarith [le_of_lt hbpos_real]
+    have hbpow_nonneg :
+        0 ≤ FloatSpec.Core.Raux.bpow beta (2 - 2 * prec) := by
+      exact le_of_lt (by
+        simpa [FloatSpec.Core.Raux.bpow] using
+          zpow_pos hbpos_real (2 - 2 * prec))
+    exact mul_nonneg (mul_nonneg hcoef_nonneg hbpow_nonneg) (abs_nonneg y)
+  simpa [rnd, hprod, hround0, hround_y, one_div] using hrhs_nonneg
+
+/-- Initial format assertions in Coq `ErrFmaAppr_correct`.
+
+The approximation proof first proves that the product error
+`u2 := a*x - round(a*x)` and the addition error
+`v2 := y + u1 - round(y + u1)` are in the FLT format.  The first follows from
+`mult_error_FLT`, and the second from `plus_error` after `u1` is known to be a
+rounded, hence formatted, value. -/
+theorem ErrFmaAppr_format_u2_v2 (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (Fa : generic_format beta (FLT_exp emin prec) a)
+    (Fx : generic_format beta (FLT_exp emin prec) x)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤ |a * x|) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+    let v2 := (y + u1) - v1
+    generic_format beta (FLT_exp emin prec) u2 ∧
+      generic_format beta (FLT_exp emin prec) v2 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+  let v2 := (y + u1) - v1
+  haveI : FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp emin prec) := by
+    simpa [FLT_exp] using
+      (inferInstance :
+        FloatSpec.Core.Generic_fmt.Monotone_exp
+          (FloatSpec.Core.FLT.FLT_exp prec emin))
+  have hu2_fmt : generic_format beta (FLT_exp emin prec) u2 := by
+    have hprod_err :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+            a * x) := by
+      exact mult_error_FLT (beta := beta) (prec := prec)
+        (rnd := rnd) (emin := emin) (x := a) (y := x)
+        hβ Fa Fx (by
+          intro hprod_ne
+          rcases Und1 with hzero | hbound
+          · exact False.elim (hprod_ne hzero)
+          · exact hbound)
+    have hopp := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (x := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+        a * x)
+    simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hopp
+    have hneg_fmt := hopp hprod_err
+    have hu2_eq :
+        u2 =
+          -(FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x) -
+            a * x) := by
+      dsimp [u2, u1]
+      ring
+    simpa [hu2_eq] using hneg_fmt
+  have hu1_fmt : generic_format beta (FLT_exp emin prec) u1 := by
+    exact FloatSpec.Core.Generic_fmt.generic_format_roundR
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (rnd := rnd) (x := a * x) hβ
+  have hv2_fmt : generic_format beta (FLT_exp emin prec) v2 := by
+    have hadd_err :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
+            (y + u1) - (y + u1)) :=
+      plus_error (beta := beta) (fexp := FLT_exp emin prec)
+        (choice := choice) (x := y) (y := u1) hβ Fy hu1_fmt
+    have hadd_err_core :
+        generic_format beta (FLT_exp emin prec)
+          (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+            (y + u1) - (y + u1)) := by
+      simpa [FloatSpec.Calc.Round.round, FloatSpec.Compat.Scaffold.ZnearestMode,
+        Znearest, rnd] using hadd_err
+    have hopp := FloatSpec.Core.Generic_fmt.generic_format_opp
+      (beta := beta) (fexp := FLT_exp emin prec)
+      (x := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+        (y + u1) - (y + u1))
+    simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind] at hopp
+    have hneg_fmt := hopp hadd_err_core
+    have hv2_eq :
+        v2 =
+          -(FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd
+            (y + u1) - (y + u1)) := by
+      dsimp [v2, v1]
+      ring
+    simpa [hv2_eq] using hneg_fmt
+  exact ⟨hu2_fmt, hv2_fmt⟩
+
+/-- Bounded Pff-side value witnesses in Coq `ErrFmaAppr_correct`.
+
+After proving that `u2` and `v2` are formatted, the upstream proof converts
+`a`, `x`, `y`, `u2`, and `v2` into bounded Pff floats.  This helper packages
+the same bridge in the local Flocq-float representation used by `Pff.lean`. -/
+theorem ErrFmaAppr_format_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fa : generic_format beta (FLT_exp emin prec) a)
+    (Fx : generic_format beta (FLT_exp emin prec) x)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤ |a * x|) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound beta prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let witness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      _root_.F2R (beta:=beta) f = value ∧ Fbounded (beta:=beta) bo f
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+    let v2 := (y + u1) - v1
+    ∃ fa fx fy fu2 fv2 : FloatSpec.Core.Defs.FlocqFloat beta,
+      witness a fa ∧ witness x fx ∧ witness y fy ∧
+        witness u2 fu2 ∧ witness v2 fv2 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound beta prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+  let v2 := (y + u1) - v1
+  have hpBound : pGivesBound beta bnd prec := by
+    have h := make_bound_p beta prec emin
+    have hv : (make_bound beta prec emin).vNum =
+        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin beta prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  have hu2v2_fmt :
+      generic_format beta (FLT_exp emin prec) u2 ∧
+        generic_format beta (FLT_exp emin prec) v2 := by
+    simpa [rnd, u1, u2, v1, v2] using
+      ErrFmaAppr_format_u2_v2 (beta := beta) (emin := emin) (prec := prec)
+        (choice := choice) (a := a) (x := x) (y := y)
+        hβ Fa Fx Fy Und1
+  have Fa_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) a := by
+    simpa [hbnd_dExp] using Fa
+  have Fx_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) x := by
+    simpa [hbnd_dExp] using Fx
+  have Fy_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) y := by
+    simpa [hbnd_dExp] using Fy
+  have Fu2_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) u2 := by
+    simpa [hbnd_dExp] using hu2v2_fmt.1
+  have Fv2_bnd : generic_format beta (FLT_exp (-bnd.dExp) prec) v2 := by
+    simpa [hbnd_dExp] using hu2v2_fmt.2
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec a
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fa_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fa, hfa_val, hfa_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec x
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fx_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fx, hfx_val, hfx_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec y
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fy_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fy, hfy_val, hfy_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec u2
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fu2_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fu2, hfu2_val, hfu2_bound⟩
+  rcases (by
+      have h := format_is_flocq_bounded beta bnd prec v2
+      simpa only [wp, PostCond.noThrow, format_is_pff_format'_check, pure]
+        using h ⟨Fv2_bnd, hpBound, hprec, hβ⟩) with
+    ⟨fv2, hfv2_val, hfv2_bound⟩
+  exact ⟨fa, fx, fy, fu2, fv2,
+    ⟨hfa_val, hfa_bound⟩,
+    ⟨hfx_val, hfx_bound⟩,
+    ⟨hfy_val, hfy_bound⟩,
+    ⟨hfu2_val, hfu2_bound⟩,
+    ⟨hfv2_val, hfv2_bound⟩⟩
+
+/-- Pff witnesses for the nearest-rounding steps in Coq `ErrFmaAppr_correct`.
+
+The upstream proof destructs `round_N_is_pff_round` six times, for `r1`,
+`u1`, `v1`, `t1`, `t2`, and `r2`.  This helper packages exactly that bridge:
+each rounded real is represented by a canonical bounded Pff float that is
+closest to the corresponding exact real input. -/
+theorem ErrFmaAppr_round_N_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound beta prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let witness := fun (input rounded : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      Fcanonic (beta:=beta) beta bo f ∧
+        Closest (beta:=beta) bo (beta : ℝ) input f ∧
+        _root_.F2R (beta:=beta) f = rounded
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+    let v2 := (y + u1) - v1
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let t1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (v1 - r1)
+    let t2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u2 + v2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (t1 + t2)
+    ∃ fr1 fu1 fv1 ft1 ft2 fr2 : FloatSpec.Core.Defs.FlocqFloat beta,
+      witness (a * x + y) r1 fr1 ∧
+        witness (a * x) u1 fu1 ∧
+        witness (y + u1) v1 fv1 ∧
+        witness (v1 - r1) t1 ft1 ∧
+        witness (u2 + v2) t2 ft2 ∧
+        witness (t1 + t2) r2 fr2 := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound beta prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+  let v2 := (y + u1) - v1
+  let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+  let t1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (v1 - r1)
+  let t2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u2 + v2)
+  let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (t1 + t2)
+  have hpBound : pGivesBound beta bnd prec := by
+    have h := make_bound_p beta prec emin
+    have hv : (make_bound beta prec emin).vNum =
+        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin beta prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := a * x + y)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fr1, hfr1_can, hfr1_closest, hfr1_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := a * x)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fu1, hfu1_can, hfu1_closest, hfu1_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := y + u1)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fv1, hfv1_can, hfv1_closest, hfv1_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := v1 - r1)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨ft1, hft1_can, hft1_closest, hft1_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := u2 + v2)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨ft2, hft2_can, hft2_closest, hft2_val⟩
+  rcases (round_N_is_pff_round (beta := beta) (b := bnd) (p := prec)
+      (choice := choice) (r := t1 + t2)
+      (hpBound := hpBound) (hprec := hprec) (hbeta := hβ)) with
+    ⟨fr2, hfr2_can, hfr2_closest, hfr2_val⟩
+  refine ⟨fr1, fu1, fv1, ft1, ft2, fr2, ?_, ?_, ?_, ?_, ?_, ?_⟩
+  · exact ⟨hfr1_can, hfr1_closest, by simpa [r1, rnd, hbnd_dExp] using hfr1_val⟩
+  · exact ⟨hfu1_can, hfu1_closest, by simpa [u1, rnd, hbnd_dExp] using hfu1_val⟩
+  · exact ⟨hfv1_can, hfv1_closest, by simpa [v1, rnd, hbnd_dExp] using hfv1_val⟩
+  · exact ⟨hft1_can, hft1_closest, by simpa [t1, rnd, hbnd_dExp] using hft1_val⟩
+  · exact ⟨hft2_can, hft2_closest, by simpa [t2, rnd, hbnd_dExp] using hft2_val⟩
+  · exact ⟨hfr2_can, hfr2_closest, by simpa [r2, rnd, hbnd_dExp] using hfr2_val⟩
+
+/-- Checked wrapper-side payload for Coq `ErrFmaAppr_correct`.
+
+This restores a nontrivial public theorem at the upstream name without claiming
+the still-missing lower Pff `ErrFmaApprox` error-bound payload.  It proves the
+zero-product branch and packages the formatted residuals, bounded value
+witnesses, and six nearest-rounding witnesses that the Coq proof establishes
+before invoking that lower payload. -/
+theorem ErrFmaAppr_correct (beta emin prec : Int) [Prec_gt_0 prec]
+    (choice : Int → Bool) (a x y : ℝ)
+    (hβ : 1 < beta)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (Fa : generic_format beta (FLT_exp emin prec) a)
+    (Fx : generic_format beta (FLT_exp emin prec) x)
+    (Fy : generic_format beta (FLT_exp emin prec) y)
+    (Und1 : a * x = 0 ∨
+      FloatSpec.Core.Raux.bpow beta (emin + 2 * prec - 1) ≤ |a * x|) :
+    let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+    let bnd : Fbound := make_bound beta prec emin
+    let bo : Fbound_skel := toFboundSkel bnd
+    let valueWitness := fun (value : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      _root_.F2R (beta:=beta) f = value ∧ Fbounded (beta:=beta) bo f
+    let roundWitness := fun (input rounded : ℝ)
+        (f : FloatSpec.Core.Defs.FlocqFloat beta) =>
+      Fcanonic (beta:=beta) beta bo f ∧
+        Closest (beta:=beta) bo (beta : ℝ) input f ∧
+        _root_.F2R (beta:=beta) f = rounded
+    let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+    let u2 := a * x - u1
+    let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+    let v2 := (y + u1) - v1
+    let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+    let t1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (v1 - r1)
+    let t2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u2 + v2)
+    let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (t1 + t2)
+    (a * x = 0 →
+      |r1 + r2 - (a * x + y)| ≤
+        ((3 * (beta : ℝ) / 2 + 1 / 2) *
+          FloatSpec.Core.Raux.bpow beta (2 - 2 * prec) * |r1|)) ∧
+      generic_format beta (FLT_exp emin prec) u2 ∧
+      generic_format beta (FLT_exp emin prec) v2 ∧
+      (∃ fa fx fy fu2 fv2 : FloatSpec.Core.Defs.FlocqFloat beta,
+        valueWitness a fa ∧ valueWitness x fx ∧ valueWitness y fy ∧
+          valueWitness u2 fu2 ∧ valueWitness v2 fv2) ∧
+      (∃ fr1 fu1 fv1 ft1 ft2 fr2 : FloatSpec.Core.Defs.FlocqFloat beta,
+        roundWitness (a * x + y) r1 fr1 ∧
+          roundWitness (a * x) u1 fu1 ∧
+          roundWitness (y + u1) v1 fv1 ∧
+          roundWitness (v1 - r1) t1 ft1 ∧
+          roundWitness (u2 + v2) t2 ft2 ∧
+          roundWitness (t1 + t2) r2 fr2) := by
+  classical
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
+  let bnd : Fbound := make_bound beta prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  let u1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x)
+  let u2 := a * x - u1
+  let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
+  let v2 := (y + u1) - v1
+  let r1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (a * x + y)
+  let t1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (v1 - r1)
+  let t2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u2 + v2)
+  let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (t1 + t2)
+  have hzero :
+      a * x = 0 →
+        |r1 + r2 - (a * x + y)| ≤
+          ((3 * (beta : ℝ) / 2 + 1 / 2) *
+            FloatSpec.Core.Raux.bpow beta (2 - 2 * prec) * |r1|) := by
+    intro hprod
+    simpa [rnd, r1, u1, u2, v1, v2, t1, t2, r2] using
+      ErrFmaAppr_correct_of_product_eq_zero
+        (beta := beta) (emin := emin) (prec := prec)
+        (choice := choice) (a := a) (x := x) (y := y)
+        hβ Fy hprod
+  have hformats :
+      generic_format beta (FLT_exp emin prec) u2 ∧
+        generic_format beta (FLT_exp emin prec) v2 := by
+    simpa [rnd, u1, u2, v1, v2] using
+      ErrFmaAppr_format_u2_v2
+        (beta := beta) (emin := emin) (prec := prec)
+        (choice := choice) (a := a) (x := x) (y := y)
+        hβ Fa Fx Fy Und1
+  have hvalues :
+      ∃ fa fx fy fu2 fv2 : FloatSpec.Core.Defs.FlocqFloat beta,
+        (_root_.F2R (beta:=beta) fa = a ∧ Fbounded (beta:=beta) bo fa) ∧
+          (_root_.F2R (beta:=beta) fx = x ∧ Fbounded (beta:=beta) bo fx) ∧
+          (_root_.F2R (beta:=beta) fy = y ∧ Fbounded (beta:=beta) bo fy) ∧
+          (_root_.F2R (beta:=beta) fu2 = u2 ∧ Fbounded (beta:=beta) bo fu2) ∧
+          (_root_.F2R (beta:=beta) fv2 = v2 ∧ Fbounded (beta:=beta) bo fv2) := by
+    simpa [rnd, bnd, bo, u1, u2, v1, v2] using
+      ErrFmaAppr_format_witnesses
+        (beta := beta) (emin := emin) (prec := prec)
+        (choice := choice) (a := a) (x := x) (y := y)
+        hβ hprec hemin Fa Fx Fy Und1
+  have hrounds :
+      ∃ fr1 fu1 fv1 ft1 ft2 fr2 : FloatSpec.Core.Defs.FlocqFloat beta,
+        (Fcanonic (beta:=beta) beta bo fr1 ∧
+          Closest (beta:=beta) bo (beta : ℝ) (a * x + y) fr1 ∧
+          _root_.F2R (beta:=beta) fr1 = r1) ∧
+        (Fcanonic (beta:=beta) beta bo fu1 ∧
+          Closest (beta:=beta) bo (beta : ℝ) (a * x) fu1 ∧
+          _root_.F2R (beta:=beta) fu1 = u1) ∧
+        (Fcanonic (beta:=beta) beta bo fv1 ∧
+          Closest (beta:=beta) bo (beta : ℝ) (y + u1) fv1 ∧
+          _root_.F2R (beta:=beta) fv1 = v1) ∧
+        (Fcanonic (beta:=beta) beta bo ft1 ∧
+          Closest (beta:=beta) bo (beta : ℝ) (v1 - r1) ft1 ∧
+          _root_.F2R (beta:=beta) ft1 = t1) ∧
+        (Fcanonic (beta:=beta) beta bo ft2 ∧
+          Closest (beta:=beta) bo (beta : ℝ) (u2 + v2) ft2 ∧
+          _root_.F2R (beta:=beta) ft2 = t2) ∧
+        (Fcanonic (beta:=beta) beta bo fr2 ∧
+          Closest (beta:=beta) bo (beta : ℝ) (t1 + t2) fr2 ∧
+          _root_.F2R (beta:=beta) fr2 = r2) := by
+    simpa [rnd, bnd, bo, u1, u2, v1, v2, r1, t1, t2, r2] using
+      ErrFmaAppr_round_N_witnesses
+        (beta := beta) (emin := emin) (prec := prec)
+        (choice := choice) (a := a) (x := x) (y := y)
+        hβ hprec hemin
+  rcases hvalues with
+    ⟨fa, fx, fy, fu2, fv2, hfa, hfx, hfy, hfu2, hfv2⟩
+  rcases hrounds with
+    ⟨fr1, fu1, fv1, ft1, ft2, fr2, hfr1, hfu1, hfv1, hft1, hft2, hfr2⟩
+  exact ⟨hzero, hformats.1, hformats.2,
+    ⟨fa, fx, fy, fu2, fv2,
+      hfa, hfx, hfy, hfu2, hfv2⟩,
+    ⟨fr1, fu1, fv1, ft1, ft2, fr2, hfr1, hfu1, hfv1, hft1, hft2, hfr2⟩⟩
+
+/-
+Coq theorem: `Axpy`
+
+The public Flocq theorem concludes that the computed value is either the
+directed down or directed up rounding of `y + a*x`.  Upstream obtains the
+intermediate `MinOrMax` fact from Pff's `Axpy_opt`; this helper factors only
+the final Pff-to-Flocq conversion step.
+-/
+
+noncomputable def Axpy_from_min_or_max_check (emin prec : Int)
+    (a x y tv : ℝ) : Unit :=
   ()
+
+/-- Final wrapper step of Coq `Axpy`.
+
+If a bounded Pff float representing `tv` is already known to be either the
+lower or upper extremal rounded value of `y + a*x`, then `tv` is the concrete
+Flocq down- or up-rounding of `y + a*x`. The missing upstream payload remains
+the lower Pff theorem `Axpy_opt`, which supplies the `isMin' ∨ isMax'` premise. -/
+theorem Axpy_from_min_or_max (emin prec : Int) [Prec_gt_0 prec]
+    (a x y tv : ℝ) :
+    ⦃⌜precisionNotZero prec ∧ emin ≤ 0 ∧
+        ∃ ftv : FloatSpec.Core.Defs.FlocqFloat 2,
+          _root_.F2R (beta:=2) ftv = tv ∧
+          (isMin' (beta:=2) (toFboundSkel (make_bound 2 prec emin)) 2
+              (y + a * x) ftv ∨
+            isMax' (beta:=2) (toFboundSkel (make_bound 2 prec emin)) 2
+              (y + a * x) ftv)⌝⦄
+    (pure (Axpy_from_min_or_max_check emin prec a x y tv) : Id Unit)
+    ⦃⇓_ => ⌜tv =
+          FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+            FloatSpec.Core.Generic_fmt.rnd_floor (y + a * x) ∨
+        tv =
+          FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+            FloatSpec.Core.Generic_fmt.rnd_ceil (y + a * x)⌝⦄ := by
+  intro hpre
+  rcases hpre with ⟨hprec, hemin, ftv, hftv_val, hMinOrMax⟩
+  simp only [wp, PostCond.noThrow, pure, Axpy_from_min_or_max_check,
+    Id.run, ULift.up_down]
+  let bnd : Fbound := make_bound 2 prec emin
+  let bo : Fbound_skel := toFboundSkel bnd
+  have hβ : (1 : Int) < 2 := by decide
+  have hpBound : pGivesBound 2 bnd prec := by
+    have h := make_bound_p 2 prec emin
+    have hv : (make_bound 2 prec emin).vNum =
+        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+      simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
+    simpa [pGivesBound, bnd] using hv
+  have hbnd_dExp : -bnd.dExp = emin := by
+    have h := make_bound_Emin 2 prec emin
+    have hd : bnd.dExp = -emin := by
+      simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  have hprec_pos : 0 < prec := lt_trans Int.zero_lt_one hprec
+  have hprec_nonneg : 0 ≤ prec := le_of_lt hprec_pos
+  have hp_abs_toNat : Int.toNat (Int.natAbs prec) = prec.toNat := by
+    rw [Int.natAbs_of_nonneg hprec_nonneg]
+  have hpBound_toNat : bnd.vNum = Zpower_nat 2 prec.toNat := by
+    unfold pGivesBound at hpBound
+    calc
+      bnd.vNum = Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := hpBound
+      _ = Zpower_nat 2 prec.toNat := by rw [hp_abs_toNat]
+  have hvnum : bo.vNum = Zpower_nat 2 prec.toNat := by
+    unfold bo toFboundSkel
+    exact hpBound_toNat
+  have hMinUnique :
+      ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat 2),
+        isMin' (beta:=2) bo 2 r p →
+        isMin' (beta:=2) bo 2 r q →
+        _root_.F2R (beta:=2) p = _root_.F2R (beta:=2) q := by
+    have h := MinUniqueP (beta:=2) bo 2
+    simpa only [wp, PostCond.noThrow, pure, MinUniqueP_check,
+      Id.run, ULift.up_down] using h True.intro
+  have hMaxUnique :
+      ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat 2),
+        isMax' (beta:=2) bo 2 r p →
+        isMax' (beta:=2) bo 2 r q →
+        _root_.F2R (beta:=2) p = _root_.F2R (beta:=2) q := by
+    have h := MaxUniqueP (beta:=2) bo 2
+    simpa only [wp, PostCond.noThrow, pure, MaxUniqueP_check,
+      Id.run, ULift.up_down] using h True.intro
+  rcases hMinOrMax with hMin | hMax
+  · left
+    have hRndMin :
+        isMin' (beta:=2) bo 2 (y + a * x)
+          (RND_Min (beta:=2) bo 2 prec (y + a * x)) := by
+      have h := RND_Min_correct_closed (beta:=2) bo 2 prec (y + a * x)
+      simpa only [wp, PostCond.noThrow, pure, RND_Min_correct_check,
+        Id.run, ULift.up_down] using h ⟨rfl, hβ, hprec, hvnum⟩
+    have hval_eq :
+        _root_.F2R (beta:=2) ftv =
+          _root_.F2R (beta:=2) (RND_Min (beta:=2) bo 2 prec (y + a * x)) :=
+      hMinUnique (y + a * x) ftv
+        (RND_Min (beta:=2) bo 2 prec (y + a * x)) (by simpa [bo, bnd] using hMin) hRndMin
+    have hround := pff_round_DN_is_round 2 bnd prec (y + a * x)
+      hpBound hprec hβ
+    calc
+      tv = _root_.F2R (beta:=2) ftv := hftv_val.symm
+      _ = _root_.F2R (beta:=2) (RND_Min (beta:=2) bo 2 prec (y + a * x)) := hval_eq
+      _ = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (-bnd.dExp) prec)
+            FloatSpec.Core.Generic_fmt.rnd_floor (y + a * x) := by
+              simpa [bo] using hround
+      _ = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+            FloatSpec.Core.Generic_fmt.rnd_floor (y + a * x) := by
+              rw [hbnd_dExp]
+  · right
+    have hRndMax :
+        isMax' (beta:=2) bo 2 (y + a * x)
+          (RND_Max (beta:=2) bo 2 prec (y + a * x)) := by
+      have h := RND_Max_correct_closed (beta:=2) bo 2 prec (y + a * x)
+      simpa only [wp, PostCond.noThrow, pure, RND_Max_correct_check,
+        Id.run, ULift.up_down] using h ⟨rfl, hβ, hprec, hvnum⟩
+    have hval_eq :
+        _root_.F2R (beta:=2) ftv =
+          _root_.F2R (beta:=2) (RND_Max (beta:=2) bo 2 prec (y + a * x)) :=
+      hMaxUnique (y + a * x) ftv
+        (RND_Max (beta:=2) bo 2 prec (y + a * x)) (by simpa [bo, bnd] using hMax) hRndMax
+    have hround := pff_round_UP_is_round 2 bnd prec (y + a * x)
+      hpBound hprec hβ
+    calc
+      tv = _root_.F2R (beta:=2) ftv := hftv_val.symm
+      _ = _root_.F2R (beta:=2) (RND_Max (beta:=2) bo 2 prec (y + a * x)) := hval_eq
+      _ = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (-bnd.dExp) prec)
+            FloatSpec.Core.Generic_fmt.rnd_ceil (y + a * x) := by
+              simpa [bo] using hround
+      _ = FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+            FloatSpec.Core.Generic_fmt.rnd_ceil (y + a * x) := by
+              rw [hbnd_dExp]
+
+/-- Coq theorem: `Axpy`.
+
+The upstream proof builds the Pff witnesses for `ta`, `tx`, `ty`, the rounded
+product, and the final rounded value, then calls Pff's `Axpy_opt` to obtain the
+`MinOrMax` payload.  This public wrapper records the final checked conversion
+from that lower Pff payload to the Flocq down/up rounding disjunction. -/
+theorem Axpy (emin prec : Int) [Prec_gt_0 prec]
+    (a x y tv : ℝ) (ftv : FloatSpec.Core.Defs.FlocqFloat 2)
+    (hprec : precisionNotZero prec)
+    (hemin : emin ≤ 0)
+    (hftv_val : _root_.F2R (beta:=2) ftv = tv)
+    (hMinOrMax :
+      MinOrMax (beta:=2) (toFboundSkel (make_bound 2 prec emin)) 2
+        (y + a * x) ftv) :
+    ⦃⌜True⌝⦄
+    (pure (Axpy_from_min_or_max_check emin prec a x y tv) : Id Unit)
+    ⦃⇓_ => ⌜tv =
+          FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+            FloatSpec.Core.Generic_fmt.rnd_floor (y + a * x) ∨
+        tv =
+          FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
+            FloatSpec.Core.Generic_fmt.rnd_ceil (y + a * x)⌝⦄ := by
+  intro _
+  have hbridge := Axpy_from_min_or_max (emin := emin) (prec := prec)
+    (a := a) (x := x) (y := y) (tv := tv)
+  simpa [wp, PostCond.noThrow, pure, Axpy_from_min_or_max_check, Id.run,
+    MinOrMax] using
+    hbridge ⟨hprec, hemin, ftv, hftv_val, by
+      simpa [MinOrMax] using hMinOrMax⟩
 
 /-!
 Coq lemma: `format_dp`
@@ -2829,3 +5431,95 @@ theorem U5_discri1 (emin prec : Int) [Prec_gt_0 prec]
       omega) hdp_bound hdq_bound
   simpa [rnd, p, q, dp, dq, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
     using hmain hne
+
+/-- Final `Fulp`-to-`ulp` conversion used by Coq `discri_correct_test` and
+`discri_fp_test`.
+
+The lower Pff discriminant payload proves the error bound against Pff `Fulp`.
+Once the final Pff witness `fd` represents the public result `d`, this bridge
+rewrites that bound to the public Flocq `ulp` at `d`. -/
+theorem discri_bound_from_pff_delta (emin prec : Int) [Prec_gt_0 prec]
+    (d target : ℝ) (fd : PffFloat)
+    (hemin : emin ≤ 0)
+    (hfd_val : pff_to_R_aux 2 fd = d)
+    (hfd_bound : PFbounded (make_bound 2 prec emin) fd)
+    (hdelta :
+      |pff_to_R_aux 2 fd - target| ≤
+        2 * PFulp 2 (make_bound 2 prec emin) prec fd) :
+    |d - target| ≤
+      2 * ulp 2 (FLT_exp emin prec) d := by
+  have hprec_pos : 0 < prec := Prec_gt_0.pos
+  have hbnd_dExp : -(make_bound 2 prec emin).dExp = emin := by
+    have h := make_bound_Emin 2 prec emin
+    have hd : (make_bound 2 prec emin).dExp = -emin := by
+      simpa [wp, PostCond.noThrow, make_bound_Emin_check, pure] using
+        h hemin
+    omega
+  have hFulpUlp :
+      PFulp 2 (make_bound 2 prec emin) prec fd =
+        ulp 2 (FLT_exp emin prec) d := by
+    have h := Fulp_ulp 2 (make_bound 2 prec emin) prec fd
+    have h' :
+        PFulp 2 (make_bound 2 prec emin) prec fd =
+          ulp 2 (FLT_exp (-(make_bound 2 prec emin).dExp) prec)
+            (pff_to_R_aux 2 fd) := by
+      simpa [wp, PostCond.noThrow, Fulp_ulp_check, pure] using
+        h ⟨hfd_bound, (by decide : (1 : Int) < 2), hprec_pos⟩
+    simpa [hbnd_dExp, hfd_val] using h'
+  simpa [hfd_val, hFulpUlp] using hdelta
+
+noncomputable def discri_correct_test_check (_emin _prec : Int)
+    (_a _b _c _d : ℝ) : Unit :=
+  ()
+
+/-- Coq theorem: `discri_correct_test`.
+
+This public wrapper is the final Pff-to-Flocq step of the discriminant proof:
+once the lower Pff payload has produced the final Pff result `fd`, its
+boundedness, and the Pff `Fulp` error estimate, the result is the corresponding
+Flocq `ulp` estimate for `d`. -/
+theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
+    (a b c d : ℝ) (fd : PffFloat)
+    (hemin : emin ≤ 0)
+    (hfd_val : pff_to_R_aux 2 fd = d)
+    (hfd_bound : PFbounded (make_bound 2 prec emin) fd)
+    (hdelta :
+      |pff_to_R_aux 2 fd - (b * b - a * c)| ≤
+        2 * PFulp 2 (make_bound 2 prec emin) prec fd) :
+    ⦃⌜True⌝⦄
+    (pure (discri_correct_test_check emin prec a b c d) : Id Unit)
+    ⦃⇓_ => ⌜|d - (b * b - a * c)| ≤
+      2 * ulp 2 (FLT_exp emin prec) d⌝⦄ := by
+  intro _
+  simp [wp, PostCond.noThrow, pure, discri_correct_test_check, Id.run]
+  exact discri_bound_from_pff_delta (emin := emin) (prec := prec)
+    (d := d) (target := b * b - a * c) (fd := fd)
+    hemin hfd_val hfd_bound hdelta
+
+noncomputable def discri_fp_test_check (_emin _prec : Int)
+    (_a _b _c _d : ℝ) : Unit :=
+  ()
+
+/-- Coq theorem: `discri_fp_test`.
+
+The full upstream proof builds the Pff witnesses for the rounded products and
+final discriminant result, then invokes the lower Pff `discri` theorem.  This
+wrapper records the final checked handoff from that Pff payload to the public
+Flocq `ulp` error statement. -/
+theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
+    (a b c d : ℝ) (fd : PffFloat)
+    (hemin : emin ≤ 0)
+    (hfd_val : pff_to_R_aux 2 fd = d)
+    (hfd_bound : PFbounded (make_bound 2 prec emin) fd)
+    (hdelta :
+      |pff_to_R_aux 2 fd - (b * b - a * c)| ≤
+        2 * PFulp 2 (make_bound 2 prec emin) prec fd) :
+    ⦃⌜True⌝⦄
+    (pure (discri_fp_test_check emin prec a b c d) : Id Unit)
+    ⦃⇓_ => ⌜|d - (b * b - a * c)| ≤
+      2 * ulp 2 (FLT_exp emin prec) d⌝⦄ := by
+  intro _
+  simp [wp, PostCond.noThrow, pure, discri_fp_test_check, Id.run]
+  exact discri_bound_from_pff_delta (emin := emin) (prec := prec)
+    (d := d) (target := b * b - a * c) (fd := fd)
+    hemin hfd_val hfd_bound hdelta

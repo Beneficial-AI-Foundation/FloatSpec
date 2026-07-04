@@ -28,12 +28,24 @@ def Rnd_odd_pt (x f : ℝ) : Prop :=
        FloatSpec.Core.Generic_fmt.canonical beta fexp g ∧
        g.Fnum % 2 ≠ 0))
 
+/-- Coq (`Round_odd.v`): `Definition Rnd_odd`.
+
+A rounding function is round-to-odd when every output satisfies the
+pointwise round-to-odd predicate. -/
+def Rnd_odd (rnd : ℝ → ℝ) : Prop :=
+  ∀ x : ℝ, Rnd_odd_pt (beta := beta) (fexp := fexp) x (rnd x)
+
 /-- Round to odd rounding mode -/
 noncomputable def Zodd : ℝ → Int := fun x =>
   let n := FloatSpec.Core.Raux.Zfloor x
   if x = (n : ℝ) then n
   else if n % 2 = 0 then FloatSpec.Core.Raux.Zceil x
   else n
+
+/-- Coq (`Round_odd.v`): `Definition Zrnd_odd`.
+
+Public Flocq-name wrapper for the integer round-to-odd mode. -/
+noncomputable def Zrnd_odd : ℝ → Int := Zodd
 
 /-- `Calc.Round` wrapper for Flocq's round-to-odd integer mode. -/
 noncomputable def oddMode : FloatSpec.Calc.Round.Mode where
@@ -859,7 +871,7 @@ private lemma roundR_nearest_eq_DN_of_lt_mid
   have hZ :
       FloatSpec.Core.Generic_fmt.Znearest choice sm = n := by
     have h := FloatSpec.Core.Generic_fmt.Znearest_imp choice sm n hdist_lt
-    simpa [FloatSpec.Core.Generic_fmt.Znearest_imp_check, Std.Do.wp,
+    simpa [Std.Do.wp,
       Std.Do.PostCond.noThrow, Id.run, pure] using h
   calc
     FloatSpec.Core.Generic_fmt.roundR beta fexp
@@ -958,7 +970,7 @@ private lemma roundR_nearest_eq_UP_of_mid_lt
   have hZ :
       FloatSpec.Core.Generic_fmt.Znearest choice sm = n := by
     have h := FloatSpec.Core.Generic_fmt.Znearest_imp choice sm n hdist_lt
-    simpa [FloatSpec.Core.Generic_fmt.Znearest_imp_check, Std.Do.wp,
+    simpa [Std.Do.wp,
       Std.Do.PostCond.noThrow, Id.run, pure] using h
   calc
     FloatSpec.Core.Generic_fmt.roundR beta fexp

@@ -395,10 +395,9 @@ theorem relative_error_N (x : ℝ)
         FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
         FloatSpec.Compat.Scaffold.ZnearestMode, e, sm, zn]
     have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
-      have htrip := FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm
-      simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-        FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, zn, abs_sub_comm,
-        Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip trivial
+      have htrip := FloatSpec.Core.Generic_fmt.Znearest_half choice sm
+      simpa [zn, abs_sub_comm,
+        Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip
     have hdiff :
         FloatSpec.Calc.Round.round beta fexp (Znearest choice) x - x =
           ((zn : ℝ) - sm) * (beta : ℝ) ^ e := by
@@ -590,9 +589,8 @@ theorem relative_error_N_round (h_pos : 0 < p) (x : ℝ)
       simp [rx, rnd, zn, sm, e, FloatSpec.Core.Generic_fmt.roundR]
     have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
       have h :=
-        (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
-      simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-        FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, zn, abs_sub_comm,
+        (FloatSpec.Core.Generic_fmt.Znearest_half choice sm)
+      simpa [zn, abs_sub_comm,
         Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using h
     have hlocal : |rx - x| ≤ (1 / 2 : ℝ) * (beta : ℝ) ^ e := by
       have hdiff : rx - x = ((zn : ℝ) - sm) * (beta : ℝ) ^ e := by
@@ -926,9 +924,8 @@ theorem relative_error_N_FLX (hβ : 1 < beta) (x : ℝ) :
         FloatSpec.Compat.Scaffold.ZnearestMode, fexpFLX, e, sm, zn]
     have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
       have h :=
-        (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm) True.intro
-      simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-        FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, zn, abs_sub_comm,
+        (FloatSpec.Core.Generic_fmt.Znearest_half choice sm)
+      simpa [zn, abs_sub_comm,
         Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using h
     have hlocal :
         |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) x - x| ≤
@@ -1010,14 +1007,12 @@ private lemma Znearest_error_le_scaled (choice : Int → Bool) (N : Int) (y : �
   have hcases :
       FloatSpec.Core.Generic_fmt.Znearest choice y = FloatSpec.Core.Raux.Zfloor y ∨
         FloatSpec.Core.Generic_fmt.Znearest choice y = FloatSpec.Core.Raux.Zceil y := by
-    have h := (FloatSpec.Core.Generic_fmt.Znearest_DN_or_UP choice y) True.intro
-    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using h
+    exact FloatSpec.Core.Generic_fmt.Znearest_DN_or_UP choice y
   have hhalf :
       |((FloatSpec.Core.Generic_fmt.Znearest choice y : Int) : ℝ) - y| ≤
         (1 / 2 : ℝ) := by
-    have h := (FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice y) True.intro
-    simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-      FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, abs_sub_comm,
+    have h := (FloatSpec.Core.Generic_fmt.Znearest_half choice y)
+    simpa [abs_sub_comm,
       Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using h
   rcases hcases with hfloor | hceil
   · have hfloor_le : ((FloatSpec.Core.Raux.Zfloor y : Int) : ℝ) ≤ y := by
@@ -1797,10 +1792,9 @@ lemma error_N_FLT_aux (x : ℝ) (hβ : 1 < beta) (h_pos : 0 < x) :
         FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
         FloatSpec.Compat.Scaffold.ZnearestMode, fexpFLT, e, sm, zn]
     have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
-      have htrip := FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm
-      simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-        FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, zn, abs_sub_comm,
-        Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip trivial
+      have htrip := FloatSpec.Core.Generic_fmt.Znearest_half choice sm
+      simpa [zn, abs_sub_comm,
+        Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip
     refine ⟨0, FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x - x,
       ?_, ?_, ?_, ?_⟩
     · have hrhs : 0 ≤ (1 / 2 : ℝ) * (beta : ℝ) ^ (-prec + 1) :=
@@ -1895,10 +1889,9 @@ theorem relative_error_N_FLT'_ex (x : ℝ) (hβ : 1 < beta) :
           FloatSpec.Core.Generic_fmt.scaled_mantissa, Znearest,
           FloatSpec.Compat.Scaffold.ZnearestMode, fexpFLT, e, sm, zn]
       have hnearest : |(zn : ℝ) - sm| ≤ (1 / 2 : ℝ) := by
-        have htrip := FloatSpec.Core.Generic_fmt.Znearest_half_theorem choice sm
-        simpa [FloatSpec.Core.Generic_fmt.Znearest_half_check,
-          FloatSpec.Core.Generic_fmt.Znearest_N_strict_check, zn, abs_sub_comm,
-          Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip trivial
+        have htrip := FloatSpec.Core.Generic_fmt.Znearest_half choice sm
+        simpa [zn, abs_sub_comm,
+          Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip
       refine ⟨0, FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x - x,
         ?_, ?_, ?_, ?_⟩
       · simpa using u_rod1pu_ro_pos (beta := beta) (prec := prec) hβ

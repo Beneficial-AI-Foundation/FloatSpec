@@ -6,14 +6,14 @@
       "admit": 0,
       "axiom": 0,
       "lean_files": 7,
-      "placeholder": 6,
+      "placeholder": 5,
       "sorry": 0
     },
     "Core": {
       "admit": 0,
       "axiom": 0,
       "lean_files": 16,
-      "placeholder": 31,
+      "placeholder": 30,
       "sorry": 0
     },
     "ErrorBound": {
@@ -53,7 +53,7 @@
     }
   },
   "lean_files": 58,
-  "placeholder_semantics_count": 58,
+  "placeholder_semantics_count": 56,
   "sorry_count": 0,
   "spec_weakened_count": 0
 }
