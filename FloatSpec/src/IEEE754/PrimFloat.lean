@@ -1112,4 +1112,42 @@ theorem Prim2B_B2Prim (x : PrimBinaryFloat) :
   rw [hB2Prim]
   simpa [Prim2B, Prim2SF] using SF2B_B2SF x
 
+private def specRoundNearestEven (m : Int) (l : Loc) : Int :=
+  FloatSpec.Calc.Round.cond_incr
+    (FloatSpec.Calc.Round.round_N (!(decide (2 ∣ m))) l) m
+
+private theorem specRoundNearestEven_eq_choiceMode
+    (s : Bool) (m : Int) (l : Loc) :
+    specRoundNearestEven m l = choice_mode RoundingMode.RNE s m l := by
+  cases l with
+  | loc_Exact => rfl
+  | loc_Inexact c =>
+      cases c <;> simp [specRoundNearestEven, choice_mode,
+        FloatSpec.Calc.Round.cond_incr, FloatSpec.Calc.Round.round_N]
+
+-- Coq `SpecFloat.binary_round_aux`, specialized to primitive binary64.
+noncomputable def binary_round_aux (sx : Bool) (mx ex : Int) (lx : Loc) :
+    StandardFloat :=
+  let first := bsn_shr_fexp (prec:=primPrec) (emax:=primEmax) mx ex lx
+  let roundedMant :=
+    specRoundNearestEven first.1.shr_m (loc_of_shr_record first.1)
+  let second := bsn_shr_fexp (prec:=primPrec) (emax:=primEmax)
+    roundedMant first.2 FloatSpec.Calc.Bracket.Location.loc_Exact
+  if second.1.shr_m = 0 then
+    StandardFloat.S754_zero sx
+  else if 0 < second.1.shr_m then
+    binary_fit_aux (prec:=primPrec) (emax:=primEmax)
+      RoundingMode.RNE sx second.1.shr_m.toNat second.2
+  else
+    StandardFloat.S754_nan
+
+-- Coq `PrimFloat.v:binary_round_aux_equiv`.
+theorem binary_round_aux_equiv (sx : Bool) (mx ex : Int) (lx : Loc) :
+    binary_round_aux sx mx ex lx =
+      _root_.binary_round_aux (prec:=primPrec) (emax:=primEmax)
+        RoundingMode.RNE sx mx ex lx := by
+  unfold binary_round_aux _root_.binary_round_aux
+  simp (config := { zeta := true })
+    [specRoundNearestEven_eq_choiceMode sx]
+
 end FaithfulPrimFloat

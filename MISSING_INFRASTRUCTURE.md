@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 92.
+- Active semantic gap candidates still listed below: 91.
 - Files with at least one active listed candidate: 2.
-- Counterpart audit coverage for the active list: 92/92 names have been
+- Counterpart audit coverage for the active list: 91/91 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 92 active
+Fix the remaining Flocq import gaps by working through the 91 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1695,7 +1695,7 @@ explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
 
-#### `IEEE754/PrimFloat.v` (6)
+#### `IEEE754/PrimFloat.v` (5)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
@@ -1741,7 +1741,6 @@ infinities, the unique NaN, and bounded finite values. The existing
 evidence. Focused `lake env lean FloatSpec/src/IEEE754/PrimFloat.lean`
 passed. Therefore `Prim2B` and `B2Prim` are removed from the active list.
 
-- `binary_round_aux_equiv` (Lemma, upstream line 133)
 - `mul_equiv` (Theorem, upstream line 143)
 - `binary_round_equiv` (Lemma, upstream line 161)
 - `binary_normalize_equiv` (Lemma, upstream line 170)
@@ -1777,7 +1776,25 @@ and rewrites with `round_nearest_even_equiv`. Current Lean still has only the
 ports of Flocq `binary_round_aux`/`binary_round`/`binary_normalize`. Adding an
 exact-name theorem over those local wrappers would be helper-only or
 tautological rather than the primitive-float/Flocq payload, so
-`binary_round_aux_equiv` remains active.
+`binary_round_aux_equiv` remained active at that time.
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_204757` restored
+`FaithfulPrimFloat.binary_round_aux_equiv` with `result = proved` and a passing
+local target gate. The new `FaithfulPrimFloat.binary_round_aux` independently
+mirrors upstream `SpecFloat.binary_round_aux` for fixed binary64: it performs
+the same two `bsn_shr_fexp` passes and `binary_fit_aux` step, but selects the
+mantissa with its own SpecFloat nearest-even operation. The equivalence proof
+unfolds that algorithm and the root Flocq `binary_round_aux`, then rewrites the
+only differing operation by the local nearest-even/`choice_mode RNE`
+equivalence, matching upstream `PrimFloat.v:134-142`. Manual follow-up kept
+this helper wholly inside `FaithfulPrimFloat`, with no dependency on the
+real-only experimental bridge. Focused Lean checking, the zero-finding
+placeholder/status audits, and the full 3345-job `lake build` all passed.
+Therefore `binary_round_aux_equiv` is removed from the active list; its older
+blocker note above is retained as historical evidence of the infrastructure
+that was missing before `bsn_shr_fexp` and the faithful primitive carrier were
+restored.
 
 2026-07-17 blocker note: harness attempt
 `.change_log/codex_attempt_20260717_030122` rechecked upstream
