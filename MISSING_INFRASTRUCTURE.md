@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 80.
+- Active semantic gap candidates still listed below: 78.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 80/80 names have been
+- Counterpart audit coverage for the active list: 78/78 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 79 active
+Fix the remaining Flocq import gaps by working through the 78 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2095,9 +2095,28 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `Veltkamp_aux_aux` is removed from the
 active list, and `Veltkamp_aux` is next.
 
-#### `Pff/Pff.v` (79)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_035252` correctly classified exact public
+`Veltkamp_aux` as blocked without retaining source changes: the missing step
+was a tight reduced-bound representative for `Fplus p q`. The manual repair
+restored the exact upstream conjunction and existential payload under only the
+expanded Veltkamp section context. A private residual lemma composes
+`eqEqual`, `ClosestUlp`, `ClosestExp`, and `hxExact`. A second private lemma
+uses `eqGe` to bound the exact sum's mantissa, applies `FboundedMbound` at
+precision `t - s`, and normalizes the result into a canonical same-value
+representative. The public theorem applies `Veltkamp_aux_aux` and
+`ImplyClosest`, then derives `(s : Int) + x.Fexp <= hx'.Fexp` with
+`Fcanonic_Rle_Zle`. The focused Lean process exited 0, `git diff --check`
+passed, placeholder/status audits reported zero findings, and the full
+3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_Veltkamp_aux_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `Veltkamp_aux` is removed from the active list,
+and `VeltkampEven1` is next.
 
-- `Veltkamp_aux` (Lemma, upstream line 14021)
+#### `Pff/Pff.v` (78)
+
 - `VeltkampEven1` (Lemma, upstream line 14188)
 - `VeltkampEven2` (Lemma, upstream line 14483)
 - `Veltkamp_pos` (Lemma, upstream line 14709)
@@ -6879,7 +6898,7 @@ Statement-level checks performed for the first 35 active Pff entries:
   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
   inequality from only the upstream Veltkamp section hypotheses.
-- `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`,
+- `VeltkampEven1`,
   `VeltkampEven2`, `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`,
   `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
@@ -6888,6 +6907,9 @@ Statement-level checks performed for the first 35 active Pff entries:
   Veltkamp error bound and reduced witness from rounded intermediate
   products/sums. They are therefore missing lower Pff payloads, not hidden
   under the public wrapper.
+- `Veltkamp_aux_aux` and `Veltkamp_aux` are now restored as exact public Lean
+  theorems in `FloatSpec/src/Pff/Pff.lean`; they are no longer inferred from
+  the higher-level wrapper and no longer belong to this missing-payload group.
 - `bimplybplusNorm` was restored as exact public Lean theorem
   `FloatSpec/src/Pff/Pff.lean:bimplybplusNorm`: from `Fbounded b f` and
   `F2R f ≠ 0`, it constructs `Fnormalize radix (plusExp b) t f`, preserves
