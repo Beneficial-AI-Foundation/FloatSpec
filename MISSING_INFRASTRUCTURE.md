@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 69.
+- Active semantic gap candidates still listed below: 68.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 69/69 names have been
+- Counterpart audit coverage for the active list: 68/68 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 69 active
+Fix the remaining Flocq import gaps by working through the 68 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2281,9 +2281,26 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `Closestbbplus` is removed from the active
 list, and `EvenClosestbplusb` is next.
 
-#### `Pff/Pff.v` (69)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_071155` left the exact
+`EvenClosestbplusb` payload unchanged and did not run a build. The manual
+repair restored exact public `EvenClosestbplusb`, the upstream restriction of
+nearest-even closestness from `plusExp b0 t` back to `b0`, with no extra
+premises. Ordinary closestness restricts through exact `Closestbplusb`. In the
+normal branch, canonical uniqueness identifies the normalizations under the
+two bounds and transfers normalized parity; in the subnormal branch,
+`ClosestUlp` and minimum-unit discreteness force exactness, which supplies the
+required uniqueness alternative. The focused Lean process exited 0,
+`git diff --check` passed, placeholder/status audits reported zero findings,
+and the full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is
+absent from this checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_EvenClosestbplusb_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `EvenClosestbplusb` is removed from the
+active list, and `ClosestClosest` is next.
 
-- `EvenClosestbplusb` (Lemma, upstream line 15287)
+#### `Pff/Pff.v` (68)
+
 - `ClosestClosest` (Lemma, upstream line 15367)
 - `EvenClosestbbplus` (Lemma, upstream line 15448)
 - `VeltkampS` (Lemma, upstream line 15559)
@@ -7073,17 +7090,19 @@ Statement-level checks performed for the first 35 active Pff entries:
   `F2R f ≠ 0`, it constructs `Fnormalize radix (plusExp b) t f`, preserves
   `F2R`, and rules out the subnormal branch using the original bounded
   exponent and the `plusExp` first-normal threshold.
-- `EvenClosestbplusb`, `ClosestClosest`, and
-  `EvenClosestbbplus` have no faithful counterpart.
+- `ClosestClosest` and `EvenClosestbbplus` have no faithful counterpart.
   Lean has `Closestbplusb`, but that is the reverse restriction direction
   from `plusExp b` closestness plus a bound proof back to `b` closestness.
-  Upstream `EvenClosestbplusb` and `EvenClosestbbplus` add nearest-even side
-  conditions in the two directions. The local theorem is not a replacement
-  for either missing even-closest theorem.
+  Upstream `EvenClosestbbplus` adds the nearest-even side condition in the
+  extension direction. The local theorem is not a replacement for that
+  missing even-closest theorem.
 - `Closestbbplus` is now restored as the exact public extension theorem from
   `Closest b0` to `Closest (plusExp b0 t)` in
   `FloatSpec/src/Pff/Pff.lean`; together with existing reverse-direction
   `Closestbplusb`, both upstream closest-bound directions are now present.
+- `EvenClosestbplusb` is now restored as the exact public nearest-even
+  restriction theorem from `plusExp b0 t` to `b0` in
+  `FloatSpec/src/Pff/Pff.lean`.
 
 Updated status: active Pff entries 1-35 are confirmed real semantic gaps or
 unported section lemmas, not renamed/split complete ports. Later restorations
