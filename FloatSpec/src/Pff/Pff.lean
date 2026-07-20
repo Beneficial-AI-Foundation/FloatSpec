@@ -38282,6 +38282,421 @@ theorem Axpy_u_lower_from_closest_sum {beta : Int}
     Id.run, ULift.up_down, eps, U] using
     hlower ⟨hsum_pos, hsum_error⟩
 
+/-- A closest subnormal radix-2 result is an exact sum when both inputs are
+bounded. Any distinct result has an adjacent bounded minimum-exponent float
+strictly closer to the exact sum. -/
+private theorem closest_sum_eq_of_subnormal
+    (b : Fbound_skel)
+    (t y u : FloatSpec.Core.Defs.FlocqFloat 2)
+    (htBound : Fbounded (beta:=2) b t)
+    (hyBound : Fbounded (beta:=2) b y)
+    (huClosest : Closest (beta:=2) b (2 : ℝ)
+      (_root_.F2R (beta:=2) t + _root_.F2R (beta:=2) y) u)
+    (huSubnormal : Fsubnormal (beta:=2) 2 b u)
+    (hvNum_gt : 1 < b.vNum) :
+    _root_.F2R (beta:=2) u =
+      _root_.F2R (beta:=2) t + _root_.F2R (beta:=2) y := by
+  have htExp : -b.dExp ≤ t.Fexp := htBound.2
+  have hyExp : -b.dExp ≤ y.Fexp := hyBound.2
+  let nt : Nat := Int.natAbs (t.Fexp - (-b.dExp))
+  let ny : Nat := Int.natAbs (y.Fexp - (-b.dExp))
+  have hnt : (nt : Int) = t.Fexp - (-b.dExp) := by
+    simpa [nt] using
+      Int.natAbs_of_nonneg (by omega : 0 ≤ t.Fexp - (-b.dExp))
+  have hny : (ny : Int) = y.Fexp - (-b.dExp) := by
+    simpa [ny] using
+      Int.natAbs_of_nonneg (by omega : 0 ≤ y.Fexp - (-b.dExp))
+  let ts : FloatSpec.Core.Defs.FlocqFloat 2 := Fshift (beta:=2) 2 nt t
+  let ys : FloatSpec.Core.Defs.FlocqFloat 2 := Fshift (beta:=2) 2 ny y
+  have htsExp : ts.Fexp = -b.dExp := by
+    simp only [ts, Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rw [hnt]
+    omega
+  have hysExp : ys.Fexp = -b.dExp := by
+    simp only [ys, Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rw [hny]
+    omega
+  have htsVal : _root_.F2R (beta:=2) ts = _root_.F2R (beta:=2) t := by
+    simpa [ts] using Fshift_value (beta:=2) 2 nt t rfl (by decide)
+  have hysVal : _root_.F2R (beta:=2) ys = _root_.F2R (beta:=2) y := by
+    simpa [ys] using Fshift_value (beta:=2) 2 ny y rfl (by decide)
+  let q : ℝ := (2 : ℝ) ^ (-b.dExp)
+  let sumNum : Int := ts.Fnum + ys.Fnum
+  have hqPos : 0 < q := zpow_pos (by norm_num) _
+  have htVal : _root_.F2R (beta:=2) t = (ts.Fnum : ℝ) * q := by
+    rw [← htsVal]
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, htsExp, q]
+  have hyVal : _root_.F2R (beta:=2) y = (ys.Fnum : ℝ) * q := by
+    rw [← hysVal]
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hysExp, q]
+  have huVal : _root_.F2R (beta:=2) u = (u.Fnum : ℝ) * q := by
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, huSubnormal.2.1, q]
+  have hsumVal :
+      _root_.F2R (beta:=2) t + _root_.F2R (beta:=2) y =
+        (sumNum : ℝ) * q := by
+    rw [htVal, hyVal]
+    simp only [sumNum, Int.cast_add]
+    ring
+  by_contra hne
+  have hnumNe : u.Fnum ≠ sumNum := by
+    intro hnum
+    apply hne
+    rw [huVal, hsumVal, hnum]
+  have huSmall : |2 * u.Fnum| < b.vNum := huSubnormal.2.2
+  rw [abs_lt] at huSmall
+  rcases lt_or_gt_of_ne hnumNe with hlt | hgt
+  · let g : FloatSpec.Core.Defs.FlocqFloat 2 :=
+      ⟨u.Fnum + 1, -b.dExp⟩
+    have hgNum : |u.Fnum + 1| < b.vNum := by
+      rw [abs_lt]
+      constructor <;> omega
+    have hgBound : Fbounded (beta:=2) b g := by
+      exact ⟨by simpa [g] using hgNum, by simp [g]⟩
+    have hgVal : _root_.F2R (beta:=2) g = ((u.Fnum + 1 : Int) : ℝ) * q := by
+      simp [g, q, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hdist := huClosest.2 g hgBound
+    rw [huVal, hsumVal, hgVal] at hdist
+    have hltReal : (u.Fnum : ℝ) < (sumNum : ℝ) := by
+      exact_mod_cast hlt
+    have hstepReal : ((u.Fnum + 1 : Int) : ℝ) ≤ (sumNum : ℝ) := by
+      exact_mod_cast (by omega : u.Fnum + 1 ≤ sumNum)
+    have hleftNonpos :
+        (u.Fnum : ℝ) * q - (sumNum : ℝ) * q ≤ 0 := by
+      nlinarith
+    have hrightNonpos :
+        ((u.Fnum + 1 : Int) : ℝ) * q - (sumNum : ℝ) * q ≤ 0 := by
+      nlinarith
+    rw [abs_of_nonpos hleftNonpos, abs_of_nonpos hrightNonpos] at hdist
+    push_cast at hdist
+    nlinarith
+  · let g : FloatSpec.Core.Defs.FlocqFloat 2 :=
+      ⟨u.Fnum - 1, -b.dExp⟩
+    have hgNum : |u.Fnum - 1| < b.vNum := by
+      rw [abs_lt]
+      constructor <;> omega
+    have hgBound : Fbounded (beta:=2) b g := by
+      exact ⟨by simpa [g] using hgNum, by simp [g]⟩
+    have hgVal : _root_.F2R (beta:=2) g = ((u.Fnum - 1 : Int) : ℝ) * q := by
+      simp [g, q, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hdist := huClosest.2 g hgBound
+    rw [huVal, hsumVal, hgVal] at hdist
+    have hgtReal : (sumNum : ℝ) < (u.Fnum : ℝ) := by
+      exact_mod_cast hgt
+    have hstepReal : (sumNum : ℝ) ≤ ((u.Fnum - 1 : Int) : ℝ) := by
+      exact_mod_cast (by omega : sumNum ≤ u.Fnum - 1)
+    have hleftNonneg :
+        0 ≤ (u.Fnum : ℝ) * q - (sumNum : ℝ) * q := by
+      nlinarith
+    have hrightNonneg :
+        0 ≤ ((u.Fnum - 1 : Int) : ℝ) * q - (sumNum : ℝ) * q := by
+      nlinarith
+    rw [abs_of_nonneg hleftNonneg, abs_of_nonneg hrightNonneg] at hdist
+    push_cast at hdist
+    nlinarith
+
+private theorem UlpFlessuGe_coefficient_bound
+    (eps eps2 D c A T Y U : ℝ)
+    (hden : 0 < 1 - eps) (hsum : 0 < 1 + eps) (hD : 0 < D)
+    (hcoef : 0 ≤ 1 - eps2)
+    (hT : |T| ≤ (|A| + c) * (1 - eps)⁻¹)
+    (hU : (|Y| - |T|) * (1 + eps)⁻¹ ≤ |U|)
+    (heps2 : eps2 = 2 * eps) :
+    (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) -
+      (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|) -
+      c * ((2 * D)⁻¹ +
+        (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) ≤
+    (4 * D)⁻¹ * (|U| - (|U| * eps2 + 2 * c)) := by
+  have hden_ne : 1 - eps ≠ 0 := ne_of_gt hden
+  have hsum_ne : 1 + eps ≠ 0 := ne_of_gt hsum
+  have hD_ne : D ≠ 0 := ne_of_gt hD
+  have hprod_pos : 0 < 4 * D * (1 + eps) := by nlinarith
+  have hprod2_pos : 0 < 4 * D := by nlinarith
+  have hK_nonneg : 0 ≤ (4 * D * (1 + eps))⁻¹ * (1 - eps2) := by
+    exact mul_nonneg (inv_nonneg.mpr (le_of_lt hprod_pos)) hcoef
+  have hround_sub : |Y| - (|A| + c) * (1 - eps)⁻¹ ≤ |Y| - |T| := by
+    linarith [hT]
+  have hstep1 :
+      (4 * D * (1 + eps))⁻¹ * (1 - eps2) *
+          (|Y| - (|A| + c) * (1 - eps)⁻¹) ≤
+        (4 * D * (1 + eps))⁻¹ * (1 - eps2) * (|Y| - |T|) := by
+    exact mul_le_mul_of_nonneg_left hround_sub hK_nonneg
+  have hK2_nonneg : 0 ≤ (4 * D)⁻¹ * (1 - eps2) := by
+    exact mul_nonneg (inv_nonneg.mpr (le_of_lt hprod2_pos)) hcoef
+  have hstep2 :
+      (4 * D)⁻¹ * (1 - eps2) * ((|Y| - |T|) * (1 + eps)⁻¹) ≤
+        (4 * D)⁻¹ * (1 - eps2) * |U| := by
+    exact mul_le_mul_of_nonneg_left hU hK2_nonneg
+  have hleft_eq :
+      (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) -
+        (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|) -
+        c * ((2 * D)⁻¹ +
+          (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) =
+      (4 * D * (1 + eps))⁻¹ * (1 - eps2) *
+        (|Y| - (|A| + c) * (1 - eps)⁻¹) - c * (2 * D)⁻¹ := by
+    field_simp [hden_ne, hsum_ne, hD_ne] <;> ring
+  have hmid_eq :
+      (4 * D * (1 + eps))⁻¹ * (1 - eps2) * (|Y| - |T|) =
+      (4 * D)⁻¹ * (1 - eps2) * ((|Y| - |T|) * (1 + eps)⁻¹) := by
+    field_simp [hsum_ne, hD_ne] <;> ring
+  have hright_eq :
+      (4 * D)⁻¹ * (1 - eps2) * |U| - c * (2 * D)⁻¹ =
+      (4 * D)⁻¹ * (|U| - (|U| * eps2 + 2 * c)) := by
+    subst eps2
+    field_simp [hD_ne] <;> ring
+  calc
+    (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) -
+      (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|) -
+      c * ((2 * D)⁻¹ +
+        (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2))
+        = (4 * D * (1 + eps))⁻¹ * (1 - eps2) *
+          (|Y| - (|A| + c) * (1 - eps)⁻¹) - c * (2 * D)⁻¹ := hleft_eq
+    _ ≤ (4 * D * (1 + eps))⁻¹ * (1 - eps2) * (|Y| - |T|) -
+          c * (2 * D)⁻¹ := by linarith
+    _ = (4 * D)⁻¹ * (1 - eps2) * ((|Y| - |T|) * (1 + eps)⁻¹) -
+          c * (2 * D)⁻¹ := by rw [hmid_eq]
+    _ ≤ (4 * D)⁻¹ * (1 - eps2) * |U| - c * (2 * D)⁻¹ := by
+          linarith
+    _ = (4 * D)⁻¹ * (|U| - (|U| * eps2 + 2 * c)) := hright_eq
+
+noncomputable def UlpFlessuGe_check {beta : Int}
+    (_b : Fbound_skel) (_precision : Nat)
+    (_a _x _y _t _u : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+/-- Coq: `UlpFlessuGe`.
+
+Restores the full Axpy-section coefficient inequality.  The proof follows the
+upstream reductions: `RoundLeGeneral` bounds `t`, closestness of the rounded sum
+gives the lower estimate for `u`, the displayed coefficient is reduced to the
+general `Fulp` bound, and the existing `UlpFlessuGe` helper stack finishes the
+quarter-ulp comparison. -/
+theorem UlpFlessuGe {beta : Int}
+    (b : Fbound_skel) (precision : Nat)
+    (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b a ∧
+        Fbounded (beta:=beta) b x ∧
+        Fbounded (beta:=beta) b y ∧
+        Fbounded (beta:=beta) b t ∧
+        Fbounded (beta:=beta) b u ∧
+        Closest (beta:=beta) b (2 : ℝ)
+          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) t ∧
+        Closest (beta:=beta) b (2 : ℝ)
+          (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y) u ∧
+        Fcanonic (beta:=beta) 2 b u ∧
+        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision⌝⦄
+    (pure (UlpFlessuGe_check (beta:=beta) b precision a x y t u) : Id Unit)
+    ⦃⇓_ => ⌜
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=beta) y|) -
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))) *
+          (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x|) -
+      (2 : ℝ) ^ (-b.dExp - 1) *
+        ((2 * ((2 : ℝ) ^ (precision : Int) - 1))⁻¹ +
+          (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+              (1 + (2 : ℝ) ^ (-(precision : Int))) *
+              (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+            (1 - (2 : ℝ) ^ (1 - (precision : Int)))) ≤
+      (1 / 4 : ℝ) *
+        Fulp (beta:=beta) b 2 precision
+          (FLess (beta:=beta) b 2 precision u)⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨_haBound, _hxBound, hyBound, htBound, huBound, htClosest, huClosest,
+      huCan, hbeta, hprecision_gt, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, UlpFlessuGe_check,
+    Id.run, ULift.up_down]
+  subst beta
+  let A : ℝ := _root_.F2R (beta:=2) a * _root_.F2R (beta:=2) x
+  let T : ℝ := _root_.F2R (beta:=2) t
+  let Y : ℝ := _root_.F2R (beta:=2) y
+  let U : ℝ := _root_.F2R (beta:=2) u
+  let eps : ℝ := (2 : ℝ) ^ (-(precision : Int))
+  let eps2 : ℝ := (2 : ℝ) ^ (1 - (precision : Int))
+  let D : ℝ := (2 : ℝ) ^ (precision : Int) - 1
+  let c : ℝ := (2 : ℝ) ^ (-b.dExp - 1)
+  have hprecision_ne : precision ≠ 0 := by omega
+  have hprecision_pos : (0 : Int) < (precision : Int) := by
+    exact_mod_cast Nat.pos_of_ne_zero hprecision_ne
+  have hprecision_gt_one_int : (1 : Int) < (precision : Int) := by
+    exact_mod_cast hprecision_gt
+  have heps_pos : 0 < eps := by
+    exact zpow_pos (by norm_num : (0 : ℝ) < 2) _
+  have heps_lt_one : eps < 1 := by
+    have hpow_lt :
+        (2 : ℝ) ^ (-(precision : Int)) < (2 : ℝ) ^ (0 : Int) := by
+      exact zpow_lt_zpow_right₀ (by norm_num : (1 : ℝ) < 2) (by omega)
+    simpa [eps] using hpow_lt
+  have heps2_eq : eps2 = 2 * eps := by
+    have htwo_ne : (2 : ℝ) ≠ 0 := by norm_num
+    calc
+      eps2 = (2 : ℝ) ^ ((1 : Int) + (-(precision : Int))) := by
+          rfl
+      _ = (2 : ℝ) ^ (1 : Int) * (2 : ℝ) ^ (-(precision : Int)) := by
+          rw [zpow_add₀ htwo_ne]
+      _ = 2 * eps := by simp [eps]
+  have heps2_lt_one : eps2 < 1 := by
+    have hpow_lt :
+        (2 : ℝ) ^ (1 - (precision : Int)) < (2 : ℝ) ^ (0 : Int) := by
+      exact zpow_lt_zpow_right₀ (by norm_num : (1 : ℝ) < 2) (by omega)
+    simpa [eps2] using hpow_lt
+  have hcoef_nonneg : 0 ≤ 1 - eps2 := by linarith
+  have hden_pos : 0 < 1 - eps := by linarith
+  have hsum_pos : 0 < 1 + eps := by linarith
+  have hD_pos : 0 < D := by
+    have hpow_lt :
+        (2 : ℝ) ^ (0 : Int) < (2 : ℝ) ^ (precision : Int) := by
+      exact zpow_lt_zpow_right₀ (by norm_num : (1 : ℝ) < 2) hprecision_pos
+    have hpow_gt_one : 1 < (2 : ℝ) ^ (precision : Int) := by
+      simpa using hpow_lt
+    exact sub_pos.mpr hpow_gt_one
+  have htBound' : Fbounded' (beta:=2) b t := by
+    simpa [Fbounded'] using htBound
+  have huBound' : Fbounded' (beta:=2) b u := by
+    simpa [Fbounded'] using huBound
+  have hround_t :
+      |T| ≤ (|A| + c) * (1 - eps)⁻¹ := by
+    have h := RoundLeGeneral (beta:=2) b precision t A
+    have hraw :
+        |T| ≤ |A| * (1 - eps)⁻¹ + c * (1 - eps)⁻¹ := by
+      simpa only [wp, PostCond.noThrow, pure, RoundLeGeneral_check,
+        Id.run, ULift.up_down, A, T, eps, c] using
+        h ⟨htBound, htBound', htClosest, rfl, hprecision_ne, hvNum⟩
+    calc
+      |T| ≤ |A| * (1 - eps)⁻¹ + c * (1 - eps)⁻¹ := hraw
+      _ = (|A| + c) * (1 - eps)⁻¹ := by ring
+  have hlower_u :
+      (|Y| - |T|) * (1 + eps)⁻¹ ≤ |U| := by
+    rcases huCan with huNormal | huSubnormal
+    · have h := Axpy_u_lower_from_closest_sum (beta:=2) b precision u T Y
+      have huClosest_comm :
+          Closest (beta:=2) b (2 : ℝ) (Y + T) u := by
+        simpa [T, Y, add_comm, add_left_comm, add_assoc] using huClosest
+      have huNormEq :
+          Fnormalize (beta:=2) 2 b precision u = u := by
+        have hnorm := FcanonicFnormalizeEq (beta:=2) 2 b precision u
+        simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+          Id.run, ULift.up_down] using
+          hnorm ⟨Or.inl huNormal, rfl, by decide, hprecision_ne, hvNum⟩
+      have huNormalNorm :
+          Fnormal (beta:=2) 2 b (Fnormalize (beta:=2) 2 b precision u) := by
+        simpa [huNormEq] using huNormal
+      simpa only [wp, PostCond.noThrow, pure,
+        Axpy_u_lower_from_closest_sum_check, Id.run, ULift.up_down,
+        eps, T, Y, U] using
+        h ⟨hsum_pos, huClosest_comm, huBound, huNormalNorm, rfl, hprecision_ne,
+          hvNum⟩
+    · have hvNum_gt : 1 < b.vNum := by
+        rw [hvNum]
+        have hpow_int : (1 : Int) < (2 : Int) ^ precision := by
+          exact_mod_cast (Nat.one_lt_pow hprecision_ne (by decide : 1 < 2))
+        simpa [Zpower_nat] using hpow_int
+      have hexact : U = T + Y := by
+        have h := closest_sum_eq_of_subnormal b t y u htBound hyBound
+          huClosest huSubnormal hvNum_gt
+        simpa [T, Y, U] using h
+      have htri : |Y| - |T| ≤ |U| := by
+        have hrev : |Y| ≤ |Y + T| + |T| := by
+          calc
+            |Y| = |(Y + T) + (-T)| := by
+                congr 1
+                ring
+            _ ≤ |Y + T| + |-T| := abs_add_le _ _
+            _ = |Y + T| + |T| := by rw [abs_neg]
+        have hsum_abs : |Y + T| = |U| := by
+          rw [hexact]
+          ring_nf
+        linarith
+      by_cases hnonpos : |Y| - |T| ≤ 0
+      · have hleft_nonpos :
+            (|Y| - |T|) * (1 + eps)⁻¹ ≤ 0 := by
+          exact mul_nonpos_of_nonpos_of_nonneg hnonpos
+            (inv_nonneg.mpr (le_of_lt hsum_pos))
+        exact le_trans hleft_nonpos (abs_nonneg U)
+      · have hdiff_pos : 0 < |Y| - |T| := lt_of_not_ge hnonpos
+        have hinv_le_one : (1 + eps)⁻¹ ≤ 1 :=
+          inv_le_one_of_one_le₀ (by linarith [heps_pos] : (1 : ℝ) ≤ 1 + eps)
+        have hmul_le :
+            (|Y| - |T|) * (1 + eps)⁻¹ ≤ |Y| - |T| := by
+          calc
+            (|Y| - |T|) * (1 + eps)⁻¹ ≤ (|Y| - |T|) * 1 :=
+              mul_le_mul_of_nonneg_left hinv_le_one (le_of_lt hdiff_pos)
+            _ = |Y| - |T| := by ring
+        exact le_trans hmul_le htri
+  have hcoeff_general :
+      (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) -
+        (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|) -
+        c * ((2 * D)⁻¹ +
+          (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) ≤
+      (4 * D)⁻¹ * (|U| - (|U| * eps2 + 2 * c)) :=
+    UlpFlessuGe_coefficient_bound eps eps2 D c A T Y U hden_pos hsum_pos
+      hD_pos hcoef_nonneg hround_t hlower_u heps2_eq
+  have hboundary_eq : (2 : ℝ) ^ (-b.dExp) = 2 * c := by
+    have htwo_ne : (2 : ℝ) ≠ 0 := by norm_num
+    calc
+      (2 : ℝ) ^ (-b.dExp) =
+          (2 : ℝ) ^ ((1 : Int) + (-b.dExp - 1)) := by
+            congr 1
+            omega
+        _ = (2 : ℝ) ^ (1 : Int) * (2 : ℝ) ^ (-b.dExp - 1) := by
+              rw [zpow_add₀ htwo_ne]
+        _ = 2 * c := by simp [c]
+  have hgeneral :
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1))⁻¹ *
+        (|_root_.F2R (beta:=2) u| -
+          (|_root_.F2R (beta:=2) u| *
+            (2 : ℝ) ^ (1 - (precision : Int)) +
+           (2 : ℝ) ^ (-b.dExp))) =
+      (4 * D)⁻¹ * (|U| - (|U| * eps2 + 2 * c)) := by
+    rw [hboundary_eq]
+  have hE_general :
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) y|) -
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))) *
+          (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) a * _root_.F2R (beta:=2) x|) -
+      (2 : ℝ) ^ (-b.dExp - 1) *
+        ((2 * ((2 : ℝ) ^ (precision : Int) - 1))⁻¹ +
+          (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+              (1 + (2 : ℝ) ^ (-(precision : Int))) *
+              (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+            (1 - (2 : ℝ) ^ (1 - (precision : Int)))) ≤
+        (4 * ((2 : ℝ) ^ (precision : Int) - 1))⁻¹ *
+          (|_root_.F2R (beta:=2) u| -
+            (|_root_.F2R (beta:=2) u| *
+              (2 : ℝ) ^ (1 - (precision : Int)) +
+             (2 : ℝ) ^ (-b.dExp))) := by
+      refine le_trans ?_ (le_of_eq hgeneral.symm)
+      simpa only [D, A, Y, U, eps, eps2, c] using hcoeff_general
+  have hfinish := UlpFlessuGe_from_general_fulp_bound (beta:=2) b 2 precision u
+    ((4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) y|) -
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))) *
+          (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) a * _root_.F2R (beta:=2) x|) -
+      (2 : ℝ) ^ (-b.dExp - 1) *
+        ((2 * ((2 : ℝ) ^ (precision : Int) - 1))⁻¹ +
+          (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+              (1 + (2 : ℝ) ^ (-(precision : Int))) *
+              (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+            (1 - (2 : ℝ) ^ (1 - (precision : Int)))))
+  simpa only [wp, PostCond.noThrow, pure,
+    UlpFlessuGe_from_general_fulp_bound_check, Id.run, ULift.up_down] using
+    hfinish ⟨huBound, huBound', huCan, rfl, by decide, hprecision_ne, hvNum,
+      hE_general⟩
+
 /-- Coq `Axpy_opt` scale premise from rounded inputs.
 
 This composes `RoundLeGeneral`, the rounded-sum lower estimate, and the

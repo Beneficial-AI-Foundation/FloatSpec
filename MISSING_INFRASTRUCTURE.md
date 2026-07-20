@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 86.
+- Active semantic gap candidates still listed below: 85.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 86/86 names have been
+- Counterpart audit coverage for the active list: 85/85 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 86 active
+Fix the remaining Flocq import gaps by working through the 85 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1960,9 +1960,28 @@ analysis, and `binary_normalize_equiv`. Focused Lean checking, `git diff
 Therefore `add_equiv` is removed from the active list, leaving no active
 `PrimFloat.v` gaps.
 
-#### `Pff/Pff.v` (86)
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_223036` produced the full displayed
+`UlpFlessuGe` coefficient proof and passed its final focused/full builds, but
+its public theorem initially carried a universal `boundR` exponent premise
+that is not present in the upstream Axpy section. The manual repair removed
+that premise and replaced the affected subnormal branch with a direct bounded-
+lattice argument: shift both inputs to the minimum exponent, then show that
+if the subnormal closest result differed from the exact sum, the adjacent
+minimum-exponent float in the direction of the sum would be bounded and
+strictly closer. The exact public theorem now assumes only the translated
+Axpy section context plus `Fcanonic u`, proves the full upstream coefficient
+inequality, and composes `RoundLeGeneral`, the normal/subnormal lower bound,
+`FulpLeGeneral`, `UlpFlessuGe_aux`, and the final `FLess` scale. Focused Lean
+checking, `git diff --check`, zero-finding placeholder/status audits, and the
+full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from
+this checkout. The authoritative classifier
+`.change_log/manual_attempt_20260720_UlpFlessuGe_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `UlpFlessuGe` is removed from the active list.
 
-- `UlpFlessuGe` (Theorem, upstream line 11675)
+#### `Pff/Pff.v` (85)
+
 - `UlpFlessuGe2` (Theorem, upstream line 11885)
 - `Axpy_opt` (Theorem, upstream line 12301)
 - `eqLe` (Lemma, upstream line 13220)
