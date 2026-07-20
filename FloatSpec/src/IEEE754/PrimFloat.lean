@@ -1028,6 +1028,23 @@ abbrev primPrec : Int := 53
 
 abbrev primEmax : Int := 1024
 
+private instance instPrimPrecGt0 : Prec_gt_0 primPrec :=
+  ⟨by norm_num [primPrec]⟩
+
+private instance instPrimPrecLtEmax : Prec_lt_emax primPrec primEmax :=
+  ⟨by
+    norm_num [primPrec, primEmax],
+   by
+    norm_num [primEmax]⟩
+
+private instance instPrimFLTExpMonotone :
+    FloatSpec.Core.Generic_fmt.Monotone_exp
+      (FLT_exp (3 - primEmax - primPrec) primPrec) := by
+  simpa [FLT_exp] using
+    (inferInstance :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FloatSpec.Core.FLT.FLT_exp primPrec (3 - primEmax - primPrec)))
+
 abbrev PrimBinaryFloat := BinarySingleNaNFloat primPrec primEmax
 
 structure PrimitiveFloat where
@@ -1169,5 +1186,57 @@ theorem binary_round_equiv (sx : Bool) (mx : Nat) (ex : Int) :
   cases aligned with
   | mk alignedMant alignedExp =>
       apply binary_round_aux_equiv
+
+private theorem rootBinaryRoundValid (sx : Bool) (mx : Nat) (ex : Int)
+    (hmx_pos : 0 < mx) :
+    validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax)
+      (_root_.binary_round (prec := primPrec) (emax := primEmax)
+        RoundingMode.RNE sx mx ex) = true :=
+  (_root_.binary_round_correct (prec := primPrec) (emax := primEmax)
+    RoundingMode.RNE sx mx ex hmx_pos).1
+
+-- Coq `SpecFloat.binary_normalize`, specialized to primitive binary64.
+noncomputable def binary_normalize (m e : Int) (szero : Bool) :
+    StandardFloat :=
+  if m = 0 then
+    StandardFloat.S754_zero szero
+  else if 0 < m then
+    binary_round false m.toNat e
+  else
+    binary_round true m.natAbs e
+
+-- Coq `BinarySingleNaN.binary_normalize`, specialized to primitive binary64.
+noncomputable def binary_normalize_bsn (m e : Int) (szero : Bool) :
+    PrimBinaryFloat :=
+  if hzero : m = 0 then
+    BinarySingleNaNFloat.B754_zero (prec := primPrec) (emax := primEmax) szero
+  else if hpos : 0 < m then
+    have hm_toNat_pos : 0 < m.toNat := by
+      have hcast : (0 : Int) < (m.toNat : Int) := by
+        simpa [Int.toNat_of_nonneg (le_of_lt hpos)] using hpos
+      exact_mod_cast hcast
+    SF2B
+      (_root_.binary_round (prec := primPrec) (emax := primEmax)
+        RoundingMode.RNE false m.toNat e)
+      (rootBinaryRoundValid false m.toNat e hm_toNat_pos)
+  else
+    have hm_ne : m ≠ 0 := by
+      intro h
+      exact hzero h
+    have hm_abs_pos : 0 < m.natAbs := Int.natAbs_pos.mpr hm_ne
+    SF2B
+      (_root_.binary_round (prec := primPrec) (emax := primEmax)
+        RoundingMode.RNE true m.natAbs e)
+      (rootBinaryRoundValid true m.natAbs e hm_abs_pos)
+
+-- Coq `PrimFloat.v:binary_normalize_equiv`.
+theorem binary_normalize_equiv (m e : Int) (szero : Bool) :
+    binary_normalize m e szero = B2SF (binary_normalize_bsn m e szero) := by
+  unfold binary_normalize binary_normalize_bsn
+  by_cases hzero : m = 0
+  · simp [hzero, B2SF, binarySingleNaNFloatToStandardFloat]
+  · by_cases hpos : 0 < m
+    · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv]
+    · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv]
 
 end FaithfulPrimFloat

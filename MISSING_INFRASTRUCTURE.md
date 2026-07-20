@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 90.
+- Active semantic gap candidates still listed below: 89.
 - Files with at least one active listed candidate: 2.
-- Counterpart audit coverage for the active list: 90/90 names have been
+- Counterpart audit coverage for the active list: 89/89 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 90 active
+Fix the remaining Flocq import gaps by working through the 89 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1695,7 +1695,7 @@ explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
 
-#### `IEEE754/PrimFloat.v` (4)
+#### `IEEE754/PrimFloat.v` (3)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
@@ -1742,7 +1742,6 @@ evidence. Focused `lake env lean FloatSpec/src/IEEE754/PrimFloat.lean`
 passed. Therefore `Prim2B` and `B2Prim` are removed from the active list.
 
 - `mul_equiv` (Theorem, upstream line 143)
-- `binary_normalize_equiv` (Lemma, upstream line 170)
 - `add_equiv` (Theorem, upstream line 181)
 - `normfr_mantissa_equiv` (Theorem, upstream line 258)
 
@@ -1862,7 +1861,25 @@ provide the PrimFloat/SpecFloat equivalence target, and the prerequisite
 `binary_round_equiv` remained active/blocked at that time. Adding
 `binary_normalize_equiv` over the available wrappers would therefore be
 helper-only, tautological, or differently parameterized, so
-`binary_normalize_equiv` remains active.
+`binary_normalize_equiv` remained active at that time.
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_211626` added the independent
+`FaithfulPrimFloat.binary_normalize`, proof-carrying
+`FaithfulPrimFloat.binary_normalize_bsn`, and exact
+`FaithfulPrimFloat.binary_normalize_equiv`. The SpecFloat side returns a
+`StandardFloat` by splitting the signed integer mantissa into zero, positive,
+and negative branches. The BinarySingleNaN side returns `PrimBinaryFloat`,
+constructing each nonzero branch with `SF2B` and validity supplied by
+root `binary_round_correct`; it does not use the proof-erased raw `B754`
+normalizer. The theorem follows upstream `PrimFloat.v:170-179`: split by sign
+and reduce the nonzero branches through `B2SF_SF2B` and
+`binary_round_equiv`. Focused Lean checking, zero-finding placeholder/status
+audits, and the full 3345-job `lake build` passed. The authoritative classifier
+`.change_log/manual_attempt_20260720_binary_normalize_equiv_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `binary_normalize_equiv` is removed from
+the active list.
 
 2026-07-17 blocker note: harness attempt
 `.change_log/codex_attempt_20260717_033820` rechecked upstream
