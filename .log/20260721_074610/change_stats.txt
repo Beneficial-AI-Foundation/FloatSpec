@@ -1,0 +1,11 @@
+commit 2b78eb5929b77bd9626a42ba5029aeef24337165
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 07:46:04 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 07:46:04 2026 +0800
+
+    Restore exact Pff ClosestClosest theorem
+
+ FloatSpec/src/Pff/Pff.lean | 137 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  31 ++++++++--
+ 2 files changed, 162 insertions(+), 6 deletions(-)
