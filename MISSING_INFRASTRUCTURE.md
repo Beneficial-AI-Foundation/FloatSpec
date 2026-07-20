@@ -31,16 +31,16 @@ Audit basis:
   `instance`, including common modifiers such as `public`, `private`,
   `protected`, and `noncomputable`.
 
-Current broad exact-name result and counterpart-filtered status:
+Broad exact-name scan baseline and current counterpart-filtered status:
 
-- Unique public upstream Flocq declarations scanned: 2378.
-- Unique Lean declaration names scanned: 4629.
-- Missing exact public upstream declaration names: 193.
+- Unique public upstream Flocq declarations in the 2026-07-04 scan: 2378.
+- Unique Lean declaration names in the 2026-07-04 scan: 4629.
+- Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 96.
-- Files with at least one active listed candidate: 3.
-- Counterpart audit coverage for the active list: 96/96 names have been
+- Active semantic gap candidates still listed below: 94.
+- Files with at least one active listed candidate: 2.
+- Counterpart audit coverage for the active list: 94/94 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 96 active
+Fix the remaining Flocq import gaps by working through the 94 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -350,9 +350,34 @@ The proof uses the Coq-shaped `specFloat_bounded` carrier migration from
 placeholder audit, status report, and `git diff --check` passed. Status:
 implemented and removed from active semantic gaps.
 
-#### `IEEE754/BinarySingleNaN.v` (1)
+#### `IEEE754/BinarySingleNaN.v` (0)
 
-- `Bsucc'_correct` (Theorem, upstream line 3670)
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_140942` selected the explicit OpenAI
+subscription path with `gpt-5.5`/high reasoning, passed its local target gate,
+and made no source changes after classifying the missing raw SingleNaN
+successor payload as blocked. The subsequent manual repair restored exact
+public `Bsucc'_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. It preserves upstream
+`IEEE754/BinarySingleNaN.v:3671`: under `2 < emax`, every proof-carrying finite
+input satisfies exact constructor equality `Bsucc' x = Bsucc x`. The zero
+case reuses the exact `Bulp'_correct` power-of-two path; the positive finite
+case proves validity plus matching mathematical-successor or positive-overflow
+payloads for optimized `Bplus x (Bulp x)` and executable `Bsucc`, then uses
+validity-aware constructor injectivity; the negative finite case reduces
+through `Bpred_pos'_correct` and involutive `Bopp_bsn`. The proof does not use
+the proof-erased `Binary754` compatibility carrier and does not weaken equality
+to real-value equality. Focused
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full `lake build`
+across 3345 jobs, `git diff --check`, `scripts/status_report.sh --write`, and
+`scripts/audit_placeholders.sh --json FloatSpec` passed with zero placeholder,
+weakening, or conclusion-as-hypothesis findings. The requested
+`scripts/check_diff_trust.sh` gate is unavailable because that script is not
+present in this checkout. The normalized classifier
+`.change_log/manual_attempt_20260720_bsucc_prime_correct_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and
+`local_target_gate = pass`. Status: implemented and removed from active
+semantic gaps; the `BinarySingleNaN.v` active family is complete.
 
 2026-07-20 completion note: subscription harness attempt
 `.change_log/codex_attempt_20260720_130235` failed before proof generation

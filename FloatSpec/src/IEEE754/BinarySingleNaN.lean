@@ -7919,4 +7919,472 @@ theorem Bpred_pos'_correct {prec emax : Int}
             FloatSpec.Core.Defs.F2R] at hxpos
           linarith
 
+private theorem Bplus_finite_positive_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (mx my : Nat) (ex ey : Int) (hmx : 0 < mx) (hmy : 0 < my) :
+    let x := B754.B754_finite false mx ex
+    let y := B754.B754_finite false my ey
+    let r := Bplus (prec:=prec) (emax:=emax) RoundingMode.RNE x y
+    let rounded := FloatSpec.Core.Generic_fmt.roundR 2
+      (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RNE)
+      (B754_to_R x + B754_to_R y)
+    validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+        (B2SF_BSN r) = true ∧
+      if FloatSpec.Core.Raux.Rlt_bool |rounded|
+          (FloatSpec.Core.Raux.bpow 2 emax) then
+        B754_to_R r = rounded ∧ BSN_is_finite r = true ∧ BSN_sign r = false
+      else
+        r = B754.B754_infinity false := by
+  let x := B754.B754_finite false mx ex
+  let y := B754.B754_finite false my ey
+  let ez := min ex ey
+  let m := Fplus_naive false mx ex false my ey ez
+  let r := Bplus (prec:=prec) (emax:=emax) RoundingMode.RNE x y
+  let rounded := FloatSpec.Core.Generic_fmt.roundR 2
+    (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RNE)
+    (B754_to_R x + B754_to_R y)
+  have hsumRaw := Fplus_naive_correct false mx ex false my ey ez
+    (min_le_left ex ey) (min_le_right ex ey)
+  have hsum :
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk m ez :
+        FloatSpec.Core.Defs.FlocqFloat 2) = B754_to_R x + B754_to_R y := by
+    simpa [m, ez, x, y, B754_to_R, FloatSpec.Core.Zaux.cond_Zopp] using hsumRaw
+  have hxPos : 0 < B754_to_R x := by
+    have hmxR : (0 : ℝ) < (mx : ℝ) := Nat.cast_pos.mpr hmx
+    have hpow : (0 : ℝ) < (2 : ℝ) ^ ex := zpow_pos (by norm_num) ex
+    simpa [x, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] using mul_pos hmxR hpow
+  have hyPos : 0 < B754_to_R y := by
+    have hmyR : (0 : ℝ) < (my : ℝ) := Nat.cast_pos.mpr hmy
+    have hpow : (0 : ℝ) < (2 : ℝ) ^ ey := zpow_pos (by norm_num) ey
+    simpa [y, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] using mul_pos hmyR hpow
+  have hsumPos : 0 < B754_to_R x + B754_to_R y := add_pos hxPos hyPos
+  have hpowEz : (0 : ℝ) < (2 : ℝ) ^ ez := zpow_pos (by norm_num) ez
+  have hmRealPos : (0 : ℝ) < (m : ℝ) := by
+    apply (mul_pos_iff_of_pos_right hpowEz).mp
+    have hF2RPos :
+        0 < F2R (FloatSpec.Core.Defs.FlocqFloat.mk m ez :
+          FloatSpec.Core.Defs.FlocqFloat 2) := by
+      rw [hsum]
+      exact hsumPos
+    simpa [F2R, FloatSpec.Core.Defs.F2R] using hF2RPos
+  have hmPos : 0 < m := by exact_mod_cast hmRealPos
+  have hmNe : m ≠ 0 := ne_of_gt hmPos
+  have hmNonneg : 0 ≤ m := le_of_lt hmPos
+  have hmCast : (m.toNat : Int) = m := Int.toNat_of_nonneg hmNonneg
+  have hmNatPos : 0 < m.toNat := by omega
+  let z := binary_round (prec:=prec) (emax:=emax)
+    RoundingMode.RNE false m.toNat ez
+  have hround := binary_round_correct (prec:=prec) (emax:=emax)
+    RoundingMode.RNE false m.toNat ez hmNatPos
+  have hinput :
+      SF2R 2 (StandardFloat.S754_finite false m.toNat ez) =
+        B754_to_R x + B754_to_R y := by
+    simpa [SF2R, F2R, FloatSpec.Core.Defs.F2R, hmCast] using hsum
+  have hr : r = SF2B z := by
+    simp [r, x, y, Bplus, binary_normalize, m, ez, hmNe, hmPos, z]
+  have hview : B2SF_BSN (SF2B z) = z := by
+    cases z <;> rfl
+  have hvalueView : B754_to_R (SF2B z) = SF2R 2 z := by
+    cases z <;> rfl
+  have hfiniteView : BSN_is_finite (SF2B z) = is_finite_SF z := by
+    cases z <;> rfl
+  have hsignView : BSN_sign (SF2B z) = sign_SF z := by
+    cases z <;> rfl
+  change validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+      (B2SF_BSN r) = true ∧
+    (if FloatSpec.Core.Raux.Rlt_bool |rounded|
+        (FloatSpec.Core.Raux.bpow 2 emax) then
+      B754_to_R r = rounded ∧ BSN_is_finite r = true ∧ BSN_sign r = false
+    else
+      r = B754.B754_infinity false)
+  constructor
+  · rw [hr, hview]
+    exact hround.1
+  · by_cases hlt : FloatSpec.Core.Raux.Rlt_bool |rounded|
+        (FloatSpec.Core.Raux.bpow 2 emax) = true
+    · rw [if_pos hlt]
+      have hltInput :
+          FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2
+              (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RNE)
+              (SF2R 2 (StandardFloat.S754_finite false m.toNat ez))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+        simpa [rounded, hinput] using hlt
+      have hbranch := hround.2
+      dsimp at hbranch
+      rw [hltInput] at hbranch
+      simp at hbranch
+      refine ⟨?_, ?_, ?_⟩
+      · rw [hr, hvalueView, hbranch.1]
+        simp [rounded, hinput]
+      · rw [hr, hfiniteView, hbranch.2.1]
+      · rw [hr, hsignView, hbranch.2.2]
+    · rw [if_neg hlt]
+      have hltInput :
+          FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2
+              (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RNE)
+              (SF2R 2 (StandardFloat.S754_finite false m.toNat ez))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = false := by
+        have hfalse := Bool.eq_false_of_not_eq_true hlt
+        simpa [rounded, hinput] using hfalse
+      have hbranch := hround.2
+      dsimp at hbranch
+      rw [hltInput] at hbranch
+      simp at hbranch
+      have hover : z = bsn_binary_overflow (prec:=prec) (emax:=emax)
+          RoundingMode.RNE false := by
+        simpa [z] using hbranch
+      rw [hr, hover]
+      rfl
+
+private theorem Bsucc_positive_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (mx : Nat) (ex : Int) (hmx : 0 < mx)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true) :
+    let x := B754.B754_finite false mx ex
+    let r := Bsucc (prec:=prec) (emax:=emax) x
+    let successor := FloatSpec.Core.Ulp.succ 2
+      (FLT_exp (3 - emax - prec) prec) (B754_to_R x)
+    validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+        (B2SF_BSN r) = true ∧
+      if FloatSpec.Core.Raux.Rlt_bool |successor|
+          (FloatSpec.Core.Raux.bpow 2 emax) then
+        B754_to_R r = successor ∧ BSN_is_finite r = true ∧ BSN_sign r = false
+      else
+        r = B754.B754_infinity false := by
+  let x := B754.B754_finite false mx ex
+  let xr := B754_to_R x
+  let fp := FLT_exp (3 - emax - prec) prec
+  let successor := FloatSpec.Core.Ulp.succ 2 fp xr
+  let z := binary_round (prec:=prec) (emax:=emax)
+    RoundingMode.RTP false (mx + 1) ex
+  let r := Bsucc (prec:=prec) (emax:=emax) x
+  have hmxR : (0 : ℝ) < (mx : ℝ) := Nat.cast_pos.mpr hmx
+  have hpow : (0 : ℝ) < (2 : ℝ) ^ ex := zpow_pos (by norm_num) ex
+  have hxrPos : 0 < xr := by
+    simpa [xr, x, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] using mul_pos hmxR hpow
+  have hcanonBool := canonical_mantissa_of_specFloat_bounded
+    (prec:=prec) (emax:=emax) hbounded
+  have hcanonTrip := canonical_canonical_mantissa_bsn
+    (prec:=prec) (emax:=emax) false mx ex hmx hcanonBool
+  have hcanon : FloatSpec.Core.Generic_fmt.canonical 2 fp
+      (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) := by
+    simpa [fp, wp, PostCond.noThrow, pure] using hcanonTrip trivial
+  have hformat : FloatSpec.Core.Generic_fmt.generic_format 2 fp xr := by
+    change FloatSpec.Core.Generic_fmt.generic_format 2 fp
+      (F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex :
+        FloatSpec.Core.Defs.FlocqFloat 2))
+    exact FloatSpec.Core.Generic_fmt.generic_format_canonical
+      (beta:=2) (fexp:=fp)
+      (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
+  have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
+    (beta:=2) (fexp:=fp) (m:=(mx : Int)) (e:=ex)
+    (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon (by norm_num : (1 : Int) < 2)
+  have hulp : FloatSpec.Core.Ulp.ulp 2 fp xr = (2 : ℝ) ^ ex := by
+    simpa [fp, xr, x, B754_to_R, wp, PostCond.noThrow, pure] using hulpTrip trivial
+  have hsuccTrip := FloatSpec.Core.Ulp.succ_eq_pos
+    (beta:=2) (fexp:=fp) xr (le_of_lt hxrPos)
+  have hsuccEq : successor = xr + FloatSpec.Core.Ulp.ulp 2 fp xr := by
+    simpa [successor, wp, PostCond.noThrow, pure] using hsuccTrip trivial
+  have hinput :
+      SF2R 2 (StandardFloat.S754_finite false (mx + 1) ex) = successor := by
+    rw [hsuccEq, hulp]
+    simp [SF2R, F2R, FloatSpec.Core.Defs.F2R, xr, x, B754_to_R]
+    ring
+  have hsuccFormatTrip := FloatSpec.Core.Ulp.generic_format_succ
+    (beta:=2) (fexp:=fp) xr hformat (by norm_num : (1 : Int) < 2)
+  have hsuccFormat : FloatSpec.Core.Generic_fmt.generic_format 2 fp successor := by
+    simpa [successor, wp, PostCond.noThrow, pure] using hsuccFormatTrip trivial
+  have hroundEq :
+      FloatSpec.Core.Generic_fmt.roundR 2 fp (rnd_of_mode RoundingMode.RTP)
+          (SF2R 2 (StandardFloat.S754_finite false (mx + 1) ex)) = successor := by
+    rw [hinput]
+    exact FloatSpec.Core.Generic_fmt.roundR_generic
+      (beta:=2) (fexp:=fp) (rnd:=rnd_of_mode RoundingMode.RTP)
+      (x:=successor) (by norm_num) hsuccFormat
+  have hmxSucc : 0 < mx + 1 := by omega
+  have hround := binary_round_correct (prec:=prec) (emax:=emax)
+    RoundingMode.RTP false (mx + 1) ex hmxSucc
+  have hr : r = SF2B z := by
+    simp [r, x, Bsucc, z]
+  have hview : B2SF_BSN (SF2B z) = z := by
+    cases z <;> rfl
+  have hvalueView : B754_to_R (SF2B z) = SF2R 2 z := by
+    cases z <;> rfl
+  have hfiniteView : BSN_is_finite (SF2B z) = is_finite_SF z := by
+    cases z <;> rfl
+  have hsignView : BSN_sign (SF2B z) = sign_SF z := by
+    cases z <;> rfl
+  change validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+      (B2SF_BSN r) = true ∧
+    (if FloatSpec.Core.Raux.Rlt_bool |successor|
+        (FloatSpec.Core.Raux.bpow 2 emax) then
+      B754_to_R r = successor ∧ BSN_is_finite r = true ∧ BSN_sign r = false
+    else
+      r = B754.B754_infinity false)
+  constructor
+  · rw [hr, hview]
+    exact hround.1
+  · by_cases hlt : FloatSpec.Core.Raux.Rlt_bool |successor|
+        (FloatSpec.Core.Raux.bpow 2 emax) = true
+    · rw [if_pos hlt]
+      have hltInput :
+          FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2 fp (rnd_of_mode RoundingMode.RTP)
+              (SF2R 2 (StandardFloat.S754_finite false (mx + 1) ex))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+        simpa [hroundEq] using hlt
+      have hbranch := hround.2
+      dsimp at hbranch
+      rw [hltInput] at hbranch
+      simp at hbranch
+      refine ⟨?_, ?_, ?_⟩
+      · rw [hr, hvalueView, hbranch.1, hroundEq]
+      · rw [hr, hfiniteView, hbranch.2.1]
+      · rw [hr, hsignView, hbranch.2.2]
+    · rw [if_neg hlt]
+      have hltInput :
+          FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2 fp (rnd_of_mode RoundingMode.RTP)
+              (SF2R 2 (StandardFloat.S754_finite false (mx + 1) ex))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = false := by
+        have hfalse := Bool.eq_false_of_not_eq_true hlt
+        simpa [hroundEq] using hfalse
+      have hbranch := hround.2
+      dsimp at hbranch
+      rw [hltInput] at hbranch
+      simp at hbranch
+      have hover : z = bsn_binary_overflow (prec:=prec) (emax:=emax)
+          RoundingMode.RTP false := by
+        simpa [z] using hbranch
+      rw [hr, hover]
+      rfl
+
+-- Coq: Bsucc'_correct
+theorem Bsucc'_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (hmax : 2 < emax) (x : BinarySingleNaNFloat prec emax)
+    (hfinite : BSN_is_finite
+      (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) x) = true) :
+    Bsucc' (prec:=prec) (emax:=emax)
+        (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) x) =
+      Bsucc (prec:=prec) (emax:=emax)
+        (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) x) := by
+  cases x with
+  | B754_zero sx =>
+      let xzero : BinarySingleNaNFloat prec emax :=
+        BinarySingleNaNFloat.B754_zero sx
+      have hulp := Bulp'_correct (prec:=prec) (emax:=emax) hmax xzero (by rfl)
+      have hsentinel :
+          FLT_exp (3 - emax - prec) prec (-2 * emax - prec) =
+            3 - emax - prec := by
+        unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+        apply max_eq_right
+        have hprec := (inferInstance : Prec_gt_0 prec).pos
+        omega
+      change Bldexp (prec:=prec) (emax:=emax) RoundingMode.RNE Bone
+          (FLT_exp (3 - emax - prec) prec (-2 * emax - prec)) =
+        B754.B754_finite false 1 (3 - emax - prec) at hulp
+      change Bldexp (prec:=prec) (emax:=emax) RoundingMode.RNE Bone
+          (3 - emax - prec) =
+        B754.B754_finite false 1 (3 - emax - prec)
+      rw [hsentinel] at hulp
+      exact hulp
+  | B754_infinity sx =>
+      simp [binarySingleNaNFloatToB754, BSN_is_finite] at hfinite
+  | B754_nan =>
+      simp [binarySingleNaNFloatToB754, BSN_is_finite] at hfinite
+  | B754_finite sx mx ex hmx hbounded =>
+      cases sx with
+      | false =>
+          let raw := B754.B754_finite false mx ex
+          let xpf : BinarySingleNaNFloat prec emax :=
+            BinarySingleNaNFloat.B754_finite false mx ex hmx hbounded
+          let xr := B754_to_R raw
+          let fp := FLT_exp (3 - emax - prec) prec
+          let successor := FloatSpec.Core.Ulp.succ 2 fp xr
+          let y := Bulp (prec:=prec) (emax:=emax) raw
+          have hulp := Bulp_correct (prec:=prec) (emax:=emax) xpf (by rfl)
+          have hulpY :
+              B754_to_R y = FloatSpec.Core.Ulp.ulp 2 fp xr ∧
+                BSN_is_finite y = true ∧ BSN_sign y = false := by
+            simpa [y, fp, xr, raw, xpf, binarySingleNaNFloatToB754] using hulp
+          have hcanonBool := canonical_mantissa_of_specFloat_bounded
+            (prec:=prec) (emax:=emax) hbounded
+          have hcanonTrip := canonical_canonical_mantissa_bsn
+            (prec:=prec) (emax:=emax) false mx ex hmx hcanonBool
+          have hcanon : FloatSpec.Core.Generic_fmt.canonical 2 fp
+              (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) := by
+            simpa [fp, wp, PostCond.noThrow, pure] using hcanonTrip trivial
+          have hformat : FloatSpec.Core.Generic_fmt.generic_format 2 fp xr := by
+            change FloatSpec.Core.Generic_fmt.generic_format 2 fp
+              (F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex :
+                FloatSpec.Core.Defs.FlocqFloat 2))
+            exact FloatSpec.Core.Generic_fmt.generic_format_canonical
+              (beta:=2) (fexp:=fp)
+              (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
+          have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
+            (beta:=2) (fexp:=fp) (m:=(mx : Int)) (e:=ex)
+            (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon
+            (by norm_num : (1 : Int) < 2)
+          have hulpPow : FloatSpec.Core.Ulp.ulp 2 fp xr = (2 : ℝ) ^ ex := by
+            simpa [fp, xr, raw, B754_to_R, wp, PostCond.noThrow, pure] using
+              hulpTrip trivial
+          have hyPos : 0 < B754_to_R y := by
+            rw [hulpY.1, hulpPow]
+            exact zpow_pos (by norm_num) ex
+          have hyShape : ∃ my ey,
+              y = B754.B754_finite false my ey ∧ 0 < my := by
+            cases hy : y with
+            | B754_zero sy =>
+                simp [hy, B754_to_R] at hyPos
+            | B754_infinity sy =>
+                have hfalse := hulpY.2.1
+                rw [hy] at hfalse
+                simp [BSN_is_finite] at hfalse
+            | B754_nan =>
+                have hfalse := hulpY.2.1
+                rw [hy] at hfalse
+                simp [BSN_is_finite] at hfalse
+            | B754_finite sy my ey =>
+                have hsy : sy = false := by
+                  have hsign := hulpY.2.2
+                  rw [hy] at hsign
+                  simpa [BSN_sign] using hsign
+                subst sy
+                have hmy : 0 < my := by
+                  by_contra hnot
+                  have hzero : my = 0 := Nat.eq_zero_of_not_pos hnot
+                  simp [hy, hzero, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] at hyPos
+                exact ⟨my, ey, rfl, hmy⟩
+          rcases hyShape with ⟨my, ey, hy, hmy⟩
+          have hsuccTrip := FloatSpec.Core.Ulp.succ_eq_pos
+            (beta:=2) (fexp:=fp) xr (by
+              have hmxR : (0 : ℝ) < (mx : ℝ) := Nat.cast_pos.mpr hmx
+              have hpow : (0 : ℝ) < (2 : ℝ) ^ ex := zpow_pos (by norm_num) ex
+              exact le_of_lt (by
+                simpa [xr, raw, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] using
+                  mul_pos hmxR hpow))
+          have hsuccEq :
+              successor = xr + FloatSpec.Core.Ulp.ulp 2 fp xr := by
+            simpa [successor, wp, PostCond.noThrow, pure] using hsuccTrip trivial
+          have hsumEq :
+              B754_to_R raw +
+                  B754_to_R (B754.B754_finite false my ey) = successor := by
+            calc
+              B754_to_R raw + B754_to_R (B754.B754_finite false my ey) =
+                  xr + B754_to_R y := by rw [hy]
+              _ = xr + FloatSpec.Core.Ulp.ulp 2 fp xr := by
+                    rw [hulpY.1]
+              _ = successor := hsuccEq.symm
+          have hsuccFormatTrip := FloatSpec.Core.Ulp.generic_format_succ
+            (beta:=2) (fexp:=fp) xr hformat (by norm_num : (1 : Int) < 2)
+          have hsuccFormat :
+              FloatSpec.Core.Generic_fmt.generic_format 2 fp successor := by
+            simpa [successor, wp, PostCond.noThrow, pure] using
+              hsuccFormatTrip trivial
+          have hroundSum :
+              FloatSpec.Core.Generic_fmt.roundR 2 fp
+                  (rnd_of_mode RoundingMode.RNE)
+                  (B754_to_R raw +
+                    B754_to_R (B754.B754_finite false my ey)) = successor := by
+            rw [hsumEq]
+            exact FloatSpec.Core.Generic_fmt.roundR_generic
+              (beta:=2) (fexp:=fp) (rnd:=rnd_of_mode RoundingMode.RNE)
+              (x:=successor) (by norm_num) hsuccFormat
+          have hplus := Bplus_finite_positive_correct
+            (prec:=prec) (emax:=emax) mx my ex ey hmx hmy
+          have href := Bsucc_positive_correct (prec:=prec) (emax:=emax)
+            mx ex hmx hbounded
+          change Bplus (prec:=prec) (emax:=emax) RoundingMode.RNE raw y =
+            Bsucc (prec:=prec) (emax:=emax) raw
+          rw [hy]
+          by_cases hlt : FloatSpec.Core.Raux.Rlt_bool |successor|
+              (FloatSpec.Core.Raux.bpow 2 emax) = true
+          · have hltPlus :
+                FloatSpec.Core.Raux.Rlt_bool
+                  |FloatSpec.Core.Generic_fmt.roundR 2 fp
+                    (rnd_of_mode RoundingMode.RNE)
+                    (B754_to_R raw +
+                      B754_to_R (B754.B754_finite false my ey))|
+                  (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+              simpa [hroundSum] using hlt
+            have hplusBranch := hplus.2
+            rw [if_pos hltPlus] at hplusBranch
+            have hrefBranch := href.2
+            rw [if_pos hlt] at hrefBranch
+            apply B754_eq_of_valid_finite_sign_value (prec:=prec) (emax:=emax)
+            · exact hplus.1
+            · exact href.1
+            · exact hplusBranch.2.1
+            · exact hrefBranch.2.1
+            · calc
+                B754_to_R (Bplus (prec:=prec) (emax:=emax) RoundingMode.RNE raw
+                    (B754.B754_finite false my ey)) =
+                    FloatSpec.Core.Generic_fmt.roundR 2 fp
+                      (rnd_of_mode RoundingMode.RNE)
+                      (B754_to_R raw +
+                        B754_to_R (B754.B754_finite false my ey)) := hplusBranch.1
+                _ = successor := hroundSum
+                _ = B754_to_R (Bsucc (prec:=prec) (emax:=emax) raw) :=
+                  hrefBranch.1.symm
+            · exact hplusBranch.2.2.trans hrefBranch.2.2.symm
+          · have hltPlus :
+                FloatSpec.Core.Raux.Rlt_bool
+                  |FloatSpec.Core.Generic_fmt.roundR 2 fp
+                    (rnd_of_mode RoundingMode.RNE)
+                    (B754_to_R raw +
+                      B754_to_R (B754.B754_finite false my ey))|
+                  (FloatSpec.Core.Raux.bpow 2 emax) = false := by
+              have hfalse := Bool.eq_false_of_not_eq_true hlt
+              simpa [hroundSum] using hfalse
+            have hplusBranch := hplus.2
+            have hltPlusNot :
+                ¬FloatSpec.Core.Raux.Rlt_bool
+                  |FloatSpec.Core.Generic_fmt.roundR 2 fp
+                    (rnd_of_mode RoundingMode.RNE)
+                    (B754_to_R raw +
+                      B754_to_R (B754.B754_finite false my ey))|
+                  (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+              simp [hltPlus]
+            rw [if_neg hltPlusNot] at hplusBranch
+            have hrefBranch := href.2
+            rw [if_neg hlt] at hrefBranch
+            exact hplusBranch.trans hrefBranch.symm
+      | true =>
+          let xopp : BinarySingleNaNFloat prec emax :=
+            BinarySingleNaNFloat.B754_finite false mx ex hmx hbounded
+          have hxoppPos : 0 < B754_to_R
+              (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) xopp) := by
+            have hmxR : (0 : ℝ) < (mx : ℝ) := Nat.cast_pos.mpr hmx
+            have hpow : (0 : ℝ) < (2 : ℝ) ^ ex := zpow_pos (by norm_num) ex
+            simpa [xopp, binarySingleNaNFloatToB754, B754_to_R, F2R,
+              FloatSpec.Core.Defs.F2R] using mul_pos hmxR hpow
+          have hpred := Bpred_pos'_correct (prec:=prec) (emax:=emax)
+            hmax xopp hxoppPos
+          have hpredRaw :
+              Bpred_pos' (prec:=prec) (emax:=emax)
+                  (B754.B754_finite false mx ex) =
+                Bpred (prec:=prec) (emax:=emax)
+                  (B754.B754_finite false mx ex) := by
+            simpa [xopp, binarySingleNaNFloatToB754] using hpred
+          change Bopp_bsn
+              (Bpred_pos' (prec:=prec) (emax:=emax)
+                (B754.B754_finite false mx ex)) =
+            Bsucc (prec:=prec) (emax:=emax) (B754.B754_finite true mx ex)
+          rw [hpredRaw]
+          unfold Bpred
+          have hopp : ∀ z : B754, Bopp_bsn (Bopp_bsn z) = z := by
+            intro z
+            cases z <;> simp [Bopp_bsn]
+          exact hopp (Bsucc (prec:=prec) (emax:=emax)
+            (B754.B754_finite true mx ex))
+
 end ExperimentalSingleNaNArithmetic
