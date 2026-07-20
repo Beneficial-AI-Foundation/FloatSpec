@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 80 active
+Fix the remaining Flocq import gaps by working through the 79 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2075,9 +2075,28 @@ checkout. The normalized classifier
 local target gate. Therefore `eqEqual` is removed from the active list, and
 `Veltkamp_aux_aux` is next.
 
-#### `Pff/Pff.v` (80)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_031224` correctly classified the exact
+`Veltkamp_aux_aux` payload as blocked without changing Lean source: the local
+proof still needed upstream's low-mantissa reconstruction branch rather than a
+weaker generic canonicity argument. The manual repair restored exact public
+`Veltkamp_aux_aux` under only the expanded upstream Veltkamp section context.
+For the low-mantissa branch it defines the upstream integer residual `eps`,
+constructs the same two bounded normal comparison floats, applies
+`ImplyClosestStrict` to identify the represented values of `p` and `Fopp q`,
+and combines those values with `hxExact` to reconstruct the lower binade
+endpoint exactly. The complementary mantissa branch follows directly from the
+half-ulp residual premise. The corrected focused Lean process exited 0,
+`git diff --check` passed, placeholder/status audits reported zero findings,
+and the full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is
+absent from this checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_Veltkamp_aux_aux_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `Veltkamp_aux_aux` is removed from the
+active list, and `Veltkamp_aux` is next.
 
-- `Veltkamp_aux_aux` (Lemma, upstream line 13770)
+#### `Pff/Pff.v` (79)
+
 - `Veltkamp_aux` (Lemma, upstream line 14021)
 - `VeltkampEven1` (Lemma, upstream line 14188)
 - `VeltkampEven2` (Lemma, upstream line 14483)
