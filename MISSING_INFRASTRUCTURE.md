@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 87.
-- Files with at least one active listed candidate: 2.
-- Counterpart audit coverage for the active list: 87/87 names have been
+- Active semantic gap candidates still listed below: 86.
+- Files with at least one active listed candidate: 1.
+- Counterpart audit coverage for the active list: 86/86 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 87 active
+Fix the remaining Flocq import gaps by working through the 86 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1695,7 +1695,7 @@ explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
 
-#### `IEEE754/PrimFloat.v` (1)
+#### `IEEE754/PrimFloat.v` (0)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
@@ -1740,8 +1740,6 @@ infinities, the unique NaN, and bounded finite values. The existing
 `ExperimentalPrimFloatBridge` declarations were not changed or counted as
 evidence. Focused `lake env lean FloatSpec/src/IEEE754/PrimFloat.lean`
 passed. Therefore `Prim2B` and `B2Prim` are removed from the active list.
-
-- `add_equiv` (Theorem, upstream line 181)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_035155_normfr_mantissa_equiv_blocked/attempt.json`
@@ -1936,7 +1934,31 @@ real-wrapper `PrimFloat`; local `prim_add_correct` is a reflexive statement
 over `binary_add`, and the faithful primitive-float/Bplus bridge plus
 `binary_normalize_equiv` are unavailable in the upstream shape. Adding
 `add_equiv` over those local wrappers would be helper-only, tautological, or
-differently parameterized, so `add_equiv` remains active.
+differently parameterized, so `add_equiv` remained active at that time.
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_221430`, explicitly using `gpt-5.5` with
+high reasoning, added the independent SpecFloat-side `SFadd`, primitive
+`add`/`Add PrimitiveFloat` operation and exact `add_spec`, proof-carrying
+SingleNaN `Bplus`, and exact `add_equiv` inside `FaithfulPrimFloat`.
+`SFadd` matches Coq `SpecFloat.SFadd`: it preserves the NaN, infinity, and
+signed-zero constructor matrix, aligns finite mantissas at `min ex ey`, forms
+the signed `Fplus_naive` sum, and calls the namespace-local RNE
+`binary_normalize`; it does not call `Bplus`. Manual fidelity review found
+that the generated `Bplus` initially accepted a rounding mode but used an
+RNE-only finite normalizer. The final patch therefore generalized the
+proof-carrying `binary_normalize_bsn` and its validity helper over the supplied
+mode, keeps `binary_normalize_equiv` explicitly specialized to `RNE`, and
+passes `Bplus`'s mode through both finite rounding and the mode-dependent zero
+sign. The exact theorem states
+`Prim2B (x + y) = Bplus RoundingMode.RNE (Prim2B x) (Prim2B y)` and follows
+upstream `PrimFloat.v:182-197` through the conversion/injection stack,
+`add_spec`, reverse `B2SF_Prim2B` rewrites, proof-carrying constructor case
+analysis, and `binary_normalize_equiv`. Focused Lean checking, `git diff
+--check`, zero-finding placeholder/status audits, and the full 3345-job
+`lake build` passed; `scripts/check_diff_trust.sh` is absent from this checkout.
+Therefore `add_equiv` is removed from the active list, leaving no active
+`PrimFloat.v` gaps.
 
 #### `Pff/Pff.v` (86)
 

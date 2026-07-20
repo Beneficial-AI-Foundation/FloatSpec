@@ -1378,13 +1378,14 @@ theorem binary_round_equiv (sx : Bool) (mx : Nat) (ex : Int) :
   | mk alignedMant alignedExp =>
       apply binary_round_aux_equiv
 
-private theorem rootBinaryRoundValid (sx : Bool) (mx : Nat) (ex : Int)
+private theorem rootBinaryRoundValid (mode : RoundingMode)
+    (sx : Bool) (mx : Nat) (ex : Int)
     (hmx_pos : 0 < mx) :
     validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax)
       (_root_.binary_round (prec := primPrec) (emax := primEmax)
-        RoundingMode.RNE sx mx ex) = true :=
+        mode sx mx ex) = true :=
   (_root_.binary_round_correct (prec := primPrec) (emax := primEmax)
-    RoundingMode.RNE sx mx ex hmx_pos).1
+    mode sx mx ex hmx_pos).1
 
 -- Coq `SpecFloat.binary_normalize`, specialized to primitive binary64.
 noncomputable def binary_normalize (m e : Int) (szero : Bool) :
@@ -1397,7 +1398,8 @@ noncomputable def binary_normalize (m e : Int) (szero : Bool) :
     binary_round true m.natAbs e
 
 -- Coq `BinarySingleNaN.binary_normalize`, specialized to primitive binary64.
-noncomputable def binary_normalize_bsn (m e : Int) (szero : Bool) :
+noncomputable def binary_normalize_bsn (mode : RoundingMode)
+    (m e : Int) (szero : Bool) :
     PrimBinaryFloat :=
   if hzero : m = 0 then
     BinarySingleNaNFloat.B754_zero (prec := primPrec) (emax := primEmax) szero
@@ -1408,8 +1410,8 @@ noncomputable def binary_normalize_bsn (m e : Int) (szero : Bool) :
       exact_mod_cast hcast
     SF2B
       (_root_.binary_round (prec := primPrec) (emax := primEmax)
-        RoundingMode.RNE false m.toNat e)
-      (rootBinaryRoundValid false m.toNat e hm_toNat_pos)
+        mode false m.toNat e)
+      (rootBinaryRoundValid mode false m.toNat e hm_toNat_pos)
   else
     have hm_ne : m ≠ 0 := by
       intro h
@@ -1417,17 +1419,135 @@ noncomputable def binary_normalize_bsn (m e : Int) (szero : Bool) :
     have hm_abs_pos : 0 < m.natAbs := Int.natAbs_pos.mpr hm_ne
     SF2B
       (_root_.binary_round (prec := primPrec) (emax := primEmax)
-        RoundingMode.RNE true m.natAbs e)
-      (rootBinaryRoundValid true m.natAbs e hm_abs_pos)
+        mode true m.natAbs e)
+      (rootBinaryRoundValid mode true m.natAbs e hm_abs_pos)
 
 -- Coq `PrimFloat.v:binary_normalize_equiv`.
 theorem binary_normalize_equiv (m e : Int) (szero : Bool) :
-    binary_normalize m e szero = B2SF (binary_normalize_bsn m e szero) := by
+    binary_normalize m e szero =
+      B2SF (binary_normalize_bsn RoundingMode.RNE m e szero) := by
   unfold binary_normalize binary_normalize_bsn
   by_cases hzero : m = 0
   · simp [hzero, B2SF, binarySingleNaNFloatToStandardFloat]
   · by_cases hpos : 0 < m
     · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv]
     · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv]
+
+-- Coq `SpecFloat.SFadd`, specialized to primitive binary64.
+noncomputable def SFadd (x y : StandardFloat) : StandardFloat :=
+  match x, y with
+  | StandardFloat.S754_nan, _ => StandardFloat.S754_nan
+  | _, StandardFloat.S754_nan => StandardFloat.S754_nan
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_infinity sy =>
+      if sx == sy then x else StandardFloat.S754_nan
+  | StandardFloat.S754_infinity _, _ => x
+  | _, StandardFloat.S754_infinity _ => y
+  | StandardFloat.S754_zero sx, StandardFloat.S754_zero sy =>
+      if sx == sy then x else StandardFloat.S754_zero false
+  | StandardFloat.S754_zero _, _ => y
+  | _, StandardFloat.S754_zero _ => x
+  | StandardFloat.S754_finite sx mx ex,
+      StandardFloat.S754_finite sy my ey =>
+      let ez := min ex ey
+      binary_normalize (Fplus_naive sx mx ex sy my ey ez) ez false
+
+theorem SFadd_valid (x y : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) x = true)
+    (hy : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) y = true) :
+    validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax)
+      (SFadd x y) = true := by
+  cases x with
+  | S754_zero sx =>
+      cases y with
+      | S754_zero sy =>
+          by_cases h : sx = sy <;> simp [SFadd, h, validBinarySingleNaNStandardFloat]
+      | S754_infinity sy =>
+          simp [SFadd, validBinarySingleNaNStandardFloat]
+      | S754_nan =>
+          simp [SFadd, validBinarySingleNaNStandardFloat]
+      | S754_finite sy my ey =>
+          simpa [SFadd, validBinarySingleNaNStandardFloat, Bool.and_eq_true] using hy
+  | S754_infinity sx =>
+      cases y with
+      | S754_zero sy =>
+          simp [SFadd, validBinarySingleNaNStandardFloat]
+      | S754_infinity sy =>
+          by_cases h : sx = sy <;> simp [SFadd, h, validBinarySingleNaNStandardFloat]
+      | S754_nan =>
+          simp [SFadd, validBinarySingleNaNStandardFloat]
+      | S754_finite sy my ey =>
+          simp [SFadd, validBinarySingleNaNStandardFloat]
+  | S754_nan =>
+      cases y <;> simp [SFadd, validBinarySingleNaNStandardFloat]
+  | S754_finite sx mx ex =>
+      cases y with
+      | S754_zero sy =>
+          simpa [SFadd, validBinarySingleNaNStandardFloat, Bool.and_eq_true] using hx
+      | S754_infinity sy =>
+          simp [SFadd, validBinarySingleNaNStandardFloat]
+      | S754_nan =>
+          simp [SFadd, validBinarySingleNaNStandardFloat]
+      | S754_finite sy my ey =>
+          change validBinarySingleNaNStandardFloat
+            (binary_normalize (Fplus_naive sx mx ex sy my ey (min ex ey))
+              (min ex ey) false) = true
+          rw [binary_normalize_equiv]
+          exact B2SF_valid (binary_normalize_bsn RoundingMode.RNE
+            (Fplus_naive sx mx ex sy my ey (min ex ey)) (min ex ey) false)
+
+-- Coq primitive addition, independently defined through `Prim2SF`.
+noncomputable def add (x y : PrimitiveFloat) : PrimitiveFloat :=
+  ⟨SFadd (Prim2SF x) (Prim2SF y),
+    SFadd_valid (Prim2SF x) (Prim2SF y) (Prim2SF_valid x) (Prim2SF_valid y)⟩
+
+noncomputable instance : Add PrimitiveFloat where
+  add := FaithfulPrimFloat.add
+
+theorem add_spec (x y : PrimitiveFloat) :
+    Prim2SF (x + y) = SFadd (Prim2SF x) (Prim2SF y) := by
+  rfl
+
+-- Coq `BinarySingleNaN.Bplus`, specialized to primitive binary64.
+noncomputable def Bplus (mode : RoundingMode)
+    (x y : PrimBinaryFloat) : PrimBinaryFloat :=
+  match x, y with
+  | BinarySingleNaNFloat.B754_nan, _ => BinarySingleNaNFloat.B754_nan
+  | _, BinarySingleNaNFloat.B754_nan => BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_infinity sx, BinarySingleNaNFloat.B754_infinity sy =>
+      if sx == sy then x else BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_infinity _, _ => x
+  | _, BinarySingleNaNFloat.B754_infinity _ => y
+  | BinarySingleNaNFloat.B754_zero sx, BinarySingleNaNFloat.B754_zero sy =>
+      if sx == sy then x
+      else
+        match mode with
+        | RoundingMode.RTN =>
+            BinarySingleNaNFloat.B754_zero (prec:=primPrec) (emax:=primEmax) true
+        | _ =>
+            BinarySingleNaNFloat.B754_zero (prec:=primPrec) (emax:=primEmax) false
+  | BinarySingleNaNFloat.B754_zero _, _ => y
+  | _, BinarySingleNaNFloat.B754_zero _ => x
+  | BinarySingleNaNFloat.B754_finite sx mx ex _ _,
+      BinarySingleNaNFloat.B754_finite sy my ey _ _ =>
+      let ez := min ex ey
+      let szero :=
+        match mode with
+        | RoundingMode.RTN => true
+        | _ => false
+      binary_normalize_bsn mode (Fplus_naive sx mx ex sy my ey ez) ez szero
+
+-- Coq `PrimFloat.v:add_equiv`.
+theorem add_equiv (x y : PrimitiveFloat) :
+    Prim2B (x + y) = Bplus RoundingMode.RNE (Prim2B x) (Prim2B y) := by
+  apply B2Prim_inj
+  rw [B2Prim_Prim2B]
+  apply Prim2SF_inj
+  rw [Prim2SF_B2Prim]
+  rw [add_spec]
+  rw [← B2SF_Prim2B x, ← B2SF_Prim2B y]
+  cases Prim2B x <;> cases Prim2B y <;>
+    simp [SFadd, Bplus, B2SF_zero, B2SF_infinity, B2SF_nan,
+      B2SF_finite, binary_normalize_equiv] <;>
+      split_ifs <;> rfl
 
 end FaithfulPrimFloat
