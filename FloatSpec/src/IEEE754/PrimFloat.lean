@@ -1012,3 +1012,104 @@ theorem leb_equiv (prec emax : Int)
   rfl
 
 end ExperimentalPrimFloatBridge
+
+namespace FaithfulPrimFloat
+
+/-!
+Proof-carrying model of Coq's primitive binary64 floats.
+
+This namespace is intentionally separate from `ExperimentalPrimFloatBridge`:
+the latter keeps its historical real-only compatibility API, while this model
+preserves the `StandardFloat` representation and validity evidence used by
+Flocq's `PrimFloat.v` conversion layer.
+-/
+
+abbrev primPrec : Int := 53
+
+abbrev primEmax : Int := 1024
+
+abbrev PrimBinaryFloat := BinarySingleNaNFloat primPrec primEmax
+
+structure PrimitiveFloat where
+  toStandardFloat : StandardFloat
+  valid :
+    validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax)
+      toStandardFloat = true
+
+def Prim2SF (x : PrimitiveFloat) : StandardFloat :=
+  x.toStandardFloat
+
+theorem Prim2SF_valid (x : PrimitiveFloat) :
+    validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax)
+      (Prim2SF x) = true :=
+  x.valid
+
+private def canonicalNaN : PrimitiveFloat :=
+  ⟨StandardFloat.S754_nan, rfl⟩
+
+def SF2Prim (x : StandardFloat) : PrimitiveFloat :=
+  if hx : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) x = true then
+    ⟨x, hx⟩
+  else
+    canonicalNaN
+
+def SF2B (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) x = true) :
+    PrimBinaryFloat :=
+  standardFloatToBinarySingleNaNFloat (prec := primPrec) (emax := primEmax) x hx
+
+def B2SF (x : PrimBinaryFloat) : StandardFloat :=
+  binarySingleNaNFloatToStandardFloat (prec := primPrec) (emax := primEmax) x
+
+theorem B2SF_valid (x : PrimBinaryFloat) :
+    validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax)
+      (B2SF x) = true :=
+  validBinarySingleNaNStandardFloat_binarySingleNaNFloatToStandardFloat
+    (prec := primPrec) (emax := primEmax) x
+
+-- Flocq `PrimFloat.v:Prim2B`.
+def Prim2B (x : PrimitiveFloat) : PrimBinaryFloat :=
+  SF2B (Prim2SF x) (Prim2SF_valid x)
+
+-- Flocq `PrimFloat.v:B2Prim`.
+def B2Prim (x : PrimBinaryFloat) : PrimitiveFloat :=
+  SF2Prim (B2SF x)
+
+theorem Prim2SF_SF2Prim (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) x = true) :
+    Prim2SF (SF2Prim x) = x := by
+  simp [Prim2SF, SF2Prim, hx]
+
+theorem SF2Prim_Prim2SF (x : PrimitiveFloat) :
+    SF2Prim (Prim2SF x) = x := by
+  rcases x with ⟨x, hx⟩
+  simp [SF2Prim, Prim2SF, hx]
+
+theorem B2SF_SF2B (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) x = true) :
+    B2SF (SF2B x hx) = x := by
+  exact
+    binarySingleNaNFloatToStandardFloat_standardFloatToBinarySingleNaNFloat
+      (prec := primPrec) (emax := primEmax) x hx
+
+theorem SF2B_B2SF (x : PrimBinaryFloat) :
+    SF2B (B2SF x) (B2SF_valid x) = x := by
+  exact
+    standardFloatToBinarySingleNaNFloat_binarySingleNaNFloatToStandardFloat
+      (prec := primPrec) (emax := primEmax) x
+
+theorem B2Prim_Prim2B (x : PrimitiveFloat) :
+    B2Prim (Prim2B x) = x := by
+  rcases x with ⟨x, hx⟩
+  simp [B2Prim, Prim2B, B2SF, SF2B, Prim2SF, SF2Prim, hx,
+    binarySingleNaNFloatToStandardFloat_standardFloatToBinarySingleNaNFloat]
+
+theorem Prim2B_B2Prim (x : PrimBinaryFloat) :
+    Prim2B (B2Prim x) = x := by
+  have hB2Prim :
+      B2Prim x = ⟨B2SF x, B2SF_valid x⟩ := by
+    simp [B2Prim, SF2Prim, B2SF_valid]
+  rw [hB2Prim]
+  simpa [Prim2B, Prim2SF] using SF2B_B2SF x
+
+end FaithfulPrimFloat

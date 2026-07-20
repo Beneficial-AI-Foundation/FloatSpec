@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 94.
+- Active semantic gap candidates still listed below: 92.
 - Files with at least one active listed candidate: 2.
-- Counterpart audit coverage for the active list: 94/94 names have been
+- Counterpart audit coverage for the active list: 92/92 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 94 active
+Fix the remaining Flocq import gaps by working through the 92 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1695,7 +1695,7 @@ explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
 
-#### `IEEE754/PrimFloat.v` (8)
+#### `IEEE754/PrimFloat.v` (6)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
@@ -1710,9 +1710,6 @@ IEEE/PrimFloat equivalence. No faithful Coq primitive `float`, `Prim2SF_valid`,
 or proof-carrying `SF2B ... : binary_float prec emax` path is present, so
 `Prim2B` remains active until that primitive-float bridge exists.
 
-- `Prim2B` (Definition, upstream line 27)
-- `B2Prim` (Definition, upstream line 32)
-
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_B2Prim_current_blocked/attempt.json`
 records `result = blocked` and `coq_alignment = checked`: upstream line 32
@@ -1725,6 +1722,24 @@ signed-zero behavior. No faithful Coq primitive `float`, `SF2Prim`, or
 proof-carrying `B2SF ... : StandardFloat` path from local `binary_float prec
 emax` is present, so `B2Prim` remains active until that primitive-float bridge
 exists.
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_202634` correctly rejected an invasive
+replacement of the historical real-only experimental bridge and restored a
+clean worktree. Manual follow-up then added an independent
+`FaithfulPrimFloat` model whose `PrimitiveFloat` carrier stores a
+`StandardFloat` together with the exact fixed-binary64
+`validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)` proof.
+`FaithfulPrimFloat.Prim2B` is definitionally
+`SF2B (Prim2SF x) (Prim2SF_valid x)`, and
+`FaithfulPrimFloat.B2Prim` is definitionally `SF2Prim (B2SF x)`, matching
+upstream `PrimFloat.v:30-34` on the proof-carrying SingleNaN binary64 carrier.
+The accompanying `B2SF_SF2B`, `SF2B_B2SF`, `B2Prim_Prim2B`, and
+`Prim2B_B2Prim` theorems prove exact round trips for signed zeros,
+infinities, the unique NaN, and bounded finite values. The existing
+`ExperimentalPrimFloatBridge` declarations were not changed or counted as
+evidence. Focused `lake env lean FloatSpec/src/IEEE754/PrimFloat.lean`
+passed. Therefore `Prim2B` and `B2Prim` are removed from the active list.
 
 - `binary_round_aux_equiv` (Lemma, upstream line 133)
 - `mul_equiv` (Theorem, upstream line 143)
