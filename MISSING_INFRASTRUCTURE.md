@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 78.
+- Active semantic gap candidates still listed below: 76.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 78/78 names have been
+- Counterpart audit coverage for the active list: 76/76 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 77 active
+Fix the remaining Flocq import gaps by working through the 76 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2136,9 +2136,27 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `VeltkampEven1` is removed from the
 active list, and `VeltkampEven2` is next.
 
-#### `Pff/Pff.v` (77)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_052705` left the exact `VeltkampEven2`
+payload unchanged and did not run a build. The manual repair restored exact
+public `VeltkampEven2` with the expanded upstream Veltkamp section assumptions
+and exact conclusion: a same-value representative of `hx` that is even-closest
+to `x` in the reduced `t - s` format. A private no-tie lemma represents the
+residual as an integer multiple of `radix ^ Fexp x`; an exact half-ulp tie
+would make `radix ^ s` even, contradicting `Odd radix`. The public proof uses
+`Veltkamp_aux`, constructs the canonical reduced representative, rules out the
+tie, and applies `ImplyClosestStrict2` for uniqueness and hence
+`EvenClosest`. The focused Lean process exited 0, `git diff --check` passed,
+placeholder/status audits reported zero findings, and the full 3345-job
+`lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_VeltkampEven2_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `VeltkampEven2` is removed from the
+active list, and `Veltkamp_pos` is next.
 
-- `VeltkampEven2` (Lemma, upstream line 14483)
+#### `Pff/Pff.v` (76)
+
 - `Veltkamp_pos` (Lemma, upstream line 14709)
 - `VeltkampN_aux` (Lemma, upstream line 14788)
 - `VeltkampN` (Lemma, upstream line 14832)
@@ -6918,7 +6936,7 @@ Statement-level checks performed for the first 35 active Pff entries:
   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
   inequality from only the upstream Veltkamp section hypotheses.
-- `VeltkampEven2`, `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`,
+- `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`,
   `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
   `FloatSpec/src/Pff/Pff2Flocq.lean`. The wrapper assumes a reduced
@@ -6926,8 +6944,9 @@ Statement-level checks performed for the first 35 active Pff entries:
   Veltkamp error bound and reduced witness from rounded intermediate
   products/sums. They are therefore missing lower Pff payloads, not hidden
   under the public wrapper.
-- `Veltkamp_aux_aux`, `Veltkamp_aux`, and `VeltkampEven1` are now restored as
-  exact public Lean theorems in `FloatSpec/src/Pff/Pff.lean`; they are no
+- `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`, and `VeltkampEven2`
+  are now restored as exact public Lean theorems in
+  `FloatSpec/src/Pff/Pff.lean`; they are no
   longer inferred from the higher-level wrapper and no longer belong to this
   missing-payload group.
 - `bimplybplusNorm` was restored as exact public Lean theorem
