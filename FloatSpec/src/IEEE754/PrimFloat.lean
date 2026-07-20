@@ -1129,6 +1129,44 @@ theorem Prim2B_B2Prim (x : PrimBinaryFloat) :
   rw [hB2Prim]
   simpa [Prim2B, Prim2SF] using SF2B_B2SF x
 
+theorem B2SF_Prim2B (x : PrimitiveFloat) :
+    B2SF (Prim2B x) = Prim2SF x := by
+  exact B2SF_SF2B (Prim2SF x) (Prim2SF_valid x)
+
+namespace Uint63
+
+structure t where
+  toNat : Nat
+
+def to_Z (x : t) : Int :=
+  Int.ofNat x.toNat
+
+end Uint63
+
+namespace Z
+
+def of_N (n : Nat) : Int :=
+  Int.ofNat n
+
+end Z
+
+def normfr_mantissa (x : PrimitiveFloat) : Uint63.t :=
+  ⟨SFnormfr_mantissa primPrec (Prim2SF x)⟩
+
+theorem normfr_mantissa_spec (x : PrimitiveFloat) :
+    Uint63.to_Z (normfr_mantissa x) =
+      Z.of_N (SFnormfr_mantissa primPrec (Prim2SF x)) := by
+  rfl
+
+-- Coq `PrimFloat.v:normfr_mantissa_equiv`.
+theorem normfr_mantissa_equiv (x : PrimitiveFloat) :
+    Uint63.to_Z (normfr_mantissa x) =
+      Z.of_N (BinarySingleNaNFloat.Bnormfr_mantissa (Prim2B x)) := by
+  rw [normfr_mantissa_spec]
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> simp [Z.of_N, B2SF, BinarySingleNaNFloat.Bnormfr_mantissa,
+    SFnormfr_mantissa, binarySingleNaNFloatToStandardFloat]
+
 private def specRoundNearestEven (m : Int) (l : Loc) : Int :=
   FloatSpec.Calc.Round.cond_incr
     (FloatSpec.Calc.Round.round_N (!(decide (2 ∣ m))) l) m

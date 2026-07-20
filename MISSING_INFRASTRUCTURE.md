@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 89.
+- Active semantic gap candidates still listed below: 88.
 - Files with at least one active listed candidate: 2.
-- Counterpart audit coverage for the active list: 89/89 names have been
+- Counterpart audit coverage for the active list: 88/88 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 89 active
+Fix the remaining Flocq import gaps by working through the 88 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1695,7 +1695,7 @@ explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
 
-#### `IEEE754/PrimFloat.v` (3)
+#### `IEEE754/PrimFloat.v` (2)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
@@ -1743,7 +1743,6 @@ passed. Therefore `Prim2B` and `B2Prim` are removed from the active list.
 
 - `mul_equiv` (Theorem, upstream line 143)
 - `add_equiv` (Theorem, upstream line 181)
-- `normfr_mantissa_equiv` (Theorem, upstream line 258)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_035155_normfr_mantissa_equiv_blocked/attempt.json`
@@ -1759,7 +1758,28 @@ primitive-float `normfr_mantissa`, `to_Z`, or `Z.of_N` payloads with matching
 types. `Bnormfr_mantissa` exists only on local binary bridge types. Adding
 the exact theorem over the current wrappers would be helper-only or
 tautological rather than the upstream primitive-float theorem, so
-`normfr_mantissa_equiv` remains active.
+`normfr_mantissa_equiv` remained active at that time.
+
+2026-07-20 completion note: the first subscription harness attempt
+`.change_log/codex_attempt_20260720_213724` failed before editing because the
+ambient model cache used the unsupported reasoning value `max`. The corrected
+subscription attempt `.change_log/codex_attempt_20260720_213832`, explicitly
+using `gpt-5.5` with high reasoning, added the faithful primitive-side
+`Uint63.t`, `Uint63.to_Z`, `Z.of_N`, `normfr_mantissa`,
+`normfr_mantissa_spec`, `B2SF_Prim2B`, and exact
+`normfr_mantissa_equiv` in `FaithfulPrimFloat`. The primitive operation is
+defined independently through `SFnormfr_mantissa primPrec (Prim2SF x)` and
+does not call `BinarySingleNaNFloat.Bnormfr_mantissa`; its specification has
+the exact Coq `FloatAxioms.normfr_mantissa_spec` payload after representing
+Coq's nonnegative `uint63`/`N` results with the local `Nat` carrier and both
+integer conversions with `Int.ofNat`. The equivalence proof rewrites that
+specification, rewrites `B2SF_Prim2B` in reverse, and case-splits the
+proof-carrying `Prim2B x`, matching upstream `PrimFloat.v:259-266`. Focused
+Lean checking, the zero-finding placeholder/status audits, and the full
+3345-job `lake build` passed. The authoritative classifier for the final
+patch records `result = proved`, `build = pass`, `coq_alignment = checked`,
+and a passing local target gate. Therefore `normfr_mantissa_equiv` is removed
+from the active list.
 
 2026-07-17 blocker note: harness attempt
 `.change_log/codex_attempt_20260717_025301` rechecked upstream
