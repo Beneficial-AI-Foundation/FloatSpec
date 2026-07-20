@@ -45895,6 +45895,229 @@ theorem VeltkampEvenN {beta : Int}
   exact VeltkampEvenN_aux (beta:=radix) b radix s t x np nq hx rfl hradix
     hvNum hsGe hsLe hxNormal hnpCan hnqCan hnpEven hnqEven hhxEven
 
+/-! Coq Veltkamp bound-extension lemma `Closestbbplus`.
+
+Competitors newly admitted by `plusExp` have exponent below the original
+minimum and magnitude below the first interior radix threshold. Inside that
+threshold the exact float has an exact original-bound representative; outside
+it, the threshold float on the same side is no farther from the exact value. -/
+theorem Closestbbplus {beta : Int}
+    (b0 : Fbound_skel) (radix : Int) (t n : Nat)
+    (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
+    (hfextExp : -b0.dExp ≤ fext.Fexp)
+    (hfClosest : Closest (beta:=beta) b0 (radix : ℝ)
+      (_root_.F2R (beta:=beta) fext) f) :
+    Closest (beta:=beta) (plusExp b0 t) (radix : ℝ)
+      (_root_.F2R (beta:=beta) fext) f := by
+  subst beta
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradixPosInt
+  have hradixOne : (1 : ℝ) ≤ (radix : ℝ) := by
+    exact_mod_cast (le_of_lt hradix)
+  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
+  have hnPredCast : ((n - 1 : Nat) : Int) = (n : Int) - 1 := by
+    omega
+  let mantissaThreshold : Int := Zpower_nat radix (n - 1)
+  let threshold : ℝ :=
+    (radix : ℝ) ^ ((n : Int) - 1 - b0.dExp)
+  have hmantissaThresholdPos : 0 < mantissaThreshold := by
+    dsimp [mantissaThreshold, Zpower_nat]
+    exact pow_pos hradixPosInt _
+  have hmantissaThresholdLt : mantissaThreshold < b0.vNum := by
+    rw [hvNum]
+    dsimp [mantissaThreshold, Zpower_nat]
+    exact pow_lt_pow_right₀ hradix (by omega)
+  have hthresholdPos : 0 < threshold := by
+    exact zpow_pos hradixPos _
+  let upper : FloatSpec.Core.Defs.FlocqFloat radix :=
+    ⟨mantissaThreshold, -b0.dExp⟩
+  let lower : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fopp (beta:=radix) upper
+  have hupperBound : Fbounded (beta:=radix) b0 upper := by
+    constructor
+    · dsimp [upper]
+      rw [abs_of_pos hmantissaThresholdPos]
+      exact hmantissaThresholdLt
+    · simp [upper]
+  have hlowerBound : Fbounded (beta:=radix) b0 lower := by
+    simpa [lower, Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg]
+      using hupperBound
+  have hthresholdScale :
+      threshold = (mantissaThreshold : ℝ) * (radix : ℝ) ^ (-b0.dExp) := by
+    dsimp [threshold, mantissaThreshold, Zpower_nat]
+    rw [Int.cast_pow, ← zpow_natCast, hnPredCast]
+    rw [← zpow_add₀ hradixNe]
+    congr 1
+  have hupperValue :
+      _root_.F2R (beta:=radix) upper = threshold := by
+    dsimp [upper, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    rw [hthresholdScale]
+  have hlowerValue :
+      _root_.F2R (beta:=radix) lower = -threshold := by
+    have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=radix) upper) trivial
+    calc
+      _root_.F2R (beta:=radix) lower =
+          -_root_.F2R (beta:=radix) upper := by
+        simpa [lower, Fopp, _root_.F2R] using h
+      _ = -threshold := by rw [hupperValue]
+  constructor
+  · rcases hfClosest.1 with ⟨hfNum, hfExp⟩
+    constructor
+    · simpa [plusExp] using hfNum
+    · dsimp [plusExp]
+      have htNonneg : (0 : Int) ≤ ((t - 1 : Nat) : Int) :=
+        Int.natCast_nonneg _
+      omega
+  · intro g hgPlus
+    by_cases hgOldExp : -b0.dExp ≤ g.Fexp
+    · apply hfClosest.2 g
+      constructor
+      · simpa [plusExp] using hgPlus.1
+      · exact hgOldExp
+    · have hgExpLe : g.Fexp ≤ -b0.dExp - 1 := by omega
+      have hgNumInt : |g.Fnum| < Zpower_nat radix n := by
+        simpa [plusExp, hvNum] using hgPlus.1
+      have hgNumRealCast :
+          ((|g.Fnum| : Int) : ℝ) < ((Zpower_nat radix n : Int) : ℝ) := by
+        exact_mod_cast hgNumInt
+      have hgNumReal : |(g.Fnum : ℝ)| < (radix : ℝ) ^ n := by
+        simpa [Int.cast_abs, Zpower_nat, Int.cast_pow] using hgNumRealCast
+      have hgPowPos : 0 < (radix : ℝ) ^ g.Fexp :=
+        zpow_pos hradixPos _
+      have hgPowLe :
+          (radix : ℝ) ^ g.Fexp ≤
+            (radix : ℝ) ^ (-b0.dExp - 1) :=
+        zpow_le_zpow_right₀ hradixOne hgExpLe
+      have hgAbsValue :
+          |_root_.F2R (beta:=radix) g| =
+            |(g.Fnum : ℝ)| * (radix : ℝ) ^ g.Fexp := by
+        simp [_root_.F2R, FloatSpec.Core.Defs.F2R, abs_mul,
+          abs_of_pos hgPowPos]
+      have hgMagnitudeLt :
+          |_root_.F2R (beta:=radix) g| < threshold := by
+        rw [hgAbsValue]
+        calc
+          |(g.Fnum : ℝ)| * (radix : ℝ) ^ g.Fexp <
+              (radix : ℝ) ^ n * (radix : ℝ) ^ g.Fexp :=
+            mul_lt_mul_of_pos_right hgNumReal hgPowPos
+          _ ≤ (radix : ℝ) ^ n *
+              (radix : ℝ) ^ (-b0.dExp - 1) :=
+            mul_le_mul_of_nonneg_left hgPowLe (by positivity)
+          _ = threshold := by
+            dsimp [threshold]
+            rw [← zpow_natCast, ← zpow_add₀ hradixNe]
+            congr 1
+            ring
+      let shift : Nat := (fext.Fexp + b0.dExp).toNat
+      have hshiftCast : (shift : Int) = fext.Fexp + b0.dExp := by
+        dsimp [shift]
+        rw [Int.toNat_of_nonneg]
+        omega
+      let exactMantissa : Int := fext.Fnum * radix ^ shift
+      let exactFloat : FloatSpec.Core.Defs.FlocqFloat radix :=
+        ⟨exactMantissa, -b0.dExp⟩
+      have hexactValue :
+          _root_.F2R (beta:=radix) exactFloat =
+            _root_.F2R (beta:=radix) fext := by
+        dsimp [exactFloat, exactMantissa, _root_.F2R,
+          FloatSpec.Core.Defs.F2R]
+        rw [Int.cast_mul, Int.cast_pow, ← zpow_natCast]
+        calc
+          (fext.Fnum : ℝ) * (radix : ℝ) ^ (shift : Int) *
+              (radix : ℝ) ^ (-b0.dExp) =
+              (fext.Fnum : ℝ) *
+                ((radix : ℝ) ^ (shift : Int) *
+                  (radix : ℝ) ^ (-b0.dExp)) := by ring
+          _ = (fext.Fnum : ℝ) *
+                (radix : ℝ) ^ ((shift : Int) + (-b0.dExp)) := by
+              rw [zpow_add₀ hradixNe]
+          _ = (fext.Fnum : ℝ) * (radix : ℝ) ^ fext.Fexp := by
+              rw [hshiftCast]
+              congr 2
+              ring
+      by_cases hzInside :
+          |_root_.F2R (beta:=radix) fext| < threshold
+      · have hscalePos : 0 < (radix : ℝ) ^ (-b0.dExp) :=
+          zpow_pos hradixPos _
+        have hexactAbs :
+            |_root_.F2R (beta:=radix) exactFloat| =
+              |(exactMantissa : ℝ)| * (radix : ℝ) ^ (-b0.dExp) := by
+          dsimp [exactFloat, _root_.F2R, FloatSpec.Core.Defs.F2R]
+          rw [abs_mul, abs_of_pos hscalePos]
+        have hexactMantissaRealLt :
+            |(exactMantissa : ℝ)| < (mantissaThreshold : ℝ) := by
+          rw [← hexactValue] at hzInside
+          rw [hexactAbs, hthresholdScale] at hzInside
+          exact lt_of_mul_lt_mul_right hzInside (le_of_lt hscalePos)
+        have hexactMantissaIntLt :
+            |exactMantissa| < mantissaThreshold := by
+          exact_mod_cast (show
+            ((|exactMantissa| : Int) : ℝ) < (mantissaThreshold : ℝ) by
+              simpa [Int.cast_abs] using hexactMantissaRealLt)
+        have hexactBound : Fbounded (beta:=radix) b0 exactFloat := by
+          constructor
+          · dsimp [exactFloat]
+            exact lt_trans hexactMantissaIntLt hmantissaThresholdLt
+          · simp [exactFloat]
+        have hzeroError := hfClosest.2 exactFloat hexactBound
+        rw [hexactValue, sub_self, abs_zero] at hzeroError
+        exact le_trans hzeroError (abs_nonneg _)
+      · have hthresholdLeAbs :
+            threshold ≤ |_root_.F2R (beta:=radix) fext| :=
+          le_of_not_gt hzInside
+        by_cases hzNonneg : 0 ≤ _root_.F2R (beta:=radix) fext
+        · have hthresholdLeZ :
+              threshold ≤ _root_.F2R (beta:=radix) fext := by
+            simpa [abs_of_nonneg hzNonneg] using hthresholdLeAbs
+          have hgLtZ :
+              _root_.F2R (beta:=radix) g <
+                _root_.F2R (beta:=radix) fext :=
+            lt_of_le_of_lt (le_abs_self _) (lt_of_lt_of_le
+              hgMagnitudeLt hthresholdLeZ)
+          have hgLtThreshold :
+              _root_.F2R (beta:=radix) g < threshold :=
+            lt_of_le_of_lt (le_abs_self _) hgMagnitudeLt
+          have hupperErrorLe :
+              |_root_.F2R (beta:=radix) upper -
+                  _root_.F2R (beta:=radix) fext| ≤
+                |_root_.F2R (beta:=radix) g -
+                  _root_.F2R (beta:=radix) fext| := by
+            rw [hupperValue, abs_of_nonpos (by linarith),
+              abs_of_nonpos (by linarith)]
+            linarith
+          exact le_trans (hfClosest.2 upper hupperBound) hupperErrorLe
+        · have hzNeg : _root_.F2R (beta:=radix) fext < 0 :=
+            lt_of_not_ge hzNonneg
+          have hzLeNegThreshold :
+              _root_.F2R (beta:=radix) fext ≤ -threshold := by
+            rw [abs_of_neg hzNeg] at hthresholdLeAbs
+            linarith
+          have hzLtG :
+              _root_.F2R (beta:=radix) fext <
+                _root_.F2R (beta:=radix) g := by
+            have hnegAbsLeG :
+                -|_root_.F2R (beta:=radix) g| ≤
+                  _root_.F2R (beta:=radix) g := neg_abs_le _
+            linarith
+          have hlowerErrorLe :
+              |_root_.F2R (beta:=radix) lower -
+                  _root_.F2R (beta:=radix) fext| ≤
+                |_root_.F2R (beta:=radix) g -
+                  _root_.F2R (beta:=radix) fext| := by
+            rw [hlowerValue, abs_of_nonneg (by linarith),
+              abs_of_nonneg (by linarith)]
+            have hnegThresholdLeG :
+                -threshold ≤ _root_.F2R (beta:=radix) g := by
+              have hnegAbsLeG :
+                  -|_root_.F2R (beta:=radix) g| ≤
+                    _root_.F2R (beta:=radix) g := neg_abs_le _
+              linarith
+            linarith
+          exact le_trans (hfClosest.2 lower hlowerBound) hlowerErrorLe
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
