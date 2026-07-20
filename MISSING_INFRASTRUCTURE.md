@@ -350,10 +350,32 @@ The proof uses the Coq-shaped `specFloat_bounded` carrier migration from
 placeholder audit, status report, and `git diff --check` passed. Status:
 implemented and removed from active semantic gaps.
 
-#### `IEEE754/BinarySingleNaN.v` (2)
+#### `IEEE754/BinarySingleNaN.v` (1)
 
-- `Bpred_pos'_correct` (Theorem, upstream line 3464)
 - `Bsucc'_correct` (Theorem, upstream line 3670)
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_130235` failed before proof generation
+because its configured reasoning-effort value was rejected; it changed no
+source files and its local target gate passed. The subsequent manual repair
+restored exact public `Bpred_pos'_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The theorem preserves the
+upstream equality payload over the proof-carrying SingleNaN carrier:
+`2 < emax` and positive real semantics imply `Bpred_pos' x = Bpred x`.
+The proof establishes faithful real-value, validity, finiteness, and sign
+packages for both executable predecessors, handles the normal/subnormal radix
+boundary split through `Bfrexp`, `Bulp'`, and `Bplus`, and concludes by
+constructor injectivity; it does not use a proof-erased compatibility carrier
+or weaken equality to real-value equality. Focused
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full `lake build`
+across 3345 jobs, `git diff --check`, `scripts/status_report.sh --write`, and
+`scripts/audit_placeholders.sh --json FloatSpec` passed; the audit reported
+zero placeholder, weakening, or conclusion-as-hypothesis findings. Status:
+implemented and removed from active semantic gaps.
+The normalized classifier
+`.change_log/manual_attempt_20260720_bpred_pos_prime_correct_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and
+`local_target_gate = pass`.
 
 2026-07-20 completion note: subscription harness attempt
 `.change_log/codex_attempt_20260720_111844` failed before proof generation

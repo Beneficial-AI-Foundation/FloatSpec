@@ -4727,6 +4727,32 @@ private theorem standardFloat_eq_of_valid_finite_sign_value
                   simpa [bx, byFloat, B2FF_FF2B] using hstd
             _ = StandardFloat.S754_finite sy my ey := FF2SF_SF2FF _
 
+private theorem B754_eq_of_valid_finite_sign_value
+    (x y : B754)
+    (hvalidX : validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+      (B2SF_BSN x) = true)
+    (hvalidY : validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+      (B2SF_BSN y) = true)
+    (hfiniteX : BSN_is_finite x = true)
+    (hfiniteY : BSN_is_finite y = true)
+    (hvalue : B754_to_R x = B754_to_R y)
+    (hsign : BSN_sign x = BSN_sign y) :
+    x = y := by
+  have hxnan : BSN_is_nan x = false := by
+    cases x <;> simp_all [BSN_is_nan, BSN_is_finite]
+  have hynan : BSN_is_nan y = false := by
+    cases y <;> simp_all [BSN_is_nan, BSN_is_finite]
+  apply B2SF_inj x y hxnan hynan
+  apply standardFloat_eq_of_valid_finite_sign_value (prec:=prec) (emax:=emax)
+  · exact hvalidX
+  · exact hvalidY
+  · cases x <;> simpa [B2SF_BSN, is_finite_SF, BSN_is_finite] using hfiniteX
+  · cases y <;> simpa [B2SF_BSN, is_finite_SF, BSN_is_finite] using hfiniteY
+  · cases x <;> cases y <;>
+      simpa [B2SF_BSN, SF2R, B754_to_R] using hvalue
+  · cases x <;> cases y <;>
+      simpa [B2SF_BSN, sign_SF, BSN_sign] using hsign
+
 private theorem binary_round_one_payload
     [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
@@ -4836,6 +4862,59 @@ private theorem Bfrexp_fexp_eq_of_finite
       ring
     rw [harg]
     exact hcanonEq.symm
+
+private theorem Bfrexp_exp_eq_mag_of_finite
+    (hmax : 2 < emax) (sx : Bool) (mx : Nat) (ex : Int)
+    (hmx : 0 < mx)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true) :
+    (Bfrexp_bsn (prec:=prec) (emax:=emax)
+      (B754.B754_finite sx mx ex)).2 =
+      FloatSpec.Core.Raux.mag 2
+        (B754_to_R (B754.B754_finite sx mx ex)) := by
+  have hfirst : FloatSpec.Core.Zaux.Zlt_bool (-prec) (3 - emax - prec) = false := by
+    simp [FloatSpec.Core.Zaux.Zlt_bool]
+    omega
+  have hdigitTrip := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat mx
+  have hdigit :
+      FloatSpec.Core.Digits.Zdigits 2 (mx : Int) =
+        (FloatSpec.Core.Digits.digits2_Pnat mx : Int) := by
+    simpa [wp, PostCond.noThrow, pure] using hdigitTrip hmx
+  have hdigitLe : FloatSpec.Core.Digits.Zdigits 2 (mx : Int) ≤ prec :=
+    Zdigits_le_prec_of_specFloat_bounded (prec:=prec) (emax:=emax) mx ex hbounded
+  have hmxInt : (mx : Int) ≠ 0 := by
+    exact_mod_cast (Nat.ne_of_gt hmx)
+  have hsignedInt : (if sx then -(mx : Int) else (mx : Int)) ≠ 0 := by
+    cases sx <;> simp <;> omega
+  have hmagSigned := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits
+    (beta:=2) (m:=if sx then -(mx : Int) else (mx : Int)) (e:=ex)
+    (by norm_num : (1 : Int) < 2) hsignedInt
+  have hsignDigitsTrip := FloatSpec.Core.Digits.Zdigits_cond_Zopp
+    (beta:=2) (b:=sx) (n:=(mx : Int))
+  have hsignDigits :
+      FloatSpec.Core.Digits.Zdigits 2 (if sx then -(mx : Int) else (mx : Int)) =
+        FloatSpec.Core.Digits.Zdigits 2 (mx : Int) := by
+    simpa [wp, PostCond.noThrow, pure] using hsignDigitsTrip trivial
+  have hmag :
+      FloatSpec.Core.Raux.mag 2
+          (B754_to_R (B754.B754_finite sx mx ex)) =
+        FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex := by
+    simpa [B754_to_R, F2R, FloatSpec.Core.Defs.F2R, hsignDigits] using hmagSigned
+  by_cases hprecDigits : prec.toNat ≤ FloatSpec.Core.Digits.digits2_Pnat mx
+  · have hprecNonneg : 0 ≤ prec := le_of_lt (inferInstance : Prec_gt_0 prec).pos
+    have hdigitNatLe : FloatSpec.Core.Digits.digits2_Pnat mx ≤ prec.toNat := by
+      have hcast : (FloatSpec.Core.Digits.digits2_Pnat mx : Int) ≤ prec := by
+        simpa [hdigit] using hdigitLe
+      have hprecCast : (prec.toNat : Int) = prec := Int.toNat_of_nonneg hprecNonneg
+      have hcast' : (FloatSpec.Core.Digits.digits2_Pnat mx : Int) ≤
+          (prec.toNat : Int) := by simpa [hprecCast] using hcast
+      exact_mod_cast hcast'
+    have hdigitNatEq : FloatSpec.Core.Digits.digits2_Pnat mx = prec.toNat :=
+      Nat.le_antisymm hdigitNatLe hprecDigits
+    simp [Bfrexp_bsn, Ffrexp_core_binary, hfirst, hprecDigits, hmag, hdigit,
+      hdigitNatEq, Int.toNat_of_nonneg hprecNonneg]
+    ring
+  · simp [Bfrexp_bsn, Ffrexp_core_binary, hfirst, hprecDigits, hmag, hdigit]
+    ring
 
 -- Coq: Bulp'_correct
 theorem Bulp'_correct
@@ -7166,7 +7245,7 @@ private theorem Bplus_finite_nonnegative_correct {prec emax : Int}
     have hbranch := hround.2
     dsimp at hbranch
     rw [hltAux] at hbranch
-    simp only [if_pos rfl] at hbranch
+    simp at hbranch
     have hr : r = SF2B z := by
       simp [r, Bplus, binary_normalize, m, ez, hm0, hmpos, z]
     rw [hr]
@@ -7196,5 +7275,648 @@ private theorem Bplus_finite_nonnegative_correct {prec emax : Int}
       · constructor
         · exact hfinite.trans hbranch.2.1
         · exact hsign.trans hbranch.2.2
+
+private theorem roundR_RTZ_eq_floor_of_nonneg {prec emax : Int}
+    (x : ℝ) (hx : 0 ≤ x) :
+    FloatSpec.Core.Generic_fmt.roundR 2
+        (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RTZ) x =
+      FloatSpec.Core.Generic_fmt.roundR 2
+        (FLT_exp (3 - emax - prec) prec) FloatSpec.Core.Generic_fmt.rnd_floor x := by
+  let sm := FloatSpec.Core.Generic_fmt.scaled_mantissa 2
+    (FLT_exp (3 - emax - prec) prec) x
+  have hpow : 0 ≤ (2 : ℝ) ^
+      (-(FloatSpec.Core.Generic_fmt.cexp 2
+        (FLT_exp (3 - emax - prec) prec) x)) :=
+    le_of_lt (zpow_pos (by norm_num : (0 : ℝ) < 2) _)
+  have hsm : 0 ≤ sm := by
+    simpa [sm, FloatSpec.Core.Generic_fmt.scaled_mantissa] using mul_nonneg hx hpow
+  have hrnd : rnd_of_mode RoundingMode.RTZ sm =
+      FloatSpec.Core.Generic_fmt.rnd_floor sm := by
+    simp [rnd_of_mode, FloatSpec.Core.Generic_fmt.rnd_floor,
+      FloatSpec.Core.Raux.Zfloor, not_lt.mpr hsm]
+  simp only [FloatSpec.Core.Generic_fmt.roundR]
+  rw [hrnd]
+
+private theorem roundR_floor_minus_eps_pos {prec emax : Int}
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    (x eps : ℝ) (hx : 0 < x)
+    (hformat : FloatSpec.Core.Generic_fmt.generic_format 2
+      (FLT_exp (3 - emax - prec) prec) x)
+    (heps : 0 < eps ∧ eps ≤ FloatSpec.Core.Ulp.ulp 2
+      (FLT_exp (3 - emax - prec) prec)
+      (FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) x)) :
+    FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (3 - emax - prec) prec)
+        FloatSpec.Core.Generic_fmt.rnd_floor (x - eps) =
+      FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) x := by
+  have hchosenTrip := FloatSpec.Core.Ulp.round_DN_minus_eps_pos
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+    (x:=x) hx hformat eps heps (by norm_num : (1 : Int) < 2)
+  have hchosen :
+      FloatSpec.Core.Generic_fmt.round_DN_to_format 2
+          (FLT_exp (3 - emax - prec) prec) (x - eps) (by norm_num) =
+        FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) x := by
+    simpa [wp, PostCond.noThrow, pure] using hchosenTrip trivial
+  have hround := FloatSpec.Core.Generic_fmt.roundR_DN_pt
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+    (x:=x - eps) (by norm_num : (1 : Int) < 2)
+  have hchosenSpec := Classical.choose_spec
+    (FloatSpec.Core.Generic_fmt.round_DN_exists
+      (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+      (x:=x - eps) (hβ:=by norm_num))
+  have heq :
+      FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (3 - emax - prec) prec)
+          FloatSpec.Core.Generic_fmt.rnd_floor (x - eps) =
+        FloatSpec.Core.Generic_fmt.round_DN_to_format 2
+          (FLT_exp (3 - emax - prec) prec) (x - eps) (by norm_num) := by
+    apply le_antisymm
+    · exact hchosenSpec.2.2.2 _ hround.1 hround.2.1
+    · exact hround.2.2 _ hchosenSpec.1 hchosenSpec.2.2.1
+  exact heq.trans hchosen
+
+private theorem Zrnd_opp_RTZ :
+    FloatSpec.Core.Generic_fmt.Zrnd_opp (rnd_of_mode RoundingMode.RTZ) =
+      rnd_of_mode RoundingMode.RTZ := by
+  funext x
+  by_cases hx : x < 0
+  · have hnegx : ¬ -x < 0 := not_lt.mpr (le_of_lt (neg_pos.mpr hx))
+    simp [FloatSpec.Core.Generic_fmt.Zrnd_opp, rnd_of_mode, hx, hnegx,
+      Int.floor_neg]
+  · have hxnonneg : 0 ≤ x := le_of_not_gt hx
+    by_cases hxzero : x = 0
+    · simp [hxzero, FloatSpec.Core.Generic_fmt.Zrnd_opp, rnd_of_mode]
+    · have hxpos : 0 < x := lt_of_le_of_ne hxnonneg (Ne.symm hxzero)
+      have hnegx : -x < 0 := neg_neg_of_pos hxpos
+      simp [FloatSpec.Core.Generic_fmt.Zrnd_opp, rnd_of_mode, hx, hnegx,
+        Int.ceil_neg]
+
+private theorem Bpred_positive_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (mx : Nat) (ex : Int) (hmx : 0 < mx)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true) :
+    let x := B754.B754_finite false mx ex
+    let r := Bpred (prec:=prec) (emax:=emax) x
+    validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax) (B2SF_BSN r) = true ∧
+      B754_to_R r = FloatSpec.Core.Ulp.pred_pos 2
+        (FLT_exp (3 - emax - prec) prec) (B754_to_R x) ∧
+      BSN_is_finite r = true ∧ BSN_sign r = false := by
+  let x := B754.B754_finite false mx ex
+  let xr := B754_to_R x
+  let eps : ℝ := (2 : ℝ) ^ (ex - 1)
+  have hmxR : (0 : ℝ) < (mx : ℝ) := Nat.cast_pos.mpr hmx
+  have hpowEx : (0 : ℝ) < (2 : ℝ) ^ ex := zpow_pos (by norm_num) ex
+  have hxrPos : 0 < xr := by
+    simpa [xr, x, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] using mul_pos hmxR hpowEx
+  have hcanonBool : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true :=
+    canonical_mantissa_of_specFloat_bounded (prec:=prec) (emax:=emax) hbounded
+  have hcanonTrip := canonical_canonical_mantissa_bsn
+    (prec:=prec) (emax:=emax) false mx ex hmx hcanonBool
+  have hcanon :
+      FloatSpec.Core.Generic_fmt.canonical 2 (FLT_exp (3 - emax - prec) prec)
+        (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) := by
+    simpa [wp, PostCond.noThrow, pure] using hcanonTrip trivial
+  have hformat : FloatSpec.Core.Generic_fmt.generic_format 2
+      (FLT_exp (3 - emax - prec) prec) xr := by
+    change FloatSpec.Core.Generic_fmt.generic_format 2
+      (FLT_exp (3 - emax - prec) prec)
+      (F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex :
+        FloatSpec.Core.Defs.FlocqFloat 2))
+    exact FloatSpec.Core.Generic_fmt.generic_format_canonical
+      (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+      (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
+  have hulpXTrip := FloatSpec.Core.Ulp.ulp_canonical
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+    (m:=(mx : Int)) (e:=ex) (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon
+    (by norm_num : (1 : Int) < 2)
+  have hulpX : FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) xr =
+      (2 : ℝ) ^ ex := by
+    simpa [wp, PostCond.noThrow, pure, xr, x, B754_to_R] using hulpXTrip trivial
+  have hulpPredCasesTrip := FloatSpec.Core.FLT.ulp_FLT_pred_pos
+    (prec:=prec) (emin:=3 - emax - prec) (beta:=2) xr
+  have hulpPredCases :
+      FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec)
+          (FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) xr) =
+            FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) xr ∨
+        (xr = (2 : ℝ) ^ (FloatSpec.Core.Raux.mag 2 xr - 1) ∧
+          FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec)
+              (FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) xr) =
+            FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) xr / 2) := by
+    simpa [FLT_exp, wp, PostCond.noThrow, pure] using
+      hulpPredCasesTrip ⟨by norm_num, hformat, le_of_lt hxrPos⟩
+  have hpowHalf : (2 : ℝ) ^ ex / 2 = eps := by
+    calc
+      (2 : ℝ) ^ ex / 2 = (2 : ℝ) ^ ex * (2 : ℝ) ^ (-1 : Int) := by ring_nf
+      _ = (2 : ℝ) ^ (ex + (-1 : Int)) := by
+        rw [zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      _ = eps := by simp [eps, sub_eq_add_neg]
+  have hepsLePredUlp : eps ≤ FloatSpec.Core.Ulp.ulp 2
+      (FLT_exp (3 - emax - prec) prec)
+      (FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) xr) := by
+    rcases hulpPredCases with hsame | ⟨_, hhalf⟩
+    · rw [hsame, hulpX]
+      exact zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2) (by omega)
+    · rw [hhalf, hulpX, hpowHalf]
+  have hepsPos : 0 < eps := by
+    exact zpow_pos (by norm_num : (0 : ℝ) < 2) _
+  have hepsLeX : eps ≤ xr := by
+    have hpowLe : eps ≤ (2 : ℝ) ^ ex :=
+      zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2) (by omega)
+    have hmxOne : (1 : ℝ) ≤ (mx : ℝ) := by exact_mod_cast (Nat.succ_le_iff.mpr hmx)
+    calc
+      eps ≤ (2 : ℝ) ^ ex := hpowLe
+      _ = 1 * (2 : ℝ) ^ ex := by ring
+      _ ≤ (mx : ℝ) * (2 : ℝ) ^ ex :=
+        mul_le_mul_of_nonneg_right hmxOne (le_of_lt hpowEx)
+      _ = xr := by simp [xr, x, B754_to_R, F2R, FloatSpec.Core.Defs.F2R]
+  let q := xr - eps
+  have hqNonneg : 0 ≤ q := sub_nonneg.mpr hepsLeX
+  have hfloorPred := roundR_floor_minus_eps_pos (prec:=prec) (emax:=emax)
+    xr eps hxrPos hformat ⟨hepsPos, hepsLePredUlp⟩
+  have hpredEqPosTrip := FloatSpec.Core.Ulp.pred_eq_pos
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec) xr (le_of_lt hxrPos)
+  have hpredEqPos :
+      FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec) xr =
+        FloatSpec.Core.Ulp.pred_pos 2 (FLT_exp (3 - emax - prec) prec) xr := by
+    simpa [wp, PostCond.noThrow, pure] using hpredEqPosTrip (by norm_num)
+  have hrtzQ : FloatSpec.Core.Generic_fmt.roundR 2
+      (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RTZ) q =
+        FloatSpec.Core.Ulp.pred_pos 2 (FLT_exp (3 - emax - prec) prec) xr := by
+    rw [roundR_RTZ_eq_floor_of_nonneg (prec:=prec) (emax:=emax) q hqNonneg]
+    simpa [q, hpredEqPos] using hfloorPred
+  have hpredNonnegTrip := FloatSpec.Core.Ulp.pred_pos_ge_0
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec) xr hxrPos hformat
+  have hpredNonneg : 0 ≤ FloatSpec.Core.Ulp.pred_pos 2
+      (FLT_exp (3 - emax - prec) prec) xr := by
+    simpa [wp, PostCond.noThrow, pure] using hpredNonnegTrip (by norm_num)
+  let mn := 2 * mx - 1
+  have hmnPos : 0 < mn := by simp [mn]; omega
+  have hmnCast : (mn : ℝ) = 2 * (mx : ℝ) - 1 := by
+    have hone : 1 ≤ 2 * mx := by omega
+    simp [mn, Nat.cast_sub hone]
+  have hpowSplit : (2 : ℝ) ^ ex = 2 * (2 : ℝ) ^ (ex - 1) := by
+    calc
+      (2 : ℝ) ^ ex = (2 : ℝ) ^ (1 + (ex - 1)) := by ring_nf
+      _ = (2 : ℝ) ^ (1 : Int) * (2 : ℝ) ^ (ex - 1) := by
+        rw [zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      _ = 2 * (2 : ℝ) ^ (ex - 1) := by norm_num
+  have hinput :
+      SF2R 2 (StandardFloat.S754_finite true mn (ex - 1)) = -q := by
+    simp [SF2R, F2R, FloatSpec.Core.Defs.F2R, q, xr, x, B754_to_R,
+      eps, hmnCast, hpowSplit]
+    ring
+  have hroundOpp := FloatSpec.Core.Generic_fmt.roundR_opp
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+    (rnd:=rnd_of_mode RoundingMode.RTZ) q (by norm_num : (1 : Int) < 2)
+  have hrtzNeg : FloatSpec.Core.Generic_fmt.roundR 2
+      (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RTZ) (-q) =
+        -FloatSpec.Core.Ulp.pred_pos 2 (FLT_exp (3 - emax - prec) prec) xr := by
+    calc
+      FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (3 - emax - prec) prec)
+          (rnd_of_mode RoundingMode.RTZ) (-q) =
+        -FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (3 - emax - prec) prec)
+          (FloatSpec.Core.Generic_fmt.Zrnd_opp (rnd_of_mode RoundingMode.RTZ)) q := hroundOpp
+      _ = -FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (3 - emax - prec) prec)
+          (rnd_of_mode RoundingMode.RTZ) q := by rw [Zrnd_opp_RTZ]
+      _ = -FloatSpec.Core.Ulp.pred_pos 2 (FLT_exp (3 - emax - prec) prec) xr := by
+        rw [hrtzQ]
+  have hrange := range_bounded_of_specFloat_bounded
+    (prec:=prec) (emax:=emax) mx ex hmx hbounded
+  have hxrLtTrip := bounded_lt_emax (prec:=prec) (emax:=emax) mx ex hrange
+  have hxrLt : xr < FloatSpec.Core.Raux.bpow 2 emax := by
+    simpa [wp, PostCond.noThrow, pure, xr, x, B754_to_R] using hxrLtTrip trivial
+  have hpredLeTrip := FloatSpec.Core.Ulp.pred_le_id
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec) xr
+  have hpredLe : FloatSpec.Core.Ulp.pred_pos 2
+      (FLT_exp (3 - emax - prec) prec) xr ≤ xr := by
+    have hle : FloatSpec.Core.Ulp.pred 2
+        (FLT_exp (3 - emax - prec) prec) xr ≤ xr := by
+      simpa [wp, PostCond.noThrow, pure] using hpredLeTrip (by norm_num)
+    simpa [hpredEqPos] using hle
+  have hover : FloatSpec.Core.Raux.Rlt_bool
+      |FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp (3 - emax - prec) prec)
+        (rnd_of_mode RoundingMode.RTZ)
+        (SF2R 2 (StandardFloat.S754_finite true mn (ex - 1)))|
+      (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+    rw [hinput, hrtzNeg]
+    simp [FloatSpec.Core.Raux.Rlt_bool, abs_of_nonneg hpredNonneg,
+      lt_of_le_of_lt hpredLe hxrLt]
+  let z := binary_round (prec:=prec) (emax:=emax)
+    RoundingMode.RTZ true mn (ex - 1)
+  have hround := binary_round_correct (prec:=prec) (emax:=emax)
+    RoundingMode.RTZ true mn (ex - 1) hmnPos
+  have hbranch := hround.2
+  dsimp at hbranch
+  rw [hover] at hbranch
+  simp at hbranch
+  have hr : Bpred (prec:=prec) (emax:=emax) x = Bopp_bsn (SF2B z) := by
+    simp [x, Bpred, Bsucc, Bopp_bsn, z, mn]
+  have hvalidZ : validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax) z = true := by
+    simpa [z] using hround.1
+  have hvalueZ : SF2R 2 z = FloatSpec.Core.Generic_fmt.roundR 2
+      (FLT_exp (3 - emax - prec) prec) (rnd_of_mode RoundingMode.RTZ)
+      (SF2R 2 (StandardFloat.S754_finite true mn (ex - 1))) := by
+    simpa [z] using hbranch.1
+  have hfiniteZ : is_finite_SF z = true := by
+    simpa [z] using hbranch.2.1
+  have hsignZ : sign_SF z = true := by
+    simpa [z] using hbranch.2.2
+  have hvalidOpp :
+      validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+          (B2SF_BSN (Bopp_bsn (SF2B z))) =
+        validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax) z := by
+    cases z <;> rfl
+  have hfiniteOpp : BSN_is_finite (Bopp_bsn (SF2B z)) = is_finite_SF z := by
+    cases z <;> rfl
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · rw [hr, hvalidOpp, hvalidZ]
+  · rw [hr]
+    have hvalueOpp : B754_to_R (Bopp_bsn (SF2B z)) = -SF2R 2 z := by
+      cases z with
+      | S754_zero s => simp [B754_to_R, Bopp_bsn, SF2B, SF2R]
+      | S754_infinity s => simp [B754_to_R, Bopp_bsn, SF2B, SF2R]
+      | S754_nan => simp [B754_to_R, Bopp_bsn, SF2B, SF2R]
+      | S754_finite s m e =>
+          cases s <;> simp [B754_to_R, Bopp_bsn, SF2B, SF2R, F2R,
+            FloatSpec.Core.Defs.F2R]
+    rw [hvalueOpp, hvalueZ, hinput, hrtzNeg]
+    ring
+  · rw [hr, hfiniteOpp, hfiniteZ]
+  · rw [hr]
+    cases hz : z <;> simp [hz, BSN_sign, SF2B, Bopp_bsn, sign_SF] at hsignZ ⊢
+    all_goals assumption
+
+private theorem value_boundary_of_mantissa_boundary {prec : Int}
+    [Prec_gt_0 prec]
+    (mx : Nat) (ex : Int) (hboundary : 2 * mx = (2 : Nat) ^ prec.toNat) :
+    B754_to_R (B754.B754_finite false mx ex) =
+      (2 : ℝ) ^
+        (FloatSpec.Core.Raux.mag 2
+          (B754_to_R (B754.B754_finite false mx ex)) - 1) := by
+  have hprecNonneg : 0 ≤ prec := le_of_lt (inferInstance : Prec_gt_0 prec).pos
+  have hcastPow : (((2 : Nat) ^ prec.toNat : Nat) : ℝ) = (2 : ℝ) ^ prec := by
+    rw [Nat.cast_pow, ← zpow_natCast]
+    congr 1
+    exact Int.toNat_of_nonneg hprecNonneg
+  have hboundaryR : 2 * (mx : ℝ) = (2 : ℝ) ^ prec := by
+    have hcast := congrArg (fun n : Nat => (n : ℝ)) hboundary
+    norm_num only [Nat.cast_mul, Nat.cast_ofNat] at hcast
+    simpa [hcastPow] using hcast
+  have hpowSplit : (2 : ℝ) ^ prec = 2 * (2 : ℝ) ^ (prec - 1) := by
+    calc
+      (2 : ℝ) ^ prec = (2 : ℝ) ^ (1 + (prec - 1)) := by ring_nf
+      _ = (2 : ℝ) ^ (1 : Int) * (2 : ℝ) ^ (prec - 1) := by
+        rw [zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      _ = 2 * (2 : ℝ) ^ (prec - 1) := by norm_num
+  have hmxR : (mx : ℝ) = (2 : ℝ) ^ (prec - 1) := by
+    linarith
+  have hmxIR : ((mx : Int) : ℝ) = (2 : ℝ) ^ (prec - 1) := by
+    simpa using hmxR
+  let xr := B754_to_R (B754.B754_finite false mx ex)
+  have hxrPower : xr = (2 : ℝ) ^ (prec + ex - 1) := by
+    simp only [xr, B754_to_R, F2R, FloatSpec.Core.Defs.F2R,
+      Bool.false_eq_true, ↓reduceIte]
+    rw [hmxIR]
+    change (2 : ℝ) ^ (prec - 1) * (2 : ℝ) ^ ex =
+      (2 : ℝ) ^ (prec + ex - 1)
+    rw [← zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+    congr 1
+    ring
+  have hmagTrip := FloatSpec.Core.Raux.mag_bpow
+    (beta:=2) (e:=prec + ex - 1) (by norm_num : (1 : Int) < 2)
+  have hmag : FloatSpec.Core.Raux.mag 2 xr = prec + ex := by
+    rw [hxrPower]
+    simpa [wp, PostCond.noThrow, pure] using hmagTrip trivial
+  change xr = (2 : ℝ) ^ (FloatSpec.Core.Raux.mag 2 xr - 1)
+  rw [hmag, hxrPower]
+
+private theorem ulp_eq_boundary_step_of_mantissa_nonboundary {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    (mx : Nat) (ex : Int) (hmx : 0 < mx)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true)
+    (hmant : 2 * mx ≠ (2 : Nat) ^ prec.toNat)
+    (hvalue : B754_to_R (B754.B754_finite false mx ex) =
+      (2 : ℝ) ^
+        (FloatSpec.Core.Raux.mag 2
+          (B754_to_R (B754.B754_finite false mx ex)) - 1)) :
+    FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec)
+        (B754_to_R (B754.B754_finite false mx ex)) =
+      (2 : ℝ) ^ (FLT_exp (3 - emax - prec) prec
+        (FloatSpec.Core.Raux.mag 2
+          (B754_to_R (B754.B754_finite false mx ex)) - 1)) := by
+  let xr := B754_to_R (B754.B754_finite false mx ex)
+  let M := FloatSpec.Core.Raux.mag 2 xr
+  have hcanonBool := canonical_mantissa_of_specFloat_bounded
+    (prec:=prec) (emax:=emax) hbounded
+  have hcanonTrip := canonical_canonical_mantissa_bsn
+    (prec:=prec) (emax:=emax) false mx ex hmx hcanonBool
+  have hcanon : FloatSpec.Core.Generic_fmt.canonical 2
+      (FLT_exp (3 - emax - prec) prec)
+      (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) := by
+    simpa [wp, PostCond.noThrow, pure] using hcanonTrip trivial
+  have hexCanon : ex = FLT_exp (3 - emax - prec) prec M := by
+    simpa [FloatSpec.Core.Generic_fmt.canonical, M, xr, B754_to_R] using hcanon
+  have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
+    (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+    (m:=(mx : Int)) (e:=ex) (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon
+    (by norm_num : (1 : Int) < 2)
+  have hulp : FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) xr =
+      (2 : ℝ) ^ ex := by
+    simpa [wp, PostCond.noThrow, pure, xr] using hulpTrip trivial
+  have hMsmall : M ≤ 3 - emax - prec + prec := by
+    by_contra hnot
+    have hlarge : 3 - emax - prec + prec < M := lt_of_not_ge hnot
+    have hexLarge : ex = M - prec := by
+      rw [hexCanon]
+      unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+      rw [max_eq_left]
+      omega
+    have hxrepr : (mx : ℝ) * (2 : ℝ) ^ ex = (2 : ℝ) ^ (M - 1) := by
+      simpa [xr, M, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] using hvalue
+    have hpowDecomp : (2 : ℝ) ^ (M - 1) =
+        (2 : ℝ) ^ (M - prec) * (2 : ℝ) ^ (prec - 1) := by
+      rw [← zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+      congr 1
+      ring
+    rw [hexLarge, hpowDecomp] at hxrepr
+    have hpowPos : 0 < (2 : ℝ) ^ (M - prec) := zpow_pos (by norm_num) _
+    have hmxR : (mx : ℝ) = (2 : ℝ) ^ (prec - 1) := by
+      nlinarith
+    have hprecNonneg : 0 ≤ prec := le_of_lt (inferInstance : Prec_gt_0 prec).pos
+    have hcastPow : (((2 : Nat) ^ prec.toNat : Nat) : ℝ) = (2 : ℝ) ^ prec := by
+      rw [Nat.cast_pow, ← zpow_natCast]
+      congr 1
+      exact Int.toNat_of_nonneg hprecNonneg
+    have hpowSplit : (2 : ℝ) ^ prec = 2 * (2 : ℝ) ^ (prec - 1) := by
+      calc
+        (2 : ℝ) ^ prec = (2 : ℝ) ^ (1 + (prec - 1)) := by ring_nf
+        _ = (2 : ℝ) ^ (1 : Int) * (2 : ℝ) ^ (prec - 1) := by
+          rw [zpow_add₀ (by norm_num : (2 : ℝ) ≠ 0)]
+        _ = 2 * (2 : ℝ) ^ (prec - 1) := by norm_num
+    have hboundaryR : 2 * (mx : ℝ) = (2 : ℝ) ^ prec := by
+      rw [hmxR, hpowSplit]
+    have hboundaryCast : ((2 * mx : Nat) : ℝ) = (((2 : Nat) ^ prec.toNat : Nat) : ℝ) := by
+      simpa [hcastPow] using hboundaryR
+    have hboundary : 2 * mx = (2 : Nat) ^ prec.toNat := by
+      exact_mod_cast hboundaryCast
+    exact hmant hboundary
+  have hstep : FLT_exp (3 - emax - prec) prec M =
+      FLT_exp (3 - emax - prec) prec (M - 1) := by
+    unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+    rw [max_eq_right, max_eq_right]
+    · omega
+    · omega
+  change FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) xr =
+    (2 : ℝ) ^ (FLT_exp (3 - emax - prec) prec (M - 1))
+  rw [hulp, hexCanon, hstep]
+
+private theorem Bpred_pos'_positive_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (hmax : 2 < emax) (mx : Nat) (ex : Int) (hmx : 0 < mx)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true) :
+    let x := B754.B754_finite false mx ex
+    let r := Bpred_pos' (prec:=prec) (emax:=emax) x
+    validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax) (B2SF_BSN r) = true ∧
+      B754_to_R r = FloatSpec.Core.Ulp.pred_pos 2
+        (FLT_exp (3 - emax - prec) prec) (B754_to_R x) ∧
+      BSN_is_finite r = true ∧ BSN_sign r = false := by
+  let x := B754.B754_finite false mx ex
+  let xr := B754_to_R x
+  let fp := FLT_exp (3 - emax - prec) prec
+  have hmxR : (0 : ℝ) < (mx : ℝ) := Nat.cast_pos.mpr hmx
+  have hpowEx : (0 : ℝ) < (2 : ℝ) ^ ex := zpow_pos (by norm_num) ex
+  have hxrPos : 0 < xr := by
+    simpa [xr, x, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] using mul_pos hmxR hpowEx
+  have hcanonBool := canonical_mantissa_of_specFloat_bounded
+    (prec:=prec) (emax:=emax) hbounded
+  have hcanonTrip := canonical_canonical_mantissa_bsn
+    (prec:=prec) (emax:=emax) false mx ex hmx hcanonBool
+  have hcanon : FloatSpec.Core.Generic_fmt.canonical 2 fp
+      (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) := by
+    simpa [fp, wp, PostCond.noThrow, pure] using hcanonTrip trivial
+  have hformat : FloatSpec.Core.Generic_fmt.generic_format 2 fp xr := by
+    change FloatSpec.Core.Generic_fmt.generic_format 2 fp
+      (F2R (FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex :
+        FloatSpec.Core.Defs.FlocqFloat 2))
+    exact FloatSpec.Core.Generic_fmt.generic_format_canonical
+      (beta:=2) (fexp:=fp)
+      (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
+  have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
+    (beta:=2) (fexp:=fp) (m:=(mx : Int)) (e:=ex)
+    (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon (by norm_num : (1 : Int) < 2)
+  have hulp : FloatSpec.Core.Ulp.ulp 2 fp xr = (2 : ℝ) ^ ex := by
+    simpa [fp, xr, x, B754_to_R, wp, PostCond.noThrow, pure] using hulpTrip trivial
+  have hulpPos : 0 < FloatSpec.Core.Ulp.ulp 2 fp xr := by
+    rw [hulp]
+    exact hpowEx
+  have hrange := range_bounded_of_specFloat_bounded
+    (prec:=prec) (emax:=emax) mx ex hmx hbounded
+  have hxrLtTrip := bounded_lt_emax (prec:=prec) (emax:=emax) mx ex hrange
+  have hxrLt : xr < FloatSpec.Core.Raux.bpow 2 emax := by
+    simpa [xr, x, B754_to_R, wp, PostCond.noThrow, pure] using hxrLtTrip trivial
+  have hmagTrip := FloatSpec.Core.Raux.mag_le_bpow
+    (beta:=2) (x:=xr) (e:=emax) (by norm_num : (1 : Int) < 2)
+    (ne_of_gt hxrPos) (by simpa [abs_of_pos hxrPos] using hxrLt)
+  have hmagLe : FloatSpec.Core.Raux.mag 2 xr ≤ emax := by
+    simpa [wp, PostCond.noThrow, pure] using hmagTrip trivial
+  have hfrexpMag := Bfrexp_exp_eq_mag_of_finite (prec:=prec) (emax:=emax)
+    hmax false mx ex hmx hbounded
+  let ed := fp ((Bfrexp_bsn (prec:=prec) (emax:=emax) x).2 - 1)
+  have hed : ed = fp (FloatSpec.Core.Raux.mag 2 xr - 1) := by
+    simp [ed, fp, xr, x, hfrexpMag]
+  have heminEd : 3 - emax - prec ≤ ed := by
+    simp [ed, fp, FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+  have hedMax : ed < emax := by
+    rw [hed]
+    unfold fp FLT_exp FloatSpec.Core.FLT.FLT_exp
+    apply max_lt
+    · have hprecPos := (inferInstance : Prec_gt_0 prec).pos
+      omega
+    · have hprecPos := (inferInstance : Prec_gt_0 prec).pos
+      omega
+  let d := if 2 * mx == (2 : Nat) ^ prec.toNat then
+      Bldexp (prec:=prec) (emax:=emax) RoundingMode.RNE Bone ed
+    else Bulp' (prec:=prec) (emax:=emax) x
+  have hdPayload :
+      B754_to_R d = xr - FloatSpec.Core.Ulp.pred_pos 2 fp xr ∧
+        0 < B754_to_R d ∧ BSN_is_finite d = true ∧ BSN_sign d = false := by
+    by_cases hb : 2 * mx == (2 : Nat) ^ prec.toNat
+    · have hboundary : 2 * mx = (2 : Nat) ^ prec.toNat := eq_of_beq hb
+      have hvalueBoundary := value_boundary_of_mantissa_boundary
+        (prec:=prec) mx ex hboundary
+      let z := binary_round (prec:=prec) (emax:=emax) RoundingMode.RNE false 1 ed
+      have hzPayload := binary_round_one_payload (prec:=prec) (emax:=emax)
+        RoundingMode.RNE ed heminEd hedMax
+      have hdEq : d = SF2B z := by
+        simp [d, hb, Bldexp, Bone, SF2B, z]
+      have hB2R : B754_to_R (SF2B z) = SF2R 2 z := by
+        cases z <;> rfl
+      have hfinite : BSN_is_finite (SF2B z) = is_finite_SF z := by
+        cases z <;> rfl
+      have hsign : BSN_sign (SF2B z) = sign_SF z := by
+        cases z <;> rfl
+      rw [hdEq]
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · rw [hB2R, hzPayload.2.1, hed]
+        simp only [FloatSpec.Core.Raux.bpow]
+        unfold FloatSpec.Core.Ulp.pred_pos
+        rw [if_pos (by simpa [xr, x] using hvalueBoundary)]
+        ring
+      · rw [hB2R, hzPayload.2.1]
+        exact zpow_pos (by norm_num) _
+      · exact hfinite.trans hzPayload.2.2.1
+      · exact hsign.trans hzPayload.2.2.2
+    · have hmant : 2 * mx ≠ (2 : Nat) ^ prec.toNat := by simpa using hb
+      let xpf := BinarySingleNaNFloat.B754_finite (prec:=prec) (emax:=emax)
+        false mx ex hmx hbounded
+      have hulpEq := Bulp'_correct (prec:=prec) (emax:=emax) hmax xpf (by rfl)
+      have hulpPayload := Bulp_correct (prec:=prec) (emax:=emax) xpf (by rfl)
+      have hdEq : d = Bulp (prec:=prec) (emax:=emax) x := by
+        simpa [d, hb, x, xpf] using hulpEq
+      have hdValue : B754_to_R d = FloatSpec.Core.Ulp.ulp 2 fp xr := by
+        rw [hdEq]
+        simpa [fp, xr, x, xpf] using hulpPayload.1
+      rw [hdValue]
+      refine ⟨?_, hulpPos, ?_, ?_⟩
+      · by_cases hreal : xr = ((2 : Int) : ℝ) ^ (FloatSpec.Core.Raux.mag 2 xr - 1)
+        · have hstep := ulp_eq_boundary_step_of_mantissa_nonboundary
+            (prec:=prec) (emax:=emax) mx ex hmx hbounded hmant
+            (by simpa [xr, x] using hreal)
+          unfold FloatSpec.Core.Ulp.pred_pos
+          rw [if_pos hreal]
+          have hstep' : FloatSpec.Core.Ulp.ulp 2 fp xr =
+              ((2 : Int) : ℝ) ^ (fp (FloatSpec.Core.Raux.mag 2 xr - 1)) := by
+            simpa [fp, xr, x] using hstep
+          rw [hstep']
+          ring
+        · unfold FloatSpec.Core.Ulp.pred_pos
+          rw [if_neg hreal]
+          ring
+      · rw [hdEq]
+        simpa [x, xpf] using hulpPayload.2.1
+      · rw [hdEq]
+        simpa [x, xpf] using hulpPayload.2.2
+  have hpredNonnegTrip := FloatSpec.Core.Ulp.pred_pos_ge_0
+    (beta:=2) (fexp:=fp) xr hxrPos hformat
+  have hpredNonneg : 0 ≤ FloatSpec.Core.Ulp.pred_pos 2 fp xr := by
+    simpa [wp, PostCond.noThrow, pure] using hpredNonnegTrip (by norm_num)
+  have hdShape : ∃ my ey, d = B754.B754_finite false my ey ∧ 0 < my := by
+    cases hd : d with
+    | B754_zero sd =>
+        simp [hd, B754_to_R] at hdPayload
+    | B754_infinity sd =>
+        simp [hd, BSN_is_finite] at hdPayload
+    | B754_nan =>
+        simp [hd, BSN_is_finite] at hdPayload
+    | B754_finite sd my ey =>
+        have hsd : sd = false := by
+          simpa [hd, BSN_sign] using hdPayload.2.2.2
+        subst sd
+        have hmy : 0 < my := by
+          by_contra hnot
+          have hzero : my = 0 := Nat.eq_zero_of_not_pos hnot
+          simp [hd, hzero, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] at hdPayload
+        exact ⟨my, ey, rfl, hmy⟩
+  rcases hdShape with ⟨my, ey, hd, hmy⟩
+  have hsum :
+      B754_to_R (B754.B754_finite false mx ex) +
+          B754_to_R (B754.B754_finite true my ey) =
+        FloatSpec.Core.Ulp.pred_pos 2 fp xr := by
+    have hdValue := hdPayload.1
+    rw [hd] at hdValue
+    simp [xr, x, B754_to_R, F2R, FloatSpec.Core.Defs.F2R] at hdValue ⊢
+    linarith
+  have hsumNonneg : 0 ≤
+      B754_to_R (B754.B754_finite false mx ex) +
+        B754_to_R (B754.B754_finite true my ey) := by
+    rw [hsum]
+    exact hpredNonneg
+  have hpredFormatTrip := FloatSpec.Core.Ulp.generic_format_pred_pos
+    (beta:=2) (fexp:=fp) xr hformat hxrPos (by norm_num : (1 : Int) < 2)
+  have hpredFormat : FloatSpec.Core.Generic_fmt.generic_format 2 fp
+      (FloatSpec.Core.Ulp.pred_pos 2 fp xr) := by
+    simpa [wp, PostCond.noThrow, pure] using hpredFormatTrip trivial
+  have hroundPred := FloatSpec.Core.Generic_fmt.roundR_generic
+    (beta:=2) (fexp:=fp) (rnd:=rnd_of_mode RoundingMode.RNE)
+    (x:=FloatSpec.Core.Ulp.pred_pos 2 fp xr) (by norm_num : (1 : Int) < 2)
+    hpredFormat
+  have hpredLe : FloatSpec.Core.Ulp.pred_pos 2 fp xr < xr := by
+    linarith [hdPayload.2.1]
+  have hpredLt : FloatSpec.Core.Ulp.pred_pos 2 fp xr <
+      FloatSpec.Core.Raux.bpow 2 emax := lt_trans hpredLe hxrLt
+  have hlt : FloatSpec.Core.Raux.Rlt_bool
+      |FloatSpec.Core.Generic_fmt.roundR 2 fp (rnd_of_mode RoundingMode.RNE)
+        (B754_to_R (B754.B754_finite false mx ex) +
+          B754_to_R (B754.B754_finite true my ey))|
+      (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+    rw [hsum, hroundPred]
+    simp [FloatSpec.Core.Raux.Rlt_bool, abs_of_nonneg hpredNonneg, hpredLt]
+  have hplus := Bplus_finite_nonnegative_correct (prec:=prec) (emax:=emax)
+    mx my ex ey hmx hmy hsumNonneg hlt
+  have hr : Bpred_pos' (prec:=prec) (emax:=emax) x =
+      Bplus (prec:=prec) (emax:=emax) RoundingMode.RNE
+        (B754.B754_finite false mx ex) (B754.B754_finite true my ey) := by
+    change Bplus (prec:=prec) (emax:=emax) RoundingMode.RNE x (Bopp_bsn d) =
+      Bplus (prec:=prec) (emax:=emax) RoundingMode.RNE
+        (B754.B754_finite false mx ex) (B754.B754_finite true my ey)
+    rw [hd]
+    rfl
+  change validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax)
+      (B2SF_BSN (Bpred_pos' (prec:=prec) (emax:=emax) x)) = true ∧
+    B754_to_R (Bpred_pos' (prec:=prec) (emax:=emax) x) =
+        FloatSpec.Core.Ulp.pred_pos 2 fp xr ∧
+      BSN_is_finite (Bpred_pos' (prec:=prec) (emax:=emax) x) = true ∧
+        BSN_sign (Bpred_pos' (prec:=prec) (emax:=emax) x) = false
+  rw [hr]
+  refine ⟨hplus.1, ?_, hplus.2.2.1, hplus.2.2.2⟩
+  rw [hplus.2.1, hsum, hroundPred]
+
+-- Coq: Bpred_pos'_correct
+theorem Bpred_pos'_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (hmax : 2 < emax) (x : BinarySingleNaNFloat prec emax)
+    (hxpos : 0 < B754_to_R
+      (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) x)) :
+    Bpred_pos' (prec:=prec) (emax:=emax)
+        (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) x) =
+      Bpred (prec:=prec) (emax:=emax)
+        (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) x) := by
+  cases x with
+  | B754_zero sx =>
+      simp [binarySingleNaNFloatToB754, B754_to_R] at hxpos
+  | B754_infinity sx =>
+      simp [binarySingleNaNFloatToB754, B754_to_R] at hxpos
+  | B754_nan =>
+      simp [binarySingleNaNFloatToB754, B754_to_R] at hxpos
+  | B754_finite sx mx ex hmx hbounded =>
+      cases sx with
+      | false =>
+          let raw := B754.B754_finite false mx ex
+          have hopt := Bpred_pos'_positive_correct (prec:=prec) (emax:=emax)
+            hmax mx ex hmx hbounded
+          have href := Bpred_positive_correct (prec:=prec) (emax:=emax)
+            mx ex hmx hbounded
+          change Bpred_pos' (prec:=prec) (emax:=emax) raw =
+            Bpred (prec:=prec) (emax:=emax) raw
+          apply B754_eq_of_valid_finite_sign_value (prec:=prec) (emax:=emax)
+          · exact hopt.1
+          · exact href.1
+          · exact hopt.2.2.1
+          · exact href.2.2.1
+          · exact hopt.2.1.trans href.2.1.symm
+          · exact hopt.2.2.2.trans href.2.2.2.symm
+      | true =>
+          have hmxR : (0 : ℝ) < (mx : ℝ) := Nat.cast_pos.mpr hmx
+          have hpow : (0 : ℝ) < (2 : ℝ) ^ ex := zpow_pos (by norm_num) ex
+          have hneg : -(mx : ℝ) * (2 : ℝ) ^ ex < 0 :=
+            mul_neg_of_neg_of_pos (neg_neg_of_pos hmxR) hpow
+          simp [binarySingleNaNFloatToB754, B754_to_R, F2R,
+            FloatSpec.Core.Defs.F2R] at hxpos
+          linarith
 
 end ExperimentalSingleNaNArithmetic
