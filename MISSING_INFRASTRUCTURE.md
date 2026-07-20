@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 75.
+- Active semantic gap candidates still listed below: 74.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 75/75 names have been
+- Counterpart audit coverage for the active list: 74/74 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 75 active
+Fix the remaining Flocq import gaps by working through the 74 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2174,9 +2174,26 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `Veltkamp_pos` is removed from the active
 list, and `VeltkampN_aux` is next.
 
-#### `Pff/Pff.v` (75)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_060314` left the exact `VeltkampN_aux`
+payload unchanged and did not run a build. The manual repair restored exact
+public `VeltkampN_aux` under only the expanded upstream `VeltN` assumptions.
+Normality gives a nonzero represented value, so the nonnegative branch calls
+`Veltkamp_pos` directly. The negative branch negates `x`, `p`, `q`, and `hx`,
+transports all three closest-rounding premises with `ClosestOpp`, applies
+`Veltkamp_pos`, and negates the reduced witness back while preserving its
+value, closestness, exponent, and the residual bound. The focused Lean process
+exited 0, `git diff --check` passed, placeholder/status audits reported zero
+findings, and the full 3345-job `lake build` passed;
+`scripts/check_diff_trust.sh` is absent from this checkout. The normalized
+classifier
+`.change_log/manual_attempt_20260721_VeltkampN_aux_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `VeltkampN_aux` is removed from the
+active list, and `VeltkampN` is next.
 
-- `VeltkampN_aux` (Lemma, upstream line 14788)
+#### `Pff/Pff.v` (74)
+
 - `VeltkampN` (Lemma, upstream line 14832)
 - `VeltkampEven_pos` (Lemma, upstream line 14856)
 - `VeltkampEvenN_aux` (Lemma, upstream line 14942)
@@ -6954,7 +6971,7 @@ Statement-level checks performed for the first 35 active Pff entries:
   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
   inequality from only the upstream Veltkamp section hypotheses.
-- `VeltkampN_aux`, `VeltkampN`,
+- `VeltkampN`,
   `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
   `FloatSpec/src/Pff/Pff2Flocq.lean`. The wrapper assumes a reduced
@@ -6962,8 +6979,9 @@ Statement-level checks performed for the first 35 active Pff entries:
   Veltkamp error bound and reduced witness from rounded intermediate
   products/sums. They are therefore missing lower Pff payloads, not hidden
   under the public wrapper.
-- `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`, `VeltkampEven2`, and
-  `Veltkamp_pos` are now restored as exact public Lean theorems in
+- `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`, `VeltkampEven2`,
+  `Veltkamp_pos`, and `VeltkampN_aux` are now restored as exact public Lean
+  theorems in
   `FloatSpec/src/Pff/Pff.lean`; they are no
   longer inferred from the higher-level wrapper and no longer belong to this
   missing-payload group.
