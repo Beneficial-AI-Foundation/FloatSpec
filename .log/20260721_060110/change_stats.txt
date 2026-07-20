@@ -1,0 +1,11 @@
+commit 8ebb7c835ca728e5f056484de94b3899f414ba9f
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 06:00:57 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 06:00:57 2026 +0800
+
+    Restore exact Pff Veltkamp_pos theorem
+
+ FloatSpec/src/Pff/Pff.lean | 227 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  34 +++++--
+ 2 files changed, 253 insertions(+), 8 deletions(-)
