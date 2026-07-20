@@ -1150,4 +1150,24 @@ theorem binary_round_aux_equiv (sx : Bool) (mx ex : Int) (lx : Loc) :
   simp (config := { zeta := true })
     [specRoundNearestEven_eq_choiceMode sx]
 
+-- Coq `SpecFloat.binary_round`, specialized to primitive binary64.
+noncomputable def binary_round (sx : Bool) (mx : Nat) (ex : Int) :
+    StandardFloat :=
+  let aligned := shl_align_fexp (prec:=primPrec) (emax:=primEmax) mx ex
+  binary_round_aux sx (aligned.1 : Int) aligned.2
+    FloatSpec.Calc.Bracket.Location.loc_Exact
+
+-- Coq `PrimFloat.v:binary_round_equiv`.
+theorem binary_round_equiv (sx : Bool) (mx : Nat) (ex : Int) :
+    binary_round sx mx ex =
+      _root_.binary_round (prec:=primPrec) (emax:=primEmax)
+        RoundingMode.RNE sx mx ex := by
+  unfold binary_round _root_.binary_round shl_align_fexp
+  set aligned := shl_align mx ex
+    (FLT_exp (3 - primEmax - primPrec) primPrec
+      (FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex))
+  cases aligned with
+  | mk alignedMant alignedExp =>
+      apply binary_round_aux_equiv
+
 end FaithfulPrimFloat

@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 91.
+- Active semantic gap candidates still listed below: 90.
 - Files with at least one active listed candidate: 2.
-- Counterpart audit coverage for the active list: 91/91 names have been
+- Counterpart audit coverage for the active list: 90/90 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 91 active
+Fix the remaining Flocq import gaps by working through the 90 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1695,7 +1695,7 @@ explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
 
-#### `IEEE754/PrimFloat.v` (5)
+#### `IEEE754/PrimFloat.v` (4)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
@@ -1742,7 +1742,6 @@ evidence. Focused `lake env lean FloatSpec/src/IEEE754/PrimFloat.lean`
 passed. Therefore `Prim2B` and `B2Prim` are removed from the active list.
 
 - `mul_equiv` (Theorem, upstream line 143)
-- `binary_round_equiv` (Lemma, upstream line 161)
 - `binary_normalize_equiv` (Lemma, upstream line 170)
 - `add_equiv` (Theorem, upstream line 181)
 - `normfr_mantissa_equiv` (Theorem, upstream line 258)
@@ -1823,9 +1822,27 @@ by unfolding `SpecFloat.binary_round`, Flocq `binary_round`, and
 `PrimFloat.lean` is explicitly the `ExperimentalPrimFloatBridge` real-wrapper,
 `Binary.lean`'s `ExperimentalBinaryRound` helpers are documented audit helpers
 rather than Flocq algorithm ports, and the prerequisite
-`binary_round_aux_equiv` remains active/blocked. Adding `binary_round_equiv`
-over those local wrappers would be helper-only, tautological, or differently
-parameterized, so `binary_round_equiv` remains active.
+`binary_round_aux_equiv` remained active/blocked at that time. Adding
+`binary_round_equiv` over those local wrappers would be helper-only,
+tautological, or differently parameterized, so `binary_round_equiv` remained
+active at that time.
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_210214` added the independent
+`FaithfulPrimFloat.binary_round` and exact
+`FaithfulPrimFloat.binary_round_equiv`. The SpecFloat-side definition applies
+the shared `shl_align_fexp` and then calls the namespace-local faithful
+`binary_round_aux` at `loc_Exact`; it does not alias the root operation. The
+proof unfolds both rounders and `shl_align_fexp`, destructs the shared
+alignment pair, and applies `binary_round_aux_equiv`, matching upstream
+`PrimFloat.v:161-168`. The provider's internal classifier recorded
+`result = proved`, `build = pass`, and `coq_alignment = checked`; the outer
+harness misparsed the provider's leading `Status: proved` prose and recorded a
+spurious blocked result, so
+`.change_log/manual_attempt_20260720_binary_round_equiv_proved/attempt.json`
+is the corrected authoritative classification. Focused Lean checking, the
+zero-finding placeholder/status audits, and the full 3345-job `lake build` all
+passed. Therefore `binary_round_equiv` is removed from the active list.
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_193147_binary_normalize_equiv_blocked_current/attempt.json`
@@ -1842,9 +1859,10 @@ a faithful Coq `SpecFloat.binary_normalize` primitive-float payload in
 rather than Flocq `binary_round_aux`/`binary_round`/`binary_normalize` ports.
 `BinarySingleNaN.lean` has a closer local `binary_normalize`, but it does not
 provide the PrimFloat/SpecFloat equivalence target, and the prerequisite
-`binary_round_equiv` remains active/blocked. Adding `binary_normalize_equiv`
-over the available wrappers would therefore be helper-only, tautological, or
-differently parameterized, so `binary_normalize_equiv` remains active.
+`binary_round_equiv` remained active/blocked at that time. Adding
+`binary_normalize_equiv` over the available wrappers would therefore be
+helper-only, tautological, or differently parameterized, so
+`binary_normalize_equiv` remains active.
 
 2026-07-17 blocker note: harness attempt
 `.change_log/codex_attempt_20260717_033820` rechecked upstream
