@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 78 active
+Fix the remaining Flocq import gaps by working through the 77 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2115,9 +2115,29 @@ checkout. The normalized classifier
 local target gate. Therefore `Veltkamp_aux` is removed from the active list,
 and `VeltkampEven1` is next.
 
-#### `Pff/Pff.v` (78)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_043449` left the exact
+`VeltkampEven1` payload unchanged and did not run a build. The manual repair
+restored exact public `VeltkampEven1` with all expanded upstream Veltkamp
+section assumptions, including the three `EvenClosest` hypotheses, and the
+exact existential conclusion: a same-value representative of `hx` that is
+even-closest to `x` in the reduced `t - s` format. A private candidate lemma
+reconstructs the high part at exponent `s + Fexp x`, normalizes the strict
+mantissa case, and uses an even minimal-normal representative at the mantissa
+boundary. A private tie lemma aligns the `p` and `q` mantissas at the reduced
+exponent and applies `ClosestImplyEven_int` to the even-closest split stages;
+outside the exact midpoint, `ImplyClosestStrict2` supplies uniqueness. The
+focused Lean process exited 0, `git diff --check` passed, placeholder/status
+audits reported zero findings, and the full 3345-job `lake build` passed;
+`scripts/check_diff_trust.sh` is absent from this checkout. The normalized
+classifier
+`.change_log/manual_attempt_20260721_VeltkampEven1_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `VeltkampEven1` is removed from the
+active list, and `VeltkampEven2` is next.
 
-- `VeltkampEven1` (Lemma, upstream line 14188)
+#### `Pff/Pff.v` (77)
+
 - `VeltkampEven2` (Lemma, upstream line 14483)
 - `Veltkamp_pos` (Lemma, upstream line 14709)
 - `VeltkampN_aux` (Lemma, upstream line 14788)
@@ -6898,8 +6918,7 @@ Statement-level checks performed for the first 35 active Pff entries:
   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
   inequality from only the upstream Veltkamp section hypotheses.
-- `VeltkampEven1`,
-  `VeltkampEven2`, `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`,
+- `VeltkampEven2`, `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`,
   `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
   `FloatSpec/src/Pff/Pff2Flocq.lean`. The wrapper assumes a reduced
@@ -6907,9 +6926,10 @@ Statement-level checks performed for the first 35 active Pff entries:
   Veltkamp error bound and reduced witness from rounded intermediate
   products/sums. They are therefore missing lower Pff payloads, not hidden
   under the public wrapper.
-- `Veltkamp_aux_aux` and `Veltkamp_aux` are now restored as exact public Lean
-  theorems in `FloatSpec/src/Pff/Pff.lean`; they are no longer inferred from
-  the higher-level wrapper and no longer belong to this missing-payload group.
+- `Veltkamp_aux_aux`, `Veltkamp_aux`, and `VeltkampEven1` are now restored as
+  exact public Lean theorems in `FloatSpec/src/Pff/Pff.lean`; they are no
+  longer inferred from the higher-level wrapper and no longer belong to this
+  missing-payload group.
 - `bimplybplusNorm` was restored as exact public Lean theorem
   `FloatSpec/src/Pff/Pff.lean:bimplybplusNorm`: from `Fbounded b f` and
   `F2R f ≠ 0`, it constructs `Fnormalize radix (plusExp b) t f`, preserves
