@@ -1109,6 +1109,27 @@ theorem B2SF_SF2B (x : StandardFloat)
     binarySingleNaNFloatToStandardFloat_standardFloatToBinarySingleNaNFloat
       (prec := primPrec) (emax := primEmax) x hx
 
+private theorem B2SF_zero (s : Bool) :
+    B2SF (BinarySingleNaNFloat.B754_zero (prec:=primPrec) (emax:=primEmax) s) =
+      StandardFloat.S754_zero s :=
+  rfl
+
+private theorem B2SF_infinity (s : Bool) :
+    B2SF (BinarySingleNaNFloat.B754_infinity (prec:=primPrec) (emax:=primEmax) s) =
+      StandardFloat.S754_infinity s :=
+  rfl
+
+private theorem B2SF_nan :
+    B2SF (BinarySingleNaNFloat.B754_nan (prec:=primPrec) (emax:=primEmax)) =
+      StandardFloat.S754_nan :=
+  rfl
+
+private theorem B2SF_finite (s : Bool) (m : Nat) (e : Int)
+    (hm : 0 < m) (hbounded : specFloat_bounded (prec:=primPrec) (emax:=primEmax) m e = true) :
+    B2SF (BinarySingleNaNFloat.B754_finite (prec:=primPrec) (emax:=primEmax)
+      s m e hm hbounded) = StandardFloat.S754_finite s m e :=
+  rfl
+
 theorem SF2B_B2SF (x : PrimBinaryFloat) :
     SF2B (B2SF x) (B2SF_valid x) = x := by
   exact
@@ -1204,6 +1225,138 @@ theorem binary_round_aux_equiv (sx : Bool) (mx ex : Int) (lx : Loc) :
   unfold binary_round_aux _root_.binary_round_aux
   simp (config := { zeta := true })
     [specRoundNearestEven_eq_choiceMode sx]
+
+theorem Prim2SF_B2Prim (x : PrimBinaryFloat) :
+    Prim2SF (B2Prim x) = B2SF x := by
+  unfold B2Prim
+  exact Prim2SF_SF2Prim (B2SF x) (B2SF_valid x)
+
+theorem Prim2SF_inj (x y : PrimitiveFloat)
+    (h : Prim2SF x = Prim2SF y) : x = y := by
+  rcases x with ⟨x, hx⟩
+  rcases y with ⟨y, hy⟩
+  simp [Prim2SF] at h
+  subst y
+  rfl
+
+theorem B2Prim_inj (x y : PrimBinaryFloat)
+    (h : B2Prim x = B2Prim y) : x = y := by
+  have h' := congrArg Prim2B h
+  simpa [Prim2B_B2Prim] using h'
+
+-- Coq `SpecFloat.SFmul`, specialized to primitive binary64.
+noncomputable def SFmul (x y : StandardFloat) : StandardFloat :=
+  match x, y with
+  | StandardFloat.S754_nan, _ => StandardFloat.S754_nan
+  | _, StandardFloat.S754_nan => StandardFloat.S754_nan
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_infinity sy =>
+      StandardFloat.S754_infinity (Bool.xor sx sy)
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_finite sy _ _ =>
+      StandardFloat.S754_infinity (Bool.xor sx sy)
+  | StandardFloat.S754_finite sx _ _, StandardFloat.S754_infinity sy =>
+      StandardFloat.S754_infinity (Bool.xor sx sy)
+  | StandardFloat.S754_infinity _, StandardFloat.S754_zero _ =>
+      StandardFloat.S754_nan
+  | StandardFloat.S754_zero _, StandardFloat.S754_infinity _ =>
+      StandardFloat.S754_nan
+  | StandardFloat.S754_finite sx _ _, StandardFloat.S754_zero sy =>
+      StandardFloat.S754_zero (Bool.xor sx sy)
+  | StandardFloat.S754_zero sx, StandardFloat.S754_finite sy _ _ =>
+      StandardFloat.S754_zero (Bool.xor sx sy)
+  | StandardFloat.S754_zero sx, StandardFloat.S754_zero sy =>
+      StandardFloat.S754_zero (Bool.xor sx sy)
+  | StandardFloat.S754_finite sx mx ex,
+      StandardFloat.S754_finite sy my ey =>
+      binary_round_aux (Bool.xor sx sy) ((mx * my : Nat) : Int) (ex + ey)
+        FloatSpec.Calc.Bracket.Location.loc_Exact
+
+theorem SFmul_valid (x y : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) x = true)
+    (hy : validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) y = true) :
+    validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax)
+      (SFmul x y) = true := by
+  cases x with
+  | S754_zero sx =>
+      cases y <;> simp [SFmul, validBinarySingleNaNStandardFloat]
+  | S754_infinity sx =>
+      cases y <;> simp [SFmul, validBinarySingleNaNStandardFloat]
+  | S754_nan =>
+      cases y <;> simp [SFmul, validBinarySingleNaNStandardFloat]
+  | S754_finite sx mx ex =>
+      cases y with
+      | S754_zero sy =>
+          simp [SFmul, validBinarySingleNaNStandardFloat]
+      | S754_infinity sy =>
+          simp [SFmul, validBinarySingleNaNStandardFloat]
+      | S754_nan =>
+          simp [SFmul, validBinarySingleNaNStandardFloat]
+      | S754_finite sy my ey =>
+          have hx' : decide (0 < mx) = true ∧
+              specFloat_bounded (prec := primPrec) (emax := primEmax) mx ex = true := by
+            simpa [validBinarySingleNaNStandardFloat, Bool.and_eq_true] using hx
+          have hy' : decide (0 < my) = true ∧
+              specFloat_bounded (prec := primPrec) (emax := primEmax) my ey = true := by
+            simpa [validBinarySingleNaNStandardFloat, Bool.and_eq_true] using hy
+          have haux := _root_.Bmult_correct_aux (prec:=primPrec) (emax:=primEmax)
+            RoundingMode.RNE sx mx ex (of_decide_eq_true hx'.1) hx'.2
+            sy my ey (of_decide_eq_true hy'.1) hy'.2
+          simpa [SFmul, binary_round_aux_equiv] using haux.1
+
+-- Coq primitive multiplication, independently defined through `Prim2SF`.
+noncomputable def mul (x y : PrimitiveFloat) : PrimitiveFloat :=
+  ⟨SFmul (Prim2SF x) (Prim2SF y),
+    SFmul_valid (Prim2SF x) (Prim2SF y) (Prim2SF_valid x) (Prim2SF_valid y)⟩
+
+noncomputable instance : Mul PrimitiveFloat where
+  mul := FaithfulPrimFloat.mul
+
+theorem mul_spec (x y : PrimitiveFloat) :
+    Prim2SF (x * y) = SFmul (Prim2SF x) (Prim2SF y) := by
+  rfl
+
+-- Coq `BinarySingleNaN.Bmult`, specialized to primitive binary64.
+noncomputable def Bmult (mode : RoundingMode)
+    (x y : PrimBinaryFloat) : PrimBinaryFloat :=
+  match x, y with
+  | BinarySingleNaNFloat.B754_nan, _ => BinarySingleNaNFloat.B754_nan
+  | _, BinarySingleNaNFloat.B754_nan => BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_infinity sx, BinarySingleNaNFloat.B754_infinity sy =>
+      BinarySingleNaNFloat.B754_infinity (prec:=primPrec) (emax:=primEmax) (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_infinity sx, BinarySingleNaNFloat.B754_finite sy _ _ _ _ =>
+      BinarySingleNaNFloat.B754_infinity (prec:=primPrec) (emax:=primEmax) (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_finite sx _ _ _ _, BinarySingleNaNFloat.B754_infinity sy =>
+      BinarySingleNaNFloat.B754_infinity (prec:=primPrec) (emax:=primEmax) (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_infinity _, BinarySingleNaNFloat.B754_zero _ =>
+      BinarySingleNaNFloat.B754_nan (prec:=primPrec) (emax:=primEmax)
+  | BinarySingleNaNFloat.B754_zero _, BinarySingleNaNFloat.B754_infinity _ =>
+      BinarySingleNaNFloat.B754_nan (prec:=primPrec) (emax:=primEmax)
+  | BinarySingleNaNFloat.B754_finite sx _ _ _ _, BinarySingleNaNFloat.B754_zero sy =>
+      BinarySingleNaNFloat.B754_zero (prec:=primPrec) (emax:=primEmax) (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_zero sx, BinarySingleNaNFloat.B754_finite sy _ _ _ _ =>
+      BinarySingleNaNFloat.B754_zero (prec:=primPrec) (emax:=primEmax) (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_zero sx, BinarySingleNaNFloat.B754_zero sy =>
+      BinarySingleNaNFloat.B754_zero (prec:=primPrec) (emax:=primEmax) (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_finite sx mx ex hmx_pos Hx,
+      BinarySingleNaNFloat.B754_finite sy my ey hmy_pos Hy =>
+      let z := _root_.binary_round_aux (prec:=primPrec) (emax:=primEmax)
+        mode (Bool.xor sx sy) ((mx * my : Nat) : Int) (ex + ey)
+        FloatSpec.Calc.Bracket.Location.loc_Exact
+      have haux := _root_.Bmult_correct_aux (prec:=primPrec) (emax:=primEmax)
+        mode sx mx ex hmx_pos Hx sy my ey hmy_pos Hy
+      SF2B z haux.1
+
+-- Coq `PrimFloat.v:mul_equiv`.
+theorem mul_equiv (x y : PrimitiveFloat) :
+    Prim2B (x * y) = Bmult RoundingMode.RNE (Prim2B x) (Prim2B y) := by
+  apply B2Prim_inj
+  rw [B2Prim_Prim2B]
+  apply Prim2SF_inj
+  rw [Prim2SF_B2Prim]
+  rw [mul_spec]
+  rw [← B2SF_Prim2B x, ← B2SF_Prim2B y]
+  cases Prim2B x <;> cases Prim2B y <;>
+    simp [SFmul, Bmult, B2SF_SF2B, B2SF_zero, B2SF_infinity, B2SF_nan,
+      B2SF_finite, binary_round_aux_equiv]
 
 -- Coq `SpecFloat.binary_round`, specialized to primitive binary64.
 noncomputable def binary_round (sx : Bool) (mx : Nat) (ex : Int) :

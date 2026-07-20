@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 88.
+- Active semantic gap candidates still listed below: 87.
 - Files with at least one active listed candidate: 2.
-- Counterpart audit coverage for the active list: 88/88 names have been
+- Counterpart audit coverage for the active list: 87/87 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 88 active
+Fix the remaining Flocq import gaps by working through the 87 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1695,7 +1695,7 @@ explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
 
-#### `IEEE754/PrimFloat.v` (2)
+#### `IEEE754/PrimFloat.v` (1)
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
@@ -1741,7 +1741,6 @@ infinities, the unique NaN, and bounded finite values. The existing
 evidence. Focused `lake env lean FloatSpec/src/IEEE754/PrimFloat.lean`
 passed. Therefore `Prim2B` and `B2Prim` are removed from the active list.
 
-- `mul_equiv` (Theorem, upstream line 143)
 - `add_equiv` (Theorem, upstream line 181)
 
 2026-07-17 blocker note: manual target recheck
@@ -1828,7 +1827,29 @@ real-wrapper `PrimFloat`; local `prim_mul_correct` is a reflexive statement
 over `binary_mul`, and the faithful primitive-float conversions,
 `SpecFloat.mul_spec`, and `binary_round_aux_equiv` payloads are not present in
 the upstream shape. Adding `mul_equiv` over those local wrappers would be
-helper-only or differently parameterized, so `mul_equiv` remains active.
+helper-only or differently parameterized, so `mul_equiv` remained active at
+that time.
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_215315`, explicitly using `gpt-5.5` with
+high reasoning, added exact primitive multiplication infrastructure inside
+`FaithfulPrimFloat`: independent SpecFloat-side `SFmul`, proof-carrying
+primitive `mul` with a `Mul PrimitiveFloat` instance, exact `mul_spec`, and a
+separate mode-parameterized SingleNaN `Bmult`. The two finite branches are not
+aliases: `SFmul` calls the namespace-local SpecFloat `binary_round_aux`, while
+`Bmult` calls root `_root_.binary_round_aux` at its supplied mode and packages
+its result with validity from `_root_.Bmult_correct_aux`; `mul_equiv`
+specializes that mode to `RNE`. The other branches independently
+match Coq's NaN, infinity, signed-zero, and sign-xor constructor behavior.
+The exact `mul_equiv` statement uses primitive `x * y` notation and follows
+upstream `PrimFloat.v:144-159` through `B2Prim_inj`, `B2Prim_Prim2B`,
+`Prim2SF_inj`, `Prim2SF_B2Prim`, `mul_spec`, reverse `B2SF_Prim2B` rewrites,
+proof-carrying constructor case analysis, `B2SF_SF2B`, and
+`binary_round_aux_equiv`. Focused Lean checking, zero-finding
+placeholder/status audits, and the full 3345-job `lake build` passed. The
+authoritative classifier for the final patch records `result = proved`,
+`build = pass`, `coq_alignment = checked`, and a passing local target gate.
+Therefore `mul_equiv` is removed from the active list.
 
 2026-07-17 blocker note: manual target recheck
 `.change_log/manual_attempt_20260717_032042_binary_round_equiv_blocked/attempt.json`
