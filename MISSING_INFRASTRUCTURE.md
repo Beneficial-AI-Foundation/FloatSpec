@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 74.
+- Active semantic gap candidates still listed below: 73.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 74/74 names have been
+- Counterpart audit coverage for the active list: 73/73 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 74 active
+Fix the remaining Flocq import gaps by working through the 73 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2192,9 +2192,25 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `VeltkampN_aux` is removed from the
 active list, and `VeltkampN` is next.
 
-#### `Pff/Pff.v` (74)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_061502` left the exact `VeltkampN` payload
+unchanged and did not run a build. The manual repair restored exact public
+`VeltkampN` under only the expanded upstream `VeltN` assumptions. It
+normalizes the merely bounded closest outputs `p` and `q`, proves both
+normalized representatives are bounded and canonical with unchanged real
+values, reconstructs the three closest-rounding premises, and invokes exact
+`VeltkampN_aux` for the unchanged residual and reduced-witness conclusion.
+The focused Lean process exited 0, `git diff --check` passed,
+placeholder/status audits reported zero findings, and the full 3345-job
+`lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_VeltkampN_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `VeltkampN` is removed from the active list, and
+`VeltkampEven_pos` is next.
 
-- `VeltkampN` (Lemma, upstream line 14832)
+#### `Pff/Pff.v` (73)
+
 - `VeltkampEven_pos` (Lemma, upstream line 14856)
 - `VeltkampEvenN_aux` (Lemma, upstream line 14942)
 - `VeltkampEvenN` (Lemma, upstream line 15000)
@@ -6971,8 +6987,7 @@ Statement-level checks performed for the first 35 active Pff entries:
   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
   inequality from only the upstream Veltkamp section hypotheses.
-- `VeltkampN`,
-  `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
+- `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
   `FloatSpec/src/Pff/Pff2Flocq.lean`. The wrapper assumes a reduced
   nearest-even witness as input; the active upstream lemmas construct the
@@ -6980,8 +6995,8 @@ Statement-level checks performed for the first 35 active Pff entries:
   products/sums. They are therefore missing lower Pff payloads, not hidden
   under the public wrapper.
 - `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`, `VeltkampEven2`,
-  `Veltkamp_pos`, and `VeltkampN_aux` are now restored as exact public Lean
-  theorems in
+  `Veltkamp_pos`, `VeltkampN_aux`, and `VeltkampN` are now restored as exact
+  public Lean theorems in
   `FloatSpec/src/Pff/Pff.lean`; they are no
   longer inferred from the higher-level wrapper and no longer belong to this
   missing-payload group.
