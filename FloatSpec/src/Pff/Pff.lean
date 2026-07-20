@@ -38458,7 +38458,137 @@ private theorem UlpFlessuGe_coefficient_bound
           linarith
     _ = (4 * D)⁻¹ * (|U| - (|U| * eps2 + 2 * c)) := hright_eq
 
+private theorem UlpFlessuGe2_coefficient_strict
+    (eps eps2 D q A Y : ℝ)
+    (heps_pos : 0 < eps) (heps_le_quarter : eps ≤ 1 / 4)
+    (hD_pos : 0 < D) (hq_pos : 0 < q)
+    (heps2 : eps2 = 2 * eps) (hD_eps : D * eps = 1 - eps) :
+    eps / 4 * ((1 - eps2) * |Y|) - eps / 4 * |A| - q / 4 <
+      (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) -
+        (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|) -
+        (q / 2) * ((2 * D)⁻¹ +
+          (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) := by
+  have heps_lt_one : eps < 1 := by nlinarith
+  have hden_pos : 0 < 1 - eps := by nlinarith
+  have hden_ne : 1 - eps ≠ 0 := ne_of_gt hden_pos
+  have hsum_pos : 0 < 1 + eps := by nlinarith
+  have hcoef_nonneg : 0 ≤ 1 - eps2 := by
+    rw [heps2]
+    nlinarith
+  have hden1_pos : 0 < 4 * D * (1 + eps) := by nlinarith
+  have hden1_ne : 4 * D * (1 + eps) ≠ 0 := ne_of_gt hden1_pos
+  have hden2_pos : 0 < 4 * D * (1 + eps) * (1 - eps) := by nlinarith
+  have hden2_ne : 4 * D * (1 + eps) * (1 - eps) ≠ 0 := ne_of_gt hden2_pos
+  have hD2_pos : 0 < 2 * D := by nlinarith
+  have hD2_ne : 2 * D ≠ 0 := ne_of_gt hD2_pos
+  have hcoefY_base : eps / 4 < (4 * D * (1 + eps))⁻¹ := by
+    have heps_sq_pos : 0 < eps * eps := mul_pos heps_pos heps_pos
+    have hmul : (eps / 4) * (4 * D * (1 + eps)) < 1 := by
+      calc
+        (eps / 4) * (4 * D * (1 + eps)) = (D * eps) * (1 + eps) := by ring
+        _ = (1 - eps) * (1 + eps) := by rw [hD_eps]
+        _ = 1 - eps * eps := by ring
+        _ < 1 := by nlinarith
+    have hmul2 : (eps / 4) * (4 * D * (1 + eps)) <
+        (4 * D * (1 + eps))⁻¹ * (4 * D * (1 + eps)) := by
+      rw [inv_mul_cancel₀ hden1_ne]
+      exact hmul
+    exact lt_of_mul_lt_mul_right hmul2 (le_of_lt hden1_pos)
+  have hcoefY :
+      eps / 4 * (1 - eps2) ≤ (4 * D * (1 + eps))⁻¹ * (1 - eps2) := by
+    exact mul_le_mul_of_nonneg_right (le_of_lt hcoefY_base) hcoef_nonneg
+  have hcoefA :
+      (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2) ≤ eps / 4 := by
+    have hmul :
+        ((4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) *
+            (4 * D * (1 + eps) * (1 - eps)) ≤
+          (eps / 4) * (4 * D * (1 + eps) * (1 - eps)) := by
+      field_simp [hden2_ne, hden_ne]
+      rw [heps2]
+      have hpoly : 1 - 2 * eps ≤ (1 - eps) * (1 - eps) * (1 + eps) := by
+        have hpos : 0 ≤ eps * (1 - eps + eps * eps) := by
+          exact mul_nonneg (le_of_lt heps_pos)
+            (by nlinarith [mul_nonneg (le_of_lt heps_pos) (le_of_lt heps_pos)])
+        nlinarith
+      have htarget :
+          (1 - eps) * (1 - eps) * (1 + eps) =
+            D * eps * (1 + eps) * (1 - eps) := by
+        rw [hD_eps]
+        ring
+      nlinarith
+    exact le_of_mul_le_mul_right hmul hden2_pos
+  have hbracket_lt_half :
+      (2 * D)⁻¹ +
+          (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2) < 1 / 2 := by
+    have hmul :
+        ((2 * D)⁻¹ +
+              (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) *
+            (4 * D * (1 + eps) * (1 - eps)) <
+          (1 / 2) * (4 * D * (1 + eps) * (1 - eps)) := by
+      field_simp [hden2_ne, hD2_ne, hden_ne]
+      rw [heps2]
+      have hpoly_pos : 0 < 2 - 5 * eps + 4 * eps * eps * eps := by
+        have hmain : 5 * eps ≤ 5 * (1 / 4 : ℝ) := by nlinarith
+        have hcube_nonneg : 0 ≤ 4 * eps * eps * eps := by positivity
+        nlinarith
+      have hcalc :
+          eps * (2 * (1 + eps) * (1 - eps) + (1 - 2 * eps)) <
+            2 * (1 - eps) * (1 + eps) * (1 - eps) := by
+        nlinarith
+      have htarget :
+          2 * (1 - eps) * (1 + eps) * (1 - eps) =
+            2 * (D * eps) * (1 + eps) * (1 - eps) := by
+        rw [hD_eps]
+      nlinarith
+    exact lt_of_mul_lt_mul_right hmul (le_of_lt hden2_pos)
+  have hconst :
+      -(q / 4) <
+        -((q / 2) *
+          ((2 * D)⁻¹ +
+            (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2))) := by
+    have :
+        (q / 2) *
+            ((2 * D)⁻¹ +
+              (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) <
+          q / 4 := by
+      have hqhalf_pos : 0 < q / 2 := by positivity
+      calc
+        (q / 2) *
+            ((2 * D)⁻¹ +
+              (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2))
+            < (q / 2) * (1 / 2) :=
+                mul_lt_mul_of_pos_left hbracket_lt_half hqhalf_pos
+        _ = q / 4 := by ring
+    linarith
+  have hYpart :
+      eps / 4 * ((1 - eps2) * |Y|) ≤
+        (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) := by
+    calc
+      eps / 4 * ((1 - eps2) * |Y|) = (eps / 4 * (1 - eps2)) * |Y| := by ring
+      _ ≤ ((4 * D * (1 + eps))⁻¹ * (1 - eps2)) * |Y| :=
+        mul_le_mul_of_nonneg_right hcoefY (abs_nonneg Y)
+      _ = (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) := by ring
+  have hApart :
+      - (eps / 4 * |A|) ≤
+        - ((4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|)) := by
+    have hmulA :
+        (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|) ≤
+          eps / 4 * |A| := by
+      calc
+        (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|)
+            = ((4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) * |A| := by
+              ring
+        _ ≤ (eps / 4) * |A| := mul_le_mul_of_nonneg_right hcoefA (abs_nonneg A)
+        _ = eps / 4 * |A| := by ring
+    linarith
+  linarith
+
 noncomputable def UlpFlessuGe_check {beta : Int}
+    (_b : Fbound_skel) (_precision : Nat)
+    (_a _x _y _t _u : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+noncomputable def UlpFlessuGe2_check {beta : Int}
     (_b : Fbound_skel) (_precision : Nat)
     (_a _x _y _t _u : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -38696,6 +38826,177 @@ theorem UlpFlessuGe {beta : Int}
     UlpFlessuGe_from_general_fulp_bound_check, Id.run, ULift.up_down] using
     hfinish ⟨huBound, huBound', huCan, rfl, by decide, hprecision_ne, hvNum,
       hE_general⟩
+
+/-- Coq: `UlpFlessuGe2`.
+
+Strict coefficient form from the Axpy auxiliary section.  This first compares
+the strict upstream coefficient expression with the non-strict coefficient form
+proved by `UlpFlessuGe`, then uses that public theorem for the final ulp bound. -/
+theorem UlpFlessuGe2 {beta : Int}
+    (b : Fbound_skel) (precision : Nat)
+    (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fbounded (beta:=beta) b a ∧
+        Fbounded (beta:=beta) b x ∧
+        Fbounded (beta:=beta) b y ∧
+        Fbounded (beta:=beta) b t ∧
+        Fbounded (beta:=beta) b u ∧
+        Closest (beta:=beta) b (2 : ℝ)
+          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) t ∧
+        Closest (beta:=beta) b (2 : ℝ)
+          (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y) u ∧
+        Fcanonic (beta:=beta) 2 b u ∧
+        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision⌝⦄
+    (pure (UlpFlessuGe2_check (beta:=beta) b precision a x y t u) : Id Unit)
+    ⦃⇓_ => ⌜
+      (2 : ℝ) ^ (-(precision : Int) - 2) *
+          (1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=beta) y| -
+      ((2 : ℝ) ^ (-(precision : Int) - 2) *
+          |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x|) -
+      (2 : ℝ) ^ (-b.dExp - 2) <
+      (1 / 4 : ℝ) *
+        Fulp (beta:=beta) b 2 precision
+          (FLess (beta:=beta) b 2 precision u)⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest, huClosest,
+      huCan, hbeta, hprecision_gt, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, UlpFlessuGe2_check,
+    Id.run, ULift.up_down]
+  subst beta
+  let A : ℝ := _root_.F2R (beta:=2) a * _root_.F2R (beta:=2) x
+  let Y : ℝ := _root_.F2R (beta:=2) y
+  let eps : ℝ := (2 : ℝ) ^ (-(precision : Int))
+  let eps2 : ℝ := (2 : ℝ) ^ (1 - (precision : Int))
+  let D : ℝ := (2 : ℝ) ^ (precision : Int) - 1
+  let q : ℝ := (2 : ℝ) ^ (-b.dExp)
+  have htwo_ne : (2 : ℝ) ≠ 0 := by norm_num
+  have hprecision_ne : precision ≠ 0 := by omega
+  have hprecision_pos : (0 : Int) < (precision : Int) := by
+    exact_mod_cast Nat.pos_of_ne_zero hprecision_ne
+  have heps_pos : 0 < eps := by
+    exact zpow_pos (by norm_num : (0 : ℝ) < 2) _
+  have heps_le_quarter : eps ≤ 1 / 4 := by
+    have hpow_le :
+        (2 : ℝ) ^ (-(precision : Int)) ≤ (2 : ℝ) ^ (-2 : Int) := by
+      exact zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2) (by omega)
+    have hpow_eq : (2 : ℝ) ^ (-2 : Int) = 1 / 4 := by
+      norm_num [zpow_neg]
+    exact le_trans hpow_le (le_of_eq hpow_eq)
+  have heps2_eq : eps2 = 2 * eps := by
+    calc
+      eps2 = (2 : ℝ) ^ ((1 : Int) + (-(precision : Int))) := by
+          rfl
+      _ = (2 : ℝ) ^ (1 : Int) * (2 : ℝ) ^ (-(precision : Int)) := by
+          rw [zpow_add₀ htwo_ne]
+      _ = 2 * eps := by simp [eps]
+  have hD_pos : 0 < D := by
+    have hpow_lt :
+        (2 : ℝ) ^ (0 : Int) < (2 : ℝ) ^ (precision : Int) := by
+      exact zpow_lt_zpow_right₀ (by norm_num : (1 : ℝ) < 2) hprecision_pos
+    have hpow_gt_one : 1 < (2 : ℝ) ^ (precision : Int) := by
+      simpa using hpow_lt
+    exact sub_pos.mpr hpow_gt_one
+  have hq_pos : 0 < q := by
+    exact zpow_pos (by norm_num : (0 : ℝ) < 2) _
+  have hD_eps : D * eps = 1 - eps := by
+    calc
+      D * eps = ((2 : ℝ) ^ (precision : Int) - 1) *
+          (2 : ℝ) ^ (-(precision : Int)) := by rfl
+      _ = (2 : ℝ) ^ (precision : Int) * (2 : ℝ) ^ (-(precision : Int)) -
+          (2 : ℝ) ^ (-(precision : Int)) := by ring
+      _ = (2 : ℝ) ^ ((precision : Int) + (-(precision : Int))) -
+          (2 : ℝ) ^ (-(precision : Int)) := by rw [← zpow_add₀ htwo_ne]
+      _ = 1 - eps := by
+        have hsum : (precision : Int) + (-(precision : Int)) = 0 := by omega
+        rw [hsum]
+        simp [eps]
+  have hshift_precision :
+      (2 : ℝ) ^ (-(precision : Int) - 2) = eps / 4 := by
+    calc
+      (2 : ℝ) ^ (-(precision : Int) - 2) =
+          (2 : ℝ) ^ (-(precision : Int)) * (2 : ℝ) ^ (-2 : Int) := by
+            rw [show -(precision : Int) - 2 =
+              -(precision : Int) + (-2 : Int) by omega]
+            rw [zpow_add₀ htwo_ne]
+      _ = eps / 4 := by
+        norm_num [eps, zpow_neg]
+        ring
+  have hshift_q2 : (2 : ℝ) ^ (-b.dExp - 1) = q / 2 := by
+    calc
+      (2 : ℝ) ^ (-b.dExp - 1) =
+          (2 : ℝ) ^ (-b.dExp) * (2 : ℝ) ^ (-1 : Int) := by
+            rw [show -b.dExp - 1 = -b.dExp + (-1 : Int) by omega]
+            rw [zpow_add₀ htwo_ne]
+      _ = q / 2 := by
+        norm_num [q, zpow_neg]
+        ring
+  have hshift_q4 : (2 : ℝ) ^ (-b.dExp - 2) = q / 4 := by
+    calc
+      (2 : ℝ) ^ (-b.dExp - 2) =
+          (2 : ℝ) ^ (-b.dExp) * (2 : ℝ) ^ (-2 : Int) := by
+            rw [show -b.dExp - 2 = -b.dExp + (-2 : Int) by omega]
+            rw [zpow_add₀ htwo_ne]
+      _ = q / 4 := by
+        norm_num [q, zpow_neg]
+        ring
+  have hstrict_core :
+      eps / 4 * ((1 - eps2) * |Y|) - eps / 4 * |A| - q / 4 <
+        (4 * D * (1 + eps))⁻¹ * ((1 - eps2) * |Y|) -
+          (4 * D * (1 + eps) * (1 - eps))⁻¹ * ((1 - eps2) * |A|) -
+          (q / 2) * ((2 * D)⁻¹ +
+            (4 * D * (1 + eps) * (1 - eps))⁻¹ * (1 - eps2)) :=
+    UlpFlessuGe2_coefficient_strict eps eps2 D q A Y heps_pos
+      heps_le_quarter hD_pos hq_pos heps2_eq hD_eps
+  have hstrict :
+      (2 : ℝ) ^ (-(precision : Int) - 2) *
+          (1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) y| -
+      ((2 : ℝ) ^ (-(precision : Int) - 2) *
+          |_root_.F2R (beta:=2) a * _root_.F2R (beta:=2) x|) -
+      (2 : ℝ) ^ (-b.dExp - 2) <
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) y|) -
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))) *
+          (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) a * _root_.F2R (beta:=2) x|) -
+      (2 : ℝ) ^ (-b.dExp - 1) *
+        ((2 * ((2 : ℝ) ^ (precision : Int) - 1))⁻¹ +
+          (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+              (1 + (2 : ℝ) ^ (-(precision : Int))) *
+              (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+            (1 - (2 : ℝ) ^ (1 - (precision : Int)))) := by
+    rw [hshift_precision, hshift_q4, hshift_q2]
+    simpa only [D, A, Y, eps, eps2, q, mul_assoc] using hstrict_core
+  have hmain := UlpFlessuGe (beta:=2) b precision a x y t u
+  have hle :
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) y|) -
+      (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+          (1 + (2 : ℝ) ^ (-(precision : Int))) *
+          (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+        ((1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=2) a * _root_.F2R (beta:=2) x|) -
+      (2 : ℝ) ^ (-b.dExp - 1) *
+        ((2 * ((2 : ℝ) ^ (precision : Int) - 1))⁻¹ +
+          (4 * ((2 : ℝ) ^ (precision : Int) - 1) *
+              (1 + (2 : ℝ) ^ (-(precision : Int))) *
+              (1 - (2 : ℝ) ^ (-(precision : Int))))⁻¹ *
+            (1 - (2 : ℝ) ^ (1 - (precision : Int)))) ≤
+      (1 / 4 : ℝ) *
+        Fulp (beta:=2) b 2 precision
+          (FLess (beta:=2) b 2 precision u) := by
+    simpa only [wp, PostCond.noThrow, pure, UlpFlessuGe_check,
+      Id.run, ULift.up_down] using
+      hmain ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest, huClosest,
+        huCan, rfl, hprecision_gt, hvNum⟩
+  exact lt_of_lt_of_le hstrict hle
 
 /-- Coq `Axpy_opt` scale premise from rounded inputs.
 

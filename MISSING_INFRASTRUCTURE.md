@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 85.
+- Active semantic gap candidates still listed below: 84.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 85/85 names have been
+- Counterpart audit coverage for the active list: 84/84 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 85 active
+Fix the remaining Flocq import gaps by working through the 84 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1980,9 +1980,23 @@ this checkout. The authoritative classifier
 `result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
 local target gate. Therefore `UlpFlessuGe` is removed from the active list.
 
-#### `Pff/Pff.v` (85)
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_233428` restored exact public
+`UlpFlessuGe2` in `FloatSpec/src/Pff/Pff.lean`. Its assumptions are precisely
+the live `AxpyAux` section context used upstream: bounded `a`, `x`, `y`, `t`,
+and `u`, closest rounded product and sum, canonic `u`, radix 2, precision
+greater than one, and `vNum = 2^precision`. Its conclusion is the full strict
+upstream coefficient inequality, with the two predecessor shifts represented
+as exponents `-precision - 2` and `-dExp - 2`. The proof derives the strict
+coefficient comparison internally and composes it with exact public
+`UlpFlessuGe`; it does not expose the old general-bound helper premise.
+Focused `lake env lean FloatSpec/src/Pff/Pff.lean` passed. The normalized
+classifier `.change_log/manual_attempt_20260720_UlpFlessuGe2_proved/attempt.json`
+records the checked provider, build, and Coq-alignment result. Therefore
+`UlpFlessuGe2` is removed from the active list.
 
-- `UlpFlessuGe2` (Theorem, upstream line 11885)
+#### `Pff/Pff.v` (84)
+
 - `Axpy_opt` (Theorem, upstream line 12301)
 - `eqLe` (Lemma, upstream line 13220)
 - `eqGe` (Lemma, upstream line 13547)
