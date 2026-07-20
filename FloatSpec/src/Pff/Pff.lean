@@ -45455,6 +45455,197 @@ theorem VeltkampN {beta : Int}
   exact VeltkampN_aux (beta:=radix) b radix s t x np nq hx rfl hradix
     hvNum hsGe hsLe hxNormal hnpCan hnqCan hnpClosest hnqClosest hhxClosest
 
+private theorem Veltkamp_pos_q_normal
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q : FloatSpec.Core.Defs.FlocqFloat radix)
+    (hradix : 1 < radix) (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxNormal : Fnormal (beta:=radix) radix b x)
+    (hqCan : Fcanonic (beta:=radix) radix b q)
+    (hxPos : 0 < _root_.F2R (beta:=radix) x)
+    (hpDef : Closest (beta:=radix) b (radix : ℝ)
+      (_root_.F2R (beta:=radix) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDef : Closest (beta:=radix) b (radix : ℝ)
+      (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p) q) :
+    Fnormal (beta:=radix) radix b q := by
+  have htGtOne : 1 < t := by omega
+  have htNe : t ≠ 0 := Nat.ne_of_gt (lt_trans Nat.zero_lt_one htGtOne)
+  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
+  have hfirstLeX :
+      _root_.F2R (beta:=radix)
+          (firstNormalPos (beta:=radix) radix b t) ≤
+        _root_.F2R (beta:=radix) x :=
+    (FnormalLtFirstNormalPos (beta:=radix) radix b t x)
+      ⟨hxNormal, hxNormal, htNe, rfl, hradix, hvNum, le_of_lt hxPos⟩
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradixPosInt
+  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
+  have hmono :
+      MonotoneP_float (Closest (beta:=radix) b (radix : ℝ)) := by
+    have h := ClosestMonotone (beta:=radix) b (radix : ℝ)
+    simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
+      Id.run, ULift.up_down] using h trivial
+  let xShift : FloatSpec.Core.Defs.FlocqFloat radix :=
+    ⟨x.Fnum, x.Fexp + 2⟩
+  have hxShiftBound : Fbounded (beta:=radix) b xShift := by
+    constructor
+    · simpa only [xShift] using hxBound.1
+    · dsimp [xShift]
+      exact le_trans hxBound.2 (by omega)
+  have hxShiftValue :
+      _root_.F2R (beta:=radix) xShift =
+        _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (2 : Int) := by
+    dsimp [xShift, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    rw [zpow_add₀ hradixNe]
+    ring
+  have hxShiftClosest :
+      Closest (beta:=radix) b (radix : ℝ)
+        (_root_.F2R (beta:=radix) xShift) xShift := by
+    constructor
+    · exact hxShiftBound
+    · intro g _hg
+      rw [sub_self, abs_zero]
+      exact abs_nonneg _
+  have hradixOneLe : (1 : ℝ) ≤ (radix : ℝ) := by
+    exact_mod_cast (le_of_lt hradix)
+  have hpowTwoLeS :
+      (radix : ℝ) ^ (2 : Int) ≤ (radix : ℝ) ^ (s : Int) :=
+    zpow_le_zpow_right₀ hradixOneLe (by omega)
+  have hxShiftLtScaled :
+      _root_.F2R (beta:=radix) xShift <
+        _root_.F2R (beta:=radix) x *
+          ((radix : ℝ) ^ (s : Int) + 1) := by
+    rw [hxShiftValue]
+    calc
+      _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (2 : Int) ≤
+          _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (s : Int) :=
+        mul_le_mul_of_nonneg_left hpowTwoLeS (le_of_lt hxPos)
+      _ < _root_.F2R (beta:=radix) x *
+          ((radix : ℝ) ^ (s : Int) + 1) := by nlinarith
+  have hxShiftLeP :
+      _root_.F2R (beta:=radix) xShift ≤
+        _root_.F2R (beta:=radix) p :=
+    hmono _ _ xShift p hxShiftLtScaled hxShiftClosest hpDef
+  have hradixTwoLe : (2 : ℝ) ≤ (radix : ℝ) := by
+    exact_mod_cast (by omega : (2 : Int) ≤ radix)
+  have hpowTwoGeFour :
+      (4 : ℝ) ≤ (radix : ℝ) ^ (2 : Int) := by
+    norm_num [zpow_ofNat]
+    nlinarith
+  have hpowTwoGtTwo : (2 : ℝ) < (radix : ℝ) ^ (2 : Int) :=
+    lt_of_lt_of_le (by norm_num) hpowTwoGeFour
+  have htwoXLtShift :
+      2 * _root_.F2R (beta:=radix) x <
+        _root_.F2R (beta:=radix) xShift := by
+    rw [hxShiftValue]
+    have h := mul_lt_mul_of_pos_left hpowTwoGtTwo hxPos
+    nlinarith
+  have htwoXLtP :
+      2 * _root_.F2R (beta:=radix) x <
+        _root_.F2R (beta:=radix) p :=
+    lt_of_lt_of_le htwoXLtShift hxShiftLeP
+  have hfirstLtOppInput :
+      _root_.F2R (beta:=radix)
+          (firstNormalPos (beta:=radix) radix b t) <
+        -(_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p) := by
+    have hxLtOppInput :
+        _root_.F2R (beta:=radix) x <
+          -(_root_.F2R (beta:=radix) x -
+            _root_.F2R (beta:=radix) p) := by
+      nlinarith
+    exact lt_of_le_of_lt hfirstLeX hxLtOppInput
+  have hqOppCan :
+      Fcanonic (beta:=radix) radix b (Fopp (beta:=radix) q) := by
+    have h := FcanonicFopp (beta:=radix) radix b q
+    simpa only [wp, PostCond.noThrow, pure, FcanonicFopp_check,
+      Id.run, ULift.up_down] using h hqCan
+  have hqOppClosest :
+      Closest (beta:=radix) b (radix : ℝ)
+        (-(_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p))
+        (Fopp (beta:=radix) q) := by
+    have h := ClosestOpp (beta:=radix) b (radix : ℝ) q
+      (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p)
+    simpa only [wp, PostCond.noThrow, pure, ClosestOpp_check,
+      Id.run, ULift.up_down] using h hqDef
+  have hqOppNormal :
+      Fnormal (beta:=radix) radix b (Fopp (beta:=radix) q) :=
+    Veltkamp_pos_normal_of_first_lt b radix t
+      (-(_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p))
+      (Fopp (beta:=radix) q) hradix htGtOne hvNum hqOppCan hqOppClosest
+      hfirstLtOppInput
+  have h := FnormalFop (beta:=radix) b radix (Fopp (beta:=radix) q)
+  have hdouble :
+      Fnormal (beta:=radix) radix b
+        (Fopp (beta:=radix) (Fopp (beta:=radix) q)) := by
+    simpa only [wp, PostCond.noThrow, pure, FnormalFop_check,
+      Id.run, ULift.up_down] using h hqOppNormal
+  simpa [Fopp, FloatSpec.Calc.Operations.Fopp] using hdouble
+
+/-! Coq positive-input even-rounding wrapper `VeltkampEven_pos`.
+
+The `Closest` components yield normal intermediates.  Even radix then uses
+`VeltkampEven1`; odd radix uses the no-midpoint theorem `VeltkampEven2`. -/
+theorem VeltkampEven_pos {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hpCan : Fcanonic (beta:=beta) radix b p)
+    (hqCan : Fcanonic (beta:=beta) radix b q)
+    (hxPos : 0 < _root_.F2R (beta:=beta) x)
+    (hpDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx) :
+    ∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
+        EvenClosest (beta:=beta) (Veltkamp_reducedBound radix b s t)
+          (radix : ℝ) (t - s) (_root_.F2R (beta:=beta) x) hx' := by
+  subst beta
+  have hpDef := hpDefEven.1
+  have hqDef := hqDefEven.1
+  have hhxDef := hhxDefEven.1
+  have htGtOne : 1 < t := by omega
+  have htNe : t ≠ 0 := Nat.ne_of_gt (lt_trans Nat.zero_lt_one htGtOne)
+  have hfirstLeX :
+      _root_.F2R (beta:=radix)
+          (firstNormalPos (beta:=radix) radix b t) ≤
+        _root_.F2R (beta:=radix) x :=
+    (FnormalLtFirstNormalPos (beta:=radix) radix b t x)
+      ⟨hxNormal, hxNormal, htNe, rfl, hradix, hvNum, le_of_lt hxPos⟩
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradixPosInt
+  have hpowSPos : 0 < (radix : ℝ) ^ (s : Int) :=
+    zpow_pos hradixPos _
+  have hxLtScaled :
+      _root_.F2R (beta:=radix) x <
+        _root_.F2R (beta:=radix) x *
+          ((radix : ℝ) ^ (s : Int) + 1) := by
+    nlinarith
+  have hpNormal : Fnormal (beta:=radix) radix b p :=
+    Veltkamp_pos_normal_of_first_lt b radix t
+      (_root_.F2R (beta:=radix) x *
+        ((radix : ℝ) ^ (s : Int) + 1)) p
+      hradix htGtOne hvNum hpCan hpDef
+      (lt_of_le_of_lt hfirstLeX hxLtScaled)
+  have hqNormal : Fnormal (beta:=radix) radix b q :=
+    Veltkamp_pos_q_normal b radix s t x p q hradix hvNum hsGe hsLe hxNormal
+      hqCan hxPos hpDef hqDef
+  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
+  rcases Int.even_or_odd radix with hEvenRadix | hOddRadix
+  · exact VeltkampEven1 (beta:=radix) b radix s t x p q hx rfl hradix
+      hvNum hsGe hsLe hxBound hpDef hqDef hhxDef hxPos hpNormal hqNormal
+      hxNormal hpDefEven hqDefEven hhxDefEven hEvenRadix
+  · exact VeltkampEven2 (beta:=radix) b radix s t x p q hx rfl hradix
+      hvNum hsGe hsLe hxBound hpDef hqDef hhxDef hxPos hpNormal hqNormal
+      hxNormal hpDefEven hqDefEven hhxDefEven hOddRadix
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
