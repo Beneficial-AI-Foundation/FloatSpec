@@ -2,6 +2,7 @@
 -- Translated from Coq file: flocq/src/IEEE754/PrimFloat.v
 
 import FloatSpec.src.IEEE754.Binary
+import FloatSpec.src.IEEE754.BinarySingleNaN
 import FloatSpec.src.IEEE754.Bits
 import FloatSpec.src.SimprocWP
 import Mathlib.Data.Real.Basic
@@ -22,6 +23,20 @@ Flocq's Coq `PrimFloat.v` in this port.  This file therefore uses an opaque
 wrapper carrying a real projection for audit experiments.  It must not be
 counted as a faithful IEEE/PrimFloat equivalence result.
 -/
+
+-- Coq `SpecFloat.round_nearest_even`.
+def round_nearest_even (m : Int) (l : Loc) : Int :=
+  FloatSpec.Calc.Round.cond_incr
+    (FloatSpec.Calc.Round.round_N (!(decide (2 ∣ m))) l) m
+
+-- Coq: round_nearest_even_equiv
+lemma round_nearest_even_equiv (s : Bool) (m : Int) (l : Loc) :
+    round_nearest_even m l = choice_mode RoundingMode.RNE s m l := by
+  cases l with
+  | loc_Exact => rfl
+  | loc_Inexact c =>
+      cases c <;> simp [round_nearest_even, choice_mode, FloatSpec.Calc.Round.cond_incr,
+        FloatSpec.Calc.Round.round_N]
 
 structure PrimFloat where
   toReal : ℝ

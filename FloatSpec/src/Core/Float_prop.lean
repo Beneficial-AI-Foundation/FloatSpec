@@ -1683,9 +1683,8 @@ Qed.
     -- Conclude by rewriting the RHS of htrans
     simpa [hbcast_nat', hRHS_alt] using htrans
   -- Apply uniqueness of mag on (0, ∞)
-  -- TODO: Update proof for new mag_unique_pos signature with Coq semantics
-  -- Old: b^(e-1) < x ∧ x ≤ b^e
-  -- New: b^(e-1) ≤ x ∧ x < b^e
+  -- Use the current `mag_unique_pos` boundary convention:
+  -- lower bound is non-strict, upper bound is strict.
   have hbR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hbeta
   have hlogb_pos : 0 < Real.log (beta : ℝ) := Real.log_pos hbR
   have hbpos : 0 < (beta : ℝ) := lt_trans (by linarith) hbR

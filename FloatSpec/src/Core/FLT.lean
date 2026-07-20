@@ -19,6 +19,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.Round_NE
 import FloatSpec.src.Core.Ulp
 import FloatSpec.src.Core.FLX
 import FloatSpec.src.Core.FIX
@@ -152,6 +153,40 @@ instance FLT_exp_mono :
     intro a b hab
     simp only [FLT_exp]
     exact max_le_max (sub_le_sub_right hab prec) le_rfl⟩
+
+/-
+Coq (FLT.v):
+Global Instance exists_NE_FLT :
+  (Z.even beta = false \/ (1 < prec)%Z) ->
+  Exists_NE beta FLT_exp.
+-/
+instance exists_NE_FLT (beta : Int)
+    [hNE : Fact (beta % 2 ≠ 0 ∨ 1 < prec)] :
+    FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp prec emin) where
+  exists_ne := by
+    rcases hNE.out with hodd | hprec
+    · exact Or.inl hodd
+    · right
+      intro e
+      constructor
+      · intro hlarge
+        unfold FLT_exp at hlarge ⊢
+        rcases max_lt_iff.mp hlarge with ⟨_, hemin_lt⟩
+        exact max_lt (by omega) hemin_lt
+      · intro hsmall
+        unfold FLT_exp at hsmall ⊢
+        have hemin_ge : e ≤ emin := by
+          by_contra hnot
+          have hemin_lt : emin < e := lt_of_not_ge hnot
+          have hmax_lt : max (e - prec) emin < e :=
+            max_lt (by omega) hemin_lt
+          exact (not_lt.mpr hsmall) hmax_lt
+        have hfe : max (e - prec) emin = emin := by
+          apply max_eq_right
+          omega
+        have hnext_le : emin + 1 - prec ≤ emin := by
+          omega
+        simpa [hfe] using max_eq_right hnext_le
 
 /-- Specification: FLT format using generic format
 
@@ -528,8 +563,7 @@ Coq (FLT.v):
 Lemma negligible_exp_FLT :
   exists n, negligible_exp FLT_exp = Some n /\\ (n <= emin)%Z.
 
-Lean (spec): State existence of a negligible exponent bound for FLT.
-We keep the proof as a placeholder.
+Lean: prove existence of a negligible exponent bound for FLT.
 -/
 private lemma negligible_exp_FLT_exists (prec emin : Int) [Prec_gt_0 prec] :
     ∃ n : Int, FloatSpec.Core.Ulp.negligible_exp (fexp := FLT_exp prec emin) = some n ∧ n ≤ emin := by
@@ -706,7 +740,7 @@ theorem ulp_FLT_0 (beta : Int) :
   intro _
   simp only [wp, PostCond.noThrow, pure]
   classical
-  -- From FLT, `negligible_exp` always returns a witness `n` with `n ≤ emin`.
+  -- From FLT, `negligible_exp` supplies a witness `n` with `n ≤ emin`.
   have ⟨n, hsome, hn_le_emin⟩ :=
     negligible_exp_FLT_exists (prec := prec) (emin := emin)
   -- Evaluate `ulp` at zero using the computed witness.

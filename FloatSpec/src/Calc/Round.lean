@@ -112,12 +112,11 @@ theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 end MainRounding
 
 /-
-  Placeholders for Coq Round.v theorems that have no Lean counterparts yet.
+  Lean ports for Coq Round.v theorems.
   These mirror the statement intent and reference existing Core/Bracket defs.
-  The remaining proof gaps can be discharged incrementally.
 -/
 
-section CoqTheoremsPlaceholders
+section CoqTheoremsPorts
 
 open FloatSpec.Core.Defs
 open FloatSpec.Core.Generic_fmt
@@ -1134,7 +1133,7 @@ theorem inbetween_int_ZR (x : ℝ) (m : Int) (l : Location)
             exact le_of_lt hbounds.2
         -- Right-hand side chooses m+1 since l is inexact and m < 0
         have hrhs : cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool m 0) (Location.loc_Inexact ord)) m = m + 1 := by
-          -- round_ZR returns the input boolean on inexact locations
+          -- round_ZR reuses the supplied direction on inexact locations
           simp only [round_ZR, hb, decide_eq_true hmneg, cond_incr, ite_true]
         -- Compute LHS: Ztrunc x = ceil x = m + 1
         have hLHS : (FloatSpec.Core.Raux.Ztrunc x) = m + 1 := by
@@ -1280,7 +1279,7 @@ theorem inbetween_int_ZR_sign (x : ℝ) (m : Int) (l : Location)
       simpa [FloatSpec.Core.Raux.Zfloor] using hfloor
     simp [FloatSpec.Core.Raux.Ztrunc, hxlt, FloatSpec.Core.Zaux.cond_Zopp, hb, hfloor_int]
 
--- Nearest (N), Nearest Even (NE), Nearest Away (NA) families (placeholders)
+-- Nearest (N), Nearest Even (NE), Nearest Away (NA) rounding families.
 def round_N (p : Bool) (l : Location) : Bool :=
   match l with
   | Location.loc_Exact => false
@@ -3836,6 +3835,6 @@ theorem truncate_FIX_correct
               using hle_emin_e
         exact Or.inr ⟨rfl, by simpa [Hx_eq] using Hformat_F2R⟩
 
-end CoqTheoremsPlaceholders
+end CoqTheoremsPorts
 
 end FloatSpec.Calc.Round

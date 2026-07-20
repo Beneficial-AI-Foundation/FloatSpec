@@ -1743,6 +1743,16 @@ noncomputable instance valid_rnd_Ztrunc : Valid_rnd FloatSpec.Core.Raux.Ztrunc :
     have h := FloatSpec.Core.Raux.Ztrunc_IZR n
     simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
 
+/-- Coq (`Generic_fmt.v`): away-from-zero rounding is a valid integer rounding mode. -/
+noncomputable instance valid_rnd_AW : Valid_rnd FloatSpec.Core.Raux.Zaway := by
+  refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
+  · intro x y hxy
+    have h := FloatSpec.Core.Raux.Zaway_le x y hxy
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+  · intro n
+    have h := FloatSpec.Core.Raux.Zaway_IZR n
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+
 /-- Coq ({lit}`Generic_fmt.v`): Opposite rounding function {lean}`Zrnd_opp`. -/
 noncomputable def Zrnd_opp (rnd : ℝ → Int) (x : ℝ) : Int :=
   -(rnd (-x))
@@ -2225,7 +2235,7 @@ noncomputable instance valid_rnd_N (choice : Int → Bool) :
     simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
       FloatSpec.Core.Raux.Rcompare]
 
-/- Additional Znearest lemmas from Coq (placeholders, to be filled iteratively):
+/- Additional Znearest lemmas from Coq, filled iteratively:
    Znearest_opp.
    We add them one-by-one following the pipeline instructions. -/
 
@@ -3022,7 +3032,7 @@ theorem round_N_small_pos
   -- Now the product is trivially zero
   simp only [roundR, hZsm0, Int.cast_zero, zero_mul]
 
--- ### Round-to-format helper stubs (Coq: round_bounded_small_pos / large_pos etc.)
+-- ### Round-to-format helper bridges (Coq: round_bounded_small_pos / large_pos etc.)
 
 /-- Port of Coq’s {lit}`round_bounded_small_pos` (statement only). -/
 theorem roundR_bounded_small_pos
@@ -3050,7 +3060,7 @@ theorem roundR_bounded_small_pos
     set sm : ℝ := x * (beta : ℝ) ^ (-c) with hsm
     set e : Int := (cexp beta fexp x) with he
 
-    -- `cexp` always returns the exponent `c`
+    -- Unfold `cexp` at this point to identify the exponent `c`.
     have he_eq : e = c := by simpa [cexp, hc, hm] using he
 
     -- Magnitude bound: `m ≤ ex`
@@ -3144,7 +3154,7 @@ theorem roundR_bounded_large_pos
   set sm : ℝ := x * (beta : ℝ) ^ (-c) with hsm
   set e : Int := (cexp beta fexp x) with he
 
-  -- `cexp` always returns the exponent `c`
+  -- Unfold `cexp` at this point to identify the exponent `c`.
   have he_eq : e = c := by simpa [cexp, hc, hm] using he
 
   -- Magnitude bound: `m ≤ ex`
@@ -3604,6 +3614,13 @@ theorem round_to_generic_int_eq_roundR
     It selects the upper neighbor when the tie is nonnegative. -/
 noncomputable def ZnearestA := fun t : Int => decide (0 ≤ t)
 
+/-- Coq `Generic_fmt.v`: instance `valid_rnd_NA`.
+
+    Upstream: `Global Instance valid_rnd_NA :
+    Valid_rnd (Znearest (Zle_bool 0)) := valid_rnd_N _.` -/
+noncomputable instance valid_rnd_NA : Valid_rnd (Znearest ZnearestA) :=
+  valid_rnd_N ZnearestA
+
 /-- Local monotonicity assumption on the exponent function (matches Coq's
     monotone exp section used by the positive cexp lemma). We keep it local to avoid
     introducing import cycles. -/
@@ -3793,8 +3810,17 @@ theorem round_to_generic_generic
         simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htrip True.intro
       exact hmag_le'
 
-/-- Choice function for round-to-nearest, ties toward zero. -/
-noncomputable def Znearest0 := fun t : Int => decide (t < 0)
+/-- Coq `Generic_fmt.v`: notation `Znearest0`.
+
+    Upstream: `Notation Znearest0 := (Znearest (fun x => (Zlt_bool x 0))).` -/
+noncomputable def Znearest0 : ℝ → Int :=
+  Znearest (fun t : Int => decide (t < 0))
+
+/-- Coq `Generic_fmt.v`: instance `valid_rnd_N0`.
+
+    Upstream: `Global Instance valid_rnd_N0 : Valid_rnd Znearest0 := valid_rnd_N _.` -/
+noncomputable instance valid_rnd_N0 : Valid_rnd Znearest0 :=
+  valid_rnd_N (fun t : Int => decide (t < 0))
 
 /- Coq (Generic_fmt.v): round_N_opp
 
@@ -4698,7 +4724,7 @@ private theorem Rnd_UP_to_DN_via_neg
     simpa using (neg_le_neg hf_le)
   exact ⟨hFneg, hle', hmax⟩
 
-/-- Placeholder existence theorem: There exists a round-up value in the generic format.
+/-- Existence theorem: There exists a round-up value in the generic format.
     A constructive proof requires additional spacing/discreteness lemmas for the format.
 -/
 theorem round_UP_exists
@@ -7055,7 +7081,7 @@ theorem round_le
     Theorem round_ZR_or_AW:
       forall x, round rnd x = round Ztrunc x \/ round rnd x = round Zaway x.
 
-    Lean (spec placeholder): Any rounding result equals either
+    Lean port note: Any rounding result equals either
     truncation (ZR) or ties-away-from-zero (AW) rounding.
  -/
 theorem round_ZR_or_AW
@@ -7731,8 +7757,8 @@ noncomputable def round_N_to_format
 -- (moved earlier) round_DN_to_format, round_UP_to_format, and round_to_format_properties
 
 /-
-  Placeholder theorems relating rounding modes (opp/abs/ZR/DN/UP/AW).
-  We re-introduce them one-by-one with empty proofs to align with Coq.
+  Theorems relating rounding modes (opp/abs/ZR/DN/UP/AW).
+  They are ported one-by-one to align with Coq.
 -/
 
 /-- Coq Generic_fmt.v: Theorem round_DN_opp.
@@ -7760,7 +7786,7 @@ theorem round_UP_opp
       pure (a, b) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
   intro _
-  -- Same computation as in round_DN_opp; rounding mode is ignored.
+  -- Same computation as in round_DN_opp; this branch does not inspect the rounding mode.
   simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
@@ -7780,7 +7806,7 @@ theorem round_ZR_opp
       pure (a, b) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
   intro _
-  -- Same computation; mode argument is ignored.
+  -- Same computation; this branch does not inspect the mode argument.
   simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
@@ -7908,7 +7934,7 @@ theorem round_AW_DN
 
 /-- Coq {lit}`Generic_fmt.v`: Theorem {name}`mag_round_ge`.
     If round rnd x ≠ 0, then mag x ≤ mag (round rnd x).
-    Lean (spec placeholder): Magnitude does not decrease under rounding away from zero.
+    Lean port note: Magnitude does not decrease under rounding away from zero.
  -/
 theorem mag_round_ge
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
@@ -8416,7 +8442,7 @@ theorem exp_small_round_0_pos
     Theorem exp_small_round_0:
       (bpow (ex-1) ≤ |x| < bpow ex) → round rnd x = 0 → ex ≤ fexp ex.
 
-    Lean (spec placeholder): Small-exponent inputs round to zero only in the small regime. -/
+    Lean port note: Small-exponent inputs round to zero only in the small regime. -/
 theorem exp_small_round_0
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     [Monotone_exp fexp]

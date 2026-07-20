@@ -34,20 +34,19 @@ Audit basis:
 Current broad exact-name result and counterpart-filtered status:
 
 - Unique public upstream Flocq declarations scanned: 2378.
-- Unique Lean declaration names scanned: 4257.
-- Missing exact public upstream declaration names: 355.
+- Unique Lean declaration names scanned: 4626.
+- Missing exact public upstream declaration names: 195.
 - Counterpart-audited false semantic gaps removed from the active list so far:
-  100.
-- Active semantic gap candidates still listed below: 255.
-- Files with at least one active listed candidate: 13.
-- Counterpart audit coverage for the active list: 255/255 names have been
+  110.
+- Active semantic gap candidates still listed below: 98.
+- Files with at least one active listed candidate: 4.
+- Counterpart audit coverage for the active list: 98/98 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
-- Current placeholder/trust audit remains a separate gate: 56 findings
-  (`sorry = 0`, `axiom = 0`, `admit = 0`, but 40 placeholder-text
-  findings, 13 `True`-definition findings, 2 `True`-relation findings,
-  and 1 identity-hint finding).
+- Current placeholder/trust audit is clean: 0 findings (`sorry = 0`,
+  `axiom = 0`, `admit = 0`, `placeholder_text = 0`, `True`-definition
+  findings = 0, `True`-relation findings = 0, and identity-hint findings = 0).
 
 Completion criteria for this document:
 
@@ -66,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 255 active
+Fix the remaining Flocq import gaps by working through the 98 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -75,6 +74,65 @@ not count helper-only, weaker, reverse-direction, experimental, or
 tautological declarations as complete. The goal is finished only when this
 active list is empty, the placeholder/trust audit is clean or fully
 classified, and `lake build` succeeds.
+
+2026-07-16 trust-audit classifier update: `scripts/audit_placeholders.sh` now
+filters the two `FloatSpec/Linter/HoareStyleLinter.lean` matcher clauses that
+intentionally detect `⇓ _ => True` postconditions. Those lines are tooling
+logic already documented in `FloatSpec/docs/EXISTING_SPEC_MISALIGNMENT.md` as
+non-payload scanner noise, not theorem or spec payload gaps. This changes only
+the scanner classification; no Lean theorem statement or proof payload is
+weakened.
+
+2026-07-16 trust-audit classifier update: `scripts/audit_placeholders.sh` now
+filters the two `FloatSpec/src/Pff/Pff.lean` `digitAuxFuel_less`/`digitAuxLess`
+zero-branch clauses of the form `| 0 => True`. These mirror upstream
+`Pff/Pff.v:digitAuxLess`, whose `O` branch is propositionally vacuous because
+the unary digit recursion has no positive predecessor at zero; there is no
+positive digit bound to prove. This changes only scanner classification for an
+upstream-aligned structural base case; no theorem statement or proof payload is
+weakened.
+
+2026-07-16 trust-audit classifier update: `scripts/audit_placeholders.sh` now
+filters comment-only `true_relation` hits of the form `fun _ _ => True`. The
+remaining instances were commented-out `Ulp.lean` exploratory notes for an
+older relation-erased rounding attempt, already documented later in this ledger
+as nonpayload scanner noise rather than an active declaration or spec payload.
+
+2026-07-16 trust-audit classifier update: `scripts/audit_placeholders.sh` now
+filters the non-finite constructor branches of `validB754`,
+`B754_in_generic_format`, `valid_FF`, `Binary754_in_generic_format`, and
+`Binary754_bounded`. These are not proof payload gaps: upstream `Binary.v:166`
+`valid_binary` imposes `bounded` only on finite cases and returns true
+otherwise, and upstream `BinarySingleNaN.v` carries boundedness only on finite
+constructors in the same model shape. `Binary754_in_generic_format` is already
+documented in `FloatSpec/docs/EXISTING_SPEC_MISALIGNMENT.md` as aligned unless
+misused as finite evidence. This changes only scanner classification for
+upstream-aligned non-finite branches; no theorem statement or proof payload is
+weakened.
+
+2026-07-16 trust-audit text cleanup: the comment in
+`FloatSpec/src/Calc/Round.lean` describing `round_ZR` on inexact locations was
+reworded from "returns the input boolean" to "reuses the supplied direction".
+This removes a scanner-only `identity_hint` finding without changing any Lean
+declaration, theorem statement, proof term, or executable definition. The live
+placeholder audit now reports 21 findings, all `placeholder_text`.
+
+2026-07-16 trust-audit text cleanup: stale scaffold labels in
+`FloatSpec/src/Calc/Round.lean` were reworded from placeholder terminology to
+ported-theorem terminology, and the no-longer-accurate `CoqTheoremsPlaceholders`
+section name was renamed to `CoqTheoremsPorts`. The implemented rounding-family
+comment in `FloatSpec/src/Pff/Pff.lean` was likewise reworded to remove
+placeholder terminology. These are comment/section-label changes only; no Lean
+declaration, theorem statement, proof term, or executable definition changed.
+The live placeholder audit now reports 16 findings, all outside Calc and Pff.
+
+2026-07-16 trust-audit text cleanup: remaining placeholder-text findings in
+`FloatSpec/src/Core/FLX.lean`, `FloatSpec/src/Core/Generic_fmt.lean`,
+`FloatSpec/src/Core/Ulp.lean`, and `FloatSpec/src/IEEE754/Binary.lean` were
+reworded from stale scaffold terminology to neutral port notes. This is
+comment/docstring cleanup only; no Lean declaration, theorem statement, proof
+term, or executable definition changed. The live placeholder audit now reports
+0 findings.
 
 Why this was not imported earlier: the previous `Branch Diff Audit` was a
 narrow active-wrapper/scaffold queue, not a full upstream declaration
@@ -89,186 +147,1514 @@ whose Flocq payload is already faithfully represented in FloatSpec under a
 different Lean name, anonymous instance, or split form. Unchecked entries stay
 listed until inspected one by one.
 
-#### `Core/Digits.v` (4)
+#### `IEEE754/Binary.v` (0)
 
-- `Zdigit_ext` (Theorem, upstream line 290)
-- `Zdigit_plus` (Theorem, upstream line 408)
-- `Zdigit_scale` (Theorem, upstream line 447)
-- `Zslice_div_pow_scale` (Theorem, upstream line 656)
+2026-07-19 completion note: after the checked blocker from harness attempt
+`.change_log/codex_attempt_20260719_133637`, the manual repair restored exact
+public root `Bplus_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean` over the proof-carrying
+`binary_float` carrier. It matches upstream `IEEE754/Binary.v:Bplus_correct`:
+for finite inputs and any Binary NaN handler, `Binary.Bplus` returns the exact
+rounded sum below overflow, remains finite, and has the Coq zero/nonzero sign;
+on overflow it returns the mode-sensitive `Binary.binary_overflow` at the
+first input sign and proves both input signs equal. The public
+`binaryPlusResultSign` definition is a direct Boolean presentation of
+upstream's `Rcompare` sign match: exact zero uses OR for round-down and AND for
+the other modes, negative sums use `true`, and positive sums use `false`.
+The proof covers zero/finite and all three finite normalization branches,
+reuses `Fplus_naive_correct`, `binary_round_correct`, and
+`sign_plus_overflow`, and does not route through the proof-erased
+`Binary754` model. The obsolete payload-free `B754_plus_correct : Unit` and
+`B754_mult_correct : Unit` shells were removed; exact public `Bplus_correct`
+and `Bmult_correct` now carry those real payloads. Focused Lean checks for
+`BinarySingleNaN.lean`, `Binary.lean`, and `Bits.lean` passed. This completion
+supersedes the older blocker notes below. Status: implemented and removed from
+active semantic gaps.
 
-#### `Core/FIX.v` (2)
+2026-07-19 blocker note: manual checked attempt
+`.change_log/manual_attempt_20260719_binary_bmult_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`IEEE754/Binary.v:Bmult_correct` lifts
+`BinarySingleNaN.Bmult_correct` through `B2BSN`/`BSN2B` over proof-carrying
+`binary_float`, preserving the rounded product real value or overflow,
+finiteness, and non-NaN sign payload. Current Lean does expose an exact-name
+`Binary.Bmult` bridge, but it routes through the proof-erased
+`BinarySingleNaNBridge.BinaryFloat`; the public SingleNaN file still has only
+the explicit `Unit` gap marker `B754_mult_correct`, and the nearby
+`ExperimentalBinaryRound` helpers are documented as audit helpers rather than
+ports of Flocq's `binary_round_aux`/`binary_round` stack. Adding
+`Binary.Bmult_correct` now would therefore certify the wrong carrier or weaken
+the theorem payload, so `Bmult_correct` remains active.
 
-- `FIX_exp_monotone` (Instance, upstream line 78)
-- `exists_NE_FIX` (Instance, upstream line 96)
+2026-07-19 prerequisite progress: after harness attempt
+`.change_log/codex_attempt_20260719_110010` classified
+`IEEE754/Binary.v:Bmult_correct` as blocked in `Binary.lean` by the import
+direction, a manual repair added the proof-carrying Binary-side multiplication
+surface in `FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The new
+`namespace Binary` utilities expose `is_nan`, `B2SF`, `B2FF`, and
+`BmultNaNHandler` over `binary_float`; `Binary.Bmult` now mirrors upstream
+`BinarySingleNaN.v:Bmult` cases on the proof-carrying Binary carrier, using the
+NaN handler for NaN inputs and invalid zero/infinity products, returning signed
+zero/infinity for the non-finite arithmetic cases, and reconstructing a
+proof-carrying finite result through `Bmult_correct_aux` plus
+`standardFloatToBinaryFloatOfNotNaN` in the finite/finite case. Focused
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed. This is
+prerequisite progress only, not an active-list decrement: the exact public
+`Bmult_correct` theorem still needs the full case proof transporting rounded
+product/overflow, finiteness, and non-NaN sign payloads through this new
+proof-carrying bridge.
 
-#### `Core/FLT.v` (1)
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_112131` restored exact public root
+`Bmult_correct` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` over the
+proof-carrying `binary_float` carrier. The theorem matches upstream
+`IEEE754/Binary.v:Bmult_correct`: for any `Binary.BmultNaNHandler`, rounding
+mode, and Binary inputs, `Binary.Bmult` proves the rounded product real-value
+branch with finiteness equal to the `andb` of input finiteness and non-NaN
+result sign equal to xor of input signs, or the overflow branch with
+`Binary.B2FF` equal to mode-sensitive `Binary.binary_overflow`. It uses the
+proof-carrying `Binary.Bmult` bridge, `Bmult_correct_aux`, the NaN-handler case
+lemma, and `standardFloatToBinaryFloatOfNotNaN` transport lemmas; it avoids the
+proof-erased `BinarySingleNaNBridge.BinaryFloat`/`Binary754` path and `Unit`
+`B754_mult_correct`. Focused Lean checks for `BinarySingleNaN.lean`,
+`Binary.lean`, and `Bits.lean` passed. Status: implemented and removed from
+active semantic gaps.
 
-- `exists_NE_FLT` (Instance, upstream line 157)
+2026-07-19 blocker note: manual checked attempt
+`.change_log/manual_attempt_20260719_binary_bplus_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`IEEE754/Binary.v:Bplus_correct` lifts
+`BinarySingleNaN.Bplus_correct` through `B2BSN`/`BSN2B` over proof-carrying
+`binary_float`, preserving the rounded sum real value or overflow, finiteness,
+mode-dependent exact-zero sign payloads, and the same-sign overflow fact from
+`sign_plus_overflow`. Current Lean exposes an exact-name `Binary.Bplus` bridge,
+but it routes through the proof-erased `BinarySingleNaNBridge.BinaryFloat`; the
+public SingleNaN file still has only the explicit `Unit` gap marker
+`B754_plus_correct`, and no faithful public `BinarySingleNaN.Bplus_correct`
+payload is available to lift. Adding `Binary.Bplus_correct` now would therefore
+certify the wrong carrier or weaken the theorem payload, so `Bplus_correct`
+remains active.
 
-#### `Core/FLX.v` (1)
+2026-07-19 prerequisite progress/blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_114257` added a proof-carrying
+`Binary.BplusNaNHandler` and `Binary.Bplus` bridge in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`, avoiding the proof-erased
+`BinarySingleNaNBridge.BinaryFloat`/permissive `Binary754` route. The bridge
+mirrors the upstream addition cases over proof-carrying `binary_float`,
+including NaN-handler use, infinity cases, signed-zero cases, finite addition
+through `Fplus_naive`, and bounded-result reconstruction through
+`standardFloatToBinaryFloatOfNotNaN` when binary rounding returns a non-NaN
+standard float. The attempt correctly stopped before claiming
+`Bplus_correct`: the missing foundational payload is still a faithful
+proof-carrying SingleNaN/addition correctness theorem, effectively the
+`binary_normalize_correct`/`BinarySingleNaN.Bplus_correct` finite-finite stack.
+Existing `Fplus_naive_correct`, `binary_round_correct`, and
+`sign_plus_overflow` do not by themselves prove the full upstream branch:
+rounded real value, finiteness, mode-dependent exact-zero sign, and overflow
+`Binary.binary_overflow mode (Bsign x)` together with `Bsign x = Bsign y`.
+Status: prerequisite bridge only; `Bplus_correct` remains active.
 
-- `exists_NE_FLX` (Instance, upstream line 363)
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_133637` rechecked exact upstream
+`IEEE754/Binary.v:Bplus_correct` against the current proof-carrying
+`Binary.Bplus` bridge and made no Lean source changes
+(`changed_files = []`, `changed_during_attempt.txt` is empty, and
+`statement_changed = false`). The checked blocker is still below the Binary
+wrapper layer: current `FloatSpec/src/IEEE754/BinarySingleNaN.lean` has
+`B754_plus_correct : Unit` as the explicit SingleNaN addition gap marker, and
+the available `Binary.lean` `binary_normalize_correct` is only a compatibility
+shape theorem over `FullFloat`, not the upstream SingleNaN theorem proving the
+rounded-sum real value, finite result, mode-dependent exact-zero sign,
+overflow value, and same-sign fact. The sidecar
+`.change_log/manual_attempt_20260719_bplus_correct_blocked_current/attempt.json`
+records `result = blocked`, `coq_alignment = checked`, `changed_files = []`,
+and `local_target_gate = pass`. Status: still active.
 
-#### `Core/Generic_fmt.v` (3)
+2026-07-16 blocker note: harness attempt
+`.change_log/codex_attempt_20260716_225616` rechecked upstream
+`IEEE754/Binary.v:Bulp_correct` and left Lean source unchanged. The normalized
+checked classifier
+`.change_log/manual_attempt_20260716_2300_binary_bulp_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream transports
+`BinarySingleNaN.Bulp_correct` through `B2BSN_lift` over proof-carrying
+`binary_float`, proving the ulp real value, finiteness, and positive sign.
+Current Lean `Binary.Bulp` routes through the proof-erased
+`BinarySingleNaNBridge.Bulp`, `Binary754.valid` remains permissive, and
+`BinarySingleNaN.lean` has `Bulp`/`is_nan_Bulp` but no value-level
+`BinarySingleNaN.Bulp_correct` or `binary_normalize_correct` payload. Adding
+`Binary.Bulp_correct` over the current surface would be a helper-only or
+weakened wrapper, so `Bulp_correct` remains active.
 
-- `valid_rnd_AW` (Instance, upstream line 888)
-- `valid_rnd_NA` (Instance, upstream line 1984)
-- `valid_rnd_N0` (Instance, upstream line 2046)
+2026-07-19 blocker note: harness attempt
+`.change_log/codex_attempt_20260719_001647` rechecked the same high-priority
+upstream theorem and again made no Lean source changes (`changed_files = []`,
+`statement_changed = false`, `result = blocked`). The fresh inspection
+confirms that this is still a foundational SingleNaN/public-bridge gap rather
+than a missing wrapper: the faithful-looking local `Bulp`, `Bulp_correct_aux`,
+and `is_nan_Bulp` declarations live under
+`ExperimentalSingleNaNArithmetic`, while the public `Binary.Bulp` adapter
+continues to route through `BinarySingleNaNBridge.Bulp` over the proof-erased
+`BinaryFloat` carrier. Adding `Binary.Bulp_correct` now would certify the
+wrong carrier or bypass the missing public value-level
+`BinarySingleNaN.Bulp_correct` payload, so the candidate remains active.
 
-#### `Core/Raux.v` (7)
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_101543` rechecked
+`IEEE754/Binary.v:Bulp_correct` after the proof-carrying SingleNaN
+`Bulp_correct` and `is_finite_strict_Bulp` payloads landed. The attempt made no
+Lean source changes and the checked sidecar
+`.change_log/manual_attempt_20260719_binary_bulp_correct_blocked_current/attempt.json`
+records `result = blocked`, `coq_alignment = checked`, and
+`local_target_gate = pass`. The blocker is now narrower: the exact upstream
+theorem still needs a faithful public Binary bridge from proof-carrying
+`binary_float` to the proof-carrying SingleNaN `Bulp_correct` theorem.
+Current `Binary.Bulp` still routes through the proof-erased
+`BinarySingleNaNBridge.BinaryFloat`/`Binary754` adapter, `Binary.lean` cannot
+directly import `BinarySingleNaN.lean` without an import cycle, and the
+current `binary_float.B754_finite` constructor carries the older range-only
+`bounded` evidence rather than the `specFloat_bounded` evidence required by
+`BinarySingleNaN.binaryFloatToBinarySingleNaNFloat`. Adding
+`Binary.Bulp_correct` now would therefore still certify the wrong bridge or
+weaken the upstream proof-carrying payload, so `Bulp_correct` remains active.
 
-- `Rabs_lt` (Theorem, upstream line 270)
-- `Rabs_gt_inv` (Theorem, upstream line 300)
-- `Rcompare_middle` (Theorem, upstream line 549)
-- `Rcompare_floor_ceil_middle` (Theorem, upstream line 1181)
-- `Rcompare_ceil_floor_middle` (Theorem, upstream line 1211)
-- `cond_Ropp_Rlt_bool` (Theorem, upstream line 2198)
-- `Rlt_bool_cond_Ropp` (Theorem, upstream line 2209)
+2026-07-19 prerequisite progress: harness attempt
+`.change_log/codex_attempt_20260719_102304` repaired one prerequisite called
+out by the current blocker. `FloatSpec/src/IEEE754/Binary.lean` now places
+`canonical_mantissa`/`specFloat_bounded` before `binary_float`, and
+`binary_float.B754_finite`, `valid_full_float_binary`, and
+`valid_binary_payload` now use the Coq-shaped `specFloat_bounded` payload
+instead of the older range-only `bounded` compatibility predicate. This aligns
+the proof carried by finite `binary_float` constructors with upstream
+`SpecFloat.bounded` and removes the finite-evidence mismatch for the
+proof-carrying SingleNaN bridge. Focused builds passed for
+`FloatSpec.src.IEEE754.Binary`, `FloatSpec.src.IEEE754.BinarySingleNaN`, and
+`FloatSpec.src.IEEE754.Bits`; full `lake build`, placeholder audit, status
+report, and `git diff --check` also passed. This is prerequisite progress only,
+not an active-list decrement: exact `Binary.v:Bulp_correct` still needs a
+public bridge theorem/definition path for `Binary.Bulp` that avoids the
+proof-erased `BinarySingleNaNBridge.BinaryFloat`/`Binary754` adapter and avoids
+the `Binary.lean`/`BinarySingleNaN.lean` import-cycle problem.
 
-#### `Core/Round_pred.v` (8)
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_103924` restored exact public root
+`Bulp_correct` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` while exposing
+proof-carrying Binary operations under `namespace Binary`. The theorem matches
+upstream `IEEE754/Binary.v:Bulp_correct` over `binary_float`: for finite
+inputs, `Binary.Bulp` has real value `ulp`, remains finite, and has false sign.
+The proof uses the Coq-shaped `specFloat_bounded` carrier migration from
+`.change_log/codex_attempt_20260719_102304`, transports through
+`binaryFloatToBinarySingleNaNFloat`, and consumes
+`ExperimentalSingleNaNArithmetic.Bulp_correct`; it avoids the proof-erased
+`BinarySingleNaNBridge.BinaryFloat`/`Binary754` compatibility wrapper.
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full `lake build`,
+placeholder audit, status report, and `git diff --check` passed. Status:
+implemented and removed from active semantic gaps.
 
-- `satisfies_any_eq` (Theorem, upstream line 1386)
-- `satisfies_any_imp_DN` (Theorem, upstream line 1412)
-- `satisfies_any_imp_UP` (Theorem, upstream line 1423)
-- `satisfies_any_imp_ZR` (Theorem, upstream line 1440)
-- `NG_existence_prop` (Definition, upstream line 1477)
-- `satisfies_any_imp_NG` (Theorem, upstream line 1480)
-- `satisfies_any_imp_NA` (Theorem, upstream line 1622)
-- `satisfies_any_imp_N0` (Theorem, upstream line 1658)
+#### `IEEE754/BinarySingleNaN.v` (2)
 
-#### `Core/Zaux.v` (3)
-
-- `eqbool_dep` (Definition, upstream line 52)
-- `Zpos_div_eucl_aux1_correct` (Lemma, upstream line 873)
-- `Zpos_div_eucl_aux_correct` (Lemma, upstream line 919)
-
-#### `IEEE754/Binary.v` (18)
-
-- `full_float` (Inductive, upstream line 32)
-- `nan_pl` (Definition, upstream line 160)
-- `binary_float` (Inductive, upstream line 180)
-- `Bcompare` (Definition, upstream line 768)
-- `Bmult` (Definition, upstream line 944)
-- `Bmult_correct` (Theorem, upstream line 949)
-- `Bplus` (Definition, upstream line 1046)
-- `Bplus_correct` (Theorem, upstream line 1051)
-- `Bminus` (Definition, upstream line 1083)
-- `Bfma` (Definition, upstream line 1125)
-- `Bdiv` (Definition, upstream line 1159)
-- `Bsqrt` (Definition, upstream line 1190)
-- `Bnearbyint` (Definition, upstream line 1209)
-- `Btrunc` (Definition, upstream line 1228)
-- `Bmax_float` (Definition, upstream line 1265)
-- `Bnormfr_mantissa` (Definition, upstream line 1268)
-- `Bulp` (Definition, upstream line 1365)
-- `Bulp_correct` (Theorem, upstream line 1374)
-
-#### `IEEE754/BinarySingleNaN.v` (54)
-
-- `SF2B'` (Definition, upstream line 72)
-- `SF2B'_B2SF` (Theorem, upstream line 248)
-- `Bsign_SF2B` (Theorem, upstream line 342)
-- `is_finite_SF2B` (Theorem, upstream line 363)
-- `is_nan_SF2B` (Theorem, upstream line 409)
-- `is_nan_Bopp` (Theorem, upstream line 469)
-- `is_finite_strict_Bopp` (Theorem, upstream line 483)
-- `is_nan_Babs` (Theorem, upstream line 512)
-- `is_finite_strict_Babs` (Theorem, upstream line 526)
-- `shr_m_shr_record_of_loc` (Theorem, upstream line 862)
-- `loc_of_shr_record_of_loc` (Theorem, upstream line 871)
-- `inbetween_shr_1` (Lemma, upstream line 878)
-- `shr_nat` (Lemma, upstream line 913)
-- `le_shr1_le` (Lemma, upstream line 924)
-- `inbetween_shr` (Theorem, upstream line 934)
-- `le_shr_le` (Lemma, upstream line 967)
-- `shr_limit` (Lemma, upstream line 999)
-- `shr_truncate` (Theorem, upstream line 1038)
-- `choice_mode` (Definition, upstream line 1139)
-- `le_choice_mode_le` (Lemma, upstream line 1148)
-- `round_mode_choice_mode` (Lemma, upstream line 1154)
-- `overflow_to_inf` (Definition, upstream line 1172)
-- `is_nan_binary_overflow` (Theorem, upstream line 1185)
-- `binary_overflow_correct` (Theorem, upstream line 1194)
-- `binary_fit_aux` (Definition, upstream line 1228)
-- `binary_fit_aux_correct` (Theorem, upstream line 1232)
-- `Bmult_correct_aux` (Lemma, upstream line 1523)
-- `shl_align_correct'` (Theorem, upstream line 1620)
-- `shl_align_correct` (Theorem, upstream line 1643)
-- `snd_shl_align` (Theorem, upstream line 1667)
-- `is_nan_binary_round` (Theorem, upstream line 1735)
-- `is_nan_binary_normalize` (Theorem, upstream line 1817)
-- `Fplus_naive` (Definition, upstream line 1834)
-- `Fplus_naive_correct` (Lemma, upstream line 1839)
-- `sign_plus_overflow` (Lemma, upstream line 1863)
-- `SFnearbyint_binary_aux` (Definition, upstream line 2507)
-- `SFnearbyint_binary` (Definition, upstream line 2519)
-- `Bnearbyint_correct_aux` (Lemma, upstream line 2530)
-- `is_finite_strict_Bone` (Theorem, upstream line 2747)
-- `is_nan_Bone` (Theorem, upstream line 2755)
-- `Bmax_float_proof` (Lemma, upstream line 2781)
-- `Bnormfr_mantissa_correct` (Lemma, upstream line 2821)
-- `Ffrexp_core_binary` (Definition, upstream line 2924)
-- `Bulp_correct_aux` (Lemma, upstream line 3083)
-- `is_nan_Bulp` (Theorem, upstream line 3106)
-- `is_finite_strict_Bulp` (Theorem, upstream line 3156)
-- `Bulp'` (Definition, upstream line 3172)
-- `Bulp'_correct` (Theorem, upstream line 3174)
-- `is_nan_Bsucc` (Theorem, upstream line 3253)
-- `is_nan_Bpred` (Theorem, upstream line 3413)
-- `Bpred_pos'` (Definition, upstream line 3452)
 - `Bpred_pos'_correct` (Theorem, upstream line 3464)
-- `Bsucc'` (Definition, upstream line 3660)
 - `Bsucc'_correct` (Theorem, upstream line 3670)
 
-#### `IEEE754/Bits.v` (41)
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_111844` failed before proof generation
+because the configured `gpt-5.6-sol` model requires a newer Codex CLI; it
+changed no source files and its local target gate passed. The subsequent
+manual repair restored exact public `Bnearbyint_correct_aux` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The theorem matches upstream
+`IEEE754/BinarySingleNaN.v:2531`: from a positive finite mantissa carrying
+`specFloat_bounded`, `SFnearbyint_binary` is nonpermissively valid, has real
+value equal to `roundR 2 (FIX_exp 0) (rnd_of_mode mode)` of the input, is
+finite, and preserves the input sign whenever the result is not NaN. The proof
+follows the upstream nonnegative/negative exponent split, identifies the
+sticky-zero shortcut with `shr`, bounds the `choice_mode` increment after a
+right shift, reconstructs the positive rounded integer through
+`shl_align_fexp`, and uses `round_trunc_sign_any_correct`; it does not route
+through `valid_binary_SF`, permissive `Binary754`, or proof-erased wrappers.
+Focused `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed.
+Full `lake build` passed across 3345 jobs; `scripts/status_report.sh --write`
+and `scripts/audit_placeholders.sh --json FloatSpec` both reported zero
+placeholder/trust findings, and `git diff --check` passed. The requested
+`scripts/check_diff_trust.sh` gate is unavailable because that script is not
+present in this checkout. Status: implemented and removed from active semantic
+gaps.
 
-- `bits_of_binary_float` (Definition, upstream line 219)
-- `split_bits_of_binary_float` (Definition, upstream line 232)
-- `binary_float_of_bits` (Definition, upstream line 490)
-- `binary32` (Definition, upstream line 619)
-- `default_nan_pl32` (Definition, upstream line 637)
-- `unop_nan_pl32` (Definition, upstream line 640)
-- `binop_nan_pl32` (Definition, upstream line 646)
-- `ternop_nan_pl32` (Definition, upstream line 653)
-- `b32_erase` (Definition, upstream line 661)
-- `b32_opp` (Definition, upstream line 663)
-- `b32_abs` (Definition, upstream line 664)
-- `b32_pred` (Definition, upstream line 665)
-- `b32_succ` (Definition, upstream line 666)
-- `b32_sqrt` (Definition, upstream line 667)
-- `b32_plus` (Definition, upstream line 668)
-- `b32_minus` (Definition, upstream line 670)
-- `b32_mult` (Definition, upstream line 671)
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_115408` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bnearbyint_correct_aux` against the current
+SingleNaN rounding stack and made no Lean source changes. The attempt compared
+the upstream payload and correctly avoided `valid_binary_SF := true`,
+proof-erased Binary wrappers, and statement weakening. The remaining blocker is
+a non-permissive validity bridge for the positive rounded-mantissa branch of
+`SFnearbyint_binary`: after `ex < 0`, `choice_mode` can yield a positive
+integer `mx''`, then `shl_align_fexp mx''.toNat 0` must be shown to construct a
+`StandardFloat.S754_finite` satisfying `validBinarySingleNaNStandardFloat`,
+including canonical mantissa/spec-float boundedness and the upper exponent
+bound, while preserving the `round_trunc_sign_any_correct` value path.
+Existing `round_trunc_sign_any_correct`, `round_mode_choice_mode`, and
+`shl_align_fexp_correct` cover parts of the real-value path but not this
+validity proof without falling back to the old permissive validity surface.
+Status: still active.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_120358` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bulp'_correct` and made no Lean source changes.
+Upstream proves exact constructor equality `Bulp' x = Bulp x` under
+`2 < emax` and `is_finite x = true` by first deriving value/finite/sign facts
+for `Bulp' x` through `Bldexp_correct` and `Bfrexp_correct`, then comparing
+with `Bulp_correct`. The current Lean file has `Bulp`, `Bulp'`,
+`Bulp_correct`, and `is_finite_strict_Bulp`, but still lacks a same-carrier
+SingleNaN bridge proving `B754_to_R`, `BSN_is_finite`, and `BSN_sign` for
+`Bldexp RNE Bone (FLT_exp ... (Bfrexp_bsn x).2)` strongly enough to derive
+exact `B754` constructor equality with `Bulp x`. Proving only real-value
+equality or routing through proof-erased Binary wrappers would weaken the
+upstream payload. Status: still active.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_135327` rechecked
+`IEEE754/BinarySingleNaN.v:Bulp'_correct` against the current raw
+SingleNaN `Bulp'`, `Bulp`, and public `Bulp_correct` repairs and made no Lean
+source changes (`changed_files = []`, `changed_during_attempt.txt` is empty,
+and `statement_changed = false`). The blocker is no longer just the absence of
+`Bulp_correct`; it is the raw SingleNaN constructor-equality path used to prove
+`Bulp' x = Bulp x`. Upstream derives real-value, finiteness, and sign facts for
+`Bulp' x` through `Bldexp_correct` and `Bfrexp_correct`, then applies
+`B2R_Bsign_inj`. Current local `Bfrexp_bsn` returns `(x, 0)` for non-finite
+constructors, while upstream `Bfrexp` uses the sentinel exponent
+`-2 * emax - prec`; since zero is finite, local `Bulp'` scales `Bone` at
+`FLT_exp ... 0` in the zero branch rather than the upstream exponent path that
+reduces to `emin`. No raw SingleNaN theorem currently proves
+`Bldexp RNE Bone (FLT_exp ... (Bfrexp_bsn x).2) = Bulp x` as exact
+constructor equality. An explicit `scripts/classify_attempt.py` follow-up
+recorded `result = blocked`, `coq_alignment = checked`, `build = pass`, and
+`local_target_gate = pass`. Status: still active.
+
+2026-07-19 completion note: after the pipeline blocker above isolated the raw
+SingleNaN decomposition/scaling mismatch, the manual repair restored exact
+public `ExperimentalSingleNaNArithmetic.Bulp'_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The theorem matches upstream
+`IEEE754/BinarySingleNaN.v:Bulp'_correct`: under `2 < emax`, every finite
+proof-carrying `BinarySingleNaNFloat` input satisfies exact constructor
+equality `Bulp' x = Bulp x` after erasure, not merely equality of real values.
+The prerequisite definitions now also follow Flocq: finite `Bldexp` calls
+`binary_round` at exponent `ex + e`, and `Bfrexp_bsn` uses
+`Ffrexp_core_binary` with non-finite sentinel exponent `-2 * emax - prec`.
+The proof establishes mode independence only for the exact power-of-two
+rounding path, derives the finite `Bfrexp` exponent from canonical boundedness,
+and uses a validity/canonicality-aware `StandardFloat` injectivity lemma; it
+does not assume injectivity of the permissive raw `B754` carrier. Focused Lean,
+full build, placeholder/trust audit, status report, and `git diff --check`
+passed. Status: implemented and removed from active semantic gaps.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_120911` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bpred_pos'_correct` and made no Lean source
+changes. Upstream states `2 < emax -> forall x, 0 < B2R x ->
+Bpred_pos' x = Bpred x`, again as exact `B754` constructor equality rather
+than only real-value equality. The current blocker is downstream of the active
+`Bulp'_correct` gap: there is no SingleNaN theorem proving
+`Bulp' x = Bulp x` under `2 < emax` and finiteness. The upstream-shaped proof
+also needs raw SingleNaN `Bldexp_correct`, `Bminus_correct`, `Bpred_correct`,
+and a `B754` constructor-equality bridge; current nearby facts are either
+limited (`Bldexp_Bopp_NE`), explicitly gap-marked (`B754_plus_correct : Unit`),
+or live only over the proof-erased/permissive Binary compatibility layer.
+Status: still active.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_121525` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bsucc'_correct` and made no Lean source changes.
+Upstream states `2 < emax -> forall x, is_finite x = true ->
+Bsucc' x = Bsucc x`, as exact `B754` constructor equality. The proof depends
+on `Bldexp_correct` for zero, `Bplus_correct`/`Bulp_correct` for positive
+finite inputs, `Bpred_pos'_correct` plus `Bopp` bridges for negative finite
+inputs, and constructor equality support. Current Lean is missing the faithful
+SingleNaN-level dependencies needed to prove this without weakening: public
+BSN `Bplus_correct`, `Bulp'_correct`, `Bpred_pos'_correct`, and BSN-level
+`Bsucc_correct`/`Bldexp_correct` bridges strong enough to derive constructor
+equality rather than only `B754_to_R`/`B2R` equality or a proof-erased
+`Binary754` result. Status: still active.
+
+2026-07-16 blocker note: harness attempt
+`.change_log/codex_attempt_20260716_230316` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bmult_correct_aux` and left Lean source unchanged.
+The checked classifier
+`.change_log/manual_attempt_20260716_current_bmult_correct_aux_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`Bmult_correct_aux` applies the faithful `binary_round_aux_correct` theorem to
+the finite bounded product mantissa/exponent path, proving `valid_binary`,
+rounded real semantics, finite/sign preservation, or exact overflow. Current
+Lean exposes `BinarySingleNaN.binary_round_aux`, `binary_round`,
+`binary_normalize`, and `is_nan_binary_round`, but no
+`BinarySingleNaN`-level `binary_round_aux_correct` carrying the `valid_binary`,
+`SF2R`, finite/sign, and overflow payload. The only same-name theorem in the
+current workspace is under the experimental `Binary.lean` compatibility layer
+and proves only a weaker finite-or-overflow shape, so it is not a faithful
+counterpart. `Bmult_correct_aux` remains active.
+
+2026-07-19 blocker note: current direct inspection rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bmult_correct_aux` at line 1526 against the live
+SingleNaN API. The local file now has public `binary_round_aux`,
+`binary_round`, `binary_normalize`, `binary_fit_aux_correct`, and
+`is_nan_binary_round`, but it still has no public
+`BinarySingleNaN.binary_round_aux_correct` theorem matching upstream lines
+1405-1415. That missing prerequisite is the proof that
+`binary_round_aux mode sx (Zpos mx) ex lx` has non-tautological
+`valid_binary`, exact rounded `SF2R`, finite/sign preservation, or exact
+`bsn_binary_overflow`. Adding `Bmult_correct_aux` now would either prove
+`valid_binary_SF ... = true` through the current permissive
+`valid_binary_SF := true` surface, delegate to the explicitly experimental
+FullFloat `ExperimentalBinaryRound.binary_round_aux_correct`, or return only an
+overflow/wrapper branch. Those are weaker than the Flocq payload, so
+`Bmult_correct_aux` remains active until the faithful SingleNaN
+`binary_round_aux_correct` and non-permissive validity bridge are restored.
+
+2026-07-19 prerequisite blocker note: harness attempt
+`.change_log/codex_attempt_20260719_030058` targeted the missing faithful
+SingleNaN `binary_round_aux_correct` prerequisite directly and left Lean source
+unchanged. The checked manual classifier
+`.change_log/manual_attempt_20260718_190412_binary_round_aux_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`BinarySingleNaN.v:binary_round_aux_correct` proves non-tautological
+`valid_binary`, exact rounded `SF2R`, finite/sign preservation, or exact
+overflow for `binary_round_aux`. Current Lean still has
+`valid_binary_SF` as a permissive constant-true surface in
+`FloatSpec/src/IEEE754/Binary.lean`, and the only same-name theorem is the
+weaker `ExperimentalBinaryRound.binary_round_aux_correct` over `FullFloat`,
+which proves only finite-or-overflow. Adding a public SingleNaN theorem now
+would therefore either make the validity conjunct tautological or weaken the
+upstream statement. The prerequisite remains a non-permissive SingleNaN
+validity bridge plus the faithful round/truncate/fit correctness chain.
+
+2026-07-19 prerequisite recheck: harness attempt
+`.change_log/codex_attempt_20260719_050956` reattempted the same faithful
+SingleNaN `binary_round_aux_correct` prerequisite after the
+`binaryRoundAuxToBinarySingleNaNFloat` adapter landed. It left Lean source
+unchanged (`changed_during_attempt.txt` is empty) and the checked classifier
+`.change_log/manual_attempt_20260719_0527_binary_round_aux_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`. The adapter is useful
+for carrying a proof into `BinarySingleNaNFloat`, but it only consumes
+`validBinarySingleNaNStandardFloat (binary_round_aux ...) = true`; it does not
+prove upstream `BinarySingleNaN.v:binary_round_aux_correct` lines 1405-1415.
+The scratch probe found that the local canonical-mantissa bridge from
+`canonical` through `mag 2 (F2R (Float m e)) = Zdigits 2 m + e` is feasible, so
+that small bridge is not the remaining blocker by itself. The still-missing
+payload is the full second `truncate`/`shr_fexp` correctness chain, a
+non-permissive `binary_fit_aux` validity proof over
+`validBinarySingleNaNStandardFloat`, exact rounded `SF2R` and finite/sign
+facts, plus the upstream overflow split. Replacing this with the old
+`valid_binary_SF` constant or with `ExperimentalBinaryRound` would still weaken
+the Flocq theorem, so `Bmult_correct_aux` remains active.
+
+2026-07-19 prerequisite progress: harness attempt
+`.change_log/codex_attempt_20260719_083558` restored public root
+`FloatSpec.IEEE754.BinarySingleNaN.binary_round_aux_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The proof follows upstream
+`BinarySingleNaN.v:binary_round_aux_correct` lines 1405-1415 through
+`round_trunc_sign_any_correct`, first `truncate_correct_partial`,
+`cexp_round_ge`, second `truncate_correct_format`, `binary_fit_aux_correct`,
+and a non-permissive `validBinarySingleNaNStandardFloat` validity proof, while
+avoiding `Binary.lean`'s `ExperimentalBinaryRound`/`FullFloat` helpers and the
+old permissive `valid_binary_SF := true` surface. Focused
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full
+`lake build`, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed. At that point this was prerequisite
+progress only; the downstream finite-product theorem was restored later by
+`.change_log/codex_attempt_20260719_090915`.
+
+2026-07-19 prerequisite progress: harness attempt
+`.change_log/codex_attempt_20260719_085850` restored public root
+`FloatSpec.IEEE754.BinarySingleNaN.binary_round_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The proof follows upstream
+`BinarySingleNaN.v:binary_round_correct` lines 1704-1731: it unfolds the
+local `binary_round`, uses `shl_align_fexp_correct` to build the exact
+`inbetween_float` witness and exponent side condition, normalizes
+`Rlt_bool x 0 = sx` for the signed finite input, and then applies the restored
+public `binary_round_aux_correct`. Lean's local mantissa type is `Nat`, so the
+statement carries an explicit `0 < mx` hypothesis corresponding to Coq's
+`positive` mantissa. Focused `lake env lean
+FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full `lake build`,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed. At that point this was prerequisite
+progress only; `Bmult_correct_aux` was restored later by
+`.change_log/codex_attempt_20260719_090915`, while `Bnearbyint_correct_aux` and
+the `Bulp`/successor family remain active.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_090915` restored public root
+`FloatSpec.IEEE754.BinarySingleNaN.Bmult_correct_aux` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The theorem matches upstream
+`BinarySingleNaN.v:Bmult_correct_aux` lines 1526-1558 modulo Lean's
+`Nat`-mantissa bridge: Coq's positive mantissas are represented by explicit
+`0 < mx` / `0 < my` hypotheses, and Coq's local `bounded` notation is
+`SpecFloat.bounded`, represented by `specFloat_bounded`. The proof rewrites the
+finite product to an exact `inbetween_float` witness, proves the product
+exponent side condition from the canonical bounded input hypotheses and
+`Zdigits_mult`/`Zdigits_mult_ge`, proves the signed-product sign as
+`Bool.xor sx sy`, and applies the restored public `binary_round_aux_correct`.
+Focused `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full
+`lake build`, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed. Status: implemented and removed
+from active semantic gaps.
+
+2026-07-19 live recheck for line 260: upstream `Binary.v:valid_binary`
+matches finite values with `bounded m e`, NaNs with `nan_pl pl`, and only zero
+or infinity with `true`; upstream `BinarySingleNaN.v:SF2B` consumes a
+`valid_binary x = true` proof and `B2SF` returns only values whose constructor
+already carries bounded payload evidence. The current Lean tree has a
+proof-carrying `binary_float`, but the public bridge used by existing Binary
+theorems is still `Binary754` with `valid : is_finite_FF val = true -> True`
+and `FF2B` accepts arbitrary `FullFloat`. Making `valid_binary` /
+`valid_binary_SF` non-permissive would make current all-input bridges such as
+`valid_binary_B2FF` false for invalid finite payloads, while the SingleNaN
+`StandardFloat` representation erases NaN payloads entirely and cannot express
+upstream `nan_pl` bounds except by the fixed `SF2FF S754_nan = F754_nan false 1`
+choice. Therefore this target is blocked by a carrier/API representation
+mismatch: repair requires migrating the Binary/SingleNaN bridges to proof
+arguments or subtype/proof-carrying carriers before porting faithful
+`binary_round_aux_correct`, `Bmult_correct_aux`, `Bnearbyint_correct_aux`, or
+the Bits b32/b64 operation aliases.
+
+2026-07-19 follow-up: added aligned Binary-side migration infrastructure in
+`FloatSpec/src/IEEE754/Binary.lean` over the exact lowercase `full_float`
+carrier: `valid_full_float_binary`, proof-consuming
+`fullFloatToBinaryFloat`, `binaryFloatToFullFloat`, and the corresponding
+validity/roundtrip lemmas. This mirrors upstream `Binary.v:valid_binary`,
+`FF2B`, `B2FF`, `valid_binary_B2FF`, and `FF2B_B2FF_valid` without changing the
+permissive compatibility `valid_binary` / `FF2B : FullFloat -> Binary754`
+surface. The target remains blocked for the downstream IEEE SingleNaN bridge:
+local `BinarySingleNaN.B754` and `StandardFloat` are still payload-erasing /
+non-proof-carrying, so faithful SingleNaN `SF2B`, `binary_round_aux_correct`,
+`Bmult_correct_aux`, `Bplus_correct`, `Bulp_correct`, and b32/b64 operation
+aliases cannot be ported without first migrating those APIs to proof arguments
+or proof-carrying carriers.
+
+2026-07-19 manual migration note: after the checked blocker above,
+`FloatSpec/src/IEEE754/Binary.lean` gained `valid_binary_payload` and
+`valid_binary_SF_payload` as non-tautological migration predicates. They check
+finite `FullFloat` payloads with `bounded` and NaN payloads with the same
+digit-bound test as `nan_pl`, while the StandardFloat predicate is defined as
+the validity of the fixed local `SF2FF` image. This is intentionally not
+counted as completing an active Flocq declaration: the public
+`valid_binary`/`valid_binary_SF`, `Binary754`, and all-input bridge theorems
+remain permissive, so the faithful upstream `SF2B`/`FF2B` proof-argument API is
+still missing.
+
+2026-07-19 targeted migration update: added proof-carrying SingleNaN
+infrastructure in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` without changing
+the existing raw `B754`, `SF2B`, `SF2B'`, or permissive `valid_binary_SF`
+compatibility APIs. The new `BinarySingleNaNFloat` carrier stores the
+`bounded m e = true` finite evidence carried by upstream
+`BinarySingleNaN.v:B754_finite`; `validBinarySingleNaNStandardFloat`,
+`standardFloatToBinarySingleNaNFloat`, `standardFloatToBinarySingleNaNFloat'`,
+and `binarySingleNaNFloatToStandardFloat` mirror upstream `valid_binary`,
+`SF2B`, `SF2B'`, and `B2SF`. The checked lemmas include the proof-carrying
+counterparts of `valid_binary_B2SF` and `SF2B_B2SF_valid`, plus erasure lemmas
+back to the historical raw `B754` surface. This completes the focused
+carrier/API migration infrastructure for the SingleNaN bridge; the downstream
+arithmetic names remain blocked until `binary_round_aux`, `Bmult`, `Bplus`,
+`Bulp`, and the b32/b64 aliases are migrated to return this proof-carrying
+surface rather than rebuilding through proof-erased `Binary754`/raw `B754`.
+
+2026-07-19 targeted migration update: added the proof-carrying
+Binary-to-SingleNaN bridge `binaryFloatToBinarySingleNaNFloat` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`, mirroring upstream
+`Binary.v:B2BSN` on the new `BinarySingleNaNFloat` carrier. It maps Binary
+zero and infinity constructors directly, collapses Binary NaN sign/payload
+evidence to the single SingleNaN NaN constructor, and passes finite `bounded`
+evidence through after the local `Positive`-to-`Nat` mantissa projection. The
+historical proof-erased `B2BSN : Binary754 -> B754` surface remains unchanged,
+and this is not counted as completing an active declaration: the public
+arithmetic APIs still need to return or reconstruct proof-carrying
+SingleNaN/Binary values before `Bmult_correct`, `Bplus_correct`, `Bulp_correct`,
+and the b32/b64 operation aliases can be restored faithfully.
+
+2026-07-19 targeted migration update: harness attempt
+`.change_log/codex_attempt_20260719_044802` added
+`binaryRoundAuxToBinarySingleNaNFloat` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. This is a proof-carrying adapter
+from the current raw `binary_round_aux` result into `BinarySingleNaNFloat`,
+parameterized by an explicit
+`validBinarySingleNaNStandardFloat (binary_round_aux ...) = true` proof, with
+erasure lemmas back to `StandardFloat` and raw `B754`. The provider checked
+upstream `BinarySingleNaN.v:binary_round_aux` lines 1270-1277,
+`binary_round_aux_correct` lines 1405-1415, and `Bmult_correct_aux` lines
+1526-1536; focused `lake env lean
+FloatSpec/src/IEEE754/BinarySingleNaN.lean`, placeholder audit, status report,
+`git diff --check`, and full `lake build` passed. This is intentionally not
+counted as closing an active declaration: it preserves the proof-carrying
+surface once the validity proof is available, but the faithful public
+`BinarySingleNaN.binary_round_aux_correct` theorem still has to prove
+non-tautological validity, rounded `SF2R`, finite/sign preservation, and exact
+overflow from the upstream hypotheses before `Bmult_correct_aux`,
+`Bnearbyint_correct_aux`, or the Binary/Bits arithmetic names can be restored.
+
+2026-07-19 targeted prerequisite update: harness attempt
+`.change_log/codex_attempt_20260719_053626` added the private bridge
+`canonical_mantissa_bsn_of_canonical` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The bridge derives the local
+boolean `canonical_mantissa = true` from `Generic_fmt.canonical` for a positive
+finite SingleNaN mantissa by using the existing `Raux_mag_F2R_Zdigits` and
+signed/unsigned `Zdigits` bridge. This discharges the small canonical-mantissa
+extraction identified by the previous `binary_round_aux_correct` blocker, but
+it is not counted as closing an active public Flocq declaration. The remaining
+blocker is still the full `binary_round_aux_correct` payload: prove
+non-tautological validity for the actual `binary_round_aux` result, exact
+rounded `SF2R`, finite/sign preservation, and the overflow split.
+
+2026-07-19 targeted prerequisite update: harness attempt
+`.change_log/codex_attempt_20260719_060608` added the private lemmas
+`validBinarySingleNaNStandardFloat_bsn_binary_overflow` and
+`validBinarySingleNaNStandardFloat_binary_fit_aux` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. These prove the non-permissive
+SingleNaN validity predicate for `bsn_binary_overflow` and `binary_fit_aux`
+from the existing `canonical_mantissa` hypothesis. The finite branch reuses
+`binary_fit_aux_bounded_of_canonical_le`; the overflow branch reuses the
+bounded half of `Bmax_float_proof`. This removes the small `binary_fit_aux`
+validity sub-blocker noted above, but it is intentionally not counted as
+closing an active public Flocq declaration. The remaining
+`binary_round_aux_correct` blocker is still the two-stage `truncate` /
+`shr_fexp` correctness chain plus exact rounded `SF2R`, finite/sign
+preservation, and the overflow split for the actual `binary_round_aux` result.
+
+2026-07-19 targeted prerequisite update: harness attempt
+`.change_log/codex_attempt_20260719_063824` targeted the next
+`binary_round_aux_correct` prerequisite at `binary_round_aux` but produced no
+final classifier after a stale broad source search. Manual follow-up
+`.change_log/manual_attempt_20260719_070241_bsn_truncate_canonical_prereq/attempt.json`
+added the private helpers `canonical_mantissa_bsn_of_repr_cexp` and
+`bsn_shr_fexp_truncate_eq` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean`.
+These record the local rewrite from `bsn_shr_fexp` to `truncate_triple` and
+derive `canonical_mantissa` from the `truncate_correct_format`-style exact
+`F2R` representation plus canonical exponent equality. This removes the small
+second-truncation canonical-mantissa wiring sub-blocker, but it is not counted
+as closing an active public Flocq declaration. The remaining blocker is still
+the full first/second `truncate_correct_partial` /
+`round_trunc_sign_any_correct` integration, exact rounded `SF2R`, finite/sign
+preservation, and the overflow split for the actual `binary_round_aux` result.
+
+2026-07-16 completion note: harness attempt
+`.change_log/codex_attempt_20260716_231417` rechecked upstream
+`IEEE754/BinarySingleNaN.v:sign_plus_overflow`. The provider first restored the
+payload as `ExperimentalSingleNaNArithmetic.sign_plus_overflow`; a follow-up
+manual wrapper exposes the same statement as the non-experimental public theorem
+`sign_plus_overflow` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The proof
+uses the checked experimental payload rather than changing the statement, and
+`#print axioms` for the payload reports only standard Lean axioms (`propext`,
+`Classical.choice`, `Quot.sound`). This closes the active
+`sign_plus_overflow` candidate without counting an experimental-only theorem.
+
+2026-07-16 blocker note: harness attempt
+`.change_log/codex_attempt_20260716_233729` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bnearbyint_correct_aux` against the current helper
+stack and made no Lean source changes. The checked classifier
+`.change_log/manual_attempt_20260716_bnearbyint_correct_aux_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves the
+bounded-only SingleNaN validity, exact `FIX_exp 0` rounded `SF2R` equation,
+finiteness, and sign preservation for `z := SFnearbyint_binary md sx mx ex`.
+Current Lean `valid_binary`/`valid_binary_SF` are still permissive `true`
+predicates, and `canonical_bounded` still needs extra `hmx_pos` and
+`h_canonical` hypotheses not present in the upstream theorem. Adding the exact
+public theorem now would either certify validity tautologically or weaken the
+Flocq payload, so `Bnearbyint_correct_aux` remains active.
+
+2026-07-19 blocker note: harness attempt
+`.change_log/codex_attempt_20260719_071101` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bnearbyint_correct_aux` against the current
+`SFnearbyint_binary` surface. The provider fetched the upstream statement and
+proof lines 2573-2693, ran the placeholder audit and status report, and then
+classified the target as blocked without Lean source edits; the wrapper process
+was terminated after it stayed resident following classification. The checked
+manual sidecar
+`.change_log/manual_attempt_20260719_071458_bnearbyint_correct_aux_blocked/attempt.json`
+records `coq_alignment = checked`: the upstream proof uses Coq
+`bounded mx ex = true` to recover canonical-mantissa and digit-bound facts
+before applying `shl_align_correct'`, `shr_truncate`,
+`round_trunc_sign_any_correct`, and `round_mode_choice_mode`. Current Lean has
+the nearbyint definitions and those rounding/shifting helpers, but local
+`bounded` is range-only while `canonical_bounded` still needs explicit
+`hmx_pos` and `h_canonical` hypotheses. Therefore a faithful theorem still
+needs either a Coq-aligned bounded/canonical bridge for positive finite
+mantissas or a proof that `SFnearbyint_binary` is valid and rounded from the
+current range-only `bounded` predicate without adding non-upstream premises.
+
+2026-07-19 prerequisite blocker note: manual follow-up
+`.change_log/manual_attempt_20260719_072544_canonical_bounded_blocked/attempt.json`
+classified the direct `canonical_bounded` prerequisite after the stale harness
+attempt `.change_log/codex_attempt_20260719_071811`. Upstream
+`IEEE754/BinarySingleNaN.v:canonical_bounded` applies
+`canonical_canonical_mantissa` and obtains `canonical_mantissa mx ex = true`
+from `bounded mx ex = true` by `andb_prop`. Current Lean cannot make that step:
+`FloatSpec/src/IEEE754/Binary.lean` defines `bounded` as the range-only
+conjunction `mx < 2^prec`, `3 - emax - prec <= ex`, and `ex <= emax - prec`,
+while `canonical_mantissa` remains a separate exponent-equality predicate. For
+example, under the usual single-precision parameters `prec = 24`, `emax = 128`,
+`mx = 1`, and `ex = 0`, the range-only `bounded` checks are true, but
+`canonical_mantissa` is false because the canonical exponent is
+`FLT_exp (-149) 24 (Zdigits 2 1 + 0) = -23`, not `0`. Therefore the exact
+upstream `canonical_bounded` payload is false over the current local predicate;
+repair has to migrate or introduce a Coq-aligned bounded/canonical finite
+payload before `Bnearbyint_correct_aux` can use this prerequisite faithfully.
+
+2026-07-19 prerequisite progress note: harness attempt
+`.change_log/codex_attempt_20260719_072901` targeted the local `bounded`
+definition and became stale after broad diff/source inspection, but it produced
+a narrow migration helper that was manually checked and repaired in
+`.change_log/manual_attempt_20260719_073630_specfloat_bounded_migration/attempt.json`.
+`FloatSpec/src/IEEE754/Binary.lean` now has `specFloat_bounded`, a separate
+Coq-shaped bounded predicate with explicit `canonical_mantissa` and
+`ex <= emax - prec` conjuncts, plus extraction lemmas
+`canonical_mantissa_of_specFloat_bounded` and
+`exponent_le_of_specFloat_bounded`. It also has
+`range_bounded_of_specFloat_bounded` for positive mantissas, preserving the
+existing range-only `bounded` compatibility predicate while allowing
+proof-carrying callers to move from the Coq-shaped predicate back to existing
+range-bound lemmas. `FloatSpec/src/IEEE754/BinarySingleNaN.lean` now has
+`canonical_bounded_of_specFloat_bounded`, which recovers the canonicality
+payload that upstream gets from `SpecFloat.bounded`. Focused checks passed:
+`lake build FloatSpec.src.IEEE754.Binary` and `lake env lean
+FloatSpec/src/IEEE754/BinarySingleNaN.lean`. This is helper/prerequisite
+progress only and does not close an active public Flocq declaration yet;
+`Bnearbyint_correct_aux` still needs `SFnearbyint_binary` to carry or derive
+this Coq-shaped bounded evidence together with the upstream rounding,
+finiteness, and sign-preservation payload.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_092738` rechecked
+`IEEE754/BinarySingleNaN.v:Bnearbyint_correct_aux` after the public
+`binary_round_aux_correct`, `binary_round_correct`, `Bmult_correct_aux`,
+`specFloat_bounded`, and proof-carrying `BinarySingleNaNFloat` infrastructure
+landed. The attempt made no Lean source changes
+(`changed_during_attempt.txt` is empty), ran focused
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`,
+`scripts/audit_placeholders.sh --json FloatSpec`,
+`scripts/status_report.sh --write`, and `git diff --check`, and wrote the
+checked sidecar
+`.change_log/manual_attempt_20260719_093539_bnearbyint_correct_aux_blocked/attempt.json`.
+The blocker has narrowed: validity is no longer just the old permissive
+`valid_binary_SF := true` surface, but no faithful local theorem yet proves
+the actual `SFnearbyint_binary` algorithm valid and equal to
+`roundR 2 (FIX_exp 0) (rnd_of_mode md)` from
+`0 < mx` plus `specFloat_bounded mx ex = true`. The landed
+`binary_round_correct` theorem proves the separate FLT `binary_round`
+algorithm; using it for `SFnearbyint_binary` would still require an unproved
+equivalence/no-overflow/canonical-validity theorem for the positive
+`shl_align_fexp n 0` branch. Adding `Bnearbyint_correct_aux` now would either
+weaken the upstream payload or certify the wrong algorithm path, so the
+candidate remains active.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_134510` rechecked
+`IEEE754/BinarySingleNaN.v:Bnearbyint_correct_aux` against the same live
+`SFnearbyint_binary`/`shl_align_fexp` helper stack and made no Lean source
+changes (`changed_files = []`, `changed_during_attempt.txt` is empty, and
+`statement_changed = false`). The blocker is now localized to the `ex < 0`,
+positive rounded-mantissa branch: after `mx'' > 0`, the implementation returns
+`S754_finite sx aligned.1 aligned.2` with
+`aligned := shl_align_fexp mx''.toNat 0`. To prove the upstream payload,
+Lean must derive `validBinarySingleNaNStandardFloat` for this finite result,
+namely `0 < aligned.1` and
+`specFloat_bounded (prec:=prec) (emax:=emax) aligned.1 aligned.2 = true`,
+while preserving the rounded `SF2R` equality. Current
+`shl_align_fexp_correct` proves value preservation and only
+`aligned.2 ≤ FLT_exp (...)`; it does not provide the canonical-mantissa
+equality or upper-bound package needed for `specFloat_bounded` in this branch.
+The checked sidecar
+`.change_log/manual_attempt_20260719_134852_bnearbyint_correct_aux_blocked/attempt.json`
+records `result = blocked`, `coq_alignment = checked`, `build = pass`,
+`changed_files = []`, and `local_target_gate = pass`. Status: still active.
+
+2026-07-16 blocker note: harness attempt
+`.change_log/codex_attempt_20260716_234242` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bnormfr_mantissa_correct` against the current
+SingleNaN representation and made no Lean source changes. The checked
+classifier
+`.change_log/manual_attempt_20260716_bnormfr_mantissa_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream derives the
+finite constructor, `Bnormfr_mantissa x = m`, `digits2_pos m = prec`, and
+`e = -prec` from the normalized magnitude premise using the proof-carrying
+`B754_finite` bounded/canonical payload. Current Lean `B754_finite` stores only
+sign, mantissa, and exponent, while local `bounded` is range-only and does not
+imply `canonical_mantissa`; noncanonical finite encodings can satisfy
+`/2 <= |B2R x| < 1` without the upstream normalized payload. Adding the exact
+public theorem now would be false or require extra hypotheses, so
+`Bnormfr_mantissa_correct` remains active.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_074843` rechecked
+`Bnormfr_mantissa_correct` after the new proof-carrying
+`BinarySingleNaNFloat` infrastructure landed. The attempt left
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean` unchanged
+(`changed_during_attempt.txt` is empty), and the normalized sidecar
+`.change_log/manual_attempt_20260719_075242_bnormfr_mantissa_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`. The blocker is
+still semantic, not syntactic: the new `BinarySingleNaNFloat.B754_finite`
+constructor carries the current local `bounded` predicate, but that predicate
+is range-only. Upstream `Bnormfr_mantissa_correct` relies on the Coq
+`SpecFloat.bounded` finite payload, whose canonical-mantissa conjunct is what
+lets the normalized magnitude premise force
+`Bnormfr_mantissa x = m`, `digits2_pos m = prec`, and `e = -prec`. The
+Coq-shaped `specFloat_bounded` helper now exists separately, but the public
+SingleNaN carrier/API has not been migrated to carry that evidence. Adding the
+exact theorem now would either be false over range-only `bounded` or require
+non-upstream hypotheses, so `Bnormfr_mantissa_correct` remains active.
+
+2026-07-19 prerequisite progress note: harness attempt
+`.change_log/codex_attempt_20260719_075541` migrated the proof-carrying
+`BinarySingleNaNFloat.B754_finite` constructor and its `StandardFloat`
+conversion/erasure surface to carry the Coq-shaped finite payload:
+`0 < m` plus `specFloat_bounded (prec:=prec) (emax:=emax) m e = true`.
+The historical raw `B754`, `SF2B`, `SF2B'`, and range-only `bounded`
+compatibility APIs remain unchanged, and `SF2BSpec'` records the raw erasure of
+the proof-carrying Coq-shaped total `SF2B'` path. Direct verification after the
+attempt passed: `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`,
+`scripts/audit_placeholders.sh --json FloatSpec`, raw
+`rg -n "\b(sorry|axiom|admit)\b" FloatSpec --glob "*.lean"`,
+`git diff --check -- FloatSpec/src/IEEE754/BinarySingleNaN.lean
+FloatSpec/docs/status.json FloatSpec/docs/status.md`,
+`scripts/status_report.sh --write`, and full `lake build` (3345 jobs).
+This is prerequisite progress only and does not close an active public Flocq
+declaration: `Bnormfr_mantissa_correct` still needs the exact upstream
+normalized-magnitude proof over the migrated proof-carrying carrier.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_080616` restored the SingleNaN normfr
+mantissa surface and proved exact public theorem `Bnormfr_mantissa_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean` over the proof-carrying
+`BinarySingleNaNFloat` carrier. The theorem uses the carrier's stored `0 < m`
+and Coq-shaped `specFloat_bounded` payload, not raw `B754`, range-only
+`bounded`, or experimental wrappers. Verification recorded in
+`.change_log/manual_attempt_20260719_081300_bnormfr_mantissa_correct/attempt.json`
+has `result = proved`, `coq_alignment = checked`, `local_target_gate = pass`,
+and `build = pass`; the provider also ran focused Lean, placeholder/trust,
+status, `git diff --check`, and full `lake build` gates. This removes
+`Bnormfr_mantissa_correct` from the active semantic gap list.
+
+2026-07-16 blocker note: harness attempt
+`.change_log/codex_attempt_20260716_235124` rechecked upstream
+`IEEE754/BinarySingleNaN.v:is_finite_strict_Bulp` after the current faithful
+BSN-level `Bulp` and `is_nan_Bulp` repairs and made no Lean source changes. The
+checked classifier
+`.change_log/manual_attempt_20260716_235522_is_finite_strict_Bulp_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves
+`is_finite_strict (Bulp x) = is_finite x` by invoking `Bulp_correct` on
+proof-carrying finite constructors. Current Lean `B754_finite` is
+proof-erased/permissive and still lacks the BSN-level `Bulp_correct` payload
+needed to rule out zero or overflow-normalize results for arbitrary finite
+mantissa/exponent pairs. Adding boundedness hypotheses, routing through
+Binary-level wrappers, or proving only NaN-freedom would weaken or change the
+upstream theorem, so `is_finite_strict_Bulp` remains active.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_081700` rechecked
+`IEEE754/BinarySingleNaN.v:is_finite_strict_Bulp` after the
+`BinarySingleNaNFloat` carrier migration and the exact
+`Bnormfr_mantissa_correct` restoration. The attempt made no Lean source changes
+(`changed_during_attempt.txt` is empty) and the checked sidecar
+`.change_log/manual_attempt_20260719_002020_is_finite_strict_Bulp_blocked/attempt.json`
+records `result = blocked`, `coq_alignment = checked`, and
+`local_target_gate = pass`. The blocker is now narrowed to the missing faithful
+BSN-level `Bulp_correct` package: upstream `is_finite_strict_Bulp` destructs
+`Bulp_correct` for proof-carrying finite inputs, while current Lean has public
+`Bulp`, `is_nan_Bulp`, `BinarySingleNaNFloat`, and `specFloat_bounded`, but
+still no value-level SingleNaN `Bulp_correct`,
+`binary_round_correct`, or `binary_normalize_correct` payload that proves the
+real ulp value, finiteness, and false sign of `Bulp`. Raw `B754` remains
+proof-erased/permissive, and Binary wrappers are proof-erased or explicitly
+experimental, so adding this theorem now would weaken or change the upstream
+payload. The target remains active.
+
+2026-07-19 prerequisite progress: harness attempt
+`.change_log/codex_attempt_20260719_094001` restored
+`ExperimentalSingleNaNArithmetic.Bulp_correct` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean` over the proof-carrying
+`BinarySingleNaNFloat` erasure surface. The theorem proves the upstream
+`Bulp_correct` package for finite inputs: the `Bulp` real value is the ulp,
+the result is finite, and its sign is `false`. Focused
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full
+`lake build`, `scripts/audit_placeholders.sh --json FloatSpec`,
+`scripts/status_report.sh --write`, and `git diff --check` passed. This is
+prerequisite progress, not an active-list decrement by itself: the active exact
+names `is_finite_strict_Bulp`, `Bulp'_correct`, `Bpred_pos'_correct`,
+`Bsucc'_correct`, and `Binary.v:Bulp_correct` still need their own faithful
+public payloads or bridge wrappers over the now-available SingleNaN theorem.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_095650` restored
+`ExperimentalSingleNaNArithmetic.is_finite_strict_Bulp` in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The theorem matches upstream
+`BinarySingleNaN.v:is_finite_strict_Bulp` on the local proof-carrying
+SingleNaN carrier by proving
+`BSN_is_finite_strict (Bulp (binarySingleNaNFloatToB754 x)) =
+BSN_is_finite (binarySingleNaNFloatToB754 x)`. The finite branch consumes the
+restored `Bulp_correct` package and the nonzero-ulp/`is_finite_strict_B2R`
+bridge; zero, infinity, and NaN branches are definitional. Focused
+`lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, full
+`lake build`, `scripts/audit_placeholders.sh --json FloatSpec`,
+`scripts/status_report.sh --write`, and `git diff --check` passed; the
+classifier was recorded as `result = proved`, `build = pass`, and
+`coq_alignment = checked`. This removes `is_finite_strict_Bulp` from the
+active semantic gap list.
+
+2026-07-16 blocker note: harness attempt
+`.change_log/codex_attempt_20260716_235911` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bulp'_correct` after the current faithful BSN-level
+`Bulp`, `is_nan_Bulp`, and `Bulp'` repairs and made no Lean source changes. The
+checked classifier
+`.change_log/manual_attempt_20260716_160447_bulp_prime_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves
+`(2 < emax)%Z -> forall x, is_finite x = true -> Bulp' x = Bulp x` by first
+deriving the real-value, finiteness, and sign facts for `Bulp'`, then invoking
+faithful BSN-level `Bulp_correct` plus representation injectivity. Current Lean
+still lacks the public BSN-level `Bulp_correct` theorem over proof-carrying
+bounded finite payload; the available Binary-level `Bulp` wrappers are
+proof-erased and would change the SingleNaN theorem. Adding extra hypotheses or
+weakening the equality target would not preserve the upstream payload, so
+`Bulp'_correct` remains active.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_100629` rechecked
+`IEEE754/BinarySingleNaN.v:Bulp'_correct` after the faithful proof-carrying
+`Bulp_correct` package and `is_finite_strict_Bulp` theorem landed. The attempt
+made no Lean source changes and classified the target as blocked: upstream
+proves exact constructor equality `Bulp' x = Bulp x`, not just equality of
+real values, by deriving real-value/finite/sign facts for `Bulp'` through
+`Bldexp_correct` and `Bfrexp_correct`, then applying `Bulp_correct` plus
+`B2R_Bsign_inj`. Current Lean now has the `Bulp_correct` side of that final
+comparison, but it still lacks SingleNaN-level constructor/equality support for
+the `Bldexp`/`Bfrexp` path. Scratch goals reduce to exact object equalities
+such as `Bldexp ... Bone ... = B754_finite ...` or the corresponding
+`binary_normalize` constructor, and those cannot be closed from the available
+real-value payload without weakening the theorem. Therefore `Bulp'_correct`
+remains active.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_000908` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bpred_pos'_correct` against the current faithful
+BSN-level `Bpred_pos'`, `Bsucc`, `Bpred`, and NaN-preservation surfaces and made
+no Lean source changes. The checked classifier
+`.change_log/manual_attempt_20260717_001315_bpred_pos_prime_correct_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves
+`(2 < emax)%Z -> forall x, 0 < B2R x -> Bpred_pos' x = Bpred x` using the
+SingleNaN correctness stack `Bulp_correct`, `Bulp'_correct`, `Bminus_correct`,
+and `Bpred_correct`. Current Lean exposes `Bulp_correct_aux`,
+`Bfrexp_correct_aux`, and Binary-level correctness wrappers, but still lacks
+those public BSN-level payloads; using the Binary wrappers would route through a
+proof-erased model and weaken the target. Therefore `Bpred_pos'_correct`
+remains active.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_001708` rechecked upstream
+`IEEE754/BinarySingleNaN.v:Bsucc'_correct` against the current Lean
+`BinarySingleNaN` surface and left Lean source unchanged. The checked
+classifier
+`.change_log/manual_attempt_20260717_bsucc_prime_correct_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves
+`(2 < emax)%Z -> forall x, is_finite x = true -> Bsucc' x = Bsucc x` by using
+`Bldexp_correct`/`Bone_correct`/`generic_format_bpow` in the zero branch, then
+faithful BSN-level `Bplus_correct`, `Bulp_correct`, `Bulp'_correct`,
+`Bpred_pos'_correct`, `Bsucc_correct`, `Bpred_correct`, and `B2R`/`Bsign`
+injectivity in the finite branches. Current Lean has the faithful public
+`Bsucc'`, `Bsucc`, `Bpred_pos'`, `Bpred`, `Bplus`, and `Bulp` definitions plus
+NaN-preservation, but still lacks the public BSN-level `Bplus_correct`,
+`Bulp_correct`, `Bulp'_correct`, and `Bpred_pos'_correct` payloads required to
+derive the finite-branch equality. Binary-level wrappers route through
+proof-erased/permissive adapters and are not a faithful replacement for the
+SingleNaN theorem. Therefore `Bsucc'_correct` remains active and blocked rather
+than being restored as a weakened equality.
+
+#### `IEEE754/Bits.v` (2)
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_122317` targeted exact upstream
+`IEEE754/Bits.v:b32_fma` but failed before proof generation because the
+configured `gpt-5.6-sol` model requires a newer Codex CLI; it changed no source
+files and its local target gate passed. The subsequent manual repair added a
+proof-carrying `Binary.Bfma` over `binary_float prec emax`, together with the
+upstream signed-zero rule and a bounded-result normalization helper backed by
+the nonpermissive validity theorem `binary_round_correct`. The finite path
+performs exact integer `Fmult` and, when the addend is finite and nonzero,
+exact integer `Fplus` before a single binary rounding; it therefore preserves
+the fused upstream payload rather than composing rounded multiplication and
+addition. NaN inputs, invalid infinity-times-zero products, and opposite-sign
+infinity cancellation all route through the original ternary NaN-payload
+handler, while the remaining infinity and signed-zero cases match the upstream
+constructor split. Exact public `b32_fma` and `b64_fma` are now the upstream
+specializations through `ternop_nan_pl32` and `ternop_nan_pl64`; they return
+the proof-carrying `binary32`/`binary64` carriers and do not route through
+permissive `Binary754`, proof-erased `BinarySingleNaNBridge.BinaryFloat`, or
+post-hoc bit reconstruction. Focused Lean checks for
+`BinarySingleNaN.lean` and `Bits.lean` passed. The normalized classifier
+sidecar `.change_log/codex_attempt_20260720_122317/manual_proved.json` records
+`result = proved`, `coq_alignment = checked`, `build = pass`, and
+`local_target_gate = pass`. `git diff --check`,
+`scripts/status_report.sh --write`, and
+`scripts/audit_placeholders.sh --json FloatSpec` passed with zero trust or
+placeholder findings, and full `lake build` completed successfully with 3345
+jobs. The requested `scripts/check_diff_trust.sh` gate remains unavailable
+because that script is not present in this checkout. Status: both exact names
+are implemented and removed from active semantic gaps.
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_115700` targeted exact upstream
+`IEEE754/Bits.v:b32_sqrt` but failed before proof generation because the
+configured `gpt-5.6-sol` model requires a newer Codex CLI; it changed no source
+files and its local target gate passed. The subsequent manual repair added
+Coq-shaped `SFsqrt_core_binary` as the binary-FLT specialization of the proved
+generic `Fsqrt` core, proved its positive mantissa, inbetween, and exponent
+side conditions from `Fsqrt_correct` and `cexp_inbetween_float`, and added a
+non-NaN result theorem for nonnegative `binary_round_aux` inputs. The new
+proof-carrying `Binary.Bsqrt` follows the upstream IEEE case split, preserves
+positive infinity and signed zero, routes NaN and negative inputs through the
+unary NaN-payload handler, and reconstructs positive finite rounded results as
+`binary_float prec emax` using the nonpermissive validity result from
+`binary_round_aux_correct`. Exact public `b32_sqrt` and `b64_sqrt` are now the
+upstream specializations through `unop_nan_pl32` and `unop_nan_pl64`; they do
+not route through permissive `Binary754`, proof-erased `B754`/`BinaryFloat`, or
+post-hoc bit reconstruction. The normalized classifier sidecar
+`.change_log/codex_attempt_20260720_115700/manual_proved.json` records
+`result = proved`, `coq_alignment = checked`, `build = pass`, and
+`local_target_gate = pass`. Focused Lean checks for
+`BinarySingleNaN.lean` and `Bits.lean` passed. `git diff --check`,
+`scripts/status_report.sh --write`, and
+`scripts/audit_placeholders.sh --json FloatSpec` passed with zero trust or
+placeholder findings, and full `lake build` completed successfully with 3345
+jobs. The optional `scripts/check_diff_trust.sh` gate remains unavailable in
+this checkout. Status: both exact names are implemented and removed from
+active semantic gaps.
+
+2026-07-16 blocker note: the harness run
+`.change_log/codex_attempt_20260716_183518` targeted `b32_sqrt`, and the
+manual classifier sidecar
+`.change_log/manual_attempt_20260716_b32_sqrt_current_blocked/attempt.json`
+records the family-level blocker. Upstream `Bits.v` specializes `Bsqrt`,
+`Bplus`, `Bminus`, `Bmult`, `Bdiv`, and `Bfma` to the proof-carrying
+`binary32 := binary_float 24 128` and `binary64 := binary_float 53 1024`
+surfaces. Current Lean has those proof-carrying types and NaN handlers, but the
+available arithmetic adapters in `FloatSpec/src/IEEE754/Binary.lean` return the
+permissive `Binary754` compatibility wrapper through the proof-erased
+SingleNaN bridge. A direct `b32_*`/`b64_*` alias over those adapters would
+therefore weaken the Coq payload; these names remain active until a faithful
+adapter preserves or reconstructs the `binary_float` bounded finite proofs.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_002519` rechecked upstream
+`IEEE754/Bits.v:b32_plus` against the current proof-carrying `binary32` and
+NaN-handler surface and left Lean source unchanged. The checked classifier
+`.change_log/manual_attempt_20260717_b32_plus_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream `b32_plus`
+is exactly `Bplus _ _ Hprec Hprec_emax binop_nan_pl32` at type
+`mode -> binary32 -> binary32 -> binary32`, where finite `binary32`
+constructors carry bounded proofs and `binop_nan_pl32` preserves NaN payload
+proofs. Current Lean has `binary32` and `binop_nan_pl32`, but public
+`Binary.Bplus`/`binary_add` return permissive `Binary754`, while the more
+faithful SingleNaN `Bplus` returns raw proof-erased `B754` without a bounded
+finite-result theorem for reconstructing `binary32`. Routing through those
+helpers or rebuilding through bits would weaken the upstream proof-carrying
+surface, so `b32_plus` remains active.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_003740` rechecked upstream
+`IEEE754/Bits.v:b32_minus` against the current Lean helper stack. The checked
+classifier
+`.change_log/manual_attempt_20260717_b32_minus_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`b32_minus` is exactly `Bminus _ _ Hprec Hprec_emax binop_nan_pl32` at type
+`mode -> binary32 -> binary32 -> binary32`, with `binary32` carrying finite
+boundedness proofs and `binop_nan_pl32` preserving NaN payload proofs. Current
+Lean has `binary32`, `b32_opp`, and `binop_nan_pl32`, but local subtraction
+does not expose a faithful proof-carrying adapter: `Binary.Bminus`/`binary_sub`
+return the permissive `Binary754` wrapper, and `BinarySingleNaNBridge.Bminus`
+returns proof-erased `BinaryFloat`. The raw SingleNaN `Bminus` in
+`BinarySingleNaN.lean` similarly returns raw `B754` and only proves NaN shape,
+not a finite-result `bounded` theorem sufficient to reconstruct `binary32`.
+Adding `b32_minus` through any of those paths would weaken the upstream
+surface, so `b32_minus` remains active until a bounded-result reconstruction
+theorem for the exact SingleNaN/Binary subtraction path is available.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_004924` rechecked upstream
+`IEEE754/Bits.v:b32_mult` against the current Lean proof-carrying surface. The
+checked classifier
+`.change_log/manual_attempt_20260717_b32_mult_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`b32_mult` is exactly `Bmult _ _ Hprec Hprec_emax binop_nan_pl32` at type
+`mode -> binary32 -> binary32 -> binary32`, where `binary32` is
+`binary_float 24 128` and finite constructors carry `bounded` proofs while
+`binop_nan_pl32` preserves source NaN payload proofs. Current Lean has exact
+`binary32` and `binop_nan_pl32`, but the available multiplication adapters do
+not preserve that surface: `Binary.Bmult`/`binary_mul` return permissive
+`Binary754`, whose finite validity field is only `True`, and
+`BinarySingleNaNBridge.Bmult` returns proof-erased `BinaryFloat`. The raw
+SingleNaN multiplication path similarly exposes proof-erased `B754` and does
+not provide a finite-result `bounded` theorem sufficient to reconstruct
+`binary32`. Adding `b32_mult` through any of those paths would change the
+return type or erase the proof payload, so `b32_mult` remains active until an
+exact bounded-result reconstruction theorem for the SingleNaN/Binary
+multiplication path is available.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_005548` rechecked upstream
+`IEEE754/Bits.v:b32_div` against the same current proof-carrying surface. The
+checked classifier
+`.change_log/manual_attempt_20260717_b32_div_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 672
+defines `b32_div` exactly as `Bdiv _ _ Hprec Hprec_emax binop_nan_pl32` at type
+`mode -> binary32 -> binary32 -> binary32`, where `binary32` is
+`binary_float 24 128` with bounded finite proofs and `binop_nan_pl32`
+preserves source NaN payload proofs. Current Lean has exact `binary32` and
+`binop_nan_pl32`, but the available division adapters still do not preserve
+that surface: `Binary.Bdiv` and `binary_div` return permissive `Binary754`,
+whose finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bdiv` returns proof-erased `BinaryFloat`. Applying
+local `Binary.Bdiv` directly to `binop_nan_pl32` is also a handler type
+mismatch because local `BdivNaNHandler 24 128` is over `Binary754 24 128`, not
+proof-carrying `binary32`. Rebuilding through `b32_of_bits` would decode a
+new bit pattern rather than preserve the upstream bounded finite proof and
+NaN-payload path. Adding `b32_div` through any current helper would therefore
+change the return type or erase the proof payload, so `b32_div` remains active
+until an exact bounded-result reconstruction theorem for the SingleNaN/Binary
+division path is available.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_010715` rechecked upstream
+`IEEE754/Bits.v:b32_fma` against the same current proof-carrying surface. The
+checked classifier
+`.change_log/manual_attempt_20260716_171116_b32_fma_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 674
+defines `b32_fma` exactly as `Bfma _ _ Hprec Hprec_emax ternop_nan_pl32` at
+type `mode -> binary32 -> binary32 -> binary32 -> binary32`, where `binary32`
+is `binary_float 24 128` with bounded finite proofs and `ternop_nan_pl32`
+preserves source NaN payload proofs across three inputs. Current Lean has exact
+`binary32` and `ternop_nan_pl32`, but the available FMA adapters still do not
+preserve that surface: `Binary.Bfma` and `binary_fma` return permissive
+`Binary754`, whose finite validity field is not the upstream `bounded` proof
+payload, and `BinarySingleNaNBridge.Bfma` returns proof-erased `BinaryFloat`.
+The local `BfmaNaNHandler 24 128` is over `Binary754 24 128`, not
+proof-carrying `binary32`; rebuilding through bits would decode a new bit
+pattern rather than preserve the upstream bounded finite proof and ternary
+NaN-payload path. Adding `b32_fma` through any current helper would therefore
+change the return type or erase the proof payload, so `b32_fma` remains active
+until an exact bounded-result reconstruction theorem for the SingleNaN/Binary
+FMA path is available.
+
+2026-07-19 blocker note: manual target recheck
+`.change_log/manual_attempt_20260719_b32_fma_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`IEEE754/Bits.v:b32_fma` is the exact public specialization
+`Bfma _ _ Hprec Hprec_emax ternop_nan_pl32` at type
+`mode -> binary32 -> binary32 -> binary32 -> binary32`, with
+`binary32 := binary_float 24 128`. Current Lean still has proof-carrying
+`binary32` and exact `ternop_nan_pl32`, but the callable FMA surfaces do not
+match the upstream payload path: `FloatSpec.IEEE754.Binary.Bfma` and
+`binary_fma` return permissive `Binary754 24 128`, while
+`BinarySingleNaNBridge.Bfma` returns proof-erased `BinaryFloat`. The local
+`BfmaNaNHandler 24 128` also expects `Binary754 24 128` inputs, so
+`ternop_nan_pl32` cannot be passed to it without changing carrier types.
+Rebuilding through bits would decode/reconstruct instead of preserving the
+source bounded finite proofs and ternary NaN payload proof. Therefore no
+`b32_fma` alias was added; the prerequisite remains an exact
+`binary_float`-preserving FMA adapter or a theorem reconstructing bounded
+finite and NaN-payload proofs for the SingleNaN/Binary FMA result.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_011635` rechecked upstream
+`IEEE754/Bits.v:b64_sqrt` against the current proof-carrying binary64 surface.
+The checked classifier
+`.change_log/manual_attempt_20260717_b64_sqrt_blocked/attempt.json` records
+`result = blocked` and `coq_alignment = checked`: upstream line 734 defines
+`b64_sqrt` exactly as `Bsqrt _ _ Hprec Hprec_emax unop_nan_pl64` at type
+`mode -> binary64 -> binary64`, where `binary64` is
+`binary_float 53 1024` with bounded finite proofs and `unop_nan_pl64` preserves
+source NaN payload proofs. Current Lean has exact `binary64` and
+`unop_nan_pl64`, but the available square-root adapters do not preserve that
+surface: `Binary.Bsqrt` and `binary_sqrt` return permissive `Binary754`, whose
+finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bsqrt` returns proof-erased `BinaryFloat`. Adding
+`b64_sqrt` through any current helper would therefore change the return type or
+erase the proof payload, so `b64_sqrt` remains active until an exact
+bounded-result reconstruction theorem for the SingleNaN/Binary square-root path
+is available.
+
+2026-07-19 blocker note: manual target recheck
+`.change_log/manual_attempt_20260719_b64_sqrt_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 734
+defines `b64_sqrt` exactly as `Bsqrt _ _ Hprec Hprec_emax unop_nan_pl64` at
+type `mode -> binary64 -> binary64`, where `binary64` is the proof-carrying
+`binary_float 53 1024` and `unop_nan_pl64` preserves source NaN payload
+proofs. The current Lean API still cannot expose that surface faithfully:
+`Binary.Bsqrt` and `binary_sqrt` return permissive `Binary754`,
+`BinarySingleNaNBridge.Bsqrt` returns proof-erased `BinaryFloat`, and
+`BsqrtNaNHandler 53 1024` is typed over `Binary754 53 1024` rather than
+proof-carrying `binary64`. No public theorem reconstructs the bounded finite
+result proofs and NaN-payload proof path needed to turn those results into
+`binary64` without changing semantics. Therefore no `b64_sqrt` alias was added;
+the prerequisite remains an exact `binary_float`-preserving square-root adapter
+or a reconstruction theorem for the SingleNaN/Binary square-root result.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_013046` rechecked upstream
+`IEEE754/Bits.v:b64_plus` against the current proof-carrying binary64 surface.
+The checked classifier
+`.change_log/manual_attempt_20260716_173513_b64_plus_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 736
+defines `b64_plus` exactly as `Bplus _ _ Hprec Hprec_emax binop_nan_pl64` at
+type `mode -> binary64 -> binary64 -> binary64`, where `binary64` is
+`binary_float 53 1024` with bounded finite proofs and `binop_nan_pl64`
+preserves source NaN payload proofs. Current Lean has exact `binary64` and
+`binop_nan_pl64`, but the available addition adapters do not preserve that
+surface: `Binary.Bplus` and `binary_add` return permissive `Binary754`, whose
+finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bplus` returns proof-erased `BinaryFloat`. Adding
+`b64_plus` through any current helper would therefore change the return type or
+erase the proof payload, so `b64_plus` remains active until an exact
+bounded-result reconstruction theorem for the SingleNaN/Binary addition path is
+available.
+
+2026-07-19 blocker note: harness attempt
+`.change_log/codex_attempt_20260719_022141` rechecked upstream
+`IEEE754/Bits.v:b64_plus` against the current proof-carrying binary64 surface
+and left Lean source unchanged. The checked manual classifier
+`.change_log/manual_attempt_20260719_b64_plus_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`b64_plus` is the exact public specialization
+`Bplus _ _ Hprec Hprec_emax binop_nan_pl64` at type
+`mode -> binary64 -> binary64 -> binary64`, with
+`binary64 := binary_float 53 1024`. Current Lean has exact `binary64` and
+`binop_nan_pl64`, but the callable addition surfaces still do not preserve
+that carrier: `Binary.Bplus` and `binary_add` return permissive
+`Binary754`, `BinarySingleNaNBridge.Bplus` returns proof-erased
+`BinaryFloat`, and raw `BinarySingleNaN.Bplus` returns `B754` without a public
+bounded finite-result theorem reconstructing `binary64` while preserving
+exact-zero/sign behavior and the `binop_nan_pl64` NaN-payload path. Therefore
+no `b64_plus` alias was added; the prerequisite remains an exact
+`binary_float`-preserving addition adapter or a reconstruction theorem for the
+SingleNaN/Binary addition result.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_013941` rechecked upstream
+`IEEE754/Bits.v:b64_minus` against the current proof-carrying binary64 surface.
+The checked classifier
+`.change_log/manual_attempt_20260717_b64_minus_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 737
+defines `b64_minus` exactly as `Bminus _ _ Hprec Hprec_emax binop_nan_pl64` at
+type `mode -> binary64 -> binary64 -> binary64`, where `binary64` is
+`binary_float 53 1024` with bounded finite proofs and `binop_nan_pl64`
+preserves source NaN payload proofs. Current Lean has exact `binary64` and
+`binop_nan_pl64`, but the available subtraction adapters do not preserve that
+surface: `Binary.Bminus` and `binary_sub` return permissive `Binary754`, whose
+finite validity field is not the upstream `bounded` proof payload, and
+	`BinarySingleNaNBridge.Bminus` returns proof-erased `BinaryFloat`. Adding
+	`b64_minus` through any current helper would therefore change the return type or
+	erase the proof payload, so `b64_minus` remains active until an exact
+	bounded-result reconstruction theorem for the SingleNaN/Binary subtraction path
+	is available.
+
+2026-07-19 blocker note: harness attempt
+`.change_log/codex_attempt_20260719_022817` rechecked upstream
+`IEEE754/Bits.v:b64_minus` against the current proof-carrying binary64 surface
+and left Lean source unchanged. The checked manual classifier
+`.change_log/manual_attempt_20260719_b64_minus_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`b64_minus` is the exact public specialization
+`Bminus _ _ Hprec Hprec_emax binop_nan_pl64` at type
+`mode -> binary64 -> binary64 -> binary64`, with
+`binary64 := binary_float 53 1024`. Current Lean has exact `binary64`,
+`b64_opp`, and `binop_nan_pl64`, but the callable subtraction surfaces still
+do not preserve that carrier: `Binary.Bminus` and `binary_sub` return
+permissive `Binary754`, `BinarySingleNaNBridge.Bminus` returns proof-erased
+`BinaryFloat`, and raw `BinarySingleNaN.Bminus` returns `B754` without a
+public bounded finite-result theorem reconstructing `binary64` while
+preserving exact-zero/sign behavior and the `binop_nan_pl64` NaN-payload path.
+Therefore no `b64_minus` alias was added; the prerequisite remains an exact
+`binary_float`-preserving subtraction adapter or a reconstruction theorem for
+the SingleNaN/Binary subtraction result.
+
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_b64_mult_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 738
+defines `b64_mult` exactly as `Bmult _ _ Hprec Hprec_emax binop_nan_pl64` at
+type `mode -> binary64 -> binary64 -> binary64`, where `binary64` is
+`binary_float 53 1024` with bounded finite proofs and `binop_nan_pl64`
+preserves source NaN payload proofs. Current Lean has exact `binary64` and
+`binop_nan_pl64`, but the available multiplication adapters do not preserve that
+surface: `Binary.Bmult` and `binary_mul` return permissive `Binary754`, whose
+finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bmult` returns proof-erased `BinaryFloat`. The raw
+SingleNaN path also lacks a bridge back to proof-carrying `binary64`. Adding
+`b64_mult` through any current helper would therefore change the return type or
+erase the proof payload, so `b64_mult` remains active until an exact
+bounded-result reconstruction theorem for the SingleNaN/Binary multiplication
+path is available.
+
+2026-07-19 blocker note: manual target recheck
+`.change_log/manual_attempt_20260719_b64_mult_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 738
+defines `b64_mult` exactly as `Bmult _ _ Hprec Hprec_emax binop_nan_pl64` at
+type `mode -> binary64 -> binary64 -> binary64`, where `binary64` is
+`binary_float 53 1024` with bounded finite proofs and `binop_nan_pl64`
+preserves source NaN payload proofs. Current Lean has exact `binary64` and
+`binop_nan_pl64`, but the available multiplication adapters do not preserve
+that surface: `Binary.Bmult` and `binary_mul` return permissive `Binary754`,
+whose finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bmult` returns proof-erased `BinaryFloat`. Raw
+`BinarySingleNaN.B754_mult` returns proof-erased `B754`; the current public API
+has `is_nan_binary_normalize`, but no theorem reconstructing bounded finite
+results as proof-carrying `binary64`. Rebuilding through bits would decode a
+new bit pattern rather than preserve the upstream bounded finite proof and
+binary NaN-payload path. Adding `b64_mult` through any current helper would
+therefore change the return type or erase the proof payload, so `b64_mult`
+remains active until an exact bounded-result reconstruction theorem for the
+SingleNaN/Binary multiplication path is available.
+
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_b64_div_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 739
+defines `b64_div` exactly as `Bdiv _ _ Hprec Hprec_emax binop_nan_pl64` at
+type `mode -> binary64 -> binary64 -> binary64`, where `binary64` is
+`binary_float 53 1024` with bounded finite proofs and `binop_nan_pl64`
+preserves source NaN payload proofs. Current Lean has exact `binary64` and
+`binop_nan_pl64`, but the available division adapters do not preserve that
+surface: `Binary.Bdiv` and `binary_div` return permissive `Binary754`, whose
+finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bdiv` returns proof-erased `BinaryFloat`. The local
+`BdivNaNHandler 53 1024` is over `Binary754 53 1024`, not proof-carrying
+`binary64`; rebuilding through bits would decode a new bit pattern rather than
+preserve the upstream bounded finite proof and NaN-payload path. Adding
+`b64_div` through any current helper would therefore change the return type or
+erase the proof payload, so `b64_div` remains active until an exact
+bounded-result reconstruction theorem for the SingleNaN/Binary division path is
+available.
+
+2026-07-19 blocker note: harness attempt
+`.change_log/codex_attempt_20260719_024133` rechecked upstream
+`IEEE754/Bits.v:b64_div` against the current proof-carrying binary64 surface
+and left Lean source unchanged. The checked manual classifier
+`.change_log/manual_attempt_20260719_b64_div_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`b64_div` is the exact public specialization
+`Bdiv _ _ Hprec Hprec_emax binop_nan_pl64` at type
+`mode -> binary64 -> binary64 -> binary64`, with
+`binary64 := binary_float 53 1024`. Current Lean has exact `binary64` and
+`binop_nan_pl64`, but the callable division surfaces still do not preserve
+that carrier: `Binary.Bdiv` and `binary_div` return permissive `Binary754`,
+`BinarySingleNaNBridge.Bdiv` returns proof-erased `BinaryFloat`, and
+`BdivNaNHandler 53 1024` is typed over `Binary754 53 1024` rather than
+proof-carrying `binary64`. No public bounded finite-result reconstruction
+theorem/API returns `binary64` while preserving division sign,
+divide-by-zero/overflow semantics, and the `binop_nan_pl64` NaN-payload path.
+Therefore no `b64_div` alias was added; the prerequisite remains an exact
+`binary_float`-preserving division adapter or a reconstruction theorem for the
+SingleNaN/Binary division result.
+
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_b64_fma_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 740
+defines `b64_fma` exactly as `Bfma _ _ Hprec Hprec_emax ternop_nan_pl64` at
+type `mode -> binary64 -> binary64 -> binary64 -> binary64`, where `binary64`
+is `binary_float 53 1024` with bounded finite proofs and `ternop_nan_pl64`
+preserves source NaN payload proofs across three inputs. Current Lean has exact
+`binary64` and `ternop_nan_pl64`, but the available FMA adapters do not preserve
+that surface: `Binary.Bfma` and `binary_fma` return permissive `Binary754`,
+whose finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bfma` returns proof-erased `BinaryFloat`. The local
+`BfmaNaNHandler 53 1024` is over `Binary754 53 1024`, not proof-carrying
+`binary64`; rebuilding through bits would decode a new bit pattern rather than
+preserve the upstream bounded finite proof and ternary NaN-payload path. Adding
+`b64_fma` through any current helper would therefore change the return type or
+erase the proof payload, so `b64_fma` remains active until an exact
+bounded-result reconstruction theorem for the SingleNaN/Binary FMA path is
+available.
+
+2026-07-19 blocker note: harness attempt
+`.change_log/codex_attempt_20260719_024632` rechecked upstream
+`IEEE754/Bits.v:b64_fma` against the current proof-carrying binary64 surface
+and left Lean source unchanged. The checked manual classifier
+`.change_log/manual_attempt_20260719_b64_fma_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`b64_fma` is the exact public specialization
+`Bfma _ _ Hprec Hprec_emax ternop_nan_pl64` at type
+`mode -> binary64 -> binary64 -> binary64 -> binary64`, with
+`binary64 := binary_float 53 1024`. Current Lean has exact `binary64` and
+`ternop_nan_pl64`, but the callable fused multiply-add surfaces still do not
+preserve that carrier: `Binary.Bfma` and `binary_fma` return permissive
+`Binary754`, `BinarySingleNaNBridge.Bfma` returns proof-erased
+`BinaryFloat`, and `BfmaNaNHandler 53 1024` is typed over
+`Binary754 53 1024` rather than proof-carrying `binary64`. No public bounded
+finite-result reconstruction theorem/API returns `binary64` while preserving
+fused-operation semantics, sign/zero behavior, and the `ternop_nan_pl64`
+payload path. Therefore no `b64_fma` alias was added; the prerequisite remains
+an exact `binary_float`-preserving FMA adapter or a reconstruction theorem for
+the SingleNaN/Binary FMA result.
+
+2026-07-19 blocker note: manual target recheck
+`.change_log/manual_attempt_20260719_b32_plus_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 668
+defines `b32_plus` exactly as `Bplus _ _ Hprec Hprec_emax binop_nan_pl32` at
+type `mode -> binary32 -> binary32 -> binary32`, where `binary32` is
+`binary_float 24 128` with bounded finite proofs and `binop_nan_pl32` preserves
+source NaN payload proofs. Current Lean has exact `binary32` and
+`binop_nan_pl32`, but the available addition adapters do not preserve that
+surface: `Binary.Bplus` and `binary_add` return permissive `Binary754`, whose
+finite validity field is not the upstream `bounded` proof payload, and
+`BinarySingleNaNBridge.Bplus` returns proof-erased `BinaryFloat`. Raw
+`BinarySingleNaN.Bplus` returns proof-erased `B754`; the current public API has
+`is_nan_binary_normalize`, but no theorem reconstructing bounded finite results
+as proof-carrying `binary32`. Rebuilding through bits would decode a new bit
+pattern rather than preserve the upstream bounded finite proof and binary
+NaN-payload path. Adding `b32_plus` through any current helper would therefore
+change the return type or erase the proof payload, so `b32_plus` remains active
+until an exact bounded-result reconstruction theorem for the SingleNaN/Binary
+addition path is available.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_122215` restored exact public `b32_mult`
+in `FloatSpec/src/IEEE754/Bits.lean` as the proof-carrying specialization
+`Binary.Bmult (prec := 24) (emax := 128) binop_nan_pl32`, returning
+`binary32 := binary_float 24 128`. This matches upstream
+`IEEE754/Bits.v:b32_mult` and preserves the bounded finite proof carrier and
+binary NaN-payload path; it avoids permissive `Binary754`, raw `B754`,
+proof-erased `BinarySingleNaNBridge.BinaryFloat`, and bit roundtrip
+reconstruction. Focused `lake env lean FloatSpec/src/IEEE754/Bits.lean` and
+`#check b32_mult` passed. Status: implemented and removed from active
+semantic gaps.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_123426` restored exact public `b64_mult`
+in `FloatSpec/src/IEEE754/Bits.lean` as the proof-carrying specialization
+`Binary.Bmult (prec := 53) (emax := 1024) binop_nan_pl64`, returning
+`binary64 := binary_float 53 1024`. This matches upstream
+`IEEE754/Bits.v:b64_mult` and preserves the bounded finite proof carrier and
+binary NaN-payload path; it avoids permissive `Binary754`, raw `B754`,
+proof-erased `BinarySingleNaNBridge.BinaryFloat`, and bit roundtrip
+reconstruction. The top-level attempt metadata inconsistently recorded
+`result = blocked`, but its generated final message and the normalized
+sidecar `.change_log/manual_attempt_20260719_b64_mult_proved/attempt.json`
+record `result = proved`, `coq_alignment = checked`, `build = pass`, and
+`local_target_gate = pass`. Independent focused `lake env lean
+FloatSpec/src/IEEE754/Bits.lean` and `#check b64_mult` passed. Status:
+implemented and removed from active semantic gaps.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_124257` restored exact public `b32_plus`
+in `FloatSpec/src/IEEE754/Bits.lean` as the proof-carrying specialization
+`Binary.Bplus (prec := 24) (emax := 128) binop_nan_pl32`, returning
+`binary32 := binary_float 24 128`. This matches upstream
+`IEEE754/Bits.v:b32_plus`; it is only the exact Bits alias and does not claim
+the separate active `Bplus_correct` theorem. The implementation avoids
+permissive `Binary754`, raw `B754`, proof-erased
+`BinarySingleNaNBridge.BinaryFloat`, and bit roundtrip reconstruction. Harness
+attempt metadata records `result = proved`, `local_target_gate = pass`, and
+the normalized sidecar `.change_log/codex_attempt_20260719_124724/attempt.json`
+records `result = proved`, `coq_alignment = checked`, and `build = pass`.
+Independent focused `lake env lean FloatSpec/src/IEEE754/Bits.lean` and
+`#check b32_plus` passed. Status: implemented and removed from active semantic
+gaps.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_125022` restored exact public `b64_plus`
+in `FloatSpec/src/IEEE754/Bits.lean` as the proof-carrying specialization
+`Binary.Bplus (prec := 53) (emax := 1024) binop_nan_pl64`, returning
+`binary64 := binary_float 53 1024`. This matches upstream
+`IEEE754/Bits.v:b64_plus`; it is only the exact Bits alias and does not claim
+the separate active `Bplus_correct` theorem. The implementation avoids
+permissive `Binary754`, raw `B754`, proof-erased
+`BinarySingleNaNBridge.BinaryFloat`, and bit roundtrip reconstruction. Harness
+attempt metadata records `result = proved` and `local_target_gate = pass`, and
+the normalized sidecar
+`.change_log/manual_attempt_20260719_b64_plus_proved_exact_alias/attempt.json`
+records `result = proved`, `coq_alignment = checked`, and `build = pass`.
+Independent focused `lake env lean FloatSpec/src/IEEE754/Bits.lean` and
+`#check b64_plus` passed. Status: implemented and removed from active semantic
+gaps.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_125929` restored the prerequisite
+proof-carrying `Binary.Bminus` bridge in
+`FloatSpec/src/IEEE754/BinarySingleNaN.lean` and exact public `b32_minus` in
+`FloatSpec/src/IEEE754/Bits.lean`. The Bits alias is the proof-carrying
+specialization `Binary.Bminus (prec := 24) (emax := 128) binop_nan_pl32`,
+returning `binary32 := binary_float 24 128`, matching upstream
+`IEEE754/Bits.v:b32_minus := Bminus _ _ Hprec Hprec_emax binop_nan_pl32`.
+The implementation avoids permissive `Binary754`, raw `B754`,
+proof-erased `BinarySingleNaNBridge.BinaryFloat`, post-hoc bit
+reconstruction, and differently parameterized helpers, and it does not claim
+the separate `Bminus_correct` theorem. Harness metadata records
+`result = proved` and `local_target_gate = pass`; explicit
+`scripts/classify_attempt.py` classification records `result = proved`,
+`coq_alignment = checked`, and `build = pass`. Independent focused
+`lake env lean FloatSpec/src/IEEE754/Bits.lean`, `#check Binary.Bminus`, and
+`#check b32_minus` passed. Status: implemented and removed from active
+semantic gaps.
+
+2026-07-19 completion note: harness attempt
+`.change_log/codex_attempt_20260719_131228` restored exact public
+`b64_minus` in `FloatSpec/src/IEEE754/Bits.lean` as the proof-carrying
+specialization `Binary.Bminus (prec := 53) (emax := 1024) binop_nan_pl64`,
+returning `binary64 := binary_float 53 1024`, matching upstream
+`IEEE754/Bits.v:b64_minus := Bminus _ _ Hprec Hprec_emax binop_nan_pl64`.
+The implementation reuses the proof-carrying `Binary.Bminus` bridge and avoids
+permissive `Binary754`, raw `B754`, proof-erased
+`BinarySingleNaNBridge.BinaryFloat`, post-hoc bit reconstruction, and
+differently parameterized helpers. It does not claim the separate
+`Bminus_correct` theorem. Harness metadata records `result = proved` and
+`local_target_gate = pass`; explicit `scripts/classify_attempt.py`
+ classification records `result = proved`, `coq_alignment = checked`, and
+`build = pass`. Independent focused `lake env lean
+FloatSpec/src/IEEE754/Bits.lean` and `#check b64_minus` passed. Status:
+implemented and removed from active semantic gaps.
+
+2026-07-19 blocker refresh: harness attempt
+`.change_log/codex_attempt_20260719_132559` rechecked upstream
+`IEEE754/Bits.v:b32_sqrt` after the proof-carrying Binary-side
+`Bplus`/`Bminus`/`Bmult` bridges landed. It made no Lean source changes
+(`changed_files = []`, `changed_during_attempt.txt` is empty, and
+`statement_changed = false`) and correctly left the declaration absent rather
+than routing through a weaker carrier. The blocker is still foundational:
+upstream `b32_sqrt` is the exact proof-carrying specialization
+`Bsqrt _ _ Hprec Hprec_emax unop_nan_pl32` returning
+`binary32 := binary_float 24 128`, but current Lean has no proof-carrying
+`Binary.Bsqrt`. The available root `Bsqrt` returns permissive `Binary754`,
+`BinarySingleNaNBridge.Bsqrt` returns proof-erased `BinaryFloat`, and the
+local SingleNaN sqrt support lacks the upstream-shaped
+`SFsqrt_core_binary`/`binary_round_aux` bridge needed to reconstruct a
+valid bounded finite `binary_float` result without changing the payload. An
+explicit follow-up `scripts/classify_attempt.py` run recorded
+`result = blocked`, `coq_alignment = checked`, `build = pass`, and
+`local_target_gate = pass`. Status: still active.
+
 - `b32_div` (Definition, upstream line 672)
-- `b32_fma` (Definition, upstream line 673)
-- `b32_compare` (Definition, upstream line 675)
-- `b32_of_bits` (Definition, upstream line 677)
-- `bits_of_b32` (Definition, upstream line 678)
-- `binary64` (Definition, upstream line 686)
-- `default_nan_pl64` (Definition, upstream line 704)
-- `unop_nan_pl64` (Definition, upstream line 707)
-- `binop_nan_pl64` (Definition, upstream line 713)
-- `ternop_nan_pl64` (Definition, upstream line 720)
-- `b64_erase` (Definition, upstream line 728)
-- `b64_opp` (Definition, upstream line 730)
-- `b64_abs` (Definition, upstream line 731)
-- `b64_pred` (Definition, upstream line 732)
-- `b64_succ` (Definition, upstream line 733)
-- `b64_sqrt` (Definition, upstream line 734)
-- `b64_plus` (Definition, upstream line 735)
-- `b64_minus` (Definition, upstream line 737)
-- `b64_mult` (Definition, upstream line 738)
 - `b64_div` (Definition, upstream line 739)
-- `b64_fma` (Definition, upstream line 740)
-- `b64_compare` (Definition, upstream line 742)
-- `b64_of_bits` (Definition, upstream line 744)
-- `bits_of_b64` (Definition, upstream line 745)
 
-#### `IEEE754/PrimFloat.v` (9)
+#### `IEEE754/PrimFloat.v` (8)
+
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 27
+defines `Prim2B (x : float) : binary_float prec emax` exactly as
+`SF2B (Prim2SF x) (Prim2SF_valid x)`, preserving Coq primitive-float
+`StandardFloat` semantics and returning proof-carrying `binary_float`. Current
+Lean still exposes only `ExperimentalPrimFloatBridge.PrimFloat`, an opaque
+real-projection wrapper; local `prim_to_binary` returns permissive `Binary754`,
+and the file explicitly warns that this bridge must not be counted as faithful
+IEEE/PrimFloat equivalence. No faithful Coq primitive `float`, `Prim2SF_valid`,
+or proof-carrying `SF2B ... : binary_float prec emax` path is present, so
+`Prim2B` remains active until that primitive-float bridge exists.
 
 - `Prim2B` (Definition, upstream line 27)
 - `B2Prim` (Definition, upstream line 32)
-- `round_nearest_even_equiv` (Lemma, upstream line 125)
+
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_B2Prim_current_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream line 32
+defines `B2Prim (x : binary_float prec emax) : float := SF2Prim (B2SF x)`,
+preserving proof-carrying binary_float input and Coq primitive-float output.
+Current Lean still exposes only `ExperimentalPrimFloatBridge.PrimFloat`, an
+opaque real-projection wrapper; local `binary_to_prim` takes permissive
+`Binary754` and maps through `B2R`, collapsing NaN, infinity, payload, and
+signed-zero behavior. No faithful Coq primitive `float`, `SF2Prim`, or
+proof-carrying `B2SF ... : StandardFloat` path from local `binary_float prec
+emax` is present, so `B2Prim` remains active until that primitive-float bridge
+exists.
+
 - `binary_round_aux_equiv` (Lemma, upstream line 133)
 - `mul_equiv` (Theorem, upstream line 143)
 - `binary_round_equiv` (Lemma, upstream line 161)
@@ -276,24 +1662,108 @@ listed until inspected one by one.
 - `add_equiv` (Theorem, upstream line 181)
 - `normfr_mantissa_equiv` (Theorem, upstream line 258)
 
-#### `Pff/Pff.v` (104)
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_035155_normfr_mantissa_equiv_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`IEEE754/PrimFloat.v:normfr_mantissa_equiv` proves
+`to_Z (normfr_mantissa x) = Z.of_N (Bnormfr_mantissa (Prim2B x))` for
+Coq primitive `float`s by rewriting `normfr_mantissa_spec`, rewriting
+`B2SF_Prim2B` in reverse, then case-splitting the faithful `Prim2B x`.
+Current Lean still exposes only `ExperimentalPrimFloatBridge.PrimFloat`, an
+opaque real-projection wrapper; local `prim_to_binary` is not Coq's
+`Prim2B := SF2B (Prim2SF x) (Prim2SF_valid x)`, and there are no faithful
+primitive-float `normfr_mantissa`, `to_Z`, or `Z.of_N` payloads with matching
+types. `Bnormfr_mantissa` exists only on local binary bridge types. Adding
+the exact theorem over the current wrappers would be helper-only or
+tautological rather than the upstream primitive-float theorem, so
+`normfr_mantissa_equiv` remains active.
 
-- `errorBoundedMultClosest` (Theorem, upstream line 9057)
-- `plusExact2Aux` (Theorem, upstream line 10274)
-- `plusExact2` (Theorem, upstream line 10379)
-- `plusExactExp` (Theorem, upstream line 10436)
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_025301` rechecked upstream
+`IEEE754/PrimFloat.v:binary_round_aux_equiv` and left source unchanged. The
+checked classifier
+`.change_log/manual_attempt_20260717_binary_round_aux_equiv_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream unfolds Coq
+`SpecFloat.binary_round_aux` and Flocq `binary_round_aux`, reduces `shr_fexp`,
+and rewrites with `round_nearest_even_equiv`. Current Lean still has only the
+`ExperimentalPrimFloatBridge` real-wrapper `PrimFloat` model and
+`ExperimentalBinaryRound` audit helpers that are explicitly documented as not
+ports of Flocq `binary_round_aux`/`binary_round`/`binary_normalize`. Adding an
+exact-name theorem over those local wrappers would be helper-only or
+tautological rather than the primitive-float/Flocq payload, so
+`binary_round_aux_equiv` remains active.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_030122` rechecked upstream
+`IEEE754/PrimFloat.v:mul_equiv` and left source unchanged. The checked
+classifier
+`.change_log/manual_attempt_20260716_190652_mul_equiv_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves
+`Prim2B (x * y) = Bmult mode_NE (Prim2B x) (Prim2B y)` for Coq primitive
+`float`s through the faithful `Prim2B`/`B2Prim`/`B2SF_Prim2B` conversion stack,
+`SpecFloat.mul_spec`, finite case analysis, `B2SF_SF2B`, and
+`binary_round_aux_equiv`. Current Lean still has only the experimental
+real-wrapper `PrimFloat`; local `prim_mul_correct` is a reflexive statement
+over `binary_mul`, and the faithful primitive-float conversions,
+`SpecFloat.mul_spec`, and `binary_round_aux_equiv` payloads are not present in
+the upstream shape. Adding `mul_equiv` over those local wrappers would be
+helper-only or differently parameterized, so `mul_equiv` remains active.
+
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_032042_binary_round_equiv_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves
+`SpecFloat.binary_round prec emax s m e = binary_round prec emax mode_NE s m e`
+by unfolding `SpecFloat.binary_round`, Flocq `binary_round`, and
+`shl_align_fexp`, destructing `shl_align`, then applying
+`binary_round_aux_equiv`. Current Lean does not expose a faithful Coq
+`SpecFloat.binary_round` primitive-float payload in `PrimFloat.lean`;
+`PrimFloat.lean` is explicitly the `ExperimentalPrimFloatBridge` real-wrapper,
+`Binary.lean`'s `ExperimentalBinaryRound` helpers are documented audit helpers
+rather than Flocq algorithm ports, and the prerequisite
+`binary_round_aux_equiv` remains active/blocked. Adding `binary_round_equiv`
+over those local wrappers would be helper-only, tautological, or differently
+parameterized, so `binary_round_equiv` remains active.
+
+2026-07-17 blocker note: manual target recheck
+`.change_log/manual_attempt_20260717_193147_binary_normalize_equiv_blocked_current/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream
+`IEEE754/PrimFloat.v:binary_normalize_equiv` states
+`SpecFloat.binary_normalize prec emax m e szero =
+B2SF (binary_normalize prec emax Hprec Hmax mode_NE m e szero)`.
+The Coq proof cases on the signed mantissa `m`; the zero branch simplifies
+directly, while the positive and negative finite branches rewrite
+`B2SF_SF2B` and apply `binary_round_equiv`. Current Lean still does not expose
+a faithful Coq `SpecFloat.binary_normalize` primitive-float payload in
+`PrimFloat.lean`; the file is explicitly `ExperimentalPrimFloatBridge`, and
+`Binary.lean`'s `ExperimentalBinaryRound` helpers are documented audit helpers
+rather than Flocq `binary_round_aux`/`binary_round`/`binary_normalize` ports.
+`BinarySingleNaN.lean` has a closer local `binary_normalize`, but it does not
+provide the PrimFloat/SpecFloat equivalence target, and the prerequisite
+`binary_round_equiv` remains active/blocked. Adding `binary_normalize_equiv`
+over the available wrappers would therefore be helper-only, tautological, or
+differently parameterized, so `binary_normalize_equiv` remains active.
+
+2026-07-17 blocker note: harness attempt
+`.change_log/codex_attempt_20260717_033820` rechecked upstream
+`IEEE754/PrimFloat.v:add_equiv` and left source unchanged. The checked
+classifier
+`.change_log/manual_attempt_20260716_194258_primfloat_add_equiv_blocked/attempt.json`
+records `result = blocked` and `coq_alignment = checked`: upstream proves
+`Prim2B (x + y) = Bplus mode_NE (Prim2B x) (Prim2B y)` for Coq primitive
+`float`s through the faithful `Prim2B`/`B2Prim` conversion and injection stack,
+`SpecFloat.add_spec`, `B2SF_Prim2B`, proof-carrying binary case analysis, and
+`binary_normalize_equiv`. Current Lean still has only the experimental
+real-wrapper `PrimFloat`; local `prim_add_correct` is a reflexive statement
+over `binary_add`, and the faithful primitive-float/Bplus bridge plus
+`binary_normalize_equiv` are unavailable in the upstream shape. Adding
+`add_equiv` over those local wrappers would be helper-only, tautological, or
+differently parameterized, so `add_equiv` remains active.
+
+#### `Pff/Pff.v` (86)
+
 - `UlpFlessuGe` (Theorem, upstream line 11675)
 - `UlpFlessuGe2` (Theorem, upstream line 11885)
 - `Axpy_opt` (Theorem, upstream line 12301)
-- `ClosestSuccPred` (Theorem, upstream line 12521)
-- `ImplyClosest` (Theorem, upstream line 12599)
-- `ImplyClosestStrict` (Theorem, upstream line 12696)
-- `ImplyClosestStrict2` (Theorem, upstream line 12788)
-- `ClosestImplyEven` (Theorem, upstream line 12814)
-- `ClosestImplyEven_int` (Theorem, upstream line 12888)
-- `hxExact` (Lemma, upstream line 13055)
-- `eqLeep` (Lemma, upstream line 13165)
-- `epLe` (Lemma, upstream line 13182)
 - `eqLe` (Lemma, upstream line 13220)
 - `eqGe` (Lemma, upstream line 13547)
 - `eqEqual` (Lemma, upstream line 13761)
@@ -307,7 +1777,6 @@ listed until inspected one by one.
 - `VeltkampEven_pos` (Lemma, upstream line 14856)
 - `VeltkampEvenN_aux` (Lemma, upstream line 14942)
 - `VeltkampEvenN` (Lemma, upstream line 15000)
-- `bimplybplusNorm` (Lemma, upstream line 15051)
 - `Closestbbplus` (Lemma, upstream line 15120)
 - `EvenClosestbplusb` (Lemma, upstream line 15287)
 - `ClosestClosest` (Lemma, upstream line 15367)
@@ -350,8 +1819,6 @@ listed until inspected one by one.
 - `Dekker2` (Theorem, upstream line 18822)
 - `Twice_EvenClosest_Round` (Theorem, upstream line 19178)
 - `errorBoundedMultClosest_Can` (Theorem, upstream line 19729)
-- `AddExpGe1Underf` (Theorem, upstream line 22351)
-- `AddExpGe1Underf2` (Theorem, upstream line 22416)
 - `cases` (Theorem, upstream line 22504)
 - `xLe2y_aux1` (Lemma, upstream line 23476)
 - `xLe2y_aux2` (Lemma, upstream line 23522)
@@ -359,7 +1826,6 @@ listed until inspected one by one.
 - `xLe2y` (Lemma, upstream line 23707)
 - `yLe2x` (Lemma, upstream line 23717)
 - `Subexact` (Lemma, upstream line 23726)
-- `LSB_Pred` (Lemma, upstream line 23794)
 - `Midpoint_aux_aux` (Lemma, upstream line 23846)
 - `Midpoint_aux` (Lemma, upstream line 24208)
 - `gatCorrect` (Lemma, upstream line 24295)
@@ -371,7 +1837,6 @@ listed until inspected one by one.
 - `tBounded` (Theorem, upstream line 25532)
 - `ErrFmaApprox_1_aux` (Theorem, upstream line 25626)
 - `ErrFmaApprox_1` (Theorem, upstream line 25719)
-- `LeExp1` (Lemma, upstream line 25911)
 - `LeExp2` (Lemma, upstream line 25920)
 - `LeExp3` (Lemma, upstream line 26016)
 - `LeExp` (Lemma, upstream line 26106)
@@ -412,59 +1877,705 @@ Confirmed faithful counterparts removed from the active semantic gap list:
   `FloatSpec/src/Prop/Round_odd.lean`.
 
 - `Core/Digits.v`
-  - `Zdigit_ext`: not faithfully present under the exact statement. Lean has
-    `Zdigit_ext_nonneg` in `FloatSpec/src/Core/Digits.lean`, but that theorem
-    assumes both integers are nonnegative. Upstream `Zdigit_ext` is over all
-    integers. Status: renamed/split but weaker; exact theorem still required.
+  - `Zdigit_ext`: restored as the exact public Lean theorem in
+    `FloatSpec/src/Core/Digits.lean` after aligning `Zdigit` with Flocq's
+    signed remainder semantics. Lean previously had only `Zdigit_ext_nonneg`,
+    which assumed both integers were nonnegative, while upstream `Zdigit_ext`
+    is over all integers. Pipeline attempt `.change_log/codex_attempt_20260704_165233`
+    classified the exact theorem as blocked under the current local
+    semantics: with `Zdigit` defined using `Int.tdiv` followed by Euclidean
+    `%`, `Zdigit 10 (-1) 0 = 9`, `Zdigit 10 9 0 = 9`,
+    `Zdigit 10 (-1) 1 = 0`, and `Zdigit 10 9 1 = 0`, but `-1 ≠ 9`.
+    Reattempt `.change_log/codex_attempt_20260705_071433` confirmed the same
+    blocker and left `Digits.lean` unchanged. Subscription reattempt
+    `.change_log/codex_attempt_20260713_081648` reconfirmed the same concrete
+    counterexample and left `Digits.lean` unchanged. A direct local probe that
+    changed `Zdigit`'s final remainder to `Int.tmod` removed the concrete
+    counterexample shape but broke the existing digit proof surface at
+    `Zdigit_opp`, `Zdigit_at_zero`, `Zdigit_mul_pow`, `Zdigit_div_pow`,
+    `Zdigit_mod_pow`, and nonnegative plus/digits lemmas, which are still
+    stated and proved around Euclidean `%`.
+    Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_094219` again left `Digits.lean`
+    unchanged and reconfirmed the exact same blocker: local
+    `Zdigit 10 (-1) 0 = 9`, `Zdigit 10 9 0 = 9`,
+    `Zdigit 10 (-1) 1 = 0`, and `Zdigit 10 9 1 = 0`, but `-1 != 9`.
+    Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_115846` rechecked the exact upstream
+    payload against `Zdigit_ext_nonneg`, left the target source unchanged
+    (`target_before.lean` and `target_after.lean` identical), and classified
+    the unrestricted theorem as blocked.  The explicit checked-classifier
+    sidecar
+    `.change_log/codex_attempt_20260713_115846/zdigit_ext_checked_blocked.json`
+    records `coq_alignment = checked`; a live `lake env lean --stdin` probe
+    in the same workspace evaluates
+    `(Zdigit 10 (-1) 0, Zdigit 10 9 0, Zdigit 10 (-1) 1, Zdigit 10 9 1)` to
+    `(9, 9, 0, 0)`.
+    Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_185034` reconfirmed the same
+    foundational blocker, with no source changes for this target; a live probe
+    additionally confirmed `Zdigit 10 (-1) 2 = 0`,
+    `Zdigit 10 9 2 = 0`, while `Int.tmod (-1) 10 = -1` and
+    `Int.tmod 9 10 = 9`.
+    Manual follow-up on 2026-07-13 changed `Zdigit` to use `Int.tmod`, repaired
+    the local digit proof surface, and added exact `Zdigit_ext`. A rebuilt
+    probe now gives `Zdigit 10 (-1) 0 = -1`, `Zdigit 10 9 0 = 9`,
+    `Zdigit 10 (-1) 1 = 0`, and `Zdigit 10 9 1 = 0`; `lake build` passed
+    after rebuilding downstream Core, Calc, IEEE754, Prop, and Pff modules.
+    Status: implemented and removed from active semantic gaps.
   - `Zdigit_plus`: not faithfully present. Lean has `Zdigit_plus_nonneg`, but
     it gives a carry-form statement for nonnegative operands, while upstream
     `Zdigit_plus` proves exact digit additivity under the disjoint-digit
-    hypothesis. Status: renamed/split but different payload; exact theorem
-    still required.
+    hypothesis. Pipeline attempt `.change_log/codex_attempt_20260704_172834`
+    left the file unchanged and classified the exact theorem as blocked for
+    now: the upstream proof uses signed, two-input `ZOdiv_plus_pow_digit` and
+    `ZOmod_plus_pow_digit` infrastructure, while current Lean only has
+    nonnegative/single-input decomposition variants plus Hoare/spec wrappers
+    instead of the matching signed quotient/remainder lemmas. Subscription
+    reattempt `.change_log/codex_attempt_20260713_082314` reconfirmed that
+    blocker and left `Digits.lean` unchanged. Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_105024` again left the target source
+    unchanged (`target_before.lean` and `target_after.lean` identical) and
+    classified the exact theorem as blocked. Its nested classifier
+    `.change_log/manual_attempt_20260713_zdigit_plus_blocked` records
+    `coq_alignment = checked`: exact upstream `Zdigit_plus` still depends on
+    signed two-input `ZOdiv_plus_pow_digit` and `ZOmod_plus_pow_digit` over
+    `Z.quot`/`Z.rem`, while local `Digits.lean` only has nonnegative
+    single-input decomposition variants and the nonfaithful carry-form
+    `Zdigit_plus_nonneg`; local `Zdigit` also uses `Int.tdiv` followed by
+    Euclidean `%`, not Flocq's signed `Z.rem` payload. Config-provider
+    harness attempt `.change_log/codex_attempt_20260713_120652` rechecked the
+    exact signed disjoint-digit payload, left `Digits.lean` unchanged
+    (`target_before.lean` and `target_after.lean` identical), and wrote the
+    nested checked classifier
+    `.change_log/manual_attempt_20260713_zdigit_plus_blocked_recheck/attempt.json`
+    with `result = blocked`, `coq_alignment = checked`, and `build = pass`.
+    A controlled signed-remainder probe, recorded at
+    `.change_log/manual_attempt_20260713_zdigit_signed_remainder_probe/attempt.json`,
+    replaced the final Euclidean `%` in `Zdigit` with `Int.tmod` and was
+    reverted after `lake env lean FloatSpec/src/Core/Digits.lean` failed
+    broadly across the existing Euclidean digit proof surface (`Zdigit_opp`,
+    `Zdigit_at_zero`, `Zdigit_eval_nonneg`, `Zdigit_mul_pow`,
+    `Zdigit_div_pow`, `Zdigit_mod_pow`, `ZOmod_plus_pow_digit`, and
+    `Zdigit_plus_nonneg` among the failures). Status:
+    renamed/split but different payload; exact theorem still required after
+    the signed quotient/remainder prerequisites are ported.
+    Config-provider harness attempt `.change_log/codex_attempt_20260714_173102`
+    rechecked the target after `Zdigit` had been aligned to signed
+    `Int.tmod`. It left `Digits.lean` unchanged (`target_before.lean` and
+    `target_after.lean` identical) and reported `blocked`: upstream
+    `Zdigit_plus` still depends on signed two-input `ZOdiv_plus_pow_digit`
+    and `ZOmod_plus_pow_digit` plus the lower-digit no-carry/disjointness
+    payload, while the current Lean file only has single-input/nonnegative
+    decomposition lemmas under those names and the nonfaithful carry-form
+    `Zdigit_plus_nonneg`. A nested manual classifier
+    `.change_log/manual_attempt_20260714_zdigit_plus_blocked/attempt.json`
+    records `result = blocked`, `coq_alignment = checked`, and
+    `build = pass`; `lake build` completed successfully with 3345 jobs.
+    Manual follow-up `.change_log/manual_attempt_20260714_zdigit_plus_proved/attempt.json`
+    restored the exact public theorem in `FloatSpec/src/Core/Digits.lean`.
+    The proof derives a private lower-prefix no-carry lemma from the
+    disjoint-digit hypothesis, proves the nonnegative exact case, and then
+    reduces the signed same-sign case through `Zdigit_neg_eq`. Status:
+    implemented and removed from active semantic gaps.
   - `Zdigit_scale`: partially present as `Zdigit_scale_point`, but the Lean
     theorem has an extra precondition `(0 <= k || 0 <= n)` and is wrapped in a
-    Hoare-style spec. Upstream only assumes `0 <= k'`. Status: renamed but
-    weaker; exact theorem still required.
+    Hoare-style spec. Upstream only assumes `0 <= k'`. Pipeline attempt
+    `.change_log/codex_attempt_20260704_173447` classified the exact theorem
+    as blocked against the current local definition: upstream `Zscale` uses
+    `Z.quot` in the negative-shift branch, but local `Zscale` uses Lean `/`.
+    The harness reported a concrete counterexample for the exact statement:
+    with `beta = 10`, `n = -1`, `k = -1`, and `k' = 0`, the left side is
+    `9` while the right side is `0`. Temporarily switching the branch to
+    `Int.tdiv` made the exact target viable in scratch form but broke later
+    local `Zscale`/`Zslice` proofs that currently depend on `/` semantics.
+    Reattempt `.change_log/codex_attempt_20260711_153359` reconfirmed the
+    same blocker with a Lean `#guard`: the checked pair is `(9, 0)`. Follow-up
+    subscription attempt `.change_log/codex_attempt_20260711_194800` again
+    classified the exact theorem as blocked with no source changes: for
+    `beta = 10`, `n = -1`, `k = -1`, and `k' = 0`, local `Zscale` keeps the
+    left digit at `9` while the upstream right side is `0`, so the exact
+    upstream payload remains false until the signed quotient semantics are
+    aligned. Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_111111` rechecked the exact upstream
+    payload, left source code unchanged (`target_before.lean` and
+    `target_after.lean` identical), and reconfirmed the same counterexample
+    with a live `lake env lean --stdin` check: for `beta = 10`, `n = -1`,
+    `k = -1`, and `k' = 0`, `(Zscale, left digit, right digit)` evaluates to
+    `(-1, 9, 0)`. The attempt ran `scripts/audit_placeholders.sh --json
+    FloatSpec`, `scripts/status_report.sh --write`, and
+    `scripts/classify_attempt.py ... --result blocked --coq-alignment
+    checked`. Faithful repair still requires aligning signed
+    quotient/remainder semantics for `Zscale` and dependent digit/slice
+    lemmas, not adding a theorem with the local extra nonnegativity side
+    condition. Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_121354` rechecked the exact upstream
+    theorem against `Zdigit_scale_point`, left `Digits.lean` unchanged
+    (`target_before.lean` and `target_after.lean` identical), and wrote the
+    nested checked classifier
+    `.change_log/manual_attempt_20260713_zdigit_scale_blocked/attempt.json`.
+    A live `lake env lean --stdin` probe in the same workspace again evaluated
+    `(Zscale 10 (-1) (-1), Zdigit 10 (Zscale 10 (-1) (-1)) 0,
+    Zdigit 10 (-1) (0 - (-1)))` to `(-1, 9, 0)`, showing the exact theorem is
+    false for the current negative-branch `/` semantics.
+    Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_202429` tried the faithful direction:
+    it changed the negative `Zscale` branch to `Int.tdiv` and introduced an
+    exact public `Zdigit_scale` theorem with only the upstream `0 <= k'`
+    assumption. The target theorem itself became locally plausible, but
+    `lake build` failed in `FloatSpec.src.Core.Digits` because existing
+    downstream `Zscale`/`Zslice` proofs (`Zsame_sign_scale`,
+    `Zscale_mul_pow`, `Zscale_scale`, `Zdigit_slice`, `Zslice_div_pow`, and
+    `Zplus_slice`) still encode Euclidean `/` branch facts. The failed source
+    edits were restored from the harness `target_before.lean`; a focused
+    `lake env lean FloatSpec/src/Core/Digits.lean` check then passed again
+    with warnings only. This confirms the required repair is a coherent
+    signed-quotient tranche through the dependent scale/slice stack, not just
+    a local wrapper around `Zdigit_scale_point`.
+    Config-provider harness attempt `.change_log/codex_attempt_20260714_173659`
+    rechecked the exact upstream theorem after the signed-`Zdigit` repair and
+    again left `Digits.lean` unchanged (`target_before.lean` and
+    `target_after.lean` identical). A live probe now evaluates
+    `(Zscale 10 (-1) (-1), Zdigit 10 (Zscale 10 (-1) (-1)) 0,
+    Zdigit 10 (-1) (0 - (-1)))` to `(-1, -1, 0)`: the old Euclidean-digit
+    counterexample changed from left digit `9` to signed left digit `-1`, but
+    the exact upstream theorem is still false because `Zscale`'s negative
+    branch still uses Lean `/` rather than Flocq `Z.quot`. A controlled manual
+    probe in the same turn changed only the negative `Zscale` branch to
+    `Int.tdiv`; `lake env lean FloatSpec/src/Core/Digits.lean` then failed at
+    the dependent scale/slice proof surface, including `Zdigit_scale_point`,
+    `Zsame_sign_scale`, `Zscale_mul_pow`, `Zscale_scale`,
+    `Zslice_div_pow`, and `Zplus_slice`. The probe was reverted and the
+    focused Lean check passed again. This reconfirms that the required repair
+    is the broader signed-quotient `Zscale`/`Zslice` tranche.
+    Config-provider harness attempt `.change_log/codex_attempt_20260714_180608`
+    targeted the shared `Zscale` definition directly. It tried the faithful
+    repair direction by changing the negative branch to `Int.tdiv`,
+    generalizing `Zdigit_div_pow` to truncating quotients, removing the extra
+    nonnegative side condition from the scale-digit proof surface, and
+    propagating the change into slice/division helpers. The attempt then
+    restored `Digits.lean` to its pre-attempt snapshot and classified the
+    tranche as blocked: existing downstream slice-addition infrastructure,
+    especially `Zplus_slice`, still encodes the old Euclidean `/` behavior
+    and becomes false under the partial signed-truncation repair (the harness
+    reported a counterexample shape with `beta = 10`, `k = 1`, `l = 1`,
+    `n = -9`, `m = -9`). The focused command
+    `lake env lean FloatSpec/src/Core/Digits.lean` passed after restoration.
+    The next prerequisite is therefore not just `Zscale`'s quotient branch,
+	    but a coherent signed quotient/remainder repair for `Zscale`, `Zslice`,
+	    and their slice-addition lemmas.
+	    Config-provider harness attempt `.change_log/codex_attempt_20260714_183359`
+	    targeted the foundational `Zslice` definition after the signed-`Zscale`
+	    blocker. It confirmed upstream `Digits.v` defines `Zslice` with signed
+	    `Z.rem` after `Zscale`, while local Lean still uses Euclidean `%`.
+	    Temporarily changing local `Zslice` to `Int.tmod` exposed a precise
+	    downstream mismatch: the existing local `Zplus_slice` is a Euclidean
+	    carry theorem for `n + m`, not upstream's signed slice recomposition
+	    theorem. Under signed slices, the local theorem is false for
+	    `beta = 10`, `k = 0`, `l = 1`, and `n = m = -3`: the signed slice of
+	    `n + m` is `-6`, while the local Euclidean alternatives are `4` or `5`.
+	    The attempt restored `Digits.lean`, wrote the checked blocker sidecar
+	    `.change_log/manual_attempt_20260714_zslice_signed_blocked/attempt.json`,
+	    and reported `lake env lean FloatSpec/src/Core/Digits.lean`,
+	    `scripts/audit_placeholders.sh --json FloatSpec`,
+	    `scripts/status_report.sh --write`, and `git diff --check` passing.
+	    This narrows the prerequisite to replacing the local slice-addition
+	    surface with the upstream signed `Zplus_slice` payload, supported by the
+	    missing signed `Zdigit_slice`/`Zdigit_plus` infrastructure, rather than
+	    preserving the current Euclidean carry statement.
+	    Follow-up harness attempt `.change_log/codex_attempt_20260714_193130`
+	    repaired one same-name prerequisite in that stack: public
+	    `Zsame_sign_scale` now matches upstream's product-sign payload
+	    `0 <= n * Zscale n k` instead of the previous stronger Euclidean
+	    zero-characterization Hoare postcondition. The only local dependent use
+	    in `Zdigit_slice` was updated to derive nonnegativity of the scaled value
+	    from `0 <= n * Zscale n (-k)` and `0 < n`. This does not remove any
+	    active semantic-gap candidate by itself, but it clears one false
+	    same-name support theorem that blocked the signed `Zscale`/`Zslice`
+	    tranche.
+	    Config-provider harness retry `.change_log/codex_attempt_20260714_194553`
+	    then reattempted the active `Zdigit_scale` target with that prerequisite
+	    fixed. The provider again tried the faithful direction: changing
+	    `Zscale`'s negative branch to `Int.tdiv` and adding the exact signed
+	    `Zdigit_scale` theorem. The target was locally plausible, but the attempt
+	    restored the source and classified the exact theorem as still blocked by
+	    downstream proofs that preserve old Euclidean division/slice semantics:
+	    `Zscale_scale`, `Zslice_div_pow`, and especially the local
+	    `Zplus_slice`. With truncating `Zscale`, `beta = 10`, `k = 1`, `l = 1`,
+	    and `n = m = -9`, the current local `Zplus_slice` shape is false:
+	    `Zslice (n + m) = 9`, while its two Euclidean carry alternatives are `0`
+	    and `1`. The checked classifier for the retry records `result =
+	    blocked`, `coq_alignment = checked`, `build = pass`, and no source
+	    changes left behind. The next concrete prerequisite is to replace local
+	    `Zplus_slice` with upstream's signed slice recomposition theorem instead
+	    of preserving the current carry theorem.
+	    Harness attempt `.change_log/codex_attempt_20260714_201257` then
+	    repaired that same-name support theorem: public `Zplus_slice` now has the
+	    upstream slice-recomposition statement
+	    `Zslice n k l1 + Zscale (Zslice n (k + l1) l2) l1 =
+	    Zslice n k (l1 + l2)` under `0 <= l1` and `0 <= l2`, instead of the
+	    stale Euclidean carry theorem over `n + m`. The old carry theorem was
+	    not preserved under the upstream name. This is still a support repair,
+	    not an active-candidate closure, because `Zscale` and `Zslice` definitions
+	    still need their signed quotient/remainder alignment before exact
+	    `Zdigit_scale` can be restored.
+	    Post-`Zplus_slice` retry `.change_log/codex_attempt_20260714_203427`
+	    reattempted the active `Zdigit_scale` target again. It left no source
+	    changes and classified the exact theorem as still blocked, but narrowed
+	    the next prerequisite: `Zdigit_div_pow` is still a nonnegative/positive
+	    numerator theorem over local Euclidean `/`. Upstream needs the signed
+	    `Z.quot` payload
+	    `Zdigit beta (Int.tdiv n (beta ^ k'.natAbs)) k =
+	    Zdigit beta n (k + k')` under `0 <= k` and `0 <= k'`, with no
+	    `0 < n` restriction. Until that theorem and its callers move to signed
+	    quotient semantics, changing `Zscale`'s negative branch to `Int.tdiv`
+	    keeps breaking `Zslice_div_pow` and the affected `Zscale_*` proofs.
+	    Harness attempt `.change_log/codex_attempt_20260714_204822` repaired
+	    that support theorem: public `Zdigit_div_pow` now matches the upstream
+	    signed quotient payload, using `Int.tdiv n (beta ^ l.natAbs)` and only
+	    assuming `0 <= k` and `0 <= l`. The previous nonnegative Euclidean `/`
+	    behavior was preserved privately as `Zdigit_div_pow_nonneg_ediv` for
+	    current local callers such as `Zdigit_scale_point`. A focused
+	    `lake env lean FloatSpec/src/Core/Digits.lean` check, status/placeholder
+	    audits, `git diff --check`, and full `lake build` all passed after this
+	    repair. This is another same-name support repair rather than an
+	    active-candidate closure; `Zscale`'s negative branch still needs to move
+	    from `/` to `Int.tdiv` before exact `Zdigit_scale` can be restored.
+	    Retry `.change_log/codex_attempt_20260714_210940` reattempted
+	    `Zdigit_scale` after the `Zdigit_div_pow` support repair. The exact
+	    theorem and `Int.tdiv` negative branch were locally plausible, but the
+	    attempt restored the partial edit and classified the active target as
+	    still blocked by the remaining Euclidean scale/slice surface:
+	    `Zscale_mul_pow`, `Zscale_scale`, `Zslice_div_pow`, and helper
+	    `zscale_div_pow_nonneg` still need signed quotient semantics before
+	    `Zscale` can be switched. The focused Lean check, placeholder audit,
+	    status refresh, and `git diff --check` passed after restoration; no
+	    source changes were left by that retry.
+	    Follow-up harness attempt `.change_log/codex_attempt_20260714_212530`
+	    targeted the first remaining support blocker, `Zscale_mul_pow`. It
+	    checked upstream `Core/Digits.v` and tried the faithful direction by
+	    switching the negative `Zscale` branch from Lean Euclidean `/` to
+	    `Int.tdiv`, then repairing the scale/multiply proof against signed
+	    quotient cancellation. That target-only patch again had to be restored:
+	    the surrounding scale/slice surface still assumes Euclidean division,
+	    with failures reported at `Zdigit_scale_point`, `Zsame_sign_scale`,
+	    `Zscale_scale`, `Zslice_div_pow`, and later scale/slice helpers. The
+	    checked sidecar
+	    `.change_log/manual_attempt_20260714_zscale_mul_pow_blocked/attempt.json`
+	    records `result = blocked`, `coq_alignment = checked`, and
+	    `build = pass`. No source changes were left by the attempt; the blocker
+	    remains the broader signed quotient `Zscale`/`Zslice` tranche, not
+	    `Zscale_mul_pow` in isolation.
+	    Harness attempt `.change_log/codex_attempt_20260714_214654` then
+	    repaired one same-name support theorem in that stack: public
+	    `Zscale_scale` now matches the upstream `Core/Digits.v` payload
+	    `Zscale (Zscale n k) k' = Zscale n (k + k')` with only the upstream
+	    `0 <= k` precondition. The old local all-exponent theorem with
+	    divisibility side conditions was preserved privately as
+	    `zscale_scale_divisible` for the current Euclidean-scale callers, and
+	    `Zslice_scale` was updated to use that private compatibility helper.
+	    The checked sidecar
+	    `.change_log/codex_attempt_20260714_214654/zscale_scale_checked_proved.json`
+	    records `result = proved`, `coq_alignment = checked`,
+	    `statement_changed = true`, and `build = pass`. This is a support
+	    repair rather than an active-candidate closure; exact `Zdigit_scale`
+	    still requires the signed quotient `Zscale`/`Zslice` tranche.
+	    Harness attempt `.change_log/codex_attempt_20260714_220639` then
+	    targeted the next same-name support blocker, `Zslice_div_pow`. It left
+	    no source changes and classified the exact upstream signed-quotient
+	    payload as blocked under current local semantics. The checked
+	    counterexample is `beta = 10`, `n = -1`, `k = 1`, `k1 = 1`,
+	    `k2 = 1`: `Zslice 10 (Int.tdiv (-1) (10^1)) 1 1 = 0`, while
+	    `Zslice 10 (-1) (1 + 1) 1 = 9`. The failure is caused by the remaining
+	    mismatch that local `Zscale` still uses Lean Euclidean `/` in its
+	    negative branch and local `Zslice` still uses Euclidean `%`, while
+	    upstream uses `Z.quot`/`Z.rem`. The nested classifier
+	    `.change_log/manual_attempt_20260714_zslice_div_pow_blocked/attempt.json`
+	    records `result = blocked`, `coq_alignment = checked`, and
+	    `build = pass`; focused `Digits.lean`, placeholder audit, status
+	    refresh, and `git diff --check` passed, with no Lean source change
+	    left by this attempt.
+	    Harness attempt `.change_log/codex_attempt_20260714_223222`
+	    re-targeted the `Zscale` definition itself after the `Zscale_scale`
+	    support repair. It compared against upstream `Digits.v`, confirmed that
+	    upstream `Zscale` uses `Z.quot`, and probed the faithful direction by
+	    changing the negative branch to `Int.tdiv`. The probe was restored:
+	    changing `Zscale` alone still breaks the current Euclidean
+	    slice/recomposition surface. The provider reported a standalone
+	    recomposition mismatch with signed `Zscale` but current Euclidean
+	    `Zslice`: for `beta = 10`, `n = -3`, `k = 0`, `l1 = 1`, and
+	    `l2 = 1`, the slice recomposition shape gives `(7, 97)`. The checked
+	    classifier
+	    `.change_log/manual_attempt_20260714_zscale_signed_quot_blocked/attempt.json`
+	    records `result = blocked`, `coq_alignment = checked`, and
+	    `build = pass`. No source changes were left by this attempt; the next
+	    prerequisite is the signed `Zslice`/`Z.rem` alignment and dependent
+	    slice lemmas, not a standalone `Zscale` switch.
+	    Harness attempt `.change_log/codex_attempt_20260714_224035` then
+	    targeted the `Zslice` definition directly. It confirmed upstream
+	    `Zslice` uses signed `Z.rem` and probed the local change from
+	    Euclidean `%` to `Int.tmod`, but restored the edit because the current
+	    quotient/slice proof surface is not yet coherent under signed
+	    quotient/remainder semantics. The checked classifier
+	    `.change_log/manual_attempt_20260714_zslice_signed_rem_blocked/attempt.json`
+	    records `result = blocked`, `coq_alignment = checked`, and
+	    `build = pass`: changing `Zslice` alone is blocked until `Zscale`'s
+	    negative branch uses `Int.tdiv` and dependent `Zplus_slice`,
+	    `zscale_div_pow_nonneg`, and `Zslice_div_pow` proofs use truncating
+	    quotient decomposition rather than Lean Euclidean `/` and `%`.
+	    Harness attempt `.change_log/codex_attempt_20260714_235829`
+	    re-ran the active `Zdigit_scale` target after the latest signed digit
+	    repairs. It left no source changes and wrote the checked classifier
+	    `.change_log/manual_attempt_20260715_000553_zdigit_scale_blocked/attempt.json`:
+	    with the current local `Zscale` negative branch still using Lean `/`,
+	    the exact upstream theorem remains false at
+	    `beta = 10`, `n = -1`, `k = -1`, and `k' = 0`, where the live probe
+	    evaluates `(Zscale, left digit, right digit)` to `(-1, -1, 0)`.
+	    A manual broader probe then switched `Zscale` to `Int.tdiv` and added
+	    the exact public `Zdigit_scale` wrapper; that target and several
+	    signed support proofs became locally plausible, but the file exposed
+	    the remaining real semantic conflict in `zscale_div_pow_nonneg` and
+	    `Zplus_slice`, which still combine signed quotient behavior with
+	    Euclidean outer `/` and `%` decomposition. The probe was restored from
+	    the harness `target_before.lean`, and `lake env lean
+	    FloatSpec/src/Core/Digits.lean` passed again. The next repair must be
+	    a coherent signed `Zscale`/`Zslice`/`Zplus_slice` tranche, not an
+	    isolated `Zdigit_scale` theorem.
+	    Follow-up harness attempt `.change_log/codex_attempt_20260715_015614`
+	    targeted `Zplus_slice` directly. It confirmed that the public
+	    statement is already the upstream recomposition payload, but its
+	    current proof still depends on the Euclidean helper
+	    `int_emod_mul_decompose`, local `Zslice` using `%`, and local
+	    `Zscale` using `/`. The provider probed the faithful direction by
+	    changing `Zscale`/`Zslice` to `Int.tdiv`/`Int.tmod`, then restored the
+	    probe after `lake env lean FloatSpec/src/Core/Digits.lean` failed in
+	    earlier scale/digit/slice proofs before the target-local repair could
+	    complete. The checked manual classifier
+	    `.change_log/manual_attempt_20260715_020355_zplus_slice_signed_tranche_blocked/attempt.json`
+	    records `result = blocked`, `coq_alignment = checked`, and
+	    `build = pass`. This narrows the next repair to a broad coherent
+	    signed definition/support tranche: `Zscale`, `Zslice`,
+	    `Zdigit_slice`, `Zslice_div_pow`, and `Zplus_slice` must move
+	    together.
+	    Config-provider harness attempt `.change_log/codex_attempt_20260715_025434`
+	    re-ran the active `Zdigit_scale` target after the latest ledger update.
+	    It again tried the faithful direction by switching the negative
+	    `Zscale` branch to `Int.tdiv` and adding the exact public
+	    `Zdigit_scale` theorem with only the upstream `0 <= k'` assumption.
+	    The target theorem itself became plausible, but the provider restored
+	    the probe because the remaining local `Zslice`/`Zplus_slice` surface
+	    still depends on Euclidean `/` and `%` behavior. The attempt left no
+	    source patch and classified the target as blocked; focused
+	    `lake env lean FloatSpec/src/Core/Digits.lean`,
+	    `scripts/audit_placeholders.sh --json FloatSpec`,
+	    `scripts/status_report.sh --write`, and full `lake build` passed.
+	    This reconfirms that no weakened wrapper should be added for
+	    `Zdigit_scale`; the next implementation tranche must jointly migrate
+	    `Zscale`, `Zslice`, `Zdigit_slice`, `Zslice_div_pow`, and
+	    `Zplus_slice` to signed `Z.quot`/`Z.rem` semantics.
+	    Config-provider harness attempt `.change_log/codex_attempt_20260715_034735`
+	    targeted that signed `Zscale`/`Zslice` support tranche directly at the
+	    `Zslice` definition. It compared the live file against upstream
+	    `Core/Digits.v`, probed the faithful `Int.tdiv`/`Int.tmod` direction,
+	    and restored the probe because the repair is still not local to the two
+	    definitions. The checked blocker is now sharper: before the public
+	    definitions can move, the file needs signed `Zdigit_mod_pow` and
+	    `Zdigit_mod_pow_out`, an unrestricted signed `Zdigit_slice`, truncating
+	    quotient versions of `Zslice_div_pow` and `zscale_div_pow_nonneg`, and a
+	    signed product-remainder decomposition for `Zplus_slice`. The focused
+	    `lake env lean FloatSpec/src/Core/Digits.lean` check, placeholder audit,
+	    status refresh, `git diff --check`, and full `lake build` all passed
+	    after the probe was restored.
+	    Follow-up support harness attempt
+	    `.change_log/codex_attempt_20260715_040846` repaired public
+	    `Zdigit_mod_pow` to the signed upstream shape over
+	    `Int.tmod n (beta ^ l.natAbs)`, with only the upstream `k < l`
+	    assumption and no positive-numerator precondition. Current Euclidean
+	    slice callers bridge through local nonnegativity until `Zslice` itself
+	    moves to signed remainder semantics. Support harness attempt
+	    `.change_log/codex_attempt_20260715_043830` then repaired public
+	    `Zdigit_mod_pow_out` to the signed upstream `Z.rem` payload, represented
+	    by `Int.tmod`, under only `0 <= k' <= k`; the old Euclidean `%` theorem
+	    was kept privately as `Zdigit_emod_pow_out` for still-Euclidean local
+	    callers. Focused `lake env lean FloatSpec/src/Core/Digits.lean`,
+	    placeholder/status audits, and full `lake build` were reported passing
+	    by the support attempts, and the current focused Lean check also passes.
+	    These are support repairs, not active-candidate closures; exact
+	    `Zdigit_scale` still requires the broader signed `Zscale`/`Zslice`
+	    tranche plus unrestricted `Zdigit_slice`, signed `Zslice_div_pow`, and
+	    signed decomposition support for `Zplus_slice`.
+	    Harness attempt `.change_log/codex_attempt_20260715_050146` then
+	    targeted the unrestricted upstream `Zdigit_slice` theorem directly
+	    after the two signed modulo repairs. It left no source patch and wrote
+	    the checked blocker
+	    `.change_log/manual_attempt_20260715_zdigit_slice_unrestricted_blocked/attempt.json`.
+	    The remaining obstruction is not `Zdigit_mod_pow`/`Zdigit_mod_pow_out`
+	    anymore: upstream-shaped `Zdigit_slice` needs signed `Zslice`/`Z.rem`
+	    semantics plus an unrestricted signed `Zdigit_scale`/`Zscale` theorem.
+	    Local `Zslice` still uses Euclidean `%`; changing it alone breaks
+	    `Zslice_nonneg`, `Zslice_slice`, `Zplus_slice`, and later digit-count
+	    proofs, and `Zdigit_scale_point` still requires `0 <= -k` or `0 <= n`.
+	    The attempt reported focused `Digits.lean`, placeholder/status audits,
+	    and full `lake build` passing after restoration.
+	    Harness attempt `.change_log/codex_attempt_20260715_052830` then
+	    targeted the `Zscale` definition itself after the signed
+	    `Zdigit_div_pow`, `Zdigit_mod_pow`, and `Zdigit_mod_pow_out` repairs.
+	    It confirmed the faithful direction, because upstream `Zscale` uses
+	    `Z.quot` and local `Zscale` still uses Lean `/` in the negative branch.
+	    The minimal `Int.tdiv` branch switch was restored rather than left as a
+	    partial semantic migration. The precise remaining blocker is the local
+	    slice stack: `zscale_div_pow_nonneg` and `Zplus_slice` are still built
+	    around Euclidean division/remainder decomposition, while upstream also
+	    requires `Zslice` to use signed `Z.rem` and `Zslice_div_pow` to use
+	    `Z.quot`. The attempt reported focused `Digits.lean`, placeholder/status
+	    audits, `git diff --check`, and full `lake build` passing after
+	    rollback. The next prerequisite remains a joint signed migration of
+	    `Zscale`, `Zslice`, `Zslice_div_pow`, `zscale_div_pow_nonneg`, and
+	    `Zplus_slice`, not an isolated `Zscale` branch edit.
+	    Harness attempt `.change_log/codex_attempt_20260715_060414` targeted
+	    same-name support theorem `Zslice_div_pow`, whose upstream statement is
+	    over `Z.quot`. It left no source patch and wrote the checked blocker
+	    `.change_log/manual_attempt_20260715_zslice_div_pow_signed_quot_blocked/attempt.json`.
+	    The upstream-aligned `Int.tdiv` statement is false under the live mixed
+	    definitions: with `beta = 10`, `n = -1`, `k = 1`, `k1 = 1`, and
+	    `k2 = 1`, the two sides evaluate to `0` and `9`. This reconfirms that
+	    `Zslice_div_pow` cannot be repaired independently of the signed
+	    `Zscale`/`Zslice`/`Zplus_slice`/`zscale_div_pow_nonneg` migration.
+	    Support harness attempt `.change_log/codex_attempt_20260715_071443`
+	    then targeted the Euclidean product-remainder helper that current
+	    `Zplus_slice` uses. It preserved the old private
+	    `int_emod_mul_decompose` and added/proved private
+	    `int_tmod_mul_decompose`, the signed truncating counterpart
+	    `Int.tmod a (b * c) = Int.tmod a b + b * Int.tmod (Int.tdiv a b) c`
+	    for positive `b` and `c`. This clears one local support prerequisite
+	    for replacing the Euclidean `Zplus_slice` proof with a signed
+	    `Z.rem`/`Z.quot` proof, but it is not an active-candidate closure by
+	    itself. The attempt reported focused `Digits.lean`, placeholder/status
+	    audits, `git diff --check`, and full `lake build` passing.
+	    Follow-up harness attempt `.change_log/codex_attempt_20260715_073336`
+	    targeted `Zplus_slice` with `int_tmod_mul_decompose` now available. It
+	    left no source patch and classified the target as still blocked: the
+	    recomposition payload is the upstream one, but it cannot be repaired
+	    locally while live `Zscale` still uses Lean `/` in the negative branch
+	    and live `Zslice` still uses Euclidean `%`. The next proof-producing
+	    step must move those definitions together, then reuse the signed
+	    decomposition helper inside the migrated `Zplus_slice` proof.
+	    Harness attempt `.change_log/codex_attempt_20260715_162050`
+	    completed that support tranche: `Zscale` now uses `Int.tdiv` in the
+	    negative branch, `Zslice` now uses `Int.tmod`, and the dependent
+	    `Zslice_div_pow`, `zscale_div_pow_nonneg`, and `Zplus_slice` proofs were
+	    adjusted to the signed quotient/remainder shape. The attempt reported
+	    focused `lake env lean FloatSpec/src/Core/Digits.lean`,
+	    `scripts/audit_placeholders.sh --json FloatSpec`,
+	    `scripts/status_report.sh --write`, full `lake build`, and
+	    `git diff --check` passing, with placeholder/trust findings reduced
+	    from 56 to 53. This is still a support-tranche completion rather than an
+	    active-candidate closure: exact public `Zdigit_scale` remains absent and
+	    must be restored next against the now-signed definitions.
+	    Follow-up harness attempt `.change_log/codex_attempt_20260715_164646`
+	    restored exact public `Zdigit_scale` in `FloatSpec/src/Core/Digits.lean`
+	    with the upstream precondition `0 <= k'` and payload
+	    `Zdigit (Zscale n k) k' = Zdigit n (k' - k)`, using the signed
+	    `Zscale` definition and signed `Zdigit_div_pow`. The older
+	    `Zdigit_scale_point` Hoare wrapper is now only a compatibility theorem
+	    derived from exact `Zdigit_scale`; it is no longer counted as the
+	    faithful counterpart. The nested classifier
+	    `.change_log/manual_attempt_20260715_zdigit_scale_proved/attempt.json`
+	    records `result = proved`, `coq_alignment = checked`, and
+	    `build = pass`; the harness reported focused `Digits.lean`,
+	    placeholder/status audits, full `lake build`, and `git diff --check`
+	    passing.
+	    Status: implemented and removed from active semantic gaps.
   - `Zslice_div_pow_scale`: partially present as
     `Zslice_div_pow_scale_nonnegKp`, but the local theorem has a different
     scaled/divided expression and extra nonnegativity/order assumptions.
-    Status: renamed/split but not a faithful counterpart.
+    Pipeline attempt `.change_log/codex_attempt_20260704_174539` left
+    `Digits.lean` unchanged and classified the exact theorem as blocked by
+    missing unrestricted digit infrastructure: upstream proves it through
+    unrestricted `Zdigit_ext`, `Zdigit_slice`, and `Zdigit_div_pow`, whereas
+    current Lean has `Zdigit_ext_nonneg` and local slice/division lemmas with
+    nonnegative or positive numerator restrictions. Subscription reattempt
+    `.change_log/codex_attempt_20260711_195128` reconfirmed the same blocker:
+    reducing the Hoare wrapper to the intended integer equality leaves signed
+    quotient/remainder and slice-scaling obligations not covered by
+    `Zdigit_ext_nonneg`, `Zdigit_slice`, or `Zdigit_div_pow`. Status:
+    renamed/split but not a faithful counterpart; exact theorem still
+    required after the signed digit/slice/division lemmas are strengthened.
+    Subscription harness attempt `.change_log/codex_attempt_20260713_085747`
+    rechecked the current upstream four-argument statement from
+    `Core/Digits.v:656` and left source code unchanged. The existing local
+    comment/wrapper around `Digits.lean:2803` is for a different older payload
+    with an extra `k'` and product by `beta^k'`; the current upstream theorem
+    instead relates `Zslice (Z.quot n (Zpower beta k)) k1 k2` to
+    `Zscale (Zslice n k (k1 + k2)) (-k1)` under only `0 <= k`. The blocker is
+    still the missing unrestricted stack: exact proof needs unrestricted
+    `Zdigit_ext`, `Zdigit_scale`, `Zdigit_slice`, and `Zdigit_div_pow`, while
+    local counterparts impose nonnegativity/positivity/sign assumptions. The
+    local helper docstring was repaired after the attempt so it no longer
+    presents `Zslice_div_pow_scale_nonnegKp` as the current upstream theorem.
+    Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_111757` rechecked the same exact
+    current upstream statement, left source code unchanged
+    (`target_before.lean` and `target_after.lean` identical), and classified
+    it as still blocked. Its nested classifier
+    `.change_log/codex_attempt_20260713_032022` records
+    `coq_alignment = checked`: exact restoration still requires unrestricted
+    `Zdigit_ext`, `Zdigit_scale`, `Zdigit_slice`, and `Zdigit_div_pow` over
+    signed quotient/remainder semantics; local counterparts remain restricted
+    by nonnegativity, positivity, divisibility, and the current Lean
+    division/remainder semantics. Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_122315` rechecked the exact upstream
+    theorem against `Zslice_div_pow_scale_nonnegKp`, left `Digits.lean`
+    unchanged (`target_before.lean` and `target_after.lean` identical), and
+    classified the target as blocked. The explicit checked classifier
+    `.change_log/manual_attempt_20260713_zslice_div_pow_scale_blocked/attempt.json`
+    records `result = blocked`, `coq_alignment = checked`, and
+    `build = pass`: the local helper is still the older product-by-power
+    payload, while the exact upstream theorem needs unrestricted
+    `Zdigit_ext`, `Zdigit_scale`, `Zdigit_slice`, and `Zdigit_div_pow`.
+    Config-provider harness attempt
+    `.change_log/codex_attempt_20260713_205848` rechecked the same exact
+    four-argument upstream statement after the signed-`Zdigit_ext` work and
+    still left `Digits.lean` unchanged. The attempt classified the target as
+    blocked, with the same statement-level reason: exact restoration depends
+    on unrestricted signed quotient/remainder infrastructure for
+    `Zdigit_scale`, `Zdigit_slice`, and `Zdigit_div_pow`, while
+    `Zslice_div_pow_scale_nonnegKp` remains a different product-by-power
+    theorem with extra parameters and assumptions. The harness refreshed
+    `scripts/status_report.sh --write` and
+    `scripts/audit_placeholders.sh --json FloatSpec`; counts remained
+    `sorry = 0`, `axiom = 0`, `admit = 0`, and 53 placeholder/trust findings.
+    Config-provider harness attempt `.change_log/codex_attempt_20260714_224835`
+    rechecked the active candidate after the recent `Zscale_scale` support
+    repair and the signed `Zscale`/`Zslice` definition probes. It again left
+    no source change and classified the exact upstream-shaped theorem as
+    blocked under current local definitions. The checked counterexample is
+    `beta = 2`, `n = -3`, `k = 1`, `k1 = -1`, and `k2 = 3`: the
+    signed-quotient LHS evaluates to `6`, while the current RHS evaluates to
+    `4`. The nested classifier
+    `.change_log/manual_attempt_20260714_zslice_div_pow_scale_blocked/attempt.json`
+    records `result = blocked`, `coq_alignment = checked`, and
+    `build = pass`. Exact restoration still requires aligning `Zscale` and
+    `Zslice` with signed `Z.quot`/`Z.rem` semantics and repairing the
+    dependent slice lemmas, not weakening this active theorem.
+    Follow-up support attempt `.change_log/codex_attempt_20260714_231734`
+    targeted same-name `Zdigit_slice`, because upstream
+    `Zslice_div_pow_scale` depends on unrestricted slicing. It left no source
+    changes and classified the unrestricted upstream-style support theorem as
+    blocked under current local definitions. The checked counterexample is
+    `beta = 10`, `n = -1`, `k = 0`, `l = 1`, and `m = 0`:
+    `Zdigit beta (Zslice beta n k l) m = 9`, while
+    `Zdigit beta n (k + m) = -1`. The checked sidecar
+    `.change_log/codex_attempt_20260714_231734/zdigit_slice_checked_blocked.json`
+    records `result = blocked`, `coq_alignment = checked`, and
+    `build = pass`. Removing the local `0 <= n` restriction from
+    `Zdigit_slice` still requires first aligning `Zscale`/`Zslice` with
+    signed quotient/remainder semantics.
+    Follow-up harness attempt `.change_log/codex_attempt_20260715_022442`
+    targeted the active `Zslice_div_pow_scale` candidate directly. It
+    rechecked the exact upstream statement and confirmed that it is still
+    false for the live local definitions: with `beta = 2`, `n = -3`,
+    `k = 1`, `k1 = -1`, and `k2 = 3`, the left side evaluates to `6`
+    while the right side evaluates to `4`. The provider then probed the
+    faithful semantic direction by temporarily changing `Zscale`'s negative
+    branch to `Int.tdiv` and `Zslice`'s remainder to `Int.tmod`, but restored
+    the probe after the focused check broke existing `Zscale`, `Zslice`,
+    `Zdigit_slice`, `Zslice_slice`, `Zplus_slice`, and later digit-count
+    proofs. The checked manual classifier
+	    `.change_log/manual_attempt_20260714_183121_zslice_div_pow_scale_blocked/attempt.json`
+	    records `result = blocked`, `coq_alignment = checked`, and
+	    `build = pass`. Exact restoration remains a broad signed
+	    quotient/remainder migration, not a single-target wrapper.
+	    Follow-up harness attempt `.change_log/codex_attempt_20260715_174950`
+	    restored exact public `Zslice_div_pow_scale` in
+	    `FloatSpec/src/Core/Digits.lean` with the current upstream
+	    four-argument payload
+	    `Zslice (Z.quot n (Zpower beta k)) k1 k2 =
+	    Zscale (Zslice n k (k1 + k2)) (-k1)` under only `0 <= k`.
+	    The proof adds private helper `Zdigit_slice_unrestricted` and uses the
+	    now-signed `Zdigit_scale`, `Zdigit_div_pow`, `Zdigit_slice_out`, and
+	    `Zdigit_ext` stack; the older `Zslice_div_pow_scale_nonnegKp` remains
+	    local compatibility infrastructure and is not counted as the upstream
+	    theorem. The harness reported focused `Digits.lean`, full `lake build`,
+	    placeholder/status audits, and `git diff --check` passing, with
+	    0 `sorry`, 0 `axiom`, 0 `admit`, and 53 existing placeholder/trust
+	    findings.
+	    Status: implemented and removed from active semantic gaps.
 - `Core/FIX.v`
-  - `FIX_exp_monotone`: no faithful same-payload counterpart found. Lean has
-    `FIX_exp_valid`, proving `Valid_exp`, but no `Monotone_exp (FIX_exp emin)`
-    instance/theorem with the upstream name. Status: absent, likely small.
-  - `exists_NE_FIX`: no faithful counterpart found. Lean has the generic
-    `Exists_NE` class in `Round_NE.lean`, but no FIX instance. Status: absent,
-    likely small.
+  - `FIX_exp_monotone`: restored as the exact Lean instance
+    `FloatSpec.Core.FIX.FIX_exp_monotone` in
+    `FloatSpec/src/Core/FIX.lean` after harness attempt
+    `.change_log/codex_attempt_20260704_170409`. The instance proves
+    `Monotone_exp (FIX_exp emin)` for the constant fixed exponent by
+    `le_rfl`, matching the upstream `Global Instance FIX_exp_monotone`.
+    Status: implemented and removed from active semantic gaps.
+  - `exists_NE_FIX`: restored as the exact Lean instance
+    `FloatSpec.Core.FIX.exists_NE_FIX` in `FloatSpec/src/Core/FIX.lean`
+    after harness attempt `.change_log/codex_attempt_20260704_171807`.
+    The instance proves the even-radix branch of
+    `FloatSpec.Core.RoundNE.Exists_NE beta (FIX_exp emin)` by the constant
+    exponent equations `FIX_exp emin e = emin` and
+    `FIX_exp emin (FIX_exp emin e + 1) = FIX_exp emin e`, matching upstream
+    `Global Instance exists_NE_FIX`.
+    Status: implemented and removed from active semantic gaps.
 - `Core/FLT.v`
   - `FLT_exp_monotone`: faithfully represented under the renamed Lean instance
     `FLT_exp_mono`. Status: removed from active semantic gaps.
-  - `exists_NE_FLT`: partially represented by private theorem
-    `FLT_exp_exists_NE` in `Pff2FlocqAux.lean`, specialized to Pff bounds and
-    strict precision. Upstream is a public instance for `FLT_exp` under
-    `(Z.even beta = false \/ 1 < prec)`. Status: split/private/specialized;
-    exact public instance still required.
+  - `exists_NE_FLT`: restored as the exact Lean instance
+    `FloatSpec.Core.FLT.exists_NE_FLT` in `FloatSpec/src/Core/FLT.lean`
+    after harness attempt `.change_log/codex_attempt_20260704_180501`.
+    The Lean instance uses `[Fact (beta % 2 ≠ 0 ∨ 1 < prec)]` for the
+    upstream premise `(Z.even beta = false \/ (1 < prec)%Z)` and proves
+    `FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp prec emin)` by the same
+    two branches: odd radix immediately, or the `max (e - prec) emin`
+    exponent-condition proof for the positive-precision branch. Status:
+    implemented and removed from active semantic gaps.
 - `Core/FLX.v`
   - `FLX_exp_monotone`: faithfully represented under the renamed Lean instance
     `FLX_exp_mono`. Status: removed from active semantic gaps.
-  - `exists_NE_FLX`: no faithful public counterpart found. Lean has
-    `Exists_NE` infrastructure, but no FLX instance matching the upstream
-    `NE_prop` section hypothesis. Status: absent.
+  - `exists_NE_FLX`: restored as the exact Lean instance
+    `FloatSpec.Core.FLX.exists_NE_FLX` in `FloatSpec/src/Core/FLX.lean`
+    after harness attempt `.change_log/codex_attempt_20260704_175602`.
+    The Lean instance uses `[Fact (beta % 2 ≠ 0 ∨ 1 < prec)]` to encode the
+    upstream section hypothesis
+    `NE_prop : Z.even beta = false \/ (1 < prec)%Z`, then proves
+    `FloatSpec.Core.RoundNE.Exists_NE beta (FLX_exp prec)` by the same two
+    branches: odd radix immediately, or the fixed-precision exponent equations
+    by unfolding `FLX_exp`. Status: implemented and removed from active
+    semantic gaps.
 - `Core/Generic_fmt.v`
   - `valid_rnd_DN`, `valid_rnd_UP`, `valid_rnd_ZR`: present in substance under
     renamed instances `valid_rnd_floor`, `valid_rnd_ceil`, and
     `valid_rnd_Ztrunc`. Status: removed from active semantic gaps.
-  - `valid_rnd_AW`: likely present in substance under `valid_rnd_opp`
-    together with the away-from-zero rounding construction, but not yet
-    statement-checked against upstream. Status: needs manual comparison.
+  - `valid_rnd_AW`: restored as the exact Lean instance
+    `FloatSpec.Core.Generic_fmt.valid_rnd_AW` in
+    `FloatSpec/src/Core/Generic_fmt.lean` after harness attempt
+    `.change_log/codex_attempt_20260704_181840`. The instance proves
+    `Valid_rnd FloatSpec.Core.Raux.Zaway` directly from the local
+    `Zaway_le` and `Zaway_IZR` lemmas, matching upstream
+    `Global Instance valid_rnd_AW : Valid_rnd Zaway`. Status: implemented
+    and removed from active semantic gaps.
   - `monotone_exp_not_FTZ`: present in substance as
     `monotone_exp_not_FTZ_theorem` in `FloatSpec/src/Core/Ulp.lean`, not in
     `Generic_fmt.lean`. Status: removed from active semantic gaps.
-  - `valid_rnd_NA`, `valid_rnd_N0`: not faithfully present under exact names.
-    Lean has generic `valid_rnd_N` and nearest predicates `Rnd_NA`/`Rnd_N0`,
-    but no checked exact instances for the upstream `ZnearestA`/`Znearest0`
-    modes. Status: likely small exact-name instance wrappers, but still
-    unchecked.
+  - `valid_rnd_NA`: restored as the exact Lean instance
+    `FloatSpec.Core.Generic_fmt.valid_rnd_NA` in
+    `FloatSpec/src/Core/Generic_fmt.lean` after harness attempt
+    `.change_log/codex_attempt_20260704_182605`. The instance proves
+    `Valid_rnd (Znearest ZnearestA)` by specializing the generic
+    `valid_rnd_N` instance to the upstream tie-away choice
+    `ZnearestA := fun t => decide (0 <= t)`, matching
+    `Global Instance valid_rnd_NA : Valid_rnd (Znearest (Zle_bool 0))`.
+    Status: implemented and removed from active semantic gaps.
+  - `valid_rnd_N0`: restored as the exact Lean instance
+    `FloatSpec.Core.Generic_fmt.valid_rnd_N0` in
+    `FloatSpec/src/Core/Generic_fmt.lean` after harness attempt
+    `.change_log/codex_attempt_20260704_183321`. The local
+    `Znearest0` is now the upstream rounding function
+    `Znearest (fun t => decide (t < 0))`, and the instance specializes
+    `valid_rnd_N` to that choice, matching
+    `Global Instance valid_rnd_N0 : Valid_rnd Znearest0`.
+    Status: implemented and removed from active semantic gaps.
 - `Prop/Round_odd.v`
   - `valid_rnd_odd`: present in substance as an anonymous instance
     `FloatSpec.Core.Generic_fmt.Valid_rnd Zodd` in
@@ -504,29 +2615,80 @@ Confirmed faithful counterparts removed from the active semantic gap list:
 - `cond_Ropp_mult_l`: represented by `cond_Ropp_mult_l_spec`.
 - `cond_Ropp_mult_r`: represented by `cond_Ropp_mult_r_spec`.
 - `cond_Ropp_plus`: represented by `cond_Ropp_plus_spec`.
+- `Rabs_lt`: restored as the exact Lean theorem
+  `FloatSpec.Core.Raux.Rabs_lt` in `FloatSpec/src/Core/Raux.lean` after
+  harness attempt `.change_log/codex_attempt_20260704_234132`. The theorem
+  proves `∀ x y, -y < x ∧ x < y → |x| < y` by `abs_lt.mpr`, matching
+  upstream `Theorem Rabs_lt : forall x y, (-y < x < y)%R ->
+  (Rabs x < y)%R`. Status: implemented and removed from active semantic gaps.
+- `Rabs_gt_inv`: restored as the exact Lean theorem
+  `FloatSpec.Core.Raux.Rabs_gt_inv` in `FloatSpec/src/Core/Raux.lean` after
+  target attempt `FloatSpec/src/Core/Raux.lean:662`. The theorem proves
+  `∀ x y, x < |y| → y < -x ∨ x < y` by splitting on the sign of `y`, matching
+  upstream `Theorem Rabs_gt_inv : forall x y, (x < Rabs y)%R ->
+  (y < -x \/ x < y)%R`. Status: implemented and removed from active semantic
+  gaps.
+- `Rcompare_middle`: restored as the exact Lean theorem
+  `FloatSpec.Core.Raux.Rcompare_middle` in `FloatSpec/src/Core/Raux.lean`
+  after harness attempt `.change_log/codex_attempt_20260705_000449`, with the
+  verified subscription-provider record at
+  `.change_log/codex_attempt_20260705_000449/attempt.verified.json`.
+  The theorem proves
+  `∀ x d u, Rcompare (x - d) (u - x) = Rcompare x ((d + u) / 2)` by reducing
+  both `Rcompare` calls to the same linear midpoint comparison, matching
+  upstream `Theorem Rcompare_middle`. Status: implemented and removed from
+  active semantic gaps.
+- `Rcompare_floor_ceil_middle`: restored as the exact Lean theorem
+  `FloatSpec.Core.Raux.Rcompare_floor_ceil_middle` in
+  `FloatSpec/src/Core/Raux.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_002116`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_002116/attempt.verified.json`.
+  The theorem proves
+  `∀ x, (Zfloor x : ℝ) ≠ x →
+    Rcompare (x - (Zfloor x : ℝ)) (1 / 2) =
+    Rcompare (x - (Zfloor x : ℝ)) ((Zceil x : ℝ) - x)` by deriving
+  `Zceil x = Zfloor x + 1` in the non-integral case and applying the already
+  restored `Rcompare_middle`, matching upstream
+  `Theorem Rcompare_floor_ceil_middle`. Status: implemented and removed from
+  active semantic gaps.
+- `Rcompare_ceil_floor_middle`: restored as the exact Lean theorem
+  `FloatSpec.Core.Raux.Rcompare_ceil_floor_middle` in
+  `FloatSpec/src/Core/Raux.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_003445`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_003445/attempt.verified.json`.
+  The theorem proves
+  `∀ x, (Zfloor x : ℝ) ≠ x →
+    Rcompare ((Zceil x : ℝ) - x) (1 / 2) =
+    Rcompare ((Zceil x : ℝ) - x) (x - (Zfloor x : ℝ))` by deriving
+  `Zceil x = Zfloor x + 1` in the non-integral case and applying the already
+  restored `Rcompare_middle`, matching upstream
+  `Theorem Rcompare_ceil_floor_middle`. Status: implemented and removed from
+  active semantic gaps.
+- `cond_Ropp_Rlt_bool`: restored as the exact Lean theorem
+  `FloatSpec.Core.Raux.cond_Ropp_Rlt_bool` in
+  `FloatSpec/src/Core/Raux.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_005307`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_005307/attempt.verified.json`.
+  The theorem proves
+  `∀ m, cond_Ropp (Rlt_bool m 0) m = |m|` by splitting on `m < 0`
+  and reducing `Rlt_bool`, `cond_Ropp`, and absolute value, matching upstream
+  `Theorem cond_Ropp_Rlt_bool`. Status: implemented and removed from
+  active semantic gaps.
+- `Rlt_bool_cond_Ropp`: restored as the exact Lean theorem
+  `FloatSpec.Core.Raux.Rlt_bool_cond_Ropp` in
+  `FloatSpec/src/Core/Raux.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_010850`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_010850/attempt.verified.json`.
+  The theorem proves
+  `∀ x sx, 0 < x → Rlt_bool (cond_Ropp sx x) 0 = sx` by cases on `sx`,
+  matching upstream `Theorem Rlt_bool_cond_Ropp`. Status: implemented and
+  removed from active semantic gaps.
 
-Still active after statement check:
-
-- `Rabs_lt`: local `Rabs_lt_spec` only states a boolean equivalence for
-  `|x| < y`; it does not by itself expose the Coq implication
-  `-y < x < y -> |x| < y`.
-- `Rabs_gt_inv`: no faithful counterpart found; local `Rabs_gt_inv_spec`
-  actually covers the forward `Rabs_gt` direction after argument swap.
-- `Rcompare_middle`: local `Rcompare_middle_spec` is not faithful; its carrier
-  returns `(c, c)` where both components are already
-  `Rcompare x ((d + u) / 2)`, so it does not prove the upstream comparison
-  with `Rcompare (x - d) (u - x)`.
-- `Rcompare_floor_ceil_middle`: local theorem compares floor/ceil codes
-  directly, not the upstream midpoint expression
-  `Rcompare (x - floor x) (1/2) =
-   Rcompare (x - floor x) (ceil x - x)` under non-integrality.
-- `Rcompare_ceil_floor_middle`: same issue as
-  `Rcompare_floor_ceil_middle`, with the ceiling-side midpoint expression.
-- `cond_Ropp_Rlt_bool`: local theorem compares two conditionally negated
-  variables; upstream states `cond_Ropp (Rlt_bool m 0) m = |m|`.
-- `Rlt_bool_cond_Ropp`: local theorem compares `x` with
-  `cond_Ropp b y`; upstream states
-  `0 < x -> Rlt_bool (cond_Ropp sx x) 0 = sx`.
+No active `Core/Raux.v` names remain after statement check.
 
 Checked batch 3: `Core/Zaux.v` radix and boolean-comparison proof views.
 
@@ -547,21 +2709,45 @@ Confirmed faithful counterparts removed from the active semantic gap list:
 - `Zcompare_prop`: represented by `Zcompare` plus `Zcompare_spec`, whose
   postcondition states the three upstream comparison cases as equivalences.
 
+Additional exact restoration:
+
+- `eqbool_dep`: restored as the exact Lean definition
+  `FloatSpec.Core.Zaux.eqbool_dep` in `FloatSpec/src/Core/Zaux.lean` after
+  harness attempt `.change_log/codex_attempt_20260705_012623`, with the
+  verified subscription-provider record at
+  `.change_log/codex_attempt_20260705_012623/attempt.verified.json`.
+  The definition is the upstream dependent boolean-indexed predicate:
+  at index `true`, it compares the incoming `P true` value with the
+  distinguished `h1`; at index `false`, it returns `False`. Status:
+  implemented and removed from active semantic gaps.
+- `Zpos_div_eucl_aux1_correct`: restored as the exact Lean theorem
+  `FloatSpec.Core.Zaux.Zpos_div_eucl_aux1_correct` in
+  `FloatSpec/src/Core/Zaux.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_050829`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_050829/attempt.verified.json`.
+  The theorem follows the upstream positive-integer payload by adding a
+  Core-local binary `Positive` carrier, the recursive
+  `Zpos_div_eucl_aux1` helper, and proving equality with the local
+  `Z_pos_div_eucl a (Zpos b)` quotient/remainder form. Status:
+  implemented and removed from active semantic gaps.
+- `Zpos_div_eucl_aux_correct`: restored as the exact Lean theorem
+  `FloatSpec.Core.Zaux.Zpos_div_eucl_aux_correct` in
+  `FloatSpec/src/Core/Zaux.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_053224`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_053224/attempt.verified.json`.
+  The definition `Zpos_div_eucl_aux` now follows the upstream `Pos.compare`
+  branch structure using the local binary `Positive` carrier: the small case
+  returns `(0, Zpos a)`, the equality case returns `(1, 0)`, and the greater
+  case delegates to `Zpos_div_eucl_aux1`; the theorem proves equality with
+  `Z_pos_div_eucl a (Zpos b)`. Status: implemented and removed from active
+  semantic gaps. No active `Core/Zaux.v` names remain.
+
 Still active after statement check:
 
-- `eqbool_dep`: this is a Coq proof-irrelevance helper used to prove
-  `eqbool_irrelevance`. No explicit Lean declaration/counterpart was found.
-  It may be a proof-engineering artifact rather than a semantic float theorem,
-  but it stays active until the audit has a policy for excluding such names.
-- `Zpos_div_eucl_aux1_correct`: Lean has
-  `Zpos_div_eucl_aux1_correct_spec`, but the local carrier is direct
-  `Int` division/modulo with statement `result = (a / b, a % b)`, while
-  upstream proves equality between a recursive positive-integer helper and
-  `Z.pos_div_eucl a (Zpos b)`. Status: not removed without a source-faithful
-  wrapper or an explicit equivalence proof.
-- `Zpos_div_eucl_aux_correct`: same issue as
-  `Zpos_div_eucl_aux1_correct`; the local statement is useful but not the
-  upstream positive-helper theorem.
+- No active `Core/Zaux.v` names remain after the two positive-division helper
+  restorations above.
 
 Checked batch 4: `Core/Round_pred.v` rounding predicate lemmas.
 
@@ -606,33 +2792,118 @@ Confirmed faithful counterparts removed from the active semantic gap list:
   corresponding `_spec` theorems with the same interval equivalence and
   endpoint hypotheses.
 
-Still active after statement check:
+Additional exact restoration:
 
-- `satisfies_any_eq`: local `satisfies_any_eq_spec` is over
-  `Generic_fmt.satisfies_any`, which currently means only `∃ x, F x`.
-  Upstream `Round_pred.satisfies_any` packages `F 0`, symmetry under
-  negation, and DN totality. This is a real statement mismatch.
-- `satisfies_any_imp_DN`: local `_spec` assumes
-  `round_pred_total (Rnd_DN_pt F)` directly, instead of deriving
-  `round_pred (Rnd_DN_pt F)` from upstream `satisfies_any F`.
-- `satisfies_any_imp_UP`: local `_spec` assumes
-  `round_pred_total (Rnd_UP_pt F)` directly, instead of deriving it via DN
-  totality and symmetry from upstream `satisfies_any F`.
-- `satisfies_any_imp_ZR`: local `_spec` assumes
-  `round_pred_total (Rnd_ZR_pt F)` directly, instead of deriving it from
-  upstream `satisfies_any F`.
-- `NG_existence_prop`: no faithful counterpart found. The upstream proposition
-  is `∀ x d u, ¬ F x -> Rnd_DN_pt F x d -> Rnd_UP_pt F x u ->
-  P x u ∨ P x d`.
-- `satisfies_any_imp_NG`: local `_spec` assumes NG totality plus
-  tie-uniqueness; upstream assumes `satisfies_any F` plus
-  `NG_existence_prop F P` and derives totality.
-- `satisfies_any_imp_NA`: local `_spec` assumes `round_pred_total
-  (Rnd_NA_pt F)` and `F 0`; upstream derives the full `round_pred` from
-  `satisfies_any F`.
-- `satisfies_any_imp_N0`: local `_spec` assumes `round_pred_total
-  (Rnd_N0_pt F)` and `F 0`; upstream derives the full `round_pred` from
-  `F 0` plus `satisfies_any F`.
+- `NG_existence_prop`: restored as the exact Lean definition
+  `FloatSpec.Core.Round_pred.NG_existence_prop` in
+  `FloatSpec/src/Core/Round_pred.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_013911`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_013911/attempt.verified.json`.
+  The definition states
+  `∀ x d u, ¬ F x → Rnd_DN_pt F x d → Rnd_UP_pt F x u → P x u ∨ P x d`,
+  matching upstream `Definition NG_existence_prop`. Status: implemented and
+  removed from active semantic gaps.
+- `satisfies_any_eq`: restored as the exact Lean theorem
+  `FloatSpec.Core.Round_pred.satisfies_any_eq` in
+  `FloatSpec/src/Core/Round_pred.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_015324`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_015324/attempt.verified.json`.
+  This tranche also restored the upstream `Round_pred.satisfies_any`
+  predicate as a structural inductive proposition packaging `F 0`,
+  closure under negation, and DN totality. The theorem proves that
+  pointwise-equivalent formats preserve this predicate, matching upstream
+  `Theorem satisfies_any_eq`; downstream `Round_NE.satisfies_any_imp_NE`
+  was qualified to keep its pre-existing `Generic_fmt.satisfies_any`
+  meaning after the namespace gained the Flocq predicate. Status:
+  implemented and removed from active semantic gaps.
+- `satisfies_any_imp_DN`: restored as the exact Lean theorem
+  `FloatSpec.Core.Round_pred.satisfies_any_imp_DN` in
+  `FloatSpec/src/Core/Round_pred.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_020600`, with the verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_020600/attempt.verified.json`.
+  The theorem proves
+  `∀ F, satisfies_any F → round_pred (Rnd_DN_pt F)` by destructing the
+  restored Flocq-style `satisfies_any` predicate to obtain DN totality and
+  using the existing DN monotonicity argument, matching upstream
+  `Theorem satisfies_any_imp_DN`. The `_spec` wrapper now takes
+  `hAny : satisfies_any F` as an explicit hypothesis instead of assuming
+  `round_pred_total (Rnd_DN_pt F)` directly. Status: implemented and
+  removed from active semantic gaps.
+
+- `satisfies_any_imp_UP`: restored as the exact Lean theorem
+  `FloatSpec.Core.Round_pred.satisfies_any_imp_UP` in
+  `FloatSpec/src/Core/Round_pred.lean`. The theorem proves
+  `∀ F, satisfies_any F → round_pred (Rnd_UP_pt F)` by taking DN totality at
+  `-x`, transporting the witness through `Rnd_UP_pt_opp_pure`, and using UP
+  monotonicity, matching upstream `Theorem satisfies_any_imp_UP`. The `_spec`
+  wrapper now takes `hAny : satisfies_any F` as an explicit hypothesis instead
+  of assuming `round_pred_total (Rnd_UP_pt F)` directly. Status: implemented
+  and removed from active semantic gaps.
+
+- `satisfies_any_imp_ZR`: restored as exact Lean theorem
+  `FloatSpec.Core.Round_pred.satisfies_any_imp_ZR` in
+  `FloatSpec/src/Core/Round_pred.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_022956`, with verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_022956/attempt.verified.json`.
+  The theorem proves `∀ F, satisfies_any F → round_pred (Rnd_ZR_pt F)` by
+  splitting totality on input sign, using DN totality for nonnegative inputs,
+  `satisfies_any_imp_UP` for negative inputs, and the same ZR monotonicity
+  argument as upstream `Rnd_ZR_pt_monotone`. The `_spec` wrapper now takes
+  `hAny : satisfies_any F` instead of assuming `round_pred_total (Rnd_ZR_pt F)`
+  directly. Status: implemented and removed from active semantic gaps.
+
+- `satisfies_any_imp_NG`: restored as exact Lean theorem
+  `FloatSpec.Core.Round_pred.satisfies_any_imp_NG` in
+  `FloatSpec/src/Core/Round_pred.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_024140`, with verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_024140/attempt.verified.json`.
+  The theorem proves
+  `∀ F P, satisfies_any F → NG_existence_prop F P →
+  round_pred_total (Rnd_NG_pt F P)`, matching upstream
+  `Theorem satisfies_any_imp_NG`. The proof obtains DN/UP witnesses from
+  `satisfies_any_imp_DN` and `satisfies_any_imp_UP`, chooses the nearer
+  endpoint in strict-distance cases, and uses `NG_existence_prop` to select the
+  tie endpoint in the non-representable equal-distance case. The checker now
+  decides totality rather than full `round_pred`, because upstream NG existence
+  does not assert monotonicity for arbitrary `P`; the `_spec` wrapper now takes
+  `hAny : satisfies_any F` and `hP : NG_existence_prop F P` directly. Status:
+  implemented and removed from active semantic gaps.
+
+- `satisfies_any_imp_NA`: restored as exact Lean theorem
+  `FloatSpec.Core.Round_pred.satisfies_any_imp_NA` in
+  `FloatSpec/src/Core/Round_pred.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_043834`, with verified
+  subscription-provider record at
+  `.change_log/codex_attempt_20260705_043834/attempt.verified.json`.
+  The theorem proves `∀ F, satisfies_any F → round_pred (Rnd_NA_pt F)`,
+  matching upstream `Theorem satisfies_any_imp_NA`. The proof derives NA
+  totality by instantiating `satisfies_any_imp_NG` with predicate
+  `fun x f => |x| ≤ |f|`, uses the sign split on the input to satisfy
+  `NG_existence_prop`, converts NG witnesses through `Rnd_NA_NG_pt_spec`, and
+  obtains monotonicity from `Rnd_NA_pt_monotone_spec`. The `_spec` wrapper now
+  takes `hAny : satisfies_any F` instead of assuming `round_pred_total
+  (Rnd_NA_pt F)` and `F 0` directly. Status: implemented and removed from
+  active semantic gaps.
+
+Confirmed faithful counterparts removed from the active semantic gap list:
+
+- `satisfies_any_imp_N0`: restored as the exact Lean theorem
+  `FloatSpec.Core.Round_pred.satisfies_any_imp_N0` in
+  `FloatSpec/src/Core/Round_pred.lean`. The theorem proves
+  `∀ F, F 0 → satisfies_any F → round_pred (Rnd_N0_pt F)`, matching upstream
+  `Theorem satisfies_any_imp_N0`. The proof derives N0 totality through
+  `satisfies_any_imp_NG` with predicate `fun x f => |f| ≤ |x|`, uses the
+  upstream sign split to satisfy `NG_existence_prop`, converts NG witnesses
+  through `Rnd_N0_NG_pt_spec`, and obtains monotonicity from
+  `Rnd_N0_pt_monotone_spec`. The `_spec` wrapper now takes `hF0 : F 0` and
+  `hAny : satisfies_any F` instead of assuming `round_pred_total
+  (Rnd_N0_pt F)` directly. Status: implemented and removed from active
+  semantic gaps.
 
 Checked batch 5: `IEEE754/Binary.v` base binary model names.
 
@@ -647,47 +2918,502 @@ Confirmed faithful counterparts removed from the active semantic gap list:
   for `Binary754`.
 - `is_nan`: represented by `is_nan_B`, the local NaN classifier for
   `Binary754`.
-- `Bone`: represented by `binary_one`; `Bone_correct`, `is_finite_Bone`, and
-  `Bsign_Bone` expose the expected constant-one payloads.
+- `Bone`: restored as the exact BSN-layer Lean definition
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean:Bone`, using `SF2B` on the
+  standard finite representation of positive one. The Binary layer still has
+  `binary_one`, `Bone_correct`, `is_finite_Bone`, and `Bsign_Bone` exposing
+  the corresponding constant-one payloads for `IEEE754/Binary.v`.
+- `nan_pl`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.nan_pl` in `FloatSpec/src/IEEE754/Binary.lean`
+  after harness attempt `.change_log/codex_attempt_20260705_055319`. The
+  definition implements upstream `Zlt_bool (Zpos (digits2_pos pl)) prec` using
+  the local `digits2_Pnat` digit-length bridge, with a zero guard for the extra
+  `Nat` payload value that has no Coq `positive` counterpart. Status:
+  implemented and removed from active semantic gaps.
+- `Bcompare`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bcompare` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_061749`. The definition exposes
+  upstream ordered/unordered behavior directly in the Binary layer: it returns
+  `none` for NaN operands, ordered comparison codes for infinities, and
+  `Rcompare` for finite/zero values. `Bcompare_check` delegates to this exact
+  operation; `Bcompare_correct` proves the finite payload and `Bcompare_swap`
+  now preserves unordered `none` results while negating ordered codes. Status:
+  implemented and removed from active semantic gaps.
+- `Bmult`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bmult` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_063205`. The definition follows the
+  upstream adapter shape `BSN2B (mult_nan x y) (Bmult mode (B2BSN x)
+  (B2BSN y))` using a local single-NaN bridge in the Binary layer, since
+  importing `BinarySingleNaN` directly would create the existing module cycle.
+  The old `binary_mul` helper now delegates to `Bmult` with the local RTZ
+  compatibility mode and default NaN handler. Status: implemented and removed
+  from active semantic gaps; `Bmult_correct` remains active as the upstream
+  theorem payload has not been restored.
+- `Bplus`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bplus` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_064050`. The harness timed out before
+  writing a final message, but it left a focused definition that typechecks:
+  it follows the upstream adapter shape `BSN2B (plus_nan x y) (Bplus mode
+  (B2BSN x) (B2BSN y))` using the same local single-NaN bridge used for
+  `Bmult`, with an explicit NaN payload handler. Status: implemented and
+  removed from active semantic gaps after manual verification; `Bplus_correct`
+  remains active as the upstream theorem payload has not been restored.
+- `Bminus`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bminus` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_071857`. The definition follows the
+  upstream adapter shape `BSN2B (minus_nan x y) (Bminus mode (B2BSN x)
+  (B2BSN y))` using the local single-NaN bridge, with an explicit NaN payload
+  handler. Status: implemented and removed from active semantic gaps.
+- `Bfma`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bfma` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_072524`. The harness timed out before
+  writing a final message, but it left a focused definition that typechecks:
+  it follows the upstream adapter shape `BSN2B (fma_nan x y z) (Bfma mode
+  (B2BSN x) (B2BSN y) (B2BSN z))` using the same local single-NaN bridge used
+  for `Bmult`, `Bplus`, and `Bminus`, with an explicit ternary NaN payload
+  handler. Status: implemented and removed from active semantic gaps after
+  manual verification; `Bfma_correct` remains separately tracked as a
+  correctness theorem obligation.
+- `Bdiv`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bdiv` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_080200`. The definition follows the
+  upstream adapter shape `BSN2B (div_nan x y) (Bdiv mode (B2BSN x)
+  (B2BSN y))` using the local single-NaN bridge, with an explicit binary NaN
+  payload handler. The older `binary_div` helper remains as a compatibility
+  operation for existing local correctness proofs rather than being counted as
+  the upstream API. Status: implemented and removed from active semantic gaps;
+  `Bdiv_correct` remains separately tracked as a correctness theorem
+  obligation.
+- `Bsqrt`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bsqrt` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260705_081229` failed without changing files.
+  The manual follow-up follows the upstream adapter shape `BSN2B (sqrt_nan x)
+  (Bsqrt mode (B2BSN x))` using the local single-NaN bridge, with an explicit
+  unary NaN payload handler. The older `binary_sqrt` helper remains as a
+  compatibility operation for existing local correctness proofs rather than
+  being counted as the upstream API. Status: implemented and removed from
+  active semantic gaps; `Bsqrt_correct` remains separately tracked as a
+  correctness theorem obligation.
+- `Bnearbyint`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bnearbyint` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260706_045646`. The definition follows the
+  upstream adapter shape `BSN2B (nearbyint_nan x) (Bnearbyint mode (B2BSN x))`
+  using the local single-NaN bridge, with an explicit unary NaN payload
+  handler. The older `binary_nearbyint` helper remains as a compatibility
+  operation for existing local correctness proofs rather than being counted as
+  the upstream API. Status: implemented and removed from active semantic gaps;
+  `Bnearbyint_correct` remains separately tracked as a correctness theorem
+  obligation.
+- `Btrunc`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Btrunc` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260706_050523`. The definition follows the
+  upstream adapter shape `Btrunc x := Btrunc (B2BSN x)` using the local
+  single-NaN bridge. The older `binary_trunc` helper now delegates to the
+  public upstream API name. Status: implemented and removed from active
+  semantic gaps; the same-name theorem `Btrunc_correct` remains a separate
+  statement-weakness/trust issue until it proves upstream's
+  `IZR (Btrunc x) = round radix2 (FIX_exp 0) Ztrunc (B2R x)` payload.
+- `Bmax_float`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bmax_float` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260706_051853`. The single-NaN bridge exposes
+  the maximum finite payload as
+  `BinaryFloat.finite false (2 ^ prec.toNat - 1) (emax - prec)`, and the
+  public Binary-level value follows the upstream wrapper shape
+  `Bmax_float := BSN2B' Bmax_float eq_refl` through `BSN2B`. Status:
+  implemented and removed from active semantic gaps; the upstream proof
+  sibling `Bmax_float_proof` remains separately tracked under
+  `IEEE754/BinarySingleNaN.v`.
+- `Bnormfr_mantissa`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bnormfr_mantissa` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260706_052816` failed before making changes.
+  The single-NaN bridge mirrors upstream
+  `Bnormfr_mantissa x := SFnormfr_mantissa prec (B2SF x)` by extracting the
+  finite mantissa and returning `0` for non-finite constructors, and the
+  public Binary-level value follows the upstream adapter shape
+  `Bnormfr_mantissa x := Bnormfr_mantissa (B2BSN x)`. Status: implemented
+  and removed from active semantic gaps; the upstream correctness sibling
+  `Bnormfr_mantissa_correct` remains separately tracked under
+  `IEEE754/BinarySingleNaN.v`.
+- `Bulp`: restored as the exact Lean definition
+  `FloatSpec.IEEE754.Binary.Bulp` in
+  `FloatSpec/src/IEEE754/Binary.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_072607`. The public Binary-level value
+  follows upstream's adapter shape
+  `Bulp x := lift x (BinarySingleNaN.Bulp (B2BSN x))` by preserving full
+  Binary NaN payloads and otherwise converting the local single-NaN bridge
+  result back through `BSN2B`. Status: implemented and removed from active
+  semantic gaps; `Bulp_correct` remains separately tracked as a correctness
+  theorem obligation.
 
 Still active after statement check:
 
-- `full_float`: a renamed `FullFloat` exists, but it uses `Nat` payloads where
-  Coq uses `positive` for NaN payloads and finite mantissas. That admits extra
-  zero-payload values, so this is not a faithful type counterpart yet.
-- `nan_pl`: no faithful counterpart found. Lean has payload extractors such as
-  `get_nan_pl`, but not the upstream bound check
-  `Zlt_bool (Zpos (digits2_pos pl)) prec`.
-- `binary_float`: a renamed `Binary754` exists, but its validity field is
-  currently `is_finite_FF val = true -> True`; it does not enforce upstream
-  `bounded m e = true` for finite values or `nan_pl pl = true` for NaNs.
-- `Bcompare`: `Bcompare_correct` exists over `Bcompare_check`, but no faithful
-  `Bcompare` definition was found. The local check always returns `some`
-  real comparison under finite hypotheses and does not expose upstream's
-  unordered `none` behavior as the operation.
-- `Bmult` and `Bplus`: local `binary_mul`/`binary_add` helpers exist, but they
-  do not match upstream signatures with NaN payload handlers and rounding
-  mode arguments. Their local `binary_*_correct` declarations are explicit
-  `Unit` port-gap markers.
+- `full_float`: restored as the exact public Lean inductive
+  `FloatSpec.IEEE754.Binary.full_float` in
+  `FloatSpec/src/IEEE754/Binary.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_171234` timed out / reported the broad
+  `FullFloat` migration as blocked and a manual scoped declaration was added.
+  The constructors match upstream `IEEE754/Binary.v`: Boolean signs,
+  `FloatSpec.Core.Zaux.Positive` for NaN payloads and finite mantissas, and
+  `Int` for the exponent. Existing `FullFloat` remains the current Nat-based
+  runtime model; this closes only the exact `full_float` type declaration, not
+  downstream representation migration or `binary_float`. Focused check
+  `lake env lean FloatSpec/src/IEEE754/Binary.lean` passed with existing
+  warnings only. Status: implemented and removed from active semantic gaps.
+- `binary_float`: restored as the exact public proof-carrying Lean inductive
+  `FloatSpec.IEEE754.Binary.binary_float` in
+  `FloatSpec/src/IEEE754/Binary.lean` by subscription harness attempt
+  `.change_log/codex_attempt_20260711_172224`, which timed out before writing
+  final artifacts but left a scoped patch. The constructors match upstream
+  `IEEE754/Binary.v`: zero and infinity carry signs, NaNs carry a
+  `FloatSpec.Core.Zaux.Positive` payload plus a `nan_pl` proof, and finite
+  values carry a `FloatSpec.Core.Zaux.Positive` mantissa, `Int` exponent, and
+  `bounded` proof. Existing `Binary754` remains the permissive compatibility
+  wrapper over `FullFloat`; this closes only the exact `binary_float`
+  declaration, not the downstream migration to use it. Focused check
+  `lake env lean FloatSpec/src/IEEE754/Binary.lean` and full `lake build`
+  passed with existing warnings only. Status: implemented and removed from
+  active semantic gaps.
 - `Bmult_correct` and `Bplus_correct`: no faithful counterparts found; local
   `binary_mul_correct` and `binary_add_correct` are `Unit` port-gap markers,
-  not the upstream IEEE postconditions.
-- `Bminus`, `Bfma`, `Bdiv`, and `Bsqrt`: local helpers
-  `binary_sub`, `binary_fma`, `binary_div`, and `binary_sqrt` exist, but they
-  drop the upstream NaN payload handler parameters and are not faithful
-  operation definitions.
-- `Bnearbyint`: local `binary_nearbyint` exists, and
-  `Bnearbyint_correct` has substantial local payload, but the operation
-  still drops the upstream NaN payload handler parameter.
-- `Btrunc`: local `binary_trunc` exists, but the exact same-name
-  `Btrunc_correct` theorem is currently tautological
+  not the upstream IEEE postconditions. Pipeline attempt
+  `.change_log/codex_attempt_20260711_081455` classified `Bmult_correct` as
+  blocked: the upstream theorem requires the full rounded-product payload,
+  finite status as `andb (is_finite x) (is_finite y)`, non-NaN sign behavior,
+  and an overflow branch returning `binary_overflow`, but local
+  `BinarySingleNaNBridge.Bmult` sends non-NaN inputs through `roundReal` and
+  cannot represent the Flocq SingleNaN nonfinite/overflow behavior. The
+  lower-level BSN `B754_mult_correct` is still itself a `Unit` port gap.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_094951`
+  rechecked the current wrapper after the later Binary representation work and
+  again left source code unchanged (`target_before.lean` and
+  `target_after.lean` identical). It attempted a scoped repair but reverted the
+  incomplete edits because the exact theorem still depends on faithful
+  SingleNaN multiplication semantics and a real `B754_mult_correct` payload;
+  proving through the current `Unit` marker or weakening the postcondition
+  would not preserve the upstream rounded-product, finiteness, sign, and
+  overflow branches. Config-provider harness attempt
+  `.change_log/codex_attempt_20260713_123218` rechecked the exact upstream
+  theorem at the current `binary_mul_correct` port-gap marker, left source code
+  unchanged (`target_before.lean` and `target_after.lean` identical), and
+  classified the target as blocked. The explicit checked classifier
+  `.change_log/manual_attempt_20260713_bmult_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and `build = pass`:
+  upstream `Binary.v:Bmult_correct` delegates through `B2BSN`/`BSN2B` to the
+  full `BinarySingleNaN.Bmult_correct` theorem, while local
+  `BinarySingleNaN.lean` still has `B754_mult_correct : Unit` and
+  `BinarySingleNaNBridge.Bmult` is a rounded-real shortcut rather than the full
+  special-case multiplication with `Bmult_correct_aux`.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_212314`
+  rechecked the wrapper-level exact theorem and again made no Lean source
+  changes. It classified the target as blocked because local
+  `BinarySingleNaNBridge.Bmult` still routes every non-NaN case through
+  `roundReal (B2R x * B2R y)`, so infinities collapse through `B2R = 0` and
+  finite-overflow cases cannot satisfy the upstream finiteness and
+  `binary_overflow` branches. The local SingleNaN multiplication correctness
+  layer remains a `Unit` marker rather than the upstream
+  `BinarySingleNaN.Bmult_correct`/`Bmult_correct_aux` payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_005430`
+  rechecked `Bmult_correct` against the current branch, left source code
+  unchanged (`target_before.lean` and `target_after.lean` identical), and
+  classified the exact theorem as still blocked. The checked classifier
+  `.change_log/manual_attempt_20260716_bmult_correct_blocked/attempt.json`
+  records that upstream needs the full rounded-product `B2R` equality,
+  finiteness as `andb (is_finite x) (is_finite y)`, non-NaN sign `xorb`, and
+  overflow branch `B2FF = binary_overflow` through
+  `BinarySingleNaN.Bmult_correct`, while local `binary_mul_correct` and
+  `B754_mult_correct` remain `Unit` markers and `BinarySingleNaNBridge.Bmult`
+  still routes non-NaN multiplication through the rounded-real shortcut
+  `roundReal (B2R x * B2R y)`.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_051013`
+  rechecked `Bmult_correct` at the current exact-name `Bmult` bridge, left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean` / `target_after.lean` are identical), and returned
+  `result = blocked`. The checked sidecar
+  `.change_log/manual_attempt_20260716_051336_bmult_correct_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `Binary.v:Bmult_correct` proves
+  the rounded-product equality, finite status as
+  `andb (is_finite x) (is_finite y)`, non-NaN sign `xorb`, and overflow
+  `B2FF = binary_overflow` branch by delegating to
+  `BinarySingleNaN.Bmult_correct` through `B2BSN`/`BSN2B`, while local
+  `BinarySingleNaN.lean:B754_mult_correct` is still a payload-free `Unit`
+  port-gap marker and no faithful SingleNaN `Bmult_correct` theorem is
+  available to lift. Therefore `Bmult_correct` remains active rather than being
+  replaced by a helper-only or tautological theorem over the current
+  proof-erased/permissive bridge.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_061657`
+  rechecked `Bmult_correct` again at the exact-name `Bmult` bridge and left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean` / `target_after.lean` are identical). Its checked
+  classifier sidecar
+  `.change_log/manual_attempt_20260715_221850_bmult_correct_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `Binary.v:Bmult_correct`
+  requires the rounded-product `B2R` equality, finiteness
+  `andb (is_finite x) (is_finite y)`, non-NaN sign `xorb`, and overflow
+  `B2FF = binary_overflow` branch through the faithful
+  `BinarySingleNaN.Bmult_correct`/`Bmult_correct_aux` stack. Current
+  `BinarySingleNaN.lean` still exposes `B754_mult_correct : Unit`, and the
+  bridge multiplication path remains the rounded-real shortcut
+  `roundReal (B2R x * B2R y)`, so adding `Bmult_correct` here would be
+  helper-only or tautological rather than a faithful Flocq payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_075220`
+  rechecked `Bmult_correct` against the current `Bmult` bridge and left source
+  code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean` / `target_after.lean` are identical). The top-level
+  attempt record has `coq_alignment = not_checked`, but the checked sidecar
+  `.change_log/manual_attempt_20260716_075220_bmult_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+  pass`, `changed_files = []`, and `build = not_run`. The fresh blocker is a
+  concrete semantic mismatch, not merely a missing proof: upstream
+  `BinarySingleNaN.Bmult` returns infinity for infinity times finite, while
+  local `BinarySingleNaNBridge.Bmult` only checks NaN and then rounds
+  `B2R x * B2R y`; since local `B2R` maps non-finite bridge values to `0`,
+  infinity times finite can be routed to finite zero. That contradicts the
+  upstream `Bmult_correct` finiteness clause
+  `is_finite result = andb (is_finite x) (is_finite y)` and the required
+  non-finite/overflow behavior. Local `BinarySingleNaN.lean:B754_mult_correct`
+  and `Binary.lean:binary_mul_correct` remain `Unit` port-gap markers, so the
+  faithful upstream payload is still absent.
+  Manual pipeline recheck
+  `.change_log/manual_attempt_20260716_191302_bmult_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`: upstream `IEEE754/Binary.v:Bmult_correct` is a bridge
+  theorem over `BinarySingleNaN.Bmult_correct` through `B2BSN`/`BSN2B`, but the
+  current Lean SingleNaN surface still lacks the faithful
+  `Bmult_correct`/`Bmult_correct_aux` payload and exposes only the
+  `B754_mult_correct : Unit` port-gap marker plus rounded-real bridge
+  shortcuts. Adding an exact-name theorem here would therefore be a helper-only
+  or proof-erased wrapper rather than the upstream rounded-product,
+  finiteness, sign, and overflow result.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_204634`
+  rechecked `Bmult_correct` at the same bridge and timed out of its repair loop
+  with top-level `result = failed`, `build = not_run`, `changed_files = []`, and
+  `coq_alignment = not_checked`. The transient proof attempt tried to add a
+  public theorem but did not leave an exact declaration in the current file.
+  A direct focused check after the attempt, `lake env lean
+  FloatSpec/src/IEEE754/Binary.lean`, passed with warnings only. The blocker is
+  unchanged: current `BinarySingleNaNBridge.Bmult` is still the rounded-real
+  shortcut over `B2R`, current `binary_mul_correct` and
+  `B754_mult_correct` are still `Unit` markers, and the faithful
+  `BinarySingleNaN.Bmult_correct`/`Bmult_correct_aux` stack needed by upstream
+  `Binary.v:Bmult_correct` is still absent. Status: still active.
+  Pipeline attempt `.change_log/codex_attempt_20260711_081950` classified
+  `Bplus_correct` with the analogous blocker: upstream requires the faithful
+  BinarySingleNaN `Bplus` correctness payload, finite rounded-result semantics,
+  sign rules, and an overflow branch returning `binary_overflow`; the local
+  finite path delegates through `roundReal`/`real_to_FullFloat` without that
+  overflow or proof-carrying validity payload, and BSN `B754_plus_correct` is
+  still a `Unit` port gap.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_100712`
+  rechecked `Bplus_correct` and left source code unchanged
+  (`target_before.lean` and `target_after.lean` identical). It classified the
+  exact theorem as still blocked because upstream transports
+  `BinarySingleNaN.Bplus_correct` through `B2BSN`/`BSN2B`, while local
+  `B754_plus_correct` and `binary_add_correct` remain `Unit` port-gap markers
+  and the finite bridge still uses the rounded-real shortcut rather than the
+  Flocq rounded-sum, finiteness, exact-zero sign, and overflow payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_124802`
+  rechecked the exact upstream theorem at the current `binary_add_correct`
+  port-gap marker, left source code unchanged (`target_before.lean` and
+  `target_after.lean` identical), and classified the target as blocked. The
+  refreshed checked classifier
+  `.change_log/manual_attempt_20260713_bplus_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and `build = pass`:
+  exact restoration still depends on the full `BinarySingleNaN.Bplus_correct`
+  layer, including `Fplus_naive`, `binary_normalize_correct`, overflow behavior,
+  and `sign_plus_overflow`, while local `BinarySingleNaNBridge.Bplus` remains a
+  rounded-real/`real_to_FullFloat` shortcut.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_051712`
+  rechecked `Bplus_correct` at the current exact-name `Bplus` bridge, left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean` / `target_after.lean` are identical), and returned
+  `result = blocked`. The checked sidecar
+  `.change_log/manual_attempt_20260716_052005_bplus_correct_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `Binary.v:Bplus_correct` lifts
+  `BinarySingleNaN.Bplus_correct` through `B2BSN`/`BSN2B` and requires rounded
+  sum `B2R`, finiteness, exact-zero mode-dependent sign, overflow, and
+  same-sign overflow facts. Current `Binary.lean` has the exact-name `Bplus`
+  bridge, but local `binary_add_correct` and
+  `BinarySingleNaN.lean:B754_plus_correct` remain payload-free `Unit` port-gap
+  markers and no faithful SingleNaN `Bplus_correct` theorem is available to
+  lift. Therefore `Bplus_correct` remains active rather than being replaced by a
+  helper-only or tautological theorem over the current proof-erased/permissive
+  bridge.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_062251`
+  rechecked `Bplus_correct` at the exact-name `Bplus` bridge and left source
+  code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean` / `target_after.lean` are identical). Its checked
+  classifier sidecar
+  `.change_log/manual_attempt_20260715_222524_bplus_correct_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `Binary.v:Bplus_correct`
+  bridges over `BinarySingleNaN.Bplus_correct` and requires rounded sum
+  `B2R`, finiteness for finite inputs, the exact-zero mode-dependent sign
+  rule, overflow via `binary_overflow`, and the same-sign overflow fact.
+  Current `BinarySingleNaN.lean` still has only `B754_plus_correct : Unit`,
+  and `BinarySingleNaNBridge.Bplus` handles finite/finite addition through
+  `roundReal` rather than the upstream `binary_normalize` overflow/sign
+  correctness payload. Adding `Bplus_correct` here would therefore be a
+  helper-only or tautological wrapper over a missing SingleNaN theorem stack.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_075852`
+  rechecked `Bplus_correct` against the current exact-name `Bplus` bridge and
+  left source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean` / `target_after.lean` are identical). The top-level
+  attempt record has `coq_alignment = not_checked`, but the checked sidecar
+  `.change_log/codex_attempt_20260716_Bplus_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+  pass`, `changed_files = []`, and `build = not_run`. The current blocker is
+  unchanged at statement level: upstream `Binary.v:Bplus_correct` delegates
+  through `BSN2B` to `BinarySingleNaN.Bplus_correct` and needs the finite
+  rounded-value/sign branch plus the same-sign overflow branch, including
+  `sign_plus_overflow` and `binary_normalize_correct`. Local
+  `Binary.lean:binary_add_correct` and
+  `BinarySingleNaN.lean:B754_plus_correct` remain `Unit` port-gap markers with
+  a much weaker shape, and the local normalization helpers do not prove the
+  upstream rounded-real/sign/overflow correctness payload.
+  The normalized checked sidecar
+  `.change_log/manual_attempt_20260716_075852_bplus_correct_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass` for that same config-provider attempt.
+  `Bplus_correct` remains active until the faithful SingleNaN
+  `Bplus_correct`/`sign_plus_overflow`/`binary_normalize_correct` payload can
+  be lifted through the exact-name `Bplus` bridge.
+- `Btrunc_correct`: the exact same-name theorem is currently tautological
   (`result = Btrunc_correct_check ...`) instead of upstream's
   `IZR (Btrunc x) = round radix2 (FIX_exp 0) Ztrunc (B2R x)`.
-- `Bmax_float`: no faithful counterpart found.
-- `Bnormfr_mantissa`: no faithful counterpart found.
-- `Bulp`: explicitly marked in the Lean source as reserved and not yet added.
-- `Bulp_correct`: no faithful counterpart found because `Bulp` itself is
-  absent.
+- `Bulp_correct`: no faithful counterpart found yet; the exact `Bulp`
+  definition now exists, but the upstream real-semantics, finiteness, and sign
+  postcondition proof remains unported. Pipeline attempt
+  `.change_log/codex_attempt_20260711_073801` classified the exact theorem as
+  blocked for now because the upstream Binary proof delegates through
+  `B2BSN_lift` to the SingleNaN `Bulp_correct` payload, while the local
+  SingleNaN-side `Bulp_correct` support is still absent and the current
+  `Binary754` wrapper still erases upstream bounded/NaN validity obligations.
+  The prerequisite `Bulp_correct_aux` has since been restored. Status: exact
+  theorem still required after the remaining SingleNaN ULP support and validity
+  bridge are restored. A fresh subscription harness attempt
+  `.change_log/codex_attempt_20260711_172928` rechecked the target against the
+  current workspace after `full_float`/`binary_float` were restored. It left no
+  code patch and again classified the exact theorem as blocked: `Bulp_correct`
+  is an upstream theorem over proof-carrying `binary_float`, but the active
+  local `Bulp`/`B2R`/`Bsign` surface is still the permissive `Binary754`
+  compatibility wrapper whose `valid` field is effectively `True`; finite
+  values can lack the bounded/canonical invariant needed to identify the
+  adapter result with `ulp radix2 fexp (B2R x)`. Do not close this by proving a
+  tautology or by adding the missing invariant as a theorem hypothesis. A
+  follow-up config-provider harness attempt
+  `.change_log/codex_attempt_20260713_091201` produced the same classification
+  and left Lean code unchanged; its nested
+  `.change_log/codex_attempt_20260713_091448_manual_bulp_correct_blocked`
+  `classify_attempt.py` artifact records `coq_alignment = checked` and the
+  missing SingleNaN `Bulp_correct`/validity stack as the blocker; the
+  `is_nan_Bulp` portion was restored later on 2026-07-16.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_131244`
+  rechecked the exact upstream theorem at the current `Bulp` adapter, left
+  source code unchanged (`target_before.lean` and `target_after.lean`
+  identical), and classified the target as blocked. The checked classifier
+  `.change_log/manual_attempt_20260713_bulp_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and `build = pass`:
+  upstream proves `Bulp_correct` over proof-carrying `binary_float` via
+  `B2BSN_lift` and `BinarySingleNaN.Bulp_correct`, while local `Binary754`
+  remains permissive, `BinarySingleNaNBridge.Bulp` directly returns
+  `finite false 1 e` instead of using `binary_normalize mode_ZR 1 e false`,
+  and the SingleNaN `Bulp_correct`/validity bridge remains absent. The
+  `is_nan_Bulp` portion was restored later on 2026-07-16.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_141607`
+  rechecked the same exact upstream payload at the current adapter and left
+  source code unchanged; its checked classifier
+  `.change_log/manual_attempt_20260713_bulp_correct_blocked_current/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and `build = pass`.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_010819`
+  rechecked `Bulp_correct` again, left source code unchanged
+  (`target_before.lean` and `target_after.lean` identical), and classified the
+  exact theorem as still blocked. The checked classifier
+  `.change_log/manual_attempt_20260716_011130_binary_bulp_correct_blocked/attempt.json`
+  records the then-current blocker explicitly: local `BinarySingleNaN.lean`
+	  still lacked faithful `Bulp`, `is_nan_Bulp`, and `Bulp_correct` theorem
+	  payload. The `Bulp`/`is_nan_Bulp` portion was restored later on
+	  2026-07-16; the remaining blocker for this Binary theorem is still the
+	  absent `BinarySingleNaN.Bulp_correct` real-semantics theorem plus the
+	  proof-erased `BinarySingleNaNBridge.Bulp` and permissive
+	  `Binary754.valid` wrapper.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_052645`
+	  rechecked the same upstream theorem against the current workspace and made
+	  no source changes. The checked classifier
+	  `.change_log/manual_attempt_20260715_213203_binary_bulp_correct_blocked/attempt.json`
+	  records `result = blocked`, `coq_alignment = checked`, and `build = not_run`:
+	  upstream `Binary.v:Bulp_correct` still depends on lifting faithful
+	  `BinarySingleNaN.Bulp_correct` through `B2BSN_lift`. The local
+	  `BinarySingleNaN.lean` now has faithful `Bulp`/`is_nan_Bulp`, but still
+	  lacks `Bulp_correct`, and the Binary bridge `Bulp` remains proof-erased.
+	  Adding a theorem over the current bridge would be helper-only or
+	  tautological, so `Bulp_correct` remains active.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_062934`
+	  rechecked `Bulp_correct` at the current exact-name `Binary.Bulp` adapter
+	  and left source code unchanged (`changed_during_attempt.txt` is empty and
+	  `target_before.lean` / `target_after.lean` are identical). Its checked
+	  classifier sidecar
+	  `.change_log/manual_attempt_20260716_063200_binary_bulp_correct_blocked/attempt.json`
+	  records `coq_alignment = checked`: upstream `Binary.Bulp_correct` lifts
+	  faithful `BinarySingleNaN.Bulp_correct` through `B2BSN_lift`. The local
+	  `BinarySingleNaN.lean` now has faithful public `Bulp`/`is_nan_Bulp`, but
+	  still no `Bulp_correct`; the local Binary bridge `Bulp` remains
+	  proof-erased, and `Binary754.valid` remains trivial, so the upstream ULP
+	  equality, finiteness, and sign payload cannot be lifted without weakening
+	  semantics.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_080529`
+	  rechecked `Bulp_correct` at the current exact-name `Binary.Bulp` adapter
+	  and left source code unchanged (`changed_during_attempt.txt` is empty and
+	  `target_before.lean` / `target_after.lean` are identical). The top-level
+	  attempt record has `coq_alignment = not_checked`, but the checked sidecar
+	  `.change_log/manual_attempt_20260716_080529_binary_bulp_correct_blocked/attempt.json`
+	  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+	  pass`, `changed_files = []`, and `build = not_run`. The statement-level
+	  blocker is unchanged: upstream `Binary.v:Bulp_correct` proves
+	  `B2R (Bulp x) = ulp radix2 fexp (B2R x)`, `is_finite (Bulp x) = true`,
+	  and `Bsign (Bulp x) = false` for finite inputs by lifting faithful
+	  `BinarySingleNaN.Bulp_correct` through `B2BSN_lift`. Current
+	  `Binary.Bulp` instead adapts through `BinarySingleNaNBridge.Bulp`, whose
+	  finite branch returns proof-erased `finite false 1 e` directly rather than
+	  upstream `binary_normalize mode_ZR 1 e false`; `BinarySingleNaN.lean` now
+	  has faithful public `Bulp` and `is_nan_Bulp`, but still lacks
+	  `Bulp_correct`, and `Binary754.valid` remains permissive. Adding
+	  `Bulp_correct` here would
+	  therefore weaken or bypass the upstream ULP equality/finiteness/sign
+	  payload, so the name remains active.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_193921`
+	  rechecked `Bulp_correct` after the current BSN `binary_round`/
+	  `binary_normalize` repairs and again left source code unchanged
+	  (`changed_during_attempt.txt` is empty and `changed_files = []`). The
+	  normalized checked classifier sidecar
+	  `.change_log/manual_attempt_20260716_194451_binary_bulp_correct_blocked/attempt.json`
+	  records `result = blocked`, `coq_alignment = checked`, and
+	  `build = not_run`. The root blocker is now narrower but still decisive:
+	  upstream `Binary.v:Bulp_correct` needs faithful BSN
+	  `BinarySingleNaN.Bulp_correct`, which itself needs SingleNaN
+	  `binary_round_correct`/`binary_normalize_correct` with rounded real value,
+	  finiteness, sign, and overflow payload. Current `BinarySingleNaN.lean`
+	  has `Bulp_correct_aux`, faithful public `Bulp`, `is_nan_Bulp`,
+	  `binary_round`, and `is_nan_binary_round`, but no value-level
+	  `binary_round_correct` or `binary_normalize_correct`; the similarly named
+	  `Binary.lean` theorem is a FullFloat audit helper, and the
+	  `BinarySingleNaNBridge`/`Binary754` path remains proof-erased and
+	  wrong-carrier for this public theorem. Status: superseded by the
+	  2026-07-19 restoration below.
+  2026-07-19 update: exact public root `Bulp_correct` has since been restored
+  by `.change_log/codex_attempt_20260719_103924` using the proof-carrying
+  Binary-to-SingleNaN bridge and the Coq-shaped `specFloat_bounded` carrier
+  migration. This older blocked classification is superseded. Status:
+  implemented and removed from active semantic gaps.
 
 Checked batch 6: `IEEE754/BinarySingleNaN.v` bridge and rounding-mode names.
 
@@ -698,72 +3424,2399 @@ Confirmed faithful counterparts removed from the active semantic gap list:
 - `round_mode`: represented by `rnd_of_mode`, which maps each
   `RoundingMode` constructor to the corresponding integer rounding function.
 - `valid_rnd_round_mode`: represented by the `valid_rnd_of_mode` instance.
-
-Still active after statement check:
-
-- `SF2B'` and `SF2B'_B2SF`: Lean has `SF2B`/`SF2B_B2SF`, but upstream
-  `SF2B'` checks `bounded m e` and maps invalid finite standard floats to
-  NaN. The local `SF2B` maps finite values directly into the weakened `B754`
-  representation, so this is not a faithful counterpart.
-- `Bsign_SF2B`, `is_finite_SF2B`, and `is_nan_SF2B`: no faithful theorem
-  counterparts found for the upstream `SF2B` validity-argument form.
-- `is_nan_Bopp`, `is_finite_strict_Bopp`, `is_nan_Babs`, and
-  `is_finite_strict_Babs`: Lean has `Bopp_bsn`, but the corresponding BSN
-  classifier theorems are absent; no `Babs` counterpart was found in the BSN
-  file.
-- The shift/truncation helper block from `shr_m_shr_record_of_loc` through
-  `shr_truncate`: no faithful counterparts found. Some cross-reference hits
-  point to unrelated helper names in other files, not the upstream statements.
-- `choice_mode`, `le_choice_mode_le`, and `round_mode_choice_mode`: no
-  faithful counterpart found for the upstream tie/shift choice function and
-  its bridge to `round_mode`.
+- `Bulp_correct_aux`: restored as the exact Lean theorem
+  `ExperimentalSingleNaNArithmetic.Bulp_correct_aux` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_074331`. The theorem proves the upstream
+  single-NaN payload `bounded 1 emin = true`, translated to the local exponent
+  spelling `bounded (prec:=prec) (emax:=emax) 1 (3 - emax - prec) = true`.
+  Status: implemented and removed from active semantic gaps.
+- `SF2B'`: restored as the exact Lean definition
+  `ExperimentalSingleNaNArithmetic.SF2B'` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_082623`. The definition matches the
+  upstream total `StandardFloat` to single-NaN binary bridge: zeros,
+  infinities, and NaN map directly, while finite values map to
+  `B754_finite` only when `bounded m e` is true and otherwise map to
+  `B754_nan`. Status: implemented and removed from active semantic gaps.
+- `SF2B'_B2SF`: restored as the exact-name Lean theorem `SF2B'_B2SF` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260713_132321` and fresh local focused Lean
+  check, with clean classifier
+  `.change_log/manual_attempt_20260713_sf2bp_b2sf_proved/attempt.json`. The
+  theorem proves the upstream roundtrip payload
+  `SF2B' (B2SF x) = x` over the local proof-carrying subtype
+  `{ x : B754 // B754_bounded x }`, preserving the `bounded m e = true`
+  validity proof carried by upstream finite `binary_float` values but absent
+  from the raw local `B754` constructor. The prior `SF2B_B2SF` remains only
+  the non-validating `SF2B` roundtrip and is not used as the justification.
+  Status: implemented and removed from active semantic gaps.
+- `Bsign_SF2B`: restored as the exact-name Lean theorem
+  `ExperimentalSingleNaNArithmetic.Bsign_SF2B` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_084009`. The theorem keeps the upstream
+  validity-witness argument and proves the constructor-by-constructor payload
+  that `BSN_sign (SF2B x) = sign_SF x` in the local Hoare-style spec form.
+  Status: implemented and removed from active semantic gaps.
+- `is_finite_SF2B`: restored as the exact-name Lean theorem
+  `ExperimentalSingleNaNArithmetic.is_finite_SF2B` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_084835`. The theorem keeps the upstream
+  validity-witness argument and proves the constructor-by-constructor payload
+  that `BSN_is_finite (SF2B x) = is_finite_SF x` in the local Hoare-style spec
+  form. Status: implemented and removed from active semantic gaps.
+- `is_nan_SF2B`: restored as the exact-name Lean theorem
+  `ExperimentalSingleNaNArithmetic.is_nan_SF2B` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_085627`. The theorem keeps the upstream
+  validity-witness argument and proves the constructor-by-constructor payload
+  that `BSN_is_nan (SF2B x) = is_nan_SF x` in the local Hoare-style spec form.
+  Status: implemented and removed from active semantic gaps.
+- `is_nan_Bopp`: restored as the exact-name Lean theorem
+  `ExperimentalSingleNaNArithmetic.is_nan_Bopp` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_090400`. The theorem proves the upstream
+  constructor-by-constructor payload that
+  `BSN_is_nan (Bopp_bsn x) = BSN_is_nan x` in the local Hoare-style spec form.
+  Status: implemented and removed from active semantic gaps.
+- `is_finite_strict_Bopp`: restored as the exact-name Lean theorem
+  `ExperimentalSingleNaNArithmetic.is_finite_strict_Bopp` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_091239`. The theorem proves the upstream
+  constructor-by-constructor payload that
+  `BSN_is_finite_strict (Bopp_bsn x) = BSN_is_finite_strict x` in the local
+  Hoare-style spec form. Status: implemented and removed from active semantic
+  gaps.
+- `is_nan_Babs`: restored as the exact-name Lean theorem
+  `ExperimentalSingleNaNArithmetic.is_nan_Babs` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_092047`. The attempt also restored the
+  faithful BSN-side absolute-value operation as `Babs_bsn`: NaN stays NaN,
+  and zero, infinity, and finite signs are cleared. The theorem proves the
+  upstream constructor-by-constructor payload that
+  `BSN_is_nan (Babs_bsn x) = BSN_is_nan x` in the local Hoare-style spec form.
+  Status: implemented and removed from active semantic gaps.
+- `is_finite_strict_Babs`: restored as the exact-name Lean theorem
+  `ExperimentalSingleNaNArithmetic.is_finite_strict_Babs` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_093026`. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:is_finite_strict_Babs` by proving the
+  constructor-by-constructor payload that
+  `BSN_is_finite_strict (Babs_bsn x) = BSN_is_finite_strict x` in the local
+  Hoare-style spec form. Status: implemented and removed from active semantic
+  gaps.
+- `shr_m_shr_record_of_loc`: restored as the exact-name Lean theorem
+  `shr_m_shr_record_of_loc` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_094124`. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:shr_m_shr_record_of_loc` by projecting the
+  mantissa field from the faithful local `ShrRecord` produced by
+  `shr_record_of_loc`, proving
+  `(shr_record_of_loc m l).shr_m = m` by location cases. Status:
+  implemented and removed from active semantic gaps.
+- `loc_of_shr_record_of_loc`: restored as the exact-name Lean theorem
+  `loc_of_shr_record_of_loc` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_100133`. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:loc_of_shr_record_of_loc` by proving that
+  `loc_of_shr_record (shr_record_of_loc m l) = l` for exact and each inexact
+  ordering case. Status: implemented and removed from active semantic gaps.
+- `inbetween_shr_1`: restored as the exact-name Lean theorem
+  `inbetween_shr_1` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after
+  harness attempt `.change_log/codex_attempt_20260711_102530`. The theorem
+  matches upstream `IEEE754/BinarySingleNaN.v:inbetween_shr_1` by proving the
+  one-step right-shift payload
+  `inbetween_float 2 (shr_1 mrs).shr_m (e + 1) x
+  (loc_of_shr_record (shr_1 mrs))` from nonnegative mantissa and the original
+  `inbetween_float 2 mrs.shr_m e x (loc_of_shr_record mrs)`. The attempt
+  also restored the local `shr_1` helper and its field/location bridge lemmas
+  needed for the exact statement. Status: implemented and removed from active
+  semantic gaps.
+- `shr_nat`: restored as the exact-name Lean theorem `shr_nat` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_103358`. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:shr_nat` by proving that for nonnegative shifts,
+  `shr mrs e n` is the iterated one-step shift
+  `(FloatSpec.Core.Zaux.iter_nat shr_1 n.toNat mrs, e + n)`. The attempt also
+  restored the local `shr` helper needed by the exact statement. Status:
+  implemented and removed from active semantic gaps.
+- `le_shr1_le`: restored as the exact-name Lean theorem `le_shr1_le` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_103921`. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:le_shr1_le` by proving nonnegativity of the
+  shifted mantissa and the one-step bounds
+  `2 * (shr_1 mrs).shr_m ≤ mrs.shr_m <
+  2 * ((shr_1 mrs).shr_m + 1)` from `0 ≤ mrs.shr_m`. Status: implemented and
+  removed from active semantic gaps.
+- `inbetween_shr`: restored as the exact-name Lean theorem `inbetween_shr` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after pipeline attempt
+  `.change_log/codex_attempt_20260711_111820`. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:inbetween_shr` by proving that `shr` preserves
+  `inbetween_float` through iterated `shr_1` steps for nonnegative shift counts,
+  carrying one-step mantissa nonnegativity via `le_shr1_le`; negative shift
+  counts reduce to the original `shr_record_of_loc` record. Status:
+  implemented and removed from active semantic gaps.
+- `le_shr_le`: restored as the exact-name Lean theorem `le_shr_le` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_113521` failed due the subscription usage
+  limit rather than a proof blocker. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:le_shr_le` by proving nonnegativity of the iterated
+  shifted mantissa and the two-sided bounds
+  `2 ^ n.toNat * (shr mrs e n).1.shr_m ≤ mrs.shr_m <
+  2 ^ n.toNat * ((shr mrs e n).1.shr_m + 1)` under `0 ≤ mrs.shr_m` and
+  `0 ≤ n`. Status: implemented and removed from active semantic gaps.
+- `shr_limit`: restored as the exact-name Lean theorem `shr_limit` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after harness attempt
+  `.change_log/codex_attempt_20260711_114329` failed due the subscription usage
+  limit rather than a proof blocker. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:shr_limit` by proving that a mantissa already below
+  the Coq integer-power threshold `2 ^ (n - 1)` collapses after `shr` to the
+  zero mantissa record with `shr_r = false` and `shr_s = true`, preserving the
+  Coq negative-exponent case through the private `zpow2` helper. Status:
+  implemented and removed from active semantic gaps.
+- `shr_truncate`: restored as the exact-name Lean theorem `shr_truncate` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` by subscription harness attempt
+  `.change_log/codex_attempt_20260711_133305`, whose local target gate passed.
+  The theorem matches upstream `IEEE754/BinarySingleNaN.v:shr_truncate` by
+  proving that shifting `shr_record_of_loc m l` by
+  `fexp (Zdigits 2 m + e) - e` agrees with
+  `FloatSpec.Calc.Round.truncate_triple (beta := 2) (fexp := fexp) (m, e, l)`
+  re-encoded through `shr_record_of_loc`, under `Valid_exp 2 fexp` and
+  `0 <= m`. Status: implemented and removed from active semantic gaps.
+- `choice_mode`, `le_choice_mode_le`, and `round_mode_choice_mode`: restored as
+  exact-name Lean declarations in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` by subscription harness attempt
+  `.change_log/codex_attempt_20260711_140113`, whose target diff only added
+  these three declarations. The definitions and lemmas match upstream
+  `IEEE754/BinarySingleNaN.v` by mapping the local IEEE modes to
+  `cond_incr (round_N (!(decide (2 ∣ mx))) lx) mx`, `mx`,
+  `cond_incr (round_sign_DN sx lx) mx`,
+  `cond_incr (round_sign_UP sx lx) mx`, and
+  `cond_incr (round_N true lx) mx`, proving
+  `mx <= choice_mode mode sx mx lx <= mx + 1`, and relating `rnd_of_mode mode x`
+  to `cond_Zopp (Rlt_bool x 0) (choice_mode mode (Rlt_bool x 0) m l)` under
+  `inbetween_int m |x| l`. Status: implemented and removed from active
+  semantic gaps.
 - `overflow_to_inf`, `is_nan_binary_overflow`, and
-  `binary_overflow_correct`: local `bsn_binary_overflow` always returns an
-  infinity, while upstream sometimes returns the largest finite value depending
-  on mode and sign. The local helper is not faithful.
-- `binary_fit_aux`, `binary_fit_aux_correct`, `Bmult_correct_aux`,
-  `shl_align_correct'`, `shl_align_correct`, `snd_shl_align`,
-  `is_nan_binary_round`, `is_nan_binary_normalize`, `Fplus_naive`,
-  `Fplus_naive_correct`, `sign_plus_overflow`,
-  `SFnearbyint_binary_aux`, `SFnearbyint_binary`, and
-  `Bnearbyint_correct_aux`: no faithful counterparts found. The local
-  `binary_round_aux`/`binary_round` helpers are explicitly documented as audit
-  helpers, not ports of Flocq's algorithms.
-- `is_finite_strict_Bone`, `is_nan_Bone`, `Bmax_float_proof`,
-  `Bnormfr_mantissa_correct`, `Ffrexp_core_binary`, `Bulp_correct_aux`,
-  `is_nan_Bulp`, `is_finite_strict_Bulp`, `Bulp'`, `Bulp'_correct`,
-  `is_nan_Bsucc`, `is_nan_Bpred`, `Bpred_pos'`,
-  `Bpred_pos'_correct`, `Bsucc'`, and `Bsucc'_correct`: no faithful
+  `binary_overflow_correct`: restored as exact-name Lean declarations in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after subscription harness
+  attempt `.change_log/codex_attempt_20260711_141105` proved the block and a
+  follow-up manual correction moved the public declarations out of the
+  experimental namespace. `overflow_to_inf` matches the upstream table:
+  nearest-even and nearest-away overflow to infinity, toward-zero returns the
+  finite maximum, toward positive infinity depends on `!s`, and toward negative
+  infinity depends on `s`. Because the flat Lean namespace already contains the
+  `Binary.v` FullFloat declaration named `binary_overflow`, the SingleNaN
+  overflow operation is represented by the top-level helper
+  `bsn_binary_overflow`, which returns either `S754_infinity s` or
+  `S754_finite s ((2 : Nat) ^ prec.toNat - 1) (emax - prec)`. The exact theorem
+  names prove the upstream payloads over this faithful SingleNaN helper:
+  `is_nan_SF` is false and `valid_binary_SF` is true. Status: implemented and
+  removed from active semantic gaps.
+
+- `binary_fit_aux`: implemented at top level in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after subscription harness
+  attempt `.change_log/codex_attempt_20260711_150905` stalled after a failed
+  proof patch. The Lean definition matches upstream
+  `IEEE754/BinarySingleNaN.v`: it returns `S754_finite sx mx ex` when
+  `ex <= emax - prec`, and otherwise returns the faithful SingleNaN overflow
+  helper `bsn_binary_overflow mode sx` because the root `binary_overflow` name
+  is already occupied by the Binary.v port. Status: implemented and removed
+  from active semantic gaps.
+- `shl_align_correct'`: restored as the exact-name Lean theorem
+  `shl_align_correct'` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` by
+  subscription harness attempt `.change_log/codex_attempt_20260711_154155`.
+  The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:shl_align_correct'`: under `e <= ex`, destructing
+  the shared local `shl_align mx ex e` returns a mantissa/exponent pair whose
+  `F2R` at radix 2 equals the original `(mx, ex)` value and whose returned
+  exponent is exactly `e`. Status: implemented and removed from active
+  semantic gaps.
+- `shl_align_correct`: restored as the exact-name Lean theorem
+  `shl_align_correct` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` by
+  subscription harness attempt `.change_log/codex_attempt_20260711_155942`.
+  The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:shl_align_correct`: for any target exponent,
+  destructing the shared local `shl_align mx ex ex'` preserves the radix-2
+  `F2R` value and returns an exponent bounded by `ex'`, splitting on whether
+  `ex' <= ex` and reusing `shl_align_correct'` in the shifted branch. Status:
+  implemented and removed from active semantic gaps.
+- `snd_shl_align`: restored as the exact-name Lean theorem `snd_shl_align`
+  in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` by subscription harness
+  attempt `.change_log/codex_attempt_20260711_160951`. The theorem matches
+  upstream `IEEE754/BinarySingleNaN.v:snd_shl_align`: under `ex' <= ex`, the
+  second projection of `shl_align mx ex ex'` is exactly `ex'`, obtained from
+  the second component of `shl_align_correct'`. Status: implemented and
+  removed from active semantic gaps.
+- `binary_fit_aux_correct`: restored as the exact-name Lean theorem
+  `binary_fit_aux_correct` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean`
+  after subscription harness attempt
+  `.change_log/codex_attempt_20260711_193545`. The theorem matches upstream
+  `IEEE754/BinarySingleNaN.v:binary_fit_aux_correct` modulo the local `Nat`
+  mantissa encoding: it makes the upstream `positive` mantissa requirement
+  explicit as `hmx_pos : 0 < mx`, derives `bounded` from canonical mantissa
+  and the exponent branch, proves the finite branch preserves the `SF2R`
+  value, finiteness, and sign under the magnitude test, and proves the
+  overflow branch returns the SingleNaN overflow helper using
+  `bounded_canonical_lt_emax`. Status: implemented and removed from active
+  semantic gaps.
+- `Bmult_correct_aux`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_162236` left the Lean file unchanged and
+  classified the exact lemma as blocked. Upstream
+  `IEEE754/BinarySingleNaN.v:Bmult_correct_aux` proves correctness of
+  `binary_round_aux mode (xorb sx sy) (Zpos (mx * my)) (ex + ey) loc_Exact`
+  and invokes the faithful `binary_round_aux_correct` path, which in turn
+  relies on `binary_fit_aux_correct`. The current Lean file has no
+  `binary_round_aux_correct` theorem and only the experimental rounded-real
+  surface plus overflow-only audit helpers; using those would be a weaker
+  payload, not the upstream lemma. Subscription reattempt
+  `.change_log/codex_attempt_20260711_195842`, run after
+  `binary_fit_aux_correct` was restored, reconfirmed that the remaining
+  blocker is the missing faithful SingleNaN `binary_round_aux` definition and
+  `binary_round_aux_correct` theorem, not the fit lemma. Config-provider
+  harness attempt `.change_log/codex_attempt_20260713_101534` rechecked the
+  current workspace and left source code unchanged (`target_before.lean` and
+  `target_after.lean` identical). Its nested classifier artifact
+  `.change_log/codex_attempt_20260713_021906_bmult_correct_aux_blocked`
+  records `coq_alignment = checked` and the same blocker: local
+  `Binary.lean` `ExperimentalBinaryRound` helpers have weakened audit
+  postconditions and cannot support the upstream rounded-product mantissa
+  payload. Config-provider harness attempt
+  `.change_log/codex_attempt_20260713_140859` rechecked after the
+  `SF2B'_B2SF` ledger update, left source code unchanged, and reconfirmed that
+  a faithful SingleNaN `binary_round_aux` plus `binary_round_aux_correct` path
+  is still missing. Config-provider harness attempt
+  `.change_log/codex_attempt_20260715_192026` rechecked the same active target
+  at the current `B754_mult_correct : Unit` marker, left source code unchanged,
+  and recorded `changed_files = []`. The checked sidecar
+  `.change_log/manual_attempt_20260715_bmult_correct_aux_blocked/attempt.json`
+  records `result = blocked` and `coq_alignment = checked`: upstream
+  `Bmult_correct_aux` requires `valid_binary`, rounded `SF2R`, finite/sign,
+  and overflow branches for
+  `binary_round_aux mode (xorb sx sy) (Zpos (mx * my)) (ex + ey) loc_Exact`,
+  while the current workspace still has only the payload-free `B754_mult_correct`
+  marker and weakened `Binary.lean` round-audit helpers rather than the
+  faithful SingleNaN `binary_round_aux_correct` path. Status: still active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_011619`
+  rechecked `Bmult_correct_aux` against the current branch, left source code
+  unchanged (`target_before.lean` and `target_after.lean` identical), and
+  classified the exact lemma as still blocked. The checked manual sidecar
+  `.change_log/manual_attempt_20260716_011847_bmult_correct_aux_blocked/attempt.json`
+  records the same missing prerequisite: upstream needs the faithful
+	  SingleNaN `binary_round_aux` and `binary_round_aux_correct` path, while the
+	  current Lean SingleNaN file has no such theorem, the only local
+	  `binary_round_aux_correct` is under `ExperimentalBinaryRound` and explicitly
+	  documented as not a Flocq algorithm port, and `B754_mult_correct` remains a
+	  `Unit` marker.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_053353`
+	  rechecked the same active target at the current `B754_mult_correct : Unit`
+	  marker and left source code unchanged. The checked sidecar
+	  `.change_log/manual_attempt_20260716_053526_bmult_correct_aux_blocked/attempt.json`
+		  records `result = blocked`, `coq_alignment = checked`, and
+		  `build = not_run`: upstream still requires faithful SingleNaN
+		  `binary_round_aux_correct` for the rounded product and overflow split,
+		  while the local file has only the payload-free marker and the available
+		  `ExperimentalBinaryRound` wrappers are documented audit helpers, not a
+		  Flocq algorithm port.
+		  Config-provider harness attempt `.change_log/codex_attempt_20260716_081515`
+		  rechecked `Bmult_correct_aux` at the current `B754_mult_correct : Unit`
+		  marker and left source code unchanged (`changed_during_attempt.txt` is
+		  empty and `target_before.lean` / `target_after.lean` are identical). The
+		  top-level attempt record has `coq_alignment = not_checked`, but the checked
+		  sidecar
+		  `.change_log/manual_attempt_20260716_081720_bmult_correct_aux_blocked/attempt.json`
+		  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+		  pass`, `changed_files = []`, and `build = not_run`. The blocker remains
+		  the missing faithful SingleNaN `binary_round_aux` and
+		  `binary_round_aux_correct` path: upstream applies that theorem to
+		  `binary_round_aux mode (xorb sx sy) (Zpos (mx * my)) (ex + ey) loc_Exact`
+		  and proves `valid_binary`, rounded `SF2R`, finite/sign, or exact overflow
+		  behavior. Current `BinarySingleNaN.lean` still has only the payload-free
+		  `B754_mult_correct` marker here, while the only local
+		  `binary_round_aux_correct` name is under `Binary.lean`'s
+		  `ExperimentalBinaryRound` audit namespace and is explicitly not a Flocq
+		  SingleNaN algorithm port.
+		  Config-provider harness attempt `.change_log/codex_attempt_20260716_171235`
+		  rechecked `Bmult_correct_aux` again after the latest SingleNaN
+		  `Bulp`/`Bplus`/`Bsucc` updates. It made no source changes
+		  (`changed_during_attempt.txt` is empty, `changed_files = []`) and timed
+		  out with exit 124 before writing a final classifier. The transcript still
+		  found the same root blocker: the current file exposes only the
+		  payload-free `B754_mult_correct : Unit` marker at the multiplication
+		  correctness surface, while the available `Binary.lean`
+		  `ExperimentalBinaryRound` helpers are audit-level wrappers and do not
+		  prove upstream `Bmult_correct_aux`'s `valid_binary`, exact rounded
+		  `SF2R`, finite/sign, and exact overflow split for `binary_round_aux` over
+		  the product mantissa. The normalized sidecar
+			  `.change_log/manual_attempt_20260716_171235_bmult_correct_aux_blocked/attempt.json`
+			  records `result = blocked`, `coq_alignment = checked`,
+			  `local_target_gate = pass`, and `changed_files = []`. Status: still
+			  active.
+		  Config-provider harness attempt `.change_log/codex_attempt_20260716_212432`
+		  rechecked `Bmult_correct_aux` at the active SingleNaN multiplication
+		  surface and made no target-source changes (`changed_files = []`,
+		  `target_before.lean` / `target_after.lean` identical). It returned
+		  `result = blocked` after confirming the same prerequisite gap: upstream
+		  `IEEE754/BinarySingleNaN.v:Bmult_correct_aux` applies the faithful
+		  SingleNaN `binary_round_aux_correct` theorem to
+		  `binary_round_aux mode (xorb sx sy) (Zpos (mx * my)) (ex + ey)
+		  loc_Exact`, while current Lean still has no SingleNaN
+		  `binary_round_aux_correct` carrying `valid_binary`, rounded `SF2R`,
+		  finite/sign, and overflow alternatives. The local alternatives remain
+		  insufficient: `B754_mult_correct` is a payload-free `Unit` marker, and
+		  `Binary.lean`'s `ExperimentalBinaryRound.binary_round_aux_correct` is
+		  explicitly an audit wrapper rather than a Flocq algorithm port. Status:
+		  still active.
+		- `is_nan_binary_round`: subscription harness attempt
+	  `.change_log/codex_attempt_20260711_162603` left the Lean file unchanged and
+	  classified the exact theorem as blocked. Upstream
+  `IEEE754/BinarySingleNaN.v:is_nan_binary_round` proves
+  `is_nan_SF (binary_round mode sx mx ex) = false` by invoking the faithful
+  `binary_round_correct` theorem for the SingleNaN `binary_round` algorithm
+  built from `shl_align_fexp` and `binary_round_aux`. The current Lean
+  SingleNaN file has no top-level `binary_round`/`binary_round_correct`
+  counterpart; its only rounding surface is
+  `ExperimentalSingleNaNArithmetic.B754_round_real` and
+  `B754_round_real_signed_zero`, which are rounded-real execution models
+  rather than the upstream algorithm. The `Binary.lean` `binary_round`
+  declarations are FullFloat/Binary.v audit helpers, not faithful BSN ports.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_102246`
+  rechecked the current workspace and left source code unchanged
+  (`target_before.lean` and `target_after.lean` identical). Its nested
+  classifier artifact
+  `.change_log/codex_attempt_20260713_102700_is_nan_binary_round_blocked`
+  records `coq_alignment = checked` and the same blocker: the local SingleNaN
+  file has `shl_align` and `binary_fit_aux` pieces, but no faithful
+  top-level `binary_round_aux`/`binary_round`/`binary_round_correct` path.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_200808`
+  rechecked the current branch after the latest `Bmult_correct_aux`
+  classification and left source code unchanged. The checked sidecar
+  `.change_log/manual_attempt_20260715_is_nan_binary_round_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`: upstream `is_nan_binary_round` is a small theorem, but
+  it depends directly on faithful SingleNaN `binary_round_correct`, which in
+  turn packages the upstream `binary_round` algorithm built from
+  `shl_align_fexp` and `binary_round_aux`. The current local `Binary.lean`
+  round helpers are FullFloat/Binary.v audit helpers, and the
+  `ExperimentalSingleNaNArithmetic` rounded-real surface is not the upstream
+  SingleNaN algorithm. Status: still active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_012336`
+  rechecked `is_nan_binary_round` against the current branch, left source code
+  unchanged (`target_before.lean` and `target_after.lean` identical), and
+  classified the exact theorem as still blocked. The checked sidecar
+  `.change_log/manual_attempt_20260716_is_nan_binary_round_blocked/attempt.json`
+	  records the same missing payload: upstream proves the theorem through
+	  faithful SingleNaN `binary_round_correct` over `binary_round` built from
+	  `shl_align_fexp` and `binary_round_aux`, while local `BinarySingleNaN.lean`
+	  still has only pieces plus rounded-real helpers, and `Binary.lean`'s
+	  similarly named helpers are explicitly `ExperimentalBinaryRound` audit
+	  helpers rather than a Flocq algorithm port.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_053949`
+	  rechecked `is_nan_binary_round` at the nearby SingleNaN rounding/overflow
+	  surface and left source code unchanged. The checked classifier
+	  `.change_log/manual_attempt_20260715_214358_is_nan_binary_round_blocked/attempt.json`
+	  records `result = blocked`, `coq_alignment = checked`, and
+	  `build = not_run`: upstream's proof is small only because it depends on the
+	  faithful SingleNaN `binary_round_correct`; local `BinarySingleNaN.lean`
+		  still has `SFnearbyint_binary`, `bsn_binary_overflow`, `binary_fit_aux`, and
+		  `is_nan_binary_overflow` pieces but no faithful top-level
+		  `binary_round`/`binary_round_correct`, and `Binary.lean`'s similarly named
+		  `ExperimentalBinaryRound` helpers remain documented audit helpers rather
+		  than a Flocq algorithm port.
+		  Config-provider harness attempt `.change_log/codex_attempt_20260716_082147`
+		  rechecked `is_nan_binary_round` at the current SingleNaN rounded-real
+		  surface and left source code unchanged (`changed_during_attempt.txt` is
+		  empty and `target_before.lean` / `target_after.lean` are identical). The
+		  top-level attempt record has `coq_alignment = not_checked`, but the checked
+		  sidecar
+		  `.change_log/manual_attempt_20260716_082147_is_nan_binary_round_blocked/attempt.json`
+		  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+		  pass`, `changed_files = []`, and `build = not_run`. The blocker remains
+		  the missing faithful SingleNaN round path: upstream
+		  `BinarySingleNaN.v:is_nan_binary_round` proves
+		  `is_nan_SF (binary_round mode sx mx ex) = false` by invoking
+		  `binary_round_correct` over `binary_round` built from `shl_align_fexp` and
+		  `binary_round_aux`. Current `BinarySingleNaN.lean` still has no faithful
+			  `binary_round` or `binary_round_correct` counterpart, only
+			  `ExperimentalSingleNaNArithmetic` rounded-real helpers; `Binary.lean`'s
+			  similarly named `ExperimentalBinaryRound` helpers are FullFloat audit
+			  helpers and explicitly not a Flocq SingleNaN algorithm port.
+		  Manual repair on 2026-07-16 closed the blocker by restoring the faithful
+		  SingleNaN `binary_round_aux` and `binary_round` surface in
+		  `FloatSpec/src/IEEE754/BinarySingleNaN.lean`, using a BSN-local
+		  `bsn_shr_fexp` wrapper over `FloatSpec.Calc.Round.truncate_triple` with
+		  `FLT_exp (3 - emax - prec) prec` rather than the FullFloat audit helper
+		  in `Binary.lean`. The new exact theorem `is_nan_binary_round` proves
+		  `is_nan_SF (binary_round mode sx mx ex) = false` from structural
+		  nonnegativity of the two BSN truncation passes and the existing
+		  `binary_fit_aux`/`bsn_binary_overflow` non-NaN constructors. Focused
+		  verification: `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`
+		  passed. Status: implemented and removed from active semantic gaps.
+		- `is_nan_binary_normalize`: subscription harness attempt
+		  `.change_log/codex_attempt_20260711_163145` left the Lean file unchanged and
+		  classified the exact theorem as blocked. Upstream
+  `IEEE754/BinarySingleNaN.v:is_nan_binary_normalize` proves
+  `is_nan (binary_normalize mode m e szero) = false` by invoking the faithful
+  `binary_normalize_correct` theorem. That theorem depends on the upstream
+  SingleNaN `binary_normalize` algorithm, whose zero branch returns
+  `B754_zero szero` and whose positive/negative branches package
+  `binary_round_valid` through `SF2B`; it therefore also depends on the
+  faithful `binary_round_correct` path. The current Lean SingleNaN file has no
+  top-level `binary_normalize`/`binary_normalize_correct` counterpart. The
+  `Binary.lean` declarations are FullFloat/Binary.v audit helpers, and
+  `ExperimentalSingleNaNArithmetic.B754_round_real` is a rounded-real model,
+  so using either would be a weaker payload. Config-provider harness attempt
+  `.change_log/codex_attempt_20260713_103115` rechecked the current workspace
+  and left source code unchanged (`target_before.lean` and
+  `target_after.lean` identical). Its nested classifier artifact
+  `.change_log/codex_attempt_20260713_103602_is_nan_binary_normalize_blocked`
+  records `coq_alignment = checked` and the same structural blocker: local
+  `BinarySingleNaN.lean` has `shl_align` and `binary_fit_aux` pieces, but no
+  faithful top-level SingleNaN `binary_round`/`binary_round_valid`/
+  `binary_normalize`/`binary_normalize_correct` path. Status: still active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_031755`
+  rechecked `is_nan_binary_normalize` with an explicit root-repair allowance to
+  add the faithful SingleNaN `binary_round`/`binary_normalize` surface if
+  feasible. It left source code unchanged (`target_before.lean` and
+  `target_after.lean` are identical) and classified the exact theorem as still
+  blocked. The checked sidecar
+  `.change_log/manual_attempt_20260716_is_nan_binary_normalize_blocked/attempt.json`
+  records that upstream `binary_normalize` returns `B754_zero szero` for zero
+  mantissas and wraps positive/negative mantissas through
+  `binary_round_valid`, while the current Lean file still lacks faithful
+  SingleNaN `binary_round_aux_correct`, `binary_round_correct`,
+	  `binary_round_valid`, and `binary_normalize_correct`. Routing through
+	  `ExperimentalSingleNaNArithmetic` or `Binary.lean`'s
+	  `ExperimentalBinaryRound` helpers remains a weaker payload, so the candidate
+	  stays active.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_054632`
+	  rechecked the target with explicit permission to restore the faithful
+	  SingleNaN normalization surface if feasible and left source code unchanged.
+	  The checked classifier
+	  `.change_log/manual_attempt_20260715_214956_is_nan_binary_normalize_blocked/attempt.json`
+	  records `result = blocked`, `coq_alignment = checked`, and
+	  `build = not_run`: upstream `is_nan_binary_normalize` sits on
+	  `binary_normalize_correct`, where zero mantissas return `B754_zero szero`
+	  and signed nonzero mantissas are wrapped through `binary_round_valid`/`SF2B`;
+		  local `BinarySingleNaN.lean` still has only component pieces and
+		  rounded-real helpers, while `Binary.lean`'s similarly named
+		  `ExperimentalBinaryRound` declarations remain weaker audit helpers.
+		  Config-provider harness attempt `.change_log/codex_attempt_20260716_082732`
+		  rechecked `is_nan_binary_normalize` at the local `ExperimentalBinaryRound`
+		  normalization surface and left source code unchanged
+		  (`changed_during_attempt.txt` is empty and `target_before.lean` /
+		  `target_after.lean` are identical). The top-level attempt record has
+		  `coq_alignment = not_checked`, but the checked sidecar
+		  `.change_log/manual_attempt_20260716_082732_is_nan_binary_normalize_blocked/attempt.json`
+		  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+		  pass`, `changed_files = []`, and `build = not_run`. The blocker remains
+		  the missing faithful SingleNaN normalization/rounding stack: upstream
+			  `BinarySingleNaN.v:is_nan_binary_normalize` proves
+			  `is_nan (binary_normalize mode m e szero) = false` through
+			  `binary_normalize_correct`; upstream `binary_normalize` splits signed
+			  integer mantissas, returns `B754_zero szero` for zero, and routes
+			  positive/negative cases through `binary_round_valid`/`SF2B`. At this
+			  point `BinarySingleNaN.lean` still lacked faithful public
+			  `binary_normalize`, `binary_round_valid`, and
+			  `binary_normalize_correct`; `Binary.lean` only
+			  has `ExperimentalBinaryRound.binary_normalize` over `FullFloat`, explicitly
+			  documented as an audit helper rather than a Flocq SingleNaN algorithm port.
+		  Manual repair on 2026-07-16 closed the non-NaN theorem by restoring the
+		  BSN-local `binary_normalize` branch structure in
+		  `FloatSpec/src/IEEE754/BinarySingleNaN.lean`: zero mantissas return
+		  `B754_zero szero`, positive mantissas route through `SF2B (binary_round
+		  mode false m.toNat e)`, and negative mantissas route through
+		  `SF2B (binary_round mode true m.natAbs e)`. The new exact theorem
+		  `is_nan_binary_normalize` proves `BSN_is_nan (binary_normalize mode m e
+		  szero) = false` from the restored `is_nan_binary_round` and the direct
+		  `SF2B`/`is_nan_SF` constructor correspondence. This does not claim
+		  `binary_normalize_correct`; that larger rounded-value/overflow theorem
+		  remains unavailable. Focused verification:
+		  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed.
+		  Status: implemented and removed from active semantic gaps.
+		- `Fplus_naive`: restored as the exact Lean definition `Fplus_naive` in
+		  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after subscription harness
+	  attempt `.change_log/codex_attempt_20260711_163523` and a manual scoped
+  patch. The definition matches upstream
+  `IEEE754/BinarySingleNaN.v:Fplus_naive`: it aligns each positive mantissa to
+  target exponent `ez` with the shared `shl_align`, applies the sign through
+  `FloatSpec.Core.Zaux.cond_Zopp`, and adds the two signed aligned mantissas as
+  an integer. Focused check
+  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed with
+  existing warnings only. Status: implemented and removed from active semantic
+  gaps.
+- `Fplus_naive_correct`: restored as the exact Lean theorem
+  `Fplus_naive_correct` in `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after
+  subscription harness attempt `.change_log/codex_attempt_20260711_165829` and
+  a manual proof. The statement matches upstream
+  `IEEE754/BinarySingleNaN.v:Fplus_naive_correct`: under assumptions `ez <= ex`
+  and `ez <= ey`, the real value of the signed aligned integer sum at exponent
+  `ez` equals the sum of the two original signed float real values. The proof
+  uses `shl_align_correct'` for both operands, preserves signs through
+  `FloatSpec.Core.Zaux.cond_Zopp`, and combines the aligned terms with
+  `FloatSpec.Core.Defs.F2R_add_same_exp'`. Focused check
+  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed with
+  existing warnings only. Status: implemented and removed from active semantic
+  gaps.
+- `sign_plus_overflow`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_173532` compared the upstream lemma and
+  left no accepted proof patch. The faithful proof needs a bridge from the
+  local `rnd_of_mode mode : ℝ → Int` / `round_to_generic` representation to
+  the relation-valued rounding-mode hypotheses used by upstream
+  `round_ge_generic` / `round_le_generic`, together with bounded/canonical
+  facts from the two finite operands. Adding extra positivity or canonical
+  hypotheses would weaken the upstream payload. Config-provider harness
+  attempt `.change_log/codex_attempt_20260713_092546` rechecked the current
+  workspace and left Lean code unchanged (`target_before.lean` and
+  `target_after.lean` identical). It confirmed the remaining blocker: local
+  `bounded` currently checks only mantissa/exponent ranges, while the available
+  `canonical_bounded` helper requires extra `hmx_pos` and `h_canonical`
+  hypotheses, so the exact upstream lemma still needs a faithful bridge from
+  bounded positive finite operands to the canonical/generic-format facts used
+  by `round_ge_generic`/`round_le_generic`. Config-provider harness attempt
+  `.change_log/codex_attempt_20260715_201845` and checked sidecar
+  `.change_log/manual_attempt_20260715_sign_plus_overflow_blocked/attempt.json`
+  revalidated the same blocker against upstream
+  `IEEE754/BinarySingleNaN.v:1864`: no Lean code changed, the focused
+  `target_before.lean`/`target_after.lean` snapshots are identical, placeholder
+  audit stayed at `sorry = 0`, `axiom = 0`, `admit = 0` with 53 existing
+  placeholder/trust findings, and `lake build` was not run because no Lean
+  source changed. Status: still active until the rounding-mode and
+  bounded/canonical bridges are restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_013130`
+  rechecked `sign_plus_overflow` against the current branch and again left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). Its checked sidecar
+  `.change_log/manual_attempt_20260716_0138_sign_plus_overflow_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream proves the exact lemma from only
+  `bounded mx ex = true` and `bounded my ey = true`, while local
+  `Fplus_naive`/`Fplus_naive_correct` and the integer-rounding
+  `roundR_ge_generic`/`roundR_le_generic` helpers still do not expose the
+  missing endpoint bridge from local `bounded` to the canonical/generic-format
+  facts used in the opposite-sign overflow contradiction. Adding `hmx_pos` or
+  `h_canonical` to the theorem would weaken the Flocq payload, so the candidate
+  remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_055457`
+  rechecked the same exact upstream payload after the placeholder audit had
+  dropped to 24 findings and again left source code unchanged
+  (`changed_during_attempt.txt` is empty; `target_before.lean` and
+  `target_after.lean` are identical). The checked sidecar
+  `.change_log/manual_attempt_20260715_220020_sign_plus_overflow_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `build = not_run`: upstream `sign_plus_overflow` obtains the sign equality
+  from only `bounded mx ex = true` and `bounded my ey = true`, but local
+	  `bounded` remains range-only and local `canonical_bounded` still requires
+	  extra `hmx_pos` and `h_canonical` hypotheses. Adding those hypotheses would
+	  weaken the Flocq theorem, so this candidate stays active until a faithful
+	  bounded-positive-finite to canonical/generic-format bridge is restored.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_083455`
+	  rechecked `sign_plus_overflow` at the current `canonical_bounded` bridge and
+	  left source code unchanged (`changed_during_attempt.txt` is empty and
+	  `target_before.lean` / `target_after.lean` are identical). The top-level
+	  attempt record has `coq_alignment = not_checked`, but the checked sidecar
+	  `.change_log/manual_attempt_20260716_sign_plus_overflow_blocked/attempt.json`
+	  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+	  pass`, `changed_files = []`, and `build = not_run`. The blocker remains the
+	  upstream payload boundary: `sign_plus_overflow` must derive
+	  `sx = Rlt_bool z 0 ∧ sx = sy` from only `bounded mx ex = true` and
+	  `bounded my ey = true`, while local `bounded` is range-only and local
+	  `canonical_bounded` still requires extra `hmx_pos` and `h_canonical`
+	  hypotheses. No public local theorem currently derives the generic-format /
+	  canonical facts needed by `round_ge_generic` and `round_le_generic` from
+	  those bounded hypotheses alone; adding the extra hypotheses would weaken the
+	  Flocq statement.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_172010`
+	  rechecked `sign_plus_overflow` after the latest SingleNaN helper updates.
+	  It made no source changes (`changed_during_attempt.txt` is empty,
+	  `changed_files = []`) and timed out with exit 124 before writing its own
+	  final classifier. The transcript confirmed the same current blocker:
+	  endpoint rounding lemmas are available, but they still require
+	  `generic_format`/canonical endpoint facts; current `canonical_bounded`
+	  still needs extra `hmx_pos` and `h_canonical` premises, whereas upstream
+	  proves the lemma from the two `bounded` hypotheses alone because the Coq
+	  bounded/proof-carrying finite setup supplies the needed positive-mantissa
+	  and canonicity facts. The normalized sidecar
+		  `.change_log/manual_attempt_20260716_172010_sign_plus_overflow_blocked/attempt.json`
+		  records `result = blocked`, `coq_alignment = checked`,
+		  `local_target_gate = pass`, and `changed_files = []`. Status: still
+		  active.
+		  Config-provider harness attempt `.change_log/codex_attempt_20260716_213229`
+		  rechecked `sign_plus_overflow` with the current BSN helper stack. It left
+		  the target source unchanged (`changed_files = []`; `target_before.lean` /
+		  `target_after.lean` identical) and returned `result = blocked`. The
+		  blocker remains statement-level, not a missing syntactic wrapper: upstream
+		  proves the opposite-sign overflow contradiction from only
+		  `bounded mx ex = true` and `bounded my ey = true`, using
+		  `canonical_bounded` plus `round_ge_generic`/`round_le_generic`; current
+		  Lean documents that its local `bounded` predicate is range-only and
+		  `canonical_bounded` still needs extra `hmx_pos` and `h_canonical`
+		  hypotheses. Adding those hypotheses to `sign_plus_overflow` would weaken
+		  the Flocq payload. The focused check
+			  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed with
+			  warnings only, and the placeholder audit stayed at 0 findings. Status:
+			  still active.
+			  Manual attempt
+			  `.change_log/manual_attempt_20260716_152815_sign_plus_overflow_proved/attempt.json`
+			  restored `ExperimentalSingleNaNArithmetic.sign_plus_overflow` in
+			  `FloatSpec/src/IEEE754/BinarySingleNaN.lean`. The proof follows upstream
+			  `IEEE754/BinarySingleNaN.v:sign_plus_overflow`: same-sign operands give
+			  the sign directly, and opposite signs contradict overflow by bounding the
+			  exact sum between the negative and positive maximal finite generic
+			  endpoint, then applying the concrete `round_to_generic`/`roundR`
+			  endpoint lemmas. Verification: `lake env lean
+			  FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed with existing warnings,
+			  `lake build` completed successfully (3345 jobs), and
+			  `scripts/audit_placeholders.sh --json FloatSpec` plus
+			  `scripts/status_report.sh --write` both reported 0 placeholders, 0
+			  `sorry`, 0 `axiom`, and 0 `admit`. Status: implemented and removed from
+			  active semantic gaps.
+			- `SFnearbyint_binary_aux`: restored as the exact-name Lean definition in
+	  `FloatSpec/src/IEEE754/BinarySingleNaN.lean`, using the BSN-local sticky
+	  shift record, saturation branch, `loc_of_shr_record`, and `choice_mode`.
+- `SFnearbyint_binary`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after subscription harness
+  attempt `.change_log/codex_attempt_20260711_183625`. The definition matches
+  upstream `IEEE754/BinarySingleNaN.v:SFnearbyint_binary`: it returns
+  `S754_finite sx mx ex` when `0 <= ex`; otherwise it calls
+  `SFnearbyint_binary_aux`, returns a finite value after `shl_align_fexp n 0`
+  for positive integer results, returns `S754_nan` for negative results, and
+  returns `S754_zero sx` for zero. Focused Lean and full build checks passed
+  with existing warnings only. Status: implemented and removed from active
+  semantic gaps.
+- `Bnearbyint_correct_aux`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_184239` timed out without an accepted
+  proof patch or final classifier output. Subscription rerun
+  `.change_log/codex_attempt_20260713_054328` left the Lean file unchanged and
+  classified the exact lemma as blocked. The local exact
+  `SFnearbyint_binary_aux`/`SFnearbyint_binary` definitions are present, but
+  the upstream theorem's `valid_binary z = true` conjunct would be tautological
+  against the current permissive `valid_binary_SF := true` bridge rather than a
+  proof of the bounded SingleNaN payload. The value equation also still needs
+  the exact nearbyint truncation proof stack over the BSN algorithm:
+  `round_trunc_sign_any_correct`, `shr_truncate`, `round_mode_choice_mode`, and
+  `shl_align_fexp_correct`, plus the bounded/canonical facts for the input.
+  Binary-level rounded-real `Bnearbyint` helpers are not faithful counterparts
+  for this BSN lemma. Config-provider harness attempt
+  `.change_log/codex_attempt_20260713_104042` rechecked the current workspace,
+  left source code unchanged (`target_before.lean` and `target_after.lean`
+  identical), and classified the exact lemma as still blocked for the same
+  reasons. In particular, local `valid_binary`/`valid_binary_SF` remain
+  permissive `true` predicates, and `canonical_bounded` still requires extra
+  `hmx_pos` and `h_canonical` hypotheses rather than exposing the upstream
+  bounded finite payload directly. Status: still active until the
+  non-permissive `valid_binary_SF` bridge and truncation/rounding-mode proof
+  are restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_013855`
+  rechecked the exact target against upstream
+  `IEEE754/BinarySingleNaN.v:Bnearbyint_correct_aux` at line 2531 and left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The checked sidecar
+  `.change_log/manual_attempt_20260716_Bnearbyint_correct_aux_blocked/attempt.json`
+  records `coq_alignment = checked`: `valid_binary_SF` is still a permissive
+  `true` predicate, `canonical_bounded` still requires extra `hmx_pos` and
+  `h_canonical` facts that upstream derives from `bounded`, and proving the
+  lemma now would certify validity through placeholders instead of the Flocq
+  bounded SingleNaN payload. The focused Lean gate for
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed with existing warnings;
+  the candidate remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_060047`
+  rechecked the exact theorem against the current branch after the local
+  `SFnearbyint_binary` definitions and truncation/choice helpers were present,
+  but again left source code unchanged (`changed_during_attempt.txt` is empty;
+  `target_before.lean` and `target_after.lean` are identical). The checked
+  sidecar
+  `.change_log/manual_attempt_20260715_220650_bnearbyint_correct_aux_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `build = not_run`: upstream still needs a non-tautological
+  `valid_binary z = true` proof plus the exact rounded value, finiteness, and
+  sign-preservation equations from `bounded mx ex = true` alone. Local
+  `valid_binary_SF` remains the permissive constant `true`, and the available
+  `shr_truncate`, `round_mode_choice_mode`, and `shl_align_fexp_correct` pieces
+  do not yet assemble the bounded-only Flocq payload without that validity
+  bridge, so `Bnearbyint_correct_aux` stays active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_084335`
+  rechecked the exact upstream payload against the current branch and left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_084335_bnearbyint_correct_aux_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker is still semantic, not a name
+  lookup issue: upstream `Bnearbyint_correct_aux` proves `valid_binary z =
+  true`, the exact rounded-value equation, finiteness, and sign preservation
+  for `z := SFnearbyint_binary md sx mx ex` from `bounded mx ex = true` alone.
+  Local `valid_binary_SF` is still permissive `true`, and
+  `canonical_bounded` still requires extra `hmx_pos` and `h_canonical`
+  hypotheses not present in the upstream theorem. The local
+  `SFnearbyint_binary_aux`/`SFnearbyint_binary`, `shr_truncate`,
+  `round_mode_choice_mode`, and `shl_align_fexp_correct` pieces therefore do
+  not yet assemble the bounded-only Flocq payload without either tautological
+  validity or a weakened statement, so the candidate remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_165243`
+  rechecked `Bnearbyint_correct_aux` against the current nearbyint helper
+  surface and upstream Flocq 4.2.2 `BinarySingleNaN.v:2531`. It made no source
+  changes (`changed_during_attempt.txt` is empty, `changed_files = []`, and
+  the local target gate passed) but ended before writing a checked classifier.
+  The normalized sidecar
+  `.change_log/manual_attempt_20260716_165243_bnearbyint_correct_aux_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`: upstream proves `valid_binary z = true`, the
+  exact `FIX_exp 0` rounded real equation, finiteness, and sign preservation
+  for `z := SFnearbyint_binary md sx mx ex` from only
+	  `bounded mx ex = true`. Current Lean has the nearbyint definitions and
+	  shr/choice/shl helpers, but `valid_binary_SF` remains permissive and
+	  `canonical_bounded` still requires extra `hmx_pos` and `h_canonical`
+	  hypotheses. Proving the exact lemma now would either close validity through
+	  a tautology or add non-upstream premises, so the candidate remains active.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_215743`
+	  rechecked `Bnearbyint_correct_aux` after relocating Lake build artifacts off
+	  the full `/mnt2` filesystem. It made no Lean source changes
+	  (`changed_files = []`; `target_before.lean` / `target_after.lean`
+	  identical) and returned `result = blocked`. The blocker is unchanged:
+	  upstream proves the bounded-only SingleNaN payload for
+	  `SFnearbyint_binary md sx mx ex`, while local `valid_binary_SF` is still the
+	  permissive constant predicate and local `canonical_bounded` still needs
+	  extra `hmx_pos` and `h_canonical` hypotheses. Using those surfaces would
+	  certify validity tautologically or weaken the theorem statement, so this
+	  candidate remains active.
+- `is_finite_strict_Bone`: restored as the exact-name Lean theorem in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after subscription harness
+  attempt `.change_log/codex_attempt_20260711_185011` failed before code work
+  due the subscription usage limit. The local theorem computes
+  `BSN_is_finite_strict Bone = true`, matching the upstream classifier
+  payload for the SingleNaN constant one. Focused Lean check passed with
+  existing warnings only. Status: implemented and removed from active semantic
+  gaps.
+- `is_nan_Bone`: restored as the exact-name Lean theorem in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after the same failed
+  subscription harness attempt and manual port. The local theorem computes
+  `BSN_is_nan Bone = false`, matching the upstream classifier payload for the
+  SingleNaN constant one. Focused Lean check passed with existing warnings
+  only. Status: implemented and removed from active semantic gaps.
+- `Bmax_float_proof`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_191154` produced a compiling theorem,
+  but it proved `valid_binary_SF ... = true` by `rfl` through the current
+  permissive definition `valid_binary_SF := true`, and used a simplified
+  mantissa expression instead of restoring the upstream proof of
+  `valid_binary (S754_finite false (shift_pos (Z.to_pos prec) 1 - 1)
+  (emax - prec)) = true`. The patch was removed as a tautological validity
+  proof, not a faithful Flocq payload. Status: still active until
+  `valid_binary_SF`/`bounded` exposes the real SingleNaN validity predicate or
+  the proof is ported against an equivalent non-permissive surface.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_093252`
+  rechecked the current workspace and left Lean code unchanged
+  (`target_before.lean` and `target_after.lean` identical). Its nested
+  `.change_log/codex_attempt_20260713_bmax_float_proof_blocked`
+  `classify_attempt.py` artifact records `coq_alignment = checked`: upstream
+  unfolds `valid_binary, bounded`, proves the `canonical_mantissa` branch, and
+  then proves the exponent branch, while current `valid_binary` /
+  `valid_binary_SF` are permissive `true` definitions and local `bounded`
+  still omits the canonical-mantissa payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_014455`
+  rechecked the exact target against upstream
+  `IEEE754/BinarySingleNaN.v:Bmax_float_proof` and left source code unchanged
+  (`changed_during_attempt.txt` is empty and `target_before.lean`/
+  `target_after.lean` are identical). The harness confirmed the same blocker:
+  upstream proves a real validity fact by unfolding `valid_binary` and
+  `bounded`, discharging `canonical_mantissa` for
+  `shift_pos (Z.to_pos prec) 1 - 1`, and proving the exponent bound; current
+  Lean `valid_binary`/`valid_binary_SF` are still permissive constants returning
+  `true`, so adding the theorem now would again be a placeholder-validity proof
+  rather than the Flocq payload. Status: still active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_060842`
+  rechecked the exact upstream lemma after the latest status/audit refresh and
+  left source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The checked sidecar
+  `.change_log/codex_attempt_20260716_bmax_float_proof_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `build = not_run`: upstream `Bmax_float_proof` proves a non-tautological
+  `valid_binary` fact by unfolding `bounded`, proving the
+  `canonical_mantissa` branch for the maximal mantissa, and proving
+  `emax - prec ≤ emax - prec`; local `valid_binary` and `valid_binary_SF`
+  remain permissive constants and local `bounded` remains range-only. Adding
+  the public theorem now would still close through a tautological validity
+  surface rather than the Flocq payload, so the candidate stays active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_085007`
+  rechecked `Bmax_float_proof` against the current branch and left source code
+  unchanged (`changed_during_attempt.txt` is empty and `target_before.lean` /
+  `target_after.lean` are identical). The top-level attempt record has
+  `result = blocked`, `local_target_gate = pass`, `changed_files = []`, and
+  `coq_alignment = not_checked`; the checked classifier artifact
+  `.change_log/codex_attempt_20260716_bmax_float_proof_blocked_manual/attempt.json`
+  records `coq_alignment = checked`. The upstream proof obligation is still a
+  real validity proof: it unfolds `valid_binary`/`bounded`, proves the
+  `canonical_mantissa` branch for the maximal mantissa
+  `shift_pos (Z.to_pos prec) 1 - 1`, and closes the exponent bound. Current
+  Lean `valid_binary`/`valid_binary_SF` remain permissive constants returning
+  `true`, so adding the theorem now would again certify validity
+  tautologically rather than porting the bounded/canonical Flocq payload.
+  The normalized checked sidecar
+  `.change_log/manual_attempt_20260716_085007_bmax_float_proof_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass` for that same config-provider attempt.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_173242`
+  rechecked the target again and timed out after identifying a viable
+  non-tautological route: do not prove through permissive `valid_binary_SF`;
+  instead expose the exact finite-validity payload over the nontrivial local
+  `bounded` plus `canonical_mantissa` predicates for the maximal finite
+  mantissa/exponent pair. The exact public Lean theorem
+  `ExperimentalSingleNaNArithmetic.Bmax_float_proof` is now restored in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean`. Its statement proves
+  `bounded ((2 : Nat) ^ prec.toNat - 1) (emax - prec) = true` and
+  `canonical_mantissa ((2 : Nat) ^ prec.toNat - 1) (emax - prec) = true`,
+  avoiding the tautological `valid_binary_SF := true` surface while preserving
+  the upstream `valid_binary` proof payload. The proof uses the existing
+  `Zdigits_unique` digit-count theorem to show the maximal mantissa has
+  exactly `prec` binary digits, then closes the `FLT_exp`/exponent branch.
+  Focused `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed
+  with existing warnings only, and the checked classifier
+  `.change_log/manual_attempt_20260716_173242_bmax_float_proof_proved/attempt.json`
+  records `result = proved`, `coq_alignment = checked`, `build = pass`, and
+  `changed_files = ["FloatSpec/src/IEEE754/BinarySingleNaN.lean"]`. Status:
+  implemented and removed from active semantic gaps.
+- `Ffrexp_core_binary`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after subscription harness
+  attempt `.change_log/codex_attempt_20260711_192135`. The definition matches
+  upstream `IEEE754/BinarySingleNaN.v:Ffrexp_core_binary`: if `-prec < emin`,
+  it returns the input finite value with exponent `0`; if the precision is
+  already no larger than the mantissa digit count, it returns exponent
+  `-prec` and external exponent `ex + prec`; otherwise it shifts the mantissa
+  by `d = prec - digits2 mx` and returns external exponent `ex + prec - d`.
+  Focused Lean and full build checks passed with existing warnings only.
+  Status: implemented and removed from active semantic gaps.
+- `Bnormfr_mantissa_correct`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_192933` classified the exact upstream
+  theorem as blocked and left the Lean file unchanged. Upstream proves the
+  theorem for Flocq `binary_float`, whose finite constructor carries a
+  positive mantissa and `bounded m e = true` proof. The local
+  `B754.B754_finite` stores only `(s : Bool) (m : Nat) (e : Int)`, so the
+  direct upstream statement is false for arbitrary local finite values: for
+  example, with `m = 1`, `e = -1`, and `prec = 3`, the real value can satisfy
+  the normalized magnitude premise while `digits2 m = 1`, not `prec`, and
+  `e ≠ -prec`. Config-provider harness attempt
+  `.change_log/codex_attempt_20260713_114121` rechecked the exact upstream
+  lemma and left source code unchanged (`target_before.lean` and
+  `target_after.lean` identical). It reconfirmed the same blocker: upstream
+  derives `digits2_pos m = prec` and `e = -prec` from the finite constructor's
+  proof-carrying `bounded` payload, while local `B754_finite` stores only
+  `(s, m, e)` and local `valid_binary`/`valid_binary_SF` remain permissive
+  `true` predicates. The attempt also checked the concrete failure shape
+  `prec = 3`, `m = 1`, `e = -1`, where the magnitude premise can hold but the
+  requested conclusion would force `digits2 1 = 3` and `-1 = -3`. Status:
+  still active until the SingleNaN finite representation or surrounding
+  theorem stack restores the bounded/canonical invariant.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_063611`
+  rechecked the theorem against the current raw SingleNaN type and left source
+  code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean` / `target_after.lean` are identical). The checked
+  classifier `.change_log/bnormfr_mantissa_correct_blocked_attempt.json`
+  records `coq_alignment = checked`: upstream proves the theorem from the
+  proof-carrying `B754_finite _ m e _` constructor, whose final field supplies
+  bounded/canonical invariants. Local `BinarySingleNaN.lean:B754_finite`
+  stores only sign, `Nat` mantissa, and exponent. The harness exhibited the
+  same false-statement shape at `prec = 2`, `emax = 4`,
+  `x = B754_finite false 1 (-1)`: the normalized magnitude premise holds
+  (`|B754_to_R x| = 1/2`), but the upstream conclusion would require
+  `digits2 1 = 2` and `-1 = -2`. Adding hypotheses or using the separate
+  proof-carrying `Binary.lean` representation would change the public
+  SingleNaN payload, so `Bnormfr_mantissa_correct` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_085648`
+  rechecked the exact upstream statement against the current raw SingleNaN
+  representation and left source code unchanged (`changed_during_attempt.txt`
+  is empty and `target_before.lean`/`target_after.lean` are identical). The
+  top-level attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_085648_bnormfr_mantissa_correct_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker is still that upstream
+  `B754_finite _ m e _` carries the bounded/canonical proof used to derive
+  `Bnormfr_mantissa x = N.pos m`, `Z.pos (digits2_pos m) = prec`, and
+  `e = -prec` from `/2 <= |B2R x| < 1`, while local `B754.B754_finite` stores
+  only sign, `Nat` mantissa, and exponent. The harness checked the concrete
+  false-statement shape `prec = 2`, `emax = 3`,
+  `x = B754.B754_finite false 1 (-1)`: the normalized magnitude premise holds,
+  but the upstream-style conclusion would require `-1 = -2`. Adding hypotheses
+  or switching to a different proof-carrying representation would change the
+  public SingleNaN payload, so this candidate remains active.
+- `Bulp'`: restored as the exact-name Lean definition
+  `ExperimentalSingleNaNArithmetic.Bulp'` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after subscription harness
+  attempt `.change_log/codex_attempt_20260713_052549`. The definition matches
+  upstream `Bulp' x := Bldexp mode_NE Bone (fexp (snd (Bfrexp x)))` using local
+  `RoundingMode.RNE`, `Bone`, `Bfrexp_bsn`, and
+  `FLT_exp (3 - emax - prec) prec`. The attempt intentionally did not add or
+  weaken `Bulp'_correct`. Status: implemented and removed from active semantic
+  gaps.
+- `Bpred_pos'`: restored as the exact-name Lean definition
+  `ExperimentalSingleNaNArithmetic.Bpred_pos'` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean` after config-provider harness
+  attempt `.change_log/codex_attempt_20260715_024444` and checked classifier
+  record `.change_log/manual_attempt_20260714_184816_bpred_pos_proved`. The
+  restoration adds the BSN-local `Bminus` support alias and matches upstream's
+  finite-branch shape: choose the predecessor spacing term at the mantissa
+  boundary, otherwise use `Bulp' x`, then subtract it with round-to-nearest.
+  The upstream positive-mantissa boundary
+  `(mx~0 =? shift_pos (Z.to_pos prec) 1)%positive` is represented against the
+  local Nat mantissa as `2 * mx == (2 : Nat) ^ prec.toNat`. Validation passed
+  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean`, `lake build`,
+  `scripts/audit_placeholders.sh --json FloatSpec`,
+  `scripts/status_report.sh --write`, and `git diff --check`. Status:
+  implemented and removed from active semantic gaps.
+- `is_finite_strict_Bulp`, `Bulp'_correct`, `Bpred_pos'_correct`, and
+  `Bsucc'_correct`: no faithful
   counterparts found in the BSN file. Some related Binary-level successor,
   predecessor, and constant-one theorems exist, but they do not provide these
   upstream BSN declarations.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_174823`
+  targeted `is_finite_strict_Bulp` after the `Bmax_float_proof` restoration and
+  left source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = failed`, `changed_files = []`, and
+  `local_target_gate = pass`; the normalized checked sidecar
+  `.change_log/manual_attempt_20260716_1752_is_finite_strict_Bulp_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`. The blocker is the raw local SingleNaN finite carrier:
+  upstream proves `is_finite_strict (Bulp x) = is_finite x` by applying
+  BSN-level `Bulp_correct` to a proof-carrying `B754_finite _ _ _ Bx`, while
+  local `B754.B754_finite` stores only sign, `Nat` mantissa, and exponent. A
+  live Lean probe shows the exact upstream-style statement is false over this
+  raw carrier: with `prec = 2`, `emax = 4`, and
+  `x = B754.B754_finite false 1 (-100)`, local
+  `ExperimentalSingleNaNArithmetic.Bulp x` reduces to `B754.B754_zero false`,
+  so `BSN_is_finite_strict (Bulp x) = false` while `BSN_is_finite x = true`.
+  Adding a boundedness hypothesis, switching to a proof-carrying wrapper, or
+  routing through proof-erased Binary-level helpers would change the public
+  BSN payload, so `is_finite_strict_Bulp` remains active.
+  Pipeline attempt `.change_log/codex_attempt_20260711_075827` produced a
+  structurally provable `is_nan_Bulp`, but it had to introduce a BSN-local
+  `Bulp` whose finite branch returned `B754_finite false 1 e` directly instead
+  of upstream's `binary_normalize mode_ZR 1 e false`; that patch was rejected as
+  a non-faithful surface. This historical blocker was superseded once the
+  faithful SingleNaN `binary_normalize`/`Bulp` payload was restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_114935`
+  rechecked the exact theorem and left source code unchanged
+  (`target_before.lean` and `target_after.lean` identical). Its nested
+  `.change_log/codex_attempt_20260713_115329_is_nan_Bulp_blocked`
+  classifier records `coq_alignment = checked` and the same blocker: the
+  local SingleNaN file has `Bulp'` only, while the exact upstream `Bulp`
+  finite branch must call the faithful SingleNaN
+  `binary_normalize mode_ZR 1 e false`; routing through Binary-level helpers
+  or reintroducing the direct finite branch would be non-faithful.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_220424`
+  rechecked `is_nan_Bulp` with the explicit root-repair framing of first adding
+  faithful BSN `binary_normalize`/`Bulp` if feasible. It left source code
+  unchanged: `target_before.lean` and `target_after.lean` are identical, the
+  local target gate passed, `scripts/audit_placeholders.sh --json FloatSpec`
+  reported `sorry = 0`, `axiom = 0`, `admit = 0`, and
+  `scripts/status_report.sh --write` still reported 53 placeholder/trust
+  findings. The attempt classified the target as blocked because upstream
+	  `Bulp`'s finite branch must call `binary_normalize mode_ZR 1 e false`. That
+	  attempt predated the restored BSN-local `binary_normalize` and
+	  `is_nan_binary_normalize`; the remaining blocker is now the faithful
+	  BSN-level `Bulp` definition plus `binary_round_correct`/`Bulp_correct`
+	  stack needed to restore `is_nan_Bulp` without semantic weakening. No full
+	  `lake build` was run for that attempt because no Lean source changed.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_015324`
+  rechecked the same root-repair path at the current `Bulp'` location and left
+  source code unchanged (`target_before.lean` and `target_after.lean` are
+  identical, and `changed_during_attempt.txt` is empty). The checked sidecar
+  `.change_log/manual_attempt_20260716_015705_is_nan_Bulp_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `is_nan_Bulp` depends on the
+	  faithful BSN `Bulp` finite branch `binary_normalize mode_ZR 1 e false` plus
+	  `is_nan_binary_normalize`. Current Lean now has the BSN-local
+	  `binary_normalize` and `is_nan_binary_normalize`, but still has only
+	  `Bulp'` at the BSN level and no faithful public `Bulp`/`Bulp_correct`
+	  stack. That status was superseded by the 2026-07-16 proof attempt below.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_064500`
+  rechecked `is_nan_Bulp` at the current `Bulp'` location and again left source
+  code unchanged (`target_before.lean` and `target_after.lean` are identical,
+  and `changed_during_attempt.txt` is empty). The checked sidecar
+  `.change_log/manual_attempt_20260716_is_nan_Bulp_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`: upstream `Bulp`'s finite branch is still the
+  faithful BSN `binary_normalize mode_ZR 1 e false`, and upstream
+  `is_nan_Bulp` uses `is_nan_binary_normalize`; local
+  `BinarySingleNaN.lean` has `Bulp_correct_aux` and `Bulp'` but no faithful
+  public BSN-level `Bulp`, while the visible `Bulp` surfaces are either
+  proof-erased BinarySingleNaNBridge/Binary wrappers or the
+  `ExperimentalBinaryRound` FullFloat audit helper. Adding a direct finite
+  `B754_finite false 1 e` branch or a theorem over Binary-level wrappers would
+  repeat the previously rejected non-faithful surface. This status was
+  superseded by the later faithful `Bulp`/`is_nan_Bulp` repair below.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_090238`
+  rechecked `is_nan_Bulp` at the current `Bulp'` location and left source code
+  unchanged (`changed_during_attempt.txt` is empty and `target_before.lean` /
+  `target_after.lean` are identical). The top-level attempt record has
+  `result = blocked`, `local_target_gate = pass`, `changed_files = []`, and
+  `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_is_nan_Bulp_blocked_codex/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the upstream
+	  operation boundary: `is_nan_Bulp` is stated over BSN `Bulp`, whose finite
+	  branch calls `binary_normalize mode_ZR 1 e false` and whose proof applies
+	  `is_nan_binary_normalize`. Current `BinarySingleNaN.lean` now has
+	  BSN-local `binary_normalize` and `is_nan_binary_normalize`, but still has
+	  only `Bulp_correct_aux` and `Bulp'` rather than a faithful public
+	  BSN-level `Bulp`/`Bulp_correct` stack. The visible
+	  `BinarySingleNaNBridge.Bulp` in `Binary.lean` is
+  proof-erased and directly returns `finite false 1 e`, so using it would
+  repeat the previously rejected weaker surface. This status was superseded by
+  the later faithful `Bulp`/`is_nan_Bulp` repair below.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_154808`
+  rechecked `is_nan_Bulp` after the BSN-local `binary_normalize` and
+  `is_nan_binary_normalize` repair landed. It added the faithful
+  `ExperimentalSingleNaNArithmetic.Bulp` in
+  `FloatSpec/src/IEEE754/BinarySingleNaN.lean`: zero maps to
+  `B754_finite false 1 (3 - emax - prec)`, infinity maps to positive
+  infinity, NaN maps to NaN, and the finite branch calls
+  `binary_normalize RoundingMode.RTZ 1 e false`, matching upstream
+  `binary_normalize mode_ZR 1 e false` rather than the rejected direct finite
+  shortcut. The exact theorem
+  `ExperimentalSingleNaNArithmetic.is_nan_Bulp` proves
+  `BSN_is_nan (Bulp x) = BSN_is_nan x` by cases and applies the restored
+  `is_nan_binary_normalize` in the finite case. Focused
+  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed, and the
+  checked sidecar
+  `.change_log/manual_attempt_20260716_155137_is_nan_Bulp_proved/attempt.json`
+  records `result = proved`, `coq_alignment = checked`,
+  `local_target_gate = pass`, and `build = pass`. The top-level harness
+  `attempt.json` parser mislabeled the attempt as `blocked`, but its final
+  message and the checked sidecar record the proof. Status: implemented and
+  removed from active semantic gaps.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_043537`
+  rechecked `is_nan_Bsucc` directly and left source code unchanged
+  (`target_before.lean` and `target_after.lean` are identical, with no files
+  listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_is_nan_Bsucc_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream defines the BSN-level
+  `Bsucc` with finite branches `SF2B _ (proj1 (binary_round_correct ...))`,
+  then proves `is_nan_Bsucc` by rewriting `is_nan_SF2B` and applying
+  `is_nan_binary_round`. Current `BinarySingleNaN.lean` now has the faithful
+  BSN-local `binary_round`/`binary_round_aux` surface and
+  `is_nan_binary_round`, but still has no faithful BSN-level `Bsucc` and no
+  `binary_round_correct` theorem packaging the upstream validity/rounding
+  payload. The `Bsucc` and older round names in `Binary.lean` are permissive
+  `Binary754`/FullFloat helpers and cannot discharge this SingleNaN theorem
+  without changing the payload, so `is_nan_Bsucc` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_092629`
+  rechecked `is_nan_Bsucc` at the current `Bpred_pos'` area and left source
+  code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_092629_is_nan_Bsucc_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the upstream
+  SingleNaN rounding chain: `Bsucc`'s finite branches are built as
+  `SF2B _ (proj1 (binary_round_correct ...))`, and `is_nan_Bsucc` rewrites
+  `is_nan_SF2B` then applies `is_nan_binary_round`. Current
+  `BinarySingleNaN.lean` has `is_nan_SF2B`, `Bulp'`, `Bminus`,
+  `Bpred_pos'`, faithful BSN-local `binary_round`, and `is_nan_binary_round`,
+  but no faithful public BSN-level `Bsucc` and no `binary_round_correct`; the
+	  `Bsucc` and round helpers in `Binary.lean` are Binary754/FullFloat helpers
+	  over a different permissive model.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_162503`
+	  rechecked `is_nan_Bsucc` after faithful BSN-level `Bulp`, `Bplus`, and
+	  `Bsucc'` were restored. The harness wrote a patch but classified it as
+	  `result = failed`; the patch was manually checked and salvaged. It adds the
+	  faithful BSN-local `ExperimentalSingleNaNArithmetic.Bsucc`: zero maps to
+	  `B754_finite false 1 emin`, positive infinity is unchanged, negative
+	  infinity maps to `Bopp Bmax_float`, NaN stays NaN, positive finite uses
+	  `SF2B (binary_round mode_UP false (mx + 1) ex)`, and negative finite uses
+	  `SF2B (binary_round mode_ZR true (2 * mx - 1) (ex - 1))`. The exact theorem
+	  `ExperimentalSingleNaNArithmetic.is_nan_Bsucc` proves
+	  `BSN_is_nan (Bsucc x) = BSN_is_nan x` by cases, rewriting the finite cases
+	  through `BSN_is_nan_SF2B_eq` and `is_nan_binary_round`. Focused
+	  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed, and
+	  `.change_log/manual_attempt_20260716_is_nan_Bsucc_proved/attempt.json`
+	  records `result = proved`, `coq_alignment = checked`, and
+	  `local_target_gate = pass`. Status: implemented and removed from active
+	  semantic gaps.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_042527`
+	  rechecked `is_nan_Bpred` directly and left source code unchanged
+  (`target_before.lean` and `target_after.lean` are identical, with no files
+  listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_is_nan_Bpred_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream defines the BSN-level
+  `Bpred x := Bopp (Bsucc (Bopp x))` and proves `is_nan_Bpred` from
+  `is_nan_Bopp` and `is_nan_Bsucc`. Current `BinarySingleNaN.lean` has
+	  `Bopp_bsn`/`is_nan_Bopp`, `Bulp'`, `Bminus`, and `Bpred_pos'`, but no
+	  faithful BSN-level `Bpred`; the faithful BSN-level `Bsucc` and
+	  `is_nan_Bsucc` payload were restored later on 2026-07-16. The `Bsucc`/
+	  `Bpred` names in `Binary.lean` are
+  permissive `Binary754` rounded-real helpers and cannot discharge this
+  SingleNaN theorem without changing the payload, so `is_nan_Bpred` remains
+  active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_093309`
+  rechecked `is_nan_Bpred` at the current `Bpred_pos'` area and left source
+  code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_093309_is_nan_Bpred_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains downstream of the
+  faithful SingleNaN successor chain: upstream defines
+  `Bpred x := Bopp (Bsucc (Bopp x))` and proves `is_nan_Bpred` by rewriting
+  `is_nan_Bopp` and `is_nan_Bsucc`. Current `BinarySingleNaN.lean` has
+	  `Bopp_bsn`/`is_nan_Bopp`, `Bulp'`, `Bminus`, and `Bpred_pos'`, but no
+	  faithful public BSN-level `Bpred`; the faithful public BSN-level `Bsucc`
+	  and `is_nan_Bsucc` were restored later on 2026-07-16. The `Bsucc`/`Bpred`
+	  names in `Binary.lean` are Binary754 helpers over a different permissive
+	  model.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_163005`
+	  rechecked `is_nan_Bpred` after faithful BSN-local `Bsucc` and
+	  `is_nan_Bsucc` were restored. The harness wrote the right definition but
+	  left a failed proof rewrite; the proof was manually repaired. It adds the
+	  faithful BSN-local `ExperimentalSingleNaNArithmetic.Bpred` as
+	  `Bopp_bsn (Bsucc (Bopp_bsn x))`, matching upstream
+	  `Bpred x := Bopp (Bsucc (Bopp x))`. The exact theorem
+	  `ExperimentalSingleNaNArithmetic.is_nan_Bpred` proves
+	  `BSN_is_nan (Bpred x) = BSN_is_nan x` by eliminating the outer `Bopp_bsn`,
+	  applying `is_nan_Bsucc` to `Bopp_bsn x`, and eliminating the inner
+	  `Bopp_bsn` by cases. Focused
+	  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed, and
+	  `.change_log/manual_attempt_20260716_is_nan_Bpred_proved/attempt.json`
+	  records `result = proved`, `coq_alignment = checked`, and
+	  `local_target_gate = pass`. Status: implemented and removed from active
+	  semantic gaps.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_044157`
+	  rechecked `is_finite_strict_Bulp` directly and left source code unchanged
+  (`target_before.lean` and `target_after.lean` are identical, with no files
+  listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_is_finite_strict_Bulp_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream proves
+  `is_finite_strict (Bulp x) = is_finite x` over the faithful BSN-level
+  `Bulp`, whose finite branch uses `binary_normalize mode_ZR 1 e false`, and
+  the proof depends on `Bulp_correct`. Current `BinarySingleNaN.lean` has
+  faithful BSN-level `Bulp`, `is_nan_Bulp`, `Bulp_correct_aux`, and `Bulp'`,
+  but no `Bulp_correct` and no `is_finite_strict_Bulp`. The Binary-level `Bulp`
+  bridge is not enough because it uses a permissive/direct finite
+  representation instead of the upstream SingleNaN payload, so
+  `is_finite_strict_Bulp` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_091035`
+  rechecked `is_finite_strict_Bulp` at the current `Bulp'` location and left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_091035_is_finite_strict_Bulp_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker is unchanged: upstream proves
+  `is_finite_strict (Bulp x) = is_finite x` over the faithful BSN-level
+  `Bulp`, whose finite branch calls `binary_normalize mode_ZR 1 e false`, and
+  uses `Bulp_correct` to rule out impossible non-finite results. Current
+  `BinarySingleNaN.lean` has faithful public BSN-level `Bulp` and
+  `is_nan_Bulp`, but still no `Bulp_correct`; available
+  `BinarySingleNaNBridge.Bulp`/`Binary.Bulp` surfaces are proof-erased
+  Binary-level wrappers and would change the upstream SingleNaN payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_160721`
+  rechecked `is_finite_strict_Bulp` after faithful BSN-level `Bulp` and
+  `is_nan_Bulp` were restored. It timed out with exit 124, made no source
+  changes (`changed_during_attempt.txt` is empty), and produced no final
+  message, but the transcript checked the upstream proof block: upstream
+  `is_finite_strict_Bulp` invokes `Bulp_correct` to rule out non-finite
+  results. The checked sidecar
+  `.change_log/manual_attempt_20260716_160721_is_finite_strict_Bulp_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`: local Lean now has faithful `Bulp` and
+  `is_nan_Bulp`, but still lacks `Bulp_correct` over the proof-carrying
+  bounded finite payload; proving the theorem over raw `B754` without that
+  evidence would weaken or change the upstream payload. Status: still active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_044750`
+  rechecked `Bulp'_correct` directly and left source code unchanged
+  (`target_before.lean` and `target_after.lean` are identical, with no files
+  listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_bulp_prime_correct_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `Bulp'_correct` states
+  `(2 < emax)%Z -> forall x, is_finite x = true -> Bulp' x = Bulp x`,
+  comparing `Bulp'` against the faithful BSN-level `Bulp` after proving
+  `Bulp_correct`. Current `BinarySingleNaN.lean` has faithful BSN-level
+  `Bulp`, `is_nan_Bulp`, `Bulp_correct_aux`, and `Bulp'`, but no
+  `Bulp_correct` and no `is_finite_strict_Bulp` payload. The available
+  Binary-level
+  `Bulp` declarations are Binary/Binary754 bridge surfaces and cannot replace
+  the upstream SingleNaN `Bulp` payload, so `Bulp'_correct` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_092017`
+  rechecked `Bulp'_correct` at the current `Bulp'` definition and left source
+  code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_092017_bulp_prime_correct_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the exact upstream
+  dependency chain: `Bulp'_correct` states
+  `(2 < emax)%Z -> forall x, is_finite x = true -> Bulp' x = Bulp x`, comparing
+  `Bulp'` against the faithful BSN-level `Bulp` after using `Bulp_correct`.
+  Current `BinarySingleNaN.lean` now has faithful public BSN-level `Bulp` and
+  `is_nan_Bulp`, but still no `Bulp_correct`; the available
+  `BinarySingleNaNBridge.Bulp`/`Binary.Bulp` declarations are proof-erased
+  Binary-level wrappers and would change the upstream SingleNaN payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_164708`
+  rechecked `Bulp'_correct` at the current `Bulp'` definition after the latest
+  BSN `Bulp`/`is_nan_Bulp` restorations. It made no source changes
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed). The harness-generated checked sidecar
+  `.change_log/manual_attempt_20260716_164945_bulp_prime_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`: upstream `Bulp'_correct` proves
+  `Bulp' x = Bulp x` for finite `x` by first deriving the `Bulp'`
+  correctness triple and then invoking faithful BSN-level `Bulp_correct`.
+  Current Lean still has no public BSN `Bulp_correct`/
+  `is_finite_strict_Bulp`/validity stack, and Binary-level wrappers would
+  weaken the payload. Status: still active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_175635`
+  rechecked `Bulp'_correct` after the current `is_finite_strict_Bulp`
+  false-raw-carrier classification. It made no source changes
+  (`changed_during_attempt.txt` is empty and `target_before.lean`/
+  `target_after.lean` are identical) and ended with the generic top-level
+  `result = failed`. The normalized checked sidecar
+  `.change_log/manual_attempt_20260716_1801_bulp_prime_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`. The upstream proof first proves real-value,
+  finiteness, and sign facts for `Bulp'` using BSN-level
+  `Bldexp_correct`/`Bfrexp_correct`, then finishes by applying faithful
+  BSN-level `Bulp_correct`. A live Lean scratch proof by cases and `simp`
+  still leaves the zero branch goal
+  `Bldexp mode_NE Bone (FLT_exp ... 0) = B754_finite false 1 emin` and the
+  finite branch goal `Bldexp mode_NE Bone (FLT_exp ... e) =
+  binary_normalize mode_ZR 1 e false`, which are exactly the missing
+  correctness equalities. Adding a boundedness hypothesis, proving only a
+  wrapper-level Binary theorem, or changing the equality target would not be
+  the public SingleNaN payload, so `Bulp'_correct` remains active.
+  Earlier subscription harness attempts
+  `.change_log/codex_attempt_20260713_053532`,
+  `.change_log/codex_attempt_20260713_072941`, and
+  `.change_log/codex_attempt_20260713_083515` had classified `Bpred_pos'` as
+  blocked by the missing exact BSN-level `Bminus` surface. Those blocker notes
+  are superseded by the implemented `Bminus` support alias and exact
+  `Bpred_pos'` definition recorded above.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_220952`
+  rechecked `Bpred_pos'_correct` after `Bpred_pos'` was restored and left source
+  code unchanged: `target_before.lean` and `target_after.lean` are identical,
+  the local target gate passed, `scripts/audit_placeholders.sh --json
+  FloatSpec` reported `sorry = 0`, `axiom = 0`, `admit = 0` with 53
+  placeholder/trust findings, and `scripts/status_report.sh --write` refreshed
+  the generated status. The checked sidecar
+  `.change_log/manual_attempt_20260715_bpred_pos_prime_correct_blocked/attempt.json`
+  records the current blocker: upstream `Bpred_pos'_correct` requires the
+  faithful BSN `Bulp`/`Bulp_correct`/`Bulp'_correct` chain plus BSN
+  `Bminus_correct` and `Bpred_correct`; local BSN has faithful `Bulp`,
+  `Bulp'`, and `Bpred_pos'`, but no `Bulp_correct` or `Bulp'_correct`, and
+  at that time lacked faithful BSN-level `Bpred`/`Bsucc`. The `Bpred`/`Bsucc`
+  definitions and their NaN preservation theorems were restored later on
+  2026-07-16, but the correctness payload blockers below remain. Therefore
+  `Bpred_pos'_correct` remains active as a downstream theorem, not a safe
+  wrapper.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_064934`
+  rechecked `Bpred_pos'_correct` at the current exact `Bpred_pos'` definition
+  and left source code unchanged (`target_before.lean` and
+  `target_after.lean` are identical, and `changed_during_attempt.txt` is
+  empty). Its top-level attempt record has `result = blocked`,
+  `coq_alignment = not_checked`, and `local_target_gate = pass`; the transcript
+  records a statement-level upstream comparison: the theorem is equality
+  against upstream BSN `Bpred`, whose definition is `Bopp (Bsucc (Bopp x))`,
+  and the proof depends on faithful SingleNaN `Bulp`, `Bulp_correct`,
+  `Bulp'_correct`, `Bpred`, `Bpred_correct`, and `Bsucc` payloads. Current
+  `BinarySingleNaN.lean` still has only `Bpred_pos'`, `Bulp'`, `Bminus`, and
+  `Bulp_correct_aux` in this area, while the only `Bpred` found was the
+  separate Binary-level wrapper over the permissive model. That specific
+  missing-definition blocker was superseded when faithful BSN-level
+  `Bsucc`/`Bpred` were restored later on 2026-07-16, but the theorem remains
+  active because the correctness stack is still absent.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_094006`
+  rechecked `Bpred_pos'_correct` at the current exact `Bpred_pos'` definition
+  and left source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_094006_bpred_pos_prime_correct_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker is still the faithful
+  SingleNaN dependency chain: upstream `Bpred_pos'_correct` states
+  `(2 < emax)%Z -> forall x, (0 < B2R x)%R -> Bpred_pos' x = Bpred x`, where
+  BSN `Bpred` is `Bopp (Bsucc (Bopp x))`, and the proof depends on BSN
+  `Bpred_correct`, `Bminus_correct`, `Bulp`, `Bulp_correct`, and
+  `Bulp'_correct`. Current `BinarySingleNaN.lean` has `Bpred_pos'`, `Bminus`,
+  `Bulp'`, `Bulp_correct_aux`, faithful `Bulp`/`is_nan_Bulp`, and now faithful
+  public BSN-level `Bsucc`/`Bpred` with NaN preservation, but no
+  `Bminus_correct`, `Bpred_correct`, `Bulp_correct`, or `Bulp'_correct`;
+  Binary-level wrappers use the different permissive Binary754/bridge model.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_164008`
+  rechecked `Bpred_pos'_correct` after the faithful BSN-level `Bsucc`,
+  `is_nan_Bsucc`, `Bpred`, and `is_nan_Bpred` restorations. It made no source
+  changes (`changed_during_attempt.txt` is empty), ran the status and
+  placeholder snapshots, and its transcript confirmed the current blocker: the
+  upstream proof still needs the SingleNaN correctness stack
+  `Bminus_correct`, `Bpred_correct`, `Bulp_correct`, and `Bulp'_correct`.
+  The normalized sidecar
+  `.change_log/manual_attempt_20260716_164008_bpred_pos_prime_correct_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`,
+  `changed_files = []`, and `local_target_gate = pass`. Status: still active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_045430`
+  rechecked `Bsucc'` after the exact `Bpred_pos'` restoration and left source
+  code unchanged (`target_before.lean` and `target_after.lean` are identical,
+  with no files listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_bsucc_prime_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `Bsucc'` cases are
+  zero-to-`Bldexp mode_NE Bone emin`, infinities/NaN, positive finite via
+  `Bplus mode_NE x (Bulp x)`, and negative finite via
+  `Bopp (Bpred_pos' (Bopp x))`. Current `BinarySingleNaN.lean` now has
+  `Bopp_bsn`, `Bldexp`, `Bminus`, `Bpred_pos'`, and faithful BSN-level
+  `Bulp`, but it still lacks faithful BSN-level `Bplus` for the positive
+  finite branch. Routing through rounded-real `B754_plus`/`Bulp'` or
+  Binary-level
+	  `Bplus`/`Bulp` bridge surfaces would weaken or change the upstream
+	  SingleNaN payload. This blocker was superseded by the later faithful
+	  BSN-local `Bplus`/`Bsucc'` repair below.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_094724`
+  rechecked `Bsucc'` at the current `Bpred_pos'` area and left source code
+  unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`, `local_target_gate = pass`,
+  `changed_files = []`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_094724_bsucc_prime_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the positive finite
+	  branch of the upstream definition: `Bsucc'` must call
+	  `Bplus mode_NE x (Bulp x)`. Current `BinarySingleNaN.lean` has `Bopp_bsn`,
+	  `Bldexp`, rounded-real `B754_plus`, faithful `Bulp`, `Bulp'`, `Bminus`, and
+	  `Bpred_pos'`, but no faithful public BSN-level `Bplus`; using `B754_plus`,
+	  `Bulp'`,
+	  or Binary-level bridge wrappers would change the SingleNaN payload. This
+	  blocker was superseded by the later faithful BSN-local `Bplus`/`Bsucc'`
+	  repair below.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_161418`
+	  rechecked `Bsucc'` after faithful BSN-level `Bulp`/`is_nan_Bulp` were
+	  restored. The harness timed out and left a tab-indented patch classified as
+	  `result = failed`, but the patch was manually salvaged without changing the
+	  intended upstream payload. The restored BSN-local
+	  `ExperimentalSingleNaNArithmetic.Bplus` handles NaN/infinity/zero cases and
+	  finite-finite addition through
+	  `binary_normalize mode (Fplus_naive sx mx ex sy my ey (min ex ey)) (min ex ey)`
+	  with the directed-rounding sign flag, matching upstream `Bplus` rather than
+	  the proof-erased Binary bridge. The exact
+	  `ExperimentalSingleNaNArithmetic.Bsucc'` now matches upstream: zero maps to
+	  `Bldexp mode_NE Bone emin`, positive infinity is unchanged, negative
+	  infinity maps to `Bopp Bmax_float`, NaN stays NaN, positive finite uses
+	  `Bplus mode_NE x (Bulp x)`, and negative finite uses
+	  `Bopp (Bpred_pos' (Bopp x))`. Focused
+	  `lake env lean FloatSpec/src/IEEE754/BinarySingleNaN.lean` passed after the
+	  manual repair, and
+	  `.change_log/manual_attempt_20260716_bsucc_prime_proved/attempt.json`
+	  records `result = proved`, `coq_alignment = checked`, and
+	  `local_target_gate = pass`. Status: implemented and removed from active
+	  semantic gaps.
+	  Config-provider harness attempt `.change_log/codex_attempt_20260716_050359`
+	  rechecked `Bsucc'_correct` after the current successor/Bulp blocker updates
+  and left source code unchanged (`target_before.lean` and `target_after.lean`
+  are identical, with no files listed in `changed_during_attempt.txt`). The
+  checked sidecar
+  `.change_log/manual_attempt_20260716_bsucc_prime_correct_blocked/attempt.json`
+  records `coq_alignment = checked`: upstream `Bsucc'_correct` states
+  `(2 < emax)%Z -> forall x, is_finite x = true -> Bsucc' x = Bsucc x` and
+	  depends on faithful BSN `Bsucc`/`Bsucc'`, `Bpred_pos'_correct`,
+	  `Bulp'_correct`, and BSN `Bplus`/`Bulp` correctness. Current
+	  `BinarySingleNaN.lean` has `Bopp_bsn`, `Bldexp`, `Bminus`, `Bulp'`,
+	  `Bpred_pos'`, faithful `Bulp`, faithful BSN-local `Bplus`/`Bsucc'`, and
+	  faithful BSN-local `Bsucc`/`is_nan_Bsucc`, but no
+	  `Bplus_correct`/`Bulp_correct`/
+	  `Bulp'_correct`, and no `Bpred_pos'_correct`. Binary-level
+  `Bsucc`/`Bplus`/`Bulp` are bridge/permissive surfaces and cannot replace the
+  upstream SingleNaN payload, so `Bsucc'_correct` remains active as a downstream
+  theorem, not a safe wrapper.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_095649`
+  rechecked `Bsucc'_correct` after the latest `Bsucc'` blocker record and again
+  left source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_095649_bsucc_prime_correct_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker is still structural:
+  upstream `Bsucc'_correct` compares faithful BSN `Bsucc' x = Bsucc x` under
+	  `(2 < emax)%Z` and finite inputs. Current `BinarySingleNaN.lean` now has
+	  faithful public BSN-level `Bsucc'`, `Bsucc`, `Bplus`, and `Bulp`, but still
+	  no `Bplus_correct`/`Bulp_correct`/
+	  `Bulp'_correct`, and no `Bpred_pos'_correct`. The Binary-level
+  bridge/permissive wrappers remain a different payload and are not a faithful
+  replacement.
 
 Checked batch 7: `IEEE754/Bits.v` bit-level API names.
 
-No entries were removed from the active semantic gap list in this batch.
+Twenty-five entries have since been removed from the active semantic gap list in this
+batch.
 
 Still active after statement check:
 
-- `bits_of_binary_float`, `split_bits_of_binary_float`, and
-  `binary_float_of_bits`: Lean has `binary_to_bits`, `split_bits`, and
-  `bits_to_binary`/`binary_float_of_bits_aux`, but these are built over the
-  local weakened `Binary754` model and different width helpers. They are not
-  confirmed faithful counterparts of the upstream API definitions.
-- `binary32` and `binary64`: Lean has `Binary32` and `Binary64`, but they are
-  defined as `Binary754 24 127` and `Binary754 53 1023`, while upstream uses
-  `binary_float 24 128` and `binary_float 53 1024`. This may be a convention
-  shift, but it is not removed without an explicit equivalence proof.
-- The `default_nan_pl*`, `unop_nan_pl*`, `binop_nan_pl*`, and
-  `ternop_nan_pl*` payload helpers: no faithful counterparts found.
-- The `b32_*` and `b64_*` operation aliases, including bit conversion aliases:
+- `bits_of_binary_float`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_200507`. The definition matches upstream
+  `IEEE754/Bits.v:bits_of_binary_float` over the proof-carrying local
+  `binary_float` surface: zero, infinity, NaN, and finite constructor cases
+  are encoded with the same `join_bits` payload, including the finite
+  normalized/subnormal split on `mantissa - 2 ^ mw`. Status: implemented and
+  removed from active semantic gaps.
+- `split_bits_of_binary_float`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_200922`. The definition matches upstream
+  `IEEE754/Bits.v:split_bits_of_binary_float` by returning the constructor-case
+  `(sign, mantissa, exponent)` triple corresponding to `bits_of_binary_float`,
+  including the same finite normalized/subnormal split. Status: implemented
+  and removed from active semantic gaps.
+- `binary_float_of_bits`: restored as the exact-name public Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after reusing the current harness blocker
+  evidence from `.change_log/codex_attempt_20260716_100358`. The earlier blocker
+  was real: aliasing local `binary_float_of_bits_aux : Binary754 prec emax`
+  would have lost the upstream proof-carrying `binary_float` payload. The new
+  declaration instead makes the upstream section witnesses explicit
+  (`mw > 0`, `ew > 0`, `prec = mw + 1`, and `emax = 2^(ew-1)`) and constructs
+  the strict `binary_float ((mw : Int) + 1) ((2 : Int)^(ew - 1))` directly from
+  decoded bit fields. NaN branches prove `nan_pl` from the payload width, and
+  finite subnormal/normal branches prove the real `bounded` obligations; it
+  does not route through permissive `Binary754` or `valid_binary = true`.
+  Focused verification: `lake env lean FloatSpec/src/IEEE754/Bits.lean`
+  passed after the restoration, and classifier sidecar
+  `.change_log/manual_attempt_20260716_071529_binary_float_of_bits_proved/attempt.json`
+  records `result = proved`, `coq_alignment = checked`, and `build = pass`.
+  Status: implemented and removed from active semantic gaps.
+- `binary32`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_202037`. The definition matches upstream
+  `binary_float 24 128` over the proof-carrying local `binary_float` surface
+  and is distinct from the existing permissive `Binary32 := Binary754 24 127`
+  compatibility alias. Status: implemented and removed from active semantic
+  gaps.
+- `default_nan_pl32`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_204114`. The definition adds the
+  proof-carrying `is_nan 24 128` result and the upstream `iter_nat xO 22 xH`
+  payload with a local proof that `nan_pl 24` is true. Status: implemented and
+  removed from active semantic gaps.
+- `unop_nan_pl32`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_204636`. The definition preserves an
+  input NaN sign, payload, and validity proof, otherwise returning
+  `default_nan_pl32`. Status: implemented and removed from active semantic
+  gaps.
+- `binop_nan_pl32`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_205247`. The definition prefers the
+  first operand NaN, then the second, otherwise `default_nan_pl32`. Status:
+  implemented and removed from active semantic gaps.
+- `ternop_nan_pl32`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_205739`. The definition prefers the
+  first operand NaN, then the second, then the third, otherwise
+  `default_nan_pl32`. Status: implemented and removed from active semantic
+  gaps.
+- `b32_erase`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_210605`. Upstream `erase` has
+  `erase_correct : forall x, erase x = x`; the Lean specialization is the
+  constructor-preserving identity on `binary_float 24 128`, preserving zero,
+  infinity, NaN sign/payload/proof, and finite mantissa/exponent/boundedness
+  proof. Status: implemented and removed from active semantic gaps.
+- `b32_opp`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_211534`. The definition matches upstream
+  `Bopp 24 128 unop_nan_pl32`: NaN inputs are rebuilt via `unop_nan_pl32`,
+  while zero, infinity, and finite constructors flip their sign and preserve
+  mantissa/exponent and proof payloads. Status: implemented and removed from
+  active semantic gaps.
+- `b32_abs`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_212355`. The definition matches upstream
+  `Babs 24 128 unop_nan_pl32`: NaN inputs are rebuilt via `unop_nan_pl32`,
+  while zero, infinity, and finite constructors set their sign to `false` and
+  preserve mantissa/exponent and proof payloads. Status: implemented and
+  removed from active semantic gaps.
+- `b32_pred`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` by config-provider harness attempt
+  `.change_log/codex_attempt_20260716_022939`, with checked classifier sidecar
+  `.change_log/manual_attempt_20260716_b32_pred_proved/attempt.json`.
+  The definition matches the fixed-width upstream payload
+  `IEEE754/Bits.v:b32_pred : binary32 -> binary32 := Bpred _ _ Hprec Hprec_emax`
+  on the proof-carrying `binary_float 24 128` surface: NaNs preserve their
+  original sign/payload/proof, positive finite/zero encodings step to the
+  previous IEEE32 bit pattern, negative encodings step toward larger unsigned
+  bit patterns, negative infinity is fixed, and all generated non-NaN results
+  are reconstructed through `b32_of_bits` so finite outputs carry fresh
+  `bounded` proofs. It does not route through the permissive `Binary754`
+  `Bpred`. Focused check `lake env lean FloatSpec/src/IEEE754/Bits.lean` and
+  full `lake build` passed. Status: implemented and removed from active
+  semantic gaps.
+- `b32_succ`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` by config-provider harness attempt
+  `.change_log/codex_attempt_20260716_024401`, with checked classifier sidecar
+  `.change_log/manual_attempt_20260716_b32_succ_proved/attempt.json`.
+  The definition matches the fixed-width upstream payload
+  `IEEE754/Bits.v:b32_succ : binary32 -> binary32 := Bsucc _ _ Hprec Hprec_emax`
+  on the proof-carrying `binary_float 24 128` surface: NaNs preserve their
+  original sign/payload/proof, signed zero maps to positive minimum subnormal,
+  positive encodings step to the next IEEE32 bit pattern with positive infinity
+  fixed, and negative encodings step toward smaller unsigned bit patterns so
+  negative infinity becomes negative maximum finite. All generated non-NaN
+  results are reconstructed through `b32_of_bits` so finite outputs carry fresh
+  `bounded` proofs. It does not route through the permissive `Binary754`
+  `Bsucc`. Focused check `lake env lean FloatSpec/src/IEEE754/Bits.lean` and
+  full `lake build` passed. Status: implemented and removed from active
+  semantic gaps.
+- `b32_sqrt`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_214309` classified the exact public
+  alias as blocked. Upstream specializes `Bsqrt _ _ Hprec Hprec_emax
+  unop_nan_pl32` over proof-carrying `binary32`, but current Lean's available
+  square-root operations and bridges are over the permissive `Binary754` or
+  proof-erased SingleNaN surfaces. Routing through `binary_sqrt` or the local
+  `Binary.Bsqrt` would not return a `binary_float 24 128` with preserved
+  bounded proofs and `unop_nan_pl32` payload handling, so the name remains
+  active until the proof-carrying square-root bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_222425`
+  rechecked the current tree and left source code unchanged:
+  `target_before.lean` and `target_after.lean` are identical, the local target
+  gate passed, `scripts/audit_placeholders.sh --json FloatSpec` reported
+  `sorry = 0`, `axiom = 0`, `admit = 0`, and `scripts/status_report.sh
+  --write` refreshed the 53 placeholder/trust findings. The checked sidecar
+  `.change_log/manual_attempt_20260715_222647_b32_sqrt_blocked/attempt.json`
+  records that upstream `b32_sqrt` is
+  `Bsqrt _ _ Hprec Hprec_emax unop_nan_pl32` with type
+  `mode -> binary32 -> binary32` over proof-carrying `binary_float 24 128`,
+  while local `Bsqrt`/`binary_sqrt` route through permissive `Binary754` or
+  proof-erased SingleNaN and cannot preserve bounded proofs or the
+  `unop_nan_pl32` NaN-payload handler.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_031131`
+  rechecked the target after the fixed-width proof-carrying decoders and
+  successor/predecessor definitions were restored. It left
+  `FloatSpec/src/IEEE754/Bits.lean` unchanged: `target_before.lean` and
+  `target_after.lean` are identical, and the checked sidecar
+  `.change_log/manual_attempt_20260716_b32_sqrt_blocked/attempt.json` records
+  `result = blocked`, `coq_alignment = checked`, and `local_target_gate =
+  pass`. The current blocker is still the missing proof-carrying
+  `Bsqrt`/rounding bridge; re-encoding unconstrained finite outputs through
+  `b32_of_bits` would weaken the upstream `Bsqrt ... unop_nan_pl32` payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_070419`
+  rechecked the exact alias after the current `binary32`, `unop_nan_pl32`,
+  `b32_of_bits`, `b32_pred`, and `b32_succ` restorations and left source code
+  unchanged (`target_before.lean` and `target_after.lean` are identical, and
+  `changed_during_attempt.txt` is empty). The checked sidecar
+  `.change_log/manual_attempt_20260715_230707_b32_sqrt_blocked_recheck/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`: upstream `b32_sqrt` is
+  `Bsqrt _ _ Hprec Hprec_emax unop_nan_pl32` with type
+  `mode -> binary32 -> binary32` over proof-carrying `binary_float 24 128`;
+  current Lean has the fixed-width proof-carrying type and NaN handler, but
+  available square-root implementations still route through permissive
+  `Binary754` or proof-erased `BinarySingleNaNBridge.BinaryFloat`. No local
+  proof-carrying `Bsqrt`/`binary_normalize`/`SF2B` bridge constructs bounded
+  finite `binary32` results while preserving `unop_nan_pl32` payload handling,
+  and routing through `Binary.Bsqrt`, `binary_sqrt`, or `b32_of_bits` would
+  change or weaken the upstream return surface.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_101016`
+  rechecked `b32_sqrt` after the latest generic decoder blocker update and
+  left source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_101016_b32_sqrt_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+	  proof-carrying square-root bridge: upstream returns `binary32` through
+	  `Bsqrt _ _ Hprec Hprec_emax unop_nan_pl32`, while local `Binary.lean`
+	  exposes `Bsqrt`/`binary_sqrt` returning permissive `Binary754` or
+	  proof-erased bridge payloads. Routing through those surfaces would not
+	  preserve bounded proofs or the `unop_nan_pl32` NaN-payload path.
+  Manual post-decoder recheck
+  `.change_log/manual_attempt_20260716_071950_b32_sqrt_post_decoder_blocked/attempt.json`
+  records the same blocker after `binary_float_of_bits` was restored. A focused
+  Lean probe sees the new proof-carrying `b32_of_bits` and
+  `binary_float_of_bits`, but the direct upstream alias still fails:
+  `Bsqrt (prec := 24) (emax := 128) unop_nan_pl32` expects a
+  `BsqrtNaNHandler 24 128` over permissive `Binary754`, while
+  `unop_nan_pl32` has type `binary32 -> { nan // is_nan 24 128 nan = true }`.
+  The local `Bsqrt` result type is also `Binary754 24 128`, not
+  `binary32`. Re-encoding that permissive result through `b32_of_bits` would
+  rebuild a proof-carrying value after the fact rather than preserve upstream
+  `Bsqrt`'s proof-carrying operation payload and NaN-handler path, so
+  `b32_sqrt` remains active.
+- `b32_plus`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_214941` classified the exact public
+  alias as blocked. Upstream specializes `Bplus _ _ Hprec Hprec_emax
+  binop_nan_pl32` over proof-carrying `binary32`, but current Lean's available
+  `Bplus` bridge returns the permissive `Binary754` wrapper. Routing through
+  `Binary.Bplus` or `binary_add` would not return a `binary_float 24 128` with
+  bounded finite proofs and preserved `binop_nan_pl32` payload handling, so
+  the name remains active until the proof-carrying addition bridge is
+  restored. Config-provider harness attempt
+  `.change_log/codex_attempt_20260715_222955` rechecked the current tree and
+  left source code unchanged: `target_before.lean` and `target_after.lean` are
+  identical, the local target gate passed, `scripts/audit_placeholders.sh
+  --json FloatSpec` reported `sorry = 0`, `axiom = 0`, `admit = 0`,
+  `scripts/status_report.sh --write` refreshed the generated status, focused
+  `lake env lean FloatSpec/src/IEEE754/Bits.lean` passed with warnings only,
+  and full `lake build` passed with 3345 jobs. The checked sidecar
+  `.change_log/manual_attempt_20260715_223226_b32_plus_blocked/attempt.json`
+  records that upstream `b32_plus` has type
+  `mode -> binary32 -> binary32 -> binary32` over proof-carrying
+  `binary_float 24 128`, while local `Bplus` returns permissive `Binary754`
+  via `FF2B`/`BSN2B`; no lossless `Binary754`-to-`binary_float 24 128` bridge
+  or proof-carrying SingleNaN `Bplus` theorem is available to preserve bounded
+  finite proofs and `binop_nan_pl32` payload handling.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_035908`
+  rechecked `b32_plus` after the latest proof-carrying `binary32` bit helpers
+  and successor/predecessor definitions. It left source code unchanged and
+  returned `result = blocked`. The checked classifier
+  `.change_log/manual_attempt_20260716_040248_b32_plus_blocked/attempt.json`
+  records `coq_alignment = checked`, `build = pass`, and `changed_files = []`.
+  A focused alias probe failed at the exact boundary: upstream
+  `b32_plus := Bplus _ _ Hprec Hprec_emax binop_nan_pl32` needs a
+  proof-carrying `Bplus` over `binary_float 24 128`, but local `Bplus` expects
+  `BplusNaNHandler 24 128` over permissive `Binary754` and returns
+  `Binary754`; `BinarySingleNaNBridge.Bplus` is proof-erased and lacks bounded
+  finite proofs. Re-encoding through `b32_of_bits` would rebuild rather than
+  preserve the upstream payload/proof surface.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_071401`
+  rechecked the same boundary with the current proof-carrying `binary32`,
+  `binop_nan_pl32`, `b32_of_bits`, `b32_pred`, and `b32_succ` context. It
+  left source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical) and classified the
+  target as blocked. The top-level harness artifact records
+  `coq_alignment = not_checked`, but the checked sidecar
+  `.change_log/b32_plus_blocked_20260716/attempt.json` records
+  `result = blocked`, `coq_alignment = checked`, `local_target_gate = pass`,
+  `changed_files = []`, and `build = not_run`. The checked blocker is still
+  statement-level: upstream `b32_plus` is the proof-carrying alias
+  `Bplus _ _ Hprec Hprec_emax binop_nan_pl32`, while local `Bplus`/`binary_add`
+  routes return `Binary754` or proof-erased SingleNaN bridge values and cannot
+  supply bounded finite proofs without rebuilding through `b32_of_bits` or
+  weakening the return surface.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_101716`
+  rechecked `b32_plus` after the latest `b32_sqrt` blocker update and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_101716_b32_plus_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying addition bridge: upstream returns `binary32` through
+  `Bplus _ _ Hprec Hprec_emax binop_nan_pl32`, while local `Binary.lean`
+  exposes `Bplus`/`binary_add` returning permissive `Binary754` or
+  proof-erased bridge payloads. Routing through those surfaces or rebuilding
+  through bits would not preserve bounded finite proofs or the `binop_nan_pl32`
+  NaN-payload path.
+  Manual recheck `.change_log/manual_attempt_20260717_b32_plus_current_blocked`
+  keeps the same classification after comparing upstream
+  `/mnt2/users/kaile/hantao/flocq-upstream/src/IEEE754/Bits.v:669` and
+  `/mnt2/users/kaile/hantao/flocq-upstream/src/IEEE754/Binary.v:1049`.
+  Upstream `b32_plus` is exactly
+  `Bplus _ _ Hprec Hprec_emax binop_nan_pl32` at type
+  `mode -> binary32 -> binary32 -> binary32`, where `binary32` is
+  `binary_float 24 128` and finite constructors carry the `bounded` proof.
+  The current proof-carrying `Bits.lean` surface has `binary32`,
+  `binop_nan_pl32`, `b32_of_bits`, `b32_pred`, and `b32_succ`, but the public
+  `Binary.Bplus` handler/argument/result type remains `Binary754 24 128`.
+  The more faithful `BinarySingleNaN.Bplus` works over raw single-NaN `B754`,
+  whose finite constructor is proof-erased; no theorem currently available
+  proves every finite `Bplus` result bounded so it can be reconstructed as
+  `binary_float 24 128` while preserving the `binop_nan_pl32` payload path.
+  Adding `b32_plus` via `Binary.Bplus`, `binary_add`, or post-hoc
+  `b32_of_bits` reconstruction would therefore weaken the upstream
+  proof-carrying surface, so the active item remains blocked.
+- `b32_minus`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_215637` classified the exact public
+  alias as blocked. Upstream specializes `Bminus _ _ Hprec Hprec_emax
+  binop_nan_pl32` over proof-carrying `binary32`, but current Lean's available
+  `Bminus` bridge returns the permissive `Binary754` wrapper. Routing through
+  `Binary.Bminus` or `binary_sub` would not return a `binary_float 24 128`
+  with bounded finite proofs and preserved `binop_nan_pl32` payload handling,
+  so the name remains active until the proof-carrying subtraction bridge is
+  restored. Config-provider harness attempt
+  `.change_log/codex_attempt_20260715_223604` rechecked the current tree and
+  left source code unchanged: `target_before.lean` and `target_after.lean` are
+  identical, the local target gate passed, focused
+  `lake env lean FloatSpec/src/IEEE754/Bits.lean` passed with warnings only,
+  `scripts/audit_placeholders.sh --json FloatSpec` reported `sorry = 0`,
+  `axiom = 0`, `admit = 0` with 53 placeholder/trust findings,
+  `scripts/status_report.sh --write` refreshed the generated status, and
+  `git diff --check` passed. The checked sidecar
+  `.change_log/manual_attempt_20260715_223921_b32_minus_blocked/attempt.json`
+  records that upstream `b32_minus` has type
+  `mode -> binary_float 24 128 -> binary_float 24 128 -> binary_float 24 128`,
+  while local `Bminus`/`binary_sub` accept and return `Binary754 24 128`, and
+  `BinarySingleNaNBridge.Bminus` returns proof-erased `BinaryFloat`; no
+  faithful bounded lift preserves finite proofs and `binop_nan_pl32` payload
+  handling.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_072050`
+  rechecked the target after the current `binary32`, `binop_nan_pl32`,
+  `b32_of_bits`, `b32_pred`, and `b32_succ` restorations. It left source code
+  unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical), with the local target
+  gate passing. The top-level attempt record has `coq_alignment = not_checked`,
+  but the checked sidecar
+  `.change_log/manual_attempt_20260716_b32_minus_blocked/attempt.json` records
+  `result = blocked`, `coq_alignment = checked`, `local_target_gate = pass`,
+  and `build = not_run`; its `changed_files` list reflects the already-dirty
+  workspace, not files modified by this attempt. The statement-level blocker is
+  unchanged: upstream `b32_minus` is `Bminus _ _ Hprec Hprec_emax
+  binop_nan_pl32` returning proof-carrying `binary32`, while local
+  `Binary.Bminus`, `binary_sub`, and `BinarySingleNaNBridge.Bminus` return
+  permissive or proof-erased surfaces and cannot preserve bounded finite proofs
+  or `binop_nan_pl32` payload handling without a faithful proof-carrying bridge.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_102458`
+  rechecked `b32_minus` after the latest `b32_plus` blocker update and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_102458_b32_minus_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying subtraction bridge: upstream returns `binary32` through
+  `Bminus _ _ Hprec Hprec_emax binop_nan_pl32`, while local `Binary.lean`
+  exposes `Bminus`/`binary_sub` returning permissive `Binary754` or
+  proof-erased bridge payloads. Routing through those surfaces or rebuilding
+  through bits would not preserve bounded finite proofs or the `binop_nan_pl32`
+  NaN-payload path.
+- `b32_mult`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_221829` classified the exact public
+  alias as blocked. Upstream specializes `Bmult _ _ Hprec Hprec_emax
+  binop_nan_pl32` over proof-carrying `binary32`, but current Lean's available
+  `Bmult` bridge returns the permissive `Binary754` wrapper and the SingleNaN
+  bridge is proof-erased. Routing through `Binary.Bmult` or `binary_mul` would
+  not return a `binary_float 24 128` with bounded finite proofs and preserved
+  `binop_nan_pl32` payload handling, so the name remains active until the
+  proof-carrying multiplication bridge is restored. Config-provider harness
+  attempt `.change_log/codex_attempt_20260715_224332` rechecked the current
+  tree and left source code unchanged: `target_before.lean` and
+  `target_after.lean` are identical, the local target gate passed,
+  `scripts/audit_placeholders.sh --json FloatSpec` reported `sorry = 0`,
+  `axiom = 0`, `admit = 0` with 53 placeholder/trust findings,
+  `scripts/status_report.sh --write` refreshed generated status, focused
+  `lake env lean FloatSpec/src/IEEE754/Bits.lean` passed with warnings only,
+  and `git diff --check` passed. The checked sidecar
+  `.change_log/manual_attempt_20260715_b32_mult_blocked/attempt.json` records
+  that upstream `b32_mult` has type
+  `mode -> binary32 -> binary32 -> binary32` over proof-carrying
+  `binary_float 24 128`, while local `Binary.Bmult`/`Binary.binary_mul` return
+  permissive `Binary754 24 128` through `FF2B`/`BSN2B`, and the SingleNaN
+  bridge is proof-erased. Exact restoration still needs a faithful bounded
+  lift or proof-carrying multiplication bridge.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_072944`
+  rechecked `b32_mult` against the current proof-carrying `binary32`,
+  `binop_nan_pl32`, `b32_of_bits`, `b32_pred`, and `b32_succ` context. It left
+  source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical), and returned
+  `result = blocked` with `local_target_gate = pass`. The top-level attempt
+  record has `coq_alignment = not_checked`, but the checked sidecar
+  `.change_log/manual_attempt_20260716_b32_mult_blocked/attempt.json` records
+  `result = blocked`, `coq_alignment = checked`, `local_target_gate = pass`,
+  `changed_files = []`, and `build = not_run`. The blocker remains the missing
+  proof-carrying multiplication bridge: local `Bmult` returns `Binary754` via
+  proof-erased `BinarySingleNaNBridge.BinaryFloat`, so finite results do not
+  carry the bounded proofs required by `binary_float.B754_finite`, and routing
+  through `Binary.Bmult`, `binary_mul`, or `b32_of_bits` would weaken the
+  upstream `b32_mult` return surface.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_104252`
+  rechecked `b32_mult` after the latest `b32_minus` blocker update and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_104252_b32_mult_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying multiplication bridge: upstream returns `binary32` through
+  `Bmult _ _ Hprec Hprec_emax binop_nan_pl32`, while local `Binary.lean`
+  exposes `Bmult`/`binary_mul` returning permissive `Binary754` or
+  proof-erased bridge payloads. Routing through those surfaces or rebuilding
+  through bits would not preserve bounded finite proofs or the `binop_nan_pl32`
+  NaN-payload path.
+- `b32_div`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_222436` classified the exact public
+  alias as blocked. Upstream specializes `Bdiv _ _ Hprec Hprec_emax
+  binop_nan_pl32` over proof-carrying `binary32`, but current Lean's available
+  `Bdiv` bridge returns the permissive `Binary754` wrapper and the SingleNaN
+  bridge is proof-erased. Routing through `Binary.Bdiv` or `binary_div` would
+  not return a `binary_float 24 128` with bounded finite proofs and preserved
+  `binop_nan_pl32` payload handling, so the name remains active until the
+  proof-carrying division bridge is restored. Config-provider harness attempt
+  `.change_log/codex_attempt_20260715_224930` rechecked the current tree and
+  left source code unchanged: `target_before.lean` and `target_after.lean` are
+  identical, the local target gate passed, `scripts/audit_placeholders.sh
+  --json FloatSpec` reported `sorry = 0`, `axiom = 0`, `admit = 0`,
+  `scripts/status_report.sh --write` refreshed generated status, and focused
+  `lake env lean FloatSpec/src/IEEE754/Bits.lean` passed. The attempt record
+  confirms that local `binop_nan_pl32` exists, but local `Binary.Bdiv` expects
+  `Binary754` inputs plus a `BdivNaNHandler 24 128`, not proof-carrying
+  `binary32`; no bridge exists from the permissive `Binary754` division result
+  back to `binary_float 24 128` with finite boundedness and NaN payload
+  validity proofs.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_073706`
+  rechecked `b32_div` after the current proof-carrying `binary32`,
+  `binop_nan_pl32`, `b32_of_bits`, `b32_pred`, and `b32_succ` context. It
+  left source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical), and returned
+  `result = blocked` with `local_target_gate = pass`. The top-level attempt
+  record has `coq_alignment = not_checked`, but the checked sidecar
+  `.change_log/manual_attempt_20260715_234011_b32_div_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+  pass`, and `build = pass`; its `changed_files` list reflects the
+  already-dirty workspace, not files modified by this attempt. The blocker
+  remains the missing proof-carrying division bridge: upstream `b32_div` is
+  `Bdiv _ _ Hprec Hprec_emax binop_nan_pl32` returning proof-carrying
+  `binary32`, while local `Binary.Bdiv`/`binary_div` and the SingleNaN
+  division route return `Binary754` or proof-erased values. Applying local
+  `Bdiv 24 128` to `binop_nan_pl32` is a handler type mismatch, and
+  reconstructing through `b32_of_bits` would weaken the upstream return
+  surface instead of preserving bounded finite proofs and NaN payload validity.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_105123`
+  rechecked `b32_div` after the latest `b32_mult` blocker update and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_105651_b32_div_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying division bridge: upstream returns `binary32` through
+  `Bdiv _ _ Hprec Hprec_emax binop_nan_pl32`, while local `Binary.lean`
+  exposes `Bdiv`/`binary_div` returning permissive `Binary754` or proof-erased
+  bridge payloads. A probe confirmed the boundary directly:
+  `binop_nan_pl32` has type `binary32 -> binary32 -> { nan // is_nan 24 128 nan = true }`,
+  but local `Bdiv` expects `BdivNaNHandler 24 128` over `Binary754 24 128`.
+  Routing through those surfaces or rebuilding through bits would not preserve
+  bounded finite proofs or the `binop_nan_pl32` NaN-payload path.
+- `b32_fma`: subscription harness attempt
+  `.change_log/codex_attempt_20260711_224804` classified the exact public
+  alias as blocked. Upstream specializes `Bfma _ _ Hprec Hprec_emax
+  ternop_nan_pl32` over proof-carrying `binary32`, and current Lean has the
+  proof-carrying `binary32` alias plus `ternop_nan_pl32`. The available
+  `Bfma` bridge, however, returns the permissive `Binary754` wrapper and the
+  SingleNaN bridge is proof-erased. Routing through `Binary.Bfma` or
+  `binary_fma` would not return a `binary_float 24 128` with bounded finite
+  proofs and preserved `ternop_nan_pl32` payload handling, so the name remains
+  active until the proof-carrying fused-multiply-add bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_225806`
+  rechecked the current tree and left the target source unchanged:
+  `target_before.lean` and `target_after.lean` are identical. The exact probe
+  failed because local `ternop_nan_pl32` has type
+  `binary32 -> binary32 -> binary32 -> { nan // is_nan 24 128 nan = true }`,
+  while local `Binary.Bfma` expects a `BfmaNaNHandler 24 128` over
+  `Binary754 24 128` and returns `Binary754 24 128`. A permissive
+  `Binary754` FMA probe typechecked only with an explicit `Valid_exp`
+  assumption and a `Binary754` NaN handler, confirming that the available
+  bridge is not the upstream proof-carrying `binary32` API. The attempt ran
+  `scripts/audit_placeholders.sh --json FloatSpec` (`sorry = 0`,
+  `axiom = 0`, `admit = 0`), `scripts/status_report.sh --write`, focused
+  `lake env lean FloatSpec/src/IEEE754/Bits.lean`, and wrote
+  `.change_log/manual_attempt_20260715_b32_fma_blocked/attempt.json`.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_074441`
+  rechecked `b32_fma` after the current proof-carrying `binary32`,
+  `ternop_nan_pl32`, `b32_of_bits`, `b32_pred`, and `b32_succ` context. It
+  left source code unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical), and returned
+  `result = blocked` with `local_target_gate = pass`. The top-level attempt
+  record has `coq_alignment = not_checked`, but the checked sidecar
+  `.change_log/manual_attempt_20260716_074816_b32_fma_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, `local_target_gate =
+  pass`, and `build = not_run`; its `changed_files` list reflects the
+  already-dirty workspace, not files modified by this attempt. The blocker
+  remains the missing proof-carrying fused-multiply-add bridge: upstream
+  `b32_fma` is `Bfma _ _ Hprec Hprec_emax ternop_nan_pl32` returning
+  proof-carrying `binary32`, while local `Binary.Bfma`/`binary_fma` and the
+  SingleNaN FMA route return `Binary754` or proof-erased values. Applying
+  `ternop_nan_pl32` to the current `Binary.Bfma` surface is a handler type
+  mismatch, and reconstructing through `b32_of_bits` would weaken the upstream
+  return surface instead of preserving bounded finite proofs and NaN payload
+  validity.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_110347`
+  rechecked `b32_fma` after the latest `b32_div` blocker update and left source
+  code unchanged (`changed_during_attempt.txt` is empty, `changed_files = []`,
+  and the local target gate passed). The top-level attempt record has
+  `result = blocked`, `build = not_run`, and `coq_alignment = not_checked`; the
+  exact checked sidecar
+  `.change_log/manual_attempt_20260716_110347_b32_fma_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying fused-multiply-add bridge: upstream returns `binary32` through
+  `Bfma _ _ Hprec Hprec_emax ternop_nan_pl32`, while local `Binary.lean`
+  exposes `Bfma`/`binary_fma` returning permissive `Binary754` or proof-erased
+  bridge payloads. Routing through those surfaces or rebuilding through bits
+  would not preserve bounded finite proofs or the `ternop_nan_pl32` NaN-payload
+  path.
+- `b32_compare`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260711_225610` failed before model execution
+  because of subscription quota. The manual follow-up preserves the upstream
+  `Bcompare 24 128` payload on proof-carrying `binary32`: NaN operands return
+  `none`, signed infinities order around all finite/zero values, and remaining
+  ordered cases return the local `Option Int` comparison-code representation
+  via `Rcompare` on the constructor real values. It does not route through the
+  permissive `Binary754` comparison. Status: implemented and removed from
+  active semantic gaps.
+- `b64_compare`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_045226`. The definition matches upstream
+  `Bcompare 53 1024` on the proof-carrying `binary64` alias: NaN operands
+  return `none`, signed infinities order around finite/zero values, and
+  remaining ordered cases return the local `Option Int` comparison-code
+  representation via `Rcompare` on constructor real values. It does not route
+  through the permissive `Binary754` comparison. Status: implemented and
+  removed from active semantic gaps.
+- `b32_of_bits`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` by config-provider harness attempt
+  `.change_log/codex_attempt_20260716_021320`, with checked classifier sidecar
+  `.change_log/manual_attempt_20260716_b32_of_bits_proved/attempt.json`.
+  The definition matches upstream `IEEE754/Bits.v:b32_of_bits`: it decodes
+  `(sign, mantissa, exponent)` fields with `split_bits 23 8`, returns
+  proof-carrying `binary_float 24 128`, maps zero and infinity fields to the
+  corresponding constructors, maps nonzero all-ones exponent fields to
+  `B754_nan` with a proved `nan_pl 24` payload, and maps finite fields to
+  `B754_finite` with concrete IEEE32 `bounded` proofs for subnormal exponent
+  `-149` and normal exponent `eField - 150`. It does not route through the
+  permissive `Binary754` decoder. Focused check
+  `lake env lean FloatSpec/src/IEEE754/Bits.lean` passed with warnings only.
+  Status: implemented and removed from active semantic gaps.
+- `bits_of_b32`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_024802`. The definition is the public
+  binary32 specialization of the already-restored proof-carrying
+  `bits_of_binary_float`, with local witnesses for `Prec_gt_0 24` and
+  `Prec_lt_emax 24 128`. It returns the encoded `Int` bits from
+  `binary32 := binary_float 24 128` and does not route through the permissive
+  `Binary754`/`binary_to_bits` compatibility layer. Status: implemented and
+  removed from active semantic gaps.
+- `bits_of_b64`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_050315`. The definition is the public
+  binary64 specialization of the already-restored proof-carrying
+  `bits_of_binary_float`, matching upstream `bits_of_binary_float 52 11` via
+  local witnesses for `Prec_gt_0 53` and `Prec_lt_emax 53 1024`. It returns the
+  encoded `Int` bits from `binary64 := binary_float 53 1024` and does not route
+  through the permissive `Binary754`/`binary_to_bits` compatibility layer.
+  Status: implemented and removed from active semantic gaps.
+- `binary64`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_025639`. The definition matches upstream
+  `binary_float 53 1024` over the proof-carrying local `binary_float` surface
+  and is distinct from the existing permissive `Binary64 := Binary754 53 1023`
+  compatibility alias. Status: implemented and removed from active semantic
+  gaps.
+- `default_nan_pl64`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_030259`. The definition matches upstream
+  `exist _ (@B754_nan 53 1024 false (iter_nat xO 51 xH) ...) ...` over
+  `binary64`, using a local `nan_pl 53` proof for the exact payload and
+  returning `{ nan : binary64 // is_nan 53 1024 nan = true }`. It does not
+  route through the permissive `Binary754` model. Status: implemented and
+  removed from active semantic gaps.
+- `unop_nan_pl64`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_030817`. The definition matches upstream:
+  if the input `binary64` is `B754_nan`, it preserves the sign, payload, and
+  validity proof in the returned subtype; otherwise it returns
+  `default_nan_pl64`. It stays on the proof-carrying `binary64` surface and
+  does not route through `Binary754`. Status: implemented and removed from
+  active semantic gaps.
+- `binop_nan_pl64`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_031340`. The definition matches
+  upstream: it prefers the first operand NaN sign/payload/proof, then the
+  second operand NaN sign/payload/proof, and otherwise returns
+  `default_nan_pl64`. It stays on the proof-carrying `binary64` surface and
+  does not route through `Binary754`. Status: implemented and removed from
+  active semantic gaps.
+- `ternop_nan_pl64`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_032006`. The definition matches
+  upstream: it prefers the first operand NaN sign/payload/proof, then the
+  second operand, then the third operand, and otherwise returns
+  `default_nan_pl64`. It stays on the proof-carrying `binary64` surface and
+  does not route through `Binary754`. Status: implemented and removed from
+  active semantic gaps.
+- `b64_erase`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_032531`. Upstream specializes
+  `erase 53 1024`, whose correctness theorem states `erase x = x`; the Lean
+  specialization is the constructor-preserving identity on
+  `binary_float 53 1024`, preserving zero, infinity, NaN sign/payload/proof,
+  and finite mantissa/exponent/boundedness proof. Status: implemented and
+  removed from active semantic gaps.
+- `b64_opp`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_034800`. The definition matches upstream
+  `Bopp 53 1024 unop_nan_pl64`: NaN inputs are rebuilt via `unop_nan_pl64`,
+  while zero, infinity, and finite constructors flip their sign and preserve
+  mantissa/exponent and proof payloads. It stays on the proof-carrying
+  `binary64` surface and does not route through `Binary754`. Status:
+  implemented and removed from active semantic gaps.
+- `b64_abs`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` after subscription harness attempt
+  `.change_log/codex_attempt_20260713_035419`. The definition matches upstream
+  `Babs 53 1024 unop_nan_pl64`: NaN inputs are rebuilt via `unop_nan_pl64`,
+  while zero, infinity, and finite constructors set their sign to `false` and
+  preserve mantissa/exponent and proof payloads. It stays on the
+  proof-carrying `binary64` surface and does not route through `Binary754`.
+  Status: implemented and removed from active semantic gaps.
+- `b64_pred`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` by config-provider harness attempt
+  `.change_log/codex_attempt_20260716_025236`, with checked classifier sidecar
+  `.change_log/manual_attempt_20260716_b64_pred_proved/attempt.json`.
+  The definition matches the fixed-width upstream payload
+  `IEEE754/Bits.v:b64_pred : binary64 -> binary64 := Bpred _ _ Hprec Hprec_emax`
+  on the proof-carrying `binary_float 53 1024` surface: NaNs preserve their
+  original sign/payload/proof, positive finite/zero encodings step to the
+  previous IEEE64 bit pattern, negative encodings step toward larger unsigned
+  bit patterns, negative infinity is fixed, and all generated non-NaN results
+  are reconstructed through `b64_of_bits` so finite outputs carry fresh
+  `bounded` proofs. It does not route through the permissive `Binary754`
+  `Bpred`. Focused check `lake env lean FloatSpec/src/IEEE754/Bits.lean` and
+  full `lake build` passed. Status: implemented and removed from active
+  semantic gaps.
+- `b64_succ`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` by config-provider harness attempt
+  `.change_log/codex_attempt_20260716_030010`, with checked classifier sidecar
+  `.change_log/manual_attempt_20260716_b64_succ_proved/attempt.json`.
+  The definition matches the fixed-width upstream payload
+  `IEEE754/Bits.v:b64_succ : binary64 -> binary64 := Bsucc _ _ Hprec Hprec_emax`
+  on the proof-carrying `binary_float 53 1024` surface: NaNs preserve their
+  original sign/payload/proof, signed zero maps to positive minimum subnormal,
+  positive encodings step to the next IEEE64 bit pattern with positive infinity
+  fixed, and negative encodings step toward smaller unsigned bit patterns so
+  negative infinity becomes negative maximum finite. All generated non-NaN
+  results are reconstructed through `b64_of_bits` so finite outputs carry fresh
+  `bounded` proofs. It does not route through the permissive `Binary754`
+  `Bsucc`. Focused check `lake env lean FloatSpec/src/IEEE754/Bits.lean` and
+  full `lake build` passed. Status: implemented and removed from active
+  semantic gaps.
+- `b64_sqrt`: subscription harness attempt
+  `.change_log/codex_attempt_20260713_042546` classified the exact public
+  alias as blocked. Upstream specializes `Bsqrt _ _ Hprec Hprec_emax
+  unop_nan_pl64` over proof-carrying `binary64`, but current Lean's available
+  square-root operations and bridges are over the permissive `Binary754` or
+  proof-erased surfaces. Routing through `Binary.Bsqrt` or `binary_sqrt` would
+  not return a `binary_float 53 1024` with preserved bounded finite proofs and
+  `unop_nan_pl64` payload handling, so the name remains active until the
+  proof-carrying square-root bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_232550`
+  and checked sidecar
+  `.change_log/manual_attempt_20260715_b64_sqrt_blocked/attempt.json`
+  rechecked the current tree and left the target source unchanged:
+  `target_before.lean` and `target_after.lean` are identical. The attempt
+  confirmed that local `binary64` is the proof-carrying
+  `binary_float 53 1024`, but local `Binary.Bsqrt` returns permissive
+  `Binary754` through the `FF2B`/`BSN2B` bridge; no proof-carrying square-root
+  bridge currently reconstructs bounded finite proofs while preserving
+  `unop_nan_pl64` payload handling. The attempt ran
+  `scripts/audit_placeholders.sh --json FloatSpec` (`sorry = 0`,
+  `axiom = 0`, `admit = 0`) and `scripts/status_report.sh --write`; no full
+  `lake build` was run because no Lean source changed.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_111402`
+  rechecked `b64_sqrt` after the current `b64_pred`/`b64_succ` restorations
+  and the `b32_*` arithmetic blocker updates. It left source code unchanged
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed). The top-level attempt record has `result = blocked`,
+  `build = not_run`, and `coq_alignment = not_checked`; the exact checked
+  sidecar
+  `.change_log/manual_attempt_20260716_111402_b64_sqrt_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying square-root bridge: upstream returns `binary64` through
+  `Bsqrt _ _ Hprec Hprec_emax unop_nan_pl64`, while local `Binary.lean`
+  exposes `Bsqrt`/`binary_sqrt` returning permissive `Binary754` or
+  proof-erased bridge payloads. Routing through those surfaces or rebuilding
+  through bits would not preserve bounded finite proofs or the
+  `unop_nan_pl64` NaN-payload path.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_134815`
+  tried to add `b64_sqrt`, but the patch converted proof-carrying `binary64`
+  to permissive `Binary754`, applied local `Binary.Bsqrt`, and reconstructed
+  the result through `binary_to_bits`/`b64_of_bits`. Manual fidelity review
+  removed that block and recorded the checked sidecar
+  `.change_log/manual_attempt_20260716_134815_b64_sqrt_blocked/attempt.json`
+  with `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. This remains the same semantic blocker:
+  the upstream alias must preserve the proof-carrying
+  `binary_float 53 1024` API, bounded finite proofs, and `unop_nan_pl64`
+  NaN-payload path; the available permissive `Binary754` route is not a
+  faithful completion, so `b64_sqrt` remains active.
+  Manual target recheck on 2026-07-17 for `MISSING_INFRASTRUCTURE.md:426`
+  again leaves source code unchanged. Upstream `Bits.v:734` is the exact alias
+  `b64_sqrt : mode -> binary64 -> binary64 := Bsqrt _ _ Hprec Hprec_emax
+  unop_nan_pl64`, with `binary64 := binary_float 53 1024`. The current Lean
+  tree has the proof-carrying `binary64`, `default_nan_pl64`, and
+  `unop_nan_pl64`, but the only local square-root operation named `Bsqrt` is
+  still `FloatSpec.IEEE754.Binary.Bsqrt`, whose handler and result are over
+  permissive `Binary754`; its `BinarySingleNaNBridge.Bsqrt` side returns a
+  proof-erased `BinaryFloat`, and `binary_sqrt` also returns `Binary754`.
+  `BinarySingleNaN.lean` has a permissive `B754` layer and an audit helper for
+  `Bsqrt_correct_aux`, but no proof-carrying `SF2B`/`BSN2B` bridge that
+  constructs a `binary_float 53 1024` result with bounded finite proofs while
+  preserving the `unop_nan_pl64` NaN-payload path. Routing through
+  `Binary.Bsqrt`, `binary_sqrt`, or `b64_of_bits` would therefore be the same
+  proof-erased or proof-reconstructed wrapper rejected by the target.
+- `b64_plus`: subscription harness attempt
+  `.change_log/codex_attempt_20260713_043044` classified the exact public
+  alias as blocked. Upstream specializes `Bplus _ _ Hprec Hprec_emax
+  binop_nan_pl64` over proof-carrying `binary64`, but current Lean's available
+  addition operations are over `BinaryFloat`/`Binary754` and proof-erased or
+  permissive wrappers. Routing through `Binary.Bplus` or `binary_add` would not
+  return a `binary_float 53 1024` with preserved bounded finite proofs and
+  `binop_nan_pl64` payload handling, so the name remains active until the
+  proof-carrying addition bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_233450`
+  rechecked the exact upstream alias after the current `binary64` surface
+  restorations and again left Lean source unchanged: `target_before.lean` and
+  `target_after.lean` are identical, the local target gate passed,
+  `scripts/audit_placeholders.sh --json FloatSpec` passed with existing
+  placeholder/trust findings (`sorry = 0`, `axiom = 0`, `admit = 0`), and
+  `scripts/status_report.sh --write` completed. The attempt classified the
+  target as blocked because local `Binary.Bplus` still returns permissive
+  `Binary754`, not `binary_float 53 1024`, and no bridge currently
+  reconstructs the bounded finite proofs while preserving `binop_nan_pl64`
+  payload handling.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_112346`
+  rechecked `b64_plus` after the current `b64_sqrt` blocker update and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_112346_b64_plus_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying addition bridge: upstream returns `binary64` through
+  `Bplus _ _ Hprec Hprec_emax binop_nan_pl64`, while local `Binary.lean`
+  exposes `Bplus`/`binary_add` returning permissive `Binary754` or
+  proof-erased bridge payloads. Routing through those surfaces or rebuilding
+  through bits would not preserve bounded finite proofs or the
+  `binop_nan_pl64` NaN-payload path.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_135820`
+  rechecked `b64_plus` after the manual rejection of the weakened `b64_sqrt`
+  patch and left source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_135820_b64_plus_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker remains the proof-carrying
+  binary64 operation surface: upstream `b64_plus` specializes `Bplus _ _
+  Hprec Hprec_emax binop_nan_pl64` to `binary64 -> binary64 -> binary64`,
+  preserving bounded finite proofs and first-NaN payload handling. Current Lean
+  has `binary64` and `binop_nan_pl64`, but `Binary.Bplus` returns permissive
+  `Binary754` and `BinarySingleNaNBridge.Bplus` returns proof-erased
+  `BinaryFloat`; no faithful adapter back to `binary_float 53 1024` is present.
+  Adding `b64_plus` from those helpers or rebuilding through bits would be
+  differently parameterized and proof-erased, so `b64_plus` remains active.
+  Manual target recheck on 2026-07-17 for `MISSING_INFRASTRUCTURE.md:448`
+  again classifies the exact alias as blocked. Upstream `IEEE754/Bits.v:736`
+  defines `b64_plus : mode -> binary64 -> binary64 -> binary64 :=
+  Bplus _ _ Hprec Hprec_emax binop_nan_pl64`, where `binary64` is
+  `binary_float 53 1024` and the NaN handler preserves the first source NaN
+  payload proof. Current Lean has that proof-carrying `binary64` and
+  `binop_nan_pl64`, but the available addition paths still do not produce the
+  same carrier: `FloatSpec.IEEE754.Binary.Bplus` and `binary_add` return the
+  permissive `Binary754`, while `BinarySingleNaNBridge.Bplus` returns
+  proof-erased `BinaryFloat`. No current bridge reconstructs the finite
+  `bounded` proof required by `binary_float.B754_finite` while also preserving
+  the `binop_nan_pl64` payload path, so adding a Lean `b64_plus` through those
+  helpers would violate the target by changing the return surface or erasing
+  proof payloads.
+- `b64_minus`: subscription harness attempt
+  `.change_log/codex_attempt_20260713_043459` classified the exact public
+  alias as blocked. Upstream specializes `Bminus _ _ Hprec Hprec_emax
+  binop_nan_pl64` over proof-carrying `binary64`, but current Lean's available
+  subtraction operations are over `BinaryFloat`/`Binary754` and proof-erased or
+  permissive wrappers. Routing through `Binary.Bminus` or `binary_sub` would
+  not return a `binary_float 53 1024` with preserved bounded finite proofs and
+  `binop_nan_pl64` payload handling, so the name remains active until the
+  proof-carrying subtraction bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_233857`
+  rechecked the exact alias against upstream `Bits.v` and left Lean source
+  unchanged: `target_before.lean` and `target_after.lean` are identical, the
+  local target gate passed, `scripts/audit_placeholders.sh --json FloatSpec`
+  passed with existing placeholder/trust findings (`sorry = 0`, `axiom = 0`,
+  `admit = 0`), and `scripts/status_report.sh --write` completed. The nested
+  checked classifier
+  `.change_log/manual_attempt_20260715_154123_b64_minus_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and `build = not_run`:
+  current Lean subtraction paths still return proof-erased/permissive
+  `BinaryFloat`/`Binary754` surfaces, and no existing bridge reconstructs
+  `binary_float 53 1024` with bounded finite proofs while preserving
+  `binop_nan_pl64` payload handling.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_113620`
+  rechecked `b64_minus` after the current `b64_plus` blocker update and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_113620_b64_minus_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying subtraction bridge: upstream returns `binary64` through
+  `Bminus _ _ Hprec Hprec_emax binop_nan_pl64`, while local `Binary.lean`
+  exposes `Bminus`/`binary_sub` returning permissive `Binary754` or
+  proof-erased bridge payloads. Routing through those surfaces or rebuilding
+  through bits would not preserve bounded finite proofs or the
+  `binop_nan_pl64` NaN-payload path.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_140559`
+  rechecked `b64_minus` after the current `b64_plus` blocker update and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_140559_b64_minus_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker remains the proof-carrying
+  binary64 operation surface: upstream `b64_minus` specializes `Bminus _ _
+  Hprec Hprec_emax binop_nan_pl64` to `binary64 -> binary64 -> binary64`,
+  preserving bounded finite proofs and first-NaN payload handling. Current Lean
+  has `binary64` and `binop_nan_pl64`, but `Binary.Bminus` returns permissive
+  `Binary754` and `BinarySingleNaNBridge.Bminus` returns proof-erased
+  `BinaryFloat`; no faithful adapter back to `binary_float 53 1024` is present.
+  Adding `b64_minus` from those helpers or rebuilding through bits would be
+  differently parameterized and proof-erased, so `b64_minus` remains active.
+- `b64_mult`: subscription harness attempt
+  `.change_log/codex_attempt_20260713_044008` classified the exact public
+  alias as blocked. Upstream specializes `Bmult _ _ Hprec Hprec_emax
+  binop_nan_pl64` over proof-carrying `binary64`, but current Lean's available
+  multiplication paths are over `BinaryFloat`/`Binary754` and proof-erased or
+  permissive wrappers. Routing through `Binary.Bmult` or `binary_mul` would not
+  return a `binary_float 53 1024` with preserved bounded finite proofs and
+  `binop_nan_pl64` payload handling, so the name remains active until the
+  proof-carrying multiplication bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_234434`
+  rechecked the exact alias at the current proof-carrying `binary64` surface
+  and left Lean source unchanged: `target_before.lean` and
+  `target_after.lean` are identical, the local target gate passed,
+  `scripts/audit_placeholders.sh --json FloatSpec` passed with existing
+  placeholder/trust findings (`sorry = 0`, `axiom = 0`, `admit = 0`), and
+  `scripts/status_report.sh --write` completed. The attempt also confirmed
+  the direct type mismatch: `binop_nan_pl64` is a NaN handler over
+  `binary64`, but local `Binary.Bmult` expects a `BmultNaNHandler` over
+  `Binary754` and returns `Binary754`, so adding `b64_mult` now would require
+  either weakening through a fake adapter or restoring the missing
+  proof-carrying multiplication bridge.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_114331`
+  rechecked `b64_mult` and left source code unchanged
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed). The top-level attempt record has `result = blocked`,
+  `build = not_run`, and `coq_alignment = not_checked`; the checked blocker
+  artifact `.change_log/codex_attempt_20260716T034710Z_b64_mult_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying multiplication bridge: upstream returns `binary64` through
+  `Bmult _ _ Hprec Hprec_emax binop_nan_pl64`, while local `Binary.lean`
+  exposes `Bmult`/`binary_mul` returning permissive `Binary754` or
+  proof-erased bridge payloads. A direct alias rejects because
+  `binop_nan_pl64` has the wrong carrier type for local `Bmult`; routing
+  through `Binary754` or rebuilding through bits would weaken the upstream
+  proof-carrying `binary_float 53 1024` result surface.
+  The normalized checked sidecar
+  `.change_log/manual_attempt_20260716_114331_b64_mult_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass` for that same config-provider attempt.
+  `b64_mult` remains active until a faithful proof-carrying adapter is
+  available for `Bmult _ _ Hprec Hprec_emax binop_nan_pl64` over
+  `binary_float 53 1024`.
+- `b64_div`: subscription harness attempt
+  `.change_log/codex_attempt_20260713_044410` classified the exact public alias
+  as blocked. Upstream specializes `Bdiv _ _ Hprec Hprec_emax binop_nan_pl64`
+  over proof-carrying `binary64`, but current Lean's available division paths
+  are over `BinaryFloat`/`Binary754` and proof-erased or permissive wrappers.
+  Routing through `Binary.Bdiv` or `binary_div` would not return a
+  `binary_float 53 1024` with preserved bounded finite proofs and
+  `binop_nan_pl64` payload handling, so the name remains active until the
+  proof-carrying division bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_235029`
+  rechecked the exact alias at the current `binary64` surface and left Lean
+  source unchanged: `target_before.lean` and `target_after.lean` are
+  identical, the local target gate passed,
+  `scripts/audit_placeholders.sh --json FloatSpec` passed with existing
+  placeholder/trust findings (`sorry = 0`, `axiom = 0`, `admit = 0`), and
+  `scripts/status_report.sh --write` completed. The nested checked classifier
+  `.change_log/manual_attempt_20260715_155236_b64_div_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `build = not_run`: local `Bdiv`/`binary_div` still operate on
+  `Binary754`/`BinaryFloat` and return `Binary754`, with no faithful lift back
+  to `binary_float 53 1024` preserving bounded finite proofs and
+  `binop_nan_pl64` NaN payload behavior.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_115205`
+  rechecked `b64_div` and left source code unchanged
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed). The top-level attempt record has `result = blocked`,
+  `build = not_run`, and `coq_alignment = not_checked`; the exact checked
+  sidecar `.change_log/manual_attempt_20260716_115205_b64_div_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying division bridge: upstream returns `binary64` through
+  `Bdiv _ _ Hprec Hprec_emax binop_nan_pl64`, while local `Binary.lean`
+  exposes `Bdiv`/`binary_div` returning permissive `Binary754` or proof-erased
+  bridge payloads. Routing through those surfaces or rebuilding through bits
+  would not preserve bounded finite proofs or the `binop_nan_pl64` NaN-payload
+  path.
+  Manual target recheck `.change_log/manual_attempt_20260717_b64_div_current_blocked/attempt.json`
+  keeps the item classified as blocked for the same proof-carrying surface
+  mismatch. Upstream line 739 defines `b64_div : mode -> binary64 -> binary64
+  -> binary64 := Bdiv _ _ Hprec Hprec_emax binop_nan_pl64`, and upstream
+  `Binary.Bdiv` reconstructs a `binary_float` with `BSN2B`. Current Lean has
+  `binary64` and `binop_nan_pl64`, but local `Binary.Bdiv`/`binary_div` operate
+  over `Binary754`, whose finite validity payload is permissive, while
+  `BinarySingleNaNBridge.Bdiv` returns proof-erased `BinaryFloat`. Adding
+  `b64_div` now would therefore either change the return type, erase bounded
+  finite proofs, lose the `binop_nan_pl64` NaN payload path, or rebuild through
+  bits; the prerequisite is an exact proof-carrying division bridge back to
+  `binary_float 53 1024`.
+- `b64_fma`: subscription harness attempt
+  `.change_log/codex_attempt_20260713_044818` classified the exact public alias
+  as blocked. Upstream specializes `Bfma _ _ Hprec Hprec_emax ternop_nan_pl64`
+  over proof-carrying `binary64`, but current Lean's available fused
+  multiply-add paths are over `BinaryFloat`/`Binary754` and proof-erased or
+  permissive wrappers. Routing through `Binary.Bfma` or `binary_fma` would not
+  return a `binary_float 53 1024` with preserved bounded finite proofs and
+  `ternop_nan_pl64` payload handling, so the name remains active until the
+  proof-carrying fused multiply-add bridge is restored.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_235604`
+  rechecked the exact alias at the current `binary64` surface and left Lean
+  source unchanged: `target_before.lean` and `target_after.lean` are
+  identical, `lake env lean FloatSpec/src/IEEE754/Bits.lean` passed with
+  existing warnings only, `scripts/audit_placeholders.sh --json FloatSpec`
+  passed with existing placeholder/trust findings (`sorry = 0`, `axiom = 0`,
+  `admit = 0`), and `scripts/status_report.sh --write` completed. The nested
+  checked classifier
+  `.change_log/manual_attempt_20260715_b64_fma_blocked/attempt.json` records
+  `result = blocked`, `coq_alignment = checked`, and `build = not_run`: local
+  `Binary.Bfma` expects a `BfmaNaNHandler` over permissive `Binary754 53 1024`
+  and returns `Binary754`, while `BinarySingleNaNBridge.Bfma` returns
+  proof-erased `BinaryFloat`; no faithful bridge currently reconstructs
+  `binary_float 53 1024` with bounded finite proofs while preserving
+  `ternop_nan_pl64` payload handling.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_115937`
+  rechecked `b64_fma` and left source code unchanged
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed). The top-level attempt record has `result = blocked`,
+  `build = not_run`, and `coq_alignment = not_checked`; the exact checked
+  sidecar `.change_log/manual_attempt_20260716_115937_b64_fma_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing
+  proof-carrying fused multiply-add bridge: upstream returns `binary64` through
+  `Bfma _ _ Hprec Hprec_emax ternop_nan_pl64`, while local `Binary.lean`
+  exposes `Bfma`/`binary_fma` returning permissive `Binary754` or proof-erased
+  bridge payloads. A direct alias rejects because `ternop_nan_pl64` has the
+  wrong carrier type for local `Bfma`; routing through those surfaces or
+  rebuilding through bits would not preserve bounded finite proofs or the
+  `ternop_nan_pl64` NaN-payload path.
+- `b64_of_bits`: restored as the exact-name Lean definition in
+  `FloatSpec/src/IEEE754/Bits.lean` by config-provider harness attempt
+  `.change_log/codex_attempt_20260716_021320`, with checked classifier sidecar
+  `.change_log/manual_attempt_20260716_b64_of_bits_proved/attempt.json`.
+  The definition matches upstream `IEEE754/Bits.v:b64_of_bits`: it decodes
+  `(sign, mantissa, exponent)` fields with `split_bits 52 11`, returns
+  proof-carrying `binary_float 53 1024`, maps zero and infinity fields to the
+  corresponding constructors, maps nonzero all-ones exponent fields to
+  `B754_nan` with a proved `nan_pl 53` payload, and maps finite fields to
+  `B754_finite` with concrete IEEE64 `bounded` proofs for subnormal exponent
+  `-1074` and normal exponent `eField - 1075`. It does not route through the
+  permissive `Binary754` decoder. Focused check
+  `lake env lean FloatSpec/src/IEEE754/Bits.lean` passed with warnings only.
+  Status: implemented and removed from active semantic gaps.
+- The remaining `b32_*` and `b64_*` operation aliases:
   no faithful counterparts found under the upstream names. Some generic local
   helpers such as `erase`, `succ`, `pred`, `compare`, `binary_to_bits`, and
-  `bits_to_binary` exist, but the specialized IEEE32/IEEE64 API layer is not
-  present.
+  `bits_to_binary` exist, but the specialized IEEE32/IEEE64 operation API layer
+  is not present.
 
 Checked batch 8: `IEEE754/PrimFloat.v` primitive-float bridge names.
 
-No entries were removed from the active semantic gap list in this batch.
+One entry has been removed from the active semantic gap list in this batch.
+
+- `round_nearest_even_equiv`: restored as the exact public Lean lemma
+  `ExperimentalPrimFloatBridge.round_nearest_even_equiv` in
+  `FloatSpec/src/IEEE754/PrimFloat.lean`. Upstream proves
+  `round_nearest_even m l = choice_mode mode_NE s m l` by case analysis on
+  the location and tie case; the Lean port adds the corresponding local
+  `round_nearest_even` definition using `cond_incr` and `round_N
+  (!(decide (2 ∣ m)))`, then proves equality with the existing
+  `choice_mode RoundingMode.RNE` by the same case split. Config-provider
+  harness attempt `.change_log/codex_attempt_20260716_002221` produced the
+  source patch; a direct follow-up check on the actual lemma line confirmed
+  `lake env lean FloatSpec/src/IEEE754/PrimFloat.lean` succeeds and
+  `#print axioms ExperimentalPrimFloatBridge.round_nearest_even_equiv` reports
+  no `sorryAx`.
 
 Still active after statement check:
 
@@ -771,17 +5824,239 @@ Still active after statement check:
   the file explicitly uses an experimental opaque real-wrapper `PrimFloat` and
   states that it must not be counted as a faithful IEEE/PrimFloat equivalence
   result. These are not faithful counterparts of Coq's primitive `float`
-  bridge.
-- `round_nearest_even_equiv`, `binary_round_aux_equiv`,
-  `binary_round_equiv`, and `binary_normalize_equiv`: no faithful
-  counterparts found. Local `binary_round_aux`/`binary_round`/normalization
-  helpers are documented as audit helpers rather than ports of the Flocq
-  algorithms.
+  bridge. Subscription harness attempt
+  `.change_log/codex_attempt_20260713_084934` classified `Prim2B` as blocked
+  with no source changes: upstream is `SF2B (Prim2SF x) (Prim2SF_valid x)` over
+  Coq primitive `float`, while the local file lacks faithful primitive-float
+  semantics, `Prim2SF_valid`, and the proof-carrying `SF2B` bridge needed to
+  expose public exact-name `Prim2B`. Config-provider harness attempt
+  `.change_log/codex_attempt_20260716_001241` rechecked the same exact-name
+  payload against the current `ExperimentalPrimFloatBridge`, left
+  `FloatSpec/src/IEEE754/PrimFloat.lean` unchanged
+  (`target_before.lean` and `target_after.lean` identical), and classified the
+  target as blocked for the same reason: the local `PrimFloat` is only a
+  real-valued wrapper, not Coq primitive `float`, and no local `Prim2SF_valid`
+  or proof-carrying `SF2B (Prim2SF x) ... : binary_float prec emax` path exists.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_120908`
+  rechecked `Prim2B` after the current IEEE64 operation blocker updates and left
+  source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the exact checked sidecar
+  `.change_log/manual_attempt_20260716_120908_Prim2B_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing faithful
+  primitive-float bridge: upstream returns proof-carrying `binary_float prec
+  emax` via `SF2B (Prim2SF x) (Prim2SF_valid x)`, while local
+  `ExperimentalPrimFloatBridge.prim_to_binary` maps an opaque real-wrapper
+  `PrimFloat` through `round_to_generic`/`real_to_FullFloat` into permissive
+  `Binary754`. Adding exact-name `Prim2B` over that local surface would be a
+  semantic placeholder and would lose Coq primitive `float`, `Prim2SF_valid`,
+  NaN, infinity, payload, and signed-zero behavior.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_141959`
+  rechecked `Prim2B` against the current `ExperimentalPrimFloatBridge` and
+  left source code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_Prim2B_current_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, and
+  `coq_alignment = checked`. The blocker remains the missing faithful
+  primitive-float input bridge: upstream `Prim2B (x : float)` returns
+  proof-carrying `binary_float prec emax` by applying `SF2B` to
+  `Prim2SF x` and `Prim2SF_valid x`. Current Lean has proof-carrying
+  `binary_float`, but its `PrimFloat` is an opaque `ℝ` wrapper, local
+  `prim_to_binary` returns permissive `Binary754`, `BinarySingleNaN.SF2B`
+  returns raw `B754`, and no `Prim2SF_valid` counterpart exists. Adding
+  `Prim2B` over that surface would again be a semantic placeholder rather
+  than the upstream primitive-float bridge, so `Prim2B` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_184119`
+  rechecked the same exact-name payload after the current Bits-family
+  blocker update and left source code unchanged. The checked sidecar
+  `.change_log/manual_attempt_20260716_Prim2B_bridge_mismatch_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, and
+  `coq_alignment = checked`: the current file still lacks Coq primitive
+  `float`, `Prim2SF_valid`, and a proof-carrying `SF2B` path to
+  `binary_float prec emax`.
+  Manual target recheck
+  `.change_log/manual_attempt_20260717_Prim2B_current_blocked/attempt.json`
+  records `result = blocked` and `coq_alignment = checked`: upstream line 27
+  defines `Prim2B (x : float) : binary_float prec emax` exactly as
+  `SF2B (Prim2SF x) (Prim2SF_valid x)`. Current Lean still exposes only the
+  experimental real-projection `PrimFloat`; its `Prim2SF` is computed through
+  `prim_to_binary`, whose result is permissive `Binary754`, and the local
+  `BinarySingleNaN.SF2B` returns proof-erased `B754` rather than
+  proof-carrying `binary_float prec emax`. No faithful `Prim2SF_valid` or Coq
+  primitive `float` bridge is present, so adding exact-name `Prim2B` now would
+  be a semantic placeholder.
+  Subscription harness attempt
+  `.change_log/codex_attempt_20260713_085249` classified `B2Prim` as blocked
+  with no source changes: upstream is `SF2Prim (B2SF x)` from proof-carrying
+  `binary_float prec emax` to Coq primitive `float`, while the local
+  `binary_to_prim` maps permissive `Binary754` through `B2R` into the opaque
+  real wrapper and collapses special primitive-float behavior. Config-provider
+  harness attempt `.change_log/codex_attempt_20260716_001724` rechecked the
+  exact upstream definition against the current target, left
+  `FloatSpec/src/IEEE754/PrimFloat.lean` unchanged
+  (`target_before.lean` and `target_after.lean` identical), and classified the
+  candidate as blocked because the local bridge has no `SF2Prim` primitive
+  bridge or Coq-like primitive `float` model; implementing `B2Prim` over the
+  real wrapper would lose NaN, infinity, payload, and signed-zero behavior.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_121625`
+  rechecked `B2Prim` after the current `Prim2B` blocker update and left source
+  code unchanged (`changed_during_attempt.txt` is empty,
+  `changed_files = []`, and the local target gate passed). The top-level
+  attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the checked blocker artifact
+  `.change_log/manual_attempt_20260716_121839_B2Prim_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing faithful
+  primitive-float output bridge: upstream returns Coq primitive `float` through
+  `SF2Prim (B2SF x)` from proof-carrying `binary_float prec emax`, while local
+	  `ExperimentalPrimFloatBridge.binary_to_prim` maps permissive `Binary754`
+	  through `B2R` into an opaque real-wrapper `PrimFloat`. Adding exact-name
+	  `B2Prim` over that local surface would be a semantic placeholder and would
+	  lose NaN, infinity, payload, and signed-zero behavior.
+	  Current-refresh sidecar
+	  `.change_log/manual_attempt_20260716_145407_B2Prim_current_blocked/attempt.json`
+	  reuses the config-provider harness evidence from
+	  `.change_log/codex_attempt_20260716_121625` because the target snapshots were
+	  identical and `changed_during_attempt.txt` was empty. It records
+	  `coq_alignment = checked`, `local_target_gate = pass`, and
+	  `changed_files = []`: upstream `B2Prim` is still the primitive-float bridge
+	  `SF2Prim (B2SF x)` from proof-carrying `binary_float prec emax`, while local
+	  `binary_to_prim` still maps permissive `Binary754` through `B2R` into the
+	  opaque real-wrapper `PrimFloat` and has no `SF2Prim`/Coq primitive `float`
+	  counterpart. Therefore `B2Prim` remains active rather than being replaced by
+	  the local wrapper.
+- `binary_round_aux_equiv`, `binary_round_equiv`, and
+  `binary_normalize_equiv`: no faithful counterparts found. Local
+  `binary_round_aux`/`binary_round`/normalization helpers are documented as
+  audit helpers rather than ports of the Flocq algorithms. Config-provider
+  harness attempt `.change_log/codex_attempt_20260716_003125` rechecked
+  `binary_round_aux_equiv` after `round_nearest_even_equiv` was restored, left
+  `FloatSpec/src/IEEE754/PrimFloat.lean` unchanged
+  (`target_before.lean` and `target_after.lean` identical), and classified the
+  exact upstream payload as blocked. The checked sidecar
+  `.change_log/codex_attempt_20260716_003125/binary_round_aux_equiv_blocked.json`
+  records the missing pair explicitly: upstream unfolds
+  `SpecFloat.binary_round_aux` and Flocq `binary_round_aux`, then rewrites by
+  `round_nearest_even_equiv`, while the local repository only has
+  `ExperimentalBinaryRound.binary_round_aux`, documented as not a port of the
+  Flocq `binary_round_aux`/`binary_round`/`binary_normalize` algorithms.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_122806`
+  rechecked `binary_round_aux_equiv` after the current `Prim2B`/`B2Prim`
+  blocker updates and left source code unchanged (`changed_during_attempt.txt`
+  is empty, `changed_files = []`, and the local target gate passed). The
+  top-level attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_122806_binary_round_aux_equiv_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing faithful
+  `SpecFloat.binary_round_aux`/`shr_fexp` and BinarySingleNaN/Binary
+  `binary_round_aux` bridge: upstream unfolds both sides and finishes with
+  `round_nearest_even_equiv`, while local Lean only has the nearest-even choice
+  lemma inside the experimental real-wrapper bridge plus
+  `ExperimentalBinaryRound` audit helpers explicitly documented as non-ports of
+  the Flocq algorithms. Adding an exact-name lemma over those local wrappers
+  would be helper-only/tautological, not the upstream primitive-float payload.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_004648`
+  then rechecked `binary_round_equiv`, left
+  `FloatSpec/src/IEEE754/PrimFloat.lean` unchanged
+  (`target_before.lean` and `target_after.lean` identical), and classified the
+  exact upstream payload as blocked. The nested checked sidecar
+  `.change_log/manual_attempt_20260716_004851_binary_round_equiv_blocked/attempt.json`
+  records that upstream needs faithful `SpecFloat.binary_round`, Flocq
+  `binary_round`, `shl_align_fexp`, and `binary_round_aux_equiv`; the local
+  repository has no `SpecFloat.binary_round` counterpart and only the
+  non-faithful `ExperimentalBinaryRound` audit helpers.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_124106`
+  rechecked `binary_round_equiv` after the current `binary_round_aux_equiv`
+  blocker update and left source code unchanged (`changed_during_attempt.txt`
+  is empty, `changed_files = []`, and the local target gate passed). The
+  top-level attempt record has `result = blocked`, `build = not_run`, and
+  `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_124106_binary_round_equiv_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the missing faithful
+  `SpecFloat.binary_round` and Flocq `binary_round` bridge: upstream unfolds
+  `SpecFloat.binary_round`, `binary_round`, and `shl_align_fexp`, destructs
+  `shl_align`, then applies `binary_round_aux_equiv`. Local Lean has
+  `shl_align_fexp`, but only has `ExperimentalBinaryRound.binary_round` and
+  `ExperimentalBinaryRound.binary_round_aux`, both documented as audit helpers
+  rather than Flocq algorithm ports, and `binary_round_aux_equiv` remains
+  structurally blocked.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_124734`
+  rechecked `binary_normalize_equiv` after the current `binary_round_equiv`
+  blocker update and left source code unchanged (`changed_during_attempt.txt`
+  is empty and `target_before.lean`/`target_after.lean` are identical). The
+  clean checked sidecar
+  `.change_log/manual_attempt_20260716_124734_binary_normalize_equiv_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker remains the missing faithful
+  `SpecFloat.binary_normalize` and Flocq `binary_normalize` bridge: upstream
+  cases on the signed mantissa, simplifies zero directly, and reduces positive
+  and negative finite cases through `B2SF_SF2B` plus `binary_round_equiv`.
+  Local Lean only exposes `ExperimentalBinaryRound.binary_normalize`, whose
+  namespace is documented as not a Flocq `binary_round_aux`/`binary_round`/
+  `binary_normalize` port, and `binary_round_equiv` remains structurally
+  blocked.
 - `mul_equiv` and `add_equiv`: no faithful counterparts found. Local
   `prim_mul_correct` and `prim_add_correct` are reflexive tautologies over the
   local model, not the upstream equivalences between primitive operations and
-  `Bmult`/`Bplus`.
-- `normfr_mantissa_equiv`: no faithful counterpart found.
+  `Bmult`/`Bplus`. Config-provider harness attempt
+  `.change_log/codex_attempt_20260716_003910` rechecked `mul_equiv`, left
+  `FloatSpec/src/IEEE754/PrimFloat.lean` unchanged
+  (`target_before.lean` and `target_after.lean` identical), and classified the
+  target as blocked. The nested checked sidecar
+  `.change_log/manual_attempt_20260715_164232/attempt.json` records the
+  specific missing payloads: upstream `mul_equiv` needs faithful Coq primitive
+  float bridge lemmas `Prim2B`/`B2Prim`/`B2SF_Prim2B`, `SpecFloat.mul_spec`,
+  and `binary_round_aux_equiv`; the local `ExperimentalPrimFloatBridge` is an
+  opaque real wrapper, `prim_to_binary`/`binary_to_prim` are not proof-carrying
+  primitive-float conversions, `binary_mul` is a compatibility wrapper, and
+  `ExperimentalBinaryRound.binary_round_aux` is not a Flocq algorithm port.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_123426`
+  rechecked `mul_equiv` after the current primitive bridge and
+  `binary_round_aux_equiv` blocker updates and again left source code unchanged
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed). The top-level attempt record has `result = blocked`,
+  `build = not_run`, and `coq_alignment = not_checked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_primfloat_mul_equiv_blocked/attempt.json`
+  records `coq_alignment = checked`. The blocker remains the full upstream
+  primitive multiplication equivalence payload: Coq proves
+  `Prim2B (x * y) = Bmult mode_NE (Prim2B x) (Prim2B y)` through
+  `B2Prim_inj`, `B2Prim_Prim2B`, `Prim2SF_inj`, `Prim2SF_B2Prim`,
+  `SpecFloat.mul_spec`, `B2SF_Prim2B`, proof-carrying binary case analysis,
+  `B2SF_SF2B`, and `binary_round_aux_equiv`. Local `prim_mul_correct` is still
+  a reflexive theorem over `binary_to_prim (binary_mul x y)`, and using it
+  would certify the local experimental wrappers rather than Flocq primitive
+  multiplication semantics.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_125646`
+  rechecked `add_equiv` after the current primitive bridge and
+  `binary_normalize_equiv` blocker updates and left source code unchanged
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_primfloat_add_equiv_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker remains the full upstream
+  primitive addition equivalence payload: Coq proves
+  `Prim2B (x + y) = Bplus mode_NE (Prim2B x) (Prim2B y)` through
+  `B2Prim_inj`, `B2Prim_Prim2B`, `Prim2SF_inj`, `Prim2SF_B2Prim`,
+  `SpecFloat.add_spec`, `B2SF_Prim2B`, proof-carrying binary case analysis,
+  and `binary_normalize_equiv`. Local `prim_add_correct` is still a reflexive
+  theorem over `binary_to_prim (binary_add x y)`, and using it would certify
+  the local experimental wrappers rather than Flocq primitive addition
+  semantics.
+- `normfr_mantissa_equiv`: no faithful counterpart found. Config-provider
+  harness attempt `.change_log/codex_attempt_20260716_041136` rechecked the
+  exact upstream payload and left source code unchanged. The checked sidecar
+  `.change_log/manual_attempt_20260716_041520_normfr_mantissa_equiv_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`. The blocker is structural: upstream
+  `IEEE754/PrimFloat.v:normfr_mantissa_equiv` proves
+  `to_Z (normfr_mantissa x) = Z.of_N (Bnormfr_mantissa (Prim2B x))` over Coq
+  primitive `float`, using `Prim2B := SF2B (Prim2SF x) (Prim2SF_valid x)` and
+  `normfr_mantissa_spec`. Current `PrimFloat.lean` is still the
+  `ExperimentalPrimFloatBridge` real-wrapper model and lacks faithful public
+  `Prim2B`, `normfr_mantissa`, `to_Z`, `Z.of_N`, and primitive
+  `SpecFloat` semantics. A theorem over `prim_to_binary`/`binary_to_prim`
+  would be helper-only/tautological and would not preserve primitive NaN,
+  infinity, or signed-zero payload.
 
 Checked batch 9: `Pff/Pff.v` initial counterpart triage.
 
@@ -800,10 +6075,11 @@ Initial status:
   `UlpFlessuGe_*` helper theorems, `Axpy_opt` versus
   `Axpy_opt_from_*`, and `Twice_EvenClosest_Round` versus
   `Twice_EvenClosest_Round_from_*`.
-- Entries with no credible local candidate in the first triage, such as
-  `plusExact2Aux`, `plusExact2`, many `Bounded*`/`Veltkamp*` lemmas, and the
-  final `ErrFmaApprox*` family, remain active.
-- This Pff pass is not yet a completed statement-by-statement audit of all 104
+- Entries with no credible local candidate in the first triage, such as many
+  `Bounded*`/`Veltkamp*` lemmas and the final `ErrFmaApprox*` family, remain
+  active. `plusExact2Aux`, `plusExact2`, and `plusExactExp` were later restored
+  exactly and removed from the active list.
+- This Pff pass is not yet a completed statement-by-statement audit of all 102
   entries. It only confirms that no obvious renamed/split counterpart was safe
   to remove without deeper theorem-payload comparison.
 
@@ -822,10 +6098,49 @@ Statement-level checks performed:
   exponent form. Upstream `errorBoundedMultClosest` proves the final
   existential over `r` and `s` with `Fexp s = Fexp r - precision`; no
   faithful renamed counterpart was found.
-- `plusExact2Aux`, `plusExact2`, and `plusExactExp`: no faithful local
-  counterpart was found. The local `AddExpGeUnderf` comment explicitly treats
-  the key content of `plusExactExp` as an extra hypothesis, so this family is
-  still real missing infrastructure rather than a hidden split port.
+  Config-provider harness attempt `.change_log/codex_attempt_20260713_231215`
+  targeted the exact theorem after the current helper stack was inspected, but
+  failed before proof work because the configured subscription provider had hit
+  its usage limit. `target_before.lean` and `target_after.lean` are identical,
+  no Lean files were changed, and this attempt is not evidence of a semantic
+  blocker beyond the already recorded missing final residual re-encoding from
+  the auxiliary exponent package to `Fexp s = Fexp r - precision`.
+  Follow-up exact-name restoration `.change_log/codex_attempt_20260715_203423`
+  added public theorem `errorBoundedMultClosest` in
+  `FloatSpec/src/Pff/Pff.lean`. It now proves the upstream existential payload:
+  canonical and bounded rounded product `r`, bounded residual `s`, real-value
+  equality to `pq`, residual equality to `p * q - r`, and
+  `s.Fexp = r.Fexp - precision`. The proof normalizes the rounded result, uses
+  `FcanonicUnique` to identify it with the auxiliary rounded value, applies
+  `ClosestUlp`, `FulpLe`, `ClosestErrorBound`, and
+  `F2R_rep_at_lower_exp` to re-encode the residual at the final exponent, and
+  handles the zero residual branch with a bounded `Fzero`. Verification:
+  focused `lake env lean FloatSpec/src/Pff/Pff.lean` passed, placeholder/status
+  gates passed with `sorry = 0`, `axiom = 0`, `admit = 0`, and full
+  `lake build` completed successfully with 3345 jobs. Removed from the active
+  list.
+- `plusExact2Aux`: restored exactly in `FloatSpec/src/Pff/Pff.lean` as a public
+  theorem with the upstream payload
+  `0 ≤ F2R p → Fcanonic p → Fbounded q → Closest (F2R p + F2R q) r →
+  Fexp r < pred (Fexp p) → F2R r = F2R p + F2R q`. The subscription harness
+  attempt `.change_log/codex_attempt_20260713_055654` produced the proof; a
+  direct focused check `lake env lean FloatSpec/src/Pff/Pff.lean` exited with
+  status 0 after the harness patch. Removed from the active list.
+- `plusExact2`: restored exactly in `FloatSpec/src/Pff/Pff.lean` as a public
+  theorem with the upstream payload
+  `Fcanonic p → Fbounded q → Closest (F2R p + F2R q) r →
+  Fexp r < pred (Fexp p) → F2R r = F2R p + F2R q`. Subscription harness
+  attempt `.change_log/codex_attempt_20260713_061811` proved it by splitting on
+  the sign of `p`, applying restored `plusExact2Aux` in the nonnegative branch,
+  and using `FcanonicFopp`, `oppBounded`, `ClosestOpp`, and `Fopp_correct` in
+  the negative branch. A direct focused check
+  `lake env lean FloatSpec/src/Pff/Pff.lean` exited with status 0 after the
+  harness patch. Removed from the active list.
+- `plusExactExp`: restored as an exact public theorem in
+  `FloatSpec/src/Pff/Pff.lean`, matching upstream line 10436's residual-plus-
+  rounded-part payload. The proof uses the existing closest-rounding,
+  `plusExpMin`/upper-bound, zero-float, and `errorBoundedPlus` infrastructure
+  without adding helper-only hypotheses.
 - `UlpFlessuGe` and `UlpFlessuGe2`: Lean has `UlpFlessuGe_aux`,
   `UlpFlessuGe_final_scale`,
   `UlpFlessuGe_from_abs_sub_fulp`,
@@ -834,12 +6149,109 @@ Statement-level checks performed:
   theorems; the comments and statements leave the large coefficient
   arithmetic bound as a premise. Upstream `UlpFlessuGe` and
   `UlpFlessuGe2` prove those displayed coefficient inequalities, so both
-  remain active.
+  remain active. Config-provider harness attempt
+  `.change_log/codex_attempt_20260715_210956` rechecked
+  `UlpFlessuGe` against upstream `Pff.v:11676` and left Lean code unchanged:
+  `target_before.lean` and `target_after.lean` are identical, focused
+  `lake env lean FloatSpec/src/Pff/Pff.lean` passed with warnings only,
+  `scripts/audit_placeholders.sh --json FloatSpec` passed, and
+  `scripts/status_report.sh --write` reported the existing 53 placeholder/trust
+  findings with
+  `sorry = 0`, `axiom = 0`, `admit = 0`. The attempt classified the target as
+  blocked because adding a wrapper around
+  `UlpFlessuGe_from_general_fulp_bound` would smuggle the missing coefficient
+  inequality in as a premise rather than proving the upstream payload from the
+  Axpy section context.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_165902`
+  rechecked `UlpFlessuGe` against the current helper stack after the later
+  `UlpFlessuGe_aux`, final-scale, `from_abs_sub_fulp`, and
+  `from_general_fulp_bound` restorations. It made no source changes
+  (`changed_during_attempt.txt` is empty, `changed_files = []`, and the local
+  target gate passed) and ended without a checked classifier. The normalized
+  sidecar
+  `.change_log/manual_attempt_20260716_165902_ulpflessuge_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`: upstream `UlpFlessuGe` proves the full displayed
+  coefficient inequality from `Fcanonic radix b u` and the Axpy section
+  context, while local `UlpFlessuGe_from_general_fulp_bound` still takes the
+  general `FulpLeGeneral` coefficient bound as an explicit premise. Adding an
+  exact-name wrapper now would therefore hide the missing arithmetic payload
+  instead of porting it.
+  The newest
+  config-provider harness attempt `.change_log/codex_attempt_20260716_180512`
+  also left source unchanged (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical) and ended with the
+  generic top-level `result = failed`. The normalized checked sidecar
+  `.change_log/manual_attempt_20260716_180512_ulpflessuge_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`. The blocker remains the missing final arithmetic
+  reduction: upstream `UlpFlessuGe` derives the displayed coefficient
+  inequality from the Axpy section assumptions, `RoundLeGeneral`, closestness
+  of `u`, `FulpLe2`/`FulpLeGeneral`, and `UlpFlessuGe_aux`; current Lean only
+  has helper reductions such as `UlpFlessuGe_from_general_fulp_bound`, which
+  prove the quarter-ulp conclusion after assuming the equivalent residual /
+  `FulpLeGeneral` bound explicitly. Adding the public theorem now would smuggle
+  that bound in as a premise rather than proving the upstream payload, so
+  `UlpFlessuGe` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_221345`
+  rechecked `UlpFlessuGe` against the current Pff helper stack and made no
+  source changes (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`; the normalized checked sidecar
+  `.change_log/manual_attempt_20260716_221805_ulpflessuge_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, `build = pass`, and
+  `changed_files = []`. The focused `lake env lean
+  FloatSpec/src/Pff/Pff.lean` check passed with warnings only, and the attempt
+  reran `scripts/audit_placeholders.sh --json FloatSpec` plus
+  `scripts/status_report.sh --write`, both reporting zero placeholder/trust
+  findings. The blocker is unchanged: upstream `Pff.v:11675` proves the
+  displayed Axpy coefficient bound from `Fcanonic radix b u`,
+  `RoundLeGeneral`, closestness/ulp facts, and exact-sum algebra, while local
+  `UlpFlessuGe_from_general_fulp_bound` still assumes that general
+  `FulpLeGeneral` coefficient bound as a premise.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_170340`
+  rechecked `UlpFlessuGe2` against the same current helper stack. It made no
+  source changes (`changed_files = []`, local target gate passed) and reported
+  the same faithful-port blocker for the strict variant: upstream
+  `Pff.v:11885` proves the strict displayed coefficient inequality from
+  `Fcanonic radix b u` plus the `AxpyAux` section context, then applies
+  upstream `UlpFlessuGe`. The normalized sidecar
+  `.change_log/manual_attempt_20260716_170340_ulpflessuge2_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `local_target_gate = pass`; local `UlpFlessuGe2_from_general_bound` still
+  takes the strict general-bound coefficient inequality as an explicit premise,
+  so adding the exact public theorem now would smuggle the missing arithmetic
+  payload rather than proving the Flocq theorem. Status: still active.
 - `Axpy_opt`: Lean has `Axpy_opt_from_strict_bound` and
   `Axpy_opt_from_general_bound`, but both keep additional premises for the
   strict coefficient estimate and predecessor side cases. Upstream
   `Axpy_opt` proves `MinOrMax` directly from the two displayed user
   hypotheses, so the local helpers are not faithful replacements.
+  A 2026-07-16 focused recheck against upstream `Pff/Pff.v:12301` left Lean
+  code unchanged and classified the exact theorem as blocked. The checked
+  sidecar
+  `.change_log/manual_attempt_20260716_axpy_opt_blocked/attempt.json` records
+  `result = blocked`, `changed_files = []`, and `coq_alignment = checked`:
+  adding an exact-name wrapper over `Axpy_opt_from_general_bound` would assume
+  the missing `UlpFlessuGe2` coefficient estimate and predecessor side cases
+  instead of deriving them from the upstream large-`y` and perturbation
+  hypotheses.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_222714`
+  rechecked the exact upstream theorem through `scripts/codex_attempt.sh` and
+  made no Lean source changes (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`; the checked sidecar
+  `.change_log/manual_attempt_20260716_222906_axpy_opt_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`. The attempt reran
+  `scripts/audit_placeholders.sh --json FloatSpec` and
+  `scripts/status_report.sh --write`, both clean. The blocker remains the
+  exact upstream payload: Coq proves `MinOrMax radix b (a1 * x1 + y1) u`
+  from boundedness, closestness, canonicity, the large-`y` hypothesis, and the
+  perturbation hypothesis alone, while current Lean still exposes the
+  `UlpFlessuGe2` coefficient estimate and `Axpy_tFlessu` predecessor side
+  cases as explicit premises in `UlpFlessuGe2_from_general_bound` and
+  `Axpy_opt_from_general_bound`.
 - `Dekker1` and `Dekker2`: Lean has `Dekker1_FTS` and `Dekker2_FTS`, but
   these are Fast2Sum/Dekker support theorems over abstract `Iplus`/`Iminus`.
   They do not match the upstream Pff `Dekker1`/`Dekker2` section payloads,
@@ -859,8 +6271,8 @@ Statement-level checks performed:
   the same payload.
 
 Updated status: the plausible Pff false-positive candidates checked so far
-are confirmed as real semantic gaps, not renamed/split complete ports. The
-Pff active count therefore remains 104.
+are confirmed as real semantic gaps, not renamed/split complete ports. Later
+Pff restorations are reflected in the current `Pff/Pff.v` section count above.
 
 Checked batch 11: active Core bucket revalidation after direct `rg` scan.
 
@@ -868,30 +6280,25 @@ No entries were removed from the active semantic gap list in this batch.
 
 The scan intentionally revisited names with nearby `_spec` or helper names:
 
-- `Core/Raux.v`: the active names still have only weaker or tautological local
-  carriers. In particular, `Rabs_lt_spec` is a boolean test for `|x| < y`,
-  `Rabs_gt_inv_spec` proves the already-removed forward `Rabs_gt` direction
-  after argument swap, and `Rcompare_middle_spec` returns `(c, c)` instead of
-  comparing `Rcompare (x - d) (u - x)` with
-  `Rcompare x ((d + u) / 2)`. The floor/ceil midpoint and conditional-negation
-  entries likewise remain statement mismatches, not hidden ports.
-- `Core/Round_pred.v`: the active `satisfies_any_*` `_spec` declarations are
-  over the local existential-only `Generic_fmt.satisfies_any`, or assume the
-  target rounding totality directly. They do not prove the upstream
-  `Round_pred.satisfies_any` consequences, where `satisfies_any` packages
-  `F 0`, symmetry, and DN totality.
-- `Core/Generic_fmt.v`: `Zaway`, `Zaway_le`, `Zaway_IZR`, and the nearest
-  choice helpers exist, but no `Valid_rnd Zaway`/AW instance or public
-  `valid_rnd_NA`/`valid_rnd_N0` instance was found under a faithful renamed
-  declaration. The active instance names remain real import debt.
-- `Core/FIX.v`, `Core/FLT.v`, and `Core/FLX.v`: `FIX_exp_valid`,
-  `FLT_exp_mono`, `FLX_exp_mono`, and private/specialized Pff bridges exist,
-  but the active public `Monotone_exp`/`Exists_NE` instances listed above are
-  still not present with the upstream payload.
-- `Core/Digits.v` and `Core/Zaux.v`: the visible renamed helpers remain the
-  already-recorded weaker forms (`Zdigit_*_nonneg`,
-  `Zdigit_scale_point`, `Zslice_div_pow_scale_nonnegKp`, and direct `Int`
-  division/modulo correctness specs), not exact statement counterparts.
+- `Core/Raux.v`: `Rcompare_middle`, `Rcompare_floor_ceil_middle`,
+  `Rcompare_ceil_floor_middle`, `cond_Ropp_Rlt_bool`, and
+  `Rlt_bool_cond_Ropp` have since been restored exactly. No active
+  `Core/Raux.v` names remain in the current list.
+- `Core/Round_pred.v`: `satisfies_any_imp_N0` has been restored as the
+  upstream `Round_pred.satisfies_any` consequence, where `satisfies_any`
+  packages `F 0`, symmetry, and DN totality. No active `Core/Round_pred.v`
+  names remain in the current list.
+- `Core/Generic_fmt.v`: the earlier active rounding-mode instance gaps have
+  since been restored directly as `valid_rnd_AW`, `valid_rnd_NA`, and
+  `valid_rnd_N0`; no active `Core/Generic_fmt.v` names remain in the current
+  list.
+- `Core/FIX.v`, `Core/FLT.v`, and `Core/FLX.v`: the earlier active
+  `Monotone_exp`/`Exists_NE` instance gaps have since been restored directly;
+  no active `Core/FIX.v`, `Core/FLT.v`, or `Core/FLX.v` names remain in the
+  current list.
+- `Core/Digits.v`: the visible renamed helpers remain the already-recorded
+  weaker forms (`Zdigit_*_nonneg`, `Zdigit_scale_point`, and
+  `Zslice_div_pow_scale_nonnegKp`), not exact statement counterparts.
 
 Checked batch 12: IEEE active sibling-name revalidation after direct `rg`
 scan.
@@ -902,34 +6309,31 @@ The scan revisited active IEEE names with nearby same-stem declarations:
 
 - `IEEE754/Binary.v`: `FullFloat` and `Binary754` are real local type
   counterparts, but still do not encode upstream's positive payload and
-  finite/NaN validity obligations. `Bcompare_check`, `binary_add`,
-  `binary_mul`, `binary_sub`, `binary_fma`, `binary_div`, `binary_sqrt`,
-  `binary_nearbyint`, and `binary_trunc` are nearby operation families, but
-  they are not faithful definitions of the upstream `Bcompare`, `Bplus`,
-  `Bmult`, `Bminus`, `Bfma`, `Bdiv`, `Bsqrt`, `Bnearbyint`, and `Btrunc`
-  APIs. The local arithmetic operations drop upstream NaN payload handler
-  parameters, some local `binary_*_correct` declarations are explicit `Unit`
-  port-gap markers, and `Btrunc_correct` is still a tautological
-  `result = Btrunc_correct_check ...` statement. `Bulp` remains explicitly
-  reserved in the Lean source, so `Bulp_correct` cannot be considered hidden.
+  finite/NaN validity obligations. The remaining local arithmetic operations
+  drop upstream NaN payload handler parameters, some local `binary_*_correct`
+  declarations are explicit `Unit` port-gap markers, and `Btrunc_correct` is
+  still a tautological
+  `result = Btrunc_correct_check ...` statement. The exact `Bulp` definition is
+  now present, but `Bulp_correct` still cannot be considered hidden because no
+  local theorem proves its upstream postcondition.
 - `IEEE754/BinarySingleNaN.v`: `SF2B` and `SF2B_B2SF` exist, but they do not
   implement the upstream `SF2B'` validation behavior that maps invalid finite
-  standard floats to NaN. The Binary-level `Bopp`/`Babs` classifier facts do
-  not supply the active BSN-specific `is_nan_Bopp`,
-  `is_finite_strict_Bopp`, `is_nan_Babs`, or
-  `is_finite_strict_Babs` declarations. The local rounding/normalization
+  standard floats to NaN. The active BSN-specific `is_nan_Babs` and
+  `is_finite_strict_Babs` declarations are now supplied by BSN-local theorems;
+  `is_nan_Bopp` and `is_finite_strict_Bopp` are also supplied by BSN-local
+  theorems. The local rounding/normalization
   helpers are documented as audit helpers rather than Flocq algorithm ports,
   and no faithful hidden counterparts were found for the active overflow,
   fit, shift/truncate, successor/predecessor, `Bulp'`, or
   `SFnearbyint_binary` families.
 - `IEEE754/Bits.v`: generic `binary_to_bits`, `split_bits`,
-  `bits_to_binary`, and `binary_float_of_bits_aux` exist, but the active
-  upstream names are the specialized `bits_of_binary_float`,
-  `split_bits_of_binary_float`, `binary_float_of_bits`, `binary32`,
-  `binary64`, and `b32_*`/`b64_*` API layer. Local `Binary32` and `Binary64`
-  use `Binary754 24 127` and `Binary754 53 1023`, while upstream uses
-  `binary_float 24 128` and `binary_float 53 1024`; without an explicit
-  equivalence proof this remains a gap, not a safe renaming.
+  `bits_to_binary`, and `binary_float_of_bits_aux` exist, and the exact
+  proof-carrying `binary_float_of_bits` has now been restored with explicit
+  upstream width witnesses. The active remaining upstream names are the
+  `b32_*`/`b64_*` operation API layer. The exact upstream
+  `binary64 := binary_float 53 1024` surface is now present; the existing
+  permissive `Binary64 := Binary754 53 1023` compatibility alias remains
+  separate and is not used as the proof-carrying Flocq counterpart.
 - `IEEE754/PrimFloat.v`: the file is in
   `ExperimentalPrimFloatBridge` and explicitly uses an opaque real-wrapper
   model that must not be counted as a faithful primitive-float bridge.
@@ -943,24 +6347,209 @@ The scan revisited active IEEE names with nearby same-stem declarations:
 
 Checked batch 13: `Pff/Pff.v` first active closestness/Veltkamp block.
 
-No entries were removed from the active semantic gap list in this batch.
+Follow-up on 2026-07-13 restored the exact local Veltkamp lemma `hxExact` in
+`FloatSpec/src/Pff/Pff.lean`.  The Lean theorem concludes
+`F2R hx = F2R p + F2R q` from the upstream rounded definitions for `p`, `q`,
+and `hx`, using the restored `pPos`, `qNeg`, `RleRRounded`, `SterbenzAux`,
+`ClosestOpp`, and `ClosestIdem` payload.  Focused verification:
+`lake env lean FloatSpec/src/Pff/Pff.lean` passed.  Status: implemented and
+removed from active semantic gaps; the remaining entries in this batch remain
+active.
+
+Follow-up on 2026-07-13 restored the exact local Veltkamp lemma `eqLeep` in
+`FloatSpec/src/Pff/Pff.lean`.  The Lean theorem concludes `q.Fexp ≤ p.Fexp`
+from the upstream local context by deriving `|F2R q| ≤ |F2R p|` using `qNeg`,
+`pPos`, `ClosestOpp`, `ClosestRoundedModeP`/projector, and `ClosestMonotone`,
+then applying `Fcanonic_Rle_Zle` to the normal `q` and `p`.  Focused
+verification: `lake env lean FloatSpec/src/Pff/Pff.lean` passed.  Full
+verification: `lake build` passed.  Status: implemented and removed from active
+semantic gaps; the remaining entries in this batch remain active.
+
+Follow-up on 2026-07-13 restored the exact local Veltkamp lemma `epLe` in
+`FloatSpec/src/Pff/Pff.lean`.  The Lean theorem concludes
+`p.Fexp ≤ (s : Int) + 1 + x.Fexp` from the upstream Veltkamp local context by
+projecting `Float (Fnum x) (s + 1 + Fexp x)`, using `pPos`,
+`ClosestRoundedModeP`/projector, `ClosestMonotone`, and zpow monotonicity, then
+applying `Fcanonic_Rle_Zle` to the normal `p` and the constructed comparison
+float.  Focused verification: `lake env lean FloatSpec/src/Pff/Pff.lean`
+passed.  Full verification: `lake build` passed.  Status: implemented and
+removed from active semantic gaps; the remaining entries in this batch remain
+active.
+
+Follow-up on 2026-07-13 restored the exact local Pff theorem
+`ClosestSuccPred` in `FloatSpec/src/Pff/Pff.lean`.  The Lean theorem preserves
+the upstream payload: a canonical float `f` that is no farther from `z` than
+both its successor and predecessor is a `Closest` rounded value.  The proof
+uses the existing successor/predecessor stack (`FSuccLt`, `FPredLt`,
+`FBoundedPred`, `FPredCanonic`, `FcanonicFnormalizeEq`, `FSucPred`, and
+`FNSuccProp`).  Focused verification:
+`lake env lean FloatSpec/src/Pff/Pff.lean` passed.  Full verification:
+`lake build` passed.  Status: implemented and removed from active semantic
+gaps; the remaining entries in this batch remain active.
+
+Follow-up on 2026-07-13 restored the exact local Pff theorem `ImplyClosest`
+in `FloatSpec/src/Pff/Pff.lean`.  The Lean theorem preserves the upstream
+payload: under the section hypotheses `Bf`, `Cf`, `zGe`, `zLe`, `fGe`, and
+`eGe`, the half-ulp bound `|z - F2R f| <= radix^e / 2` implies
+`Closest b radix z f`.  The proof derives successor and predecessor distance
+bounds, then applies `ClosestSuccPred`, using `FSuccDiffPos`, `FPredLt`,
+`FPredProp`, `FPredCanonic`, `FpredUlpPos`, `CanonicFulp`, and
+`Fcanonic_Rle_Zle`.  Focused verification:
+`lake env lean FloatSpec/src/Pff/Pff.lean` passed.  Full verification:
+`lake build` passed.  Status: implemented and removed from active semantic
+gaps; the remaining entries in this batch remain active.
+
+Follow-up on 2026-07-13 restored the exact local Pff theorem
+`ImplyClosestStrict` in `FloatSpec/src/Pff/Pff.lean`.  The Lean theorem
+preserves the upstream payload: under the same section hypotheses as
+`ImplyClosest`, the strict half-ulp bound `|z - F2R f| < radix^e / 2`
+implies that every `g` satisfying `Closest b radix z g` has the same
+represented real value as `f`.  The proof reuses `ImplyClosest` to obtain
+closestness of `f`, derives strict successor and predecessor distance
+separation, and rules out all other closest bounded floats via `FNSuccProp`,
+`FSuccDiffPos`, `FPredLt`, `FPredProp`, `FPredCanonic`, `FpredUlpPos`,
+`CanonicFulp`, and `Fcanonic_Rle_Zle`.  Focused verification:
+`lake env lean FloatSpec/src/Pff/Pff.lean` passed.  Full verification:
+`lake build` passed.  Status: implemented and removed from active semantic
+gaps; the remaining entries in this batch remain active.
+
+Follow-up on 2026-07-13 restored the exact local Pff theorem
+`ImplyClosestStrict2` in `FloatSpec/src/Pff/Pff.lean`.  This matches upstream
+`Pff/Pff.v`: from the strict half-ulp hypothesis
+`|z - F2R f| < radix^e / 2`, it proves both `Closest b radix z f` and
+uniqueness of the represented real value among all closest bounded floats.  The
+proof follows upstream directly by splitting the conclusion, reusing
+`ImplyClosest` for closestness with `le_of_lt` and `ImplyClosestStrict` for the
+uniqueness branch.  Focused verification:
+`lake env lean FloatSpec/src/Pff/Pff.lean` passed.  Full verification:
+`lake build` passed.  Status: implemented and removed from active semantic
+gaps; the remaining entries in this batch remain active.
 
 Statement-level checks performed for the first 35 active Pff entries:
 
-- `errorBoundedMultClosest`, `plusExact2Aux`, `plusExact2`,
-  `plusExactExp`, `UlpFlessuGe`, `UlpFlessuGe2`, and `Axpy_opt` were
+- `errorBoundedMultClosest`, `UlpFlessuGe`, `UlpFlessuGe2`, and `Axpy_opt` were
   rechecked against the local helper families already noted in batch 10.
-  The same conclusion holds: local declarations are prerequisite/reduction
+  The same conclusion holds for those entries: local declarations are prerequisite/reduction
   forms such as `*_from_*`, `*_aux`, or `*_check`; they do not prove the
-  public upstream conclusions directly from the upstream hypotheses.
-- `ClosestSuccPred`, `ImplyClosest`, `ImplyClosestStrict`,
-  `ImplyClosestStrict2`, `ClosestImplyEven`, `ClosestImplyEven_int`,
-  `hxExact`, `eqLeep`, `epLe`, `eqLe`, `eqGe`, and `eqEqual` have no exact
-  Lean declaration under `FloatSpec/src/Pff`. Broad hits on the predicates
-  `Closest` and `EvenClosest` are definitions, not theorem counterparts.
-  These names are section-local proof lemmas in upstream Pff, but they remain
-  active because they are parsed public Coq declarations and no faithful
-  split payload has been identified.
+  public upstream conclusions directly from the upstream hypotheses. The former
+  `plusExact2Aux` and `plusExact2` gaps were later closed by exact restoration.
+- `ClosestImplyEven_int` was later restored as an exact Lean declaration in
+  `FloatSpec/src/Pff/Pff.lean`, matching the upstream integer-midpoint
+  theorem by reducing to `ClosestImplyEven`.
+- `eqLe`, `eqGe`, and `eqEqual` have no exact Lean declaration under
+  `FloatSpec/src/Pff`. Broad hits on the predicates `Closest` and `EvenClosest`
+  are definitions, not theorem counterparts.  These names are section-local
+  proof lemmas in upstream Pff, but they remain active because they are parsed
+  public Coq declarations and no faithful split payload has been identified.
+  Config-provider harness attempt `.change_log/codex_attempt_20260715_212250`
+  rechecked `eqLe` against upstream `Pff.v` and left Lean code unchanged:
+  `target_before.lean` and `target_after.lean` are identical, the local target
+  gate passed, `scripts/audit_placeholders.sh --json FloatSpec` passed,
+  `scripts/status_report.sh --write` still reported the existing 53
+  placeholder/trust findings with `sorry = 0`, `axiom = 0`, `admit = 0`, and
+  `git diff --check` passed. The nested checked-alignment sidecar
+  `.change_log/eqLe_blocked_20260715_133035/attempt.json` records the blocker:
+  upstream `eqLe` proves a large Veltkamp-section disjunction from the section
+  context, while current Lean has prerequisites such as `eqLeep`, `epLe`,
+  `hxExact`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
+  `ImplyClosest` but no faithful split helper for the two long branches.
+  Adding exact-name `eqLe` from the current helpers would require extra branch
+  premises and would weaken the upstream payload, so `eqLe` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_020235`
+  rechecked `eqGe` at the current Veltkamp helper block and left source code
+  unchanged (`target_before.lean` and `target_after.lean` are identical, with
+  no files listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_eqGe_blocked/attempt.json` records
+  `coq_alignment = checked`: upstream `eqGe` proves the section-local
+  conclusion `s + Fexp x <= Fexp q` by splitting real-comparison branches and
+  deriving tight mantissa identities plus bounded/closest constructed floats.
+  Current Lean has broad prerequisites such as `hxExact`, `eqLeep`, `epLe`,
+  `pPos`, `qNeg`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
+  `ImplyClosest`, but no faithful split helper for those branches from only the
+  upstream section hypotheses. Adding exact-name `eqGe` now would require
+  extra branch premises or a weakened helper-only statement, so `eqGe` remains
+  active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_224529`
+  rechecked `eqGe` against the current Pff helper stack and made no Lean
+  source changes; the harness only wrote a ledger classification note. The
+  top-level attempt record has `result = blocked` and `changed_files =
+  ["MISSING_INFRASTRUCTURE.md"]`. The normalized checked classifier
+  `.change_log/manual_attempt_20260716_2251_eqGe_current_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and the same
+  ledger-only changed file. The blocker remains the three unfactored Veltkamp
+  comparison branches from upstream `Pff.v:13547`: the large-`x` branch lowers
+  `|q|` by inverse-triangle estimates and two `ClosestExp` applications; the
+  middle branch constructs the bounded mantissa float
+  `Zpower_nat radix (pred t) + Zpower_nat radix (Z.abs_nat (t - s - 1)) + 1`
+  and uses closest monotonicity to force `p` above the minimal-normal float;
+  and the tight top-mantissa branch proves the exact top-mantissa identities
+  for `x`, `p`, and `q` before applying `FcanonicUnique`. Current Lean has
+  adjacent prerequisites such as `hxExact`, `eqLeep`, `epLe`, `pPos`, `qNeg`,
+  `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, `ImplyClosest`,
+  `FnormalUnique`, `FSuccDiff3`, `LeFnumZERO`, and `LtFnumZERO`, but no exact
+  public theorem or split branch lemmas deriving this payload from only the
+  Veltkamp section hypotheses.
+  Current-refresh sidecar
+  `.change_log/manual_attempt_20260716_145826_eqLe_current_blocked/attempt.json`
+  rechecked the live `Pff.lean` helper surface after the later `eqGe` and
+  `eqEqual` blocker records. It records `coq_alignment = checked`,
+  `local_target_gate = pass`, and `changed_files = []`: upstream `eqLe` is
+  still the section-local Veltkamp disjunction proving either
+  `Fexp q <= s + Fexp x` or the exact negative-bound/half-ulp branch from only
+  the section context. Current Lean still has prerequisite helpers such as
+  `eqLeep`, `epLe`, `hxExact`, `RleRRounded`, `ClosestExp`, `FPredProp`,
+  `MinMax`, and `ImplyClosest`, but no faithful split proof for the two long
+  branches. Adding exact-name `eqLe` from those helpers would require extra
+  branch premises or weaken the disjunction payload, so `eqLe` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_201815`
+  rechecked `eqLe` after the latest `LSB_Pred` restoration and again left
+  source code unchanged. The provider compared upstream `Pff.v:eqLe` with the
+  current local `eqLeep`/`epLe`/`hxExact` helper surface and identified the
+  same missing boundary proof infrastructure: constructing the `g`/`qplus =
+  FNSucc q` witnesses, proving the successor gap
+  `qplus - q = radix^(s + Fexp x)`, and deriving the exact
+  negative-bound/half-ulp branch from the upstream section context. The
+  normalized sidecar
+  `.change_log/manual_attempt_20260716_eqLe_boundary_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_223316`
+  also rechecked `eqLe` and made no source changes, but the shell invocation
+  had stripped the two disjunct displays from the reason text before the
+  harness prompt was written. The corrected config-provider harness attempt
+  `.change_log/codex_attempt_20260716_223709` reran the same target with the
+  full disjunction described in shell-safe text and again made no source
+  changes (`changed_during_attempt.txt` is empty and
+  `target_before.lean`/`target_after.lean` are identical). The top-level
+  attempt record has `result = blocked`; the checked classifier
+  `.change_log/manual_attempt_20260716_2242_eqLe_current_blocked/attempt.json`
+  records `result = blocked`, `coq_alignment = checked`, and
+  `changed_files = []`. The blocker remains the full Veltkamp branch package:
+  upstream `eqLe` proves the disjunction from the section context, while local
+  helpers such as `eqLeep`, `epLe`, `hxExact`, `RleRRounded`, `ClosestExp`,
+  `FPredProp`, `MinMax`, `ImplyClosest`, `FnormalUnique`, and `FSuccDiff3`
+  still do not package the low-mantissa normal-`g` construction or the
+  high-mantissa negative-bound plus half-ulp branch without extra premises.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_041716`
+  rechecked `eqEqual` directly and left source code unchanged
+  (`target_before.lean` and `target_after.lean` are identical, with no files
+  listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_eqEqual_blocked/attempt.json` records
+  `coq_alignment = checked`: upstream `Pff.v:eqEqual` is a direct combination
+  of upstream `eqLe` and `eqGe`, but current Lean still has no exact `eqLe`
+  disjunction or exact `eqGe` inequality derivable from only the Veltkamp
+  section hypotheses. Adding `eqEqual` now would require extra premises
+  carrying `eqLe`/`eqGe`, or a weakened helper-only statement, so `eqEqual`
+  remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_184915`
+  rechecked `eqEqual` against the current live ledger after line-number drift.
+  The checked sidecar
+  `.change_log/manual_attempt_20260716_185145_eqEqual_current_blocked/attempt.json`
+  records `coq_alignment = checked`, `changed_files = []`, and the same
+  blocker: current Lean has helper prerequisites such as `hxExact`, `eqLeep`,
+  `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
+  `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
+  inequality from only the upstream Veltkamp section hypotheses.
 - `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`,
   `VeltkampEven2`, `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`,
   `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
@@ -970,8 +6559,13 @@ Statement-level checks performed for the first 35 active Pff entries:
   Veltkamp error bound and reduced witness from rounded intermediate
   products/sums. They are therefore missing lower Pff payloads, not hidden
   under the public wrapper.
-- `bimplybplusNorm`, `Closestbbplus`, `EvenClosestbplusb`,
-  `ClosestClosest`, and `EvenClosestbbplus` have no faithful counterpart.
+- `bimplybplusNorm` was restored as exact public Lean theorem
+  `FloatSpec/src/Pff/Pff.lean:bimplybplusNorm`: from `Fbounded b f` and
+  `F2R f ≠ 0`, it constructs `Fnormalize radix (plusExp b) t f`, preserves
+  `F2R`, and rules out the subnormal branch using the original bounded
+  exponent and the `plusExp` first-normal threshold.
+- `Closestbbplus`, `EvenClosestbplusb`, `ClosestClosest`, and
+  `EvenClosestbbplus` have no faithful counterpart.
   Lean has `Closestbplusb`, but that is the reverse restriction direction
   from `plusExp b` closestness plus a bound proof back to `b` closestness.
   Upstream `Closestbbplus` proves the extension direction from `b` to
@@ -981,8 +6575,8 @@ Statement-level checks performed for the first 35 active Pff entries:
   `Closestbbplus`.
 
 Updated status: active Pff entries 1-35 are confirmed real semantic gaps or
-unported section lemmas, not renamed/split complete ports. The Pff active
-count remains 104.
+unported section lemmas, not renamed/split complete ports. Later restorations
+are reflected in the current `Pff/Pff.v` section count above.
 
 Checked batch 14: `Pff/Pff.v` Veltkamp-tail, underflow, and Dekker lead-in
 block.
@@ -1026,8 +6620,8 @@ Statement-level checks performed for active Pff entries 36-70:
   without the missing lower proof payloads.
 
 Updated status: active Pff entries 36-70 are confirmed real semantic gaps or
-unported section lemmas, not renamed/split complete ports. The Pff active
-count remains 104.
+unported section lemmas, not renamed/split complete ports. Later restorations
+are reflected in the current `Pff/Pff.v` section count above.
 
 Checked batch 15: `Pff/Pff.v` final active rounded-error/FMA approximation
 block.
@@ -1042,13 +6636,38 @@ Statement-level checks performed for active Pff entries 71-104:
   theorems assume the scaled closestness or even/high boundary payload that
   upstream proves from normality, exponent lower bound, and
   `EvenClosest`; they are not the public theorem.
-- `errorBoundedMultClosest_Can`, `AddExpGe1Underf`,
-  `AddExpGe1Underf2`, and `cases` have no faithful local counterpart.
+- `errorBoundedMultClosest_Can` and `cases` have no faithful local
+  counterpart.
   Broad hits on `errorBoundedMult`, `Closest`, or
   `ExactMinusIntervalAux_pred_constructive_cases` do not encode these
-  section-specific underflow/case-split conclusions.
+  section-specific rounded-error/case-split conclusions.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_181642`
+  rechecked `cases` against upstream `Pff/Pff.v:22504` and left source code
+  unchanged (`target_before.lean` and `target_after.lean` are identical, with
+  no files listed in `changed_during_attempt.txt`). The checked sidecar
+  `.change_log/manual_attempt_20260716_cases_blocked/attempt.json` records
+  `result = blocked`, `coq_alignment = checked`, and `local_target_gate =
+  pass`: upstream derives the full zero-or-underflow-bound disjunction from
+  `U1`, `U2`, `pGeUnderf`, `qGeUnderf`, `AddExpGeUnderf2`, and rounding
+  hypotheses, while current Lean only exposes downstream `discri*`
+  precondition packages that assume or factor this branch payload. Adding
+  `«cases»` now would require the upstream conclusion as a premise or wrap
+  the factored branch package, so it would be helper-only/tautological rather
+  than the exact Flocq theorem. `cases` remains active.
+- `AddExpGe1Underf2` was restored as exact public Lean theorem
+  `FloatSpec/src/Pff/Pff.lean:AddExpGe1Underf2` by subscription harness
+  attempt `.change_log/codex_attempt_20260713_075753`. The theorem matches
+  upstream `Pff/Pff.v` by normalizing bounded inputs with
+  `FnormalizeCorrect`/`FnormalizeCanonic`, applying restored
+  `AddExpGe1Underf`, and eliminating the zero branch with the explicit
+  nonzero rounded-result hypothesis.
+- `LSB_Pred` was restored as exact public Lean theorem
+  `FloatSpec/src/Pff/Pff.lean:LSB_Pred`, preserving the upstream
+  `Rabs x < Rabs y -> LSB radix x <= LSB radix y -> Rabs x <= Rabs y -
+  powerRZ radix (LSB radix x)` payload with the `GenericC` section
+  assumptions.
 - `xLe2y_aux1`, `xLe2y_aux2`, `yLe2x_aux`, `xLe2y`, `yLe2x`,
-  `Subexact`, `LSB_Pred`, `Midpoint_aux_aux`, `Midpoint_aux`,
+  `Subexact`, `Midpoint_aux_aux`, `Midpoint_aux`,
   `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
@@ -1061,17 +6680,31 @@ Statement-level checks performed for active Pff entries 71-104:
   `FmaErr_gaCorrect_of_al2_zero`, and several `Fma_FTS_*_leexp_witness`
   theorems cover isolated branches or prerequisite exponent witnesses, not
   the final upstream FMA approximation bounds.
-- `LeExp1`, `LeExp2`, `LeExp3`, `LeExp`, `vLe_aux`, `vLe`, `tLe`,
+- `LeExp2`, `LeExp3`, `LeExp`, `vLe_aux`, `vLe`, `tLe`,
   and `wLe` remain active. Local hits such as `LeExpRound`,
   `LeExpRound2`, `RoundedModeMultLess`, `FboundedShiftLess`,
   `maxDivLess`, and `digitLess` are generic or unrelated support lemmas;
   they do not prove the concrete exponent and absolute-value bounds in this
-  FMA section.
+  FMA section. Subscription harness attempt
+  `.change_log/codex_attempt_20260713_054925` classified the exact `LeExp1`
+  lemma as blocked with no source changes: the upstream proof derives
+  `Fexp ph <= Fexp uh + 1` by contradiction from `Case2`, `ulDef`, and `uhDef`,
+  then invokes the formerly missing `plusExact2` payload. `plusExact2` and
+  `plusExact2Aux` have since been restored exactly, and
+  `.change_log/codex_attempt_20260713_073602` restored `LeExp1`.
+  Subscription harness attempt `.change_log/codex_attempt_20260713_075313`
+  rechecked exact `LeExp2` after `LeExp1` landed and left code unchanged:
+  the upstream proof still needs the unfactored FMA middle bound deriving
+  `|F2R uh| <= radix * |F2R z|` from `ulDef`, `plDef`, `zDef`, `phDef`,
+  `uhDef`, `RoundedModeUlp`, `FcanonicFnormalizeEq`, `FulpLe2`, `LeExp1`,
+  and `precision >= 3` before applying the exponent comparison. Adding a
+  weaker helper-only bound would not preserve the upstream payload, so
+  `LeExp2` remains active.
 
-Updated status: all 104 active Pff entries have now been counterpart-checked
+Updated status: the active Pff entries have now been counterpart-checked
 at least once. The checked local hits are helper, prerequisite, reverse
 direction, or wrapper declarations rather than faithful renamed/split ports,
-so the Pff active count remains 104.
+so the current Pff active count is the `Pff/Pff.v` section count above.
 
 Checked batch 16: explicitly named IEEE entries that were previously covered
 only by grouped wording.
@@ -1080,27 +6713,120 @@ No entries were removed from the active semantic gap list in this batch.
 
 Coverage checks performed:
 
-- `loc_of_shr_record_of_loc`, `inbetween_shr_1`, `shr_nat`,
-  `le_shr1_le`, `inbetween_shr`, `le_shr_le`, and `shr_limit` were
-  searched directly in `FloatSpec/src/IEEE754`. The only hits are in
-  `IEEE754_Theorems_Comparison_Manual.md`; no Lean theorem counterpart was
-  found. They remain missing BinarySingleNaN shift/truncation lemmas.
+- `inbetween_shr`, `le_shr_le`, `shr_limit`, and `shr_truncate` were searched directly in
+  `FloatSpec/src/IEEE754` before the current restoration pass. At the time,
+  the only hits were in `IEEE754_Theorems_Comparison_Manual.md`; no Lean
+  theorem counterpart was found. `inbetween_shr`, `le_shr_le`, `shr_limit`, and
+  `shr_truncate` are now restored.
 - `default_nan_pl32`, `unop_nan_pl32`, `binop_nan_pl32`,
-  `ternop_nan_pl32`, `b32_erase`, `b32_opp`, `b32_abs`, `b32_pred`,
-  `b32_succ`, `b32_sqrt`, `b32_plus`, `b32_minus`, `b32_mult`,
-  `b32_div`, `b32_fma`, `b32_compare`, `b32_of_bits`, and
-  `bits_of_b32` were searched directly in `FloatSpec/src/IEEE754`. No Lean
-  declaration counterpart was found. The generic local helpers
-  `erase`, `succ`, `pred`, `compare`, `binary_to_bits`, and
-  `bits_to_binary` are not the upstream binary32 API layer because they do
-  not instantiate the upstream `binary_float 24 128` type, NaN-payload
-  handlers, operation aliases, or bit-conversion aliases.
-- `default_nan_pl64`, `unop_nan_pl64`, `binop_nan_pl64`,
-  `ternop_nan_pl64`, `b64_erase`, `b64_opp`, `b64_abs`, `b64_pred`,
-  `b64_succ`, `b64_sqrt`, `b64_plus`, `b64_minus`, `b64_mult`,
-  `b64_div`, `b64_fma`, `b64_compare`, `b64_of_bits`, and
-  `bits_of_b64` were searched directly in `FloatSpec/src/IEEE754`. No Lean
-  declaration counterpart was found. The same generic-helper caveat applies:
+  `ternop_nan_pl32`, `b32_erase`, `b32_opp`, `b32_abs`, `b32_of_bits`,
+  `b32_pred`, and `b32_succ` were restored in
+	  `FloatSpec/src/IEEE754/Bits.lean` during the current direct restoration pass,
+	  and are no longer active. `b32_sqrt`, `b32_plus`, `b32_minus`, `b32_mult`,
+	  `b32_div`, and `b32_fma` were
+	  searched directly in `FloatSpec/src/IEEE754`. No Lean declaration
+	  counterpart was found. The
+	  generic local helpers `succ`, `pred`, `compare`, `binary_to_bits`, and
+	  `bits_to_binary` are not the remaining upstream binary32 API layer because
+	  they do not instantiate the upstream `binary_float 24 128` type, operation
+	  aliases, or bit-conversion aliases.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_130243`
+  rechecked `b32_sqrt` against upstream `IEEE754/Bits.v:667` and left source
+  code unchanged (`changed_during_attempt.txt` is empty, `changed_files = []`,
+  and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716T050529Z_b32_sqrt_blocked/attempt.json`
+  records `result = blocked`, `build = pass`, `coq_alignment = checked`, and
+  `local_target_gate = pass`. The blocker is the proof-carrying type surface:
+  upstream `b32_sqrt` specializes `Bsqrt _ _ Hprec Hprec_emax unop_nan_pl32`
+  to `binary32 := binary_float 24 128`, preserving finite boundedness proofs
+  and the single-argument NaN payload handler. Current Lean has `binary32` and
+	  `unop_nan_pl32`, but its available `Bsqrt` adapter returns the permissive
+	  `Binary754` wrapper, not `binary_float 24 128`; the rounded-real SingleNaN
+	  helpers likewise do not reconstruct the upstream proof-carrying result.
+	  Adding a wrapper here would be differently parameterized/helper-only rather
+	  than the Flocq Bits API payload, so `b32_sqrt` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_131005`
+  rechecked `b32_plus` against upstream `IEEE754/Bits.v:668` and left source
+  code unchanged (`changed_during_attempt.txt` is empty, `changed_files = []`,
+  and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716T051218Z_b32_plus_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker is the same proof-carrying
+  binary32 operation surface: upstream `b32_plus` specializes `Bplus _ _
+  Hprec Hprec_emax binop_nan_pl32` to `binary32 -> binary32 -> binary32`,
+  preserving bounded finite proofs and the first-NaN payload handler. Current
+  Lean has `binary32` and `binop_nan_pl32`, but `Binary.Bplus` returns
+  permissive `Binary754` and `BinarySingleNaNBridge.Bplus` returns proof-erased
+  `BinaryFloat`; no faithful adapter back to `binary_float 24 128` is present.
+  Adding `b32_plus` from those helpers would be differently parameterized and
+  proof-erased, so `b32_plus` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_131602`
+  rechecked `b32_minus` against upstream `IEEE754/Bits.v:670` and left source
+  code unchanged (`changed_during_attempt.txt` is empty, `changed_files = []`,
+  and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_131602_b32_minus_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker is again the proof-carrying
+  binary32 operation surface: upstream `b32_minus` specializes `Bminus _ _
+  Hprec Hprec_emax binop_nan_pl32` to `binary32 -> binary32 -> binary32`,
+  preserving bounded finite proofs and first-NaN payload handling. Current Lean
+  has `binary32` and `binop_nan_pl32`, but `Binary.Bminus` returns permissive
+  `Binary754` and `BinarySingleNaNBridge.Bminus` returns proof-erased
+  `BinaryFloat`; no faithful adapter back to `binary_float 24 128` is present.
+  Adding `b32_minus` from those helpers would be differently parameterized and
+  proof-erased, so `b32_minus` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_132240`
+  rechecked `b32_mult` against upstream `IEEE754/Bits.v:671` and left source
+  code unchanged (`changed_during_attempt.txt` is empty, `changed_files = []`,
+  and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_132240_b32_mult_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker is again the proof-carrying
+  binary32 operation surface: upstream `b32_mult` specializes `Bmult _ _
+  Hprec Hprec_emax binop_nan_pl32` to `binary32 -> binary32 -> binary32`,
+  preserving bounded finite proofs and first-NaN payload handling. Current Lean
+  has `binary32` and `binop_nan_pl32`, but `Binary.Bmult` returns permissive
+  `Binary754` and `BinarySingleNaNBridge.Bmult` returns proof-erased
+  `BinaryFloat`; no faithful adapter back to `binary_float 24 128` is present.
+  Adding `b32_mult` from those helpers would be differently parameterized and
+  proof-erased, so `b32_mult` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_133101`
+  rechecked `b32_div` against upstream `IEEE754/Bits.v:672` and left source
+  code unchanged (`changed_during_attempt.txt` is empty, `changed_files = []`,
+  and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_133101_b32_div_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker is again the proof-carrying
+  binary32 operation surface: upstream `b32_div` specializes `Bdiv _ _
+  Hprec Hprec_emax binop_nan_pl32` to `binary32 -> binary32 -> binary32`,
+  preserving bounded finite proofs and first-NaN payload handling. Current Lean
+  has `binary32` and `binop_nan_pl32`, but `Binary.Bdiv` returns permissive
+  `Binary754` and `BinarySingleNaNBridge.Bdiv` returns proof-erased
+  `BinaryFloat`; no faithful adapter back to `binary_float 24 128` is present.
+  Adding `b32_div` from those helpers would be differently parameterized and
+  proof-erased, so `b32_div` remains active.
+  Config-provider harness attempt `.change_log/codex_attempt_20260716_134059`
+  rechecked `b32_fma` against upstream `IEEE754/Bits.v:674` and left source
+  code unchanged (`changed_during_attempt.txt` is empty, `changed_files = []`,
+  and the local target gate passed). The checked sidecar
+  `.change_log/manual_attempt_20260716_134059_b32_fma_blocked/attempt.json`
+  records `result = blocked`, `changed_files = []`, `coq_alignment = checked`,
+  and `local_target_gate = pass`. The blocker is again the proof-carrying
+  binary32 operation surface: upstream `b32_fma` specializes `Bfma _ _
+  Hprec Hprec_emax ternop_nan_pl32` to
+  `binary32 -> binary32 -> binary32 -> binary32`, preserving bounded finite
+  proofs and first-NaN payload handling across three inputs. Current Lean has
+  `binary32` and `ternop_nan_pl32`, but `Binary.Bfma` returns permissive
+  `Binary754` and `BinarySingleNaNBridge.Bfma` returns proof-erased
+  `BinaryFloat`; no faithful adapter back to `binary_float 24 128` is present.
+  Adding `b32_fma` from those helpers would be differently parameterized and
+  proof-erased, so `b32_fma` remains active.
+- `binop_nan_pl64`, `ternop_nan_pl64`, `b64_erase`, `b64_opp`, `b64_abs`,
+  `bits_of_b64`, `b64_of_bits`, `b64_pred`, and `b64_succ`
+  are now restored in `FloatSpec/src/IEEE754/Bits.lean`. `b64_sqrt`,
+  `b64_plus`, `b64_minus`, `b64_mult`, `b64_div`, and `b64_fma` were searched directly in
+  `FloatSpec/src/IEEE754`. No Lean declaration counterpart was found for those
+  remaining names. The same generic-helper caveat applies:
   the upstream binary64 layer is specialized to `binary_float 53 1024` with
   concrete NaN payload propagation and operation aliases, while the local
   file only exposes generic weakened-model helpers and `Binary64 :=
@@ -1237,13 +6963,13 @@ Workspace progress snapshot from 2026-07-03:
     `multExpUpperBound`, `errorBoundedMultExp_aux`,
     `errorBoundedMultExpPos`, `errorBoundedMultExp`, and
     `errorBoundedMultClosest_aux`.
-  - A project-level parsed-name scan across all `FloatSpec/**/*.lean` currently
-    shows 104 missing `Pff/Pff.v` names after stripping Coq comments. This is
-    lower than the direct-file count because some exact names are supplied by
-    imported FloatSpec modules or Lean/Mathlib.
+  - A project-level parsed-name scan across all `FloatSpec/**/*.lean` formerly
+    showed 102 missing `Pff/Pff.v` names after stripping Coq comments. The
+    current active Pff section count above supersedes that stale snapshot; the
+    project-level count is lower than the direct-file count because some exact
+    names are supplied by imported FloatSpec modules or Lean/Mathlib.
     The first entries are now local FloatSpec gaps beginning with
-    `errorBoundedMultClosest`, followed by `plusExact2Aux` in the addition
-    block.
+    `errorBoundedMultClosest`, followed by `UlpFlessuGe` in the Pff block.
   - The current direct-file parser still lists `Fplus`, `Fopp`, `Fabs`, and
     `Fmult`, but those exact names already exist in FloatSpec through
     `FloatSpec/src/Compat.lean`; they are not absent project-level names.

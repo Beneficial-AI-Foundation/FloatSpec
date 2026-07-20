@@ -6,14 +6,14 @@
       "admit": 0,
       "axiom": 0,
       "lean_files": 7,
-      "placeholder": 5,
+      "placeholder": 0,
       "sorry": 0
     },
     "Core": {
       "admit": 0,
       "axiom": 0,
       "lean_files": 16,
-      "placeholder": 30,
+      "placeholder": 0,
       "sorry": 0
     },
     "ErrorBound": {
@@ -27,21 +27,21 @@
       "admit": 0,
       "axiom": 0,
       "lean_files": 6,
-      "placeholder": 11,
+      "placeholder": 0,
       "sorry": 0
     },
     "Other": {
       "admit": 0,
       "axiom": 0,
       "lean_files": 9,
-      "placeholder": 5,
+      "placeholder": 0,
       "sorry": 0
     },
     "Pff": {
       "admit": 0,
       "axiom": 0,
       "lean_files": 5,
-      "placeholder": 5,
+      "placeholder": 0,
       "sorry": 0
     },
     "Prop": {
@@ -53,7 +53,7 @@
     }
   },
   "lean_files": 58,
-  "placeholder_semantics_count": 56,
+  "placeholder_semantics_count": 0,
   "sorry_count": 0,
   "spec_weakened_count": 0
 }

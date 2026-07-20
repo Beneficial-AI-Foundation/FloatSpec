@@ -2210,7 +2210,9 @@ noncomputable def satisfies_any_imp_NE_check : Bool :=
     nearest-even rounding forms a proper rounding predicate.
 -/
 theorem satisfies_any_imp_NE :
-    ⦃⌜beta > 1 ∧ satisfies_any (fun x => FloatSpec.Core.Generic_fmt.generic_format beta fexp x)⌝⦄
+    ⦃⌜beta > 1 ∧
+      FloatSpec.Core.Generic_fmt.satisfies_any
+        (fun x => FloatSpec.Core.Generic_fmt.generic_format beta fexp x)⌝⦄
     (pure (satisfies_any_imp_NE_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro _

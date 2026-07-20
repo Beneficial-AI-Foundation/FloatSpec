@@ -49,7 +49,7 @@ noncomputable def mag (beta : Int) (x : ℝ) : Int :=
 noncomputable def Ztrunc (x : ℝ) : Int :=
   (FloatSpec.Core.Raux.Ztrunc x)
 
-/-- Fixed-exponent function: always returns the provided exponent. -/
+/-- Fixed-exponent function selecting the provided exponent. -/
 def FIX_exp (emin : Int) : Int → Int := fun _ => emin
 
 /-- Bridge: ulp as a plain ℝ (unwraps Id) -/

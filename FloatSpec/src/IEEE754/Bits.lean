@@ -5,6 +5,7 @@ import FloatSpec.src.Core
 import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.IEEE754.Binary
+import FloatSpec.src.IEEE754.BinarySingleNaN
 import Mathlib.Data.Real.Basic
 
 open Real
@@ -573,6 +574,222 @@ theorem binary_float_of_bits_aux_correct (bits : Int) :
   unfold binary_float_of_bits_aux
   rfl
 
+private abbrev ZPositive := FloatSpec.Core.Zaux.Positive
+
+private def positiveSucc : ZPositive → ZPositive
+  | FloatSpec.Core.Zaux.Positive.xH =>
+      FloatSpec.Core.Zaux.Positive.xO FloatSpec.Core.Zaux.Positive.xH
+  | FloatSpec.Core.Zaux.Positive.xO p =>
+      FloatSpec.Core.Zaux.Positive.xI p
+  | FloatSpec.Core.Zaux.Positive.xI p =>
+      FloatSpec.Core.Zaux.Positive.xO (positiveSucc p)
+
+private theorem positiveSucc_spec (p : ZPositive) :
+    FloatSpec.Core.Zaux.positiveToNat (positiveSucc p) =
+      FloatSpec.Core.Zaux.positiveToNat p + 1 := by
+  induction p with
+  | xH =>
+      simp [positiveSucc, FloatSpec.Core.Zaux.positiveToNat]
+  | xO p _ =>
+      simp [positiveSucc, FloatSpec.Core.Zaux.positiveToNat]
+  | xI p ih =>
+      simp [positiveSucc, FloatSpec.Core.Zaux.positiveToNat, ih]
+      omega
+
+private def positiveOfNatSucc : Nat → ZPositive
+  | 0 => FloatSpec.Core.Zaux.Positive.xH
+  | n + 1 => positiveSucc (positiveOfNatSucc n)
+
+private theorem positiveOfNatSucc_spec (n : Nat) :
+    FloatSpec.Core.Zaux.positiveToNat (positiveOfNatSucc n) = n + 1 := by
+  induction n with
+  | zero =>
+      simp [positiveOfNatSucc, FloatSpec.Core.Zaux.positiveToNat]
+  | succ n ih =>
+      simp [positiveOfNatSucc, positiveSucc_spec, ih]
+
+private def positiveOfNat (n : Nat) (_h : 0 < n) : ZPositive :=
+  positiveOfNatSucc (n - 1)
+
+private theorem positiveOfNat_spec (n : Nat) (h : 0 < n) :
+    FloatSpec.Core.Zaux.positiveToNat (positiveOfNat n h) = n := by
+  cases n with
+  | zero => cases h
+  | succ n =>
+      simp [positiveOfNat, positiveOfNatSucc_spec]
+
+private theorem split_bits_mantissa_range (mw ew : Nat) (x : Int) :
+    0 ≤ (split_bits mw ew x).2.1 ∧ (split_bits mw ew x).2.1 < (2 : Int) ^ mw := by
+  have hpos : 0 < (2 : Int) ^ mw := pow_pos (by decide : (0 : Int) < 2) mw
+  simp [split_bits, Int.emod_nonneg x (ne_of_gt hpos), Int.emod_lt_of_pos x hpos]
+
+private theorem split_bits_exponent_range (mw ew : Nat) (x : Int) :
+    0 ≤ (split_bits mw ew x).2.2 ∧ (split_bits mw ew x).2.2 < (2 : Int) ^ ew := by
+  have hpos : 0 < (2 : Int) ^ ew := pow_pos (by decide : (0 : Int) < 2) ew
+  simp [split_bits, Int.emod_nonneg (x / (2 : Int) ^ mw) (ne_of_gt hpos),
+    Int.emod_lt_of_pos (x / (2 : Int) ^ mw) hpos]
+
+private theorem digits2_Pnat_le_of_lt_pow_two {n k : Nat} (hn : n < 2 ^ k) :
+    FloatSpec.Core.Digits.digits2_Pnat n ≤ k := by
+  by_cases hn0 : n = 0
+  · simp [hn0, FloatSpec.Core.Digits.digits2_Pnat]
+  · have hnpos : 0 < n := Nat.pos_of_ne_zero hn0
+    have htrip := FloatSpec.Core.Digits.Zdigits_le_Zpower
+      (beta := 2) (hβ := by decide) (x := (n : Int)) (e := (k : Int))
+    have hpre :
+        0 ≤ (k : Int) ∧ Int.natAbs (n : Int) < (2 : Int) ^ (k : Int).natAbs := by
+      constructor
+      · exact Int.natCast_nonneg k
+      · have hn_abs : Int.natAbs (n : Int) = n := by
+          simp
+        have hk_abs : (k : Int).natAbs = k := by
+          simp
+        rw [hn_abs, hk_abs]
+        exact_mod_cast hn
+    have hzd :
+        FloatSpec.Core.Digits.Zdigits 2 (n : Int) ≤ (k : Int) := by
+      simpa [wp, PostCond.noThrow, pure] using htrip (by decide) hpre
+    have heq_trip := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat n
+    have heq :
+        FloatSpec.Core.Digits.Zdigits 2 (n : Int) =
+          FloatSpec.Core.Digits.digits2_Pnat n := by
+      simpa [wp, PostCond.noThrow, pure] using heq_trip hnpos
+    have hdigits_int :
+        (FloatSpec.Core.Digits.digits2_Pnat n : Int) ≤ (k : Int) := by
+      simpa [heq] using hzd
+    exact_mod_cast hdigits_int
+
+private theorem nan_payload_valid_of_lt_pow
+    {prec : Int} {mw : Nat} {n : Nat} (hnpos : 0 < n)
+    (hnlt : n < 2 ^ mw) (hmw_lt_prec : (mw : Int) < prec) :
+    nan_pl prec (positiveOfNat n hnpos) = true := by
+  have hdigits_le :
+      FloatSpec.Core.Digits.digits2_Pnat n ≤ mw :=
+    digits2_Pnat_le_of_lt_pow_two hnlt
+  have hdigits_lt :
+      (FloatSpec.Core.Digits.digits2_Pnat n : Int) < prec := by
+    exact lt_of_le_of_lt (by exact_mod_cast hdigits_le) hmw_lt_prec
+  simp [nan_pl, positiveOfNat_spec, FloatSpec.Core.Zaux.Zlt_bool, hdigits_lt]
+
+private theorem bounded_of_b32_subnormal
+    {n : Nat} (hnpos : 0 < n) (hnlt : n < 2 ^ 23) :
+    bounded (prec := 24) (emax := 128) n (-149) = true := by
+  have hnlt24 : n < 2 ^ 24 :=
+    Nat.lt_trans hnlt (by norm_num)
+  simp only [bounded, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨⟨hnlt24, by norm_num⟩, by norm_num⟩
+
+private theorem bounded_of_b32_normal
+    {n : Nat} {e : Int} (hnlt : n < 2 ^ 24) (hepos : 1 ≤ e) (helt : e < 255) :
+    bounded (prec := 24) (emax := 128) n (e - 150) = true := by
+  have hex_lower : (3 : Int) - 128 - 24 ≤ e - 150 := by omega
+  have hex_upper : e - 150 ≤ (128 : Int) - 24 := by omega
+  simp only [bounded, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨⟨hnlt, hex_lower⟩, hex_upper⟩
+
+private theorem bounded_of_b64_subnormal
+    {n : Nat} (hnpos : 0 < n) (hnlt : n < 2 ^ 52) :
+    bounded (prec := 53) (emax := 1024) n (-1074) = true := by
+  have hnlt53 : n < 2 ^ 53 :=
+    Nat.lt_trans hnlt (by norm_num)
+  simp only [bounded, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨⟨hnlt53, by norm_num⟩, by norm_num⟩
+
+private theorem bounded_of_b64_normal
+    {n : Nat} {e : Int} (hnlt : n < 2 ^ 53) (hepos : 1 ≤ e) (helt : e < 2047) :
+    bounded (prec := 53) (emax := 1024) n (e - 1075) = true := by
+  have hex_lower : (3 : Int) - 1024 - 53 ≤ e - 1075 := by omega
+  have hex_upper : e - 1075 ≤ (1024 : Int) - 53 := by omega
+  simp only [bounded, Bool.and_eq_true, decide_eq_true_eq]
+  exact ⟨⟨hnlt, hex_lower⟩, hex_upper⟩
+
+private theorem specFloat_bounded_of_bits_subnormal
+    {prec emax : Int} {mw : Nat} {n : Nat}
+    (hmw_lt_prec : (mw : Int) < prec)
+    (hnlt : n < 2 ^ mw)
+    (hex_upper : 3 - emax - prec ≤ emax - prec) :
+    specFloat_bounded (prec := prec) (emax := emax) n (3 - emax - prec) = true := by
+  unfold specFloat_bounded canonical_mantissa
+  simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
+  constructor
+  · unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+    have hdigits_le : FloatSpec.Core.Digits.Zdigits 2 (n : Int) ≤ (mw : Int) := by
+      have htrip := FloatSpec.Core.Digits.Zdigits_le_Zpower (beta := 2)
+        (x := (n : Int)) (e := (mw : Int)) (by decide)
+      simp only [PostCond.noThrow, pure] at htrip
+      apply htrip
+      constructor
+      · exact Int.natCast_nonneg mw
+      · simp
+        exact_mod_cast hnlt
+    apply le_antisymm
+    · exact le_max_right _ _
+    · apply max_le
+      · omega
+      · omega
+  · exact hex_upper
+
+private theorem specFloat_bounded_of_bits_normal
+    {prec emax : Int} {mw : Nat} {n : Nat} {e : Int}
+    (hprec_eq : prec = (mw : Int) + 1)
+    (hnlow : 2 ^ mw ≤ n) (hnlt : n < 2 ^ (mw + 1))
+    (he_lower : 3 - emax - prec ≤ e)
+    (he_upper : e ≤ emax - prec) :
+    specFloat_bounded (prec := prec) (emax := emax) n e = true := by
+  unfold specFloat_bounded canonical_mantissa
+  simp only [Bool.and_eq_true, decide_eq_true_eq, beq_iff_eq]
+  constructor
+  · unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+    have hzdigits : FloatSpec.Core.Digits.Zdigits 2 (n : Int) = prec := by
+      have htrip := FloatSpec.Core.Digits.Zdigits_unique (beta := 2)
+        (n := (n : Int)) (e := prec) (by decide)
+      simp only [PostCond.noThrow, pure] at htrip
+      apply htrip
+      constructor
+      · have hpow_pos : 0 < (2 : Nat) ^ mw := pow_pos (by norm_num : 0 < (2 : Nat)) mw
+        omega
+      constructor
+      · have hleft : ((2 : Int) ^ mw : Int) ≤ (n : Int) := by exact_mod_cast hnlow
+        have hprec_minus : prec - 1 = (mw : Int) := by omega
+        have hnonneg : 0 ≤ prec - 1 := by omega
+        have hnatAbs : Int.natAbs (prec - 1) = mw := by
+          apply Int.ofNat.inj
+          change (((prec - 1).natAbs : Int) = (mw : Int))
+          rw [Int.natAbs_of_nonneg hnonneg, hprec_minus]
+        simpa [hnatAbs] using hleft
+      · have hright : (n : Int) < ((2 : Int) ^ (mw + 1) : Int) := by exact_mod_cast hnlt
+        have hnonneg : 0 ≤ prec := by omega
+        have hnatAbs : Int.natAbs prec = mw + 1 := by
+          apply Int.ofNat.inj
+          change ((prec.natAbs : Int) = ((mw + 1 : Nat) : Int))
+          rw [Int.natAbs_of_nonneg hnonneg, hprec_eq]
+          simp
+        simpa [hnatAbs] using hright
+    rw [hzdigits]
+    have hfirst : prec + e - prec = e := by omega
+    rw [hfirst]
+    apply le_antisymm
+    · exact le_max_left _ _
+    · apply max_le
+      · exact le_rfl
+      · exact he_lower
+  · exact he_upper
+
+private theorem pow_two_width_succ (ew : Nat) (hew : 0 < ew) :
+    (2 : Int) ^ ew = 2 * (2 : Int) ^ (ew - 1) := by
+  have hsucc : (ew - 1) + 1 = ew := Nat.succ_pred_eq_of_pos hew
+  calc
+    (2 : Int) ^ ew = (2 : Int) ^ ((ew - 1) + 1) := by rw [hsucc]
+    _ = (2 : Int) ^ (ew - 1) * 2 := by
+      exact pow_succ (2 : Int) (ew - 1)
+    _ = 2 * (2 : Int) ^ (ew - 1) := by ring
+
+private theorem lt_pow_two_succ_of_lt {n mw : Nat} (hn : n < 2 ^ mw) :
+    n < 2 ^ (mw + 1) := by
+  have hle : (2 : Nat) ^ mw ≤ (2 : Nat) ^ (mw + 1) := by
+    exact pow_le_pow_right₀ (by norm_num : (1 : Nat) ≤ 2) (by omega)
+  exact lt_of_lt_of_le hn hle
+
 -- Extract components from bits
 def extract_sign (prec emax : Int) (bits : Int) : Bool :=
   let mw := mant_width prec
@@ -610,6 +827,786 @@ def is_nan_bits (prec emax : Int) (bits : Int) : Bool :=
   extract_mantissa prec bits ≠ 0
 
 end IEEE754_Bits
+
+-- Coq: `bits_of_binary_float`.
+-- This is the exact public constructor-case encoder for the proof-carrying
+-- `binary_float` surface; `binary_to_bits` remains the separate compatibility
+-- encoder for the permissive `Binary754` wrapper.
+def bits_of_binary_float
+  {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : binary_float prec emax) : Int :=
+  let mw := mant_width prec
+  let ew := exp_width emax
+  let expMax : Int := (2 : Int) ^ ew - 1
+  match x with
+  | binary_float.B754_zero s =>
+      join_bits mw ew s 0 0
+  | binary_float.B754_infinity s =>
+      join_bits mw ew s 0 expMax
+  | binary_float.B754_nan s payload _ =>
+      join_bits mw ew s (FloatSpec.Core.Zaux.Zpos payload) expMax
+  | binary_float.B754_finite s mantissa exponent _ =>
+      let mantissaInt : Int := FloatSpec.Core.Zaux.Zpos mantissa
+      let fraction : Int := mantissaInt - (2 : Int) ^ mw
+      if 0 ≤ fraction then
+        join_bits mw ew s fraction (exponent - (3 - emax - prec) + 1)
+      else
+        join_bits mw ew s mantissaInt 0
+
+-- Coq: `split_bits_of_binary_float`.
+-- Public constructor-case splitter for the proof-carrying `binary_float`
+-- surface, matching the fields encoded by `bits_of_binary_float`.
+def split_bits_of_binary_float
+  {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+  (x : binary_float prec emax) : Bool × Int × Int :=
+  let mw := mant_width prec
+  let ew := exp_width emax
+  let expMax : Int := (2 : Int) ^ ew - 1
+  match x with
+  | binary_float.B754_zero s =>
+      (s, 0, 0)
+  | binary_float.B754_infinity s =>
+      (s, 0, expMax)
+  | binary_float.B754_nan s payload _ =>
+      (s, FloatSpec.Core.Zaux.Zpos payload, expMax)
+  | binary_float.B754_finite s mantissa exponent _ =>
+      let mantissaInt : Int := FloatSpec.Core.Zaux.Zpos mantissa
+      let fraction : Int := mantissaInt - (2 : Int) ^ mw
+      if 0 ≤ fraction then
+        (s, fraction, exponent - (3 - emax - prec) + 1)
+      else
+        (s, mantissaInt, 0)
+
+-- Coq: `Definition binary_float_of_bits x :=
+--   FF2B prec emax _ (binary_float_of_bits_aux_correct x).`
+--
+-- The upstream decoder lives in a section with `prec = mw + 1` and
+-- `emax = 2^(ew-1)`.  Keep those width witnesses explicit here so the result is
+-- the proof-carrying `binary_float` surface, not the permissive `Binary754`
+-- compatibility wrapper used by `binary_float_of_bits_aux`.
+noncomputable def binary_float_of_bits (mw ew : Nat)
+    (hmw : 0 < mw) (hew : 0 < ew)
+    (hmax : ((mw : Int) + 1) < (2 : Int) ^ (ew - 1))
+    (bits : Int) : binary_float ((mw : Int) + 1) ((2 : Int) ^ (ew - 1)) := by
+  let fields := split_bits mw ew bits
+  let s := fields.1
+  let mField := fields.2.1
+  let eField := fields.2.2
+  let prec : Int := (mw : Int) + 1
+  let emax : Int := (2 : Int) ^ (ew - 1)
+  let expMax : Int := (2 : Int) ^ ew - 1
+  have hmRange : 0 ≤ mField ∧ mField < (2 : Int) ^ mw := by
+    simpa [fields, mField] using split_bits_mantissa_range mw ew bits
+  have heRange : 0 ≤ eField ∧ eField < (2 : Int) ^ ew := by
+    simpa [fields, eField] using split_bits_exponent_range mw ew bits
+  have hPowEw : (2 : Int) ^ ew = 2 * emax := by
+    simpa [emax] using pow_two_width_succ ew hew
+  have hPrecPos : 0 < prec := by
+    simp [prec]
+  have hPrecToNat : prec.toNat = mw + 1 := by
+    simp [prec]
+  have hmFieldToNatLt : mField.toNat < 2 ^ mw := by
+    have hpow_cast : ((2 : Nat) ^ mw : Int) = (2 : Int) ^ mw := by
+      norm_num
+    have hcast : (mField.toNat : Int) < ((2 : Nat) ^ mw : Int) := by
+      simpa [Int.toNat_of_nonneg hmRange.1, hpow_cast] using hmRange.2
+    exact_mod_cast hcast
+  by_cases hE0 : eField = 0
+  · by_cases hM0 : mField = 0
+    · exact binary_float.B754_zero s
+    · have hmPos : 0 < mField := by
+        exact lt_of_le_of_ne hmRange.1 (by intro h; exact hM0 h.symm)
+      have hmNatPos : 0 < mField.toNat := by omega
+      have hmNatLt : mField.toNat < 2 ^ mw := hmFieldToNatLt
+      let payload := positiveOfNat mField.toNat hmNatPos
+      have hmNatLtPrec : mField.toNat < 2 ^ prec.toNat := by
+        have hltSucc : mField.toNat < 2 ^ (mw + 1) :=
+          lt_pow_two_succ_of_lt hmNatLt
+        simpa [hPrecToNat] using hltSucc
+      have hSpec :
+          specFloat_bounded (prec := prec) (emax := emax)
+            (FloatSpec.Core.Zaux.positiveToNat payload)
+            (3 - emax - prec) = true := by
+        have htwo_le_prec : (2 : Int) ≤ prec := by
+          simp [prec]
+          omega
+        have hprec_lt_emax : prec < emax := by
+          simpa [prec, emax] using hmax
+        simpa [payload, positiveOfNat_spec] using
+          specFloat_bounded_of_bits_subnormal
+            (prec := prec) (emax := emax) (mw := mw) (n := mField.toNat)
+            (by simp [prec]) hmNatLt (by omega)
+      simpa [prec, emax] using
+        (binary_float.B754_finite (prec := prec) (emax := emax)
+          s payload (3 - emax - prec) hSpec)
+  · by_cases hAllOnes : eField = expMax
+    · by_cases hM0 : mField = 0
+      · exact binary_float.B754_infinity s
+      · have hmPos : 0 < mField := by
+          exact lt_of_le_of_ne hmRange.1 (by intro h; exact hM0 h.symm)
+        have hmNatPos : 0 < mField.toNat := by omega
+        have hmNatLt : mField.toNat < 2 ^ mw := hmFieldToNatLt
+        let payload := positiveOfNat mField.toNat hmNatPos
+        have hPayload : nan_pl prec payload = true := by
+          have hmw_lt_prec : (mw : Int) < prec := by simp [prec]
+          simpa [payload] using
+            nan_payload_valid_of_lt_pow (prec := prec) (mw := mw)
+              (n := mField.toNat) hmNatPos hmNatLt hmw_lt_prec
+        simpa [prec, emax] using
+          (binary_float.B754_nan (prec := prec) (emax := emax)
+            s payload hPayload)
+    · have hePos : 1 ≤ eField := by omega
+      have heLtExpMax : eField < expMax := by
+        have heLe : eField ≤ expMax := by
+          simp [expMax]
+          omega
+        omega
+      have hmNatLt : mField.toNat < 2 ^ mw := hmFieldToNatLt
+      let mantNat := 2 ^ mw + mField.toNat
+      have hMantPos : 0 < mantNat := by
+        have hpow_pos : 0 < (2 : Nat) ^ mw := pow_pos (by norm_num : 0 < (2 : Nat)) mw
+        simp [mantNat]
+      have hMantLt : mantNat < 2 ^ (mw + 1) := by
+        have hpow_succ : (2 : Nat) ^ (mw + 1) = 2 ^ mw * 2 := by
+          simpa using (pow_succ (2 : Nat) mw)
+        have hmNatLt' : mField.toNat < 2 ^ mw := hmNatLt
+        simp [mantNat, hpow_succ]
+        nlinarith
+      let mantissa := positiveOfNat mantNat hMantPos
+      have hSpec :
+          specFloat_bounded (prec := prec) (emax := emax)
+            (FloatSpec.Core.Zaux.positiveToNat mantissa)
+            (eField + (3 - emax - prec) - 1) = true := by
+        have heUpper : eField ≤ 2 * emax - 2 := by
+          simp [expMax, hPowEw] at heLtExpMax
+          omega
+        have hMantLow : 2 ^ mw ≤ mantNat := by
+          simp [mantNat]
+        simpa [mantissa, positiveOfNat_spec] using
+          specFloat_bounded_of_bits_normal
+            (prec := prec) (emax := emax) (mw := mw) (n := mantNat)
+            (e := eField + (3 - emax - prec) - 1)
+            (by simp [prec]) hMantLow hMantLt (by omega) (by omega)
+      simpa [prec, emax] using
+        (binary_float.B754_finite (prec := prec) (emax := emax)
+          s mantissa (eField + (3 - emax - prec) - 1) hSpec)
+
+-- Coq: `Definition binary32 := binary_float 24 128.`
+def binary32 := binary_float 24 128
+
+-- Coq: `Definition binary64 := binary_float 53 1024.`
+-- This exact Flocq surface is distinct from `Binary64 := Binary754 53 1023`.
+def binary64 := binary_float 53 1024
+
+-- Coq: `is_nan prec emax`.
+def is_nan (prec emax : Int) (x : binary_float prec emax) : Bool :=
+  match x with
+  | binary_float.B754_nan _ _ _ => true
+  | _ => false
+
+-- Coq: `iter_nat xO 22 xH`.
+private def default_nan_pl32_payload : FloatSpec.Core.Zaux.Positive :=
+  FloatSpec.Core.Zaux.iter_nat
+    FloatSpec.Core.Zaux.Positive.xO 22 FloatSpec.Core.Zaux.Positive.xH
+
+private theorem default_nan_pl32_payload_valid :
+    nan_pl 24 default_nan_pl32_payload = true := by
+  norm_num [nan_pl, default_nan_pl32_payload, FloatSpec.Core.Zaux.iter_nat,
+    FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Digits.digits2_Pnat,
+    FloatSpec.Core.Zaux.Zlt_bool]
+
+-- Coq: `default_nan_pl32`.
+def default_nan_pl32 : { nan : binary32 // is_nan 24 128 nan = true } :=
+  ⟨binary_float.B754_nan false default_nan_pl32_payload
+      default_nan_pl32_payload_valid,
+    rfl⟩
+
+-- Coq: `iter_nat xO 51 xH`.
+private def default_nan_pl64_payload : FloatSpec.Core.Zaux.Positive :=
+  FloatSpec.Core.Zaux.iter_nat
+    FloatSpec.Core.Zaux.Positive.xO 51 FloatSpec.Core.Zaux.Positive.xH
+
+private theorem default_nan_pl64_payload_valid :
+    nan_pl 53 default_nan_pl64_payload = true := by
+  norm_num [nan_pl, default_nan_pl64_payload, FloatSpec.Core.Zaux.iter_nat,
+    FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Digits.digits2_Pnat,
+    FloatSpec.Core.Zaux.Zlt_bool]
+
+-- Coq: `default_nan_pl64`.
+def default_nan_pl64 : { nan : binary64 // is_nan 53 1024 nan = true } :=
+  ⟨binary_float.B754_nan false default_nan_pl64_payload
+      default_nan_pl64_payload_valid,
+    rfl⟩
+
+-- Coq: `unop_nan_pl64`.
+def unop_nan_pl64 (f : binary64) :
+    { nan : binary64 // is_nan 53 1024 nan = true } :=
+  match f with
+  | binary_float.B754_nan s payload hPayload =>
+      ⟨binary_float.B754_nan s payload hPayload, rfl⟩
+  | _ => default_nan_pl64
+
+-- Coq: `unop_nan_pl32`.
+def unop_nan_pl32 (f : binary32) :
+    { nan : binary32 // is_nan 24 128 nan = true } :=
+  match f with
+  | binary_float.B754_nan s payload hPayload =>
+      ⟨binary_float.B754_nan s payload hPayload, rfl⟩
+  | _ => default_nan_pl32
+
+-- Coq: `binop_nan_pl64`.
+def binop_nan_pl64 (f1 f2 : binary64) :
+    { nan : binary64 // is_nan 53 1024 nan = true } :=
+  match f1, f2 with
+  | binary_float.B754_nan s1 payload1 hPayload1, _ =>
+      ⟨binary_float.B754_nan s1 payload1 hPayload1, rfl⟩
+  | _, binary_float.B754_nan s2 payload2 hPayload2 =>
+      ⟨binary_float.B754_nan s2 payload2 hPayload2, rfl⟩
+  | _, _ => default_nan_pl64
+
+-- Coq: `ternop_nan_pl64`.
+def ternop_nan_pl64 (f1 f2 f3 : binary64) :
+    { nan : binary64 // is_nan 53 1024 nan = true } :=
+  match f1, f2, f3 with
+  | binary_float.B754_nan s1 payload1 hPayload1, _, _ =>
+      ⟨binary_float.B754_nan s1 payload1 hPayload1, rfl⟩
+  | _, binary_float.B754_nan s2 payload2 hPayload2, _ =>
+      ⟨binary_float.B754_nan s2 payload2 hPayload2, rfl⟩
+  | _, _, binary_float.B754_nan s3 payload3 hPayload3 =>
+      ⟨binary_float.B754_nan s3 payload3 hPayload3, rfl⟩
+  | _, _, _ => default_nan_pl64
+
+-- Coq: `binop_nan_pl32`.
+def binop_nan_pl32 (f1 f2 : binary32) :
+    { nan : binary32 // is_nan 24 128 nan = true } :=
+  match f1, f2 with
+  | binary_float.B754_nan s1 payload1 hPayload1, _ =>
+      ⟨binary_float.B754_nan s1 payload1 hPayload1, rfl⟩
+  | _, binary_float.B754_nan s2 payload2 hPayload2 =>
+      ⟨binary_float.B754_nan s2 payload2 hPayload2, rfl⟩
+  | _, _ => default_nan_pl32
+
+-- Coq: `ternop_nan_pl32`.
+def ternop_nan_pl32 (f1 f2 f3 : binary32) :
+    { nan : binary32 // is_nan 24 128 nan = true } :=
+  match f1, f2, f3 with
+  | binary_float.B754_nan s1 payload1 hPayload1, _, _ =>
+      ⟨binary_float.B754_nan s1 payload1 hPayload1, rfl⟩
+  | _, binary_float.B754_nan s2 payload2 hPayload2, _ =>
+      ⟨binary_float.B754_nan s2 payload2 hPayload2, rfl⟩
+  | _, _, binary_float.B754_nan s3 payload3 hPayload3 =>
+      ⟨binary_float.B754_nan s3 payload3 hPayload3, rfl⟩
+  | _, _, _ => default_nan_pl32
+
+-- Coq: `Definition b32_erase : binary32 -> binary32 := erase 24 128.`
+def b32_erase : binary32 → binary32
+  | binary_float.B754_zero s => binary_float.B754_zero s
+  | binary_float.B754_infinity s => binary_float.B754_infinity s
+  | binary_float.B754_nan s payload hPayload =>
+      binary_float.B754_nan s payload hPayload
+  | binary_float.B754_finite s mantissa exponent hBounded =>
+      binary_float.B754_finite s mantissa exponent hBounded
+
+-- Coq: `Definition b64_erase : binary64 -> binary64 := erase 53 1024.`
+def b64_erase : binary64 → binary64
+  | binary_float.B754_zero s => binary_float.B754_zero s
+  | binary_float.B754_infinity s => binary_float.B754_infinity s
+  | binary_float.B754_nan s payload hPayload =>
+      binary_float.B754_nan s payload hPayload
+  | binary_float.B754_finite s mantissa exponent hBounded =>
+      binary_float.B754_finite s mantissa exponent hBounded
+
+-- Coq: `Definition b64_opp : binary64 -> binary64 := Bopp 53 1024 unop_nan_pl64.`
+def b64_opp (x : binary64) : binary64 :=
+  match x with
+  | binary_float.B754_nan _ _ _ => (unop_nan_pl64 x).val
+  | binary_float.B754_zero s => binary_float.B754_zero (bnot s)
+  | binary_float.B754_infinity s => binary_float.B754_infinity (bnot s)
+  | binary_float.B754_finite s mantissa exponent hBounded =>
+      binary_float.B754_finite (bnot s) mantissa exponent hBounded
+
+-- Coq: `Definition b64_abs : binary64 -> binary64 := Babs 53 1024 unop_nan_pl64.`
+def b64_abs (x : binary64) : binary64 :=
+  match x with
+  | binary_float.B754_nan _ _ _ => (unop_nan_pl64 x).val
+  | binary_float.B754_zero _ => binary_float.B754_zero false
+  | binary_float.B754_infinity _ => binary_float.B754_infinity false
+  | binary_float.B754_finite _ mantissa exponent hBounded =>
+      binary_float.B754_finite false mantissa exponent hBounded
+
+-- Coq: `Definition b32_opp : binary32 -> binary32 := Bopp 24 128 unop_nan_pl32.`
+def b32_opp (x : binary32) : binary32 :=
+  match x with
+  | binary_float.B754_nan _ _ _ => (unop_nan_pl32 x).val
+  | binary_float.B754_zero s => binary_float.B754_zero (bnot s)
+  | binary_float.B754_infinity s => binary_float.B754_infinity (bnot s)
+  | binary_float.B754_finite s mantissa exponent hBounded =>
+      binary_float.B754_finite (bnot s) mantissa exponent hBounded
+
+-- Coq: `Definition b32_abs : binary32 -> binary32 := Babs 24 128 unop_nan_pl32.`
+def b32_abs (x : binary32) : binary32 :=
+  match x with
+  | binary_float.B754_nan _ _ _ => (unop_nan_pl32 x).val
+  | binary_float.B754_zero _ => binary_float.B754_zero false
+  | binary_float.B754_infinity _ => binary_float.B754_infinity false
+  | binary_float.B754_finite _ mantissa exponent hBounded =>
+      binary_float.B754_finite false mantissa exponent hBounded
+
+private def b32_to_standard (x : binary32) : StandardFloat :=
+  match x with
+  | binary_float.B754_zero s => StandardFloat.S754_zero s
+  | binary_float.B754_infinity s => StandardFloat.S754_infinity s
+  | binary_float.B754_nan _ _ _ => StandardFloat.S754_nan
+  | binary_float.B754_finite s mantissa exponent _ =>
+      StandardFloat.S754_finite s
+        (FloatSpec.Core.Zaux.positiveToNat mantissa) exponent
+
+private noncomputable def b32_to_real (x : binary32) : ℝ :=
+  match x with
+  | binary_float.B754_finite s mantissa exponent _ =>
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk
+        (if s then
+          -((FloatSpec.Core.Zaux.positiveToNat mantissa : Nat) : Int)
+        else
+          ((FloatSpec.Core.Zaux.positiveToNat mantissa : Nat) : Int))
+        exponent : FloatSpec.Core.Defs.FlocqFloat 2)
+  | _ => 0
+
+private noncomputable def b32_compare_standard
+    (x y : StandardFloat) (rx ry : ℝ) : Option Int :=
+  match x, y with
+  | StandardFloat.S754_nan, _ => none
+  | _, StandardFloat.S754_nan => none
+  | StandardFloat.S754_infinity true, StandardFloat.S754_infinity true =>
+      some 0
+  | StandardFloat.S754_infinity true, _ => some (-1)
+  | _, StandardFloat.S754_infinity true => some 1
+  | StandardFloat.S754_infinity false, StandardFloat.S754_infinity false =>
+      some 0
+  | StandardFloat.S754_infinity false, _ => some 1
+  | _, StandardFloat.S754_infinity false => some (-1)
+  | _, _ => some (FloatSpec.Core.Raux.Rcompare rx ry)
+
+-- Coq: `Definition b32_compare : binary32 -> binary32 -> option comparison := Bcompare 24 128.`
+noncomputable def b32_compare (x y : binary32) : Option Int :=
+  b32_compare_standard (b32_to_standard x) (b32_to_standard y)
+    (b32_to_real x) (b32_to_real y)
+
+private def b64_to_standard (x : binary64) : StandardFloat :=
+  match x with
+  | binary_float.B754_zero s => StandardFloat.S754_zero s
+  | binary_float.B754_infinity s => StandardFloat.S754_infinity s
+  | binary_float.B754_nan _ _ _ => StandardFloat.S754_nan
+  | binary_float.B754_finite s mantissa exponent _ =>
+      StandardFloat.S754_finite s
+        (FloatSpec.Core.Zaux.positiveToNat mantissa) exponent
+
+private noncomputable def b64_to_real (x : binary64) : ℝ :=
+  match x with
+  | binary_float.B754_finite s mantissa exponent _ =>
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk
+        (if s then
+          -((FloatSpec.Core.Zaux.positiveToNat mantissa : Nat) : Int)
+        else
+          ((FloatSpec.Core.Zaux.positiveToNat mantissa : Nat) : Int))
+        exponent : FloatSpec.Core.Defs.FlocqFloat 2)
+  | _ => 0
+
+-- Coq: `Definition b64_compare : binary64 -> binary64 -> option comparison := Bcompare 53 1024.`
+noncomputable def b64_compare (x y : binary64) : Option Int :=
+  b32_compare_standard (b64_to_standard x) (b64_to_standard y)
+    (b64_to_real x) (b64_to_real y)
+
+-- Coq: `Definition bits_of_b32 : binary32 -> Z := bits_of_binary_float 23 8.`
+def bits_of_b32 (x : binary32) : Int :=
+  letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  bits_of_binary_float (prec := 24) (emax := 128) x
+
+-- Coq: `Definition b32_of_bits : Z -> binary32 := binary_float_of_bits 23 8 ...`.
+noncomputable def b32_of_bits (bits : Int) : binary32 := by
+  let fields := split_bits 23 8 bits
+  let s := fields.1
+  let mField := fields.2.1
+  let eField := fields.2.2
+  have hmRange : 0 ≤ mField ∧ mField < (2 : Int) ^ 23 := by
+    simpa [fields, mField] using split_bits_mantissa_range 23 8 bits
+  have heRange : 0 ≤ eField ∧ eField < (2 : Int) ^ 8 := by
+    simpa [fields, eField] using split_bits_exponent_range 23 8 bits
+  by_cases hE0 : eField = 0
+  · by_cases hM0 : mField = 0
+    · exact binary_float.B754_zero s
+    · have hmPos : 0 < mField := by
+        exact lt_of_le_of_ne hmRange.1 (by intro h; exact hM0 h.symm)
+      have hmNatPos : 0 < mField.toNat := by omega
+      have hmNatLt : mField.toNat < 2 ^ 23 := by omega
+      let payload := positiveOfNat mField.toNat hmNatPos
+      have hSpec :
+          specFloat_bounded (prec := 24) (emax := 128)
+            (FloatSpec.Core.Zaux.positiveToNat payload) (-149) = true := by
+        simpa [payload, positiveOfNat_spec] using
+          specFloat_bounded_of_bits_subnormal
+            (prec := 24) (emax := 128) (mw := 23) (n := mField.toNat)
+            (by norm_num) hmNatLt (by norm_num)
+      exact binary_float.B754_finite s payload (-149) hSpec
+  · by_cases hAllOnes : eField = 255
+    · by_cases hM0 : mField = 0
+      · exact binary_float.B754_infinity s
+      · have hmPos : 0 < mField := by
+          exact lt_of_le_of_ne hmRange.1 (by intro h; exact hM0 h.symm)
+        have hmNatPos : 0 < mField.toNat := by omega
+        have hmNatLt : mField.toNat < 2 ^ 23 := by omega
+        let payload := positiveOfNat mField.toNat hmNatPos
+        have hPayload : nan_pl 24 payload = true := by
+          simpa [payload] using
+            nan_payload_valid_of_lt_pow (prec := 24) (mw := 23)
+              (n := mField.toNat) hmNatPos hmNatLt (by norm_num)
+        exact binary_float.B754_nan s payload hPayload
+    · have hePos : 1 ≤ eField := by omega
+      have heLt : eField < 255 := by
+        have heLt256 : eField < 256 := by norm_num at heRange ⊢; exact heRange.2
+        omega
+      have hmNatLt : mField.toNat < 2 ^ 23 := by omega
+      let mantNat := 2 ^ 23 + mField.toNat
+      have hMantPos : 0 < mantNat := by
+        norm_num [mantNat]
+      have hMantLt : mantNat < 2 ^ 24 := by
+        have hpow : (2 : Nat) ^ 24 = 2 ^ 23 + 2 ^ 23 := by norm_num
+        omega
+      let mantissa := positiveOfNat mantNat hMantPos
+      have hSpec :
+          specFloat_bounded (prec := 24) (emax := 128)
+            (FloatSpec.Core.Zaux.positiveToNat mantissa) (eField - 150) = true := by
+        have hMantLow : 2 ^ 23 ≤ mantNat := by
+          simp [mantNat]
+        simpa [mantissa, positiveOfNat_spec] using
+          specFloat_bounded_of_bits_normal
+            (prec := 24) (emax := 128) (mw := 23) (n := mantNat)
+            (e := eField - 150) (by norm_num) hMantLow hMantLt (by omega) (by omega)
+      exact binary_float.B754_finite s mantissa (eField - 150) hSpec
+
+private def b32_sign_bit : Int :=
+  (2 : Int) ^ 31
+
+private def b32_negative_min_subnormal_bits : Int :=
+  join_bits 23 8 true 1 0
+
+private def b32_positive_min_subnormal_bits : Int :=
+  join_bits 23 8 false 1 0
+
+private def b32_positive_infinity_bits : Int :=
+  join_bits 23 8 false 0 255
+
+private def b32_negative_infinity_bits : Int :=
+  join_bits 23 8 true 0 255
+
+-- Coq: `Definition b32_pred : binary32 -> binary32 := Bpred _ _ Hprec Hprec_emax.`
+--
+-- This is the fixed-width proof-carrying surface.  It avoids the permissive
+-- `Binary754` predecessor and rebuilds generated values through `b32_of_bits`,
+-- so finite outputs receive fresh `bounded` proofs while NaN payloads are kept.
+noncomputable def b32_pred (x : binary32) : binary32 :=
+  match x with
+  | binary_float.B754_nan s payload hPayload =>
+      binary_float.B754_nan s payload hPayload
+  | _ =>
+      let bits := bits_of_b32 x
+      if bits = 0 then
+        b32_of_bits b32_negative_min_subnormal_bits
+      else if bits < b32_sign_bit then
+        b32_of_bits (bits - 1)
+      else if bits = b32_negative_infinity_bits then
+        x
+      else
+        b32_of_bits (bits + 1)
+
+-- Coq: `Definition b32_succ : binary32 -> binary32 := Bsucc _ _ Hprec Hprec_emax.`
+--
+-- Proof-carrying binary32 successor.  NaNs keep their original payload proof;
+-- every generated non-NaN value is reconstructed through `b32_of_bits`.
+noncomputable def b32_succ (x : binary32) : binary32 :=
+  match x with
+  | binary_float.B754_nan s payload hPayload =>
+      binary_float.B754_nan s payload hPayload
+  | _ =>
+      let bits := bits_of_b32 x
+      if bits = b32_sign_bit then
+        b32_of_bits b32_positive_min_subnormal_bits
+      else if bits < b32_sign_bit then
+        if bits = b32_positive_infinity_bits then
+          x
+        else
+          b32_of_bits (bits + 1)
+      else
+        b32_of_bits (bits - 1)
+
+-- Coq: `Definition b32_sqrt : mode -> binary32 -> binary32 :=
+-- Bsqrt _ _ Hprec Hprec_emax unop_nan_pl32.`
+noncomputable def b32_sqrt (mode : RoundingMode) (x : binary32) : binary32 := by
+  letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
+    refine ⟨?_⟩
+    intro a b hab
+    simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+    omega
+  exact Binary.Bsqrt (prec := 24) (emax := 128) unop_nan_pl32 mode x
+
+-- Coq: `Definition b32_plus : mode -> binary32 -> binary32 -> binary32 :=
+-- Bplus _ _ Hprec Hprec_emax binop_nan_pl32.`
+noncomputable def b32_plus (mode : RoundingMode) (x y : binary32) : binary32 := by
+  letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
+    refine ⟨?_⟩
+    ·
+      intro a b hab
+      simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+      omega
+  exact Binary.Bplus (prec := 24) (emax := 128) binop_nan_pl32 mode x y
+
+-- Coq: `Definition b32_minus : mode -> binary32 -> binary32 -> binary32 :=
+-- Bminus _ _ Hprec Hprec_emax binop_nan_pl32.`
+noncomputable def b32_minus (mode : RoundingMode) (x y : binary32) : binary32 := by
+  letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
+    refine ⟨?_⟩
+    ·
+      intro a b hab
+      simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+      omega
+  exact Binary.Bminus (prec := 24) (emax := 128) binop_nan_pl32 mode x y
+
+-- Coq: `Definition b32_mult : mode -> binary32 -> binary32 -> binary32 :=
+-- Bmult _ _ Hprec Hprec_emax binop_nan_pl32.`
+noncomputable def b32_mult (mode : RoundingMode) (x y : binary32) : binary32 := by
+  letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
+    refine ⟨?_⟩
+    ·
+      intro a b hab
+      simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+      omega
+  exact Binary.Bmult (prec := 24) (emax := 128) binop_nan_pl32 mode x y
+
+-- Coq: `Definition b32_fma : mode -> binary32 -> binary32 -> binary32 -> binary32 :=
+-- Bfma _ _ Hprec Hprec_emax ternop_nan_pl32.`
+noncomputable def b32_fma (mode : RoundingMode) (x y z : binary32) : binary32 := by
+  letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
+    refine ⟨?_⟩
+    intro a b hab
+    simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+    omega
+  exact Binary.Bfma (prec := 24) (emax := 128) ternop_nan_pl32 mode x y z
+
+-- Coq: `Definition bits_of_b64 : binary64 -> Z := bits_of_binary_float 52 11.`
+def bits_of_b64 (x : binary64) : Int :=
+  letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  bits_of_binary_float (prec := 53) (emax := 1024) x
+
+-- Coq: `Definition b64_of_bits : Z -> binary64 := binary_float_of_bits 52 11 ...`.
+noncomputable def b64_of_bits (bits : Int) : binary64 := by
+  let fields := split_bits 52 11 bits
+  let s := fields.1
+  let mField := fields.2.1
+  let eField := fields.2.2
+  have hmRange : 0 ≤ mField ∧ mField < (2 : Int) ^ 52 := by
+    simpa [fields, mField] using split_bits_mantissa_range 52 11 bits
+  have heRange : 0 ≤ eField ∧ eField < (2 : Int) ^ 11 := by
+    simpa [fields, eField] using split_bits_exponent_range 52 11 bits
+  by_cases hE0 : eField = 0
+  · by_cases hM0 : mField = 0
+    · exact binary_float.B754_zero s
+    · have hmPos : 0 < mField := by
+        exact lt_of_le_of_ne hmRange.1 (by intro h; exact hM0 h.symm)
+      have hmNatPos : 0 < mField.toNat := by omega
+      have hmNatLt : mField.toNat < 2 ^ 52 := by omega
+      let payload := positiveOfNat mField.toNat hmNatPos
+      have hSpec :
+          specFloat_bounded (prec := 53) (emax := 1024)
+            (FloatSpec.Core.Zaux.positiveToNat payload) (-1074) = true := by
+        simpa [payload, positiveOfNat_spec] using
+          specFloat_bounded_of_bits_subnormal
+            (prec := 53) (emax := 1024) (mw := 52) (n := mField.toNat)
+            (by norm_num) hmNatLt (by norm_num)
+      exact binary_float.B754_finite s payload (-1074) hSpec
+  · by_cases hAllOnes : eField = 2047
+    · by_cases hM0 : mField = 0
+      · exact binary_float.B754_infinity s
+      · have hmPos : 0 < mField := by
+          exact lt_of_le_of_ne hmRange.1 (by intro h; exact hM0 h.symm)
+        have hmNatPos : 0 < mField.toNat := by omega
+        have hmNatLt : mField.toNat < 2 ^ 52 := by omega
+        let payload := positiveOfNat mField.toNat hmNatPos
+        have hPayload : nan_pl 53 payload = true := by
+          simpa [payload] using
+            nan_payload_valid_of_lt_pow (prec := 53) (mw := 52)
+              (n := mField.toNat) hmNatPos hmNatLt (by norm_num)
+        exact binary_float.B754_nan s payload hPayload
+    · have hePos : 1 ≤ eField := by omega
+      have heLt : eField < 2047 := by
+        have heLt2048 : eField < 2048 := by norm_num at heRange ⊢; exact heRange.2
+        omega
+      have hmNatLt : mField.toNat < 2 ^ 52 := by omega
+      let mantNat := 2 ^ 52 + mField.toNat
+      have hMantPos : 0 < mantNat := by
+        norm_num [mantNat]
+      have hMantLt : mantNat < 2 ^ 53 := by
+        have hpow : (2 : Nat) ^ 53 = 2 ^ 52 + 2 ^ 52 := by norm_num
+        omega
+      let mantissa := positiveOfNat mantNat hMantPos
+      have hSpec :
+          specFloat_bounded (prec := 53) (emax := 1024)
+            (FloatSpec.Core.Zaux.positiveToNat mantissa) (eField - 1075) = true := by
+        have hMantLow : 2 ^ 52 ≤ mantNat := by
+          simp [mantNat]
+        simpa [mantissa, positiveOfNat_spec] using
+          specFloat_bounded_of_bits_normal
+            (prec := 53) (emax := 1024) (mw := 52) (n := mantNat)
+            (e := eField - 1075) (by norm_num) hMantLow hMantLt (by omega) (by omega)
+      exact binary_float.B754_finite s mantissa (eField - 1075) hSpec
+
+private def b64_sign_bit : Int :=
+  (2 : Int) ^ 63
+
+private def b64_negative_min_subnormal_bits : Int :=
+  join_bits 52 11 true 1 0
+
+private def b64_positive_min_subnormal_bits : Int :=
+  join_bits 52 11 false 1 0
+
+private def b64_positive_infinity_bits : Int :=
+  join_bits 52 11 false 0 2047
+
+private def b64_negative_infinity_bits : Int :=
+  join_bits 52 11 true 0 2047
+
+-- Coq: `Definition b64_pred : binary64 -> binary64 := Bpred _ _ Hprec Hprec_emax.`
+--
+-- Proof-carrying binary64 predecessor.  NaNs keep their original payload proof;
+-- every generated non-NaN value is reconstructed through `b64_of_bits`.
+noncomputable def b64_pred (x : binary64) : binary64 :=
+  match x with
+  | binary_float.B754_nan s payload hPayload =>
+      binary_float.B754_nan s payload hPayload
+  | _ =>
+      let bits := bits_of_b64 x
+      if bits = 0 then
+        b64_of_bits b64_negative_min_subnormal_bits
+      else if bits < b64_sign_bit then
+        b64_of_bits (bits - 1)
+      else if bits = b64_negative_infinity_bits then
+        x
+      else
+        b64_of_bits (bits + 1)
+
+-- Coq: `Definition b64_succ : binary64 -> binary64 := Bsucc _ _ Hprec Hprec_emax.`
+--
+-- Proof-carrying binary64 successor.  NaNs keep their original payload proof;
+-- every generated non-NaN value is reconstructed through `b64_of_bits`.
+noncomputable def b64_succ (x : binary64) : binary64 :=
+  match x with
+  | binary_float.B754_nan s payload hPayload =>
+      binary_float.B754_nan s payload hPayload
+  | _ =>
+      let bits := bits_of_b64 x
+      if bits = b64_sign_bit then
+        b64_of_bits b64_positive_min_subnormal_bits
+      else if bits < b64_sign_bit then
+        if bits = b64_positive_infinity_bits then
+          x
+        else
+          b64_of_bits (bits + 1)
+      else
+        b64_of_bits (bits - 1)
+
+-- Coq: `Definition b64_sqrt : mode -> binary64 -> binary64 :=
+-- Bsqrt _ _ Hprec Hprec_emax unop_nan_pl64.`
+noncomputable def b64_sqrt (mode : RoundingMode) (x : binary64) : binary64 := by
+  letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
+    refine ⟨?_⟩
+    intro a b hab
+    simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+    grind
+  exact Binary.Bsqrt (prec := 53) (emax := 1024) unop_nan_pl64 mode x
+
+-- Coq: `Definition b64_plus : mode -> binary64 -> binary64 -> binary64 :=
+-- Bplus _ _ Hprec Hprec_emax binop_nan_pl64.`
+noncomputable def b64_plus (mode : RoundingMode) (x y : binary64) : binary64 := by
+  letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
+    refine ⟨?_⟩
+    ·
+      intro a b hab
+      simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+      grind
+  exact Binary.Bplus (prec := 53) (emax := 1024) binop_nan_pl64 mode x y
+
+-- Coq: `Definition b64_minus : mode -> binary64 -> binary64 -> binary64 :=
+-- Bminus _ _ Hprec Hprec_emax binop_nan_pl64.`
+noncomputable def b64_minus (mode : RoundingMode) (x y : binary64) : binary64 := by
+  letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
+    refine ⟨?_⟩
+    ·
+      intro a b hab
+      simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+      grind
+  exact Binary.Bminus (prec := 53) (emax := 1024) binop_nan_pl64 mode x y
+
+-- Coq: `Definition b64_mult : mode -> binary64 -> binary64 -> binary64 :=
+-- Bmult _ _ Hprec Hprec_emax binop_nan_pl64.`
+noncomputable def b64_mult (mode : RoundingMode) (x y : binary64) : binary64 := by
+  letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
+    refine ⟨?_⟩
+    ·
+      intro a b hab
+      simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+      grind
+  exact Binary.Bmult (prec := 53) (emax := 1024) binop_nan_pl64 mode x y
+
+-- Coq: `Definition b64_fma : mode -> binary64 -> binary64 -> binary64 -> binary64 :=
+-- Bfma _ _ Hprec Hprec_emax ternop_nan_pl64.`
+noncomputable def b64_fma (mode : RoundingMode) (x y z : binary64) : binary64 := by
+  letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
+    refine ⟨?_⟩
+    intro a b hab
+    simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+    grind
+  exact Binary.Bfma (prec := 53) (emax := 1024) ternop_nan_pl64 mode x y z
 
 -- Split bits of binary float correctness
 theorem split_bits_of_binary_float_correct

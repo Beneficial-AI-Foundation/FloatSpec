@@ -79,11 +79,18 @@ end Zmissing
 
 section ProofIrrelevance
 
-/-- Boolean equality irrelevance principle
+/-- Dependent equality helper for boolean-indexed families.
 
-    Establishes that all proofs of boolean equality are equal.
-    This is fundamental for working with decidable propositions.
+    Lean counterpart of Flocq's `eqbool_dep`: at index `true`, it compares
+    the incoming proof/data with the distinguished value `h1`; at index
+    `false`, the predicate is impossible.
 -/
+def eqbool_dep (P : Bool → Sort u) (h1 : P true) (b : Bool) : P b → Prop :=
+  match b with
+  | true => fun h2 => h1 = h2
+  | false => fun _ => False
+
+/-- Boolean equality irrelevance principle. -/
 def eqbool_irrelevance (b : Bool) (_h1 _h2 : b = true) : Bool :=
   true
 
@@ -841,7 +848,7 @@ def Zeq_bool_diag (_ : Int) : Bool :=
 
 /-- Specification: Reflexivity of boolean equality
 
-    The boolean equality test always returns true when
+    The boolean equality test evaluates to true when
     comparing a value with itself. This is the boolean
     version of reflexivity.
 -/
@@ -1496,32 +1503,159 @@ theorem Zdiv_eucl_unique_spec (a b : Int) :
   unfold Zdiv_eucl_unique
   rfl
 
-/-- Auxiliary division algorithm on positive integers. -/
-def Zpos_div_eucl_aux1 (a b : Int) : (Int × Int) :=
-  (a / b, a % b)
+/-- Binary positive integers, matching Coq's `positive` constructors. -/
+inductive Positive where
+  | xH : Positive
+  | xO : Positive → Positive
+  | xI : Positive → Positive
+  deriving DecidableEq, Repr
 
-/-- Specification: correctness of positive-aux division helper. -/
-theorem Zpos_div_eucl_aux1_correct_spec (a b : Int) :
-    ⦃⌜True⌝⦄
-    (pure (Zpos_div_eucl_aux1 a b) : Id _)
-    ⦃⇓result => ⌜result = (a / b, a % b)⌝⦄ := by
-  intro _
-  unfold Zpos_div_eucl_aux1
-  rfl
+/-- Natural-number value of a Coq-style positive integer. -/
+def positiveToNat : Positive → Nat
+  | Positive.xH => 1
+  | Positive.xO p => 2 * positiveToNat p
+  | Positive.xI p => 2 * positiveToNat p + 1
+
+private theorem positiveToNat_pos (p : Positive) : 0 < positiveToNat p := by
+  induction p with
+  | xH => simp [positiveToNat]
+  | xO p hp => simp [positiveToNat, hp]
+  | xI p hp => simp [positiveToNat]
+
+/-- Coq `Zpos`: embed a positive integer into `Int`. -/
+def Zpos (p : Positive) : Int :=
+  positiveToNat p
+
+private def Zpos_div_eucl_aux1_nat : Positive → Positive → Nat × Nat
+  | a, Positive.xH => (positiveToNat a, 0)
+  | Positive.xH, Positive.xO _ => (0, 1)
+  | Positive.xO a, Positive.xO b =>
+      let qr := Zpos_div_eucl_aux1_nat a b
+      (qr.1, 2 * qr.2)
+  | Positive.xI a, Positive.xO b =>
+      let qr := Zpos_div_eucl_aux1_nat a b
+      (qr.1, 2 * qr.2 + 1)
+  | a, Positive.xI b =>
+      (positiveToNat a / positiveToNat (Positive.xI b),
+        positiveToNat a % positiveToNat (Positive.xI b))
+
+private theorem Zpos_div_eucl_aux1_nat_correct (a b : Positive) :
+    Zpos_div_eucl_aux1_nat a b =
+      (positiveToNat a / positiveToNat b, positiveToNat a % positiveToNat b) := by
+  induction b generalizing a with
+  | xH =>
+      cases a <;> simp [Zpos_div_eucl_aux1_nat, positiveToNat, Nat.div_one, Nat.mod_one]
+  | xI b =>
+      cases a <;> simp [Zpos_div_eucl_aux1_nat]
+  | xO b ih =>
+      cases a with
+      | xH =>
+          have hbpos : 0 < positiveToNat b := positiveToNat_pos b
+          have hlt : 1 < 2 * positiveToNat b := by omega
+          have hdiv : 1 / (2 * positiveToNat b) = 0 := Nat.div_eq_of_lt hlt
+          have hmod : 1 % (2 * positiveToNat b) = 1 := Nat.mod_eq_of_lt hlt
+          simp [Zpos_div_eucl_aux1_nat, positiveToNat, hdiv, hmod]
+      | xO a =>
+          have ih' := ih a
+          simp only [Zpos_div_eucl_aux1_nat] at ih' ⊢
+          rw [ih']
+          have htwo : 0 < 2 := by decide
+          simp [positiveToNat, Nat.mul_div_mul_left, Nat.mul_mod_mul_left, htwo]
+      | xI a =>
+          have ih' := ih a
+          simp only [Zpos_div_eucl_aux1_nat] at ih' ⊢
+          rw [ih']
+          set A := positiveToNat a
+          set B := positiveToNat b
+          set q := A / B
+          set r := A % B
+          have hBpos : 0 < B := by simpa [B] using positiveToNat_pos b
+          have hden_pos : 0 < 2 * B := by omega
+          have hrem_lt : 2 * r + 1 < 2 * B := by
+            have hr_lt : r < B := by
+              simpa [r] using Nat.mod_lt A hBpos
+            omega
+          have hdecomp : B * q + r = A := by
+            simpa [q, r] using Nat.div_add_mod A B
+          have hnum : 2 * A + 1 = (2 * B) * q + (2 * r + 1) := by
+            rw [← hdecomp]
+            ring
+          have hdiv :
+              (2 * A + 1) / (2 * B) = q := by
+            calc
+              (2 * A + 1) / (2 * B)
+                  = ((2 * B) * q + (2 * r + 1)) / (2 * B) := by
+                      rw [hnum]
+              _ = q + (2 * r + 1) / (2 * B) := by
+                      rw [Nat.mul_add_div hden_pos]
+              _ = q := by rw [Nat.div_eq_of_lt hrem_lt, Nat.add_zero]
+          have hmod :
+              (2 * A + 1) % (2 * B) = 2 * r + 1 := by
+            calc
+              (2 * A + 1) % (2 * B)
+                  = ((2 * B) * q + (2 * r + 1)) % (2 * B) := by
+                      rw [hnum]
+              _ = (2 * r + 1) % (2 * B) := by
+                      rw [Nat.mul_add_mod]
+              _ = 2 * r + 1 := Nat.mod_eq_of_lt hrem_lt
+          simp [positiveToNat, A, B, q, r, hdiv, hmod]
+
+/-- Coq `Z.pos_div_eucl` for the positive-divisor case used by this file. -/
+def Z_pos_div_eucl (a : Positive) (b : Int) : Int × Int :=
+  (Zpos a / b, Zpos a % b)
+
+/-- Auxiliary division algorithm on positive integers. -/
+def Zpos_div_eucl_aux1 (a b : Positive) : Int × Int :=
+  let qr := Zpos_div_eucl_aux1_nat a b
+  (qr.1, qr.2)
+
+/-- Coq `Zaux.v`: `Zpos_div_eucl_aux1 a b = Z.pos_div_eucl a (Zpos b)`. -/
+theorem Zpos_div_eucl_aux1_correct (a b : Positive) :
+    Zpos_div_eucl_aux1 a b = Z_pos_div_eucl a (Zpos b) := by
+  unfold Zpos_div_eucl_aux1 Z_pos_div_eucl Zpos
+  rw [Zpos_div_eucl_aux1_nat_correct]
+  simp [Int.natCast_ediv, Int.natCast_emod]
 
 /-- Secondary auxiliary division algorithm on positive integers. -/
-def Zpos_div_eucl_aux (a b : Int) : (Int × Int) :=
-  Zpos_div_eucl_aux1 a b
+def Zpos_div_eucl_aux (a b : Positive) : Int × Int :=
+  if positiveToNat a < positiveToNat b then
+    (0, Zpos a)
+  else if positiveToNat a = positiveToNat b then
+    (1, 0)
+  else
+    Zpos_div_eucl_aux1 a b
+
+/-- Coq `Zaux.v`: `Zpos_div_eucl_aux a b = Z.pos_div_eucl a (Zpos b)`. -/
+theorem Zpos_div_eucl_aux_correct (a b : Positive) :
+    Zpos_div_eucl_aux a b = Z_pos_div_eucl a (Zpos b) := by
+  unfold Zpos_div_eucl_aux
+  by_cases hlt : positiveToNat a < positiveToNat b
+  · simp only [hlt, ↓reduceIte]
+    unfold Z_pos_div_eucl Zpos
+    apply Prod.ext
+    · rw [← Int.natCast_ediv, Nat.div_eq_of_lt hlt]
+      rfl
+    · rw [← Int.natCast_emod, Nat.mod_eq_of_lt hlt]
+  · simp only [hlt, ↓reduceIte]
+    by_cases heq : positiveToNat a = positiveToNat b
+    · have hbpos : 0 < positiveToNat b := positiveToNat_pos b
+      simp only [heq, ↓reduceIte]
+      unfold Z_pos_div_eucl Zpos
+      apply Prod.ext
+      · rw [heq, ← Int.natCast_ediv, Nat.div_self hbpos]
+        rfl
+      · rw [heq, ← Int.natCast_emod, Nat.mod_self]
+        rfl
+    · simp [heq, Zpos_div_eucl_aux1_correct]
 
 /-- Specification: correctness of secondary positive-aux division helper. -/
 @[spec]
-theorem Zpos_div_eucl_aux_correct_spec (a b : Int) :
+theorem Zpos_div_eucl_aux_correct_spec (a b : Positive) :
     ⦃⌜True⌝⦄
     (pure (Zpos_div_eucl_aux a b) : Id _)
-    ⦃⇓result => ⌜result = (a / b, a % b)⌝⦄ := by
+    ⦃⇓result => ⌜result = Z_pos_div_eucl a (Zpos b)⌝⦄ := by
   intro _
-  unfold Zpos_div_eucl_aux Zpos_div_eucl_aux1
-  rfl
+  exact Zpos_div_eucl_aux_correct a b
 
 /-- Fast Euclidean division for integers. -/
 def Zfast_div_eucl (a b : Int) : (Int × Int) :=

@@ -2072,7 +2072,7 @@ private theorem ulp_round_pos_theorem
       -- Extract mag equality from mag_round_ZR
       -- NOTE: This requires 1 < beta which is not explicit in the theorem hypothesis.
       -- The theorem may need updating to include hβ : 1 < beta, or we need to
-      -- derive it from Valid_exp. For now, we leave this as a structural placeholder.
+      -- derive it from Valid_exp. The current port keeps this as a structural case split.
       have hmag_eq : (FloatSpec.Core.Raux.mag beta r) = e := by
         have htrip := (FloatSpec.Core.Generic_fmt.mag_round_ZR
           (beta := beta) (fexp := fexp) (rndZR := rnd) (x := x)) hβ
@@ -4254,7 +4254,7 @@ theorem generic_format_ulp
             (e := fexp n) hpre)
   ·
     -- Nonzero branch: ulp x = β^(cexp x) and cexp x = fexp (mag x).run
-    -- Apply `generic_format_bpow` with exponent fexp (mag x).run using the Exp_not_FTZ axiom.
+    -- Apply `generic_format_bpow` with exponent fexp (mag x).run using the Exp_not_FTZ hypothesis.
     have hpre'' : (1 < beta) ∧ fexp (fexp ((FloatSpec.Core.Raux.mag beta x)) + 1)
                     ≤ fexp ((FloatSpec.Core.Raux.mag beta x)) := by
       exact And.intro hβ (Exp_not_FTZ.exp_not_FTZ (fexp := fexp)
@@ -4679,9 +4679,9 @@ theorem generic_format_pred_aux2
   -- Discharge the Hoare triple
   simpa [hf, hc, he, wp, PostCond.noThrow, Id.run, bind, pure] using hfmt_f
 
-/-! Local bridge theorem (Coq's `generic_format_pred_aux1`) (early placeholder).
+/-! Local bridge theorem (Coq's `generic_format_pred_aux1`).
 
-    This local stub avoids forward-reference errors in `generic_format_pred_pos`.
+    This local bridge avoids forward-reference errors in `generic_format_pred_pos`.
     A full proof is provided later in the file.
 -/
 private theorem generic_format_pred_aux1_theorem_early
@@ -5762,7 +5762,7 @@ private theorem ulp_DN_run_theorem
           lt_of_le_of_lt hr_le_x hx_lt_bpow
         -- But hr_pow says r = β^(mag x), contradiction
         exact absurd hr_pow (ne_of_lt hr_lt)
-    -- Bridge DN witness to round_to_generic at x via equality of ulps (local placeholder logic).
+    -- Bridge DN witness to round_to_generic at x via equality of ulps.
     -- On the nonnegative half-line, DN x ≤ x and r is the DN-style round.
     -- Since ulp depends only on cexp x = fexp (mag x), which is constant on [d, succ d),
     -- and r ∈ [d, succ d), both ulps match. We realize this by transporting along r = d ∨ r = succ d

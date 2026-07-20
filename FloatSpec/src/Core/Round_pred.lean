@@ -116,7 +116,7 @@ theorem Rnd_ZR_spec (F : ℝ → Prop) (rnd : ℝ → ℝ) :
 
 /-- Round to nearest property for functions
 
-    A function satisfies `Rnd_N` if it always returns the nearest
+    A function satisfies `Rnd_N` when it selects a nearest
     representable value. This is the base property for all
     `round-to-nearest` modes without specifying tie breaking.
 -/
@@ -4026,26 +4026,49 @@ end FormatEquivalence
 
 section SatisfiesAnyConsequences
 
-/-- Check alternative characterization of `satisfies_any`
+/-- A format has the structural properties needed to make rounding total.
 
-    Placeholder equivalence/characterization for `satisfies_any`.
+    This is the Lean counterpart of Flocq's `Round_pred.satisfies_any`.
 -/
-noncomputable def satisfies_any_eq_check (F : ℝ → Prop) : Id Bool :=
+inductive satisfies_any (F : ℝ → Prop) : Prop where
+  | intro :
+      F 0 →
+      (∀ x : ℝ, F x → F (-x)) →
+      round_pred_total (Rnd_DN_pt F) →
+      satisfies_any F
+
+/-- Pointwise-equivalent formats preserve `satisfies_any`.
+
+    This restores Flocq theorem `satisfies_any_eq`.
+-/
+theorem satisfies_any_eq :
+    ∀ F1 F2 : ℝ → Prop,
+      (∀ x, F1 x ↔ F2 x) →
+      satisfies_any F1 →
+      satisfies_any F2 := by
+  intro F1 F2 Heq hAny
+  cases hAny with
+  | intro Hzero Hsym Hrnd =>
+      refine satisfies_any.intro ?zero ?sym ?total
+      · exact (Heq 0).mp Hzero
+      · intro x Hx
+        exact (Heq (-x)).mp (Hsym x ((Heq x).mpr Hx))
+      · intro x
+        rcases Hrnd x with ⟨f, Hf, hf_le_x, hmax⟩
+        exact ⟨f, (Heq f).mp Hf, hf_le_x, fun g Hg hg_le_x => hmax g ((Heq g).mpr Hg) hg_le_x⟩
+
+/-- Check Flocq theorem `satisfies_any_eq`. -/
+noncomputable def satisfies_any_eq_check (_F : ℝ → Prop) : Id Bool :=
   by
-    -- A usable consequence: formats equivalent pointwise preserve `satisfies_any`.
-    -- This matches Coq's `satisfies_any_eq` theorem.
     classical
     exact
       (pure
         (decide
           (∀ (F1 F2 : ℝ → Prop), (∀ x, F1 x ↔ F2 x) →
-            FloatSpec.Core.Generic_fmt.satisfies_any F1 →
-            FloatSpec.Core.Generic_fmt.satisfies_any F2)) : Id Bool)
+            satisfies_any F1 →
+            satisfies_any F2)) : Id Bool)
 
-/-- Specification: `satisfies_any` alternative characterization
-
-    A placeholder statement expressing equivalence for `satisfies_any`.
--/
+/-- Specification wrapper for Flocq theorem `satisfies_any_eq`. -/
 @[spec]
 theorem satisfies_any_eq_spec (F : ℝ → Prop) :
     ⦃⌜True⌝⦄
@@ -4054,12 +4077,8 @@ theorem satisfies_any_eq_spec (F : ℝ → Prop) :
   intro _
   unfold satisfies_any_eq_check
   classical
-  -- Reduce to proving the Coq-style consequence as a proposition.
-  simp [ pure]
-  -- Proof of: ∀ F1 F2, (∀ x, F1 x ↔ F2 x) → satisfies_any F1 → satisfies_any F2
-  intro F1 F2 hEq hAny
-  rcases hAny with ⟨x, hx⟩
-  exact ⟨x, (hEq x).mp hx⟩
+  simp [pure]
+  exact satisfies_any_eq
 
 /-- Check existence of DN rounding from `satisfies_any`
 
@@ -4071,30 +4090,33 @@ noncomputable def satisfies_any_imp_DN_check (F : ℝ → Prop) : Id Bool :=
     -- Totality of DN rounding as a round_pred property.
     exact (pure (decide (round_pred (Rnd_DN_pt F))) : Id Bool)
 
+/-- Flocq theorem `satisfies_any_imp_DN`. -/
+theorem satisfies_any_imp_DN (F : ℝ → Prop) :
+    satisfies_any F →
+    round_pred (Rnd_DN_pt F) := by
+  intro hAny
+  cases hAny with
+  | intro _Hzero _Hsym Hrnd =>
+      refine ⟨Hrnd, ?_⟩
+      intro x y f g hx hy hxy
+      rcases hx with ⟨hfF, hf_le_x, _hmax_x⟩
+      rcases hy with ⟨_hgF, _hy_le_y, hmax_y⟩
+      exact hmax_y f hfF (le_trans hf_le_x hxy)
+
 /-- Specification: `satisfies_any` implies DN rounding exists
 
     From `satisfies_any F`, DN rounding predicate is total.
 -/
 @[spec]
-theorem satisfies_any_imp_DN_spec (F : ℝ → Prop) :
-    ⦃⌜round_pred_total (Rnd_DN_pt F)⌝⦄
+theorem satisfies_any_imp_DN_spec (F : ℝ → Prop) (hAny : satisfies_any F) :
+    ⦃⌜True⌝⦄
     satisfies_any_imp_DN_check F
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro htot
+  intro _
   unfold satisfies_any_imp_DN_check
   classical
-  -- Reduce the Hoare triple to the underlying proposition about `round_pred`.
-  -- It suffices to show totality and monotonicity for `Rnd_DN_pt F`.
-  simp [ pure, round_pred]
-  constructor
-  · -- Totality comes from the precondition (Coq's satisfies_any contains this field).
-    exact htot
-  · -- Monotonicity of DN-points holds for any format F.
-    intro x y f g hx hy hxy
-    rcases hx with ⟨hfF, hf_le_x, hmax_x⟩
-    rcases hy with ⟨hgF, hy_le_y, hmax_y⟩
-    have hf_le_y : f ≤ y := le_trans hf_le_x hxy
-    exact hmax_y f hfF hf_le_y
+  simp [pure]
+  exact satisfies_any_imp_DN F hAny
 
 /-- Check existence of UP rounding from `satisfies_any`
 
@@ -4105,30 +4127,37 @@ noncomputable def satisfies_any_imp_UP_check (F : ℝ → Prop) : Id Bool :=
     classical
     exact (pure (decide (round_pred (Rnd_UP_pt F))) : Id Bool)
 
+/-- Flocq theorem `satisfies_any_imp_UP`. -/
+theorem satisfies_any_imp_UP (F : ℝ → Prop) :
+    satisfies_any F →
+    round_pred (Rnd_UP_pt F) := by
+  intro hAny
+  cases hAny with
+  | intro _Hzero hsym hDNtotal =>
+      refine ⟨?_, ?_⟩
+      · intro x
+        rcases hDNtotal (-x) with ⟨f, hf⟩
+        refine ⟨-f, ?_⟩
+        simpa [neg_neg] using Rnd_UP_pt_opp_pure F (-x) f hsym hf
+      · intro x y f g hx hy hxy
+        rcases hx with ⟨_hfF, _hx_le_f, hmin_x⟩
+        rcases hy with ⟨hgF, hy_le_g, _hmin_y⟩
+        exact hmin_x g hgF (le_trans hxy hy_le_g)
+
 /-- Specification: `satisfies_any` implies UP rounding exists
 
     From `satisfies_any F`, UP rounding predicate is total.
 -/
 @[spec]
-theorem satisfies_any_imp_UP_spec (F : ℝ → Prop) :
-    ⦃⌜round_pred_total (Rnd_UP_pt F)⌝⦄
+theorem satisfies_any_imp_UP_spec (F : ℝ → Prop) (hAny : satisfies_any F) :
+    ⦃⌜True⌝⦄
     satisfies_any_imp_UP_check F
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro htot
+  intro _
   unfold satisfies_any_imp_UP_check
   classical
-  -- Reduce the Hoare triple to proving `round_pred (Rnd_UP_pt F)`.
-  simp [ pure, round_pred]
-  constructor
-  · -- Totality comes from the precondition.
-    exact htot
-  · -- Monotonicity of UP-points holds for any format `F`.
-    intro x y f g hx hy hxy
-    rcases hx with ⟨hfF, hx_le_f, hmin_x⟩
-    rcases hy with ⟨hgF, hy_le_y, hmin_y⟩
-    -- Since x ≤ y ≤ g, we have x ≤ g; minimality at x yields f ≤ g.
-    have hx_le_g : x ≤ g := le_trans hxy hy_le_y
-    exact hmin_x g hgF hx_le_g
+  simp [pure]
+  exact satisfies_any_imp_UP F hAny
 
 /-- Check existence of ZR rounding from `satisfies_any`
 
@@ -4139,55 +4168,75 @@ noncomputable def satisfies_any_imp_ZR_check (F : ℝ → Prop) : Id Bool :=
     classical
     exact (pure (decide (round_pred (FloatSpec.Core.Defs.Rnd_ZR_pt F))) : Id Bool)
 
+/-- Flocq theorem `satisfies_any_imp_ZR`. -/
+theorem satisfies_any_imp_ZR (F : ℝ → Prop) :
+    satisfies_any F →
+    round_pred (Rnd_ZR_pt F) := by
+  intro hAny
+  cases hAny with
+  | intro hF0 hsym hDNtotal =>
+      have hAny' : satisfies_any F := satisfies_any.intro hF0 hsym hDNtotal
+      refine ⟨?_, ?_⟩
+      · intro x
+        by_cases hx : 0 ≤ x
+        · rcases hDNtotal x with ⟨f, hDN⟩
+          refine ⟨f, ?_⟩
+          constructor
+          · intro _
+            exact hDN
+          · intro hxle0
+            have hx_eq0 : x = 0 := le_antisymm hxle0 hx
+            subst x
+            have hf_eq0 : f = 0 := by
+              exact le_antisymm hDN.2.1 (hDN.2.2 0 hF0 le_rfl)
+            subst f
+            exact ⟨hF0, le_rfl, fun g _ h0g => h0g⟩
+        · rcases (satisfies_any_imp_UP F hAny').1 x with ⟨f, hUP⟩
+          refine ⟨f, ?_⟩
+          constructor
+          · intro hx_nonneg
+            exact False.elim (hx hx_nonneg)
+          · intro _
+            exact hUP
+      · intro x y f g hx hy hxy
+        by_cases hx0 : 0 ≤ x
+        · have hDNx : Rnd_DN_pt F x f := (hx.1) hx0
+          have hy0 : 0 ≤ y := le_trans hx0 hxy
+          have hDNy : Rnd_DN_pt F y g := (hy.1) hy0
+          exact hDNy.2.2 f hDNx.1 (le_trans hDNx.2.1 hxy)
+        · have hUPx : Rnd_UP_pt F x f := (hx.2) (le_of_lt (lt_of_not_ge hx0))
+          by_cases hy0 : 0 ≤ y
+          · have hDNy : Rnd_DN_pt F y g := (hy.1) hy0
+            have hxle0 : x ≤ 0 := le_of_lt (lt_of_not_ge hx0)
+            have hfle0 : f ≤ 0 := hUPx.2.2 0 hF0 hxle0
+            have h0leg : 0 ≤ g := hDNy.2.2 0 hF0 hy0
+            exact le_trans hfle0 h0leg
+          · have hUPy : Rnd_UP_pt F y g := (hy.2) (le_of_lt (lt_of_not_ge hy0))
+            have hxleg : x ≤ g := le_trans hxy hUPy.2.1
+            exact hUPx.2.2 g hUPy.1 hxleg
+
 /-- Specification: `satisfies_any` implies ZR rounding exists
 
     From `satisfies_any F`, ZR rounding predicate is total.
 -/
 @[spec]
-theorem satisfies_any_imp_ZR_spec (F : ℝ → Prop) :
-    ⦃⌜round_pred_total (FloatSpec.Core.Defs.Rnd_ZR_pt F)⌝⦄
+theorem satisfies_any_imp_ZR_spec (F : ℝ → Prop) (hAny : satisfies_any F) :
+    ⦃⌜True⌝⦄
     satisfies_any_imp_ZR_check F
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro htot
+  intro _
   unfold satisfies_any_imp_ZR_check
   classical
-  -- Reduce the Hoare triple to proving `round_pred (Rnd_ZR_pt F)`.
-  simp [ pure, round_pred]
-  constructor
-  · -- Totality follows from the precondition.
-    exact htot
-  · -- Monotonicity of `Rnd_ZR_pt`.
-    intro x y f g hx hy hxy
-    -- Derive `F 0` from totality at x = 0.
-    obtain ⟨f0, h0⟩ := htot 0
-    have hDN0 : Rnd_DN_pt F 0 f0 := (h0.1) le_rfl
-    have hUP0 : Rnd_UP_pt F 0 f0 := (h0.2) le_rfl
-    have hf0_le0 : f0 ≤ 0 := hDN0.2.1
-    have h0_lef0 : 0 ≤ f0 := hUP0.2.1
-    have hf0_eq0 : f0 = 0 := le_antisymm hf0_le0 h0_lef0
-    have hF0 : F 0 := by simpa [hf0_eq0] using hDN0.1
-    -- Prove monotonicity by cases on the signs of x and y.
-    by_cases hx0 : 0 ≤ x
-    · -- x ≥ 0: both sides are DN-points (since y ≥ x ≥ 0)
-      have hDNx : Rnd_DN_pt F x f := (hx.1) hx0
-      have hy0 : 0 ≤ y := le_trans hx0 hxy
-      have hDNy : Rnd_DN_pt F y g := (hy.1) hy0
-      -- Use maximality at y with candidate f
-      exact hDNy.2.2 f hDNx.1 (le_trans hDNx.2.1 hxy)
-    · -- x < 0: `hx` gives an UP-point at x
-      have hUPx : Rnd_UP_pt F x f := (hx.2) (le_of_lt (lt_of_not_ge hx0))
-      -- Split on the sign of y
-      by_cases hy0 : 0 ≤ y
-      · -- x < 0 ≤ y: compare via 0 using `F 0`
-        have hDNy : Rnd_DN_pt F y g := (hy.1) hy0
-        have hxle0 : x ≤ 0 := le_of_lt (lt_of_not_ge hx0)
-        have hfle0 : f ≤ 0 := hUPx.2.2 0 hF0 hxle0
-        have h0leg : 0 ≤ g := hDNy.2.2 0 hF0 hy0
-        exact le_trans hfle0 h0leg
-      · -- y < 0: both sides are UP-points
-        have hUPy : Rnd_UP_pt F y g := (hy.2) (le_of_lt (lt_of_not_ge hy0))
-        have hxleg : x ≤ g := le_trans hxy hUPy.2.1
-        exact hUPx.2.2 g hUPy.1 hxleg
+  simp [pure]
+  exact satisfies_any_imp_ZR F hAny
+
+/-- Flocq `NG_existence_prop`.
+
+    For a non-representable real number `x`, any DN/UP bracket must let the
+    generic nearest predicate choose at least one endpoint.
+-/
+def NG_existence_prop (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Prop :=
+  ∀ x d u, ¬ F x → Rnd_DN_pt F x d → Rnd_UP_pt F x u → P x u ∨ P x d
 
 /-- Check existence of NG rounding from `satisfies_any`
 
@@ -4196,36 +4245,78 @@ theorem satisfies_any_imp_ZR_spec (F : ℝ → Prop) :
 noncomputable def satisfies_any_imp_NG_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Id Bool :=
   by
     classical
-    exact (pure (decide (round_pred (Rnd_NG_pt F P))) : Id Bool)
+    exact (pure (decide (round_pred_total (Rnd_NG_pt F P))) : Id Bool)
+
+/-- Flocq theorem `satisfies_any_imp_NG`. -/
+theorem satisfies_any_imp_NG (F : ℝ → Prop) (P : ℝ → ℝ → Prop) :
+    satisfies_any F →
+    NG_existence_prop F P →
+    round_pred_total (Rnd_NG_pt F P) := by
+  intro hAny hP x
+  rcases (satisfies_any_imp_DN F hAny).1 x with ⟨d, hDN⟩
+  rcases (satisfies_any_imp_UP F hAny).1 x with ⟨u, hUP⟩
+  have hNearestDN (hdist : x - d ≤ u - x) : Rnd_N_pt F x d := by
+    have hspec := Rnd_N_pt_DN_spec F x d u
+    simpa [Rnd_N_pt_DN_check, pure, decide_eq_true_iff]
+      using hspec ⟨hDN, hUP, hdist⟩
+  have hNearestUP (hdist : u - x ≤ x - d) : Rnd_N_pt F x u := by
+    have hspec := Rnd_N_pt_UP_spec F x d u
+    simpa [Rnd_N_pt_UP_check, pure, decide_eq_true_iff]
+      using hspec ⟨hDN, hUP, hdist⟩
+  have hEndpoint (f : ℝ) (hf : Rnd_N_pt F x f) : f = d ∨ f = u := by
+    have hspec := Rnd_N_pt_DN_or_UP_eq_spec F x d u f hDN hUP hf
+    simpa [Rnd_N_pt_DN_or_UP_eq_check, pure, decide_eq_true_iff]
+      using hspec trivial
+  rcases lt_trichotomy (u - x) (x - d) with hlt | heq | hgt
+  · refine ⟨u, ?_⟩
+    have hN : Rnd_N_pt F x u := hNearestUP (le_of_lt hlt)
+    refine ⟨hN, Or.inr ?_⟩
+    intro f hf
+    rcases hEndpoint f hf with hfd | hfu
+    · subst f
+      have hle_abs : |d - x| ≤ |u - x| := hf.2 u hUP.1
+      have hle : x - d ≤ u - x := by
+        simpa [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hDN.2.1),
+          abs_of_nonneg (sub_nonneg.mpr hUP.2.1)] using hle_abs
+      exact False.elim ((not_le_of_gt hlt) hle)
+    · exact hfu
+  · by_cases hxF : F x
+    · refine ⟨x, ?_⟩
+      have hspec := Rnd_NG_pt_refl_spec F P x
+      simpa [Rnd_NG_pt_refl_check, pure, decide_eq_true_iff] using hspec hxF
+    · rcases hP x d u hxF hDN hUP with hPu | hPd
+      · refine ⟨u, ?_⟩
+        exact ⟨hNearestUP (le_of_eq heq), Or.inl hPu⟩
+      · refine ⟨d, ?_⟩
+        exact ⟨hNearestDN (le_of_eq heq.symm), Or.inl hPd⟩
+  · refine ⟨d, ?_⟩
+    have hN : Rnd_N_pt F x d := hNearestDN (le_of_lt hgt)
+    refine ⟨hN, Or.inr ?_⟩
+    intro f hf
+    rcases hEndpoint f hf with hfd | hfu
+    · exact hfd
+    · subst f
+      have hle_abs : |u - x| ≤ |d - x| := hf.2 d hDN.1
+      have hle : u - x ≤ x - d := by
+        simpa [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hDN.2.1),
+          abs_of_nonneg (sub_nonneg.mpr hUP.2.1)] using hle_abs
+      exact False.elim ((not_le_of_gt hgt) hle)
 
 /-- Specification: `satisfies_any` implies NG rounding exists
 
     From `satisfies_any F` and a predicate `P`, NG rounding predicate is total.
 -/
 @[spec]
-theorem satisfies_any_imp_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop) :
-    ⦃⌜round_pred_total (Rnd_NG_pt F P) ∧
-        (∀ x d u,
-          Rnd_DN_pt F x d → Rnd_N_pt F x d →
-          Rnd_UP_pt F x u → Rnd_N_pt F x u →
-          P x d → P x u → d = u)⌝⦄
+theorem satisfies_any_imp_NG_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
+    (hAny : satisfies_any F) (hP : NG_existence_prop F P) :
+    ⦃⌜True⌝⦄
     satisfies_any_imp_NG_check F P
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold satisfies_any_imp_NG_check
   classical
-  -- Reduce to the underlying `round_pred` proposition.
-  simp [ pure, round_pred]
-  rcases h with ⟨htot, hTieUnique⟩
-  constructor
-  · -- Totality provided by the precondition.
-    exact htot
-  · -- Monotonicity follows from the NG monotonicity lemma under tie uniqueness.
-    -- Use the existing spec-lemma to discharge `round_pred_monotone`.
-    have hmono := Rnd_NG_pt_monotone_spec (F := F) (P := P)
-    -- Convert its boolean check result to the desired proposition.
-    simpa [Rnd_NG_pt_monotone_check, pure, decide_eq_true_iff]
-      using hmono hTieUnique
+  simp [pure]
+  exact satisfies_any_imp_NG F P hAny hP
 
 /-- Check existence of NA rounding from `satisfies_any`
 
@@ -4236,27 +4327,50 @@ noncomputable def satisfies_any_imp_NA_check (F : ℝ → Prop) : Id Bool :=
     classical
     exact (pure (decide (round_pred (Rnd_NA_pt F))) : Id Bool)
 
+/-- Flocq theorem `satisfies_any_imp_NA`. -/
+theorem satisfies_any_imp_NA (F : ℝ → Prop) :
+    satisfies_any F →
+    round_pred (Rnd_NA_pt F) := by
+  intro hAny
+  cases hAny with
+  | intro hF0 hsym hDNtotal =>
+      have hAny' : satisfies_any F := satisfies_any.intro hF0 hsym hDNtotal
+      have hP : NG_existence_prop F (fun x f => |x| ≤ |f|) := by
+        intro x d u _hxNF hDN hUP
+        by_cases hx0 : 0 ≤ x
+        · left
+          have hu0 : 0 ≤ u := le_trans hx0 hUP.2.1
+          simpa [abs_of_nonneg hx0, abs_of_nonneg hu0] using hUP.2.1
+        · right
+          have hxle0 : x ≤ 0 := le_of_lt (lt_of_not_ge hx0)
+          have hdle0 : d ≤ 0 := le_trans hDN.2.1 hxle0
+          have : -x ≤ -d := neg_le_neg hDN.2.1
+          simpa [abs_of_nonpos hxle0, abs_of_nonpos hdle0] using this
+      refine ⟨?_, ?_⟩
+      · intro x
+        rcases satisfies_any_imp_NG F (fun x f => |x| ≤ |f|) hAny' hP x with ⟨f, hNG⟩
+        refine ⟨f, ?_⟩
+        have hEqv : Rnd_NA_pt F x f ↔ Rnd_NG_pt F (fun x f => |x| ≤ |f|) x f := by
+          have hspec := Rnd_NA_NG_pt_spec F x f
+          simpa [Rnd_NA_NG_pt_check, pure, decide_eq_true_iff] using hspec hF0
+        exact hEqv.mpr hNG
+      · have hmono := Rnd_NA_pt_monotone_spec (F := F)
+        simpa [Rnd_NA_pt_monotone_check, pure, decide_eq_true_iff] using hmono hF0
+
 /-- Specification: `satisfies_any` implies NA rounding exists
 
     From `satisfies_any F`, NA rounding predicate is total.
 -/
 @[spec]
-theorem satisfies_any_imp_NA_spec (F : ℝ → Prop) :
-    ⦃⌜round_pred_total (Rnd_NA_pt F) ∧ F 0⌝⦄
+theorem satisfies_any_imp_NA_spec (F : ℝ → Prop) (hAny : satisfies_any F) :
+    ⦃⌜True⌝⦄
     satisfies_any_imp_NA_check F
     ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
+  intro _
   unfold satisfies_any_imp_NA_check
   classical
-  -- Reduce to proving `round_pred (Rnd_NA_pt F)`.
-  simp [ pure, round_pred]
-  rcases h with ⟨htot, hF0⟩
-  constructor
-  · exact htot
-  · -- Monotonicity from the NA monotonicity lemma under `F 0`.
-    have hmono := Rnd_NA_pt_monotone_spec (F := F)
-    simpa [Rnd_NA_pt_monotone_check, pure,
-      decide_eq_true_iff] using hmono hF0
+  simp [pure]
+  exact satisfies_any_imp_NA F hAny
 
 /-- Check existence of N0 rounding from `satisfies_any`
 
@@ -4267,27 +4381,53 @@ noncomputable def satisfies_any_imp_N0_check (F : ℝ → Prop) : Id Bool :=
     classical
     exact (pure (decide (round_pred (Rnd_N0_pt F))) : Id Bool)
 
-/-- Specification: `satisfies_any` implies N0 rounding exists
-
-    From `satisfies_any F`, N0 rounding predicate is total.
--/
-@[spec]
-theorem satisfies_any_imp_N0_spec (F : ℝ → Prop) :
-    ⦃⌜round_pred_total (Rnd_N0_pt F) ∧ F 0⌝⦄
-    satisfies_any_imp_N0_check F
-    ⦃⇓result => ⌜result = true⌝⦄ := by
-  intro h
-  unfold satisfies_any_imp_N0_check
-  classical
-  -- Reduce to proving `round_pred (Rnd_N0_pt F)`.
-  simp [ pure, round_pred]
-  rcases h with ⟨htot, hF0⟩
-  constructor
-  · exact htot
-  · -- Monotonicity from the N0 monotonicity lemma under `F 0`.
-    have hmono := Rnd_N0_pt_monotone_spec (F := F)
+/-- Flocq theorem `satisfies_any_imp_N0`. -/
+theorem satisfies_any_imp_N0 (F : ℝ → Prop) :
+    F 0 →
+    satisfies_any F →
+    round_pred (Rnd_N0_pt F) := by
+  intro hF0 hAny
+  have hP : NG_existence_prop F (fun x f => |f| ≤ |x|) := by
+    intro x d u _hxNF hDN hUP
+    by_cases hx0 : 0 ≤ x
+    · right
+      have hd0 : 0 ≤ d := hDN.2.2 0 hF0 hx0
+      simpa [abs_of_nonneg hd0, abs_of_nonneg hx0] using hDN.2.1
+    · left
+      have hxle0 : x ≤ 0 := le_of_lt (lt_of_not_ge hx0)
+      have hule0 : u ≤ 0 := hUP.2.2 0 hF0 hxle0
+      have : -u ≤ -x := neg_le_neg hUP.2.1
+      simpa [abs_of_nonpos hule0, abs_of_nonpos hxle0] using this
+  have hTotal :
+      round_pred_total (Rnd_NG_pt F (fun x f => |f| ≤ |x|)) :=
+    satisfies_any_imp_NG F (fun x f => |f| ≤ |x|) hAny hP
+  refine ⟨?_, ?_⟩
+  · intro x
+    rcases hTotal x with ⟨f, hNG⟩
+    refine ⟨f, ?_⟩
+    have hEqv :
+        Rnd_N0_pt F x f ↔ Rnd_NG_pt F (fun x f => |f| ≤ |x|) x f := by
+      have hspec := Rnd_N0_NG_pt_spec F x f
+      simpa [Rnd_N0_NG_pt_check, pure, decide_eq_true_iff] using hspec hF0
+    exact hEqv.mpr hNG
+  · have hmono := Rnd_N0_pt_monotone_spec (F := F)
     simpa [Rnd_N0_pt_monotone_check, pure,
       decide_eq_true_iff] using hmono hF0
+
+/-- Specification wrapper for Flocq theorem `satisfies_any_imp_N0`.
+
+    From `F 0` and `satisfies_any F`, N0 rounding predicate is total.
+-/
+@[spec]
+theorem satisfies_any_imp_N0_spec (F : ℝ → Prop) (hF0 : F 0) (hAny : satisfies_any F) :
+    ⦃⌜True⌝⦄
+    satisfies_any_imp_N0_check F
+    ⦃⇓result => ⌜result = true⌝⦄ := by
+  intro _
+  unfold satisfies_any_imp_N0_check
+  classical
+  simp [pure]
+  exact satisfies_any_imp_N0 F hF0 hAny
 
 end SatisfiesAnyConsequences
 

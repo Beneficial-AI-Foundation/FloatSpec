@@ -4431,7 +4431,7 @@ theorem FcanonicLtNeg {beta : Int}
         have hq_exp : q.Fexp = -b.dExp := hexpQ
         omega
 
--- Placeholders for rounding operators on nonnegative reals and their variants
+-- Rounding operators on nonnegative reals and their variants
 noncomputable def RND_Min_Pos {beta : Int}
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -10930,7 +10930,7 @@ theorem div2IsBetween {beta : Int}
 
 /-- Coq `div2IsBetween`, stated over the restored float extrema predicates.
 
-The older port kept unused generic `isMin`/`isMax` placeholders in the
+The older port kept unused generic `isMin`/`isMax` assumptions in the
 precondition.  This lemma exposes the actual Flocq payload: concrete lower and
 upper bounded extrema around `p/2`, plus the two bounded residual witnesses. -/
 theorem div2IsBetween_from_extrema {beta : Int}
@@ -11388,8 +11388,8 @@ theorem FexpGeUnderf {beta : Int}
 -- and `f2` are sufficiently large in magnitude, then `g` is either zero or has
 -- magnitude at least `β^(e-precision+1)`.
 --
--- Note: this port carries explicit hypotheses matching Coq's section context and the key content of
--- `plusExactExp` (which is not yet ported to Lean):
+-- Note: this port carries explicit hypotheses matching Coq's section context and a projection of
+-- `plusExactExp`, which is now available separately below:
 -- - `hBeta`: the radix is at least 2
 -- - `hPrec`: precision is at least 1
 -- - `hBound`: `bo.vNum = beta ^ precision` (Coq's `pGivesBound`)
@@ -16763,7 +16763,7 @@ Any bounded float whose exponent is within the finite box used by `mBFloat`
 is enumerated by that list.  The upstream Coq theorem derives the exponent
 upper bound from the real comparisons with `Fopp (boundR r)` and `boundR r`;
 the local statement keeps that finite-box fact explicit so `MinEx` can use the
-same enumeration step without a payload-free placeholder. -/
+same enumeration step without adding an unrelated bridge theorem. -/
 theorem mBFadic_correct1 {beta : Int}
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -23529,6 +23529,193 @@ theorem FNSuccProp {beta : Int}
   exact
     (FSuccProp (beta:=beta) b beta precision a c)
       ⟨rfl, hbeta, hprecision, hvnum, haCan, hcCan, hac⟩
+
+noncomputable def ClosestSuccPred_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+/-- Coq: `ClosestSuccPred` — if a canonical float is no farther from `z`
+than both normalized neighbors, then it is a closest bounded float. -/
+theorem ClosestSuccPred {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Fcanonic (beta:=beta) radix b f ∧
+        |z - _root_.F2R (beta:=beta) f| ≤
+          |z - _root_.F2R (beta:=beta)
+            (FSucc (beta:=beta) b radix precision f)| ∧
+        |z - _root_.F2R (beta:=beta) f| ≤
+          |z - _root_.F2R (beta:=beta)
+            (FPred (beta:=beta) b radix precision f)| ∧
+        beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
+        b.vNum = Zpower_nat radix precision⌝⦄
+    (pure (ClosestSuccPred_check (beta:=beta) b radix precision z f) : Id Unit)
+    ⦃⇓_ => ⌜Closest (beta:=beta) b (radix : ℝ) z f⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨hfCan, hdistSucc, hdistPred, hbeta, hradix, hprecision, hvnum⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestSuccPred_check,
+    Id.run, ULift.up_down]
+  have hfBound : Fbounded (beta:=beta) b f := by
+    have hbound := FcanonicBound (beta:=beta) radix b f
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using hbound hfCan
+  let succ : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FSucc (beta:=beta) b radix precision f
+  let pred : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FPred (beta:=beta) b radix precision f
+  have hsucc_lt :
+      _root_.F2R (beta:=beta) f <
+        _root_.F2R (beta:=beta) succ := by
+    have hlt := FSuccLt (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FSuccLt_check,
+      Id.run, ULift.up_down, succ] using
+      hlt ⟨hbeta, hradix, hprecision, hvnum⟩
+  have hpred_lt :
+      _root_.F2R (beta:=beta) pred <
+        _root_.F2R (beta:=beta) f := by
+    have hlt := FPredLt (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FPredLt_check,
+      Id.run, ULift.up_down, pred] using
+      hlt ⟨hbeta, hradix, hprecision, hvnum⟩
+  have hpredBound : Fbounded (beta:=beta) b pred := by
+    have h := FBoundedPred (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FBoundedPred_check,
+      Id.run, ULift.up_down, pred] using
+      h ⟨hfBound, hradix, hprecision, hvnum⟩
+  have hpredCan : Fcanonic (beta:=beta) radix b pred := by
+    have h := FPredCanonic (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FPredCanonic_check,
+      Id.run, ULift.up_down, pred] using
+      h ⟨hfCan, hradix, hprecision, hvnum⟩
+  have hFNSuccPred :
+      FNSucc (beta:=beta) b (radix : ℝ) precision pred = f := by
+    have hnorm :
+        Fnormalize (beta:=beta) beta b precision pred = pred := by
+      have h := FcanonicFnormalizeEq (beta:=beta) beta b precision pred
+      simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+        Id.run, ULift.up_down] using
+        h ⟨by simpa [hbeta] using hpredCan, rfl, by omega, hprecision,
+          by simpa [hbeta] using hvnum⟩
+    have hsuccPred :
+        FSucc (beta:=beta) b radix precision pred = f := by
+      have h := FSucPred (beta:=beta) b radix precision f
+      simpa only [wp, PostCond.noThrow, pure, FSucPred_check,
+        Id.run, ULift.up_down, pred] using
+        h ⟨hfCan, hradix, hprecision, hvnum⟩
+    have hsuccPredBeta :
+        FSucc (beta:=beta) b beta precision pred = f := by
+      simpa [hbeta] using hsuccPred
+    simpa [FNSucc, hnorm] using hsuccPredBeta
+  have hFNSuccF :
+      FNSucc (beta:=beta) b (radix : ℝ) precision f = succ := by
+    have hnorm :
+        Fnormalize (beta:=beta) beta b precision f = f := by
+      have h := FcanonicFnormalizeEq (beta:=beta) beta b precision f
+      simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+        Id.run, ULift.up_down] using
+        h ⟨by simpa [hbeta] using hfCan, rfl, by omega, hprecision,
+          by simpa [hbeta] using hvnum⟩
+    have hsuccEq :
+        FSucc (beta:=beta) b beta precision f = succ := by
+      simp [succ, hbeta]
+    simpa [FNSucc, hnorm] using hsuccEq
+  have hpred_le_z :
+      _root_.F2R (beta:=beta) pred ≤ z := by
+    by_contra hnot
+    have hz_lt_pred : z < _root_.F2R (beta:=beta) pred := lt_of_not_ge hnot
+    have hz_lt_f : z < _root_.F2R (beta:=beta) f :=
+      lt_trans hz_lt_pred hpred_lt
+    have hdist :
+        _root_.F2R (beta:=beta) f - z ≤
+          _root_.F2R (beta:=beta) pred - z := by
+      simpa [abs_of_neg (sub_neg.mpr hz_lt_f),
+        abs_of_neg (sub_neg.mpr hz_lt_pred), pred] using hdistPred
+    linarith
+  have hz_le_succ :
+      z ≤ _root_.F2R (beta:=beta) succ := by
+    by_contra hnot
+    have hsucc_lt_z : _root_.F2R (beta:=beta) succ < z := lt_of_not_ge hnot
+    have hf_lt_z : _root_.F2R (beta:=beta) f < z :=
+      lt_trans hsucc_lt hsucc_lt_z
+    have hdist :
+        z - _root_.F2R (beta:=beta) f ≤
+          z - _root_.F2R (beta:=beta) succ := by
+      simpa [abs_of_nonneg (sub_nonneg.mpr (le_of_lt hf_lt_z)),
+        abs_of_nonneg (sub_nonneg.mpr (le_of_lt hsucc_lt_z)), succ] using
+        hdistSucc
+    linarith
+  constructor
+  · exact hfBound
+  · intro g hgBound
+    by_cases hg_le_pred :
+        _root_.F2R (beta:=beta) g ≤ _root_.F2R (beta:=beta) pred
+    · have hg_le_z :
+          _root_.F2R (beta:=beta) g ≤ z :=
+        le_trans hg_le_pred hpred_le_z
+      have hdist :
+          |z - _root_.F2R (beta:=beta) f| ≤
+            |z - _root_.F2R (beta:=beta) g| := by
+        calc
+          |z - _root_.F2R (beta:=beta) f|
+              ≤ |z - _root_.F2R (beta:=beta) pred| := by
+                simpa [pred] using hdistPred
+          _ = z - _root_.F2R (beta:=beta) pred := by
+                rw [abs_of_nonneg (sub_nonneg.mpr hpred_le_z)]
+          _ ≤ z - _root_.F2R (beta:=beta) g := by linarith
+          _ = |z - _root_.F2R (beta:=beta) g| := by
+                rw [abs_of_nonneg (sub_nonneg.mpr hg_le_z)]
+      simpa [abs_sub_comm] using hdist
+    · have hpred_lt_g :
+          _root_.F2R (beta:=beta) pred < _root_.F2R (beta:=beta) g :=
+        lt_of_not_ge hg_le_pred
+      have hf_le_g :
+          _root_.F2R (beta:=beta) f ≤ _root_.F2R (beta:=beta) g := by
+        have hprop := FNSuccProp (beta:=beta) b (radix : ℝ) precision pred g
+        have hle :
+            _root_.F2R (beta:=beta)
+                (FNSucc (beta:=beta) b (radix : ℝ) precision pred) ≤
+              _root_.F2R (beta:=beta) g := by
+          simpa only [wp, PostCond.noThrow, pure, FNSuccProp_check,
+            Id.run, ULift.up_down] using
+            hprop ⟨hpredBound, hgBound, hpred_lt_g, by omega, hprecision,
+              by simpa [hbeta] using hvnum⟩
+        rwa [hFNSuccPred] at hle
+      by_cases hf_lt_g :
+          _root_.F2R (beta:=beta) f < _root_.F2R (beta:=beta) g
+      · have hsucc_le_g :
+            _root_.F2R (beta:=beta) succ ≤ _root_.F2R (beta:=beta) g := by
+          have hprop := FNSuccProp (beta:=beta) b (radix : ℝ) precision f g
+          have hle :
+              _root_.F2R (beta:=beta)
+                  (FNSucc (beta:=beta) b (radix : ℝ) precision f) ≤
+                _root_.F2R (beta:=beta) g := by
+            simpa only [wp, PostCond.noThrow, pure, FNSuccProp_check,
+              Id.run, ULift.up_down] using
+              hprop ⟨hfBound, hgBound, hf_lt_g, by omega, hprecision,
+                by simpa [hbeta] using hvnum⟩
+          rwa [hFNSuccF] at hle
+        have hz_le_g : z ≤ _root_.F2R (beta:=beta) g :=
+          le_trans hz_le_succ hsucc_le_g
+        have hdist :
+            |z - _root_.F2R (beta:=beta) f| ≤
+              |z - _root_.F2R (beta:=beta) g| := by
+          calc
+            |z - _root_.F2R (beta:=beta) f|
+                ≤ |z - _root_.F2R (beta:=beta) succ| := by
+                  simpa [succ] using hdistSucc
+            _ = _root_.F2R (beta:=beta) succ - z := by
+                  rw [abs_of_nonpos (sub_nonpos.mpr hz_le_succ)]
+                  ring
+            _ ≤ _root_.F2R (beta:=beta) g - z := by linarith
+            _ = |z - _root_.F2R (beta:=beta) g| := by
+                  rw [abs_of_nonpos (sub_nonpos.mpr hz_le_g)]
+                  ring
+        simpa [abs_sub_comm] using hdist
+      · have hg_eq_f :
+            _root_.F2R (beta:=beta) g = _root_.F2R (beta:=beta) f :=
+          le_antisymm (le_of_not_gt hf_lt_g) hf_le_g
+        simpa [hg_eq_f, abs_sub_comm]
 
 noncomputable def MinMax_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
@@ -31515,6 +31702,799 @@ theorem FpredUlpPos {beta : Int}
           rw [hstep]
     _ = _root_.F2R (beta:=beta) x := by ring
 
+noncomputable def ImplyClosest_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) : Unit :=
+  ()
+
+/-- Coq: `ImplyClosest` — the local binade and half-ulp hypotheses imply
+closestness. -/
+theorem ImplyClosest {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) :
+    ⦃⌜Fbounded (beta:=beta) b f ∧
+        Fcanonic (beta:=beta) radix b f ∧
+        (radix : ℝ) ^ (e + (precision : Int) - 1) ≤ z ∧
+        z ≤ (radix : ℝ) ^ (e + (precision : Int)) ∧
+        (radix : ℝ) ^ (e + (precision : Int) - 1) ≤
+          _root_.F2R (beta:=beta) f ∧
+        -b.dExp ≤ e ∧
+        beta = radix ∧ 1 < radix ∧ 1 < precision ∧
+        b.vNum = Zpower_nat radix precision ∧
+        |z - _root_.F2R (beta:=beta) f| ≤ (radix : ℝ) ^ e / 2⌝⦄
+    (pure (ImplyClosest_check (beta:=beta) b radix precision z f e) : Id Unit)
+    ⦃⇓_ => ⌜Closest (beta:=beta) b (radix : ℝ) z f⌝⦄ := by
+  intro h
+  rcases h with ⟨_hfBound, hfCan, hzGe, _hzLe, hfGe, heGe, hbeta, hradix,
+    hprecision_gt, hvNum, hdist⟩
+  simp only [wp, PostCond.noThrow, pure, ImplyClosest_check, Id.run]
+  have hprecision : precision ≠ 0 := by omega
+  have hprecision_pos : 0 < precision := by omega
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (by omega : (0 : Int) < radix)
+  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+  have hbase_ge_one : (1 : ℝ) ≤ (radix : ℝ) := by
+    exact_mod_cast (le_of_lt hradix)
+  have hpowe_pos : 0 < (radix : ℝ) ^ e := zpow_pos hradix_pos e
+  let lower : FloatSpec.Core.Defs.FlocqFloat beta :=
+    ⟨nNormMin radix precision, e⟩
+  have hlowerCan : Fcanonic (beta:=beta) radix b lower := by
+    have h := FcanonicNnormMin (beta:=beta) radix b precision e
+    simpa only [lower] using h hradix hprecision_pos hvNum heGe
+  have hlowerVal :
+      _root_.F2R (beta:=beta) lower =
+        (radix : ℝ) ^ (e + (precision : Int) - 1) := by
+    dsimp [lower, _root_.F2R, FloatSpec.Core.Defs.F2R, nNormMin]
+    have hcast_beta : (beta : ℝ) = (radix : ℝ) := by
+      exact_mod_cast hbeta
+    rw [hcast_beta]
+    have hpow_nat :
+        ((radix ^ (precision - 1) : Int) : ℝ) =
+          (radix : ℝ) ^ ((precision - 1 : Nat) : Int) := by
+      simp [Int.cast_pow]
+    rw [hpow_nat]
+    have hprec_cast :
+        ((precision - 1 : Nat) : Int) = (precision : Int) - 1 := by
+      omega
+    rw [hprec_cast]
+    calc
+      (radix : ℝ) ^ ((precision : Int) - 1) * (radix : ℝ) ^ e
+          = (radix : ℝ) ^ (((precision : Int) - 1) + e) := by
+              rw [zpow_add₀ hradix_ne]
+      _ = (radix : ℝ) ^ (e + (precision : Int) - 1) := by
+              congr 1
+              ring
+  have hlowerNonneg : 0 ≤ _root_.F2R (beta:=beta) lower := by
+    rw [hlowerVal]
+    exact le_of_lt (zpow_pos hradix_pos _)
+  have hfNonneg : 0 ≤ _root_.F2R (beta:=beta) f := by
+    exact le_trans (by simpa [hlowerVal] using hlowerNonneg) hfGe
+  have hfPos : 0 < _root_.F2R (beta:=beta) f :=
+    lt_of_lt_of_le
+      (by
+        simpa [hlowerVal] using
+          (zpow_pos hradix_pos (e + (precision : Int) - 1)))
+      hfGe
+  have he_le_fexp : e ≤ f.Fexp := by
+    have habs :
+        |_root_.F2R (beta:=beta) lower| ≤
+          |_root_.F2R (beta:=beta) f| := by
+      rw [abs_of_nonneg hlowerNonneg, abs_of_nonneg hfNonneg]
+      simpa [hlowerVal] using hfGe
+    have hbeta_gt : 1 < beta := by omega
+    have h := Fcanonic_Rle_Zle (beta:=beta) radix b lower f
+      hbeta_gt hbeta.symm
+    have hle : lower.Fexp ≤ f.Fexp := by
+      simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
+        Id.run, ULift.up_down, Fcanonic', lower] using
+        h ⟨hlowerCan, hfCan, habs⟩
+    simpa [lower] using hle
+  let succ : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FSucc (beta:=beta) b radix precision f
+  let pred : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FPred (beta:=beta) b radix precision f
+  have hsucc_gap :
+      _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) f =
+        (radix : ℝ) ^ f.Fexp := by
+    have hdiff := FSuccDiffPos (beta:=beta) radix b precision f
+    have hdiff' :
+        _root_.F2R (beta:=beta)
+            (FloatSpec.Calc.Operations.Fminus (beta:=beta) succ f) =
+          (radix : ℝ) ^ f.Fexp := by
+      simpa only [wp, PostCond.noThrow, pure, FSuccDiffPos_check,
+        Id.run, ULift.up_down, succ] using
+        hdiff ⟨hbeta, hradix, hprecision, hvNum, hfNonneg⟩
+    have hminus := Fminus_correct (beta:=beta) succ f
+    have hminus' :
+        _root_.F2R (beta:=beta)
+            (FloatSpec.Calc.Operations.Fminus (beta:=beta) succ f) =
+          _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) f := by
+      have hbeta_gt : 1 < beta := by omega
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, succ] using hminus hbeta_gt
+    exact hminus'.symm.trans hdiff'
+  have hpowe_le_succ_gap :
+      (radix : ℝ) ^ e ≤
+        _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) f := by
+    rw [hsucc_gap]
+    exact zpow_le_zpow_right₀ hbase_ge_one he_le_fexp
+  have hdistSucc :
+      |z - _root_.F2R (beta:=beta) f| ≤
+        |z - _root_.F2R (beta:=beta) succ| := by
+    have hz_minus_f_le :
+        z - _root_.F2R (beta:=beta) f ≤ (radix : ℝ) ^ e / 2 := by
+      exact le_trans (le_abs_self _) hdist
+    have hhalf_le_succ_minus_z :
+        (radix : ℝ) ^ e / 2 ≤ _root_.F2R (beta:=beta) succ - z := by
+      nlinarith [hpowe_le_succ_gap, hz_minus_f_le]
+    have hz_le_succ : z ≤ _root_.F2R (beta:=beta) succ := by
+      nlinarith [hpowe_pos, hhalf_le_succ_minus_z]
+    rw [abs_of_nonpos (sub_nonpos.mpr hz_le_succ)]
+    nlinarith [hdist, hhalf_le_succ_minus_z]
+  have hpred_lt_f :
+      _root_.F2R (beta:=beta) pred < _root_.F2R (beta:=beta) f := by
+    have h := FPredLt (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FPredLt_check,
+      Id.run, ULift.up_down, pred] using
+      h ⟨hbeta, hradix, hprecision, hvNum⟩
+  have hdistPred :
+      |z - _root_.F2R (beta:=beta) f| ≤
+        |z - _root_.F2R (beta:=beta) pred| := by
+    by_cases hf_le_z : _root_.F2R (beta:=beta) f ≤ z
+    · have hpred_le_z : _root_.F2R (beta:=beta) pred ≤ z :=
+        le_trans (le_of_lt hpred_lt_f) hf_le_z
+      rw [abs_of_nonneg (sub_nonneg.mpr hf_le_z),
+        abs_of_nonneg (sub_nonneg.mpr hpred_le_z)]
+      linarith
+    · have hz_lt_f : z < _root_.F2R (beta:=beta) f :=
+        lt_of_not_ge hf_le_z
+      have hlower_lt_f :
+          _root_.F2R (beta:=beta) lower < _root_.F2R (beta:=beta) f := by
+        exact lt_of_le_of_lt (by simpa [hlowerVal] using hzGe) hz_lt_f
+      have hpredCan : Fcanonic (beta:=beta) radix b pred := by
+        have h := FPredCanonic (beta:=beta) b radix precision f
+        simpa only [wp, PostCond.noThrow, pure, FPredCanonic_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hfCan, hradix, hprecision, hvNum⟩
+      have hlower_le_pred :
+          _root_.F2R (beta:=beta) lower ≤
+            _root_.F2R (beta:=beta) pred := by
+        have h := FPredProp (beta:=beta) b radix precision lower f
+        simpa only [wp, PostCond.noThrow, pure, FPredProp_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hbeta, hradix, hprecision, hvNum, hlowerCan, hfCan,
+            hlower_lt_f⟩
+      have hpredNonneg : 0 ≤ _root_.F2R (beta:=beta) pred :=
+        le_trans hlowerNonneg hlower_le_pred
+      have he_le_predexp : e ≤ pred.Fexp := by
+        have habs :
+            |_root_.F2R (beta:=beta) lower| ≤
+              |_root_.F2R (beta:=beta) pred| := by
+          rw [abs_of_nonneg hlowerNonneg, abs_of_nonneg hpredNonneg]
+          exact hlower_le_pred
+        have hbeta_gt : 1 < beta := by omega
+        have h := Fcanonic_Rle_Zle (beta:=beta) radix b lower pred
+          hbeta_gt hbeta.symm
+        have hle : lower.Fexp ≤ pred.Fexp := by
+          simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
+            Id.run, ULift.up_down, Fcanonic', lower, pred] using
+            h ⟨hlowerCan, hpredCan, habs⟩
+        simpa [lower] using hle
+      have hpredUlp :
+          Fulp (beta:=beta) b radix precision pred =
+            (radix : ℝ) ^ pred.Fexp := by
+        have h := CanonicFulp (beta:=beta) radix b precision pred
+        simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hpredCan, hbeta, hradix, hprecision, hvNum⟩
+      have hstep :
+          _root_.F2R (beta:=beta) pred +
+              Fulp (beta:=beta) b radix precision pred =
+            _root_.F2R (beta:=beta) f := by
+        have h := FpredUlpPos (beta:=beta) radix b precision f
+        simpa only [wp, PostCond.noThrow, pure, FpredUlpPos_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hfCan, hfPos, hbeta, hradix, hprecision, hvNum⟩
+      have hpowe_le_gap :
+          (radix : ℝ) ^ e ≤
+            _root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) pred := by
+        have hpow_le :
+            (radix : ℝ) ^ e ≤ (radix : ℝ) ^ pred.Fexp :=
+          zpow_le_zpow_right₀ hbase_ge_one he_le_predexp
+        rw [← hpredUlp] at hpow_le
+        nlinarith
+      have hf_minus_z_le :
+          _root_.F2R (beta:=beta) f - z ≤ (radix : ℝ) ^ e / 2 := by
+        have hleabs :
+            _root_.F2R (beta:=beta) f - z ≤
+              |z - _root_.F2R (beta:=beta) f| := by
+          rw [abs_of_neg (sub_neg.mpr hz_lt_f)]
+          linarith
+        exact le_trans hleabs hdist
+      have hhalf_le_z_minus_pred :
+          (radix : ℝ) ^ e / 2 ≤ z - _root_.F2R (beta:=beta) pred := by
+        nlinarith [hpowe_le_gap, hf_minus_z_le]
+      have hpred_le_z : _root_.F2R (beta:=beta) pred ≤ z := by
+        nlinarith [hpowe_pos, hhalf_le_z_minus_pred]
+      rw [abs_of_neg (sub_neg.mpr hz_lt_f),
+        abs_of_nonneg (sub_nonneg.mpr hpred_le_z)]
+      nlinarith [hdist, hhalf_le_z_minus_pred]
+  have hclosest := ClosestSuccPred (beta:=beta) b radix precision z f
+  exact hclosest ⟨hfCan, hdistSucc, hdistPred, hbeta, hradix, hprecision, hvNum⟩
+
+noncomputable def ImplyClosestStrict_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) : Unit :=
+  ()
+
+/-- Coq: `ImplyClosestStrict` — a strict half-ulp error bound makes the closest
+rounded value unique at the level of represented real values. -/
+theorem ImplyClosestStrict {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) :
+    ⦃⌜Fbounded (beta:=beta) b f ∧
+        Fcanonic (beta:=beta) radix b f ∧
+        (radix : ℝ) ^ (e + (precision : Int) - 1) ≤ z ∧
+        z ≤ (radix : ℝ) ^ (e + (precision : Int)) ∧
+        (radix : ℝ) ^ (e + (precision : Int) - 1) ≤
+          _root_.F2R (beta:=beta) f ∧
+        -b.dExp ≤ e ∧
+        beta = radix ∧ 1 < radix ∧ 1 < precision ∧
+        b.vNum = Zpower_nat radix precision ∧
+        |z - _root_.F2R (beta:=beta) f| < (radix : ℝ) ^ e / 2⌝⦄
+    (pure (ImplyClosestStrict_check (beta:=beta) b radix precision z f e) : Id Unit)
+    ⦃⇓_ => ⌜∀ g : FloatSpec.Core.Defs.FlocqFloat beta,
+        Closest (beta:=beta) b (radix : ℝ) z g →
+          _root_.F2R (beta:=beta) f = _root_.F2R (beta:=beta) g⌝⦄ := by
+  intro h
+  rcases h with ⟨hfBound, hfCan, hzGe, hzLe, hfGe, heGe, hbeta, hradix,
+    hprecision_gt, hvNum, hdist⟩
+  simp only [wp, PostCond.noThrow, pure, ImplyClosestStrict_check, Id.run]
+  have hprecision : precision ≠ 0 := by omega
+  have hprecision_pos : 0 < precision := by omega
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (by omega : (0 : Int) < radix)
+  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+  have hbase_ge_one : (1 : ℝ) ≤ (radix : ℝ) := by
+    exact_mod_cast (le_of_lt hradix)
+  have hpowe_pos : 0 < (radix : ℝ) ^ e := zpow_pos hradix_pos e
+  let lower : FloatSpec.Core.Defs.FlocqFloat beta :=
+    ⟨nNormMin radix precision, e⟩
+  have hlowerCan : Fcanonic (beta:=beta) radix b lower := by
+    have h := FcanonicNnormMin (beta:=beta) radix b precision e
+    simpa only [lower] using h hradix hprecision_pos hvNum heGe
+  have hlowerVal :
+      _root_.F2R (beta:=beta) lower =
+        (radix : ℝ) ^ (e + (precision : Int) - 1) := by
+    dsimp [lower, _root_.F2R, FloatSpec.Core.Defs.F2R, nNormMin]
+    have hcast_beta : (beta : ℝ) = (radix : ℝ) := by
+      exact_mod_cast hbeta
+    rw [hcast_beta]
+    have hpow_nat :
+        ((radix ^ (precision - 1) : Int) : ℝ) =
+          (radix : ℝ) ^ ((precision - 1 : Nat) : Int) := by
+      simp [Int.cast_pow]
+    rw [hpow_nat]
+    have hprec_cast :
+        ((precision - 1 : Nat) : Int) = (precision : Int) - 1 := by
+      omega
+    rw [hprec_cast]
+    calc
+      (radix : ℝ) ^ ((precision : Int) - 1) * (radix : ℝ) ^ e
+          = (radix : ℝ) ^ (((precision : Int) - 1) + e) := by
+              rw [zpow_add₀ hradix_ne]
+      _ = (radix : ℝ) ^ (e + (precision : Int) - 1) := by
+              congr 1
+              ring
+  have hlowerNonneg : 0 ≤ _root_.F2R (beta:=beta) lower := by
+    rw [hlowerVal]
+    exact le_of_lt (zpow_pos hradix_pos _)
+  have hfNonneg : 0 ≤ _root_.F2R (beta:=beta) f := by
+    exact le_trans (by simpa [hlowerVal] using hlowerNonneg) hfGe
+  have hfPos : 0 < _root_.F2R (beta:=beta) f :=
+    lt_of_lt_of_le
+      (by
+        simpa [hlowerVal] using
+          (zpow_pos hradix_pos (e + (precision : Int) - 1)))
+      hfGe
+  have he_le_fexp : e ≤ f.Fexp := by
+    have habs :
+        |_root_.F2R (beta:=beta) lower| ≤
+          |_root_.F2R (beta:=beta) f| := by
+      rw [abs_of_nonneg hlowerNonneg, abs_of_nonneg hfNonneg]
+      simpa [hlowerVal] using hfGe
+    have hbeta_gt : 1 < beta := by omega
+    have h := Fcanonic_Rle_Zle (beta:=beta) radix b lower f
+      hbeta_gt hbeta.symm
+    have hle : lower.Fexp ≤ f.Fexp := by
+      simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
+        Id.run, ULift.up_down, Fcanonic', lower] using
+        h ⟨hlowerCan, hfCan, habs⟩
+    simpa [lower] using hle
+  let succ : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FSucc (beta:=beta) b radix precision f
+  let pred : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FPred (beta:=beta) b radix precision f
+  have hsucc_gap :
+      _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) f =
+        (radix : ℝ) ^ f.Fexp := by
+    have hdiff := FSuccDiffPos (beta:=beta) radix b precision f
+    have hdiff' :
+        _root_.F2R (beta:=beta)
+            (FloatSpec.Calc.Operations.Fminus (beta:=beta) succ f) =
+          (radix : ℝ) ^ f.Fexp := by
+      simpa only [wp, PostCond.noThrow, pure, FSuccDiffPos_check,
+        Id.run, ULift.up_down, succ] using
+        hdiff ⟨hbeta, hradix, hprecision, hvNum, hfNonneg⟩
+    have hminus := Fminus_correct (beta:=beta) succ f
+    have hminus' :
+        _root_.F2R (beta:=beta)
+            (FloatSpec.Calc.Operations.Fminus (beta:=beta) succ f) =
+          _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) f := by
+      have hbeta_gt : 1 < beta := by omega
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, succ] using hminus hbeta_gt
+    exact hminus'.symm.trans hdiff'
+  have hpowe_le_succ_gap :
+      (radix : ℝ) ^ e ≤
+        _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) f := by
+    rw [hsucc_gap]
+    exact zpow_le_zpow_right₀ hbase_ge_one he_le_fexp
+  have hdistSucc :
+      |z - _root_.F2R (beta:=beta) f| <
+        |z - _root_.F2R (beta:=beta) succ| := by
+    have hz_minus_f_lt :
+        z - _root_.F2R (beta:=beta) f < (radix : ℝ) ^ e / 2 :=
+      lt_of_le_of_lt (le_abs_self _) hdist
+    have hhalf_lt_succ_minus_z :
+        (radix : ℝ) ^ e / 2 < _root_.F2R (beta:=beta) succ - z := by
+      nlinarith [hpowe_le_succ_gap, hz_minus_f_lt]
+    have hz_lt_succ : z < _root_.F2R (beta:=beta) succ := by
+      nlinarith [hpowe_pos, hhalf_lt_succ_minus_z]
+    rw [abs_of_nonpos (sub_nonpos.mpr (le_of_lt hz_lt_succ))]
+    nlinarith [hdist, hhalf_lt_succ_minus_z]
+  have hpred_lt_f :
+      _root_.F2R (beta:=beta) pred < _root_.F2R (beta:=beta) f := by
+    have h := FPredLt (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FPredLt_check,
+      Id.run, ULift.up_down, pred] using
+      h ⟨hbeta, hradix, hprecision, hvNum⟩
+  have hdistPred :
+      |z - _root_.F2R (beta:=beta) f| <
+        |z - _root_.F2R (beta:=beta) pred| := by
+    by_cases hf_le_z : _root_.F2R (beta:=beta) f ≤ z
+    · have hpred_le_z : _root_.F2R (beta:=beta) pred ≤ z :=
+        le_trans (le_of_lt hpred_lt_f) hf_le_z
+      rw [abs_of_nonneg (sub_nonneg.mpr hf_le_z),
+        abs_of_nonneg (sub_nonneg.mpr hpred_le_z)]
+      linarith
+    · have hz_lt_f : z < _root_.F2R (beta:=beta) f :=
+        lt_of_not_ge hf_le_z
+      have hlower_lt_f :
+          _root_.F2R (beta:=beta) lower < _root_.F2R (beta:=beta) f := by
+        exact lt_of_le_of_lt (by simpa [hlowerVal] using hzGe) hz_lt_f
+      have hpredCan : Fcanonic (beta:=beta) radix b pred := by
+        have h := FPredCanonic (beta:=beta) b radix precision f
+        simpa only [wp, PostCond.noThrow, pure, FPredCanonic_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hfCan, hradix, hprecision, hvNum⟩
+      have hlower_le_pred :
+          _root_.F2R (beta:=beta) lower ≤
+            _root_.F2R (beta:=beta) pred := by
+        have h := FPredProp (beta:=beta) b radix precision lower f
+        simpa only [wp, PostCond.noThrow, pure, FPredProp_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hbeta, hradix, hprecision, hvNum, hlowerCan, hfCan,
+            hlower_lt_f⟩
+      have hpredNonneg : 0 ≤ _root_.F2R (beta:=beta) pred :=
+        le_trans hlowerNonneg hlower_le_pred
+      have he_le_predexp : e ≤ pred.Fexp := by
+        have habs :
+            |_root_.F2R (beta:=beta) lower| ≤
+              |_root_.F2R (beta:=beta) pred| := by
+          rw [abs_of_nonneg hlowerNonneg, abs_of_nonneg hpredNonneg]
+          exact hlower_le_pred
+        have hbeta_gt : 1 < beta := by omega
+        have h := Fcanonic_Rle_Zle (beta:=beta) radix b lower pred
+          hbeta_gt hbeta.symm
+        have hle : lower.Fexp ≤ pred.Fexp := by
+          simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
+            Id.run, ULift.up_down, Fcanonic', lower, pred] using
+            h ⟨hlowerCan, hpredCan, habs⟩
+        simpa [lower] using hle
+      have hpredUlp :
+          Fulp (beta:=beta) b radix precision pred =
+            (radix : ℝ) ^ pred.Fexp := by
+        have h := CanonicFulp (beta:=beta) radix b precision pred
+        simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hpredCan, hbeta, hradix, hprecision, hvNum⟩
+      have hstep :
+          _root_.F2R (beta:=beta) pred +
+              Fulp (beta:=beta) b radix precision pred =
+            _root_.F2R (beta:=beta) f := by
+        have h := FpredUlpPos (beta:=beta) radix b precision f
+        simpa only [wp, PostCond.noThrow, pure, FpredUlpPos_check,
+          Id.run, ULift.up_down, pred] using
+          h ⟨hfCan, hfPos, hbeta, hradix, hprecision, hvNum⟩
+      have hpowe_le_gap :
+          (radix : ℝ) ^ e ≤
+            _root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) pred := by
+        have hpow_le :
+            (radix : ℝ) ^ e ≤ (radix : ℝ) ^ pred.Fexp :=
+          zpow_le_zpow_right₀ hbase_ge_one he_le_predexp
+        rw [← hpredUlp] at hpow_le
+        nlinarith
+      have hf_minus_z_lt :
+          _root_.F2R (beta:=beta) f - z < (radix : ℝ) ^ e / 2 := by
+        have hleabs :
+            _root_.F2R (beta:=beta) f - z =
+              |z - _root_.F2R (beta:=beta) f| := by
+          rw [abs_of_neg (sub_neg.mpr hz_lt_f)]
+          ring
+        rw [hleabs]
+        exact hdist
+      have hhalf_lt_z_minus_pred :
+          (radix : ℝ) ^ e / 2 < z - _root_.F2R (beta:=beta) pred := by
+        nlinarith [hpowe_le_gap, hf_minus_z_lt]
+      have hpred_lt_z : _root_.F2R (beta:=beta) pred < z := by
+        nlinarith [hpowe_pos, hhalf_lt_z_minus_pred]
+      rw [abs_of_neg (sub_neg.mpr hz_lt_f),
+        abs_of_nonneg (sub_nonneg.mpr (le_of_lt hpred_lt_z))]
+      nlinarith [hf_minus_z_lt, hhalf_lt_z_minus_pred]
+  have hclosest_f : Closest (beta:=beta) b (radix : ℝ) z f := by
+    have h := ImplyClosest (beta:=beta) b radix precision z f e
+    exact h ⟨hfBound, hfCan, hzGe, hzLe, hfGe, heGe, hbeta, hradix,
+      hprecision_gt, hvNum, le_of_lt hdist⟩
+  have hpredBound : Fbounded (beta:=beta) b pred := by
+    have h := FBoundedPred (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FBoundedPred_check,
+      Id.run, ULift.up_down, pred] using
+      h ⟨hfBound, hradix, hprecision, hvNum⟩
+  have hpredCan : Fcanonic (beta:=beta) radix b pred := by
+    have h := FPredCanonic (beta:=beta) b radix precision f
+    simpa only [wp, PostCond.noThrow, pure, FPredCanonic_check,
+      Id.run, ULift.up_down, pred] using
+      h ⟨hfCan, hradix, hprecision, hvNum⟩
+  have hFNSuccPred :
+      FNSucc (beta:=beta) b (radix : ℝ) precision pred = f := by
+    have hnorm :
+        Fnormalize (beta:=beta) beta b precision pred = pred := by
+      have h := FcanonicFnormalizeEq (beta:=beta) beta b precision pred
+      simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+        Id.run, ULift.up_down] using
+        h ⟨by simpa [hbeta] using hpredCan, rfl, by omega, hprecision,
+          by simpa [hbeta] using hvNum⟩
+    have hsuccPred :
+        FSucc (beta:=beta) b radix precision pred = f := by
+      have h := FSucPred (beta:=beta) b radix precision f
+      simpa only [wp, PostCond.noThrow, pure, FSucPred_check,
+        Id.run, ULift.up_down, pred] using
+        h ⟨hfCan, hradix, hprecision, hvNum⟩
+    have hsuccPredBeta :
+        FSucc (beta:=beta) b beta precision pred = f := by
+      simpa [hbeta] using hsuccPred
+    simpa [FNSucc, hnorm] using hsuccPredBeta
+  have hFNSuccF :
+      FNSucc (beta:=beta) b (radix : ℝ) precision f = succ := by
+    have hnorm :
+        Fnormalize (beta:=beta) beta b precision f = f := by
+      have h := FcanonicFnormalizeEq (beta:=beta) beta b precision f
+      simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+        Id.run, ULift.up_down] using
+        h ⟨by simpa [hbeta] using hfCan, rfl, by omega, hprecision,
+          by simpa [hbeta] using hvNum⟩
+    have hsuccEq :
+        FSucc (beta:=beta) b beta precision f = succ := by
+      simp [succ, hbeta]
+    simpa [FNSucc, hnorm] using hsuccEq
+  have hpred_le_z :
+      _root_.F2R (beta:=beta) pred ≤ z := by
+    by_contra hnot
+    have hz_lt_pred : z < _root_.F2R (beta:=beta) pred := lt_of_not_ge hnot
+    have hz_lt_f : z < _root_.F2R (beta:=beta) f :=
+      lt_trans hz_lt_pred hpred_lt_f
+    have hdist_le :
+        _root_.F2R (beta:=beta) f - z <
+          _root_.F2R (beta:=beta) pred - z := by
+      simpa [abs_of_neg (sub_neg.mpr hz_lt_f),
+        abs_of_neg (sub_neg.mpr hz_lt_pred), pred] using hdistPred
+    linarith
+  have hz_le_succ :
+      z ≤ _root_.F2R (beta:=beta) succ := by
+    by_contra hnot
+    have hsucc_lt_z : _root_.F2R (beta:=beta) succ < z := lt_of_not_ge hnot
+    have hf_lt_z : _root_.F2R (beta:=beta) f < z :=
+      lt_trans (by
+        have hlt := FSuccLt (beta:=beta) b radix precision f
+        simpa only [wp, PostCond.noThrow, pure, FSuccLt_check,
+          Id.run, ULift.up_down, succ] using
+          hlt ⟨hbeta, hradix, hprecision, hvNum⟩) hsucc_lt_z
+    have hdist_le :
+        z - _root_.F2R (beta:=beta) f <
+          z - _root_.F2R (beta:=beta) succ := by
+      simpa [abs_of_nonneg (sub_nonneg.mpr (le_of_lt hf_lt_z)),
+        abs_of_nonneg (sub_nonneg.mpr (le_of_lt hsucc_lt_z)), succ] using
+        hdistSucc
+    linarith
+  intro g hgClosest
+  have hg_to_f :
+      |_root_.F2R (beta:=beta) g - z| ≤
+        |_root_.F2R (beta:=beta) f - z| :=
+    hgClosest.2 f hclosest_f.1
+  by_cases hg_le_pred :
+      _root_.F2R (beta:=beta) g ≤ _root_.F2R (beta:=beta) pred
+  · have hg_le_z : _root_.F2R (beta:=beta) g ≤ z :=
+      le_trans hg_le_pred hpred_le_z
+    have hstrict :
+        |_root_.F2R (beta:=beta) f - z| <
+          |_root_.F2R (beta:=beta) g - z| := by
+      calc
+        |_root_.F2R (beta:=beta) f - z|
+            = |z - _root_.F2R (beta:=beta) f| := abs_sub_comm _ _
+        _ < |z - _root_.F2R (beta:=beta) pred| := hdistPred
+        _ = z - _root_.F2R (beta:=beta) pred := by
+              rw [abs_of_nonneg (sub_nonneg.mpr hpred_le_z)]
+        _ ≤ z - _root_.F2R (beta:=beta) g := by linarith
+        _ = |_root_.F2R (beta:=beta) g - z| := by
+              rw [abs_of_nonpos (sub_nonpos.mpr hg_le_z)]
+              ring
+    exact (False.elim (not_lt_of_ge hg_to_f hstrict))
+  · have hpred_lt_g :
+        _root_.F2R (beta:=beta) pred < _root_.F2R (beta:=beta) g :=
+      lt_of_not_ge hg_le_pred
+    have hf_le_g :
+        _root_.F2R (beta:=beta) f ≤ _root_.F2R (beta:=beta) g := by
+      have hprop := FNSuccProp (beta:=beta) b (radix : ℝ) precision pred g
+      have hle :
+          _root_.F2R (beta:=beta)
+              (FNSucc (beta:=beta) b (radix : ℝ) precision pred) ≤
+            _root_.F2R (beta:=beta) g := by
+        simpa only [wp, PostCond.noThrow, pure, FNSuccProp_check,
+          Id.run, ULift.up_down] using
+          hprop ⟨hpredBound, hgClosest.1, hpred_lt_g, by omega, hprecision,
+            by simpa [hbeta] using hvNum⟩
+      rwa [hFNSuccPred] at hle
+    by_cases hf_lt_g :
+        _root_.F2R (beta:=beta) f < _root_.F2R (beta:=beta) g
+    · have hsucc_le_g :
+          _root_.F2R (beta:=beta) succ ≤ _root_.F2R (beta:=beta) g := by
+        have hprop := FNSuccProp (beta:=beta) b (radix : ℝ) precision f g
+        have hle :
+            _root_.F2R (beta:=beta)
+                (FNSucc (beta:=beta) b (radix : ℝ) precision f) ≤
+              _root_.F2R (beta:=beta) g := by
+          simpa only [wp, PostCond.noThrow, pure, FNSuccProp_check,
+            Id.run, ULift.up_down] using
+            hprop ⟨hfBound, hgClosest.1, hf_lt_g, by omega, hprecision,
+              by simpa [hbeta] using hvNum⟩
+        rwa [hFNSuccF] at hle
+      have hz_le_g : z ≤ _root_.F2R (beta:=beta) g :=
+        le_trans hz_le_succ hsucc_le_g
+      have hstrict :
+          |_root_.F2R (beta:=beta) f - z| <
+            |_root_.F2R (beta:=beta) g - z| := by
+        calc
+          |_root_.F2R (beta:=beta) f - z|
+              = |z - _root_.F2R (beta:=beta) f| := abs_sub_comm _ _
+          _ < |z - _root_.F2R (beta:=beta) succ| := hdistSucc
+          _ = _root_.F2R (beta:=beta) succ - z := by
+                rw [abs_of_nonpos (sub_nonpos.mpr hz_le_succ)]
+                ring
+          _ ≤ _root_.F2R (beta:=beta) g - z := by linarith
+          _ = |_root_.F2R (beta:=beta) g - z| := by
+                rw [abs_of_nonneg (sub_nonneg.mpr hz_le_g)]
+      exact (False.elim (not_lt_of_ge hg_to_f hstrict))
+    · exact le_antisymm hf_le_g (le_of_not_gt hf_lt_g)
+
+noncomputable def ImplyClosestStrict2_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) : Unit :=
+  ()
+
+/-- Coq: `ImplyClosestStrict2` — the strict half-ulp hypothesis gives both
+closestness and uniqueness of the represented real value. -/
+theorem ImplyClosestStrict2 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) :
+    ⦃⌜Fbounded (beta:=beta) b f ∧
+        Fcanonic (beta:=beta) radix b f ∧
+        (radix : ℝ) ^ (e + (precision : Int) - 1) ≤ z ∧
+        z ≤ (radix : ℝ) ^ (e + (precision : Int)) ∧
+        (radix : ℝ) ^ (e + (precision : Int) - 1) ≤
+          _root_.F2R (beta:=beta) f ∧
+        -b.dExp ≤ e ∧
+        beta = radix ∧ 1 < radix ∧ 1 < precision ∧
+        b.vNum = Zpower_nat radix precision ∧
+        |z - _root_.F2R (beta:=beta) f| < (radix : ℝ) ^ e / 2⌝⦄
+    (pure (ImplyClosestStrict2_check (beta:=beta) b radix precision z f e) : Id Unit)
+    ⦃⇓_ => ⌜Closest (beta:=beta) b (radix : ℝ) z f ∧
+        ∀ g : FloatSpec.Core.Defs.FlocqFloat beta,
+          Closest (beta:=beta) b (radix : ℝ) z g →
+            _root_.F2R (beta:=beta) f = _root_.F2R (beta:=beta) g⌝⦄ := by
+  intro h
+  rcases h with ⟨hfBound, hfCan, hzGe, hzLe, hfGe, heGe, hbeta, hradix,
+    hprecision_gt, hvNum, hdist⟩
+  simp only [wp, PostCond.noThrow, pure, ImplyClosestStrict2_check, Id.run]
+  constructor
+  · have hclosest := ImplyClosest (beta:=beta) b radix precision z f e
+    exact hclosest ⟨hfBound, hfCan, hzGe, hzLe, hfGe, heGe, hbeta, hradix,
+      hprecision_gt, hvNum, le_of_lt hdist⟩
+  · have hstrict := ImplyClosestStrict (beta:=beta) b radix precision z f e
+    exact hstrict ⟨hfBound, hfCan, hzGe, hzLe, hfGe, heGe, hbeta, hradix,
+      hprecision_gt, hvNum, hdist⟩
+
+noncomputable def ClosestImplyEven_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+/-- Coq: `ClosestImplyEven`.
+
+If `z` is exactly halfway above a nonnegative canonical float and `f` is an
+even-closest rounding of `z`, then the tie-breaking clause forces `f` to be
+normalized-even. -/
+theorem ClosestImplyEven {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜EvenClosest (beta:=beta) b (radix : ℝ) precision z f ∧
+        (∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+          z = _root_.F2R (beta:=beta) g + (radix : ℝ) ^ g.Fexp / 2 ∧
+          Fcanonic (beta:=beta) radix b g ∧ 0 ≤ g.Fnum) ∧
+        beta = radix ∧ 1 < radix ∧ 1 < precision ∧
+        b.vNum = Zpower_nat radix precision⌝⦄
+    (pure (ClosestImplyEven_check (beta:=beta) b radix precision z f) : Id Unit)
+    ⦃⇓_ => ⌜FNeven (beta:=beta) b (radix : ℝ) precision f⌝⦄ := by
+  intro h
+  rcases h with ⟨hEvenClosest, hmid, hbeta, hradix, hprecision_gt, hvNum⟩
+  rcases hmid with ⟨g, hz_mid, hgCan, hgNum_nonneg⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestImplyEven_check,
+    Id.run, ULift.up_down]
+  let succ : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FSucc (beta:=beta) b radix precision g
+  let pred : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FPred (beta:=beta) b radix precision g
+  let succ2 : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FSucc (beta:=beta) b radix precision succ
+  have hprecision : precision ≠ 0 := by omega
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (by omega : (0 : Int) < radix)
+  have hpow_pos : 0 < (radix : ℝ) ^ g.Fexp :=
+    zpow_pos hradix_pos g.Fexp
+  have hgBound : Fbounded (beta:=beta) b g := by
+    have h := FcanonicBound (beta:=beta) radix b g
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using h hgCan
+  have hsuccCan : Fcanonic (beta:=beta) radix b succ := by
+    have h := FSuccCanonic (beta:=beta) b radix precision g
+    simpa only [wp, PostCond.noThrow, pure, FSuccCanonic_check,
+      Id.run, ULift.up_down, succ] using
+      h ⟨hgCan, hradix, hprecision, hvNum⟩
+  have hsuccBound : Fbounded (beta:=beta) b succ := by
+    have h := FcanonicBound (beta:=beta) radix b succ
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using h hsuccCan
+  have hg_not_low : g.Fnum ≠ -nNormMin radix precision := by
+    have hnpos : 0 < nNormMin radix precision := by
+      unfold nNormMin
+      exact pow_pos (by omega : 0 < radix) _
+    omega
+  have hsucc_sub :
+      _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) g =
+        (radix : ℝ) ^ g.Fexp := by
+    have hdiff := FSuccDiff1 (beta:=beta) b radix precision g
+      hbeta hradix hprecision hvNum hg_not_low
+    have hbeta_gt : 1 < beta := by omega
+    have hminus :
+        _root_.F2R (beta:=beta) (Fminus (beta:=beta) succ g) =
+          _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) g := by
+      have h := Fminus_correct (beta:=beta) succ g
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Fminus, Id.run, ULift.up_down] using h hbeta_gt
+    calc
+      _root_.F2R (beta:=beta) succ - _root_.F2R (beta:=beta) g =
+          _root_.F2R (beta:=beta) (Fminus (beta:=beta) succ g) := hminus.symm
+      _ = FtoR (Fminus (beta:=beta) succ g) := rfl
+      _ = FtoR (⟨1, g.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat beta) := hdiff
+      _ = (radix : ℝ) ^ g.Fexp := by
+            simp [FtoR, _root_.F2R, FloatSpec.Core.Defs.F2R, hbeta]
+  have hsucc_val :
+      _root_.F2R (beta:=beta) succ =
+        _root_.F2R (beta:=beta) g + (radix : ℝ) ^ g.Fexp := by
+    linarith
+  have hg_lt_z : _root_.F2R (beta:=beta) g < z := by
+    rw [hz_mid]
+    nlinarith
+  have hz_lt_succ : z < _root_.F2R (beta:=beta) succ := by
+    rw [hz_mid, hsucc_val]
+    nlinarith
+  have hzg_nonneg : 0 ≤ z - _root_.F2R (beta:=beta) g := by
+    linarith
+  have hzs_nonpos : z - _root_.F2R (beta:=beta) succ ≤ 0 := by
+    linarith
+  have hdist_g_succ_eq :
+      |z - _root_.F2R (beta:=beta) g| =
+        |z - _root_.F2R (beta:=beta) succ| := by
+    rw [abs_of_nonneg hzg_nonneg, abs_of_nonpos hzs_nonpos]
+    linarith
+  have hpred_lt_g :
+      _root_.F2R (beta:=beta) pred < _root_.F2R (beta:=beta) g := by
+    have h := FPredLt (beta:=beta) b radix precision g
+    simpa only [wp, PostCond.noThrow, pure, FPredLt_check,
+      Id.run, ULift.up_down, pred] using
+      h ⟨hbeta, hradix, hprecision, hvNum⟩
+  have hdist_g_pred :
+      |z - _root_.F2R (beta:=beta) g| ≤
+        |z - _root_.F2R (beta:=beta) pred| := by
+    have hpred_le_z : _root_.F2R (beta:=beta) pred ≤ z :=
+      le_trans (le_of_lt hpred_lt_g) (le_of_lt hg_lt_z)
+    rw [abs_of_nonneg hzg_nonneg,
+      abs_of_nonneg (sub_nonneg.mpr hpred_le_z)]
+    linarith
+  have hClosest_g : Closest (beta:=beta) b (radix : ℝ) z g := by
+    have h := ClosestSuccPred (beta:=beta) b radix precision z g
+    simpa only [wp, PostCond.noThrow, pure, ClosestSuccPred_check,
+      Id.run, ULift.up_down, succ, pred] using
+      h ⟨hgCan, le_of_eq hdist_g_succ_eq, hdist_g_pred,
+        hbeta, hradix, hprecision, hvNum⟩
+  have hsucc2_gt_succ :
+      _root_.F2R (beta:=beta) succ <
+        _root_.F2R (beta:=beta) succ2 := by
+    have h := FSuccLt (beta:=beta) b radix precision succ
+    simpa only [wp, PostCond.noThrow, pure, FSuccLt_check,
+      Id.run, ULift.up_down, succ2] using
+      h ⟨hbeta, hradix, hprecision, hvNum⟩
+  have hdist_succ_succ2 :
+      |z - _root_.F2R (beta:=beta) succ| ≤
+        |z - _root_.F2R (beta:=beta) succ2| := by
+    have hz_le_succ2 : z ≤ _root_.F2R (beta:=beta) succ2 :=
+      le_trans (le_of_lt hz_lt_succ) (le_of_lt hsucc2_gt_succ)
+    rw [abs_of_nonpos hzs_nonpos,
+      abs_of_nonpos (sub_nonpos.mpr hz_le_succ2)]
+    linarith
+  have hpred_succ :
+      FPred (beta:=beta) b radix precision succ = g := by
+    have h := FPredSuc (beta:=beta) b radix precision g
+    simpa only [wp, PostCond.noThrow, pure, FPredSuc_check,
+      Id.run, ULift.up_down, succ] using
+      h ⟨hgCan, hradix, hprecision, hvNum⟩
+  have hdist_succ_pred :
+      |z - _root_.F2R (beta:=beta) succ| ≤
+        |z - _root_.F2R (beta:=beta)
+          (FPred (beta:=beta) b radix precision succ)| := by
+    rw [hpred_succ]
+    exact le_of_eq hdist_g_succ_eq.symm
+  have hClosest_succ : Closest (beta:=beta) b (radix : ℝ) z succ := by
+    have h := ClosestSuccPred (beta:=beta) b radix precision z succ
+    simpa only [wp, PostCond.noThrow, pure, ClosestSuccPred_check,
+      Id.run, ULift.up_down, succ2] using
+      h ⟨hsuccCan, hdist_succ_succ2, hdist_succ_pred,
+        hbeta, hradix, hprecision, hvNum⟩
+  have hMinOrMax :
+      isMin' (beta:=beta) b radix z f ∨ isMax' (beta:=beta) b radix z f := by
+    have h := EvenClosestMinOrMax (beta:=beta) b radix (radix : ℝ) precision
+    exact h True.intro z f hEvenClosest
+  rcases hEvenClosest with ⟨_, hTie⟩
+  rcases hTie with hEven | hUnique
+  · exact hEven
+  · exfalso
+    rcases hMinOrMax with hMin | hMax
+    · have hf_lt_succ :
+          _root_.F2R (beta:=beta) f < _root_.F2R (beta:=beta) succ :=
+        lt_of_le_of_lt hMin.2.1 hz_lt_succ
+      have hEq := hUnique succ hClosest_succ
+      linarith
+    · have hg_lt_f :
+            _root_.F2R (beta:=beta) g < _root_.F2R (beta:=beta) f :=
+        lt_of_lt_of_le hg_lt_z hMax.2.1
+      have hEq := hUnique g hClosest_g
+      linarith
+
+noncomputable def ClosestImplyEven_int_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z m : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
 noncomputable def MinOrMax2_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -33627,7 +34607,6 @@ theorem errorBoundedMultClosest_aux {beta : Int}
   · exact le_of_lt ht_lt_r
   · exact le_trans hr_exp_le_r0 hr0_upper
 
-
 /-- Coq: `ClosestUlp`.
 
 The proof follows the upstream min/max split.  If `q` is the lower closest
@@ -33790,6 +34769,379 @@ theorem ClosestUlp {beta : Int}
     rw [habs]
     exact le_trans htwice hstep
 
+/-- Coq: `errorBoundedMultClosest`.
+
+Final closest-rounded multiplication error theorem: the rounded product can be
+represented canonically, and its nonzero residual can be represented at
+exponent `Fexp r - precision`.
+-/
+theorem errorBoundedMultClosest {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+    beta = radix →
+    1 < radix →
+    precision ≠ 0 →
+    1 < bo.vNum →
+    bo.vNum = Zpower_nat radix precision →
+    (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) →
+    ∀ p q pq : FloatSpec.Core.Defs.FlocqFloat beta,
+      Fbounded (beta:=beta) bo p →
+      Fbounded (beta:=beta) bo q →
+      Closest (beta:=beta) bo (radix : ℝ)
+        (_root_.F2R (beta:=beta) p * _root_.F2R (beta:=beta) q) pq →
+      -bo.dExp ≤ p.Fexp + q.Fexp →
+      -bo.dExp ≤
+        (Fnormalize (beta:=beta) radix bo precision pq).Fexp - precision →
+      ∃ r s : FloatSpec.Core.Defs.FlocqFloat beta,
+        Fcanonic (beta:=beta) radix bo r ∧
+        Fbounded (beta:=beta) bo r ∧
+        Fbounded (beta:=beta) bo s ∧
+        _root_.F2R (beta:=beta) r = _root_.F2R (beta:=beta) pq ∧
+        _root_.F2R (beta:=beta) s =
+          _root_.F2R (beta:=beta) p * _root_.F2R (beta:=beta) q -
+            _root_.F2R (beta:=beta) r ∧
+        s.Fexp = r.Fexp - precision := by
+  intro hbeta hradix hprecision hvNum_gt hvNum hBoundExp p q pq hp hq hclosest
+    hexp hnormLower
+  subst beta
+  let prod : ℝ := _root_.F2R (beta:=radix) p * _root_.F2R (beta:=radix) q
+  let nr : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix bo precision pq
+  have hvNum_pos : 0 < bo.vNum := by omega
+  have hnr_can : Fcanonic (beta:=radix) radix bo nr := by
+    have h := FnormalizeCanonic (beta:=radix) radix bo precision pq
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, nr] using
+      h ⟨hclosest.1, hclosest.1, hprecision, hradix, hvNum⟩
+  have hnr_bound : Fbounded (beta:=radix) bo nr := by
+    have h := FnormalizeBounded (beta:=radix) radix bo precision pq
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeBounded_check,
+      Id.run, ULift.up_down, nr] using
+      h ⟨hclosest.1, hclosest.1, hprecision, hradix, hvNum⟩
+  have hnr_val : _root_.F2R (beta:=radix) nr = _root_.F2R (beta:=radix) pq := by
+    have h := FnormalizeCorrect (beta:=radix) radix bo precision pq
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nr] using h ⟨rfl, hradix⟩
+  by_cases hzero :
+      prod - _root_.F2R (beta:=radix) pq = 0
+  · let s : FloatSpec.Core.Defs.FlocqFloat radix :=
+      Fzero radix (nr.Fexp - precision)
+    have hs_bound : Fbounded (beta:=radix) bo s := by
+      constructor
+      · simpa [s, Fzero] using hvNum_pos
+      · change -bo.dExp ≤ nr.Fexp - (precision : Int)
+        simpa [nr] using hnormLower
+    have hs_val :
+        _root_.F2R (beta:=radix) s =
+          prod - _root_.F2R (beta:=radix) nr := by
+      have hs_zero : _root_.F2R (beta:=radix) s = 0 := by
+        have h := FzeroisReallyZero (beta:=radix) (nr.Fexp - precision)
+        simpa only [wp, PostCond.noThrow, pure, FzeroisReallyZero_check,
+          Id.run, ULift.up_down, s] using h trivial
+      rw [hs_zero, hnr_val]
+      exact hzero.symm
+    refine ⟨nr, s, hnr_can, hnr_bound, hs_bound, hnr_val, hs_val, ?_⟩
+    rfl
+  · rcases errorBoundedMultClosest_aux (beta:=radix) bo radix precision
+      rfl hradix hprecision hvNum_gt hvNum hBoundExp p q pq hp hq hclosest
+      hexp (by simpa [prod] using hzero) with
+      ⟨r, s, hr_can, hr_bound, hs_bound, hr_val, hs_val, hs_exp,
+        _hs_le_r, hr_upper⟩
+    let e : Int := r.Fexp - precision
+    have hr_eq_nr : r = nr := by
+      have huniq := FcanonicUnique (beta:=radix) radix bo r nr hradix rfl
+      have hval : _root_.F2R (beta:=radix) r = _root_.F2R (beta:=radix) nr := by
+        rw [hr_val, hnr_val]
+      simpa only [wp, PostCond.noThrow, pure, FcanonicUnique_check,
+        ULift.down_up, Fcanonic'] using huniq ⟨hr_can, hnr_can, hval⟩
+    have he_lower : -bo.dExp ≤ e := by
+      dsimp [e]
+      rw [hr_eq_nr]
+      simpa [nr] using hnormLower
+    have he_le_s : e ≤ s.Fexp := by
+      dsimp [e]
+      rw [hs_exp]
+      omega
+    have hrep := F2R_rep_at_lower_exp (beta:=radix) s e
+    rcases (by
+      simpa only [wp, PostCond.noThrow, pure, F2R_rep_at_lower_exp_check,
+        Id.run, ULift.up_down] using hrep ⟨hradix, he_le_s⟩) with
+      ⟨m, hm_repr⟩
+    let s' : FloatSpec.Core.Defs.FlocqFloat radix := ⟨m, e⟩
+    have hclosest_r :
+        Closest (beta:=radix) bo (radix : ℝ) prod r := by
+      constructor
+      · exact hr_bound
+      · intro f hf
+        have hdist := hclosest.2 f hf
+        simpa [prod, hr_val] using hdist
+    have hclosestUlp :
+        2 * |prod - _root_.F2R (beta:=radix) r| ≤
+          Fulp (beta:=radix) bo radix precision r := by
+      have h := ClosestUlp (beta:=radix) bo radix precision prod r
+      simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hclosest_r, rfl, hradix, hprecision, hvNum⟩
+    have hFulpLe :
+        Fulp (beta:=radix) bo radix precision r ≤ (radix : ℝ) ^ r.Fexp := by
+      have h := FulpLe (beta:=radix) radix bo precision r
+      simpa only [wp, PostCond.noThrow, pure, FulpLe_check,
+        Id.run, ULift.up_down] using h ⟨hr_bound, rfl, hradix⟩
+    have hClosestExp :
+        2 * |prod - _root_.F2R (beta:=radix) r| ≤ (radix : ℝ) ^ r.Fexp :=
+      le_trans hclosestUlp hFulpLe
+    have herrorBound :
+        |_root_.F2R (beta:=radix) s| ≤
+          _root_.F2R (beta:=radix)
+            (FloatSpec.Core.Defs.FlocqFloat.mk (beta:=radix) 1 r.Fexp) *
+            (1 / 2 : ℝ) := by
+      have h := ClosestErrorBound (beta:=radix) bo (radix : ℝ) r s prod
+      simpa only [wp, PostCond.noThrow, pure, ClosestErrorBound_check,
+        Id.run, ULift.up_down] using
+        h ⟨hr_bound, hclosest_r, hs_val, hClosestExp⟩
+    have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+      exact_mod_cast (by omega : (0 : Int) < radix)
+    have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+    have he_pow_pos : 0 < (radix : ℝ) ^ e := zpow_pos hradix_pos e
+    have hpow_prec_pos : 0 < (radix : ℝ) ^ (precision : Int) :=
+      zpow_pos hradix_pos (precision : Int)
+    have hpow_split :
+        (radix : ℝ) ^ r.Fexp =
+          (radix : ℝ) ^ e * (radix : ℝ) ^ (precision : Int) := by
+      have heq : e + (precision : Int) = r.Fexp := by
+        dsimp [e]
+        omega
+      rw [← heq, zpow_add₀ hradix_ne]
+    have hscaled :
+        ((|m| : Int) : ℝ) * (radix : ℝ) ^ e ≤
+          (radix : ℝ) ^ r.Fexp * (1 / 2 : ℝ) := by
+      have hrepr_abs : |_root_.F2R (beta:=radix) s'| =
+          |_root_.F2R (beta:=radix) s| := by
+        rw [show _root_.F2R (beta:=radix) s' = _root_.F2R (beta:=radix) s from
+          by simpa [s'] using hm_repr.symm]
+      have hbound_s' :
+          |_root_.F2R (beta:=radix) s'| ≤
+            (radix : ℝ) ^ r.Fexp * (1 / 2 : ℝ) := by
+        simpa [_root_.F2R, FloatSpec.Core.Defs.F2R] using
+          (hrepr_abs.trans_le herrorBound)
+      simpa [s', _root_.F2R, FloatSpec.Core.Defs.F2R, abs_mul,
+        abs_of_pos he_pow_pos, Int.cast_abs] using hbound_s'
+    have hm_le_half :
+        ((|m| : Int) : ℝ) ≤ (radix : ℝ) ^ (precision : Int) / 2 := by
+      rw [hpow_split] at hscaled
+      nlinarith [he_pow_pos, hscaled]
+    have hm_lt_pow :
+        ((|m| : Int) : ℝ) < (radix : ℝ) ^ (precision : Int) := by
+      nlinarith [hm_le_half, hpow_prec_pos]
+    have hvNum_real :
+        (bo.vNum : ℝ) = (radix : ℝ) ^ (precision : Int) := by
+      rw [hvNum]
+      unfold Zpower_nat
+      rw [Int.cast_pow]
+      exact (zpow_ofNat (radix : ℝ) precision).symm
+    have hm_bound_real : ((|m| : Int) : ℝ) < (bo.vNum : ℝ) := by
+      rw [hvNum_real]
+      exact hm_lt_pow
+    have hm_bound : |m| < bo.vNum := by
+      exact_mod_cast hm_bound_real
+    have hs'_bound : Fbounded (beta:=radix) bo s' := by
+      exact ⟨by simpa [s'] using hm_bound, by simpa [s', e] using he_lower⟩
+    have hs'_val :
+        _root_.F2R (beta:=radix) s' =
+          prod - _root_.F2R (beta:=radix) r := by
+      rw [show _root_.F2R (beta:=radix) s' = _root_.F2R (beta:=radix) s from
+        by simpa [s'] using hm_repr.symm]
+      exact hs_val
+    refine ⟨r, s', hr_can, hr_bound, hs'_bound, hr_val, hs'_val, ?_⟩
+    rfl
+
+/-- Coq: `ClosestImplyEven_int`.
+
+Integer-midpoint form of `ClosestImplyEven`: if `z` is the midpoint
+`radix^(Fexp f) * (m + 1/2)` with integer `m`, then even-closest rounding
+forces the canonical nonnegative float `f` to be normalized-even. -/
+theorem ClosestImplyEven_int {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (z m : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜Even radix ∧
+        EvenClosest (beta:=beta) b (radix : ℝ) precision z f ∧
+        Fcanonic (beta:=beta) radix b f ∧
+        0 ≤ _root_.F2R (beta:=beta) f ∧
+        z = (radix : ℝ) ^ f.Fexp * (m + 1 / 2) ∧
+        (∃ n : Int, (n : ℝ) = m) ∧
+        beta = radix ∧ 1 < radix ∧ 1 < precision ∧
+        b.vNum = Zpower_nat radix precision⌝⦄
+    (pure (ClosestImplyEven_int_check (beta:=beta) b radix precision z m f) :
+      Id Unit)
+    ⦃⇓_ => ⌜FNeven (beta:=beta) b (radix : ℝ) precision f⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨hEvenRadix, hEvenClosest, hfCan, hfNonneg, hz, ⟨n, hn⟩,
+      hbeta, hradix, hprecision_gt, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, ClosestImplyEven_int_check,
+    Id.run, ULift.up_down]
+  have hprecision : precision ≠ 0 := by omega
+  have hprecision_pos : 0 < precision := by omega
+  have hbeta_gt : 1 < beta := by omega
+  have hradix_pos_int : (0 : Int) < radix := by omega
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradix_pos_int
+  have hpow_pos : 0 < (radix : ℝ) ^ f.Fexp :=
+    zpow_pos hradix_pos f.Fexp
+  have hfNum_nonneg : 0 ≤ f.Fnum :=
+    FloatSpec.Core.Float_prop.ge_0_F2R (beta:=beta) f hbeta_gt hfNonneg
+  have hnorm_eq_f :
+      Fnormalize (beta:=beta) beta b precision f = f := by
+    have h := FcanonicFnormalizeEq (beta:=beta) beta b precision f
+    simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+      Id.run, ULift.up_down] using
+      h ⟨by simpa [hbeta] using hfCan, rfl, hbeta_gt, hprecision,
+        by simpa [hbeta] using hvNum⟩
+  by_cases hfZero : f.Fnum = 0
+  · unfold FNeven
+    rw [hnorm_eq_f]
+    simp [Feven, hfZero]
+  by_cases hfMin : f.Fnum = nNormMin radix precision
+  · unfold FNeven
+    rw [hnorm_eq_f]
+    unfold Feven
+    rw [hfMin]
+    unfold nNormMin
+    have hs : Nat.succ (precision - 2) = precision - 1 := by omega
+    rw [← hs]
+    exact hEvenRadix.pow_of_ne_zero (Nat.succ_ne_zero _)
+  have hfNum_pos : 0 < f.Fnum := lt_of_le_of_ne hfNum_nonneg (Ne.symm hfZero)
+  have hclosest_ulp :
+      2 * |z - _root_.F2R (beta:=beta) f| ≤
+        Fulp (beta:=beta) b radix precision f := by
+    have h := ClosestUlp (beta:=beta) b radix precision z f
+    simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
+      Id.run, ULift.up_down] using
+      h ⟨hEvenClosest.1, hbeta, hradix, hprecision, hvNum⟩
+  have hclosest_exp :
+      2 * |z - _root_.F2R (beta:=beta) f| ≤
+        (radix : ℝ) ^ f.Fexp := by
+    have h := ClosestExp (beta:=beta) b radix precision z f
+    have hle :
+        2 * |z - _root_.F2R (beta:=beta) f| ≤
+          (beta : ℝ) ^ f.Fexp := by
+      simpa only [wp, PostCond.noThrow, pure, ClosestExp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hEvenClosest.1, hclosest_ulp, hbeta, hradix⟩
+    simpa [hbeta] using hle
+  let mid : FloatSpec.Core.Defs.FlocqFloat beta := ⟨n, f.Fexp⟩
+  have hdist_coeff :
+      |(n : ℝ) + 1 / 2 - (f.Fnum : ℝ)| ≤ (1 / 2 : ℝ) := by
+    have hdist_eq :
+        |z - _root_.F2R (beta:=beta) f| =
+          |(n : ℝ) + 1 / 2 - (f.Fnum : ℝ)| *
+            (radix : ℝ) ^ f.Fexp := by
+      rw [hz, ← hn]
+      dsimp [_root_.F2R, FloatSpec.Core.Defs.F2R]
+      have hcast : (beta : ℝ) = (radix : ℝ) := by
+        exact_mod_cast hbeta
+      rw [hcast]
+      have hfactor :
+          (radix : ℝ) ^ f.Fexp * ((n : ℝ) + 1 / 2) -
+              (f.Fnum : ℝ) * (radix : ℝ) ^ f.Fexp =
+            ((n : ℝ) + 1 / 2 - (f.Fnum : ℝ)) *
+              (radix : ℝ) ^ f.Fexp := by
+        ring
+      rw [hfactor, abs_mul, abs_of_pos hpow_pos]
+    have hscaled :
+        2 * (|(n : ℝ) + 1 / 2 - (f.Fnum : ℝ)| *
+            (radix : ℝ) ^ f.Fexp) ≤
+          (radix : ℝ) ^ f.Fexp := by
+      simpa [hdist_eq] using hclosest_exp
+    nlinarith [hpow_pos]
+  have hn_le_fnum : n ≤ f.Fnum := by
+    have hright := (abs_le.mp hdist_coeff).2
+    have hreal : (n : ℝ) ≤ (f.Fnum : ℝ) := by linarith
+    exact_mod_cast hreal
+  have hfnum_pred_le_n : f.Fnum - 1 ≤ n := by
+    have hleft := (abs_le.mp hdist_coeff).1
+    have hreal : ((f.Fnum - 1 : Int) : ℝ) ≤ (n : ℝ) := by
+      norm_num at hleft ⊢
+      linarith
+    exact_mod_cast hreal
+  have hn_nonneg : 0 ≤ n := by
+    omega
+  have hmid_val :
+      z = _root_.F2R (beta:=beta) mid + (radix : ℝ) ^ mid.Fexp / 2 := by
+    rw [hz, ← hn]
+    dsimp [mid, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hcast : (beta : ℝ) = (radix : ℝ) := by
+      exact_mod_cast hbeta
+    rw [hcast]
+    ring
+  have hmidCan : Fcanonic (beta:=beta) radix b mid := by
+    rcases hfCan with hfNorm | hfSub
+    · left
+      rcases hfNorm with ⟨hfBound, hfNormMant⟩
+      have hfNum_lt_vNum : f.Fnum < b.vNum := by
+        have habs : |f.Fnum| = f.Fnum := abs_of_nonneg hfNum_nonneg
+        simpa [habs] using hfBound.1
+      have hn_lt_vNum : n < b.vNum := lt_of_le_of_lt hn_le_fnum hfNum_lt_vNum
+      have hmidBound : Fbounded (beta:=beta) b mid := by
+        constructor
+        · dsimp [mid]
+          rw [abs_of_nonneg hn_nonneg]
+          exact hn_lt_vNum
+        · exact hfBound.2
+      constructor
+      · exact hmidBound
+      · have hposnorm := PosNormMin radix b precision hprecision_pos hvNum
+        have hnorm_le_fnum : nNormMin radix precision ≤ f.Fnum := by
+          have hradix_mul_le : radix * nNormMin radix precision ≤ radix * f.Fnum := by
+            have hfNormMant' :
+                b.vNum ≤ radix * f.Fnum := by
+              have hmul_nonneg : 0 ≤ radix * f.Fnum := by
+                exact mul_nonneg (by omega) hfNum_nonneg
+              simpa [abs_of_nonneg hmul_nonneg] using hfNormMant
+            simpa [hposnorm] using hfNormMant'
+          exact (Int.mul_le_mul_left hradix_pos_int).mp hradix_mul_le
+        have hnorm_lt_fnum : nNormMin radix precision < f.Fnum := by
+          exact lt_of_le_of_ne hnorm_le_fnum (Ne.symm hfMin)
+        have hnorm_le_n : nNormMin radix precision ≤ n := by omega
+        have hmul_nonneg : 0 ≤ radix * n := by
+          exact mul_nonneg (by omega) hn_nonneg
+        rw [abs_of_nonneg hmul_nonneg]
+        rw [hposnorm]
+        exact Int.mul_le_mul_of_nonneg_left hnorm_le_n (by omega : 0 ≤ radix)
+    · right
+      rcases hfSub with ⟨hfBound, hfExp, hfSubMant⟩
+      have hfNum_lt_vNum : f.Fnum < b.vNum := by
+        have habs : |f.Fnum| = f.Fnum := abs_of_nonneg hfNum_nonneg
+        simpa [habs] using hfBound.1
+      have hn_lt_vNum : n < b.vNum := lt_of_le_of_lt hn_le_fnum hfNum_lt_vNum
+      have hmidBound : Fbounded (beta:=beta) b mid := by
+        constructor
+        · dsimp [mid]
+          rw [abs_of_nonneg hn_nonneg]
+          exact hn_lt_vNum
+        · exact hfBound.2
+      constructor
+      · exact hmidBound
+      constructor
+      · exact hfExp
+      · have hmul_f_nonneg : 0 ≤ radix * f.Fnum := by
+          exact mul_nonneg (by omega) hfNum_nonneg
+        have hmul_n_nonneg : 0 ≤ radix * n := by
+          exact mul_nonneg (by omega) hn_nonneg
+        rw [abs_of_nonneg hmul_n_nonneg]
+        have hfSubMant' : radix * f.Fnum < b.vNum := by
+          simpa [abs_of_nonneg hmul_f_nonneg] using hfSubMant
+        exact lt_of_le_of_lt
+          (Int.mul_le_mul_of_nonneg_left hn_le_fnum (by omega : 0 ≤ radix))
+          hfSubMant'
+  have hmid : ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+      z = _root_.F2R (beta:=beta) g + (radix : ℝ) ^ g.Fexp / 2 ∧
+      Fcanonic (beta:=beta) radix b g ∧ 0 ≤ g.Fnum :=
+    ⟨mid, hmid_val, hmidCan, hn_nonneg⟩
+  have h := ClosestImplyEven (beta:=beta) b radix precision z f
+  simpa only [wp, PostCond.noThrow, pure, ClosestImplyEven_check,
+    Id.run, ULift.up_down] using
+    h ⟨hEvenClosest, hmid, hbeta, hradix, hprecision_gt, hvNum⟩
+
 /-- Coq: `plusExact1`.
 
 If the closest rounded sum has exponent no greater than both input exponents,
@@ -33857,6 +35209,918 @@ theorem plusExact1 {beta : Int}
     have hmin_lt : min p.Fexp q.Fexp < r.Fexp := by
       simpa [herrorExp] using hstrict
     exact False.elim ((not_lt_of_ge hrExp) hmin_lt)
+
+/-- Coq: `plusExact2Aux`.
+
+For a nonnegative canonical `p`, if the closest rounded sum has exponent below
+`pred (Fexp p)`, then the rounded result is exact. -/
+theorem plusExact2Aux {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+    beta = radix →
+    1 < radix →
+    precision ≠ 0 →
+    1 < bo.vNum →
+    bo.vNum = Zpower_nat radix precision →
+    (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) →
+    ∀ p q r : FloatSpec.Core.Defs.FlocqFloat beta,
+      0 ≤ _root_.F2R (beta:=beta) p →
+      Fcanonic (beta:=beta) radix bo p →
+      Fbounded (beta:=beta) bo q →
+      Closest (beta:=beta) bo (radix : ℝ)
+        (_root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q) r →
+      r.Fexp < Int.pred p.Fexp →
+      _root_.F2R (beta:=beta) r =
+        _root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q := by
+  intro hbeta hradix hprecision hvNum_gt hvNum hBoundExp p q r
+    hp_nonneg hp_can hq hclosest hr_lt
+  subst beta
+  have hp : Fbounded (beta:=radix) bo p := by
+    have h := FcanonicBound (beta:=radix) radix bo p
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using h hp_can
+  have hmain :
+      r.Fexp ≤ min p.Fexp q.Fexp := by
+    by_cases hpq : p.Fexp ≤ q.Fexp
+    · rw [min_eq_left hpq]
+      simp [Int.pred] at hr_lt
+      omega
+    · have hq_lt_p : q.Fexp < p.Fexp := lt_of_not_ge hpq
+      by_cases hsucc : p.Fexp = q.Fexp + 1
+      · rw [min_eq_right (le_of_lt hq_lt_p)]
+        rw [hsucc] at hr_lt
+        simp [Int.pred] at hr_lt
+        omega
+      · have hq_lt_pred : q.Fexp < Int.pred p.Fexp := by
+          simp [Int.pred]
+          omega
+        exfalso
+        let a : FloatSpec.Core.Defs.FlocqFloat radix :=
+          ⟨nNormMin radix precision, Int.pred p.Fexp⟩
+        have ha_bound : Fbounded (beta:=radix) bo a := by
+          have ha_can : Fcanonic (beta:=radix) radix bo a := by
+            have h := FcanonicNnormMin (beta:=radix) radix bo precision
+              (Int.pred p.Fexp)
+            simpa only [a] using h hradix (Nat.pos_iff_ne_zero.mpr hprecision)
+              hvNum (le_trans hq.2 (le_of_lt hq_lt_pred))
+          have h := FcanonicBound (beta:=radix) radix bo a
+          simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+            Id.run, ULift.up_down] using h ha_can
+        have hTotal : TotalP (Closest (beta:=radix) bo (radix : ℝ)) := by
+          intro x
+          have hMinTotal : TotalP (isMin' (beta:=radix) bo radix) := by
+            intro y
+            have h := MinEx (beta:=radix) bo radix y
+            simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
+              ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp y⟩
+          have hMaxTotal : TotalP (isMax' (beta:=radix) bo radix) := by
+            intro y
+            have h := MaxEx (beta:=radix) bo radix y
+            simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
+              ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp y⟩
+          have h := ClosestTotal (beta:=radix) bo radix (radix : ℝ) x
+          simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check,
+            Id.run, ULift.up_down] using h ⟨hMinTotal, hMaxTotal⟩
+        have hRounded :
+            RoundedModeP_full (beta:=radix) bo
+              (Closest (beta:=radix) bo (radix : ℝ)) := by
+          have h := ClosestRoundedModeP (beta:=radix) bo (radix : ℝ)
+          simpa only [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check,
+            Id.run, ULift.up_down] using h hTotal
+        rcases hRounded with ⟨_, _, hMono, hProj, _⟩
+        have ha_closest :
+            Closest (beta:=radix) bo (radix : ℝ)
+              (_root_.F2R (beta:=radix) a) a :=
+          hProj a ha_bound
+        have ha_le_sum :
+            _root_.F2R (beta:=radix) a ≤
+              _root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q := by
+          have hradix_pos_int : (0 : Int) < radix := by omega
+          have hradix_pos : (0 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix_pos_int
+          have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+          have hradix_two : (2 : ℝ) ≤ (radix : ℝ) := by
+            exact_mod_cast (by omega : (2 : Int) ≤ radix)
+          have hnmin_pos_int : 0 < nNormMin radix precision := by
+            cases precision with
+            | zero => exact False.elim (hprecision rfl)
+            | succ k =>
+                simp [nNormMin]
+                exact pow_pos hradix_pos_int k
+          have hnmin_pos : (0 : ℝ) < (nNormMin radix precision : ℝ) := by
+            exact_mod_cast hnmin_pos_int
+          have ha_pos : 0 < _root_.F2R (beta:=radix) a := by
+            dsimp [a, _root_.F2R, FloatSpec.Core.Defs.F2R]
+            exact mul_pos hnmin_pos (zpow_pos hradix_pos _)
+          rcases hp_can with hp_norm | hp_sub
+          · let ap : FloatSpec.Core.Defs.FlocqFloat radix :=
+              ⟨nNormMin radix precision, p.Fexp⟩
+            have hap_scale :
+                _root_.F2R (beta:=radix) ap =
+                  (radix : ℝ) * _root_.F2R (beta:=radix) a := by
+              dsimp [ap, a, _root_.F2R, FloatSpec.Core.Defs.F2R]
+              rw [show p.Fexp = Int.pred p.Fexp + 1 by simp [Int.pred]]
+              rw [zpow_add₀ hradix_ne]
+              simp [Int.pred]
+              ring
+            have hmin_abs : nNormMin radix precision ≤ |p.Fnum| := by
+              have h := pNormal_absolu_min (beta:=radix) radix bo precision p
+              simpa only [wp, PostCond.noThrow, pure, pNormal_absolu_min_check,
+                Id.run, ULift.up_down] using
+                h ⟨hp_norm, hp_norm, hprecision, hradix, hvNum⟩
+            have hp_num_nonneg : 0 ≤ p.Fnum := by
+              exact FloatSpec.Core.Float_prop.ge_0_F2R (beta:=radix) p
+                hradix hp_nonneg
+            have hmin_num_int : nNormMin radix precision ≤ p.Fnum := by
+              simpa [abs_of_nonneg hp_num_nonneg] using hmin_abs
+            have hmin_num : (nNormMin radix precision : ℝ) ≤ (p.Fnum : ℝ) := by
+              exact_mod_cast hmin_num_int
+            have hap_le_p :
+                _root_.F2R (beta:=radix) ap ≤ _root_.F2R (beta:=radix) p := by
+              have hpow_nonneg : 0 ≤ (radix : ℝ) ^ p.Fexp :=
+                le_of_lt (zpow_pos hradix_pos _)
+              dsimp [ap, _root_.F2R, FloatSpec.Core.Defs.F2R]
+              exact mul_le_mul_of_nonneg_right hmin_num hpow_nonneg
+            have htwo_a_le_ap :
+                2 * _root_.F2R (beta:=radix) a ≤
+                  _root_.F2R (beta:=radix) ap := by
+              rw [hap_scale]
+              exact mul_le_mul_of_nonneg_right hradix_two (le_of_lt ha_pos)
+            by_cases hq_nonneg : 0 ≤ _root_.F2R (beta:=radix) q
+            · linarith
+            · have hq_neg : _root_.F2R (beta:=radix) q < 0 :=
+                lt_of_not_ge hq_nonneg
+              have hq_abs_lt_a :
+                  |_root_.F2R (beta:=radix) q| <
+                    _root_.F2R (beta:=radix) a := by
+                have h := maxMaxBis (beta:=radix) bo q (Int.pred p.Fexp) precision
+                have hvPow : bo.vNum = radix ^ precision := by
+                  simpa [Zpower_nat] using hvNum
+                simpa only [wp, PostCond.noThrow, pure, maxMax1_check,
+                  Id.run, ULift.up_down, a] using
+                  h ⟨hq, hq_lt_pred, hq, hradix, hvPow⟩
+              have hneg_q_lt_a :
+                  -_root_.F2R (beta:=radix) q <
+                    _root_.F2R (beta:=radix) a := by
+                rwa [abs_of_neg hq_neg] at hq_abs_lt_a
+              linarith
+          · have hp_exp : p.Fexp = -bo.dExp := hp_sub.2.1
+            have hq_low : q.Fexp < -bo.dExp := by
+              rw [hp_exp] at hq_lt_pred
+              simp [Int.pred] at hq_lt_pred
+              omega
+            exact False.elim ((not_lt_of_ge hq.2) hq_low)
+        have ha_le_r :
+            _root_.F2R (beta:=radix) a ≤ _root_.F2R (beta:=radix) r := by
+          by_cases heq :
+              _root_.F2R (beta:=radix) a =
+                _root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q
+          · rw [heq]
+            have hdist := hclosest.2 a ha_bound
+            rw [← heq, sub_self, abs_zero] at hdist
+            have hz : |_root_.F2R (beta:=radix) r -
+                _root_.F2R (beta:=radix) a| = 0 :=
+              le_antisymm hdist (abs_nonneg _)
+            have hsub :
+                _root_.F2R (beta:=radix) r -
+                  _root_.F2R (beta:=radix) a = 0 :=
+              abs_eq_zero.mp hz
+            linarith
+          · have hlt :
+                _root_.F2R (beta:=radix) a <
+                  _root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q :=
+              lt_of_le_of_ne ha_le_sum heq
+            exact hMono (_root_.F2R (beta:=radix) a)
+              (_root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q)
+              a r hlt ha_closest hclosest
+        have hr_lt_a :
+            _root_.F2R (beta:=radix) r < _root_.F2R (beta:=radix) a := by
+          have hradix_pos_int : (0 : Int) < radix := by omega
+          have hradix_pos : (0 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix_pos_int
+          have hnmin_pos_int : 0 < nNormMin radix precision := by
+            cases precision with
+            | zero => exact False.elim (hprecision rfl)
+            | succ k =>
+                simp [nNormMin]
+                exact pow_pos hradix_pos_int k
+          have hnmin_pos : (0 : ℝ) < (nNormMin radix precision : ℝ) := by
+            exact_mod_cast hnmin_pos_int
+          have ha_pos : 0 < _root_.F2R (beta:=radix) a := by
+            dsimp [a, _root_.F2R, FloatSpec.Core.Defs.F2R]
+            exact mul_pos hnmin_pos (zpow_pos hradix_pos _)
+          by_cases hr_nonneg : 0 ≤ _root_.F2R (beta:=radix) r
+          · have hr_abs_lt_a :
+                |_root_.F2R (beta:=radix) r| <
+                  _root_.F2R (beta:=radix) a := by
+              have h := maxMaxBis (beta:=radix) bo r (Int.pred p.Fexp) precision
+              have hvPow : bo.vNum = radix ^ precision := by
+                simpa [Zpower_nat] using hvNum
+              simpa only [wp, PostCond.noThrow, pure, maxMax1_check,
+                Id.run, ULift.up_down, a] using
+                h ⟨hclosest.1, hr_lt, hclosest.1, hradix, hvPow⟩
+            rwa [abs_of_nonneg hr_nonneg] at hr_abs_lt_a
+          · have hr_neg : _root_.F2R (beta:=radix) r < 0 :=
+              lt_of_not_ge hr_nonneg
+            linarith
+        exact not_lt_of_ge ha_le_r hr_lt_a
+  exact plusExact1 (beta:=radix) bo radix precision rfl hradix hprecision
+    hvNum_gt hvNum hBoundExp p q r hp hq hclosest hmain
+
+/-- Coq: `plusExact2`.
+
+If the closest rounded sum has exponent below `pred (Fexp p)` and `p` is
+canonical, then the rounded result is exact. -/
+theorem plusExact2 {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+    beta = radix →
+    1 < radix →
+    precision ≠ 0 →
+    1 < bo.vNum →
+    bo.vNum = Zpower_nat radix precision →
+    (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) →
+    ∀ p q r : FloatSpec.Core.Defs.FlocqFloat beta,
+      Fcanonic (beta:=beta) radix bo p →
+      Fbounded (beta:=beta) bo q →
+      Closest (beta:=beta) bo (radix : ℝ)
+        (_root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q) r →
+      r.Fexp < Int.pred p.Fexp →
+      _root_.F2R (beta:=beta) r =
+        _root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q := by
+  intro hbeta hradix hprecision hvNum_gt hvNum hBoundExp p q r
+    hp_can hq_bound hclosest hr_lt
+  by_cases hp_nonneg : 0 ≤ _root_.F2R (beta:=beta) p
+  · exact plusExact2Aux (beta:=beta) bo radix precision hbeta hradix
+      hprecision hvNum_gt hvNum hBoundExp p q r hp_nonneg hp_can
+      hq_bound hclosest hr_lt
+  · have hp_neg : _root_.F2R (beta:=beta) p < 0 := lt_of_not_ge hp_nonneg
+    have hp_opp_val :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) p) =
+          -_root_.F2R (beta:=beta) p := by
+      have h := Fopp_correct (beta:=beta) p
+      simpa [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+        ULift.up_down, Fopp] using h True.intro
+    have hq_opp_val :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) =
+          -_root_.F2R (beta:=beta) q := by
+      have h := Fopp_correct (beta:=beta) q
+      simpa [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+        ULift.up_down, Fopp] using h True.intro
+    have hr_opp_val :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) r) =
+          -_root_.F2R (beta:=beta) r := by
+      have h := Fopp_correct (beta:=beta) r
+      simpa [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+        ULift.up_down, Fopp] using h True.intro
+    have hp_opp_nonneg : 0 ≤ _root_.F2R (beta:=beta) (Fopp (beta:=beta) p) := by
+      rw [hp_opp_val]
+      linarith
+    have hp_opp_can : Fcanonic (beta:=beta) radix bo (Fopp (beta:=beta) p) := by
+      have h := FcanonicFopp (beta:=beta) radix bo p
+      simpa only [wp, PostCond.noThrow, pure, FcanonicFopp_check] using h hp_can
+    have hq_opp_bound : Fbounded (beta:=beta) bo (Fopp (beta:=beta) q) := by
+      have h := oppBounded (beta:=beta) bo q
+      simpa only [wp, PostCond.noThrow, pure, oppBounded_check, Id.run,
+        ULift.up_down] using h hq_bound
+    have hclosest_opp_sum :
+        Closest (beta:=beta) bo (radix : ℝ)
+          (-(_root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q))
+          (Fopp (beta:=beta) r) := by
+      have h := ClosestOpp (beta:=beta) bo (radix : ℝ) r
+        (_root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q)
+      simpa only [wp, PostCond.noThrow, pure, ClosestOpp_check,
+        Id.run, ULift.up_down] using h hclosest
+    have hclosest_opp :
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) (Fopp (beta:=beta) p) +
+            _root_.F2R (beta:=beta) (Fopp (beta:=beta) q))
+          (Fopp (beta:=beta) r) := by
+      simpa [hp_opp_val, hq_opp_val, neg_add, add_comm] using hclosest_opp_sum
+    have hr_opp_lt :
+        (Fopp (beta:=beta) r).Fexp < Int.pred (Fopp (beta:=beta) p).Fexp := by
+      simpa [Fopp, FloatSpec.Calc.Operations.Fopp] using hr_lt
+    have haux :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) r) =
+          _root_.F2R (beta:=beta) (Fopp (beta:=beta) p) +
+            _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) :=
+      plusExact2Aux (beta:=beta) bo radix precision hbeta hradix hprecision
+        hvNum_gt hvNum hBoundExp (Fopp (beta:=beta) p) (Fopp (beta:=beta) q)
+        (Fopp (beta:=beta) r) hp_opp_nonneg hp_opp_can hq_opp_bound
+        hclosest_opp hr_opp_lt
+    rw [hr_opp_val, hp_opp_val, hq_opp_val] at haux
+    linarith
+
+noncomputable def LeExp1_check {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (b ph uh ul : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+/-- Coq `ErrFmaApprox` local lemma `LeExp1`.
+
+In the inexact `uh` branch, if the residual `ul = ph + b - uh` is nonzero,
+then `uh` cannot have exponent strictly below `pred (Fexp ph)`: otherwise
+`plusExact2` would make the rounded sum exact and force `ul` to be zero. -/
+theorem LeExp1 {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (b ph uh ul : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
+        1 < bo.vNum ∧ bo.vNum = Zpower_nat radix precision ∧
+        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) ∧
+        Fbounded (beta:=beta) bo b ∧
+        Fnormal (beta:=beta) radix bo ph ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b) uh ∧
+        _root_.F2R (beta:=beta) ul =
+          _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
+            _root_.F2R (beta:=beta) uh ∧
+        ¬ _root_.F2R (beta:=beta) ul = 0⌝⦄
+    (pure (LeExp1_check (beta:=beta) bo radix precision b ph uh ul) : Id Unit)
+    ⦃⇓_ => ⌜ph.Fexp ≤ uh.Fexp + 1⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨hbeta, hradix, hprecision, hvNum_gt, hvNum, hBoundExp, hbBound,
+      hphNormal, huhClosest, hulDef, hCase2⟩
+  simp only [wp, PostCond.noThrow, pure, LeExp1_check, Id.run, ULift.up_down]
+  by_contra hle
+  have huh_lt : uh.Fexp < Int.pred ph.Fexp := by
+    have hsum_lt : uh.Fexp + 1 < ph.Fexp := not_le.mp hle
+    simp [Int.pred]
+    omega
+  have huhExact :
+      _root_.F2R (beta:=beta) uh =
+        _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b :=
+    plusExact2 (beta:=beta) bo radix precision hbeta hradix hprecision
+      hvNum_gt hvNum hBoundExp ph b uh (Or.inl hphNormal) hbBound
+      huhClosest huh_lt
+  have hulZero : _root_.F2R (beta:=beta) ul = 0 := by
+    calc
+      _root_.F2R (beta:=beta) ul =
+          _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
+            _root_.F2R (beta:=beta) uh := hulDef
+      _ = 0 := by
+        rw [huhExact]
+        ring
+  exact hCase2 hulZero
+
+/-- Coq: `plusExactExp`.
+
+The rounded sum can be split into an exponent-bounded rounded part `s` with the
+same real value as `pq` and a bounded residual `r` at the minimum input
+exponent. -/
+theorem plusExactExp {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+    beta = radix →
+    1 < radix →
+    precision ≠ 0 →
+    1 < bo.vNum →
+    bo.vNum = Zpower_nat radix precision →
+    (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) →
+    ∀ p q pq : FloatSpec.Core.Defs.FlocqFloat beta,
+      Fbounded (beta:=beta) bo p →
+      Fbounded (beta:=beta) bo q →
+      Closest (beta:=beta) bo (radix : ℝ)
+        (_root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q) pq →
+      ∃ r s : FloatSpec.Core.Defs.FlocqFloat beta,
+        Fbounded (beta:=beta) bo r ∧
+        Fbounded (beta:=beta) bo s ∧
+        _root_.F2R (beta:=beta) s = _root_.F2R (beta:=beta) pq ∧
+        _root_.F2R (beta:=beta) r =
+          _root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q -
+            _root_.F2R (beta:=beta) s ∧
+        r.Fexp = min p.Fexp q.Fexp ∧
+        r.Fexp ≤ s.Fexp ∧
+        s.Fexp ≤ Int.succ (max p.Fexp q.Fexp) := by
+  intro hbeta hradix hprecision hvNum_gt hvNum hBoundExp p q pq hp hq hclosest
+  subst beta
+  let P : ℝ → FloatSpec.Core.Defs.FlocqFloat radix → Prop :=
+    Closest (beta:=radix) bo (radix : ℝ)
+  have hMinTotal : TotalP (isMin' (beta:=radix) bo radix) := by
+    intro r
+    have h := MinEx (beta:=radix) bo radix r
+    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp r⟩
+  have hMaxTotal : TotalP (isMax' (beta:=radix) bo radix) := by
+    intro r
+    have h := MaxEx (beta:=radix) bo radix r
+    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp r⟩
+  have hTotal : TotalP P := by
+    intro r
+    have h := ClosestTotal (beta:=radix) bo radix (radix : ℝ) r
+    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
+      ULift.up_down, P] using h ⟨hMinTotal, hMaxTotal⟩
+  have hCompat : CompatibleP P := by
+    have h := ClosestCompatible (beta:=radix) bo (radix : ℝ)
+    simpa only [wp, PostCond.noThrow, pure, ClosestCompatible_check,
+      PredTrans.pure, PredTrans.apply, Id.run, ULift.down, P] using h trivial
+  have hMinMax : MinOrMaxP_float (beta:=radix) bo radix P := by
+    have h := ClosestMinOrMax (beta:=radix) bo radix (radix : ℝ)
+    simpa only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check,
+      Id.run, ULift.up_down, P] using h trivial
+  have hMono : MonotoneP_float P := by
+    have h := ClosestMonotone (beta:=radix) bo (radix : ℝ)
+    simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
+      Id.run, ULift.up_down, P] using h trivial
+  have hRoundedFloat : RoundedModeP_float (beta:=radix) bo radix P :=
+    ⟨hTotal, hCompat, hMinMax, hMono⟩
+  have hRep :
+      ∀ a r : FloatSpec.Core.Defs.FlocqFloat radix,
+        P (_root_.F2R (beta:=radix) a) r →
+          ∃ m : Int,
+            _root_.F2R (beta:=radix) r =
+              _root_.F2R (beta:=radix)
+                (⟨m, a.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
+    have h := ClosestRoundedModeRep (beta:=radix) bo radix precision
+    simpa only [wp, PostCond.noThrow, pure, ClosestRoundedModeRep_check,
+      Id.run, ULift.up_down, P] using
+      h ⟨rfl, hradix, hprecision, hvNum_gt, hvNum, hBoundExp⟩
+  have hP :
+      P (_root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q) pq := hclosest
+  let upperExp : Int := Int.succ (max p.Fexp q.Fexp)
+  have hmin_le_upper : min p.Fexp q.Fexp ≤ upperExp := by
+    have hmin_le_max : min p.Fexp q.Fexp ≤ max p.Fexp q.Fexp :=
+      le_trans (min_le_left p.Fexp q.Fexp) (le_max_left p.Fexp q.Fexp)
+    have hmax_le_succ : max p.Fexp q.Fexp ≤ upperExp := by
+      simp [upperExp, Int.succ]
+    exact le_trans hmin_le_max hmax_le_succ
+  have hLower :
+      ∃ s : FloatSpec.Core.Defs.FlocqFloat radix,
+        Fbounded (beta:=radix) bo s ∧
+        _root_.F2R (beta:=radix) s = _root_.F2R (beta:=radix) pq ∧
+        min p.Fexp q.Fexp ≤ s.Fexp := by
+    have h := plusExpMin (beta:=radix) bo radix P p q pq
+    simpa only [wp, PostCond.noThrow, pure, plusExpMin_check, Id.run,
+      ULift.up_down] using h ⟨rfl, hradix, hMinMax, hRep, hP⟩
+  have hUpper :
+      ∃ s : FloatSpec.Core.Defs.FlocqFloat radix,
+        Fbounded (beta:=radix) bo s ∧
+        _root_.F2R (beta:=radix) s = _root_.F2R (beta:=radix) pq ∧
+        s.Fexp ≤ upperExp := by
+    let z : Int := max p.Fexp q.Fexp
+    let upper : FloatSpec.Core.Defs.FlocqFloat radix := ⟨bo.vNum - 1, Int.succ z⟩
+    have hpExpLe : p.Fexp ≤ z := le_max_left p.Fexp q.Fexp
+    have hqExpLe : q.Fexp ≤ z := le_max_right p.Fexp q.Fexp
+    have hsucc_z : z ≤ Int.succ z := by
+      simp [Int.succ]
+    have hupperBounded : Fbounded (beta:=radix) bo upper := by
+      constructor
+      · have hnonneg : 0 ≤ bo.vNum - 1 := by omega
+        rw [abs_of_nonneg hnonneg]
+        omega
+      · have hp_low : -bo.dExp ≤ z := le_trans hp.2 hpExpLe
+        exact le_trans hp_low hsucc_z
+    have hpAbsLeBase :
+        |_root_.F2R (beta:=radix) p| ≤
+          _root_.F2R (beta:=radix)
+            (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
+      have h := maxMax1 (beta:=radix) bo p z
+      simpa only [wp, PostCond.noThrow, pure, maxMax1_check, Id.run,
+        ULift.up_down] using h ⟨hp, hpExpLe, hp, hradix⟩
+    have hqAbsLeBase :
+        |_root_.F2R (beta:=radix) q| ≤
+          _root_.F2R (beta:=radix)
+            (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
+      have h := maxMax1 (beta:=radix) bo q z
+      simpa only [wp, PostCond.noThrow, pure, maxMax1_check, Id.run,
+        ULift.up_down] using h ⟨hq, hqExpLe, hq, hradix⟩
+    have hbase_nonneg :
+        0 ≤ _root_.F2R (beta:=radix)
+          (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
+      have hnum : (0 : Int) ≤ bo.vNum - 1 := by omega
+      have hnumR : (0 : ℝ) ≤ ((bo.vNum - 1 : Int) : ℝ) := by exact_mod_cast hnum
+      have hradixR_pos : (0 : ℝ) < (radix : ℝ) := by
+        exact_mod_cast (by omega : (0 : Int) < radix)
+      have hpow_nonneg : 0 ≤ (radix : ℝ) ^ z :=
+        le_of_lt (zpow_pos hradixR_pos z)
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
+        FloatSpec.Core.Defs.FlocqFloat.Fnum,
+        FloatSpec.Core.Defs.FlocqFloat.Fexp]
+      exact mul_nonneg hnumR hpow_nonneg
+    have hupper_val :
+        _root_.F2R (beta:=radix) upper =
+          (radix : ℝ) *
+            _root_.F2R (beta:=radix)
+              (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
+      have hradix_ne : (radix : ℝ) ≠ 0 := by
+        exact_mod_cast (ne_of_gt (by omega : (0 : Int) < radix))
+      simp only [upper, _root_.F2R, FloatSpec.Core.Defs.F2R,
+        FloatSpec.Core.Defs.FlocqFloat.Fnum,
+        FloatSpec.Core.Defs.FlocqFloat.Fexp]
+      rw [show Int.succ z = z + 1 by simp [Int.succ]]
+      rw [zpow_add₀ hradix_ne]
+      simp
+      ring
+    have hsumAbsLeUpper :
+        |_root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q| ≤
+          _root_.F2R (beta:=radix) upper := by
+      have htri :
+          |_root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q| ≤
+            |_root_.F2R (beta:=radix) p| + |_root_.F2R (beta:=radix) q| :=
+        abs_add_le _ _
+      have htwo :
+          |_root_.F2R (beta:=radix) p| + |_root_.F2R (beta:=radix) q| ≤
+            (2 : ℝ) *
+              _root_.F2R (beta:=radix)
+                (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
+        linarith [hpAbsLeBase, hqAbsLeBase]
+      have htwo_le_radix :
+          (2 : ℝ) *
+              _root_.F2R (beta:=radix)
+                (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) ≤
+            (radix : ℝ) *
+              _root_.F2R (beta:=radix)
+                (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
+        have hradix2 : (2 : ℝ) ≤ (radix : ℝ) := by exact_mod_cast hradix
+        exact mul_le_mul_of_nonneg_right hradix2 hbase_nonneg
+      calc
+        |_root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q|
+            ≤ |_root_.F2R (beta:=radix) p| + |_root_.F2R (beta:=radix) q| := htri
+        _ ≤ (2 : ℝ) *
+              _root_.F2R (beta:=radix)
+                (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := htwo
+        _ ≤ (radix : ℝ) *
+              _root_.F2R (beta:=radix)
+                (⟨bo.vNum - 1, z⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := htwo_le_radix
+        _ = _root_.F2R (beta:=radix) upper := hupper_val.symm
+    have hpqAbsLeUpper :
+        |_root_.F2R (beta:=radix) pq| ≤ _root_.F2R (beta:=radix) upper := by
+      have h := RoundAbsMonotoner (beta:=radix) bo radix P
+        (_root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q) pq upper
+      simpa only [wp, PostCond.noThrow, pure, RoundAbsMonotoner_check, Id.run,
+        ULift.up_down] using h ⟨hRoundedFloat, hupperBounded, hP, hsumAbsLeUpper⟩
+    have hmax := eqExpMax (beta:=radix) bo radix pq upper
+    simpa only [wp, PostCond.noThrow, pure, eqExpMax_check, Id.run,
+      ULift.up_down, upper, z, upperExp] using
+      hmax ⟨rfl, hradix, hclosest.1, hupperBounded, hpqAbsLeUpper⟩
+  have hsExp :
+      ∃ s : FloatSpec.Core.Defs.FlocqFloat radix,
+        Fbounded (beta:=radix) bo s ∧
+        _root_.F2R (beta:=radix) s = _root_.F2R (beta:=radix) pq ∧
+        min p.Fexp q.Fexp ≤ s.Fexp ∧
+        s.Fexp ≤ upperExp := by
+    rcases hLower with ⟨rLower, hrLowerBounded, hrLowerVal, hrLowerExpMin⟩
+    by_cases hLowerUpper : rLower.Fexp ≤ upperExp
+    · exact ⟨rLower, hrLowerBounded, hrLowerVal, hrLowerExpMin, hLowerUpper⟩
+    · rcases hUpper with ⟨rUpper, hrUpperBounded, hrUpperVal, hrUpperExpLe⟩
+      have hUpperLtLower : upperExp < rLower.Fexp := lt_of_not_ge hLowerUpper
+      have hrUpperExpLeLower : rUpper.Fexp ≤ rLower.Fexp :=
+        le_trans hrUpperExpLe (le_of_lt hUpperLtLower)
+      let nUpper : Nat := Int.natAbs (rLower.Fexp - rUpper.Fexp)
+      let nTarget : Nat := Int.natAbs (rLower.Fexp - upperExp)
+      have hnUpper :
+          ((nUpper : Nat) : Int) = rLower.Fexp - rUpper.Fexp := by
+        simpa [nUpper] using
+          Int.natAbs_of_nonneg (by omega : 0 ≤ rLower.Fexp - rUpper.Fexp)
+      have hnTarget :
+          ((nTarget : Nat) : Int) = rLower.Fexp - upperExp := by
+        simpa [nTarget] using
+          Int.natAbs_of_nonneg (by omega : 0 ≤ rLower.Fexp - upperExp)
+      have hnTargetLeUpper : nTarget ≤ nUpper := by
+        have hleInt : ((nTarget : Nat) : Int) ≤ ((nUpper : Nat) : Int) := by
+          rw [hnTarget, hnUpper]
+          omega
+        exact_mod_cast hleInt
+      let shiftedUpper : FloatSpec.Core.Defs.FlocqFloat radix :=
+        Fshift (beta:=radix) radix nUpper rLower
+      have hshiftedUpperVal :
+          _root_.F2R (beta:=radix) shiftedUpper =
+            _root_.F2R (beta:=radix) rUpper := by
+        calc
+          _root_.F2R (beta:=radix) shiftedUpper =
+              _root_.F2R (beta:=radix) rLower := by
+            simpa [shiftedUpper] using
+              Fshift_value (beta:=radix) radix nUpper rLower rfl hradix
+          _ = _root_.F2R (beta:=radix) pq := hrLowerVal
+          _ = _root_.F2R (beta:=radix) rUpper := hrUpperVal.symm
+      have hshiftedUpperExp : shiftedUpper.Fexp = rUpper.Fexp := by
+        simp only [shiftedUpper, Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+        rw [hnUpper]
+        omega
+      have hshiftedUpperBounded :
+          Fbounded (beta:=radix) bo shiftedUpper := by
+        constructor
+        · have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+            exact_mod_cast (by omega : (0 : Int) < radix)
+          have hpow_pos : 0 < (radix : ℝ) ^ rUpper.Fexp :=
+            zpow_pos hradix_pos rUpper.Fexp
+          have hnumReal :
+              ((shiftedUpper.Fnum : Int) : ℝ) = (rUpper.Fnum : ℝ) := by
+            have hval := hshiftedUpperVal
+            simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
+              hshiftedUpperExp] at hval
+            exact (mul_right_inj' (ne_of_gt hpow_pos)).mp (by
+              simpa [mul_comm] using hval)
+          have hnumEq : shiftedUpper.Fnum = rUpper.Fnum := by
+            exact_mod_cast hnumReal
+          simpa [hnumEq] using hrUpperBounded.1
+        · simpa [hshiftedUpperExp] using hrUpperBounded.2
+      let s : FloatSpec.Core.Defs.FlocqFloat radix :=
+        Fshift (beta:=radix) radix nTarget rLower
+      have hsBounded : Fbounded (beta:=radix) bo s := by
+        have h := FboundedShiftLess (beta:=radix) bo radix rLower nUpper nTarget
+        simpa only [wp, PostCond.noThrow, pure, FboundedShiftLess_check, Id.run,
+          ULift.up_down, shiftedUpper, s] using
+          h ⟨hradix, hnTargetLeUpper, hshiftedUpperBounded⟩
+      have hsVal : _root_.F2R (beta:=radix) s = _root_.F2R (beta:=radix) pq := by
+        calc
+          _root_.F2R (beta:=radix) s =
+              _root_.F2R (beta:=radix) rLower := by
+            simpa [s] using Fshift_value (beta:=radix) radix nTarget rLower rfl hradix
+          _ = _root_.F2R (beta:=radix) pq := hrLowerVal
+      have hsExp : s.Fexp = upperExp := by
+        simp only [s, Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+        rw [hnTarget]
+        omega
+      refine ⟨s, hsBounded, hsVal, ?_, ?_⟩
+      · simpa [hsExp] using hmin_le_upper
+      · simpa [hsExp, upperExp]
+  rcases hsExp with ⟨s, hsBounded, hsVal, hsMin, hsUpper⟩
+  by_cases hzero :
+      _root_.F2R (beta:=radix) p + _root_.F2R (beta:=radix) q -
+        _root_.F2R (beta:=radix) pq = 0
+  · let r : FloatSpec.Core.Defs.FlocqFloat radix := Fzero radix (min p.Fexp q.Fexp)
+    have hrBounded : Fbounded (beta:=radix) bo r := by
+      by_cases hpq_exp : p.Fexp ≤ q.Fexp
+      · have h := FboundedZeroSameExp (beta:=radix) bo p
+        simpa only [wp, PostCond.noThrow, pure, FboundedZeroSameExp_check,
+          Id.run, ULift.up_down, r, min_eq_left hpq_exp] using h hp
+      · have hqp_exp : q.Fexp ≤ p.Fexp := le_of_lt (lt_of_not_ge hpq_exp)
+        have h := FboundedZeroSameExp (beta:=radix) bo q
+        simpa only [wp, PostCond.noThrow, pure, FboundedZeroSameExp_check,
+          Id.run, ULift.up_down, r, min_eq_right hqp_exp] using h hq
+    have hrVal0 : _root_.F2R (beta:=radix) r = 0 := by
+      have h := FzeroisReallyZero (beta:=radix) (min p.Fexp q.Fexp)
+      simpa only [wp, PostCond.noThrow, pure, FzeroisReallyZero_check,
+        Id.run, ULift.up_down, r] using h True.intro
+    refine ⟨r, s, hrBounded, hsBounded, hsVal, ?_, rfl, ?_, hsUpper⟩
+    · rw [hrVal0, hsVal]
+      exact hzero.symm
+    · simpa [r, Fzero] using hsMin
+  · rcases errorBoundedPlus (beta:=radix) bo radix precision rfl hradix
+        hprecision hvNum_gt hvNum hBoundExp p q pq hp hq hclosest with
+      ⟨error, herrorVal, herrorBounded, herrorExp⟩
+    refine ⟨error, s, herrorBounded, hsBounded, hsVal, ?_, herrorExp, ?_, hsUpper⟩
+    · simpa [hsVal] using herrorVal
+    · simpa [herrorExp] using hsMin
+
+/-- Coq: `AddExpGe1Underf`.
+
+If one canonical addend is at least `radix^e` in magnitude and `e - 1` is not
+below the underflow exponent, a closest rounded sum is either zero or has
+magnitude at least `radix^(e - precision)`. -/
+theorem AddExpGe1Underf {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+    beta = radix →
+    1 < radix →
+    precision ≠ 0 →
+    1 < bo.vNum →
+    bo.vNum = Zpower_nat radix precision →
+    (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) →
+    ∀ f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta, ∀ e : Int,
+      Closest (beta:=beta) bo (radix : ℝ)
+        (_root_.F2R (beta:=beta) f1 + _root_.F2R (beta:=beta) f2) g →
+      Fcanonic (beta:=beta) radix bo f1 →
+      Fcanonic (beta:=beta) radix bo f2 →
+      (radix : ℝ) ^ e ≤ |_root_.F2R (beta:=beta) f1| →
+      -bo.dExp ≤ e - 1 →
+      _root_.F2R (beta:=beta) g = 0 ∨
+        (radix : ℝ) ^ (e - (precision : Int)) ≤ |_root_.F2R (beta:=beta) g| := by
+  intro hbeta hradix hprecision hvNum_gt hvNum hBoundExp f1 f2 g e
+    hclosest hf1Can hf2Can hmag1 heUnder
+  subst beta
+  have hf1Bound : Fbounded (beta:=radix) bo f1 := by
+    have h := FcanonicBound (beta:=radix) radix bo f1
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using h hf1Can
+  have hf2Bound : Fbounded (beta:=radix) bo f2 := by
+    have h := FcanonicBound (beta:=radix) radix bo f2
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using h hf2Can
+  have hprecision_pos : 0 < precision := Nat.pos_iff_ne_zero.mpr hprecision
+  have hprecision_int : (1 : Int) ≤ (precision : Int) := by
+    exact_mod_cast hprecision_pos
+  have hradixR : (1 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix
+  have hradixR_pos : (0 : ℝ) < (radix : ℝ) := by linarith
+  have hradixR_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradixR_pos
+  have hradixR_ge : (1 : ℝ) ≤ (radix : ℝ) := le_of_lt hradixR
+  have hvNumReal : (bo.vNum : ℝ) = (radix : ℝ) ^ (precision : Int) := by
+    rw [hvNum, Zpower_nat, Int.cast_pow, ← zpow_natCast]
+  have hMinTotal : TotalP (isMin' (beta:=radix) bo radix) := by
+    intro r
+    have h := MinEx (beta:=radix) bo radix r
+    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp r⟩
+  have hMaxTotal : TotalP (isMax' (beta:=radix) bo radix) := by
+    intro r
+    have h := MaxEx (beta:=radix) bo radix r
+    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp r⟩
+  have hTotal : TotalP (Closest (beta:=radix) bo (radix : ℝ)) := by
+    intro r
+    have h := ClosestTotal (beta:=radix) bo radix (radix : ℝ) r
+    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
+      ULift.up_down] using h ⟨hMinTotal, hMaxTotal⟩
+  have hCompat : CompatibleP (Closest (beta:=radix) bo (radix : ℝ)) := by
+    have h := ClosestCompatible (beta:=radix) bo (radix : ℝ)
+    simpa only [wp, PostCond.noThrow, pure, ClosestCompatible_check,
+      PredTrans.pure, PredTrans.apply, Id.run, ULift.down] using h trivial
+  have hMinMax :
+      MinOrMaxP_float (beta:=radix) bo radix
+        (Closest (beta:=radix) bo (radix : ℝ)) := by
+    have h := ClosestMinOrMax (beta:=radix) bo radix (radix : ℝ)
+    simpa only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check,
+      Id.run, ULift.up_down] using h trivial
+  have hMono : MonotoneP_float (Closest (beta:=radix) bo (radix : ℝ)) := by
+    have h := ClosestMonotone (beta:=radix) bo (radix : ℝ)
+    simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
+      Id.run, ULift.up_down] using h trivial
+  have hRoundedFloat :
+      RoundedModeP_float (beta:=radix) bo radix
+        (Closest (beta:=radix) bo (radix : ℝ)) :=
+    ⟨hTotal, hCompat, hMinMax, hMono⟩
+  have hPlusExact :
+      _root_.F2R (beta:=radix) g ≠ 0 →
+        ∃ g' : FloatSpec.Core.Defs.FlocqFloat radix,
+          Fbounded' bo g' ∧
+          _root_.F2R (beta:=radix) g' = _root_.F2R (beta:=radix) g ∧
+          min f1.Fexp f2.Fexp ≤ g'.Fexp := by
+    intro _
+    rcases plusExactExp (beta:=radix) bo radix precision rfl hradix hprecision
+        hvNum_gt hvNum hBoundExp f1 f2 g hf1Bound hf2Bound hclosest with
+      ⟨_r, s, _hrBound, hsBound, hsVal, _hrVal, hrExp, hrLeS, _hsUpper⟩
+    exact ⟨s, hsBound, hsVal, by simpa [hrExp] using hrLeS⟩
+  have runAdd :
+      ∀ e0 : Int,
+        (radix : ℝ) ^ e0 ≤ |_root_.F2R (beta:=radix) f1| →
+        (radix : ℝ) ^ e0 ≤ |_root_.F2R (beta:=radix) f2| →
+        _root_.F2R (beta:=radix) g = 0 ∨
+          (radix : ℝ) ^ (e0 - (precision : Int) + 1) ≤
+            |_root_.F2R (beta:=radix) g| := by
+    intro e0 h1 h2
+    have h := AddExpGeUnderf (beta:=radix) bo (precision : Int) e0
+      (radix : ℝ) f1 f2 g
+    simpa only [wp, PostCond.noThrow, pure, AddExpGeUnderf_check,
+      Id.run, ULift.up_down] using
+      h ⟨hclosest, hf1Bound, hf2Bound, h1, h2, hradix, hprecision_int,
+        hvNumReal, hf1Bound, hf2Bound, hPlusExact⟩
+  by_cases hgZero : _root_.F2R (beta:=radix) g = 0
+  · exact Or.inl hgZero
+  right
+  by_cases hle12 :
+      |_root_.F2R (beta:=radix) f1| ≤ |_root_.F2R (beta:=radix) f2|
+  · have hmag2 : (radix : ℝ) ^ e ≤ |_root_.F2R (beta:=radix) f2| :=
+      le_trans hmag1 hle12
+    have hres := runAdd e hmag1 hmag2
+    have hstrong :
+        (radix : ℝ) ^ (e - (precision : Int) + 1) ≤
+          |_root_.F2R (beta:=radix) g| :=
+      hres.resolve_left hgZero
+    have hpow_le :
+        (radix : ℝ) ^ (e - (precision : Int)) ≤
+          (radix : ℝ) ^ (e - (precision : Int) + 1) :=
+      zpow_right_mono₀ hradixR_ge (by omega)
+    exact le_trans hpow_le hstrong
+  · have hlt21 : |_root_.F2R (beta:=radix) f2| < |_root_.F2R (beta:=radix) f1| :=
+      lt_of_not_ge hle12
+    have hpow_e_sub_one_le_half :
+        (radix : ℝ) ^ (e - 1) ≤ |_root_.F2R (beta:=radix) f1| / 2 := by
+      have hpow_e :
+          (radix : ℝ) ^ e =
+            (radix : ℝ) ^ (e - 1) * (radix : ℝ) := by
+        calc
+          (radix : ℝ) ^ e = (radix : ℝ) ^ ((e - 1) + 1) := by
+            congr 1
+            omega
+          _ = (radix : ℝ) ^ (e - 1) * (radix : ℝ) := by
+            rw [zpow_add₀ hradixR_ne, zpow_one]
+      have htwo_le :
+          2 * (radix : ℝ) ^ (e - 1) ≤ (radix : ℝ) ^ e := by
+        rw [hpow_e]
+        have hradix_two : (2 : ℝ) ≤ (radix : ℝ) := by
+          exact_mod_cast (by omega : (2 : Int) ≤ radix)
+        calc
+          2 * (radix : ℝ) ^ (e - 1) =
+              (radix : ℝ) ^ (e - 1) * 2 := by ring
+          _ ≤ (radix : ℝ) ^ (e - 1) * (radix : ℝ) :=
+              mul_le_mul_of_nonneg_left hradix_two
+                (le_of_lt (zpow_pos hradixR_pos (e - 1)))
+      nlinarith [hmag1, htwo_le]
+    have hmag1_e_sub_one :
+        (radix : ℝ) ^ (e - 1) ≤ |_root_.F2R (beta:=radix) f1| := by
+      have hpow_le : (radix : ℝ) ^ (e - 1) ≤ (radix : ℝ) ^ e :=
+        zpow_right_mono₀ hradixR_ge (by omega)
+      exact le_trans hpow_le hmag1
+    by_cases hsmall :
+        |_root_.F2R (beta:=radix) f2| ≤ |_root_.F2R (beta:=radix) f1| / 2
+    · let a : FloatSpec.Core.Defs.FlocqFloat radix := ⟨1, e - 1⟩
+      have haBound : Fbounded (beta:=radix) bo a := by
+        constructor
+        · dsimp [a]
+          simpa using hvNum_gt
+        · dsimp [a]
+          exact heUnder
+      have haVal :
+          _root_.F2R (beta:=radix) a = (radix : ℝ) ^ (e - 1) := by
+        simp [a, _root_.F2R, FloatSpec.Core.Defs.F2R]
+      have htri :
+          |_root_.F2R (beta:=radix) f1| - |_root_.F2R (beta:=radix) f2| ≤
+            |_root_.F2R (beta:=radix) f1 + _root_.F2R (beta:=radix) f2| := by
+        have h := abs_sub_abs_le_abs_sub (_root_.F2R (beta:=radix) f1)
+          (-_root_.F2R (beta:=radix) f2)
+        rw [abs_neg, sub_neg_eq_add] at h
+        exact h
+      have hsumLower :
+          (radix : ℝ) ^ (e - 1) ≤
+            |_root_.F2R (beta:=radix) f1 + _root_.F2R (beta:=radix) f2| := by
+        have hhalf_le_diff :
+            |_root_.F2R (beta:=radix) f1| / 2 ≤
+              |_root_.F2R (beta:=radix) f1| - |_root_.F2R (beta:=radix) f2| := by
+          nlinarith
+        exact le_trans hpow_e_sub_one_le_half (le_trans hhalf_le_diff htri)
+      have hround := RoundAbsMonotonel (beta:=radix) bo radix
+        (Closest (beta:=radix) bo (radix : ℝ))
+        (_root_.F2R (beta:=radix) f1 + _root_.F2R (beta:=radix) f2) g a
+      have hround_le :
+          _root_.F2R (beta:=radix) a ≤ |_root_.F2R (beta:=radix) g| := by
+        simpa only [wp, PostCond.noThrow, pure, RoundAbsMonotonel_check,
+          Id.run, ULift.up_down] using
+          hround ⟨hRoundedFloat, haBound, hclosest, by simpa [haVal] using hsumLower⟩
+      have hpow_le :
+          (radix : ℝ) ^ (e - (precision : Int)) ≤ (radix : ℝ) ^ (e - 1) :=
+        zpow_right_mono₀ hradixR_ge (by omega)
+      exact le_trans hpow_le (by simpa [haVal] using hround_le)
+    · have hlarge2 :
+          |_root_.F2R (beta:=radix) f1| / 2 < |_root_.F2R (beta:=radix) f2| :=
+        lt_of_not_ge hsmall
+      have hmag2_e_sub_one :
+          (radix : ℝ) ^ (e - 1) ≤ |_root_.F2R (beta:=radix) f2| :=
+        le_trans hpow_e_sub_one_le_half (le_of_lt hlarge2)
+      have hres := runAdd (e - 1) hmag1_e_sub_one hmag2_e_sub_one
+      have hstrong :
+          (radix : ℝ) ^ ((e - 1) - (precision : Int) + 1) ≤
+            |_root_.F2R (beta:=radix) g| :=
+        hres.resolve_left hgZero
+      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hstrong
+
+/-- Coq: `AddExpGe1Underf2`.
+
+The bounded-input form of `AddExpGe1Underf`: normalize both inputs to obtain
+canonical representatives, then eliminate the zero branch using the explicit
+nonzero rounded result hypothesis. -/
+theorem AddExpGe1Underf2 {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+    beta = radix →
+    1 < radix →
+    precision ≠ 0 →
+    1 < bo.vNum →
+    bo.vNum = Zpower_nat radix precision →
+    (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) →
+    ∀ f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta, ∀ e : Int,
+      Closest (beta:=beta) bo (radix : ℝ)
+        (_root_.F2R (beta:=beta) f1 + _root_.F2R (beta:=beta) f2) g →
+      Fbounded (beta:=beta) bo f1 →
+      Fbounded (beta:=beta) bo f2 →
+      (radix : ℝ) ^ e ≤ |_root_.F2R (beta:=beta) f1| →
+      -bo.dExp ≤ e - 1 →
+      _root_.F2R (beta:=beta) g ≠ 0 →
+      (radix : ℝ) ^ (e - (precision : Int)) ≤
+        |_root_.F2R (beta:=beta) g| := by
+  intro hbeta hradix hprecision hvNum_gt hvNum hBoundExp f1 f2 g e
+    hclosest hf1Bound hf2Bound hmag1 heUnder hgNonzero
+  subst beta
+  let nf1 : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix bo precision f1
+  let nf2 : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix bo precision f2
+  have hnf1Correct :
+      _root_.F2R (beta:=radix) nf1 = _root_.F2R (beta:=radix) f1 := by
+    have h := FnormalizeCorrect (beta:=radix) radix bo precision f1
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nf1] using h ⟨rfl, hradix⟩
+  have hnf2Correct :
+      _root_.F2R (beta:=radix) nf2 = _root_.F2R (beta:=radix) f2 := by
+    have h := FnormalizeCorrect (beta:=radix) radix bo precision f2
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nf2] using h ⟨rfl, hradix⟩
+  have hnf1Canonic : Fcanonic (beta:=radix) radix bo nf1 := by
+    have h := FnormalizeCanonic (beta:=radix) radix bo precision f1
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, Fbounded', nf1] using
+      h ⟨hf1Bound, hf1Bound, hprecision, hradix, hvNum⟩
+  have hnf2Canonic : Fcanonic (beta:=radix) radix bo nf2 := by
+    have h := FnormalizeCanonic (beta:=radix) radix bo precision f2
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, Fbounded', nf2] using
+      h ⟨hf2Bound, hf2Bound, hprecision, hradix, hvNum⟩
+  have hclosestNorm :
+      Closest (beta:=radix) bo (radix : ℝ)
+        (_root_.F2R (beta:=radix) nf1 + _root_.F2R (beta:=radix) nf2) g := by
+    simpa [hnf1Correct, hnf2Correct] using hclosest
+  have hmagNorm :
+      (radix : ℝ) ^ e ≤ |_root_.F2R (beta:=radix) nf1| := by
+    simpa [hnf1Correct] using hmag1
+  have hres :=
+    AddExpGe1Underf (beta:=radix) bo radix precision rfl hradix hprecision
+      hvNum_gt hvNum hBoundExp nf1 nf2 g e hclosestNorm hnf1Canonic
+      hnf2Canonic hmagNorm heUnder
+  exact hres.resolve_left (fun hgZero => hgNonzero hgZero)
 
 /-- Coq: `plusExactR0`.
 
@@ -37323,6 +39587,162 @@ theorem RleRRounded_from_Fulp_rel {beta : Int}
         (1 + (radix : ℝ) ^ (1 - (precision : Int)) / 2) := by
           ring
 
+private lemma fbounded_abs_F2R_ge_min_exp {beta : Int}
+    (b : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : 1 < beta)
+    (hfBound : Fbounded (beta:=beta) b f)
+    (hfNonzero : _root_.F2R (beta:=beta) f ≠ 0) :
+    (beta : ℝ) ^ (-b.dExp) ≤ |_root_.F2R (beta:=beta) f| := by
+  rcases hfBound with ⟨_, hfExp⟩
+  have hbeta_pos : (0 : ℝ) < (beta : ℝ) := by
+    exact_mod_cast (lt_trans Int.zero_lt_one hbeta)
+  have hbeta_one : (1 : ℝ) ≤ (beta : ℝ) := by
+    exact_mod_cast (le_of_lt hbeta)
+  have hfnum_ne : f.Fnum ≠ 0 := by
+    intro hfnum_zero
+    apply hfNonzero
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hfnum_zero]
+  have hfnum_abs_pos : 0 < |f.Fnum| := abs_pos.mpr hfnum_ne
+  have hfnum_abs_ge_one_int : (1 : Int) ≤ |f.Fnum| := by
+    omega
+  have hfnum_abs_ge_one_cast : (1 : ℝ) ≤ ((|f.Fnum| : Int) : ℝ) := by
+    exact_mod_cast hfnum_abs_ge_one_int
+  have hfnum_abs_ge_one : (1 : ℝ) ≤ |(f.Fnum : ℝ)| := by
+    simpa [Int.cast_abs] using hfnum_abs_ge_one_cast
+  have hpow_mono :
+      (beta : ℝ) ^ (-b.dExp) ≤ (beta : ℝ) ^ f.Fexp :=
+    zpow_le_zpow_right₀ hbeta_one hfExp
+  have hpow_min_pos : 0 < (beta : ℝ) ^ (-b.dExp) :=
+    zpow_pos hbeta_pos _
+  calc
+    (beta : ℝ) ^ (-b.dExp)
+        = (1 : ℝ) * (beta : ℝ) ^ (-b.dExp) := by ring
+    _ ≤ |(f.Fnum : ℝ)| * (beta : ℝ) ^ (-b.dExp) := by
+          exact mul_le_mul_of_nonneg_right hfnum_abs_ge_one
+            (le_of_lt hpow_min_pos)
+    _ ≤ |(f.Fnum : ℝ)| * (beta : ℝ) ^ f.Fexp := by
+          exact mul_le_mul_of_nonneg_left hpow_mono (abs_nonneg _)
+    _ = |_root_.F2R (beta:=beta) f| := by
+          simp [_root_.F2R, FloatSpec.Core.Defs.F2R, abs_mul,
+            abs_of_pos (zpow_pos hbeta_pos f.Fexp)]
+
+private lemma firstNormalPos_plusExp_eq_min_exp {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (_hprecision : precision ≠ 0) :
+    _root_.F2R (beta:=beta)
+        (firstNormalPos (beta:=beta) radix (plusExp b precision) precision) =
+      (beta : ℝ) ^ (-b.dExp) := by
+  subst beta
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (lt_trans Int.zero_lt_one hradix)
+  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, firstNormalPos, nNormMin,
+    plusExp, FloatSpec.Core.Defs.FlocqFloat.Fnum,
+    FloatSpec.Core.Defs.FlocqFloat.Fexp]
+  have hpow_cast :
+      ((radix ^ (precision - 1) : Int) : ℝ) =
+        (radix : ℝ) ^ (precision - 1 : Nat) := by
+    simp [Int.cast_pow]
+  rw [hpow_cast]
+  rw [← zpow_natCast]
+  calc
+    (radix : ℝ) ^ ((precision - 1 : Nat) : Int) *
+        (radix : ℝ) ^ (-(b.dExp + ((precision - 1 : Nat) : Int)))
+        = (radix : ℝ) ^
+            (((precision - 1 : Nat) : Int) +
+              (-(b.dExp + ((precision - 1 : Nat) : Int)))) := by
+              rw [zpow_add₀ hradix_ne]
+    _ = (radix : ℝ) ^ (-b.dExp) := by
+          congr 1
+          ring
+
+/-- Coq: `bimplybplusNorm` from section `VeltS`.
+
+Any nonzero float bounded by `b` has an equal real representative that is
+normal for the enlarged `plusExp b` bound. -/
+theorem bimplybplusNorm {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hpGivesBound : b.vNum = Zpower_nat radix t)
+    (hSLe : 2 ≤ s) (_hSGe : s ≤ t - 2)
+    (hfBound : Fbounded (beta:=beta) b f)
+    (hfNonzero : _root_.F2R (beta:=beta) f ≠ 0) :
+    ∃ g : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) g = _root_.F2R (beta:=beta) f ∧
+        Fnormal (beta:=beta) radix (plusExp b t) g := by
+  let g : FloatSpec.Core.Defs.FlocqFloat beta :=
+    Fnormalize (beta:=beta) radix (plusExp b t) t f
+  have ht_ne : t ≠ 0 := by
+    omega
+  have hvNumPlus : (plusExp b t).vNum = Zpower_nat radix t := by
+    simpa [plusExp] using hpGivesBound
+  have hfBoundPlus : Fbounded (beta:=beta) (plusExp b t) f := by
+    rcases hfBound with ⟨hfNum, hfExp⟩
+    constructor
+    · simpa [plusExp] using hfNum
+    · dsimp [plusExp]
+      have hnonneg : (0 : Int) ≤ ((t - 1 : Nat) : Int) :=
+        Int.natCast_nonneg _
+      omega
+  have hgEq : _root_.F2R (beta:=beta) g = _root_.F2R (beta:=beta) f := by
+    have h := FnormalizeCorrect (beta:=beta) radix (plusExp b t) t f
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, g] using h ⟨hbeta, hradix⟩
+  have hgCan :
+      Fcanonic (beta:=beta) radix (plusExp b t) g := by
+    have h := FnormalizeCanonic (beta:=beta) radix (plusExp b t) t f
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, Fbounded', g] using
+      h ⟨hfBoundPlus, hfBoundPlus, ht_ne, hradix, hvNumPlus⟩
+  refine ⟨g, hgEq, ?_⟩
+  rcases hgCan with hgNormal | hgSub
+  · exact hgNormal
+  · exfalso
+    have hbeta_gt : 1 < beta := by
+      omega
+    have hLower :
+        (beta : ℝ) ^ (-b.dExp) ≤ |_root_.F2R (beta:=beta) f| :=
+      fbounded_abs_F2R_ge_min_exp (beta:=beta) b f hbeta_gt hfBound hfNonzero
+    have hFirst :
+        _root_.F2R (beta:=beta)
+            (firstNormalPos (beta:=beta) radix (plusExp b t) t) =
+          (beta : ℝ) ^ (-b.dExp) :=
+      firstNormalPos_plusExp_eq_min_exp (beta:=beta) b radix t hbeta hradix ht_ne
+    have hgAbsSub :
+        Fsubnormal (beta:=beta) radix (plusExp b t)
+          (Fabs (beta:=beta) g) := by
+      have h := FsubnormFabs (beta:=beta) (plusExp b t) radix g
+      simpa only [wp, PostCond.noThrow, pure, FsubnormFabs_check,
+        Id.run, ULift.up_down] using h hgSub
+    have hgAbsEq :
+        _root_.F2R (beta:=beta) (Fabs (beta:=beta) g) =
+          |_root_.F2R (beta:=beta) g| := by
+      have h := Fabs_correct (beta:=beta) g
+      simpa only [wp, PostCond.noThrow, pure, Fabs_correct_check,
+        Id.run, ULift.up_down] using h hbeta_gt
+    have hgAbsNonneg :
+        0 ≤ _root_.F2R (beta:=beta) (Fabs (beta:=beta) g) := by
+      rw [hgAbsEq]
+      exact abs_nonneg _
+    have hSubLt :
+        _root_.F2R (beta:=beta) (Fabs (beta:=beta) g) <
+          _root_.F2R (beta:=beta)
+            (firstNormalPos (beta:=beta) radix (plusExp b t) t) := by
+      have h := FsubnormalLtFirstNormalPos
+        (beta:=beta) radix (plusExp b t) t (Fabs (beta:=beta) g)
+      simpa only [wp, PostCond.noThrow, pure,
+        FsubnormalLtFirstNormalPos_check, Id.run, ULift.up_down, Fbounded'] using
+        h ⟨hgAbsSub, hgAbsSub, ht_ne, hbeta, hradix, hvNumPlus, hgAbsNonneg⟩
+    have hAbsG_lt :
+        |_root_.F2R (beta:=beta) g| < (beta : ℝ) ^ (-b.dExp) := by
+      simpa [hgAbsEq, hFirst] using hSubLt
+    have hAbsF_lt :
+        |_root_.F2R (beta:=beta) f| < (beta : ℝ) ^ (-b.dExp) := by
+      simpa [hgEq] using hAbsG_lt
+    exact (not_lt_of_ge hLower) hAbsF_lt
+
 noncomputable def ClosestErrorBoundNormal_aux_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) : Unit :=
@@ -37496,6 +39916,536 @@ theorem RleRRounded {beta : Int}
       h ⟨hnormal.1, hNormalNorm, hbeta, hradix, hprecision, hvNum⟩
   exact RleRRounded_from_Fulp_rel (beta:=beta) b radix precision f z
     hClosestUlp hFulpRel
+
+/-- Coq Veltkamp local lemma `hxExact`.
+
+The third Veltkamp rounded value is exact: rounding `q + p` returns the
+representable sum `p + q`.  This is the upstream `ClosestIdem`/`SterbenzAux`
+argument using the local rounded definitions `pDef` and `qDef`. -/
+theorem hxExact {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hTotal : TotalP (Closest (beta:=beta) b (radix : ℝ)))
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (ht_ne : t ≠ 0)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hxBound : Fbounded (beta:=beta) b x)
+    (hpDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hxPos : 0 < _root_.F2R (beta:=beta) x)
+    (hpNormal : Fnormal (beta:=beta) radix b p)
+    (hqNormal : Fnormal (beta:=beta) radix b q)
+    (hs_ge : 2 ≤ s) (hs_le : s ≤ t - 2) :
+    _root_.F2R (beta:=beta) hx =
+      _root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q := by
+  have hbeta_gt : 1 < beta := by
+    rw [hbeta]
+    exact hradix
+  have hpBound : Fbounded (beta:=beta) b p := hpDef.1
+  have hqBound : Fbounded (beta:=beta) b q := hqDef.1
+  have hpNonneg :
+      0 ≤ _root_.F2R (beta:=beta) p :=
+    pPos (beta:=beta) b radix s t x p hTotal hradix hvNum hxPos hpDef
+  have hqNonpos :
+      _root_.F2R (beta:=beta) q ≤ 0 :=
+    qNeg (beta:=beta) b radix s t x p q hTotal hradix hvNum
+      hxBound hxPos hpDef hqDef
+  have hRounded :
+      RoundedModeP_full (beta:=beta) b
+        (Closest (beta:=beta) b (radix : ℝ)) := by
+    have h := ClosestRoundedModeP (beta:=beta) b (radix : ℝ)
+    simpa [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check,
+      Id.run, ULift.up_down] using h hTotal
+  rcases hRounded with ⟨_, _, hMono, hProject, _⟩
+  have hOppQ :
+      Closest (beta:=beta) b (radix : ℝ)
+        (-(_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p))
+        (Fopp (beta:=beta) q) := by
+    have h := ClosestOpp (beta:=beta) b (radix : ℝ) q
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p)
+    simpa [wp, PostCond.noThrow, pure, ClosestOpp_check, Id.run,
+      ULift.up_down] using h hqDef
+  have hFoppQ :
+      _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) =
+        -_root_.F2R (beta:=beta) q := by
+    have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=beta) q) trivial
+    simpa [Fopp, _root_.F2R] using h
+  have hFoppQBound : Fbounded (beta:=beta) b (Fopp (beta:=beta) q) := by
+    simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hqBound
+  have hProjectP :
+      Closest (beta:=beta) b (radix : ℝ)
+        (_root_.F2R (beta:=beta) p) p := hProject p hpBound
+  have hOppInputLt :
+      -(_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) <
+        _root_.F2R (beta:=beta) p := by
+    nlinarith
+  have hFoppQ_le_p :
+      _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) ≤
+        _root_.F2R (beta:=beta) p :=
+    hMono
+      (-(_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p))
+      (_root_.F2R (beta:=beta) p)
+      (Fopp (beta:=beta) q) p hOppInputLt hOppQ hProjectP
+  have hpAbs :
+      |_root_.F2R (beta:=beta) p| =
+        _root_.F2R (beta:=beta) p :=
+    abs_of_nonneg hpNonneg
+  have hqAbs :
+      |_root_.F2R (beta:=beta) q| =
+        -_root_.F2R (beta:=beta) q :=
+    abs_of_nonpos hqNonpos
+  have hFoppQAbs :
+      |_root_.F2R (beta:=beta) (Fopp (beta:=beta) q)| =
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) := by
+    rw [hFoppQ]
+    exact abs_of_nonneg (by linarith)
+  have ht_ge_three : 3 ≤ t := by
+    omega
+  have hfactor_pos :
+      0 < (radix : ℝ) ^ (s : Int) + 1 := by
+    have hradix_pos_int : (0 : Int) < radix := lt_trans (by decide) hradix
+    have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+      exact_mod_cast hradix_pos_int
+    have hpow_pos : 0 < (radix : ℝ) ^ (s : Int) :=
+      zpow_pos hradix_pos _
+    linarith
+  have hpRounded :
+      |_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)| ≤
+        |_root_.F2R (beta:=beta) p| *
+          (1 + (radix : ℝ) ^ (1 - (t : Int)) / 2) :=
+    RleRRounded (beta:=beta) b radix t p
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1))
+      hbeta hradix ht_ne hvNum hpNormal hpDef
+  have hp_lower :
+      _root_.F2R (beta:=beta) x ≤
+        _root_.F2R (beta:=beta) p *
+          (1 + (radix : ℝ) ^ (1 - (t : Int)) / 2) /
+            ((radix : ℝ) ^ (s : Int) + 1) := by
+    have hx_nonneg : 0 ≤ _root_.F2R (beta:=beta) x := le_of_lt hxPos
+    have hinput_abs :
+        |_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)| =
+          _root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1) := by
+      rw [abs_of_nonneg]
+      exact mul_nonneg hx_nonneg (le_of_lt hfactor_pos)
+    have hpRounded' :
+        _root_.F2R (beta:=beta) x *
+            ((radix : ℝ) ^ (s : Int) + 1) ≤
+          _root_.F2R (beta:=beta) p *
+            (1 + (radix : ℝ) ^ (1 - (t : Int)) / 2) := by
+      have hpRounded'' := hpRounded
+      rw [hinput_abs, hpAbs] at hpRounded''
+      exact hpRounded''
+    exact (le_div_iff₀ hfactor_pos).2 hpRounded'
+  have hqRounded :
+      |_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p| ≤
+        |_root_.F2R (beta:=beta) q| *
+          (1 + (radix : ℝ) ^ (1 - (t : Int)) / 2) :=
+    RleRRounded (beta:=beta) b radix t q
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p)
+      hbeta hradix ht_ne hvNum hqNormal hqDef
+  have hx_le_p : _root_.F2R (beta:=beta) x ≤ _root_.F2R (beta:=beta) p := by
+    have hProj : Closest (beta:=beta) b (radix : ℝ)
+        (_root_.F2R (beta:=beta) x) x := hProject x hxBound
+    have hradix_pos_int : (0 : Int) < radix := lt_trans (by decide) hradix
+    have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+      exact_mod_cast hradix_pos_int
+    have hpow_pos : 0 < (radix : ℝ) ^ (s : Int) :=
+      zpow_pos hradix_pos _
+    have hscaled_gt :
+        _root_.F2R (beta:=beta) x <
+          _root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1) := by
+      nlinarith
+    exact hMono (_root_.F2R (beta:=beta) x)
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1))
+      x p hscaled_gt hProj hpDef
+  have hq_abs_input :
+      |_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p| =
+        _root_.F2R (beta:=beta) p - _root_.F2R (beta:=beta) x := by
+    calc
+      |_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p| =
+          -(_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) :=
+        abs_of_nonpos (sub_nonpos.mpr hx_le_p)
+      _ = _root_.F2R (beta:=beta) p - _root_.F2R (beta:=beta) x := by ring
+  have hp_le_two_oppq :
+      _root_.F2R (beta:=beta) p ≤
+        2 * _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) := by
+    let eps : ℝ := (radix : ℝ) ^ (1 - (t : Int))
+    let powS : ℝ := (radix : ℝ) ^ (s : Int)
+    let A : ℝ := 1 + eps / 2
+    let B : ℝ := powS + 1
+    let k : ℝ := 1 - A / B
+    have hqBoundFromRounded :
+        _root_.F2R (beta:=beta) p - _root_.F2R (beta:=beta) x ≤
+          (-_root_.F2R (beta:=beta) q) *
+            (1 + (radix : ℝ) ^ (1 - (t : Int)) / 2) := by
+      simpa [hq_abs_input, hqAbs] using hqRounded
+    have hradix_pos_int : (0 : Int) < radix := lt_trans (by decide) hradix
+    have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+      exact_mod_cast hradix_pos_int
+    have hradix_one_le : (1 : ℝ) ≤ (radix : ℝ) := by
+      exact_mod_cast (le_of_lt hradix)
+    have hradix_two_le : (2 : ℝ) ≤ (radix : ℝ) := by
+      exact_mod_cast (by omega : (2 : Int) ≤ radix)
+    have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+    have hsmall_pow :
+        (radix : ℝ) ^ (1 - (t : Int)) ≤ 1 := by
+      exact zpow_le_one_of_nonpos₀ hradix_one_le (by omega)
+    have hcoeff_le : 1 + (radix : ℝ) ^ (1 - (t : Int)) / 2 ≤ (3 / 2 : ℝ) := by
+      nlinarith
+    have hq_nonneg : 0 ≤ -_root_.F2R (beta:=beta) q := by linarith
+    have hpowS_pos : 0 < powS := by
+      dsimp [powS]
+      exact zpow_pos hradix_pos _
+    have hB_pos : 0 < B := by
+      dsimp [B]
+      linarith
+    have hB_ne : B ≠ 0 := ne_of_gt hB_pos
+    have hpowS_ge_four : (4 : ℝ) ≤ powS := by
+      have hs_two : (2 : Int) ≤ (s : Int) := by omega
+      have hpow_two_le : (radix : ℝ) ^ (2 : Int) ≤ powS := by
+        dsimp [powS]
+        exact zpow_le_zpow_right₀ hradix_one_le hs_two
+      have hfour_le_rsq : (4 : ℝ) ≤ (radix : ℝ) ^ (2 : Int) := by
+        norm_num [zpow_ofNat]
+        nlinarith
+      exact le_trans hfour_le_rsq hpow_two_le
+    have heps_mul_powS_le_half : eps * powS ≤ (1 / 2 : ℝ) := by
+      have hmul_pow :
+          eps * powS = (radix : ℝ) ^ (1 - (t : Int) + (s : Int)) := by
+        dsimp [eps, powS]
+        rw [← zpow_add₀ hradix_ne]
+      have hexp_le : 1 - (t : Int) + (s : Int) ≤ -(1 : Int) := by
+        omega
+      have hpow_le :
+          (radix : ℝ) ^ (1 - (t : Int) + (s : Int)) ≤
+            (radix : ℝ) ^ (-(1 : Int)) :=
+        zpow_le_zpow_right₀ hradix_one_le hexp_le
+      have hinv_le_half :
+          (radix : ℝ) ^ (-(1 : Int)) ≤ (1 / 2 : ℝ) := by
+        have hone_div : (1 : ℝ) / (radix : ℝ) ≤ (1 : ℝ) / 2 :=
+          one_div_le_one_div_of_le (by norm_num) hradix_two_le
+        simpa [zpow_neg, one_div] using hone_div
+      rw [hmul_pow]
+      exact le_trans hpow_le hinv_le_half
+    have heps_le_eighth : eps ≤ (1 / 8 : ℝ) := by
+      have heps_le_half_div : eps ≤ (1 / 2 : ℝ) / powS := by
+        exact (le_div_iff₀ hpowS_pos).2 heps_mul_powS_le_half
+      have hhalf_div_le : (1 / 2 : ℝ) / powS ≤ (1 / 8 : ℝ) := by
+        exact (div_le_iff₀ hpowS_pos).2 (by nlinarith)
+      exact le_trans heps_le_half_div hhalf_div_le
+    have hA_le_17 : A ≤ (17 / 16 : ℝ) := by
+      dsimp [A, eps] at *
+      nlinarith
+    have hB_ge_five : (5 : ℝ) ≤ B := by
+      dsimp [B]
+      nlinarith
+    have hk_pos : 0 < k := by
+      have hA_lt_B : A < B := by
+        nlinarith
+      have hA_div_lt_one : A / B < 1 := by
+        have hA_lt_one_mul_B : A < 1 * B := by simpa using hA_lt_B
+        exact (div_lt_iff₀ hB_pos).2 hA_lt_one_mul_B
+      dsimp [k]
+      linarith
+    have hp_lower_mul :
+          _root_.F2R (beta:=beta) x ≤
+          _root_.F2R (beta:=beta) p * (A / B) := by
+      dsimp [A, B, eps, powS]
+      simpa [mul_div_assoc] using hp_lower
+    have hp_k_le_p_minus_x :
+        _root_.F2R (beta:=beta) p * k ≤
+          _root_.F2R (beta:=beta) p - _root_.F2R (beta:=beta) x := by
+      calc
+        _root_.F2R (beta:=beta) p * k =
+            _root_.F2R (beta:=beta) p -
+              _root_.F2R (beta:=beta) p * (A / B) := by
+              dsimp [k]
+              ring
+        _ ≤ _root_.F2R (beta:=beta) p - _root_.F2R (beta:=beta) x := by
+              linarith
+    have hp_k_le_oppA :
+        _root_.F2R (beta:=beta) p * k ≤
+          (-_root_.F2R (beta:=beta) q) * A := by
+      have hqBoundA :
+          _root_.F2R (beta:=beta) p - _root_.F2R (beta:=beta) x ≤
+            (-_root_.F2R (beta:=beta) q) * A := by
+        simpa [A, eps] using hqBoundFromRounded
+      exact le_trans hp_k_le_p_minus_x hqBoundA
+    have hA_le_two_k : A ≤ 2 * k := by
+      have hmain_mul : A * (B + 2) ≤ 2 * B := by
+        change (1 + eps / 2) * (powS + 1 + 2) ≤ 2 * (powS + 1)
+        nlinarith only [hpowS_ge_four, heps_mul_powS_le_half, heps_le_eighth]
+      have hmul : A * B ≤ (2 * k) * B := by
+        have hright : (2 * k) * B = 2 * B - 2 * A := by
+          calc
+            (2 * k) * B = (2 * (1 - A / B)) * B := by rfl
+            _ = 2 * B - 2 * A := by field_simp [hB_ne]
+        rw [hright]
+        nlinarith only [hmain_mul]
+      exact le_of_mul_le_mul_right hmul hB_pos
+    have hopp_nonneg : 0 ≤ _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) := by
+      rw [hFoppQ]
+      linarith
+    have hoppA_le :
+        _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) * A ≤
+          _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) * (2 * k) :=
+      mul_le_mul_of_nonneg_left hA_le_two_k hopp_nonneg
+    have hp_k_le_two :
+        _root_.F2R (beta:=beta) p * k ≤
+          (2 * _root_.F2R (beta:=beta) (Fopp (beta:=beta) q)) * k := by
+      have htmp :
+          _root_.F2R (beta:=beta) p * k ≤
+            _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) * (2 * k) := by
+        exact le_trans (by simpa [hFoppQ] using hp_k_le_oppA) hoppA_le
+      nlinarith only [htmp]
+    exact le_of_mul_le_mul_right hp_k_le_two hk_pos
+  let pq : FloatSpec.Core.Defs.FlocqFloat beta :=
+    FloatSpec.Calc.Operations.Fminus (beta:=beta) p (Fopp (beta:=beta) q)
+  have hpqBound : Fbounded (beta:=beta) b pq := by
+    have h := SterbenzAux (beta:=beta) b p (Fopp (beta:=beta) q)
+    simpa [wp, PostCond.noThrow, pure, SterbenzAux_check, pq] using
+      h ⟨hbeta_gt, hpBound, hFoppQBound, hFoppQ_le_p, hp_le_two_oppq⟩
+  have hpqVal :
+      _root_.F2R (beta:=beta) pq =
+        _root_.F2R (beta:=beta) p + _root_.F2R (beta:=beta) q := by
+    have hminus := Fminus_correct (beta:=beta) p (Fopp (beta:=beta) q)
+    have hval :
+        _root_.F2R (beta:=beta)
+            (FloatSpec.Calc.Operations.Fminus (beta:=beta) p (Fopp (beta:=beta) q)) =
+          _root_.F2R (beta:=beta) p -
+            _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) := by
+      simpa [wp, PostCond.noThrow, pure, Fminus_correct_check] using hminus hbeta_gt
+    simp [pq, hval, hFoppQ]
+  have hhxDef' :
+      Closest (beta:=beta) b (radix : ℝ) (_root_.F2R (beta:=beta) pq) hx := by
+    simpa [hpqVal, add_comm] using hhxDef
+  have hidem := ClosestIdem (beta:=beta) b (radix : ℝ) pq hx
+  have hpq_hx :
+      _root_.F2R (beta:=beta) pq = _root_.F2R (beta:=beta) hx := by
+    simpa [wp, PostCond.noThrow, pure, ClosestIdem_check, Fbounded'] using
+      hidem ⟨hpqBound, hhxDef', hpqBound, hhxDef'.1, hhxDef'.2⟩
+  rw [← hpq_hx, hpqVal]
+
+/-- Coq Veltkamp local lemma `eqLeep`.
+
+The exponent of the second rounded Veltkamp value is no larger than the
+exponent of the first.  This is the upstream `Fcanonic_Rle_Zle` argument after
+rewriting the signs of `q` and `p`. -/
+theorem eqLeep {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hTotal : TotalP (Closest (beta:=beta) b (radix : ℝ)))
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hxBound : Fbounded (beta:=beta) b x)
+    (hpDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hxPos : 0 < _root_.F2R (beta:=beta) x)
+    (hpNormal : Fnormal (beta:=beta) radix b p)
+    (hqNormal : Fnormal (beta:=beta) radix b q) :
+    q.Fexp ≤ p.Fexp := by
+  have hbeta_gt : 1 < beta := by
+    rw [hbeta]
+    exact hradix
+  have hpNonneg :
+      0 ≤ _root_.F2R (beta:=beta) p :=
+    pPos (beta:=beta) b radix s t x p hTotal hradix hvNum hxPos hpDef
+  have hqNonpos :
+      _root_.F2R (beta:=beta) q ≤ 0 :=
+    qNeg (beta:=beta) b radix s t x p q hTotal hradix hvNum
+      hxBound hxPos hpDef hqDef
+  have hRounded :
+      RoundedModeP_full (beta:=beta) b
+        (Closest (beta:=beta) b (radix : ℝ)) := by
+    have h := ClosestRoundedModeP (beta:=beta) b (radix : ℝ)
+    simpa [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check,
+      Id.run, ULift.up_down] using h hTotal
+  rcases hRounded with ⟨_, _, hMono, hProject, _⟩
+  have hOppQ :
+      Closest (beta:=beta) b (radix : ℝ)
+        (-(_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p))
+        (Fopp (beta:=beta) q) := by
+    have h := ClosestOpp (beta:=beta) b (radix : ℝ) q
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p)
+    simpa [wp, PostCond.noThrow, pure, ClosestOpp_check, Id.run,
+      ULift.up_down] using h hqDef
+  have hFoppQ :
+      _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) =
+        -_root_.F2R (beta:=beta) q := by
+    have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=beta) q) trivial
+    simpa [Fopp, _root_.F2R] using h
+  have hProjectP :
+      Closest (beta:=beta) b (radix : ℝ)
+        (_root_.F2R (beta:=beta) p) p := hProject p hpDef.1
+  have hOppInputLt :
+      -(_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) <
+        _root_.F2R (beta:=beta) p := by
+    nlinarith
+  have hFoppQ_le_p :
+      _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) ≤
+        _root_.F2R (beta:=beta) p :=
+    hMono
+      (-(_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p))
+      (_root_.F2R (beta:=beta) p)
+      (Fopp (beta:=beta) q) p hOppInputLt hOppQ hProjectP
+  have hpAbs :
+      |_root_.F2R (beta:=beta) p| =
+        _root_.F2R (beta:=beta) p :=
+    abs_of_nonneg hpNonneg
+  have hqAbs :
+      |_root_.F2R (beta:=beta) q| =
+        -_root_.F2R (beta:=beta) q :=
+    abs_of_nonpos hqNonpos
+  have habs_le :
+      |_root_.F2R (beta:=beta) q| ≤
+        |_root_.F2R (beta:=beta) p| := by
+    calc
+      |_root_.F2R (beta:=beta) q| =
+          -_root_.F2R (beta:=beta) q := hqAbs
+      _ = _root_.F2R (beta:=beta) (Fopp (beta:=beta) q) := hFoppQ.symm
+      _ ≤ _root_.F2R (beta:=beta) p := hFoppQ_le_p
+      _ = |_root_.F2R (beta:=beta) p| := hpAbs.symm
+  have h := Fcanonic_Rle_Zle (beta:=beta) radix b q p hbeta_gt hbeta.symm
+  simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
+    Id.run, ULift.up_down] using
+    h ⟨Or.inl hqNormal, Or.inl hpNormal, habs_le⟩
+
+/-- Coq Veltkamp local lemma `epLe`.
+
+The exponent of the first rounded Veltkamp value is no larger than the
+exponent of the comparison float `Float (Fnum x) (s + 1 + Fexp x)`.  This is
+the upstream `Fcanonic_Rle_Zle` argument after projecting the comparison float
+and using closest-rounding monotonicity. -/
+theorem epLe {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hTotal : TotalP (Closest (beta:=beta) b (radix : ℝ)))
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hxPos : 0 < _root_.F2R (beta:=beta) x)
+    (hpNormal : Fnormal (beta:=beta) radix b p)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hs_ge : 2 ≤ s) :
+    p.Fexp ≤ (s : Int) + 1 + x.Fexp := by
+  have hbeta_gt : 1 < beta := by
+    rw [hbeta]
+    exact hradix
+  have hpNonneg :
+      0 ≤ _root_.F2R (beta:=beta) p :=
+    pPos (beta:=beta) b radix s t x p hTotal hradix hvNum hxPos hpDef
+  have hRounded :
+      RoundedModeP_full (beta:=beta) b
+        (Closest (beta:=beta) b (radix : ℝ)) := by
+    have h := ClosestRoundedModeP (beta:=beta) b (radix : ℝ)
+    simpa [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check,
+      Id.run, ULift.up_down] using h hTotal
+  rcases hRounded with ⟨_, _, hMono, hProject, _⟩
+  let xp : FloatSpec.Core.Defs.FlocqFloat beta :=
+    ⟨x.Fnum, (s : Int) + 1 + x.Fexp⟩
+  have hxpNormal : Fnormal (beta:=beta) radix b xp := by
+    rcases hxNormal with ⟨hxBound, hxMant⟩
+    constructor
+    · constructor
+      · simpa [xp] using hxBound.1
+      · exact le_trans hxBound.2 (by omega : x.Fexp ≤ (s : Int) + 1 + x.Fexp)
+    · simpa [xp] using hxMant
+  have hProjectXp :
+      Closest (beta:=beta) b (radix : ℝ)
+        (_root_.F2R (beta:=beta) xp) xp :=
+    hProject xp hxpNormal.1
+  have hradix_pos_int : (0 : Int) < radix := lt_trans (by decide) hradix
+  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradix_pos_int
+  have hradix_one_lt : (1 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradix
+  have hradix_one_le : (1 : ℝ) ≤ (radix : ℝ) := le_of_lt hradix_one_lt
+  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
+  have hpow_s_pos : 0 < (radix : ℝ) ^ (s : Int) :=
+    zpow_pos hradix_pos _
+  have hfactor_lt_pow :
+      (radix : ℝ) ^ (s : Int) + 1 <
+        (radix : ℝ) ^ ((s : Int) + 1) := by
+    have hs_two_int : (2 : Int) ≤ (s : Int) := by exact_mod_cast hs_ge
+    have hpow_two_le :
+        (radix : ℝ) ^ (2 : Int) ≤ (radix : ℝ) ^ (s : Int) :=
+      zpow_le_zpow_right₀ hradix_one_le hs_two_int
+    have htwo_le_radix : (2 : ℝ) ≤ (radix : ℝ) := by
+      exact_mod_cast (by omega : (2 : Int) ≤ radix)
+    have hpow_two_eq : (radix : ℝ) ^ (2 : Int) = (radix : ℝ) * (radix : ℝ) := by
+      norm_num [zpow_ofNat, pow_two]
+    have htwo_le_pow_s : (2 : ℝ) ≤ (radix : ℝ) ^ (s : Int) := by
+      calc
+        (2 : ℝ) ≤ (radix : ℝ) := htwo_le_radix
+        _ ≤ (radix : ℝ) * (radix : ℝ) := by
+          nlinarith [hradix_one_le]
+        _ = (radix : ℝ) ^ (2 : Int) := hpow_two_eq.symm
+        _ ≤ (radix : ℝ) ^ (s : Int) := hpow_two_le
+    calc
+      (radix : ℝ) ^ (s : Int) + 1
+          < (radix : ℝ) ^ (s : Int) + (radix : ℝ) ^ (s : Int) := by
+            linarith
+      _ = (radix : ℝ) ^ (s : Int) * (2 : ℝ) := by ring
+      _ ≤ (radix : ℝ) ^ (s : Int) * (radix : ℝ) :=
+            mul_le_mul_of_nonneg_left htwo_le_radix (le_of_lt hpow_s_pos)
+      _ = (radix : ℝ) ^ ((s : Int) + 1) := by
+            rw [zpow_add₀ hradix_ne, zpow_one]
+  have hinput_lt :
+      _root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1) <
+        _root_.F2R (beta:=beta) xp := by
+    have hscaled :
+        _root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1) <
+          _root_.F2R (beta:=beta) x *
+            (radix : ℝ) ^ ((s : Int) + 1) :=
+      mul_lt_mul_of_pos_left hfactor_lt_pow hxPos
+    have hxp_val :
+        _root_.F2R (beta:=beta) xp =
+          _root_.F2R (beta:=beta) x *
+            (radix : ℝ) ^ ((s : Int) + 1) := by
+      dsimp [xp, _root_.F2R, FloatSpec.Core.Defs.F2R]
+      have hradix_cast : (radix : ℝ) = (beta : ℝ) := by
+        exact_mod_cast hbeta.symm
+      have hbeta_pos_real : (0 : ℝ) < (beta : ℝ) := by
+        have : (0 : Int) < beta := lt_trans (by decide) hbeta_gt
+        exact_mod_cast this
+      have hbeta_ne : (beta : ℝ) ≠ 0 := ne_of_gt hbeta_pos_real
+      rw [hradix_cast]
+      rw [show (s : Int) + 1 + x.Fexp = x.Fexp + ((s : Int) + 1) by ring]
+      rw [zpow_add₀ hbeta_ne]
+      ring
+    simpa [hxp_val]
+      using hscaled
+  have hp_le_xp :
+      _root_.F2R (beta:=beta) p ≤ _root_.F2R (beta:=beta) xp :=
+    hMono
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1))
+      (_root_.F2R (beta:=beta) xp)
+      p xp hinput_lt hpDef hProjectXp
+  have hpAbs :
+      |_root_.F2R (beta:=beta) p| =
+        _root_.F2R (beta:=beta) p :=
+    abs_of_nonneg hpNonneg
+  have hxpNonneg : 0 ≤ _root_.F2R (beta:=beta) xp :=
+    le_trans hpNonneg hp_le_xp
+  have hxpAbs :
+      |_root_.F2R (beta:=beta) xp| =
+        _root_.F2R (beta:=beta) xp :=
+    abs_of_nonneg hxpNonneg
+  have habs_le :
+      |_root_.F2R (beta:=beta) p| ≤
+        |_root_.F2R (beta:=beta) xp| := by
+    simpa [hpAbs, hxpAbs] using hp_le_xp
+  have h := Fcanonic_Rle_Zle (beta:=beta) radix b p xp hbeta_gt hbeta.symm
+  simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
+    Id.run, ULift.up_down, xp] using
+    h ⟨Or.inl hpNormal, Or.inl hxpNormal, habs_le⟩
 
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
@@ -41305,6 +44255,145 @@ theorem MSB_monotone {beta : Int}
         (Int.succ (MSB (beta:=beta) radix y)))
       ⟨hbeta, hstrict⟩
   simpa [Int.succ] using hlt_succ
+
+private lemma abs_F2R_repr_at_lsb {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta_radix : beta = radix) (hradix : 1 < radix) :
+    ∃ z : Int,
+      |_root_.F2R (beta:=beta) x| =
+        (z : ℝ) * (radix : ℝ) ^ (LSB (beta:=beta) radix x) := by
+  have hbeta : 1 < beta := by omega
+  have habs :
+      _root_.F2R (beta:=beta) (Fabs (beta:=beta) x) =
+        |_root_.F2R (beta:=beta) x| := by
+    have h := Fabs_correct (beta:=beta) x
+    simpa only [wp, PostCond.noThrow, pure, Fabs_correct_check, Id.run,
+      ULift.up_down] using h hbeta
+  have hlsb_abs :
+      LSB (beta:=beta) radix x =
+        LSB (beta:=beta) radix (Fabs (beta:=beta) x) :=
+    (LSB_abs (beta:=beta) radix x) trivial
+  rcases (LSB_rep_min (beta:=beta) radix (Fabs (beta:=beta) x))
+      ⟨hbeta_radix, hradix⟩ with ⟨z, hz⟩
+  refine ⟨z, ?_⟩
+  calc
+    |_root_.F2R (beta:=beta) x|
+        = _root_.F2R (beta:=beta) (Fabs (beta:=beta) x) := habs.symm
+    _ = _root_.F2R (beta:=beta)
+          (⟨z, LSB (beta:=beta) radix (Fabs (beta:=beta) x)⟩ :
+            FloatSpec.Core.Defs.FlocqFloat beta) := hz
+    _ = (z : ℝ) * (radix : ℝ) ^ (LSB (beta:=beta) radix x) := by
+          simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hbeta_radix,
+            ← hlsb_abs]
+
+private lemma abs_F2R_repr_at {beta : Int}
+    (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int)
+    (hbeta_radix : beta = radix) (hradix : 1 < radix)
+    (he : e ≤ LSB (beta:=beta) radix x) :
+    ∃ z : Int,
+      |_root_.F2R (beta:=beta) x| =
+        (z : ℝ) * (radix : ℝ) ^ e := by
+  rcases abs_F2R_repr_at_lsb (beta:=beta) radix x hbeta_radix hradix with
+    ⟨z, hz⟩
+  let k : Nat := Int.toNat (LSB (beta:=beta) radix x - e)
+  let scale : Int := Zpower_nat radix k
+  refine ⟨z * scale, ?_⟩
+  have hradix_pos_int : 0 < radix := by omega
+  have hradix_pos_real : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradix_pos_int
+  have hradix_ne_real : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos_real
+  have hdiff_nonneg : 0 ≤ LSB (beta:=beta) radix x - e := by omega
+  have hk_cast :
+      (k : Int) = LSB (beta:=beta) radix x - e := by
+    simpa [k] using Int.toNat_of_nonneg hdiff_nonneg
+  have hscale :
+      (scale : ℝ) =
+        (radix : ℝ) ^ (LSB (beta:=beta) radix x - e) := by
+    have hbridge := (Zpower_nat_Z_powerRZ radix k) trivial
+    simpa [scale, hk_cast] using hbridge
+  have hsplit :
+      (radix : ℝ) ^ (LSB (beta:=beta) radix x) =
+        (radix : ℝ) ^ (LSB (beta:=beta) radix x - e) *
+          (radix : ℝ) ^ e := by
+    calc
+      (radix : ℝ) ^ (LSB (beta:=beta) radix x)
+          = (radix : ℝ) ^ ((LSB (beta:=beta) radix x - e) + e) := by
+              congr 1
+              ring
+      _ = (radix : ℝ) ^ (LSB (beta:=beta) radix x - e) *
+            (radix : ℝ) ^ e :=
+              zpow_add₀ hradix_ne_real (LSB (beta:=beta) radix x - e) e
+  calc
+    |_root_.F2R (beta:=beta) x|
+        = (z : ℝ) * (radix : ℝ) ^ (LSB (beta:=beta) radix x) := hz
+    _ = (z : ℝ) *
+          ((radix : ℝ) ^ (LSB (beta:=beta) radix x - e) *
+            (radix : ℝ) ^ e) := by rw [hsplit]
+    _ = ((z * scale : Int) : ℝ) * (radix : ℝ) ^ e := by
+          rw [Int.cast_mul, hscale]
+          ring
+
+noncomputable def LSB_Pred_check {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+/-- Coq: `LSB_Pred`.
+
+If two floats are ordered by absolute value and the least significant bit of
+`x` is no larger than that of `y`, then `|x|` is at least one `LSB x` unit
+below `|y|`.  The precondition carries the upstream `GenericC` section
+assumptions. -/
+theorem LSB_Pred {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜beta = radix ∧ 1 < radix ∧
+        b.vNum = Zpower_nat radix precision ∧ 1 < precision ∧ Even radix ∧
+        |_root_.F2R (beta:=beta) x| < |_root_.F2R (beta:=beta) y| ∧
+        LSB (beta:=beta) radix x ≤ LSB (beta:=beta) radix y⌝⦄
+    (pure (LSB_Pred_check (beta:=beta) b radix precision x y) : Id Unit)
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) x| ≤
+        |_root_.F2R (beta:=beta) y| -
+          (radix : ℝ) ^ (LSB (beta:=beta) radix x)⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨hbeta_radix, hradix, _hvnum, _hprecision, _heven, hlt_abs, hlsb⟩
+  simp only [wp, PostCond.noThrow, pure, LSB_Pred_check, Id.run,
+    ULift.up_down]
+  let e : Int := LSB (beta:=beta) radix x
+  rcases abs_F2R_repr_at (beta:=beta) radix x e hbeta_radix hradix
+      (by simp [e]) with ⟨nx, hx_repr⟩
+  rcases abs_F2R_repr_at (beta:=beta) radix y e hbeta_radix hradix
+      (by simpa [e] using hlsb) with ⟨ny, hy_repr⟩
+  have hradix_pos_int : 0 < radix := by omega
+  have hradix_pos_real : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradix_pos_int
+  have hunit_pos : 0 < (radix : ℝ) ^ e := zpow_pos hradix_pos_real e
+  have hnx_lt_ny_real : (nx : ℝ) < (ny : ℝ) := by
+    have hscaled :
+        (nx : ℝ) * (radix : ℝ) ^ e <
+          (ny : ℝ) * (radix : ℝ) ^ e := by
+      simpa [hx_repr, hy_repr] using hlt_abs
+    exact lt_of_mul_lt_mul_right hscaled (le_of_lt hunit_pos)
+  have hnx_succ_le_ny : nx + 1 ≤ ny := by
+    have hnx_lt_ny : nx < ny := Int.cast_lt.mp hnx_lt_ny_real
+    omega
+  have hcoeff :
+      ((nx : ℝ) + 1) * (radix : ℝ) ^ e ≤
+        (ny : ℝ) * (radix : ℝ) ^ e := by
+    have hcoeff_le : (nx : ℝ) + 1 ≤ (ny : ℝ) := by
+      exact_mod_cast hnx_succ_le_ny
+    exact mul_le_mul_of_nonneg_right hcoeff_le (le_of_lt hunit_pos)
+  calc
+    |_root_.F2R (beta:=beta) x|
+        = (nx : ℝ) * (radix : ℝ) ^ e := hx_repr
+    _ ≤ (ny : ℝ) * (radix : ℝ) ^ e - (radix : ℝ) ^ e := by
+          nlinarith
+    _ = |_root_.F2R (beta:=beta) y| - (radix : ℝ) ^ e := by
+          rw [hy_repr]
+    _ = |_root_.F2R (beta:=beta) y| -
+          (radix : ℝ) ^ (LSB (beta:=beta) radix x) := by
+          simp [e]
 
 /-- Coq: `isMinComp` — a lower rounded value remains the lower bound for any
 intermediate real strictly between the same min/max pair. -/

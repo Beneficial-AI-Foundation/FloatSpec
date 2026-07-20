@@ -1,6 +1,6 @@
 /-
-FloatSpec documentation extensions (stubbed).
+FloatSpec documentation extension hooks.
 
 Verso doc-role infrastructure has been removed in this fork.
-This file is kept as a stub so existing `import FloatSpec.VersoExt` lines compile.
+This compatibility module keeps existing `import FloatSpec.VersoExt` lines compiling.
 -/

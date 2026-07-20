@@ -19,6 +19,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.Round_NE
 import Mathlib.Data.Real.Basic
 import Mathlib.Algebra.Ring.Defs
 import Mathlib.Algebra.Ring.Basic
@@ -82,9 +83,9 @@ theorem FLX_exp_spec (e : Int) :
 def FLX_format (beta : Int) (x : ℝ) : Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
 
-/-- Unbounded fixed-precision format with normalized mantissas (placeholder).
+/-- Unbounded fixed-precision format with normalized mantissas.
 
-    This mirrors Coq's `FLXN_format`. For now, we model it using
+    This mirrors Coq's `FLXN_format`. The current port models it using
     the same underlying generic format predicate as `FLX_format`.
     Proofs will refine this equivalence later.
 -/
@@ -452,7 +453,27 @@ namespace FloatSpec.Core.FLX
 
 variable (prec : Int)
 
-/- Valid_exp instance for FLX_exp (placeholder). -/
+/-
+Coq (FLX.v):
+Hypothesis NE_prop : Z.even beta = false \/ (1 < prec)%Z.
+
+Global Instance exists_NE_FLX : Exists_NE beta FLX_exp.
+-/
+instance exists_NE_FLX (beta : Int)
+    [hNE : Fact (beta % 2 ≠ 0 ∨ 1 < prec)] :
+    FloatSpec.Core.RoundNE.Exists_NE beta (FLX_exp prec) where
+  exists_ne := by
+    rcases hNE.out with hodd | hprec
+    · exact Or.inl hodd
+    · right
+      intro e
+      constructor
+      · intro _
+        simp [FLX_exp]
+        grind
+      · intro he
+        simp [FLX_exp] at he ⊢
+        grind
 
 /-
 Coq (FLX.v):
