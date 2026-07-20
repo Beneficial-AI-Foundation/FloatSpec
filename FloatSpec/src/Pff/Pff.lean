@@ -42933,6 +42933,41 @@ theorem eqGe {beta : Int}
   exact eqGe_exact_min (beta:=radix) b radix s t x p q rfl hradix hvNum
     hsGe hsLe hxBound hpDef hqDef hqNormal hxNumExact
 
+/-! Coq Veltkamp local lemma `eqEqual`.
+
+Combines the exact public `eqLe` disjunction with the exact public `eqGe`
+lower exponent bound, preserving the negative minimal-normal boundary and
+half-ulp residual payload from the second `eqLe` branch. -/
+theorem eqEqual {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxBound : Fbounded (beta:=beta) b x)
+    (hpDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hxPos : 0 < _root_.F2R (beta:=beta) x)
+    (hpNormal : Fnormal (beta:=beta) radix b p)
+    (hqNormal : Fnormal (beta:=beta) radix b q)
+    (hxNormal : Fnormal (beta:=beta) radix b x) :
+    q.Fexp = (s : Int) + x.Fexp ∨
+      (_root_.F2R (beta:=beta) q =
+          -(radix : ℝ) ^ ((t : Int) + (s : Int) + x.Fexp) ∧
+        |_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx| ≤
+          (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2) := by
+  have hle := eqLe (beta:=beta) b radix s t x p q hx hbeta hradix hvNum
+    hsGe hsLe hxBound hpDef hqDef hhxDef hxPos hpNormal hqNormal hxNormal
+  have hge := eqGe (beta:=beta) b radix s t x p q hx hbeta hradix hvNum
+    hsGe hsLe hxBound hpDef hqDef hhxDef hxPos hpNormal hqNormal hxNormal
+  rcases hle with hle | hboundary
+  · exact Or.inl (le_antisymm hle hge)
+  · exact Or.inr hboundary
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=

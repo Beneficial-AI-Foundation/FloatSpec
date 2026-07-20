@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 81.
+- Active semantic gap candidates still listed below: 80.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 81/81 names have been
+- Counterpart audit coverage for the active list: 80/80 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 81 active
+Fix the remaining Flocq import gaps by working through the 80 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2058,9 +2058,25 @@ absent from this checkout. The normalized classifier
 local target gate. This completion supersedes the older `eqGe` blocker notes
 below. Therefore `eqGe` is removed from the active list, and `eqEqual` is next.
 
-#### `Pff/Pff.v` (81)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_025037` restored exact public `eqEqual` in
+`FloatSpec/src/Pff/Pff.lean`. The theorem keeps the expanded upstream
+Veltkamp section assumptions and the exact upstream disjunction: either
+`q.Fexp = (s : Int) + x.Fexp`, or `q` has the negative minimal-normal boundary
+value and the reconstructed high part satisfies the half-ulp residual bound.
+Its proof combines exact public `eqLe` with exact public `eqGe`; the exponent
+branch is closed by antisymmetry, while the boundary branch is preserved
+unchanged. The real focused Lean process exited 0, `git diff --check` passed,
+placeholder/status audits reported zero findings, and the full 3345-job
+`lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_eqEqual_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `eqEqual` is removed from the active list, and
+`Veltkamp_aux_aux` is next.
 
-- `eqEqual` (Lemma, upstream line 13761)
+#### `Pff/Pff.v` (80)
+
 - `Veltkamp_aux_aux` (Lemma, upstream line 13770)
 - `Veltkamp_aux` (Lemma, upstream line 14021)
 - `VeltkampEven1` (Lemma, upstream line 14188)
