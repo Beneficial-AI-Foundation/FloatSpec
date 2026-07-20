@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 72.
+- Active semantic gap candidates still listed below: 71.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 72/72 names have been
+- Counterpart audit coverage for the active list: 71/71 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 72 active
+Fix the remaining Flocq import gaps by working through the 71 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2227,9 +2227,26 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `VeltkampEven_pos` is removed from the
 active list, and `VeltkampEvenN_aux` is next.
 
-#### `Pff/Pff.v` (72)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_063702` left the exact
+`VeltkampEvenN_aux` payload unchanged and did not run a build. The manual
+repair restored exact public `VeltkampEvenN_aux` under only the expanded
+upstream `VeltN` assumptions. Normality excludes a zero represented input, so
+the nonnegative branch invokes exact `VeltkampEven_pos`. The negative branch
+negates `x`, `p`, `q`, and `hx`, transports all three `EvenClosest` premises
+with exact `EvenClosestSymmetric`, invokes the positive theorem, and negates
+the reduced witness back while preserving its represented value and
+even-closest relation. The focused Lean process exited 0, `git diff --check`
+passed, placeholder/status audits reported zero findings, and the full
+3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_VeltkampEvenN_aux_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `VeltkampEvenN_aux` is removed from the
+active list, and `VeltkampEvenN` is next.
 
-- `VeltkampEvenN_aux` (Lemma, upstream line 14942)
+#### `Pff/Pff.v` (71)
+
 - `VeltkampEvenN` (Lemma, upstream line 15000)
 - `Closestbbplus` (Lemma, upstream line 15120)
 - `EvenClosestbplusb` (Lemma, upstream line 15287)
@@ -7004,7 +7021,7 @@ Statement-level checks performed for the first 35 active Pff entries:
   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
   inequality from only the upstream Veltkamp section hypotheses.
-- `VeltkampEvenN_aux`, `VeltkampEvenN`, and
+- `VeltkampEvenN` and
   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
   `FloatSpec/src/Pff/Pff2Flocq.lean`. The wrapper assumes a reduced
   nearest-even witness as input; the active upstream lemmas construct the
@@ -7012,8 +7029,8 @@ Statement-level checks performed for the first 35 active Pff entries:
   products/sums. They are therefore missing lower Pff payloads, not hidden
   under the public wrapper.
 - `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`, `VeltkampEven2`,
-  `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`, and `VeltkampEven_pos` are now
-  restored as exact
+  `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`, `VeltkampEven_pos`, and
+  `VeltkampEvenN_aux` are now restored as exact
   public Lean theorems in
   `FloatSpec/src/Pff/Pff.lean`; they are no
   longer inferred from the higher-level wrapper and no longer belong to this

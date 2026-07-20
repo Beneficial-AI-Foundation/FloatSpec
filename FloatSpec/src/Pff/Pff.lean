@@ -45646,6 +45646,128 @@ theorem VeltkampEven_pos {beta : Int}
       hvNum hsGe hsLe hxBound hpDef hqDef hhxDef hxPos hpNormal hqNormal
       hxNormal hpDefEven hqDefEven hhxDefEven hOddRadix
 
+/-! Coq sign-symmetric even-rounding wrapper `VeltkampEvenN_aux`.
+
+The positive branch is `VeltkampEven_pos`. For a negative normal input, negate
+all four floats, transport the three even-closest premises by symmetry, apply
+the positive theorem, and negate its reduced witness back. -/
+theorem VeltkampEvenN_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hpCan : Fcanonic (beta:=beta) radix b p)
+    (hqCan : Fcanonic (beta:=beta) radix b q)
+    (hpDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx) :
+    ∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
+        EvenClosest (beta:=beta) (Veltkamp_reducedBound radix b s t)
+          (radix : ℝ) (t - s) (_root_.F2R (beta:=beta) x) hx' := by
+  subst beta
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hvNumPos : 0 < b.vNum := by
+    rw [hvNum, Zpower_nat]
+    exact pow_pos hradixPosInt _
+  have hxNumNe : x.Fnum ≠ 0 := by
+    intro hxNumZero
+    have hnormalMant := hxNormal.2
+    rw [hxNumZero, mul_zero, abs_zero] at hnormalMant
+    omega
+  have hxValueNe : _root_.F2R (beta:=radix) x ≠ 0 :=
+    FloatSpec.Core.Float_prop.F2R_neq_0 (beta:=radix) x hradix hxNumNe
+  by_cases hxNonneg : 0 ≤ _root_.F2R (beta:=radix) x
+  · have hxPos : 0 < _root_.F2R (beta:=radix) x :=
+      lt_of_le_of_ne hxNonneg hxValueNe.symm
+    exact VeltkampEven_pos (beta:=radix) b radix s t x p q hx rfl hradix
+      hvNum hsGe hsLe hxNormal hpCan hqCan hxPos hpDefEven hqDefEven hhxDefEven
+  · have hxNeg : _root_.F2R (beta:=radix) x < 0 := lt_of_not_ge hxNonneg
+    have hoppValue (f : FloatSpec.Core.Defs.FlocqFloat radix) :
+        _root_.F2R (beta:=radix) (Fopp (beta:=radix) f) =
+          -_root_.F2R (beta:=radix) f := by
+      have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=radix) f) trivial
+      simpa [Fopp, _root_.F2R] using h
+    have hxOppNormal :
+        Fnormal (beta:=radix) radix b (Fopp (beta:=radix) x) := by
+      have h := FnormalFop (beta:=radix) b radix x
+      simpa only [wp, PostCond.noThrow, pure, FnormalFop_check,
+        Id.run, ULift.up_down] using h hxNormal
+    have hpOppCan :
+        Fcanonic (beta:=radix) radix b (Fopp (beta:=radix) p) := by
+      have h := FcanonicFopp (beta:=radix) radix b p
+      simpa only [wp, PostCond.noThrow, pure, FcanonicFopp_check,
+        Id.run, ULift.up_down] using h hpCan
+    have hqOppCan :
+        Fcanonic (beta:=radix) radix b (Fopp (beta:=radix) q) := by
+      have h := FcanonicFopp (beta:=radix) radix b q
+      simpa only [wp, PostCond.noThrow, pure, FcanonicFopp_check,
+        Id.run, ULift.up_down] using h hqCan
+    have hxOppPos :
+        0 < _root_.F2R (beta:=radix) (Fopp (beta:=radix) x) := by
+      rw [hoppValue]
+      linarith
+    have hsym :
+        SymmetricP (EvenClosest (beta:=radix) b (radix : ℝ) t) := by
+      have h := EvenClosestSymmetric (beta:=radix) b (radix : ℝ) t
+      simpa only [wp, PostCond.noThrow, pure, EvenClosestSymmetric_check,
+        Id.run, ULift.up_down] using h trivial
+    have hpOppDefEven :
+        EvenClosest (beta:=radix) b (radix : ℝ) t
+          (_root_.F2R (beta:=radix) (Fopp (beta:=radix) x) *
+            ((radix : ℝ) ^ (s : Int) + 1))
+          (Fopp (beta:=radix) p) := by
+      have hOpp := hsym
+        (_root_.F2R (beta:=radix) x * ((radix : ℝ) ^ (s : Int) + 1))
+        p hpDefEven
+      rw [hoppValue]
+      convert hOpp using 1 <;> ring
+    have hqOppDefEven :
+        EvenClosest (beta:=radix) b (radix : ℝ) t
+          (_root_.F2R (beta:=radix) (Fopp (beta:=radix) x) -
+            _root_.F2R (beta:=radix) (Fopp (beta:=radix) p))
+          (Fopp (beta:=radix) q) := by
+      have hOpp := hsym
+        (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p)
+        q hqDefEven
+      rw [hoppValue, hoppValue]
+      convert hOpp using 1 <;> ring
+    have hhxOppDefEven :
+        EvenClosest (beta:=radix) b (radix : ℝ) t
+          (_root_.F2R (beta:=radix) (Fopp (beta:=radix) q) +
+            _root_.F2R (beta:=radix) (Fopp (beta:=radix) p))
+          (Fopp (beta:=radix) hx) := by
+      have hOpp := hsym
+        (_root_.F2R (beta:=radix) q + _root_.F2R (beta:=radix) p)
+        hx hhxDefEven
+      rw [hoppValue, hoppValue]
+      convert hOpp using 1 <;> ring
+    rcases VeltkampEven_pos (beta:=radix) b radix s t
+        (Fopp (beta:=radix) x) (Fopp (beta:=radix) p)
+        (Fopp (beta:=radix) q) (Fopp (beta:=radix) hx)
+        rfl hradix hvNum hsGe hsLe hxOppNormal hpOppCan hqOppCan hxOppPos
+        hpOppDefEven hqOppDefEven hhxOppDefEven with
+      ⟨v, hvValue, hvEven⟩
+    refine ⟨Fopp (beta:=radix) v, ?_, ?_⟩
+    · rw [hoppValue, hvValue, hoppValue]
+      ring
+    · have hsymReduced :
+          SymmetricP (EvenClosest (beta:=radix)
+            (Veltkamp_reducedBound radix b s t) (radix : ℝ) (t - s)) := by
+        have h := EvenClosestSymmetric (beta:=radix)
+          (Veltkamp_reducedBound radix b s t) (radix : ℝ) (t - s)
+        simpa only [wp, PostCond.noThrow, pure, EvenClosestSymmetric_check,
+          Id.run, ULift.up_down] using h trivial
+      have hOpp := hsymReduced
+        (_root_.F2R (beta:=radix) (Fopp (beta:=radix) x)) v hvEven
+      rw [hoppValue] at hOpp
+      simpa using hOpp
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
