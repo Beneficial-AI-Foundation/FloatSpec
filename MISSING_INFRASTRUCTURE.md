@@ -34,13 +34,13 @@ Audit basis:
 Current broad exact-name result and counterpart-filtered status:
 
 - Unique public upstream Flocq declarations scanned: 2378.
-- Unique Lean declaration names scanned: 4626.
-- Missing exact public upstream declaration names: 195.
+- Unique Lean declaration names scanned: 4629.
+- Missing exact public upstream declaration names: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 98.
-- Files with at least one active listed candidate: 4.
-- Counterpart audit coverage for the active list: 98/98 names have been
+- Active semantic gap candidates still listed below: 96.
+- Files with at least one active listed candidate: 3.
+- Counterpart audit coverage for the active list: 96/96 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 98 active
+Fix the remaining Flocq import gaps by working through the 96 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -1061,7 +1061,34 @@ proof-erased/permissive adapters and are not a faithful replacement for the
 SingleNaN theorem. Therefore `Bsucc'_correct` remains active and blocked rather
 than being restored as a weakened equality.
 
-#### `IEEE754/Bits.v` (2)
+#### `IEEE754/Bits.v` (0)
+
+2026-07-20 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260720_123847` targeted exact upstream
+`IEEE754/Bits.v:b32_div` but failed before proof generation because the
+configured `gpt-5.6-sol` model requires a newer Codex CLI; it changed no source
+files and its local target gate passed. The manual repair removed the
+always-overflow `Bdiv_correct_aux_check` shell and restored the exact quotient
+path: `SFdiv_core_binary` specializes the proved `Fdiv` core, its data theorem
+supplies the inbetween and exponent obligations, and exact public
+`Bdiv_correct_aux` feeds those obligations to `binary_round_aux_correct'` for
+the signed quotient. Proof-carrying `Binary.Bdiv` now follows the upstream NaN,
+infinity, signed-zero, divide-by-zero, and finite/finite constructor split and
+reconstructs every finite result through nonpermissive binary validity. Exact
+public `b32_div` and `b64_div` specialize that operation with `binop_nan_pl32`
+and `binop_nan_pl64`, returning the proof-carrying `binary32`/`binary64`
+carriers without routing through permissive `Binary754` or proof-erased bridge
+types. Focused dependency builds for `BinarySingleNaN.lean` and `Bits.lean`
+passed. The classifier sidecar
+`.change_log/codex_attempt_20260720_123847/manual_proved.json` records
+`result = proved`, `coq_alignment = checked`, `build = pass`, and
+`local_target_gate = pass`. `git diff --check`,
+`scripts/status_report.sh --write`, and
+`scripts/audit_placeholders.sh --json FloatSpec` passed with zero trust or
+placeholder findings, and full `lake build` completed successfully with 3345
+jobs. The requested `scripts/check_diff_trust.sh` gate remains unavailable
+because that script is not present in this checkout. Status: both exact names
+are implemented and removed from active semantic gaps.
 
 2026-07-20 completion note: subscription harness attempt
 `.change_log/codex_attempt_20260720_122317` targeted exact upstream
@@ -1620,9 +1647,6 @@ valid bounded finite `binary_float` result without changing the payload. An
 explicit follow-up `scripts/classify_attempt.py` run recorded
 `result = blocked`, `coq_alignment = checked`, `build = pass`, and
 `local_target_gate = pass`. Status: still active.
-
-- `b32_div` (Definition, upstream line 672)
-- `b64_div` (Definition, upstream line 739)
 
 #### `IEEE754/PrimFloat.v` (8)
 

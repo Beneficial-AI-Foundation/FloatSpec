@@ -1399,6 +1399,20 @@ noncomputable def b32_mult (mode : RoundingMode) (x y : binary32) : binary32 := 
       omega
   exact Binary.Bmult (prec := 24) (emax := 128) binop_nan_pl32 mode x y
 
+-- Coq: `Definition b32_div : mode -> binary32 -> binary32 -> binary32 :=
+-- Bdiv _ _ Hprec Hprec_emax binop_nan_pl32.`
+noncomputable def b32_div (mode : RoundingMode) (x y : binary32) : binary32 := by
+  letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
+    refine ⟨?_⟩
+    intro a b hab
+    simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+    omega
+  exact Binary.Bdiv (prec := 24) (emax := 128) binop_nan_pl32 mode x y
+
 -- Coq: `Definition b32_fma : mode -> binary32 -> binary32 -> binary32 -> binary32 :=
 -- Bfma _ _ Hprec Hprec_emax ternop_nan_pl32.`
 noncomputable def b32_fma (mode : RoundingMode) (x y z : binary32) : binary32 := by
@@ -1593,6 +1607,20 @@ noncomputable def b64_mult (mode : RoundingMode) (x y : binary64) : binary64 := 
       simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
       grind
   exact Binary.Bmult (prec := 53) (emax := 1024) binop_nan_pl64 mode x y
+
+-- Coq: `Definition b64_div : mode -> binary64 -> binary64 -> binary64 :=
+-- Bdiv _ _ Hprec Hprec_emax binop_nan_pl64.`
+noncomputable def b64_div (mode : RoundingMode) (x y : binary64) : binary64 := by
+  letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
+    refine ⟨?_⟩
+    intro a b hab
+    simp [FLT_exp, FloatSpec.Core.FLT.FLT_exp]
+    grind
+  exact Binary.Bdiv (prec := 53) (emax := 1024) binop_nan_pl64 mode x y
 
 -- Coq: `Definition b64_fma : mode -> binary64 -> binary64 -> binary64 -> binary64 :=
 -- Bfma _ _ Hprec Hprec_emax ternop_nan_pl64.`
