@@ -4551,6 +4551,12 @@ noncomputable def Axpy_opt_from_general_bound_check {beta : Int}
     (a1 x1 y1 E : ℝ) : Unit :=
   ()
 
+noncomputable def Axpy_opt_check {beta : Int}
+    (b : Fbound_skel) (precision : Nat)
+    (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
+    (a1 x1 y1 : ℝ) : Unit :=
+  ()
+
 noncomputable def ExactSum_Near_check {beta : Int}
     (b : Fbound_skel) (precision : Nat)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -36795,6 +36801,86 @@ theorem Axpy_aux1_aux3 {beta : Int}
     nlinarith
   exact le_trans hdist_half hquarter
 
+private theorem bounded_sum_eq_of_lt_min
+    (b : Fbound_skel)
+    (t y u : FloatSpec.Core.Defs.FlocqFloat 2)
+    (htBound : Fbounded (beta:=2) b t)
+    (hyBound : Fbounded (beta:=2) b y)
+    (huBound : Fbounded (beta:=2) b u)
+    (hsmall : |_root_.F2R (beta:=2) t + _root_.F2R (beta:=2) y -
+        _root_.F2R (beta:=2) u| < (2 : ℝ) ^ (-b.dExp)) :
+    _root_.F2R (beta:=2) u =
+      _root_.F2R (beta:=2) t + _root_.F2R (beta:=2) y := by
+  have htExp : -b.dExp ≤ t.Fexp := htBound.2
+  have hyExp : -b.dExp ≤ y.Fexp := hyBound.2
+  have huExp : -b.dExp ≤ u.Fexp := huBound.2
+  let nt : Nat := Int.natAbs (t.Fexp - (-b.dExp))
+  let ny : Nat := Int.natAbs (y.Fexp - (-b.dExp))
+  let nu : Nat := Int.natAbs (u.Fexp - (-b.dExp))
+  have hnt : (nt : Int) = t.Fexp - (-b.dExp) := by
+    simpa [nt] using
+      Int.natAbs_of_nonneg (by omega : 0 ≤ t.Fexp - (-b.dExp))
+  have hny : (ny : Int) = y.Fexp - (-b.dExp) := by
+    simpa [ny] using
+      Int.natAbs_of_nonneg (by omega : 0 ≤ y.Fexp - (-b.dExp))
+  have hnu : (nu : Int) = u.Fexp - (-b.dExp) := by
+    simpa [nu] using
+      Int.natAbs_of_nonneg (by omega : 0 ≤ u.Fexp - (-b.dExp))
+  let ts : FloatSpec.Core.Defs.FlocqFloat 2 := Fshift (beta:=2) 2 nt t
+  let ys : FloatSpec.Core.Defs.FlocqFloat 2 := Fshift (beta:=2) 2 ny y
+  let us : FloatSpec.Core.Defs.FlocqFloat 2 := Fshift (beta:=2) 2 nu u
+  have htsExp : ts.Fexp = -b.dExp := by
+    simp only [ts, Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rw [hnt]
+    omega
+  have hysExp : ys.Fexp = -b.dExp := by
+    simp only [ys, Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rw [hny]
+    omega
+  have husExp : us.Fexp = -b.dExp := by
+    simp only [us, Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rw [hnu]
+    omega
+  have htsVal : _root_.F2R (beta:=2) ts = _root_.F2R (beta:=2) t := by
+    simpa [ts] using Fshift_value (beta:=2) 2 nt t rfl (by decide)
+  have hysVal : _root_.F2R (beta:=2) ys = _root_.F2R (beta:=2) y := by
+    simpa [ys] using Fshift_value (beta:=2) 2 ny y rfl (by decide)
+  have husVal : _root_.F2R (beta:=2) us = _root_.F2R (beta:=2) u := by
+    simpa [us] using Fshift_value (beta:=2) 2 nu u rfl (by decide)
+  let q : ℝ := (2 : ℝ) ^ (-b.dExp)
+  have hqPos : 0 < q := zpow_pos (by norm_num) _
+  have htVal : _root_.F2R (beta:=2) t = (ts.Fnum : ℝ) * q := by
+    rw [← htsVal]
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, htsExp, q]
+  have hyVal : _root_.F2R (beta:=2) y = (ys.Fnum : ℝ) * q := by
+    rw [← hysVal]
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hysExp, q]
+  have huVal : _root_.F2R (beta:=2) u = (us.Fnum : ℝ) * q := by
+    rw [← husVal]
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, husExp, q]
+  rw [htVal, hyVal, huVal] at hsmall
+  have hcombine :
+      (ts.Fnum : ℝ) * q + (ys.Fnum : ℝ) * q - (us.Fnum : ℝ) * q =
+        ((ts.Fnum + ys.Fnum - us.Fnum : Int) : ℝ) * q := by
+    push_cast
+    ring
+  rw [hcombine, abs_mul, abs_of_pos hqPos] at hsmall
+  have hcoeffAbs :
+      |((ts.Fnum + ys.Fnum - us.Fnum : Int) : ℝ)| < 1 := by
+    change |((ts.Fnum + ys.Fnum - us.Fnum : Int) : ℝ)| * q < q at hsmall
+    nlinarith
+  have hcoeffAbsInt : |ts.Fnum + ys.Fnum - us.Fnum| < 1 := by
+    exact_mod_cast hcoeffAbs
+  have hcoeffAbsNonneg : 0 ≤ |ts.Fnum + ys.Fnum - us.Fnum| :=
+    abs_nonneg _
+  have hcoeffAbsZero : |ts.Fnum + ys.Fnum - us.Fnum| = 0 := by omega
+  have hcoeffZero : ts.Fnum + ys.Fnum - us.Fnum = 0 :=
+    abs_eq_zero.mp hcoeffAbsZero
+  have hnumEq : us.Fnum = ts.Fnum + ys.Fnum := by omega
+  rw [huVal, htVal, hyVal, hnumEq]
+  push_cast
+  ring
+
 /-- Coq: `Axpy_aux3`, the remaining subnormal `t` Axpy min/max branch.
 
 When `t + y` lies below `u`, closestness rules out the predecessor-boundary
@@ -36820,15 +36906,14 @@ theorem Axpy_aux3 {beta : Int}
           (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) t ∧
         Closest (beta:=beta) b (2 : ℝ)
           (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y) u ∧
-        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision ∧
-        (∀ r : ℝ, -b.dExp ≤ (boundR (beta:=beta) 2 r).Fexp)⌝⦄
+        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision⌝⦄
     (pure (Axpy_aux3_check (beta:=beta) b precision a x y t u a1 x1 y1) :
       Id Unit)
     ⦃⇓_ => ⌜MinOrMax (beta:=beta) b 2 (a1 * x1 + y1) u⌝⦄ := by
   intro h
   rcases h with
     ⟨huCan, htSub, hyBound, huPos, hpredExpEq, huExp, hperturb,
-      htClosest, huClosest, hbeta, hprecision_gt, hvNum, hBoundExp⟩
+      htClosest, huClosest, hbeta, hprecision_gt, hvNum⟩
   simp only [wp, PostCond.noThrow, pure, Axpy_aux3_check,
     Id.run, ULift.up_down]
   have hprecision : precision ≠ 0 := by omega
@@ -36982,44 +37067,13 @@ theorem Axpy_aux3 {beta : Int}
         rw [abs_of_nonneg (by linarith : 0 ≤ U - S)]
         linarith
       linarith
-    have hvNum_gt : (1 : Int) < b.vNum := by
-      have h := vNumbMoreThanOne b 2 precision
-      simpa only [wp, PostCond.noThrow, pure, vNumbMoreThanOne_check,
-        Id.run, ULift.up_down] using
-        h ⟨hprecision, by decide, hvNum⟩
-    rcases errorBoundedPlus (beta:=beta) b 2 precision hbeta (by decide)
-        hprecision hvNum_gt hvNum hBoundExp t y u htBound hyBound huClosest with
-      ⟨err, herrVal, _herrBound, herrExp⟩
-    have hyExp : -b.dExp ≤ y.Fexp := hyBound.2
-    have hminExp : min t.Fexp y.Fexp = -b.dExp := by
-      rw [htSub.2.1]
-      exact min_eq_left hyExp
-    have herrExp' : err.Fexp = -b.dExp := by
-      rw [herrExp, hminExp]
-    have herrSmall :
-        |_root_.F2R (beta:=beta) err| < (2 : ℝ) ^ (-b.dExp) := by
-      simpa [herrVal, T, Y, U] using hdist_lt_boundary
-    have herrAbs :
-        |_root_.F2R (beta:=beta) err| =
-          |(err.Fnum : ℝ)| * (2 : ℝ) ^ (-b.dExp) := by
-      simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hbeta, herrExp', abs_mul,
-        abs_of_pos hboundary_pos]
-    have hmant_abs_lt_one : |(err.Fnum : ℝ)| < 1 := by
-      have hlt : |(err.Fnum : ℝ)| * (2 : ℝ) ^ (-b.dExp) <
-          1 * (2 : ℝ) ^ (-b.dExp) := by
-        simpa [herrAbs] using herrSmall
-      nlinarith [hboundary_pos, hlt]
-    have hmant_abs_int_lt_one : |err.Fnum| < 1 := by
-      exact_mod_cast hmant_abs_lt_one
-    have hmant_abs_nonneg : 0 ≤ |err.Fnum| := abs_nonneg err.Fnum
-    have hmant_abs_zero : |err.Fnum| = 0 := by omega
-    have hmant_zero : err.Fnum = 0 := abs_eq_zero.mp hmant_abs_zero
-    have herrZero : _root_.F2R (beta:=beta) err = 0 := by
-      simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hmant_zero]
-    have hdelta_zero : T + Y - U = 0 := by
-      dsimp [T, Y, U]
-      rw [← herrVal, herrZero]
-    linarith
+    have hsumExact :
+        _root_.F2R (beta:=beta) u =
+          _root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y := by
+      subst beta
+      exact bounded_sum_eq_of_lt_min b t y u htBound hyBound huBound
+        (by simpa [S, T, Y, U] using hdist_lt_boundary)
+    simpa [S, T, Y, U] using hsumExact.symm
   by_cases hU_le_Z : U ≤ Z
   · have hhalf_u : |S - U| ≤
         (1 / 2 : ℝ) * Fulp (beta:=beta) b 2 precision u := by
@@ -37113,9 +37167,7 @@ theorem Axpy_aux3 {beta : Int}
 The upstream proof splits the canonical `t` case.  Normal `t` uses
 `Axpy_aux1_aux1` followed by `Axpy_aux1`; subnormal `t` uses either the
 boundary predecessor branch `Axpy_aux3` or the larger predecessor exponent
-estimate `Axpy_aux1_aux3` followed by `Axpy_aux1`.  The predecessor-exponent
-split is explicit here, matching the local shape of the restored auxiliary
-lemmas rather than hiding it as an unproved local case analysis. -/
+estimate `Axpy_aux1_aux3` followed by `Axpy_aux1`. -/
 theorem AxpyPos {beta : Int}
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
@@ -37135,19 +37187,26 @@ theorem AxpyPos {beta : Int}
           (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) t ∧
         Closest (beta:=beta) b (2 : ℝ)
           (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y) u ∧
-        (((FPred (beta:=beta) b 2 precision u).Fexp = -b.dExp ∧
-            -b.dExp + 1 ≤ u.Fexp) ∨
-          -b.dExp + 1 ≤ (FPred (beta:=beta) b 2 precision u).Fexp) ∧
-        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision ∧
-        (∀ r : ℝ, -b.dExp ≤ (boundR (beta:=beta) 2 r).Fexp)⌝⦄
+        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision⌝⦄
     (pure (AxpyPos_check (beta:=beta) b precision a x y t u a1 x1 y1) :
       Id Unit)
     ⦃⇓_ => ⌜MinOrMax (beta:=beta) b 2 (a1 * x1 + y1) u⌝⦄ := by
   intro h
   rcases h with
     ⟨huCan, htCan, hyBound, huPos, htScale, hperturb, htClosest,
-      huClosest, hpredSplit, hbeta, hprecision_gt, hvNum, hBoundExp⟩
+      huClosest, hbeta, hprecision_gt, hvNum⟩
   simp only [wp, PostCond.noThrow, pure, AxpyPos_check, Id.run, ULift.up_down]
+  have hprecision : precision ≠ 0 := by omega
+  have huBound : Fbounded (beta:=beta) b u := by
+    have h := FcanonicBound (beta:=beta) 2 b u
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using h huCan
+  have hpredBound :
+      Fbounded (beta:=beta) b (FPred (beta:=beta) b 2 precision u) := by
+    have h := FBoundedPred (beta:=beta) b 2 precision u
+    simpa only [wp, PostCond.noThrow, pure, FBoundedPred_check,
+      Id.run, ULift.up_down] using
+      h ⟨huBound, by decide, hprecision, hvNum⟩
   rcases htCan with htNorm | htSub
   · have hblop :
         |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
@@ -37163,27 +37222,67 @@ theorem AxpyPos {beta : Int}
       Id.run, ULift.up_down] using
       h ⟨huCan, hblop, huPos, htScale, hperturb, huClosest,
         hbeta, hprecision_gt, hvNum⟩
-  · rcases hpredSplit with hboundary | hpredHigh
-    · have h := Axpy_aux3 (beta:=beta) b precision a x y t u a1 x1 y1
-      simpa only [wp, PostCond.noThrow, pure, Axpy_aux3_check,
+  · rcases eq_or_lt_of_le huBound.2 with huExpEq | huExpLt
+    · have huUlp :
+          Fulp (beta:=beta) b 2 precision u = (2 : ℝ) ^ (-b.dExp) := by
+        have h := CanonicFulp (beta:=beta) 2 b precision u
+        have h' :
+            Fulp (beta:=beta) b 2 precision u = (2 : ℝ) ^ u.Fexp := by
+          simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check,
+            Id.run, ULift.up_down] using
+            h ⟨huCan, hbeta, by decide, hprecision, hvNum⟩
+        rw [h', ← huExpEq]
+      have huClosestUlp :
+          2 * |_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y -
+              _root_.F2R (beta:=beta) u| ≤
+            Fulp (beta:=beta) b 2 precision u := by
+        have h := ClosestUlp (beta:=beta) b 2 precision
+          (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y) u
+        simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
+          Id.run, ULift.up_down] using
+          h ⟨huClosest, hbeta, by decide, hprecision, hvNum⟩
+      have hboundaryPos : 0 < (2 : ℝ) ^ (-b.dExp) :=
+        zpow_pos (by norm_num) _
+      have hsumSmall :
+          |_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y -
+              _root_.F2R (beta:=beta) u| < (2 : ℝ) ^ (-b.dExp) := by
+        rw [huUlp] at huClosestUlp
+        nlinarith
+      subst beta
+      have huEq :
+          _root_.F2R (beta:=2) u =
+            _root_.F2R (beta:=2) t + _root_.F2R (beta:=2) y :=
+        bounded_sum_eq_of_lt_min b t y u htSub.1 hyBound huBound hsumSmall
+      have h := Axpy_aux2 (beta:=2) b precision a x y t u a1 x1 y1
+      simpa only [wp, PostCond.noThrow, pure, Axpy_aux2_check,
         Id.run, ULift.up_down] using
-        h ⟨huCan, htSub, hyBound, huPos, hboundary.1, hboundary.2, hperturb,
-          htClosest, huClosest, hbeta, hprecision_gt, hvNum, hBoundExp⟩
-    · have hblop :
+        h ⟨huCan, htSub, huPos, huEq, hperturb, htClosest,
+          rfl, hprecision_gt, hvNum⟩
+    · have huExpHigh : -b.dExp + 1 ≤ u.Fexp := by omega
+      rcases eq_or_lt_of_le hpredBound.2 with hpredExpEq | hpredExpLt
+      · have h := Axpy_aux3 (beta:=beta) b precision a x y t u a1 x1 y1
+        simpa only [wp, PostCond.noThrow, pure, Axpy_aux3_check,
+          Id.run, ULift.up_down] using
+          h ⟨huCan, htSub, hyBound, huPos, hpredExpEq.symm, huExpHigh,
+            hperturb, htClosest, huClosest, hbeta, hprecision_gt, hvNum⟩
+      · have hpredHigh :
+            -b.dExp + 1 ≤ (FPred (beta:=beta) b 2 precision u).Fexp := by
+          omega
+        have hblop :
           |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
               _root_.F2R (beta:=beta) t| ≤
             (1 / 4 : ℝ) * Fulp (beta:=beta) b 2 precision
               (FPred (beta:=beta) b 2 precision u) := by
-        have h := Axpy_aux1_aux3 (beta:=beta) b precision a x t u
-        simpa only [wp, PostCond.noThrow, pure, Axpy_aux1_aux3_check,
+          have h := Axpy_aux1_aux3 (beta:=beta) b precision a x t u
+          simpa only [wp, PostCond.noThrow, pure, Axpy_aux1_aux3_check,
+            Id.run, ULift.up_down] using
+            h ⟨htSub, huCan, huPos, hpredHigh, htClosest,
+              hbeta, hprecision_gt, hvNum⟩
+        have h := Axpy_aux1 (beta:=beta) b precision a x y t u a1 x1 y1
+        simpa only [wp, PostCond.noThrow, pure, Axpy_aux1_check,
           Id.run, ULift.up_down] using
-          h ⟨htSub, huCan, huPos, hpredHigh, htClosest,
+          h ⟨huCan, hblop, huPos, htScale, hperturb, huClosest,
             hbeta, hprecision_gt, hvNum⟩
-      have h := Axpy_aux1 (beta:=beta) b precision a x y t u a1 x1 y1
-      simpa only [wp, PostCond.noThrow, pure, Axpy_aux1_check,
-        Id.run, ULift.up_down] using
-        h ⟨huCan, hblop, huPos, htScale, hperturb, huClosest,
-          hbeta, hprecision_gt, hvNum⟩
 
 /-- Nonzero helper for Coq `Axpy_tFlessu`.
 
@@ -37213,23 +37312,15 @@ theorem Axpy_tFlessu_nonzero {beta : Int}
           (1 / 4 : ℝ) * Fulp (beta:=beta) b 2 precision
             (FLess (beta:=beta) b 2 precision u) ∧
         _root_.F2R (beta:=beta) u ≠ 0 ∧
-        (((FPred (beta:=beta) b 2 precision u).Fexp = -b.dExp ∧
-            -b.dExp + 1 ≤ u.Fexp) ∨
-          -b.dExp + 1 ≤ (FPred (beta:=beta) b 2 precision u).Fexp) ∧
-        (((FPred (beta:=beta) b 2 precision (Fopp (beta:=beta) u)).Fexp =
-            -b.dExp ∧ -b.dExp + 1 ≤ (Fopp (beta:=beta) u).Fexp) ∨
-          -b.dExp + 1 ≤
-            (FPred (beta:=beta) b 2 precision (Fopp (beta:=beta) u)).Fexp) ∧
-        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision ∧
-        (∀ r : ℝ, -b.dExp ≤ (boundR (beta:=beta) 2 r).Fexp)⌝⦄
+        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision⌝⦄
     (pure (Axpy_tFlessu_check (beta:=beta) b precision a x y t u a1 x1 y1) :
       Id Unit)
     ⦃⇓_ => ⌜MinOrMax (beta:=beta) b 2 (a1 * x1 + y1) u⌝⦄ := by
   intro h
   rcases h with
     ⟨haBound, _hxBound, hyBound, _htBound, _huBound, htClosest, huClosest,
-      huCan, htCan, htScale, hperturb, huNonzero, hpredPos, hpredNeg,
-      hbeta, hprecision_gt, hvNum, hBoundExp⟩
+      huCan, htCan, htScale, hperturb, huNonzero,
+      hbeta, hprecision_gt, hvNum⟩
   simp only [wp, PostCond.noThrow, pure, Axpy_tFlessu_check,
     Id.run, ULift.up_down]
   have hF2R_opp (q : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -37360,8 +37451,8 @@ theorem Axpy_tFlessu_nonzero {beta : Int}
       simpa only [wp, PostCond.noThrow, pure, AxpyPos_check,
         Id.run, ULift.up_down] using
         hneg ⟨huOppCan, htOppCan, hyOppBound, huOppPos, hscaleOpp,
-          hperturbOpp, htOppClosest, huOppClosest, hpredNeg, hbeta,
-          hprecision_gt, hvNum, hBoundExp⟩
+          hperturbOpp, htOppClosest, huOppClosest, hbeta,
+          hprecision_gt, hvNum⟩
     have hnegTarget :
         MinOrMax (beta:=beta) b 2 (-(a1 * x1 + y1))
           (Fopp (beta:=beta) u) := by
@@ -37387,8 +37478,7 @@ theorem Axpy_tFlessu_nonzero {beta : Int}
     simpa only [wp, PostCond.noThrow, pure, AxpyPos_check,
         Id.run, ULift.up_down] using
       hpos ⟨huCan, htCan, hyBound, huPos, htScale, hperturbPred,
-        htClosest, huClosest, hpredPos, hbeta, hprecision_gt, hvNum,
-        hBoundExp⟩
+        htClosest, huClosest, hbeta, hprecision_gt, hvNum⟩
 
 /-- Zero-valued branch of Coq `Axpy_tFlessu`.
 
@@ -37538,9 +37628,7 @@ theorem Axpy_tFlessu_zero {beta : Int}
 /-- Coq: `Axpy_tFlessu`, signed dispatch around `AxpyPos`.
 
 Negative and positive nonzero branches use `Axpy_tFlessu_nonzero`; the
-zero branch is the explicit `Axpy_tFlessu_zero` proof above.  This removes
-the extra nonzero precondition from the same-name theorem while preserving
-the local predecessor-exponent splits needed by the restored `AxpyPos`. -/
+zero branch is the explicit `Axpy_tFlessu_zero` proof above. -/
 theorem Axpy_tFlessu {beta : Int}
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
@@ -37563,23 +37651,15 @@ theorem Axpy_tFlessu {beta : Int}
             a1 * x1| <
           (1 / 4 : ℝ) * Fulp (beta:=beta) b 2 precision
             (FLess (beta:=beta) b 2 precision u) ∧
-        (((FPred (beta:=beta) b 2 precision u).Fexp = -b.dExp ∧
-            -b.dExp + 1 ≤ u.Fexp) ∨
-          -b.dExp + 1 ≤ (FPred (beta:=beta) b 2 precision u).Fexp) ∧
-        (((FPred (beta:=beta) b 2 precision (Fopp (beta:=beta) u)).Fexp =
-            -b.dExp ∧ -b.dExp + 1 ≤ (Fopp (beta:=beta) u).Fexp) ∨
-          -b.dExp + 1 ≤
-            (FPred (beta:=beta) b 2 precision (Fopp (beta:=beta) u)).Fexp) ∧
-        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision ∧
-        (∀ r : ℝ, -b.dExp ≤ (boundR (beta:=beta) 2 r).Fexp)⌝⦄
+        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision⌝⦄
     (pure (Axpy_tFlessu_check (beta:=beta) b precision a x y t u a1 x1 y1) :
       Id Unit)
     ⦃⇓_ => ⌜MinOrMax (beta:=beta) b 2 (a1 * x1 + y1) u⌝⦄ := by
   intro h
   rcases h with
     ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest, huClosest,
-      huCan, htCan, htScale, hperturb, hpredPos, hpredNeg,
-      hbeta, hprecision_gt, hvNum, hBoundExp⟩
+      huCan, htCan, htScale, hperturb,
+      hbeta, hprecision_gt, hvNum⟩
   simp only [wp, PostCond.noThrow, pure, Axpy_tFlessu_check,
     Id.run, ULift.up_down]
   by_cases huZero : _root_.F2R (beta:=beta) u = 0
@@ -37604,8 +37684,8 @@ theorem Axpy_tFlessu {beta : Int}
     simpa only [wp, PostCond.noThrow, pure, Axpy_tFlessu_check,
       Id.run, ULift.up_down] using
       hnonzero ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest,
-        huClosest, huCan, htCan, htScale, hperturb, huZero, hpredPos,
-        hpredNeg, hbeta, hprecision_gt, hvNum, hBoundExp⟩
+        huClosest, huCan, htCan, htScale, hperturb, huZero,
+        hbeta, hprecision_gt, hvNum⟩
 
 /-- Coq: `UlpFlessuGe_aux`.
 
@@ -39005,27 +39085,27 @@ real-arithmetic scale cut to produce the `4 * |t| ≤ |u|` premise consumed by
 `Axpy_tFlessu`. -/
 theorem Axpy_scale_from_rounding_inputs {beta : Int}
     (b : Fbound_skel) (precision : Nat)
-    (t u : FloatSpec.Core.Defs.FlocqFloat beta) (A Y : ℝ) :
+    (t y u : FloatSpec.Core.Defs.FlocqFloat beta) (A : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b t ∧
-        Fbounded' (beta:=beta) b t ∧
+        Fbounded (beta:=beta) b y ∧
         Closest (beta:=beta) b (2 : ℝ) A t ∧
         Closest (beta:=beta) b (2 : ℝ)
-          (Y + _root_.F2R (beta:=beta) t) u ∧
+          (_root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) t) u ∧
         Fbounded (beta:=beta) b u ∧
-        Fnormal (beta:=beta) 2 b
-          (Fnormalize (beta:=beta) 2 b precision u) ∧
+        Fcanonic (beta:=beta) 2 b u ∧
         beta = 2 ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat 2 precision ∧
         (5 + 4 * (2 : ℝ) ^ (-(precision : Int))) *
           ((|A| + (2 : ℝ) ^ (-b.dExp - 1)) *
-            (1 - (2 : ℝ) ^ (-(precision : Int)))⁻¹) ≤ |Y|⌝⦄
+            (1 - (2 : ℝ) ^ (-(precision : Int)))⁻¹) ≤
+          |_root_.F2R (beta:=beta) y|⌝⦄
     (pure (Axpy_scale_from_rounding_inputs_check
-      (beta:=beta) b precision t u A Y) : Id Unit)
+      (beta:=beta) b precision t u A (_root_.F2R (beta:=beta) y)) : Id Unit)
     ⦃⇓_ => ⌜(4 : ℝ) * |_root_.F2R (beta:=beta) t| ≤
         |_root_.F2R (beta:=beta) u|⌝⦄ := by
   intro h
   rcases h with
-    ⟨htBound, htBound', htClosest, huClosest, huBound, huNormal,
+    ⟨htBound, hyBound, htClosest, huClosest, huBound, huCan,
       hbeta, hprecision, hvNum, hdom⟩
   simp only [wp, PostCond.noThrow, pure, Axpy_scale_from_rounding_inputs_check,
     Id.run, ULift.up_down]
@@ -39033,6 +39113,7 @@ theorem Axpy_scale_from_rounding_inputs {beta : Int}
   let eps : ℝ := (2 : ℝ) ^ (-(precision : Int))
   let c : ℝ := (2 : ℝ) ^ (-b.dExp - 1)
   let T : ℝ := _root_.F2R (beta:=2) t
+  let Y : ℝ := _root_.F2R (beta:=2) y
   let U : ℝ := _root_.F2R (beta:=2) u
   have hprecision_pos : (0 : Int) < (precision : Int) := by
     exact_mod_cast Nat.pos_of_ne_zero hprecision
@@ -39047,6 +39128,8 @@ theorem Axpy_scale_from_rounding_inputs {beta : Int}
     linarith
   have hsum_pos : 0 < 1 + eps := by
     linarith
+  have htBound' : Fbounded' (beta:=2) b t := by
+    simpa [Fbounded'] using htBound
   have ht_round :
       |T| ≤ (|A| + c) * (1 - eps)⁻¹ := by
     have h := RoundLeGeneral (beta:=2) b precision t A
@@ -39060,10 +39143,59 @@ theorem Axpy_scale_from_rounding_inputs {beta : Int}
       _ = (|A| + c) * (1 - eps)⁻¹ := by ring
   have hu_lower :
       (|Y| - |T|) * (1 + eps)⁻¹ ≤ |U| := by
-    have h := Axpy_u_lower_from_closest_sum (beta:=2) b precision u T Y
-    simpa only [wp, PostCond.noThrow, pure, Axpy_u_lower_from_closest_sum_check,
-      Id.run, ULift.up_down, eps, T, U] using
-      h ⟨hsum_pos, huClosest, huBound, huNormal, rfl, hprecision, hvNum⟩
+    rcases huCan with huNormal | huSubnormal
+    · have h := Axpy_u_lower_from_closest_sum (beta:=2) b precision u T Y
+      have huNormEq :
+          Fnormalize (beta:=2) 2 b precision u = u := by
+        have hnorm := FcanonicFnormalizeEq (beta:=2) 2 b precision u
+        simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+          Id.run, ULift.up_down] using
+          hnorm ⟨Or.inl huNormal, rfl, by decide, hprecision, hvNum⟩
+      have huNormalNorm :
+          Fnormal (beta:=2) 2 b (Fnormalize (beta:=2) 2 b precision u) := by
+        simpa [huNormEq] using huNormal
+      simpa only [wp, PostCond.noThrow, pure,
+        Axpy_u_lower_from_closest_sum_check, Id.run, ULift.up_down,
+        eps, T, Y, U] using
+        h ⟨hsum_pos, huClosest, huBound, huNormalNorm, rfl, hprecision, hvNum⟩
+    · have hvNum_gt : 1 < b.vNum := by
+        rw [hvNum]
+        have hpow_int : (1 : Int) < (2 : Int) ^ precision := by
+          exact_mod_cast (Nat.one_lt_pow hprecision (by decide : 1 < 2))
+        simpa [Zpower_nat] using hpow_int
+      have hexact : U = T + Y := by
+        have h := closest_sum_eq_of_subnormal b t y u htBound hyBound
+          (by simpa [T, Y, add_comm, add_left_comm, add_assoc] using huClosest)
+          huSubnormal hvNum_gt
+        simpa [T, Y, U] using h
+      have htri : |Y| - |T| ≤ |U| := by
+        have hrev : |Y| ≤ |Y + T| + |T| := by
+          calc
+            |Y| = |(Y + T) + (-T)| := by
+                congr 1
+                ring
+            _ ≤ |Y + T| + |-T| := abs_add_le _ _
+            _ = |Y + T| + |T| := by rw [abs_neg]
+        have hsum_abs : |Y + T| = |U| := by
+          rw [hexact]
+          ring_nf
+        linarith
+      by_cases hnonpos : |Y| - |T| ≤ 0
+      · have hleft_nonpos :
+            (|Y| - |T|) * (1 + eps)⁻¹ ≤ 0 := by
+          exact mul_nonpos_of_nonpos_of_nonneg hnonpos
+            (inv_nonneg.mpr (le_of_lt hsum_pos))
+        exact le_trans hleft_nonpos (abs_nonneg U)
+      · have hdiff_pos : 0 < |Y| - |T| := lt_of_not_ge hnonpos
+        have hinv_le_one : (1 + eps)⁻¹ ≤ 1 :=
+          inv_le_one_of_one_le₀ (by linarith [heps_pos] : (1 : ℝ) ≤ 1 + eps)
+        have hmul_le :
+            (|Y| - |T|) * (1 + eps)⁻¹ ≤ |Y| - |T| := by
+          calc
+            (|Y| - |T|) * (1 + eps)⁻¹ ≤ (|Y| - |T|) * 1 :=
+              mul_le_mul_of_nonneg_left hinv_le_one (le_of_lt hdiff_pos)
+            _ = |Y| - |T| := by ring
+        exact le_trans hmul_le htri
   have hdom' :
       (5 + 4 * eps) * ((|A| + c) * (1 - eps)⁻¹) ≤ |Y| := by
     simpa [eps, c] using hdom
@@ -39168,12 +39300,11 @@ theorem Axpy_min_or_max_from_rounding_inputs {beta : Int}
   have hscale :
       (4 : ℝ) * |_root_.F2R (beta:=beta) t| ≤
         |_root_.F2R (beta:=beta) u| := by
-    have h := Axpy_scale_from_rounding_inputs (beta:=beta) b precision t u
+    have h := Axpy_scale_from_rounding_inputs (beta:=beta) b precision t y u
       (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x)
-      (_root_.F2R (beta:=beta) y)
     simpa only [wp, PostCond.noThrow, pure,
       Axpy_scale_from_rounding_inputs_check, Id.run, ULift.up_down] using
-      h ⟨htBound, htBound', htClosest, huClosest_comm, huBound, huNormal,
+      h ⟨htBound, hyBound, htClosest, huClosest_comm, huBound, huCan,
         hbeta, hprecision_ne, hvNum, hdom⟩
   have hperturb :
       |_root_.F2R (beta:=beta) y - y1| +
@@ -39190,8 +39321,8 @@ theorem Axpy_min_or_max_from_rounding_inputs {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, Axpy_tFlessu_check,
     Id.run, ULift.up_down] using
     hmain ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest,
-      huClosest, huCan, htCan, hscale, hperturb, hpredPos, hpredNeg,
-      hbeta, hprecision_gt, hvNum, hBoundExp⟩
+      huClosest, huCan, htCan, hscale, hperturb,
+      hbeta, hprecision_gt, hvNum⟩
 
 /-- Coq `Axpy_opt` after the strict coefficient estimate has been isolated.
 
@@ -39336,6 +39467,109 @@ theorem Axpy_opt_from_general_bound {beta : Int}
     hmain ⟨haBound, hxBound, hyBound, htBound, htBound', huBound,
       htClosest, huClosest, huCan, htCan, huNormal, hlarge, hEbound, hEstrict,
       hpredPos, hpredNeg, hbeta, hprecision_gt, hvNum, hBoundExp⟩
+
+/-- Coq: `Axpy_opt`.
+
+The optimized Axpy error criterion implies that `u` is one of the two
+extremal bounded floats around the perturbed exact result. -/
+theorem Axpy_opt {beta : Int}
+    (b : Fbound_skel) (precision : Nat)
+    (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
+    (a1 x1 y1 : ℝ) :
+    ⦃⌜Fbounded (beta:=beta) b a ∧
+        Fbounded (beta:=beta) b x ∧
+        Fbounded (beta:=beta) b y ∧
+        Fbounded (beta:=beta) b t ∧
+        Fbounded (beta:=beta) b u ∧
+        Closest (beta:=beta) b (2 : ℝ)
+          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) t ∧
+        Closest (beta:=beta) b (2 : ℝ)
+          (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) y) u ∧
+        Fcanonic (beta:=beta) 2 b u ∧
+        Fcanonic (beta:=beta) 2 b t ∧
+        (5 + 4 * (2 : ℝ) ^ (-(precision : Int))) *
+            (1 - (2 : ℝ) ^ (-(precision : Int)))⁻¹ *
+            (|_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x| +
+              (2 : ℝ) ^ (-b.dExp - 1)) ≤
+          |_root_.F2R (beta:=beta) y| ∧
+        |y1 - _root_.F2R (beta:=beta) y| +
+            |a1 * x1 -
+              _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x| ≤
+          (2 : ℝ) ^ (-(precision : Int) - 2) *
+              (1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+              |_root_.F2R (beta:=beta) y| -
+            ((2 : ℝ) ^ (-(precision : Int) - 2) *
+              |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x|) -
+            (2 : ℝ) ^ (-b.dExp - 2) ∧
+        beta = 2 ∧ 1 < precision ∧ b.vNum = Zpower_nat 2 precision⌝⦄
+    (pure (Axpy_opt_check (beta:=beta) b precision a x y t u a1 x1 y1) :
+      Id Unit)
+    ⦃⇓_ => ⌜MinOrMax (beta:=beta) b 2 (a1 * x1 + y1) u⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest, huClosest,
+      huCan, htCan, hlarge, herror, hbeta, hprecision_gt, hvNum⟩
+  simp only [wp, PostCond.noThrow, pure, Axpy_opt_check,
+    Id.run, ULift.up_down]
+  have hprecision : precision ≠ 0 := by omega
+  have huClosestComm :
+      Closest (beta:=beta) b (2 : ℝ)
+        (_root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) t) u := by
+    simpa [add_comm, add_left_comm, add_assoc] using huClosest
+  have hdom :
+      (5 + 4 * (2 : ℝ) ^ (-(precision : Int))) *
+        ((|_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x| +
+            (2 : ℝ) ^ (-b.dExp - 1)) *
+          (1 - (2 : ℝ) ^ (-(precision : Int)))⁻¹) ≤
+        |_root_.F2R (beta:=beta) y| := by
+    simpa [mul_assoc, mul_left_comm, mul_comm] using hlarge
+  have hscale :
+      (4 : ℝ) * |_root_.F2R (beta:=beta) t| ≤
+        |_root_.F2R (beta:=beta) u| := by
+    have h := Axpy_scale_from_rounding_inputs (beta:=beta) b precision t y u
+      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x)
+    simpa only [wp, PostCond.noThrow, pure,
+      Axpy_scale_from_rounding_inputs_check, Id.run, ULift.up_down] using
+      h ⟨htBound, hyBound, htClosest, huClosestComm, huBound, huCan,
+        hbeta, hprecision, hvNum, hdom⟩
+  have hstrict :
+      (2 : ℝ) ^ (-(precision : Int) - 2) *
+          (1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+          |_root_.F2R (beta:=beta) y| -
+        ((2 : ℝ) ^ (-(precision : Int) - 2) *
+          |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x|) -
+        (2 : ℝ) ^ (-b.dExp - 2) <
+      (1 / 4 : ℝ) * Fulp (beta:=beta) b 2 precision
+        (FLess (beta:=beta) b 2 precision u) := by
+    have h := UlpFlessuGe2 (beta:=beta) b precision a x y t u
+    simpa only [wp, PostCond.noThrow, pure, UlpFlessuGe2_check,
+      Id.run, ULift.up_down] using
+      h ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest, huClosest,
+        huCan, hbeta, hprecision_gt, hvNum⟩
+  have hperturb :
+      |_root_.F2R (beta:=beta) y - y1| +
+          |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
+            a1 * x1| <
+        (1 / 4 : ℝ) * Fulp (beta:=beta) b 2 precision
+          (FLess (beta:=beta) b 2 precision u) := by
+    have herror' :
+        |_root_.F2R (beta:=beta) y - y1| +
+            |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
+              a1 * x1| ≤
+          (2 : ℝ) ^ (-(precision : Int) - 2) *
+              (1 - (2 : ℝ) ^ (1 - (precision : Int))) *
+              |_root_.F2R (beta:=beta) y| -
+            ((2 : ℝ) ^ (-(precision : Int) - 2) *
+              |_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x|) -
+            (2 : ℝ) ^ (-b.dExp - 2) := by
+      simpa [abs_sub_comm] using herror
+    exact lt_of_le_of_lt herror' hstrict
+  have hmain := Axpy_tFlessu (beta:=beta) b precision a x y t u a1 x1 y1
+  simpa only [wp, PostCond.noThrow, pure, Axpy_tFlessu_check,
+    Id.run, ULift.up_down] using
+    hmain ⟨haBound, hxBound, hyBound, htBound, huBound, htClosest,
+      huClosest, huCan, htCan, hscale, hperturb,
+      hbeta, hprecision_gt, hvNum⟩
 
 /-- Coq: `ExactSum_Near`.
 
