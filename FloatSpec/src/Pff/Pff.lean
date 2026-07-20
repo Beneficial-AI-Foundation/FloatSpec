@@ -46298,6 +46298,143 @@ theorem EvenClosestbplusb {beta : Int}
         (le_antisymm hqError (abs_nonneg _))
     linarith
 
+private lemma FSucc_exp_le_add_one {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
+    (FSucc (beta:=beta) b radix precision x).Fexp ≤ x.Fexp + 1 := by
+  unfold FSucc
+  split_ifs <;> simp <;> omega
+
+/-! Coq closest-exponent separation lemma `ClosestClosest`.
+
+After taking absolute values, normalize the lower-exponent result and place its
+normalized successor strictly between the two closest values. That successor is
+bounded, so one of the two original closestness inequalities is contradicted,
+depending on which side of the successor contains the exact value. -/
+theorem ClosestClosest {beta : Int}
+    (b0 : Fbound_skel) (radix : Int) (n : Nat) (z : ℝ)
+    (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
+    (hf1 : Closest (beta:=beta) b0 (radix : ℝ) z f1)
+    (hf2 : Closest (beta:=beta) b0 (radix : ℝ) z f2)
+    (hf2Normal : Fnormal (beta:=beta) radix b0 f2)
+    (hExp : f1.Fexp ≤ f2.Fexp - 2) : False := by
+  subst beta
+  have hnNe : n ≠ 0 := by omega
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hvNumPos : 0 < b0.vNum := by
+    rw [hvNum, Zpower_nat]
+    exact pow_pos hradixPosInt _
+  have hf1Abs :
+      Closest (beta:=radix) b0 (radix : ℝ) |z| (Fabs f1) := by
+    have h := ClosestFabs (beta:=radix) b0 (radix : ℝ) f1 z
+    simpa only [wp, PostCond.noThrow, pure, ClosestFabs_check,
+      Id.run, ULift.up_down] using h ⟨hradix, hf1⟩
+  have hf2Abs :
+      Closest (beta:=radix) b0 (radix : ℝ) |z| (Fabs f2) := by
+    have h := ClosestFabs (beta:=radix) b0 (radix : ℝ) f2 z
+    simpa only [wp, PostCond.noThrow, pure, ClosestFabs_check,
+      Id.run, ULift.up_down] using h ⟨hradix, hf2⟩
+  let nf1 : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix b0 n (Fabs f1)
+  let af2 : FloatSpec.Core.Defs.FlocqFloat radix := Fabs f2
+  have hnf1Can : Fcanonic (beta:=radix) radix b0 nf1 := by
+    have h := FnormalizeCanonic (beta:=radix) radix b0 n (Fabs f1)
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, nf1] using
+      h ⟨hf1Abs.1, hf1Abs.1, hnNe, hradix, hvNum⟩
+  have hnf1Value :
+      _root_.F2R (beta:=radix) nf1 =
+        _root_.F2R (beta:=radix) (Fabs f1) := by
+    have h := FnormalizeCorrect (beta:=radix) radix b0 n (Fabs f1)
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nf1] using h ⟨rfl, hradix⟩
+  have haf2Normal : Fnormal (beta:=radix) radix b0 af2 := by
+    constructor
+    · have h := absFBounded (beta:=radix) b0 f2
+      simpa only [wp, PostCond.noThrow, pure, absFBounded_check,
+        Id.run, ULift.up_down, af2] using h hf2Normal.1
+    · simpa [af2, Fabs, FloatSpec.Calc.Operations.Fabs,
+        Int.natCast_natAbs, abs_mul] using hf2Normal.2
+  have haf2Can : Fcanonic (beta:=radix) radix b0 af2 :=
+    Or.inl haf2Normal
+  have hnf1Nonneg : 0 ≤ _root_.F2R (beta:=radix) nf1 := by
+    rw [hnf1Value]
+    have h := FloatSpec.Calc.Operations.F2R_abs (beta:=radix) f1 hradix
+    rw [show _root_.F2R (beta:=radix) (Fabs f1) =
+        |_root_.F2R (beta:=radix) f1| by simpa [Fabs, _root_.F2R] using h]
+    exact abs_nonneg _
+  have haf2Nonneg : 0 ≤ _root_.F2R (beta:=radix) af2 := by
+    have h := FloatSpec.Calc.Operations.F2R_abs (beta:=radix) f2 hradix
+    rw [show _root_.F2R (beta:=radix) af2 =
+        |_root_.F2R (beta:=radix) f2| by
+          simpa [af2, Fabs, _root_.F2R] using h]
+    exact abs_nonneg _
+  have hnf1ExpLe : nf1.Fexp ≤ (Fabs f1).Fexp := by
+    have h := FcanonicLeastExp (beta:=radix) radix b0 (Fabs f1) nf1
+      hradix rfl hvNumPos
+    simpa only [wp, PostCond.noThrow, pure, FcanonicLeastExp_check,
+      ULift.down_up, Fbounded', Fcanonic', nf1] using
+      h ⟨hnf1Value.symm, hf1Abs.1, hnf1Can⟩
+  have hnf1ExpGap : nf1.Fexp ≤ af2.Fexp - 2 := by
+    have hfabs1Exp : (Fabs f1).Fexp = f1.Fexp := by
+      simp [Fabs, FloatSpec.Calc.Operations.Fabs]
+    have hfabs2Exp : af2.Fexp = f2.Fexp := by
+      simp [af2, Fabs, FloatSpec.Calc.Operations.Fabs]
+    rw [hfabs1Exp] at hnf1ExpLe
+    rw [hfabs2Exp]
+    omega
+  let succ : FloatSpec.Core.Defs.FlocqFloat radix :=
+    FNSucc (beta:=radix) b0 (radix : ℝ) n (Fabs f1)
+  have hsuccCan : Fcanonic (beta:=radix) radix b0 succ := by
+    have h := FNSuccCanonic (beta:=radix) b0 (radix : ℝ) n (Fabs f1)
+    simpa only [wp, PostCond.noThrow, pure, FNSuccCanonic_check,
+      Id.run, ULift.up_down, succ] using
+      h ⟨hf1Abs.1, hradix, hnNe, hvNum⟩
+  have hsuccBound : Fbounded (beta:=radix) b0 succ :=
+    (FcanonicBound (beta:=radix) radix b0 succ) hsuccCan
+  have hnf1LtSucc :
+      _root_.F2R (beta:=radix) nf1 <
+        _root_.F2R (beta:=radix) succ := by
+    have h := FNSuccLt (beta:=radix) b0 (radix : ℝ) n (Fabs f1)
+    have h' :
+        _root_.F2R (beta:=radix) (Fabs f1) <
+          _root_.F2R (beta:=radix) succ := by
+      simpa only [wp, PostCond.noThrow, pure, FNSuccLt_check,
+        Id.run, ULift.up_down, succ] using h ⟨hradix, hnNe, hvNum⟩
+    simpa [hnf1Value] using h'
+  have hsuccNonneg : 0 ≤ _root_.F2R (beta:=radix) succ :=
+    le_trans hnf1Nonneg (le_of_lt hnf1LtSucc)
+  have hsuccExpLe : succ.Fexp ≤ nf1.Fexp + 1 := by
+    simpa [succ, FNSucc, nf1] using
+      (FSucc_exp_le_add_one (beta:=radix) b0 radix n nf1)
+  have hsuccExpLt : succ.Fexp < af2.Fexp := by omega
+  have hsuccLtAf2 :
+      _root_.F2R (beta:=radix) succ <
+        _root_.F2R (beta:=radix) af2 := by
+    have h := FcanonicPosFexpRlt (beta:=radix) radix b0 succ af2 hradix rfl
+    simpa only [wp, PostCond.noThrow, pure, FcanonicPosFexpRlt_check,
+      ULift.down_up, Fcanonic'] using
+      h ⟨hsuccCan, haf2Can, hsuccNonneg, haf2Nonneg, hsuccExpLt⟩
+  have hf1Dist := hf1Abs.2 succ hsuccBound
+  have hf2Dist := hf2Abs.2 succ hsuccBound
+  by_cases hzLe : |z| ≤ _root_.F2R (beta:=radix) succ
+  · have hsuccDiffNonneg :
+        0 ≤ _root_.F2R (beta:=radix) succ - |z| := by linarith
+    have haf2DiffNonneg :
+        0 ≤ _root_.F2R (beta:=radix) af2 - |z| := by linarith
+    rw [abs_of_nonneg haf2DiffNonneg, abs_of_nonneg hsuccDiffNonneg] at hf2Dist
+    exact (not_le_of_gt hsuccLtAf2) (by linarith)
+  · have hzGt : _root_.F2R (beta:=radix) succ < |z| := lt_of_not_ge hzLe
+    have hnf1DiffNonpos :
+        _root_.F2R (beta:=radix) nf1 - |z| ≤ 0 := by linarith
+    have hsuccDiffNonpos :
+        _root_.F2R (beta:=radix) succ - |z| ≤ 0 := by linarith
+    rw [← hnf1Value] at hf1Dist
+    rw [abs_of_nonpos hnf1DiffNonpos, abs_of_nonpos hsuccDiffNonpos] at hf1Dist
+    exact (not_le_of_gt hnf1LtSucc) (by linarith)
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
