@@ -47532,6 +47532,130 @@ theorem Veltkamp_tail2 {beta : Int}
     ring
   · simpa only [nx] using hnxExpLeC
 
+/-! Coq useful Veltkamp theorem `VeltkampU`.
+
+Combine the normal/subnormal Veltkamp residual theorem with the tail
+construction.  The latter residual lies strictly inside the `s`-digit split
+bound, so closestness identifies its value with `tx`. -/
+theorem VeltkampU {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx tx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxCan : Fcanonic (beta:=beta) radix b x)
+    (hpDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (htxDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx) :
+    |_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx| ≤
+        (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2 ∧
+      _root_.F2R (beta:=beta) x =
+        _root_.F2R (beta:=beta) hx + _root_.F2R (beta:=beta) tx ∧
+      (∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
+          Fbounded (beta:=beta) (Veltkamp_reducedBound radix b s t) hx' ∧
+          (Fnormal (beta:=beta) radix b x →
+            (s : Int) + x.Fexp ≤ hx'.Fexp)) ∧
+      ∃ tx' : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) tx' = _root_.F2R (beta:=beta) tx ∧
+          Fbounded (beta:=beta) (Veltkamp_splitBound radix b s) tx' ∧
+          x.Fexp ≤ tx'.Fexp := by
+  subst beta
+  have hxBound : Fbounded (beta:=radix) b x := by
+    have h := FcanonicBound (beta:=radix) radix b x
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
+      Id.run, ULift.up_down] using h hxCan
+  have hHead :
+      |_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx| ≤
+          (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2 ∧
+        ∃ hx' : FloatSpec.Core.Defs.FlocqFloat radix,
+          _root_.F2R (beta:=radix) hx' = _root_.F2R (beta:=radix) hx ∧
+            Fbounded (beta:=radix) (Veltkamp_reducedBound radix b s t) hx' ∧
+            (Fnormal (beta:=radix) radix b x →
+              (s : Int) + x.Fexp ≤ hx'.Fexp) := by
+    by_cases hxNormal : Fnormal (beta:=radix) radix b x
+    · rcases VeltkampN (beta:=radix) b radix s t x p q hx rfl hradix
+          hvNum hsGe hsLe hxNormal hpDef hqDef hhxDef with
+        ⟨hResidual, hx', hhxValue, hhxClosest, hhxExp⟩
+      exact ⟨hResidual, hx', hhxValue, hhxClosest.1, fun _ ↦ hhxExp⟩
+    · have hxSub : Fsubnormal (beta:=radix) radix b x :=
+        hxCan.resolve_left hxNormal
+      rcases VeltkampS (beta:=radix) b radix s t x p q hx rfl hradix
+          hvNum hsGe hsLe hxSub hpDef hqDef hhxDef with
+        ⟨hResidual, hx', hhxValue, hhxClosest⟩
+      exact ⟨hResidual, hx', hhxValue, hhxClosest.1,
+        fun hnormal ↦ (hxNormal hnormal).elim⟩
+  rcases Veltkamp_tail_aux (beta:=radix) b radix s t x p q hx tx rfl hradix
+      hvNum hsGe hsLe hxCan hpDef hqDef hhxDef htxDef with
+    ⟨v, hvValue, hdExp, hdMantissa⟩
+  let d : FloatSpec.Core.Defs.FlocqFloat radix := Fminus x v
+  have hdExp' : d.Fexp = x.Fexp := by
+    simpa only [d] using hdExp
+  have hdMantissa' :
+      (((|d.Fnum| : Int) : ℝ) ≤ (radix : ℝ) ^ (s : Int) / 2) := by
+    simpa only [d] using hdMantissa
+  have hpowSCast :
+      (Zpower_nat radix s : ℝ) = (radix : ℝ) ^ (s : Int) := by
+    have h := Zpower_nat_Z_powerRZ radix s
+    simpa only [wp, PostCond.noThrow, pure, Zpower_nat_Z_powerRZ_check,
+      Id.run, ULift.up_down] using h trivial
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (show (0 : Int) < radix by omega)
+  have hpowSPos : 0 < (radix : ℝ) ^ (s : Int) :=
+    zpow_pos hradixPos _
+  have hdMantissaReal :
+      ((|d.Fnum| : Int) : ℝ) < (Zpower_nat radix s : ℝ) := by
+    rw [hpowSCast]
+    nlinarith
+  have hdMantissaInt : |d.Fnum| < Zpower_nat radix s := by
+    exact_mod_cast hdMantissaReal
+  have hdBound :
+      Fbounded (beta:=radix) (Veltkamp_splitBound radix b s) d := by
+    constructor
+    · simpa [Veltkamp_splitBound] using hdMantissaInt
+    · simpa [Veltkamp_splitBound, hdExp'] using hxBound.2
+  have hdOriginalBound : Fbounded (beta:=radix) b d := by
+    constructor
+    · calc
+        |d.Fnum| < (Veltkamp_splitBound radix b s).vNum := hdBound.1
+        _ = Zpower_nat radix s := rfl
+        _ < b.vNum := by
+          rw [hvNum]
+          exact pow_lt_pow_right₀ hradix (by omega)
+    · simpa [Veltkamp_splitBound] using hdBound.2
+  have hdValue :
+      _root_.F2R (beta:=radix) d =
+        _root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) v := by
+    have h := Fminus_correct (beta:=radix) x v
+    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+      Id.run, ULift.up_down, d] using h hradix
+  have hdResidual :
+      _root_.F2R (beta:=radix) d =
+        _root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx := by
+    rw [hdValue, hvValue]
+  have htxValue :
+      _root_.F2R (beta:=radix) tx =
+        _root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx := by
+    have hdist := htxDef.2 d hdOriginalBound
+    rw [hdResidual, sub_self, abs_zero] at hdist
+    have hzero :
+        |_root_.F2R (beta:=radix) tx -
+          (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx)| = 0 :=
+      le_antisymm hdist (abs_nonneg _)
+    exact sub_eq_zero.mp (abs_eq_zero.mp hzero)
+  rcases hHead with ⟨hResidual, hx', hhxValue, hhxBound, hhxExp⟩
+  refine ⟨hResidual, ?_, ⟨hx', hhxValue, hhxBound, hhxExp⟩, d, ?_,
+    hdBound, ?_⟩
+  · rw [htxValue]
+    ring
+  · exact hdResidual.trans htxValue.symm
+  · rw [hdExp']
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=

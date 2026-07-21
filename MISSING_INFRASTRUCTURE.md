@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 61.
+- Active semantic gap candidates still listed below: 60.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 61/61 names have been
+- Counterpart audit coverage for the active list: 60/60 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 61 active
+Fix the remaining Flocq import gaps by working through the 60 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2426,9 +2426,27 @@ classifier
 local target gate. Therefore `Veltkamp_tail2` is removed from the active list,
 and `VeltkampU` is next.
 
-#### `Pff/Pff.v` (61)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_094158` restored exact public `VeltkampU`
+under only the expanded upstream section assumptions: canonical `x`, the four
+`Closest` premises, the residual estimate and exact `x = hx + tx`
+decomposition, an equal-value reduced-bound `hx` witness with the conditional
+normal exponent lower bound, and an equal-value split-bound `tx` witness with
+exponent at least `x.Fexp`. The proof combines `VeltkampN` and `VeltkampS` for
+the head witness with `Veltkamp_tail_aux` for the tail, then uses closestness
+to identify the exact residual with `tx`. The independent focused Lean process
+exited 0, `git diff --check` passed, the placeholder and generated status
+audits reported zero findings, and the full 3345-job `lake build` passed;
+`scripts/check_diff_trust.sh` is absent from this checkout. The harness's
+top-level `attempt.json` recorded `result = proved` but did not propagate its
+nested build or Coq-alignment checks. The normalized classifier
+`.change_log/manual_attempt_20260721_VeltkampU_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `VeltkampU` is removed from the active
+list, and `BoundedL` is next.
 
-- `VeltkampU` (Theorem, upstream line 16270)
+#### `Pff/Pff.v` (60)
+
 - `BoundedL` (Theorem, upstream line 16329)
 - `Closestbbext` (Theorem, upstream line 16377)
 - `Underf_Err1` (Theorem, upstream line 16555)
