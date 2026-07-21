@@ -1,0 +1,154 @@
+commit 8bb5432ec47664df350c6751a2cbab8ce86b73fb
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 07:57:10 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 07:57:10 2026 +0800
+
+    Restore exact Pff NormalbPrim theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index c7e4e945..bf86e3aa 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -47921,6 +47921,86 @@ theorem Veltkampb' {beta : Int}
+     simpa [hfMinusHfValue] using h
+   exact ⟨hA1Ext, hA2Ext, hA3Ext, hA4Ext⟩
+ 
++/-! Coq Algo2 theorem `NormalbPrim`.
++
++Every nonzero canonical float under the original Dekker bound has a normal
++representative under the extended bound.  Lean's `Fbound_skel.dExp` is an
++integer, so the Coq invariant `0 <= dExp b` is explicit here. -/
++theorem NormalbPrim {beta : Int}
++    (b : Fbound_skel) (radix : Int) (t : Nat)
++    (f : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hpGe : 4 ≤ t)
++    (hdExp : 0 ≤ b.dExp)
++    (hfCan : Fcanonic (beta:=beta) radix b f)
++    (hfNonzero : _root_.F2R (beta:=beta) f ≠ 0) :
++    ∃ f' : FloatSpec.Core.Defs.FlocqFloat beta,
++      Fnormal (beta:=beta) radix (Dekker_extendedBound b t) f' ∧
++        _root_.F2R (beta:=beta) f' = _root_.F2R (beta:=beta) f ∧
++        -((t : Int)) - b.dExp ≤ f'.Fexp := by
++  subst beta
++  let b' : Fbound_skel := Dekker_extendedBound b t
++  let nf : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fnormalize (beta:=radix) radix b' t f
++  have htNe : t ≠ 0 := by omega
++  have hb'Num : b'.vNum = Zpower_nat radix t := by
++    simpa [b'] using hvNum
++  have hfBound : Fbounded (beta:=radix) b f := by
++    have h := FcanonicBound (beta:=radix) radix b f
++    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check] using h hfCan
++  have hbExt : b.dExp < b'.dExp := by
++    simpa [b'] using dExpPrim b t hdExp
++  have hfBoundExt : Fbounded (beta:=radix) b' f := by
++    constructor
++    · simpa [b'] using hfBound.1
++    · have hlower : -b'.dExp ≤ -b.dExp := by omega
++      exact le_trans hlower hfBound.2
++  have hnfCan : Fcanonic (beta:=radix) radix b' nf := by
++    have h := FnormalizeCanonic (beta:=radix) radix b' t f
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++      Id.run, ULift.up_down, Fbounded', nf] using
++      h ⟨hfBoundExt, hfBoundExt, htNe, hradix, hb'Num⟩
++  have hnfValue :
++      _root_.F2R (beta:=radix) nf = _root_.F2R (beta:=radix) f := by
++    have h := FnormalizeCorrect (beta:=radix) radix b' t f
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++      Id.run, ULift.up_down, nf] using h ⟨rfl, hradix⟩
++  have hfNumNonzero : f.Fnum ≠ 0 := by
++    intro hfNum
++    apply hfNonzero
++    simp [hfNum, _root_.F2R, FloatSpec.Core.Defs.F2R]
++  have hnfExpLower : -((t : Int)) - b.dExp ≤ nf.Fexp := by
++    have hshiftLe :
++        ((min (t - Fdigit (beta:=radix) radix f)
++          (Int.natAbs (b'.dExp + f.Fexp)) : Nat) : Int) ≤ (t : Int) := by
++      have hmin :
++          min (t - Fdigit (beta:=radix) radix f)
++              (Int.natAbs (b'.dExp + f.Fexp)) ≤
++            t - Fdigit (beta:=radix) radix f :=
++        Nat.min_le_left _ _
++      have hsub : t - Fdigit (beta:=radix) radix f ≤ t :=
++        Nat.sub_le _ _
++      exact_mod_cast le_trans hmin hsub
++    have hnfExp :
++        nf.Fexp =
++          f.Fexp - ((min (t - Fdigit (beta:=radix) radix f)
++            (Int.natAbs (b'.dExp + f.Fexp)) : Nat) : Int) := by
++      dsimp [nf]
++      simp [Fnormalize, hfNumNonzero, Fshift]
++    have hfExpLower : -b.dExp ≤ f.Fexp := hfBound.2
++    rw [hnfExp]
++    omega
++  have hnfNormal : Fnormal (beta:=radix) radix b' nf := by
++    rcases hnfCan with hnormal | hsubnormal
++    · exact hnormal
++    · exfalso
++      have hb'Exp : b'.dExp = 2 * b.dExp + 2 * (t : Int) + 2 := by
++        simpa [b'] using dExpPrimEq b t
++      have hsubExp : nf.Fexp = -b'.dExp := hsubnormal.2.1
++      omega
++  exact ⟨nf, hnfNormal, hnfValue, hnfExpLower⟩
++
+ private lemma Fbounded_of_same_vNum_of_exp_ge {beta : Int}
+     (b b' : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
+     (hbNum : b.vNum = b'.vNum) (hfBound : Fbounded (beta:=beta) b' f)
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 796e4bca..41ee3d7f 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 33 active
++Fix the remaining Flocq import gaps by working through the 32 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -3096,9 +3096,27 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+ passing local target gate. Exact public `Veltkampb'` is removed from the active
+ list, reducing the ledger from 34 to 33; `NormalbPrim` is next.
+ 
+-#### `Pff/Pff.v` (33)
++2026-07-22 completion note: exact public `NormalbPrim` is restored in
++`FloatSpec/src/Pff/Pff.lean` beside the Algo2 bound-extension lemmas. It matches
++the upstream payload over `Dekker_extendedBound b t`: for every canonical
++nonzero `f` under `b`, assuming the section hypotheses and only the faithful
++local integer representation invariant `0 <= b.dExp`, it constructs
++`Fnormalize radix (Dekker_extendedBound b t) t f`, proves it normal under the
++extended bound, preserves `F2R`, and proves `-(t:Int)-b.dExp <= Fexp`. The proof
++uses `dExpPrim`/`dExpPrimEq`, `FcanonicBound`, `FnormalizeCanonic`, and
++`FnormalizeCorrect`; no magnitude, exponent, totality, conclusion, or weakening
++premise was added. `lake env lean FloatSpec/src/Pff/Pff.lean`,
++`git diff --check`, `scripts/audit_placeholders.sh --json FloatSpec`, and
++`scripts/status_report.sh --write` passed, and full `lake build` passed all
++3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
++independently normalized classifier
++`.change_log/manual_attempt_20260722_NormalbPrim_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Exact public `NormalbPrim` is removed from the active list,
++reducing the ledger from 33 to 32; `Dekker2_aux` is next.
++
++#### `Pff/Pff.v` (32)
+ 
+-- `NormalbPrim` (Theorem, upstream line 18513)
+ - `Dekker2_aux` (Theorem, upstream line 18573)
+ - `Dekker2` (Theorem, upstream line 18822)
+ - `Twice_EvenClosest_Round` (Theorem, upstream line 19178)
+@@ -7908,9 +7926,8 @@ Statement-level checks performed for active Pff entries 36-70:
+   section statements.
+ - `Veltkampb'` is now restored as the exact public bound-extension theorem in
+   `FloatSpec/src/Pff/Pff.lean`.
+-- `NormalbPrim` has no faithful local counterpart found. It constructs a
+-  normal representative in the enlarged bound and is not implied by the
+-  public Veltkamp/Dekker wrappers without the missing lower proof payloads.
++- `NormalbPrim` is now restored as the exact public Algo2 normal-representative
++  theorem in `FloatSpec/src/Pff/Pff.lean`.
+ 
+ Updated status: active Pff entries 36-70 are confirmed real semantic gaps or
+ unported section lemmas, not renamed/split complete ports. Later restorations
