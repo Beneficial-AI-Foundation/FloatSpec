@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 35 active
+Fix the remaining Flocq import gaps by working through the 34 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3040,11 +3040,37 @@ normalized classifier
 `.change_log/manual_attempt_20260722_DekkerS2_proved/attempt.json` records
 `result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
 local target gate. Exact public `DekkerS2` is removed from the active list,
-reducing the ledger from 36 to 35; `Dekker1` is next.
+reducing the ledger from 36 to 35.
 
-#### `Pff/Pff.v` (35)
+2026-07-22 completion note: exact public `Dekker1` is restored with the full
+upstream `Algo1` section payload: canonic `x` and `y`, the exponent-sum bound,
+all A1-A4/B1-B4/C1-C4/D1-D5 `Closest` hypotheses, the section exponent
+condition, and only the branch premise `radix = 2 ∨ Even t`. Because upstream
+`dExp b : N`, its premise `Z.of_N (dExp b) ≠ 0` is represented faithfully as
+`0 < b.dExp` for the local `Int`-valued `Fbound_skel.dExp`; a bare integer
+nonzero premise would incorrectly admit negative exponents. The proof splits
+both exact `Fcanonic = Fnormal ∨ Fsubnormal` hypotheses, dispatches the three
+possible cases to exact `DekkerN`, `DekkerS1`, and `DekkerS2`, and derives the
+double-subnormal case contradiction from `Expoxy` and positive `dExp`. No
+extra decomposition, conclusion, totality, or weakening premise was added.
+Required subscription harness attempt
+`.change_log/codex_attempt_20260722_065543` used `gpt-5.5` with high reasoning,
+recorded `result = proved`, and passed its local target gate. Independent
+focused `lake env lean FloatSpec/src/Pff/Pff.lean` exited 0; `git diff --check`
+and the direct added-hole scan passed.
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings;
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
+repository has no executable `scripts/check_diff_trust.sh`, so that optional
+trust gate could not be run. Full `lake build` passed all 3345 jobs. The
+normalized classifier
+`.change_log/manual_attempt_20260722_Dekker1_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `Dekker1` is removed from the active list,
+reducing the ledger from 35 to 34; `Veltkampb'` is next.
 
-- `Dekker1` (Theorem, upstream line 18385)
+#### `Pff/Pff.v` (34)
+
 - `Veltkampb'` (Theorem, upstream line 18421)
 - `NormalbPrim` (Theorem, upstream line 18513)
 - `Dekker2_aux` (Theorem, upstream line 18573)
@@ -7484,11 +7510,9 @@ Statement-level checks performed:
   `UlpFlessuGe2` coefficient estimate and `Axpy_tFlessu` predecessor side
   cases as explicit premises in `UlpFlessuGe2_from_general_bound` and
   `Axpy_opt_from_general_bound`.
-- `Dekker1` and `Dekker2`: Lean has `Dekker1_FTS` and `Dekker2_FTS`, but
-  these are Fast2Sum/Dekker support theorems over abstract `Iplus`/`Iminus`.
-  They do not match the upstream Pff `Dekker1`/`Dekker2` section payloads,
-  which prove the concrete long product decomposition equation
-  `x * y = r - t4` under the section's rounded intermediate hypotheses.
+- `Dekker2`: Lean has `Dekker2_FTS`, but this is a Fast2Sum/Dekker support
+  theorem over abstract `Iplus`/`Iminus`. It does not match the upstream Pff
+  `Dekker2` section payload.
 - `Twice_EvenClosest_Round`: Lean has
   `Twice_EvenClosest_Round_from_closest` and
   `Twice_EvenClosest_Round_from_even_or_high`, but these require the scaled
@@ -7846,11 +7870,10 @@ Statement-level checks performed for active Pff entries 36-70:
   concrete existential boundedness statements for the Dekker construction.
 - `Boundedx2y2` is now restored as the exact public section-local
   product-splitting theorem in `FloatSpec/src/Pff/Pff.lean`.
-- `Dekker_aux`, `DekkerN`, `DekkerS1`, and `DekkerS2` are now restored as
-  exact public theorems in
+- `Dekker_aux`, `DekkerN`, `DekkerS1`, `DekkerS2`, and `Dekker1` are now
+  restored as exact public theorems in
   `FloatSpec/src/Pff/Pff.lean`.
-- `Dekker1`, `Dekker2_aux`, and `Dekker2` are not
-  supplied by the public Lean
+- `Dekker2_aux` and `Dekker2` are not supplied by the public Lean
   `Dekker` wrapper or the local `Dekker1_FTS`/`Dekker2_FTS` helper
   family. The wrapper assumes summarized payloads, while the upstream names
   prove the concrete product decomposition or error bound from the section's

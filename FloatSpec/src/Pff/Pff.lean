@@ -53881,6 +53881,82 @@ theorem DekkerS2 {beta : Int}
       hC3Plus hC4Plus hD1Plus hD2Plus hD3Plus hD4Plus hD5Plus hBranch
     simpa [hxxValue] using hDekker
 
+/-! Coq Algo1 theorem `Dekker1`.
+
+This is the exact upstream section wrapper at `Pff.v:18387`: split the
+canonical inputs into the four normal/subnormal cases, delegate the three
+possible cases to `DekkerN`, `DekkerS1`, and `DekkerS2`, and derive the final
+subnormal/subnormal case contradiction from `Expoxy` and `0 < b.dExp`. -/
+theorem Dekker1 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
+      FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hxCan : Fcanonic (beta:=beta) radix b x)
+    (hyCan : Fcanonic (beta:=beta) radix b y)
+    (hExpoxy : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hA1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
+    (hA2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hA3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hA4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
+    (hB1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
+    (hB2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
+    (hB3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
+    (hB4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
+    (hC1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) hy) x1y1)
+    (hC2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) ty) x1y2)
+    (hC3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) hy) x2y1)
+    (hC4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty) x2y2)
+    (hD1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
+    (hD2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) x1y1) t1)
+    (hD3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t1 - _root_.F2R (beta:=beta) x1y2) t2)
+    (hD4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t2 - _root_.F2R (beta:=beta) x2y1) t3)
+    (hD5 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t3 - _root_.F2R (beta:=beta) x2y2) t4)
+    (hdExpPos : 0 < b.dExp)
+    (hBranch : radix = 2 ∨ Even t) :
+    _root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y =
+      _root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) t4 := by
+  rcases hxCan with hxNormal | hxSubnormal
+  · rcases hyCan with hyNormal | hySubnormal
+    · exact DekkerN (beta:=beta) b radix t x y p q hx tx p' q' hy ty
+        x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 hbeta hradix hvNum hpGe
+        hxNormal hyNormal hExpoxy hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4 hC1
+        hC2 hC3 hC4 hD1 hD2 hD3 hD4 hD5 hBranch
+    · exact DekkerS1 (beta:=beta) b radix t x y p q hx tx p' q' hy ty
+        x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 hbeta hradix hvNum hpGe
+        hxNormal hySubnormal hExpoxy hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4 hC1
+        hC2 hC3 hC4 hD1 hD2 hD3 hD4 hD5 hBranch
+  · rcases hyCan with hyNormal | hySubnormal
+    · exact DekkerS2 (beta:=beta) b radix t x y p q hx tx p' q' hy ty
+        x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 hbeta hradix hvNum hpGe
+        hxSubnormal hyNormal hExpoxy hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4 hC1
+        hC2 hC3 hC4 hD1 hD2 hD3 hD4 hD5 hBranch
+    · exfalso
+      have hxExp : x.Fexp = -b.dExp := hxSubnormal.2.1
+      have hyExp : y.Fexp = -b.dExp := hySubnormal.2.1
+      omega
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
