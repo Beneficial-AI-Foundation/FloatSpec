@@ -51948,6 +51948,59 @@ theorem Boundedt3 {beta : Int}
   refine ⟨xprime, ?_, hxprimeBound, hxprimeExp⟩
   rw [hxprimeVal, hresidualValue]
 
+/-! Coq Sec1 exact residual bound `Boundedt4`.
+
+This is the upstream `Boundedt4` payload consumed later in the Dekker section:
+use the rounded-multiplication error from `errorBoundedMult`, then negate that
+error float to represent the final five-term residual. -/
+theorem Boundedt4 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x x1 x2 y y1 y2 r : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hSLe : 2 ≤ s) (hSGe : s ≤ t - 2)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hyNormal : Fnormal (beta:=beta) radix b y)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hClosest : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
+    (hXeq : _root_.F2R (beta:=beta) x =
+      _root_.F2R (beta:=beta) x1 + _root_.F2R (beta:=beta) x2)
+    (hYeq : _root_.F2R (beta:=beta) y =
+      _root_.F2R (beta:=beta) y1 + _root_.F2R (beta:=beta) y2) :
+    ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) xprime =
+          _root_.F2R (beta:=beta) r -
+            _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y1 -
+            _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y2 -
+            _root_.F2R (beta:=beta) x2 * _root_.F2R (beta:=beta) y1 -
+            _root_.F2R (beta:=beta) x2 * _root_.F2R (beta:=beta) y2 ∧
+        Fbounded (beta:=beta) b xprime := by
+  subst beta
+  have htPrecision : t ≠ 0 := by omega
+  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
+  have hyBound : Fbounded (beta:=radix) b y := hyNormal.1
+  have hErr := errorBoundedMult (beta:=radix) b radix t x y r
+  rcases (by
+      simpa only [wp, PostCond.noThrow, pure, errorBoundedMult_check,
+        Id.run, ULift.up_down] using
+        hErr ⟨rfl, hradix, htPrecision, hvNum, hxBound, hyBound, hK,
+          hClosest⟩) with
+    ⟨g, hgVal, hgBound, _hgExp⟩
+  refine ⟨Fopp (beta:=radix) g, ?_, ?_⟩
+  · have hOpp := Fopp_correct (beta:=radix) g
+    have hOppVal :
+        _root_.F2R (beta:=radix) (Fopp (beta:=radix) g) =
+          -_root_.F2R (beta:=radix) g := by
+      simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check,
+        Id.run, ULift.up_down] using hOpp True.intro
+    rw [hOppVal, hgVal]
+    rw [hXeq, hYeq]
+    ring
+  · have hBound := oppBounded (beta:=radix) b g
+    simpa only [wp, PostCond.noThrow, pure, oppBounded_check, Id.run,
+      ULift.up_down] using hBound hgBound
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
