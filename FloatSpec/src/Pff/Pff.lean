@@ -50747,6 +50747,51 @@ theorem Underf_Err3 {beta : Int}
   · intro hz'Exp
     exact hSameIfOld hz'Exp
 
+/-! Coq generic Dekker theorem `Underf_Err3_bis`. -/
+theorem Underf_Err3_bis {beta : Int}
+    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
+    (x x' y y' z' z : FloatSpec.Core.Defs.FlocqFloat beta)
+    (rx ry epsx epsy : ℝ)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix precision)
+    (hprecision : 1 < precision)
+    (hprecision4 : 4 ≤ precision)
+    (hbNum : b.vNum = b'.vNum) (hbExp : b.dExp ≤ b'.dExp)
+    (hxUnder : Underf_Err (beta:=beta) b b' radix x x' rx epsx)
+    (hyUnder : Underf_Err (beta:=beta) b b' radix y y' ry epsy)
+    (hbudget7 : epsx + epsy ≤ 7)
+    (hz'Bound : Fbounded (beta:=beta) b' z')
+    (hz'Val : _root_.F2R (beta:=beta) z' =
+      _root_.F2R (beta:=beta) x' - _root_.F2R (beta:=beta) y')
+    (hz'ExpX : z'.Fexp ≤ x'.Fexp) (hz'ExpY : z'.Fexp ≤ y'.Fexp)
+    (hzClosest : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) y) z) :
+    Underf_Err (beta:=beta) b b' radix z z'
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) y)
+      (epsx + epsy) := by
+  have hbudget :
+      epsx + epsy ≤ (radix : ℝ) ^ ((precision : Int) - 1) - 1 := by
+    have hradixTwo : (2 : ℝ) ≤ (radix : ℝ) := by
+      exact_mod_cast (show (2 : Int) ≤ radix by omega)
+    have hpowBase : (2 : ℝ) ^ (3 : Int) ≤
+        (radix : ℝ) ^ (3 : Int) := by
+      exact zpow_le_zpow_left₀ (by norm_num : (0 : Int) ≤ (3 : Int))
+        (by norm_num : (0 : ℝ) ≤ (2 : ℝ)) hradixTwo
+    have hradixOne : (1 : ℝ) ≤ (radix : ℝ) :=
+      le_trans (by norm_num : (1 : ℝ) ≤ 2) hradixTwo
+    have hpowExp : (radix : ℝ) ^ (3 : Int) ≤
+        (radix : ℝ) ^ ((precision : Int) - 1) := by
+      exact zpow_le_zpow_right₀ hradixOne
+        (by omega : (3 : Int) ≤ (precision : Int) - 1)
+    have hpow : (8 : ℝ) ≤ (radix : ℝ) ^ ((precision : Int) - 1) := by
+      norm_num at hpowBase
+      exact le_trans hpowBase hpowExp
+    nlinarith
+  exact Underf_Err3 (beta:=beta) b b' radix precision
+    x x' y y' z' z rx ry epsx epsy hbeta hradix hvNum hprecision
+    hbNum hbExp hxUnder hyUnder hbudget hz'Bound hz'Val hz'ExpX
+    hz'ExpY hzClosest
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous

@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 54.
+- Active semantic gap candidates still listed below: 53.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 54/54 names have been
+- Counterpart audit coverage for the active list: 53/53 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 54 active
+Fix the remaining Flocq import gaps by working through the 53 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2561,9 +2561,28 @@ checkout. The normalized classifier
 local target gate. Therefore `Underf_Err3` is removed from the active list, and
 `Underf_Err3_bis` is next.
 
-#### `Pff/Pff.v` (54)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_132843` restored the proof of exact public
+`Underf_Err3_bis`; a manual fidelity check then restored the explicit
+GenericDek `1 < precision` section hypothesis that the harness draft had
+omitted as redundant under `4 <= precision`. The final theorem adds only the
+upstream `4 <= precision` and `epsx + epsy <= 7` hypotheses over the existing
+section assumptions and `Underf_Err3` payloads, derives
+`7 <= radix^(precision-1)-1` from `radix >= 2` and `precision >= 4`, and applies
+`Underf_Err3` with the unchanged underflow-error, bounded-difference, exponent,
+and closestness hypotheses. No totality, `dExp`, `boundR`, finite-box,
+canonicality, conclusion, or other extra public premise was added. The focused
+Lean check exited 0, `git diff --check` passed, the direct live-hole scan and
+placeholder/generated-status audits reported zero findings, and the full
+3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The classifier record
+`.change_log/manual_attempt_20260721_Underf_Err3_bis_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `Underf_Err3_bis` is removed from the
+active list, and `eLe` is next.
 
-- `Underf_Err3_bis` (Theorem, upstream line 16899)
+#### `Pff/Pff.v` (53)
+
 - `eLe` (Lemma, upstream line 17049)
 - `rExp` (Lemma, upstream line 17107)
 - `Boundedt1` (Lemma, upstream line 17177)
@@ -7374,10 +7393,9 @@ Statement-level checks performed for active Pff entries 36-70:
 - `Closestbbext` is now restored as the exact public arbitrary-bound extension
   theorem in `FloatSpec/src/Pff/Pff.lean`, reduced to `Closestbbplus` after
   proving the supplied extended bound is the corresponding `plusExp` bound.
-- `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, and `Underf_Err3` are now
-  restored as exact public underflow-error transfer theorems in
-  `FloatSpec/src/Pff/Pff.lean`. `Underf_Err3_bis` still has no exact Lean
-  declaration under `FloatSpec/src/Pff`.
+- `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
+  `Underf_Err3_bis` are now restored as exact public underflow-error transfer
+  theorems in `FloatSpec/src/Pff/Pff.lean`.
 - `eLe`, `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`,
   `Boundedt4`, `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
