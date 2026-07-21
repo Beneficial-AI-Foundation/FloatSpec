@@ -47722,6 +47722,54 @@ theorem BoundedL {beta : Int}
   · simpa [hvNum] using hmantissa
   · simpa [hx'Exp] using heMin
 
+/-! Coq generic Dekker theorem `Closestbbext`.
+
+An arbitrary extended bound with the same mantissa limit and a strictly larger
+local exponent is a `plusExp` bound for the exact exponent gap, so closestness
+extends by `Closestbbplus`. -/
+theorem Closestbbext {beta : Int}
+    (b bext : Fbound_skel) (radix : Int) (precision : Nat)
+    (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix precision)
+    (hprecision : 1 < precision)
+    (hbextNum : bext.vNum = b.vNum)
+    (hbextExp : b.dExp < bext.dExp)
+    (hfextExp : -b.dExp ≤ fext.Fexp)
+    (hfClosest : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) fext) f) :
+    Closest (beta:=beta) bext (radix : ℝ)
+      (_root_.F2R (beta:=beta) fext) f := by
+  subst beta
+  let t : Nat := (bext.dExp - b.dExp + 1).toNat
+  have htCast : (t : Int) = bext.dExp - b.dExp + 1 := by
+    dsimp [t]
+    rw [Int.toNat_of_nonneg]
+    omega
+  have htPredCast : ((t - 1 : Nat) : Int) = bext.dExp - b.dExp := by
+    have htPos : 0 < t := by
+      omega
+    have hpred : ((t - 1 : Nat) : Int) = (t : Int) - 1 := by
+      omega
+    omega
+  have hbextEq : plusExp b t = bext := by
+    cases b with
+    | mk bd bv =>
+      cases bext with
+      | mk ed ev =>
+        simp only [Fbound_skel.dExp, Fbound_skel.vNum] at htPredCast hbextNum
+        simp only [plusExp, Fbound_skel.mk.injEq,
+          Fbound_skel.dExp, Fbound_skel.vNum]
+        constructor
+        · omega
+        · exact hbextNum.symm
+  have hplus :
+      Closest (beta:=radix) (plusExp b t) (radix : ℝ)
+        (_root_.F2R (beta:=radix) fext) f :=
+    Closestbbplus b radix t precision fext f rfl hradix hvNum
+      hprecision hfextExp hfClosest
+  simpa [hbextEq] using hplus
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=

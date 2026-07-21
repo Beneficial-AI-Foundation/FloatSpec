@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 59.
+- Active semantic gap candidates still listed below: 58.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 59/59 names have been
+- Counterpart audit coverage for the active list: 58/58 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 59 active
+Fix the remaining Flocq import gaps by working through the 58 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2458,9 +2458,27 @@ reported zero findings, and the full 3345-job `lake build` passed;
 local target gate. Therefore `BoundedL` is removed from the active list, and
 `Closestbbext` is next.
 
-#### `Pff/Pff.v` (59)
+2026-07-21 completion note: the default subscription harness attempt
+`.change_log/codex_attempt_20260721_103346` failed before proof work because
+the configured `gpt-5.6-sol` model requires a newer Codex CLI. The explicit
+`gpt-5.5` subscription retry
+`.change_log/codex_attempt_20260721_103544` restored exact public
+`Closestbbext` under only the expanded GenericDek section assumptions. It
+represents an arbitrary `bext` with the same mantissa bound and strictly larger
+`dExp` as `plusExp b ((bext.dExp - b.dExp + 1).toNat)`, then applies exact
+`Closestbbplus`. The independent focused Lean process exited 0,
+`git diff --check` passed, the placeholder and generated-status audits
+reported zero findings, and the full 3345-job `lake build` passed;
+`scripts/check_diff_trust.sh` is absent from this checkout. The harness's
+top-level `attempt.json` recorded `result = proved` but did not propagate its
+nested build or Coq-alignment checks. The normalized classifier
+`.change_log/manual_attempt_20260721_Closestbbext_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `Closestbbext` is removed from the active list,
+and `Underf_Err1` is next.
 
-- `Closestbbext` (Theorem, upstream line 16377)
+#### `Pff/Pff.v` (58)
+
 - `Underf_Err1` (Theorem, upstream line 16555)
 - `Underf_Err2_aux` (Theorem, upstream line 16610)
 - `Underf_Err2` (Theorem, upstream line 16750)
@@ -7273,7 +7291,10 @@ Statement-level checks performed for active Pff entries 36-70:
   hypotheses. They remain lower Pff payload gaps.
 - `BoundedL` is now restored as the exact public bounded-lifting theorem in
   `FloatSpec/src/Pff/Pff.lean`.
-- `Closestbbext`, `Underf_Err1`, `Underf_Err2_aux`,
+- `Closestbbext` is now restored as the exact public arbitrary-bound extension
+  theorem in `FloatSpec/src/Pff/Pff.lean`, reduced to `Closestbbplus` after
+  proving the supplied extended bound is the corresponding `plusExp` bound.
+- `Underf_Err1`, `Underf_Err2_aux`,
   `Underf_Err2`, `Underf_Err3`, and `Underf_Err3_bis` have no exact Lean
   declaration under `FloatSpec/src/Pff`. Local hits on `Bound`, `Closest`,
   `Underf_Err`, and `underf_mult_aux*` are data definitions or separate
