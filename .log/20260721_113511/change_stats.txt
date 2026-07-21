@@ -1,0 +1,11 @@
+commit f10e179af7820b9602516c530c39766db21061ca
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 11:35:11 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 11:35:11 2026 +0800
+
+    Restore exact Pff Underf_Err1 theorem
+
+ FloatSpec/src/Pff/Pff.lean | 270 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  29 ++++-
+ 2 files changed, 294 insertions(+), 5 deletions(-)
