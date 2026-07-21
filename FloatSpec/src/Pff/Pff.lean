@@ -52366,6 +52366,183 @@ theorem Boundedx2y1 {beta : Int}
     ⟨xprime, hvalue, hbounded, _hexp⟩
   exact ⟨xprime, hvalue, hbounded⟩
 
+/-! Coq Algo exact product bound `Boundedx2y2`.
+
+This is the upstream theorem at `Pff.v:17710`: the binary-radix branch uses
+`Veltkamp_tail2`, while the even-precision branch uses `VeltkampU`.  Both
+branches share the same exact `Fmult` construction for `tx * ty`. -/
+theorem Boundedx2y2 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (x y p q hx tx p' q' hy ty : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hyNormal : Fnormal (beta:=beta) radix b y)
+    (hA1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
+    (hA2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hA3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hA4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
+    (hB1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
+    (hB2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
+    (hB3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
+    (hB4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
+    (hBranch : radix = 2 ∨ Even t) :
+    ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) xprime =
+          _root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty ∧
+        Fbounded (beta:=beta) b xprime ∧
+        x.Fexp + y.Fexp ≤ xprime.Fexp := by
+  subst beta
+  let s : Nat := t - Nat.div2 t
+  have hSLeInt : (2 : Int) ≤ (t : Int) - (Nat.div2 t : Int) :=
+    SLe t hpGe
+  have hSGeInt : (t : Int) - (Nat.div2 t : Int) ≤ (t : Int) - 2 :=
+    SGe t hpGe
+  have hsGe : 2 ≤ s := by
+    dsimp [s]
+    omega
+  have hsLe : s ≤ t - 2 := by
+    dsimp [s]
+    omega
+  have hRadixSplit : (s - 1) + (s - 1) ≤ t := by
+    have h := s2Le t
+    dsimp [s]
+    omega
+  have hEvenSplit (htEven : Even t) : s + s ≤ t := by
+    rcases htEven with ⟨k, hk⟩
+    dsimp [s]
+    rw [Nat.div2_val]
+    omega
+  have htNe : t ≠ 0 := by omega
+  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
+  have hyBound : Fbounded (beta:=radix) b y := hyNormal.1
+  have product_from_split :
+      ∀ (sx sy : Nat) (x2 y2 : FloatSpec.Core.Defs.FlocqFloat radix),
+        _root_.F2R (beta:=radix) x2 = _root_.F2R (beta:=radix) tx →
+        _root_.F2R (beta:=radix) y2 = _root_.F2R (beta:=radix) ty →
+        Fbounded (beta:=radix) (Veltkamp_splitBound radix b sx) x2 →
+        Fbounded (beta:=radix) (Veltkamp_splitBound radix b sy) y2 →
+        x.Fexp ≤ x2.Fexp →
+        y.Fexp ≤ y2.Fexp →
+        sx + sy ≤ t →
+        ∃ xprime : FloatSpec.Core.Defs.FlocqFloat radix,
+          _root_.F2R (beta:=radix) xprime =
+              _root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) ty ∧
+            Fbounded (beta:=radix) b xprime ∧
+            x.Fexp + y.Fexp ≤ xprime.Fexp := by
+    intro sx sy x2 y2 hx2Val hy2Val hx2Bound hy2Bound hx2Exp hy2Exp hsum
+    let prod : FloatSpec.Core.Defs.FlocqFloat radix :=
+      FloatSpec.Calc.Operations.Fmult (beta:=radix) x2 y2
+    refine ⟨prod, ?_, ?_, ?_⟩
+    · have hmult := Fmult_correct (beta:=radix) x2 y2
+      have hprod :
+          _root_.F2R (beta:=radix) prod =
+            _root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y2 := by
+        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check, Id.run,
+          ULift.up_down, prod] using hmult hradix
+      rw [hprod, hx2Val, hy2Val]
+    · rcases hx2Bound with ⟨hx2Num, _hx2ExpLower⟩
+      rcases hy2Bound with ⟨hy2Num, _hy2ExpLower⟩
+      have hradixGe : (1 : Int) ≤ radix := le_of_lt hradix
+      have hradixPos : (0 : Int) < radix := by omega
+      have hpowSxPos : 0 < Zpower_nat radix sx := by
+        simpa [Zpower_nat] using (pow_pos hradixPos sx)
+      have hpowSyPos : 0 < Zpower_nat radix sy := by
+        simpa [Zpower_nat] using (pow_pos hradixPos sy)
+      have hx2NumSplit : |x2.Fnum| < Zpower_nat radix sx := by
+        simpa [Veltkamp_splitBound] using hx2Num
+      have hy2NumSplit : |y2.Fnum| < Zpower_nat radix sy := by
+        simpa [Veltkamp_splitBound] using hy2Num
+      have hx2NumAbsNonneg : 0 ≤ |x2.Fnum| := abs_nonneg x2.Fnum
+      have hprodLtSplit :
+          |x2.Fnum * y2.Fnum| <
+            Zpower_nat radix sx * Zpower_nat radix sy := by
+        rw [abs_mul]
+        by_cases hxZero : |x2.Fnum| = 0
+        · rw [hxZero, zero_mul]
+          exact mul_pos hpowSxPos hpowSyPos
+        · have hxNonzero : (0 : Int) ≠ |x2.Fnum| := fun h => hxZero h.symm
+          have hxPos : 0 < |x2.Fnum| := lt_of_le_of_ne hx2NumAbsNonneg hxNonzero
+          have hleft :
+              |x2.Fnum| * |y2.Fnum| <
+                |x2.Fnum| * Zpower_nat radix sy :=
+            mul_lt_mul_of_pos_left hy2NumSplit hxPos
+          have hright :
+              |x2.Fnum| * Zpower_nat radix sy ≤
+                Zpower_nat radix sx * Zpower_nat radix sy :=
+            mul_le_mul_of_nonneg_right (le_of_lt hx2NumSplit) (le_of_lt hpowSyPos)
+          exact lt_of_lt_of_le hleft hright
+      have hsplitLeOrig :
+          Zpower_nat radix sx * Zpower_nat radix sy ≤ Zpower_nat radix t := by
+        calc
+          Zpower_nat radix sx * Zpower_nat radix sy =
+              Zpower_nat radix (sx + sy) := by
+                simp [Zpower_nat, pow_add]
+          _ ≤ Zpower_nat radix t := by
+              simpa [Zpower_nat] using pow_le_pow_right₀ hradixGe hsum
+      have hnum : |prod.Fnum| < b.vNum := by
+        have hlt : |x2.Fnum * y2.Fnum| < Zpower_nat radix t :=
+          lt_of_lt_of_le hprodLtSplit hsplitLeOrig
+        simpa [prod, FloatSpec.Calc.Operations.Fmult, hvNum] using hlt
+      have hexp : -b.dExp ≤ prod.Fexp := by
+        dsimp [prod, FloatSpec.Calc.Operations.Fmult]
+        exact le_trans hK (add_le_add hx2Exp hy2Exp)
+      exact ⟨hnum, hexp⟩
+    · dsimp [prod, FloatSpec.Calc.Operations.Fmult]
+      omega
+  rcases hBranch with hradixTwo | htEven
+  · rcases Veltkamp_tail2 (beta:=radix) b radix s t x p q hx tx rfl hradix
+        hvNum hsGe hsLe hradixTwo hxBound (by simpa [s] using hA1)
+        hA2 hA3 hA4 with
+      ⟨x2, hx2Val, _hxDecomp, hx2Bound, hx2NormExp⟩
+    rcases Veltkamp_tail2 (beta:=radix) b radix s t y p' q' hy ty rfl hradix
+        hvNum hsGe hsLe hradixTwo hyBound (by simpa [s] using hB1)
+        hB2 hB3 hB4 with
+      ⟨y2, hy2Val, _hyDecomp, hy2Bound, hy2NormExp⟩
+    have hxNormEq : (Fnormalize (beta:=radix) radix b t x).Fexp = x.Fexp := by
+      have h := FcanonicFnormalizeEq (beta:=radix) radix b t x
+      have heq :
+          Fnormalize (beta:=radix) radix b t x = x := by
+        simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+          Id.run, ULift.up_down] using
+          h ⟨Or.inl hxNormal, rfl, hradix, htNe, hvNum⟩
+      rw [heq]
+    have hyNormEq : (Fnormalize (beta:=radix) radix b t y).Fexp = y.Fexp := by
+      have h := FcanonicFnormalizeEq (beta:=radix) radix b t y
+      have heq :
+          Fnormalize (beta:=radix) radix b t y = y := by
+        simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
+          Id.run, ULift.up_down] using
+          h ⟨Or.inl hyNormal, rfl, hradix, htNe, hvNum⟩
+      rw [heq]
+    exact product_from_split (s - 1) (s - 1) x2 y2 hx2Val hy2Val
+      hx2Bound hy2Bound (by simpa [hxNormEq] using hx2NormExp)
+      (by simpa [hyNormEq] using hy2NormExp) hRadixSplit
+  · rcases VeltkampU (beta:=radix) b radix s t x p q hx tx rfl hradix
+        hvNum hsGe hsLe (Or.inl hxNormal) (by simpa [s] using hA1)
+        hA2 hA3 hA4 with
+      ⟨_hxAbs, _hxEq, _hxHead, hxTail⟩
+    rcases hxTail with ⟨x2, hx2Val, hx2Bound, hx2Exp⟩
+    rcases VeltkampU (beta:=radix) b radix s t y p' q' hy ty rfl hradix
+        hvNum hsGe hsLe (Or.inl hyNormal) (by simpa [s] using hB1)
+        hB2 hB3 hB4 with
+      ⟨_hyAbs, _hyEq, _hyHead, hyTail⟩
+    rcases hyTail with ⟨y2, hy2Val, hy2Bound, hy2Exp⟩
+    exact product_from_split s s x2 y2 hx2Val hy2Val hx2Bound hy2Bound
+      hx2Exp hy2Exp (hEvenSplit htEven)
+
 /-! Coq Algo theorem `Dekker_aux`.
 
 This is the main algebraic reconstruction for the normal Dekker path.  The

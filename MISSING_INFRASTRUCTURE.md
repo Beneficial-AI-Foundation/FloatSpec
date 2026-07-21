@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 39.
+- Active semantic gap candidates still listed below: 38.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 39/39 names have been
+- Counterpart audit coverage for the active list: 38/38 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 39 active
+Fix the remaining Flocq import gaps by working through the 38 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2944,9 +2944,32 @@ normalized classifier
 local target gate. Therefore exact public `Dekker_aux` is removed from the
 active list, reducing the ledger from 40 to 39; `Boundedx2y2` is next.
 
-#### `Pff/Pff.v` (39)
+2026-07-21 completion note: exact public `Boundedx2y2` is restored with the
+upstream `Algo` section payload. It consumes the radix/bound/precision equation,
+`pGe`, the product exponent lower bound, normality of `x` and `y`, the two
+four-step split-rounding chains, and the upstream branch premise
+`radix = 2 ∨ Even t`; it returns a representative of `tx * ty` that is bounded
+by `b` and whose exponent is at least `x.Fexp + y.Fexp`. The local
+`s := t - Nat.div2 t`, its lower/upper bounds, and the product-width
+inequalities are derived internally rather than exposed as caller premises.
+The radix-two branch uses `Veltkamp_tail2` for both tails, the even-precision
+branch uses `VeltkampU`, and both branches share the exact bounded `Fmult`
+construction. Required subscription harness attempt
+`.change_log/codex_attempt_20260721_190324` used `gpt-5.5` with high reasoning
+and passed its local target gate; its initially expanded theorem boundary was
+manually repaired before independent verification. Focused
+`lake env lean FloatSpec/src/Pff/Pff.lean` exited 0;
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings;
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings;
+`git diff --check` passed; and full `lake build` passed all 3345 jobs. The
+classifier `.change_log/manual_attempt_20260721_Boundedx2y2_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore exact public `Boundedx2y2` is removed from
+the active list, reducing the ledger from 39 to 38; `DekkerN` is next.
 
-- `Boundedx2y2` (Theorem, upstream line 17707)
+#### `Pff/Pff.v` (38)
+
 - `DekkerN` (Theorem, upstream line 17819)
 - `DekkerS1` (Theorem, upstream line 17877)
 - `DekkerS2` (Theorem, upstream line 18130)
@@ -7745,11 +7768,13 @@ Statement-level checks performed for active Pff entries 36-70:
 - `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
   `Underf_Err3_bis` are now restored as exact public underflow-error transfer
   theorems in `FloatSpec/src/Pff/Pff.lean`.
-- `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
-  `Boundedx1y2_aux`, and `Boundedx2y2` are section-local product-splitting
+- `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`, and
+  `Boundedx1y2_aux` are section-local product-splitting
   bounds in upstream Pff. Local broad hits on `Bound`, `ZleLe`,
   `ClosestRoundeLeNormal`, or rounded-error helpers do not encode these
   concrete existential boundedness statements for the Dekker construction.
+- `Boundedx2y2` is now restored as the exact public section-local
+  product-splitting theorem in `FloatSpec/src/Pff/Pff.lean`.
 - `Dekker_aux`, `DekkerN`, `DekkerS1`, `DekkerS2`, `Dekker1`,
   `Dekker2_aux`, and `Dekker2` are not supplied by the public Lean
   `Dekker` wrapper or the local `Dekker1_FTS`/`Dekker2_FTS` helper
