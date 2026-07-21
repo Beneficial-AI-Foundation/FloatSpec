@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 38.
+- Active semantic gap candidates still listed below: 37.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 38/38 names have been
+- Counterpart audit coverage for the active list: 37/37 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 38 active
+Fix the remaining Flocq import gaps by working through the 37 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2968,9 +2968,31 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore exact public `Boundedx2y2` is removed from
 the active list, reducing the ledger from 39 to 38; `DekkerN` is next.
 
-#### `Pff/Pff.v` (38)
+2026-07-21 completion note: exact public `DekkerN` is restored immediately
+after exact `Dekker_aux`. It matches upstream `Pff.v:DekkerN`: the theorem
+consumes the full `Algo` section payload plus the sole branch premise
+`radix = 2 ∨ Even t`, obtains the bounded `tx * ty` representative from exact
+`Boundedx2y2`, discards only that helper's additional exponent conjunct, and
+applies exact `Dekker_aux` to conclude
+`F2R x * F2R y = F2R r - F2R t4`. No separate bounded-witness, totality,
+canonicity, conclusion, or weakening premise was introduced. Required
+subscription harness attempt `.change_log/codex_attempt_20260721_192803` used
+`gpt-5.5` with high reasoning, recorded `result = proved`, and passed its local
+target gate. Independent focused `lake env lean FloatSpec/src/Pff/Pff.lean`
+exited 0; `git diff --check` and the direct added-Lean-hole scan passed;
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings; and
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
+repository has no executable `scripts/check_diff_trust.sh`, so that optional
+trust gate could not be run. Full `lake build` passed all 3345 jobs. The
+normalized classifier
+`.change_log/manual_attempt_20260721_DekkerN_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore exact public `DekkerN` is removed from the active
+list, reducing the ledger from 38 to 37; `DekkerS1` is next.
 
-- `DekkerN` (Theorem, upstream line 17819)
+#### `Pff/Pff.v` (37)
+
 - `DekkerS1` (Theorem, upstream line 17877)
 - `DekkerS2` (Theorem, upstream line 18130)
 - `Dekker1` (Theorem, upstream line 18385)
@@ -7775,8 +7797,10 @@ Statement-level checks performed for active Pff entries 36-70:
   concrete existential boundedness statements for the Dekker construction.
 - `Boundedx2y2` is now restored as the exact public section-local
   product-splitting theorem in `FloatSpec/src/Pff/Pff.lean`.
-- `Dekker_aux`, `DekkerN`, `DekkerS1`, `DekkerS2`, `Dekker1`,
-  `Dekker2_aux`, and `Dekker2` are not supplied by the public Lean
+- `Dekker_aux` and `DekkerN` are now restored as exact public theorems in
+  `FloatSpec/src/Pff/Pff.lean`.
+- `DekkerS1`, `DekkerS2`, `Dekker1`, `Dekker2_aux`, and `Dekker2` are not
+  supplied by the public Lean
   `Dekker` wrapper or the local `Dekker1_FTS`/`Dekker2_FTS` helper
   family. The wrapper assumes summarized payloads, while the upstream names
   prove the concrete product decomposition or error bound from the section's

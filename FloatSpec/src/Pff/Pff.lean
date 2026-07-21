@@ -52806,6 +52806,69 @@ theorem Dekker_aux {beta : Int}
   rw [ht4Val]
   ring
 
+/-! Coq Algo theorem `DekkerN`.
+
+This is the exact upstream wrapper at `Pff.v:17820`: the branch premise builds
+the bounded `tx * ty` representative with `Boundedx2y2`, then `Dekker_aux`
+performs the algebraic reconstruction. -/
+theorem DekkerN {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
+      FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hyNormal : Fnormal (beta:=beta) radix b y)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hA1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
+    (hA2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hA3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hA4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
+    (hB1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
+    (hB2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
+    (hB3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
+    (hB4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
+    (hC1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) hy) x1y1)
+    (hC2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) ty) x1y2)
+    (hC3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) hy) x2y1)
+    (hC4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty) x2y2)
+    (hD1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
+    (hD2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) x1y1) t1)
+    (hD3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t1 - _root_.F2R (beta:=beta) x1y2) t2)
+    (hD4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t2 - _root_.F2R (beta:=beta) x2y1) t3)
+    (hD5 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t3 - _root_.F2R (beta:=beta) x2y2) t4)
+    (hBranch : radix = 2 ∨ Even t) :
+    _root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y =
+      _root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) t4 := by
+  rcases Boundedx2y2 (beta:=beta) b radix t x y p q hx tx p' q' hy ty
+      hbeta hradix hvNum hpGe hK hxNormal hyNormal hA1 hA2 hA3 hA4
+      hB1 hB2 hB3 hB4 hBranch with
+    ⟨prod22, hprod22Val, hprod22Bound, _hprod22Exp⟩
+  exact Dekker_aux (beta:=beta) b radix t x y p q hx tx p' q' hy ty
+    x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 hbeta hradix hvNum hpGe
+    hxNormal hyNormal hK hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4 hC1 hC2 hC3 hC4
+    hD1 hD2 hD3 hD4 hD5 ⟨prod22, hprod22Val, hprod22Bound⟩
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
