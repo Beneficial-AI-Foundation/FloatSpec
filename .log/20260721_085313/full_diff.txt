@@ -1,0 +1,104 @@
+commit 38dce9071504f4e07efc5a4912d0e7ce6d487b43
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 08:53:13 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 08:53:13 2026 +0800
+
+    Restore exact Pff VeltkampEven theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 7a37ea57..af5a8acd 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -47251,6 +47251,59 @@ theorem VeltkampEvenS {beta : Int}
+       · exact EvenClosestbplusb bRed radix t (t - s) x g rfl hradix
+           hvNumRed hredPrecGtOne hxExpRed hgEvenPlusRed hgBoundRed
+ 
++/-! Coq bounded-input nearest-even Veltkamp theorem `VeltkampEven`.
++
++Normalize the bounded input, split its canonical representative into normal and
++subnormal cases, and delegate to `VeltkampEvenN` or `VeltkampEvenS`. -/
++theorem VeltkampEven {beta : Int}
++    (b : Fbound_skel) (radix : Int) (s t : Nat)
++    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
++    (hxBound : Fbounded (beta:=beta) b x)
++    (hpDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
++      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
++    (hqDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
++    (hhxDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
++      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx) :
++    ∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
++      _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
++        EvenClosest (beta:=beta) (Veltkamp_reducedBound radix b s t)
++          (radix : ℝ) (t - s) (_root_.F2R (beta:=beta) x) hx' := by
++  subst beta
++  have htNe : t ≠ 0 := by omega
++  let nx : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fnormalize (beta:=radix) radix b t x
++  have hnxCan : Fcanonic (beta:=radix) radix b nx := by
++    have h := FnormalizeCanonic (beta:=radix) radix b t x
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++      Id.run, ULift.up_down, nx] using
++      h ⟨hxBound, hxBound, htNe, hradix, hvNum⟩
++  have hnxValue :
++      _root_.F2R (beta:=radix) nx = _root_.F2R (beta:=radix) x := by
++    have h := FnormalizeCorrect (beta:=radix) radix b t x
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++      Id.run, ULift.up_down, nx] using h ⟨rfl, hradix⟩
++  have hpNx :
++      EvenClosest (beta:=radix) b (radix : ℝ) t
++        (_root_.F2R (beta:=radix) nx *
++          ((radix : ℝ) ^ (s : Int) + 1)) p := by
++    simpa [hnxValue] using hpDefEven
++  have hqNx :
++      EvenClosest (beta:=radix) b (radix : ℝ) t
++        (_root_.F2R (beta:=radix) nx -
++          _root_.F2R (beta:=radix) p) q := by
++    simpa [hnxValue] using hqDefEven
++  rcases hnxCan with hnxNormal | hnxSubnormal
++  · have h := VeltkampEvenN (beta:=radix) b radix s t nx p q hx
++      rfl hradix hvNum hsGe hsLe hnxNormal hpNx hqNx hhxDefEven
++    simpa [hnxValue] using h
++  · have h := VeltkampEvenS (beta:=radix) b radix s t nx p q hx
++      rfl hradix hvNum hsGe hsLe hnxSubnormal hpNx hqNx hhxDefEven
++    simpa [hnxValue] using h
++
+ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+     (b : Fbound_skel) (radix : Int) (precision : Nat)
+     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 6d1391da..8119b69b 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -2372,9 +2372,25 @@ checkout. The normalized classifier
+ local target gate. Therefore `VeltkampEvenS` is removed from the active list,
+ and `VeltkampEven` is next.
+ 
+-#### `Pff/Pff.v` (64)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_084628` failed without source changes or a
++build after Codex process/session persistence errors. The manual repair
++restored exact public `VeltkampEven` under only the expanded upstream section
++assumptions. It normalizes the bounded input, proves the normalized
++representative canonical, transfers the two input-dependent `EvenClosest`
++premises by exact represented-value equality, and splits the canonical result.
++The normal branch delegates to exact `VeltkampEvenN`; the subnormal branch
++delegates to exact `VeltkampEvenS`. The focused Lean process exited 0,
++`git diff --check` passed, placeholder/status audits reported zero findings,
++and the full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is
++absent from this checkout. The normalized classifier
++`.change_log/manual_attempt_20260721_VeltkampEven_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Therefore `VeltkampEven` is removed from the active list,
++and `Veltkamp_tail_aux` is next.
++
++#### `Pff/Pff.v` (63)
+ 
+-- `VeltkampEven` (Theorem, upstream line 15944)
+ - `Veltkamp_tail_aux` (Theorem, upstream line 16001)
+ - `Veltkamp_tail2` (Theorem, upstream line 16157)
+ - `VeltkampU` (Theorem, upstream line 16270)
