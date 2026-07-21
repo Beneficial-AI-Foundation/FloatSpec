@@ -47656,6 +47656,72 @@ theorem VeltkampU {beta : Int}
   · exact hdResidual.trans htxValue.symm
   · rw [hdExp']
 
+/-! Coq generic Dekker theorem `BoundedL`.
+
+Rescale the mantissa of `x` down to exponent `e`.  The strict magnitude bound
+then gives the required mantissa bound after canceling the positive
+`radix ^ e` factor. -/
+theorem BoundedL {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (r : ℝ) (x : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix precision)
+    (_hprecision : 1 < precision)
+    (heLe : e ≤ x.Fexp) (heMin : -b.dExp ≤ e)
+    (hxValue : _root_.F2R (beta:=beta) x = r)
+    (hrBound : |r| < (radix : ℝ) ^ (e + (precision : Int))) :
+    ∃ x' : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) x' = r ∧
+        Fbounded (beta:=beta) b x' ∧ x'.Fexp = e := by
+  subst beta
+  let shift : Nat := Int.natAbs (x.Fexp - e)
+  let x' : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fshift (beta:=radix) radix shift x
+  have hdiffNonneg : 0 ≤ x.Fexp - e := by omega
+  have hshiftCast : (shift : Int) = x.Fexp - e := by
+    simpa only [shift] using Int.natAbs_of_nonneg hdiffNonneg
+  have hx'Exp : x'.Fexp = e := by
+    simp only [x', Fshift, FloatSpec.Core.Defs.FlocqFloat.Fexp]
+    rw [hshiftCast]
+    omega
+  have hx'Value : _root_.F2R (beta:=radix) x' = r := by
+    exact (Fshift_value (beta:=radix) radix shift x rfl hradix).trans hxValue
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (show (0 : Int) < radix by omega)
+  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
+  have hscalePos : 0 < (radix : ℝ) ^ e := zpow_pos hradixPos e
+  have hscaledMantissa :
+      ((|x'.Fnum| : Int) : ℝ) * (radix : ℝ) ^ e <
+        (radix : ℝ) ^ ((precision : Int)) * (radix : ℝ) ^ e := by
+    calc
+      ((|x'.Fnum| : Int) : ℝ) * (radix : ℝ) ^ e =
+          |_root_.F2R (beta:=radix) x'| := by
+            simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hx'Exp, abs_mul,
+              abs_of_pos hscalePos, Int.cast_abs]
+      _ = |r| := congrArg abs hx'Value
+      _ < (radix : ℝ) ^ (e + (precision : Int)) := hrBound
+      _ = (radix : ℝ) ^ ((precision : Int)) * (radix : ℝ) ^ e := by
+        rw [zpow_add₀ hradixNe]
+        ring
+  have hmantissaReal :
+      ((|x'.Fnum| : Int) : ℝ) < (radix : ℝ) ^ ((precision : Int)) :=
+    lt_of_mul_lt_mul_right hscaledMantissa (le_of_lt hscalePos)
+  have hpowCast :
+      (Zpower_nat radix precision : ℝ) =
+        (radix : ℝ) ^ ((precision : Int)) := by
+    have h := Zpower_nat_Z_powerRZ radix precision
+    simpa only [wp, PostCond.noThrow, pure, Zpower_nat_Z_powerRZ_check,
+      Id.run, ULift.up_down] using h trivial
+  have hmantissa : |x'.Fnum| < Zpower_nat radix precision := by
+    exact_mod_cast (show ((|x'.Fnum| : Int) : ℝ) <
+        (Zpower_nat radix precision : ℝ) by
+      rw [hpowCast]
+      exact hmantissaReal)
+  refine ⟨x', hx'Value, ?_, hx'Exp⟩
+  constructor
+  · simpa [hvNum] using hmantissa
+  · simpa [hx'Exp] using heMin
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=

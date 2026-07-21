@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 60.
+- Active semantic gap candidates still listed below: 59.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 60/60 names have been
+- Counterpart audit coverage for the active list: 59/59 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 60 active
+Fix the remaining Flocq import gaps by working through the 59 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2445,9 +2445,21 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `VeltkampU` is removed from the active
 list, and `BoundedL` is next.
 
-#### `Pff/Pff.v` (60)
+2026-07-21 completion note: exact public `BoundedL` is restored under the
+expanded GenericDek section assumptions. The proof constructs the upstream
+rescaled-mantissa witness at exponent `e`, preserves the represented real
+value, and cancels the positive `radix ^ e` scale from the strict magnitude
+bound to establish `Fbounded b`. The focused Lean process produced no errors,
+`git diff --check` passed, the placeholder and generated-status audits
+reported zero findings, and the full 3345-job `lake build` passed;
+`scripts/check_diff_trust.sh` is absent from this checkout. The classifier
+`.change_log/manual_attempt_20260721_BoundedL_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `BoundedL` is removed from the active list, and
+`Closestbbext` is next.
 
-- `BoundedL` (Theorem, upstream line 16329)
+#### `Pff/Pff.v` (59)
+
 - `Closestbbext` (Theorem, upstream line 16377)
 - `Underf_Err1` (Theorem, upstream line 16555)
 - `Underf_Err2_aux` (Theorem, upstream line 16610)
@@ -7259,7 +7271,9 @@ Statement-level checks performed for active Pff entries 36-70:
   hypotheses; the upstream active lemmas construct those witnesses and tail
   decompositions from the rounded intermediate `p`, `q`, `hx`, and `tx`
   hypotheses. They remain lower Pff payload gaps.
-- `BoundedL`, `Closestbbext`, `Underf_Err1`, `Underf_Err2_aux`,
+- `BoundedL` is now restored as the exact public bounded-lifting theorem in
+  `FloatSpec/src/Pff/Pff.lean`.
+- `Closestbbext`, `Underf_Err1`, `Underf_Err2_aux`,
   `Underf_Err2`, `Underf_Err3`, and `Underf_Err3_bis` have no exact Lean
   declaration under `FloatSpec/src/Pff`. Local hits on `Bound`, `Closest`,
   `Underf_Err`, and `underf_mult_aux*` are data definitions or separate
