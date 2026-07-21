@@ -52055,6 +52055,83 @@ theorem Boundedt4_aux {beta : Int}
       ULift.up_down] using hBound hgBound
   · simpa [Fopp, FloatSpec.Calc.Operations.Fopp] using hgExp
 
+/-! Coq Sec1 exact product bound `Boundedx1y1_aux`.
+
+This is the first exact product used after the four residual bounds: multiplying
+the two reduced-bound leading parts stays inside the original bound because
+`t <= 2 * s`. -/
+theorem Boundedx1y1_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x x1 y y1 : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hx1Exp : (s : Int) + x.Fexp ≤ x1.Fexp)
+    (hy1Exp : (s : Int) + y.Fexp ≤ y1.Fexp)
+    (Fx1 : Fbounded (beta:=beta) (Veltkamp_reducedBound radix b s t) x1)
+    (Fy1 : Fbounded (beta:=beta) (Veltkamp_reducedBound radix b s t) y1)
+    (Hst3 : (t : Int) ≤ 2 * (s : Int)) :
+    ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) xprime =
+          _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y1 ∧
+        Fbounded (beta:=beta) b xprime ∧
+        xprime.Fexp = x1.Fexp + y1.Fexp := by
+  subst beta
+  let prod : FloatSpec.Core.Defs.FlocqFloat radix :=
+    FloatSpec.Calc.Operations.Fmult (beta:=radix) x1 y1
+  refine ⟨prod, ?_, ?_, ?_⟩
+  · have hmult := Fmult_correct (beta:=radix) x1 y1
+    simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check, Id.run,
+      ULift.up_down, prod] using hmult hradix
+  · rcases Fx1 with ⟨hx1Num, _hx1ExpLower⟩
+    rcases Fy1 with ⟨hy1Num, _hy1ExpLower⟩
+    have hradixGe : (1 : Int) ≤ radix := le_of_lt hradix
+    have hradixPos : (0 : Int) < radix := by grind
+    have hpowRedPos : 0 < Zpower_nat radix (t - s) := by
+      simpa [Zpower_nat] using (pow_pos hradixPos (t - s))
+    have hx1NumRed : |x1.Fnum| < Zpower_nat radix (t - s) := by
+      simpa [Veltkamp_reducedBound] using hx1Num
+    have hy1NumRed : |y1.Fnum| < Zpower_nat radix (t - s) := by
+      simpa [Veltkamp_reducedBound] using hy1Num
+    have hx1NumAbsNonneg : 0 ≤ |x1.Fnum| := abs_nonneg x1.Fnum
+    have hprodLtRedSq :
+        |x1.Fnum * y1.Fnum| <
+          Zpower_nat radix (t - s) * Zpower_nat radix (t - s) := by
+      rw [abs_mul]
+      by_cases hxZero : |x1.Fnum| = 0
+      · rw [hxZero, zero_mul]
+        exact mul_pos hpowRedPos hpowRedPos
+      · have hxNonzero : (0 : Int) ≠ |x1.Fnum| := fun h => hxZero h.symm
+        have hxPos : 0 < |x1.Fnum| := lt_of_le_of_ne hx1NumAbsNonneg hxNonzero
+        have hleft :
+            |x1.Fnum| * |y1.Fnum| <
+              |x1.Fnum| * Zpower_nat radix (t - s) :=
+          mul_lt_mul_of_pos_left hy1NumRed hxPos
+        have hright :
+            |x1.Fnum| * Zpower_nat radix (t - s) ≤
+              Zpower_nat radix (t - s) * Zpower_nat radix (t - s) :=
+          mul_le_mul_of_nonneg_right (le_of_lt hx1NumRed) (le_of_lt hpowRedPos)
+        exact lt_of_lt_of_le hleft hright
+    have hredSqLeOrig :
+        Zpower_nat radix (t - s) * Zpower_nat radix (t - s) ≤ Zpower_nat radix t := by
+      have hsubSumLe : (t - s) + (t - s) ≤ t := by grind
+      calc
+        Zpower_nat radix (t - s) * Zpower_nat radix (t - s)
+            = Zpower_nat radix ((t - s) + (t - s)) := by
+                simp [Zpower_nat, pow_add]
+        _ ≤ Zpower_nat radix t := by
+            simpa [Zpower_nat] using
+              pow_le_pow_right₀ hradixGe hsubSumLe
+    have hnum : |prod.Fnum| < b.vNum := by
+      have hlt : |x1.Fnum * y1.Fnum| < Zpower_nat radix t :=
+        lt_of_lt_of_le hprodLtRedSq hredSqLeOrig
+      simpa [prod, FloatSpec.Calc.Operations.Fmult, hvNum] using hlt
+    have hexp : -b.dExp ≤ prod.Fexp := by
+      dsimp [prod, FloatSpec.Calc.Operations.Fmult]
+      grind
+    exact ⟨hnum, hexp⟩
+  · simp [prod, FloatSpec.Calc.Operations.Fmult]
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
