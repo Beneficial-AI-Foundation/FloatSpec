@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 58.
+- Active semantic gap candidates still listed below: 57.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 58/58 names have been
+- Counterpart audit coverage for the active list: 57/57 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 58 active
+Fix the remaining Flocq import gaps by working through the 57 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2477,9 +2477,28 @@ nested build or Coq-alignment checks. The normalized classifier
 local target gate. Therefore `Closestbbext` is removed from the active list,
 and `Underf_Err1` is next.
 
-#### `Pff/Pff.v` (58)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_110255` restored exact public
+`Underf_Err1` under only the expanded upstream GenericDek section assumptions
+and the existing exact `Underf_Err` predicate. The proof transfers the bounded
+input to the original bound in the above-minimum-exponent branch, where
+closestness gives exact equality. In the underflow branch it bounds the input
+and closest result by `firstNormalPos`, normalizes the result, derives the
+minimum original exponent with `Fcanonic_Rle_Zle`, and combines the resulting
+minimum `Fulp` equality with `ClosestUlp` to prove the exact half-unit error
+bound. The independent focused Lean process exited 0, `git diff --check`
+passed, the direct live-hole scan and placeholder/generated-status audits
+reported zero findings, and the full 3345-job `lake build` passed;
+`scripts/check_diff_trust.sh` is absent from this checkout. The harness's
+top-level `attempt.json` recorded `result = proved` but did not propagate its
+nested build or Coq-alignment checks. The normalized classifier
+`.change_log/manual_attempt_20260721_Underf_Err1_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `Underf_Err1` is removed from the active list,
+and `Underf_Err2_aux` is next.
 
-- `Underf_Err1` (Theorem, upstream line 16555)
+#### `Pff/Pff.v` (57)
+
 - `Underf_Err2_aux` (Theorem, upstream line 16610)
 - `Underf_Err2` (Theorem, upstream line 16750)
 - `Underf_Err3` (Theorem, upstream line 16774)
