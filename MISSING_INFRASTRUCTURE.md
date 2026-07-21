@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 53.
+- Active semantic gap candidates still listed below: 52.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 53/53 names have been
+- Counterpart audit coverage for the active list: 52/52 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 53 active
+Fix the remaining Flocq import gaps by working through the 52 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2581,9 +2581,32 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `Underf_Err3_bis` is removed from the
 active list, and `eLe` is next.
 
-#### `Pff/Pff.v` (53)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_135051` correctly rejected a deliberately
+too-weak projection of upstream `eLe`; without the Sec1 precision and product
+range hypotheses the claimed error bound has a radix-2 counterexample. The
+corrected subscription attempt `.change_log/codex_attempt_20260721_135903`
+then restored exact public `eLe` with the section facts consumed by the Coq
+proof: the beta/radix equality, radix lower bound,
+`b.vNum = Zpower_nat radix t`, natural range hypotheses `2 <= s` and
+`s <= t - 2`, normality of `x` and `y`, product exponent lower bound `K`,
+closestness of `r`, and exact residual decomposition
+`F2R x * F2R y = F2R r + F2R e`. It deliberately omits unused `Hst1`/`Hst2`
+and the later split operands and assumptions for `x1`/`x2`/`y1`/`y2`. The
+proof follows the upstream `ClosestUlp` route, derives the product max-float
+bound directly from `Closest` instead of adding totality as a public premise,
+and compares normalized exponents via `Fcanonic_Rle_Zle`. Independent focused
+Lean exited 0, `git diff --check` passed, the direct live-hole scan and
+placeholder/generated-status audits reported zero findings, and the full
+3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_eLe_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `eLe` is removed from the active list, reducing
+the ledger from 53 to 52; `rExp` is next.
 
-- `eLe` (Lemma, upstream line 17049)
+#### `Pff/Pff.v` (52)
+
 - `rExp` (Lemma, upstream line 17107)
 - `Boundedt1` (Lemma, upstream line 17177)
 - `Boundedt2` (Lemma, upstream line 17248)
@@ -7396,8 +7419,8 @@ Statement-level checks performed for active Pff entries 36-70:
 - `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
   `Underf_Err3_bis` are now restored as exact public underflow-error transfer
   theorems in `FloatSpec/src/Pff/Pff.lean`.
-- `eLe`, `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`,
-  `Boundedt4`, `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
+- `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`, `Boundedt4`,
+  `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
   `Boundedx2y1`, and `Boundedx2y2` are section-local product-splitting
   bounds in upstream Pff. Local broad hits on `Bound`, `ZleLe`,
