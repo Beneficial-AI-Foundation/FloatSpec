@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 40.
+- Active semantic gap candidates still listed below: 39.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 40/40 names have been
+- Counterpart audit coverage for the active list: 39/39 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 40 active
+Fix the remaining Flocq import gaps by working through the 39 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2914,9 +2914,38 @@ normalized classifier
 local target gate. Therefore exact public `Boundedx2y1` is removed from the
 active list, reducing the ledger from 41 to 40; `Dekker_aux` is next.
 
-#### `Pff/Pff.v` (40)
+2026-07-21 completion note: exact public `Dekker_aux` is restored in
+`FloatSpec/src/Pff/Pff.lean` immediately after exact `Boundedx2y1`. It matches
+upstream `Pff.v:Dekker_aux` and its `Algo` section context: it consumes the
+radix/bound/precision hypotheses, normality of `x` and `y`, the product
+exponent lower bound, all four split-rounding hypotheses for each operand, the
+four component-product rounding hypotheses, the five residual-rounding
+hypotheses, and the sole theorem premise giving a bounded representative of
+`tx * ty`; it concludes `F2R x * F2R y = F2R r - F2R t4`. No totality,
+canonicity, precomputed split equality, bounded intermediate, conclusion, or
+weakening premise was introduced. The proof derives the local `s` bounds,
+uses exact `VeltkampU` twice, constructs the exact bounded component products
+with `Boundedx1y1`, `Boundedx1y2`, and `Boundedx2y1`, constructs the four exact
+residual witnesses with `Boundedt1` through `Boundedt4`, identifies every
+rounded output through the projector property proved directly from `Closest`,
+and closes the upstream algebraic reconstruction. Required subscription
+harness attempt `.change_log/codex_attempt_20260721_183648` used `gpt-5.5`
+with high reasoning, recorded `result = proved`, and passed its local target
+gate. Independent focused `lake env lean FloatSpec/src/Pff/Pff.lean` exited 0;
+`git diff --check` and the direct added-Lean-hole scan passed;
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings; and
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
+repository has no executable `scripts/check_diff_trust.sh`, so that optional
+trust gate could not be run. Full `lake build` passed all 3345 jobs. The
+normalized classifier
+`.change_log/manual_attempt_20260721_Dekker_aux_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore exact public `Dekker_aux` is removed from the
+active list, reducing the ledger from 40 to 39; `Boundedx2y2` is next.
 
-- `Dekker_aux` (Theorem, upstream line 17588)
+#### `Pff/Pff.v` (39)
+
 - `Boundedx2y2` (Theorem, upstream line 17707)
 - `DekkerN` (Theorem, upstream line 17819)
 - `DekkerS1` (Theorem, upstream line 17877)

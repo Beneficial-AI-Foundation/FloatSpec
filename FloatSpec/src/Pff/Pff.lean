@@ -52366,6 +52366,269 @@ theorem Boundedx2y1 {beta : Int}
     ⟨xprime, hvalue, hbounded, _hexp⟩
   exact ⟨xprime, hvalue, hbounded⟩
 
+/-! Coq Algo theorem `Dekker_aux`.
+
+This is the main algebraic reconstruction for the normal Dekker path.  The
+last product `tx * ty` is supplied as the same bounded witness assumed by
+upstream; `Boundedx2y2` is the later theorem that constructs that witness. -/
+theorem Dekker_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
+      FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hyNormal : Fnormal (beta:=beta) radix b y)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hA1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
+    (hA2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hA3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hA4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
+    (hB1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
+    (hB2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
+    (hB3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
+    (hB4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
+    (hC1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) hy) x1y1)
+    (hC2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) ty) x1y2)
+    (hC3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) hy) x2y1)
+    (hC4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty) x2y2)
+    (hD1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
+    (hD2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) x1y1) t1)
+    (hD3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t1 - _root_.F2R (beta:=beta) x1y2) t2)
+    (hD4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t2 - _root_.F2R (beta:=beta) x2y1) t3)
+    (hD5 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t3 - _root_.F2R (beta:=beta) x2y2) t4)
+    (hTxTy : ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) xprime =
+          _root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty ∧
+        Fbounded (beta:=beta) b xprime) :
+    _root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y =
+      _root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) t4 := by
+  subst beta
+  let s : Nat := t - Nat.div2 t
+  have hSLeInt : (2 : Int) ≤ (t : Int) - (Nat.div2 t : Int) :=
+    SLe t hpGe
+  have hSGeInt : (t : Int) - (Nat.div2 t : Int) ≤ (t : Int) - 2 :=
+    SGe t hpGe
+  have hsGe : 2 ≤ s := by
+    dsimp [s]
+    omega
+  have hsLe : s ≤ t - 2 := by
+    dsimp [s]
+    omega
+  have hHst1 : (t : Int) - 1 ≤ 2 * (s : Int) := by
+    have h := s2Ge t
+    dsimp [s]
+    omega
+  have hHst2 : 2 * (s : Int) ≤ (t : Int) + 1 := by
+    have h := s2Le t
+    dsimp [s]
+    omega
+  have hHst3 : (t : Int) ≤ 2 * (s : Int) := by
+    have h := s2Ge t
+    dsimp [s]
+    omega
+  have closest_projector_eq :
+      ∀ p q : FloatSpec.Core.Defs.FlocqFloat radix,
+        Fbounded (beta:=radix) b p →
+        Closest (beta:=radix) b (radix : ℝ)
+          (_root_.F2R (beta:=radix) p) q →
+        _root_.F2R (beta:=radix) q = _root_.F2R (beta:=radix) p := by
+    intro p q hpBound hClosest
+    have hdist := hClosest.2 p hpBound
+    rw [sub_self, abs_zero] at hdist
+    have hzero :
+        |_root_.F2R (beta:=radix) q - _root_.F2R (beta:=radix) p| = 0 :=
+      le_antisymm hdist (abs_nonneg _)
+    exact sub_eq_zero.mp (abs_eq_zero.mp hzero)
+  rcases VeltkampU (beta:=radix) b radix s t x p q hx tx rfl hradix
+      hvNum hsGe hsLe (Or.inl hxNormal)
+      (by simpa [s] using hA1) hA2 hA3 hA4 with
+    ⟨hx2Le, hXeq, hxHead, hxTail⟩
+  rcases hxHead with ⟨hx', hhxVal, hhxBound, hhxExpFn⟩
+  rcases hxTail with ⟨tx', htxVal, htxBound, htxExp⟩
+  have hhxExp : (s : Int) + x.Fexp ≤ hx'.Fexp := hhxExpFn hxNormal
+  rcases VeltkampU (beta:=radix) b radix s t y p' q' hy ty rfl hradix
+      hvNum hsGe hsLe (Or.inl hyNormal)
+      (by simpa [s] using hB1) hB2 hB3 hB4 with
+    ⟨hy2Le, hYeq, hyHead, hyTail⟩
+  rcases hyHead with ⟨hy', hhyVal, hhyBound, hhyExpFn⟩
+  rcases hyTail with ⟨ty', htyVal, htyBound, htyExp⟩
+  have hhyExp : (s : Int) + y.Fexp ≤ hy'.Fexp := hhyExpFn hyNormal
+  have htxAbsLe :
+      |_root_.F2R (beta:=radix) tx| ≤
+        (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2 := by
+    have hsub :
+        _root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx =
+          _root_.F2R (beta:=radix) tx := by
+      linarith
+    simpa [hsub] using hx2Le
+  have htyAbsLe :
+      |_root_.F2R (beta:=radix) ty| ≤
+        (radix : ℝ) ^ ((s : Int) + y.Fexp) / 2 := by
+    have hsub :
+        _root_.F2R (beta:=radix) y - _root_.F2R (beta:=radix) hy =
+          _root_.F2R (beta:=radix) ty := by
+      linarith
+    simpa [hsub] using hy2Le
+  let e : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fminus (beta:=radix) (FloatSpec.Calc.Operations.Fmult (beta:=radix) x y) r
+  have hee :
+      _root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y =
+        _root_.F2R (beta:=radix) r + _root_.F2R (beta:=radix) e := by
+    have hmult := Fmult_correct (beta:=radix) x y
+    have hmultVal :
+        _root_.F2R (beta:=radix)
+            (FloatSpec.Calc.Operations.Fmult (beta:=radix) x y) =
+          _root_.F2R (beta:=radix) x *
+            _root_.F2R (beta:=radix) y := by
+      simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+        Id.run, ULift.up_down] using hmult hradix
+    have hminus := Fminus_correct (beta:=radix)
+      (FloatSpec.Calc.Operations.Fmult (beta:=radix) x y) r
+    have hminusVal :
+        _root_.F2R (beta:=radix) e =
+          _root_.F2R (beta:=radix)
+              (FloatSpec.Calc.Operations.Fmult (beta:=radix) x y) -
+            _root_.F2R (beta:=radix) r := by
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, e] using hminus hradix
+    rw [hminusVal, hmultVal]
+    ring
+  rcases Boundedx1y1 (beta:=radix) b radix s t x hx' y hy' rfl hradix
+      hvNum hK hhxExp hhyExp hhxBound hhyBound hHst3 with
+    ⟨prod11, hprod11Val, hprod11Bound⟩
+  have hx1y1Val :
+      _root_.F2R (beta:=radix) x1y1 =
+        _root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) hy := by
+    have hproj :
+        _root_.F2R (beta:=radix) x1y1 =
+          _root_.F2R (beta:=radix) prod11 :=
+      closest_projector_eq prod11 x1y1 hprod11Bound
+        (by simpa [hprod11Val, hhxVal, hhyVal] using hC1)
+    rw [hproj, hprod11Val, hhxVal, hhyVal]
+  rcases Boundedx1y2 (beta:=radix) b radix s t x hx' y ty' rfl hradix
+      hvNum hsLe hK hhxExp htyExp hhxBound htyBound with
+    ⟨prod12, hprod12Val, hprod12Bound⟩
+  have hx1y2Val :
+      _root_.F2R (beta:=radix) x1y2 =
+        _root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) ty := by
+    have hproj :
+        _root_.F2R (beta:=radix) x1y2 =
+          _root_.F2R (beta:=radix) prod12 :=
+      closest_projector_eq prod12 x1y2 hprod12Bound
+        (by simpa [hprod12Val, hhxVal, htyVal] using hC2)
+    rw [hproj, hprod12Val, hhxVal, htyVal]
+  rcases Boundedx2y1 (beta:=radix) b radix s t x tx' y hy' rfl hradix
+      hvNum hsLe hK htxExp hhyExp htxBound hhyBound with
+    ⟨prod21, hprod21Val, hprod21Bound⟩
+  have hx2y1Val :
+      _root_.F2R (beta:=radix) x2y1 =
+        _root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) hy := by
+    have hproj :
+        _root_.F2R (beta:=radix) x2y1 =
+          _root_.F2R (beta:=radix) prod21 :=
+      closest_projector_eq prod21 x2y1 hprod21Bound
+        (by simpa [hprod21Val, htxVal, hhyVal] using hC3)
+    rw [hproj, hprod21Val, htxVal, hhyVal]
+  rcases hTxTy with ⟨prod22, hprod22Val, hprod22Bound⟩
+  have hx2y2Val :
+      _root_.F2R (beta:=radix) x2y2 =
+        _root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) ty := by
+    have hproj :
+        _root_.F2R (beta:=radix) x2y2 =
+          _root_.F2R (beta:=radix) prod22 :=
+      closest_projector_eq prod22 x2y2 hprod22Bound
+        (by simpa [hprod22Val] using hC4)
+    rw [hproj, hprod22Val]
+  rcases Boundedt1 (beta:=radix) b radix s t x hx' tx' y hy' ty' r e
+      rfl hradix hvNum hsGe hsLe hHst1 hHst2 hxNormal hyNormal hK hD1
+      hee
+      (by rw [hhxVal, htxVal]; exact hXeq)
+      (by rw [hhyVal, htyVal]; exact hYeq)
+      (by simpa [htxVal] using htxAbsLe)
+      (by simpa [htyVal] using htyAbsLe)
+      hhxExp hhyExp with
+    ⟨u1, hu1Val, hu1Bound, _hu1Exp⟩
+  have ht1Eq :
+      _root_.F2R (beta:=radix) t1 = _root_.F2R (beta:=radix) u1 := by
+    have hinput :
+        _root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) x1y1 =
+          _root_.F2R (beta:=radix) u1 := by
+      rw [hu1Val, hx1y1Val, hhxVal, hhyVal]
+    exact closest_projector_eq u1 t1 hu1Bound (by simpa [hinput] using hD2)
+  rcases Boundedt2 (beta:=radix) b radix s t x hx' tx' y hy' ty' r e
+      rfl hradix hvNum hsGe hsLe hHst1 hHst2 hxNormal hyNormal hK hD1
+      hee
+      (by rw [hhxVal, htxVal]; exact hXeq)
+      (by rw [hhyVal, htyVal]; exact hYeq)
+      (by simpa [htxVal] using htxAbsLe)
+      (by simpa [htyVal] using htyAbsLe)
+      hhxExp hhyExp htyExp with
+    ⟨u2, hu2Val, hu2Bound, _hu2Exp⟩
+  have ht2Eq :
+      _root_.F2R (beta:=radix) t2 = _root_.F2R (beta:=radix) u2 := by
+    have hinput :
+        _root_.F2R (beta:=radix) t1 - _root_.F2R (beta:=radix) x1y2 =
+          _root_.F2R (beta:=radix) u2 := by
+      rw [ht1Eq, hu1Val, hx1y2Val, hu2Val, hhxVal, hhyVal, htyVal]
+    exact closest_projector_eq u2 t2 hu2Bound (by simpa [hinput] using hD3)
+  rcases Boundedt3 (beta:=radix) b radix s t x hx' tx' y hy' ty' r e
+      rfl hradix hvNum hsGe hsLe hHst1 hHst2 hxNormal hyNormal hK hD1
+      hee
+      (by rw [hhxVal, htxVal]; exact hXeq)
+      (by rw [hhyVal, htyVal]; exact hYeq)
+      (by simpa [htxVal] using htxAbsLe)
+      (by simpa [htyVal] using htyAbsLe)
+      hhxExp hhyExp htxExp htyExp with
+    ⟨u3, hu3Val, hu3Bound, _hu3Exp⟩
+  have ht3Eq :
+      _root_.F2R (beta:=radix) t3 = _root_.F2R (beta:=radix) u3 := by
+    have hinput :
+        _root_.F2R (beta:=radix) t2 - _root_.F2R (beta:=radix) x2y1 =
+          _root_.F2R (beta:=radix) u3 := by
+      rw [ht2Eq, hu2Val, hx2y1Val, hu3Val, hhxVal, hhyVal, htxVal, htyVal]
+    exact closest_projector_eq u3 t3 hu3Bound (by simpa [hinput] using hD4)
+  rcases Boundedt4 (beta:=radix) b radix s t x hx' tx' y hy' ty' r
+      rfl hradix hvNum hsGe hsLe hxNormal hyNormal hK hD1
+      (by rw [hhxVal, htxVal]; exact hXeq)
+      (by rw [hhyVal, htyVal]; exact hYeq) with
+    ⟨u4, hu4Val, hu4Bound⟩
+  have ht4Eq :
+      _root_.F2R (beta:=radix) t4 = _root_.F2R (beta:=radix) u4 := by
+    have hinput :
+        _root_.F2R (beta:=radix) t3 - _root_.F2R (beta:=radix) x2y2 =
+          _root_.F2R (beta:=radix) u4 := by
+      rw [ht3Eq, hu3Val, hx2y2Val, hu4Val, hhxVal, hhyVal, htxVal, htyVal]
+    exact closest_projector_eq u4 t4 hu4Bound (by simpa [hinput] using hD5)
+  have ht4Val :
+      _root_.F2R (beta:=radix) t4 =
+        _root_.F2R (beta:=radix) r -
+          _root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y := by
+    rw [ht4Eq, hu4Val, hhxVal, hhyVal, htxVal, htyVal, hXeq, hYeq]
+    ring
+  rw [ht4Val]
+  ring
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
