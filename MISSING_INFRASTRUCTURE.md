@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 45.
+- Active semantic gap candidates still listed below: 44.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 45/45 names have been
+- Counterpart audit coverage for the active list: 44/44 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 45 active
+Fix the remaining Flocq import gaps by working through the 44 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2784,9 +2784,35 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore exact public `Boundedx1y1_aux` is removed
 from the active list, reducing the ledger from 46 to 45; `Boundedx1y1` is next.
 
-#### `Pff/Pff.v` (45)
+2026-07-21 completion note: exact public `Boundedx1y1` is restored in
+`FloatSpec/src/Pff/Pff.lean` immediately after exact `Boundedx1y1_aux`. It
+matches upstream `Pff.v:Boundedx1y1`: the public theorem consumes the same
+Sec1 payload as the auxiliary theorem and returns an `xprime` whose real value
+is `F2R x1 * F2R y1` and which is `Fbounded b`. It introduces no extra
+hypothesis and drops only the auxiliary exponent-equality conjunct, exactly as
+the Coq wrapper does. The proof directly eliminates local exact
+`Boundedx1y1_aux` and projects its value and boundedness witnesses. The first
+subscription harness attempt
+`.change_log/codex_attempt_20260721_170359` made no changes because the local
+Codex CLI rejected its configured `gpt-5.6-sol` default as requiring a newer
+CLI. The required compatible rerun at
+`.change_log/codex_attempt_20260721_170512` used `gpt-5.5` with high reasoning,
+recorded `result = proved`, and passed its local target gate. Independent
+focused `lake env lean FloatSpec/src/Pff/Pff.lean` exited 0;
+`git diff --check` and the direct added-hole scan passed;
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings; and
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
+repository has no executable `scripts/check_diff_trust.sh`, so that optional
+trust gate could not be run. Full `lake build` passed all 3345 jobs. The
+normalized classifier
+`.change_log/manual_attempt_20260721_Boundedx1y1_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore exact public `Boundedx1y1` is removed from the
+active list, reducing the ledger from 45 to 44; `Boundedx1y2_aux` is next.
 
-- `Boundedx1y1` (Lemma, upstream line 17413)
+#### `Pff/Pff.v` (44)
+
 - `Boundedx1y2_aux` (Lemma, upstream line 17421)
 - `Boundedx1y2` (Lemma, upstream line 17443)
 - `Boundedx2y1_aux` (Lemma, upstream line 17448)
