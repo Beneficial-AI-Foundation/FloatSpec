@@ -46944,6 +46944,313 @@ theorem VeltkampS {beta : Int}
         · exact Closestbplusb bRed (radix : ℝ) t
             (_root_.F2R (beta:=radix) x) g hgClosestPlusRed hgBoundRed
 
+/-! Coq subnormal nearest-even Veltkamp lemma `VeltkampEvenS`.
+
+Normalize a nonzero subnormal input under the enlarged exponent bound, apply
+`VeltkampEvenN`, and transfer its nearest-even reduced-bound witness back to
+the original exponent range. The zero case uses a normalized-even zero
+representative directly. -/
+theorem VeltkampEvenS {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxSub : Fsubnormal (beta:=beta) radix b x)
+    (hpDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx) :
+    ∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
+        EvenClosest (beta:=beta) (Veltkamp_reducedBound radix b s t)
+          (radix : ℝ) (t - s) (_root_.F2R (beta:=beta) x) hx' := by
+  subst beta
+  have htGtOne : 1 < t := by omega
+  have hredPrecNe : t - s ≠ 0 := by omega
+  have hredPrecGtOne : 1 < t - s := by omega
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradixPosInt
+  have hvNumPos : 0 < b.vNum := by
+    rw [hvNum, Zpower_nat]
+    exact pow_pos hradixPosInt _
+  let bRed : Fbound_skel := Veltkamp_reducedBound radix b s t
+  let bPlus : Fbound_skel := plusExp b t
+  let bRedPlus : Fbound_skel := Veltkamp_reducedBound radix bPlus s t
+  have hvNumPlus : bPlus.vNum = Zpower_nat radix t := by
+    simpa [bPlus, plusExp] using hvNum
+  have hvNumRed : bRed.vNum = Zpower_nat radix (t - s) := by
+    simp [bRed, Veltkamp_reducedBound]
+  have hvNumRedPlus : bRedPlus.vNum = Zpower_nat radix (t - s) := by
+    simp [bRedPlus, bPlus, Veltkamp_reducedBound]
+  have hvNumRedPos : 0 < bRed.vNum := by
+    rw [hvNumRed, Zpower_nat]
+    exact pow_pos hradixPosInt _
+  have hxExpRed : -bRed.dExp ≤ x.Fexp := by
+    simpa [bRed, Veltkamp_reducedBound] using hxSub.1.2
+  by_cases hxZero : _root_.F2R (beta:=radix) x = 0
+  · let z0 : FloatSpec.Core.Defs.FlocqFloat radix := ⟨0, -b.dExp⟩
+    have hz0Bound : Fbounded (beta:=radix) b z0 := by
+      exact ⟨by simpa [z0] using hvNumPos, by simp [z0]⟩
+    have hz0Value : _root_.F2R (beta:=radix) z0 = 0 := by
+      simp [z0, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hpError := hpDefEven.1.2 z0 hz0Bound
+    have hpZero : _root_.F2R (beta:=radix) p = 0 := by
+      have hle : |_root_.F2R (beta:=radix) p| ≤ 0 := by
+        simpa [hxZero, hz0Value] using hpError
+      exact abs_eq_zero.mp (le_antisymm hle (abs_nonneg _))
+    have hqError := hqDefEven.1.2 z0 hz0Bound
+    have hqZero : _root_.F2R (beta:=radix) q = 0 := by
+      have hle : |_root_.F2R (beta:=radix) q| ≤ 0 := by
+        simpa [hxZero, hpZero, hz0Value] using hqError
+      exact abs_eq_zero.mp (le_antisymm hle (abs_nonneg _))
+    have hhxError := hhxDefEven.1.2 z0 hz0Bound
+    have hhxZero : _root_.F2R (beta:=radix) hx = 0 := by
+      have hle : |_root_.F2R (beta:=radix) hx| ≤ 0 := by
+        simpa [hqZero, hpZero, hz0Value] using hhxError
+      exact abs_eq_zero.mp (le_antisymm hle (abs_nonneg _))
+    let zRed : FloatSpec.Core.Defs.FlocqFloat radix := ⟨0, -bRed.dExp⟩
+    have hzRedBound : Fbounded (beta:=radix) bRed zRed := by
+      exact ⟨by simpa [zRed] using hvNumRedPos, by simp [zRed]⟩
+    have hzRedValue : _root_.F2R (beta:=radix) zRed = 0 := by
+      simp [zRed, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hzRedClosest :
+        Closest (beta:=radix) bRed (radix : ℝ)
+          (_root_.F2R (beta:=radix) x) zRed := by
+      constructor
+      · exact hzRedBound
+      · intro g hg
+        simp [hzRedValue, hxZero]
+    have hzRedEven :
+        FNeven (beta:=radix) bRed (radix : ℝ) (t - s) zRed := by
+      have h := FnormalizeCorrect (beta:=radix) radix bRed (t - s) zRed
+      have hnormValue :
+          _root_.F2R (beta:=radix)
+              (Fnormalize (beta:=radix) radix bRed (t - s) zRed) =
+            _root_.F2R (beta:=radix) zRed := by
+        simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+          Id.run, ULift.up_down] using h ⟨rfl, hradix⟩
+      exact FNeven_of_Fnormalize_F2R_zero bRed (radix : ℝ) (t - s) zRed
+        hradixPosInt (by simpa [hzRedValue] using hnormValue)
+    exact ⟨zRed, by simpa [hzRedValue] using hhxZero.symm,
+      hzRedClosest, Or.inl hzRedEven⟩
+  · rcases bimplybplusNorm (beta:=radix) b radix s t x rfl hradix
+        hvNum hsGe hsLe hxSub.1 hxZero with
+      ⟨xn, hxnValue, hxnNormal⟩
+    let xs : FloatSpec.Core.Defs.FlocqFloat radix :=
+      ⟨x.Fnum, x.Fexp + (s : Int)⟩
+    have hxsValue :
+        _root_.F2R (beta:=radix) xs =
+          _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (s : Int) := by
+      simp only [xs, _root_.F2R, FloatSpec.Core.Defs.F2R]
+      rw [zpow_add₀ (ne_of_gt hradixPos)]
+      ring
+    let pin : FloatSpec.Core.Defs.FlocqFloat radix := Fplus x xs
+    have hpinValue :
+        _root_.F2R (beta:=radix) pin =
+          _root_.F2R (beta:=radix) x *
+            ((radix : ℝ) ^ (s : Int) + 1) := by
+      have h := Fplus_correct (beta:=radix) x xs
+      have h' : _root_.F2R (beta:=radix) pin =
+          _root_.F2R (beta:=radix) x +
+            _root_.F2R (beta:=radix) xs := by
+        simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+          Id.run, ULift.up_down, pin] using h hradix
+      rw [h', hxsValue]
+      ring
+    have hpinExp : -b.dExp ≤ pin.Fexp := by
+      have hmin := Fplus_exp_eq_min x xs
+      have hxLeXs : x.Fexp ≤ xs.Fexp := by simp [xs]
+      rw [hmin, min_eq_left hxLeXs]
+      exact hxSub.1.2
+    have hpPin :
+        EvenClosest (beta:=radix) b (radix : ℝ) t
+          (_root_.F2R (beta:=radix) pin) p := by
+      simpa [hpinValue] using hpDefEven
+    have hpPlus :
+        EvenClosest (beta:=radix) bPlus (radix : ℝ) t
+          (_root_.F2R (beta:=radix) xn *
+            ((radix : ℝ) ^ (s : Int) + 1)) p := by
+      have h := EvenClosestbbplus b radix t t pin p rfl hradix hvNum
+        htGtOne hpinExp hpPin
+      simpa [bPlus, hpinValue, hxnValue] using h
+    let qin : FloatSpec.Core.Defs.FlocqFloat radix := Fminus x p
+    have hqinValue :
+        _root_.F2R (beta:=radix) qin =
+          _root_.F2R (beta:=radix) x -
+            _root_.F2R (beta:=radix) p := by
+      have h := Fminus_correct (beta:=radix) x p
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, qin] using h hradix
+    have hqinExp : -b.dExp ≤ qin.Fexp := by
+      have hmin := Fminus_exp_eq_min x p
+      rw [hmin]
+      exact le_min hxSub.1.2 hpDefEven.1.1.2
+    have hqQin :
+        EvenClosest (beta:=radix) b (radix : ℝ) t
+          (_root_.F2R (beta:=radix) qin) q := by
+      simpa [hqinValue] using hqDefEven
+    have hqPlus :
+        EvenClosest (beta:=radix) bPlus (radix : ℝ) t
+          (_root_.F2R (beta:=radix) xn -
+            _root_.F2R (beta:=radix) p) q := by
+      have h := EvenClosestbbplus b radix t t qin q rfl hradix hvNum
+        htGtOne hqinExp hqQin
+      simpa [bPlus, hqinValue, hxnValue] using h
+    let hxin : FloatSpec.Core.Defs.FlocqFloat radix := Fplus q p
+    have hhxinValue :
+        _root_.F2R (beta:=radix) hxin =
+          _root_.F2R (beta:=radix) q +
+            _root_.F2R (beta:=radix) p := by
+      have h := Fplus_correct (beta:=radix) q p
+      simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+        Id.run, ULift.up_down, hxin] using h hradix
+    have hhxinExp : -b.dExp ≤ hxin.Fexp := by
+      have hmin := Fplus_exp_eq_min q p
+      rw [hmin]
+      exact le_min hqDefEven.1.1.2 hpDefEven.1.1.2
+    have hhxHxin :
+        EvenClosest (beta:=radix) b (radix : ℝ) t
+          (_root_.F2R (beta:=radix) hxin) hx := by
+      simpa [hhxinValue] using hhxDefEven
+    have hhxPlus :
+        EvenClosest (beta:=radix) bPlus (radix : ℝ) t
+          (_root_.F2R (beta:=radix) q +
+            _root_.F2R (beta:=radix) p) hx := by
+      have h := EvenClosestbbplus b radix t t hxin hx rfl hradix hvNum
+        htGtOne hhxinExp hhxHxin
+      simpa [bPlus, hhxinValue] using h
+    rcases VeltkampEvenN (beta:=radix) bPlus radix s t xn p q hx
+        rfl hradix hvNumPlus hsGe hsLe hxnNormal hpPlus hqPlus hhxPlus with
+      ⟨w, hwValue, hwEven⟩
+    have hwEvenX :
+        EvenClosest (beta:=radix) bRedPlus (radix : ℝ) (t - s)
+          (_root_.F2R (beta:=radix) x) w := by
+      simpa [bRedPlus, bPlus, hxnValue] using hwEven
+    have hwEvenPlusRed :
+        EvenClosest (beta:=radix) (plusExp bRed t) (radix : ℝ) (t - s)
+          (_root_.F2R (beta:=radix) x) w := by
+      simpa [bRed, bPlus, bRedPlus, Veltkamp_reducedBound, plusExp] using
+        hwEvenX
+    by_cases hwExpOld : -b.dExp ≤ w.Fexp
+    · have hwBoundRed : Fbounded (beta:=radix) bRed w := by
+        constructor
+        · simpa [bRed, bPlus, bRedPlus, Veltkamp_reducedBound] using
+            hwEven.1.1.1
+        · simpa [bRed, Veltkamp_reducedBound] using hwExpOld
+      refine ⟨w, hwValue, ?_⟩
+      exact EvenClosestbplusb bRed radix t (t - s) x w rfl hradix
+        hvNumRed hredPrecGtOne hxExpRed hwEvenPlusRed hwBoundRed
+    · have hMinMax :
+          MinOrMaxP_float (beta:=radix) bRedPlus radix
+            (EvenClosest (beta:=radix) bRedPlus (radix : ℝ) (t - s)) := by
+        have h := EvenClosestMinOrMax (beta:=radix) bRedPlus radix
+          (radix : ℝ) (t - s)
+        simpa only [wp, PostCond.noThrow, pure, EvenClosestMinOrMax_check,
+          Id.run, ULift.up_down] using h trivial
+      have hRep : ∃ m : Int,
+          _root_.F2R (beta:=radix) w =
+            _root_.F2R (beta:=radix) ⟨m, x.Fexp⟩ := by
+        rcases hMinMax (_root_.F2R (beta:=radix) x) w hwEvenX with
+          hMin | hMax
+        · have h := FminRep (beta:=radix) bRedPlus radix (t - s) x w
+          simpa only [wp, PostCond.noThrow, pure, FminRep_check,
+            Id.run, ULift.up_down] using
+            h ⟨rfl, hradix, hredPrecNe, hvNumRedPlus, hMin⟩
+        · have h := FmaxRep (beta:=radix) bRedPlus radix (t - s) x w
+          simpa only [wp, PostCond.noThrow, pure, FmaxRep_check,
+            Id.run, ULift.up_down] using
+            h ⟨rfl, hradix, hredPrecNe, hvNumRedPlus, hMax⟩
+      rcases hRep with ⟨m, hm⟩
+      let g : FloatSpec.Core.Defs.FlocqFloat radix := ⟨m, x.Fexp⟩
+      have hwValueG :
+          _root_.F2R (beta:=radix) w =
+            _root_.F2R (beta:=radix) g := by
+        simpa [g] using hm
+      have hwExpLeG : w.Fexp ≤ g.Fexp := by
+        dsimp [g]
+        have hxAtMin := hxSub.2.1
+        omega
+      have hgBoundPlus : Fbounded (beta:=radix) bRedPlus g := by
+        have h := FboundedEqExp (beta:=radix) bRedPlus w g
+        simpa only [wp, PostCond.noThrow, pure, FboundedEqExp_check,
+          Id.run, ULift.up_down] using
+          h ⟨hradix, hwEvenX.1.1, hwValueG, hwExpLeG⟩
+      have hgBoundRed : Fbounded (beta:=radix) bRed g := by
+        constructor
+        · simpa [bRed, bRedPlus, bPlus, Veltkamp_reducedBound] using
+            hgBoundPlus.1
+        · dsimp [g, bRed, Veltkamp_reducedBound]
+          rw [hxSub.2.1]
+      have hgClosestPlus :
+          Closest (beta:=radix) bRedPlus (radix : ℝ)
+            (_root_.F2R (beta:=radix) x) g := by
+        constructor
+        · exact hgBoundPlus
+        · intro y hy
+          have hdist := hwEvenX.1.2 y hy
+          simpa [hwValueG] using hdist
+      have hgEvenPlus :
+          EvenClosest (beta:=radix) bRedPlus (radix : ℝ) (t - s)
+            (_root_.F2R (beta:=radix) x) g := by
+        refine ⟨hgClosestPlus, ?_⟩
+        rcases hwEvenX.2 with hwParity | hwUnique
+        · left
+          let nw : FloatSpec.Core.Defs.FlocqFloat radix :=
+            Fnormalize (beta:=radix) radix bRedPlus (t - s) w
+          let ng : FloatSpec.Core.Defs.FlocqFloat radix :=
+            Fnormalize (beta:=radix) radix bRedPlus (t - s) g
+          have hnwCan : Fcanonic (beta:=radix) radix bRedPlus nw := by
+            have h := FnormalizeCanonic (beta:=radix) radix bRedPlus
+              (t - s) w
+            simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+              Id.run, ULift.up_down, nw] using
+              h ⟨hwEvenX.1.1, hwEvenX.1.1, hredPrecNe, hradix, hvNumRedPlus⟩
+          have hngCan : Fcanonic (beta:=radix) radix bRedPlus ng := by
+            have h := FnormalizeCanonic (beta:=radix) radix bRedPlus
+              (t - s) g
+            simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+              Id.run, ULift.up_down, ng] using
+              h ⟨hgBoundPlus, hgBoundPlus, hredPrecNe, hradix, hvNumRedPlus⟩
+          have hnwValue :
+              _root_.F2R (beta:=radix) nw =
+                _root_.F2R (beta:=radix) w := by
+            have h := FnormalizeCorrect (beta:=radix) radix bRedPlus
+              (t - s) w
+            simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+              Id.run, ULift.up_down, nw] using h ⟨rfl, hradix⟩
+          have hngValue :
+              _root_.F2R (beta:=radix) ng =
+                _root_.F2R (beta:=radix) g := by
+            have h := FnormalizeCorrect (beta:=radix) radix bRedPlus
+              (t - s) g
+            simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+              Id.run, ULift.up_down, ng] using h ⟨rfl, hradix⟩
+          have hnEq : nw = ng := by
+            have h := FcanonicUnique (beta:=radix) radix bRedPlus nw ng
+              hradix rfl
+            simpa only [wp, PostCond.noThrow, pure, FcanonicUnique_check,
+              ULift.down_up, Fcanonic'] using
+              h ⟨hnwCan, hngCan,
+                hnwValue.trans (hwValueG.trans hngValue.symm)⟩
+          unfold FNeven at hwParity ⊢
+          simpa only [nw, ng, hnEq] using hwParity
+        · right
+          intro y hy
+          exact (hwUnique y hy).trans hwValueG
+      have hgEvenPlusRed :
+          EvenClosest (beta:=radix) (plusExp bRed t) (radix : ℝ) (t - s)
+            (_root_.F2R (beta:=radix) x) g := by
+        simpa [bRed, bPlus, bRedPlus, Veltkamp_reducedBound, plusExp] using
+          hgEvenPlus
+      refine ⟨g, ?_, ?_⟩
+      · exact hwValueG.symm.trans hwValue
+      · exact EvenClosestbplusb bRed radix t (t - s) x g rfl hradix
+          hvNumRed hredPrecGtOne hxExpRed hgEvenPlusRed hgBoundRed
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=

@@ -2352,9 +2352,28 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `VeltkampS` is removed from the active
 list, and `VeltkampEvenS` is next.
 
-#### `Pff/Pff.v` (65)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_083331` failed without source changes or a
+build after Codex process/session persistence errors. The manual repair
+restored exact public `VeltkampEvenS` under only the expanded upstream section
+assumptions. The zero branch constructs a normalized-even zero witness. For a
+nonzero subnormal input, the proof normalizes the input under `plusExp`,
+transfers all three `EvenClosest` premises to that enlarged bound, and applies
+exact `VeltkampEvenN`. It restricts witnesses already in the old exponent
+range directly. For lower-exponent min/max witnesses, it re-encodes the value
+at the subnormal input exponent and preserves nearest-even parity by proving
+the two normalized canonical representatives equal before restricting the
+bound. The focused Lean process exited 0, `git diff --check` passed,
+placeholder/status audits reported zero findings, and the full 3345-job
+`lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_VeltkampEvenS_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `VeltkampEvenS` is removed from the active list,
+and `VeltkampEven` is next.
 
-- `VeltkampEvenS` (Lemma, upstream line 15734)
+#### `Pff/Pff.v` (64)
+
 - `VeltkampEven` (Theorem, upstream line 15944)
 - `Veltkamp_tail_aux` (Theorem, upstream line 16001)
 - `Veltkamp_tail2` (Theorem, upstream line 16157)
