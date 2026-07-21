@@ -1,0 +1,11 @@
+commit 6aa01309ef4469a22d468e5478b76404b83b8b04
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 16:28:00 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 16:28:00 2026 +0800
+
+    Restore exact Pff Boundedt4_aux theorem
+
+ FloatSpec/src/Pff/Pff.lean | 54 ++++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  | 36 ++++++++++++++++++++++++++-----
+ 2 files changed, 85 insertions(+), 5 deletions(-)
