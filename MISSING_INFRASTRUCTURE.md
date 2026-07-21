@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 52.
+- Active semantic gap candidates still listed below: 51.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 52/52 names have been
+- Counterpart audit coverage for the active list: 51/51 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 52 active
+Fix the remaining Flocq import gaps by working through the 51 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2605,9 +2605,29 @@ checkout. The normalized classifier
 local target gate. Therefore `eLe` is removed from the active list, reducing
 the ledger from 53 to 52; `rExp` is next.
 
-#### `Pff/Pff.v` (52)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_142334` checked exact upstream `rExp` but
+stopped because the local `RoundAbsMonotonel` packaging requires
+`ClosestTotal`, whose current construction exposes the forbidden `boundR`
+side condition. The manual repair preserved the exact Sec1 public surface and
+avoided that local packaging mismatch: it derives the minimum-normal product
+magnitude from the two `Fnormal` hypotheses, applies `Closest` directly to the
+positive or negative bounded comparison float according to the product sign,
+then compares canonical exponents after normalization and transports the
+bound back to `r`. No residual `e`, `eeq`, `Hst1`/`Hst2`, split operands,
+totality, `boundR`, canonicity, conclusion, or other extra public premise was
+added. Focused `lake env lean FloatSpec/src/Pff/Pff.lean` exited 0. Therefore
+`git diff --check` passed, the direct live-hole scan and
+placeholder/generated-status audits reported zero findings, and the full
+3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_rExp_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore exact public `rExp` is removed from the active
+list, reducing the ledger from 52 to 51; `Boundedt1` is next.
 
-- `rExp` (Lemma, upstream line 17107)
+#### `Pff/Pff.v` (51)
+
 - `Boundedt1` (Lemma, upstream line 17177)
 - `Boundedt2` (Lemma, upstream line 17248)
 - `Boundedt3` (Lemma, upstream line 17288)
@@ -7419,8 +7439,8 @@ Statement-level checks performed for active Pff entries 36-70:
 - `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
   `Underf_Err3_bis` are now restored as exact public underflow-error transfer
   theorems in `FloatSpec/src/Pff/Pff.lean`.
-- `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`, `Boundedt4`,
-  `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
+- `Boundedt1`, `Boundedt2`, `Boundedt3`, `Boundedt4`, `Boundedt4_aux`,
+  `Boundedx1y1_aux`, `Boundedx1y1`,
   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
   `Boundedx2y1`, and `Boundedx2y2` are section-local product-splitting
   bounds in upstream Pff. Local broad hits on `Bound`, `ZleLe`,
