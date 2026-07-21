@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 66.
+- Active semantic gap candidates still listed below: 61.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 66/66 names have been
+- Counterpart audit coverage for the active list: 61/61 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 62 active
+Fix the remaining Flocq import gaps by working through the 61 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2407,9 +2407,27 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Therefore `Veltkamp_tail_aux` is removed from the
 active list, and `Veltkamp_tail2` is next.
 
-#### `Pff/Pff.v` (62)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_091300` restored exact public
+`Veltkamp_tail2` under only the expanded upstream section assumptions. It
+normalizes the bounded input, reuses exact `Veltkamp_tail_aux`, and applies
+`FboundedMbound2` to construct an equal-value residual witness in the `s - 1`
+split bound. The binary-radix identity `2 ^ s / 2 = 2 ^ (s - 1)` supplies the
+mantissa bound; closest-rounding minimality identifies the witness with `tx`,
+while the constructor preserves the normalized input exponent lower bound.
+The independent focused Lean process exited 0, `git diff --check` passed, the
+placeholder and generated-status audits reported zero findings, and the full
+3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The harness's top-level `attempt.json` recorded `result = proved`
+but did not propagate its nested build or Coq-alignment checks. The normalized
+classifier
+`.change_log/manual_attempt_20260721_Veltkamp_tail2_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `Veltkamp_tail2` is removed from the active list,
+and `VeltkampU` is next.
 
-- `Veltkamp_tail2` (Theorem, upstream line 16157)
+#### `Pff/Pff.v` (61)
+
 - `VeltkampU` (Theorem, upstream line 16270)
 - `BoundedL` (Theorem, upstream line 16329)
 - `Closestbbext` (Theorem, upstream line 16377)
