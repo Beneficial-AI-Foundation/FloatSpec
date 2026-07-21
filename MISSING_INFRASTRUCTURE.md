@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 34 active
+Fix the remaining Flocq import gaps by working through the 33 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3069,9 +3069,35 @@ normalized classifier
 local target gate. Exact public `Dekker1` is removed from the active list,
 reducing the ledger from 35 to 34; `Veltkampb'` is next.
 
-#### `Pff/Pff.v` (34)
+2026-07-22 completion note: exact public `Veltkampb'` is restored beside its
+exact `Closestbbext` prerequisite. It matches the full upstream `Algo2`
+payload: for arbitrary `f`, `pf`, `qf`, `hf`, and `tf`, strict extension from
+`b.dExp` to `Dekker_extendedBound b t`, boundedness of `f` under `b`, and the
+four original split-operation `Closest` hypotheses imply the same four
+closestness statements under the extended bound, in the same nested
+conjunction. The proof builds exact `Fmult`/`Fplus`/`Fminus` input witnesses,
+derives their old-bound exponent floors from `Fbounded` and preceding
+closestness outputs, and applies exact `Closestbbext`; no canonicity,
+normality, totality, conclusion, or weakening premise was added. Required
+subscription harness attempt `.change_log/codex_attempt_20260722_071159` used
+`gpt-5.5` with high reasoning and recorded `result = proved`. Its line-based
+post-edit dependency sidecar resolved the old insertion line to `DekkerS2`, so
+that sidecar is not counted as target evidence. Independent focused
+`lake env lean FloatSpec/src/Pff/Pff.lean` at the actual declaration exited 0;
+`git diff --check`, the direct added-hole scan, and
+`scripts/audit_placeholders.sh --json FloatSpec` passed with zero findings.
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
+repository has no executable `scripts/check_diff_trust.sh`, so that optional
+trust gate could not be run. Full `lake build` passed all 3345 jobs. The
+normalized classifier at the actual declaration,
+`.change_log/manual_attempt_20260722_Veltkampb_prime_proved/attempt.json`,
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Exact public `Veltkampb'` is removed from the active
+list, reducing the ledger from 34 to 33; `NormalbPrim` is next.
 
-- `Veltkampb'` (Theorem, upstream line 18421)
+#### `Pff/Pff.v` (33)
+
 - `NormalbPrim` (Theorem, upstream line 18513)
 - `Dekker2_aux` (Theorem, upstream line 18573)
 - `Dekker2` (Theorem, upstream line 18822)
@@ -7880,11 +7906,11 @@ Statement-level checks performed for active Pff entries 36-70:
   rounded split/multiply hypotheses. The `*_FTS` helpers are Fast2Sum-style
   support lemmas over abstract operations and do not match the Pff Dekker
   section statements.
-- `Veltkampb'` and `NormalbPrim` have no faithful local counterpart found.
-  The former is a bound-parameter side theorem inside the Veltkamp/Dekker
-  development, and the latter constructs a normal representative in the
-  enlarged bound. Neither is implied by the public Veltkamp/Dekker wrappers
-  without the missing lower proof payloads.
+- `Veltkampb'` is now restored as the exact public bound-extension theorem in
+  `FloatSpec/src/Pff/Pff.lean`.
+- `NormalbPrim` has no faithful local counterpart found. It constructs a
+  normal representative in the enlarged bound and is not implied by the
+  public Veltkamp/Dekker wrappers without the missing lower proof payloads.
 
 Updated status: active Pff entries 36-70 are confirmed real semantic gaps or
 unported section lemmas, not renamed/split complete ports. Later restorations

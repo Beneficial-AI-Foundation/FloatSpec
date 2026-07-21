@@ -47770,6 +47770,157 @@ theorem Closestbbext {beta : Int}
       hprecision hfextExp hfClosest
   simpa [hbextEq] using hplus
 
+/-! Coq Algo2 theorem `Veltkampb'`.
+
+The four Veltkamp split roundings under `b` remain closest roundings under the
+Dekker extended bound `b'`.  The represented inputs are exactly the upstream
+`Fplus`/`Fminus`/`Fmult` witnesses, and the transfer step is `Closestbbext`. -/
+theorem Veltkampb' {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (f pf qf hf tf : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hbextExp : b.dExp < (Dekker_extendedBound b t).dExp)
+    (hfBound : Fbounded (beta:=beta) b f)
+    (hA1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) f *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) pf)
+    (hA2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) pf) qf)
+    (hA3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) qf + _root_.F2R (beta:=beta) pf) hf)
+    (hA4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) hf) tf) :
+    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
+      (_root_.F2R (beta:=beta) f *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) pf ∧
+    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
+      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) pf) qf ∧
+    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
+      (_root_.F2R (beta:=beta) qf + _root_.F2R (beta:=beta) pf) hf ∧
+    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
+      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) hf) tf := by
+  subst beta
+  let s : Nat := t - Nat.div2 t
+  have htGtOne : 1 < t := by omega
+  let scale : FloatSpec.Core.Defs.FlocqFloat radix := ⟨1, (s : Int)⟩
+  let fScale : FloatSpec.Core.Defs.FlocqFloat radix :=
+    FloatSpec.Calc.Operations.Fmult (beta:=radix) f scale
+  let fScaled : FloatSpec.Core.Defs.FlocqFloat radix := Fplus fScale f
+  have hfScaledValue :
+      _root_.F2R (beta:=radix) fScaled =
+        _root_.F2R (beta:=radix) f *
+          ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1) := by
+    have hplus := Fplus_correct (beta:=radix) fScale f
+    have hplusValue :
+        _root_.F2R (beta:=radix) fScaled =
+          _root_.F2R (beta:=radix) fScale + _root_.F2R (beta:=radix) f := by
+      simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check, Id.run,
+        ULift.up_down, fScaled] using hplus hradix
+    have hmult := Fmult_correct (beta:=radix) f scale
+    have hscaleValue :
+        _root_.F2R (beta:=radix) fScale =
+          _root_.F2R (beta:=radix) f * (radix : ℝ) ^ (s : Int) := by
+      have hmultValue :
+          _root_.F2R (beta:=radix) fScale =
+            _root_.F2R (beta:=radix) f * _root_.F2R (beta:=radix) scale := by
+        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check, Id.run,
+          ULift.up_down, fScale] using hmult hradix
+      rw [hmultValue]
+      simp [scale, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    rw [hplusValue, hscaleValue]
+    simp [s]
+    ring
+  have hfScaledExp : -b.dExp ≤ fScaled.Fexp := by
+    have hplusExp :
+        fScaled.Fexp = min fScale.Fexp f.Fexp := by
+      simpa [fScaled] using Fplus_exp_eq_min (beta:=radix) fScale f
+    have hfScaleExp : fScale.Fexp = f.Fexp + (s : Int) := by
+      simp [fScale, scale, FloatSpec.Calc.Operations.Fmult]
+    rw [hplusExp, hfScaleExp, min_eq_right]
+    · exact hfBound.2
+    · omega
+  have hA1Ext :
+      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
+        (_root_.F2R (beta:=radix) f *
+          ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) pf := by
+    have hA1Value :
+        Closest (beta:=radix) b (radix : ℝ)
+          (_root_.F2R (beta:=radix) fScaled) pf := by
+      simpa [hfScaledValue] using hA1
+    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
+      radix t fScaled pf rfl hradix hvNum htGtOne rfl hbextExp
+      hfScaledExp hA1Value
+    simpa [hfScaledValue] using h
+  let fMinusPf : FloatSpec.Core.Defs.FlocqFloat radix := Fminus f pf
+  have hfMinusPfValue :
+      _root_.F2R (beta:=radix) fMinusPf =
+        _root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) pf := by
+    have h := Fminus_correct (beta:=radix) f pf
+    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check, Id.run,
+      ULift.up_down, fMinusPf] using h hradix
+  have hfMinusPfExp : -b.dExp ≤ fMinusPf.Fexp := by
+    rw [show fMinusPf.Fexp = min f.Fexp pf.Fexp by
+      simpa [fMinusPf] using Fminus_exp_eq_min (beta:=radix) f pf]
+    exact le_min hfBound.2 hA1.1.2
+  have hA2Ext :
+      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
+        (_root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) pf) qf := by
+    have hA2Value :
+        Closest (beta:=radix) b (radix : ℝ)
+          (_root_.F2R (beta:=radix) fMinusPf) qf := by
+      simpa [hfMinusPfValue] using hA2
+    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
+      radix t fMinusPf qf rfl hradix hvNum htGtOne rfl hbextExp
+      hfMinusPfExp hA2Value
+    simpa [hfMinusPfValue] using h
+  let qPlusPf : FloatSpec.Core.Defs.FlocqFloat radix := Fplus qf pf
+  have hqPlusPfValue :
+      _root_.F2R (beta:=radix) qPlusPf =
+        _root_.F2R (beta:=radix) qf + _root_.F2R (beta:=radix) pf := by
+    have h := Fplus_correct (beta:=radix) qf pf
+    simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check, Id.run,
+      ULift.up_down, qPlusPf] using h hradix
+  have hqPlusPfExp : -b.dExp ≤ qPlusPf.Fexp := by
+    rw [show qPlusPf.Fexp = min qf.Fexp pf.Fexp by
+      simpa [qPlusPf] using Fplus_exp_eq_min (beta:=radix) qf pf]
+    exact le_min hA2.1.2 hA1.1.2
+  have hA3Ext :
+      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
+        (_root_.F2R (beta:=radix) qf + _root_.F2R (beta:=radix) pf) hf := by
+    have hA3Value :
+        Closest (beta:=radix) b (radix : ℝ)
+          (_root_.F2R (beta:=radix) qPlusPf) hf := by
+      simpa [hqPlusPfValue] using hA3
+    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
+      radix t qPlusPf hf rfl hradix hvNum htGtOne rfl hbextExp
+      hqPlusPfExp hA3Value
+    simpa [hqPlusPfValue] using h
+  let fMinusHf : FloatSpec.Core.Defs.FlocqFloat radix := Fminus f hf
+  have hfMinusHfValue :
+      _root_.F2R (beta:=radix) fMinusHf =
+        _root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) hf := by
+    have h := Fminus_correct (beta:=radix) f hf
+    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check, Id.run,
+      ULift.up_down, fMinusHf] using h hradix
+  have hfMinusHfExp : -b.dExp ≤ fMinusHf.Fexp := by
+    rw [show fMinusHf.Fexp = min f.Fexp hf.Fexp by
+      simpa [fMinusHf] using Fminus_exp_eq_min (beta:=radix) f hf]
+    exact le_min hfBound.2 hA3.1.2
+  have hA4Ext :
+      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
+        (_root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) hf) tf := by
+    have hA4Value :
+        Closest (beta:=radix) b (radix : ℝ)
+          (_root_.F2R (beta:=radix) fMinusHf) tf := by
+      simpa [hfMinusHfValue] using hA4
+    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
+      radix t fMinusHf tf rfl hradix hvNum htGtOne rfl hbextExp
+      hfMinusHfExp hA4Value
+    simpa [hfMinusHfValue] using h
+  exact ⟨hA1Ext, hA2Ext, hA3Ext, hA4Ext⟩
+
 private lemma Fbounded_of_same_vNum_of_exp_ge {beta : Int}
     (b b' : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbNum : b.vNum = b'.vNum) (hfBound : Fbounded (beta:=beta) b' f)
