@@ -51514,6 +51514,251 @@ theorem Boundedt1 {beta : Int}
   refine ⟨xprime, ?_, hxprimeBound, hxprimeExp⟩
   rw [hxprimeVal, hresidualValue]
 
+/-! Coq Sec1 exact residual bound `Boundedt2`.
+
+This is the second Dekker residual stage: use exact `Boundedt1` for the
+representable `r - x1 * y1`, subtract `x1 * y2`, then lower the exponent to
+`s + x.Fexp + y.Fexp` with `BoundedL`. -/
+theorem Boundedt2 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x x1 x2 y y1 y2 r e : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hSLe : 2 ≤ s) (hSGe : s ≤ t - 2)
+    (hHst1 : (t : Int) - 1 ≤ 2 * (s : Int))
+    (hHst2 : 2 * (s : Int) ≤ (t : Int) + 1)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hyNormal : Fnormal (beta:=beta) radix b y)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hClosest : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
+    (hee : _root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y =
+      _root_.F2R (beta:=beta) r + _root_.F2R (beta:=beta) e)
+    (hXeq : _root_.F2R (beta:=beta) x =
+      _root_.F2R (beta:=beta) x1 + _root_.F2R (beta:=beta) x2)
+    (hYeq : _root_.F2R (beta:=beta) y =
+      _root_.F2R (beta:=beta) y1 + _root_.F2R (beta:=beta) y2)
+    (hx2Le : |_root_.F2R (beta:=beta) x2| ≤
+      (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2)
+    (hy2Le : |_root_.F2R (beta:=beta) y2| ≤
+      (radix : ℝ) ^ ((s : Int) + y.Fexp) / 2)
+    (hx1Exp : (s : Int) + x.Fexp ≤ x1.Fexp)
+    (hy1Exp : (s : Int) + y.Fexp ≤ y1.Fexp)
+    (hy2Exp : y.Fexp ≤ y2.Fexp) :
+    ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) xprime =
+          _root_.F2R (beta:=beta) r -
+            _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y1 -
+            _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y2 ∧
+        Fbounded (beta:=beta) b xprime ∧
+          xprime.Fexp = (s : Int) + x.Fexp + y.Fexp := by
+  subst beta
+  let targetExp : Int := (s : Int) + x.Fexp + y.Fexp
+  rcases Boundedt1 b radix s t x x1 x2 y y1 y2 r e rfl hradix hvNum
+      hSLe hSGe hHst1 hHst2 hxNormal hyNormal hK hClosest hee hXeq hYeq
+      hx2Le hy2Le hx1Exp hy1Exp with
+    ⟨t1, ht1Val, ht1Bound, ht1Exp⟩
+  let prod12 : FloatSpec.Core.Defs.FlocqFloat radix :=
+    FloatSpec.Calc.Operations.Fmult (beta:=radix) x1 y2
+  let residual : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fminus (beta:=radix) t1 prod12
+  have htPrecision : 1 < t := by omega
+  have hradixPosInt : 0 < radix := by omega
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by exact_mod_cast hradixPosInt
+  have hradixOne : (1 : ℝ) ≤ (radix : ℝ) := by
+    exact_mod_cast (le_of_lt hradix)
+  have hnormalAbsLt :
+      ∀ f : FloatSpec.Core.Defs.FlocqFloat radix,
+        Fbounded (beta:=radix) b f →
+          |_root_.F2R (beta:=radix) f| <
+            (radix : ℝ) ^ ((t : Int) + f.Fexp) := by
+    intro f hfBound
+    have hnumReal :
+        |(f.Fnum : ℝ)| < (radix : ℝ) ^ (t : Int) := by
+      have hnumCast : ((|f.Fnum| : Int) : ℝ) < (b.vNum : ℝ) := by
+        exact_mod_cast hfBound.1
+      have hvReal : (b.vNum : ℝ) = (radix : ℝ) ^ (t : Int) := by
+        rw [hvNum]
+        have h := Zpower_nat_Z_powerRZ radix t
+        simpa only [wp, PostCond.noThrow, pure, Zpower_nat_Z_powerRZ_check,
+          Id.run, ULift.up_down] using h trivial
+      simpa [Int.cast_abs, hvReal] using hnumCast
+    have hpowPos : 0 < (radix : ℝ) ^ f.Fexp := zpow_pos hradixPos _
+    calc
+      |_root_.F2R (beta:=radix) f| =
+          |(f.Fnum : ℝ)| * (radix : ℝ) ^ f.Fexp := by
+            simp [_root_.F2R, FloatSpec.Core.Defs.F2R, abs_mul,
+              abs_of_pos hpowPos]
+      _ < (radix : ℝ) ^ (t : Int) * (radix : ℝ) ^ f.Fexp :=
+          mul_lt_mul_of_pos_right hnumReal hpowPos
+      _ = (radix : ℝ) ^ ((t : Int) + f.Fexp) := by
+          rw [zpow_add₀ (ne_of_gt hradixPos)]
+  have hyAbsLt :
+      |_root_.F2R (beta:=radix) y| <
+        (radix : ℝ) ^ ((t : Int) + y.Fexp) :=
+    hnormalAbsLt y hyNormal.1
+  have hx2y2Bound :
+      |_root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y2| ≤
+        (radix : ℝ) ^ (2 * (s : Int) + x.Fexp + y.Fexp) / 4 :=
+    x2y2Le radix s x.Fexp y.Fexp
+      (_root_.F2R (beta:=radix) x2) (_root_.F2R (beta:=radix) y2)
+      hradix hx2Le hy2Le
+  have hx2y1Bound :
+      |_root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y1| <
+        (radix : ℝ) ^ ((t : Int) + (s : Int) + x.Fexp + y.Fexp) / 2 +
+          (radix : ℝ) ^ (2 * (s : Int) + x.Fexp + y.Fexp) / 4 :=
+    x2y1Le radix s t x.Fexp y.Fexp
+      (_root_.F2R (beta:=radix) x2) (_root_.F2R (beta:=radix) y)
+      (_root_.F2R (beta:=radix) y1) (_root_.F2R (beta:=radix) y2)
+      hradix hYeq hx2Le hyAbsLt hx2y2Bound
+  have heBound :
+      |_root_.F2R (beta:=radix) e| ≤
+        (radix : ℝ) ^ ((t : Int) + x.Fexp + y.Fexp) / 2 :=
+    eLe b radix s t x y r e rfl hradix hvNum hSLe hSGe
+      hxNormal hyNormal hK hClosest hee
+  have hdecomp :
+      _root_.F2R (beta:=radix) r -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y1 -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y2 =
+        -_root_.F2R (beta:=radix) e +
+          _root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y1 +
+          _root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y2 := by
+    calc
+      _root_.F2R (beta:=radix) r -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y1 -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y2 =
+        (_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y -
+          _root_.F2R (beta:=radix) e) -
+            _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y1 -
+            _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y2 := by
+            linarith
+      _ = -_root_.F2R (beta:=radix) e +
+          _root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y1 +
+          _root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y2 := by
+            rw [hXeq, hYeq]
+            ring
+  have hresAbsTri :
+      |_root_.F2R (beta:=radix) r -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y1 -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y2| ≤
+        |_root_.F2R (beta:=radix) e| +
+          |_root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y1| +
+          |_root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y2| := by
+    rw [hdecomp]
+    have h1 := abs_add_le
+      (-_root_.F2R (beta:=radix) e +
+        _root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y1)
+      (_root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y2)
+    have h2 := abs_add_le
+      (-_root_.F2R (beta:=radix) e)
+      (_root_.F2R (beta:=radix) x2 * _root_.F2R (beta:=radix) y1)
+    rw [abs_neg] at h2
+    nlinarith
+  let A : ℝ := (radix : ℝ) ^ ((t : Int) + x.Fexp + y.Fexp)
+  let B : ℝ := (radix : ℝ) ^ ((t : Int) + (s : Int) + x.Fexp + y.Fexp)
+  let C : ℝ := (radix : ℝ) ^ (2 * (s : Int) + x.Fexp + y.Fexp)
+  let T : ℝ := (radix : ℝ) ^ (targetExp + (t : Int))
+  have hresAbsLtFirst :
+      |_root_.F2R (beta:=radix) r -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y1 -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y2| <
+        A / 2 + (B / 2 + C / 4) + C / 4 := by
+    have hx2y1Bound' : |_root_.F2R (beta:=radix) x2 *
+          _root_.F2R (beta:=radix) y1| < B / 2 + C / 4 := by
+      simpa [B, C, add_assoc] using hx2y1Bound
+    have hx2y2Bound' : |_root_.F2R (beta:=radix) x2 *
+          _root_.F2R (beta:=radix) y2| ≤ C / 4 := by
+      simpa [C] using hx2y2Bound
+    have heBound' : |_root_.F2R (beta:=radix) e| ≤ A / 2 := by
+      simpa [A, add_assoc] using heBound
+    nlinarith
+  have hsumLe :
+      A / 2 + (B / 2 + C / 4) + C / 4 ≤
+        B / 2 + (A / 2 + C / 2) := by
+    ring_nf
+    exact le_rfl
+  have hAC_le_B :
+      A + C ≤ B := by
+    have hA_le_A1 :
+        A ≤ (radix : ℝ) ^ ((t : Int) + 1 + x.Fexp + y.Fexp) := by
+      dsimp [A]
+      exact zpow_le_zpow_right₀ hradixOne (by omega)
+    have hA1C_le :
+        (radix : ℝ) ^ ((t : Int) + 1 + x.Fexp + y.Fexp) + C ≤
+          (radix : ℝ) ^ (((t : Int) + 1 + x.Fexp + y.Fexp) + 1) := by
+      exact powerRZSumRle radix ((t : Int) + 1 + x.Fexp + y.Fexp)
+        (2 * (s : Int) + x.Fexp + y.Fexp) hradix (by omega)
+    have hA1C_le_B :
+        (radix : ℝ) ^ ((t : Int) + 1 + x.Fexp + y.Fexp) + C ≤ B := by
+      have hpow :
+          (radix : ℝ) ^ (((t : Int) + 1 + x.Fexp + y.Fexp) + 1) ≤ B := by
+        dsimp [B]
+        exact zpow_le_zpow_right₀ hradixOne (by omega)
+      exact le_trans hA1C_le hpow
+    nlinarith [hA_le_A1, hA1C_le_B]
+  have hboundTower : B / 2 + (A / 2 + C / 2) ≤ T := by
+    have hB_eq_T : B = T := by
+      dsimp [B, T, targetExp]
+      congr 1
+      ring
+    nlinarith [hAC_le_B]
+  have hresBound :
+      |_root_.F2R (beta:=radix) r -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y1 -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y2| < T :=
+    lt_of_lt_of_le (lt_of_lt_of_le hresAbsLtFirst hsumLe) hboundTower
+  have hresidualValue :
+      _root_.F2R (beta:=radix) residual =
+        _root_.F2R (beta:=radix) r -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y1 -
+          _root_.F2R (beta:=radix) x1 * _root_.F2R (beta:=radix) y2 := by
+    have hminus := Fminus_correct (beta:=radix) t1 prod12
+    have hminusVal :
+        _root_.F2R (beta:=radix) residual =
+          _root_.F2R (beta:=radix) t1 -
+            _root_.F2R (beta:=radix) prod12 := by
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, residual] using hminus hradix
+    have hmult := Fmult_correct (beta:=radix) x1 y2
+    have hmultVal :
+        _root_.F2R (beta:=radix) prod12 =
+          _root_.F2R (beta:=radix) x1 *
+            _root_.F2R (beta:=radix) y2 := by
+      simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+        Id.run, ULift.up_down, prod12] using hmult hradix
+    rw [hminusVal, hmultVal, ht1Val]
+  have htargetLeResidualExp : targetExp ≤ residual.Fexp := by
+    have hresidualExp :
+        residual.Fexp = min t1.Fexp prod12.Fexp := by
+      simpa [residual] using Fminus_exp_eq_min (beta:=radix) t1 prod12
+    have hprod12Exp : prod12.Fexp = x1.Fexp + y2.Fexp := by
+      simp [prod12, FloatSpec.Calc.Operations.Fmult]
+    have htargetLeT1 : targetExp ≤ t1.Fexp := by
+      rw [ht1Exp]
+      dsimp [targetExp]
+      omega
+    have htargetLeProd : targetExp ≤ prod12.Fexp := by
+      rw [hprod12Exp]
+      dsimp [targetExp]
+      omega
+    rw [hresidualExp]
+    exact le_min htargetLeT1 htargetLeProd
+  have htargetMin : -b.dExp ≤ targetExp := by
+    dsimp [targetExp]
+    omega
+  have hresidualBoundForBoundedL :
+      |_root_.F2R (beta:=radix) residual| <
+        (radix : ℝ) ^ (targetExp + (t : Int)) := by
+    rw [hresidualValue]
+    simpa [T] using hresBound
+  rcases BoundedL b radix t
+      (_root_.F2R (beta:=radix) residual) residual targetExp
+      rfl hradix hvNum htPrecision htargetLeResidualExp htargetMin
+      rfl hresidualBoundForBoundedL with
+    ⟨xprime, hxprimeVal, hxprimeBound, hxprimeExp⟩
+  refine ⟨xprime, ?_, hxprimeBound, hxprimeExp⟩
+  rw [hxprimeVal, hresidualValue]
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous

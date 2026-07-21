@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 50.
+- Active semantic gap candidates still listed below: 49.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 50/50 names have been
+- Counterpart audit coverage for the active list: 49/49 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 50 active
+Fix the remaining Flocq import gaps by working through the 49 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2653,9 +2653,34 @@ normalized classifier
 local target gate. Therefore exact public `Boundedt1` is removed from the active
 list, reducing the ledger from 51 to 50; `Boundedt2` is next.
 
-#### `Pff/Pff.v` (50)
+2026-07-21 completion note: exact public `Boundedt2` is restored in
+`FloatSpec/src/Pff/Pff.lean` immediately after exact `Boundedt1`. The public
+Lean payload matches the upstream Sec1 context consumed by Coq `Boundedt2`:
+beta/radix equality, `1 < radix`, `b.vNum = Zpower_nat radix t`, `SLe`,
+`SGe`, `Hst1`, `Hst2`, normality of `x` and `y`, product exponent lower bound
+`K`, closestness of `r`, exact residual equality, split equalities for
+`x = x1 + x2` and `y = y1 + y2`, half-scale bounds on `x2` and `y2`, plus
+`x1Exp`, `y1Exp`, and the exact upstream `y2Exp : y.Fexp ≤ y2.Fexp`.
+No `x2Exp`, totality, `boundR`, canonicity,
+conclusion premise, weakened payload, or mode-erased placeholder was introduced.
+The proof uses exact local `Boundedt1`, `BoundedL`, `eLe`, `x2y1Le`,
+`x2y2Le`, and `powerRZSumRle` infrastructure, following upstream by building
+`Fminus t1 (Fmult x1 y2)` and bounding the residual
+`r - x1*y1 - x1*y2`. Focused
+`lake env lean FloatSpec/src/Pff/Pff.lean` exited 0;
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings;
+`git diff --check` passed; `scripts/status_report.sh --write` reported 58 Lean
+files with `sorry = 0`, `axiom = 0`, `admit = 0`, and zero
+placeholder/weakening findings; full `lake build` passed all 3345 jobs. The
+repository has no `scripts/check_diff_trust.sh`, so that optional trust gate
+could not be run. The normalized classifier
+`.change_log/manual_attempt_20260721_Boundedt2_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore exact public `Boundedt2` is removed from the active
+list, reducing the ledger from 50 to 49; `Boundedt3` is next.
 
-- `Boundedt2` (Lemma, upstream line 17248)
+#### `Pff/Pff.v` (49)
+
 - `Boundedt3` (Lemma, upstream line 17288)
 - `Boundedt4` (Lemma, upstream line 17329)
 - `Boundedt4_aux` (Lemma, upstream line 17342)
@@ -7465,8 +7490,7 @@ Statement-level checks performed for active Pff entries 36-70:
 - `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
   `Underf_Err3_bis` are now restored as exact public underflow-error transfer
   theorems in `FloatSpec/src/Pff/Pff.lean`.
-- `Boundedt2`, `Boundedt3`, `Boundedt4`, `Boundedt4_aux`,
-  `Boundedx1y1_aux`, `Boundedx1y1`,
+- `Boundedt3`, `Boundedt4`, `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
   `Boundedx2y1`, and `Boundedx2y2` are section-local product-splitting
   bounds in upstream Pff. Local broad hits on `Bound`, `ZleLe`,
