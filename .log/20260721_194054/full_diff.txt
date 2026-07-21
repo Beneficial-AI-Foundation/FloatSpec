@@ -1,0 +1,154 @@
+commit 6cd8b7125bce79174df8b7dbc54b369d95c94939
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 19:40:27 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 19:40:27 2026 +0800
+
+    Restore exact Pff DekkerN theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 614f3f73..5adb9bd0 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -52806,6 +52806,69 @@ theorem Dekker_aux {beta : Int}
+   rw [ht4Val]
+   ring
+ 
++/-! Coq Algo theorem `DekkerN`.
++
++This is the exact upstream wrapper at `Pff.v:17820`: the branch premise builds
++the bounded `tx * ty` representative with `Boundedx2y2`, then `Dekker_aux`
++performs the algebraic reconstruction. -/
++theorem DekkerN {beta : Int}
++    (b : Fbound_skel) (radix : Int) (t : Nat)
++    (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
++      FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hpGe : 4 ≤ t)
++    (hxNormal : Fnormal (beta:=beta) radix b x)
++    (hyNormal : Fnormal (beta:=beta) radix b y)
++    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
++    (hA1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
++    (hA2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
++    (hA3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
++    (hA4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
++    (hB1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) y *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
++    (hB2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
++    (hB3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
++    (hB4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
++    (hC1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) hy) x1y1)
++    (hC2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) ty) x1y2)
++    (hC3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) hy) x2y1)
++    (hC4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty) x2y2)
++    (hD1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
++    (hD2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) x1y1) t1)
++    (hD3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) t1 - _root_.F2R (beta:=beta) x1y2) t2)
++    (hD4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) t2 - _root_.F2R (beta:=beta) x2y1) t3)
++    (hD5 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) t3 - _root_.F2R (beta:=beta) x2y2) t4)
++    (hBranch : radix = 2 ∨ Even t) :
++    _root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y =
++      _root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) t4 := by
++  rcases Boundedx2y2 (beta:=beta) b radix t x y p q hx tx p' q' hy ty
++      hbeta hradix hvNum hpGe hK hxNormal hyNormal hA1 hA2 hA3 hA4
++      hB1 hB2 hB3 hB4 hBranch with
++    ⟨prod22, hprod22Val, hprod22Bound, _hprod22Exp⟩
++  exact Dekker_aux (beta:=beta) b radix t x y p q hx tx p' q' hy ty
++    x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 hbeta hradix hvNum hpGe
++    hxNormal hyNormal hK hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4 hC1 hC2 hC3 hC4
++    hD1 hD2 hD3 hD4 hD5 ⟨prod22, hprod22Val, hprod22Bound⟩
++
+ /-- Closed section-context form of `RND_EvenClosest_canonic`.
+ 
+ This discharges the signed lower/upper canonicity dependencies.  The analogous
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 8c23eee8..6c727aef 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 38.
++- Active semantic gap candidates still listed below: 37.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 38/38 names have been
++- Counterpart audit coverage for the active list: 37/37 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 38 active
++Fix the remaining Flocq import gaps by working through the 37 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2968,9 +2968,31 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+ passing local target gate. Therefore exact public `Boundedx2y2` is removed from
+ the active list, reducing the ledger from 39 to 38; `DekkerN` is next.
+ 
+-#### `Pff/Pff.v` (38)
++2026-07-21 completion note: exact public `DekkerN` is restored immediately
++after exact `Dekker_aux`. It matches upstream `Pff.v:DekkerN`: the theorem
++consumes the full `Algo` section payload plus the sole branch premise
++`radix = 2 ∨ Even t`, obtains the bounded `tx * ty` representative from exact
++`Boundedx2y2`, discards only that helper's additional exponent conjunct, and
++applies exact `Dekker_aux` to conclude
++`F2R x * F2R y = F2R r - F2R t4`. No separate bounded-witness, totality,
++canonicity, conclusion, or weakening premise was introduced. Required
++subscription harness attempt `.change_log/codex_attempt_20260721_192803` used
++`gpt-5.5` with high reasoning, recorded `result = proved`, and passed its local
++target gate. Independent focused `lake env lean FloatSpec/src/Pff/Pff.lean`
++exited 0; `git diff --check` and the direct added-Lean-hole scan passed;
++`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings; and
++`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
++`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
++repository has no executable `scripts/check_diff_trust.sh`, so that optional
++trust gate could not be run. Full `lake build` passed all 3345 jobs. The
++normalized classifier
++`.change_log/manual_attempt_20260721_DekkerN_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Therefore exact public `DekkerN` is removed from the active
++list, reducing the ledger from 38 to 37; `DekkerS1` is next.
++
++#### `Pff/Pff.v` (37)
+ 
+-- `DekkerN` (Theorem, upstream line 17819)
+ - `DekkerS1` (Theorem, upstream line 17877)
+ - `DekkerS2` (Theorem, upstream line 18130)
+ - `Dekker1` (Theorem, upstream line 18385)
+@@ -7775,8 +7797,10 @@ Statement-level checks performed for active Pff entries 36-70:
+   concrete existential boundedness statements for the Dekker construction.
+ - `Boundedx2y2` is now restored as the exact public section-local
+   product-splitting theorem in `FloatSpec/src/Pff/Pff.lean`.
+-- `Dekker_aux`, `DekkerN`, `DekkerS1`, `DekkerS2`, `Dekker1`,
+-  `Dekker2_aux`, and `Dekker2` are not supplied by the public Lean
++- `Dekker_aux` and `DekkerN` are now restored as exact public theorems in
++  `FloatSpec/src/Pff/Pff.lean`.
++- `DekkerS1`, `DekkerS2`, `Dekker1`, `Dekker2_aux`, and `Dekker2` are not
++  supplied by the public Lean
+   `Dekker` wrapper or the local `Dekker1_FTS`/`Dekker2_FTS` helper
+   family. The wrapper assumes summarized payloads, while the upstream names
+   prove the concrete product decomposition or error bound from the section's
