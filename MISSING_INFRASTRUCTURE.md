@@ -2372,9 +2372,25 @@ checkout. The normalized classifier
 local target gate. Therefore `VeltkampEvenS` is removed from the active list,
 and `VeltkampEven` is next.
 
-#### `Pff/Pff.v` (64)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_084628` failed without source changes or a
+build after Codex process/session persistence errors. The manual repair
+restored exact public `VeltkampEven` under only the expanded upstream section
+assumptions. It normalizes the bounded input, proves the normalized
+representative canonical, transfers the two input-dependent `EvenClosest`
+premises by exact represented-value equality, and splits the canonical result.
+The normal branch delegates to exact `VeltkampEvenN`; the subnormal branch
+delegates to exact `VeltkampEvenS`. The focused Lean process exited 0,
+`git diff --check` passed, placeholder/status audits reported zero findings,
+and the full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is
+absent from this checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_VeltkampEven_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `VeltkampEven` is removed from the active list,
+and `Veltkamp_tail_aux` is next.
 
-- `VeltkampEven` (Theorem, upstream line 15944)
+#### `Pff/Pff.v` (63)
+
 - `Veltkamp_tail_aux` (Theorem, upstream line 16001)
 - `Veltkamp_tail2` (Theorem, upstream line 16157)
 - `VeltkampU` (Theorem, upstream line 16270)

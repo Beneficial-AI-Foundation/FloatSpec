@@ -47251,6 +47251,59 @@ theorem VeltkampEvenS {beta : Int}
       · exact EvenClosestbplusb bRed radix t (t - s) x g rfl hradix
           hvNumRed hredPrecGtOne hxExpRed hgEvenPlusRed hgBoundRed
 
+/-! Coq bounded-input nearest-even Veltkamp theorem `VeltkampEven`.
+
+Normalize the bounded input, split its canonical representative into normal and
+subnormal cases, and delegate to `VeltkampEvenN` or `VeltkampEvenS`. -/
+theorem VeltkampEven {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxBound : Fbounded (beta:=beta) b x)
+    (hpDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx) :
+    ∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
+        EvenClosest (beta:=beta) (Veltkamp_reducedBound radix b s t)
+          (radix : ℝ) (t - s) (_root_.F2R (beta:=beta) x) hx' := by
+  subst beta
+  have htNe : t ≠ 0 := by omega
+  let nx : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix b t x
+  have hnxCan : Fcanonic (beta:=radix) radix b nx := by
+    have h := FnormalizeCanonic (beta:=radix) radix b t x
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, nx] using
+      h ⟨hxBound, hxBound, htNe, hradix, hvNum⟩
+  have hnxValue :
+      _root_.F2R (beta:=radix) nx = _root_.F2R (beta:=radix) x := by
+    have h := FnormalizeCorrect (beta:=radix) radix b t x
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nx] using h ⟨rfl, hradix⟩
+  have hpNx :
+      EvenClosest (beta:=radix) b (radix : ℝ) t
+        (_root_.F2R (beta:=radix) nx *
+          ((radix : ℝ) ^ (s : Int) + 1)) p := by
+    simpa [hnxValue] using hpDefEven
+  have hqNx :
+      EvenClosest (beta:=radix) b (radix : ℝ) t
+        (_root_.F2R (beta:=radix) nx -
+          _root_.F2R (beta:=radix) p) q := by
+    simpa [hnxValue] using hqDefEven
+  rcases hnxCan with hnxNormal | hnxSubnormal
+  · have h := VeltkampEvenN (beta:=radix) b radix s t nx p q hx
+      rfl hradix hvNum hsGe hsLe hnxNormal hpNx hqNx hhxDefEven
+    simpa [hnxValue] using h
+  · have h := VeltkampEvenS (beta:=radix) b radix s t nx p q hx
+      rfl hradix hvNum hsGe hsLe hnxSubnormal hpNx hqNx hhxDefEven
+    simpa [hnxValue] using h
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
