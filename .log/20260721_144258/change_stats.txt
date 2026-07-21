@@ -1,0 +1,11 @@
+commit 2d353f5258eb5da38f859c6c35cf0c4b786be3fa
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 14:42:29 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 14:42:29 2026 +0800
+
+    Restore exact Pff rExp theorem
+
+ FloatSpec/src/Pff/Pff.lean | 201 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  34 ++++++--
+ 2 files changed, 228 insertions(+), 7 deletions(-)
