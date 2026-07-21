@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 42.
+- Active semantic gap candidates still listed below: 41.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 42/42 names have been
+- Counterpart audit coverage for the active list: 41/41 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 42 active
+Fix the remaining Flocq import gaps by working through the 41 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2858,9 +2858,39 @@ The normalized classifier
 local target gate. Therefore exact public `Boundedx1y2` is removed from the
 active list, reducing the ledger from 43 to 42; `Boundedx2y1_aux` is next.
 
-#### `Pff/Pff.v` (42)
+2026-07-21 completion note: exact public `Boundedx2y1_aux` is restored in
+`FloatSpec/src/Pff/Pff.lean` immediately after exact `Boundedx1y2`. The public
+Lean payload matches the upstream Sec1 context consumed by Coq
+`Boundedx2y1_aux`: beta/radix equality, `1 < radix`,
+`b.vNum = Zpower_nat radix t`, `SGe`, product exponent lower bound `K`, split
+exponent premises for `x2` and `y1`, split-bound hypothesis for `x2`, and
+reduced-bound hypothesis for `y1`. Its conclusion is the exact upstream
+auxiliary product result: existence of `xprime` with
+`F2R xprime = F2R x2 * F2R y1`, `Fbounded b xprime`, and
+`xprime.Fexp = x2.Fexp + y1.Fexp`. No normality, residual, rounding,
+closestness, unrelated component, `Hst1`/`Hst2`/`Hst3`, totality, `boundR`,
+canonicity, conclusion, or weakening premise was introduced. The proof
+constructs `Fmult x2 y1`; `Fmult_correct` supplies the real value, the
+split/reduced mantissa inequalities combine through integer-power monotonicity
+and `SGe` to recover `b.vNum`, and the exponent hypotheses plus `K` give the
+product exponent lower bound. Required subscription harness attempt
+`.change_log/codex_attempt_20260721_175413` used `gpt-5.5` with high reasoning,
+recorded `result = proved`, and passed its local target gate. Independent
+focused `lake env lean FloatSpec/src/Pff/Pff.lean` exited 0;
+`git diff --check` and the direct added-Lean-hole scan passed;
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings; and
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
+repository has no executable `scripts/check_diff_trust.sh`, so that optional
+trust gate could not be run. Full `lake build` passed all 3345 jobs. The
+normalized classifier
+`.change_log/manual_attempt_20260721_Boundedx2y1_aux_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore exact public `Boundedx2y1_aux` is removed
+from the active list, reducing the ledger from 42 to 41; `Boundedx2y1` is next.
 
-- `Boundedx2y1_aux` (Lemma, upstream line 17448)
+#### `Pff/Pff.v` (41)
+
 - `Boundedx2y1` (Lemma, upstream line 17470)
 - `Dekker_aux` (Theorem, upstream line 17588)
 - `Boundedx2y2` (Theorem, upstream line 17707)
@@ -7663,8 +7693,8 @@ Statement-level checks performed for active Pff entries 36-70:
   `Underf_Err3_bis` are now restored as exact public underflow-error transfer
   theorems in `FloatSpec/src/Pff/Pff.lean`.
 - `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
-  `Boundedx1y2_aux`, `Boundedx2y1_aux`, `Boundedx2y1`, and
-  `Boundedx2y2` are section-local product-splitting
+  `Boundedx1y2_aux`, `Boundedx2y1`, and `Boundedx2y2` are section-local
+  product-splitting
   bounds in upstream Pff. Local broad hits on `Bound`, `ZleLe`,
   `ClosestRoundeLeNormal`, or rounded-error helpers do not encode these
   concrete existential boundedness statements for the Dekker construction.
