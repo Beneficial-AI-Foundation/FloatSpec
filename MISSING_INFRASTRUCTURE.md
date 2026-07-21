@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 33 active
+Fix the remaining Flocq import gaps by working through the 32 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3096,9 +3096,27 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Exact public `Veltkampb'` is removed from the active
 list, reducing the ledger from 34 to 33; `NormalbPrim` is next.
 
-#### `Pff/Pff.v` (33)
+2026-07-22 completion note: exact public `NormalbPrim` is restored in
+`FloatSpec/src/Pff/Pff.lean` beside the Algo2 bound-extension lemmas. It matches
+the upstream payload over `Dekker_extendedBound b t`: for every canonical
+nonzero `f` under `b`, assuming the section hypotheses and only the faithful
+local integer representation invariant `0 <= b.dExp`, it constructs
+`Fnormalize radix (Dekker_extendedBound b t) t f`, proves it normal under the
+extended bound, preserves `F2R`, and proves `-(t:Int)-b.dExp <= Fexp`. The proof
+uses `dExpPrim`/`dExpPrimEq`, `FcanonicBound`, `FnormalizeCanonic`, and
+`FnormalizeCorrect`; no magnitude, exponent, totality, conclusion, or weakening
+premise was added. `lake env lean FloatSpec/src/Pff/Pff.lean`,
+`git diff --check`, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+independently normalized classifier
+`.change_log/manual_attempt_20260722_NormalbPrim_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `NormalbPrim` is removed from the active list,
+reducing the ledger from 33 to 32; `Dekker2_aux` is next.
 
-- `NormalbPrim` (Theorem, upstream line 18513)
+#### `Pff/Pff.v` (32)
+
 - `Dekker2_aux` (Theorem, upstream line 18573)
 - `Dekker2` (Theorem, upstream line 18822)
 - `Twice_EvenClosest_Round` (Theorem, upstream line 19178)
@@ -7908,9 +7926,8 @@ Statement-level checks performed for active Pff entries 36-70:
   section statements.
 - `Veltkampb'` is now restored as the exact public bound-extension theorem in
   `FloatSpec/src/Pff/Pff.lean`.
-- `NormalbPrim` has no faithful local counterpart found. It constructs a
-  normal representative in the enlarged bound and is not implied by the
-  public Veltkamp/Dekker wrappers without the missing lower proof payloads.
+- `NormalbPrim` is now restored as the exact public Algo2 normal-representative
+  theorem in `FloatSpec/src/Pff/Pff.lean`.
 
 Updated status: active Pff entries 36-70 are confirmed real semantic gaps or
 unported section lemmas, not renamed/split complete ports. Later restorations

@@ -47921,6 +47921,86 @@ theorem Veltkampb' {beta : Int}
     simpa [hfMinusHfValue] using h
   exact ⟨hA1Ext, hA2Ext, hA3Ext, hA4Ext⟩
 
+/-! Coq Algo2 theorem `NormalbPrim`.
+
+Every nonzero canonical float under the original Dekker bound has a normal
+representative under the extended bound.  Lean's `Fbound_skel.dExp` is an
+integer, so the Coq invariant `0 <= dExp b` is explicit here. -/
+theorem NormalbPrim {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (f : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hdExp : 0 ≤ b.dExp)
+    (hfCan : Fcanonic (beta:=beta) radix b f)
+    (hfNonzero : _root_.F2R (beta:=beta) f ≠ 0) :
+    ∃ f' : FloatSpec.Core.Defs.FlocqFloat beta,
+      Fnormal (beta:=beta) radix (Dekker_extendedBound b t) f' ∧
+        _root_.F2R (beta:=beta) f' = _root_.F2R (beta:=beta) f ∧
+        -((t : Int)) - b.dExp ≤ f'.Fexp := by
+  subst beta
+  let b' : Fbound_skel := Dekker_extendedBound b t
+  let nf : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix b' t f
+  have htNe : t ≠ 0 := by omega
+  have hb'Num : b'.vNum = Zpower_nat radix t := by
+    simpa [b'] using hvNum
+  have hfBound : Fbounded (beta:=radix) b f := by
+    have h := FcanonicBound (beta:=radix) radix b f
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check] using h hfCan
+  have hbExt : b.dExp < b'.dExp := by
+    simpa [b'] using dExpPrim b t hdExp
+  have hfBoundExt : Fbounded (beta:=radix) b' f := by
+    constructor
+    · simpa [b'] using hfBound.1
+    · have hlower : -b'.dExp ≤ -b.dExp := by omega
+      exact le_trans hlower hfBound.2
+  have hnfCan : Fcanonic (beta:=radix) radix b' nf := by
+    have h := FnormalizeCanonic (beta:=radix) radix b' t f
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, Fbounded', nf] using
+      h ⟨hfBoundExt, hfBoundExt, htNe, hradix, hb'Num⟩
+  have hnfValue :
+      _root_.F2R (beta:=radix) nf = _root_.F2R (beta:=radix) f := by
+    have h := FnormalizeCorrect (beta:=radix) radix b' t f
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nf] using h ⟨rfl, hradix⟩
+  have hfNumNonzero : f.Fnum ≠ 0 := by
+    intro hfNum
+    apply hfNonzero
+    simp [hfNum, _root_.F2R, FloatSpec.Core.Defs.F2R]
+  have hnfExpLower : -((t : Int)) - b.dExp ≤ nf.Fexp := by
+    have hshiftLe :
+        ((min (t - Fdigit (beta:=radix) radix f)
+          (Int.natAbs (b'.dExp + f.Fexp)) : Nat) : Int) ≤ (t : Int) := by
+      have hmin :
+          min (t - Fdigit (beta:=radix) radix f)
+              (Int.natAbs (b'.dExp + f.Fexp)) ≤
+            t - Fdigit (beta:=radix) radix f :=
+        Nat.min_le_left _ _
+      have hsub : t - Fdigit (beta:=radix) radix f ≤ t :=
+        Nat.sub_le _ _
+      exact_mod_cast le_trans hmin hsub
+    have hnfExp :
+        nf.Fexp =
+          f.Fexp - ((min (t - Fdigit (beta:=radix) radix f)
+            (Int.natAbs (b'.dExp + f.Fexp)) : Nat) : Int) := by
+      dsimp [nf]
+      simp [Fnormalize, hfNumNonzero, Fshift]
+    have hfExpLower : -b.dExp ≤ f.Fexp := hfBound.2
+    rw [hnfExp]
+    omega
+  have hnfNormal : Fnormal (beta:=radix) radix b' nf := by
+    rcases hnfCan with hnormal | hsubnormal
+    · exact hnormal
+    · exfalso
+      have hb'Exp : b'.dExp = 2 * b.dExp + 2 * (t : Int) + 2 := by
+        simpa [b'] using dExpPrimEq b t
+      have hsubExp : nf.Fexp = -b'.dExp := hsubnormal.2.1
+      omega
+  exact ⟨nf, hnfNormal, hnfValue, hnfExpLower⟩
+
 private lemma Fbounded_of_same_vNum_of_exp_ge {beta : Int}
     (b b' : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbNum : b.vNum = b'.vNum) (hfBound : Fbounded (beta:=beta) b' f)
