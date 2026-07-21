@@ -1,0 +1,141 @@
+commit 691f96f5c8b6d4eb48b06f3123ef930ecef4000e
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 16:10:48 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 16:10:48 2026 +0800
+
+    Restore exact Pff Boundedt4 theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index a4c17cb1..eca70749 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -51948,6 +51948,59 @@ theorem Boundedt3 {beta : Int}
+   refine ⟨xprime, ?_, hxprimeBound, hxprimeExp⟩
+   rw [hxprimeVal, hresidualValue]
+ 
++/-! Coq Sec1 exact residual bound `Boundedt4`.
++
++This is the upstream `Boundedt4` payload consumed later in the Dekker section:
++use the rounded-multiplication error from `errorBoundedMult`, then negate that
++error float to represent the final five-term residual. -/
++theorem Boundedt4 {beta : Int}
++    (b : Fbound_skel) (radix : Int) (s t : Nat)
++    (x x1 x2 y y1 y2 r : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hSLe : 2 ≤ s) (hSGe : s ≤ t - 2)
++    (hxNormal : Fnormal (beta:=beta) radix b x)
++    (hyNormal : Fnormal (beta:=beta) radix b y)
++    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
++    (hClosest : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
++    (hXeq : _root_.F2R (beta:=beta) x =
++      _root_.F2R (beta:=beta) x1 + _root_.F2R (beta:=beta) x2)
++    (hYeq : _root_.F2R (beta:=beta) y =
++      _root_.F2R (beta:=beta) y1 + _root_.F2R (beta:=beta) y2) :
++    ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
++      _root_.F2R (beta:=beta) xprime =
++          _root_.F2R (beta:=beta) r -
++            _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y1 -
++            _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y2 -
++            _root_.F2R (beta:=beta) x2 * _root_.F2R (beta:=beta) y1 -
++            _root_.F2R (beta:=beta) x2 * _root_.F2R (beta:=beta) y2 ∧
++        Fbounded (beta:=beta) b xprime := by
++  subst beta
++  have htPrecision : t ≠ 0 := by omega
++  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
++  have hyBound : Fbounded (beta:=radix) b y := hyNormal.1
++  have hErr := errorBoundedMult (beta:=radix) b radix t x y r
++  rcases (by
++      simpa only [wp, PostCond.noThrow, pure, errorBoundedMult_check,
++        Id.run, ULift.up_down] using
++        hErr ⟨rfl, hradix, htPrecision, hvNum, hxBound, hyBound, hK,
++          hClosest⟩) with
++    ⟨g, hgVal, hgBound, _hgExp⟩
++  refine ⟨Fopp (beta:=radix) g, ?_, ?_⟩
++  · have hOpp := Fopp_correct (beta:=radix) g
++    have hOppVal :
++        _root_.F2R (beta:=radix) (Fopp (beta:=radix) g) =
++          -_root_.F2R (beta:=radix) g := by
++      simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check,
++        Id.run, ULift.up_down] using hOpp True.intro
++    rw [hOppVal, hgVal]
++    rw [hXeq, hYeq]
++    ring
++  · have hBound := oppBounded (beta:=radix) b g
++    simpa only [wp, PostCond.noThrow, pure, oppBounded_check, Id.run,
++      ULift.up_down] using hBound hgBound
++
+ /-- Closed section-context form of `RND_EvenClosest_canonic`.
+ 
+ This discharges the signed lower/upper canonicity dependencies.  The analogous
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index f2bb27e7..d18fae85 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 48.
++- Active semantic gap candidates still listed below: 47.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 48/48 names have been
++- Counterpart audit coverage for the active list: 47/47 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 48 active
++Fix the remaining Flocq import gaps by working through the 47 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2705,9 +2705,32 @@ could not be run. The normalized classifier
+ local target gate. Therefore exact public `Boundedt3` is removed from the active
+ list, reducing the ledger from 49 to 48; `Boundedt4` is next.
+ 
+-#### `Pff/Pff.v` (48)
++2026-07-21 completion note: exact public `Boundedt4` is restored in
++`FloatSpec/src/Pff/Pff.lean` immediately after exact `Boundedt3`. The public
++Lean payload matches the upstream Sec1 context consumed by Coq `Boundedt4`:
++beta/radix equality, `1 < radix`, `b.vNum = Zpower_nat radix t`, `SLe`, `SGe`,
++normality of `x` and `y`, product exponent lower bound `K`, closestness of `r`,
++and split equalities for `x = x1 + x2` and `y = y1 + y2`. No `Hst1`/`Hst2`,
++residual error float `e` or `eeq`, half-scale bounds, split exponent premises,
++totality, `boundR`, canonicity, conclusion premise, weakened payload, or
++mode-erased placeholder was introduced. The proof follows upstream by applying
++exact local `errorBoundedMult` to `x * y` rounded to `r`, then constructing
++`Fopp g`; `Fopp_correct` supplies the real value and `oppBounded` supplies the
++boundedness. Focused `lake env lean FloatSpec/src/Pff/Pff.lean` exited 0;
++`git diff --check` passed;
++`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings;
++`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
++`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings; full
++`lake build` passed all 3345 jobs. The repository has no
++`scripts/check_diff_trust.sh`, so that optional trust gate could not be run.
++The normalized classifier
++`.change_log/manual_attempt_20260721_Boundedt4_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Therefore exact public `Boundedt4` is removed from the active
++list, reducing the ledger from 48 to 47; `Boundedt4_aux` is next.
++
++#### `Pff/Pff.v` (47)
+ 
+-- `Boundedt4` (Lemma, upstream line 17329)
+ - `Boundedt4_aux` (Lemma, upstream line 17342)
+ - `Boundedx1y1_aux` (Lemma, upstream line 17388)
+ - `Boundedx1y1` (Lemma, upstream line 17413)
+@@ -7515,7 +7538,7 @@ Statement-level checks performed for active Pff entries 36-70:
+ - `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
+   `Underf_Err3_bis` are now restored as exact public underflow-error transfer
+   theorems in `FloatSpec/src/Pff/Pff.lean`.
+-- `Boundedt4`, `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
++- `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
+   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
+   `Boundedx2y1`, and `Boundedx2y2` are section-local product-splitting
+   bounds in upstream Pff. Local broad hits on `Bound`, `ZleLe`,
