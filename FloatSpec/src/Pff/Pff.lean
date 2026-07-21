@@ -50202,6 +50202,46 @@ theorem Underf_Err2_aux {beta : Int}
       · intro hx2Exp
         exact False.elim (hx2ExpOld hx2Exp)
 
+/-! Coq generic Dekker theorem `Underf_Err2`. -/
+theorem Underf_Err2 {beta : Int}
+    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
+    (r : ℝ) (x1 : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix precision)
+    (hprecision : 1 < precision)
+    (hbNum : b.vNum = b'.vNum) (hbExp : b.dExp ≤ b'.dExp)
+    (hx1Closest : Closest (beta:=beta) b (radix : ℝ) r x1) :
+    ∃ x2 : FloatSpec.Core.Defs.FlocqFloat beta,
+      Underf_Err (beta:=beta) b b' radix x1 x2 r (3 / 4 : ℝ) ∧
+        Closest (beta:=beta) b' (radix : ℝ) r x2 := by
+  let nx1 : FloatSpec.Core.Defs.FlocqFloat beta :=
+    Fnormalize (beta:=beta) radix b precision x1
+  have hprecisionNe : precision ≠ 0 := by omega
+  have hnx1Value :
+      _root_.F2R (beta:=beta) nx1 = _root_.F2R (beta:=beta) x1 := by
+    have h := FnormalizeCorrect (beta:=beta) radix b precision x1
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nx1] using h ⟨hbeta, hradix⟩
+  have hnx1Can : Fcanonic (beta:=beta) radix b nx1 := by
+    have h := FnormalizeCanonic (beta:=beta) radix b precision x1
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, Fbounded', nx1] using
+      h ⟨hx1Closest.1, hx1Closest.1, hprecisionNe, hradix, hvNum⟩
+  have hnx1Closest : Closest (beta:=beta) b (radix : ℝ) r nx1 := by
+    constructor
+    · exact (FcanonicBound (beta:=beta) radix b nx1) hnx1Can
+    · intro g hg
+      simpa [hnx1Value] using hx1Closest.2 g hg
+  rcases Underf_Err2_aux (beta:=beta) b b' radix precision r nx1
+      hbeta hradix hvNum hprecision hbNum hbExp hnx1Can hnx1Closest with
+    ⟨x2, hUnder, hx2Closest⟩
+  rcases hUnder with ⟨_hnxClosest, hx2Bound, hdist, hsame⟩
+  refine ⟨x2, ?_, hx2Closest⟩
+  refine ⟨hx1Closest, hx2Bound, ?_, ?_⟩
+  · simpa [hnx1Value] using hdist
+  · intro hx2Exp
+    exact hnx1Value.symm.trans (hsame hx2Exp)
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
