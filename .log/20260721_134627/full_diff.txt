@@ -1,0 +1,134 @@
+commit 1d5da8fb9b5afed3cf3255d4609d2f776f14cb30
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 13:45:14 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 13:45:14 2026 +0800
+
+    Restore exact Pff Underf_Err3_bis theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index acf8ef3b..8a5d2cc6 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -50747,6 +50747,51 @@ theorem Underf_Err3 {beta : Int}
+   · intro hz'Exp
+     exact hSameIfOld hz'Exp
+ 
++/-! Coq generic Dekker theorem `Underf_Err3_bis`. -/
++theorem Underf_Err3_bis {beta : Int}
++    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
++    (x x' y y' z' z : FloatSpec.Core.Defs.FlocqFloat beta)
++    (rx ry epsx epsy : ℝ)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix precision)
++    (hprecision : 1 < precision)
++    (hprecision4 : 4 ≤ precision)
++    (hbNum : b.vNum = b'.vNum) (hbExp : b.dExp ≤ b'.dExp)
++    (hxUnder : Underf_Err (beta:=beta) b b' radix x x' rx epsx)
++    (hyUnder : Underf_Err (beta:=beta) b b' radix y y' ry epsy)
++    (hbudget7 : epsx + epsy ≤ 7)
++    (hz'Bound : Fbounded (beta:=beta) b' z')
++    (hz'Val : _root_.F2R (beta:=beta) z' =
++      _root_.F2R (beta:=beta) x' - _root_.F2R (beta:=beta) y')
++    (hz'ExpX : z'.Fexp ≤ x'.Fexp) (hz'ExpY : z'.Fexp ≤ y'.Fexp)
++    (hzClosest : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) y) z) :
++    Underf_Err (beta:=beta) b b' radix z z'
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) y)
++      (epsx + epsy) := by
++  have hbudget :
++      epsx + epsy ≤ (radix : ℝ) ^ ((precision : Int) - 1) - 1 := by
++    have hradixTwo : (2 : ℝ) ≤ (radix : ℝ) := by
++      exact_mod_cast (show (2 : Int) ≤ radix by omega)
++    have hpowBase : (2 : ℝ) ^ (3 : Int) ≤
++        (radix : ℝ) ^ (3 : Int) := by
++      exact zpow_le_zpow_left₀ (by norm_num : (0 : Int) ≤ (3 : Int))
++        (by norm_num : (0 : ℝ) ≤ (2 : ℝ)) hradixTwo
++    have hradixOne : (1 : ℝ) ≤ (radix : ℝ) :=
++      le_trans (by norm_num : (1 : ℝ) ≤ 2) hradixTwo
++    have hpowExp : (radix : ℝ) ^ (3 : Int) ≤
++        (radix : ℝ) ^ ((precision : Int) - 1) := by
++      exact zpow_le_zpow_right₀ hradixOne
++        (by omega : (3 : Int) ≤ (precision : Int) - 1)
++    have hpow : (8 : ℝ) ≤ (radix : ℝ) ^ ((precision : Int) - 1) := by
++      norm_num at hpowBase
++      exact le_trans hpowBase hpowExp
++    nlinarith
++  exact Underf_Err3 (beta:=beta) b b' radix precision
++    x x' y y' z' z rx ry epsx epsy hbeta hradix hvNum hprecision
++    hbNum hbExp hxUnder hyUnder hbudget hz'Bound hz'Val hz'ExpX
++    hz'ExpY hzClosest
++
+ /-- Closed section-context form of `RND_EvenClosest_canonic`.
+ 
+ This discharges the signed lower/upper canonicity dependencies.  The analogous
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 20930312..8ee4ec39 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 54.
++- Active semantic gap candidates still listed below: 53.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 54/54 names have been
++- Counterpart audit coverage for the active list: 53/53 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 54 active
++Fix the remaining Flocq import gaps by working through the 53 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2561,9 +2561,28 @@ checkout. The normalized classifier
+ local target gate. Therefore `Underf_Err3` is removed from the active list, and
+ `Underf_Err3_bis` is next.
+ 
+-#### `Pff/Pff.v` (54)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_132843` restored the proof of exact public
++`Underf_Err3_bis`; a manual fidelity check then restored the explicit
++GenericDek `1 < precision` section hypothesis that the harness draft had
++omitted as redundant under `4 <= precision`. The final theorem adds only the
++upstream `4 <= precision` and `epsx + epsy <= 7` hypotheses over the existing
++section assumptions and `Underf_Err3` payloads, derives
++`7 <= radix^(precision-1)-1` from `radix >= 2` and `precision >= 4`, and applies
++`Underf_Err3` with the unchanged underflow-error, bounded-difference, exponent,
++and closestness hypotheses. No totality, `dExp`, `boundR`, finite-box,
++canonicality, conclusion, or other extra public premise was added. The focused
++Lean check exited 0, `git diff --check` passed, the direct live-hole scan and
++placeholder/generated-status audits reported zero findings, and the full
++3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
++checkout. The classifier record
++`.change_log/manual_attempt_20260721_Underf_Err3_bis_proved/attempt.json`
++records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
++passing local target gate. Therefore `Underf_Err3_bis` is removed from the
++active list, and `eLe` is next.
++
++#### `Pff/Pff.v` (53)
+ 
+-- `Underf_Err3_bis` (Theorem, upstream line 16899)
+ - `eLe` (Lemma, upstream line 17049)
+ - `rExp` (Lemma, upstream line 17107)
+ - `Boundedt1` (Lemma, upstream line 17177)
+@@ -7374,10 +7393,9 @@ Statement-level checks performed for active Pff entries 36-70:
+ - `Closestbbext` is now restored as the exact public arbitrary-bound extension
+   theorem in `FloatSpec/src/Pff/Pff.lean`, reduced to `Closestbbplus` after
+   proving the supplied extended bound is the corresponding `plusExp` bound.
+-- `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, and `Underf_Err3` are now
+-  restored as exact public underflow-error transfer theorems in
+-  `FloatSpec/src/Pff/Pff.lean`. `Underf_Err3_bis` still has no exact Lean
+-  declaration under `FloatSpec/src/Pff`.
++- `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
++  `Underf_Err3_bis` are now restored as exact public underflow-error transfer
++  theorems in `FloatSpec/src/Pff/Pff.lean`.
+ - `eLe`, `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`,
+   `Boundedt4`, `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
+   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
