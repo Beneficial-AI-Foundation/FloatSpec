@@ -52156,6 +52156,87 @@ theorem Boundedx1y1 {beta : Int}
     ⟨xprime, hvalue, hbounded, _hexp⟩
   exact ⟨xprime, hvalue, hbounded⟩
 
+/-! Coq Sec1 exact product bound `Boundedx1y2_aux`.
+
+This is the exponent-preserving product payload for the first reduced component
+and the second split component.  It consumes only the Sec1 hypotheses needed by
+the upstream proof: the original bound equation, `SGe`, the product exponent
+lower bound, the two component exponent bounds, and the two component
+boundedness facts. -/
+theorem Boundedx1y2_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x x1 y y2 : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hSGe : s ≤ t - 2)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hx1Exp : (s : Int) + x.Fexp ≤ x1.Fexp)
+    (hy2Exp : y.Fexp ≤ y2.Fexp)
+    (Fx1 : Fbounded (beta:=beta) (Veltkamp_reducedBound radix b s t) x1)
+    (Fy2 : Fbounded (beta:=beta) (Veltkamp_splitBound radix b s) y2) :
+    ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) xprime =
+          _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y2 ∧
+        Fbounded (beta:=beta) b xprime ∧
+        xprime.Fexp = x1.Fexp + y2.Fexp := by
+  subst beta
+  let prod : FloatSpec.Core.Defs.FlocqFloat radix :=
+    FloatSpec.Calc.Operations.Fmult (beta:=radix) x1 y2
+  refine ⟨prod, ?_, ?_, ?_⟩
+  · have hmult := Fmult_correct (beta:=radix) x1 y2
+    simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check, Id.run,
+      ULift.up_down, prod] using hmult hradix
+  · rcases Fx1 with ⟨hx1Num, _hx1ExpLower⟩
+    rcases Fy2 with ⟨hy2Num, _hy2ExpLower⟩
+    have hradixGe : (1 : Int) ≤ radix := le_of_lt hradix
+    have hradixPos : (0 : Int) < radix := by grind
+    have hpowRedPos : 0 < Zpower_nat radix (t - s) := by
+      simpa [Zpower_nat] using (pow_pos hradixPos (t - s))
+    have hpowSplitPos : 0 < Zpower_nat radix s := by
+      simpa [Zpower_nat] using (pow_pos hradixPos s)
+    have hx1NumRed : |x1.Fnum| < Zpower_nat radix (t - s) := by
+      simpa [Veltkamp_reducedBound] using hx1Num
+    have hy2NumSplit : |y2.Fnum| < Zpower_nat radix s := by
+      simpa [Veltkamp_splitBound] using hy2Num
+    have hx1NumAbsNonneg : 0 ≤ |x1.Fnum| := abs_nonneg x1.Fnum
+    have hprodLtRedSplit :
+        |x1.Fnum * y2.Fnum| <
+          Zpower_nat radix (t - s) * Zpower_nat radix s := by
+      rw [abs_mul]
+      by_cases hxZero : |x1.Fnum| = 0
+      · rw [hxZero, zero_mul]
+        exact mul_pos hpowRedPos hpowSplitPos
+      · have hxNonzero : (0 : Int) ≠ |x1.Fnum| := fun h => hxZero h.symm
+        have hxPos : 0 < |x1.Fnum| := lt_of_le_of_ne hx1NumAbsNonneg hxNonzero
+        have hleft :
+            |x1.Fnum| * |y2.Fnum| <
+              |x1.Fnum| * Zpower_nat radix s :=
+          mul_lt_mul_of_pos_left hy2NumSplit hxPos
+        have hright :
+            |x1.Fnum| * Zpower_nat radix s ≤
+              Zpower_nat radix (t - s) * Zpower_nat radix s :=
+          mul_le_mul_of_nonneg_right (le_of_lt hx1NumRed) (le_of_lt hpowSplitPos)
+        exact lt_of_lt_of_le hleft hright
+    have hredSplitLeOrig :
+        Zpower_nat radix (t - s) * Zpower_nat radix s ≤ Zpower_nat radix t := by
+      have hsubSumLe : (t - s) + s ≤ t := by omega
+      calc
+        Zpower_nat radix (t - s) * Zpower_nat radix s
+            = Zpower_nat radix ((t - s) + s) := by
+                simp [Zpower_nat, pow_add]
+        _ ≤ Zpower_nat radix t := by
+            simpa [Zpower_nat] using
+              pow_le_pow_right₀ hradixGe hsubSumLe
+    have hnum : |prod.Fnum| < b.vNum := by
+      have hlt : |x1.Fnum * y2.Fnum| < Zpower_nat radix t :=
+        lt_of_lt_of_le hprodLtRedSplit hredSplitLeOrig
+      simpa [prod, FloatSpec.Calc.Operations.Fmult, hvNum] using hlt
+    have hexp : -b.dExp ≤ prod.Fexp := by
+      dsimp [prod, FloatSpec.Calc.Operations.Fmult]
+      omega
+    exact ⟨hnum, hexp⟩
+  · simp [prod, FloatSpec.Calc.Operations.Fmult]
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
