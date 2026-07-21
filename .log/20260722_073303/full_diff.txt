@@ -1,0 +1,238 @@
+commit 7e8fcd4b50453ee1fcec0f036c72552b971fc046
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 07:32:56 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 07:32:56 2026 +0800
+
+    Restore exact Pff Veltkampb' theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index beeeb0a4..c7e4e945 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -47770,6 +47770,157 @@ theorem Closestbbext {beta : Int}
+       hprecision hfextExp hfClosest
+   simpa [hbextEq] using hplus
+ 
++/-! Coq Algo2 theorem `Veltkampb'`.
++
++The four Veltkamp split roundings under `b` remain closest roundings under the
++Dekker extended bound `b'`.  The represented inputs are exactly the upstream
++`Fplus`/`Fminus`/`Fmult` witnesses, and the transfer step is `Closestbbext`. -/
++theorem Veltkampb' {beta : Int}
++    (b : Fbound_skel) (radix : Int) (t : Nat)
++    (f pf qf hf tf : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hpGe : 4 ≤ t)
++    (hbextExp : b.dExp < (Dekker_extendedBound b t).dExp)
++    (hfBound : Fbounded (beta:=beta) b f)
++    (hA1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) f *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) pf)
++    (hA2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) pf) qf)
++    (hA3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) qf + _root_.F2R (beta:=beta) pf) hf)
++    (hA4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) hf) tf) :
++    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
++      (_root_.F2R (beta:=beta) f *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) pf ∧
++    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
++      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) pf) qf ∧
++    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
++      (_root_.F2R (beta:=beta) qf + _root_.F2R (beta:=beta) pf) hf ∧
++    Closest (beta:=beta) (Dekker_extendedBound b t) (radix : ℝ)
++      (_root_.F2R (beta:=beta) f - _root_.F2R (beta:=beta) hf) tf := by
++  subst beta
++  let s : Nat := t - Nat.div2 t
++  have htGtOne : 1 < t := by omega
++  let scale : FloatSpec.Core.Defs.FlocqFloat radix := ⟨1, (s : Int)⟩
++  let fScale : FloatSpec.Core.Defs.FlocqFloat radix :=
++    FloatSpec.Calc.Operations.Fmult (beta:=radix) f scale
++  let fScaled : FloatSpec.Core.Defs.FlocqFloat radix := Fplus fScale f
++  have hfScaledValue :
++      _root_.F2R (beta:=radix) fScaled =
++        _root_.F2R (beta:=radix) f *
++          ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1) := by
++    have hplus := Fplus_correct (beta:=radix) fScale f
++    have hplusValue :
++        _root_.F2R (beta:=radix) fScaled =
++          _root_.F2R (beta:=radix) fScale + _root_.F2R (beta:=radix) f := by
++      simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check, Id.run,
++        ULift.up_down, fScaled] using hplus hradix
++    have hmult := Fmult_correct (beta:=radix) f scale
++    have hscaleValue :
++        _root_.F2R (beta:=radix) fScale =
++          _root_.F2R (beta:=radix) f * (radix : ℝ) ^ (s : Int) := by
++      have hmultValue :
++          _root_.F2R (beta:=radix) fScale =
++            _root_.F2R (beta:=radix) f * _root_.F2R (beta:=radix) scale := by
++        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check, Id.run,
++          ULift.up_down, fScale] using hmult hradix
++      rw [hmultValue]
++      simp [scale, _root_.F2R, FloatSpec.Core.Defs.F2R]
++    rw [hplusValue, hscaleValue]
++    simp [s]
++    ring
++  have hfScaledExp : -b.dExp ≤ fScaled.Fexp := by
++    have hplusExp :
++        fScaled.Fexp = min fScale.Fexp f.Fexp := by
++      simpa [fScaled] using Fplus_exp_eq_min (beta:=radix) fScale f
++    have hfScaleExp : fScale.Fexp = f.Fexp + (s : Int) := by
++      simp [fScale, scale, FloatSpec.Calc.Operations.Fmult]
++    rw [hplusExp, hfScaleExp, min_eq_right]
++    · exact hfBound.2
++    · omega
++  have hA1Ext :
++      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
++        (_root_.F2R (beta:=radix) f *
++          ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) pf := by
++    have hA1Value :
++        Closest (beta:=radix) b (radix : ℝ)
++          (_root_.F2R (beta:=radix) fScaled) pf := by
++      simpa [hfScaledValue] using hA1
++    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
++      radix t fScaled pf rfl hradix hvNum htGtOne rfl hbextExp
++      hfScaledExp hA1Value
++    simpa [hfScaledValue] using h
++  let fMinusPf : FloatSpec.Core.Defs.FlocqFloat radix := Fminus f pf
++  have hfMinusPfValue :
++      _root_.F2R (beta:=radix) fMinusPf =
++        _root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) pf := by
++    have h := Fminus_correct (beta:=radix) f pf
++    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check, Id.run,
++      ULift.up_down, fMinusPf] using h hradix
++  have hfMinusPfExp : -b.dExp ≤ fMinusPf.Fexp := by
++    rw [show fMinusPf.Fexp = min f.Fexp pf.Fexp by
++      simpa [fMinusPf] using Fminus_exp_eq_min (beta:=radix) f pf]
++    exact le_min hfBound.2 hA1.1.2
++  have hA2Ext :
++      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
++        (_root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) pf) qf := by
++    have hA2Value :
++        Closest (beta:=radix) b (radix : ℝ)
++          (_root_.F2R (beta:=radix) fMinusPf) qf := by
++      simpa [hfMinusPfValue] using hA2
++    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
++      radix t fMinusPf qf rfl hradix hvNum htGtOne rfl hbextExp
++      hfMinusPfExp hA2Value
++    simpa [hfMinusPfValue] using h
++  let qPlusPf : FloatSpec.Core.Defs.FlocqFloat radix := Fplus qf pf
++  have hqPlusPfValue :
++      _root_.F2R (beta:=radix) qPlusPf =
++        _root_.F2R (beta:=radix) qf + _root_.F2R (beta:=radix) pf := by
++    have h := Fplus_correct (beta:=radix) qf pf
++    simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check, Id.run,
++      ULift.up_down, qPlusPf] using h hradix
++  have hqPlusPfExp : -b.dExp ≤ qPlusPf.Fexp := by
++    rw [show qPlusPf.Fexp = min qf.Fexp pf.Fexp by
++      simpa [qPlusPf] using Fplus_exp_eq_min (beta:=radix) qf pf]
++    exact le_min hA2.1.2 hA1.1.2
++  have hA3Ext :
++      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
++        (_root_.F2R (beta:=radix) qf + _root_.F2R (beta:=radix) pf) hf := by
++    have hA3Value :
++        Closest (beta:=radix) b (radix : ℝ)
++          (_root_.F2R (beta:=radix) qPlusPf) hf := by
++      simpa [hqPlusPfValue] using hA3
++    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
++      radix t qPlusPf hf rfl hradix hvNum htGtOne rfl hbextExp
++      hqPlusPfExp hA3Value
++    simpa [hqPlusPfValue] using h
++  let fMinusHf : FloatSpec.Core.Defs.FlocqFloat radix := Fminus f hf
++  have hfMinusHfValue :
++      _root_.F2R (beta:=radix) fMinusHf =
++        _root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) hf := by
++    have h := Fminus_correct (beta:=radix) f hf
++    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check, Id.run,
++      ULift.up_down, fMinusHf] using h hradix
++  have hfMinusHfExp : -b.dExp ≤ fMinusHf.Fexp := by
++    rw [show fMinusHf.Fexp = min f.Fexp hf.Fexp by
++      simpa [fMinusHf] using Fminus_exp_eq_min (beta:=radix) f hf]
++    exact le_min hfBound.2 hA3.1.2
++  have hA4Ext :
++      Closest (beta:=radix) (Dekker_extendedBound b t) (radix : ℝ)
++        (_root_.F2R (beta:=radix) f - _root_.F2R (beta:=radix) hf) tf := by
++    have hA4Value :
++        Closest (beta:=radix) b (radix : ℝ)
++          (_root_.F2R (beta:=radix) fMinusHf) tf := by
++      simpa [hfMinusHfValue] using hA4
++    have h := Closestbbext (beta:=radix) b (Dekker_extendedBound b t)
++      radix t fMinusHf tf rfl hradix hvNum htGtOne rfl hbextExp
++      hfMinusHfExp hA4Value
++    simpa [hfMinusHfValue] using h
++  exact ⟨hA1Ext, hA2Ext, hA3Ext, hA4Ext⟩
++
+ private lemma Fbounded_of_same_vNum_of_exp_ge {beta : Int}
+     (b b' : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
+     (hbNum : b.vNum = b'.vNum) (hfBound : Fbounded (beta:=beta) b' f)
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index f290f34c..796e4bca 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 34 active
++Fix the remaining Flocq import gaps by working through the 33 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -3069,9 +3069,35 @@ normalized classifier
+ local target gate. Exact public `Dekker1` is removed from the active list,
+ reducing the ledger from 35 to 34; `Veltkampb'` is next.
+ 
+-#### `Pff/Pff.v` (34)
++2026-07-22 completion note: exact public `Veltkampb'` is restored beside its
++exact `Closestbbext` prerequisite. It matches the full upstream `Algo2`
++payload: for arbitrary `f`, `pf`, `qf`, `hf`, and `tf`, strict extension from
++`b.dExp` to `Dekker_extendedBound b t`, boundedness of `f` under `b`, and the
++four original split-operation `Closest` hypotheses imply the same four
++closestness statements under the extended bound, in the same nested
++conjunction. The proof builds exact `Fmult`/`Fplus`/`Fminus` input witnesses,
++derives their old-bound exponent floors from `Fbounded` and preceding
++closestness outputs, and applies exact `Closestbbext`; no canonicity,
++normality, totality, conclusion, or weakening premise was added. Required
++subscription harness attempt `.change_log/codex_attempt_20260722_071159` used
++`gpt-5.5` with high reasoning and recorded `result = proved`. Its line-based
++post-edit dependency sidecar resolved the old insertion line to `DekkerS2`, so
++that sidecar is not counted as target evidence. Independent focused
++`lake env lean FloatSpec/src/Pff/Pff.lean` at the actual declaration exited 0;
++`git diff --check`, the direct added-hole scan, and
++`scripts/audit_placeholders.sh --json FloatSpec` passed with zero findings.
++`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
++`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
++repository has no executable `scripts/check_diff_trust.sh`, so that optional
++trust gate could not be run. Full `lake build` passed all 3345 jobs. The
++normalized classifier at the actual declaration,
++`.change_log/manual_attempt_20260722_Veltkampb_prime_proved/attempt.json`,
++records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
++passing local target gate. Exact public `Veltkampb'` is removed from the active
++list, reducing the ledger from 34 to 33; `NormalbPrim` is next.
++
++#### `Pff/Pff.v` (33)
+ 
+-- `Veltkampb'` (Theorem, upstream line 18421)
+ - `NormalbPrim` (Theorem, upstream line 18513)
+ - `Dekker2_aux` (Theorem, upstream line 18573)
+ - `Dekker2` (Theorem, upstream line 18822)
+@@ -7880,11 +7906,11 @@ Statement-level checks performed for active Pff entries 36-70:
+   rounded split/multiply hypotheses. The `*_FTS` helpers are Fast2Sum-style
+   support lemmas over abstract operations and do not match the Pff Dekker
+   section statements.
+-- `Veltkampb'` and `NormalbPrim` have no faithful local counterpart found.
+-  The former is a bound-parameter side theorem inside the Veltkamp/Dekker
+-  development, and the latter constructs a normal representative in the
+-  enlarged bound. Neither is implied by the public Veltkamp/Dekker wrappers
+-  without the missing lower proof payloads.
++- `Veltkampb'` is now restored as the exact public bound-extension theorem in
++  `FloatSpec/src/Pff/Pff.lean`.
++- `NormalbPrim` has no faithful local counterpart found. It constructs a
++  normal representative in the enlarged bound and is not implied by the
++  public Veltkamp/Dekker wrappers without the missing lower proof payloads.
+ 
+ Updated status: active Pff entries 36-70 are confirmed real semantic gaps or
+ unported section lemmas, not renamed/split complete ports. Later restorations
