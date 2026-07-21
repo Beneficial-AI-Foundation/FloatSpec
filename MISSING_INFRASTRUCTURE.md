@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 57.
+- Active semantic gap candidates still listed below: 56.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 57/57 names have been
+- Counterpart audit coverage for the active list: 56/56 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 57 active
+Fix the remaining Flocq import gaps by working through the 56 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2497,9 +2497,31 @@ nested build or Coq-alignment checks. The normalized classifier
 local target gate. Therefore `Underf_Err1` is removed from the active list,
 and `Underf_Err2_aux` is next.
 
-#### `Pff/Pff.v` (57)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_114333` checked exact upstream
+`Underf_Err2_aux`, left the tracked worktree unchanged, and classified the
+target as blocked on the arbitrary-real canonical closest-transfer argument.
+The blocker was then repaired manually rather than preserved. Two private
+lemmas prove that a canonical float strictly above the old minimum exponent
+has one ulp plus the minimum-normal magnitude available, and use that gap to
+transfer arbitrary-real closestness from `b` to an extended bound with the
+same mantissa limit. Exact public `Underf_Err2_aux` then follows the upstream
+case split: the strict-exponent branch returns `x1`; the minimum-exponent
+branch constructs an extended-bound closest `x2` with the closed
+`RND_Closest` correctness stack and combines the original half-unit error
+with the extended quarter-unit error to obtain the exact `3/4` payload. No
+totality, finite-box, conclusion, or other extra public premise was added.
+The focused Lean process exited 0, `git diff --check` passed, the direct
+live-hole scan and placeholder/generated-status audits reported zero findings,
+and the full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is
+absent from this checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_Underf_Err2_aux_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `Underf_Err2_aux` is removed from the
+active list, and `Underf_Err2` is next.
 
-- `Underf_Err2_aux` (Theorem, upstream line 16610)
+#### `Pff/Pff.v` (56)
+
 - `Underf_Err2` (Theorem, upstream line 16750)
 - `Underf_Err3` (Theorem, upstream line 16774)
 - `Underf_Err3_bis` (Theorem, upstream line 16899)
