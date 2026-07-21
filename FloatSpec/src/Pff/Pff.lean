@@ -46435,6 +46435,218 @@ theorem ClosestClosest {beta : Int}
     rw [abs_of_nonpos hnf1DiffNonpos, abs_of_nonpos hsuccDiffNonpos] at hf1Dist
     exact (not_le_of_gt hnf1LtSucc) (by linarith)
 
+/-! Coq nearest-even bound-extension lemma `EvenClosestbbplus`.
+
+Above the original minimum exponent, parity and uniqueness transfer to the
+enlarged bound; a newly admitted lower-exponent competitor is excluded by
+`ClosestClosest`. At the original minimum exponent, the exact input and rounded
+result lie on the same minimum-unit lattice, so the closestness bound forces an
+exact result and hence uniqueness under the enlarged bound. -/
+theorem EvenClosestbbplus {beta : Int}
+    (b0 : Fbound_skel) (radix : Int) (t n : Nat)
+    (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
+    (hfextExp : -b0.dExp ≤ fext.Fexp)
+    (hEven0 : EvenClosest (beta:=beta) b0 (radix : ℝ) n
+      (_root_.F2R (beta:=beta) fext) f) :
+    EvenClosest (beta:=beta) (plusExp b0 t) (radix : ℝ) n
+      (_root_.F2R (beta:=beta) fext) f := by
+  subst beta
+  have hnNe : n ≠ 0 := by omega
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradixPosInt
+  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
+  have hvNumPlus : (plusExp b0 t).vNum = Zpower_nat radix n := by
+    simpa [plusExp] using hvNum
+  have hClosest0 := hEven0.1
+  have hClosestPlus :
+      Closest (beta:=radix) (plusExp b0 t) (radix : ℝ)
+        (_root_.F2R (beta:=radix) fext) f :=
+    Closestbbplus b0 radix t n fext f rfl hradix hvNum hn
+      hfextExp hClosest0
+  let nf : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix b0 n f
+  have hnfBound0 : Fbounded (beta:=radix) b0 nf := by
+    have h := FnormalizeBounded (beta:=radix) radix b0 n f
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeBounded_check,
+      Id.run, ULift.up_down, Fbounded', nf] using
+      h ⟨hClosest0.1, hClosest0.1, hnNe, hradix, hvNum⟩
+  have hnfCan0 : Fcanonic (beta:=radix) radix b0 nf := by
+    have h := FnormalizeCanonic (beta:=radix) radix b0 n f
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+      Id.run, ULift.up_down, nf] using
+      h ⟨hClosest0.1, hClosest0.1, hnNe, hradix, hvNum⟩
+  have hnfValue :
+      _root_.F2R (beta:=radix) nf = _root_.F2R (beta:=radix) f := by
+    have h := FnormalizeCorrect (beta:=radix) radix b0 n f
+    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+      Id.run, ULift.up_down, nf] using h ⟨rfl, hradix⟩
+  have hnfBoundPlus : Fbounded (beta:=radix) (plusExp b0 t) nf := by
+    rcases hnfBound0 with ⟨hnum, hexp⟩
+    constructor
+    · simpa [plusExp] using hnum
+    · dsimp [plusExp]
+      have htNonneg : (0 : Int) ≤ ((t - 1 : Nat) : Int) :=
+        Int.natCast_nonneg _
+      omega
+  have hnfClosestPlus :
+      Closest (beta:=radix) (plusExp b0 t) (radix : ℝ)
+        (_root_.F2R (beta:=radix) fext) nf := by
+    constructor
+    · exact hnfBoundPlus
+    · intro g hg
+      simpa [hnfValue] using hClosestPlus.2 g hg
+  refine ⟨hClosestPlus, ?_⟩
+  by_cases hnfAbove : -b0.dExp < nf.Fexp
+  · have hnfNormal0 : Fnormal (beta:=radix) radix b0 nf := by
+      rcases hnfCan0 with hnormal | hsubnormal
+      · exact hnormal
+      · exfalso
+        have hnfAtMin := hsubnormal.2.1
+        omega
+    have hnfNormalPlus :
+        Fnormal (beta:=radix) radix (plusExp b0 t) nf := by
+      constructor
+      · exact hnfBoundPlus
+      · simpa [plusExp] using hnfNormal0.2
+    rcases hEven0.2 with hEven | hUnique
+    · left
+      let nfPlus : FloatSpec.Core.Defs.FlocqFloat radix :=
+        Fnormalize (beta:=radix) radix (plusExp b0 t) n f
+      have hnfPlusCan :
+          Fcanonic (beta:=radix) radix (plusExp b0 t) nfPlus := by
+        have h := FnormalizeCanonic (beta:=radix) radix (plusExp b0 t) n f
+        simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+          Id.run, ULift.up_down, nfPlus] using
+          h ⟨hClosestPlus.1, hClosestPlus.1, hnNe, hradix, hvNumPlus⟩
+      have hnfPlusValue :
+          _root_.F2R (beta:=radix) nfPlus =
+            _root_.F2R (beta:=radix) f := by
+        have h := FnormalizeCorrect (beta:=radix) radix (plusExp b0 t) n f
+        simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+          Id.run, ULift.up_down, nfPlus] using h ⟨rfl, hradix⟩
+      have hnfEq : nfPlus = nf := by
+        have h := FcanonicUnique (beta:=radix) radix (plusExp b0 t)
+          nfPlus nf hradix rfl
+        simpa only [wp, PostCond.noThrow, pure, FcanonicUnique_check,
+          ULift.down_up, Fcanonic'] using
+          h ⟨hnfPlusCan, Or.inl hnfNormalPlus,
+            hnfPlusValue.trans hnfValue.symm⟩
+      unfold FNeven at hEven ⊢
+      simpa only [nfPlus, nf, hnfEq] using hEven
+    · right
+      intro q hqPlus
+      by_cases hqExp : -b0.dExp ≤ q.Fexp
+      · have hqBound0 : Fbounded (beta:=radix) b0 q := by
+          exact ⟨by simpa [plusExp] using hqPlus.1.1, hqExp⟩
+        have hq0 :
+            Closest (beta:=radix) b0 (radix : ℝ)
+              (_root_.F2R (beta:=radix) fext) q :=
+          Closestbplusb b0 (radix : ℝ) t
+            (_root_.F2R (beta:=radix) fext) q hqPlus hqBound0
+        exact hUnique q hq0
+      · have hqGap : q.Fexp ≤ nf.Fexp - 2 := by omega
+        exact False.elim (ClosestClosest (beta:=radix)
+          (plusExp b0 t) radix n
+          (_root_.F2R (beta:=radix) fext) q nf rfl hradix
+          hvNumPlus hn hqPlus hnfClosestPlus hnfNormalPlus hqGap)
+  · have hnfExpEq : nf.Fexp = -b0.dExp := by
+      have hnfExpBound := hnfBound0.2
+      omega
+    right
+    intro q hqPlus
+    have herrorUlp :
+        2 * |_root_.F2R (beta:=radix) fext -
+            _root_.F2R (beta:=radix) f| ≤
+          Fulp (beta:=radix) b0 radix n f := by
+      have h := ClosestUlp (beta:=radix) b0 radix n
+        (_root_.F2R (beta:=radix) fext) f
+      simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hClosest0, rfl, hradix, hnNe, hvNum⟩
+    have herrorLe :
+        2 * |_root_.F2R (beta:=radix) fext -
+            _root_.F2R (beta:=radix) f| ≤
+          (radix : ℝ) ^ (-b0.dExp) := by
+      simpa [Fulp, nf, hnfExpEq] using herrorUlp
+    let shift : Nat := (fext.Fexp + b0.dExp).toNat
+    have hshiftCast : (shift : Int) = fext.Fexp + b0.dExp := by
+      dsimp [shift]
+      rw [Int.toNat_of_nonneg]
+      omega
+    let exactMantissa : Int := fext.Fnum * radix ^ shift
+    have hfextScale :
+        _root_.F2R (beta:=radix) fext =
+          (exactMantissa : ℝ) * (radix : ℝ) ^ (-b0.dExp) := by
+      dsimp [exactMantissa, _root_.F2R, FloatSpec.Core.Defs.F2R]
+      rw [Int.cast_mul, Int.cast_pow, ← zpow_natCast]
+      calc
+        (fext.Fnum : ℝ) * (radix : ℝ) ^ fext.Fexp =
+            (fext.Fnum : ℝ) *
+              (radix : ℝ) ^ ((shift : Int) + (-b0.dExp)) := by
+          rw [hshiftCast]
+          congr 2
+          ring
+        _ = (fext.Fnum : ℝ) *
+              ((radix : ℝ) ^ (shift : Int) *
+                (radix : ℝ) ^ (-b0.dExp)) := by
+          rw [zpow_add₀ hradixNe]
+        _ = ((fext.Fnum : ℝ) * (radix : ℝ) ^ (shift : Int)) *
+              (radix : ℝ) ^ (-b0.dExp) := by ring
+    have hfScale :
+        _root_.F2R (beta:=radix) f =
+          (nf.Fnum : ℝ) * (radix : ℝ) ^ (-b0.dExp) := by
+      rw [← hnfValue]
+      simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hnfExpEq]
+    have hdeltaPos : 0 < (radix : ℝ) ^ (-b0.dExp) :=
+      zpow_pos hradixPos _
+    have herrorScale :
+        |_root_.F2R (beta:=radix) fext -
+            _root_.F2R (beta:=radix) f| =
+          |((exactMantissa - nf.Fnum : Int) : ℝ)| *
+            (radix : ℝ) ^ (-b0.dExp) := by
+      rw [hfextScale, hfScale]
+      have hfactor :
+          (exactMantissa : ℝ) * (radix : ℝ) ^ (-b0.dExp) -
+              (nf.Fnum : ℝ) * (radix : ℝ) ^ (-b0.dExp) =
+            ((exactMantissa - nf.Fnum : Int) : ℝ) *
+              (radix : ℝ) ^ (-b0.dExp) := by
+        push_cast
+        ring
+      rw [hfactor, abs_mul, abs_of_pos hdeltaPos]
+    have hdiffZero : exactMantissa - nf.Fnum = 0 := by
+      by_contra hdiffNe
+      have hdiffInt : (1 : Int) ≤ |exactMantissa - nf.Fnum| :=
+        Int.one_le_abs hdiffNe
+      have hdiffReal :
+          (1 : ℝ) ≤ |((exactMantissa - nf.Fnum : Int) : ℝ)| := by
+        exact_mod_cast (show
+          (1 : Int) ≤ |exactMantissa - nf.Fnum| from hdiffInt)
+      have hdeltaLeError :
+          (radix : ℝ) ^ (-b0.dExp) ≤
+            |_root_.F2R (beta:=radix) fext -
+              _root_.F2R (beta:=radix) f| := by
+        rw [herrorScale]
+        simpa using mul_le_mul_of_nonneg_right hdiffReal
+          (le_of_lt hdeltaPos)
+      nlinarith
+    have hfExact :
+        _root_.F2R (beta:=radix) f =
+          _root_.F2R (beta:=radix) fext := by
+      rw [hfScale, hfextScale]
+      have hmantissaEq : exactMantissa = nf.Fnum := by omega
+      rw [hmantissaEq]
+    have hqError := hqPlus.2 f hClosestPlus.1
+    rw [hfExact, sub_self, abs_zero] at hqError
+    have hqDiffZero :
+        _root_.F2R (beta:=radix) q -
+            _root_.F2R (beta:=radix) fext = 0 := by
+      exact abs_eq_zero.mp
+        (le_antisymm hqError (abs_nonneg _))
+    linarith
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
