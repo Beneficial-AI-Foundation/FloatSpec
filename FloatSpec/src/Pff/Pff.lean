@@ -52237,6 +52237,30 @@ theorem Boundedx1y2_aux {beta : Int}
     exact ⟨hnum, hexp⟩
   · simp [prod, FloatSpec.Calc.Operations.Fmult]
 
+/-! Coq Sec1 exact product bound `Boundedx1y2`.
+
+This is the upstream wrapper around `Boundedx1y2_aux`; it keeps the same
+section payload and drops only the exponent equality conjunct. -/
+theorem Boundedx1y2 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x x1 y y2 : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hSGe : s ≤ t - 2)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hx1Exp : (s : Int) + x.Fexp ≤ x1.Fexp)
+    (hy2Exp : y.Fexp ≤ y2.Fexp)
+    (Fx1 : Fbounded (beta:=beta) (Veltkamp_reducedBound radix b s t) x1)
+    (Fy2 : Fbounded (beta:=beta) (Veltkamp_splitBound radix b s) y2) :
+    ∃ xprime : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) xprime =
+          _root_.F2R (beta:=beta) x1 * _root_.F2R (beta:=beta) y2 ∧
+        Fbounded (beta:=beta) b xprime := by
+  rcases Boundedx1y2_aux (beta:=beta) b radix s t x x1 y y2
+      hbeta hradix hvNum hSGe hK hx1Exp hy2Exp Fx1 Fy2 with
+    ⟨xprime, hvalue, hbounded, _hexp⟩
+  exact ⟨xprime, hvalue, hbounded⟩
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous
