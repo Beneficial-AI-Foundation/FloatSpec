@@ -47304,6 +47304,85 @@ theorem VeltkampEven {beta : Int}
       rfl hradix hvNum hsGe hsLe hnxSubnormal hpNx hqNx hhxDefEven
     simpa [hnxValue] using h
 
+/-- Coq Veltkamp tail lemma `Veltkamp_tail_aux`.
+
+The subtraction of an equal-value reduced Veltkamp witness preserves the input
+exponent and has a mantissa bounded by half of `radix ^ s`. -/
+theorem Veltkamp_tail_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (x p q hx tx : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
+    (hxCan : Fcanonic (beta:=beta) radix b x)
+    (hpDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
+    (hqDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hhxDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (htxDef : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx) :
+    ∃ v : FloatSpec.Core.Defs.FlocqFloat beta,
+      _root_.F2R (beta:=beta) v = _root_.F2R (beta:=beta) hx ∧
+        (Fminus (beta:=beta) x v).Fexp = x.Fexp ∧
+          (((|(Fminus (beta:=beta) x v).Fnum| : Int) : ℝ) ≤
+            (radix : ℝ) ^ (s : Int) / 2) := by
+  subst beta
+  have hradixPosInt : (0 : Int) < radix := by omega
+  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast hradixPosInt
+  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
+  have hCore :
+      |_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx| ≤
+          (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2 ∧
+        ∃ v : FloatSpec.Core.Defs.FlocqFloat radix,
+          _root_.F2R (beta:=radix) v = _root_.F2R (beta:=radix) hx ∧
+            Closest (beta:=radix) (Veltkamp_reducedBound radix b s t)
+              (radix : ℝ) (_root_.F2R (beta:=radix) x) v ∧
+            x.Fexp ≤ v.Fexp := by
+    rcases hxCan with hxNormal | hxSubnormal
+    · rcases VeltkampN (beta:=radix) b radix s t x p q hx rfl hradix
+          hvNum hsGe hsLe hxNormal hpDef hqDef hhxDef with
+        ⟨hResidual, v, hvValue, hvClosest, hvExp⟩
+      refine ⟨hResidual, v, hvValue, hvClosest, ?_⟩
+      omega
+    · rcases VeltkampS (beta:=radix) b radix s t x p q hx rfl hradix
+          hvNum hsGe hsLe hxSubnormal hpDef hqDef hhxDef with
+        ⟨hResidual, v, hvValue, hvClosest⟩
+      have hxAtMin := hxSubnormal.2.1
+      have hvExpBound := hvClosest.1.2
+      dsimp [Veltkamp_reducedBound] at hvExpBound
+      exact ⟨hResidual, v, hvValue, hvClosest, by omega⟩
+  rcases hCore with ⟨hResidual, v, hvValue, hvClosest, hxExpLeV⟩
+  let d : FloatSpec.Core.Defs.FlocqFloat radix := Fminus x v
+  have hdExp : d.Fexp = x.Fexp := by
+    dsimp [d]
+    rw [Fminus_exp_eq_min, min_eq_left hxExpLeV]
+  have hdValue :
+      _root_.F2R (beta:=radix) d =
+        _root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) v := by
+    have h := Fminus_correct (beta:=radix) x v
+    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+      Id.run, ULift.up_down, d] using h hradix
+  have hAbsScale :
+      |_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) v| =
+        ((|d.Fnum| : Int) : ℝ) * (radix : ℝ) ^ x.Fexp := by
+    rw [← hdValue]
+    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hdExp, abs_mul,
+      abs_of_pos (zpow_pos hradixPos x.Fexp)]
+  have hResidualV :
+      |_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) v| ≤
+        (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2 := by
+    simpa [hvValue] using hResidual
+  rw [hAbsScale, zpow_add₀ hradixNe] at hResidualV
+  refine ⟨v, hvValue, ?_, ?_⟩
+  · exact hdExp
+  · dsimp [d]
+    have hscalePos : 0 < (radix : ℝ) ^ x.Fexp :=
+      zpow_pos hradixPos x.Fexp
+    nlinarith
+
 noncomputable def ClosestRoundeGeNormal_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=

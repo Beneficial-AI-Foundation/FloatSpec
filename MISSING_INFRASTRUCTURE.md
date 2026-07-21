@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 66 active
+Fix the remaining Flocq import gaps by working through the 62 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2389,9 +2389,26 @@ absent from this checkout. The normalized classifier
 local target gate. Therefore `VeltkampEven` is removed from the active list,
 and `Veltkamp_tail_aux` is next.
 
-#### `Pff/Pff.v` (63)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_085558` failed without source changes or a
+build after Codex process/session persistence errors. The manual repair
+restored exact public `Veltkamp_tail_aux` under only the expanded upstream
+section assumptions, including the upstream `tx` closestness premise. It
+splits canonical `x` into normal and subnormal cases, obtains an equal-value
+reduced Veltkamp witness from exact `VeltkampN` or `VeltkampS`, and proves that
+the witness exponent is at least `x.Fexp`. The local `Fminus` exponent law then
+preserves `x.Fexp`; the real residual bound cancels the positive radix scale to
+give the exact mantissa bound. The focused Lean process exited 0,
+`git diff --check` passed, placeholder/status audits reported zero findings,
+and the full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is
+absent from this checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_Veltkamp_tail_aux_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Therefore `Veltkamp_tail_aux` is removed from the
+active list, and `Veltkamp_tail2` is next.
 
-- `Veltkamp_tail_aux` (Theorem, upstream line 16001)
+#### `Pff/Pff.v` (62)
+
 - `Veltkamp_tail2` (Theorem, upstream line 16157)
 - `VeltkampU` (Theorem, upstream line 16270)
 - `BoundedL` (Theorem, upstream line 16329)
