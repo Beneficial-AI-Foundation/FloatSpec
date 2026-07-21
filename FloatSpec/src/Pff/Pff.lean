@@ -52869,6 +52869,511 @@ theorem DekkerN {beta : Int}
     hxNormal hyNormal hK hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4 hC1 hC2 hC3 hC4
     hD1 hD2 hD3 hD4 hD5 ⟨prod22, hprod22Val, hprod22Bound⟩
 
+/-! Coq AlgoS1 theorem `DekkerS1`.
+
+This is the subnormal-`y` counterpart of `DekkerN`.  The zero branch follows
+the upstream `ClosestZero` cascade.  In the nonzero branch, `y` is normalized
+under `plusExp b t`, all closest-operation witnesses are lifted to that larger
+bound with local exact operation witnesses, and the result delegates to
+`DekkerN`. -/
+theorem DekkerS1 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
+      FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hxNormal : Fnormal (beta:=beta) radix b x)
+    (hySubnormal : Fsubnormal (beta:=beta) radix b y)
+    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
+    (hA1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
+    (hA2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hA3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hA4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
+    (hB1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
+    (hB2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
+    (hB3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
+    (hB4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
+    (hC1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) hy) x1y1)
+    (hC2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) ty) x1y2)
+    (hC3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) hy) x2y1)
+    (hC4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty) x2y2)
+    (hD1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
+    (hD2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) x1y1) t1)
+    (hD3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t1 - _root_.F2R (beta:=beta) x1y2) t2)
+    (hD4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t2 - _root_.F2R (beta:=beta) x2y1) t3)
+    (hD5 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t3 - _root_.F2R (beta:=beta) x2y2) t4)
+    (hBranch : radix = 2 ∨ Even t) :
+    _root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y =
+      _root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) t4 := by
+  subst beta
+  let s : Nat := t - Nat.div2 t
+  let bPlus : Fbound_skel := plusExp b t
+  have hsGe : 2 ≤ s := by
+    have h := SLe t hpGe
+    dsimp [s]
+    omega
+  have hsLe : s ≤ t - 2 := by
+    have h := SGe t hpGe
+    dsimp [s]
+    omega
+  have htGtOne : 1 < t := by omega
+  have htoPlus :
+      ∀ {z : ℝ} {f : FloatSpec.Core.Defs.FlocqFloat radix},
+        Closest (beta:=radix) b (radix : ℝ) z f →
+          z = 0 → _root_.F2R (beta:=radix) f = 0 := by
+    intro z f hClosest hz
+    have h := ClosestZero2 (beta:=radix) b (radix : ℝ) z f
+    simpa only [wp, PostCond.noThrow, pure, ClosestZero2_check, Id.run,
+      ULift.up_down] using h ⟨hClosest, hz⟩
+  by_cases hyZero : _root_.F2R (beta:=radix) y = 0
+  · have hrZero : _root_.F2R (beta:=radix) r = 0 :=
+      htoPlus hD1 (by rw [hyZero]; ring)
+    have hp'Zero : _root_.F2R (beta:=radix) p' = 0 :=
+      htoPlus hB1 (by rw [hyZero]; ring)
+    have hq'Zero : _root_.F2R (beta:=radix) q' = 0 :=
+      htoPlus hB2 (by rw [hyZero, hp'Zero]; ring)
+    have hhyZero : _root_.F2R (beta:=radix) hy = 0 :=
+      htoPlus hB3 (by rw [hq'Zero, hp'Zero]; ring)
+    have htyZero : _root_.F2R (beta:=radix) ty = 0 :=
+      htoPlus hB4 (by rw [hyZero, hhyZero]; ring)
+    have hx1y1Zero : _root_.F2R (beta:=radix) x1y1 = 0 :=
+      htoPlus hC1 (by rw [hhyZero]; ring)
+    have hx1y2Zero : _root_.F2R (beta:=radix) x1y2 = 0 :=
+      htoPlus hC2 (by rw [htyZero]; ring)
+    have hx2y1Zero : _root_.F2R (beta:=radix) x2y1 = 0 :=
+      htoPlus hC3 (by rw [hhyZero]; ring)
+    have hx2y2Zero : _root_.F2R (beta:=radix) x2y2 = 0 :=
+      htoPlus hC4 (by rw [htyZero]; ring)
+    have ht1Zero : _root_.F2R (beta:=radix) t1 = 0 :=
+      htoPlus hD2 (by rw [hrZero, hx1y1Zero]; ring)
+    have ht2Zero : _root_.F2R (beta:=radix) t2 = 0 :=
+      htoPlus hD3 (by rw [ht1Zero, hx1y2Zero]; ring)
+    have ht3Zero : _root_.F2R (beta:=radix) t3 = 0 :=
+      htoPlus hD4 (by rw [ht2Zero, hx2y1Zero]; ring)
+    have ht4Zero : _root_.F2R (beta:=radix) t4 = 0 :=
+      htoPlus hD5 (by rw [ht3Zero, hx2y2Zero]; ring)
+    rw [hyZero, hrZero, ht4Zero]
+    ring
+  · rcases bimplybplusNorm (beta:=radix) b radix s t y rfl hradix
+        hvNum hsGe hsLe hySubnormal.1 hyZero with
+      ⟨yy, hyyValue, hyyNormal⟩
+    have hvNumPlus : bPlus.vNum = Zpower_nat radix t := by
+      simpa [bPlus, plusExp] using hvNum
+    have hxNormalPlus : Fnormal (beta:=radix) radix bPlus x := by
+      constructor
+      · rcases hxNormal.1 with ⟨hnum, hexp⟩
+        constructor
+        · simpa [bPlus, plusExp] using hnum
+        · dsimp [bPlus, plusExp]
+          omega
+      · simpa [bPlus, plusExp] using hxNormal.2
+    have hxExpNonneg : 0 ≤ x.Fexp := by
+      have hyExp : y.Fexp = -b.dExp := hySubnormal.2.1
+      rw [hyExp] at hK
+      omega
+    have hKPlus : -bPlus.dExp ≤ x.Fexp + yy.Fexp := by
+      have hyyExp : -bPlus.dExp ≤ yy.Fexp := hyyNormal.1.2
+      omega
+    have liftClosest :
+        ∀ (fext f : FloatSpec.Core.Defs.FlocqFloat radix) (z : ℝ),
+          _root_.F2R (beta:=radix) fext = z →
+          -b.dExp ≤ fext.Fexp →
+          Closest (beta:=radix) b (radix : ℝ) z f →
+          Closest (beta:=radix) bPlus (radix : ℝ) z f := by
+      intro fext f z hfextValue hfextExp hClosest
+      have hClosest' :
+          Closest (beta:=radix) b (radix : ℝ)
+            (_root_.F2R (beta:=radix) fext) f := by
+        simpa [hfextValue] using hClosest
+      have h := Closestbbplus b radix t t fext f rfl hradix hvNum
+        htGtOne hfextExp hClosest'
+      simpa [bPlus, hfextValue] using h
+    rcases VeltkampU (beta:=radix) b radix s t x p q hx tx rfl hradix
+        hvNum hsGe hsLe (Or.inl hxNormal) (by simpa [s] using hA1)
+        hA2 hA3 hA4 with
+      ⟨_hxResidual, _hXeq, hxHead, hxTail⟩
+    rcases hxHead with ⟨hx', hhxVal, _hhxBound, hhxExpFn⟩
+    rcases hxTail with ⟨tx', htxVal, _htxBound, htxExp⟩
+    have hhxExp : (s : Int) + x.Fexp ≤ hx'.Fexp := hhxExpFn hxNormal
+    rcases VeltkampU (beta:=radix) b radix s t y p' q' hy ty rfl hradix
+        hvNum hsGe hsLe (Or.inr hySubnormal) (by simpa [s] using hB1)
+        hB2 hB3 hB4 with
+      ⟨_hyResidual, _hYeq, _hyHead, hyTail⟩
+    rcases hyTail with ⟨ty', htyVal, _htyBound, htyExp⟩
+    have hxPrimeNonneg : 0 ≤ hx'.Fexp := by omega
+    have txPrimeNonneg : 0 ≤ tx'.Fexp := by omega
+    let xs : FloatSpec.Core.Defs.FlocqFloat radix := ⟨x.Fnum, x.Fexp + (s : Int)⟩
+    have hxsValue :
+        _root_.F2R (beta:=radix) xs =
+          _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (s : Int) := by
+      simp only [xs, _root_.F2R, FloatSpec.Core.Defs.F2R]
+      rw [zpow_add₀ (by exact_mod_cast (show radix ≠ 0 by omega))]
+      ring
+    let xScaled : FloatSpec.Core.Defs.FlocqFloat radix := Fplus x xs
+    have hxScaledValue :
+        _root_.F2R (beta:=radix) xScaled =
+          _root_.F2R (beta:=radix) x *
+            ((radix : ℝ) ^ (s : Int) + 1) := by
+      have h := Fplus_correct (beta:=radix) x xs
+      have h' : _root_.F2R (beta:=radix) xScaled =
+          _root_.F2R (beta:=radix) x + _root_.F2R (beta:=radix) xs := by
+        simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+          Id.run, ULift.up_down, xScaled] using h hradix
+      rw [h', hxsValue]
+      ring
+    have hxScaledExp : -b.dExp ≤ xScaled.Fexp := by
+      have hmin := Fplus_exp_eq_min x xs
+      have hxLeXs : x.Fexp ≤ xs.Fexp := by simp [xs]
+      rw [show xScaled.Fexp = min x.Fexp xs.Fexp by simpa [xScaled] using hmin,
+        min_eq_left hxLeXs]
+      exact hxNormal.1.2
+    let ys : FloatSpec.Core.Defs.FlocqFloat radix := ⟨y.Fnum, y.Fexp + (s : Int)⟩
+    have hysValue :
+        _root_.F2R (beta:=radix) ys =
+          _root_.F2R (beta:=radix) y * (radix : ℝ) ^ (s : Int) := by
+      simp only [ys, _root_.F2R, FloatSpec.Core.Defs.F2R]
+      rw [zpow_add₀ (by exact_mod_cast (show radix ≠ 0 by omega))]
+      ring
+    let yScaled : FloatSpec.Core.Defs.FlocqFloat radix := Fplus y ys
+    have hyScaledValue :
+        _root_.F2R (beta:=radix) yScaled =
+          _root_.F2R (beta:=radix) y *
+            ((radix : ℝ) ^ (s : Int) + 1) := by
+      have h := Fplus_correct (beta:=radix) y ys
+      have h' : _root_.F2R (beta:=radix) yScaled =
+          _root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) ys := by
+        simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+          Id.run, ULift.up_down, yScaled] using h hradix
+      rw [h', hysValue]
+      ring
+    have hyScaledExp : -b.dExp ≤ yScaled.Fexp := by
+      have hmin := Fplus_exp_eq_min y ys
+      have hyLeYs : y.Fexp ≤ ys.Fexp := by simp [ys]
+      rw [show yScaled.Fexp = min y.Fexp ys.Fexp by simpa [yScaled] using hmin,
+        min_eq_left hyLeYs]
+      exact hySubnormal.1.2
+    let xMinusP : FloatSpec.Core.Defs.FlocqFloat radix := Fminus x p
+    have hxMinusPValue :
+        _root_.F2R (beta:=radix) xMinusP =
+          _root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p := by
+      have h := Fminus_correct (beta:=radix) x p
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, xMinusP] using h hradix
+    have hxMinusPExp : -b.dExp ≤ xMinusP.Fexp := by
+      rw [show xMinusP.Fexp = min x.Fexp p.Fexp by
+        simpa [xMinusP] using Fminus_exp_eq_min (beta:=radix) x p]
+      exact le_min hxNormal.1.2 hA1.1.2
+    let qPlusP : FloatSpec.Core.Defs.FlocqFloat radix := Fplus q p
+    have hqPlusPValue :
+        _root_.F2R (beta:=radix) qPlusP =
+          _root_.F2R (beta:=radix) q + _root_.F2R (beta:=radix) p := by
+      have h := Fplus_correct (beta:=radix) q p
+      simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+        Id.run, ULift.up_down, qPlusP] using h hradix
+    have hqPlusPExp : -b.dExp ≤ qPlusP.Fexp := by
+      rw [show qPlusP.Fexp = min q.Fexp p.Fexp by
+        simpa [qPlusP] using Fplus_exp_eq_min (beta:=radix) q p]
+      exact le_min hA2.1.2 hA1.1.2
+    let xMinusHx : FloatSpec.Core.Defs.FlocqFloat radix := Fminus x hx
+    have hxMinusHxValue :
+        _root_.F2R (beta:=radix) xMinusHx =
+          _root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx := by
+      have h := Fminus_correct (beta:=radix) x hx
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, xMinusHx] using h hradix
+    have hxMinusHxExp : -b.dExp ≤ xMinusHx.Fexp := by
+      rw [show xMinusHx.Fexp = min x.Fexp hx.Fexp by
+        simpa [xMinusHx] using Fminus_exp_eq_min (beta:=radix) x hx]
+      exact le_min hxNormal.1.2 hA3.1.2
+    let yMinusP : FloatSpec.Core.Defs.FlocqFloat radix := Fminus y p'
+    have hyMinusPValue :
+        _root_.F2R (beta:=radix) yMinusP =
+          _root_.F2R (beta:=radix) y - _root_.F2R (beta:=radix) p' := by
+      have h := Fminus_correct (beta:=radix) y p'
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, yMinusP] using h hradix
+    have hyMinusPExp : -b.dExp ≤ yMinusP.Fexp := by
+      rw [show yMinusP.Fexp = min y.Fexp p'.Fexp by
+        simpa [yMinusP] using Fminus_exp_eq_min (beta:=radix) y p']
+      exact le_min hySubnormal.1.2 hB1.1.2
+    let qPlusP' : FloatSpec.Core.Defs.FlocqFloat radix := Fplus q' p'
+    have hqPlusP'Value :
+        _root_.F2R (beta:=radix) qPlusP' =
+          _root_.F2R (beta:=radix) q' + _root_.F2R (beta:=radix) p' := by
+      have h := Fplus_correct (beta:=radix) q' p'
+      simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+        Id.run, ULift.up_down, qPlusP'] using h hradix
+    have hqPlusP'Exp : -b.dExp ≤ qPlusP'.Fexp := by
+      rw [show qPlusP'.Fexp = min q'.Fexp p'.Fexp by
+        simpa [qPlusP'] using Fplus_exp_eq_min (beta:=radix) q' p']
+      exact le_min hB2.1.2 hB1.1.2
+    let yMinusHy : FloatSpec.Core.Defs.FlocqFloat radix := Fminus y hy
+    have hyMinusHyValue :
+        _root_.F2R (beta:=radix) yMinusHy =
+          _root_.F2R (beta:=radix) y - _root_.F2R (beta:=radix) hy := by
+      have h := Fminus_correct (beta:=radix) y hy
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, yMinusHy] using h hradix
+    have hyMinusHyExp : -b.dExp ≤ yMinusHy.Fexp := by
+      rw [show yMinusHy.Fexp = min y.Fexp hy.Fexp by
+        simpa [yMinusHy] using Fminus_exp_eq_min (beta:=radix) y hy]
+      exact le_min hySubnormal.1.2 hB3.1.2
+    have hA1Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) x *
+            ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p := by
+      have h := liftClosest xScaled p
+        (_root_.F2R (beta:=radix) x *
+          ((radix : ℝ) ^ (s : Int) + 1))
+        hxScaledValue hxScaledExp (by simpa [s] using hA1)
+      simpa [s] using h
+    have hA2Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p) q :=
+      liftClosest xMinusP q
+        (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p)
+        hxMinusPValue hxMinusPExp hA2
+    have hA3Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) q + _root_.F2R (beta:=radix) p) hx :=
+      liftClosest qPlusP hx
+        (_root_.F2R (beta:=radix) q + _root_.F2R (beta:=radix) p)
+        hqPlusPValue hqPlusPExp hA3
+    have hA4Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx) tx :=
+      liftClosest xMinusHx tx
+        (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) hx)
+        hxMinusHxValue hxMinusHxExp hA4
+    have hB1Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) yy *
+            ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p' := by
+      have h := liftClosest yScaled p'
+        (_root_.F2R (beta:=radix) y *
+          ((radix : ℝ) ^ (s : Int) + 1))
+        hyScaledValue hyScaledExp (by simpa [s] using hB1)
+      simpa [s, hyyValue] using h
+    have hB2Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) yy - _root_.F2R (beta:=radix) p') q' := by
+      have h := liftClosest yMinusP q'
+        (_root_.F2R (beta:=radix) y - _root_.F2R (beta:=radix) p')
+        hyMinusPValue hyMinusPExp hB2
+      simpa [hyyValue] using h
+    have hB3Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) q' + _root_.F2R (beta:=radix) p') hy :=
+      liftClosest qPlusP' hy
+        (_root_.F2R (beta:=radix) q' + _root_.F2R (beta:=radix) p')
+        hqPlusP'Value hqPlusP'Exp hB3
+    have hB4Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) yy - _root_.F2R (beta:=radix) hy) ty := by
+      have h := liftClosest yMinusHy ty
+        (_root_.F2R (beta:=radix) y - _root_.F2R (beta:=radix) hy)
+        hyMinusHyValue hyMinusHyExp hB4
+      simpa [hyyValue] using h
+    let hxhy : FloatSpec.Core.Defs.FlocqFloat radix :=
+      FloatSpec.Calc.Operations.Fmult (beta:=radix) hx' hy
+    have hxhyValue :
+        _root_.F2R (beta:=radix) hxhy =
+          _root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) hy := by
+      have h := Fmult_correct (beta:=radix) hx' hy
+      have hv :
+          _root_.F2R (beta:=radix) hxhy =
+            _root_.F2R (beta:=radix) hx' * _root_.F2R (beta:=radix) hy := by
+        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+          Id.run, ULift.up_down, hxhy] using h hradix
+      rw [hv, hhxVal]
+    have hxhyExp : -b.dExp ≤ hxhy.Fexp := by
+      dsimp [hxhy, FloatSpec.Calc.Operations.Fmult]
+      have hyBound : -b.dExp ≤ hy.Fexp := hB3.1.2
+      omega
+    let hxty : FloatSpec.Core.Defs.FlocqFloat radix :=
+      FloatSpec.Calc.Operations.Fmult (beta:=radix) hx' ty'
+    have hxtyValue :
+        _root_.F2R (beta:=radix) hxty =
+          _root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) ty := by
+      have h := Fmult_correct (beta:=radix) hx' ty'
+      have hv :
+          _root_.F2R (beta:=radix) hxty =
+            _root_.F2R (beta:=radix) hx' * _root_.F2R (beta:=radix) ty' := by
+        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+          Id.run, ULift.up_down, hxty] using h hradix
+      rw [hv, hhxVal, htyVal]
+    have hxtyExp : -b.dExp ≤ hxty.Fexp := by
+      dsimp [hxty, FloatSpec.Calc.Operations.Fmult]
+      omega
+    let txhy : FloatSpec.Core.Defs.FlocqFloat radix :=
+      FloatSpec.Calc.Operations.Fmult (beta:=radix) tx' hy
+    have txhyValue :
+        _root_.F2R (beta:=radix) txhy =
+          _root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) hy := by
+      have h := Fmult_correct (beta:=radix) tx' hy
+      have hv :
+          _root_.F2R (beta:=radix) txhy =
+            _root_.F2R (beta:=radix) tx' * _root_.F2R (beta:=radix) hy := by
+        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+          Id.run, ULift.up_down, txhy] using h hradix
+      rw [hv, htxVal]
+    have txhyExp : -b.dExp ≤ txhy.Fexp := by
+      dsimp [txhy, FloatSpec.Calc.Operations.Fmult]
+      have hyBound : -b.dExp ≤ hy.Fexp := hB3.1.2
+      omega
+    let txty : FloatSpec.Core.Defs.FlocqFloat radix :=
+      FloatSpec.Calc.Operations.Fmult (beta:=radix) tx' ty'
+    have txtyValue :
+        _root_.F2R (beta:=radix) txty =
+          _root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) ty := by
+      have h := Fmult_correct (beta:=radix) tx' ty'
+      have hv :
+          _root_.F2R (beta:=radix) txty =
+            _root_.F2R (beta:=radix) tx' * _root_.F2R (beta:=radix) ty' := by
+        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+          Id.run, ULift.up_down, txty] using h hradix
+      rw [hv, htxVal, htyVal]
+    have txtyExp : -b.dExp ≤ txty.Fexp := by
+      dsimp [txty, FloatSpec.Calc.Operations.Fmult]
+      have hyExp : y.Fexp = -b.dExp := hySubnormal.2.1
+      omega
+    let xy : FloatSpec.Core.Defs.FlocqFloat radix :=
+      FloatSpec.Calc.Operations.Fmult (beta:=radix) x y
+    have hxyValue :
+        _root_.F2R (beta:=radix) xy =
+          _root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y := by
+      have h := Fmult_correct (beta:=radix) x y
+      simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+        Id.run, ULift.up_down, xy] using h hradix
+    have hxyExp : -b.dExp ≤ xy.Fexp := by
+      dsimp [xy, FloatSpec.Calc.Operations.Fmult]
+      exact hK
+    let rMinus11 : FloatSpec.Core.Defs.FlocqFloat radix := Fminus r x1y1
+    have hrMinus11Value :
+        _root_.F2R (beta:=radix) rMinus11 =
+          _root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) x1y1 := by
+      have h := Fminus_correct (beta:=radix) r x1y1
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, rMinus11] using h hradix
+    have hrMinus11Exp : -b.dExp ≤ rMinus11.Fexp := by
+      rw [show rMinus11.Fexp = min r.Fexp x1y1.Fexp by
+        simpa [rMinus11] using Fminus_exp_eq_min (beta:=radix) r x1y1]
+      exact le_min hD1.1.2 hC1.1.2
+    let t1Minus12 : FloatSpec.Core.Defs.FlocqFloat radix := Fminus t1 x1y2
+    have ht1Minus12Value :
+        _root_.F2R (beta:=radix) t1Minus12 =
+          _root_.F2R (beta:=radix) t1 - _root_.F2R (beta:=radix) x1y2 := by
+      have h := Fminus_correct (beta:=radix) t1 x1y2
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, t1Minus12] using h hradix
+    have ht1Minus12Exp : -b.dExp ≤ t1Minus12.Fexp := by
+      rw [show t1Minus12.Fexp = min t1.Fexp x1y2.Fexp by
+        simpa [t1Minus12] using Fminus_exp_eq_min (beta:=radix) t1 x1y2]
+      exact le_min hD2.1.2 hC2.1.2
+    let t2Minus21 : FloatSpec.Core.Defs.FlocqFloat radix := Fminus t2 x2y1
+    have ht2Minus21Value :
+        _root_.F2R (beta:=radix) t2Minus21 =
+          _root_.F2R (beta:=radix) t2 - _root_.F2R (beta:=radix) x2y1 := by
+      have h := Fminus_correct (beta:=radix) t2 x2y1
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, t2Minus21] using h hradix
+    have ht2Minus21Exp : -b.dExp ≤ t2Minus21.Fexp := by
+      rw [show t2Minus21.Fexp = min t2.Fexp x2y1.Fexp by
+        simpa [t2Minus21] using Fminus_exp_eq_min (beta:=radix) t2 x2y1]
+      exact le_min hD3.1.2 hC3.1.2
+    let t3Minus22 : FloatSpec.Core.Defs.FlocqFloat radix := Fminus t3 x2y2
+    have ht3Minus22Value :
+        _root_.F2R (beta:=radix) t3Minus22 =
+          _root_.F2R (beta:=radix) t3 - _root_.F2R (beta:=radix) x2y2 := by
+      have h := Fminus_correct (beta:=radix) t3 x2y2
+      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+        Id.run, ULift.up_down, t3Minus22] using h hradix
+    have ht3Minus22Exp : -b.dExp ≤ t3Minus22.Fexp := by
+      rw [show t3Minus22.Fexp = min t3.Fexp x2y2.Fexp by
+        simpa [t3Minus22] using Fminus_exp_eq_min (beta:=radix) t3 x2y2]
+      exact le_min hD4.1.2 hC4.1.2
+    have hC1Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) hy) x1y1 :=
+      liftClosest hxhy x1y1
+        (_root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) hy)
+        hxhyValue hxhyExp hC1
+    have hC2Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) ty) x1y2 :=
+      liftClosest hxty x1y2
+        (_root_.F2R (beta:=radix) hx * _root_.F2R (beta:=radix) ty)
+        hxtyValue hxtyExp hC2
+    have hC3Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) hy) x2y1 :=
+      liftClosest txhy x2y1
+        (_root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) hy)
+        txhyValue txhyExp hC3
+    have hC4Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) ty) x2y2 :=
+      liftClosest txty x2y2
+        (_root_.F2R (beta:=radix) tx * _root_.F2R (beta:=radix) ty)
+        txtyValue txtyExp hC4
+    have hD1Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) yy) r := by
+      have h := liftClosest xy r
+        (_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y)
+        hxyValue hxyExp hD1
+      simpa [hyyValue] using h
+    have hD2Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) x1y1) t1 :=
+      liftClosest rMinus11 t1
+        (_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) x1y1)
+        hrMinus11Value hrMinus11Exp hD2
+    have hD3Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) t1 - _root_.F2R (beta:=radix) x1y2) t2 :=
+      liftClosest t1Minus12 t2
+        (_root_.F2R (beta:=radix) t1 - _root_.F2R (beta:=radix) x1y2)
+        ht1Minus12Value ht1Minus12Exp hD3
+    have hD4Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) t2 - _root_.F2R (beta:=radix) x2y1) t3 :=
+      liftClosest t2Minus21 t3
+        (_root_.F2R (beta:=radix) t2 - _root_.F2R (beta:=radix) x2y1)
+        ht2Minus21Value ht2Minus21Exp hD4
+    have hD5Plus :
+        Closest (beta:=radix) bPlus (radix : ℝ)
+          (_root_.F2R (beta:=radix) t3 - _root_.F2R (beta:=radix) x2y2) t4 :=
+      liftClosest t3Minus22 t4
+        (_root_.F2R (beta:=radix) t3 - _root_.F2R (beta:=radix) x2y2)
+        ht3Minus22Value ht3Minus22Exp hD5
+    have hDekker := DekkerN (beta:=radix) bPlus radix t x yy p q hx tx
+      p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 rfl hradix
+      hvNumPlus hpGe hxNormalPlus hyyNormal hKPlus hA1Plus hA2Plus
+      hA3Plus hA4Plus hB1Plus hB2Plus hB3Plus hB4Plus hC1Plus hC2Plus
+      hC3Plus hC4Plus hD1Plus hD2Plus hD3Plus hD4Plus hD5Plus hBranch
+    simpa [hyyValue] using hDekker
+
 /-- Closed section-context form of `RND_EvenClosest_canonic`.
 
 This discharges the signed lower/upper canonicity dependencies.  The analogous

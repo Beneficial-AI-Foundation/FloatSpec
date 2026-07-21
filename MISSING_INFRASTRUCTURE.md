@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 37 active
+Fix the remaining Flocq import gaps by working through the 36 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2991,9 +2991,33 @@ normalized classifier
 local target gate. Therefore exact public `DekkerN` is removed from the active
 list, reducing the ledger from 38 to 37; `DekkerS1` is next.
 
-#### `Pff/Pff.v` (37)
+2026-07-22 completion note: exact public `DekkerS1` is restored immediately
+after exact `DekkerN`. It matches upstream `Pff.v:DekkerS1` and the full
+`AlgoS1` section payload: normal `x`, subnormal `y`, the exponent-sum bound,
+all A1-A4/B1-B4/C1-C4/D1-D5 `Closest` hypotheses, and only the branch premise
+`radix = 2 ∨ Even t`. The zero-`y` case follows the upstream zero-projection
+cascade. The nonzero case obtains a normal representative of `y` under
+`plusExp b t` via exact `bimplybplusNorm`, constructs exact float-operation
+witnesses to lift every closestness hypothesis via `Closestbbplus`, and applies
+exact `DekkerN` under the enlarged bound. No canonicity, bounded-witness,
+totality, conclusion, or weakening premise was added. Required subscription
+harness attempt `.change_log/codex_attempt_20260722_060750` used `gpt-5.5`
+with high reasoning and recorded `result = proved` with a passing local target
+gate. Independent focused `lake env lean FloatSpec/src/Pff/Pff.lean` exited 0,
+and `git diff --check` plus the direct added-hole scan passed.
+`scripts/audit_placeholders.sh --json FloatSpec` reported zero findings;
+`scripts/status_report.sh --write` reported 58 Lean files with `sorry = 0`,
+`axiom = 0`, `admit = 0`, and zero placeholder/weakening findings. The
+repository has no executable `scripts/check_diff_trust.sh`, so that optional
+trust gate could not be run. Full `lake build` passed all 3345 jobs. Therefore
+the normalized classifier
+`.change_log/manual_attempt_20260722_DekkerS1_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `DekkerS1` is removed from the active list,
+reducing the ledger from 37 to 36; `DekkerS2` is next.
 
-- `DekkerS1` (Theorem, upstream line 17877)
+#### `Pff/Pff.v` (36)
+
 - `DekkerS2` (Theorem, upstream line 18130)
 - `Dekker1` (Theorem, upstream line 18385)
 - `Veltkampb'` (Theorem, upstream line 18421)
@@ -7797,9 +7821,10 @@ Statement-level checks performed for active Pff entries 36-70:
   concrete existential boundedness statements for the Dekker construction.
 - `Boundedx2y2` is now restored as the exact public section-local
   product-splitting theorem in `FloatSpec/src/Pff/Pff.lean`.
-- `Dekker_aux` and `DekkerN` are now restored as exact public theorems in
+- `Dekker_aux`, `DekkerN`, and `DekkerS1` are now restored as exact public
+  theorems in
   `FloatSpec/src/Pff/Pff.lean`.
-- `DekkerS1`, `DekkerS2`, `Dekker1`, `Dekker2_aux`, and `Dekker2` are not
+- `DekkerS2`, `Dekker1`, `Dekker2_aux`, and `Dekker2` are not
   supplied by the public Lean
   `Dekker` wrapper or the local `Dekker1_FTS`/`Dekker2_FTS` helper
   family. The wrapper assumes summarized payloads, while the upstream names
