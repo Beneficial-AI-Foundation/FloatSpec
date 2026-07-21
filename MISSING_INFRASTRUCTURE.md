@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 55.
+- Active semantic gap candidates still listed below: 54.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 55/55 names have been
+- Counterpart audit coverage for the active list: 54/54 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 55 active
+Fix the remaining Flocq import gaps by working through the 54 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -2538,9 +2538,31 @@ The normalized classifier
 local target gate. Therefore `Underf_Err2` is removed from the active list, and
 `Underf_Err3` is next.
 
-#### `Pff/Pff.v` (55)
+2026-07-21 completion note: subscription harness attempt
+`.change_log/codex_attempt_20260721_123937` explored exact upstream
+`Underf_Err3` but was classified failed. Its draft added non-upstream public
+`hvNum_gt` and `hBoundExp` premises, so it was not counted. The manual repair
+removed both premises and restored exact public `Underf_Err3` under only the
+expanded GenericDek section assumptions and the theorem's explicit upstream
+hypotheses. A private lattice lemma aligns the exact input sum at the rounded
+result exponent, combines `ClosestUlp` with the nonzero integer-mantissa gap,
+and forces the rounding error to zero without totality or `boundR` premises.
+The low-exponent branch bounds the exact subtraction by the predecessor of the
+mantissa limit, applies that lattice exactness result, and combines the two
+input underflow errors; the high-exponent branch transports both exactness
+implications directly. No `dExp` invariant, totality, finite-box, canonicity,
+conclusion, or other extra public premise was added. The focused Lean process
+exited 0, `git diff --check` passed, the direct live-hole scan and
+placeholder/generated-status audits reported zero findings, and the full
+3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260721_Underf_Err3_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Therefore `Underf_Err3` is removed from the active list, and
+`Underf_Err3_bis` is next.
 
-- `Underf_Err3` (Theorem, upstream line 16774)
+#### `Pff/Pff.v` (54)
+
 - `Underf_Err3_bis` (Theorem, upstream line 16899)
 - `eLe` (Lemma, upstream line 17049)
 - `rExp` (Lemma, upstream line 17107)
@@ -7352,10 +7374,10 @@ Statement-level checks performed for active Pff entries 36-70:
 - `Closestbbext` is now restored as the exact public arbitrary-bound extension
   theorem in `FloatSpec/src/Pff/Pff.lean`, reduced to `Closestbbplus` after
   proving the supplied extended bound is the corresponding `plusExp` bound.
-- `Underf_Err1`, `Underf_Err2_aux`, and `Underf_Err2` are now restored as
-  exact public underflow-error transfer theorems in
-  `FloatSpec/src/Pff/Pff.lean`. `Underf_Err3` and `Underf_Err3_bis` still have
-  no exact Lean declaration under `FloatSpec/src/Pff`.
+- `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, and `Underf_Err3` are now
+  restored as exact public underflow-error transfer theorems in
+  `FloatSpec/src/Pff/Pff.lean`. `Underf_Err3_bis` still has no exact Lean
+  declaration under `FloatSpec/src/Pff`.
 - `eLe`, `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`,
   `Boundedt4`, `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
