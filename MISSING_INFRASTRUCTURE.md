@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 32 active
+Fix the remaining Flocq import gaps by working through the 31 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3115,9 +3115,27 @@ independently normalized classifier
 local target gate. Exact public `NormalbPrim` is removed from the active list,
 reducing the ledger from 33 to 32; `Dekker2_aux` is next.
 
-#### `Pff/Pff.v` (32)
+2026-07-22 completion note: exact public `Dekker2_aux` is restored in
+`FloatSpec/src/Pff/Pff.lean` immediately after `DekkerN`. It preserves the full
+upstream Algo2 payload: canonical nonzero `x` and `y`, the strict underflow
+exponent premise, all A/B/C/D `Closest` hypotheses, the radix-two/even-precision
+branch, and the `7/2 * radix^(-dExp b)` error bound. The only Lean-only premise
+is the faithful local integer representation invariant `0 <= b.dExp`. The
+proof normalizes both inputs under `Dekker_extendedBound`, reconstructs the
+extended-bound Dekker computation with the existing bounded-product and
+projector stack, and accumulates the exact `Underf_Err` bounds. Independent
+`lake env lean FloatSpec/src/Pff/Pff.lean`, `git diff --check`,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/manual_attempt_20260722_Dekker2_aux_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `Dekker2_aux` is removed from the active list,
+reducing the ledger from 32 to 31; `Dekker2` is next.
 
-- `Dekker2_aux` (Theorem, upstream line 18573)
+#### `Pff/Pff.v` (31)
+
 - `Dekker2` (Theorem, upstream line 18822)
 - `Twice_EvenClosest_Round` (Theorem, upstream line 19178)
 - `errorBoundedMultClosest_Can` (Theorem, upstream line 19729)
@@ -7917,13 +7935,14 @@ Statement-level checks performed for active Pff entries 36-70:
 - `Dekker_aux`, `DekkerN`, `DekkerS1`, `DekkerS2`, and `Dekker1` are now
   restored as exact public theorems in
   `FloatSpec/src/Pff/Pff.lean`.
-- `Dekker2_aux` and `Dekker2` are not supplied by the public Lean
-  `Dekker` wrapper or the local `Dekker1_FTS`/`Dekker2_FTS` helper
-  family. The wrapper assumes summarized payloads, while the upstream names
-  prove the concrete product decomposition or error bound from the section's
-  rounded split/multiply hypotheses. The `*_FTS` helpers are Fast2Sum-style
-  support lemmas over abstract operations and do not match the Pff Dekker
-  section statements.
+- `Dekker2_aux` is now restored as the exact public Algo2 underflow-error
+  theorem in `FloatSpec/src/Pff/Pff.lean`.
+- `Dekker2` is not supplied by the public Lean `Dekker` wrapper or the local
+  `Dekker1_FTS`/`Dekker2_FTS` helper family. The wrapper assumes summarized
+  payloads, while upstream `Dekker2` derives its concrete error bound from the
+  section's rounded split/multiply hypotheses. The `*_FTS` helpers are
+  Fast2Sum-style support lemmas over abstract operations and do not match the
+  Pff Dekker section statement.
 - `Veltkampb'` is now restored as the exact public bound-extension theorem in
   `FloatSpec/src/Pff/Pff.lean`.
 - `NormalbPrim` is now restored as the exact public Algo2 normal-representative
