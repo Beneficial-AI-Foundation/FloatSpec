@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 15.
+- Active semantic gap candidates still listed below: 14.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 15/15 names have been
+- Counterpart audit coverage for the active list: 14/14 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 19 active
+Fix the remaining Flocq import gaps by working through the 14 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3448,9 +3448,28 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Exact public `be2MuchSmaller` is removed from the
 active list, reducing the ledger from 16 to 15; `gaCorrect` is next.
 
-#### `Pff/Pff.v` (15)
+2026-07-22 completion note: exact public Be2NonZero lemma `gaCorrect` is
+restored in `FloatSpec/src/Pff/Pff.lean` with the upstream existential payload:
+a bounded float representing
+`F2R be1 - F2R r1 + F2R be2`. The proof first obtains the exact
+`gatCorrect` witness for `be1 - r1`, handles the `al2 = 0` branch through the
+effective rounded-mode compatibility payload, derives the upstream
+`u2 = 0` contradiction, then applies `Midpoint_aux`. In the nontrivial
+midpoint branch it adds the `gatCorrect` and midpoint witnesses, proves the
+upstream magnitude bound using `Expr1`, `be2MuchSmaller`, and closest-ulp
+bounds, and applies exact `BoundedL` at exponent `be1.Fexp - 2`. The public
+statement intentionally does not expose unused section variables such as
+`gat`, `ga`, `P1`, or boundedness of `a` and `x`. Focused Lean,
+`lake build`, `git diff --check`, `scripts/audit_placeholders.sh --json
+FloatSpec`, and `scripts/status_report.sh --write` passed.
+`scripts/check_diff_trust.sh` is absent in this checkout. The normalized
+classifier `.change_log/manual_attempt_20260722_gaCorrect_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Exact public `gaCorrect` is removed from the active
+list, reducing the ledger from 15 to 14; `tBounded_aux` is next.
 
-- `gaCorrect` (Lemma, upstream line 24617)
+#### `Pff/Pff.v` (14)
+
 - `tBounded_aux` (Theorem, upstream line 25145)
 - `tBounded` (Theorem, upstream line 25532)
 - `ErrFmaApprox_1_aux` (Theorem, upstream line 25626)
