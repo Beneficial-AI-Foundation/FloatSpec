@@ -50229,6 +50229,71 @@ theorem yLe2x_aux {beta : Int}
       mul_lt_mul_of_pos_left hlt hden_pos'
     exact not_lt_of_ge hmain hmul_lt
 
+noncomputable def xLe2y_check {beta : Int}
+    (_bo : Fbound_skel) (_radix : Int) (_precision : Nat)
+    (_a _b _x _y : FloatSpec.Core.Defs.FlocqFloat beta) (_e : ℝ) : Unit :=
+  ()
+
+/-- Coq GenericB lemma `xLe2y`.
+
+This is the exported GenericB branch following `yLe2x_aux`: compare
+`|b|` and `|a|`, then reuse the GenericA payload `xLe2y_aux2`, swapping
+`a` and `b` in the second branch exactly as upstream does.  The sign-transfer
+hypothesis used later by `Subexact` is intentionally not part of this lemma. -/
+theorem xLe2y {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ) :
+    ⦃⌜beta = radix ∧ 1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧
+        3 ≤ precision ∧ Even radix ∧
+        |e| ≤ (1 / 2 : ℝ) * Fulp (beta:=beta) bo radix precision a ∧
+        |e| ≤ (1 / 2 : ℝ) * Fulp (beta:=beta) bo radix precision b ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) a + _root_.F2R (beta:=beta) b) x ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) a + _root_.F2R (beta:=beta) b + e) y ∧
+        Fnormal (beta:=beta) radix bo x ∧
+        Fnormal (beta:=beta) radix bo y ∧
+        Fcanonic (beta:=beta) radix bo a ∧
+        Fcanonic (beta:=beta) radix bo b ∧
+        -bo.dExp < a.Fexp ∧
+        -bo.dExp < b.Fexp ∧
+        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp)⌝⦄
+    (pure (xLe2y_check (beta:=beta) bo radix precision a b x y e) :
+      Id Unit)
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) x| ≤
+      2 * |_root_.F2R (beta:=beta) y|⌝⦄ := by
+  intro hpre
+  rcases hpre with
+    ⟨hbeta, hradix, hvNum, hprecision_ge, hEven, heLea, heLeb, hxClosest,
+      hyClosest, hxNormal, hyNormal, haCan, hbCan, haExpGt, hbExpGt,
+      hBoundExp⟩
+  subst beta
+  simp only [wp, PostCond.noThrow, pure, xLe2y_check, Id.run, ULift.up_down]
+  by_cases hbLeA :
+      |_root_.F2R (beta:=radix) b| ≤ |_root_.F2R (beta:=radix) a|
+  · have h := xLe2y_aux2 (beta:=radix) bo radix precision a b x y e
+    simpa only [wp, PostCond.noThrow, pure, xLe2y_aux2_check, Id.run,
+      ULift.up_down] using
+      h ⟨rfl, hradix, hvNum, hprecision_ge, hEven, heLeb, hxClosest, hyClosest,
+        hxNormal, hyNormal, haCan, hbCan, hbExpGt, hbLeA, hBoundExp⟩
+  · have haLeB :
+        |_root_.F2R (beta:=radix) a| ≤ |_root_.F2R (beta:=radix) b| :=
+      le_of_lt (lt_of_not_ge hbLeA)
+    have hxClosest_swap :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) b + _root_.F2R (beta:=radix) a) x := by
+      simpa [add_comm] using hxClosest
+    have hyClosest_swap :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) b + _root_.F2R (beta:=radix) a + e) y := by
+      simpa [add_comm, add_left_comm, add_assoc] using hyClosest
+    have h := xLe2y_aux2 (beta:=radix) bo radix precision b a x y e
+    simpa only [wp, PostCond.noThrow, pure, xLe2y_aux2_check, Id.run,
+      ULift.up_down] using
+      h ⟨rfl, hradix, hvNum, hprecision_ge, hEven, heLea, hxClosest_swap,
+        hyClosest_swap, hxNormal, hyNormal, hbCan, haCan, haExpGt, haLeB,
+        hBoundExp⟩
+
 noncomputable def RoundLeNormal_check {beta : Int}
     (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
