@@ -1,0 +1,619 @@
+commit f759a0cb0e9ef1efa522a38c1d35e236ac4ed3c7
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 08:32:20 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 08:32:20 2026 +0800
+
+    Restore exact Pff Dekker2_aux theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index bf86e3aa..95ca1f6b 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -53100,6 +53100,541 @@ theorem DekkerN {beta : Int}
+     hxNormal hyNormal hK hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4 hC1 hC2 hC3 hC4
+     hD1 hD2 hD3 hD4 hD5 ⟨prod22, hprod22Val, hprod22Bound⟩
+ 
++/-! Coq Algo2 theorem `Dekker2_aux`.
++
++This is the exact upstream underflow companion after `DekkerN`: nonzero
++canonical inputs are normalized into Dekker's extended bound, the product and
++four correction residuals are related back to the original bound with
++`Underf_Err`, and the final error is the sum of the product underflow error and
++the four residual underflow steps.  The only Lean-only hypothesis is
++`0 <= b.dExp`, the faithful replacement for Coq's `dExp b : N`. -/
++theorem Dekker2_aux {beta : Int}
++    (b : Fbound_skel) (radix : Int) (t : Nat)
++    (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
++      FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hpGe : 4 ≤ t)
++    (hdExp : 0 ≤ b.dExp)
++    (hxCan : Fcanonic (beta:=beta) radix b x)
++    (hyCan : Fcanonic (beta:=beta) radix b y)
++    (hxNonzero : _root_.F2R (beta:=beta) x ≠ 0)
++    (hyNonzero : _root_.F2R (beta:=beta) y ≠ 0)
++    (_hUnder : x.Fexp + y.Fexp < -b.dExp)
++    (hA1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
++    (hA2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
++    (hA3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
++    (hA4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
++    (hB1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) y *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
++    (hB2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
++    (hB3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
++    (hB4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
++    (hC1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) hy) x1y1)
++    (hC2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) ty) x1y2)
++    (hC3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) hy) x2y1)
++    (hC4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty) x2y2)
++    (hD1 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
++    (hD2 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) x1y1) t1)
++    (hD3 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) t1 - _root_.F2R (beta:=beta) x1y2) t2)
++    (hD4 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) t2 - _root_.F2R (beta:=beta) x2y1) t3)
++    (hD5 : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) t3 - _root_.F2R (beta:=beta) x2y2) t4)
++    (hBranch : radix = 2 ∨ Even t) :
++    |_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y -
++        (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) t4)| ≤
++      (7 / 2 : ℝ) * (radix : ℝ) ^ (-(b.dExp)) := by
++  subst beta
++  let s : Nat := t - Nat.div2 t
++  let b' : Fbound_skel := Dekker_extendedBound b t
++  have hsGe : 2 ≤ s := by
++    have h := SLe t hpGe
++    dsimp [s]
++    omega
++  have hsLe : s ≤ t - 2 := by
++    dsimp [s]
++    have h := SGe t hpGe
++    omega
++  have hHst1 : (t : Int) - 1 ≤ 2 * (s : Int) := by
++    have h := s2Ge t
++    dsimp [s]
++    omega
++  have hHst2 : 2 * (s : Int) ≤ (t : Int) + 1 := by
++    have h := s2Le t
++    dsimp [s]
++    omega
++  have hHst3 : (t : Int) ≤ 2 * (s : Int) := by
++    have h := s2Ge t
++    dsimp [s]
++    omega
++  have hb'Num : b'.vNum = Zpower_nat radix t := by
++    simpa [b'] using hvNum
++  have hb'NumEq : b.vNum = b'.vNum := by
++    rw [hb'Num]
++    exact hvNum
++  have hb'ExpLt : b.dExp < b'.dExp := by
++    simpa [b'] using dExpPrim b t hdExp
++  have hb'ExpLe : b.dExp ≤ b'.dExp := le_of_lt hb'ExpLt
++  have hb'ExpNonneg : 0 ≤ b'.dExp := le_trans hdExp hb'ExpLe
++  have htPrecision : 1 < t := by omega
++  have hb'VNumGt : 1 < b'.vNum := by
++    rw [hb'Num, Zpower_nat]
++    calc
++      (1 : Int) < 2 := by norm_num
++      _ ≤ radix := by omega
++      _ = radix ^ (1 : Nat) := by simp
++      _ ≤ radix ^ t := by
++        exact pow_le_pow_right₀ (by omega : (1 : Int) ≤ radix) (by omega : 1 ≤ t)
++  have hBoundRExp :
++      ∀ z : ℝ, -b'.dExp ≤ (boundR (beta:=radix) radix z).Fexp := by
++    intro z
++    have hnonneg :
++        (0 : Int) ≤ (boundR (beta:=radix) radix z).Fexp := by
++      simp [boundR, boundNat]
++    omega
++  have hMinTotal : TotalP (isMin' (beta:=radix) b' radix) := by
++    intro z
++    have h := MinEx (beta:=radix) b' radix z
++    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hb'VNumGt, hBoundRExp z⟩
++  have hMaxTotal : TotalP (isMax' (beta:=radix) b' radix) := by
++    intro z
++    have h := MaxEx (beta:=radix) b' radix z
++    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hb'VNumGt, hBoundRExp z⟩
++  have hClosestTotal : TotalP (Closest (beta:=radix) b' (radix : ℝ)) := by
++    intro z
++    have h := ClosestTotal (beta:=radix) b' radix (radix : ℝ) z
++    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
++      ULift.up_down] using h ⟨hMinTotal, hMaxTotal⟩
++  have closest_projector_eq :
++      ∀ p q : FloatSpec.Core.Defs.FlocqFloat radix,
++        Fbounded (beta:=radix) b' p →
++        Closest (beta:=radix) b' (radix : ℝ)
++          (_root_.F2R (beta:=radix) p) q →
++        _root_.F2R (beta:=radix) q = _root_.F2R (beta:=radix) p := by
++    intro p q hpBound hClosest
++    have hdist := hClosest.2 p hpBound
++    rw [sub_self, abs_zero] at hdist
++    have hzero :
++        |_root_.F2R (beta:=radix) q - _root_.F2R (beta:=radix) p| = 0 :=
++      le_antisymm hdist (abs_nonneg _)
++    exact sub_eq_zero.mp (abs_eq_zero.mp hzero)
++  have hxBound : Fbounded (beta:=radix) b x := by
++    have h := FcanonicBound (beta:=radix) radix b x
++    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check] using h hxCan
++  have hyBound : Fbounded (beta:=radix) b y := by
++    have h := FcanonicBound (beta:=radix) radix b y
++    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check] using h hyCan
++  rcases NormalbPrim (beta:=radix) b radix t x rfl hradix hvNum hpGe
++      hdExp hxCan hxNonzero with
++    ⟨x', hx'Normal, hx'Val, hx'ExpLower⟩
++  rcases NormalbPrim (beta:=radix) b radix t y rfl hradix hvNum hpGe
++      hdExp hyCan hyNonzero with
++    ⟨y', hy'Normal, hy'Val, hy'ExpLower⟩
++  have hK' : -b'.dExp ≤ x'.Fexp + y'.Fexp := by
++    have hb'eq : b'.dExp = 2 * b.dExp + 2 * (t : Int) + 2 := by
++      simpa [b'] using dExpPrimEq b t
++    omega
++  rcases Underf_Err2 (beta:=radix) b b' radix t
++      (_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y) r
++      rfl hradix hvNum htPrecision hb'NumEq hb'ExpLe hD1 with
++    ⟨r', hrUnder, hrClosest'⟩
++  have hrClosestX' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) x' * _root_.F2R (beta:=radix) y') r' := by
++    simpa [hx'Val, hy'Val] using hrClosest'
++  rcases Veltkampb' (beta:=radix) b radix t x p q hx tx
++      rfl hradix hvNum hpGe hb'ExpLt hxBound hA1 hA2 hA3 hA4 with
++    ⟨hA1', hA2', hA3', hA4'⟩
++  rcases Veltkampb' (beta:=radix) b radix t y p' q' hy ty
++      rfl hradix hvNum hpGe hb'ExpLt hyBound hB1 hB2 hB3 hB4 with
++    ⟨hB1', hB2', hB3', hB4'⟩
++  have hA1x' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) x' *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p := by
++    simpa [b', hx'Val] using hA1'
++  have hA2x' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) x' - _root_.F2R (beta:=radix) p) q := by
++    simpa [b', hx'Val] using hA2'
++  have hA3x' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) q + _root_.F2R (beta:=radix) p) hx := by
++    simpa [b'] using hA3'
++  have hA4x' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) x' - _root_.F2R (beta:=radix) hx) tx := by
++    simpa [b', hx'Val] using hA4'
++  have hB1y' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) y' *
++        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p' := by
++    simpa [b', hy'Val] using hB1'
++  have hB2y' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) y' - _root_.F2R (beta:=radix) p') q' := by
++    simpa [b', hy'Val] using hB2'
++  have hB3y' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) q' + _root_.F2R (beta:=radix) p') hy := by
++    simpa [b'] using hB3'
++  have hB4y' : Closest (beta:=radix) b' (radix : ℝ)
++      (_root_.F2R (beta:=radix) y' - _root_.F2R (beta:=radix) hy) ty := by
++    simpa [b', hy'Val] using hB4'
++  rcases VeltkampU (beta:=radix) b' radix s t x' p q hx tx rfl hradix
++      hb'Num hsGe hsLe (Or.inl hx'Normal)
++      (by simpa [s] using hA1x') hA2x' hA3x' hA4x' with
++    ⟨hxTailAbs, hxDecomp, hxHead, hxTail⟩
++  rcases hxHead with ⟨chx, hchxVal, hchxBound, hchxExpFn⟩
++  rcases hxTail with ⟨ctx, hctxVal, hctxBound, hctxExp⟩
++  have hchxExp : (s : Int) + x'.Fexp ≤ chx.Fexp := hchxExpFn hx'Normal
++  have hcxDecomp :
++      _root_.F2R (beta:=radix) x' =
++        _root_.F2R (beta:=radix) chx + _root_.F2R (beta:=radix) ctx := by
++    rw [hxDecomp, ← hchxVal, ← hctxVal]
++  have hctxAbs : |_root_.F2R (beta:=radix) ctx| ≤
++      (radix : ℝ) ^ ((s : Int) + x'.Fexp) / 2 := by
++    have htxEq :
++        _root_.F2R (beta:=radix) tx =
++          _root_.F2R (beta:=radix) x' - _root_.F2R (beta:=radix) hx := by
++      rw [hxDecomp]
++      ring
++    simpa [hctxVal, htxEq.symm] using hxTailAbs
++  rcases VeltkampU (beta:=radix) b' radix s t y' p' q' hy ty rfl hradix
++      hb'Num hsGe hsLe (Or.inl hy'Normal)
++      (by simpa [s] using hB1y') hB2y' hB3y' hB4y' with
++    ⟨hyTailAbs, hyDecomp, hyHead, hyTail⟩
++  rcases hyHead with ⟨chy, hchyVal, hchyBound, hchyExpFn⟩
++  rcases hyTail with ⟨cty, hctyVal, hctyBound, hctyExp⟩
++  have hchyExp : (s : Int) + y'.Fexp ≤ chy.Fexp := hchyExpFn hy'Normal
++  have hcyDecomp :
++      _root_.F2R (beta:=radix) y' =
++        _root_.F2R (beta:=radix) chy + _root_.F2R (beta:=radix) cty := by
++    rw [hyDecomp, ← hchyVal, ← hctyVal]
++  have hctyAbs : |_root_.F2R (beta:=radix) cty| ≤
++      (radix : ℝ) ^ ((s : Int) + y'.Fexp) / 2 := by
++    have htyEq :
++        _root_.F2R (beta:=radix) ty =
++          _root_.F2R (beta:=radix) y' - _root_.F2R (beta:=radix) hy := by
++      rw [hyDecomp]
++      ring
++    simpa [hctyVal, htyEq.symm] using hyTailAbs
++  let err : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fminus (beta:=radix)
++      (FloatSpec.Calc.Operations.Fmult (beta:=radix) x' y') r'
++  have herrVal :
++      _root_.F2R (beta:=radix) err =
++        _root_.F2R (beta:=radix) x' * _root_.F2R (beta:=radix) y' -
++          _root_.F2R (beta:=radix) r' := by
++    have hminus := Fminus_correct (beta:=radix)
++      (FloatSpec.Calc.Operations.Fmult (beta:=radix) x' y') r'
++    have hminusVal :
++        _root_.F2R (beta:=radix) err =
++          _root_.F2R (beta:=radix)
++              (FloatSpec.Calc.Operations.Fmult (beta:=radix) x' y') -
++            _root_.F2R (beta:=radix) r' := by
++      simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
++        Id.run, ULift.up_down, err] using hminus hradix
++    have hmult := Fmult_correct (beta:=radix) x' y'
++    have hmultVal :
++        _root_.F2R (beta:=radix)
++            (FloatSpec.Calc.Operations.Fmult (beta:=radix) x' y') =
++          _root_.F2R (beta:=radix) x' * _root_.F2R (beta:=radix) y' := by
++      simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
++        Id.run, ULift.up_down] using hmult hradix
++    rw [hminusVal, hmultVal]
++  have hProdEq :
++      _root_.F2R (beta:=radix) x' * _root_.F2R (beta:=radix) y' =
++        _root_.F2R (beta:=radix) r' + _root_.F2R (beta:=radix) err := by
++    rw [herrVal]
++    ring
++  rcases Boundedt1 (beta:=radix) b' radix s t x' chx ctx y' chy cty r' err
++      rfl hradix hb'Num hsGe hsLe hHst1 hHst2 hx'Normal hy'Normal hK'
++      hrClosestX' hProdEq hcxDecomp hcyDecomp hctxAbs hctyAbs
++      hchxExp hchyExp with
++    ⟨ct1, hct1Val, hct1Bound, hct1Exp⟩
++  rcases Boundedt2 (beta:=radix) b' radix s t x' chx ctx y' chy cty r' err
++      rfl hradix hb'Num hsGe hsLe hHst1 hHst2 hx'Normal hy'Normal hK'
++      hrClosestX' hProdEq hcxDecomp hcyDecomp hctxAbs hctyAbs
++      hchxExp hchyExp hctyExp with
++    ⟨ct2, hct2Val, hct2Bound, hct2Exp⟩
++  rcases Boundedt3 (beta:=radix) b' radix s t x' chx ctx y' chy cty r' err
++      rfl hradix hb'Num hsGe hsLe hHst1 hHst2 hx'Normal hy'Normal hK'
++      hrClosestX' hProdEq hcxDecomp hcyDecomp hctxAbs hctyAbs
++      hchxExp hchyExp hctxExp hctyExp with
++    ⟨ct3, hct3Val, hct3Bound, hct3Exp⟩
++  rcases Boundedt4_aux (beta:=radix) b' radix s t x' chx ctx y' chy cty r'
++      rfl hradix hb'Num hsGe hsLe hx'Normal hy'Normal hK' hrClosestX'
++      hcxDecomp hcyDecomp with
++    ⟨ct4, hct4Val, hct4Bound, hct4Exp⟩
++  rcases Boundedx1y1_aux (beta:=radix) b' radix s t x' chx y' chy
++      rfl hradix hb'Num hK' hchxExp hchyExp hchxBound hchyBound hHst3 with
++    ⟨cx1y1, hcx1y1Val, hcx1y1Bound, hcx1y1Exp⟩
++  rcases Boundedx1y2_aux (beta:=radix) b' radix s t x' chx y' cty
++      rfl hradix hb'Num hsLe hK' hchxExp hctyExp hchxBound hctyBound with
++    ⟨cx1y2, hcx1y2Val, hcx1y2Bound, hcx1y2Exp⟩
++  rcases Boundedx2y1_aux (beta:=radix) b' radix s t x' ctx y' chy
++      rfl hradix hb'Num hsLe hK' hctxExp hchyExp hctxBound hchyBound with
++    ⟨cx2y1, hcx2y1Val, hcx2y1Bound, hcx2y1Exp⟩
++  rcases Boundedx2y2 (beta:=radix) b' radix t x' y' p q hx tx p' q' hy ty
++      rfl hradix hb'Num hpGe hK' hx'Normal hy'Normal hA1x' hA2x'
++      hA3x' hA4x' hB1y' hB2y' hB3y' hB4y' hBranch with
++    ⟨cx2y2, hcx2y2Val, hcx2y2Bound, hcx2y2Exp⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) hx *
++      _root_.F2R (beta:=radix) hy) with
++    ⟨x1y1', hC1'⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) hx *
++      _root_.F2R (beta:=radix) ty) with
++    ⟨x1y2', hC2'⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) tx *
++      _root_.F2R (beta:=radix) hy) with
++    ⟨x2y1', hC3'⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) tx *
++      _root_.F2R (beta:=radix) ty) with
++    ⟨x2y2', hC4'⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) r' -
++      _root_.F2R (beta:=radix) x1y1') with
++    ⟨t1', hD2'⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) t1' -
++      _root_.F2R (beta:=radix) x1y2') with
++    ⟨t2', hD3'⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) t2' -
++      _root_.F2R (beta:=radix) x2y1') with
++    ⟨t3', hD4'⟩
++  rcases hClosestTotal (_root_.F2R (beta:=radix) t3' -
++      _root_.F2R (beta:=radix) x2y2') with
++    ⟨t4', hD5'⟩
++  have hx1y1'Eq : _root_.F2R (beta:=radix) x1y1' =
++      _root_.F2R (beta:=radix) cx1y1 := by
++    apply closest_projector_eq cx1y1 x1y1' hcx1y1Bound
++    simpa [hcx1y1Val, hchxVal, hchyVal] using hC1'
++  have hx1y2'Eq : _root_.F2R (beta:=radix) x1y2' =
++      _root_.F2R (beta:=radix) cx1y2 := by
++    apply closest_projector_eq cx1y2 x1y2' hcx1y2Bound
++    simpa [hcx1y2Val, hchxVal, hctyVal] using hC2'
++  have hx2y1'Eq : _root_.F2R (beta:=radix) x2y1' =
++      _root_.F2R (beta:=radix) cx2y1 := by
++    apply closest_projector_eq cx2y1 x2y1' hcx2y1Bound
++    simpa [hcx2y1Val, hctxVal, hchyVal] using hC3'
++  have hx2y2'Eq : _root_.F2R (beta:=radix) x2y2' =
++      _root_.F2R (beta:=radix) cx2y2 := by
++    apply closest_projector_eq cx2y2 x2y2' hcx2y2Bound
++    simpa [hcx2y2Val, hctxVal, hctyVal] using hC4'
++  have ht1'Eq : _root_.F2R (beta:=radix) t1' =
++      _root_.F2R (beta:=radix) ct1 := by
++    apply closest_projector_eq ct1 t1' hct1Bound
++    have hinput :
++        _root_.F2R (beta:=radix) r' -
++            _root_.F2R (beta:=radix) x1y1' =
++          _root_.F2R (beta:=radix) ct1 := by
++      rw [hct1Val, hx1y1'Eq, hcx1y1Val, hchxVal, hchyVal]
++    simpa [hinput] using hD2'
++  have ht2'Eq : _root_.F2R (beta:=radix) t2' =
++      _root_.F2R (beta:=radix) ct2 := by
++    apply closest_projector_eq ct2 t2' hct2Bound
++    have hinput :
++        _root_.F2R (beta:=radix) t1' -
++            _root_.F2R (beta:=radix) x1y2' =
++          _root_.F2R (beta:=radix) ct2 := by
++      calc
++        _root_.F2R (beta:=radix) t1' -
++            _root_.F2R (beta:=radix) x1y2' =
++          _root_.F2R (beta:=radix) ct1 -
++            _root_.F2R (beta:=radix) cx1y2 := by
++            rw [ht1'Eq, hx1y2'Eq]
++        _ = _root_.F2R (beta:=radix) ct2 := by
++            rw [hct1Val, hcx1y2Val, hct2Val, hchxVal, hctyVal]
++    simpa [hinput] using hD3'
++  have ht3'Eq : _root_.F2R (beta:=radix) t3' =
++      _root_.F2R (beta:=radix) ct3 := by
++    apply closest_projector_eq ct3 t3' hct3Bound
++    have hinput :
++        _root_.F2R (beta:=radix) t2' -
++            _root_.F2R (beta:=radix) x2y1' =
++          _root_.F2R (beta:=radix) ct3 := by
++      calc
++        _root_.F2R (beta:=radix) t2' -
++            _root_.F2R (beta:=radix) x2y1' =
++          _root_.F2R (beta:=radix) ct2 -
++            _root_.F2R (beta:=radix) cx2y1 := by
++            rw [ht2'Eq, hx2y1'Eq]
++        _ = _root_.F2R (beta:=radix) ct3 := by
++            rw [hct2Val, hcx2y1Val, hct3Val, hctxVal, hchyVal]
++    simpa [hinput] using hD4'
++  have ht4'Eq : _root_.F2R (beta:=radix) t4' =
++      _root_.F2R (beta:=radix) ct4 := by
++    apply closest_projector_eq ct4 t4' hct4Bound
++    have hinput :
++        _root_.F2R (beta:=radix) t3' -
++            _root_.F2R (beta:=radix) x2y2' =
++          _root_.F2R (beta:=radix) ct4 := by
++      calc
++        _root_.F2R (beta:=radix) t3' -
++            _root_.F2R (beta:=radix) x2y2' =
++          _root_.F2R (beta:=radix) ct3 -
++            _root_.F2R (beta:=radix) cx2y2 := by
++            rw [ht3'Eq, hx2y2'Eq]
++        _ = _root_.F2R (beta:=radix) ct4 := by
++            rw [hct3Val, hcx2y2Val, hct4Val, ← hctxVal, ← hctyVal]
++    simpa [hinput] using hD5'
++  have hDekker :
++      _root_.F2R (beta:=radix) x' * _root_.F2R (beta:=radix) y' =
++        _root_.F2R (beta:=radix) r' - _root_.F2R (beta:=radix) t4' :=
++    DekkerN (beta:=radix) b' radix t x' y' p q hx tx p' q' hy ty
++      x1y1' x1y2' x2y1' x2y2' r' t1' t2' t3' t4' rfl hradix hb'Num
++      hpGe hx'Normal hy'Normal hK' hA1x' hA2x' hA3x' hA4x' hB1y'
++      hB2y' hB3y' hB4y' hC1' hC2' hC3' hC4' hrClosestX' hD2' hD3'
++      hD4' hD5' hBranch
++  have hC1Exact :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) cx1y1) x1y1 := by
++    simpa [hcx1y1Val, hchxVal, hchyVal] using hC1
++  have hC2Exact :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) cx1y2) x1y2 := by
++    simpa [hcx1y2Val, hchxVal, hctyVal] using hC2
++  have hC3Exact :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) cx2y1) x2y1 := by
++    simpa [hcx2y1Val, hctxVal, hchyVal] using hC3
++  have hC4Exact :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) cx2y2) x2y2 := by
++    simpa [hcx2y2Val, hctxVal, hctyVal] using hC4
++  have hRexp :
++      (t : Int) - 1 + x'.Fexp + y'.Fexp ≤ r'.Fexp :=
++    rExp (beta:=radix) b' radix s t x' y' r' rfl hradix hb'Num hsGe hsLe
++      hx'Normal hy'Normal hK' hrClosestX'
++  have hCx1y1Under :
++      Underf_Err (beta:=radix) b b' radix x1y1 cx1y1
++        (_root_.F2R (beta:=radix) cx1y1) (1 / 2 : ℝ) :=
++    Underf_Err1 (beta:=radix) b b' radix t cx1y1 x1y1 rfl hradix
++      hvNum htPrecision hb'NumEq hb'ExpLe hcx1y1Bound hC1Exact
++  have hCx1y2Under :
++      Underf_Err (beta:=radix) b b' radix x1y2 cx1y2
++        (_root_.F2R (beta:=radix) cx1y2) (1 / 2 : ℝ) :=
++    Underf_Err1 (beta:=radix) b b' radix t cx1y2 x1y2 rfl hradix
++      hvNum htPrecision hb'NumEq hb'ExpLe hcx1y2Bound hC2Exact
++  have hCx2y1Under :
++      Underf_Err (beta:=radix) b b' radix x2y1 cx2y1
++        (_root_.F2R (beta:=radix) cx2y1) (1 / 2 : ℝ) :=
++    Underf_Err1 (beta:=radix) b b' radix t cx2y1 x2y1 rfl hradix
++      hvNum htPrecision hb'NumEq hb'ExpLe hcx2y1Bound hC3Exact
++  have hCx2y2Under :
++      Underf_Err (beta:=radix) b b' radix x2y2 cx2y2
++        (_root_.F2R (beta:=radix) cx2y2) (1 / 2 : ℝ) :=
++    Underf_Err1 (beta:=radix) b b' radix t cx2y2 x2y2 rfl hradix
++      hvNum htPrecision hb'NumEq hb'ExpLe hcx2y2Bound hC4Exact
++  have ht1Under :
++      Underf_Err (beta:=radix) b b' radix t1 ct1
++        (_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) x1y1)
++        ((3 / 4 : ℝ) + (1 / 2 : ℝ)) := by
++    refine Underf_Err3_bis (beta:=radix) b b' radix t r r' x1y1 cx1y1
++      ct1 t1 (_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y)
++      (_root_.F2R (beta:=radix) cx1y1) (3 / 4 : ℝ) (1 / 2 : ℝ)
++      rfl hradix hvNum htPrecision hpGe hb'NumEq hb'ExpLe hrUnder
++      hCx1y1Under (by norm_num) hct1Bound ?_ ?_ ?_ hD2
++    · rw [hct1Val, hcx1y1Val, hchxVal, hchyVal]
++    · rw [hct1Exp]
++      exact hRexp
++    · rw [hct1Exp, hcx1y1Exp]
++      omega
++  have ht2Under :
++      Underf_Err (beta:=radix) b b' radix t2 ct2
++        (_root_.F2R (beta:=radix) t1 - _root_.F2R (beta:=radix) x1y2)
++        (((3 / 4 : ℝ) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) := by
++    refine Underf_Err3_bis (beta:=radix) b b' radix t t1 ct1 x1y2 cx1y2
++      ct2 t2 (_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) x1y1)
++      (_root_.F2R (beta:=radix) cx1y2)
++      ((3 / 4 : ℝ) + (1 / 2 : ℝ)) (1 / 2 : ℝ)
++      rfl hradix hvNum htPrecision hpGe hb'NumEq hb'ExpLe ht1Under
++      hCx1y2Under (by norm_num) hct2Bound ?_ ?_ ?_ hD3
++    · rw [hct2Val, hcx1y2Val, hct1Val, hchxVal, hctyVal]
++    · rw [hct2Exp, hct1Exp]
++      omega
++    · rw [hct2Exp, hcx1y2Exp]
++      omega
++  have ht3Under :
++      Underf_Err (beta:=radix) b b' radix t3 ct3
++        (_root_.F2R (beta:=radix) t2 - _root_.F2R (beta:=radix) x2y1)
++        ((((3 / 4 : ℝ) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) := by
++    refine Underf_Err3_bis (beta:=radix) b b' radix t t2 ct2 x2y1 cx2y1
++      ct3 t3 (_root_.F2R (beta:=radix) t1 - _root_.F2R (beta:=radix) x1y2)
++      (_root_.F2R (beta:=radix) cx2y1)
++      (((3 / 4 : ℝ) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) (1 / 2 : ℝ)
++      rfl hradix hvNum htPrecision hpGe hb'NumEq hb'ExpLe ht2Under
++      hCx2y1Under (by norm_num) hct3Bound ?_ ?_ ?_ hD4
++    · rw [hct3Val, hcx2y1Val, hct2Val, hctxVal, hchyVal]
++    · rw [hct3Exp, hct2Exp]
++    · rw [hct3Exp, hcx2y1Exp]
++      omega
++  have ht4Under :
++      Underf_Err (beta:=radix) b b' radix t4 ct4
++        (_root_.F2R (beta:=radix) t3 - _root_.F2R (beta:=radix) x2y2)
++        (((((3 / 4 : ℝ) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) +
++          (1 / 2 : ℝ)) := by
++    refine Underf_Err3_bis (beta:=radix) b b' radix t t3 ct3 x2y2 cx2y2
++      ct4 t4 (_root_.F2R (beta:=radix) t2 - _root_.F2R (beta:=radix) x2y1)
++      (_root_.F2R (beta:=radix) cx2y2)
++      ((((3 / 4 : ℝ) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) + (1 / 2 : ℝ))
++      (1 / 2 : ℝ) rfl hradix hvNum htPrecision hpGe hb'NumEq hb'ExpLe
++      ht3Under hCx2y2Under (by norm_num) hct4Bound ?_ ?_ ?_ hD5
++    · rw [hct4Val, hcx2y2Val, hct3Val, ← hctxVal, ← hctyVal]
++    · rw [hct4Exp, hct3Exp]
++      omega
++    · rw [hct4Exp]
++      exact hcx2y2Exp
++  have hunitNonneg : 0 ≤ (radix : ℝ) ^ (-b.dExp) := by
++    have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++      exact_mod_cast (show (0 : Int) < radix by omega)
++    exact le_of_lt (zpow_pos hradixPos _)
++  have hrDiff :
++      |_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) r'| ≤
++        (3 / 4 : ℝ) * (radix : ℝ) ^ (-b.dExp) := by
++    exact hrUnder.2.2.1
++  have ht4Diff :
++      |_root_.F2R (beta:=radix) t4 - _root_.F2R (beta:=radix) ct4| ≤
++        (((((3 / 4 : ℝ) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) + (1 / 2 : ℝ)) +
++          (1 / 2 : ℝ)) * (radix : ℝ) ^ (-b.dExp) := by
++    exact ht4Under.2.2.1
++  have ht4Diff' :
++      |_root_.F2R (beta:=radix) t4 - _root_.F2R (beta:=radix) t4'| ≤
++        (11 / 4 : ℝ) * (radix : ℝ) ^ (-b.dExp) := by
++    rw [ht4'Eq]
++    convert ht4Diff using 1 <;> norm_num
++  have hmainEq :
++      _root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y =
++        _root_.F2R (beta:=radix) r' - _root_.F2R (beta:=radix) t4' := by
++    rw [← hx'Val, ← hy'Val]
++    exact hDekker
++  calc
++    |_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y -
++        (_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) t4)|
++        = |(-(_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) r')) +
++            (_root_.F2R (beta:=radix) t4 - _root_.F2R (beta:=radix) t4')| := by
++          rw [hmainEq]
++          ring_nf
++    _ ≤ |_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) r'| +
++          |_root_.F2R (beta:=radix) t4 - _root_.F2R (beta:=radix) t4'| := by
++          simpa [abs_neg, abs_sub_comm] using abs_add_le
++            (-(_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) r'))
++            (_root_.F2R (beta:=radix) t4 - _root_.F2R (beta:=radix) t4')
++    _ ≤ (3 / 4 : ℝ) * (radix : ℝ) ^ (-b.dExp) +
++          (11 / 4 : ℝ) * (radix : ℝ) ^ (-b.dExp) :=
++          add_le_add hrDiff ht4Diff'
++    _ = (7 / 2 : ℝ) * (radix : ℝ) ^ (-b.dExp) := by ring
++
+ /-! Coq AlgoS1 theorem `DekkerS1`.
+ 
+ This is the subnormal-`y` counterpart of `DekkerN`.  The zero branch follows
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 41ee3d7f..e3802f84 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 32 active
++Fix the remaining Flocq import gaps by working through the 31 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -3115,9 +3115,27 @@ independently normalized classifier
+ local target gate. Exact public `NormalbPrim` is removed from the active list,
+ reducing the ledger from 33 to 32; `Dekker2_aux` is next.
+ 
+-#### `Pff/Pff.v` (32)
++2026-07-22 completion note: exact public `Dekker2_aux` is restored in
++`FloatSpec/src/Pff/Pff.lean` immediately after `DekkerN`. It preserves the full
++upstream Algo2 payload: canonical nonzero `x` and `y`, the strict underflow
++exponent premise, all A/B/C/D `Closest` hypotheses, the radix-two/even-precision
++branch, and the `7/2 * radix^(-dExp b)` error bound. The only Lean-only premise
++is the faithful local integer representation invariant `0 <= b.dExp`. The
++proof normalizes both inputs under `Dekker_extendedBound`, reconstructs the
++extended-bound Dekker computation with the existing bounded-product and
++projector stack, and accumulates the exact `Underf_Err` bounds. Independent
++`lake env lean FloatSpec/src/Pff/Pff.lean`, `git diff --check`,
++`scripts/audit_placeholders.sh --json FloatSpec`, and
++`scripts/status_report.sh --write` passed, and full `lake build` passed all
++3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
++normalized classifier
++`.change_log/manual_attempt_20260722_Dekker2_aux_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Exact public `Dekker2_aux` is removed from the active list,
++reducing the ledger from 32 to 31; `Dekker2` is next.
++
++#### `Pff/Pff.v` (31)
+ 
+-- `Dekker2_aux` (Theorem, upstream line 18573)
+ - `Dekker2` (Theorem, upstream line 18822)
+ - `Twice_EvenClosest_Round` (Theorem, upstream line 19178)
+ - `errorBoundedMultClosest_Can` (Theorem, upstream line 19729)
+@@ -7917,13 +7935,14 @@ Statement-level checks performed for active Pff entries 36-70:
+ - `Dekker_aux`, `DekkerN`, `DekkerS1`, `DekkerS2`, and `Dekker1` are now
+   restored as exact public theorems in
+   `FloatSpec/src/Pff/Pff.lean`.
+-- `Dekker2_aux` and `Dekker2` are not supplied by the public Lean
+-  `Dekker` wrapper or the local `Dekker1_FTS`/`Dekker2_FTS` helper
+-  family. The wrapper assumes summarized payloads, while the upstream names
+-  prove the concrete product decomposition or error bound from the section's
+-  rounded split/multiply hypotheses. The `*_FTS` helpers are Fast2Sum-style
+-  support lemmas over abstract operations and do not match the Pff Dekker
+-  section statements.
++- `Dekker2_aux` is now restored as the exact public Algo2 underflow-error
++  theorem in `FloatSpec/src/Pff/Pff.lean`.
++- `Dekker2` is not supplied by the public Lean `Dekker` wrapper or the local
++  `Dekker1_FTS`/`Dekker2_FTS` helper family. The wrapper assumes summarized
++  payloads, while upstream `Dekker2` derives its concrete error bound from the
++  section's rounded split/multiply hypotheses. The `*_FTS` helpers are
++  Fast2Sum-style support lemmas over abstract operations and do not match the
++  Pff Dekker section statement.
+ - `Veltkampb'` is now restored as the exact public bound-extension theorem in
+   `FloatSpec/src/Pff/Pff.lean`.
+ - `NormalbPrim` is now restored as the exact public Algo2 normal-representative
