@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 20.
+- Active semantic gap candidates still listed below: 19.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 20/20 names have been
+- Counterpart audit coverage for the active list: 19/19 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 20 active
+Fix the remaining Flocq import gaps by working through the 19 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3352,9 +3352,27 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Exact public `Midpoint_aux_aux` is removed from the
 active list, reducing the ledger from 21 to 20; `Midpoint_aux` is next.
 
-#### `Pff/Pff.v` (20)
+2026-07-22 completion note: exact public GenericD lemma `Midpoint_aux` is
+restored in `FloatSpec/src/Pff/Pff.lean` with the full upstream disjunction
+and without adding an `x1` positivity premise. The proof matches upstream
+`Pff/Pff.v:24209`: it splits on the sign of `F2R x1`, applies
+`Midpoint_aux_aux` directly in the positive branch, rules out zero from
+normality, and handles the negative branch by transporting the two `Closest`
+premises through `Fopp`/`ClosestOpp`, rewriting `MSB`/`LSB` with
+`MSB_opp`/`LSB_opp`, preserving normality with `FnormalFop`, and mapping the
+witness back with `Fopp`. Focused Lean, `lake build`, `git diff --check`,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed. The required subscription harness
+attempt `.change_log/codex_attempt_20260722_144725` generated the exact
+declaration and proof. `scripts/check_diff_trust.sh` is absent in this
+checkout. The normalized classifier
+`.change_log/manual_attempt_20260722_Midpoint_aux_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `Midpoint_aux` is removed from the active
+list, reducing the ledger from 20 to 19; `gatCorrect` is next.
 
-- `Midpoint_aux` (Lemma, upstream line 24208)
+#### `Pff/Pff.v` (19)
+
 - `gatCorrect` (Lemma, upstream line 24295)
 - `Expr1` (Lemma, upstream line 24443)
 - `Expbe1` (Lemma, upstream line 24480)
@@ -8196,8 +8214,7 @@ Statement-level checks performed for active Pff entries 71-104:
 - `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
   exact representability fixes `|x|`, and the even-radix half-unit witness
   plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
-- `Midpoint_aux`, `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and
-  `gaCorrect`
+- `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
   not the upstream subtraction/midpoint/least-significant-bit payloads.

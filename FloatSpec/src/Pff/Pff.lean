@@ -60286,6 +60286,154 @@ theorem Midpoint_aux_aux {beta : Int}
       htarget_lower (hupper_for_exp hsmall) hnormalBounds.1
       (by omega) hsmall hfClosest
 
+/-- Coq GenericD lemma `Midpoint_aux`.
+
+This is the sign-symmetric public wrapper around `Midpoint_aux_aux`. -/
+theorem Midpoint_aux {beta : Int}
+    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (x1 x2 y f : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta_radix : beta = radix)
+    (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix precision)
+    (hprecision : 1 < precision)
+    (hEven : Even radix)
+    (hx1Closest : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x1 + _root_.F2R (beta:=beta) x2) x1)
+    (hfClosest : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x1 + _root_.F2R (beta:=beta) x2 +
+        _root_.F2R (beta:=beta) y) f)
+    (hy_lsb : MSB (beta:=beta) radix y < LSB (beta:=beta) radix x2)
+    (hx1Normal : Fnormal (beta:=beta) radix b x1)
+    (hx2ValueNonzero : _root_.F2R (beta:=beta) x2 ≠ 0)
+    (hx1Exp : -b.dExp < x1.Fexp) :
+    _root_.F2R (beta:=beta) x1 = _root_.F2R (beta:=beta) f ∨
+      ∃ v : FloatSpec.Core.Defs.FlocqFloat beta,
+        _root_.F2R (beta:=beta) v = _root_.F2R (beta:=beta) x2 ∧
+          x1.Fexp - 2 ≤ v.Fexp := by
+  subst beta
+  have hradix_pos_int : (0 : Int) < radix := by omega
+  have hvNum_pos : 0 < b.vNum := by
+    rw [hvNum]
+    simpa [Zpower_nat] using (pow_pos hradix_pos_int precision)
+  rcases lt_trichotomy (_root_.F2R (beta:=radix) x1) 0 with
+      hx1Neg | hx1Zero | hx1Pos
+  · let ox1 : FloatSpec.Core.Defs.FlocqFloat radix := Fopp (beta:=radix) x1
+    let ox2 : FloatSpec.Core.Defs.FlocqFloat radix := Fopp (beta:=radix) x2
+    let oy : FloatSpec.Core.Defs.FlocqFloat radix := Fopp (beta:=radix) y
+    let of : FloatSpec.Core.Defs.FlocqFloat radix := Fopp (beta:=radix) f
+    have hx1OppReal :
+        _root_.F2R (beta:=radix) ox1 =
+          -_root_.F2R (beta:=radix) x1 := by
+      have h := Fopp_correct (beta:=radix) x1
+      simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+        ULift.up_down, ox1] using h trivial
+    have hx2OppReal :
+        _root_.F2R (beta:=radix) ox2 =
+          -_root_.F2R (beta:=radix) x2 := by
+      have h := Fopp_correct (beta:=radix) x2
+      simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+        ULift.up_down, ox2] using h trivial
+    have hyOppReal :
+        _root_.F2R (beta:=radix) oy =
+          -_root_.F2R (beta:=radix) y := by
+      have h := Fopp_correct (beta:=radix) y
+      simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+        ULift.up_down, oy] using h trivial
+    have hfOppReal :
+        _root_.F2R (beta:=radix) of =
+          -_root_.F2R (beta:=radix) f := by
+      have h := Fopp_correct (beta:=radix) f
+      simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+        ULift.up_down, of] using h trivial
+    have hx1OppPos : 0 < _root_.F2R (beta:=radix) ox1 := by
+      rw [hx1OppReal]
+      linarith
+    have hx1ClosestOpp : Closest (beta:=radix) b (radix : ℝ)
+        (_root_.F2R (beta:=radix) ox1 + _root_.F2R (beta:=radix) ox2) ox1 := by
+      have h := ClosestOpp (beta:=radix) b (radix : ℝ) x1
+        (_root_.F2R (beta:=radix) x1 + _root_.F2R (beta:=radix) x2)
+      have hraw : Closest (beta:=radix) b (radix : ℝ)
+          (-(_root_.F2R (beta:=radix) x1 + _root_.F2R (beta:=radix) x2)) ox1 := by
+        simpa only [wp, PostCond.noThrow, pure, ClosestOpp_check,
+          Id.run, ULift.up_down, ox1] using h hx1Closest
+      have harg :
+          _root_.F2R (beta:=radix) ox1 + _root_.F2R (beta:=radix) ox2 =
+            -(_root_.F2R (beta:=radix) x1 + _root_.F2R (beta:=radix) x2) := by
+        rw [hx1OppReal, hx2OppReal]
+        ring
+      simpa [harg] using hraw
+    have hfClosestOpp : Closest (beta:=radix) b (radix : ℝ)
+        (_root_.F2R (beta:=radix) ox1 + _root_.F2R (beta:=radix) ox2 +
+          _root_.F2R (beta:=radix) oy) of := by
+      have h := ClosestOpp (beta:=radix) b (radix : ℝ) f
+        (_root_.F2R (beta:=radix) x1 + _root_.F2R (beta:=radix) x2 +
+          _root_.F2R (beta:=radix) y)
+      have hraw : Closest (beta:=radix) b (radix : ℝ)
+          (-(_root_.F2R (beta:=radix) x1 + _root_.F2R (beta:=radix) x2 +
+            _root_.F2R (beta:=radix) y)) of := by
+        simpa only [wp, PostCond.noThrow, pure, ClosestOpp_check,
+          Id.run, ULift.up_down, of] using h hfClosest
+      have harg :
+          _root_.F2R (beta:=radix) ox1 + _root_.F2R (beta:=radix) ox2 +
+              _root_.F2R (beta:=radix) oy =
+            -(_root_.F2R (beta:=radix) x1 + _root_.F2R (beta:=radix) x2 +
+              _root_.F2R (beta:=radix) y) := by
+        rw [hx1OppReal, hx2OppReal, hyOppReal]
+        ring
+      simpa [harg] using hraw
+    have hy_lsb_opp : MSB (beta:=radix) radix oy < LSB (beta:=radix) radix ox2 := by
+      have hmsb := MSB_opp (beta:=radix) radix y
+      have hmsb' : MSB (beta:=radix) radix y = MSB (beta:=radix) radix oy := by
+        simpa only [wp, PostCond.noThrow, pure, MSB_opp_check, Id.run,
+          ULift.up_down, oy] using hmsb trivial
+      have hlsb := LSB_opp (beta:=radix) radix x2
+      have hlsb' : LSB (beta:=radix) radix x2 = LSB (beta:=radix) radix ox2 := by
+        simpa only [wp, PostCond.noThrow, pure, LSB_opp_check, Id.run,
+          ULift.up_down, ox2] using hlsb trivial
+      simpa [← hmsb', ← hlsb'] using hy_lsb
+    have hx1NormalOpp : Fnormal (beta:=radix) radix b ox1 := by
+      have h := FnormalFop (beta:=radix) b radix x1
+      simpa only [wp, PostCond.noThrow, pure, FnormalFop_check, Id.run,
+        ULift.up_down, ox1] using h hx1Normal
+    have hx2OppValueNonzero : _root_.F2R (beta:=radix) ox2 ≠ 0 := by
+      intro hzero
+      apply hx2ValueNonzero
+      rw [hx2OppReal] at hzero
+      linarith
+    have hx1OppExp : -b.dExp < ox1.Fexp := by
+      simpa [ox1, Fopp, FloatSpec.Calc.Operations.Fopp] using hx1Exp
+    have haux := Midpoint_aux_aux b radix precision ox1 ox2 oy of
+      rfl hradix hvNum hprecision hEven hx1ClosestOpp hfClosestOpp
+      hy_lsb_opp hx1NormalOpp hx1OppPos hx2OppValueNonzero hx1OppExp
+    rcases haux with hEq | ⟨v, hvReal, hvExp⟩
+    · left
+      rw [hx1OppReal, hfOppReal] at hEq
+      linarith
+    · right
+      refine ⟨Fopp (beta:=radix) v, ?_, ?_⟩
+      · have hvOppReal :
+            _root_.F2R (beta:=radix) (Fopp (beta:=radix) v) =
+              -_root_.F2R (beta:=radix) v := by
+          have h := Fopp_correct (beta:=radix) v
+          simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check, Id.run,
+            ULift.up_down] using h trivial
+        rw [hvOppReal, hvReal, hx2OppReal]
+        ring
+      · simpa [ox1, Fopp, FloatSpec.Calc.Operations.Fopp] using hvExp
+  · have hx1NotFzero : ¬ is_Fzero x1 := by
+      have h := FnormalNotZero (beta:=radix) b radix x1 radix hvNum_pos
+        hx1Normal.2
+      simpa only [wp, PostCond.noThrow, pure, FnormalNotZero_check,
+        ULift.down_up] using h hx1Normal
+    have hx1Fzero : is_Fzero x1 := by
+      have h := is_Fzero_rep2 (beta:=radix) x1
+      simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep2_check, Id.run,
+        ULift.up_down] using h ⟨hradix, hx1Zero⟩
+    exact False.elim (hx1NotFzero hx1Fzero)
+  · exact Midpoint_aux_aux b radix precision x1 x2 y f
+      rfl hradix hvNum hprecision hEven hx1Closest hfClosest hy_lsb
+      hx1Normal hx1Pos hx2ValueNonzero hx1Exp
+
 noncomputable def MSBroundLSB_check {beta : Int}
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
