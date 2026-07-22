@@ -3708,9 +3708,26 @@ local target gate. Exact public `vLe` is removed from the active list, reducing
 the ledger from 6 to 5; `tLe` is next. Overall exact-gap progress is 250 of 255
 resolved.
 
-#### `Pff/Pff.v` (5)
+2026-07-22 completion note: exact public `tLe` is restored in
+`FloatSpec/src/Pff/Pff.lean`. Its effective payload matches upstream
+`Pff/Pff.v:tLe`: bounded `a`, `x`, and `b`; canonical `b`; normal `ph`, `uh`,
+and `z`; the product-exponent condition; exact `pl` and `ul` residuals;
+nonzero `ul`; and closest-rounding definitions for `z`, `ph`, `uh`, and `t`.
+The proof derives `F2R t = F2R uh - F2R z` internally through `tBounded` and
+the closest-rounding projector, then follows the upstream triangle split with
+`RoundedModeUlp`, `ClosestUlp`, `CanonicFulp`, and exact `LeExp`. It adds no
+pre-proved `t` equality, desired output bound, or unrelated `v`/`w` premises.
+Subscription harness attempt `.change_log/codex_attempt_20260722_223444`
+changed only `FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`,
+`build = pass`, and a passing local target gate. Independent focused Lean,
+`git diff --check`, the added-hole scan, and
+`scripts/audit_placeholders.sh --json FloatSpec` passed with zero findings;
+full `lake build` passed all 3345 jobs. Exact public `tLe` is removed from the
+active list, reducing the ledger from 5 to 4; `wLe` is next. Overall exact-gap
+progress is 251 of 255 resolved.
 
-- `tLe` (Lemma, upstream line 26151)
+#### `Pff/Pff.v` (4)
+
 - `wLe` (Lemma, upstream line 26187)
 - `ErrFmaApprox_2_aux` (Theorem, upstream line 26217)
 - `ErrFmaApprox_2` (Theorem, upstream line 26310)
