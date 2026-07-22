@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 28.
+- Active semantic gap candidates still listed below: 27.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 28/28 names have been
+- Counterpart audit coverage for the active list: 27/27 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 28 active
+Fix the remaining Flocq import gaps by working through the 27 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3196,9 +3196,30 @@ passing local target gate. Exact public `errorBoundedMultClosest_Can` is
 removed from the active list, reducing the ledger from 29 to 28; `cases` is
 next.
 
-#### `Pff/Pff.v` (28)
+2026-07-22 completion note: exact public `cases` is restored as Lean
+declaration `«cases»` in `FloatSpec/src/Pff/Pff.lean`. It preserves the
+Discriminant7 section payload, including float-typed `dp`/`dq`, their
+conditional boundedness and residual equations, all rounding hypotheses, the
+five zero alternatives, and the six no-underflow magnitude bounds. The only
+Lean-specific premise is `boundR` exponent totality required by the local
+`Fbound_skel` representation. Required subscription harness attempt
+`.change_log/codex_attempt_20260722_104151` produced the core proof strategy,
+but its generated `discri16_cases` statement changed `dp`/`dq` to reals with
+existential bounded representations. That altered public statement was
+rejected; the normalized proof restores the upstream types and exact reserved
+name. Independent `lake env lean -DmaxErrors=20 FloatSpec/src/Pff/Pff.lean`,
+`git diff --check`, the added-hole scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/manual_attempt_20260722_cases_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `cases` is removed from the active list,
+reducing the ledger from 28 to 27; `xLe2y_aux1` is next.
 
-- `cases` (Theorem, upstream line 22504)
+#### `Pff/Pff.v` (27)
+
 - `xLe2y_aux1` (Lemma, upstream line 23476)
 - `xLe2y_aux2` (Lemma, upstream line 23522)
 - `yLe2x_aux` (Lemma, upstream line 23595)
@@ -8026,22 +8047,13 @@ Statement-level checks performed for active Pff entries 71-104:
 - `errorBoundedMultClosest_Can` is now restored as the exact public binary
   canonical closest-product residual theorem in
   `FloatSpec/src/Pff/Pff.lean`.
-- `cases` has no faithful local counterpart. Broad hits on
-  `ExactMinusIntervalAux_pred_constructive_cases` do not encode its
-  section-specific case-split conclusion.
-  Config-provider harness attempt `.change_log/codex_attempt_20260716_181642`
-  rechecked `cases` against upstream `Pff/Pff.v:22504` and left source code
-  unchanged (`target_before.lean` and `target_after.lean` are identical, with
-  no files listed in `changed_during_attempt.txt`). The checked sidecar
-  `.change_log/manual_attempt_20260716_cases_blocked/attempt.json` records
-  `result = blocked`, `coq_alignment = checked`, and `local_target_gate =
-  pass`: upstream derives the full zero-or-underflow-bound disjunction from
-  `U1`, `U2`, `pGeUnderf`, `qGeUnderf`, `AddExpGeUnderf2`, and rounding
-  hypotheses, while current Lean only exposes downstream `discri*`
-  precondition packages that assume or factor this branch payload. Adding
-  `«cases»` now would require the upstream conclusion as a premise or wrap
-  the factored branch package, so it would be helper-only/tautological rather
-  than the exact Flocq theorem. `cases` remains active.
+- `cases` is now restored as exact public Lean theorem `«cases»` in
+  `FloatSpec/src/Pff/Pff.lean`. It derives the upstream zero-or-six-bound
+  disjunction from `U1`, `U2`, `pGeUnderf`, `qGeUnderf`, the restored addition
+  exponent lemmas, and the section rounding hypotheses without assuming a
+  `discri*` branch package. The old config-provider blocker
+  `.change_log/manual_attempt_20260716_cases_blocked/attempt.json` is
+  superseded: the prerequisite stack changed after that audit.
 - `AddExpGe1Underf2` was restored as exact public Lean theorem
   `FloatSpec/src/Pff/Pff.lean:AddExpGe1Underf2` by subscription harness
   attempt `.change_log/codex_attempt_20260713_075753`. The theorem matches
