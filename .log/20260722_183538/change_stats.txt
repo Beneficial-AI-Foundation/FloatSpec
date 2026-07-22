@@ -1,0 +1,11 @@
+commit 923640147621a7baacf7f37cbdccee96f4c9b6bd
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 18:34:24 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 18:34:24 2026 +0800
+
+    Restore tBounded_aux
+
+ FloatSpec/src/Pff/Pff.lean | 985 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  38 +-
+ 2 files changed, 1018 insertions(+), 5 deletions(-)
