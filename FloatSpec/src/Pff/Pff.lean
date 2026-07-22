@@ -66109,6 +66109,148 @@ theorem ErrFmaApprox_2 {beta : Int}
       nlinarith [hplDef, hulDef, hplulZero]
     simpa [htargetZero] using hRhsNonneg
 
+/-- Coq `ErrFmaApprox`: public Total-section FMA approximation bound.
+
+This is the upstream wrapper over the exact and inexact `ul` branches.  The
+canonical representative for `b` and the bounded product residual are kept
+internal, matching Flocq's `Total` section statement. -/
+theorem ErrFmaApprox {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : bo.vNum = Zpower_nat radix precision)
+    (hprecision : 4 ≤ precision)
+    (hBoundExp : ∀ r : ℝ,
+      -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp)
+    (hbBound : Fbounded (beta:=beta) bo b)
+    (haBound : Fbounded (beta:=beta) bo a)
+    (hxBound : Fbounded (beta:=beta) bo x)
+    (hphNZ : Fnormal (beta:=beta) radix bo ph ∨
+      _root_.F2R (beta:=beta) ph = 0)
+    (huhNZ : Fnormal (beta:=beta) radix bo uh ∨
+      _root_.F2R (beta:=beta) uh = 0)
+    (hzNZ : Fnormal (beta:=beta) radix bo z ∨
+      _root_.F2R (beta:=beta) z = 0)
+    (hwNZ : Fnormal (beta:=beta) radix bo w ∨
+      _root_.F2R (beta:=beta) w = 0)
+    (hvNZ : Fnormal (beta:=beta) radix bo v ∨
+      _root_.F2R (beta:=beta) v = 0)
+    (hproductExp : -bo.dExp ≤ a.Fexp + x.Fexp)
+    (hzDef : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
+        _root_.F2R (beta:=beta) b) z)
+    (hphDef : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) ph)
+    (hplDef : _root_.F2R (beta:=beta) pl =
+      _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
+        _root_.F2R (beta:=beta) ph)
+    (huhDef : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b) uh)
+    (hulDef : _root_.F2R (beta:=beta) ul =
+      _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
+        _root_.F2R (beta:=beta) uh)
+    (htDef : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) uh - _root_.F2R (beta:=beta) z) t)
+    (hvDef : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) pl + _root_.F2R (beta:=beta) ul) v)
+    (hwDef : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) v) w) :
+    |_root_.F2R (beta:=beta) z + _root_.F2R (beta:=beta) w -
+        (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
+          _root_.F2R (beta:=beta) b)|
+      ≤ ((3 * (radix : ℝ) / 2 + 1 / 2) *
+          (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
+            |_root_.F2R (beta:=beta) z|) := by
+  subst beta
+  have hprecisionNe : precision ≠ 0 := by omega
+  have hprecision3 : 3 ≤ precision := by omega
+  let bNorm : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fnormalize (beta:=radix) radix bo precision b
+  by_cases hulZero : _root_.F2R (beta:=radix) ul = 0
+  · rcases errorBoundedMult (beta:=radix) bo radix precision a x ph with hmult
+    have hmult' := hmult ⟨rfl, hradix, hprecisionNe, hvNum, haBound, hxBound,
+      hproductExp, hphDef⟩
+    rcases hmult' with ⟨plPrime, hplPrimeVal, hplPrimeBound, _hplPrimeExp⟩
+    have hbNormCorrect :
+        _root_.F2R (beta:=radix) bNorm =
+          _root_.F2R (beta:=radix) b := by
+      have h := FnormalizeCorrect (beta:=radix) radix bo precision b
+      simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+        Id.run, ULift.up_down, bNorm] using h ⟨rfl, hradix⟩
+    have hbNormBound : Fbounded (beta:=radix) bo bNorm := by
+      have h := FnormalizeBounded (beta:=radix) radix bo precision b
+      simpa only [wp, PostCond.noThrow, pure, FnormalizeBounded_check,
+        Id.run, ULift.up_down, Fbounded', bNorm] using
+        h ⟨hbBound, hbBound, hprecisionNe, hradix, hvNum⟩
+    have hbNormCan : Fcanonic (beta:=radix) radix bo bNorm := by
+      have h := FnormalizeCanonic (beta:=radix) radix bo precision b
+      simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+        Id.run, ULift.up_down, Fbounded', bNorm] using
+        h ⟨hbBound, hbBound, hprecisionNe, hradix, hvNum⟩
+    have hplPrimeEq :
+        _root_.F2R (beta:=radix) plPrime =
+          _root_.F2R (beta:=radix) pl := by
+      rw [hplPrimeVal, hplDef]
+    have hzDefNorm :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
+            _root_.F2R (beta:=radix) bNorm) z := by
+      simpa [hbNormCorrect] using hzDef
+    have huhDefNorm :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) bNorm) uh := by
+      simpa [hbNormCorrect] using huhDef
+    have hulDefNorm :
+        _root_.F2R (beta:=radix) ul =
+          _root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) bNorm -
+            _root_.F2R (beta:=radix) uh := by
+      simpa [hbNormCorrect] using hulDef
+    have hvDefPrime :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) plPrime + _root_.F2R (beta:=radix) ul) v := by
+      simpa [hplPrimeEq] using hvDef
+    have hbranch := ErrFmaApprox_1 bo radix precision a x bNorm ph plPrime uh ul
+      z t v w rfl hradix hvNum hprecision3 hBoundExp hbNormBound haBound
+      hxBound hbNormCan hphNZ huhNZ hzNZ hwNZ hplPrimeBound hproductExp
+      hzDefNorm hphDef hplPrimeVal huhDefNorm hulDefNorm htDef hvDefPrime hwDef
+      hulZero
+    simpa [hbNormCorrect] using hbranch
+  · have hbNormCorrect :
+        _root_.F2R (beta:=radix) bNorm =
+          _root_.F2R (beta:=radix) b := by
+      have h := FnormalizeCorrect (beta:=radix) radix bo precision b
+      simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
+        Id.run, ULift.up_down, bNorm] using h ⟨rfl, hradix⟩
+    have hbNormBound : Fbounded (beta:=radix) bo bNorm := by
+      have h := FnormalizeBounded (beta:=radix) radix bo precision b
+      simpa only [wp, PostCond.noThrow, pure, FnormalizeBounded_check,
+        Id.run, ULift.up_down, Fbounded', bNorm] using
+        h ⟨hbBound, hbBound, hprecisionNe, hradix, hvNum⟩
+    have hbNormCan : Fcanonic (beta:=radix) radix bo bNorm := by
+      have h := FnormalizeCanonic (beta:=radix) radix bo precision b
+      simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
+        Id.run, ULift.up_down, Fbounded', bNorm] using
+        h ⟨hbBound, hbBound, hprecisionNe, hradix, hvNum⟩
+    have hzDefNorm :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
+            _root_.F2R (beta:=radix) bNorm) z := by
+      simpa [hbNormCorrect] using hzDef
+    have huhDefNorm :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) bNorm) uh := by
+      simpa [hbNormCorrect] using huhDef
+    have hulDefNorm :
+        _root_.F2R (beta:=radix) ul =
+          _root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) bNorm -
+            _root_.F2R (beta:=radix) uh := by
+      simpa [hbNormCorrect] using hulDef
+    have hbranch := ErrFmaApprox_2 bo radix precision a x bNorm ph pl uh ul
+      z t v w rfl hradix hvNum hprecision hBoundExp hbNormBound haBound
+      hxBound hbNormCan hphNZ huhNZ hzNZ hvNZ hwNZ hproductExp hzDefNorm
+      hphDef hplDef huhDefNorm hulDefNorm htDef hvDef hwDef hulZero
+    simpa [hbNormCorrect] using hbranch
+
 -- Coq: `digit_abs` — digit n (|p|) = digit n p
 noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
   ()
