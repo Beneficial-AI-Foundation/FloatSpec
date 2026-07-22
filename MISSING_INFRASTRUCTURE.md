@@ -3726,9 +3726,26 @@ full `lake build` passed all 3345 jobs. Exact public `tLe` is removed from the
 active list, reducing the ledger from 5 to 4; `wLe` is next. Overall exact-gap
 progress is 251 of 255 resolved.
 
-#### `Pff/Pff.v` (4)
+2026-07-22 completion note: exact public `wLe` is restored in
+`FloatSpec/src/Pff/Pff.lean`. Its effective payload matches upstream
+`Pff/Pff.v:wLe`: the shared inexact-rounding premises used by exact `tLe` and
+`vLe`, plus closest-rounding definitions of `t`, `v`, and `w`. The proof
+constructs the bounded comparator float with mantissa `2 * radix + 1` and
+exponent `z.Fexp`, applies `RoundAbsMonotoner` to the closest rounding of
+`t + v`, and combines exact `tLe` and `vLe` through the triangle inequality.
+It adds no pre-proved correction bounds or values and no normality premise for
+`v` or `w`. Subscription harness attempt
+`.change_log/codex_attempt_20260722_225843` changed only
+`FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`, `build = pass`, and
+a passing local target gate. Independent focused Lean, `git diff --check`, the
+added-hole scan, and `scripts/audit_placeholders.sh --json FloatSpec` passed
+with zero findings; full `lake build` passed all 3345 jobs. Exact public `wLe`
+is removed from the active list, reducing the ledger from 4 to 3;
+`ErrFmaApprox_2_aux` is next. Overall exact-gap progress is 252 of 255
+resolved.
 
-- `wLe` (Lemma, upstream line 26187)
+#### `Pff/Pff.v` (3)
+
 - `ErrFmaApprox_2_aux` (Theorem, upstream line 26217)
 - `ErrFmaApprox_2` (Theorem, upstream line 26310)
 - `ErrFmaApprox` (Theorem, upstream line 26490)
