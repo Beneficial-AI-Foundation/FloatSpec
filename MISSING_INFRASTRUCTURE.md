@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 27.
+- Active semantic gap candidates still listed below: 26.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 27/27 names have been
+- Counterpart audit coverage for the active list: 26/26 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 27 active
+Fix the remaining Flocq import gaps by working through the 26 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3216,11 +3216,30 @@ normalized classifier
 `.change_log/manual_attempt_20260722_cases_proved/attempt.json` records
 `result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
 local target gate. Exact public `cases` is removed from the active list,
-reducing the ledger from 28 to 27; `xLe2y_aux1` is next.
+reducing the ledger from 28 to 27.
 
-#### `Pff/Pff.v` (27)
+2026-07-22 completion note: exact public GenericA lemma `xLe2y_aux1` is
+restored in `FloatSpec/src/Pff/Pff.lean`, preserving the upstream beta/radix,
+precision, even-radix, closestness, canonicity, exponent, error-bound, and
+magnitude payload. The proof derives exactness of `x` from the representable
+power magnitude, constructs the even-radix half-unit bounded witness, proves
+that witness lies below `|a + b + e|`, and transfers the bound to `|y|` by
+closest absolute monotonicity. The only Lean-specific premise is `boundR`
+exponent totality required by the local `Fbound_skel` representation. Required
+subscription harness attempt `.change_log/codex_attempt_20260722_112000`
+produced the exact declaration and proof. Independent `lake env lean
+-DmaxErrors=20 FloatSpec/src/Pff/Pff.lean`, `git diff --check`, the added-hole
+scan, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/manual_attempt_20260722_xLe2y_aux1_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `xLe2y_aux1` is removed from the active list,
+reducing the ledger from 27 to 26; `xLe2y_aux2` is next.
 
-- `xLe2y_aux1` (Lemma, upstream line 23476)
+#### `Pff/Pff.v` (26)
+
 - `xLe2y_aux2` (Lemma, upstream line 23522)
 - `yLe2x_aux` (Lemma, upstream line 23595)
 - `xLe2y` (Lemma, upstream line 23707)
@@ -8066,7 +8085,10 @@ Statement-level checks performed for active Pff entries 71-104:
   `Rabs x < Rabs y -> LSB radix x <= LSB radix y -> Rabs x <= Rabs y -
   powerRZ radix (LSB radix x)` payload with the `GenericC` section
   assumptions.
-- `xLe2y_aux1`, `xLe2y_aux2`, `yLe2x_aux`, `xLe2y`, `yLe2x`,
+- `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
+  exact representability fixes `|x|`, and the even-radix half-unit witness
+  plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
+- `xLe2y_aux2`, `yLe2x_aux`, `xLe2y`, `yLe2x`,
   `Subexact`, `Midpoint_aux_aux`, `Midpoint_aux`,
   `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
