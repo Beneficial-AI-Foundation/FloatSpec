@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 16.
+- Active semantic gap candidates still listed below: 15.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 16/16 names have been
+- Counterpart audit coverage for the active list: 15/15 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -3425,9 +3425,31 @@ normalized classifier
 local target gate. Exact public `Expbe1` is removed from the active list,
 reducing the ledger from 17 to 16; `be2MuchSmaller` is next.
 
-#### `Pff/Pff.v` (16)
+2026-07-22 completion note: exact public Be2NonZero lemma `be2MuchSmaller` is
+restored in `FloatSpec/src/Pff/Pff.lean` with the upstream payload: nonzero
+`al2`, `u2`, and `be2` imply
+`MSB radix al2 < LSB radix be2`. The proof transports exact representations
+through `MSB_comp`/`LSB_comp`, propagates the residual bit bounds with
+`MSBroundLSB`, `LSBPlus`, and `LSBMinus`, uses `TwoSumProp` for the absolute
+residual comparison, and rules out the remaining `be1` exponent branch with
+`plusExact1`. The required subscription harness attempt
+`.change_log/codex_attempt_20260722_161709` generated the exact result but
+initially exposed closest totality as an extra public premise; that premise was
+removed manually and derived internally from `MinEx`, `MaxEx`, and
+`ClosestTotal` using the existing `boundR` invariant. The theorem is placed
+after `LSBPlus`, where its local Lean dependencies are available. Independent
+focused Lean, `git diff --check`, the added-hole scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/manual_attempt_20260722_be2MuchSmaller_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Exact public `be2MuchSmaller` is removed from the
+active list, reducing the ledger from 16 to 15; `gaCorrect` is next.
 
-- `be2MuchSmaller` (Lemma, upstream line 24522)
+#### `Pff/Pff.v` (15)
+
 - `gaCorrect` (Lemma, upstream line 24617)
 - `tBounded_aux` (Theorem, upstream line 25145)
 - `tBounded` (Theorem, upstream line 25532)
@@ -8265,7 +8287,7 @@ Statement-level checks performed for active Pff entries 71-104:
 - `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
   exact representability fixes `|x|`, and the even-radix half-unit witness
   plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
-- `be2MuchSmaller` and `gaCorrect`
+- `gaCorrect`
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
   not the upstream subtraction/midpoint/least-significant-bit payloads.

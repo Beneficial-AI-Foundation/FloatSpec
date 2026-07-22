@@ -61256,6 +61256,441 @@ theorem LSBPlus {beta : Int}
   rw [hlsb]
   simpa [hexp] using hle
 
+/-- Coq Be2NonZero lemma `be2MuchSmaller`.
+
+When the second residuals `al2`, `u2`, and `be2` are all nonzero, the most
+significant bit of `al2` is strictly below the least significant bit of `be2`.
+This is the upstream transport proof: compare `be2` with
+`(u1 + al1) - be1`, push the least-significant-bit lower bound through
+`LSBMinus` and `LSBPlus`, obtain the two residual MSB bounds from
+`MSBroundLSB`, `TwoSumProp`, and exact representation transport, and rule out
+the remaining `be1` exponent case with `plusExact1`. -/
+theorem be2MuchSmaller {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (a x y u1 u2 al1 al2 be1 be2 :
+      FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : bo.vNum = Zpower_nat radix precision)
+    (hprecision_ge : 3 ≤ precision)
+    (hBoundExp : ∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp)
+    (hyBound : Fbounded (beta:=beta) bo y)
+    (hu1Can : Fcanonic (beta:=beta) radix bo u1)
+    (hal1Can : Fcanonic (beta:=beta) radix bo al1)
+    (hu1Def : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) u1)
+    (hu2Def : _root_.F2R (beta:=beta) u2 =
+      _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
+        _root_.F2R (beta:=beta) u1)
+    (hal1Def : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) u2) al1)
+    (hal2Def : _root_.F2R (beta:=beta) al2 =
+      _root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) u2 -
+        _root_.F2R (beta:=beta) al1)
+    (hbe1Def : Closest (beta:=beta) bo (radix : ℝ)
+      (_root_.F2R (beta:=beta) u1 + _root_.F2R (beta:=beta) al1) be1)
+    (hbe2Def : _root_.F2R (beta:=beta) be2 =
+      _root_.F2R (beta:=beta) u1 + _root_.F2R (beta:=beta) al1 -
+        _root_.F2R (beta:=beta) be1)
+    (hal2Nonzero : _root_.F2R (beta:=beta) al2 ≠ 0)
+    (hu2Nonzero : _root_.F2R (beta:=beta) u2 ≠ 0)
+    (hbe2Nonzero : _root_.F2R (beta:=beta) be2 ≠ 0) :
+    MSB (beta:=beta) radix al2 < LSB (beta:=beta) radix be2 := by
+  subst beta
+  have hprecision_ne : precision ≠ 0 := by omega
+  have hvNum_pos : 0 < bo.vNum := by
+    rw [hvNum, Zpower_nat]
+    exact pow_pos (by omega : 0 < radix) precision
+  have hvNum_gt : 1 < bo.vNum := by
+    rw [hvNum, Zpower_nat]
+    exact one_lt_pow₀ hradix hprecision_ne
+  have hMinTotal : TotalP (isMin' (beta:=radix) bo radix) := by
+    intro r
+    have h := MinEx (beta:=radix) bo radix r
+    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp r⟩
+  have hMaxTotal : TotalP (isMax' (beta:=radix) bo radix) := by
+    intro r
+    have h := MaxEx (beta:=radix) bo radix r
+    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, hradix, hvNum_gt, hBoundExp r⟩
+  have hTotal : TotalP (Closest (beta:=radix) bo (radix : ℝ)) := by
+    intro r
+    have h := ClosestTotal (beta:=radix) bo radix (radix : ℝ) r
+    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
+      ULift.up_down] using h ⟨hMinTotal, hMaxTotal⟩
+  have hradix_real_gt : (1 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix
+  have hradix_real_ge : (1 : ℝ) ≤ (radix : ℝ) := le_of_lt hradix_real_gt
+  have hu1Bound : Fbounded (beta:=radix) bo u1 := by
+    have h := FcanonicBound (beta:=radix) radix bo u1
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check] using h hu1Can
+  have hal1Bound : Fbounded (beta:=radix) bo al1 := by
+    have h := FcanonicBound (beta:=radix) radix bo al1
+    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check] using h hal1Can
+  have hRoundedClosest :
+      RoundedModeP_float (beta:=radix) bo radix
+        (Closest (beta:=radix) bo (radix : ℝ)) := by
+    refine ⟨hTotal, ?_, ?_, ?_⟩
+    · have h := ClosestCompatible (beta:=radix) bo (radix : ℝ)
+      simpa only [wp, PostCond.noThrow, pure, ClosestCompatible_check,
+        Id.run, ULift.up_down] using h True.intro
+    · have h := ClosestMinOrMax (beta:=radix) bo radix (radix : ℝ)
+      simpa only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check,
+        Id.run, ULift.up_down] using h True.intro
+    · have h := ClosestMonotone (beta:=radix) bo (radix : ℝ)
+      simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
+        Id.run, ULift.up_down] using h True.intro
+  have hal2NotFzero : ¬ is_Fzero al2 := by
+    intro hzero
+    have h := is_Fzero_rep1 (beta:=radix) al2
+    exact hal2Nonzero (by
+      simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check,
+        Id.run, ULift.up_down] using h hzero)
+  have hu2NotFzero : ¬ is_Fzero u2 := by
+    intro hzero
+    have h := is_Fzero_rep1 (beta:=radix) u2
+    exact hu2Nonzero (by
+      simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check,
+        Id.run, ULift.up_down] using h hzero)
+  let prod : FloatSpec.Core.Defs.FlocqFloat radix :=
+    FloatSpec.Calc.Operations.Fmult (beta:=radix) a x
+  let sumAl : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fplus (beta:=radix) y u2
+  let sumBe : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fplus (beta:=radix) u1 al1
+  let be2Diff : FloatSpec.Core.Defs.FlocqFloat radix :=
+    Fminus (beta:=radix) sumBe be1
+  have hprodVal :
+      _root_.F2R (beta:=radix) prod =
+        _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x := by
+    have h := Fmult_correct (beta:=radix) a x
+    simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
+      Id.run, ULift.up_down, prod] using h hradix
+  have hsumAlVal :
+      _root_.F2R (beta:=radix) sumAl =
+        _root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2 := by
+    have h := Fplus_correct (beta:=radix) y u2
+    simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+      Id.run, ULift.up_down, sumAl] using h hradix
+  have hsumBeVal :
+      _root_.F2R (beta:=radix) sumBe =
+        _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 := by
+    have h := Fplus_correct (beta:=radix) u1 al1
+    simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
+      Id.run, ULift.up_down, sumBe] using h hradix
+  have hbe2DiffVal :
+      _root_.F2R (beta:=radix) be2Diff =
+        _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 -
+          _root_.F2R (beta:=radix) be1 := by
+    have h := Fminus_correct (beta:=radix) sumBe be1
+    calc
+      _root_.F2R (beta:=radix) be2Diff
+          = _root_.F2R (beta:=radix) sumBe -
+              _root_.F2R (beta:=radix) be1 := by
+            simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+              Id.run, ULift.up_down, be2Diff] using h hradix
+      _ = _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 -
+          _root_.F2R (beta:=radix) be1 := by rw [hsumBeVal]
+  have hbe2Transport :
+      _root_.F2R (beta:=radix) be2 =
+        _root_.F2R (beta:=radix) be2Diff := by
+    rw [hbe2Def, hbe2DiffVal]
+  have hbe2DiffNotFzero : ¬ is_Fzero be2Diff := by
+    intro hzero
+    have h := is_Fzero_rep1 (beta:=radix) be2Diff
+    have hdiffZero : _root_.F2R (beta:=radix) be2Diff = 0 := by
+      simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check,
+        Id.run, ULift.up_down] using h hzero
+    exact hbe2Nonzero (by rw [hbe2Transport, hdiffZero])
+  have hsumBeRealNonzero :
+      _root_.F2R (beta:=radix) sumBe ≠ 0 := by
+    intro hsumZero
+    have hsumParts :
+        _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 = 0 := by
+      rw [← hsumBeVal]
+      exact hsumZero
+    let z : FloatSpec.Core.Defs.FlocqFloat radix := Fzero radix (-bo.dExp)
+    have hzBound : Fbounded (beta:=radix) bo z := by
+      have h := FboundedFzero (beta:=radix) bo
+      simpa only [wp, PostCond.noThrow, pure, FboundedFzero_check,
+        Id.run, ULift.up_down, z] using h hvNum_pos
+    have hzVal : _root_.F2R (beta:=radix) z = 0 := by
+      have h := FzeroisReallyZero (beta:=radix) (-bo.dExp)
+      simpa only [wp, PostCond.noThrow, pure, FzeroisReallyZero_check,
+        Id.run, ULift.up_down, z] using h True.intro
+    have hRoundedFull :
+        RoundedModeP_full (beta:=radix) bo
+          (Closest (beta:=radix) bo (radix : ℝ)) := by
+      have h := ClosestRoundedModeP (beta:=radix) bo (radix : ℝ)
+      simpa only [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check,
+        Id.run, ULift.up_down] using h hTotal
+    rcases hRoundedFull with ⟨_, _, _, _, hProjectorEq⟩
+    have hbe1ClosestZero :
+        Closest (beta:=radix) bo (radix : ℝ)
+          (_root_.F2R (beta:=radix) z) be1 := by
+      simpa [hzVal, hsumParts] using hbe1Def
+    have hbe1Zero : _root_.F2R (beta:=radix) be1 = 0 := by
+      have hproj := hProjectorEq z be1 hzBound hbe1ClosestZero
+      simpa [hzVal] using hproj.symm
+    have hbe2Zero : _root_.F2R (beta:=radix) be2 = 0 := by
+      rw [hbe2Def, hsumParts, hbe1Zero]
+      ring
+    exact hbe2Nonzero hbe2Zero
+  have hsumBeNotFzero : ¬ is_Fzero sumBe := by
+    intro hzero
+    have h := is_Fzero_rep1 (beta:=radix) sumBe
+    exact hsumBeRealNonzero (by
+      simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check,
+        Id.run, ULift.up_down] using h hzero)
+  have hal2LeU2 :
+      |_root_.F2R (beta:=radix) al2| ≤ |_root_.F2R (beta:=radix) u2| := by
+    have h := TwoSumProp (beta:=radix) bo (radix : ℝ) y u2 al1 al2
+    simpa only [wp, PostCond.noThrow, pure, TwoSumProp_check, Id.run,
+      ULift.up_down] using h ⟨hyBound, hal1Def, hal2Def⟩
+  have hu1RoundProd :
+      Closest (beta:=radix) bo (radix : ℝ)
+        (_root_.F2R (beta:=radix) prod) u1 := by
+    simpa [hprodVal] using hu1Def
+  have hal1RoundSumAl :
+      Closest (beta:=radix) bo (radix : ℝ)
+        (_root_.F2R (beta:=radix) sumAl) al1 := by
+    simpa [hsumAlVal] using hal1Def
+  have hu2AsDiff :
+      _root_.F2R (beta:=radix) u2 =
+        _root_.F2R (beta:=radix) prod - _root_.F2R (beta:=radix) u1 := by
+    rw [hprodVal]
+    exact hu2Def
+  have hal2AsDiff :
+      _root_.F2R (beta:=radix) al2 =
+        _root_.F2R (beta:=radix) sumAl - _root_.F2R (beta:=radix) al1 := by
+    rw [hsumAlVal]
+    exact hal2Def
+  have hprodDiff : _root_.F2R (beta:=radix)
+        (Fminus (beta:=radix) prod u1) =
+      _root_.F2R (beta:=radix) prod - _root_.F2R (beta:=radix) u1 := by
+    have h := Fminus_correct (beta:=radix) prod u1
+    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+      Id.run, ULift.up_down] using h hradix
+  have hsumAlDiff : _root_.F2R (beta:=radix)
+        (Fminus (beta:=radix) sumAl al1) =
+      _root_.F2R (beta:=radix) sumAl - _root_.F2R (beta:=radix) al1 := by
+    have h := Fminus_correct (beta:=radix) sumAl al1
+    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
+      Id.run, ULift.up_down] using h hradix
+  have hprodDiffNotFzero : ¬ is_Fzero (Fminus (beta:=radix) prod u1) := by
+    intro hzero
+    have h := is_Fzero_rep1 (beta:=radix) (Fminus (beta:=radix) prod u1)
+    have hdiffZero : _root_.F2R (beta:=radix) (Fminus (beta:=radix) prod u1) = 0 := by
+      simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check,
+        Id.run, ULift.up_down] using h hzero
+    exact hu2Nonzero (by rw [hu2AsDiff, ← hprodDiff, hdiffZero])
+  have hsumAlDiffNotFzero : ¬ is_Fzero (Fminus (beta:=radix) sumAl al1) := by
+    intro hzero
+    have h := is_Fzero_rep1 (beta:=radix) (Fminus (beta:=radix) sumAl al1)
+    have hdiffZero : _root_.F2R (beta:=radix) (Fminus (beta:=radix) sumAl al1) = 0 := by
+      simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check,
+        Id.run, ULift.up_down] using h hzero
+    exact hal2Nonzero (by rw [hal2AsDiff, ← hsumAlDiff, hdiffZero])
+  have hmsbU2Diff :
+      MSB (beta:=radix) radix u2 =
+        MSB (beta:=radix) radix (Fminus (beta:=radix) prod u1) := by
+    have h := MSB_comp (beta:=radix) radix u2 (Fminus (beta:=radix) prod u1) 0
+    simpa only [wp, PostCond.noThrow, pure, MSB_comp_check,
+      Id.run, ULift.up_down] using
+      h ⟨rfl, hradix, hu2NotFzero, by rw [hu2AsDiff, hprodDiff]⟩
+  have hmsbAl2Diff :
+      MSB (beta:=radix) radix al2 =
+        MSB (beta:=radix) radix (Fminus (beta:=radix) sumAl al1) := by
+    have h := MSB_comp (beta:=radix) radix al2 (Fminus (beta:=radix) sumAl al1) 0
+    simpa only [wp, PostCond.noThrow, pure, MSB_comp_check,
+      Id.run, ULift.up_down] using
+      h ⟨rfl, hradix, hal2NotFzero, by rw [hal2AsDiff, hsumAlDiff]⟩
+  have hmsbU2LtLsbU1 :
+      MSB (beta:=radix) radix u2 < LSB (beta:=radix) radix u1 := by
+    have h := MSBroundLSB (beta:=radix) bo radix precision
+      (Closest (beta:=radix) bo (radix : ℝ)) prod u1
+    have hraw :
+        MSB (beta:=radix) radix (Fminus (beta:=radix) prod u1) <
+          LSB (beta:=radix) radix u1 := by
+      simpa only [wp, PostCond.noThrow, pure, MSBroundLSB_check,
+        Id.run, ULift.up_down] using
+        h ⟨rfl, hradix, hprecision_ne, hvNum, hRoundedClosest,
+          hu1RoundProd, hprodDiffNotFzero⟩
+    simpa [hmsbU2Diff] using hraw
+  have hmsbAl2LtLsbAl1 :
+      MSB (beta:=radix) radix al2 < LSB (beta:=radix) radix al1 := by
+    have h := MSBroundLSB (beta:=radix) bo radix precision
+      (Closest (beta:=radix) bo (radix : ℝ)) sumAl al1
+    have hraw :
+        MSB (beta:=radix) radix (Fminus (beta:=radix) sumAl al1) <
+          LSB (beta:=radix) radix al1 := by
+      simpa only [wp, PostCond.noThrow, pure, MSBroundLSB_check,
+        Id.run, ULift.up_down] using
+        h ⟨rfl, hradix, hprecision_ne, hvNum, hRoundedClosest,
+          hal1RoundSumAl, hsumAlDiffNotFzero⟩
+    simpa [hmsbAl2Diff] using hraw
+  have hmsbAl2LtLsbU1 :
+      MSB (beta:=radix) radix al2 < LSB (beta:=radix) radix u1 :=
+    lt_of_le_of_lt
+      (MSB_monotone (beta:=radix) radix al2 u2 rfl hradix hal2NotFzero
+        hu2NotFzero (by
+          have hal2Abs :
+              _root_.F2R (beta:=radix) (Fabs (beta:=radix) al2) =
+                |_root_.F2R (beta:=radix) al2| := by
+            have h := Fabs_correct (beta:=radix) al2
+            simpa only [wp, PostCond.noThrow, pure, Fabs_correct_check,
+              Id.run, ULift.up_down] using h hradix
+          have hu2Abs :
+              _root_.F2R (beta:=radix) (Fabs (beta:=radix) u2) =
+                |_root_.F2R (beta:=radix) u2| := by
+            have h := Fabs_correct (beta:=radix) u2
+            simpa only [wp, PostCond.noThrow, pure, Fabs_correct_check,
+              Id.run, ULift.up_down] using h hradix
+          simpa [hal2Abs, hu2Abs] using hal2LeU2))
+      hmsbU2LtLsbU1
+  have hal2LtPowU1 :
+      |_root_.F2R (beta:=radix) al2| < (radix : ℝ) ^ u1.Fexp := by
+    have hu2RoundUlp :
+        |_root_.F2R (beta:=radix) prod - _root_.F2R (beta:=radix) u1| <
+          Fulp (beta:=radix) bo radix precision u1 := by
+      have h := RoundedModeUlp (beta:=radix) bo radix precision
+        (Closest (beta:=radix) bo (radix : ℝ))
+        (_root_.F2R (beta:=radix) prod) u1
+      simpa only [wp, PostCond.noThrow, pure, RoundedModeUlp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hRoundedClosest, hu1RoundProd, rfl, hradix, hprecision_ne, hvNum⟩
+    have hfulp :
+        Fulp (beta:=radix) bo radix precision u1 = (radix : ℝ) ^ u1.Fexp := by
+      have h := CanonicFulp (beta:=radix) radix bo precision u1
+      simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hu1Can, rfl, hradix, hprecision_ne, hvNum⟩
+    have hu2Lt : |_root_.F2R (beta:=radix) u2| < (radix : ℝ) ^ u1.Fexp := by
+      simpa [hu2AsDiff, hfulp] using hu2RoundUlp
+    exact lt_of_le_of_lt hal2LeU2 hu2Lt
+  have hal2LtPowAl1 :
+      |_root_.F2R (beta:=radix) al2| < (radix : ℝ) ^ al1.Fexp := by
+    have hal2RoundUlp :
+        |_root_.F2R (beta:=radix) sumAl - _root_.F2R (beta:=radix) al1| <
+          Fulp (beta:=radix) bo radix precision al1 := by
+      have h := RoundedModeUlp (beta:=radix) bo radix precision
+        (Closest (beta:=radix) bo (radix : ℝ))
+        (_root_.F2R (beta:=radix) sumAl) al1
+      simpa only [wp, PostCond.noThrow, pure, RoundedModeUlp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hRoundedClosest, hal1RoundSumAl, rfl, hradix, hprecision_ne, hvNum⟩
+    have hfulp :
+        Fulp (beta:=radix) bo radix precision al1 = (radix : ℝ) ^ al1.Fexp := by
+      have h := CanonicFulp (beta:=radix) radix bo precision al1
+      simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hal1Can, rfl, hradix, hprecision_ne, hvNum⟩
+    simpa [hal2AsDiff, hfulp] using hal2RoundUlp
+  have hbe1ExpGeMin : min u1.Fexp al1.Fexp ≤ be1.Fexp := by
+    by_contra hnot
+    have hbe1ExpLeMin : be1.Fexp ≤ min u1.Fexp al1.Fexp := by omega
+    have hbe1Exact :
+        _root_.F2R (beta:=radix) be1 =
+          _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 := by
+      exact plusExact1 (beta:=radix) bo radix precision rfl hradix hprecision_ne
+        hvNum_gt hvNum hBoundExp u1 al1 be1 hu1Bound hal1Bound hbe1Def
+        hbe1ExpLeMin
+    have hbe2Zero : _root_.F2R (beta:=radix) be2 = 0 := by
+      rw [hbe2Def, hbe1Exact]
+      ring
+    exact hbe2Nonzero hbe2Zero
+  have hal2LtPowMin :
+      |_root_.F2R (beta:=radix) al2| <
+        (radix : ℝ) ^ (min u1.Fexp al1.Fexp) := by
+    by_cases hle : u1.Fexp ≤ al1.Fexp
+    · simpa [min_eq_left hle] using hal2LtPowU1
+    · have hge : al1.Fexp ≤ u1.Fexp := le_of_lt (lt_of_not_ge hle)
+      simpa [min_eq_right hge] using hal2LtPowAl1
+  have hal2LtPowBe1 :
+      |_root_.F2R (beta:=radix) al2| < (radix : ℝ) ^ be1.Fexp := by
+    have hpow_le :
+        (radix : ℝ) ^ (min u1.Fexp al1.Fexp) ≤
+          (radix : ℝ) ^ be1.Fexp := by
+      have h := Rle_powerRZ (radix : ℝ) (min u1.Fexp al1.Fexp) be1.Fexp
+      simpa only [wp, PostCond.noThrow, pure, Rle_powerRZ_check,
+        Id.run, ULift.up_down] using h ⟨hradix_real_ge, hbe1ExpGeMin⟩
+    exact lt_of_lt_of_le hal2LtPowMin hpow_le
+  have hmsbAl2LtLsbBe1 :
+      MSB (beta:=radix) radix al2 < LSB (beta:=radix) radix be1 := by
+    have hunitMsbLeAbs :
+        _root_.F2R (beta:=radix)
+            (⟨1, MSB (beta:=radix) radix al2⟩ :
+              FloatSpec.Core.Defs.FlocqFloat radix) ≤
+          |_root_.F2R (beta:=radix) al2| := by
+      have h := MSB_le_abs (beta:=radix) radix al2 rfl hradix hal2NotFzero
+      have habs :
+          _root_.F2R (beta:=radix) (Fabs (beta:=radix) al2) =
+            |_root_.F2R (beta:=radix) al2| := by
+        have hf := Fabs_correct (beta:=radix) al2
+        simpa only [wp, PostCond.noThrow, pure, Fabs_correct_check,
+          Id.run, ULift.up_down] using hf hradix
+      simpa [habs] using h
+    have hbe1ExpLeLsb : be1.Fexp ≤ LSB (beta:=radix) radix be1 := by
+      exact (Fexp_le_LSB (beta:=radix) radix be1) trivial
+    have hpowBe1LeUnitLsb :
+        (radix : ℝ) ^ be1.Fexp ≤
+          _root_.F2R (beta:=radix)
+            (⟨1, LSB (beta:=radix) radix be1⟩ :
+              FloatSpec.Core.Defs.FlocqFloat radix) := by
+      have h := oneExp_le (beta:=radix) be1.Fexp (LSB (beta:=radix) radix be1)
+      simpa only [wp, PostCond.noThrow, pure, oneExp_le_check,
+        Id.run, ULift.up_down, _root_.F2R, FloatSpec.Core.Defs.F2R,
+        Int.cast_one, one_mul] using h ⟨hradix, hbe1ExpLeLsb⟩
+    have hunitLt :
+        _root_.F2R (beta:=radix)
+            (⟨1, MSB (beta:=radix) radix al2⟩ :
+              FloatSpec.Core.Defs.FlocqFloat radix) <
+          _root_.F2R (beta:=radix)
+            (⟨1, LSB (beta:=radix) radix be1⟩ :
+              FloatSpec.Core.Defs.FlocqFloat radix) :=
+      lt_of_le_of_lt hunitMsbLeAbs
+        (lt_of_lt_of_le hal2LtPowBe1 hpowBe1LeUnitLsb)
+    exact (oneExp_Zlt (beta:=radix) (MSB (beta:=radix) radix al2)
+      (LSB (beta:=radix) radix be1)) ⟨hradix, hunitLt⟩
+  have hmsbAl2LtLsbSumBe :
+      MSB (beta:=radix) radix al2 < LSB (beta:=radix) radix sumBe := by
+    have hltMin :
+        MSB (beta:=radix) radix al2 <
+          min (LSB (beta:=radix) radix u1) (LSB (beta:=radix) radix al1) :=
+      lt_min hmsbAl2LtLsbU1 hmsbAl2LtLsbAl1
+    have hlsbPlus :
+        min (LSB (beta:=radix) radix u1) (LSB (beta:=radix) radix al1) ≤
+          LSB (beta:=radix) radix sumBe := by
+      have h := LSBPlus (beta:=radix) radix u1 al1
+      simpa only [wp, PostCond.noThrow, pure, LSBPlus_check,
+        Id.run, ULift.up_down, sumBe] using
+        h ⟨rfl, hradix, hsumBeNotFzero⟩
+    exact lt_of_lt_of_le hltMin hlsbPlus
+  have hmsbAl2LtMin :
+      MSB (beta:=radix) radix al2 <
+        min (LSB (beta:=radix) radix sumBe) (LSB (beta:=radix) radix be1) :=
+    lt_min hmsbAl2LtLsbSumBe hmsbAl2LtLsbBe1
+  have hlsbMinus :
+      min (LSB (beta:=radix) radix sumBe) (LSB (beta:=radix) radix be1) ≤
+        LSB (beta:=radix) radix be2Diff := by
+    have h := LSBMinus (beta:=radix) radix sumBe be1
+    simpa only [wp, PostCond.noThrow, pure, LSBMinus_check,
+      Id.run, ULift.up_down, be2Diff] using
+      h ⟨rfl, hradix, hbe2DiffNotFzero⟩
+  have hlsbTransport :
+      LSB (beta:=radix) radix be2 = LSB (beta:=radix) radix be2Diff := by
+    have h := LSB_comp (beta:=radix) radix be2 be2Diff 0
+    have hbe2NotFzero : ¬ is_Fzero be2 := by
+      intro hzero
+      have hz := is_Fzero_rep1 (beta:=radix) be2
+      exact hbe2Nonzero (by
+        simpa only [wp, PostCond.noThrow, pure, is_Fzero_rep1_check,
+          Id.run, ULift.up_down] using hz hzero)
+    simpa only [wp, PostCond.noThrow, pure, LSB_comp_check,
+      Id.run, ULift.up_down] using
+      h ⟨rfl, hradix, hbe2NotFzero, hbe2Transport⟩
+  rw [hlsbTransport]
+  exact lt_of_lt_of_le hmsbAl2LtMin hlsbMinus
+
 -- Coq: `digit_abs` — digit n (|p|) = digit n p
 noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
   ()
