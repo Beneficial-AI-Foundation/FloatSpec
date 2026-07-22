@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 19.
+- Active semantic gap candidates still listed below: 18.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 19/19 names have been
+- Counterpart audit coverage for the active list: 18/18 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -3371,9 +3371,23 @@ checkout. The normalized classifier
 local target gate. Exact public `Midpoint_aux` is removed from the active
 list, reducing the ledger from 20 to 19; `gatCorrect` is next.
 
-#### `Pff/Pff.v` (19)
+2026-07-22 completion note: exact public Be2Zero lemma `gatCorrect` is restored
+in `FloatSpec/src/Pff/Pff.lean` with the full upstream existential payload: a
+float representing `F2R be1 - F2R r1`, bounded by `bo`, whose exponent is
+`min be1.Fexp r1.Fexp`. The proof derives the two half-ulp error bounds from
+`ClosestUlp` and `TwoSumProp`, reconstructs the exact rounded sum, transports
+the required sign conditions through positive, zero, and negated closest
+branches, and applies exact `Subexact`. The required subscription harness
+attempt `.change_log/codex_attempt_20260722_150956` generated the declaration
+and proof. Independent focused Lean, `git diff --check`, the added-hole scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. Exact
+public `gatCorrect` is removed from the active list, reducing the ledger from
+19 to 18; `Expr1` is next.
 
-- `gatCorrect` (Lemma, upstream line 24295)
+#### `Pff/Pff.v` (18)
+
 - `Expr1` (Lemma, upstream line 24443)
 - `Expbe1` (Lemma, upstream line 24480)
 - `be2MuchSmaller` (Lemma, upstream line 24522)
@@ -8214,7 +8228,7 @@ Statement-level checks performed for active Pff entries 71-104:
 - `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
   exact representability fixes `|x|`, and the even-radix half-unit witness
   plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
-- `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
+- `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
   not the upstream subtraction/midpoint/least-significant-bit payloads.
