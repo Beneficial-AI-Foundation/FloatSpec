@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 12.
+- Active semantic gap candidates still listed below: 11.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 12/12 names have been
+- Counterpart audit coverage for the active list: 11/11 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 12 active
+Fix the remaining Flocq import gaps by working through the 11 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3520,11 +3520,37 @@ normalized classifier
 `.change_log/codex_attempt_20260722_183900/attempt.verified.json` records
 `result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
 local target gate. Exact public `tBounded` is removed from the active list,
-reducing the ledger from 13 to 12; `ErrFmaApprox_1_aux` is next.
+reducing the ledger from 13 to 12.
 
-#### `Pff/Pff.v` (12)
+2026-07-22 completion note: exact public FMA lemma `ErrFmaApprox_1_aux` is
+restored in `FloatSpec/src/Pff/Pff.lean` with the effective upstream exact-`uh`
+Case1 payload. Under the bounded/canonical input hypotheses, normal-or-zero
+`ph` and `uh`, bounded multiplication residual `pl`, the FMA rounding
+definitions, `F2R ul = 0`, and explicit normality of `z` and `w`, it proves
+`|z+w-(a*x+b)| <= (3*radix/2+1/2)*radix^(2-2*precision)*|z|`. The proof uses
+exact `tBounded` and rounded projector equality to establish `F2R t = uh-z`,
+identifies `v` with `pl` by projector equality, and rewrites the target as the
+rounding error of `w`. `RoundedModeUlp`, `FcanonicFnormalizeEq`, and `FulpLe2`
+provide the normal relative ulp bounds for `z` and `w`; the final inequality
+derives the upstream quadratic precision power and relaxes the coefficient to
+`3*radix/2+1/2`. Redundant normal-or-zero section hypotheses for `z` and `w`
+are not exposed because the theorem already assumes both are normal. Closest
+totality is derived internally from `MinEx`, `MaxEx`, and `ClosestTotal`; no
+public totality, ulp, magnitude, or algebraic-rewrite premises are exposed.
+Required subscription harness attempt
+`.change_log/codex_attempt_20260722_185832` generated the exact declaration,
+proof, and initial ledger note. Independent focused Lean, `git diff --check`,
+the added-hole scan, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/codex_attempt_20260722_185832/attempt.verified.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `ErrFmaApprox_1_aux` is removed from the active
+list, reducing the ledger from 12 to 11; `ErrFmaApprox_1` is next.
 
-- `ErrFmaApprox_1_aux` (Theorem, upstream line 25626)
+#### `Pff/Pff.v` (11)
+
 - `ErrFmaApprox_1` (Theorem, upstream line 25719)
 - `LeExp2` (Lemma, upstream line 25920)
 - `LeExp3` (Lemma, upstream line 26016)
@@ -8362,8 +8388,7 @@ Statement-level checks performed for active Pff entries 71-104:
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
   not the upstream subtraction/midpoint/least-significant-bit payloads.
-- `tBounded_aux`, `tBounded`, `ErrFmaApprox_1_aux`,
-  `ErrFmaApprox_1`, `ErrFmaApprox_2_aux`, `ErrFmaApprox_2`, and
+- `ErrFmaApprox_1`, `ErrFmaApprox_2_aux`, `ErrFmaApprox_2`, and
   `ErrFmaApprox` are not hidden under the current local FMA helper family.
   The visible local helpers such as
   `FmaErr_gaCorrect_of_be1_eq_r1`,
