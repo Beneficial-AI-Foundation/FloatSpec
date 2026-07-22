@@ -53635,6 +53635,148 @@ theorem Dekker2_aux {beta : Int}
           add_le_add hrDiff ht4Diff'
     _ = (7 / 2 : ℝ) * (radix : ℝ) ^ (-b.dExp) := by ring
 
+/-! Coq Algo2 theorem `Dekker2`.
+
+This is the exact upstream section wrapper after `Dekker2_aux`: if either
+canonical input has real value zero, the rounded-operation chain collapses by
+`ClosestZero2`; otherwise the nonzero case is exactly `Dekker2_aux`.  The only
+Lean-only hypothesis is `0 <= b.dExp`, the faithful replacement for Coq's
+natural-valued `dExp b`. -/
+theorem Dekker2 {beta : Int}
+    (b : Fbound_skel) (radix : Int) (t : Nat)
+    (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
+      FloatSpec.Core.Defs.FlocqFloat beta)
+    (hbeta : beta = radix) (hradix : 1 < radix)
+    (hvNum : b.vNum = Zpower_nat radix t)
+    (hpGe : 4 ≤ t)
+    (hdExp : 0 ≤ b.dExp)
+    (hxCan : Fcanonic (beta:=beta) radix b x)
+    (hyCan : Fcanonic (beta:=beta) radix b y)
+    (hUnder : x.Fexp + y.Fexp < -b.dExp)
+    (hA1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p)
+    (hA2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
+    (hA3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
+    (hA4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx)
+    (hB1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y *
+        ((radix : ℝ) ^ (((t - Nat.div2 t : Nat) : Int)) + 1)) p')
+    (hB2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) p') q')
+    (hB3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) q' + _root_.F2R (beta:=beta) p') hy)
+    (hB4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) y - _root_.F2R (beta:=beta) hy) ty)
+    (hC1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) hy) x1y1)
+    (hC2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) hx * _root_.F2R (beta:=beta) ty) x1y2)
+    (hC3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) hy) x2y1)
+    (hC4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) tx * _root_.F2R (beta:=beta) ty) x2y2)
+    (hD1 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
+    (hD2 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) x1y1) t1)
+    (hD3 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t1 - _root_.F2R (beta:=beta) x1y2) t2)
+    (hD4 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t2 - _root_.F2R (beta:=beta) x2y1) t3)
+    (hD5 : Closest (beta:=beta) b (radix : ℝ)
+      (_root_.F2R (beta:=beta) t3 - _root_.F2R (beta:=beta) x2y2) t4)
+    (hBranch : radix = 2 ∨ Even t) :
+    |_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y -
+        (_root_.F2R (beta:=beta) r - _root_.F2R (beta:=beta) t4)| ≤
+      (7 / 2 : ℝ) * (radix : ℝ) ^ (-(b.dExp)) := by
+  subst beta
+  have hRhsNonneg : 0 ≤ (7 / 2 : ℝ) * (radix : ℝ) ^ (-b.dExp) := by
+    have hradixPos : (0 : ℝ) < (radix : ℝ) := by
+      exact_mod_cast (show (0 : Int) < radix by omega)
+    exact mul_nonneg (by norm_num) (le_of_lt (zpow_pos hradixPos _))
+  have hzeroClosest :
+      ∀ {z : ℝ} {f : FloatSpec.Core.Defs.FlocqFloat radix},
+        Closest (beta:=radix) b (radix : ℝ) z f →
+          z = 0 → _root_.F2R (beta:=radix) f = 0 := by
+    intro z f hClosest hz
+    have h := ClosestZero2 (beta:=radix) b (radix : ℝ) z f
+    simpa only [wp, PostCond.noThrow, pure, ClosestZero2_check, Id.run,
+      ULift.up_down] using h ⟨hClosest, hz⟩
+  by_cases hxZero : _root_.F2R (beta:=radix) x = 0
+  · have hrZero : _root_.F2R (beta:=radix) r = 0 :=
+      hzeroClosest hD1 (by rw [hxZero]; ring)
+    have hpZero : _root_.F2R (beta:=radix) p = 0 :=
+      hzeroClosest hA1 (by rw [hxZero]; ring)
+    have hqZero : _root_.F2R (beta:=radix) q = 0 :=
+      hzeroClosest hA2 (by rw [hxZero, hpZero]; ring)
+    have hhxZero : _root_.F2R (beta:=radix) hx = 0 :=
+      hzeroClosest hA3 (by rw [hqZero, hpZero]; ring)
+    have htxZero : _root_.F2R (beta:=radix) tx = 0 :=
+      hzeroClosest hA4 (by rw [hxZero, hhxZero]; ring)
+    have hx1y1Zero : _root_.F2R (beta:=radix) x1y1 = 0 :=
+      hzeroClosest hC1 (by rw [hhxZero]; ring)
+    have hx1y2Zero : _root_.F2R (beta:=radix) x1y2 = 0 :=
+      hzeroClosest hC2 (by rw [hhxZero]; ring)
+    have hx2y1Zero : _root_.F2R (beta:=radix) x2y1 = 0 :=
+      hzeroClosest hC3 (by rw [htxZero]; ring)
+    have hx2y2Zero : _root_.F2R (beta:=radix) x2y2 = 0 :=
+      hzeroClosest hC4 (by rw [htxZero]; ring)
+    have ht1Zero : _root_.F2R (beta:=radix) t1 = 0 :=
+      hzeroClosest hD2 (by rw [hrZero, hx1y1Zero]; ring)
+    have ht2Zero : _root_.F2R (beta:=radix) t2 = 0 :=
+      hzeroClosest hD3 (by rw [ht1Zero, hx1y2Zero]; ring)
+    have ht3Zero : _root_.F2R (beta:=radix) t3 = 0 :=
+      hzeroClosest hD4 (by rw [ht2Zero, hx2y1Zero]; ring)
+    have ht4Zero : _root_.F2R (beta:=radix) t4 = 0 :=
+      hzeroClosest hD5 (by rw [ht3Zero, hx2y2Zero]; ring)
+    calc
+      |_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y -
+          (_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) t4)| = 0 := by
+          rw [hxZero, hrZero, ht4Zero]
+          simp
+      _ ≤ (7 / 2 : ℝ) * (radix : ℝ) ^ (-b.dExp) := hRhsNonneg
+  · by_cases hyZero : _root_.F2R (beta:=radix) y = 0
+    · have hrZero : _root_.F2R (beta:=radix) r = 0 :=
+        hzeroClosest hD1 (by rw [hyZero]; ring)
+      have hp'Zero : _root_.F2R (beta:=radix) p' = 0 :=
+        hzeroClosest hB1 (by rw [hyZero]; ring)
+      have hq'Zero : _root_.F2R (beta:=radix) q' = 0 :=
+        hzeroClosest hB2 (by rw [hyZero, hp'Zero]; ring)
+      have hhyZero : _root_.F2R (beta:=radix) hy = 0 :=
+        hzeroClosest hB3 (by rw [hq'Zero, hp'Zero]; ring)
+      have htyZero : _root_.F2R (beta:=radix) ty = 0 :=
+        hzeroClosest hB4 (by rw [hyZero, hhyZero]; ring)
+      have hx1y1Zero : _root_.F2R (beta:=radix) x1y1 = 0 :=
+        hzeroClosest hC1 (by rw [hhyZero]; ring)
+      have hx1y2Zero : _root_.F2R (beta:=radix) x1y2 = 0 :=
+        hzeroClosest hC2 (by rw [htyZero]; ring)
+      have hx2y1Zero : _root_.F2R (beta:=radix) x2y1 = 0 :=
+        hzeroClosest hC3 (by rw [hhyZero]; ring)
+      have hx2y2Zero : _root_.F2R (beta:=radix) x2y2 = 0 :=
+        hzeroClosest hC4 (by rw [htyZero]; ring)
+      have ht1Zero : _root_.F2R (beta:=radix) t1 = 0 :=
+        hzeroClosest hD2 (by rw [hrZero, hx1y1Zero]; ring)
+      have ht2Zero : _root_.F2R (beta:=radix) t2 = 0 :=
+        hzeroClosest hD3 (by rw [ht1Zero, hx1y2Zero]; ring)
+      have ht3Zero : _root_.F2R (beta:=radix) t3 = 0 :=
+        hzeroClosest hD4 (by rw [ht2Zero, hx2y1Zero]; ring)
+      have ht4Zero : _root_.F2R (beta:=radix) t4 = 0 :=
+        hzeroClosest hD5 (by rw [ht3Zero, hx2y2Zero]; ring)
+      calc
+        |_root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y -
+            (_root_.F2R (beta:=radix) r - _root_.F2R (beta:=radix) t4)| = 0 := by
+            rw [hyZero, hrZero, ht4Zero]
+            simp
+        _ ≤ (7 / 2 : ℝ) * (radix : ℝ) ^ (-b.dExp) := hRhsNonneg
+    · exact Dekker2_aux (beta:=radix) b radix t x y p q hx tx p' q' hy ty
+        x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 rfl hradix hvNum hpGe hdExp
+        hxCan hyCan hxZero hyZero hUnder hA1 hA2 hA3 hA4 hB1 hB2 hB3 hB4
+        hC1 hC2 hC3 hC4 hD1 hD2 hD3 hD4 hD5 hBranch
+
 /-! Coq AlgoS1 theorem `DekkerS1`.
 
 This is the subnormal-`y` counterpart of `DekkerN`.  The zero branch follows
