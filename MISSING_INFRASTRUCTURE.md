@@ -3763,9 +3763,28 @@ with zero findings; full `lake build` passed all 3345 jobs. Exact public
 3 to 2; `ErrFmaApprox_2` is next. Overall exact-gap progress is 253 of 255
 resolved.
 
-#### `Pff/Pff.v` (2)
+2026-07-22 completion note: exact public `ErrFmaApprox_2` is restored in
+`FloatSpec/src/Pff/Pff.lean`. Its payload matches upstream section
+`uhInexact2`: bounded `a`, `x`, and `b`; canonical `b`; normal-or-zero
+hypotheses for `ph`, `uh`, `z`, `v`, and `w`; the product-exponent condition;
+all six closest-rounding definitions; exact `pl` and `ul` residuals; and
+nonzero `ul`. The proof calls exact `ErrFmaApprox_2_aux` in the all-normal
+branch, proves the quantitative `w = 0` branch, derives contradictions with
+nonzero `ul` in the `uh = 0`, `ph = 0`, and `z = 0` branches, and proves exact
+zero error in the `v = 0` branch using bounded error witnesses and closest
+projector equalities. It does not add bounded `pl`, pre-proved zero
+consequences, correction bounds, or the final error bound. Subscription
+harness attempt `.change_log/codex_attempt_20260722_234309` changed only
+`FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`, `build = pass`, and
+a passing local target gate. Independent focused Lean, `git diff --check`, the
+added-hole scan, and `scripts/audit_placeholders.sh --json FloatSpec` passed
+with zero findings; full `lake build` passed all 3345 jobs. Exact public
+`ErrFmaApprox_2` is removed from the active list, reducing the ledger from 2
+to 1; `ErrFmaApprox` is next. Overall exact-gap progress is 254 of 255
+resolved.
 
-- `ErrFmaApprox_2` (Theorem, upstream line 26310)
+#### `Pff/Pff.v` (1)
+
 - `ErrFmaApprox` (Theorem, upstream line 26490)
 
 ### Counterpart/Renaming Audit Progress
