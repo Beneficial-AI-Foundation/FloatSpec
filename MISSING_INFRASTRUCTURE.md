@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 10.
+- Active semantic gap candidates still listed below: 9.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 10/10 names have been
+- Counterpart audit coverage for the active list: 9/9 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 10 active
+Fix the remaining Flocq import gaps by working through the 9 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3575,9 +3575,33 @@ normalized classifier
 local target gate. Exact public `ErrFmaApprox_1` is removed from the active
 list, reducing the ledger from 11 to 10; `LeExp2` is next.
 
-#### `Pff/Pff.v` (10)
+2026-07-22 completion note: exact public inexact-`uh` FMA lemma `LeExp2` is
+restored in `FloatSpec/src/Pff/Pff.lean` with the effective upstream payload.
+Under the radix, precision, bounded-exponent, bounded-`b`, normal `ph`/`uh`/`z`,
+rounded `z`/`ph`/`uh`, exact `ul`, and nonzero-`ul` hypotheses, it proves
+`Fexp uh <= Fexp z + 1`. The proof combines the three closest-rounding ulp
+bounds, uses exact `LeExp1` to bound `Fulp ph` by `radix * Fulp uh`, and then
+uses `FcanonicFnormalizeEq`, `FulpLe2`, and the upstream precision-four
+coefficient argument to derive `|F2R uh| <= radix * |F2R z|`. A canonical
+shift of `z` and `Fcanonic_Rle_Zle` yield the exponent conclusion. Coq section
+premises not used by this lemma, including boundedness of `a` and `x`,
+canonicity of `b`, and the `pl` residual, are not exposed publicly. Required
+subscription harness attempt `.change_log/codex_attempt_20260722_195131`
+generated the exact candidate proof; its initial full build was interrupted by
+the full `/mnt/users` Ceph volume. After moving the ignored `.lake/build`
+symlink to `/tmp`, independent focused Lean, `git diff --check`, the added-hole
+scan, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized verified classifier
+`.change_log/codex_attempt_20260722_195131/attempt.verified.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `LeExp2` is removed from the active list,
+reducing the ledger from 10 to 9; `LeExp3` is next. Overall exact-gap progress
+is 246 of 255 resolved.
 
-- `LeExp2` (Lemma, upstream line 25920)
+#### `Pff/Pff.v` (9)
+
 - `LeExp3` (Lemma, upstream line 26016)
 - `LeExp` (Lemma, upstream line 26106)
 - `vLe_aux` (Lemma, upstream line 26117)
@@ -8420,8 +8444,8 @@ Statement-level checks performed for active Pff entries 71-104:
   `FmaErr_gaCorrect_of_al2_zero`, and several `Fma_FTS_*_leexp_witness`
   theorems cover isolated branches or prerequisite exponent witnesses, not
   the final upstream FMA approximation bounds.
-- `LeExp2`, `LeExp3`, `LeExp`, `vLe_aux`, `vLe`, `tLe`,
-  and `wLe` remain active. Local hits such as `LeExpRound`,
+- `LeExp3`, `LeExp`, `vLe_aux`, `vLe`, `tLe`, and `wLe` remain active. Local
+  hits such as `LeExpRound`,
   `LeExpRound2`, `RoundedModeMultLess`, `FboundedShiftLess`,
   `maxDivLess`, and `digitLess` are generic or unrelated support lemmas;
   they do not prove the concrete exponent and absolute-value bounds in this
@@ -8438,8 +8462,10 @@ Statement-level checks performed for active Pff entries 71-104:
   `|F2R uh| <= radix * |F2R z|` from `ulDef`, `plDef`, `zDef`, `phDef`,
   `uhDef`, `RoundedModeUlp`, `FcanonicFnormalizeEq`, `FulpLe2`, `LeExp1`,
   and `precision >= 3` before applying the exponent comparison. Adding a
-  weaker helper-only bound would not preserve the upstream payload, so
-  `LeExp2` remains active.
+  weaker helper-only bound would not preserve the upstream payload. That old
+  blocker is now superseded by exact public `LeExp2`, restored by harness
+  attempt `.change_log/codex_attempt_20260722_195131` and the independent
+  verified continuation documented in the completion note above.
 
 Updated status: the active Pff entries have now been counterpart-checked
 at least once. The checked local hits are helper, prerequisite, reverse
