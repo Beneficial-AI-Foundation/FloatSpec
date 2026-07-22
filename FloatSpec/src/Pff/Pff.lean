@@ -35372,7 +35372,506 @@ theorem errorBoundedMultClosest {beta : Int}
     refine ⟨r, s', hr_can, hr_bound, hs'_bound, hr_val, hs'_val, ?_⟩
     rfl
 
-/-- Coq: `ClosestImplyEven_int`.
+/-- Coq: `errorBoundedMultClosest_Can`.
+
+Binary closest-rounded multiplication error for a canonical rounded product:
+under the upstream no-underflow magnitude premise, the residual is a bounded
+float at exponent `g.Fexp - precision`, with mantissa bounded by
+`2^(precision - 1)`.  This is the binary/canonical wrapper around the already
+restored `errorBoundedMultClosest`. -/
+theorem errorBoundedMultClosest_Can {beta : Int}
+      (bo : Fbound_skel) (precision : Nat)
+      (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) :
+      beta = 2 →
+      1 < precision →
+      bo.vNum = Zpower_nat 2 precision →
+      Fbounded (beta:=beta) bo f1 →
+      Fbounded (beta:=beta) bo f2 →
+      Closest (beta:=beta) bo (2 : ℝ)
+        (_root_.F2R (beta:=beta) f1 * _root_.F2R (beta:=beta) f2) g →
+      (2 : ℝ) ^ (-bo.dExp + 2 * (precision : Int) - 1) ≤
+        |_root_.F2R (beta:=beta) f1 * _root_.F2R (beta:=beta) f2| →
+      Fcanonic (beta:=beta) 2 bo g →
+      ∃ s : FloatSpec.Core.Defs.FlocqFloat beta,
+        Fbounded (beta:=beta) bo s ∧
+        _root_.F2R (beta:=beta) s =
+          _root_.F2R (beta:=beta) f1 * _root_.F2R (beta:=beta) f2 -
+            _root_.F2R (beta:=beta) g ∧
+        s.Fexp = g.Fexp - precision ∧
+        ((|s.Fnum| : Int) : ℝ) ≤ (2 : ℝ) ^ ((precision : Int) - 1) := by
+    intro hbeta hprecision_gt hvNum hf1 hf2 hclosest hprodLower hgCan
+    subst beta
+    have hprecision_ne : precision ≠ 0 := by omega
+    have hvNum_gt : 1 < bo.vNum := by
+      rw [hvNum, Zpower_nat]
+      calc
+        (1 : Int) < 2 := by norm_num
+        _ = 2 ^ (1 : Nat) := by simp
+        _ ≤ 2 ^ precision := by
+          exact pow_le_pow_right₀ (by norm_num : (1 : Int) ≤ 2)
+            (by omega : 1 ≤ precision)
+    have hvNum_real : (bo.vNum : ℝ) = (2 : ℝ) ^ (precision : Int) := by
+      rw [hvNum, Zpower_nat, Int.cast_pow]
+      exact (zpow_natCast (2 : ℝ) precision).symm
+    have htwo_pos : (0 : ℝ) < 2 := by norm_num
+    have htwo_ne : (2 : ℝ) ≠ 0 := by norm_num
+    have htwo_one_le : (1 : ℝ) ≤ 2 := by norm_num
+    have htwo_one_lt : (1 : ℝ) < 2 := by norm_num
+    have hAbsF2R_lt_pow
+        (x : FloatSpec.Core.Defs.FlocqFloat 2)
+        (hx : Fbounded (beta:=2) bo x) :
+        |_root_.F2R (beta:=2) x| <
+          (2 : ℝ) ^ ((precision : Int) + x.Fexp) := by
+      have hnum_lt_v : (((|x.Fnum| : Int) : ℝ) < (bo.vNum : ℝ)) := by
+        exact_mod_cast hx.1
+      have hnum_lt_pow : |(x.Fnum : ℝ)| < (2 : ℝ) ^ (precision : Int) := by
+        simpa [Int.cast_abs, hvNum_real] using hnum_lt_v
+      have hpow_pos : 0 < (2 : ℝ) ^ x.Fexp := zpow_pos htwo_pos x.Fexp
+      calc
+      |_root_.F2R (beta:=2) x| =
+          |(x.Fnum : ℝ)| * (2 : ℝ) ^ x.Fexp := by
+            simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+            rw [abs_mul]
+            simpa [abs_of_pos hpow_pos]
+        _ < (2 : ℝ) ^ (precision : Int) * (2 : ℝ) ^ x.Fexp :=
+            mul_lt_mul_of_pos_right hnum_lt_pow hpow_pos
+        _ = (2 : ℝ) ^ ((precision : Int) + x.Fexp) := by
+            rw [← zpow_add₀ htwo_ne]
+    have hProdAbs_lt :
+        |_root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2| <
+          (2 : ℝ) ^ (2 * (precision : Int) + f1.Fexp + f2.Fexp) := by
+      have hf1_lt := hAbsF2R_lt_pow f1 hf1
+      have hf2_lt := hAbsF2R_lt_pow f2 hf2
+      have hpow1_pos :
+          0 < (2 : ℝ) ^ ((precision : Int) + f1.Fexp) :=
+        zpow_pos htwo_pos _
+      have hpow2_pos :
+          0 < (2 : ℝ) ^ ((precision : Int) + f2.Fexp) :=
+        zpow_pos htwo_pos _
+      calc
+        |_root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2| =
+            |_root_.F2R (beta:=2) f1| * |_root_.F2R (beta:=2) f2| := by
+              rw [abs_mul]
+        _ < (2 : ℝ) ^ ((precision : Int) + f1.Fexp) *
+              (2 : ℝ) ^ ((precision : Int) + f2.Fexp) := by
+              nlinarith [hf1_lt, hf2_lt, abs_nonneg (_root_.F2R (beta:=2) f1),
+                abs_nonneg (_root_.F2R (beta:=2) f2), hpow1_pos, hpow2_pos]
+        _ = (2 : ℝ) ^ (2 * (precision : Int) + f1.Fexp + f2.Fexp) := by
+              rw [← zpow_add₀ htwo_ne]
+              ring_nf
+    have hProductExpLt :
+        -bo.dExp + 2 * (precision : Int) - 1 <
+          2 * (precision : Int) + f1.Fexp + f2.Fexp := by
+      have hpow_lt :
+          (2 : ℝ) ^ (-bo.dExp + 2 * (precision : Int) - 1) <
+            (2 : ℝ) ^ (2 * (precision : Int) + f1.Fexp + f2.Fexp) :=
+        lt_of_le_of_lt hprodLower hProdAbs_lt
+      have h := Zlt_powerRZ (2 : ℝ)
+        (-bo.dExp + 2 * (precision : Int) - 1)
+        (2 * (precision : Int) + f1.Fexp + f2.Fexp)
+      simpa only [wp, PostCond.noThrow, pure, Zlt_powerRZ_check, Id.run,
+        ULift.up_down] using h ⟨htwo_one_le, hpow_lt⟩
+    have hExpProduct : -bo.dExp ≤ f1.Fexp + f2.Fexp := by
+      omega
+    let lower : FloatSpec.Core.Defs.FlocqFloat 2 :=
+      ⟨1, -bo.dExp + 2 * (precision : Int) - 1⟩
+    have hlowerBound : Fbounded (beta:=2) bo lower := by
+      constructor
+      · have hOneLt : (1 : Int) < bo.vNum := hvNum_gt
+        simpa [lower] using hOneLt
+      · dsimp [lower]
+        omega
+    have hlowerVal :
+        _root_.F2R (beta:=2) lower =
+          (2 : ℝ) ^ (-bo.dExp + 2 * (precision : Int) - 1) := by
+      simp [lower, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    have hMinMax :
+        MinOrMaxP_float (beta:=2) bo 2 (Closest (beta:=2) bo (2 : ℝ)) := by
+      have h := ClosestMinOrMax (beta:=2) bo 2 (2 : ℝ)
+      simpa only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check,
+        Id.run, ULift.up_down] using h trivial
+    let zeroFloat : FloatSpec.Core.Defs.FlocqFloat 2 := ⟨0, -bo.dExp⟩
+    have hzeroBound : Fbounded (beta:=2) bo zeroFloat := by
+      constructor
+      · have hVNumPos : (0 : Int) < bo.vNum := by omega
+        simpa [zeroFloat] using hVNumPos
+      · simp [zeroFloat]
+    have hzeroVal : _root_.F2R (beta:=2) zeroFloat = 0 := by
+      simp [zeroFloat, _root_.F2R, FloatSpec.Core.Defs.F2R]
+    let negLower : FloatSpec.Core.Defs.FlocqFloat 2 :=
+      Fopp (beta:=2) lower
+    have hnegLowerBound : Fbounded (beta:=2) bo negLower := by
+      have h := oppBounded (beta:=2) bo lower
+      simpa only [wp, PostCond.noThrow, pure, oppBounded_check, Id.run,
+        ULift.up_down, negLower] using h hlowerBound
+    have hnegLowerVal :
+        _root_.F2R (beta:=2) negLower =
+          -_root_.F2R (beta:=2) lower := by
+      have h := FloatSpec.Calc.Operations.F2R_opp (beta:=2) lower
+      simpa [negLower, Fopp, _root_.F2R] using h trivial
+    have hlowerNonneg : 0 ≤ _root_.F2R (beta:=2) lower := by
+      rw [hlowerVal]
+      exact le_of_lt (zpow_pos htwo_pos _)
+    have hlowerLeGAbs :
+        (2 : ℝ) ^ (-bo.dExp + 2 * (precision : Int) - 1) ≤
+          |_root_.F2R (beta:=2) g| := by
+      let prod : ℝ :=
+        _root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2
+      have hgMinMax := hMinMax prod g (by simpa [prod] using hclosest)
+      have hlowerLeProdAbs :
+          _root_.F2R (beta:=2) lower ≤ |prod| := by
+        simpa [prod, hlowerVal] using hprodLower
+      have hlowerLeG :
+          _root_.F2R (beta:=2) lower ≤
+            |_root_.F2R (beta:=2) g| := by
+        by_cases hprodNonneg : 0 ≤ prod
+        · have hlowerLeProd : _root_.F2R (beta:=2) lower ≤ prod := by
+            simpa [abs_of_nonneg hprodNonneg] using hlowerLeProdAbs
+          rcases hgMinMax with hgMin | hgMax
+          · rcases hgMin with ⟨_hgBound, _hgLe, hGreatest⟩
+            have hlowerLeGVal := hGreatest lower hlowerBound hlowerLeProd
+            have hgNonneg : 0 ≤ _root_.F2R (beta:=2) g :=
+              le_trans hlowerNonneg hlowerLeGVal
+            simpa [abs_of_nonneg hgNonneg] using hlowerLeGVal
+          · rcases hgMax with ⟨_hgBound, hprodLeG, _hLeast⟩
+            have hlowerLeGVal := le_trans hlowerLeProd hprodLeG
+            have hgNonneg : 0 ≤ _root_.F2R (beta:=2) g :=
+              le_trans hlowerNonneg hlowerLeGVal
+            simpa [abs_of_nonneg hgNonneg] using hlowerLeGVal
+        · have hprodNeg : prod < 0 := lt_of_not_ge hprodNonneg
+          have hlowerLeNegProd :
+              _root_.F2R (beta:=2) lower ≤ -prod := by
+            simpa [abs_of_neg hprodNeg] using hlowerLeProdAbs
+          have hprodLeNegLower : prod ≤ _root_.F2R (beta:=2) negLower := by
+            rw [hnegLowerVal]
+            linarith
+          rcases hgMinMax with hgMin | hgMax
+          · rcases hgMin with ⟨_hgBound, hgLeProd, _hGreatest⟩
+            have hgLeNegLower :
+                _root_.F2R (beta:=2) g ≤ _root_.F2R (beta:=2) negLower :=
+              le_trans hgLeProd hprodLeNegLower
+            have hgNonpos : _root_.F2R (beta:=2) g ≤ 0 :=
+              le_trans hgLeProd (le_of_lt hprodNeg)
+            rw [abs_of_nonpos hgNonpos, hnegLowerVal] at *
+            linarith
+          · rcases hgMax with ⟨_hgBound, _hprodLeG, hLeast⟩
+            have hgLeNegLower :=
+              hLeast negLower hnegLowerBound hprodLeNegLower
+            have hgLeZero : _root_.F2R (beta:=2) g ≤ 0 := by
+              have hprodLeZero : prod ≤ _root_.F2R (beta:=2) zeroFloat := by
+                simpa [hzeroVal] using le_of_lt hprodNeg
+              have := hLeast zeroFloat hzeroBound hprodLeZero
+              simpa [hzeroVal] using this
+            rw [abs_of_nonpos hgLeZero, hnegLowerVal] at *
+            linarith
+      simpa [hlowerVal] using hlowerLeG
+    have hGAbs_lt :
+        |_root_.F2R (beta:=2) g| <
+          (2 : ℝ) ^ ((precision : Int) + g.Fexp) :=
+      hAbsF2R_lt_pow g hclosest.1
+    have hGExpLt :
+        -bo.dExp + 2 * (precision : Int) - 1 <
+          (precision : Int) + g.Fexp := by
+      have hpow_lt :
+          (2 : ℝ) ^ (-bo.dExp + 2 * (precision : Int) - 1) <
+            (2 : ℝ) ^ ((precision : Int) + g.Fexp) :=
+        lt_of_le_of_lt hlowerLeGAbs hGAbs_lt
+      have h := Zlt_powerRZ (2 : ℝ)
+        (-bo.dExp + 2 * (precision : Int) - 1)
+        ((precision : Int) + g.Fexp)
+      simpa only [wp, PostCond.noThrow, pure, Zlt_powerRZ_check, Id.run,
+        ULift.up_down] using h ⟨htwo_one_le, hpow_lt⟩
+    let prod : ℝ :=
+      _root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2
+    let z : Int := f1.Fexp + f2.Fexp
+    let upperExp : Int := (precision : Int) + z
+    let upper : FloatSpec.Core.Defs.FlocqFloat 2 :=
+      ⟨bo.vNum - 1, upperExp⟩
+    have hupperBounded : Fbounded (beta:=2) bo upper := by
+      constructor
+      · have hnonneg : 0 ≤ bo.vNum - 1 := by omega
+        rw [abs_of_nonneg hnonneg]
+        omega
+      · dsimp [upper, upperExp, z]
+        omega
+    have hf1AbsLe :
+        |_root_.F2R (beta:=2) f1| ≤
+          _root_.F2R (beta:=2)
+            (⟨bo.vNum - 1, f1.Fexp⟩ :
+              FloatSpec.Core.Defs.FlocqFloat 2) := by
+      have h := maxMax1 (beta:=2) bo f1 f1.Fexp
+      simpa only [wp, PostCond.noThrow, pure, maxMax1_check, Id.run,
+        ULift.up_down] using h ⟨hf1, le_rfl, hf1, by norm_num⟩
+    have hf2AbsLe :
+        |_root_.F2R (beta:=2) f2| ≤
+          _root_.F2R (beta:=2)
+            (⟨bo.vNum - 1, f2.Fexp⟩ :
+              FloatSpec.Core.Defs.FlocqFloat 2) := by
+      have h := maxMax1 (beta:=2) bo f2 f2.Fexp
+      simpa only [wp, PostCond.noThrow, pure, maxMax1_check, Id.run,
+        ULift.up_down] using h ⟨hf2, le_rfl, hf2, by norm_num⟩
+    have hbaseF1Nonneg :
+        0 ≤ _root_.F2R (beta:=2)
+          (⟨bo.vNum - 1, f1.Fexp⟩ :
+            FloatSpec.Core.Defs.FlocqFloat 2) := by
+      have hnum : (0 : Int) ≤ bo.vNum - 1 := by omega
+      have hnumR : (0 : ℝ) ≤ ((bo.vNum - 1 : Int) : ℝ) := by
+        exact_mod_cast hnum
+      have hpowNonneg : 0 ≤ (2 : ℝ) ^ f1.Fexp :=
+        le_of_lt (zpow_pos htwo_pos f1.Fexp)
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
+        FloatSpec.Core.Defs.FlocqFloat.Fnum,
+        FloatSpec.Core.Defs.FlocqFloat.Fexp]
+      exact mul_nonneg hnumR hpowNonneg
+    have hprodAbsLeBase :
+        |prod| ≤
+          _root_.F2R (beta:=2)
+              (⟨bo.vNum - 1, f1.Fexp⟩ :
+                FloatSpec.Core.Defs.FlocqFloat 2) *
+            _root_.F2R (beta:=2)
+              (⟨bo.vNum - 1, f2.Fexp⟩ :
+                FloatSpec.Core.Defs.FlocqFloat 2) := by
+      dsimp [prod]
+      rw [abs_mul]
+      exact mul_le_mul hf1AbsLe hf2AbsLe
+        (abs_nonneg _) hbaseF1Nonneg
+    have hpredLePow :
+        ((bo.vNum - 1 : Int) : ℝ) ≤ (2 : ℝ) ^ (precision : Int) := by
+      have hleInt : bo.vNum - 1 ≤ bo.vNum := by omega
+      have hleReal :
+          ((bo.vNum - 1 : Int) : ℝ) ≤ (bo.vNum : ℝ) := by
+        exact_mod_cast hleInt
+      exact le_trans hleReal (le_of_eq hvNum_real)
+    have hbaseProdLeUpper :
+        _root_.F2R (beta:=2)
+              (⟨bo.vNum - 1, f1.Fexp⟩ :
+                FloatSpec.Core.Defs.FlocqFloat 2) *
+            _root_.F2R (beta:=2)
+              (⟨bo.vNum - 1, f2.Fexp⟩ :
+                FloatSpec.Core.Defs.FlocqFloat 2) ≤
+          _root_.F2R (beta:=2) upper := by
+      let A : ℝ := ((bo.vNum - 1 : Int) : ℝ)
+      have hANonneg : 0 ≤ A := by
+        have hnonneg : (0 : Int) ≤ bo.vNum - 1 := by omega
+        simpa [A] using
+          (show (0 : ℝ) ≤ ((bo.vNum - 1 : Int) : ℝ) by
+            exact_mod_cast hnonneg)
+      have hpowZNonneg : 0 ≤ (2 : ℝ) ^ z :=
+        le_of_lt (zpow_pos htwo_pos z)
+      have hASqLe : A * A ≤ A * (2 : ℝ) ^ (precision : Int) :=
+        mul_le_mul_of_nonneg_left (by simpa [A] using hpredLePow) hANonneg
+      have hmulExp :
+          (2 : ℝ) ^ f1.Fexp * (2 : ℝ) ^ f2.Fexp =
+            (2 : ℝ) ^ z := by
+        dsimp [z]
+        rw [← zpow_add₀ htwo_ne]
+      have hupperExp :
+          (2 : ℝ) ^ upperExp =
+            (2 : ℝ) ^ (precision : Int) * (2 : ℝ) ^ z := by
+        dsimp [upperExp]
+        exact zpow_add₀ htwo_ne (precision : Int) z
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
+        FloatSpec.Core.Defs.FlocqFloat.Fnum,
+        FloatSpec.Core.Defs.FlocqFloat.Fexp, upper]
+      calc
+        A * (2 : ℝ) ^ f1.Fexp * (A * (2 : ℝ) ^ f2.Fexp) =
+            (A * A) * (2 : ℝ) ^ z := by
+              rw [← hmulExp]
+              ring
+        _ ≤ (A * (2 : ℝ) ^ (precision : Int)) * (2 : ℝ) ^ z :=
+          mul_le_mul_of_nonneg_right hASqLe hpowZNonneg
+        _ = A * (2 : ℝ) ^ upperExp := by
+          rw [hupperExp]
+          ring
+    have hprodAbsLeUpper :
+        |prod| ≤ _root_.F2R (beta:=2) upper :=
+      le_trans hprodAbsLeBase hbaseProdLeUpper
+    have hprodBounds :
+        -_root_.F2R (beta:=2) upper ≤ prod ∧
+          prod ≤ _root_.F2R (beta:=2) upper :=
+      abs_le.mp hprodAbsLeUpper
+    have hupperNonneg : 0 ≤ _root_.F2R (beta:=2) upper :=
+      le_trans (abs_nonneg prod) hprodAbsLeUpper
+    let lowerUpper : FloatSpec.Core.Defs.FlocqFloat 2 :=
+      Fopp (beta:=2) upper
+    have hlowerUpperBounded : Fbounded (beta:=2) bo lowerUpper := by
+      have h := oppBounded (beta:=2) bo upper
+      simpa only [wp, PostCond.noThrow, pure, oppBounded_check, Id.run,
+        ULift.up_down, lowerUpper] using h hupperBounded
+    have hlowerUpperVal :
+        _root_.F2R (beta:=2) lowerUpper =
+          -_root_.F2R (beta:=2) upper := by
+      have h := FloatSpec.Calc.Operations.F2R_opp (beta:=2) upper
+      simpa [lowerUpper, Fopp, _root_.F2R] using h trivial
+    have hclosestProd : Closest (beta:=2) bo (2 : ℝ) prod g := by
+      simpa [prod] using hclosest
+    have hgLeUpper :
+        _root_.F2R (beta:=2) g ≤ _root_.F2R (beta:=2) upper := by
+      by_contra hnot
+      have hlt :
+          _root_.F2R (beta:=2) upper < _root_.F2R (beta:=2) g :=
+        lt_of_not_ge hnot
+      have hdist := hclosestProd.2 upper hupperBounded
+      have hgSubNonneg : 0 ≤ _root_.F2R (beta:=2) g - prod := by
+        linarith [hprodBounds.2]
+      have huSubNonneg : 0 ≤ _root_.F2R (beta:=2) upper - prod := by
+        linarith [hprodBounds.2]
+      rw [abs_of_nonneg hgSubNonneg, abs_of_nonneg huSubNonneg] at hdist
+      linarith
+    have hlowerUpperLeG :
+        -_root_.F2R (beta:=2) upper ≤ _root_.F2R (beta:=2) g := by
+      by_contra hnot
+      have hlt :
+          _root_.F2R (beta:=2) g <
+            -_root_.F2R (beta:=2) upper := lt_of_not_ge hnot
+      have hdist := hclosestProd.2 lowerUpper hlowerUpperBounded
+      rw [hlowerUpperVal] at hdist
+      have hgSubNonpos : _root_.F2R (beta:=2) g - prod ≤ 0 := by
+        linarith [hprodBounds.1]
+      have hlSubNonpos :
+          -_root_.F2R (beta:=2) upper - prod ≤ 0 := by
+        linarith [hprodBounds.1]
+      rw [abs_of_nonpos hgSubNonpos, abs_of_nonpos hlSubNonpos] at hdist
+      linarith
+    have hgAbsLeUpper :
+        |_root_.F2R (beta:=2) g| ≤ _root_.F2R (beta:=2) upper :=
+      abs_le.mpr ⟨hlowerUpperLeG, hgLeUpper⟩
+    have hupperCan : Fcanonic (beta:=2) 2 bo upper := by
+      have hlowerExp : -bo.dExp ≤ upperExp := by
+        dsimp [upperExp, z]
+        omega
+      simpa [upper, pPred] using
+        (FcanonicPpred (beta:=2) 2 bo precision upperExp
+          (by norm_num) (by omega) hvNum hlowerExp)
+    have hupperAbs :
+        |_root_.F2R (beta:=2) upper| =
+          _root_.F2R (beta:=2) upper :=
+      abs_of_nonneg hupperNonneg
+    have hgExpLeUpper : g.Fexp ≤ upper.Fexp := by
+      have h := Fcanonic_Rle_Zle (beta:=2) 2 bo g upper
+        (by norm_num) rfl
+      simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
+        ULift.down_up, Fcanonic'] using
+        h ⟨hgCan, hupperCan, by simpa [hupperAbs] using hgAbsLeUpper⟩
+    have hgExpLe : g.Fexp ≤ (precision : Int) + z := by
+      simpa [upper, upperExp] using hgExpLeUpper
+    let e : Int := g.Fexp - precision
+    have heLower : -bo.dExp ≤ e := by
+      dsimp [e]
+      omega
+    have heLeZ : e ≤ z := by
+      dsimp [e]
+      omega
+    have hErr := errorBoundedMult (beta:=2) bo 2 precision f1 f2 g
+    rcases (by
+      simpa only [wp, PostCond.noThrow, pure, errorBoundedMult_check,
+        Id.run, ULift.up_down] using
+        hErr ⟨rfl, by norm_num, hprecision_ne, hvNum, hf1, hf2,
+          by simpa [z] using hExpProduct, hclosest⟩) with
+      ⟨s0, hs0Val, _hs0Bound, hs0Exp⟩
+    have heLeS0 : e ≤ s0.Fexp := by
+      rw [hs0Exp]
+      exact heLeZ
+    have hrep := F2R_rep_at_lower_exp (beta:=2) s0 e
+    rcases (by
+      simpa only [wp, PostCond.noThrow, pure, F2R_rep_at_lower_exp_check,
+        Id.run, ULift.up_down] using hrep ⟨by norm_num, heLeS0⟩) with
+      ⟨m, hm⟩
+    let s : FloatSpec.Core.Defs.FlocqFloat 2 := ⟨m, e⟩
+    have hsVal :
+        _root_.F2R (beta:=2) s =
+          _root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2 -
+            _root_.F2R (beta:=2) g := by
+      calc
+        _root_.F2R (beta:=2) s = _root_.F2R (beta:=2) s0 := by
+          simpa [s] using hm.symm
+        _ = _ := hs0Val
+    have hsExp : s.Fexp = g.Fexp - precision := by
+      rfl
+    have hclosestUlp :
+        2 *
+            |_root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2 -
+              _root_.F2R (beta:=2) g| ≤
+          Fulp (beta:=2) bo 2 precision g := by
+      have h := ClosestUlp (beta:=2) bo 2 precision
+        (_root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2) g
+      simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hclosest, rfl, by norm_num, hprecision_ne, hvNum⟩
+    have hcanFulp :
+        Fulp (beta:=2) bo 2 precision g = (2 : ℝ) ^ g.Fexp := by
+      have h := CanonicFulp (beta:=2) 2 bo precision g
+      simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check,
+        Id.run, ULift.up_down] using
+        h ⟨hgCan, rfl, by norm_num, hprecision_ne, hvNum⟩
+    have hsAbsBound :
+        2 * |_root_.F2R (beta:=2) s| ≤ (2 : ℝ) ^ g.Fexp := by
+      calc
+        2 * |_root_.F2R (beta:=2) s| =
+            2 *
+              |_root_.F2R (beta:=2) f1 * _root_.F2R (beta:=2) f2 -
+                _root_.F2R (beta:=2) g| := by rw [hsVal]
+        _ ≤ Fulp (beta:=2) bo 2 precision g := hclosestUlp
+        _ = (2 : ℝ) ^ g.Fexp := hcanFulp
+    have hsAbsF2R :
+        |_root_.F2R (beta:=2) s| =
+          ((|s.Fnum| : Int) : ℝ) * (2 : ℝ) ^ s.Fexp := by
+      have hpow_pos : 0 < (2 : ℝ) ^ s.Fexp := zpow_pos htwo_pos s.Fexp
+      simp only [_root_.F2R, FloatSpec.Core.Defs.F2R]
+      rw [abs_mul]
+      simpa [abs_of_pos hpow_pos, Int.cast_abs]
+    have hpow_split :
+        (2 : ℝ) ^ g.Fexp =
+          (2 : ℝ) ^ s.Fexp * (2 : ℝ) ^ (precision : Int) := by
+      rw [hsExp]
+      calc
+        (2 : ℝ) ^ g.Fexp =
+            (2 : ℝ) ^ ((g.Fexp - (precision : Int)) + (precision : Int)) := by
+              congr 1
+              omega
+        _ = (2 : ℝ) ^ (g.Fexp - (precision : Int)) *
+              (2 : ℝ) ^ (precision : Int) := by
+              rw [zpow_add₀ htwo_ne]
+    have hscaled :
+        2 * (((|s.Fnum| : Int) : ℝ) * (2 : ℝ) ^ s.Fexp) ≤
+          (2 : ℝ) ^ s.Fexp * (2 : ℝ) ^ (precision : Int) := by
+      simpa [hsAbsF2R, hpow_split] using hsAbsBound
+    have hmant_half :
+        ((|s.Fnum| : Int) : ℝ) ≤ (2 : ℝ) ^ (precision : Int) / 2 := by
+      have hpow_s_pos : 0 < (2 : ℝ) ^ s.Fexp := zpow_pos htwo_pos s.Fexp
+      nlinarith
+    have hhalf_eq :
+        (2 : ℝ) ^ (precision : Int) / 2 =
+          (2 : ℝ) ^ ((precision : Int) - 1) := by
+      have hexp : (precision : Int) - 1 + 1 = (precision : Int) := by omega
+      calc
+        (2 : ℝ) ^ (precision : Int) / 2 =
+            ((2 : ℝ) ^ ((precision : Int) - 1) * (2 : ℝ)) / 2 := by
+              rw [← hexp, zpow_add₀ htwo_ne]
+              norm_num
+        _ = (2 : ℝ) ^ ((precision : Int) - 1) := by ring
+    have hmant :
+        ((|s.Fnum| : Int) : ℝ) ≤
+          (2 : ℝ) ^ ((precision : Int) - 1) := by
+      rw [← hhalf_eq]
+      exact hmant_half
+    have hpowPredLt :
+        (2 : ℝ) ^ ((precision : Int) - 1) <
+          (2 : ℝ) ^ (precision : Int) :=
+      zpow_lt_zpow_right₀ htwo_one_lt (by omega)
+    have hmantLtVNumReal :
+        ((|s.Fnum| : Int) : ℝ) < (bo.vNum : ℝ) := by
+      rw [hvNum_real]
+      exact lt_of_le_of_lt hmant hpowPredLt
+    have hmantLtVNum : |s.Fnum| < bo.vNum := by
+      exact_mod_cast hmantLtVNumReal
+    have hsBound : Fbounded (beta:=2) bo s := by
+      constructor
+      · exact hmantLtVNum
+      · simpa [s] using heLower
+    exact ⟨s, hsBound, hsVal, hsExp, hmant⟩
+
+  /-- Coq: `ClosestImplyEven_int`.
 
 Integer-midpoint form of `ClosestImplyEven`: if `z` is the midpoint
 `radix^(Fexp f) * (m + 1/2)` with integer `m`, then even-closest rounding

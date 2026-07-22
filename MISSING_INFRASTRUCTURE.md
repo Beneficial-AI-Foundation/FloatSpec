@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 37.
+- Active semantic gap candidates still listed below: 28.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 37/37 names have been
+- Counterpart audit coverage for the active list: 28/28 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 29 active
+Fix the remaining Flocq import gaps by working through the 28 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3167,17 +3167,37 @@ canonical exponent comparison before applying `Half_Closest_Round`.
 Independent `lake env lean FloatSpec/src/Pff/Pff.lean`, `git diff --check`,
 `scripts/audit_placeholders.sh --json FloatSpec`, and
 `scripts/status_report.sh --write` passed, and full `lake build` passed all
-3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. Exact
-The normalized classifier
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
 `.change_log/manual_attempt_20260722_Twice_EvenClosest_Round_proved/attempt.json`
 records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Exact public `Twice_EvenClosest_Round` is removed
 from the active list, reducing the ledger from 30 to 29;
 `errorBoundedMultClosest_Can` is next.
 
-#### `Pff/Pff.v` (29)
+2026-07-22 completion note: exact public `errorBoundedMultClosest_Can` is
+restored in `FloatSpec/src/Pff/Pff.lean` with the full upstream binary section
+payload: `1 < precision`, `vNum = 2^precision`, bounded inputs, a closest and
+canonical rounded product, the no-underflow product-magnitude premise, and a
+bounded residual whose value, exponent, and `2^(precision - 1)` mantissa bound
+match Flocq. The required subscription harness attempt
+`.change_log/codex_attempt_20260722_094154` timed out with exit status 124
+after producing a compiling theorem with an extra global `boundR` exponent
+premise. That non-upstream premise was rejected and removed in the normalized
+manual proof. Independent `lake env lean -DmaxErrors=20
+FloatSpec/src/Pff/Pff.lean`, `git diff --check`, the added-hole scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/manual_attempt_20260722_errorBoundedMultClosest_Can_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Exact public `errorBoundedMultClosest_Can` is
+removed from the active list, reducing the ledger from 29 to 28; `cases` is
+next.
 
-- `errorBoundedMultClosest_Can` (Theorem, upstream line 19729)
+#### `Pff/Pff.v` (28)
+
 - `cases` (Theorem, upstream line 22504)
 - `xLe2y_aux1` (Lemma, upstream line 23476)
 - `xLe2y_aux2` (Lemma, upstream line 23522)
@@ -8003,11 +8023,12 @@ Statement-level checks performed for active Pff entries 71-104:
   upstream proves from normality, exponent lower bound, and
   `EvenClosest`; those helpers alone were not the public theorem. The exact
   public theorem is now restored and removed from the active list.
-- `errorBoundedMultClosest_Can` and `cases` have no faithful local
-  counterpart.
-  Broad hits on `errorBoundedMult`, `Closest`, or
-  `ExactMinusIntervalAux_pred_constructive_cases` do not encode these
-  section-specific rounded-error/case-split conclusions.
+- `errorBoundedMultClosest_Can` is now restored as the exact public binary
+  canonical closest-product residual theorem in
+  `FloatSpec/src/Pff/Pff.lean`.
+- `cases` has no faithful local counterpart. Broad hits on
+  `ExactMinusIntervalAux_pred_constructive_cases` do not encode its
+  section-specific case-split conclusion.
   Config-provider harness attempt `.change_log/codex_attempt_20260716_181642`
   rechecked `cases` against upstream `Pff/Pff.v:22504` and left source code
   unchanged (`target_before.lean` and `target_after.lean` are identical, with
@@ -9406,7 +9427,8 @@ Current restore blockers found by pipeline attempts:
 	  restored exact lower theorem `discri4` at
 	  `FloatSpec/src/Pff/Pff.lean:32862`: it handles the same-exponent branch by
 	  exposing the residual bounded-witness result that upstream obtains from
-	  `errorBoundedMultClosest_Can`, then delegates the final estimate to
+	  the now-restored exact `errorBoundedMultClosest_Can`, then delegates the
+	  final estimate to
 	  `discri3`. A checked follow-up restored exact lower theorem `discri5` at
 	  `FloatSpec/src/Pff/Pff.lean:32909`: it handles the same-sign residual branch
 	  `0 < dp*dq` once the residual bounded-witness result is available, then
