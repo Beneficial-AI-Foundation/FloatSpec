@@ -1,0 +1,204 @@
+commit a9b8367bf2a10baa25441650c482fed5a0264d25
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 23:15:05 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 23:15:05 2026 +0800
+
+    Restore wLe
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 98c4ff21..4605135e 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -65239,6 +65239,158 @@ theorem tLe {beta : Int}
+           norm_num
+           ring
+ 
++noncomputable def wLe_check {beta : Int}
++    (bo : Fbound_skel) (radix : Int) (precision : Nat)
++    (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
++  ()
++
++/-- Coq `ErrFmaApprox` local lemma `wLe`.
++
++The rounded total correction is bounded by the sum of the exact upstream
++`tLe` and `vLe` bounds.  The proof follows Flocq: construct the bounded
++comparator float `Float (2 * radix + 1) (Fexp z)`, use
++`RoundAbsMonotoner` for the closest rounding of `t + v`, and discharge the
++input bound with the triangle inequality. -/
++theorem wLe {beta : Int}
++    (bo : Fbound_skel) (radix : Int) (precision : Nat)
++    (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta) :
++    ⦃⌜beta = radix ∧ 1 < radix ∧
++        bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
++        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) ∧
++        Fbounded (beta:=beta) bo b ∧
++        Fbounded (beta:=beta) bo a ∧
++        Fbounded (beta:=beta) bo x ∧
++        Fcanonic (beta:=beta) radix bo b ∧
++        Fnormal (beta:=beta) radix bo ph ∧
++        Fnormal (beta:=beta) radix bo uh ∧
++        Fnormal (beta:=beta) radix bo z ∧
++        -bo.dExp ≤ a.Fexp + x.Fexp ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
++            _root_.F2R (beta:=beta) b) z ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) ph ∧
++        _root_.F2R (beta:=beta) pl =
++          _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
++            _root_.F2R (beta:=beta) ph ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b) uh ∧
++        _root_.F2R (beta:=beta) ul =
++          _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
++            _root_.F2R (beta:=beta) uh ∧
++        ¬ _root_.F2R (beta:=beta) ul = 0 ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) uh - _root_.F2R (beta:=beta) z) t ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) pl + _root_.F2R (beta:=beta) ul) v ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) v) w⌝⦄
++    (pure (wLe_check (beta:=beta) bo radix precision a x b ph pl uh ul z t v w) :
++      Id Unit)
++    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) w| ≤
++      (radix : ℝ) ^ z.Fexp * (2 * (radix : ℝ) + 1)⌝⦄ := by
++  intro h
++  rcases h with
++    ⟨hbeta, hradix, hvNum, hprecision, hBoundExp, hbBound, haBound,
++      hxBound, hbCan, hphNormal, huhNormal, hzNormal, hproductExp, hzDef,
++      hphDef, hplDef, huhDef, hulDef, hulNonzero, htDef, hvDef, hwDef⟩
++  simp only [wp, PostCond.noThrow, pure, wLe_check, Id.run, ULift.up_down]
++  subst beta
++  let P : ℝ → FloatSpec.Core.Defs.FlocqFloat radix → Prop :=
++    Closest (beta:=radix) bo (radix : ℝ)
++  let upper : FloatSpec.Core.Defs.FlocqFloat radix := ⟨2 * radix + 1, z.Fexp⟩
++  have hprecisionNe : precision ≠ 0 := by omega
++  have hvNumGt : 1 < bo.vNum := by
++    rw [hvNum, Zpower_nat]
++    exact one_lt_pow₀ hradix hprecisionNe
++  have hMinTotal : TotalP (isMin' (beta:=radix) bo radix) := by
++    intro r
++    have h := MinEx (beta:=radix) bo radix r
++    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hvNumGt, hBoundExp r⟩
++  have hMaxTotal : TotalP (isMax' (beta:=radix) bo radix) := by
++    intro r
++    have h := MaxEx (beta:=radix) bo radix r
++    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hvNumGt, hBoundExp r⟩
++  have hTotal : TotalP P := by
++    intro r
++    have h := ClosestTotal (beta:=radix) bo radix (radix : ℝ) r
++    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
++      ULift.up_down, P] using h ⟨hMinTotal, hMaxTotal⟩
++  have hCompat : CompatibleP P := by
++    have h := ClosestCompatible (beta:=radix) bo (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestCompatible_check,
++      PredTrans.pure, PredTrans.apply, Id.run, ULift.down, P] using h trivial
++  have hMinMax : MinOrMaxP_float (beta:=radix) bo radix P := by
++    have h := ClosestMinOrMax (beta:=radix) bo radix (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check,
++      Id.run, ULift.up_down, P] using h trivial
++  have hMono : MonotoneP_float P := by
++    have h := ClosestMonotone (beta:=radix) bo (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
++      Id.run, ULift.up_down, P] using h trivial
++  have hRoundedFloat : RoundedModeP_float (beta:=radix) bo radix P :=
++    ⟨hTotal, hCompat, hMinMax, hMono⟩
++  have hUpperBound : Fbounded (beta:=radix) bo upper := by
++    constructor
++    · have hmantNonneg : 0 ≤ 2 * radix + 1 := by omega
++      have hmantLtPow4 : 2 * radix + 1 < radix ^ 4 := by
++        nlinarith [sq_nonneg (radix - 2), sq_nonneg radix]
++      have hpow4Le : radix ^ 4 ≤ radix ^ precision := by
++        exact pow_le_pow_right₀ (by omega : (1 : Int) ≤ radix) hprecision
++      have hmantLtVNum : 2 * radix + 1 < bo.vNum := by
++        rw [hvNum, Zpower_nat]
++        exact lt_of_lt_of_le hmantLtPow4 hpow4Le
++      simpa [upper, abs_of_nonneg hmantNonneg] using hmantLtVNum
++    · simpa [upper] using hzNormal.1.2
++  have hUpperVal :
++      _root_.F2R (beta:=radix) upper =
++        (radix : ℝ) ^ z.Fexp * (2 * (radix : ℝ) + 1) := by
++    simp [upper, _root_.F2R, FloatSpec.Core.Defs.F2R]
++    ring
++  have htBound :
++      |_root_.F2R (beta:=radix) t| ≤
++        (radix : ℝ) ^ z.Fexp * ((radix : ℝ) + 1) := by
++    have h := tLe (beta:=radix) bo radix precision a x b ph pl uh ul z t
++    simpa only [wp, PostCond.noThrow, pure, tLe_check, Id.run,
++      ULift.up_down] using
++      h ⟨rfl, hradix, hvNum, hprecision, hBoundExp, hbBound, haBound,
++        hxBound, hbCan, hphNormal, huhNormal, hzNormal, hproductExp, hzDef,
++        hphDef, hplDef, huhDef, hulDef, hulNonzero, htDef⟩
++  have hvBound :
++      |_root_.F2R (beta:=radix) v| ≤
++        (radix : ℝ) ^ z.Fexp * (radix : ℝ) := by
++    have h := vLe (beta:=radix) bo radix precision a x b ph pl uh ul z v
++    simpa only [wp, PostCond.noThrow, pure, Id.run, ULift.up_down] using
++      h ⟨rfl, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
++        huhNormal, hzNormal, hzDef, hphDef, hplDef, huhDef, hulDef,
++        hulNonzero, hvDef⟩
++  have hInputBound :
++      |_root_.F2R (beta:=radix) t + _root_.F2R (beta:=radix) v| ≤
++        (radix : ℝ) ^ z.Fexp * (2 * (radix : ℝ) + 1) := by
++    calc
++      |_root_.F2R (beta:=radix) t + _root_.F2R (beta:=radix) v|
++          ≤ |_root_.F2R (beta:=radix) t| +
++            |_root_.F2R (beta:=radix) v| := abs_add_le _ _
++      _ ≤ (radix : ℝ) ^ z.Fexp * ((radix : ℝ) + 1) +
++            (radix : ℝ) ^ z.Fexp * (radix : ℝ) :=
++          add_le_add htBound hvBound
++      _ = (radix : ℝ) ^ z.Fexp * (2 * (radix : ℝ) + 1) := by
++          ring
++  have hAbsLeUpper :
++      |_root_.F2R (beta:=radix) t + _root_.F2R (beta:=radix) v| ≤
++        _root_.F2R (beta:=radix) upper := by
++    simpa [hUpperVal] using hInputBound
++  have hwAbsLeUpper :
++      |_root_.F2R (beta:=radix) w| ≤ _root_.F2R (beta:=radix) upper := by
++    have h := RoundAbsMonotoner (beta:=radix) bo radix P
++      (_root_.F2R (beta:=radix) t + _root_.F2R (beta:=radix) v) w upper
++    simpa only [wp, PostCond.noThrow, pure, RoundAbsMonotoner_check, Id.run,
++      ULift.up_down, P] using h ⟨hRoundedFloat, hUpperBound, hwDef,
++        hAbsLeUpper⟩
++  simpa [hUpperVal] using hwAbsLeUpper
++
+ -- Coq: `digit_abs` — digit n (|p|) = digit n p
+ noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
+   ()
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 92174422..9a8cd535 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -3726,9 +3726,26 @@ full `lake build` passed all 3345 jobs. Exact public `tLe` is removed from the
+ active list, reducing the ledger from 5 to 4; `wLe` is next. Overall exact-gap
+ progress is 251 of 255 resolved.
+ 
+-#### `Pff/Pff.v` (4)
++2026-07-22 completion note: exact public `wLe` is restored in
++`FloatSpec/src/Pff/Pff.lean`. Its effective payload matches upstream
++`Pff/Pff.v:wLe`: the shared inexact-rounding premises used by exact `tLe` and
++`vLe`, plus closest-rounding definitions of `t`, `v`, and `w`. The proof
++constructs the bounded comparator float with mantissa `2 * radix + 1` and
++exponent `z.Fexp`, applies `RoundAbsMonotoner` to the closest rounding of
++`t + v`, and combines exact `tLe` and `vLe` through the triangle inequality.
++It adds no pre-proved correction bounds or values and no normality premise for
++`v` or `w`. Subscription harness attempt
++`.change_log/codex_attempt_20260722_225843` changed only
++`FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`, `build = pass`, and
++a passing local target gate. Independent focused Lean, `git diff --check`, the
++added-hole scan, and `scripts/audit_placeholders.sh --json FloatSpec` passed
++with zero findings; full `lake build` passed all 3345 jobs. Exact public `wLe`
++is removed from the active list, reducing the ledger from 4 to 3;
++`ErrFmaApprox_2_aux` is next. Overall exact-gap progress is 252 of 255
++resolved.
++
++#### `Pff/Pff.v` (3)
+ 
+-- `wLe` (Lemma, upstream line 26187)
+ - `ErrFmaApprox_2_aux` (Theorem, upstream line 26217)
+ - `ErrFmaApprox_2` (Theorem, upstream line 26310)
+ - `ErrFmaApprox` (Theorem, upstream line 26490)
