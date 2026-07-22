@@ -1,0 +1,11 @@
+commit e7c379fcb384c75c85729ce960b1801883b1ceea
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 15:05:15 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 15:05:15 2026 +0800
+
+    Restore Midpoint_aux
+
+ FloatSpec/src/Pff/Pff.lean | 148 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  31 +++++++---
+ 2 files changed, 172 insertions(+), 7 deletions(-)
