@@ -64750,6 +64750,126 @@ theorem LeExp {beta : Int}
           add_le_add hphPow huhPow
     _ = 2 * (radix : ℝ) ^ (z.Fexp + 1) := by ring
 
+noncomputable def vLe_aux_check {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (a x b ph pl uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+/-- Coq `ErrFmaApprox` local lemma `vLe_aux`.
+
+The inexact low-term sum is bounded by one radix successor of the rounded FMA
+exponent.  This is the direct upstream triangle-inequality proof: two
+`ClosestUlp` bounds are converted with `CanonicFulp`, then combined through
+`LeExp`. -/
+theorem vLe_aux {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (a x b ph pl uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜beta = radix ∧ 1 < radix ∧
+        bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
+        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) ∧
+        Fbounded (beta:=beta) bo b ∧
+        Fnormal (beta:=beta) radix bo ph ∧
+        Fnormal (beta:=beta) radix bo uh ∧
+        Fnormal (beta:=beta) radix bo z ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
+            _root_.F2R (beta:=beta) b) z ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) ph ∧
+        _root_.F2R (beta:=beta) pl =
+          _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
+            _root_.F2R (beta:=beta) ph ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b) uh ∧
+        _root_.F2R (beta:=beta) ul =
+          _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
+            _root_.F2R (beta:=beta) uh ∧
+        ¬ _root_.F2R (beta:=beta) ul = 0⌝⦄
+    (pure (vLe_aux_check (beta:=beta) bo radix precision a x b ph pl uh ul z) :
+      Id Unit)
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) pl + _root_.F2R (beta:=beta) ul| ≤
+      (radix : ℝ) ^ z.Fexp * radix⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨hbeta, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
+      huhNormal, hzNormal, hzDef, hphDef, hplDef, huhDef, hulDef, hCase2⟩
+  simp only [wp, PostCond.noThrow, pure, vLe_aux_check, Id.run, ULift.up_down]
+  subst beta
+  have hprecisionNe : precision ≠ 0 := by omega
+  have hradixRealPos : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (by omega : (0 : Int) < radix)
+  have hradixRealNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixRealPos
+  have hplUlp :
+      2 *
+          |_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x -
+            _root_.F2R (beta:=radix) ph| ≤
+        Fulp (beta:=radix) bo radix precision ph := by
+    have h := ClosestUlp (beta:=radix) bo radix precision
+      (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x) ph
+    simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check, Id.run,
+      ULift.up_down] using h ⟨hphDef, rfl, hradix, hprecisionNe, hvNum⟩
+  have hphFulp :
+      Fulp (beta:=radix) bo radix precision ph = (radix : ℝ) ^ ph.Fexp := by
+    have h := CanonicFulp (beta:=radix) radix bo precision ph
+    simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check, Id.run,
+      ULift.up_down] using
+      h ⟨Or.inl hphNormal, rfl, hradix, hprecisionNe, hvNum⟩
+  have hplBound :
+      2 * |_root_.F2R (beta:=radix) pl| ≤ (radix : ℝ) ^ ph.Fexp := by
+    calc
+      2 * |_root_.F2R (beta:=radix) pl|
+          = 2 *
+              |_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x -
+                _root_.F2R (beta:=radix) ph| := by rw [hplDef]
+      _ ≤ Fulp (beta:=radix) bo radix precision ph := hplUlp
+      _ = (radix : ℝ) ^ ph.Fexp := hphFulp
+  have hulUlp :
+      2 *
+          |_root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) b -
+            _root_.F2R (beta:=radix) uh| ≤
+        Fulp (beta:=radix) bo radix precision uh := by
+    have h := ClosestUlp (beta:=radix) bo radix precision
+      (_root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) b) uh
+    simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check, Id.run,
+      ULift.up_down] using h ⟨huhDef, rfl, hradix, hprecisionNe, hvNum⟩
+  have huhFulp :
+      Fulp (beta:=radix) bo radix precision uh = (radix : ℝ) ^ uh.Fexp := by
+    have h := CanonicFulp (beta:=radix) radix bo precision uh
+    simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check, Id.run,
+      ULift.up_down] using
+      h ⟨Or.inl huhNormal, rfl, hradix, hprecisionNe, hvNum⟩
+  have hulBound :
+      2 * |_root_.F2R (beta:=radix) ul| ≤ (radix : ℝ) ^ uh.Fexp := by
+    calc
+      2 * |_root_.F2R (beta:=radix) ul|
+          = 2 *
+              |_root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) b -
+                _root_.F2R (beta:=radix) uh| := by rw [hulDef]
+      _ ≤ Fulp (beta:=radix) bo radix precision uh := hulUlp
+      _ = (radix : ℝ) ^ uh.Fexp := huhFulp
+  have hLeExp :
+      (radix : ℝ) ^ ph.Fexp + (radix : ℝ) ^ uh.Fexp ≤
+        2 * (radix : ℝ) ^ (z.Fexp + 1) := by
+    have h := LeExp (beta:=radix) bo radix precision a x b ph uh ul z
+    simpa only [wp, PostCond.noThrow, pure, LeExp_check, Id.run,
+      ULift.up_down] using
+      h ⟨rfl, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
+        huhNormal, hzNormal, hzDef, hphDef, huhDef, hulDef, hCase2⟩
+  have htri :
+      |_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul| ≤
+        |_root_.F2R (beta:=radix) pl| + |_root_.F2R (beta:=radix) ul| :=
+    abs_add_le _ _
+  have hhalf :
+      |_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul| ≤
+        (radix : ℝ) ^ (z.Fexp + 1) := by
+    nlinarith [htri, hplBound, hulBound, hLeExp]
+  calc
+    |_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul|
+        ≤ (radix : ℝ) ^ (z.Fexp + 1) := hhalf
+    _ = (radix : ℝ) ^ z.Fexp * radix := by
+          rw [zpow_add₀ hradixRealNe]
+          norm_num
+
 -- Coq: `digit_abs` — digit n (|p|) = digit n p
 noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
   ()

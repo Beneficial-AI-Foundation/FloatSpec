@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 7.
+- Active semantic gap candidates still listed below: 6.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 7/7 names have been
+- Counterpart audit coverage for the active list: 6/6 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 7 active
+Fix the remaining Flocq import gaps by working through the 6 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3664,9 +3664,30 @@ local target gate. Exact public `LeExp` is removed from the active list,
 reducing the ledger from 8 to 7; `vLe_aux` is next. Overall exact-gap progress
 is 248 of 255 resolved.
 
-#### `Pff/Pff.v` (7)
+2026-07-22 completion note: exact public low-residual bound `vLe_aux` is
+restored in `FloatSpec/src/Pff/Pff.lean`. Under the effective inexact-`uh`
+payload plus the exact `pl = a*x-ph` residual, it proves
+`|pl+ul| <= radix^z.Fexp * radix`. The proof derives both doubled residual
+bounds from `ClosestUlp`, rewrites the ulps with `CanonicFulp` for normal
+`ph` and `uh`, combines them through exact `LeExp`, and finishes with the
+successor-power identity. Required subscription harness attempt
+`.change_log/codex_attempt_20260722_214915` changed only
+`FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`, `build = pass`, and
+a passing local target gate. The public surface exposes no pre-proved ulp or
+exponent bound, boundedness of `a` or `x`, canonicity of `b`, `v`/`t`/`w`, or
+unrelated residual. Independent focused Lean, `git diff --check`, the
+added-hole scan, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/codex_attempt_20260722_214915/attempt.verified.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `vLe_aux` is removed from the active list,
+reducing the ledger from 7 to 6; `vLe` is next. Overall exact-gap progress is
+249 of 255 resolved.
 
-- `vLe_aux` (Lemma, upstream line 26117)
+#### `Pff/Pff.v` (6)
+
 - `vLe` (Lemma, upstream line 26137)
 - `tLe` (Lemma, upstream line 26151)
 - `wLe` (Lemma, upstream line 26187)
@@ -8506,7 +8527,7 @@ Statement-level checks performed for active Pff entries 71-104:
   `FmaErr_gaCorrect_of_al2_zero`, and several `Fma_FTS_*_leexp_witness`
   theorems cover isolated branches or prerequisite exponent witnesses, not
   the final upstream FMA approximation bounds.
-- `vLe_aux`, `vLe`, `tLe`, and `wLe` remain active. Local
+- `vLe`, `tLe`, and `wLe` remain active. Local
   hits such as `LeExpRound`,
   `LeExpRound2`, `RoundedModeMultLess`, `FboundedShiftLess`,
   `maxDivLess`, and `digitLess` are generic or unrelated support lemmas;
@@ -8535,6 +8556,9 @@ Statement-level checks performed for active Pff entries 71-104:
   Exact public `LeExp` was then restored by subscription harness attempt
   `.change_log/codex_attempt_20260722_213255` as the direct power-bound
   consequence of exact `LeExp1`, `LeExp2`, and `LeExp3`.
+  Exact public `vLe_aux` was subsequently restored by subscription harness
+  attempt `.change_log/codex_attempt_20260722_214915` from exact residual
+  definitions, two `ClosestUlp` bounds, `CanonicFulp`, and exact `LeExp`.
 
 Updated status: the active Pff entries have now been counterpart-checked
 at least once. The checked local hits are helper, prerequisite, reverse
