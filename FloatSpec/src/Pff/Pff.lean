@@ -64662,6 +64662,94 @@ theorem LeExp3 {beta : Int}
   rw [hlowerVal] at hLowerLeZ
   exact (not_le_of_gt hzAbsStrict) hLowerLeZ
 
+noncomputable def LeExp_check {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+  ()
+
+/-- Coq `ErrFmaApprox` local lemma `LeExp`.
+
+Combines `LeExp1`, `LeExp2`, and the forbidden equality/equality corner from
+`LeExp3` to bound the two ulp-sized terms by twice the successor exponent of
+the rounded FMA result. -/
+theorem LeExp {beta : Int}
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) :
+    ⦃⌜beta = radix ∧ 1 < radix ∧
+        bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
+        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) ∧
+        Fbounded (beta:=beta) bo b ∧
+        Fnormal (beta:=beta) radix bo ph ∧
+        Fnormal (beta:=beta) radix bo uh ∧
+        Fnormal (beta:=beta) radix bo z ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
+            _root_.F2R (beta:=beta) b) z ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) ph ∧
+        Closest (beta:=beta) bo (radix : ℝ)
+          (_root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b) uh ∧
+        _root_.F2R (beta:=beta) ul =
+          _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
+            _root_.F2R (beta:=beta) uh ∧
+        ¬ _root_.F2R (beta:=beta) ul = 0⌝⦄
+    (pure (LeExp_check (beta:=beta) bo radix precision a x b ph uh ul z) :
+      Id Unit)
+    ⦃⇓_ => ⌜(radix : ℝ) ^ ph.Fexp + (radix : ℝ) ^ uh.Fexp ≤
+      2 * (radix : ℝ) ^ (z.Fexp + 1)⌝⦄ := by
+  intro h
+  rcases h with
+    ⟨hbeta, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
+      huhNormal, hzNormal, hzDef, hphDef, huhDef, hulDef, hCase2⟩
+  simp only [wp, PostCond.noThrow, pure, LeExp_check, Id.run, ULift.up_down]
+  subst beta
+  have hprecisionNe : precision ≠ 0 := by omega
+  have hvNumGt : 1 < bo.vNum := by
+    rw [hvNum, Zpower_nat]
+    exact one_lt_pow₀ hradix hprecisionNe
+  have hLeExp1 : ph.Fexp ≤ uh.Fexp + 1 := by
+    have h := LeExp1 (beta:=radix) bo radix precision b ph uh ul
+    simpa only [wp, PostCond.noThrow, pure, LeExp1_check, Id.run,
+      ULift.up_down] using
+      h ⟨rfl, hradix, hprecisionNe, hvNumGt, hvNum, hBoundExp, hbBound,
+        hphNormal, huhDef, hulDef, hCase2⟩
+  have hLeExp2 : uh.Fexp ≤ z.Fexp + 1 := by
+    have h := LeExp2 (beta:=radix) bo radix precision a x b ph uh ul z
+    simpa only [wp, PostCond.noThrow, pure, LeExp2_check, Id.run,
+      ULift.up_down] using
+      h ⟨rfl, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
+        huhNormal, hzNormal, hzDef, hphDef, huhDef, hulDef, hCase2⟩
+  have hphLeZSucc : ph.Fexp ≤ z.Fexp + 1 := by
+    by_contra hnot
+    have hph_gt : z.Fexp + 1 < ph.Fexp := not_le.mp hnot
+    have hph_eq : ph.Fexp = uh.Fexp + 1 := by omega
+    have huh_eq : uh.Fexp = z.Fexp + 1 := by omega
+    have hfalse : False := by
+      have h := LeExp3 (beta:=radix) bo radix precision a x b ph uh ul z
+      simpa only [wp, PostCond.noThrow, pure, LeExp3_check, Id.run,
+        ULift.up_down] using
+        h ⟨rfl, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
+          huhNormal, hzNormal, hzDef, hphDef, huhDef, hulDef, hCase2,
+          hph_eq, huh_eq⟩
+    exact hfalse.elim
+  have hradixReal : (1 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix
+  have hradixRealGe : (1 : ℝ) ≤ (radix : ℝ) := le_of_lt hradixReal
+  have hphPow :
+      (radix : ℝ) ^ ph.Fexp ≤ (radix : ℝ) ^ (z.Fexp + 1) := by
+    have h := Rle_powerRZ (radix : ℝ) ph.Fexp (z.Fexp + 1)
+    simpa only [wp, PostCond.noThrow, pure, Rle_powerRZ_check, Id.run,
+      ULift.up_down] using h ⟨hradixRealGe, hphLeZSucc⟩
+  have huhPow :
+      (radix : ℝ) ^ uh.Fexp ≤ (radix : ℝ) ^ (z.Fexp + 1) := by
+    have h := Rle_powerRZ (radix : ℝ) uh.Fexp (z.Fexp + 1)
+    simpa only [wp, PostCond.noThrow, pure, Rle_powerRZ_check, Id.run,
+      ULift.up_down] using h ⟨hradixRealGe, hLeExp2⟩
+  calc
+    (radix : ℝ) ^ ph.Fexp + (radix : ℝ) ^ uh.Fexp
+        ≤ (radix : ℝ) ^ (z.Fexp + 1) + (radix : ℝ) ^ (z.Fexp + 1) :=
+          add_le_add hphPow huhPow
+    _ = 2 * (radix : ℝ) ^ (z.Fexp + 1) := by ring
+
 -- Coq: `digit_abs` — digit n (|p|) = digit n p
 noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
   ()
