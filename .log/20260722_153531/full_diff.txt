@@ -1,0 +1,358 @@
+commit 538153f8f25a673420d7d856cec47a4c2600dd1c
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 15:34:42 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 15:34:42 2026 +0800
+
+    Restore gatCorrect
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index afca7ab6..30f89577 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -50529,6 +50529,294 @@ theorem Subexact {beta : Int}
+         Fminus_exp_eq_min (beta:=radix)
+           (Fopp (beta:=radix) x) (Fopp (beta:=radix) y)
+ 
++private theorem Closest_exact_of_bounded {beta : Int}
++    (bo : Fbound_skel) (radix : ℝ)
++    (p : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hpBound : Fbounded (beta:=beta) bo p) :
++    Closest (beta:=beta) bo radix (_root_.F2R (beta:=beta) p) p := by
++  constructor
++  · exact hpBound
++  · intro g hg
++    rw [sub_self, abs_zero]
++    exact abs_nonneg (_root_.F2R (beta:=beta) g - _root_.F2R (beta:=beta) p)
++
++private theorem Closest_lower_bound_of_bounded {beta : Int}
++    (bo : Fbound_skel) (radix : ℝ)
++    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ)
++    (hpBound : Fbounded (beta:=beta) bo p)
++    (hpr : _root_.F2R (beta:=beta) p ≤ r)
++    (hqClosest : Closest (beta:=beta) bo radix r q) :
++    _root_.F2R (beta:=beta) p ≤ _root_.F2R (beta:=beta) q := by
++  by_cases hlt : _root_.F2R (beta:=beta) p < r
++  · have hMono : MonotoneP_float (Closest (beta:=beta) bo radix) := by
++      have h := ClosestMonotone (beta:=beta) bo radix
++      simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
++        Id.run, ULift.up_down] using h True.intro
++    exact hMono (_root_.F2R (beta:=beta) p) r p q hlt
++      (Closest_exact_of_bounded (beta:=beta) bo radix p hpBound) hqClosest
++  · have heq : _root_.F2R (beta:=beta) p = r := le_antisymm hpr (le_of_not_gt hlt)
++    have hdist :
++        |_root_.F2R (beta:=beta) q - r| ≤
++          |_root_.F2R (beta:=beta) p - r| :=
++      hqClosest.2 p hpBound
++    rw [heq, sub_self, abs_zero] at hdist
++    have hq_eq : _root_.F2R (beta:=beta) q = r := by
++      exact sub_eq_zero.mp (abs_eq_zero.mp (le_antisymm hdist (abs_nonneg _)))
++    rw [hq_eq]
++    exact hpr
++
++private theorem Closest_upper_bound_of_bounded {beta : Int}
++    (bo : Fbound_skel) (radix : ℝ)
++    (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ)
++    (hrp : r ≤ _root_.F2R (beta:=beta) p)
++    (hqClosest : Closest (beta:=beta) bo radix r q)
++    (hpBound : Fbounded (beta:=beta) bo p) :
++    _root_.F2R (beta:=beta) q ≤ _root_.F2R (beta:=beta) p := by
++  by_cases hlt : r < _root_.F2R (beta:=beta) p
++  · have hMono : MonotoneP_float (Closest (beta:=beta) bo radix) := by
++      have h := ClosestMonotone (beta:=beta) bo radix
++      simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
++        Id.run, ULift.up_down] using h True.intro
++    exact hMono r (_root_.F2R (beta:=beta) p) q p hlt hqClosest
++      (Closest_exact_of_bounded (beta:=beta) bo radix p hpBound)
++  · have heq : r = _root_.F2R (beta:=beta) p := le_antisymm hrp (le_of_not_gt hlt)
++    have hdist :
++        |_root_.F2R (beta:=beta) q - r| ≤
++          |_root_.F2R (beta:=beta) p - r| :=
++      hqClosest.2 p hpBound
++    rw [← heq, sub_self, abs_zero] at hdist
++    have hq_eq : _root_.F2R (beta:=beta) q = r := by
++      exact sub_eq_zero.mp (abs_eq_zero.mp (le_antisymm hdist (abs_nonneg _)))
++    rw [hq_eq, heq]
++
++/-- Coq Be2Zero lemma `gatCorrect`.
++
++The subtraction `be1 - r1` is exactly representable with exponent
++`min be1.Fexp r1.Fexp`.  This is the public upstream `gatCorrect` payload:
++the two error bounds are obtained from `TwoSumProp`/`ClosestUlp`, and the
++sign-transfer pair needed by `Subexact` follows from closest-rounding
++monotonicity. -/
++theorem gatCorrect {beta : Int}
++    (bo : Fbound_skel) (radix : Int) (precision : Nat)
++    (a x y r1 u1 u2 al1 al2 be1 :
++      FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : bo.vNum = Zpower_nat radix precision)
++    (hprecision_ge : 3 ≤ precision) (hEven : Even radix)
++    (hBoundExp : ∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp)
++    (hyBound : Fbounded (beta:=beta) bo y)
++    (hbe1Normal : Fnormal (beta:=beta) radix bo be1)
++    (hr1Normal : Fnormal (beta:=beta) radix bo r1)
++    (hal1Can : Fcanonic (beta:=beta) radix bo al1)
++    (hu1Can : Fcanonic (beta:=beta) radix bo u1)
++    (hal1ExpGt : -bo.dExp < al1.Fexp)
++    (hu1ExpGt : -bo.dExp < u1.Fexp)
++    (hr1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
++        _root_.F2R (beta:=beta) y) r1)
++    (hu1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) u1)
++    (hu2Def : _root_.F2R (beta:=beta) u2 =
++      _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
++        _root_.F2R (beta:=beta) u1)
++    (hal1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) u2) al1)
++    (hal2Def : _root_.F2R (beta:=beta) al2 =
++      _root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) u2 -
++        _root_.F2R (beta:=beta) al1)
++    (hbe1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) u1 + _root_.F2R (beta:=beta) al1) be1) :
++    ∃ v : FloatSpec.Core.Defs.FlocqFloat beta,
++      _root_.F2R (beta:=beta) v =
++        _root_.F2R (beta:=beta) be1 - _root_.F2R (beta:=beta) r1 ∧
++      Fbounded (beta:=beta) bo v ∧
++      v.Fexp = min be1.Fexp r1.Fexp := by
++  subst beta
++  have hprecision_ne : precision ≠ 0 := by omega
++  have hu1Bound : Fbounded (beta:=radix) bo u1 := by
++    have h := FcanonicBound (beta:=radix) radix bo u1
++    simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check] using h hu1Can
++  have hneg_u1_bound :
++      Fbounded (beta:=radix) bo (Fopp (beta:=radix) u1) := by
++    have h := oppBounded (beta:=radix) bo u1
++    simpa [Fopp, wp, PostCond.noThrow, pure, oppBounded_check,
++      Id.run, ULift.up_down] using h hu1Bound
++  have hneg_u1_val :
++      _root_.F2R (beta:=radix) (Fopp (beta:=radix) u1) =
++        -_root_.F2R (beta:=radix) u1 := by
++    have h := Fopp_correct (beta:=radix) u1
++    simpa [Fopp, wp, PostCond.noThrow, pure, Fopp_correct_check,
++      Id.run, ULift.up_down] using h trivial
++  have hu2_abs_bound :
++      |_root_.F2R (beta:=radix) u2| ≤
++        (1 / 2 : ℝ) * Fulp (beta:=radix) bo radix precision u1 := by
++    have hcu :
++        2 * |_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x -
++            _root_.F2R (beta:=radix) u1| ≤
++          Fulp (beta:=radix) bo radix precision u1 := by
++      have h := ClosestUlp (beta:=radix) bo radix precision
++        (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x) u1
++      simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
++        Id.run, ULift.up_down] using
++        h ⟨hu1Def, rfl, hradix, hprecision_ne, hvNum⟩
++    rw [hu2Def]
++    nlinarith
++  have hal2_le_u2 :
++      |_root_.F2R (beta:=radix) al2| ≤ |_root_.F2R (beta:=radix) u2| := by
++    have h := TwoSumProp (beta:=radix) bo (radix : ℝ) y u2 al1 al2
++    simpa only [wp, PostCond.noThrow, pure, TwoSumProp_check, Id.run,
++      ULift.up_down] using h ⟨hyBound, hal1Def, hal2Def⟩
++  have hal2_u1_ulp :
++      |_root_.F2R (beta:=radix) al2| ≤
++        (1 / 2 : ℝ) * Fulp (beta:=radix) bo radix precision u1 := by
++    exact le_trans hal2_le_u2 hu2_abs_bound
++  have hal2_al1_ulp :
++      |_root_.F2R (beta:=radix) al2| ≤
++        (1 / 2 : ℝ) * Fulp (beta:=radix) bo radix precision al1 := by
++    have hcu :
++        2 * |(_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2) -
++            _root_.F2R (beta:=radix) al1| ≤
++          Fulp (beta:=radix) bo radix precision al1 := by
++      have h := ClosestUlp (beta:=radix) bo radix precision
++        (_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2) al1
++      simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
++        Id.run, ULift.up_down] using
++        h ⟨hal1Def, rfl, hradix, hprecision_ne, hvNum⟩
++    have hal2_abs_eq :
++        |_root_.F2R (beta:=radix) al2| =
++          |(_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2) -
++            _root_.F2R (beta:=radix) al1| := by
++      rw [hal2Def]
++    rw [hal2_abs_eq]
++    nlinarith
++  have hr1ClosestSubexact :
++      Closest (beta:=radix) bo (radix : ℝ)
++        (_root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 +
++          _root_.F2R (beta:=radix) al2) r1 := by
++    have harg :
++        _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 +
++            _root_.F2R (beta:=radix) al2 =
++          _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++            _root_.F2R (beta:=radix) y := by
++      rw [hal2Def, hu2Def]
++      ring
++    simpa [harg] using hr1Def
++  have hr1ValueNe : _root_.F2R (beta:=radix) r1 ≠ 0 := by
++    have hvNum_pos : 0 < bo.vNum := by
++      rw [hvNum, Zpower_nat]
++      exact pow_pos (by omega : 0 < radix) precision
++    have hnotZero : ¬ is_Fzero r1 := by
++      have h := FnormalNotZero (beta:=radix) bo radix r1 radix hvNum_pos
++        hr1Normal.2
++      simpa only [wp, PostCond.noThrow, pure, FnormalNotZero_check,
++        ULift.down_up] using h hr1Normal
++    have hnum : r1.Fnum ≠ 0 := by
++      simpa [is_Fzero] using hnotZero
++    exact FloatSpec.Core.Float_prop.F2R_neq_0 (beta:=radix) r1 hradix hnum
++  have hSign :
++      (0 ≤ _root_.F2R (beta:=radix) r1 →
++          0 ≤ _root_.F2R (beta:=radix) be1) ∧
++        (_root_.F2R (beta:=radix) r1 ≤ 0 →
++          _root_.F2R (beta:=radix) be1 ≤ 0) := by
++    let s : ℝ :=
++      _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++        _root_.F2R (beta:=radix) y
++    let t : ℝ := _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1
++    by_cases hs_nonneg : 0 ≤ s
++    · have hinput_lower :
++          _root_.F2R (beta:=radix) (Fopp (beta:=radix) u1) ≤
++            _root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2 := by
++        rw [hneg_u1_val, hu2Def]
++        change 0 ≤
++          _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++            _root_.F2R (beta:=radix) y at hs_nonneg
++        linarith
++      have hal1_lower :
++          _root_.F2R (beta:=radix) (Fopp (beta:=radix) u1) ≤
++            _root_.F2R (beta:=radix) al1 :=
++        Closest_lower_bound_of_bounded (beta:=radix) bo (radix : ℝ)
++          (Fopp (beta:=radix) u1) al1
++          (_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2)
++          hneg_u1_bound hinput_lower hal1Def
++      have ht_nonneg : 0 ≤ t := by
++        dsimp [t]
++        rw [hneg_u1_val] at hal1_lower
++        linarith
++      constructor
++      · intro _
++        exact P_positive (beta:=radix) bo (radix : ℝ) t be1 hbe1Def ht_nonneg
++      · intro hr1_nonpos
++        have hr1_nonneg : 0 ≤ _root_.F2R (beta:=radix) r1 := by
++          exact P_positive (beta:=radix) bo (radix : ℝ) s r1 hr1Def hs_nonneg
++        have hr1_zero : _root_.F2R (beta:=radix) r1 = 0 :=
++          le_antisymm hr1_nonpos hr1_nonneg
++        exact False.elim (hr1ValueNe hr1_zero)
++    · have hs_nonpos : s ≤ 0 := le_of_lt (lt_of_not_ge hs_nonneg)
++      have hinput_upper :
++          _root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2 ≤
++            _root_.F2R (beta:=radix) (Fopp (beta:=radix) u1) := by
++        rw [hneg_u1_val, hu2Def]
++        change
++          _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++            _root_.F2R (beta:=radix) y ≤ 0 at hs_nonpos
++        linarith
++      have hal1_upper :
++          _root_.F2R (beta:=radix) al1 ≤
++            _root_.F2R (beta:=radix) (Fopp (beta:=radix) u1) :=
++        Closest_upper_bound_of_bounded (beta:=radix) bo (radix : ℝ)
++          (Fopp (beta:=radix) u1) al1
++          (_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2)
++          hinput_upper hal1Def hneg_u1_bound
++      have ht_nonpos : t ≤ 0 := by
++        dsimp [t]
++        rw [hneg_u1_val] at hal1_upper
++        linarith
++      constructor
++      · intro hr1_nonneg
++        have hr1_nonpos : _root_.F2R (beta:=radix) r1 ≤ 0 := by
++          have hnegClosest : Closest (beta:=radix) bo (radix : ℝ) (-s)
++              (Fopp (beta:=radix) r1) := by
++            have h := ClosestOpp (beta:=radix) bo (radix : ℝ) r1 s
++            simpa only [wp, PostCond.noThrow, pure, ClosestOpp_check,
++              Id.run, ULift.up_down] using h hr1Def
++          have hnonneg_neg_s : 0 ≤ -s := by linarith
++          have hnonneg_opp :
++              0 ≤ _root_.F2R (beta:=radix) (Fopp (beta:=radix) r1) :=
++            P_positive (beta:=radix) bo (radix : ℝ) (-s)
++              (Fopp (beta:=radix) r1) hnegClosest hnonneg_neg_s
++          have hopp :
++              _root_.F2R (beta:=radix) (Fopp (beta:=radix) r1) =
++                -_root_.F2R (beta:=radix) r1 := by
++            have h := Fopp_correct (beta:=radix) r1
++            simpa [Fopp, wp, PostCond.noThrow, pure, Fopp_correct_check,
++              Id.run, ULift.up_down] using h trivial
++          linarith
++        have hr1_zero : _root_.F2R (beta:=radix) r1 = 0 :=
++          le_antisymm hr1_nonpos hr1_nonneg
++        exact False.elim (hr1ValueNe hr1_zero)
++      · intro _
++        have hnegClosest : Closest (beta:=radix) bo (radix : ℝ) (-t)
++            (Fopp (beta:=radix) be1) := by
++          have h := ClosestOpp (beta:=radix) bo (radix : ℝ) be1 t
++          simpa only [wp, PostCond.noThrow, pure, ClosestOpp_check,
++            Id.run, ULift.up_down] using h hbe1Def
++        have hnonneg_neg_t : 0 ≤ -t := by linarith
++        have hnonneg_opp :
++            0 ≤ _root_.F2R (beta:=radix) (Fopp (beta:=radix) be1) :=
++          P_positive (beta:=radix) bo (radix : ℝ) (-t)
++            (Fopp (beta:=radix) be1) hnegClosest hnonneg_neg_t
++        have hopp :
++            _root_.F2R (beta:=radix) (Fopp (beta:=radix) be1) =
++              -_root_.F2R (beta:=radix) be1 := by
++          have h := Fopp_correct (beta:=radix) be1
++          simpa [Fopp, wp, PostCond.noThrow, pure, Fopp_correct_check,
++            Id.run, ULift.up_down] using h trivial
++        linarith
++  exact Subexact (beta:=radix) bo radix precision u1 al1 be1 r1
++    (_root_.F2R (beta:=radix) al2) rfl hradix hvNum hprecision_ge hEven
++    hal2_u1_ulp hal2_al1_ulp hbe1Def hr1ClosestSubexact hbe1Normal
++    hr1Normal hu1Can hal1Can hu1ExpGt hal1ExpGt hSign hBoundExp
++
+ noncomputable def RoundLeNormal_check {beta : Int}
+     (b : Fbound_skel) (precision : Nat)
+     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 0f9e955a..d1ee6f53 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 19.
++- Active semantic gap candidates still listed below: 18.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 19/19 names have been
++- Counterpart audit coverage for the active list: 18/18 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -3371,9 +3371,23 @@ checkout. The normalized classifier
+ local target gate. Exact public `Midpoint_aux` is removed from the active
+ list, reducing the ledger from 20 to 19; `gatCorrect` is next.
+ 
+-#### `Pff/Pff.v` (19)
++2026-07-22 completion note: exact public Be2Zero lemma `gatCorrect` is restored
++in `FloatSpec/src/Pff/Pff.lean` with the full upstream existential payload: a
++float representing `F2R be1 - F2R r1`, bounded by `bo`, whose exponent is
++`min be1.Fexp r1.Fexp`. The proof derives the two half-ulp error bounds from
++`ClosestUlp` and `TwoSumProp`, reconstructs the exact rounded sum, transports
++the required sign conditions through positive, zero, and negated closest
++branches, and applies exact `Subexact`. The required subscription harness
++attempt `.change_log/codex_attempt_20260722_150956` generated the declaration
++and proof. Independent focused Lean, `git diff --check`, the added-hole scan,
++`scripts/audit_placeholders.sh --json FloatSpec`, and
++`scripts/status_report.sh --write` passed, and full `lake build` passed all
++3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. Exact
++public `gatCorrect` is removed from the active list, reducing the ledger from
++19 to 18; `Expr1` is next.
++
++#### `Pff/Pff.v` (18)
+ 
+-- `gatCorrect` (Lemma, upstream line 24295)
+ - `Expr1` (Lemma, upstream line 24443)
+ - `Expbe1` (Lemma, upstream line 24480)
+ - `be2MuchSmaller` (Lemma, upstream line 24522)
+@@ -8214,7 +8228,7 @@ Statement-level checks performed for active Pff entries 71-104:
+ - `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
+   exact representability fixes `|x|`, and the even-radix half-unit witness
+   plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
+-- `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
++- `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
+   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
+   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
+   not the upstream subtraction/midpoint/least-significant-bit payloads.
