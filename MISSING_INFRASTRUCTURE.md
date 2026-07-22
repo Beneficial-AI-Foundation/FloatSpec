@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 14.
+- Active semantic gap candidates still listed below: 13.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 14/14 names have been
+- Counterpart audit coverage for the active list: 13/13 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 14 active
+Fix the remaining Flocq import gaps by working through the 13 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3468,9 +3468,37 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
 passing local target gate. Exact public `gaCorrect` is removed from the active
 list, reducing the ledger from 15 to 14; `tBounded_aux` is next.
 
-#### `Pff/Pff.v` (14)
+2026-07-22 completion note: exact public FMA lemma `tBounded_aux` is restored in
+`FloatSpec/src/Pff/Pff.lean` with the effective upstream payload: bounded
+inputs `a`, `x`, and `b`, canonical `b`, normal rounded values `ph`, `z`, and
+`uh`, the product-exponent floor, the three closest-rounding relations, the
+exact multiplication residual `pl`, and nonnegativity of `a*x+b` yield a
+bounded float representing `F2R uh - F2R z`. The proof preserves all three
+upstream branches. When `ph+b=0`, closestness forces `uh=0` and bounded `-z`
+is the witness. Under `|pl| <= |ph+b|/4`, normal relative-error bounds and the
+upstream radix/precision factor inequality establish the Sterbenz ratios and
+exact subtraction supplies the witness. In the complementary branch, the
+proof combines `errorBoundedMult`, canonical comparison floats,
+`Fcanonic_Rle_Zle`, `FcanonicLeastExp`, `LeExpRound2`, closest-ulp bounds, and
+two applications of `BoundedL` to construct the exact bounded difference.
+Closest totality is derived internally from `MinEx`, `MaxEx`, and
+`ClosestTotal`; no helper result or additional totality premise is exposed in
+the public theorem. Required subscription harness attempt
+`.change_log/codex_attempt_20260722_171329` made no source changes and reported
+that the prerequisite names existed but the unfactored proof exceeded its
+single-attempt scope; the manual continuation completed that proof.
+Independent focused Lean, `git diff --check`, the added-hole scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/manual_attempt_20260722_tBounded_aux_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `tBounded_aux` is removed from the active list,
+reducing the ledger from 14 to 13; `tBounded` is next.
 
-- `tBounded_aux` (Theorem, upstream line 25145)
+#### `Pff/Pff.v` (13)
+
 - `tBounded` (Theorem, upstream line 25532)
 - `ErrFmaApprox_1_aux` (Theorem, upstream line 25626)
 - `ErrFmaApprox_1` (Theorem, upstream line 25719)
