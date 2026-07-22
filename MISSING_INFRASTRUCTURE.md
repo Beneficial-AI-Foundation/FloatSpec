@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 13.
+- Active semantic gap candidates still listed below: 12.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 13/13 names have been
+- Counterpart audit coverage for the active list: 12/12 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 13 active
+Fix the remaining Flocq import gaps by working through the 12 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3497,9 +3497,33 @@ normalized classifier
 local target gate. Exact public `tBounded_aux` is removed from the active list,
 reducing the ledger from 14 to 13; `tBounded` is next.
 
-#### `Pff/Pff.v` (13)
+2026-07-22 completion note: exact public FMA lemma `tBounded` is restored in
+`FloatSpec/src/Pff/Pff.lean` with the upstream payload: bounded inputs `a`,
+`x`, and `b`, canonical `b`, normal-or-zero rounded values `ph`, `z`, and `uh`,
+the product-exponent floor, the three closest-rounding relations, and the exact
+multiplication residual `pl` yield a bounded float representing
+`F2R uh - F2R z`. In the all-normal branch, nonnegative inputs apply exact
+`tBounded_aux` directly; negative inputs transport every premise through
+`Fopp`, `ClosestOpp`, `FnormalFop`, `FcanonicFopp`, and `oppBounded`, apply
+`tBounded_aux`, and negate its witness. The zero-valued branches preserve the
+upstream construction: `ph = 0` uses `ClosestZero1` to force the exact product
+to zero and rounded projector equality to identify `z` and `uh` with `b`,
+`z = 0` returns `uh`, and `uh = 0` returns bounded `-z`. Closest totality is
+derived internally from `MinEx`, `MaxEx`, and `ClosestTotal`, so no additional
+public totality premise is exposed. Required subscription harness attempt
+`.change_log/codex_attempt_20260722_183900` generated the exact declaration and
+proof. Independent focused Lean, `git diff --check`, the added-hole scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/codex_attempt_20260722_183900/attempt.verified.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `tBounded` is removed from the active list,
+reducing the ledger from 13 to 12; `ErrFmaApprox_1_aux` is next.
 
-- `tBounded` (Theorem, upstream line 25532)
+#### `Pff/Pff.v` (12)
+
 - `ErrFmaApprox_1_aux` (Theorem, upstream line 25626)
 - `ErrFmaApprox_1` (Theorem, upstream line 25719)
 - `LeExp2` (Lemma, upstream line 25920)
