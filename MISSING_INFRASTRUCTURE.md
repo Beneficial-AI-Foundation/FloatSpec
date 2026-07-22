@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 11.
+- Active semantic gap candidates still listed below: 10.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 11/11 names have been
+- Counterpart audit coverage for the active list: 10/10 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 11 active
+Fix the remaining Flocq import gaps by working through the 10 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3549,9 +3549,34 @@ normalized classifier
 local target gate. Exact public `ErrFmaApprox_1_aux` is removed from the active
 list, reducing the ledger from 12 to 11; `ErrFmaApprox_1` is next.
 
-#### `Pff/Pff.v` (11)
+2026-07-22 completion note: exact public FMA lemma `ErrFmaApprox_1` is restored
+in `FloatSpec/src/Pff/Pff.lean` with the upstream exact-`uh` Case1 payload and
+normal-or-zero hypotheses for both `z` and `w`. The all-normal branch delegates
+directly to exact `ErrFmaApprox_1_aux`. In the normal-`z`/zero-`w` branch, the
+proof preserves the upstream exactness chain: `tBounded` plus projector equality
+gives `F2R t = F2R uh - F2R z`, projector equality gives `F2R v = F2R pl` under
+`F2R ul = 0`, and `ClosestZero1` applied to the exact `Fplus t v` witness forces
+`F2R t + F2R v = 0`, making the target zero. In the zero-`z` branch,
+`ClosestZero1` first forces the exact FMA input to zero, rounded projector
+equality identifies `ph` with `-b`, `ClosestZero2` forces `uh`, `t`, `v`, and
+`w` to zero, and the target again reduces to zero. Closest totality is derived
+internally from `MinEx`, `MaxEx`, and `ClosestTotal`; no totality, equality,
+positivity, or nonzero premises are exposed. Required subscription harness
+attempt `.change_log/codex_attempt_20260722_192358` generated the exact
+declaration, proof, and ledger update. Independent focused Lean
+`lake env lean FloatSpec/src/Pff/Pff.lean`, `git diff --check`, the added-hole
+scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/codex_attempt_20260722_192358/attempt.verified.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `ErrFmaApprox_1` is removed from the active
+list, reducing the ledger from 11 to 10; `LeExp2` is next.
 
-- `ErrFmaApprox_1` (Theorem, upstream line 25719)
+#### `Pff/Pff.v` (10)
+
 - `LeExp2` (Lemma, upstream line 25920)
 - `LeExp3` (Lemma, upstream line 26016)
 - `LeExp` (Lemma, upstream line 26106)
@@ -8388,8 +8413,8 @@ Statement-level checks performed for active Pff entries 71-104:
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
   not the upstream subtraction/midpoint/least-significant-bit payloads.
-- `ErrFmaApprox_1`, `ErrFmaApprox_2_aux`, `ErrFmaApprox_2`, and
-  `ErrFmaApprox` are not hidden under the current local FMA helper family.
+- `ErrFmaApprox_2_aux`, `ErrFmaApprox_2`, and `ErrFmaApprox` are not hidden
+  under the current local FMA helper family.
   The visible local helpers such as
   `FmaErr_gaCorrect_of_be1_eq_r1`,
   `FmaErr_gaCorrect_of_al2_zero`, and several `Fma_FTS_*_leexp_witness`
