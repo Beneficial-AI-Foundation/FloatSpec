@@ -1,0 +1,211 @@
+commit 21de54547e3a6656f69f239a5418697078e259a2
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 22:28:00 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 22:28:00 2026 +0800
+
+    Restore vLe
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 0c22b5fd..edb3b2f8 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -64870,6 +64870,121 @@ theorem vLe_aux {beta : Int}
+           rw [zpow_add₀ hradixRealNe]
+           norm_num
+ 
++/-- Coq `ErrFmaApprox` local lemma `vLe`.
++
++The rounded low-term sum inherits the `vLe_aux` magnitude bound by monotonicity
++of absolute values under closest rounding, using the bounded comparator float
++`Float radix (Fexp z)`. -/
++theorem vLe {beta : Int}
++    (bo : Fbound_skel) (radix : Int) (precision : Nat)
++    (a x b ph pl uh ul z v : FloatSpec.Core.Defs.FlocqFloat beta) :
++    ⦃⌜beta = radix ∧ 1 < radix ∧
++        bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
++        (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp) ∧
++        Fbounded (beta:=beta) bo b ∧
++        Fnormal (beta:=beta) radix bo ph ∧
++        Fnormal (beta:=beta) radix bo uh ∧
++        Fnormal (beta:=beta) radix bo z ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
++            _root_.F2R (beta:=beta) b) z ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) ph ∧
++        _root_.F2R (beta:=beta) pl =
++          _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
++            _root_.F2R (beta:=beta) ph ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b) uh ∧
++        _root_.F2R (beta:=beta) ul =
++          _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
++            _root_.F2R (beta:=beta) uh ∧
++        ¬ _root_.F2R (beta:=beta) ul = 0 ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) pl + _root_.F2R (beta:=beta) ul) v⌝⦄
++    (pure () : Id Unit)
++    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) v| ≤
++      (radix : ℝ) ^ z.Fexp * radix⌝⦄ := by
++  intro h
++  rcases h with
++    ⟨hbeta, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
++      huhNormal, hzNormal, hzDef, hphDef, hplDef, huhDef, hulDef, hulNonzero,
++      hvDef⟩
++  simp only [wp, PostCond.noThrow, pure, Id.run, ULift.up_down]
++  subst beta
++  let P : ℝ → FloatSpec.Core.Defs.FlocqFloat radix → Prop :=
++    Closest (beta:=radix) bo (radix : ℝ)
++  let upper : FloatSpec.Core.Defs.FlocqFloat radix := ⟨radix, z.Fexp⟩
++  have hprecisionNe : precision ≠ 0 := by omega
++  have hvNumGt : 1 < bo.vNum := by
++    rw [hvNum, Zpower_nat]
++    exact one_lt_pow₀ hradix hprecisionNe
++  have hMinTotal : TotalP (isMin' (beta:=radix) bo radix) := by
++    intro r
++    have h := MinEx (beta:=radix) bo radix r
++    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hvNumGt, hBoundExp r⟩
++  have hMaxTotal : TotalP (isMax' (beta:=radix) bo radix) := by
++    intro r
++    have h := MaxEx (beta:=radix) bo radix r
++    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hvNumGt, hBoundExp r⟩
++  have hTotal : TotalP P := by
++    intro r
++    have h := ClosestTotal (beta:=radix) bo radix (radix : ℝ) r
++    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
++      ULift.up_down, P] using h ⟨hMinTotal, hMaxTotal⟩
++  have hCompat : CompatibleP P := by
++    have h := ClosestCompatible (beta:=radix) bo (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestCompatible_check,
++      PredTrans.pure, PredTrans.apply, Id.run, ULift.down, P] using h trivial
++  have hMinMax : MinOrMaxP_float (beta:=radix) bo radix P := by
++    have h := ClosestMinOrMax (beta:=radix) bo radix (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check,
++      Id.run, ULift.up_down, P] using h trivial
++  have hMono : MonotoneP_float P := by
++    have h := ClosestMonotone (beta:=radix) bo (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
++      Id.run, ULift.up_down, P] using h trivial
++  have hRoundedFloat : RoundedModeP_float (beta:=radix) bo radix P :=
++    ⟨hTotal, hCompat, hMinMax, hMono⟩
++  have hUpperBound : Fbounded (beta:=radix) bo upper := by
++    constructor
++    · have hradixLtPred : radix < pPred bo.vNum := by
++        have h := pPredMoreThanRadix bo radix precision
++        simpa only [wp, PostCond.noThrow, pure, pPredMoreThanRadix_check,
++          Id.run, ULift.up_down] using h ⟨hradix, by omega, hvNum⟩
++      have hradixLtVNum : radix < bo.vNum := by
++        unfold pPred at hradixLtPred
++        omega
++      have hradixNonneg : 0 ≤ radix := by omega
++      simpa [upper, abs_of_nonneg hradixNonneg] using hradixLtVNum
++    · simpa [upper] using hzNormal.1.2
++  have hUpperVal :
++      _root_.F2R (beta:=radix) upper = (radix : ℝ) ^ z.Fexp * radix := by
++    simp [upper, _root_.F2R, FloatSpec.Core.Defs.F2R]
++    ring
++  have hAux :
++      |_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul| ≤
++        (radix : ℝ) ^ z.Fexp * radix := by
++    have h := vLe_aux (beta:=radix) bo radix precision a x b ph pl uh ul z
++    simpa only [wp, PostCond.noThrow, pure, vLe_aux_check, Id.run,
++      ULift.up_down] using
++      h ⟨rfl, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
++        huhNormal, hzNormal, hzDef, hphDef, hplDef, huhDef, hulDef,
++        hulNonzero⟩
++  have hAbsLeUpper :
++      |_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul| ≤
++        _root_.F2R (beta:=radix) upper := by
++    simpa [hUpperVal] using hAux
++  have hvAbsLeUpper :
++      |_root_.F2R (beta:=radix) v| ≤ _root_.F2R (beta:=radix) upper := by
++    have h := RoundAbsMonotoner (beta:=radix) bo radix P
++      (_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul) v upper
++    simpa only [wp, PostCond.noThrow, pure, RoundAbsMonotoner_check, Id.run,
++      ULift.up_down, P] using h ⟨hRoundedFloat, hUpperBound, hvDef,
++        hAbsLeUpper⟩
++  simpa [hUpperVal] using hvAbsLeUpper
++
+ -- Coq: `digit_abs` — digit n (|p|) = digit n p
+ noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
+   ()
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index d797f142..e0dd96f8 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 6.
++- Active semantic gap candidates still listed below: 5.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 6/6 names have been
++- Counterpart audit coverage for the active list: 5/5 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 6 active
++Fix the remaining Flocq import gaps by working through the 5 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -3686,9 +3686,30 @@ local target gate. Exact public `vLe_aux` is removed from the active list,
+ reducing the ledger from 7 to 6; `vLe` is next. Overall exact-gap progress is
+ 249 of 255 resolved.
+ 
+-#### `Pff/Pff.v` (6)
++2026-07-22 completion note: exact public rounded low-term bound `vLe` is
++restored in `FloatSpec/src/Pff/Pff.lean`. Under the exact `vLe_aux` payload plus
++`Closest (pl+ul) v`, it proves `|v| <= radix^z.Fexp * radix`. The proof derives
++the bounded comparator float `Float radix z.Fexp` from normal `z`, the
++mantissa-bound power equation, and precision at least four, then applies
++`RoundAbsMonotoner` with exact `vLe_aux`. Required subscription harness attempt
++`.change_log/codex_attempt_20260722_221259` changed only
++`FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`, `build = pass`, and
++a passing local target gate. The public surface adds no normality premise for
++`v`, desired output bound, pre-proved monotonicity result, boundedness of `a` or
++`x`, canonicity of `b`, or unrelated `t`/`w` residuals. Independent focused
++Lean, `git diff --check`, the added-hole scan,
++`scripts/audit_placeholders.sh --json FloatSpec`, and
++`scripts/status_report.sh --write` passed, and full `lake build` passed all
++3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
++normalized classifier
++`.change_log/codex_attempt_20260722_221259/attempt.verified.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Exact public `vLe` is removed from the active list, reducing
++the ledger from 6 to 5; `tLe` is next. Overall exact-gap progress is 250 of 255
++resolved.
++
++#### `Pff/Pff.v` (5)
+ 
+-- `vLe` (Lemma, upstream line 26137)
+ - `tLe` (Lemma, upstream line 26151)
+ - `wLe` (Lemma, upstream line 26187)
+ - `ErrFmaApprox_2_aux` (Theorem, upstream line 26217)
+@@ -8527,7 +8548,7 @@ Statement-level checks performed for active Pff entries 71-104:
+   `FmaErr_gaCorrect_of_al2_zero`, and several `Fma_FTS_*_leexp_witness`
+   theorems cover isolated branches or prerequisite exponent witnesses, not
+   the final upstream FMA approximation bounds.
+-- `vLe`, `tLe`, and `wLe` remain active. Local
++- `tLe` and `wLe` remain active. Local
+   hits such as `LeExpRound`,
+   `LeExpRound2`, `RoundedModeMultLess`, `FboundedShiftLess`,
+   `maxDivLess`, and `digitLess` are generic or unrelated support lemmas;
+@@ -8559,6 +8580,9 @@ Statement-level checks performed for active Pff entries 71-104:
+   Exact public `vLe_aux` was subsequently restored by subscription harness
+   attempt `.change_log/codex_attempt_20260722_214915` from exact residual
+   definitions, two `ClosestUlp` bounds, `CanonicFulp`, and exact `LeExp`.
++  Exact public `vLe` was then restored by subscription harness attempt
++  `.change_log/codex_attempt_20260722_221259` using the bounded comparator
++  float and `RoundAbsMonotoner` over exact `vLe_aux`.
+ 
+ Updated status: the active Pff entries have now been counterpart-checked
+ at least once. The checked local hits are helper, prerequisite, reverse
