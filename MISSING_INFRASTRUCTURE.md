@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 30 active
+Fix the remaining Flocq import gaps by working through the 29 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3153,9 +3153,30 @@ normalized classifier
 local target gate. Exact public `Dekker2` is removed from the active list,
 reducing the ledger from 31 to 30; `Twice_EvenClosest_Round` is next.
 
-#### `Pff/Pff.v` (30)
+2026-07-22 completion note: exact public `Twice_EvenClosest_Round` is restored
+in `FloatSpec/src/Pff/Pff.lean` immediately after `ClosestUlp`, whose exact
+closest-rounding error bound it uses. The theorem preserves the complete
+upstream radix-two payload: `1 < precision`, `vNum = 2^precision`, the
+predecessor-exponent bound, normality, and `EvenClosest`, with no extra
+scaled-closestness, parity, competitor-halvability, monotonicity, uniqueness,
+or conclusion premise. The proof handles high-exponent competitors by bounded
+halving and proves the minimum-exponent boundary directly from the mantissa
+bound, normal lower magnitude, and closest-ulp estimate. Its uniqueness branch
+derives the competitor exponent through absolute-value closest monotonicity and
+canonical exponent comparison before applying `Half_Closest_Round`.
+Independent `lake env lean FloatSpec/src/Pff/Pff.lean`, `git diff --check`,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. Exact
+The normalized classifier
+`.change_log/manual_attempt_20260722_Twice_EvenClosest_Round_proved/attempt.json`
+records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+passing local target gate. Exact public `Twice_EvenClosest_Round` is removed
+from the active list, reducing the ledger from 30 to 29;
+`errorBoundedMultClosest_Can` is next.
 
-- `Twice_EvenClosest_Round` (Theorem, upstream line 19178)
+#### `Pff/Pff.v` (29)
+
 - `errorBoundedMultClosest_Can` (Theorem, upstream line 19729)
 - `cases` (Theorem, upstream line 22504)
 - `xLe2y_aux1` (Lemma, upstream line 23476)
@@ -7957,6 +7978,8 @@ Statement-level checks performed for active Pff entries 36-70:
   theorem in `FloatSpec/src/Pff/Pff.lean`.
 - `Dekker2` is now restored as the exact public Algo2 zero-aware underflow
   wrapper in `FloatSpec/src/Pff/Pff.lean`.
+- `Twice_EvenClosest_Round` is now restored as the exact public radix-two
+  doubled nearest-even rounding theorem in `FloatSpec/src/Pff/Pff.lean`.
 - `Veltkampb'` is now restored as the exact public bound-extension theorem in
   `FloatSpec/src/Pff/Pff.lean`.
 - `NormalbPrim` is now restored as the exact public Algo2 normal-representative
@@ -7973,12 +7996,13 @@ No entries were removed from the active semantic gap list in this batch.
 
 Statement-level checks performed for active Pff entries 71-104:
 
-- `Twice_EvenClosest_Round` was rechecked against
+- `Twice_EvenClosest_Round` was previously rechecked against
   `Twice_EvenClosest_Round_from_closest` and
   `Twice_EvenClosest_Round_from_even_or_high`. As in batch 10, the local
   theorems assume the scaled closestness or even/high boundary payload that
   upstream proves from normality, exponent lower bound, and
-  `EvenClosest`; they are not the public theorem.
+  `EvenClosest`; those helpers alone were not the public theorem. The exact
+  public theorem is now restored and removed from the active list.
 - `errorBoundedMultClosest_Can` and `cases` have no faithful local
   counterpart.
   Broad hits on `errorBoundedMult`, `Closest`, or
@@ -9334,13 +9358,13 @@ Current restore blockers found by pipeline attempts:
   `Fulp_le_twice_r_round` at `FloatSpec/src/Pff/Pff.lean:24842`; the theorem
   now packages the monotonicity step from `x <= 2*r` to `x <= 2*y` and then
   calls `Fulp_le_twice_r`, while keeping the doubled nearest-even rounding
-  payload explicit because the separate upstream helper
-  `Twice_EvenClosest_Round` is still not restored. A checked follow-up restored
+  payload explicit because the separate upstream helper was not yet restored.
+  A checked follow-up restored
   the parity-preservation component
   `FNeven_double_of_Fnormal` at `FloatSpec/src/Pff/Pff.lean:24699`: for a
   normal radix-2 float, incrementing the exponent keeps normalized-evenness,
-  so the remaining `Twice_EvenClosest_Round` work is the closestness/boundary
-  scaling argument for competitors at the minimum exponent. A checked follow-up
+  leaving the closestness/boundary scaling argument for competitors at the
+  minimum exponent. A checked follow-up
   added `Twice_EvenClosest_Round_from_closest` at
   `FloatSpec/src/Pff/Pff.lean:24738`, which packages the final `EvenClosest`
   conclusion from the doubled closestness fact plus the restored parity
@@ -9356,10 +9380,9 @@ Current restore blockers found by pipeline attempts:
   `Twice_EvenClosest_Round_from_even_or_high` at
   `FloatSpec/src/Pff/Pff.lean:24931` and
   `FloatSpec/src/Pff/Pff.lean:24983`, composing that halving lemma through the
-  doubled-closestness and final even-closestness steps. The remaining payload
-  for exact upstream `Twice_EvenClosest_Round` is the genuine boundary argument
-  for odd competitors at the minimum exponent; the current bridge records that
-  condition explicitly instead of pretending it follows for all bounded floats.
+  doubled-closestness and final even-closestness steps. These were intermediate
+  bridges: exact upstream `Twice_EvenClosest_Round` is now restored, with the
+  odd-competitor minimum-exponent boundary proved internally.
   A checked follow-up restored the exact lower first discriminant estimate
   `delta_inf` at `FloatSpec/src/Pff/Pff.lean:32166`, proving the
   three-rounding-error triangle bound from `ClosestUlp`. A 2026-07-02 checked
