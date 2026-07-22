@@ -1,0 +1,11 @@
+commit 9def8ca62c076c235f57c40f195c5c50bdeb8cf7
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 16:46:10 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 16:46:10 2026 +0800
+
+    Restore be2MuchSmaller
+
+ FloatSpec/src/Pff/Pff.lean | 435 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  32 +++-
+ 2 files changed, 462 insertions(+), 5 deletions(-)
