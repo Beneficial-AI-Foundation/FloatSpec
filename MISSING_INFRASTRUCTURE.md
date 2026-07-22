@@ -3600,6 +3600,25 @@ local target gate. Exact public `LeExp2` is removed from the active list,
 reducing the ledger from 10 to 9; `LeExp3` is next. Overall exact-gap progress
 is 246 of 255 resolved.
 
+2026-07-22 prerequisite progress: exact upstream-strength `RleRoundedAbs` is
+restored in `FloatSpec/src/Pff/Pff.lean`. Its public surface now uses the Coq
+section payload: integer radix, natural precision, `vNum = radix^precision`,
+precision at least four, closestness, normality, and exponent strictly above
+the minimum boundary. The former public expansions of `Closest` and `Fnormal`
+and the non-upstream premise `vNum >= |Fnum f| * radix` were removed. In the
+minimum-normal branch, the mantissa-product equality is derived internally
+from `nNormMin`, `PosNormMin`, and the `vNum` power equation. Required
+subscription harness attempt `.change_log/codex_attempt_20260722_203914`
+performed the repair. Independent focused Lean, `git diff --check`, the
+added-hole scan, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. The normalized classifier
+`.change_log/codex_attempt_20260722_203914/attempt.verified.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. This directly clears the blocker recorded by the first
+`LeExp3` harness attempt `.change_log/codex_attempt_20260722_203104`; it is
+prerequisite progress only, so the active exact-gap count remains 9.
+
 #### `Pff/Pff.v` (9)
 
 - `LeExp3` (Lemma, upstream line 26016)

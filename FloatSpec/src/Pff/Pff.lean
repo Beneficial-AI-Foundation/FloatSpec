@@ -12044,62 +12044,73 @@ theorem FsubnormalLt {beta : Int}
 -- ---------------------------------------------------------------------------
 -- RleRoundedAbs (Coq: Pff.v) — lower bound on |r| from rounding to nearest
 
-noncomputable def RleRoundedAbs_check {beta : Int}
-    (bo : Fbound_skel) (radix : ℝ) (p : Int)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
+noncomputable def RleRoundedAbs_check
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (f : FloatSpec.Core.Defs.FlocqFloat radix) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `RleRoundedAbs` — if `Closest bo radix r f`, `Fnormal radix bo f` and
     `-(dExp bo) < Fexp f`, then
-    `((radix ^ (p - 1) + - (1 / (2 * radix))) * radix ^ (Fexp f) ≤ |r|)`.
+    `((radix ^ (precision - 1) + - (1 / (2 * radix))) * radix ^ (Fexp f) ≤ |r|)`.
 
-    Note: `Closest` and `Fnormal` are concrete; this port carries explicit
-    hypotheses matching Coq's definitions, following the `ClosestZero` pattern:
-    - Section hypotheses: `1 < radix`, `radix = (beta : ℝ)`, `0 < beta`
-    - `Fbounded' bo f` and Closest minimality
-    - `nNormMin ≤ |f.Fnum|` (from Fnormal)
-    - These make the theorem provable and match the original Coq semantics. -/
-theorem RleRoundedAbs {beta : Int}
-    (bo : Fbound_skel) (radix : ℝ) (p : Int)
-    (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
-    ⦃⌜Closest (beta:=beta) bo radix r f ∧ Fnormal (beta:=beta) beta bo f ∧ (-bo.dExp < f.Fexp)
-      -- Real hypotheses matching Coq semantics:
-      ∧ (1 < radix)
-      ∧ (radix = (beta : ℝ))
-      ∧ (0 < beta)
-      ∧ Fbounded' bo f
-      ∧ (∀ g : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' bo g →
-          |_root_.F2R f - r| ≤ |_root_.F2R g - r|)
-      ∧ (radix ^ (p - 1) ≤ |(f.Fnum : ℝ)|)
-      ∧ (0 < bo.vNum)
-      ∧ (0 ≤ p - 1)  -- precision p ≥ 1
-      ∧ (bo.vNum ≥ |(f.Fnum : ℤ)| * beta)  -- mantissa bound (from vNum ≥ radix^p ≥ |Fnum|*radix)
-      ⌝⦄
-    (pure (RleRoundedAbs_check (beta:=beta) bo radix p f r) : Id Unit)
-    ⦃⇓_ => ⌜((radix ^ (p - 1) + - (1 / (2 * radix))) * (radix ^ (f.Fexp)) ≤ |r|)⌝⦄ := by
-  intro ⟨_hClosest, _hNormal, hExpBound, hRadixGt1, hRadixEq, hBetaPos,
-         hFbounded, hMin, hFnumBound, hvNum, hPge1, hVnumBound⟩
+    This is the upstream section payload from Flocq `Pff.v`: integer radix,
+    natural precision, `bo.vNum = radix^precision`, `4 ≤ precision`, closest
+    rounding, normality, and exponent above the minimum-normal boundary. -/
+theorem RleRoundedAbs
+    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (f : FloatSpec.Core.Defs.FlocqFloat radix) (r : ℝ) :
+    ⦃⌜1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
+        Closest (beta:=radix) bo (radix : ℝ) r f ∧
+        Fnormal (beta:=radix) radix bo f ∧ -bo.dExp < f.Fexp⌝⦄
+    (pure (RleRoundedAbs_check bo radix precision f r) : Id Unit)
+    ⦃⇓_ => ⌜(((radix : ℝ) ^ (precision - 1) + - (1 / (2 * (radix : ℝ)))) *
+        ((radix : ℝ) ^ (f.Fexp)) ≤ |r|)⌝⦄ := by
+  intro ⟨hRadixGt1, hvNumEq, hPrecisionGe4, hClosest, hNormal, hExpBound⟩
   simp only [wp, PostCond.noThrow, pure, RleRoundedAbs_check]
-  show (radix ^ (p - 1) + -(1 / (2 * radix))) * radix ^ f.Fexp ≤ |r|
+  show (((radix : ℝ) ^ (precision - 1) + -(1 / (2 * (radix : ℝ)))) *
+      (radix : ℝ) ^ f.Fexp) ≤ |r|
   -- Key facts
-  have hRadixPos : (0 : ℝ) < radix := by linarith
-  have hBetaR_pos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hBetaPos
-  have hBetaR_ne : (beta : ℝ) ≠ 0 := ne_of_gt hBetaR_pos
-  have hBetaGe1 : (1 : ℝ) < (beta : ℝ) := hRadixEq ▸ hRadixGt1
-  have hBetaExpPos : (0 : ℝ) < (beta : ℝ) ^ f.Fexp := zpow_pos hBetaR_pos f.Fexp
-  have hExpPos : (0 : ℝ) < radix ^ f.Fexp := hRadixEq ▸ hBetaExpPos
-  have hExpNonneg : (0 : ℝ) ≤ radix ^ f.Fexp := le_of_lt hExpPos
+  have hRadixPosInt : (0 : Int) < radix := by omega
+  have hRadixPos : (0 : ℝ) < (radix : ℝ) := by exact_mod_cast hRadixPosInt
+  have hRadixR_ne : (radix : ℝ) ≠ 0 := ne_of_gt hRadixPos
+  have hRadixGe1 : (1 : ℝ) < (radix : ℝ) := by exact_mod_cast hRadixGt1
+  have hBetaExpPos : (0 : ℝ) < (radix : ℝ) ^ f.Fexp := zpow_pos hRadixPos f.Fexp
+  have hExpPos : (0 : ℝ) < (radix : ℝ) ^ f.Fexp := hBetaExpPos
+  have hExpNonneg : (0 : ℝ) ≤ (radix : ℝ) ^ f.Fexp := le_of_lt hExpPos
+  have hPrecisionNe : precision ≠ 0 := by omega
+  have hPrecisionPos : 0 < precision := Nat.pos_of_ne_zero hPrecisionNe
+  have hFbounded : Fbounded' bo f := hClosest.1
+  have hMin : ∀ g : FloatSpec.Core.Defs.FlocqFloat radix, Fbounded' bo g →
+      |_root_.F2R f - r| ≤ |_root_.F2R g - r| := hClosest.2
+  have hNormMinLeAbsInt : nNormMin radix precision ≤ |f.Fnum| := by
+    have hposnorm : bo.vNum = radix * nNormMin radix precision :=
+      PosNormMin radix bo precision hPrecisionPos hvNumEq
+    have hprod_le : radix * nNormMin radix precision ≤ |radix * f.Fnum| := by
+      simpa [hposnorm] using hNormal.2
+    have habs_mul : |radix * f.Fnum| = radix * |f.Fnum| := by
+      rw [abs_mul, abs_of_nonneg (le_of_lt hRadixPosInt)]
+    have hmul : radix * nNormMin radix precision ≤ radix * |f.Fnum| := by
+      simpa [habs_mul] using hprod_le
+    exact Int.le_of_mul_le_mul_left hmul hRadixPosInt
+  have hFnumBound : (radix : ℝ) ^ (precision - 1) ≤ |(f.Fnum : ℝ)| := by
+    have hcast : ((nNormMin radix precision : Int) : ℝ) ≤ ((|f.Fnum| : Int) : ℝ) := by
+      exact_mod_cast hNormMinLeAbsInt
+    simpa [nNormMin] using hcast
   -- |F2R f| = |f.Fnum| * beta^e
-  have hF2R_abs : |_root_.F2R f| = |(f.Fnum : ℝ)| * (beta : ℝ) ^ f.Fexp := by
+  have hF2R_abs : |_root_.F2R f| =
+      |(f.Fnum : ℝ)| * (radix : ℝ) ^ f.Fexp := by
     unfold _root_.F2R FloatSpec.Core.Defs.F2R
     rw [abs_mul, abs_of_pos hBetaExpPos]
   -- |F2R f| ≥ radix^(p-1) * radix^e
-  have hF2R_lower : radix ^ (p - 1) * radix ^ f.Fexp ≤ |_root_.F2R f| := by
-    rw [hF2R_abs, hRadixEq]
-    exact mul_le_mul_of_nonneg_right (hRadixEq ▸ hFnumBound) (le_of_lt hBetaExpPos)
+  have hF2R_lower :
+      (radix : ℝ) ^ (precision - 1) * (radix : ℝ) ^ f.Fexp ≤ |_root_.F2R f| := by
+    rw [hF2R_abs]
+    exact mul_le_mul_of_nonneg_right hFnumBound (le_of_lt hBetaExpPos)
   -- f.Fnum ≠ 0
   have hFnumNe : f.Fnum ≠ 0 := by
-    intro h; simp [h] at hFnumBound; linarith [zpow_pos hRadixPos (p - 1)]
+    intro h
+    simp [h] at hFnumBound
+    linarith [pow_pos hRadixPos (precision - 1)]
   have hSignCases : f.Fnum.sign = 1 ∨ f.Fnum.sign = -1 := by
     rcases ne_iff_lt_or_gt.mp hFnumNe with h | h
     · right; exact Int.sign_eq_neg_one_iff_neg.mpr h
@@ -12109,8 +12120,9 @@ theorem RleRoundedAbs {beta : Int}
     linarith [abs_sub_abs_le_abs_sub (_root_.F2R f) r]
   -- Case 1: |r| ≥ |F2R f| — trivially sufficient
   by_cases hRgeF : |r| ≥ |_root_.F2R f|
-  · calc (radix ^ (p - 1) + -(1 / (2 * radix))) * radix ^ f.Fexp
-        ≤ radix ^ (p - 1) * radix ^ f.Fexp := by
+  · calc (((radix : ℝ) ^ (precision - 1) + -(1 / (2 * (radix : ℝ)))) *
+          (radix : ℝ) ^ f.Fexp)
+        ≤ (radix : ℝ) ^ (precision - 1) * (radix : ℝ) ^ f.Fexp := by
           apply mul_le_mul_of_nonneg_right _ hExpNonneg
           linarith [div_pos (one_pos) (mul_pos (by linarith : (0:ℝ) < 2) hRadixPos)]
       _ ≤ |_root_.F2R f| := hF2R_lower
@@ -12146,25 +12158,27 @@ theorem RleRoundedAbs {beta : Int}
         linarith [neg_abs_le r]
 
     -- Sub-case split on |f.Fnum|
-    by_cases hFnumStrict : |(f.Fnum : ℝ)| > radix ^ (p - 1)
-    · -- Case A: |f.Fnum| > radix^(p-1), integer gap gives |f.Fnum| ≥ radix^(p-1) + 1
-      have hIntGap : |(f.Fnum : ℝ)| ≥ radix ^ (p - 1) + 1 := by
-        rw [hRadixEq]
-        -- Convert zpow to npow for integer comparison
-        have hP1nn : (0 : ℤ) ≤ p - 1 := hPge1
-        set n := (p - 1).toNat with hn_def
-        have hn_eq : (p - 1 : ℤ) = (n : ℤ) := (Int.toNat_of_nonneg hP1nn).symm
-        have hFS := hFnumStrict; rw [hRadixEq] at hFS
-        -- |f.Fnum| (as ℤ) > beta^n (as ℤ)
-        have hFnum_abs_int : (|(f.Fnum : ℝ)| : ℝ) = ((|f.Fnum| : ℤ) : ℝ) := by push_cast; rfl
-        have hBetaPow_int : ((beta : ℝ) ^ (p - 1) : ℝ) = ((beta ^ n : ℤ) : ℝ) := by
-          rw [hn_eq]; push_cast; rfl
-        rw [hBetaPow_int] at hFS ⊢
-        rw [hFnum_abs_int] at hFS ⊢
-        have hIntStrict : (|f.Fnum| : ℤ) > (beta ^ n : ℤ) := by exact_mod_cast hFS
-        have : (|f.Fnum| : ℤ) ≥ beta ^ n + 1 := by omega
-        exact_mod_cast this
-      let g : FloatSpec.Core.Defs.FlocqFloat beta :=
+    by_cases hFnumStrict : |(f.Fnum : ℝ)| > (radix : ℝ) ^ (precision - 1)
+    · -- Case A: the mantissa is separated from the minimum by at least one integer ulp.
+      have hIntGap :
+          |(f.Fnum : ℝ)| ≥ (radix : ℝ) ^ (precision - 1) + 1 := by
+        have hFnum_abs_int :
+            |(f.Fnum : ℝ)| = ((|f.Fnum| : Int) : ℝ) := by
+          simpa using
+            (Int.cast_abs f.Fnum :
+              ((|f.Fnum| : Int) : ℝ) = |(f.Fnum : ℝ)|).symm
+        have hPow_int :
+            ((radix ^ (precision - 1) : Int) : ℝ) =
+              (radix : ℝ) ^ (precision - 1) := by
+          norm_num
+        have hFS := hFnumStrict
+        rw [hFnum_abs_int, ← hPow_int] at hFS
+        have hIntStrict : (|f.Fnum| : Int) > radix ^ (precision - 1) := by
+          exact_mod_cast hFS
+        have hGap : radix ^ (precision - 1) + 1 ≤ (|f.Fnum| : Int) := by omega
+        rw [hFnum_abs_int, ← hPow_int]
+        exact_mod_cast hGap
+      let g : FloatSpec.Core.Defs.FlocqFloat radix :=
         ⟨f.Fnum - Int.sign f.Fnum, f.Fexp⟩
       have hgBounded : Fbounded' bo g := by
         obtain ⟨hNumBound, hExpBound'⟩ := hFbounded
@@ -12172,128 +12186,194 @@ theorem RleRoundedAbs {beta : Int}
         show |f.Fnum - Int.sign f.Fnum| < bo.vNum
         rcases hSignCases with hs | hs <;> rw [hs]
         · have hfp : 0 < f.Fnum := Int.sign_eq_one_iff_pos.mp hs
-          have h1 : (|f.Fnum - 1| : ℤ) = f.Fnum - 1 := by
-            rw [Int.abs_eq_natAbs]; exact Int.natAbs_of_nonneg (by omega)
-          have h2 : (|f.Fnum| : ℤ) = f.Fnum := by
-            rw [Int.abs_eq_natAbs]; exact Int.natAbs_of_nonneg (by omega)
-          rw [h2] at hNumBound; rw [h1]; omega
+          have h1 : (|f.Fnum - 1| : Int) = f.Fnum - 1 := by
+            rw [Int.abs_eq_natAbs]
+            exact Int.natAbs_of_nonneg (by omega)
+          have h2 : (|f.Fnum| : Int) = f.Fnum := by
+            rw [Int.abs_eq_natAbs]
+            exact Int.natAbs_of_nonneg (by omega)
+          rw [h2] at hNumBound
+          rw [h1]
+          omega
         · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
-          have h1 : (|f.Fnum - (-1)| : ℤ) = -(f.Fnum + 1) := by
-            rw [show f.Fnum - (-1 : ℤ) = f.Fnum + 1 from by ring]
-            rw [Int.abs_eq_natAbs]; exact Int.ofNat_natAbs_of_nonpos (by omega)
-          have h2 : (|f.Fnum| : ℤ) = -f.Fnum := by
-            rw [Int.abs_eq_natAbs]; exact Int.ofNat_natAbs_of_nonpos (by omega)
-          rw [h2] at hNumBound; rw [h1]; omega
-      have hgF2R_diff : _root_.F2R f - _root_.F2R g = (Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp := by
-        unfold _root_.F2R FloatSpec.Core.Defs.F2R; simp only [g]; push_cast; ring
+          have h1 : (|f.Fnum - (-1)| : Int) = -(f.Fnum + 1) := by
+            rw [show f.Fnum - (-1 : Int) = f.Fnum + 1 from by ring]
+            rw [Int.abs_eq_natAbs]
+            exact Int.ofNat_natAbs_of_nonpos (by omega)
+          have h2 : (|f.Fnum| : Int) = -f.Fnum := by
+            rw [Int.abs_eq_natAbs]
+            exact Int.ofNat_natAbs_of_nonpos (by omega)
+          rw [h2] at hNumBound
+          rw [h1]
+          omega
+      have hgF2R_diff :
+          _root_.F2R f - _root_.F2R g =
+            (Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ f.Fexp := by
+        unfold _root_.F2R FloatSpec.Core.Defs.F2R
+        simp only [g]
+        push_cast
+        ring
       have hMinG := hMin g hgBounded
-      -- Closest gives: |u| ≤ |u - (sign * beta^e)|
-      have hMinG' : |u| ≤ |u - (Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp| := by
-        have : _root_.F2R g - r = u - ((Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp) := by
+      have hMinG' :
+          |u| ≤ |u - (Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ f.Fexp| := by
+        have :
+            _root_.F2R g - r =
+              u - ((Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ f.Fexp) := by
           linarith [hgF2R_diff]
         rwa [this] at hMinG
-      -- One-sided bound: |u| ≤ beta^e / 2
-      have hErrBound : |u| ≤ (beta : ℝ) ^ f.Fexp / 2 := by
-        set delta := (Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp with hdelta_def
+      have hErrBound : |u| ≤ (radix : ℝ) ^ f.Fexp / 2 := by
+        set delta := (Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ f.Fexp with hdelta_def
         rcases hSignCases with hs | hs
         · have hfp : 0 < f.Fnum := Int.sign_eq_one_iff_pos.mp hs
           have hu_pos : 0 ≤ u := le_of_lt (hu_sign.1 hfp)
-          have hdelta_pos : 0 < delta := by simp [hdelta_def, hs, hBetaExpPos]
           rw [abs_of_nonneg hu_pos] at hMinG' ⊢
-          have hdelta_eq : delta = (beta : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
+          have hdelta_eq : delta = (radix : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
           by_cases hud : u ≤ delta
-          · rw [abs_of_nonpos (by linarith)] at hMinG'; linarith [hdelta_eq]
-          · push Not at hud; rw [abs_of_nonneg (by linarith)] at hMinG'; linarith
+          · rw [abs_of_nonpos (by linarith)] at hMinG'
+            linarith [hdelta_eq]
+          · push Not at hud
+            rw [abs_of_nonneg (by linarith)] at hMinG'
+            linarith
         · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
           have hu_neg : u ≤ 0 := le_of_lt (hu_sign.2 hfn)
-          have hdelta_neg : delta < 0 := by
-            simp [hdelta_def, hs]; linarith [hBetaExpPos]
           rw [abs_of_nonpos hu_neg] at hMinG' ⊢
-          have hdelta_eq : delta = -(beta : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
+          have hdelta_eq : delta = -(radix : ℝ) ^ f.Fexp := by simp [hdelta_def, hs]
           by_cases hud : delta ≤ u
-          · rw [abs_of_nonneg (by linarith)] at hMinG'; linarith [hdelta_eq]
-          · push Not at hud; rw [abs_of_nonpos (by linarith)] at hMinG'; linarith
-      -- Final inequality for Case A
-      have hIntGapR : |(f.Fnum : ℝ)| ≥ (beta : ℝ) ^ (p - 1) + 1 := by rwa [hRadixEq] at hIntGap
-      have h1over2beta : 1 / (2 * (beta : ℝ)) ≤ 1 / 2 := by
-        apply div_le_div_of_nonneg_left (by positivity : (0:ℝ) < 1).le (by positivity) (by nlinarith)
-      calc (radix ^ (p - 1) + -(1 / (2 * radix))) * radix ^ f.Fexp
-          = (radix ^ (p - 1) - 1 / (2 * radix)) * radix ^ f.Fexp := by ring
-        _ ≤ (|(f.Fnum : ℝ)| - 1 / 2) * (beta : ℝ) ^ f.Fexp := by
-            rw [hRadixEq]
-            apply mul_le_mul_of_nonneg_right _ (le_of_lt hBetaExpPos)
-            have h12b_pos : (0 : ℝ) < 1 / (2 * (beta : ℝ)) := by positivity
-            linarith [hIntGapR, h1over2beta, h12b_pos]
-        _ = |(f.Fnum : ℝ)| * (beta : ℝ) ^ f.Fexp - (beta : ℝ) ^ f.Fexp / 2 := by ring
-        _ = |_root_.F2R f| - (beta : ℝ) ^ f.Fexp / 2 := by rw [hF2R_abs]
+          · rw [abs_of_nonneg (by linarith)] at hMinG'
+            linarith [hdelta_eq]
+          · push Not at hud
+            rw [abs_of_nonpos (by linarith)] at hMinG'
+            linarith
+      have h1over2radix : 1 / (2 * (radix : ℝ)) ≤ 1 / 2 := by
+        apply div_le_div_of_nonneg_left
+        · positivity
+        · positivity
+        · nlinarith
+      calc (((radix : ℝ) ^ (precision - 1) + -(1 / (2 * (radix : ℝ)))) *
+          (radix : ℝ) ^ f.Fexp)
+          = ((radix : ℝ) ^ (precision - 1) - 1 / (2 * (radix : ℝ))) *
+              (radix : ℝ) ^ f.Fexp := by ring
+        _ ≤ (|(f.Fnum : ℝ)| - 1 / 2) * (radix : ℝ) ^ f.Fexp := by
+          apply mul_le_mul_of_nonneg_right _ (le_of_lt hBetaExpPos)
+          have h12r_pos : (0 : ℝ) < 1 / (2 * (radix : ℝ)) := by positivity
+          linarith [hIntGap, h1over2radix, h12r_pos]
+        _ = |(f.Fnum : ℝ)| * (radix : ℝ) ^ f.Fexp -
+              (radix : ℝ) ^ f.Fexp / 2 := by ring
+        _ = |_root_.F2R f| - (radix : ℝ) ^ f.Fexp / 2 := by rw [hF2R_abs]
         _ ≤ |r| := by linarith [hTriangle, hErrBound]
-    · -- Case B: |f.Fnum| = radix^(p-1) exactly (minimum normal mantissa)
+    · -- Case B: exact minimum-normal mantissa; step to the predecessor exponent.
       push Not at hFnumStrict
-      have hFnumExact : |(f.Fnum : ℝ)| = radix ^ (p - 1) := le_antisymm hFnumStrict hFnumBound
-      -- Use predecessor at lower exponent: g₂ = ⟨f.Fnum * beta - sign(f.Fnum), f.Fexp - 1⟩
-      let g₂ : FloatSpec.Core.Defs.FlocqFloat beta :=
-        ⟨f.Fnum * beta - Int.sign f.Fnum, f.Fexp - 1⟩
+      have hFnumExact :
+          |(f.Fnum : ℝ)| = (radix : ℝ) ^ (precision - 1) :=
+        le_antisymm hFnumStrict hFnumBound
+      let g₂ : FloatSpec.Core.Defs.FlocqFloat radix :=
+        ⟨f.Fnum * radix - Int.sign f.Fnum, f.Fexp - 1⟩
       have hg₂Bounded : Fbounded' bo g₂ := by
-        obtain ⟨hNumBd, hExpBd⟩ := hFbounded
+        obtain ⟨_hNumBd, _hExpBd⟩ := hFbounded
         refine ⟨?_, by show -bo.dExp ≤ f.Fexp - 1; omega⟩
-        show |f.Fnum * beta - Int.sign f.Fnum| < bo.vNum
-        have hVB2 : (|f.Fnum| : ℤ) * beta ≤ bo.vNum := by
-          rw [Int.abs_eq_natAbs] at hVnumBound ⊢
-          exact_mod_cast hVnumBound
+        show |f.Fnum * radix - Int.sign f.Fnum| < bo.vNum
+        have hFnumExactInt : |f.Fnum| = nNormMin radix precision := by
+          have hFnum_abs_int :
+              |(f.Fnum : ℝ)| = ((|f.Fnum| : Int) : ℝ) := by
+            simpa using
+              (Int.cast_abs f.Fnum :
+                ((|f.Fnum| : Int) : ℝ) = |(f.Fnum : ℝ)|).symm
+          have hPow_int :
+              ((nNormMin radix precision : Int) : ℝ) =
+                (radix : ℝ) ^ (precision - 1) := by
+            simp [nNormMin]
+          have hcast : ((|f.Fnum| : Int) : ℝ) =
+              ((nNormMin radix precision : Int) : ℝ) := by
+            rw [← hFnum_abs_int, hPow_int]
+            exact hFnumExact
+          exact_mod_cast hcast
+        have hVB2 : (|f.Fnum| : Int) * radix ≤ bo.vNum := by
+          have hposnorm := PosNormMin radix bo precision hPrecisionPos hvNumEq
+          have hEq : (|f.Fnum| : Int) * radix = bo.vNum := by
+            rw [hFnumExactInt, hposnorm]
+            ring
+          exact le_of_eq hEq
         rcases hSignCases with hs | hs <;> rw [hs]
         · have hfp : 0 < f.Fnum := Int.sign_eq_one_iff_pos.mp hs
-          have habs_eq : (|f.Fnum| : ℤ) = f.Fnum := by
-            rw [Int.abs_eq_natAbs]; exact Int.natAbs_of_nonneg (by omega)
-          have h1 : (|f.Fnum * beta - 1| : ℤ) = f.Fnum * beta - 1 := by
-            rw [Int.abs_eq_natAbs]; exact Int.natAbs_of_nonneg (by nlinarith)
-          rw [habs_eq] at hVB2; rw [h1]; omega
-        · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
-          have habs_eq : (|f.Fnum| : ℤ) = -f.Fnum := by
-            rw [Int.abs_eq_natAbs]; exact Int.ofNat_natAbs_of_nonpos (by omega)
-          have h1 : (|f.Fnum * beta - (-1)| : ℤ) = -f.Fnum * beta - 1 := by
-            rw [show f.Fnum * beta - (-1 : ℤ) = -((-f.Fnum) * beta - 1) from by ring]
-            rw [Int.abs_eq_natAbs]; rw [Int.natAbs_neg]
+          have habs_eq : (|f.Fnum| : Int) = f.Fnum := by
+            rw [Int.abs_eq_natAbs]
+            exact Int.natAbs_of_nonneg (by omega)
+          have h1 : (|f.Fnum * radix - 1| : Int) = f.Fnum * radix - 1 := by
+            rw [Int.abs_eq_natAbs]
             exact Int.natAbs_of_nonneg (by nlinarith)
-          rw [habs_eq] at hVB2; rw [h1]; omega
-      have hbe : (beta : ℝ) ^ f.Fexp = (beta : ℝ) * (beta : ℝ) ^ (f.Fexp - 1) := by
-        have := zpow_add₀ hBetaR_ne (1 : ℤ) (f.Fexp - 1)
-        rw [show (1 : ℤ) + (f.Fexp - 1) = f.Fexp from by ring] at this
+          rw [habs_eq] at hVB2
+          rw [h1]
+          omega
+        · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
+          have habs_eq : (|f.Fnum| : Int) = -f.Fnum := by
+            rw [Int.abs_eq_natAbs]
+            exact Int.ofNat_natAbs_of_nonpos (by omega)
+          have h1 : (|f.Fnum * radix - (-1)| : Int) = -f.Fnum * radix - 1 := by
+            rw [show f.Fnum * radix - (-1 : Int) = -((-f.Fnum) * radix - 1) from by ring]
+            rw [Int.abs_eq_natAbs]
+            rw [Int.natAbs_neg]
+            exact Int.natAbs_of_nonneg (by nlinarith)
+          rw [habs_eq] at hVB2
+          rw [h1]
+          omega
+      have hbe :
+          (radix : ℝ) ^ f.Fexp =
+            (radix : ℝ) * (radix : ℝ) ^ (f.Fexp - 1) := by
+        have := zpow_add₀ hRadixR_ne (1 : Int) (f.Fexp - 1)
+        rw [show (1 : Int) + (f.Fexp - 1) = f.Fexp from by ring] at this
         rw [this, zpow_one]
-      have hg₂F2R_diff : _root_.F2R f - _root_.F2R g₂ = (Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ (f.Fexp - 1) := by
-        unfold _root_.F2R FloatSpec.Core.Defs.F2R; simp only [g₂]; push_cast; rw [hbe]; ring
+      have hg₂F2R_diff :
+          _root_.F2R f - _root_.F2R g₂ =
+            (Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ (f.Fexp - 1) := by
+        unfold _root_.F2R FloatSpec.Core.Defs.F2R
+        simp only [g₂]
+        push_cast
+        rw [hbe]
+        ring
       have hMinG₂ := hMin g₂ hg₂Bounded
-      have hMinG₂' : |u| ≤ |u - (Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ (f.Fexp - 1)| := by
-        have : _root_.F2R g₂ - r = u - ((Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ (f.Fexp - 1)) := by
+      have hMinG₂' :
+          |u| ≤ |u - (Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ (f.Fexp - 1)| := by
+        have :
+            _root_.F2R g₂ - r =
+              u - ((Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ (f.Fexp - 1)) := by
           linarith [hg₂F2R_diff]
         rwa [this] at hMinG₂
-      have hBetaExpM1Pos : (0 : ℝ) < (beta : ℝ) ^ (f.Fexp - 1) := zpow_pos hBetaR_pos _
-      -- One-sided bound: |u| ≤ beta^(e-1) / 2
-      have hErrBound₂ : |u| ≤ (beta : ℝ) ^ (f.Fexp - 1) / 2 := by
-        set delta₂ := (Int.sign f.Fnum : ℝ) * (beta : ℝ) ^ (f.Fexp - 1) with hdelta₂_def
+      have hBetaExpM1Pos : (0 : ℝ) < (radix : ℝ) ^ (f.Fexp - 1) :=
+        zpow_pos hRadixPos _
+      have hErrBound₂ : |u| ≤ (radix : ℝ) ^ (f.Fexp - 1) / 2 := by
+        set delta₂ := (Int.sign f.Fnum : ℝ) * (radix : ℝ) ^ (f.Fexp - 1) with hdelta₂_def
         rcases hSignCases with hs | hs
         · have hfp : 0 < f.Fnum := Int.sign_eq_one_iff_pos.mp hs
           have hu_pos : 0 ≤ u := le_of_lt (hu_sign.1 hfp)
-          have hdelta_pos : 0 < delta₂ := by simp [hdelta₂_def, hs, hBetaExpM1Pos]
           rw [abs_of_nonneg hu_pos] at hMinG₂' ⊢
-          have hdelta_eq : delta₂ = (beta : ℝ) ^ (f.Fexp - 1) := by simp [hdelta₂_def, hs]
+          have hdelta_eq : delta₂ = (radix : ℝ) ^ (f.Fexp - 1) := by
+            simp [hdelta₂_def, hs]
           by_cases hud : u ≤ delta₂
-          · rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith [hdelta_eq]
-          · push Not at hud; rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith
+          · rw [abs_of_nonpos (by linarith)] at hMinG₂'
+            linarith [hdelta_eq]
+          · push Not at hud
+            rw [abs_of_nonneg (by linarith)] at hMinG₂'
+            linarith
         · have hfn : f.Fnum < 0 := Int.sign_eq_neg_one_iff_neg.mp hs
           have hu_neg : u ≤ 0 := le_of_lt (hu_sign.2 hfn)
-          have hdelta_neg : delta₂ < 0 := by
-            simp [hdelta₂_def, hs]; linarith [hBetaExpM1Pos]
           rw [abs_of_nonpos hu_neg] at hMinG₂' ⊢
-          have hdelta_eq : delta₂ = -(beta : ℝ) ^ (f.Fexp - 1) := by simp [hdelta₂_def, hs]
+          have hdelta_eq : delta₂ = -(radix : ℝ) ^ (f.Fexp - 1) := by
+            simp [hdelta₂_def, hs]
           by_cases hud : delta₂ ≤ u
-          · rw [abs_of_nonneg (by linarith)] at hMinG₂'; linarith [hdelta_eq]
-          · push Not at hud; rw [abs_of_nonpos (by linarith)] at hMinG₂'; linarith
-      -- Final calc for Case B
-      calc (radix ^ (p - 1) + -(1 / (2 * radix))) * radix ^ f.Fexp
-          = radix ^ (p - 1) * radix ^ f.Fexp - 1 / (2 * radix) * radix ^ f.Fexp := by ring
-        _ = |(f.Fnum : ℝ)| * (beta : ℝ) ^ f.Fexp - (beta : ℝ) ^ (f.Fexp - 1) / 2 := by
-              rw [hFnumExact, hRadixEq, hbe]; field_simp
-        _ = |_root_.F2R f| - (beta : ℝ) ^ (f.Fexp - 1) / 2 := by rw [hF2R_abs]
+          · rw [abs_of_nonneg (by linarith)] at hMinG₂'
+            linarith [hdelta_eq]
+          · push Not at hud
+            rw [abs_of_nonpos (by linarith)] at hMinG₂'
+            linarith
+      calc (((radix : ℝ) ^ (precision - 1) + -(1 / (2 * (radix : ℝ)))) *
+          (radix : ℝ) ^ f.Fexp)
+          = (radix : ℝ) ^ (precision - 1) * (radix : ℝ) ^ f.Fexp -
+              1 / (2 * (radix : ℝ)) * (radix : ℝ) ^ f.Fexp := by ring
+        _ = |(f.Fnum : ℝ)| * (radix : ℝ) ^ f.Fexp -
+              (radix : ℝ) ^ (f.Fexp - 1) / 2 := by
+          rw [hFnumExact, hbe]
+          field_simp [hRadixR_ne]
+        _ = |_root_.F2R f| - (radix : ℝ) ^ (f.Fexp - 1) / 2 := by rw [hF2R_abs]
         _ ≤ |r| := by linarith [hTriangle, hErrBound₂]
 
 -- Coq: `RoundedModeMultAbs` — absolute-value scaling under RoundedModeP
