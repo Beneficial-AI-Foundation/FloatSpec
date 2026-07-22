@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 9.
+- Active semantic gap candidates still listed below: 8.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 9/9 names have been
+- Counterpart audit coverage for the active list: 8/8 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 9 active
+Fix the remaining Flocq import gaps by working through the 8 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3619,9 +3619,30 @@ local target gate. This directly clears the blocker recorded by the first
 `LeExp3` harness attempt `.change_log/codex_attempt_20260722_203104`; it is
 prerequisite progress only, so the active exact-gap count remains 9.
 
-#### `Pff/Pff.v` (9)
+2026-07-22 completion note: exact public inexact-`uh` exponent contradiction
+`LeExp3` is restored in `FloatSpec/src/Pff/Pff.lean`. Under the effective
+upstream radix, precision, bounded-exponent, bounded-`b`, normal
+`ph`/`uh`/`z`, rounded `z`/`ph`/`uh`, exact nonzero `ul`, and the two
+one-exponent-gap hypotheses, it concludes `False`. The proof derives
+`b.Fexp <= z.Fexp` from `errorBoundedPlus` and `ClosestErrorExpStrict`, applies
+exact-strength `RleRoundedAbs` to the rounded product, and uses closest-rounding
+absolute monotonicity to force a lower representable power below `|z|`,
+contradicting the bounded mantissa of normal `z`. Required subscription harness
+attempt `.change_log/codex_attempt_20260722_210800` changed only
+`FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`, `build = pass`, and
+a passing local target gate. Independent focused Lean, `git diff --check`, the
+added-hole scan, `scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/codex_attempt_20260722_210800/attempt.verified.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public
+`LeExp3` is removed from the active list, reducing the ledger from 9 to 8;
+`LeExp` is next. Overall exact-gap progress is 247 of 255 resolved.
 
-- `LeExp3` (Lemma, upstream line 26016)
+#### `Pff/Pff.v` (8)
+
 - `LeExp` (Lemma, upstream line 26106)
 - `vLe_aux` (Lemma, upstream line 26117)
 - `vLe` (Lemma, upstream line 26137)
@@ -8463,7 +8484,7 @@ Statement-level checks performed for active Pff entries 71-104:
   `FmaErr_gaCorrect_of_al2_zero`, and several `Fma_FTS_*_leexp_witness`
   theorems cover isolated branches or prerequisite exponent witnesses, not
   the final upstream FMA approximation bounds.
-- `LeExp3`, `LeExp`, `vLe_aux`, `vLe`, `tLe`, and `wLe` remain active. Local
+- `LeExp`, `vLe_aux`, `vLe`, `tLe`, and `wLe` remain active. Local
   hits such as `LeExpRound`,
   `LeExpRound2`, `RoundedModeMultLess`, `FboundedShiftLess`,
   `maxDivLess`, and `digitLess` are generic or unrelated support lemmas;
@@ -8485,6 +8506,10 @@ Statement-level checks performed for active Pff entries 71-104:
   blocker is now superseded by exact public `LeExp2`, restored by harness
   attempt `.change_log/codex_attempt_20260722_195131` and the independent
   verified continuation documented in the completion note above.
+  Exact public `LeExp3` was subsequently restored by subscription harness
+  attempt `.change_log/codex_attempt_20260722_210800` after the
+  upstream-strength `RleRoundedAbs` repair; its completion note above records
+  the effective section payload and independent verification.
 
 Updated status: the active Pff entries have now been counterpart-checked
 at least once. The checked local hits are helper, prerequisite, reverse
