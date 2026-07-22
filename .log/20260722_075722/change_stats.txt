@@ -1,0 +1,11 @@
+commit 8bb5432ec47664df350c6751a2cbab8ce86b73fb
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 07:57:10 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 07:57:10 2026 +0800
+
+    Restore exact Pff NormalbPrim theorem
+
+ FloatSpec/src/Pff/Pff.lean | 80 ++++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  | 29 +++++++++++++----
+ 2 files changed, 103 insertions(+), 6 deletions(-)

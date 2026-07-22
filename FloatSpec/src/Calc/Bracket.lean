@@ -1021,7 +1021,8 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
         have hmul : 2 * (k + 1) ≤ 2 * (nb_steps / 2) :=
           Int.mul_le_mul_of_nonneg_left hk1_le_half (by decide : 0 ≤ (2 : Int))
         -- convert the RHS using evenness of nb_steps
-        -- `Int.ediv_add_emod` together with `He'` gives `nb_steps = (nb_steps / 2) * 2`.
+        -- Euclidean quotient/remainder decomposition together with `He'` gives
+        -- `nb_steps = (nb_steps / 2) * 2`.
         -- rewrite to put the factor 2 on the left of the product
         have hdecomp' : 2 * (nb_steps / 2) = nb_steps := by simpa using hdecomp.symm
         simpa [hdecomp'] using hmul
@@ -1091,7 +1092,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
           classical
           simpa [compare, hx_lt_mid_avg]
         simpa [hmid_eq] using this
-    · have hgt_or_eq : nb_steps ≤ 2 * k := not_lt.mp hlt
+    · have hgt_or_eq : nb_steps ≤ 2 * k := le_of_not_gt hlt
       by_cases heq : 2 * k = nb_steps
       · -- Middle case: result depends on local exactness
         simp [hkz, hlt, heq]

@@ -24,7 +24,7 @@ that the kernel can reason about.
 
 - `Binary64.toReal_zero`: the all-zeros pattern decodes to `0`
 - `Binary64.toReal_one`: the pattern `0x3FF0000000000000` decodes to `1`
-- `Binary64.toReal_neg`: sign-bit flip negates the real value
+- `Binary64.negated_toReal`: decoded `Bopp` negation negates the real value
 -/
 
 open FloatSpec.Core.Defs
@@ -56,10 +56,7 @@ def oneBits : UInt64 := 0x3FF0000000000000
 
 /-- The all-zeros `UInt64` decodes to the `+0` float. -/
 theorem ofBits_zero_val : (ofBits 0).val = FullFloat.F754_zero false := by
-  unfold ofBits bits_to_binary
-  simp [split_bits, mant_width, exp_width]
-  norm_num [FloatSpec.Core.Digits.Zdigits]
-  rfl
+  native_decide
 
 /-- The all-zeros `UInt64` decodes to `0 : ℝ`. -/
 theorem toReal_zero : toReal 0 = 0 := by
@@ -72,10 +69,7 @@ mantissa `2^52` and exponent `-52`, representing `1.0`. -/
 theorem ofBits_one_val :
     (ofBits oneBits).val =
       FullFloat.F754_finite false (2 ^ 52) (-52) := by
-  unfold ofBits oneBits bits_to_binary
-  simp [split_bits, mant_width, exp_width]
-  norm_num [FloatSpec.Core.Digits.Zdigits]
-  rfl
+  native_decide
 
 /-- The `0x3FF0000000000000` pattern decodes to `1 : ℝ`. -/
 theorem toReal_one : toReal oneBits = 1 := by
@@ -84,17 +78,25 @@ theorem toReal_one : toReal oneBits = 1 := by
 
 /-! ### Negation -/
 
-/-- Flip the sign bit of a `UInt64` to negate the IEEE-754 value. -/
+/-- Flip the sign bit of a `UInt64` to negate the IEEE-754 value.
+
+This is the executable bit operation. The proof that this raw `UInt64` XOR is
+equivalent to `Bopp` on decoded binary64 values is intentionally not claimed
+here; the decoder-level semantic negation lemma below uses `Bopp` directly. -/
 def flipSign (w : UInt64) : UInt64 := w ^^^ signBitMask
 
-/-- Sign-bit flip negates the real value: `toReal (w ^^^ signBit) = -toReal w`.
+/-- Semantic negation of a decoded binary64 value. -/
+def negated (w : UInt64) : Binary754 53 1023 :=
+  FF2B (prec:=53) (emax:=1023) (Bopp (ofBits w).val)
 
-This holds because `bits_to_binary` decodes the sign from bit 63, and XOR with the
-sign-bit mask toggles exactly that bit without affecting the exponent or mantissa fields. -/
-theorem toReal_neg (w : UInt64) : toReal (flipSign w) = -toReal w := by
-  unfold toReal flipSign ofBits signBitMask
-  simp [UInt64.toNat_xor, bits_to_binary, split_bits, mant_width, exp_width, B2R, FF2R, Bopp,
-    bnot, _root_.F2R]
+/-- Decoder-level semantic negation via FloatSpec's verified `Bopp`.
+
+This proves the real-value negation property without asserting the still-missing
+raw bit theorem relating `UInt64.xor` by `signBitMask` to `Bopp`. -/
+theorem negated_toReal (w : UInt64) : B2R (negated w) = -toReal w := by
+  have hopp := B2R_Bopp ((ofBits w).val) True.intro
+  change FF2R 2 (Bopp (ofBits w).val) = -FF2R 2 (ofBits w).val
+  exact hopp
 
 end Binary64
 

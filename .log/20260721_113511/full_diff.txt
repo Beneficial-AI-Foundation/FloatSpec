@@ -1,0 +1,345 @@
+commit f10e179af7820b9602516c530c39766db21061ca
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 11:35:11 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 11:35:11 2026 +0800
+
+    Restore exact Pff Underf_Err1 theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 24e0ee0f..f5a8bd01 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -47770,6 +47770,276 @@ theorem Closestbbext {beta : Int}
+       hprecision hfextExp hfClosest
+   simpa [hbextEq] using hplus
+ 
++private lemma Fbounded_of_same_vNum_of_exp_ge {beta : Int}
++    (b b' : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbNum : b.vNum = b'.vNum) (hfBound : Fbounded (beta:=beta) b' f)
++    (hfExp : -b.dExp ≤ f.Fexp) :
++    Fbounded (beta:=beta) b f := by
++  exact ⟨by simpa [hbNum] using hfBound.1, hfExp⟩
++
++private lemma firstNormalPos_value_pos {beta : Int}
++    (b : Fbound_skel) (radix : Int) (precision : Nat)
++    (hbeta : beta = radix) (hradix : 1 < radix) :
++    0 < _root_.F2R (beta:=beta)
++      (firstNormalPos (beta:=beta) radix b precision) := by
++  subst beta
++  have hradixPosInt : (0 : Int) < radix := by omega
++  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++    exact_mod_cast hradixPosInt
++  have hnormMinPos : 0 < nNormMin radix precision := by
++    unfold nNormMin
++    exact pow_pos hradixPosInt _
++  simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, firstNormalPos]
++  exact mul_pos (by exact_mod_cast hnormMinPos) (zpow_pos hradixPos _)
++
++private lemma abs_under_extended_below_firstNormal {beta : Int}
++    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
++    (a' : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hprecision : 1 < precision)
++    (hvNum : b.vNum = Zpower_nat radix precision)
++    (hbNum : b.vNum = b'.vNum)
++    (ha'Bound : Fbounded (beta:=beta) b' a')
++    (ha'ExpLt : a'.Fexp < -b.dExp) :
++    |_root_.F2R (beta:=beta) a'| <
++      _root_.F2R (beta:=beta)
++        (firstNormalPos (beta:=beta) radix b precision) := by
++  subst beta
++  have hradixPosInt : (0 : Int) < radix := by omega
++  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++    exact_mod_cast hradixPosInt
++  have hradixOne : (1 : ℝ) ≤ (radix : ℝ) := by
++    exact_mod_cast (le_of_lt hradix)
++  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
++  have haNumReal :
++      |(a'.Fnum : ℝ)| < (radix : ℝ) ^ (precision : Int) := by
++    have haNumCast :
++        ((|a'.Fnum| : Int) : ℝ) < (b.vNum : ℝ) := by
++      exact_mod_cast (show |a'.Fnum| < b.vNum by
++        simpa [hbNum] using ha'Bound.1)
++    have hvNumReal : (b.vNum : ℝ) = (radix : ℝ) ^ (precision : Int) := by
++      rw [hvNum, Zpower_nat, Int.cast_pow, ← zpow_natCast]
++    simpa [Int.cast_abs, hvNumReal] using haNumCast
++  have haPowPos : 0 < (radix : ℝ) ^ a'.Fexp := zpow_pos hradixPos _
++  have haPowLe :
++      (radix : ℝ) ^ a'.Fexp ≤ (radix : ℝ) ^ (-b.dExp - 1) :=
++    zpow_le_zpow_right₀ hradixOne (by omega)
++  have hAbsValue :
++      |_root_.F2R (beta:=radix) a'| =
++        |(a'.Fnum : ℝ)| * (radix : ℝ) ^ a'.Fexp := by
++    simp [_root_.F2R, FloatSpec.Core.Defs.F2R, abs_mul,
++      abs_of_pos haPowPos]
++  have hFirstValue :
++      _root_.F2R (beta:=radix)
++          (firstNormalPos (beta:=radix) radix b precision) =
++        (radix : ℝ) ^ ((precision : Int) - 1 - b.dExp) := by
++    have hpredCast : ((precision - 1 : Nat) : Int) =
++        (precision : Int) - 1 := by
++      omega
++    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, firstNormalPos, nNormMin]
++    rw [Int.cast_pow, ← zpow_natCast]
++    rw [hpredCast]
++    rw [← zpow_add₀ hradixNe]
++    congr 1
++  rw [hAbsValue, hFirstValue]
++  calc
++    |(a'.Fnum : ℝ)| * (radix : ℝ) ^ a'.Fexp
++        < (radix : ℝ) ^ (precision : Int) * (radix : ℝ) ^ a'.Fexp :=
++          mul_lt_mul_of_pos_right haNumReal haPowPos
++    _ ≤ (radix : ℝ) ^ (precision : Int) *
++          (radix : ℝ) ^ (-b.dExp - 1) :=
++          mul_le_mul_of_nonneg_left haPowLe (by positivity)
++    _ = (radix : ℝ) ^ ((precision : Int) - 1 - b.dExp) := by
++          rw [← zpow_add₀ hradixNe]
++          congr 1
++          ring
++
++private lemma closest_abs_le_of_input_abs_le {beta : Int}
++    (b : Fbound_skel) (radix : Int) (precision : Nat)
++    (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hprecision : 1 < precision)
++    (hvNum : b.vNum = Zpower_nat radix precision)
++    (hzAbs :
++      |z| ≤ _root_.F2R (beta:=beta)
++        (firstNormalPos (beta:=beta) radix b precision))
++    (hfClosest : Closest (beta:=beta) b (radix : ℝ) z f) :
++    |_root_.F2R (beta:=beta) f| ≤
++      _root_.F2R (beta:=beta)
++        (firstNormalPos (beta:=beta) radix b precision) := by
++  subst beta
++  let upper : FloatSpec.Core.Defs.FlocqFloat radix :=
++    firstNormalPos (beta:=radix) radix b precision
++  let lower : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fopp (beta:=radix) upper
++  have hupperNormal : Fnormal (beta:=radix) radix b upper := by
++    have h := firstNormalPosNormal (beta:=radix) radix b precision
++    simpa only [wp, PostCond.noThrow, pure, firstNormalPosNormal_check,
++      Id.run, ULift.up_down, upper] using h ⟨hradix, hprecision, hvNum⟩
++  have hupperBound : Fbounded (beta:=radix) b upper := hupperNormal.1
++  have hupperPos :
++      0 < _root_.F2R (beta:=radix) upper := by
++    exact firstNormalPos_value_pos (beta:=radix) b radix precision rfl hradix
++  have hlowerBound : Fbounded (beta:=radix) b lower := by
++    simpa [lower, Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg]
++      using hupperBound
++  have hlowerValue :
++      _root_.F2R (beta:=radix) lower =
++        -_root_.F2R (beta:=radix) upper := by
++    simpa [lower] using
++      (FloatSpec.Calc.Operations.F2R_opp (beta:=radix) upper) True.intro
++  have hminmax :
++      isMin' (beta:=radix) b radix z f ∨
++        isMax' (beta:=radix) b radix z f := by
++    have h := ClosestMinOrMax (beta:=radix) b radix (radix : ℝ)
++    have hMinOrMaxP :
++        MinOrMaxP_float (beta:=radix) b radix
++          (Closest (beta:=radix) b (radix : ℝ)) := by
++      simpa only [wp, PostCond.noThrow, pure, ClosestMinOrMax_check,
++        Id.run, ULift.up_down] using h True.intro
++    exact hMinOrMaxP z f hfClosest
++  have hz_le_upper : z ≤ _root_.F2R (beta:=radix) upper :=
++    le_trans (le_abs_self z) hzAbs
++  have hlower_le_z : _root_.F2R (beta:=radix) lower ≤ z := by
++    rw [hlowerValue]
++    exact le_trans (neg_le_neg hzAbs) (neg_abs_le z)
++  rcases hminmax with hmin | hmax
++  · rcases hmin with ⟨_hfBound, hf_le_z, hgreatest⟩
++    have hlower_le_f : _root_.F2R (beta:=radix) lower ≤
++        _root_.F2R (beta:=radix) f :=
++      hgreatest lower hlowerBound hlower_le_z
++    have hf_le_upper : _root_.F2R (beta:=radix) f ≤
++        _root_.F2R (beta:=radix) upper :=
++      le_trans hf_le_z hz_le_upper
++    rw [abs_le]
++    exact ⟨by simpa [hlowerValue] using hlower_le_f, hf_le_upper⟩
++  · rcases hmax with ⟨_hfBound, hz_le_f, hleast⟩
++    have hf_le_upper : _root_.F2R (beta:=radix) f ≤
++        _root_.F2R (beta:=radix) upper :=
++      hleast upper hupperBound hz_le_upper
++    have hlower_le_f : _root_.F2R (beta:=radix) lower ≤
++        _root_.F2R (beta:=radix) f :=
++      le_trans hlower_le_z hz_le_f
++    rw [abs_le]
++    exact ⟨by simpa [hlowerValue] using hlower_le_f, hf_le_upper⟩
++
++/-! Coq generic Dekker theorem `Underf_Err1`. -/
++theorem Underf_Err1 {beta : Int}
++    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
++    (a' a : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix precision)
++    (hprecision : 1 < precision)
++    (hbNum : b.vNum = b'.vNum) (_hbExp : b.dExp ≤ b'.dExp)
++    (ha'Bound : Fbounded (beta:=beta) b' a')
++    (hClosest : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) a') a) :
++    Underf_Err (beta:=beta) b b' radix a a'
++      (_root_.F2R (beta:=beta) a') (1 / 2 : ℝ) := by
++  constructor
++  · exact hClosest
++  constructor
++  · exact ha'Bound
++  constructor
++  · by_cases ha'Exp : -b.dExp ≤ a'.Fexp
++    · have ha'OldBound : Fbounded (beta:=beta) b a' :=
++        Fbounded_of_same_vNum_of_exp_ge b b' a' hbNum ha'Bound ha'Exp
++      have hzero := hClosest.2 a' ha'OldBound
++      have hdiff :
++          _root_.F2R (beta:=beta) a -
++              _root_.F2R (beta:=beta) a' = 0 := by
++        exact abs_eq_zero.mp (le_antisymm (by simpa using hzero) (abs_nonneg _))
++      rw [hdiff, abs_zero]
++      have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++        exact_mod_cast (show (0 : Int) < radix by omega)
++      positivity
++    · have ha'ExpLt : a'.Fexp < -b.dExp := lt_of_not_ge ha'Exp
++      have hprecisionNe : precision ≠ 0 := by omega
++      have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++        exact_mod_cast (show (0 : Int) < radix by omega)
++      have hunitPos : 0 < (radix : ℝ) ^ (-b.dExp) :=
++        zpow_pos hradixPos _
++      have haAbsLeFirst :
++          |_root_.F2R (beta:=beta) a'| ≤
++            _root_.F2R (beta:=beta)
++              (firstNormalPos (beta:=beta) radix b precision) :=
++        le_of_lt (abs_under_extended_below_firstNormal b b' radix precision a'
++          hbeta hradix hprecision hvNum hbNum ha'Bound ha'ExpLt)
++      have haAbsLeFirstRounded :
++          |_root_.F2R (beta:=beta) a| ≤
++            _root_.F2R (beta:=beta)
++              (firstNormalPos (beta:=beta) radix b precision) :=
++        closest_abs_le_of_input_abs_le b radix precision
++          (_root_.F2R (beta:=beta) a') a hbeta hradix hprecision hvNum
++          haAbsLeFirst hClosest
++      let nf : FloatSpec.Core.Defs.FlocqFloat beta :=
++        Fnormalize (beta:=beta) radix b precision a
++      have hnCan : Fcanonic (beta:=beta) radix b nf := by
++        have h := FnormalizeCanonic (beta:=beta) radix b precision a
++        simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++          Id.run, ULift.up_down, Fbounded', nf] using
++          h ⟨hClosest.1, hClosest.1, hprecisionNe, hradix, hvNum⟩
++      have hnValue :
++          _root_.F2R (beta:=beta) nf = _root_.F2R (beta:=beta) a := by
++        have h := FnormalizeCorrect (beta:=beta) radix b precision a
++        simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++          Id.run, ULift.up_down, nf] using h ⟨hbeta, hradix⟩
++      have hnBound : Fbounded (beta:=beta) b nf :=
++        (FcanonicBound (beta:=beta) radix b nf) hnCan
++      have hfirstCan : Fcanonic (beta:=beta) radix b
++          (firstNormalPos (beta:=beta) radix b precision) := by
++        exact Or.inl ((firstNormalPosNormal (beta:=beta) radix b precision)
++          ⟨hradix, hprecision, hvNum⟩)
++      have hnfAbsLeFirst :
++          |_root_.F2R (beta:=beta) nf| ≤
++            |_root_.F2R (beta:=beta)
++              (firstNormalPos (beta:=beta) radix b precision)| := by
++        rw [hnValue]
++        have hfirstPos := firstNormalPos_value_pos b radix precision hbeta hradix
++        simpa [abs_of_pos hfirstPos] using haAbsLeFirstRounded
++      have hnExpLe :
++          nf.Fexp ≤
++            (firstNormalPos (beta:=beta) radix b precision).Fexp := by
++        have hbetaGt : 1 < beta := by
++          omega
++        have hradixEqBeta : radix = beta := hbeta.symm
++        have h := Fcanonic_Rle_Zle (beta:=beta) radix b nf
++          (firstNormalPos (beta:=beta) radix b precision)
++          hbetaGt hradixEqBeta
++        simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
++          ULift.down_up, Fcanonic'] using h ⟨hnCan, hfirstCan, hnfAbsLeFirst⟩
++      have hnExpEq : nf.Fexp = -b.dExp := by
++        simp only [firstNormalPos] at hnExpLe
++        have hnExpLower : -b.dExp ≤ nf.Fexp := hnBound.2
++        omega
++      have hfulpMin :
++          Fulp (beta:=beta) b radix precision a =
++            (radix : ℝ) ^ (-b.dExp) := by
++        simp [Fulp, nf, hnExpEq]
++      have hClosestUlp :
++          2 * |_root_.F2R (beta:=beta) a' -
++              _root_.F2R (beta:=beta) a| ≤
++            Fulp (beta:=beta) b radix precision a := by
++        have h := ClosestUlp (beta:=beta) b radix precision
++          (_root_.F2R (beta:=beta) a') a
++        simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
++          Id.run, ULift.up_down] using
++          h ⟨hClosest, hbeta, hradix, hprecisionNe, hvNum⟩
++      have hdist :
++          |_root_.F2R (beta:=beta) a - _root_.F2R (beta:=beta) a'| ≤
++            (radix : ℝ) ^ (-b.dExp) / 2 := by
++        rw [abs_sub_comm]
++        rw [hfulpMin] at hClosestUlp
++        nlinarith
++      simpa [one_div, div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc]
++        using hdist
++  · intro ha'Exp
++    have ha'OldBound : Fbounded (beta:=beta) b a' :=
++      Fbounded_of_same_vNum_of_exp_ge b b' a' hbNum ha'Bound ha'Exp
++    have hzero := hClosest.2 a' ha'OldBound
++    exact sub_eq_zero.mp (abs_eq_zero.mp
++      (le_antisymm (by simpa using hzero) (abs_nonneg _)))
++
+ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+     (b : Fbound_skel) (radix : Int) (precision : Nat)
+     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index f0e36869..8584afe1 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 58.
++- Active semantic gap candidates still listed below: 57.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 58/58 names have been
++- Counterpart audit coverage for the active list: 57/57 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 58 active
++Fix the remaining Flocq import gaps by working through the 57 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2477,9 +2477,28 @@ nested build or Coq-alignment checks. The normalized classifier
+ local target gate. Therefore `Closestbbext` is removed from the active list,
+ and `Underf_Err1` is next.
+ 
+-#### `Pff/Pff.v` (58)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_110255` restored exact public
++`Underf_Err1` under only the expanded upstream GenericDek section assumptions
++and the existing exact `Underf_Err` predicate. The proof transfers the bounded
++input to the original bound in the above-minimum-exponent branch, where
++closestness gives exact equality. In the underflow branch it bounds the input
++and closest result by `firstNormalPos`, normalizes the result, derives the
++minimum original exponent with `Fcanonic_Rle_Zle`, and combines the resulting
++minimum `Fulp` equality with `ClosestUlp` to prove the exact half-unit error
++bound. The independent focused Lean process exited 0, `git diff --check`
++passed, the direct live-hole scan and placeholder/generated-status audits
++reported zero findings, and the full 3345-job `lake build` passed;
++`scripts/check_diff_trust.sh` is absent from this checkout. The harness's
++top-level `attempt.json` recorded `result = proved` but did not propagate its
++nested build or Coq-alignment checks. The normalized classifier
++`.change_log/manual_attempt_20260721_Underf_Err1_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Therefore `Underf_Err1` is removed from the active list,
++and `Underf_Err2_aux` is next.
++
++#### `Pff/Pff.v` (57)
+ 
+-- `Underf_Err1` (Theorem, upstream line 16555)
+ - `Underf_Err2_aux` (Theorem, upstream line 16610)
+ - `Underf_Err2` (Theorem, upstream line 16750)
+ - `Underf_Err3` (Theorem, upstream line 16774)

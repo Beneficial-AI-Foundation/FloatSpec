@@ -1,0 +1,11 @@
+commit c9fc16c84c7104bd3a5b85d3b195ba0f4abc3d89
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 19:21:46 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 19:21:46 2026 +0800
+
+    Restore ErrFmaApprox_1_aux
+
+ FloatSpec/src/Pff/Pff.lean | 294 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  41 +++++--
+ 2 files changed, 327 insertions(+), 8 deletions(-)

@@ -1,0 +1,283 @@
+commit 93756788dc6c2c7cb9ace36f0fdfcc4c6f9f7223
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 06:34:20 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 06:34:20 2026 +0800
+
+    Restore exact Pff VeltkampEven_pos theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 16992a8c..43799097 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -45455,6 +45455,197 @@ theorem VeltkampN {beta : Int}
+   exact VeltkampN_aux (beta:=radix) b radix s t x np nq hx rfl hradix
+     hvNum hsGe hsLe hxNormal hnpCan hnqCan hnpClosest hnqClosest hhxClosest
+ 
++private theorem Veltkamp_pos_q_normal
++    (b : Fbound_skel) (radix : Int) (s t : Nat)
++    (x p q : FloatSpec.Core.Defs.FlocqFloat radix)
++    (hradix : 1 < radix) (hvNum : b.vNum = Zpower_nat radix t)
++    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
++    (hxNormal : Fnormal (beta:=radix) radix b x)
++    (hqCan : Fcanonic (beta:=radix) radix b q)
++    (hxPos : 0 < _root_.F2R (beta:=radix) x)
++    (hpDef : Closest (beta:=radix) b (radix : ℝ)
++      (_root_.F2R (beta:=radix) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
++    (hqDef : Closest (beta:=radix) b (radix : ℝ)
++      (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p) q) :
++    Fnormal (beta:=radix) radix b q := by
++  have htGtOne : 1 < t := by omega
++  have htNe : t ≠ 0 := Nat.ne_of_gt (lt_trans Nat.zero_lt_one htGtOne)
++  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
++  have hfirstLeX :
++      _root_.F2R (beta:=radix)
++          (firstNormalPos (beta:=radix) radix b t) ≤
++        _root_.F2R (beta:=radix) x :=
++    (FnormalLtFirstNormalPos (beta:=radix) radix b t x)
++      ⟨hxNormal, hxNormal, htNe, rfl, hradix, hvNum, le_of_lt hxPos⟩
++  have hradixPosInt : (0 : Int) < radix := by omega
++  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++    exact_mod_cast hradixPosInt
++  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
++  have hmono :
++      MonotoneP_float (Closest (beta:=radix) b (radix : ℝ)) := by
++    have h := ClosestMonotone (beta:=radix) b (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestMonotone_check,
++      Id.run, ULift.up_down] using h trivial
++  let xShift : FloatSpec.Core.Defs.FlocqFloat radix :=
++    ⟨x.Fnum, x.Fexp + 2⟩
++  have hxShiftBound : Fbounded (beta:=radix) b xShift := by
++    constructor
++    · simpa only [xShift] using hxBound.1
++    · dsimp [xShift]
++      exact le_trans hxBound.2 (by omega)
++  have hxShiftValue :
++      _root_.F2R (beta:=radix) xShift =
++        _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (2 : Int) := by
++    dsimp [xShift, _root_.F2R, FloatSpec.Core.Defs.F2R]
++    rw [zpow_add₀ hradixNe]
++    ring
++  have hxShiftClosest :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) xShift) xShift := by
++    constructor
++    · exact hxShiftBound
++    · intro g _hg
++      rw [sub_self, abs_zero]
++      exact abs_nonneg _
++  have hradixOneLe : (1 : ℝ) ≤ (radix : ℝ) := by
++    exact_mod_cast (le_of_lt hradix)
++  have hpowTwoLeS :
++      (radix : ℝ) ^ (2 : Int) ≤ (radix : ℝ) ^ (s : Int) :=
++    zpow_le_zpow_right₀ hradixOneLe (by omega)
++  have hxShiftLtScaled :
++      _root_.F2R (beta:=radix) xShift <
++        _root_.F2R (beta:=radix) x *
++          ((radix : ℝ) ^ (s : Int) + 1) := by
++    rw [hxShiftValue]
++    calc
++      _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (2 : Int) ≤
++          _root_.F2R (beta:=radix) x * (radix : ℝ) ^ (s : Int) :=
++        mul_le_mul_of_nonneg_left hpowTwoLeS (le_of_lt hxPos)
++      _ < _root_.F2R (beta:=radix) x *
++          ((radix : ℝ) ^ (s : Int) + 1) := by nlinarith
++  have hxShiftLeP :
++      _root_.F2R (beta:=radix) xShift ≤
++        _root_.F2R (beta:=radix) p :=
++    hmono _ _ xShift p hxShiftLtScaled hxShiftClosest hpDef
++  have hradixTwoLe : (2 : ℝ) ≤ (radix : ℝ) := by
++    exact_mod_cast (by omega : (2 : Int) ≤ radix)
++  have hpowTwoGeFour :
++      (4 : ℝ) ≤ (radix : ℝ) ^ (2 : Int) := by
++    norm_num [zpow_ofNat]
++    nlinarith
++  have hpowTwoGtTwo : (2 : ℝ) < (radix : ℝ) ^ (2 : Int) :=
++    lt_of_lt_of_le (by norm_num) hpowTwoGeFour
++  have htwoXLtShift :
++      2 * _root_.F2R (beta:=radix) x <
++        _root_.F2R (beta:=radix) xShift := by
++    rw [hxShiftValue]
++    have h := mul_lt_mul_of_pos_left hpowTwoGtTwo hxPos
++    nlinarith
++  have htwoXLtP :
++      2 * _root_.F2R (beta:=radix) x <
++        _root_.F2R (beta:=radix) p :=
++    lt_of_lt_of_le htwoXLtShift hxShiftLeP
++  have hfirstLtOppInput :
++      _root_.F2R (beta:=radix)
++          (firstNormalPos (beta:=radix) radix b t) <
++        -(_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p) := by
++    have hxLtOppInput :
++        _root_.F2R (beta:=radix) x <
++          -(_root_.F2R (beta:=radix) x -
++            _root_.F2R (beta:=radix) p) := by
++      nlinarith
++    exact lt_of_le_of_lt hfirstLeX hxLtOppInput
++  have hqOppCan :
++      Fcanonic (beta:=radix) radix b (Fopp (beta:=radix) q) := by
++    have h := FcanonicFopp (beta:=radix) radix b q
++    simpa only [wp, PostCond.noThrow, pure, FcanonicFopp_check,
++      Id.run, ULift.up_down] using h hqCan
++  have hqOppClosest :
++      Closest (beta:=radix) b (radix : ℝ)
++        (-(_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p))
++        (Fopp (beta:=radix) q) := by
++    have h := ClosestOpp (beta:=radix) b (radix : ℝ) q
++      (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p)
++    simpa only [wp, PostCond.noThrow, pure, ClosestOpp_check,
++      Id.run, ULift.up_down] using h hqDef
++  have hqOppNormal :
++      Fnormal (beta:=radix) radix b (Fopp (beta:=radix) q) :=
++    Veltkamp_pos_normal_of_first_lt b radix t
++      (-(_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) p))
++      (Fopp (beta:=radix) q) hradix htGtOne hvNum hqOppCan hqOppClosest
++      hfirstLtOppInput
++  have h := FnormalFop (beta:=radix) b radix (Fopp (beta:=radix) q)
++  have hdouble :
++      Fnormal (beta:=radix) radix b
++        (Fopp (beta:=radix) (Fopp (beta:=radix) q)) := by
++    simpa only [wp, PostCond.noThrow, pure, FnormalFop_check,
++      Id.run, ULift.up_down] using h hqOppNormal
++  simpa [Fopp, FloatSpec.Calc.Operations.Fopp] using hdouble
++
++/-! Coq positive-input even-rounding wrapper `VeltkampEven_pos`.
++
++The `Closest` components yield normal intermediates.  Even radix then uses
++`VeltkampEven1`; odd radix uses the no-midpoint theorem `VeltkampEven2`. -/
++theorem VeltkampEven_pos {beta : Int}
++    (b : Fbound_skel) (radix : Int) (s t : Nat)
++    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
++    (hxNormal : Fnormal (beta:=beta) radix b x)
++    (hpCan : Fcanonic (beta:=beta) radix b p)
++    (hqCan : Fcanonic (beta:=beta) radix b q)
++    (hxPos : 0 < _root_.F2R (beta:=beta) x)
++    (hpDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
++      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
++    (hqDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
++    (hhxDefEven : EvenClosest (beta:=beta) b (radix : ℝ) t
++      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx) :
++    ∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
++      _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
++        EvenClosest (beta:=beta) (Veltkamp_reducedBound radix b s t)
++          (radix : ℝ) (t - s) (_root_.F2R (beta:=beta) x) hx' := by
++  subst beta
++  have hpDef := hpDefEven.1
++  have hqDef := hqDefEven.1
++  have hhxDef := hhxDefEven.1
++  have htGtOne : 1 < t := by omega
++  have htNe : t ≠ 0 := Nat.ne_of_gt (lt_trans Nat.zero_lt_one htGtOne)
++  have hfirstLeX :
++      _root_.F2R (beta:=radix)
++          (firstNormalPos (beta:=radix) radix b t) ≤
++        _root_.F2R (beta:=radix) x :=
++    (FnormalLtFirstNormalPos (beta:=radix) radix b t x)
++      ⟨hxNormal, hxNormal, htNe, rfl, hradix, hvNum, le_of_lt hxPos⟩
++  have hradixPosInt : (0 : Int) < radix := by omega
++  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++    exact_mod_cast hradixPosInt
++  have hpowSPos : 0 < (radix : ℝ) ^ (s : Int) :=
++    zpow_pos hradixPos _
++  have hxLtScaled :
++      _root_.F2R (beta:=radix) x <
++        _root_.F2R (beta:=radix) x *
++          ((radix : ℝ) ^ (s : Int) + 1) := by
++    nlinarith
++  have hpNormal : Fnormal (beta:=radix) radix b p :=
++    Veltkamp_pos_normal_of_first_lt b radix t
++      (_root_.F2R (beta:=radix) x *
++        ((radix : ℝ) ^ (s : Int) + 1)) p
++      hradix htGtOne hvNum hpCan hpDef
++      (lt_of_le_of_lt hfirstLeX hxLtScaled)
++  have hqNormal : Fnormal (beta:=radix) radix b q :=
++    Veltkamp_pos_q_normal b radix s t x p q hradix hvNum hsGe hsLe hxNormal
++      hqCan hxPos hpDef hqDef
++  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
++  rcases Int.even_or_odd radix with hEvenRadix | hOddRadix
++  · exact VeltkampEven1 (beta:=radix) b radix s t x p q hx rfl hradix
++      hvNum hsGe hsLe hxBound hpDef hqDef hhxDef hxPos hpNormal hqNormal
++      hxNormal hpDefEven hqDefEven hhxDefEven hEvenRadix
++  · exact VeltkampEven2 (beta:=radix) b radix s t x p q hx rfl hradix
++      hvNum hsGe hsLe hxBound hpDef hqDef hhxDef hxPos hpNormal hqNormal
++      hxNormal hpDefEven hqDefEven hhxDefEven hOddRadix
++
+ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+     (b : Fbound_skel) (radix : Int) (precision : Nat)
+     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index fcf5040c..f8fcd966 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 73.
++- Active semantic gap candidates still listed below: 72.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 73/73 names have been
++- Counterpart audit coverage for the active list: 72/72 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 73 active
++Fix the remaining Flocq import gaps by working through the 72 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2209,9 +2209,26 @@ checkout. The normalized classifier
+ local target gate. Therefore `VeltkampN` is removed from the active list, and
+ `VeltkampEven_pos` is next.
+ 
+-#### `Pff/Pff.v` (73)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_062537` left the exact
++`VeltkampEven_pos` payload unchanged and did not run a build. The manual repair
++restored exact public `VeltkampEven_pos` under only the expanded upstream
++`VeltN` assumptions. It extracts the ordinary closest-rounding components from
++the three even-closest premises, proves `p` normal with the first-normal
++separation argument, and proves `q` normal using closest-rounding monotonicity
++and the upstream two-exponent shift. It then splits on radix parity and invokes
++exact `VeltkampEven1` or `VeltkampEven2` to construct the unchanged
++same-value reduced even-closest witness. The focused Lean process exited 0,
++`git diff --check` passed, placeholder/status audits reported zero findings,
++and the full 3345-job `lake build` passed; `scripts/check_diff_trust.sh` is
++absent from this checkout. The normalized classifier
++`.change_log/manual_attempt_20260721_VeltkampEven_pos_proved/attempt.json`
++records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
++passing local target gate. Therefore `VeltkampEven_pos` is removed from the
++active list, and `VeltkampEvenN_aux` is next.
++
++#### `Pff/Pff.v` (72)
+ 
+-- `VeltkampEven_pos` (Lemma, upstream line 14856)
+ - `VeltkampEvenN_aux` (Lemma, upstream line 14942)
+ - `VeltkampEvenN` (Lemma, upstream line 15000)
+ - `Closestbbplus` (Lemma, upstream line 15120)
+@@ -6987,7 +7004,7 @@ Statement-level checks performed for the first 35 active Pff entries:
+   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
+   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
+   inequality from only the upstream Veltkamp section hypotheses.
+-- `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
++- `VeltkampEvenN_aux`, `VeltkampEvenN`, and
+   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
+   `FloatSpec/src/Pff/Pff2Flocq.lean`. The wrapper assumes a reduced
+   nearest-even witness as input; the active upstream lemmas construct the
+@@ -6995,7 +7012,8 @@ Statement-level checks performed for the first 35 active Pff entries:
+   products/sums. They are therefore missing lower Pff payloads, not hidden
+   under the public wrapper.
+ - `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`, `VeltkampEven2`,
+-  `Veltkamp_pos`, `VeltkampN_aux`, and `VeltkampN` are now restored as exact
++  `Veltkamp_pos`, `VeltkampN_aux`, `VeltkampN`, and `VeltkampEven_pos` are now
++  restored as exact
+   public Lean theorems in
+   `FloatSpec/src/Pff/Pff.lean`; they are no
+   longer inferred from the higher-level wrapper and no longer belong to this

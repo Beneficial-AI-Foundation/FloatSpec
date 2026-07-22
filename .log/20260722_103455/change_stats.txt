@@ -1,0 +1,11 @@
+commit 6bff2718f189ddfb304583f7d29e661bc97caaac
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 10:34:45 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 10:34:45 2026 +0800
+
+    Restore errorBoundedMultClosest_Can
+
+ FloatSpec/src/Pff/Pff.lean | 501 ++++++++++++++++++++++++++++++++++++++++++++-
+ MISSING_INFRASTRUCTURE.md  |  48 +++--
+ 2 files changed, 535 insertions(+), 14 deletions(-)

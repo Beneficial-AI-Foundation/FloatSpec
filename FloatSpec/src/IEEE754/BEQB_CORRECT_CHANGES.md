@@ -86,8 +86,9 @@ The file compiles successfully with no errors. The theorem `Beqb_correct` is now
 ## Impact
 
 This change may affect other theorems that depend on `Beqb`. In particular:
-- `Beqb_refl` (still has sorry)
-- `Bltb_correct` (still has sorry)
-- `Bleb_correct` (still has sorry)
+- `Beqb_refl`
+- `Bltb_correct`
+- `Bleb_correct`
 
-These may need similar approaches using `Rcompare`-based definitions.
+These should be checked against the current `Rcompare`-based definitions when
+that part of the IEEE754 port is revisited.

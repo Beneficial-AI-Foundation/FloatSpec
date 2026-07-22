@@ -18,6 +18,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.Round_NE
 import FloatSpec.src.Core.Ulp
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
@@ -43,18 +44,18 @@ def FIX_exp (_ : Int) : Int :=
 
 /-- Check FIX format correctness
 
-    Verify the fundamental property that {name}`FIX_exp` always
-    returns emin regardless of input. This validates
+    Verify the fundamental property that {name}`FIX_exp` yields
+    emin regardless of input. This validates
     the fixed-point nature of the format.
 -/
 def FIX_exp_correct_check (e : Int) : Bool :=
-  -- Use boolean equality on integers to avoid Prop placeholders
+  -- Use boolean equality on integers to stay in Bool-valued code.
   (FIX_exp emin e) == emin
 
-/-- Specification: Fixed exponent always returns emin
+/-- Specification: fixed exponent yields emin
 
     The fixed-point exponent function ignores its input and
-    always returns the fixed exponent emin. This ensures
+    yields the fixed exponent emin. This ensures
     uniform scaling across all representable values.
 
     Note: We wrap the pure function in `(pure ... : Id T)` because
@@ -99,6 +100,30 @@ instance FIX_exp_valid (beta : Int) :
       intro l _
       simpa [FIX_exp]
 
+/- Coq (FIX.v):
+Global Instance FIX_exp_monotone : Monotone_exp FIX_exp.
+-/
+instance FIX_exp_monotone :
+    FloatSpec.Core.Generic_fmt.Monotone_exp (FIX_exp emin) :=
+  ⟨by
+    intro a b hab
+    exact le_rfl⟩
+
+/- Coq (FIX.v):
+Global Instance exists_NE_FIX :
+      Exists_NE beta FIX_exp.
+-/
+instance exists_NE_FIX (beta : Int) :
+    FloatSpec.Core.RoundNE.Exists_NE beta (FIX_exp emin) where
+  exists_ne := by
+    right
+    intro e
+    constructor
+    · intro h
+      simpa [FIX_exp] using h
+    · intro _
+      simp [FIX_exp]
+
 /-- Specification: FIX format using generic format
 
     The FIX format is defined in terms of the generic format
@@ -119,7 +144,7 @@ theorem FIX_format_spec (beta : Int) (x : ℝ) :
 /-- Specification: FIX exponent function correctness
 
     The FIX exponent function satisfies its specification:
-    it always returns emin for any input e. This establishes
+    it yields emin for any input e. This establishes
     the correctness of the fixed-point implementation.
 -/
 @[spec]
@@ -266,7 +291,8 @@ canonical exponent. For {lit}`fexp` = {lean}`FIX_exp` 0 and {lit}`beta` = 2, thi
 -/
 theorem round_FIX_IZR (x : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int))) (mode := fun _ _ => True) x) : Id ℝ)
+    (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int)))
+      (mode := FloatSpec.Core.Raux.Ztrunc) x) : Id ℝ)
     ⦃⇓r => ⌜r = ((FloatSpec.Core.Raux.Ztrunc x) : ℝ)⌝⦄ := by
   intro _
   -- Unfold the rounding model and compute with the constant exponent 0

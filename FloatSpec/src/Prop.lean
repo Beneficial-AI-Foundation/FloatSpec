@@ -1,7 +1,9 @@
--- import FloatSpec.src.Prop.Relative
--- import FloatSpec.src.Prop.Plus_error
--- import FloatSpec.src.Prop.Mult_error
--- import FloatSpec.src.Prop.Div_sqrt_error
--- import FloatSpec.src.Prop.Sterbenz
--- import FloatSpec.src.Prop.Double_rounding
--- import FloatSpec.src.Prop.Round_odd
+-- Property analysis and error-bound modules.
+
+import FloatSpec.src.Prop.Relative
+import FloatSpec.src.Prop.Plus_error
+import FloatSpec.src.Prop.Mult_error
+import FloatSpec.src.Prop.Div_sqrt_error
+import FloatSpec.src.Prop.Sterbenz
+import FloatSpec.src.Prop.Double_rounding
+import FloatSpec.src.Prop.Round_odd

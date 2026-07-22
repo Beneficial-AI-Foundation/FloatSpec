@@ -39,7 +39,7 @@ variable (prec emin : Int) [Fact (0 < prec)]
     when it is at least `emin`; otherwise flush to the floor `emin` (no subnormals).
 -/
 def FTZ_exp (e : Int) : Int :=
-  if emin ≤ e - prec then e - prec else emin
+  if e - prec < emin then emin + prec - 1 else e - prec
 
 /-- Check FTZ exponent function correctness
 
@@ -48,7 +48,7 @@ def FTZ_exp (e : Int) : Int :=
 -/
 def FTZ_exp_correct_check (e : Int) : Bool :=
   -- Use boolean equality to avoid Prop-in-Bool mismatches
-  (FTZ_exp prec emin e) == (if emin ≤ e - prec then e - prec else emin)
+  (FTZ_exp prec emin e) == (if e - prec < emin then emin + prec - 1 else e - prec)
 
 /-- Specification: FTZ exponent calculation
 
@@ -154,76 +154,41 @@ instance FTZ_exp_valid (beta : Int) [hp : Fact (0 < prec)] :
   · -- Large regime: if fexp k < k, then fexp (k+1) ≤ k
     intro hklt
     have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr hp.out
-    -- Bound for the else-branch at k+1: emin ≤ k
-    have hemin_le_k : emin ≤ k := by
-      by_cases h : emin ≤ k - prec
-      · -- arithmetic branch at k
-        have hle' : emin + prec ≤ k := by grind
-        have h0 : 0 ≤ prec := le_of_lt hp.out
-        exact le_trans (le_add_of_nonneg_right h0) hle'
-      · -- else-branch at k: fexp k = emin < k
-        have : FTZ_exp prec emin k = emin := by simpa [FTZ_exp, h]
-        have : emin < k := by simpa [this] using hklt
-        exact le_of_lt this
-    -- Evaluate fexp at (k+1)
-    by_cases h1 : emin ≤ (k + 1) - prec
-    · -- fexp (k+1) = (k+1) - prec ≤ k since 1 ≤ prec
-      have : (k + 1) - prec ≤ k := by grind
-      simpa [FTZ_exp, h1] using this
-    · -- fexp (k+1) = emin ≤ k
-      simpa [FTZ_exp, h1] using hemin_le_k
+    by_cases hk : k - prec < emin
+    · by_cases hk1 : (k + 1) - prec < emin
+      · simp [FTZ_exp, hk, hk1] at hklt ⊢
+        omega
+      · simp [FTZ_exp, hk, hk1] at hklt ⊢
+        omega
+    · by_cases hk1 : (k + 1) - prec < emin
+      · simp [FTZ_exp, hk, hk1] at hklt ⊢
+        omega
+      · simp [FTZ_exp, hk, hk1] at hklt ⊢
+        omega
   · -- Small regime: if k ≤ fexp k, then stability at fexp k and constancy below it
     intro hk
     have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr hp.out
-    -- Show: we must be in the else-branch at k (arithmetic branch would force prec ≤ 0)
-    have hfexp_k : FTZ_exp prec emin k = emin := by
+    have hk_branch : k - prec < emin := by
       by_contra hnot
-      -- Analyze the branch of the IF in fexp k
-      by_cases he : emin ≤ k - prec
-      · -- arithmetic branch at k ⇒ fexp k = k - prec ≥ k contradicts 0 < prec
-        have hk_le : k ≤ k - prec := by simpa [FTZ_exp, he] using hk
-        have hkplusle : k + prec ≤ k := by
-          have := add_le_add_right hk_le prec
-          simpa [sub_add_cancel] using this
-        have hklt : k < k + prec := lt_add_of_pos_right k hp.out
-        exact (lt_irrefl _ ((lt_of_lt_of_le hklt hkplusle)))
-      · -- else-branch at k: fexp k = emin, contradicting hnot
-        have : FTZ_exp prec emin k = emin := by simpa [FTZ_exp, he]
-        exact hnot this
-    -- From hk and hfexp_k, we get k ≤ emin
-    have hk_le_emin : k ≤ emin := by simpa [hfexp_k] using hk
+      have hk_le : k ≤ k - prec := by simpa [FTZ_exp, hnot] using hk
+      omega
+    have hfexp_k : FTZ_exp prec emin k = emin + prec - 1 := by
+      simp [FTZ_exp, hk_branch]
     refine And.intro ?hA ?hB
     · -- fexp (fexp k + 1) ≤ fexp k
-      -- Using hfexp_k = emin, reduce to: fexp (emin + 1) ≤ emin
-      have hgoal : FTZ_exp prec emin (emin + 1) ≤ emin := by
-        by_cases h1 : emin ≤ (emin + 1) - prec
-        · -- arithmetic branch at emin + 1
-          have hle : (emin + 1) - prec ≤ emin := by grind
-          simpa [FTZ_exp, h1] using hle
-        · -- else-branch at (emin + 1): fexp = emin
-          simp [FTZ_exp, h1]
+      have hgoal : FTZ_exp prec emin (emin + prec) ≤ emin + prec - 1 := by
+        have hbranch : ¬ emin + prec - prec < emin := by omega
+        simp [FTZ_exp, hbranch]
+        omega
       simpa [hfexp_k, add_comm, add_left_comm, add_assoc] using hgoal
     · -- Constancy below fexp k = emin
       intro l hl
-      -- Reduce to l ≤ emin
-      have hl_emin : l ≤ emin := by simpa [hfexp_k] using hl
-      -- Show l - prec < emin by chaining monotonicity of subtraction
-      have hle_sub : l - prec ≤ emin - 1 := by
-        -- From 1 ≤ prec, we get l - prec ≤ l - 1
-        have hstep1 : l - prec ≤ l - 1 := by
-          exact sub_le_sub_left hprec1 l
-        -- From l ≤ emin, we get l - 1 ≤ emin - 1
-        have hstep2 : l - 1 ≤ emin - 1 := by
-          exact sub_le_sub_right hl_emin 1
-        exact le_trans hstep1 hstep2
-      have hlt : l - prec < emin :=
-        lt_of_le_of_lt hle_sub (by
-          have : emin - 1 < emin := by simpa [sub_eq_add_neg] using Int.sub_one_lt (a := emin)
-          simpa using this)
-      -- Hence fexp l = emin
-      have hfl : FTZ_exp prec emin l = emin := by
-        have hnotle : ¬ emin ≤ l - prec := not_le_of_gt hlt
-        simpa [FTZ_exp, hnotle]
+      have hlt : l - prec < emin := by
+        have hl' : l ≤ emin + prec - 1 := by
+          simpa [hfexp_k] using hl
+        omega
+      have hfl : FTZ_exp prec emin l = emin + prec - 1 := by
+        simp [FTZ_exp, hlt]
       -- Conclude constancy below fexp k
       simpa [hfexp_k] using hfl
 
@@ -408,17 +373,18 @@ theorem FLXN_format_FTZ (beta : Int) (x : ℝ) :
         ≤ FTZ_exp prec emin ((FloatSpec.Core.Raux.mag beta x)) := by
     intro _
     set m : Int := (FloatSpec.Core.Raux.mag beta x) with hm
-    by_cases h : emin ≤ m - prec
+    by_cases h : m - prec < emin
     ·
-      -- Both sides reduce to m - prec
+      -- In the flushed branch, FTZ_exp is the threshold exponent.
       have : FloatSpec.Core.FLX.FLX_exp prec m ≤ FTZ_exp prec emin m := by
-        simpa [FloatSpec.Core.FLX.FLX_exp, FTZ_exp, h]
+        have hprec1 : 1 ≤ prec := by simpa using (Int.add_one_le_iff).mpr (Fact.out : 0 < prec)
+        simp [FloatSpec.Core.FLX.FLX_exp, FTZ_exp, h]
+        omega
       simpa [hm] using this
     ·
-      -- Else-branch: FTZ_exp m = emin and m - prec ≤ emin by arithmetic
+      -- Otherwise both exponents reduce to `m - prec`.
       have hle' : FloatSpec.Core.FLX.FLX_exp prec m ≤ FTZ_exp prec emin m := by
-        have hle : m - prec ≤ emin := le_of_lt (lt_of_not_ge h)
-        simpa [FloatSpec.Core.FLX.FLX_exp, FTZ_exp, h, hle]
+        simpa [FloatSpec.Core.FLX.FLX_exp, FTZ_exp, h]
       simpa [hm] using hle'
   -- Apply inclusion-by-magnitude from FTZ_exp to FLX_exp
   have hrun :
@@ -499,8 +465,9 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
         -- Subtract prec on both sides
         have := sub_le_sub_right this prec
         simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-      -- In the `then` branch, FTZ_exp = e - prec, same as FLX_exp
-      simpa [FTZ_exp, FloatSpec.Core.FLX.FLX_exp, hbranch]
+      -- In this band, FTZ_exp = e - prec, same as FLX_exp.
+      have hnot : ¬ e - prec < emin := not_lt.mpr hbranch
+      simpa [FTZ_exp, FloatSpec.Core.FLX.FLX_exp, hnot]
     -- Apply inclusion on the strict band (e1, M+1]
     have hrun :
         (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) x) := by
@@ -530,10 +497,10 @@ theorem FTZ_format_FLXN (beta : Int) (x : ℝ) :
         -- emin ≤ emin + (prec - 1) = e1
         simpa [e1, sub_eq_add_neg, add_comm, add_left_comm, add_assoc]
           using le_add_of_nonneg_right hnonneg
-      -- Case split on FTZ_exp branch
-      by_cases hbranch : emin ≤ e1 - prec
-      · simpa [FTZ_exp, hbranch] using hsub
-      · simpa [FTZ_exp, hbranch] using hmin
+      have hbranch : e1 - prec < emin := by
+        simp [e1]
+        omega
+      simp [FTZ_exp, hbranch, e1]
     -- Apply generic_format_bpow' for FTZ_exp at exponent e1 and rewrite x by |x|
     have hfmt_ftz :
         (FloatSpec.Core.Generic_fmt.generic_format beta (FTZ_exp prec emin) ((beta : ℝ) ^ e1)) := by
@@ -676,31 +643,27 @@ Lean (spec): If |x| is smaller than {lit}`β^(emin+prec-1)`, then rounding in
 FTZ flushes to zero for any rounding predicate {lit}`rnd`.
 -/
 theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜1 < beta ∧ |x| < (beta : ℝ) ^ (emin)⌝⦄
+    ⦃⌜1 < beta ∧ |x| < (beta : ℝ) ^ (emin + prec - 1)⌝⦄
     (pure (round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x) : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hxlt⟩
-  -- From |x| < β^emin and the FTZ small-regime property at emin,
+  let e0 : Int := emin + prec - 1
+  -- From |x| < β^e0 and the FTZ small-regime property at e0,
   -- the scaled mantissa is strictly within (-1, 1).
-  have hbranch : ¬ emin ≤ emin - prec := by
-    -- If emin ≤ emin - prec, then adding prec on both sides gives emin + prec ≤ emin,
-    -- contradicting 0 < prec.
-    intro hle
-    have : emin + prec ≤ emin := by
-      have := add_le_add_right hle prec
-      simpa [sub_add_cancel] using this
-    have hlt : emin < emin + prec := lt_add_of_pos_right _ (Fact.out : 0 < prec)
-    exact (lt_irrefl _ (lt_of_lt_of_le hlt this))
-  have hex_le : emin ≤ FTZ_exp prec emin emin := by
-    -- In FTZ, fexp emin = emin (else-branch) since prec > 0
-    simpa [FTZ_exp, hbranch]
+  have hbranch : e0 - prec < emin := by
+    simp [e0]
+    omega
+  have hfexp_e0 : FTZ_exp prec emin e0 = e0 := by
+    simp [FTZ_exp, hbranch, e0]
+  have hex_le : e0 ≤ FTZ_exp prec emin e0 := by
+    simpa [hfexp_e0]
   have hsm_lt1 :
       abs (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FTZ_exp prec emin) x) < 1 := by
     -- Apply the generic scaled_mantissa bound with ex = emin
     exact
       FloatSpec.Core.Generic_fmt.scaled_mantissa_lt_1
-        (beta := beta) (fexp := FTZ_exp prec emin) (x := x) (ex := emin)
+        (beta := beta) (fexp := FTZ_exp prec emin) (x := x) (ex := e0)
         hβ (by simpa using hxlt) hex_le
   -- Let sm be the scaled mantissa; from |sm| < 1 we deduce Ztrunc sm = 0
   set sm : ℝ := (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FTZ_exp prec emin) x) with hsm
@@ -768,7 +731,8 @@ theorem round_FTZ_small (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     have htrunc0R' : ((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-E))) : ℝ) = 0 := by
       simpa [hm] using htrunc0R
     -- Final simplification: 0 * β^E = 0
-    simp only [hrw, htrunc0R', zero_mul]
+    simp only [FloatSpec.Core.Generic_fmt.RoundModeLike.toRnd_relation_apply,
+      hrw, htrunc0R', zero_mul]
   -- Discharge the Hoare triple
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
 
@@ -827,30 +791,25 @@ namespace FloatSpec.Core.FTZ
 variable (prec emin : Int) [Fact (0 < prec)]
 
 /-- Coq ({lit}`FTZ.v`):
-Theorem {lit}`ulp_FTZ_0`: {lit}`ulp beta FTZ_exp 0 = bpow emin`.
+Theorem {lit}`ulp_FTZ_0`: {lit}`ulp beta FTZ_exp 0 = bpow (emin + prec - 1)`.
 
-Lean (spec): The ULP under FTZ at 0 equals {lit}`β^emin`.
+Lean (spec): The ULP under FTZ at 0 equals {lit}`β^(emin+prec-1)`.
 -/
 theorem ulp_FTZ_0 (beta : Int) :
     ⦃⌜True⌝⦄
     (pure (FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0) : Id ℝ)
-    ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
+    ⦃⇓r => ⌜r = (beta : ℝ) ^ (emin + prec - 1)⌝⦄ := by
   intro _
   classical
-  -- Show the FTZ exponent at `emin` is exactly `emin` (else-branch since `prec > 0`).
-  have hbranch : ¬ emin ≤ emin - prec := by
-    intro hle
-    -- Adding `prec` on both sides leads to `emin + prec ≤ emin`, which contradicts `0 < prec`.
-    have : emin + prec ≤ emin := by
-      have := add_le_add_right hle prec
-      simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-    have hlt : emin < emin + prec := lt_add_of_pos_right _ (Fact.out : 0 < prec)
-    exact (not_le_of_gt hlt) this
-  have hfexp_emin : FTZ_exp prec emin emin = emin := by
-    simpa [FTZ_exp, hbranch]
-  -- Hence there exists a negligible exponent witness (take `n = emin`).
-  have h_le_wit : emin ≤ FTZ_exp prec emin emin := by
-    simpa [hfexp_emin] using (le_rfl : emin ≤ emin)
+  let e0 : Int := emin + prec - 1
+  have hbranch : e0 - prec < emin := by
+    simp [e0]
+    omega
+  have hfexp_e0 : FTZ_exp prec emin e0 = e0 := by
+    simp [FTZ_exp, hbranch, e0]
+  -- Hence there exists a negligible exponent witness (take `n = e0`).
+  have h_le_wit : e0 ≤ FTZ_exp prec emin e0 := by
+    simpa [hfexp_e0]
   -- Use the canonical spec for `negligible_exp` to extract a concrete witness.
   have hsome : ∃ n : Int,
       FloatSpec.Core.Ulp.negligible_exp (FTZ_exp prec emin) = some n ∧ n ≤ FTZ_exp prec emin n := by
@@ -859,24 +818,24 @@ theorem ulp_FTZ_0 (beta : Int) :
     cases H with
     | inl hnone =>
         rcases hnone with ⟨hEqNone, hall_lt⟩
-        have : (FTZ_exp prec emin emin) < emin := hall_lt emin
-        -- Contradiction with `fexp emin = emin`.
-        have : False := by simpa [hfexp_emin] using this
+        have : (FTZ_exp prec emin e0) < e0 := hall_lt e0
+        -- Contradiction with `fexp e0 = e0`.
+        have : False := by simpa [hfexp_e0] using this
         cases this
     | inr hsome =>
         exact hsome
   rcases hsome with ⟨n, hneg_eq, hnle⟩
-  -- Any negligible witness yields the same exponent; specialize to `emin`.
-  have hfexp_eq : FTZ_exp prec emin n = FTZ_exp prec emin emin := by
+  -- Any negligible witness yields the same exponent; specialize to `e0`.
+  have hfexp_eq : FTZ_exp prec emin n = FTZ_exp prec emin e0 := by
     simpa using
       (FloatSpec.Core.Ulp.fexp_negligible_exp_eq
-        (beta := beta) (fexp := FTZ_exp prec emin) (n := n) (m := emin)
+        (beta := beta) (fexp := FTZ_exp prec emin) (n := n) (m := e0)
         hnle h_le_wit)
   -- Compute ulp at 0 using the `some` branch and rewrite the exponent.
-  have : FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0 = ((beta : ℝ) ^ emin) := by
+  have : FloatSpec.Core.Ulp.ulp beta (FTZ_exp prec emin) 0 = ((beta : ℝ) ^ e0) := by
     unfold FloatSpec.Core.Ulp.ulp
-    -- Select the `some n` branch and rewrite its exponent to `emin`.
-    simpa [hneg_eq, hfexp_eq, hfexp_emin]
+    -- Select the `some n` branch and rewrite its exponent to `e0`.
+    simpa [hneg_eq, hfexp_eq, hfexp_e0]
   -- Discharge the Hoare-style postcondition.
   simpa [wp, PostCond.noThrow, Id.run, pure] using this
 

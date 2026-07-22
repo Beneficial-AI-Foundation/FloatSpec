@@ -1,0 +1,320 @@
+commit bb6bfe51e98942de6e6cf108f9603bb4f2e382fb
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 07:08:43 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 07:08:43 2026 +0800
+
+    Restore exact Pff Closestbbplus theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 428122db..b546407b 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -45895,6 +45895,229 @@ theorem VeltkampEvenN {beta : Int}
+   exact VeltkampEvenN_aux (beta:=radix) b radix s t x np nq hx rfl hradix
+     hvNum hsGe hsLe hxNormal hnpCan hnqCan hnpEven hnqEven hhxEven
+ 
++/-! Coq Veltkamp bound-extension lemma `Closestbbplus`.
++
++Competitors newly admitted by `plusExp` have exponent below the original
++minimum and magnitude below the first interior radix threshold. Inside that
++threshold the exact float has an exact original-bound representative; outside
++it, the threshold float on the same side is no farther from the exact value. -/
++theorem Closestbbplus {beta : Int}
++    (b0 : Fbound_skel) (radix : Int) (t n : Nat)
++    (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
++    (hfextExp : -b0.dExp ≤ fext.Fexp)
++    (hfClosest : Closest (beta:=beta) b0 (radix : ℝ)
++      (_root_.F2R (beta:=beta) fext) f) :
++    Closest (beta:=beta) (plusExp b0 t) (radix : ℝ)
++      (_root_.F2R (beta:=beta) fext) f := by
++  subst beta
++  have hradixPosInt : (0 : Int) < radix := by omega
++  have hradixPos : (0 : ℝ) < (radix : ℝ) := by
++    exact_mod_cast hradixPosInt
++  have hradixOne : (1 : ℝ) ≤ (radix : ℝ) := by
++    exact_mod_cast (le_of_lt hradix)
++  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
++  have hnPredCast : ((n - 1 : Nat) : Int) = (n : Int) - 1 := by
++    omega
++  let mantissaThreshold : Int := Zpower_nat radix (n - 1)
++  let threshold : ℝ :=
++    (radix : ℝ) ^ ((n : Int) - 1 - b0.dExp)
++  have hmantissaThresholdPos : 0 < mantissaThreshold := by
++    dsimp [mantissaThreshold, Zpower_nat]
++    exact pow_pos hradixPosInt _
++  have hmantissaThresholdLt : mantissaThreshold < b0.vNum := by
++    rw [hvNum]
++    dsimp [mantissaThreshold, Zpower_nat]
++    exact pow_lt_pow_right₀ hradix (by omega)
++  have hthresholdPos : 0 < threshold := by
++    exact zpow_pos hradixPos _
++  let upper : FloatSpec.Core.Defs.FlocqFloat radix :=
++    ⟨mantissaThreshold, -b0.dExp⟩
++  let lower : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fopp (beta:=radix) upper
++  have hupperBound : Fbounded (beta:=radix) b0 upper := by
++    constructor
++    · dsimp [upper]
++      rw [abs_of_pos hmantissaThresholdPos]
++      exact hmantissaThresholdLt
++    · simp [upper]
++  have hlowerBound : Fbounded (beta:=radix) b0 lower := by
++    simpa [lower, Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg]
++      using hupperBound
++  have hthresholdScale :
++      threshold = (mantissaThreshold : ℝ) * (radix : ℝ) ^ (-b0.dExp) := by
++    dsimp [threshold, mantissaThreshold, Zpower_nat]
++    rw [Int.cast_pow, ← zpow_natCast, hnPredCast]
++    rw [← zpow_add₀ hradixNe]
++    congr 1
++  have hupperValue :
++      _root_.F2R (beta:=radix) upper = threshold := by
++    dsimp [upper, _root_.F2R, FloatSpec.Core.Defs.F2R]
++    rw [hthresholdScale]
++  have hlowerValue :
++      _root_.F2R (beta:=radix) lower = -threshold := by
++    have h := (FloatSpec.Calc.Operations.F2R_opp (beta:=radix) upper) trivial
++    calc
++      _root_.F2R (beta:=radix) lower =
++          -_root_.F2R (beta:=radix) upper := by
++        simpa [lower, Fopp, _root_.F2R] using h
++      _ = -threshold := by rw [hupperValue]
++  constructor
++  · rcases hfClosest.1 with ⟨hfNum, hfExp⟩
++    constructor
++    · simpa [plusExp] using hfNum
++    · dsimp [plusExp]
++      have htNonneg : (0 : Int) ≤ ((t - 1 : Nat) : Int) :=
++        Int.natCast_nonneg _
++      omega
++  · intro g hgPlus
++    by_cases hgOldExp : -b0.dExp ≤ g.Fexp
++    · apply hfClosest.2 g
++      constructor
++      · simpa [plusExp] using hgPlus.1
++      · exact hgOldExp
++    · have hgExpLe : g.Fexp ≤ -b0.dExp - 1 := by omega
++      have hgNumInt : |g.Fnum| < Zpower_nat radix n := by
++        simpa [plusExp, hvNum] using hgPlus.1
++      have hgNumRealCast :
++          ((|g.Fnum| : Int) : ℝ) < ((Zpower_nat radix n : Int) : ℝ) := by
++        exact_mod_cast hgNumInt
++      have hgNumReal : |(g.Fnum : ℝ)| < (radix : ℝ) ^ n := by
++        simpa [Int.cast_abs, Zpower_nat, Int.cast_pow] using hgNumRealCast
++      have hgPowPos : 0 < (radix : ℝ) ^ g.Fexp :=
++        zpow_pos hradixPos _
++      have hgPowLe :
++          (radix : ℝ) ^ g.Fexp ≤
++            (radix : ℝ) ^ (-b0.dExp - 1) :=
++        zpow_le_zpow_right₀ hradixOne hgExpLe
++      have hgAbsValue :
++          |_root_.F2R (beta:=radix) g| =
++            |(g.Fnum : ℝ)| * (radix : ℝ) ^ g.Fexp := by
++        simp [_root_.F2R, FloatSpec.Core.Defs.F2R, abs_mul,
++          abs_of_pos hgPowPos]
++      have hgMagnitudeLt :
++          |_root_.F2R (beta:=radix) g| < threshold := by
++        rw [hgAbsValue]
++        calc
++          |(g.Fnum : ℝ)| * (radix : ℝ) ^ g.Fexp <
++              (radix : ℝ) ^ n * (radix : ℝ) ^ g.Fexp :=
++            mul_lt_mul_of_pos_right hgNumReal hgPowPos
++          _ ≤ (radix : ℝ) ^ n *
++              (radix : ℝ) ^ (-b0.dExp - 1) :=
++            mul_le_mul_of_nonneg_left hgPowLe (by positivity)
++          _ = threshold := by
++            dsimp [threshold]
++            rw [← zpow_natCast, ← zpow_add₀ hradixNe]
++            congr 1
++            ring
++      let shift : Nat := (fext.Fexp + b0.dExp).toNat
++      have hshiftCast : (shift : Int) = fext.Fexp + b0.dExp := by
++        dsimp [shift]
++        rw [Int.toNat_of_nonneg]
++        omega
++      let exactMantissa : Int := fext.Fnum * radix ^ shift
++      let exactFloat : FloatSpec.Core.Defs.FlocqFloat radix :=
++        ⟨exactMantissa, -b0.dExp⟩
++      have hexactValue :
++          _root_.F2R (beta:=radix) exactFloat =
++            _root_.F2R (beta:=radix) fext := by
++        dsimp [exactFloat, exactMantissa, _root_.F2R,
++          FloatSpec.Core.Defs.F2R]
++        rw [Int.cast_mul, Int.cast_pow, ← zpow_natCast]
++        calc
++          (fext.Fnum : ℝ) * (radix : ℝ) ^ (shift : Int) *
++              (radix : ℝ) ^ (-b0.dExp) =
++              (fext.Fnum : ℝ) *
++                ((radix : ℝ) ^ (shift : Int) *
++                  (radix : ℝ) ^ (-b0.dExp)) := by ring
++          _ = (fext.Fnum : ℝ) *
++                (radix : ℝ) ^ ((shift : Int) + (-b0.dExp)) := by
++              rw [zpow_add₀ hradixNe]
++          _ = (fext.Fnum : ℝ) * (radix : ℝ) ^ fext.Fexp := by
++              rw [hshiftCast]
++              congr 2
++              ring
++      by_cases hzInside :
++          |_root_.F2R (beta:=radix) fext| < threshold
++      · have hscalePos : 0 < (radix : ℝ) ^ (-b0.dExp) :=
++          zpow_pos hradixPos _
++        have hexactAbs :
++            |_root_.F2R (beta:=radix) exactFloat| =
++              |(exactMantissa : ℝ)| * (radix : ℝ) ^ (-b0.dExp) := by
++          dsimp [exactFloat, _root_.F2R, FloatSpec.Core.Defs.F2R]
++          rw [abs_mul, abs_of_pos hscalePos]
++        have hexactMantissaRealLt :
++            |(exactMantissa : ℝ)| < (mantissaThreshold : ℝ) := by
++          rw [← hexactValue] at hzInside
++          rw [hexactAbs, hthresholdScale] at hzInside
++          exact lt_of_mul_lt_mul_right hzInside (le_of_lt hscalePos)
++        have hexactMantissaIntLt :
++            |exactMantissa| < mantissaThreshold := by
++          exact_mod_cast (show
++            ((|exactMantissa| : Int) : ℝ) < (mantissaThreshold : ℝ) by
++              simpa [Int.cast_abs] using hexactMantissaRealLt)
++        have hexactBound : Fbounded (beta:=radix) b0 exactFloat := by
++          constructor
++          · dsimp [exactFloat]
++            exact lt_trans hexactMantissaIntLt hmantissaThresholdLt
++          · simp [exactFloat]
++        have hzeroError := hfClosest.2 exactFloat hexactBound
++        rw [hexactValue, sub_self, abs_zero] at hzeroError
++        exact le_trans hzeroError (abs_nonneg _)
++      · have hthresholdLeAbs :
++            threshold ≤ |_root_.F2R (beta:=radix) fext| :=
++          le_of_not_gt hzInside
++        by_cases hzNonneg : 0 ≤ _root_.F2R (beta:=radix) fext
++        · have hthresholdLeZ :
++              threshold ≤ _root_.F2R (beta:=radix) fext := by
++            simpa [abs_of_nonneg hzNonneg] using hthresholdLeAbs
++          have hgLtZ :
++              _root_.F2R (beta:=radix) g <
++                _root_.F2R (beta:=radix) fext :=
++            lt_of_le_of_lt (le_abs_self _) (lt_of_lt_of_le
++              hgMagnitudeLt hthresholdLeZ)
++          have hgLtThreshold :
++              _root_.F2R (beta:=radix) g < threshold :=
++            lt_of_le_of_lt (le_abs_self _) hgMagnitudeLt
++          have hupperErrorLe :
++              |_root_.F2R (beta:=radix) upper -
++                  _root_.F2R (beta:=radix) fext| ≤
++                |_root_.F2R (beta:=radix) g -
++                  _root_.F2R (beta:=radix) fext| := by
++            rw [hupperValue, abs_of_nonpos (by linarith),
++              abs_of_nonpos (by linarith)]
++            linarith
++          exact le_trans (hfClosest.2 upper hupperBound) hupperErrorLe
++        · have hzNeg : _root_.F2R (beta:=radix) fext < 0 :=
++            lt_of_not_ge hzNonneg
++          have hzLeNegThreshold :
++              _root_.F2R (beta:=radix) fext ≤ -threshold := by
++            rw [abs_of_neg hzNeg] at hthresholdLeAbs
++            linarith
++          have hzLtG :
++              _root_.F2R (beta:=radix) fext <
++                _root_.F2R (beta:=radix) g := by
++            have hnegAbsLeG :
++                -|_root_.F2R (beta:=radix) g| ≤
++                  _root_.F2R (beta:=radix) g := neg_abs_le _
++            linarith
++          have hlowerErrorLe :
++              |_root_.F2R (beta:=radix) lower -
++                  _root_.F2R (beta:=radix) fext| ≤
++                |_root_.F2R (beta:=radix) g -
++                  _root_.F2R (beta:=radix) fext| := by
++            rw [hlowerValue, abs_of_nonneg (by linarith),
++              abs_of_nonneg (by linarith)]
++            have hnegThresholdLeG :
++                -threshold ≤ _root_.F2R (beta:=radix) g := by
++              have hnegAbsLeG :
++                  -|_root_.F2R (beta:=radix) g| ≤
++                    _root_.F2R (beta:=radix) g := neg_abs_le _
++              linarith
++            linarith
++          exact le_trans (hfClosest.2 lower hlowerBound) hlowerErrorLe
++
+ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+     (b : Fbound_skel) (radix : Int) (precision : Nat)
+     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 0431594a..eeccdb9b 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 70.
++- Active semantic gap candidates still listed below: 69.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 70/70 names have been
++- Counterpart audit coverage for the active list: 69/69 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 70 active
++Fix the remaining Flocq import gaps by working through the 69 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2263,9 +2263,26 @@ absent from this checkout. The normalized classifier
+ local target gate. Therefore `VeltkampEvenN` is removed from the active list,
+ and `Closestbbplus` is next.
+ 
+-#### `Pff/Pff.v` (70)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_065619` left the exact `Closestbbplus`
++payload unchanged and did not run a build. The manual repair restored exact
++public `Closestbbplus`, the upstream extension direction from `Closest b0` to
++`Closest (plusExp b0 t)`, with no extra premises. Competitors satisfying the
++original exponent bound are handled directly by original closestness. Any
++newly admitted lower-exponent competitor has magnitude below the first
++interior radix threshold: when the exact float lies inside that threshold, an
++exact shifted original-bound representative gives zero error; otherwise the
++signed threshold representative is no farther away. The focused Lean process
++exited 0, `git diff --check` passed, placeholder/status audits reported zero
++findings, and the full 3345-job `lake build` passed;
++`scripts/check_diff_trust.sh` is absent from this checkout. The normalized
++classifier `.change_log/manual_attempt_20260721_Closestbbplus_proved/attempt.json`
++records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
++passing local target gate. Therefore `Closestbbplus` is removed from the active
++list, and `EvenClosestbplusb` is next.
++
++#### `Pff/Pff.v` (69)
+ 
+-- `Closestbbplus` (Lemma, upstream line 15120)
+ - `EvenClosestbplusb` (Lemma, upstream line 15287)
+ - `ClosestClosest` (Lemma, upstream line 15367)
+ - `EvenClosestbbplus` (Lemma, upstream line 15448)
+@@ -7056,15 +7073,17 @@ Statement-level checks performed for the first 35 active Pff entries:
+   `F2R f ≠ 0`, it constructs `Fnormalize radix (plusExp b) t f`, preserves
+   `F2R`, and rules out the subnormal branch using the original bounded
+   exponent and the `plusExp` first-normal threshold.
+-- `Closestbbplus`, `EvenClosestbplusb`, `ClosestClosest`, and
++- `EvenClosestbplusb`, `ClosestClosest`, and
+   `EvenClosestbbplus` have no faithful counterpart.
+   Lean has `Closestbplusb`, but that is the reverse restriction direction
+   from `plusExp b` closestness plus a bound proof back to `b` closestness.
+-  Upstream `Closestbbplus` proves the extension direction from `b` to
+-  `plusExp b`; upstream `EvenClosestbplusb` and `EvenClosestbbplus` add
+-  nearest-even side conditions in the two directions. The local theorem is
+-  not a replacement for either missing even-closest theorem or for
+-  `Closestbbplus`.
++  Upstream `EvenClosestbplusb` and `EvenClosestbbplus` add nearest-even side
++  conditions in the two directions. The local theorem is not a replacement
++  for either missing even-closest theorem.
++- `Closestbbplus` is now restored as the exact public extension theorem from
++  `Closest b0` to `Closest (plusExp b0 t)` in
++  `FloatSpec/src/Pff/Pff.lean`; together with existing reverse-direction
++  `Closestbplusb`, both upstream closest-bound directions are now present.
+ 
+ Updated status: active Pff entries 1-35 are confirmed real semantic gaps or
+ unported section lemmas, not renamed/split complete ports. Later restorations

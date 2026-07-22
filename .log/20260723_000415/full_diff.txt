@@ -1,0 +1,498 @@
+commit 255ac26e5f0a3256d83d584e3b2b08dce8dca595
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Thu Jul 23 00:04:04 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Thu Jul 23 00:04:04 2026 +0800
+
+    Restore ErrFmaApprox_2
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 6acee788..a2f4743d 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -65665,6 +65665,450 @@ theorem ErrFmaApprox_2_aux {beta : Int}
+           (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
+             |_root_.F2R (beta:=radix) z|) := by ring_nf
+ 
++/-- Coq `ErrFmaApprox_2`: public inexact-`uh` FMA branch with the upstream
++normal-or-zero hypotheses for `ph`, `uh`, `z`, `v`, and `w`. -/
++theorem ErrFmaApprox_2 {beta : Int}
++    (bo : Fbound_skel) (radix : Int) (precision : Nat)
++    (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : bo.vNum = Zpower_nat radix precision)
++    (hprecision : 4 ≤ precision)
++    (hBoundExp : ∀ r : ℝ,
++      -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp)
++    (hbBound : Fbounded (beta:=beta) bo b)
++    (haBound : Fbounded (beta:=beta) bo a)
++    (hxBound : Fbounded (beta:=beta) bo x)
++    (hbCan : Fcanonic (beta:=beta) radix bo b)
++    (hphNZ : Fnormal (beta:=beta) radix bo ph ∨
++      _root_.F2R (beta:=beta) ph = 0)
++    (huhNZ : Fnormal (beta:=beta) radix bo uh ∨
++      _root_.F2R (beta:=beta) uh = 0)
++    (hzNZ : Fnormal (beta:=beta) radix bo z ∨
++      _root_.F2R (beta:=beta) z = 0)
++    (hvNZ : Fnormal (beta:=beta) radix bo v ∨
++      _root_.F2R (beta:=beta) v = 0)
++    (hwNZ : Fnormal (beta:=beta) radix bo w ∨
++      _root_.F2R (beta:=beta) w = 0)
++    (hproductExp : -bo.dExp ≤ a.Fexp + x.Fexp)
++    (hzDef : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
++        _root_.F2R (beta:=beta) b) z)
++    (hphDef : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) ph)
++    (hplDef : _root_.F2R (beta:=beta) pl =
++      _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
++        _root_.F2R (beta:=beta) ph)
++    (huhDef : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b) uh)
++    (hulDef : _root_.F2R (beta:=beta) ul =
++      _root_.F2R (beta:=beta) ph + _root_.F2R (beta:=beta) b -
++        _root_.F2R (beta:=beta) uh)
++    (htDef : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) uh - _root_.F2R (beta:=beta) z) t)
++    (hvDef : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) pl + _root_.F2R (beta:=beta) ul) v)
++    (hwDef : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) t + _root_.F2R (beta:=beta) v) w)
++    (hulNonzero : ¬ _root_.F2R (beta:=beta) ul = 0) :
++    |_root_.F2R (beta:=beta) z + _root_.F2R (beta:=beta) w -
++        (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
++          _root_.F2R (beta:=beta) b)|
++      ≤ ((3 * (radix : ℝ) / 2 + 1 / 2) *
++          (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++            |_root_.F2R (beta:=beta) z|) := by
++  subst beta
++  have hprecisionNe : precision ≠ 0 := by omega
++  have hprecision3 : 3 ≤ precision := by omega
++  have hvNumGt : 1 < bo.vNum := by
++    rw [hvNum, Zpower_nat]
++    exact one_lt_pow₀ hradix hprecisionNe
++  have hradixReal : (1 : ℝ) < (radix : ℝ) := by exact_mod_cast hradix
++  have hradixPos : (0 : ℝ) < (radix : ℝ) := lt_trans zero_lt_one hradixReal
++  have hradixNe : (radix : ℝ) ≠ 0 := ne_of_gt hradixPos
++  have hMinTotal : TotalP (isMin' (beta:=radix) bo radix) := by
++    intro r
++    have h := MinEx (beta:=radix) bo radix r
++    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hvNumGt, hBoundExp r⟩
++  have hMaxTotal : TotalP (isMax' (beta:=radix) bo radix) := by
++    intro r
++    have h := MaxEx (beta:=radix) bo radix r
++    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
++      ULift.up_down] using h ⟨rfl, hradix, hvNumGt, hBoundExp r⟩
++  have hTotal : TotalP (Closest (beta:=radix) bo (radix : ℝ)) := by
++    intro r
++    have h := ClosestTotal (beta:=radix) bo radix (radix : ℝ) r
++    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
++      ULift.up_down] using h ⟨hMinTotal, hMaxTotal⟩
++  have hRoundedFull :
++      RoundedModeP_full (beta:=radix) bo
++        (Closest (beta:=radix) bo (radix : ℝ)) := by
++    have h := ClosestRoundedModeP (beta:=radix) bo (radix : ℝ)
++    simpa only [wp, PostCond.noThrow, pure, ClosestRoundedModeP_check,
++      Id.run, ULift.up_down] using h hTotal
++  have hRhsNonneg :
++      0 ≤ ((3 * (radix : ℝ) / 2 + 1 / 2) *
++          (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++            |_root_.F2R (beta:=radix) z|) := by
++    have hcoef : 0 ≤ 3 * (radix : ℝ) / 2 + 1 / 2 := by nlinarith
++    exact mul_nonneg (mul_nonneg hcoef (le_of_lt (zpow_pos hradixPos _)))
++      (abs_nonneg _)
++  let eps : ℝ := (radix : ℝ) ^ (1 - (precision : Int))
++  have hepsNonneg : 0 ≤ eps := le_of_lt (zpow_pos hradixPos _)
++  have hpowMul : eps * eps = (radix : ℝ) ^ (2 - 2 * (precision : Int)) := by
++    simp only [eps]
++    rw [← zpow_add₀ hradixNe]
++    congr 1
++    ring
++  rcases hvNZ with hvNormal | hvZero
++  · rcases hzNZ with hzNormal | hzZero
++    · rcases hphNZ with hphNormal | hphZero
++      · rcases huhNZ with huhNormal | huhZero
++        · rcases hwNZ with hwNormal | hwZero
++          · exact ErrFmaApprox_2_aux bo radix precision a x b ph pl uh ul z t v w
++              rfl hradix hvNum hprecision hBoundExp hbBound haBound hxBound hbCan
++              hphNormal huhNormal hzNormal hvNormal hwNormal hproductExp hzDef
++              hphDef hplDef huhDef hulDef htDef hvDef hwDef hulNonzero
++          · have htExact :
++                _root_.F2R (beta:=radix) t =
++                  _root_.F2R (beta:=radix) uh - _root_.F2R (beta:=radix) z := by
++              rcases tBounded bo radix precision a x b ph pl uh z rfl hradix
++                  hvNum hprecision3 hBoundExp hbBound haBound hxBound hbCan
++                  (Or.inl hphNormal) (Or.inl hzNormal) (Or.inl huhNormal)
++                  hproductExp hzDef hphDef hplDef huhDef with
++                ⟨t', ht'Bound, ht'Val⟩
++              have htProject :
++                  _root_.F2R (beta:=radix) t' = _root_.F2R (beta:=radix) t :=
++                hRoundedFull.2.2.2.2 t' t ht'Bound (by simpa [ht'Val] using htDef)
++              rw [← htProject, ht'Val]
++            let sumtv : FloatSpec.Core.Defs.FlocqFloat radix := Fplus (beta:=radix) t v
++            have hsumtvVal :
++                _root_.F2R (beta:=radix) sumtv =
++                  _root_.F2R (beta:=radix) t + _root_.F2R (beta:=radix) v := by
++              have h := Fplus_correct (beta:=radix) t v
++              simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
++                Id.run, ULift.up_down, sumtv] using h hradix
++            have hsumtvExp : -bo.dExp ≤ sumtv.Fexp := by
++              have htExp : -bo.dExp ≤ t.Fexp := htDef.1.2
++              have hvExp : -bo.dExp ≤ v.Fexp := hvDef.1.2
++              by_cases htv : t.Fexp ≤ v.Fexp
++              · simpa [sumtv, Fplus, FloatSpec.Calc.Operations.Fplus,
++                  FloatSpec.Calc.Operations.Falign, htv] using htExp
++              · simpa [sumtv, Fplus, FloatSpec.Calc.Operations.Fplus,
++                  FloatSpec.Calc.Operations.Falign, htv] using hvExp
++            have hsumtvZero :
++                _root_.F2R (beta:=radix) t + _root_.F2R (beta:=radix) v = 0 := by
++              have hzero := ClosestZero1 (beta:=radix) bo (radix : ℝ)
++                (_root_.F2R (beta:=radix) t + _root_.F2R (beta:=radix) v) w sumtv
++              simpa only [wp, PostCond.noThrow, pure, ClosestZero1_check,
++                Id.run, ULift.down_up] using
++                hzero ⟨hwDef, hwZero, hsumtvVal.symm, hsumtvExp,
++                  by simpa [Fbounded'] using hwDef.1,
++                  by
++                    intro g hg
++                    exact hwDef.2 g (by simpa [Fbounded'] using hg),
++                  hradixReal, hvNumGt⟩
++            have hvUlp :
++                2 *
++                    |_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul -
++                      _root_.F2R (beta:=radix) v| ≤
++                  Fulp (beta:=radix) bo radix precision v := by
++              have h := ClosestUlp (beta:=radix) bo radix precision
++                (_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul) v
++              simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check, Id.run,
++                ULift.up_down] using h ⟨hvDef, rfl, hradix, hprecisionNe, hvNum⟩
++            have hvNormEq :
++                Fnormalize (beta:=radix) radix bo precision v = v := by
++              have h := FcanonicFnormalizeEq (beta:=radix) radix bo precision v
++              simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
++                Id.run, ULift.up_down] using
++                h ⟨Or.inl hvNormal, rfl, hradix, hprecisionNe, hvNum⟩
++            have hvFulpRel :
++                Fulp (beta:=radix) bo radix precision v ≤
++                  |_root_.F2R (beta:=radix) v| * eps := by
++              have h := FulpLe2 (beta:=radix) radix bo precision v
++              simpa only [wp, PostCond.noThrow, pure, FulpLe2_check, Id.run,
++                ULift.up_down, eps] using
++                h ⟨hvDef.1, by simpa [hvNormEq] using hvNormal, rfl, hradix,
++                  hprecisionNe, hvNum⟩
++            have hzNormEq :
++                Fnormalize (beta:=radix) radix bo precision z = z := by
++              have h := FcanonicFnormalizeEq (beta:=radix) radix bo precision z
++              simpa only [wp, PostCond.noThrow, pure, FcanonicFnormalizeEq_check,
++                Id.run, ULift.up_down] using
++                h ⟨Or.inl hzNormal, rfl, hradix, hprecisionNe, hvNum⟩
++            have hzScale :
++                (radix : ℝ) ^ z.Fexp ≤ |_root_.F2R (beta:=radix) z| * eps := by
++              have hzFulp :
++                  Fulp (beta:=radix) bo radix precision z = (radix : ℝ) ^ z.Fexp := by
++                have h := CanonicFulp (beta:=radix) radix bo precision z
++                simpa only [wp, PostCond.noThrow, pure, CanonicFulp_check,
++                  Id.run, ULift.up_down] using
++                  h ⟨Or.inl hzNormal, rfl, hradix, hprecisionNe, hvNum⟩
++              have h := FulpLe2 (beta:=radix) radix bo precision z
++              have hrel :
++                  Fulp (beta:=radix) bo radix precision z ≤
++                    |_root_.F2R (beta:=radix) z| * eps := by
++                simpa only [wp, PostCond.noThrow, pure, FulpLe2_check, Id.run,
++                  ULift.up_down, eps] using
++                  h ⟨hzDef.1, by simpa [hzNormEq] using hzNormal, rfl, hradix,
++                    hprecisionNe, hvNum⟩
++              simpa [hzFulp] using hrel
++            have hvBound :
++                |_root_.F2R (beta:=radix) v| ≤
++                  (radix : ℝ) ^ z.Fexp * (radix : ℝ) := by
++              have h := vLe (beta:=radix) bo radix precision a x b ph pl uh ul z v
++              simpa only [wp, PostCond.noThrow, pure, Id.run, ULift.up_down] using
++                h ⟨rfl, hradix, hvNum, hprecision, hBoundExp, hbBound, hphNormal,
++                  huhNormal, hzNormal, hzDef, hphDef, hplDef, huhDef, hulDef,
++                  hulNonzero, hvDef⟩
++            have herrorEq :
++                |_root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++                    (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                      _root_.F2R (beta:=radix) b)| =
++                  |_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul -
++                    _root_.F2R (beta:=radix) v| := by
++              have hraw :
++                  _root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++                      (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                        _root_.F2R (beta:=radix) b) =
++                    -(_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul -
++                      _root_.F2R (beta:=radix) v) := by
++                rw [hplDef, hulDef, hwZero]
++                nlinarith [hsumtvZero, htExact]
++              rw [hraw, abs_neg]
++            have htwice :
++                2 *
++                    |_root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++                      (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                        _root_.F2R (beta:=radix) b)|
++                  ≤ Fulp (beta:=radix) bo radix precision v := by
++              simpa [herrorEq] using hvUlp
++            have hsmall :
++                2 *
++                    |_root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++                      (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                        _root_.F2R (beta:=radix) b)|
++                  ≤ (radix : ℝ) *
++                    (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++                      |_root_.F2R (beta:=radix) z| := by
++              calc
++                2 *
++                    |_root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++                      (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                        _root_.F2R (beta:=radix) b)|
++                    ≤ Fulp (beta:=radix) bo radix precision v := htwice
++                _ ≤ |_root_.F2R (beta:=radix) v| * eps := hvFulpRel
++                _ ≤ ((radix : ℝ) ^ z.Fexp * (radix : ℝ)) * eps :=
++                  mul_le_mul_of_nonneg_right hvBound hepsNonneg
++                _ ≤ ((|_root_.F2R (beta:=radix) z| * eps) *
++                    (radix : ℝ)) * eps := by
++                  exact mul_le_mul_of_nonneg_right
++                    (mul_le_mul_of_nonneg_right hzScale (le_of_lt hradixPos))
++                    hepsNonneg
++                _ = (radix : ℝ) *
++                    (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++                      |_root_.F2R (beta:=radix) z| := by
++                  rw [← hpowMul]
++                  ring
++            have hcoef :
++                (radix : ℝ) ≤ 3 * (radix : ℝ) + 1 := by nlinarith [hradixReal]
++            have hcoefNonneg :
++                0 ≤ (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++                  |_root_.F2R (beta:=radix) z| := by
++              exact mul_nonneg (le_of_lt (zpow_pos hradixPos _)) (abs_nonneg _)
++            have htwiceFinal :
++                2 *
++                    |_root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++                      (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                        _root_.F2R (beta:=radix) b)|
++                  ≤ (3 * (radix : ℝ) + 1) *
++                    (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++                      |_root_.F2R (beta:=radix) z| := by
++              exact le_trans hsmall (by
++                simpa [mul_assoc, mul_comm, mul_left_comm] using
++                  mul_le_mul_of_nonneg_right hcoef hcoefNonneg)
++            calc
++              |_root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++                  (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                    _root_.F2R (beta:=radix) b)|
++                  ≤ ((3 * (radix : ℝ) + 1) / 2) *
++                    (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++                      |_root_.F2R (beta:=radix) z| := by
++                    nlinarith [htwiceFinal]
++              _ = ((3 * (radix : ℝ) / 2 + 1 / 2) *
++                    (radix : ℝ) ^ (2 - 2 * (precision : Int)) *
++                      |_root_.F2R (beta:=radix) z|) := by ring_nf
++        · have hsum : _root_.F2R (beta:=radix) ph +
++                _root_.F2R (beta:=radix) b = 0 := by
++            let sumphb : FloatSpec.Core.Defs.FlocqFloat radix := Fplus (beta:=radix) ph b
++            have hsumVal :
++                _root_.F2R (beta:=radix) sumphb =
++                  _root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) b := by
++              have h := Fplus_correct (beta:=radix) ph b
++              simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
++                Id.run, ULift.up_down, sumphb] using h hradix
++            have hsumExp : -bo.dExp ≤ sumphb.Fexp := by
++              have hphExp : -bo.dExp ≤ ph.Fexp := hphNormal.1.2
++              have hbExp : -bo.dExp ≤ b.Fexp := hbBound.2
++              by_cases hle : ph.Fexp ≤ b.Fexp
++              · simpa [sumphb, Fplus, FloatSpec.Calc.Operations.Fplus,
++                  FloatSpec.Calc.Operations.Falign, hle] using hphExp
++              · simpa [sumphb, Fplus, FloatSpec.Calc.Operations.Fplus,
++                  FloatSpec.Calc.Operations.Falign, hle] using hbExp
++            have hzero := ClosestZero1 (beta:=radix) bo (radix : ℝ)
++              (_root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) b)
++              uh sumphb
++            simpa only [wp, PostCond.noThrow, pure, ClosestZero1_check,
++              Id.run, ULift.down_up] using
++              hzero ⟨huhDef, huhZero, hsumVal.symm, hsumExp,
++                by simpa [Fbounded'] using huhDef.1,
++                by
++                  intro g hg
++                  exact huhDef.2 g (by simpa [Fbounded'] using hg),
++                hradixReal, hvNumGt⟩
++          exact False.elim (hulNonzero (by rw [hulDef, hsum, huhZero]; ring))
++      · have hbEqUh :
++            _root_.F2R (beta:=radix) b = _root_.F2R (beta:=radix) uh := by
++          exact hRoundedFull.2.2.2.2 b uh hbBound
++            (by simpa [hphZero, zero_add] using huhDef)
++        exact False.elim (hulNonzero (by rw [hulDef, hphZero, hbEqUh]; ring))
++    · let axb : FloatSpec.Core.Defs.FlocqFloat radix :=
++        Fplus (beta:=radix) (FloatSpec.Calc.Operations.Fmult (beta:=radix) a x) b
++      have hprodVal :
++          _root_.F2R (beta:=radix) (FloatSpec.Calc.Operations.Fmult (beta:=radix) a x) =
++            _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x := by
++        have h := Fmult_correct (beta:=radix) a x
++        simpa only [wp, PostCond.noThrow, pure, Fmult_correct_check,
++          Id.run, ULift.up_down] using h hradix
++      have haxbVal :
++          _root_.F2R (beta:=radix) axb =
++            _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++              _root_.F2R (beta:=radix) b := by
++        have h := Fplus_correct (beta:=radix)
++          (FloatSpec.Calc.Operations.Fmult (beta:=radix) a x) b
++        calc
++          _root_.F2R (beta:=radix) axb =
++              _root_.F2R (beta:=radix)
++                  (FloatSpec.Calc.Operations.Fmult (beta:=radix) a x) +
++                _root_.F2R (beta:=radix) b := by
++                  simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
++                    Id.run, ULift.up_down, axb] using h hradix
++          _ = _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++                _root_.F2R (beta:=radix) b := by rw [hprodVal]
++      have haxbExp : -bo.dExp ≤ axb.Fexp := by
++        have hbExp : -bo.dExp ≤ b.Fexp := hbBound.2
++        by_cases hle : a.Fexp + x.Fexp ≤ b.Fexp
++        · simpa [axb, Fplus, FloatSpec.Calc.Operations.Fplus,
++            FloatSpec.Calc.Operations.Falign, FloatSpec.Calc.Operations.Fmult, hle]
++            using hproductExp
++        · simpa [axb, Fplus, FloatSpec.Calc.Operations.Fplus,
++            FloatSpec.Calc.Operations.Falign, FloatSpec.Calc.Operations.Fmult, hle]
++            using hbExp
++      have hinputZero :
++          _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++            _root_.F2R (beta:=radix) b = 0 := by
++        have hzero := ClosestZero1 (beta:=radix) bo (radix : ℝ)
++          (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++            _root_.F2R (beta:=radix) b) z axb
++        simpa only [wp, PostCond.noThrow, pure, ClosestZero1_check,
++          Id.run, ULift.down_up] using
++          hzero ⟨hzDef, hzZero, haxbVal.symm, haxbExp,
++            by simpa [Fbounded'] using hzDef.1,
++            by
++              intro g hg
++              exact hzDef.2 g (by simpa [Fbounded'] using hg),
++            hradixReal, hvNumGt⟩
++      have hbOppBound : Fbounded (beta:=radix) bo (Fopp (beta:=radix) b) := by
++        have h := oppBounded (beta:=radix) bo b
++        simpa only [wp, PostCond.noThrow, pure, oppBounded_check,
++          Id.run, ULift.up_down] using h hbBound
++      have hbOppVal :
++          _root_.F2R (beta:=radix) (Fopp (beta:=radix) b) =
++            -_root_.F2R (beta:=radix) b := by
++        have h := Fopp_correct (beta:=radix) b
++        simpa only [wp, PostCond.noThrow, pure, Fopp_correct_check,
++          Id.run, ULift.up_down] using h True.intro
++      have hphEqOppB :
++          _root_.F2R (beta:=radix) (Fopp (beta:=radix) b) =
++            _root_.F2R (beta:=radix) ph := by
++        have haxEqOppB :
++            _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x =
++              _root_.F2R (beta:=radix) (Fopp (beta:=radix) b) := by
++          rw [hbOppVal]
++          linarith
++        exact hRoundedFull.2.2.2.2 (Fopp (beta:=radix) b) ph hbOppBound
++          (by simpa [haxEqOppB] using hphDef)
++      have hphPlusBZero :
++          _root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) b = 0 := by
++        linarith [hbOppVal, hphEqOppB]
++      have huhZero :
++          _root_.F2R (beta:=radix) uh = 0 := by
++        have hzero := ClosestZero2 (beta:=radix) bo (radix : ℝ)
++          (_root_.F2R (beta:=radix) ph + _root_.F2R (beta:=radix) b) uh
++        simpa only [wp, PostCond.noThrow, pure, ClosestZero2_check,
++          Id.run, ULift.up_down] using hzero ⟨huhDef, hphPlusBZero⟩
++      exact False.elim (hulNonzero (by rw [hulDef, hphPlusBZero, huhZero]; ring))
++  · rcases errorBoundedPlus (beta:=radix) bo radix precision rfl hradix
++        hprecisionNe hvNumGt hvNum hBoundExp ph b uh hphDef.1 hbBound huhDef with
++      ⟨ul', hul'Val, hul'Bound, hul'Exp⟩
++    rcases errorBoundedMult (beta:=radix) bo radix precision a x ph with hmult
++    have hmult' := hmult ⟨rfl, hradix, hprecisionNe, hvNum, haBound, hxBound,
++      hproductExp, hphDef⟩
++    rcases hmult' with ⟨pl', hpl'Val, hpl'Bound, hpl'Exp⟩
++    let sumErr : FloatSpec.Core.Defs.FlocqFloat radix := Fplus (beta:=radix) pl' ul'
++    have hsumErrVal :
++        _root_.F2R (beta:=radix) sumErr =
++          _root_.F2R (beta:=radix) pl' + _root_.F2R (beta:=radix) ul' := by
++      have h := Fplus_correct (beta:=radix) pl' ul'
++      simpa only [wp, PostCond.noThrow, pure, Fplus_correct_check,
++        Id.run, ULift.up_down, sumErr] using h hradix
++    have hsumErrExp : -bo.dExp ≤ sumErr.Fexp := by
++      have hplExp : -bo.dExp ≤ pl'.Fexp := hpl'Bound.2
++      have hulExp : -bo.dExp ≤ ul'.Fexp := hul'Bound.2
++      by_cases hle : pl'.Fexp ≤ ul'.Fexp
++      · simpa [sumErr, Fplus, FloatSpec.Calc.Operations.Fplus,
++          FloatSpec.Calc.Operations.Falign, hle] using hplExp
++      · simpa [sumErr, Fplus, FloatSpec.Calc.Operations.Fplus,
++          FloatSpec.Calc.Operations.Falign, hle] using hulExp
++    have hsumErrInput :
++        _root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul =
++          _root_.F2R (beta:=radix) sumErr := by
++      rw [hsumErrVal, hpl'Val, hul'Val, hplDef, hulDef]
++    have hplulZero :
++        _root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul = 0 := by
++      have hzero := ClosestZero1 (beta:=radix) bo (radix : ℝ)
++        (_root_.F2R (beta:=radix) pl + _root_.F2R (beta:=radix) ul) v sumErr
++      simpa only [wp, PostCond.noThrow, pure, ClosestZero1_check,
++        Id.run, ULift.down_up] using
++        hzero ⟨hvDef, hvZero, hsumErrInput, hsumErrExp,
++          by simpa [Fbounded'] using hvDef.1,
++          by
++            intro g hg
++            exact hvDef.2 g (by simpa [Fbounded'] using hg),
++          hradixReal, hvNumGt⟩
++    have htExact :
++        _root_.F2R (beta:=radix) t =
++          _root_.F2R (beta:=radix) uh - _root_.F2R (beta:=radix) z := by
++      rcases tBounded bo radix precision a x b ph pl uh z rfl hradix hvNum
++          hprecision3 hBoundExp hbBound haBound hxBound hbCan hphNZ hzNZ huhNZ
++          hproductExp hzDef hphDef hplDef huhDef with
++        ⟨t', ht'Bound, ht'Val⟩
++      have htProject :
++          _root_.F2R (beta:=radix) t' = _root_.F2R (beta:=radix) t :=
++        hRoundedFull.2.2.2.2 t' t ht'Bound (by simpa [ht'Val] using htDef)
++      rw [← htProject, ht'Val]
++    have hwEqT :
++        _root_.F2R (beta:=radix) t = _root_.F2R (beta:=radix) w :=
++      hRoundedFull.2.2.2.2 t w htDef.1 (by simpa [hvZero, add_zero] using hwDef)
++    have htargetZero :
++        _root_.F2R (beta:=radix) z + _root_.F2R (beta:=radix) w -
++            (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++              _root_.F2R (beta:=radix) b) = 0 := by
++      rw [← hwEqT, htExact]
++      nlinarith [hplDef, hulDef, hplulZero]
++    simpa [htargetZero] using hRhsNonneg
++
+ -- Coq: `digit_abs` — digit n (|p|) = digit n p
+ noncomputable def digit_abs_check (n : Int) (p : Int) : Unit :=
+   ()
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 7107a866..c1c01fbf 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -3763,9 +3763,28 @@ with zero findings; full `lake build` passed all 3345 jobs. Exact public
+ 3 to 2; `ErrFmaApprox_2` is next. Overall exact-gap progress is 253 of 255
+ resolved.
+ 
+-#### `Pff/Pff.v` (2)
++2026-07-22 completion note: exact public `ErrFmaApprox_2` is restored in
++`FloatSpec/src/Pff/Pff.lean`. Its payload matches upstream section
++`uhInexact2`: bounded `a`, `x`, and `b`; canonical `b`; normal-or-zero
++hypotheses for `ph`, `uh`, `z`, `v`, and `w`; the product-exponent condition;
++all six closest-rounding definitions; exact `pl` and `ul` residuals; and
++nonzero `ul`. The proof calls exact `ErrFmaApprox_2_aux` in the all-normal
++branch, proves the quantitative `w = 0` branch, derives contradictions with
++nonzero `ul` in the `uh = 0`, `ph = 0`, and `z = 0` branches, and proves exact
++zero error in the `v = 0` branch using bounded error witnesses and closest
++projector equalities. It does not add bounded `pl`, pre-proved zero
++consequences, correction bounds, or the final error bound. Subscription
++harness attempt `.change_log/codex_attempt_20260722_234309` changed only
++`FloatSpec/src/Pff/Pff.lean` and recorded `result = proved`, `build = pass`, and
++a passing local target gate. Independent focused Lean, `git diff --check`, the
++added-hole scan, and `scripts/audit_placeholders.sh --json FloatSpec` passed
++with zero findings; full `lake build` passed all 3345 jobs. Exact public
++`ErrFmaApprox_2` is removed from the active list, reducing the ledger from 2
++to 1; `ErrFmaApprox` is next. Overall exact-gap progress is 254 of 255
++resolved.
++
++#### `Pff/Pff.v` (1)
+ 
+-- `ErrFmaApprox_2` (Theorem, upstream line 26310)
+ - `ErrFmaApprox` (Theorem, upstream line 26490)
+ 
+ ### Counterpart/Renaming Audit Progress

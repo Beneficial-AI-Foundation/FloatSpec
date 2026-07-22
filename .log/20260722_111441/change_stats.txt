@@ -1,0 +1,11 @@
+commit efa2efdb40796a06e8aed33a0f900b3056b59cb6
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 11:14:30 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 11:14:30 2026 +0800
+
+    Restore exact cases theorem
+
+ FloatSpec/src/Pff/Pff.lean | 328 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  54 +++++---
+ 2 files changed, 361 insertions(+), 21 deletions(-)

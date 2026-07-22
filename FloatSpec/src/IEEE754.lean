@@ -1,5 +1,4 @@
--- Top-level IEEE754 module importing all IEEE 754 implementation files
--- Full IEEE 754 binary floating-point arithmetic
+-- IEEE 754 binary floating-point modules.
 
 import FloatSpec.src.IEEE754.Binary
 import FloatSpec.src.IEEE754.Bits

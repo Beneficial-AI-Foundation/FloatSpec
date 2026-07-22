@@ -1,0 +1,11 @@
+commit 56f812c54b1d4fa72542d64f06fec9ddd88f28ed
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 13:49:53 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 13:49:53 2026 +0800
+
+    Restore Subexact
+
+ FloatSpec/src/Pff/Pff.lean | 175 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  29 ++++++--
+ 2 files changed, 198 insertions(+), 6 deletions(-)

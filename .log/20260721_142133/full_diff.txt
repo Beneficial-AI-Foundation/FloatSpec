@@ -1,0 +1,342 @@
+commit 6daf94ec756b3282ab6c02628e887bb0e833e960
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 14:21:27 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 14:21:27 2026 +0800
+
+    Restore exact Pff eLe theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 8a5d2cc6..41162a18 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -50792,6 +50792,258 @@ theorem Underf_Err3_bis {beta : Int}
+     hbNum hbExp hxUnder hyUnder hbudget hz'Bound hz'Val hz'ExpX
+     hz'ExpY hzClosest
+ 
++/-- Coq Sec1 product error bound `eLe`.
++
++The exported Lean statement keeps exactly the section facts used by the Coq
++proof: the radix/precision hypotheses, the `s`/`t` range facts needed to recover
++the precision side conditions, the normality of the product operands, the lower
++product exponent bound, closestness of the rounded product, and the exact
++decomposition of the residual.  The later split operands and the `Hst1`/`Hst2`
++range facts are not consumed by this proof. -/
++theorem eLe {beta : Int}
++    (b : Fbound_skel) (radix : Int) (s t : Nat)
++    (x y r e : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hSLe : 2 ≤ s) (hSGe : s ≤ t - 2)
++    (hxNormal : Fnormal (beta:=beta) radix b x)
++    (hyNormal : Fnormal (beta:=beta) radix b y)
++    (hK : -b.dExp ≤ x.Fexp + y.Fexp)
++    (hClosest : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y) r)
++    (hee : _root_.F2R (beta:=beta) x * _root_.F2R (beta:=beta) y =
++      _root_.F2R (beta:=beta) r + _root_.F2R (beta:=beta) e) :
++    |_root_.F2R (beta:=beta) e| ≤
++      (radix : ℝ) ^ ((t : Int) + x.Fexp + y.Fexp) / 2 := by
++  subst beta
++  let prod : ℝ := _root_.F2R (beta:=radix) x * _root_.F2R (beta:=radix) y
++  let z : Int := x.Fexp + y.Fexp
++  let upper : FloatSpec.Core.Defs.FlocqFloat radix :=
++    ⟨b.vNum - 1, (t : Int) + z⟩
++  let lower : FloatSpec.Core.Defs.FlocqFloat radix :=
++    ⟨-(b.vNum - 1), (t : Int) + z⟩
++  have ht_ne : t ≠ 0 := by omega
++  have ht_pos : 0 < t := Nat.pos_of_ne_zero ht_ne
++  have hvNum_gt : 1 < b.vNum := by
++    rw [hvNum]
++    cases t with
++    | zero => contradiction
++    | succ t' =>
++        cases t' with
++        | zero => omega
++        | succ u =>
++            unfold Zpower_nat
++            have hpow_pos : 0 < radix ^ u := pow_pos (by omega : 0 < radix) u
++            have hle : radix ≤ radix ^ u * (radix * radix) := by
++              nlinarith [hpow_pos, hradix]
++            exact lt_of_lt_of_le hradix
++              (by simpa [pow_succ, mul_assoc, mul_comm, mul_left_comm] using hle)
++  have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
++    exact_mod_cast (by omega : (0 : Int) < radix)
++  have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
++  have hradix_ge_one : (1 : ℝ) ≤ (radix : ℝ) := by
++    exact_mod_cast (by omega : (1 : Int) ≤ radix)
++  have hClosestUlp := ClosestUlp (beta:=radix) b radix t prod r
++  have htwo_abs_diff_le_fulp :
++      2 * |prod - _root_.F2R (beta:=radix) r| ≤
++        Fulp (beta:=radix) b radix t r := by
++    simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check, Id.run,
++      ULift.up_down, prod] using
++      hClosestUlp ⟨hClosest, rfl, hradix, ht_ne, hvNum⟩
++  have hdiff_e : prod - _root_.F2R (beta:=radix) r =
++      _root_.F2R (beta:=radix) e := by
++    dsimp [prod] at hee ⊢
++    linarith
++  have htwo_abs_e_le_fulp :
++      2 * |_root_.F2R (beta:=radix) e| ≤
++        Fulp (beta:=radix) b radix t r := by
++    simpa [hdiff_e] using htwo_abs_diff_le_fulp
++  have hxBound : Fbounded (beta:=radix) b x := hxNormal.1
++  have hyBound : Fbounded (beta:=radix) b y := hyNormal.1
++  have hupperBounded : Fbounded (beta:=radix) b upper := by
++    dsimp [upper, Fbounded]
++    constructor
++    · have hnonneg : 0 ≤ b.vNum - 1 := by omega
++      rw [abs_of_nonneg hnonneg]
++      omega
++    · dsimp [z]
++      omega
++  have hlowerBounded : Fbounded (beta:=radix) b lower := by
++    dsimp [lower, Fbounded]
++    constructor
++    · have hnonneg : 0 ≤ b.vNum - 1 := by omega
++      rw [abs_neg, abs_of_nonneg hnonneg]
++      omega
++    · dsimp [z]
++      omega
++  have hxAbsLe :
++      |_root_.F2R (beta:=radix) x| ≤
++        _root_.F2R (beta:=radix)
++          (⟨b.vNum - 1, x.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
++    have h := maxMax1 (beta:=radix) b x x.Fexp
++    simpa only [wp, PostCond.noThrow, pure, maxMax1_check, Id.run,
++      ULift.up_down] using h ⟨hxBound, le_rfl, hxBound, hradix⟩
++  have hyAbsLe :
++      |_root_.F2R (beta:=radix) y| ≤
++        _root_.F2R (beta:=radix)
++          (⟨b.vNum - 1, y.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
++    have h := maxMax1 (beta:=radix) b y y.Fexp
++    simpa only [wp, PostCond.noThrow, pure, maxMax1_check, Id.run,
++      ULift.up_down] using h ⟨hyBound, le_rfl, hyBound, hradix⟩
++  have hbaseX_nonneg :
++      0 ≤ _root_.F2R (beta:=radix)
++        (⟨b.vNum - 1, x.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
++    have hnum : (0 : Int) ≤ b.vNum - 1 := by omega
++    have hnumR : (0 : ℝ) ≤ (b.vNum : ℝ) - 1 := by exact_mod_cast hnum
++    have hpow_nonneg : 0 ≤ (radix : ℝ) ^ x.Fexp :=
++      le_of_lt (zpow_pos hradix_pos _)
++    simp [_root_.F2R, FloatSpec.Core.Defs.F2R]
++    exact mul_nonneg hnumR hpow_nonneg
++  have hprodAbsLeBase :
++      |prod| ≤
++        _root_.F2R (beta:=radix)
++          (⟨b.vNum - 1, x.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) *
++        _root_.F2R (beta:=radix)
++          (⟨b.vNum - 1, y.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) := by
++    dsimp [prod]
++    rw [abs_mul]
++    exact mul_le_mul hxAbsLe hyAbsLe (abs_nonneg _) hbaseX_nonneg
++  have hpred_le_pow :
++      ((b.vNum - 1 : Int) : ℝ) ≤ (radix : ℝ) ^ (t : Int) := by
++    have hle_int : b.vNum - 1 ≤ b.vNum := by omega
++    have hle_real : ((b.vNum - 1 : Int) : ℝ) ≤ (b.vNum : ℝ) := by
++      exact_mod_cast hle_int
++    have hv_cast : (b.vNum : ℝ) = (radix : ℝ) ^ t := by
++      simp [hvNum, Zpower_nat]
++    have hv_cast_int : (b.vNum : ℝ) = (radix : ℝ) ^ (t : Int) := by
++      rw [hv_cast]
++      rw [← zpow_natCast]
++    exact le_trans hle_real (le_of_eq hv_cast_int)
++  have hbaseProdLeUpper :
++      _root_.F2R (beta:=radix)
++          (⟨b.vNum - 1, x.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) *
++        _root_.F2R (beta:=radix)
++          (⟨b.vNum - 1, y.Fexp⟩ : FloatSpec.Core.Defs.FlocqFloat radix) ≤
++        _root_.F2R (beta:=radix) upper := by
++    let A : ℝ := ((b.vNum - 1 : Int) : ℝ)
++    have hA_nonneg : 0 ≤ A := by
++      have hnonneg : (0 : Int) ≤ b.vNum - 1 := by omega
++      simpa [A] using
++        (show (0 : ℝ) ≤ ((b.vNum - 1 : Int) : ℝ) by exact_mod_cast hnonneg)
++    have hpow_z_nonneg : 0 ≤ (radix : ℝ) ^ z :=
++      le_of_lt (zpow_pos hradix_pos z)
++    have hA_sq_le : A * A ≤ A * (radix : ℝ) ^ (t : Int) :=
++      mul_le_mul_of_nonneg_left (by simpa [A] using hpred_le_pow) hA_nonneg
++    have hmul_exp :
++        (radix : ℝ) ^ x.Fexp * (radix : ℝ) ^ y.Fexp = (radix : ℝ) ^ z := by
++      rw [← zpow_add₀ hradix_ne]
++    have hupper_exp :
++        (radix : ℝ) ^ ((t : Int) + z) =
++          (radix : ℝ) ^ (t : Int) * (radix : ℝ) ^ z := by
++      exact zpow_add₀ hradix_ne (t : Int) z
++    simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, upper]
++    calc
++      A * (radix : ℝ) ^ x.Fexp * (A * (radix : ℝ) ^ y.Fexp)
++          = (A * A) * (radix : ℝ) ^ z := by
++            rw [← hmul_exp]
++            ring
++      _ ≤ (A * (radix : ℝ) ^ (t : Int)) * (radix : ℝ) ^ z :=
++            mul_le_mul_of_nonneg_right hA_sq_le hpow_z_nonneg
++      _ = A * (radix : ℝ) ^ ((t : Int) + z) := by
++            rw [hupper_exp]
++            ring
++  have hprodAbsLeUpper : |prod| ≤ _root_.F2R (beta:=radix) upper :=
++    le_trans hprodAbsLeBase hbaseProdLeUpper
++  have hprod_bounds :
++      -_root_.F2R (beta:=radix) upper ≤ prod ∧
++        prod ≤ _root_.F2R (beta:=radix) upper :=
++    abs_le.mp hprodAbsLeUpper
++  have hupper_nonneg : 0 ≤ _root_.F2R (beta:=radix) upper := by
++    exact le_trans (abs_nonneg prod) hprodAbsLeUpper
++  have hlower_val : _root_.F2R (beta:=radix) lower =
++      -_root_.F2R (beta:=radix) upper := by
++    simp [lower, upper, _root_.F2R, FloatSpec.Core.Defs.F2R]
++    ring
++  have hr_le_upper :
++      _root_.F2R (beta:=radix) r ≤ _root_.F2R (beta:=radix) upper := by
++    by_contra hnot
++    have hlt :
++        _root_.F2R (beta:=radix) upper <
++          _root_.F2R (beta:=radix) r := lt_of_not_ge hnot
++    have hdist := hClosest.2 upper hupperBounded
++    have hr_sub_nonneg :
++        0 ≤ _root_.F2R (beta:=radix) r - prod := by
++      linarith [hprod_bounds.2, hlt]
++    have hu_sub_nonneg :
++        0 ≤ _root_.F2R (beta:=radix) upper - prod := by
++      linarith [hprod_bounds.2]
++    rw [abs_of_nonneg hr_sub_nonneg, abs_of_nonneg hu_sub_nonneg] at hdist
++    linarith
++  have hlower_le_r :
++      -_root_.F2R (beta:=radix) upper ≤ _root_.F2R (beta:=radix) r := by
++    by_contra hnot
++    have hlt :
++        _root_.F2R (beta:=radix) r <
++          -_root_.F2R (beta:=radix) upper := lt_of_not_ge hnot
++    have hdist := hClosest.2 lower hlowerBounded
++    rw [hlower_val] at hdist
++    have hr_sub_nonpos :
++        _root_.F2R (beta:=radix) r - prod ≤ 0 := by
++      linarith [hprod_bounds.1, hlt]
++    have hlower_sub_nonpos :
++        -_root_.F2R (beta:=radix) upper - prod ≤ 0 := by
++      linarith [hprod_bounds.1]
++    rw [abs_of_nonpos hr_sub_nonpos, abs_of_nonpos hlower_sub_nonpos] at hdist
++    linarith
++  have hrAbsLeUpper :
++      |_root_.F2R (beta:=radix) r| ≤ _root_.F2R (beta:=radix) upper :=
++    abs_le.mpr ⟨hlower_le_r, hr_le_upper⟩
++  let nr : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fnormalize (beta:=radix) radix b t r
++  have hnrCan : Fcanonic (beta:=radix) radix b nr := by
++    have h := FnormalizeCanonic (beta:=radix) radix b t r
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++      Id.run, ULift.up_down, nr] using
++      h ⟨hClosest.1, hClosest.1, ht_ne, hradix, hvNum⟩
++  have hupperCan : Fcanonic (beta:=radix) radix b upper := by
++    have hlowerExp : -b.dExp ≤ (t : Int) + z := by
++      dsimp [z]
++      omega
++    simpa [upper, pPred] using
++      (FcanonicPpred (beta:=radix) radix b t ((t : Int) + z)
++        hradix ht_pos hvNum hlowerExp)
++  have hnrVal :
++      _root_.F2R (beta:=radix) nr = _root_.F2R (beta:=radix) r := by
++    have h := FnormalizeCorrect (beta:=radix) radix b t r
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++      Id.run, ULift.up_down, nr] using h ⟨rfl, hradix⟩
++  have hupperAbs :
++      |_root_.F2R (beta:=radix) upper| =
++        _root_.F2R (beta:=radix) upper :=
++    abs_of_nonneg hupper_nonneg
++  have hnrAbsLeUpper :
++      |_root_.F2R (beta:=radix) nr| ≤ |_root_.F2R (beta:=radix) upper| := by
++    rw [hnrVal, hupperAbs]
++    exact hrAbsLeUpper
++  have hnrExpLe : nr.Fexp ≤ upper.Fexp := by
++    have h := Fcanonic_Rle_Zle (beta:=radix) radix b nr upper hradix rfl
++    simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
++      ULift.down_up, Fcanonic'] using h ⟨hnrCan, hupperCan, hnrAbsLeUpper⟩
++  have hfulp_le_pow :
++      Fulp (beta:=radix) b radix t r ≤
++        (radix : ℝ) ^ ((t : Int) + x.Fexp + y.Fexp) := by
++    unfold Fulp
++    have :
++        (Fnormalize (beta:=radix) radix b t r).Fexp ≤
++          (t : Int) + x.Fexp + y.Fexp := by
++      simpa [nr, upper, z, add_assoc] using hnrExpLe
++    exact zpow_right_mono₀ hradix_ge_one this
++  have htwo_abs_e_le_pow :
++      2 * |_root_.F2R (beta:=radix) e| ≤
++        (radix : ℝ) ^ ((t : Int) + x.Fexp + y.Fexp) :=
++    le_trans htwo_abs_e_le_fulp hfulp_le_pow
++  nlinarith
++
+ /-- Closed section-context form of `RND_EvenClosest_canonic`.
+ 
+ This discharges the signed lower/upper canonicity dependencies.  The analogous
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 8ee4ec39..4cc7f40d 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 53.
++- Active semantic gap candidates still listed below: 52.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 53/53 names have been
++- Counterpart audit coverage for the active list: 52/52 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 53 active
++Fix the remaining Flocq import gaps by working through the 52 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2581,9 +2581,32 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+ passing local target gate. Therefore `Underf_Err3_bis` is removed from the
+ active list, and `eLe` is next.
+ 
+-#### `Pff/Pff.v` (53)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_135051` correctly rejected a deliberately
++too-weak projection of upstream `eLe`; without the Sec1 precision and product
++range hypotheses the claimed error bound has a radix-2 counterexample. The
++corrected subscription attempt `.change_log/codex_attempt_20260721_135903`
++then restored exact public `eLe` with the section facts consumed by the Coq
++proof: the beta/radix equality, radix lower bound,
++`b.vNum = Zpower_nat radix t`, natural range hypotheses `2 <= s` and
++`s <= t - 2`, normality of `x` and `y`, product exponent lower bound `K`,
++closestness of `r`, and exact residual decomposition
++`F2R x * F2R y = F2R r + F2R e`. It deliberately omits unused `Hst1`/`Hst2`
++and the later split operands and assumptions for `x1`/`x2`/`y1`/`y2`. The
++proof follows the upstream `ClosestUlp` route, derives the product max-float
++bound directly from `Closest` instead of adding totality as a public premise,
++and compares normalized exponents via `Fcanonic_Rle_Zle`. Independent focused
++Lean exited 0, `git diff --check` passed, the direct live-hole scan and
++placeholder/generated-status audits reported zero findings, and the full
++3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
++checkout. The normalized classifier
++`.change_log/manual_attempt_20260721_eLe_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Therefore `eLe` is removed from the active list, reducing
++the ledger from 53 to 52; `rExp` is next.
++
++#### `Pff/Pff.v` (52)
+ 
+-- `eLe` (Lemma, upstream line 17049)
+ - `rExp` (Lemma, upstream line 17107)
+ - `Boundedt1` (Lemma, upstream line 17177)
+ - `Boundedt2` (Lemma, upstream line 17248)
+@@ -7396,8 +7419,8 @@ Statement-level checks performed for active Pff entries 36-70:
+ - `Underf_Err1`, `Underf_Err2_aux`, `Underf_Err2`, `Underf_Err3`, and
+   `Underf_Err3_bis` are now restored as exact public underflow-error transfer
+   theorems in `FloatSpec/src/Pff/Pff.lean`.
+-- `eLe`, `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`,
+-  `Boundedt4`, `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
++- `rExp`, `Boundedt1`, `Boundedt2`, `Boundedt3`, `Boundedt4`,
++  `Boundedt4_aux`, `Boundedx1y1_aux`, `Boundedx1y1`,
+   `Boundedx1y2_aux`, `Boundedx1y2`, `Boundedx2y1_aux`,
+   `Boundedx2y1`, and `Boundedx2y2` are section-local product-splitting
+   bounds in upstream Pff. Local broad hits on `Bound`, `ZleLe`,

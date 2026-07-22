@@ -1,0 +1,11 @@
+commit cd1b52250135a23efb9e0e454648b0a643e8f597
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 08:00:34 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 08:00:34 2026 +0800
+
+    Restore exact Pff EvenClosestbbplus theorem
+
+ FloatSpec/src/Pff/Pff.lean | 212 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  34 +++++---
+ 2 files changed, 235 insertions(+), 11 deletions(-)

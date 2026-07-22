@@ -604,6 +604,14 @@ end Squares
 
 section AbsMore
 
+/-
+  Coq (Raux.v):
+  Theorem Rabs_lt :
+    forall x y, (-y < x < y)%R -> (Rabs x < y)%R.
+-/
+theorem Rabs_lt (x y : ℝ) (h : -y < x ∧ x < y) : |x| < y := by
+  exact abs_lt.mpr h
+
 /-- Boolean check for strict inequality on absolute value: |x| < y -/
 noncomputable def Rabs_lt_check (x y : ℝ) : Bool :=
   (|x| < y)
@@ -641,6 +649,17 @@ theorem Rabs_gt_spec (x y : ℝ) :
 end AbsGt
 
 section AbsGtInv
+
+/-- Coq `Rabs_gt_inv`: if `x < |y|`, then `y < -x` or `x < y`. -/
+theorem Rabs_gt_inv (x y : ℝ) (h : x < |y|) : y < -x ∨ x < y := by
+  by_cases hy : 0 ≤ y
+  · right
+    simpa [abs_of_nonneg hy] using h
+  · left
+    have hy_nonpos : y ≤ 0 := le_of_not_ge hy
+    have hx_neg : x < -y := by
+      simpa [abs_of_nonpos hy_nonpos] using h
+    simpa using (neg_lt_neg hx_neg)
 
 /-- Pair carrier for the converse direction: from y < x or y < -x to y < |x| -/
 def Rabs_gt_inv_pair (x y : ℝ) : (ℝ × ℝ) :=
@@ -1159,8 +1178,31 @@ theorem Rcompare_IZR_spec (m n : Int) :
 
 /-- Middle-value comparison identity: compare (x - d) vs (u - x) equals comparing x vs (d+u)/2 -/
 noncomputable def Rcompare_middle_check (x d u : ℝ) : (Int × Int) :=
-  let c := (Rcompare x ((d + u) / 2))
-  (c, c)
+  ((Rcompare (x - d) (u - x)), (Rcompare x ((d + u) / 2)))
+
+/-- Coq theorem `Rcompare_middle`: midpoint comparison identity. -/
+theorem Rcompare_middle (x d u : ℝ) :
+    Rcompare (x - d) (u - x) = Rcompare x ((d + u) / 2) := by
+  unfold Rcompare
+  have hlt : (x - d < u - x) ↔ x < (d + u) / 2 := by
+    constructor <;> intro h <;> linarith
+  have heq : (x - d = u - x) ↔ x = (d + u) / 2 := by
+    constructor <;> intro h <;> linarith
+  by_cases hleft_lt : x - d < u - x
+  · have hxlt : x < (d + u) / 2 := hlt.mp hleft_lt
+    simp [hleft_lt, hxlt]
+  · by_cases hleft_eq : x - d = u - x
+    · have hxeq : x = (d + u) / 2 := heq.mp hleft_eq
+      have hmid_eq : (d + u) / 2 - d = u - (d + u) / 2 := by
+        linarith
+      simp [hxeq, hmid_eq]
+    · have hxnotlt : ¬ x < (d + u) / 2 := by
+        intro hxlt
+        exact hleft_lt (hlt.mpr hxlt)
+      have hxneq : x ≠ (d + u) / 2 := by
+        intro hxeq
+        exact hleft_eq (heq.mpr hxeq)
+      simp [hleft_lt, hleft_eq, hxnotlt, hxneq]
 
 @[spec]
 theorem Rcompare_middle_spec (x d u : ℝ) :
@@ -1169,7 +1211,7 @@ theorem Rcompare_middle_spec (x d u : ℝ) :
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
   unfold Rcompare_middle_check
-  simp [wp, PostCond.noThrow, Id.run]
+  simp [wp, PostCond.noThrow, Id.run, Rcompare_middle]
 
 /-- Halving on left: compare {lean}`x/2` with {lean}`y` equals compare {lean}`x` with {lean}`2*y`. -/
 noncomputable def Rcompare_half_l_check (x y : ℝ) : (Int × Int) :=
@@ -1835,6 +1877,15 @@ end CondAbsMulAdd
 
 section CondRltBool
 
+/-- Coq {coq}`cond_Ropp_Rlt_bool`: applying the sign from {lean}`Rlt_bool m 0`
+    turns {lean}`m` into its absolute value. -/
+theorem cond_Ropp_Rlt_bool (m : ℝ) :
+    cond_Ropp (Rlt_bool m 0) m = |m| := by
+  by_cases hm : m < 0
+  · simp [cond_Ropp, Rlt_bool, hm, abs_of_neg hm]
+  · have hm_nonneg : 0 ≤ m := le_of_not_gt hm
+    simp [cond_Ropp, Rlt_bool, hm, abs_of_nonneg hm_nonneg]
+
 /-- Compare after conditional negation on both sides -/
 noncomputable def cond_Ropp_Rlt_bool_check (b : Bool) (x y : ℝ) : Bool :=
   let x' := cond_Ropp b x
@@ -1857,6 +1908,16 @@ theorem cond_Ropp_Rlt_bool_spec (b : Bool) (x y : ℝ) :
     simp [hb, neg_lt_neg_iff]
   · -- When b = false, the inequality is unchanged
     simp [hb]
+
+/-- Coq {coq}`Rlt_bool_cond_Ropp`: a positive magnitude has sign flag {lean}`sx`
+    after conditional negation by {lean}`sx`. -/
+theorem Rlt_bool_cond_Ropp (x : ℝ) (sx : Bool) (hx : 0 < x) :
+    Rlt_bool (cond_Ropp sx x) 0 = sx := by
+  cases sx
+  · have hnot : ¬ x < 0 := by linarith
+    simp [Rlt_bool, cond_Ropp, hnot]
+  · have hneg : -x < 0 := by linarith
+    simp [Rlt_bool, cond_Ropp, hneg]
 
 /-- Compare after conditional negation on right side -/
 noncomputable def Rlt_bool_cond_Ropp_check (b : Bool) (x y : ℝ) : Bool :=
@@ -2614,6 +2675,45 @@ end IntDiv
 -- Comparisons against floor/ceil bounds
 section CompareIntBounds
 
+/-- Coq theorem {coq}`Rcompare_floor_ceil_middle`: in the non-integral case,
+    comparing the fractional part of {lean}`x` with {lean}`1 / 2` is the same
+    as comparing it with the distance from {lean}`x` to its ceiling. -/
+theorem Rcompare_floor_ceil_middle (x : ℝ)
+    (hne : ((Zfloor x) : ℝ) ≠ x) :
+    Rcompare (x - (Zfloor x : ℝ)) (1 / 2) =
+      Rcompare (x - (Zfloor x : ℝ)) ((Zceil x : ℝ) - x) := by
+  have hceil : Zceil x = Zfloor x + 1 := by
+    unfold Zceil Zfloor
+    set f := Int.floor x
+    set c := Int.ceil x
+    have hne_f : (f : ℝ) ≠ x := by simpa [Zfloor, f] using hne
+    have hfl : (f : ℝ) ≤ x := by simpa [f] using (Int.floor_le x)
+    have hflt : (f : ℝ) < x := lt_of_le_of_ne hfl hne_f
+    have hxc : x ≤ (c : ℝ) := by simpa [c] using (Int.le_ceil x)
+    have hfcR : (f : ℝ) < (c : ℝ) := lt_of_lt_of_le hflt hxc
+    have hfc : f < c := (Int.cast_lt).mp hfcR
+    have hceil_le : c ≤ f + 1 := by
+      refine (Int.ceil_le).mpr ?_
+      have hxlt : x < (f : ℝ) + 1 := by
+        simpa [f] using (Int.lt_floor_add_one x)
+      have : x ≤ (f : ℝ) + 1 := le_of_lt hxlt
+      simpa [Int.cast_add, Int.cast_one] using this
+    have hle' : f + 1 ≤ c := Int.add_one_le_iff.mpr hfc
+    exact le_antisymm hceil_le hle'
+  have hceilR : ((Zceil x : Int) : ℝ) = (Zfloor x : ℝ) + 1 := by
+    simpa [Int.cast_add, Int.cast_one] using congrArg (fun z : Int => (z : ℝ)) hceil
+  have hdist :
+      (Zceil x : ℝ) - x = 1 - (x - (Zfloor x : ℝ)) := by
+    linarith
+  have hmiddle :=
+    Rcompare_middle (x := x - (Zfloor x : ℝ)) (d := 0) (u := 1)
+  calc
+    Rcompare (x - (Zfloor x : ℝ)) (1 / 2)
+        = Rcompare (x - (Zfloor x : ℝ)) (1 - (x - (Zfloor x : ℝ))) := by
+          simpa using hmiddle.symm
+    _ = Rcompare (x - (Zfloor x : ℝ)) ((Zceil x : ℝ) - x) := by
+          rw [hdist]
+
 /-- Floor/Ceil middle comparison identities -/
 noncomputable def Rcompare_floor_ceil_middle_check (x : ℝ) : (Int × Int) :=
   let f := Zfloor x
@@ -2709,6 +2809,45 @@ theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
       rw [hL1, hR1]
   -- Finish by reducing the wp-goal to this equality.
   simpa [wp, PostCond.noThrow] using this
+
+/-- Coq theorem {coq}`Rcompare_ceil_floor_middle`: in the non-integral case,
+    comparing the distance from {lean}`x` to its ceiling with {lean}`1 / 2`
+    is the same as comparing it with the fractional part of {lean}`x`. -/
+theorem Rcompare_ceil_floor_middle (x : ℝ)
+    (hne : ((Zfloor x) : ℝ) ≠ x) :
+    Rcompare ((Zceil x : ℝ) - x) (1 / 2) =
+      Rcompare ((Zceil x : ℝ) - x) (x - (Zfloor x : ℝ)) := by
+  have hceil : Zceil x = Zfloor x + 1 := by
+    unfold Zceil Zfloor
+    set f := Int.floor x
+    set c := Int.ceil x
+    have hne_f : (f : ℝ) ≠ x := by simpa [Zfloor, f] using hne
+    have hfl : (f : ℝ) ≤ x := by simpa [f] using (Int.floor_le x)
+    have hflt : (f : ℝ) < x := lt_of_le_of_ne hfl hne_f
+    have hxc : x ≤ (c : ℝ) := by simpa [c] using (Int.le_ceil x)
+    have hfcR : (f : ℝ) < (c : ℝ) := lt_of_lt_of_le hflt hxc
+    have hfc : f < c := (Int.cast_lt).mp hfcR
+    have hceil_le : c ≤ f + 1 := by
+      refine (Int.ceil_le).mpr ?_
+      have hxlt : x < (f : ℝ) + 1 := by
+        simpa [f] using (Int.lt_floor_add_one x)
+      have : x ≤ (f : ℝ) + 1 := le_of_lt hxlt
+      simpa [Int.cast_add, Int.cast_one] using this
+    have hle' : f + 1 ≤ c := Int.add_one_le_iff.mpr hfc
+    exact le_antisymm hceil_le hle'
+  have hceilR : ((Zceil x : Int) : ℝ) = (Zfloor x : ℝ) + 1 := by
+    simpa [Int.cast_add, Int.cast_one] using congrArg (fun z : Int => (z : ℝ)) hceil
+  have hdist :
+      x - (Zfloor x : ℝ) = 1 - ((Zceil x : ℝ) - x) := by
+    linarith
+  have hmiddle :=
+    Rcompare_middle (x := (Zceil x : ℝ) - x) (d := 0) (u := 1)
+  calc
+    Rcompare ((Zceil x : ℝ) - x) (1 / 2)
+        = Rcompare ((Zceil x : ℝ) - x) (1 - ((Zceil x : ℝ) - x)) := by
+          simpa using hmiddle.symm
+    _ = Rcompare ((Zceil x : ℝ) - x) (x - (Zfloor x : ℝ)) := by
+          rw [hdist]
 
 /-- Carrier for {coq}`Rcompare_ceil_floor_middle`: checks ceiling/floor comparison codes. -/
 noncomputable def Rcompare_ceil_floor_middle_check (x : ℝ) : (Int × Int) :=

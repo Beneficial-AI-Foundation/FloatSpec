@@ -1,0 +1,11 @@
+commit 6cd8b7125bce79174df8b7dbc54b369d95c94939
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 19:40:27 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 19:40:27 2026 +0800
+
+    Restore exact Pff DekkerN theorem
+
+ FloatSpec/src/Pff/Pff.lean | 63 ++++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  | 38 ++++++++++++++++++++++------
+ 2 files changed, 94 insertions(+), 7 deletions(-)

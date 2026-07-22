@@ -1,0 +1,141 @@
+commit 8b31762ddb2089941cd51efbcac99ef36d43607e
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 13:31:27 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 13:31:27 2026 +0800
+
+    Restore yLe2x
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 5ed83db5..ca044613 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -50294,6 +50294,66 @@ theorem xLe2y {beta : Int}
+         hyClosest_swap, hxNormal, hyNormal, hbCan, haCan, haExpGt, haLeB,
+         hBoundExp⟩
+ 
++noncomputable def yLe2x_check {beta : Int}
++    (_bo : Fbound_skel) (_radix : Int) (_precision : Nat)
++    (_a _b _x _y : FloatSpec.Core.Defs.FlocqFloat beta) (_e : ℝ) : Unit :=
++  ()
++
++/-- Coq GenericB lemma `yLe2x`.
++
++This is the exported GenericB companion of `xLe2y`: under nonzero rounded
++`x`, compare `|b|` and `|a|`, then reuse the GenericA payload `yLe2x_aux`,
++swapping `a` and `b` in the second branch exactly as upstream does. -/
++theorem yLe2x {beta : Int}
++    (bo : Fbound_skel) (radix : Int) (precision : Nat)
++    (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ) :
++    ⦃⌜beta = radix ∧ 1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧
++        3 ≤ precision ∧
++        |e| ≤ (1 / 2 : ℝ) * Fulp (beta:=beta) bo radix precision a ∧
++        |e| ≤ (1 / 2 : ℝ) * Fulp (beta:=beta) bo radix precision b ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) a + _root_.F2R (beta:=beta) b) x ∧
++        Closest (beta:=beta) bo (radix : ℝ)
++          (_root_.F2R (beta:=beta) a + _root_.F2R (beta:=beta) b + e) y ∧
++        Fnormal (beta:=beta) radix bo x ∧
++        Fnormal (beta:=beta) radix bo y ∧
++        Fcanonic (beta:=beta) radix bo a ∧
++        Fcanonic (beta:=beta) radix bo b ∧
++        _root_.F2R (beta:=beta) x ≠ 0⌝⦄
++    (pure (yLe2x_check (beta:=beta) bo radix precision a b x y e) :
++      Id Unit)
++    ⦃⇓_ => ⌜|_root_.F2R (beta:=beta) y| ≤
++      2 * |_root_.F2R (beta:=beta) x|⌝⦄ := by
++  intro hpre
++  rcases hpre with
++    ⟨hbeta, hradix, hvNum, hprecision_ge, heLea, heLeb, hxClosest,
++      hyClosest, hxNormal, hyNormal, haCan, hbCan, hxNonzero⟩
++  subst beta
++  simp only [wp, PostCond.noThrow, pure, yLe2x_check, Id.run, ULift.up_down]
++  by_cases hbLeA :
++      |_root_.F2R (beta:=radix) b| ≤ |_root_.F2R (beta:=radix) a|
++  · have h := yLe2x_aux (beta:=radix) bo radix precision a b x y e
++    simpa only [wp, PostCond.noThrow, pure, yLe2x_aux_check, Id.run,
++      ULift.up_down] using
++      h ⟨rfl, hradix, hvNum, hprecision_ge, heLeb, hxClosest, hyClosest,
++        hxNormal, hyNormal, haCan, hbCan, hbLeA, hxNonzero⟩
++  · have haLeB :
++        |_root_.F2R (beta:=radix) a| ≤ |_root_.F2R (beta:=radix) b| :=
++      le_of_lt (lt_of_not_ge hbLeA)
++    have hxClosest_swap :
++        Closest (beta:=radix) bo (radix : ℝ)
++          (_root_.F2R (beta:=radix) b + _root_.F2R (beta:=radix) a) x := by
++      simpa [add_comm] using hxClosest
++    have hyClosest_swap :
++        Closest (beta:=radix) bo (radix : ℝ)
++          (_root_.F2R (beta:=radix) b + _root_.F2R (beta:=radix) a + e) y := by
++      simpa [add_comm, add_left_comm, add_assoc] using hyClosest
++    have h := yLe2x_aux (beta:=radix) bo radix precision b a x y e
++    simpa only [wp, PostCond.noThrow, pure, yLe2x_aux_check, Id.run,
++      ULift.up_down] using
++      h ⟨rfl, hradix, hvNum, hprecision_ge, heLea, hxClosest_swap,
++        hyClosest_swap, hxNormal, hyNormal, hbCan, haCan, haLeB, hxNonzero⟩
++
+ noncomputable def RoundLeNormal_check {beta : Int}
+     (b : Fbound_skel) (precision : Nat)
+     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 4be7d50a..517aee04 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 23.
++- Active semantic gap candidates still listed below: 22.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 23/23 names have been
++- Counterpart audit coverage for the active list: 22/22 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 23 active
++Fix the remaining Flocq import gaps by working through the 22 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -3295,9 +3295,24 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+ passing local target gate. Exact public `xLe2y` is removed from the active
+ list, reducing the ledger from 24 to 23; `yLe2x` is next.
+ 
+-#### `Pff/Pff.v` (23)
++2026-07-22 completion note: exact public GenericB lemma `yLe2x` is restored in
++`FloatSpec/src/Pff/Pff.lean`. It preserves only the exported premises used by
++upstream, splits on `|b| <= |a|`, applies exact `yLe2x_aux` directly in the
++first branch, and swaps `a` and `b` with their error/canonicity hypotheses in
++the second branch. It correctly omits unused even-radix, strict-exponent,
++`dsd`, and `boundR`-totality hypotheses. Required subscription harness attempt
++`.change_log/codex_attempt_20260722_131848` produced the exact declaration and
++proof. Independent focused Lean, `git diff --check`, the added-hole scan,
++`scripts/audit_placeholders.sh --json FloatSpec`, and
++`scripts/status_report.sh --write` passed, and full `lake build` passed all
++3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
++normalized classifier `.change_log/manual_attempt_20260722_yLe2x_proved/attempt.json`
++records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
++passing local target gate. Exact public `yLe2x` is removed from the active
++list, reducing the ledger from 23 to 22; `Subexact` is next.
++
++#### `Pff/Pff.v` (22)
+ 
+-- `yLe2x` (Lemma, upstream line 23717)
+ - `Subexact` (Lemma, upstream line 23726)
+ - `Midpoint_aux_aux` (Lemma, upstream line 23846)
+ - `Midpoint_aux` (Lemma, upstream line 24208)
+@@ -8142,8 +8157,7 @@ Statement-level checks performed for active Pff entries 71-104:
+ - `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
+   exact representability fixes `|x|`, and the even-radix half-unit witness
+   plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
+-- `yLe2x`,
+-  `Subexact`, `Midpoint_aux_aux`, `Midpoint_aux`,
++- `Subexact`, `Midpoint_aux_aux`, `Midpoint_aux`,
+   `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
+   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
+   `LSB` or FMA helper theorems are definitions or narrower branch helpers,

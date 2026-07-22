@@ -1,0 +1,11 @@
+commit 94e4ae38da5d5e7ed5b00236d4779fff056aaa12
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 21:02:51 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 21:02:51 2026 +0800
+
+    Strengthen RleRoundedAbs
+
+ FloatSpec/src/Pff/Pff.lean | 386 +++++++++++++++++++++++++++------------------
+ MISSING_INFRASTRUCTURE.md  |  19 +++
+ 2 files changed, 252 insertions(+), 153 deletions(-)

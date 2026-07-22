@@ -1,0 +1,228 @@
+commit 2b78eb5929b77bd9626a42ba5029aeef24337165
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 07:46:04 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 07:46:04 2026 +0800
+
+    Restore exact Pff ClosestClosest theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index f1b5971d..87dc7b57 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -46298,6 +46298,143 @@ theorem EvenClosestbplusb {beta : Int}
+         (le_antisymm hqError (abs_nonneg _))
+     linarith
+ 
++private lemma FSucc_exp_le_add_one {beta : Int}
++    (b : Fbound_skel) (radix : Int) (precision : Nat)
++    (x : FloatSpec.Core.Defs.FlocqFloat beta) :
++    (FSucc (beta:=beta) b radix precision x).Fexp ≤ x.Fexp + 1 := by
++  unfold FSucc
++  split_ifs <;> simp <;> omega
++
++/-! Coq closest-exponent separation lemma `ClosestClosest`.
++
++After taking absolute values, normalize the lower-exponent result and place its
++normalized successor strictly between the two closest values. That successor is
++bounded, so one of the two original closestness inequalities is contradicted,
++depending on which side of the successor contains the exact value. -/
++theorem ClosestClosest {beta : Int}
++    (b0 : Fbound_skel) (radix : Int) (n : Nat) (z : ℝ)
++    (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
++    (hf1 : Closest (beta:=beta) b0 (radix : ℝ) z f1)
++    (hf2 : Closest (beta:=beta) b0 (radix : ℝ) z f2)
++    (hf2Normal : Fnormal (beta:=beta) radix b0 f2)
++    (hExp : f1.Fexp ≤ f2.Fexp - 2) : False := by
++  subst beta
++  have hnNe : n ≠ 0 := by omega
++  have hradixPosInt : (0 : Int) < radix := by omega
++  have hvNumPos : 0 < b0.vNum := by
++    rw [hvNum, Zpower_nat]
++    exact pow_pos hradixPosInt _
++  have hf1Abs :
++      Closest (beta:=radix) b0 (radix : ℝ) |z| (Fabs f1) := by
++    have h := ClosestFabs (beta:=radix) b0 (radix : ℝ) f1 z
++    simpa only [wp, PostCond.noThrow, pure, ClosestFabs_check,
++      Id.run, ULift.up_down] using h ⟨hradix, hf1⟩
++  have hf2Abs :
++      Closest (beta:=radix) b0 (radix : ℝ) |z| (Fabs f2) := by
++    have h := ClosestFabs (beta:=radix) b0 (radix : ℝ) f2 z
++    simpa only [wp, PostCond.noThrow, pure, ClosestFabs_check,
++      Id.run, ULift.up_down] using h ⟨hradix, hf2⟩
++  let nf1 : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fnormalize (beta:=radix) radix b0 n (Fabs f1)
++  let af2 : FloatSpec.Core.Defs.FlocqFloat radix := Fabs f2
++  have hnf1Can : Fcanonic (beta:=radix) radix b0 nf1 := by
++    have h := FnormalizeCanonic (beta:=radix) radix b0 n (Fabs f1)
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++      Id.run, ULift.up_down, nf1] using
++      h ⟨hf1Abs.1, hf1Abs.1, hnNe, hradix, hvNum⟩
++  have hnf1Value :
++      _root_.F2R (beta:=radix) nf1 =
++        _root_.F2R (beta:=radix) (Fabs f1) := by
++    have h := FnormalizeCorrect (beta:=radix) radix b0 n (Fabs f1)
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++      Id.run, ULift.up_down, nf1] using h ⟨rfl, hradix⟩
++  have haf2Normal : Fnormal (beta:=radix) radix b0 af2 := by
++    constructor
++    · have h := absFBounded (beta:=radix) b0 f2
++      simpa only [wp, PostCond.noThrow, pure, absFBounded_check,
++        Id.run, ULift.up_down, af2] using h hf2Normal.1
++    · simpa [af2, Fabs, FloatSpec.Calc.Operations.Fabs,
++        Int.natCast_natAbs, abs_mul] using hf2Normal.2
++  have haf2Can : Fcanonic (beta:=radix) radix b0 af2 :=
++    Or.inl haf2Normal
++  have hnf1Nonneg : 0 ≤ _root_.F2R (beta:=radix) nf1 := by
++    rw [hnf1Value]
++    have h := FloatSpec.Calc.Operations.F2R_abs (beta:=radix) f1 hradix
++    rw [show _root_.F2R (beta:=radix) (Fabs f1) =
++        |_root_.F2R (beta:=radix) f1| by simpa [Fabs, _root_.F2R] using h]
++    exact abs_nonneg _
++  have haf2Nonneg : 0 ≤ _root_.F2R (beta:=radix) af2 := by
++    have h := FloatSpec.Calc.Operations.F2R_abs (beta:=radix) f2 hradix
++    rw [show _root_.F2R (beta:=radix) af2 =
++        |_root_.F2R (beta:=radix) f2| by
++          simpa [af2, Fabs, _root_.F2R] using h]
++    exact abs_nonneg _
++  have hnf1ExpLe : nf1.Fexp ≤ (Fabs f1).Fexp := by
++    have h := FcanonicLeastExp (beta:=radix) radix b0 (Fabs f1) nf1
++      hradix rfl hvNumPos
++    simpa only [wp, PostCond.noThrow, pure, FcanonicLeastExp_check,
++      ULift.down_up, Fbounded', Fcanonic', nf1] using
++      h ⟨hnf1Value.symm, hf1Abs.1, hnf1Can⟩
++  have hnf1ExpGap : nf1.Fexp ≤ af2.Fexp - 2 := by
++    have hfabs1Exp : (Fabs f1).Fexp = f1.Fexp := by
++      simp [Fabs, FloatSpec.Calc.Operations.Fabs]
++    have hfabs2Exp : af2.Fexp = f2.Fexp := by
++      simp [af2, Fabs, FloatSpec.Calc.Operations.Fabs]
++    rw [hfabs1Exp] at hnf1ExpLe
++    rw [hfabs2Exp]
++    omega
++  let succ : FloatSpec.Core.Defs.FlocqFloat radix :=
++    FNSucc (beta:=radix) b0 (radix : ℝ) n (Fabs f1)
++  have hsuccCan : Fcanonic (beta:=radix) radix b0 succ := by
++    have h := FNSuccCanonic (beta:=radix) b0 (radix : ℝ) n (Fabs f1)
++    simpa only [wp, PostCond.noThrow, pure, FNSuccCanonic_check,
++      Id.run, ULift.up_down, succ] using
++      h ⟨hf1Abs.1, hradix, hnNe, hvNum⟩
++  have hsuccBound : Fbounded (beta:=radix) b0 succ :=
++    (FcanonicBound (beta:=radix) radix b0 succ) hsuccCan
++  have hnf1LtSucc :
++      _root_.F2R (beta:=radix) nf1 <
++        _root_.F2R (beta:=radix) succ := by
++    have h := FNSuccLt (beta:=radix) b0 (radix : ℝ) n (Fabs f1)
++    have h' :
++        _root_.F2R (beta:=radix) (Fabs f1) <
++          _root_.F2R (beta:=radix) succ := by
++      simpa only [wp, PostCond.noThrow, pure, FNSuccLt_check,
++        Id.run, ULift.up_down, succ] using h ⟨hradix, hnNe, hvNum⟩
++    simpa [hnf1Value] using h'
++  have hsuccNonneg : 0 ≤ _root_.F2R (beta:=radix) succ :=
++    le_trans hnf1Nonneg (le_of_lt hnf1LtSucc)
++  have hsuccExpLe : succ.Fexp ≤ nf1.Fexp + 1 := by
++    simpa [succ, FNSucc, nf1] using
++      (FSucc_exp_le_add_one (beta:=radix) b0 radix n nf1)
++  have hsuccExpLt : succ.Fexp < af2.Fexp := by omega
++  have hsuccLtAf2 :
++      _root_.F2R (beta:=radix) succ <
++        _root_.F2R (beta:=radix) af2 := by
++    have h := FcanonicPosFexpRlt (beta:=radix) radix b0 succ af2 hradix rfl
++    simpa only [wp, PostCond.noThrow, pure, FcanonicPosFexpRlt_check,
++      ULift.down_up, Fcanonic'] using
++      h ⟨hsuccCan, haf2Can, hsuccNonneg, haf2Nonneg, hsuccExpLt⟩
++  have hf1Dist := hf1Abs.2 succ hsuccBound
++  have hf2Dist := hf2Abs.2 succ hsuccBound
++  by_cases hzLe : |z| ≤ _root_.F2R (beta:=radix) succ
++  · have hsuccDiffNonneg :
++        0 ≤ _root_.F2R (beta:=radix) succ - |z| := by linarith
++    have haf2DiffNonneg :
++        0 ≤ _root_.F2R (beta:=radix) af2 - |z| := by linarith
++    rw [abs_of_nonneg haf2DiffNonneg, abs_of_nonneg hsuccDiffNonneg] at hf2Dist
++    exact (not_le_of_gt hsuccLtAf2) (by linarith)
++  · have hzGt : _root_.F2R (beta:=radix) succ < |z| := lt_of_not_ge hzLe
++    have hnf1DiffNonpos :
++        _root_.F2R (beta:=radix) nf1 - |z| ≤ 0 := by linarith
++    have hsuccDiffNonpos :
++        _root_.F2R (beta:=radix) succ - |z| ≤ 0 := by linarith
++    rw [← hnf1Value] at hf1Dist
++    rw [abs_of_nonpos hnf1DiffNonpos, abs_of_nonpos hsuccDiffNonpos] at hf1Dist
++    exact (not_le_of_gt hnf1LtSucc) (by linarith)
++
+ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+     (b : Fbound_skel) (radix : Int) (precision : Nat)
+     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index fed6fcb8..0ff0c2d9 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 68.
++- Active semantic gap candidates still listed below: 67.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 68/68 names have been
++- Counterpart audit coverage for the active list: 67/67 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 68 active
++Fix the remaining Flocq import gaps by working through the 67 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2299,9 +2299,25 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+ passing local target gate. Therefore `EvenClosestbplusb` is removed from the
+ active list, and `ClosestClosest` is next.
+ 
+-#### `Pff/Pff.v` (68)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_073226` failed without source changes or a
++build after the Codex process encountered the local model-cache configuration
++error. The manual repair restored exact public `ClosestClosest` under only the
++expanded upstream section assumptions. It takes absolute values, normalizes
++the lower-exponent closest result, and proves that its bounded normalized
++successor lies strictly between the two closest represented values. Depending
++on which side of that successor contains `|z|`, one of the original
++closestness inequalities is then impossible. The focused Lean process exited
++0, `git diff --check` passed, placeholder/status audits reported zero
++findings, and the full 3345-job `lake build` passed;
++`scripts/check_diff_trust.sh` is absent from this checkout. The normalized
++classifier `.change_log/manual_attempt_20260721_ClosestClosest_proved/attempt.json`
++records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
++passing local target gate. Therefore `ClosestClosest` is removed from the
++active list, and `EvenClosestbbplus` is next.
++
++#### `Pff/Pff.v` (67)
+ 
+-- `ClosestClosest` (Lemma, upstream line 15367)
+ - `EvenClosestbbplus` (Lemma, upstream line 15448)
+ - `VeltkampS` (Lemma, upstream line 15559)
+ - `VeltkampEvenS` (Lemma, upstream line 15734)
+@@ -7090,7 +7106,7 @@ Statement-level checks performed for the first 35 active Pff entries:
+   `F2R f ≠ 0`, it constructs `Fnormalize radix (plusExp b) t f`, preserves
+   `F2R`, and rules out the subnormal branch using the original bounded
+   exponent and the `plusExp` first-normal threshold.
+-- `ClosestClosest` and `EvenClosestbbplus` have no faithful counterpart.
++- `EvenClosestbbplus` has no faithful counterpart.
+   Lean has `Closestbplusb`, but that is the reverse restriction direction
+   from `plusExp b` closestness plus a bound proof back to `b` closestness.
+   Upstream `EvenClosestbbplus` adds the nearest-even side condition in the
+@@ -7103,6 +7119,9 @@ Statement-level checks performed for the first 35 active Pff entries:
+ - `EvenClosestbplusb` is now restored as the exact public nearest-even
+   restriction theorem from `plusExp b0 t` to `b0` in
+   `FloatSpec/src/Pff/Pff.lean`.
++- `ClosestClosest` is now restored as the exact public theorem excluding an
++  exponent separation of at least two between two closest results when the
++  higher-exponent result is normal.
+ 
+ Updated status: active Pff entries 1-35 are confirmed real semantic gaps or
+ unported section lemmas, not renamed/split complete ports. Later restorations

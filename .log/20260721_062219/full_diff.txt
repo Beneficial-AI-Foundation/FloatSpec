@@ -1,0 +1,181 @@
+commit 5b6b03b0c36e770e534def198cd3f1f6a13e99cb
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 06:22:12 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 06:22:12 2026 +0800
+
+    Restore exact Pff VeltkampN theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 6c79e76b..16992a8c 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -45367,6 +45367,94 @@ theorem VeltkampN_aux {beta : Int}
+       simpa using hOpp
+     · simpa [Fopp, FloatSpec.Calc.Operations.Fopp] using hvExp
+ 
++/-! Coq normalized Veltkamp wrapper `VeltkampN`.
++
++The closest-rounding premises already make `p` and `q` bounded.  Normalize
++them into canonical representatives with unchanged real values, transfer the
++three closestness hypotheses, and apply `VeltkampN_aux`. -/
++theorem VeltkampN {beta : Int}
++    (b : Fbound_skel) (radix : Int) (s t : Nat)
++    (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
++    (hxNormal : Fnormal (beta:=beta) radix b x)
++    (hpDef : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
++    (hqDef : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
++    (hhxDef : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx) :
++    |_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx| ≤
++        (radix : ℝ) ^ ((s : Int) + x.Fexp) / 2 ∧
++      ∃ hx' : FloatSpec.Core.Defs.FlocqFloat beta,
++        _root_.F2R (beta:=beta) hx' = _root_.F2R (beta:=beta) hx ∧
++          Closest (beta:=beta) (Veltkamp_reducedBound radix b s t)
++            (radix : ℝ) (_root_.F2R (beta:=beta) x) hx' ∧
++          (s : Int) + x.Fexp ≤ hx'.Fexp := by
++  subst beta
++  have htNe : t ≠ 0 := by omega
++  let np : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fnormalize (beta:=radix) radix b t p
++  let nq : FloatSpec.Core.Defs.FlocqFloat radix :=
++    Fnormalize (beta:=radix) radix b t q
++  have hpBound : Fbounded (beta:=radix) b p := hpDef.1
++  have hqBound : Fbounded (beta:=radix) b q := hqDef.1
++  have hnpValue :
++      _root_.F2R (beta:=radix) np = _root_.F2R (beta:=radix) p := by
++    have h := FnormalizeCorrect (beta:=radix) radix b t p
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++      Id.run, ULift.up_down, np] using h ⟨rfl, hradix⟩
++  have hnqValue :
++      _root_.F2R (beta:=radix) nq = _root_.F2R (beta:=radix) q := by
++    have h := FnormalizeCorrect (beta:=radix) radix b t q
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++      Id.run, ULift.up_down, nq] using h ⟨rfl, hradix⟩
++  have hnpBound : Fbounded (beta:=radix) b np := by
++    have h := FnormalizeBounded (beta:=radix) radix b t p
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeBounded_check,
++      Id.run, ULift.up_down, np] using
++      h ⟨hpBound, hpBound, htNe, hradix, hvNum⟩
++  have hnqBound : Fbounded (beta:=radix) b nq := by
++    have h := FnormalizeBounded (beta:=radix) radix b t q
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeBounded_check,
++      Id.run, ULift.up_down, nq] using
++      h ⟨hqBound, hqBound, htNe, hradix, hvNum⟩
++  have hnpCan : Fcanonic (beta:=radix) radix b np := by
++    have h := FnormalizeCanonic (beta:=radix) radix b t p
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++      Id.run, ULift.up_down, np] using
++      h ⟨hpBound, hpBound, htNe, hradix, hvNum⟩
++  have hnqCan : Fcanonic (beta:=radix) radix b nq := by
++    have h := FnormalizeCanonic (beta:=radix) radix b t q
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++      Id.run, ULift.up_down, nq] using
++      h ⟨hqBound, hqBound, htNe, hradix, hvNum⟩
++  have hnpClosest :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) x *
++          ((radix : ℝ) ^ (s : Int) + 1)) np := by
++    constructor
++    · exact hnpBound
++    · intro g hg
++      rw [hnpValue]
++      exact hpDef.2 g hg
++  have hnqClosest :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) x - _root_.F2R (beta:=radix) np) nq := by
++    constructor
++    · exact hnqBound
++    · intro g hg
++      rw [hnpValue, hnqValue]
++      exact hqDef.2 g hg
++  have hhxClosest :
++      Closest (beta:=radix) b (radix : ℝ)
++        (_root_.F2R (beta:=radix) nq + _root_.F2R (beta:=radix) np) hx := by
++    rw [hnqValue, hnpValue]
++    exact hhxDef
++  exact VeltkampN_aux (beta:=radix) b radix s t x np nq hx rfl hradix
++    hvNum hsGe hsLe hxNormal hnpCan hnqCan hnpClosest hnqClosest hhxClosest
++
+ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+     (b : Fbound_skel) (radix : Int) (precision : Nat)
+     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index ce801cb6..fcf5040c 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 74.
++- Active semantic gap candidates still listed below: 73.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 74/74 names have been
++- Counterpart audit coverage for the active list: 73/73 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 74 active
++Fix the remaining Flocq import gaps by working through the 73 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2192,9 +2192,25 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+ passing local target gate. Therefore `VeltkampN_aux` is removed from the
+ active list, and `VeltkampN` is next.
+ 
+-#### `Pff/Pff.v` (74)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_061502` left the exact `VeltkampN` payload
++unchanged and did not run a build. The manual repair restored exact public
++`VeltkampN` under only the expanded upstream `VeltN` assumptions. It
++normalizes the merely bounded closest outputs `p` and `q`, proves both
++normalized representatives are bounded and canonical with unchanged real
++values, reconstructs the three closest-rounding premises, and invokes exact
++`VeltkampN_aux` for the unchanged residual and reduced-witness conclusion.
++The focused Lean process exited 0, `git diff --check` passed,
++placeholder/status audits reported zero findings, and the full 3345-job
++`lake build` passed; `scripts/check_diff_trust.sh` is absent from this
++checkout. The normalized classifier
++`.change_log/manual_attempt_20260721_VeltkampN_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Therefore `VeltkampN` is removed from the active list, and
++`VeltkampEven_pos` is next.
++
++#### `Pff/Pff.v` (73)
+ 
+-- `VeltkampN` (Lemma, upstream line 14832)
+ - `VeltkampEven_pos` (Lemma, upstream line 14856)
+ - `VeltkampEvenN_aux` (Lemma, upstream line 14942)
+ - `VeltkampEvenN` (Lemma, upstream line 15000)
+@@ -6971,8 +6987,7 @@ Statement-level checks performed for the first 35 active Pff entries:
+   `epLe`, `RleRRounded`, `ClosestExp`, `FPredProp`, `MinMax`, and
+   `ImplyClosest`, but no exact `eqLe` disjunction and no exact `eqGe`
+   inequality from only the upstream Veltkamp section hypotheses.
+-- `VeltkampN`,
+-  `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
++- `VeltkampEven_pos`, `VeltkampEvenN_aux`, `VeltkampEvenN`, and
+   `VeltkampS` are not covered by the public Lean `Veltkamp` wrapper in
+   `FloatSpec/src/Pff/Pff2Flocq.lean`. The wrapper assumes a reduced
+   nearest-even witness as input; the active upstream lemmas construct the
+@@ -6980,8 +6995,8 @@ Statement-level checks performed for the first 35 active Pff entries:
+   products/sums. They are therefore missing lower Pff payloads, not hidden
+   under the public wrapper.
+ - `Veltkamp_aux_aux`, `Veltkamp_aux`, `VeltkampEven1`, `VeltkampEven2`,
+-  `Veltkamp_pos`, and `VeltkampN_aux` are now restored as exact public Lean
+-  theorems in
++  `Veltkamp_pos`, `VeltkampN_aux`, and `VeltkampN` are now restored as exact
++  public Lean theorems in
+   `FloatSpec/src/Pff/Pff.lean`; they are no
+   longer inferred from the higher-level wrapper and no longer belong to this
+   missing-payload group.

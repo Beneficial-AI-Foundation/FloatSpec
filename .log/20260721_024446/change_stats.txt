@@ -1,0 +1,11 @@
+commit c46fc460908e213677833b94b626850cc9358891
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 02:44:20 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 02:44:20 2026 +0800
+
+    Restore exact Pff eqGe theorem
+
+ FloatSpec/src/Pff/Pff.lean | 726 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  30 +-
+ 2 files changed, 751 insertions(+), 5 deletions(-)

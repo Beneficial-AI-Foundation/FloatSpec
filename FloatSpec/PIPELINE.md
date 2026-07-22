@@ -4,6 +4,55 @@
 
 This document provides a systematic process for generating Vector-based Lean 4 specifications with Hoare triple syntax from Flocq function documentation and source code. The pipeline produces formal specifications that capture the mathematical properties of Flocq operations.
 
+## Proof Repair Checks
+
+For FloatSpec proof repair, the repository is built as one unified target.
+Every agent attempt should run the status and placeholder checks described in
+`FloatSpec/docs/PIPELINE_IMPROVEMENTS_FROM_VERINA.md`.
+
+Required commands:
+
+```bash
+scripts/audit_placeholders.sh --json FloatSpec
+scripts/status_report.sh --write
+scripts/classify_attempt.py --target <file:line> --reason <reason> --result <proved|blocked|failed|no_action>
+```
+
+For Codex-backed attempts, prefer the harness:
+
+```bash
+scripts/codex_attempt.sh --target <file:line> --reason <reason>
+```
+
+The harness can force either Codex auth/provider path instead of relying on the
+ambient `~/.codex/config.toml` default:
+
+```bash
+# Use ChatGPT/Codex subscription auth through the built-in OpenAI provider.
+scripts/codex_attempt.sh --provider subscription --target <file:line> --reason <reason>
+
+# Use an API-compatible provider. The key must live in the named env var.
+export XHUB_API_KEY=...
+scripts/codex_attempt.sh \
+  --provider api \
+  --api-base-url https://api3.xhub.chat/v1 \
+  --api-env-key XHUB_API_KEY \
+  --api-wire-api responses \
+  --model gpt-5.5 \
+  --target <file:line> \
+  --reason <reason>
+```
+
+Each attempt records the requested provider mode in `attempt.json` and writes a
+sanitized `.change_log/codex_attempt_<timestamp>/codex_provider.txt` sidecar with
+the base URL, env var name, and wire API. The sidecar records whether the env
+var was present, but never records the secret value.
+
+The harness writes a status snapshot, Codex JSONL transcript, Codex stderr,
+placeholder-audit output, and `attempt.json` under `.change_log/`. If a target is
+blocked by a missing foundational theorem, the correct outcome is a blocker
+report, not a weakened statement or semantic placeholder.
+
 ## Essential Concepts
 
 ### 1. Hoare Triple Syntax in Lean 4

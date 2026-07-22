@@ -396,7 +396,7 @@ theorem generic_format_bpow_inv'
     -- hfmt: β^e = Ztrunc(β^e * β^(-fexp(e+1))) * β^(fexp(e+1))
     -- Assume for contradiction: fexp(e+1) > e
     by_contra hgt
-    push_neg at hgt
+    push Not at hgt
     have hexp_neg : e - fexp (e + 1) < 0 := by grind
     -- β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1)), and since exponent is negative:
     -- 0 < β^(e - fexp(e+1)) < 1
@@ -431,7 +431,7 @@ theorem generic_format_bpow_inv'
   -- Since e + 1 ≤ fexp(e), we'd have fexp(e+1) = fexp(e) ≥ e + 1 > e
   -- But fexp(e+1) ≤ e, contradiction
   by_contra h_not_le
-  push_neg at h_not_le
+  push Not at h_not_le
   -- h_not_le : fexp e > e, so fexp e ≥ e + 1
   have hfexp_e_ge : fexp e ≥ e + 1 := by grind
   have he_le_fexp : e ≤ fexp e := by grind
@@ -640,6 +640,9 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
   unfold generic_format scaled_mantissa cexp
   simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind]
   simp [hmag']
+  change (beta : ℝ) ^ e =
+    (Ztrunc ((beta : ℝ) ^ e * ((beta : ℝ) ^ fexp (e + 1))⁻¹) : ℝ) *
+      (beta : ℝ) ^ fexp (e + 1)
   -- Goal: β^e = Ztrunc(β^e * β^(-fexp(e+1))) * β^(fexp(e+1))
   -- scaled_mantissa = β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1))
   have hexp_diff : e - fexp (e + 1) ≥ 0 := by grind
@@ -652,17 +655,20 @@ theorem generic_format_bpow (beta : Int) (fexp : Int → Int) [Valid_exp beta fe
         (beta : ℝ) ^ (e - fexp (e + 1)) := by
     simpa [zpow_neg, Int.sub_eq_add_neg] using
       (zpow_add₀ hbne e (-(fexp (e + 1)))).symm
-  simp only [hmul_pow]
+  rw [hmul_pow]
   -- β^e * β^(-fexp(e+1)) = β^(e - fexp(e+1))
   -- Ztrunc(β^(e - fexp(e+1))) = β^(e - fexp(e+1)) since it's a positive integer
   have hsm_int : (beta : ℝ) ^ (e - fexp (e + 1)) = ((beta : Int) ^ k : ℝ) := by
     rw [hk_eq, zpow_natCast, ← Int.cast_pow]
-  simp only [hsm_int]
+  rw [hsm_int]
   -- Ztrunc of an integer is itself
   have htrunc : Ztrunc ((beta : ℝ) ^ k) = (beta ^ k : Int) := by
     simpa [Int.cast_pow] using (Ztrunc_intCast (beta ^ k))
-  change (beta : ℝ) ^ e = ↑(Ztrunc ((beta : ℝ) ^ k)) * (beta : ℝ) ^ fexp (e + 1)
-  rw [htrunc, Int.cast_pow, ← hsm_int, zpow_sub₀ hbne]
+  simp [FloatSpec.Core.Defs.F2R, Id.run, pure, htrunc]
+  -- Goal: β^e = (beta^k : ℝ) * β^(fexp(e+1))
+  rw [← hsm_int]
+  -- β^e = β^(e - fexp(e+1)) * β^(fexp(e+1)) = β^e
+  rw [zpow_sub₀ hbne]
   simp [div_eq_mul_inv, inv_mul_cancel_right₀ (zpow_ne_zero _ hbne)]
 
 /--
@@ -682,7 +688,7 @@ theorem generic_format_bpow' (beta : Int) (fexp : Int → Int) [Valid_exp beta f
     · -- Large regime: fexp(e) < e implies fexp(e+1) ≤ e
       exact hpair.left hlt
     · -- Small regime: fexp(e) = e (since fexp(e) ≤ e and ¬(fexp(e) < e))
-      have heq : fexp e = e := le_antisymm hfe (not_lt.mp hlt)
+      have heq : fexp e = e := le_antisymm hfe (le_of_not_gt hlt)
       have hsmall : e ≤ fexp e := by grind
       have hbound := (hpair.right hsmall).left
       -- fexp(fexp(e) + 1) ≤ fexp(e), i.e., fexp(e+1) ≤ e
@@ -759,7 +765,7 @@ theorem canonical_abs (beta : Int) (fexp : Int → Int) (m e : Int) (h : canonic
     simp only [abs_of_nonneg hm]
     exact h
   · -- m < 0: |m| = -m
-    push_neg at hm
+    push Not at hm
     simp only [abs_of_neg hm]
     exact canonical_opp beta fexp m e h
 
@@ -895,14 +901,18 @@ theorem scaled_mantissa_F2R_canonical
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
   have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  -- Unfold definitions
   unfold scaled_mantissa cexp
   simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind]
+  -- canonical means f.Fexp = fexp(mag(F2R f))
   unfold canonical at hcan
-  have hcan' : fexp (mag beta (F2R f)) = f.Fexp := by simpa using hcan.symm
+  have hcan' : fexp (mag beta (F2R f)) = f.Fexp := by
+    simpa using hcan.symm
   rw [hcan']
+  -- Goal: F2R(f) * β^(-f.Fexp) = f.Fnum
   unfold FloatSpec.Core.Defs.F2R
+  -- (f.Fnum * β^f.Fexp) * β^(-f.Fexp) = f.Fnum * (β^f.Fexp * β^(-f.Fexp)) = f.Fnum * 1 = f.Fnum
   rw [mul_assoc, zpow_neg, mul_inv_cancel₀ (zpow_ne_zero _ hbne), mul_one]
-  change (↑f.Fnum : ℝ) = ↑f.Fnum
   rfl
 
 /-- Specification: Scaled mantissa of absolute value
@@ -915,14 +925,19 @@ theorem scaled_mantissa_abs (beta : Int) (fexp : Int → Int) (x : ℝ) :
     (pure (scaled_mantissa beta fexp (abs x)) : Id ℝ)
     ⦃⇓result => ⌜result = abs (scaled_mantissa beta fexp x)⌝⦄ := by
   intro hβ
+  -- mag(|x|) = mag(x) since mag uses |·| in its definition: ||x|| = |x|
+  -- |x| * β^(-e) = |x * β^(-e)| since β^(-e) > 0
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
   have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  -- Unfold definitions
   unfold scaled_mantissa cexp
   simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Bind.bind, reduceMagAbs]
-  have hpow_pos : 0 < (beta : ℝ) ^ (-fexp (mag beta x)) := zpow_pos hbposR _
+  change |x| * (beta : ℝ) ^ (-(fexp (mag beta x))) =
+    |x * (beta : ℝ) ^ (-(fexp (mag beta x)))|
+  -- Now goal: |x| * β^(-e) = |x * β^(-e)|
+  set e := fexp (mag beta x) with he
+  have hpow_pos : 0 < (beta : ℝ) ^ (-e) := zpow_pos hbposR _
   rw [abs_mul, abs_of_pos hpow_pos]
-  change |x| * (beta : ℝ) ^ (-fexp (mag beta x)) = |x| * (beta : ℝ) ^ (-fexp (mag beta x))
-  rfl
 -- Section: Generic format closure properties
 
 /-- Specification: Generic format opposite
@@ -1358,6 +1373,13 @@ private theorem abs_le_bpow_mag
       simpa [wp, PostCond.noThrow, Id.run, pure] using hmub (by trivial)
     exact le_of_lt hmub'
 
+private theorem abs_lt_bpow_mag
+    (beta : Int) (x : ℝ) (hβ : 1 < beta) (hx_ne : x ≠ 0) :
+    abs x < (beta : ℝ) ^ ((mag beta x)) := by
+  have hmub := FloatSpec.Core.Raux.mag_upper_bound beta x hβ hx_ne
+  simpa [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run, pure]
+    using hmub True.intro
+
 theorem scaled_mantissa_lt_bpow
     (beta : Int) (fexp : Int → Int) (x : ℝ)
     (hβ : 1 < beta) :
@@ -1388,26 +1410,15 @@ theorem scaled_mantissa_lt_bpow
     simpa [zpow_neg] using hpow_pos
   exact mul_le_mul_of_nonneg_right habs_bound (le_of_lt hpow_pos')
 
-/- Coq ({lit}`Generic_fmt.v`):
-Theorem {lit}`mag_generic_gt`:
-  {lit}`forall x, x <> 0%R -> generic_format x -> (cexp x < mag beta x)%Z.`
+/-- Coq (`Generic_fmt.v`): `mag_generic_gt`.
 
-Lean (spec): If {lit}`x ≠ 0` and {lit}`x` is in {name}`generic_format`, then
-the canonical exponent is strictly less than {lit}`mag beta x`.
--/
-/-- Revised (Lean) version: with our {name}``mag`` definition (upper bound is non‑strict),
-    and with {given -show}``beta : Int``, {given -show}``fexp : Int → Int``,
-    and {given -show}``x : ℝ``, generic numbers satisfy
-    {lean}``cexp beta fexp x ≤ mag beta x``.
-
-    This differs from the Coq statement (<) which relies on a strict upper
-    bound in the characterization of {name}``mag``. We document the change in notes.
--/
+If `x` is nonzero and generic, its canonical exponent is strictly below
+`mag beta x`. -/
 theorem mag_generic_gt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ (generic_format beta fexp x)⌝⦄
     (pure (cexp beta fexp x) : Id Int)
-    ⦃⇓e => ⌜e ≤ (mag beta x)⌝⦄ := by
+    ⦃⇓e => ⌜e < (mag beta x)⌝⦄ := by
   intro hpre
   simp [wp, PostCond.noThrow, pure] at hpre ⊢
   rcases hpre with ⟨hβ, hx_ne, hx_fmt⟩
@@ -1456,7 +1467,7 @@ theorem mag_generic_gt
       exact_mod_cast (Nat.succ_le_of_lt hnat_pos)
     -- Relate |(n : ℝ)| to (Int.natAbs n : ℝ)
     have h_abs_natAbs : (Int.natAbs n : ℝ) = |(n : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     simpa [hn, h_abs_natAbs] using hnat_ge1
   have h_le_abs : (beta : ℝ) ^ (fexp M) ≤ abs x := by
     -- |x| = |m| * β^(fexp M) with |m| ≥ 1 and β^(fexp M) > 0
@@ -1484,20 +1495,17 @@ theorem mag_generic_gt
         ≤ |(((Ztrunc (x * (beta : ℝ) ^ (-(fexp M)))) : Int) : ℝ)| * (beta : ℝ) ^ (fexp M) := by
       simpa [one_mul] using mul_le_mul_of_nonneg_right h_abs_m_ge1 (le_of_lt hpow_pos)
     simpa [hx_abs] using hstep
-  -- Upper bound: |x| ≤ β^M (by definition of mag)
-  have h_abs_le : abs x ≤ (beta : ℝ) ^ M := abs_le_bpow_mag beta x hβ
-  -- Chain inequalities: β^(fexp M) ≤ |x| ≤ β^M ⇒ fexp M ≤ M
-  have hpow_le : (beta : ℝ) ^ (fexp M) ≤ (beta : ℝ) ^ M := le_trans h_le_abs h_abs_le
-  -- Convert back to the exponents using monotonicity (bases > 1)
-  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
-  -- Use Raux helper lemma to relate powers and exponents
-  have : (fexp M) ≤ M := by
-    -- le_bpow: from (beta^e1) ≤ (beta^e2) under 1 < beta, deduce e1 ≤ e2
-    have hmono := FloatSpec.Core.Raux.le_bpow (beta := beta) (e1 := fexp M) (e2 := M)
-      hβ hpow_le
-    -- Run the Hoare triple on the pure values to extract the inequality
-    simpa [FloatSpec.Core.Raux.le_bpow_check, wp, PostCond.noThrow, Id.run, pure]
-      using hmono (by trivial)
+  -- Strict upper bound: |x| < β^M (by the defining property of `mag`).
+  have h_abs_lt : abs x < (beta : ℝ) ^ M := by
+    simpa [M] using abs_lt_bpow_mag beta x hβ hx_ne
+  -- Chain inequalities: β^(fexp M) ≤ |x| < β^M ⇒ fexp M < M.
+  have hpow_lt : (beta : ℝ) ^ (fexp M) < (beta : ℝ) ^ M :=
+    lt_of_le_of_lt h_le_abs h_abs_lt
+  have : (fexp M) < M := by
+    have hmono := FloatSpec.Core.Raux.lt_bpow (beta := beta) (e1 := fexp M) (e2 := M)
+      hβ hpow_lt
+    simpa [FloatSpec.Core.Raux.lt_bpow_check, wp, PostCond.noThrow, Id.run, pure]
+      using hmono True.intro
   -- This matches the simplified goal (unfolding the definition of mag on runs)
   simpa [M, FloatSpec.Core.Raux.mag]
 
@@ -1725,6 +1733,26 @@ instance valid_rnd_ceil : Valid_rnd rnd_ceil := by
     intro n
     simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil] using (Int.ceil_intCast (n := n))
 
+/-- Coq (`Generic_fmt.v`): truncation is a valid integer rounding mode. -/
+noncomputable instance valid_rnd_Ztrunc : Valid_rnd FloatSpec.Core.Raux.Ztrunc := by
+  refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
+  · intro x y hxy
+    have h := FloatSpec.Core.Raux.Ztrunc_le x y hxy
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+  · intro n
+    have h := FloatSpec.Core.Raux.Ztrunc_IZR n
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+
+/-- Coq (`Generic_fmt.v`): away-from-zero rounding is a valid integer rounding mode. -/
+noncomputable instance valid_rnd_AW : Valid_rnd FloatSpec.Core.Raux.Zaway := by
+  refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
+  · intro x y hxy
+    have h := FloatSpec.Core.Raux.Zaway_le x y hxy
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+  · intro n
+    have h := FloatSpec.Core.Raux.Zaway_IZR n
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+
 /-- Coq ({lit}`Generic_fmt.v`): Opposite rounding function {lean}`Zrnd_opp`. -/
 noncomputable def Zrnd_opp (rnd : ℝ → Int) (x : ℝ) : Int :=
   -(rnd (-x))
@@ -1911,6 +1939,54 @@ lemma Znearest_eq_if (choice : Int → Bool) (x : ℝ) :
   norm_num
   split_ifs <;> rfl
 
+/-- Strictly below the midpoint, `Znearest` selects the floor branch. -/
+theorem Znearest_eq_floor_of_lt_half (choice : Int → Bool) (x : ℝ)
+    (h : x - (((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ)) < (1 / 2 : ℝ)) :
+    Znearest choice x = FloatSpec.Core.Raux.Zfloor x := by
+  unfold Znearest
+  set f := FloatSpec.Core.Raux.Zfloor x with hf
+  set c := FloatSpec.Core.Raux.Zceil x with hc
+  have hcmp : FloatSpec.Core.Raux.Rcompare (x - (f : ℝ)) (1 / 2 : ℝ) = -1 := by
+    have hcmp2 : FloatSpec.Core.Raux.Rcompare (x - (f : ℝ)) (2⁻¹ : ℝ) = -1 := by
+      unfold FloatSpec.Core.Raux.Rcompare
+      have h' : x - (f : ℝ) < (1 / 2 : ℝ) := by simpa [f, hf] using h
+      have hhalf : (2⁻¹ : ℝ) = (1 / 2 : ℝ) := by norm_num
+      have hlt2 : x - (f : ℝ) < (2⁻¹ : ℝ) := by
+        rw [hhalf]
+        exact h'
+      simp [hlt2]
+    have hhalf : (2⁻¹ : ℝ) = (1 / 2 : ℝ) := by norm_num
+    rw [← hhalf]
+    exact hcmp2
+  simpa only [hcmp]
+
+/-- Strictly above the midpoint, `Znearest` selects the ceiling branch. -/
+theorem Znearest_eq_ceil_of_half_lt (choice : Int → Bool) (x : ℝ)
+    (h : (1 / 2 : ℝ) < x - (((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ))) :
+    Znearest choice x = FloatSpec.Core.Raux.Zceil x := by
+  unfold Znearest
+  set f := FloatSpec.Core.Raux.Zfloor x with hf
+  set c := FloatSpec.Core.Raux.Zceil x with hc
+  have hnot_lt : ¬ x - (f : ℝ) < (1 / 2 : ℝ) :=
+    not_lt.mpr (le_of_lt (by simpa [f, hf] using h))
+  have hnot_eq : ¬ x - (f : ℝ) = (1 / 2 : ℝ) :=
+    ne_of_gt (by simpa [f, hf] using h)
+  have hcmp : FloatSpec.Core.Raux.Rcompare (x - (f : ℝ)) (1 / 2 : ℝ) = 1 := by
+    have hcmp2 : FloatSpec.Core.Raux.Rcompare (x - (f : ℝ)) (2⁻¹ : ℝ) = 1 := by
+      unfold FloatSpec.Core.Raux.Rcompare
+      have hhalf : (2⁻¹ : ℝ) = (1 / 2 : ℝ) := by norm_num
+      have hnot_lt2 : ¬ x - (f : ℝ) < (2⁻¹ : ℝ) := by
+        rw [hhalf]
+        exact hnot_lt
+      have hnot_eq2 : ¬ x - (f : ℝ) = (2⁻¹ : ℝ) := by
+        rw [hhalf]
+        exact hnot_eq
+      simp [hnot_lt2, hnot_eq2]
+    have hhalf : (2⁻¹ : ℝ) = (1 / 2 : ℝ) := by norm_num
+    rw [← hhalf]
+    exact hcmp2
+  simpa only [hcmp]
+
 /- Helper: ⌈x⌉ = ⌊x⌋ + 1 when x is not an integer -/
 theorem ceil_eq_floor_add_one {x : ℝ} (hx : x ≠ (⌊x⌋ : ℝ)) : ⌈x⌉ = ⌊x⌋ + 1 := by
   rw [Int.ceil_eq_iff]
@@ -1925,16 +2001,11 @@ theorem ceil_eq_floor_add_one {x : ℝ} (hx : x ≠ (⌊x⌋ : ℝ)) : ⌈x⌉ =
     For any {given -show}``choice : Int → Bool`` and {given -show}``x : ℝ``,
     {lean}``Znearest choice x`` is either {lean}``FloatSpec.Core.Raux.Zfloor x`` or
     {lean}``FloatSpec.Core.Raux.Zceil x`` (depending on the comparison and the
-    tie-breaking choice). We state it using the
-    Hoare-triple style around the pure computation of {name}``Znearest``.
+    tie-breaking choice).
 -/
 theorem Znearest_DN_or_UP (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest choice x) : Id Int)
-    ⦃⇓z => ⌜z = (FloatSpec.Core.Raux.Zfloor x) ∨ z = (FloatSpec.Core.Raux.Zceil x)⌝⦄ := by
-  intro _
-  -- Znearest compares x - floor(x) with 1/2 and returns either floor or ceil
-  simp only [wp, PostCond.noThrow, PredTrans.pure, pure]
+    Znearest choice x = FloatSpec.Core.Raux.Zfloor x ∨
+      Znearest choice x = FloatSpec.Core.Raux.Zceil x := by
   unfold Znearest
   set f := (FloatSpec.Core.Raux.Zfloor x) with hf
   set c := (FloatSpec.Core.Raux.Zceil x) with hc
@@ -1975,90 +2046,207 @@ theorem Znearest_DN_or_UP (choice : Int → Bool) (x : ℝ) :
           right
           simp [hcmp]
 
-/-- Check pair for Znearest_ge_floor: returns (⌊x⌋, Znearest x) -/
-noncomputable def Znearest_ge_floor_check (choice : Int → Bool) (x : ℝ) : (Int × Int) :=
-  let f := FloatSpec.Core.Raux.Zfloor x
-  (f, Znearest choice x)
-
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_ge_floor`
 
     Always floor x ≤ Znearest x.
 -/
 theorem Znearest_ge_floor (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest_ge_floor_check choice x) : Id (Int × Int))
-    ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro _
-  -- ⌊x⌋ ≤ Znearest x since Znearest returns either ⌊x⌋ or ⌈x⌉, and ⌊x⌋ ≤ ⌈x⌉
-  simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Znearest_ge_floor_check,
-             Bind.bind]
-  have hz := (Znearest_DN_or_UP choice x) True.intro
-  simp [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure] at hz
+    FloatSpec.Core.Raux.Zfloor x ≤ Znearest choice x := by
   have hz :
       Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
-        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := hz
+        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) :=
+    Znearest_DN_or_UP choice x
   rcases hz with hfloor | hceil
-  · simp only [hfloor] at *
-    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zfloor x
-    exact le_refl _
+  · simpa [hfloor]
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
-    simp only [hceil] at *
-    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zceil x
-    exact hle
-
-/-- Check pair for Znearest_le_ceil: returns (Znearest x, ⌈x⌉). -/
-noncomputable def Znearest_le_ceil_check (choice : Int → Bool) (x : ℝ) : (Int × Int) :=
-  let c := FloatSpec.Core.Raux.Zceil x
-  (Znearest choice x, c)
+    simpa [hceil] using hle
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_le_ceil`
 
     Always Znearest x ≤ ceil x.
 -/
 theorem Znearest_le_ceil (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest_le_ceil_check choice x) : Id (Int × Int))
-    ⦃⇓p => ⌜p.1 ≤ p.2⌝⦄ := by
-  intro _
-  -- Znearest x ≤ ⌈x⌉ since Znearest returns either ⌊x⌋ or ⌈x⌉, and ⌊x⌋ ≤ ⌈x⌉
-  simp only [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure, Znearest_le_ceil_check,
-             Bind.bind]
-  have hz := (Znearest_DN_or_UP choice x) True.intro
-  simp [wp, PostCond.noThrow, PredTrans.pure, Id.run, pure] at hz
+    Znearest choice x ≤ FloatSpec.Core.Raux.Zceil x := by
   have hz :
       Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
-        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := hz
+        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) :=
+    Znearest_DN_or_UP choice x
   rcases hz with hfloor | hceil
   · have hle : (FloatSpec.Core.Raux.Zfloor x) ≤ (FloatSpec.Core.Raux.Zceil x) := by
       simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using (Int.floor_le_ceil x)
-    simp only [hfloor] at *
-    change FloatSpec.Core.Raux.Zfloor x ≤ FloatSpec.Core.Raux.Zceil x
-    exact hle
-  · simp only [hceil] at *
-    change FloatSpec.Core.Raux.Zceil x ≤ FloatSpec.Core.Raux.Zceil x
-    exact le_refl _
+    simpa [hfloor] using hle
+  · simpa [hceil]
 
-/- Additional Znearest lemmas from Coq (placeholders, to be filled iteratively):
-   Znearest_le_ceil, Znearest_N_strict, Znearest_half, Znearest_imp, Znearest_opp.
+/-- Coq `Generic_fmt.v`: instance `valid_rnd_N`.
+
+Rounding to nearest with an arbitrary tie-breaking choice is a valid integer
+rounding mode. -/
+noncomputable instance valid_rnd_N (choice : Int → Bool) :
+    Valid_rnd (Znearest choice) := by
+  refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
+  · intro x y hxy
+    by_cases hceilx_le_y : ((FloatSpec.Core.Raux.Zceil x : Int) : ℝ) ≤ y
+    · have hx_to_ceil : Znearest choice x ≤ FloatSpec.Core.Raux.Zceil x := by
+        exact Znearest_le_ceil choice x
+      have hceil_floor_y : FloatSpec.Core.Raux.Zceil x ≤ FloatSpec.Core.Raux.Zfloor y := by
+        have htrip := FloatSpec.Core.Raux.Zfloor_lub (x := y)
+          (m := FloatSpec.Core.Raux.Zceil x) hceilx_le_y
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hy_from_floor : FloatSpec.Core.Raux.Zfloor y ≤ Znearest choice y := by
+        exact Znearest_ge_floor choice y
+      exact le_trans hx_to_ceil (le_trans hceil_floor_y hy_from_floor)
+    · have hy_lt_ceilx : y < (FloatSpec.Core.Raux.Zceil x : ℝ) := lt_of_not_ge hceilx_le_y
+      have hfloor_y_eq_x : FloatSpec.Core.Raux.Zfloor y = FloatSpec.Core.Raux.Zfloor x := by
+        have hlow : ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ) ≤ y :=
+          le_trans (by simpa [FloatSpec.Core.Raux.Zfloor] using Int.floor_le x) hxy
+        have hceilx_le_floorx1 :
+            (FloatSpec.Core.Raux.Zceil x : Int) ≤ FloatSpec.Core.Raux.Zfloor x + 1 := by
+          have hx_floor1 : x ≤ (((FloatSpec.Core.Raux.Zfloor x + 1 : Int) : ℝ)) :=
+            le_of_lt (by
+              simpa [FloatSpec.Core.Raux.Zfloor, Int.cast_add, Int.cast_one]
+                using Int.lt_floor_add_one x)
+          have htrip := FloatSpec.Core.Raux.Zceil_glb (x := x)
+            (m := FloatSpec.Core.Raux.Zfloor x + 1) hx_floor1
+          simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+        have hhigh : y < ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ) + 1 := by
+          have hceilx_le_real :
+              ((FloatSpec.Core.Raux.Zceil x : Int) : ℝ)
+                ≤ ((FloatSpec.Core.Raux.Zfloor x + 1 : Int) : ℝ) := by
+            exact_mod_cast hceilx_le_floorx1
+          exact lt_of_lt_of_le hy_lt_ceilx (by
+            simpa [Int.cast_add, Int.cast_one] using hceilx_le_real)
+        have htrip := FloatSpec.Core.Raux.Zfloor_imp (x := y)
+          (m := FloatSpec.Core.Raux.Zfloor x) ⟨hlow, hhigh⟩
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hfloor_le_near_y : FloatSpec.Core.Raux.Zfloor y ≤ Znearest choice y := by
+        exact Znearest_ge_floor choice y
+      have hceilx_le_ceily : FloatSpec.Core.Raux.Zceil x ≤ FloatSpec.Core.Raux.Zceil y := by
+        have htrip := FloatSpec.Core.Raux.Zceil_le (x := x) (y := y) hxy
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+      by_cases hx_lt : x - ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ) < (1 / 2 : ℝ)
+      · have hzx : Znearest choice x = FloatSpec.Core.Raux.Zfloor x := by
+          have hx_lt' : Int.fract x < (2⁻¹ : ℝ) := by
+            simpa [FloatSpec.Core.Raux.Zfloor] using hx_lt
+          rw [Znearest_eq_if]
+          simp [hx_lt', FloatSpec.Core.Raux.Zfloor]
+        rw [hzx]
+        simpa [hfloor_y_eq_x] using hfloor_le_near_y
+      ·
+        by_cases hx_eq : x - ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ) = (1 / 2 : ℝ)
+        · have hzx :
+              Znearest choice x =
+                (if choice (FloatSpec.Core.Raux.Zfloor x)
+                  then FloatSpec.Core.Raux.Zceil x
+                  else FloatSpec.Core.Raux.Zfloor x) := by
+            have hx_lt' : ¬ Int.fract x < (2⁻¹ : ℝ) := by
+              simpa [FloatSpec.Core.Raux.Zfloor] using hx_lt
+            have hx_eq' : Int.fract x = (2⁻¹ : ℝ) := by
+              simpa [FloatSpec.Core.Raux.Zfloor] using hx_eq
+            rw [Znearest_eq_if]
+            simp [hx_lt', hx_eq', FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil]
+          rw [hzx]
+          by_cases hy_lt : y - ((FloatSpec.Core.Raux.Zfloor y : Int) : ℝ) < (1 / 2 : ℝ)
+          · have hfrac_le :
+                x - ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ)
+                  ≤ y - ((FloatSpec.Core.Raux.Zfloor y : Int) : ℝ) := by
+              rw [hfloor_y_eq_x]
+              linarith
+            exact False.elim (by linarith)
+          ·
+            by_cases hy_eq :
+                y - ((FloatSpec.Core.Raux.Zfloor y : Int) : ℝ) = (1 / 2 : ℝ)
+            · have hzy :
+                  Znearest choice y =
+                    (if choice (FloatSpec.Core.Raux.Zfloor y)
+                      then FloatSpec.Core.Raux.Zceil y
+                      else FloatSpec.Core.Raux.Zfloor y) := by
+                have hy_lt' : ¬ Int.fract y < (2⁻¹ : ℝ) := by
+                  simpa [FloatSpec.Core.Raux.Zfloor] using hy_lt
+                have hy_eq' : Int.fract y = (2⁻¹ : ℝ) := by
+                  simpa [FloatSpec.Core.Raux.Zfloor] using hy_eq
+                rw [Znearest_eq_if]
+                simp [hy_lt', hy_eq', FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil]
+              rw [hzy]
+              have hxy_eq : x = y := by
+                rw [hfloor_y_eq_x] at hy_eq
+                linarith
+              simp [hxy_eq]
+            · have hzy : Znearest choice y = FloatSpec.Core.Raux.Zceil y := by
+                have hy_lt' : ¬ Int.fract y < (2⁻¹ : ℝ) := by
+                  simpa [FloatSpec.Core.Raux.Zfloor] using hy_lt
+                have hy_eq' : ¬ Int.fract y = (2⁻¹ : ℝ) := by
+                  simpa [FloatSpec.Core.Raux.Zfloor] using hy_eq
+                rw [Znearest_eq_if]
+                simp [hy_lt', hy_eq', FloatSpec.Core.Raux.Zceil]
+              rw [hzy]
+              have hx_near_le_ceilx :
+                  (if choice (FloatSpec.Core.Raux.Zfloor x)
+                    then FloatSpec.Core.Raux.Zceil x
+                    else FloatSpec.Core.Raux.Zfloor x)
+                    ≤ FloatSpec.Core.Raux.Zceil x := by
+                by_cases hchoice : choice (FloatSpec.Core.Raux.Zfloor x)
+                · simp [hchoice]
+                · simp [hchoice]
+                  simpa [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil] using
+                    Int.floor_le_ceil x
+              exact le_trans hx_near_le_ceilx hceilx_le_ceily
+        · have hzx : Znearest choice x = FloatSpec.Core.Raux.Zceil x := by
+            have hx_lt' : ¬ Int.fract x < (2⁻¹ : ℝ) := by
+              simpa [FloatSpec.Core.Raux.Zfloor] using hx_lt
+            have hx_eq' : ¬ Int.fract x = (2⁻¹ : ℝ) := by
+              simpa [FloatSpec.Core.Raux.Zfloor] using hx_eq
+            rw [Znearest_eq_if]
+            simp [hx_lt', hx_eq', FloatSpec.Core.Raux.Zceil]
+          rw [hzx]
+          have hy_not_lt :
+              ¬ y - ((FloatSpec.Core.Raux.Zfloor y : Int) : ℝ) < (1 / 2 : ℝ) := by
+            intro hy_lt
+            have hfrac_le :
+                x - ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ)
+                  ≤ y - ((FloatSpec.Core.Raux.Zfloor y : Int) : ℝ) := by
+              rw [hfloor_y_eq_x]
+              linarith
+            have hx_ge :
+                (1 / 2 : ℝ) ≤ x - ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ) :=
+              le_of_not_gt hx_lt
+            linarith
+          by_cases hy_eq :
+              y - ((FloatSpec.Core.Raux.Zfloor y : Int) : ℝ) = (1 / 2 : ℝ)
+          ·
+            rw [hfloor_y_eq_x] at hy_eq
+            have hx_gt :
+                (1 / 2 : ℝ) < x - ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ) :=
+              lt_of_le_of_ne (le_of_not_gt hx_lt) (Ne.symm hx_eq)
+            have hxy_eq : x = y := by linarith
+            exfalso
+            exact ne_of_gt hx_gt (by simpa [hxy_eq] using hy_eq)
+          · have hzy : Znearest choice y = FloatSpec.Core.Raux.Zceil y := by
+              have hy_not_lt' : ¬ Int.fract y < (2⁻¹ : ℝ) := by
+                simpa [FloatSpec.Core.Raux.Zfloor] using hy_not_lt
+              have hy_eq' : ¬ Int.fract y = (2⁻¹ : ℝ) := by
+                simpa [FloatSpec.Core.Raux.Zfloor] using hy_eq
+              rw [Znearest_eq_if]
+              simp [hy_not_lt', hy_eq', FloatSpec.Core.Raux.Zceil]
+            rw [hzy]
+            exact hceilx_le_ceily
+  · intro n
+    unfold Znearest
+    simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
+      FloatSpec.Core.Raux.Rcompare]
+
+/- Additional Znearest lemmas from Coq, filled iteratively:
+   Znearest_opp.
    We add them one-by-one following the pipeline instructions. -/
-
-/-- Check value for {lit}`Znearest_N_strict`: {lean}`|x - (((Znearest choice x) : Int) : ℝ)|`. -/
-noncomputable def Znearest_N_strict_check (choice : Int → Bool) (x : ℝ) : ℝ :=
-  (|x - (((Znearest choice x) : Int) : ℝ)|)
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_N_strict`
 
     If (x - floor x) ≠ 1/2 then |x - IZR (Znearest x)| < 1/2.
 -/
 theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) ≠ (1/2)⌝⦄
-    (pure (Znearest_N_strict_check choice x) : Id ℝ)
-    ⦃⇓r => ⌜r < (1/2)⌝⦄ := by
-  intro _
-  unfold Znearest_N_strict_check
-  -- Reduce the Hoare triple on Id to a pure goal
-  simp [wp, PostCond.noThrow, Id.run, pure]
+    x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) ≠ (1/2) →
+      |x - (((Znearest choice x) : Int) : ℝ)| < (1/2) := by
+  intro hnot_mid
   -- Notations for floor/ceil
   set f : Int := (FloatSpec.Core.Raux.Zfloor x) with hf
   set c : Int := (FloatSpec.Core.Raux.Zceil x) with hc
@@ -2073,8 +2261,7 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
   -- Exclude the tie: (x - f) ≠ 1/2, so split on < or >
   have hx_ne : x - (f : ℝ) ≠ (1/2) := by
     -- Goal precondition is exactly this after unfolding casts
-    simpa [hf] using
-      (show x - (((FloatSpec.Core.Raux.Zfloor x) : Int) : ℝ) ≠ (1/2) from ‹_›)
+    simpa [hf] using hnot_mid
   -- Bridge lemma for the half constant: for ℝ, 2⁻¹ = 1/2
   have hhalf_id : (2⁻¹ : ℝ) = (1/2) := by
     -- Use zpow_neg_one to turn 2⁻¹ into (2)⁻¹, then 1/2
@@ -2111,7 +2298,7 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
       -- From ¬(x - f < 1/2), get (1/2) ≤ (x - f); combined with ≠ yields strict
       have hxge : (2⁻¹) ≤ x - (f : ℝ) := by
         -- rewrite 2⁻¹ as (1/2) to use hlt
-        simpa [hhalf_id.symm] using (not_lt.mp hlt)
+        simpa [hhalf_id.symm] using (le_of_not_gt hlt)
       -- turn ≠ into ≠ after rewriting 2⁻¹ ↔ 1/2
       have hx_ne' : x - (f : ℝ) ≠ (2⁻¹) := by simpa [hhalf_id.symm] using hx_ne
       exact lt_of_le_of_ne hxge (Ne.symm hx_ne')
@@ -2176,20 +2363,10 @@ theorem Znearest_N_strict (choice : Int → Bool) (x : ℝ) :
     have : |x - (c : ℝ)| < (2⁻¹) := by simpa [habs] using this
     simpa [habs_near]
 
-/-- Check value for {lit}`Znearest_half`: {lean}`|x - ((Znearest choice x : Int) : ℝ)|`. -/
-noncomputable def Znearest_half_check (choice : Int → Bool) (x : ℝ) : ℝ :=
-  Znearest_N_strict_check choice x
-
 /-- Coq {lit}`Generic_fmt.v`: {lit}`Znearest_half`.
     Always {lean}`|x - ((Znearest choice x : Int) : ℝ)| ≤ (1/2)`. -/
-theorem Znearest_half_theorem (choice : Int → Bool) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (pure (Znearest_half_check choice x) : Id ℝ)
-    ⦃⇓r => ⌜r ≤ (1/2)⌝⦄ := by
-  intro _
-  unfold Znearest_half_check
-  -- Reduce to the absolute-distance bound for Znearest
-  simp [Znearest_N_strict_check, wp, PostCond.noThrow, Id.run, pure]
+theorem Znearest_half (choice : Int → Bool) (x : ℝ) :
+    |x - (((Znearest choice x) : Int) : ℝ)| ≤ (1/2) := by
   classical
   -- Notations for floor/ceil as integers
   set f : Int := (FloatSpec.Core.Raux.Zfloor x) with hf
@@ -2258,54 +2435,37 @@ theorem Znearest_half_theorem (choice : Int → Bool) (x : ℝ) :
     -- Znearest is either floor or ceil; finish by cases
     have hdisj :
         Znearest choice x = (FloatSpec.Core.Raux.Zfloor x) ∨
-        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) := by
-      have h := (Znearest_DN_or_UP choice x) True.intro
-      simpa [wp, PostCond.noThrow, Id.run, pure] using h
+        Znearest choice x = (FloatSpec.Core.Raux.Zceil x) :=
+      Znearest_DN_or_UP choice x
     rcases hdisj with hZ | hZ
     · -- nearest = floor
       simpa [hZ, hf] using (le_of_eq h_to_floor)
     · -- nearest = ceil
       simpa [hZ, hc, abs_sub_comm] using h_to_ceil_le
   · -- Off the midpoint, invoke the strict bound and relax to ≤
-    have hstrict := (Znearest_N_strict choice x) (by
+    have hstrict : |x - (((Znearest choice x) : Int) : ℝ)| < (1/2) :=
+      Znearest_N_strict choice x (by
       -- Precondition for the strict lemma: x - ⌊x⌋ ≠ 1/2
       simpa [hf] using hmid)
-    have hlt : |x - (((Znearest choice x) : Int) : ℝ)| < (1/2) := by
-      simpa [Znearest_N_strict_check, wp, PostCond.noThrow, Id.run, pure]
-        using hstrict
-    -- Convert to the 2⁻¹ form if needed and relax to ≤
-    have hlt' : |x - (((Znearest choice x) : Int) : ℝ)| < (2⁻¹ : ℝ) := by
-      simpa [zpow_neg_one, one_div] using hlt
-    exact le_of_lt hlt'
-
-
-/-- {lit}`Check pair for Znearest_imp: returns (Znearest choice x, n)` -/
-noncomputable def Znearest_imp_check (choice : Int → Bool) (x : ℝ) (n : Int) : (Int × Int) :=
-  (Znearest choice x, n)
+    exact le_of_lt hstrict
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`Znearest_imp`
 
     If |x - IZR n| < 1/2 then Znearest x = n.
 -/
 theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
-    ⦃⌜|x - ((n : Int) : ℝ)| < (1/2)⌝⦄
-    (pure (Znearest_imp_check choice x n) : Id (Int × Int))
-    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
-  intro _
-  unfold Znearest_imp_check
-  -- Reduce to a pure equality on Id
-  simp [wp, PostCond.noThrow, Id.run, pure]
+    |x - ((n : Int) : ℝ)| < (1/2) →
+      Znearest choice x = n := by
+  intro hdist
   classical
-  -- From Znearest_half_theorem: |x - Znearest x| ≤ 1/2
+  -- From Znearest_half: |x - Znearest x| ≤ 1/2
   have hZ_le : |x - (((Znearest choice x) : Int) : ℝ)| ≤ (1/2) := by
-    have h := (Znearest_half_theorem choice x) True.intro
-    simpa [Znearest_half_check, Znearest_N_strict_check, wp, PostCond.noThrow, Id.run, pure] using h
+    exact Znearest_half choice x
   -- Triangle inequality to compare the two integers Znearest and n
   have hsum_lt : |x - ((n : Int) : ℝ)| + |x - (((Znearest choice x) : Int) : ℝ)| < 1 := by
     -- Combine as: (|x-n| < 1/2) and (|x-Z| ≤ 1/2) ⇒ sum < 1
     have h1 : |x - ((n : Int) : ℝ)| + |x - (((Znearest choice x) : Int) : ℝ)|
                 < (1/2) + |x - (((Znearest choice x) : Int) : ℝ)| := by
-      have hlt := ‹|x - ((n : Int) : ℝ)| < (1/2)›
       linarith
     have h2 : (1/2) + |x - (((Znearest choice x) : Int) : ℝ)|
                 ≤ (1/2) + (1/2) := by linarith
@@ -2346,7 +2506,7 @@ theorem Znearest_imp (choice : Int → Bool) (x : ℝ) (n : Int) :
     -- Relate |z| to natAbs z for integers z
     have h_eq_abs : ((Int.natAbs ((Znearest choice x) - n)) : ℝ)
                       = |(((Znearest choice x) - n : Int) : ℝ)| := by
-      simpa [Int.cast_natAbs, Int.cast_abs]
+      simpa [Nat.cast_natAbs, Int.cast_abs]
     have : (1 : ℝ) ≤ |(((Znearest choice x) - n : Int) : ℝ)| := by simpa [h_eq_abs] using hge1
     -- Relate to the bound on |(Z : ℝ) - (n : ℝ)| using casts
     have hcast : |(((Znearest choice x) - n : Int) : ℝ)|
@@ -2421,7 +2581,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
         by_cases hc : choice (-1 + -f) = true
         · simp only [hc, Bool.not_true, h_half_irrefl, Bool.false_eq_true, if_true, if_false,
             neg_neg]
-        · push_neg at hc
+        · push Not at hc
           simp only [hc, Bool.not_false, h_half_irrefl, Bool.false_eq_true, if_false, if_true,
             neg_add_rev]
       · -- Case: d > 1/2 (since ¬(d < 1/2) and d ≠ 1/2)
@@ -2444,6 +2604,44 @@ noncomputable def roundR (beta : Int) (fexp : Int → Int)
   let sm := (scaled_mantissa beta fexp x)
   let e  := (cexp beta fexp x)
   (((rnd sm : Int) : ℝ) * (beta : ℝ) ^ e)
+
+/-- Coq (`Generic_fmt.v`): `Definition round`.
+
+This is the public Flocq-name wrapper around the concrete Lean rounding
+operator used throughout the port. -/
+noncomputable def round (beta : Int) (fexp : Int → Int)
+    (rnd : ℝ → Int) (x : ℝ) : ℝ :=
+  roundR beta fexp rnd x
+
+/-- Interpretation of translated rounding-mode arguments as the integer
+rounding function used on the scaled mantissa.
+
+Flocq's `round` is parameterized by `rnd : R -> Z`. Some early translated
+FloatSpec files instead passed a relation-shaped rounding argument
+`ℝ → ℝ → Prop`; that legacy case is interpreted as truncation so those files
+continue to compile while they are migrated to concrete integer roundings. -/
+class RoundModeLike (Mode : Type u) where
+  toRnd : Mode → ℝ → Int
+
+instance roundModeLikeInt : RoundModeLike (ℝ → Int) where
+  toRnd rnd := rnd
+
+noncomputable instance roundModeLikeRelation : RoundModeLike (ℝ → ℝ → Prop) where
+  toRnd _ := FloatSpec.Core.Raux.Ztrunc
+
+@[simp] theorem RoundModeLike.toRnd_int (rnd : ℝ → Int) :
+    RoundModeLike.toRnd rnd = rnd := rfl
+
+@[simp] theorem RoundModeLike.toRnd_relation (rnd : ℝ → ℝ → Prop) :
+    RoundModeLike.toRnd rnd = FloatSpec.Core.Raux.Ztrunc := rfl
+
+@[simp] theorem RoundModeLike.toRnd_relation_apply (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    RoundModeLike.toRnd rnd x = FloatSpec.Core.Raux.Ztrunc x := rfl
+
+/-- Relation-shaped truncation mode for legacy statements that still use the
+old translated `ℝ → ℝ → Prop` rounding argument shape. -/
+noncomputable def Ztrunc_rel (x y : ℝ) : Prop :=
+  y = (((FloatSpec.Core.Raux.Ztrunc x) : Int) : ℝ)
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`round_N_middle`
 
@@ -2499,10 +2697,8 @@ theorem round_N_middle
     · -- Integer mantissa: floor = ceil and both branches agree
       have hcf : c = f := by
         simp [c, hsm_int, FloatSpec.Core.Raux.Zceil, Id.run, pure, Int.ceil_intCast]
-      have hz := (Znearest_DN_or_UP choice sm) True.intro
-      simp [wp, PostCond.noThrow, PredTrans.pure, pure] at hz
       have hz' : Znearest choice sm = f ∨ Znearest choice sm = c := by
-        simpa [f, c] using hz
+        simpa [f, c] using Znearest_DN_or_UP choice sm
       have hzn : Znearest choice sm = f := by
         rcases hz' with h | h
         · exact h
@@ -2527,6 +2723,162 @@ theorem round_N_middle
       · simp [hzn, hchoice]
       · simp [hzn, hchoice]
   simpa [roundR, sm, e] using hgoal
+
+/-- If the concrete upper rounded value is strictly closer than the lower one,
+`roundR` with `Znearest` selects the upper branch. -/
+theorem round_N_eq_UP
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (choice : Int → Bool) (x : ℝ) (hβ : 1 < beta)
+    (hclose :
+      |roundR beta fexp rnd_ceil x - x| <
+        |roundR beta fexp rnd_floor x - x|) :
+    roundR beta fexp (Znearest choice) x = roundR beta fexp rnd_ceil x := by
+  classical
+  set sm : ℝ := scaled_mantissa beta fexp x with hsm
+  set e : Int := cexp beta fexp x with he
+  set s : ℝ := (beta : ℝ) ^ e with hs
+  set f : Int := FloatSpec.Core.Raux.Zfloor sm with hf
+  set c : Int := FloatSpec.Core.Raux.Zceil sm with hc
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hspos : 0 < s := by simpa [s, hs] using zpow_pos hbposR e
+  have hsnonneg : 0 ≤ s := le_of_lt hspos
+  have hx_scaled : sm * s = x := by
+    have htrip := scaled_mantissa_mult_bpow (beta := beta) (fexp := fexp) (x := x)
+    simpa [wp, PostCond.noThrow, Id.run, pure, sm, hsm, e, he, s, hs] using htrip hβ
+  have hceil_eval :
+      roundR beta fexp rnd_ceil x = (c : ℝ) * s := by
+    simp [roundR, rnd_ceil, sm, hsm, e, he, s, hs, c, hc]
+  have hfloor_eval :
+      roundR beta fexp rnd_floor x = (f : ℝ) * s := by
+    simp [roundR, rnd_floor, sm, hsm, e, he, s, hs, f, hf]
+  have hscaled :
+      |((c : ℝ) * s - sm * s)| < |((f : ℝ) * s - sm * s)| := by
+    simpa [hceil_eval, hfloor_eval, hx_scaled] using hclose
+  have hceil_abs :
+      |((c : ℝ) * s - sm * s)| = |(c : ℝ) - sm| * s := by
+    calc
+      |((c : ℝ) * s - sm * s)| = |((c : ℝ) - sm) * s| := by ring_nf
+      _ = |(c : ℝ) - sm| * s := by simp [abs_mul, abs_of_nonneg hsnonneg]
+  have hfloor_abs :
+      |((f : ℝ) * s - sm * s)| = |(f : ℝ) - sm| * s := by
+    calc
+      |((f : ℝ) * s - sm * s)| = |((f : ℝ) - sm) * s| := by ring_nf
+      _ = |(f : ℝ) - sm| * s := by simp [abs_mul, abs_of_nonneg hsnonneg]
+  have habs_lt : |(c : ℝ) - sm| < |(f : ℝ) - sm| := by
+    exact lt_of_mul_lt_mul_right (by simpa [hceil_abs, hfloor_abs] using hscaled) (le_of_lt hspos)
+  have hfloor_le : (f : ℝ) ≤ sm := by
+    simpa [f, hf, FloatSpec.Core.Raux.Zfloor] using Int.floor_le sm
+  have hceil_ge : sm ≤ (c : ℝ) := by
+    simpa [c, hc, FloatSpec.Core.Raux.Zceil] using Int.le_ceil sm
+  have hdist : (c : ℝ) - sm < sm - (f : ℝ) := by
+    have hc_abs : |(c : ℝ) - sm| = (c : ℝ) - sm :=
+      abs_of_nonneg (sub_nonneg.mpr hceil_ge)
+    have hf_abs : |(f : ℝ) - sm| = sm - (f : ℝ) := by
+      simpa [abs_sub_comm] using abs_of_nonneg (sub_nonneg.mpr hfloor_le)
+    simpa [hc_abs, hf_abs] using habs_lt
+  have hhalf : (1 / 2 : ℝ) < sm - (f : ℝ) := by
+    have hnot_int : sm ≠ (f : ℝ) := by
+      intro hsmf
+      have hc_eq : c = f := by
+        have hc_raw : FloatSpec.Core.Raux.Zceil sm = f := by
+          simpa [FloatSpec.Core.Raux.Zceil, hsmf] using
+            (Int.ceil_intCast (n := f))
+        simpa [c, hc] using hc_raw
+      rw [hsmf, hc_eq] at hdist
+      linarith
+    have hc_eq_f1 : c = f + 1 := by
+      have hc_raw :
+          FloatSpec.Core.Raux.Zceil sm = FloatSpec.Core.Raux.Zfloor sm + 1 := by
+        simpa [FloatSpec.Core.Raux.Zceil, FloatSpec.Core.Raux.Zfloor] using
+          ceil_eq_floor_add_one (x := sm) hnot_int
+      simpa [c, hc, f, hf] using hc_raw
+    have hlt : ((f : ℝ) + 1) - sm < sm - (f : ℝ) := by
+      simpa [hc_eq_f1, Int.cast_add, Int.cast_one] using hdist
+    linarith
+  have hz : Znearest choice sm = c := by
+    simpa [f, hf, c, hc] using Znearest_eq_ceil_of_half_lt choice sm hhalf
+  calc
+    roundR beta fexp (Znearest choice) x
+        = ((Znearest choice sm : Int) : ℝ) * s := by
+          simp [roundR, sm, hsm, e, he, s, hs]
+    _ = (c : ℝ) * s := by rw [hz]
+    _ = roundR beta fexp rnd_ceil x := hceil_eval.symm
+
+/-- If the concrete lower rounded value is strictly closer than the upper one,
+`roundR` with `Znearest` selects the lower branch. -/
+theorem round_N_eq_DN
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (choice : Int → Bool) (x : ℝ) (hβ : 1 < beta)
+    (hclose :
+      |roundR beta fexp rnd_floor x - x| <
+        |roundR beta fexp rnd_ceil x - x|) :
+    roundR beta fexp (Znearest choice) x = roundR beta fexp rnd_floor x := by
+  classical
+  set sm : ℝ := scaled_mantissa beta fexp x with hsm
+  set e : Int := cexp beta fexp x with he
+  set s : ℝ := (beta : ℝ) ^ e with hs
+  set f : Int := FloatSpec.Core.Raux.Zfloor sm with hf
+  set c : Int := FloatSpec.Core.Raux.Zceil sm with hc
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hspos : 0 < s := by simpa [s, hs] using zpow_pos hbposR e
+  have hsnonneg : 0 ≤ s := le_of_lt hspos
+  have hx_scaled : sm * s = x := by
+    have htrip := scaled_mantissa_mult_bpow (beta := beta) (fexp := fexp) (x := x)
+    simpa [wp, PostCond.noThrow, Id.run, pure, sm, hsm, e, he, s, hs] using htrip hβ
+  have hceil_eval :
+      roundR beta fexp rnd_ceil x = (c : ℝ) * s := by
+    simp [roundR, rnd_ceil, sm, hsm, e, he, s, hs, c, hc]
+  have hfloor_eval :
+      roundR beta fexp rnd_floor x = (f : ℝ) * s := by
+    simp [roundR, rnd_floor, sm, hsm, e, he, s, hs, f, hf]
+  have hscaled :
+      |((f : ℝ) * s - sm * s)| < |((c : ℝ) * s - sm * s)| := by
+    simpa [hceil_eval, hfloor_eval, hx_scaled] using hclose
+  have hfloor_abs :
+      |((f : ℝ) * s - sm * s)| = |(f : ℝ) - sm| * s := by
+    calc
+      |((f : ℝ) * s - sm * s)| = |((f : ℝ) - sm) * s| := by ring_nf
+      _ = |(f : ℝ) - sm| * s := by simp [abs_mul, abs_of_nonneg hsnonneg]
+  have hceil_abs :
+      |((c : ℝ) * s - sm * s)| = |(c : ℝ) - sm| * s := by
+    calc
+      |((c : ℝ) * s - sm * s)| = |((c : ℝ) - sm) * s| := by ring_nf
+      _ = |(c : ℝ) - sm| * s := by simp [abs_mul, abs_of_nonneg hsnonneg]
+  have habs_lt : |(f : ℝ) - sm| < |(c : ℝ) - sm| := by
+    exact lt_of_mul_lt_mul_right (by simpa [hfloor_abs, hceil_abs] using hscaled) (le_of_lt hspos)
+  have hfloor_le : (f : ℝ) ≤ sm := by
+    simpa [f, hf, FloatSpec.Core.Raux.Zfloor] using Int.floor_le sm
+  have hceil_ge : sm ≤ (c : ℝ) := by
+    simpa [c, hc, FloatSpec.Core.Raux.Zceil] using Int.le_ceil sm
+  have hdist : sm - (f : ℝ) < (c : ℝ) - sm := by
+    have hf_abs : |(f : ℝ) - sm| = sm - (f : ℝ) := by
+      simpa [abs_sub_comm] using abs_of_nonneg (sub_nonneg.mpr hfloor_le)
+    have hc_abs : |(c : ℝ) - sm| = (c : ℝ) - sm :=
+      abs_of_nonneg (sub_nonneg.mpr hceil_ge)
+    simpa [hf_abs, hc_abs] using habs_lt
+  have hceil_le_f1 : (c : ℝ) ≤ (f : ℝ) + 1 := by
+    have hlt : sm < (f : ℝ) + 1 := by
+      simpa [f, hf, FloatSpec.Core.Raux.Zfloor] using Int.lt_floor_add_one sm
+    have hceil_le : c ≤ f + 1 := by
+      apply Int.ceil_le.mpr
+      simpa [Int.cast_add, Int.cast_one] using le_of_lt hlt
+    exact_mod_cast hceil_le
+  have hhalf : sm - (f : ℝ) < (1 / 2 : ℝ) := by
+    have hle : (c : ℝ) - sm ≤ ((f : ℝ) + 1) - sm :=
+      sub_le_sub_right hceil_le_f1 sm
+    have hlt : sm - (f : ℝ) < ((f : ℝ) + 1) - sm :=
+      lt_of_lt_of_le hdist hle
+    linarith
+  have hz : Znearest choice sm = f := by
+    simpa [f, hf] using Znearest_eq_floor_of_lt_half choice sm hhalf
+  calc
+    roundR beta fexp (Znearest choice) x
+        = ((Znearest choice sm : Int) : ℝ) * s := by
+          simp [roundR, sm, hsm, e, he, s, hs]
+    _ = (f : ℝ) * s := by rw [hz]
+    _ = roundR beta fexp rnd_floor x := hfloor_eval.symm
 
 /- Coq (Generic_fmt.v): round_N_small_pos
 
@@ -2680,7 +3032,7 @@ theorem round_N_small_pos
   -- Now the product is trivially zero
   simp only [roundR, hZsm0, Int.cast_zero, zero_mul]
 
--- ### Round-to-format helper stubs (Coq: round_bounded_small_pos / large_pos etc.)
+-- ### Round-to-format helper bridges (Coq: round_bounded_small_pos / large_pos etc.)
 
 /-- Port of Coq’s {lit}`round_bounded_small_pos` (statement only). -/
 theorem roundR_bounded_small_pos
@@ -2708,7 +3060,7 @@ theorem roundR_bounded_small_pos
     set sm : ℝ := x * (beta : ℝ) ^ (-c) with hsm
     set e : Int := (cexp beta fexp x) with he
 
-    -- `cexp` always returns the exponent `c`
+    -- Unfold `cexp` at this point to identify the exponent `c`.
     have he_eq : e = c := by simpa [cexp, hc, hm] using he
 
     -- Magnitude bound: `m ≤ ex`
@@ -2802,7 +3154,7 @@ theorem roundR_bounded_large_pos
   set sm : ℝ := x * (beta : ℝ) ^ (-c) with hsm
   set e : Int := (cexp beta fexp x) with he
 
-  -- `cexp` always returns the exponent `c`
+  -- Unfold `cexp` at this point to identify the exponent `c`.
   have he_eq : e = c := by simpa [cexp, hc, hm] using he
 
   -- Magnitude bound: `m ≤ ex`
@@ -2948,21 +3300,326 @@ theorem roundR_bounded_large_pos
 
   exact ⟨hlower, hupper⟩
 
-/-- Generic format from rounding (simple truncation-based model).
-    Defined early so it is available to theorems below. -/
+/-- Coq (`Generic_fmt.v`): positive-case monotonicity of concrete rounding. -/
+theorem roundR_le_pos
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+    (hβ : 1 < beta) (hx : 0 < x) (hxy : x ≤ y) :
+    roundR beta fexp rnd x ≤ roundR beta fexp rnd y := by
+  classical
+  have hy : 0 < y := lt_of_lt_of_le hx hxy
+  have hx_ne : x ≠ 0 := ne_of_gt hx
+  have hy_ne : y ≠ 0 := ne_of_gt hy
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbge1R : (1 : ℝ) ≤ (beta : ℝ) := le_of_lt (by exact_mod_cast hβ)
+
+  set ex : Int := mag beta x with hex
+  set ey : Int := mag beta y with hey
+
+  have hx_low : (beta : ℝ) ^ (ex - 1) ≤ x := by
+    have htrip := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x) hβ hx_ne
+    simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hx, hex, wp, PostCond.noThrow,
+      Id.run, pure] using htrip True.intro
+  have hx_high : x < (beta : ℝ) ^ ex := by
+    have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x) hβ hx_ne
+    simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hx, hex, wp, PostCond.noThrow,
+      Id.run, pure] using htrip True.intro
+  have hy_low : (beta : ℝ) ^ (ey - 1) ≤ y := by
+    have htrip := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := y) hβ hy_ne
+    simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hy, hey, wp, PostCond.noThrow,
+      Id.run, pure] using htrip True.intro
+  have hy_high : y < (beta : ℝ) ^ ey := by
+    have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := y) hβ hy_ne
+    simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hy, hey, wp, PostCond.noThrow,
+      Id.run, pure] using htrip True.intro
+
+  have hex_le_ey : ex ≤ ey := by
+    have habs : |x| ≤ |y| := by simpa [abs_of_pos hx, abs_of_pos hy] using hxy
+    have htrip := FloatSpec.Core.Raux.mag_le (beta := beta) (x := x) (y := y)
+      hβ hx_ne habs
+    simpa [hex, hey, wp, PostCond.noThrow, Id.run, pure]
+      using htrip True.intro
+
+  have same_exp_le :
+      fexp ex = fexp ey → roundR beta fexp rnd x ≤ roundR beta fexp rnd y := by
+    intro hfe
+    have hscale_nonneg : 0 ≤ (beta : ℝ) ^ (-(fexp ex)) :=
+      le_of_lt (zpow_pos hbposR _)
+    have hsm_le :
+        scaled_mantissa beta fexp x ≤ scaled_mantissa beta fexp y := by
+      have hmul := mul_le_mul_of_nonneg_right hxy hscale_nonneg
+      have hmul' :
+          x * (beta : ℝ) ^ (-(fexp ex)) ≤ y * (beta : ℝ) ^ (-(fexp ey)) := by
+        simpa [hfe] using hmul
+      simpa [scaled_mantissa, cexp, hex, hey] using hmul'
+    have hrnd_int :
+        rnd (scaled_mantissa beta fexp x) ≤ rnd (scaled_mantissa beta fexp y) :=
+      Valid_rnd.Zrnd_le _ _ hsm_le
+    have hrnd_real :
+        ((rnd (scaled_mantissa beta fexp x) : Int) : ℝ) ≤
+          ((rnd (scaled_mantissa beta fexp y) : Int) : ℝ) := by
+      exact_mod_cast hrnd_int
+    have hpow_nonneg : 0 ≤ (beta : ℝ) ^ (fexp ex) :=
+      le_of_lt (zpow_pos hbposR _)
+    have hmul := mul_le_mul_of_nonneg_right hrnd_real hpow_nonneg
+    have hmul' :
+        ((rnd (scaled_mantissa beta fexp x) : Int) : ℝ) * (beta : ℝ) ^ (fexp ex) ≤
+          ((rnd (scaled_mantissa beta fexp y) : Int) : ℝ) * (beta : ℝ) ^ (fexp ey) := by
+      simpa [hfe] using hmul
+    simpa [roundR, cexp, hex, hey] using hmul'
+
+  by_cases hy_small : ey ≤ fexp ey
+  · have hfe : fexp ex = fexp ey := by
+      have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ey
+      have hconst := (hpair.right hy_small).right
+      exact hconst ex (le_trans hex_le_ey hy_small)
+    exact same_exp_le hfe
+  · have hy_large : fexp ey < ey := lt_of_not_ge hy_small
+    rcases lt_or_eq_of_le hex_le_ey with hex_lt_ey | hex_eq_ey
+    · have hright :
+          (beta : ℝ) ^ (ey - 1) ≤ roundR beta fexp rnd y :=
+        (roundR_bounded_large_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+          (x := y) (ex := ey) ⟨hy_low, hy_high⟩ hy_large hβ).left
+      have hleft : roundR beta fexp rnd x ≤ (beta : ℝ) ^ (ey - 1) := by
+        by_cases hx_small : ex ≤ fexp ex
+        · have hround :=
+            roundR_bounded_small_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+              (x := x) (ex := ex) ⟨hx_low, hx_high⟩ hx_small hβ
+          rcases hround with hzero | hpow
+          · have hpow_nonneg : 0 ≤ (beta : ℝ) ^ (ey - 1) :=
+              le_of_lt (zpow_pos hbposR _)
+            simpa [hzero] using hpow_nonneg
+          · have hfex_le : fexp ex ≤ ey - 1 := by
+              have hfex_lt_ey : fexp ex < ey := by
+                by_contra hnot
+                have hey_le_fex : ey ≤ fexp ex := le_of_not_gt hnot
+                have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex
+                have hconst := (hpair.right hx_small).right
+                have hfe_eq : fexp ey = fexp ex := hconst ey hey_le_fex
+                exact (not_le_of_gt hy_large) (by simpa [hfe_eq] using hey_le_fex)
+              exact Int.le_sub_one_iff.mpr hfex_lt_ey
+            have hpow_le : (beta : ℝ) ^ (fexp ex) ≤ (beta : ℝ) ^ (ey - 1) :=
+              zpow_le_zpow_right₀ hbge1R hfex_le
+            simpa [hpow] using hpow_le
+        · have hx_large : fexp ex < ex := lt_of_not_ge hx_small
+          have hx_upper :
+              roundR beta fexp rnd x ≤ (beta : ℝ) ^ ex :=
+            (roundR_bounded_large_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+              (x := x) (ex := ex) ⟨hx_low, hx_high⟩ hx_large hβ).right
+          have hex_le_eym1 : ex ≤ ey - 1 :=
+            Int.le_sub_one_iff.mpr hex_lt_ey
+          have hpow_le : (beta : ℝ) ^ ex ≤ (beta : ℝ) ^ (ey - 1) :=
+            zpow_le_zpow_right₀ hbge1R hex_le_eym1
+          exact le_trans hx_upper hpow_le
+      exact le_trans hleft hright
+    · have hfe : fexp ex = fexp ey := by simpa [hex_eq_ey]
+      exact same_exp_le hfe
+
+/-- Concrete rounding preserves nonnegativity. -/
+theorem roundR_nonneg_of_nonneg
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+    (hβ : 1 < beta) (hx : 0 ≤ x) :
+    0 ≤ roundR beta fexp rnd x := by
+  classical
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hpow_pos : 0 < (beta : ℝ) ^ (cexp beta fexp x) := zpow_pos hbposR _
+  have hscale_nonneg : 0 ≤ scaled_mantissa beta fexp x := by
+    unfold scaled_mantissa
+    exact mul_nonneg hx (le_of_lt (zpow_pos hbposR _))
+  have hrnd_nonneg_int : (0 : Int) ≤ rnd (scaled_mantissa beta fexp x) := by
+    have hmono := Valid_rnd.Zrnd_le (rnd := rnd) (0 : ℝ) (scaled_mantissa beta fexp x) hscale_nonneg
+    have h0 : rnd (0 : ℝ) = (0 : Int) := by
+      simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+    simpa [h0] using hmono
+  have hrnd_nonneg : 0 ≤ ((rnd (scaled_mantissa beta fexp x) : Int) : ℝ) := by
+    exact_mod_cast hrnd_nonneg_int
+  simpa [roundR] using mul_nonneg hrnd_nonneg (le_of_lt hpow_pos)
+
+/-- Concrete rounding preserves nonpositivity. -/
+theorem roundR_nonpos_of_nonpos
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+    (hβ : 1 < beta) (hx : x ≤ 0) :
+    roundR beta fexp rnd x ≤ 0 := by
+  classical
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hpow_pos : 0 < (beta : ℝ) ^ (cexp beta fexp x) := zpow_pos hbposR _
+  have hscale_nonpos : scaled_mantissa beta fexp x ≤ 0 := by
+    unfold scaled_mantissa
+    exact mul_nonpos_of_nonpos_of_nonneg hx (le_of_lt (zpow_pos hbposR _))
+  have hrnd_nonpos_int : rnd (scaled_mantissa beta fexp x) ≤ (0 : Int) := by
+    have hmono := Valid_rnd.Zrnd_le (rnd := rnd) (scaled_mantissa beta fexp x) (0 : ℝ) hscale_nonpos
+    have h0 : rnd (0 : ℝ) = (0 : Int) := by
+      simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+    simpa [h0] using hmono
+  have hrnd_nonpos : ((rnd (scaled_mantissa beta fexp x) : Int) : ℝ) ≤ 0 := by
+    exact_mod_cast hrnd_nonpos_int
+  simpa [roundR] using mul_nonpos_of_nonpos_of_nonneg hrnd_nonpos (le_of_lt hpow_pos)
+
+/-- Coq (`Generic_fmt.v`): negation compatibility for concrete rounding. -/
+theorem roundR_opp
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) (x : ℝ) (hβ : 1 < beta) :
+    roundR beta fexp rnd (-x) = - roundR beta fexp (Zrnd_opp rnd) x := by
+  classical
+  have hcexp : cexp beta fexp (-x) = cexp beta fexp x := by
+    have h := cexp_opp (beta := beta) (fexp := fexp) (x := x) hβ
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h
+  have hsm : scaled_mantissa beta fexp (-x) = - scaled_mantissa beta fexp x := by
+    have h := scaled_mantissa_opp (beta := beta) (fexp := fexp) (x := x)
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+  simp [roundR, Zrnd_opp, hcexp, hsm, neg_mul]
+
+/-- Coq (`Generic_fmt.v`): monotonicity of concrete rounding. -/
+theorem roundR_le
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+    (hβ : 1 < beta) (hxy : x ≤ y) :
+    roundR beta fexp rnd x ≤ roundR beta fexp rnd y := by
+  classical
+  by_cases hxpos : 0 < x
+  · exact roundR_le_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+      (x := x) (y := y) hβ hxpos hxy
+  · have hxle0 : x ≤ 0 := le_of_not_gt hxpos
+    by_cases hx0 : x = 0
+    · subst hx0
+      have hy_nonneg : 0 ≤ y := hxy
+      have h0 : roundR beta fexp rnd 0 = 0 := by
+        have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+          simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+        simp [roundR, scaled_mantissa, hrnd0]
+      simpa [h0] using
+        roundR_nonneg_of_nonneg (beta := beta) (fexp := fexp) (rnd := rnd)
+          (x := y) hβ hy_nonneg
+    · have hxlt0 : x < 0 := lt_of_le_of_ne hxle0 hx0
+      by_cases hylt0 : y < 0
+      · have hpos_neg_y : 0 < -y := neg_pos.mpr hylt0
+        have hle_neg : -y ≤ -x := neg_le_neg hxy
+        have hpos :=
+          roundR_le_pos (beta := beta) (fexp := fexp) (rnd := Zrnd_opp rnd)
+            (x := -y) (y := -x) hβ hpos_neg_y hle_neg
+        have hneg := neg_le_neg hpos
+        have hx_rw : roundR beta fexp rnd x = - roundR beta fexp (Zrnd_opp rnd) (-x) := by
+          have h := roundR_opp (beta := beta) (fexp := fexp) (rnd := rnd) (x := -x) hβ
+          simpa using h
+        have hy_rw : roundR beta fexp rnd y = - roundR beta fexp (Zrnd_opp rnd) (-y) := by
+          have h := roundR_opp (beta := beta) (fexp := fexp) (rnd := rnd) (x := -y) hβ
+          simpa using h
+        simpa [hx_rw, hy_rw] using hneg
+      · have hy_nonneg : 0 ≤ y := le_of_not_gt hylt0
+        exact le_trans
+          (roundR_nonpos_of_nonpos (beta := beta) (fexp := fexp) (rnd := rnd)
+            (x := x) hβ hxle0)
+          (roundR_nonneg_of_nonneg (beta := beta) (fexp := fexp) (rnd := rnd)
+            (x := y) hβ hy_nonneg)
+
+/-- Concrete rounding fixes values already in the generic format. -/
+theorem roundR_generic
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    generic_format beta fexp x → roundR beta fexp rnd x = x := by
+  classical
+  intro hx
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  set e : Int := cexp beta fexp x with he
+  set sm : ℝ := scaled_mantissa beta fexp x with hsm
+  have hx_eq : x = (((Ztrunc sm) : Int) : ℝ) * (beta : ℝ) ^ e := by
+    simpa [generic_format, F2R, sm, e, hsm, he] using hx
+  have hsm_plain : sm = (((Ztrunc sm) : Int) : ℝ) := by
+    calc
+      sm = x * (beta : ℝ) ^ (-e) := by
+          simpa [sm, hsm, e, he, scaled_mantissa]
+      _ = ((((Ztrunc sm) : Int) : ℝ) * (beta : ℝ) ^ e) * (beta : ℝ) ^ (-e) := by
+          rw [hx_eq]
+      _ = (((Ztrunc sm) : Int) : ℝ) * ((beta : ℝ) ^ e * (beta : ℝ) ^ (-e)) := by
+          ring
+      _ = (((Ztrunc sm) : Int) : ℝ) * (beta : ℝ) ^ (e + -e) := by
+          rw [← zpow_add₀ hbne e (-e)]
+      _ = (((Ztrunc sm) : Int) : ℝ) := by simp
+  have hrnd :
+      rnd (scaled_mantissa beta fexp x) =
+        Ztrunc (scaled_mantissa beta fexp x) := by
+    calc
+      rnd (scaled_mantissa beta fexp x)
+          = rnd ((((Ztrunc sm) : Int) : ℝ)) := by
+              simpa [← hsm] using congrArg rnd hsm_plain
+      _ = Ztrunc (scaled_mantissa beta fexp x) :=
+          by
+            have hIZR := Valid_rnd.Zrnd_IZR (rnd := rnd) (Ztrunc sm)
+            simpa [← hsm]
+              using hIZR
+  simpa [roundR, hrnd, sm, e, hsm, he] using hx_eq.symm
+
+/-- Lower generic bound for concrete rounding. -/
+theorem roundR_ge_generic
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+    (hβ : 1 < beta) :
+    generic_format beta fexp x → x ≤ y → x ≤ roundR beta fexp rnd y := by
+  intro hx hxy
+  have hmono := roundR_le (beta := beta) (fexp := fexp) (rnd := rnd)
+    (x := x) (y := y) hβ hxy
+  have hfix := roundR_generic (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) hβ hx
+  simpa [hfix] using hmono
+
+/-- Upper generic bound for concrete rounding. -/
+theorem roundR_le_generic
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
+    (hβ : 1 < beta) :
+    generic_format beta fexp y → x ≤ y → roundR beta fexp rnd x ≤ y := by
+  intro hy hxy
+  have hmono := roundR_le (beta := beta) (fexp := fexp) (rnd := rnd)
+    (x := x) (y := y) hβ hxy
+  have hfix := roundR_generic (beta := beta) (fexp := fexp) (rnd := rnd) (x := y) hβ hy
+  simpa [hfix] using hmono
+
+/-- Generic format from rounding.
+
+    For Flocq-aligned callers, `mode` should be a concrete integer rounding
+    function `ℝ → Int`, interpreted through `RoundModeLike` and applied to the
+    scaled mantissa by `roundR`. Legacy relation-shaped translated modes still
+    compile through a truncation fallback, but new results should avoid that
+    compatibility path. -/
 noncomputable def round_to_generic (beta : Int) (fexp : Int → Int)
-    [Valid_exp beta fexp] (mode : ℝ → ℝ → Prop) (x : ℝ) : ℝ :=
-  -- Return the rounded value in generic format using canonical exponent
-  -- and truncation of the scaled mantissa (mode is ignored in this model).
+    [Valid_exp beta fexp] {Mode : Type u} [RoundModeLike Mode]
+    (mode : Mode) (x : ℝ) : ℝ :=
   let exp := (cexp beta fexp x)
   let mantissa := x * (beta : ℝ) ^ (-exp)
-  let rounded_mantissa : Int := (Ztrunc mantissa)
+  let rounded_mantissa : Int := RoundModeLike.toRnd mode mantissa
   (rounded_mantissa : ℝ) * (beta : ℝ) ^ exp
+
+theorem round_to_generic_relation_eq
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (mode : ℝ → ℝ → Prop) (x : ℝ) :
+    round_to_generic beta fexp mode x =
+      (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp x)))) : Int) : ℝ)
+        * (beta : ℝ) ^ (cexp beta fexp x) := by
+  simp [round_to_generic]
+
+theorem round_to_generic_int_eq_roundR
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) (x : ℝ) :
+    round_to_generic beta fexp rnd x = roundR beta fexp rnd x := by
+  simp [round_to_generic, roundR, scaled_mantissa]
 
 /-- Choice function for round-to-nearest, ties away from zero.
 
     It selects the upper neighbor when the tie is nonnegative. -/
 noncomputable def ZnearestA := fun t : Int => decide (0 ≤ t)
+
+/-- Coq `Generic_fmt.v`: instance `valid_rnd_NA`.
+
+    Upstream: `Global Instance valid_rnd_NA :
+    Valid_rnd (Znearest (Zle_bool 0)) := valid_rnd_N _.` -/
+noncomputable instance valid_rnd_NA : Valid_rnd (Znearest ZnearestA) :=
+  valid_rnd_N ZnearestA
 
 /-- Local monotonicity assumption on the exponent function (matches Coq's
     monotone exp section used by the positive cexp lemma). We keep it local to avoid
@@ -3082,7 +3739,7 @@ theorem round_to_generic_generic
           rw [abs_of_nonpos h_ceil_le0, abs_of_nonpos h_y_neg]
           linarith
         · -- y ≥ 0: Ztrunc(y) = floor(y) ≤ y, so |floor(y)| ≤ |y|
-          push_neg at hy
+          push Not at hy
           have h_ztrunc : (FloatSpec.Core.Raux.Ztrunc y) = Int.floor y := by
             simp [FloatSpec.Core.Raux.Ztrunc, Id.run, pure, hy]
           rw [h_ztrunc]
@@ -3153,8 +3810,17 @@ theorem round_to_generic_generic
         simpa [wp, PostCond.noThrow, Id.run, bind, pure] using htrip True.intro
       exact hmag_le'
 
-/-- Choice function for round-to-nearest, ties toward zero. -/
-noncomputable def Znearest0 := fun t : Int => decide (t < 0)
+/-- Coq `Generic_fmt.v`: notation `Znearest0`.
+
+    Upstream: `Notation Znearest0 := (Znearest (fun x => (Zlt_bool x 0))).` -/
+noncomputable def Znearest0 : ℝ → Int :=
+  Znearest (fun t : Int => decide (t < 0))
+
+/-- Coq `Generic_fmt.v`: instance `valid_rnd_N0`.
+
+    Upstream: `Global Instance valid_rnd_N0 : Valid_rnd Znearest0 := valid_rnd_N _.` -/
+noncomputable instance valid_rnd_N0 : Valid_rnd Znearest0 :=
+  valid_rnd_N (fun t : Int => decide (t < 0))
 
 /- Coq (Generic_fmt.v): round_N_opp
 
@@ -3682,17 +4348,259 @@ end Inclusion
 
 section Round_generic
 
+/-- Coq `Generic_fmt.v`: theorem `generic_format_round`, specialized to the
+concrete integer-rounding operator used by this port. -/
+theorem generic_format_roundR
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    generic_format beta fexp (roundR beta fexp rnd x) := by
+  classical
+  have hroundR_pos_format :
+      ∀ (rnd : ℝ → Int), [Valid_rnd rnd] → ∀ y : ℝ, 0 ≤ y →
+        generic_format beta fexp (roundR beta fexp rnd y) := by
+    intro rnd _ y hy_nonneg
+    by_cases hy0 : y = 0
+    · have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+        simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+      have hround0 : roundR beta fexp rnd y = 0 := by
+        simp [hy0, roundR, scaled_mantissa, hrnd0]
+      simpa [hround0] using generic_format_0_run (beta := beta) (fexp := fexp)
+    · set ex : Int := mag beta y with hex
+      set c : Int := fexp ex with hc
+      set sm : ℝ := scaled_mantissa beta fexp y with hsm
+      set r : ℝ := roundR beta fexp rnd y with hr
+      have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+      have hpow_pos : 0 < (beta : ℝ) ^ (ex - 1) := zpow_pos hbposR _
+      have hlow : (beta : ℝ) ^ (ex - 1) ≤ y := by
+        have htrip := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := y) hβ hy0
+        simpa [FloatSpec.Core.Raux.abs_val, abs_of_nonneg hy_nonneg, hex, wp,
+          PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hhigh : y < (beta : ℝ) ^ ex := by
+        have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := y) hβ hy0
+        simpa [FloatSpec.Core.Raux.abs_val, abs_of_nonneg hy_nonneg, hex, wp,
+          PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hcexp_y : cexp beta fexp y = c := by
+        simpa [cexp, hex, hc]
+      have hsm_y : scaled_mantissa beta fexp y = sm := by simpa using hsm.symm
+      have hr_eval : r = ((rnd sm : Int) : ℝ) * (beta : ℝ) ^ c := by
+        simpa [r, hr, roundR, hsm_y, hcexp_y]
+      by_cases hsmall : ex ≤ fexp ex
+      · have hround :=
+          roundR_bounded_small_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+            (x := y) (ex := ex) ⟨hlow, hhigh⟩ hsmall hβ
+        have hround_r : r = 0 ∨ r = (beta : ℝ) ^ (fexp ex) := by
+          simpa [r, hr] using hround
+        rcases hround_r with hr0 | hrpow
+        · simpa [hr0] using generic_format_0_run (beta := beta) (fexp := fexp)
+        · have hfexp_self : fexp (fexp ex) ≤ fexp ex := by
+            have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex
+            have hconst := (hpair.right hsmall).right
+            have heq : fexp (fexp ex) = fexp ex := hconst (fexp ex) le_rfl
+            exact le_of_eq heq
+          have hgen := generic_format_bpow' (beta := beta) (fexp := fexp)
+            (e := fexp ex) ⟨hβ, hfexp_self⟩
+          have hgen_run : generic_format beta fexp ((beta : ℝ) ^ (fexp ex)) := by
+            simpa [wp, PostCond.noThrow, Id.run, pure] using hgen
+          simpa [hrpow] using hgen_run
+      · have hlarge : fexp ex < ex := lt_of_not_ge hsmall
+        have hround :=
+          roundR_bounded_large_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+            (x := y) (ex := ex) ⟨hlow, hhigh⟩ hlarge hβ
+        have hr_low : (beta : ℝ) ^ (ex - 1) ≤ r := by simpa [r, hr] using hround.left
+        have hr_high : r ≤ (beta : ℝ) ^ ex := by simpa [r, hr] using hround.right
+        rcases lt_or_eq_of_le hr_high with hr_lt | hr_eq_pow
+        · have hr_pos : 0 < r := lt_of_lt_of_le hpow_pos hr_low
+          have hmag_r : mag beta r = ex := by
+            have hr_low_abs : (beta : ℝ) ^ (ex - 1) ≤ |r| := by
+              simpa [abs_of_pos hr_pos] using hr_low
+            have hr_lt_abs : |r| < (beta : ℝ) ^ ex := by
+              simpa [abs_of_pos hr_pos] using hr_lt
+            have htrip := FloatSpec.Core.Raux.mag_unique (beta := beta) (x := r) (e := ex)
+              hβ hr_low_abs hr_lt_abs
+            simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+          have hfmt_float :
+              generic_format beta fexp
+                (F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta)) := by
+            have htrip := generic_format_F2R (beta := beta) (fexp := fexp)
+              (m := rnd sm) (e := c)
+            have hbound :
+                (rnd sm ≠ 0 →
+                  cexp beta fexp (F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta)) ≤ c) := by
+              intro _
+              have hF2R_eq : F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta) = r := by
+                simpa [FloatSpec.Core.Defs.F2R] using hr_eval.symm
+              have hcexp_r : cexp beta fexp r = c := by
+                simpa [cexp, hmag_r, hc]
+              rw [hF2R_eq, hcexp_r]
+            have hres := htrip ⟨hβ, hbound⟩
+            simpa [wp, PostCond.noThrow, Id.run, pure] using hres
+          have hF2R_eq : F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta) = r := by
+            simpa [FloatSpec.Core.Defs.F2R] using hr_eval.symm
+          simpa [hF2R_eq] using hfmt_float
+        · have hc_le_ex : fexp ex ≤ ex := le_of_lt hlarge
+          have hgen := generic_format_bpow' (beta := beta) (fexp := fexp)
+            (e := ex) ⟨hβ, hc_le_ex⟩
+          have hgen_run : generic_format beta fexp ((beta : ℝ) ^ ex) := by
+            simpa [wp, PostCond.noThrow, Id.run, pure] using hgen
+          simpa [hr_eq_pow] using hgen_run
+  by_cases hx_nonneg : 0 ≤ x
+  · exact hroundR_pos_format rnd x hx_nonneg
+  · have hx_neg : x < 0 := lt_of_not_ge hx_nonneg
+    have hx_pos_neg : 0 ≤ -x := le_of_lt (neg_pos.mpr hx_neg)
+    have hopp_fmt : generic_format beta fexp (roundR beta fexp (Zrnd_opp rnd) (-x)) :=
+      hroundR_pos_format (Zrnd_opp rnd) (-x) hx_pos_neg
+    have hround_eq : roundR beta fexp rnd x = - roundR beta fexp (Zrnd_opp rnd) (-x) := by
+      have h := roundR_opp (beta := beta) (fexp := fexp) (rnd := rnd) (x := -x) hβ
+      simpa [neg_neg] using h
+    have hneg_fmt := generic_format_opp (beta := beta) (fexp := fexp)
+      (x := roundR beta fexp (Zrnd_opp rnd) (-x)) hopp_fmt
+    simpa [hround_eq] using hneg_fmt
+
 /-- Existence of round-down value in the generic format. -/
 theorem round_DN_exists
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f) ∧
       Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f := by
-  -- Construct the round-down witness: f = ⌊x * β^(-cexp x)⌋ * β^(cexp x)
-  -- f is in generic format by generic_format_F2R
-  -- f ≤ x by floor property and zpow_add₀
-  -- f is maximal among generic format values ≤ x by the floor construction
-  -- API changes in mul_le_mul_of_nonneg_right and zpow require adjustment
-  sorry
+  classical
+  let dn := roundR beta fexp rnd_floor x
+
+  have hroundR_pos_format :
+      ∀ (rnd : ℝ → Int), [Valid_rnd rnd] → ∀ y : ℝ, 0 ≤ y →
+        generic_format beta fexp (roundR beta fexp rnd y) := by
+    intro rnd _ y hy_nonneg
+    by_cases hy0 : y = 0
+    · have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+        simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+      have hround0 : roundR beta fexp rnd y = 0 := by
+        simp [hy0, roundR, scaled_mantissa, hrnd0]
+      simpa [hround0] using generic_format_0_run (beta := beta) (fexp := fexp)
+    · have hy_pos : 0 < y := lt_of_le_of_ne hy_nonneg (Ne.symm hy0)
+      set ex : Int := mag beta y with hex
+      set c : Int := fexp ex with hc
+      set sm : ℝ := scaled_mantissa beta fexp y with hsm
+      set r : ℝ := roundR beta fexp rnd y with hr
+      have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+      have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+      have hpow_pos : 0 < (beta : ℝ) ^ (ex - 1) := zpow_pos hbposR _
+      have hpow_nonneg : 0 ≤ (beta : ℝ) ^ (ex - 1) := le_of_lt hpow_pos
+      have hlow : (beta : ℝ) ^ (ex - 1) ≤ y := by
+        have htrip := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := y) hβ hy0
+        simpa [FloatSpec.Core.Raux.abs_val, abs_of_nonneg hy_nonneg, hex, wp,
+          PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hhigh : y < (beta : ℝ) ^ ex := by
+        have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := y) hβ hy0
+        simpa [FloatSpec.Core.Raux.abs_val, abs_of_nonneg hy_nonneg, hex, wp,
+          PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hcexp_y : cexp beta fexp y = c := by
+        simpa [cexp, hex, hc]
+      have hsm_y : scaled_mantissa beta fexp y = sm := by simpa using hsm.symm
+      have hr_eval : r = ((rnd sm : Int) : ℝ) * (beta : ℝ) ^ c := by
+        simpa [r, hr, roundR, hsm_y, hcexp_y]
+      by_cases hsmall : ex ≤ fexp ex
+      · have hround :=
+          roundR_bounded_small_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+            (x := y) (ex := ex) ⟨hlow, hhigh⟩ hsmall hβ
+        have hround_r : r = 0 ∨ r = (beta : ℝ) ^ (fexp ex) := by
+          simpa [r, hr] using hround
+        rcases hround_r with hr0 | hrpow
+        · simpa [hr0] using generic_format_0_run (beta := beta) (fexp := fexp)
+        · have hfexp_self : fexp (fexp ex) ≤ fexp ex := by
+            have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex
+            have hconst := (hpair.right hsmall).right
+            have heq : fexp (fexp ex) = fexp ex := hconst (fexp ex) le_rfl
+            exact le_of_eq heq
+          have hgen := generic_format_bpow' (beta := beta) (fexp := fexp)
+            (e := fexp ex) ⟨hβ, hfexp_self⟩
+          have hgen_run : generic_format beta fexp ((beta : ℝ) ^ (fexp ex)) := by
+            simpa [wp, PostCond.noThrow, Id.run, pure] using hgen
+          simpa [hrpow] using hgen_run
+      · have hlarge : fexp ex < ex := lt_of_not_ge hsmall
+        have hround :=
+          roundR_bounded_large_pos (beta := beta) (fexp := fexp) (rnd := rnd)
+            (x := y) (ex := ex) ⟨hlow, hhigh⟩ hlarge hβ
+        have hr_low : (beta : ℝ) ^ (ex - 1) ≤ r := by simpa [r, hr] using hround.left
+        have hr_high : r ≤ (beta : ℝ) ^ ex := by simpa [r, hr] using hround.right
+        rcases lt_or_eq_of_le hr_high with hr_lt | hr_eq_pow
+        · have hr_pos : 0 < r := lt_of_lt_of_le hpow_pos hr_low
+          have hr_ne : r ≠ 0 := ne_of_gt hr_pos
+          have hmag_r : mag beta r = ex := by
+            have hr_low_abs : (beta : ℝ) ^ (ex - 1) ≤ |r| := by
+              simpa [abs_of_pos hr_pos] using hr_low
+            have hr_lt_abs : |r| < (beta : ℝ) ^ ex := by
+              simpa [abs_of_pos hr_pos] using hr_lt
+            have htrip := FloatSpec.Core.Raux.mag_unique (beta := beta) (x := r) (e := ex)
+              hβ hr_low_abs hr_lt_abs
+            simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+          have hfmt_float :
+              generic_format beta fexp
+                (F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta)) := by
+            have htrip := generic_format_F2R (beta := beta) (fexp := fexp)
+              (m := rnd sm) (e := c)
+            have hbound :
+                (rnd sm ≠ 0 →
+                  cexp beta fexp (F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta)) ≤ c) := by
+              intro _
+              have hF2R_eq : F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta) = r := by
+                simpa [FloatSpec.Core.Defs.F2R] using hr_eval.symm
+              have hcexp_r : cexp beta fexp r = c := by
+                simpa [cexp, hmag_r, hc]
+              rw [hF2R_eq, hcexp_r]
+            have hres := htrip ⟨hβ, hbound⟩
+            simpa [wp, PostCond.noThrow, Id.run, pure] using hres
+          have hF2R_eq : F2R (FlocqFloat.mk (rnd sm) c : FlocqFloat beta) = r := by
+            simpa [FloatSpec.Core.Defs.F2R] using hr_eval.symm
+          simpa [hF2R_eq]
+            using hfmt_float
+        · have hc_le_ex : fexp ex ≤ ex := le_of_lt hlarge
+          have hgen := generic_format_bpow' (beta := beta) (fexp := fexp)
+            (e := ex) ⟨hβ, hc_le_ex⟩
+          have hgen_run : generic_format beta fexp ((beta : ℝ) ^ ex) := by
+            simpa [wp, PostCond.noThrow, Id.run, pure] using hgen
+          simpa [hr_eq_pow] using hgen_run
+
+  have hdn_format : generic_format beta fexp dn := by
+    by_cases hx_nonneg : 0 ≤ x
+    · exact hroundR_pos_format rnd_floor x hx_nonneg
+    · have hx_neg : x < 0 := lt_of_not_ge hx_nonneg
+      have hx_pos_neg : 0 ≤ -x := le_of_lt (neg_pos.mpr hx_neg)
+      have hceil_fmt : generic_format beta fexp (roundR beta fexp rnd_ceil (-x)) :=
+        hroundR_pos_format rnd_ceil (-x) hx_pos_neg
+      have hopp_fun : Zrnd_opp rnd_floor = rnd_ceil := by
+        funext y
+        simp [Zrnd_opp, rnd_floor, rnd_ceil, FloatSpec.Core.Raux.Zfloor,
+          FloatSpec.Core.Raux.Zceil, Int.floor_neg]
+      have hdn_eq : dn = - roundR beta fexp rnd_ceil (-x) := by
+        have h := roundR_opp (beta := beta) (fexp := fexp) (rnd := rnd_floor) (x := -x) hβ
+        simpa [dn, neg_neg, hopp_fun] using h
+      have hneg_fmt :=
+        generic_format_opp (beta := beta) (fexp := fexp)
+          (x := roundR beta fexp rnd_ceil (-x)) hceil_fmt
+      simpa [hdn_eq] using hneg_fmt
+
+  have hdn_le : dn ≤ x := by
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    set e : Int := cexp beta fexp x with he
+    set sm : ℝ := scaled_mantissa beta fexp x with hsm
+    have hfloor_le : ((rnd_floor sm : Int) : ℝ) ≤ sm := by
+      simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using (Int.floor_le sm)
+    have hmul := mul_le_mul_of_nonneg_right hfloor_le (le_of_lt (zpow_pos hbposR e))
+    have hscaled : sm * (beta : ℝ) ^ e = x := by
+      have htrip := scaled_mantissa_mult_bpow (beta := beta) (fexp := fexp) (x := x)
+      simpa [wp, PostCond.noThrow, Id.run, pure, sm, hsm, e, he] using htrip hβ
+    have hdn_eval : dn = ((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e := by
+      simpa [dn, roundR, sm, hsm, e, he]
+    calc
+      dn = ((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e := hdn_eval
+      _ ≤ sm * (beta : ℝ) ^ e := hmul
+      _ = x := hscaled
+
+  refine ⟨dn, hdn_format, ?_⟩
+  refine ⟨hdn_format, hdn_le, ?_⟩
+  intro g hg_fmt hg_le
+  exact roundR_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd_floor)
+    (x := g) (y := x) hβ hg_fmt hg_le
 
 -- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
 theorem round_DN_exists_global
@@ -3703,6 +4611,80 @@ theorem round_DN_exists_global
   classical
   -- `round_DN_exists` does not require `1 < beta`, so we can reuse it directly.
   simpa using (round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
+
+/-- Concrete Flocq-style down-rounding point theorem for `roundR`.
+
+This is the payload hidden by the existential compatibility theorem
+`round_DN_exists`: the concrete floor-rounded value is the greatest generic
+format value below `x`. -/
+theorem roundR_DN_pt
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (hβ : 1 < beta) :
+    Rnd_DN_pt (fun y => generic_format beta fexp y) x
+      (roundR beta fexp rnd_floor x) := by
+  classical
+  constructor
+  · exact generic_format_roundR (beta := beta) (fexp := fexp)
+      (rnd := rnd_floor) (x := x) hβ
+  constructor
+  · have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    set e : Int := cexp beta fexp x with he
+    set sm : ℝ := scaled_mantissa beta fexp x with hsm
+    have hfloor_le : ((rnd_floor sm : Int) : ℝ) ≤ sm := by
+      simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using (Int.floor_le sm)
+    have hmul := mul_le_mul_of_nonneg_right hfloor_le (le_of_lt (zpow_pos hbposR e))
+    have hscaled : sm * (beta : ℝ) ^ e = x := by
+      have htrip := scaled_mantissa_mult_bpow (beta := beta) (fexp := fexp) (x := x)
+      simpa [wp, PostCond.noThrow, Id.run, pure, sm, hsm, e, he] using htrip hβ
+    have hdn_eval :
+        roundR beta fexp rnd_floor x =
+          ((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e := by
+      simpa [roundR, sm, hsm, e, he]
+    calc
+      roundR beta fexp rnd_floor x
+          = ((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e := hdn_eval
+      _ ≤ sm * (beta : ℝ) ^ e := hmul
+      _ = x := hscaled
+  · intro g hg_fmt hg_le
+    exact roundR_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd_floor)
+      (x := g) (y := x) hβ hg_fmt hg_le
+
+/-- Concrete Flocq-style up-rounding point theorem for `roundR`.
+
+The concrete ceiling-rounded value is the least generic format value above
+`x`. This is the upward analogue of `roundR_DN_pt`. -/
+theorem roundR_UP_pt
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (hβ : 1 < beta) :
+    Rnd_UP_pt (fun y => generic_format beta fexp y) x
+      (roundR beta fexp rnd_ceil x) := by
+  classical
+  constructor
+  · exact generic_format_roundR (beta := beta) (fexp := fexp)
+      (rnd := rnd_ceil) (x := x) hβ
+  constructor
+  · have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    set e : Int := cexp beta fexp x with he
+    set sm : ℝ := scaled_mantissa beta fexp x with hsm
+    have hceil_ge : sm ≤ ((rnd_ceil sm : Int) : ℝ) := by
+      simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil] using (Int.le_ceil sm)
+    have hmul := mul_le_mul_of_nonneg_right hceil_ge (le_of_lt (zpow_pos hbposR e))
+    have hscaled : sm * (beta : ℝ) ^ e = x := by
+      have htrip := scaled_mantissa_mult_bpow (beta := beta) (fexp := fexp) (x := x)
+      simpa [wp, PostCond.noThrow, Id.run, pure, sm, hsm, e, he] using htrip hβ
+    have hup_eval :
+        roundR beta fexp rnd_ceil x =
+          ((rnd_ceil sm : Int) : ℝ) * (beta : ℝ) ^ e := by
+      simpa [roundR, sm, hsm, e, he]
+    calc
+      x = sm * (beta : ℝ) ^ e := hscaled.symm
+      _ ≤ ((rnd_ceil sm : Int) : ℝ) * (beta : ℝ) ^ e := hmul
+      _ = roundR beta fexp rnd_ceil x := hup_eval.symm
+  · intro g hg_fmt hx_le_g
+    exact roundR_le_generic (beta := beta) (fexp := fexp) (rnd := rnd_ceil)
+      (x := x) (y := g) hβ hg_fmt hx_le_g
 
 -- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
 -- Remove the earlier forward declaration to avoid duplicate definitions.
@@ -3742,7 +4724,7 @@ private theorem Rnd_UP_to_DN_via_neg
     simpa using (neg_le_neg hf_le)
   exact ⟨hFneg, hle', hmax⟩
 
-/-- Placeholder existence theorem: There exists a round-up value in the generic format.
+/-- Existence theorem: There exists a round-up value in the generic format.
     A constructive proof requires additional spacing/discreteness lemmas for the format.
 -/
 theorem round_UP_exists
@@ -3851,7 +4833,7 @@ theorem round_NA_pt
         -- First, f2 cannot be on the right of x (would give distance ≥ b > a)
         have hf2_le_x : f2 ≤ x := by
           by_contra hxle
-          have hx_le_f2 : x ≤ f2 := (not_le.mp hxle).le
+          have hx_le_f2 : x ≤ f2 := le_of_not_ge hxle
           -- From UP minimality, xup ≤ f2, hence |x - f2| ≥ b
           have hxup_le_f2 : xup ≤ f2 := hmin_up f2 hF2 hx_le_f2
           have hge_b : |x - f2| ≥ b := by
@@ -3919,7 +4901,7 @@ theorem round_NA_pt
             -- f2 cannot be on the left of x (distance ≥ a > b)
             have hx_le_f2 : x ≤ f2 := by
               by_contra h_not
-              have hf2_le_x : f2 ≤ x := (not_le.mp h_not).le
+              have hf2_le_x : f2 ≤ x := le_of_not_ge h_not
               -- From DN maximality, f2 ≤ xdn ⇒ |x - f2| ≥ a
               have hf2_le_xdn : f2 ≤ xdn := hmax_dn f2 hF2 hf2_le_x
               have hge_a : |x - f2| ≥ a := by
@@ -4541,22 +5523,44 @@ theorem round_to_format_properties (beta : Int) (fexp : Int → Int)
   -- Conclude the required conjunction
   exact ⟨hFdn, hFup, hdn_le, hup_ge⟩
 
-/-- Consecutive scaled mantissas for DN/UP neighbors.
-    Uses sorry pending constructive proof via format spacing. -/
-theorem consecutive_scaled_mantissas_ax
+/-- DN/UP endpoints in the generic format have canonical float representatives.
+
+    This is the Flocq-aligned portion of the old translated spacing bridge:
+    DN/UP predicates give endpoint format membership, and generic-format
+    membership gives the canonical representative at the endpoint's own
+    canonical exponent. It deliberately does not claim that both endpoints use
+    the same exponent as `x`; the UP endpoint can cross a power-of-`beta`
+    boundary. -/
+theorem DN_UP_canonical_neighbors
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x xd xu : ℝ) :
-    1 < beta → 0 < x → ¬ (generic_format beta fexp x) →
+    1 < beta →
     Rnd_DN_pt (fun y => (generic_format beta fexp y)) x xd →
     Rnd_UP_pt (fun y => (generic_format beta fexp y)) x xu →
     ∃ gd gu : FlocqFloat beta,
       xd = (F2R gd) ∧ xu = (F2R gu) ∧
-      canonical beta fexp gd ∧ canonical beta fexp gu ∧
-      let ex := (cexp beta fexp x);
-      xd * (beta : ℝ) ^ (-ex) = (gd.Fnum : ℝ) ∧
-      xu * (beta : ℝ) ^ (-ex) = (gu.Fnum : ℝ) ∧
-      (gu.Fnum = gd.Fnum + 1) := by
-  intros; sorry
+      canonical beta fexp gd ∧ canonical beta fexp gu := by
+  intro hβ hDN hUP
+  classical
+  rcases hDN with ⟨hFxd, _⟩
+  rcases hUP with ⟨hFxu, _⟩
+  let gd : FlocqFloat beta :=
+    ⟨Ztrunc (scaled_mantissa beta fexp xd), cexp beta fexp xd⟩
+  let gu : FlocqFloat beta :=
+    ⟨Ztrunc (scaled_mantissa beta fexp xu), cexp beta fexp xu⟩
+  have hxd : xd = F2R gd := by
+    simpa [gd, generic_format] using hFxd
+  have hxu : xu = F2R gu := by
+    simpa [gu, generic_format] using hFxu
+  have hcanon_d : canonical beta fexp gd := by
+    have htrip := canonical_generic_format (beta := beta) (fexp := fexp) (x := xd)
+    have hpost := htrip ⟨hβ, hFxd⟩
+    simpa [gd, wp, PostCond.noThrow, Id.run, pure] using hpost hxd
+  have hcanon_u : canonical beta fexp gu := by
+    have htrip := canonical_generic_format (beta := beta) (fexp := fexp) (x := xu)
+    have hpost := htrip ⟨hβ, hFxu⟩
+    simpa [gu, wp, PostCond.noThrow, Id.run, pure] using hpost hxu
+  exact ⟨gd, gu, hxd, hxu, hcanon_d, hcanon_u⟩
 
 /-- Theorem: Reciprocal bound via magnitude
     For beta > 1 and x ≠ 0, the reciprocal of |x| is bounded by
@@ -4754,7 +5758,7 @@ theorem lt_cexp_pos_ax
     by_contra hnot
     have hle : (FloatSpec.Core.Raux.mag beta y) ≤ (FloatSpec.Core.Raux.mag beta x) := le_of_not_gt hnot
     have hmono := Monotone_exp.mono (fexp := fexp) hle
-    exact (not_lt.mpr hmono) hfe
+    exact (not_lt_of_ge hmono) hfe
   -- Translate mag inequality on positive y to x < y
   exact lt_of_mag_lt_pos (beta := beta) (x := x) (y := y) hβ hy hmag_lt
 
@@ -4768,14 +5772,35 @@ theorem cexp_ge_bpow_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
-    1 < beta → (beta : ℝ) ^ (e - 1) < abs x → fexp e ≤ (cexp beta fexp x) := by
-  -- From the strict bpow lower bound, obtain `e ≤ mag x` (Raux.mag_ge_bpow)
-  intro hβ hpow_lt
-  have hmag := FloatSpec.Core.Raux.mag_ge_bpow (beta := beta) (x := x) (e := e)
-    hβ hpow_lt
-  have hrun : e ≤ (FloatSpec.Core.Raux.mag beta x) := by
-    -- Reduce the Hoare triple to the pure run-value inequality
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hmag (by trivial)
+    1 < beta → (beta : ℝ) ^ (e - 1) ≤ abs x → fexp e ≤ (cexp beta fexp x) := by
+  -- From the non-strict bpow lower bound, obtain `e ≤ mag x`.
+  intro hβ hpow_le
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := lt_trans zero_lt_one hβR
+  have hpow_pos : 0 < (beta : ℝ) ^ (e - 1) := zpow_pos hbpos _
+  have hx_pos : 0 < abs x := lt_of_lt_of_le hpow_pos hpow_le
+  have hx_ne : x ≠ 0 := abs_pos.mp hx_pos
+  set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
+  have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
+    have hiff := Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbpos)
+    exact hiff.mpr hβR
+  have hlog_le :
+      Real.log ((beta : ℝ) ^ (e - 1)) ≤ Real.log (abs x) :=
+    Real.log_le_log hpow_pos hpow_le
+  have hpow_log :
+      Real.log ((beta : ℝ) ^ (e - 1))
+        = (e - 1 : ℝ) * Real.log (beta : ℝ) := by
+    simpa using Real.log_zpow hbpos (e - 1)
+  have hle_L : (e - 1 : ℝ) ≤ L := by
+    have := (le_div_iff₀ hlogβ_pos).mpr (by simpa [hpow_log] using hlog_le)
+    simpa [L] using this
+  have h_em1_le_floor : e - 1 ≤ Int.floor L := by
+    have h : ((e - 1 : Int) : ℝ) ≤ L := by simpa using hle_L
+    exact Int.le_floor.mpr h
+  have hfloor : e ≤ Int.floor L + 1 := by
+    omega
+  have hrun : e ≤ FloatSpec.Core.Raux.mag beta x := by
+    simpa [FloatSpec.Core.Raux.mag, hx_ne, L] using hfloor
   -- Monotonicity of `fexp` lifts the inequality through `fexp`
   have hmono := Monotone_exp.mono (fexp := fexp) hrun
   -- Unfold `cexp` to expose `fexp (mag x)`
@@ -4896,7 +5921,7 @@ theorem scaled_mantissa_generic (beta : Int) (fexp : Int → Int) [Valid_exp bet
   set e := fexp (mag beta x) with he
   -- hx gives us the reconstruction equation directly
   -- Since beta > 1 is typically required by Valid_exp, beta^e ≠ 0
-  -- We handle the nonzero case and leave a sorry for the degenerate case
+  -- Handle both the nonzero and degenerate power cases explicitly.
   by_cases hpow : (beta : ℝ) ^ e = 0
   · -- Degenerate case: β^e = 0 means RHS of hx is 0, so x = 0
     have hx_zero : x = 0 := by simp only [hpow, mul_zero] at hx; exact hx
@@ -5132,31 +6157,27 @@ theorem generic_format_round_pos (beta : Int) (fexp : Int → Int) [Valid_exp be
     Theorem {lean}`round_DN_pt`:
     {lit}`∀ x, Rnd_DN_pt format x (round Zfloor x)`.
 
-    Lean (existence form): There exists a down-rounded value in the
-    generic format for any real x. This mirrors the Coq statement
-    using our pointwise predicate rather than a concrete round.
+    The concrete floor-rounded value is a down-rounding point for the generic
+    format.
 -/
 theorem round_DN_pt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f := by
-  -- Directly reuse the DN existence result established above.
-  -- Requires beta > 1 in the Coq development; we keep existence here.
-  -- One can retrieve such a witness from `generic_format_round_DN` when beta > 1.
-  exact round_DN_exists beta fexp x hbeta
+    Rnd_DN_pt (fun y => (generic_format beta fexp y)) x
+      (roundR beta fexp rnd_floor x) := by
+  exact roundR_DN_pt (beta := beta) (fexp := fexp) (x := x) hbeta
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_UP_pt`:
     {lit}`∀ x, Rnd_UP_pt format x (round Zceil x)`.
 
-    Lean (existence form): There exists an up-rounded value in the
-    generic format for any real x, stated with the pointwise predicate.
+    The concrete ceiling-rounded value is an up-rounding point for the generic
+    format.
 -/
 theorem round_UP_pt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      Rnd_UP_pt (fun y => (generic_format beta fexp y)) x f := by
-  exact round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hbeta)
+    Rnd_UP_pt (fun y => (generic_format beta fexp y)) x
+      (roundR beta fexp rnd_ceil x) := by
+  exact roundR_UP_pt (beta := beta) (fexp := fexp) (x := x) hbeta
 
 /-- Coq {lit}`Generic_fmt.v`:
     Theorem {lean}`round_ZR_pt`:
@@ -5214,135 +6235,139 @@ theorem round_ZR_pt
     Theorem {lean}`round_N_pt`,
     {lit}`∀ x, Rnd_N_pt format x (round Znearest x)`.
 
-    Lean (existence form): There exists a nearest-rounded value in the
-    generic format for any real x, stated with the pointwise predicate.
-    This mirrors the Coq statement without committing to a particular
-    tie-breaking strategy.
+    The concrete nearest-rounded value is a nearest point for the generic
+    format.
 -/
 theorem round_N_pt
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      Rnd_N_pt (fun y => (generic_format beta fexp y)) x f := by
-  -- Let F denote the generic-format predicate
-  let F := fun y => (generic_format beta fexp y)
-  -- Get down- and up-rounded witnesses bracketing x
-  rcases round_DN_exists beta fexp x hbeta with ⟨xdn, hFdn, hdn⟩
-  rcases round_UP_exists beta fexp x hbeta with ⟨xup, hFup, hup⟩
-  rcases hdn with ⟨hFxdn, hxdn_le_x, hmax_dn⟩
-  rcases hup with ⟨hFxup, hx_le_xup, hmin_up⟩
-  -- Define distances to the bracketing points
-  let a := x - xdn
-  let b := xup - x
-  have ha_nonneg : 0 ≤ a := by
-    have : xdn ≤ x := hxdn_le_x
-    simpa [a] using sub_nonneg.mpr this
-  have hb_nonneg : 0 ≤ b := by
-    have : x ≤ xup := hx_le_xup
-    simpa [b] using sub_nonneg.mpr this
-  -- Choose the closer of xdn and xup
-  by_cases hchoose : a ≤ b
-  · -- Use xdn as nearest
-    refine ⟨xdn, hFdn, ?_⟩
-    -- Show nearest property
-    refine And.intro hFxdn ?_
-    intro g hFg
-    have htotal := le_total g x
-    -- Distance to xdn equals a
-    have habs_f : |x - xdn| = a := by
-      have : 0 ≤ x - xdn := by
-        have : xdn ≤ x := hxdn_le_x
-        simpa using sub_nonneg.mpr this
-      simpa [a] using abs_of_nonneg this
-    -- For any g in F, compare |x - g| by cases on position of g
-    cases htotal with
-    | inl hgle =>
-        -- g ≤ x ⇒ g ≤ xdn by maximality; hence x - g ≥ a
-        have hgle_dn : g ≤ xdn := hmax_dn g hFg hgle
-        have hxg_nonneg : 0 ≤ x - g := by simpa using sub_nonneg.mpr hgle
-        have hxg_ge_a : x - g ≥ a := by
-          -- x - g ≥ x - xdn since g ≤ xdn
-          have : x - g ≥ x - xdn := by exact sub_le_sub_left hgle_dn x
-          simpa [a] using this
-        -- Conclude using absolute values
-        have : |x - g| = x - g := by simpa using abs_of_nonneg hxg_nonneg
-        have : a ≤ |x - g| := by simpa [this] using hxg_ge_a
-        -- Since a ≤ b by choice, |xdn - x| = a ≤ |g - x| (by symmetry of |·| on subtraction)
-        simpa [habs_f, abs_sub_comm] using this
-    | inr hxle =>
-        -- x ≤ g ⇒ xup ≤ g by minimality; hence g - x ≥ b ≥ a
-        have hxup_le_g : xup ≤ g := hmin_up g hFg hxle
-        have hxg_nonpos : x - g ≤ 0 := by simpa using sub_nonpos.mpr hxle
-        have h_abs_xg : |x - g| = g - x := by
-          have : x - g ≤ 0 := hxg_nonpos
-          simpa [sub_eq_add_neg] using (abs_of_nonpos this)
-        have hge_b : g - x ≥ b := by
-          -- g - x ≥ xup - x since xup ≤ g
-          have : g - x ≥ xup - x := by exact sub_le_sub_right hxup_le_g x
-          simpa [b] using this
-        have h_a_le_b : a ≤ b := hchoose
-        have : a ≤ |x - g| := by
-          -- |x - g| = g - x ≥ b ≥ a
-          have : |x - g| ≥ b := by simpa [h_abs_xg] using hge_b
-          exact le_trans h_a_le_b this
-        simpa [habs_f, abs_sub_comm] using this
-  · -- Use xup as nearest
-    -- From not (a ≤ b), we get b < a hence b ≤ a
-    have hb_le_a : b ≤ a := (lt_of_not_ge hchoose).le
-    refine ⟨xup, hFup, ?_⟩
-    -- Show nearest property
-    refine And.intro hFxup ?_
-    intro g hFg
-    have htotal := le_total g x
-    -- Distance to xup equals b
-    have habs_f : |x - xup| = b := by
-      have : x - xup ≤ 0 := by simpa using sub_nonpos.mpr hx_le_xup
-      simpa [b, sub_eq_add_neg] using abs_of_nonpos this
-    -- For any g in F, compare |x - g|
-    cases htotal with
-    | inl hgle =>
-        -- g ≤ x ⇒ g ≤ xdn; hence x - g ≥ a ≥ b
-        have hgle_dn : g ≤ xdn := hmax_dn g hFg hgle
-        have hxg_nonneg : 0 ≤ x - g := by simpa using sub_nonneg.mpr hgle
-        have hxg_ge_a : x - g ≥ a := by
-          have : x - g ≥ x - xdn := sub_le_sub_left hgle_dn x
-          simpa [a] using this
-        have : |x - g| = x - g := by simpa using abs_of_nonneg hxg_nonneg
-        have hge_b : |x - g| ≥ b := by
-          have hge_min : a ≤ |x - g| := by simpa [this] using hxg_ge_a
-          exact le_trans hb_le_a hge_min
-        -- Conclude |xup - x| = b ≤ |g - x| (by symmetry of |·| on subtraction)
-        have : b ≤ |x - g| := hge_b
-        simpa [habs_f, abs_sub_comm] using this
-    | inr hxle =>
-        -- x ≤ g ⇒ xup ≤ g; hence g - x ≥ b directly
-        have hxup_le_g : xup ≤ g := hmin_up g hFg hxle
-        have hxg_nonpos : x - g ≤ 0 := by simpa using sub_nonpos.mpr hxle
-        have h_abs_xg : |x - g| = g - x := by
-          simpa [sub_eq_add_neg] using abs_of_nonpos hxg_nonpos
-        have hge_b : g - x ≥ b := by
-          have : g - x ≥ xup - x := sub_le_sub_right hxup_le_g x
-          simpa [b] using this
-        have : b ≤ |x - g| := by simpa [h_abs_xg] using hge_b
-        simpa [habs_f, abs_sub_comm] using this
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (choice : Int → Bool) (x : ℝ) (hbeta : 1 < beta) :
+    Rnd_N_pt (fun y => generic_format beta fexp y) x
+      (roundR beta fexp (Znearest choice) x) := by
+  classical
+  let F : ℝ → Prop := fun y => generic_format beta fexp y
+  let dn : ℝ := roundR beta fexp rnd_floor x
+  let up : ℝ := roundR beta fexp rnd_ceil x
+  let rn : ℝ := roundR beta fexp (Znearest choice) x
+  have hDN : Rnd_DN_pt F x dn := by
+    simpa [F, dn] using round_DN_pt (beta := beta) (fexp := fexp) (x := x) hbeta
+  have hUP : Rnd_UP_pt F x up := by
+    simpa [F, up] using round_UP_pt (beta := beta) (fexp := fexp) (x := x) hbeta
+  have hcases :
+      rn = dn ∨ rn = up := by
+    rcases Znearest_DN_or_UP choice (scaled_mantissa beta fexp x) with h | h
+    · left
+      simp [rn, dn, roundR, rnd_floor, h]
+    · right
+      simp [rn, up, roundR, rnd_ceil, h]
+  rcases hcases with hrn_dn | hrn_up
+  · have hnot_up_closer : ¬ |up - x| < |dn - x| := by
+      intro hclose
+      have hsel :
+          rn = up := by
+        simpa [rn, dn, up] using
+          (round_N_eq_UP (beta := beta) (fexp := fexp)
+            (choice := choice) (x := x) hbeta (by simpa [dn, up] using hclose))
+      have hdn_up : dn = up := hrn_dn.symm.trans hsel
+      have : |dn - x| < |dn - x| := by
+        simpa [hdn_up] using hclose
+      exact lt_irrefl _ this
+    have hdist : x - dn ≤ up - x := by
+      have hle_abs : |dn - x| ≤ |up - x| := le_of_not_gt hnot_up_closer
+      have hdn_le_x : dn ≤ x := hDN.2.1
+      have hx_le_up : x ≤ up := hUP.2.1
+      simpa [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hdn_le_x),
+        abs_of_nonneg (sub_nonneg.mpr hx_le_up)] using hle_abs
+    have hdn_nearest : Rnd_N_pt F x dn := by
+      refine ⟨hDN.1, ?_⟩
+      intro g hFg
+      cases le_total g x with
+      | inl hgle =>
+          have h_g_le_dn : g ≤ dn := hDN.2.2 g hFg hgle
+          have hsub : x - dn ≤ x - g := sub_le_sub_left h_g_le_dn x
+          have h_abs_dn : |dn - x| = x - dn := by
+            have : dn - x ≤ 0 := sub_nonpos.mpr hDN.2.1
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          have h_abs_g : |g - x| = x - g := by
+            have : g - x ≤ 0 := sub_nonpos.mpr hgle
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          simpa [h_abs_dn, h_abs_g] using hsub
+      | inr hxle =>
+          have h_up_le_g : up ≤ g := hUP.2.2 g hFg hxle
+          have hsub : up - x ≤ g - x := sub_le_sub_right h_up_le_g x
+          have hchain : x - dn ≤ g - x := le_trans hdist hsub
+          have h_abs_dn : |dn - x| = x - dn := by
+            have : dn - x ≤ 0 := sub_nonpos.mpr hDN.2.1
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          have h_abs_g : |g - x| = g - x := by
+            have : 0 ≤ g - x := sub_nonneg.mpr hxle
+            simpa using abs_of_nonneg this
+          simpa [h_abs_dn, h_abs_g] using hchain
+    simpa [F, rn, hrn_dn] using hdn_nearest
+  · have hnot_dn_closer : ¬ |dn - x| < |up - x| := by
+      intro hclose
+      have hsel :
+          rn = dn := by
+        simpa [rn, dn, up] using
+          (round_N_eq_DN (beta := beta) (fexp := fexp)
+            (choice := choice) (x := x) hbeta (by simpa [dn, up] using hclose))
+      have hup_dn : up = dn := hrn_up.symm.trans hsel
+      have : |up - x| < |up - x| := by
+        simpa [hup_dn] using hclose
+      exact lt_irrefl _ this
+    have hdist : up - x ≤ x - dn := by
+      have hle_abs : |up - x| ≤ |dn - x| := le_of_not_gt hnot_dn_closer
+      have hdn_le_x : dn ≤ x := hDN.2.1
+      have hx_le_up : x ≤ up := hUP.2.1
+      simpa [abs_sub_comm, abs_of_nonneg (sub_nonneg.mpr hdn_le_x),
+        abs_of_nonneg (sub_nonneg.mpr hx_le_up)] using hle_abs
+    have hup_nearest : Rnd_N_pt F x up := by
+      refine ⟨hUP.1, ?_⟩
+      intro g hFg
+      cases le_total g x with
+      | inl hgle =>
+          have h_g_le_dn : g ≤ dn := hDN.2.2 g hFg hgle
+          have hsub : x - dn ≤ x - g := sub_le_sub_left h_g_le_dn x
+          have hchain : up - x ≤ x - g := le_trans hdist hsub
+          have h_abs_up : |up - x| = up - x := by
+            have : 0 ≤ up - x := sub_nonneg.mpr hUP.2.1
+            simpa using abs_of_nonneg this
+          have h_abs_g : |g - x| = x - g := by
+            have : g - x ≤ 0 := sub_nonpos.mpr hgle
+            simpa [sub_eq_add_neg] using abs_of_nonpos this
+          simpa [h_abs_up, h_abs_g] using hchain
+      | inr hxle =>
+          have h_up_le_g : up ≤ g := hUP.2.2 g hFg hxle
+          have hsub : up - x ≤ g - x := sub_le_sub_right h_up_le_g x
+          have h_abs_up : |up - x| = up - x := by
+            have : 0 ≤ up - x := sub_nonneg.mpr hUP.2.1
+            simpa using abs_of_nonneg this
+          have h_abs_g : |g - x| = g - x := by
+            have : 0 ≤ g - x := sub_nonneg.mpr hxle
+            simpa using abs_of_nonneg this
+          simpa [h_abs_up, h_abs_g] using hsub
+    simpa [F, rn, hrn_up] using hup_nearest
 
 /-- Coq (Generic_fmt.v):
     Theorem round_DN_or_UP:
       forall x, round rnd x = round Zfloor x \/ round rnd x = round Zceil x.
 
-    Lean (existence/predicate form): For any x there exists a representable
-    rounding that is either a round-down or a round-up point. -/
+    Any concrete rounding produced by a valid integer rounding function agrees
+    with either the concrete floor or ceiling rounding at the same input. -/
 theorem round_DN_or_UP
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
-    ∃ f, (generic_format beta fexp f) ∧
-      (Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f ∨
-       Rnd_UP_pt (fun y => (generic_format beta fexp y)) x f) := by
-  -- This follows from the separate existence of DN and UP points.
-  -- A deterministic equality with a specific `round` function
-  -- requires additional infrastructure not yet ported.
-  -- We directly use the DN existence theorem to produce a witness,
-  -- then inject it into the left disjunct.
-  rcases round_DN_exists beta fexp x hbeta with ⟨f, hF, hDN⟩
-  exact ⟨f, hF, Or.inl hDN⟩
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
+    roundR beta fexp rnd x = roundR beta fexp rnd_floor x ∨
+      roundR beta fexp rnd x = roundR beta fexp rnd_ceil x := by
+  classical
+  let sm := scaled_mantissa beta fexp x
+  have hdisj : rnd sm = Int.floor sm ∨ rnd sm = Int.ceil sm := by
+    have h := (Zrnd_DN_or_UP (rnd := rnd) sm) True.intro
+    simpa [wp, PostCond.noThrow, Id.run, pure] using h
+  rcases hdisj with hfloor | hceil
+  · left
+    simp [roundR, sm, hfloor, rnd_floor, FloatSpec.Core.Raux.Zfloor]
+  · right
+    simp [roundR, sm, hceil, rnd_ceil, FloatSpec.Core.Raux.Zceil]
 
 -- moved below, after `mag_DN`, to use that lemma
 
@@ -5532,12 +6557,16 @@ theorem generic_round_generic_ax
     using hx
 
 /-- Monotonicity of generic rounding: x <= y implies round x <= round y.
-    Uses sorry pending constructive proof via Ztrunc monotonicity. -/
+    Uses the constructive proof via Ztrunc monotonicity. -/
 theorem round_to_generic_monotone
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) :
+    (rnd : ℝ → ℝ → Prop) (hβ : 1 < beta) :
     Monotone (fun x => round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x) := by
-  sorry
+  intro x y hxy
+  have h := roundR_le (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Raux.Ztrunc) (x := x) (y := y) hβ hxy
+  simpa [round_to_generic, roundR, scaled_mantissa]
+    using h
 
 /-- Absolute-value compatibility for {name}`round_to_generic` (theorem).
 
@@ -5604,7 +6633,7 @@ theorem round_to_generic_abs
           = (((Ztrunc ((abs x) * (beta : ℝ) ^ (-e))) : Int) : ℝ) * (beta : ℝ) ^ e := by
       -- Expand and substitute using hf_abs'
       unfold round_to_generic cexp
-      simp only [Id.run, pure, Bind.bind, hf_abs']
+      simp only [RoundModeLike.toRnd_relation_apply, Id.run, pure, Bind.bind, hf_abs']
     -- Convert to the ((β^e)⁻¹) form used by simp elsewhere
     have hbne : (beta : ℝ) ≠ 0 := by exact_mod_cast (ne_of_gt hbposℤ)
     have hzpow_neg : (beta : ℝ) ^ (-e) = ((beta : ℝ) ^ e)⁻¹ := by simpa [zpow_neg]
@@ -5688,7 +6717,7 @@ theorem round_to_generic_abs
       have hLneg : round_to_generic beta fexp rnd (-x)
             = (((Ztrunc ((-x) * (beta : ℝ) ^ (-e))) : Int) : ℝ) * (beta : ℝ) ^ e := by
         unfold round_to_generic cexp
-        simp only [Id.run, pure, Bind.bind, hf_neg']
+        simp only [RoundModeLike.toRnd_relation_apply, Id.run, pure, Bind.bind, hf_neg']
       have hZreal : (((Ztrunc ((-x) * (beta : ℝ) ^ (-e))) : Int) : ℝ)
                         = -(((Ztrunc s) : Int) : ℝ) := by
         have harg : (-x) * (beta : ℝ) ^ (-e) = -s := hs_neg
@@ -5718,13 +6747,196 @@ theorem round_to_generic_abs
 
 
 /-- Magnitude does not decrease under rounding when result is nonzero.
-    Uses sorry pending constructive proof via mag properties. -/
+    Uses the constructive proof via mag properties. -/
 theorem mag_round_ge_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    (rnd : ℝ → ℝ → Prop) (x : ℝ) (hβ : 1 < beta) :
     let r := round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x
     r ≠ 0 → (mag beta x) ≤ (mag beta r) := by
-  sorry
+  classical
+  dsimp only
+  intro hr_ne
+  set r := round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x with hr
+  by_cases hx0 : x = 0
+  · have hr0 : r = 0 := by
+      simpa [r, hr, hx0, round_to_generic]
+    exact False.elim (hr_ne hr0)
+  set ex : Int := mag beta x with hex
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hlow_abs : (beta : ℝ) ^ (ex - 1) ≤ |x| := by
+    have htrip := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := x) hβ hx0
+    simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val, hex]
+      using htrip True.intro
+  have hupp_abs : |x| < (beta : ℝ) ^ ex := by
+    have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := x) hβ hx0
+    simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val, hex]
+      using htrip True.intro
+  have hround_abs :
+      round_to_generic beta fexp rnd |x| = |r| := by
+    have h := round_to_generic_abs (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) hβ
+    simpa [r, hr] using h
+  have hround_floor_abs :
+      round_to_generic beta fexp rnd |x| = roundR beta fexp rnd_floor |x| := by
+    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+    have hscale_nonneg :
+        0 ≤ |x| * (beta : ℝ) ^ (-(cexp beta fexp |x|)) := by
+      exact mul_nonneg (abs_nonneg x) (le_of_lt (zpow_pos hbposR _))
+    have hscale_nonneg_inv :
+        0 ≤ |x| * ((beta : ℝ) ^ (cexp beta fexp |x|))⁻¹ := by
+      simpa [zpow_neg] using hscale_nonneg
+    simp [round_to_generic, roundR, scaled_mantissa, rnd_floor,
+      FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Ztrunc,
+      not_lt.mpr hscale_nonneg_inv]
+  have hmag_ge_of_lower :
+      ∀ z : ℝ, z ≠ 0 → (beta : ℝ) ^ (ex - 1) ≤ |z| → ex ≤ mag beta z := by
+    intro z hz_ne hlow_z
+    by_contra hnot
+    have hlt_mag : mag beta z < ex := lt_of_not_ge hnot
+    have hmag_le : mag beta z ≤ ex - 1 := Int.le_sub_one_iff.mpr hlt_mag
+    have hz_upper : |z| < (beta : ℝ) ^ (mag beta z) := by
+      have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := z) hβ hz_ne
+      simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val]
+        using htrip True.intro
+    have hpow_le : (beta : ℝ) ^ (mag beta z) ≤ (beta : ℝ) ^ (ex - 1) := by
+      have htrip := FloatSpec.Core.Raux.bpow_le (beta := beta)
+        (e1 := mag beta z) (e2 := ex - 1) hβ hmag_le
+      simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run, pure]
+        using htrip True.intro
+    exact (not_lt_of_ge hlow_z) (lt_of_lt_of_le hz_upper hpow_le)
+  have hlow_r : (beta : ℝ) ^ (ex - 1) ≤ |r| := by
+    by_cases hsmall : ex ≤ fexp ex
+    · have hsmall_round :=
+        roundR_bounded_small_pos (beta := beta) (fexp := fexp) (rnd := rnd_floor)
+          (x := |x|) (ex := ex) ⟨hlow_abs, hupp_abs⟩ hsmall hβ
+      have hsmall_plain :
+          round_to_generic beta fexp rnd |x| = 0 ∨
+            round_to_generic beta fexp rnd |x| = (beta : ℝ) ^ (fexp ex) := by
+        simpa [hround_floor_abs] using hsmall_round
+      rcases hsmall_plain with hzero | hpow
+      · have hr_abs0 : |r| = 0 := by
+          simpa [hround_abs] using hzero
+        exact False.elim (hr_ne (abs_eq_zero.mp hr_abs0))
+      · have hpow_abs : |r| = (beta : ℝ) ^ (fexp ex) := by
+          simpa [hround_abs] using hpow
+        have hpow_le : (beta : ℝ) ^ (ex - 1) ≤ (beta : ℝ) ^ (fexp ex) := by
+          have hle : ex - 1 ≤ fexp ex := le_trans (sub_le_self ex (by decide : (0 : Int) ≤ 1)) hsmall
+          have htrip := FloatSpec.Core.Raux.bpow_le (beta := beta)
+            (e1 := ex - 1) (e2 := fexp ex) hβ hle
+          simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run, pure]
+            using htrip True.intro
+        simpa [hpow_abs] using hpow_le
+    · have hlarge : fexp ex < ex := lt_of_not_ge hsmall
+      have hlarge_round :=
+        roundR_bounded_large_pos (beta := beta) (fexp := fexp) (rnd := rnd_floor)
+          (x := |x|) (ex := ex) ⟨hlow_abs, hupp_abs⟩ hlarge hβ
+      have hlarge_plain :
+          (beta : ℝ) ^ (ex - 1) ≤ round_to_generic beta fexp rnd |x| := by
+        simpa [hround_floor_abs] using hlarge_round.left
+      simpa [hround_abs] using hlarge_plain
+  exact hmag_ge_of_lower r hr_ne hlow_r
+
+/-- Concrete counterpart of `mag_round_ge_ax` for the integer rounding
+operator used by `roundR`. -/
+theorem mag_roundR_ge
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    let r := roundR beta fexp rnd x
+    r ≠ 0 → (mag beta x) ≤ (mag beta r) := by
+  classical
+  dsimp only
+  intro hr_ne
+  let positive_case :
+      ∀ (rnd' : ℝ → Int), [Valid_rnd rnd'] → ∀ y : ℝ, 0 < y →
+        let ry := roundR beta fexp rnd' y
+        ry ≠ 0 → (mag beta y) ≤ (mag beta ry) := by
+    intro rnd' _ y hy
+    dsimp only
+    intro hry_ne
+    set ex : Int := mag beta y with hex
+    have hy_ne : y ≠ 0 := ne_of_gt hy
+    have hlow_y : (beta : ℝ) ^ (ex - 1) ≤ y := by
+      have htrip := FloatSpec.Core.Raux.mag_lower_bound (beta := beta) (x := y) hβ hy_ne
+      simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val,
+        abs_of_pos hy, hex] using htrip True.intro
+    have hupp_y : y < (beta : ℝ) ^ ex := by
+      have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := y) hβ hy_ne
+      simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val,
+        abs_of_pos hy, hex] using htrip True.intro
+    have hmag_ge_of_lower :
+        ∀ z : ℝ, z ≠ 0 → (beta : ℝ) ^ (ex - 1) ≤ |z| → ex ≤ mag beta z := by
+      intro z hz_ne hlow_z
+      by_contra hnot
+      have hlt_mag : mag beta z < ex := lt_of_not_ge hnot
+      have hmag_le : mag beta z ≤ ex - 1 := Int.le_sub_one_iff.mpr hlt_mag
+      have hz_upper : |z| < (beta : ℝ) ^ (mag beta z) := by
+        have htrip := FloatSpec.Core.Raux.mag_upper_bound (beta := beta) (x := z) hβ hz_ne
+        simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.abs_val]
+          using htrip True.intro
+      have hpow_le : (beta : ℝ) ^ (mag beta z) ≤ (beta : ℝ) ^ (ex - 1) := by
+        have htrip := FloatSpec.Core.Raux.bpow_le (beta := beta)
+          (e1 := mag beta z) (e2 := ex - 1) hβ hmag_le
+        simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run, pure]
+          using htrip True.intro
+      exact (not_lt_of_ge hlow_z) (lt_of_lt_of_le hz_upper hpow_le)
+    have hlow_ry :
+        (beta : ℝ) ^ (ex - 1) ≤ |roundR beta fexp rnd' y| := by
+      by_cases hsmall : ex ≤ fexp ex
+      · have hround :=
+          roundR_bounded_small_pos (beta := beta) (fexp := fexp) (rnd := rnd')
+            (x := y) (ex := ex) ⟨hlow_y, hupp_y⟩ hsmall hβ
+        rcases hround with hzero | hpow
+        · exact False.elim (hry_ne hzero)
+        · have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
+          have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
+          have hpow_pos : 0 < (beta : ℝ) ^ (fexp ex) := zpow_pos hbposR _
+          have hpow_abs :
+              |roundR beta fexp rnd' y| = (beta : ℝ) ^ (fexp ex) := by
+            simpa [hpow] using abs_of_pos hpow_pos
+          have hpow_le : (beta : ℝ) ^ (ex - 1) ≤ (beta : ℝ) ^ (fexp ex) := by
+            have hle : ex - 1 ≤ fexp ex :=
+              le_trans (sub_le_self ex (by decide : (0 : Int) ≤ 1)) hsmall
+            have htrip := FloatSpec.Core.Raux.bpow_le (beta := beta)
+              (e1 := ex - 1) (e2 := fexp ex) hβ hle
+            simpa [FloatSpec.Core.Raux.bpow_le_check, wp, PostCond.noThrow, Id.run, pure]
+              using htrip True.intro
+          simpa [hpow_abs] using hpow_le
+      · have hlarge : fexp ex < ex := lt_of_not_ge hsmall
+        have hround :=
+          roundR_bounded_large_pos (beta := beta) (fexp := fexp) (rnd := rnd')
+            (x := y) (ex := ex) ⟨hlow_y, hupp_y⟩ hlarge hβ
+        exact le_trans hround.left (le_abs_self (roundR beta fexp rnd' y))
+    exact hmag_ge_of_lower (roundR beta fexp rnd' y) hry_ne hlow_ry
+  by_cases hx0 : x = 0
+  · have hr0 : roundR beta fexp rnd x = 0 := by
+      subst x
+      have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
+        simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int))
+      simp [roundR, scaled_mantissa, hrnd0]
+    exact False.elim (hr_ne hr0)
+  · rcases lt_or_gt_of_ne hx0 with hx_lt | hx_gt
+    · have hy_pos : 0 < -x := neg_pos.mpr hx_lt
+      have hround_eq :
+          roundR beta fexp rnd x =
+            - roundR beta fexp (Zrnd_opp rnd) (-x) := by
+        have h := roundR_opp (beta := beta) (fexp := fexp) (rnd := rnd) (x := -x) hβ
+        simpa using h
+      have hry_ne : roundR beta fexp (Zrnd_opp rnd) (-x) ≠ 0 := by
+        intro hry0
+        exact hr_ne (by simpa [hround_eq, hry0])
+      have hpos :=
+        positive_case (Zrnd_opp rnd) (-x) hy_pos hry_ne
+      have hmag_x : mag beta (-x) = mag beta x := by
+        have htrip := FloatSpec.Core.Raux.mag_opp (beta := beta) (x := x) hβ
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+      have hmag_r :
+          mag beta (-roundR beta fexp (Zrnd_opp rnd) (-x))
+            = mag beta (roundR beta fexp (Zrnd_opp rnd) (-x)) := by
+        have htrip := FloatSpec.Core.Raux.mag_opp
+          (beta := beta) (x := roundR beta fexp (Zrnd_opp rnd) (-x)) hβ
+        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+      simpa [hmag_x, hround_eq, hmag_r] using hpos
+    · exact positive_case rnd x hx_gt hr_ne
 
 theorem generic_round_generic
     (x : ℝ) (beta : Int) (fexp1 fexp2 : Int → Int)
@@ -5756,34 +6968,30 @@ theorem round_to_generic_spec (beta : Int) (fexp : Int → Int) [Valid_exp beta 
 
 /-- Coq (Generic_fmt.v):
     Theorem round_generic:
-    For any rounding relation and real x, rounding to the generic
-    format produces a value in the generic format. -/
+    If x is already in the generic format, then rounding x returns x unchanged. -/
 theorem round_generic
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
-    ⦃⇓r => ⌜(generic_format beta fexp r)⌝⦄ := by
+    ⦃⇓r => ⌜r = x⌝⦄ := by
   intro hx
-  -- Use closure of the generic format under rounding (fexp preserved).
-  -- This is a direct specialization of `generic_round_generic` with `fexp1 = fexp2 = fexp`.
-  -- Evaluate the pure computation and apply the predicate-level result.
-  simpa using
-    (generic_round_generic (rnd := rnd) (x := x) (beta := beta)
-      (fexp1 := fexp) (fexp2 := fexp) rfl hx)
+  have hx_eq : x
+      = (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp x)))) : Int) : ℝ)
+          * (beta : ℝ) ^ (cexp beta fexp x) := by
+    simpa [generic_format, scaled_mantissa, cexp, FloatSpec.Core.Defs.F2R]
+      using hx
+  simpa [round_to_generic] using hx_eq.symm
 
 /-- Coq (Generic_fmt.v):
     Theorem generic_format_round:
       forall rnd x, generic_format (round rnd x).
-
-    Lean (spec alias): Same as {name}`round_generic`, provided for Coq-name compatibility. -/
+ -/
 theorem generic_format_round
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜(generic_format beta fexp x)⌝⦄
-    (pure (round_to_generic beta fexp rnd x) : Id ℝ)
-    ⦃⇓r => ⌜(generic_format beta fexp r)⌝⦄ :=
-  round_generic (beta := beta) (fexp := fexp) (rnd := rnd) (x := x)
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    generic_format beta fexp (roundR beta fexp rnd x) :=
+  generic_format_roundR (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) hβ
 
 /-- Coq (Generic_fmt.v):
     Theorem round_ext:
@@ -5816,19 +7024,9 @@ theorem round_generic_identity
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
-    ⦃⇓r => ⌜r = x⌝⦄ := by
-  intro hx
-  -- Expand the hypothesis that x is in the generic format to its reconstruction equality.
-  have hx_eq : x
-      = (((Ztrunc (x * (beta : ℝ) ^ (-(cexp beta fexp x)))) : Int) : ℝ)
-          * (beta : ℝ) ^ (cexp beta fexp x) := by
-    -- Unfold the generic_format predicate at x
-    simpa [generic_format, scaled_mantissa, cexp, FloatSpec.Core.Defs.F2R]
-      using hx
-  -- Evaluate the pure computation defining round_to_generic and use the equality above.
-  have hx_eq' := hx_eq.symm
-  simpa [round_to_generic]
-    using hx_eq'
+    ⦃⇓r => ⌜r = x⌝⦄ :=
+  round_generic (beta := beta) (hbeta := hbeta) (fexp := fexp)
+    (rnd := rnd) (x := x)
 
 /-- Coq (Generic_fmt.v):
     Theorem round_opp:
@@ -5848,7 +7046,7 @@ theorem round_opp
   -- Also, `cexp` depends on `|x|`, hence `cexp (-x) = cexp x`.
   -- Using `Ztrunc_neg` on the scaled mantissa yields the negation law.
   -- Note: -x = 0 ↔ x = 0, so the conditions are equivalent
-  simp only [round_to_generic,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -5866,15 +7064,16 @@ theorem round_opp
 theorem round_le
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
-    ⦃⌜x ≤ y⌝⦄
+    ⦃⌜1 < beta ∧ x ≤ y⌝⦄
     (do
       let rx := round_to_generic beta fexp rnd x
       let ry := round_to_generic beta fexp rnd y
       pure (rx, ry) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜let (rx, ry) := result; rx ≤ ry⌝⦄ := by
   -- Reduce the do-block to a pair, then apply monotonicity of `round_to_generic`.
-  intro hxy
-  have hmono := (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd)) hxy
+  intro hpre
+  rcases hpre with ⟨hβ, hxy⟩
+  have hmono := (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd) hβ) hxy
   simpa [round_to_generic]
     using hmono
 
@@ -5882,7 +7081,7 @@ theorem round_le
     Theorem round_ZR_or_AW:
       forall x, round rnd x = round Ztrunc x \/ round rnd x = round Zaway x.
 
-    Lean (spec placeholder): Any rounding result equals either
+    Lean port note: Any rounding result equals either
     truncation (ZR) or ties-away-from-zero (AW) rounding.
  -/
 theorem round_ZR_or_AW
@@ -5912,14 +7111,14 @@ theorem round_ZR_or_AW
 theorem round_ge_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
-    ⦃⌜(generic_format beta fexp x) ∧ x ≤ y⌝⦄
+    ⦃⌜1 < beta ∧ (generic_format beta fexp x) ∧ x ≤ y⌝⦄
     (pure (round_to_generic beta fexp rnd y) : Id ℝ)
     ⦃⇓ry => ⌜x ≤ ry⌝⦄ := by
   intro hpre
-  rcases hpre with ⟨hx, hxy⟩
+  rcases hpre with ⟨hβ, hx, hxy⟩
   -- Monotonicity: x ≤ y ⇒ round x ≤ round y
   have hmono :=
-    (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd)) hxy
+    (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd) hβ) hxy
   -- Show fixpoint on values already in generic format
   have hfix : round_to_generic beta fexp rnd x = x := by
     -- Turn the generic_format hypothesis into the reconstruction equality
@@ -5949,14 +7148,14 @@ theorem round_ge_generic
 theorem round_le_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
-    ⦃⌜(generic_format beta fexp y) ∧ x ≤ y⌝⦄
+    ⦃⌜1 < beta ∧ (generic_format beta fexp y) ∧ x ≤ y⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
     ⦃⇓rx => ⌜rx ≤ y⌝⦄ := by
   intro hpre
-  rcases hpre with ⟨hy, hxy⟩
+  rcases hpre with ⟨hβ, hy, hxy⟩
   -- Monotonicity: x ≤ y ⇒ round x ≤ round y
   have hmono :=
-    (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd)) hxy
+    (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd) hβ) hxy
   -- Show fixpoint on values already in generic format (for y)
   have hfix : round_to_generic beta fexp rnd y = y := by
     -- Turn the generic_format hypothesis into the reconstruction equality
@@ -6008,7 +7207,7 @@ theorem round_abs_abs
     against representable lower bounds. -/
 theorem abs_round_ge_generic_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
+    (rnd : ℝ → ℝ → Prop) (x y : ℝ) (hβ : 1 < beta) :
     (generic_format beta fexp x) → x ≤ abs y →
     x ≤ abs (round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) y) := by
   intro hxF hxle
@@ -6021,7 +7220,7 @@ theorem abs_round_ge_generic_ax
     have hx_le_r : x ≤ round_to_generic beta fexp rnd y := by
       simpa using
         (round_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-          (x := x) (y := y) ⟨hxF, hxle'⟩)
+          (x := x) (y := y) ⟨hβ, hxF, hxle'⟩)
     exact le_trans hx_le_r (le_abs_self _)
   · -- If y ≤ 0, then |y| = -y.
     have hy' : y ≤ 0 := le_of_not_ge hy
@@ -6031,10 +7230,10 @@ theorem abs_round_ge_generic_ax
     have hx_le_rneg : x ≤ round_to_generic beta fexp rnd (-y) := by
       simpa using
         (round_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-          (x := x) (y := -y) ⟨hxF, hxle'⟩)
+          (x := x) (y := -y) ⟨hβ, hxF, hxle'⟩)
     have h_opp : round_to_generic beta fexp rnd (-y)
                 = - round_to_generic beta fexp rnd y := by
-      simp only [round_to_generic,
+      simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
             FloatSpec.Core.Generic_fmt.cexp,
             FloatSpec.Core.Raux.mag,
             abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6053,7 +7252,7 @@ theorem abs_round_ge_generic_ax
 -/
 theorem abs_round_le_generic_ax
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
+    (rnd : ℝ → ℝ → Prop) (x y : ℝ) (hβ : 1 < beta) :
     (generic_format beta fexp y) → abs x ≤ y →
     abs (round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x) ≤ y := by
   intro hyF habs
@@ -6065,14 +7264,14 @@ theorem abs_round_le_generic_ax
   have h_up : round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x ≤ y := by
     simpa using
       (round_le_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-        (x := x) (y := y) ⟨hyF, hx_le_y⟩)
+        (x := x) (y := y) ⟨hβ, hyF, hx_le_y⟩)
   -- Lower bound: -y ≤ round x since -y is representable and -y ≤ x
   have hnegF : (generic_format beta fexp (-y)) :=
     generic_format_neg_closed (beta := beta) (fexp := fexp) (y := y) hyF
   have h_lo : -y ≤ round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x := by
     simpa using
       (round_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-        (x := -y) (y := x) ⟨hnegF, hneg_y_le_x⟩)
+        (x := -y) (y := x) ⟨hβ, hnegF, hneg_y_le_x⟩)
   -- Conclude with the absolute-value characterization
   exact (abs_le.mpr ⟨h_lo, h_up⟩)
 
@@ -6109,7 +7308,7 @@ theorem round_bounded_large
     -- round_le_generic expects generic_format on the upper bound and a ≤ hypothesis
     simpa using
       (round_le_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-        (x := abs x) (y := (beta : ℝ) ^ ex) ⟨hgfmt_ex, hx_le⟩)
+        (x := abs x) (y := (beta : ℝ) ^ ex) ⟨hβ, hgfmt_ex, hx_le⟩)
   -- Lower bound: β^(ex-1) ≤ |round x|
   --   Show β^(ex-1) is representable and below |x|, then use round_ge_generic.
   -- From hlex : fexp ex < ex, derive fexp ex ≤ ex - 1
@@ -6129,7 +7328,7 @@ theorem round_bounded_large
     -- round_ge_generic expects generic_format on the lower bound and a ≤ hypothesis
     simpa using
       (round_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-        (x := (beta : ℝ) ^ (ex - 1)) (y := abs x) ⟨hgfmt_exm1, hlow⟩)
+        (x := (beta : ℝ) ^ (ex - 1)) (y := abs x) ⟨hβ, hgfmt_exm1, hlow⟩)
   -- Conclude by rewriting round(|x|) as |round(x)| and bundling bounds
   constructor
   · -- Lower bound with absolute value on the rounded result
@@ -6152,7 +7351,7 @@ theorem round_0 (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (rnd : �
   intro _
   -- Direct computation: scaled mantissa at 0 is 0, so rounding yields 0.
   -- Apply zero_mul first to reduce 0 * β^(-e) to 0, then Ztrunc_zero_coe after Id.run
-  simp only [round_to_generic, wp, PostCond.noThrow, PredTrans.pure, pure, Bind.bind,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation, wp, PostCond.noThrow, PredTrans.pure, pure, Bind.bind,
              zero_mul, Id.run, Ztrunc_zero_coe, Int.cast_zero, zero_mul]
   trivial
 
@@ -6519,7 +7718,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     -- Rewrite base (β : ℝ) as ((natAbs β) : ℝ) since β > 0
     have hbeta_cast_eq : ((Int.natAbs beta : Nat) : ℝ) = (beta : ℝ) := by
       have : ((Int.natAbs beta : Nat) : ℝ) = abs (beta : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [abs_of_pos hbposR] using this
     -- Convert the RHS to a casted Nat power
     have hRHS_cast : (beta : ℝ) ^ (Int.toNat (k - e))
@@ -6531,7 +7730,7 @@ theorem precision_generic_format (beta : Int) (fexp : Int → Int) [Valid_exp be
     have hcast_ineq : (Int.natAbs m : ℝ) ≤ ((Int.natAbs beta ^ Int.toNat (k - e) : Nat) : ℝ) := by
       -- Use ((natAbs m) : ℝ) = |(m : ℝ)| and rewrite the RHS using hzpow_toNat and hRHS_cast
       have hLHS : (Int.natAbs m : ℝ) = abs (m : ℝ) := by
-        simpa [Int.cast_natAbs, Int.cast_abs]
+        simpa [Nat.cast_natAbs, Int.cast_abs]
       simpa [hLHS, hzpow_toNat, hRHS_cast] using h_abs_m_le
     -- Coercion monotonicity gives the required Nat inequality
     exact (by exact_mod_cast hcast_ineq)
@@ -6558,33 +7757,23 @@ noncomputable def round_N_to_format
 -- (moved earlier) round_DN_to_format, round_UP_to_format, and round_to_format_properties
 
 /-
-  Placeholder theorems relating rounding modes (opp/abs/ZR/DN/UP/AW).
-  We re-introduce them one-by-one with empty proofs to align with Coq.
+  Theorems relating rounding modes (opp/abs/ZR/DN/UP/AW).
+  They are ported one-by-one to align with Coq.
 -/
 
 /-- Coq Generic_fmt.v: Theorem round_DN_opp.
     Statement: ∀ x, round Zfloor (-x) = - round Zceil x.
-    Lean (spec placeholder): Specializes round_opp for DN/UP relations. -/
+    Concrete floor rounding commutes with negation as ceiling rounding. -/
 theorem round_DN_opp
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (rndDN rndUP : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜True⌝⦄
-    (do
-      let a := round_to_generic beta fexp rndDN (-x)
-      let b := round_to_generic beta fexp rndUP x
-      pure (a, b) : Id (ℝ × ℝ))
-    ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
-  intro _
-  -- `round_to_generic` ignores the rounding relation argument and
-  -- reconstruction uses `cexp` which depends on `|x|`, so `cexp (-x) = cexp x`.
-  -- Using `Ztrunc_neg` on the scaled mantissa yields the negation law.
-  simp only [round_to_generic,
-        FloatSpec.Core.Generic_fmt.cexp,
-        FloatSpec.Core.Raux.mag,
-        abs_neg, neg_eq_zero, pure, Bind.bind,
-        wp, PostCond.noThrow, PredTrans.pure,
-        neg_mul, mul_neg, Id.run, Ztrunc_neg_coe_real, Int.cast_neg]
-  trivial
+    (x : ℝ) (hβ : 1 < beta) :
+    roundR beta fexp rnd_floor (-x) = - roundR beta fexp rnd_ceil x := by
+  have hopp_fun : Zrnd_opp rnd_floor = rnd_ceil := by
+    funext y
+    simp [Zrnd_opp, rnd_floor, rnd_ceil, FloatSpec.Core.Raux.Zfloor,
+      FloatSpec.Core.Raux.Zceil, Int.floor_neg]
+  have h := roundR_opp (beta := beta) (fexp := fexp) (rnd := rnd_floor) (x := x) hβ
+  simpa [hopp_fun] using h
 
 -- Coq (Generic_fmt.v): round_UP_opp
 theorem round_UP_opp
@@ -6597,8 +7786,8 @@ theorem round_UP_opp
       pure (a, b) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
   intro _
-  -- Same computation as in round_DN_opp; rounding mode is ignored.
-  simp only [round_to_generic,
+  -- Same computation as in round_DN_opp; this branch does not inspect the rounding mode.
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6617,8 +7806,8 @@ theorem round_ZR_opp
       pure (a, b) : Id (ℝ × ℝ))
     ⦃⇓result => ⌜let (a, b) := result; a = -b⌝⦄ := by
   intro _
-  -- Same computation; mode argument is ignored.
-  simp only [round_to_generic,
+  -- Same computation; this branch does not inspect the mode argument.
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6659,7 +7848,7 @@ theorem round_AW_opp
   -- `round_to_generic` ignores the rounding relation argument and
   -- reconstruction uses `cexp` which depends on `|x|`, so `cexp (-x) = cexp x`.
   -- Using `Ztrunc_neg` on the scaled mantissa yields the negation law.
-  simp only [round_to_generic,
+  simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         abs_neg, neg_eq_zero, pure, Bind.bind,
@@ -6745,19 +7934,19 @@ theorem round_AW_DN
 
 /-- Coq {lit}`Generic_fmt.v`: Theorem {name}`mag_round_ge`.
     If round rnd x ≠ 0, then mag x ≤ mag (round rnd x).
-    Lean (spec placeholder): Magnitude does not decrease under rounding away from zero.
+    Lean port note: Magnitude does not decrease under rounding away from zero.
  -/
 theorem mag_round_ge
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜True⌝⦄
+    ⦃⌜1 < beta⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
     ⦃⇓r => ⌜r ≠ 0 → (mag beta x) ≤ (mag beta r)⌝⦄ := by
-  intro _
+  intro hβ
   -- Evaluate the `Id` computation and reduce to the core implication.
   simp [wp, PostCond.noThrow, Id.run]
   -- Apply the localized theorem for `mag` monotonicity under rounding.
-  simpa using (mag_round_ge_ax (beta := beta) (fexp := fexp) (rnd := rnd) (x := x))
+  simpa using (mag_round_ge_ax (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) hβ)
 
 
 -- (exp_small_round_0_pos_ax moved below round_large_pos_ge_bpow)
@@ -6864,9 +8053,9 @@ theorem cexp_ge_bpow
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
-    1 < beta → (beta : ℝ) ^ (e - 1) < abs x → fexp e ≤ (cexp beta fexp x) := by
-  intro hβ hlt
-  exact cexp_ge_bpow_ax (beta := beta) (fexp := fexp) (x := x) (e := e) hβ hlt
+    1 < beta → (beta : ℝ) ^ (e - 1) ≤ abs x → fexp e ≤ (cexp beta fexp x) := by
+  intro hβ hle
+  exact cexp_ge_bpow_ax (beta := beta) (fexp := fexp) (x := x) (e := e) hβ hle
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`lt_cexp`
     If y ≠ 0 and cexp x < cexp y, then |x| < |y|.
@@ -6900,15 +8089,16 @@ theorem lt_cexp
 theorem abs_round_ge_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
-    ⦃⌜(generic_format beta fexp x) ∧ x ≤ abs y⌝⦄
+    ⦃⌜1 < beta ∧ (generic_format beta fexp x) ∧ x ≤ abs y⌝⦄
     (pure (round_to_generic beta fexp rnd y) : Id ℝ)
     ⦃⇓r => ⌜x ≤ abs r⌝⦄ := by
   intro hpre
-  rcases hpre with ⟨hxF, hxle⟩
+  rcases hpre with ⟨hβ, hxF, hxle⟩
   -- Reduce the Id/pure computation
   simp [wp, PostCond.noThrow, Id.run, pure]
   -- Apply the absolute-value lower-bound theorem
-  exact abs_round_ge_generic_ax (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) (y := y) hxF hxle
+  exact abs_round_ge_generic_ax (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) (y := y)
+    hβ hxF hxle
 
 /-- Coq {lit}`Generic_fmt.v`: Theorem {name}`abs_round_le_generic`.
     If {name}`generic_format` holds for y and |x| ≤ y, then
@@ -6917,15 +8107,15 @@ theorem abs_round_ge_generic
 theorem abs_round_le_generic
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
-    ⦃⌜(generic_format beta fexp y) ∧ abs x ≤ y⌝⦄
+    ⦃⌜1 < beta ∧ (generic_format beta fexp y) ∧ abs x ≤ y⌝⦄
     (pure (round_to_generic beta fexp rnd x) : Id ℝ)
     ⦃⇓r => ⌜abs r ≤ y⌝⦄ := by
   intro hpre
-  rcases hpre with ⟨hyF, hle⟩
+  rcases hpre with ⟨hβ, hyF, hle⟩
   -- Reduce the Id/pure computation and apply the theorem
   simp [wp, PostCond.noThrow, Id.run, pure]
   exact abs_round_le_generic_ax (beta := beta) (fexp := fexp) (rnd := rnd)
-    (x := x) (y := y) hyF hle
+    (x := x) (y := y) hβ hyF hle
 
 /-- Coq (Generic_fmt.v):
     Theorem round_bounded_small_pos:
@@ -7038,7 +8228,7 @@ theorem round_bounded_large_pos
     have hle_abs : (beta : ℝ) ^ (ex - 1) ≤ abs x := by simpa [habsx] using hx_low
     -- Apply the theorem
     exact abs_round_ge_generic_ax (beta := beta) (fexp := fexp) (rnd := rnd)
-      (x := (beta : ℝ) ^ (ex - 1)) (y := x) hgen_low_run hle_abs
+      (x := (beta : ℝ) ^ (ex - 1)) (y := x) hβ hgen_low_run hle_abs
   -- Upper bound: use abs_round_le_generic with y = β^ex
   have h_le : abs (round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x) ≤ (beta : ℝ) ^ ex := by
     -- Show β^ex is in generic format using fexp ex ≤ ex
@@ -7052,13 +8242,13 @@ theorem round_bounded_large_pos
     have hle_abs : abs x ≤ (beta : ℝ) ^ ex := by simpa [habsx] using le_of_lt hx_high
     -- Apply the theorem
     exact abs_round_le_generic_ax (beta := beta) (fexp := fexp) (rnd := rnd)
-      (x := x) (y := (beta : ℝ) ^ ex) hgen_up_run hle_abs
+      (x := x) (y := (beta : ℝ) ^ ex) hβ hgen_up_run hle_abs
   -- Show round result is nonnegative using monotonicity and round 0 = 0
   have hr0 : round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) 0 = 0 := by
-    simp only [round_to_generic]
+    simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, RoundModeLike.toRnd_relation]
     simp only [zero_mul, Ztrunc_zero, Int.cast_zero, zero_mul]
   have hr_nonneg : 0 ≤ round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x := by
-    have hmono := round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd)
+    have hmono := round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd) hβ
     have : round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) 0
             ≤ round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x :=
       hmono (le_of_lt hx_pos)
@@ -7078,16 +8268,16 @@ theorem round_bounded_large_pos
 theorem round_le_pos
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (rnd : ℝ → ℝ → Prop) (x y : ℝ) :
-    ⦃⌜0 < x ∧ x ≤ y⌝⦄
+    ⦃⌜1 < beta ∧ 0 < x ∧ x ≤ y⌝⦄
     (do
       let rx := round_to_generic beta fexp rnd x
       let ry := round_to_generic beta fexp rnd y
       pure (rx, ry) : Id (ℝ × ℝ))
     ⦃⇓p => ⌜let (rx, ry) := p; rx ≤ ry⌝⦄ := by
   intro hpre
-  rcases hpre with ⟨_, hxy⟩
+  rcases hpre with ⟨hβ, _, hxy⟩
   -- Monotonicity of the rounding operation yields the desired inequality.
-  have hmono := (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd)) hxy
+  have hmono := (round_to_generic_monotone (beta := beta) (fexp := fexp) (rnd := rnd) hβ) hxy
   simpa [round_to_generic]
     using hmono
 
@@ -7097,13 +8287,23 @@ theorem round_le_pos
  -/
 theorem round_DN_small_pos
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x : ℝ) (ex : Int) :
-    ⦃⌜ex ≤ fexp ex ∧ (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
-    (pure 0 : Id ℝ)
-    ⦃⇓r => ⌜r = 0⌝⦄ := by
-  intro _
-  -- The computation returns the constant 0; close the triple directly.
-  simp [wp, PostCond.noThrow, Id.run, pure]
+    (x : ℝ) (ex : Int)
+    (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
+    (he : ex ≤ fexp ex) (hβ : 1 < beta) :
+    roundR beta fexp rnd_floor x = 0 := by
+  have hcexp : cexp beta fexp x = fexp ex := by
+    have h := cexp_fexp_pos (beta := beta) (fexp := fexp) (x := x) (ex := ex)
+    simpa [wp, PostCond.noThrow, Id.run, pure]
+      using h ⟨hβ, hx.1, hx.2⟩
+  have hfloor :
+      Int.floor (x * (beta : ℝ) ^ (-(fexp ex))) = 0 :=
+    mantissa_DN_small_pos (beta := beta) (fexp := fexp) (x := x) (ex := ex)
+      hx he hβ
+  have hrnd :
+      rnd_floor (scaled_mantissa beta fexp x) = 0 := by
+    simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor, scaled_mantissa, hcexp]
+      using hfloor
+  simp [roundR, hrnd]
 
 /-- Coq (Generic_fmt.v):
     Lemma round_UP_small_pos:
@@ -7112,36 +8312,52 @@ theorem round_DN_small_pos
 theorem round_UP_small_pos
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     (x : ℝ) (ex : Int) :
-    ⦃⌜ex ≤ fexp ex ∧ (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
-    (pure ((beta : ℝ) ^ (fexp ex)) : Id ℝ)
+    ⦃⌜1 < beta ∧ ex ≤ fexp ex ∧ (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
+    (pure (round_to_generic beta fexp rnd_ceil x) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ (fexp ex)⌝⦄ := by
-  intro _
-  -- The computation returns the claimed constant; close the triple directly.
+  intro hpre
+  rcases hpre with ⟨hβ, he, hx_low, hx_high⟩
   simp [wp, PostCond.noThrow, Id.run, pure]
+  have hcexp : cexp beta fexp x = fexp ex := by
+    have h := cexp_fexp_pos (beta := beta) (fexp := fexp) (x := x) (ex := ex)
+    simpa [wp, PostCond.noThrow, Id.run, pure]
+      using h ⟨hβ, hx_low, hx_high⟩
+  have hceil :
+      Int.ceil (x * (beta : ℝ) ^ (-(fexp ex))) = 1 :=
+    mantissa_UP_small_pos (beta := beta) (fexp := fexp) (x := x) (ex := ex)
+      ⟨hx_low, hx_high⟩ he hβ
+  have hrnd :
+      rnd_ceil (scaled_mantissa beta fexp x) = 1 := by
+    simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil, scaled_mantissa, hcexp]
+      using hceil
+  calc
+    round_to_generic beta fexp rnd_ceil x = roundR beta fexp rnd_ceil x := by
+      exact round_to_generic_int_eq_roundR (beta := beta) (fexp := fexp) (rnd := rnd_ceil) (x := x)
+    _ = (beta : ℝ) ^ (fexp ex) := by
+      simp [roundR, hrnd, hcexp]
 
 /-- Coq (Generic_fmt.v):
-    Lemma round_DN_UP_lt:
-      For DN/UP points d,u at x with d < u, any f in format satisfies f ≤ d ∨ u ≤ f.
+    Theorem round_DN_UP_lt:
+      If x is not in the generic format, it lies strictly between its concrete
+      floor and ceiling roundings.
  -/
 theorem round_DN_UP_lt
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
-    (x d u f : ℝ) :
-    Rnd_DN_pt (fun y => (generic_format beta fexp y)) x d →
-    Rnd_UP_pt (fun y => (generic_format beta fexp y)) x u →
-    (generic_format beta fexp f) → d < u → (f ≤ d ∨ u ≤ f) := by
-  intro hdn hup hfF _
-  rcases hdn with ⟨hFd, hd_le_x, hmax⟩
-  rcases hup with ⟨hFu, hx_le_u, hmin⟩
-  -- Totality of ≤ on ℝ gives cases f ≤ x or x ≤ f
-  cases le_total f x with
-  | inl hf_le_x =>
-      -- If f ≤ x, maximality of d among F-values ≤ x gives f ≤ d
-      left
-      exact hmax f hfF hf_le_x
-  | inr hx_le_f =>
-      -- If x ≤ f, minimality of u among F-values ≥ x gives u ≤ f
-      right
-      exact hmin f hfF hx_le_f
+    (x : ℝ) (hβ : 1 < beta) (hxF : ¬ generic_format beta fexp x) :
+    roundR beta fexp rnd_floor x < x ∧ x < roundR beta fexp rnd_ceil x := by
+  have hdn := round_DN_pt (beta := beta) (fexp := fexp) (x := x) hβ
+  have hup := round_UP_pt (beta := beta) (fexp := fexp) (x := x) hβ
+  rcases hdn with ⟨hFd, hd_le_x, _⟩
+  rcases hup with ⟨hFu, hx_le_u, _⟩
+  constructor
+  · exact lt_of_le_of_ne hd_le_x (by
+      intro h_eq
+      apply hxF
+      simpa [h_eq] using hFd)
+  · exact lt_of_le_of_ne hx_le_u (by
+      intro h_eq
+      apply hxF
+      simpa [← h_eq] using hFu)
 
 /-- Coq {lit}`Generic_fmt.v`:
     Lemma {lean}`round_large_pos_ge_bpow`:
@@ -7168,7 +8384,7 @@ theorem round_large_pos_ge_bpow
                   ≤ round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x := by
     simpa using
       (round_ge_generic (beta := beta) (fexp := fexp) (rnd := rnd)
-        (x := (beta : ℝ) ^ (ex - 1)) (y := x) ⟨hgfmt_exm1_run, hx_low⟩)
+        (x := (beta : ℝ) ^ (ex - 1)) (y := x) ⟨hβ, hgfmt_exm1_run, hx_low⟩)
   -- Close the Hoare triple for the pure computation
   simpa [wp, PostCond.noThrow, Id.run, pure] using h_lower
 
@@ -7226,7 +8442,7 @@ theorem exp_small_round_0_pos
     Theorem exp_small_round_0:
       (bpow (ex-1) ≤ |x| < bpow ex) → round rnd x = 0 → ex ≤ fexp ex.
 
-    Lean (spec placeholder): Small-exponent inputs round to zero only in the small regime. -/
+    Lean port note: Small-exponent inputs round to zero only in the small regime. -/
 theorem exp_small_round_0
     (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
     [Monotone_exp fexp]
@@ -7255,7 +8471,7 @@ theorem exp_small_round_0
     -- Use hcexp_eq to rewrite the (-x)-branch and Ztrunc_neg for negation
     simp only [hcexp_eq]
     -- -x * β^(-e) = -(x * β^(-e)), so Ztrunc(-(x * ...)) = -(Ztrunc(x * ...))
-    simp only [neg_mul, Ztrunc_neg, Int.cast_neg, neg_mul]
+    simp only [RoundModeLike.toRnd_relation_apply, neg_mul, Ztrunc_neg, Int.cast_neg, neg_mul]
   -- Split on the sign of x and reduce to the positive case
   by_cases hx_nonneg : 0 ≤ x
   · -- abs x = x
@@ -7333,7 +8549,7 @@ theorem mag_round_ZR
   have h_ge : (mag beta x) ≤ (mag beta r) := by
     -- Use the localized theorem via the small wrapper lemma
     simpa [hrdef] using
-      (mag_round_ge_ax (beta := beta) (fexp := fexp) (rnd := rndZR) (x := x) hr_ne)
+      (mag_round_ge_ax (beta := beta) (fexp := fexp) (rnd := rndZR) (x := x) hβ hr_ne)
   -- Upper bound: |r| ≤ (β : ℝ) ^ mag(x)
   -- Notation for mag/cexp on x
   set e : Int := (mag beta x)
@@ -7384,12 +8600,65 @@ theorem mag_round_ZR
   -- We need |r| < β^e. The key insight is that r ≠ 0 implies we can use the
   -- strict inequality from mag_upper_bound on r itself.
   have h_abs_r_lt : abs r < (beta : ℝ) ^ e := by
-    -- Since r ≠ 0, the bound is strict. The proof uses:
-    -- 1. |r| ≤ β^e (from h_abs_r_le)
-    -- 2. r ≠ 0 and r is a scaled integer, so |r| is in the generic format
-    -- 3. Generic format values satisfy |r| < β^(mag r), and mag r ≤ e gives |r| < β^e
-    -- This requires careful reasoning about generic format bounds
-    sorry
+    have h_abs_r_le_x : abs r ≤ abs x := by
+      have hpow_nonneg : 0 ≤ (beta : ℝ) ^ c := le_of_lt (zpow_pos hbposR _)
+      have htr_le :
+          abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+            ≤ abs (x * (beta : ℝ) ^ (-c)) := by
+        simpa using abs_Ztrunc_le_abs (y := x * (beta : ℝ) ^ (-c))
+      have h_abs_eq :
+          abs r =
+            abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+              * (beta : ℝ) ^ c := by
+        have hpow_abs : abs ((beta : ℝ) ^ c) = (beta : ℝ) ^ c :=
+          abs_of_nonneg hpow_nonneg
+        simpa [hr_explicit, abs_mul, hpow_abs]
+      have hmul_le :
+          abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+              * (beta : ℝ) ^ c
+            ≤ abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c :=
+        mul_le_mul_of_nonneg_right htr_le hpow_nonneg
+      have hscaled :
+          abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c = abs x := by
+        have hpow_pos_neg : 0 < (beta : ℝ) ^ (-c) := zpow_pos hbposR _
+        have hpow_abs_neg : abs ((beta : ℝ) ^ (-c)) = (beta : ℝ) ^ (-c) :=
+          abs_of_pos hpow_pos_neg
+        have hpow_cancel : (beta : ℝ) ^ (-c) * (beta : ℝ) ^ c = 1 := by
+          calc
+            (beta : ℝ) ^ (-c) * (beta : ℝ) ^ c
+                = (beta : ℝ) ^ ((-c) + c) := by rw [← zpow_add₀ hbneR]
+            _ = (beta : ℝ) ^ 0 := by
+                  have hsum : (-c) + c = 0 := by ring
+                  rw [hsum]
+                  rfl
+            _ = 1 := zpow_zero (beta : ℝ)
+        calc
+          abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c
+              = (abs x * abs ((beta : ℝ) ^ (-c))) * (beta : ℝ) ^ c := by
+                  rw [abs_mul]
+          _ = (abs x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c := by
+                  rw [hpow_abs_neg]
+          _ = abs x * ((beta : ℝ) ^ (-c) * (beta : ℝ) ^ c) := by ring
+          _ = abs x * 1 := by
+                  rw [hpow_cancel]
+          _ = abs x := by ring
+      calc
+        abs r
+            = abs (((FloatSpec.Core.Raux.Ztrunc (x * (beta : ℝ) ^ (-c))) : Int) : ℝ)
+                * (beta : ℝ) ^ c := h_abs_eq
+        _ ≤ abs (x * (beta : ℝ) ^ (-c)) * (beta : ℝ) ^ c := hmul_le
+        _ = abs x := hscaled
+    have hx_ne : x ≠ 0 := by
+      intro hx0
+      have h_abs_r_zero : abs r = 0 := by
+        have : abs r ≤ 0 := by simpa [hx0] using h_abs_r_le_x
+        exact le_antisymm this (abs_nonneg r)
+      exact hr_ne (abs_eq_zero.mp h_abs_r_zero)
+    have hx_upper : abs x < (beta : ℝ) ^ e := by
+      have hmub := FloatSpec.Core.Raux.mag_upper_bound beta x hβ hx_ne
+      unfold FloatSpec.Core.Raux.abs_val at hmub
+      simpa [wp, PostCond.noThrow, Id.run, pure, e] using hmub (by trivial)
+    exact lt_of_le_of_lt h_abs_r_le_x hx_upper
   -- Now use mag_le_abs
   have h_le : (mag beta r) ≤ e := by
     have htrip := FloatSpec.Core.Raux.mag_le_abs beta r e hβ hr_ne h_abs_r_lt
@@ -7426,10 +8695,26 @@ theorem cexp_round_ge_ax
   -- Conclude inequality as equality
   rw [hcexp_eq]
 
+/-- Coq (`Generic_fmt.v`): `Theorem cexp_round_ge`.
+
+For concrete Flocq-style integer roundings, a nonzero rounded result cannot
+have a smaller canonical exponent. -/
+theorem cexp_round_ge
+    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] [Monotone_exp fexp]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
+    round beta fexp rnd x ≠ 0 →
+      cexp beta fexp x ≤ cexp beta fexp (round beta fexp rnd x) := by
+  intro hround_ne
+  have hmag :
+      mag beta x ≤ mag beta (roundR beta fexp rnd x) := by
+    exact (mag_roundR_ge (beta := beta) (fexp := fexp) (rnd := rnd)
+      (x := x) hβ) (by simpa [round] using hround_ne)
+  simpa [cexp, round] using (Monotone_exp.mono (fexp := fexp) hmag)
+
 theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     [Valid_exp beta fexp] [Monotone_exp fexp] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    (pure (round_to_generic beta fexp (fun _ _ => True) x) : Id ℝ)
+    (pure (round_to_generic beta fexp Ztrunc_rel x) : Id ℝ)
     ⦃⇓r => ⌜0 < r → (scaled_mantissa beta fexp r) = (((Ztrunc ((scaled_mantissa beta fexp x))) : Int) : ℝ)⌝⦄ := by
   intro hβ
   -- Reduce the computation to bind-free form and introduce the positivity premise.
@@ -7439,7 +8724,7 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
   -- Notation for the rounded value and exponents
   set ex : Int := (cexp beta fexp x) with hex
   set s : ℝ := (scaled_mantissa beta fexp x) with hs
-  set r : ℝ := round_to_generic beta fexp (fun _ _ => True) x with hrdef
+  set r : ℝ := round_to_generic beta fexp Ztrunc_rel x with hrdef
   -- Normalize the goal to an equality of real numbers (eliminate the Id wrapper)
   -- Adjust only the goal; no hypotheses need changing here.
   change (scaled_mantissa beta fexp r) =
@@ -7534,14 +8819,15 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     -- From the localized theorem for round-to-generic, applied to our `r`
     have hr_ne : r ≠ 0 := ne_of_gt hr_pos_r
     -- Make `r` syntactically match the theorem's `round_to_generic` result
-    have hr_eq : round_to_generic (beta := beta) (fexp := fexp) (mode := fun _ _ => True) x = r := by
+    have hr_eq : round_to_generic (beta := beta) (fexp := fexp)
+        (mode := Ztrunc_rel) x = r := by
       simp [round_to_generic,
             FloatSpec.Core.Generic_fmt.cexp,
             hrdef]
     -- Rewrite the target and use the theorem
     simpa [hr_eq] using
       (cexp_round_ge_ax (beta := beta) (fexp := fexp)
-        (rnd := fun _ _ => True) (x := x) hβ r hr_eq.symm hr_ne)
+        (rnd := Ztrunc_rel) (x := x) hβ r hr_eq.symm hr_ne)
   have heq_exp : (cexp beta fexp r) = (cexp beta fexp x) := le_antisymm hle1 hle2
   -- Base nonnegativity facts from 1 < beta
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -7598,24 +8884,134 @@ theorem scaled_mantissa_DN (beta : Int) (fexp : Int → Int)
     equals that of the input. We require 1 < beta, as in the Coq development. -/
 theorem mag_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
     ⦃⌜1 < beta⌝⦄
-    (pure (round_to_generic beta fexp (fun r y => True) x) : Id ℝ)
+    (pure (roundR beta fexp rnd_floor x) : Id ℝ)
     ⦃⇓r => ⌜0 < r → (mag beta r) = (mag beta x)⌝⦄ := by
   intro hβ
-  let rndTrue : ℝ → ℝ → Prop := fun r y => True
-  -- Reduce the Id computation; denote the rounded value as r.
-  simp [wp, PostCond.noThrow, Id.run, pure, rndTrue]
+  simp [wp, PostCond.noThrow, Id.run, pure]
   intro hr_pos
-  -- Specialize the ZR magnitude preservation lemma to the trivial relation; `round_to_generic`
-  -- ignores the relation argument, so this is general.
+  set sm : ℝ := scaled_mantissa beta fexp x with hsm
+  set e : Int := cexp beta fexp x with he
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+  have hpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbposR e
+  have hr_exp :
+      roundR beta fexp rnd_floor x =
+        (((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e) := by
+    simp [roundR, sm, e, hsm, he]
+  have hfloor_pos_real : 0 < ((rnd_floor sm : Int) : ℝ) := by
+    have hprod : 0 < ((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e := by
+      simpa [hr_exp] using hr_pos
+    exact pos_of_mul_pos_right (by simpa [mul_comm] using hprod) (le_of_lt hpow_pos)
+  have hsm_pos : 0 < sm := by
+    have hfloor_le : ((rnd_floor sm : Int) : ℝ) ≤ sm := by
+      simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using Int.floor_le sm
+    exact lt_of_lt_of_le hfloor_pos_real hfloor_le
+  have htrunc_floor : FloatSpec.Core.Raux.Ztrunc sm = rnd_floor sm := by
+    have htr := FloatSpec.Core.Raux.Ztrunc_floor sm (le_of_lt hsm_pos) True.intro
+    simpa [wp, PostCond.noThrow, Id.run, pure, rnd_floor, FloatSpec.Core.Raux.Zfloor] using htr
+  have hround_eq :
+      round_to_generic beta fexp Ztrunc_rel x = roundR beta fexp rnd_floor x := by
+    have hrtg_exp :
+        round_to_generic beta fexp Ztrunc_rel x =
+          (((FloatSpec.Core.Raux.Ztrunc (scaled_mantissa beta fexp x) : Int) : ℝ)
+            * (beta : ℝ) ^ (cexp beta fexp x)) := by
+      simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, scaled_mantissa]
+    calc
+      round_to_generic beta fexp Ztrunc_rel x
+          = (((FloatSpec.Core.Raux.Ztrunc sm : Int) : ℝ) * (beta : ℝ) ^ e) := by
+              simpa [hsm, he] using hrtg_exp
+      _ = (((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e) := by
+              rw [htrunc_floor]
+      _ = roundR beta fexp rnd_floor x := by
+              rw [hr_exp]
   have hZR := (mag_round_ZR (beta := beta) (fexp := fexp)
-                  (rndZR := rndTrue) (x := x)) hβ
-  -- Extract the implication from the Hoare triple and apply it to `hr_pos`.
+                  (rndZR := Ztrunc_rel) (x := x)) hβ
   have himp :
-      round_to_generic beta fexp rndTrue x ≠ 0 →
-      (mag beta (round_to_generic beta fexp rndTrue x)) = (mag beta x) := by
+      round_to_generic beta fexp Ztrunc_rel x ≠ 0 →
+      (mag beta (round_to_generic beta fexp Ztrunc_rel x)) = (mag beta x) := by
     simpa [wp, PostCond.noThrow, Id.run, pure] using hZR
-  have hr_ne : round_to_generic beta fexp rndTrue x ≠ 0 := ne_of_gt hr_pos
-  simpa using himp hr_ne
+  have hpos_trunc : 0 < round_to_generic beta fexp Ztrunc_rel x := by
+    simpa [hround_eq] using hr_pos
+  have hr_ne : round_to_generic beta fexp Ztrunc_rel x ≠ 0 := ne_of_gt hpos_trunc
+  simpa [hround_eq] using himp hr_ne
+
+/-- Coq {lit}`Generic_fmt.v`:
+    Truncation-relation helper for the canonical exponent counterpart of
+    {name}`mag_DN`. This is not the public Flocq `cexp_DN` statement because
+    Flocq `cexp_DN` is about floor rounding. -/
+private theorem cexp_DN_trunc_rel (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (round_to_generic beta fexp Ztrunc_rel x) : Id ℝ)
+    ⦃⇓r => ⌜0 < r → (cexp beta fexp r) = (cexp beta fexp x)⌝⦄ := by
+  intro hβ
+  simp [wp, PostCond.noThrow, Id.run, pure]
+  intro hr_pos
+  have hmag :
+      (mag beta (round_to_generic beta fexp Ztrunc_rel x)) = (mag beta x) := by
+    have h := (mag_round_ZR (beta := beta) (fexp := fexp)
+      (rndZR := Ztrunc_rel) (x := x)) hβ
+    have himp :
+        round_to_generic beta fexp Ztrunc_rel x ≠ 0 →
+          (mag beta (round_to_generic beta fexp Ztrunc_rel x)) = (mag beta x) := by
+      simpa [wp, PostCond.noThrow, Id.run, pure] using h
+    exact himp (ne_of_gt hr_pos)
+  simp [cexp, hmag]
+
+/-- Coq {lit}`Generic_fmt.v`:
+    Theorem {coq}`cexp_DN`:
+      {coq}`0 < round Zfloor x -> cexp (round Zfloor x) = cexp x`.
+
+    Lean statement uses the concrete floor rounding function {name}`rnd_floor`
+    through {name}`roundR`. -/
+theorem cexp_DN (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (roundR beta fexp rnd_floor x) : Id ℝ)
+    ⦃⇓r => ⌜0 < r → (cexp beta fexp r) = (cexp beta fexp x)⌝⦄ := by
+  intro hβ
+  simp [wp, PostCond.noThrow, Id.run, pure]
+  intro hr_pos
+  set sm : ℝ := scaled_mantissa beta fexp x with hsm
+  set e : Int := cexp beta fexp x with he
+  have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+  have hpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbposR e
+  have hr_exp :
+      roundR beta fexp rnd_floor x =
+        (((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e) := by
+    simp [roundR, sm, e, hsm, he]
+  have hfloor_pos_real : 0 < ((rnd_floor sm : Int) : ℝ) := by
+    have hprod : 0 < ((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e := by
+      simpa [hr_exp] using hr_pos
+    exact pos_of_mul_pos_right (by simpa [mul_comm] using hprod) (le_of_lt hpow_pos)
+  have hsm_pos : 0 < sm := by
+    have hfloor_le : ((rnd_floor sm : Int) : ℝ) ≤ sm := by
+      simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using Int.floor_le sm
+    exact lt_of_lt_of_le hfloor_pos_real hfloor_le
+  have htrunc_floor : FloatSpec.Core.Raux.Ztrunc sm = rnd_floor sm := by
+    have htr := FloatSpec.Core.Raux.Ztrunc_floor sm (le_of_lt hsm_pos) True.intro
+    simpa [wp, PostCond.noThrow, Id.run, pure, rnd_floor, FloatSpec.Core.Raux.Zfloor] using htr
+  have hround_eq :
+      round_to_generic beta fexp Ztrunc_rel x = roundR beta fexp rnd_floor x := by
+    have hrtg_exp :
+        round_to_generic beta fexp Ztrunc_rel x =
+          (((FloatSpec.Core.Raux.Ztrunc (scaled_mantissa beta fexp x) : Int) : ℝ)
+            * (beta : ℝ) ^ (cexp beta fexp x)) := by
+      simp only [round_to_generic, RoundModeLike.toRnd_relation_apply, scaled_mantissa]
+    calc
+      round_to_generic beta fexp Ztrunc_rel x
+          = (((FloatSpec.Core.Raux.Ztrunc sm : Int) : ℝ) * (beta : ℝ) ^ e) := by
+              simpa [hsm, he] using hrtg_exp
+      _ = (((rnd_floor sm : Int) : ℝ) * (beta : ℝ) ^ e) := by
+              rw [htrunc_floor]
+      _ = roundR beta fexp rnd_floor x := by
+              rw [hr_exp]
+  have hhelper := (cexp_DN_trunc_rel (beta := beta) (fexp := fexp) (x := x)) hβ
+  have himp :
+      0 < round_to_generic beta fexp Ztrunc_rel x →
+        cexp beta fexp (round_to_generic beta fexp Ztrunc_rel x) =
+          cexp beta fexp x := by
+    simpa [wp, PostCond.noThrow, Id.run, pure] using hhelper
+  have hpos_trunc : 0 < round_to_generic beta fexp Ztrunc_rel x := by
+    simpa [hround_eq] using hr_pos
+  simpa [hround_eq] using himp hpos_trunc
 
 /-- Coq (Generic_fmt.v):
     Theorem mag_round:

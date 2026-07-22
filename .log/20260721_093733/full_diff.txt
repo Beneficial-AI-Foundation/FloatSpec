@@ -1,0 +1,223 @@
+commit 0f0da7c959c86cc637de9d7b87acb61abf18e810
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Tue Jul 21 09:37:33 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Tue Jul 21 09:37:33 2026 +0800
+
+    Restore exact Pff Veltkamp_tail2 theorem
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index 4c10d629..d4c1a6c6 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -47383,6 +47383,155 @@ theorem Veltkamp_tail_aux {beta : Int}
+       zpow_pos hradixPos x.Fexp
+     nlinarith
+ 
++/-! Coq binary-radix Veltkamp tail theorem `Veltkamp_tail2`.
++
++Normalize the bounded input, apply `Veltkamp_tail_aux`, and re-encode the exact
++residual in the `s - 1` split bound.  Binary radix turns the auxiliary
++`2 ^ s / 2` mantissa estimate into the required `2 ^ (s - 1)` bound. -/
++theorem Veltkamp_tail2 {beta : Int}
++    (b : Fbound_skel) (radix : Int) (s t : Nat)
++    (x p q hx tx : FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : b.vNum = Zpower_nat radix t)
++    (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
++    (hradixTwo : radix = 2)
++    (hxBound : Fbounded (beta:=beta) b x)
++    (hpDef : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x * ((radix : ℝ) ^ (s : Int) + 1)) p)
++    (hqDef : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) p) q)
++    (hhxDef : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) q + _root_.F2R (beta:=beta) p) hx)
++    (htxDef : Closest (beta:=beta) b (radix : ℝ)
++      (_root_.F2R (beta:=beta) x - _root_.F2R (beta:=beta) hx) tx) :
++    ∃ tx' : FloatSpec.Core.Defs.FlocqFloat beta,
++      _root_.F2R (beta:=beta) tx' = _root_.F2R (beta:=beta) tx ∧
++        _root_.F2R (beta:=beta) hx + _root_.F2R (beta:=beta) tx' =
++          _root_.F2R (beta:=beta) x ∧
++        Fbounded (beta:=beta) (Veltkamp_splitBound radix b (s - 1)) tx' ∧
++        (Fnormalize (beta:=beta) radix b t x).Fexp ≤ tx'.Fexp := by
++  subst beta
++  subst radix
++  have htNe : t ≠ 0 := by omega
++  let nx : FloatSpec.Core.Defs.FlocqFloat 2 :=
++    Fnormalize (beta:=2) 2 b t x
++  have hnxCan : Fcanonic (beta:=2) 2 b nx := by
++    have h := FnormalizeCanonic (beta:=2) 2 b t x
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCanonic_check,
++      Id.run, ULift.up_down, nx] using
++      h ⟨hxBound, hxBound, htNe, hradix, hvNum⟩
++  have hnxBound : Fbounded (beta:=2) b nx := by
++    have h := FnormalizeBounded (beta:=2) 2 b t x
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeBounded_check,
++      Id.run, ULift.up_down, nx] using
++      h ⟨hxBound, hxBound, htNe, hradix, hvNum⟩
++  have hnxValue :
++      _root_.F2R (beta:=2) nx = _root_.F2R (beta:=2) x := by
++    have h := FnormalizeCorrect (beta:=2) 2 b t x
++    simpa only [wp, PostCond.noThrow, pure, FnormalizeCorrect_check,
++      Id.run, ULift.up_down, nx] using h ⟨rfl, hradix⟩
++  have hpNx :
++      Closest (beta:=2) b (2 : ℝ)
++        (_root_.F2R (beta:=2) nx * ((2 : ℝ) ^ (s : Int) + 1)) p := by
++    simpa [hnxValue] using hpDef
++  have hqNx :
++      Closest (beta:=2) b (2 : ℝ)
++        (_root_.F2R (beta:=2) nx - _root_.F2R (beta:=2) p) q := by
++    simpa [hnxValue] using hqDef
++  have htxNx :
++      Closest (beta:=2) b (2 : ℝ)
++        (_root_.F2R (beta:=2) nx - _root_.F2R (beta:=2) hx) tx := by
++    simpa [hnxValue] using htxDef
++  rcases Veltkamp_tail_aux (beta:=2) b 2 s t nx p q hx tx rfl hradix
++      hvNum hsGe hsLe hnxCan hpNx hqNx hhxDef htxNx with
++    ⟨v, hvValue, hdExp, hdMantissa⟩
++  let d : FloatSpec.Core.Defs.FlocqFloat 2 := Fminus nx v
++  have hdExp' : d.Fexp = nx.Fexp := by
++    simpa only [d] using hdExp
++  have hdMantissa' :
++      (((|d.Fnum| : Int) : ℝ) ≤ (2 : ℝ) ^ (s : Int) / 2) := by
++    simpa only [d] using hdMantissa
++  have hpowPredCast :
++      (Zpower_nat 2 (s - 1) : ℝ) =
++        (2 : ℝ) ^ (((s - 1 : Nat) : Int)) := by
++    have h := Zpower_nat_Z_powerRZ 2 (s - 1)
++    simpa only [wp, PostCond.noThrow, pure, Zpower_nat_Z_powerRZ_check,
++      Id.run, ULift.up_down] using h trivial
++  have hsPredCast : ((s - 1 : Nat) : Int) = (s : Int) - 1 := by
++    omega
++  have hhalfPow :
++      (2 : ℝ) ^ (s : Int) / 2 = (Zpower_nat 2 (s - 1) : ℝ) := by
++    rw [hpowPredCast, hsPredCast]
++    rw [show (2 : ℝ) ^ (s : Int) =
++        (2 : ℝ) ^ ((s : Int) - 1) * 2 by
++      calc
++        (2 : ℝ) ^ (s : Int) =
++            (2 : ℝ) ^ (((s : Int) - 1) + 1) := by congr 1 <;> omega
++        _ = (2 : ℝ) ^ ((s : Int) - 1) * (2 : ℝ) ^ (1 : Int) :=
++          zpow_add₀ (by norm_num) _ _
++        _ = _ := by rw [zpow_one]]
++    ring
++  have hdMantissaInt : |d.Fnum| ≤ Zpower_nat 2 (s - 1) := by
++    exact_mod_cast (show ((|d.Fnum| : Int) : ℝ) ≤
++        (Zpower_nat 2 (s - 1) : ℝ) by
++      rw [← hhalfPow]
++      exact hdMantissa')
++  have hnxExpMin :
++      -(Veltkamp_splitBound 2 b (s - 1)).dExp ≤ nx.Fexp := by
++    simpa [Veltkamp_splitBound] using hnxBound.2
++  have hbounded :=
++    FboundedMbound2 (beta:=2) (Veltkamp_splitBound 2 b (s - 1))
++      2 (s - 1) nx.Fexp d.Fnum
++  rcases (by
++      simpa only [wp, PostCond.noThrow, pure, FboundedMbound2_check,
++        Id.run, ULift.up_down] using
++        hbounded ⟨rfl, hradix, by omega, rfl, hdMantissaInt, hnxExpMin⟩) with
++    ⟨c, hcTailBound, hcScaledValue, hnxExpLeC⟩
++  have hdValue :
++      _root_.F2R (beta:=2) d =
++        _root_.F2R (beta:=2) nx - _root_.F2R (beta:=2) v := by
++    have h := Fminus_correct (beta:=2) nx v
++    simpa only [wp, PostCond.noThrow, pure, Fminus_correct_check,
++      Id.run, ULift.up_down, d] using h hradix
++  have hcValueD :
++      _root_.F2R (beta:=2) c = _root_.F2R (beta:=2) d := by
++    calc
++      _root_.F2R (beta:=2) c =
++          (d.Fnum : ℝ) * (2 : ℝ) ^ nx.Fexp := hcScaledValue
++      _ = _root_.F2R (beta:=2) d := by
++        simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hdExp']
++  have hcResidual :
++      _root_.F2R (beta:=2) c =
++        _root_.F2R (beta:=2) x - _root_.F2R (beta:=2) hx := by
++    calc
++      _root_.F2R (beta:=2) c = _root_.F2R (beta:=2) d := hcValueD
++      _ = _root_.F2R (beta:=2) nx - _root_.F2R (beta:=2) v := hdValue
++      _ = _root_.F2R (beta:=2) x - _root_.F2R (beta:=2) hx := by
++        rw [hnxValue, hvValue]
++  have hcOriginalBound : Fbounded (beta:=2) b c := by
++    constructor
++    · calc
++        |c.Fnum| < (Veltkamp_splitBound 2 b (s - 1)).vNum := hcTailBound.1
++        _ = Zpower_nat 2 (s - 1) := rfl
++        _ < b.vNum := by
++          rw [hvNum]
++          exact pow_lt_pow_right₀ hradix (by omega)
++    · simpa [Veltkamp_splitBound] using hcTailBound.2
++  have htxValue :
++      _root_.F2R (beta:=2) tx =
++        _root_.F2R (beta:=2) x - _root_.F2R (beta:=2) hx := by
++    have hdist := htxDef.2 c hcOriginalBound
++    rw [hcResidual, sub_self, abs_zero] at hdist
++    have hzero :
++        |_root_.F2R (beta:=2) tx -
++          (_root_.F2R (beta:=2) x - _root_.F2R (beta:=2) hx)| = 0 :=
++      le_antisymm hdist (abs_nonneg _)
++    exact sub_eq_zero.mp (abs_eq_zero.mp hzero)
++  refine ⟨c, hcResidual.trans htxValue.symm, ?_, hcTailBound, ?_⟩
++  · rw [hcResidual]
++    ring
++  · simpa only [nx] using hnxExpLeC
++
+ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+     (b : Fbound_skel) (radix : Int) (precision : Nat)
+     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 41555d86..1e8d2dee 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 66.
++- Active semantic gap candidates still listed below: 61.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 66/66 names have been
++- Counterpart audit coverage for the active list: 61/61 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -65,7 +65,7 @@ Completion criteria for this document:
+ 
+ Next implementation goal:
+ 
+-Fix the remaining Flocq import gaps by working through the 62 active
++Fix the remaining Flocq import gaps by working through the 61 active
+ semantic gap candidates below in dependency order. For each name, either add
+ the exact public Lean declaration with the upstream Flocq payload, or replace
+ the ledger entry with a statement-level proof that an existing Lean theorem,
+@@ -2407,9 +2407,27 @@ records `result = proved`, `build = pass`, `coq_alignment = checked`, and a
+ passing local target gate. Therefore `Veltkamp_tail_aux` is removed from the
+ active list, and `Veltkamp_tail2` is next.
+ 
+-#### `Pff/Pff.v` (62)
++2026-07-21 completion note: subscription harness attempt
++`.change_log/codex_attempt_20260721_091300` restored exact public
++`Veltkamp_tail2` under only the expanded upstream section assumptions. It
++normalizes the bounded input, reuses exact `Veltkamp_tail_aux`, and applies
++`FboundedMbound2` to construct an equal-value residual witness in the `s - 1`
++split bound. The binary-radix identity `2 ^ s / 2 = 2 ^ (s - 1)` supplies the
++mantissa bound; closest-rounding minimality identifies the witness with `tx`,
++while the constructor preserves the normalized input exponent lower bound.
++The independent focused Lean process exited 0, `git diff --check` passed, the
++placeholder and generated-status audits reported zero findings, and the full
++3345-job `lake build` passed; `scripts/check_diff_trust.sh` is absent from this
++checkout. The harness's top-level `attempt.json` recorded `result = proved`
++but did not propagate its nested build or Coq-alignment checks. The normalized
++classifier
++`.change_log/manual_attempt_20260721_Veltkamp_tail2_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Therefore `Veltkamp_tail2` is removed from the active list,
++and `VeltkampU` is next.
++
++#### `Pff/Pff.v` (61)
+ 
+-- `Veltkamp_tail2` (Theorem, upstream line 16157)
+ - `VeltkampU` (Theorem, upstream line 16270)
+ - `BoundedL` (Theorem, upstream line 16329)
+ - `Closestbbext` (Theorem, upstream line 16377)
