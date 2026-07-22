@@ -1,0 +1,219 @@
+commit 201fad1cd926050a21212106f67b9e4aacb2fcec
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 16:14:29 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 16:14:29 2026 +0800
+
+    Restore Expbe1
+
+diff --git a/FloatSpec/src/Pff/Pff.lean b/FloatSpec/src/Pff/Pff.lean
+index b0dbf356..8a9d66a0 100644
+--- a/FloatSpec/src/Pff/Pff.lean
++++ b/FloatSpec/src/Pff/Pff.lean
+@@ -50969,6 +50969,149 @@ theorem Expr1 {beta : Int}
+       h ⟨Or.inl hr1Normal, Or.inl hscaledNormal, hAbsLeScaled⟩
+   simpa [scaled] using hExpLeScaled
+ 
++/-- Coq Be2NonZero lemma `Expbe1`.
++
++The exponent of `be1` is at most one above the exponent of the nonzero `r1`
++result.  This is the upstream `Fcanonic_Rle_Zle` argument dual to `Expr1`:
++compare `be1` with the scaled float `Float (Fnum r1) (Fexp r1 + 1)`,
++whose value is `radix * r1`, and obtain the absolute-value comparison from
++`xLe2y`, `TwoSumProp`, and `ClosestUlp`. -/
++theorem Expbe1 {beta : Int}
++    (bo : Fbound_skel) (radix : Int) (precision : Nat)
++    (a x y r1 u1 u2 al1 al2 be1 :
++      FloatSpec.Core.Defs.FlocqFloat beta)
++    (hbeta : beta = radix) (hradix : 1 < radix)
++    (hvNum : bo.vNum = Zpower_nat radix precision)
++    (hprecision_ge : 3 ≤ precision) (hEven : Even radix)
++    (hBoundExp : ∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp)
++    (hyBound : Fbounded (beta:=beta) bo y)
++    (hbe1Normal : Fnormal (beta:=beta) radix bo be1)
++    (hr1Normal : Fnormal (beta:=beta) radix bo r1)
++    (hu1Can : Fcanonic (beta:=beta) radix bo u1)
++    (hal1Can : Fcanonic (beta:=beta) radix bo al1)
++    (hu1ExpGt : -bo.dExp < u1.Fexp)
++    (hal1ExpGt : -bo.dExp < al1.Fexp)
++    (hr1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x +
++        _root_.F2R (beta:=beta) y) r1)
++    (hu1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x) u1)
++    (hu2Def : _root_.F2R (beta:=beta) u2 =
++      _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) x -
++        _root_.F2R (beta:=beta) u1)
++    (hal1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) u2) al1)
++    (hal2Def : _root_.F2R (beta:=beta) al2 =
++      _root_.F2R (beta:=beta) y + _root_.F2R (beta:=beta) u2 -
++        _root_.F2R (beta:=beta) al1)
++    (hbe1Def : Closest (beta:=beta) bo (radix : ℝ)
++      (_root_.F2R (beta:=beta) u1 + _root_.F2R (beta:=beta) al1) be1) :
++    be1.Fexp ≤ r1.Fexp + 1 := by
++  subst beta
++  have hprecision_ne : precision ≠ 0 := by omega
++  have hal2_u1_ulp :
++      |_root_.F2R (beta:=radix) al2| ≤
++        (1 / 2 : ℝ) * Fulp (beta:=radix) bo radix precision u1 := by
++    have hu2_abs_bound :
++        |_root_.F2R (beta:=radix) u2| ≤
++          (1 / 2 : ℝ) * Fulp (beta:=radix) bo radix precision u1 := by
++      have hcu :
++          2 * |_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x -
++              _root_.F2R (beta:=radix) u1| ≤
++            Fulp (beta:=radix) bo radix precision u1 := by
++        have h := ClosestUlp (beta:=radix) bo radix precision
++          (_root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x) u1
++        simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
++          Id.run, ULift.up_down] using
++          h ⟨hu1Def, rfl, hradix, hprecision_ne, hvNum⟩
++      rw [hu2Def]
++      nlinarith
++    have hal2_le_u2 :
++        |_root_.F2R (beta:=radix) al2| ≤ |_root_.F2R (beta:=radix) u2| := by
++      have h := TwoSumProp (beta:=radix) bo (radix : ℝ) y u2 al1 al2
++      simpa only [wp, PostCond.noThrow, pure, TwoSumProp_check, Id.run,
++        ULift.up_down] using h ⟨hyBound, hal1Def, hal2Def⟩
++    exact le_trans hal2_le_u2 hu2_abs_bound
++  have hal2_al1_ulp :
++      |_root_.F2R (beta:=radix) al2| ≤
++        (1 / 2 : ℝ) * Fulp (beta:=radix) bo radix precision al1 := by
++    have hcu :
++        2 * |(_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2) -
++            _root_.F2R (beta:=radix) al1| ≤
++          Fulp (beta:=radix) bo radix precision al1 := by
++      have h := ClosestUlp (beta:=radix) bo radix precision
++        (_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2) al1
++      simpa only [wp, PostCond.noThrow, pure, ClosestUlp_check,
++        Id.run, ULift.up_down] using
++        h ⟨hal1Def, rfl, hradix, hprecision_ne, hvNum⟩
++    have hal2_abs_eq :
++        |_root_.F2R (beta:=radix) al2| =
++          |(_root_.F2R (beta:=radix) y + _root_.F2R (beta:=radix) u2) -
++            _root_.F2R (beta:=radix) al1| := by
++      rw [hal2Def]
++    rw [hal2_abs_eq]
++    nlinarith
++  have hr1ClosestGeneric :
++      Closest (beta:=radix) bo (radix : ℝ)
++        (_root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 +
++          _root_.F2R (beta:=radix) al2) r1 := by
++    have harg :
++        _root_.F2R (beta:=radix) u1 + _root_.F2R (beta:=radix) al1 +
++            _root_.F2R (beta:=radix) al2 =
++          _root_.F2R (beta:=radix) a * _root_.F2R (beta:=radix) x +
++            _root_.F2R (beta:=radix) y := by
++      rw [hal2Def, hu2Def]
++      ring
++    simpa [harg] using hr1Def
++  have hbe1AbsLe2r1 :
++      |_root_.F2R (beta:=radix) be1| ≤
++        2 * |_root_.F2R (beta:=radix) r1| := by
++    have h := xLe2y (beta:=radix) bo radix precision u1 al1 be1 r1
++      (_root_.F2R (beta:=radix) al2)
++    simpa only [wp, PostCond.noThrow, pure, xLe2y_check, Id.run,
++      ULift.up_down] using
++      h ⟨rfl, hradix, hvNum, hprecision_ge, hEven, hal2_u1_ulp, hal2_al1_ulp,
++        hbe1Def, hr1ClosestGeneric, hbe1Normal, hr1Normal, hu1Can, hal1Can,
++        hu1ExpGt, hal1ExpGt, hBoundExp⟩
++  let scaled : FloatSpec.Core.Defs.FlocqFloat radix :=
++    ⟨r1.Fnum, r1.Fexp + 1⟩
++  have hscaledNormal : Fnormal (beta:=radix) radix bo scaled := by
++    constructor
++    · constructor
++      · simpa [scaled] using hr1Normal.1.1
++      · dsimp [scaled]
++        exact le_trans hr1Normal.1.2 (by omega : r1.Fexp ≤ r1.Fexp + 1)
++    · simpa [scaled] using hr1Normal.2
++  have hscaledValue :
++      _root_.F2R (beta:=radix) scaled =
++        (radix : ℝ) * _root_.F2R (beta:=radix) r1 := by
++    have hradix_pos : (0 : ℝ) < (radix : ℝ) := by
++      exact_mod_cast (by omega : (0 : Int) < radix)
++    have hradix_ne : (radix : ℝ) ≠ 0 := ne_of_gt hradix_pos
++    dsimp [scaled, _root_.F2R, FloatSpec.Core.Defs.F2R]
++    rw [zpow_add₀ hradix_ne, zpow_one]
++    ring
++  have hAbsLeScaled :
++      |_root_.F2R (beta:=radix) be1| ≤
++        |_root_.F2R (beta:=radix) scaled| := by
++    have htwo_le_radix : (2 : ℝ) ≤ (radix : ℝ) := by
++      exact_mod_cast (by omega : (2 : Int) ≤ radix)
++    have hradix_nonneg : 0 ≤ (radix : ℝ) := by
++      exact_mod_cast (by omega : (0 : Int) ≤ radix)
++    calc
++      |_root_.F2R (beta:=radix) be1|
++          ≤ 2 * |_root_.F2R (beta:=radix) r1| := hbe1AbsLe2r1
++      _ ≤ (radix : ℝ) * |_root_.F2R (beta:=radix) r1| :=
++          mul_le_mul_of_nonneg_right htwo_le_radix (abs_nonneg _)
++      _ = |_root_.F2R (beta:=radix) scaled| := by
++          rw [hscaledValue, abs_mul, abs_of_nonneg hradix_nonneg]
++  have hExpLeScaled : be1.Fexp ≤ scaled.Fexp := by
++    have h := Fcanonic_Rle_Zle (beta:=radix) radix bo be1 scaled hradix rfl
++    simpa only [wp, PostCond.noThrow, pure, Fcanonic_Rle_Zle_check,
++      Id.run, ULift.up_down, Fcanonic'] using
++      h ⟨Or.inl hbe1Normal, Or.inl hscaledNormal, hAbsLeScaled⟩
++  simpa [scaled] using hExpLeScaled
++
+ noncomputable def RoundLeNormal_check {beta : Int}
+     (b : Fbound_skel) (precision : Nat)
+     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
+diff --git a/MISSING_INFRASTRUCTURE.md b/MISSING_INFRASTRUCTURE.md
+index 90ef80cb..5c207ec4 100644
+--- a/MISSING_INFRASTRUCTURE.md
++++ b/MISSING_INFRASTRUCTURE.md
+@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
+ - Missing exact public upstream declaration names in that scan: 193.
+ - Counterpart-audited false semantic gaps removed from the active list so far:
+   110.
+-- Active semantic gap candidates still listed below: 17.
++- Active semantic gap candidates still listed below: 16.
+ - Files with at least one active listed candidate: 1.
+-- Counterpart audit coverage for the active list: 17/17 names have been
++- Counterpart audit coverage for the active list: 16/16 names have been
+   explicitly checked and mentioned in the notes below; none of the remaining
+   active names currently has a faithful exact, renamed, formatted, or split
+   Lean counterpart in the current workspace.
+@@ -3404,9 +3404,29 @@ normalized classifier
+ local target gate. Exact public `Expr1` is removed from the active list,
+ reducing the ledger from 18 to 17; `Expbe1` is next.
+ 
+-#### `Pff/Pff.v` (17)
++2026-07-22 completion note: exact public Be2NonZero lemma `Expbe1` is restored
++in `FloatSpec/src/Pff/Pff.lean` with the upstream exponent payload
++`be1.Fexp <= r1.Fexp + 1`. The proof keeps the genuinely required GenericB
++premises for local `xLe2y`: radix parity, strict exponent bounds for `u1` and
++`al1`, and total `boundR` exponent coverage. It derives the two residual
++half-ulp bounds with `TwoSumProp` and `ClosestUlp`, applies exact `xLe2y` to
++obtain `|F2R be1| <= 2 * |F2R r1|`, constructs the canonical scaled `r1` float
++at exponent `r1.Fexp + 1`, and closes the exponent comparison with
++`Fcanonic_Rle_Zle`. The required subscription harness attempt
++`.change_log/codex_attempt_20260722_160030` generated the exact declaration,
++proof, and provisional ledger note. Independent focused Lean,
++`git diff --check`, the added-hole scan,
++`scripts/audit_placeholders.sh --json FloatSpec`, and
++`scripts/status_report.sh --write` passed, and full `lake build` passed all
++3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
++normalized classifier
++`.change_log/manual_attempt_20260722_Expbe1_proved/attempt.json` records
++`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
++local target gate. Exact public `Expbe1` is removed from the active list,
++reducing the ledger from 17 to 16; `be2MuchSmaller` is next.
++
++#### `Pff/Pff.v` (16)
+ 
+-- `Expbe1` (Lemma, upstream line 24480)
+ - `be2MuchSmaller` (Lemma, upstream line 24522)
+ - `gaCorrect` (Lemma, upstream line 24617)
+ - `tBounded_aux` (Theorem, upstream line 25145)
+@@ -8245,7 +8265,7 @@ Statement-level checks performed for active Pff entries 71-104:
+ - `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
+   exact representability fixes `|x|`, and the even-radix half-unit witness
+   plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
+-- `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
++- `be2MuchSmaller` and `gaCorrect`
+   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
+   `LSB` or FMA helper theorems are definitions or narrower branch helpers,
+   not the upstream subtraction/midpoint/least-significant-bit payloads.

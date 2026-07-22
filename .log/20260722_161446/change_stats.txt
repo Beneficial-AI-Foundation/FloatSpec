@@ -1,0 +1,11 @@
+commit 201fad1cd926050a21212106f67b9e4aacb2fcec
+Author:     Hantao Lou <hantaolou.htlou@gmail.com>
+AuthorDate: Wed Jul 22 16:14:29 2026 +0800
+Commit:     Hantao Lou <hantaolou.htlou@gmail.com>
+CommitDate: Wed Jul 22 16:14:29 2026 +0800
+
+    Restore Expbe1
+
+ FloatSpec/src/Pff/Pff.lean | 143 +++++++++++++++++++++++++++++++++++++++++++++
+ MISSING_INFRASTRUCTURE.md  |  30 ++++++++--
+ 2 files changed, 168 insertions(+), 5 deletions(-)
