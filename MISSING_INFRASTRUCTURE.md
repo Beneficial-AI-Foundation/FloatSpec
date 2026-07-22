@@ -38,9 +38,9 @@ Broad exact-name scan baseline and current counterpart-filtered status:
 - Missing exact public upstream declaration names in that scan: 193.
 - Counterpart-audited false semantic gaps removed from the active list so far:
   110.
-- Active semantic gap candidates still listed below: 25.
+- Active semantic gap candidates still listed below: 24.
 - Files with at least one active listed candidate: 1.
-- Counterpart audit coverage for the active list: 25/25 names have been
+- Counterpart audit coverage for the active list: 24/24 names have been
   explicitly checked and mentioned in the notes below; none of the remaining
   active names currently has a faithful exact, renamed, formatted, or split
   Lean counterpart in the current workspace.
@@ -65,7 +65,7 @@ Completion criteria for this document:
 
 Next implementation goal:
 
-Fix the remaining Flocq import gaps by working through the 25 active
+Fix the remaining Flocq import gaps by working through the 24 active
 semantic gap candidates below in dependency order. For each name, either add
 the exact public Lean declaration with the upstream Flocq payload, or replace
 the ledger entry with a statement-level proof that an existing Lean theorem,
@@ -3257,9 +3257,28 @@ local target gate. Exact public
 `xLe2y_aux2` is removed from the active list, reducing the ledger from 26 to
 25; `yLe2x_aux` is next.
 
-#### `Pff/Pff.v` (25)
+2026-07-22 completion note: exact public GenericA lemma `yLe2x_aux` is restored
+in `FloatSpec/src/Pff/Pff.lean`. It derives the upstream zero-or-positive-unit
+split from canonical `Fplus`; the zero branch contradicts the explicit
+`F2R x != 0` premise, while the positive branch combines the `eLeb` half-ulp
+bound with `ClosestRoundeLeNormal`, `ClosestRoundeGeNormal`, and
+`UnMoinsPos` to prove `|y| <= 2 * |x|`. Required subscription harness attempt
+`.change_log/codex_attempt_20260722_123242` produced the proof. Its generated
+signature was manually normalized by removing `Even radix` and the strict
+`b`-exponent hypothesis, which are unused section hypotheses omitted from the
+exported Coq lemma; no mathematical premise used by upstream was removed.
+Independent focused Lean, `git diff --check`, the added-hole scan,
+`scripts/audit_placeholders.sh --json FloatSpec`, and
+`scripts/status_report.sh --write` passed, and full `lake build` passed all
+3345 jobs. `scripts/check_diff_trust.sh` is absent in this checkout. The
+normalized classifier
+`.change_log/manual_attempt_20260722_yLe2x_aux_proved/attempt.json` records
+`result = proved`, `build = pass`, `coq_alignment = checked`, and a passing
+local target gate. Exact public `yLe2x_aux` is removed from the active list,
+reducing the ledger from 25 to 24; `xLe2y` is next.
 
-- `yLe2x_aux` (Lemma, upstream line 23595)
+#### `Pff/Pff.v` (24)
+
 - `xLe2y` (Lemma, upstream line 23707)
 - `yLe2x` (Lemma, upstream line 23717)
 - `Subexact` (Lemma, upstream line 23726)
@@ -8106,7 +8125,7 @@ Statement-level checks performed for active Pff entries 71-104:
 - `xLe2y_aux1` is now restored as the exact GenericA exact-power branch:
   exact representability fixes `|x|`, and the even-radix half-unit witness
   plus closest absolute monotonicity proves `|x| ≤ 2 * |y|`.
-- `yLe2x_aux`, `xLe2y`, `yLe2x`,
+- `xLe2y`, `yLe2x`,
   `Subexact`, `Midpoint_aux_aux`, `Midpoint_aux`,
   `gatCorrect`, `Expr1`, `Expbe1`, `be2MuchSmaller`, and `gaCorrect`
   have no exact Lean declaration under `FloatSpec/src/Pff`. Local hits on
