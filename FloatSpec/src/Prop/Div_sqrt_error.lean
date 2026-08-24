@@ -1404,8 +1404,8 @@ private lemma mag_gt_of_bpow_le (x : ℝ) (e : Int)
   rcases lt_or_eq_of_le hbound with hlt | heq
   · have htrip := FloatSpec.Core.Raux.mag_ge_bpow
       (beta := beta) (x := x) (e := e + 1) hβ
-      (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt)
-    simpa [wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip trivial
+      (le_of_lt (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt))
+    simpa using htrip
   · have hmag_abs := FloatSpec.Core.Raux.mag_abs (beta := beta) (x := x) hβ
     have hmag_abs_run :
         FloatSpec.Core.Raux.mag beta |x| = FloatSpec.Core.Raux.mag beta x := by

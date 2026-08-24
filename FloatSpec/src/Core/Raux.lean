@@ -3523,7 +3523,9 @@ abbrev Build_mag_prop {beta : Int} {x : ℝ} (e : Int)
 -/
 noncomputable def mag (beta : Int) (x : ℝ) : Int :=
   -- Use floor + 1 to match Coq's strict upper bound semantics.
-  if x = 0 then 0 else ⌊Real.log (abs x) / Real.log (beta : ℝ)⌋ + 1
+  -- Coq's concrete witness is `Zfloor (ln |x| / ln beta) + 1`; since
+  -- Coq's `ln 0` reduces to zero, its observable value at zero is one.
+  if x = 0 then 1 else ⌊Real.log (abs x) / Real.log (beta : ℝ)⌋ + 1
 
 /-- Uniqueness of magnitude from bpow bounds.
     With Coq semantics: β^(e-1) ≤ |x| < β^e implies mag(x) = e.
@@ -3801,86 +3803,6 @@ theorem mag_bpow (beta e : Int) (hβ : 1 < beta) :
   -- The goal should be e + 1 = e + 1
   rfl
 
-/-- Scaling by bpow shifts magnitude additively -/
-theorem mag_mult_bpow (beta : Int) (x : ℝ) (e : Int) (hβ : 1 < beta) :
-    ⦃⌜True⌝⦄
-    (pure (mag beta (x * (beta : ℝ) ^ e)) : Id _)
-    ⦃⇓m => ⌜∃ k, m = k + e⌝⦄ := by
-  intro _
-  -- Reduce Hoare triple on Id to a pure existence over the returned value
-  simp [wp, PostCond.noThrow, Id.run, pure, mag]
-  -- We need to show: ∃ k, (if x * (beta : ℝ) ^ e = 0 then 0
-  --                      else ⌈Real.log (|x * (beta : ℝ) ^ e|) / Real.log (beta : ℝ)⌉)
-  --                    = k + e
-  by_cases hx : x = 0
-  · -- If x = 0, the result is 0; pick k = -e
-    simp [hx]
-    exact ⟨-e, by simp⟩
-  · -- If x ≠ 0, rewrite the logarithm and use translation invariance of ceil
-    have hx_ne : x ≠ 0 := hx
-    -- From 1 < beta, the base is positive, hence its zpow is positive and nonzero
-    have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
-    have hbpos : (0 : ℝ) < (beta : ℝ) := lt_trans zero_lt_one hβR
-    have hbpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbpos _
-    have hbpow_ne : (beta : ℝ) ^ e ≠ 0 := ne_of_gt hbpow_pos
-    -- Therefore x * (beta : ℝ) ^ e ≠ 0, so we are in the nonzero branch
-    have hxmul_ne : x * (beta : ℝ) ^ e ≠ 0 := mul_ne_zero hx_ne hbpow_ne
-    -- The condition (x = 0 ∨ (β : ℝ)^e = 0) is false in this branch
-    simp [hx, hbpow_ne]
-    -- Rewrite the argument of the ceiling as L + e, where L := log |x| / log β
-    set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
-    have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
-      have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
-        Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbpos)
-      exact this.mpr hβR
-    have hlogβ_ne : Real.log (beta : ℝ) ≠ 0 := ne_of_gt hlogβ_pos
-    -- |(β : ℝ) ^ e| = (β : ℝ) ^ e since it is positive
-    have habs_bpow : |(beta : ℝ) ^ e| = (beta : ℝ) ^ e := by
-      simpa using (abs_of_nonneg (le_of_lt hbpow_pos))
-    -- log (|x| * |β^e|) = log |x| + e * log β (since |x| > 0 and β^e > 0)
-    have hxabs_pos : 0 < |x| := abs_pos.mpr hx_ne
-    have hlog_abs_bpow : Real.log (|(beta : ℝ) ^ e|) = Real.log ((beta : ℝ) ^ e) := by
-      simpa [abs_of_nonneg (le_of_lt hbpow_pos)]
-    have hlog_prod :
-        Real.log (|x| * |(beta : ℝ) ^ e|)
-          = Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ) := by
-      have habs_bpow_pos : 0 < |(beta : ℝ) ^ e| := abs_pos.mpr hbpow_ne
-      calc
-        Real.log (|x| * |(beta : ℝ) ^ e|)
-            = Real.log (|x|) + Real.log (|(beta : ℝ) ^ e|) := by
-                simpa using Real.log_mul (ne_of_gt hxabs_pos) (ne_of_gt habs_bpow_pos)
-        _ = Real.log (|x|) + Real.log ((beta : ℝ) ^ e) := by
-                simpa [hlog_abs_bpow]
-        _ = Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ) := by
-                simpa using Real.log_zpow hbpos e
-    -- Divide by log β and simplify to L + e
-    have hdiv :
-        Real.log (|x| * |(beta : ℝ) ^ e|) / Real.log (beta : ℝ)
-          = L + (e : ℝ) := by
-      have hmul_div : ((e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) = (e : ℝ) := by
-        simpa [hlogβ_ne] using (mul_div_cancel' (e : ℝ) (Real.log (beta : ℝ)))
-      calc
-        _ = (Real.log (|x|) + (e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
-              simp only [hlog_prod]
-        _ = Real.log (|x|) / Real.log (beta : ℝ)
-              + ((e : ℝ) * Real.log (beta : ℝ)) / Real.log (beta : ℝ) := by
-              ring
-        _ = L + (e : ℝ) := by
-              simp only [L, hmul_div]
-    -- Now use translation invariance of floor by integers
-    refine ⟨Int.floor L + 1, ?_⟩
-    -- Since beta > 0, |beta| = beta and |beta^e| = beta^e = |beta|^e
-    have habs_beta : |(beta : ℝ)| = (beta : ℝ) := abs_of_pos hbpos
-    have habs_beta_pow : |(beta : ℝ)| ^ e = |(beta : ℝ) ^ e| := by
-      rw [habs_beta, habs_bpow]
-    have hfloor_eq : Int.floor
-              (Real.log (|x| * |(beta : ℝ) ^ e|) / Real.log (beta : ℝ))
-              = Int.floor (L + (e : ℝ)) := by
-      simp only [hdiv]
-    -- Apply Int.floor_add_intCast: ⌊L + e⌋ = ⌊L⌋ + e
-    simp only [habs_beta_pow, hfloor_eq, Int.floor_add_intCast]
-    ring
-
 /-- Upper bound: if x ≠ 0 and |x| < bpow e then mag x ≤ e -/
 theorem mag_le_bpow (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
@@ -3893,60 +3815,42 @@ theorem mag_le_bpow (beta : Int) (x : ℝ) (e : Int)
   intro _
   exact (mag_le_abs beta x e hβ hx_ne hx_lt) (by trivial)
 
-/-- Lower bound: if bpow (e - 1) ≤ |x| then e ≤ mag x -/
+/-- Coq `Raux.mag_gt_bpow`: if `bpow e ≤ |x|`, then `e < mag x`. -/
 theorem mag_gt_bpow (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
-    (hlt : (beta : ℝ) ^ (e - 1) < |x|) :
-    ⦃⌜True⌝⦄
-    (pure (mag beta x) : Id _)
-    ⦃⇓m => ⌜e ≤ m⌝⦄ := by
-  intro _
-  -- Unpack hypotheses and derive basic positivity facts
+    (hle : (beta : ℝ) ^ e ≤ |x|) :
+    e < mag beta x := by
   have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
   have hbpos : (0 : ℝ) < (beta : ℝ) := lt_trans zero_lt_one hβR
-  -- From strict lower bound, |x| is positive hence x ≠ 0
-  have hx_pos : 0 < |x| := lt_trans (zpow_pos hbpos (e - 1)) hlt
-  have hx_ne : x ≠ 0 := by
-    exact (abs_pos.mp hx_pos)
-  -- Reduce the Hoare triple on Id to a pure inequality about ceilings
-  simp [mag, hx_ne, wp, PostCond.noThrow, Id.run]
-  -- Let L := log |x| / log β
+  have hx_pos : 0 < |x| := lt_of_lt_of_le (zpow_pos hbpos e) hle
+  have hx_ne : x ≠ 0 := abs_pos.mp hx_pos
   set L : ℝ := Real.log (abs x) / Real.log (beta : ℝ)
-  -- log β is positive since β > 1
   have hlogβ_pos : 0 < Real.log (beta : ℝ) := by
     have : 0 < Real.log (beta : ℝ) ↔ 1 < (beta : ℝ) :=
       Real.log_pos_iff (x := (beta : ℝ)) (le_of_lt hbpos)
     exact this.mpr hβR
-  -- Take logs (strictly increasing on ℝ>0) on the strict lower bound
-  have hlog_lt :
-      Real.log ((beta : ℝ) ^ (e - 1)) < Real.log (abs x) :=
-    Real.log_lt_log (zpow_pos hbpos (e - 1)) hlt
-  -- Rewrite log of the power and divide by positive log β to get (e-1) < L
+  have hlog_le :
+      Real.log ((beta : ℝ) ^ e) ≤ Real.log (abs x) :=
+    Real.strictMonoOn_log.monotoneOn
+      (Set.mem_Ioi.mpr (zpow_pos hbpos e)) (Set.mem_Ioi.mpr hx_pos) hle
   have hpow_log :
-      Real.log ((beta : ℝ) ^ (e - 1))
-        = (e - 1 : ℝ) * Real.log (beta : ℝ) := by
-    simpa using Real.log_zpow hbpos (e - 1)
-  have hlt_L : (e - 1 : ℝ) < L := by
-    have := (lt_div_iff₀ hlogβ_pos).mpr (by simpa [hpow_log] using hlog_lt)
+      Real.log ((beta : ℝ) ^ e) = (e : ℝ) * Real.log (beta : ℝ) := by
+    simpa using Real.log_zpow hbpos e
+  have he_le_L : (e : ℝ) ≤ L := by
+    have := (le_div_iff₀ hlogβ_pos).mpr (by simpa [hpow_log] using hlog_le)
     simpa [L] using this
-  -- Use floor property: (e - 1 : ℝ) < L implies e - 1 < floor(L) + 1, i.e., e ≤ floor(L) + 1
-  -- Since (e - 1) < L, we have e - 1 ≤ floor(L) (because floor(L) ≥ e-1 when L > e-1)
-  have h_em1_le_floor : e - 1 ≤ Int.floor L := by
-    have h : ((e - 1 : Int) : ℝ) < L := by simpa using hlt_L
-    exact Int.le_floor.mpr (le_of_lt h)
-  -- Therefore e ≤ floor(L) + 1
-  have hfinal : e ≤ Int.floor L + 1 := by grind
-  simpa [wp, PostCond.noThrow, Id.run, pure, mag, hx_ne, L] using hfinal
+  have he_le_floor : e ≤ Int.floor L := Int.le_floor.mpr he_le_L
+  have hfinal : e < Int.floor L + 1 := by omega
+  simpa [mag, hx_ne, L] using hfinal
 
-/-- Combined lower bound: if bpow (e - 1) < |x| then e ≤ mag x -/
+/-- Coq `Raux.mag_ge_bpow`: the non-strict shifted lower bound. -/
 theorem mag_ge_bpow (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
-    (hlt : (beta : ℝ) ^ (e - 1) < |x|) :
-    ⦃⌜True⌝⦄
-    (pure (mag beta x) : Id _)
-    ⦃⇓m => ⌜e ≤ m⌝⦄ := by
-  -- This is exactly `mag_gt_bpow`.
-  exact mag_gt_bpow beta x e hβ hlt
+    (hle : (beta : ℝ) ^ (e - 1) ≤ |x|) :
+    e ≤ mag beta x := by
+  by_cases hxe : |x| < (beta : ℝ) ^ e
+  · exact le_of_eq ((mag_unique beta x e hβ hle hxe) True.intro).symm
+  · exact le_of_lt (mag_gt_bpow beta x e hβ (le_of_not_gt hxe))
 
 /-- If mag x < e then |x| < bpow e -/
 noncomputable def abs_val (x : ℝ) : ℝ :=
@@ -4166,34 +4070,101 @@ theorem mag_upper_bound (beta : Int) (x : ℝ)
   simp_rw [hmag]
   exact habs_lt
 
-/-- If {lit}`1 < beta`, {lit}`0 ≤ e`, and {lit}`|x| < (beta : ℝ)^e`, then {lit}`mag beta x ≤ e`. -/
-theorem mag_le_Zpower (beta : Int) (x : ℝ) (e : Int)
-    (hβ : 1 < beta)
-    (he_nonneg : 0 ≤ e)
-    (hlt : |x| < ((beta : ℝ) ^ e)) :
-    ⦃⌜True⌝⦄
-    (pure (mag beta x) : Id _)
-    ⦃⇓m => ⌜m ≤ e⌝⦄ := by
-  intro _
-  by_cases hx0 : x = 0
-  · -- If x = 0, then mag returns 0; conclude 0 ≤ e from the hypothesis
-    -- Reduce Hoare triple to a pure inequality
-    simp [mag, hx0, wp, PostCond.noThrow, Id.run] at *
-    exact he_nonneg
-  · -- If x ≠ 0, this is exactly `mag_le_bpow`
-    have hx_ne : x ≠ 0 := by exact hx0
-    exact (mag_le_bpow beta x e hβ hx_ne hlt) (by trivial)
+/-- Coq `Raux.mag_mult_bpow`: multiplying by a radix power shifts the
+    magnitude by the same exponent. -/
+theorem mag_mult_bpow (beta : Int) (x : ℝ) (e : Int) (hβ : 1 < beta)
+    (hx : x ≠ 0) :
+    mag beta (x * (beta : ℝ) ^ e) = mag beta x + e := by
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := lt_trans zero_lt_one hβR
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+  have hpow_pos : 0 < (beta : ℝ) ^ e := zpow_pos hbpos e
+  have hpow_nonneg : 0 ≤ (beta : ℝ) ^ e := le_of_lt hpow_pos
+  have hlow_x := (mag_lower_bound beta x hβ hx) True.intro
+  have hupp_x := (mag_upper_bound beta x hβ hx) True.intro
+  have hlow_x' : (beta : ℝ) ^ (mag beta x - 1) ≤ |x| := by
+    simpa [abs_val] using hlow_x
+  have hupp_x' : |x| < (beta : ℝ) ^ (mag beta x) := by
+    simpa [abs_val] using hupp_x
+  have habs : |x * (beta : ℝ) ^ e| = |x| * (beta : ℝ) ^ e := by
+    rw [abs_mul, abs_of_pos hpow_pos]
+  have hpow_low :
+      (beta : ℝ) ^ (mag beta x + e - 1) =
+        (beta : ℝ) ^ (mag beta x - 1) * (beta : ℝ) ^ e := by
+    calc
+      (beta : ℝ) ^ (mag beta x + e - 1)
+          = (beta : ℝ) ^ ((mag beta x - 1) + e) := by ring_nf
+      _ = (beta : ℝ) ^ (mag beta x - 1) * (beta : ℝ) ^ e :=
+        zpow_add₀ hbne (mag beta x - 1) e
+  have hpow_high :
+      (beta : ℝ) ^ (mag beta x + e) =
+        (beta : ℝ) ^ (mag beta x) * (beta : ℝ) ^ e :=
+    zpow_add₀ hbne (mag beta x) e
+  have hlow :
+      (beta : ℝ) ^ (mag beta x + e - 1) ≤
+        |x * (beta : ℝ) ^ e| := by
+    rw [hpow_low, habs]
+    exact mul_le_mul_of_nonneg_right hlow_x' hpow_nonneg
+  have hupp :
+      |x * (beta : ℝ) ^ e| <
+        (beta : ℝ) ^ (mag beta x + e) := by
+    rw [habs, hpow_high]
+    exact mul_lt_mul_of_pos_right hupp_x' hpow_pos
+  exact (mag_unique beta (x * (beta : ℝ) ^ e) (mag beta x + e) hβ hlow hupp)
+    True.intro
 
-/-- If {lean}`1 < beta` and {lean}`(beta : ℝ)^(e-1) < |x|`, then {lean}`e ≤ mag beta x`. -/
-theorem mag_gt_Zpower (beta : Int) (x : ℝ) (e : Int)
+/-- Coq `Raux.mag_le_Zpower`, with the source integer domain and nonzero
+    precondition preserved exactly. -/
+theorem mag_le_Zpower (beta : Int) (m e : Int)
     (hβ : 1 < beta)
-    (hlt : ((beta : ℝ) ^ (e - 1)) < |x|) :
-    ⦃⌜True⌝⦄
-    (pure (mag beta x) : Id _)
-    ⦃⇓m => ⌜e ≤ m⌝⦄ := by
-  intro _
-  -- This matches `mag_ge_bpow` exactly.
-  exact (mag_ge_bpow beta x e hβ hlt) (by trivial)
+    (hm : m ≠ 0)
+    (hlt : |m| < FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e) :
+    mag beta (m : ℝ) ≤ e := by
+  by_cases he : 0 ≤ e
+  · have hpow_cast :
+        ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) =
+          (beta : ℝ) ^ e := by
+      have heq : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he
+      simp [FloatSpec.Core.Zaux.Zpower_Zpower_nat, he, Int.cast_pow,
+        ← zpow_natCast, heq]
+    have hltR : |(m : ℝ)| < (beta : ℝ) ^ e := by
+      have hcast : ((|m| : Int) : ℝ) <
+          ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) := by
+        exact_mod_cast hlt
+      simpa [Int.cast_abs, hpow_cast] using hcast
+    exact (mag_le_bpow beta (m : ℝ) e hβ (by exact_mod_cast hm) hltR) True.intro
+  · have habs_nonneg : 0 ≤ |m| := abs_nonneg m
+    simp [FloatSpec.Core.Zaux.Zpower_Zpower_nat, he] at hlt
+    omega
+
+/-- Coq `Raux.mag_gt_Zpower`, preserving its integer power premise and strict
+    postcondition. -/
+theorem mag_gt_Zpower (beta : Int) (m e : Int)
+    (hβ : 1 < beta)
+    (hm : m ≠ 0)
+    (hle : FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e ≤ |m|) :
+    e < mag beta (m : ℝ) := by
+  by_cases he : 0 ≤ e
+  · have hpow_cast :
+        ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) =
+          (beta : ℝ) ^ e := by
+      have heq : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he
+      simp [FloatSpec.Core.Zaux.Zpower_Zpower_nat, he, Int.cast_pow,
+        ← zpow_natCast, heq]
+    have hleR : (beta : ℝ) ^ e ≤ |(m : ℝ)| := by
+      have hcast :
+          ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) ≤
+            ((|m| : Int) : ℝ) := by
+        exact_mod_cast hle
+      simpa [Int.cast_abs, hpow_cast] using hcast
+    exact mag_gt_bpow beta (m : ℝ) e hβ hleR
+  · have he_neg : e < 0 := lt_of_not_ge he
+    have hmabs : (1 : ℝ) ≤ |(m : ℝ)| := by
+      have hmabsZ : (1 : Int) ≤ |m| := Int.one_le_abs hm
+      exact_mod_cast hmabsZ
+    have hmag_pos : 0 < mag beta (m : ℝ) :=
+      mag_gt_bpow beta (m : ℝ) 0 hβ (by simpa using hmabs)
+    exact lt_trans he_neg hmag_pos
 
 /-- Magnitude of a product versus sum of magnitudes -/
 theorem mag_mult (beta : Int) (x y : ℝ)

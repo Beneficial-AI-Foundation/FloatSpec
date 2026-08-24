@@ -4133,10 +4133,10 @@ private theorem ulp_succ_pos_theorem
         _ = (succ beta fexp x) := hsucc_pos.symm
     have hsucc_abs_gt : b ^ (e - 1) < |(succ beta fexp x)| := by
       simpa [habs_succ] using hsucc_gt
-    have hmag_ge := FloatSpec.Core.Raux.mag_gt_bpow (beta := beta)
-        (x := (succ beta fexp x)) (e := e) hβ hsucc_abs_gt
+    have hmag_ge := FloatSpec.Core.Raux.mag_ge_bpow (beta := beta)
+        (x := (succ beta fexp x)) (e := e) hβ (le_of_lt hsucc_abs_gt)
     have hmag_succ_ge : e ≤ (FloatSpec.Core.Raux.mag beta (succ beta fexp x)) := by
-      simpa [wp, PostCond.noThrow, Id.run, b] using (hmag_ge trivial)
+      simpa [b] using hmag_ge
     -- Combine: mag(succ x) = e = mag x
     have hmag_succ_eq : (FloatSpec.Core.Raux.mag beta (succ beta fexp x)) = e :=
       le_antisymm hmag_succ_le hmag_succ_ge
@@ -6581,10 +6581,10 @@ private theorem pred_succ_pos_theorem
         (x := s) (e := e) hβ hsucc_ne (by simpa [habs_s, b] using hsucc_lt_bpow)
       have hmag_s_le : FloatSpec.Core.Raux.mag beta s ≤ e := by
         simpa [wp, PostCond.noThrow, Id.run, b] using hmag_le trivial
-      have hmag_ge := FloatSpec.Core.Raux.mag_gt_bpow (beta := beta)
-        (x := s) (e := e) hβ (by simpa [habs_s, b] using hsucc_gt_lower)
+      have hmag_ge := FloatSpec.Core.Raux.mag_ge_bpow (beta := beta)
+        (x := s) (e := e) hβ (le_of_lt (by simpa [habs_s, b] using hsucc_gt_lower))
       have hmag_s_ge : e ≤ FloatSpec.Core.Raux.mag beta s := by
-        simpa [wp, PostCond.noThrow, Id.run, b] using hmag_ge trivial
+        simpa [b] using hmag_ge
       exact le_antisymm hmag_s_le hmag_s_ge
     have hulp_s_eq :
         (ulp (beta := beta) (fexp := fexp) s)

@@ -4499,8 +4499,8 @@ theorem round_round_sqrt_from_aux (fexp1 fexp2 : Int → Int)
             simpa [abs_of_pos (lt_trans zero_lt_one hsqrt_gt_one)] using
               hsqrt_gt_one
           have htrip := FloatSpec.Core.Raux.mag_ge_bpow
-            (beta := beta) (x := Real.sqrt x) (e := 1) hβ hlt
-          simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+            (beta := beta) (x := Real.sqrt x) (e := 1) hβ (le_of_lt hlt)
+          simpa using htrip
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
           (beta := beta) (fexp := fexp1)
           (k := 1) (l := FloatSpec.Core.Raux.mag beta (Real.sqrt x))
@@ -4791,8 +4791,8 @@ theorem round_round_sqrt_radix_ge_4_from_aux (fexp1 fexp2 : Int → Int)
             simpa [abs_of_pos (lt_trans zero_lt_one hsqrt_gt_one)] using
               hsqrt_gt_one
           have htrip := FloatSpec.Core.Raux.mag_ge_bpow
-            (beta := beta) (x := Real.sqrt x) (e := 1) hβ hlt
-          simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+            (beta := beta) (x := Real.sqrt x) (e := 1) hβ (le_of_lt hlt)
+          simpa using htrip
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
           (beta := beta) (fexp := fexp1)
           (k := 1) (l := FloatSpec.Core.Raux.mag beta (Real.sqrt x))

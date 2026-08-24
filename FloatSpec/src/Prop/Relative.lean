@@ -167,8 +167,8 @@ theorem relative_error (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd
       rcases lt_or_eq_of_le h_bound with hlt | heq
       · have htrip := FloatSpec.Core.Raux.mag_ge_bpow
           (beta := beta) (x := x) (e := emin + 1) hβ
-          (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt)
-        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, M] using htrip trivial
+          (le_of_lt (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt))
+        simpa [M] using htrip
       · have hmag_abs := FloatSpec.Core.Raux.mag_abs (beta := beta) (x := x) hβ
         have hmag_abs_run :
             FloatSpec.Core.Raux.mag beta |x| = FloatSpec.Core.Raux.mag beta x := by
@@ -340,8 +340,8 @@ theorem relative_error_N (x : ℝ)
       rcases lt_or_eq_of_le h_bound with hlt | heq
       · have htrip := FloatSpec.Core.Raux.mag_ge_bpow
           (beta := beta) (x := x) (e := emin + 1) hβ
-          (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt)
-        simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, M] using htrip trivial
+          (le_of_lt (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt))
+        simpa [M] using htrip
       · have hmag_abs := FloatSpec.Core.Raux.mag_abs (beta := beta) (x := x) hβ
         have hmag_abs_run :
             FloatSpec.Core.Raux.mag beta |x| = FloatSpec.Core.Raux.mag beta x := by
@@ -612,9 +612,9 @@ theorem relative_error_N_round (h_pos : 0 < p) (x : ℝ)
       rcases lt_or_eq_of_le h_bound with hlt | heq
       · have hmag :=
           (FloatSpec.Core.Raux.mag_ge_bpow (beta := beta) (x := x) (e := emin + 1)
-            hβ (by simpa using hlt)) True.intro
+            hβ (le_of_lt (by simpa using hlt)))
         have hrun : emin + 1 ≤ ex := by
-          simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure, ex] using hmag
+          simpa [ex] using hmag
         omega
       · have hmag_abs :=
           (FloatSpec.Core.Raux.mag_abs (beta := beta) (x := x) hβ) True.intro
@@ -1405,8 +1405,8 @@ private lemma mag_gt_of_bpow_le (x : ℝ) (e : Int)
   rcases lt_or_eq_of_le hbound with hlt | heq
   · have htrip := FloatSpec.Core.Raux.mag_ge_bpow
       (beta := beta) (x := x) (e := e + 1) hβ
-      (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt)
-    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip trivial
+      (le_of_lt (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt))
+    simpa using htrip
   · have hmag_abs := FloatSpec.Core.Raux.mag_abs (beta := beta) (x := x) hβ
     have hmag_abs_run :
         FloatSpec.Core.Raux.mag beta |x| = FloatSpec.Core.Raux.mag beta x := by

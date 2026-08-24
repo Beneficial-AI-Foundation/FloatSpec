@@ -4122,9 +4122,9 @@ theorem generic_inclusion_lt_ge (e1 e2 : Int) :
       have : (e1 + 1 - 1 : Int) = e1 := by ring
       simpa [this] using hxB.left
     have htrip := FloatSpec.Core.Raux.mag_ge_bpow (beta := beta) (x := x) (e := e1 + 1)
-      hβ hlt
+      hβ (le_of_lt hlt)
     have hrun : (e1 + 1) ≤ (mag beta x) := by
-      simpa [wp, PostCond.noThrow, Id.run, pure, FloatSpec.Core.Raux.mag] using htrip (by trivial)
+      simpa [FloatSpec.Core.Raux.mag] using htrip
     -- (e1 + 1) ≤ M ↔ e1 < M
     exact (Int.add_one_le_iff).1 (by simpa [hM] using hrun)
   -- Assemble the pointwise exponent comparison required by generic_inclusion_mag
@@ -4318,9 +4318,9 @@ theorem generic_inclusion_ge (e1 : Int) :
         have hshift : (e1 + 1 - 1 : Int) = e1 := by ring
         simpa [hshift] using hlt
       have htrip := FloatSpec.Core.Raux.mag_ge_bpow (beta := beta) (x := x) (e := e1 + 1)
-        hβ hlt'
+        hβ (le_of_lt hlt')
       have hrun : (e1 + 1) ≤ (mag beta x) := by
-        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip (by trivial)
+        simpa using htrip
       have he1_le : e1 ≤ e1 + 1 := by linarith
       exact le_trans he1_le hrun
     · -- Equality case: |x| = β^e1 implies mag x = e1 + 1

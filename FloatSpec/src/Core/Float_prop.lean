@@ -56,14 +56,12 @@ private lemma natAbs_eq_toNat_of_nonneg {z : Int} (hz : 0 ≤ z) :
 
 --
 
-/-- Magnitude function for real numbers
+/-- Compatibility name for FLoCq's unique magnitude operation.
 
-    Returns the exponent such that beta^(mag-1) ≤ |x| < beta^mag.
-    For x = 0, returns an arbitrary value (typically 0).
--/
-noncomputable def mag (beta : Int) (x : ℝ) : Int :=
-  if x = 0 then 0
-  else ⌈Real.log (abs x) / Real.log (beta : ℝ)⌉
+    Earlier versions accidentally introduced a second, ceiling-based
+    magnitude here.  FLoCq uses the floor-plus-one witness implemented by
+    `Core.Raux.mag`, including its observable value at zero. -/
+noncomputable abbrev mag := FloatSpec.Core.Raux.mag
 
 
 -- Comparison theorems
@@ -1147,8 +1145,41 @@ theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
   0 < m →
   ((F2R (FlocqFloat.mk m e : FlocqFloat beta)) ≤ x ∧
     x < (F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta))) →
-  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) ≤ mag beta x ∧
-    mag beta x ≤ mag beta ((F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta))) := by
+  mag beta x = mag beta (F2R (FlocqFloat.mk m e : FlocqFloat beta)) := by
+  intro hm_pos ⟨hx_lo, hx_hi⟩
+  let f : ℝ := F2R (FlocqFloat.mk m e : FlocqFloat beta)
+  have hf_pos : 0 < f :=
+    F2R_gt_0 (beta := beta) (f := FlocqFloat.mk m e) hbeta hm_pos
+  have hx_pos : 0 < x := lt_of_lt_of_le hf_pos hx_lo
+  have hf_ne : f ≠ 0 := ne_of_gt hf_pos
+  have hx_ne : x ≠ 0 := ne_of_gt hx_pos
+  have hf_low :=
+    (FloatSpec.Core.Raux.mag_lower_bound beta f hbeta hf_ne) True.intro
+  have hf_high :=
+    (FloatSpec.Core.Raux.mag_upper_bound beta f hbeta hf_ne) True.intro
+  have hlow :
+      (beta : ℝ) ^ (mag beta f - 1) ≤ |x| := by
+    change (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f - 1) ≤ |x|
+    rw [abs_of_pos hx_pos]
+    have hf_low' :
+        (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f - 1) ≤ f := by
+      simpa only [FloatSpec.Core.Raux.abs_val, abs_of_pos hf_pos] using hf_low
+    exact le_trans hf_low' (by simpa only [f] using hx_lo)
+  have hf1_le :
+      F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta) ≤
+        (beta : ℝ) ^ (mag beta f) := by
+    change F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta) ≤
+      (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f)
+    apply F2R_p1_le_bpow (beta := beta) m e (mag beta f) hbeta hm_pos
+    change f < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f)
+    simpa [FloatSpec.Core.Raux.abs_val, abs_of_pos hf_pos] using hf_high
+  have hupp : |x| < (beta : ℝ) ^ (mag beta f) := by
+    change |x| < (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta f)
+    rw [abs_of_pos hx_pos]
+    exact lt_of_lt_of_le hx_hi hf1_le
+  exact (FloatSpec.Core.Raux.mag_unique beta x (mag beta f) hbeta hlow hupp) True.intro
+
+/- Legacy proof for the accidentally weakened interval-only contract.
   intro hm_pos ⟨hx_lo, hx_hi⟩
   -- Basic positivity setup
   have hβposInt : (0 : Int) < beta := lt_trans (by decide) hbeta
@@ -1196,6 +1227,7 @@ theorem mag_F2R_bounds (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
   constructor
   · exact Int.ceil_mono hdiv_lo
   · exact Int.ceil_mono (le_of_lt hdiv_hi)
+-/
 /-
 Coq original:
 Theorem mag_F2R : forall m e : Z,
@@ -1210,6 +1242,11 @@ Qed.
 theorem mag_F2R (m e : Int) (hbeta : 1 < beta) :
   m ≠ 0 →
   mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) = mag beta (m : ℝ) + e := by
+  intro hm_ne
+  apply FloatSpec.Core.Raux.mag_mult_bpow beta (m : ℝ) e hbeta
+  exact_mod_cast hm_ne
+
+/- Legacy proof for the removed duplicate ceiling-based magnitude.
   intro hm_ne
   -- Simplify F2R
   simp only [F2R, pure, Id.run, FlocqFloat.mk]
@@ -1255,6 +1292,7 @@ theorem mag_F2R (m e : Int) (hbeta : 1 < beta) :
     exact Int.ceil_add_intCast (Real.log |(m : ℝ)| / Real.log (beta : ℝ)) e
   -- Combine all the steps
   rw [habs_prod, hlog_prod, hdiv_eq, hceil_add]
+-/
 /-
 Coq original:
 Theorem Zdigits_mag : forall n,
@@ -1283,7 +1321,7 @@ In this file, `mag` is the legacy ceiling-based local definition, not
 code that uses `Generic_fmt.cexp` should use `FloatSpec.Core.Raux.mag` bridges
 instead.
 -/
-theorem Zdigits_mag (n : Int) (hbeta : 1 < beta) :
+theorem Zdigits_pos (n : Int) (hbeta : 1 < beta) :
   n ≠ 0 → (Zdigits beta n) > 0 := by
   intro hn
   -- Direct consequence of `Zdigits_gt_0` from `Digits.lean`.
@@ -1293,7 +1331,7 @@ theorem Zdigits_mag (n : Int) (hbeta : 1 < beta) :
 
 /-- Digit count agrees with the Coq-compatible magnitude used by `Raux` and
 `Generic_fmt.cexp` for nonzero integer casts. -/
-theorem Zdigits_Raux_mag (n : Int) (hbeta : 1 < beta) :
+theorem Zdigits_mag (n : Int) (hbeta : 1 < beta) :
   n ≠ 0 → Zdigits beta n = FloatSpec.Core.Raux.mag beta (n : ℝ) := by
   intro hn
   set d : Int := Zdigits beta n with hd
@@ -1333,6 +1371,12 @@ theorem Zdigits_Raux_mag (n : Int) (hbeta : 1 < beta) :
     simpa using hmag
   simpa [d, hd] using hmag_eq.symm
 
+/-- Compatibility spelling retained for callers that previously had to
+    distinguish the canonical `Raux.mag` from the duplicate local one. -/
+theorem Zdigits_Raux_mag (n : Int) (hbeta : 1 < beta) :
+    n ≠ 0 → Zdigits beta n = FloatSpec.Core.Raux.mag beta (n : ℝ) :=
+  Zdigits_mag (beta := beta) n hbeta
+
 /-
 Coq original:
 Theorem mag_F2R_Zdigits : forall m e,
@@ -1354,10 +1398,12 @@ For nonzero mantissas, we can always rewrite the magnitude of a float as
 -/
 theorem mag_F2R_Zdigits (m e : Int) (hbeta : 1 < beta) :
   m ≠ 0 →
-  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) = mag beta (m : ℝ) + e := by
-  -- This is exactly `mag_F2R` proved above.
+  mag beta ((F2R (FlocqFloat.mk m e : FlocqFloat beta))) = Zdigits beta m + e := by
   intro hm
-  simpa using (mag_F2R (beta := beta) m e hbeta hm)
+  calc
+    mag beta (F2R (FlocqFloat.mk m e : FlocqFloat beta))
+        = mag beta (m : ℝ) + e := mag_F2R (beta := beta) m e hbeta hm
+    _ = Zdigits beta m + e := by rw [Zdigits_mag (beta := beta) m hbeta hm]
 
 /-- Coq-compatible magnitude version of `mag_F2R_Zdigits`.
 
@@ -1446,11 +1492,20 @@ This is the `Raux.mag` analogue of the legacy local
 `mag_F2R_bounds_Zdigits` theorem and is the magnitude fact needed by
 `Generic_fmt.cexp`.
 -/
-theorem Raux_mag_F2R_bounds_Zdigits (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
+theorem mag_F2R_bounds_Zdigits (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
   0 < m →
   (F2R (FlocqFloat.mk m e : FlocqFloat beta) ≤ x ∧
     x < F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)) →
   FloatSpec.Core.Raux.mag beta x = Zdigits beta m + e := by
+  intro hm hx
+  calc
+    FloatSpec.Core.Raux.mag beta x =
+        FloatSpec.Core.Raux.mag beta
+          (F2R (FlocqFloat.mk m e : FlocqFloat beta)) :=
+      mag_F2R_bounds (beta := beta) x m e hbeta hm hx
+    _ = Zdigits beta m + e := mag_F2R_Zdigits (beta := beta) m e hbeta (ne_of_gt hm)
+
+/- Legacy direct logarithmic proof, superseded by the two exact source lemmas.
   intro hm_pos hx
   set d : Int := Zdigits beta m with hd
   have hm_ne : m ≠ 0 := ne_of_gt hm_pos
@@ -1727,6 +1782,16 @@ Qed.
       (div_le_iff₀ hlogb_pos).2 hlog_le'
     -- Cast `(d+e)` to `ℝ` in the expected way.
     simpa [Int.cast_add] using hdiv
+-/
+
+/-- Compatibility spelling for callers written while `Float_prop` had a
+    second magnitude implementation. -/
+theorem Raux_mag_F2R_bounds_Zdigits (x : ℝ) (m e : Int) (hbeta : 1 < beta) :
+    0 < m →
+    (F2R (FlocqFloat.mk m e : FlocqFloat beta) ≤ x ∧
+      x < F2R (FlocqFloat.mk (m + 1) e : FlocqFloat beta)) →
+    FloatSpec.Core.Raux.mag beta x = Zdigits beta m + e :=
+  mag_F2R_bounds_Zdigits (beta := beta) x m e hbeta
 
 /-
 Coq original:
@@ -1847,7 +1912,7 @@ theorem float_distribution_pos (m1 e1 m2 e2 : Int) (hbeta : 1 < beta) :
                     (Zdigits beta m1) + e1 := by
       apply mag_F2R_bounds_Zdigits beta (x := (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)))
         (m := m1) (e := e1) hbeta hm1_pos
-      exact ⟨hlo, hhi⟩
+      exact ⟨le_of_lt hlo, hhi⟩
     -- By mag_F2R: mag(F2R(m2,e2)) = mag(m2) + e2
     have hmag_eq2 : mag beta (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)) =
                     mag beta (m2 : ℝ) + e2 := by
