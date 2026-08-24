@@ -24,7 +24,7 @@ open Std.Do
 
 namespace FloatSpec.Calc.Div
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 
 section MagnitudeBounds
@@ -98,11 +98,11 @@ noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
     let q := m1' / m2'
     let r := m1' % m2'
     -- Define the real bounds and midpoint for the quotient interval
-    let dR : ℝ := (F2R (FlocqFloat.mk q e : FlocqFloat beta))
-    let uR : ℝ := (F2R (FlocqFloat.mk (q + 1) e : FlocqFloat beta))
+    let dR : ℝ := (q : ℝ) * (beta : ℝ) ^ e
+    let uR : ℝ := ((q + 1 : Int) : ℝ) * (beta : ℝ) ^ e
     let xR : ℝ :=
-      ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta))) /
-      ((F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta)))
+      ((m1 : ℝ) * (beta : ℝ) ^ e1) /
+      ((m2 : ℝ) * (beta : ℝ) ^ e2)
     let l := if r = 0 then Location.loc_Exact
              else Location.loc_Inexact (FloatSpec.Calc.Bracket.compare xR ((dR + uR) / 2))
     (q, l))

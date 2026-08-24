@@ -10,7 +10,7 @@ import Mathlib.Data.Real.Basic
 open Real
 open FloatSpec.Core.Defs
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 

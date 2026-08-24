@@ -77,11 +77,11 @@ theorem FIX_exp_spec (e : Int) :
     using the generic format with the fixed exponent function.
     This means x = m × β^emin for some integer mantissa m.
 -/
-def FIX_format (beta : Int) (x : ℝ) : Prop :=
+def FIX_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
 
 /-- Exponent-validity instance for the fixed exponent function. -/
-instance FIX_exp_valid (beta : Int) :
+instance FIX_exp_valid (beta : Int) [ValidRadix beta] :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FIX_exp emin) := by
   refine ⟨?_⟩
   intro k
@@ -113,7 +113,7 @@ instance FIX_exp_monotone :
 Global Instance exists_NE_FIX :
       Exists_NE beta FIX_exp.
 -/
-instance exists_NE_FIX (beta : Int) :
+instance exists_NE_FIX (beta : Int) [ValidRadix beta] :
     FloatSpec.Core.RoundNE.Exists_NE beta (FIX_exp emin) where
   exists_ne := by
     right
@@ -131,7 +131,7 @@ instance exists_NE_FIX (beta : Int) :
     characterization of fixed-point representable numbers.
 -/
 @[spec]
-theorem FIX_format_spec (beta : Int) (x : ℝ) :
+theorem FIX_format_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result = FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x⌝⦄ := by
@@ -159,7 +159,7 @@ theorem FIX_exp_correct_spec (e : Int) :
     Verify that zero is representable in the fixed-point format.
     Zero should always be representable as 0 × β^emin = 0.
 -/
-noncomputable def FIX_format_0_check (beta : Int) : Bool :=
+noncomputable def FIX_format_0_check (beta : Int) [ValidRadix beta] : Bool :=
   -- A concrete, checkable fact used by the spec proof: Ztrunc 0 = 0
   ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ))) == (0 : Int)
 
@@ -170,7 +170,7 @@ noncomputable def FIX_format_0_check (beta : Int) : Bool :=
     fixed-point formats always contain the additive identity.
 -/
 @[spec]
-theorem FIX_format_0_spec (beta : Int) :
+theorem FIX_format_0_spec (beta : Int) [ValidRadix beta] :
     ⦃⌜beta > 1⌝⦄
     (pure (FIX_format_0_check beta) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -190,7 +190,7 @@ theorem FIX_format_0_spec (beta : Int) :
     Verify that if x is in FIX format, then -x is also in FIX format.
     This tests the closure property under additive inverse.
 -/
-noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
+noncomputable def FIX_format_opp_check (beta : Int) [ValidRadix beta] (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_neg: Ztrunc(-x) + Ztrunc(x) = 0
   ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x)) == (0 : Int)
 
@@ -201,7 +201,7 @@ noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
     from the fact that if x = m × β^emin, then -x = (-m) × β^emin.
 -/
 @[spec]
-theorem FIX_format_opp_spec (beta : Int) (x : ℝ) :
+theorem FIX_format_opp_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FIX_format emin beta x⌝⦄
     (pure (FIX_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -221,7 +221,7 @@ Coq (FIX.v):
 Theorem generic_format_FIX :
   forall x, FIX_format x -> generic_format beta FIX_exp x.
 -/
-theorem generic_format_FIX (beta : Int) (x : ℝ) :
+theorem generic_format_FIX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FIX_format emin beta x⌝⦄
     (pure (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -233,7 +233,7 @@ Coq (FIX.v):
 Theorem FIX_format_generic :
   forall x, generic_format beta FIX_exp x -> FIX_format x.
 -/
-theorem FIX_format_generic (beta : Int) (x : ℝ) :
+theorem FIX_format_generic (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x⌝⦄
     (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -245,7 +245,7 @@ Coq (FIX.v):
 Theorem FIX_format_satisfies_any :
   satisfies_any FIX_format.
 -/
-theorem FIX_format_satisfies_any (beta : Int) :
+theorem FIX_format_satisfies_any (beta : Int) [ValidRadix beta] :
     FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FIX_format emin beta y) := by
   -- Immediate from the generic format version
   simpa [FIX_format]
@@ -256,7 +256,7 @@ Theorem ulp_FIX : forall x, ulp beta FIX_exp x = bpow emin.
 
 Lean (spec): For any real {name}`x`, the ULP under FIX exponent equals β^emin.
 -/
-private lemma ulp_FIX_run_eq (beta : Int) (emin : Int) (x : ℝ) :
+private lemma ulp_FIX_run_eq (beta : Int) [ValidRadix beta] (emin : Int) (x : ℝ) :
     (FloatSpec.Core.Ulp.ulp beta (FIX_exp (emin := emin)) x) = (beta : ℝ) ^ emin := by
   classical
   by_cases hx : x = 0
@@ -269,7 +269,7 @@ private lemma ulp_FIX_run_eq (beta : Int) (emin : Int) (x : ℝ) :
   · simp [FloatSpec.Core.Ulp.ulp, FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag,
           FIX_exp, hx]
 
-theorem ulp_FIX (beta : Int) (x : ℝ) :
+theorem ulp_FIX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (FloatSpec.Core.Ulp.ulp beta (FIX_exp emin) x) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by

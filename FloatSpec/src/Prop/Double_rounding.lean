@@ -9,7 +9,7 @@ open Std.Do
 -- Double rounding properties
 -- Translated from Coq file: flocq/src/Prop/Double_rounding.v
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
 /-! Midpoint helpers, corresponding to Coq's `midp` and `midp'`. -/
 
@@ -3286,7 +3286,7 @@ theorem round_round_sqrt_upper_grid_le_of_scaled_int
 Coq scales by `bpow (-2 * e)`. In Lean this form is easier to combine with
 the endpoint algebra as `(β^e)⁻¹ * (β^e)⁻¹`. -/
 theorem round_round_sqrt_scale_neg_two_eq_inv_sq
-    (beta : Int) (e : Int) (hβ : 1 < beta) :
+    (beta : Int) [ValidRadix beta] (e : Int) (hβ : 1 < beta) :
     (beta : ℝ) ^ (-(2 * e)) =
       ((beta : ℝ) ^ e)⁻¹ * ((beta : ℝ) ^ e)⁻¹ := by
   have hbposI : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
@@ -3411,7 +3411,7 @@ unfolding `generic_format` gives
 `x = Ztrunc (scaled_mantissa x) * beta^(cexp x)`, so multiplying by
 `beta^(-cexp x)` recovers the integer mantissa. -/
 theorem round_round_sqrt_scaled_mantissa_int_of_generic_format
-    (beta : Int) (fexp : Int → Int) (x : ℝ)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) (x : ℝ)
     (hβ : 1 < beta)
     (hfmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x) :
     FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x =
@@ -3454,7 +3454,7 @@ When the canonical exponent of `x` is `2*e`, scaling by `beta^(-2*e)`
 is exactly scaling by `beta^(-cexp x)`, hence the result is the integer
 truncated scaled mantissa. -/
 theorem round_round_sqrt_scaled_int_of_generic_format_at_exp
-    (beta : Int) (fexp : Int → Int) (x scale : ℝ) (e : Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) (x scale : ℝ) (e : Int)
     (hβ : 1 < beta)
     (hfmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
     (hcexp : FloatSpec.Core.Generic_fmt.cexp beta fexp x = 2 * e)
@@ -3483,7 +3483,7 @@ known only to be below the canonical exponent of `x`.  This helper turns the
 canonical `generic_format` representation into the needed integer witness after
 rescaling. -/
 theorem round_round_sqrt_scaled_int_of_generic_format_le_exp
-    (beta : Int) (fexp : Int → Int) (x scale : ℝ) (target : Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) (x scale : ℝ) (target : Int)
     (hβ : 1 < beta)
     (hfmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
     (hle : target ≤ FloatSpec.Core.Generic_fmt.cexp beta fexp x)

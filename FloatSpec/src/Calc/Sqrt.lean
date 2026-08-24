@@ -25,7 +25,7 @@ open Std.Do
 
 namespace FloatSpec.Calc.Sqrt
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 
 section MagnitudeBounds
@@ -445,7 +445,7 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
   split_ifs with hr_zero
   · -- Case: r = 0, so sqrt is exact
     apply inbetween.inbetween_Exact
-    rw [hsqrt_F2R, hF2R_q]
+    rw [hsqrt_F2R]
     congr 1
     -- r = 0 means m1' = q², so sqrt(m1') = q
     have hm1'_eq_qq : m1' = q * q := by
@@ -489,7 +489,8 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
       -- 4*(m1' - q²) vs 4*q + 1, i.e., 4*r vs 4*q + 1
       -- Location is lt if 4*r < 4*q + 1, i.e., r ≤ q
       -- Location is gt if 4*r > 4*q + 1, i.e., r > q (since both integers)
-      rw [hsqrt_F2R, hF2R_q, hF2R_q1]
+      rw [hsqrt_F2R]
+      simp only [Int.cast_add, Int.cast_one]
       -- Midpoint calculation
       have hmid : ((q : ℝ) * (beta : ℝ) ^ e + ((q : ℝ) + 1) * (beta : ℝ) ^ e) / 2 =
                   ((q : ℝ) + 1 / 2) * (beta : ℝ) ^ e := by ring
@@ -568,7 +569,8 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
     apply inbetween.inbetween_Inexact
     · exact ⟨hstrict_lb, hsqrt_F2R_ub⟩
     · -- Prove the compare relation: Bracket.compare ... = Ordering.gt
-      rw [hsqrt_F2R, hF2R_q, hF2R_q1]
+      rw [hsqrt_F2R]
+      simp only [Int.cast_add, Int.cast_one]
       have hmid : ((q : ℝ) * (beta : ℝ) ^ e + ((q : ℝ) + 1) * (beta : ℝ) ^ e) / 2 =
                   ((q : ℝ) + 1 / 2) * (beta : ℝ) ^ e := by ring
       rw [hmid]

@@ -9,7 +9,7 @@ import Mathlib.Data.Real.Basic
 open Real
 open FloatSpec.Calc.Round
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 
@@ -417,7 +417,8 @@ theorem Rnd_odd_pt_opp_inv (x f : ℝ) :
           have hnegf_le_negg : -f ≤ -g := hmin (-g) hneg_g_fmt hnegx_le_negg
           linarith
     · rcases hg with ⟨g, hfg, hcan, hodd⟩
-      refine ⟨FloatSpec.Core.Defs.FlocqFloat.mk (-g.Fnum) g.Fexp, ?_, ?_, ?_⟩
+      refine ⟨FloatSpec.Core.Defs.FlocqFloat.mk (-g.Fnum) g.Fexp,
+        ?_, ?_, ?_⟩
       · have hf2r_neg :
             FloatSpec.Core.Defs.F2R
                 (FloatSpec.Core.Defs.FlocqFloat.mk (-g.Fnum) g.Fexp :
@@ -431,7 +432,8 @@ theorem Rnd_odd_pt_opp_inv (x f : ℝ) :
                 (FloatSpec.Core.Defs.FlocqFloat.mk (-g.Fnum) g.Fexp :
                   FloatSpec.Core.Defs.FlocqFloat beta) := hf2r_neg.symm
       · exact FloatSpec.Core.Generic_fmt.canonical_opp
-          beta fexp g.Fnum g.Fexp hcan
+          (beta := beta) (fexp := fexp)
+          g.Fnum g.Fexp hcan
       · exact emod_two_ne_zero_neg hodd
 
 /-- Negation commutes with round-to-odd.
@@ -2584,7 +2586,8 @@ theorem mag_round_odd
           FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp emin prec)
             (FloatSpec.Core.Defs.FlocqFloat.mk (Int.ofNat (Int.natAbs g.Fnum)) g.Fexp) := by
         simpa using FloatSpec.Core.Generic_fmt.canonical_abs
-          (beta := beta) (fexp := FLT_exp emin prec) g.Fnum g.Fexp hg_can
+          (beta := beta) (fexp := FLT_exp emin prec)
+          g.Fnum g.Fexp hg_can
       have huniq :
           gg =
             (FloatSpec.Core.Defs.FlocqFloat.mk (Int.ofNat (Int.natAbs g.Fnum)) g.Fexp :

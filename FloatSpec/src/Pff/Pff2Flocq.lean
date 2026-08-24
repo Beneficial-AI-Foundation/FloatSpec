@@ -17,7 +17,7 @@ open Std.Do
 
 -- Conversion functions between Pff and Flocq representations
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
 -- Convert Pff float to Flocq float
 def pff_to_float (f : PffFloat) : FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -220,7 +220,7 @@ private lemma Ztrunc_neg_eq (y : ℝ) : FloatSpec.Core.Raux.Ztrunc (-y) = -Float
       simp only [h_not_lt, ite_false, Int.floor_zero, neg_zero]
 
 -- Helper lemma: cexp(-x) = cexp(x)
-private lemma cexp_neg_eq (b emin prec : Int) (x : ℝ) :
+private lemma cexp_neg_eq (b emin prec : Int) [ValidRadix b] (x : ℝ) :
     FloatSpec.Core.Generic_fmt.cexp b (FLT_exp emin prec) (-x)
     = FloatSpec.Core.Generic_fmt.cexp b (FLT_exp emin prec) x := by
   simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, abs_neg]
@@ -376,12 +376,12 @@ theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec]
   let bo : Fbound_skel := toFboundSkel bnd
   have hbeta : (1 : Int) < 2 := by decide
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin 2 prec emin
+    have h := make_bound_Emin 2 prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using h hemin
     omega
   have hpBound : pGivesBound 2 bnd prec := by
-    have h := make_bound_p 2 prec emin
+    have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
         Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
@@ -649,12 +649,12 @@ theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec]
   let bo : Fbound_skel := toFboundSkel bnd
   have hbeta : (1 : Int) < 2 := by decide
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin 2 prec emin
+    have h := make_bound_Emin 2 prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using h hemin
     omega
   have hpBound : pGivesBound 2 bnd prec := by
-    have h := make_bound_p 2 prec emin
+    have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
         Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
@@ -963,12 +963,12 @@ have a product whose magnitude is at least `bpow (e + 2 * prec - 1)`, then the
 sum of their exponents is at least `e`.
 -/
 
-noncomputable def underf_mult_aux_check {beta : Int}
+noncomputable def underf_mult_aux_check {beta : Int} [ValidRadix beta]
     (_b : Fbound_skel) (_prec e : Int)
     (_x _y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-private lemma underf_mult_aux_abs_lt {beta : Int}
+private lemma underf_mult_aux_abs_lt {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (prec : Int)
     (hβ : 1 < beta) (hprec : 1 < prec)
     (hpGivesBound : b.vNum = Zpower_nat beta (Int.natAbs prec))
@@ -1016,7 +1016,7 @@ private lemma underf_mult_aux_abs_lt {beta : Int}
 If `x` and `y` are bounded by `b`, `b.vNum` is the radix precision bound, and
 `|F2R x * F2R y|` is at least `bpow (e + 2 * prec - 1)`, then the product
 cannot underflow below exponent `e`. -/
-theorem underf_mult_aux {beta : Int}
+theorem underf_mult_aux {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (prec e : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧
@@ -1091,14 +1091,14 @@ theorem underf_mult_aux {beta : Int}
   have heq : (e - 1) + 1 = e := by omega
   simpa [heq] using hle
 
-noncomputable def underf_mult_aux'_check {beta : Int}
+noncomputable def underf_mult_aux'_check {beta : Int} [ValidRadix beta]
     (_b : Fbound_skel) (_prec : Int)
     (_x _y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `underf_mult_aux'`.
 This is the `underf_mult_aux` specialization at `e = -dExp b`. -/
-theorem underf_mult_aux' {beta : Int}
+theorem underf_mult_aux' {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (prec : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧
@@ -1121,7 +1121,7 @@ theorem underf_mult_aux' {beta : Int}
 In the ErrFMA V1 construction, with `u1 := round_flt (a*x)`, the first
 rounded product either remains zero or preserves the strong non-underflow lower
 bound assumed for `a*x`. -/
-theorem V1_Und3' (beta emin prec : Int) [Prec_gt_0 prec]
+theorem V1_Und3' (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x _y : ℝ)
     (hβ : 1 < beta) (hprec : 3 ≤ prec)
     (_Fa : generic_format beta (FLT_exp emin prec) a)
@@ -1198,7 +1198,7 @@ theorem V1_Und3' (beta emin prec : Int) [Prec_gt_0 prec]
 /-- Coq: `V1_Und3`.
 This weakens `V1_Und3'` from exponent `emin + 2*prec - 1` to
 `emin + prec`, using monotonicity of powers. -/
-theorem V1_Und3 (beta emin prec : Int) [Prec_gt_0 prec]
+theorem V1_Und3 (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta) (hprec : 3 ≤ prec)
     (_Fa : generic_format beta (FLT_exp emin prec) a)
@@ -1233,7 +1233,7 @@ The public Veltkamp wrappers first convert the formatted input `x` to a
 bounded Pff float, then destruct `round_N_is_pff_round` for the three rounded
 intermediates `p`, `q`, and `hx`.  This helper packages that wrapper-side
 setup independently of the still-missing lower Pff `Veltkamp` payload. -/
-theorem Veltkamp_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec]
+theorem Veltkamp_round_N_witnesses (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (x : ℝ)
     (hβ : 1 < beta)
     (hprec : precisionNotZero prec)
@@ -1267,13 +1267,13 @@ theorem Veltkamp_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec]
   let q := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - p)
   let hx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (q + p)
   have hpBound : pGivesBound beta bnd prec := by
-    have h := make_bound_p beta prec emin
+    have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
         Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin beta prec emin
+    have h := make_bound_Emin beta prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -1308,7 +1308,7 @@ theorem Veltkamp_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec]
 This extends `Veltkamp_round_N_witnesses` with the fourth rounded
 intermediate `tx := round (x - hx)`, the extra witness destructed by the
 upstream tail theorem before invoking the lower Pff `Veltkamp_tail` payload. -/
-theorem Veltkamp_tail_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec]
+theorem Veltkamp_tail_round_N_witnesses (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (x : ℝ)
     (hβ : 1 < beta)
     (hprec : precisionNotZero prec)
@@ -1345,13 +1345,13 @@ theorem Veltkamp_tail_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec
   let hx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (q + p)
   let tx := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (x - hx)
   have hpBound : pGivesBound beta bnd prec := by
-    have h := make_bound_p beta prec emin
+    have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
         Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin beta prec emin
+    have h := make_bound_Emin beta prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -1391,7 +1391,7 @@ theorem Veltkamp_tail_round_N_witnesses (beta emin prec s : Int) [Prec_gt_0 prec
 Once the lower Pff `VeltkampEven` payload supplies an `EvenClosest` witness for
 the reduced precision bound, the public Flocq equality follows from the
 nearest-even bridge. -/
-theorem Veltkamp_Even_from_reduced_evenClosest (beta emin prec s : Int)
+theorem Veltkamp_Even_from_reduced_evenClosest (beta emin prec s : Int) [ValidRadix beta]
     [Prec_gt_0 prec] (x hx : ℝ)
     (hβ : 1 < beta)
     (hemin : emin ≤ 0)
@@ -1450,7 +1450,7 @@ The lower Pff payload used by both public Veltkamp theorems can provide the
 same reduced-bound nearest-even witness.  The non-even public theorem only asks
 for existence of a nearest choice, so this bridge packages the even choice as
 that witness. -/
-theorem Veltkamp_from_reduced_evenClosest (beta emin prec s : Int)
+theorem Veltkamp_from_reduced_evenClosest (beta emin prec s : Int) [ValidRadix beta]
     [Prec_gt_0 prec] (x hx : ℝ)
     (hβ : 1 < beta)
     (hemin : emin ≤ 0)
@@ -1475,7 +1475,7 @@ theorem Veltkamp_from_reduced_evenClosest (beta emin prec s : Int)
 Once the lower Pff `Veltkamp_tail` payload supplies the tail float bounded by
 the precision-`s` bound, this bridge converts it to the public Flocq equality
 and `generic_format` statement. -/
-theorem Veltkamp_tail_from_pff_tail_payload (beta emin prec s : Int)
+theorem Veltkamp_tail_from_pff_tail_payload (beta emin prec s : Int) [ValidRadix beta]
     [Prec_gt_0 prec] (x hx tx : ℝ)
     (hβ : 1 < beta)
     (hemin : emin ≤ 0)
@@ -1522,7 +1522,7 @@ The upstream public wrapper constructs the Pff witnesses for the Veltkamp
 intermediates and calls lower Pff `VeltkampEven`.  This wrapper records the
 final checked conversion: once that lower payload supplies the reduced
 `EvenClosest` witness, the public nearest-even equality follows. -/
-theorem Veltkamp_Even (beta emin prec s : Int) [Prec_gt_0 prec]
+theorem Veltkamp_Even (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (x hx : ℝ)
     (hβ : 1 < beta)
     (hemin : emin ≤ 0)
@@ -1547,7 +1547,7 @@ theorem Veltkamp_Even (beta emin prec s : Int) [Prec_gt_0 prec]
 The lower Pff payload gives the same reduced nearest-even witness used by
 `Veltkamp_Even`; the non-even public theorem only requires existence of a
 nearest choice. -/
-theorem Veltkamp (beta emin prec s : Int) [Prec_gt_0 prec]
+theorem Veltkamp (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (x hx : ℝ)
     (hβ : 1 < beta)
     (hemin : emin ≤ 0)
@@ -1570,7 +1570,7 @@ theorem Veltkamp (beta emin prec s : Int) [Prec_gt_0 prec]
 
 Once the lower Pff `Veltkamp_tail` payload supplies the tail float and its
 bound, this public wrapper exposes the Flocq equality and format conclusion. -/
-theorem Veltkamp_tail (beta emin prec s : Int) [Prec_gt_0 prec]
+theorem Veltkamp_tail (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (x hx tx : ℝ)
     (hβ : 1 < beta)
     (hemin : emin ≤ 0)
@@ -1782,13 +1782,13 @@ theorem Dekker_round_N_witnesses (emin prec s : Int) [Prec_gt_0 prec]
   let t4 := round_flt (t3 + x2y2)
   have hβ : (1 : Int) < 2 := by decide
   have hpBound : pGivesBound 2 bnd prec := by
-    have h := make_bound_p 2 prec emin
+    have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
         Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin 2 prec emin
+    have h := make_bound_Emin 2 prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -1923,7 +1923,7 @@ noncomputable def ErrFMA_bounded_check (emin prec : Int)
 
 /-- Audit gap for Coq `ErrFMA_bounded`; the former theorem had postcondition
 `True` and proved no boundedness property. -/
-theorem ErrFMA_bounded (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_bounded (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (Fa : generic_format beta (FLT_exp emin prec) a)
@@ -2074,7 +2074,7 @@ noncomputable def ErrFMA_correct_check (emin prec : Int)
 When the product input is exactly zero, the compensated FMA reconstruction
 collapses by `round(0)=0` and `round(y)=y` for formatted `y`.  The nonzero
 branch still requires the lower Pff `FmaErr` reconstruction theorem. -/
-theorem ErrFMA_correct_of_product_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_correct_of_product_eq_zero (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (Fy : generic_format beta (FLT_exp emin prec) y)
@@ -2116,7 +2116,7 @@ The lower Pff `FmaErr` payload reconstructs the exact value as
 `r3 = gamma + alpha2 - r2`; this helper packages that last let-bound
 algebraic rewrite. -/
 theorem ErrFMA_correct_from_core_equality
-    (beta emin prec : Int) [Prec_gt_0 prec]
+    (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hcore :
       let rnd := FloatSpec.Core.Generic_fmt.Znearest choice
@@ -2239,13 +2239,13 @@ theorem ErrFMA_round_N_witnesses (emin prec : Int) [Prec_gt_0 prec]
   let gat := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (beta1 - r1)
   let gamma := FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec) rnd (gat + beta2)
   have hpBound : pGivesBound 2 bnd prec := by
-    have h := make_bound_p 2 prec emin
+    have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
         Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin 2 prec emin
+    have h := make_bound_Emin 2 prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -2287,7 +2287,7 @@ theorem ErrFMA_round_N_witnesses (emin prec : Int) [Prec_gt_0 prec]
 The public FMA wrapper needs Pff-side witnesses for the unrounded compensation
 errors `u2`, `alpha2`, and `beta2` before calling the lower `FmaErr` payload.
 This helper ports the generic-format part of those witness constructions. -/
-theorem ErrFMA_error_value_formats (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_error_value_formats (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (Fa : generic_format beta (FLT_exp emin prec) a)
@@ -2411,7 +2411,7 @@ This is the wrapper-side analogue of `ErrFmaAppr_format_witnesses`, but for the
 exact FMA reconstruction path.  It converts the formatted inputs and the three
 unrounded compensation errors into bounded Pff floats with matching real
 values. -/
-theorem ErrFMA_error_value_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_error_value_witnesses (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (hprec : precisionNotZero prec)
@@ -2446,13 +2446,13 @@ theorem ErrFMA_error_value_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
   let beta1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u1 + alpha1)
   let beta2 := (u1 + alpha1) - beta1
   have hpBound : pGivesBound beta bnd prec := by
-    have h := make_bound_p beta prec emin
+    have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
         Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin beta prec emin
+    have h := make_bound_Emin beta prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -3051,7 +3051,7 @@ theorem ErrFMA_correct (emin prec : Int) [Prec_gt_0 prec]
 /-- Coq: `mult_error_FLT_ge_bpow'`.
 Nearest-even specialization of `Prop.Mult_error.mult_error_FLT_ge_bpow`, with
 the upstream zero-error disjunct and exponent weakening. -/
-theorem mult_error_FLT_ge_bpow' (beta emin prec : Int) [Prec_gt_0 prec]
+theorem mult_error_FLT_ge_bpow' (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a b : ℝ) (e : Int)
     (hβ : 1 < beta)
     (ha : generic_format beta (FLT_exp emin prec) a)
@@ -3102,7 +3102,7 @@ theorem mult_error_FLT_ge_bpow' (beta emin prec : Int) [Prec_gt_0 prec]
       simpa [abs_sub_comm] using hcore
 
 private noncomputable def flocqCanonicalFloat
-    (beta : Int) (fexp : Int → Int) (x : ℝ) :
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) (x : ℝ) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
   FloatSpec.Core.Defs.FlocqFloat.mk
     (FloatSpec.Core.Raux.Ztrunc
@@ -3110,14 +3110,14 @@ private noncomputable def flocqCanonicalFloat
     (FloatSpec.Core.Generic_fmt.cexp beta fexp x)
 
 private theorem F2R_flocqCanonicalFloat
-    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x : ℝ)
     (hx : generic_format beta fexp x) :
     _root_.F2R (flocqCanonicalFloat beta fexp x) = x := by
   simpa [flocqCanonicalFloat, FloatSpec.Core.Generic_fmt.generic_format] using hx.symm
 
 private theorem abs_roundR_ge_generic
-    (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
     (hβ : 1 < beta)
     (hxF : generic_format beta fexp x)
@@ -3154,7 +3154,7 @@ private theorem abs_roundR_ge_generic
     simpa [h_opp, abs_neg] using hx_le_abs
 
 private theorem F2R_sum3_ge_bpow
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (x y z : ℝ) (e : Int)
     (hβ : 1 < beta)
@@ -3223,7 +3223,7 @@ noncomputable def ErrFMA_bounded_simpl_check (emin prec : Int)
 
 -- Coq: `ErrFMA_bounded_simpl` — in the ErrFMA V2 setting (nearest-even),
 -- the intermediate results `r1`, `r2`, `r3` are in format.
-theorem ErrFMA_bounded_simpl (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_bounded_simpl (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hβ : 1 < beta) (hprec : 3 ≤ prec)
     (Fa : generic_format beta (FLT_exp emin prec) a)
@@ -3269,7 +3269,7 @@ theorem ErrFMA_bounded_simpl (beta emin prec : Int) [Prec_gt_0 prec]
 In the ErrFMA V2 construction, with nearest-even rounding, non-underflow of `y`
 implies the rounded `alpha1 := round_flt (y + u2)` is either zero or has
 magnitude at least `bpow (emin + prec)`. -/
-theorem V2_Und2 (beta emin prec : Int) [Prec_gt_0 prec]
+theorem V2_Und2 (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hβ : 1 < beta) (hprec : 3 ≤ prec)
     (_Fa : generic_format beta (FLT_exp emin prec) a)
@@ -3335,7 +3335,7 @@ theorem V2_Und2 (beta emin prec : Int) [Prec_gt_0 prec]
 In the ErrFMA V2 construction, with nearest-even rounding, non-underflow of
 `a*x` implies the rounded `beta1 := round_flt (u1 + alpha1)` is either zero or
 has magnitude at least `bpow (emin + prec + 1)`. -/
-theorem V2_Und4 (beta emin prec : Int) [Prec_gt_0 prec]
+theorem V2_Und4 (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hβ : 1 < beta) (hprec : 3 ≤ prec)
     (_Fa : generic_format beta (FLT_exp emin prec) a)
@@ -3444,7 +3444,7 @@ theorem V2_Und4 (beta emin prec : Int) [Prec_gt_0 prec]
 In the ErrFMA V2 construction, with nearest-even rounding, non-underflow of
 `a*x` and `y` implies `r1 := round_flt (a*x+y)` is either zero or has magnitude
 at least `bpow (emin + prec - 1)`. -/
-theorem V2_Und5 (beta emin prec : Int) [Prec_gt_0 prec]
+theorem V2_Und5 (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hβ : 1 < beta) (hprec : 3 ≤ prec)
     (Fa : generic_format beta (FLT_exp emin prec) a)
@@ -3723,7 +3723,7 @@ noncomputable def ErrFMA_correct_simpl_check (emin prec : Int)
 This is the first branch of the upstream simplified V2 proof, specialized to
 nearest-even rounding. The remaining branches still depend on the full
 `ErrFMA_correct`/`FmaErr` payload stack. -/
-theorem ErrFMA_correct_simpl_of_product_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_correct_simpl_of_product_eq_zero (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hβ : 1 < beta)
     (Fy : generic_format beta (FLT_exp emin prec) y)
@@ -3752,7 +3752,7 @@ theorem ErrFMA_correct_simpl_of_product_eq_zero (beta emin prec : Int) [Prec_gt_
 Once `u2 := a*x - round(a*x)` vanishes, the product `a*x` is formatted.
 The remaining compensation term is the addition error for `a*x + y`, hence it
 is fixed by the same rounding operation. -/
-theorem ErrFMA_correct_simpl_of_u2_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_correct_simpl_of_u2_eq_zero (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hβ : 1 < beta)
     (Fy : generic_format beta (FLT_exp emin prec) y)
@@ -3830,7 +3830,7 @@ When the addend is zero, the simplified V2 reconstruction reduces to the
 product rounding error `u2 := a*x - round(a*x)`. The V2 underflow lower bound
 is stronger than the one required by `mult_error_FLT`, so `u2` is formatted and
 all remaining rounded correction terms are fixed points. -/
-theorem ErrFMA_correct_simpl_of_y_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFMA_correct_simpl_of_y_eq_zero (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hβ : 1 < beta)
     (hprec : 3 ≤ prec)
@@ -3911,7 +3911,7 @@ This is the nearest-even specialization of `ErrFMA_correct_from_core_equality`.
 The lower FMA payload reconstructs `a*x+y` as `r1 + gamma + alpha2`; the public
 simplified theorem returns the let-bound split `r1 + r2 + r3`. -/
 theorem ErrFMA_correct_simpl_from_core_equality
-    (beta emin prec : Int) [Prec_gt_0 prec]
+    (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (a x y : ℝ)
     (hcore :
       let rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t)))
@@ -4089,7 +4089,7 @@ noncomputable def ErrFmaAppr_correct_check (emin prec : Int)
 When `a*x = 0`, the approximate FMA residual is exactly zero: all rounded
 correction terms collapse by `round(0)=0`, while the formatted input `y` is
 fixed by rounding. -/
-theorem ErrFmaAppr_correct_of_product_eq_zero (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFmaAppr_correct_of_product_eq_zero (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (Fy : generic_format beta (FLT_exp emin prec) y)
@@ -4143,7 +4143,7 @@ The approximation proof first proves that the product error
 `v2 := y + u1 - round(y + u1)` are in the FLT format.  The first follows from
 `mult_error_FLT`, and the second from `plus_error` after `u1` is known to be a
 rounded, hence formatted, value. -/
-theorem ErrFmaAppr_format_u2_v2 (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFmaAppr_format_u2_v2 (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (Fa : generic_format beta (FLT_exp emin prec) a)
@@ -4231,7 +4231,7 @@ theorem ErrFmaAppr_format_u2_v2 (beta emin prec : Int) [Prec_gt_0 prec]
 After proving that `u2` and `v2` are formatted, the upstream proof converts
 `a`, `x`, `y`, `u2`, and `v2` into bounded Pff floats.  This helper packages
 the same bridge in the local Flocq-float representation used by `Pff.lean`. -/
-theorem ErrFmaAppr_format_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFmaAppr_format_witnesses (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (hprec : precisionNotZero prec)
@@ -4262,13 +4262,13 @@ theorem ErrFmaAppr_format_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
   let v1 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (y + u1)
   let v2 := (y + u1) - v1
   have hpBound : pGivesBound beta bnd prec := by
-    have h := make_bound_p beta prec emin
+    have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
         Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin beta prec emin
+    have h := make_bound_Emin beta prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -4328,7 +4328,7 @@ The upstream proof destructs `round_N_is_pff_round` six times, for `r1`,
 `u1`, `v1`, `t1`, `t2`, and `r2`.  This helper packages exactly that bridge:
 each rounded real is represented by a canonical bounded Pff float that is
 closest to the corresponding exact real input. -/
-theorem ErrFmaAppr_round_N_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFmaAppr_round_N_witnesses (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (hprec : precisionNotZero prec)
@@ -4368,13 +4368,13 @@ theorem ErrFmaAppr_round_N_witnesses (beta emin prec : Int) [Prec_gt_0 prec]
   let t2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (u2 + v2)
   let r2 := FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd (t1 + t2)
   have hpBound : pGivesBound beta bnd prec := by
-    have h := make_bound_p beta prec emin
+    have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
         Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin beta prec emin
+    have h := make_bound_Emin beta prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -4418,7 +4418,7 @@ the still-missing lower Pff `ErrFmaApprox` error-bound payload.  It proves the
 zero-product branch and packages the formatted residuals, bounded value
 witnesses, and six nearest-rounding witnesses that the Coq proof establishes
 before invoking that lower payload. -/
-theorem ErrFmaAppr_correct (beta emin prec : Int) [Prec_gt_0 prec]
+theorem ErrFmaAppr_correct (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec]
     (choice : Int → Bool) (a x y : ℝ)
     (hβ : 1 < beta)
     (hprec : precisionNotZero prec)
@@ -4582,13 +4582,13 @@ theorem Axpy_from_min_or_max (emin prec : Int) [Prec_gt_0 prec]
   let bo : Fbound_skel := toFboundSkel bnd
   have hβ : (1 : Int) < 2 := by decide
   have hpBound : pGivesBound 2 bnd prec := by
-    have h := make_bound_p 2 prec emin
+    have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
         Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
-    have h := make_bound_Emin 2 prec emin
+    have h := make_bound_Emin 2 prec emin (hp := by exact hprec)
     have hd : bnd.dExp = -emin := by
       simpa [bnd, wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -5440,6 +5440,7 @@ Once the final Pff witness `fd` represents the public result `d`, this bridge
 rewrites that bound to the public Flocq `ulp` at `d`. -/
 theorem discri_bound_from_pff_delta (emin prec : Int) [Prec_gt_0 prec]
     (d target : ℝ) (fd : PffFloat)
+    (hprec : 1 < prec)
     (hemin : emin ≤ 0)
     (hfd_val : pff_to_R_aux 2 fd = d)
     (hfd_bound : PFbounded (make_bound 2 prec emin) fd)
@@ -5450,7 +5451,7 @@ theorem discri_bound_from_pff_delta (emin prec : Int) [Prec_gt_0 prec]
       2 * ulp 2 (FLT_exp emin prec) d := by
   have hprec_pos : 0 < prec := Prec_gt_0.pos
   have hbnd_dExp : -(make_bound 2 prec emin).dExp = emin := by
-    have h := make_bound_Emin 2 prec emin
+    have h := make_bound_Emin 2 prec emin (hp := by exact hprec)
     have hd : (make_bound 2 prec emin).dExp = -emin := by
       simpa [wp, PostCond.noThrow, make_bound_Emin_check, pure] using
         h hemin
@@ -5480,6 +5481,7 @@ boundedness, and the Pff `Fulp` error estimate, the result is the corresponding
 Flocq `ulp` estimate for `d`. -/
 theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
     (a b c d : ℝ) (fd : PffFloat)
+    (hprec : 1 < prec)
     (hemin : emin ≤ 0)
     (hfd_val : pff_to_R_aux 2 fd = d)
     (hfd_bound : PFbounded (make_bound 2 prec emin) fd)
@@ -5494,7 +5496,7 @@ theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
   simp [wp, PostCond.noThrow, pure, discri_correct_test_check, Id.run]
   exact discri_bound_from_pff_delta (emin := emin) (prec := prec)
     (d := d) (target := b * b - a * c) (fd := fd)
-    hemin hfd_val hfd_bound hdelta
+    hprec hemin hfd_val hfd_bound hdelta
 
 noncomputable def discri_fp_test_check (_emin _prec : Int)
     (_a _b _c _d : ℝ) : Unit :=
@@ -5508,6 +5510,7 @@ wrapper records the final checked handoff from that Pff payload to the public
 Flocq `ulp` error statement. -/
 theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
     (a b c d : ℝ) (fd : PffFloat)
+    (hprec : 1 < prec)
     (hemin : emin ≤ 0)
     (hfd_val : pff_to_R_aux 2 fd = d)
     (hfd_bound : PFbounded (make_bound 2 prec emin) fd)
@@ -5522,4 +5525,4 @@ theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
   simp [wp, PostCond.noThrow, pure, discri_fp_test_check, Id.run]
   exact discri_bound_from_pff_delta (emin := emin) (prec := prec)
     (d := d) (target := b * b - a * c) (fd := fd)
-    hemin hfd_val hfd_bound hdelta
+    hprec hemin hfd_val hfd_bound hdelta

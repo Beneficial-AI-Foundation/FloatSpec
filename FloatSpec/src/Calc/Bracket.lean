@@ -1715,9 +1715,12 @@ theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
 end SteppingRanges
 
 /-- Helper for float location -/
-def inbetween_float (beta : Int) (m e : Int) (x : ℝ) (l : Location) : Prop :=
-  inbetween ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
-            ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) x l
+def inbetween_float (beta : Int) [ValidRadix beta] (m e : Int) (x : ℝ) (l : Location) : Prop :=
+  -- Source `F2R (Float beta m e)` unfolded.  Keeping the interval predicate
+  -- as real arithmetic avoids constructing a source float before a radix
+  -- witness is available.
+  inbetween ((m : ℝ) * (beta : ℝ) ^ e)
+            (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e) x l
 
 /- Additional theorems mirroring Coq counterparts that were missing in Lean. -/
 
@@ -2348,7 +2351,7 @@ theorem inbetween_mult_reg (d u x : ℝ) (l : Location) (s : ℝ)
         simpa using this
 
 -- Specialization to consecutive floats
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
   theorem inbetween_float_bounds
     (x : ℝ) (m e : Int) (l : Location)
@@ -2608,7 +2611,7 @@ theorem inbetween_float_ex
   let u : ℝ := ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)))
   -- Show the interval is non-empty using 1 < beta ⇒ (beta : ℝ)^e > 0
   have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
-  have hbpos_real : 0 < ((beta : Int) : ℝ) := by exact_mod_cast hbpos_int
+  have hbpos_real : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
   have hstep_pos : 0 < ((beta : ℝ) ^ e) := zpow_pos hbpos_real _
   have hm_lt_real : (m : ℝ) < (m + 1 : ℝ) := by
     have : (0 : ℝ) < 1 := by norm_num

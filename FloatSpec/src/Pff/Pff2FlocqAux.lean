@@ -21,26 +21,28 @@ We introduce the Coq-side objects used by the lemmas in Pff2FlocqAux.v
 using the project Hoare-triple style.
 -/
 
--- Minimal bound record used by Pff theorems
-structure Fbound where
-  vNum : Int
-  dExp : Int
+-- `Fbound` is defined once in `Pff.lean`; older translations accidentally
+-- introduced a second, unrefined record in this module.
 
--- Constructor mirroring Coq `Bound`
-def Bound (vnum dexp : Int) : Fbound := { vNum := vnum, dExp := dexp }
+-- Arithmetic compatibility constructor.  Its proof arguments make the two
+-- source refinements explicit while allowing existing valid calls to be
+-- discharged mechanically.
+def Bound (vnum dexp : Int)
+    (hv : 0 < vnum := by omega) (hd : 0 ≤ dexp := by omega) : Fbound :=
+  { vNum := vnum, dExp := dexp, vNum_pos := hv, dExp_nonneg := hd }
 
 -- Use the existing `Zpower_nat` defined in `Pff.lean` to avoid duplication.
 
 -- Local bridge used by this auxiliary leaf. Keeping it here avoids importing
 -- `Pff2Flocq`, which still contains deferred theorem bodies.
-noncomputable def pff_to_R_aux (beta : Int) (f : PffFloat) : ℝ :=
+noncomputable def pff_to_R_aux (beta : Int) [ValidRadix beta] (f : PffFloat) : ℝ :=
   _root_.F2R (pff_to_flocq beta f)
 
 /-- Coq (`Pff2FlocqAux.v`): `FtoR_F2R`.
 
 If the auxiliary Pff float and the Core Flocq float have the same effective
 mantissa and exponent, their real interpretations agree. -/
-theorem FtoR_F2R (beta : Int) (f : PffFloat)
+theorem FtoR_F2R (beta : Int) [ValidRadix beta] (f : PffFloat)
     (g : FloatSpec.Core.Defs.FlocqFloat beta)
     (hnum : (if f.sign then -f.mantissa else f.mantissa) = g.Fnum)
     (hexp : f.exponent = g.Fexp) :
@@ -53,7 +55,7 @@ theorem FtoR_F2R (beta : Int) (f : PffFloat)
 def radix2 : Int := 2
 
 -- Predicate mirroring Coq hypotheses in this file
-def pGivesBound (beta : Int) (b : Fbound) (p : Int) : Prop :=
+def pGivesBound (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) : Prop :=
   b.vNum = Zpower_nat beta (Int.toNat (Int.natAbs p))
 
 def precisionNotZero (p : Int) : Prop := 1 < p
@@ -71,11 +73,11 @@ def PFbounded (b : Fbound) (f : PffFloat) : Prop :=
 
 /-- View the auxiliary Pff2Flocq bound record as the Pff core bound skeleton. -/
 def toFboundSkel (b : Fbound) : Fbound_skel :=
-  { vNum := b.vNum, dExp := b.dExp }
+  b
 
 /-- Boundedness bridge from the auxiliary `PffFloat` model to Pff's core
 `FlocqFloat` model. -/
-theorem PFbounded_to_Fbounded (beta : Int) (b : Fbound) (f : PffFloat) :
+theorem PFbounded_to_Fbounded (beta : Int) [ValidRadix beta] (b : Fbound) (f : PffFloat) :
     PFbounded b f →
       Fbounded (beta:=beta) (toFboundSkel b) (pff_to_flocq beta f) := by
   intro h
@@ -85,7 +87,7 @@ theorem PFbounded_to_Fbounded (beta : Int) (b : Fbound) (f : PffFloat) :
 
 /-- A PffFloat is canonical in the context of a Fbound if its exponent
     equals the canonical Flocq exponent for its real value. -/
-noncomputable def PFcanonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Prop :=
+noncomputable def PFcanonic (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : Prop :=
   f.exponent = FLT_exp (-b.dExp) p (mag beta (pff_to_R_aux beta f))
 
 /-- Pff normality for this auxiliary bridge: the float is bounded and its
@@ -96,21 +98,29 @@ def PFnormal (b : Fbound) (f : PffFloat) : Prop :=
   PFbounded b f ∧ -b.dExp - 1 < f.exponent
 
 -- Minimal `make_bound` used in Coq proofs
-noncomputable def make_bound (beta p E : Int) : Fbound :=
+noncomputable def make_bound (beta p E : Int)
+    (hβ : 1 < beta := by omega) : Fbound :=
   let v := Zpower_nat beta (Int.toNat (Int.natAbs p))
   let de := if E ≤ 0 then -E else E
-  Bound v de
+  have hv : 0 < v := by
+    unfold v Zpower_nat
+    exact pow_pos (lt_trans Int.zero_lt_one hβ) _
+  have hd : 0 ≤ de := by
+    unfold de
+    split <;> omega
+  Bound v de hv hd
 
 -- Predefined single/double bounds from Coq
-noncomputable def bsingle : Fbound := make_bound radix2 24 (-149)
-noncomputable def bdouble : Fbound := make_bound radix2 53 1074
+noncomputable def bsingle : Fbound := make_bound radix2 24 (-149) (by simp [radix2])
+noncomputable def bdouble : Fbound := make_bound radix2 53 1074 (by simp [radix2])
 
 -- First missing theorem: make_bound_Emin
 noncomputable def make_bound_Emin_check (beta p E : Int) : Id Unit :=
   pure ()
 
 /-- Coq: `make_bound_Emin` — if `E ≤ 0`, then `(dExp (make_bound beta p E)) = -E`. -/
-theorem make_bound_Emin (beta p E : Int) :
+theorem make_bound_Emin (beta p E : Int)
+    (hβ : 1 < beta := by omega) (hp : 1 < p := by omega) :
     ⦃⌜E ≤ 0⌝⦄
     make_bound_Emin_check beta p E
     ⦃⇓_ => ⌜(make_bound beta p E).dExp = -E⌝⦄ := by
@@ -128,7 +138,8 @@ noncomputable def make_bound_p_check (beta p E : Int) : Id Unit :=
 /-- Coq: `make_bound_p` — the `vNum` of `make_bound` equals `Zpower_nat beta (Z.abs_nat p)`.
 In this Lean port, `vNum` is stored as an `Int`, and `Z.abs_nat p` corresponds
 to `Int.toNat (Int.natAbs p)`. -/
-theorem make_bound_p (beta p E : Int) :
+theorem make_bound_p (beta p E : Int)
+    (hβ : 1 < beta := by omega) (hp : 1 < p := by omega) :
     ⦃⌜True⌝⦄
     make_bound_p_check beta p E
     ⦃⇓_ => ⌜(make_bound beta p E).vNum = Zpower_nat beta (Int.toNat (Int.natAbs p))⌝⦄ := by
@@ -141,7 +152,8 @@ This is the concrete side condition needed when the restored Pff `Dekker_FTS`
 payload is instantiated from the `Pff2Flocq` finite FLT sections: `make_bound`
 stores a nonnegative decimal exponent, while `boundR` is constructed with a
 natural digit exponent. -/
-theorem make_bound_boundR_exp_box (beta p E : Int) (r : ℝ) :
+theorem make_bound_boundR_exp_box (beta p E : Int) [ValidRadix beta] (r : ℝ)
+    (hβ : 1 < beta := by omega) :
     -(make_bound beta p E).dExp ≤ (boundR (beta:=beta) beta r).Fexp := by
   have hde_nonneg : 0 ≤ (make_bound beta p E).dExp := by
     by_cases hE : E ≤ 0
@@ -192,7 +204,7 @@ private lemma Ztrunc_zero : Ztrunc 0 = 0 := by
 /-- Helper: For a number in generic_format for FLT, the absolute value of the mantissa
     (Ztrunc of scaled_mantissa) is bounded by beta^p.
     This follows from |x| < beta^(mag x) and the FLT exponent structure. -/
-private lemma FLT_mantissa_bound (beta emin p : Int) (x : ℝ)
+private lemma FLT_mantissa_bound (beta emin p : Int) [ValidRadix beta] (x : ℝ)
     (hβ : 1 < beta) (hfmt : generic_format beta (FLT_exp emin p) x) :
     (|Ztrunc (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FLT_exp emin p) x)| : ℝ)
       < (beta : ℝ) ^ p := by
@@ -225,8 +237,6 @@ private lemma FLT_mantissa_bound (beta emin p : Int) (x : ℝ)
       unfold generic_format FloatSpec.Core.Generic_fmt.generic_format at hfmt'
       simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Generic_fmt.scaled_mantissa,
                  Ztrunc, FloatSpec.Core.Raux.Ztrunc] at hfmt'
-      unfold FloatSpec.Core.Defs.F2R at hfmt'
-      simp only [FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp] at hfmt'
       convert hfmt' using 1
     -- Therefore |x| = |mx| * beta^ex (since beta^ex > 0)
     have h_pow_pos : (0 : ℝ) < (beta : ℝ) ^ ex := zpow_pos hbposR ex
@@ -260,7 +270,7 @@ private lemma FLT_mantissa_bound (beta emin p : Int) (x : ℝ)
     exact lt_of_lt_of_le h_mx_lt_pow h_pow_le
 
 -- Build a Pff-style float from a real known to be in generic_format
-noncomputable def mk_from_generic (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : PffFloat :=
+noncomputable def mk_from_generic (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ) : PffFloat :=
   { mantissa :=
       Ztrunc (FloatSpec.Core.Generic_fmt.scaled_mantissa beta (FLT_exp (-b.dExp) p) r)
     , exponent := cexp beta (FLT_exp (-b.dExp) p) r
@@ -268,25 +278,25 @@ noncomputable def mk_from_generic (beta : Int) (b : Fbound) (p : Int) (r : ℝ) 
 
 /-- Auxiliary normalization used by this Pff/Flocq bridge. It keeps the real
 value and stores the canonical FLT exponent chosen by `mk_from_generic`. -/
-noncomputable def PFnormalize (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : PffFloat :=
+noncomputable def PFnormalize (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : PffFloat :=
   mk_from_generic beta b p (pff_to_R_aux beta f)
 
 /-- Pff-side ulp in the auxiliary `PffFloat` model. Zero uses the minimum
 exponent, and nonzero values use the exponent of the normalized representative. -/
-noncomputable def PFulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : ℝ :=
+noncomputable def PFulp (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : ℝ :=
   if pff_to_R_aux beta f = 0 then
     (beta : ℝ) ^ (-b.dExp)
   else
     (beta : ℝ) ^ (PFnormalize beta b p f).exponent
 
-noncomputable def format_is_pff_format'_check (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : Id Unit :=
+noncomputable def format_is_pff_format'_check (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ) : Id Unit :=
   pure ()
 
 /-- Coq: `format_is_pff_format'` — from `generic_format`, construct a bounded Pff float.
     Note: This theorem requires `pGivesBound` and `precisionNotZero` hypotheses which are
     present in the Coq section context. We also require `1 < beta` which in Coq comes
     from the `radix` type. -/
-theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
+theorem format_is_pff_format' (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p ∧ 1 < beta⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜PFbounded b (mk_from_generic beta b p r)⌝⦄ := by
@@ -331,7 +341,7 @@ theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
       rfl
     rw [h_abs_eq, h_pow_eq] at hbound_real
     -- hbound_real : (m.natAbs : ℝ) < (beta : ℝ) ^ p.natAbs
-    -- Goal: (m.natAbs : Int) < (beta : Int) ^ p.natAbs
+    -- Goal: (m.natAbs : Int) < beta ^ p.natAbs
     -- Convert the real inequality to an integer inequality
     -- Note: (beta : ℝ)^p.natAbs = ((beta^p.natAbs : Int) : ℝ)
     have h_rhs_cast : (beta : ℝ) ^ p.natAbs = ((beta ^ p.natAbs : Int) : ℝ) := by norm_cast
@@ -359,7 +369,7 @@ theorem format_is_pff_format' (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
 
     Note: In Coq, `beta : radix` automatically implies `1 < beta`. We add this hypothesis
     explicitly since Lean's `Int` type does not carry this constraint. -/
-theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
+theorem format_is_pff_format (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧ pGivesBound beta b p ∧ precisionNotZero p ∧ 1 < beta⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R_aux beta f = r ∧ PFbounded b f⌝⦄ := by
@@ -390,7 +400,7 @@ theorem format_is_pff_format (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
 This packages the auxiliary Pff witness through `pff_to_flocq`, so callers that
 use Pff core predicates such as `isMin'`/`isMax'` can consume generic-format
 rounded values directly. -/
-theorem format_is_flocq_bounded (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
+theorem format_is_flocq_bounded (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r ∧
         pGivesBound beta b p ∧ precisionNotZero p ∧ 1 < beta⌝⦄
     format_is_pff_format'_check beta b p r
@@ -406,7 +416,7 @@ theorem format_is_flocq_bounded (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
   · exact PFbounded_to_Fbounded beta b fp hbounded
 
 -- Next missing theorem: pff_format_is_format
-noncomputable def pff_format_is_format_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+noncomputable def pff_format_is_format_check (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
 
 /-- Coq: `pff_format_is_format` — from `Fbounded b f`, obtain
@@ -419,7 +429,7 @@ The key insight is that generic format for FLT requires finding a float represen
 
 The PFbounded hypothesis gives us exactly these bounds, so we can use `generic_format_F2R`
 to conclude that `pff_to_R_aux beta f` is in generic format. -/
-theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) [Prec_gt_0 p] (f : PffFloat) :
+theorem pff_format_is_format (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) [Prec_gt_0 p] (f : PffFloat) :
     ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ PFbounded b f ∧ beta > 1⌝⦄
     pff_format_is_format_check beta b p f
     ⦃⇓_ => ⌜generic_format beta (FLT_exp (-b.dExp) p) (pff_to_R_aux beta f)⌝⦄ := by
@@ -441,12 +451,11 @@ theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) [Prec_gt_0 p] (
   -- where effective_mantissa = if f.sign then -f.mantissa else f.mantissa
   --
   -- Apply generic_format_F2R (using the instance instValidExp_FLT_Compat from Compat.lean)
-  have hF2R_in_fmt := @FloatSpec.Core.Generic_fmt.generic_format_F2R
-    beta
-    (FLT_exp (-b.dExp) p)
-    (instValidExp_FLT_Compat beta (-b.dExp) p)
-    (if f.sign then -f.mantissa else f.mantissa)
-    f.exponent
+  have hF2R_in_fmt := FloatSpec.Core.Generic_fmt.generic_format_F2R
+    (beta := beta)
+    (fexp := FLT_exp (-b.dExp) p)
+    (m := if f.sign then -f.mantissa else f.mantissa)
+    (e := f.exponent)
   -- Extract the result from the Hoare triple
   simp only [wp, PostCond.noThrow, pure] at hF2R_in_fmt
   apply hF2R_in_fmt
@@ -599,7 +608,7 @@ theorem pff_format_is_format (beta : Int) (b : Fbound) (p : Int) [Prec_gt_0 p] (
 
 /-- Converting a core `FlocqFloat` to the auxiliary `PffFloat` preserves its
 real value. -/
-theorem flocq_to_pff_to_R_aux (beta : Int)
+theorem flocq_to_pff_to_R_aux (beta : Int) [ValidRadix beta]
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     pff_to_R_aux beta (flocq_to_pff f) = _root_.F2R (beta:=beta) f := by
   unfold pff_to_R_aux pff_to_flocq flocq_to_pff _root_.F2R FloatSpec.Core.Defs.F2R
@@ -615,7 +624,7 @@ theorem flocq_to_pff_to_R_aux (beta : Int)
 
 /-- Boundedness bridge from Pff core `FlocqFloat`s to the auxiliary
 `PffFloat` representation. -/
-theorem Fbounded_to_PFbounded (beta : Int) (b : Fbound)
+theorem Fbounded_to_PFbounded (beta : Int) [ValidRadix beta] (b : Fbound)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     Fbounded (beta:=beta) (toFboundSkel b) f →
       PFbounded b (flocq_to_pff f) := by
@@ -642,7 +651,7 @@ theorem Fbounded_to_PFbounded (beta : Int) (b : Fbound)
   · exact hexp
 
 /-- Core Pff bounded floats are in the corresponding FLT generic format. -/
-theorem flocq_bounded_is_format (beta : Int) (b : Fbound) (p : Int)
+theorem flocq_bounded_is_format (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧
         Fbounded (beta:=beta) (toFboundSkel b) f ∧ 1 < beta⌝⦄
@@ -663,7 +672,7 @@ theorem flocq_bounded_is_format (beta : Int) (b : Fbound) (p : Int)
 For a nonzero bounded core Pff float, the Core FLT canonical exponent of its
 real value is no larger than the stored exponent.  This is the reusable
 mantissa-bound part of the Pff-to-Core canonicity shuttle. -/
-private theorem flocq_bounded_FLT_cexp_le (beta : Int) (b : Fbound) (p : Int)
+private theorem flocq_bounded_FLT_cexp_le (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p)
     (hfbounded : Fbounded (beta:=beta) (toFboundSkel b) f)
@@ -762,7 +771,7 @@ private theorem flocq_bounded_FLT_cexp_le (beta : Int) (b : Fbound) (p : Int)
 Once boundedness gives the Core FLT canonical exponent upper bound, a
 subnormal Pff float is already at the minimum exponent, so the `max` in
 `FLT_exp` must choose that same exponent. -/
-private theorem Fsubnormal_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
+private theorem Fsubnormal_to_core_canonical (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p)
     (hsub : Fsubnormal (beta:=beta) beta (toFboundSkel b) f)
@@ -786,7 +795,7 @@ private theorem Fsubnormal_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
 Normality supplies the lower magnitude bound needed to prove that the Core
 canonical exponent is at least the stored exponent. Combined with boundedness'
 upper-exponent half, this gives Core `canonical`. -/
-private theorem Fnormal_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
+private theorem Fnormal_to_core_canonical (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p)
     (hnormal : Fnormal (beta:=beta) beta (toFboundSkel b) f)
@@ -894,7 +903,7 @@ private theorem Fnormal_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
 
 /-- Dispatcher for Coq `pff_canonic_is_canonic` over Pff's
 normal/subnormal canonicity split. -/
-private theorem Fcanonic_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
+private theorem Fcanonic_to_core_canonical (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p)
     (hcan : Fcanonic (beta:=beta) beta (toFboundSkel b) f)
@@ -909,7 +918,7 @@ private theorem Fcanonic_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
 
 /-- Normalization-specific canonicity shuttle for the nonzero branch of Coq
 `pff_round_NE_is_round`. -/
-private theorem Fnormalize_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
+private theorem Fnormalize_to_core_canonical (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p)
     (hfbounded : Fbounded (beta:=beta) (toFboundSkel b) f)
@@ -944,7 +953,7 @@ private theorem Fnormalize_to_core_canonical (beta : Int) (b : Fbound) (p : Int)
 
 /-- Convert Pff's bounded-float `Closest` predicate into Core's real-valued
 nearest-point predicate over the matching FLT generic format. -/
-private theorem closest_to_Rnd_N_pt (beta : Int) (b : Fbound) (p : Int)
+private theorem closest_to_Rnd_N_pt (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (r : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta)
@@ -966,7 +975,7 @@ private theorem closest_to_Rnd_N_pt (beta : Int) (b : Fbound) (p : Int)
 
 /-- Convert a Core real-valued nearest point and its bounded float witness back
 to Pff's `Closest` predicate. -/
-private theorem Rnd_N_pt_to_closest (beta : Int) (b : Fbound) (p : Int)
+private theorem Rnd_N_pt_to_closest (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     [Prec_gt_0 p] (r y : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta)
@@ -991,7 +1000,7 @@ normalized Pff representative is known to be the Core canonical
 representative.  This is the nonzero branch of Coq
 `pff_round_NE_is_round` after the Pff/Core canonicity shuttle has been
 established. -/
-private theorem FNeven_of_NE_prop_normalized (beta : Int)
+private theorem FNeven_of_NE_prop_normalized (beta : Int) [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (fexp : Int → Int) (x y : ℝ)
     (f : FloatSpec.Core.Defs.FlocqFloat beta)
@@ -1022,7 +1031,7 @@ private theorem FNeven_of_NE_prop_normalized (beta : Int)
 The zero case is pure Pff normalization.  The nonzero case converts the
 normalized Pff canonicity into Core `canonical`, then reuses the Core
 nearest-even mantissa witness. -/
-private theorem FNeven_of_NE_prop_or_zero_normalized (beta : Int)
+private theorem FNeven_of_NE_prop_or_zero_normalized (beta : Int) [ValidRadix beta]
     (b : Fbound) (p : Int) [Prec_gt_0 p]
     (x y : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p)
@@ -1057,7 +1066,7 @@ private theorem FNeven_of_NE_prop_or_zero_normalized (beta : Int)
 This is the forward direction needed by `pff_round_NE_is_round`: Pff's
 `EvenClosest` payload proves evenness of the normalized selected float, while
 Core nearest-even uniqueness is stated through `NE_prop` on real values. -/
-private theorem NE_prop_of_FNeven_normalized (beta : Int)
+private theorem NE_prop_of_FNeven_normalized (beta : Int) [ValidRadix beta]
     (b : Fbound) (p : Int) [Prec_gt_0 p]
     (x y : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : pGivesBound beta b p)
@@ -1091,7 +1100,7 @@ private theorem NE_prop_of_FNeven_normalized (beta : Int)
 
 /-- FLT exponents satisfy the nearest-even parity side condition whenever the
 precision is strictly greater than one. -/
-private theorem FLT_exp_exists_NE (beta : Int) (b : Fbound) (p : Int)
+private theorem FLT_exp_exists_NE (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (hprec : precisionNotZero p) :
     FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp (-b.dExp) p) := by
   have hp_gt : 1 < p := hprec
@@ -1119,7 +1128,7 @@ private theorem FLT_exp_exists_NE (beta : Int) (b : Fbound) (p : Int)
 
 /-- Coq: `pff_round_DN_is_round` — Pff lower rounding agrees with concrete
 Flocq floor rounding. -/
-theorem pff_round_DN_is_round (beta : Int) (b : Fbound) (p : Int) (r : ℝ)
+theorem pff_round_DN_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
@@ -1182,7 +1191,7 @@ theorem pff_round_DN_is_round (beta : Int) (b : Fbound) (p : Int) (r : ℝ)
 
 /-- Coq: `pff_round_UP_is_round` — Pff upper rounding agrees with concrete
 Flocq ceiling rounding. -/
-theorem pff_round_UP_is_round (beta : Int) (b : Fbound) (p : Int) (r : ℝ)
+theorem pff_round_UP_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
@@ -1245,7 +1254,7 @@ theorem pff_round_UP_is_round (beta : Int) (b : Fbound) (p : Int) (r : ℝ)
 
 /-- Coq: `pff_round_N_is_round` — Pff closest rounding agrees with concrete
 Flocq nearest rounding for an arbitrary tie-breaking choice. -/
-theorem pff_round_N_is_round (beta : Int) (b : Fbound) (p : Int)
+theorem pff_round_N_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (choice : Int → Bool) (r : ℝ)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
@@ -1394,10 +1403,10 @@ theorem pff_round_N_is_round (beta : Int) (b : Fbound) (p : Int)
           have hlt0 :
               ¬ |_root_.F2R (beta:=beta)
                     (RND_Max (beta:=beta)
-                      ({ dExp := b.dExp, vNum := b.vNum } : Fbound_skel) beta p r) - r| <
+                      b beta p r) - r| <
                   |_root_.F2R (beta:=beta)
                     (RND_Min (beta:=beta)
-                      ({ dExp := b.dExp, vNum := b.vNum } : Fbound_skel) beta p r) - r| := by
+                      b beta p r) - r| := by
             simpa [rd, ru, toFboundSkel] using hlt
           have hchoice0 :
               choice (FloatSpec.Core.Raux.Zfloor
@@ -1425,10 +1434,10 @@ theorem pff_round_N_is_round (beta : Int) (b : Fbound) (p : Int)
       have hle0 :
           ¬ |_root_.F2R (beta:=beta)
                 (RND_Max (beta:=beta)
-                  ({ dExp := b.dExp, vNum := b.vNum } : Fbound_skel) beta p r) - r| ≤
+                  b beta p r) - r| ≤
               |_root_.F2R (beta:=beta)
                 (RND_Min (beta:=beta)
-                  ({ dExp := b.dExp, vNum := b.vNum } : Fbound_skel) beta p r) - r| := by
+                  b beta p r) - r| := by
         simpa [rd, ru, toFboundSkel] using hle
       unfold RND_Closest
       simp [rd, ru, hle0, fexp, toFboundSkel]
@@ -1458,7 +1467,7 @@ theorem pff_round_N_is_round (beta : Int) (b : Fbound) (p : Int)
 
 /-- Coq: `round_N_is_pff_round` — nearest rounding has a canonical Pff witness
 whose real value is the concrete Flocq nearest rounding. -/
-theorem round_N_is_pff_round (beta : Int) (b : Fbound) (p : Int)
+theorem round_N_is_pff_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (choice : Int → Bool) (r : ℝ)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
@@ -1500,7 +1509,7 @@ theorem round_N_is_pff_round (beta : Int) (b : Fbound) (p : Int)
 /-- If the down-rounded value is itself nearest, the always-down tie breaker
 selects it. -/
 private theorem round_N_const_false_eq_DN_of_nearest_DN
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (r : ℝ) (hbeta : 1 < beta)
     (hDN_nearest : FloatSpec.Core.Defs.Rnd_N_pt
@@ -1565,7 +1574,7 @@ private theorem round_N_const_false_eq_DN_of_nearest_DN
 /-- If the up-rounded value is itself nearest, the always-up tie breaker
 selects it. -/
 private theorem round_N_const_true_eq_UP_of_nearest_UP
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (r : ℝ) (hbeta : 1 < beta)
     (hUP_nearest : FloatSpec.Core.Defs.Rnd_N_pt
@@ -1629,7 +1638,7 @@ private theorem round_N_const_true_eq_UP_of_nearest_UP
 
 /-- Coq: `pff_round_is_round_N` — every Pff `Closest` witness is represented
 by concrete Flocq nearest rounding for some tie-breaking choice. -/
-theorem pff_round_is_round_N (beta : Int) (b : Fbound) (p : Int)
+theorem pff_round_is_round_N (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (r : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
@@ -1694,7 +1703,7 @@ theorem pff_round_is_round_N (beta : Int) (b : Fbound) (p : Int)
 
 /-- Coq: `pff_round_NE_is_round` — Pff even-closest rounding agrees with the
 concrete Flocq nearest-even rounding. -/
-theorem pff_round_NE_is_round (beta : Int) (b : Fbound) (p : Int) (r : ℝ)
+theorem pff_round_NE_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
@@ -1779,7 +1788,7 @@ nearest-even rounded value.
 Upstream `Pff2Flocq.v` uses this conversion pattern when importing Pff payloads
 such as `VeltkampEven`: the Pff theorem returns an `EvenClosest` witness, while
 the public Flocq theorem is stated with `round ... ZnearestE`. -/
-theorem evenClosest_value_eq_round_NE (beta : Int) (b : Fbound) (p : Int)
+theorem evenClosest_value_eq_round_NE (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (r : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
@@ -1846,7 +1855,7 @@ theorem evenClosest_value_eq_round_NE (beta : Int) (b : Fbound) (p : Int)
 /-- Coq: `round_NE_is_pff_round` — nearest-even rounding has a canonical Pff
 `EvenClosest` witness whose real value is the concrete Flocq nearest-even
 rounding. -/
-theorem round_NE_is_pff_round (beta : Int) (b : Fbound) (p : Int) (r : ℝ)
+theorem round_NE_is_pff_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
@@ -1909,10 +1918,10 @@ theorem equiv_RNDs_aux (z : Int) :
 
 /-- Coq: `pff_canonic_is_canonic` — canonical in Pff implies `canonical` in Flocq sense
     for the corresponding `pff_to_flocq` float, assuming nonzero value. -/
-noncomputable def pff_canonic_is_canonic_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+noncomputable def pff_canonic_is_canonic_check (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
 
-theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+theorem pff_canonic_is_canonic (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFcanonic beta b p f ∧ pff_to_R_aux beta f ≠ 0⌝⦄
     pff_canonic_is_canonic_check beta b p f
     ⦃⇓_ => ⌜FloatSpec.Core.Generic_fmt.canonical beta (FLT_exp (-b.dExp) p) (pff_to_flocq beta f)⌝⦄ := by
@@ -1939,7 +1948,7 @@ theorem pff_canonic_is_canonic (beta : Int) (b : Fbound) (p : Int) (f : PffFloat
 /-- Coq: `format_is_pff_format_can` — from `generic_format`, produce a canonical Pff float.
     We use the same checker as `format_is_pff_format'` and return existence of a
     canonical witness with the right real value. -/
-theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
+theorem format_is_pff_format_can (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ) :
     ⦃⌜generic_format beta (FLT_exp (-b.dExp) p) r⌝⦄
     format_is_pff_format'_check beta b p r
     ⦃⇓_ => ⌜∃ f : PffFloat, pff_to_R_aux beta f = r ∧ PFcanonic beta b p f⌝⦄ := by
@@ -1974,7 +1983,7 @@ theorem format_is_pff_format_can (beta : Int) (b : Fbound) (p : Int) (r : ℝ) :
     unfold mk_from_generic cexp FloatSpec.Core.Generic_fmt.cexp
     rfl
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
 -- Auxiliary conversion functions
 /-- Pff normalization operator for this auxiliary compatibility leaf.
@@ -2127,13 +2136,13 @@ Hoare-triple syntax for each translated statement.
 -/
 
 -- Exponent lower bound from magnitude lower bound
-noncomputable def FloatFexp_gt_check (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) : Id Unit :=
+noncomputable def FloatFexp_gt_check (beta : Int) [ValidRadix beta] (b : Fbound) (p e : Int) (f : PffFloat) : Id Unit :=
   pure ()
 
 /-- Coq: `FloatFexp_gt` — if `f` is bounded and `(beta : ℝ)^(e+p) ≤ |FtoR f|`,
     then `e < Fexp f`. Here we use `pff_to_R_aux` for `FtoR` and the `exponent`
     field of `PffFloat` for `Fexp`. -/
-theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
+theorem FloatFexp_gt (beta : Int) [ValidRadix beta] (b : Fbound) (p e : Int) (f : PffFloat) :
     ⦃⌜pGivesBound beta b p ∧ PFbounded b f ∧ (beta : ℝ) ^ (e + p) ≤ |pff_to_R_aux beta f| ∧ (1 : Int) < beta ∧ p > 0⌝⦄
     FloatFexp_gt_check beta b p e f
     ⦃⇓_ => ⌜e < f.exponent⌝⦄ := by
@@ -2154,7 +2163,7 @@ theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
     have h0 : (0 : Int) < beta := by omega
     exact Int.cast_pos.mpr h0
   have hbeta_gt_1_real : (1 : ℝ) < (beta : ℝ) := by
-    have h1 : ((1 : Int) : ℝ) < ((beta : Int) : ℝ) := Int.cast_lt.mpr hbeta_gt_1
+    have h1 : ((1 : Int) : ℝ) < (beta : ℝ) := Int.cast_lt.mpr hbeta_gt_1
     simp only [Int.cast_one] at h1
     exact h1
 
@@ -2228,14 +2237,14 @@ theorem FloatFexp_gt (beta : Int) (b : Fbound) (p e : Int) (f : PffFloat) :
   trivial
 
 -- From canonicity and a magnitude lower bound, derive normality
-noncomputable def CanonicGeNormal_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+noncomputable def CanonicGeNormal_check (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
 
 /-- Coq: `CanonicGeNormal` — if `f` is canonical and `β^(-dExp b + p - 1) ≤ |FtoR f|`,
     then `f` is normal (in the Pff sense).  The Lean statement exposes the
     bounded-format side conditions needed by the already ported
     `FloatFexp_gt` exponent lower-bound lemma. -/
-theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+theorem CanonicGeNormal (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFcanonic beta b p f ∧ PFbounded b f ∧ pGivesBound beta b p ∧
         (beta : ℝ) ^ (-b.dExp + p - 1) ≤ |pff_to_R_aux beta f| ∧
         (1 : Int) < beta ∧ p > 0⌝⦄
@@ -2258,12 +2267,12 @@ theorem CanonicGeNormal (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     htrip ⟨hpGives, hbounded, hmag', hbeta, hp_pos⟩
 
 -- Ulp for canonical/bounded matches Core.ulps
-noncomputable def Fulp_ulp_aux_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+noncomputable def Fulp_ulp_aux_check (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
 
 /-- Coq: `Fulp_ulp_aux` — for canonical `f`, Pff `Fulp` equals Core `ulp`
 at `(FLT_exp (-dExp b) p)`. -/
-theorem Fulp_ulp_aux (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+theorem Fulp_ulp_aux (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFcanonic beta b p f ∧ (1 : Int) < beta ∧ 0 < p⌝⦄
     Fulp_ulp_aux_check beta b p f
     ⦃⇓_ => ⌜PFulp beta b p f =
@@ -2300,11 +2309,11 @@ theorem Fulp_ulp_aux (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     rw [hulp]
     simp [PFnormalize, mk_from_generic, cexp]
 
-noncomputable def Fulp_ulp_check (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
+noncomputable def Fulp_ulp_check (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) : Id Unit :=
   pure ()
 
 /-- Coq: `Fulp_ulp` — same as `Fulp_ulp_aux` but from `Fbounded` via normalization. -/
-theorem Fulp_ulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
+theorem Fulp_ulp (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (f : PffFloat) :
     ⦃⌜PFbounded b f ∧ (1 : Int) < beta ∧ 0 < p⌝⦄
     Fulp_ulp_check beta b p f
     ⦃⇓_ => ⌜PFulp beta b p f =
@@ -2342,7 +2351,7 @@ theorem Fulp_ulp (beta : Int) (b : Fbound) (p : Int) (f : PffFloat) :
     simp [PFnormalize, mk_from_generic, cexp]
 
 noncomputable def round_NE_is_pff_round_generic_check
-    (beta : Int) (b : Fbound) (p : Int) (r : ℝ) : Id Unit :=
+    (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ) : Id Unit :=
   pure ()
 
 /-- Generic nearest-even witness bridge used by the specialized binary32/64
@@ -2350,7 +2359,7 @@ bridges below. This proves the PffFloat bounded/canonical witness and value
 equality for `Calc.Round.round`; it is not the full upstream
 `round_NE_is_pff_round`, whose Pff `EvenClosest` payload is still separate. -/
 theorem round_NE_is_pff_round_generic
-    (beta : Int) (b : Fbound) (p : Int) (r : ℝ)
+    (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)] :
     ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ (1 : Int) < beta⌝⦄
     round_NE_is_pff_round_generic_check beta b p r

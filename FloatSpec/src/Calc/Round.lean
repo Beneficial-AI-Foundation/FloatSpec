@@ -23,7 +23,7 @@ open Std.Do
 
 namespace FloatSpec.Calc.Round
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 
 /-- Rounding mode wrapper used by `Calc.Round.round`.
@@ -51,7 +51,7 @@ noncomputable instance : Coe Unit Mode where
   coe _ := nearestEvenMode
 
 /-- Bridge Calc.round to Core's concrete mode-sensitive rounding operator. -/
-noncomputable def round (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
     (mode : Mode) (x : ℝ) : ℝ :=
   FloatSpec.Core.Generic_fmt.roundR beta fexp mode.rnd x
 
@@ -61,7 +61,7 @@ section Truncation
 
     Helper for truncating float values with location tracking
 -/
-noncomputable def truncate_aux (beta : Int) (f : Int × Int × Location) (k : Int) : (Int × Int × Location) :=
+noncomputable def truncate_aux (beta : Int) [ValidRadix beta] (f : Int × Int × Location) (k : Int) : (Int × Int × Location) :=
   let m := f.1
   let e := f.2.1
   let l := f.2.2
@@ -72,7 +72,7 @@ noncomputable def truncate_aux (beta : Int) (f : Int × Int × Location) (k : In
 
     Adjusts a float to have a specified higher exponent while tracking precision loss
 -/
-noncomputable def truncate (beta : Int) (f : FlocqFloat beta) (e : Int) (l : Location) : (Int × Int × Location) :=
+noncomputable def truncate (beta : Int) [ValidRadix beta] (f : FlocqFloat beta) (e : Int) (l : Location) : (Int × Int × Location) :=
   let k := e - f.Fexp
   if 0 < k then
     truncate_aux beta (f.Fnum, f.Fexp, l) k
@@ -122,7 +122,7 @@ open FloatSpec.Core.Defs
 open FloatSpec.Core.Generic_fmt
 open FloatSpec.Calc.Bracket
 
-variable {beta : Int}
+variable {beta : Int} [ValidRadix beta]
 variable (fexp : Int → Int)
 
 -- Minimal local definition to model parity on integers.
@@ -133,7 +133,7 @@ abbrev Even (t : Int) : Prop := t % 2 = 0
 end Int
 
 -- Coq-style truncate on a triple (m,e,l) using fexp and Zdigits
-noncomputable def truncate_triple (beta : Int) (fexp : Int → Int)
+noncomputable def truncate_triple (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     (t : Int × Int × Location) : (Int × Int × Location) :=
   let m := t.1
   let e := t.2.1

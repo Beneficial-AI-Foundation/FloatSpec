@@ -23,7 +23,7 @@ open Std.Do
 
 namespace FloatSpec.Calc.Plus
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 
 section CoreAddition

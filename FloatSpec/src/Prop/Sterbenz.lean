@@ -8,7 +8,7 @@ import Mathlib.Data.Real.Basic
 open Real
 open Std.Do
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]

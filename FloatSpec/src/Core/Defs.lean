@@ -33,6 +33,23 @@ class Prec_gt_0 (prec : Int) : Prop where
   /-- Witness that {lean}`0 < prec`. -/
   (pos : 0 < prec)
 
+/-- Type-level witness that an integer is a genuine FLoCq radix.
+
+Coq indexes every `float` by `beta : radix`; the radix proof therefore belongs
+to the type context, not to each individual floating-point value.  Keeping the
+integer as the visible index preserves the arithmetic API of this port while
+this class restores the source invariant exactly once per radix.
+-/
+class ValidRadix (beta : Int) : Prop where
+  valid : 1 < beta
+
+/-- Canonical structured radix corresponding to a valid integer index. -/
+def ValidRadix.toRadix (beta : Int) [ValidRadix beta] : FloatSpec.Core.Zaux.Radix :=
+  ⟨beta, by have h := ValidRadix.valid (beta := beta); omega⟩
+
+instance : ValidRadix 2 where
+  valid := by omega
+
 namespace FloatSpec.Core.Defs
 
 section BasicDefinitions
@@ -46,14 +63,19 @@ section BasicDefinitions
 
     This matches the Coq float record with a radix parameter.
 -/
-structure FlocqFloat (beta : Int) where
+structure FlocqFloat (beta : Int) [ValidRadix beta] where
   /-- Mantissa (significand) -/
   Fnum : Int
   /-- Exponent -/
   Fexp : Int
 
+/-- Recover the canonical source radix carried by a float's type context. -/
+def FlocqFloat.radix {beta : Int} [ValidRadix beta]
+    (_f : FlocqFloat beta) : FloatSpec.Core.Zaux.Radix :=
+  ValidRadix.toRadix beta
+
 -- Make the fields accessible without explicit beta parameter
-variable {beta : Int}
+variable {beta : Int} [ValidRadix beta]
 
 /-- Convert FlocqFloat to real number
 
@@ -238,7 +260,7 @@ section HelperFunctions
 
     Simple accessor function for the mantissa field.
 -/
-def Fnum_extract {beta : Int} (f : FlocqFloat beta) : Int :=
+def Fnum_extract {beta : Int} [ValidRadix beta] (f : FlocqFloat beta) : Int :=
   f.Fnum
 
 /-- Specification: Mantissa extraction
@@ -246,7 +268,7 @@ def Fnum_extract {beta : Int} (f : FlocqFloat beta) : Int :=
     The extraction returns the Fnum field unchanged.
 -/
 @[spec]
-theorem Fnum_extract_spec {beta : Int} (f : FlocqFloat beta) :
+theorem Fnum_extract_spec {beta : Int} [ValidRadix beta] (f : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fnum_extract f) : Id Int)
     ⦃⇓result => ⌜result = f.Fnum⌝⦄ := by
@@ -257,7 +279,7 @@ theorem Fnum_extract_spec {beta : Int} (f : FlocqFloat beta) :
 
     Simple accessor function for the exponent field.
 -/
-def Fexp_extract {beta : Int} (f : FlocqFloat beta) : Int :=
+def Fexp_extract {beta : Int} [ValidRadix beta] (f : FlocqFloat beta) : Int :=
   f.Fexp
 
 /-- Specification: Exponent extraction
@@ -265,7 +287,7 @@ def Fexp_extract {beta : Int} (f : FlocqFloat beta) : Int :=
     The extraction returns the Fexp field unchanged.
 -/
 @[spec]
-theorem Fexp_extract_spec {beta : Int} (f : FlocqFloat beta) :
+theorem Fexp_extract_spec {beta : Int} [ValidRadix beta] (f : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fexp_extract f) : Id Int)
     ⦃⇓result => ⌜result = f.Fexp⌝⦄ := by
@@ -276,7 +298,7 @@ theorem Fexp_extract_spec {beta : Int} (f : FlocqFloat beta) :
 
     Constructor function for building floating-point values.
 -/
-def make_float {beta : Int} (num exp : Int) : (FlocqFloat beta) :=
+def make_float {beta : Int} [ValidRadix beta] (num exp : Int) : FlocqFloat beta :=
   ⟨num, exp⟩
 
 /-- Specification: Float construction
@@ -284,7 +306,7 @@ def make_float {beta : Int} (num exp : Int) : (FlocqFloat beta) :=
     The constructor properly sets both fields.
 -/
 @[spec]
-theorem make_float_spec {beta : Int} (num exp : Int) :
+theorem make_float_spec {beta : Int} [ValidRadix beta] (num exp : Int) :
     ⦃⌜True⌝⦄
     (pure (make_float (beta := beta) num exp) : Id (FlocqFloat beta))
     ⦃⇓result => ⌜result.Fnum = num ∧ result.Fexp = exp⌝⦄ := by
@@ -299,7 +321,7 @@ section StructuralProperties
 
     Returns true if both mantissa and exponent match.
 -/
-def FlocqFloat_eq {beta : Int} (f g : FlocqFloat beta) : Bool :=
+def FlocqFloat_eq {beta : Int} [ValidRadix beta] (f g : FlocqFloat beta) : Bool :=
   (f.Fnum == g.Fnum && f.Fexp == g.Fexp)
 
 /-- Specification: Float equality
@@ -307,7 +329,7 @@ def FlocqFloat_eq {beta : Int} (f g : FlocqFloat beta) : Bool :=
     Two FlocqFloats are equal iff their components are equal.
 -/
 @[spec]
-theorem FlocqFloat_eq_spec {beta : Int} (f g : FlocqFloat beta) :
+theorem FlocqFloat_eq_spec {beta : Int} [ValidRadix beta] (f g : FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (FlocqFloat_eq f g) : Id Bool)
     ⦃⇓result => ⌜result ↔ (f.Fnum = g.Fnum ∧ f.Fexp = g.Fexp)⌝⦄ := by
@@ -319,7 +341,7 @@ theorem FlocqFloat_eq_spec {beta : Int} (f g : FlocqFloat beta) :
 
     The zero float (0, 0) should convert to real zero.
 -/
-noncomputable def F2R_zero_float {beta : Int} : ℝ :=
+noncomputable def F2R_zero_float {beta : Int} [ValidRadix beta] : ℝ :=
   F2R (⟨0, 0⟩ : FlocqFloat beta)
 
 /-- Specification: F2R preserves zero
@@ -327,7 +349,7 @@ noncomputable def F2R_zero_float {beta : Int} : ℝ :=
     The zero float (0, 0) converts to real zero.
 -/
 @[spec]
-theorem F2R_zero_spec {beta : Int} :
+theorem F2R_zero_spec {beta : Int} [ValidRadix beta] :
     ⦃⌜True⌝⦄
     (pure (F2R_zero_float (beta := beta)) : Id ℝ)
     ⦃⇓result => ⌜result = 0⌝⦄ := by
@@ -339,7 +361,7 @@ theorem F2R_zero_spec {beta : Int} :
     When two floats have the same exponent, their sum
     can be computed by adding mantissas.
 -/
-noncomputable def F2R_add_same_exp {beta : Int} (f g : FlocqFloat beta) : (ℝ × ℝ) :=
+noncomputable def F2R_add_same_exp {beta : Int} [ValidRadix beta] (f g : FlocqFloat beta) : (ℝ × ℝ) :=
   let sum_float : FlocqFloat beta := ⟨f.Fnum + g.Fnum, f.Fexp⟩
   let f_real := F2R f
   let g_real := F2R g
@@ -351,7 +373,7 @@ noncomputable def F2R_add_same_exp {beta : Int} (f g : FlocqFloat beta) : (ℝ �
     When two floats have the same exponent, F2R distributes over addition.
 -/
 @[spec]
-theorem F2R_add_same_exp_spec {beta : Int} (f g : FlocqFloat beta)
+theorem F2R_add_same_exp_spec {beta : Int} [ValidRadix beta] (f g : FlocqFloat beta)
     (h_eq : f.Fexp = g.Fexp) :
     ⦃⌜True⌝⦄
     (pure (F2R_add_same_exp f g) : Id (ℝ × ℝ))

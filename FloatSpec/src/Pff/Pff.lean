@@ -14,19 +14,19 @@ open Std.Do
 -- Compatibility definitions for Pff legacy support
 
 -- Coq: `float`
-abbrev float (beta : Int) :=
+abbrev float (beta : Int) [ValidRadix beta] :=
   FloatSpec.Core.Defs.FlocqFloat beta
 
 -- Coq: `FtoR`
-noncomputable def FtoR {beta : Int} (x : float beta) : ℝ :=
+noncomputable def FtoR {beta : Int} [ValidRadix beta] (x : float beta) : ℝ :=
   _root_.F2R (beta:=beta) x
 
 -- Coq: `Fle`
-def Fle {beta : Int} (x y : float beta) : Prop :=
+def Fle {beta : Int} [ValidRadix beta] (x y : float beta) : Prop :=
   FtoR x ≤ FtoR y
 
 -- Coq: `Fminus`
-def Fminus {beta : Int} (x y : float beta) : float beta :=
+def Fminus {beta : Int} [ValidRadix beta] (x y : float beta) : float beta :=
   FloatSpec.Calc.Operations.Fminus (beta:=beta) x y
 
 -- Even number properties
@@ -621,19 +621,19 @@ theorem OddExp (n : Int) (m : Nat) :
   exact hodd.pow
 
 -- Float-level parity wrappers and lemmas (Lean skeletons mirroring Coq)
-def Feven {beta : Int}
+def Feven {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Even p.Fnum
 
-def Fodd {beta : Int}
+def Fodd {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Odd p.Fnum
 
-noncomputable def FevenOrFodd_check {beta : Int}
+noncomputable def FevenOrFodd_check {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FevenOrFodd {beta : Int}
+theorem FevenOrFodd {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (FevenOrFodd_check (beta:=beta) p) : Id Unit)
@@ -665,7 +665,7 @@ def MonotoneP_with {α : Type} (toReal : α → ℝ) (P : ℝ → α → Prop) :
   ∀ (p q : ℝ) (p' q' : α), p < q → P p p' → P q q' → toReal p' ≤ toReal q'
 
 -- For FlocqFloat, the natural toReal is F2R
-def MonotoneP_float {beta : Int} (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
+def MonotoneP_float {beta : Int} [ValidRadix beta] (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   MonotoneP_with (_root_.F2R (beta := beta)) P
 
 -- Generic fallback: without a float interpretation for `α`, monotonicity can
@@ -695,12 +695,20 @@ def ProjectorP {α : Type} (P : ℝ → α → Prop) : Prop :=
   ∀ (r : ℝ) (p q : α), P r p → P r q → p = q
 
 -- ---------------------------------------------------------------------------
--- Minimal bound skeleton + helper predicates (shared across Pff specs)
-
-structure Fbound_skel where
-  -- Minimal exponent field needed by several Pff theorems (e.g. RleRoundedAbs)
+-- Source-faithful bound carrier shared by every Pff module.  Coq stores a
+-- `positive` mantissa bound and an `N` exponent bound.  We retain the
+-- arithmetic-friendly `Int` projections but carry the two refinements in the
+-- value, so negative exponents and non-positive mantissa bounds are no longer
+-- representable.
+structure Fbound where
   dExp : Int := 0
   vNum : Int := 1
+  dExp_nonneg : 0 ≤ dExp := by omega
+  vNum_pos : 0 < vNum := by omega
+
+/-- Temporary source-compatible spelling used by existing Pff proofs.  This
+    is a definitional alias, not a second bound representation. -/
+abbrev Fbound_skel := Fbound
 
 /-- Coq Veltkamp helper `plusExp`.
 
@@ -708,18 +716,28 @@ It keeps the same mantissa bound and raises `dExp` by `precision - 1`, which
 lowers the minimal admissible exponent.  This is the enlarged bound used in
 the subnormal Veltkamp branch. -/
 def plusExp (b : Fbound_skel) (precision : Nat) : Fbound_skel :=
-  { dExp := b.dExp + ((precision - 1 : Nat) : Int), vNum := b.vNum }
+  { dExp := b.dExp + ((precision - 1 : Nat) : Int)
+    vNum := b.vNum
+    dExp_nonneg := by exact add_nonneg b.dExp_nonneg (Int.natCast_nonneg _)
+    vNum_pos := b.vNum_pos }
 
 /-- Coq Veltkamp reduced bound `b'`.
 
 The reduced Veltkamp bound keeps the original exponent field and uses
 precision `t - s` for the mantissa bound. -/
-noncomputable def Veltkamp_reducedBound (beta : Int) (b : Fbound_skel) (s t : Nat) :
+noncomputable def Veltkamp_reducedBound (beta : Int) [ValidRadix beta] (b : Fbound_skel) (s t : Nat)
+    (hβ : 1 < beta := by omega) :
     Fbound_skel :=
-  { dExp := b.dExp, vNum := Zpower_nat beta (t - s) }
+  { dExp := b.dExp
+    vNum := Zpower_nat beta (t - s)
+    dExp_nonneg := b.dExp_nonneg
+    vNum_pos := by
+      unfold Zpower_nat
+      exact pow_pos (lt_trans Int.zero_lt_one hβ) _ }
 
 /-- Coq: `p'GivesBound`, the mantissa-bound equation for `b'`. -/
-theorem p'GivesBound (beta : Int) (b : Fbound_skel) (s t : Nat) :
+theorem p'GivesBound (beta : Int) [ValidRadix beta] (b : Fbound_skel) (s t : Nat)
+    (hβ : 1 < beta := by omega) :
     (Veltkamp_reducedBound beta b s t).vNum = Zpower_nat beta (t - s) := by
   rfl
 
@@ -727,12 +745,19 @@ theorem p'GivesBound (beta : Int) (b : Fbound_skel) (s t : Nat) :
 
 The Dekker split bound keeps the original exponent field and uses precision
 `s` for the mantissa bound. -/
-noncomputable def Veltkamp_splitBound (beta : Int) (b : Fbound_skel) (s : Nat) :
+noncomputable def Veltkamp_splitBound (beta : Int) [ValidRadix beta] (b : Fbound_skel) (s : Nat)
+    (hβ : 1 < beta := by omega) :
     Fbound_skel :=
-  { dExp := b.dExp, vNum := Zpower_nat beta s }
+  { dExp := b.dExp
+    vNum := Zpower_nat beta s
+    dExp_nonneg := b.dExp_nonneg
+    vNum_pos := by
+      unfold Zpower_nat
+      exact pow_pos (lt_trans Int.zero_lt_one hβ) _ }
 
 /-- Coq: `p''GivesBound`, the mantissa-bound equation for `bt`. -/
-theorem p''GivesBound (beta : Int) (b : Fbound_skel) (s : Nat) :
+theorem p''GivesBound (beta : Int) [ValidRadix beta] (b : Fbound_skel) (s : Nat)
+    (hβ : 1 < beta := by omega) :
     (Veltkamp_splitBound beta b s).vNum = Zpower_nat beta s := by
   rfl
 
@@ -742,7 +767,13 @@ The Coq bound keeps `vNum b` and sets
 `dExp b' = N.double (dExp b) + N.double (Npos (P_of_succ_nat t))`,
 which coerces to `2 * dExp b + 2 * t + 2` over integers. -/
 def Dekker_extendedBound (b : Fbound_skel) (t : Nat) : Fbound_skel :=
-  { dExp := 2 * b.dExp + 2 * (t : Int) + 2, vNum := b.vNum }
+  { dExp := 2 * b.dExp + 2 * (t : Int) + 2
+    vNum := b.vNum
+    dExp_nonneg := by
+      have hb := b.dExp_nonneg
+      have ht : 0 ≤ (t : Int) := Int.natCast_nonneg t
+      omega
+    vNum_pos := b.vNum_pos }
 
 /-- Coq: `dExpPrim`, the local exponent of Dekker's `b'` strictly extends `b`.
 
@@ -760,14 +791,14 @@ theorem dExpPrimEq (b : Fbound_skel) (t : Nat) :
   rfl
 
 -- Coq: Fbounded b d := (Z.abs (Fnum d) < Zpos (vNum b))%Z /\ (- dExp b <= Fexp d)%Z
-def Fbounded {beta : Int}
+def Fbounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   |f.Fnum| < bo.vNum ∧ -bo.dExp ≤ f.Fexp
 
 -- Backward-compatible alias kept for proofs that were already moved to the
 -- faithful boundedness predicate.
-def Fbounded' {beta : Int}
+def Fbounded' {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fbounded bo f
@@ -780,7 +811,7 @@ def isMax {α : Type} (b : Fbound_skel) (radix : Int) : ℝ → α → Prop :=
 
 -- Proper Coq-matching isMin predicate for floats
 -- Coq: isMin r min := Fbounded b min ∧ (min ≤ r) ∧ (∀ f, Fbounded b f → (f ≤ r) → (f ≤ min))
-def isMin' {beta : Int} (b : Fbound_skel) (radix : Int) :
+def isMin' {beta : Int} [ValidRadix beta] (b : Fbound_skel) (radix : Int) :
     ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop :=
   fun r min => Fbounded' b min ∧
     (_root_.F2R min ≤ r) ∧
@@ -788,21 +819,21 @@ def isMin' {beta : Int} (b : Fbound_skel) (radix : Int) :
 
 -- Proper Coq-matching isMax predicate for floats
 -- Coq: isMax r max := Fbounded b max ∧ (r ≤ max) ∧ (∀ f, Fbounded b f → (r ≤ f) → (max ≤ f))
-def isMax' {beta : Int} (b : Fbound_skel) (radix : Int) :
+def isMax' {beta : Int} [ValidRadix beta] (b : Fbound_skel) (radix : Int) :
     ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop :=
   fun r max => Fbounded' b max ∧
     (r ≤ _root_.F2R max) ∧
     (∀ f : FloatSpec.Core.Defs.FlocqFloat beta, Fbounded' b f → r ≤ _root_.F2R f → _root_.F2R max ≤ _root_.F2R f)
 
 -- Coq: `MinOrMax z f := isMin b radix z f \/ isMax b radix z f`.
-def MinOrMax {beta : Int} (b : Fbound_skel) (radix : Int) :
+def MinOrMax {beta : Int} [ValidRadix beta] (b : Fbound_skel) (radix : Int) :
     ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop :=
   fun z f => isMin' (beta:=beta) b radix z f ∨
     isMax' (beta:=beta) b radix z f
 
 -- Float-specific Coq-matching min/max disjunction.
 -- Coq: MinOrMaxP P := ∀ r p, P r p -> isMin r p \/ isMax r p.
-def MinOrMaxP_float {beta : Int} (b : Fbound_skel) (radix : Int)
+def MinOrMaxP_float {beta : Int} [ValidRadix beta] (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   ∀ (r : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta),
     P r p → isMin' (beta:=beta) b radix r p ∨ isMax' (beta:=beta) b radix r p
@@ -811,19 +842,19 @@ def MinOrMaxP_float {beta : Int} (b : Fbound_skel) (radix : Int)
 -- Float-specific rounding properties (matching Coq Pff semantics)
 
 -- Projector property for floats: bounded floats round to themselves
-def ProjectorP_float {beta : Int} (b : Fbound_skel)
+def ProjectorP_float {beta : Int} [ValidRadix beta] (b : Fbound_skel)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   ∀ p : FloatSpec.Core.Defs.FlocqFloat beta,
     Fbounded b p → P (_root_.F2R p) p
 
 -- Projector equality: if P (F2R p) q for bounded p, then F2R p = F2R q
-def ProjectorEqP_float {beta : Int} (b : Fbound_skel)
+def ProjectorEqP_float {beta : Int} [ValidRadix beta] (b : Fbound_skel)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   ∀ p q : FloatSpec.Core.Defs.FlocqFloat beta,
     Fbounded b p → P (_root_.F2R p) q → _root_.F2R p = _root_.F2R q
 
 -- Full rounded-mode package for floats with all required properties
-def RoundedModeP_full {beta : Int} (b : Fbound_skel)
+def RoundedModeP_full {beta : Int} [ValidRadix beta] (b : Fbound_skel)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   TotalP P ∧ CompatibleP P ∧ MonotoneP_float P ∧
   ProjectorP_float b P ∧ ProjectorEqP_float b P
@@ -832,7 +863,7 @@ def RoundedModeP_full {beta : Int} (b : Fbound_skel)
 -- The generic `RoundedModeP` above is representation-based; Flocq-facing
 -- theorems use this package when the upstream theorem only needs totality,
 -- compatibility, min-or-max, and monotonicity.
-def RoundedModeP_float {beta : Int} (b : Fbound_skel) (radix : Int)
+def RoundedModeP_float {beta : Int} [ValidRadix beta] (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   TotalP P ∧ CompatibleP P ∧
     MinOrMaxP_float (beta:=beta) b radix P ∧ MonotoneP_float P
@@ -842,7 +873,7 @@ def RoundedModeP_float {beta : Int} (b : Fbound_skel) (radix : Int)
 -- the radix power at the normalized exponent of the float.
 
 -- Coq: `RleBoundRoundl` — rounding preserves lower bounds
-noncomputable def RleBoundRoundl_check {beta : Int}
+noncomputable def RleBoundRoundl_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
@@ -853,7 +884,7 @@ noncomputable def RleBoundRoundl_check {beta : Int}
 
     Note: We use `RoundedModeP_full` which includes the float-specific
     monotonicity and projector properties needed for this proof. -/
-theorem RleBoundRoundl {beta : Int}
+theorem RleBoundRoundl {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
@@ -880,7 +911,7 @@ theorem RleBoundRoundl {beta : Int}
     have hEqReal : _root_.F2R p = _root_.F2R q := hProjEq p q hBounded hP_F2R_q
     exact le_of_eq hEqReal
 
-noncomputable def RleBoundRoundr_check {beta : Int}
+noncomputable def RleBoundRoundr_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
@@ -891,7 +922,7 @@ noncomputable def RleBoundRoundr_check {beta : Int}
 
     Note: We use `RoundedModeP_full` which includes the float-specific
     monotonicity and projector properties needed for this proof (matching RleBoundRoundl). -/
-theorem RleBoundRoundr {beta : Int}
+theorem RleBoundRoundr {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
@@ -939,12 +970,12 @@ noncomputable def pPred (n : Int) : Int :=
   n - 1
 
 -- Coq: `firstNormalPos_eq` — value of the first normal positive float
-noncomputable def firstNormalPos {beta : Int}
+noncomputable def firstNormalPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
   ⟨nNormMin radix precision, -b.dExp⟩
 
-noncomputable def firstNormalPos_eq_check {beta : Int}
+noncomputable def firstNormalPos_eq_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) : Unit :=
   ()
 
@@ -954,7 +985,7 @@ noncomputable def firstNormalPos_eq_check {beta : Int}
 
     Note: Requires `beta = radix` since F2R uses the type-level `beta` as base,
     while `firstNormalPos` constructs the mantissa using `radix`. -/
-theorem firstNormalPos_eq {beta : Int}
+theorem firstNormalPos_eq {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⌜beta = radix⌝⦄
     (pure (firstNormalPos_eq_check (beta:=beta) radix b precision) : Id Unit)
@@ -981,7 +1012,7 @@ theorem firstNormalPos_eq {beta : Int}
 
 -- Coq: Closest r p := Fbounded b p /\
 --   forall f, Fbounded b f -> Rabs (p - r) <= Rabs (f - r).
-def Closest {beta : Int}
+def Closest {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fbounded bo f ∧
@@ -991,7 +1022,7 @@ def Closest {beta : Int}
 
 /-- Coq: `Closestbplusb` — closestness for the enlarged `plusExp` bound
 restricts to closestness for the original bound. -/
-theorem Closestbplusb {beta : Int}
+theorem Closestbplusb {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hClosest : Closest (beta:=beta) (plusExp b precision) radix z f)
@@ -1009,7 +1040,7 @@ theorem Closestbplusb {beta : Int}
           Int.natCast_nonneg _
         omega)
 
-noncomputable def TwoSumProp_check {beta : Int}
+noncomputable def TwoSumProp_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -1018,7 +1049,7 @@ noncomputable def TwoSumProp_check {beta : Int}
 
 If `x` is a closest rounded value of `a + b` and `y` represents the residual
 `a + b - x`, then the residual is no larger in absolute value than `b`. -/
-theorem TwoSumProp {beta : Int}
+theorem TwoSumProp {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) bo a ∧
@@ -1062,42 +1093,42 @@ theorem TwoSumProp {beta : Int}
   exact le_trans hdist (le_of_eq hb_abs)
 
 -- Coq: Fnormal p := Fbounded b p /\ (Zpos (vNum b) <= Z.abs (radix * Fnum p))%Z
-def Fnormal {beta : Int}
+def Fnormal {beta : Int} [ValidRadix beta]
     (radix : Int) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fbounded bo f ∧ bo.vNum ≤ |radix * f.Fnum|
 
 -- Coq: Fsubnormal p := Fbounded b p /\ Fexp p = (- dExp b)%Z /\
 --   (Z.abs (radix * Fnum p) < Zpos (vNum b))%Z
-def Fsubnormal {beta : Int}
+def Fsubnormal {beta : Int} [ValidRadix beta]
     (radix : Int) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fbounded bo f ∧ f.Fexp = -bo.dExp ∧ |radix * f.Fnum| < bo.vNum
 
 -- Backward-compatible alias used by proofs that already avoided the old shell.
-def Fnormal' {beta : Int}
+def Fnormal' {beta : Int} [ValidRadix beta]
     (radix : Int) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fnormal radix bo f
 
 -- Backward-compatible alias used by proofs that already avoided the old shell.
-def Fsubnormal' {beta : Int}
+def Fsubnormal' {beta : Int} [ValidRadix beta]
     (radix : Int) (bo : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fsubnormal radix bo f
 
 -- Coq: `Fdigit p := digit radix (Fnum p)`.
-noncomputable def Fdigit {beta : Int}
+noncomputable def Fdigit {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat :=
   Int.toNat (FloatSpec.Core.Digits.Zdigits radix x.Fnum)
 
 -- Coq: `Fshift n x := Float (Fnum x * Zpower_nat radix n) (Fexp x - n)`.
-noncomputable def Fshift {beta : Int}
+noncomputable def Fshift {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
   ⟨x.Fnum * radix ^ n, x.Fexp - (n : Int)⟩
 
-private theorem Fshift_value {beta : Int}
+private theorem Fshift_value {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta_radix : beta = radix) (hradix : 1 < radix) :
     _root_.F2R (beta:=beta) (Fshift (beta:=beta) radix n x) =
@@ -1122,7 +1153,7 @@ private theorem Fshift_value {beta : Int}
   ring_nf
 
 -- Predicate: zero mantissa (Coq: `is_Fzero`). Placed early for downstream uses.
-def is_Fzero {beta : Int} (x : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
+def is_Fzero {beta : Int} [ValidRadix beta] (x : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   x.Fnum = 0
 
 /-!
@@ -1133,7 +1164,7 @@ neighbor aliases can match Flocq:
 `FNSucc x := FSucc (Fnormalize radix b precision x)`.
 -/
 
-noncomputable def FSucc {beta : Int}
+noncomputable def FSucc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -1147,7 +1178,7 @@ noncomputable def FSucc {beta : Int}
   else
     ⟨x.Fnum + 1, x.Fexp⟩
 
-noncomputable def FPred {beta : Int}
+noncomputable def FPred {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -1166,7 +1197,7 @@ noncomputable def FPred {beta : Int}
 Zero is represented with the boundary exponent `-b.dExp`; nonzero floats are
 shifted just enough to fit the requested precision without crossing the
 minimum exponent. -/
-noncomputable def Fnormalize {beta : Int}
+noncomputable def Fnormalize {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -1178,7 +1209,7 @@ noncomputable def Fnormalize {beta : Int}
         (Int.natAbs (b.dExp + p.Fexp)))
       p
 
-private lemma Fdigit_Fopp {beta : Int}
+private lemma Fdigit_Fopp {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     Fdigit (beta:=beta) radix (FloatSpec.Calc.Operations.Fopp (beta:=beta) p) =
       Fdigit (beta:=beta) radix p := by
@@ -1190,7 +1221,7 @@ private lemma Fdigit_Fopp {beta : Int}
     rcases h with ⟨dn, hdn, hd⟩
     exact congrArg Int.toNat (hd.trans hdn.symm)
 
-private lemma Fdigit_Fabs_early {beta : Int}
+private lemma Fdigit_Fabs_early {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     Fdigit (beta:=beta) radix (FloatSpec.Calc.Operations.Fabs (beta:=beta) p) =
       Fdigit (beta:=beta) radix p := by
@@ -1204,13 +1235,13 @@ private lemma Fdigit_Fabs_early {beta : Int}
     rcases h with ⟨dn, hdn, hd⟩
     exact congrArg Int.toNat (hd.trans hdn.symm)
 
-noncomputable def Fnormalize_Fopp_check {beta : Int}
+noncomputable def Fnormalize_Fopp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `Fnormalize_Fopp` — normalization commutes with float negation. -/
-theorem Fnormalize_Fopp {beta : Int}
+theorem Fnormalize_Fopp {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
@@ -1235,13 +1266,13 @@ theorem Fnormalize_Fopp {beta : Int}
           (Fdigit_Fopp (beta:=beta) radix { Fnum := m, Fexp := e })
       simp [hm, hneg, hfd]
 
-noncomputable def Fnormalize_Fabs_check {beta : Int}
+noncomputable def Fnormalize_Fabs_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Local bridge: normalization commutes with float absolute value. -/
-theorem Fnormalize_Fabs {beta : Int}
+theorem Fnormalize_Fabs {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 < radix⌝⦄
@@ -1316,13 +1347,13 @@ theorem Fnormalize_Fabs {beta : Int}
 -- The local signatures keep `radix : ℝ` for existing callers; the integer
 -- radix used by the translated Pff section is the type-level `beta`.
 -- Coq: Definition FNeven (p : float) := Feven (Fnormalize radix b precision p).
-def FNeven {beta : Int}
+def FNeven {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (_radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Feven (beta:=beta) (Fnormalize (beta:=beta) beta b precision p)
 
 /-- Local bridge: normalized-even parity is preserved by float absolute value. -/
-theorem FNevenFabs {beta : Int}
+theorem FNevenFabs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 < beta ∧ FNeven (beta:=beta) b radix precision p⌝⦄
@@ -1352,20 +1383,20 @@ theorem FNevenFabs {beta : Int}
   exact even_iff_two_dvd.mpr hdiv_abs
 
 -- Coq: Definition FNodd (p : float) := Fodd (Fnormalize radix b precision p).
-def FNodd {beta : Int}
+def FNodd {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (_radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fodd (beta:=beta) (Fnormalize (beta:=beta) beta b precision p)
 
 /-- Coq: `FNSucc x := FSucc (Fnormalize radix b precision x)`. -/
-noncomputable def FNSucc {beta : Int}
+noncomputable def FNSucc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (_radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : FloatSpec.Core.Defs.FlocqFloat beta :=
   FSucc (beta:=beta) b beta precision
     (Fnormalize (beta:=beta) beta b precision p)
 
 /-- Coq: `FNPred x := FPred (Fnormalize radix b precision x)`. -/
-noncomputable def FNPred {beta : Int}
+noncomputable def FNPred {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (_radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : FloatSpec.Core.Defs.FlocqFloat beta :=
   FPred (beta:=beta) b beta precision
@@ -1375,7 +1406,7 @@ noncomputable def FNPred {beta : Int}
 -- boundary-aware `FSucc` definition.
 
 -- EvenClosest: closest rounding with tie-breaking toward even (or uniqueness)
-def EvenClosest {beta : Int}
+def EvenClosest {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (r : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
@@ -1389,19 +1420,19 @@ def EvenClosest {beta : Int}
 -- Rounding operators (RND_*) and canonicity (skeletons to mirror Coq Pff.v)
 
 -- Coq: Fcanonic a := Fnormal a \/ Fsubnormal a.
-def Fcanonic {beta : Int}
+def Fcanonic {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fnormal radix b f ∨ Fsubnormal radix b f
 
 -- Backward-compatible alias used by proofs that already avoided the old shell.
-def Fcanonic' {beta : Int}
+def Fcanonic' {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fcanonic radix b f
 
 /-- Coq: `FnormalPpred` — the predecessor of the positive mantissa bound is normal. -/
-theorem FnormalPpred {beta : Int}
+theorem FnormalPpred {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) (x : Int) :
     1 < radix →
     0 < precision →
@@ -1436,7 +1467,7 @@ theorem FnormalPpred {beta : Int}
     nlinarith [hradix, hvge_two]
 
 /-- Coq: `FcanonicPpred` — the predecessor normal float is canonical. -/
-theorem FcanonicPpred {beta : Int}
+theorem FcanonicPpred {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) (x : Int) :
     1 < radix →
     0 < precision →
@@ -1448,7 +1479,7 @@ theorem FcanonicPpred {beta : Int}
   exact Or.inl (FnormalPpred (beta:=beta) radix b precision x hradix hprecision hvNum hx)
 
 /-- Coq: `FnormalNnormMin` — the minimal normal mantissa is normal. -/
-theorem FnormalNnormMin {beta : Int}
+theorem FnormalNnormMin {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) (x : Int) :
     1 < radix →
     0 < precision →
@@ -1476,7 +1507,7 @@ theorem FnormalNnormMin {beta : Int}
     rw [hposnorm]
 
 /-- Coq: `FcanonicNnormMin` — the minimal normal mantissa is canonical. -/
-theorem FcanonicNnormMin {beta : Int}
+theorem FcanonicNnormMin {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) (x : Int) :
     1 < radix →
     0 < precision →
@@ -1487,13 +1518,13 @@ theorem FcanonicNnormMin {beta : Int}
   intro hradix hprecision hvNum hx
   exact Or.inl (FnormalNnormMin (beta:=beta) radix b precision x hradix hprecision hvNum hx)
 
-noncomputable def FcanonicBound_check {beta : Int}
+noncomputable def FcanonicBound_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FcanonicBound` — canonical floats are bounded. -/
-theorem FcanonicBound {beta : Int}
+theorem FcanonicBound {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
@@ -1505,13 +1536,13 @@ theorem FcanonicBound {beta : Int}
   · exact hnormal.1
   · exact hsubnormal.1
 
-noncomputable def FcanonicFopp_check {beta : Int}
+noncomputable def FcanonicFopp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FcanonicFopp` — canonicity preserved under float negation. -/
-theorem FcanonicFopp {beta : Int}
+theorem FcanonicFopp {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
@@ -1529,13 +1560,13 @@ theorem FcanonicFopp {beta : Int}
       FloatSpec.Calc.Operations.Fopp, abs_mul, abs_neg, mul_neg]
       using hsubnormal
 
-noncomputable def FcanonicFabs_check {beta : Int}
+noncomputable def FcanonicFabs_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FcanonicFabs` — canonicity preserved under float absolute value. -/
-theorem FcanonicFabs {beta : Int}
+theorem FcanonicFabs {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p⌝⦄
@@ -1553,12 +1584,12 @@ theorem FcanonicFabs {beta : Int}
       FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs, abs_mul]
       using hsubnormal
 
-noncomputable def FSuccSimpl1_check {beta : Int}
+noncomputable def FSuccSimpl1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSuccSimpl1`. -/
-theorem FSuccSimpl1 {beta : Int}
+theorem FSuccSimpl1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜x.Fnum = pPred b.vNum⌝⦄
@@ -1572,12 +1603,12 @@ theorem FSuccSimpl1 {beta : Int}
     PredTrans.pure, PredTrans.apply, ULift.down]
   simp [FSucc, hx']
 
-noncomputable def FSuccSimpl2_check {beta : Int}
+noncomputable def FSuccSimpl2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSuccSimpl2`. -/
-theorem FSuccSimpl2 {beta : Int}
+theorem FSuccSimpl2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜pPred b.vNum ≠ -nNormMin radix precision ∧
@@ -1596,11 +1627,11 @@ theorem FSuccSimpl2 {beta : Int}
     exact hdisjoint h.symm
   simp [FSucc, hnot_pred, hnot_boundary, hnum, hexp]
 
-noncomputable def FSuccSimpl3_check {beta : Int}
+noncomputable def FSuccSimpl3_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat) : Unit := ()
 
 /-- Coq: `FSuccSimpl3`. -/
-theorem FSuccSimpl3 {beta : Int}
+theorem FSuccSimpl3 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat) :
     ⦃⌜pPred b.vNum ≠ -nNormMin radix precision⌝⦄
     (pure (FSuccSimpl3_check (beta:=beta) b radix precision) : Id Unit)
@@ -1613,12 +1644,12 @@ theorem FSuccSimpl3 {beta : Int}
     ULift.up_down]
   simp [FSucc, hneq.symm]
 
-noncomputable def FSuccSimpl4_check {beta : Int}
+noncomputable def FSuccSimpl4_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSuccSimpl4`. -/
-theorem FSuccSimpl4 {beta : Int}
+theorem FSuccSimpl4 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜x.Fnum ≠ pPred b.vNum ∧ x.Fnum ≠ -nNormMin radix precision⌝⦄
@@ -1667,7 +1698,7 @@ private lemma nNormMin_mul_radix_cast
 
 /-- Coq: `FSuccDiff1` — away from the negative minimal-normal boundary,
 the successor step has the value of `Float 1 (Fexp x)`. -/
-theorem FSuccDiff1 {beta : Int}
+theorem FSuccDiff1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -1723,7 +1754,7 @@ theorem FSuccDiff1 {beta : Int}
 
 /-- Coq: `FSuccDiff2` — at the negative minimal-normal boundary with the
 minimum exponent, the successor step is one current-exponent ulp. -/
-theorem FSuccDiff2 {beta : Int}
+theorem FSuccDiff2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -1761,7 +1792,7 @@ theorem FSuccDiff2 {beta : Int}
 
 /-- Coq: `FSuccDiff3` — crossing the negative minimal-normal boundary away
 from the minimum exponent yields one ulp at the predecessor exponent. -/
-theorem FSuccDiff3 {beta : Int}
+theorem FSuccDiff3 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -1850,7 +1881,7 @@ theorem ZltNormMinVnum
   simpa using hmul
 
 /-- Coq: `FSuccNormPos` — the successor of a nonnegative normal float is normal. -/
-theorem FSuccNormPos {beta : Int}
+theorem FSuccNormPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (a : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -1942,7 +1973,7 @@ private lemma abs_succ_lt_of_abs_lt_ne_pred
 /-- Coq: `FSuccSubnormNotNearNormMin` — away from the positive
 normal-minimum predecessor, the successor of a subnormal float remains
 subnormal. -/
-theorem FSuccSubnormNotNearNormMin {beta : Int}
+theorem FSuccSubnormNotNearNormMin {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (a : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < radix →
@@ -2016,7 +2047,7 @@ theorem FSuccSubnormNotNearNormMin {beta : Int}
 
 /-- Coq: `FSuccSubnormNearNormMin` — the successor of the largest positive
 subnormal mantissa is the minimal positive normal float. -/
-theorem FSuccSubnormNearNormMin {beta : Int}
+theorem FSuccSubnormNearNormMin {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (a : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < radix →
@@ -2062,7 +2093,7 @@ theorem FSuccSubnormNearNormMin {beta : Int}
             omega)
 
 /-- Coq: `FSuccSubnormal` — the successor of a subnormal float is canonical. -/
-theorem FSuccSubnormal {beta : Int}
+theorem FSuccSubnormal {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (a : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < radix →
@@ -2082,7 +2113,7 @@ theorem FSuccSubnormal {beta : Int}
 
 /-- Coq: `FSuccPosNotMax` — successor preserves canonicity for nonnegative
 canonical floats. -/
-theorem FSuccPosNotMax {beta : Int}
+theorem FSuccPosNotMax {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (a : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -2104,7 +2135,7 @@ theorem FSuccPosNotMax {beta : Int}
 
 /-- Coq: `FSuccNormNegNormMin` — the successor of the negative minimal
 normal boundary at the minimum exponent is subnormal. -/
-theorem FSuccNormNegNormMin {beta : Int}
+theorem FSuccNormNegNormMin {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     1 < radix →
     0 < precision →
@@ -2208,7 +2239,7 @@ private lemma succ_boundary_parity
       exact Odd.sub_odd hp odd_one
 
 -- Parity behavior of successor (Coq: FevenSucProp)
-noncomputable def FevenSucProp_check {beta : Int}
+noncomputable def FevenSucProp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -2219,7 +2250,7 @@ Unlike the former local lightweight statement, this theorem targets the real
 boundary-aware `FSucc`.  The usual Pff section hypotheses are explicit because
 the top/bottom mantissa cases use `b.vNum = radix^precision` and
 `1 < precision` to transfer parity across the carry/borrow boundary. -/
-theorem FevenSucProp {beta : Int}
+theorem FevenSucProp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < precision ∧ b.vNum = Zpower_nat radix precision⌝⦄
@@ -2286,13 +2317,13 @@ theorem FevenSucProp {beta : Int}
     · simp [hlow]
 
 -- Parity corollaries for successor (Coq: FoddSuc / FevenSuc)
-noncomputable def FoddSuc_check {beta : Int}
+noncomputable def FoddSuc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FoddSuc` — if a float is odd, its faithful successor is even. -/
-theorem FoddSuc {beta : Int}
+theorem FoddSuc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < precision ∧ b.vNum = Zpower_nat radix precision ∧ Fodd (beta:=beta) p⌝⦄
@@ -2305,13 +2336,13 @@ theorem FoddSuc {beta : Int}
   simpa [wp, PostCond.noThrow, pure, FevenSucProp_check, FoddSuc_check]
     using hres.1 hp_odd
 
-noncomputable def FevenSuc_check {beta : Int}
+noncomputable def FevenSuc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FevenSuc` — if a float is even, its faithful successor is odd. -/
-theorem FevenSuc {beta : Int}
+theorem FevenSuc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < precision ∧ b.vNum = Zpower_nat radix precision ∧ Feven (beta:=beta) p⌝⦄
@@ -2324,12 +2355,12 @@ theorem FevenSuc {beta : Int}
   simpa [wp, PostCond.noThrow, pure, FevenSucProp_check, FevenSuc_check]
     using hres.2 hp_even
 
-noncomputable def FPredSimpl1_check {beta : Int}
+noncomputable def FPredSimpl1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredSimpl1`. -/
-theorem FPredSimpl1 {beta : Int}
+theorem FPredSimpl1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜x.Fnum = -pPred b.vNum⌝⦄
@@ -2343,12 +2374,12 @@ theorem FPredSimpl1 {beta : Int}
     ULift.up_down]
   simp [FPred, hx']
 
-noncomputable def FPredSimpl2_check {beta : Int}
+noncomputable def FPredSimpl2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredSimpl2`. -/
-theorem FPredSimpl2 {beta : Int}
+theorem FPredSimpl2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜-pPred b.vNum ≠ nNormMin radix precision ∧
@@ -2367,11 +2398,11 @@ theorem FPredSimpl2 {beta : Int}
     exact hdisjoint h.symm
   simp [FPred, hnot_pred, hnot_boundary, hnum, hexp]
 
-noncomputable def FPredSimpl3_check {beta : Int}
+noncomputable def FPredSimpl3_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat) : Unit := ()
 
 /-- Coq: `FPredSimpl3`. -/
-theorem FPredSimpl3 {beta : Int}
+theorem FPredSimpl3 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat) :
     ⦃⌜-pPred b.vNum ≠ nNormMin radix precision⌝⦄
     (pure (FPredSimpl3_check (beta:=beta) b radix precision) : Id Unit)
@@ -2384,12 +2415,12 @@ theorem FPredSimpl3 {beta : Int}
     ULift.up_down]
   simp [FPred, hneq.symm]
 
-noncomputable def FPredSimpl4_check {beta : Int}
+noncomputable def FPredSimpl4_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredSimpl4`. -/
-theorem FPredSimpl4 {beta : Int}
+theorem FPredSimpl4 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜x.Fnum ≠ -pPred b.vNum ∧ x.Fnum ≠ nNormMin radix precision⌝⦄
@@ -2401,12 +2432,12 @@ theorem FPredSimpl4 {beta : Int}
     ULift.up_down]
   simp [FPred, hpred, hnorm]
 
-noncomputable def FPredFopFSucc_check {beta : Int}
+noncomputable def FPredFopFSucc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredFopFSucc` — predecessor is successor under float negation. -/
-theorem FPredFopFSucc {beta : Int}
+theorem FPredFopFSucc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < radix ∧ precision ≠ 0 ∧
@@ -2456,7 +2487,7 @@ theorem FPredFopFSucc {beta : Int}
 
 /-- Coq: `FPredDiff1` — away from the positive minimal-normal boundary,
 the predecessor step has the value of `Float 1 (Fexp x)`. -/
-theorem FPredDiff1 {beta : Int}
+theorem FPredDiff1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -2512,7 +2543,7 @@ theorem FPredDiff1 {beta : Int}
 
 /-- Coq: `FPredDiff2` — at the positive minimal-normal boundary with the
 minimum exponent, the predecessor step is one current-exponent ulp. -/
-theorem FPredDiff2 {beta : Int}
+theorem FPredDiff2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -2550,7 +2581,7 @@ theorem FPredDiff2 {beta : Int}
 
 /-- Coq: `FPredDiff3` — crossing the positive minimal-normal boundary away
 from the minimum exponent yields one ulp at the predecessor exponent. -/
-theorem FPredDiff3 {beta : Int}
+theorem FPredDiff3 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -2615,12 +2646,12 @@ theorem FPredDiff3 {beta : Int}
           (radix : ℝ) ^ (x.Fexp - 1) := by rw [hnorm_mul]
     _ = ((1 : Int) : ℝ) * (radix : ℝ) ^ (x.Fexp - 1) := by norm_num
 
-noncomputable def FSuccFopFPred_check {beta : Int}
+noncomputable def FSuccFopFPred_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Dual of `FPredFopFSucc`: successor is predecessor under float negation. -/
-theorem FSuccFopFPred {beta : Int}
+theorem FSuccFopFPred {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < radix ∧ precision ≠ 0 ∧
@@ -2646,13 +2677,13 @@ theorem FSuccFopFPred {beta : Int}
   cases FSucc (beta:=beta) b radix precision x
   simp [Fopp, FloatSpec.Calc.Operations.Fopp]
 
-noncomputable def FBoundedSuc_check {beta : Int}
+noncomputable def FBoundedSuc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FBoundedSuc` — the normalized successor of a bounded float remains
 bounded under the precision/radix section assumptions. -/
-theorem FBoundedSuc {beta : Int}
+theorem FBoundedSuc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b x ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -2734,13 +2765,13 @@ theorem FBoundedSuc {beta : Int}
         exact habs_lt
       · exact hexp
 
-noncomputable def FBoundedPred_check {beta : Int}
+noncomputable def FBoundedPred_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FBoundedPred` — the normalized predecessor of a bounded float remains
 bounded under the precision/radix section assumptions. -/
-theorem FBoundedPred {beta : Int}
+theorem FBoundedPred {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b x ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -2771,12 +2802,12 @@ theorem FBoundedPred {beta : Int}
   rw [hpred_eq]
   simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hsucc_bounded
 
-noncomputable def FPredSuc_check {beta : Int}
+noncomputable def FPredSuc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredSuc` — predecessor cancels successor on canonical floats. -/
-theorem FPredSuc {beta : Int}
+theorem FPredSuc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b x ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -2881,12 +2912,12 @@ theorem FPredSuc {beta : Int}
           exact False.elim hcase_false
       · simp [hx_succ_not_neg_pred, hnorm_succ]
 
-noncomputable def FSucPred_check {beta : Int}
+noncomputable def FSucPred_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSucPred` — successor cancels predecessor on canonical floats. -/
-theorem FSucPred {beta : Int}
+theorem FSucPred {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b x ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -2941,14 +2972,14 @@ theorem FSucPred {beta : Int}
   cases x
   simp [Fopp, FloatSpec.Calc.Operations.Fopp]
 
-noncomputable def FSuccCanonic_check {beta : Int}
+noncomputable def FSuccCanonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSuccCanonic` — successor preserves canonicity under the local
 precision/radix section assumptions.  Upstream statement:
 `forall a : float, Fcanonic radix b a -> Fcanonic radix b (FSucc a)`. -/
-theorem FSuccCanonic {beta : Int}
+theorem FSuccCanonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b x ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -3100,7 +3131,7 @@ theorem FSuccCanonic {beta : Int}
 
 /-- Coq: `FSuccNormNegNotNormMin` — the successor of a nonpositive normal
 float is normal unless the input is the negative minimal-normal boundary. -/
-theorem FSuccNormNegNotNormMin {beta : Int}
+theorem FSuccNormNegNotNormMin {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -3201,14 +3232,14 @@ theorem FSuccNormNegNotNormMin {beta : Int}
         rw [abs_mul, abs_of_pos hradix_pos, hvnum_mul_norm]
         exact mul_le_mul_of_nonneg_left hnorm_le_abs_succ (le_of_lt hradix_pos)
 
-noncomputable def FSuccNegCanonic_check {beta : Int}
+noncomputable def FSuccNegCanonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSuccNegCanonic` — successor preserves canonicity on the
 nonpositive branch.  The local all-sign `FSuccCanonic` theorem is stronger,
 so this wrapper restores the exact upstream name. -/
-theorem FSuccNegCanonic {beta : Int}
+theorem FSuccNegCanonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜FtoR x ≤ 0 ∧ Fcanonic (beta:=beta) radix b x ∧
@@ -3223,7 +3254,7 @@ theorem FSuccNegCanonic {beta : Int}
     FSuccNegCanonic_check, Id.run, ULift.up_down] using
     hsucc ⟨hcan, hradix, hprecision, hvnum⟩
 
-noncomputable def FSuccLt_check {beta : Int}
+noncomputable def FSuccLt_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
@@ -3232,7 +3263,7 @@ noncomputable def FSuccLt_check {beta : Int}
 Upstream statement: `forall a : float, (a < FSucc a)%R`.  The Lean port makes
 the section assumptions explicit, including the equality between the `F2R` base
 and the Pff radix. -/
-theorem FSuccLt {beta : Int}
+theorem FSuccLt {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -3338,12 +3369,12 @@ theorem FSuccLt {beta : Int}
         (by exact_mod_cast (show x.Fnum < x.Fnum + 1 by omega))
         (zpow_pos hradix_pos_real x.Fexp)
 
-noncomputable def FPredCanonic_check {beta : Int}
+noncomputable def FPredCanonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredCanonic` — predecessor preserves canonicity. -/
-theorem FPredCanonic {beta : Int}
+theorem FPredCanonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b x ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -3381,7 +3412,7 @@ theorem FPredCanonic {beta : Int}
     using h hsucc_can
 
 /-- Boundedness corollary for the canonical predecessor. -/
-theorem FPredBounded {beta : Int}
+theorem FPredBounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     Fcanonic (beta:=beta) radix b x →
@@ -3401,12 +3432,12 @@ theorem FPredBounded {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, FcanonicBound_check,
     Id.run, ULift.up_down] using hbound hpredCan
 
-noncomputable def FPredLt_check {beta : Int}
+noncomputable def FPredLt_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredLt` — every float is strictly above its normalized predecessor. -/
-theorem FPredLt {beta : Int}
+theorem FPredLt {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -3452,14 +3483,14 @@ theorem FPredLt {beta : Int}
   have hdual := neg_lt_neg hsucc_lt
   simpa using hdual
 
-noncomputable def R0RltRleSucc_check {beta : Int}
+noncomputable def R0RltRleSucc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `R0RltRleSucc` — if a float is negative, its normalized successor is
 still nonpositive. -/
-theorem R0RltRleSucc {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem R0RltRleSucc {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -3515,14 +3546,14 @@ theorem R0RltRleSucc {beta : Int}
           FloatSpec.Core.Defs.FlocqFloat radix)
         hmant
 
-noncomputable def R0RltRlePred_check {beta : Int}
+noncomputable def R0RltRlePred_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `R0RltRlePred` — if a float is positive, its normalized predecessor is
 still nonnegative. -/
-theorem R0RltRlePred {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem R0RltRlePred {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -3570,7 +3601,7 @@ theorem R0RltRlePred {beta : Int}
   exact neg_nonneg.mpr hsucc_nonpos
 
 -- Relative ordering of canonical floats (Coq: `FcanonicLtPos`)
-noncomputable def FcanonicLtPos_check {beta : Int}
+noncomputable def FcanonicLtPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -3583,7 +3614,7 @@ is strictly smaller.
 Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
-theorem FcanonicLtPos {beta : Int}
+theorem FcanonicLtPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -3787,7 +3818,7 @@ theorem FcanonicLtPos {beta : Int}
         -- This contradicts hexp_gt: q.Fexp < p.Fexp
         omega
 
-noncomputable def Fcanonic_Rle_Zle_check {beta : Int}
+noncomputable def Fcanonic_Rle_Zle_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -3798,7 +3829,7 @@ noncomputable def Fcanonic_Rle_Zle_check {beta : Int}
 Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
-theorem Fcanonic_Rle_Zle {beta : Int}
+theorem Fcanonic_Rle_Zle {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -4010,7 +4041,7 @@ theorem Fcanonic_Rle_Zle {beta : Int}
             -- x subnormal, y subnormal
             · rw [hexpX, hexpY] at hexp_gt; omega
 
-noncomputable def FcanonicLtNeg_check {beta : Int}
+noncomputable def FcanonicLtNeg_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -4023,7 +4054,7 @@ the mantissa of `p` is strictly smaller.
 Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
-theorem FcanonicLtNeg {beta : Int}
+theorem FcanonicLtNeg {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -4432,7 +4463,7 @@ theorem FcanonicLtNeg {beta : Int}
         omega
 
 -- Rounding operators on nonnegative reals and their variants
-noncomputable def RND_Min_Pos {beta : Int}
+noncomputable def RND_Min_Pos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   let firstNormPosValue : ℝ := _root_.F2R (beta:=beta) (firstNormalPos (beta:=beta) radix b p.toNat)
@@ -4451,18 +4482,18 @@ noncomputable def RND_Min_Pos {beta : Int}
 
 Flocq defines the float ulp as the radix power at the exponent of the
 normalized representative of `p`. -/
-noncomputable def Fulp {beta : Int}
+noncomputable def Fulp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : ℝ :=
   (radix : ℝ) ^ (Fnormalize (beta:=beta) radix b precision p).Fexp
 
-noncomputable def FulpFabs_check {beta : Int}
+noncomputable def FulpFabs_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpFabs` — the ulp is invariant under float absolute value. -/
-theorem FulpFabs {beta : Int}
+theorem FulpFabs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 < radix⌝⦄
@@ -4484,22 +4515,22 @@ theorem FulpFabs {beta : Int}
   rw [hnorm']
   simp [Fabs, FloatSpec.Calc.Operations.Fabs]
 
-noncomputable def FulpLe_check {beta : Int}
+noncomputable def FulpLe_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FulpLe2_check {beta : Int}
+noncomputable def FulpLe2_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FulpLeGeneral_check {beta : Int}
+noncomputable def FulpLeGeneral_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def RoundLeGeneral_check {beta : Int}
+noncomputable def RoundLeGeneral_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) : Unit :=
   ()
@@ -4512,59 +4543,59 @@ noncomputable def Axpy_u_lower_from_sum_error_check
     (eps T Y U : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_sum_error_from_closest_ulp_check {beta : Int}
+noncomputable def Axpy_sum_error_from_closest_ulp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (u : FloatSpec.Core.Defs.FlocqFloat beta) (S : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_u_lower_from_closest_sum_check {beta : Int}
+noncomputable def Axpy_u_lower_from_closest_sum_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (u : FloatSpec.Core.Defs.FlocqFloat beta) (T Y : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_scale_from_rounding_inputs_check {beta : Int}
+noncomputable def Axpy_scale_from_rounding_inputs_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (t u : FloatSpec.Core.Defs.FlocqFloat beta) (A Y : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_perturb_from_error_bound_check {beta : Int}
+noncomputable def Axpy_perturb_from_error_bound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_min_or_max_from_rounding_inputs_check {beta : Int}
+noncomputable def Axpy_min_or_max_from_rounding_inputs_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_opt_from_strict_bound_check {beta : Int}
+noncomputable def Axpy_opt_from_strict_bound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_opt_from_general_bound_check {beta : Int}
+noncomputable def Axpy_opt_from_general_bound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_opt_check {beta : Int}
+noncomputable def Axpy_opt_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) : Unit :=
   ()
 
-noncomputable def ExactSum_Near_check {beta : Int}
+noncomputable def ExactSum_Near_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpLe` — the normalized ulp of a bounded float is no larger than
 the radix power at the float's current exponent. -/
-theorem FulpLe {beta : Int}
+theorem FulpLe {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ beta = radix ∧ 1 < radix⌝⦄
@@ -4586,27 +4617,27 @@ theorem FulpLe {beta : Int}
     exact_mod_cast (le_of_lt hradix)
   simpa [Fulp] using zpow_le_zpow_right₀ hbase_ge_one hnorm_exp_le
 
-noncomputable def FnormalizeCorrect_check {beta : Int}
+noncomputable def FnormalizeCorrect_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FnormalizeBounded_check {beta : Int}
+noncomputable def FnormalizeBounded_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FnormalizeCanonic_check {beta : Int}
+noncomputable def FnormalizeCanonic_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FcanonicFnormalizeEq_check {beta : Int}
+noncomputable def FcanonicFnormalizeEq_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FcanonicPosFexpRlt_check {beta : Int}
+noncomputable def FcanonicPosFexpRlt_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -4616,7 +4647,7 @@ smaller exponent yields a strictly smaller value.
 
 Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 Requires `radix = beta` and `1 < beta` for the mantissa bounds to imply the result. -/
-theorem FcanonicPosFexpRlt {beta : Int}
+theorem FcanonicPosFexpRlt {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -5166,7 +5197,7 @@ theorem FcanonicPosFexpRlt {beta : Int}
           have hy_exp_eq : y.Fexp = -b.dExp := hexpY
           omega
 
-noncomputable def FSuccPropPos_check {beta : Int}
+noncomputable def FSuccPropPos_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
@@ -5178,7 +5209,7 @@ Upstream statement:
 Fcanonic radix b y -> (x < y)%R -> (FSucc x <= y)%R`.  The Lean port makes the
 section hypotheses explicit: `beta = radix`, `1 < radix`, nonzero precision,
 and `b.vNum = Zpower_nat radix precision`. -/
-theorem FSuccPropPos {beta : Int}
+theorem FSuccPropPos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -5323,7 +5354,7 @@ theorem FSuccPropPos {beta : Int}
       (le_of_lt (zpow_pos
         (by exact_mod_cast (show (0 : Int) < radix by omega)) y.Fexp))
 
-noncomputable def FcanonicNegFexpRlt_check {beta : Int}
+noncomputable def FcanonicNegFexpRlt_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -5333,7 +5364,7 @@ larger exponent forces a strictly smaller real value.
 
 Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 Requires `radix = beta` and `1 < beta` for the mantissa bounds to imply the result. -/
-theorem FcanonicNegFexpRlt {beta : Int}
+theorem FcanonicNegFexpRlt {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -5646,7 +5677,7 @@ theorem FcanonicNegFexpRlt {beta : Int}
       have hy_exp : y.Fexp = -b.dExp := hexpY
       omega
 
-noncomputable def NormalAndSubNormalNotEq_check {beta : Int}
+noncomputable def NormalAndSubNormalNotEq_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -5656,7 +5687,7 @@ represent different real numbers.
 
 Note: Uses `Fnormal'` and `Fsubnormal'`, the Coq-matching predicates.
 Requires `radix = beta` and `1 < beta`. -/
-theorem NormalAndSubNormalNotEq {beta : Int}
+theorem NormalAndSubNormalNotEq {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -5804,14 +5835,14 @@ theorem NormalAndSubNormalNotEq {beta : Int}
       -- But hcore says |radix * q.Fnum| < |radix * p.Fnum|
       omega
 
-noncomputable def FSuccProp_cross_zero_check {beta : Int}
+noncomputable def FSuccProp_cross_zero_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Case reducer for `FSuccPropNeg`: if the upper float is nonnegative, the
 successor of the negative lower float is still below it. -/
-theorem FSuccProp_cross_zero {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FSuccProp_cross_zero {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -5835,14 +5866,14 @@ theorem FSuccProp_cross_zero {beta : Int}
       hsucc ⟨hbeta, hradix, hprecision, hvnum, hxneg⟩
   exact le_trans hsucc_nonpos hy_nonneg
 
-noncomputable def FSucc_same_exp_mantissa_le_check {beta : Int}
+noncomputable def FSucc_same_exp_mantissa_le_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Same-exponent case reducer for successor ordering: if `FSucc x` keeps
 `x`'s exponent and increments the mantissa, then any float with the same
 exponent and a larger mantissa is above it. -/
-theorem FSucc_same_exp_mantissa_le {beta : Int}
+theorem FSucc_same_exp_mantissa_le {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜FSucc (beta:=beta) b radix precision x =
@@ -5868,7 +5899,7 @@ theorem FSucc_same_exp_mantissa_le {beta : Int}
     (le_of_lt (zpow_pos
       (by exact_mod_cast (show (0 : Int) < beta by omega)) y.Fexp))
 
-noncomputable def FcanonicUnique_check {beta : Int}
+noncomputable def FcanonicUnique_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -5879,7 +5910,7 @@ number are equal as floats.
 Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 This theorem requires the canonical form structure to be meaningful.
 Requires `1 < beta` (radixMoreThanOne in Coq) and `radix = beta`. -/
-theorem FcanonicUnique {beta : Int}
+theorem FcanonicUnique {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -6063,19 +6094,19 @@ theorem FcanonicUnique {beta : Int}
     exact ⟨hfnum_eq, hexp_eq⟩
 
 -- Coq: `Fweight`
-noncomputable def Fweight {beta : Int}
+noncomputable def Fweight {beta : Int} [ValidRadix beta]
     (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
   p.Fnum + p.Fexp * Zpower_nat radix precision
 
-noncomputable def FweightLt_check {beta : Int}
+noncomputable def FweightLt_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FweightLt` — the integer rank of nonnegative canonical floats is
 strictly monotone with the represented real value. -/
-theorem FweightLt {beta : Int}
+theorem FweightLt {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -6145,13 +6176,13 @@ theorem FweightLt {beta : Int}
     simpa [add_comm, add_left_comm, add_assoc] using
       add_lt_add_right hnum_lt (q.Fexp * Zpower_nat radix precision)
 
-noncomputable def FweightEq_check {beta : Int}
+noncomputable def FweightEq_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FweightEq` — equal canonical real values have equal weight. -/
-theorem FweightEq {beta : Int}
+theorem FweightEq {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -6171,13 +6202,13 @@ theorem FweightEq {beta : Int}
       ULift.down_up, Fcanonic'] using huniq ⟨hp_can, hq_can, hpq⟩
   simpa [hp_eq_q]
 
-noncomputable def FweightZle_check {beta : Int}
+noncomputable def FweightZle_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FweightZle` — nonnegative canonical order implies weight order. -/
-theorem FweightZle {beta : Int}
+theorem FweightZle {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -6208,7 +6239,7 @@ theorem FweightZle {beta : Int}
 /-- Coq: `FinductNegAux` — induction downward over nonnegative canonical
 floats, using the integer gap `Fweight p - Fweight q` as the well-founded
 measure. -/
-theorem FinductNegAux {beta : Int}
+theorem FinductNegAux {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (hbeta_radix : beta = radix)
     (hradix : 1 < radix)
@@ -6357,7 +6388,7 @@ theorem FinductNegAux {beta : Int}
 
 /-- Coq: `FinductNeg` — downward induction over canonical floats between zero
 and a nonnegative canonical upper endpoint. -/
-theorem FinductNeg {beta : Int}
+theorem FinductNeg {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (hbeta_radix : beta = radix)
     (hradix : 1 < radix)
@@ -6407,8 +6438,8 @@ theorem FinductNeg {beta : Int}
 
 /-- Coq: `radixRangeBoundExp` — if two nonnegative canonical floats are within
 one radix factor, their exponents are equal or adjacent. -/
-theorem radixRangeBoundExp {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem radixRangeBoundExp {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
     1 < radix →
@@ -6581,7 +6612,7 @@ theorem radixRangeBoundExp {beta : Int}
   · left
     exact hp_exp_eq_q
 
-noncomputable def FcanonicLeastExp_check {beta : Int}
+noncomputable def FcanonicLeastExp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -6592,7 +6623,7 @@ bounded float has exponent no larger than the bounded one.
 Note: Uses `Fcanonic'`, the Coq-matching canonical predicate.
 Requires `1 < beta` and `radix = beta` for the mantissa/exponent relationship to work.
 Also requires `0 < b.vNum` for the Normal case to be non-vacuous. -/
-theorem FcanonicLeastExp {beta : Int}
+theorem FcanonicLeastExp {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -6755,7 +6786,7 @@ theorem FcanonicLeastExp {beta : Int}
           omega
 
 -- Auxiliary boundedness of `RND_Min_Pos` on nonnegative reals (Coq: RND_Min_Pos_bounded_aux)
-noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
+noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p e : Int) (r : ℝ) : Unit :=
   ()
 
@@ -6764,7 +6795,7 @@ noncomputable def RND_Min_Pos_bounded_aux_check {beta : Int}
 The Coq section assumptions `radixMoreThanOne`, `pGreaterThanOne`, and
 `pGivesBound` are explicit in the precondition because this Lean port keeps
 `radix`, precision, and `Fbound_skel` as ordinary parameters. -/
-theorem RND_Min_Pos_bounded_aux {beta : Int}
+theorem RND_Min_Pos_bounded_aux {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p e : Int) (r : ℝ) :
     ⦃⌜0 ≤ r ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat ∧
@@ -6833,7 +6864,7 @@ theorem RND_Min_Pos_bounded_aux {beta : Int}
     exact Int.cast_lt.mp (by simpa [hp_zpow] using hfloor_lt_real)
   · exact he_lb
 
-noncomputable def RND_Min_Pos_canonic_check {beta : Int}
+noncomputable def RND_Min_Pos_canonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
@@ -6843,7 +6874,7 @@ The Lean statement makes the Coq section assumptions explicit: the binary
 radix used by `F2R` agrees with the Pff radix, the radix and precision are
 strictly greater than one, and the bound skeleton has the expected mantissa
 bound. -/
-theorem RND_Min_Pos_canonic {beta : Int}
+theorem RND_Min_Pos_canonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -7102,13 +7133,13 @@ theorem RND_Min_Pos_canonic {beta : Int}
     exact Int.cast_lt.mp hgoal_real
 
 -- Lower rounding on nonnegative reals is ≤ the input (Coq: RND_Min_Pos_Rle)
-noncomputable def RND_Min_Pos_Rle_check {beta : Int}
+noncomputable def RND_Min_Pos_Rle_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `RND_Min_Pos_Rle` — for nonnegative `r`, the value of
     `RND_Min_Pos r` (interpreted in ℝ) is less than or equal to `r`. -/
-theorem RND_Min_Pos_Rle {beta : Int}
+theorem RND_Min_Pos_Rle {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix⌝⦄
     (pure (RND_Min_Pos_Rle_check (beta:=beta) b radix p r) : Id Unit)
@@ -7166,7 +7197,7 @@ theorem RND_Min_Pos_Rle {beta : Int}
       _ = r * 1 := by simp only [add_neg_cancel, zpow_zero]
       _ = r := mul_one r
 
-private lemma RND_Min_Pos_nonneg {beta : Int}
+private lemma RND_Min_Pos_nonneg {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ)
     (hr : 0 ≤ r) (hBetaEq : beta = radix) (hRadixGt1 : 1 < radix) :
     0 ≤ _root_.F2R (RND_Min_Pos (beta:=beta) b radix p r) := by
@@ -7245,7 +7276,7 @@ private lemma exponent_mono {radix p : ℤ} (hRadix : (1 : ℤ) < radix) {r₁ r
   linarith
 
 -- Monotonicity of `RND_Min_Pos` w.r.t. the real input (Coq: RND_Min_Pos_monotone)
-noncomputable def RND_Min_Pos_monotone_check {beta : Int}
+noncomputable def RND_Min_Pos_monotone_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r₁ r₂ : ℝ) : Unit :=
   ()
 
@@ -7258,7 +7289,7 @@ noncomputable def RND_Min_Pos_monotone_check {beta : Int}
     - radix > 1
     - beta = radix (so the base used in F2R matches the base in RND_Min_Pos)
     These are now explicit in the precondition. -/
-theorem RND_Min_Pos_monotone {beta : Int}
+theorem RND_Min_Pos_monotone {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r₁ r₂ : ℝ) :
     ⦃⌜0 ≤ r₁ ∧ r₁ ≤ r₂ ∧ beta = radix ∧ 1 < radix ∧ 1 ≤ p⌝⦄
     (pure (RND_Min_Pos_monotone_check (beta:=beta) b radix p r₁ r₂) : Id Unit)
@@ -7275,8 +7306,8 @@ theorem RND_Min_Pos_monotone {beta : Int}
   have hRadixNe0 : (radix : ℝ) ≠ 0 := ne_of_gt hRadixPos
   have hBetaPos : (0 : ℝ) < beta := by rw [hBetaEq]; exact hRadixPos
   -- Let firstNP denote the first normal position threshold
-  set firstNP := (↑(firstNormalPos radix b p.toNat).Fnum : ℝ) *
-                  (beta : ℝ) ^ (firstNormalPos radix b p.toNat).Fexp with hFirstNP
+  set firstNP := (↑(firstNormalPos (beta:=beta) radix b p.toNat).Fnum : ℝ) *
+                  (beta : ℝ) ^ (firstNormalPos (beta:=beta) radix b p.toNat).Fexp with hFirstNP
   -- Case analysis on whether r₁ and r₂ are normal or subnormal
   by_cases h1 : firstNP ≤ r₁
   · -- Case 1: r₁ is normal (and hence r₂ is also normal since r₁ ≤ r₂)
@@ -7954,7 +7985,7 @@ theorem RND_Min_Pos_monotone {beta : Int}
       exact hResult
 
 -- Projector property for `RND_Min_Pos` on canonical inputs (Coq: RND_Min_Pos_projector)
-noncomputable def RND_Min_Pos_projector_check {beta : Int}
+noncomputable def RND_Min_Pos_projector_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -7965,7 +7996,7 @@ noncomputable def RND_Min_Pos_projector_check {beta : Int}
 
     Note: The Lean version uses `Fcanonic'` which matches the proper Coq `Fcanonic`
     definition (Fnormal \/ Fsubnormal). -/
-theorem RND_Min_Pos_projector {beta : Int}
+theorem RND_Min_Pos_projector {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ _root_.F2R f ∧ Fcanonic' (beta:=beta) radix b f ∧ beta = radix ∧ 1 < radix ∧ 1 ≤ p ∧
@@ -8370,7 +8401,7 @@ theorem RND_Min_Pos_projector {beta : Int}
       rw [Int.floor_intCast]
       rfl
 
-noncomputable def RND_Min_canonic_check {beta : Int}
+noncomputable def RND_Min_canonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
@@ -8386,7 +8417,7 @@ noncomputable def IRNDU (r : ℝ) : Int := Int.ceil r
 Flocq defines this as either the lower rounded value itself, when the input is
 already represented by `RND_Min_Pos`, or the normalized successor of that lower
 rounded value. -/
-noncomputable def RND_Max_Pos {beta : Int}
+noncomputable def RND_Max_Pos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   let mn := RND_Min_Pos (beta:=beta) b radix p r
@@ -8395,7 +8426,7 @@ noncomputable def RND_Max_Pos {beta : Int}
   else
     FSucc (beta:=beta) b radix p.toNat mn
 
-noncomputable def RND_Max_Pos_canonic_check {beta : Int}
+noncomputable def RND_Max_Pos_canonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
@@ -8403,7 +8434,7 @@ noncomputable def RND_Max_Pos_canonic_check {beta : Int}
 
 This follows Flocq's definition of `RND_Max_Pos`: it is either the lower
 rounded value itself or the normalized successor of that value. -/
-theorem RND_Max_Pos_canonic {beta : Int}
+theorem RND_Max_Pos_canonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -8441,24 +8472,24 @@ theorem RND_Max_Pos_canonic {beta : Int}
       hsucc ⟨hmin_can, hradix_gt, hp_nat_ne, hvNum⟩
 
 -- Lower rounding correctness on nonnegative reals (Coq: RND_Min_Pos_correct)
-noncomputable def RND_Min_Pos_correct_check {beta : Int}
+noncomputable def RND_Min_Pos_correct_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
 -- Upper rounding is ≥ the input on nonnegative reals (Coq: RND_Max_Pos_Rle)
-noncomputable def RND_Max_Pos_Rle_check {beta : Int}
+noncomputable def RND_Max_Pos_Rle_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `RND_Max_Pos_Rle` is restored after `RND_Min_Pos_correct`, because
 the Flocq proof extracts the lower-rounding extremal property. -/
 -- Upper rounding correctness on nonnegative reals (Coq: RND_Max_Pos_correct)
-noncomputable def RND_Max_Pos_correct_check {beta : Int}
+noncomputable def RND_Max_Pos_correct_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
 -- Roundings of any real (upper rounding)
-noncomputable def RND_Min {beta : Int}
+noncomputable def RND_Min {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   if 0 ≤ r then
@@ -8466,7 +8497,7 @@ noncomputable def RND_Min {beta : Int}
   else
     Fopp (beta:=beta) (RND_Max_Pos (beta:=beta) b radix p (-r))
 
-noncomputable def RND_Max {beta : Int}
+noncomputable def RND_Max {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   if 0 ≤ r then
@@ -8479,7 +8510,7 @@ noncomputable def RND_Max {beta : Int}
 The signed wrapper follows Flocq's sign split. The positive canonicity payloads
 remain explicit because the positive theorems carry section assumptions that
 this wrapper does not infer. -/
-theorem RND_Min_canonic {beta : Int}
+theorem RND_Min_canonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜(∀ s : ℝ, 0 ≤ s →
           Fcanonic (beta:=beta) radix b
@@ -8503,7 +8534,7 @@ theorem RND_Min_canonic {beta : Int}
     exact FcanonicFopp (beta:=beta) radix b
       (RND_Max_Pos (beta:=beta) b radix p (-r)) (hMaxPos (-r) hneg)
 
-noncomputable def RND_Max_canonic_check {beta : Int}
+noncomputable def RND_Max_canonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) : Unit :=
   ()
 
@@ -8512,7 +8543,7 @@ noncomputable def RND_Max_canonic_check {beta : Int}
 The signed wrapper follows Flocq's sign split. The positive canonicity payloads
 remain explicit because the positive theorems carry section assumptions that
 this wrapper does not infer. -/
-theorem RND_Max_canonic {beta : Int}
+theorem RND_Max_canonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜(∀ s : ℝ, 0 ≤ s →
           Fcanonic (beta:=beta) radix b
@@ -8538,7 +8569,7 @@ theorem RND_Max_canonic {beta : Int}
 
 
 -- Correctness of lower rounding (Coq: RND_Min_correct)
-noncomputable def RND_Min_correct_check {beta : Int}
+noncomputable def RND_Min_correct_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : Unit :=
   ()
@@ -8547,7 +8578,7 @@ noncomputable def RND_Min_correct_check {beta : Int}
 
 The signed theorem follows the upstream sign split.  The still-missing positive
 correctness proofs are explicit dependencies. -/
-theorem RND_Min_correct {beta : Int}
+theorem RND_Min_correct {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜(∀ s : ℝ, 0 ≤ s →
           isMin' (beta:=beta) b radix s
@@ -8609,7 +8640,7 @@ theorem RND_Min_correct {beta : Int}
       linarith
 
 -- Correctness of upper rounding (Coq: RND_Max_correct)
-noncomputable def RND_Max_correct_check {beta : Int}
+noncomputable def RND_Max_correct_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (r : ℝ) : Unit :=
   ()
@@ -8618,7 +8649,7 @@ noncomputable def RND_Max_correct_check {beta : Int}
 
 The signed theorem follows the upstream sign split.  The still-missing positive
 correctness proofs are explicit dependencies. -/
-theorem RND_Max_correct {beta : Int}
+theorem RND_Max_correct {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜(∀ s : ℝ, 0 ≤ s →
           isMin' (beta:=beta) b radix s
@@ -8686,7 +8717,7 @@ DN/UP wrappers keep their positive-side payloads explicit, so the
 correctness/canonicity lemmas below expose the same prerequisites instead of
 hiding them in a vacuous theorem shell. -/
 
-noncomputable def RND_Closest {beta : Int}
+noncomputable def RND_Closest {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (choice : Int → Bool) (r : ℝ) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -8706,7 +8737,7 @@ noncomputable def RND_Closest {beta : Int}
   else
     rd
 
-noncomputable def RND_Closest_canonic_check {beta : Int}
+noncomputable def RND_Closest_canonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (choice : Int → Bool) (r : ℝ) : Unit :=
   ()
@@ -8714,7 +8745,7 @@ noncomputable def RND_Closest_canonic_check {beta : Int}
 /-- Coq: `RND_Closest_canonic`.
 
 This follows Flocq's case split over the upper/lower rounded values. -/
-theorem RND_Closest_canonic {beta : Int}
+theorem RND_Closest_canonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (choice : Int → Bool) (r : ℝ) :
     ⦃⌜Fcanonic (beta:=beta) radix b
@@ -8749,13 +8780,13 @@ theorem RND_Closest_canonic {beta : Int}
   · simp [hle]
     exact hMin
 
-noncomputable def RND_Closest_correct_check {beta : Int}
+noncomputable def RND_Closest_correct_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (choice : Int → Bool) (r : ℝ) : Unit :=
   ()
 
 -- Even-closest rounding function (Coq: `RND_EvenClosest`)
-noncomputable def RND_EvenClosest {beta : Int}
+noncomputable def RND_EvenClosest {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   let rmax := RND_Max (beta:=beta) b radix (precision : Int) r
@@ -8773,7 +8804,7 @@ noncomputable def RND_EvenClosest {beta : Int}
     rmin
 
 -- Even-closest rounding: canonicity (Coq: RND_EvenClosest_canonic)
-noncomputable def RND_EvenClosest_canonic_check {beta : Int}
+noncomputable def RND_EvenClosest_canonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) : Unit :=
   ()
@@ -8783,7 +8814,7 @@ noncomputable def RND_EvenClosest_canonic_check {beta : Int}
 The proof follows Flocq's case split over whether even-closest returns the
 signed upper or lower rounding. The signed canonicity wrappers remain explicit
 dependencies until their positive canonic payloads are fully restored. -/
-theorem RND_EvenClosest_canonic {beta : Int}
+theorem RND_EvenClosest_canonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) :
     ⦃⌜Fcanonic (beta:=beta) radix b
@@ -8817,7 +8848,7 @@ theorem RND_EvenClosest_canonic {beta : Int}
     exact hMin
 
 -- Even-closest rounding: correctness (Coq: RND_EvenClosest_correct)
-noncomputable def RND_EvenClosest_correct_check {beta : Int}
+noncomputable def RND_EvenClosest_correct_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) : Unit :=
   ()
@@ -8831,7 +8862,7 @@ midpoint odd-min branch depends on the endpoint-successor/parity machinery that
 Flocq derives from `MinMax`, `FNSucc`, and canonical uniqueness, so the
 remaining tie payload is the faithful parity obligation: if the lower endpoint
 is odd, the selected upper endpoint is normalized-even. -/
-theorem RND_EvenClosest_correct_from_payload {beta : Int}
+theorem RND_EvenClosest_correct_from_payload {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) :
     ⦃⌜isMin' (beta:=beta) b radix r
@@ -8978,18 +9009,18 @@ theorem RND_EvenClosest_correct_from_payload {beta : Int}
             linarith)⟩
 
 -- Totality of EvenClosest
-noncomputable def EvenClosestTotal_check {beta : Int}
+noncomputable def EvenClosestTotal_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) (r : ℝ) : Unit :=
   ()
 
 
 -- Parity under negation (Coq: FevenFop)
-noncomputable def FevenFop_check {beta : Int}
+noncomputable def FevenFop_check {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FevenFop` — if a float is even, its negation is even. -/
-theorem FevenFop {beta : Int}
+theorem FevenFop {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Feven (beta:=beta) p⌝⦄
     (pure (FevenFop_check (beta:=beta) p) : Id Unit)
@@ -8999,7 +9030,7 @@ theorem FevenFop {beta : Int}
   exact heven.neg
 
 -- Normalized-odd is preserved under equal real value (Coq: FNoddEq)
-noncomputable def FNoddEq_check {beta : Int}
+noncomputable def FNoddEq_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -9010,7 +9041,7 @@ noncomputable def FNoddEq_check {beta : Int}
     NOTE: Since `Fnormalize = id` currently, we require `Fcanonic'` preconditions
     instead of just `Fbounded`. The theorem then follows from `FcanonicUnique`:
     canonical floats with the same real value are equal. -/
-theorem FNoddEq {beta : Int}
+theorem FNoddEq {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta) :
@@ -9030,7 +9061,7 @@ theorem FNoddEq {beta : Int}
   exact hNodd1
 
 -- Normalized-even is preserved under equal real value (Coq: FNevenEq)
-noncomputable def FNevenEq_check {beta : Int}
+noncomputable def FNevenEq_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -9042,7 +9073,7 @@ noncomputable def FNevenEq_check {beta : Int}
     canonical forms. Since our `Fnormalize = id`, we strengthen the precondition to
     require `Fcanonic'` directly. We also need `1 < beta` and `radix = beta` to
     apply `FcanonicUnique`. -/
-theorem FNevenEq {beta : Int}
+theorem FNevenEq {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta) :
@@ -9053,7 +9084,7 @@ theorem FNevenEq {beta : Int}
   intro ⟨hcan1, hcan2, hF2Req, hFNeven1⟩
   simp only [wp, PostCond.noThrow, pure, FNevenEq_check, ULift.down_up]
   -- Use FcanonicUnique to show f1 = f2
-  have hspec := @FcanonicUnique beta beta b f1 f2 hβ rfl
+  have hspec := FcanonicUnique (beta:=beta) beta b f1 f2 hβ rfl
   simp only [wp, PostCond.noThrow, pure, FcanonicUnique_check, ULift.down_up] at hspec
   have heq : f1 = f2 := hspec ⟨hcan1, hcan2, hF2Req⟩
   -- Since f1 = f2, their parities are the same
@@ -9064,7 +9095,7 @@ theorem FNevenEq {beta : Int}
 
 This is the zero branch used in Coq `Pff2FlocqAux.pff_round_NE_is_round`: if
 the normalized representative denotes zero, its mantissa is zero, hence even. -/
-theorem FNeven_of_Fnormalize_F2R_zero {beta : Int}
+theorem FNeven_of_Fnormalize_F2R_zero {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 0 < beta)
@@ -9085,13 +9116,13 @@ theorem FNeven_of_Fnormalize_F2R_zero {beta : Int}
   simpa [hnum_zero]
 
 -- Normalized-even under negation (Coq: FNevenFop)
-noncomputable def FNevenFop_check {beta : Int}
+noncomputable def FNevenFop_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FNevenFop` — if a float is normalized-even, its negation is normalized-even. -/
-theorem FNevenFop {beta : Int}
+theorem FNevenFop {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜FNeven (beta:=beta) b radix precision p⌝⦄
@@ -9111,23 +9142,23 @@ theorem FNevenFop {beta : Int}
   simpa [FloatSpec.Calc.Operations.Fopp] using h.neg
 
 -- Successor parity for normalized predicates (Coq: FNoddSuc / FNevenSuc)
-noncomputable def FNoddSuc_check {beta : Int}
+noncomputable def FNoddSuc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FNevenSuc_check {beta : Int}
+noncomputable def FNevenSuc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 -- Disjunction for normalized parity (Coq: FNevenOrFNodd)
-noncomputable def FNevenOrFNodd_check {beta : Int}
+noncomputable def FNevenOrFNodd_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FNevenOrFNodd {beta : Int}
+theorem FNevenOrFNodd {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
@@ -9138,12 +9169,12 @@ theorem FNevenOrFNodd {beta : Int}
   exact Int.even_or_odd (Fnormalize (beta:=beta) beta b precision p).Fnum
 
 -- Incompatibility of normalized odd and even (Coq: FnOddNEven)
-noncomputable def FnOddNEven_check {beta : Int}
+noncomputable def FnOddNEven_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (n : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FnOddNEven {beta : Int}
+theorem FnOddNEven {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (n : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜FNodd (beta:=beta) b radix precision n⌝⦄
@@ -9154,13 +9185,13 @@ theorem FnOddNEven {beta : Int}
   exact Int.not_even_iff_odd.mpr hOdd
 
 -- Compatibility of `Closest` w.r.t. equalities (Coq: `ClosestCompatible`)
-noncomputable def ClosestCompatible_check {beta : Int}
+noncomputable def ClosestCompatible_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
 /-- Coq: `ClosestCompatible` — the `Closest` relation is compatible
     with equality of reals and representations. -/
-theorem ClosestCompatible {beta : Int}
+theorem ClosestCompatible {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜True⌝⦄
     (pure (ClosestCompatible_check (beta:=beta) bo radix) : Id Unit)
@@ -9174,7 +9205,7 @@ theorem ClosestCompatible {beta : Int}
   exact hp
 
 -- Minimal conditions imply `Closest r min` (Coq: `ClosestMin`)
-noncomputable def ClosestMin_check {beta : Int}
+noncomputable def ClosestMin_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -9183,7 +9214,7 @@ noncomputable def ClosestMin_check {beta : Int}
 /-- Coq: `ClosestMin` — if `min` is the greatest bounded float below `r`,
     `max` is the least bounded float above `r`, and the midpoint leans toward
     `min`, then `min` is a closest bounded float to `r`. -/
-theorem ClosestMin {beta : Int}
+theorem ClosestMin {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -9220,7 +9251,7 @@ theorem ClosestMin {beta : Int}
       linarith
 
 -- Maximal conditions imply `Closest r max` (Coq: `ClosestMax`)
-noncomputable def ClosestMax_check {beta : Int}
+noncomputable def ClosestMax_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -9229,7 +9260,7 @@ noncomputable def ClosestMax_check {beta : Int}
 /-- Coq: `ClosestMax` — if `min` is the greatest bounded float below `r`,
     `max` is the least bounded float above `r`, and the midpoint leans toward
     `max`, then `max` is a closest bounded float to `r`. -/
-theorem ClosestMax {beta : Int}
+theorem ClosestMax {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -9269,7 +9300,7 @@ theorem ClosestMax {beta : Int}
 
 The nearest result is closest because the selected branch is either the
 restored lower or upper extremal rounded value. -/
-theorem RND_Closest_correct {beta : Int}
+theorem RND_Closest_correct {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (choice : Int → Bool) (r : ℝ) :
     ⦃⌜isMin' (beta:=beta) b radix r
@@ -9349,7 +9380,7 @@ theorem RND_Closest_correct {beta : Int}
     simpa [rd, ru, hle] using closest_min hmid
 
 -- Existence of a closest representation (Coq: `ClosestTotal`)
-noncomputable def ClosestTotal_check {beta : Int}
+noncomputable def ClosestTotal_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ) : Unit :=
   ()
 
@@ -9359,7 +9390,7 @@ Upstream proves closest-point existence from `MinEx` and `MaxEx`, then chooses
 the side with the smaller distance to `r`.  The current Lean theorem keeps
 those two existence constructions explicit because the corresponding finite
 bounded-float enumeration theorems are defined later in this file. -/
-theorem ClosestTotal {beta : Int}
+theorem ClosestTotal {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ) (r : ℝ) :
     ⦃⌜TotalP (isMin' (beta:=beta) bo radixZ) ∧
         TotalP (isMax' (beta:=beta) bo radixZ)⌝⦄
@@ -9408,13 +9439,13 @@ theorem ClosestTotal {beta : Int}
         ⟨hmaxBounded, hmaxGe, hmaxLeast⟩, hmid⟩
 
 -- Disjunction: any candidate is either a min or a max (Coq: `ClosestMinOrMax`)
-noncomputable def ClosestMinOrMax_check {beta : Int}
+noncomputable def ClosestMinOrMax_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
 /-- Coq: `ClosestMinOrMax` — every closest rounded float is either the
     greatest bounded float below `r` or the least bounded float above `r`. -/
-theorem ClosestMinOrMax {beta : Int}
+theorem ClosestMinOrMax {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ) :
     ⦃⌜True⌝⦄
     (pure (ClosestMinOrMax_check (beta:=beta) bo radixR) : Id Unit)
@@ -9444,7 +9475,7 @@ theorem ClosestMinOrMax {beta : Int}
     linarith
 
 -- Zero case for Closest rounding (Coq: `ClosestZero`)
-noncomputable def ClosestZero_check {beta : Int}
+noncomputable def ClosestZero_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -9458,7 +9489,7 @@ noncomputable def ClosestZero_check {beta : Int}
     - `Fbounded' bo x`: the float is bounded
     - `hClosestProp`: `x` minimizes distance to `r` among bounded floats
     These make the theorem provable and match the original Coq semantics. -/
-theorem ClosestZero {beta : Int}
+theorem ClosestZero {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix r x ∧ r = 0 ∧
@@ -9496,7 +9527,7 @@ theorem ClosestZero {beta : Int}
     omega
 
 -- Coq: `ClosestZero2` — a closest rounding of zero has real value zero.
-noncomputable def ClosestZero2_check {beta : Int}
+noncomputable def ClosestZero2_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -9506,7 +9537,7 @@ noncomputable def ClosestZero2_check {beta : Int}
 If `x` is a closest rounded float for `r`, and `r = 0`, then `F2R x = 0`.
 This exact-name wrapper exposes the upstream theorem name while reusing the
 already restored local `ClosestZero` payload. -/
-theorem ClosestZero2 {beta : Int}
+theorem ClosestZero2 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix r x ∧ r = 0⌝⦄
@@ -9536,7 +9567,7 @@ Construct a bounded float whose real value equals `m * radix^z` when the
 mantissa/exponent bounds hold. The real radix is obtained from the integer
 radix via coercion so that `powerRZ` can be reused verbatim.
 -/
-noncomputable def FboundedMboundPos_check {beta : Int}
+noncomputable def FboundedMboundPos_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (z m : Int) : Unit :=
   ()
@@ -9546,7 +9577,7 @@ noncomputable def FboundedMboundPos_check {beta : Int}
 The original theorem lives under the Pff section assumptions connecting the
 float radix to `radix` and `b.vNum` to `Zpower_nat radix precision`; those
 assumptions are explicit here. -/
-theorem FboundedMboundPos {beta : Int}
+theorem FboundedMboundPos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
@@ -9626,14 +9657,14 @@ theorem FboundedMboundPos {beta : Int}
 
 /-- Coq: `FboundedMbound` — extends `FboundedMboundPos` by allowing
 negative mantissas via symmetry. -/
-noncomputable def FboundedMbound_check {beta : Int}
+noncomputable def FboundedMbound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (z m : Int) : Unit :=
   ()
 
 /-- Coq: `FboundedMbound` — construct a bounded float for any signed
     mantissa whose absolute value is within the precision bound. -/
-theorem FboundedMbound {beta : Int}
+theorem FboundedMbound {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
@@ -9680,7 +9711,7 @@ theorem FboundedMbound {beta : Int}
         _ = (m : ℝ) * (radix : ℝ) ^ z := by
               norm_num
 
-noncomputable def FboundedMbound2Pos_check {beta : Int}
+noncomputable def FboundedMbound2Pos_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (z m : Int) : Unit :=
   ()
@@ -9689,7 +9720,7 @@ noncomputable def FboundedMbound2Pos_check {beta : Int}
 
 Positive mantissas up to the precision bound have a bounded float
 representative whose exponent is no smaller than the requested exponent. -/
-theorem FboundedMbound2Pos {beta : Int}
+theorem FboundedMbound2Pos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
@@ -9767,7 +9798,7 @@ theorem FboundedMbound2Pos {beta : Int}
     · change z ≤ z + 1
       omega
 
-noncomputable def FboundedMbound2_check {beta : Int}
+noncomputable def FboundedMbound2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (z m : Int) : Unit :=
   ()
@@ -9776,7 +9807,7 @@ noncomputable def FboundedMbound2_check {beta : Int}
 
 Signed version of `FboundedMbound2Pos`, reducing negative mantissas by
 opposition. -/
-theorem FboundedMbound2 {beta : Int}
+theorem FboundedMbound2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (precision : Nat)
     (z m : Int) :
@@ -9838,7 +9869,7 @@ such that `F2R min ≤ r` and it is minimal among those at most `r`.
 -/
 
 /-- Helper: the pure mathematical content of `MinExList`, proved by induction on the list. -/
-private lemma minExList_aux {beta : Int}
+private lemma minExList_aux {beta : Int} [ValidRadix beta]
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) :
     (∀ f, f ∈ L → r < _root_.F2R f) ∨
     (∃ min, min ∈ L ∧ _root_.F2R min ≤ r ∧
@@ -9876,11 +9907,11 @@ private lemma minExList_aux {beta : Int}
           · exact absurd hfr (not_le.mpr (heq ▸ h))
           · exact hmin_max f hmem hfr⟩
 
-noncomputable def MinExList_check {beta : Int}
+noncomputable def MinExList_check {beta : Int} [ValidRadix beta]
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) : Unit :=
   ()
 
-theorem MinExList {beta : Int}
+theorem MinExList {beta : Int} [ValidRadix beta]
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) :
     ⦃⌜True⌝⦄
     (pure (MinExList_check (beta:=beta) r L) : Id Unit)
@@ -9899,7 +9930,7 @@ every element of the finite list is strictly below `r`, or the list contains a
 least element among those whose value is at least `r`.
 -/
 
-private lemma maxExList_aux {beta : Int}
+private lemma maxExList_aux {beta : Int} [ValidRadix beta]
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) :
     (∀ f, f ∈ L → _root_.F2R f < r) ∨
     (∃ max, max ∈ L ∧ r ≤ _root_.F2R max ∧
@@ -9937,11 +9968,11 @@ private lemma maxExList_aux {beta : Int}
           · exact absurd hfr (not_le.mpr (heq ▸ h))
           · exact hmax_min f hmem hfr⟩
 
-noncomputable def MaxExList_check {beta : Int}
+noncomputable def MaxExList_check {beta : Int} [ValidRadix beta]
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) : Unit :=
   ()
 
-theorem MaxExList {beta : Int}
+theorem MaxExList {beta : Int} [ValidRadix beta]
     (r : ℝ) (L : List (FloatSpec.Core.Defs.FlocqFloat beta)) :
     ⦃⌜True⌝⦄
     (pure (MaxExList_check (beta:=beta) r L) : Id Unit)
@@ -9953,7 +9984,7 @@ theorem MaxExList {beta : Int}
   exact maxExList_aux r L
 
 -- Equality under strict-leaning midpoint toward min (Coq: `ClosestMinEq`)
-noncomputable def ClosestMinEq_check {beta : Int}
+noncomputable def ClosestMinEq_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (r : ℝ)
     (min max p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -9968,7 +9999,7 @@ noncomputable def ClosestMinEq_check {beta : Int}
     - `isMax r max` provides `r ≤ F2R max`
     - `Closest r p` provides `∀ bounded f, |F2R p - r| ≤ |F2R f - r|`; we instantiate at `min`
     - `ClosestMinOrMax` provides `F2R p = F2R min ∨ F2R p = F2R max` -/
-theorem ClosestMinEq {beta : Int}
+theorem ClosestMinEq {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max p : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -9991,7 +10022,7 @@ theorem ClosestMinEq {beta : Int}
     linarith
 
 -- Equality under strict-leaning midpoint toward max (Coq: `ClosestMaxEq`)
-noncomputable def ClosestMaxEq_check {beta : Int}
+noncomputable def ClosestMaxEq_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (r : ℝ)
     (min max p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -10006,7 +10037,7 @@ noncomputable def ClosestMaxEq_check {beta : Int}
     - `isMax r max` provides `r ≤ F2R max`
     - `Closest r p` provides `∀ bounded f, |F2R p - r| ≤ |F2R f - r|`; we instantiate at `max`
     - `ClosestMinOrMax` provides `F2R p = F2R min ∨ F2R p = F2R max` -/
-theorem ClosestMaxEq {beta : Int}
+theorem ClosestMaxEq {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radixZ : Int) (radixR : ℝ)
     (r : ℝ)
     (min max p : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -10029,7 +10060,7 @@ theorem ClosestMaxEq {beta : Int}
   · exact h
 
 -- Monotonicity of the Closest relation (Coq: `ClosestMonotone`)
-noncomputable def ClosestMonotone_check {beta : Int}
+noncomputable def ClosestMonotone_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
@@ -10038,7 +10069,7 @@ noncomputable def ClosestMonotone_check {beta : Int}
 The Lean statement targets the float-specific monotonicity predicate; the
 generic `MonotoneP` fallback is representation equality and is not the Flocq
 payload. -/
-theorem ClosestMonotone {beta : Int}
+theorem ClosestMonotone {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜True⌝⦄
     (pure (ClosestMonotone_check (beta:=beta) bo radix) : Id Unit)
@@ -10080,7 +10111,7 @@ theorem ClosestMonotone {beta : Int}
   nlinarith
 
 -- Rounded-mode packaging for `Closest` (Coq: `ClosestRoundedModeP`)
-noncomputable def ClosestRoundedModeP_check {beta : Int}
+noncomputable def ClosestRoundedModeP_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
@@ -10090,7 +10121,7 @@ The local generic `RoundedModeP` is intentionally not the Coq float-specific
 package, so this theorem restores the payload as `RoundedModeP_full`.  Totality
 remains explicit because `ClosestTotal` is still an open construction over the
 bounded-float set. -/
-theorem ClosestRoundedModeP {beta : Int}
+theorem ClosestRoundedModeP {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜TotalP (Closest (beta:=beta) bo radix)⌝⦄
     (pure (ClosestRoundedModeP_check (beta:=beta) bo radix) : Id Unit)
@@ -10124,7 +10155,7 @@ theorem ClosestRoundedModeP {beta : Int}
 
 The first Veltkamp rounded value is nonnegative because it rounds the positive
 quantity `x * (radix^s + 1)` with the monotone closest-rounding mode. -/
-theorem pPos {beta : Int}
+theorem pPos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hradix : 1 < radix)
@@ -10177,7 +10208,7 @@ theorem pPos {beta : Int}
 
 After `p` rounds the scaled value above `x`, the second rounded value `q`
 rounds the nonpositive residual `x - p`, so it is nonpositive. -/
-theorem qNeg {beta : Int}
+theorem qNeg {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hradix : 1 < radix)
@@ -10253,13 +10284,13 @@ theorem qNeg {beta : Int}
     exact le_of_eq hqZero
 
 -- Symmetry under negation on the real side (Coq: `ClosestOpp`)
-noncomputable def ClosestOpp_check {beta : Int}
+noncomputable def ClosestOpp_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `ClosestOpp` — negation preserves closestness. -/
-theorem ClosestOpp {beta : Int}
+theorem ClosestOpp {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜Closest (beta:=beta) bo radix r p⌝⦄
@@ -10302,13 +10333,13 @@ theorem ClosestOpp {beta : Int}
             rw [harg, abs_neg]
 
 -- Absolute-value symmetry on the real side (Coq: `ClosestFabs`)
-noncomputable def ClosestFabs_check {beta : Int}
+noncomputable def ClosestFabs_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `ClosestFabs` — absolute value preserves closestness. -/
-theorem ClosestFabs {beta : Int}
+theorem ClosestFabs {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜1 < beta ∧ Closest (beta:=beta) bo radix r p⌝⦄
@@ -10369,13 +10400,13 @@ theorem ClosestFabs {beta : Int}
             rw [htarget]
 
 -- Ulp inequality for closest rounding (Coq: `ClosestUlp`)
-noncomputable def ClosestUlp_check {beta : Int}
+noncomputable def ClosestUlp_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 -- Exponent inequality from closest error (Coq: `ClosestExp`)
-noncomputable def ClosestExp_check {beta : Int}
+noncomputable def ClosestExp_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -10385,7 +10416,7 @@ noncomputable def ClosestExp_check {beta : Int}
 Upstream derives this from `ClosestUlp` and `FulpLe`.  This theorem keeps the
 `ClosestUlp` inequality explicit because the local `ClosestUlp` theorem is
 declared later, after the normalized `FulpSuc`/`FulpPred` stack it depends on. -/
-theorem ClosestExp {beta : Int}
+theorem ClosestExp {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (x : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo (radix : ℝ) x q ∧
@@ -10406,7 +10437,7 @@ theorem ClosestExp {beta : Int}
   exact le_trans hClosestUlp hFulpLe
 
 -- Strict error-exp implication (Coq: `ClosestErrorExpStrict`)
-noncomputable def ClosestErrorExpStrict_check {beta : Int}
+noncomputable def ClosestErrorExpStrict_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) : Unit :=
   ()
@@ -10419,7 +10450,7 @@ noncomputable def ClosestErrorExpStrict_check {beta : Int}
     - `hBetaGe1`: the radix β ≥ 1 (needed for zpow monotonicity/positivity)
     - `hClosestExp`: from Coq's `ClosestExp`, the closest-rounding error bound
       `2 * |x - F2R p| ≤ β^(Fexp p)` -/
-theorem ClosestErrorExpStrict {beta : Int}
+theorem ClosestErrorExpStrict {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Fbounded (beta:=beta) bo q ∧
@@ -10477,7 +10508,7 @@ theorem ClosestErrorExpStrict {beta : Int}
   linarith [hPowPos q.Fexp]
 
 -- Idempotence property for Closest (Coq: `ClosestIdem`)
-noncomputable def ClosestIdem_check {beta : Int}
+noncomputable def ClosestIdem_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -10491,7 +10522,7 @@ noncomputable def ClosestIdem_check {beta : Int}
     - `Fbounded' bo q`: `q` is bounded (part of `Closest`)
     - `hClosestProp`: `q` minimizes distance to `F2R p` among bounded floats
     These make the theorem provable and match the original Coq semantics. -/
-theorem ClosestIdem {beta : Int}
+theorem ClosestIdem {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix (_root_.F2R p) q ∧
@@ -10514,7 +10545,7 @@ theorem ClosestIdem {beta : Int}
   exact hAbs0.symm
 
 -- Error bound for closest rounding (Coq: `ClosestErrorBound`)
-noncomputable def ClosestErrorBound_check {beta : Int}
+noncomputable def ClosestErrorBound_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) : Unit :=
   ()
@@ -10524,7 +10555,7 @@ noncomputable def ClosestErrorBound_check {beta : Int}
 -- `Float 1 (Fexp p) / 2`.
 -- This port carries an explicit hypothesis combining ClosestUlp and FulpLe
 -- from the original Coq proof.
-theorem ClosestErrorBound {beta : Int}
+theorem ClosestErrorBound {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧ Closest (beta:=beta) bo radix x p ∧
@@ -10550,12 +10581,12 @@ theorem ClosestErrorBound {beta : Int}
   linarith
 
 -- Inequality lifting for scaling by radix halves (Coq: `FmultRadixInv`)
-noncomputable def FmultRadixInv_check {beta : Int}
+noncomputable def FmultRadixInv_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (x z : FloatSpec.Core.Defs.FlocqFloat beta) (y : ℝ) : Unit :=
   ()
 
-theorem FmultRadixInv {beta : Int}
+theorem FmultRadixInv {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (x z : FloatSpec.Core.Defs.FlocqFloat beta) (y : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo x ∧ Closest (beta:=beta) bo radix y z ∧ (1/2 : ℝ) * _root_.F2R x < y ∧
@@ -10593,7 +10624,7 @@ The upstream proof obtains `min` and `max` around `x/2`, proves
 rounding of a real strictly above `x/2` cannot lie below `x/2`.  This theorem
 restores that core argument without requiring callers to supply an arbitrary
 bounded witness in the interval. -/
-theorem FmultRadixInv_from_extrema {beta : Int}
+theorem FmultRadixInv_from_extrema {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (x z min max : FloatSpec.Core.Defs.FlocqFloat beta) (y : ℝ) :
     ⦃⌜Fbounded (beta:=beta) bo x ∧
@@ -10661,18 +10692,18 @@ theorem FmultRadixInv_from_extrema {beta : Int}
     linarith
 
 -- Symmetric property of Closest (Coq: `ClosestSymmetric`)
-noncomputable def ClosestSymmetric_check {beta : Int}
+noncomputable def ClosestSymmetric_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) : Unit :=
   ()
 
 /-- Auxiliary predicate: symmetry for rounding relations on floats. -/
-def SymmetricP {beta : Int}
+def SymmetricP {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Prop :=
   ∀ r (p : FloatSpec.Core.Defs.FlocqFloat beta), P r p → P (-r) (Fopp p)
 
 /-- Coq: `ClosestSymmetric` — the `Closest` relation is symmetric under
     real negation accompanied by float negation. -/
-theorem ClosestSymmetric {beta : Int}
+theorem ClosestSymmetric {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) :
     ⦃⌜True⌝⦄
     (pure (ClosestSymmetric_check (beta:=beta) bo radix) : Id Unit)
@@ -10716,7 +10747,7 @@ theorem ClosestSymmetric {beta : Int}
 
 -- Coq: `ClosestZero1` — if `Closest r f`, `F2R f = 0`, `r = F2R g`, and
 -- `-dExp bo ≤ Fexp g`, then `r = 0`.
-noncomputable def ClosestZero1_check {beta : Int}
+noncomputable def ClosestZero1_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (r : ℝ)
     (f g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -10732,7 +10763,7 @@ noncomputable def ClosestZero1_check {beta : Int}
     - `1 < (beta : ℝ)`: radix is at least 2
     - `bo.vNum > 1`: needed to construct bounded witness floats
     These make the theorem provable and match the original Coq semantics. -/
-theorem ClosestZero1 {beta : Int}
+theorem ClosestZero1 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (r : ℝ)
     (f g : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -10833,7 +10864,7 @@ port-gap definitions rather than theorem claims.
 
 -- Coq: `div2IsBetweenPos` — if 0 ≤ p and min/max are the rounded bounds of p/2,
 -- then F2R p = F2R min + F2R max
-noncomputable def div2IsBetweenPos_check {beta : Int}
+noncomputable def div2IsBetweenPos_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -10841,7 +10872,7 @@ noncomputable def div2IsBetweenPos_check {beta : Int}
 -- Coq: div2IsBetweenPos — if 0 ≤ F2R p and min/max are the rounded
 -- bounds of (1/2) * F2R p among bounded floats, then F2R p = F2R min + F2R max.
 -- Modified: precondition inlines real content from Coq isMin/isMax/Sterbenz/PminPos.
-theorem div2IsBetweenPos {beta : Int}
+theorem div2IsBetweenPos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ _root_.F2R p ∧
@@ -10891,14 +10922,14 @@ theorem div2IsBetweenPos {beta : Int}
     linarith
 
 -- Coq: `div2IsBetween` — same as above without the nonnegativity side-condition
-noncomputable def div2IsBetween_check {beta : Int}
+noncomputable def div2IsBetween_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 -- Modified: precondition inlines real content from Coq isMin/isMax/Sterbenz/PminPos
 -- (same as div2IsBetweenPos but without the 0 ≤ F2R p condition).
-theorem div2IsBetween {beta : Int}
+theorem div2IsBetween {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
@@ -10943,7 +10974,7 @@ theorem div2IsBetween {beta : Int}
 The older port kept unused generic `isMin`/`isMax` assumptions in the
 precondition.  This lemma exposes the actual Flocq payload: concrete lower and
 upper bounded extrema around `p/2`, plus the two bounded residual witnesses. -/
-theorem div2IsBetween_from_extrema {beta : Int}
+theorem div2IsBetween_from_extrema {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p min max : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
@@ -10991,12 +11022,12 @@ theorem div2IsBetween_from_extrema {beta : Int}
     linarith
 
 -- Compatibility of `EvenClosest` (Coq: `EvenClosestCompatible`)
-noncomputable def EvenClosestCompatible_check {beta : Int}
+noncomputable def EvenClosestCompatible_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
 /-- Coq: `EvenClosestCompatible` — `EvenClosest` respects equality compat. -/
-theorem EvenClosestCompatible {beta : Int}
+theorem EvenClosestCompatible {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
     (pure (EvenClosestCompatible_check (beta:=beta) b radix precision) : Id Unit)
@@ -11010,7 +11041,7 @@ theorem EvenClosestCompatible {beta : Int}
   exact hec
 
 -- Min-or-max disjunction for `EvenClosest` (Coq: `EvenClosestMinOrMax`)
-noncomputable def EvenClosestMinOrMax_check {beta : Int}
+noncomputable def EvenClosestMinOrMax_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radixZ : Int) (radixR : ℝ) (precision : Nat) : Unit :=
   ()
 
@@ -11018,7 +11049,7 @@ noncomputable def EvenClosestMinOrMax_check {beta : Int}
 
 An `EvenClosest` witness includes a `Closest` witness, so the min-or-max
 disjunction follows from the already restored `ClosestMinOrMax` proof. -/
-theorem EvenClosestMinOrMax {beta : Int}
+theorem EvenClosestMinOrMax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radixZ : Int) (radixR : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
     (pure (EvenClosestMinOrMax_check (beta:=beta) b radixZ radixR precision) : Id Unit)
@@ -11034,7 +11065,7 @@ theorem EvenClosestMinOrMax {beta : Int}
   exact hClosest r p hp.1
 
 -- Monotonicity for `EvenClosest` (Coq: `EvenClosestMonotone`)
-noncomputable def EvenClosestMonotone_check {beta : Int}
+noncomputable def EvenClosestMonotone_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
@@ -11043,7 +11074,7 @@ noncomputable def EvenClosestMonotone_check {beta : Int}
 The Coq proof applies `ClosestMonotone` after unpacking the two
 `EvenClosest` hypotheses; the Lean statement uses the float-specific
 `MonotoneP_float` payload. -/
-theorem EvenClosestMonotone {beta : Int}
+theorem EvenClosestMonotone {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
     (pure (EvenClosestMonotone_check (beta:=beta) b radix precision) : Id Unit)
@@ -11058,7 +11089,7 @@ theorem EvenClosestMonotone {beta : Int}
   intro p q p' q' hpq hp' hq'
   exact hClosestMono p q p' q' hpq hp'.1 hq'.1
 
-noncomputable def EvenClosestMonotone2_check {beta : Int}
+noncomputable def EvenClosestMonotone2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p q : ℝ)
     (p' q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -11073,7 +11104,7 @@ noncomputable def EvenClosestMonotone2_check {beta : Int}
     - `UniqueP`: uniqueness of rounding (same real → same float)
     These capture the properties that `EvenClosestMonotone` and `EvenClosestUniqueP`
     provide in the original Coq proof. -/
-theorem EvenClosestMonotone2 {beta : Int}
+theorem EvenClosestMonotone2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radixZ : Int) (radixR : ℝ) (precision : Nat)
     (p q : ℝ)
     (p' q' : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -11096,12 +11127,12 @@ theorem EvenClosestMonotone2 {beta : Int}
     rw [heq']
 
 -- Symmetric property of EvenClosest (Coq: `EvenClosestSymmetric`)
-noncomputable def EvenClosestSymmetric_check {beta : Int}
+noncomputable def EvenClosestSymmetric_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
 /-- Coq: `EvenClosestSymmetric` — even tie-breaking is symmetric under negation. -/
-theorem EvenClosestSymmetric {beta : Int}
+theorem EvenClosestSymmetric {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜True⌝⦄
     (pure (EvenClosestSymmetric_check (beta:=beta) b radix precision) : Id Unit)
@@ -11145,13 +11176,13 @@ theorem EvenClosestSymmetric {beta : Int}
       rw [hF2R_opp_p]
       linarith
 
-noncomputable def EvenClosestFabs_check {beta : Int}
+noncomputable def EvenClosestFabs_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `EvenClosestFabs` — absolute value preserves even-closest rounding. -/
-theorem EvenClosestFabs {beta : Int}
+theorem EvenClosestFabs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜Fcanonic (beta:=beta) beta b f ∧ 1 < beta ∧
@@ -11229,7 +11260,7 @@ theorem EvenClosestFabs {beta : Int}
         linarith
 
 -- Rounded-mode packaging for `EvenClosest` (Coq: `EvenClosestRoundedModeP`)
-noncomputable def EvenClosestRoundedModeP_check {beta : Int}
+noncomputable def EvenClosestRoundedModeP_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
@@ -11239,7 +11270,7 @@ The upstream theorem packages `EvenClosestTotal`, `EvenClosestCompatible`,
 `EvenClosestMinOrMax`, and `EvenClosestMonotone`.  `EvenClosestTotal` remains
 explicit because bounded closest-point existence is still an active
 construction; the other three components are proved locally. -/
-theorem EvenClosestRoundedModeP {beta : Int}
+theorem EvenClosestRoundedModeP {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radixZ : Int) (radixR : ℝ) (precision : Nat) :
     ⦃⌜TotalP (EvenClosest (beta:=beta) b radixR precision)⌝⦄
     (pure (EvenClosestRoundedModeP_check (beta:=beta) b radixR precision) : Id Unit)
@@ -11278,11 +11309,11 @@ theorem EvenClosestRoundedModeP {beta : Int}
 
     Section variables from Coq (`radixMoreThanOne`, `precisionGreaterThanOne`,
     `pGivesBound`) are also reflected in the precondition for completeness. -/
-noncomputable def EvenClosestUniqueP_check {beta : Int}
+noncomputable def EvenClosestUniqueP_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) : Unit :=
   ()
 
-theorem EvenClosestUniqueP {beta : Int}
+theorem EvenClosestUniqueP {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat) :
     ⦃⌜1 < (beta : ℤ) ∧ 1 < precision ∧ b.vNum = beta ^ precision ∧
       -- Core hypothesis capturing the Coq proof's content:
@@ -11328,7 +11359,7 @@ theorem EvenClosestUniqueP {beta : Int}
 
 Bundled underflow-error predicate relating a closest rounding `a` in bound `b`
 to a bounded witness `a'` in the extended bound `b'`. -/
-def Underf_Err {beta : Int}
+def Underf_Err {beta : Int} [ValidRadix beta]
     (b b' : Fbound_skel) (radix : Int)
     (a a' : FloatSpec.Core.Defs.FlocqFloat beta) (ra n : ℝ) : Prop :=
   Closest (beta:=beta) b (radix : ℝ) ra a ∧
@@ -11341,7 +11372,7 @@ def Underf_Err {beta : Int}
 -- Coq: `FexpGeUnderf` — from boundedness and a magnitude lower bound on |F2R f|
 -- derive a lower bound on the exponent Fexp f. We keep the statement in terms of
 -- integers and real powers, mirroring the Coq intent. Proof deferred.
-noncomputable def FexpGeUnderf_check {beta : Int}
+noncomputable def FexpGeUnderf_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision e : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -11356,7 +11387,7 @@ noncomputable def FexpGeUnderf_check {beta : Int}
     - `hBound`: `bo.vNum = beta ^ precision` (Coq's `pGivesBound`)
     - `hFb`: the float is bounded (using `Fbounded'`)
     These make the theorem provable and match the original Coq semantics. -/
-theorem FexpGeUnderf {beta : Int}
+theorem FexpGeUnderf {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision e : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) bo f ∧ (beta : ℝ) ^ e ≤ |_root_.F2R f| ∧
@@ -11407,12 +11438,12 @@ theorem FexpGeUnderf {beta : Int}
 -- - `hPlusExact`: key content of Coq's `plusExactExp` — if g is nonzero, there
 --   exists a bounded float `g'` with `F2R g' = F2R g` and whose exponent is at
 --   least `min(Fexp f1, Fexp f2)`.
-noncomputable def AddExpGeUnderf_check {beta : Int}
+noncomputable def AddExpGeUnderf_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision e : Int) (radix : ℝ)
     (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem AddExpGeUnderf {beta : Int}
+theorem AddExpGeUnderf {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision e : Int) (radix : ℝ)
     (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix (_root_.F2R f1 + _root_.F2R f2) g ∧
@@ -11504,7 +11535,7 @@ theorem AddExpGeUnderf {beta : Int}
           apply mul_le_mul_of_nonneg_right _ hExpPos.le
           exact_mod_cast hFnumAbs
 
-noncomputable def AddExpGeUnderf2_check {beta : Int}
+noncomputable def AddExpGeUnderf2_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision e : Int) (radix : ℝ)
     (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -11513,7 +11544,7 @@ noncomputable def AddExpGeUnderf2_check {beta : Int}
 
 Nonzero projection of `AddExpGeUnderf`: if the rounded sum is not zero, the
 underflow-disjunction collapses to the lower magnitude bound. -/
-theorem AddExpGeUnderf2 {beta : Int}
+theorem AddExpGeUnderf2 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision e : Int) (radix : ℝ)
     (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo radix (_root_.F2R f1 + _root_.F2R f2) g ∧
@@ -11592,7 +11623,7 @@ theorem RoundedProjector {α : Type} (P : ℝ → α → Prop) :
   exact hRounded.2.2.1
 
 -- Coq: `RoundedModeProjectorIdem` — under RoundedModeP, P p p for bounded p
-noncomputable def RoundedModeProjectorIdem_check {beta : Int}
+noncomputable def RoundedModeProjectorIdem_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -11608,7 +11639,7 @@ noncomputable def RoundedModeProjectorIdem_check {beta : Int}
     and the Lean `ProjectorP` fallback is not enough to recover structural
     equality, so we add an explicit projector hypothesis matching Coq semantics:
     any q satisfying P (F2R p) q must equal p structurally. -/
-theorem RoundedModeProjectorIdem {beta : Int}
+theorem RoundedModeProjectorIdem {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -11627,7 +11658,7 @@ theorem RoundedModeProjectorIdem {beta : Int}
   exact hCompat (_root_.F2R p) (_root_.F2R p) q p hPq rfl hqp
 
 -- Coq: `RoundedModeBounded` — from P r q under RoundedModeP, q is bounded
-noncomputable def RoundedModeBounded_check {beta : Int}
+noncomputable def RoundedModeBounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -11639,7 +11670,7 @@ The upstream Coq proof extracts `MinOrMaxP` from `RoundedModeP` and then takes
 the `Fbounded` component of the resulting `isMin`/`isMax` branch.  The generic
 Lean `RoundedModeP` no longer includes that float-specific payload, so the
 faithful min/max disjunction is explicit here. -/
-theorem RoundedModeBounded {beta : Int}
+theorem RoundedModeBounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -11657,7 +11688,7 @@ theorem RoundedModeBounded {beta : Int}
 -- ---------------------------------------------------------------------------
 -- Coq: `PminPos` — existence of bounded complement to the min rounding
 
-noncomputable def PminPos_check {beta : Int}
+noncomputable def PminPos_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p min : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -11666,7 +11697,7 @@ noncomputable def PminPos_check {beta : Int}
 `FboundNext` are available. -/
 
 -- Coq: `RoundedModeProjectorIdemEq` — equality on reals under RoundedModeP
-noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
+noncomputable def RoundedModeProjectorIdemEq_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -11683,7 +11714,7 @@ noncomputable def RoundedModeProjectorIdemEq_check {beta : Int}
 
     Change record: Added `ProjectorEqP_float b P` to precondition because the
     generic fallback makes the original precondition insufficient. -/
-theorem RoundedModeProjectorIdemEq {beta : Int}
+theorem RoundedModeProjectorIdemEq {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -11696,7 +11727,7 @@ theorem RoundedModeProjectorIdemEq {beta : Int}
   exact hProjEq p q hBnd hPpq
 
 -- Coq: `RoundedModeUlp` — under a rounded mode P and P p q, |p - q| < Fulp q
-noncomputable def RoundedModeUlp_check {beta : Int}
+noncomputable def RoundedModeUlp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -11706,14 +11737,14 @@ noncomputable def RoundedModeUlp_check {beta : Int}
 stack (`FulpSuc`/`FulpPred`) it depends on. -/
 
 -- Coq: `RoundedModeErrorExpStrict` — nonzero rounding error has lower exponent
-noncomputable def RoundedModeErrorExpStrict_check {beta : Int}
+noncomputable def RoundedModeErrorExpStrict_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) : Unit :=
   ()
 
 -- Coq: `RoundedModeMult` — monotonicity wrt scaling by radix
-noncomputable def RoundedModeMult_check {beta : Int}
+noncomputable def RoundedModeMult_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -11725,7 +11756,7 @@ Upstream uses `FBoundedScale` to show that the scaled float
 `Float q'.Fnum (q'.Fexp + 1)` is bounded and represents `radix * q'`.  Those
 scaling facts are still explicit obligations in this port; the rounding-mode
 argument itself is restored through `RleBoundRoundr`. -/
-theorem RoundedModeMult {beta : Int}
+theorem RoundedModeMult {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -11753,14 +11784,14 @@ theorem RoundedModeMult {beta : Int}
   simpa [scaled, hScaledValue] using hq_le_scaled
 
 -- Coq: `RoundedModeMultLess` — dual inequality for scaling by radix
-noncomputable def RoundedModeMultLess_check {beta : Int}
+noncomputable def RoundedModeMultLess_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `RoundedModeMultLess`; lower-bound dual of `RoundedModeMult`. -/
-theorem RoundedModeMultLess {beta : Int}
+theorem RoundedModeMultLess {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -11788,14 +11819,14 @@ theorem RoundedModeMultLess {beta : Int}
   simpa [scaled, hScaledValue] using hscaled_le_q
 
 -- Coq: `FnormalBounded` — normal floats are bounded
-noncomputable def FnormalBounded_check {beta : Int}
+noncomputable def FnormalBounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalBounded` — if a float is normal with respect to `b` and `radix`,
     then it is bounded by `b`. -/
-theorem FnormalBounded {beta : Int}
+theorem FnormalBounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
@@ -11805,7 +11836,7 @@ theorem FnormalBounded {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, FnormalBounded_check, Id.run, ULift.up_down] using hnormal.1
 
 -- Coq: `FnormalNotZero` — normal floats are not the zero float
-noncomputable def FnormalNotZero_check {beta : Int}
+noncomputable def FnormalNotZero_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -11818,7 +11849,7 @@ noncomputable def FnormalNotZero_check {beta : Int}
     - `0 < b.vNum`: the bound's digit count is positive (in Coq, `vNum` has type `positive`)
     - `b.vNum ≤ |radixInt * p.Fnum|`: the normality condition from Coq
     These make the theorem provable and match the original Coq semantics. -/
-theorem FnormalNotZero {beta : Int}
+theorem FnormalNotZero {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (radixInt : Int)
@@ -11840,13 +11871,13 @@ theorem FnormalNotZero {beta : Int}
   omega
 
 -- Coq: `FnormalFop` — normality is preserved by float negation
-noncomputable def FnormalFop_check {beta : Int}
+noncomputable def FnormalFop_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalFop` — if a float is normal, then its negation is also normal. -/
-theorem FnormalFop {beta : Int}
+theorem FnormalFop {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
@@ -11858,13 +11889,13 @@ theorem FnormalFop {beta : Int}
     using hnormal
 
 -- Coq: `FnormalFabs` — normality is preserved by float absolute value
-noncomputable def FnormalFabs_check {beta : Int}
+noncomputable def FnormalFabs_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalFabs` — taking the absolute value of a normal float keeps it normal. -/
-theorem FnormalFabs {beta : Int}
+theorem FnormalFabs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p⌝⦄
@@ -11879,14 +11910,14 @@ theorem FnormalFabs {beta : Int}
   · simpa [Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs, abs_mul] using hmant
 
 -- Coq: `FsubnormalFbounded` — subnormal floats are bounded
-noncomputable def FsubnormalFbounded_check {beta : Int}
+noncomputable def FsubnormalFbounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalFbounded` — if a float is subnormal with respect to `b` and
     `radix`, then it is bounded by `b`. -/
-theorem FsubnormalFbounded {beta : Int}
+theorem FsubnormalFbounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
@@ -11898,7 +11929,7 @@ theorem FsubnormalFbounded {beta : Int}
   exact hsub.1
 
 -- Coq: `FsubnormalFexp` — exponent of a subnormal float is fixed
-noncomputable def FsubnormalFexp_check {beta : Int}
+noncomputable def FsubnormalFexp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -11910,7 +11941,7 @@ noncomputable def FsubnormalFexp_check {beta : Int}
     matching Coq's `Fsubnormal` definition:
     - `p.Fexp = -b.dExp`: the exponent is the minimal exponent
     These make the theorem provable and match the original Coq semantics. -/
-theorem FsubnormalFexp {beta : Int}
+theorem FsubnormalFexp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧ p.Fexp = -b.dExp⌝⦄
@@ -11922,13 +11953,13 @@ theorem FsubnormalFexp {beta : Int}
   exact hExp
 
 -- Coq: `FsubnormFopp` — subnormality preserved by float negation
-noncomputable def FsubnormFopp_check {beta : Int}
+noncomputable def FsubnormFopp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormFopp` — if `p` is subnormal, then so is `Fopp p`. -/
-theorem FsubnormFopp {beta : Int}
+theorem FsubnormFopp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
@@ -11942,13 +11973,13 @@ theorem FsubnormFopp {beta : Int}
     using hsub
 
 -- Coq: `FsubnormFabs` — subnormality preserved by float absolute value
-noncomputable def FsubnormFabs_check {beta : Int}
+noncomputable def FsubnormFabs_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormFabs` — if `p` is subnormal, then so is `Fabs p`. -/
-theorem FsubnormFabs {beta : Int}
+theorem FsubnormFabs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p⌝⦄
@@ -11962,7 +11993,7 @@ theorem FsubnormFabs {beta : Int}
     using hsub
 
 -- Coq: `FsubnormalUnique` — subnormal floats equal as reals coincide syntactically
-noncomputable def FsubnormalUnique_check {beta : Int}
+noncomputable def FsubnormalUnique_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -11975,7 +12006,7 @@ noncomputable def FsubnormalUnique_check {beta : Int}
     - `p.Fexp = -b.dExp` and `q.Fexp = -b.dExp`: both have minimal exponent
     - `1 < beta`: radix condition
     These make the theorem provable and match the original Coq semantics. -/
-theorem FsubnormalUnique {beta : Int}
+theorem FsubnormalUnique {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
@@ -12003,7 +12034,7 @@ theorem FsubnormalUnique {beta : Int}
   cases p; cases q; simp at hnum_eq_int hexp_eq ⊢; exact ⟨hnum_eq_int, hexp_eq⟩
 
 -- Coq: `FsubnormalLt` — ordering subnormal mantissas mirrors real order
-noncomputable def FsubnormalLt_check {beta : Int}
+noncomputable def FsubnormalLt_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -12016,7 +12047,7 @@ noncomputable def FsubnormalLt_check {beta : Int}
     - `p.Fexp = -b.dExp` and `q.Fexp = -b.dExp`: subnormal floats share the minimum exponent
     - `(beta : ℤ) > 0`: the radix is positive
     These make the theorem provable and match the original Coq semantics. -/
-theorem FsubnormalLt {beta : Int}
+theorem FsubnormalLt {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
@@ -12045,7 +12076,7 @@ theorem FsubnormalLt {beta : Int}
 -- RleRoundedAbs (Coq: Pff.v) — lower bound on |r| from rounding to nearest
 
 noncomputable def RleRoundedAbs_check
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat radix) (r : ℝ) : Unit :=
   ()
 
@@ -12057,7 +12088,7 @@ noncomputable def RleRoundedAbs_check
     natural precision, `bo.vNum = radix^precision`, `4 ≤ precision`, closest
     rounding, normality, and exponent above the minimum-normal boundary. -/
 theorem RleRoundedAbs
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat radix) (r : ℝ) :
     ⦃⌜1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
         Closest (beta:=radix) bo (radix : ℝ) r f ∧
@@ -12378,7 +12409,7 @@ theorem RleRoundedAbs
 
 -- Coq: `RoundedModeMultAbs` — absolute-value scaling under RoundedModeP
 
-noncomputable def RoundedModeMultAbs_check {beta : Int}
+noncomputable def RoundedModeMultAbs_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -12390,7 +12421,7 @@ This restores the wrapper payload: the absolute-value result follows by cases
 on the sign of `r` from the two directional scaling lemmas
 `RoundedModeMult` and `RoundedModeMultLess`.  Their payloads are passed as
 explicit dependencies here rather than hidden behind a trivial postcondition. -/
-theorem RoundedModeMultAbs {beta : Int}
+theorem RoundedModeMultAbs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (r : ℝ) (q q' : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -12477,7 +12508,7 @@ noncomputable def MinRoundedModeP_check {α : Type}
 
 The faithful Lean statement targets the float-specific `isMin'` predicate.
 Totality is explicit because `MinEx` is still an active construction. -/
-theorem MinRoundedModeP {beta : Int}
+theorem MinRoundedModeP {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) :
     ⦃⌜TotalP (isMin' (beta:=beta) b radix)⌝⦄
     (pure (MinRoundedModeP_check
@@ -12530,7 +12561,7 @@ noncomputable def MaxRoundedModeP_check {α : Type}
 
 The faithful Lean statement targets the float-specific `isMax'` predicate.
 Totality is explicit because `MaxEx` is still an active construction. -/
-theorem MaxRoundedModeP {beta : Int}
+theorem MaxRoundedModeP {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) :
     ⦃⌜TotalP (isMax' (beta:=beta) b radix)⌝⦄
     (pure (MaxRoundedModeP_check
@@ -12558,12 +12589,12 @@ theorem MaxRoundedModeP {beta : Int}
     exact le_antisymm hpLeq hqLep
 
 -- Coq: `isMin_inv1` — a minimum witness is below the rounded real.
-noncomputable def isMin_inv1_check {beta : Int}
+noncomputable def isMin_inv1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-theorem isMin_inv1 {beta : Int}
+theorem isMin_inv1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMin' (beta:=beta) b radix r p⌝⦄
@@ -12575,12 +12606,12 @@ theorem isMin_inv1 {beta : Int}
   exact h.2.1
 
 -- Coq: `isMax_inv1` — the rounded real is below a maximum witness.
-noncomputable def isMax_inv1_check {beta : Int}
+noncomputable def isMax_inv1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-theorem isMax_inv1 {beta : Int}
+theorem isMax_inv1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMax' (beta:=beta) b radix r p⌝⦄
@@ -12594,7 +12625,7 @@ theorem isMax_inv1 {beta : Int}
 /-- Coq: `ProjectMin` — minimum witnesses are projectors at the real-value
 level.  Coq's statement uses float coercions, so the Lean result states
 equality of `F2R` values. -/
-theorem ProjectMin {beta : Int}
+theorem ProjectMin {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) :
     ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
       isMin' (beta:=beta) b radix r p →
@@ -12606,7 +12637,7 @@ theorem ProjectMin {beta : Int}
   · exact hp.2.2 q hq.1 hq.2.1
 
 /-- Coq: `MonotoneMin` — lower projectors are monotone. -/
-theorem MonotoneMin {beta : Int}
+theorem MonotoneMin {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) :
     ∀ (p q : ℝ) (p' q' : FloatSpec.Core.Defs.FlocqFloat beta),
       p < q →
@@ -12619,7 +12650,7 @@ theorem MonotoneMin {beta : Int}
 /-- Coq: `ProjectMax` — maximum witnesses are projectors at the real-value
 level.  Coq's statement uses float coercions, so the Lean result states
 equality of `F2R` values. -/
-theorem ProjectMax {beta : Int}
+theorem ProjectMax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) :
     ∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
       isMax' (beta:=beta) b radix r p →
@@ -12631,7 +12662,7 @@ theorem ProjectMax {beta : Int}
   · exact hq.2.2 p hp.1 hp.2.1
 
 /-- Coq: `MonotoneMax` — upper projectors are monotone. -/
-theorem MonotoneMax {beta : Int}
+theorem MonotoneMax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) :
     ∀ (p q : ℝ) (p' q' : FloatSpec.Core.Defs.FlocqFloat beta),
       p < q →
@@ -12642,12 +12673,12 @@ theorem MonotoneMax {beta : Int}
   exact hp'.2.2 q' hq'.1 (le_trans (le_of_lt hpq) hq'.2.1)
 
 -- Coq: `MinEq` — minimum witnesses are unique at the real-value level.
-noncomputable def MinEq_check {beta : Int}
+noncomputable def MinEq_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-theorem MinEq {beta : Int}
+theorem MinEq {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMin' (beta:=beta) b radix r p ∧
@@ -12664,12 +12695,12 @@ theorem MinEq {beta : Int}
   · exact hp.2.2 q hq.1 hq.2.1
 
 -- Coq: `MaxEq` — maximum witnesses are unique at the real-value level.
-noncomputable def MaxEq_check {beta : Int}
+noncomputable def MaxEq_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-theorem MaxEq {beta : Int}
+theorem MaxEq {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMax' (beta:=beta) b radix r p ∧
@@ -12686,12 +12717,12 @@ theorem MaxEq {beta : Int}
   · exact hq.2.2 p hp.1 hp.2.1
 
 -- Coq: `MinOppMax` — negating a minimum witness gives a maximum witness.
-noncomputable def MinOppMax_check {beta : Int}
+noncomputable def MinOppMax_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-theorem MinOppMax {beta : Int}
+theorem MinOppMax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMin' (beta:=beta) b radix r p⌝⦄
@@ -12729,12 +12760,12 @@ theorem MinOppMax {beta : Int}
     linarith
 
 -- Coq: `MaxOppMin` — negating a maximum witness gives a minimum witness.
-noncomputable def MaxOppMin_check {beta : Int}
+noncomputable def MaxOppMin_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-theorem MaxOppMin {beta : Int}
+theorem MaxOppMin {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMax' (beta:=beta) b radix r p⌝⦄
@@ -12772,7 +12803,7 @@ theorem MaxOppMin {beta : Int}
     linarith
 
 -- Coq: `RleMinR0` — if 0 ≤ r and `isMin b radix r min` then 0 ≤ F2R min
-noncomputable def RleMinR0_check {beta : Int}
+noncomputable def RleMinR0_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (min : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -12787,7 +12818,7 @@ noncomputable def RleMinR0_check {beta : Int}
     - maximality: min is the greatest bounded float ≤ r
     - `0 < b.vNum`: needed to construct the zero witness float
     These make the theorem provable and match the original Coq semantics. -/
-theorem RleMinR0 {beta : Int}
+theorem RleMinR0 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (min : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜0 ≤ r ∧ isMin (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r min
@@ -12821,7 +12852,7 @@ theorem RleMinR0 {beta : Int}
   exact h0LeMin
 
 -- Coq: `RleRoundedR0` — under RoundedModeP P, if P r p and 0 ≤ r then 0 ≤ F2R p
-noncomputable def RleRoundedR0_check {beta : Int}
+noncomputable def RleRoundedR0_check {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -12834,7 +12865,7 @@ noncomputable def RleRoundedR0_check {beta : Int}
     - `MonotoneP_float P`: monotonicity of rounding w.r.t. F2R
     - `∀ f, P 0 f → 0 ≤ F2R f`: rounding 0 produces a non-negative float
     The Coq proof derives the second from MinOrMaxP + isMin/isMax semantics. -/
-theorem RleRoundedR0 {beta : Int}
+theorem RleRoundedR0 {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜RoundedModeP P ∧ P r p ∧ 0 ≤ r ∧
@@ -12861,7 +12892,7 @@ theorem RleRoundedR0 {beta : Int}
     linarith
 
 -- Coq: `RleMaxR0` — if r ≤ 0 and `isMax b radix r max` then F2R max ≤ 0
-noncomputable def RleMaxR0_check {beta : Int}
+noncomputable def RleMaxR0_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (max : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -12874,7 +12905,7 @@ noncomputable def RleMaxR0_check {beta : Int}
     - `r ≤ F2R max`: r is below max
     - Minimality: for any bounded f with r ≤ F2R f, we have F2R max ≤ F2R f
     - `0 < b.vNum`: needed to construct the zero float as a bounded witness -/
-theorem RleMaxR0 {beta : Int}
+theorem RleMaxR0 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (max : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜r ≤ 0 ∧ isMax (α:=FloatSpec.Core.Defs.FlocqFloat beta) b radix r max ∧
@@ -12907,7 +12938,7 @@ theorem RleMaxR0 {beta : Int}
   exact hMaxLeZero
 
 -- Coq: `RleRoundedLessR0` — under RoundedModeP P, if P r p and r ≤ 0 then F2R p ≤ 0
-noncomputable def RleRoundedLessR0_check {beta : Int}
+noncomputable def RleRoundedLessR0_check {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -12920,7 +12951,7 @@ noncomputable def RleRoundedLessR0_check {beta : Int}
     - `MonotoneP_float P`: monotonicity of rounding w.r.t. F2R
     - `∀ f, P 0 f → F2R f ≤ 0`: rounding 0 produces a non-positive float
     The Coq proof derives the second from MinOrMaxP + isMin/isMax semantics. -/
-theorem RleRoundedLessR0 {beta : Int}
+theorem RleRoundedLessR0 {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜RoundedModeP P ∧ P r p ∧ r ≤ 0 ∧
@@ -12949,7 +12980,7 @@ theorem RleRoundedLessR0 {beta : Int}
 -- Coq: `MinUniqueP` — uniqueness for isMin
 -- Note: the generic `isMin` fallback is weak, so we add explicit `isMin'` hypotheses
 -- matching Coq's real isMin definition, and conclude F2R equality (matching Coq's :>R).
-noncomputable def MinUniqueP_check {beta : Int}
+noncomputable def MinUniqueP_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
@@ -12957,7 +12988,7 @@ noncomputable def MinUniqueP_check {beta : Int}
     their real values are equal. This is the core uniqueness lemma for isMin.
     Since the generic `isMin` fallback is weak, we use `isMin'` (the Coq definition)
     in explicit hypotheses, following the ClosestZero pattern. -/
-theorem MinUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
+theorem MinUniqueP {beta : Int} [ValidRadix beta] (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
     (pure (MinUniqueP_check (beta:=beta) b radix) : Id Unit)
     ⦃⇓_ => ⌜∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
@@ -12977,7 +13008,7 @@ theorem MinUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
 -- Coq: `MaxUniqueP` — uniqueness for isMax
 -- Note: the generic `isMax` fallback is weak, so we add explicit `isMax'` hypotheses
 -- matching Coq's real isMax definition, and conclude F2R equality (matching Coq's :>R).
-noncomputable def MaxUniqueP_check {beta : Int}
+noncomputable def MaxUniqueP_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
@@ -12985,7 +13016,7 @@ noncomputable def MaxUniqueP_check {beta : Int}
     their real values are equal. This is the core uniqueness lemma for isMax.
     Since the generic `isMax` fallback is weak, we use `isMax'` (the Coq definition)
     in explicit hypotheses, following the MinUniqueP pattern. -/
-theorem MaxUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
+theorem MaxUniqueP {beta : Int} [ValidRadix beta] (b : Fbound_skel) (radix : Int) :
     ⦃⌜True⌝⦄
     (pure (MaxUniqueP_check (beta:=beta) b radix) : Id Unit)
     ⦃⇓_ => ⌜∀ (r : ℝ) (p q : FloatSpec.Core.Defs.FlocqFloat beta),
@@ -13005,7 +13036,7 @@ theorem MaxUniqueP {beta : Int} (b : Fbound_skel) (radix : Int) :
 -- (Next missing theorems will be added one-by-one after validation.)
 
 -- Coq: `MinOrMaxRep` — representation form for Min/Max predicates
-noncomputable def MinOrMaxRep_check {beta : Int}
+noncomputable def MinOrMaxRep_check {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Unit :=
   ()
 
@@ -13017,7 +13048,7 @@ noncomputable def MinOrMaxRep_check {beta : Int}
     `q = ⟨m, p.Fexp⟩` (structural equality) to `_root_.F2R q = _root_.F2R ⟨m, p.Fexp⟩`
     (F2R equality) matching Coq's `:>R` coercion. Added explicit `MinOrMaxRepP` hypothesis
     because the generic fallback does not carry the float-specific representation result. -/
-theorem MinOrMaxRep {beta : Int}
+theorem MinOrMaxRep {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
     ⦃⌜MinOrMaxP P ∧
       (∀ (p q : FloatSpec.Core.Defs.FlocqFloat beta),
@@ -13032,7 +13063,7 @@ theorem MinOrMaxRep {beta : Int}
     Id.run, ULift.up_down]
   exact hRep
 
-noncomputable def F2R_rep_at_lower_exp_check {beta : Int}
+noncomputable def F2R_rep_at_lower_exp_check {beta : Int} [ValidRadix beta]
     (q : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) : Unit :=
   ()
 
@@ -13040,7 +13071,7 @@ noncomputable def F2R_rep_at_lower_exp_check {beta : Int}
 represented at that target exponent by shifting its mantissa. This is the
 Pff-facing form of Core `F2R_change_exp` and is one of the representation
 steps used by Flocq's `FminRep`. -/
-theorem F2R_rep_at_lower_exp {beta : Int}
+theorem F2R_rep_at_lower_exp {beta : Int} [ValidRadix beta]
     (q : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) :
     ⦃⌜1 < beta ∧ e ≤ q.Fexp⌝⦄
     (pure (F2R_rep_at_lower_exp_check (beta:=beta) q e) : Id Unit)
@@ -13054,7 +13085,7 @@ theorem F2R_rep_at_lower_exp {beta : Int}
   refine ⟨q.Fnum * beta ^ (q.Fexp - e).natAbs, ?_⟩
   exact FloatSpec.Core.Float_prop.F2R_change_exp (beta:=beta) q e hbeta hexp
 
-noncomputable def FmaxRep_from_FminRep_check {beta : Int}
+noncomputable def FmaxRep_from_FminRep_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) : Unit :=
   ()
 
@@ -13062,7 +13093,7 @@ noncomputable def FmaxRep_from_FminRep_check {beta : Int}
 keeps that dependency explicit: once the min-side representation theorem is
 available, the max-side representation follows by applying it to `Fopp p` and
 `Fopp q`. -/
-theorem FmaxRep_from_FminRep {beta : Int}
+theorem FmaxRep_from_FminRep {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) :
     ⦃⌜(∀ p q : FloatSpec.Core.Defs.FlocqFloat beta,
           isMin' (beta:=beta) b radix (_root_.F2R (beta:=beta) p) q →
@@ -13130,7 +13161,7 @@ theorem FmaxRep_from_FminRep {beta : Int}
     Int.cast_neg] at hm
   linarith
 
-noncomputable def MinOrMaxRep_float_from_rep_check {beta : Int}
+noncomputable def MinOrMaxRep_float_from_rep_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Unit :=
   ()
@@ -13139,7 +13170,7 @@ noncomputable def MinOrMaxRep_float_from_rep_check {beta : Int}
 payloads.  This is the non-shell version of the upstream step immediately
 above `RoundedModeRep`; the only remaining hard input is the min-side
 representation theorem. -/
-theorem MinOrMaxRep_float_from_rep {beta : Int}
+theorem MinOrMaxRep_float_from_rep {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
     ⦃⌜MinOrMaxP_float (beta:=beta) b radix P ∧
@@ -13168,14 +13199,14 @@ theorem MinOrMaxRep_float_from_rep {beta : Int}
   · exact hMinRep p q hMin
   · exact hMaxRep p q hMax
 
-noncomputable def RoundedModeRep_float_from_minmax_check {beta : Int}
+noncomputable def RoundedModeRep_float_from_minmax_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Unit :=
   ()
 
 /-- Float-specific `RoundedModeRep` factored through the restored
 `MinOrMaxP_float` package and explicit min/max representation payloads. -/
-theorem RoundedModeRep_float_from_minmax {beta : Int}
+theorem RoundedModeRep_float_from_minmax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
     ⦃⌜RoundedModeP_float (beta:=beta) b radix P ∧
@@ -13207,7 +13238,7 @@ theorem RoundedModeRep_float_from_minmax {beta : Int}
 -- ---------------------------------------------------------------------------
 -- Max-bound comparison lemmas (around Coq: maxFbounded, maxMax, maxMaxBis)
 -- Coq: `MaxFloat` — bounded floats stay below the canonical bound at their exponent
-noncomputable def MaxFloat_check {beta : Int}
+noncomputable def MaxFloat_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) : Unit :=
   ()
 
@@ -13220,7 +13251,7 @@ Since `Fbounded` is concrete, this port keeps explicit `Fbounded'` and
 `beta > 1` hypotheses matching the Coq section assumptions. The `z` parameter
 is kept for compatibility with downstream callers but the bound uses `b.vNum`
 at `p.Fexp` per Coq's original. -/
-theorem MaxFloat {beta : Int}
+theorem MaxFloat {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
         Fbounded' b p ∧ 1 < beta⌝⦄
@@ -13249,7 +13280,7 @@ theorem MaxFloat {beta : Int}
 -- `Fexp p ≤ z`, then `Fabs p < Float (Zpos (vNum b)) z`. Our bound skeleton
 -- does not carry `vNum`; we state the result against the canonical unit
 -- mantissa at exponent `z`, consistent with other places using `⟨1, z⟩`.
-noncomputable def maxMax_check {beta : Int}
+noncomputable def maxMax_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) : Unit :=
   ()
 
@@ -13266,7 +13297,7 @@ instead of `F2R (Fabs p)`.
 Change record: Fixed RHS from `⟨1, z⟩` to `⟨b.vNum, z⟩` to match Coq's
 `Float (Zpos (vNum b)) z`. Used `|F2R p|` instead of `F2R (Fabs p)` because
 `Fabs` is modeled directly in Compat.lean. -/
-theorem maxMax {beta : Int}
+theorem maxMax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
         Fbounded' b p ∧ 1 < beta⌝⦄
@@ -13302,7 +13333,7 @@ theorem maxMax {beta : Int}
 
 /-- Helper computation for `maxMax1`. Mirrors the Hoare-style pipeline used in
 `maxMax` but records the weaker (non-strict) inequality variant from Coq. -/
-noncomputable def maxMax1_check {beta : Int}
+noncomputable def maxMax1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) : Unit :=
   ()
 
@@ -13312,7 +13343,7 @@ canonical encoding at exponent `z`.
 Change record: Fixed postcondition from `F2R (Fabs p) ≤ F2R ⟨1, z⟩` to
 `|F2R p| ≤ F2R ⟨b.vNum - 1, z⟩` to match Coq's `Fabs p ≤ Float (pPred (vNum b)) z`.
 Added `Fbounded'` and `1 < beta` hypotheses to expose the bound obligations. -/
-theorem maxMax1 {beta : Int}
+theorem maxMax1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp ≤ z ∧
         Fbounded' b p ∧ 1 < beta⌝⦄
@@ -13359,7 +13390,7 @@ Change record: Fixed postcondition from `F2R (Fabs p) < F2R ⟨1, z⟩` to
 `Fabs p < Float nNormMin z`. Added `Fbounded'`, `1 < beta`, `precision`,
 and `pGivesBound` hypotheses to expose the bound obligations. Uses `|F2R p|`
 instead of `F2R (Fabs p)`. -/
-theorem maxMaxBis {beta : Int}
+theorem maxMaxBis {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : Int)
     (precision : Nat) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ p.Fexp < z ∧
@@ -13440,11 +13471,11 @@ theorem maxMaxBis {beta : Int}
 -- Coq: `eqExpLess` — if `p` is bounded and `F2R p = F2R q`,
 -- then there exists a bounded `r` with the same real value as `q`
 -- and exponent at least that of `q`.
-noncomputable def eqExpLess_check {beta : Int}
+noncomputable def eqExpLess_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem eqExpLess {beta : Int}
+theorem eqExpLess {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
         _root_.F2R p = _root_.F2R q⌝⦄
@@ -13459,12 +13490,12 @@ theorem eqExpLess {beta : Int}
 
 -- Coq: `FboundedShiftLess` — if `m ≤ n` and `Fshift radix n f` is bounded,
 -- then `Fshift radix m f` is also bounded.
-noncomputable def FboundedShiftLess_check {beta : Int}
+noncomputable def FboundedShiftLess_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) : Unit :=
   ()
 
-theorem FboundedShiftLess {beta : Int}
+theorem FboundedShiftLess {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (n m : Nat) :
     ⦃⌜1 < radix ∧ m ≤ n ∧
@@ -13496,13 +13527,13 @@ theorem FboundedShiftLess {beta : Int}
 
 -- Coq: `eqExpMax` — if `p` and `q` are bounded and |F2R p| ≤ F2R q,
 -- then there exists a bounded `r` with F2R r = F2R p and Fexp r ≤ Fexp q.
-noncomputable def eqExpMax_check {beta : Int}
+noncomputable def eqExpMax_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 -- Note: Coq has radix ≥ 2 as section variable; added 1 < beta to precondition
-theorem eqExpMax {beta : Int}
+theorem eqExpMax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -13556,12 +13587,12 @@ theorem eqExpMax {beta : Int}
 
 -- Coq: `FboundNext` — the real value obtained by incrementing a bounded
 -- mantissa has a bounded representative, carrying at the mantissa limit.
-noncomputable def FboundNext_check {beta : Int}
+noncomputable def FboundNext_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FboundNext {beta : Int}
+theorem FboundNext {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision ∧
@@ -13677,11 +13708,11 @@ theorem FboundNext {beta : Int}
 -- Since the generic `MinOrMaxP` fallback is weak, we add an explicit hypothesis
 -- carrying the real content, following the pattern of MinOrMaxRep.
 -- Changed postcondition to use F2R equality (matching Coq's :>R coercion).
-noncomputable def RoundedModeRep_check {beta : Int}
+noncomputable def RoundedModeRep_check {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) : Unit :=
   ()
 
-theorem RoundedModeRep {beta : Int}
+theorem RoundedModeRep {beta : Int} [ValidRadix beta]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop) :
     ⦃⌜RoundedModeP P ∧
       (∀ (p q : FloatSpec.Core.Defs.FlocqFloat beta),
@@ -13813,11 +13844,11 @@ theorem pow_R1 (r : ℝ) (n : Nat) :
     rw [hrn, abs_one]
 
 -- Coq: `Rle_Fexp_eq_Zle` — if x ≤ y and Fexp x = Fexp y then Fnum x ≤ Fnum y
-noncomputable def Rle_Fexp_eq_Zle_check {beta : Int}
+noncomputable def Rle_Fexp_eq_Zle_check {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Rle_Fexp_eq_Zle {beta : Int}
+theorem Rle_Fexp_eq_Zle {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R x ≤ _root_.F2R y ∧ x.Fexp = y.Fexp ∧ (1 : Int) < beta⌝⦄
     (pure (Rle_Fexp_eq_Zle_check (beta:=beta) x y) : Id Unit)
@@ -14116,11 +14147,11 @@ theorem Rle_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
   exact le_of_mul_le_mul_right hxy (zpow_pos hradix z)
 
 -- Coq: `FtoREqInv2` — equality by equal real value and same exponent
-noncomputable def FtoREqInv2_check {beta : Int}
+noncomputable def FtoREqInv2_check {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FtoREqInv2 {beta : Int}
+theorem FtoREqInv2 {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R p = _root_.F2R q ∧ p.Fexp = q.Fexp ∧ 1 < beta⌝⦄
     (pure (FtoREqInv2_check (beta:=beta) p q) : Id Unit)
@@ -14144,11 +14175,11 @@ theorem FtoREqInv2 {beta : Int}
     simp [hint]
 
 -- Coq: `sameExpEq` — if two floats have equal real value and same exponent, they are equal
-noncomputable def sameExpEq_check {beta : Int}
+noncomputable def sameExpEq_check {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem sameExpEq {beta : Int}
+theorem sameExpEq {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R p = _root_.F2R q ∧ p.Fexp = q.Fexp ∧ 1 < beta⌝⦄
     (pure (sameExpEq_check (beta:=beta) p q) : Id Unit)
@@ -14160,10 +14191,10 @@ theorem sameExpEq {beta : Int}
   exact (FtoREqInv2 (beta := beta) p q) h
 
 -- Coq: `Rlt_Float_Zlt` — compare mantissas when exponents equal
-noncomputable def Rlt_Float_Zlt_check {beta : Int} (p q r : Int) : Unit :=
+noncomputable def Rlt_Float_Zlt_check {beta : Int} [ValidRadix beta] (p q r : Int) : Unit :=
   ()
 
-theorem Rlt_Float_Zlt {beta : Int} (p q r : Int) :
+theorem Rlt_Float_Zlt {beta : Int} [ValidRadix beta] (p q r : Int) :
     ⦃⌜1 < beta ∧ _root_.F2R (⟨p, r⟩ : FloatSpec.Core.Defs.FlocqFloat beta) <
          _root_.F2R (⟨q, r⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄
     (pure (Rlt_Float_Zlt_check (beta:=beta) p q r) : Id Unit)
@@ -14180,10 +14211,10 @@ theorem Rlt_Float_Zlt {beta : Int} (p q r : Int) :
   exact_mod_cast hreal
 
 -- Coq: `oneExp_le` — with mantissa 1, exponent order preserves real ≤
-noncomputable def oneExp_le_check {beta : Int} (x y : Int) : Unit :=
+noncomputable def oneExp_le_check {beta : Int} [ValidRadix beta] (x y : Int) : Unit :=
   ()
 
-theorem oneExp_le {beta : Int} (x y : Int) :
+theorem oneExp_le {beta : Int} [ValidRadix beta] (x y : Int) :
     ⦃⌜1 < beta ∧ x ≤ y⌝⦄
     (pure (oneExp_le_check (beta:=beta) x y) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (⟨1, x⟩ : FloatSpec.Core.Defs.FlocqFloat beta)
@@ -14197,10 +14228,10 @@ theorem oneExp_le {beta : Int} (x y : Int) :
   exact (zpow_right_strictMono₀ hβR).monotone hxy
 
 -- Coq: `oneExp_Zlt` — with mantissa 1, real < implies exponent <
-noncomputable def oneExp_Zlt_check {beta : Int} (x y : Int) : Unit :=
+noncomputable def oneExp_Zlt_check {beta : Int} [ValidRadix beta] (x y : Int) : Unit :=
   ()
 
-theorem oneExp_Zlt {beta : Int} (x y : Int) :
+theorem oneExp_Zlt {beta : Int} [ValidRadix beta] (x y : Int) :
     ⦃⌜1 < beta ∧ _root_.F2R (⟨1, x⟩ : FloatSpec.Core.Defs.FlocqFloat beta) <
          _root_.F2R (⟨1, y⟩ : FloatSpec.Core.Defs.FlocqFloat beta)⌝⦄
     (pure (oneExp_Zlt_check (beta:=beta) x y) : Id Unit)
@@ -15002,13 +15033,13 @@ theorem digitVNumiSPrecision
   rw [hzdigits]
   simp
 
-noncomputable def pGivesDigit_check {beta : Int}
+noncomputable def pGivesDigit_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `pGivesDigit` — bounded floats have digit ≤ precision. -/
-theorem pGivesDigit {beta : Int}
+theorem pGivesDigit {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded' b p ∧
@@ -15039,13 +15070,13 @@ theorem pGivesDigit {beta : Int}
     simpa only [wp, PostCond.noThrow, pure, Id.run] using h
   exact Int.toNat_le.mpr hdigits_int
 
-noncomputable def digitGivesBoundedNum_check {beta : Int}
+noncomputable def digitGivesBoundedNum_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `digitGivesBoundedNum` — digit bound implies vNum bound. -/
-theorem digitGivesBoundedNum {beta : Int}
+theorem digitGivesBoundedNum {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜precision ≠ 0 ∧ 1 < radix ∧ b.vNum = Zpower_nat radix precision ∧
@@ -15083,13 +15114,13 @@ theorem digitGivesBoundedNum {beta : Int}
   simpa [Zpower_nat, Int.natAbs_of_nonneg
     (show 0 ≤ (precision : Int) by exact_mod_cast Nat.zero_le precision)] using hnum_lt
 
-noncomputable def FnormalPrecision_check {beta : Int}
+noncomputable def FnormalPrecision_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalPrecision` — a normal float always has digit `precision`. -/
-theorem FnormalPrecision {beta : Int}
+theorem FnormalPrecision {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
@@ -15277,11 +15308,11 @@ theorem pPredMoreThanRadix
 -- NOTE: `firstNormalPos` is defined earlier in this file (near nNormMin)
 
 noncomputable def firstNormalPosNormal_check
-    {beta : Int} (radix : Int) (b : Fbound_skel) (precision : Nat) : Unit :=
+    {beta : Int} [ValidRadix beta] (radix : Int) (b : Fbound_skel) (precision : Nat) : Unit :=
   ()
 
 /-- Coq: `firstNormalPosNormal` — the first positive normal float is normal. -/
-theorem firstNormalPosNormal {beta : Int}
+theorem firstNormalPosNormal {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat) :
     ⦃⌜1 < radix ∧ 1 < precision ∧ b.vNum = Zpower_nat radix precision⌝⦄
     (pure (firstNormalPosNormal_check (beta:=beta) radix b precision) : Id Unit)
@@ -15315,13 +15346,13 @@ theorem firstNormalPosNormal {beta : Int}
     rw [hpow_succ]
     rw [abs_of_pos (mul_pos hradix_pos hpow_pos)]
 
-noncomputable def pNormal_absolu_min_check {beta : Int}
+noncomputable def pNormal_absolu_min_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `pNormal_absolu_min` — normal mantissas dominate `nNormMin`. -/
-theorem pNormal_absolu_min {beta : Int}
+theorem pNormal_absolu_min {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
@@ -15349,13 +15380,13 @@ theorem pNormal_absolu_min {beta : Int}
     simpa [abs_mul, hradix_abs] using hpow_prec_le
   exact Int.le_of_mul_le_mul_left hmul_le hradix_pos
 
-noncomputable def FSuccPropNeg_check {beta : Int}
+noncomputable def FSuccPropNeg_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSuccPropNeg` — successor ordering for negative lower endpoint. -/
-theorem FSuccPropNeg {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FSuccPropNeg {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -15523,14 +15554,14 @@ theorem FSuccPropNeg {beta : Int}
           (FSucc_same_exp_mantissa_le (beta:=beta) b radix precision x y)
             ⟨hsucc_eq, hexp_eq, hnum_lt, hbeta_gt⟩
 
-noncomputable def FSuccProp_check {beta : Int}
+noncomputable def FSuccProp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FSuccProp` — the faithful successor of a canonical lower float is
 below any strictly larger canonical float. -/
-theorem FSuccProp {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FSuccProp {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -15554,14 +15585,14 @@ theorem FSuccProp {beta : Int}
       (FSuccPropNeg (beta:=beta) b radix precision x y)
         ⟨hbeta, hradix, hprecision, hvnum, hxneg, hxcan, hycan, hxy⟩
 
-noncomputable def FPredProp_check {beta : Int}
+noncomputable def FPredProp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit := ()
 
 /-- Coq: `FPredProp` — if canonical `x < y`, then `x` is below the
 predecessor of `y`. -/
-theorem FPredProp {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FPredProp {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -15630,14 +15661,14 @@ theorem FPredProp {beta : Int}
   rw [hx_opp] at hsucc
   simpa using neg_le_neg hsucc
 
-noncomputable def FnormalLtFirstNormalPos_check {beta : Int}
+noncomputable def FnormalLtFirstNormalPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FnormalLtFirstNormalPos` — normal nonnegative floats dominate
 the first normal positive value. -/
-theorem FnormalLtFirstNormalPos {beta : Int}
+theorem FnormalLtFirstNormalPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
@@ -15684,14 +15715,14 @@ theorem FnormalLtFirstNormalPos {beta : Int}
     _ ≤ (p.Fnum : ℝ) * (beta : ℝ) ^ p.Fexp := by
           exact mul_le_mul_of_nonneg_left hpow_le hp_fnum_nonneg_real
 
-noncomputable def FsubnormalDigit_check {beta : Int}
+noncomputable def FsubnormalDigit_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalDigit` — a subnormal float has digit strictly below
 `precision`. Mirrors the original statement with Hoare triple syntax. -/
-theorem FsubnormalDigit {beta : Int}
+theorem FsubnormalDigit {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
@@ -15742,14 +15773,14 @@ theorem FsubnormalDigit {beta : Int}
   exact lt_of_le_of_lt hnat_le (Nat.pred_lt hprecision)
 
 -- Coq: `pSubnormal_absolu_min` — subnormal mantissas lie below `nNormMin`.
-noncomputable def pSubnormal_absolu_min_check {beta : Int}
+noncomputable def pSubnormal_absolu_min_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `pSubnormal_absolu_min` — the absolute mantissa of a subnormal is
 bounded by `nNormMin`. -/
-theorem pSubnormal_absolu_min {beta : Int}
+theorem pSubnormal_absolu_min {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
@@ -15775,14 +15806,14 @@ theorem pSubnormal_absolu_min {beta : Int}
     simpa [hvNum, Zpower_nat, abs_mul, hradix_abs] using hnum
   simpa [nNormMin] using Int.lt_of_mul_lt_mul_left hmul_lt (le_of_lt hradix_pos)
 
-noncomputable def FsubnormalLtFirstNormalPos_check {beta : Int}
+noncomputable def FsubnormalLtFirstNormalPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalLtFirstNormalPos` — a nonnegative subnormal float lies
 strictly below the first positive normal float. -/
-theorem FsubnormalLtFirstNormalPos {beta : Int}
+theorem FsubnormalLtFirstNormalPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
@@ -15818,14 +15849,14 @@ theorem FsubnormalLtFirstNormalPos {beta : Int}
   rw [hexp]
   exact mul_lt_mul_of_pos_right hp_fnum_lt_real (zpow_pos hbeta_pos (-b.dExp))
 
-noncomputable def FsubnormalnormalLtPos_check {beta : Int}
+noncomputable def FsubnormalnormalLtPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalnormalLtPos` — a nonnegative subnormal float is strictly
 below any nonnegative normal float. -/
-theorem FsubnormalnormalLtPos {beta : Int}
+theorem FsubnormalnormalLtPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
@@ -15856,14 +15887,14 @@ theorem FsubnormalnormalLtPos {beta : Int}
       ⟨hnormal, hnormal', hprecision, hbeta_radix, hradix, hvNum, hq_nonneg⟩
   exact lt_of_lt_of_le hp_lt_first hfirst_le_q
 
-noncomputable def FsubnormalnormalLtNeg_check {beta : Int}
+noncomputable def FsubnormalnormalLtNeg_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FsubnormalnormalLtNeg` — a nonpositive subnormal float is strictly
 above any nonpositive normal float. -/
-theorem FsubnormalnormalLtNeg {beta : Int}
+theorem FsubnormalnormalLtNeg {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) radix b p ∧
@@ -15936,7 +15967,7 @@ theorem FsubnormalnormalLtNeg {beta : Int}
     exact hopp_lt
   exact neg_lt_neg_iff.mp hneg_lt
 
-noncomputable def FnormalUnique_check {beta : Int}
+noncomputable def FnormalUnique_check {beta : Int} [ValidRadix beta]
     (radix : ℝ) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -15944,7 +15975,7 @@ noncomputable def FnormalUnique_check {beta : Int}
 -- Declared after `FdigitEq`, matching the dependency order in upstream Flocq.
 
 -- Coq: `FnormalLtPos` — ordered normal floats compare via exponent then mantissa.
-noncomputable def FnormalLtPos_check {beta : Int}
+noncomputable def FnormalLtPos_check {beta : Int} [ValidRadix beta]
     (radix : ℝ) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -15957,7 +15988,7 @@ noncomputable def FnormalLtPos_check {beta : Int}
     `1 < radix`, `precision ≠ 0`, and `vNum b = radix^precision` are section
     hypotheses. Lean also carries `beta = radix` because `F2R` is parameterized
     by `beta`, and uses `Fnormal'` for the proper normality predicate. -/
-theorem FnormalLtPos {beta : Int}
+theorem FnormalLtPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
@@ -16636,11 +16667,11 @@ theorem in_map_inv {A B : Type}
   exact hinj' x y hy_eq.symm ▸ hy_mem
 
 -- Coq: `boundNat n := Float 1 (digit radix n)`.
-noncomputable def boundNat {beta : Int}
+noncomputable def boundNat {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) : FloatSpec.Core.Defs.FlocqFloat beta :=
   ⟨1, Int.ofNat (digit radix (Int.ofNat n))⟩
 
-noncomputable def boundNatCorrect_check {beta : Int}
+noncomputable def boundNatCorrect_check {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) : Unit :=
   ()
 
@@ -16648,7 +16679,7 @@ noncomputable def boundNatCorrect_check {beta : Int}
 
 The local statement carries the `beta = radix` bridge needed because
 `FlocqFloat beta` stores the semantic base as the type parameter. -/
-theorem boundNatCorrect {beta : Int}
+theorem boundNatCorrect {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) :
     ⦃⌜beta = radix ∧ 1 < radix⌝⦄
     (pure (boundNatCorrect_check (beta:=beta) radix n) : Id Unit)
@@ -16693,16 +16724,16 @@ theorem boundNatCorrect {beta : Int}
 
 -- Coq: `boundR r := boundNat (Z.abs_nat (up (Rabs r)))`.
 -- Lean's `Int.ceil` supplies the Archimedean upper integer used by Coq's `up`.
-noncomputable def boundR {beta : Int}
+noncomputable def boundR {beta : Int} [ValidRadix beta]
     (radix : Int) (r : ℝ) : FloatSpec.Core.Defs.FlocqFloat beta :=
   boundNat (beta:=beta) radix (Int.natAbs (Int.ceil |r|))
 
-noncomputable def boundRrOpp_check {beta : Int}
+noncomputable def boundRrOpp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `boundRrOpp`. -/
-theorem boundRrOpp {beta : Int}
+theorem boundRrOpp {beta : Int} [ValidRadix beta]
     (radix : Int) (r : ℝ) :
     ⦃⌜True⌝⦄
     (pure (boundRrOpp_check (beta:=beta) radix r) : Id Unit)
@@ -16713,12 +16744,12 @@ theorem boundRrOpp {beta : Int}
     ULift.up_down]
   simp [boundR, abs_neg]
 
-noncomputable def boundRCorrect1_check {beta : Int}
+noncomputable def boundRCorrect1_check {beta : Int} [ValidRadix beta]
     (radix : Int) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `boundRCorrect1` — the positive sentinel `boundR r` is strictly above `r`. -/
-theorem boundRCorrect1 {beta : Int}
+theorem boundRCorrect1 {beta : Int} [ValidRadix beta]
     (radix : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix⌝⦄
     (pure (boundRCorrect1_check (beta:=beta) radix r) : Id Unit)
@@ -16748,12 +16779,12 @@ theorem boundRCorrect1 {beta : Int}
       using hbound ⟨hbeta, hradix⟩
   exact lt_of_le_of_lt hr_le_nat (by simpa [boundR] using hbound_prop)
 
-noncomputable def boundRCorrect2_check {beta : Int}
+noncomputable def boundRCorrect2_check {beta : Int} [ValidRadix beta]
     (radix : Int) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `boundRCorrect2` — the negative sentinel `Fopp (boundR r)` is strictly below `r`. -/
-theorem boundRCorrect2 {beta : Int}
+theorem boundRCorrect2 {beta : Int} [ValidRadix beta]
     (radix : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix⌝⦄
     (pure (boundRCorrect2_check (beta:=beta) radix r) : Id Unit)
@@ -16785,7 +16816,7 @@ theorem boundRCorrect2 {beta : Int}
 -- Coq: `mBFloat`.
 -- Enumerates every pair `(mantissa, exponent)` inside the finite bounded box
 -- used by the min/max existence proofs.
-noncomputable def mBFloat {beta : Int}
+noncomputable def mBFloat {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     List (FloatSpec.Core.Defs.FlocqFloat beta) :=
   (mProd
@@ -16793,7 +16824,7 @@ noncomputable def mBFloat {beta : Int}
       (mZlist (-b.dExp) ((boundR (beta:=beta) radix r).Fexp))).map
     (fun p : Int × Int => ⟨p.1, p.2⟩)
 
-private lemma mBFloat_pair_mem {beta : Int}
+private lemma mBFloat_pair_mem {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hp : p ∈ mBFloat (beta:=beta) b radix r) :
@@ -16808,7 +16839,7 @@ private lemma mBFloat_pair_mem {beta : Int}
   cases pair
   simp_all
 
-noncomputable def mBPadic_Fbounded_check {beta : Int}
+noncomputable def mBPadic_Fbounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -16818,7 +16849,7 @@ noncomputable def mBPadic_Fbounded_check {beta : Int}
 Every float enumerated by `mBFloat` satisfies the concrete `Fbounded`
 predicate.  This is the finite-list bridge used by the upstream `MinEx` and
 `MaxEx` proofs. -/
-theorem mBPadic_Fbounded {beta : Int}
+theorem mBPadic_Fbounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜p ∈ mBFloat (beta:=beta) b radix r⌝⦄
@@ -16842,7 +16873,7 @@ theorem mBPadic_Fbounded {beta : Int}
     exact abs_lt.mpr ⟨by omega, by omega⟩
   exact ⟨hnum_abs, hexp_lower⟩
 
-noncomputable def mBFadic_correct1_check {beta : Int}
+noncomputable def mBFadic_correct1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -16854,7 +16885,7 @@ is enumerated by that list.  The upstream Coq theorem derives the exponent
 upper bound from the real comparisons with `Fopp (boundR r)` and `boundR r`;
 the local statement keeps that finite-box fact explicit so `MinEx` can use the
 same enumeration step without adding an unrelated bridge theorem. -/
-theorem mBFadic_correct1 {beta : Int}
+theorem mBFadic_correct1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b q ∧
@@ -16882,7 +16913,7 @@ theorem mBFadic_correct1 {beta : Int}
       · exact hExpUpper
   · rfl
 
-noncomputable def mBFadic_correct3_check {beta : Int}
+noncomputable def mBFadic_correct3_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) : Unit :=
   ()
 
@@ -16890,7 +16921,7 @@ noncomputable def mBFadic_correct3_check {beta : Int}
 
 The negative sentinel `Fopp (boundR r)` is explicitly included in `mBFloat r`.
 This is used to rule out the "all elements are above r" branch in `MinEx`. -/
-theorem mBFadic_correct3 {beta : Int}
+theorem mBFadic_correct3 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     ⦃⌜1 < b.vNum ∧ -b.dExp ≤ (boundR (beta:=beta) radix r).Fexp⌝⦄
     (pure (mBFadic_correct3_check (beta:=beta) b radix r) : Id Unit)
@@ -16914,7 +16945,7 @@ theorem mBFadic_correct3 {beta : Int}
       · exact le_refl _
   · simp [Fopp, FloatSpec.Calc.Operations.Fopp, boundR, boundNat]
 
-noncomputable def mBFadic_correct2_check {beta : Int}
+noncomputable def mBFadic_correct2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) : Unit :=
   ()
 
@@ -16923,7 +16954,7 @@ noncomputable def mBFadic_correct2_check {beta : Int}
 The positive sentinel `boundR r` is explicitly included in `mBFloat r`.  This
 is the dual sentinel used to rule out the "all elements are below r" branch in
 `MaxEx`. -/
-theorem mBFadic_correct2 {beta : Int}
+theorem mBFadic_correct2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     ⦃⌜1 < b.vNum ∧ -b.dExp ≤ (boundR (beta:=beta) radix r).Fexp⌝⦄
     (pure (mBFadic_correct2_check (beta:=beta) b radix r) : Id Unit)
@@ -16947,14 +16978,14 @@ theorem mBFadic_correct2 {beta : Int}
       · exact le_refl _
   · simp [boundR, boundNat]
 
-noncomputable def mBFadic_correct4_check {beta : Int}
+noncomputable def mBFadic_correct4_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `mBFadic_correct4`.
 
 The canonical zero float at exponent `-dExp` is included in `mBFloat r`. -/
-theorem mBFadic_correct4 {beta : Int}
+theorem mBFadic_correct4 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     ⦃⌜1 < b.vNum ∧ -b.dExp ≤ (boundR (beta:=beta) radix r).Fexp⌝⦄
     (pure (mBFadic_correct4_check (beta:=beta) b radix r) : Id Unit)
@@ -16978,7 +17009,7 @@ theorem mBFadic_correct4 {beta : Int}
       · exact hexp_lower
   · rfl
 
-noncomputable def MinEx_check {beta : Int}
+noncomputable def MinEx_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) : Unit :=
   ()
 
@@ -16989,7 +17020,7 @@ Coq-matching float predicate `isMin'`.  The finite-box side condition is
 derived locally: if a bounded candidate lies inside the exponent box it is in
 `mBFloat`; otherwise its nonzero mantissa puts it beyond one of the sentinels,
 while zero is handled by the canonical zero representative in the list. -/
-theorem MinEx {beta : Int}
+theorem MinEx {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < b.vNum ∧
         -b.dExp ≤ (boundR (beta:=beta) radix r).Fexp⌝⦄
@@ -17128,7 +17159,7 @@ theorem MinEx {beta : Int}
         rw [hf_zero]
         simpa [_root_.F2R, FloatSpec.Core.Defs.F2R] using hzero_le_min
 
-noncomputable def MaxEx_check {beta : Int}
+noncomputable def MaxEx_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) : Unit :=
   ()
 
@@ -17139,7 +17170,7 @@ Coq-matching float predicate `isMax'`.  The finite-box side condition is
 derived locally: if a bounded candidate lies inside the exponent box it is in
 `mBFloat`; otherwise its nonzero mantissa puts it beyond the positive sentinel,
 while zero is handled by the canonical zero representative in the list. -/
-theorem MaxEx {beta : Int}
+theorem MaxEx {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < b.vNum ∧
         -b.dExp ≤ (boundR (beta:=beta) radix r).Fexp⌝⦄
@@ -17297,11 +17328,11 @@ structure PffFloat where
 -- Equality of Flocq-style floats by components (Coq: `floatEq`)
 -- We mirror Coq's record equality lemma for the Flocq float record
 -- (with fields `Fnum` and `Fexp`).
-noncomputable def floatEq_check {beta : Int}
+noncomputable def floatEq_check {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem floatEq {beta : Int}
+theorem floatEq {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜p.Fnum = q.Fnum ∧ p.Fexp = q.Fexp⌝⦄
     (pure (floatEq_check p q) : Id Unit)
@@ -17313,11 +17344,11 @@ theorem floatEq {beta : Int}
   cases p; cases q; simp_all
 
 -- Decidability of equality for Core floats (Coq: `floatDec`)
-noncomputable def floatDec_check {beta : Int}
+noncomputable def floatDec_check {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem floatDec {beta : Int}
+theorem floatDec {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (floatDec_check x y) : Id Unit)
@@ -17329,24 +17360,24 @@ theorem floatDec {beta : Int}
   exact eq_or_ne x y
 
 -- Conversion between Pff and Flocq formats
-def pff_to_flocq (beta : Int) (f : PffFloat) : FloatSpec.Core.Defs.FlocqFloat beta :=
+def pff_to_flocq (beta : Int) [ValidRadix beta] (f : PffFloat) : FloatSpec.Core.Defs.FlocqFloat beta :=
   FloatSpec.Core.Defs.FlocqFloat.mk (if f.sign then -f.mantissa else f.mantissa) f.exponent
 
-def flocq_to_pff {beta : Int} (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFloat :=
+def flocq_to_pff {beta : Int} [ValidRadix beta] (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFloat :=
   { mantissa := Int.natAbs f.Fnum,
     exponent := f.Fexp,
     sign := f.Fnum < 0 }
 
 
 -- Zero float at exponent z (Coq: `Fzero`)
-def Fzero (beta : Int) (z : Int) : FloatSpec.Core.Defs.FlocqFloat beta :=
+def Fzero (beta : Int) [ValidRadix beta] (z : Int) : FloatSpec.Core.Defs.FlocqFloat beta :=
   FloatSpec.Core.Defs.FlocqFloat.mk 0 z
 
 -- Coq: `FzeroisReallyZero` — real value of zero float is 0
-noncomputable def FzeroisReallyZero_check {beta : Int} (z : Int) : Unit :=
+noncomputable def FzeroisReallyZero_check {beta : Int} [ValidRadix beta] (z : Int) : Unit :=
   ()
 
-theorem FzeroisReallyZero {beta : Int} (z : Int) :
+theorem FzeroisReallyZero {beta : Int} [ValidRadix beta] (z : Int) :
     ⦃⌜True⌝⦄
     (pure (FzeroisReallyZero_check (beta:=beta) z) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (Fzero beta z) = 0⌝⦄ := by
@@ -17357,11 +17388,11 @@ theorem FzeroisReallyZero {beta : Int} (z : Int) :
   simp [Fzero, _root_.F2R, FloatSpec.Core.Defs.F2R]
 
 -- Coq: `FzeroisZero` — specialized form using a bound's exponent
-noncomputable def FzeroisZero_check {beta : Int}
+noncomputable def FzeroisZero_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) : Unit :=
   ()
 
-theorem FzeroisZero {beta : Int}
+theorem FzeroisZero {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) :
     ⦃⌜True⌝⦄
     (pure (FzeroisZero_check (beta:=beta) b) : Id Unit)
@@ -17373,11 +17404,11 @@ theorem FzeroisZero {beta : Int}
   simp [Fzero, _root_.F2R, FloatSpec.Core.Defs.F2R]
 
 -- Coq: `FboundedFzero` — the zero float is bounded for any bound descriptor
-noncomputable def FboundedFzero_check {beta : Int}
+noncomputable def FboundedFzero_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) : Unit :=
   ()
 
-theorem FboundedFzero {beta : Int}
+theorem FboundedFzero {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) :
     ⦃⌜0 < b.vNum⌝⦄
     (pure (FboundedFzero_check (beta:=beta) b) : Id Unit)
@@ -17389,11 +17420,11 @@ theorem FboundedFzero {beta : Int}
   exact ⟨by simpa [Fzero] using hvNum, le_refl _⟩
 
 -- Coq: `FboundedZeroSameExp` — boundedness preserved when replacing mantissa by zero at same exponent
-noncomputable def FboundedZeroSameExp_check {beta : Int}
+noncomputable def FboundedZeroSameExp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FboundedZeroSameExp {beta : Int}
+theorem FboundedZeroSameExp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
     (pure (FboundedZeroSameExp_check (beta:=beta) b p) : Id Unit)
@@ -17407,11 +17438,11 @@ theorem FboundedZeroSameExp {beta : Int}
   simpa using hvNum
 
 -- Coq: `FBoundedScale` — scaling exponent by natural n preserves boundedness
-noncomputable def FBoundedScale_check {beta : Int}
+noncomputable def FBoundedScale_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Unit :=
   ()
 
-theorem FBoundedScale {beta : Int}
+theorem FBoundedScale {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜Fbounded (beta:=beta) b p⌝⦄
     (pure (FBoundedScale_check (beta:=beta) b p n) : Id Unit)
@@ -17426,11 +17457,11 @@ theorem FBoundedScale {beta : Int}
   omega
 
 -- Coq: `FvalScale` — value after scaling exponent equals multiplication by powerRZ
-noncomputable def FvalScale_check {beta : Int}
+noncomputable def FvalScale_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Unit :=
   ()
 
-theorem FvalScale (beta : Int)
+theorem FvalScale (beta : Int) [ValidRadix beta]
     (b : Fbound_skel) (p : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜(beta : ℝ) ≠ 0⌝⦄
     (pure (FvalScale_check (beta:=beta) b p n) : Id Unit)
@@ -17450,11 +17481,11 @@ theorem FvalScale (beta : Int)
 -- due to the simplified bound skeleton (no vNum field). This preserves
 -- the intent that there exists a bounded float at any exponent z above
 -- the minimal exponent bound.
-noncomputable def maxFbounded_check {beta : Int}
+noncomputable def maxFbounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (z : Int) : Unit :=
   ()
 
-theorem maxFbounded {beta : Int}
+theorem maxFbounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (z : Int) :
     ⦃⌜- b.dExp ≤ z ∧ 1 < b.vNum⌝⦄
     (pure (maxFbounded_check (beta:=beta) b z) : Id Unit)
@@ -17465,11 +17496,11 @@ theorem maxFbounded {beta : Int}
   exact ⟨by simpa [Fbounded] using h.2, h.1⟩
 
 -- Coq: `oppBounded` — boundedness preserved under negation
-noncomputable def oppBounded_check {beta : Int}
+noncomputable def oppBounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem oppBounded {beta : Int}
+theorem oppBounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b x⌝⦄
     (pure (oppBounded_check (beta:=beta) b x) : Id Unit)
@@ -17480,13 +17511,13 @@ theorem oppBounded {beta : Int}
   simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hx
 
 -- Coq: `oppBoundedInv` — boundedness inversion under negation
-noncomputable def oppBoundedInv_check {beta : Int}
+noncomputable def oppBoundedInv_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `oppBoundedInv` — if `Fopp x` is bounded then `x` is bounded.
     Hoare-triple style statement mirroring Pff.v; proof deferred. -/
-theorem oppBoundedInv {beta : Int}
+theorem oppBoundedInv {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b (Fopp x)⌝⦄
     (pure (oppBoundedInv_check (beta:=beta) b x) : Id Unit)
@@ -17497,13 +17528,13 @@ theorem oppBoundedInv {beta : Int}
   simpa [Fbounded, Fopp, FloatSpec.Calc.Operations.Fopp, abs_neg] using hx
 
 -- Coq: `absFBounded` — boundedness preserved under absolute value
-noncomputable def absFBounded_check {beta : Int}
+noncomputable def absFBounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `absFBounded` — if `f` is bounded then `Fabs f` is also bounded.
     Hoare-triple style statement; proof deferred. -/
-theorem absFBounded {beta : Int}
+theorem absFBounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b f⌝⦄
     (pure (absFBounded_check (beta:=beta) b f) : Id Unit)
@@ -17514,13 +17545,13 @@ theorem absFBounded {beta : Int}
   simpa [Fbounded, Fabs, FloatSpec.Calc.Operations.Fabs, Int.natCast_natAbs] using hf
 
 -- Coq: `FboundedEqExp` — transfer boundedness along equal value and exp inequality
-noncomputable def FboundedEqExp_check {beta : Int}
+noncomputable def FboundedEqExp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FboundedEqExp` — if `p` is bounded, `F2R p = F2R q`, and `p.Fexp ≤ q.Fexp`,
     then `q` is bounded. Statement mirrors Pff.v; proof deferred. -/
-theorem FboundedEqExp {beta : Int}
+theorem FboundedEqExp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ Fbounded (beta:=beta) b p ∧
         _root_.F2R p = _root_.F2R q ∧ p.Fexp ≤ q.Fexp⌝⦄
@@ -17568,11 +17599,11 @@ theorem FboundedEqExp {beta : Int}
   · exact le_trans hp.2 hexp
 
 -- Coq: `is_Fzero_rep1` — zero mantissa implies zero real value
-noncomputable def is_Fzero_rep1_check {beta : Int}
+noncomputable def is_Fzero_rep1_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem is_Fzero_rep1 {beta : Int}
+theorem is_Fzero_rep1 {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜is_Fzero x⌝⦄
     (pure (is_Fzero_rep1_check x) : Id Unit)
@@ -17585,11 +17616,11 @@ theorem is_Fzero_rep1 {beta : Int}
   simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hfz]
 
 -- Coq: `is_Fzero_rep2` — zero real value implies zero mantissa
-noncomputable def is_Fzero_rep2_check {beta : Int}
+noncomputable def is_Fzero_rep2_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem is_Fzero_rep2 {beta : Int}
+theorem is_Fzero_rep2 {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ _root_.F2R x = 0⌝⦄
     (pure (is_Fzero_rep2_check x) : Id Unit)
@@ -17601,11 +17632,11 @@ theorem is_Fzero_rep2 {beta : Int}
   exact FloatSpec.Core.Float_prop.eq_0_F2R (beta:=beta) x hβ hx
 
 -- Coq: `NisFzeroComp` — if x is not zero and F2R x = F2R y then y is not zero
-noncomputable def NisFzeroComp_check {beta : Int}
+noncomputable def NisFzeroComp_check {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem NisFzeroComp {beta : Int}
+theorem NisFzeroComp {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ ¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
     (pure (NisFzeroComp_check x y) : Id Unit)
@@ -17626,10 +17657,10 @@ theorem NisFzeroComp {beta : Int}
 -- We mirror the Coq statement Fle_Zle: n1 ≤ n2 → Fle (Float n1 d) (Float n2 d)
 -- Our Pff compatibility struct `PffFloat` uses fields (mantissa, exponent, sign).
 -- We state an analogous lemma at the level of reals via `F2R ∘ pff_to_flocq`.
-noncomputable def Fle_Zle_check (beta : Int) (n1 n2 d : Int) : Unit :=
+noncomputable def Fle_Zle_check (beta : Int) [ValidRadix beta] (n1 n2 d : Int) : Unit :=
   ()
 
-theorem Fle_Zle (beta : Int) (n1 n2 d : Int) :
+theorem Fle_Zle (beta : Int) [ValidRadix beta] (n1 n2 d : Int) :
     ⦃⌜1 < beta ∧ n1 ≤ n2⌝⦄
     (pure (Fle_Zle_check beta n1 n2 d) : Id Unit)
     ⦃⇓_ => ⌜_root_.F2R (pff_to_flocq beta { mantissa := n1, exponent := d, sign := false })
@@ -17646,11 +17677,11 @@ theorem Fle_Zle (beta : Int) (n1 n2 d : Int) :
   exact mul_le_mul_of_nonneg_right (by exact_mod_cast hn) hp
 
 -- Coq: `Rlt_Fexp_eq_Zlt` — if x < y and Fexp x = Fexp y then Fnum x < Fnum y
-noncomputable def Rlt_Fexp_eq_Zlt_check {beta : Int}
+noncomputable def Rlt_Fexp_eq_Zlt_check {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Rlt_Fexp_eq_Zlt {beta : Int}
+theorem Rlt_Fexp_eq_Zlt {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ _root_.F2R x < _root_.F2R y ∧ x.Fexp = y.Fexp⌝⦄
     (pure (Rlt_Fexp_eq_Zlt_check (beta:=beta) x y) : Id Unit)
@@ -17669,11 +17700,11 @@ theorem Rlt_Fexp_eq_Zlt {beta : Int}
   exact_mod_cast hreal
 
 -- Coq: `Fopp_correct` — float negation corresponds to real negation
-noncomputable def Fopp_correct_check {beta : Int}
+noncomputable def Fopp_correct_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fopp_correct {beta : Int}
+theorem Fopp_correct {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fopp_correct_check (beta:=beta) x) : Id Unit)
@@ -17685,7 +17716,7 @@ theorem Fopp_correct {beta : Int}
   simp [_root_.F2R, FloatSpec.Core.Defs.F2R, FloatSpec.Calc.Operations.Fopp, neg_mul]
 
 -- Coq: `RoundAbsMonotoner` — absolute upper bounds are preserved by rounding
-noncomputable def RoundAbsMonotoner_check {beta : Int}
+noncomputable def RoundAbsMonotoner_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q r : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -17694,7 +17725,7 @@ noncomputable def RoundAbsMonotoner_check {beta : Int}
 /-- Coq: `RoundAbsMonotoner` — if `|p|` is bounded above by a bounded float
 `r`, then any rounded result `q` of `p` is also bounded by `r` in absolute
 value. -/
-theorem RoundAbsMonotoner {beta : Int}
+theorem RoundAbsMonotoner {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q r : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -17779,7 +17810,7 @@ theorem RoundAbsMonotoner {beta : Int}
         _ ≤ _root_.F2R (beta:=beta) r := by linarith
 
 -- Coq: `RoundAbsMonotonel` — absolute lower bounds are preserved by rounding
-noncomputable def RoundAbsMonotonel_check {beta : Int}
+noncomputable def RoundAbsMonotonel_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q r : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -17787,7 +17818,7 @@ noncomputable def RoundAbsMonotonel_check {beta : Int}
 
 /-- Coq: `RoundAbsMonotonel` — if a bounded float `r` is below `|p|`, then it
 is also below the absolute value of any rounded result `q` of `p`. -/
-theorem RoundAbsMonotonel {beta : Int}
+theorem RoundAbsMonotonel {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q r : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -17869,7 +17900,7 @@ theorem RoundAbsMonotonel {beta : Int}
         _root_.F2R (beta:=beta) r ≤ -_root_.F2R (beta:=beta) q := by linarith
         _ = |_root_.F2R (beta:=beta) q| := (abs_of_nonpos hq_le_zero).symm
 
-noncomputable def pGeUnderf_check {beta : Int}
+noncomputable def pGeUnderf_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (b p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -17879,8 +17910,8 @@ noncomputable def pGeUnderf_check {beta : Int}
 In the nonzero branch of the first discriminant underflow hypothesis, the
 rounded value `p` of `b*b` inherits the displayed lower magnitude bound by
 absolute-value monotonicity of the even-closest rounding mode. -/
-theorem pGeUnderf {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem pGeUnderf {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (b p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 0 < precision ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -17950,7 +17981,7 @@ theorem pGeUnderf {beta : Int}
       hmono ⟨hRounded, hwitnessBound, hpRound, hwitnessLe⟩
   simpa [hwitnessVal, e] using hres
 
-noncomputable def qGeUnderf_check {beta : Int}
+noncomputable def qGeUnderf_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a c q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -17960,8 +17991,8 @@ noncomputable def qGeUnderf_check {beta : Int}
 Symmetric underflow branch for the rounded product `a*c`: when the exact
 product is nonzero, the rounded value `q` inherits the lower magnitude bound
 from the second underflow hypothesis. -/
-theorem qGeUnderf {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem qGeUnderf {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a c q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 0 < precision ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -18032,11 +18063,11 @@ theorem qGeUnderf {beta : Int}
   simpa [hwitnessVal, e] using hres
 
 -- Coq: `Fplus_correct` — float addition corresponds to real addition
-noncomputable def Fplus_correct_check {beta : Int}
+noncomputable def Fplus_correct_check {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fplus_correct {beta : Int}
+theorem Fplus_correct {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta⌝⦄
     (pure (Fplus_correct_check (beta:=beta) x y) : Id Unit)
@@ -18049,11 +18080,11 @@ theorem Fplus_correct {beta : Int}
   simpa [Fplus, _root_.F2R] using h
 
 -- Coq: `Fminus_correct` — float subtraction corresponds to real subtraction
-noncomputable def Fminus_correct_check {beta : Int}
+noncomputable def Fminus_correct_check {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fminus_correct {beta : Int}
+theorem Fminus_correct {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta⌝⦄
     (pure (Fminus_correct_check (beta:=beta) x y) : Id Unit)
@@ -18068,11 +18099,11 @@ theorem Fminus_correct {beta : Int}
   simpa [_root_.F2R] using h
 
 -- Coq: `Fmult_correct` — float multiplication corresponds to real multiplication
-noncomputable def Fmult_correct_check {beta : Int}
+noncomputable def Fmult_correct_check {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fmult_correct {beta : Int}
+theorem Fmult_correct {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta⌝⦄
     (pure (Fmult_correct_check (beta:=beta) x y) : Id Unit)
@@ -18085,11 +18116,11 @@ theorem Fmult_correct {beta : Int}
   simpa [_root_.F2R, wp, PostCond.noThrow, pure] using h hβ
 
 -- Coq: `Fopp_Fopp` — involutive property of float negation
-noncomputable def Fopp_Fopp_check {beta : Int}
+noncomputable def Fopp_Fopp_check {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fopp_Fopp {beta : Int}
+theorem Fopp_Fopp {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fopp_Fopp_check (beta:=beta) p) : Id Unit)
@@ -18101,7 +18132,7 @@ theorem Fopp_Fopp {beta : Int}
   cases p
   simp [Fopp, FloatSpec.Calc.Operations.Fopp]
 
-noncomputable def MinOrMax_Fopp_check {beta : Int}
+noncomputable def MinOrMax_Fopp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (x : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -18110,7 +18141,7 @@ noncomputable def MinOrMax_Fopp_check {beta : Int}
 
 Negating both the real target and the float swaps lower and upper witnesses;
 double negation returns the original float. -/
-theorem MinOrMax_Fopp {beta : Int}
+theorem MinOrMax_Fopp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (x : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜MinOrMax (beta:=beta) b radix (-x) (Fopp (beta:=beta) f)⌝⦄
@@ -18148,11 +18179,11 @@ theorem MinOrMax_Fopp {beta : Int}
     simpa [hDouble] using hMinDouble
 
 -- Coq: `Fopp_Fminus` — negation of a subtraction swaps the operands
-noncomputable def Fopp_Fminus_check {beta : Int}
+noncomputable def Fopp_Fminus_check {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fopp_Fminus {beta : Int}
+theorem Fopp_Fminus {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fopp_Fminus_check (beta:=beta) p q) : Id Unit)
@@ -18182,11 +18213,11 @@ theorem Fopp_Fminus {beta : Int}
           add_comm]
 
 -- Coq: `Fdigit_opp` — digit invariant under negation
-noncomputable def Fdigit_opp_check {beta : Int}
+noncomputable def Fdigit_opp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fdigit_opp {beta : Int}
+theorem Fdigit_opp {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fdigit_opp_check (beta:=beta) radix x) : Id Unit)
@@ -18201,11 +18232,11 @@ theorem Fdigit_opp {beta : Int}
     exact digit_neg radix m
 
 -- Coq: `Fopp_Fminus_dist` — negation distributes over subtraction
-noncomputable def Fopp_Fminus_dist_check {beta : Int}
+noncomputable def Fopp_Fminus_dist_check {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fopp_Fminus_dist {beta : Int}
+theorem Fopp_Fminus_dist {beta : Int} [ValidRadix beta]
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fopp_Fminus_dist_check (beta:=beta) p q) : Id Unit)
@@ -18238,14 +18269,14 @@ We introduce Coq's `SterbenzAux` in the project's Hoare-triple style. It uses
 the local `Fbounded` predicate and `Fminus` operation available in this file.
 -/
 
-noncomputable def SterbenzAux_check {beta : Int}
+noncomputable def SterbenzAux_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `SterbenzAux` — if `x` and `y` are bounded in the same bound `b` and
     satisfy `F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded in `b`. -/
-theorem SterbenzAux {beta : Int}
+theorem SterbenzAux {beta : Int} [ValidRadix beta]
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧
@@ -18344,14 +18375,14 @@ theorem SterbenzAux {beta : Int}
       exact hyBounded.2
 
 -- Coq: `Sterbenz` — symmetric bound version using 1/2 ≤ x/y ≤ 2
-noncomputable def Sterbenz_check {beta : Int}
+noncomputable def Sterbenz_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `Sterbenz` — if `x` and `y` are bounded in the same bound `b` and
     satisfy `1/2 * F2R y ≤ F2R x ≤ 2 * F2R y`, then `Fminus x y` is bounded. -/
-theorem Sterbenz {beta : Int}
+theorem Sterbenz {beta : Int} [ValidRadix beta]
     (b : Fbound_skel)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧
@@ -18416,7 +18447,7 @@ stack; the remaining upstream work is to restore `ErrorBoundedIplus` and
 In the upstream Fast2Sum section, subtraction is defined through addition with
 an opposite operand.  This restores the corresponding closest-rounding payload
 for the abstract `Iminus` operation. -/
-theorem IminusCorrect {beta : Int}
+theorem IminusCorrect {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18453,7 +18484,7 @@ theorem IminusCorrect {beta : Int}
   simpa [hqVal, sub_eq_add_neg] using hclosest
 
 /-- Coq: `IplusBounded`. -/
-theorem IplusBounded {beta : Int}
+theorem IplusBounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18474,7 +18505,7 @@ theorem IplusBounded {beta : Int}
   exact (IplusCorrect p q hp hq).1
 
 /-- Coq: `IminusBounded`. -/
-theorem IminusBounded {beta : Int}
+theorem IminusBounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18502,7 +18533,7 @@ theorem IminusBounded {beta : Int}
 
 If the right operand represents zero, closest rounding of `p + q` returns a
 float with the same real value as `p`. -/
-theorem IplusOr {beta : Int}
+theorem IplusOr {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18539,7 +18570,7 @@ theorem IplusOr {beta : Int}
 
 If the two operands have the same real value, the abstract subtraction returns a
 float with real value zero. -/
-theorem IminusId {beta : Int}
+theorem IminusId {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18589,7 +18620,7 @@ theorem IminusId {beta : Int}
 If `pq` is a bounded exact representation of `p + q`, then the abstract
 closest addition `Iplus p q` has the same real value as the supplied result
 `r`. -/
-theorem IplusCorrectEq {beta : Int}
+theorem IplusCorrectEq {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18627,7 +18658,7 @@ theorem IplusCorrectEq {beta : Int}
 
 If `pq` is a bounded exact representation of `p - q`, then the abstract
 subtraction `Iminus p q` has the same real value as the supplied result `r`. -/
-theorem IminusCorrectEq {beta : Int}
+theorem IminusCorrectEq {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18670,7 +18701,7 @@ theorem IminusCorrectEq {beta : Int}
 
 The upstream Fast section derives the left-zero case for abstract rounded
 addition from commutativity and `IplusOr`. -/
-theorem IplusOl {beta : Int}
+theorem IplusOl {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18703,7 +18734,7 @@ theorem IplusOl {beta : Int}
 
 Subtraction is addition with an opposite operand, so compatibility of
 `Iplus` with `Fopp` transfers to `Iminus`. -/
-theorem IminusOp {beta : Int}
+theorem IminusOp {beta : Int} [ValidRadix beta]
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
         FloatSpec.Core.Defs.FlocqFloat beta →
@@ -18722,7 +18753,7 @@ theorem IminusOp {beta : Int}
   rw [IminusPlus, IminusPlus]
   exact IplusOp p (Fopp (beta:=beta) q)
 
-noncomputable def eqExpLess_from_bounded_left_check {beta : Int}
+noncomputable def eqExpLess_from_bounded_left_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
@@ -18731,7 +18762,7 @@ noncomputable def eqExpLess_from_bounded_left_check {beta : Int}
 This is the useful payload of Coq `eqExpLess`: if a bounded float `p` has the
 same real value as `q`, then that real value has a bounded representative whose
 exponent is at least `q.Fexp`. -/
-theorem eqExpLess_from_bounded_left {beta : Int}
+theorem eqExpLess_from_bounded_left {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ Fbounded (beta:=beta) b p ∧
         _root_.F2R (beta:=beta) p = _root_.F2R (beta:=beta) q⌝⦄
@@ -18753,7 +18784,7 @@ theorem eqExpLess_from_bounded_left {beta : Int}
         ULift.up_down] using h ⟨hbeta, hpBounded, hpq, hp_exp_le⟩
     exact ⟨q, hqBounded, rfl, le_rfl⟩
 
-noncomputable def plusExpMin_check {beta : Int}
+noncomputable def plusExpMin_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -18764,8 +18795,8 @@ noncomputable def plusExpMin_check {beta : Int}
 The local Lean statement uses the float-specific rounded-mode pieces explicitly:
 `MinOrMaxP_float` supplies boundedness of `pq`, while the representation
 payload is the same one used by `RoundedModeRep_float_from_minmax`. -/
-theorem plusExpMin {beta : Int}
-    (b : Fbound_skel) (radix : Int)
+theorem plusExpMin {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -18830,7 +18861,7 @@ theorem plusExpMin {beta : Int}
   · rw [hsValRep, ← hrep_val]
   · simpa [rep, hplus_exp] using hrepExpLe
 
-noncomputable def plusExpUpperBound_check {beta : Int}
+noncomputable def plusExpUpperBound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -18843,8 +18874,8 @@ this file.  It bounds the exact sum by the canonical maximal float at exponent
 `succ (max p.Fexp q.Fexp)`, transfers that bound through rounding, then uses
 `eqExpMax` to obtain a same-value bounded representative at no larger
 exponent. -/
-theorem plusExpUpperBound {beta : Int}
-    (b : Fbound_skel) (radix : Int)
+theorem plusExpUpperBound {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < b.vNum ∧
@@ -18966,7 +18997,7 @@ theorem plusExpUpperBound {beta : Int}
         ULift.up_down] using hb ⟨hRounded, hRoundedFloat.2.2.1, hP⟩,
       hupperBounded, hpqAbsLeUpper⟩
 
-noncomputable def plusExpBound_check {beta : Int}
+noncomputable def plusExpBound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -18978,8 +19009,8 @@ This combines `plusExpMin` and `plusExpUpperBound`.  If the lower-exponent
 representative already satisfies the upper exponent bound, use it directly.
 Otherwise shift that representative down to the upper bound; boundedness follows
 by comparing against the upper-bound representative with the same real value. -/
-theorem plusExpBound {beta : Int}
-    (b : Fbound_skel) (radix : Int)
+theorem plusExpBound {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix]
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < b.vNum ∧
@@ -19104,7 +19135,7 @@ The upstream proof first obtains a representation of `pq` at the exponent of
 `Fplus p q`.  This lemma restores the remaining arithmetic and boundedness
 payload from that representation, leaving only the representation-producing
 rounded-mode step for the closed theorem. -/
-theorem errorBoundedPlusLe_from_rep {beta : Int}
+theorem errorBoundedPlusLe_from_rep {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ Fbounded (beta:=beta) bo p ∧ Fbounded (beta:=beta) bo q ∧
@@ -19281,7 +19312,7 @@ Upstream `ErrorBoundedIplus` is a direct specialization of the global
 `errorBoundedPlus` theorem to the abstract addition operation `Iplus`.  This
 lemma restores that specialization once the global closest-plus error payload is
 available, without pretending that the global theorem has already been ported. -/
-theorem ErrorBoundedIplus_from_errorBoundedPlus {beta : Int}
+theorem ErrorBoundedIplus_from_errorBoundedPlus {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19324,7 +19355,7 @@ theorem ErrorBoundedIplus_from_errorBoundedPlus {beta : Int}
 
 The Fast-section theorem is the abstract `Iplus` specialization of the global
 closest-plus error bound. -/
-theorem ErrorBoundedIplus {beta : Int}
+theorem ErrorBoundedIplus {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19360,7 +19391,7 @@ theorem ErrorBoundedIplus {beta : Int}
   ErrorBoundedIplus_from_errorBoundedPlus (beta:=beta) bo radix Iplus
     IplusCorrect errorBoundedPlus
 
-theorem MDekkerAux1_from_payload {beta : Int}
+theorem MDekkerAux1_from_payload {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19416,7 +19447,7 @@ payload.
 This removes the manual error-witness and second-closest hypotheses from
 `MDekkerAux1_from_payload`; the only algorithmic premise left is the first
 subtraction exactness premise, exactly as in the upstream lemma. -/
-theorem MDekkerAux1_from_errorBoundedPlus {beta : Int}
+theorem MDekkerAux1_from_errorBoundedPlus {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19479,7 +19510,7 @@ theorem MDekkerAux1_from_errorBoundedPlus {beta : Int}
 Fast-section reconstruction of the second Dekker subtraction.  The global
 closest-plus error bound is explicit in Lean through `errorBoundedPlus`; the
 runtime premise is the same first-subtraction exactness used upstream. -/
-theorem MDekkerAux1 {beta : Int}
+theorem MDekkerAux1 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19525,7 +19556,7 @@ theorem MDekkerAux1 {beta : Int}
 If the abstract rounded addition is exact, then the first abstract subtraction
 is exact as well.  This is one of the upstream Fast-section support lemmas used
 on the path to `MDekker`/`Dekker_FTS`. -/
-theorem MDekkerAux2 {beta : Int}
+theorem MDekkerAux2 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19583,7 +19614,7 @@ theorem MDekkerAux2 {beta : Int}
 
 If the exact float addition `Fplus p q` is bounded, the abstract rounded
 addition is exact by closest-rounding idempotence, so `MDekkerAux2` applies. -/
-theorem MDekkerAux3 {beta : Int}
+theorem MDekkerAux3 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19638,7 +19669,7 @@ theorem MDekkerAux3 {beta : Int}
 
 If the exact float subtraction `(Iplus p q) - p` is bounded, the abstract
 subtraction is exact by closest-rounding idempotence. -/
-theorem MDekkerAux4 {beta : Int}
+theorem MDekkerAux4 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19708,7 +19739,7 @@ The upstream proof of `Dekker1_FTS` first proves that
 `Fminus (Iplus p q) p` is bounded by Sterbenz, using rounded-mode inequalities
 to establish the two real bounds below.  This lemma restores the exactness
 payload once those Sterbenz bounds are available. -/
-theorem Dekker1_FTS_from_sterbenz_bounds {beta : Int}
+theorem Dekker1_FTS_from_sterbenz_bounds {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19754,7 +19785,7 @@ theorem Dekker1_FTS_from_sterbenz_bounds {beta : Int}
 This restores the upstream nonnegative `0 <= q <= p` case.  The Coq section
 has binary radix fixed globally; here the binary alignment and closest totality
 used by `ClosestRoundedModeP` are explicit section hypotheses. -/
-theorem Dekker1_FTS {beta : Int}
+theorem Dekker1_FTS {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19871,7 +19902,7 @@ theorem Dekker1_FTS {beta : Int}
 Upstream proves this boundedness by rewriting addition as subtraction from
 `Fopp q` and applying Sterbenz.  Once that boundedness is available,
 `MDekkerAux3` gives the exact first subtraction. -/
-theorem Dekker2_FTS_from_Fplus_bounded {beta : Int}
+theorem Dekker2_FTS_from_Fplus_bounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19905,7 +19936,7 @@ This ports the Sterbenz part of the upstream proof in the case
 `0 <= p`, `-q <= p`, and `p <= 2 * -q`.  The Coq section fixes
 `radix := 2`; the equality is explicit here because the surrounding Lean
 section is parameterized over the real rounding radix. -/
-theorem Dekker2_FTS {beta : Int}
+theorem Dekker2_FTS {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -19984,7 +20015,7 @@ theorem Dekker2_FTS {beta : Int}
 As for `Dekker1_FTS`, the upstream proof spends its work deriving this
 boundedness from rounded-mode and Sterbenz facts; exactness then follows from
 `MDekkerAux4`. -/
-theorem Dekker3_FTS_from_Fminus_bounded {beta : Int}
+theorem Dekker3_FTS_from_Fminus_bounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20020,7 +20051,7 @@ The upstream proof obtains the witness for `FmultRadixInv` from
 payload: once that bounded half-step witness is available, the lower Sterbenz
 inequality follows from `FmultRadixInv`, the upper one from rounded-mode
 monotonicity, and the exactness step is `MDekkerAux4`. -/
-theorem Dekker3_from_half_witness {beta : Int}
+theorem Dekker3_from_half_witness {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20139,7 +20170,7 @@ This removes the arbitrary midpoint witness from `Dekker3_from_half_witness`.
 The remaining upstream work for the same-name theorem is to construct these
 `min`/`max` extrema and the `div2IsBetween` equality from the section
 assumptions. -/
-theorem Dekker3_from_extrema {beta : Int}
+theorem Dekker3_from_extrema {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20256,7 +20287,7 @@ This restores the third Sterbenz case under the explicit Pff section
 assumptions needed in Lean to construct the midpoint extrema used by
 `FmultRadixInv`: precision is nonzero, `vNum = beta^precision`, and the
 `boundR` exponent box contains the midpoint `p/2`. -/
-theorem Dekker3 {beta : Int}
+theorem Dekker3 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20377,7 +20408,7 @@ theorem Dekker3 {beta : Int}
 
 Exactness for the opposite operands transfers back to the original operands
 through the `IplusOp` compatibility of abstract addition with float negation. -/
-theorem MDekkerAux5 {beta : Int}
+theorem MDekkerAux5 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20464,7 +20495,7 @@ The upstream theorem is mostly a real-arithmetic case split over signs and the
 relative magnitude of `p` and `q`, delegating exactness to `Dekker1_FTS`,
 `Dekker2_FTS`, `Dekker3`, and using `MDekkerAux5` for the negative-`p`
 symmetry branch. -/
-theorem MDekker_from_case_payloads {beta : Int}
+theorem MDekker_from_case_payloads {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20588,7 +20619,7 @@ This is the Fast-section case split from upstream Flocq, packaged through the
 already restored Lean case lemmas.  The section hypotheses that Lean currently
 needs to construct the `Dekker3` midpoint extrema remain explicit here; they
 are infrastructure obligations, not proof payloads for the final equality. -/
-theorem MDekker {beta : Int}
+theorem MDekker {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20655,7 +20686,7 @@ closest-plus error representation needed by `MDekkerAux1`.  The remaining
 global `errorBoundedPlus` theorem is still an explicit premise; once that
 upstream theorem is ported, this statement can be closed to the original Fast
 section context. -/
-theorem Dekker_FTS {beta : Int}
+theorem Dekker_FTS {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -20726,11 +20757,11 @@ theorem Dekker_FTS {beta : Int}
     IplusCorrect IminusPlus errorBoundedPlus p q hp hq hFirstExact
 
 -- Coq: `Fdigit_abs` — digit invariant under absolute value
-noncomputable def Fdigit_abs_check {beta : Int}
+noncomputable def Fdigit_abs_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fdigit_abs {beta : Int}
+theorem Fdigit_abs {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fdigit_abs_check (beta:=beta) radix x) : Id Unit)
@@ -20751,11 +20782,11 @@ theorem Fdigit_abs {beta : Int}
     exact h
 
 -- Coq: `Fabs_correct1` — if 0 ≤ F2R x then F2R (Fabs x) = F2R x
-noncomputable def Fabs_correct1_check {beta : Int}
+noncomputable def Fabs_correct1_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fabs_correct1 {beta : Int}
+theorem Fabs_correct1 {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ 0 ≤ _root_.F2R x⌝⦄
     (pure (Fabs_correct1_check (beta:=beta) x) : Id Unit)
@@ -20772,11 +20803,11 @@ theorem Fabs_correct1 {beta : Int}
       Int.natAbs_of_nonneg hnum]
 
 -- Coq: `Fabs_correct2` — if F2R x ≤ 0 then F2R (Fabs x) = - F2R x
-noncomputable def Fabs_correct2_check {beta : Int}
+noncomputable def Fabs_correct2_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fabs_correct2 {beta : Int}
+theorem Fabs_correct2 {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ _root_.F2R x ≤ 0⌝⦄
     (pure (Fabs_correct2_check (beta:=beta) x) : Id Unit)
@@ -20793,11 +20824,11 @@ theorem Fabs_correct2 {beta : Int}
     _ = - _root_.F2R x := hxabs
 
 -- Coq: `Fabs_correct` — F2R (Fabs x) = |F2R x|
-noncomputable def Fabs_correct_check {beta : Int}
+noncomputable def Fabs_correct_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fabs_correct {beta : Int}
+theorem Fabs_correct {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta⌝⦄
     (pure (Fabs_correct_check (beta:=beta) x) : Id Unit)
@@ -20810,11 +20841,11 @@ theorem Fabs_correct {beta : Int}
   simpa [Fabs, _root_.F2R] using habs
 
 -- Coq: `RleFexpFabs` — for nonzero real value, Float 1 (Fexp p) ≤ Fabs p
-noncomputable def RleFexpFabs_check {beta : Int}
+noncomputable def RleFexpFabs_check {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem RleFexpFabs {beta : Int}
+theorem RleFexpFabs {beta : Int} [ValidRadix beta]
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ _root_.F2R p ≠ 0⌝⦄
     (pure (RleFexpFabs_check (beta:=beta) p) : Id Unit)
@@ -20840,11 +20871,11 @@ theorem RleFexpFabs {beta : Int}
   simpa using mul_le_mul_of_nonneg_right hmant hp_pow
 
 -- Coq: `Fabs_Fzero` — nonzero stays nonzero under absolute value
-noncomputable def Fabs_Fzero_check {beta : Int}
+noncomputable def Fabs_Fzero_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fabs_Fzero {beta : Int}
+theorem Fabs_Fzero {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜¬ is_Fzero x⌝⦄
     (pure (Fabs_Fzero_check (beta:=beta) x) : Id Unit)
@@ -20860,10 +20891,10 @@ theorem Fabs_Fzero {beta : Int}
 
 -- Compatibility operations
 -- pff_add: Add two PffFloats by converting through FlocqFloat and using Calc.Operations.Fplus
-def pff_add (beta : Int) (x y : PffFloat) : PffFloat :=
+def pff_add (beta : Int) [ValidRadix beta] (x y : PffFloat) : PffFloat :=
   flocq_to_pff (FloatSpec.Calc.Operations.Fplus beta (pff_to_flocq beta x) (pff_to_flocq beta y))
 
-def pff_mul (beta : Int) (x y : PffFloat) : PffFloat :=
+def pff_mul (beta : Int) [ValidRadix beta] (x y : PffFloat) : PffFloat :=
   flocq_to_pff (FloatSpec.Calc.Operations.Fmult beta (pff_to_flocq beta x) (pff_to_flocq beta y))
 
 -- Error bounds compatibility
@@ -20905,11 +20936,11 @@ noncomputable def maxDiv (radix : Int) (v : Int) : Nat → Nat
 -- representation; a duplicate definition existed later, so keep only this one.
 
 -- Coq: `FshiftFdigit` — ~is_Fzero x -> Fdigit (Fshift n x) = Fdigit x + n
-noncomputable def FshiftFdigit_check {beta : Int}
+noncomputable def FshiftFdigit_check {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FshiftFdigit {beta : Int}
+theorem FshiftFdigit {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < radix ∧ ¬ is_Fzero x⌝⦄
     (pure (FshiftFdigit_check (beta:=beta) radix n x) : Id Unit)
@@ -20942,11 +20973,11 @@ theorem FshiftFdigit {beta : Int}
   simp
 
 -- Coq: `FshiftCorrect` — shifting does not change the real value
-noncomputable def FshiftCorrect_check {beta : Int}
+noncomputable def FshiftCorrect_check {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FshiftCorrect {beta : Int}
+theorem FshiftCorrect {beta : Int} [ValidRadix beta]
     (radix : Int) (n : Nat) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix⌝⦄
     (pure (FshiftCorrect_check (beta:=beta) radix n x) : Id Unit)
@@ -20974,7 +21005,7 @@ theorem FshiftCorrect {beta : Int}
   ring_nf
   trivial
 
-noncomputable def FSuccZleEq_check {beta : Int}
+noncomputable def FSuccZleEq_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -20982,8 +21013,8 @@ noncomputable def FSuccZleEq_check {beta : Int}
 /-- Coq: `FSuccZleEq` — if `q` has exponent no smaller than `p`, and lies in
 the half-open interval `[p, FSucc p)`, then `p` and `q` have the same real
 value. -/
-theorem FSuccZleEq {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FSuccZleEq {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -21182,7 +21213,7 @@ The proof follows Flocq's argument.  If `min = p/2`, `min` itself is the
 residual.  Otherwise `eqExpMax` aligns `min` to the exponent of `p`, and
 `FboundNext` supplies the bounded successor; minimality of `min` forces that
 successor to be exactly `p - min`. -/
-theorem PminPos {beta : Int}
+theorem PminPos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p min : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -21354,7 +21385,7 @@ theorem PminPos {beta : Int}
       Int.cast_one]
     ring
 
-noncomputable def ExactMinusInterval_sterbenz_case_check {beta : Int}
+noncomputable def ExactMinusInterval_sterbenz_case_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel)
     (p r : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -21364,7 +21395,7 @@ noncomputable def ExactMinusInterval_sterbenz_case_check {beta : Int}
 When `0 <= p <= r <= 2*p`, the exact difference `r - p` is represented by
 `Fminus r p` and remains bounded.  This is the easy branch used before the
 upstream predecessor-interval induction takes over for the `2*p < r` case. -/
-theorem ExactMinusInterval_sterbenz_case {beta : Int}
+theorem ExactMinusInterval_sterbenz_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel)
     (p r : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧
@@ -21402,7 +21433,7 @@ if either the upper interval endpoint `q` or the requested point `r` is at most
 `2*p`, then `r - p` is represented by `Fminus r p`.  The only remaining
 premise is exactly the hard predecessor-induction branch
 `2*p < q` and `2*p < r`. -/
-theorem ExactMinusIntervalAux1_from_hard_branch {beta : Int}
+theorem ExactMinusIntervalAux1_from_hard_branch {beta : Int} [ValidRadix beta]
     (b : Fbound_skel)
     (p q r : FloatSpec.Core.Defs.FlocqFloat beta)
     (hHard :
@@ -21454,7 +21485,7 @@ induction from the upper endpoint `q`.  This theorem packages that induction
 using the restored `FinductNeg`; the remaining premise is exactly the local
 predecessor step that turns a representation of `r - p` into one for
 `FPred r - p`. -/
-theorem ExactMinusIntervalAux_from_pred_step {beta : Int}
+theorem ExactMinusIntervalAux_from_pred_step {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hStep :
@@ -21514,7 +21545,7 @@ The upstream proof applies `FinductNeg` to the predicate
 the Coq proof: the predecessor step only has to handle the hard branch
 `2*p < FPred r`; the boundary `FPred r <= 2*p` belongs to
 `ExactMinusIntervalAux1`/Sterbenz rather than this induction step. -/
-theorem ExactMinusIntervalAux_from_hard_pred_step {beta : Int}
+theorem ExactMinusIntervalAux_from_hard_pred_step {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hStep :
@@ -21581,7 +21612,7 @@ When the predecessor has moved back into the Sterbenz range
 `p <= FPred r <= 2*p`, exactness of `FPred r - p` is immediate.  The
 remaining predecessor-step work is therefore the strictly-above-boundary case.
 -/
-theorem ExactMinusIntervalAux_pred_sterbenz_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_sterbenz_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -21607,7 +21638,7 @@ theorem ExactMinusIntervalAux_pred_sterbenz_case {beta : Int}
     hTrip ⟨hβ, hpBound, hpredBound, hpNonneg, hpLePred, hpredLe⟩
 
 -- Coq: `minusRoundRep`
-noncomputable def minusRoundRep_check {beta : Int}
+noncomputable def minusRoundRep_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q qmp _qmmp : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -21621,7 +21652,7 @@ payload is split across `RoundedModeP_full` (projector/monotone facts) and
 `RoundedModeP_float` (min-or-max/boundedness facts), so both packages are
 carried explicitly; the remaining radix/precision hypotheses are the section
 facts required by `MinEx`, `MaxEx`, and `PminPos`. -/
-theorem minusRoundRep {beta : Int}
+theorem minusRoundRep {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q qmp _qmmp : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -21803,7 +21834,7 @@ theorem minusRoundRep {beta : Int}
 /-- Coq: `FnormalizeCorrect` — the normalized float represents the same real
 value as the original.  The Lean port states explicitly that the `F2R` base
 `beta` is the Flocq section radix. -/
-theorem FnormalizeCorrect {beta : Int}
+theorem FnormalizeCorrect {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix⌝⦄
@@ -21827,8 +21858,8 @@ theorem FnormalizeCorrect {beta : Int}
 
 For a bounded float whose normalized representative is normal, its ulp is
 bounded by the magnitude of the value times `radix^(1 - precision)`. -/
-theorem FulpLe2 {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
+theorem FulpLe2 {beta : Int} [ValidRadix beta]
+    (radix : Int) [ValidRadix radix] (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fnormal (beta:=beta) radix b
@@ -21932,7 +21963,7 @@ theorem FulpLe2 {beta : Int}
   simpa [Fulp, nf, hcorr] using hmain
 
 /-- Coq: `FnormalizeBounded` — normalization preserves boundedness. -/
-theorem FnormalizeBounded {beta : Int}
+theorem FnormalizeBounded {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded' b p ∧
@@ -21998,7 +22029,7 @@ theorem FnormalizeBounded {beta : Int}
         exact le_trans (by exact_mod_cast hmin_le) (le_of_eq hnat_eq)
       omega
 
-private lemma Fdigit_pos_of_nonzero {beta : Int}
+private lemma Fdigit_pos_of_nonzero {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hradix : 1 < radix) (hp_nonzero : p.Fnum ≠ 0) :
     0 < Fdigit (beta:=beta) radix p := by
@@ -22016,7 +22047,7 @@ private lemma Fdigit_pos_of_nonzero {beta : Int}
     exact hgt
   exact_mod_cast hpos_int
 
-private lemma Fdigit_less_abs {beta : Int}
+private lemma Fdigit_less_abs {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hradix : 1 < radix) (hp_nonzero : p.Fnum ≠ 0) :
     Zpower_nat radix (Nat.pred (Fdigit (beta:=beta) radix p)) ≤ |p.Fnum| := by
@@ -22042,7 +22073,7 @@ private lemma Fdigit_less_abs {beta : Int}
     exact hpred_cast.symm
   simpa [Zpower_nat, d, hpred] using hbounds.1
 
-private lemma abs_lt_Fdigit_pow {beta : Int}
+private lemma abs_lt_Fdigit_pow {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hradix : 1 < radix) :
     |p.Fnum| < Zpower_nat radix (Fdigit (beta:=beta) radix p) := by
@@ -22064,7 +22095,7 @@ private lemma abs_lt_Fdigit_pow {beta : Int}
 
 The Lean statement makes the usual Pff section hypotheses explicit, matching
 the already restored `FnormalizeBounded` theorem. -/
-theorem FnormalizeCanonic {beta : Int}
+theorem FnormalizeCanonic {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded' b p ∧
@@ -22229,7 +22260,7 @@ The Axpy estimates need a bound that also covers the subnormal normalized
 representative. In the normal case this is `FulpLe2`; in the subnormal case
 `Fulp` is the boundary exponent `radix^(-dExp)`, so the additional nonnegative
 term closes the estimate. -/
-theorem FulpLeGeneral {beta : Int}
+theorem FulpLeGeneral {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded' (beta:=beta) b p ∧
@@ -22287,7 +22318,7 @@ The upstream theorem first normalizes `p`, `q`, and `r`, then delegates to
 only remaining premise is the canonical interval payload itself, so downstream
 proofs do not need to repeat the normalization bookkeeping while the hard
 predecessor induction is still being ported. -/
-theorem ExactMinusInterval_from_Aux1 {beta : Int}
+theorem ExactMinusInterval_from_Aux1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (hAux1 :
       ∀ p q r : FloatSpec.Core.Defs.FlocqFloat beta,
@@ -22384,7 +22415,7 @@ Given a bounded representative of `r - p` in the branch `2*p < r`, its
 normalization is nonnegative, strictly below `r`, and lies in the same or next
 lower exponent binade relative to `r`.  This packages the normalization and
 `radixRangeBoundExp` part of the upstream proof. -/
-theorem ExactMinusIntervalAux_pred_setup {beta : Int}
+theorem ExactMinusIntervalAux_pred_setup {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -22435,7 +22466,7 @@ representative of `r - p` in the same exponent binade as `r`.  If the
 predecessor of `r` decreases that same exponent by one ulp, then decrementing
 the representative mantissa gives a bounded representative of `FPred r - p`.
 -/
-theorem ExactMinusIntervalAux_pred_same_exp_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_same_exp_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22494,7 +22525,7 @@ This packages the upstream `FPredSimpl4` branch when the normalized
 representative of `r - p` has the same exponent as `r`: the predecessor is one
 ulp below `r` at that same exponent, so the generic same-exponent arithmetic
 lemma applies directly. -/
-theorem ExactMinusIntervalAux_pred_same_exp_non_normmin_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_same_exp_non_normmin_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22539,7 +22570,7 @@ At the minimum exponent, `FPredSimpl3` says that the predecessor of the minimal
 normal mantissa stays in the same exponent and decrements the mantissa by one.
 This is the remaining same-exponent boundary case before the adjacent-exponent
 branches take over. -/
-theorem ExactMinusIntervalAux_pred_same_exp_normmin_minexp_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_same_exp_normmin_minexp_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22609,7 +22640,7 @@ This is the common constructive step behind the same-exponent branch and the
 normal-boundary adjacent-exponent branch: if `FPred r` is exactly one ulp below
 `r` at the normalized representative exponent, then decrementing the
 representative mantissa gives a bounded representative of `FPred r - p`. -/
-theorem ExactMinusIntervalAux_pred_one_ulp_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_one_ulp_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22667,7 +22698,7 @@ This corresponds to the upstream branch using `FPredSimpl2`: when `r` has the
 minimal normal mantissa away from the minimum exponent and the normalized
 representative of `r - p` sits one exponent below `r`, `FPred r` is one ulp
 below `r` at that representative exponent. -/
-theorem ExactMinusIntervalAux_pred_adjacent_normmin_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_adjacent_normmin_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22761,7 +22792,7 @@ theorem ExactMinusIntervalAux_pred_adjacent_normmin_case {beta : Int}
 When `FPred r` is one `beta`-scaled ulp below `r` at the normalized
 representative exponent, decrementing the representative mantissa by `beta`
 gives a bounded representative of `FPred r - p`. -/
-theorem ExactMinusIntervalAux_pred_beta_ulp_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_beta_ulp_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22838,7 +22869,7 @@ theorem ExactMinusIntervalAux_pred_beta_ulp_case {beta : Int}
 This corresponds to the upstream `FPredSimpl4` branch after
 `radixRangeBoundExp`: the normalized representative of `r - p` is one exponent
 below `r`, while `r` is not at the normal-boundary mantissa. -/
-theorem ExactMinusIntervalAux_pred_adjacent_non_normmin_case {beta : Int}
+theorem ExactMinusIntervalAux_pred_adjacent_non_normmin_case {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22899,7 +22930,7 @@ Once the upstream setup has normalized the representative of `r - p`, proved
 that it lies in the same or adjacent exponent binade, and ruled out the
 same-exponent normal-boundary/impossible case, the predecessor arithmetic is a
 case split over the four `FPredSimpl` branches restored above. -/
-theorem ExactMinusIntervalAux_pred_constructive_cases {beta : Int}
+theorem ExactMinusIntervalAux_pred_constructive_cases {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     let nrp := Fnormalize (beta:=beta) beta b precision rp
@@ -22967,7 +22998,7 @@ above.  The remaining explicit premise is the upstream contradiction ruling
 out the same-exponent normal-boundary case away from the minimum exponent; the
 next layer obtains that contradiction from `FcanonicLtPos` and
 `pNormal_absolu_min`. -/
-theorem ExactMinusIntervalAux_pred_constructive_from_setup {beta : Int}
+theorem ExactMinusIntervalAux_pred_constructive_from_setup {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -23026,7 +23057,7 @@ strictly below `r`, and `r` is the minimal normal mantissa away from the minimum
 exponent, then `FcanonicLtPos` forces the representative mantissa below
 `nNormMin`; canonicity and `pNormal_absolu_min` force it at least
 `nNormMin`, a contradiction. -/
-theorem ExactMinusIntervalAux_same_exp_normmin_non_minexp_contradiction {beta : Int}
+theorem ExactMinusIntervalAux_same_exp_normmin_non_minexp_contradiction {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (nrp r : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -23076,7 +23107,7 @@ discharged internally.
 This is the closed form of the strictly-above-boundary arithmetic used by
 Coq's `ExactMinusIntervalAux`: from a bounded representative of `r - p`, it
 builds a bounded representative of `FPred r - p`. -/
-theorem ExactMinusIntervalAux_pred_constructive_closed {beta : Int}
+theorem ExactMinusIntervalAux_pred_constructive_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r rp : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -23126,7 +23157,7 @@ The induction hypothesis gives a representative of `r - p` only under the hard
 premise `2*p < r`.  The extra premise `2*p < FPred r`, together with
 `FPredLt`, supplies that hard premise for the current `r`; the closed
 constructive step then produces `FPred r - p`. -/
-theorem ExactMinusIntervalAux_hard_pred_step {beta : Int}
+theorem ExactMinusIntervalAux_hard_pred_step {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p r : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -23170,7 +23201,7 @@ This is the hard branch of the exact-minus interval theorem.  The proof now
 matches the upstream structure: downward induction over canonical floats using
 the predicate `2*p < r -> exists r', r' = r - p`, with the predecessor step
 provided by `ExactMinusIntervalAux_hard_pred_step`. -/
-theorem ExactMinusIntervalAux {beta : Int}
+theorem ExactMinusIntervalAux {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -23206,7 +23237,7 @@ theorem ExactMinusIntervalAux {beta : Int}
 This wraps `ExactMinusIntervalAux` with the two easy Sterbenz branches.  If
 `p = 0`, the hard branch is immediate by choosing `r` itself; otherwise the
 hard branch delegates to `ExactMinusIntervalAux`. -/
-theorem ExactMinusIntervalAux1 {beta : Int}
+theorem ExactMinusIntervalAux1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     1 < beta →
@@ -23254,7 +23285,7 @@ theorem ExactMinusIntervalAux1 {beta : Int}
 The bounded-input theorem follows the upstream normalization step packaged in
 `ExactMinusInterval_from_Aux1`, now using the restored canonical interval
 payload `ExactMinusIntervalAux1`. -/
-theorem ExactMinusInterval {beta : Int}
+theorem ExactMinusInterval {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat) :
     1 < beta →
     (beta : ℝ) = 2 →
@@ -23304,7 +23335,7 @@ theorem ExactMinusInterval {beta : Int}
 
 /-- Coq: `FcanonicFnormalizeEq` — a canonical float is unchanged by
 normalization. -/
-theorem FcanonicFnormalizeEq {beta : Int}
+theorem FcanonicFnormalizeEq {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p ∧ beta = radix ∧ 1 < radix ∧
@@ -23339,7 +23370,7 @@ theorem FcanonicFnormalizeEq {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, FcanonicUnique_check,
     ULift.down_up, Fcanonic'] using huniq ⟨hnormCan, hpCan, hnormEq⟩
 
-noncomputable def FNSuccCanonic_check {beta : Int}
+noncomputable def FNSuccCanonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -23347,7 +23378,7 @@ noncomputable def FNSuccCanonic_check {beta : Int}
 /-- Coq: `FNSuccCanonic` — the normalized successor of a bounded float is
 canonical.  This is the `FNSucc` wrapper over the already restored
 `FnormalizeCanonic` and `FSuccCanonic` payloads. -/
-theorem FNSuccCanonic {beta : Int}
+theorem FNSuccCanonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ 1 < beta ∧ precision ≠ 0 ∧
@@ -23372,13 +23403,13 @@ theorem FNSuccCanonic {beta : Int}
     Id.run, ULift.up_down, FNSucc] using
     hsucc ⟨hnorm_can, hbeta, hprecision, hvnum⟩
 
-noncomputable def FNSuccLt_check {beta : Int}
+noncomputable def FNSuccLt_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FNSuccLt` — every float is strictly below its normalized successor. -/
-theorem FNSuccLt {beta : Int}
+theorem FNSuccLt {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ precision ≠ 0 ∧ b.vNum = Zpower_nat beta precision⌝⦄
@@ -23409,14 +23440,14 @@ theorem FNSuccLt {beta : Int}
       hsucc ⟨rfl, hbeta, hprecision, hvnum⟩
   simpa [hnorm] using hsucc'
 
-noncomputable def FNPredFopFNSucc_check {beta : Int}
+noncomputable def FNPredFopFNSucc_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FNPredFopFNSucc` — normalized predecessor is normalized successor
 under float negation. -/
-theorem FNPredFopFNSucc {beta : Int}
+theorem FNPredFopFNSucc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ precision ≠ 0 ∧ b.vNum = Zpower_nat beta precision⌝⦄
@@ -23447,14 +23478,14 @@ theorem FNPredFopFNSucc {beta : Int}
       Id.run, ULift.up_down] using hpred ⟨hbeta, hprecision, hvnum⟩
   simpa only [FNPred, FNSucc, hnorm_opp] using hpred'
 
-noncomputable def FNPredCanonic_check {beta : Int}
+noncomputable def FNPredCanonic_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FNPredCanonic` — the normalized predecessor of a bounded float is
 canonical. -/
-theorem FNPredCanonic {beta : Int}
+theorem FNPredCanonic {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ 1 < beta ∧ precision ≠ 0 ∧
@@ -23479,14 +23510,14 @@ theorem FNPredCanonic {beta : Int}
     Id.run, ULift.up_down, FNPred] using
     hpred ⟨hnorm_can, hbeta, hprecision, hvnum⟩
 
-noncomputable def FNPredLt_check {beta : Int}
+noncomputable def FNPredLt_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FNPredLt` — every float is strictly above its normalized
 predecessor. -/
-theorem FNPredLt {beta : Int}
+theorem FNPredLt {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ precision ≠ 0 ∧ b.vNum = Zpower_nat beta precision⌝⦄
@@ -23517,7 +23548,7 @@ theorem FNPredLt {beta : Int}
       hpred ⟨rfl, hbeta, hprecision, hvnum⟩
   simpa [hnorm] using hpred'
 
-noncomputable def FNSuccProp_from_FSuccProp_check {beta : Int}
+noncomputable def FNSuccProp_from_FSuccProp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -23527,7 +23558,7 @@ noncomputable def FNSuccProp_from_FSuccProp_check {beta : Int}
 This is the non-circular wrapper used by Flocq's `FNSuccProp`: once the
 all-sign canonical successor theorem is available for `FSucc`, normalization
 transfers it to arbitrary bounded floats. -/
-theorem FNSuccProp_from_FSuccProp {beta : Int}
+theorem FNSuccProp_from_FSuccProp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b x ∧ Fbounded (beta:=beta) b y ∧
@@ -23592,13 +23623,13 @@ theorem FNSuccProp_from_FSuccProp {beta : Int}
   rw [hyNormEq] at hsucc
   simpa [FNSucc] using hsucc
 
-noncomputable def FNSuccProp_check {beta : Int}
+noncomputable def FNSuccProp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FNSuccProp` — normalized successor ordering for bounded floats. -/
-theorem FNSuccProp {beta : Int}
+theorem FNSuccProp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b x ∧ Fbounded (beta:=beta) b y ∧
@@ -23620,14 +23651,14 @@ theorem FNSuccProp {beta : Int}
     (FSuccProp (beta:=beta) b beta precision a c)
       ⟨rfl, hbeta, hprecision, hvnum, haCan, hcCan, hac⟩
 
-noncomputable def ClosestSuccPred_check {beta : Int}
+noncomputable def ClosestSuccPred_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `ClosestSuccPred` — if a canonical float is no farther from `z`
 than both normalized neighbors, then it is a closest bounded float. -/
-theorem ClosestSuccPred {beta : Int}
+theorem ClosestSuccPred {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b f ∧
@@ -23807,13 +23838,13 @@ theorem ClosestSuccPred {beta : Int}
           le_antisymm (le_of_not_gt hf_lt_g) hf_le_g
         simpa [hg_eq_f, abs_sub_comm]
 
-noncomputable def MinMax_check {beta : Int}
+noncomputable def MinMax_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `MinMax` — a strict minimum yields the next maximum via `FNSucc`. -/
-theorem MinMax {beta : Int}
+theorem MinMax {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMin' (beta:=beta) b radix r p ∧
@@ -23874,14 +23905,14 @@ theorem MinMax {beta : Int}
       Id.run, ULift.up_down] using
       hprop ⟨hpBound, hfBound, hp_lt_f, hradix, hprecision, hvnum⟩
 
-noncomputable def MaxMin_check {beta : Int}
+noncomputable def MaxMin_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
 /-- Coq: `MaxMin` — a strict maximum yields the previous minimum via
 `FNPred`. -/
-theorem MaxMin {beta : Int}
+theorem MaxMin {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜isMax' (beta:=beta) b radix r p ∧
@@ -23940,7 +23971,7 @@ theorem MaxMin {beta : Int}
   simpa [hpred_eq]
     using hBack
 
-noncomputable def FminRep_check {beta : Int}
+noncomputable def FminRep_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -23952,8 +23983,8 @@ This follows the upstream split.  If the normalized minimum has exponent no
 larger than `p`, then the half-open successor interval collapses it to `p` by
 `FSuccZleEq`.  Otherwise the normalized minimum can be shifted down to
 `p.Fexp` while preserving its real value. -/
-theorem FminRep {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FminRep {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -24068,15 +24099,15 @@ theorem FminRep {beta : Int}
     rcases hrep' with ⟨m, hm⟩
     exact ⟨m, by rw [← hqn_val]; exact hm⟩
 
-noncomputable def FmaxRep_check {beta : Int}
+noncomputable def FmaxRep_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FmaxRep` — a maximum of the real value of `p` has a representation
 at exponent `Fexp p`. -/
-theorem FmaxRep {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FmaxRep {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -24117,8 +24148,8 @@ theorem FmaxRep {beta : Int}
 This closes the factored `errorBoundedPlusLe_from_rep` theorem by deriving the
 representation of the closest result from the restored min/max representation
 stack.  The usual Pff section hypotheses are explicit in Lean. -/
-theorem errorBoundedPlusLe {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem errorBoundedPlusLe {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -24218,14 +24249,14 @@ theorem errorBoundedPlusLe {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, Id.run, ULift.up_down] using
     hle ⟨hradix, hp, hq, hpq_exp, hclosest, hrep⟩
 
-noncomputable def ClosestRoundedModeRep_check {beta : Int}
+noncomputable def ClosestRoundedModeRep_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat) : Unit :=
   ()
 
 /-- Coq helper used by `LeExpRound`: a closest-rounded result has a
 representation at the source float's exponent. -/
-theorem ClosestRoundedModeRep {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem ClosestRoundedModeRep {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧ bo.vNum = Zpower_nat radix precision ∧
         (∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=beta) radix r).Fexp)⌝⦄
@@ -24294,7 +24325,7 @@ theorem ClosestRoundedModeRep {beta : Int}
     RoundedModeRep_float_from_minmax_check, Id.run, ULift.up_down] using
     h ⟨⟨hTotal, hCompat, hMinMax, hMono⟩, hMinRep, hMaxRep⟩
 
-noncomputable def LeExpRound_check {beta : Int}
+noncomputable def LeExpRound_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (f g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -24304,8 +24335,8 @@ noncomputable def LeExpRound_check {beta : Int}
 If `g` is a closest rounded value of the real represented by `f`, then `g` has
 an equal-real-value bounded representative whose exponent is at least
 `f.Fexp`. -/
-theorem LeExpRound {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem LeExpRound {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (f g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧ bo.vNum = Zpower_nat radix precision ∧
@@ -24350,14 +24381,14 @@ theorem LeExpRound {beta : Int}
     refine ⟨g', hg_bound, ?_, by simp [g']⟩
     simpa [g'] using hm.symm
 
-noncomputable def LeExpRound2_check {beta : Int}
+noncomputable def LeExpRound2_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
     (f g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `LeExpRound2`, the lower-bound corollary of `LeExpRound`. -/
-theorem LeExpRound2 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
+theorem LeExpRound2 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) (n : Int)
     (f g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧ bo.vNum = Zpower_nat radix precision ∧
@@ -24383,8 +24414,8 @@ theorem LeExpRound2 {beta : Int}
   exact ⟨g', hgBound, hgVal, le_trans hn hfg⟩
 
 /-- Coq: `errorBoundedPlusAbs`. -/
-theorem errorBoundedPlusAbs {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem errorBoundedPlusAbs {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -24420,8 +24451,8 @@ theorem errorBoundedPlusAbs {beta : Int}
     · simpa [min_comm] using hexp
 
 /-- Coq: `errorBoundedPlus`. -/
-theorem errorBoundedPlus {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem errorBoundedPlus {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -24476,7 +24507,7 @@ been represented at exponent `p.Fexp + q.Fexp`, it remains to bound the
 integer mantissa error.  The quotient/min/max parts of the upstream proof are
 exactly what discharge `hnum_bound`; this helper turns that payload into the
 bounded error float required by `errorBoundedMult`. -/
-theorem errorBoundedMult_from_same_exp_mantissa_bound {beta : Int}
+theorem errorBoundedMult_from_same_exp_mantissa_bound {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) (m : Int)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -24515,7 +24546,7 @@ theorem errorBoundedMult_from_same_exp_mantissa_bound {beta : Int}
 
 This is the integer form of the `Rle_monotony_contra_exp` step used in Coq
 proofs such as `errorBoundedMultMin` and `errorBoundedMultMax`. -/
-theorem F2R_le_same_exp_mantissa_le {beta : Int}
+theorem F2R_le_same_exp_mantissa_le {beta : Int} [ValidRadix beta]
     (radix : Int) (m n e : Int)
     (hbeta : beta = radix)
     (hradix : 0 < radix)
@@ -24534,7 +24565,7 @@ theorem F2R_le_same_exp_mantissa_le {beta : Int}
 
 /-- Same-exponent mantissa comparison when the left float is known only through
 an `F2R` representation witness. -/
-theorem F2R_le_same_exp_mantissa_le_of_left_repr {beta : Int}
+theorem F2R_le_same_exp_mantissa_le_of_left_repr {beta : Int} [ValidRadix beta]
     (radix : Int) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (m n e : Int)
     (hbeta : beta = radix)
@@ -24553,7 +24584,7 @@ theorem F2R_le_same_exp_mantissa_le_of_left_repr {beta : Int}
 
 /-- Same-exponent mantissa comparison when the right float is known only through
 an `F2R` representation witness. -/
-theorem F2R_le_same_exp_mantissa_le_of_right_repr {beta : Int}
+theorem F2R_le_same_exp_mantissa_le_of_right_repr {beta : Int} [ValidRadix beta]
     (radix : Int) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (m n e : Int)
     (hbeta : beta = radix)
@@ -24571,7 +24602,7 @@ theorem F2R_le_same_exp_mantissa_le_of_right_repr {beta : Int}
     (by simpa [hrepr] using hle)
 
 /-- Same-exponent mantissa inequalities lift to real-value inequalities. -/
-theorem F2R_le_of_same_exp_mantissa_le {beta : Int}
+theorem F2R_le_of_same_exp_mantissa_le {beta : Int} [ValidRadix beta]
     (radix : Int) (m n e : Int)
     (hbeta : beta = radix)
     (hradix : 0 < radix)
@@ -24592,7 +24623,7 @@ If a bounded same-exponent bucket lies below the exact real target, then the
 greatest-lower-bound part of `isMin'` puts it below the chosen rounded value.
 The same-exponent comparison then converts that real inequality into a
 mantissa inequality. -/
-theorem errorBoundedMultMin_bucket_le_from_isMin {beta : Int}
+theorem errorBoundedMultMin_bucket_le_from_isMin {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (r : ℝ)
     (fmin : FloatSpec.Core.Defs.FlocqFloat beta)
     (bucket m e : Int)
@@ -24625,7 +24656,7 @@ theorem errorBoundedMultMin_bucket_le_from_isMin {beta : Int}
 If a bounded same-exponent bucket lies above the exact real target, then the
 least-upper-bound part of `isMax'` puts the chosen rounded value below that
 bucket; the same-exponent comparison recovers the mantissa inequality. -/
-theorem errorBoundedMultMax_bucket_le_from_isMax {beta : Int}
+theorem errorBoundedMultMax_bucket_le_from_isMax {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (r : ℝ)
     (fmax : FloatSpec.Core.Defs.FlocqFloat beta)
     (m bucket e : Int)
@@ -24659,7 +24690,7 @@ real-value representation.
 This matches the shape produced by `FboundedMbound` in Coq
 `errorBoundedMultMin`: the bounded witness may be represented at a shifted
 exponent, but its real value is the same as a same-exponent bucket mantissa. -/
-theorem errorBoundedMultMin_bucket_le_from_isMin_candidate_repr {beta : Int}
+theorem errorBoundedMultMin_bucket_le_from_isMin_candidate_repr {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (r : ℝ)
     (fmin candidate : FloatSpec.Core.Defs.FlocqFloat beta)
     (bucket m e : Int)
@@ -24694,7 +24725,7 @@ real-value representation.
 
 This is the upper-rounding companion of
 `errorBoundedMultMin_bucket_le_from_isMin_candidate_repr`. -/
-theorem errorBoundedMultMax_bucket_le_from_isMax_candidate_repr {beta : Int}
+theorem errorBoundedMultMax_bucket_le_from_isMax_candidate_repr {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (r : ℝ)
     (fmax candidate : FloatSpec.Core.Defs.FlocqFloat beta)
     (m bucket e : Int)
@@ -24731,7 +24762,7 @@ Coq's multiplication-error proof constructs a bounded float with value
 same-exponent bucket mantissa
 `bucket * Zpower_nat radix precision` at exponent `e`, which is the form needed
 by the integer quotient estimates. -/
-theorem FboundedMbound_zpower_bucket_candidate {beta : Int}
+theorem FboundedMbound_zpower_bucket_candidate {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (bucket e : Int)
     (hbeta : beta = radix)
@@ -24881,7 +24912,7 @@ theorem bucket_le_product_of_abs_le_nonneg
   exact (abs_le.mp habs').2
 
 /-- Min-side real comparison between a quotient bucket and the exact product. -/
-theorem Zquotient_bucket_F2R_le_product {beta : Int}
+theorem Zquotient_bucket_F2R_le_product {beta : Int} [ValidRadix beta]
     (radix : Int) (prod n e : Int)
     (hbeta : beta = radix)
     (hradix : 0 < radix)
@@ -24910,7 +24941,7 @@ theorem product_le_next_quotient_bucket_from_decomp
 
 /-- Max-side real comparison between the exact product and the next quotient
 bucket. -/
-theorem product_F2R_le_next_Zquotient_bucket {beta : Int}
+theorem product_F2R_le_next_Zquotient_bucket {beta : Int} [ValidRadix beta]
     (radix : Int) (prod n rem e : Int)
     (hbeta : beta = radix)
     (hradix : 0 < radix)
@@ -24932,7 +24963,7 @@ theorem product_F2R_le_next_Zquotient_bucket {beta : Int}
 
 This packages the core remaining arithmetic of Coq `errorBoundedMultMin` once
 the rounded product has been represented at the multiplication exponent. -/
-theorem errorBoundedMultMin_mantissa_bound_from_quotient {beta : Int}
+theorem errorBoundedMultMin_mantissa_bound_from_quotient {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (prod e m : Int) (fmin : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix)
@@ -25020,7 +25051,7 @@ When the product is exactly a quotient bucket, that bucket is a bounded upper
 candidate equal to the product itself.  The `isMax'` upper-bound property and
 the defining lower inequality therefore force the represented max mantissa to
 equal the product mantissa. -/
-theorem errorBoundedMultMax_mantissa_bound_of_exact_quotient {beta : Int}
+theorem errorBoundedMultMax_mantissa_bound_of_exact_quotient {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (prod e m : Int) (fmax : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix)
@@ -25205,7 +25236,7 @@ This is the nonzero-remainder companion of
 represented at the multiplication exponent, the successor quotient bucket is
 shown bounded, and the `isMax'` extremum property gives the upper mantissa
 inequality needed by the quotient error estimate. -/
-theorem errorBoundedMultMax_mantissa_bound_from_quotient {beta : Int}
+theorem errorBoundedMultMax_mantissa_bound_from_quotient {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (prod e m : Int) (fmax : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix)
@@ -25289,7 +25320,7 @@ theorem errorBoundedMultMax_mantissa_bound_from_quotient {beta : Int}
       (by simpa [n] using hrem_pos) hprod_le_m hm_le_next
   simpa [n, hvnum] using hbound
 
-noncomputable def errorBoundedMultMin_from_quotient_bound_check {beta : Int}
+noncomputable def errorBoundedMultMin_from_quotient_bound_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q fmin : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -25300,8 +25331,8 @@ Flocq's `errorBoundedMultMin` first represents the lower rounded product at
 the exponent of `Fmult p q`, then proves a strict mantissa-error bound by
 integer quotient arithmetic.  This helper discharges everything except that
 last quotient bound. -/
-theorem errorBoundedMultMin_from_quotient_bound {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultMin_from_quotient_bound {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q fmin : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -25367,7 +25398,7 @@ theorem errorBoundedMultMin_from_quotient_bound {beta : Int}
   exact errorBoundedMult_from_same_exp_mantissa_bound (beta:=radix)
     bo radix p q fmin m rfl hradix hrepr (hquot_bound m hrepr) hexp
 
-noncomputable def errorBoundedMultMin_check {beta : Int}
+noncomputable def errorBoundedMultMin_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q fmin : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -25379,8 +25410,8 @@ bounded nonnegative input mantissas give the product-square bound, and
 `errorBoundedMultMin_mantissa_bound_from_quotient` supplies the strict
 same-exponent mantissa bound required by
 `errorBoundedMultMin_from_quotient_bound`. -/
-theorem errorBoundedMultMin {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultMin {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q fmin : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -25464,7 +25495,7 @@ theorem errorBoundedMultMin {beta : Int}
     hbranch ⟨hbeta, hradix, hprecision, hvnum, hp, hq, hp_nonneg, hq_nonneg,
       hexp, hmin, hquot_bound⟩
 
-noncomputable def errorBoundedMultMax_from_quotient_bound_check {beta : Int}
+noncomputable def errorBoundedMultMax_from_quotient_bound_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q fmax : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -25475,8 +25506,8 @@ This is the max-side companion of `errorBoundedMultMin_from_quotient_bound`.
 The restored `FmaxRep_from_FminRep` bridge supplies the same-exponent
 representation of the upper rounded product; the only remaining upstream
 payload is the strict quotient/mantissa bound. -/
-theorem errorBoundedMultMax_from_quotient_bound {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultMax_from_quotient_bound {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q fmax : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -25552,7 +25583,7 @@ theorem errorBoundedMultMax_from_quotient_bound {beta : Int}
   exact errorBoundedMult_from_same_exp_mantissa_bound (beta:=radix)
     bo radix p q fmax m rfl hradix hrepr (hquot_bound m hrepr) hexp
 
-noncomputable def errorBoundedMultMax_check {beta : Int}
+noncomputable def errorBoundedMultMax_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q fmax : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -25562,8 +25593,8 @@ noncomputable def errorBoundedMultMax_check {beta : Int}
 The zero-remainder branch is exact; the nonzero branch uses the successor
 quotient bucket assembled in `errorBoundedMultMax_mantissa_bound_from_quotient`.
 -/
-theorem errorBoundedMultMax {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultMax {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q fmax : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -25666,7 +25697,7 @@ theorem errorBoundedMultMax {beta : Int}
     hbranch ⟨hbeta, hradix, hprecision, hvnum, hp, hq, hp_nonneg, hq_nonneg,
       hexp, hmax, hquot_bound⟩
 
-noncomputable def multExpUpperBound_check {beta : Int}
+noncomputable def multExpUpperBound_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -25679,8 +25710,8 @@ than `precision + p.Fexp + q.Fexp`.  The proof bounds the exact product by the
 maximal mantissa at that exponent, transfers the absolute bound through the
 rounded-mode predicate, and then normalizes the representative with `eqExpMax`.
 -/
-theorem multExpUpperBound {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem multExpUpperBound {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q pq : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧ 1 < bo.vNum ∧
@@ -25936,7 +25967,7 @@ theorem errorBoundedMultExp_aux
     exact ⟨nx, 0, hrepr', hnx_abs_lt, le_rfl,
       by exact_mod_cast Nat.zero_le precision⟩
 
-private theorem eqExpMax_between {beta : Int}
+private theorem eqExpMax_between {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (lower upperExp : Int)
@@ -25997,7 +26028,7 @@ private theorem eqExpMax_between {beta : Int}
       exact hlower_upper, by rw [hr_exp]⟩
 
 -- Coq: `errorBoundedMultPos` — nonnegative product rounding error bound
-noncomputable def errorBoundedMultPos_check {beta : Int}
+noncomputable def errorBoundedMultPos_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -26009,8 +26040,8 @@ For nonnegative bounded inputs, any rounded product has an exact bounded error
 represented at exponent `p.Fexp + q.Fexp`.  This wrapper is the upstream
 min/max dispatch over the already restored `errorBoundedMultMin` and
 `errorBoundedMultMax` branches. -/
-theorem errorBoundedMultPos {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultPos {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -26051,7 +26082,7 @@ theorem errorBoundedMultPos {beta : Int}
         hexp, hMax⟩
 
 -- Coq: `errorBoundedMultNeg` — mixed-sign product rounding error bound
-noncomputable def errorBoundedMultNeg_check {beta : Int}
+noncomputable def errorBoundedMultNeg_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -26063,8 +26094,8 @@ This is the mixed-sign counterpart of `errorBoundedMultPos`: when the left
 input is nonpositive and the right input is nonnegative, the product branch is
 reduced to the nonnegative min/max arithmetic branches by negating the left
 input and the rounded result. -/
-theorem errorBoundedMultNeg {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultNeg {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -26195,7 +26226,7 @@ This factors the easy all-sign dispatch from Flocq's `errorBoundedMult`.
 The remaining arithmetic payload is the nonnegative branch: once a future
 `errorBoundedMultMin`/`errorBoundedMultMax` port proves that branch, this lemma
 extends it to arbitrary input signs using `ClosestOpp` and `oppBounded`. -/
-theorem errorBoundedMultClosest_from_nonneg {beta : Int}
+theorem errorBoundedMultClosest_from_nonneg {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int)
     (hNonneg :
       ∀ p q f : FloatSpec.Core.Defs.FlocqFloat beta,
@@ -26422,7 +26453,7 @@ This is the other lightweight part of Flocq's `errorBoundedMultPos`: a closest
 rounded value is either the min or max rounded value, so the nonnegative
 multiplication branch follows once the min and max arithmetic branches are
 available. -/
-theorem errorBoundedMultClosest_nonneg_from_minmax {beta : Int}
+theorem errorBoundedMultClosest_nonneg_from_minmax {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int)
     (hMin :
       ∀ p q fmin : FloatSpec.Core.Defs.FlocqFloat beta,
@@ -26486,7 +26517,7 @@ theorem errorBoundedMultClosest_nonneg_from_minmax {beta : Int}
 This combines `errorBoundedMultClosest_nonneg_from_minmax` with
 `errorBoundedMultClosest_from_nonneg`, isolating the only remaining Flocq
 payload to the concrete min/max quotient bounds. -/
-theorem errorBoundedMultClosest_from_minmax {beta : Int}
+theorem errorBoundedMultClosest_from_minmax {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int)
     (hMin :
       ∀ p q fmin : FloatSpec.Core.Defs.FlocqFloat beta,
@@ -26533,7 +26564,7 @@ theorem errorBoundedMultClosest_from_minmax {beta : Int}
   exact errorBoundedMultClosest_from_nonneg (beta:=beta) bo radix
     (errorBoundedMultClosest_nonneg_from_minmax (beta:=beta) bo radix hMin hMax)
 
-noncomputable def errorBoundedMult_check {beta : Int}
+noncomputable def errorBoundedMult_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26542,8 +26573,8 @@ noncomputable def errorBoundedMult_check {beta : Int}
 
 This exposes the full closest-rounded multiplication error theorem from the
 proved nonnegative min/max branches plus the existing sign-reduction bridge. -/
-theorem errorBoundedMult {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMult {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -26610,7 +26641,7 @@ theorem errorBoundedMult {beta : Int}
   exact errorBoundedMultClosest_from_minmax (beta:=beta) bo radix hMin hMax
     p q f hp hq hexp hclosest
 
-noncomputable def zPos_check {beta : Int}
+noncomputable def zPos_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b z : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26619,7 +26650,7 @@ noncomputable def zPos_check {beta : Int}
 
 The rounded value `z` is nonnegative because it is a closest rounding of the
 nonnegative real `a * x + b`. -/
-theorem zPos {beta : Int}
+theorem zPos {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b z : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -26673,7 +26704,7 @@ theorem zPos {beta : Int}
       hRound ⟨hRounded, hZeroBounded, hinput_nonneg', hzClosest'⟩
   simpa [hZeroF2R] using hle
 
-noncomputable def uhPos_check {beta : Int}
+noncomputable def uhPos_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (ph b uh : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26683,7 +26714,7 @@ noncomputable def uhPos_check {beta : Int}
 The rounded value `uh` is nonnegative because it is a closest rounding of the
 nonnegative real `ph + b`.  Upstream derives this input nonnegativity from the
 preceding product rounding and the global positivity premise. -/
-theorem uhPos {beta : Int}
+theorem uhPos {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (ph b uh : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -26733,7 +26764,7 @@ theorem uhPos {beta : Int}
       hRound ⟨hRounded, hZeroBounded, hinput_nonneg', huhClosest'⟩
   simpa [hZeroF2R] using hle
 
-noncomputable def FmaErr_product_error_witness_check {beta : Int}
+noncomputable def FmaErr_product_error_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x u1 u2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26744,8 +26775,8 @@ Upstream starts the FMA reconstruction by applying `errorBoundedMult` to the
 rounded product `u1`, obtaining a bounded float whose value is
 `a*x - u1`.  This helper packages that exact specialization and identifies it
 with the already-named product error `u2`. -/
-theorem FmaErr_product_error_witness {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FmaErr_product_error_witness {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x u1 u2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         bo.vNum = Zpower_nat radix precision ∧
@@ -26776,7 +26807,7 @@ theorem FmaErr_product_error_witness {beta : Int}
     ⟨err, herr_val, herr_bounded, herr_exp⟩
   exact ⟨err, herr_val.trans hu2_val.symm, herr_bounded, herr_exp⟩
 
-noncomputable def FmaErr_add_error_witness_check {beta : Int}
+noncomputable def FmaErr_add_error_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (y u2 al1 al2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26787,8 +26818,8 @@ After `u2` has been represented as a bounded product-error float, upstream
 applies `errorBoundedPlus` to `y + u2` rounded to `al1`.  This helper packages
 that specialization and identifies the resulting bounded error with
 `al2 = y + u2 - al1`. -/
-theorem FmaErr_add_error_witness {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FmaErr_add_error_witness {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (y u2 al1 al2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧
@@ -26818,7 +26849,7 @@ theorem FmaErr_add_error_witness {beta : Int}
     ⟨err, herr_val, herr_bounded, herr_exp⟩
   exact ⟨err, herr_val.trans hal2_val.symm, herr_bounded, herr_exp⟩
 
-noncomputable def FmaErr_be1_error_witness_check {beta : Int}
+noncomputable def FmaErr_be1_error_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (u1 al1 be1 be2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26829,8 +26860,8 @@ After the product and first addition errors have bounded representatives,
 upstream applies `errorBoundedPlus` once more to the rounded sum `be1` of
 `u1 + al1`.  This helper packages that specialization and identifies the
 resulting bounded error with `be2 = u1 + al1 - be1`. -/
-theorem FmaErr_be1_error_witness {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FmaErr_be1_error_witness {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (u1 al1 be1 be2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧
@@ -26860,7 +26891,7 @@ theorem FmaErr_be1_error_witness {beta : Int}
     ⟨err, herr_val, herr_bounded, herr_exp⟩
   exact ⟨err, herr_val.trans hbe2_val.symm, herr_bounded, herr_exp⟩
 
-noncomputable def Fma_FTS_plus_leexp_witness_check {beta : Int}
+noncomputable def Fma_FTS_plus_leexp_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
     (p q g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26872,8 +26903,8 @@ addition after rewriting the exact source float with `Fplus_correct`.  This
 helper packages that pattern: a closest rounding of `p + q` has a bounded
 same-value representative whose exponent remains above any lower bound below
 both input exponents. -/
-theorem Fma_FTS_plus_leexp_witness {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
+theorem Fma_FTS_plus_leexp_witness {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) (n : Int)
     (p q g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧
@@ -26923,7 +26954,7 @@ theorem Fma_FTS_plus_leexp_witness {beta : Int}
     hle ⟨hbeta, hradix, hprecision, hvnum_gt, hvnum, hBoundExp,
       hclosest_plus, by simpa [hplus_exp] using hn⟩
 
-noncomputable def Fma_FTS_mult_leexp_witness_check {beta : Int}
+noncomputable def Fma_FTS_mult_leexp_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
     (p q g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26933,8 +26964,8 @@ noncomputable def Fma_FTS_mult_leexp_witness_check {beta : Int}
 This is the multiplication analogue of `Fma_FTS_plus_leexp_witness`: upstream
 uses `Fmult_correct` to turn a closest rounding of `p * q` into a
 `LeExpRound2` call on the exact float product. -/
-theorem Fma_FTS_mult_leexp_witness {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
+theorem Fma_FTS_mult_leexp_witness {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) (n : Int)
     (p q g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧
@@ -26978,7 +27009,7 @@ theorem Fma_FTS_mult_leexp_witness {beta : Int}
     hle ⟨hbeta, hradix, hprecision, hvnum_gt, hvnum, hBoundExp,
       hclosest_mult, by simpa [hmult_exp] using hn⟩
 
-noncomputable def Fma_FTS_minus_leexp_witness_check {beta : Int}
+noncomputable def Fma_FTS_minus_leexp_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
     (p q g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -26989,8 +27020,8 @@ This packages the `Fminus_correct` plus `LeExpRound2` step used for the
 rounded correction term `gat`: a closest rounding of `p - q` has a bounded
 same-value representative whose exponent stays above any lower bound below
 both input exponents. -/
-theorem Fma_FTS_minus_leexp_witness {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) (n : Int)
+theorem Fma_FTS_minus_leexp_witness {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) (n : Int)
     (p q g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧
@@ -27045,7 +27076,7 @@ theorem Fma_FTS_minus_leexp_witness {beta : Int}
     hle ⟨hbeta, hradix, hprecision, hvnum_gt, hvnum, hBoundExp,
       hclosest_minus, by simpa [hminus_exp] using hn⟩
 
-noncomputable def Fma_FTS_be2_error_witness_check {beta : Int}
+noncomputable def Fma_FTS_be2_error_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (u1 al1 u1' al1' be1 be2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     Unit :=
@@ -27057,8 +27088,8 @@ After `LeExpRound2` replaces `u1` and `al1` by bounded same-value
 representatives `u1'` and `al1'`, upstream applies `errorBoundedPlus` to the
 rounded sum `be1`.  This helper packages the value rewrites and produces the
 bounded representative of `be2 = u1 + al1 - be1`. -/
-theorem Fma_FTS_be2_error_witness {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Fma_FTS_be2_error_witness {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (u1 al1 u1' al1' be1 be2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧
@@ -27104,7 +27135,7 @@ theorem Fma_FTS_be2_error_witness {beta : Int}
       _ = _root_.F2R (beta:=beta) be2 := hbe2_val.symm
   exact ⟨err, herr_val', herr_bounded, herr_exp⟩
 
-noncomputable def Fma_FTS_check {beta : Int}
+noncomputable def Fma_FTS_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 be2 gat ga :
       FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -27116,8 +27147,8 @@ This restores the bounded-witness payload used after `FmaErr`: the product
 error and addition-error witnesses are normalized to a shared lower exponent,
 then the final rounded correction `ga` is represented at an exponent no smaller
 than the represented `al2` error. -/
-theorem Fma_FTS {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Fma_FTS {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 be2 gat ga :
       FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -27292,7 +27323,7 @@ theorem Fma_FTS {beta : Int}
     exact hga'_exp
   exact ⟨ga', al2', hga'_val, hal2'_val, hga'_bound, hal2'_bound, hal2_le_ga⟩
 
-noncomputable def FmaErr_reconstruct_from_ga_correction_check {beta : Int}
+noncomputable def FmaErr_reconstruct_from_ga_correction_check {beta : Int} [ValidRadix beta]
     (a x y r1 u1 u2 al1 al2 be1 be2 ga :
       FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -27302,7 +27333,7 @@ noncomputable def FmaErr_reconstruct_from_ga_correction_check {beta : Int}
 The hard part of upstream `FmaErr` is proving the correction value represented
 by `ga`.  Once that value is available, the final equality follows only from
 the product error, the first addition error, and the `be2` definition. -/
-theorem FmaErr_reconstruct_from_ga_correction {beta : Int}
+theorem FmaErr_reconstruct_from_ga_correction {beta : Int} [ValidRadix beta]
     (a x y r1 u1 u2 al1 al2 be1 be2 ga :
       FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R (beta:=beta) u2 =
@@ -27335,7 +27366,7 @@ theorem FmaErr_reconstruct_from_ga_correction {beta : Int}
   rw [hga, hal2, hbe2, hu2]
   ring
 
-noncomputable def FmaErr_ga_value_of_be2_zero_check {beta : Int}
+noncomputable def FmaErr_ga_value_of_be2_zero_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (gat be2 ga : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -27346,7 +27377,7 @@ When the second compensation error represents zero, the final correction
 rounding has exact input `gat`.  Since `gat` is already bounded, the
 closest-rounding projector property forces the rounded correction `ga` to have
 the same real value as `gat`. -/
-theorem FmaErr_ga_value_of_be2_zero {beta : Int}
+theorem FmaErr_ga_value_of_be2_zero {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (gat be2 ga : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜TotalP (Closest (beta:=beta) bo radix) ∧
@@ -27372,7 +27403,7 @@ theorem FmaErr_ga_value_of_be2_zero {beta : Int}
     simpa [hbe2_zero] using hga_closest
   exact (hProjEq gat ga hgat_bound hga_closest').symm
 
-noncomputable def FmaErr_gat_value_of_exact_difference_check {beta : Int}
+noncomputable def FmaErr_gat_value_of_exact_difference_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (be1 r1 diff gat : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -27383,7 +27414,7 @@ Upstream repeatedly uses `RoundedModeProjectorIdemEq` when the exact input
 `be1 - r1` is already represented by a bounded float.  This helper packages
 that step for the closest-rounding relation: a closest rounding of that exact
 bounded value represents the same real number. -/
-theorem FmaErr_gat_value_of_exact_difference {beta : Int}
+theorem FmaErr_gat_value_of_exact_difference {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (be1 r1 diff gat : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜TotalP (Closest (beta:=beta) bo radix) ∧
@@ -27410,7 +27441,7 @@ theorem FmaErr_gat_value_of_exact_difference {beta : Int}
     simpa [hdiff_val] using hgat_closest
   exact (hProjEq diff gat hdiff_bound hgat_closest').symm
 
-noncomputable def FmaErr_aux1_check {beta : Int}
+noncomputable def FmaErr_aux1_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat ga :
       FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -27422,7 +27453,7 @@ This branch is the one selected in upstream `FmaErr_aux` when `be2` represents
 zero.  The two rounded correction steps are discharged by the local projector
 helpers above, and the remaining equality is the algebraic reconstruction used
 by `FmaErr`. -/
-theorem FmaErr_aux1 {beta : Int}
+theorem FmaErr_aux1 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat ga :
       FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -27482,7 +27513,7 @@ theorem FmaErr_aux1 {beta : Int}
     FmaErr_reconstruct_from_ga_correction_check, Id.run, ULift.up_down] using
     hmain ⟨hu2_val, hal2_val, hbe2_val, hga_val⟩
 
-noncomputable def FmaErr_ga_value_of_correction_witness_check {beta : Int}
+noncomputable def FmaErr_ga_value_of_correction_witness_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (gat be2 corr ga : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -27492,7 +27523,7 @@ noncomputable def FmaErr_ga_value_of_correction_witness_check {beta : Int}
 After upstream `gaCorrect` constructs a bounded float representing
 `gat + be2`, the closest rounding defining `ga` must have the same real value as
 that witness.  This helper isolates that final rounded-mode idempotence step. -/
-theorem FmaErr_ga_value_of_correction_witness {beta : Int}
+theorem FmaErr_ga_value_of_correction_witness {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (gat be2 corr ga : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜TotalP (Closest (beta:=beta) bo radix) ∧
@@ -27519,7 +27550,7 @@ theorem FmaErr_ga_value_of_correction_witness {beta : Int}
     simpa [hcorr_val] using hga_closest
   exact (hProjEq corr ga hcorr_bound hga_closest').symm
 
-noncomputable def FmaErr_aux2_check {beta : Int}
+noncomputable def FmaErr_aux2_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -27531,7 +27562,7 @@ The hard work in the upstream nonzero-`be2` branch is constructing bounded
 witnesses for `be1 - r1` and for `be1 - r1 + be2`.  Once those witnesses are
 available, this theorem performs the rounded-mode projector steps and the final
 algebraic reconstruction. -/
-theorem FmaErr_aux2 {beta : Int}
+theorem FmaErr_aux2 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -27593,7 +27624,7 @@ theorem FmaErr_aux2 {beta : Int}
     FmaErr_reconstruct_from_ga_correction_check, Id.run, ULift.up_down] using
     hmain ⟨hu2_val, hal2_val, hbe2_val, hga_val⟩
 
-noncomputable def FmaErr_aux_check {beta : Int}
+noncomputable def FmaErr_aux_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -27605,7 +27636,7 @@ The upstream proof splits on whether `be2` represents zero.  The zero branch is
 `FmaErr_aux1`; the nonzero branch is `FmaErr_aux2` once `gaCorrect` has built a
 bounded witness for `gat + be2`.  This theorem restores that branch dispatcher
 without assuming the still-missing midpoint/size construction of the witness. -/
-theorem FmaErr_aux {beta : Int}
+theorem FmaErr_aux {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -27657,7 +27688,7 @@ theorem FmaErr_aux {beta : Int}
       h ⟨hTotal, hdiff_bound, hdiff_val, hcorr_bound, hcorr_val, hu2_val,
         hal2_val, hbe2_val, hgat_closest, hga_closest⟩
 
-noncomputable def FmaErr_core_from_aux_and_FTS_check {beta : Int}
+noncomputable def FmaErr_core_from_aux_and_FTS_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -27669,8 +27700,8 @@ The remaining hard work for full `FmaErr` is constructing the correction split
 used by `gaCorrect`.  Once that split is available, `FmaErr_aux` gives the
 real-valued reconstruction equality and `Fma_FTS` gives the bounded
 representatives needed by the wrapper layer. -/
-theorem FmaErr_core_from_aux_and_FTS {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FmaErr_core_from_aux_and_FTS {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -27759,7 +27790,7 @@ theorem FmaErr_core_from_aux_and_FTS {beta : Int}
         hbe1_closest, hbe2_val, hgat_closest, hga_closest⟩
   exact ⟨heq, hfts⟩
 
-noncomputable def FmaErr_check {beta : Int}
+noncomputable def FmaErr_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -27771,8 +27802,8 @@ This is the restored lower FMA-error reconstruction payload once the remaining
 `gaCorrect` correction split has been supplied.  It exposes the upstream name
 while keeping that split explicit, and delegates the reconstruction and
 bounded-representative packaging to `FmaErr_core_from_aux_and_FTS`. -/
-theorem FmaErr {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FmaErr {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 be2 diff gat corr ga :
       FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -27834,7 +27865,7 @@ theorem FmaErr {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, FmaErr_core_from_aux_and_FTS_check,
     Id.run, ULift.up_down] using hcore h
 
-noncomputable def FmaErr_gaCorrect_of_al2_zero_check {beta : Int}
+noncomputable def FmaErr_gaCorrect_of_al2_zero_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (a x y r1 u1 u2 al1 al2 be1 be2 :
@@ -27846,7 +27877,7 @@ noncomputable def FmaErr_gaCorrect_of_al2_zero_check {beta : Int}
 In this branch, upstream proves `be1` and `r1` have the same real value using
 the rounded-mode compatibility hypothesis `P2`; then `be2` itself is the
 bounded correction witness for `be1 - r1 + be2`. -/
-theorem FmaErr_gaCorrect_of_al2_zero {beta : Int}
+theorem FmaErr_gaCorrect_of_al2_zero {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (a x y r1 u1 u2 al1 al2 be1 be2 :
@@ -27893,7 +27924,7 @@ theorem FmaErr_gaCorrect_of_al2_zero {beta : Int}
   rw [hbe1_r1]
   ring
 
-noncomputable def FmaErr_al2_zero_of_u2_zero_check {beta : Int}
+noncomputable def FmaErr_al2_zero_of_u2_zero_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (y u2 al1 al2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -27903,7 +27934,7 @@ noncomputable def FmaErr_al2_zero_of_u2_zero_check {beta : Int}
 In the second `gaCorrect` branch, upstream derives a contradiction from
 `al2 ≠ 0` by showing that if `u2` represents zero then the rounded value `al1`
 is exactly `y`, hence the represented `al2 = y + u2 - al1` is zero. -/
-theorem FmaErr_al2_zero_of_u2_zero {beta : Int}
+theorem FmaErr_al2_zero_of_u2_zero {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (y u2 al1 al2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜TotalP (Closest (beta:=beta) bo radix) ∧
@@ -27936,7 +27967,7 @@ theorem FmaErr_al2_zero_of_u2_zero {beta : Int}
   rw [hal2_val, hu2_zero, hy_al1]
   ring
 
-noncomputable def FmaErr_gaCorrect_of_be1_eq_r1_check {beta : Int}
+noncomputable def FmaErr_gaCorrect_of_be1_eq_r1_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (be1 r1 be2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -27947,7 +27978,7 @@ After upstream `Midpoint_aux` proves that `be1` and `r1` have the same real
 value, the correction target `be1 - r1 + be2` is represented by `be2` itself.
 This packages the `exists be2; rewrite H; ring` branch used before the harder
 bounded-sum branch. -/
-theorem FmaErr_gaCorrect_of_be1_eq_r1 {beta : Int}
+theorem FmaErr_gaCorrect_of_be1_eq_r1 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (be1 r1 be2 : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) bo be2 ∧
@@ -27972,7 +28003,7 @@ theorem FmaErr_gaCorrect_of_be1_eq_r1 {beta : Int}
 A closest rounded value of a nonnegative real is nonnegative: otherwise the
 bounded zero float would be strictly closer to the input than the negative
 candidate. -/
-theorem P_positive {beta : Int}
+theorem P_positive {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (r : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hp : Closest (beta:=beta) bo radix r p)
@@ -28010,7 +28041,7 @@ theorem P_positive {beta : Int}
   rw [hp_dist, hzero_dist] at hdist
   linarith
 
-noncomputable def Half_Closest_Round_check {beta : Int}
+noncomputable def Half_Closest_Round_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (r : ℝ)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -28020,7 +28051,7 @@ noncomputable def Half_Closest_Round_check {beta : Int}
 At radix 2, halving a closest rounded float by decrementing its exponent gives
 a closest rounded value for the halved real input, provided the decremented
 exponent remains inside the bound. -/
-theorem Half_Closest_Round {beta : Int}
+theorem Half_Closest_Round {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (r : ℝ)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = 2 ∧ -bo.dExp ≤ x.Fexp - 1 ∧
@@ -28106,7 +28137,7 @@ theorem Half_Closest_Round {beta : Int}
     rw [hx_scaled, hg_scaled] at hclosest
     linarith
 
-noncomputable def FNeven_double_of_Fnormal_check {beta : Int}
+noncomputable def FNeven_double_of_Fnormal_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -28116,7 +28147,7 @@ noncomputable def FNeven_double_of_Fnormal_check {beta : Int}
 For a normal radix-2 float, incrementing the exponent keeps the normalized
 mantissa unchanged.  Thus the normalized-even side condition in an
 `EvenClosest` witness survives the doubling step. -/
-theorem FNeven_double_of_Fnormal {beta : Int}
+theorem FNeven_double_of_Fnormal {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = 2 ∧ precision ≠ 0 ∧
@@ -28158,7 +28189,7 @@ theorem FNeven_double_of_Fnormal {beta : Int}
       h ⟨hxDoubleCan, rfl, hradix, hprecision, hvNum⟩
   simpa [FNeven, xDouble, hxNorm, hxDoubleNorm] using hxEven
 
-noncomputable def Twice_EvenClosest_Round_from_closest_check {beta : Int}
+noncomputable def Twice_EvenClosest_Round_from_closest_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -28168,7 +28199,7 @@ noncomputable def Twice_EvenClosest_Round_from_closest_check {beta : Int}
 The only missing part of the full upstream theorem is the scaled closestness
 argument.  Once the doubled float is known to be closest to `2 * r`, the
 normal/parity payload above turns it into an `EvenClosest` result. -/
-theorem Twice_EvenClosest_Round_from_closest {beta : Int}
+theorem Twice_EvenClosest_Round_from_closest {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜beta = 2 ∧ precision ≠ 0 ∧
@@ -28196,7 +28227,7 @@ theorem Twice_EvenClosest_Round_from_closest {beta : Int}
       FNeven_double_of_Fnormal_check, Id.run, ULift.up_down] using
       h ⟨rfl, hprecision, hvNum, hxNormal, hxEven⟩
 
-noncomputable def Closest_double_of_halvable_competitors_check {beta : Int}
+noncomputable def Closest_double_of_halvable_competitors_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -28207,7 +28238,7 @@ If every bounded competitor for the doubled target has a bounded half with the
 corresponding real value, closestness at `r` scales to closestness at `2 * r`.
 The remaining work for the full upstream theorem is exactly proving this
 halvability premise at the subnormal boundary. -/
-theorem Closest_double_of_halvable_competitors {beta : Int}
+theorem Closest_double_of_halvable_competitors {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜beta = 2 ∧
@@ -28265,7 +28296,7 @@ theorem Closest_double_of_halvable_competitors {beta : Int}
     rw [hx_scaled, hg_scaled]
     nlinarith
 
-noncomputable def Fbounded_half_even_or_high_exp_check {beta : Int}
+noncomputable def Fbounded_half_even_or_high_exp_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (g : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
@@ -28274,7 +28305,7 @@ noncomputable def Fbounded_half_even_or_high_exp_check {beta : Int}
 A bounded radix-2 float can be halved as a bounded float if either its exponent
 can be decremented without underflow, or its mantissa is even and can be halved
 at the same exponent. -/
-theorem Fbounded_half_even_or_high_exp {beta : Int}
+theorem Fbounded_half_even_or_high_exp {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (g : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = 2 ∧ Fbounded (beta:=beta) bo g ∧
         (-bo.dExp ≤ g.Fexp - 1 ∨ Even g.Fnum)⌝⦄
@@ -28331,7 +28362,7 @@ theorem Fbounded_half_even_or_high_exp {beta : Int}
       rw [Int.cast_add]
       ring_nf
 
-noncomputable def Closest_double_of_even_or_high_competitors_check {beta : Int}
+noncomputable def Closest_double_of_even_or_high_competitors_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -28341,7 +28372,7 @@ noncomputable def Closest_double_of_even_or_high_competitors_check {beta : Int}
 This packages the checked halving lemma into the scaled closestness proof: if
 every bounded competitor for `2*r` either has room to decrement its exponent or
 has an even mantissa, then the doubled float is closest to `2*r`. -/
-theorem Closest_double_of_even_or_high_competitors {beta : Int}
+theorem Closest_double_of_even_or_high_competitors {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜beta = 2 ∧
@@ -28384,7 +28415,7 @@ theorem Closest_double_of_even_or_high_competitors {beta : Int}
     Closest_double_of_halvable_competitors_check, Id.run, ULift.up_down] using
     hclosest ⟨rfl, hxDoubleBound, hxDoubleVal, hxClosest, hhalve⟩
 
-noncomputable def Twice_EvenClosest_Round_from_even_or_high_check {beta : Int}
+noncomputable def Twice_EvenClosest_Round_from_even_or_high_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -28393,7 +28424,7 @@ noncomputable def Twice_EvenClosest_Round_from_even_or_high_check {beta : Int}
 
 The only remaining unproved boundary payload is now the arithmetic fact that
 actual closestness competitors satisfy the even-or-high-exponent premise. -/
-theorem Twice_EvenClosest_Round_from_even_or_high {beta : Int}
+theorem Twice_EvenClosest_Round_from_even_or_high {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜beta = 2 ∧ precision ≠ 0 ∧
@@ -28455,12 +28486,12 @@ theorem Twice_EvenClosest_Round_from_even_or_high {beta : Int}
     hfinal ⟨rfl, hprecision, hvNum, hxNormal, hxEven,
       by simpa [xDouble] using hxDoubleClosest⟩
 
-noncomputable def Twice_EvenClosest_Round_check {beta : Int}
+noncomputable def Twice_EvenClosest_Round_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
 
-noncomputable def Fulp_le_twice_l_check {beta : Int}
+noncomputable def Fulp_le_twice_l_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -28469,7 +28500,7 @@ noncomputable def Fulp_le_twice_l_check {beta : Int}
 
 If a normal nonnegative float `x` is at most half of a bounded float `y`, then
 the ulp at `y` is at least twice the ulp at `x`. -/
-theorem Fulp_le_twice_l {beta : Int}
+theorem Fulp_le_twice_l {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = 2 ∧ precision ≠ 0 ∧ bo.vNum = Zpower_nat 2 precision ∧
@@ -28565,7 +28596,7 @@ theorem Fulp_le_twice_l {beta : Int}
   rw [hleft, hright]
   exact hpow_le
 
-noncomputable def Fulp_le_twice_r_check {beta : Int}
+noncomputable def Fulp_le_twice_r_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -28574,7 +28605,7 @@ noncomputable def Fulp_le_twice_r_check {beta : Int}
 
 Symmetric ulp comparison: if a bounded nonnegative float `x` is at most twice
 a normal float `y`, then the ulp at `x` is at most twice the ulp at `y`. -/
-theorem Fulp_le_twice_r {beta : Int}
+theorem Fulp_le_twice_r {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = 2 ∧ precision ≠ 0 ∧ bo.vNum = Zpower_nat 2 precision ∧
@@ -28670,7 +28701,7 @@ theorem Fulp_le_twice_r {beta : Int}
   rw [hleft, hright]
   exact hpow_le
 
-noncomputable def Fulp_le_twice_r_round_check {beta : Int}
+noncomputable def Fulp_le_twice_r_round_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -28681,7 +28712,7 @@ This is the final `Fulp_le_twice_r` handoff after monotonicity of nearest-even
 rounding has compared `x` with the doubled rounded value of `y`.  The doubled
 rounding payload is kept explicit; upstream derives it from
 `Twice_EvenClosest_Round`, which remains a separate lower helper to restore. -/
-theorem Fulp_le_twice_r_round {beta : Int}
+theorem Fulp_le_twice_r_round {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜beta = 2 ∧ precision ≠ 0 ∧ bo.vNum = Zpower_nat 2 precision ∧
@@ -28806,12 +28837,12 @@ In the second discriminant branch, Sterbenz makes the subtraction `p - q`
 representable in the current Pff bound.  Since `t` is an even-closest rounding
 of the same real value, closest-rounding idempotence forces its real value to
 be exactly `p - q`. -/
-noncomputable def t_exact_check {beta : Int}
+noncomputable def t_exact_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p q t : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem t_exact {beta : Int}
+theorem t_exact {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p q t : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧
@@ -28872,8 +28903,8 @@ This is the first Knuth payload from upstream `TwoSum.v`: once the first
 subtraction `(Iplus p q) - p` is exact, the correction sum recovers the
 addition error. The usual Pff radix/precision hypotheses are explicit because
 the local `errorBoundedPlus` theorem is packaged that way. -/
-theorem MKnuth {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem MKnuth {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
         FloatSpec.Core.Defs.FlocqFloat beta →
@@ -28993,8 +29024,8 @@ theorem MKnuth {beta : Int}
 This is the generic Knuth correction payload once the two subtractions
 `q - c` and `(Iplus p q) - c` are exact. It is the proof component used by the
 harder interval cases in upstream Pff. -/
-theorem MKnuth1 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem MKnuth1 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
         FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29128,7 +29159,7 @@ theorem MKnuth1 {beta : Int}
 
 /-- Closed variant of `MDekker` that derives the midpoint minimum payload from
 `PminPos` in the only case where `Dekker3` needs it. -/
-theorem MDekker_closed {beta : Int}
+theorem MDekker_closed {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29200,7 +29231,7 @@ The magnitude-bounded Knuth case follows by first applying the restored
 `MDekker_closed` theorem to obtain exactness of `(Iplus p q) - p`, then
 finishing with `MKnuth`. Upstream's Fast section fixes radix 2, represented
 here by `(beta : ℝ) = 2`. -/
-theorem MKnuth2 {beta : Int}
+theorem MKnuth2 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29268,7 +29299,7 @@ theorem MKnuth2 {beta : Int}
 The Knuth correction term is compatible with simultaneous float negation of
 the inputs. Upstream states this through the real coercion `:> R`; locally we
 state the corresponding `F2R` equality. -/
-theorem MKnuthOpp {beta : Int}
+theorem MKnuthOpp {beta : Int} [ValidRadix beta]
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
         FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29328,7 +29359,7 @@ theorem MKnuthOpp {beta : Int}
 Fast-section Knuth case where `q` lies between `-p` and `2 * -p`.  The exact
 addition is obtained by representing `p + q` as `Fminus q (Fopp p)` and using
 Sterbenz. -/
-theorem MKnuth3 {beta : Int}
+theorem MKnuth3 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29447,7 +29478,7 @@ Fast-section Knuth case where `p < 0`, `q > 0`, and `q` is past the
 `2 * -p` boundary. The proof follows upstream: derive the four rounded-mode
 inequalities around `s = Iplus p q` and `c = Iminus s p`, use Sterbenz to
 make the two remaining subtractions exact, then apply `MKnuth1`. -/
-theorem MKnuth4 {beta : Int}
+theorem MKnuth4 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29755,7 +29786,7 @@ For `s = Iplus p q` and `c = Iminus s p`, upstream proves
 `Iminus s c = s - c` by applying `minusRoundRep` to the rounded subtraction
 `c` of `s - p`, then projecting the exact representative through
 `IminusCorrectEq`. -/
-theorem MKnuth5_s_minus_c_exact {beta : Int}
+theorem MKnuth5_s_minus_c_exact {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29848,7 +29879,7 @@ In the positive `p < q` case, upstream first handles the subcase
 `q - c` is then a direct Sterbenz subtraction because `c <= s <= 2*q`.
 The complementary `c < q` subcase is the one that still needs the full
 `ExactMinusInterval` predecessor induction. -/
-theorem MKnuth5_q_le_c {beta : Int}
+theorem MKnuth5_q_le_c {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29958,7 +29989,7 @@ In the positive `p < q` case with `c = Iminus (Iplus p q) p`, this handles
 the `c < q` branch once the exact interval theorem can provide a bounded
 representative for `q - c` from the already exact representative of `s - c`.
 -/
-theorem MKnuth5_c_lt_q_from_interval {beta : Int}
+theorem MKnuth5_c_lt_q_from_interval {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30073,7 +30104,7 @@ monotonicity gives `p <= s` and `q <= s`, rounded-mode nonnegativity gives
 `0 <= c`, and radix scaling gives `s <= 2*q`.  The remaining exact-minus
 payload is still explicit as `hInterval`; once `ExactMinusInterval` is closed,
 this becomes the direct upstream `MKnuth5` theorem. -/
-theorem MKnuth5_from_interval {beta : Int}
+theorem MKnuth5_from_interval {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30264,7 +30295,7 @@ theorem MKnuth5_from_interval {beta : Int}
 The positive `p < q` Knuth branch is now closed by the restored
 `ExactMinusInterval`, removing the explicit interval premise from
 `MKnuth5_from_interval`. -/
-theorem MKnuth5 {beta : Int}
+theorem MKnuth5 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30311,8 +30342,8 @@ theorem MKnuth5 {beta : Int}
 
 If the abstract addition is already exact, the first subtraction is exact by
 `IminusCorrectEq`, so the generic `MKnuth` payload applies. -/
-theorem MKnuth6 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem MKnuth6 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
         FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30377,7 +30408,7 @@ Upstream `MKnuth7` is a short sign split after `MKnuth5`: for nonnegative
 positive `p` it delegates to `MKnuth5`; at `p = 0` it uses `MKnuth6`; and for
 negative `p` it delegates to `MKnuth3` or `MKnuth4` depending on the
 `q <= 2*(-p)` boundary. -/
-theorem MKnuth7_from_MKnuth5 {beta : Int}
+theorem MKnuth7_from_MKnuth5 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30488,7 +30519,7 @@ This composes the restored positive-case side-condition theorem
 `MKnuth5_from_interval` with the sign split in `MKnuth7_from_MKnuth5`.  The
 only remaining premise is the exact interval payload; after that is closed,
 this is the direct upstream `MKnuth7` theorem. -/
-theorem MKnuth7_from_interval {beta : Int}
+theorem MKnuth7_from_interval {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30567,7 +30598,7 @@ theorem MKnuth7_from_interval {beta : Int}
 
 This removes the explicit interval premise from `MKnuth7_from_interval` by
 using the restored direct `MKnuth5`. -/
-theorem MKnuth7 {beta : Int}
+theorem MKnuth7 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30630,7 +30661,7 @@ theorem MKnuth7 {beta : Int}
 The upstream theorem is a final magnitude/sign split after `MKnuth2` and
 `MKnuth7`.  This version composes those restored payloads while the exact
 interval theorem is still explicit. -/
-theorem Knuth_from_interval {beta : Int}
+theorem Knuth_from_interval {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30826,7 +30857,7 @@ theorem Knuth_from_interval {beta : Int}
 
 This closes the final Knuth magnitude/sign split by supplying the restored
 `ExactMinusInterval` to `Knuth_from_interval`. -/
-theorem Knuth {beta : Int}
+theorem Knuth {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30881,7 +30912,7 @@ an explicit premise to avoid a forward reference.  Once `errorBoundedPlus` is
 available, downstream wrappers can use this theorem instead: the only remaining
 section side condition is the finite exponent box needed by `MinEx`/`MaxEx`.
 -/
-theorem Dekker_FTS_closed {beta : Int}
+theorem Dekker_FTS_closed {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -30948,7 +30979,7 @@ theorem Dekker_FTS_closed {beta : Int}
     IplusCorrect IminusPlus hError p q hp hq hFirstExact
 
 /-- Coq: `FNoddSuc` — for bounded `p`, normalized-odd implies successor is normalized-even. -/
-theorem FNoddSuc {beta : Int}
+theorem FNoddSuc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ FNodd (beta:=beta) b radix precision p ∧
@@ -30990,7 +31021,7 @@ theorem FNoddSuc {beta : Int}
     using hs ⟨hprecision, hvnum, hodd⟩
 
 /-- Coq: `FNevenSuc` — for bounded `p`, normalized-even implies successor is normalized-odd. -/
-theorem FNevenSuc {beta : Int}
+theorem FNevenSuc {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : ℝ) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ FNeven (beta:=beta) b radix precision p ∧
@@ -31032,8 +31063,8 @@ theorem FNevenSuc {beta : Int}
     using hs ⟨hprecision, hvnum, heven⟩
 
 /-- Coq: `EvenClosestTotal` — the even-nearest relation is total. -/
-theorem EvenClosestTotal {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem EvenClosestTotal {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < precision ∧ 1 < b.vNum ∧
         b.vNum = Zpower_nat radix precision ∧
         (∀ r : ℝ, -b.dExp ≤ (boundR (beta:=beta) radix r).Fexp)⌝⦄
@@ -31217,14 +31248,14 @@ theorem EvenClosestTotal {beta : Int}
       linarith
     · exact hMaxUnique q hqMax
 
-noncomputable def CanonicFulp_check {beta : Int}
+noncomputable def CanonicFulp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `CanonicFulp` — for a canonical float, `Fulp` is the radix power at
 the float exponent. -/
-theorem CanonicFulp {beta : Int}
+theorem CanonicFulp {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p ∧ beta = radix ∧ 1 < radix ∧
@@ -31243,13 +31274,13 @@ theorem CanonicFulp {beta : Int}
       hnorm ⟨hpCan, hbeta, hradix, hprecision, hvNum⟩
   simp [Fulp, hnorm_eq]
 
-noncomputable def Fulp_zero_check {beta : Int}
+noncomputable def Fulp_zero_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `Fulp_zero` — zero floats have the minimum-bound ulp. -/
-theorem Fulp_zero {beta : Int}
+theorem Fulp_zero {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜is_Fzero p⌝⦄
@@ -31261,14 +31292,14 @@ theorem Fulp_zero {beta : Int}
   have hnum : p.Fnum = 0 := by simpa [is_Fzero] using hp_zero
   simp [Fulp, Fnormalize, hnum]
 
-noncomputable def FulpComp_check {beta : Int}
+noncomputable def FulpComp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpComp` — bounded floats with the same real value have the same
 `Fulp`. -/
-theorem FulpComp {beta : Int}
+theorem FulpComp {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded (beta:=beta) b q ∧
@@ -31328,15 +31359,15 @@ theorem FulpComp {beta : Int}
       hnormEq ⟨hpNormCan, hqNormCan, hnormVal⟩
   simp [Fulp, hnormFloatEq]
 
-noncomputable def FulpGe_check {beta : Int}
+noncomputable def FulpGe_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpGe` — a bounded float's magnitude is controlled by the largest
 mantissa and its normalized ulp. -/
-theorem FulpGe {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
+theorem FulpGe {beta : Int} [ValidRadix beta]
+    (radix : Int) [ValidRadix radix] (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ beta = radix ∧ 1 < radix ∧
         precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision⌝⦄
@@ -31400,13 +31431,13 @@ theorem FulpGe {beta : Int}
           Fulp (beta:=radix) b radix precision p := by
             simp [Fulp, nf]
 
-noncomputable def LeFulpPos_check {beta : Int}
+noncomputable def LeFulpPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `LeFulpPos` — on nonnegative bounded floats, `Fulp` is monotone. -/
-theorem LeFulpPos {beta : Int}
+theorem LeFulpPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b x ∧ Fbounded (beta:=beta) b y ∧
@@ -31471,15 +31502,15 @@ theorem LeFulpPos {beta : Int}
     exact_mod_cast (le_of_lt hradix)
   simpa [Fulp] using zpow_le_zpow_right₀ hbase_ge_one hExpLe
 
-noncomputable def FulpFPredGePos_check {beta : Int}
+noncomputable def FulpFPredGePos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpFPredGePos` — the predecessor of a positive canonical float has
 ulp no larger than the float itself. -/
-theorem FulpFPredGePos {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
+theorem FulpFPredGePos {beta : Int} [ValidRadix beta]
+    (radix : Int) [ValidRadix radix] (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b f ∧
         Fcanonic (beta:=beta) radix b f ∧
@@ -31523,14 +31554,14 @@ theorem FulpFPredGePos {beta : Int}
     hmono ⟨hpredBound, hfBound, hpredNonneg, hpredLe, hbeta, hradix,
       hprecision, hvNum⟩
 
-noncomputable def FulpFPredLe_check {beta : Int}
+noncomputable def FulpFPredLe_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpFPredLe` — an ulp is at most one radix multiple of the
 predecessor ulp. -/
-theorem FulpFPredLe {beta : Int}
+theorem FulpFPredLe {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b f ∧
@@ -31597,14 +31628,14 @@ theorem FulpFPredLe {beta : Int}
           rw [zpow_add₀ hradix_ne, zpow_one]
           ring
 
-noncomputable def FSuccDiffPos_check {beta : Int}
+noncomputable def FSuccDiffPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FSuccDiffPos` — for nonnegative floats, the successor step has
 real value exactly one ulp at the current exponent. -/
-theorem FSuccDiffPos {beta : Int}
+theorem FSuccDiffPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -31681,14 +31712,14 @@ theorem FSuccDiffPos {beta : Int}
       norm_num [Int.cast_add]
       ring
 
-noncomputable def FSuccUlpPos_check {beta : Int}
+noncomputable def FSuccUlpPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FSuccUlpPos` — for canonical nonnegative floats, the successor
 step is exactly one normalized ulp. -/
-theorem FSuccUlpPos {beta : Int}
+theorem FSuccUlpPos {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b x ∧
@@ -31721,15 +31752,15 @@ theorem FSuccUlpPos {beta : Int}
       hfulp ⟨hxCan, hbeta, hradix, hprecision, hvNum⟩
   exact hdiff'.trans hfulp'.symm
 
-noncomputable def FpredUlpPos_check {beta : Int}
+noncomputable def FpredUlpPos_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FpredUlpPos` — a positive canonical float is the predecessor plus
 the predecessor ulp. -/
-theorem FpredUlpPos {beta : Int}
-    (radix : Int) (b : Fbound_skel) (precision : Nat)
+theorem FpredUlpPos {beta : Int} [ValidRadix beta]
+    (radix : Int) [ValidRadix radix] (b : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b x ∧
         0 < _root_.F2R (beta:=beta) x ∧
@@ -31797,15 +31828,15 @@ theorem FpredUlpPos {beta : Int}
           rw [hstep]
     _ = _root_.F2R (beta:=beta) x := by ring
 
-noncomputable def ImplyClosest_check {beta : Int}
+noncomputable def ImplyClosest_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) : Unit :=
   ()
 
 /-- Coq: `ImplyClosest` — the local binade and half-ulp hypotheses imply
 closestness. -/
-theorem ImplyClosest {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ImplyClosest {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) :
     ⦃⌜Fbounded (beta:=beta) b f ∧
         Fcanonic (beta:=beta) radix b f ∧
@@ -32017,15 +32048,15 @@ theorem ImplyClosest {beta : Int}
   have hclosest := ClosestSuccPred (beta:=beta) b radix precision z f
   exact hclosest ⟨hfCan, hdistSucc, hdistPred, hbeta, hradix, hprecision, hvNum⟩
 
-noncomputable def ImplyClosestStrict_check {beta : Int}
+noncomputable def ImplyClosestStrict_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) : Unit :=
   ()
 
 /-- Coq: `ImplyClosestStrict` — a strict half-ulp error bound makes the closest
 rounded value unique at the level of represented real values. -/
-theorem ImplyClosestStrict {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ImplyClosestStrict {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) :
     ⦃⌜Fbounded (beta:=beta) b f ∧
         Fcanonic (beta:=beta) radix b f ∧
@@ -32382,15 +32413,15 @@ theorem ImplyClosestStrict {beta : Int}
       exact (False.elim (not_lt_of_ge hg_to_f hstrict))
     · exact le_antisymm hf_le_g (le_of_not_gt hf_lt_g)
 
-noncomputable def ImplyClosestStrict2_check {beta : Int}
+noncomputable def ImplyClosestStrict2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) : Unit :=
   ()
 
 /-- Coq: `ImplyClosestStrict2` — the strict half-ulp hypothesis gives both
 closestness and uniqueness of the represented real value. -/
-theorem ImplyClosestStrict2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ImplyClosestStrict2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int) :
     ⦃⌜Fbounded (beta:=beta) b f ∧
         Fcanonic (beta:=beta) radix b f ∧
@@ -32419,7 +32450,7 @@ theorem ImplyClosestStrict2 {beta : Int}
     exact hstrict ⟨hfBound, hfCan, hzGe, hzLe, hfGe, heGe, hbeta, hradix,
       hprecision_gt, hvNum, hdist⟩
 
-noncomputable def ClosestImplyEven_check {beta : Int}
+noncomputable def ClosestImplyEven_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -32429,7 +32460,7 @@ noncomputable def ClosestImplyEven_check {beta : Int}
 If `z` is exactly halfway above a nonnegative canonical float and `f` is an
 even-closest rounding of `z`, then the tie-breaking clause forces `f` to be
 normalized-even. -/
-theorem ClosestImplyEven {beta : Int}
+theorem ClosestImplyEven {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜EvenClosest (beta:=beta) b (radix : ℝ) precision z f ∧
@@ -32585,12 +32616,12 @@ theorem ClosestImplyEven {beta : Int}
       have hEq := hUnique g hClosest_g
       linarith
 
-noncomputable def ClosestImplyEven_int_check {beta : Int}
+noncomputable def ClosestImplyEven_int_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z m : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def MinOrMax2_check {beta : Int}
+noncomputable def MinOrMax2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -32599,8 +32630,8 @@ noncomputable def MinOrMax2_check {beta : Int}
 
 If a positive canonical bounded float `p` lies below `z` and `z` is less than
 one ulp away from `p`, then `p` is the lower endpoint around `z`. -/
-theorem MinOrMax2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem MinOrMax2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fcanonic (beta:=beta) radix b p ∧
@@ -32703,7 +32734,7 @@ theorem MinOrMax2 {beta : Int}
             (FPred (beta:=beta) b radix precision succ) := hnf_le_pred
       _ = _root_.F2R (beta:=beta) p := by rw [hpred_succ]
 
-noncomputable def MinOrMax1_check {beta : Int}
+noncomputable def MinOrMax1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -32712,8 +32743,8 @@ noncomputable def MinOrMax1_check {beta : Int}
 
 A positive canonical bounded float within one predecessor ulp of `z` is either
 the lower or upper extremal bounded float around `z`. -/
-theorem MinOrMax1 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem MinOrMax1 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fcanonic (beta:=beta) radix b p ∧
@@ -32823,13 +32854,13 @@ theorem MinOrMax1 {beta : Int}
         _ ≤ _root_.F2R (beta:=beta) nf := hsucc_le_nf
         _ = _root_.F2R (beta:=beta) f := hnf_val
 
-noncomputable def FcanonicZeroEq_check {beta : Int}
+noncomputable def FcanonicZeroEq_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Canonical zero is represented by the boundary zero float. -/
-theorem FcanonicZeroEq {beta : Int}
+theorem FcanonicZeroEq {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p ∧
@@ -32857,14 +32888,14 @@ theorem FcanonicZeroEq {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, FcanonicUnique_check,
     ULift.down_up, Fcanonic'] using huniq ⟨hpCan, hzeroCan, hpZero.trans hzeroVal.symm⟩
 
-noncomputable def FpredUlpZero_check {beta : Int}
+noncomputable def FpredUlpZero_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Zero-valued analogue of `FpredUlpPos` used by Coq `MinOrMax3_aux`. -/
-theorem FpredUlpZero {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FpredUlpZero {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p ∧
         _root_.F2R (beta:=beta) p = 0 ∧
@@ -32921,14 +32952,14 @@ theorem FpredUlpZero {beta : Int}
   rw [hfulp, hpred_eq]
   simp [_root_.F2R, FloatSpec.Core.Defs.F2R]
 
-noncomputable def MinOrMax3_aux_check {beta : Int}
+noncomputable def MinOrMax3_aux_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `MinOrMax3_aux`, the nonpositive side of the zero case. -/
-theorem MinOrMax3_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem MinOrMax3_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fcanonic (beta:=beta) radix b p ∧
@@ -33005,14 +33036,14 @@ theorem MinOrMax3_aux {beta : Int}
       _ ≤ _root_.F2R (beta:=beta) nf := hsucc_le_nf
       _ = _root_.F2R (beta:=beta) f := hnf_val
 
-noncomputable def MinOrMax3_check {beta : Int}
+noncomputable def MinOrMax3_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `MinOrMax3`, the signed zero-valued closeness lemma. -/
-theorem MinOrMax3 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem MinOrMax3 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fcanonic (beta:=beta) radix b p ∧
@@ -33086,47 +33117,47 @@ theorem MinOrMax3 {beta : Int}
     simpa only [wp, PostCond.noThrow, pure, MinOrMax_Fopp_check,
       Id.run, ULift.up_down] using h haux
 
-noncomputable def Axpy_aux2_check {beta : Int}
+noncomputable def Axpy_aux2_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_aux1_check {beta : Int}
+noncomputable def Axpy_aux1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_aux3_check {beta : Int}
+noncomputable def Axpy_aux3_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_aux1_aux3_check {beta : Int}
+noncomputable def Axpy_aux1_aux3_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x t u : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def Axpy_aux1_aux1_check {beta : Int}
+noncomputable def Axpy_aux1_aux1_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x t u : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def AxpyPos_check {beta : Int}
+noncomputable def AxpyPos_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_tFlessu_check {beta : Int}
+noncomputable def Axpy_tFlessu_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) : Unit :=
   ()
 
-noncomputable def Axpy_tFlessu_zero_check {beta : Int}
+noncomputable def Axpy_tFlessu_zero_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) : Unit :=
@@ -33136,7 +33167,7 @@ noncomputable def Axpy_tFlessu_zero_check {beta : Int}
 
 The neighbor closer to zero: successor for negative floats, predecessor
 otherwise. -/
-noncomputable def FLess {beta : Int}
+noncomputable def FLess {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     FloatSpec.Core.Defs.FlocqFloat beta :=
@@ -33145,7 +33176,7 @@ noncomputable def FLess {beta : Int}
   else
     FPred (beta:=beta) b radix precision p
 
-noncomputable def FLessBounded_check {beta : Int}
+noncomputable def FLessBounded_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -33155,7 +33186,7 @@ noncomputable def FLessBounded_check {beta : Int}
 Upstream discharges boundedness of the neighbor selected by `FLess` by
 splitting on the sign of `u`, then calling `FBoundedSuc` or `FBoundedPred`.
 This helper packages that exact local step for the `UlpFlessuGe` path. -/
-theorem FLessBounded {beta : Int}
+theorem FLessBounded {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -33175,15 +33206,15 @@ theorem FLessBounded {beta : Int}
     simpa [FLess, hpNeg] using
       h ⟨hpBound, hradix, hprecision, hvNum⟩
 
-noncomputable def FulpGe_FLess_check {beta : Int}
+noncomputable def FulpGe_FLess_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq `UlpFlessuGe` local step: the `FulpGe` bound for the neighbor selected
 by `FLess`. -/
-theorem FulpGe_FLess {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem FulpGe_FLess {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ beta = radix ∧ 1 < radix ∧
         precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision⌝⦄
@@ -33210,7 +33241,7 @@ theorem FulpGe_FLess {beta : Int}
     Id.run, ULift.up_down] using
     h ⟨hlessBound, hbeta, hradix, hprecision, hvNum⟩
 
-noncomputable def UlpFlessuGe_final_scale_check {beta : Int}
+noncomputable def UlpFlessuGe_final_scale_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) : Unit :=
   ()
@@ -33220,8 +33251,8 @@ noncomputable def UlpFlessuGe_final_scale_check {beta : Int}
 After the real-arithmetic part of the upstream proof reduces the target to a
 multiple of `|FLess p|`, `FulpGe` on the selected neighbor turns that bound into
 the required quarter-ulp estimate. -/
-theorem UlpFlessuGe_final_scale {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem UlpFlessuGe_final_scale {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ beta = radix ∧ 1 < radix ∧
         precision ≠ 0 ∧ b.vNum = Zpower_nat radix precision ∧
@@ -33275,19 +33306,19 @@ theorem UlpFlessuGe_final_scale {beta : Int}
     _ ≤ (4 * D)⁻¹ * (D * U) := hscaled
     _ = (1 / 4 : ℝ) * U := hcoef
 
-noncomputable def UlpFlessuGe_aux_check {beta : Int}
+noncomputable def UlpFlessuGe_aux_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def FulpSucCan_check {beta : Int}
+noncomputable def FulpSucCan_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpSucCan` — the successor step from a canonical float is at most
 one normalized ulp. -/
-theorem FulpSucCan {beta : Int}
+theorem FulpSucCan {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p ∧ beta = radix ∧ 1 < radix ∧
@@ -33423,14 +33454,14 @@ theorem FulpSucCan {beta : Int}
         ring
       exact le_of_eq hbranch
 
-noncomputable def FulpPredCan_check {beta : Int}
+noncomputable def FulpPredCan_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Coq: `FulpPredCan` — the predecessor step from a canonical float is at most
 one normalized ulp. -/
-theorem FulpPredCan {beta : Int}
+theorem FulpPredCan {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fcanonic (beta:=beta) radix b p ∧ beta = radix ∧ 1 < radix ∧
@@ -33571,7 +33602,7 @@ theorem FulpPredCan {beta : Int}
         ring
       exact le_of_eq hbranch
 
-noncomputable def FulpSuc_check {beta : Int}
+noncomputable def FulpSuc_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -33581,7 +33612,7 @@ most one normalized ulp.
 
 This states the expanded Flocq payload using `FSucc (Fnormalize p)`, because the
 early local `FNSucc` alias is still a lightweight parity helper. -/
-theorem FulpSuc {beta : Int}
+theorem FulpSuc {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ beta = radix ∧ 1 < radix ∧
@@ -33630,7 +33661,7 @@ theorem FulpSuc {beta : Int}
   rw [← hnpCorrect]
   exact le_trans hstep (le_of_eq hfulp)
 
-noncomputable def FulpPred_check {beta : Int}
+noncomputable def FulpPred_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -33640,7 +33671,7 @@ at most one normalized ulp.
 
 As with `FulpSuc`, this uses the expanded normalized-neighbor expression rather
 than the older lightweight `FNPred` alias. -/
-theorem FulpPred {beta : Int}
+theorem FulpPred {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ beta = radix ∧ 1 < radix ∧
@@ -33697,7 +33728,7 @@ endpoint, `p` must lie strictly below the normalized successor of `q`; if `q`
 is the upper endpoint, it must lie strictly above the normalized predecessor.
 The local statement uses `RoundedModeP_float`, the Coq-matching rounded-mode
 package carrying the min/max payload needed for this argument. -/
-theorem RoundedModeUlp {beta : Int}
+theorem RoundedModeUlp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -33832,7 +33863,7 @@ theorem RoundedModeUlp {beta : Int}
 /-- Coq: `RoundedModeErrorExpStrict` — if `p` is the rounded value of `x`
 and the represented error `q = x - p` is nonzero, then the error exponent is
 strictly below the rounded float exponent. -/
-theorem RoundedModeErrorExpStrict {beta : Int}
+theorem RoundedModeErrorExpStrict {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (x : ℝ) :
@@ -33910,8 +33941,8 @@ For nonnegative bounded inputs, a rounded product has a bounded same-value
 representative `r` with exponent between the exact product exponent and the
 standard upper bound, plus a bounded error `s` at the exact product exponent.
 -/
-theorem errorBoundedMultExpPos {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultExpPos {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (hbeta : beta = radix) (hradix : 1 < radix) (hprecision : precision ≠ 0)
     (hvNum_gt : 1 < bo.vNum)
@@ -34161,8 +34192,8 @@ theorem errorBoundedMultExpPos {beta : Int}
     · rw [hs_exp]
       exact hz_le_r
 
-private theorem errorBoundedMultExp_from_error {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+private theorem errorBoundedMultExp_from_error {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (hbeta : beta = radix) (hradix : 1 < radix) (hprecision : precision ≠ 0)
     (hvNum_gt : 1 < bo.vNum)
@@ -34413,8 +34444,8 @@ private theorem errorBoundedMultExp_from_error {beta : Int}
 The all-sign multiplication exponent/error theorem.  The arithmetic payload is
 `errorBoundedMultPos`/`errorBoundedMultNeg`; this wrapper normalizes the sign
 cases and then constructs the same-value rounded representative. -/
-theorem errorBoundedMultExp {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem errorBoundedMultExp {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (hbeta : beta = radix) (hradix : 1 < radix) (hprecision : precision ≠ 0)
     (hvNum_gt : 1 < bo.vNum)
@@ -34573,8 +34604,8 @@ For a closest-rounded product with nonzero residual, normalize the same-value
 rounded representative from `errorBoundedMultExp` so the result is canonical
 while preserving the exponent bounds needed by the downstream closest theorem.
 -/
-theorem errorBoundedMultClosest_aux {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem errorBoundedMultClosest_aux {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -34710,7 +34741,7 @@ successor of `q`; if `q` is the upper endpoint, it is instantiated at the
 normalized predecessor.  The local statement makes the usual Pff section
 assumptions explicit because `FulpSuc`/`FulpPred` are restored with those
 assumptions exposed. -/
-theorem ClosestUlp {beta : Int}
+theorem ClosestUlp {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p : ℝ) (q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Closest (beta:=beta) bo (radix : ℝ) p q ∧
@@ -34868,7 +34899,7 @@ theorem ClosestUlp {beta : Int}
 
 At radix two, doubling a normal nearest-even result by incrementing its
 exponent gives the nearest-even result for the doubled input. -/
-theorem Twice_EvenClosest_Round {beta : Int}
+theorem Twice_EvenClosest_Round {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜beta = 2 ∧ 1 < precision ∧
@@ -35273,8 +35304,8 @@ Final closest-rounded multiplication error theorem: the rounded product can be
 represented canonically, and its nonzero residual can be represented at
 exponent `Fexp r - precision`.
 -/
-theorem errorBoundedMultClosest {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem errorBoundedMultClosest {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -35459,7 +35490,7 @@ under the upstream no-underflow magnitude premise, the residual is a bounded
 float at exponent `g.Fexp - precision`, with mantissa bounded by
 `2^(precision - 1)`.  This is the binary/canonical wrapper around the already
 restored `errorBoundedMultClosest`. -/
-theorem errorBoundedMultClosest_Can {beta : Int}
+theorem errorBoundedMultClosest_Can {beta : Int} [ValidRadix beta]
       (bo : Fbound_skel) (precision : Nat)
       (f1 f2 g : FloatSpec.Core.Defs.FlocqFloat beta) :
       beta = 2 →
@@ -35956,7 +35987,7 @@ theorem errorBoundedMultClosest_Can {beta : Int}
 Integer-midpoint form of `ClosestImplyEven`: if `z` is the midpoint
 `radix^(Fexp f) * (m + 1/2)` with integer `m`, then even-closest rounding
 forces the canonical nonnegative float `f` to be normalized-even. -/
-theorem ClosestImplyEven_int {beta : Int}
+theorem ClosestImplyEven_int {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z m : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Even radix ∧
@@ -36143,8 +36174,8 @@ theorem ClosestImplyEven_int {beta : Int}
 
 If the closest rounded sum has exponent no greater than both input exponents,
 then the rounding error must be zero, so the rounded result is exact. -/
-theorem plusExact1 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem plusExact1 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -36211,8 +36242,8 @@ theorem plusExact1 {beta : Int}
 
 For a nonnegative canonical `p`, if the closest rounded sum has exponent below
 `pred (Fexp p)`, then the rounded result is exact. -/
-theorem plusExact2Aux {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem plusExact2Aux {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -36425,8 +36456,8 @@ theorem plusExact2Aux {beta : Int}
 
 If the closest rounded sum has exponent below `pred (Fexp p)` and `p` is
 canonical, then the rounded result is exact. -/
-theorem plusExact2 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem plusExact2 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -36504,7 +36535,7 @@ theorem plusExact2 {beta : Int}
     rw [hr_opp_val, hp_opp_val, hq_opp_val] at haux
     linarith
 
-noncomputable def LeExp1_check {beta : Int}
+noncomputable def LeExp1_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (b ph uh ul : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -36514,8 +36545,8 @@ noncomputable def LeExp1_check {beta : Int}
 In the inexact `uh` branch, if the residual `ul = ph + b - uh` is nonzero,
 then `uh` cannot have exponent strictly below `pred (Fexp ph)`: otherwise
 `plusExact2` would make the rounded sum exact and force `ul` to be zero. -/
-theorem LeExp1 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem LeExp1 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (b ph uh ul : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         1 < bo.vNum ∧ bo.vNum = Zpower_nat radix precision ∧
@@ -36561,8 +36592,8 @@ theorem LeExp1 {beta : Int}
 The rounded sum can be split into an exponent-bounded rounded part `s` with the
 same real value as `pq` and a bounded residual `r` at the minimum input
 exponent. -/
-theorem plusExactExp {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem plusExactExp {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -36862,8 +36893,8 @@ theorem plusExactExp {beta : Int}
 If one canonical addend is at least `radix^e` in magnitude and `e - 1` is not
 below the underflow exponent, a closest rounded sum is either zero or has
 magnitude at least `radix^(e - precision)`. -/
-theorem AddExpGe1Underf {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem AddExpGe1Underf {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -37061,8 +37092,8 @@ theorem AddExpGe1Underf {beta : Int}
 The bounded-input form of `AddExpGe1Underf`: normalize both inputs to obtain
 canonical representatives, then eliminate the zero branch using the explicit
 nonzero rounded result hypothesis. -/
-theorem AddExpGe1Underf2 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem AddExpGe1Underf2 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -37123,8 +37154,8 @@ theorem AddExpGe1Underf2 {beta : Int}
 
 If the closest rounded sum is represented by a zero-valued float, the exact
 sum is zero as well. -/
-theorem plusExactR0 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat) :
+theorem plusExactR0 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) :
     beta = radix →
     1 < radix →
     precision ≠ 0 →
@@ -37167,7 +37198,7 @@ theorem plusExactR0 {beta : Int}
   exact hzVal.symm.trans hexact
 
 /-- Coq: `Axpy_aux2`, the subnormal `t` branch of the Axpy min/max proof. -/
-theorem Axpy_aux2 {beta : Int}
+theorem Axpy_aux2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -37301,7 +37332,7 @@ theorem Axpy_aux2 {beta : Int}
 
 The theorem assumes the already-factored quarter-ulp product error bound and
 uses closestness of `u` to `t + y` to choose the lower or upper extremal case. -/
-theorem Axpy_aux1 {beta : Int}
+theorem Axpy_aux1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -37538,7 +37569,7 @@ theorem Axpy_aux1 {beta : Int}
 The normality of `t` lets us compare the ulp of `4 * t` with the ulp of `u`
 using `LeFulpPos`; `FulpFPredLe` then transfers the bound to the predecessor
 ulp used by the Axpy min/max proof. -/
-theorem Axpy_aux1_aux1 {beta : Int}
+theorem Axpy_aux1_aux1 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x t u : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) 2 b t ∧
@@ -37715,7 +37746,7 @@ theorem Axpy_aux1_aux1 {beta : Int}
 
 /-- Coq: `Axpy_aux1_aux3`, the subnormal `t` error estimate from a predecessor
 exponent lower bound. -/
-theorem Axpy_aux1_aux3 {beta : Int}
+theorem Axpy_aux1_aux3 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x t u : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fsubnormal (beta:=beta) 2 b t ∧
@@ -37878,7 +37909,7 @@ When `t + y` lies below `u`, closestness rules out the predecessor-boundary
 case and `ExactSum_Near` reduces to the already restored `Axpy_aux2`.  When
 `t + y` lies above `u`, the negative `u - (t + y)` term tightens the distance
 estimate enough for `MinOrMax1`. -/
-theorem Axpy_aux3 {beta : Int}
+theorem Axpy_aux3 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -38159,7 +38190,7 @@ The upstream proof splits the canonical `t` case.  Normal `t` uses
 `Axpy_aux1_aux1` followed by `Axpy_aux1`; subnormal `t` uses either the
 boundary predecessor branch `Axpy_aux3` or the larger predecessor exponent
 estimate `Axpy_aux1_aux3` followed by `Axpy_aux1`. -/
-theorem AxpyPos {beta : Int}
+theorem AxpyPos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -38280,7 +38311,7 @@ theorem AxpyPos {beta : Int}
 This restores the signed dispatch around `AxpyPos` when `u` is nonzero.
 The public `Axpy_tFlessu` below adds the zero branch, matching the upstream
 case split while keeping this reusable nonzero proof factored out. -/
-theorem Axpy_tFlessu_nonzero {beta : Int}
+theorem Axpy_tFlessu_nonzero {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -38477,7 +38508,7 @@ When `u` is zero, the scale hypothesis forces `t` to be zero.  Since `u` is
 closest to `t + y`, the bounded candidate `y` then has distance zero and hence
 also represents zero.  The perturbation bound plus `ClosestUlp` for `t` gives
 the small-distance hypothesis required by `MinOrMax3`. -/
-theorem Axpy_tFlessu_zero {beta : Int}
+theorem Axpy_tFlessu_zero {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -38620,7 +38651,7 @@ theorem Axpy_tFlessu_zero {beta : Int}
 
 Negative and positive nonzero branches use `Axpy_tFlessu_nonzero`; the
 zero branch is the explicit `Axpy_tFlessu_zero` proof above. -/
-theorem Axpy_tFlessu {beta : Int}
+theorem Axpy_tFlessu {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -38683,8 +38714,8 @@ theorem Axpy_tFlessu {beta : Int}
 The neighbor selected by `FLess` is at least `Fulp p` closer to zero in
 absolute value.  The positive branch is the predecessor step; the negative
 branch is its sign-dual through `Fopp`. -/
-theorem UlpFlessuGe_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem UlpFlessuGe_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fcanonic (beta:=beta) radix b p ∧
@@ -38835,7 +38866,7 @@ theorem UlpFlessuGe_aux {beta : Int}
         le_trans hleft_nonpos hnonneg
       simpa [FLess, hpNeg] using hres
 
-noncomputable def UlpFlessuGe_from_abs_sub_fulp_check {beta : Int}
+noncomputable def UlpFlessuGe_from_abs_sub_fulp_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) : Unit :=
   ()
@@ -38846,8 +38877,8 @@ final scale step.
 This packages the upstream transition from a bound by `|u| - Fulp u` to the
 quarter-ulp bound on `FLess u`; the remaining `UlpFlessuGe` work is the
 larger real-arithmetic reduction to this premise. -/
-theorem UlpFlessuGe_from_abs_sub_fulp {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem UlpFlessuGe_from_abs_sub_fulp {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fcanonic (beta:=beta) radix b p ∧
@@ -38905,7 +38936,7 @@ theorem UlpFlessuGe_from_abs_sub_fulp {beta : Int}
     hfinal ⟨hpBound, hbeta, hradix, hprecision, hvNum,
       by simpa [D, less] using hE_less⟩
 
-noncomputable def UlpFlessuGe_from_general_fulp_bound_check {beta : Int}
+noncomputable def UlpFlessuGe_from_general_fulp_bound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) : Unit :=
   ()
@@ -38915,8 +38946,8 @@ noncomputable def UlpFlessuGe_from_general_fulp_bound_check {beta : Int}
 The upstream proof first replaces `Fulp u` by the general bound
 `|u| * radix^(1 - precision) + radix^(-dExp)`, then delegates to the
 `UlpFlessuGe_aux` estimate and the final scale step. -/
-theorem UlpFlessuGe_from_general_fulp_bound {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem UlpFlessuGe_from_general_fulp_bound {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fbounded' (beta:=beta) b p ∧
@@ -38984,7 +39015,7 @@ theorem UlpFlessuGe_from_general_fulp_bound {beta : Int}
     hprev ⟨hpBound, hpCan, hbeta, hradix, hprecision, hvNum,
       by simpa [D] using hE_abs⟩
 
-noncomputable def UlpFlessuGe2_from_general_bound_check {beta : Int}
+noncomputable def UlpFlessuGe2_from_general_bound_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) : Unit :=
   ()
@@ -38994,8 +39025,8 @@ noncomputable def UlpFlessuGe2_from_general_bound_check {beta : Int}
 Once the large arithmetic expression is proved strictly below the general
 `FulpLeGeneral` bound, the non-strict `UlpFlessuGe` reduction above gives the
 strict quarter-ulp conclusion needed by `Axpy_opt`. -/
-theorem UlpFlessuGe2_from_general_bound {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem UlpFlessuGe2_from_general_bound {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (E : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
         Fbounded' (beta:=beta) b p ∧
@@ -39040,7 +39071,7 @@ theorem UlpFlessuGe2_from_general_bound {beta : Int}
 For the radix-2 Axpy setting, closestness bounds the rounding distance by one
 half ulp.  Combining that with `FulpLeGeneral` and solving the resulting
 linear inequality gives the upstream bound on the rounded value. -/
-theorem RoundLeGeneral {beta : Int}
+theorem RoundLeGeneral {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded' (beta:=beta) b p ∧
@@ -39248,7 +39279,7 @@ This packages the ulp-to-relative-error step used before
 `Axpy_u_lower_from_sum_error`: closestness gives a half-ulp bound on the
 rounded sum, while `FulpLe2` bounds that ulp by `|u| * 2^(1-precision)` in the
 normal branch. -/
-theorem Axpy_sum_error_from_closest_ulp {beta : Int}
+theorem Axpy_sum_error_from_closest_ulp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (u : FloatSpec.Core.Defs.FlocqFloat beta) (S : ℝ) :
     ⦃⌜Closest (beta:=beta) b (2 : ℝ) S u ∧
@@ -39321,7 +39352,7 @@ theorem Axpy_sum_error_from_closest_ulp {beta : Int}
 
 This combines the closest-rounding ulp estimate for the concrete sum `Y + T`
 with the real reverse-triangle step in `Axpy_u_lower_from_sum_error`. -/
-theorem Axpy_u_lower_from_closest_sum {beta : Int}
+theorem Axpy_u_lower_from_closest_sum {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (u : FloatSpec.Core.Defs.FlocqFloat beta) (T Y : ℝ) :
     ⦃⌜0 < 1 + (2 : ℝ) ^ (-(precision : Int)) ∧
@@ -39654,12 +39685,12 @@ private theorem UlpFlessuGe2_coefficient_strict
     linarith
   linarith
 
-noncomputable def UlpFlessuGe_check {beta : Int}
+noncomputable def UlpFlessuGe_check {beta : Int} [ValidRadix beta]
     (_b : Fbound_skel) (_precision : Nat)
     (_a _x _y _t _u : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-noncomputable def UlpFlessuGe2_check {beta : Int}
+noncomputable def UlpFlessuGe2_check {beta : Int} [ValidRadix beta]
     (_b : Fbound_skel) (_precision : Nat)
     (_a _x _y _t _u : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -39671,7 +39702,7 @@ upstream reductions: `RoundLeGeneral` bounds `t`, closestness of the rounded sum
 gives the lower estimate for `u`, the displayed coefficient is reduced to the
 general `Fulp` bound, and the existing `UlpFlessuGe` helper stack finishes the
 quarter-ulp comparison. -/
-theorem UlpFlessuGe {beta : Int}
+theorem UlpFlessuGe {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b a ∧
@@ -39903,7 +39934,7 @@ theorem UlpFlessuGe {beta : Int}
 Strict coefficient form from the Axpy auxiliary section.  This first compares
 the strict upstream coefficient expression with the non-strict coefficient form
 proved by `UlpFlessuGe`, then uses that public theorem for the final ulp bound. -/
-theorem UlpFlessuGe2 {beta : Int}
+theorem UlpFlessuGe2 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b a ∧
@@ -40074,7 +40105,7 @@ theorem UlpFlessuGe2 {beta : Int}
 This composes `RoundLeGeneral`, the rounded-sum lower estimate, and the
 real-arithmetic scale cut to produce the `4 * |t| ≤ |u|` premise consumed by
 `Axpy_tFlessu`. -/
-theorem Axpy_scale_from_rounding_inputs {beta : Int}
+theorem Axpy_scale_from_rounding_inputs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (t y u : FloatSpec.Core.Defs.FlocqFloat beta) (A : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b t ∧
@@ -40202,7 +40233,7 @@ hypothesis `H2` into the strict quarter-ulp bound required by `Axpy_tFlessu`
 using `UlpFlessuGe2`.  This helper packages the non-arithmetic part of that
 handoff: symmetry of the absolute-value differences and transitivity from a
 non-strict error estimate to a strict `Fulp (FLess u)` estimate. -/
-theorem Axpy_perturb_from_error_bound {beta : Int}
+theorem Axpy_perturb_from_error_bound {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) :
@@ -40236,7 +40267,7 @@ error bound has already been turned into the strict `FLess` perturbation
 bound, the restored `Axpy_tFlessu` theorem gives the desired min/max
 conclusion.  This keeps the remaining `Axpy_opt` work localized to proving the
 numeric `UlpFlessuGe2` estimate and carrying the predecessor side cases. -/
-theorem Axpy_min_or_max_from_rounding_inputs {beta : Int}
+theorem Axpy_min_or_max_from_rounding_inputs {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) :
@@ -40321,7 +40352,7 @@ This packages the already-restored rounded-input scale proof with the upstream
 large-`y` hypothesis shape.  The remaining full `Axpy_opt` payload is the
 nonlinear coefficient proof that turns the user perturbation bound into the
 strict quarter-ulp bound on `FLess u`, plus the predecessor side conditions. -/
-theorem Axpy_opt_from_strict_bound {beta : Int}
+theorem Axpy_opt_from_strict_bound {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) :
@@ -40390,7 +40421,7 @@ This composes the strict handoff `UlpFlessuGe2_from_general_bound` with
 `Axpy_opt_from_strict_bound`.  The remaining full upstream `Axpy_opt` work is
 the arithmetic proof of the displayed general coefficient inequality and the
 predecessor exponent side cases. -/
-theorem Axpy_opt_from_general_bound {beta : Int}
+theorem Axpy_opt_from_general_bound {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 E : ℝ) :
@@ -40463,7 +40494,7 @@ theorem Axpy_opt_from_general_bound {beta : Int}
 
 The optimized Axpy error criterion implies that `u` is one of the two
 extremal bounded floats around the perturbed exact result. -/
-theorem Axpy_opt {beta : Int}
+theorem Axpy_opt {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (a x y t u : FloatSpec.Core.Defs.FlocqFloat beta)
     (a1 x1 y1 : ℝ) :
@@ -40567,7 +40598,7 @@ theorem Axpy_opt {beta : Int}
 If a closest rounded sum is within the minimum exponent quantum of the exact
 sum, the error float produced by `errorBoundedPlus` has mantissa zero, so the
 rounded result is exact. -/
-theorem ExactSum_Near {beta : Int}
+theorem ExactSum_Near {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p q f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) b p ∧
@@ -40628,7 +40659,7 @@ theorem ExactSum_Near {beta : Int}
     rw [← herrVal, herrZero]
   exact sub_eq_zero.mp hdelta_zero
 
-noncomputable def delta_inf_check {beta : Int}
+noncomputable def delta_inf_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q d : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -40637,7 +40668,7 @@ noncomputable def delta_inf_check {beta : Int}
 
 The first discriminant estimate is the triangle inequality around the three
 rounding errors, with each error bounded by one half ulp via `ClosestUlp`. -/
-theorem delta_inf {beta : Int}
+theorem delta_inf {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q d : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜EvenClosest (beta:=beta) bo (radix : ℝ) precision
@@ -40721,7 +40752,7 @@ theorem delta_inf {beta : Int}
             (1 / 2 : ℝ) * Fulp (beta:=beta) bo radix precision q) := by
       linarith
 
-noncomputable def discri1_check {beta : Int}
+noncomputable def discri1_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q d : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -40732,7 +40763,7 @@ Upstream derives the final ulp-comparison disjunction from the first
 discriminant case split.  This Lean counterpart keeps that comparison package
 explicit and composes it with `delta_inf`, so the exact lower name is present
 without hiding the remaining case-split payload. -/
-theorem discri1 {beta : Int}
+theorem discri1 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q d : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜EvenClosest (beta:=beta) bo (radix : ℝ) precision
@@ -40807,12 +40838,12 @@ one half ulp via `ClosestUlp`, then compares the two ulps using
 `Fulp_le_twice_l`/`Fulp_le_twice_r`.  The two ulp-comparability facts remain
 explicit here so callers can choose the appropriate first- or second-branch
 normality route. -/
-noncomputable def dp_dq_le_check {beta : Int}
+noncomputable def dp_dq_le_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (dp dq : ℝ) : Unit :=
   ()
 
-theorem dp_dq_le {beta : Int}
+theorem dp_dq_le {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (rp rq dp dq : ℝ) :
     ⦃⌜Closest (beta:=beta) bo (radix : ℝ) rp p ∧
@@ -40870,7 +40901,7 @@ theorem dp_dq_le {beta : Int}
     _ ≤ (1 / 2 : ℝ) * (up + uq) := hsum_half
     _ ≤ (3 / 2 : ℝ) * min up uq := by nlinarith
 
-noncomputable def discri2_check {beta : Int}
+noncomputable def discri2_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -40884,7 +40915,7 @@ absolute-value monotonicity argument over the rounded residual.  This Lean
 statement keeps that branch fact explicit while proving the rest of the theorem
 from `t_exact`, `dp_dq_le`, `EvenClosestFabs`, `EvenClosestMonotone2`,
 `LeFulpPos`, and the two `ClosestUlp` estimates. -/
-theorem discri2 {beta : Int}
+theorem discri2 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -41080,7 +41111,7 @@ theorem discri2 {beta : Int}
         exact le_of_lt (zpow_pos hradix_pos _)
       nlinarith
 
-noncomputable def discri3_check {beta : Int}
+noncomputable def discri3_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -41091,7 +41122,7 @@ noncomputable def discri3_check {beta : Int}
 If the exact compensation residual `dp - dq` is representable by a bounded Pff
 float, then the rounded discriminant value has the standard `2 * Fulp d` error
 bound.  This is the exactness branch used by the later discriminant case split. -/
-theorem discri3 {beta : Int}
+theorem discri3 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -41164,7 +41195,7 @@ theorem discri3 {beta : Int}
     _ ≤ (1 / 2 : ℝ) * Fulp (beta:=beta) bo radix precision d := hhalf
     _ ≤ 2 * Fulp (beta:=beta) bo radix precision d := by nlinarith
 
-noncomputable def discri4_check {beta : Int}
+noncomputable def discri4_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -41177,7 +41208,7 @@ Upstream obtains the bounded witness for `dp - dq` from two applications of
 canonical multiplication-error witness construction is still a separate lower
 payload locally, so this theorem exposes its result and delegates the final
 error estimate to `discri3`. -/
-theorem discri4 {beta : Int}
+theorem discri4 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -41212,7 +41243,7 @@ theorem discri4 {beta : Int}
     h ⟨hRoundd, hRounds, htExact, hdpEq, hdqEq, hResidual,
       hbeta, hradix, hprecision, hvNum⟩
 
-noncomputable def discri5_check {beta : Int}
+noncomputable def discri5_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -41224,7 +41255,7 @@ Upstream uses the same-sign premise `0 < dp*dq` to build a bounded float for
 `dp - dq` from the two canonical multiplication-error witnesses.  This local
 theorem keeps that constructed witness explicit and delegates the final error
 estimate to `discri3`, matching the already restored `discri4` factoring. -/
-theorem discri5 {beta : Int}
+theorem discri5 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -41259,7 +41290,7 @@ theorem discri5 {beta : Int}
     h ⟨hRoundd, hRounds, htExact, hdpEq, hdqEq, hResidual,
       hbeta, hradix, hprecision, hvNum⟩
 
-noncomputable def discri6_check {beta : Int}
+noncomputable def discri6_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -41272,7 +41303,7 @@ Upstream uses the sign assumptions `0 < dp` and `dq < 0` to derive the
 half-error and monotonicity facts consumed by the second discriminant branch.
 Those branch facts remain explicit locally; this restores the same lower name
 and delegates the final estimate to `discri2`. -/
-theorem discri6 {beta : Int}
+theorem discri6 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -41333,7 +41364,7 @@ theorem discri6 {beta : Int}
       hSecond, hlarge, hsHalf, hq_le_twice_p, hp_le_twice_q, hMono,
       hUnique, hbeta, hradix, hprecision, hvNum⟩
 
-noncomputable def discri7_check {beta : Int}
+noncomputable def discri7_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -41345,7 +41376,7 @@ The upstream proof handles the symmetric opposite-sign branch `dp < 0` and
 `0 < dq` by constructing a bounded witness for `dp - dq`.  This local theorem
 keeps that constructed witness explicit, matching the factoring used by
 `discri4` and `discri5`, and delegates the final estimate to `discri3`. -/
-theorem discri7 {beta : Int}
+theorem discri7 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -41380,7 +41411,7 @@ theorem discri7 {beta : Int}
     h ⟨hRoundd, hRounds, htExact, hdpEq, hdqEq, hResidual,
       hbeta, hradix, hprecision, hvNum⟩
 
-noncomputable def discri8_check {beta : Int}
+noncomputable def discri8_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -41394,7 +41425,7 @@ and `discri7` for the symmetric opposite-sign branch.  This local theorem keeps
 the still-unported residual-witness and half-error branch payloads explicit,
 while restoring the `discri8` case-split name and composing the checked lower
 branches. -/
-theorem discri8 {beta : Int}
+theorem discri8 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -41493,7 +41524,7 @@ This factors the part after `ClosestUlp` and the relative ulp estimate used in
 Coq as `FulpLe2`: once the rounding error is bounded by one ulp and that ulp is
 bounded by `|f| * radix^(1 - precision)`, the rounded input `z` satisfies the
 relative bound used throughout the Veltkamp proof. -/
-theorem RleRRounded_from_Fulp_rel {beta : Int}
+theorem RleRRounded_from_Fulp_rel {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ)
     (hClosestUlp :
@@ -41528,7 +41559,7 @@ theorem RleRRounded_from_Fulp_rel {beta : Int}
         (1 + (radix : ℝ) ^ (1 - (precision : Int)) / 2) := by
           ring
 
-private lemma fbounded_abs_F2R_ge_min_exp {beta : Int}
+private lemma fbounded_abs_F2R_ge_min_exp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : 1 < beta)
     (hfBound : Fbounded (beta:=beta) b f)
@@ -41567,7 +41598,7 @@ private lemma fbounded_abs_F2R_ge_min_exp {beta : Int}
           simp [_root_.F2R, FloatSpec.Core.Defs.F2R, abs_mul,
             abs_of_pos (zpow_pos hbeta_pos f.Fexp)]
 
-private lemma firstNormalPos_plusExp_eq_min_exp {beta : Int}
+private lemma firstNormalPos_plusExp_eq_min_exp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (_hprecision : precision ≠ 0) :
@@ -41602,7 +41633,7 @@ private lemma firstNormalPos_plusExp_eq_min_exp {beta : Int}
 
 Any nonzero float bounded by `b` has an equal real representative that is
 normal for the enlarged `plusExp b` bound. -/
-theorem bimplybplusNorm {beta : Int}
+theorem bimplybplusNorm {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -41684,7 +41715,7 @@ theorem bimplybplusNorm {beta : Int}
       simpa [hgEq] using hAbsG_lt
     exact (not_lt_of_ge hLower) hAbsF_lt
 
-noncomputable def ClosestErrorBoundNormal_aux_check {beta : Int}
+noncomputable def ClosestErrorBoundNormal_aux_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) : Unit :=
   ()
@@ -41693,8 +41724,8 @@ noncomputable def ClosestErrorBoundNormal_aux_check {beta : Int}
 
 This is the normal-case closest-rounding error bound before rewriting the
 precision term from `radix / vNum` to `radix^(1-precision)`. -/
-theorem ClosestErrorBoundNormal_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ClosestErrorBoundNormal_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -41761,7 +41792,7 @@ theorem ClosestErrorBoundNormal_aux {beta : Int}
             rw [hpow_coeff]
             ring
 
-noncomputable def ClosestErrorBoundNormal_check {beta : Int}
+noncomputable def ClosestErrorBoundNormal_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) : Unit :=
   ()
@@ -41769,8 +41800,8 @@ noncomputable def ClosestErrorBoundNormal_check {beta : Int}
 /-- Coq: `ClosestErrorBoundNormal`.
 
 Normal-case closest-rounding error bound in the rewritten precision form. -/
-theorem ClosestErrorBoundNormal {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ClosestErrorBoundNormal {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -41820,8 +41851,8 @@ theorem ClosestErrorBoundNormal {beta : Int}
 
 A closest rounded value `z` to a normal float `f` is bounded by the standard
 relative `1 + radix^(1 - precision) / 2` factor. -/
-theorem RleRRounded {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem RleRRounded {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hprecision : precision ≠ 0)
@@ -41863,8 +41894,8 @@ theorem RleRRounded {beta : Int}
 The third Veltkamp rounded value is exact: rounding `q + p` returns the
 representable sum `p + q`.  This is the upstream `ClosestIdem`/`SterbenzAux`
 argument using the local rounded definitions `pDef` and `qDef`. -/
-theorem hxExact {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem hxExact {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (ht_ne : t ≠ 0)
@@ -42182,7 +42213,7 @@ theorem hxExact {beta : Int}
 The exponent of the second rounded Veltkamp value is no larger than the
 exponent of the first.  This is the upstream `Fcanonic_Rle_Zle` argument after
 rewriting the signs of `q` and `p`. -/
-theorem eqLeep {beta : Int}
+theorem eqLeep {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -42271,7 +42302,7 @@ The exponent of the first rounded Veltkamp value is no larger than the
 exponent of the comparison float `Float (Fnum x) (s + 1 + Fexp x)`.  This is
 the upstream `Fcanonic_Rle_Zle` argument after projecting the comparison float
 and using closest-rounding monotonicity. -/
-theorem epLe {beta : Int}
+theorem epLe {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -42397,8 +42428,8 @@ theorem epLe {beta : Int}
     Id.run, ULift.up_down, xp] using
     h ⟨Or.inl hpNormal, Or.inl hxpNormal, habs_le⟩
 
-private theorem eqLe_low {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem eqLe_low {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -42592,8 +42623,8 @@ private theorem eqLe_low {beta : Int}
     Id.run, ULift.up_down, g, add_comm] using
     h ⟨Or.inl hqNormal, Or.inl hgNormal, habsLe⟩
 
-private theorem velt_p_upper {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem velt_p_upper {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -42737,8 +42768,8 @@ private theorem velt_p_upper {beta : Int}
       exact abs_nonneg _
   exact hjValue ▸ hMono _ _ p j hinputLt hpDef hjProject
 
-private theorem eqLe_high {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem eqLe_high {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43164,8 +43195,8 @@ private theorem eqLe_high {beta : Int}
 The second rounded residual either has exponent at most `s + Fexp x`, or it
 is the negative minimal-normal boundary value and the reconstructed high part
 has the upstream half-ulp residual bound. -/
-theorem eqLe {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem eqLe {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43194,8 +43225,8 @@ theorem eqLe {beta : Int}
       hxBound hpDef hqDef hxPos hpNormal hqNormal hxNormal
     omega
 
-private theorem eqGe_of_min_le_opp {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem eqGe_of_min_le_opp {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43247,8 +43278,8 @@ private theorem eqGe_of_min_le_opp {beta : Int}
     Id.run, ULift.up_down, g, Fopp, FloatSpec.Calc.Operations.Fopp] using
     h ⟨Or.inl hgNormal, Or.inl hqOppNormal, habsLe⟩
 
-private theorem velt_p_lower_middle {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem velt_p_lower_middle {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43441,8 +43472,8 @@ private theorem velt_p_lower_middle {beta : Int}
       exact abs_nonneg _
   exact hjValue ▸ hMono _ _ j p hinputLt hjProject hpDef
 
-private theorem eqGe_middle {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem eqGe_middle {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43563,8 +43594,8 @@ private theorem eqGe_middle {beta : Int}
   exact eqGe_of_min_le_opp (beta:=radix) b radix s t x q rfl hradix
     hvNum htPos hxBound hqNormal (by simpa only [g] using hLower)
 
-private theorem eqGe_large {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem eqGe_large {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43731,8 +43762,8 @@ private theorem eqGe_large {beta : Int}
   exact eqGe_of_min_le_opp (beta:=radix) b radix s t x q rfl hradix
     hvNum htPos hxBound hqNormal (by simpa only [g] using hLower)
 
-private theorem eqGe_exact_min {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem eqGe_exact_min {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43881,7 +43912,7 @@ The second rounded residual cannot have exponent below `s + Fexp x`.  The
 proof follows the upstream three-way mantissa split: a two-error estimate for
 large mantissas, a monotone closest-rounding comparison in the middle range,
 and exact representability at the minimal normal mantissa. -/
-theorem eqGe {beta : Int}
+theorem eqGe {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -43925,8 +43956,8 @@ theorem eqGe {beta : Int}
 Combines the exact public `eqLe` disjunction with the exact public `eqGe`
 lower exponent bound, preserving the negative minimal-normal boundary and
 half-ulp residual payload from the second `eqLe` branch. -/
-theorem eqEqual {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem eqEqual {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -43955,8 +43986,8 @@ theorem eqEqual {beta : Int}
   · exact Or.inl (le_antisymm hle hge)
   · exact Or.inr hboundary
 
-private theorem Veltkamp_aux_aux_low {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem Veltkamp_aux_aux_low {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -44396,8 +44427,8 @@ Any canonical representative of the reconstructed high part under the reduced
 lower endpoint of `x`'s binade.  The low-mantissa branch reconstructs the high
 part exactly; the complementary branch follows directly from the residual
 bound. -/
-theorem Veltkamp_aux_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Veltkamp_aux_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -44473,7 +44504,7 @@ theorem Veltkamp_aux_aux {beta : Int}
       hqNormal hxNormal hxNumLow
     rw [hvValue, hhxValue]
 
-private theorem Veltkamp_aux_residual {beta : Int}
+private theorem Veltkamp_aux_residual {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -44525,8 +44556,8 @@ private theorem Veltkamp_aux_residual {beta : Int}
         nlinarith
   · exact hboundary.2
 
-private theorem Veltkamp_aux_reduced_rep {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem Veltkamp_aux_reduced_rep {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -44719,8 +44750,8 @@ private theorem Veltkamp_aux_reduced_rep {beta : Int}
       h ⟨hcBound, hcBound, huNe, hradix, hrvNum⟩
   exact ⟨v, hvValue, hvCan⟩
 
-private theorem VeltkampEven1_candidate {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem VeltkampEven1_candidate {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -44995,8 +45026,8 @@ private theorem VeltkampEven1_candidate {beta : Int}
           Id.run, ULift.up_down, v] using h hbaseEven
       exact ⟨v, hvValue, hvCan, Or.inl hvEven⟩
 
-private theorem VeltkampEven1_tie_even {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+private theorem VeltkampEven1_tie_even {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx v : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -45287,8 +45318,8 @@ The reconstructed high part is within half an ulp at exponent `s + Fexp x`
 and has a canonical representative in the reduced `t - s` format.  That
 representative is a closest rounding of `x`, and its exponent is no smaller
 than the residual exponent. -/
-theorem Veltkamp_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Veltkamp_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -45474,8 +45505,8 @@ theorem Veltkamp_aux {beta : Int}
 For an even radix, even-closest rounding of the two Veltkamp split stages
 forces the reconstructed high part to be the even-closest reduced-precision
 rounding of `x`. -/
-theorem VeltkampEven1 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampEven1 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -45692,7 +45723,7 @@ theorem VeltkampEven1 {beta : Int}
         (by simpa only [e] using hTie)
       exact ⟨hvClosest, Or.inl (by simpa only [rb, u] using hvEven)⟩
 
-private theorem VeltkampEven2_no_tie {beta : Int}
+private theorem VeltkampEven2_no_tie {beta : Int} [ValidRadix beta]
     (radix : Int) (s : Nat)
     (x v : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -45765,8 +45796,8 @@ private theorem VeltkampEven2_no_tie {beta : Int}
 For an odd radix, an exact reduced-format midpoint is impossible: after
 scaling by the exponent of `x`, it would make `radix^s` even.  The resulting
 strict closestness supplies the unique-value branch of `EvenClosest`. -/
-theorem VeltkampEven2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampEven2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -45969,7 +46000,7 @@ theorem VeltkampEven2 {beta : Int}
   exact (hstrictResult.2 g hg).symm
 
 private theorem Veltkamp_pos_normal_of_first_lt
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix) (hprecision : 1 < precision)
     (hvNum : b.vNum = Zpower_nat radix precision)
@@ -46036,8 +46067,8 @@ private theorem Veltkamp_pos_normal_of_first_lt
 Normality of the two rounded intermediates follows from monotonicity and the
 normal/subnormal separation at `firstNormalPos`; the exact residual and
 reduced-format witness then come from `Veltkamp_aux`. -/
-theorem Veltkamp_pos {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Veltkamp_pos {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -46200,8 +46231,8 @@ theorem Veltkamp_pos {beta : Int}
 The positive branch is `Veltkamp_pos`.  For a negative normal input, negate
 all four floats, apply the positive theorem, and negate its reduced witness
 back; normality excludes the remaining zero case. -/
-theorem VeltkampN_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampN_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -46359,8 +46390,8 @@ theorem VeltkampN_aux {beta : Int}
 The closest-rounding premises already make `p` and `q` bounded.  Normalize
 them into canonical representatives with unchanged real values, transfer the
 three closestness hypotheses, and apply `VeltkampN_aux`. -/
-theorem VeltkampN {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampN {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -46443,7 +46474,7 @@ theorem VeltkampN {beta : Int}
     hvNum hsGe hsLe hxNormal hnpCan hnqCan hnpClosest hnqClosest hhxClosest
 
 private theorem Veltkamp_pos_q_normal
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix) (hvNum : b.vNum = Zpower_nat radix t)
     (hsGe : 2 ≤ s) (hsLe : s ≤ t - 2)
@@ -46573,8 +46604,8 @@ private theorem Veltkamp_pos_q_normal
 
 The `Closest` components yield normal intermediates.  Even radix then uses
 `VeltkampEven1`; odd radix uses the no-midpoint theorem `VeltkampEven2`. -/
-theorem VeltkampEven_pos {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampEven_pos {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -46638,8 +46669,8 @@ theorem VeltkampEven_pos {beta : Int}
 The positive branch is `VeltkampEven_pos`. For a negative normal input, negate
 all four floats, transport the three even-closest premises by symmetry, apply
 the positive theorem, and negate its reduced witness back. -/
-theorem VeltkampEvenN_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampEvenN_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -46759,8 +46790,8 @@ theorem VeltkampEvenN_aux {beta : Int}
 
 Normalize the rounded intermediates into canonical representatives, preserve
 both branches of each `EvenClosest` premise, and apply `VeltkampEvenN_aux`. -/
-theorem VeltkampEvenN {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampEvenN {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -46888,8 +46919,8 @@ Competitors newly admitted by `plusExp` have exponent below the original
 minimum and magnitude below the first interior radix threshold. Inside that
 threshold the exact float has an exact original-bound representative; outside
 it, the threshold float on the same side is no farther from the exact value. -/
-theorem Closestbbplus {beta : Int}
-    (b0 : Fbound_skel) (radix : Int) (t n : Nat)
+theorem Closestbbplus {beta : Int} [ValidRadix beta]
+    (b0 : Fbound_skel) (radix : Int) [ValidRadix radix] (t n : Nat)
     (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
@@ -47111,8 +47142,8 @@ When normalization under the original bound is normal, canonical uniqueness
 transfers normalized parity from `plusExp`. In the subnormal case, the rounding
 error is an integer multiple of the minimum radix unit, while `ClosestUlp`
 bounds twice that error by one unit, forcing exactness and uniqueness. -/
-theorem EvenClosestbplusb {beta : Int}
-    (b0 : Fbound_skel) (radix : Int) (t n : Nat)
+theorem EvenClosestbplusb {beta : Int} [ValidRadix beta]
+    (b0 : Fbound_skel) (radix : Int) [ValidRadix radix] (t n : Nat)
     (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
@@ -47285,7 +47316,7 @@ theorem EvenClosestbplusb {beta : Int}
         (le_antisymm hqError (abs_nonneg _))
     linarith
 
-private lemma FSucc_exp_le_add_one {beta : Int}
+private lemma FSucc_exp_le_add_one {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     (FSucc (beta:=beta) b radix precision x).Fexp ≤ x.Fexp + 1 := by
@@ -47298,8 +47329,8 @@ After taking absolute values, normalize the lower-exponent result and place its
 normalized successor strictly between the two closest values. That successor is
 bounded, so one of the two original closestness inequalities is contradicted,
 depending on which side of the successor contains the exact value. -/
-theorem ClosestClosest {beta : Int}
-    (b0 : Fbound_skel) (radix : Int) (n : Nat) (z : ℝ)
+theorem ClosestClosest {beta : Int} [ValidRadix beta]
+    (b0 : Fbound_skel) (radix : Int) [ValidRadix radix] (n : Nat) (z : ℝ)
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
@@ -47429,8 +47460,8 @@ enlarged bound; a newly admitted lower-exponent competitor is excluded by
 `ClosestClosest`. At the original minimum exponent, the exact input and rounded
 result lie on the same minimum-unit lattice, so the closestness bound forces an
 exact result and hence uniqueness under the enlarged bound. -/
-theorem EvenClosestbbplus {beta : Int}
-    (b0 : Fbound_skel) (radix : Int) (t n : Nat)
+theorem EvenClosestbbplus {beta : Int} [ValidRadix beta]
+    (b0 : Fbound_skel) (radix : Int) [ValidRadix radix] (t n : Nat)
     (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b0.vNum = Zpower_nat radix n) (hn : 1 < n)
@@ -47634,7 +47665,7 @@ theorem EvenClosestbbplus {beta : Int}
         (le_antisymm hqError (abs_nonneg _))
     linarith
 
-private lemma Fplus_exp_eq_min {beta : Int}
+private lemma Fplus_exp_eq_min {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     (Fplus (beta:=beta) x y).Fexp = min x.Fexp y.Fexp := by
   cases x with
@@ -47648,7 +47679,7 @@ private lemma Fplus_exp_eq_min {beta : Int}
         simp [Fplus, FloatSpec.Calc.Operations.Fplus,
           FloatSpec.Calc.Operations.Falign, hle, min_eq_right hge]
 
-private lemma Fminus_exp_eq_min {beta : Int}
+private lemma Fminus_exp_eq_min {beta : Int} [ValidRadix beta]
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     (Fminus (beta:=beta) x y).Fexp = min x.Fexp y.Fexp := by
   unfold Fminus FloatSpec.Calc.Operations.Fminus
@@ -47660,8 +47691,8 @@ private lemma Fminus_exp_eq_min {beta : Int}
 Normalize a nonzero subnormal input under the enlarged exponent bound, apply
 `VeltkampN`, and then move the reduced-bound closest witness back to the
 original exponent range. The zero case is represented directly. -/
-theorem VeltkampS {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampS {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -47937,8 +47968,8 @@ Normalize a nonzero subnormal input under the enlarged exponent bound, apply
 `VeltkampEvenN`, and transfer its nearest-even reduced-bound witness back to
 the original exponent range. The zero case uses a normalized-even zero
 representative directly. -/
-theorem VeltkampEvenS {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampEvenS {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -48242,8 +48273,8 @@ theorem VeltkampEvenS {beta : Int}
 
 Normalize the bounded input, split its canonical representative into normal and
 subnormal cases, and delegate to `VeltkampEvenN` or `VeltkampEvenS`. -/
-theorem VeltkampEven {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampEven {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -48295,8 +48326,8 @@ theorem VeltkampEven {beta : Int}
 
 The subtraction of an equal-value reduced Veltkamp witness preserves the input
 exponent and has a mantissa bounded by half of `radix ^ s`. -/
-theorem Veltkamp_tail_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Veltkamp_tail_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx tx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -48375,8 +48406,8 @@ theorem Veltkamp_tail_aux {beta : Int}
 Normalize the bounded input, apply `Veltkamp_tail_aux`, and re-encode the exact
 residual in the `s - 1` split bound.  Binary radix turns the auxiliary
 `2 ^ s / 2` mantissa estimate into the required `2 ^ (s - 1)` bound. -/
-theorem Veltkamp_tail2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Veltkamp_tail2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx tx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -48524,8 +48555,8 @@ theorem Veltkamp_tail2 {beta : Int}
 Combine the normal/subnormal Veltkamp residual theorem with the tail
 construction.  The latter residual lies strictly inside the `s`-digit split
 bound, so closestness identifies its value with `tx`. -/
-theorem VeltkampU {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem VeltkampU {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x p q hx tx : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -48648,8 +48679,8 @@ theorem VeltkampU {beta : Int}
 Rescale the mantissa of `x` down to exponent `e`.  The strict magnitude bound
 then gives the required mantissa bound after canceling the positive
 `radix ^ e` factor. -/
-theorem BoundedL {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem BoundedL {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (r : ℝ) (x : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix precision)
@@ -48714,7 +48745,7 @@ theorem BoundedL {beta : Int}
 An arbitrary extended bound with the same mantissa limit and a strictly larger
 local exponent is a `plusExp` bound for the exact exponent gap, so closestness
 extends by `Closestbbplus`. -/
-theorem Closestbbext {beta : Int}
+theorem Closestbbext {beta : Int} [ValidRadix beta]
     (b bext : Fbound_skel) (radix : Int) (precision : Nat)
     (fext f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -48741,15 +48772,11 @@ theorem Closestbbext {beta : Int}
     omega
   have hbextEq : plusExp b t = bext := by
     cases b with
-    | mk bd bv =>
+    | mk bd bv hbd hbv =>
       cases bext with
-      | mk ed ev =>
-        simp only [Fbound_skel.dExp, Fbound_skel.vNum] at htPredCast hbextNum
-        simp only [plusExp, Fbound_skel.mk.injEq,
-          Fbound_skel.dExp, Fbound_skel.vNum]
-        constructor
-        · omega
-        · exact hbextNum.symm
+      | mk ed ev hed hev =>
+        simp only [plusExp] at htPredCast hbextNum ⊢
+        congr <;> omega
   have hplus :
       Closest (beta:=radix) (plusExp b t) (radix : ℝ)
         (_root_.F2R (beta:=radix) fext) f :=
@@ -48762,8 +48789,8 @@ theorem Closestbbext {beta : Int}
 The four Veltkamp split roundings under `b` remain closest roundings under the
 Dekker extended bound `b'`.  The represented inputs are exactly the upstream
 `Fplus`/`Fminus`/`Fmult` witnesses, and the transfer step is `Closestbbext`. -/
-theorem Veltkampb' {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem Veltkampb' {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (f pf qf hf tf : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -48913,8 +48940,8 @@ theorem Veltkampb' {beta : Int}
 Every nonzero canonical float under the original Dekker bound has a normal
 representative under the extended bound.  Lean's `Fbound_skel.dExp` is an
 integer, so the Coq invariant `0 <= dExp b` is explicit here. -/
-theorem NormalbPrim {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem NormalbPrim {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -48988,14 +49015,14 @@ theorem NormalbPrim {beta : Int}
       omega
   exact ⟨nf, hnfNormal, hnfValue, hnfExpLower⟩
 
-private lemma Fbounded_of_same_vNum_of_exp_ge {beta : Int}
+private lemma Fbounded_of_same_vNum_of_exp_ge {beta : Int} [ValidRadix beta]
     (b b' : Fbound_skel) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbNum : b.vNum = b'.vNum) (hfBound : Fbounded (beta:=beta) b' f)
     (hfExp : -b.dExp ≤ f.Fexp) :
     Fbounded (beta:=beta) b f := by
   exact ⟨by simpa [hbNum] using hfBound.1, hfExp⟩
 
-private lemma firstNormalPos_value_pos {beta : Int}
+private lemma firstNormalPos_value_pos {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (hbeta : beta = radix) (hradix : 1 < radix) :
     0 < _root_.F2R (beta:=beta)
@@ -49010,7 +49037,7 @@ private lemma firstNormalPos_value_pos {beta : Int}
   simp only [_root_.F2R, FloatSpec.Core.Defs.F2R, firstNormalPos]
   exact mul_pos (by exact_mod_cast hnormMinPos) (zpow_pos hradixPos _)
 
-private lemma abs_under_extended_below_firstNormal {beta : Int}
+private lemma abs_under_extended_below_firstNormal {beta : Int} [ValidRadix beta]
     (b b' : Fbound_skel) (radix : Int) (precision : Nat)
     (a' : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -49072,8 +49099,8 @@ private lemma abs_under_extended_below_firstNormal {beta : Int}
           congr 1
           ring
 
-private lemma closest_abs_le_of_input_abs_le {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+private lemma closest_abs_le_of_input_abs_le {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hprecision : 1 < precision)
@@ -49142,8 +49169,8 @@ private lemma closest_abs_le_of_input_abs_le {beta : Int}
     exact ⟨by simpa [hlowerValue] using hlower_le_f, hf_le_upper⟩
 
 /-! Coq generic Dekker theorem `Underf_Err1`. -/
-theorem Underf_Err1 {beta : Int}
-    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Underf_Err1 {beta : Int} [ValidRadix beta]
+    (b b' : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a' a : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix precision)
@@ -49258,7 +49285,7 @@ theorem Underf_Err1 {beta : Int}
     exact sub_eq_zero.mp (abs_eq_zero.mp
       (le_antisymm (by simpa using hzero) (abs_nonneg _)))
 
-noncomputable def ClosestRoundeGeNormal_check {beta : Int}
+noncomputable def ClosestRoundeGeNormal_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -49267,8 +49294,8 @@ noncomputable def ClosestRoundeGeNormal_check {beta : Int}
 
 A closest rounded normal float bounds the exact real input by the usual
 `1 + radix^(1 - precision) / 2` relative factor. -/
-theorem ClosestRoundeGeNormal {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ClosestRoundeGeNormal {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 3 ≤ precision ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -49286,7 +49313,7 @@ theorem ClosestRoundeGeNormal {beta : Int}
   exact RleRRounded (beta:=beta) b radix precision f z hbeta hradix
     hprecision_ne hvNum hnormal hClosest
 
-noncomputable def ClosestRoundeLeNormal_check {beta : Int}
+noncomputable def ClosestRoundeLeNormal_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -49295,8 +49322,8 @@ noncomputable def ClosestRoundeLeNormal_check {beta : Int}
 
 A closest rounded normal float is bounded by the exact input divided by
 `1 - radix^(1 - precision) / 2`. -/
-theorem ClosestRoundeLeNormal {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ClosestRoundeLeNormal {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (z : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 3 ≤ precision ∧
         b.vNum = Zpower_nat radix precision ∧
@@ -49609,7 +49636,7 @@ theorem abeLeab (a b e : ℝ)
     exact le_trans htri (add_le_add_right he _)
   nlinarith [abs_nonneg (a + b)]
 
-noncomputable def xLe2y_aux1_check {beta : Int}
+noncomputable def xLe2y_aux1_check {beta : Int} [ValidRadix beta]
     (_bo : Fbound_skel) (_radix : Int) (_precision : Nat)
     (_a _b _x _y : FloatSpec.Core.Defs.FlocqFloat beta) (_e : ℝ) : Unit :=
   ()
@@ -49619,8 +49646,8 @@ noncomputable def xLe2y_aux1_check {beta : Int}
 In the exact-power branch, the rounded value `x` is the exact sum `a + b`.
 The even radix gives a bounded half-ulp witness below `|a + b + e|`, and
 absolute monotonicity of closest rounding transfers that lower bound to `y`. -/
-theorem xLe2y_aux1 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem xLe2y_aux1 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧
         3 ≤ precision ∧ Even radix ∧
@@ -49823,8 +49850,8 @@ theorem xLe2y_aux1 {beta : Int}
     _ = 2 * _root_.F2R (beta:=radix) halfB := by rw [hhalfVal]; ring
     _ ≤ 2 * |_root_.F2R (beta:=radix) y| := by nlinarith
 
-private lemma xLe2y_sum_trichotomy {beta : Int}
-    (bo : Fbound_skel) (radix : Int)
+private lemma xLe2y_sum_trichotomy {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix]
     (a b : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (haCan : Fcanonic (beta:=beta) radix bo a)
@@ -49926,7 +49953,7 @@ private lemma xLe2y_factor_bound (radix : Int) (precision : Nat)
   dsimp [eps] at heps_le_quarter ⊢
   nlinarith
 
-noncomputable def xLe2y_aux2_check {beta : Int}
+noncomputable def xLe2y_aux2_check {beta : Int} [ValidRadix beta]
     (_bo : Fbound_skel) (_radix : Int) (_precision : Nat)
     (_a _b _x _y : FloatSpec.Core.Defs.FlocqFloat beta) (_e : ℝ) : Unit :=
   ()
@@ -49937,7 +49964,7 @@ This restores the full GenericA branch immediately after `xLe2y_aux1`: the
 zero and exact-power cases follow the upstream `Fplus`/`Fabs` split, and the
 large-sum case combines the normal closest-rounding relative bounds with
 `abeLeab`. -/
-theorem xLe2y_aux2 {beta : Int}
+theorem xLe2y_aux2 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧
@@ -50075,8 +50102,8 @@ theorem xLe2y_aux2 {beta : Int}
       mul_lt_mul_of_pos_left hlt hden_pos'
     exact not_lt_of_ge hmain hmul_lt
 
-private lemma yLe2x_sum_zero_or_unit {beta : Int}
-    (bo : Fbound_skel) (radix : Int)
+private lemma yLe2x_sum_zero_or_unit {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix]
     (a b : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (haCan : Fcanonic (beta:=beta) radix bo a)
@@ -50166,7 +50193,7 @@ private lemma yLe2x_factor_bound (radix : Int) (precision : Nat)
   dsimp [eps] at heps_le_quarter ⊢
   nlinarith
 
-noncomputable def yLe2x_aux_check {beta : Int}
+noncomputable def yLe2x_aux_check {beta : Int} [ValidRadix beta]
     (_bo : Fbound_skel) (_radix : Int) (_precision : Nat)
     (_a _b _x _y : FloatSpec.Core.Defs.FlocqFloat beta) (_e : ℝ) : Unit :=
   ()
@@ -50177,7 +50204,7 @@ This restores the upstream GenericA companion of `xLe2y_aux2`: after the
 zero-or-at-least-one-radix-unit `Fplus` split, the zero branch contradicts
 `x` nonzero, and the positive branch combines the normal closest-rounding
 relative bounds around `a + b` and `a + b + e`. -/
-theorem yLe2x_aux {beta : Int}
+theorem yLe2x_aux {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧
@@ -50309,7 +50336,7 @@ theorem yLe2x_aux {beta : Int}
       mul_lt_mul_of_pos_left hlt hden_pos'
     exact not_lt_of_ge hmain hmul_lt
 
-noncomputable def xLe2y_check {beta : Int}
+noncomputable def xLe2y_check {beta : Int} [ValidRadix beta]
     (_bo : Fbound_skel) (_radix : Int) (_precision : Nat)
     (_a _b _x _y : FloatSpec.Core.Defs.FlocqFloat beta) (_e : ℝ) : Unit :=
   ()
@@ -50320,7 +50347,7 @@ This is the exported GenericB branch following `yLe2x_aux`: compare
 `|b|` and `|a|`, then reuse the GenericA payload `xLe2y_aux2`, swapping
 `a` and `b` in the second branch exactly as upstream does.  The sign-transfer
 hypothesis used later by `Subexact` is intentionally not part of this lemma. -/
-theorem xLe2y {beta : Int}
+theorem xLe2y {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧
@@ -50374,7 +50401,7 @@ theorem xLe2y {beta : Int}
         hyClosest_swap, hxNormal, hyNormal, hbCan, haCan, haExpGt, haLeB,
         hBoundExp⟩
 
-noncomputable def yLe2x_check {beta : Int}
+noncomputable def yLe2x_check {beta : Int} [ValidRadix beta]
     (_bo : Fbound_skel) (_radix : Int) (_precision : Nat)
     (_a _b _x _y : FloatSpec.Core.Defs.FlocqFloat beta) (_e : ℝ) : Unit :=
   ()
@@ -50384,7 +50411,7 @@ noncomputable def yLe2x_check {beta : Int}
 This is the exported GenericB companion of `xLe2y`: under nonzero rounded
 `x`, compare `|b|` and `|a|`, then reuse the GenericA payload `yLe2x_aux`,
 swapping `a` and `b` in the second branch exactly as upstream does. -/
-theorem yLe2x {beta : Int}
+theorem yLe2x {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ bo.vNum = Zpower_nat radix precision ∧
@@ -50442,8 +50469,8 @@ upstream `Pff.v`: derive nonzeroness of `x` from normality, split on the sign
 of `y`, use `Fminus x y` in the nonnegative branch and
 `Fopp (Fminus (Fopp x) (Fopp y))` in the nonpositive branch, and discharge
 boundedness by Sterbenz from `xLe2y` and `yLe2x`. -/
-theorem Subexact {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Subexact {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a b x y : FloatSpec.Core.Defs.FlocqFloat beta) (e : ℝ)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -50609,7 +50636,7 @@ theorem Subexact {beta : Int}
         Fminus_exp_eq_min (beta:=radix)
           (Fopp (beta:=radix) x) (Fopp (beta:=radix) y)
 
-private theorem Closest_exact_of_bounded {beta : Int}
+private theorem Closest_exact_of_bounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p : FloatSpec.Core.Defs.FlocqFloat beta)
     (hpBound : Fbounded (beta:=beta) bo p) :
@@ -50620,7 +50647,7 @@ private theorem Closest_exact_of_bounded {beta : Int}
     rw [sub_self, abs_zero]
     exact abs_nonneg (_root_.F2R (beta:=beta) g - _root_.F2R (beta:=beta) p)
 
-private theorem Closest_lower_bound_of_bounded {beta : Int}
+private theorem Closest_lower_bound_of_bounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ)
     (hpBound : Fbounded (beta:=beta) bo p)
@@ -50645,7 +50672,7 @@ private theorem Closest_lower_bound_of_bounded {beta : Int}
     rw [hq_eq]
     exact hpr
 
-private theorem Closest_upper_bound_of_bounded {beta : Int}
+private theorem Closest_upper_bound_of_bounded {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : ℝ)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ)
     (hrp : r ≤ _root_.F2R (beta:=beta) p)
@@ -50676,7 +50703,7 @@ The subtraction `be1 - r1` is exactly representable with exponent
 the two error bounds are obtained from `TwoSumProp`/`ClosestUlp`, and the
 sign-transfer pair needed by `Subexact` follows from closest-rounding
 monotonicity. -/
-theorem gatCorrect {beta : Int}
+theorem gatCorrect {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 :
       FloatSpec.Core.Defs.FlocqFloat beta)
@@ -50904,8 +50931,8 @@ The exponent of the nonzero `r1` result is at most one above the exponent of
 the scaled float `Float (Fnum be1) (Fexp be1 + 1)`, whose value is
 `radix * be1`, and obtain the absolute-value comparison from `yLe2x`,
 `TwoSumProp`, and `ClosestUlp`. -/
-theorem Expr1 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Expr1 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -51056,8 +51083,8 @@ result.  This is the upstream `Fcanonic_Rle_Zle` argument dual to `Expr1`:
 compare `be1` with the scaled float `Float (Fnum r1) (Fexp r1 + 1)`,
 whose value is `radix * r1`, and obtain the absolute-value comparison from
 `xLe2y`, `TwoSumProp`, and `ClosestUlp`. -/
-theorem Expbe1 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Expbe1 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x y r1 u1 u2 al1 al2 be1 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -51192,7 +51219,7 @@ theorem Expbe1 {beta : Int}
       h ⟨Or.inl hbe1Normal, Or.inl hscaledNormal, hAbsLeScaled⟩
   simpa [scaled] using hExpLeScaled
 
-noncomputable def RoundLeNormal_check {beta : Int}
+noncomputable def RoundLeNormal_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -51202,7 +51229,7 @@ noncomputable def RoundLeNormal_check {beta : Int}
 For radix two, a closest rounded normal float cannot be much larger than the
 exact real input.  The denominator positivity side condition is kept explicit;
 upstream derives it from `3 <= precision`. -/
-theorem RoundLeNormal {beta : Int}
+theorem RoundLeNormal {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜Closest (beta:=beta) b (2 : ℝ) r f ∧
@@ -51266,7 +51293,7 @@ theorem RoundLeNormal {beta : Int}
     (le_div_iff₀ hden_pos_eps).2 hmul'
   simpa [F, eps] using hresult
 
-noncomputable def RoundGeNormal_check {beta : Int}
+noncomputable def RoundGeNormal_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) : Unit :=
   ()
@@ -51275,7 +51302,7 @@ noncomputable def RoundGeNormal_check {beta : Int}
 
 For radix two, an exact real input rounded to a normal float is bounded above
 by the rounded value times the standard `1 + 2^-precision` factor. -/
-theorem RoundGeNormal {beta : Int}
+theorem RoundGeNormal {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (r : ℝ) :
     ⦃⌜Closest (beta:=beta) b (2 : ℝ) r f ∧
@@ -51299,7 +51326,7 @@ theorem RoundGeNormal {beta : Int}
     ring
   simpa [hpow] using hrr
 
-noncomputable def dexact_check {beta : Int}
+noncomputable def dexact_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q t d : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -51309,7 +51336,7 @@ noncomputable def dexact_check {beta : Int}
 When the first discriminant branch defines `d` as the rounded subtraction
 result `t`, Sterbenz exactness for the second-branch inequality gives
 `F2R d = F2R p - F2R q`. -/
-theorem dexact {beta : Int}
+theorem dexact {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q t d : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fbounded (beta:=beta) bo p ∧
@@ -51337,7 +51364,7 @@ theorem dexact {beta : Int}
       h ⟨hbeta_gt, hpBound, hqBound, hpNonneg, hSecond, hRoundt⟩
   simpa [hdDef] using ht
 
-noncomputable def IneqEq_check {beta : Int}
+noncomputable def IneqEq_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q t u v : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -51348,7 +51375,7 @@ In the first compensated discriminant branch, `u` rounds `3 * |t|` and `v`
 rounds `p + q`.  Once `t` is known exact and the branch has `v <= u`,
 monotonicity gives the reverse inequality, hence both rounded values have the
 same real value. -/
-theorem IneqEq {beta : Int}
+theorem IneqEq {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p q t u v : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜_root_.F2R (beta:=beta) t =
@@ -51387,7 +51414,7 @@ theorem IneqEq {beta : Int}
       u v hCase1 hRoundu' hRoundv
   exact le_antisymm hCase2 hulev
 
-noncomputable def discri9_check {beta : Int}
+noncomputable def discri9_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -51399,7 +51426,7 @@ Upstream first splits between the direct subtraction branch, the large-residual
 second branch, exponent-adjacent compensated branches handled by `discri8`, and
 the same-exponent residual branch handled by `discri4`.  This local theorem
 restores the dispatch name while keeping those branch payloads explicit. -/
-theorem discri9 {beta : Int}
+theorem discri9 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -51529,7 +51556,7 @@ theorem discri9 {beta : Int}
       h ⟨hRoundd, hRounds, htExact, hdpEq, hdqEq, hpqExp, hResidual,
         hbeta, hradix, hprecision, hvNum⟩
 
-def discri9_precondition {beta : Int}
+def discri9_precondition {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Prop :=
@@ -51623,7 +51650,7 @@ def discri9_precondition {beta : Int}
           Fbounded (beta:=beta) bo f ∧
             _root_.F2R (beta:=beta) f = dp - dq))
 
-noncomputable def discri10_check {beta : Int}
+noncomputable def discri10_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -51634,7 +51661,7 @@ noncomputable def discri10_check {beta : Int}
 Upstream derives the `discri9` branch package from `q <= p` and the surrounding
 normality/case hypotheses.  This local theorem keeps that package explicit and
 composes it with the checked `discri9` dispatcher. -/
-theorem discri10 {beta : Int}
+theorem discri10 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -51654,13 +51681,13 @@ theorem discri10 {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, discri9_check, Id.run, ULift.up_down,
     discri9_precondition] using h hdiscri9
 
-noncomputable def Fulp_Fopp_check {beta : Int}
+noncomputable def Fulp_Fopp_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
 /-- Negating a float preserves its ulp. -/
-theorem Fulp_Fopp {beta : Int}
+theorem Fulp_Fopp {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
@@ -51687,7 +51714,7 @@ theorem Fulp_Fopp {beta : Int}
     _ = Fulp (beta:=beta) bo radix precision p := by
           simp [Fulp, Fopp, FloatSpec.Calc.Operations.Fopp]
 
-noncomputable def discri11_check {beta : Int}
+noncomputable def discri11_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -51700,7 +51727,7 @@ Upstream splits on `q <= p`.  The opposite branch applies `discri10` to the
 swapped products and the negated difference; the branch payload for that
 swapped call remains explicit here, matching the surrounding discriminant
 factoring. -/
-theorem discri11 {beta : Int}
+theorem discri11 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -51762,7 +51789,7 @@ theorem discri11 {beta : Int}
         ULift.up_down] using h True.intro
     simpa [htarget_abs, hFulpOpp] using hswap'
 
-noncomputable def discri12_check {beta : Int}
+noncomputable def discri12_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -51774,7 +51801,7 @@ Upstream derives this payload from the `p + q <= 3 * |p - q|` and `u < v`
 branch arithmetic, using `RoundGeNormal`, `RoundLeNormal`, and ulp comparison
 estimates.  The local theorem keeps the derived payload explicit and restores
 the exact theorem name used by `discri13`. -/
-theorem discri12 {beta : Int}
+theorem discri12 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -51794,7 +51821,7 @@ theorem discri12 {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, discri11_check, Id.run,
     ULift.up_down] using h (Or.inl ⟨hq_le_p, hpayload⟩)
 
-noncomputable def discri13_check {beta : Int}
+noncomputable def discri13_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -51806,7 +51833,7 @@ payloads.
 This is the large-branch analogue of `discri11`: the direct case calls
 `discri12`, while the opposite order calls `discri12` on swapped products and
 negated compensated terms. -/
-theorem discri13 {beta : Int}
+theorem discri13 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -51869,7 +51896,7 @@ theorem discri13 {beta : Int}
         ULift.up_down] using h True.intro
     simpa [htarget_abs, hFulpOpp] using hswap'
 
-def discri11_precondition {beta : Int}
+def discri11_precondition {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Prop :=
@@ -51881,7 +51908,7 @@ def discri11_precondition {beta : Int}
         b a c b' q p (Fopp (beta:=beta) t) s
         (Fopp (beta:=beta) d) dq dp)
 
-def discri13_precondition {beta : Int}
+def discri13_precondition {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q t s d : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Prop :=
@@ -51893,7 +51920,7 @@ def discri13_precondition {beta : Int}
         b a c b' q p (Fopp (beta:=beta) t) (Fopp (beta:=beta) s)
         (Fopp (beta:=beta) d) dq dp)
 
-def discri14_precondition {beta : Int}
+def discri14_precondition {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Prop :=
@@ -51918,7 +51945,7 @@ def discri14_precondition {beta : Int}
       discri9_precondition (beta:=beta) bo radix precision
         a b b c p q t s d dp dq)
 
-noncomputable def discri14_check {beta : Int}
+noncomputable def discri14_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -51930,7 +51957,7 @@ Upstream splits on `p + q <= 3 * |p - q|` and `v <= u`.  The direct
 same-rounding branches call `discri9`; the large-`p+q`, `u < v` branch calls
 `discri13`; and the large-`p+q`, `v <= u` branch calls `discri11` after the
 residual bounded-witness payloads have been derived. -/
-theorem discri14 {beta : Int}
+theorem discri14 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -51982,13 +52009,13 @@ theorem discri14 {beta : Int}
     simpa only [wp, PostCond.noThrow, pure, discri9_check, Id.run,
       ULift.up_down, discri9_precondition] using h hpayload
 
-noncomputable def discri15_check {beta : Int}
+noncomputable def discri15_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
   ()
 
-def discri15_precondition {beta : Int}
+def discri15_precondition {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Prop :=
@@ -52015,7 +52042,7 @@ Upstream proves the required normality and value-preservation facts for the
 rounded intermediates, normalizes `p`, `q`, `t`, `s`, `d`, `u`, and `v`, then
 delegates to `discri14`.  This local theorem keeps that normalized
 `discri14` payload and the final `d` value/ulp rewrites explicit. -/
-theorem discri15 {beta : Int}
+theorem discri15 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -52051,7 +52078,7 @@ theorem discri15 {beta : Int}
       ULift.up_down, discri14_precondition] using h hpayload
   simpa [hnorm_d, hfulp_d] using hnorm_bound
 
-noncomputable def cases_check {beta : Int}
+noncomputable def cases_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t dp dq s d u v : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -52063,7 +52090,7 @@ either one of the zero cases holds, or all six no-underflow magnitude bounds
 needed by the normalized `discri15` handoff hold.  The only Lean-specific
 premise is the `boundR` exponent-totality fact required by the local
 `Fbound_skel` existence lemmas. -/
-theorem «cases» {beta : Int}
+theorem «cases» {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t dp dq s d u v : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = 2 ∧ radix = 2 ∧ 1 < precision ∧ 4 ≤ precision ∧
@@ -52379,7 +52406,7 @@ theorem «cases» {beta : Int}
     exact le_trans hpow htStrong
   exact ⟨hbProd, hacProd, hdStrong, huLow, hvLow, htLow⟩
 
-noncomputable def discri16_check {beta : Int}
+noncomputable def discri16_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -52390,7 +52417,7 @@ noncomputable def discri16_check {beta : Int}
 Upstream first dispatches zero/special cases, returning `F2R d = 0` when the
 rounded discriminant vanishes.  In the non-special branches it derives the
 underflow and normalization payload consumed by `discri15`. -/
-theorem discri16 {beta : Int}
+theorem discri16 {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -52413,7 +52440,7 @@ theorem discri16 {beta : Int}
     simpa only [wp, PostCond.noThrow, pure, discri15_check, Id.run,
       ULift.up_down] using h hpayload
 
-noncomputable def discri_check {beta : Int}
+noncomputable def discri_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) : Unit :=
@@ -52424,7 +52451,7 @@ noncomputable def discri_check {beta : Int}
 The Coq proof handles zero and special cases directly, then delegates the
 non-special branch to `discri15`.  The restored `discri16` exposes that final
 case split; the normality hypothesis on `d` rules out the zero alternative. -/
-theorem discri {beta : Int}
+theorem discri {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b c p q t d u v s : FloatSpec.Core.Defs.FlocqFloat beta)
     (dp dq : ℝ) :
@@ -52470,7 +52497,7 @@ The proof follows the upstream Flocq shape: canonicity gives boundedness and
 the rounded value is below the input; any bounded candidate below `r` is first
 normalized without changing its value, then the projector and monotonicity of
 `RND_Min_Pos` bound it by the returned float. -/
-theorem RND_Min_Pos_correct {beta : Int}
+theorem RND_Min_Pos_correct {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -52564,7 +52591,7 @@ theorem RND_Min_Pos_correct {beta : Int}
 
 /-- Coq: `RND_Max_Pos_Rle` — for nonnegative `r`, the value of
     `RND_Max_Pos r` (interpreted in ℝ) is greater than or equal to `r`. -/
-theorem RND_Max_Pos_Rle {beta : Int}
+theorem RND_Max_Pos_Rle {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -52645,7 +52672,7 @@ theorem RND_Max_Pos_Rle {beta : Int}
 This is the Flocq upper-rounding correctness theorem for nonnegative inputs:
 `RND_Max_Pos r` is bounded, lies above `r`, and is the least bounded float above
 `r`.  The proof follows the upstream successor-of-min construction. -/
-theorem RND_Max_Pos_correct {beta : Int}
+theorem RND_Max_Pos_correct {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜0 ≤ r ∧ beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -52800,7 +52827,7 @@ The earlier translated wrapper keeps positive-side canonicity as explicit
 payloads because the positive lemmas appear later in the file.  At this point
 those payloads are available, so this theorem packages the Flocq section
 assumptions and supplies them directly. -/
-theorem RND_Min_canonic_closed {beta : Int}
+theorem RND_Min_canonic_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -52831,7 +52858,7 @@ theorem RND_Min_canonic_closed {beta : Int}
 
 /-- Closed section-context form of `RND_Max_canonic`, discharging the
 positive-side canonicity payloads from the restored positive lemmas. -/
-theorem RND_Max_canonic_closed {beta : Int}
+theorem RND_Max_canonic_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -52865,7 +52892,7 @@ theorem RND_Max_canonic_closed {beta : Int}
 This is the generic Pff lower-rounding payload needed by the Pff-to-Flocq
 rounding bridge: the positive lower/upper correctness obligations are supplied
 from `RND_Min_Pos_correct` and `RND_Max_Pos_correct`. -/
-theorem RND_Min_correct_closed {beta : Int}
+theorem RND_Min_correct_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -52896,7 +52923,7 @@ theorem RND_Min_correct_closed {beta : Int}
 
 /-- Closed section-context form of `RND_Max_correct`, discharging the positive
 lower/upper correctness payloads from restored positive rounding theorems. -/
-theorem RND_Max_correct_closed {beta : Int}
+theorem RND_Max_correct_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < p ∧
         b.vNum = Zpower_nat radix p.toNat⌝⦄
@@ -52929,7 +52956,7 @@ theorem RND_Max_correct_closed {beta : Int}
 
 This removes the explicit lower/upper canonicity payloads by using the closed
 signed min/max wrappers above. -/
-theorem RND_Closest_canonic_closed {beta : Int}
+theorem RND_Closest_canonic_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (choice : Int → Bool) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < p ∧
@@ -52957,7 +52984,7 @@ theorem RND_Closest_canonic_closed {beta : Int}
 
 This packages the nearest-rounding correctness payload once the signed
 lower/upper extremal roundings have been restored. -/
-theorem RND_Closest_correct_closed {beta : Int}
+theorem RND_Closest_correct_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (p : Int)
     (choice : Int → Bool) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < p ∧
@@ -52981,7 +53008,7 @@ theorem RND_Closest_correct_closed {beta : Int}
   simpa only [wp, PostCond.noThrow, pure, RND_Closest_correct_check,
     Id.run, ULift.up_down] using h ⟨hMin, hMax⟩
 
-private lemma canonical_above_min_gap {beta : Int}
+private lemma canonical_above_min_gap {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -53091,7 +53118,7 @@ private lemma canonical_above_min_gap {beta : Int}
       mul_le_mul_of_nonneg_right hxNumLowerReal
         (le_of_lt (zpow_pos hradixPos _))
 
-private lemma closest_under_extended_of_canonical_above_min {beta : Int}
+private lemma closest_under_extended_of_canonical_above_min {beta : Int} [ValidRadix beta]
     (b b' : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) (x : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -53176,7 +53203,7 @@ private lemma closest_under_extended_of_canonical_above_min {beta : Int}
       linarith
 
 /-! Coq generic Dekker theorem `Underf_Err2_aux`. -/
-theorem Underf_Err2_aux {beta : Int}
+theorem Underf_Err2_aux {beta : Int} [ValidRadix beta]
     (b b' : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) (x1 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -53332,7 +53359,7 @@ theorem Underf_Err2_aux {beta : Int}
         exact False.elim (hx2ExpOld hx2Exp)
 
 /-! Coq generic Dekker theorem `Underf_Err2`. -/
-theorem Underf_Err2 {beta : Int}
+theorem Underf_Err2 {beta : Int} [ValidRadix beta]
     (b b' : Fbound_skel) (radix : Int) (precision : Nat)
     (r : ℝ) (x1 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -53371,8 +53398,8 @@ theorem Underf_Err2 {beta : Int}
   · intro hx2Exp
     exact hnx1Value.symm.trans (hsame hx2Exp)
 
-private lemma closest_add_exact_of_exp_le {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+private lemma closest_add_exact_of_exp_le {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (p q z : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hprecision : precision ≠ 0)
@@ -53490,7 +53517,7 @@ private lemma closest_add_exact_of_exp_le {beta : Int}
     _ = _root_.F2R (beta:=radix) p +
         _root_.F2R (beta:=radix) q := hsumValue
 
-private lemma closest_abs_le_of_bounded_upper {beta : Int}
+private lemma closest_abs_le_of_bounded_upper {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (r : ℝ)
     (q upper : FloatSpec.Core.Defs.FlocqFloat beta)
     (hClosest : Closest (beta:=beta) b (radix : ℝ) r q)
@@ -53541,8 +53568,8 @@ private lemma closest_abs_le_of_bounded_upper {beta : Int}
     exact ⟨by simpa [hLowerValue] using hlower_le_q, hq_le_upper⟩
 
 /-! Coq generic Dekker theorem `Underf_Err3`. -/
-theorem Underf_Err3 {beta : Int}
-    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Underf_Err3 {beta : Int} [ValidRadix beta]
+    (b b' : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x x' y y' z' z : FloatSpec.Core.Defs.FlocqFloat beta)
     (rx ry epsx epsy : ℝ)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -53877,8 +53904,8 @@ theorem Underf_Err3 {beta : Int}
     exact hSameIfOld hz'Exp
 
 /-! Coq generic Dekker theorem `Underf_Err3_bis`. -/
-theorem Underf_Err3_bis {beta : Int}
-    (b b' : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Underf_Err3_bis {beta : Int} [ValidRadix beta]
+    (b b' : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x x' y y' z' z : FloatSpec.Core.Defs.FlocqFloat beta)
     (rx ry epsx epsy : ℝ)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -53929,8 +53956,8 @@ the precision side conditions, the normality of the product operands, the lower
 product exponent bound, closestness of the rounded product, and the exact
 decomposition of the residual.  The later split operands and the `Hst1`/`Hst2`
 range facts are not consumed by this proof. -/
-theorem eLe {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem eLe {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x y r e : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -54174,8 +54201,8 @@ theorem eLe {beta : Int}
   nlinarith
 
 /-- Coq Sec1 rounded-product exponent lower bound `rExp`. -/
-theorem rExp {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem rExp {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x y r : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -54380,8 +54407,8 @@ The proof follows the upstream Dekker section: build the exact subtraction
 float `r - x1 * y1`, show its exponent can be lowered to the target exponent
 with `BoundedL`, and bound its real value by decomposing the residual into the
 rounded-product error plus the three split cross terms. -/
-theorem Boundedt1 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedt1 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x1 x2 y y1 y2 r e : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -54648,8 +54675,8 @@ theorem Boundedt1 {beta : Int}
 This is the second Dekker residual stage: use exact `Boundedt1` for the
 representable `r - x1 * y1`, subtract `x1 * y2`, then lower the exponent to
 `s + x.Fexp + y.Fexp` with `BoundedL`. -/
-theorem Boundedt2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedt2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x1 x2 y y1 y2 r e : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -54893,8 +54920,8 @@ theorem Boundedt2 {beta : Int}
 This is the third Dekker residual stage: use exact `Boundedt2` for the
 representable `r - x1 * y1 - x1 * y2`, subtract `x2 * y1`, then lower the
 exponent to `s + x.Fexp + y.Fexp` with `BoundedL`. -/
-theorem Boundedt3 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedt3 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x1 x2 y y1 y2 r e : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55082,7 +55109,7 @@ theorem Boundedt3 {beta : Int}
 This is the upstream `Boundedt4` payload consumed later in the Dekker section:
 use the rounded-multiplication error from `errorBoundedMult`, then negate that
 error float to represent the final five-term residual. -/
-theorem Boundedt4 {beta : Int}
+theorem Boundedt4 {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x x1 x2 y y1 y2 r : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -55134,7 +55161,7 @@ theorem Boundedt4 {beta : Int}
 
 This is the exponent-preserving companion of `Boundedt4`: the same rounded
 multiplication error is negated, and `Fopp` preserves the error exponent. -/
-theorem Boundedt4_aux {beta : Int}
+theorem Boundedt4_aux {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (s t : Nat)
     (x x1 x2 y y1 y2 r : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -55189,8 +55216,8 @@ theorem Boundedt4_aux {beta : Int}
 This is the first exact product used after the four residual bounds: multiplying
 the two reduced-bound leading parts stays inside the original bound because
 `t <= 2 * s`. -/
-theorem Boundedx1y1_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedx1y1_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x1 y y1 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55265,8 +55292,8 @@ theorem Boundedx1y1_aux {beta : Int}
 
 This is the upstream wrapper around `Boundedx1y1_aux`; it keeps the same
 section payload and drops only the exponent equality conjunct. -/
-theorem Boundedx1y1 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedx1y1 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x1 y y1 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55292,8 +55319,8 @@ and the second split component.  It consumes only the Sec1 hypotheses needed by
 the upstream proof: the original bound equation, `SGe`, the product exponent
 lower bound, the two component exponent bounds, and the two component
 boundedness facts. -/
-theorem Boundedx1y2_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedx1y2_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x1 y y2 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55370,8 +55397,8 @@ theorem Boundedx1y2_aux {beta : Int}
 
 This is the upstream wrapper around `Boundedx1y2_aux`; it keeps the same
 section payload and drops only the exponent equality conjunct. -/
-theorem Boundedx1y2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedx1y2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x1 y y2 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55397,8 +55424,8 @@ component and the second reduced component.  It consumes only the Sec1
 hypotheses used by the upstream proof: the original bound equation, `SGe`, the
 product exponent lower bound, the two component exponent bounds, and the two
 component boundedness facts. -/
-theorem Boundedx2y1_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedx2y1_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x2 y y1 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55475,8 +55502,8 @@ theorem Boundedx2y1_aux {beta : Int}
 
 This is the upstream wrapper around `Boundedx2y1_aux`; it keeps the same
 section payload and drops only the exponent equality conjunct. -/
-theorem Boundedx2y1 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (s t : Nat)
+theorem Boundedx2y1 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (s t : Nat)
     (x x2 y y1 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55500,8 +55527,8 @@ theorem Boundedx2y1 {beta : Int}
 This is the upstream theorem at `Pff.v:17710`: the binary-radix branch uses
 `Veltkamp_tail2`, while the even-precision branch uses `VeltkampU`.  Both
 branches share the same exact `Fmult` construction for `tx * ty`. -/
-theorem Boundedx2y2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem Boundedx2y2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix t)
@@ -55677,8 +55704,8 @@ theorem Boundedx2y2 {beta : Int}
 This is the main algebraic reconstruction for the normal Dekker path.  The
 last product `tx * ty` is supplied as the same bounded witness assumed by
 upstream; `Boundedx2y2` is the later theorem that constructs that witness. -/
-theorem Dekker_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem Dekker_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -55940,8 +55967,8 @@ theorem Dekker_aux {beta : Int}
 This is the exact upstream wrapper at `Pff.v:17820`: the branch premise builds
 the bounded `tx * ty` representative with `Boundedx2y2`, then `Dekker_aux`
 performs the algebraic reconstruction. -/
-theorem DekkerN {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem DekkerN {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -56006,8 +56033,8 @@ four correction residuals are related back to the original bound with
 `Underf_Err`, and the final error is the sum of the product underflow error and
 the four residual underflow steps.  The only Lean-only hypothesis is
 `0 <= b.dExp`, the faithful replacement for Coq's `dExp b : N`. -/
-theorem Dekker2_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem Dekker2_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -56540,8 +56567,8 @@ canonical input has real value zero, the rounded-operation chain collapses by
 `ClosestZero2`; otherwise the nonzero case is exactly `Dekker2_aux`.  The only
 Lean-only hypothesis is `0 <= b.dExp`, the faithful replacement for Coq's
 natural-valued `dExp b`. -/
-theorem Dekker2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem Dekker2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -56682,8 +56709,8 @@ the upstream `ClosestZero` cascade.  In the nonzero branch, `y` is normalized
 under `plusExp b t`, all closest-operation witnesses are lifted to that larger
 bound with local exact operation witnesses, and the result delegates to
 `DekkerN`. -/
-theorem DekkerS1 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem DekkerS1 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -57188,8 +57215,8 @@ under `plusExp b t`, the A-side closestness hypotheses are lifted through that
 normal representative, the normal `y` Veltkamp witnesses are reused for the
 B-side products, and the D3/D4 subtraction order is preserved exactly before
 delegating to `DekkerN`. -/
-theorem DekkerS2 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem DekkerS2 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -57693,8 +57720,8 @@ This is the exact upstream section wrapper at `Pff.v:18387`: split the
 canonical inputs into the four normal/subnormal cases, delegate the three
 possible cases to `DekkerN`, `DekkerS1`, and `DekkerS2`, and derive the final
 subnormal/subnormal case contradiction from `Expoxy` and `0 < b.dExp`. -/
-theorem Dekker1 {beta : Int}
-    (b : Fbound_skel) (radix : Int) (t : Nat)
+theorem Dekker1 {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (t : Nat)
     (x y p q hx tx p' q' hy ty x1y1 x1y2 x2y1 x2y2 r t1 t2 t3 t4 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -57768,7 +57795,7 @@ theorem Dekker1 {beta : Int}
 This discharges the signed lower/upper canonicity dependencies.  The analogous
 correctness theorem still needs the Flocq midpoint parity bridge, so it remains
 separate. -/
-theorem RND_EvenClosest_canonic_closed {beta : Int}
+theorem RND_EvenClosest_canonic_closed {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < (precision : Int) ∧
         b.vNum = Zpower_nat radix precision⌝⦄
@@ -57799,8 +57826,8 @@ The early payload lemma keeps the implementation case split available before
 the min/max infrastructure is declared.  This theorem supplies those payloads
 from the restored signed rounding correctness/canonicity theorems and handles
 the exact odd lower-endpoint case by the uniqueness branch of `EvenClosest`. -/
-theorem RND_EvenClosest_correct {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat) (r : ℝ) :
+theorem RND_EvenClosest_correct {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat) (r : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ 1 < (precision : Int) ∧
         b.vNum = Zpower_nat radix precision⌝⦄
     (pure (RND_EvenClosest_correct_check (beta:=beta) b radix precision r) :
@@ -58032,12 +58059,12 @@ theorem RND_EvenClosest_correct {beta : Int}
         Or.inl (by simpa [RND_EvenClosest, rd, ru, hle] using hrd_even)⟩
 
 -- Coq: `FshiftCorrectInv` — align exponents by shifting the larger one down
-noncomputable def FshiftCorrectInv_check {beta : Int}
+noncomputable def FshiftCorrectInv_check {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FshiftCorrectInv {beta : Int}
+theorem FshiftCorrectInv {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -58073,11 +58100,11 @@ theorem FshiftCorrectInv {beta : Int}
       ⟨hval, hexp, hbeta⟩
 
 -- Coq: `FshiftO` — shifting by 0 is identity
-noncomputable def FshiftO_check {beta : Int}
+noncomputable def FshiftO_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FshiftO {beta : Int}
+theorem FshiftO {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (FshiftO_check (beta:=beta) radix x) : Id Unit)
@@ -58089,11 +58116,11 @@ theorem FshiftO {beta : Int}
   simp [Fshift]
 
 -- Coq: `FshiftCorrectSym` — equal reals imply some shifts match
-noncomputable def FshiftCorrectSym_check {beta : Int}
+noncomputable def FshiftCorrectSym_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FshiftCorrectSym {beta : Int}
+theorem FshiftCorrectSym {beta : Int} [ValidRadix beta]
     (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ _root_.F2R x = _root_.F2R y⌝⦄
     (pure (FshiftCorrectSym_check (beta:=beta) radix x y) : Id Unit)
@@ -58120,11 +58147,11 @@ theorem FshiftCorrectSym {beta : Int}
     exact hx_shift
 
 -- Coq: `FdigitEq` — if not zero and same real/digit, floats are equal
-noncomputable def FdigitEq_check {beta : Int}
+noncomputable def FdigitEq_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem FdigitEq {beta : Int}
+theorem FdigitEq {beta : Int} [ValidRadix beta]
     (radix : Int) (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ ¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y ∧
         Fdigit (beta:=beta) radix x = Fdigit (beta:=beta) radix y⌝⦄
@@ -58202,7 +58229,7 @@ theorem FdigitEq {beta : Int}
     exact False.elim ((Nat.lt_irrefl (Fdigit (beta:=beta) radix x)) hlt_nat)
 
 /-- Coq: `FnormalUnique` — normal floats that agree as reals are equal. -/
-theorem FnormalUnique {beta : Int}
+theorem FnormalUnique {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
@@ -58239,16 +58266,16 @@ theorem FnormalUnique {beta : Int}
       ⟨hbeta_radix, hradix, hp_nonzero, hval, hp_digit.trans hq_digit.symm⟩
 
 -- Least significant bit position of a float.
-noncomputable def LSB {beta : Int}
+noncomputable def LSB {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
   Int.ofNat (maxDiv radix x.Fnum (Fdigit (beta:=beta) radix x)) + x.Fexp
 
 -- Coq: `Fexp_le_LSB` — the encoded exponent is below the least significant bit.
-noncomputable def Fexp_le_LSB_check {beta : Int}
+noncomputable def Fexp_le_LSB_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem Fexp_le_LSB {beta : Int}
+theorem Fexp_le_LSB {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (Fexp_le_LSB_check (beta:=beta) radix x) : Id Unit)
@@ -58266,7 +58293,7 @@ theorem Fexp_le_LSB {beta : Int}
 
 /-- Coq: `Ulp_Le_LSigB` — the unit at the encoded exponent is below the
 unit at the least significant bit position. -/
-theorem Ulp_Le_LSigB {beta : Int}
+theorem Ulp_Le_LSigB {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
     1 < radix →
@@ -58282,7 +58309,7 @@ theorem Ulp_Le_LSigB {beta : Int}
 
 /-- Coq: `FUlp_Le_LSigB` — a bounded float's normalized ulp is no larger
 than the radix unit at its least significant bit. -/
-theorem FUlp_Le_LSigB {beta : Int}
+theorem FUlp_Le_LSigB {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -58310,7 +58337,7 @@ theorem FUlp_Le_LSigB {beta : Int}
   exact le_trans (by simpa [hpow_eq] using hFulp_le) hUlp_le
 
 -- Coq: `LSB_shift` — ~is_Fzero x -> LSB x = LSB (Fshift n x)
-noncomputable def LSB_shift_check {beta : Int}
+noncomputable def LSB_shift_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Unit :=
   ()
 
@@ -58335,7 +58362,7 @@ theorem maxDivLess (radix : Int) (v : Int) (p : Nat) :
       · simpa [maxDiv, h] using Nat.le_trans ih (Nat.le_succ p)
 
 -- Coq: `LSB_comp` — ~is_Fzero x → x = y :>R → LSB x = LSB y
-noncomputable def LSB_comp_check {beta : Int}
+noncomputable def LSB_comp_check {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Unit :=
   ()
@@ -58364,11 +58391,11 @@ theorem maxDivCorrect (radix : Int) (v : Int) (p : Nat) :
       · simpa [maxDiv, h] using ih
 
 -- Coq: `LSB_rep_min` — every float has an equivalent representation at `LSB`.
-noncomputable def LSB_rep_min_check {beta : Int}
+noncomputable def LSB_rep_min_check {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LSB_rep_min {beta : Int}
+theorem LSB_rep_min {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix⌝⦄
     (pure (LSB_rep_min_check (beta:=beta) radix p) : Id Unit)
@@ -58479,11 +58506,11 @@ theorem maxDiv_opp (radix : Int) (v : Int) (p : Nat) :
         simp [maxDiv, h, hneg, ih]
 
 -- Coq: `LSB_opp` — LSB x = LSB (Fopp x)
-noncomputable def LSB_opp_check {beta : Int}
+noncomputable def LSB_opp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LSB_opp {beta : Int}
+theorem LSB_opp {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (LSB_opp_check (beta:=beta) radix x) : Id Unit)
@@ -58533,11 +58560,11 @@ theorem maxDiv_abs (radix : Int) (v : Int) (p : Nat) :
         simp [maxDiv, h, habs, ih]
 
 -- Coq: `LSB_abs` — LSB x = LSB (Fabs x)
-noncomputable def LSB_abs_check {beta : Int}
+noncomputable def LSB_abs_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LSB_abs {beta : Int}
+theorem LSB_abs {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (LSB_abs_check (beta:=beta) radix x) : Id Unit)
@@ -58560,16 +58587,16 @@ theorem LSB_abs {beta : Int}
       rw [hmax]
 
 -- Most significant bit position of a float.
-noncomputable def MSB {beta : Int}
+noncomputable def MSB {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Int :=
   Int.pred (Int.ofNat (Fdigit (beta:=beta) radix x) + x.Fexp)
 
 -- Coq: `MSB_shift` — ~is_Fzero x -> MSB x = MSB (Fshift n x)
-noncomputable def MSB_shift_check {beta : Int}
+noncomputable def MSB_shift_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Unit :=
   ()
 
-theorem MSB_shift {beta : Int}
+theorem MSB_shift {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜1 < radix ∧ ¬ is_Fzero x⌝⦄
     (pure (MSB_shift_check (beta:=beta) radix x n) : Id Unit)
@@ -58597,12 +58624,12 @@ theorem MSB_shift {beta : Int}
   omega
 
 -- Coq: `MSB_comp` — ~is_Fzero x → x = y :>R → MSB x = MSB y
-noncomputable def MSB_comp_check {beta : Int}
+noncomputable def MSB_comp_check {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) : Unit :=
   ()
 
-theorem MSB_comp {beta : Int}
+theorem MSB_comp {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ ¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
@@ -58628,11 +58655,11 @@ theorem MSB_comp {beta : Int}
   rfl
 
 -- Coq: `MSB_opp` — MSB x = MSB (Fopp x)
-noncomputable def MSB_opp_check {beta : Int}
+noncomputable def MSB_opp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem MSB_opp {beta : Int}
+theorem MSB_opp {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (MSB_opp_check (beta:=beta) radix x) : Id Unit)
@@ -58648,11 +58675,11 @@ theorem MSB_opp {beta : Int}
     rw [digit_neg radix m]
 
 -- Coq: `MSB_abs` — MSB x = MSB (Fabs x)
-noncomputable def MSB_abs_check {beta : Int}
+noncomputable def MSB_abs_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem MSB_abs {beta : Int}
+theorem MSB_abs {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜True⌝⦄
     (pure (MSB_abs_check (beta:=beta) radix x) : Id Unit)
@@ -58673,11 +58700,11 @@ theorem MSB_abs {beta : Int}
     exact congrArg (fun d => Int.pred (Int.ofNat d + e)) h.symm
 
 -- Coq: `LSB_le_MSB` — for nonzero floats, least ≤ most significant bit
-noncomputable def LSB_le_MSB_check {beta : Int}
+noncomputable def LSB_le_MSB_check {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LSB_le_MSB {beta : Int}
+theorem LSB_le_MSB {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < radix ∧ ¬ is_Fzero x⌝⦄
     (pure (LSB_le_MSB_check (beta:=beta) radix x) : Id Unit)
@@ -58830,11 +58857,11 @@ theorem Zlt_1_O (z : Int) :
   show 0 < z
   have h' : 1 ≤ z := h; omega
 
-noncomputable def LtR0Fnum_check {beta : Int}
+noncomputable def LtR0Fnum_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LtR0Fnum {beta : Int}
+theorem LtR0Fnum {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ 0 < _root_.F2R x⌝⦄
     (pure (LtR0Fnum_check (beta:=beta) x) : Id Unit)
@@ -58845,11 +58872,11 @@ theorem LtR0Fnum {beta : Int}
   exact FloatSpec.Core.Float_prop.gt_0_F2R (beta:=beta) x hβ hx
 
 -- Coq: `LeR0Fnum` — 0 ≤ x → 0 ≤ Fnum x
-noncomputable def LeR0Fnum_check {beta : Int}
+noncomputable def LeR0Fnum_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LeR0Fnum {beta : Int}
+theorem LeR0Fnum {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ 0 ≤ _root_.F2R x⌝⦄
     (pure (LeR0Fnum_check (beta:=beta) x) : Id Unit)
@@ -58860,11 +58887,11 @@ theorem LeR0Fnum {beta : Int}
   exact FloatSpec.Core.Float_prop.ge_0_F2R (beta:=beta) x hβ hx
 
 -- Coq: `LeFnumZERO` — 0 ≤ Fnum x → 0 ≤ x
-noncomputable def LeFnumZERO_check {beta : Int}
+noncomputable def LeFnumZERO_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LeFnumZERO {beta : Int}
+theorem LeFnumZERO {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ 0 ≤ x.Fnum⌝⦄
     (pure (LeFnumZERO_check (beta:=beta) x) : Id Unit)
@@ -58875,11 +58902,11 @@ theorem LeFnumZERO {beta : Int}
   exact FloatSpec.Core.Float_prop.F2R_ge_0 (beta:=beta) x hβ hx
 
 -- Coq: `R0LtFnum` — x < 0 → Fnum x < 0
-noncomputable def R0LtFnum_check {beta : Int}
+noncomputable def R0LtFnum_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem R0LtFnum {beta : Int}
+theorem R0LtFnum {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ _root_.F2R x < 0⌝⦄
     (pure (R0LtFnum_check (beta:=beta) x) : Id Unit)
@@ -58890,11 +58917,11 @@ theorem R0LtFnum {beta : Int}
   exact FloatSpec.Core.Float_prop.lt_0_F2R (beta:=beta) x hβ hx
 
 -- Coq: `R0LeFnum` — x ≤ 0 → Fnum x ≤ 0
-noncomputable def R0LeFnum_check {beta : Int}
+noncomputable def R0LeFnum_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem R0LeFnum {beta : Int}
+theorem R0LeFnum {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ _root_.F2R x ≤ 0⌝⦄
     (pure (R0LeFnum_check (beta:=beta) x) : Id Unit)
@@ -58905,11 +58932,11 @@ theorem R0LeFnum {beta : Int}
   exact FloatSpec.Core.Float_prop.le_0_F2R (beta:=beta) x hβ hx
 
 -- Coq: `LeZEROFnum` — Fnum x ≤ 0 → x ≤ 0
-noncomputable def LeZEROFnum_check {beta : Int}
+noncomputable def LeZEROFnum_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LeZEROFnum {beta : Int}
+theorem LeZEROFnum {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ x.Fnum ≤ 0⌝⦄
     (pure (LeZEROFnum_check (beta:=beta) x) : Id Unit)
@@ -58920,11 +58947,11 @@ theorem LeZEROFnum {beta : Int}
   exact FloatSpec.Core.Float_prop.F2R_le_0 (beta:=beta) x hβ hx
 
 -- Coq: `LtFnumZERO` — 0 < Fnum x → 0 < x
-noncomputable def LtFnumZERO_check {beta : Int}
+noncomputable def LtFnumZERO_check {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LtFnumZERO {beta : Int}
+theorem LtFnumZERO {beta : Int} [ValidRadix beta]
     (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜1 < beta ∧ 0 < x.Fnum⌝⦄
     (pure (LtFnumZERO_check (beta:=beta) x) : Id Unit)
@@ -59498,7 +59525,7 @@ theorem digitNotZero (n : Int) (q : Int) :
 
 /-- Coq: `MSB_le_abs` — the unit at the most significant bit is below the
 absolute value of a nonzero float. -/
-theorem MSB_le_abs {beta : Int}
+theorem MSB_le_abs {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
     1 < radix →
@@ -59571,7 +59598,7 @@ theorem MSB_le_abs {beta : Int}
 
 /-- Coq: `LSB_le_abs` — the unit at the least significant bit is below the
 absolute value of a nonzero float. -/
-theorem LSB_le_abs {beta : Int}
+theorem LSB_le_abs {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
     1 < radix →
@@ -59597,7 +59624,7 @@ theorem LSB_le_abs {beta : Int}
 
 /-- Coq: `abs_lt_MSB` — the absolute value of a float is strictly below the
 unit just above its most significant bit. -/
-theorem abs_lt_MSB {beta : Int}
+theorem abs_lt_MSB {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
     1 < radix →
@@ -59666,7 +59693,7 @@ theorem abs_lt_MSB {beta : Int}
 
 /-- Coq: `MSB_monotoneAux` — with equal exponents, monotonicity of absolute
 values implies monotonicity of most significant bit positions. -/
-theorem MSB_monotoneAux {beta : Int}
+theorem MSB_monotoneAux {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -59720,7 +59747,7 @@ theorem MSB_monotoneAux {beta : Int}
 
 /-- Coq: `MSB_monotone` — absolute-value order preserves most significant bit
 positions for nonzero floats. -/
-theorem MSB_monotone {beta : Int}
+theorem MSB_monotone {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     beta = radix →
@@ -59760,7 +59787,7 @@ theorem MSB_monotone {beta : Int}
       ⟨hbeta, hstrict⟩
   simpa [Int.succ] using hlt_succ
 
-private lemma abs_F2R_repr_at_lsb {beta : Int}
+private lemma abs_F2R_repr_at_lsb {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta_radix : beta = radix) (hradix : 1 < radix) :
     ∃ z : Int,
@@ -59790,7 +59817,7 @@ private lemma abs_F2R_repr_at_lsb {beta : Int}
           simp [_root_.F2R, FloatSpec.Core.Defs.F2R, hbeta_radix,
             ← hlsb_abs]
 
-private lemma abs_F2R_repr_at {beta : Int}
+private lemma abs_F2R_repr_at {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (e : Int)
     (hbeta_radix : beta = radix) (hradix : 1 < radix)
     (he : e ≤ LSB (beta:=beta) radix x) :
@@ -59837,7 +59864,7 @@ private lemma abs_F2R_repr_at {beta : Int}
           rw [Int.cast_mul, hscale]
           ring
 
-noncomputable def LSB_Pred_check {beta : Int}
+noncomputable def LSB_Pred_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -59848,7 +59875,7 @@ If two floats are ordered by absolute value and the least significant bit of
 `x` is no larger than that of `y`, then `|x|` is at least one `LSB x` unit
 below `|y|`.  The precondition carries the upstream `GenericC` section
 assumptions. -/
-theorem LSB_Pred {beta : Int}
+theorem LSB_Pred {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -59901,7 +59928,7 @@ theorem LSB_Pred {beta : Int}
 
 /-- Coq: `isMinComp` — a lower rounded value remains the lower bound for any
 intermediate real strictly between the same min/max pair. -/
-theorem isMinComp {beta : Int}
+theorem isMinComp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r1 r2 : ℝ) (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
     isMin' (beta:=beta) b radix r1 min →
@@ -59928,7 +59955,7 @@ theorem isMinComp {beta : Int}
 
 /-- Coq: `isMaxComp` — an upper rounded value remains the upper bound for any
 intermediate real strictly between the same min/max pair. -/
-theorem isMaxComp {beta : Int}
+theorem isMaxComp {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int)
     (r1 r2 : ℝ) (min max : FloatSpec.Core.Defs.FlocqFloat beta) :
     isMin' (beta:=beta) b radix r1 min →
@@ -60277,7 +60304,7 @@ theorem maxDivPlus (radix : Int) (v : Int) (n : Nat) :
   have heq : mprod = md + n := le_antisymm hupper hlower
   simpa [mprod, prod, md, d] using heq
 
-theorem LSB_shift {beta : Int}
+theorem LSB_shift {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜1 < radix ∧ ¬ is_Fzero x⌝⦄
     (pure (LSB_shift_check (beta:=beta) radix x n) : Id Unit)
@@ -60304,7 +60331,7 @@ theorem LSB_shift {beta : Int}
     rw [Nat.cast_add]
     omega
 
-theorem LSB_comp {beta : Int}
+theorem LSB_comp {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x y : FloatSpec.Core.Defs.FlocqFloat beta) (n : Nat) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ ¬ is_Fzero x ∧ _root_.F2R x = _root_.F2R y⌝⦄
@@ -60329,7 +60356,7 @@ theorem LSB_comp {beta : Int}
   rw [hx_lsb, hshift, ← hy_lsb]
   rfl
 
-private lemma midpoint_witness_of_lsb {beta : Int}
+private lemma midpoint_witness_of_lsb {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x1 x2 : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta_radix : beta = radix) (hradix : 1 < radix)
@@ -60342,7 +60369,7 @@ private lemma midpoint_witness_of_lsb {beta : Int}
   refine ⟨⟨z, LSB (beta:=beta) radix x2⟩, hz.symm, ?_⟩
   exact hlsb
 
-private lemma midpoint_abs_y_lt_lsb {beta : Int}
+private lemma midpoint_abs_y_lt_lsb {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x2 y : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta_radix : beta = radix) (hradix : 1 < radix)
@@ -60377,7 +60404,7 @@ private lemma midpoint_abs_y_lt_lsb {beta : Int}
     exact_mod_cast (le_of_lt hradix)
   exact lt_of_lt_of_le hnext' (zpow_le_zpow_right₀ hbase hindex)
 
-private lemma midpoint_abs_y_lt_abs_x2 {beta : Int}
+private lemma midpoint_abs_y_lt_abs_x2 {beta : Int} [ValidRadix beta]
     (radix : Int)
     (x2 y : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta_radix : beta = radix) (hradix : 1 < radix)
@@ -60408,7 +60435,7 @@ private lemma midpoint_abs_y_lt_abs_x2 {beta : Int}
     hunit_le_abs
 
 private lemma midpoint_small_residual
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x1 x2 y : FloatSpec.Core.Defs.FlocqFloat radix) (e : Int)
     (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix precision)
@@ -60521,7 +60548,7 @@ private lemma midpoint_small_residual
     _ = (radix : ℝ) ^ e / 2 := by rw [hhalf_abs]; ring
 
 private lemma midpoint_positive_normal_bounds
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : b.vNum = Zpower_nat radix precision)
@@ -60616,7 +60643,7 @@ private lemma midpoint_positive_normal_bounds
     rw [hx_value, hlower_value, hmin]
 
 private lemma midpoint_closest_eq
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x1 x2 y f : FloatSpec.Core.Defs.FlocqFloat radix) (e : Int)
     (hradix : 1 < radix) (hprecision : 1 < precision)
     (hvNum : b.vNum = Zpower_nat radix precision)
@@ -60673,8 +60700,8 @@ If the second perturbation is too small in its most-significant bit to overlap
 the least-significant bit of `x2`, then either the second closest rounding
 still represents `x1`, or `x2` has an equivalent representation whose
 exponent is at least two below that of `x1`. -/
-theorem Midpoint_aux_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Midpoint_aux_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x1 x2 y f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta_radix : beta = radix)
     (hradix : 1 < radix)
@@ -60952,8 +60979,8 @@ theorem Midpoint_aux_aux {beta : Int}
 /-- Coq GenericD lemma `Midpoint_aux`.
 
 This is the sign-symmetric public wrapper around `Midpoint_aux_aux`. -/
-theorem Midpoint_aux {beta : Int}
-    (b : Fbound_skel) (radix : Int) (precision : Nat)
+theorem Midpoint_aux {beta : Int} [ValidRadix beta]
+    (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (x1 x2 y f : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta_radix : beta = radix)
     (hradix : 1 < radix)
@@ -61097,7 +61124,7 @@ theorem Midpoint_aux {beta : Int}
       rfl hradix hvNum hprecision hEven hx1Closest hfClosest hy_lsb
       hx1Normal hx1Pos hx2ValueNonzero hx1Exp
 
-noncomputable def MSBroundLSB_check {beta : Int}
+noncomputable def MSBroundLSB_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -61107,7 +61134,7 @@ noncomputable def MSBroundLSB_check {beta : Int}
 
 For a nonzero rounding error, the most significant bit of the error lies
 strictly below the least significant bit of the rounded value. -/
-theorem MSBroundLSB {beta : Int}
+theorem MSBroundLSB {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (f1 f2 : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -61187,12 +61214,12 @@ theorem MSBroundLSB {beta : Int}
       (LSB (beta:=beta) radix f2)) ⟨hβ, hunit_lt⟩
 
 -- Coq: `LSBMinus`.
-noncomputable def LSBMinus_check {beta : Int}
+noncomputable def LSBMinus_check {beta : Int} [ValidRadix beta]
     (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LSBMinus {beta : Int}
+theorem LSBMinus {beta : Int} [ValidRadix beta]
     (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -61267,12 +61294,12 @@ theorem LSBMinus {beta : Int}
   simpa [hexp] using hle
 
 -- Coq: `LSBPlus`.
-noncomputable def LSBPlus_check {beta : Int}
+noncomputable def LSBPlus_check {beta : Int} [ValidRadix beta]
     (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
 
-theorem LSBPlus {beta : Int}
+theorem LSBPlus {beta : Int} [ValidRadix beta]
     (radix : Int)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ ¬ is_Fzero (Fplus (beta:=beta) p q)⌝⦄
@@ -61345,8 +61372,8 @@ This is the upstream transport proof: compare `be2` with
 `LSBMinus` and `LSBPlus`, obtain the two residual MSB bounds from
 `MSBroundLSB`, `TwoSumProp`, and exact representation transport, and rule out
 the remaining `be1` exponent case with `plusExact1`. -/
-theorem be2MuchSmaller {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem be2MuchSmaller {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x y u1 u2 al1 al2 be1 be2 :
       FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -61779,8 +61806,8 @@ projector facts, the midpoint branch either returns `be2` directly or supplies
 an exact `be2` witness, and the remaining boundedness is obtained by applying
 `BoundedL` to the exact sum of the `gatCorrect` witness and that midpoint
 witness. -/
-theorem gaCorrect {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem gaCorrect {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (P : ℝ → FloatSpec.Core.Defs.FlocqFloat beta → Prop)
     (a x y r1 u1 u2 al1 al2 be1 be2 :
       FloatSpec.Core.Defs.FlocqFloat beta)
@@ -62231,7 +62258,7 @@ private lemma tBounded_sterbenz_bounds
   constructor <;> nlinarith
 
 private lemma tBounded_zero_case
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (ph b uh z : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -62276,7 +62303,7 @@ private lemma tBounded_zero_case
   ring
 
 private lemma tBounded_small_case
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh z : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -62415,7 +62442,7 @@ private lemma tBounded_small_case
   exact ⟨v, hvBound, hvValue⟩
 
 private lemma tBounded_large_initial_bounds
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -62484,7 +62511,7 @@ private lemma tBounded_large_initial_bounds
   · nlinarith [hplUlp]
 
 private lemma tBounded_b_exp_lower
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (ph b : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -62592,7 +62619,7 @@ private lemma tBounded_b_exp_lower
     h ⟨Or.inl hcNormal, hbCan, le_of_lt hcAbsLtB⟩
 
 private lemma tBounded_ph_exp_upper
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x ph : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -62695,7 +62722,7 @@ private lemma tBounded_ph_exp_upper
       by simpa [abs_of_nonneg htopNonneg] using hphAbsLe⟩
 
 private lemma tBounded_z_exp_lt_ph
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl z : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -62830,7 +62857,7 @@ private lemma tBounded_z_exp_lt_ph
   omega
 
 private lemma tBounded_large_case
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh z : FloatSpec.Core.Defs.FlocqFloat radix)
     (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -63067,7 +63094,7 @@ private lemma tBounded_large_case
 
 /-- Coq `tBounded_aux`: the difference between the rounded high addition and
 the rounded fused result has a bounded float representation. -/
-theorem tBounded_aux {beta : Int}
+theorem tBounded_aux {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph pl uh z : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -63139,8 +63166,8 @@ theorem tBounded_aux {beta : Int}
 
 /-- Coq `tBounded`: the FMA correction term `uh - z` is representable by a
 bounded float, allowing the rounded values to be either normal or zero. -/
-theorem tBounded {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem tBounded {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh z : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -63428,7 +63455,7 @@ theorem tBounded {beta : Int}
 
 /-- Coq `ErrFmaApprox_1_aux`: exact-`uh` FMA branch error bound, specialized
 to the normal `z`/`w` subcase. -/
-theorem ErrFmaApprox_1_aux {beta : Int}
+theorem ErrFmaApprox_1_aux {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -63722,8 +63749,8 @@ theorem ErrFmaApprox_1_aux {beta : Int}
 
 /-- Coq `ErrFmaApprox_1`: exact-`uh` FMA branch error bound with the
 upstream normal-or-zero hypotheses for both rounded results `z` and `w`. -/
-theorem ErrFmaApprox_1 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ErrFmaApprox_1 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -63976,7 +64003,7 @@ theorem ErrFmaApprox_1 {beta : Int}
       nlinarith
     simpa [htargetZero] using hRhsNonneg
 
-noncomputable def LeExp2_check {beta : Int}
+noncomputable def LeExp2_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -63988,8 +64015,8 @@ most one greater than the exponent of the rounded FMA result.  The proof follows
 the upstream argument: combine the three rounding-error ulp bounds, use
 `LeExp1` to compare `Fulp ph` with `radix * Fulp uh`, derive
 `|uh| <= radix * |z|`, then compare canonical exponents. -/
-theorem LeExp2 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem LeExp2 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
         bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
@@ -64353,7 +64380,7 @@ theorem LeExp2 {beta : Int}
         simpa [hzShiftAbs] using hAbsUhLe⟩
   simpa [zShift] using hExpLeShift
 
-noncomputable def LeExp3_check {beta : Int}
+noncomputable def LeExp3_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -64365,8 +64392,8 @@ The simultaneous one-exponent gaps `ph.Fexp = uh.Fexp + 1` and
 upstream payload used at this point: `LeExp2`, `RleRoundedAbs`, the closest
 rounding absolute monotonicity argument, and the bounded plus-error exponent
 used to force `b.Fexp <= z.Fexp`. -/
-theorem LeExp3 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem LeExp3 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
         bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
@@ -64662,7 +64689,7 @@ theorem LeExp3 {beta : Int}
   rw [hlowerVal] at hLowerLeZ
   exact (not_le_of_gt hzAbsStrict) hLowerLeZ
 
-noncomputable def LeExp_check {beta : Int}
+noncomputable def LeExp_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -64672,7 +64699,7 @@ noncomputable def LeExp_check {beta : Int}
 Combines `LeExp1`, `LeExp2`, and the forbidden equality/equality corner from
 `LeExp3` to bound the two ulp-sized terms by twice the successor exponent of
 the rounded FMA result. -/
-theorem LeExp {beta : Int}
+theorem LeExp {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -64750,7 +64777,7 @@ theorem LeExp {beta : Int}
           add_le_add hphPow huhPow
     _ = 2 * (radix : ℝ) ^ (z.Fexp + 1) := by ring
 
-noncomputable def vLe_aux_check {beta : Int}
+noncomputable def vLe_aux_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph pl uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -64761,7 +64788,7 @@ The inexact low-term sum is bounded by one radix successor of the rounded FMA
 exponent.  This is the direct upstream triangle-inequality proof: two
 `ClosestUlp` bounds are converted with `CanonicFulp`, then combined through
 `LeExp`. -/
-theorem vLe_aux {beta : Int}
+theorem vLe_aux {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph pl uh ul z : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
@@ -64875,8 +64902,8 @@ theorem vLe_aux {beta : Int}
 The rounded low-term sum inherits the `vLe_aux` magnitude bound by monotonicity
 of absolute values under closest rounding, using the bounded comparator float
 `Float radix (Fexp z)`. -/
-theorem vLe {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem vLe {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh ul z v : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
         bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
@@ -64985,7 +65012,7 @@ theorem vLe {beta : Int}
         hAbsLeUpper⟩
   simpa [hUpperVal] using hvAbsLeUpper
 
-noncomputable def tLe_check {beta : Int}
+noncomputable def tLe_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph pl uh ul z t : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -64997,8 +65024,8 @@ The rounded high correction is bounded by the FMA exponent scaled by
 `tBounded` and closest-rounding projector equality, then follows the upstream
 triangle split: the `z` error is bounded by `RoundedModeUlp`, while the `ph`
 and `uh` errors are bounded by `ClosestUlp` and combined through `LeExp`. -/
-theorem tLe {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem tLe {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh ul z t : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
         bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
@@ -65239,7 +65266,7 @@ theorem tLe {beta : Int}
           norm_num
           ring
 
-noncomputable def wLe_check {beta : Int}
+noncomputable def wLe_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
   ()
@@ -65251,8 +65278,8 @@ The rounded total correction is bounded by the sum of the exact upstream
 comparator float `Float (2 * radix + 1) (Fexp z)`, use
 `RoundAbsMonotoner` for the closest rounding of `t + v`, and discharge the
 input bound with the triangle inequality. -/
-theorem wLe {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem wLe {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜beta = radix ∧ 1 < radix ∧
         bo.vNum = Zpower_nat radix precision ∧ 4 ≤ precision ∧
@@ -65394,7 +65421,7 @@ theorem wLe {beta : Int}
 /-- Coq `ErrFmaApprox_2_aux`: in the inexact `uh` branch, with normal rounded
 intermediate floats, the composed FMA approximation error is bounded by the
 upstream `((3 * radix) / 2 + 1 / 2) * radix^(2 - 2 * precision)` scale. -/
-theorem ErrFmaApprox_2_aux {beta : Int}
+theorem ErrFmaApprox_2_aux {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
@@ -65667,8 +65694,8 @@ theorem ErrFmaApprox_2_aux {beta : Int}
 
 /-- Coq `ErrFmaApprox_2`: public inexact-`uh` FMA branch with the upstream
 normal-or-zero hypotheses for `ph`, `uh`, `z`, `v`, and `w`. -/
-theorem ErrFmaApprox_2 {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ErrFmaApprox_2 {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)
@@ -66114,8 +66141,8 @@ theorem ErrFmaApprox_2 {beta : Int}
 This is the upstream wrapper over the exact and inexact `ul` branches.  The
 canonical representative for `b` and the bounded product residual are kept
 internal, matching Flocq's `Total` section statement. -/
-theorem ErrFmaApprox {beta : Int}
-    (bo : Fbound_skel) (radix : Int) (precision : Nat)
+theorem ErrFmaApprox {beta : Int} [ValidRadix beta]
+    (bo : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (a x b ph pl uh ul z t v w : FloatSpec.Core.Defs.FlocqFloat beta)
     (hbeta : beta = radix) (hradix : 1 < radix)
     (hvNum : bo.vNum = Zpower_nat radix precision)

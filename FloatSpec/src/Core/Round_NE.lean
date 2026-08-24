@@ -43,7 +43,7 @@ namespace FloatSpec.Core.RoundNE
 
 section NearestEvenRounding
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
@@ -57,7 +57,7 @@ variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     A tie-breaking rule that selects the value whose mantissa
     is even when two representable values are equidistant.
 -/
-def NE_prop (beta : Int) (fexp : Int → Int) (x : ℝ) (f : ℝ) : Prop :=
+def NE_prop (beta : Int) [ValidRadix beta] (fexp : Int → Int) (x : ℝ) (f : ℝ) : Prop :=
   ∃ g : FlocqFloat beta, f = (F2R g) ∧ canonical beta fexp g ∧ g.Fnum % 2 = 0
 
 /-- Nearest-even rounding predicate
@@ -109,7 +109,7 @@ proof. It is intentionally local to `Round_NE`: it is not a generic-format
 fact, and the Coq theorem `DN_UP_parity_generic_pos` is stated under this
 typeclass context.
 -/
-class Exists_NE (beta : Int) (fexp : Int → Int) : Prop where
+class Exists_NE (beta : Int) [ValidRadix beta] (fexp : Int → Int) : Prop where
   exists_ne :
     beta % 2 ≠ 0 ∨
       ∀ e : Int,
@@ -118,7 +118,7 @@ class Exists_NE (beta : Int) (fexp : Int → Int) : Prop where
 
 section ParityAuxiliary
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [Exists_NE beta fexp]
@@ -276,9 +276,11 @@ theorem DN_UP_parity_aux :
     -- Canonicality is preserved under mantissa negation.
     have hcanon_gd : canonical beta fexp gd := by
       -- Use `canonical_opp` from Generic_fmt
-      exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp) (m := gu_pos.Fnum) (e := gu_pos.Fexp) hcanon_u
+      exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta)
+        (fexp := fexp) (m := gu_pos.Fnum) (e := gu_pos.Fexp) hcanon_u
     have hcanon_gu : canonical beta fexp gu := by
-      exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta) (fexp := fexp) (m := gd_pos.Fnum) (e := gd_pos.Fexp) hcanon_d
+      exact FloatSpec.Core.Generic_fmt.canonical_opp (beta := beta)
+        (fexp := fexp) (m := gd_pos.Fnum) (e := gd_pos.Fexp) hcanon_d
     -- Parity of the mantissa is invariant under negation modulo 2.
     -- We prove `(-n) % 2 = n % 2` by case-splitting on `n % 2 ∈ {0,1}`.
     have neg_mod_two (n : Int) : (-n) % 2 = n % 2 := by
@@ -351,7 +353,7 @@ the same Flocq argument gives `Exp_not_FTZ`: in the large regime monotonicity
 applies to `fexp e + 1 ≤ e`; in the small regime `Valid_exp` gives constancy.
 -/
 private theorem monotone_exp_to_ulp_not_FTZ
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [Valid_exp beta fexp] [FloatSpec.Core.Generic_fmt.Monotone_exp fexp] :
     FloatSpec.Core.Ulp.Exp_not_FTZ fexp := by
   classical
@@ -373,7 +375,7 @@ private theorem Rnd_DN_pt_unique_pure (F : ℝ → Prop) (x f₁ f₂ : ℝ)
 
 /-- Concrete integer rounding produces a generic-format value. -/
 private theorem roundR_format_int
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [Valid_exp beta fexp] (rnd : ℝ → Int) [Valid_rnd rnd]
     (x : ℝ) (hβ : 1 < beta) :
     generic_format beta fexp (roundR beta fexp rnd x) := by
@@ -489,7 +491,7 @@ private theorem roundR_format_int
 
 /-- Concrete floor rounding is the Flocq DN point for the generic format. -/
 private theorem roundR_floor_DN_pt
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [Valid_exp beta fexp]
     (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Round_pred.Rnd_DN_pt
@@ -524,7 +526,7 @@ private theorem roundR_floor_DN_pt
 
 /-- Concrete ceil rounding is the Flocq UP point for the generic format. -/
 private theorem roundR_ceil_UP_pt
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [Valid_exp beta fexp]
     (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Round_pred.Rnd_UP_pt
@@ -562,7 +564,7 @@ private theorem roundR_ceil_UP_pt
 transports it to the point predicates used by `Round_NE` via DN/UP uniqueness.
 -/
 private theorem DN_UP_gap_of_not_format
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     [Valid_exp beta fexp] [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (x xd xu : ℝ) (hβ : 1 < beta)
     (hnotFmt : ¬ generic_format beta fexp x)
@@ -608,7 +610,7 @@ private theorem DN_UP_gap_of_not_format
 by exactly one unit at their common exponent, their mantissas are consecutive.
 -/
 private theorem canonical_mantissa_succ_of_same_exp_gap
-    (beta : Int) (fexp : Int → Int) (gd gu : FlocqFloat beta)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) (gd gu : FlocqFloat beta)
     (hβ : 1 < beta)
     (hgap :
       F2R gu = F2R gd + (beta : ℝ) ^ gd.Fexp)
@@ -642,7 +644,7 @@ private theorem canonical_mantissa_succ_of_same_exp_gap
 
 /-- Same-exponent one-ULP gaps imply opposite parity. -/
 private theorem canonical_parity_of_same_exp_gap
-    (beta : Int) (fexp : Int → Int) (gd gu : FlocqFloat beta)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) (gd gu : FlocqFloat beta)
     (hβ : 1 < beta)
     (hgap :
       F2R gu = F2R gd + (beta : ℝ) ^ gd.Fexp)
@@ -691,7 +693,7 @@ private theorem int_pow_pos_mod_two_eq_base (b : Int) {n : Nat} (hn : 0 < n) :
 
 /-- Cancel a common radix scale from an equality `m * β^c = β^e`. -/
 private theorem scaled_int_eq_power_mantissa
-    (beta m c e : Int) (hβ : 1 < beta) (hce : c ≤ e)
+    (beta m c e : Int) [ValidRadix beta] (hβ : 1 < beta) (hce : c ≤ e)
     (hval : (m : ℝ) * (beta : ℝ) ^ c = (beta : ℝ) ^ e) :
     m = beta ^ ((e - c).natAbs) := by
   have hbpow := FloatSpec.Core.Float_prop.F2R_bpow
@@ -718,7 +720,7 @@ private theorem scaled_int_eq_power_mantissa
 /-- A canonical float representing the exact power `β^e` has the expected
 mantissa after changing the power float to the canonical exponent. -/
 private theorem canonical_power_mantissa
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
     (g : FlocqFloat beta) (e : Int) (hβ : 1 < beta)
     (hcan : canonical beta fexp g)
     (hg : F2R g = (beta : ℝ) ^ e) :
@@ -775,7 +777,7 @@ private theorem canonical_power_mantissa
 
 /-- Canonical exponent of a canonical float representing `β^e`. -/
 private theorem canonical_power_exp
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     (g : FlocqFloat beta) (e : Int) (hβ : 1 < beta)
     (hcan : canonical beta fexp g)
     (hg : F2R g = (beta : ℝ) ^ e) :
@@ -791,7 +793,7 @@ private theorem canonical_power_exp
 
 /-- A canonical float whose value is zero has zero mantissa. -/
 private theorem canonical_zero_mantissa
-    (beta : Int) (fexp : Int → Int)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     (g : FlocqFloat beta) (hβ : 1 < beta)
     (hg : F2R g = 0) :
     g.Fnum = 0 :=
@@ -799,7 +801,7 @@ private theorem canonical_zero_mantissa
 
 /-- If a float value is written at its own exponent, the mantissa is unique. -/
 private theorem same_exp_mantissa
-    (beta : Int) (g : FlocqFloat beta) (m e : Int) (hβ : 1 < beta)
+    (beta : Int) [ValidRadix beta] (g : FlocqFloat beta) (m e : Int) (hβ : 1 < beta)
     (hexp : g.Fexp = e)
     (hval : F2R g = (m : ℝ) * (beta : ℝ) ^ e) :
     g.Fnum = m := by
@@ -947,10 +949,7 @@ theorem DN_UP_parity_generic_pos :
             congrArg (fun t : ℝ => t * (beta : ℝ) ^ c) hfloor
       have hfmt : generic_format beta fexp x := by
         unfold generic_format
-        change x =
-          F2R (FlocqFloat.mk
-            (FloatSpec.Core.Raux.Ztrunc (scaled_mantissa beta fexp x))
-            (cexp beta fexp x) : FlocqFloat beta)
+        dsimp only
         rw [hcexp_x, htrunc]
         change x = ((Int.floor sm : Int) : ℝ) * (beta : ℝ) ^ (fexp ex)
         simpa [c, hc] using hx_recon
@@ -1748,7 +1747,7 @@ end ParityAuxiliary
 
 section UniquenessProperties
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [Exists_NE beta fexp]
@@ -1758,7 +1757,7 @@ variable [Exists_NE beta fexp]
     then they must be equal. This consolidates parity/adjacency reasoning proved
     elsewhere in the development. -/
 private theorem tie_unique_NE_ax
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] [Exists_NE beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] [Exists_NE beta fexp]
     (hβ : 1 < beta) (x d u : ℝ) :
     let F : ℝ → Prop := fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y
     FloatSpec.Core.Defs.Rnd_DN_pt F x d →
@@ -2190,7 +2189,7 @@ end UniquenessProperties
 
 section RoundingPredicateProperties
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [Exists_NE beta fexp]
@@ -2316,7 +2315,7 @@ end RoundingPredicateProperties
 
 section ParityProperties
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [Exists_NE beta fexp]
@@ -2628,7 +2627,7 @@ noncomputable def round_NE_pt_pos_check : Bool :=
 
 -- Helper: consume `Rnd_NE_pt_total` (triple style) into a pure proposition form.
 private theorem Rnd_NE_pt_total_prop
-    (beta : Int) (fexp : Int → Int) [Valid_exp beta fexp] [Exists_NE beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] [Exists_NE beta fexp]
     (hβ : beta > 1) : ∀ y : ℝ, ∃ f : ℝ, Rnd_NE_pt beta fexp y f := by
   -- Use the triple-encoded totality lemma and eliminate the Hoare wrapper by `simp`.
   have hTot := Rnd_NE_pt_total (beta := beta) (fexp := fexp)
@@ -3046,7 +3045,7 @@ end ParityProperties
 
 section ErrorBounds
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
 variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]

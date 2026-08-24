@@ -8,7 +8,7 @@ import Mathlib.Data.Real.Basic
 
 open Real
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
 -- Section: Relative error conversions
 

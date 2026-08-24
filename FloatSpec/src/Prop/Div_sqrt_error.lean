@@ -14,7 +14,7 @@ import Mathlib.Data.Real.Basic
 open Real
 open Std.Do
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (prec : Int)
 variable [Prec_gt_0 prec]
 

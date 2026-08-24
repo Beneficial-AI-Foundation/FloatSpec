@@ -30,7 +30,7 @@ open FloatSpec.Core.Digits
 
 namespace FloatSpec.Core.Float_prop
 
-variable (beta : Int) (hbeta : 1 < beta)
+variable (beta : Int) [ValidRadix beta] (hbeta : 1 < beta)
 
 section FloatProp
 

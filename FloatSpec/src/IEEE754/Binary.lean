@@ -47,21 +47,21 @@ def FF2SF (x : FullFloat) : StandardFloat :=
   | FullFloat.F754_finite s m e => StandardFloat.S754_finite s m e
 
 -- Conversion from FullFloat to real number
-noncomputable def FF2R (beta : Int) (x : FullFloat) : ℝ :=
+noncomputable def FF2R (beta : Int) [ValidRadix beta] (x : FullFloat) : ℝ :=
   match x with
   | FullFloat.F754_finite s m e =>
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat beta)
   | _ => 0
 
 -- Conversion from StandardFloat to real number
-noncomputable def SF2R (beta : Int) (x : StandardFloat) : ℝ :=
+noncomputable def SF2R (beta : Int) [ValidRadix beta] (x : StandardFloat) : ℝ :=
   match x with
   | StandardFloat.S754_finite s m e =>
     F2R (FloatSpec.Core.Defs.FlocqFloat.mk (if s then -(m : Int) else (m : Int)) e : FloatSpec.Core.Defs.FlocqFloat beta)
   | _ => 0
 
 -- SF2R and FF2SF consistency
-theorem SF2R_FF2SF (beta : Int) (x : FullFloat) :
+theorem SF2R_FF2SF (beta : Int) [ValidRadix beta] (x : FullFloat) :
   SF2R beta (FF2SF x) = FF2R beta x := by
   cases x <;> rfl
 
@@ -79,7 +79,7 @@ theorem FF2SF_SF2FF (x : StandardFloat) :
   cases x <;> rfl
 
 -- FF2R after SF2FF equals SF2R
-theorem FF2R_SF2FF (beta : Int) (x : StandardFloat) :
+theorem FF2R_SF2FF (beta : Int) [ValidRadix beta] (x : StandardFloat) :
   FF2R beta (SF2FF x) = SF2R beta x := by
   cases x <;> rfl
 
@@ -558,7 +558,7 @@ theorem B2FF_inj {prec emax} (x y : Binary754 prec emax) :
   intro h; cases x; cases y; cases h; rfl
 
 -- Coq: FF2R_B2FF — Real semantics preserved by B2FF
-theorem FF2R_B2FF (beta : Int) {prec emax} (x : Binary754 prec emax) :
+theorem FF2R_B2FF (beta : Int) [ValidRadix beta] {prec emax} (x : Binary754 prec emax) :
   FF2R beta (B2FF (prec:=prec) (emax:=emax) x) = FF2R beta x.val := by
   rfl
 
@@ -598,7 +598,7 @@ theorem is_nan_B2FF {prec emax} (x : Binary754 prec emax) :
   rfl
 
 -- Coq: B2R_FF2B — Real semantics after FF2B equals semantics of source
-theorem B2R_FF2B (beta : Int) {prec emax} (x : FullFloat) :
+theorem B2R_FF2B (beta : Int) [ValidRadix beta] {prec emax} (x : FullFloat) :
   FF2R beta (B2FF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x)) = FF2R beta x := by
   rfl
 
@@ -1542,7 +1542,8 @@ theorem Bfrexp_correct (x : Binary754 prec emax)
       -- rx = m * 2^ex, rz = m * 2^(ex - e)
       -- rz * 2^e = m * 2^(ex - e + e) = m * 2^ex = rx
       simp only [FloatSpec.Core.Raux.bpow]
-      set mag_val := FloatSpec.Core.Raux.mag 2 (F2R { Fnum := if s = true then -↑m else ↑m, Fexp := ex })
+      set mag_val := FloatSpec.Core.Raux.mag 2
+        (F2R (beta:=2) { Fnum := if s = true then -↑m else ↑m, Fexp := ex })
       -- Unfold both F2R wrappers to the Core definition and then to the formula
       unfold F2R FloatSpec.Core.Defs.F2R
       -- Goal: (if s then -↑m else ↑m) * 2^ex = (if s then -↑m else ↑m) * 2^(ex - mag_val) * 2^mag_val
@@ -2600,7 +2601,7 @@ theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
           · have hzero_raw :
                 FloatSpec.Core.Generic_fmt.round_to_generic 2
                     (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                    (rnd_of_mode mode) √(@F2R 2 { Fnum := ↑m, Fexp := e }) = 0 := by
+                    (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := ↑m, Fexp := e }) = 0 := by
               simpa [rounded, sqrt_val, fexp, FF2R] using hzero
             simp [binary_sqrt, B2R, FF2B, FF2R, is_finite_B, is_finite_FF,
               is_nan_B, is_nan_FF, Bsign, sign_FF, fexp, sqrt_val, rounded, hzero,
@@ -2623,25 +2624,25 @@ theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
             have hnotzero_raw :
                 FloatSpec.Core.Generic_fmt.round_to_generic 2
                     (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                    (rnd_of_mode mode) √(@F2R 2 { Fnum := ↑m, Fexp := e }) ≠ 0 := by
+                    (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := ↑m, Fexp := e }) ≠ 0 := by
               simpa [rounded, sqrt_val, fexp, FF2R] using hzero
             have hval_raw :
                 FF2R 2
                     (real_to_FullFloat
                       (FloatSpec.Core.Generic_fmt.round_to_generic 2
                         (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                        (rnd_of_mode mode) √(@F2R 2 { Fnum := ↑m, Fexp := e }))
+                        (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := ↑m, Fexp := e }))
                       (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))) =
                   FloatSpec.Core.Generic_fmt.round_to_generic 2
                     (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                    (rnd_of_mode mode) √(@F2R 2 { Fnum := ↑m, Fexp := e }) := by
+                    (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := ↑m, Fexp := e }) := by
               simpa [rounded, sqrt_val, fexp, FF2R] using hval
             have hsign_raw :
                 sign_FF
                     (real_to_FullFloat
                       (FloatSpec.Core.Generic_fmt.round_to_generic 2
                         (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                        (rnd_of_mode mode) √(@F2R 2 { Fnum := ↑m, Fexp := e }))
+                        (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := ↑m, Fexp := e }))
                       (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))) = false := by
               simpa [rounded, sqrt_val, fexp, FF2R] using hsign
             have hfinite :
@@ -2653,7 +2654,7 @@ theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
                     (real_to_FullFloat
                       (FloatSpec.Core.Generic_fmt.round_to_generic 2
                         (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                        (rnd_of_mode mode) √(@F2R 2 { Fnum := ↑m, Fexp := e }))
+                        (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := ↑m, Fexp := e }))
                       (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))) = true := by
               simpa [rounded, sqrt_val, fexp, FF2R] using hfinite
             have hnan :
@@ -2665,7 +2666,7 @@ theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
                     (real_to_FullFloat
                       (FloatSpec.Core.Generic_fmt.round_to_generic 2
                         (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                        (rnd_of_mode mode) √(@F2R 2 { Fnum := ↑m, Fexp := e }))
+                        (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := ↑m, Fexp := e }))
                       (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))) = false := by
               simpa [rounded, sqrt_val, fexp, FF2R] using hnan
             simp [binary_sqrt, B2R, FF2B, is_finite_B, is_nan_B, Bsign, fexp,
@@ -2686,12 +2687,12 @@ theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
           have hsqrt0 :
               Real.sqrt (FF2R 2 (FullFloat.F754_finite true m e)) = 0 :=
             Real.sqrt_eq_zero_of_nonpos hinput_nonpos
-          have hsqrt0_raw : √(@F2R 2 { Fnum := -↑m, Fexp := e }) = 0 := by
+          have hsqrt0_raw : √(F2R (beta:=2) { Fnum := -↑m, Fexp := e }) = 0 := by
             simpa [FF2R] using hsqrt0
           have hround0_raw :
               FloatSpec.Core.Generic_fmt.round_to_generic 2
                   (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-                  (rnd_of_mode mode) √(@F2R 2 { Fnum := -↑m, Fexp := e }) = 0 := by
+                  (rnd_of_mode mode) √(F2R (beta:=2) { Fnum := -↑m, Fexp := e }) = 0 := by
             simpa [fexp, hsqrt0_raw] using hround0
           simp [binary_sqrt, B2R, FF2B, FF2R, is_finite_B, is_finite_FF,
             is_nan_B, is_nan_FF, Bsign, fexp, hsqrt0, hround0, hround0_raw]

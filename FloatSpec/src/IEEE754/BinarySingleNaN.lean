@@ -4591,7 +4591,7 @@ theorem Bulp_correct
       have hulp_trip := FloatSpec.Core.Ulp.ulp_canonical
         (beta := 2) (fexp := FLT_exp (3 - emax - prec) prec)
         (m := if sx then -((mx : Int)) else (mx : Int)) (e := ex)
-        hmx_int_ne hcanon (by norm_num : (1 : Int) < 2)
+        hmx_int_ne (by norm_num : (1 : Int) < 2) hcanon
       have hulp_eq :
           FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec)
             (B754_to_R (B754.B754_finite sx mx ex)) = (2 : ℝ) ^ ex := by
@@ -7387,8 +7387,8 @@ private theorem Bpred_positive_correct {prec emax : Int}
       (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
   have hulpXTrip := FloatSpec.Core.Ulp.ulp_canonical
     (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
-    (m:=(mx : Int)) (e:=ex) (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon
-    (by norm_num : (1 : Int) < 2)
+    (m:=(mx : Int)) (e:=ex) (by exact_mod_cast (Nat.ne_of_gt hmx))
+    (by norm_num : (1 : Int) < 2) hcanon
   have hulpX : FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) xr =
       (2 : ℝ) ^ ex := by
     simpa [wp, PostCond.noThrow, pure, xr, x, B754_to_R] using hulpXTrip trivial
@@ -7619,8 +7619,8 @@ private theorem ulp_eq_boundary_step_of_mantissa_nonboundary {prec emax : Int}
     simpa [FloatSpec.Core.Generic_fmt.canonical, M, xr, B754_to_R] using hcanon
   have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
     (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
-    (m:=(mx : Int)) (e:=ex) (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon
-    (by norm_num : (1 : Int) < 2)
+    (m:=(mx : Int)) (e:=ex) (by exact_mod_cast (Nat.ne_of_gt hmx))
+    (by norm_num : (1 : Int) < 2) hcanon
   have hulp : FloatSpec.Core.Ulp.ulp 2 (FLT_exp (3 - emax - prec) prec) xr =
       (2 : ℝ) ^ ex := by
     simpa [wp, PostCond.noThrow, pure, xr] using hulpTrip trivial
@@ -7706,7 +7706,7 @@ private theorem Bpred_pos'_positive_correct {prec emax : Int}
       (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
   have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
     (beta:=2) (fexp:=fp) (m:=(mx : Int)) (e:=ex)
-    (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon (by norm_num : (1 : Int) < 2)
+    (by exact_mod_cast (Nat.ne_of_gt hmx)) (by norm_num : (1 : Int) < 2) hcanon
   have hulp : FloatSpec.Core.Ulp.ulp 2 fp xr = (2 : ℝ) ^ ex := by
     simpa [fp, xr, x, B754_to_R, wp, PostCond.noThrow, pure] using hulpTrip trivial
   have hulpPos : 0 < FloatSpec.Core.Ulp.ulp 2 fp xr := by
@@ -8084,7 +8084,7 @@ private theorem Bsucc_positive_correct {prec emax : Int}
       (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
   have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
     (beta:=2) (fexp:=fp) (m:=(mx : Int)) (e:=ex)
-    (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon (by norm_num : (1 : Int) < 2)
+    (by exact_mod_cast (Nat.ne_of_gt hmx)) (by norm_num : (1 : Int) < 2) hcanon
   have hulp : FloatSpec.Core.Ulp.ulp 2 fp xr = (2 : ℝ) ^ ex := by
     simpa [fp, xr, x, B754_to_R, wp, PostCond.noThrow, pure] using hulpTrip trivial
   have hsuccTrip := FloatSpec.Core.Ulp.succ_eq_pos
@@ -8232,8 +8232,8 @@ theorem Bsucc'_correct {prec emax : Int}
               (f:=FloatSpec.Core.Defs.FlocqFloat.mk (mx : Int) ex) hcanon
           have hulpTrip := FloatSpec.Core.Ulp.ulp_canonical
             (beta:=2) (fexp:=fp) (m:=(mx : Int)) (e:=ex)
-            (by exact_mod_cast (Nat.ne_of_gt hmx)) hcanon
-            (by norm_num : (1 : Int) < 2)
+            (by exact_mod_cast (Nat.ne_of_gt hmx))
+            (by norm_num : (1 : Int) < 2) hcanon
           have hulpPow : FloatSpec.Core.Ulp.ulp 2 fp xr = (2 : ℝ) ^ ex := by
             simpa [fp, xr, raw, B754_to_R, wp, PostCond.noThrow, pure] using
               hulpTrip trivial

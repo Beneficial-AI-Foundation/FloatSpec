@@ -76,11 +76,11 @@ theorem FLT_exp_spec (e : Int) :
     This gives IEEE 754-style floating-point representation
     with both precision and minimum exponent constraints.
 -/
-def FLT_format (beta : Int) (x : ℝ) : Prop :=
+def FLT_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
   (generic_format beta (FLT_exp prec emin) x)
 
 /-- `Valid_exp `instance for the FLT exponent function. -/
-instance FLT_exp_valid (beta : Int) [Prec_gt_0 prec] :
+instance FLT_exp_valid (beta : Int) [ValidRadix beta] [Prec_gt_0 prec] :
     FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp prec emin) := by
   refine ⟨?_⟩
   intro k
@@ -160,7 +160,7 @@ Global Instance exists_NE_FLT :
   (Z.even beta = false \/ (1 < prec)%Z) ->
   Exists_NE beta FLT_exp.
 -/
-instance exists_NE_FLT (beta : Int)
+instance exists_NE_FLT (beta : Int) [ValidRadix beta]
     [hNE : Fact (beta % 2 ≠ 0 ∨ 1 < prec)] :
     FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp prec emin) where
   exists_ne := by
@@ -195,7 +195,7 @@ instance exists_NE_FLT (beta : Int)
     (for subnormal numbers), matching IEEE 754 behavior.
 -/
 @[spec]
-theorem FLT_format_spec (beta : Int) (x : ℝ) :
+theorem FLT_format_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (FLT_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result = (generic_format beta (FLT_exp prec emin) x)⌝⦄ := by
@@ -224,7 +224,7 @@ theorem FLT_exp_correct_spec (e : Int) :
     Zero should always be representable as 0 × β^e for any
     allowed exponent e, making it universal across FLT formats.
 -/
-noncomputable def FLT_format_0_check (beta : Int) : Bool :=
+noncomputable def FLT_format_0_check (beta : Int) [ValidRadix beta] : Bool :=
   -- Concrete arithmetic check: Ztrunc 0 = 0
   ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ))) == (0 : Int)
 
@@ -235,7 +235,7 @@ noncomputable def FLT_format_0_check (beta : Int) : Bool :=
     of precision or minimum exponent constraints.
 -/
 @[spec]
-theorem FLT_format_0_spec (beta : Int) :
+theorem FLT_format_0_spec (beta : Int) [ValidRadix beta] :
     ⦃⌜beta > 1⌝⦄
     (pure (FLT_format_0_check beta) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -256,7 +256,7 @@ theorem FLT_format_0_spec (beta : Int) :
     This tests the sign symmetry property of IEEE 754-style
     floating-point representation.
 -/
-noncomputable def FLT_format_opp_check (beta : Int) (x : ℝ) : Bool :=
+noncomputable def FLT_format_opp_check (beta : Int) [ValidRadix beta] (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_neg: Ztrunc(-x) + Ztrunc(x) = 0
   ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x)) == (0 : Int)
 
@@ -267,7 +267,7 @@ noncomputable def FLT_format_opp_check (beta : Int) (x : ℝ) : Bool :=
     using the same exponent and negated mantissa.
 -/
 @[spec]
-theorem FLT_format_opp_spec (beta : Int) (x : ℝ) :
+theorem FLT_format_opp_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FLT_format prec emin beta x⌝⦄
     (pure (FLT_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -286,7 +286,7 @@ theorem FLT_format_opp_spec (beta : Int) (x : ℝ) :
     This tests the magnitude preservation property, ensuring that
     absolute values remain representable.
 -/
-noncomputable def FLT_format_abs_check (beta : Int) (x : ℝ) : Bool :=
+noncomputable def FLT_format_abs_check (beta : Int) [ValidRadix beta] (x : ℝ) : Bool :=
   -- Concrete arithmetic check: Ztrunc(|x|) matches natAbs of Ztrunc(x)
   ((FloatSpec.Core.Raux.Ztrunc (abs x)))
         == Int.ofNat ((FloatSpec.Core.Raux.Ztrunc x).natAbs)
@@ -298,7 +298,7 @@ noncomputable def FLT_format_abs_check (beta : Int) (x : ℝ) : Bool :=
     representable using the same exponent structure.
 -/
 @[spec]
-theorem FLT_format_abs_spec (beta : Int) (x : ℝ) :
+theorem FLT_format_abs_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FLT_format prec emin beta x⌝⦄
     (pure (FLT_format_abs_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -367,7 +367,7 @@ Coq (FLT.v):
 Theorem generic_format_FLT :
   forall x, FLT_format x -> generic_format beta FLT_exp x.
 -/
-theorem generic_format_FLT (beta : Int) (x : ℝ) :
+theorem generic_format_FLT (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FLT_format prec emin beta x⌝⦄
     (pure ((generic_format beta (FLT_exp prec emin) x)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -380,7 +380,7 @@ Coq (FLT.v):
 Theorem FLT_format_generic :
   forall x, generic_format beta FLT_exp x -> FLT_format x.
 -/
-theorem FLT_format_generic (beta : Int) (x : ℝ) :
+theorem FLT_format_generic (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜(generic_format beta (FLT_exp prec emin) x)⌝⦄
     (pure (FLT_format prec emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -393,7 +393,7 @@ Coq (FLT.v):
 Theorem FLT_format_satisfies_any :
   satisfies_any FLT_format.
 -/
-theorem FLT_format_satisfies_any (beta : Int) :
+theorem FLT_format_satisfies_any (beta : Int) [ValidRadix beta] :
     FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FLT_format prec emin beta y) := by
   simp only [FLT_format]
   exact FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLT_exp prec emin)
@@ -403,7 +403,7 @@ Coq (FLT.v):
 Theorem generic_format_FLT_bpow :
   forall e, (emin <= e)%Z -> generic_format beta FLT_exp (bpow e).
 -/
-theorem generic_format_FLT_bpow (beta : Int) (e : Int) :
+theorem generic_format_FLT_bpow (beta : Int) [ValidRadix beta] (e : Int) :
     ⦃⌜beta > 1 ∧ emin ≤ e⌝⦄
     (pure ((generic_format beta (FLT_exp prec emin) ((beta : ℝ) ^ e))) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -431,7 +431,7 @@ Coq (FLT.v):
 Theorem FLT_format_bpow :
   forall e, (emin <= e)%Z -> FLT_format (bpow e).
 -/
-theorem FLT_format_bpow (beta : Int) (e : Int) :
+theorem FLT_format_bpow (beta : Int) [ValidRadix beta] (e : Int) :
     ⦃⌜beta > 1 ∧ emin ≤ e⌝⦄
     (pure (FLT_format prec emin beta ((beta : ℝ) ^ e)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -460,7 +460,7 @@ Theorem generic_format_FLT_FLX :
   generic_format beta (FLX_exp prec) x ->
   generic_format beta FLT_exp x.
 -/
-theorem generic_format_FLT_FLX (beta : Int) (x : ℝ) :
+theorem generic_format_FLT_FLX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec) ≤ |x| ∧ (generic_format beta (FLX.FLX_exp prec) x)⌝⦄
     (pure (generic_format beta (FLT_exp prec emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -494,7 +494,7 @@ Theorem cexp_FLT_FLX :
   (bpow (emin + prec - 1) <= Rabs x)%R ->
   cexp beta FLT_exp x = cexp beta (FLX_exp prec) x.
 -/
-theorem cexp_FLT_FLX (beta : Int) (x : ℝ) :
+theorem cexp_FLT_FLX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec) ≤ |x|⌝⦄
     (pure (FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x) : Id ℤ)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.cexp beta (FLX.FLX_exp prec) x)⌝⦄ := by
@@ -599,7 +599,7 @@ private lemma negligible_exp_FLT_exists (prec emin : Int) [Prec_gt_0 prec] :
     have hle_emin : n ≤ emin := Or.resolve_left hcases hnot_left
     exact ⟨n, hopt, hle_emin⟩
 
-theorem negligible_exp_FLT (beta : Int) :
+theorem negligible_exp_FLT (beta : Int) [ValidRadix beta] :
     ⦃⌜True⌝⦄
     (pure (FloatSpec.Core.Ulp.negligible_exp (fexp := FLT_exp prec emin)) : Id (Option Int))
     ⦃⇓r => ⌜∃ n, r = some n ∧ n ≤ emin⌝⦄ := by
@@ -616,7 +616,7 @@ Theorem generic_format_FIX_FLT :
   generic_format beta FLT_exp x ->
   generic_format beta (FIX_exp emin) x.
 -/
-theorem generic_format_FIX_FLT (beta : Int) (x : ℝ) :
+theorem generic_format_FIX_FLT (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (generic_format beta (FLT_exp prec emin) x)⌝⦄
     (pure (generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -695,7 +695,7 @@ Theorem generic_format_FLT_FIX :
   generic_format beta FLT_exp x.
 ```
 -/
-theorem generic_format_FLT_FIX (beta : Int) (x : ℝ) :
+theorem generic_format_FLT_FIX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ |x| ≤ (beta : ℝ) ^ (emin + prec) ∧ (generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x)⌝⦄
     (pure (generic_format beta (FLT_exp prec emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -733,7 +733,7 @@ Theorem {lit}`ulp_FLT_0`: {lit}`ulp beta FLT_exp 0 = bpow emin`.
 
 Lean (spec): The ULP under FLT at 0 equals {lit}`β^emin`.
 -/
-theorem ulp_FLT_0 (beta : Int) :
+theorem ulp_FLT_0 (beta : Int) [ValidRadix beta] :
     ⦃⌜True⌝⦄
     (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) 0) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
@@ -768,7 +768,7 @@ Theorem {lit}`ulp_FLT_small`:
 
 Lean (spec): If {lit}`|x| < β^(emin+prec)`, then ULP under FLT at x equals {lit}`β^emin`.
 -/
-theorem ulp_FLT_small (beta : Int) (x : ℝ) :
+theorem ulp_FLT_small (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ |x| < (beta : ℝ) ^ (emin + prec)⌝⦄
     (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
@@ -844,7 +844,7 @@ Theorem cexp_FLT_FIX :
   (Rabs x < bpow (emin + prec))%R ->
   cexp beta FLT_exp x = cexp beta (FIX_exp emin) x.
 -/
-theorem cexp_FLT_FIX (beta : Int) (x : ℝ) :
+theorem cexp_FLT_FIX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ |x| < (beta : ℝ) ^ (emin + prec)⌝⦄
     (pure (FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp prec emin) x) : Id ℤ)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.cexp beta (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x)⌝⦄ := by
@@ -895,7 +895,7 @@ Theorem generic_format_FLT_1 :
   (emin <= 0)%Z ->
   generic_format beta FLT_exp 1.
 -/
-theorem generic_format_FLT_1 (beta : Int) :
+theorem generic_format_FLT_1 (beta : Int) [ValidRadix beta] :
     ⦃⌜beta > 1 ∧ emin ≤ 0⌝⦄
     (pure (generic_format beta (FLT_exp prec emin) 1) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -926,7 +926,7 @@ Theorem generic_format_FLX_FLT :
   forall x : R,
   generic_format beta FLT_exp x -> generic_format beta (FLX_exp prec) x.
 -/
-theorem generic_format_FLX_FLT (beta : Int) (x : ℝ) :
+theorem generic_format_FLX_FLT (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (generic_format beta (FLT_exp prec emin) x)⌝⦄
     (pure (generic_format beta (FLX.FLX_exp prec) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -964,7 +964,7 @@ Theorem ulp_FLT_le:
   forall x, (bpow (emin + prec - 1) <= Rabs x)%R ->
   (ulp beta FLT_exp x <= Rabs x * bpow (1 - prec))%R.
 -/
-theorem ulp_FLT_le (beta : Int) (x : ℝ) :
+theorem ulp_FLT_le (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec - 1) ≤ |x|⌝⦄
     (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x) : Id ℝ)
     ⦃⇓r => ⌜r ≤ |x| * (beta : ℝ) ^ (1 - prec)⌝⦄ := by
@@ -1051,7 +1051,7 @@ Coq (FLT.v):
 Theorem ulp_FLT_gt:
   forall x, (Rabs x * bpow (-prec) < ulp beta FLT_exp x)%R.
 -/
-theorem ulp_FLT_gt (beta : Int) (x : ℝ) :
+theorem ulp_FLT_gt (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     (pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x) : Id ℝ)
     ⦃⇓r => ⌜|x| * (beta : ℝ) ^ (-prec) ≤ r⌝⦄ := by
@@ -1180,7 +1180,7 @@ Lemma ulp_FLT_exact_shift:
   (emin + prec - mag beta x <= e)%Z ->
   (ulp beta FLT_exp (x * bpow e) = ulp beta FLT_exp x * bpow e)%R.
 -/
-theorem ulp_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+theorem ulp_FLT_exact_shift (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ emin + prec ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) ≤ e⌝⦄
     (do
       let u1 ← pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
@@ -1346,7 +1346,7 @@ Theorem round_FLT_FLX : forall rnd x,
 Lean (spec): Under the lower-bound condition on |x|, rounding in
 FLT equals rounding in FLX for any rounding predicate `rnd`.
 -/
-theorem round_FLT_FLX (beta : Int) (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+theorem round_FLT_FLX (beta : Int) [ValidRadix beta] (rnd : ℝ → ℝ → Prop) (x : ℝ) :
     ⦃⌜beta > 1 ∧ (beta : ℝ) ^ (emin + prec) ≤ |x|⌝⦄
     (pure (
       round_to_generic (beta := beta) (fexp := FLT_exp prec emin) (mode := rnd) x,
@@ -1432,7 +1432,7 @@ Lemma succ_FLT_exact_shift_pos:
   (emin + prec - mag beta x + 1 <= e)%Z ->
   (succ beta FLT_exp (x * bpow e) = succ beta FLT_exp x * bpow e)%R.
 -/
-theorem succ_FLT_exact_shift_pos (beta : Int) (x : ℝ) (e : Int) :
+theorem succ_FLT_exact_shift_pos (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ 0 < x ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
       let s1 ← pure (FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
@@ -1510,7 +1510,7 @@ Lemma succ_FLT_exact_shift:
 (succ beta FLT_exp (x * bpow e) = succ beta FLT_exp x * bpow e)%R.
 -/
 -- Auxiliary lemma: pred exact shift for positive inputs (used to handle negative `x` for succ)
-private theorem pred_FLT_exact_shift_pos_aux (beta : Int) (x : ℝ) (e : Int) :
+private theorem pred_FLT_exact_shift_pos_aux (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ 0 < x ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
       let p1 ← pure (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
@@ -1726,7 +1726,7 @@ private theorem pred_FLT_exact_shift_pos_aux (beta : Int) (x : ℝ) (e : Int) :
 -- Auxiliary lemma: pred exact shift for positive inputs (used to handle negative `x` for succ)
 -- (moved earlier)
 
-theorem succ_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+theorem succ_FLT_exact_shift (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
       let s1 ← pure (FloatSpec.Core.Ulp.succ beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
@@ -1789,7 +1789,7 @@ Lemma pred_FLT_exact_shift:
   (emin + prec - mag beta x + 1 <= e)%Z ->
   (pred beta FLT_exp (x * bpow e) = pred beta FLT_exp x * bpow e)%R.
 -/
-theorem pred_FLT_exact_shift (beta : Int) (x : ℝ) (e : Int) :
+theorem pred_FLT_exact_shift (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
     ⦃⌜beta > 1 ∧ x ≠ 0 ∧ emin + prec + 1 ≤ (FloatSpec.Core.Raux.mag beta x) ∧ emin + prec - (FloatSpec.Core.Raux.mag beta x) + 1 ≤ e⌝⦄
     (do
       let p1 ← pure (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) (x * (beta : ℝ) ^ e))
@@ -1853,7 +1853,7 @@ Theorem ulp_FLT_pred_pos:
   ulp beta FLT_exp (pred beta FLT_exp x) = ulp beta FLT_exp x \/
   (x = bpow (mag beta x - 1) /\\ ulp beta FLT_exp (pred beta FLT_exp x) = (ulp beta FLT_exp x / IZR beta)%R).
 -/
-theorem ulp_FLT_pred_pos (beta : Int) (x : ℝ) :
+theorem ulp_FLT_pred_pos (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (FloatSpec.Core.Generic_fmt.generic_format beta (FLT_exp prec emin) x) ∧ 0 ≤ x⌝⦄
     (do
       let up ← pure (FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) ((FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x)))
