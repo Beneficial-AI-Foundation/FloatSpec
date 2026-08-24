@@ -1103,8 +1103,7 @@ private theorem round_odd_pt_pos
                   (FloatSpec.Core.Generic_fmt.roundR beta fexp
                     FloatSpec.Core.Generic_fmt.rnd_floor x) =
                 FloatSpec.Core.Generic_fmt.cexp beta fexp x := by
-          simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
-            using htrip hβ
+          simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using htrip
         have hrd_floor :
             rd = FloatSpec.Core.Generic_fmt.roundR beta fexp
                 FloatSpec.Core.Generic_fmt.rnd_floor x := by
@@ -1282,21 +1281,14 @@ lemma mag_d (x : ℝ)
         FloatSpec.Core.Generic_fmt.roundR beta fexp
           FloatSpec.Core.Generic_fmt.rnd_floor x := by
     simpa [FloatSpec.Core.Generic_fmt.rnd_floor] using hdn
-  have hmag := (FloatSpec.Core.Generic_fmt.mag_DN
-    (beta := beta) (fexp := fexp) (x := x)) hβ
-  have himp :
-      0 < FloatSpec.Core.Generic_fmt.roundR beta fexp
-          FloatSpec.Core.Generic_fmt.rnd_floor x →
-      FloatSpec.Core.Raux.mag beta
-          (FloatSpec.Core.Generic_fmt.roundR beta fexp
-            FloatSpec.Core.Generic_fmt.rnd_floor x) =
-        FloatSpec.Core.Raux.mag beta x := by
-    simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using hmag
   have hpos_round :
       0 < FloatSpec.Core.Generic_fmt.roundR beta fexp
           FloatSpec.Core.Generic_fmt.rnd_floor x := by
     simpa [← hdn_floor] using hd_pos
-  simpa [← hdn_floor] using himp hpos_round
+  have hmag := FloatSpec.Core.Generic_fmt.mag_DN
+    (beta := beta) (fexp := fexp) (x := x)
+    (by simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using hpos_round)
+  simpa [FloatSpec.Core.Generic_fmt.round_to_generic, ← hdn_floor] using hmag
 
 /-- Coq: `Fexp_d`.
     A positive canonical DN witness has exponent `fexp (mag beta x)`. -/

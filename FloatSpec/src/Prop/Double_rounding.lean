@@ -2880,7 +2880,7 @@ theorem round_round_sqrt_center_lt_bpow_of_pos_floor
               (FloatSpec.Core.Generic_fmt.roundR beta fexp1
                 FloatSpec.Core.Generic_fmt.rnd_floor s) =
             FloatSpec.Core.Generic_fmt.cexp beta fexp1 s := by
-      simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hβ
+      simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using htrip
     simpa [a, ha] using himp (by simpa [a, ha] using ha_pos)
   have hulp_a :
       ulp beta fexp1 a =
@@ -3374,7 +3374,7 @@ theorem round_round_sqrt_floor_grid_of_pos
               (FloatSpec.Core.Generic_fmt.roundR beta fexp1
                 FloatSpec.Core.Generic_fmt.rnd_floor s) =
             FloatSpec.Core.Generic_fmt.cexp beta fexp1 s := by
-      simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hβ
+      simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using htrip
     simpa [a, ha] using himp (by simpa [a, ha] using ha_pos)
   have hu1_pow :
       u1 = (beta : ℝ) ^ FloatSpec.Core.Generic_fmt.cexp beta fexp1 s := by

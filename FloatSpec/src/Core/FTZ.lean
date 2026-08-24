@@ -559,75 +559,67 @@ FTZ equals rounding in FLX for any rounding predicate {lit}`rnd`.
 -/
 theorem round_FTZ_FLX (beta : Int) [ValidRadix beta]
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FloatSpec.Core.FLX.FLX_exp prec)]
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
-    ⦃⌜1 < beta ∧ (beta : ℝ) ^ (emin + prec) ≤ |x|⌝⦄
-    (pure (
-      round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x,
-      round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec) (mode := rnd) x) : Id (ℝ × ℝ))
-    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
-  intro hpre
-  rcases hpre with ⟨hβ, hx_lb⟩
-  classical
-  -- Notation: M is the logarithmic magnitude of x
-  set M : Int := (FloatSpec.Core.Raux.mag beta x) with hM
-  -- From mag bounds: β^(M - 1) ≤ |x|
-  have hM_lb : (beta : ℝ) ^ (M - 1) ≤ |x| := by
-    -- Use bpow lower bound at e = M
-    have h := FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := M)
-    -- Build x ≠ 0 from the global lower bound |x| ≥ β^(emin+prec)
-    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
-    have hbposR : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
-    have hpow_pos : 0 < (beta : ℝ) ^ (emin + prec) := zpow_pos hbposR _
-    have hx_pos : 0 < |x| := lt_of_lt_of_le hpow_pos hx_lb
-    have hx_ne : x ≠ 0 := (abs_pos).1 hx_pos
-    have hcall := h hβ hx_ne le_rfl trivial
-    simpa [FloatSpec.Core.Raux.abs_val, hM, wp, PostCond.noThrow, Id.run, pure, sub_eq_add_neg]
-      using hcall
-  -- Obtain the strict upper bound |x| < β^(M + 1)
-  have hx_upper : |x| < (beta : ℝ) ^ (M + 1) := by
-    have h := FloatSpec.Core.Raux.bpow_mag_gt (beta := beta) (x := x) (e := M + 1)
-    have hlt : (FloatSpec.Core.Raux.mag beta x) < M + 1 := by
-      have : M ≤ M := le_rfl
-      exact (Int.lt_add_one_iff).2 this
-    have hres := h hβ hlt trivial
-    simpa [FloatSpec.Core.Raux.abs_val, FloatSpec.Core.Raux.mag, hM, wp, PostCond.noThrow, Id.run, pure]
-      using hres
-  -- Now compare powers: β^(emin+prec) < β^(M+1) ⇒ emin+prec + 1 ≤ M+1 ⇒ emin+prec ≤ M
-  have hlt_pow' : (beta : ℝ) ^ (emin + prec) < (beta : ℝ) ^ (M + 1) :=
-    lt_of_le_of_lt hx_lb hx_upper
-  have hE_le_Mp1 : (emin + prec + 1) ≤ (M + 1) := by
-    -- Use the calibrated comparison lemma on powers
-    have h := FloatSpec.Core.Raux.bpow_lt_bpow (beta := beta) (e1 := (emin + prec + 1)) (e2 := (M + 1))
-    have hres := h hβ (by simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hlt_pow') trivial
-    simpa [FloatSpec.Core.Raux.bpow_lt_bpow_pair, wp, PostCond.noThrow, Id.run, pure]
-      using hres
-  have hE_le_M : (emin + prec) ≤ M := by
-    -- Subtract 1 on both sides of the previous inequality
-    have := sub_le_sub_right hE_le_Mp1 (1 : Int)
-    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-  -- Therefore M - prec ≥ emin, so both exponents coincide at M
-  have hcase : emin ≤ M - prec := by
-    have := sub_le_sub_right hE_le_M prec
-    simpa [sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using this
-  have hEqExp : FTZ_exp prec emin M = FloatSpec.Core.FLX.FLX_exp prec M := by
-    simpa [FTZ_exp, FloatSpec.Core.FLX.FLX_exp, hcase]
-  -- Compute both canonical exponents and conclude equality of the rounded values
-  have hcexp_FTZ : (FloatSpec.Core.Generic_fmt.cexp beta (FTZ_exp prec emin) x) = FTZ_exp prec emin M := by
-    unfold FloatSpec.Core.Generic_fmt.cexp; simp [FloatSpec.Core.Raux.mag, hM]
-  have hcexp_FLX : (FloatSpec.Core.Generic_fmt.cexp beta (FloatSpec.Core.FLX.FLX_exp prec) x) = FloatSpec.Core.FLX.FLX_exp prec M := by
-    unfold FloatSpec.Core.Generic_fmt.cexp; simp [FloatSpec.Core.Raux.mag, hM]
-  -- With identical exponents, `round_to_generic` produces identical results
-  have :
-      round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x
-        = round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec) (mode := rnd) x := by
-    -- Unfold the definition and rewrite the equal exponents
-    unfold round_to_generic
-    -- Replace both `cexp` calls by the same value and reduce
-    -- Note: cexp returns Id Int, so we use Id.run to align with .run facts
-    simp only [Id.run] at hcexp_FTZ hcexp_FLX
-    simp only [Id.run, hcexp_FTZ, hcexp_FLX, hEqExp]
-  -- Discharge the Hoare triple over the pure pair
-  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
+    (beta : ℝ) ^ (emin + prec - 1) ≤ |x| →
+      round_to_generic (beta := beta) (fexp := FTZ_exp prec emin)
+          (mode := Zrnd_FTZ rnd) x =
+      round_to_generic (beta := beta) (fexp := FloatSpec.Core.FLX.FLX_exp prec)
+          (mode := rnd) x := by
+  intro hx
+  let M := FloatSpec.Core.Raux.mag beta x
+  have hβ : 1 < beta := ValidRadix.valid
+  have hbpos : (0 : ℝ) < beta := by
+    exact_mod_cast (lt_trans Int.zero_lt_one hβ)
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+  have hxne : x ≠ 0 := by
+    have hp : 0 < (beta : ℝ) ^ (emin + prec - 1) := zpow_pos hbpos _
+    exact (abs_pos.mp (lt_of_lt_of_le hp hx))
+  have hmag : emin + prec ≤ M :=
+    FloatSpec.Core.Raux.mag_ge_bpow beta x (emin + prec) hβ hx
+  have hcase : emin ≤ M - prec := by omega
+  have hexp : FTZ_exp prec emin M = FloatSpec.Core.FLX.FLX_exp prec M := by
+    simp [FTZ_exp, FloatSpec.Core.FLX.FLX_exp, hcase]
+  have hmagLower : (beta : ℝ) ^ (M - 1) ≤ |x| := by
+    simpa [FloatSpec.Core.Raux.abs_val] using
+      (FloatSpec.Core.Raux.bpow_mag_le beta x M hβ hxne le_rfl True.intro)
+  have hprec : 0 < prec := Fact.out
+  have hpowOne : (1 : ℝ) ≤ (beta : ℝ) ^ (prec - 1) := by
+    exact one_le_zpow₀ (le_of_lt (by exact_mod_cast hβ : (1 : ℝ) < beta)) (by omega)
+  have hfactorPos : 0 < (beta : ℝ) ^ (prec - M) := zpow_pos hbpos _
+  have hscaledLower :
+      (1 : ℝ) ≤ |x * (beta : ℝ) ^ (prec - M)| := by
+    have hmul :
+        (beta : ℝ) ^ (M - 1) * (beta : ℝ) ^ (prec - M) ≤
+          |x| * (beta : ℝ) ^ (prec - M) :=
+      mul_le_mul_of_nonneg_right hmagLower (le_of_lt hfactorPos)
+    have hpow :
+        (beta : ℝ) ^ (M - 1) * (beta : ℝ) ^ (prec - M) =
+          (beta : ℝ) ^ (prec - 1) := by
+      calc
+        (beta : ℝ) ^ (M - 1) * (beta : ℝ) ^ (prec - M) =
+            (beta : ℝ) ^ ((M - 1) + (prec - M)) :=
+          (zpow_add₀ hbne (M - 1) (prec - M)).symm
+        _ = (beta : ℝ) ^ (prec - 1) := by congr 1 <;> omega
+    calc
+      (1 : ℝ) ≤ (beta : ℝ) ^ (prec - 1) := hpowOne
+      _ ≤ |x| * (beta : ℝ) ^ (prec - M) := by simpa [hpow] using hmul
+      _ = |x * (beta : ℝ) ^ (prec - M)| := by
+        rw [abs_mul, abs_of_pos hfactorPos]
+  have hscaled :
+      (1 : ℝ) ≤
+        |FloatSpec.Core.Generic_fmt.scaled_mantissa beta
+          (FloatSpec.Core.FLX.FLX_exp prec) x| := by
+    simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa,
+      FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.FLX.FLX_exp, M,
+      sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hscaledLower
+  simp only [round_to_generic, FloatSpec.Core.Generic_fmt.roundR,
+    FloatSpec.Core.Generic_fmt.scaled_mantissa,
+    FloatSpec.Core.Generic_fmt.cexp]
+  rw [hexp]
+  simp only [Zrnd_FTZ, FloatSpec.Core.Raux.Rle_bool]
+  rw [if_pos]
+  simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa,
+    FloatSpec.Core.Generic_fmt.cexp, M] using hscaled
 
 end FloatSpec.Core.FTZ
 
@@ -642,9 +634,11 @@ Theorem {lit}`round_FTZ_small`:
 Lean (spec): If |x| is smaller than {lit}`β^(emin+prec-1)`, then rounding in
 FTZ flushes to zero for any rounding predicate {lit}`rnd`.
 -/
-theorem round_FTZ_small (beta : Int) [ValidRadix beta] (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+theorem round_FTZ_small (beta : Int) [ValidRadix beta]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     ⦃⌜1 < beta ∧ |x| < (beta : ℝ) ^ (emin + prec - 1)⌝⦄
-    (pure (round_to_generic (beta := beta) (fexp := FTZ_exp prec emin) (mode := rnd) x) : Id ℝ)
+    (pure (round_to_generic (beta := beta) (fexp := FTZ_exp prec emin)
+      (mode := Zrnd_FTZ rnd) x) : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hβ, hxlt⟩
@@ -670,6 +664,19 @@ theorem round_FTZ_small (beta : Int) [ValidRadix beta] (rnd : ℝ → ℝ → Pr
   have hbounds : -1 < sm ∧ sm < 1 := by
     -- abs sm < 1 ↔ -1 < sm ∧ sm < 1
     simpa [hsm] using (abs_lt.mp hsm_lt1)
+  have hmode : Zrnd_FTZ rnd sm = 0 := by
+    have hnot : ¬ 1 ≤ |sm| := not_le.mpr (by simpa [hsm] using hsm_lt1)
+    simp [Zrnd_FTZ, FloatSpec.Core.Raux.Rle_bool, hnot]
+  have hround :
+      round_to_generic (beta := beta) (fexp := FTZ_exp prec emin)
+        (mode := Zrnd_FTZ rnd) x = 0 := by
+    have hmode' : Zrnd_FTZ rnd
+        (FloatSpec.Core.Generic_fmt.scaled_mantissa beta
+          (FTZ_exp prec emin) x) = 0 := by
+      simpa [hsm] using hmode
+    simp [round_to_generic, FloatSpec.Core.Generic_fmt.roundR, hmode']
+  simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hround
+/-
   have hZtrunc_sm : (FloatSpec.Core.Raux.Ztrunc sm) = 0 := by
     -- Split on the sign of sm and use floor/ceil characterizations
     by_cases hneg : sm < 0
@@ -735,6 +742,7 @@ theorem round_FTZ_small (beta : Int) [ValidRadix beta] (rnd : ℝ → ℝ → Pr
       hrw, htrunc0R', zero_mul]
   -- Discharge the Hoare triple
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using this
+-/
 
 end FloatSpec.Core.FTZ
 

@@ -1062,7 +1062,7 @@ theorem eq_0_round_0_FLX
     (beta : Int) [ValidRadix beta]
     [Prec_gt_0 prec]
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     ⦃⌜1 < beta ∧ round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0⌝⦄
     (pure x : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
@@ -1094,7 +1094,7 @@ theorem gt_0_round_gt_0_FLX
     (beta : Int) [ValidRadix beta]
     [Prec_gt_0 prec]
     [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
-    (rnd : ℝ → ℝ → Prop) (x : ℝ) :
+    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     ⦃⌜1 < beta ∧ 0 < x⌝⦄
     (pure (round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x) : Id ℝ)
     ⦃⇓r => ⌜0 < r⌝⦄ := by
@@ -1105,7 +1105,8 @@ theorem gt_0_round_gt_0_FLX
   -- Monotonicity gives nonnegativity: round 0 ≤ round x and round 0 = 0
   have hr0 :
       round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) 0 = 0 := by
-    simp [round_to_generic, FloatSpec.Core.Generic_fmt.Ztrunc_zero]
+    exact FloatSpec.Core.Generic_fmt.round_0
+      (beta := beta) (fexp := FLX_exp prec) (rnd := rnd)
   have hmono :=
     round_to_generic_monotone
       (beta := beta) (fexp := FLX_exp prec) (rnd := rnd) hβ

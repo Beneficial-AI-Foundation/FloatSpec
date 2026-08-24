@@ -284,20 +284,21 @@ namespace FloatSpec.Core.FIX
 /-- Coq ({lit}`FIX.v`):
 Theorem {lit}`round_FIX_IZR`: {lit}`forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).`
 
-Lean (ported, minimal adaptation): Our {lean}`round_to_generic` model ignores the
-rounding function {lit}`f` and performs truncation of the scaled mantissa with the
-canonical exponent. For {lit}`fexp` = {lean}`FIX_exp` 0 and {lit}`beta` = 2, this reduces to
-{lean}`FloatSpec.Core.Raux.Ztrunc` x since the canonical exponent is constantly 0.
+Lean: for {lit}`fexp = FIX_exp 0`, the canonical exponent is zero, so the
+result is exactly the integer selected by the supplied rounding function.
 -/
-theorem round_FIX_IZR (x : ℝ) :
+theorem round_FIX_IZR
+    (f : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd f] (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int)))
-      (mode := FloatSpec.Core.Raux.Ztrunc) x) : Id ℝ)
-    ⦃⇓r => ⌜r = ((FloatSpec.Core.Raux.Ztrunc x) : ℝ)⌝⦄ := by
+      (mode := f) x) : Id ℝ)
+    ⦃⇓r => ⌜r = ((f x : Int) : ℝ)⌝⦄ := by
   intro _
   -- Unfold the rounding model and compute with the constant exponent 0
   simp [
         round_to_generic,
+        FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         FIX_exp]

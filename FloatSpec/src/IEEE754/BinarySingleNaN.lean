@@ -3368,7 +3368,7 @@ private theorem binary_round_aux_correct_proof
       have hround_ge :=
         FloatSpec.Core.Generic_fmt.cexp_round_ge
           (beta := 2) (fexp := fexp) (rnd := rnd_of_mode mode)
-          (x := x) (hβ := (by norm_num : (1 : Int) < 2)) hrounded_ne
+          (x := x) hrounded_ne
       calc
         e1 = FloatSpec.Core.Generic_fmt.cexp 2 fexp |x| := htr1.2
         _ = FloatSpec.Core.Generic_fmt.cexp 2 fexp x := hcexp_abs_x
@@ -3391,7 +3391,6 @@ private theorem binary_round_aux_correct_proof
           FloatSpec.Core.Generic_fmt.generic_format 2 fexp rounded :=
         FloatSpec.Core.Generic_fmt.generic_format_round
           (beta := 2) (fexp := fexp) (rnd := rnd_of_mode mode) (x := x)
-          (by norm_num : (1 : Int) < 2)
       have hfmt_abs :
           FloatSpec.Core.Generic_fmt.generic_format 2 fexp |rounded| :=
         FloatSpec.Core.Generic_fmt.generic_format_abs

@@ -1511,7 +1511,7 @@ theorem round_DN_canonical_even_of_floor_even
                 (FloatSpec.Core.Generic_fmt.roundR beta fexp
                   FloatSpec.Core.Generic_fmt.rnd_floor x) =
               FloatSpec.Core.Generic_fmt.cexp beta fexp x := by
-        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hβ
+        simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using htrip
       simpa [r] using himp hrpos
     have hbpos : (0 : ℝ) < (beta : ℝ) := by
       exact_mod_cast (lt_trans Int.zero_lt_one hβ)
@@ -1623,7 +1623,7 @@ theorem round_DN_canonical_parity_of_floor
                 (FloatSpec.Core.Generic_fmt.roundR beta fexp
                   FloatSpec.Core.Generic_fmt.rnd_floor x) =
               FloatSpec.Core.Generic_fmt.cexp beta fexp x := by
-        simpa [wp, PostCond.noThrow, Id.run, pure] using htrip hβ
+        simpa [FloatSpec.Core.Generic_fmt.round_to_generic] using htrip
       simpa [rd, hrd, e, he] using himp (by simpa [rd, hrd] using hrd_pos)
     have Cgf : canonical beta fexp gf := by
       simpa [gf, FloatSpec.Core.Generic_fmt.canonical,
