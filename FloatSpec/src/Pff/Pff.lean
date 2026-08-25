@@ -1117,10 +1117,61 @@ def Fsubnormal' {beta : Int} [ValidRadix beta]
     (f : FloatSpec.Core.Defs.FlocqFloat beta) : Prop :=
   Fsubnormal radix bo f
 
+/-- The total behavior of Pff's structurally recursive `digitAux`.
+
+Coq calls `digitAux` with `xO q'`, where `q'` is the binary-positive
+representation of `|q|`.  Since the `xO` and `xI` branches are identical,
+only that constructor depth matters: it is exactly `log2 |q| + 1` for a
+nonzero integer.  Keeping this total behavior is observable because the
+surrounding `radixMoreThanOne` section hypothesis is not an exported binder of
+`digit`, `Fnormalize`, or `Fulp`. -/
+private def pffDigitAuxFuel (radix value : Int) : Int → Nat → Nat
+  | _, 0 => 0
+  | power, fuel + 1 =>
+      if power > value then 0
+      else Nat.succ (pffDigitAuxFuel radix value (radix * power) fuel)
+
+private def pffStructuralDigit (radix q : Int) : Nat :=
+  if q = 0 then 0
+  else pffDigitAuxFuel radix (q.natAbs : Int) 1 (Nat.log2 q.natAbs + 1)
+
+/-- Coq Pff's `digit`, using the existing Core implementation only on the
+radix domain where the two algorithms are extensionally equivalent. -/
+noncomputable def pffDigit (radix q : Int) : Nat :=
+  if 1 < radix then
+    Int.toNat (FloatSpec.Core.Digits.Zdigits radix q)
+  else
+    pffStructuralDigit radix q
+
+/-- On the mathematical radix domain, Pff's structural digit agrees with the
+Core logarithmic implementation used by the rest of FloatSpec. -/
+@[simp] theorem pffDigit_of_one_lt (radix q : Int) (hradix : 1 < radix) :
+    pffDigit radix q =
+      Int.toNat (FloatSpec.Core.Digits.Zdigits radix q) := by
+  simp [pffDigit, hradix]
+
+private theorem pffDigit_neg (radix q : Int) :
+    pffDigit radix (-q) = pffDigit radix q := by
+  by_cases hradix : 1 < radix
+  · simp only [pffDigit_of_one_lt radix (-q) hradix,
+      pffDigit_of_one_lt radix q hradix]
+    have h := FloatSpec.Core.Digits.Zdigits_opp
+      (beta := radix) (n := q) (by trivial)
+    simp only [wp, PostCond.noThrow, pure, Id.run] at h
+    rcases h with ⟨dn, hdn, hd⟩
+    exact congrArg Int.toNat (hd.trans hdn.symm)
+  · simp [pffDigit, hradix, pffStructuralDigit]
+
+private theorem pffDigit_abs (radix q : Int) :
+    pffDigit radix |q| = pffDigit radix q := by
+  by_cases hq : 0 ≤ q
+  · rw [abs_of_nonneg hq]
+  · rw [abs_of_neg (lt_of_not_ge hq), pffDigit_neg]
+
 -- Coq: `Fdigit p := digit radix (Fnum p)`.
 noncomputable def Fdigit {beta : Int} [ValidRadix beta]
     (radix : Int) (x : FloatSpec.Core.Defs.FlocqFloat beta) : Nat :=
-  Int.toNat (FloatSpec.Core.Digits.Zdigits radix x.Fnum)
+  pffDigit radix x.Fnum
 
 -- Coq: `Fshift n x := Float (Fnum x * Zpower_nat radix n) (Fexp x - n)`.
 noncomputable def Fshift {beta : Int} [ValidRadix beta]
@@ -1215,11 +1266,7 @@ private lemma Fdigit_Fopp {beta : Int} [ValidRadix beta]
       Fdigit (beta:=beta) radix p := by
   cases p with
   | mk m e =>
-    unfold Fdigit FloatSpec.Calc.Operations.Fopp
-    have h := FloatSpec.Core.Digits.Zdigits_opp (beta := radix) (n := m) (by trivial)
-    simp only [wp, PostCond.noThrow, pure, Id.run] at h
-    rcases h with ⟨dn, hdn, hd⟩
-    exact congrArg Int.toNat (hd.trans hdn.symm)
+    simpa [Fdigit, FloatSpec.Calc.Operations.Fopp] using pffDigit_neg radix m
 
 private lemma Fdigit_Fabs_early {beta : Int} [ValidRadix beta]
     (radix : Int) (p : FloatSpec.Core.Defs.FlocqFloat beta) :
@@ -1228,12 +1275,11 @@ private lemma Fdigit_Fabs_early {beta : Int} [ValidRadix beta]
   cases p with
   | mk m e =>
     unfold Fdigit FloatSpec.Calc.Operations.Fabs
-    change Int.toNat (FloatSpec.Core.Digits.Zdigits radix ((m.natAbs : Nat) : Int)) =
-      Int.toNat (FloatSpec.Core.Digits.Zdigits radix m)
-    have h := FloatSpec.Core.Digits.Zdigits_abs (beta := radix) (n := m) (by trivial)
-    simp only [wp, PostCond.noThrow, pure, Id.run] at h
-    rcases h with ⟨dn, hdn, hd⟩
-    exact congrArg Int.toNat (hd.trans hdn.symm)
+    change pffDigit radix (m.natAbs : Int) = pffDigit radix m
+    have habs : (|m| : Int) = (m.natAbs : Int) := by
+      rw [Int.abs_eq_natAbs]
+    rw [← habs]
+    exact pffDigit_abs radix m
 
 noncomputable def Fnormalize_Fopp_check {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
@@ -14917,29 +14963,15 @@ theorem ZDividesLe (n m : Int) :
     _ ≤ |m| * |q| := by
         apply mul_le_mul_of_nonneg_left (Int.one_le_abs hq_ne) (abs_nonneg m)
 
--- Coq: `digit` from the Pdigit section. This is the same digit count already
--- ported in Core.Digits, specialized to natural-valued Pff statements.
+-- Coq: `digit` from the Pdigit section, including its exported total behavior.
 noncomputable def digit (n : Int) (q : Int) : Nat :=
-  Int.toNat (FloatSpec.Core.Digits.Zdigits n q)
+  pffDigit n q
 
 private lemma digit_neg (n p : Int) : digit n (-p) = digit n p := by
-  unfold digit
-  have h := FloatSpec.Core.Digits.Zdigits_opp (beta := n) (n := p) (by trivial)
-  simp only [wp, PostCond.noThrow, pure, Id.run] at h
-  rcases h with ⟨dn, hdn, hd⟩
-  exact congrArg Int.toNat (hd.trans hdn.symm)
+  exact pffDigit_neg n p
 
 private lemma digit_abs_eq (n p : Int) : digit n (|p|) = digit n p := by
-  unfold digit
-  have h := FloatSpec.Core.Digits.Zdigits_abs (beta := n) (n := p) (by trivial)
-  simp only [wp, PostCond.noThrow, pure, Id.run] at h
-  rcases h with ⟨dn, hdn, hd⟩
-  have heq_abs : (|p| : Int) = (p.natAbs : Int) := by
-    rw [Int.abs_eq_natAbs]
-  have hd' : FloatSpec.Core.Digits.Zdigits n (|p|) = dn := by
-    rw [heq_abs]
-    exact hd
-  exact congrArg Int.toNat (hd'.trans hdn.symm)
+  exact pffDigit_abs n p
 
 -- Context-specific helper for digit/precision lemmas translated from Coq.
 noncomputable def digitPredVNumiSPrecision_check
@@ -14957,6 +14989,7 @@ theorem digitPredVNumiSPrecision
   rcases h with ⟨hprecision, hradix, hvNum⟩
   simp only [wp, PostCond.noThrow, pure, digitPredVNumiSPrecision_check, Id.run, ULift.up_down]
   unfold digit
+  rw [pffDigit_of_one_lt radix (Int.pred b.vNum) hradix]
   have hpred_eq : Int.pred b.vNum = radix ^ precision - 1 := by
     rw [hvNum]
     simp only [Zpower_nat, Int.pred]
@@ -15022,6 +15055,7 @@ theorem digitVNumiSPrecision
   rcases h with ⟨_hprecision, hradix, hvNum⟩
   simp only [wp, PostCond.noThrow, pure, digitVNumiSPrecision_check, Id.run]
   unfold digit
+  rw [pffDigit_of_one_lt radix b.vNum hradix]
   have hzdigits :
       FloatSpec.Core.Digits.Zdigits radix b.vNum = (precision : Int) + 1 := by
     rw [hvNum]
@@ -15050,6 +15084,7 @@ theorem pGivesDigit {beta : Int} [ValidRadix beta]
   rcases h with ⟨_, hbounded, _hprecision, hradix, hvNum⟩
   simp only [wp, PostCond.noThrow, pure, pGivesDigit_check, Id.run]
   unfold Fdigit
+  rw [pffDigit_of_one_lt radix p.Fnum hradix]
   have hnum_lt : (p.Fnum.natAbs : Int) < radix ^ precision := by
     have hnum_bound : |p.Fnum| < b.vNum := hbounded.1
     rw [← Int.abs_eq_natAbs]
@@ -15087,6 +15122,7 @@ theorem digitGivesBoundedNum {beta : Int} [ValidRadix beta]
   rcases h with ⟨_hprecision, hradix, hvNum, hdigit⟩
   simp only [wp, PostCond.noThrow, pure, digitGivesBoundedNum_check, Id.run]
   unfold Fdigit at hdigit
+  rw [pffDigit_of_one_lt radix p.Fnum hradix] at hdigit
   have hdigits_bound :
       FloatSpec.Core.Digits.Zdigits radix p.Fnum ≤ (precision : Int) := by
     have hdigits_nonneg :
@@ -15137,6 +15173,7 @@ theorem FnormalPrecision {beta : Int} [ValidRadix beta]
       (pGivesDigit (beta := beta) radix b precision p)
         ⟨hbounded, hbounded, hprecision, hradix, hvNum⟩
   · unfold Fdigit
+    rw [pffDigit_of_one_lt radix p.Fnum hradix]
     have hdigits_nonneg :
         0 ≤ FloatSpec.Core.Digits.Zdigits radix p.Fnum := by
       exact
@@ -15209,6 +15246,7 @@ theorem digitnNormMin (radix : Int) (precision : Nat) :
   simp only [wp, PostCond.noThrow, pure, digitnNormMin_check,
     Id.run, ULift.up_down]
   unfold digit nNormMin
+  rw [pffDigit_of_one_lt radix (radix ^ (precision - 1)) hradix]
   have hzdigits :
       FloatSpec.Core.Digits.Zdigits radix (radix ^ (precision - 1)) =
         ((precision - 1 : Nat) : Int) + 1 := by
@@ -15736,6 +15774,7 @@ theorem FsubnormalDigit {beta : Int} [ValidRadix beta]
   simp only [wp, PostCond.noThrow, pure, FsubnormalDigit_check,
     Id.run, ULift.up_down]
   unfold Fdigit
+  rw [pffDigit_of_one_lt radix p.Fnum hradix]
   have hradix_pos : 0 < radix := by omega
   have hprec_pred : ((precision - 1 : Nat) : Int) + 1 = (precision : Int) := by
     exact_mod_cast Nat.succ_pred hprecision
@@ -16117,11 +16156,15 @@ theorem FnormalLtPos {beta : Int} [ValidRadix beta]
           Fdigit (beta:=beta) radix (Fshift (beta:=beta) radix n p) ≤
             Fdigit (beta:=beta) radix q := by
         unfold Fdigit
+        rw [pffDigit_of_one_lt radix _ hradix,
+          pffDigit_of_one_lt radix _ hradix]
         exact Int.toNat_le_toNat hzdigits_le
       have hfd_shift :
           Fdigit (beta:=beta) radix (Fshift (beta:=beta) radix n p) =
             Fdigit (beta:=beta) radix p + n := by
         unfold Fdigit Fshift
+        rw [pffDigit_of_one_lt radix _ hradix,
+          pffDigit_of_one_lt radix _ hradix]
         have hn_nonneg : 0 ≤ (n : Int) := by exact_mod_cast Nat.zero_le n
         have hmul :=
           (FloatSpec.Core.Digits.Zdigits_mult_Zpower
@@ -16176,6 +16219,7 @@ theorem vNumPrecision
   simp only [wp, PostCond.noThrow, pure, vNumPrecision_check,
     Id.run, ULift.up_down]
   unfold digit at hdigit
+  rw [pffDigit_of_one_lt radix n hradix] at hdigit
   have hdigits_nonneg :
       0 ≤ FloatSpec.Core.Digits.Zdigits radix n := by
     exact
@@ -16231,7 +16275,7 @@ theorem NotDividesDigit (r v : Int) :
   have hupper : |v| < Zpower_nat r (digit r v) := by
     have hbounds :=
       FloatSpec.Core.Digits.Zdigits_correct r v hr hv
-    simpa [Zpower_nat, digit, hnatAbs] using hbounds.2
+    simpa [Zpower_nat, digit, pffDigit_of_one_lt r v hr, hnatAbs] using hbounds.2
   have hpow_pos : 0 < Zpower_nat r (digit r v) := by
     simp [Zpower_nat]
     exact pow_pos (by omega : 0 < r) _
@@ -16695,7 +16739,8 @@ theorem boundNatCorrect {beta : Int} [ValidRadix beta]
     by_cases hnzero : (Int.ofNat n) = 0
     · have hn : n = 0 := Int.ofNat_eq_zero.mp hnzero
       subst n
-      simp [d, digit, Zpower_nat, FloatSpec.Core.Digits.Zdigits]
+      simp [d, digit, pffDigit_of_one_lt radix 0 hradix, Zpower_nat,
+        FloatSpec.Core.Digits.Zdigits]
     · have hbounds :=
         FloatSpec.Core.Digits.Zdigits_correct radix (Int.ofNat n) hradix hnzero
       have hnonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits radix (Int.ofNat n) :=
@@ -16711,7 +16756,7 @@ theorem boundNatCorrect {beta : Int} [ValidRadix beta]
               (Int.toNat (FloatSpec.Core.Digits.Zdigits radix (Int.ofNat n))) := by
         rw [← hnat]
         simpa [Zpower_nat] using hbounds.2
-      simpa [d, digit, Zpower_nat] using hmore'
+      simpa [d, digit, pffDigit, hradix, Zpower_nat] using hmore'
   have hmore_real : (n : ℝ) < ((radix ^ d : Int) : ℝ) := by
     exact_mod_cast hmore_int
   have hpow_cast : ((radix ^ d : Int) : ℝ) = (radix : ℝ) ^ d := by
@@ -20783,17 +20828,7 @@ theorem Fdigit_abs {beta : Int} [ValidRadix beta]
   intro _
   simp only [wp, PostCond.noThrow, pure, Fdigit_abs_check, Id.run,
     ULift.up_down]
-  show Fdigit radix (Fabs x) = Fdigit radix x
-  cases x with
-  | mk m e =>
-    change Int.toNat (FloatSpec.Core.Digits.Zdigits radix (m.natAbs : Int)) =
-      Int.toNat (FloatSpec.Core.Digits.Zdigits radix m)
-    have h := digit_abs_eq radix m
-    unfold digit at h
-    have heq_abs : (|m| : Int) = (m.natAbs : Int) := by
-      rw [Int.abs_eq_natAbs]
-    rw [← heq_abs]
-    exact h
+  exact Fdigit_Fabs_early radix x
 
 -- Coq: `Fabs_correct1` — if 0 ≤ F2R x then F2R (Fabs x) = F2R x
 noncomputable def Fabs_correct1_check {beta : Int} [ValidRadix beta]
@@ -20966,6 +21001,8 @@ theorem FshiftFdigit {beta : Int} [ValidRadix beta]
   simp only [wp, PostCond.noThrow, pure, FshiftFdigit_check,
     Id.run, ULift.up_down]
   unfold Fdigit Fshift is_Fzero at *
+  rw [pffDigit_of_one_lt radix (x.Fnum * radix ^ n) hradix,
+    pffDigit_of_one_lt radix x.Fnum hradix]
   have hn_nonneg : 0 ≤ (n : Int) := by exact_mod_cast Nat.zero_le n
   have hmul :=
     (FloatSpec.Core.Digits.Zdigits_mult_Zpower
@@ -22050,6 +22087,7 @@ private lemma Fdigit_pos_of_nonzero {beta : Int} [ValidRadix beta]
     (hradix : 1 < radix) (hp_nonzero : p.Fnum ≠ 0) :
     0 < Fdigit (beta:=beta) radix p := by
   unfold Fdigit
+  rw [pffDigit_of_one_lt radix p.Fnum hradix]
   have hgt : 0 < FloatSpec.Core.Digits.Zdigits radix p.Fnum :=
     FloatSpec.Core.Digits.Zdigits_gt_0 radix p.Fnum hradix hp_nonzero
   have hnonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits radix p.Fnum := le_of_lt hgt
@@ -22068,6 +22106,7 @@ private lemma Fdigit_less_abs {beta : Int} [ValidRadix beta]
     (hradix : 1 < radix) (hp_nonzero : p.Fnum ≠ 0) :
     Zpower_nat radix (Nat.pred (Fdigit (beta:=beta) radix p)) ≤ |p.Fnum| := by
   unfold Fdigit
+  rw [pffDigit_of_one_lt radix p.Fnum hradix]
   have hbounds := FloatSpec.Core.Digits.Zdigits_correct radix p.Fnum hradix hp_nonzero
   let d := FloatSpec.Core.Digits.Zdigits radix p.Fnum
   have hgt : 0 < d := by
@@ -22094,6 +22133,7 @@ private lemma abs_lt_Fdigit_pow {beta : Int} [ValidRadix beta]
     (hradix : 1 < radix) :
     |p.Fnum| < Zpower_nat radix (Fdigit (beta:=beta) radix p) := by
   unfold Fdigit
+  rw [pffDigit_of_one_lt radix p.Fnum hradix]
   by_cases hp_zero : p.Fnum = 0
   · rw [hp_zero]
     simp [Zpower_nat, FloatSpec.Core.Digits.Zdigits]
@@ -58706,14 +58746,12 @@ theorem MSB_abs {beta : Int} [ValidRadix beta]
   show MSB radix x = MSB radix (Fabs x)
   cases x with
   | mk m e =>
-    change Int.pred (Int.ofNat (Int.toNat (FloatSpec.Core.Digits.Zdigits radix m)) + e) =
-      Int.pred (Int.ofNat (Int.toNat (FloatSpec.Core.Digits.Zdigits radix (m.natAbs : Int))) + e)
-    have h := digit_abs_eq radix m
-    unfold digit at h
+    change Int.pred (Int.ofNat (digit radix m) + e) =
+      Int.pred (Int.ofNat (digit radix (m.natAbs : Int)) + e)
     have heq_abs : (|m| : Int) = (m.natAbs : Int) := by
       rw [Int.abs_eq_natAbs]
     rw [← heq_abs]
-    exact congrArg (fun d => Int.pred (Int.ofNat d + e)) h.symm
+    rw [digit_abs_eq radix m]
 
 -- Coq: `LSB_le_MSB` — for nonzero floats, least ≤ most significant bit
 noncomputable def LSB_le_MSB_check {beta : Int} [ValidRadix beta]
@@ -59316,7 +59354,7 @@ theorem digitLess (n : Int) (q : Int) :
     apply Nat.cast_injective (R := Int)
     rw [Int.natAbs_of_nonneg (by omega : 0 ≤ d - 1)]
     exact hpred_cast.symm
-  simpa [digit, Zpower_nat, d, hpred] using hbounds.1
+  simpa [digit, pffDigit_of_one_lt n q hn, Zpower_nat, d, hpred] using hbounds.1
 
 -- Coq: `pos_length_pow` — Zpos p < Zpower_nat n (S (pos_length p))
 noncomputable def pos_length_pow_check (n : Int) (p : Positive) : Unit :=
@@ -59368,7 +59406,8 @@ theorem digitMore (n : Int) (q : Int) :
     ULift.up_down]
   by_cases hq : q = 0
   · subst q
-    simp [digit, Zpower_nat, FloatSpec.Core.Digits.Zdigits]
+    simp [digit, pffDigit_of_one_lt n 0 hn, Zpower_nat,
+      FloatSpec.Core.Digits.Zdigits]
   · have hbounds := FloatSpec.Core.Digits.Zdigits_correct n q hn hq
     have hnonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits n q :=
       FloatSpec.Core.Digits.Zdigits_ge_0 n q trivial
@@ -59377,7 +59416,7 @@ theorem digitMore (n : Int) (q : Int) :
           (FloatSpec.Core.Digits.Zdigits n q).toNat := by
       apply Nat.cast_injective (R := Int)
       rw [Int.natAbs_of_nonneg hnonneg, Int.toNat_of_nonneg hnonneg]
-    simpa [digit, Zpower_nat, hnat] using hbounds.2
+    simpa [digit, pffDigit_of_one_lt n q hn, Zpower_nat, hnat] using hbounds.2
 
 private theorem digitAuxFuel_more (n v r : Int) (q : Nat)
     (hn : 1 < n) (hr : 0 < r)
@@ -59475,6 +59514,7 @@ theorem digitInv (n : Int) (q : Int) (r : Nat) :
         (beta := n) (h_beta := hn) (n := q) (e := (r : Int)) (hβ := hn)) hpre
     simp only [wp, PostCond.noThrow, pure, Id.run] at hzd
     unfold digit
+    rw [pffDigit_of_one_lt n q hn]
     rw [hzd]
     simp
 
@@ -59491,7 +59531,7 @@ theorem digit_monotone (n : Int) (p q : Int) :
     ULift.up_down]
   by_cases hp0 : p = 0
   · subst p
-    simp [digit, FloatSpec.Core.Digits.Zdigits]
+    simp [digit, pffDigit_of_one_lt n 0 hn, FloatSpec.Core.Digits.Zdigits]
   · have hpq_nat : p.natAbs ≤ q.natAbs := by
       rw [Int.abs_eq_natAbs, Int.abs_eq_natAbs] at hpq
       exact_mod_cast hpq
@@ -59507,6 +59547,7 @@ theorem digit_monotone (n : Int) (p q : Int) :
     have hq_nonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits n q :=
       FloatSpec.Core.Digits.Zdigits_ge_0 n q trivial
     unfold digit
+    rw [pffDigit_of_one_lt n p hn, pffDigit_of_one_lt n q hn]
     have hle_toNat_int :
         ((FloatSpec.Core.Digits.Zdigits n p).toNat : Int) ≤
           ((FloatSpec.Core.Digits.Zdigits n q).toNat : Int) := by
@@ -59526,6 +59567,7 @@ theorem digitNotZero (n : Int) (q : Int) :
   simp only [wp, PostCond.noThrow, pure, digitNotZero_check, Id.run,
     ULift.up_down]
   unfold digit
+  rw [pffDigit_of_one_lt n q hn]
   have hgt : 0 < FloatSpec.Core.Digits.Zdigits n q :=
     FloatSpec.Core.Digits.Zdigits_gt_0 n q hn hq
   have hnonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits n q := le_of_lt hgt
@@ -60008,6 +60050,8 @@ theorem digitAdd (n : Int) (q : Int) (r : Nat) :
   simp only [wp, PostCond.noThrow, pure, digitAdd_check, Id.run,
     ULift.up_down]
   unfold digit
+  rw [pffDigit_of_one_lt n (q * Zpower_nat n r) hn,
+    pffDigit_of_one_lt n q hn]
   have hr_nonneg : 0 ≤ (r : Int) := by exact_mod_cast Nat.zero_le r
   have hmul :=
     (FloatSpec.Core.Digits.Zdigits_mult_Zpower
