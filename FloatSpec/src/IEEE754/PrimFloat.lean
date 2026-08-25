@@ -26,6 +26,10 @@ abbrev primPrec : Int := 53
 
 abbrev primEmax : Int := 1024
 
+-- Coq `FloatOps.shift = 2 * emax + prec`, used to encode the signed frexp
+-- exponent in an unsigned 63-bit word.
+abbrev shift : Int := 2 * primEmax + primPrec
+
 private instance instPrimPrecGt0 : Prec_gt_0 primPrec :=
   ⟨by norm_num [primPrec]⟩
 
@@ -34,6 +38,12 @@ private instance instPrimPrecLtEmax : Prec_lt_emax primPrec primEmax :=
     norm_num [primPrec, primEmax],
    by
     norm_num [primEmax]⟩
+
+-- Coq's local binary64 instances, retained under their source names so the
+-- extracted interface has a direct correspondence.
+abbrev Hprec : Prec_gt_0 primPrec := instPrimPrecGt0
+
+abbrev Hmax : Prec_lt_emax primPrec primEmax := instPrimPrecLtEmax
 
 private instance instPrimFLTExpMonotone :
     FloatSpec.Core.Generic_fmt.Monotone_exp
@@ -148,6 +158,11 @@ theorem Prim2B_B2Prim (x : PrimBinaryFloat) :
   rw [hB2Prim]
   simpa [Prim2B, Prim2SF] using SF2B_B2SF x
 
+theorem Prim2B_inj (x y : PrimitiveFloat)
+    (h : Prim2B x = Prim2B y) : x = y := by
+  have h' := congrArg B2Prim h
+  simpa [B2Prim_Prim2B] using h'
+
 theorem B2SF_Prim2B (x : PrimitiveFloat) :
     B2SF (Prim2B x) = Prim2SF x := by
   exact B2SF_SF2B (Prim2SF x) (Prim2SF_valid x)
@@ -190,8 +205,13 @@ def neg_zero : PrimitiveFloat :=
 def one : PrimitiveFloat :=
   ⟨StandardFloat.S754_finite false 4503599627370496 (-52), by native_decide⟩
 
-def two : PrimitiveFloat :=
-  ⟨StandardFloat.S754_finite false 4503599627370496 (-51), by native_decide⟩
+-- Coq `BinarySingleNaN.Bone`, specialized to binary64.  Keep this model value
+-- independent from the primitive `one`; the equivalence theorem below relates
+-- the two representations instead of defining one through the other.
+def Bone : PrimBinaryFloat :=
+  BinarySingleNaNFloat.B754_finite
+    (prec := primPrec) (emax := primEmax) false 4503599627370496 (-52)
+    (by norm_num) (by native_decide)
 
 theorem infinity_equiv :
     infinity = B2Prim
@@ -229,18 +249,7 @@ theorem neg_zero_equiv :
   rfl
 
 theorem one_equiv :
-    one = B2Prim
-      (BinarySingleNaNFloat.B754_finite
-        (prec := primPrec) (emax := primEmax) false 4503599627370496 (-52)
-        (by norm_num) (by native_decide)) := by
-  apply primitiveFloat_ext
-  rfl
-
-theorem two_equiv :
-    two = B2Prim
-      (BinarySingleNaNFloat.B754_finite
-        (prec := primPrec) (emax := primEmax) false 4503599627370496 (-51)
-        (by norm_num) (by native_decide)) := by
+    one = B2Prim Bone := by
   apply primitiveFloat_ext
   rfl
 
@@ -415,10 +424,20 @@ noncomputable def SFltb (x y : StandardFloat) : Bool :=
 noncomputable def SFleb (x y : StandardFloat) : Bool :=
   SFltb x y || SFeqb x y
 
-noncomputable def SFcompare (x y : StandardFloat) : Ordering :=
-  if SFltb x y then Ordering.lt
-  else if SFltb y x then Ordering.gt
-  else Ordering.eq
+noncomputable def SFcompare (x y : StandardFloat) : Option Ordering :=
+  match x, y with
+  | StandardFloat.S754_nan, _ => none
+  | _, StandardFloat.S754_nan => none
+  | x, y =>
+      if SFltb x y then some Ordering.lt
+      else if SFltb y x then some Ordering.gt
+      else some Ordering.eq
+
+-- Coq `PrimFloat.flatten_cmp_opt`: primitive comparison maps the unordered
+-- NaN case to `Eq`, while Flocq's model keeps it visible as `None`.
+def flatten_cmp_opt : Option Ordering → Ordering
+  | some c => c
+  | none => Ordering.eq
 
 noncomputable def eqb (x y : PrimitiveFloat) : Bool :=
   SFeqb (Prim2SF x) (Prim2SF y)
@@ -430,7 +449,7 @@ noncomputable def leb (x y : PrimitiveFloat) : Bool :=
   SFleb (Prim2SF x) (Prim2SF y)
 
 noncomputable def compare (x y : PrimitiveFloat) : Ordering :=
-  SFcompare (Prim2SF x) (Prim2SF y)
+  flatten_cmp_opt (SFcompare (Prim2SF x) (Prim2SF y))
 
 noncomputable def Beqb (x y : PrimBinaryFloat) : Bool :=
   SFeqb (B2SF x) (B2SF y)
@@ -441,11 +460,11 @@ noncomputable def Bltb (x y : PrimBinaryFloat) : Bool :=
 noncomputable def Bleb (x y : PrimBinaryFloat) : Bool :=
   SFleb (B2SF x) (B2SF y)
 
-noncomputable def Bcompare (x y : PrimBinaryFloat) : Ordering :=
+noncomputable def Bcompare (x y : PrimBinaryFloat) : Option Ordering :=
   SFcompare (B2SF x) (B2SF y)
 
 theorem compare_equiv (x y : PrimitiveFloat) :
-    compare x y = Bcompare (Prim2B x) (Prim2B y) := by
+    compare x y = flatten_cmp_opt (Bcompare (Prim2B x) (Prim2B y)) := by
   simp [compare, Bcompare, B2SF_Prim2B]
 
 theorem eqb_equiv (x y : PrimitiveFloat) :
@@ -464,9 +483,19 @@ namespace Uint63
 
 structure t where
   toNat : Nat
+  isLt : toNat < 2 ^ 63
 
 def to_Z (x : t) : Int :=
   Int.ofNat x.toNat
+
+def ofInt (z : Int) (h0 : 0 ≤ z) (hlt : z < (2 : Int) ^ 63) : t :=
+  ⟨z.toNat, by
+    have hz : (z.toNat : Int) = z := Int.toNat_of_nonneg h0
+    exact_mod_cast (hz ▸ hlt)⟩
+
+theorem to_Z_ofInt (z : Int) (h0 : 0 ≤ z) (hlt : z < (2 : Int) ^ 63) :
+    to_Z (ofInt z h0 hlt) = z := by
+  exact Int.toNat_of_nonneg h0
 
 end Uint63
 
@@ -477,8 +506,40 @@ def of_N (n : Nat) : Int :=
 
 end Z
 
+private theorem Bnormfr_mantissa_lt_uint63 (x : PrimBinaryFloat) :
+    BinarySingleNaNFloat.Bnormfr_mantissa x < 2 ^ 63 := by
+  cases x with
+  | B754_zero s => norm_num [BinarySingleNaNFloat.Bnormfr_mantissa,
+      SFnormfr_mantissa, binarySingleNaNFloatToStandardFloat]
+  | B754_infinity s => norm_num [BinarySingleNaNFloat.Bnormfr_mantissa,
+      SFnormfr_mantissa, binarySingleNaNFloatToStandardFloat]
+  | B754_nan => norm_num [BinarySingleNaNFloat.Bnormfr_mantissa,
+      SFnormfr_mantissa, binarySingleNaNFloatToStandardFloat]
+  | B754_finite s m e hm hb =>
+      have hrange := range_bounded_of_specFloat_bounded
+        (prec := primPrec) (emax := primEmax) m e hm hb
+      have hm_lt : m < 2 ^ primPrec.toNat := by
+        have hrange' :
+            (m < 2 ^ primPrec.toNat ∧
+              3 - primEmax - primPrec ≤ e) ∧ e ≤ primEmax - primPrec := by
+          simpa [bounded, Bool.and_eq_true] using hrange
+        exact hrange'.1.1
+      simp only [BinarySingleNaNFloat.Bnormfr_mantissa,
+        binarySingleNaNFloatToStandardFloat, SFnormfr_mantissa]
+      split
+      · have hp : (2 : Nat) ^ 53 < 2 ^ 63 := by norm_num
+        exact lt_trans hm_lt (by simpa [primPrec] using hp)
+      · norm_num
+
+private theorem SFnormfr_mantissa_lt_uint63 (x : PrimitiveFloat) :
+    SFnormfr_mantissa primPrec (Prim2SF x) < 2 ^ 63 := by
+  have h := Bnormfr_mantissa_lt_uint63 (Prim2B x)
+  change SFnormfr_mantissa primPrec (B2SF (Prim2B x)) < 2 ^ 63 at h
+  rw [B2SF_Prim2B] at h
+  exact h
+
 def normfr_mantissa (x : PrimitiveFloat) : Uint63.t :=
-  ⟨SFnormfr_mantissa primPrec (Prim2SF x)⟩
+  ⟨SFnormfr_mantissa primPrec (Prim2SF x), SFnormfr_mantissa_lt_uint63 x⟩
 
 theorem normfr_mantissa_spec (x : PrimitiveFloat) :
     Uint63.to_Z (normfr_mantissa x) =
@@ -506,6 +567,11 @@ private theorem specRoundNearestEven_eq_choiceMode
   | loc_Inexact c =>
       cases c <;> simp [specRoundNearestEven, choice_mode,
         FloatSpec.Calc.Round.cond_incr, FloatSpec.Calc.Round.round_N]
+
+-- Coq `PrimFloat.v:round_nearest_even_equiv`.
+theorem round_nearest_even_equiv (s : Bool) (m : Int) (l : Loc) :
+    specRoundNearestEven m l = choice_mode RoundingMode.RNE s m l :=
+  specRoundNearestEven_eq_choiceMode s m l
 
 -- Coq `SpecFloat.binary_round_aux`, specialized to primitive binary64.
 noncomputable def binary_round_aux (sx : Bool) (mx ex : Int) (lx : Loc) :
@@ -782,6 +848,41 @@ theorem div_equiv (x y : PrimitiveFloat) :
     simp [SFdiv, Bdiv, B2SF_SF2B, B2SF_zero, B2SF_infinity, B2SF_nan,
       B2SF_finite, binary_round_aux_equiv, binaryPositiveOfNat_spec]
 
+-- Embed the source SingleNaN carrier into Flocq's payload-carrying binary64
+-- carrier. The unique source NaN uses Flocq's canonical binary64 payload and
+-- is immediately collapsed again after the operation.
+private def BSN2Binary64 : PrimBinaryFloat → binary64
+  | BinarySingleNaNFloat.B754_zero s =>
+      binary_float.B754_zero (prec := primPrec) (emax := primEmax) s
+  | BinarySingleNaNFloat.B754_infinity s =>
+      binary_float.B754_infinity (prec := primPrec) (emax := primEmax) s
+  | BinarySingleNaNFloat.B754_nan => default_nan_pl64.1
+  | BinarySingleNaNFloat.B754_finite s m e hm hb =>
+      binary_float.B754_finite (prec := primPrec) (emax := primEmax) s
+        (binaryPositiveOfNat m hm) e (by
+          simpa [binaryPositiveOfNat_spec] using hb)
+
+private theorem binaryFloatToBSN_BSN2Binary64 (x : PrimBinaryFloat) :
+    binaryFloatToBinarySingleNaNFloat (BSN2Binary64 x) = x := by
+  cases x <;>
+    simp [BSN2Binary64, default_nan_pl64, binaryFloatToBinarySingleNaNFloat,
+      binaryPositiveOfNat_spec]
+
+-- Coq `PrimFloat.sqrt` is the primitive binary64 square-root operation. Its
+-- model is Flocq `BinarySingleNaN.Bsqrt mode_NE`; the payload bridge above is
+-- observationally exact because that source carrier has exactly one NaN.
+noncomputable def Bsqrt (mode : RoundingMode)
+    (x : PrimBinaryFloat) : PrimBinaryFloat :=
+  binaryFloatToBinarySingleNaNFloat
+    (b64_sqrt mode (BSN2Binary64 x))
+
+noncomputable def sqrt (x : PrimitiveFloat) : PrimitiveFloat :=
+  B2Prim (Bsqrt RoundingMode.RNE (Prim2B x))
+
+theorem sqrt_equiv (x : PrimitiveFloat) :
+    Prim2B (sqrt x) = Bsqrt RoundingMode.RNE (Prim2B x) := by
+  exact Prim2B_B2Prim _
+
 -- Coq `SpecFloat.binary_round`, specialized to primitive binary64.  The
 -- mantissa stays on Coq's nonzero `positive` domain; converting this binder to
 -- `Nat` would silently admit the source-impossible input zero.
@@ -863,6 +964,239 @@ theorem binary_normalize_equiv (m e : Int) (szero : Bool) :
         binaryPositiveOfNat_spec]
     · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv,
         binaryPositiveOfNat_spec]
+
+noncomputable def of_uint63 (i : Uint63.t) : PrimitiveFloat :=
+  B2Prim
+    (binary_normalize_bsn RoundingMode.RNE (Uint63.to_Z i) 0 false)
+
+theorem of_int63_equiv (i : Uint63.t) :
+    Prim2B (of_uint63 i) =
+      binary_normalize_bsn RoundingMode.RNE (Uint63.to_Z i) 0 false := by
+  exact Prim2B_B2Prim _
+
+-- Coq `SpecFloat.SFldexp`, specialized to primitive binary64.
+noncomputable def SFldexp (x : StandardFloat) (e : Int) : StandardFloat :=
+  match x with
+  | StandardFloat.S754_finite s m ex =>
+      if hm : 0 < m then
+        binary_round s (binaryPositiveOfNat m hm) (ex + e)
+      else
+        StandardFloat.S754_nan
+  | _ => x
+
+theorem SFldexp_valid (x : StandardFloat) (e : Int)
+    (hx : validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) x = true) :
+    validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) (SFldexp x e) = true := by
+  cases x with
+  | S754_zero s => simpa [SFldexp] using hx
+  | S754_infinity s => simpa [SFldexp] using hx
+  | S754_nan => simpa [SFldexp] using hx
+  | S754_finite s m ex =>
+      have hx' : decide (0 < m) = true ∧
+          specFloat_bounded (prec := primPrec) (emax := primEmax) m ex = true := by
+        simpa [validBinarySingleNaNStandardFloat, Bool.and_eq_true] using hx
+      have hm : 0 < m := of_decide_eq_true hx'.1
+      rw [show SFldexp (StandardFloat.S754_finite s m ex) e =
+          binary_round s (binaryPositiveOfNat m hm) (ex + e) by
+        simp [SFldexp, hm]]
+      rw [binary_round_equiv]
+      simpa [binaryPositiveOfNat_spec] using
+        rootBinaryRoundValid RoundingMode.RNE s m (ex + e) hm
+
+noncomputable def ldexp (x : PrimitiveFloat) (e : Int) : PrimitiveFloat :=
+  ⟨SFldexp (Prim2SF x) e,
+    SFldexp_valid (Prim2SF x) e (Prim2SF_valid x)⟩
+
+namespace Z
+
+noncomputable def ldexp (x : PrimitiveFloat) (e : Int) : PrimitiveFloat :=
+  FaithfulPrimFloat.ldexp x e
+
+end Z
+
+noncomputable def Bldexp (mode : RoundingMode)
+    (x : PrimBinaryFloat) (e : Int) : PrimBinaryFloat :=
+  match x with
+  | BinarySingleNaNFloat.B754_finite s m ex hm _ =>
+      SF2B
+        (_root_.binary_round (prec := primPrec) (emax := primEmax)
+          mode s m (ex + e))
+        (rootBinaryRoundValid mode s m (ex + e) hm)
+  | _ => x
+
+theorem ldexp_equiv (x : PrimitiveFloat) (e : Int) :
+    Prim2B (Z.ldexp x e) =
+      Bldexp RoundingMode.RNE (Prim2B x) e := by
+  apply primBinaryFloat_ext_sf
+  rw [B2SF_Prim2B]
+  change SFldexp (Prim2SF x) e = B2SF (Bldexp RoundingMode.RNE (Prim2B x) e)
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x with
+  | B754_zero s => rfl
+  | B754_infinity s => rfl
+  | B754_nan => rfl
+  | B754_finite s m ex hm hb =>
+      rw [B2SF_finite]
+      simp [SFldexp, Bldexp, hm, B2SF_SF2B, binary_round_equiv,
+        binaryPositiveOfNat_spec]
+
+-- Coq `BinarySingleNaN.Bfrexp`, specialized to binary64.  Non-finite values
+-- use Flocq's exact sentinel exponent `-2 * emax - prec = -2101`.
+noncomputable def Bfrexp (x : PrimBinaryFloat) : PrimBinaryFloat × Int :=
+  match x with
+  | BinarySingleNaNFloat.B754_finite s m e _ _ =>
+      let result := ExperimentalSingleNaNArithmetic.Ffrexp_core_binary
+        (prec := primPrec) (emax := primEmax) s m e
+      (standardFloatToBinarySingleNaNFloat'
+        (prec := primPrec) (emax := primEmax) result.1, result.2)
+  | _ => (x, -2 * primEmax - primPrec)
+
+namespace Z
+
+noncomputable def frexp (x : PrimitiveFloat) : PrimitiveFloat × Int :=
+  let result := Bfrexp (Prim2B x)
+  (B2Prim result.1, result.2)
+
+end Z
+
+theorem frexp_equiv (x : PrimitiveFloat) :
+    let result := Z.frexp x
+    (Prim2B result.1, result.2) = Bfrexp (Prim2B x) := by
+  unfold Z.frexp
+  cases h : Bfrexp (Prim2B x) with
+  | mk m e =>
+      simp [h, Prim2B_B2Prim]
+
+private theorem Bfrexp_shifted_exp_range (x : PrimBinaryFloat) :
+    0 ≤ (Bfrexp x).2 + shift ∧
+      (Bfrexp x).2 + shift < (2 : Int) ^ 63 := by
+  cases x with
+  | B754_zero s => norm_num [Bfrexp, shift, primEmax, primPrec]
+  | B754_infinity s => norm_num [Bfrexp, shift, primEmax, primPrec]
+  | B754_nan => norm_num [Bfrexp, shift, primEmax, primPrec]
+  | B754_finite s m e hm hb =>
+      have hrange := range_bounded_of_specFloat_bounded
+        (prec := primPrec) (emax := primEmax) m e hm hb
+      have hrange' :
+          (m < 2 ^ primPrec.toNat ∧
+            3 - primEmax - primPrec ≤ e) ∧ e ≤ primEmax - primPrec := by
+        simpa [bounded, Bool.and_eq_true] using hrange
+      have hemin : (-1074 : Int) ≤ e := by
+        have := hrange'.1.2
+        norm_num [primPrec, primEmax] at this ⊢
+        exact this
+      have hemax : e ≤ (971 : Int) := by
+        have := hrange'.2
+        norm_num [primPrec, primEmax] at this ⊢
+        exact this
+      have hdigits_pos : 0 < FloatSpec.Core.Digits.digits2_Pnat m := by
+        have h := FloatSpec.Core.Digits.digits2_Pnat_correct m
+        simpa [wp, PostCond.noThrow, pure] using (h hm).1
+      have hfirst :
+          FloatSpec.Core.Zaux.Zlt_bool (-primPrec)
+            (3 - primEmax - primPrec) = false := by
+        native_decide
+      unfold Bfrexp
+      dsimp only
+      unfold ExperimentalSingleNaNArithmetic.Ffrexp_core_binary
+      rw [hfirst]
+      simp only [Bool.false_eq_true, ↓reduceIte]
+      by_cases hdigits :
+          53 ≤ FloatSpec.Core.Digits.digits2_Pnat m
+      · simp [hdigits, shift, primPrec, primEmax]
+        omega
+      · have hdigits_lt : FloatSpec.Core.Digits.digits2_Pnat m < 53 := by
+          exact Nat.lt_of_not_ge hdigits
+        simp [hdigits, shift, primPrec, primEmax]
+        omega
+
+noncomputable def ldshiftexp
+    (x : PrimitiveFloat) (e : Uint63.t) : PrimitiveFloat :=
+  Z.ldexp x (Uint63.to_Z e - shift)
+
+theorem ldshiftexp_equiv (x : PrimitiveFloat) (e : Uint63.t) :
+    Prim2B (ldshiftexp x e) =
+      Bldexp RoundingMode.RNE (Prim2B x) (Uint63.to_Z e - shift) := by
+  exact ldexp_equiv x (Uint63.to_Z e - shift)
+
+noncomputable def frshiftexp
+    (x : PrimitiveFloat) : PrimitiveFloat × Uint63.t :=
+  let result := Bfrexp (Prim2B x)
+  let hrange := Bfrexp_shifted_exp_range (Prim2B x)
+  (B2Prim result.1,
+    Uint63.ofInt (result.2 + shift) hrange.1 hrange.2)
+
+theorem frshiftexp_equiv (x : PrimitiveFloat) :
+    let result := frshiftexp x
+    (Prim2B result.1, Uint63.to_Z result.2 - shift) =
+      Bfrexp (Prim2B x) := by
+  unfold frshiftexp
+  dsimp only
+  rw [Uint63.to_Z_ofInt]
+  simp [Prim2B_B2Prim]
+
+noncomputable def Bulp' (x : PrimBinaryFloat) : PrimBinaryFloat :=
+  Bldexp RoundingMode.RNE Bone
+    (FLT_exp (3 - primEmax - primPrec) primPrec (Bfrexp x).2)
+
+noncomputable def ulp (x : PrimitiveFloat) : PrimitiveFloat :=
+  B2Prim (Bulp' (Prim2B x))
+
+theorem ulp_equiv (x : PrimitiveFloat) :
+    Prim2B (ulp x) = Bulp' (Prim2B x) := by
+  exact Prim2B_B2Prim _
+
+private theorem minSubnormalBounded :
+    specFloat_bounded (prec := primPrec) (emax := primEmax)
+      1 (3 - primEmax - primPrec) = true := by
+  native_decide
+
+private theorem maxFiniteBounded :
+    specFloat_bounded (prec := primPrec) (emax := primEmax)
+      (2 ^ primPrec.toNat - 1) (primEmax - primPrec) = true := by
+  native_decide
+
+noncomputable def Bsucc (x : PrimBinaryFloat) : PrimBinaryFloat :=
+  match x with
+  | BinarySingleNaNFloat.B754_zero _ =>
+      BinarySingleNaNFloat.B754_finite false 1
+        (3 - primEmax - primPrec) (by norm_num) minSubnormalBounded
+  | BinarySingleNaNFloat.B754_infinity false => x
+  | BinarySingleNaNFloat.B754_infinity true =>
+      BinarySingleNaNFloat.B754_finite true
+        (2 ^ primPrec.toNat - 1) (primEmax - primPrec)
+        (by native_decide) maxFiniteBounded
+  | BinarySingleNaNFloat.B754_nan => BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_finite false m e hm _ =>
+      SF2B
+        (_root_.binary_round (prec := primPrec) (emax := primEmax)
+          RoundingMode.RTP false (m + 1) e)
+        (rootBinaryRoundValid RoundingMode.RTP false (m + 1) e (by omega))
+  | BinarySingleNaNFloat.B754_finite true m e hm _ =>
+      SF2B
+        (_root_.binary_round (prec := primPrec) (emax := primEmax)
+          RoundingMode.RTZ true (2 * m - 1) (e - 1))
+        (rootBinaryRoundValid RoundingMode.RTZ true (2 * m - 1) (e - 1)
+          (by omega))
+
+noncomputable def Bpred (x : PrimBinaryFloat) : PrimBinaryFloat :=
+  Bopp (Bsucc (Bopp x))
+
+noncomputable def next_up (x : PrimitiveFloat) : PrimitiveFloat :=
+  B2Prim (Bsucc (Prim2B x))
+
+noncomputable def next_down (x : PrimitiveFloat) : PrimitiveFloat :=
+  B2Prim (Bpred (Prim2B x))
+
+theorem next_up_equiv (x : PrimitiveFloat) :
+    Prim2B (next_up x) = Bsucc (Prim2B x) := by
+  exact Prim2B_B2Prim _
+
+theorem next_down_equiv (x : PrimitiveFloat) :
+    Prim2B (next_down x) = Bpred (Prim2B x) := by
+  exact Prim2B_B2Prim _
 
 -- Coq `SpecFloat.SFadd`, specialized to primitive binary64.
 noncomputable def SFadd (x y : StandardFloat) : StandardFloat :=
@@ -980,6 +1314,21 @@ theorem add_equiv (x y : PrimitiveFloat) :
     simp [SFadd, Bplus, B2SF_zero, B2SF_infinity, B2SF_nan,
       B2SF_finite, binary_normalize_equiv] <;>
       split_ifs <;> rfl
+
+-- Coq's primitive literal `two`, expressed through the independently defined
+-- primitive binary64 addition.  `two_equiv` below is then derived from the
+-- operation equivalence rather than from a duplicated model-side constant.
+noncomputable def two : PrimitiveFloat :=
+  one + one
+
+theorem two_equiv :
+    two = B2Prim (Bplus RoundingMode.RNE Bone Bone) := by
+  have hbone : Prim2B one = Bone := by
+    have h := congrArg Prim2B one_equiv
+    simpa [Prim2B_B2Prim] using h
+  rw [← B2Prim_Prim2B two]
+  apply congrArg B2Prim
+  simpa [two, hbone] using add_equiv one one
 
 noncomputable def sub (x y : PrimitiveFloat) : PrimitiveFloat :=
   x + (-y)
