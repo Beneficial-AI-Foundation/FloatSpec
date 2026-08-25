@@ -13,1015 +13,13 @@ open Real
 open Classical
 open Std.Do
 
-namespace ExperimentalPrimFloatBridge
-
-/-!
-Experimental primitive-float bridge.
-
-Lean does not currently expose the same primitive-float semantic bridge used by
-Flocq's Coq `PrimFloat.v` in this port.  This file therefore uses an opaque
-wrapper carrying a real projection for audit experiments.  It must not be
-counted as a faithful IEEE/PrimFloat equivalence result.
--/
-
--- Coq `SpecFloat.round_nearest_even`.
-def round_nearest_even (m : Int) (l : Loc) : Int :=
-  FloatSpec.Calc.Round.cond_incr
-    (FloatSpec.Calc.Round.round_N (!(decide (2 ∣ m))) l) m
-
--- Coq: round_nearest_even_equiv
-lemma round_nearest_even_equiv (s : Bool) (m : Int) (l : Loc) :
-    round_nearest_even m l = choice_mode RoundingMode.RNE s m l := by
-  cases l with
-  | loc_Exact => rfl
-  | loc_Inexact c =>
-      cases c <;> simp [round_nearest_even, choice_mode, FloatSpec.Calc.Round.cond_incr,
-        FloatSpec.Calc.Round.round_N]
-
-structure PrimFloat where
-  toReal : ℝ
-
-noncomputable instance : DecidableEq PrimFloat :=
-  Classical.decEq PrimFloat
-
-instance : Coe PrimFloat ℝ where
-  coe x := x.toReal
-
-namespace PrimFloat
-
-protected def ofReal (x : ℝ) : PrimFloat :=
-  ⟨x⟩
-
-instance (n : Nat) : OfNat PrimFloat n where
-  ofNat := PrimFloat.ofReal n
-
-instance : Neg PrimFloat where
-  neg x := PrimFloat.ofReal (-(x : ℝ))
-
-end PrimFloat
-
--- Operations on primitive floats
-def prim_add (x y : PrimFloat) : PrimFloat := PrimFloat.ofReal ((x : ℝ) + (y : ℝ))
-def prim_sub (x y : PrimFloat) : PrimFloat := PrimFloat.ofReal ((x : ℝ) - (y : ℝ))
-def prim_mul (x y : PrimFloat) : PrimFloat := PrimFloat.ofReal ((x : ℝ) * (y : ℝ))
-noncomputable def prim_div (x y : PrimFloat) : PrimFloat := PrimFloat.ofReal ((x : ℝ) / (y : ℝ))
-noncomputable def prim_sqrt (x : PrimFloat) : PrimFloat := PrimFloat.ofReal (Real.sqrt (x : ℝ))
-
--- Exponent scaling on primitive floats (Coq: Z.ldexp)
--- We mirror the intended semantics using `bpow 2 e` from Core.Raux.
-noncomputable def prim_ldexp (x : PrimFloat) (e : Int) : PrimFloat :=
-  PrimFloat.ofReal ((x : ℝ) * FloatSpec.Core.Raux.bpow 2 e)
-
--- Comparison operations
-noncomputable def prim_eq (x y : PrimFloat) : Bool := decide (x = y)
-noncomputable def prim_lt (x y : PrimFloat) : Bool := decide ((x : ℝ) < (y : ℝ))
-noncomputable def prim_le (x y : PrimFloat) : Bool := decide ((x : ℝ) ≤ (y : ℝ))
-
--- Classification functions
-noncomputable def prim_is_zero (x : PrimFloat) : Bool := decide ((x : ℝ) = 0)
-def prim_is_finite (_x : PrimFloat) : Bool := true
-def prim_is_nan (_x : PrimFloat) : Bool := false
-def prim_is_infinite (_x : PrimFloat) : Bool := false
-
--- Special values
-def prim_zero : PrimFloat := PrimFloat.ofReal 0
-def prim_infinity : PrimFloat := PrimFloat.ofReal 0
-def prim_nan : PrimFloat := PrimFloat.ofReal 0
-
--- Sign operations
-def prim_neg (x : PrimFloat) : PrimFloat := PrimFloat.ofReal (-(x : ℝ))
-def prim_abs (x : PrimFloat) : PrimFloat := PrimFloat.ofReal |(x : ℝ)|
-noncomputable def prim_sign (x : PrimFloat) : Bool := decide ((x : ℝ) < 0)
-
--- Conversion between Binary754 and PrimFloat
-noncomputable def binary_to_prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : Binary754 prec emax) : PrimFloat := by
-  exact PrimFloat.ofReal (B2R (prec:=prec) (emax:=emax) x)
-
-noncomputable def prim_to_binary (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : Binary754 prec emax :=
-  let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  let rounded := FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp (rnd_of_mode RoundingMode.RNE) (x : ℝ)
-  FF2B (prec:=prec) (emax:=emax) (real_to_FullFloat rounded fexp)
-
--- Bridge view: StandardFloat image of a PrimFloat via Binary754
-noncomputable def Prim2SF (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : StandardFloat :=
-  B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)
-
--- Correctness theorems
--- Note: binary_add rounds the result, so equality holds with rounding applied to the sum
-theorem prim_add_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
-  [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
-  (x y : Binary754 prec emax) :
-  binary_to_prim prec emax ((binary_add (prec:=prec) (emax:=emax) x y)) =
-  binary_to_prim prec emax ((binary_add (prec:=prec) (emax:=emax) x y)) := by
-  rfl
-
-theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
-  [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
-  (x y : Binary754 prec emax) :
-  binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) =
-  binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) := by
-  rfl
-
--- Coq: ldexp_equiv — exponent scaling correspondence between PrimFloat and Binary754
-noncomputable def ldexp_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) (e : Int) : FullFloat :=
-  B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE (prim_to_binary prec emax x) e)
-
-theorem ldexp_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) (e : Int) :
-  ⦃⌜True⌝⦄
-  (pure (ldexp_equiv_check prec emax x e) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
-              (prim_to_binary prec emax x) e)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: B2SF_Prim2B — standard view after Prim→Binary equals Prim2SF
-noncomputable def B2SF_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : StandardFloat :=
-  (B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
-
-theorem B2SF_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (B2SF_Prim2B_check prec emax x) : Id StandardFloat)
-  ⦃⇓result => ⌜result = Prim2SF prec emax x⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, B2SF_Prim2B_check, Prim2SF]
-
--- Coq: Prim2SF_B2Prim — standard view of Binary→Prim equals direct B2SF.
--- The bridge stores a real value, so Binary→Prim→Binary is not claimed as an
--- inverse. This check records the binary-side view directly.
-noncomputable def Prim2SF_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : Binary754 prec emax) : StandardFloat :=
-  B2SF (prec:=prec) (emax:=emax) x
-
--- Helper lemma for the local PrimFloat-to-StandardFloat bridge.
-theorem Prim2SF_bridge (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : Prim2SF prec emax x =
-      B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) := by
-  rfl
-
--- Binary-side zero case for the local bridge check.
-theorem Prim2SF_B2Prim_zero (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-  ⦃⌜True⌝⦄
-  (pure (Prim2SF_B2Prim_check prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero false))) : Id StandardFloat)
-  ⦃⇓result => ⌜result = B2SF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero false))⌝⦄ := by
-  intro _
-  rfl
-
--- Binary-side view for the local bridge check.
-theorem Prim2SF_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : Binary754 prec emax)
-  (h_zero : B2SF (prec:=prec) (emax:=emax) x = StandardFloat.S754_zero false) :
-  ⦃⌜B2SF (prec:=prec) (emax:=emax) x = StandardFloat.S754_zero false⌝⦄
-  (pure (Prim2SF_B2Prim_check prec emax x) : Id StandardFloat)
-  ⦃⇓result => ⌜result = B2SF (prec:=prec) (emax:=emax) x⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: compare_equiv — comparison correspondence between PrimFloat and Binary754
-noncomputable def prim_compare (x y : PrimFloat) : Option Int :=
-  some ((FloatSpec.Core.Raux.Rcompare x y))
-
-noncomputable def compare_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) : (Option Int) :=
-  Bcompare_check (prec:=prec) (emax:=emax)
-    (prim_to_binary prec emax x) (prim_to_binary prec emax y)
-
--- Bridge note: comparison is checked on the rounded binary images, not on the
--- raw `ℝ` primitive values.
-theorem compare_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat)
-  (h_eq : x = y) :
-  ⦃⌜x = y⌝⦄
-  (pure (compare_equiv_check prec emax x y) : Id (Option Int))
-  ⦃⇓result => ⌜result =
-      (Bcompare_check (prec:=prec) (emax:=emax)
-        (prim_to_binary prec emax x) (prim_to_binary prec emax y))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: B2Prim_Prim2B — roundtrip Prim → Binary → Prim
-noncomputable def B2Prim_Prim2B_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : PrimFloat :=
-  (binary_to_prim prec emax (prim_to_binary prec emax x))
-
--- Bridge note: the current `ℝ` model does not provide a faithful
--- Prim→Binary→Prim inverse; the theorem exposes the computed binary roundtrip.
-theorem B2Prim_Prim2B (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat)
-  (h_zero : x = 0) :
-  ⦃⌜x = 0⌝⦄
-  (pure (B2Prim_Prim2B_check prec emax x) : Id PrimFloat)
-  ⦃⇓result => ⌜result = binary_to_prim prec emax (prim_to_binary prec emax x)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: opp_equiv — negation correspondence between PrimFloat and Binary754
--- Bridge note: this validates the Binary negation path over the rounded
--- binary image.
-noncomputable def opp_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : FullFloat :=
-  Bopp (B2FF (prim_to_binary prec emax x))
-
--- Binary-side negation check for the local bridge.
-theorem opp_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (opp_equiv_check prec emax x) : Id FullFloat)
-  ⦃⇓result => ⌜result = Bopp (B2FF (prim_to_binary prec emax x))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: Prim2B_B2Prim — roundtrip Binary → Prim → Binary
--- Bridge note: the current `ℝ` model does not provide a faithful
--- Binary→Prim→Binary inverse; the theorem exposes the computed roundtrip.
-noncomputable def Prim2B_B2Prim_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : Binary754 prec emax) : (Binary754 prec emax) :=
-  (prim_to_binary prec emax (binary_to_prim prec emax x))
-
-theorem Prim2B_B2Prim (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : Binary754 prec emax)
-  (h_zero : x = FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero false)) :
-  ⦃⌜x = FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero false)⌝⦄
-  (pure (Prim2B_B2Prim_check prec emax x) : Id (Binary754 prec emax))
-  ⦃⇓result => ⌜result = prim_to_binary prec emax (binary_to_prim prec emax x)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: Prim2B_inj — injectivity of Prim→Binary conversion
-def Prim2B_inj_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) : Unit :=
-  ()
-
--- Bridge note: injectivity of rounded real-to-binary conversion is not true in
--- general, so this theorem keeps equality as an explicit hypothesis.
-theorem Prim2B_inj (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat)
-  (h : prim_to_binary prec emax x = prim_to_binary prec emax y)
-  (h_eq : x = y) :
-  ⦃⌜x = y⌝⦄
-  (pure (Prim2B_inj_check prec emax x y) : Id Unit)
-  ⦃⇓_ => ⌜x = y⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Prim2B_inj_check]
-  exact h_eq
-
--- Coq: B2Prim_inj — injectivity of Binary→Prim conversion
--- NOTE: The original theorem stating that B2R x = B2R y implies x = y is not provable
--- without additional constraints. Different Binary754 values can have the same real
--- semantics (e.g., non-canonical representations, or different NaN payloads).
--- We add the constraints from B2R_Bsign_inj: finiteness, validity, canonical form, and equal signs.
-def B2Prim_inj_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Unit :=
-  ()
-
-theorem B2Prim_inj (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax)
-  (h : binary_to_prim prec emax x = binary_to_prim prec emax y)
-  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
-  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true)
-  (hvx : valid_FF x.val) (hvy : valid_FF y.val)
-  (hcx : canonical_FF (prec:=prec) (emax:=emax) x.val)
-  (hcy : canonical_FF (prec:=prec) (emax:=emax) y.val)
-  (hs : Bsign (prec:=prec) (emax:=emax) x = Bsign (prec:=prec) (emax:=emax) y) :
-  ⦃⌜binary_to_prim prec emax x = binary_to_prim prec emax y ∧
-    is_finite_B (prec:=prec) (emax:=emax) x = true ∧
-    is_finite_B (prec:=prec) (emax:=emax) y = true ∧
-    Bsign (prec:=prec) (emax:=emax) x = Bsign (prec:=prec) (emax:=emax) y⌝⦄
-  (pure (B2Prim_inj_check prec emax x y) : Id Unit)
-  ⦃⇓_ => ⌜x = y⌝⦄ := by
-  intro _
-  -- binary_to_prim returns B2R, so h means B2R x = B2R y
-  -- Combined with finiteness, validity, canonical form, and sign equality,
-  -- we can use B2R_Bsign_inj from Binary.lean
-  simp only [wp, PostCond.noThrow, pure, B2Prim_inj_check]
-  simp only [binary_to_prim] at h
-  have hB2R : B2R (prec:=prec) (emax:=emax) x = B2R (prec:=prec) (emax:=emax) y := by
-    simpa [PrimFloat.ofReal] using congrArg PrimFloat.toReal h
-  exact B2R_Bsign_inj x y hx hy hvx hvy hcx hcy hB2R hs
-
--- Coq: abs_equiv — absolute-value correspondence between PrimFloat and Binary754
-noncomputable def abs_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : FullFloat :=
-  Babs (B2FF (prim_to_binary prec emax x))
-
-theorem abs_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (abs_equiv_check prec emax x) : Id FullFloat)
-  ⦃⇓result => ⌜result = Babs (B2FF (prim_to_binary prec emax x))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: div_equiv — division correspondence between PrimFloat and Flocq Binary
-noncomputable def div_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) : FullFloat :=
-  B2FF (binary_div (prec:=prec) (emax:=emax) RoundingMode.RNE
-    (prim_to_binary prec emax x) (prim_to_binary prec emax y))
-
-theorem div_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (div_equiv_check prec emax x y) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (binary_div (prec:=prec) (emax:=emax) RoundingMode.RNE
-              (prim_to_binary prec emax x)
-              (prim_to_binary prec emax y))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: ldshiftexp_equiv — shift-exponent scaling correspondence
-noncomputable def ldshiftexp_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) (e : Int) : FullFloat :=
-  B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
-    (prim_to_binary prec emax x) (e - 1))
-
-theorem ldshiftexp_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) (e : Int) :
-  ⦃⌜True⌝⦄
-  (pure (ldshiftexp_equiv_check prec emax x e) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (binary_ldexp (prec:=prec) (emax:=emax) RoundingMode.RNE
-              (prim_to_binary prec emax x) (e - 1))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: frexp_equiv — decomposition correspondence between PrimFloat and Binary754
-noncomputable def frexp_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : ((Binary754 prec emax) × Int) :=
-  (Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
-
-theorem frexp_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (frexp_equiv_check prec emax x) : Id ((Binary754 prec emax) × Int))
-  ⦃⇓result => ⌜result = Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, frexp_equiv_check]
-
--- Coq: frshiftexp_equiv — shifted decomposition correspondence
-noncomputable def frshiftexp_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : ((Binary754 prec emax) × Int) :=
-  (Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
-
-theorem frshiftexp_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (frshiftexp_equiv_check prec emax x) : Id ((Binary754 prec emax) × Int))
-  ⦃⇓result => ⌜result = Bfrexp (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, frshiftexp_equiv_check]
-
--- Coq: sub_equiv — subtraction correspondence between PrimFloat and Flocq Binary
-noncomputable def sub_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) : FullFloat :=
-  B2FF (binary_sub (prec:=prec) (emax:=emax) RoundingMode.RNE
-    (prim_to_binary prec emax x) (prim_to_binary prec emax y))
-
-theorem sub_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (sub_equiv_check prec emax x y) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (binary_sub (prec:=prec) (emax:=emax) RoundingMode.RNE
-              (prim_to_binary prec emax x)
-              (prim_to_binary prec emax y))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: sqrt_equiv — square-root correspondence between PrimFloat and Flocq Binary
-noncomputable def sqrt_equiv_check (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : FullFloat :=
-  B2FF (binary_sqrt (prec:=prec) (emax:=emax) RoundingMode.RNE (prim_to_binary prec emax x))
-
-theorem sqrt_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (sqrt_equiv_check prec emax x) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (binary_sqrt (prec:=prec) (emax:=emax) RoundingMode.RNE
-              (prim_to_binary prec emax x))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: infinity_equiv — primitive +∞ corresponds to Binary infinity
-noncomputable def infinity_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : PrimFloat :=
-  (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_infinity false)))
-
-theorem infinity_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-  ⦃⌜True⌝⦄
-  (pure (infinity_equiv_check prec emax) : Id PrimFloat)
-  ⦃⇓result => ⌜result = prim_infinity⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, infinity_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_infinity]
-  rfl
-
--- Coq: neg_infinity_equiv — primitive −∞ corresponds to Binary −∞
-noncomputable def neg_infinity_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : PrimFloat :=
-  (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_infinity true)))
-
-theorem neg_infinity_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-  ⦃⌜True⌝⦄
-  (pure (neg_infinity_equiv_check prec emax) : Id PrimFloat)
-  ⦃⇓result => ⌜result = prim_infinity⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, neg_infinity_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_infinity]
-  rfl
-
--- Coq: nan_equiv — primitive NaN corresponds to Binary NaN
-noncomputable def nan_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : PrimFloat :=
-  (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_nan false 1)))
-
-theorem nan_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-  ⦃⌜True⌝⦄
-  (pure (nan_equiv_check prec emax) : Id PrimFloat)
-  ⦃⇓result => ⌜result = prim_nan⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, nan_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_nan]
-  rfl
-
--- Coq: zero_equiv — primitive +0 corresponds to Binary zero
-noncomputable def zero_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : PrimFloat :=
-  (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero false)))
-
-theorem zero_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-  ⦃⌜True⌝⦄
-  (pure (zero_equiv_check prec emax) : Id PrimFloat)
-  ⦃⇓result => ⌜result = prim_zero⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, zero_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_zero]
-  rfl
-
--- Coq: neg_zero_equiv — primitive −0 corresponds to Binary −0
-noncomputable def neg_zero_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : PrimFloat :=
-  (binary_to_prim prec emax (FF2B (prec:=prec) (emax:=emax) (FullFloat.F754_zero true)))
-
-theorem neg_zero_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-  ⦃⌜True⌝⦄
-  (pure (neg_zero_equiv_check prec emax) : Id PrimFloat)
-  ⦃⇓result => ⌜result = prim_zero⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, neg_zero_equiv_check, binary_to_prim, B2R, FF2R, FF2B, prim_zero]
-  rfl
-
--- Coq: one_equiv — primitive one corresponds to Binary constant one
-noncomputable def one_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax] : PrimFloat :=
-  (binary_to_prim prec emax (binary_one (prec:=prec) (emax:=emax)))
-
-theorem one_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax] :
-  ⦃⌜True⌝⦄
-  (pure (one_equiv_check prec emax) : Id PrimFloat)
-  ⦃⇓result => ⌜result = 1⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, one_equiv_check, binary_to_prim,
-    B2R, binary_one, FF2B, FF2R, F2R, FloatSpec.Core.Defs.F2R,
-    PrimFloat.ofReal]
-  change ({ toReal := (1 : ℝ) } : PrimFloat) =
-    (@OfNat.ofNat PrimFloat 1 (PrimFloat.instOfNat 1))
-  unfold OfNat.ofNat PrimFloat.instOfNat PrimFloat.ofReal
-  congr
-  change (1 : ℝ) = ((1 : Nat) : ℝ)
-  norm_num
-
--- Helper lemma: FF2R of the canonical one representation equals 1
-private lemma FF2R_finite_one : FF2R 2 (FullFloat.F754_finite false 1 0) = 1 := by
-  simp only [FF2R, F2R, FloatSpec.Core.Defs.F2R]
-  norm_num
-
--- Coq: two_equiv — primitive two corresponds to Binary plus one one
-noncomputable def two_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : PrimFloat :=
-  (binary_to_prim prec emax
-          (binary_add (prec:=prec) (emax:=emax)
-            (binary_one (prec:=prec) (emax:=emax))
-            (binary_one (prec:=prec) (emax:=emax))))
-
-theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
-  [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
-  ⦃⌜True⌝⦄
-  (pure (two_equiv_check prec emax) : Id PrimFloat)
-  ⦃⇓result => ⌜result = 2⌝⦄ := by
-  intro _
-  let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
-  have hemin_le_one : 3 - emax - prec ≤ (1 : Int) := by
-    have hprec_pos : 0 < prec := Prec_gt_0.pos
-    have hemax_ge_two : 2 ≤ emax := (inferInstance : Prec_lt_emax prec emax).emax_ge_2
-    omega
-  have hgf_two : FloatSpec.Core.Generic_fmt.generic_format 2 fexp (2 : ℝ) := by
-    have hbpow := FloatSpec.Core.FLT.FLT_format_bpow
-      (prec := prec) (emin := 3 - emax - prec) (beta := 2) (e := 1)
-    have hrun := hbpow ⟨by norm_num, hemin_le_one⟩
-    simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure,
-      FloatSpec.Core.FLT.FLT_format] at hrun
-    simpa [fexp] using hrun
-  have hround_two :
-      FloatSpec.Core.Generic_fmt.round_to_generic 2 fexp FloatSpec.Core.Raux.Ztrunc (2 : ℝ) = 2 := by
-    simpa [FloatSpec.Core.Generic_fmt.round_to_generic,
-      FloatSpec.Core.Generic_fmt.generic_format,
-      FloatSpec.Core.Generic_fmt.scaled_mantissa,
-      FloatSpec.Core.Defs.F2R] using hgf_two.symm
-  have hff_two : FF2R 2 (real_to_FullFloat (2 : ℝ) fexp) = 2 :=
-    FF2R_real_to_FullFloat (x := (2 : ℝ)) (fexp := fexp) hgf_two
-  have hround_two_explicit :
-      FloatSpec.Core.Generic_fmt.round_to_generic 2
-        (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-        FloatSpec.Core.Raux.Ztrunc (2 : ℝ) = 2 := by
-    simpa [fexp] using hround_two
-  have hff_two_explicit :
-      FF2R 2 (real_to_FullFloat (2 : ℝ)
-        (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))) = 2 := by
-    simpa [fexp] using hff_two
-  simp [wp, PostCond.noThrow, pure, two_equiv_check, binary_to_prim, B2R,
-    binary_add, binary_one, FF2B, FF2R_finite_one, PrimFloat.ofReal]
-  change PrimFloat.ofReal
-      (FF2R 2 (real_to_FullFloat
-        (FloatSpec.Core.Generic_fmt.round_to_generic 2
-          (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
-          FloatSpec.Core.Raux.Ztrunc ((1 : ℝ) + 1))
-        (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)))) =
-    (2 : PrimFloat)
-  have hsum : (1 : ℝ) + 1 = 2 := by norm_num
-  rw [hsum, hround_two_explicit, hff_two_explicit]
-  change PrimFloat.ofReal (2 : ℝ) = PrimFloat.ofReal (2 : ℝ)
-  rfl
-
--- Coq: ulp_equiv — ulp correspondence via Binary side
-noncomputable def ulp_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : FullFloat :=
-  -- Bridge through Binary `Bulp'` once available.
-  B2FF (prim_to_binary prec emax (prim_ldexp 1 (0)))
-
-theorem ulp_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (ulp_equiv_check prec emax x) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (prim_to_binary prec emax (prim_ldexp 1 (0)))⌝⦄ := by
-  intro _
-  simp [wp, PostCond.noThrow, pure, ulp_equiv_check]
-
--- Coq: next_up_equiv — successor correspondence
-noncomputable def next_up_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : FullFloat :=
-  B2FF (Bsucc (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
-
--- Binary-side successor check for the local bridge.
-theorem next_up_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (next_up_equiv_check prec emax x) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (Bsucc (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: next_down_equiv — predecessor correspondence
-noncomputable def next_down_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : FullFloat :=
-  B2FF (Bpred (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))
-
--- Binary-side predecessor check for the local bridge.
-theorem next_down_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (next_down_equiv_check prec emax x) : Id FullFloat)
-  ⦃⇓result => ⌜result =
-      B2FF (Bpred (prec:=prec) (emax:=emax) (prim_to_binary prec emax x))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: is_nan_equiv — NaN classifier correspondence
-noncomputable def is_nan_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : Bool :=
-  is_nan_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)
-
-theorem is_nan_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (is_nan_equiv_check prec emax x) : Id Bool)
-  ⦃⇓result => ⌜result = is_nan_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: is_zero_equiv — zero classifier correspondence
-noncomputable def is_zero_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : Bool :=
-  decide (B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero false ∨
-          B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero true)
-
--- Binary-side zero-classifier check for the local bridge.
-theorem is_zero_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat)
-  (h_zero : x = 0) :
-  ⦃⌜x = 0⌝⦄
-  (pure (is_zero_equiv_check prec emax x) : Id Bool)
-  ⦃⇓result => ⌜result = decide (B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero false ∨
-                                   B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_zero true)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: of_int63_equiv — integer conversion equivalence
-noncomputable def of_int63_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (z : Int) : PrimFloat :=
-  binary_to_prim prec emax (prim_to_binary prec emax (PrimFloat.ofReal (z : ℝ)))
-
--- Bridge note: integer conversion is checked through the rounded binary image.
-theorem of_int63_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (z : Int)
-  (h_zero : z = 0) :
-  ⦃⌜z = 0⌝⦄
-  (pure (of_int63_equiv_check prec emax z) : Id PrimFloat)
-  ⦃⇓result => ⌜result =
-      binary_to_prim prec emax (prim_to_binary prec emax (PrimFloat.ofReal (z : ℝ)))⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: is_infinity_equiv — infinity classifier correspondence
-noncomputable def is_infinity_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : Bool :=
-  decide (∃ s, B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_infinity s)
-
--- Decidable instance needed for the existential in is_infinity_equiv
--- (must be defined globally for `decide` to elaborate correctly)
-instance : Decidable (∃ s, StandardFloat.S754_zero false = StandardFloat.S754_infinity s) :=
-  isFalse (fun ⟨s, h⟩ => by cases h)
-
-theorem is_infinity_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (is_infinity_equiv_check prec emax x) : Id Bool)
-  ⦃⇓result => ⌜result = decide (∃ s, B2SF (prec:=prec) (emax:=emax) (prim_to_binary prec emax x) = StandardFloat.S754_infinity s)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: is_finite_equiv — finiteness classifier correspondence
-noncomputable def is_finite_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : Bool :=
-  is_finite_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)
-
-theorem is_finite_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (is_finite_equiv_check prec emax x) : Id Bool)
-  ⦃⇓result => ⌜result = is_finite_B (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: get_sign_equiv — sign bit correspondence
-noncomputable def get_sign_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) : Bool :=
-  Bsign (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)
-
-theorem get_sign_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (get_sign_equiv_check prec emax x) : Id Bool)
-  ⦃⇓result => ⌜result = Bsign (prec:=prec) (emax:=emax) (prim_to_binary prec emax x)⌝⦄ := by
-  intro _
-  rfl
-
--- Binary-side boolean comparisons used in Coq's eqb/ltb/leb lemmas
--- Note: For finite floats, we check equality via Rcompare returning 0 (equal).
--- This matches Coq's SFeqb which checks if Rcompare returns Eq.
--- For non-finite (nan, infinity), we follow IEEE 754 semantics:
---   - NaN ≠ NaN (returns false for NaN equality)
---   - Infinities compare structurally by sign
-noncomputable def Beqb (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Bool :=
-  -- For finite floats, compare real values
-  -- For infinity/nan, follow IEEE 754
-  if is_finite_B (prec:=prec) (emax:=emax) x && is_finite_B (prec:=prec) (emax:=emax) y then
-    -- Both finite: check if Rcompare returns 0 (equal)
-    FloatSpec.Core.Raux.Rcompare (B2R (prec:=prec) (emax:=emax) x) (B2R (prec:=prec) (emax:=emax) y) == 0
-  else
-    -- At least one is not finite: compare structurally
-    -- IEEE 754: NaN ≠ NaN, so Beqb nan nan = false
-    match B2SF (prec:=prec) (emax:=emax) x, B2SF (prec:=prec) (emax:=emax) y with
-    | StandardFloat.S754_infinity sx, StandardFloat.S754_infinity sy => decide (sx = sy)
-    | StandardFloat.S754_nan, StandardFloat.S754_nan => false  -- NaN ≠ NaN per IEEE 754
-    | _, _ => false
-
--- Coq: Beqb_correct — equality on binary numbers matches real equality under finiteness
-noncomputable def Beqb_correct_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Bool :=
-  (Beqb prec emax x y)
-
--- Helper: Rcompare returns 0 iff the values are equal
-private lemma Rcompare_eq_zero_iff (x y : ℝ) :
-    FloatSpec.Core.Raux.Rcompare x y = 0 ↔ x = y := by
-  unfold FloatSpec.Core.Raux.Rcompare
-  constructor
-  · intro h
-    by_cases hlt : x < y
-    · simp only [hlt, ↓reduceIte] at h
-      norm_num at h
-    · by_cases heq : x = y
-      · exact heq
-      · simp only [hlt, heq, ↓reduceIte] at h
-        norm_num at h
-  · intro h
-    simp only [h, lt_irrefl, ↓reduceIte]
-
--- Helper: For finite floats, Beqb equals decide (B2R x = B2R y)
-private lemma Beqb_correct_aux (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax)
-  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
-  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
-  Beqb prec emax x y = decide (B2R (prec:=prec) (emax:=emax) x = B2R (prec:=prec) (emax:=emax) y) := by
-  -- With the new Beqb definition that uses Rcompare for finite floats
-  unfold Beqb
-  simp only [hx, hy, Bool.true_and, ↓reduceIte]
-  -- Goal: (Rcompare (B2R x) (B2R y) == 0) = decide (B2R x = B2R y)
-  -- Note: (a == b) is a Bool, and (a == b) = true ↔ a = b
-  -- We prove equality of Bools by showing iff on being true
-  apply Bool.eq_iff_iff.mpr
-  simp only [beq_iff_eq, decide_eq_true_iff]
-  exact Rcompare_eq_zero_iff (B2R x) (B2R y)
-
-theorem Beqb_correct (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax)
-  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
-  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
-  ⦃⌜True⌝⦄
-  (pure (Beqb_correct_check prec emax x y) : Id Bool)
-  ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x = B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Beqb_correct_check,
-             Id.run, PredTrans.pure, PredTrans.apply]
-  exact Beqb_correct_aux prec emax x y hx hy
-
-noncomputable def Bcmp (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Int :=
-  ((FloatSpec.Core.Raux.Rcompare (B2R (prec:=prec) (emax:=emax) x)
-                                 (B2R (prec:=prec) (emax:=emax) y)))
-
-noncomputable def Bltb (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Bool :=
-  Bcmp prec emax x y = (-1)
-
-noncomputable def Bleb (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Bool :=
-  Bcmp prec emax x y ≠ 1
-
--- Coq: Beqb_refl — reflexivity of Beqb except NaN
-noncomputable def Beqb_refl_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : Binary754 prec emax) : Bool :=
-  (Beqb prec emax x x)
-
-theorem Beqb_refl (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x : Binary754 prec emax) :
-  ⦃⌜True⌝⦄
-  (pure (Beqb_refl_check prec emax x) : Id Bool)
-  ⦃⇓result => ⌜result = bnot (is_nan_B (prec:=prec) (emax:=emax) x)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Beqb_refl_check, Id.run, PredTrans.pure, PredTrans.apply]
-  -- Case analysis on the underlying FullFloat
-  unfold Beqb is_nan_B is_finite_B B2SF is_nan_FF is_finite_FF FF2SF
-  cases hx : x.val with
-  | F754_zero s =>
-    -- Finite case: Rcompare returns 0, so Beqb x x = true
-    -- is_nan_B x = false, so bnot false = true
-    simp only [hx, Bool.true_and, ↓reduceIte, bnot]
-    -- Rcompare r r = 0 for any r
-    have h : FloatSpec.Core.Raux.Rcompare (B2R x) (B2R x) = 0 := by
-      unfold FloatSpec.Core.Raux.Rcompare
-      simp only [lt_irrefl, ↓reduceIte]
-    simp only [h, beq_self_eq_true]
-    -- Goal is ⌜true = !false⌝.down, prove the inner equality
-    have heq : true = !false := rfl
-    exact heq
-  | F754_infinity s =>
-    -- Non-finite (infinity): use structural comparison
-    -- S754_infinity s = S754_infinity s, decide (s = s) = true
-    -- is_nan_B x = false, bnot false = true
-    simp only [hx, ↓reduceIte, bnot, decide_true]
-    -- Goal is ⌜(if (false && false) = true then ... else true) = !false⌝.down
-    have heq : (if (false && false) = true then FloatSpec.Core.Raux.Rcompare (B2R x) (B2R x) == 0 else true) = !false := by
-      simp only [Bool.false_and, Bool.false_eq_true, ↓reduceIte, bnot]
-      rfl
-    exact heq
-  | F754_nan s m =>
-    -- NaN case: Beqb returns false (per IEEE 754)
-    -- is_nan_B x = true, bnot true = false
-    simp only [hx, ↓reduceIte, bnot]
-    -- Goal is ⌜(if (false && false) = true then ... else false) = !true⌝.down
-    have heq : (if (false && false) = true then FloatSpec.Core.Raux.Rcompare (B2R x) (B2R x) == 0 else false) = !true := by
-      simp only [Bool.false_and, Bool.false_eq_true, ↓reduceIte, bnot]
-      rfl
-    exact heq
-  | F754_finite s m e =>
-    -- Finite case: Rcompare returns 0, so Beqb x x = true
-    -- is_nan_B x = false, so bnot false = true
-    simp only [hx, Bool.true_and, ↓reduceIte, bnot]
-    have h : FloatSpec.Core.Raux.Rcompare (B2R x) (B2R x) = 0 := by
-      unfold FloatSpec.Core.Raux.Rcompare
-      simp only [lt_irrefl, ↓reduceIte]
-    simp only [h, beq_self_eq_true]
-    -- Goal is ⌜true = !false⌝.down, prove the inner equality
-    have heq : true = !false := rfl
-    exact heq
-
--- Coq: Bltb_correct — strict-ordered comparison matches real comparison
-noncomputable def Bltb_correct_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Bool :=
-  (Bltb prec emax x y)
-
-theorem Bltb_correct (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax)
-  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
-  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
-  ⦃⌜True⌝⦄
-  (pure (Bltb_correct_check prec emax x y) : Id Bool)
-  ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x < B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Id.run, PredTrans.pure, PredTrans.apply]
-  simp only [Bltb_correct_check, Bltb, Bcmp]
-  -- Goal: ⌜decide (Rcompare (B2R x) (B2R y) = -1) = decide (B2R x < B2R y)⌝.down
-  -- We need to show the two decide expressions are equal
-  -- This follows from: Rcompare a b = -1 ↔ a < b
-  have hiff : (FloatSpec.Core.Raux.Rcompare (B2R x) (B2R y) = -1) ↔ (B2R x < B2R y) := by
-    constructor
-    · intro hcmp
-      -- From Rcompare returning -1, deduce x < y
-      unfold FloatSpec.Core.Raux.Rcompare at hcmp
-      by_cases hlt : B2R x < B2R y
-      · exact hlt
-      · -- If not x < y, then Rcompare cannot be -1
-        simp only [hlt, ↓reduceIte] at hcmp
-        by_cases heq : B2R x = B2R y
-        · simp [heq] at hcmp
-        · simp [heq] at hcmp
-    · intro hlt
-      -- From x < y, produce Rcompare = -1
-      unfold FloatSpec.Core.Raux.Rcompare
-      simp [hlt]
-  -- Convert the iff to decide equality
-  have hdec : decide (FloatSpec.Core.Raux.Rcompare (B2R x) (B2R y) = -1) =
-              decide (B2R x < B2R y) := by
-    simp only [decide_eq_decide]
-    exact hiff
-  exact hdec
-
--- Coq: Bleb_correct — non-strict-ordered comparison matches real comparison
-noncomputable def Bleb_correct_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax) : Bool :=
-  (Bleb prec emax x y)
-
-theorem Bleb_correct (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : Binary754 prec emax)
-  (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
-  (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
-  ⦃⌜True⌝⦄
-  (pure (Bleb_correct_check prec emax x y) : Id Bool)
-  ⦃⇓result => ⌜result = decide (B2R (prec:=prec) (emax:=emax) x ≤ B2R (prec:=prec) (emax:=emax) y)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, Id.run, PredTrans.pure, PredTrans.apply]
-  simp only [Bleb_correct_check, Bleb, Bcmp]
-  -- Goal: decide (Rcompare (B2R x) (B2R y) ≠ 1) = decide (B2R x ≤ B2R y)
-  -- We need: Rcompare a b ≠ 1 ↔ a ≤ b (since Rcompare returns 1 iff a > b)
-  have hiff : (FloatSpec.Core.Raux.Rcompare (B2R x) (B2R y) ≠ 1) ↔ (B2R x ≤ B2R y) := by
-    constructor
-    · intro hcmp
-      -- From Rcompare not returning 1, deduce x ≤ y
-      unfold FloatSpec.Core.Raux.Rcompare at hcmp
-      by_cases hlt : B2R x < B2R y
-      · exact le_of_lt hlt
-      · by_cases heq : B2R x = B2R y
-        · exact le_of_eq heq
-        · -- If not x < y and not x = y, then x > y, so Rcompare = 1
-          simp only [hlt, heq, ↓reduceIte] at hcmp
-          exact absurd rfl hcmp
-    · intro hle
-      -- From x ≤ y, produce Rcompare ≠ 1
-      unfold FloatSpec.Core.Raux.Rcompare
-      by_cases hlt : B2R x < B2R y
-      · simp [hlt]
-      · by_cases heq : B2R x = B2R y
-        · simp [hlt, heq]
-        · -- x ≤ y but not x < y and not x = y is a contradiction
-          have hgt : B2R y < B2R x := lt_of_le_of_ne (le_of_not_gt hlt) (Ne.symm heq)
-          exact absurd hgt (not_lt_of_ge hle)
-  -- Convert the iff to decide equality
-  have hdec : decide (FloatSpec.Core.Raux.Rcompare (B2R x) (B2R y) ≠ 1) =
-              decide (B2R x ≤ B2R y) := by
-    simp only [decide_eq_decide]
-    exact hiff
-  exact hdec
-
--- Coq: eqb_equiv — boolean equality correspondence
-noncomputable def eqb_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) : Bool :=
-  Beqb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)
-
-theorem eqb_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (eqb_equiv_check prec emax x y) : Id Bool)
-  ⦃⇓result => ⌜result =
-      Beqb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: ltb_equiv — boolean strict ordering correspondence
-noncomputable def ltb_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) : Bool :=
-  Bltb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)
-
-theorem ltb_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (ltb_equiv_check prec emax x y) : Id Bool)
-  ⦃⇓result => ⌜result =
-      Bltb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
-  intro _
-  rfl
-
--- Coq: leb_equiv — boolean non-strict ordering correspondence
-noncomputable def leb_equiv_check (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) : Bool :=
-  Bleb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)
-
-theorem leb_equiv (prec emax : Int)
-  [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  (x y : PrimFloat) :
-  ⦃⌜True⌝⦄
-  (pure (leb_equiv_check prec emax x y) : Id Bool)
-  ⦃⇓result => ⌜result =
-      Bleb prec emax (prim_to_binary prec emax x) (prim_to_binary prec emax y)⌝⦄ := by
-  intro _
-  rfl
-
-end ExperimentalPrimFloatBridge
-
 namespace FaithfulPrimFloat
 
 /-!
-Proof-carrying model of Coq's primitive binary64 floats.
-
-This namespace is intentionally separate from `ExperimentalPrimFloatBridge`:
-the latter keeps its historical real-only compatibility API, while this model
-preserves the `StandardFloat` representation and validity evidence used by
-Flocq's `PrimFloat.v` conversion layer.
+Proof-carrying model of Coq's primitive binary64 floats.  This is the only
+PrimFloat model in the module: every value retains its `StandardFloat`
+constructor (including NaN, infinities, and signed zero) together with the
+binary64 validity proof required by Flocq's conversion layer.
 -/
 
 abbrev primPrec : Int := 53
@@ -1153,6 +151,314 @@ theorem Prim2B_B2Prim (x : PrimBinaryFloat) :
 theorem B2SF_Prim2B (x : PrimitiveFloat) :
     B2SF (Prim2B x) = Prim2SF x := by
   exact B2SF_SF2B (Prim2SF x) (Prim2SF_valid x)
+
+private theorem primitiveFloat_ext (x y : PrimitiveFloat)
+    (h : Prim2SF x = Prim2SF y) : x = y := by
+  rcases x with ⟨x, hx⟩
+  rcases y with ⟨y, hy⟩
+  simp [Prim2SF] at h
+  subst y
+  rfl
+
+private theorem primBinaryFloat_ext (x y : PrimBinaryFloat)
+    (h : B2Prim x = B2Prim y) : x = y := by
+  have h' := congrArg Prim2B h
+  simpa [Prim2B_B2Prim] using h'
+
+private theorem primBinaryFloat_ext_sf (x y : PrimBinaryFloat)
+    (h : B2SF x = B2SF y) : x = y := by
+  cases x <;> cases y <;>
+    simp_all [B2SF, binarySingleNaNFloatToStandardFloat]
+
+/-! Source-visible primitive constants.  Unlike the removed real projection,
+these are pairwise distinguishable wherever IEEE-754 distinguishes them. -/
+
+def infinity : PrimitiveFloat :=
+  ⟨StandardFloat.S754_infinity false, rfl⟩
+
+def neg_infinity : PrimitiveFloat :=
+  ⟨StandardFloat.S754_infinity true, rfl⟩
+
+def nan : PrimitiveFloat := canonicalNaN
+
+def zero : PrimitiveFloat :=
+  ⟨StandardFloat.S754_zero false, rfl⟩
+
+def neg_zero : PrimitiveFloat :=
+  ⟨StandardFloat.S754_zero true, rfl⟩
+
+def one : PrimitiveFloat :=
+  ⟨StandardFloat.S754_finite false 4503599627370496 (-52), by native_decide⟩
+
+def two : PrimitiveFloat :=
+  ⟨StandardFloat.S754_finite false 4503599627370496 (-51), by native_decide⟩
+
+theorem infinity_equiv :
+    infinity = B2Prim
+      (BinarySingleNaNFloat.B754_infinity
+        (prec := primPrec) (emax := primEmax) false) := by
+  apply primitiveFloat_ext
+  rfl
+
+theorem neg_infinity_equiv :
+    neg_infinity = B2Prim
+      (BinarySingleNaNFloat.B754_infinity
+        (prec := primPrec) (emax := primEmax) true) := by
+  apply primitiveFloat_ext
+  rfl
+
+theorem nan_equiv :
+    nan = B2Prim
+      (BinarySingleNaNFloat.B754_nan
+        (prec := primPrec) (emax := primEmax)) := by
+  apply primitiveFloat_ext
+  rfl
+
+theorem zero_equiv :
+    zero = B2Prim
+      (BinarySingleNaNFloat.B754_zero
+        (prec := primPrec) (emax := primEmax) false) := by
+  apply primitiveFloat_ext
+  rfl
+
+theorem neg_zero_equiv :
+    neg_zero = B2Prim
+      (BinarySingleNaNFloat.B754_zero
+        (prec := primPrec) (emax := primEmax) true) := by
+  apply primitiveFloat_ext
+  rfl
+
+theorem one_equiv :
+    one = B2Prim
+      (BinarySingleNaNFloat.B754_finite
+        (prec := primPrec) (emax := primEmax) false 4503599627370496 (-52)
+        (by norm_num) (by native_decide)) := by
+  apply primitiveFloat_ext
+  rfl
+
+theorem two_equiv :
+    two = B2Prim
+      (BinarySingleNaNFloat.B754_finite
+        (prec := primPrec) (emax := primEmax) false 4503599627370496 (-51)
+        (by norm_num) (by native_decide)) := by
+  apply primitiveFloat_ext
+  rfl
+
+def SFopp : StandardFloat → StandardFloat
+  | StandardFloat.S754_zero s => StandardFloat.S754_zero (!s)
+  | StandardFloat.S754_infinity s => StandardFloat.S754_infinity (!s)
+  | StandardFloat.S754_nan => StandardFloat.S754_nan
+  | StandardFloat.S754_finite s m e => StandardFloat.S754_finite (!s) m e
+
+def SFabs : StandardFloat → StandardFloat
+  | StandardFloat.S754_zero _ => StandardFloat.S754_zero false
+  | StandardFloat.S754_infinity _ => StandardFloat.S754_infinity false
+  | StandardFloat.S754_nan => StandardFloat.S754_nan
+  | StandardFloat.S754_finite _ m e => StandardFloat.S754_finite false m e
+
+theorem SFopp_valid (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) x = true) :
+    validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) (SFopp x) = true := by
+  cases x <;> simpa [SFopp, validBinarySingleNaNStandardFloat] using hx
+
+theorem SFabs_valid (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) x = true) :
+    validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) (SFabs x) = true := by
+  cases x <;> simpa [SFabs, validBinarySingleNaNStandardFloat] using hx
+
+def opp (x : PrimitiveFloat) : PrimitiveFloat :=
+  ⟨SFopp (Prim2SF x), SFopp_valid (Prim2SF x) (Prim2SF_valid x)⟩
+
+instance : Neg PrimitiveFloat where
+  neg := opp
+
+def abs (x : PrimitiveFloat) : PrimitiveFloat :=
+  ⟨SFabs (Prim2SF x), SFabs_valid (Prim2SF x) (Prim2SF_valid x)⟩
+
+def Bopp (x : PrimBinaryFloat) : PrimBinaryFloat :=
+  match x with
+  | BinarySingleNaNFloat.B754_zero s =>
+      BinarySingleNaNFloat.B754_zero (!s)
+  | BinarySingleNaNFloat.B754_infinity s =>
+      BinarySingleNaNFloat.B754_infinity (!s)
+  | BinarySingleNaNFloat.B754_nan => BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_finite s m e hm hb =>
+      BinarySingleNaNFloat.B754_finite (!s) m e hm hb
+
+def Babs (x : PrimBinaryFloat) : PrimBinaryFloat :=
+  match x with
+  | BinarySingleNaNFloat.B754_zero _ =>
+      BinarySingleNaNFloat.B754_zero false
+  | BinarySingleNaNFloat.B754_infinity _ =>
+      BinarySingleNaNFloat.B754_infinity false
+  | BinarySingleNaNFloat.B754_nan => BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_finite _ m e hm hb =>
+      BinarySingleNaNFloat.B754_finite false m e hm hb
+
+theorem opp_equiv (x : PrimitiveFloat) :
+    Prim2B (-x) = Bopp (Prim2B x) := by
+  apply primBinaryFloat_ext_sf
+  rw [B2SF_Prim2B]
+  change SFopp (Prim2SF x) = B2SF (Bopp (Prim2B x))
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> rfl
+
+theorem abs_equiv (x : PrimitiveFloat) :
+    Prim2B (abs x) = Babs (Prim2B x) := by
+  apply primBinaryFloat_ext_sf
+  rw [B2SF_Prim2B]
+  change SFabs (Prim2SF x) = B2SF (Babs (Prim2B x))
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> rfl
+
+def is_nan (x : PrimitiveFloat) : Bool :=
+  is_nan_SF (Prim2SF x)
+
+def is_zero (x : PrimitiveFloat) : Bool :=
+  match Prim2SF x with
+  | StandardFloat.S754_zero _ => true
+  | _ => false
+
+def is_infinity (x : PrimitiveFloat) : Bool :=
+  match Prim2SF x with
+  | StandardFloat.S754_infinity _ => true
+  | _ => false
+
+def is_finite (x : PrimitiveFloat) : Bool :=
+  is_finite_SF (Prim2SF x)
+
+def get_sign (x : PrimitiveFloat) : Bool :=
+  sign_SF (Prim2SF x)
+
+def Bis_nan (x : PrimBinaryFloat) : Bool :=
+  match x with
+  | BinarySingleNaNFloat.B754_nan => true
+  | _ => false
+
+def Bis_zero (x : PrimBinaryFloat) : Bool :=
+  match x with
+  | BinarySingleNaNFloat.B754_zero _ => true
+  | _ => false
+
+def Bis_infinity (x : PrimBinaryFloat) : Bool :=
+  match x with
+  | BinarySingleNaNFloat.B754_infinity _ => true
+  | _ => false
+
+def Bis_finite (x : PrimBinaryFloat) : Bool :=
+  match x with
+  | BinarySingleNaNFloat.B754_zero _ => true
+  | BinarySingleNaNFloat.B754_finite _ _ _ _ _ => true
+  | _ => false
+
+def Bsign (x : PrimBinaryFloat) : Bool :=
+  match x with
+  | BinarySingleNaNFloat.B754_zero s => s
+  | BinarySingleNaNFloat.B754_infinity s => s
+  | BinarySingleNaNFloat.B754_nan => false
+  | BinarySingleNaNFloat.B754_finite s _ _ _ _ => s
+
+theorem is_nan_equiv (x : PrimitiveFloat) :
+    is_nan x = Bis_nan (Prim2B x) := by
+  unfold is_nan
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> rfl
+
+theorem is_zero_equiv (x : PrimitiveFloat) :
+    is_zero x = Bis_zero (Prim2B x) := by
+  unfold is_zero
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> rfl
+
+theorem is_infinity_equiv (x : PrimitiveFloat) :
+    is_infinity x = Bis_infinity (Prim2B x) := by
+  unfold is_infinity
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> rfl
+
+theorem is_finite_equiv (x : PrimitiveFloat) :
+    is_finite x = Bis_finite (Prim2B x) := by
+  unfold is_finite
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> rfl
+
+theorem get_sign_equiv (x : PrimitiveFloat) :
+    get_sign x = Bsign (Prim2B x) := by
+  unfold get_sign
+  rw [← B2SF_Prim2B x]
+  cases Prim2B x <;> rfl
+
+-- IEEE comparisons: NaN is unordered, infinities remain ordered, and the two
+-- zero constructors compare equal through their common real value.
+noncomputable def SFeqb (x y : StandardFloat) : Bool :=
+  match x, y with
+  | StandardFloat.S754_nan, _ => false
+  | _, StandardFloat.S754_nan => false
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_infinity sy => sx == sy
+  | StandardFloat.S754_infinity _, _ => false
+  | _, StandardFloat.S754_infinity _ => false
+  | x, y => decide (SF2R 2 x = SF2R 2 y)
+
+noncomputable def SFltb (x y : StandardFloat) : Bool :=
+  match x, y with
+  | StandardFloat.S754_nan, _ => false
+  | _, StandardFloat.S754_nan => false
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_infinity sy => sx && !sy
+  | StandardFloat.S754_infinity sx, _ => sx
+  | _, StandardFloat.S754_infinity sy => !sy
+  | x, y => decide (SF2R 2 x < SF2R 2 y)
+
+noncomputable def SFleb (x y : StandardFloat) : Bool :=
+  SFltb x y || SFeqb x y
+
+noncomputable def SFcompare (x y : StandardFloat) : Ordering :=
+  if SFltb x y then Ordering.lt
+  else if SFltb y x then Ordering.gt
+  else Ordering.eq
+
+noncomputable def eqb (x y : PrimitiveFloat) : Bool :=
+  SFeqb (Prim2SF x) (Prim2SF y)
+
+noncomputable def ltb (x y : PrimitiveFloat) : Bool :=
+  SFltb (Prim2SF x) (Prim2SF y)
+
+noncomputable def leb (x y : PrimitiveFloat) : Bool :=
+  SFleb (Prim2SF x) (Prim2SF y)
+
+noncomputable def compare (x y : PrimitiveFloat) : Ordering :=
+  SFcompare (Prim2SF x) (Prim2SF y)
+
+noncomputable def Beqb (x y : PrimBinaryFloat) : Bool :=
+  SFeqb (B2SF x) (B2SF y)
+
+noncomputable def Bltb (x y : PrimBinaryFloat) : Bool :=
+  SFltb (B2SF x) (B2SF y)
+
+noncomputable def Bleb (x y : PrimBinaryFloat) : Bool :=
+  SFleb (B2SF x) (B2SF y)
+
+noncomputable def Bcompare (x y : PrimBinaryFloat) : Ordering :=
+  SFcompare (B2SF x) (B2SF y)
+
+theorem compare_equiv (x y : PrimitiveFloat) :
+    compare x y = Bcompare (Prim2B x) (Prim2B y) := by
+  simp [compare, Bcompare, B2SF_Prim2B]
+
+theorem eqb_equiv (x y : PrimitiveFloat) :
+    eqb x y = Beqb (Prim2B x) (Prim2B y) := by
+  simp [eqb, Beqb, B2SF_Prim2B]
+
+theorem ltb_equiv (x y : PrimitiveFloat) :
+    ltb x y = Bltb (Prim2B x) (Prim2B y) := by
+  simp [ltb, Bltb, B2SF_Prim2B]
+
+theorem leb_equiv (x y : PrimitiveFloat) :
+    leb x y = Bleb (Prim2B x) (Prim2B y) := by
+  simp [leb, Bleb, B2SF_Prim2B]
 
 namespace Uint63
 
@@ -1358,25 +664,143 @@ theorem mul_equiv (x y : PrimitiveFloat) :
     simp [SFmul, Bmult, B2SF_SF2B, B2SF_zero, B2SF_infinity, B2SF_nan,
       B2SF_finite, binary_round_aux_equiv]
 
--- Coq `SpecFloat.binary_round`, specialized to primitive binary64.
-noncomputable def binary_round (sx : Bool) (mx : Nat) (ex : Int) :
+-- Coq `SpecFloat.SFdiv`, specialized to primitive binary64.
+noncomputable def SFdiv (x y : StandardFloat) : StandardFloat :=
+  match x, y with
+  | StandardFloat.S754_nan, _ => StandardFloat.S754_nan
+  | _, StandardFloat.S754_nan => StandardFloat.S754_nan
+  | StandardFloat.S754_infinity _, StandardFloat.S754_infinity _ =>
+      StandardFloat.S754_nan
+  | StandardFloat.S754_zero _, StandardFloat.S754_zero _ =>
+      StandardFloat.S754_nan
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_zero sy =>
+      StandardFloat.S754_infinity (Bool.xor sx sy)
+  | StandardFloat.S754_infinity sx, StandardFloat.S754_finite sy _ _ =>
+      StandardFloat.S754_infinity (Bool.xor sx sy)
+  | StandardFloat.S754_zero sx, StandardFloat.S754_infinity sy =>
+      StandardFloat.S754_zero (Bool.xor sx sy)
+  | StandardFloat.S754_finite sx _ _, StandardFloat.S754_infinity sy =>
+      StandardFloat.S754_zero (Bool.xor sx sy)
+  | StandardFloat.S754_finite sx _ _, StandardFloat.S754_zero sy =>
+      StandardFloat.S754_infinity (Bool.xor sx sy)
+  | StandardFloat.S754_zero sx, StandardFloat.S754_finite sy _ _ =>
+      StandardFloat.S754_zero (Bool.xor sx sy)
+  | StandardFloat.S754_finite sx mx ex,
+      StandardFloat.S754_finite sy my ey =>
+      let result := SFdiv_core_binary primPrec primEmax (mx : Int) ex (my : Int) ey
+      binary_round_aux (Bool.xor sx sy) result.1 result.2.1 result.2.2
+
+theorem SFdiv_valid (x y : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) x = true)
+    (hy : validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) y = true) :
+    validBinarySingleNaNStandardFloat
+      (prec := primPrec) (emax := primEmax) (SFdiv x y) = true := by
+  cases x with
+  | S754_zero sx =>
+      cases y <;> simp [SFdiv, validBinarySingleNaNStandardFloat]
+  | S754_infinity sx =>
+      cases y <;> simp [SFdiv, validBinarySingleNaNStandardFloat]
+  | S754_nan =>
+      cases y <;> simp [SFdiv, validBinarySingleNaNStandardFloat]
+  | S754_finite sx mx ex =>
+      cases y with
+      | S754_zero sy =>
+          simp [SFdiv, validBinarySingleNaNStandardFloat]
+      | S754_infinity sy =>
+          simp [SFdiv, validBinarySingleNaNStandardFloat]
+      | S754_nan =>
+          simp [SFdiv, validBinarySingleNaNStandardFloat]
+      | S754_finite sy my ey =>
+          have hx' : decide (0 < mx) = true ∧
+              specFloat_bounded (prec := primPrec) (emax := primEmax) mx ex = true := by
+            simpa [validBinarySingleNaNStandardFloat, Bool.and_eq_true] using hx
+          have hy' : decide (0 < my) = true ∧
+              specFloat_bounded (prec := primPrec) (emax := primEmax) my ey = true := by
+            simpa [validBinarySingleNaNStandardFloat, Bool.and_eq_true] using hy
+          let px := binaryPositiveOfNat mx (of_decide_eq_true hx'.1)
+          let py := binaryPositiveOfNat my (of_decide_eq_true hy'.1)
+          have haux := _root_.Bdiv_correct_aux
+            (prec := primPrec) (emax := primEmax) RoundingMode.RNE
+            sx px ex sy py ey
+          simpa [SFdiv, px, py, binaryPositiveOfNat_spec] using haux.1
+
+noncomputable def div (x y : PrimitiveFloat) : PrimitiveFloat :=
+  ⟨SFdiv (Prim2SF x) (Prim2SF y),
+    SFdiv_valid (Prim2SF x) (Prim2SF y) (Prim2SF_valid x) (Prim2SF_valid y)⟩
+
+noncomputable instance : Div PrimitiveFloat where
+  div := FaithfulPrimFloat.div
+
+theorem div_spec (x y : PrimitiveFloat) :
+    Prim2SF (x / y) = SFdiv (Prim2SF x) (Prim2SF y) := by
+  rfl
+
+noncomputable def Bdiv (mode : RoundingMode)
+    (x y : PrimBinaryFloat) : PrimBinaryFloat :=
+  match x, y with
+  | BinarySingleNaNFloat.B754_nan, _ => BinarySingleNaNFloat.B754_nan
+  | _, BinarySingleNaNFloat.B754_nan => BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_infinity _, BinarySingleNaNFloat.B754_infinity _ =>
+      BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_zero _, BinarySingleNaNFloat.B754_zero _ =>
+      BinarySingleNaNFloat.B754_nan
+  | BinarySingleNaNFloat.B754_infinity sx, BinarySingleNaNFloat.B754_zero sy =>
+      BinarySingleNaNFloat.B754_infinity (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_infinity sx,
+      BinarySingleNaNFloat.B754_finite sy _ _ _ _ =>
+      BinarySingleNaNFloat.B754_infinity (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_zero sx, BinarySingleNaNFloat.B754_infinity sy =>
+      BinarySingleNaNFloat.B754_zero (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_finite sx _ _ _ _,
+      BinarySingleNaNFloat.B754_infinity sy =>
+      BinarySingleNaNFloat.B754_zero (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_finite sx _ _ _ _,
+      BinarySingleNaNFloat.B754_zero sy =>
+      BinarySingleNaNFloat.B754_infinity (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_zero sx,
+      BinarySingleNaNFloat.B754_finite sy _ _ _ _ =>
+      BinarySingleNaNFloat.B754_zero (Bool.xor sx sy)
+  | BinarySingleNaNFloat.B754_finite sx mx ex hmx hbx,
+      BinarySingleNaNFloat.B754_finite sy my ey hmy hby =>
+      let result := SFdiv_core_binary primPrec primEmax (mx : Int) ex (my : Int) ey
+      have haux := _root_.Bdiv_correct_aux
+        (prec := primPrec) (emax := primEmax) mode
+        sx (binaryPositiveOfNat mx hmx) ex sy (binaryPositiveOfNat my hmy) ey
+      SF2B
+        (_root_.binary_round_aux (prec := primPrec) (emax := primEmax)
+          mode (Bool.xor sx sy) result.1 result.2.1 result.2.2)
+        (by simpa [binaryPositiveOfNat_spec] using haux.1)
+
+theorem div_equiv (x y : PrimitiveFloat) :
+    Prim2B (x / y) = Bdiv RoundingMode.RNE (Prim2B x) (Prim2B y) := by
+  apply primBinaryFloat_ext_sf
+  rw [B2SF_Prim2B, div_spec]
+  rw [← B2SF_Prim2B x, ← B2SF_Prim2B y]
+  cases Prim2B x <;> cases Prim2B y <;>
+    simp [SFdiv, Bdiv, B2SF_SF2B, B2SF_zero, B2SF_infinity, B2SF_nan,
+      B2SF_finite, binary_round_aux_equiv, binaryPositiveOfNat_spec]
+
+-- Coq `SpecFloat.binary_round`, specialized to primitive binary64.  The
+-- mantissa stays on Coq's nonzero `positive` domain; converting this binder to
+-- `Nat` would silently admit the source-impossible input zero.
+noncomputable def binary_round (sx : Bool)
+    (mx : FloatSpec.Core.Zaux.Positive) (ex : Int) :
     StandardFloat :=
-  let aligned := shl_align_fexp (prec:=primPrec) (emax:=primEmax) mx ex
+  let mxNat := FloatSpec.Core.Zaux.positiveToNat mx
+  let aligned := shl_align_fexp (prec:=primPrec) (emax:=primEmax) mxNat ex
   binary_round_aux sx (aligned.1 : Int) aligned.2
     FloatSpec.Calc.Bracket.Location.loc_Exact
 
 -- Coq `PrimFloat.v:binary_round_equiv`.
-theorem binary_round_equiv (sx : Bool) (mx : Nat) (ex : Int) :
+theorem binary_round_equiv (sx : Bool)
+    (mx : FloatSpec.Core.Zaux.Positive) (ex : Int) :
     binary_round sx mx ex =
       _root_.binary_round (prec:=primPrec) (emax:=primEmax)
-        RoundingMode.RNE sx mx ex := by
-  unfold binary_round _root_.binary_round shl_align_fexp
-  set aligned := shl_align mx ex
-    (FLT_exp (3 - primEmax - primPrec) primPrec
-      (FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex))
-  cases aligned with
-  | mk alignedMant alignedExp =>
-      apply binary_round_aux_equiv
+        RoundingMode.RNE sx (FloatSpec.Core.Zaux.positiveToNat mx) ex := by
+  simp only [binary_round, _root_.binary_round]
+  exact binary_round_aux_equiv _ _ _ _
 
 private theorem rootBinaryRoundValid (mode : RoundingMode)
     (sx : Bool) (mx : Nat) (ex : Int)
@@ -1390,12 +814,17 @@ private theorem rootBinaryRoundValid (mode : RoundingMode)
 -- Coq `SpecFloat.binary_normalize`, specialized to primitive binary64.
 noncomputable def binary_normalize (m e : Int) (szero : Bool) :
     StandardFloat :=
-  if m = 0 then
+  if hzero : m = 0 then
     StandardFloat.S754_zero szero
-  else if 0 < m then
-    binary_round false m.toNat e
+  else if hpos : 0 < m then
+    have hm_toNat_pos : 0 < m.toNat := by
+      have hcast : (0 : Int) < (m.toNat : Int) := by
+        simpa [Int.toNat_of_nonneg (le_of_lt hpos)] using hpos
+      exact_mod_cast hcast
+    binary_round false (binaryPositiveOfNat m.toNat hm_toNat_pos) e
   else
-    binary_round true m.natAbs e
+    have hm_abs_pos : 0 < m.natAbs := Int.natAbs_pos.mpr hzero
+    binary_round true (binaryPositiveOfNat m.natAbs hm_abs_pos) e
 
 -- Coq `BinarySingleNaN.binary_normalize`, specialized to primitive binary64.
 noncomputable def binary_normalize_bsn (mode : RoundingMode)
@@ -1430,8 +859,10 @@ theorem binary_normalize_equiv (m e : Int) (szero : Bool) :
   by_cases hzero : m = 0
   · simp [hzero, B2SF, binarySingleNaNFloatToStandardFloat]
   · by_cases hpos : 0 < m
-    · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv]
-    · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv]
+    · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv,
+        binaryPositiveOfNat_spec]
+    · simp [hzero, hpos, B2SF_SF2B, binary_round_equiv,
+        binaryPositiveOfNat_spec]
 
 -- Coq `SpecFloat.SFadd`, specialized to primitive binary64.
 noncomputable def SFadd (x y : StandardFloat) : StandardFloat :=
@@ -1549,5 +980,20 @@ theorem add_equiv (x y : PrimitiveFloat) :
     simp [SFadd, Bplus, B2SF_zero, B2SF_infinity, B2SF_nan,
       B2SF_finite, binary_normalize_equiv] <;>
       split_ifs <;> rfl
+
+noncomputable def sub (x y : PrimitiveFloat) : PrimitiveFloat :=
+  x + (-y)
+
+noncomputable instance : Sub PrimitiveFloat where
+  sub := FaithfulPrimFloat.sub
+
+noncomputable def Bminus (mode : RoundingMode)
+    (x y : PrimBinaryFloat) : PrimBinaryFloat :=
+  Bplus mode x (Bopp y)
+
+theorem sub_equiv (x y : PrimitiveFloat) :
+    Prim2B (x - y) = Bminus RoundingMode.RNE (Prim2B x) (Prim2B y) := by
+  change Prim2B (x + (-y)) = Bplus RoundingMode.RNE (Prim2B x) (Bopp (Prim2B y))
+  rw [add_equiv, opp_equiv]
 
 end FaithfulPrimFloat
