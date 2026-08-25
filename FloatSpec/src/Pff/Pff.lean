@@ -5733,7 +5733,7 @@ represent different real numbers.
 
 Note: Uses `Fnormal'` and `Fsubnormal'`, the Coq-matching predicates.
 Requires `radix = beta` and `1 < beta`. -/
-theorem NormalAndSubNormalNotEq {beta : Int} [ValidRadix beta]
+theorem NormalAndSubNormalNotEq_internal {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel)
     (p q : FloatSpec.Core.Defs.FlocqFloat beta)
     (hβ : 1 < beta)
@@ -5880,6 +5880,23 @@ theorem NormalAndSubNormalNotEq {beta : Int} [ValidRadix beta]
         exact h3
       -- But hcore says |radix * q.Fnum| < |radix * p.Fnum|
       omega
+
+/-- Coq: `NormalAndSubNormalNotEq` with the exported precision-section
+contract restored.  The power-bound and precision premises are intentionally
+kept even though the internal proof establishes a stronger result. -/
+theorem NormalAndSubNormalNotEq (radix : Int) [ValidRadix radix]
+    (b : Fbound_skel) (precision : Nat)
+    (p q : FloatSpec.Core.Defs.FlocqFloat radix) :
+    ⦃⌜1 < radix ∧ precision ≠ 0 ∧
+        b.vNum = Zpower_nat radix precision ∧
+        Fnormal (beta:=radix) radix b p ∧
+        Fsubnormal (beta:=radix) radix b q⌝⦄
+    (pure (NormalAndSubNormalNotEq_check (beta:=radix) radix b p q) : Id Unit)
+    ⦃⇓_ => ⌜_root_.F2R (beta:=radix) p ≠
+        _root_.F2R (beta:=radix) q⌝⦄ := by
+  intro ⟨hradix, _hprecision, _hvNum, hp, hq⟩
+  exact NormalAndSubNormalNotEq_internal (beta:=radix)
+    radix b p q hradix rfl ⟨hp, hq⟩
 
 noncomputable def FSuccProp_cross_zero_check {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) (precision : Nat)
@@ -6111,7 +6128,7 @@ theorem FcanonicUnique {beta : Int} [ValidRadix beta]
   -- Case 2: p normal, q subnormal - contradiction
   · exfalso
     -- Use NormalAndSubNormalNotEq: normal and subnormal can't have same F2R
-    have hneq := NormalAndSubNormalNotEq radix b p q hβ hradix
+    have hneq := NormalAndSubNormalNotEq_internal radix b p q hβ hradix
     simp only [wp, PostCond.noThrow, pure, NormalAndSubNormalNotEq_check, ULift.down_up] at hneq
     have hP_normal : Fnormal' radix b p := ⟨hbP, hvnumP⟩
     have hQ_subnormal : Fsubnormal' radix b q := ⟨hbQ, hexpQ, hvnumQ⟩
@@ -6119,7 +6136,7 @@ theorem FcanonicUnique {beta : Int} [ValidRadix beta]
   -- Case 3: p subnormal, q normal - contradiction
   · exfalso
     -- By symmetry with case 2
-    have hneq := NormalAndSubNormalNotEq radix b q p hβ hradix
+    have hneq := NormalAndSubNormalNotEq_internal radix b q p hβ hradix
     simp only [wp, PostCond.noThrow, pure, NormalAndSubNormalNotEq_check, ULift.down_up] at hneq
     have hQ_normal : Fnormal' radix b q := ⟨hbQ, hvnumQ⟩
     have hP_subnormal : Fsubnormal' radix b p := ⟨hbP, hexpP, hvnumP⟩
@@ -15156,7 +15173,7 @@ noncomputable def FnormalPrecision_check {beta : Int} [ValidRadix beta]
   ()
 
 /-- Coq: `FnormalPrecision` — a normal float always has digit `precision`. -/
-theorem FnormalPrecision {beta : Int} [ValidRadix beta]
+theorem FnormalPrecision_internal {beta : Int} [ValidRadix beta]
     (radix : Int) (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜Fnormal (beta:=beta) radix b p ∧
@@ -15213,6 +15230,24 @@ theorem FnormalPrecision {beta : Int} [ValidRadix beta]
           hpow_pred_le_natAbs
       omega
     exact (Int.le_toNat hdigits_nonneg).mpr hprecision_le_digits
+
+/-- Coq: `FnormalPrecision` with its exact exported section contract.
+
+The implementation theorem above retains a duplicate compatibility predicate
+needed by older translated callers.  The public theorem exposes only the
+single `Fnormal` premise present in `Pff.v`, and indexes the float directly by
+the source radix rather than introducing a second phantom radix. -/
+theorem FnormalPrecision (radix : Int) [ValidRadix radix]
+    (b : Fbound_skel) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat radix) :
+    ⦃⌜1 < radix ∧ precision ≠ 0 ∧
+        b.vNum = Zpower_nat radix precision ∧
+        Fnormal (beta:=radix) radix b p⌝⦄
+    (pure (FnormalPrecision_check (beta:=radix) radix b precision p) : Id Unit)
+    ⦃⇓_ => ⌜Fdigit (beta:=radix) radix p = precision⌝⦄ := by
+  intro ⟨hradix, hprecision, hvNum, hnormal⟩
+  exact FnormalPrecision_internal (beta:=radix) radix b precision p
+    ⟨hnormal, hnormal, hprecision, hradix, hvNum⟩
 
 -- ---------------------------------------------------------------------------
 -- Minimal normal mantissa (`nNormMin`) and related Coq lemmas
@@ -16052,11 +16087,11 @@ theorem FnormalLtPos {beta : Int} [ValidRadix beta]
     exact_mod_cast (lt_trans (by norm_num : (0 : Int) < 1) hbeta)
   have hp_digit :
       Fdigit (beta:=beta) radix p = precision :=
-    (FnormalPrecision (beta:=beta) radix b precision p)
+    (FnormalPrecision_internal (beta:=beta) radix b precision p)
       ⟨hnormal_p, hnormal'_p, hprecision, hradix, hvNum⟩
   have hq_digit :
       Fdigit (beta:=beta) radix q = precision :=
-    (FnormalPrecision (beta:=beta) radix b precision q)
+    (FnormalPrecision_internal (beta:=beta) radix b precision q)
       ⟨hnormal_q, hnormal'_q, hprecision, hradix, hvNum⟩
   have hp_nonzero : ¬ is_Fzero p := by
     intro hp_zero
@@ -29287,7 +29322,7 @@ The magnitude-bounded Knuth case follows by first applying the restored
 `MDekker_closed` theorem to obtain exactness of `(Iplus p q) - p`, then
 finishing with `MKnuth`. Upstream's Fast section fixes radix 2, represented
 here by `(beta : ℝ) = 2`. -/
-theorem MKnuth2 {beta : Int} [ValidRadix beta]
+theorem MKnuth2_internal {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (precision : Nat)
     (Iplus Iminus :
       FloatSpec.Core.Defs.FlocqFloat beta →
@@ -29349,6 +29384,84 @@ theorem MKnuth2 {beta : Int} [ValidRadix beta]
   exact MKnuth (beta:=beta) bo beta precision Iplus Iminus
     hIplusCorrectBeta IplusSym IminusPlus rfl hβ hprecision hvNum_gt hvNum
     hBoundExp p q hp hq hFirst
+
+/-- Coq: `MKnuth2` with the exact exported Fast-section contract.
+
+The source fixes radix two, requires `1 < precision`, and exports
+`IplusComp`.  Auxiliary existence facts used by the Lean proof are derived
+here from the refined `Fbound`; they are not leaked into the theorem API. -/
+theorem MKnuth2
+    (bo : Fbound_skel) (precision : Nat)
+    (Iplus : FloatSpec.Core.Defs.FlocqFloat 2 →
+      FloatSpec.Core.Defs.FlocqFloat 2 →
+      FloatSpec.Core.Defs.FlocqFloat 2)
+    (IplusCorrect :
+      ∀ p q : FloatSpec.Core.Defs.FlocqFloat 2,
+        Fbounded (beta:=2) bo p → Fbounded (beta:=2) bo q →
+        Closest (beta:=2) bo (2 : ℝ)
+          (_root_.F2R (beta:=2) p + _root_.F2R (beta:=2) q) (Iplus p q))
+    (IplusComp :
+      ∀ p q r s : FloatSpec.Core.Defs.FlocqFloat 2,
+        Fbounded (beta:=2) bo p → Fbounded (beta:=2) bo q →
+        Fbounded (beta:=2) bo r → Fbounded (beta:=2) bo s →
+        _root_.F2R (beta:=2) p = _root_.F2R (beta:=2) r →
+        _root_.F2R (beta:=2) q = _root_.F2R (beta:=2) s →
+        _root_.F2R (beta:=2) (Iplus p q) =
+          _root_.F2R (beta:=2) (Iplus r s))
+    (IplusSym : ∀ p q, Iplus p q = Iplus q p)
+    (IplusOp : ∀ p q,
+      Fopp (beta:=2) (Iplus p q) =
+        Iplus (Fopp (beta:=2) p) (Fopp (beta:=2) q))
+    (Iminus : FloatSpec.Core.Defs.FlocqFloat 2 →
+      FloatSpec.Core.Defs.FlocqFloat 2 →
+      FloatSpec.Core.Defs.FlocqFloat 2)
+    (IminusPlus : ∀ p q,
+      Iminus p q = Iplus p (Fopp (beta:=2) q))
+    (hprecision : 1 < precision)
+    (hvNum : bo.vNum = Zpower_nat 2 precision)
+    (p q : FloatSpec.Core.Defs.FlocqFloat 2)
+    (hAbs : |_root_.F2R (beta:=2) q| ≤ |_root_.F2R (beta:=2) p|)
+    (hp : Fbounded (beta:=2) bo p)
+    (hq : Fbounded (beta:=2) bo q) :
+    _root_.F2R (beta:=2)
+        (Iplus
+          (Iminus p (Iminus (Iplus p q) (Iminus (Iplus p q) p)))
+          (Iminus q (Iminus (Iplus p q) p))) =
+      _root_.F2R (beta:=2) p + _root_.F2R (beta:=2) q -
+        _root_.F2R (beta:=2) (Iplus p q) := by
+  have hprecision_ne : precision ≠ 0 := by omega
+  have hvNum_gt : 1 < bo.vNum := by
+    rw [hvNum, Zpower_nat]
+    have hpow_ge_two : (2 : Int) ≤ 2 ^ precision := by
+      calc
+        (2 : Int) = 2 ^ (1 : Nat) := by norm_num
+        _ ≤ 2 ^ precision := pow_le_pow_right₀ (by norm_num) (by omega)
+    omega
+  have hBoundExp :
+      ∀ r : ℝ, -bo.dExp ≤ (boundR (beta:=2) 2 r).Fexp := by
+    intro r
+    have hnonneg : (0 : Int) ≤ (boundR (beta:=2) 2 r).Fexp := by
+      simp [boundR, boundNat]
+    have hdExp_nonneg : (0 : Int) ≤ bo.dExp := bo.dExp_nonneg
+    omega
+  have hMinTotal : TotalP (isMin' (beta:=2) bo 2) := by
+    intro r
+    have h := MinEx (beta:=2) bo 2 r
+    simpa only [wp, PostCond.noThrow, pure, MinEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, by norm_num, hvNum_gt, hBoundExp r⟩
+  have hMaxTotal : TotalP (isMax' (beta:=2) bo 2) := by
+    intro r
+    have h := MaxEx (beta:=2) bo 2 r
+    simpa only [wp, PostCond.noThrow, pure, MaxEx_check, Id.run,
+      ULift.up_down] using h ⟨rfl, by norm_num, hvNum_gt, hBoundExp r⟩
+  have hTotal : TotalP (Closest (beta:=2) bo (2 : ℝ)) := by
+    intro r
+    have h := ClosestTotal (beta:=2) bo 2 (2 : ℝ) r
+    simpa only [wp, PostCond.noThrow, pure, ClosestTotal_check, Id.run,
+      ULift.up_down] using h ⟨hMinTotal, hMaxTotal⟩
+  exact MKnuth2_internal (beta:=2) bo precision Iplus Iminus IplusCorrect
+    IplusSym IplusOp IminusPlus (by norm_num) rfl hprecision_ne hvNum
+    hvNum_gt hBoundExp hTotal p q hAbs hp hq
 
 /-- Coq: `MKnuthOpp`.
 
@@ -30778,7 +30891,7 @@ theorem Knuth_from_interval {beta : Int} [ValidRadix beta]
   intro p q hp hq
   by_cases hq_le_p : |_root_.F2R (beta:=beta) q| ≤
       |_root_.F2R (beta:=beta) p|
-  · exact MKnuth2 (beta:=beta) bo precision Iplus Iminus IplusCorrect
+  · exact MKnuth2_internal (beta:=beta) bo precision Iplus Iminus IplusCorrect
       IplusSym IplusOp IminusPlus hβ hbetaTwo hprecision hvNum hvNum_gt
       hBoundExp hTotal p q hq_le_p hp hq
   · have hp_lt_q_abs : |_root_.F2R (beta:=beta) p| <
@@ -39127,7 +39240,7 @@ theorem UlpFlessuGe2_from_general_bound {beta : Int} [ValidRadix beta]
 For the radix-2 Axpy setting, closestness bounds the rounding distance by one
 half ulp.  Combining that with `FulpLeGeneral` and solving the resulting
 linear inequality gives the upstream bound on the rounded value. -/
-theorem RoundLeGeneral {beta : Int} [ValidRadix beta]
+theorem RoundLeGeneral_internal {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (precision : Nat)
     (p : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) :
     ⦃⌜Fbounded (beta:=beta) b p ∧ Fbounded' (beta:=beta) b p ∧
@@ -39243,6 +39356,24 @@ theorem RoundLeGeneral {beta : Int} [ValidRadix beta]
       rw [mul_assoc, mul_inv_cancel₀ hden_ne, mul_one]
     _ ≤ (|z| + c) * den⁻¹ := hmul_inv
     _ = |z| * den⁻¹ + c * den⁻¹ := by ring
+
+/-- Coq: `RoundLeGeneral` at the Fast/Axpy section's fixed radix two.
+The public contract retains `1 < precision`, contains one boundedness premise,
+and does not expose the internal duplicate `Fbounded'`. -/
+theorem RoundLeGeneral (b : Fbound_skel) (precision : Nat)
+    (p : FloatSpec.Core.Defs.FlocqFloat 2) (z : ℝ) :
+    ⦃⌜1 < precision ∧ b.vNum = Zpower_nat 2 precision ∧
+        Fbounded (beta:=2) b p ∧
+        Closest (beta:=2) b (2 : ℝ) z p⌝⦄
+    (pure (RoundLeGeneral_check (beta:=2) b precision p z) : Id Unit)
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=2) p| ≤
+        |z| * (1 - (2 : ℝ) ^ (-(precision : Int)))⁻¹ +
+        (2 : ℝ) ^ (-b.dExp - 1) *
+          (1 - (2 : ℝ) ^ (-(precision : Int)))⁻¹⌝⦄ := by
+  intro ⟨hprecision, hvNum, hpBound, hClosest⟩
+  have hprecision_ne : precision ≠ 0 := by omega
+  exact RoundLeGeneral_internal (beta:=2) b precision p z
+    ⟨hpBound, hpBound, hClosest, rfl, hprecision_ne, hvNum⟩
 
 /-- Coq `Axpy_opt` scale algebra.
 
@@ -39848,7 +39979,7 @@ theorem UlpFlessuGe {beta : Int} [ValidRadix beta]
     simpa [Fbounded'] using huBound
   have hround_t :
       |T| ≤ (|A| + c) * (1 - eps)⁻¹ := by
-    have h := RoundLeGeneral (beta:=2) b precision t A
+    have h := RoundLeGeneral_internal (beta:=2) b precision t A
     have hraw :
         |T| ≤ |A| * (1 - eps)⁻¹ + c * (1 - eps)⁻¹ := by
       simpa only [wp, PostCond.noThrow, pure, RoundLeGeneral_check,
@@ -40210,7 +40341,7 @@ theorem Axpy_scale_from_rounding_inputs {beta : Int} [ValidRadix beta]
     simpa [Fbounded'] using htBound
   have ht_round :
       |T| ≤ (|A| + c) * (1 - eps)⁻¹ := by
-    have h := RoundLeGeneral (beta:=2) b precision t A
+    have h := RoundLeGeneral_internal (beta:=2) b precision t A
     have hraw :
         |T| ≤ |A| * (1 - eps)⁻¹ + c * (1 - eps)⁻¹ := by
       simpa only [wp, PostCond.noThrow, pure, RoundLeGeneral_check,
@@ -40724,7 +40855,7 @@ noncomputable def delta_inf_check {beta : Int} [ValidRadix beta]
 
 The first discriminant estimate is the triangle inequality around the three
 rounding errors, with each error bounded by one half ulp via `ClosestUlp`. -/
-theorem delta_inf {beta : Int} [ValidRadix beta]
+theorem delta_inf_internal {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q d : FloatSpec.Core.Defs.FlocqFloat beta) :
     ⦃⌜EvenClosest (beta:=beta) bo (radix : ℝ) precision
@@ -40808,6 +40939,31 @@ theorem delta_inf {beta : Int} [ValidRadix beta]
             (1 / 2 : ℝ) * Fulp (beta:=beta) bo radix precision q) := by
       linarith
 
+/-- Coq: `delta_inf` with the `Discriminant1` section contract restored.
+The radix is definitionally two, and the source's `1 < precision` hypothesis
+is retained instead of weakening it to nonzero precision. -/
+theorem delta_inf (bo : Fbound_skel) (precision : Nat)
+    (a b b' c p q d : FloatSpec.Core.Defs.FlocqFloat 2) :
+    ⦃⌜1 < precision ∧ bo.vNum = Zpower_nat 2 precision ∧
+        EvenClosest (beta:=2) bo (2 : ℝ) precision
+          (_root_.F2R (beta:=2) b * _root_.F2R (beta:=2) b') p ∧
+        EvenClosest (beta:=2) bo (2 : ℝ) precision
+          (_root_.F2R (beta:=2) a * _root_.F2R (beta:=2) c) q ∧
+        EvenClosest (beta:=2) bo (2 : ℝ) precision
+          (_root_.F2R (beta:=2) p - _root_.F2R (beta:=2) q) d⌝⦄
+    (pure (delta_inf_check (beta:=2) bo 2 precision a b b' c p q d) :
+      Id Unit)
+    ⦃⇓_ => ⌜|_root_.F2R (beta:=2) d -
+          (_root_.F2R (beta:=2) b * _root_.F2R (beta:=2) b' -
+            _root_.F2R (beta:=2) a * _root_.F2R (beta:=2) c)| ≤
+        (1 / 2 : ℝ) * Fulp (beta:=2) bo 2 precision d +
+          ((1 / 2 : ℝ) * Fulp (beta:=2) bo 2 precision p +
+            (1 / 2 : ℝ) * Fulp (beta:=2) bo 2 precision q)⌝⦄ := by
+  intro ⟨hprecision, hvNum, hRoundp, hRoundq, hRoundd⟩
+  have hprecision_ne : precision ≠ 0 := by omega
+  exact delta_inf_internal (beta:=2) bo 2 precision a b b' c p q d
+    ⟨hRoundp, hRoundq, hRoundd, rfl, by norm_num, hprecision_ne, hvNum⟩
+
 noncomputable def discri1_check {beta : Int} [ValidRadix beta]
     (bo : Fbound_skel) (radix : Int) (precision : Nat)
     (a b b' c p q d : FloatSpec.Core.Defs.FlocqFloat beta) : Unit :=
@@ -40860,7 +41016,7 @@ theorem discri1 {beta : Int} [ValidRadix beta]
           (_root_.F2R (beta:=beta) b * _root_.F2R (beta:=beta) b' -
             _root_.F2R (beta:=beta) a * _root_.F2R (beta:=beta) c)| ≤
         (1 / 2 : ℝ) * ud + ((1 / 2 : ℝ) * up + (1 / 2 : ℝ) * uq) := by
-    have h := delta_inf (beta:=beta) bo radix precision a b b' c p q d
+    have h := delta_inf_internal (beta:=beta) bo radix precision a b b' c p q d
     simpa only [wp, PostCond.noThrow, pure, delta_inf_check, Id.run,
       ULift.up_down, ud, up, uq] using
       h ⟨hRoundp, hRoundq, hRoundd, hbeta, hradix, hprecision, hvNum⟩
@@ -41856,7 +42012,7 @@ noncomputable def ClosestErrorBoundNormal_check {beta : Int} [ValidRadix beta]
 /-- Coq: `ClosestErrorBoundNormal`.
 
 Normal-case closest-rounding error bound in the rewritten precision form. -/
-theorem ClosestErrorBoundNormal {beta : Int} [ValidRadix beta]
+theorem ClosestErrorBoundNormal_internal {beta : Int} [ValidRadix beta]
     (b : Fbound_skel) (radix : Int) [ValidRadix radix] (precision : Nat)
     (f : FloatSpec.Core.Defs.FlocqFloat beta) (z : ℝ) :
     ⦃⌜beta = radix ∧ 1 < radix ∧ precision ≠ 0 ∧
@@ -41902,6 +42058,28 @@ theorem ClosestErrorBoundNormal {beta : Int} [ValidRadix beta]
     _ = |_root_.F2R (beta:=beta) f| *
           ((1 / 2 : ℝ) * (radix : ℝ) ^ (1 - (precision : Int))) := by
             ring
+
+/-- Coq: `ClosestErrorBoundNormal` with the exact exported hypotheses.
+`Closest` already contains boundedness, so no duplicate `Fbounded` premise is
+exposed; the source's strict `1 < precision` is preserved. -/
+theorem ClosestErrorBoundNormal (b : Fbound_skel)
+    (radix : Int) [ValidRadix radix] (precision : Nat) (z : ℝ)
+    (f : FloatSpec.Core.Defs.FlocqFloat radix) :
+    ⦃⌜1 < radix ∧ 1 < precision ∧
+        b.vNum = Zpower_nat radix precision ∧
+        Closest (beta:=radix) b (radix : ℝ) z f ∧
+        Fnormal (beta:=radix) radix b
+          (Fnormalize (beta:=radix) radix b precision f)⌝⦄
+    (pure (ClosestErrorBoundNormal_check
+      (beta:=radix) b radix precision f z) : Id Unit)
+    ⦃⇓_ => ⌜|z - _root_.F2R (beta:=radix) f| ≤
+        |_root_.F2R (beta:=radix) f| *
+          ((1 / 2 : ℝ) * (radix : ℝ) ^ (1 - (precision : Int)))⌝⦄ := by
+  intro ⟨hradix, hprecision, hvNum, hClosest, hnormal⟩
+  have hprecision_ne : precision ≠ 0 := by omega
+  exact ClosestErrorBoundNormal_internal (beta:=radix)
+    b radix precision f z
+      ⟨rfl, hradix, hprecision_ne, hvNum, hClosest.1, hnormal, hClosest⟩
 
 /-- Coq Veltkamp local lemma `RleRRounded`.
 
@@ -49408,7 +49586,7 @@ theorem ClosestRoundeLeNormal {beta : Int} [ValidRadix beta]
     simpa [hNormEq] using hnormal
   have hdist :
       |z - F| ≤ |F| * ((1 / 2 : ℝ) * eps) := by
-    have h := ClosestErrorBoundNormal (beta:=beta) b radix precision f z
+    have h := ClosestErrorBoundNormal_internal (beta:=beta) b radix precision f z
     simpa only [wp, PostCond.noThrow, pure, ClosestErrorBoundNormal_check,
       Id.run, ULift.up_down, F, eps] using
       h ⟨hbeta, hradix, hprecision_ne, hvNum, hnormal.1, hNormalNorm, hClosest⟩
@@ -49649,7 +49827,7 @@ theorem s2Ge (t : Nat) :
   omega
 
 /-- Coq Dekker local lemma `s2Le`: `s + s <= t + 1`. -/
-theorem s2Le (t : Nat) :
+theorem s2Le_internal (t : Nat) :
     ((t : Int) - (Nat.div2 t : Int)) +
         ((t : Int) - (Nat.div2 t : Int)) ≤
       (t : Int) + 1 := by
@@ -49657,6 +49835,15 @@ theorem s2Le (t : Nat) :
   have hmod : t = 2 * (t / 2) + t % 2 := (Nat.div_add_mod t 2).symm
   have hmod_lt : t % 2 < 2 := Nat.mod_lt t (by decide : 0 < 2)
   omega
+
+/-- Coq Dekker local lemma `s2Le` with the section variables that survive
+generalization.  Although the proof does not use the bound or `4 ≤ t`, they
+are part of the exported Coq contract and therefore remain public. -/
+theorem s2Le (_b : Fbound_skel) (t : Nat) (_pGe : 4 ≤ t) :
+    ((t : Int) - (Nat.div2 t : Int)) +
+        ((t : Int) - (Nat.div2 t : Int)) ≤
+      (t : Int) + 1 :=
+  s2Le_internal t
 
 /-- Coq generic FMA local lemma `UnMoinsPos`.
 
@@ -55629,7 +55816,7 @@ theorem Boundedx2y2 {beta : Int} [ValidRadix beta]
     dsimp [s]
     omega
   have hRadixSplit : (s - 1) + (s - 1) ≤ t := by
-    have h := s2Le t
+    have h := s2Le_internal t
     dsimp [s]
     omega
   have hEvenSplit (htEven : Even t) : s + s ≤ t := by
@@ -55829,7 +56016,7 @@ theorem Dekker_aux {beta : Int} [ValidRadix beta]
     dsimp [s]
     omega
   have hHst2 : 2 * (s : Int) ≤ (t : Int) + 1 := by
-    have h := s2Le t
+    have h := s2Le_internal t
     dsimp [s]
     omega
   have hHst3 : (t : Int) ≤ 2 * (s : Int) := by
@@ -56158,7 +56345,7 @@ theorem Dekker2_aux {beta : Int} [ValidRadix beta]
     dsimp [s]
     omega
   have hHst2 : 2 * (s : Int) ≤ (t : Int) + 1 := by
-    have h := s2Le t
+    have h := s2Le_internal t
     dsimp [s]
     omega
   have hHst3 : (t : Int) ≤ 2 * (s : Int) := by
@@ -58311,11 +58498,11 @@ theorem FnormalUnique {beta : Int} [ValidRadix beta]
       hnormal_p
   have hp_digit :
       Fdigit (beta:=beta) radix p = precision :=
-    (FnormalPrecision (beta:=beta) radix b precision p)
+    (FnormalPrecision_internal (beta:=beta) radix b precision p)
       ⟨hnormal_p, hnormal'_p, hprecision, hradix, hvNum⟩
   have hq_digit :
       Fdigit (beta:=beta) radix q = precision :=
-    (FnormalPrecision (beta:=beta) radix b precision q)
+    (FnormalPrecision_internal (beta:=beta) radix b precision q)
       ⟨hnormal_q, hnormal'_q, hprecision, hradix, hvNum⟩
   exact
     (FdigitEq (beta:=beta) radix p q)
