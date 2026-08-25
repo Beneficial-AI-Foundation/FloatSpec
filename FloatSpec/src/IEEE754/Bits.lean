@@ -1220,7 +1220,7 @@ noncomputable def b64_compare (x y : binary64) : Option Int :=
 -- Coq: `Definition bits_of_b32 : binary32 -> Z := bits_of_binary_float 23 8.`
 def bits_of_b32 (x : binary32) : Int :=
   letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   bits_of_binary_float (prec := 24) (emax := 128) x
 
 -- Coq: `Definition b32_of_bits : Z -> binary32 := binary_float_of_bits 23 8 ...`.
@@ -1344,7 +1344,7 @@ noncomputable def b32_succ (x : binary32) : binary32 :=
 -- Bsqrt _ _ Hprec Hprec_emax unop_nan_pl32.`
 noncomputable def b32_sqrt (mode : RoundingMode) (x : binary32) : binary32 := by
   letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
@@ -1358,7 +1358,7 @@ noncomputable def b32_sqrt (mode : RoundingMode) (x : binary32) : binary32 := by
 -- Bplus _ _ Hprec Hprec_emax binop_nan_pl32.`
 noncomputable def b32_plus (mode : RoundingMode) (x y : binary32) : binary32 := by
   letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
@@ -1373,7 +1373,7 @@ noncomputable def b32_plus (mode : RoundingMode) (x y : binary32) : binary32 := 
 -- Bminus _ _ Hprec Hprec_emax binop_nan_pl32.`
 noncomputable def b32_minus (mode : RoundingMode) (x y : binary32) : binary32 := by
   letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
@@ -1388,7 +1388,7 @@ noncomputable def b32_minus (mode : RoundingMode) (x y : binary32) : binary32 :=
 -- Bmult _ _ Hprec Hprec_emax binop_nan_pl32.`
 noncomputable def b32_mult (mode : RoundingMode) (x y : binary32) : binary32 := by
   letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
@@ -1403,7 +1403,7 @@ noncomputable def b32_mult (mode : RoundingMode) (x y : binary32) : binary32 := 
 -- Bdiv _ _ Hprec Hprec_emax binop_nan_pl32.`
 noncomputable def b32_div (mode : RoundingMode) (x y : binary32) : binary32 := by
   letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
@@ -1417,7 +1417,7 @@ noncomputable def b32_div (mode : RoundingMode) (x y : binary32) : binary32 := b
 -- Bfma _ _ Hprec Hprec_emax ternop_nan_pl32.`
 noncomputable def b32_fma (mode : RoundingMode) (x y z : binary32) : binary32 := by
   letI : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (128 : Int) - (24 : Int)) (24 : Int)) := by
@@ -1430,7 +1430,7 @@ noncomputable def b32_fma (mode : RoundingMode) (x y z : binary32) : binary32 :=
 -- Coq: `Definition bits_of_b64 : binary64 -> Z := bits_of_binary_float 52 11.`
 def bits_of_b64 (x : binary64) : Int :=
   letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   bits_of_binary_float (prec := 53) (emax := 1024) x
 
 -- Coq: `Definition b64_of_bits : Z -> binary64 := binary_float_of_bits 52 11 ...`.
@@ -1553,7 +1553,7 @@ noncomputable def b64_succ (x : binary64) : binary64 :=
 -- Bsqrt _ _ Hprec Hprec_emax unop_nan_pl64.`
 noncomputable def b64_sqrt (mode : RoundingMode) (x : binary64) : binary64 := by
   letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
@@ -1567,7 +1567,7 @@ noncomputable def b64_sqrt (mode : RoundingMode) (x : binary64) : binary64 := by
 -- Bplus _ _ Hprec Hprec_emax binop_nan_pl64.`
 noncomputable def b64_plus (mode : RoundingMode) (x y : binary64) : binary64 := by
   letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
@@ -1582,7 +1582,7 @@ noncomputable def b64_plus (mode : RoundingMode) (x y : binary64) : binary64 := 
 -- Bminus _ _ Hprec Hprec_emax binop_nan_pl64.`
 noncomputable def b64_minus (mode : RoundingMode) (x y : binary64) : binary64 := by
   letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
@@ -1597,7 +1597,7 @@ noncomputable def b64_minus (mode : RoundingMode) (x y : binary64) : binary64 :=
 -- Bmult _ _ Hprec Hprec_emax binop_nan_pl64.`
 noncomputable def b64_mult (mode : RoundingMode) (x y : binary64) : binary64 := by
   letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
@@ -1612,7 +1612,7 @@ noncomputable def b64_mult (mode : RoundingMode) (x y : binary64) : binary64 := 
 -- Bdiv _ _ Hprec Hprec_emax binop_nan_pl64.`
 noncomputable def b64_div (mode : RoundingMode) (x y : binary64) : binary64 := by
   letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by
@@ -1626,7 +1626,7 @@ noncomputable def b64_div (mode : RoundingMode) (x y : binary64) : binary64 := b
 -- Bfma _ _ Hprec Hprec_emax ternop_nan_pl64.`
 noncomputable def b64_fma (mode : RoundingMode) (x y z : binary64) : binary64 := by
   letI : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
-  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num, by norm_num⟩
+  letI : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   letI :
       FloatSpec.Core.Generic_fmt.Monotone_exp
         (FLT_exp (3 - (1024 : Int) - (53 : Int)) (53 : Int)) := by

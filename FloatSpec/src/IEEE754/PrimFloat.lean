@@ -30,20 +30,25 @@ abbrev primEmax : Int := 1024
 -- exponent in an unsigned 63-bit word.
 abbrev shift : Int := 2 * primEmax + primPrec
 
-private instance instPrimPrecGt0 : Prec_gt_0 primPrec :=
+@[reducible] private def primPrecGt0Witness : Prec_gt_0 primPrec :=
   ⟨by norm_num [primPrec]⟩
 
-private instance instPrimPrecLtEmax : Prec_lt_emax primPrec primEmax :=
-  ⟨by
-    norm_num [primPrec, primEmax],
-   by
-    norm_num [primEmax]⟩
+@[reducible] private def primPrecLtEmaxWitness : Prec_lt_emax primPrec primEmax :=
+  ⟨by norm_num [primPrec, primEmax]⟩
+
+-- These mirror Coq's `Local Instance Hprec` and `Local Instance Hmax`.
+-- Keeping the registrations local prevents importing this module from
+-- silently installing binary64 witnesses in an unrelated caller's instance
+-- search, while all declarations below still elaborate with the witnesses.
+local instance : Prec_gt_0 primPrec := primPrecGt0Witness
+
+local instance : Prec_lt_emax primPrec primEmax := primPrecLtEmaxWitness
 
 -- Coq's local binary64 instances, retained under their source names so the
 -- extracted interface has a direct correspondence.
-abbrev Hprec : Prec_gt_0 primPrec := instPrimPrecGt0
+abbrev Hprec : Prec_gt_0 primPrec := primPrecGt0Witness
 
-abbrev Hmax : Prec_lt_emax primPrec primEmax := instPrimPrecLtEmax
+abbrev Hmax : Prec_lt_emax primPrec primEmax := primPrecLtEmaxWitness
 
 private instance instPrimFLTExpMonotone :
     FloatSpec.Core.Generic_fmt.Monotone_exp
@@ -433,11 +438,34 @@ noncomputable def SFcompare (x y : StandardFloat) : Option Ordering :=
       else if SFltb y x then some Ordering.gt
       else some Ordering.eq
 
--- Coq `PrimFloat.flatten_cmp_opt`: primitive comparison maps the unordered
--- NaN case to `Eq`, while Flocq's model keeps it visible as `None`.
-def flatten_cmp_opt : Option Ordering → Ordering
-  | some c => c
-  | none => Ordering.eq
+/-! Coq's primitive comparison has four observable outcomes.  In particular,
+NaN is `FNotComparable`; it must not be collapsed into ordinary equality. -/
+
+inductive float_comparison where
+  | FNotComparable
+  | FEq
+  | FLt
+  | FGt
+deriving DecidableEq, Repr
+
+abbrev FNotComparable : float_comparison :=
+  float_comparison.FNotComparable
+
+abbrev FEq : float_comparison :=
+  float_comparison.FEq
+
+abbrev FLt : float_comparison :=
+  float_comparison.FLt
+
+abbrev FGt : float_comparison :=
+  float_comparison.FGt
+
+-- Coq `FloatAxioms.flatten_cmp_opt`.
+def flatten_cmp_opt : Option Ordering → float_comparison
+  | none => FNotComparable
+  | some Ordering.eq => FEq
+  | some Ordering.lt => FLt
+  | some Ordering.gt => FGt
 
 noncomputable def eqb (x y : PrimitiveFloat) : Bool :=
   SFeqb (Prim2SF x) (Prim2SF y)
@@ -448,7 +476,7 @@ noncomputable def ltb (x y : PrimitiveFloat) : Bool :=
 noncomputable def leb (x y : PrimitiveFloat) : Bool :=
   SFleb (Prim2SF x) (Prim2SF y)
 
-noncomputable def compare (x y : PrimitiveFloat) : Ordering :=
+noncomputable def compare (x y : PrimitiveFloat) : float_comparison :=
   flatten_cmp_opt (SFcompare (Prim2SF x) (Prim2SF y))
 
 noncomputable def Beqb (x y : PrimBinaryFloat) : Bool :=

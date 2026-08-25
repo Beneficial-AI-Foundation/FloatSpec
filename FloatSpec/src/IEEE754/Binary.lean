@@ -1744,7 +1744,7 @@ theorem fexp_emax :
   -- Show max (emax - prec) (3 - emax - prec) = emax - prec
   -- This requires (3 - emax - prec) ≤ (emax - prec), i.e., 3 - emax ≤ emax, i.e., 3 ≤ 2*emax
   -- From Prec_lt_emax we have emax ≥ 2, so 2*emax ≥ 4 > 3
-  have ⟨_, hemax⟩ := (inferInstance : Prec_lt_emax prec emax)
+  have hemax := (inferInstance : Prec_lt_emax prec emax).emax_ge_2
   have h : 3 - emax - prec ≤ emax - prec := by
     -- Simplify to 3 - emax ≤ emax, i.e., 3 ≤ 2*emax
     have h2emax : 4 ≤ 2 * emax := by linarith
@@ -3694,7 +3694,8 @@ theorem emin_lt_emax_B :
   intro _
   simp only [wp, PostCond.noThrow, pure, emin_lt_emax_check_B, Id.run, PredTrans.pure, PredTrans.apply]
   -- From Prec_lt_emax we have prec < emax and emax ≥ 2
-  have ⟨hprec, hemax⟩ := (inferInstance : Prec_lt_emax prec emax)
+  have hprec := (inferInstance : Prec_lt_emax prec emax).prec_lt_emax
+  have hemax := (inferInstance : Prec_lt_emax prec emax).emax_ge_2
   -- Goal: 3 - emax - prec < emax
   -- Rearranging: 3 - prec < 2 * emax
   -- Since prec > 0 (from Prec_gt_0), we have 3 - prec < 3

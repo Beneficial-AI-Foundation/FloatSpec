@@ -34,7 +34,7 @@ noncomputable section
 namespace Binary64
 
 instance : Prec_gt_0 (53 : Int) := ⟨by grind⟩
-instance : Prec_lt_emax (53 : Int) (1023 : Int) := ⟨by grind, by grind⟩
+instance : Prec_lt_emax (53 : Int) (1023 : Int) := ⟨by grind⟩
 
 /-- Decode a `UInt64` bit pattern into a `Binary754 53 1023` (binary64 format). -/
 def ofBits (w : UInt64) : Binary754 53 1023 :=

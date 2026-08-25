@@ -122,8 +122,15 @@ We model it as `0 < prec` so arithmetic lemmas may use it.
 class Prec_lt_emax (prec emax : Int) : Prop where
   /-- Precision is strictly less than emax (IEEE 754 constraint) -/
   (prec_lt_emax : prec < emax)
-  /-- emax is large enough for the exponent formula to work (emax ≥ 2) -/
-  (emax_ge_2 : 2 ≤ emax)
+
+/-- Coq's `Prec_lt_emax` exports only `prec < emax`.  The lower bound on
+`emax` used by binary-format proofs is a consequence of the separate
+`Prec_gt_0` premise, not an additional field of the class. -/
+theorem Prec_lt_emax.emax_ge_2 {prec emax : Int}
+    [Prec_gt_0 prec] (h : Prec_lt_emax prec emax) : 2 ≤ emax := by
+  have hprec_pos := (inferInstance : Prec_gt_0 prec).pos
+  have hprec_lt := h.prec_lt_emax
+  omega
 
 /-- Compatibility name for the core non-FTZ exponent predicate. -/
 abbrev Exp_not_FTZ (fexp : Int → Int) : Prop :=

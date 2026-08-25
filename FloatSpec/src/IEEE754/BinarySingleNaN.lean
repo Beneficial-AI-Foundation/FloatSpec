@@ -816,7 +816,8 @@ theorem emin_lt_emax :
   ⦃⇓_ => ⌜(3 - emax - prec) < emax⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure, emin_lt_emax_check, Id.run, PredTrans.pure, PredTrans.apply]
-  have ⟨hprec, hemax⟩ := (inferInstance : Prec_lt_emax prec emax)
+  have hprec := (inferInstance : Prec_lt_emax prec emax).prec_lt_emax
+  have hemax := (inferInstance : Prec_lt_emax prec emax).emax_ge_2
   have hprec_pos := (inferInstance : Prec_gt_0 prec).pos
   have h : (3 - emax - prec) < emax := by linarith
   trivial
