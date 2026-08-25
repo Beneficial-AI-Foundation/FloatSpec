@@ -42,7 +42,7 @@ noncomputable def generic_format (beta : Int) [ValidRadix beta] (fexp : Int → 
   FloatSpec.Core.Generic_fmt.generic_format beta fexp x
 
 /-- Bridge: magnitude function in root namespace -/
-noncomputable def mag (beta : Int) [ValidRadix beta] (x : ℝ) : Int :=
+noncomputable abbrev mag (beta : Int) [ValidRadix beta] (x : ℝ) : Int :=
   (FloatSpec.Core.Raux.mag beta x)
 
 /-- Bridge: integer truncation toward zero -/

@@ -17319,11 +17319,26 @@ theorem MaxEx {beta : Int} [ValidRadix beta]
         rw [hf_zero]
         exact hmax_le_zero_real
 
--- Legacy floating-point format compatibility
-structure PffFloat where
-  mantissa : Int
-  exponent : Int
-  sign : Bool
+-- Pff's Coq `float` is the same signed-mantissa/exponent record used by Core.
+-- Keep only a source-facing name: this is a definitional alias, not a second
+-- sign-magnitude carrier (which previously admitted a second representation of
+-- zero and lost the source's signed `Fnum`).
+abbrev PffFloat (beta : Int) [ValidRadix beta] :=
+  FloatSpec.Core.Defs.FlocqFloat beta
+
+namespace PffFloat
+
+/-- Compatibility view used by a few auxiliary sign-magnitude calculations. -/
+def mantissa {beta : Int} [ValidRadix beta] (f : PffFloat beta) : Int :=
+  f.Fnum.natAbs
+
+def exponent {beta : Int} [ValidRadix beta] (f : PffFloat beta) : Int :=
+  f.Fexp
+
+def sign {beta : Int} [ValidRadix beta] (f : PffFloat beta) : Bool :=
+  decide (f.Fnum < 0)
+
+end PffFloat
 
 -- Equality of Flocq-style floats by components (Coq: `floatEq`)
 -- We mirror Coq's record equality lemma for the Flocq float record
@@ -17360,13 +17375,13 @@ theorem floatDec {beta : Int} [ValidRadix beta]
   exact eq_or_ne x y
 
 -- Conversion between Pff and Flocq formats
-def pff_to_flocq (beta : Int) [ValidRadix beta] (f : PffFloat) : FloatSpec.Core.Defs.FlocqFloat beta :=
-  FloatSpec.Core.Defs.FlocqFloat.mk (if f.sign then -f.mantissa else f.mantissa) f.exponent
+def pff_to_flocq (beta : Int) [ValidRadix beta]
+    (f : PffFloat beta) : FloatSpec.Core.Defs.FlocqFloat beta :=
+  f
 
-def flocq_to_pff {beta : Int} [ValidRadix beta] (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFloat :=
-  { mantissa := Int.natAbs f.Fnum,
-    exponent := f.Fexp,
-    sign := f.Fnum < 0 }
+def flocq_to_pff {beta : Int} [ValidRadix beta]
+    (f : FloatSpec.Core.Defs.FlocqFloat beta) : PffFloat beta :=
+  f
 
 
 -- Zero float at exponent z (Coq: `Fzero`)
@@ -17655,16 +17670,15 @@ theorem NisFzeroComp {beta : Int} [ValidRadix beta]
 
 -- Coq: `Fle_Zle` — compare two floats of same exponent by their mantissas
 -- We mirror the Coq statement Fle_Zle: n1 ≤ n2 → Fle (Float n1 d) (Float n2 d)
--- Our Pff compatibility struct `PffFloat` uses fields (mantissa, exponent, sign).
--- We state an analogous lemma at the level of reals via `F2R ∘ pff_to_flocq`.
+-- Pff's source `float` has the signed fields `Fnum` and `Fexp`, exactly as Core.
 noncomputable def Fle_Zle_check (beta : Int) [ValidRadix beta] (n1 n2 d : Int) : Unit :=
   ()
 
 theorem Fle_Zle (beta : Int) [ValidRadix beta] (n1 n2 d : Int) :
     ⦃⌜1 < beta ∧ n1 ≤ n2⌝⦄
     (pure (Fle_Zle_check beta n1 n2 d) : Id Unit)
-    ⦃⇓_ => ⌜_root_.F2R (pff_to_flocq beta { mantissa := n1, exponent := d, sign := false })
-            ≤ _root_.F2R (pff_to_flocq beta { mantissa := n2, exponent := d, sign := false })⌝⦄ := by
+    ⦃⇓_ => ⌜_root_.F2R (pff_to_flocq beta { Fnum := n1, Fexp := d })
+            ≤ _root_.F2R (pff_to_flocq beta { Fnum := n2, Fexp := d })⌝⦄ := by
   intro ⟨hβ, hn⟩
   simp only [wp, PostCond.noThrow, pure, Fle_Zle_check, Id.run,
     ULift.up_down]
@@ -20891,10 +20905,12 @@ theorem Fabs_Fzero {beta : Int} [ValidRadix beta]
 
 -- Compatibility operations
 -- pff_add: Add two PffFloats by converting through FlocqFloat and using Calc.Operations.Fplus
-def pff_add (beta : Int) [ValidRadix beta] (x y : PffFloat) : PffFloat :=
+def pff_add (beta : Int) [ValidRadix beta]
+    (x y : PffFloat beta) : PffFloat beta :=
   flocq_to_pff (FloatSpec.Calc.Operations.Fplus beta (pff_to_flocq beta x) (pff_to_flocq beta y))
 
-def pff_mul (beta : Int) [ValidRadix beta] (x y : PffFloat) : PffFloat :=
+def pff_mul (beta : Int) [ValidRadix beta]
+    (x y : PffFloat beta) : PffFloat beta :=
   flocq_to_pff (FloatSpec.Calc.Operations.Fmult beta (pff_to_flocq beta x) (pff_to_flocq beta y))
 
 -- Error bounds compatibility

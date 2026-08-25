@@ -20,90 +20,29 @@ open Std.Do
 variable (beta : Int) [ValidRadix beta]
 
 -- Convert Pff float to Flocq float
-def pff_to_float (f : PffFloat) : FloatSpec.Core.Defs.FlocqFloat beta :=
+def pff_to_float (f : PffFloat beta) : FloatSpec.Core.Defs.FlocqFloat beta :=
   pff_to_flocq beta f
 
 -- Convert Flocq float to real number via Pff
-noncomputable def pff_to_R (f : PffFloat) : ℝ :=
+noncomputable def pff_to_R (f : PffFloat beta) : ℝ :=
   _root_.F2R (pff_to_flocq beta f)
 
 -- Conversion preserves value
-theorem pff_flocq_equiv (f : PffFloat) :
+theorem pff_flocq_equiv (f : PffFloat beta) :
   pff_to_R beta f = _root_.F2R (pff_to_flocq beta f) := by
   rfl
 
 -- Conversion is bijective for valid inputs
 theorem pff_flocq_bijection (f : FloatSpec.Core.Defs.FlocqFloat beta) :
   pff_to_flocq beta (flocq_to_pff f) = f := by
-  cases f with
-  | mk Fnum Fexp =>
-    simp only [flocq_to_pff, pff_to_flocq, FloatSpec.Core.Defs.FlocqFloat.mk.injEq]
-    constructor
-    · -- Fnum part
-      by_cases h : Fnum < 0
-      · -- Fnum < 0 case: sign = true, so we negate |Fnum| = -Fnum back to Fnum
-        simp only [h, decide_true, ↓reduceIte]
-        omega
-      · -- Fnum ≥ 0 case: sign = false, so |Fnum| = Fnum
-        simp only [h, decide_false, ↓reduceIte]
-        push Not at h
-        exact Int.natAbs_of_nonneg h
-    · -- Fexp part is trivially equal
-      trivial
+  rfl
 
-/-- A well-formed PffFloat has non-negative mantissa and consistent sign:
-    - mantissa ≥ 0 (sign-magnitude representation uses absolute value)
-    - if sign is true (negative), mantissa must be positive (no negative zero ambiguity) -/
-def PffFloat.wellFormed (f : PffFloat) : Prop :=
-  f.mantissa ≥ 0 ∧ (f.sign = true → f.mantissa > 0)
-
-theorem flocq_pff_bijection (f : PffFloat) (hwf : f.wellFormed) :
+theorem flocq_pff_bijection (f : PffFloat beta) :
   flocq_to_pff (pff_to_flocq beta f) = f := by
-  -- Extract wellFormed conditions
-  obtain ⟨h_mant_nonneg, h_sign_pos⟩ := hwf
-  -- Unfold the conversion functions
-  simp only [flocq_to_pff, pff_to_flocq]
-  -- We need to show three field equalities
-  cases f with
-  | mk mantissa exponent sign =>
-    simp only [PffFloat.mk.injEq]
-    -- Goal: ↑(if sign = true then -mantissa else mantissa).natAbs = mantissa ∧
-    --       True ∧ decide ((if sign = true then -mantissa else mantissa) < 0) = sign
-    -- Simplify the hypotheses
-    simp only [PffFloat.mantissa, PffFloat.sign] at h_mant_nonneg h_sign_pos
-    refine ⟨?mant, trivial, ?sign⟩
-    case mant =>
-      -- mantissa field: Int.natAbs (if sign then -mantissa else mantissa) = mantissa
-      cases hsign : sign with
-      | true =>
-        simp only [↓reduceIte]
-        -- -mantissa, and we need Int.natAbs (-mantissa) = mantissa
-        -- Since mantissa > 0 (from h_sign_pos), -mantissa < 0
-        have h_pos : mantissa > 0 := h_sign_pos hsign
-        rw [Int.natAbs_neg]
-        exact Int.natAbs_of_nonneg (le_of_lt h_pos)
-      | false =>
-        -- if false = true then -mantissa else mantissa simplifies to mantissa
-        simp only [Bool.false_eq_true, ↓reduceIte]
-        -- mantissa ≥ 0, so Int.natAbs mantissa = mantissa
-        exact Int.natAbs_of_nonneg h_mant_nonneg
-    case sign =>
-      -- sign field: decide ((if sign then -mantissa else mantissa) < 0) = sign
-      cases hsign : sign with
-      | true =>
-        simp only [↓reduceIte]
-        -- Need: decide (-mantissa < 0) = true
-        have h_pos : mantissa > 0 := h_sign_pos hsign
-        simp only [Left.neg_neg_iff, h_pos, decide_true]
-      | false =>
-        -- if false = true then -mantissa else mantissa simplifies to mantissa
-        simp only [Bool.false_eq_true, ↓reduceIte]
-        -- Need: decide (mantissa < 0) = false
-        have h_nn : ¬(mantissa < 0) := not_lt.mpr h_mant_nonneg
-        simp only [h_nn, decide_false]
+  rfl
 
 -- Pff operations match Flocq operations
-theorem pff_add_equiv (x y : PffFloat) :
+theorem pff_add_equiv (x y : PffFloat beta) :
   pff_to_R beta (pff_add beta x y) =
   _root_.F2R (FloatSpec.Calc.Operations.Fplus beta (pff_to_flocq beta x) (pff_to_flocq beta y)) := by
   -- Unfold pff_to_R and pff_add
@@ -111,7 +50,7 @@ theorem pff_add_equiv (x y : PffFloat) :
   -- Use the bijection lemma: pff_to_flocq (flocq_to_pff f) = f
   rw [pff_flocq_bijection]
 
-theorem pff_mul_equiv (x y : PffFloat) :
+theorem pff_mul_equiv (x y : PffFloat beta) :
   pff_to_R beta (pff_mul beta x y) =
   _root_.F2R (FloatSpec.Calc.Operations.Fmult beta (pff_to_flocq beta x) (pff_to_flocq beta y)) := by
   -- Unfold pff_to_R and pff_mul
@@ -383,7 +322,7 @@ theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec]
   have hpBound : pGivesBound 2 bnd prec := by
     have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
-        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat 2 (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hx_fmt_bnd : generic_format 2 (FLT_exp (-bnd.dExp) prec) x := by
@@ -402,12 +341,13 @@ theorem Fast2Sum_correct (emin prec : Int) [Prec_gt_0 prec]
     ⟨fy, hfy_val, hfy_bound⟩
   have hprec_pos : (0 : Int) < prec := lt_trans Int.zero_lt_one hprec
   have hprec_nonneg : (0 : Int) ≤ prec := le_of_lt hprec_pos
-  have hprec_toNat_abs : Int.toNat (Int.natAbs prec) = prec.toNat := by
-    rw [Int.natAbs_of_nonneg hprec_nonneg]
+  have hprec_toNat_abs : prec.natAbs = prec.toNat := by
+    apply Nat.cast_injective (R := Int)
+    rw [Int.natAbs_of_nonneg hprec_nonneg, Int.toNat_of_nonneg hprec_nonneg]
   have hpBound_toNat : bnd.vNum = Zpower_nat 2 prec.toNat := by
     unfold pGivesBound at hpBound
     calc
-      bnd.vNum = Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := hpBound
+      bnd.vNum = Zpower_nat 2 (prec.natAbs) := hpBound
       _ = Zpower_nat 2 prec.toNat := by rw [hprec_toNat_abs]
   have hvNum : bo.vNum = Zpower_nat 2 prec.toNat := by
     unfold bo toFboundSkel
@@ -656,7 +596,7 @@ theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec]
   have hpBound : pGivesBound 2 bnd prec := by
     have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
-        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat 2 (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hx_fmt_bnd : generic_format 2 (FLT_exp (-bnd.dExp) prec) x := by
@@ -675,12 +615,13 @@ theorem TwoSum_correct (emin prec : Int) [Prec_gt_0 prec]
     ⟨fy, hfy_val, hfy_bound⟩
   have hprec_pos : (0 : Int) < prec := lt_trans Int.zero_lt_one hprec
   have hprec_nonneg : (0 : Int) ≤ prec := le_of_lt hprec_pos
-  have hprec_toNat_abs : Int.toNat (Int.natAbs prec) = prec.toNat := by
-    rw [Int.natAbs_of_nonneg hprec_nonneg]
+  have hprec_toNat_abs : prec.natAbs = prec.toNat := by
+    apply Nat.cast_injective (R := Int)
+    rw [Int.natAbs_of_nonneg hprec_nonneg, Int.toNat_of_nonneg hprec_nonneg]
   have hpBound_toNat : bnd.vNum = Zpower_nat 2 prec.toNat := by
     unfold pGivesBound at hpBound
     calc
-      bnd.vNum = Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := hpBound
+      bnd.vNum = Zpower_nat 2 (prec.natAbs) := hpBound
       _ = Zpower_nat 2 prec.toNat := by rw [hprec_toNat_abs]
   have hvNum : bo.vNum = Zpower_nat 2 prec.toNat := by
     unfold bo toFboundSkel
@@ -1269,7 +1210,7 @@ theorem Veltkamp_round_N_witnesses (beta emin prec s : Int) [ValidRadix beta] [P
   have hpBound : pGivesBound beta bnd prec := by
     have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
-        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat beta (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -1347,7 +1288,7 @@ theorem Veltkamp_tail_round_N_witnesses (beta emin prec s : Int) [ValidRadix bet
   have hpBound : pGivesBound beta bnd prec := by
     have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
-        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat beta (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -1418,7 +1359,7 @@ theorem Veltkamp_Even_from_reduced_evenClosest (beta emin prec s : Int) [ValidRa
   have hReducedBound : pGivesBound beta reducedBound reducedPrec := by
     have h := make_bound_p beta reducedPrec emin
     have hv : (make_bound beta reducedPrec emin).vNum =
-        Zpower_nat beta (Int.toNat (Int.natAbs reducedPrec)) := by
+        Zpower_nat beta (reducedPrec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, reducedBound] using hv
   have hReducedExp : -reducedBound.dExp = emin := by
@@ -1496,7 +1437,7 @@ theorem Veltkamp_tail_from_pff_tail_payload (beta emin prec s : Int) [ValidRadix
   have hTailBound : pGivesBound beta tailBound s := by
     have h := make_bound_p beta s emin
     have hv : (make_bound beta s emin).vNum =
-        Zpower_nat beta (Int.toNat (Int.natAbs s)) := by
+        Zpower_nat beta (s.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, tailBound] using hv
   have hTailExp : -tailBound.dExp = emin := by
@@ -1784,7 +1725,7 @@ theorem Dekker_round_N_witnesses (emin prec s : Int) [Prec_gt_0 prec]
   have hpBound : pGivesBound 2 bnd prec := by
     have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
-        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat 2 (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -2241,7 +2182,7 @@ theorem ErrFMA_round_N_witnesses (emin prec : Int) [Prec_gt_0 prec]
   have hpBound : pGivesBound 2 bnd prec := by
     have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
-        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat 2 (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -2448,7 +2389,7 @@ theorem ErrFMA_error_value_witnesses (beta emin prec : Int) [ValidRadix beta] [P
   have hpBound : pGivesBound beta bnd prec := by
     have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
-        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat beta (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -4264,7 +4205,7 @@ theorem ErrFmaAppr_format_witnesses (beta emin prec : Int) [ValidRadix beta] [Pr
   have hpBound : pGivesBound beta bnd prec := by
     have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
-        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat beta (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -4370,7 +4311,7 @@ theorem ErrFmaAppr_round_N_witnesses (beta emin prec : Int) [ValidRadix beta] [P
   have hpBound : pGivesBound beta bnd prec := by
     have h := make_bound_p beta prec emin (hp := by exact hprec)
     have hv : (make_bound beta prec emin).vNum =
-        Zpower_nat beta (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat beta (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -4584,7 +4525,7 @@ theorem Axpy_from_min_or_max (emin prec : Int) [Prec_gt_0 prec]
   have hpBound : pGivesBound 2 bnd prec := by
     have h := make_bound_p 2 prec emin (hp := by exact hprec)
     have hv : (make_bound 2 prec emin).vNum =
-        Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := by
+        Zpower_nat 2 (prec.natAbs) := by
       simpa [wp, PostCond.noThrow, make_bound_p_check, pure] using h True.intro
     simpa [pGivesBound, bnd] using hv
   have hbnd_dExp : -bnd.dExp = emin := by
@@ -4595,12 +4536,13 @@ theorem Axpy_from_min_or_max (emin prec : Int) [Prec_gt_0 prec]
     omega
   have hprec_pos : 0 < prec := lt_trans Int.zero_lt_one hprec
   have hprec_nonneg : 0 ≤ prec := le_of_lt hprec_pos
-  have hp_abs_toNat : Int.toNat (Int.natAbs prec) = prec.toNat := by
-    rw [Int.natAbs_of_nonneg hprec_nonneg]
+  have hp_abs_toNat : prec.natAbs = prec.toNat := by
+    apply Nat.cast_injective (R := Int)
+    rw [Int.natAbs_of_nonneg hprec_nonneg, Int.toNat_of_nonneg hprec_nonneg]
   have hpBound_toNat : bnd.vNum = Zpower_nat 2 prec.toNat := by
     unfold pGivesBound at hpBound
     calc
-      bnd.vNum = Zpower_nat 2 (Int.toNat (Int.natAbs prec)) := hpBound
+      bnd.vNum = Zpower_nat 2 (prec.natAbs) := hpBound
       _ = Zpower_nat 2 prec.toNat := by rw [hp_abs_toNat]
   have hvnum : bo.vNum = Zpower_nat 2 prec.toNat := by
     unfold bo toFboundSkel
@@ -5439,7 +5381,7 @@ The lower Pff discriminant payload proves the error bound against Pff `Fulp`.
 Once the final Pff witness `fd` represents the public result `d`, this bridge
 rewrites that bound to the public Flocq `ulp` at `d`. -/
 theorem discri_bound_from_pff_delta (emin prec : Int) [Prec_gt_0 prec]
-    (d target : ℝ) (fd : PffFloat)
+    (d target : ℝ) (fd : PffFloat 2)
     (hprec : 1 < prec)
     (hemin : emin ≤ 0)
     (hfd_val : pff_to_R_aux 2 fd = d)
@@ -5460,12 +5402,16 @@ theorem discri_bound_from_pff_delta (emin prec : Int) [Prec_gt_0 prec]
       PFulp 2 (make_bound 2 prec emin) prec fd =
         ulp 2 (FLT_exp emin prec) d := by
     have h := Fulp_ulp 2 (make_bound 2 prec emin) prec fd
+    have hpBound : pGivesBound 2 (make_bound 2 prec emin) prec := by
+      have hp := make_bound_p 2 prec emin (hp := hprec)
+      simpa only [wp, PostCond.noThrow, make_bound_p_check, pure,
+        pGivesBound] using hp True.intro
     have h' :
         PFulp 2 (make_bound 2 prec emin) prec fd =
           ulp 2 (FLT_exp (-(make_bound 2 prec emin).dExp) prec)
             (pff_to_R_aux 2 fd) := by
       simpa [wp, PostCond.noThrow, Fulp_ulp_check, pure] using
-        h ⟨hfd_bound, (by decide : (1 : Int) < 2), hprec_pos⟩
+        h ⟨hfd_bound, hpBound, hprec, (by decide : (1 : Int) < 2)⟩
     simpa [hbnd_dExp, hfd_val] using h'
   simpa [hfd_val, hFulpUlp] using hdelta
 
@@ -5480,7 +5426,7 @@ once the lower Pff payload has produced the final Pff result `fd`, its
 boundedness, and the Pff `Fulp` error estimate, the result is the corresponding
 Flocq `ulp` estimate for `d`. -/
 theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
-    (a b c d : ℝ) (fd : PffFloat)
+    (a b c d : ℝ) (fd : PffFloat 2)
     (hprec : 1 < prec)
     (hemin : emin ≤ 0)
     (hfd_val : pff_to_R_aux 2 fd = d)
@@ -5509,7 +5455,7 @@ final discriminant result, then invokes the lower Pff `discri` theorem.  This
 wrapper records the final checked handoff from that Pff payload to the public
 Flocq `ulp` error statement. -/
 theorem discri_fp_test (emin prec : Int) [Prec_gt_0 prec]
-    (a b c d : ℝ) (fd : PffFloat)
+    (a b c d : ℝ) (fd : PffFloat 2)
     (hprec : 1 < prec)
     (hemin : emin ≤ 0)
     (hfd_val : pff_to_R_aux 2 fd = d)
