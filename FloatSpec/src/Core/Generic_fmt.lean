@@ -96,7 +96,7 @@ def satisfies_any (F : ℝ → Prop) : Prop :=
 
     These ensure the format behaves well across all scales.
 -/
-public class Valid_exp (fexp : Int → Int) : Prop where
+class Valid_exp (fexp : Int → Int) : Prop where
   /-- Validity conditions for the exponent function -/
   valid_exp : ∀ k : Int,
     ((fexp k < k) → (fexp (k + 1) ≤ k)) ∧
