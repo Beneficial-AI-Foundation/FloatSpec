@@ -88,4 +88,14 @@ example :
   rw [Source.Fulp, hnormalize]
   norm_num
 
+/-- Regression for the former `beta ≠ radix` branch-selection loophole.
+The source has one radix, so this is the Coq subnormal result `Float 1 (-1)`. -/
+example :
+    Source.RND_Min_Pos
+      ({ vNum := 4, dExp := 1, vNum_pos := by omega } : Source.Fbound)
+      2 2 (1 / 2 : Real) =
+      ({ Fnum := 1, Fexp := -1 } : Source.float) := by
+  norm_num [Source.RND_Min_Pos, Source.firstNormalPos, Source.nNormMin,
+    Source.FtoR, Zpower_nat, IRNDD]
+
 end FloatSpec.Test.PffSourceFacade

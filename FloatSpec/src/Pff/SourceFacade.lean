@@ -178,4 +178,29 @@ noncomputable def Fulp (b : Fbound) (radix : Int) (precision : Nat)
     (x : float) : Real :=
   (radix : Real) ^ (Fnormalize radix b precision x).Fexp
 
+/-- Coq `Pff.nNormMin`, retaining the source `Nat.pred` at precision zero. -/
+noncomputable def nNormMin (radix : Int) (precision : Nat) : Int :=
+  Zpower_nat radix (Nat.pred precision)
+
+/-- Coq `Pff.firstNormalPos`. -/
+noncomputable def firstNormalPos (radix : Int) (b : Fbound)
+    (precision : Nat) : float :=
+  ⟨nNormMin radix precision, -(b.dExp : Int)⟩
+
+/-- Coq `Pff.RND_Min_Pos`.
+
+The source declaration has one explicit radix and a natural precision.  In
+particular, the threshold is observed with that same radix; there is no
+independent type-level `beta` that could select a different branch. -/
+noncomputable def RND_Min_Pos (b : Fbound) (radix : Int)
+    (precision : Nat) (r : Real) : float :=
+  let firstNormPosValue := FtoR radix (firstNormalPos radix b precision)
+  if firstNormPosValue ≤ r then
+    let e : Int :=
+      IRNDD (Real.log r / Real.log (radix : Real) +
+        (-(precision : Int) + 1 : Int))
+    ⟨IRNDD (r * (radix : Real) ^ (-e)), e⟩
+  else
+    ⟨IRNDD (r * (radix : Real) ^ (b.dExp : Int)), -(b.dExp : Int)⟩
+
 end FloatSpec.Pff.Source
