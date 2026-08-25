@@ -4070,6 +4070,31 @@ theorem mag_upper_bound (beta : Int) (x : ℝ)
   simp_rw [hmag]
   exact habs_lt
 
+/-- Source-facing Coq `Raux.mag`.
+
+Coq returns a dependent `mag_prop x` record, not a bare integer.  The integer
+function `mag` above remains the reusable computational projection; this
+constructor restores the exported source contract by pairing that value with
+its machine-checked lower and upper bounds. -/
+noncomputable def mag_with_spec (r : FloatSpec.Core.Zaux.Radix)
+    (x : ℝ) : mag_prop r.val x :=
+  { mag_val := mag r.val x
+    mag_spec := by
+      intro hx
+      have hradix := r.prop
+      have hbeta : 1 < r.val := by omega
+      constructor
+      · simpa [abs_val] using
+          (mag_lower_bound r.val x hbeta hx)
+            True.intro
+      · simpa [abs_val] using
+          (mag_upper_bound r.val x hbeta hx)
+            True.intro }
+
+@[simp] theorem mag_with_spec_val (r : FloatSpec.Core.Zaux.Radix) (x : ℝ) :
+    (mag_with_spec r x).mag_val = mag r.val x := by
+  rfl
+
 /-- Coq `Raux.mag_mult_bpow`: multiplying by a radix power shifts the
     magnitude by the same exponent. -/
 theorem mag_mult_bpow (beta : Int) (x : ℝ) (e : Int) (hβ : 1 < beta)

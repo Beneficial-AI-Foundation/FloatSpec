@@ -1,4 +1,5 @@
 import FloatSpec.src.Pff.Pff
+import FloatSpec.src.Pff.SourceFacade
 
 /-!
 Regression checks for the exported total behavior of the legacy Pff digit
@@ -41,3 +42,50 @@ theorem Fulp_radix_neg_one :
   norm_num
 
 end FloatSpec.Test.PffTotality
+
+namespace FloatSpec.Test.PffSourceFacade
+
+open FloatSpec.Pff
+
+private def sourceBound : Source.Fbound :=
+  { vNum := 1, dExp := 2, vNum_pos := by omega }
+
+/-- The source-facing normalization has no independent representation radix.
+Both Coq and Lean reduce this call to the record `(1, -2)`. -/
+example :
+    Source.Fnormalize 1 sourceBound 3 ({ Fnum := 1, Fexp := 0 } : Source.float) =
+      ({ Fnum := 1, Fexp := -2 } : Source.float) := by
+  rfl
+
+/-- Its observable real value consequently uses radix one on both sides. -/
+example :
+    Source.FtoR 1
+      (Source.Fnormalize 1 sourceBound 3
+        ({ Fnum := 1, Fexp := 0 } : Source.float)) =
+      (1 : Real) := by
+  norm_num [Source.FtoR, Source.Fnormalize, Source.Fshift, Source.Fdigit,
+    Source.digit, sourceBound]
+
+/-- The two old invalid-radix counterexamples are retained at the exact source
+interface, without manufacturing a `ValidRadix` instance. -/
+example :
+    Source.Fnormalize 0
+      ({ vNum := 10, dExp := 0, vNum_pos := by omega } : Source.Fbound) 5
+      ({ Fnum := 5, Fexp := 10 } : Source.float) =
+      ({ Fnum := 0, Fexp := 8 } : Source.float) := by
+  rfl
+
+example :
+    Source.Fulp
+      ({ vNum := 3, dExp := 10, vNum_pos := by omega } : Source.Fbound) (-1) 6
+      ({ Fnum := 3, Fexp := 0 } : Source.float) = (1 : Real) := by
+  have hnormalize :
+      Source.Fnormalize (-1)
+        ({ vNum := 3, dExp := 10, vNum_pos := by omega } : Source.Fbound) 6
+        ({ Fnum := 3, Fexp := 0 } : Source.float) =
+        ({ Fnum := 3, Fexp := -4 } : Source.float) := by
+    rfl
+  rw [Source.Fulp, hnormalize]
+  norm_num
+
+end FloatSpec.Test.PffSourceFacade
