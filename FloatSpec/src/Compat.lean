@@ -77,27 +77,27 @@ the Core versions (`FloatSpec.Core.FLX.FLX_exp` and
 `FloatSpec.Core.FLT.FLT_exp`). While these functions are definitionally equal,
 typeclass search may not unfold through aliases. We therefore provide explicit
 bridge instances so users of the Compat layer can synthesize
-`[Valid_exp beta (FLX_exp prec)]` and `[Valid_exp beta (FLT_exp emin prec)]`
+`[Valid_exp (FLX_exp prec)]` and `[Valid_exp (FLT_exp emin prec)]`
 without further hints.
 -/
 
 -- Bridge instances for FLX/FLT exponent functions via the Core instances
 
-instance instValidExp_FLX_Compat (beta prec : Int) [ValidRadix beta] [Prec_gt_0 prec] :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec) := by
+instance instValidExp_FLX_Compat (prec : Int) [Prec_gt_0 prec] :
+    FloatSpec.Core.Generic_fmt.Valid_exp (FLX_exp prec) := by
   -- Use the Core instance after providing the `Fact (0 < prec)` bridge.
   haveI : Fact (0 < prec) := ⟨(Prec_gt_0.pos : 0 < prec)⟩
   -- Now `inferInstance` finds the Core `Valid_exp` for `FloatSpec.Core.FLX.FLX_exp`.
   -- Rewrite the target via the alias so the types match.
   simpa [FLX_exp] using
-    (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FloatSpec.Core.FLX.FLX_exp prec))
+    (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLX.FLX_exp prec))
 
-instance instValidExp_FLT_Compat (beta emin prec : Int) [ValidRadix beta] [Prec_gt_0 prec] :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp emin prec) := by
+instance instValidExp_FLT_Compat (emin prec : Int) [Prec_gt_0 prec] :
+    FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp emin prec) := by
   -- The Core instance already requires `[Prec_gt_0 prec]`.
   -- We just rewrite through the alias.
   simpa [FLT_exp] using
-    (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp beta (FloatSpec.Core.FLT.FLT_exp prec emin))
+    (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec emin))
 
 -- Namespace aliases so existing references like `FloatSpec.Compat.Ztrunc` work.
 namespace FloatSpec.Compat

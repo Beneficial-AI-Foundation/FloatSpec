@@ -112,7 +112,7 @@ noncomputable def Prim2SF (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec 
 -- Correctness theorems
 -- Note: binary_add rounds the result, so equality holds with rounding applied to the sum
 theorem prim_add_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
+  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   (x y : Binary754 prec emax) :
   binary_to_prim prec emax ((binary_add (prec:=prec) (emax:=emax) x y)) =
@@ -120,7 +120,7 @@ theorem prim_add_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec e
   rfl
 
 theorem prim_mul_correct (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
+  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   (x y : Binary754 prec emax) :
   binary_to_prim prec emax ((binary_mul (prec:=prec) (emax:=emax) x y)) =
@@ -513,14 +513,14 @@ private lemma FF2R_finite_one : FF2R 2 (FullFloat.F754_finite false 1 0) = 1 := 
 -- Coq: two_equiv — primitive two corresponds to Binary plus one one
 noncomputable def two_equiv_check (prec emax : Int)
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : PrimFloat :=
+  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : PrimFloat :=
   (binary_to_prim prec emax
           (binary_add (prec:=prec) (emax:=emax)
             (binary_one (prec:=prec) (emax:=emax))
             (binary_one (prec:=prec) (emax:=emax))))
 
 theorem two_equiv (prec emax : Int) [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
+  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
   ⦃⌜True⌝⦄
   (pure (two_equiv_check prec emax) : Id PrimFloat)

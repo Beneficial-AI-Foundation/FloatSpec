@@ -24,7 +24,7 @@ This mirrors Flocq `Div_sqrt_error.v` `generic_format_plus_prec`: the
 two magnitude bounds are over signed `bpow` exponents, not `natAbs`
 exponents. -/
 lemma generic_format_plus_prec (fexp : Int → Int)
-  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+  [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
   (h_bound : ∀ e, fexp e ≤ e - prec)
   (hβ : 1 < beta)
   (x y : ℝ) (fx fy : FloatSpec.Core.Defs.FlocqFloat beta)
@@ -1607,7 +1607,7 @@ private lemma Znearest_eq_zero_of_abs_lt_half (choice : Int → Bool) (z : ℝ)
     simp [hlt']
 
 private lemma generic_format_neg (fexp : Int → Int)
-  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] (x : ℝ)
+  [FloatSpec.Core.Generic_fmt.Valid_exp fexp] (x : ℝ)
   (hx : generic_format beta fexp x) :
   generic_format beta fexp (-x) := by
   have h := FloatSpec.Core.Generic_fmt.generic_format_opp
@@ -1617,7 +1617,7 @@ private lemma generic_format_neg (fexp : Int → Int)
 -- Section: format_REM (remainder formatting for general exponents)
 section FormatREM
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
 variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 private lemma valid_rnd_abs_sub_le_one

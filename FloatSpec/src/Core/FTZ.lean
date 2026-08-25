@@ -147,8 +147,8 @@ instance valid_rnd_FTZ (rnd : ℝ → Int) [Valid_rnd rnd] : Valid_rnd (Zrnd_FTZ
       simp [FloatSpec.Core.Raux.Rle_bool, h, hn, Valid_rnd.Zrnd_IZR (rnd := rnd) 0]
 
 /-- `Valid_exp` instance for the FTZ exponent function. -/
-instance FTZ_exp_valid (beta : Int) [ValidRadix beta] [hp : Fact (0 < prec)] :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FTZ_exp prec emin) := by
+instance FTZ_exp_valid [hp : Fact (0 < prec)] :
+    FloatSpec.Core.Generic_fmt.Valid_exp (FTZ_exp prec emin) := by
   refine ⟨?_⟩
   intro k; constructor
   · -- Large regime: if fexp k < k, then fexp (k+1) ≤ k
@@ -558,7 +558,7 @@ Lean (spec): Under the lower-bound condition on |x|, rounding in
 FTZ equals rounding in FLX for any rounding predicate {lit}`rnd`.
 -/
 theorem round_FTZ_FLX (beta : Int) [ValidRadix beta]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FloatSpec.Core.FLX.FLX_exp prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLX.FLX_exp prec)]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     (beta : ℝ) ^ (emin + prec - 1) ≤ |x| →
       round_to_generic (beta := beta) (fexp := FTZ_exp prec emin)

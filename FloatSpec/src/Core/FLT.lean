@@ -80,8 +80,8 @@ def FLT_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
   (generic_format beta (FLT_exp prec emin) x)
 
 /-- `Valid_exp `instance for the FLT exponent function. -/
-instance FLT_exp_valid (beta : Int) [ValidRadix beta] [Prec_gt_0 prec] :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp prec emin) := by
+instance FLT_exp_valid [Prec_gt_0 prec] :
+    FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp prec emin) := by
   refine ⟨?_⟩
   intro k
   refine And.intro ?h1 ?h2

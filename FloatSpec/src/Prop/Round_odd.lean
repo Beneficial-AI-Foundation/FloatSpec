@@ -11,7 +11,7 @@ open FloatSpec.Calc.Round
 
 variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
 
 /-- Rnd_odd_pt: pointwise specification of round-to-odd witness
 
@@ -556,7 +556,7 @@ theorem generic_format_round_odd (x : ℝ) (hβ : 1 < beta) :
       (beta := beta) (fexp := fexp) (rnd := Zodd) (x := x) hβ
 
 variable (fexpe : Int → Int)
-variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexpe]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp fexpe]
 
 /-- If the auxiliary exponent `fexpe` is pointwise below `fexp - 2`,
     then any `fexp`-generic number is also `fexpe`-generic.
@@ -1740,7 +1740,7 @@ lemma fexp_m_eq_0 (x : ℝ)
     simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip True.intro
   have hself : fexp (fexp e) = fexp e := by
     have hpair := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-      (beta := beta) (fexp := fexp) e
+      (fexp := fexp) e
     exact (hpair.right hsmall).right (fexp e) le_rfl
   have hnext : fexp (fexp e + 1) = fexp e := by
     rcases FloatSpec.Core.RoundNE.Exists_NE.exists_ne (beta := beta) (fexp := fexp) with hodd | heven

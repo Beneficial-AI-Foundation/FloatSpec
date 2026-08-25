@@ -35,7 +35,7 @@ noncomputable def midp' (fexp : Int → Int)
 
 /-- Coq: `round_round_lt_mid_same_place`. -/
 theorem round_round_lt_mid_same_place (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -147,7 +147,7 @@ theorem round_round_lt_mid_same_place (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_gt_mid_same_place`. -/
 theorem round_round_gt_mid_same_place (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -261,8 +261,8 @@ theorem round_round_gt_mid_same_place (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_gt_mid_further_place'`. -/
 theorem round_round_gt_mid_further_place' (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -507,8 +507,8 @@ theorem round_round_gt_mid_further_place' (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_gt_mid_further_place`. -/
 theorem round_round_gt_mid_further_place (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -732,10 +732,10 @@ theorem round_round_gt_mid_further_place (fexp1 fexp2 : Int → Int)
     have hfexp1_m1_le : fexp1 (m + 1) ≤ m := by
       rcases hfexp1_m_lt with hlt | heq
       · have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-          (beta := beta) (fexp := fexp1) m)
+          (fexp := fexp1) m)
         exact hpair.left (by simpa [e1, he1] using hlt)
       · have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-          (beta := beta) (fexp := fexp1) m)
+          (fexp := fexp1) m)
         have hsmall := hpair.right (by simpa [e1, he1, heq])
         simpa [e1, he1, heq] using hsmall.1
     have hbpow_fmt1 :
@@ -756,8 +756,8 @@ theorem round_round_gt_mid_further_place (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_gt_mid`. -/
 theorem round_round_gt_mid (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -799,8 +799,8 @@ theorem round_round_gt_mid (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_lt_mid_further_place'`. -/
 theorem round_round_lt_mid_further_place' (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1046,8 +1046,8 @@ theorem round_round_lt_mid_further_place' (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_lt_mid_further_place`. -/
 theorem round_round_lt_mid_further_place (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1178,8 +1178,8 @@ theorem round_round_lt_mid_further_place (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_lt_mid`. -/
 theorem round_round_lt_mid (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1235,7 +1235,7 @@ private theorem ceil_eq_floor_add_one_of_not_int (x : ℝ)
   omega
 
 private theorem roundR_ceil_eq_floor_add_ulp_pos (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] (x : ℝ)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp] (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
     ¬ FloatSpec.Core.Generic_fmt.generic_format beta fexp x →
@@ -1301,8 +1301,8 @@ then both the direct first rounding and the first rounding after the second
 rounding are zero. This is the early small-value branch used by Coq's
 `round_round_all_mid_cases`. -/
 theorem round_round_really_zero (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1407,7 +1407,7 @@ theorem round_round_really_zero (fexp1 fexp2 : Int → Int)
         have hf1_const :
             fexp1 (m + 1) = fexp1 m := by
           have hpair := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-            (beta := beta) (fexp := fexp1) m
+            (fexp := fexp1) m
           have hconst := (hpair.right hf1_m_le).right
           exact hconst (m + 1) (by omega)
         have hf1_gt_succ : fexp1 (m + 1) > m + 1 := by
@@ -1448,8 +1448,8 @@ both the direct first rounding and the first rounding after the second rounding
 are zero. This is the zero branch used by Coq's
 `round_round_all_mid_cases`. -/
 theorem round_round_zero (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1550,8 +1550,8 @@ theorem round_round_zero (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_mid_cases`. -/
 theorem round_round_mid_cases (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1618,8 +1618,8 @@ places above `mag x`. The top-binade branch is discharged here by the restored
 `round_round_zero`, and the ordinary midpoint band is delegated to
 `round_round_mid_cases`. -/
 theorem round_round_all_mid_cases_from_really_zero (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1692,8 +1692,8 @@ theorem round_round_all_mid_cases_from_really_zero (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_all_mid_cases`. -/
 theorem round_round_all_mid_cases (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta) :
     0 < x →
@@ -1869,7 +1869,7 @@ If positive `x` is generic and strictly above the lower edge of its binade, and
 `y` is small enough relative to the canonical exponent at `x`, subtracting `y`
 does not change the magnitude of `x`. -/
 theorem mag_minus_separated (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x y : ℝ) (hβ : 1 < beta)
     (hx_pos : 0 < x) (hy_pos : 0 < y) (hyx : y < x)
     (hx_gt_bpow :
@@ -1979,8 +1979,8 @@ def round_round_mult_hyp (fexp1 fexp2 : Int → Int) : Prop :=
 Products of two values in the wider format `fexp1` are representable in
 `fexp2` when `round_round_mult_hyp` relates the exponent functions. -/
 theorem round_round_mult_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta) (hfexp : round_round_mult_hyp fexp1 fexp2)
     (x y : ℝ) :
     FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x →
@@ -2068,8 +2068,8 @@ theorem round_round_mult_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_mult`. -/
 theorem round_round_mult (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (mode : FloatSpec.Calc.Round.Mode)
     [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
     (hβ : 1 < beta) (hfexp : round_round_mult_hyp fexp1 fexp2)
@@ -2279,8 +2279,8 @@ theorem round_round_sqrt_sq_bounds_from_interval (x a u1 u2 b bp : ℝ)
 This packages Coq's `Phu1`, `Phu2`, `Pb`, and `Pb'` facts after rewriting
 the nonzero ULPs of `sqrt x` to powers. -/
 theorem round_round_sqrt_offsets_pos (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta)
     (hx_pos : 0 < x)
     (hf2 :
@@ -2346,8 +2346,8 @@ If the floor rounding `a` of `sqrt x` is zero, the upper interval bound
 `sqrt x < beta^(fexp1 (mag (sqrt x)))`. -/
 theorem round_round_sqrt_sqrt_lt_bpow_of_zero_floor
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta) (hx_pos : 0 < x)
     (hf2 :
       fexp2 (FloatSpec.Core.Raux.mag beta (Real.sqrt x)) ≤
@@ -2602,8 +2602,8 @@ bound gives `sqrt x < beta^(fexp1 (mag (sqrt x)))`; the generic-format and
 exponent hypotheses then force the positive value `x` to be zero. -/
 theorem round_round_sqrt_zero_floor_contra
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta)
     (hx_pos : 0 < x)
     (hf2 :
@@ -2643,8 +2643,8 @@ This derives the exponent inequality `Hf1` from `round_round_sqrt_hyp` and
 uses `round_round_sqrt_mid_bounds_from_not_gap` for the upper interval bound. -/
 theorem round_round_sqrt_zero_floor_contra_from_not_gap
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -2821,7 +2821,7 @@ midpoint center `a + 1/2*u1` is strictly below the binade upper bound of
 `sqrt x`. -/
 theorem round_round_sqrt_center_lt_bpow_of_pos_floor
     (fexp1 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x : ℝ) (hβ : 1 < beta) (hx_pos : 0 < x) :
     let a := FloatSpec.Core.Generic_fmt.roundR beta fexp1
       FloatSpec.Core.Generic_fmt.rnd_floor (Real.sqrt x)
@@ -2922,8 +2922,8 @@ quarter-square power estimate. The remaining upstream work is to derive the
 magnitude case and plug this into the final interval contradiction. -/
 theorem round_round_sqrt_residual_pos_from_pos_floor_and_exp
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta) (hx_pos : 0 < x)
     (hexp :
       fexp2 (FloatSpec.Core.Raux.mag beta (Real.sqrt x)) +
@@ -3001,7 +3001,7 @@ from `round_round_sqrt_hyp`, `mag_sqrt_disj`, and the generic-format
 magnitude fact for `x`. -/
 theorem round_round_sqrt_exp_premise_from_hyp
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x : ℝ) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -3027,7 +3027,7 @@ theorem round_round_sqrt_exp_premise_from_hyp
         2 * FloatSpec.Core.Raux.mag beta (Real.sqrt x) := by
     rcases mag_sqrt_disj (beta := beta) x hβ hx_pos with hmag | hmag
     · apply FloatSpec.Core.Generic_fmt.valid_exp_large
-        (beta := beta) (fexp := fexp1)
+        (fexp := fexp1)
         (k := FloatSpec.Core.Raux.mag beta x)
         (l := 2 * FloatSpec.Core.Raux.mag beta (Real.sqrt x))
         hfx_lt
@@ -3039,8 +3039,8 @@ theorem round_round_sqrt_exp_premise_from_hyp
 `round_round_sqrt_hyp` and the generic-format assumption on `x`. -/
 theorem round_round_sqrt_residual_pos_from_pos_floor
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -3123,8 +3123,8 @@ quarter-square bound, and the first/second format exponent gap gives
 `u2^2 < u1^2`. -/
 theorem round_round_sqrt_upper_tail_from_pos_floor_and_exp
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta) (hx_pos : 0 < x)
     (hf2 :
       fexp2 (FloatSpec.Core.Raux.mag beta (Real.sqrt x)) ≤
@@ -3214,8 +3214,8 @@ theorem round_round_sqrt_upper_tail_from_pos_floor_and_exp
 `round_round_sqrt_hyp` and the generic-format assumption on `x`. -/
 theorem round_round_sqrt_upper_tail_from_pos_floor
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -3333,7 +3333,7 @@ power. This packages both facts from `round_DN_pt`, `cexp_DN`,
 `generic_format`, and `ulp_neq_0`. -/
 theorem round_round_sqrt_floor_grid_of_pos
     (fexp1 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x : ℝ) (hβ : 1 < beta) (hx_pos : 0 < x) :
     let a := FloatSpec.Core.Generic_fmt.roundR beta fexp1
       FloatSpec.Core.Generic_fmt.rnd_floor (Real.sqrt x)
@@ -3625,8 +3625,8 @@ residual positivity lemma into the final contradiction used before the proof
 returns the midpoint gap. -/
 theorem round_round_sqrt_nonzero_floor_contra_from_tail
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x a u1 u2 b bp scale p : ℝ) (e ma : Int)
     (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
@@ -3681,8 +3681,8 @@ representation facts, then derives the tail estimate internally from
 `generic_format beta fexp1 x`. -/
 theorem round_round_sqrt_nonzero_floor_contra
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x a u1 u2 b bp scale p : ℝ) (e ma : Int)
     (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
@@ -3738,8 +3738,8 @@ The zero branch only needs the first two square-root exponent hypotheses, which
 are shared by `round_round_sqrt_hyp` and `round_round_sqrt_radix_ge_4_hyp`. -/
 theorem round_round_sqrt_zero_floor_contra_from_not_gap_radix_ge_4
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -3845,7 +3845,7 @@ theorem round_round_sqrt_u2_bpow_le_quarter_sum_radix_ge_4
 /-- Radix-`ge_4` exponent premise for the nonzero residual branch. -/
 theorem round_round_sqrt_exp_premise_from_radix_ge_4_hyp
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x : ℝ) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -3871,7 +3871,7 @@ theorem round_round_sqrt_exp_premise_from_radix_ge_4_hyp
         2 * FloatSpec.Core.Raux.mag beta (Real.sqrt x) := by
     rcases mag_sqrt_disj (beta := beta) x hβ hx_pos with hmag | hmag
     · apply FloatSpec.Core.Generic_fmt.valid_exp_large
-        (beta := beta) (fexp := fexp1)
+        (fexp := fexp1)
         (k := FloatSpec.Core.Raux.mag beta x)
         (l := 2 * FloatSpec.Core.Raux.mag beta (Real.sqrt x))
         hfx_lt
@@ -3882,8 +3882,8 @@ theorem round_round_sqrt_exp_premise_from_radix_ge_4_hyp
 /-- Radix-`ge_4` residual positivity in the nonzero floor branch. -/
 theorem round_round_sqrt_residual_pos_from_pos_floor_radix_ge_4
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta) (hβ4 : 4 ≤ beta)
     (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -3958,8 +3958,8 @@ theorem round_round_sqrt_residual_pos_from_pos_floor_radix_ge_4
 /-- Radix-`ge_4` upper-tail estimate in the nonzero floor branch. -/
 theorem round_round_sqrt_upper_tail_from_pos_floor_radix_ge_4
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta) (hβ4 : 4 ≤ beta)
     (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -4140,8 +4140,8 @@ theorem round_round_sqrt_nonzero_floor_contra_from_tail_of_residual
 /-- Radix-`ge_4` nonzero-floor contradiction branch. -/
 theorem round_round_sqrt_nonzero_floor_contra_radix_ge_4
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x a u1 u2 b bp scale p : ℝ) (e ma : Int)
     (hβ : 1 < beta)
     (hβ4 : 4 ≤ beta)
@@ -4208,8 +4208,8 @@ while the positive case uses the grid witness and the nonzero-floor package.
 -/
 theorem round_round_sqrt_aux_midpoint_gap
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -4286,8 +4286,8 @@ The interval and zero-floor branches are shared; the nonzero-floor branch uses
 the weaker radix-specific exponent premise together with `4 <= beta`. -/
 theorem round_round_sqrt_radix_ge_4_aux_midpoint_gap
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x : ℝ) (hβ : 1 < beta) (hβ4 : 4 ≤ beta)
     (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
     (hx_pos : 0 < x)
@@ -4360,8 +4360,8 @@ theorem round_round_sqrt_radix_ge_4_aux_midpoint_gap
 /-- Coq: `round_round_sqrt_aux`. -/
 theorem round_round_sqrt_aux
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (Hexp : round_round_sqrt_hyp fexp1 fexp2)
     (x : ℝ) (hβ : 1 < beta)
     (hx_pos : 0 < x)
@@ -4378,8 +4378,8 @@ theorem round_round_sqrt_aux
 /-- Coq: `round_round_sqrt_radix_ge_4_aux`. -/
 theorem round_round_sqrt_radix_ge_4_aux
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta) (hβ4 : 4 ≤ beta)
     (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2)
     (x : ℝ)
@@ -4401,8 +4401,8 @@ This packages the non-arithmetic wrapper step: once the midpoint-gap payload
 for `sqrt x` is available, `round_round_mid_cases` gives the desired double
 rounding equality. -/
 theorem round_round_sqrt_pos_from_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ) (hβ : 1 < beta)
     (hx_pos : 0 < x)
     (hf2 :
@@ -4429,8 +4429,8 @@ The assumed `haux` is exactly the midpoint-gap payload supplied by upstream
 `round_round_sqrt_aux`; this theorem proves the remaining sign, magnitude, and
 midpoint-case wrapper logic. -/
 theorem round_round_sqrt_from_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (haux :
       ∀ x : ℝ,
@@ -4478,7 +4478,7 @@ theorem round_round_sqrt_from_aux (fexp1 fexp2 : Int → Int)
             (x := x) (y := Real.sqrt x) hβ hx_ne habs
           simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
-          (beta := beta) (fexp := fexp1)
+          (fexp := fexp1)
           (k := FloatSpec.Core.Raux.mag beta x)
           (l := FloatSpec.Core.Raux.mag beta (Real.sqrt x)) hfx_lt hmag_le
       · have hx_gt_one : 1 < x := lt_of_not_ge hx_le_one
@@ -4502,7 +4502,7 @@ theorem round_round_sqrt_from_aux (fexp1 fexp2 : Int → Int)
             (beta := beta) (x := Real.sqrt x) (e := 1) hβ (le_of_lt hlt)
           simpa using htrip
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
-          (beta := beta) (fexp := fexp1)
+          (fexp := fexp1)
           (k := 1) (l := FloatSpec.Core.Raux.mag beta (Real.sqrt x))
           hf1_one_lt hmag_ge_one
     have hf1 :
@@ -4519,7 +4519,7 @@ theorem round_round_sqrt_from_aux (fexp1 fexp2 : Int → Int)
               fexp1 (FloatSpec.Core.Raux.mag beta x) <
                 FloatSpec.Core.Raux.mag beta x := hfx_lt
           apply FloatSpec.Core.Generic_fmt.valid_exp_large
-            (beta := beta) (fexp := fexp1)
+            (fexp := fexp1)
             (k := FloatSpec.Core.Raux.mag beta x)
             (l := 2 * FloatSpec.Core.Raux.mag beta (Real.sqrt x))
             hlarge_x
@@ -4558,8 +4558,8 @@ theorem round_round_sqrt_from_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_sqrt`. -/
 theorem round_round_sqrt (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (Hexp : round_round_sqrt_hyp fexp1 fexp2) :
     ∀ x : ℝ,
@@ -4722,8 +4722,8 @@ The assumed `haux` is the radix-4 midpoint-gap payload. This theorem proves the
 remaining final-wrapper logic, including the weaker radix-4 exponent side
 condition. -/
 theorem round_round_sqrt_radix_ge_4_from_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (haux :
       ∀ x : ℝ,
@@ -4770,7 +4770,7 @@ theorem round_round_sqrt_radix_ge_4_from_aux (fexp1 fexp2 : Int → Int)
             (x := x) (y := Real.sqrt x) hβ hx_ne habs
           simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
-          (beta := beta) (fexp := fexp1)
+          (fexp := fexp1)
           (k := FloatSpec.Core.Raux.mag beta x)
           (l := FloatSpec.Core.Raux.mag beta (Real.sqrt x)) hfx_lt hmag_le
       · have hx_gt_one : 1 < x := lt_of_not_ge hx_le_one
@@ -4794,7 +4794,7 @@ theorem round_round_sqrt_radix_ge_4_from_aux (fexp1 fexp2 : Int → Int)
             (beta := beta) (x := Real.sqrt x) (e := 1) hβ (le_of_lt hlt)
           simpa using htrip
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
-          (beta := beta) (fexp := fexp1)
+          (fexp := fexp1)
           (k := 1) (l := FloatSpec.Core.Raux.mag beta (Real.sqrt x))
           hf1_one_lt hmag_ge_one
     have hf1 :
@@ -4811,7 +4811,7 @@ theorem round_round_sqrt_radix_ge_4_from_aux (fexp1 fexp2 : Int → Int)
               fexp1 (FloatSpec.Core.Raux.mag beta x) <
                 FloatSpec.Core.Raux.mag beta x := hfx_lt
           apply FloatSpec.Core.Generic_fmt.valid_exp_large
-            (beta := beta) (fexp := fexp1)
+            (fexp := fexp1)
             (k := FloatSpec.Core.Raux.mag beta x)
             (l := 2 * FloatSpec.Core.Raux.mag beta (Real.sqrt x))
             hlarge_x
@@ -4850,8 +4850,8 @@ theorem round_round_sqrt_radix_ge_4_from_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_sqrt_radix_ge_4`. -/
 theorem round_round_sqrt_radix_ge_4 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta) (hβ4 : 4 ≤ beta)
     (Hexp : round_round_sqrt_radix_ge_4_hyp fexp1 fexp2) :
     ∀ x : ℝ,
@@ -5158,7 +5158,7 @@ integer inequality. Upstream proves it by splitting `mag_div_disj` and applying
 the fifth clause of `round_round_div_hyp` in both cases. -/
 theorem round_round_div_aux0_top_gap_exp_first
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (hexp : round_round_div_hyp fexp1 fexp2)
     (mx my mxy : Int)
     (hfx : fexp1 mx < mx)
@@ -5173,7 +5173,7 @@ theorem round_round_div_aux0_top_gap_exp_first
   · subst mxy
     have hfx_succ : fexp1 (mx + 1) < mx + 1 := by
       have hstep := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp1) mx).left hfx
+        (fexp := fexp1) mx).left hfx
       omega
     have harg : (mx + 1) - my = mx - my + 1 := by omega
     have htop' : fexp1 ((mx + 1) - my) = (mx + 1) - my + 1 := by
@@ -5220,8 +5220,8 @@ real comparison says that the half second-format ulp of `x / y`, scaled by
 `beta^(mag (x / y) + fexp1 (mag y))`. -/
 theorem round_round_div_aux0_half_ulp_lt_first_gap
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5264,7 +5264,7 @@ theorem round_round_div_aux0_half_ulp_lt_first_gap
       PostCond.noThrow, Id.run, pure] using htrip True.intro
   have hexp_gap :
       fexp2 mxy + my ≤ mxy + fexp1 my :=
-    round_round_div_aux0_top_gap_exp_first (beta := beta)
+    round_round_div_aux0_top_gap_exp_first
       (fexp1 := fexp1) (fexp2 := fexp2) hexp mx my mxy
       (by simpa [mx] using hfx) (by simpa [my] using hfy)
       (by simpa [mxy] using htop) (by simpa [mx, my, mxy] using hdisj)
@@ -5281,8 +5281,8 @@ This is the same exponent comparison as aux0's first branch, but without the
 factor `1/2`; it corresponds to the `u2 * bpow (mag y)` subproof in Flocq. -/
 theorem round_round_div_ulp_lt_first_gap
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5325,7 +5325,7 @@ theorem round_round_div_ulp_lt_first_gap
       PostCond.noThrow, Id.run, pure] using htrip True.intro
   have hexp_gap :
       fexp2 mxy + my ≤ mxy + fexp1 my :=
-    round_round_div_aux0_top_gap_exp_first (beta := beta)
+    round_round_div_aux0_top_gap_exp_first
       (fexp1 := fexp1) (fexp2 := fexp2) hexp mx my mxy
       (by simpa [mx] using hfx) (by simpa [my] using hfy)
       (by simpa [mxy] using htop) (by simpa [mx, my, mxy] using hdisj)
@@ -5342,7 +5342,7 @@ real comparison says that the half second-format ulp of `x / y`, scaled by
 `y`, is strictly smaller than the branch gap `beta^(fexp1 (mag x))`. -/
 theorem round_round_div_aux0_half_ulp_lt_second_gap
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5397,7 +5397,7 @@ theorem round_round_div_aux0_half_ulp_lt_second_gap
 `round_round_div_aux1`/`round_round_div_aux2`. -/
 theorem round_round_div_ulp_lt_second_gap
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5458,7 +5458,7 @@ This is the non-top-binade analogue of
 `fexp1 mxy <= mxy`. -/
 theorem round_round_div_low_gap_exp_first
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (hexp : round_round_div_hyp fexp1 fexp2)
     (mx my mxy : Int)
     (hfx : fexp1 mx < mx)
@@ -5473,7 +5473,7 @@ theorem round_round_div_low_gap_exp_first
   · subst mxy
     have hfx_succ : fexp1 (mx + 1) < mx + 1 := by
       have hstep := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp1) mx).left hfx
+        (fexp := fexp1) mx).left hfx
       omega
     have harg : (mx + 1) - my = mx - my + 1 := by omega
     have hf1' : fexp1 ((mx + 1) - my) ≤ (mx + 1) - my := by
@@ -5516,8 +5516,8 @@ theorem round_round_div_low_gap_exp_second
 `round_round_div_aux1`/`round_round_div_aux2`. -/
 theorem round_round_div_ulp_lt_first_gap_low
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5560,7 +5560,7 @@ theorem round_round_div_ulp_lt_first_gap_low
       PostCond.noThrow, Id.run, pure] using htrip True.intro
   have hexp_gap :
       fexp2 mxy + my ≤ fexp1 mxy + fexp1 my :=
-    round_round_div_low_gap_exp_first (beta := beta)
+    round_round_div_low_gap_exp_first
       (fexp1 := fexp1) (fexp2 := fexp2) hexp mx my mxy
       (by simpa [mx] using hfx) (by simpa [my] using hfy)
       (by simpa [mxy] using hf1) (by simpa [mx, my, mxy] using hdisj)
@@ -5574,7 +5574,7 @@ theorem round_round_div_ulp_lt_first_gap_low
 `round_round_div_aux1`/`round_round_div_aux2`. -/
 theorem round_round_div_ulp_lt_second_gap_low
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5632,8 +5632,8 @@ arithmetic has produced the gap
 `x ≤ beta^(mag (x / y)) * y - beta^(mag (x / y) + fexp1 (mag y))`. -/
 theorem round_round_div_aux0_first_gap_contra
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5682,7 +5682,7 @@ arithmetic has produced the gap
 `x ≤ beta^(mag (x / y)) * y - beta^(fexp1 (mag x))`. -/
 theorem round_round_div_aux0_second_gap_contra
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -5726,8 +5726,8 @@ This is the final dispatcher after the mantissa arithmetic has reduced the
 top-binade case to one of the two branch gaps used by Coq's aux0 proof. -/
 theorem round_round_div_aux0_gap_cases_contra
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -6162,8 +6162,8 @@ logic: once that gap disjunction is available, the top-binade branch is
 excluded in the exact shape required by the division dispatcher. -/
 theorem round_round_div_aux0_from_gap_cases
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -6215,8 +6215,8 @@ denominator. It is the aux0 exclusion needed by the remaining division
 wrappers. -/
 theorem round_round_div_aux0_from_format
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -6251,8 +6251,8 @@ single disjunction, it exposes the two branch inequalities generated by the
 integer split in the Coq proof. -/
 theorem round_round_div_aux0_from_exponent_split
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -6303,8 +6303,8 @@ what discharges the remaining midpoint/top-binade alternatives. This lemma
 factors the already-restored midpoint dispatcher for the case where the first
 format exponent at `x / y` is not the top-binade exceptional case. -/
 theorem round_round_div_pos_from_mid_case (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -6337,8 +6337,8 @@ lower and upper midpoint bands are precisely the branches discharged upstream by
 kept as an explicit premise because it is handled upstream by the even-radix
 midpoint theorem. -/
 theorem round_round_div_pos_from_mid_exclusions (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -6390,8 +6390,8 @@ radix and midpoint arithmetic. This helper records the final, reusable step:
 once the midpoint value is in the second format, the inner rounding is fixed,
 so double rounding is immediate. -/
 theorem round_round_eq_of_second_generic (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta)
     (hfmt2 : FloatSpec.Core.Generic_fmt.generic_format beta fexp2 x) :
@@ -6411,8 +6411,8 @@ This is the branch used in Coq `round_round_div_aux` after
 `round_round_eq_mid_beta_even` constructs the second-format representation of
 the midpoint. -/
 theorem round_round_mid_eq_from_second_generic (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (x : ℝ)
     (hβ : 1 < beta)
     (_hx_pos : 0 < x)
@@ -6436,8 +6436,8 @@ representable in the second format under the division-stack exponent gap.
 The double-rounding equality then follows because the inner rounding fixes the
 midpoint value. -/
 theorem round_round_eq_mid_beta_even (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
@@ -6670,8 +6670,8 @@ midpoint bands are discharged by the `round_round_div_aux1`/`aux2` exclusions
 plus the exact-midpoint case. The arithmetic exclusions are still separate
 premises here. -/
 theorem round_round_div_pos_from_all_exclusions (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -6732,8 +6732,8 @@ corresponding to upstream `round_round_div_aux0`, `round_round_div_aux1`, and
 `round_round_div_aux2` remain as premises. -/
 theorem round_round_div_pos_from_branch_exclusions_even
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -6993,7 +6993,7 @@ This removes the explicit floor-rounded quotient and ulp representation
 premises from the common endpoint used by Coq `round_round_div_aux1`/`aux2`. -/
 theorem round_round_div_floor_right_grid
     (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (z y gap : ℝ) (my fy : Int)
     (hβ : 1 < beta)
     (hz_ne : z ≠ 0)
@@ -7040,7 +7040,7 @@ This removes the explicit `y = my * beta^fy` premise from the common endpoint
 used by Coq `round_round_div_aux1`/`aux2`. -/
 theorem round_round_div_floor_right_grid_from_generic
     (fexp fexpY : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (z y gap : ℝ)
     (hβ : 1 < beta)
     (hz_ne : z ≠ 0)
@@ -7121,7 +7121,7 @@ theorem round_round_div_floor_right_grid_from_repr_offset
 offset over the chosen gap exponent. -/
 theorem round_round_div_floor_right_grid_from_generic_offset
     (fexp fexpY : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (z y gap : ℝ) (gapExp : Int) (d : Nat)
     (hβ : 1 < beta)
     (hz_ne : z ≠ 0)
@@ -7277,8 +7277,8 @@ theorem round_round_div_aux1_floor_gap_contra_from_grid
 scaled inequality has been established. -/
 theorem round_round_div_aux1_first_low_from_scaled
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -7326,7 +7326,7 @@ theorem round_round_div_aux1_first_low_from_scaled
 scaled inequality has been established. -/
 theorem round_round_div_aux1_second_low_from_scaled
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -7677,7 +7677,7 @@ This keeps only the numerator, divisor, and branch-gap representations explicit;
 the floor-rounded quotient and first ulp power are derived internally. -/
 theorem round_round_div_aux1_floor_gap_contra_from_direct_right_grid
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (mx my fx fy : Int) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -7730,7 +7730,7 @@ This is the upper-midpoint analogue of
 `round_round_div_aux1_floor_gap_contra_from_direct_right_grid`. -/
 theorem round_round_div_aux2_floor_gap_contra_from_direct_right_grid
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (mx my fx fy : Int) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -7784,7 +7784,7 @@ Together with `round_round_div_floor_right_grid`, this leaves only the divisor
 and branch-gap representations explicit for the aux1 lattice contradiction. -/
 theorem round_round_div_aux1_floor_gap_contra_from_generic_left_grid
     (fexp1 fexp2 fexpX : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (my fy : Int) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -7842,7 +7842,7 @@ This is the upper-midpoint analogue of
 `round_round_div_aux1_floor_gap_contra_from_generic_left_grid`. -/
 theorem round_round_div_aux2_floor_gap_contra_from_generic_left_grid
     (fexp1 fexp2 fexpX : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (my fy : Int) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -7899,7 +7899,7 @@ denominator endpoint representations both extracted from `generic_format`.
 Only the branch-gap exponent identity remains explicit at this layer. -/
 theorem round_round_div_aux1_floor_gap_contra_from_generic_grids
     (fexp1 fexp2 fexpX fexpY : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -7964,7 +7964,7 @@ This is the upper-midpoint analogue of
 `round_round_div_aux1_floor_gap_contra_from_generic_grids`. -/
 theorem round_round_div_aux2_floor_gap_contra_from_generic_grids
     (fexp1 fexp2 fexpX fexpY : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -8029,7 +8029,7 @@ Here the branch gap is the numerator exponent, while the denominator/floor
 endpoint has a nonnegative offset over that gap. -/
 theorem round_round_div_aux1_floor_gap_contra_from_generic_grids_right_offset
     (fexp1 fexp2 fexpX fexpY : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -8091,7 +8091,7 @@ This is the upper-midpoint analogue of
 `round_round_div_aux1_floor_gap_contra_from_generic_grids_right_offset`. -/
 theorem round_round_div_aux2_floor_gap_contra_from_generic_grids_right_offset
     (fexp1 fexp2 fexpX fexpY : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     (x y gap : ℝ) (d : Nat)
     (hβ : 1 < beta)
     (hy_pos : 0 < y)
@@ -8156,8 +8156,8 @@ branch the numerator exponent carries the offset over
 offset over the numerator exponent. -/
 theorem round_round_div_aux1_from_generic_grids
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -8281,8 +8281,8 @@ This is the upper-midpoint analogue of
 `round_round_div_aux1_from_generic_grids`. -/
 theorem round_round_div_aux2_from_generic_grids
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -8403,8 +8403,8 @@ theorem round_round_div_aux2_from_generic_grids
 scaled inequality has been established. -/
 theorem round_round_div_aux2_first_low_from_scaled
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -8452,7 +8452,7 @@ theorem round_round_div_aux2_first_low_from_scaled
 scaled inequality has been established. -/
 theorem round_round_div_aux2_second_low_from_scaled
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -8574,8 +8574,8 @@ remaining arithmetic premises are the lower and upper midpoint exclusions,
 corresponding to upstream `round_round_div_aux1` and `round_round_div_aux2`. -/
 theorem round_round_div_pos_from_aux0_even
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -8614,8 +8614,8 @@ ordinary lower and upper midpoint exclusions remain the two arithmetic payloads
 corresponding to Coq `round_round_div_aux1` and `round_round_div_aux2`. -/
 theorem round_round_div_pos_from_gap_cases_even
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -8666,8 +8666,8 @@ with the aux0 top-binade premise exposed as the two integer-split branches from
 the upstream proof. -/
 theorem round_round_div_pos_from_exponent_split_even
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -8733,8 +8733,8 @@ floor-gap reductions. The only remaining premises are the arithmetic branch
 inequalities from the three upstream `Zle_or_lt` splits. -/
 theorem round_round_div_pos_from_all_exponent_splits_even
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -8837,8 +8837,8 @@ The top-binade aux0 branch is already discharged by
 now supplied by the generic-grid aux1/aux2 wrappers. -/
 theorem round_round_div_pos_from_generic_grids_even
     (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -8866,8 +8866,8 @@ theorem round_round_div_pos_from_generic_grids_even
         (x := x) (y := y) hx_pos hy_pos hx_fmt hy_fmt hf1)
 
 private theorem round_round_eq_opp_for_div (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (x : ℝ)
     (h :
@@ -8894,8 +8894,8 @@ lemma `round_round_div_aux`.
 The assumed `haux` is the positive `0 < x`, `0 < y` division payload. This
 theorem proves the remaining sign and zero wrapper logic. -/
 theorem round_round_div_from_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (haux :
       ∀ (choice1 choice2 : Int → Bool) (x y : ℝ),
@@ -9007,8 +9007,8 @@ This closes the sign and zero cases by reusing `round_round_div_from_aux`; the
 positive case is now `round_round_div_pos_from_generic_grids_even`, which
 packages the restored aux0/aux1/aux2 division proof obligations. -/
 theorem round_round_div_from_generic_grids_even (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2) :
@@ -9033,8 +9033,8 @@ theorem round_round_div_from_generic_grids_even (fexp1 fexp2 : Int → Int)
 The Coq statement carries the nearest-rounding choices even though this
 top-binade exclusion does not inspect them. -/
 theorem round_round_div_aux0 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (_choice1 _choice2 : Int → Bool) (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -9052,8 +9052,8 @@ theorem round_round_div_aux0 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_div_aux1`. -/
 theorem round_round_div_aux1 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (_choice1 _choice2 : Int → Bool) (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -9072,8 +9072,8 @@ theorem round_round_div_aux1 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_div_aux2`. -/
 theorem round_round_div_aux2 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (_choice1 _choice2 : Int → Bool) (hβ : 1 < beta)
     (hexp : round_round_div_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -9092,8 +9092,8 @@ theorem round_round_div_aux2 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_div_aux`. -/
 theorem round_round_div_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -9110,8 +9110,8 @@ theorem round_round_div_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_div`. -/
 theorem round_round_div (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2) :
@@ -9131,8 +9131,8 @@ exposed as concrete split obligations.
 The sign and zero logic is handled by `round_round_div_from_aux`; the positive
 case is handled by `round_round_div_pos_from_all_exponent_splits_even`. -/
 theorem round_round_div_from_all_exponent_splits_even (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool) (hβ : 1 < beta)
     (heven : ∃ n : Int, beta = 2 * n)
     (hexp : round_round_div_hyp fexp1 fexp2)
@@ -9433,7 +9433,7 @@ theorem mag_plus_disj (x y : ℝ)
 
 /-- Coq: `mag_plus_separated`. -/
 theorem mag_plus_separated (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hx_pos : 0 < x)
@@ -9488,8 +9488,8 @@ format is coarse enough at the sum magnitude for both addends, then the sum is
 representable in the target format.
 -/
 theorem round_round_plus_aux0_aux_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hxy :
@@ -9599,8 +9599,8 @@ theorem round_round_plus_aux0_aux_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus_aux0_aux`. -/
 theorem round_round_plus_aux0_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hlnx :
@@ -9640,8 +9640,8 @@ theorem round_round_plus_aux0_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus_aux0`. -/
 theorem round_round_plus_aux0 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -9896,8 +9896,8 @@ rounding `x + y` to the coarser format after the finer nearest rounding agrees
 with direct nearest rounding to the coarser format.
 -/
 theorem round_round_plus_aux1 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -10064,8 +10064,8 @@ Combines the separated small-addend case `round_round_plus_aux1` with the exact
 addition case `round_round_plus_aux0`.
 -/
 theorem round_round_plus_aux2 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -10112,8 +10112,8 @@ Nonnegative-input wrapper around `round_round_plus_aux2`; exact zero addends
 are handled by inclusion into the coarser format.
 -/
 theorem round_round_plus_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -10178,8 +10178,8 @@ theorem round_round_plus_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_aux0_aux`. -/
 theorem round_round_minus_aux0_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hlnx :
@@ -10214,8 +10214,8 @@ theorem round_round_minus_aux0_aux (fexp1 fexp2 : Int → Int)
 When two positive `fexp1`-format numbers are close in magnitude, their
 difference is exactly representable in the wider `fexp2` format. -/
 theorem round_round_minus_aux0 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -10332,8 +10332,8 @@ theorem round_round_minus_aux0 (fexp1 fexp2 : Int → Int)
 If the subtrahend is well below `x`, but still high enough relative to the
 difference's canonical exponent, the subtraction is exact in `fexp2`. -/
 theorem round_round_minus_aux1 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -10369,7 +10369,7 @@ theorem round_round_minus_aux1 (fexp1 fexp2 : Int → Int)
 The upward concrete rounding of `x - y` stays within `y` of the exact
 difference when `x` is already generic and `0 < y < x`. -/
 theorem round_round_minus_aux2_aux (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (hβ : 1 < beta)
     (x y : ℝ)
     (hy_pos : 0 < y)
@@ -10396,8 +10396,8 @@ theorem round_round_minus_aux2_aux (fexp : Int → Int)
 If the subtrahend is at least two exponent places below both `x` and `x-y`,
 then `round_round_gt_mid` applies to the positive difference. -/
 theorem round_round_minus_aux2 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -10455,7 +10455,7 @@ theorem round_round_minus_aux2 (fexp1 fexp2 : Int → Int)
     have hsmall : mz ≤ fexp1 mz := le_of_lt hmz_lt_e1
     have hconst :=
       (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp1) mz).right hsmall |>.right
+        (fexp := fexp1) mz).right hsmall |>.right
     have hfy_eq : fexp1 (FloatSpec.Core.Raux.mag beta y) = e1 := by
       have hle : FloatSpec.Core.Raux.mag beta y ≤ fexp1 mz := by
         have hle' : FloatSpec.Core.Raux.mag beta y ≤ e1 - 2 := by
@@ -10603,8 +10603,8 @@ theorem round_round_minus_aux2 (fexp1 fexp2 : Int → Int)
 
 Combines the exact-difference and midpoint cases for positive `y ≤ x`. -/
 theorem round_round_minus_aux3 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -10690,8 +10690,8 @@ theorem round_round_minus_aux3 (fexp1 fexp2 : Int → Int)
 /-- Rounding-to-nearest double-rounding commutes with negation, with the
 Flocq `round_N_opp` transformation on tie-breaking choices. -/
 private theorem round_round_eq_opp (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (x : ℝ)
     (h :
@@ -10718,8 +10718,8 @@ Nonnegative-input subtraction wrapper. The reversed-order case is reduced to
 the positive subtraction theorem by `round_N_opp`, which also transforms the
 nearest tie-breaking choices exactly as in Flocq. -/
 theorem round_round_minus_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -10805,8 +10805,8 @@ theorem round_round_minus_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus`. -/
 theorem round_round_plus (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -10894,8 +10894,8 @@ theorem round_round_plus (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus`. -/
 theorem round_round_minus (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
@@ -11142,8 +11142,8 @@ def round_round_plus_radix_ge_3_hyp (fexp1 fexp2 : Int → Int) : Prop :=
 
 /-- Coq: `round_round_plus_radix_ge_3_aux0`. -/
 theorem round_round_plus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -11226,8 +11226,8 @@ theorem round_round_plus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus_radix_ge_3_aux1`. -/
 theorem round_round_plus_radix_ge_3_aux1 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
@@ -11383,8 +11383,8 @@ theorem round_round_plus_radix_ge_3_aux1 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus_radix_ge_3_aux2`. -/
 theorem round_round_plus_radix_ge_3_aux2 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
@@ -11429,8 +11429,8 @@ theorem round_round_plus_radix_ge_3_aux2 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus_radix_ge_3_aux`. -/
 theorem round_round_plus_radix_ge_3_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
@@ -11496,8 +11496,8 @@ theorem round_round_plus_radix_ge_3_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_radix_ge_3_aux0`. -/
 theorem round_round_minus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -11611,8 +11611,8 @@ theorem round_round_minus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_radix_ge_3_aux1`. -/
 theorem round_round_minus_radix_ge_3_aux1 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -11646,8 +11646,8 @@ theorem round_round_minus_radix_ge_3_aux1 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_radix_ge_3_aux2`. -/
 theorem round_round_minus_radix_ge_3_aux2 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
@@ -11706,7 +11706,7 @@ theorem round_round_minus_radix_ge_3_aux2 (fexp1 fexp2 : Int → Int)
     have hsmall : mz ≤ fexp1 mz := le_of_lt hmz_lt_e1
     have hconst :=
       (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp1) mz).right hsmall |>.right
+        (fexp := fexp1) mz).right hsmall |>.right
     have hfy_eq : fexp1 (FloatSpec.Core.Raux.mag beta y) = e1 := by
       have hle : FloatSpec.Core.Raux.mag beta y ≤ fexp1 mz := by
         have hle' : FloatSpec.Core.Raux.mag beta y ≤ e1 - 1 := by
@@ -11843,8 +11843,8 @@ theorem round_round_minus_radix_ge_3_aux2 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_radix_ge_3_aux3`. -/
 theorem round_round_minus_radix_ge_3_aux3 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
@@ -11930,8 +11930,8 @@ theorem round_round_minus_radix_ge_3_aux3 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_radix_ge_3_aux`. -/
 theorem round_round_minus_radix_ge_3_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
@@ -12018,8 +12018,8 @@ theorem round_round_minus_radix_ge_3_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus_radix_ge_3`. -/
 theorem round_round_plus_radix_ge_3 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
@@ -12105,8 +12105,8 @@ theorem round_round_plus_radix_ge_3 (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_radix_ge_3`. -/
 theorem round_round_minus_radix_ge_3 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp2]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (choice1 choice2 : Int → Bool)
     (hβ : 3 ≤ beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)

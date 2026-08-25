@@ -1567,7 +1567,7 @@ private lemma shr_record_eq_of_m_loc (a b : ShrRecord)
 
 -- Coq: shr_truncate
 theorem shr_truncate (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (m e : Int) (l : Loc) (Hm : 0 ≤ m) :
     shr (shr_record_of_loc m l) e
         (fexp (FloatSpec.Core.Digits.Zdigits 2 m + e) - e) =
@@ -3549,7 +3549,7 @@ private theorem maxFiniteR_eq {prec emax : Int} [Prec_gt_0 prec] :
 
 private theorem maxFiniteR_generic {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)] :
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)] :
     FloatSpec.Core.Generic_fmt.generic_format 2 (FLT_exp (3 - emax - prec) prec)
       (maxFiniteR prec emax) := by
   have hproof := Bmax_float_proof (prec:=prec) (emax:=emax)
@@ -3601,7 +3601,7 @@ private theorem unsigned_le_maxFiniteR {prec emax : Int} [Prec_gt_0 prec]
 -- Coq: sign_plus_overflow
 theorem sign_plus_overflow {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     (mode : RoundingMode) (sx : Bool) (mx : Nat) (ex : Int)
     (sy : Bool) (my : Nat) (ey : Int)
     (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true)
@@ -3866,7 +3866,7 @@ noncomputable def Bsqrt_correct_aux_check {prec emax : Int}
 
 theorem Bsqrt_correct_aux {prec emax : Int}
   [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-  [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+  [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
   (mode : RoundingMode) (rnd : ℝ → Int) (hrnd0 : rnd 0 = 0)
   (mx : Nat) (ex : Int)
   (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true)
@@ -4466,7 +4466,7 @@ namespace ExperimentalSingleNaNArithmetic
 
 -- Coq: Bulp_correct
 theorem Bulp_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (x : BinarySingleNaNFloat prec emax) :
     BSN_is_finite (binarySingleNaNFloatToB754 (prec:=prec) (emax:=emax) x) = true →
@@ -4753,7 +4753,7 @@ private theorem B754_eq_of_valid_finite_sign_value
       simpa [B2SF_BSN, sign_SF, BSN_sign] using hsign
 
 private theorem binary_round_one_payload
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (mode : RoundingMode) (e : Int)
     (hemin : 3 - emax - prec ≤ e) (hemax : e < emax) :
@@ -4806,7 +4806,7 @@ private theorem binary_round_one_payload
   simpa [z, hroundEq] using hpayload
 
 private theorem binary_round_one_mode_independent
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (mode₁ mode₂ : RoundingMode) (e : Int)
     (hemin : 3 - emax - prec ≤ e) (hemax : e < emax) :
@@ -4917,7 +4917,7 @@ private theorem Bfrexp_exp_eq_mag_of_finite
 
 -- Coq: Bulp'_correct
 theorem Bulp'_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (hmax : 2 < emax) (x : BinarySingleNaNFloat prec emax)
     (hfinite :
@@ -5019,7 +5019,7 @@ theorem Bulp'_correct
 
 -- Coq: is_finite_strict_Bulp
 theorem is_finite_strict_Bulp
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (x : BinarySingleNaNFloat prec emax) :
     BSN_is_finite_strict (Bulp (prec:=prec) (emax:=emax)
@@ -6020,7 +6020,7 @@ end Binary
 -- Binary-to-SingleNaN bridge.
 theorem Bulp_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (x : binary_float prec emax) :
     Binary.is_finite (prec:=prec) (emax:=emax) x = true →
@@ -6095,7 +6095,7 @@ theorem Bulp_correct {prec emax : Int}
 -- Coq: `Binary.v:Bmult_correct`, on the proof-carrying Binary carrier.
 theorem Bmult_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (mult_nan : Binary.BmultNaNHandler prec emax)
     (mode : RoundingMode) (x y : binary_float prec emax) :
@@ -6468,7 +6468,7 @@ private theorem absBinaryFiniteLtEmax {prec emax : Int}
 
 private theorem roundRBinaryFinite {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     (mode : RoundingMode) (s : Bool) (m : FloatSpec.Core.Zaux.Positive) (e : Int)
     (hbounded : specFloat_bounded (prec:=prec) (emax:=emax)
       (FloatSpec.Core.Zaux.positiveToNat m) e = true) :
@@ -6489,7 +6489,7 @@ private theorem roundRBinaryFinite {prec emax : Int}
 -- Coq: `Binary.v:Bplus_correct`, on the proof-carrying Binary carrier.
 theorem Bplus_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (plus_nan : Binary.BplusNaNHandler prec emax)
     (mode : RoundingMode) (x y : binary_float prec emax) :
@@ -7133,7 +7133,7 @@ theorem Bplus_correct {prec emax : Int}
 -- Coq: sign_plus_overflow
 theorem sign_plus_overflow {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     (mode : RoundingMode) (sx : Bool) (mx : Nat) (ex : Int)
     (sy : Bool) (my : Nat) (ey : Int)
     (Hx : bounded (prec:=prec) (emax:=emax) mx ex = true)
@@ -7153,7 +7153,7 @@ namespace ExperimentalSingleNaNArithmetic
 
 private theorem Bplus_finite_nonnegative_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (mx my : Nat) (ex ey : Int) (hmx : 0 < mx) (hmy : 0 < my)
     (hsumNonneg :
@@ -7297,7 +7297,7 @@ private theorem roundR_RTZ_eq_floor_of_nonneg {prec emax : Int}
   rw [hrnd]
 
 private theorem roundR_floor_minus_eps_pos {prec emax : Int}
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     (x eps : ℝ) (hx : 0 < x)
     (hformat : FloatSpec.Core.Generic_fmt.generic_format 2
       (FLT_exp (3 - emax - prec) prec) x)
@@ -7350,7 +7350,7 @@ private theorem Zrnd_opp_RTZ :
 
 private theorem Bpred_positive_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (mx : Nat) (ex : Int) (hmx : 0 < mx)
     (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true) :
@@ -7591,7 +7591,7 @@ private theorem value_boundary_of_mantissa_boundary {prec : Int}
 
 private theorem ulp_eq_boundary_step_of_mantissa_nonboundary {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     (mx : Nat) (ex : Int) (hmx : 0 < mx)
     (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true)
     (hmant : 2 * mx ≠ (2 : Nat) ^ prec.toNat)
@@ -7672,7 +7672,7 @@ private theorem ulp_eq_boundary_step_of_mantissa_nonboundary {prec emax : Int}
 
 private theorem Bpred_pos'_positive_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (hmax : 2 < emax) (mx : Nat) (ex : Int) (hmx : 0 < mx)
     (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true) :
@@ -7876,7 +7876,7 @@ private theorem Bpred_pos'_positive_correct {prec emax : Int}
 -- Coq: Bpred_pos'_correct
 theorem Bpred_pos'_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (hmax : 2 < emax) (x : BinarySingleNaNFloat prec emax)
     (hxpos : 0 < B754_to_R
@@ -7920,7 +7920,7 @@ theorem Bpred_pos'_correct {prec emax : Int}
 
 private theorem Bplus_finite_positive_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (mx my : Nat) (ex ey : Int) (hmx : 0 < mx) (hmy : 0 < my) :
     let x := B754.B754_finite false mx ex
@@ -8041,7 +8041,7 @@ private theorem Bplus_finite_positive_correct {prec emax : Int}
 
 private theorem Bsucc_positive_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (mx : Nat) (ex : Int) (hmx : 0 < mx)
     (hbounded : specFloat_bounded (prec:=prec) (emax:=emax) mx ex = true) :
@@ -8167,7 +8167,7 @@ private theorem Bsucc_positive_correct {prec emax : Int}
 -- Coq: Bsucc'_correct
 theorem Bsucc'_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp 2 (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
     [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (hmax : 2 < emax) (x : BinarySingleNaNFloat prec emax)
     (hfinite : BSN_is_finite

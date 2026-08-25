@@ -49,7 +49,7 @@ section UnitInLastPlace
 
 variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
 -- Scoped assumption: many lemmas in this file rely on exponent monotonicity.
 -- Keeping it as a section variable lets downstream code provide an instance
 -- If you like a local alias:
@@ -174,17 +174,17 @@ lemma negligible_exp_spec' :
           exact Or.inr ⟨n, by simpa [hopt], by simpa using hm⟩
 
 /-- Coq (Ulp.v): {coq}`fexp_negligible_exp_eq`. -/
-lemma fexp_negligible_exp_eq (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] (n m : Int)
+lemma fexp_negligible_exp_eq (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp] (n m : Int)
     (hn : n ≤ fexp n) (hm : m ≤ fexp m) :
     fexp n = fexp m := by
   -- Use the "small-regime" constancy of `fexp` provided by `Valid_exp`.
   -- From `k ≤ fexp k`, Valid_exp gives: ∀ l ≤ fexp k, fexp l = fexp k.
   -- Apply it twice at k = n and k = m with l = min (fexp n) (fexp m).
   classical
-  have pair_n := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) n)
+  have pair_n := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) n)
   rcases pair_n with ⟨_large_n, small_n⟩
   rcases (small_n hn) with ⟨_ineq_n, const_n⟩
-  have pair_m := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) m)
+  have pair_m := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) m)
   rcases pair_m with ⟨_large_m, small_m⟩
   rcases (small_m hm) with ⟨_ineq_m, const_m⟩
   let l := min (fexp n) (fexp m)
@@ -259,7 +259,7 @@ dependencies, we prove a slightly weaker, but sufficient, monotonicity:
 positive base are nonnegative. We require the standard radix hypothesis
 {lit}`1 < beta`.
 -/
-omit [Valid_exp beta fexp] in
+omit [Valid_exp fexp] in
 private lemma ulp_run_nonneg (hβ : 1 < beta) (x : ℝ) :
     0 ≤ (ulp beta fexp x) := by
   classical
@@ -277,7 +277,7 @@ private lemma ulp_run_nonneg (hβ : 1 < beta) (x : ℝ) :
   · -- ulp x = β^(cexp x)
     simp [hx, le_of_lt (zpow_pos hbpos _)]
 
-omit [Valid_exp beta fexp] in
+omit [Valid_exp fexp] in
 /-- Strict positivity of ULP for nonzero inputs: {lit}`0 < ulp x` when {lit}`x ≠ 0`.
     This is a key spacing lemma used to show {lit}`succ x > x` strictly. -/
 private lemma ulp_run_pos (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
@@ -568,7 +568,7 @@ theorem succ_lt
   exact lt_of_lt_of_le hxy (succ_run_ge_self (beta := beta) (fexp := fexp) hβ y)
 -- Local bridge theorem: successor is within one ULP above x (run form).
 private theorem succ_le_plus_ulp_theorem
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Monotone_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     (succ beta fexp x) ≤ x + (ulp beta fexp x) := by
@@ -719,7 +719,7 @@ toolbox is fully ported.
 -- This mirrors Coq's `round_neq_0_negligible_exp` and is used in the `r = 0` branch
 -- of `pred_round_le_id_theorem` to discharge an impossible case.
 private theorem round_neq_0_negligible_exp_theorem
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (hne : negligible_exp fexp = none)
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) (hx : x ≠ 0)
@@ -852,7 +852,7 @@ private theorem round_neq_0_negligible_exp_theorem
 -- local here to avoid polluting the public API and will replace it with the
 -- ported proof later.
 private theorem ulp0_ge_pow_cexp_round0_neg_theorem
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) (e : Int) (B : ℝ) :
     (1 < beta) →
@@ -992,7 +992,7 @@ private theorem ulp0_ge_pow_cexp_round0_neg_theorem
 temporarily as audit context and is replaced by the source-structured theorem
 after the DN/UP adjacency lemmas.
 private theorem pred_round_le_id_theorem
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     (1 < beta) →
@@ -1294,7 +1294,7 @@ private theorem pred_round_le_id_theorem
 -- `UP x = u`, then round-to-nearest returns `d`.
 private theorem round_N_eq_DN_pt_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (choice : Int → Bool) (x d u : ℝ) (hbeta: 1 < beta)
     (Hd : FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y)) x d)
     (Hu : FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y)) x u)
@@ -1338,7 +1338,7 @@ private theorem round_N_eq_DN_pt_theorem
 -- `UP x = u`, then round-to-nearest returns `u`.
 private theorem round_N_eq_UP_pt_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (choice : Int → Bool) (x d u : ℝ) (hbeta : 1 < beta)
     (Hd : FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y)) x d)
     (Hu : FloatSpec.Core.Round_pred.Rnd_UP_pt (fun y => (FloatSpec.Core.Generic_fmt.generic_format beta fexp y)) x u)
@@ -1543,7 +1543,7 @@ This encapsulates the reduced obligation for `x ≠ 0 → |round rnd x - x| < ul
 The proof follows the Coq structure using generic_format_EM and round_DN_or_UP. -/
 private theorem error_lt_ulp_x_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (hβ : 1 < beta)
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) (hx : x ≠ 0) :
     abs (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x - x) <
@@ -1644,7 +1644,7 @@ It depends on adjacency/spacing facts not yet ported here. -/
 -- Lemma: round_to_generic always produces values in generic_format
 private lemma round_to_generic_format
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.generic_format beta fexp
@@ -1819,7 +1819,7 @@ directly to avoid adding an unrelated monotonicity assumption to `ulp_round_pos`
 -/
 private theorem exp_small_round_0_pos_trunc
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) (hx : 0 < x) (hβ : 1 < beta)
     (hr0 : FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x = 0) :
     let ex := FloatSpec.Core.Raux.mag beta x
@@ -1912,7 +1912,7 @@ private theorem exp_small_round_0_pos_trunc
 
 private theorem ulp_round_pos_ZR_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hx : 0 < x) (hβ : 1 < beta) :
     ulp beta fexp
         (FloatSpec.Core.Generic_fmt.round_to_generic beta fexp
@@ -1951,7 +1951,7 @@ private theorem ulp_round_pos_ZR_theorem
 /- The generated proof below likewise fixed the mantissa to `Ztrunc`; the
 source-faithful proof is placed after `UP_le_succ_DN`.
 private theorem succ_round_ge_id_theorem
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     (1 < beta) →
     x
@@ -2103,7 +2103,7 @@ Lemma {coq}`ulp_round_pos`:
 -/
 private theorem ulp_round_pos_theorem
   (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+  [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
   [Exp_not_FTZ fexp]
   (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) (hx : 0 < x) (hβ : 1 < beta) :
   let r := FloatSpec.Core.Generic_fmt.round_to_generic beta fexp rnd x
@@ -2212,7 +2212,7 @@ Theorem {coq}`ulp_round`:
 -/
 private theorem ulp_round_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Exp_not_FTZ fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     (1 < beta) →
@@ -2472,7 +2472,7 @@ theorem round_N_eq_UP_pt
 /-- The value computed by `round_N_to_format` is in the generic format. -/
 private theorem round_N_to_format_generic_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Generic_fmt.generic_format beta fexp
       (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ) := by
@@ -2514,7 +2514,7 @@ private theorem round_N_to_format_generic_theorem
 /-- Nearest rounding fixes values already in the generic format. -/
 private theorem round_N_to_format_generic_identity_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta)
     (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x) :
     FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ = x := by
@@ -2602,7 +2602,7 @@ theorem error_lt_ulp_round
     · have hle_succ : fexp e + 1 ≤ e := (Int.add_one_le_iff).mpr hlt
       exact (FloatSpec.Core.Generic_fmt.Monotone_exp.mono (fexp := fexp) hle_succ)
     · have hle : e ≤ fexp e := le_of_not_gt hlt
-      have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e)
+      have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) e)
       have hsmall := (pair.right hle).left
       simpa using hsmall
   have hulp_le : (ulp beta fexp x) ≤ (ulp beta fexp r) := by
@@ -2859,7 +2859,7 @@ Qed.
 -- We use UP-point uniqueness plus the DN→UP duality under negation.
 private lemma round_UP_choose_eq_neg_round_DN_choose
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     Classical.choose (round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ)) =
       - Classical.choose (round_DN_exists (beta := beta) (fexp := fexp) (x := -x) (hβ := hβ)) := by
@@ -2900,7 +2900,7 @@ private lemma round_UP_choose_eq_neg_round_DN_choose
 -- file‑scoped theorem to avoid pulling those dependencies here.
 private theorem generic_format_ulp0_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int) (hβ : 1 < beta)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] :
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp] :
     (FloatSpec.Core.Generic_fmt.generic_format beta fexp
       ((ulp (beta := beta) (fexp := fexp) 0))) := by
   classical
@@ -2932,7 +2932,7 @@ private theorem generic_format_ulp0_theorem
           simpa [hm_to_n] using hm_small
       -- From Valid_exp at the small‑regime witness: fexp (fexp n + 1) ≤ fexp n.
       have hpair :=
-        (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) n)
+        (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) n)
       have hsmall : fexp (fexp n + 1) ≤ fexp n := (hpair.right hn_small).left
       -- Build the precondition required by `generic_format_bpow`.
       -- Both components are available: `hβ` and the small‑regime inequality `hsmall`.
@@ -3057,7 +3057,7 @@ at format points. -/
 -- spacing/idempotence reasoning needed to establish `pred (ulp 0) = 0`.
 private theorem pred_ulp_0_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] :
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp] :
     (1 < beta) → (pred beta fexp ((ulp beta fexp 0))) = 0 := by
   intro hβ; classical
   -- Analyze the zero-case of ulp via `negligible_exp`.
@@ -3108,7 +3108,7 @@ private theorem pred_ulp_0_theorem
         cases H' with
         | negligible_Some _ hm => simpa using hm
       -- Small‑regime constancy: fexp (fexp n) = fexp n
-      have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) n)
+      have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) n)
       rcases hpair with ⟨_, hsmall⟩
       rcases (hsmall hnle) with ⟨_, hconst⟩
       have hfexp_id : fexp (fexp n) = fexp n := hconst (fexp n) le_rfl
@@ -3385,7 +3385,7 @@ private theorem id_m_ulp_ge_bpow_early (x : ℝ) (e : Int)
 -- Local theorem (file‑scoped): non‑boundary positive case adds back one ULP.
 private theorem pred_pos_plus_ulp_aux1_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (hne : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1))
@@ -3505,7 +3505,7 @@ Lemma pred_pos_plus_ulp_aux2:
 -- evaluate its ULP, without using predecessor/successor inverse lemmas.
 private theorem pred_pos_plus_ulp_aux2_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (hβ : 1 < beta)
     (x : ℝ) (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
@@ -3632,7 +3632,7 @@ private lemma zpow_int_inj_of_gt_one_early (hβ : 1 < beta) {a b : Int} :
 
 private theorem pred_pos_plus_ulp_aux3_zero_bridge_early
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (hβ : 1 < beta)
     (x : ℝ) (_hx : 0 < x)
     (_Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
@@ -3687,7 +3687,7 @@ private theorem pred_pos_plus_ulp_aux3_zero_bridge_early
 
 private theorem pred_pos_plus_ulp_core
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (hβ : 1 < beta) :
@@ -3845,7 +3845,7 @@ belongs to `pred_pos` at the boundary, not to `ulp x`.
 -/
 private theorem ulp_at_pos_boundary_aligned
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) :
     ⦃⌜1 < beta⌝⦄
     (pure (ulp beta fexp x) : Id ℝ)
@@ -3875,7 +3875,7 @@ private theorem ulp_at_pos_boundary_aligned
 
 private theorem ulp_at_pos_boundary_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (_hx : 0 < x)
     (hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)) :
     ⦃⌜1 < beta⌝⦄
@@ -4158,7 +4158,7 @@ Lemma ulp_succ_pos:
 -- spacing lemmas (`id_p_ulp_le_bpow`, magnitude bounds, etc.) are ported.
 private theorem ulp_succ_pos_theorem
   (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+  [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
   (x : ℝ)
   (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
   (hx : 0 < x)
@@ -4359,7 +4359,7 @@ theorem generic_format_ulp
               simpa using (Option.some.inj hsm)
             simpa [hm_to_n] using hm_small
         -- From Valid_exp at the small-regime witness: fexp (fexp n + 1) ≤ fexp n
-        have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) n)
+        have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) n)
         have hsmall := (hpair.right hm_small).left
         have hpre : (1 < beta) ∧ fexp (fexp n + 1) ≤ fexp n := And.intro hβ hsmall
         -- Reduce and apply `generic_format_bpow` at exponent e = fexp n.
@@ -4803,7 +4803,7 @@ theorem generic_format_pred_aux2
 -/
 private theorem generic_format_pred_aux1_theorem_early
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
@@ -5053,7 +5053,7 @@ theorem generic_format_pred_pos
 /- Direct positive case for `succ_pred`, following Flocq `succ_pred_pos`. -/
 private theorem succ_pred_pos_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (hx : 0 < x) (hβ : 1 < beta) :
@@ -5093,7 +5093,7 @@ private theorem succ_pred_pos_theorem
 
 private theorem succ_le_lt_aux_pos_core
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -5202,7 +5202,7 @@ private theorem succ_le_lt_aux_pos_core
         have hcexp_y :
             FloatSpec.Core.Generic_fmt.cexp beta fexp y = fexp n := by
           have hpair := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-            (beta := beta) (fexp := fexp) n
+            (fexp := fexp) n
           have hconst := (hpair.right hn_small).right
           simpa [FloatSpec.Core.Generic_fmt.cexp] using
             hconst (FloatSpec.Core.Raux.mag beta y) hmag_le
@@ -5300,7 +5300,7 @@ theorem le_pred_pos_lt
 
 private theorem succ_le_lt_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -5352,7 +5352,7 @@ private theorem succ_le_lt_theorem
 
 private theorem pred_ge_gt_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -5436,7 +5436,7 @@ Theorem ulp_DN:
 -- model round_to_generic (DN-style) value. This is deferred to spacing lemmas.
 private theorem ulp_DN_round_bridge_pos
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Exp_not_FTZ fexp]
     (x : ℝ) (hx : 0 < x) (hβ : 1 < beta) :
     (ulp (beta := beta) (fexp := fexp)
@@ -5787,7 +5787,7 @@ private theorem ulp_DN_round_bridge_pos
 -/
 private theorem ulp_DN_run_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Exp_not_FTZ fexp]
     (x : ℝ) (hx : 0 ≤ x) (hβ : 1 < beta):
     (ulp (beta := beta) (fexp := fexp)
@@ -5942,7 +5942,7 @@ theorem ulp_DN [Exp_not_FTZ fexp] (x : ℝ) (hx : 0 ≤ x) :
 /- DN equality on [d, succ d): chosen DN at x equals d when d ≤ x < succ d. -/
 private theorem round_DN_eq_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x d : ℝ)
     (Fd : (FloatSpec.Core.Generic_fmt.generic_format beta fexp d))
     (h : d ≤ x ∧ x < (succ beta fexp d)) (hbeta: 1 < beta):
@@ -5991,7 +5991,7 @@ theorem round_DN_eq
 
 /- UP equality on (pred u, u]: chosen UP at x equals u when pred u < x ≤ u. -/
 private theorem round_UP_eq_theorem
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x u : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u))
     (h : (pred beta fexp u) < x ∧ x ≤ u) (hβ: 1 < beta):
@@ -6085,7 +6085,7 @@ proved above.
 -- Rounding to nearest below the midpoint yields the DN witness (bridge lemma).
 private theorem round_N_le_midp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u))
     (h : v < ((u + (succ beta fexp u)) / 2)) (hβ : 1 < beta) :
@@ -6505,7 +6505,7 @@ theorem round_N_le_midp
             simp only [hc_def, b]
         · -- succ = β^e: use generic_format_bpow
             -- succ = β^e is in format when fexp(e+1) ≤ e
-            have hvalid_exp := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
+            have hvalid_exp := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) e
             -- Case split on fexp e < e or e ≤ fexp e
             rcases lt_or_ge (fexp e) e with hfexp_lt | hfexp_ge
             · -- fexp e < e: derive fexp(e+1) ≤ e from Valid_exp
@@ -6649,7 +6649,7 @@ theorem generic_format_pred
 
 private theorem pred_succ_pos_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (hx : 0 < x) (hβ : 1 < beta) :
@@ -6793,7 +6793,7 @@ private theorem pred_succ_pos_theorem
 
 private theorem succ_pred_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (hβ : 1 < beta) :
@@ -6853,7 +6853,7 @@ theorem succ_pred
 
 private theorem pred_succ_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (hβ : 1 < beta) :
@@ -6915,7 +6915,7 @@ Theorem ulp_pred_pos:
 -/
 private theorem ulp_pred_pos_theorem
   (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-  [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+  [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
   (x : ℝ)
   (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
   (hx : 0 < (pred beta fexp x)) (hβ : 1 < beta) :
@@ -6995,7 +6995,7 @@ then subtracting one ULP keeps it in the generic format.
 We place it here, after `generic_format_pred`, to avoid forward references. -/
 private theorem generic_format_pred_aux1_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
@@ -7047,7 +7047,7 @@ private theorem generic_format_pred_aux1_theorem
 -- Rounding to nearest above the lower midpoint yields a value ≥ u (bridge lemma).
 private theorem round_N_ge_midp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u))
     (hβ : 1 < beta)
@@ -7229,7 +7229,7 @@ degenerate zero-adjacent case via {lit}`u ≠ 0`.
 -/
 private theorem round_N_ge_ge_midp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u))
     (hβ : 1 < beta)
@@ -7273,7 +7273,7 @@ degenerate zero-adjacent case via {lit}`u ≠ 0`.
 -/
 private theorem round_N_le_le_midp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (choice : Int → Bool) (u v : ℝ)
     (Fu : (FloatSpec.Core.Generic_fmt.generic_format beta fexp u))
     (hβ : 1 < beta)
@@ -7373,7 +7373,7 @@ This mirrors exactly the semantic content of the Coq step used in Ulp.v.
 -/
 private theorem pred_pos_plus_ulp_aux3_zero_bridge
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (hβ : 1 < beta)
     (x : ℝ) (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
@@ -7592,7 +7592,7 @@ under {lit}`x ↦ x + eps`.
 -/
 private theorem mag_plus_eps_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hx : 0 < x)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (eps : ℝ) (heps : 0 ≤ eps ∧ eps < (ulp (beta := beta) (fexp := fexp) x))
@@ -7984,7 +7984,7 @@ theorem round_DN_plus_eps_pos
           have hcexp_eq :
               FloatSpec.Core.Generic_fmt.cexp beta fexp dn = fexp n := by
             have hpair := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-              (beta := beta) (fexp := fexp) n
+              (fexp := fexp) n
             have hconst := (hpair.right hn_small).right
             simpa [FloatSpec.Core.Generic_fmt.cexp] using hconst (FloatSpec.Core.Raux.mag beta dn) hmag_le
           set s : ℝ := (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp dn) with hs
@@ -8619,7 +8619,7 @@ private theorem generic_format_bpow_inv_shift
     FloatSpec.Core.Generic_fmt.generic_format_bpow_inv'
       (beta := beta) (fexp := fexp) (e := e) hβ hfmt
   have hvalid :=
-    FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
+    FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) e
   by_cases hlarge : fexp e < e
   · exact hvalid.left hlarge
   · have hsmall : e ≤ fexp e := le_of_not_gt hlarge
@@ -8675,12 +8675,12 @@ private theorem generic_format_bpow_ge_ulp_0_plain
             simpa [FloatSpec.Core.Raux.le_bpow_check, wp, PostCond.noThrow, Id.run, pure]
               using hmono True.intro
           have pair :=
-            FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) m
+            FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) m
           have hsmall : fexp (fexp m + 1) ≤ fexp m := (pair.right hm_small).left
           have hlt_k : fexp (fexp m + 1) < fexp m + 1 :=
             lt_of_le_of_lt hsmall (lt_add_of_pos_right _ Int.zero_lt_one)
           have hlt_e1 : fexp (e + 1) < e + 1 :=
-            FloatSpec.Core.Generic_fmt.valid_exp_large (beta := beta) (fexp := fexp)
+            FloatSpec.Core.Generic_fmt.valid_exp_large (fexp := fexp)
               (k := fexp m + 1) (l := e + 1) hlt_k (by omega)
           exact Int.lt_add_one_iff.mp hlt_e1
   have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow
@@ -8725,7 +8725,7 @@ Port note:
 -- under `Exp_not_FTZ`, we can bound `fexp (fexp e + 1)` by `fexp e`.
 private theorem exp_not_FTZ_strong_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Exp_not_FTZ fexp] : ∀ e : Int, fexp (fexp e + 1) ≤ fexp e := by
   intro e; simpa using (Exp_not_FTZ.exp_not_FTZ (fexp := fexp) e)
 
@@ -8779,7 +8779,7 @@ theorem ulp_ge_ulp_0
             by_contra hnot
             have hlt : fexp l < fexp n := lt_of_not_ge hnot
             -- From `n ≤ fexp n`, we get constancy on the small regime at `n`
-            have pair_n := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) n)
+            have pair_n := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) n)
             rcases pair_n with ⟨_large_n, small_n⟩
             rcases (small_n hnle') with ⟨_ineq_n, const_n⟩
             -- Thus fexp (fexp l + 1) = fexp n since (fexp l + 1) ≤ fexp n
@@ -8799,7 +8799,7 @@ Lemma {coq}`ulp_ulp_0`: {lit}`forall {H : Exp_not_FTZfexp}, ulp (ulp 0) = ulp 0`
 -/
 private theorem ulp_ulp_0_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Exp_not_FTZ fexp] :
     (1 < beta) →
     (ulp beta fexp ((ulp beta fexp 0))) = (ulp beta fexp 0) := by
@@ -8900,7 +8900,7 @@ adjacent lemmas in this file reason about powers of the radix.
 -- implication here as a local theorem until the Generic_fmt result is ported.
 private theorem monotone_exp_not_FTZ_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Monotone_exp fexp] : Exp_not_FTZ fexp := by
   -- Port of Coq `monotone_exp_not_FTZ` (Generic_fmt.v):
   -- Either `fexp e < e` and monotonicity gives `fexp (fexp e + 1) ≤ fexp e`,
@@ -8914,7 +8914,7 @@ private theorem monotone_exp_not_FTZ_theorem
     exact (Monotone_exp.mono (fexp := fexp) hle_succ)
   · -- Otherwise, e ≤ fexp e; use the small‑regime clause of Valid_exp at k = e
     have hle : e ≤ fexp e := le_of_not_gt hlt
-    have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e)
+    have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) e)
     have hsmall := (pair.right hle).left
     -- This is exactly the desired bound
     simpa using hsmall
@@ -9529,7 +9529,7 @@ once the spacing toolbox is available. -/
 /- Local bridge: successor of DN equals UP at non-representable x. -/
 private theorem succ_DN_eq_UP_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (hβ : 1 < beta) :
@@ -9679,7 +9679,7 @@ private theorem succ_DN_eq_UP_theorem
 
 private theorem round_UP_DN_ulp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Exp_not_FTZ fexp]
     (x : ℝ)
     (Fx : ¬ (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
@@ -9887,7 +9887,7 @@ Theorem {coq}`error_le_half_ulp`:
 -/
 private theorem error_le_half_ulp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Exp_not_FTZ fexp]
     (choice : Int → Bool) (x : ℝ) (hβ : 1 < beta) :
     abs ((FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp x hβ) - x)
@@ -10065,7 +10065,7 @@ private theorem Rnd_DN_pt_unique_pure_for_roundR
 
 private theorem roundR_floor_DN_pt_for_ulp
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Round_pred.Rnd_DN_pt
       (fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y) x
@@ -10101,7 +10101,7 @@ private theorem roundR_floor_DN_pt_for_ulp
 
 private theorem roundR_ceil_UP_pt_for_ulp
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Round_pred.Rnd_UP_pt
       (fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y) x
@@ -10136,7 +10136,7 @@ private theorem roundR_ceil_UP_pt_for_ulp
 
 private theorem roundR_floor_eq_DN_choose_for_ulp
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_floor x =
       Classical.choose
@@ -10159,7 +10159,7 @@ private theorem roundR_floor_eq_DN_choose_for_ulp
 
 private theorem roundR_ceil_eq_UP_choose_for_ulp
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     FloatSpec.Core.Generic_fmt.roundR beta fexp FloatSpec.Core.Generic_fmt.rnd_ceil x =
       Classical.choose
@@ -10804,7 +10804,7 @@ At a boundary `y = beta^(mag y - 1)`, Flocq does not rewrite
 `fexp (mag y)` directly. This is the Lean version of that construction. -/
 private theorem generic_format_pos_boundary_minus_ulp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Monotone_exp fexp]
     (y : ℝ) (hy : 0 < y)
     (Fy : FloatSpec.Core.Generic_fmt.generic_format beta fexp y)
@@ -10829,13 +10829,13 @@ private theorem generic_format_pos_boundary_minus_ulp_theorem
   have hc_le : c ≤ e - 1 := by
     by_cases hprev_lt : fexp (e - 1) < e - 1
     · have hpair := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp) (e - 1)
+        (fexp := fexp) (e - 1)
       have hstep : fexp ((e - 1) + 1) ≤ e - 1 := hpair.left hprev_lt
       simpa [c, hc, sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hstep
     · have hprev_ge : e - 1 ≤ fexp (e - 1) := le_of_not_gt hprev_lt
       have hprev_eq : fexp (e - 1) = e - 1 := le_antisymm hprev_le hprev_ge
       have hpair := FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp) (e - 1)
+        (fexp := fexp) (e - 1)
       have hsmall : e - 1 ≤ fexp (e - 1) := hprev_ge
       have hstep := (hpair.right hsmall).left
       have harg : fexp (e - 1) + 1 = e := by omega
@@ -10999,7 +10999,7 @@ theorem generic_format_ulp_0 :
           simpa [hmn] using hm_small
       -- Use Valid_exp under the small‑regime hypothesis to obtain the bound
       have hpair :=
-        (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) n)
+        (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) n)
       have hsmall := (hpair.right hn_small).left
       -- Prepare the preconditions for `generic_format_bpow` at exponent `e = fexp n`
       have hpre : (1 < beta) ∧ fexp ((fexp n) + 1) ≤ (fexp n) := And.intro hβ hsmall
@@ -11057,13 +11057,13 @@ theorem generic_format_bpow_ge_ulp_0 (e : Int)
             simpa [FloatSpec.Core.Raux.le_bpow_check, wp, PostCond.noThrow, Id.run, pure]
               using hmono (by trivial)
           -- From `Valid_exp` at the small‑regime witness: `fexp (fexp m + 1) ≤ fexp m`.
-          have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) m)
+          have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) m)
           have h_small : fexp (fexp m + 1) ≤ fexp m := (pair.right hm_small).left
           -- Propagate the “large‑regime” inequality from `k = fexp m + 1` up to `e + 1`.
           have hlt_k : fexp (fexp m + 1) < (fexp m + 1) :=
             lt_of_le_of_lt h_small (lt_add_of_pos_right _ Int.zero_lt_one)
           have hlt_e1 : fexp (e + 1) < (e + 1) :=
-            FloatSpec.Core.Generic_fmt.valid_exp_large (beta := beta) (fexp := fexp)
+            FloatSpec.Core.Generic_fmt.valid_exp_large (fexp := fexp)
               (k := fexp m + 1) (l := e + 1) hlt_k (add_le_add_left hn_le_e 1)
           -- Conclude with `Int.lt_add_one_iff`
           exact Int.lt_add_one_iff.mp hlt_e1
@@ -11086,7 +11086,7 @@ closure properties of the generic format. This matches the Coq proof structure:
 -/
 private theorem generic_format_plus_ulp_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Monotone_exp fexp]
     (x : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
@@ -11210,7 +11210,7 @@ theorem generic_format_succ_aux1
 the DN/UP adjacency bridge. -/
 private theorem exp_not_FTZ_of_monotone
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Monotone_exp fexp] :
     Exp_not_FTZ fexp := by
   refine ⟨?_⟩
@@ -11221,12 +11221,12 @@ private theorem exp_not_FTZ_of_monotone
   · have hsmall : e ≤ fexp e := le_of_not_gt hlt
     exact
       ((FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp) e).right hsmall).left
+        (fexp := fexp) e).right hsmall).left
 
 /-- Direct nearest rounding is never more than one successor below its input. -/
 private theorem round_N_to_format_le_succ_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Monotone_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     x ≤ succ beta fexp
@@ -11299,7 +11299,7 @@ identity on generic-format values.
 -/
 private theorem round_N_plus_ulp_ge_theorem
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [Monotone_exp fexp]
     (x : ℝ) (hβ: 1 < beta) :
     x ≤ (FloatSpec.Core.Generic_fmt.round_N_to_format beta fexp

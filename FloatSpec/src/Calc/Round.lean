@@ -51,7 +51,7 @@ noncomputable instance : Coe Unit Mode where
   coe _ := nearestEvenMode
 
 /-- Bridge Calc.round to Core's concrete mode-sensitive rounding operator. -/
-noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (mode : Mode) (x : ℝ) : ℝ :=
   FloatSpec.Core.Generic_fmt.roundR beta fexp mode.rnd x
 
@@ -99,7 +99,7 @@ end Truncation
 section MainRounding
 
 /-- Rounding at zero: any `Calc.Round` mode sends zero to zero. -/
-theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (mode : Mode) :
     ⦃⌜True⌝⦄
     (pure (round beta fexp mode 0) : Id ℝ)
@@ -166,7 +166,7 @@ def round_sign_DN (s : Bool) (l : Location) : Bool :=
 
 -- cexp vs inbetween_float
 theorem cexp_inbetween_float
-    [Valid_exp beta fexp]
+    [Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
     (Hβ : 1 < beta)
     (Px : 0 < x)
@@ -299,7 +299,7 @@ theorem cexp_inbetween_float
             fexp (FloatSpec.Core.Raux.mag beta x) := by
         exact le_trans Hmag_le (by simpa [cexp] using He_left)
       have Hconst := (Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp)
+        (fexp := fexp)
         (FloatSpec.Core.Raux.mag beta x)).right Hmag_le_fexp |>.right
       have Hfexp_eq : fexp e = fexp (FloatSpec.Core.Raux.mag beta x) :=
         Hconst e (by simpa [cexp] using He_left)
@@ -307,14 +307,14 @@ theorem cexp_inbetween_float
     · have Harg_le : e ≤ fexp e := by
         simpa [Hdigits0] using He_right
       have Hconst := (Valid_exp.valid_exp
-        (beta := beta) (fexp := fexp) e).right Harg_le |>.right
+        (fexp := fexp) e).right Harg_le |>.right
       have Hfexp_eq : fexp (FloatSpec.Core.Raux.mag beta x) = fexp e :=
         Hconst (FloatSpec.Core.Raux.mag beta x) (le_trans Hmag_le Harg_le)
       simpa [cexp, Hdigits0] using Hfexp_eq
 
 -- Location-or-Exact variant
 theorem cexp_inbetween_float_loc_Exact
-    [Valid_exp beta fexp]
+    [Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
     (Hβ : 1 < beta)
     (Px : 0 ≤ x)
@@ -2188,7 +2188,7 @@ theorem truncate_0 (e : Int) (l : Location) :
     simp [hk']
 
 theorem generic_format_truncate
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (m e : Int) (l : Location)
     (hβ : 1 < beta) :
     0 ≤ m →
@@ -2295,7 +2295,7 @@ end Audit
 namespace Audit
 
 theorem truncate_correct_format
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (m e : Int) (hm : m ≠ 0)
     (Hβ : 1 < beta)
     (Hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp
@@ -2403,7 +2403,7 @@ theorem truncate_correct_format
     · simpa [Hk, x, FloatSpec.Core.Defs.F2R] using Heq_cexp
 
 theorem truncate_correct_partial'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
     (Hβ : 1 < beta)
     (Hx : 0 < x)
@@ -2439,7 +2439,7 @@ theorem truncate_correct_partial'
     · simpa [Hcexp, Heq]
 
 theorem truncate_correct_partial
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
     (Hβ : 1 < beta)
     (Hx : 0 < x)
@@ -2456,7 +2456,7 @@ theorem truncate_correct_partial
     (x := x) (m := m) (e := e) (l := l) Hβ Hx H1 H2'
 
 theorem truncate_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
     (Hβ : 1 < beta)
     (Hx : 0 ≤ x)
@@ -2593,7 +2593,7 @@ theorem truncate_correct'
               (beta := beta) (fexp := fexp))
 
 theorem truncate_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
     (Hβ : 1 < beta)
     (Hx : 0 ≤ x)
@@ -2613,7 +2613,7 @@ theorem truncate_correct
 end Audit
 
 theorem round_any_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) (choice : Int → Location → Int)
     [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
@@ -2699,7 +2699,7 @@ theorem round_any_correct
               simp [hchoice]
 
 theorem round_DN_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e x l)
@@ -2721,7 +2721,7 @@ theorem round_DN_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_any_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) (choice : Int → Location → Int)
     [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
@@ -2748,7 +2748,7 @@ theorem round_trunc_any_correct
     (Hx := htr.1) (He := htr.2) (Hβ := Hβ)
 
 theorem round_trunc_any_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) (choice : Int → Location → Int)
     [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
@@ -2775,7 +2775,7 @@ theorem round_trunc_any_correct'
     (Hx := htr.1) (He := htr.2) (Hβ := Hβ)
 
 theorem round_trunc_DN_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
@@ -2799,7 +2799,7 @@ theorem round_trunc_DN_correct
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_DN_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
@@ -2822,7 +2822,7 @@ theorem round_trunc_DN_correct'
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_UP_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e x l)
@@ -2845,7 +2845,7 @@ theorem round_UP_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_UP_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
@@ -2870,7 +2870,7 @@ theorem round_trunc_UP_correct
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_UP_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
@@ -2894,7 +2894,7 @@ theorem round_trunc_UP_correct'
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_sign_any_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int)
     (choice : Bool → Int → Location → Int)
     [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
@@ -3051,7 +3051,7 @@ theorem round_sign_any_correct
                 simp [hb, hcond]
 
 theorem round_trunc_sign_any_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int)
     (choice : Bool → Int → Location → Int)
     [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
@@ -3106,7 +3106,7 @@ theorem round_trunc_sign_any_correct'
     (Hx := htr.1) (He := Hpost) (Hβ := Hβ)
 
 theorem round_trunc_sign_any_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int)
     (choice : Bool → Int → Location → Int)
     [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
@@ -3144,7 +3144,7 @@ theorem round_trunc_sign_any_correct
     (Hx := Hx) (Heq := Heq_x) (Hβ := Hβ)
 
 theorem round_sign_DN_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3169,7 +3169,7 @@ theorem round_sign_DN_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_sign_DN_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3195,7 +3195,7 @@ theorem round_trunc_sign_DN_correct
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_sign_DN_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3220,7 +3220,7 @@ theorem round_trunc_sign_DN_correct'
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_sign_UP_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3244,7 +3244,7 @@ theorem round_sign_UP_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_sign_UP_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3269,7 +3269,7 @@ theorem round_trunc_sign_UP_correct
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_sign_UP_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3293,7 +3293,7 @@ theorem round_trunc_sign_UP_correct'
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_ZR_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e x l)
@@ -3316,7 +3316,7 @@ theorem round_ZR_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_ZR_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
@@ -3341,7 +3341,7 @@ theorem round_trunc_ZR_correct
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_ZR_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
@@ -3365,7 +3365,7 @@ theorem round_trunc_ZR_correct'
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_sign_ZR_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3388,7 +3388,7 @@ theorem round_sign_ZR_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_sign_ZR_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3412,7 +3412,7 @@ theorem round_trunc_sign_ZR_correct
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_sign_ZR_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e (|x|) l)
@@ -3435,7 +3435,7 @@ theorem round_trunc_sign_ZR_correct'
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_NE_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3459,7 +3459,7 @@ theorem round_NE_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_NE_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3485,7 +3485,7 @@ theorem round_trunc_NE_correct
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_NE_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3510,7 +3510,7 @@ theorem round_trunc_NE_correct'
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_sign_NE_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3535,7 +3535,7 @@ theorem round_sign_NE_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_sign_NE_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3561,7 +3561,7 @@ theorem round_trunc_sign_NE_correct
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_sign_NE_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3586,7 +3586,7 @@ theorem round_trunc_sign_NE_correct'
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_NA_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3610,7 +3610,7 @@ theorem round_NA_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_NA_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3636,7 +3636,7 @@ theorem round_trunc_NA_correct
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_NA_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3661,7 +3661,7 @@ theorem round_trunc_NA_correct'
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_sign_NA_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3686,7 +3686,7 @@ theorem round_sign_NA_correct
     (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_sign_NA_correct
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
     (x : ℝ) (m e : Int) (l : Location)
@@ -3712,7 +3712,7 @@ theorem round_trunc_sign_NA_correct
     (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_trunc_sign_NA_correct'
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     [FloatSpec.Core.Generic_fmt.Valid_rnd
       (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
     (x : ℝ) (m e : Int) (l : Location)

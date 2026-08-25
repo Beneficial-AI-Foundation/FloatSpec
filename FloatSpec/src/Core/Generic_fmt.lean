@@ -96,7 +96,7 @@ def satisfies_any (F : ℝ → Prop) : Prop :=
 
     These ensure the format behaves well across all scales.
 -/
-public class Valid_exp (beta : Int) [ValidRadix beta] (fexp : Int → Int) : Prop where
+public class Valid_exp (fexp : Int → Int) : Prop where
   /-- Validity conditions for the exponent function -/
   valid_exp : ∀ k : Int,
     ((fexp k < k) → (fexp (k + 1) ≤ k)) ∧
@@ -111,7 +111,8 @@ public class Valid_exp (beta : Int) [ValidRadix beta] (fexp : Int → Int) : Pro
     When fexp k < k (k is in the "large" regime),
     this property extends to all larger values.
 -/
-theorem valid_exp_large (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (k l : Int) (hk : fexp k < k) (h : k ≤ l) :
+theorem valid_exp_large (fexp : Int → Int) [Valid_exp fexp]
+    (k l : Int) (hk : fexp k < k) (h : k ≤ l) :
     fexp l < l := by
   -- Prepare decomposition of l as k + n with n ≥ 0
   have hn_nonneg : 0 ≤ l - k := sub_nonneg.mpr h
@@ -128,7 +129,7 @@ theorem valid_exp_large (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Val
     | succ n ih =>
         set m := k + Int.ofNat n with hm
         have hstep_le : fexp (m + 1) ≤ m := by
-          have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) m)
+          have hpair := (Valid_exp.valid_exp (fexp := fexp) m)
           exact (hpair.left) (by simpa [hm] using ih)
         have hm_lt_succ : m < m + 1 := by
           have : (0 : Int) < 1 := Int.zero_lt_one
@@ -150,12 +151,13 @@ theorem valid_exp_large (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Val
 
     When fexp k < k, this extends to all values up to k.
 -/
-theorem valid_exp_large' (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (k l : Int) (hk : fexp k < k) (h : l ≤ k) :
+theorem valid_exp_large' (fexp : Int → Int) [Valid_exp fexp]
+    (k l : Int) (hk : fexp k < k) (h : l ≤ k) :
     fexp l < k := by
   -- By contradiction: if k ≤ fexp l, constancy on the small regime at l forces k ≤ fexp k, contradicting hk
   by_contra hnot
   have hk_le : k ≤ fexp l := le_of_not_gt hnot
-  have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) l)
+  have hpair := (Valid_exp.valid_exp (fexp := fexp) l)
   have hsmall := (hpair.right)
   have hconst := (hsmall (le_trans h hk_le)).right
   have hkeq' : fexp k = fexp l := hconst k hk_le
@@ -338,7 +340,7 @@ theorem zpow_nonneg_toNat (a : ℝ) (k : Int) (hk : 0 ≤ k) :
     The real number zero can always be exactly
     represented in any well-formed floating-point format.
 -/
-theorem generic_format_0 (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] :
+theorem generic_format_0 (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] :
     ⦃⌜beta > 1⌝⦄
     (pure (generic_format beta fexp 0) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -350,7 +352,7 @@ theorem generic_format_0 (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Va
         FloatSpec.Core.Raux.mag, FloatSpec.Core.Raux.Ztrunc]
 
 /-- Zero is in generic format (run form, no precondition needed). -/
-theorem generic_format_0_run (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] :
+theorem generic_format_0_run (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] :
     (generic_format beta fexp 0) := by
   unfold generic_format scaled_mantissa cexp
   simp [FloatSpec.Core.Raux.mag, FloatSpec.Core.Raux.Ztrunc]
@@ -371,7 +373,7 @@ is representable in the generic format.
     constraint {lit}`fexp (e + 1) ≤ e` holds.
 -/
 theorem generic_format_bpow_inv'
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (e : Int) :
     beta > 1 → (generic_format beta fexp ((beta : ℝ) ^ e)) → fexp e ≤ e := by
   intro hβ hfmt
@@ -442,7 +444,7 @@ theorem generic_format_bpow_inv'
   have hfexp_e_ge : fexp e ≥ e + 1 := by grind
   have he_le_fexp : e ≤ fexp e := by grind
   -- By Valid_exp at k = e, since e ≤ fexp e, we're in the small regime
-  have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
+  have hpair := Valid_exp.valid_exp (fexp := fexp) e
   have hsmall := hpair.right he_le_fexp
   have hconst := hsmall.right
   -- Since e + 1 ≤ fexp e, we get fexp(e+1) = fexp e
@@ -456,7 +458,7 @@ theorem generic_format_bpow_inv'
     If {lit}`β^e` is representable in the generic format, then {lit}`fexp e ≤ e`.
 -/
 theorem generic_format_bpow_inv
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (e : Int) :
     beta > 1 → (generic_format beta fexp ((beta : ℝ) ^ e)) → fexp e ≤ e := by
   -- Directly reuse the proved variant with the explicit `beta > 1` hypothesis.
@@ -497,7 +499,7 @@ theorem cexp_abs (beta : Int) [ValidRadix beta] (fexp : Int → Int) (x : ℝ) :
     floating-point representation.
 -/
 theorem canonical_generic_format (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     ⦃⌜beta > 1 ∧ (generic_format beta fexp x)⌝⦄
     (pure (FlocqFloat.mk (Ztrunc (scaled_mantissa beta fexp x))
       (cexp beta fexp x) : FlocqFloat beta) : Id (FlocqFloat beta))
@@ -549,7 +551,7 @@ lemma Ztrunc_zero : (Ztrunc (0 : ℝ)) = 0 := by
     exponent is bounded by the float's exponent.
 -/
 theorem generic_format_F2R (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (m e : Int) :
+    (fexp : Int → Int) [Valid_exp fexp] (m e : Int) :
     ⦃⌜beta > 1 ∧ (m ≠ 0 → (cexp beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta))) ≤ e)⌝⦄
     (pure (generic_format beta fexp (F2R (FlocqFloat.mk m e : FlocqFloat beta))) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -623,7 +625,7 @@ Theorem {lit}`generic_format_bpow`:
 Lean (spec): For any integer exponent {lit}`e`, the power {lit}`(β : ℝ)^e`
 is representable in the generic format provided {lit}`fexp (e+1) ≤ e`.
 -/
-theorem generic_format_bpow (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+theorem generic_format_bpow (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (e : Int) :
     ⦃⌜beta > 1 ∧ fexp (e + 1) ≤ e⌝⦄
     (pure (generic_format beta fexp ((beta : ℝ) ^ e)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -684,14 +686,14 @@ Variant {lean}`generic_format_bpow'` (Coq {lit}`Generic_fmt`).
 
 Assumes {lean}`fexp e ≤ e`.
 -/
-theorem generic_format_bpow' (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+theorem generic_format_bpow' (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (e : Int) :
     ⦃⌜beta > 1 ∧ fexp e ≤ e⌝⦄
     (pure (generic_format beta fexp ((beta : ℝ) ^ e)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro ⟨hβ, hfe⟩
   -- Derive fexp(e+1) ≤ e from fexp e ≤ e using Valid_exp
   have hfe1 : fexp (e + 1) ≤ e := by
-    have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) e
+    have hpair := Valid_exp.valid_exp (fexp := fexp) e
     by_cases hlt : fexp e < e
     · -- Large regime: fexp(e) < e implies fexp(e+1) ≤ e
       exact hpair.left hlt
@@ -709,7 +711,7 @@ theorem generic_format_bpow' (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     If x equals F2R of a float and the exponent condition
     holds, then x is in generic format.
 -/
-theorem generic_format_F2R' (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (f : FlocqFloat beta) :
+theorem generic_format_F2R' (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (f : FlocqFloat beta) :
     ⦃⌜beta > 1 ∧ (F2R f) = x ∧ (x ≠ 0 → (cexp beta fexp x) ≤ f.Fexp)⌝⦄
     (pure (generic_format beta fexp x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -955,7 +957,7 @@ theorem scaled_mantissa_abs (beta : Int) [ValidRadix beta] (fexp : Int → Int) 
     If x is in generic format, then -x is also in generic format.
 -/
 theorem generic_format_opp (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
     (pure (generic_format beta fexp (-x)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -985,7 +987,7 @@ theorem generic_format_opp (beta : Int) [ValidRadix beta]
     If x is in generic format, then |x| is also in generic format.
 -/
 theorem generic_format_abs (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
     (pure (generic_format beta fexp (abs x)) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -1008,7 +1010,7 @@ theorem generic_format_abs (beta : Int) [ValidRadix beta]
     If |x| is in generic format, then x is also in generic format.
 -/
 theorem generic_format_abs_inv (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp (abs x))⌝⦄
     (pure (generic_format beta fexp x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -1057,7 +1059,7 @@ def format_discrete (F : ℝ → Prop) : Prop :=
 
     The generic format contains at least some representable values.
 -/
-theorem generic_format_satisfies_any (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] :
+theorem generic_format_satisfies_any (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] :
     satisfies_any (fun y => (generic_format beta fexp y)) := by
   refine ⟨0, ?_⟩
   unfold generic_format scaled_mantissa cexp
@@ -1085,7 +1087,7 @@ theorem generic_format_EM
     scaled mantissa of {lit}`x` is strictly less than 1.
 -/
 theorem scaled_mantissa_lt_1
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (ex : Int) :
     1 < beta → abs x < (beta : ℝ) ^ ex → ex ≤ fexp ex →
     abs (scaled_mantissa beta fexp x) < 1 := by
@@ -1114,7 +1116,7 @@ theorem scaled_mantissa_lt_1
   -- Use the "small" regime constancy of fexp to replace fexp m with fexp ex
   have hfeq : fexp m = fexp ex := by
     -- From Valid_exp at k = ex and hypothesis ex ≤ fexp ex
-    have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex)
+    have hpair := (Valid_exp.valid_exp (fexp := fexp) ex)
     have hsmall := hpair.right
     have hconst := (hsmall hlex).right
     have hm_le_fex : m ≤ fexp ex := le_trans hmag_le_ex hlex
@@ -1422,7 +1424,7 @@ theorem scaled_mantissa_lt_bpow
 If `x` is nonzero and generic, its canonical exponent is strictly below
 `mag beta x`. -/
 theorem mag_generic_gt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     ⦃⌜1 < beta ∧ x ≠ 0 ∧ (generic_format beta fexp x)⌝⦄
     (pure (cexp beta fexp x) : Id Int)
     ⦃⇓e => ⌜e < (mag beta x)⌝⦄ := by
@@ -1518,7 +1520,7 @@ theorem mag_generic_gt
 
 /-- Coq ({lit}`Generic_fmt.v`): {lit}`abs_lt_bpow_prec`. Lean port uses a non-strict bound. -/
 theorem abs_lt_bpow_prec
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (prec : Int) :
     1 < beta →
     (∀ e : Int, e - prec ≤ fexp e) →
@@ -1614,7 +1616,7 @@ theorem generic_format_discrete
     strictly positive representable real number is at least {lit}`β^emin`.
 -/
 theorem generic_format_ge_bpow
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (emin : Int) :
     (1 < beta ∧ ∀ e : Int, emin ≤ fexp e) →
     ∀ x : ℝ, 0 < x → (generic_format beta fexp x) → (beta : ℝ) ^ emin ≤ x := by
@@ -2626,7 +2628,7 @@ noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     scaled mantissa.
 -/
 theorem round_N_middle
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (choice : Int → Bool) (x : ℝ)
     (hβ : 1 < beta)
     (hmid : x - roundR beta fexp (fun y => (FloatSpec.Core.Raux.Zfloor y)) x
@@ -2703,7 +2705,7 @@ theorem round_N_middle
 /-- If the concrete upper rounded value is strictly closer than the lower one,
 `roundR` with `Znearest` selects the upper branch. -/
 theorem round_N_eq_UP
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (choice : Int → Bool) (x : ℝ) (hβ : 1 < beta)
     (hclose :
       |roundR beta fexp rnd_ceil x - x| <
@@ -2784,7 +2786,7 @@ theorem round_N_eq_UP
 /-- If the concrete lower rounded value is strictly closer than the upper one,
 `roundR` with `Znearest` selects the lower branch. -/
 theorem round_N_eq_DN
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (choice : Int → Bool) (x : ℝ) (hβ : 1 < beta)
     (hclose :
       |roundR beta fexp rnd_floor x - x| <
@@ -2862,7 +2864,7 @@ theorem round_N_eq_DN
    yields zero. We state it for the concrete `roundR` with `Znearest choice`.
 -/
 theorem round_N_small_pos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (choice : Int → Bool) (x : ℝ) (ex : Int)
     (hβ : 1 < beta)
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
@@ -2907,7 +2909,7 @@ theorem round_N_small_pos
   -- From ex < fexp ex, we have ex ≤ fexp ex, so by constancy on [.., fexp ex], fexp m = fexp ex
   have hc_eq : c = fexp ex := by
     -- Valid_exp at k = ex
-    have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex)
+    have hpair := (Valid_exp.valid_exp (fexp := fexp) ex)
     have hsmall := hpair.right
     have hex_le : ex ≤ fexp ex := le_of_lt hex_lt
     have hconst := (hsmall hex_le).right
@@ -3012,7 +3014,7 @@ theorem round_N_small_pos
 
 /-- Port of Coq’s {lit}`round_bounded_small_pos` (statement only). -/
 theorem roundR_bounded_small_pos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {ex : Int}
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
     (hex : ex ≤ fexp ex) (hβ : 1 < beta):
@@ -3053,7 +3055,7 @@ theorem roundR_bounded_small_pos
 
     -- Constancy of `fexp` on the small branch yields `c = fexp ex`
     have hc_eq : c = fexp ex := by
-      have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex)
+      have hpair := (Valid_exp.valid_exp (fexp := fexp) ex)
       have hconst := (hpair.right hex).right
       have hm_le_fex : m ≤ fexp ex := le_trans hm_le_ex hex
       simpa [hc] using hconst m hm_le_fex
@@ -3104,7 +3106,7 @@ theorem roundR_bounded_small_pos
 
 /-- Port of Coq’s {lit}`round_bounded_large_pos` (statement only). -/
 theorem roundR_bounded_large_pos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {ex : Int}
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
     (hex : fexp ex < ex) (hβ : 1 < beta):
@@ -3149,7 +3151,7 @@ theorem roundR_bounded_large_pos
   have hc_lt_ex : c < ex := by
     -- Instantiate the large-regime lemma with `k = ex` and `l = m`
     have hlt :=
-      valid_exp_large' (beta := beta) (fexp := fexp) (k := ex) (l := m) hex hm_le_ex
+      valid_exp_large' (fexp := fexp) (k := ex) (l := m) hex hm_le_ex
     -- Since `c = fexp m`, rewrite the conclusion directly
     simpa [hc]
       using hlt
@@ -3278,7 +3280,7 @@ theorem roundR_bounded_large_pos
 
 /-- Coq (`Generic_fmt.v`): positive-case monotonicity of concrete rounding. -/
 theorem roundR_le_pos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
     (hβ : 1 < beta) (hx : 0 < x) (hxy : x ≤ y) :
     roundR beta fexp rnd x ≤ roundR beta fexp rnd y := by
@@ -3347,7 +3349,7 @@ theorem roundR_le_pos
 
   by_cases hy_small : ey ≤ fexp ey
   · have hfe : fexp ex = fexp ey := by
-      have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ey
+      have hpair := Valid_exp.valid_exp (fexp := fexp) ey
       have hconst := (hpair.right hy_small).right
       exact hconst ex (le_trans hex_le_ey hy_small)
     exact same_exp_le hfe
@@ -3370,7 +3372,7 @@ theorem roundR_le_pos
               have hfex_lt_ey : fexp ex < ey := by
                 by_contra hnot
                 have hey_le_fex : ey ≤ fexp ex := le_of_not_gt hnot
-                have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex
+                have hpair := Valid_exp.valid_exp (fexp := fexp) ex
                 have hconst := (hpair.right hx_small).right
                 have hfe_eq : fexp ey = fexp ex := hconst ey hey_le_fex
                 exact (not_le_of_gt hy_large) (by simpa [hfe_eq] using hey_le_fex)
@@ -3394,7 +3396,7 @@ theorem roundR_le_pos
 
 /-- Concrete rounding preserves nonnegativity. -/
 theorem roundR_nonneg_of_nonneg
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
     (hβ : 1 < beta) (hx : 0 ≤ x) :
     0 ≤ roundR beta fexp rnd x := by
@@ -3416,7 +3418,7 @@ theorem roundR_nonneg_of_nonneg
 
 /-- Concrete rounding preserves nonpositivity. -/
 theorem roundR_nonpos_of_nonpos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
     (hβ : 1 < beta) (hx : x ≤ 0) :
     roundR beta fexp rnd x ≤ 0 := by
@@ -3438,7 +3440,7 @@ theorem roundR_nonpos_of_nonpos
 
 /-- Coq (`Generic_fmt.v`): negation compatibility for concrete rounding. -/
 theorem roundR_opp
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) (x : ℝ) (hβ : 1 < beta) :
     roundR beta fexp rnd (-x) = - roundR beta fexp (Zrnd_opp rnd) x := by
   classical
@@ -3452,7 +3454,7 @@ theorem roundR_opp
 
 /-- Coq (`Generic_fmt.v`): monotonicity of concrete rounding. -/
 theorem roundR_le
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
     (hβ : 1 < beta) (hxy : x ≤ y) :
     roundR beta fexp rnd x ≤ roundR beta fexp rnd y := by
@@ -3495,7 +3497,7 @@ theorem roundR_le
 
 /-- Concrete rounding fixes values already in the generic format. -/
 theorem roundR_generic
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
     generic_format beta fexp x → roundR beta fexp rnd x = x := by
   classical
@@ -3534,7 +3536,7 @@ theorem roundR_generic
 
 /-- Lower generic bound for concrete rounding. -/
 theorem roundR_ge_generic
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
     (hβ : 1 < beta) :
     generic_format beta fexp x → x ≤ y → x ≤ roundR beta fexp rnd y := by
@@ -3546,7 +3548,7 @@ theorem roundR_ge_generic
 
 /-- Upper generic bound for concrete rounding. -/
 theorem roundR_le_generic
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x y : ℝ)
     (hβ : 1 < beta) :
     generic_format beta fexp y → x ≤ y → roundR beta fexp rnd x ≤ y := by
@@ -3559,11 +3561,11 @@ theorem roundR_le_generic
 /-- Coq `Generic_fmt.round`: apply the supplied integer rounding function to
     the scaled mantissa, then interpret the resulting float. -/
 noncomputable def round_to_generic (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [Valid_exp beta fexp] (mode : ℝ → Int) (x : ℝ) : ℝ :=
+    [Valid_exp fexp] (mode : ℝ → Int) (x : ℝ) : ℝ :=
   roundR beta fexp mode x
 
 theorem round_to_generic_int_eq_roundR
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) (x : ℝ) :
     round_to_generic beta fexp rnd x = roundR beta fexp rnd x := rfl
 
@@ -3592,7 +3594,7 @@ class Monotone_exp (fexp : Int → Int) : Prop where
     the usual order on nonnegative reals and is consistent with the
     magnitude-based definition used here. -/
 theorem cexp_mono_pos_ax
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     [Monotone_exp fexp] (x y : ℝ) :
     1 < beta → x ≠ 0 → 0 < y → abs x ≤ y → (cexp beta fexp x) ≤ (cexp beta fexp y) := by
   intro hβ hx_ne hy_pos habs
@@ -3626,7 +3628,7 @@ noncomputable instance valid_rnd_N0 : Valid_rnd Znearest0 :=
    Rounding to nearest commutes with negation up to the transformed choice.
 -/
 theorem round_N_opp
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (choice : Int → Bool) (x : ℝ) :
     roundR beta fexp (Znearest choice) (-x)
       = - roundR beta fexp (Znearest (fun t => ! choice (-(t + 1)))) x := by
@@ -3685,7 +3687,7 @@ theorem round_N_opp
    For ties-to-zero choice `Znearest0`, rounding commutes with negation.
 -/
 theorem round_N0_opp
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) :
     roundR beta fexp (Znearest (fun t : Int => decide (t < 0))) (-x)
       = - roundR beta fexp (Znearest (fun t : Int => decide (t < 0))) x := by
@@ -3754,7 +3756,7 @@ theorem round_N0_opp
    Signed variant of `round_N_small_pos`.
 -/
 theorem round_N_small
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (choice : Int → Bool) (x : ℝ) (ex : Int)
     (hβ : 1 < beta)
     (hx : (beta : ℝ) ^ (ex - 1) ≤ abs x ∧ abs x < (beta : ℝ) ^ ex)
@@ -3803,7 +3805,7 @@ theorem round_N_small
     For round-to-nearest-away-from-zero, rounding commutes with negation.
 -/
 theorem round_NA_opp
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) :
     roundR beta fexp (Znearest (fun t : Int => decide (0 ≤ t))) (-x)
       = - roundR beta fexp (Znearest (fun t : Int => decide (0 ≤ t))) x := by
@@ -3847,7 +3849,7 @@ theorem round_NA_opp
 section Inclusion
 
 variable (beta : Int) [ValidRadix beta] (fexp1 fexp2 : Int → Int)
-variable [Valid_exp beta fexp1] [Valid_exp beta fexp2]
+variable [Valid_exp fexp1] [Valid_exp fexp2]
 
 /-- Coq {lit}`Generic_fmt.v`: {lean}`generic_inclusion_mag`
 
@@ -4150,7 +4152,7 @@ section Round_generic
 /-- Coq `Generic_fmt.v`: theorem `generic_format_round`, specialized to the
 concrete integer-rounding operator used by this port. -/
 theorem generic_format_roundR
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
     generic_format beta fexp (roundR beta fexp rnd x) := by
   classical
@@ -4193,7 +4195,7 @@ theorem generic_format_roundR
         rcases hround_r with hr0 | hrpow
         · simpa [hr0] using generic_format_0_run (beta := beta) (fexp := fexp)
         · have hfexp_self : fexp (fexp ex) ≤ fexp ex := by
-            have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex
+            have hpair := Valid_exp.valid_exp (fexp := fexp) ex
             have hconst := (hpair.right hsmall).right
             have heq : fexp (fexp ex) = fexp ex := hconst (fexp ex) le_rfl
             exact le_of_eq heq
@@ -4260,7 +4262,7 @@ theorem generic_format_roundR
     the generic format. -/
 theorem round_to_generic_generic
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [Valid_exp beta fexp]
+    [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
     (hβ : 1 < beta := ValidRadix.valid) :
     generic_format beta fexp (round_to_generic beta fexp rnd x) := by
@@ -4270,7 +4272,7 @@ theorem round_to_generic_generic
 
 /-- Existence of round-down value in the generic format. -/
 theorem round_DN_exists
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f) ∧
       Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f := by
   classical
@@ -4317,7 +4319,7 @@ theorem round_DN_exists
         rcases hround_r with hr0 | hrpow
         · simpa [hr0] using generic_format_0_run (beta := beta) (fexp := fexp)
         · have hfexp_self : fexp (fexp ex) ≤ fexp ex := by
-            have hpair := Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex
+            have hpair := Valid_exp.valid_exp (fexp := fexp) ex
             have hconst := (hpair.right hsmall).right
             have heq : fexp (fexp ex) = fexp ex := hconst (fexp ex) le_rfl
             exact le_of_eq heq
@@ -4415,7 +4417,7 @@ theorem round_DN_exists
 
 -- Public shim with explicit `1 < beta` hypothesis; delegates to `round_DN_exists`.
 theorem round_DN_exists_global
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     ∃ f, (generic_format beta fexp f) ∧
       FloatSpec.Core.Defs.Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f := by
@@ -4429,7 +4431,7 @@ This is the payload hidden by the existential compatibility theorem
 `round_DN_exists`: the concrete floor-rounded value is the greatest generic
 format value below `x`. -/
 theorem roundR_DN_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hβ : 1 < beta) :
     Rnd_DN_pt (fun y => generic_format beta fexp y) x
       (roundR beta fexp rnd_floor x) := by
@@ -4466,7 +4468,7 @@ theorem roundR_DN_pt
 The concrete ceiling-rounded value is the least generic format value above
 `x`. This is the upward analogue of `roundR_DN_pt`. -/
 theorem roundR_UP_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hβ : 1 < beta) :
     Rnd_UP_pt (fun y => generic_format beta fexp y) x
       (roundR beta fexp rnd_ceil x) := by
@@ -4504,7 +4506,7 @@ theorem roundR_UP_pt
 
 -- Helper: closure of generic format under negation (as a plain implication)
 private theorem generic_format_neg_closed
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (y : ℝ)
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (y : ℝ)
     (hy : (generic_format beta fexp y)) :
     (generic_format beta fexp (-y)) :=
   (generic_format_opp beta fexp y) hy
@@ -4539,7 +4541,7 @@ private theorem Rnd_UP_to_DN_via_neg
     A constructive proof requires additional spacing/discreteness lemmas for the format.
 -/
 theorem round_UP_exists
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta):
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hβ : 1 < beta):
     ∃ f, (generic_format beta fexp f) ∧
       Rnd_UP_pt (fun y => (generic_format beta fexp y)) x f := by
   -- Obtain DN existence for -x (assumed available) and transform
@@ -4568,7 +4570,7 @@ theorem round_UP_exists
     exact ⟨by simpa using (generic_format_neg_closed beta fexp fdn hFdn), hx_le, hmin⟩
 
 theorem round_NA_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) :
     ∃ f, (generic_format beta fexp f) ∧
       FloatSpec.Core.Defs.Rnd_NA_pt (fun y => (generic_format beta fexp y)) x f := by
@@ -4932,7 +4934,7 @@ theorem round_NA_pt
             exact And.intro hN hNA
 
 theorem round_N0_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (hβ: 1 < beta):
     ∃ f, (generic_format beta fexp f) ∧
       FloatSpec.Core.Defs.Rnd_N0_pt (fun y => (generic_format beta fexp y)) x f := by
@@ -5296,20 +5298,20 @@ theorem round_N0_pt
 /-- Compute the round-down and round-up witnesses in the generic format.
     These are used by spacing and ulp lemmas. -/
 noncomputable def round_DN_to_format (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-  [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta) : ℝ :=
+  [Valid_exp fexp] (x : ℝ) (hβ : 1 < beta) : ℝ :=
   -- Use classical choice from existence of DN rounding in generic format
   Classical.choose (round_DN_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
 
 /-- Choose the round-up witness in the generic format for x. -/
 noncomputable def round_UP_to_format (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-  [Valid_exp beta fexp] (x : ℝ) (hβ : 1 < beta) : ℝ :=
+  [Valid_exp fexp] (x : ℝ) (hβ : 1 < beta) : ℝ :=
   -- Use classical choice from existence of UP rounding in generic format
   Classical.choose (round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hβ))
 
 /-- Properties of the format-specific rounding helpers: both results are in the format
     and they bracket the input x. -/
 theorem round_to_format_properties (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [Valid_exp beta fexp] (x : ℝ) (hbeta: 1 < beta):
+    [Valid_exp fexp] (x : ℝ) (hbeta: 1 < beta):
     ⦃⌜1 < beta⌝⦄
     (pure (round_DN_to_format beta fexp x hbeta,
            round_UP_to_format beta fexp x hbeta) : Id (ℝ × ℝ))
@@ -5343,7 +5345,7 @@ theorem round_to_format_properties (beta : Int) [ValidRadix beta] (fexp : Int �
     the same exponent as `x`; the UP endpoint can cross a power-of-`beta`
     boundary. -/
 theorem DN_UP_canonical_neighbors
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x xd xu : ℝ) :
     1 < beta →
     Rnd_DN_pt (fun y => (generic_format beta fexp y)) x xd →
@@ -5555,7 +5557,7 @@ private theorem lt_of_mag_lt_pos
 /-- Positivity-monotone cexp order implies value order (positive right argument).
     Requires base positivity and a monotone exponent function, as in Coq. -/
 theorem lt_cexp_pos_ax
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     [Monotone_exp fexp] (x y : ℝ) :
     1 < beta → 0 < y → (cexp beta fexp x) < (cexp beta fexp y) → x < y := by
   classical
@@ -5580,7 +5582,7 @@ theorem lt_cexp_pos_ax
     is at least fexp e. Mirrors Coq's {lit}`cexp_ge_bpow` under the
     {name}`Monotone_exp` assumption. -/
 theorem cexp_ge_bpow_ax
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
     1 < beta → (beta : ℝ) ^ (e - 1) ≤ abs x → fexp e ≤ (cexp beta fexp x) := by
@@ -5625,7 +5627,7 @@ theorem cexp_ge_bpow_ax
 --     When fexp (e + 1) ≤ e, beta^e is in generic format.
 -- -/
 -- theorem generic_format_bpow
---     (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+--     (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (e : Int) :
 --     ⦃⌜beta > 1 ∧ fexp (e + 1) ≤ e⌝⦄
 --     generic_format beta fexp ((beta : ℝ) ^ e)
 --     ⦃⇓result => ⌜result⌝⦄ := by
@@ -5685,7 +5687,7 @@ theorem cexp_ge_bpow_ax
 
 --     When fexp e ≤ e, beta^e is in generic format.
 -- -/
--- theorem generic_format_bpow' (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (e : Int) :
+-- theorem generic_format_bpow' (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (e : Int) :
 --     ⦃⌜beta > 1 ∧ fexp e ≤ e⌝⦄
 --     generic_format beta fexp ((beta : ℝ) ^ e)
 --     ⦃⇓result => ⌜result⌝⦄ := by
@@ -5693,7 +5695,7 @@ theorem cexp_ge_bpow_ax
 --   rcases hpre with ⟨hβ, hle⟩
 --   -- From Valid_exp, we can derive the required bound fexp (e+1) ≤ e
 --   -- by case-splitting on whether fexp e < e or e ≤ fexp e.
---   have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) e)
+--   have hpair := (Valid_exp.valid_exp (fexp := fexp) e)
 --   by_cases hlt : fexp e < e
 --   · -- Large regime: directly get fexp (e+1) ≤ e
 --     have hbound : fexp (e + 1) ≤ e := (hpair.left) hlt
@@ -5715,7 +5717,7 @@ theorem cexp_ge_bpow_ax
     For numbers in generic format, the scaled mantissa
     equals its truncation (i.e., it's already an integer).
 -/
-theorem scaled_mantissa_generic (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+theorem scaled_mantissa_generic (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     ⦃⌜(generic_format beta fexp x)⌝⦄
     (pure (scaled_mantissa beta fexp x) : Id ℝ)
     ⦃⇓result => ⌜result = (((Ztrunc result) : Int) : ℝ)⌝⦄ := by
@@ -5731,7 +5733,7 @@ theorem scaled_mantissa_generic (beta : Int) [ValidRadix beta] (fexp : Int → I
   -- Goal: x * β^(-e) = Ztrunc(x * β^(-e))
   set e := fexp (mag beta x) with he
   -- hx gives us the reconstruction equation directly
-  -- Since beta > 1 is typically required by Valid_exp, beta^e ≠ 0
+  -- Since `ValidRadix beta` gives beta > 1, beta^e ≠ 0
   -- Handle both the nonzero and degenerate power cases explicitly.
   by_cases hpow : (beta : ℝ) ^ e = 0
   · -- Degenerate case: β^e = 0 means RHS of hx is 0, so x = 0
@@ -5931,7 +5933,7 @@ theorem mantissa_small_pos (beta : Int) [ValidRadix beta] (fexp : Int → Int) (
     For any x, there exists a value f in generic format
     that is the rounding down of x.
 -/
-theorem generic_format_round_DN (beta : Int) [ValidRadix beta] (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+theorem generic_format_round_DN (beta : Int) [ValidRadix beta] (hbeta : 1 < beta) (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     ∃ f, (generic_format beta fexp f) ∧ Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f := by
   -- Derive DN existence for x from UP existence for -x via negation
   have hFneg : ∀ y, (generic_format beta fexp y) → (generic_format beta fexp (-y)) :=
@@ -5950,7 +5952,7 @@ theorem generic_format_round_DN (beta : Int) [ValidRadix beta] (hbeta : 1 < beta
     For any x, there exists a value f in generic format
     that is the rounding up of x.
 -/
-theorem generic_format_round_UP (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+theorem generic_format_round_UP (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hbeta : 1 < beta) :
     ∃ f, (generic_format beta fexp f) ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y)) x f := by
   -- Use the existence theorem (which depends on 1 < beta) to obtain a witness.
   exact round_UP_exists (beta := beta) (fexp := fexp) (x := x) (hβ := hbeta)
@@ -5960,7 +5962,7 @@ theorem generic_format_round_UP (beta : Int) [ValidRadix beta] (fexp : Int → I
     Compatibility lemma name alias: existence of a rounding-up value in the generic
     format. This wraps {name}`generic_format_round_UP` to align with the Coq lemma name.
 -/
-theorem generic_format_round_pos (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+theorem generic_format_round_pos (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hbeta : 1 < beta) :
     ∃ f, (generic_format beta fexp f) ∧ Rnd_UP_pt (fun y => (generic_format beta fexp y)) x f :=
   generic_format_round_UP (beta := beta) (fexp := fexp) (x := x) hbeta
 
@@ -5972,7 +5974,7 @@ theorem generic_format_round_pos (beta : Int) [ValidRadix beta] (fexp : Int → 
     format.
 -/
 theorem round_DN_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hbeta : 1 < beta) :
     Rnd_DN_pt (fun y => (generic_format beta fexp y)) x
       (roundR beta fexp rnd_floor x) := by
   exact roundR_DN_pt (beta := beta) (fexp := fexp) (x := x) hbeta
@@ -5985,7 +5987,7 @@ theorem round_DN_pt
     format.
 -/
 theorem round_UP_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hbeta : 1 < beta) :
     Rnd_UP_pt (fun y => (generic_format beta fexp y)) x
       (roundR beta fexp rnd_ceil x) := by
   exact roundR_UP_pt (beta := beta) (fexp := fexp) (x := x) hbeta
@@ -5997,7 +5999,7 @@ theorem round_UP_pt
     Lean (existence form): There exists a toward-zero rounded value
     in the generic format for any real x. -/
 theorem round_ZR_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta : 1 < beta) :
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hbeta : 1 < beta) :
     ∃ f, (generic_format beta fexp f) ∧
       Rnd_ZR_pt (fun y => (generic_format beta fexp y)) x f := by
   -- Case-split on the sign of x and build the ZR witness accordingly.
@@ -6050,7 +6052,7 @@ theorem round_ZR_pt
     format.
 -/
 theorem round_N_pt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (choice : Int → Bool) (x : ℝ) (hbeta : 1 < beta) :
     Rnd_N_pt (fun y => generic_format beta fexp y) x
       (roundR beta fexp (Znearest choice) x) := by
@@ -6165,7 +6167,7 @@ theorem round_N_pt
     Any concrete rounding produced by a valid integer rounding function agrees
     with either the concrete floor or ceiling rounding at the same input. -/
 theorem round_DN_or_UP
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     roundR beta fexp rnd x = roundR beta fexp rnd_floor x ∨
       roundR beta fexp rnd x = roundR beta fexp rnd_ceil x := by
@@ -6194,7 +6196,7 @@ theorem round_DN_or_UP
 -- For non-zero x in generic format, the scaled mantissa
 -- is bounded by beta^(mag(x) - cexp(x)).
 theorem generic_format_precision_bound
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (h : (generic_format beta fexp x)) (hx : x ≠ 0)
     (hβ : 1 < beta) :
     abs (scaled_mantissa beta fexp x) ≤ (beta : ℝ) ^ ((mag beta x) - (cexp beta fexp x)) := by
@@ -6205,7 +6207,7 @@ theorem generic_format_precision_bound
 
     If y > 0 and cexp x < cexp y, then x < y. -/
 theorem lt_cexp_pos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] [Monotone_exp fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] [Monotone_exp fexp]
     (x y : ℝ) :
     1 < beta → 0 < y → (cexp beta fexp x) < (cexp beta fexp y) → x < y := by
   intro hβ hy hlt
@@ -6215,12 +6217,12 @@ theorem lt_cexp_pos
 
     The exponent function is monotone.
 -/
-theorem fexp_monotone (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] :
+theorem fexp_monotone (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] :
     ∀ e1 e2 : Int, e1 ≤ e2 → e2 ≤ fexp e2 → fexp e1 ≤ fexp e2 := by
   -- Monotonicity holds on the "small" regime plateau by constancy
   intro e1 e2 hle hsmall
   -- From small-regime constancy at k = e2, any l ≤ fexp e2 has the same fexp
-  have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (beta := beta) (fexp := fexp) e2)
+  have hpair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) e2)
   have hconst := (hpair.right hsmall).right
   -- Since e1 ≤ e2 ≤ fexp e2, we get fexp e1 = fexp e2 in particular
   have : fexp e1 = fexp e2 := by
@@ -6331,7 +6333,7 @@ variable (rnd : ℝ → Int)
 
 /-- Monotonicity of source-faithful generic rounding. -/
 theorem round_to_generic_monotone
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (hβ : 1 < beta := ValidRadix.valid) :
     Monotone (fun x => round_to_generic (beta := beta) (fexp := fexp) (mode := rnd) x) := by
   intro x y hxy
@@ -6341,7 +6343,7 @@ theorem round_to_generic_monotone
 
 /-- Source-faithful magnitude monotonicity for concrete integer rounding. -/
 theorem mag_roundR_ge
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (hβ : 1 < beta) :
     let r := roundR beta fexp rnd x
     r ≠ 0 → (mag beta x) ≤ (mag beta r) := by
@@ -6443,7 +6445,7 @@ theorem mag_roundR_ge
 @[spec]
 theorem round_to_generic_spec
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (mode : ℝ → Int) (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (round_to_generic beta fexp mode x) : Id ℝ)
@@ -6456,7 +6458,7 @@ theorem round_to_generic_spec
 /-- Coq Generic_fmt.round_generic. -/
 theorem round_generic
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     generic_format beta fexp x →
       round_to_generic beta fexp rnd x = x := by
@@ -6467,7 +6469,7 @@ theorem round_generic
 /-- Coq Generic_fmt.generic_format_round. -/
 theorem generic_format_round
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     generic_format beta fexp (round_to_generic beta fexp rnd x) :=
   round_to_generic_generic (beta := beta) (fexp := fexp)
@@ -6476,7 +6478,7 @@ theorem generic_format_round
 /-- Coq Generic_fmt.round_ext. -/
 theorem round_ext
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd1 rnd2 : ℝ → Int)
     (hEq : ∀ x, rnd1 x = rnd2 x) (x : ℝ) :
     round_to_generic beta fexp rnd1 x =
@@ -6487,7 +6489,7 @@ theorem round_ext
 /-- Compatibility name for the exact round_generic contract. -/
 theorem round_generic_identity
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     generic_format beta fexp x →
       round_to_generic beta fexp rnd x = x :=
@@ -6496,7 +6498,7 @@ theorem round_generic_identity
 /-- Coq Generic_fmt.round_opp. -/
 theorem round_opp
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) (x : ℝ) :
     round_to_generic beta fexp rnd (-x) =
       -round_to_generic beta fexp (Zrnd_opp rnd) x := by
@@ -6507,7 +6509,7 @@ theorem round_opp
 /-- Coq Generic_fmt.round_le. -/
 theorem round_le
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hxy : x ≤ y) :
     round_to_generic beta fexp rnd x ≤
@@ -6519,7 +6521,7 @@ theorem round_le
 /-- Coq Generic_fmt.round_ZR_or_AW. -/
 theorem round_ZR_or_AW
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     round_to_generic beta fexp rnd x =
         round_to_generic beta fexp Ztrunc x ∨
@@ -6539,7 +6541,7 @@ theorem round_ZR_or_AW
 /-- Coq Generic_fmt.round_ge_generic. -/
 theorem round_ge_generic
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hx : generic_format beta fexp x) (hxy : x ≤ y) :
     x ≤ round_to_generic beta fexp rnd y := by
@@ -6550,7 +6552,7 @@ theorem round_ge_generic
 /-- Coq Generic_fmt.round_le_generic. -/
 theorem round_le_generic
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hy : generic_format beta fexp y) (hxy : x ≤ y) :
     round_to_generic beta fexp rnd x ≤ y := by
@@ -6561,7 +6563,7 @@ theorem round_le_generic
 /-- Coq Generic_fmt.round_abs_abs. -/
 theorem round_abs_abs
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (P : ℝ → ℝ → Prop)
     (hP : ∀ (rnd : ℝ → Int), [Valid_rnd rnd] → ∀ x,
       0 ≤ x → P x (round_to_generic beta fexp rnd x))
@@ -6598,7 +6600,7 @@ theorem round_abs_abs
 /-- Coq Generic_fmt.abs_round_ge_generic. -/
 theorem abs_round_ge_generic_ax
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hx : generic_format beta fexp x) (hxy : x ≤ abs y) :
     x ≤ abs (round_to_generic beta fexp rnd y) := by
@@ -6614,7 +6616,7 @@ theorem abs_round_ge_generic_ax
 /-- Coq Generic_fmt.abs_round_le_generic. -/
 theorem abs_round_le_generic_ax
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hy : generic_format beta fexp y) (hxy : abs x ≤ y) :
     abs (round_to_generic beta fexp rnd x) ≤ y := by
@@ -6630,7 +6632,7 @@ theorem abs_round_le_generic_ax
 /-- Coq Generic_fmt.round_bounded_large. -/
 theorem round_bounded_large
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) (ex : Int)
     (hlex : fexp ex < ex)
     (hx : (beta : ℝ) ^ (ex - 1) ≤ abs x ∧
@@ -6653,7 +6655,7 @@ theorem round_bounded_large
 /-- Coq Generic_fmt.round_0. -/
 theorem round_0
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] :
     round_to_generic beta fexp rnd 0 = 0 := by
   have hrnd0 : rnd (0 : ℝ) = (0 : Int) := by
@@ -6666,7 +6668,7 @@ theorem round_0
     represented as another generic format.
 -/
 theorem generic_format_inter_valid (beta : Int) [ValidRadix beta] (fexp1 fexp2 : Int → Int)
-    [Valid_exp beta fexp1] [Valid_exp beta fexp2]
+    [Valid_exp fexp1] [Valid_exp fexp2]
     (hβ : 1 < beta) :
     ∃ fexp3, ∀ x, generic_format_inter beta fexp1 fexp2 x → (generic_format beta fexp3 x) := by
   -- We can realize the intersection inside a single generic format by
@@ -6780,7 +6782,7 @@ theorem generic_format_inter_valid (beta : Int) [ValidRadix beta] (fexp1 fexp2 :
     For non-zero x in generic format, the exponent function
     satisfies fexp(mag(x) + 1) ≤ mag(x).
 -/
-theorem mag_generic_format (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+theorem mag_generic_format (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (h : (generic_format beta fexp x)) (hx : x ≠ 0)
     (hβ : 1 < beta) :
     fexp ((mag beta x) + 1) ≤ (mag beta x) := by
@@ -6894,7 +6896,7 @@ theorem mag_generic_format (beta : Int) [ValidRadix beta] (fexp : Int → Int) [
       have hfalse : False := (not_le_of_gt hone_lt_pow_t) this
       exact False.elim hfalse
   -- Apply Valid_exp at k, splitting on e < k vs e = k
-  have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) k)
+  have hpair := (Valid_exp.valid_exp (fexp := fexp) k)
   by_cases hlt : e < k
   · -- Large regime at k
     have : fexp (k + 1) ≤ k := (hpair.left) hlt
@@ -6912,7 +6914,7 @@ theorem mag_generic_format (beta : Int) [ValidRadix beta] (fexp : Int → Int) [
     For non-zero x in generic format, there exists a mantissa m
     such that x = F2R(m, cexp(x)) with bounded mantissa.
 -/
-theorem precision_generic_format (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+theorem precision_generic_format (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (h : (generic_format beta fexp x)) (hx : x ≠ 0) (hβ : 1 < beta) :
     ∃ m : Int,
       x = (F2R (FlocqFloat.mk m (cexp beta fexp x) : FlocqFloat beta)) ∧
@@ -7045,7 +7047,7 @@ theorem precision_generic_format (beta : Int) [ValidRadix beta] (fexp : Int → 
     Computes the nearest representable value in the format.
 -/
 noncomputable def round_N_to_format
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) (hbeta: 1 < beta): ℝ :=
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) (hbeta: 1 < beta): ℝ :=
   -- Choose the canonical down/up neighbors in the generic format,
   -- then pick the half‑interval branch: below midpoint → DN, otherwise → UP
   let d := Classical.choose (round_DN_exists beta fexp x hbeta)
@@ -7071,7 +7073,7 @@ noncomputable def round_N_to_format
     Concrete floor rounding commutes with negation as ceiling rounding. -/
 theorem round_DN_opp
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     round_to_generic beta fexp rnd_floor (-x) =
       -round_to_generic beta fexp rnd_ceil x := by
   have hopp_fun : Zrnd_opp rnd_floor = rnd_ceil := by
@@ -7082,7 +7084,7 @@ theorem round_DN_opp
 
 theorem round_UP_opp
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     round_to_generic beta fexp rnd_ceil (-x) =
       -round_to_generic beta fexp rnd_floor x := by
   have hopp_fun : Zrnd_opp rnd_ceil = rnd_floor := by
@@ -7093,7 +7095,7 @@ theorem round_UP_opp
 
 theorem round_ZR_opp
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     round_to_generic beta fexp Ztrunc (-x) =
       -round_to_generic beta fexp Ztrunc x := by
   have hopp_fun : Zrnd_opp Ztrunc = Ztrunc := by
@@ -7106,7 +7108,7 @@ theorem round_ZR_opp
 
 theorem round_ZR_abs
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     round_to_generic beta fexp Ztrunc (abs x) =
       abs (round_to_generic beta fexp Ztrunc x) := by
   by_cases hx : 0 ≤ x
@@ -7125,7 +7127,7 @@ theorem round_ZR_abs
 
 theorem round_AW_opp
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     round_to_generic beta fexp Zaway (-x) =
       -round_to_generic beta fexp Zaway x := by
   have hopp_fun : Zrnd_opp Zaway = Zaway := by
@@ -7138,7 +7140,7 @@ theorem round_AW_opp
 
 theorem round_AW_abs
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ) :
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ) :
     round_to_generic beta fexp Zaway (abs x) =
       abs (round_to_generic beta fexp Zaway x) := by
   by_cases hx : 0 ≤ x
@@ -7157,7 +7159,7 @@ theorem round_AW_abs
 
 theorem round_ZR_DN
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hx : 0 ≤ x) :
     round_to_generic beta fexp Ztrunc x =
       round_to_generic beta fexp rnd_floor x := by
@@ -7171,7 +7173,7 @@ theorem round_ZR_DN
 
 theorem round_ZR_UP
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hx : x ≤ 0) :
     round_to_generic beta fexp Ztrunc x =
       round_to_generic beta fexp rnd_ceil x := by
@@ -7188,7 +7190,7 @@ theorem round_ZR_UP
 
 theorem round_AW_UP
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hx : 0 ≤ x) :
     round_to_generic beta fexp Zaway x =
       round_to_generic beta fexp rnd_ceil x := by
@@ -7201,7 +7203,7 @@ theorem round_AW_UP
 
 theorem round_AW_DN
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hx : x ≤ 0) :
     round_to_generic beta fexp Zaway x =
       round_to_generic beta fexp rnd_floor x := by
@@ -7224,7 +7226,7 @@ theorem round_AW_DN
     Lean port note: Magnitude does not decrease under rounding away from zero.
  -/
 theorem mag_round_ge
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ) :
     round_to_generic beta fexp rnd x ≠ 0 →
       (mag beta x) ≤ (mag beta (round_to_generic beta fexp rnd x)) := by
@@ -7239,7 +7241,7 @@ theorem mag_round_ge
     Any nearest point is either a DN- or UP-point.
  -/
 theorem generic_N_pt_DN_or_UP
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x f : ℝ) :
     Rnd_N_pt (fun y => (generic_format beta fexp y)) x f →
     (Rnd_DN_pt (fun y => (generic_format beta fexp y)) x f ∨
@@ -7287,13 +7289,13 @@ theorem generic_N_pt_DN_or_UP
     while keeping the scaled mantissa yields x.
  -/
 theorem subnormal_exponent
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (ex : Int) (x : ℝ) (hβ : 1 < beta := by omega) :
     ex ≤ fexp ex → (mag beta x) ≤ fexp ex → (generic_format beta fexp x) →
     x = (F2R (FlocqFloat.mk (Ztrunc (x * (beta : ℝ) ^ (-(fexp ex)))) (fexp ex) : FlocqFloat beta)) := by
   intro hsmall hmag_le hx
   -- From valid_exp on the "small" side at `ex`, fexp is constant on all l ≤ fexp ex
-  have hpair := (Valid_exp.valid_exp (beta := beta) (fexp := fexp) ex)
+  have hpair := (Valid_exp.valid_exp (fexp := fexp) ex)
   have hconst := (hpair.right hsmall).right
   have hcexp_eq : fexp ((mag beta x)) = fexp ex := hconst ((mag beta x)) hmag_le
   -- Note: (mag beta x).run = (mag beta x) since Id.run is the identity
@@ -7311,7 +7313,7 @@ theorem subnormal_exponent
     If x ≠ 0 and |x| < β^e, then cexp x ≤ fexp e.
  -/
 theorem cexp_le_bpow
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
     1 < beta → x ≠ 0 → abs x < (beta : ℝ) ^ e → (cexp beta fexp x) ≤ fexp e := by
@@ -7334,7 +7336,7 @@ theorem cexp_le_bpow
     If β^(e-1) ≤ |x|, then fexp e ≤ cexp x.
  -/
 theorem cexp_ge_bpow
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     [Monotone_exp fexp]
     (x : ℝ) (e : Int) :
     1 < beta → (beta : ℝ) ^ (e - 1) ≤ abs x → fexp e ≤ (cexp beta fexp x) := by
@@ -7345,7 +7347,7 @@ theorem cexp_ge_bpow
     If y ≠ 0 and cexp x < cexp y, then |x| < |y|.
  -/
 theorem lt_cexp
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     [Monotone_exp fexp]
     (x y : ℝ) :
     1 < beta → y ≠ 0 → (cexp beta fexp x) < (cexp beta fexp y) → abs x < abs y := by
@@ -7372,7 +7374,7 @@ theorem lt_cexp
     Lean (spec): Absolute value monotonicity w.r.t. a representable lower bound. -/
 theorem abs_round_ge_generic
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hx : generic_format beta fexp x) (hxy : x ≤ abs y) :
     x ≤ abs (round_to_generic beta fexp rnd y) :=
@@ -7381,7 +7383,7 @@ theorem abs_round_ge_generic
 
 theorem abs_round_le_generic
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hy : generic_format beta fexp y) (hxy : abs x ≤ y) :
     abs (round_to_generic beta fexp rnd x) ≤ y :=
@@ -7390,7 +7392,7 @@ theorem abs_round_le_generic
 
 theorem round_bounded_small_pos
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {ex : Int}
     (hex : ex ≤ fexp ex)
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex) :
@@ -7402,7 +7404,7 @@ theorem round_bounded_small_pos
 
 theorem round_bounded_large_pos
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {ex : Int}
     (hex : fexp ex < ex)
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex) :
@@ -7414,7 +7416,7 @@ theorem round_bounded_large_pos
 
 theorem round_le_pos
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x y : ℝ}
     (hx : 0 < x) (hxy : x ≤ y) :
     round_to_generic beta fexp rnd x ≤
@@ -7424,7 +7426,7 @@ theorem round_le_pos
       (x := x) (y := y) ValidRadix.valid hx hxy)
 
 theorem round_DN_small_pos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (ex : Int)
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
     (he : ex ≤ fexp ex) (hβ : 1 < beta) :
@@ -7448,7 +7450,7 @@ theorem round_DN_small_pos
       ex ≤ fexp ex → bpow (ex-1) ≤ x < bpow ex → round Zceil x = bpow (fexp ex).
  -/
 theorem round_UP_small_pos
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (ex : Int) :
     ⦃⌜1 < beta ∧ ex ≤ fexp ex ∧ (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex⌝⦄
     (pure (round_to_generic beta fexp rnd_ceil x) : Id ℝ)
@@ -7480,7 +7482,7 @@ theorem round_UP_small_pos
       floor and ceiling roundings.
  -/
 theorem round_DN_UP_lt
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp]
     (x : ℝ) (hβ : 1 < beta) (hxF : ¬ generic_format beta fexp x) :
     roundR beta fexp rnd_floor x < x ∧ x < roundR beta fexp rnd_ceil x := by
   have hdn := round_DN_pt (beta := beta) (fexp := fexp) (x := x) hβ
@@ -7503,7 +7505,7 @@ theorem round_DN_UP_lt
  -/
 theorem round_large_pos_ge_bpow
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {e : Int}
     (hrpos : 0 < round_to_generic beta fexp rnd x)
     (hex : (beta : ℝ) ^ e ≤ x) :
@@ -7547,7 +7549,7 @@ theorem round_large_pos_ge_bpow
 
 theorem exp_small_round_0_pos_ax
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {ex : Int}
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
     (hr0 : round_to_generic beta fexp rnd x = 0) :
@@ -7564,7 +7566,7 @@ theorem exp_small_round_0_pos_ax
 
 theorem exp_small_round_0_pos
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {ex : Int}
     (hx : (beta : ℝ) ^ (ex - 1) ≤ x ∧ x < (beta : ℝ) ^ ex)
     (hr0 : round_to_generic beta fexp rnd x = 0) :
@@ -7574,7 +7576,7 @@ theorem exp_small_round_0_pos
 
 theorem exp_small_round_0
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] {x : ℝ} {ex : Int}
     (hx : (beta : ℝ) ^ (ex - 1) ≤ abs x ∧
       abs x < (beta : ℝ) ^ ex)
@@ -7626,7 +7628,7 @@ private theorem abs_Ztrunc_le_abs (y : ℝ) :
 
 theorem mag_round_ZR
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hrne : round_to_generic beta fexp Ztrunc x ≠ 0) :
     mag beta (round_to_generic beta fexp Ztrunc x) = mag beta x := by
   have hβ : 1 < beta := ValidRadix.valid
@@ -7673,7 +7675,7 @@ theorem mag_round_ZR
 
 theorem cexp_round_ge
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] [Monotone_exp fexp]
+    (fexp : Int → Int) [Valid_exp fexp] [Monotone_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
     (hround_ne : round_to_generic beta fexp rnd x ≠ 0) :
     cexp beta fexp x ≤
@@ -7684,7 +7686,7 @@ theorem cexp_round_ge
 
 theorem mag_DN
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hrpos : 0 < round_to_generic beta fexp rnd_floor x) :
     mag beta (round_to_generic beta fexp rnd_floor x) = mag beta x := by
   have hβ : 1 < beta := ValidRadix.valid
@@ -7700,7 +7702,7 @@ theorem mag_DN
 
 theorem cexp_DN
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hrpos : 0 < round_to_generic beta fexp rnd_floor x) :
     cexp beta fexp (round_to_generic beta fexp rnd_floor x) =
       cexp beta fexp x := by
@@ -7709,7 +7711,7 @@ theorem cexp_DN
 
 theorem scaled_mantissa_DN
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp] (x : ℝ)
+    (fexp : Int → Int) [Valid_exp fexp] (x : ℝ)
     (hrpos : 0 < round_to_generic beta fexp rnd_floor x) :
     scaled_mantissa beta fexp
         (round_to_generic beta fexp rnd_floor x) =
@@ -7739,7 +7741,7 @@ theorem scaled_mantissa_DN
 
 theorem mag_round
     (beta : Int) [ValidRadix beta]
-    (fexp : Int → Int) [Valid_exp beta fexp]
+    (fexp : Int → Int) [Valid_exp fexp]
     (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
     (hrne : round_to_generic beta fexp rnd x ≠ 0) :
     mag beta (round_to_generic beta fexp rnd x) = mag beta x ∨

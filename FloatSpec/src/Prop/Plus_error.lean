@@ -12,7 +12,7 @@ open FloatSpec.Core.Defs
 
 variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
 
 -- Section: Plus error representability
 
@@ -395,7 +395,7 @@ theorem roundR_Znearest_N_pt (x : ℝ) (hβ : 1 < beta) :
       decide_eq_true_iff] using hspec ⟨hFf, hDN, hUP, hbdL, hbdR⟩
   simpa [F, hround_near] using hN
 
-omit [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp] [FloatSpec.Core.Generic_fmt.Monotone_exp fexp] in
+omit [FloatSpec.Core.Generic_fmt.Valid_exp fexp] [FloatSpec.Core.Generic_fmt.Monotone_exp fexp] in
 theorem generic_format_shift (x : ℝ) (e : Int)
   (hβ : 1 < beta)
   (hx : generic_format beta fexp x) (h_exp : e ≤ cexp beta fexp x) :

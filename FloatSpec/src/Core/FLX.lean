@@ -261,8 +261,8 @@ instance instFactPrecPos (prec : Int) [Prec_gt_0 prec] :
   ⟨(Prec_gt_0.pos : 0 < prec)⟩
 
 /- Valid_exp instance for FLX_exp (requires positive precision). -/
-instance FLX_exp_valid (beta : Int) [ValidRadix beta] [hp : Fact (0 < prec)] :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec) := by
+instance FLX_exp_valid [hp : Fact (0 < prec)] :
+    FloatSpec.Core.Generic_fmt.Valid_exp (FLX_exp prec) := by
   refine ⟨?_⟩
   intro k
   refine And.intro ?_ ?_
@@ -439,7 +439,7 @@ Theorem FLXN_format_satisfies_any :
   satisfies_any FLXN_format.
 -/
 theorem FLXN_format_satisfies_any (beta : Int) [ValidRadix beta]
-    [Valid_exp beta (FLX_exp prec)] :
+    [Valid_exp (FLX_exp prec)] :
     FloatSpec.Core.Generic_fmt.satisfies_any
       (fun y => FLXN_format prec beta y) := by
   simpa [FLXN_format, FLX_format]
@@ -481,7 +481,7 @@ Theorem FLX_format_satisfies_any :
   satisfies_any FLX_format.
 -/
 theorem FLX_format_satisfies_any (beta : Int) [ValidRadix beta]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)] :
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLX_exp prec)] :
     FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FLX_format prec beta y) := by
   simpa [FLX_format]
     using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLX_exp prec)
@@ -1061,7 +1061,7 @@ Lean (spec): If rounding in FLX yields 0, then the input is 0 (for any mode).
 theorem eq_0_round_0_FLX
     (beta : Int) [ValidRadix beta]
     [Prec_gt_0 prec]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLX_exp prec)]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     ⦃⌜1 < beta ∧ round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0⌝⦄
     (pure x : Id ℝ)
@@ -1093,7 +1093,7 @@ Lean (spec): For any mode, if x > 0 then rounding in FLX yields a positive value
 theorem gt_0_round_gt_0_FLX
     (beta : Int) [ValidRadix beta]
     [Prec_gt_0 prec]
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLX_exp prec)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLX_exp prec)]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x : ℝ) :
     ⦃⌜1 < beta ∧ 0 < x⌝⦄
     (pure (round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x) : Id ℝ)

@@ -81,8 +81,8 @@ def FIX_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
 
 /-- Exponent-validity instance for the fixed exponent function. -/
-instance FIX_exp_valid (beta : Int) [ValidRadix beta] :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FIX_exp emin) := by
+instance FIX_exp_valid :
+    FloatSpec.Core.Generic_fmt.Valid_exp (FIX_exp emin) := by
   refine ⟨?_⟩
   intro k
   refine And.intro ?h1 ?h2

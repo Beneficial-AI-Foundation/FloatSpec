@@ -13,7 +13,7 @@ variable (beta : Int) [ValidRadix beta]
 -- Section: Relative error conversions
 
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
 
 /-- Relative error less than conversion -/
 lemma relative_error_lt_conversion (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)

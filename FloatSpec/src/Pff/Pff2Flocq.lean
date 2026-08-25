@@ -3110,14 +3110,14 @@ private noncomputable def flocqCanonicalFloat
     (FloatSpec.Core.Generic_fmt.cexp beta fexp x)
 
 private theorem F2R_flocqCanonicalFloat
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ)
     (hx : generic_format beta fexp x) :
     _root_.F2R (flocqCanonicalFloat beta fexp x) = x := by
   simpa [flocqCanonicalFloat, FloatSpec.Core.Generic_fmt.generic_format] using hx.symm
 
 private theorem abs_roundR_ge_generic
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x y : ℝ)
     (hβ : 1 < beta)
     (hxF : generic_format beta fexp x)
@@ -3155,7 +3155,7 @@ private theorem abs_roundR_ge_generic
 
 private theorem F2R_sum3_ge_bpow
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x y z : ℝ) (e : Int)
     (hβ : 1 < beta)
     (hx_fmt : generic_format beta fexp x)

@@ -10,7 +10,7 @@ open Std.Do
 
 variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
-variable [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+variable [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
 variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 
 /-- Generic format plus exact under magnitude condition -/

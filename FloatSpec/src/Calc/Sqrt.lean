@@ -640,7 +640,7 @@ def Fsqrt (x : FlocqFloat beta) : (Int × Int × Location) :=
     inbetween relation. This matches the Coq theorem {name}`Fsqrt_correct`.
 -/
 theorem Fsqrt_correct (x : FlocqFloat beta) (Hx : 0 < F2R x) (Hβ : 1 < beta)
-    [Hfexp : Valid_exp beta fexp] :
+    [Hfexp : Valid_exp fexp] :
     let (m, e, l) := Fsqrt beta fexp x
     e ≤ cexp beta fexp (Real.sqrt (F2R x)) ∧
     inbetween_float beta m e (Real.sqrt (F2R x)) l := by

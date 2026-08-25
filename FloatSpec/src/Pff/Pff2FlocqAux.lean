@@ -1129,7 +1129,7 @@ private theorem FLT_exp_exists_NE (beta : Int) [ValidRadix beta] (b : Fbound) (p
 /-- Coq: `pff_round_DN_is_round` — Pff lower rounding agrees with concrete
 Flocq floor rounding. -/
 theorem pff_round_DN_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
     _root_.F2R (beta:=beta)
@@ -1192,7 +1192,7 @@ theorem pff_round_DN_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : I
 /-- Coq: `pff_round_UP_is_round` — Pff upper rounding agrees with concrete
 Flocq ceiling rounding. -/
 theorem pff_round_UP_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
     _root_.F2R (beta:=beta)
@@ -1256,7 +1256,7 @@ theorem pff_round_UP_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : I
 Flocq nearest rounding for an arbitrary tie-breaking choice. -/
 theorem pff_round_N_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (choice : Int → Bool) (r : ℝ)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
     _root_.F2R (beta:=beta)
@@ -1469,7 +1469,7 @@ theorem pff_round_N_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : In
 whose real value is the concrete Flocq nearest rounding. -/
 theorem round_N_is_pff_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (choice : Int → Bool) (r : ℝ)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
     ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
@@ -1510,7 +1510,7 @@ theorem round_N_is_pff_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : In
 selects it. -/
 private theorem round_N_const_false_eq_DN_of_nearest_DN
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (r : ℝ) (hbeta : 1 < beta)
     (hDN_nearest : FloatSpec.Core.Defs.Rnd_N_pt
       (fun y => generic_format beta fexp y) r
@@ -1575,7 +1575,7 @@ private theorem round_N_const_false_eq_DN_of_nearest_DN
 selects it. -/
 private theorem round_N_const_true_eq_UP_of_nearest_UP
     (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (r : ℝ) (hbeta : 1 < beta)
     (hUP_nearest : FloatSpec.Core.Defs.Rnd_N_pt
       (fun y => generic_format beta fexp y) r
@@ -1640,7 +1640,7 @@ private theorem round_N_const_true_eq_UP_of_nearest_UP
 by concrete Flocq nearest rounding for some tie-breaking choice. -/
 theorem pff_round_is_round_N (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (r : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta)
     (hClosest : Closest (beta:=beta) (toFboundSkel b) (beta : ℝ) r f) :
@@ -1704,7 +1704,7 @@ theorem pff_round_is_round_N (beta : Int) [ValidRadix beta] (b : Fbound) (p : In
 /-- Coq: `pff_round_NE_is_round` — Pff even-closest rounding agrees with the
 concrete Flocq nearest-even rounding. -/
 theorem pff_round_NE_is_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
     _root_.F2R (beta:=beta)
@@ -1790,7 +1790,7 @@ such as `VeltkampEven`: the Pff theorem returns an `EvenClosest` witness, while
 the public Flocq theorem is stated with `round ... ZnearestE`. -/
 theorem evenClosest_value_eq_round_NE (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int)
     (r : ℝ) (f : FloatSpec.Core.Defs.FlocqFloat beta)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta)
     (hec : EvenClosest (beta:=beta) (toFboundSkel b) (beta : ℝ) p.toNat r f) :
@@ -1856,7 +1856,7 @@ theorem evenClosest_value_eq_round_NE (beta : Int) [ValidRadix beta] (b : Fbound
 `EvenClosest` witness whose real value is the concrete Flocq nearest-even
 rounding. -/
 theorem round_NE_is_pff_round (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)]
     (hpBound : pGivesBound beta b p) (hprec : precisionNotZero p)
     (hbeta : 1 < beta) :
     ∃ f : FloatSpec.Core.Defs.FlocqFloat beta,
@@ -2360,7 +2360,7 @@ equality for `Calc.Round.round`; it is not the full upstream
 `round_NE_is_pff_round`, whose Pff `EvenClosest` payload is still separate. -/
 theorem round_NE_is_pff_round_generic
     (beta : Int) [ValidRadix beta] (b : Fbound) (p : Int) (r : ℝ)
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta (FLT_exp (-b.dExp) p)] :
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (-b.dExp) p)] :
     ⦃⌜pGivesBound beta b p ∧ precisionNotZero p ∧ (1 : Int) < beta⌝⦄
     round_NE_is_pff_round_generic_check beta b p r
     ⦃⇓_ => ⌜∃ f : PffFloat,
