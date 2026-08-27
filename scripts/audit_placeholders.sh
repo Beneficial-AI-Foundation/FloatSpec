@@ -144,6 +144,68 @@ awk -F: '
 ' "$scan_file" >"$filtered_scan_file"
 mv "$filtered_scan_file" "$scan_file"
 
+# Scan Lean syntax, not prose in line or nested block comments.  Keeping the
+# original path and line number makes findings stable while preventing words
+# such as "temporarily" or "admit" in audit explanations from becoming trust
+# failures.  String contents are retained because placeholder code can occur in
+# generated declarations, but comment delimiters inside strings are ignored.
+code_scan_file="$(mktemp)"
+python3 - "$scan_file" "$code_scan_file" <<'PY'
+import sys
+
+source, destination = sys.argv[1:3]
+block_depth = 0
+
+with open(source, encoding="utf-8", errors="replace") as src, \
+     open(destination, "w", encoding="utf-8") as dst:
+    for raw in src:
+        raw = raw.rstrip("\n")
+        parts = raw.split(":", 2)
+        if len(parts) != 3:
+            continue
+        path, line, text = parts
+        out = []
+        i = 0
+        in_string = False
+        escaped = False
+        while i < len(text):
+            if block_depth:
+                if text.startswith("/-", i):
+                    block_depth += 1
+                    i += 2
+                elif text.startswith("-/", i):
+                    block_depth -= 1
+                    i += 2
+                else:
+                    i += 1
+                continue
+            ch = text[i]
+            if in_string:
+                out.append(ch)
+                if escaped:
+                    escaped = False
+                elif ch == "\\":
+                    escaped = True
+                elif ch == '"':
+                    in_string = False
+                i += 1
+                continue
+            if ch == '"':
+                in_string = True
+                out.append(ch)
+                i += 1
+            elif text.startswith("--", i):
+                break
+            elif text.startswith("/-", i):
+                block_depth = 1
+                i += 2
+            else:
+                out.append(ch)
+                i += 1
+        dst.write(f"{path}:{line}:{''.join(out)}\n")
+PY
+mv "$code_scan_file" "$scan_file"
+
 if "$json"; then
   python3 - "$pattern_file" "$scan_file" <<'PY'
 import json

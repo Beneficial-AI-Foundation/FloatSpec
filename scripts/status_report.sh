@@ -147,7 +147,7 @@ lines.extend([
     "",
     "## Interpretation",
     "",
-    "The default build now covers the unified FloatSpec target. Placeholder findings remain status items to repair, not a separate build tier.",
+    "The default build covers the unified FloatSpec target. Any future placeholder finding is a merge blocker, not a separate build tier.",
 ])
 
 with open(md_path, "w", encoding="utf-8") as f:

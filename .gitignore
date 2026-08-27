@@ -4,6 +4,7 @@ fwOut.txt
 /.change_log
 /.subagent_log
 /.log
+/.lia.cache
 /.claude_logs
 __pycache__/
 *.pyc.claude/
