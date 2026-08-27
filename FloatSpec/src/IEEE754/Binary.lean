@@ -1008,10 +1008,25 @@ noncomputable instance valid_rnd_of_mode (mode : RoundingMode) :
   · simpa [rnd_of_mode, FloatSpec.Core.Raux.Ztrunc] using
       FloatSpec.Core.Generic_fmt.valid_rnd_Ztrunc
 
--- Overflow helper (FullFloat variant). In Coq this is bridged via SingleNaN.
--- We keep a local constructor returning an infinity with the requested sign.
-def binary_overflow (mode : RoundingMode) (s : Bool) : FullFloat :=
-  FullFloat.F754_infinity s
+-- Coq: `Binary.binary_overflow`, bridged from the SingleNaN operation.
+-- Nearest modes overflow to infinity, toward-zero to the largest finite value,
+-- and directed modes choose between those results from the sign.
+def overflow_to_inf_FF (mode : RoundingMode) (s : Bool) : Bool :=
+  match mode with
+  | RoundingMode.RNE => true
+  | RoundingMode.RNA => true
+  | RoundingMode.RTZ => false
+  | RoundingMode.RTP => !s
+  | RoundingMode.RTN => s
+
+def standard_binary_overflow (prec emax : Int) (mode : RoundingMode) (s : Bool) : StandardFloat :=
+  if overflow_to_inf_FF mode s then
+    StandardFloat.S754_infinity s
+  else
+    StandardFloat.S754_finite s ((2 : Nat) ^ prec.toNat - 1) (emax - prec)
+
+def binary_overflow (prec emax : Int) (mode : RoundingMode) (s : Bool) : FullFloat :=
+  SF2FF (standard_binary_overflow prec emax mode s)
 
 -- Signed-zero convention for subtraction, matching the Coq `Bminus_correct`
 -- postcondition in the exact-zero case.
@@ -1058,7 +1073,8 @@ noncomputable def binary_sub (mode : RoundingMode) (x y : Binary754 prec emax)
     else
       FF2B (real_to_FullFloat rounded fexp)
   else
-    FF2B (binary_overflow mode (real_sign_or_sub_zero (prec:=prec) (emax:=emax) mode x y diff))
+    FF2B (binary_overflow prec emax mode
+      (real_sign_or_sub_zero (prec:=prec) (emax:=emax) mode x y diff))
 
 namespace BinarySingleNaNBridge
 
@@ -1669,7 +1685,7 @@ noncomputable def binary_div (mode : RoundingMode) (x y : Binary754 prec emax)
         else
           FF2B (real_to_FullFloat rounded fexp)
       else
-        FF2B (binary_overflow mode s)
+        FF2B (binary_overflow prec emax mode s)
 
 -- binary_sqrt: Computes the rounded square root of a binary float.
 -- The result's real value equals round(sqrt(FF2R x)) by construction.
@@ -1704,27 +1720,27 @@ noncomputable def binary_fma (mode : RoundingMode) (x y z : Binary754 prec emax)
     else
       FF2B (real_to_FullFloat rounded fexp)
   else
-    FF2B (binary_overflow mode (fma_val < 0))
+    FF2B (binary_overflow prec emax mode (fma_val < 0))
 
 -- Coq: eq_binary_overflow_FF2SF
 -- If FF2SF x corresponds to the single-NaN overflow value, then x is the
 -- corresponding full-float overflow value.
 def eq_binary_overflow_FF2SF_check
-  (x : FullFloat) (mode : RoundingMode) (s : Bool)
-  (h : FF2SF x = StandardFloat.S754_infinity s) : FullFloat :=
+  {prec emax : Int} (x : FullFloat) (mode : RoundingMode) (s : Bool)
+  (h : FF2SF x = standard_binary_overflow prec emax mode s) : FullFloat :=
   x
 
 theorem eq_binary_overflow_FF2SF
   (x : FullFloat) (mode : RoundingMode) (s : Bool)
-  (h : FF2SF x = StandardFloat.S754_infinity s) :
+  (h : FF2SF x = standard_binary_overflow prec emax mode s) :
   ⦃⌜True⌝⦄
   (pure (eq_binary_overflow_FF2SF_check x mode s h) : Id FullFloat)
-  ⦃⇓result => ⌜result = binary_overflow mode s⌝⦄ := by
+  ⦃⇓result => ⌜result = binary_overflow prec emax mode s⌝⦄ := by
   intro _
-  cases x <;>
-    simp [eq_binary_overflow_FF2SF_check, FF2SF, binary_overflow] at h ⊢
-  · cases h
-    rfl
+  cases x <;> cases mode <;> cases s <;>
+    simp [eq_binary_overflow_FF2SF_check, FF2SF, binary_overflow,
+      standard_binary_overflow, overflow_to_inf_FF, SF2FF] at h ⊢ <;>
+    assumption
 
 -- Coq: fexp_emax — the exponent function at emax
 -- In the Binary (full‑float) view, this expresses the relationship
@@ -1891,14 +1907,10 @@ lemma round_to_generic_rnd_of_mode_zero (mode : RoundingMode)
   simp [FloatSpec.Core.Generic_fmt.roundR, FloatSpec.Core.Generic_fmt.scaled_mantissa,
     hrnd0]
 
--- Fused multiply-add correctness (Coq: Bfma_correct) - Hoare triple wrapper
-noncomputable def Bfma_correct_check (mode : RoundingMode)
-  (x y z : Binary754 prec emax)
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : ℝ :=
-  (FF2R 2 ((binary_fma (prec:=prec) (emax:=emax) mode x y z).val))
-
--- Coq: `Bfma_correct` for the local Binary754 model.
-theorem Bfma_correct (mode : RoundingMode)
+-- Correctness of the older local `binary_fma` compatibility operation.
+-- This is not the still-unported Coq `Bfma_correct`, which quantifies over a
+-- NaN-result handler and covers the source `Bfma` operation.
+theorem binary_fma_correct (mode : RoundingMode)
   (x y z : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
@@ -1922,7 +1934,7 @@ theorem Bfma_correct (mode : RoundingMode)
     else
       B2FF (prec:=prec) (emax:=emax)
           (binary_fma (prec:=prec) (emax:=emax) mode x y z) =
-        binary_overflow mode (res < 0) := by
+        binary_overflow prec emax mode (res < 0) := by
   classical
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
   let res := B2R (prec:=prec) (emax:=emax) x *
@@ -2097,14 +2109,9 @@ theorem Bfma_correct (mode : RoundingMode)
     simp [binary_fma, B2R, B2FF, FF2B, fexp, res, rounded, hover,
       hover_raw, binary_overflow]
 
--- Subtraction correctness (Coq: Bminus_correct) - Hoare triple wrapper
-noncomputable def Bminus_correct_check (mode : RoundingMode)
-  (x y : Binary754 prec emax)
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : ℝ :=
-  (FF2R 2 ((binary_sub (prec:=prec) (emax:=emax) mode x y).val))
-
--- Coq: `Bminus_correct` for the local Binary754 model.
-theorem Bminus_correct (mode : RoundingMode) (x y : Binary754 prec emax)
+-- Correctness of the older local `binary_sub` compatibility operation.
+-- This deliberately does not occupy the source theorem name `Bminus_correct`.
+theorem binary_sub_correct (mode : RoundingMode) (x y : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
     let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
@@ -2123,7 +2130,7 @@ theorem Bminus_correct (mode : RoundingMode) (x y : Binary754 prec emax)
     else
       B2FF (prec:=prec) (emax:=emax)
           (binary_sub (prec:=prec) (emax:=emax) mode x y) =
-        binary_overflow mode
+        binary_overflow prec emax mode
           (real_sign_or_sub_zero (prec:=prec) (emax:=emax) mode x y diff) := by
   classical
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
@@ -2277,14 +2284,9 @@ theorem Bminus_correct (mode : RoundingMode) (x y : Binary754 prec emax)
       simpa [rounded, diff, fexp, B2R] using hover
     simp [binary_sub, B2R, B2FF, FF2B, fexp, diff, rounded, hover_raw]
 
--- Division correctness (Coq: Bdiv_correct)
-noncomputable def Bdiv_correct_check (mode : RoundingMode)
-  (x y : Binary754 prec emax)
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : ℝ :=
-  (FF2R 2 ((binary_div (prec:=prec) (emax:=emax) mode x y).val))
-
--- Coq: `Bdiv_correct` for the local Binary754 model.
-theorem Bdiv_correct (mode : RoundingMode) (x y : Binary754 prec emax)
+-- Correctness of the older local `binary_div` compatibility operation.
+-- This is not the source `Bdiv_correct`, whose operation has a NaN handler.
+theorem binary_div_correct (mode : RoundingMode) (x y : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   (hy : B2R (prec:=prec) (emax:=emax) y ≠ 0) :
@@ -2307,7 +2309,8 @@ theorem Bdiv_correct (mode : RoundingMode) (x y : Binary754 prec emax)
     else
       B2FF (prec:=prec) (emax:=emax)
           (binary_div (prec:=prec) (emax:=emax) mode x y) =
-        binary_overflow mode (Bdiv_sign (prec:=prec) (emax:=emax) x y) := by
+        binary_overflow prec emax mode
+          (Bdiv_sign (prec:=prec) (emax:=emax) x y) := by
   classical
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
   let quot := B2R (prec:=prec) (emax:=emax) x /
@@ -2514,14 +2517,9 @@ theorem Bdiv_correct (mode : RoundingMode) (x y : Binary754 prec emax)
                       Bdiv_sign, fexp, quot, rounded, num, den, q, r, hover,
                       hover_raw, binary_overflow]
 
--- Square-root correctness (Coq: Bsqrt_correct)
-noncomputable def Bsqrt_correct_check (mode : RoundingMode)
-  (x : Binary754 prec emax)
-  [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] : ℝ :=
-  (FF2R 2 ((binary_sqrt (prec:=prec) (emax:=emax) mode x).val))
-
--- Coq: `Bsqrt_correct` for the local Binary754 model.
-theorem Bsqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
+-- Correctness of the older local `binary_sqrt` compatibility operation.
+-- This is not the source `Bsqrt_correct`, whose operation has a NaN handler.
+theorem binary_sqrt_correct (mode : RoundingMode) (x : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
     let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
@@ -2938,7 +2936,7 @@ noncomputable def binary_ldexp (mode : RoundingMode) (x : Binary754 prec emax) (
             real_to_FullFloat rounded fexp
         FF2B ff
       else
-        FF2B (binary_overflow mode s)
+        FF2B (binary_overflow prec emax mode s)
 
 noncomputable def Bldexp_correct_check
   (mode : RoundingMode) (x : Binary754 prec emax) (e : Int)
@@ -2971,7 +2969,7 @@ theorem Bldexp_correct
   else
     B2FF (prec:=prec) (emax:=emax)
         (binary_ldexp (prec:=prec) (emax:=emax) mode x e) =
-      binary_overflow mode (Bsign (prec:=prec) (emax:=emax) x) := by
+      binary_overflow prec emax mode (Bsign (prec:=prec) (emax:=emax) x) := by
   classical
   let fexp := FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec)
   have hbpow_pos : 0 < FloatSpec.Core.Raux.bpow 2 emax := by
@@ -4883,7 +4881,7 @@ theorem binary_round_aux_correct' (mode : RoundingMode)
   ⦃⌜True⌝⦄
   (pure (binary_round_aux_correct'_check mode x sx mx ex lx) : Id FullFloat)
   ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow mode sx⌝⦄ := by
+              z = binary_overflow prec emax mode sx⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct'_check, binary_round_aux]
   left
@@ -4906,7 +4904,7 @@ theorem binary_round_shape (mode : RoundingMode)
   ⦃⌜True⌝⦄
   (pure (binary_round_correct_check mode x sx mx ex) : Id FullFloat)
   ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow mode sx⌝⦄ := by
+              z = binary_overflow prec emax mode sx⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure, binary_round_correct_check, binary_round]
   left
@@ -4919,8 +4917,8 @@ theorem binary_round_correct (mode : RoundingMode)
   ⦃⌜True⌝⦄
   (pure (binary_round_correct_check mode x sx mx ex) : Id FullFloat)
   ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow mode sx⌝⦄ :=
-  binary_round_shape mode x sx mx ex
+              z = binary_overflow prec emax mode sx⌝⦄ :=
+  binary_round_shape (prec:=prec) (emax:=emax) mode x sx mx ex
 
 -- Normalization audit helper.
 noncomputable def binary_normalize (mode : RoundingMode)
@@ -4969,7 +4967,7 @@ theorem binary_round_aux_correct (mode : RoundingMode)
   ⦃⌜True⌝⦄
   (pure (binary_round_aux_correct_check mode x sx mx ex lx) : Id FullFloat)
   ⦃⇓z => ⌜is_finite_FF z = true ∨
-              z = binary_overflow mode sx⌝⦄ := by
+              z = binary_overflow prec emax mode sx⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure, binary_round_aux_correct_check, binary_round_aux]
   left

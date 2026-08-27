@@ -5,7 +5,19 @@ the translated Flocq contracts, never independently inhabitable `Unit` values. -
 
 example : @binary_add_correct = @Bplus_correct := rfl
 example : @binary_mul_correct = @Bmult_correct := rfl
-example : @binary_sub_correct = @Bminus_correct := rfl
-example : @binary_fma_correct = @Bfma_correct := rfl
-example : @binary_div_correct = @Bdiv_correct := rfl
-example : @binary_sqrt_correct = @Bsqrt_correct := rfl
+
+/-! Overflow is part of the observable source semantics.  These examples guard
+the finite RTZ branch and both directions of sign-sensitive rounding. -/
+
+example : binary_overflow 3 10 RoundingMode.RTZ false =
+    FullFloat.F754_finite false 7 7 := rfl
+example : binary_overflow 3 10 RoundingMode.RNE true =
+    FullFloat.F754_infinity true := rfl
+example : binary_overflow 3 10 RoundingMode.RTP false =
+    FullFloat.F754_infinity false := rfl
+example : binary_overflow 3 10 RoundingMode.RTP true =
+    FullFloat.F754_finite true 7 7 := rfl
+example : binary_overflow 3 10 RoundingMode.RTN false =
+    FullFloat.F754_finite false 7 7 := rfl
+example : binary_overflow 3 10 RoundingMode.RTN true =
+    FullFloat.F754_infinity true := rfl

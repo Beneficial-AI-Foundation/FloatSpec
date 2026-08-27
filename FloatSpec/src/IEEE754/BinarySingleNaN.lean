@@ -484,6 +484,7 @@ def canonical_canonical_mantissa_bsn_check
   (sx : Bool) (mx : Nat) (ex : Int) : Unit :=
   ()
 
+omit [Prec_gt_0 prec] [Prec_lt_emax prec emax] in
 theorem canonical_canonical_mantissa_bsn
   (sx : Bool) (mx : Nat) (ex : Int)
   (hmx_pos : 0 < mx)  -- IEEE 754: finite floats have positive mantissa; zero is B754_zero
@@ -636,6 +637,7 @@ private theorem canonical_mantissa_bsn_of_repr_cexp
 def canonical_bounded_check (sx : Bool) (mx : Nat) (ex : Int) : Unit :=
   ()
 
+omit [Prec_gt_0 prec] [Prec_lt_emax prec emax] in
 theorem canonical_bounded
   (sx : Bool) (mx : FloatSpec.Core.Zaux.Positive) (ex : Int)
   (h_bounded : specFloat_bounded (prec:=prec) (emax:=emax)
@@ -652,6 +654,7 @@ theorem canonical_bounded
 
 -- Compatibility theorem for local Nat-based callers.  Its name makes the
 -- representation bridge explicit rather than weakening the source theorem.
+omit [Prec_gt_0 prec] [Prec_lt_emax prec emax] in
 theorem canonical_bounded_nat
   (sx : Bool) (mx : Nat) (ex : Int)
   (hmx_pos : 0 < mx)

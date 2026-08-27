@@ -20,20 +20,28 @@ placeholder matching.
 
 ### Correctness names
 
-Six same-name `Unit` declarations were removed. The compatibility names now
-alias the actual translated Flocq theorem contracts:
+Six same-name `Unit` declarations were removed. Two compatibility names are
+now exact aliases of translated Flocq theorem contracts:
 
 | Compatibility name | Flocq contract |
 |---|---|
 | `binary_add_correct` | `Bplus_correct` |
 | `binary_mul_correct` | `Bmult_correct` |
-| `binary_sub_correct` | `Bminus_correct` |
-| `binary_fma_correct` | `Bfma_correct` |
-| `binary_div_correct` | `Bdiv_correct` |
-| `binary_sqrt_correct` | `Bsqrt_correct` |
 
-Regression tests prove that each compatibility declaration is definitionally
-the corresponding source theorem.
+Regression tests prove these two alias equalities definitionally.
+
+The local theorems `binary_sub_correct`, `binary_fma_correct`,
+`binary_div_correct`, and `binary_sqrt_correct` no longer occupy the Coq names
+`Bminus_correct`, `Bfma_correct`, `Bdiv_correct`, and `Bsqrt_correct`. Targeted
+source/target review found that the Coq contracts quantify over source
+operations and NaN handlers that the local compatibility operations do not
+model. Those source declarations therefore remain explicitly unported instead
+of being reported as completed translations.
+
+The root `binary_overflow` implementation now follows Coq's rounding-mode and
+sign behavior, including the largest-finite result for RTZ overflow. This
+removes the concrete RTZ counterexample that exposed the old always-infinity
+implementation.
 
 ### `canonical_bounded`
 
@@ -55,5 +63,7 @@ external pipeline artifacts.
 Compilation, proof-hole scans, and alias regressions are necessary but not
 sufficient evidence of semantic equivalence. The repository-level alignment
 judge must still compare each translated declaration against the pinned Coq
-source. Judge negatives require an executable or proof-checked counterexample;
-unsupported cases remain uncertain.
+source. The targeted judge confirmed the old overflow counterexample and
+exposed the four incomplete source contracts; full-repository judging remains
+required. Judge negatives require an executable or proof-checked
+counterexample; unsupported cases remain uncertain.

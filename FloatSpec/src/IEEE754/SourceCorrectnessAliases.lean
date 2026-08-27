@@ -9,10 +9,11 @@ aliases of the actual translated Coq contracts instead:
 
 * `binary_add_correct`  → `Bplus_correct`
 * `binary_mul_correct`  → `Bmult_correct`
-* `binary_sub_correct`  → `Bminus_correct`
-* `binary_fma_correct`  → `Bfma_correct`
-* `binary_div_correct`  → `Bdiv_correct`
-* `binary_sqrt_correct` → `Bsqrt_correct`
+The remaining `binary_sub_correct`, `binary_fma_correct`,
+`binary_div_correct`, and `binary_sqrt_correct` declarations specify only the
+older local compatibility operations.  They deliberately do not alias or
+occupy the names of the still-unported Coq `Bminus_correct`, `Bfma_correct`,
+`Bdiv_correct`, and `Bsqrt_correct` contracts.
 
 The aliases intentionally specify the source `B*` operations, including their
 rounding mode, NaN handler, finiteness, sign, and overflow clauses.  They do
@@ -21,7 +22,3 @@ not certify the older local `binary_*` compatibility helpers.
 
 alias binary_add_correct := Bplus_correct
 alias binary_mul_correct := Bmult_correct
-alias binary_sub_correct := Bminus_correct
-alias binary_fma_correct := Bfma_correct
-alias binary_div_correct := Bdiv_correct
-alias binary_sqrt_correct := Bsqrt_correct
