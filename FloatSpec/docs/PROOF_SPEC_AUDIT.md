@@ -43,6 +43,26 @@ sign behavior, including the largest-finite result for RTZ overflow. This
 removes the concrete RTZ counterexample that exposed the old always-infinity
 implementation.
 
+### Targeted semantic rerun
+
+The v13 source/target judge was rerun after the fixes, using a freshly rebuilt
+target index. This was a seven-item audit, not a full-repository score:
+
+| Source item | Result | Evidence/interpretation |
+|---|---|---|
+| `canonical_bounded` | aligned | Three compiler-checked Coq/Lean proof observations; the exported interfaces no longer contain extra precision instances |
+| `Bplus_correct` | aligned | Three compiler-checked Coq/Lean proof observations |
+| `Bmult_correct` | uncertain | No mismatch found; the three-observation threshold was not completed |
+| `Bminus_correct` | not judged | Deterministic matcher selected the wrong target; source contract remains unported |
+| `Bfma_correct` | not judged | Deterministic matcher selected the local compatibility theorem; source contract remains unported |
+| `Bdiv_correct` | not judged | Deterministic matcher selected the local compatibility theorem; source contract remains unported |
+| `Bsqrt_correct` | not judged | Deterministic matcher selected the local compatibility theorem; source contract remains unported |
+
+The target compiled during judging. The overall judge report is intentionally
+`INCOMPLETE`, because only these seven jobs were requested from the 5,145-job
+repository plan. In particular, the two aligned results must not be reported
+as a repository-wide alignment score.
+
 ### `canonical_bounded`
 
 The source-facing theorem now takes a Coq-shaped positive mantissa and the
