@@ -1021,7 +1021,8 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
         have hmul : 2 * (k + 1) ≤ 2 * (nb_steps / 2) :=
           Int.mul_le_mul_of_nonneg_left hk1_le_half (by decide : 0 ≤ (2 : Int))
         -- convert the RHS using evenness of nb_steps
-        -- `Int.ediv_add_emod` together with `He'` gives `nb_steps = (nb_steps / 2) * 2`.
+        -- Euclidean quotient/remainder decomposition together with `He'` gives
+        -- `nb_steps = (nb_steps / 2) * 2`.
         -- rewrite to put the factor 2 on the left of the product
         have hdecomp' : 2 * (nb_steps / 2) = nb_steps := by simpa using hdecomp.symm
         simpa [hdecomp'] using hmul
@@ -1091,7 +1092,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
           classical
           simpa [compare, hx_lt_mid_avg]
         simpa [hmid_eq] using this
-    · have hgt_or_eq : nb_steps ≤ 2 * k := not_lt.mp hlt
+    · have hgt_or_eq : nb_steps ≤ 2 * k := le_of_not_gt hlt
       by_cases heq : 2 * k = nb_steps
       · -- Middle case: result depends on local exactness
         simp [hkz, hlt, heq]
@@ -1714,9 +1715,12 @@ theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
 end SteppingRanges
 
 /-- Helper for float location -/
-def inbetween_float (beta : Int) (m e : Int) (x : ℝ) (l : Location) : Prop :=
-  inbetween ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
-            ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) x l
+def inbetween_float (beta : Int) [ValidRadix beta] (m e : Int) (x : ℝ) (l : Location) : Prop :=
+  -- Source `F2R (Float beta m e)` unfolded.  Keeping the interval predicate
+  -- as real arithmetic avoids constructing a source float before a radix
+  -- witness is available.
+  inbetween ((m : ℝ) * (beta : ℝ) ^ e)
+            (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e) x l
 
 /- Additional theorems mirroring Coq counterparts that were missing in Lean. -/
 
@@ -2347,7 +2351,7 @@ theorem inbetween_mult_reg (d u x : ℝ) (l : Location) (s : ℝ)
         simpa using this
 
 -- Specialization to consecutive floats
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
   theorem inbetween_float_bounds
     (x : ℝ) (m e : Int) (l : Location)
@@ -2607,7 +2611,7 @@ theorem inbetween_float_ex
   let u : ℝ := ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)))
   -- Show the interval is non-empty using 1 < beta ⇒ (beta : ℝ)^e > 0
   have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
-  have hbpos_real : 0 < ((beta : Int) : ℝ) := by exact_mod_cast hbpos_int
+  have hbpos_real : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
   have hstep_pos : 0 < ((beta : ℝ) ^ e) := zpow_pos hbpos_real _
   have hm_lt_real : (m : ℝ) < (m + 1 : ℝ) := by
     have : (0 : ℝ) < 1 := by norm_num
