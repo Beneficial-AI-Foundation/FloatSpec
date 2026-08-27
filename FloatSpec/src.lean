@@ -10,7 +10,7 @@ import FloatSpec.src.Calc
 import FloatSpec.src.Compat
 
 -- Property analysis and error bounds
--- Note: FloatSpec.src.Prop currently has all imports commented out
+import FloatSpec.src.Prop
 
 -- Error bound scaffolding
 import FloatSpec.src.ErrorBound
@@ -18,9 +18,8 @@ import FloatSpec.src.ErrorBound
 -- IEEE 754 standard implementation
 import FloatSpec.src.IEEE754
 
--- Legacy Pff compatibility
-import FloatSpec.src.Pff
-
 -- Simproc helpers
 import FloatSpec.src.SimprocWP
 
+-- Legacy Pff compatibility
+import FloatSpec.src.Pff
