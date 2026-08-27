@@ -1,0 +1,59 @@
+{
+  "admit_count": 0,
+  "axiom_count": 0,
+  "by_module": {
+    "Calc": {
+      "admit": 0,
+      "axiom": 0,
+      "lean_files": 7,
+      "placeholder": 0,
+      "sorry": 0
+    },
+    "Core": {
+      "admit": 0,
+      "axiom": 0,
+      "lean_files": 17,
+      "placeholder": 0,
+      "sorry": 0
+    },
+    "ErrorBound": {
+      "admit": 0,
+      "axiom": 0,
+      "lean_files": 7,
+      "placeholder": 0,
+      "sorry": 0
+    },
+    "IEEE754": {
+      "admit": 0,
+      "axiom": 0,
+      "lean_files": 8,
+      "placeholder": 0,
+      "sorry": 0
+    },
+    "Other": {
+      "admit": 0,
+      "axiom": 0,
+      "lean_files": 16,
+      "placeholder": 0,
+      "sorry": 0
+    },
+    "Pff": {
+      "admit": 0,
+      "axiom": 0,
+      "lean_files": 6,
+      "placeholder": 0,
+      "sorry": 0
+    },
+    "Prop": {
+      "admit": 0,
+      "axiom": 0,
+      "lean_files": 8,
+      "placeholder": 0,
+      "sorry": 0
+    }
+  },
+  "lean_files": 69,
+  "placeholder_semantics_count": 0,
+  "sorry_count": 0,
+  "spec_weakened_count": 0
+}
