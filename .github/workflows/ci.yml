@@ -41,6 +41,10 @@ jobs:
       - name: Verify source hygiene
         shell: bash
         run: |
-          git diff --check HEAD^ HEAD
+          if [[ -n "${{ github.base_ref }}" ]]; then
+            git diff --check "origin/${{ github.base_ref }}...HEAD"
+          else
+            git diff --check HEAD^ HEAD
+          fi
           test -z "$(git ls-files '.log/**' '.change_log/**' '.subagent_log/**')"
           ! rg -n 'binary_(add|mul|sub|fma|div|sqrt)_correct.*: Unit' FloatSpec
