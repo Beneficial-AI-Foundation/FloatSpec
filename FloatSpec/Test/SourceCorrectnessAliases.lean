@@ -6,6 +6,14 @@ the translated Flocq contracts, never independently inhabitable `Unit` values. -
 example : @binary_add_correct = @Bplus_correct := rfl
 example : @binary_mul_correct = @Bmult_correct := rfl
 
+/-! The remaining source contracts are exported under their exact Flocq names;
+the older local `binary_*_correct` declarations remain compatibility results. -/
+
+#check @Bminus_correct
+#check @Bfma_correct
+#check @Bdiv_correct
+#check @Bsqrt_correct
+
 /-! Overflow is part of the observable source semantics.  These examples guard
 the finite RTZ branch and both directions of sign-sensitive rounding. -/
 

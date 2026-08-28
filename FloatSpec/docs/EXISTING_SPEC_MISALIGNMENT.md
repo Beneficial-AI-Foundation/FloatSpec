@@ -21,22 +21,23 @@ notation. Source-facing finite constructors and `canonical_bounded` use
 `binary_sqrt` predate the source-shaped NaN-handler operations. The Flocq
 operations are `Bplus`, `Bmult`, `Bminus`, `Bfma`, `Bdiv`, and `Bsqrt`.
 
-Only `binary_add_correct` and `binary_mul_correct` are exact aliases of the
+`binary_add_correct` and `binary_mul_correct` are exact aliases of the
 translated `Bplus_correct` and `Bmult_correct` contracts in
-`IEEE754/SourceCorrectnessAliases.lean`.
+`IEEE754/SourceCorrectnessAliases.lean`. The translated subtraction, fused
+multiply-add, division, and square-root contracts are exported directly as
+`Bminus_correct`, `Bfma_correct`, `Bdiv_correct`, and `Bsqrt_correct`.
 
 The current `binary_sub_correct`, `binary_fma_correct`, `binary_div_correct`,
 and `binary_sqrt_correct` theorems describe the older local compatibility
-operations. They are intentionally not exported as `Bminus_correct`,
-`Bfma_correct`, `Bdiv_correct`, or `Bsqrt_correct`: the Coq declarations also
-quantify over source operations and NaN handlers, and those four complete
-contracts remain to be ported.
+operations. They are intentionally not aliases of the source-shaped `B*`
+theorems: the Coq declarations quantify over source operations and NaN
+handlers, while these compatibility results certify different local helpers.
 
 The shared overflow helper is mode-sensitive as in Coq: nearest modes choose
 infinity, round-toward-zero chooses the largest finite value, and directed
 modes choose according to the sign. This fixes the previously observable RTZ
-and directed-rounding mismatch, but it does not by itself complete the four
-missing theorem contracts.
+and directed-rounding mismatch. The four source-shaped contracts additionally
+connect that helper to the translated source operations.
 
 ## Audit interpretation
 
