@@ -99,6 +99,13 @@ instance instValidExp_FLT_Compat (emin prec : Int) [Prec_gt_0 prec] :
   simpa [FLT_exp] using
     (inferInstance : FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec emin))
 
+instance instMonotoneExp_FLT_Compat (emin prec : Int) :
+    FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp emin prec) := by
+  simpa [FLT_exp] using
+    (inferInstance :
+      FloatSpec.Core.Generic_fmt.Monotone_exp
+        (FloatSpec.Core.FLT.FLT_exp prec emin))
+
 -- Namespace aliases so existing references like `FloatSpec.Compat.Ztrunc` work.
 namespace FloatSpec.Compat
 /-- Namespace alias for {name}`Ztrunc`. -/

@@ -7632,8 +7632,6 @@ theorem Bplus_correct {prec emax : Int}
 -- the negated right operand.
 theorem Bminus_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
-    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (minus_nan : Binary.BminusNaNHandler prec emax)
     (mode : RoundingMode) (x y : binary_float prec emax) :
     Binary.is_finite (prec:=prec) (emax:=emax) x = true →
@@ -7682,8 +7680,6 @@ theorem Bminus_correct {prec emax : Int}
 -- Coq: `Binary.v:Bfma_correct`, on the proof-carrying Binary carrier.
 theorem Bfma_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
-    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (fma_nan : Binary.BfmaNaNHandler prec emax)
     (mode : RoundingMode) (x y z : binary_float prec emax) :
     Binary.is_finite (prec:=prec) (emax:=emax) x = true →
@@ -7856,8 +7852,6 @@ theorem Bfma_correct {prec emax : Int}
 -- Coq: `Binary.v:Bsqrt_correct`, on the proof-carrying Binary carrier.
 theorem Bsqrt_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
-    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (sqrt_nan : Binary.BsqrtNaNHandler prec emax)
     (mode : RoundingMode) (x : binary_float prec emax) :
     Binary.B2R (prec:=prec) (emax:=emax)
@@ -8030,8 +8024,6 @@ theorem Bsqrt_correct {prec emax : Int}
 -- Coq: `Binary.v:Bdiv_correct`, on the proof-carrying Binary carrier.
 theorem Bdiv_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
-    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
     (div_nan : Binary.BdivNaNHandler prec emax)
     (mode : RoundingMode) (x y : binary_float prec emax) :
     Binary.B2R (prec:=prec) (emax:=emax) y ≠ 0 →
