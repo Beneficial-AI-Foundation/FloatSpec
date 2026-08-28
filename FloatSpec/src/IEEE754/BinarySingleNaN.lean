@@ -6814,6 +6814,113 @@ private theorem roundRBinaryFinite {prec emax : Int}
     (hβ:=by norm_num)
     (binaryFiniteGenericFormat (prec:=prec) (emax:=emax) s m e hbounded)
 
+/-- A positive bounded binary input cannot overflow when square-rooted.  The
+proof uses the representable ceiling `2^(emax-1)`, avoiding any rounding-mode
+specific error estimate. -/
+private theorem roundRSqrtBinaryFiniteLtEmax {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
+    (mode : RoundingMode) (m : FloatSpec.Core.Zaux.Positive) (e : Int)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax)
+      (FloatSpec.Core.Zaux.positiveToNat m) e = true) :
+    |FloatSpec.Core.Generic_fmt.roundR 2
+        (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+        (Real.sqrt (Binary.B2R (prec:=prec) (emax:=emax)
+          (binary_float.B754_finite (prec:=prec) (emax:=emax)
+            false m e hbounded)))| <
+      FloatSpec.Core.Raux.bpow 2 emax := by
+  let input := Binary.B2R (prec:=prec) (emax:=emax)
+    (binary_float.B754_finite (prec:=prec) (emax:=emax) false m e hbounded)
+  have hmNat := positiveToNat_pos_bsn m
+  have hmInt : (0 : Int) < (FloatSpec.Core.Zaux.positiveToNat m : Int) := by
+    exact_mod_cast hmNat
+  have hinputPos : 0 < input := by
+    simpa [input, Binary.B2R] using
+      (FloatSpec.Core.Float_prop.F2R_gt_0
+        (beta:=2)
+        (f:=FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.positiveToNat m : Int) e)
+        (by norm_num) hmInt)
+  have hinputLt : input < FloatSpec.Core.Raux.bpow 2 emax := by
+    have h := absBinaryFiniteLtEmax (prec:=prec) (emax:=emax)
+      false m e hbounded
+    simpa [input, abs_of_pos hinputPos] using h
+  have hbpowPos : 0 < FloatSpec.Core.Raux.bpow 2 emax := by
+    have htrip := FloatSpec.Core.Raux.bpow_gt_0 2 emax (by norm_num)
+    simpa [wp, PostCond.noThrow, pure] using htrip trivial
+  have hsqrtLt : Real.sqrt input <
+      Real.sqrt (FloatSpec.Core.Raux.bpow 2 emax) :=
+    Real.sqrt_lt_sqrt (le_of_lt hinputPos) hinputLt
+  let ceiling := FloatSpec.Core.Raux.bpow 2 (emax - 1)
+  have hceilingPos : 0 < ceiling := by
+    have htrip := FloatSpec.Core.Raux.bpow_gt_0 2 (emax - 1) (by norm_num)
+    simpa [wp, PostCond.noThrow, pure, ceiling] using htrip trivial
+  have hpowSquare : FloatSpec.Core.Raux.bpow 2 emax ≤ ceiling ^ 2 := by
+    have hexp : emax ≤ 2 * (emax - 1) := by
+      have hemax := (inferInstance : Prec_lt_emax prec emax).emax_ge_2
+      omega
+    have htrip := FloatSpec.Core.Raux.bpow_le 2 emax (2 * (emax - 1))
+      (by norm_num) hexp
+    have hpow : FloatSpec.Core.Raux.bpow 2 emax ≤
+        FloatSpec.Core.Raux.bpow 2 (2 * (emax - 1)) := by
+      have hrun := htrip trivial
+      simpa only [wp, PostCond.noThrow, Id.run, pure,
+        FloatSpec.Core.Raux.bpow_le_check] using hrun
+    have htwoNe : (2 : ℝ) ≠ 0 := by norm_num
+    have hsquare : ceiling ^ 2 =
+        FloatSpec.Core.Raux.bpow 2 (2 * (emax - 1)) := by
+      calc
+        ceiling ^ 2 = (2 : ℝ) ^ (emax - 1) * (2 : ℝ) ^ (emax - 1) := by
+          simp [ceiling, FloatSpec.Core.Raux.bpow, pow_two]
+        _ = (2 : ℝ) ^ ((emax - 1) + (emax - 1)) := by
+          rw [zpow_add₀ htwoNe]
+        _ = FloatSpec.Core.Raux.bpow 2 (2 * (emax - 1)) := by
+          congr 1
+          ring
+    simpa [hsquare] using hpow
+  have hsqrtCeiling : Real.sqrt (FloatSpec.Core.Raux.bpow 2 emax) ≤ ceiling :=
+    Real.sqrt_le_iff.mpr ⟨le_of_lt hceilingPos, hpowSquare⟩
+  have hsqrtInputLe : Real.sqrt input ≤ ceiling :=
+    le_trans (le_of_lt hsqrtLt) hsqrtCeiling
+  have hceilingFormat : FloatSpec.Core.Generic_fmt.generic_format 2
+      (FLT_exp (3 - emax - prec) prec) ceiling := by
+    have hfexp : FLT_exp (3 - emax - prec) prec (emax - 1) ≤ emax - 1 := by
+      unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
+      have hprec := (inferInstance : Prec_gt_0 prec).pos
+      have hemax := (inferInstance : Prec_lt_emax prec emax).emax_ge_2
+      apply max_le
+      · omega
+      · omega
+    have htrip := FloatSpec.Core.Generic_fmt.generic_format_bpow'
+      2 (FLT_exp (3 - emax - prec) prec) (emax - 1)
+    simpa [wp, PostCond.noThrow, pure, ceiling] using
+      htrip ⟨by norm_num, hfexp⟩
+  have hroundLe : FloatSpec.Core.Generic_fmt.roundR 2
+      (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+        (Real.sqrt input) ≤ ceiling :=
+    FloatSpec.Core.Generic_fmt.roundR_le_generic
+      (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+      (rnd:=rnd_of_mode mode) (x:=Real.sqrt input) (y:=ceiling)
+      (by norm_num) hceilingFormat hsqrtInputLe
+  have hceilingLt : ceiling < FloatSpec.Core.Raux.bpow 2 emax := by
+    have htrip := FloatSpec.Core.Raux.bpow_lt 2 (emax - 1) emax
+      (by norm_num) (by omega)
+    have hrun := htrip trivial
+    simpa only [wp, PostCond.noThrow, Id.run, pure,
+      FloatSpec.Core.Raux.bpow_lt_check, ceiling] using hrun
+  have hroundLt : FloatSpec.Core.Generic_fmt.roundR 2
+      (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+        (Real.sqrt input) < FloatSpec.Core.Raux.bpow 2 emax :=
+    lt_of_le_of_lt hroundLe hceilingLt
+  have hroundNonneg : 0 ≤ FloatSpec.Core.Generic_fmt.roundR 2
+      (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+        (Real.sqrt input) :=
+    FloatSpec.Core.Generic_fmt.roundR_nonneg_of_nonneg
+      (beta:=2) (fexp:=FLT_exp (3 - emax - prec) prec)
+      (rnd:=rnd_of_mode mode) (x:=Real.sqrt input) (by norm_num)
+      (Real.sqrt_nonneg input)
+  simpa [input, abs_of_nonneg hroundNonneg] using hroundLt
+
 private theorem Bfma_returned_finite_correct {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
     [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
@@ -7745,6 +7852,180 @@ theorem Bfma_correct {prec emax : Int}
                     (binary_float.B754_finite sz mz ez Hz))
               rw [← hsumInput]
               simpa [Binary.Bfma, X, Y, Z, product, sum] using hnorm
+
+-- Coq: `Binary.v:Bsqrt_correct`, on the proof-carrying Binary carrier.
+theorem Bsqrt_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (sqrt_nan : Binary.BsqrtNaNHandler prec emax)
+    (mode : RoundingMode) (x : binary_float prec emax) :
+    Binary.B2R (prec:=prec) (emax:=emax)
+        (Binary.Bsqrt (prec:=prec) (emax:=emax) sqrt_nan mode x) =
+      FloatSpec.Core.Generic_fmt.roundR 2
+        (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+          (Real.sqrt (Binary.B2R (prec:=prec) (emax:=emax) x)) ∧
+    Binary.is_finite (prec:=prec) (emax:=emax)
+        (Binary.Bsqrt (prec:=prec) (emax:=emax) sqrt_nan mode x) =
+      (match x with
+      | binary_float.B754_zero _ => true
+      | binary_float.B754_finite false _ _ _ => true
+      | _ => false) ∧
+    (Binary.is_nan (prec:=prec) (emax:=emax)
+        (Binary.Bsqrt (prec:=prec) (emax:=emax) sqrt_nan mode x) = false →
+      Binary.Bsign (prec:=prec) (emax:=emax)
+          (Binary.Bsqrt (prec:=prec) (emax:=emax) sqrt_nan mode x) =
+        Binary.Bsign (prec:=prec) (emax:=emax) x) := by
+  cases x with
+  | B754_zero sx =>
+      cases mode <;>
+        simp [Binary.Bsqrt, Binary.B2R, Binary.is_finite, Binary.is_nan,
+          Binary.Bsign, Binary.roundR_zero_of_mode]
+  | B754_infinity sx =>
+      cases sx
+      · cases mode <;>
+          simp [Binary.Bsqrt, Binary.B2R, Binary.is_finite, Binary.is_nan,
+            Binary.Bsign, Binary.roundR_zero_of_mode]
+      · rcases hnan : sqrt_nan
+            (binary_float.B754_infinity (prec:=prec) (emax:=emax) true) with
+          ⟨nan, hnanProp⟩
+        cases nan <;>
+          simp [Binary.Bsqrt, hnan, Binary.B2R, Binary.is_finite,
+            Binary.is_nan, Binary.Bsign, Binary.roundR_zero_of_mode] at hnanProp ⊢
+  | B754_nan sx payload hPayload =>
+      rcases hnan : sqrt_nan
+          (binary_float.B754_nan (prec:=prec) (emax:=emax) sx payload hPayload) with
+        ⟨nan, hnanProp⟩
+      cases nan <;>
+        simp [Binary.Bsqrt, hnan, Binary.B2R, Binary.is_finite,
+          Binary.is_nan, Binary.Bsign, Binary.roundR_zero_of_mode] at hnanProp ⊢
+  | B754_finite sx mx ex Hx =>
+      cases sx
+      · let mxn := FloatSpec.Core.Zaux.positiveToNat mx
+        let input := F2R
+          (FloatSpec.Core.Defs.FlocqFloat.mk (mxn : Int) ex :
+            FloatSpec.Core.Defs.FlocqFloat 2)
+        let result := SFsqrt_core_binary prec emax (mxn : Int) ex
+        have hdata := SFsqrt_core_binary_correct_data
+          (prec:=prec) (emax:=emax) (mxn : Int) ex
+          (by exact_mod_cast positiveToNat_pos_bsn mx)
+        have hresult_pos : 0 < result.1 := by
+          simpa [result] using hdata.1
+        let mzn := result.1.toNat
+        have hmzn_pos : 0 < mzn := by omega
+        have hmzn_cast : (mzn : Int) = result.1 :=
+          Int.toNat_of_nonneg (le_of_lt hresult_pos)
+        let z := binary_round_aux (prec:=prec) (emax:=emax) mode false
+          (mzn : Int) result.2.1 result.2.2
+        have hbetween :
+            FloatSpec.Calc.Bracket.inbetween_float 2 (mzn : Int) result.2.1
+              |Real.sqrt input| result.2.2 := by
+          simpa [input, result, hmzn_cast,
+            abs_of_nonneg (Real.sqrt_nonneg _)] using hdata.2.1
+        have hexp :
+            result.2.1 ≤ FLT_exp (3 - emax - prec) prec
+              (FloatSpec.Core.Digits.Zdigits 2 (mzn : Int) + result.2.1) := by
+          simpa [result, hmzn_cast] using hdata.2.2
+        have haux := binary_round_aux_correct (prec:=prec) (emax:=emax)
+          mode (Real.sqrt input) mzn result.2.1 result.2.2
+          hmzn_pos hbetween hexp
+        have hsqrt_sign :
+            FloatSpec.Core.Raux.Rlt_bool (Real.sqrt input) 0 = false := by
+          simp [FloatSpec.Core.Raux.Rlt_bool, Real.sqrt_nonneg]
+        have hvalid :
+            validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax) z = true := by
+          simpa [z, hsqrt_sign] using haux.1
+        have hnotnan : is_nan_SF z = false := by
+          have hmzn_nonneg : (0 : Int) ≤ (mzn : Int) := by
+            exact_mod_cast Nat.zero_le mzn
+          simpa [z] using
+            is_nan_binary_round_aux_of_nonneg (prec:=prec) (emax:=emax)
+              mode false (mzn : Int) result.2.1 result.2.2 hmzn_nonneg
+        have hlt := roundRSqrtBinaryFiniteLtEmax
+          (prec:=prec) (emax:=emax) mode mx ex Hx
+        have hltInput : FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2
+              (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+                (Real.sqrt input)|
+            (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+          simp [FloatSpec.Core.Raux.Rlt_bool]
+          simpa [input, mxn, Binary.B2R] using hlt
+        have hbranch : SF2R 2 z =
+              FloatSpec.Core.Generic_fmt.roundR 2
+                (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+                  (Real.sqrt input) ∧
+            is_finite_SF z = true ∧ sign_SF z = false := by
+          have h := haux.2
+          simpa [z, hsqrt_sign, hltInput] using h
+        have hresult : Binary.Bsqrt (prec:=prec) (emax:=emax) sqrt_nan mode
+              (binary_float.B754_finite (prec:=prec) (emax:=emax)
+                false mx ex Hx) =
+            Binary.standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hvalid hnotnan := by
+          simp [Binary.Bsqrt, mxn, input, result, mzn, z]
+        have hB2R := Binary.B2R_standardFloatToBinaryFloatOfNotNaN
+          (prec:=prec) (emax:=emax) z hvalid hnotnan
+        have hfinite := Binary.is_finite_standardFloatToBinaryFloatOfNotNaN
+          (prec:=prec) (emax:=emax) z hvalid hnotnan
+        have hsign := Binary.Bsign_standardFloatToBinaryFloatOfNotNaN
+          (prec:=prec) (emax:=emax) z hvalid hnotnan
+        rw [hresult]
+        refine ⟨?_, ?_, ?_⟩
+        · calc
+            Binary.B2R (prec:=prec) (emax:=emax)
+                (Binary.standardFloatToBinaryFloatOfNotNaN
+                  (prec:=prec) (emax:=emax) z hvalid hnotnan) = SF2R 2 z := hB2R
+            _ = _ := by simpa [input, mxn, Binary.B2R] using hbranch.1
+        · exact hfinite.trans hbranch.2.1
+        · intro _
+          calc
+            Binary.Bsign (prec:=prec) (emax:=emax)
+                (Binary.standardFloatToBinaryFloatOfNotNaN
+                  (prec:=prec) (emax:=emax) z hvalid hnotnan) = sign_SF z := hsign
+            _ = false := hbranch.2.2
+            _ = Binary.Bsign (prec:=prec) (emax:=emax)
+                (binary_float.B754_finite (prec:=prec) (emax:=emax)
+                  false mx ex Hx) := rfl
+      · have hneg : Binary.B2R (prec:=prec) (emax:=emax)
+            (binary_float.B754_finite (prec:=prec) (emax:=emax)
+              true mx ex Hx) < 0 := by
+          have hmNat := positiveToNat_pos_bsn mx
+          have hmInt : (0 : Int) <
+              (FloatSpec.Core.Zaux.positiveToNat mx : Int) := by
+            exact_mod_cast hmNat
+          change F2R (FloatSpec.Core.Defs.FlocqFloat.mk
+            (-(FloatSpec.Core.Zaux.positiveToNat mx : Int)) ex :
+              FloatSpec.Core.Defs.FlocqFloat 2) < 0
+          exact FloatSpec.Core.Float_prop.F2R_lt_0
+            (beta:=2)
+            (f:=FloatSpec.Core.Defs.FlocqFloat.mk
+              (-(FloatSpec.Core.Zaux.positiveToNat mx : Int)) ex)
+            (by norm_num) (by
+              change -(FloatSpec.Core.Zaux.positiveToNat mx : Int) < 0
+              omega)
+        have hsqrt0 : Real.sqrt (Binary.B2R (prec:=prec) (emax:=emax)
+            (binary_float.B754_finite (prec:=prec) (emax:=emax)
+              true mx ex Hx)) = 0 :=
+          Real.sqrt_eq_zero_of_nonpos (le_of_lt hneg)
+        have hround0 : FloatSpec.Core.Generic_fmt.roundR 2
+            (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+              (Real.sqrt (Binary.B2R (prec:=prec) (emax:=emax)
+                (binary_float.B754_finite (prec:=prec) (emax:=emax)
+                  true mx ex Hx))) = 0 := by
+          rw [hsqrt0]
+          exact Binary.roundR_zero_of_mode mode
+        have hround0' : FloatSpec.Core.Generic_fmt.roundR 2
+            (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+              (Real.sqrt (F2R (FloatSpec.Core.Defs.FlocqFloat.mk
+                (-(FloatSpec.Core.Zaux.positiveToNat mx : Int)) ex :
+                  FloatSpec.Core.Defs.FlocqFloat 2))) = 0 := by
+          simpa only [Binary.B2R] using hround0
+        rcases hnan : sqrt_nan
+            (binary_float.B754_finite (prec:=prec) (emax:=emax)
+              true mx ex Hx) with ⟨nan, hnanProp⟩
+        cases nan <;>
+          simp [Binary.Bsqrt, hnan, hsqrt0, hround0, hround0', Binary.B2R, Binary.is_finite,
+            Binary.is_nan, Binary.Bsign, Binary.roundR_zero_of_mode] at hnanProp ⊢
 
 -- Coq: `Binary.v:Bdiv_correct`, on the proof-carrying Binary carrier.
 theorem Bdiv_correct {prec emax : Int}
