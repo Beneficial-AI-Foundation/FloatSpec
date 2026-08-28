@@ -5906,6 +5906,199 @@ private noncomputable def normalize {prec emax : Int}
         is_nan_binary_round (prec:=prec) (emax:=emax) mode true m.natAbs e
     standardFloatToBinaryFloatOfNotNaN (prec:=prec) (emax:=emax) z hround.1 hnotnan
 
+theorem normalize_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (mode : RoundingMode) (m e : Int) (szero : Bool) :
+    let input := F2R
+      (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+        FloatSpec.Core.Defs.FlocqFloat 2)
+    if FloatSpec.Core.Raux.Rlt_bool
+        |FloatSpec.Core.Generic_fmt.roundR 2
+          (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) input|
+        (FloatSpec.Core.Raux.bpow 2 emax) then
+      B2R (prec:=prec) (emax:=emax) (normalize mode m e szero) =
+          FloatSpec.Core.Generic_fmt.roundR 2
+            (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) input ∧
+        is_finite (prec:=prec) (emax:=emax) (normalize mode m e szero) = true ∧
+        Bsign (prec:=prec) (emax:=emax) (normalize mode m e szero) =
+          if input = 0 then szero else decide (input < 0)
+    else
+      B2FF (prec:=prec) (emax:=emax) (normalize mode m e szero) =
+        binary_overflow (prec:=prec) (emax:=emax) mode
+          (FloatSpec.Core.Raux.Rlt_bool input 0) := by
+  dsimp
+  by_cases hm0 : m = 0
+  · subst m
+    have hbtrip := FloatSpec.Core.Raux.bpow_gt_0 2 emax (by norm_num)
+    have hb : 0 < FloatSpec.Core.Raux.bpow 2 emax := by
+      simpa [wp, PostCond.noThrow, pure] using hbtrip trivial
+    have hlt : FloatSpec.Core.Raux.Rlt_bool
+        |FloatSpec.Core.Generic_fmt.roundR 2
+          (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+            (F2R (FloatSpec.Core.Defs.FlocqFloat.mk 0 e :
+              FloatSpec.Core.Defs.FlocqFloat 2))|
+        (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+      simp [F2R, FloatSpec.Core.Defs.F2R, Binary.roundR_zero_of_mode,
+        FloatSpec.Core.Raux.Rlt_bool, hb]
+    rw [if_pos hlt]
+    simp [normalize, F2R, FloatSpec.Core.Defs.F2R,
+      Binary.roundR_zero_of_mode, B2R, is_finite, Bsign]
+  · by_cases hmpos : 0 < m
+    · let mn := m.toNat
+      have hmn_cast : (mn : Int) = m := Int.toNat_of_nonneg (le_of_lt hmpos)
+      have hmn_pos : 0 < mn := by
+        have : (0 : Int) < (mn : Int) := by simpa [hmn_cast] using hmpos
+        exact_mod_cast this
+      let z := binary_round (prec:=prec) (emax:=emax) mode false mn e
+      have hround := binary_round_correct (prec:=prec) (emax:=emax)
+        mode false mn e hmn_pos
+      have hnotnan : is_nan_SF z = false := by
+        simpa [z] using
+          is_nan_binary_round (prec:=prec) (emax:=emax) mode false mn e
+      have hB2R : B2R (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = SF2R 2 z :=
+        B2R_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hfinite : is_finite (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = is_finite_SF z :=
+        is_finite_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hsign : Bsign (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = sign_SF z :=
+        Bsign_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hB2FF : B2FF (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = SF2FF z :=
+        B2FF_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hinput_pos : 0 < F2R
+          (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+            FloatSpec.Core.Defs.FlocqFloat 2) :=
+        FloatSpec.Core.Float_prop.F2R_gt_0 (beta:=2)
+          (f:=FloatSpec.Core.Defs.FlocqFloat.mk m e) (by norm_num) hmpos
+      have hinput : SF2R 2 (StandardFloat.S754_finite false mn e) =
+          F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+            FloatSpec.Core.Defs.FlocqFloat 2) := by
+        simp [SF2R, hmn_cast]
+      by_cases hlt : FloatSpec.Core.Raux.Rlt_bool
+          |FloatSpec.Core.Generic_fmt.roundR 2
+            (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+              (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                FloatSpec.Core.Defs.FlocqFloat 2))|
+          (FloatSpec.Core.Raux.bpow 2 emax) = true
+      · rw [if_pos hlt]
+        have hbranch := hround.2
+        have hlt' : FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2
+              (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+                (SF2R 2 (StandardFloat.S754_finite false mn e))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = true := by simpa [hinput] using hlt
+        rw [if_pos hlt'] at hbranch
+        simpa [normalize, hm0, hmpos, mn, z, hB2R, hfinite, hsign,
+          hinput, ne_of_gt hinput_pos,
+          FloatSpec.Core.Raux.Rlt_bool, not_lt.mpr (le_of_lt hinput_pos)] using hbranch
+      · rw [if_neg hlt]
+        have hbranch := hround.2
+        have hlt' : FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2
+              (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+                (SF2R 2 (StandardFloat.S754_finite false mn e))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = false := by
+          simpa [hinput] using Bool.eq_false_of_not_eq_true hlt
+        rw [if_neg (by exact Bool.eq_false_iff.mp hlt')] at hbranch
+        have hnormalize : normalize (prec:=prec) (emax:=emax) mode m e szero =
+            standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan := by
+          simp [normalize, hm0, hmpos, mn, z]
+        rw [hnormalize, hB2FF]
+        rw [show z = bsn_binary_overflow (prec:=prec) (emax:=emax) mode false by
+          simpa [z] using hbranch]
+        change SF2FF (bsn_binary_overflow (prec:=prec) (emax:=emax) mode false) =
+          SF2FF (bsn_binary_overflow (prec:=prec) (emax:=emax) mode
+            (FloatSpec.Core.Raux.Rlt_bool
+              (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                FloatSpec.Core.Defs.FlocqFloat 2)) 0))
+        simp [FloatSpec.Core.Raux.Rlt_bool,
+          not_lt.mpr (le_of_lt hinput_pos)]
+    · have hmneg : m < 0 := lt_of_le_of_ne (le_of_not_gt hmpos) hm0
+      let mn := m.natAbs
+      have hmn_pos : 0 < mn := Int.natAbs_pos.mpr (ne_of_lt hmneg)
+      have hmn_cast : (mn : Int) = -m := by
+        rw [show (mn : Int) = |m| by simpa [mn] using Int.natCast_natAbs m,
+          abs_of_nonpos (le_of_lt hmneg)]
+      let z := binary_round (prec:=prec) (emax:=emax) mode true mn e
+      have hround := binary_round_correct (prec:=prec) (emax:=emax)
+        mode true mn e hmn_pos
+      have hnotnan : is_nan_SF z = false := by
+        simpa [z] using
+          is_nan_binary_round (prec:=prec) (emax:=emax) mode true mn e
+      have hB2R : B2R (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = SF2R 2 z :=
+        B2R_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hfinite : is_finite (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = is_finite_SF z :=
+        is_finite_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hsign : Bsign (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = sign_SF z :=
+        Bsign_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hB2FF : B2FF (prec:=prec) (emax:=emax)
+            (standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan) = SF2FF z :=
+        B2FF_standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan
+      have hinput_neg : F2R
+          (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+            FloatSpec.Core.Defs.FlocqFloat 2) < 0 :=
+        FloatSpec.Core.Float_prop.F2R_lt_0 (beta:=2)
+          (f:=FloatSpec.Core.Defs.FlocqFloat.mk m e) (by norm_num) hmneg
+      have hinput : SF2R 2 (StandardFloat.S754_finite true mn e) =
+          F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+            FloatSpec.Core.Defs.FlocqFloat 2) := by
+        simp [SF2R, hmn_cast]
+      by_cases hlt : FloatSpec.Core.Raux.Rlt_bool
+          |FloatSpec.Core.Generic_fmt.roundR 2
+            (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+              (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                FloatSpec.Core.Defs.FlocqFloat 2))|
+          (FloatSpec.Core.Raux.bpow 2 emax) = true
+      · rw [if_pos hlt]
+        have hbranch := hround.2
+        have hlt' : FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2
+              (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+                (SF2R 2 (StandardFloat.S754_finite true mn e))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = true := by simpa [hinput] using hlt
+        rw [if_pos hlt'] at hbranch
+        simpa [normalize, hm0, hmpos, mn, z, hB2R, hfinite, hsign,
+          hinput, ne_of_lt hinput_neg, FloatSpec.Core.Raux.Rlt_bool,
+          decide_eq_true_eq.mpr hinput_neg] using hbranch
+      · rw [if_neg hlt]
+        have hbranch := hround.2
+        have hlt' : FloatSpec.Core.Raux.Rlt_bool
+            |FloatSpec.Core.Generic_fmt.roundR 2
+              (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+                (SF2R 2 (StandardFloat.S754_finite true mn e))|
+            (FloatSpec.Core.Raux.bpow 2 emax) = false := by
+          simpa [hinput] using Bool.eq_false_of_not_eq_true hlt
+        rw [if_neg (by exact Bool.eq_false_iff.mp hlt')] at hbranch
+        have hnormalize : normalize (prec:=prec) (emax:=emax) mode m e szero =
+            standardFloatToBinaryFloatOfNotNaN
+              (prec:=prec) (emax:=emax) z hround.1 hnotnan := by
+          simp [normalize, hm0, hmpos, mn, z]
+        rw [hnormalize, hB2FF]
+        rw [show z = bsn_binary_overflow (prec:=prec) (emax:=emax) mode true by
+          simpa [z] using hbranch]
+        change SF2FF (bsn_binary_overflow (prec:=prec) (emax:=emax) mode true) =
+          SF2FF (bsn_binary_overflow (prec:=prec) (emax:=emax) mode
+            (FloatSpec.Core.Raux.Rlt_bool
+              (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                FloatSpec.Core.Defs.FlocqFloat 2)) 0))
+        simp [FloatSpec.Core.Raux.Rlt_bool, hinput_neg]
+
 -- Coq: `Binary.v:Bfma`.
 noncomputable def Bfma {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
@@ -6437,6 +6630,99 @@ noncomputable def binaryMinusResultSign (mode : RoundingMode)
     (sx sy : Bool) (z : ℝ) : Bool :=
   binaryPlusResultSign mode sx (!sy) z
 
+/-- The sign clause in Flocq's `Bfma_correct`, expressed without encoding
+Coq's three-way real comparison as an integer. -/
+noncomputable def binaryFmaResultSign {prec emax : Int}
+    (mode : RoundingMode) (x y z : binary_float prec emax) (res : ℝ) : Bool :=
+  if res = 0 then Binary.Bfma_szero mode x y z else decide (res < 0)
+
+private theorem binaryFinite_ne_zero {prec emax : Int}
+    (s : Bool) (m : FloatSpec.Core.Zaux.Positive) (e : Int)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax)
+      (FloatSpec.Core.Zaux.positiveToNat m) e = true) :
+    Binary.B2R (prec:=prec) (emax:=emax)
+      (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded) ≠ 0 := by
+  have hm := positiveToNat_pos_bsn m
+  have hmInt : (0 : Int) < (FloatSpec.Core.Zaux.positiveToNat m : Int) := by
+    exact_mod_cast hm
+  cases s
+  · simp only [Binary.B2R]
+    exact ne_of_gt (FloatSpec.Core.Float_prop.F2R_gt_0
+      (beta:=2) (f:=FloatSpec.Core.Defs.FlocqFloat.mk
+        (FloatSpec.Core.Zaux.positiveToNat m : Int) e) (by norm_num) hmInt)
+  · simp only [Binary.B2R]
+    exact ne_of_lt (FloatSpec.Core.Float_prop.F2R_lt_0
+      (beta:=2) (f:=FloatSpec.Core.Defs.FlocqFloat.mk
+        (-(FloatSpec.Core.Zaux.positiveToNat m : Int)) e) (by norm_num)
+        (by
+          change -(FloatSpec.Core.Zaux.positiveToNat m : Int) < 0
+          omega))
+
+private theorem binaryFinite_decide_lt_zero {prec emax : Int}
+    (s : Bool) (m : FloatSpec.Core.Zaux.Positive) (e : Int)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax)
+      (FloatSpec.Core.Zaux.positiveToNat m) e = true) :
+    decide (Binary.B2R (prec:=prec) (emax:=emax)
+      (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded) < 0) = s := by
+  have hm := positiveToNat_pos_bsn m
+  have hmInt : (0 : Int) < (FloatSpec.Core.Zaux.positiveToNat m : Int) := by
+    exact_mod_cast hm
+  cases s
+  · have hpos := FloatSpec.Core.Float_prop.F2R_gt_0
+      (beta:=2) (f:=FloatSpec.Core.Defs.FlocqFloat.mk
+        (FloatSpec.Core.Zaux.positiveToNat m : Int) e) (by norm_num) hmInt
+    simp only [Binary.B2R]
+    exact decide_eq_false_iff_not.mpr (not_lt_of_ge (le_of_lt hpos))
+  · have hneg := FloatSpec.Core.Float_prop.F2R_lt_0
+      (beta:=2) (f:=FloatSpec.Core.Defs.FlocqFloat.mk
+        (-(FloatSpec.Core.Zaux.positiveToNat m : Int)) e) (by norm_num)
+        (by
+          change -(FloatSpec.Core.Zaux.positiveToNat m : Int) < 0
+          omega)
+    simp only [Binary.B2R]
+    exact decide_eq_true_eq.mpr hneg
+
+private theorem Bfma_returned_zero_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (fma_nan : Binary.BfmaNaNHandler prec emax)
+    (mode : RoundingMode) (x y z : binary_float prec emax)
+    (hprod : Binary.B2R (prec:=prec) (emax:=emax) x *
+      Binary.B2R (prec:=prec) (emax:=emax) y = 0)
+    (hz : Binary.B2R (prec:=prec) (emax:=emax) z = 0)
+    (hout : Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z =
+      binary_float.B754_zero (prec:=prec) (emax:=emax)
+        (Binary.Bfma_szero mode x y z)) :
+    let res := Binary.B2R (prec:=prec) (emax:=emax) x *
+        Binary.B2R (prec:=prec) (emax:=emax) y +
+        Binary.B2R (prec:=prec) (emax:=emax) z
+    if FloatSpec.Core.Raux.Rlt_bool
+        |FloatSpec.Core.Generic_fmt.roundR 2
+          (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) res|
+        (FloatSpec.Core.Raux.bpow 2 emax) then
+      Binary.B2R (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+          FloatSpec.Core.Generic_fmt.roundR 2
+            (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) res ∧
+        Binary.is_finite (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) = true ∧
+        Binary.Bsign (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+          binaryFmaResultSign mode x y z res
+    else
+      Binary.B2FF (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+        Binary.binary_overflow (prec:=prec) (emax:=emax) mode
+          (FloatSpec.Core.Raux.Rlt_bool res 0) := by
+  dsimp
+  have hres : Binary.B2R (prec:=prec) (emax:=emax) x *
+      Binary.B2R (prec:=prec) (emax:=emax) y +
+      Binary.B2R (prec:=prec) (emax:=emax) z = 0 := by rw [hprod, hz]; norm_num
+  rw [hres, Binary.roundR_zero_of_mode, abs_zero, Binary.Rlt_bool_zero_bpow]
+  simp [hout, Binary.B2R, Binary.is_finite, Binary.Bsign,
+    binaryFmaResultSign]
+
 private theorem binaryFiniteGenericFormat {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
     (s : Bool) (m : FloatSpec.Core.Zaux.Positive) (e : Int)
@@ -6527,6 +6813,69 @@ private theorem roundRBinaryFinite {prec emax : Int}
       (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded))
     (hβ:=by norm_num)
     (binaryFiniteGenericFormat (prec:=prec) (emax:=emax) s m e hbounded)
+
+private theorem Bfma_returned_finite_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (fma_nan : Binary.BfmaNaNHandler prec emax)
+    (mode : RoundingMode) (x y : binary_float prec emax)
+    (s : Bool) (m : FloatSpec.Core.Zaux.Positive) (e : Int)
+    (hbounded : specFloat_bounded (prec:=prec) (emax:=emax)
+      (FloatSpec.Core.Zaux.positiveToNat m) e = true)
+    (hprod : Binary.B2R (prec:=prec) (emax:=emax) x *
+      Binary.B2R (prec:=prec) (emax:=emax) y = 0)
+    (hout : Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y
+        (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded) =
+      binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded) :
+    let z := binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded
+    let res := Binary.B2R (prec:=prec) (emax:=emax) x *
+        Binary.B2R (prec:=prec) (emax:=emax) y +
+        Binary.B2R (prec:=prec) (emax:=emax) z
+    if FloatSpec.Core.Raux.Rlt_bool
+        |FloatSpec.Core.Generic_fmt.roundR 2
+          (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) res|
+        (FloatSpec.Core.Raux.bpow 2 emax) then
+      Binary.B2R (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+          FloatSpec.Core.Generic_fmt.roundR 2
+            (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) res ∧
+        Binary.is_finite (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) = true ∧
+        Binary.Bsign (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+          binaryFmaResultSign mode x y z res
+    else
+      Binary.B2FF (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+        Binary.binary_overflow (prec:=prec) (emax:=emax) mode
+          (FloatSpec.Core.Raux.Rlt_bool res 0) := by
+  dsimp
+  have hres : Binary.B2R (prec:=prec) (emax:=emax) x *
+      Binary.B2R (prec:=prec) (emax:=emax) y +
+      Binary.B2R (prec:=prec) (emax:=emax)
+        (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded) =
+      Binary.B2R (prec:=prec) (emax:=emax)
+        (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded) := by
+    rw [hprod]; norm_num
+  have hround := roundRBinaryFinite (prec:=prec) (emax:=emax) mode s m e hbounded
+  have hlt := absBinaryFiniteLtEmax (prec:=prec) (emax:=emax) s m e hbounded
+  have hcond : FloatSpec.Core.Raux.Rlt_bool
+      |FloatSpec.Core.Generic_fmt.roundR 2
+        (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
+          (Binary.B2R (prec:=prec) (emax:=emax) x *
+            Binary.B2R (prec:=prec) (emax:=emax) y +
+            Binary.B2R (prec:=prec) (emax:=emax)
+              (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded))|
+      (FloatSpec.Core.Raux.bpow 2 emax) = true := by
+    simp [hres, hround, FloatSpec.Core.Raux.Rlt_bool, hlt]
+  rw [if_pos hcond, hout]
+  refine ⟨?_, rfl, ?_⟩
+  · simpa [hres] using hround.symm
+  · simp [binaryFmaResultSign, hres,
+      binaryFinite_ne_zero (prec:=prec) (emax:=emax) s m e hbounded,
+      binaryFinite_decide_lt_zero (prec:=prec) (emax:=emax) s m e hbounded,
+      Binary.Bsign]
 
 -- Coq: `Binary.v:Bplus_correct`, on the proof-carrying Binary carrier.
 theorem Bplus_correct {prec emax : Int}
@@ -7222,6 +7571,180 @@ theorem Bminus_correct {prec emax : Int}
   rw [← hop] at hplus
   simpa [Binary.B2R_Bopp, Binary.Bsign_Bopp, sub_eq_add_neg,
     binaryMinusResultSign] using hplus
+
+-- Coq: `Binary.v:Bfma_correct`, on the proof-carrying Binary carrier.
+theorem Bfma_correct {prec emax : Int}
+    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [FloatSpec.Core.Generic_fmt.Valid_exp (FLT_exp (3 - emax - prec) prec)]
+    [FloatSpec.Core.Generic_fmt.Monotone_exp (FLT_exp (3 - emax - prec) prec)]
+    (fma_nan : Binary.BfmaNaNHandler prec emax)
+    (mode : RoundingMode) (x y z : binary_float prec emax) :
+    Binary.is_finite (prec:=prec) (emax:=emax) x = true →
+    Binary.is_finite (prec:=prec) (emax:=emax) y = true →
+    Binary.is_finite (prec:=prec) (emax:=emax) z = true →
+    let res := Binary.B2R (prec:=prec) (emax:=emax) x *
+        Binary.B2R (prec:=prec) (emax:=emax) y +
+        Binary.B2R (prec:=prec) (emax:=emax) z
+    if FloatSpec.Core.Raux.Rlt_bool
+        |FloatSpec.Core.Generic_fmt.roundR 2
+          (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) res|
+        (FloatSpec.Core.Raux.bpow 2 emax) then
+      Binary.B2R (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+        FloatSpec.Core.Generic_fmt.roundR 2
+          (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) res ∧
+      Binary.is_finite (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) = true ∧
+      Binary.Bsign (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+        binaryFmaResultSign mode x y z res
+    else
+      Binary.B2FF (prec:=prec) (emax:=emax)
+          (Binary.Bfma (prec:=prec) (emax:=emax) fma_nan mode x y z) =
+        Binary.binary_overflow (prec:=prec) (emax:=emax) mode
+          (FloatSpec.Core.Raux.Rlt_bool res 0) := by
+  intro hx hy hz
+  cases x with
+  | B754_zero sx =>
+      cases y with
+      | B754_zero sy =>
+          cases z with
+          | B754_zero sz =>
+              apply Bfma_returned_zero_correct fma_nan mode
+                (binary_float.B754_zero sx) (binary_float.B754_zero sy)
+                (binary_float.B754_zero sz)
+              · simp [Binary.B2R]
+              · simp [Binary.B2R]
+              · simp [Binary.Bfma]
+          | B754_infinity sz => simp [Binary.is_finite] at hz
+          | B754_nan sz payload hpayload => simp [Binary.is_finite] at hz
+          | B754_finite sz mz ez Hz =>
+              apply Bfma_returned_finite_correct fma_nan mode
+                (binary_float.B754_zero sx) (binary_float.B754_zero sy)
+                sz mz ez Hz
+              · simp [Binary.B2R]
+              · simp [Binary.Bfma]
+      | B754_infinity sy => simp [Binary.is_finite] at hy
+      | B754_nan sy payload hpayload => simp [Binary.is_finite] at hy
+      | B754_finite sy my ey Hy =>
+          cases z with
+          | B754_zero sz =>
+              apply Bfma_returned_zero_correct fma_nan mode
+                (binary_float.B754_zero sx)
+                (binary_float.B754_finite sy my ey Hy)
+                (binary_float.B754_zero sz)
+              · simp [Binary.B2R]
+              · simp [Binary.B2R]
+              · simp [Binary.Bfma]
+          | B754_infinity sz => simp [Binary.is_finite] at hz
+          | B754_nan sz payload hpayload => simp [Binary.is_finite] at hz
+          | B754_finite sz mz ez Hz =>
+              apply Bfma_returned_finite_correct fma_nan mode
+                (binary_float.B754_zero sx)
+                (binary_float.B754_finite sy my ey Hy) sz mz ez Hz
+              · simp [Binary.B2R]
+              · simp [Binary.Bfma]
+  | B754_infinity sx => simp [Binary.is_finite] at hx
+  | B754_nan sx payload hpayload => simp [Binary.is_finite] at hx
+  | B754_finite sx mx ex Hx =>
+      cases y with
+      | B754_zero sy =>
+          cases z with
+          | B754_zero sz =>
+              apply Bfma_returned_zero_correct fma_nan mode
+                (binary_float.B754_finite sx mx ex Hx)
+                (binary_float.B754_zero sy) (binary_float.B754_zero sz)
+              · simp [Binary.B2R]
+              · simp [Binary.B2R]
+              · simp [Binary.Bfma]
+          | B754_infinity sz => simp [Binary.is_finite] at hz
+          | B754_nan sz payload hpayload => simp [Binary.is_finite] at hz
+          | B754_finite sz mz ez Hz =>
+              apply Bfma_returned_finite_correct fma_nan mode
+                (binary_float.B754_finite sx mx ex Hx)
+                (binary_float.B754_zero sy) sz mz ez Hz
+              · simp [Binary.B2R]
+              · simp [Binary.Bfma]
+      | B754_infinity sy => simp [Binary.is_finite] at hy
+      | B754_nan sy payload hpayload => simp [Binary.is_finite] at hy
+      | B754_finite sy my ey Hy =>
+          let X : FloatSpec.Core.Defs.FlocqFloat 2 :=
+            FloatSpec.Core.Defs.FlocqFloat.mk
+              (FloatSpec.Core.Zaux.cond_Zopp sx
+                (FloatSpec.Core.Zaux.positiveToNat mx : Int)) ex
+          let Y : FloatSpec.Core.Defs.FlocqFloat 2 :=
+            FloatSpec.Core.Defs.FlocqFloat.mk
+              (FloatSpec.Core.Zaux.cond_Zopp sy
+                (FloatSpec.Core.Zaux.positiveToNat my : Int)) ey
+          let product := FloatSpec.Calc.Operations.Fmult 2 X Y
+          have hmulTrip := FloatSpec.Calc.Operations.F2R_mult (beta:=2) X Y
+          have hmul : F2R product = F2R X * F2R Y := by
+            simpa [wp, PostCond.noThrow, pure, product] using
+              hmulTrip (by norm_num)
+          have hproductEta :
+              (FloatSpec.Core.Defs.FlocqFloat.mk product.Fnum product.Fexp :
+                FloatSpec.Core.Defs.FlocqFloat 2) = product := by
+            cases hproduct : product
+            rfl
+          have hproductInput : F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk product.Fnum product.Fexp :
+                  FloatSpec.Core.Defs.FlocqFloat 2) =
+              Binary.B2R (prec:=prec) (emax:=emax)
+                  (binary_float.B754_finite sx mx ex Hx) *
+                Binary.B2R (prec:=prec) (emax:=emax)
+                  (binary_float.B754_finite sy my ey Hy) := by
+            rw [hproductEta, hmul]
+            rfl
+          cases z with
+          | B754_zero sz =>
+              have hnorm := Binary.normalize_correct (prec:=prec) (emax:=emax)
+                mode product.Fnum product.Fexp
+                  (Binary.Bfma_szero mode
+                    (binary_float.B754_finite sx mx ex Hx)
+                    (binary_float.B754_finite sy my ey Hy)
+                    (binary_float.B754_zero sz))
+              have hzR : Binary.B2R (prec:=prec) (emax:=emax)
+                  (binary_float.B754_zero (prec:=prec) (emax:=emax) sz) = 0 := rfl
+              rw [hzR, add_zero]
+              rw [← hproductInput]
+              simpa [Binary.Bfma, X, Y, product] using hnorm
+          | B754_infinity sz => simp [Binary.is_finite] at hz
+          | B754_nan sz payload hpayload => simp [Binary.is_finite] at hz
+          | B754_finite sz mz ez Hz =>
+              let Z : FloatSpec.Core.Defs.FlocqFloat 2 :=
+                FloatSpec.Core.Defs.FlocqFloat.mk
+                  (FloatSpec.Core.Zaux.cond_Zopp sz
+                    (FloatSpec.Core.Zaux.positiveToNat mz : Int)) ez
+              let sum := FloatSpec.Calc.Operations.Fplus 2 product Z
+              have haddTrip := FloatSpec.Calc.Operations.F2R_plus
+                (beta:=2) product Z
+              have hadd : F2R sum = F2R product + F2R Z := by
+                simpa [wp, PostCond.noThrow, pure, sum] using
+                  haddTrip (by norm_num)
+              have hsumEta :
+                  (FloatSpec.Core.Defs.FlocqFloat.mk sum.Fnum sum.Fexp :
+                    FloatSpec.Core.Defs.FlocqFloat 2) = sum := by
+                cases hsum : sum
+                rfl
+              have hsumInput : F2R
+                    (FloatSpec.Core.Defs.FlocqFloat.mk sum.Fnum sum.Fexp :
+                      FloatSpec.Core.Defs.FlocqFloat 2) =
+                  Binary.B2R (prec:=prec) (emax:=emax)
+                      (binary_float.B754_finite sx mx ex Hx) *
+                    Binary.B2R (prec:=prec) (emax:=emax)
+                      (binary_float.B754_finite sy my ey Hy) +
+                    Binary.B2R (prec:=prec) (emax:=emax)
+                      (binary_float.B754_finite sz mz ez Hz) := by
+                rw [hsumEta, hadd, hmul]
+                rfl
+              have hnorm := Binary.normalize_correct (prec:=prec) (emax:=emax)
+                mode sum.Fnum sum.Fexp
+                  (Binary.Bfma_szero mode
+                    (binary_float.B754_finite sx mx ex Hx)
+                    (binary_float.B754_finite sy my ey Hy)
+                    (binary_float.B754_finite sz mz ez Hz))
+              rw [← hsumInput]
+              simpa [Binary.Bfma, X, Y, Z, product, sum] using hnorm
 
 -- Coq: `Binary.v:Bdiv_correct`, on the proof-carrying Binary carrier.
 theorem Bdiv_correct {prec emax : Int}
