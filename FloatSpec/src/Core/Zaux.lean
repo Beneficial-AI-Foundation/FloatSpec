@@ -694,11 +694,14 @@ theorem Zsame_sign_trans_spec (v u w : Int) :
   rfl
 
 /-- Coq-compatible name: transitivity of nonnegativity through a nonzero factor -/
-theorem Zsame_sign_trans (v u w : Int) :
-    ⦃⌜v ≠ 0 ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
-    (pure (Zsame_sign_trans_check v u w) : Id _)
-    ⦃⇓result => ⌜result = decide (0 ≤ u * w)⌝⦄ := by
-  exact Zsame_sign_trans_spec v u w
+theorem Zsame_sign_trans (v u w : Int) (hv : v ≠ 0)
+    (huv : 0 ≤ u * v) (hvw : 0 ≤ v * w) : 0 ≤ u * w := by
+  rcases Int.mul_nonneg_iff.mp huv with ⟨hu, hv0⟩ | ⟨hu, hv0⟩ <;>
+    rcases Int.mul_nonneg_iff.mp hvw with ⟨hv1, hw⟩ | ⟨hv1, hw⟩
+  · exact mul_nonneg hu hw
+  · exact (hv (le_antisymm hv1 hv0)).elim
+  · exact (hv (le_antisymm hv0 hv1)).elim
+  · exact mul_nonneg_of_nonpos_of_nonpos hu hw
 
 /-- Weak transitivity of nonnegativity with zero-propagation hypothesis -/
 def Zsame_sign_trans_weak_check (_v u w : Int) : Bool :=
@@ -715,14 +718,14 @@ theorem Zsame_sign_trans_weak_spec (v u w : Int) :
   rfl
 
 /-- Coq-compatible name: weak transitivity of nonnegativity -/
-theorem Zsame_sign_trans_weak (v u w : Int) :
-    ⦃⌜(v = 0 → w = 0) ∧ 0 ≤ u * v ∧ 0 ≤ v * w⌝⦄
-    (pure (Zsame_sign_trans_weak_check v u w) : Id _)
-    ⦃⇓result => ⌜result = decide (0 ≤ u * w)⌝⦄ := by
-  exact Zsame_sign_trans_weak_spec v u w
+theorem Zsame_sign_trans_weak (v u w : Int) (hzero : v = 0 → w = 0)
+    (huv : 0 ≤ u * v) (hvw : 0 ≤ v * w) : 0 ≤ u * w := by
+  by_cases hv : v = 0
+  · simp [hzero hv]
+  · exact Zsame_sign_trans v u w hv huv hvw
 
 /-- Deriving nonnegativity of product from sign-compatibility hypotheses -/
-def Zsame_sign_imp (u v : Int)
+def Zsame_sign_imp_check (u v : Int)
     (_hp : 0 < u → 0 ≤ v)
     (_hn : 0 < -u → 0 ≤ -v) : Bool :=
   decide (0 ≤ u * v)
@@ -732,25 +735,48 @@ def Zsame_sign_imp (u v : Int)
 theorem Zsame_sign_imp_spec (u v : Int)
     (hp : 0 < u → 0 ≤ v) (hn : 0 < -u → 0 ≤ -v) :
     ⦃⌜True⌝⦄
-    (pure (Zsame_sign_imp u v hp hn) : Id _)
+    (pure (Zsame_sign_imp_check u v hp hn) : Id _)
     ⦃⇓result => ⌜result = decide (0 ≤ u * v)⌝⦄ := by
   intro _
-  unfold Zsame_sign_imp
+  unfold Zsame_sign_imp_check
   rfl
 
+/-- Coq-compatible name: sign implications imply a nonnegative product. -/
+theorem Zsame_sign_imp (u v : Int)
+    (hp : 0 < u → 0 ≤ v) (hn : 0 < -u → 0 ≤ -v) : 0 ≤ u * v := by
+  by_cases hu : 0 ≤ u
+  · by_cases hu0 : u = 0
+    · simp [hu0]
+    · exact mul_nonneg hu (hp (lt_of_le_of_ne hu (Ne.symm hu0)))
+  · have huNeg : u ≤ 0 := le_of_lt (lt_of_not_ge hu)
+    have hvNeg : v ≤ 0 := by
+      have := hn (neg_pos.mpr (lt_of_not_ge hu))
+      omega
+    exact mul_nonneg_of_nonpos_of_nonpos huNeg hvNeg
+
 /-- Nonnegativity of u·(u / v) when v ≥ 0 (truncated division). -/
-def Zsame_sign_odiv (u v : Int) : Bool :=
-  decide (0 ≤ u * (u / v))
+def Zsame_sign_odiv_check (u v : Int) : Bool :=
+  decide (0 ≤ u * Int.tdiv u v)
 
 /-- Specification: If 0 ≤ v then 0 ≤ u·(u / v). -/
 @[spec]
 theorem Zsame_sign_odiv_spec (u v : Int) :
     ⦃⌜0 ≤ v⌝⦄
-    (pure (Zsame_sign_odiv u v) : Id _)
-    ⦃⇓result => ⌜result = decide (0 ≤ u * (u / v))⌝⦄ := by
+    (pure (Zsame_sign_odiv_check u v) : Id _)
+    ⦃⇓result => ⌜result = decide (0 ≤ u * Int.tdiv u v)⌝⦄ := by
   intro _
-  unfold Zsame_sign_odiv
+  unfold Zsame_sign_odiv_check
   rfl
+
+/-- Coq-compatible name: a nonnegative divisor gives a same-sign truncated quotient. -/
+theorem Zsame_sign_odiv (u v : Int) (hv : 0 ≤ v) :
+    0 ≤ u * Int.tdiv u v := by
+  apply Zsame_sign_imp u (Int.tdiv u v)
+  · intro hu
+    exact Int.tdiv_nonneg (le_of_lt hu) hv
+  · intro hu
+    have h := Int.tdiv_nonneg (le_of_lt hu) hv
+    simpa [Int.neg_tdiv] using h
 
 end SameSign
 
