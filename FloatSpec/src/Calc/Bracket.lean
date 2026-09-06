@@ -884,7 +884,8 @@ noncomputable def new_location_even (nb_steps k : Int) (l : Location) : Location
 
     The computed location for even steps preserves interval properties
 -/
-theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l : Location)
+theorem new_location_even_correct (Hnb_steps : 1 < nb_steps)
+    (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l : Location)
     (Hk : 0 ≤ k ∧ k < nb_steps) (Hstep : 0 < step)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
     ⦃⌜nb_steps % 2 = 0 ∧ 0 ≤ k ∧ k < nb_steps ∧
@@ -1218,9 +1219,7 @@ noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Location 
   if hkz : k = 0 then
     match l with
     | Location.loc_Exact => l
-    | Location.loc_Inexact ord =>
-        if nb_steps = 1 then Location.loc_Inexact ord
-        else Location.loc_Inexact Ordering.lt
+    | Location.loc_Inexact _ => Location.loc_Inexact Ordering.lt
   else
     if hlt : 2 * k + 1 < nb_steps then
       Location.loc_Inexact Ordering.lt
@@ -1235,7 +1234,8 @@ noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Location 
 
     The computed location for odd steps preserves interval properties
 -/
-theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l : Location)
+theorem new_location_odd_correct (Hnb_steps : 1 < nb_steps)
+    (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l : Location)
     (Hk : 0 ≤ k ∧ k < nb_steps) (Hstep : 0 < step)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
     ⦃⌜nb_steps % 2 = 1 ∧ 0 ≤ k ∧ k < nb_steps ∧
@@ -1263,35 +1263,8 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
     | inbetween_Inexact ord hbounds hcmp =>
         -- Two subcases on nb_steps = 1 or nb_steps ≥ 3 (since odd and > 0)
         by_cases hnb1 : nb_steps = 1
-        · -- Preserve local ordering when the whole range is a single step
-          simp [hnb1]
-          -- Bounds: start < x < start + nb_steps * step (here nb_steps = 1)
-          have hx_gt : start < x := by
-            simpa [hkz, add_mul, one_mul] using hbounds.1
-          have hx_lt_step : x < start + step := by
-            -- Upper bound from the local step interval with k = 0
-            simpa [hkz, add_mul, one_mul, Int.cast_add, Int.cast_ofNat] using hbounds.2
-          have hx_lt_global : x < start + nb_steps * step := by
-            simpa [hnb1, one_mul, Int.cast_one] using hx_lt_step
-          -- Midpoint: global midpoint equals the local-step midpoint under k = 0 and nb_steps = 1
-          have hmid_eq_glob :
-              (start + (start + nb_steps * step)) / 2 =
-              (start + (start + (k + 1) * step)) / 2 := by
-            simp [hnb1, hkz, add_mul, one_mul, Int.cast_add, Int.cast_ofNat, Int.cast_one]
-          have hcmp_glob : compare x ((start + (start + nb_steps * step)) / 2) = ord := by
-            -- Rewrite the comparison from the local-step midpoint form to the global midpoint
-            have : compare x ((start + (start + (k + 1) * step)) / 2) = ord := by
-              -- From local inbetween midpoint
-              have hmid_eq_local :
-                  (start + (start + (k + 1) * step)) / 2 =
-                  (start + k * step + (start + (k + 1) * step)) / 2 := by
-                simp [hkz, add_assoc, add_comm, add_left_comm]
-              simpa [hmid_eq_local] using hcmp
-            simpa [hmid_eq_glob] using this
-          -- Goal simplifies with nb_steps = 1, so rewrite the midpoint accordingly
-          exact inbetween.inbetween_Inexact (l := ord)
-            ⟨hx_gt, by simpa [hnb1, one_mul, Int.cast_one] using hx_lt_step⟩
-            (by simpa [hnb1, one_mul, Int.cast_one] using hcmp_glob)
+        · have := Hnb_steps
+          omega
         · -- nb_steps ≠ 1 and positive ⇒ 2 ≤ nb_steps
           have hone_le_nb : (1 : Int) ≤ nb_steps := Int.add_one_le_iff.mpr hnbpos
           have h1lt : (1 : Int) < nb_steps := lt_of_le_of_ne hone_le_nb (Ne.symm hnb1)
@@ -1670,6 +1643,7 @@ noncomputable def new_location (nb_steps k : Int) (l : Location) : Location :=
     The computed location accurately represents position in full range
 -/
 theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
+    (Hnb_steps : 1 < nb_steps)
     (Hk : 0 ≤ k ∧ k < nb_steps)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l)
     (Hstep : 0 < step) :
@@ -1689,7 +1663,7 @@ theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
     have htrip :=
       (new_location_even_correct (start := start) (step := step)
         (nb_steps := nb_steps) (x := x) (k := k) (l := l)
-        (He := He) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
+        (Hnb_steps := Hnb_steps) (He := He) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
     -- Run it with the strengthened precondition
     have := htrip hpre'
     -- Normalize the program being analyzed
@@ -1708,7 +1682,7 @@ theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
     have htrip :=
       (new_location_odd_correct (start := start) (step := step)
         (nb_steps := nb_steps) (x := x) (k := k) (l := l)
-        (Ho := Ho) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
+        (Hnb_steps := Hnb_steps) (Ho := Ho) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
     have := htrip hpre'
     simpa [new_location, He]
 
@@ -2434,6 +2408,9 @@ theorem inbetween_float_new_location
     -- From 1 < beta ⇒ 0 < beta, hence p = beta^(|k|) > 0
     have hβpos : 0 < beta := hbpos_int
     simpa [p] using pow_pos hβpos (Int.natAbs k)
+  have hp_gt : 1 < p := by
+    have hk_ne : k.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr (ne_of_gt Hk)
+    simpa [p] using one_lt_pow₀ hbeta hk_ne
   have hk_bounds : 0 ≤ (m % p) ∧ (m % p) < p := by
     have hnonneg : 0 ≤ (m % p) := Int.emod_nonneg _ (ne_of_gt hp_pos)
     have hlt : (m % p) < p := Int.emod_lt_of_pos _ hp_pos
@@ -2471,7 +2448,7 @@ theorem inbetween_float_new_location
   have htrip :=
     (new_location_correct (start := start) (step := step)
       (nb_steps := p) (x := x) (k := (m % p)) (l := l)
-      (Hk := hk_bounds) (Hx := Hx_local) (Hstep := hstep_pos))
+      (Hnb_steps := hp_gt) (Hk := hk_bounds) (Hx := Hx_local) (Hstep := hstep_pos))
   -- Feed the triple its precondition
   have hpostR : inbetween start (start + (p : ℝ) * step) x
       (Id.run (new_location (nb_steps := p) (k := (m % p)) l)) := by
