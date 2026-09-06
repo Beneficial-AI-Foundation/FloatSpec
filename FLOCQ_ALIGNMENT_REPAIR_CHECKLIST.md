@@ -7,7 +7,7 @@ Audit date: 2026-09-06
 - FLoCq source: `../sources/flocq`, commit
   `7aab8f55bceec0cfafc3b3bc0e77e0dbb5a70c5f`.
 - FloatSpec target: this repository, branch `integration`, source-bearing
-  repair commit `3d6126a893b0e75c607f481e6bde02faa6217a93` (based on
+  repair commit `ccf413dc863ecdf8a104a384a9b67b03e19221fb` (based on
   `43065f115fdf4826a3c1408d7b89499d2ba412c7`). The repair was committed
   locally and the worktree was clean at the G1 check; no remote push is part
   of this audit.
@@ -19,18 +19,17 @@ Audit date: 2026-09-06
 
 ## Repair execution status (2026-09-06)
 
-- The implementation work listed in D1-D9, T1-T36, and M1-M5 is staged in the
+- The implementation work listed in D1-D10, T1-T36, and M1-M5 is committed in the
   current worktree. Public source names expose source-shaped contracts;
   compatibility and derived-payload endpoints use distinct names.
-- A structural check found all 45 original named sections (D1-D7, T1-T33,
-  M1-M5), with
+- A structural check found all 51 named sections (D1-D10, T1-T36, M1-M5), with
   zero sections missing an explicit FLoCq/source contract, pre-repair Lean
   mismatch, or required repair.
-- After D8-D9/T34-T36 and their caller migrations, `lake build floatspec`
-  passed (6686/6686 jobs), `lake build FloatSpecTests` passed (3359/3359
+- After D10 and its caller migration, `lake build floatspec`
+  passed (6686/6686 jobs), `lake build FloatSpecTests` passed (3360/3360
   jobs), and the pipeline regression suite passed 158/158 tests. Both Lake
   commands were reproduced after G1 on clean HEAD
-  `00acaf4f073fe489f2f6c49b1dc3c8e0be426403`.
+  `ccf413dc863ecdf8a104a384a9b67b03e19221fb`.
 - The source and elaborated-environment trust scan found no `sorry`, `admit`,
   `sorryAx`, unauthorized `axiom`/`opaque`/`extern`, unsafe declaration, or
   `implemented_by` escape. Nine generated `native_decide` axioms found by the
@@ -62,16 +61,16 @@ Audit date: 2026-09-06
   `fexp_correct`/`Bfrexp_correct` false match and the Binary/SingleNaN
   same-basename collision. The audit also rejects generated environment axioms,
   not only lexical `axiom` commands. The pipeline regression suite passes
-  157/157 tests.
-- The current plan hashes are source index
+  158/158 tests.
+- The current post-D10 plan hashes are source index
   `b63167bfb633c45bebee9b0effb7282974ece811d3eafa84e14e16c4bb872b6b`,
   target index
-  `018b84f312b58e94dd05d16b589b97c782109a9375acdde3302d3f966f4d66e9`
+  `e4315c8d1f65d682333fd67f3c9355532e288f7f3db4a7ba349aa2816a39dd46`
   and plan
-  `2c60f5d8ef55736046a1d8c210586c645ba6a754f2bce25789ad14191fff867c`.
+  `f578e291e45339c244c9f863e18fb9c4f014a6017efaeef1d9d09c17304dce88`.
 - The repository is **not yet audit-aligned** under the close-out rule below:
-  the target worktree is not clean (G1), the 2548-item ledger has not received
-  complete human review (G4-G6/G9), exhaustive cross-language executions and
+  the 2548-item ledger has not received complete human review (G4-G6/G9),
+  exhaustive cross-language executions and
   adversarial reproduction are absent (G10-G11), and independent whole-scope
   sign-off is absent (G12). Pff/Pff2 received a separate proof review, but that
   is not whole-repository sign-off.
@@ -264,6 +263,21 @@ These are root causes. Fix them before repairing their dependent theorems.
   `Int.natAbs`, and prove `boundRCorrect1` from `Int.lt_floor_add_one`.
   Retain the integral-input regression because nonintegral examples do not
   distinguish the two definitions.
+
+### D10. Preserve `new_location_odd` at the public `nb_steps = 1` input
+
+- **FLoCq:** `src/Calc/Bracket.v:463-472` exports `new_location_odd` without
+  the later Section hypothesis `1 < nb_steps`.  At `k = 0`, every inexact
+  location is mapped to `loc_Inexact Lt`, including when `nb_steps = 1`.
+- **Lean before repair:** `FloatSpec/src/Calc/Bracket.lean:1216` special-cased
+  `nb_steps = 1` and preserved the input ordering.  Thus input
+  `(1, 0, loc_Inexact Gt)` returned `loc_Inexact Lt` in Coq but
+  `loc_Inexact Ordering.gt` in Lean.
+- **Repair:** remove the target-only `nb_steps = 1` branch from the definition.
+  Restore the actual exported `1 < nb_steps` dependency on
+  `new_location_even_correct`, `new_location_odd_correct`, and
+  `new_location_correct`, migrate their callers, and retain the concrete
+  definition-level regression in `FloatSpec/Test/BracketSource.lean`.
 
 ## Confirmed theorem-contract repairs
 
@@ -1100,9 +1114,9 @@ whole-repository certificate.
   representations of equal real values. Every claimed counterexample is
   manually reproduced on both sides.
 - [ ] **G12 — Independent sign-off.** A second reviewer checks every repaired
-  entry in T1-T36 and M1-M5 plus all nontrivial ledger classifications. The
-  final report links the clean build, trust scan, ledger, executed harnesses,
-  and counterexample audit.
+  entry in D1-D10, T1-T36, and M1-M5 plus all nontrivial ledger
+  classifications. The final report links the clean build, trust scan, ledger,
+  executed harnesses, and counterexample audit.
 
 ## Close-out rule
 
