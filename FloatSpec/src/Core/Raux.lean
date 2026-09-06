@@ -4143,23 +4143,23 @@ theorem mag_mult_bpow (beta : Int) (x : ℝ) (e : Int) (hβ : 1 < beta)
 theorem mag_le_Zpower (beta : Int) (m e : Int)
     (hβ : 1 < beta)
     (hm : m ≠ 0)
-    (hlt : |m| < FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e) :
+    (hlt : |m| < FloatSpec.Core.Zaux.Zpower beta e) :
     mag beta (m : ℝ) ≤ e := by
   by_cases he : 0 ≤ e
   · have hpow_cast :
-        ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) =
+        ((FloatSpec.Core.Zaux.Zpower beta e : Int) : ℝ) =
           (beta : ℝ) ^ e := by
       have heq : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he
-      simp [FloatSpec.Core.Zaux.Zpower_Zpower_nat, he, Int.cast_pow,
+      simp [FloatSpec.Core.Zaux.Zpower, he, Int.cast_pow,
         ← zpow_natCast, heq]
     have hltR : |(m : ℝ)| < (beta : ℝ) ^ e := by
       have hcast : ((|m| : Int) : ℝ) <
-          ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) := by
+          ((FloatSpec.Core.Zaux.Zpower beta e : Int) : ℝ) := by
         exact_mod_cast hlt
       simpa [Int.cast_abs, hpow_cast] using hcast
     exact (mag_le_bpow beta (m : ℝ) e hβ (by exact_mod_cast hm) hltR) True.intro
   · have habs_nonneg : 0 ≤ |m| := abs_nonneg m
-    simp [FloatSpec.Core.Zaux.Zpower_Zpower_nat, he] at hlt
+    simp [FloatSpec.Core.Zaux.Zpower, he] at hlt
     omega
 
 /-- Coq `Raux.mag_gt_Zpower`, preserving its integer power premise and strict
@@ -4167,18 +4167,18 @@ theorem mag_le_Zpower (beta : Int) (m e : Int)
 theorem mag_gt_Zpower (beta : Int) (m e : Int)
     (hβ : 1 < beta)
     (hm : m ≠ 0)
-    (hle : FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e ≤ |m|) :
+    (hle : FloatSpec.Core.Zaux.Zpower beta e ≤ |m|) :
     e < mag beta (m : ℝ) := by
   by_cases he : 0 ≤ e
   · have hpow_cast :
-        ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) =
+        ((FloatSpec.Core.Zaux.Zpower beta e : Int) : ℝ) =
           (beta : ℝ) ^ e := by
       have heq : (e.natAbs : Int) = e := Int.natAbs_of_nonneg he
-      simp [FloatSpec.Core.Zaux.Zpower_Zpower_nat, he, Int.cast_pow,
+      simp [FloatSpec.Core.Zaux.Zpower, he, Int.cast_pow,
         ← zpow_natCast, heq]
     have hleR : (beta : ℝ) ^ e ≤ |(m : ℝ)| := by
       have hcast :
-          ((FloatSpec.Core.Zaux.Zpower_Zpower_nat beta e : Int) : ℝ) ≤
+          ((FloatSpec.Core.Zaux.Zpower beta e : Int) : ℝ) ≤
             ((|m| : Int) : ℝ) := by
         exact_mod_cast hle
       simpa [Int.cast_abs, hpow_cast] using hcast
