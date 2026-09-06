@@ -559,7 +559,7 @@ lemma round_plus_neq_0_aux (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid
   have hfmt_bpow : generic_format beta fexp ((beta : ℝ) ^ e) := by
     have hnotftz :
         fexp (e + 1) ≤ e := by
-      have h := FloatSpec.Core.Ulp.Exp_not_FTZ.exp_not_FTZ
+      have h := FloatSpec.Core.Generic_fmt.Exp_not_FTZ.exp_not_FTZ
         (fexp := fexp) (mag beta x)
       simpa [e, he, FloatSpec.Core.Generic_fmt.cexp] using h
     have htrip :=

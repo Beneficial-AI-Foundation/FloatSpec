@@ -1,5 +1,6 @@
 -- Project linters (prefer grind over omega, etc.)
 import FloatSpec.Linter.OmegaLinter
+import FloatSpec.src.Version
 
 -- Core floating-point functionality
 import FloatSpec.src.Core
@@ -18,6 +19,7 @@ import FloatSpec.src.ErrorBound
 
 -- IEEE 754 standard implementation
 import FloatSpec.src.IEEE754
+import FloatSpec.src.IEEE754.BitsSourceFacade
 
 -- Simproc helpers for Id/wp Hoare triples
 import FloatSpec.src.SimprocWP

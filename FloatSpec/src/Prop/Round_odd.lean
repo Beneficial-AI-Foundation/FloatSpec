@@ -45,7 +45,7 @@ noncomputable def Zodd : ℝ → Int := fun x =>
 /-- Coq (`Round_odd.v`): `Definition Zrnd_odd`.
 
 Public Flocq-name wrapper for the integer round-to-odd mode. -/
-noncomputable def Zrnd_odd : ℝ → Int := Zodd
+noncomputable abbrev Zrnd_odd : ℝ → Int := Zodd
 
 /-- `Calc.Round` wrapper for Flocq's round-to-odd integer mode. -/
 noncomputable def oddMode : FloatSpec.Calc.Round.Mode where
@@ -241,8 +241,10 @@ private lemma Zodd_opp (x : ℝ) : Zodd (-x) = -Zodd x := by
         Zodd_of_floor_even (-x) hneg_nonint hneg_even
       rw [hnegz, hxz, hceil_neg]
 
-/-- Round to odd is a valid rounding -/
-instance : FloatSpec.Core.Generic_fmt.Valid_rnd (Zodd) := by
+/-- Coq `valid_rnd_odd`: round to odd is a valid integer rounding. -/
+noncomputable instance valid_rnd_odd :
+    FloatSpec.Core.Generic_fmt.Valid_rnd Zrnd_odd := by
+  change FloatSpec.Core.Generic_fmt.Valid_rnd Zodd
   refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
   · intro x y hxy
     exact Zodd_monotone x y hxy
@@ -2440,7 +2442,7 @@ private theorem abs_roundR_le_generic_local
     preserves its magnitude. The `Exists_NE` hypothesis is explicit in Lean
     because the local port keeps nearest-even existence as a typeclass rather
     than deriving it globally for every FLT exponent. -/
-theorem mag_round_odd
+theorem mag_round_odd_from_explicit_payload
   (emin prec : Int) [Prec_gt_0 prec]
   (hβ : 1 < beta)
   (Ebeta : ∃ b : Int, beta = 2 * b)
@@ -2633,7 +2635,7 @@ theorem mag_round_odd
 /-- Coq: `fexp_round_odd`.
 
     FLT round-to-odd preserves the canonical exponent. -/
-theorem fexp_round_odd
+theorem fexp_round_odd_from_explicit_payload
   (emin prec : Int) [Prec_gt_0 prec]
   (hβ : 1 < beta)
   (Ebeta : ∃ b : Int, beta = 2 * b)
@@ -2772,7 +2774,77 @@ theorem fexp_round_odd
         FloatSpec.Core.FLT.FLT_exp, hsub_le]
     simpa [r, hcexp_r, hcexp_x]
   · have hxmag : emin < FloatSpec.Core.Raux.mag beta x := lt_of_not_ge hsmall
-    have hmag := mag_round_odd
+    have hmag := mag_round_odd_from_explicit_payload
       (beta := beta) (emin := emin) (prec := prec)
       hβ Ebeta hNE x hprec hxmag
     simp [FloatSpec.Core.Generic_fmt.cexp, r, hmag]
+
+/-- Coq `mag_round_odd`, with only the `Odd_propbis` section hypotheses.
+The radix, positive-precision, and nearest-even instances are derived locally. -/
+theorem mag_round_odd
+    (emin prec : Int)
+    (Even_beta : beta % 2 = 0)
+    (prec_gt_1 : 1 < prec)
+    (x : ℝ)
+    (hxmag : emin < FloatSpec.Core.Raux.mag beta x) :
+    FloatSpec.Core.Raux.mag beta
+        (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) Zrnd_odd x) =
+      FloatSpec.Core.Raux.mag beta x := by
+  letI : Prec_gt_0 prec := ⟨by omega⟩
+  have Ebeta : ∃ b : Int, beta = 2 * b := by
+    exact (Int.dvd_iff_emod_eq_zero (a := (2 : Int)) (b := beta)).mpr Even_beta
+  have hNE : FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp emin prec) := by
+    exact ⟨Or.inr (by
+      intro e
+      constructor
+      · intro hlarge
+        simp only [FLT_exp, FloatSpec.Core.FLT.FLT_exp] at hlarge ⊢
+        rcases max_lt_iff.mp hlarge with ⟨_, hemin_lt⟩
+        exact max_lt (by omega) hemin_lt
+      · intro hsmall
+        simp only [FLT_exp, FloatSpec.Core.FLT.FLT_exp] at hsmall ⊢
+        by_cases he : e ≤ emin
+        · have hleft : e - prec ≤ emin := by omega
+          have hnext : emin + 1 - prec ≤ emin := by omega
+          simp [max_eq_right hleft, max_eq_right hnext]
+        · have hemin_lt : emin < e := lt_of_not_ge he
+          have hlt : max (e - prec) emin < e := max_lt (by omega) hemin_lt
+          exact False.elim ((not_lt_of_ge hsmall) hlt))⟩
+  simpa [FloatSpec.Calc.Round.round, oddMode, Zrnd_odd] using
+    (mag_round_odd_from_explicit_payload
+      (beta := beta) (emin := emin) (prec := prec)
+      ValidRadix.valid Ebeta hNE x prec_gt_1 hxmag)
+
+/-- Coq `fexp_round_odd`, with only the `Odd_propbis` section hypotheses. -/
+theorem fexp_round_odd
+    (emin prec : Int)
+    (Even_beta : beta % 2 = 0)
+    (prec_gt_1 : 1 < prec)
+    (x : ℝ) :
+    FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp emin prec)
+        (FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) Zrnd_odd x) =
+      FloatSpec.Core.Generic_fmt.cexp beta (FLT_exp emin prec) x := by
+  letI : Prec_gt_0 prec := ⟨by omega⟩
+  have Ebeta : ∃ b : Int, beta = 2 * b := by
+    exact (Int.dvd_iff_emod_eq_zero (a := (2 : Int)) (b := beta)).mpr Even_beta
+  have hNE : FloatSpec.Core.RoundNE.Exists_NE beta (FLT_exp emin prec) := by
+    exact ⟨Or.inr (by
+      intro e
+      constructor
+      · intro hlarge
+        simp only [FLT_exp, FloatSpec.Core.FLT.FLT_exp] at hlarge ⊢
+        rcases max_lt_iff.mp hlarge with ⟨_, hemin_lt⟩
+        exact max_lt (by omega) hemin_lt
+      · intro hsmall
+        simp only [FLT_exp, FloatSpec.Core.FLT.FLT_exp] at hsmall ⊢
+        by_cases he : e ≤ emin
+        · have hleft : e - prec ≤ emin := by omega
+          have hnext : emin + 1 - prec ≤ emin := by omega
+          simp [max_eq_right hleft, max_eq_right hnext]
+        · have hemin_lt : emin < e := lt_of_not_ge he
+          have hlt : max (e - prec) emin < e := max_lt (by omega) hemin_lt
+          exact False.elim ((not_lt_of_ge hsmall) hlt))⟩
+  simpa [FloatSpec.Calc.Round.round, oddMode, Zrnd_odd] using
+    (fexp_round_odd_from_explicit_payload
+      (beta := beta) (emin := emin) (prec := prec)
+      ValidRadix.valid Ebeta hNE x prec_gt_1)

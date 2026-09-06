@@ -146,6 +146,11 @@ end EvenOdd
 
 section Zpower
 
+/-- FLoCq/Coq integer power: natural powers for nonnegative exponents and
+zero for negative exponents. -/
+def Zpower (b e : Int) : Int :=
+  if 0 ≤ e then b ^ e.toNat else 0
+
 /-- Power addition formula for integers. -/
 def Zpower_plus (n k1 k2 : Int) : Int :=
   if k1 ≥ 0 && k2 ≥ 0 then
@@ -759,6 +764,13 @@ section BooleanComparisons
 def Zeq_bool (x y : Int) : Bool :=
   decide (x = y)
 
+/-- Graph of the integer equality test (FLoCq `Zeq_bool_prop`). -/
+inductive Zeq_bool_prop (x y : Int) : Bool → Prop where
+  | Zeq_bool_true_ : x = y → Zeq_bool_prop x y true
+  | Zeq_bool_false_ : x ≠ y → Zeq_bool_prop x y false
+
+export Zeq_bool_prop (Zeq_bool_true_ Zeq_bool_false_)
+
 /-- Specification: Boolean equality test
 
     The boolean equality test returns true if and only if
@@ -766,13 +778,10 @@ def Zeq_bool (x y : Int) : Bool :=
     version of equality.
 -/
 @[spec]
-theorem Zeq_bool_spec (x y : Int) :
-    ⦃⌜True⌝⦄
-    (pure (Zeq_bool x y) : Id _)
-    ⦃⇓result => ⌜result = decide (x = y)⌝⦄ := by
-  intro _
-  unfold Zeq_bool
-  rfl
+theorem Zeq_bool_spec (x y : Int) : Zeq_bool_prop x y (Zeq_bool x y) := by
+  by_cases h : x = y
+  · simpa [Zeq_bool, h] using Zeq_bool_true_ (x := x) (y := y) h
+  · simpa [Zeq_bool, h] using Zeq_bool_false_ (x := x) (y := y) h
 
 /-- Boolean less-or-equal test for integers
 
@@ -782,19 +791,24 @@ theorem Zeq_bool_spec (x y : Int) :
 def Zle_bool (x y : Int) : Bool :=
   decide (x ≤ y)
 
+/-- Graph of the integer less-or-equal test (FLoCq `Zle_bool_prop`). -/
+inductive Zle_bool_prop (x y : Int) : Bool → Prop where
+  | Zle_bool_true_ : x ≤ y → Zle_bool_prop x y true
+  | Zle_bool_false_ : y < x → Zle_bool_prop x y false
+
+export Zle_bool_prop (Zle_bool_true_ Zle_bool_false_)
+
 /-- Specification: Boolean ordering test
 
     The boolean less-or-equal test returns true if and only if
     x ≤ y. This provides a computational version of the ordering.
 -/
 @[spec]
-theorem Zle_bool_spec (x y : Int) :
-    ⦃⌜True⌝⦄
-    (pure (Zle_bool x y) : Id _)
-    ⦃⇓result => ⌜result = decide (x ≤ y)⌝⦄ := by
-  intro _
-  unfold Zle_bool
-  rfl
+theorem Zle_bool_spec (x y : Int) : Zle_bool_prop x y (Zle_bool x y) := by
+  by_cases h : x ≤ y
+  · simpa [Zle_bool, h] using Zle_bool_true_ (x := x) (y := y) h
+  · have hyx : y < x := lt_of_not_ge h
+    simpa [Zle_bool, h] using Zle_bool_false_ (x := x) (y := y) hyx
 
 /-- Boolean strict less-than test for integers
 
@@ -804,15 +818,20 @@ theorem Zle_bool_spec (x y : Int) :
 def Zlt_bool (x y : Int) : Bool :=
   decide (x < y)
 
+/-- Graph of the integer strict-order test (FLoCq `Zlt_bool_prop`). -/
+inductive Zlt_bool_prop (x y : Int) : Bool → Prop where
+  | Zlt_bool_true_ : x < y → Zlt_bool_prop x y true
+  | Zlt_bool_false_ : y ≤ x → Zlt_bool_prop x y false
+
+export Zlt_bool_prop (Zlt_bool_true_ Zlt_bool_false_)
+
 /-- Specification: Boolean strict ordering test -/
 @[spec]
-theorem Zlt_bool_spec (x y : Int) :
-    ⦃⌜True⌝⦄
-    (pure (Zlt_bool x y) : Id _)
-    ⦃⇓result => ⌜result = decide (x < y)⌝⦄ := by
-  intro _
-  unfold Zlt_bool
-  rfl
+theorem Zlt_bool_spec (x y : Int) : Zlt_bool_prop x y (Zlt_bool x y) := by
+  by_cases h : x < y
+  · simpa [Zlt_bool, h] using Zlt_bool_true_ (x := x) (y := y) h
+  · have hyx : y ≤ x := le_of_not_gt h
+    simpa [Zlt_bool, h] using Zlt_bool_false_ (x := x) (y := y) hyx
 
 /-- Boolean equality is true when equal -/
 def Zeq_bool_true (_ _ : Int) : Bool :=
@@ -1172,6 +1191,24 @@ def Zcompare (x y : Int) : Ordering :=
   else if x = y then Ordering.eq
   else Ordering.gt
 
+/-- Graph of integer comparison (FLoCq `Zcompare_prop`). -/
+inductive Zcompare_prop (x y : Int) : Ordering → Prop where
+  | Zcompare_Lt_ : x < y → Zcompare_prop x y .lt
+  | Zcompare_Eq_ : x = y → Zcompare_prop x y .eq
+  | Zcompare_Gt_ : y < x → Zcompare_prop x y .gt
+
+export Zcompare_prop (Zcompare_Lt_ Zcompare_Eq_ Zcompare_Gt_)
+
+/-- FLoCq `Zcompare_spec`. -/
+@[spec]
+theorem Zcompare_spec (x y : Int) : Zcompare_prop x y (Zcompare x y) := by
+  by_cases hxy : x < y
+  · simpa [Zcompare, hxy] using Zcompare_Lt_ (x := x) (y := y) hxy
+  · by_cases hxeq : x = y
+    · simpa [Zcompare, hxy, hxeq] using Zcompare_Eq_ (x := x) (y := y) hxeq
+    · have hyx : y < x := lt_of_le_of_ne (le_of_not_gt hxy) (Ne.symm hxeq)
+      simpa [Zcompare, hxy, hxeq] using Zcompare_Gt_ (x := x) (y := y) hyx
+
 /-- Specification: Three-way comparison correctness
 
     The comparison function returns:
@@ -1182,7 +1219,7 @@ def Zcompare (x y : Int) : Ordering :=
     This captures the complete ordering of integers.
 -/
 @[spec]
-theorem Zcompare_spec (x y : Int) :
+theorem Zcompare_behavior_spec (x y : Int) :
     ⦃⌜True⌝⦄
     (pure (Zcompare x y) : Id _)
     ⦃⇓result => ⌜(result = Ordering.lt ↔ x < y) ∧
@@ -1516,11 +1553,54 @@ def positiveToNat : Positive → Nat
   | Positive.xO p => 2 * positiveToNat p
   | Positive.xI p => 2 * positiveToNat p + 1
 
-private theorem positiveToNat_pos (p : Positive) : 0 < positiveToNat p := by
+theorem positiveToNat_pos (p : Positive) : 0 < positiveToNat p := by
   induction p with
   | xH => simp [positiveToNat]
   | xO p hp => simp [positiveToNat, hp]
   | xI p hp => simp [positiveToNat]
+
+theorem positiveToNat_injective : Function.Injective positiveToNat := by
+  intro a
+  induction a with
+  | xH =>
+      intro b h
+      cases b with
+      | xH => rfl
+      | xO b =>
+          have hb := positiveToNat_pos b
+          simp [positiveToNat] at h
+          omega
+      | xI b =>
+          have hb := positiveToNat_pos b
+          simp [positiveToNat] at h
+          omega
+  | xO a ih =>
+      intro b h
+      cases b with
+      | xH =>
+          have ha := positiveToNat_pos a
+          simp [positiveToNat] at h
+      | xO b =>
+          simp only [positiveToNat] at h
+          have hab : positiveToNat a = positiveToNat b := by omega
+          exact congrArg Positive.xO (ih hab)
+      | xI b =>
+          simp [positiveToNat] at h
+          omega
+  | xI a ih =>
+      intro b h
+      cases b with
+      | xH =>
+          have ha := positiveToNat_pos a
+          simp [positiveToNat] at h
+          omega
+      | xO b =>
+          simp [positiveToNat] at h
+          omega
+      | xI b =>
+          simp only [positiveToNat] at h
+          have hab : positiveToNat a = positiveToNat b := by omega
+          exact congrArg Positive.xI (ih hab)
 
 /-- Coq `Zpos`: embed a positive integer into `Int`. -/
 def Zpos (p : Positive) : Int :=

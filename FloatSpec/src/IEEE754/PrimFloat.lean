@@ -208,7 +208,7 @@ def neg_zero : PrimitiveFloat :=
   ⟨StandardFloat.S754_zero true, rfl⟩
 
 def one : PrimitiveFloat :=
-  ⟨StandardFloat.S754_finite false 4503599627370496 (-52), by native_decide⟩
+  ⟨StandardFloat.S754_finite false 4503599627370496 (-52), by decide⟩
 
 -- Coq `BinarySingleNaN.Bone`, specialized to binary64.  Keep this model value
 -- independent from the primitive `one`; the equivalence theorem below relates
@@ -216,7 +216,7 @@ def one : PrimitiveFloat :=
 def Bone : PrimBinaryFloat :=
   BinarySingleNaNFloat.B754_finite
     (prec := primPrec) (emax := primEmax) false 4503599627370496 (-52)
-    (by norm_num) (by native_decide)
+    (by norm_num) (by decide)
 
 theorem infinity_equiv :
     infinity = B2Prim
@@ -1125,7 +1125,7 @@ private theorem Bfrexp_shifted_exp_range (x : PrimBinaryFloat) :
       have hfirst :
           FloatSpec.Core.Zaux.Zlt_bool (-primPrec)
             (3 - primEmax - primPrec) = false := by
-        native_decide
+        decide
       unfold Bfrexp
       dsimp only
       unfold ExperimentalSingleNaNArithmetic.Ffrexp_core_binary
@@ -1179,12 +1179,12 @@ theorem ulp_equiv (x : PrimitiveFloat) :
 private theorem minSubnormalBounded :
     specFloat_bounded (prec := primPrec) (emax := primEmax)
       1 (3 - primEmax - primPrec) = true := by
-  native_decide
+  decide
 
 private theorem maxFiniteBounded :
     specFloat_bounded (prec := primPrec) (emax := primEmax)
       (2 ^ primPrec.toNat - 1) (primEmax - primPrec) = true := by
-  native_decide
+  decide
 
 noncomputable def Bsucc (x : PrimBinaryFloat) : PrimBinaryFloat :=
   match x with
@@ -1195,7 +1195,7 @@ noncomputable def Bsucc (x : PrimBinaryFloat) : PrimBinaryFloat :=
   | BinarySingleNaNFloat.B754_infinity true =>
       BinarySingleNaNFloat.B754_finite true
         (2 ^ primPrec.toNat - 1) (primEmax - primPrec)
-        (by native_decide) maxFiniteBounded
+        (by decide) maxFiniteBounded
   | BinarySingleNaNFloat.B754_nan => BinarySingleNaNFloat.B754_nan
   | BinarySingleNaNFloat.B754_finite false m e hm _ =>
       SF2B

@@ -295,12 +295,15 @@ instance FLX_exp_valid [hp : Fact (0 < prec)] :
         And.intro (False.elim hfalse) (by intro _ _; exact False.elim hfalse))
 
 /- Monotonicity of FLX_exp: subtracting a fixed `prec` preserves ≤. -/
-instance FLX_exp_mono :
+instance FLX_exp_monotone :
     Monotone_exp (FLX_exp prec) :=
   ⟨by
     intro a b hab
     -- a ≤ b ⇒ a - prec ≤ b - prec
     simpa [FLX_exp, sub_eq_add_neg] using sub_le_sub_right hab prec⟩
+
+/-- Compatibility name retained for existing FloatSpec clients. -/
+abbrev FLX_exp_mono := FLX_exp_monotone
 
 /-
 Coq (FLX.v):

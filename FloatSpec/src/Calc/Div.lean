@@ -111,7 +111,8 @@ noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
 
     The computed quotient with location accurately represents the division
 -/
-theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
+theorem Fdiv_core_correct_left_branch (m1 e1 m2 e2 e : Int)
+    (Hm1 : 0 < m1) (Hm2 : 0 < m2)
     (Hβ : 1 < beta) :
     ⦃⌜0 < m1 ∧ 0 < m2 ∧ e ≤ e1 - e2⌝⦄
     (pure (Fdiv_core beta m1 e1 m2 e2 e) : Id _)
@@ -331,7 +332,86 @@ theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int) (Hm1 : 0 < m1) (Hm2 : 0 < m2)
       have : m1' % m2 = 0 := Int.emod_eq_zero_of_dvd h
       exact hr0 (by simpa [r])
     simpa [inbetween_float, dR, uR, xR, hnotdvd] using hx_inexact
-    -- The alternative branch of Fdiv_core is not needed here because the precondition enforces e ≤ e1 - e2
+    -- The alternative branch is handled by `Fdiv_core_correct` below through
+    -- an equal-value rescaling of the denominator.
+
+/-- FLoCq `Fdiv_core_correct`: correctness for both exponent-scaling branches. -/
+theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int)
+    (Hm1 : 0 < m1) (Hm2 : 0 < m2) (Hβ : 1 < beta) :
+    ⦃⌜True⌝⦄
+    (pure (Fdiv_core beta m1 e1 m2 e2 e) : Id _)
+    ⦃⇓result => let (m, l) := result
+                ⌜inbetween_float beta m e
+                  ((F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta)) /
+                   (F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta))) l⌝⦄ := by
+  intro _
+  by_cases hele : e ≤ e1 - e2
+  · exact Fdiv_core_correct_left_branch
+      (beta := beta) m1 e1 m2 e2 e Hm1 Hm2 Hβ ⟨Hm1, Hm2, hele⟩
+  · let k : Int := e - (e1 - e2)
+    let p : Int := beta ^ k.natAbs
+    let m2' : Int := m2 * p
+    let e2' : Int := e2 - k
+    have hk : 0 < k := by
+      dsimp [k]
+      omega
+    have hbetaPos : 0 < beta := lt_trans Int.zero_lt_one Hβ
+    have hp : 0 < p := by
+      dsimp [p]
+      exact pow_pos hbetaPos _
+    have hm2' : 0 < m2' := by
+      dsimp [m2']
+      exact mul_pos Hm2 hp
+    have hleft : e ≤ e1 - e2' := by
+      dsimp [e2', k]
+      omega
+    have hbpos : (0 : ℝ) < beta := by exact_mod_cast hbetaPos
+    have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+    have hcastp : (p : ℝ) = (beta : ℝ) ^ k := by
+      dsimp [p]
+      rw [Int.cast_pow]
+      have hnat : ((k.natAbs : Nat) : Int) = k :=
+        Int.natAbs_of_nonneg (le_of_lt hk)
+      rw [← hnat]
+      exact (zpow_ofNat (beta : ℝ) k.natAbs).symm
+    have hden :
+        F2R (FlocqFloat.mk m2' e2' : FlocqFloat beta) =
+          F2R (FlocqFloat.mk m2 e2 : FlocqFloat beta) := by
+      unfold FloatSpec.Core.Defs.F2R
+      change (m2' : ℝ) * (beta : ℝ) ^ e2' =
+        (m2 : ℝ) * (beta : ℝ) ^ e2
+      rw [show (m2' : ℝ) = (m2 : ℝ) * (p : ℝ) by simp [m2']]
+      rw [hcastp]
+      calc
+        ((m2 : ℝ) * (beta : ℝ) ^ k) * (beta : ℝ) ^ e2'
+            = (m2 : ℝ) * ((beta : ℝ) ^ k * (beta : ℝ) ^ e2') := by ring
+        _ = (m2 : ℝ) * (beta : ℝ) ^ (k + e2') := by
+          rw [zpow_add₀ hbne]
+        _ = (m2 : ℝ) * (beta : ℝ) ^ e2 := by
+          congr 2
+          dsimp [e2']
+          omega
+    have hdenRaw :
+        (m2' : ℝ) * (beta : ℝ) ^ e2' =
+          (m2 : ℝ) * (beta : ℝ) ^ e2 := by
+      simpa [FloatSpec.Core.Defs.F2R] using hden
+    have hdenScaled :
+        ((m2 : ℝ) * (beta : ℝ) ^ k.natAbs) * (beta : ℝ) ^ e2' =
+          (m2 : ℝ) * (beta : ℝ) ^ e2 := by
+      simpa [m2', p, Int.cast_pow] using hdenRaw
+    have hcore :
+        Fdiv_core beta m1 e1 m2' e2' e =
+          Fdiv_core beta m1 e1 m2 e2 e := by
+      have hzero : e1 - e2' - e = 0 := by
+        dsimp [e2', k]
+        omega
+      unfold Fdiv_core
+      simp only [hleft, if_pos, hele, if_neg]
+      simp [hzero, m2', p, k, hdenScaled]
+    have h := Fdiv_core_correct_left_branch
+      (beta := beta) m1 e1 m2' e2' e Hm1 hm2' Hβ
+      ⟨Hm1, hm2', hleft⟩
+    simpa [wp, PostCond.noThrow, pure, hcore, hdenRaw] using h
 
 end CoreDivision
 
@@ -394,7 +474,7 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
       have hinst :=
         (Fdiv_core_correct (beta := beta) (m1 := m1) (e1 := e1)
           (m2 := m2) (e2 := e2) (e := e) (Hm1 := hm1_pos) (Hm2 := hm2_pos) (Hβ := Hβ))
-          ⟨hm1_pos, hm2_pos, hele⟩
+          trivial
       have hinSimple : inbetween_float beta (Fdiv_core beta m1 e1 m2 e2 e).fst e qR
             (Fdiv_core beta m1 e1 m2 e2 e).snd := by
         simpa [wp, PostCond.noThrow, pure] using hinst

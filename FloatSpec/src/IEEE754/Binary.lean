@@ -110,6 +110,73 @@ def is_finite_FF (f : FullFloat) : Bool :=
   | FullFloat.F754_zero _ => true
   | _ => false
 
+namespace full_float
+
+/-- Lossless embedding of FLoCq's Positive-payload carrier into the legacy
+Nat-payload carrier used by the original Lean translation. -/
+def toFullFloat : full_float → FullFloat
+  | F754_zero s => FullFloat.F754_zero s
+  | F754_infinity s => FullFloat.F754_infinity s
+  | F754_nan s p => FullFloat.F754_nan s (FloatSpec.Core.Zaux.positiveToNat p)
+  | F754_finite s m e =>
+      FullFloat.F754_finite s (FloatSpec.Core.Zaux.positiveToNat m) e
+
+def toStandardFloat : full_float → StandardFloat
+  | F754_zero s => StandardFloat.S754_zero s
+  | F754_infinity s => StandardFloat.S754_infinity s
+  | F754_nan _ _ => StandardFloat.S754_nan
+  | F754_finite s m e =>
+      StandardFloat.S754_finite s (FloatSpec.Core.Zaux.positiveToNat m) e
+
+noncomputable def toReal (beta : Int) [ValidRadix beta] : full_float → ℝ
+  | F754_finite s m e =>
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk
+        (if s then -(FloatSpec.Core.Zaux.positiveToNat m : Int)
+         else (FloatSpec.Core.Zaux.positiveToNat m : Int)) e :
+          FloatSpec.Core.Defs.FlocqFloat beta)
+  | _ => 0
+
+def isNaN : full_float → Bool
+  | F754_nan _ _ => true
+  | _ => false
+
+def isFinite : full_float → Bool
+  | F754_zero _ | F754_finite _ _ _ => true
+  | _ => false
+
+def sign : full_float → Bool
+  | F754_zero s | F754_infinity s | F754_nan s _ | F754_finite s _ _ => s
+
+theorem toFullFloat_toStandardFloat (x : full_float) :
+    FF2SF (toFullFloat x) = toStandardFloat x := by
+  cases x <;> rfl
+
+theorem toFullFloat_toReal (beta : Int) [ValidRadix beta] (x : full_float) :
+    FF2R beta (toFullFloat x) = toReal beta x := by
+  cases x <;> rfl
+
+theorem toFullFloat_isNaN (x : full_float) :
+    is_nan_FF (toFullFloat x) = isNaN x := by
+  cases x <;> rfl
+
+theorem toFullFloat_isFinite (x : full_float) :
+    is_finite_FF (toFullFloat x) = isFinite x := by
+  cases x <;> rfl
+
+theorem toFullFloat_sign (x : full_float) :
+    sign_FF (toFullFloat x) = sign x := by
+  cases x <;> rfl
+
+theorem toFullFloat_injective : Function.Injective toFullFloat := by
+  intro x y h
+  cases x <;> cases y <;>
+    simp_all [toFullFloat]
+  all_goals
+    congr
+    exact FloatSpec.Core.Zaux.positiveToNat_injective (by aesop)
+
+end full_float
+
 -- NaN detection consistency
 theorem is_nan_SF2FF (x : StandardFloat) :
   is_nan_FF (SF2FF x) = is_nan_SF x := by
@@ -135,7 +202,7 @@ def is_nan_build_nan_check (s : Bool) (payload : Nat) : Bool :=
   (is_nan_FF (build_nan s payload))
 
 -- Coq: is_nan_build_nan — building a NaN yields a NaN
-theorem is_nan_build_nan (s : Bool) (payload : Nat) :
+theorem is_nan_build_nan_compat (s : Bool) (payload : Nat) :
   ⦃⌜True⌝⦄
   (pure (is_nan_build_nan_check s payload) : Id Bool)
   ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -147,7 +214,7 @@ theorem is_nan_build_nan (s : Bool) (payload : Nat) :
 noncomputable def B2R_build_nan_check (s : Bool) (payload : Nat) : ℝ :=
   (FF2R 2 (build_nan s payload))
 
-theorem B2R_build_nan (s : Bool) (payload : Nat) :
+theorem B2R_build_nan_compat (s : Bool) (payload : Nat) :
   ⦃⌜True⌝⦄
   (pure (B2R_build_nan_check s payload) : Id ℝ)
   ⦃⇓result => ⌜result = 0⌝⦄ := by
@@ -159,7 +226,7 @@ theorem B2R_build_nan (s : Bool) (payload : Nat) :
 def is_finite_build_nan_check (s : Bool) (payload : Nat) : Bool :=
   (is_finite_FF (build_nan s payload))
 
-theorem is_finite_build_nan (s : Bool) (payload : Nat) :
+theorem is_finite_build_nan_compat (s : Bool) (payload : Nat) :
   ⦃⌜True⌝⦄
   (pure (is_finite_build_nan_check s payload) : Id Bool)
   ⦃⇓result => ⌜result = false⌝⦄ := by
@@ -206,7 +273,7 @@ def get_nan_pl (x : FullFloat) : Nat :=
 def build_nan_correct_check (x : { f : FullFloat // is_nan_FF f = true }) : FullFloat :=
   (build_nan (sign_FF x.val) (get_nan_pl x.val))
 
-theorem build_nan_correct (x : { f : FullFloat // is_nan_FF f = true }) :
+theorem build_nan_correct_compat (x : { f : FullFloat // is_nan_FF f = true }) :
   ⦃⌜True⌝⦄
   (pure (build_nan_correct_check x) : Id FullFloat)
   ⦃⇓result => ⌜result = x.val⌝⦄ := by
@@ -221,7 +288,7 @@ def erase (x : FullFloat) : FullFloat := x
 def erase_check (x : FullFloat) : FullFloat :=
   (erase x)
 
-theorem erase_correct (x : FullFloat) :
+theorem erase_correct_compat (x : FullFloat) :
   ⦃⌜True⌝⦄
   (pure (erase_check x) : Id FullFloat)
   ⦃⇓result => ⌜result = x⌝⦄ := by
@@ -240,7 +307,7 @@ def Bopp (x : FullFloat) : FullFloat :=
 def Bopp_involutive_check (x : FullFloat) : FullFloat :=
   (Bopp (Bopp x))
 
-theorem Bopp_involutive (x : FullFloat)
+theorem Bopp_involutive_compat (x : FullFloat)
   (hx : is_nan_FF x = false) :
   ⦃⌜True⌝⦄
   (pure (Bopp_involutive_check x) : Id FullFloat)
@@ -252,7 +319,7 @@ theorem Bopp_involutive (x : FullFloat)
 noncomputable def B2R_Bopp_check (x : FullFloat) : ℝ :=
   (FF2R 2 (Bopp x))
 
-theorem B2R_Bopp (x : FullFloat) :
+theorem B2R_Bopp_compat (x : FullFloat) :
   ⦃⌜True⌝⦄
   (pure (B2R_Bopp_check x) : Id ℝ)
   ⦃⇓result => ⌜result = - FF2R 2 x⌝⦄ := by
@@ -273,7 +340,7 @@ theorem B2R_Bopp (x : FullFloat) :
 def is_finite_Bopp_check (x : FullFloat) : Bool :=
   (is_finite_FF (Bopp x))
 
-theorem is_finite_Bopp (x : FullFloat) :
+theorem is_finite_Bopp_compat (x : FullFloat) :
   ⦃⌜True⌝⦄
   (pure (is_finite_Bopp_check x) : Id Bool)
   ⦃⇓result => ⌜result = is_finite_FF x⌝⦄ := by
@@ -284,7 +351,7 @@ theorem is_finite_Bopp (x : FullFloat) :
 def Bsign_Bopp_check (x : FullFloat) : Bool :=
   (sign_FF (Bopp x))
 
-theorem Bsign_Bopp (x : FullFloat) (hx : is_nan_FF x = false) :
+theorem Bsign_Bopp_compat (x : FullFloat) (hx : is_nan_FF x = false) :
   ⦃⌜True⌝⦄
   (pure (Bsign_Bopp_check x) : Id Bool)
   ⦃⇓result => ⌜result = bnot (sign_FF x)⌝⦄ := by
@@ -304,7 +371,7 @@ def Babs (x : FullFloat) : FullFloat :=
 noncomputable def B2R_Babs_check (x : FullFloat) : ℝ :=
   (FF2R 2 (Babs x))
 
-theorem B2R_Babs (x : FullFloat) :
+theorem B2R_Babs_compat (x : FullFloat) :
   ⦃⌜True⌝⦄
   (pure (B2R_Babs_check x) : Id ℝ)
   ⦃⇓result => ⌜result = |FF2R 2 x|⌝⦄ := by
@@ -324,7 +391,7 @@ theorem B2R_Babs (x : FullFloat) :
 def is_finite_Babs_check (x : FullFloat) : Bool :=
   (is_finite_FF (Babs x))
 
-theorem is_finite_Babs (x : FullFloat) :
+theorem is_finite_Babs_compat (x : FullFloat) :
   ⦃⌜True⌝⦄
   (pure (is_finite_Babs_check x) : Id Bool)
   ⦃⇓result => ⌜result = is_finite_FF x⌝⦄ := by
@@ -335,7 +402,7 @@ theorem is_finite_Babs (x : FullFloat) :
 def Bsign_Babs_check (x : FullFloat) : Bool :=
   (sign_FF (Babs x))
 
-theorem Bsign_Babs (x : FullFloat) (hx : is_nan_FF x = false) :
+theorem Bsign_Babs_compat (x : FullFloat) (hx : is_nan_FF x = false) :
   ⦃⌜True⌝⦄
   (pure (Bsign_Babs_check x) : Id Bool)
   ⦃⇓result => ⌜result = false⌝⦄ := by
@@ -347,7 +414,7 @@ theorem Bsign_Babs (x : FullFloat) (hx : is_nan_FF x = false) :
 def Babs_idempotent_check (x : FullFloat) : FullFloat :=
   (Babs (Babs x))
 
-theorem Babs_idempotent (x : FullFloat) (hx : is_nan_FF x = false) :
+theorem Babs_idempotent_compat (x : FullFloat) (hx : is_nan_FF x = false) :
   ⦃⌜True⌝⦄
   (pure (Babs_idempotent_check x) : Id FullFloat)
   ⦃⇓result => ⌜result = Babs x⌝⦄ := by
@@ -358,7 +425,7 @@ theorem Babs_idempotent (x : FullFloat) (hx : is_nan_FF x = false) :
 def Babs_Bopp_check (x : FullFloat) : FullFloat :=
   (Babs (Bopp x))
 
-theorem Babs_Bopp (x : FullFloat) (hx : is_nan_FF x = false) :
+theorem Babs_Bopp_compat (x : FullFloat) (hx : is_nan_FF x = false) :
   ⦃⌜True⌝⦄
   (pure (Babs_Bopp_check x) : Id FullFloat)
   ⦃⇓result => ⌜result = Babs x⌝⦄ := by
@@ -541,34 +608,82 @@ theorem fullFloatToBinaryFloat_binaryFloatToFullFloat {prec emax : Int}
       (valid_full_float_binary_binaryFloatToFullFloat (prec:=prec) (emax:=emax) x) = x := by
   cases x <;> simp [fullFloatToBinaryFloat, binaryFloatToFullFloat]
 
+namespace binary_float
+
+/-- FLoCq `B2FF` on the proof-carrying carrier. -/
+abbrev B2FF {prec emax : Int} (x : binary_float prec emax) : full_float :=
+  binaryFloatToFullFloat x
+
+/-- FLoCq `B2R` on the proof-carrying carrier. -/
+noncomputable def B2R {prec emax : Int} (x : binary_float prec emax) : ℝ :=
+  match x with
+  | B754_finite s m e _ =>
+      F2R (FloatSpec.Core.Defs.FlocqFloat.mk
+        (if s then -(FloatSpec.Core.Zaux.positiveToNat m : Int)
+          else (FloatSpec.Core.Zaux.positiveToNat m : Int)) e :
+            FloatSpec.Core.Defs.FlocqFloat 2)
+  | _ => 0
+
+/-- FLoCq `B2SF` on the proof-carrying carrier. -/
+def B2SF {prec emax : Int} (x : binary_float prec emax) : StandardFloat :=
+  match x with
+  | B754_finite s m e _ =>
+      StandardFloat.S754_finite s (FloatSpec.Core.Zaux.positiveToNat m) e
+  | B754_infinity s => StandardFloat.S754_infinity s
+  | B754_zero s => StandardFloat.S754_zero s
+  | B754_nan _ _ _ => StandardFloat.S754_nan
+
+/-- FLoCq `is_finite_strict`. -/
+def is_finite_strict {prec emax : Int} (x : binary_float prec emax) : Bool :=
+  match x with
+  | B754_finite _ _ _ _ => true
+  | _ => false
+
+/-- Checked erasure into the legacy compatibility carrier. -/
+def toBinary754 {prec emax : Int} (x : binary_float prec emax) : Binary754 prec emax :=
+  { val := match x with
+      | B754_finite s m e _ =>
+          FullFloat.F754_finite s (FloatSpec.Core.Zaux.positiveToNat m) e
+      | B754_infinity s => FullFloat.F754_infinity s
+      | B754_zero s => FullFloat.F754_zero s
+      | B754_nan s payload _ =>
+          FullFloat.F754_nan s (FloatSpec.Core.Zaux.positiveToNat payload)
+    valid := by intro; trivial }
+
+theorem B2R_toBinary754 {prec emax : Int} (x : binary_float prec emax) :
+    _root_.B2R (toBinary754 x) = B2R x := by
+  cases x <;> simp [toBinary754, _root_.B2R, B2R, FF2R]
+
+end binary_float
+
 -- Coq: B2FF_FF2B — B2FF after FF2B is identity
-theorem B2FF_FF2B {prec emax} (x : FullFloat) :
+theorem B2FF_FF2B_compat {prec emax} (x : FullFloat) :
   B2FF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x) = x := by
   rfl
 
 -- Coq: FF2B_B2FF — FF2B after B2FF is identity
-theorem FF2B_B2FF {prec emax} (x : Binary754 prec emax) :
+theorem FF2B_B2FF_compat {prec emax} (x : Binary754 prec emax) :
   FF2B (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x) = x := by
   -- trivial by construction of `FF2B` and `B2FF`
   cases x <;> rfl
 
 -- Coq: B2FF_inj — B2FF is injective
-theorem B2FF_inj {prec emax} (x y : Binary754 prec emax) :
+theorem B2FF_inj_compat {prec emax} (x y : Binary754 prec emax) :
   B2FF (prec:=prec) (emax:=emax) x = B2FF (prec:=prec) (emax:=emax) y → x = y := by
   intro h; cases x; cases y; cases h; rfl
 
 -- Coq: FF2R_B2FF — Real semantics preserved by B2FF
-theorem FF2R_B2FF (beta : Int) [ValidRadix beta] {prec emax} (x : Binary754 prec emax) :
+theorem FF2R_B2FF_compat (beta : Int) [ValidRadix beta] {prec emax} (x : Binary754 prec emax) :
   FF2R beta (B2FF (prec:=prec) (emax:=emax) x) = FF2R beta x.val := by
   rfl
 
 -- Coq: FF2SF_B2FF — Standard view after B2FF matches direct view
-theorem FF2SF_B2FF {prec emax} (x : Binary754 prec emax) :
+theorem FF2SF_B2FF_compat {prec emax} (x : Binary754 prec emax) :
   FF2SF (B2FF (prec:=prec) (emax:=emax) x) = B2SF (prec:=prec) (emax:=emax) x := by
   rfl
 
 -- Coq: B2SF_FF2B — Standard view after FF2B equals FF2SF of source
-theorem B2SF_FF2B {prec emax} (x : FullFloat) :
+theorem B2SF_FF2B_compat {prec emax} (x : FullFloat) :
   B2SF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x) = FF2SF x := by
   rfl
 
@@ -585,7 +700,7 @@ theorem B2SF_FF2B {prec emax} (x : FullFloat) :
 def is_finite_B {prec emax} (x : Binary754 prec emax) : Bool :=
   is_finite_FF x.val
 
-theorem is_finite_B2FF {prec emax} (x : Binary754 prec emax) :
+theorem is_finite_B2FF_compat {prec emax} (x : Binary754 prec emax) :
   is_finite_FF (B2FF (prec:=prec) (emax:=emax) x) = is_finite_B (prec:=prec) (emax:=emax) x := by
   rfl
 
@@ -593,12 +708,12 @@ theorem is_finite_B2FF {prec emax} (x : Binary754 prec emax) :
 def is_nan_B {prec emax} (x : Binary754 prec emax) : Bool :=
   is_nan_FF x.val
 
-theorem is_nan_B2FF {prec emax} (x : Binary754 prec emax) :
+theorem is_nan_B2FF_compat {prec emax} (x : Binary754 prec emax) :
   is_nan_FF (B2FF (prec:=prec) (emax:=emax) x) = is_nan_B (prec:=prec) (emax:=emax) x := by
   rfl
 
 -- Coq: B2R_FF2B — Real semantics after FF2B equals semantics of source
-theorem B2R_FF2B (beta : Int) [ValidRadix beta] {prec emax} (x : FullFloat) :
+theorem B2R_FF2B_compat (beta : Int) [ValidRadix beta] {prec emax} (x : FullFloat) :
   FF2R beta (B2FF (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x)) = FF2R beta x := by
   rfl
 
@@ -608,17 +723,17 @@ theorem B2R_FF2B (beta : Int) [ValidRadix beta] {prec emax} (x : FullFloat) :
 def Bsign {prec emax} (x : Binary754 prec emax) : Bool :=
   sign_FF x.val
 
-theorem Bsign_FF2B {prec emax} (x : FullFloat) :
+theorem Bsign_FF2B_compat {prec emax} (x : FullFloat) :
   Bsign (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x) = sign_FF x := by
   rfl
 
 -- Coq: is_finite_FF2B — Finite predicate after FF2B equals source predicate
-theorem is_finite_FF2B {prec emax} (x : FullFloat) :
+theorem is_finite_FF2B_compat {prec emax} (x : FullFloat) :
   is_finite_B (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x) = is_finite_FF x := by
   rfl
 
 -- Coq: is_nan_FF2B — NaN predicate after FF2B equals source predicate
-theorem is_nan_FF2B {prec emax} (x : FullFloat) :
+theorem is_nan_FF2B_compat {prec emax} (x : FullFloat) :
   is_nan_B (prec:=prec) (emax:=emax) (FF2B (prec:=prec) (emax:=emax) x) = is_nan_FF x := by
   rfl
 
@@ -653,7 +768,7 @@ def exponent_FF (f : FullFloat) : Int :=
 -- that the mantissa and exponent match explicitly. The full Flocq version derives this from
 -- the fact that valid Binary754 values have unique (m, e) representations.
 -- For two Binary754 values with the same underlying FullFloat structure, they are equal.
-theorem B2R_inj {prec emax} (x y : Binary754 prec emax)
+theorem B2R_inj_compat {prec emax} (x y : Binary754 prec emax)
   (hx : is_finite_strict_FF x.val = true)
   (hy : is_finite_strict_FF y.val = true)
   (hR : B2R (prec:=prec) (emax:=emax) x = B2R (prec:=prec) (emax:=emax) y)
@@ -738,7 +853,7 @@ def canonical_FF {prec emax : Int} (f : FullFloat) : Prop :=
 -- to match the Coq behavior where B754_finite embeds a bounded proof.
 -- Without canonical representation, different (m,e) pairs can have the same B2R value
 -- (e.g., 4*2^1 = 2*2^2 = 8), so the theorem would be unprovable.
-theorem B2R_Bsign_inj {prec emax} (x y : Binary754 prec emax)
+theorem B2R_Bsign_inj_compat {prec emax} (x y : Binary754 prec emax)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hy : is_finite_B (prec:=prec) (emax:=emax) y = true)
   (hvx : valid_FF x.val)
@@ -749,7 +864,7 @@ theorem B2R_Bsign_inj {prec emax} (x y : Binary754 prec emax)
   (hs : Bsign (prec:=prec) (emax:=emax) x = Bsign (prec:=prec) (emax:=emax) y) :
   x = y := by
   -- Reduce to showing underlying FullFloat values are equal
-  apply B2FF_inj
+  apply B2FF_inj_compat
   -- Both x.val and y.val must be F754_finite or F754_zero due to is_finite_B
   cases x with | mk xval xvalid =>
   cases y with | mk yval yvalid =>
@@ -878,7 +993,7 @@ def valid_binary_payload {prec emax : Int} (x : FullFloat) : Bool :=
 def valid_binary_B2FF_check {prec emax : Int} (x : Binary754 prec emax) : Bool :=
   (valid_binary (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x))
 
-theorem valid_binary_B2FF {prec emax} (x : Binary754 prec emax) :
+theorem valid_binary_B2FF_compat {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
   (pure (valid_binary_B2FF_check (prec:=prec) (emax:=emax) x) : Id Bool)
   ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -923,14 +1038,14 @@ theorem valid_binary_SF2FF {prec emax} (x : StandardFloat)
 def FF2B_B2FF_valid_check {prec emax : Int} (x : Binary754 prec emax) : (Binary754 prec emax) :=
   (FF2B (prec:=prec) (emax:=emax) (B2FF (prec:=prec) (emax:=emax) x))
 
-theorem FF2B_B2FF_valid {prec emax} (x : Binary754 prec emax) :
+theorem FF2B_B2FF_valid_compat {prec emax} (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
   (pure (FF2B_B2FF_valid_check (prec:=prec) (emax:=emax) x) : Id (Binary754 prec emax))
   ⦃⇓result => ⌜result = x⌝⦄ := by
   intro _
   simp only [wp, PostCond.noThrow, pure]
   unfold FF2B_B2FF_valid_check
-  simpa using (FF2B_B2FF (prec:=prec) (emax:=emax) x)
+  simpa using (FF2B_B2FF_compat (prec:=prec) (emax:=emax) x)
 
 -- Coq: match_FF2B — pattern match through FF2B corresponds to match on source
 -- We expose a small check returning the right-hand side match directly on `x`.
@@ -943,7 +1058,7 @@ def match_FF2B_check {T : Type} (fz : Bool → T) (fi : Bool → T)
     | FullFloat.F754_nan b p => fn b p
     | FullFloat.F754_finite sx mx ex => ff sx mx ex
 
-theorem match_FF2B {T : Type} (fz : Bool → T) (fi : Bool → T)
+theorem match_FF2B_compat {T : Type} (fz : Bool → T) (fi : Bool → T)
   (fn : Bool → Nat → T) (ff : Bool → Nat → Int → T)
   (x : FullFloat) :
   ⦃⌜True⌝⦄
@@ -1519,7 +1634,7 @@ noncomputable def Bfrexp_correct_check (x : Binary754 prec emax) :
 -- For strictly finite inputs, Bfrexp decomposes x = z * 2^e with |B2R z| in [1/2,1)
 -- and e = mag 2 (B2R x).
 -- Note: valid_FF ensures the mantissa is positive, matching Coq's use of `positive` type.
-theorem Bfrexp_correct (x : Binary754 prec emax)
+theorem Bfrexp_correct_compat (x : Binary754 prec emax)
   (hx : is_finite_strict_Bin (prec:=prec) (emax:=emax) x = true)
   (hvalid : valid_FF x.val) :
   ⦃⌜True⌝⦄
@@ -1730,7 +1845,7 @@ def eq_binary_overflow_FF2SF_check
   (h : FF2SF x = standard_binary_overflow prec emax mode s) : FullFloat :=
   x
 
-theorem eq_binary_overflow_FF2SF
+theorem eq_binary_overflow_FF2SF_compat
   (x : FullFloat) (mode : RoundingMode) (s : Bool)
   (h : FF2SF x = standard_binary_overflow prec emax mode s) :
   ⦃⌜True⌝⦄
@@ -2900,7 +3015,7 @@ theorem Bnearbyint_sign (mode : RoundingMode) (x : Binary754 prec emax)
 For the local `Binary754` model, nearby-integer rounding has the rounded real
 value, preserves finiteness, and preserves the input sign whenever the result is
 not NaN. -/
-theorem Bnearbyint_correct (mode : RoundingMode) (x : Binary754 prec emax)
+theorem Bnearbyint_correct_compat (mode : RoundingMode) (x : Binary754 prec emax)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FIX.FIX_exp (emin := 0))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FIX.FIX_exp (emin := 0))] :
   let y := binary_nearbyint (prec:=prec) (emax:=emax) mode x
@@ -2950,7 +3065,7 @@ The local `binary_ldexp` now follows the upstream split: if the rounded scaled
 value is below `bpow emax`, it returns that rounded value with preserved
 finiteness and sign; otherwise it returns the overflow constructor for the
 input sign. -/
-theorem Bldexp_correct
+theorem Bldexp_correct_compat
   (mode : RoundingMode) (x : Binary754 prec emax) (e : Int)
   [FloatSpec.Core.Generic_fmt.Valid_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))]
   [FloatSpec.Core.Generic_fmt.Monotone_exp (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))] :
@@ -3193,7 +3308,7 @@ noncomputable def Bsucc_correct_check (x : Binary754 prec emax) : ℝ :=
   (FF2R 2 ((Bsucc (prec:=prec) (emax:=emax) x).val))
 
 -- Coq: Bsucc_correct — either steps by one ULP or overflows to +∞
-theorem Bsucc_correct (x : Binary754 prec emax)
+theorem Bsucc_correct_compat (x : Binary754 prec emax)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hformat : Binary754_in_generic_format (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
@@ -3276,7 +3391,7 @@ noncomputable def Bpred_correct_check (x : Binary754 prec emax)
   (FF2R 2 ((Bpred (prec:=prec) (emax:=emax) x).val))
 
 -- Coq: Bpred_correct — either steps by one ULP or overflows to −∞
-theorem Bpred_correct (x : Binary754 prec emax)
+theorem Bpred_correct_compat (x : Binary754 prec emax)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hformat : Binary754_in_generic_format (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
@@ -3350,7 +3465,7 @@ def binary_one : Binary754 prec emax :=
 noncomputable def Bone_correct_check : ℝ :=
   (FF2R 2 (binary_one (prec:=prec) (emax:=emax)).val)
 
-theorem Bone_correct :
+theorem Bone_correct_compat :
   ⦃⌜True⌝⦄
   (pure (Bone_correct_check (prec:=prec) (emax:=emax)) : Id ℝ)
   ⦃⇓result => ⌜result = 1⌝⦄ := by
@@ -3361,7 +3476,7 @@ theorem Bone_correct :
 def is_finite_Bone_check : Bool :=
   (is_finite_B (prec:=prec) (emax:=emax) (binary_one (prec:=prec) (emax:=emax)))
 
-theorem is_finite_Bone :
+theorem is_finite_Bone_compat :
   ⦃⌜True⌝⦄
   (pure (is_finite_Bone_check (prec:=prec) (emax:=emax)) : Id Bool)
   ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -3372,7 +3487,7 @@ theorem is_finite_Bone :
 def Bsign_Bone_check : Bool :=
   (Bsign (prec:=prec) (emax:=emax) (binary_one (prec:=prec) (emax:=emax)))
 
-theorem Bsign_Bone :
+theorem Bsign_Bone_compat :
   ⦃⌜True⌝⦄
   (pure (Bsign_Bone_check (prec:=prec) (emax:=emax)) : Id Bool)
   ⦃⇓result => ⌜result = false⌝⦄ := by
@@ -3413,7 +3528,7 @@ instance instValidExp_FIX0 :
     · exact le_rfl
     · intro _ _; rfl
 
-theorem Btrunc_correct (x : Binary754 prec emax) :
+theorem Btrunc_correct_compat (x : Binary754 prec emax) :
   ⦃⌜True⌝⦄
   (pure (Btrunc_correct_check (prec:=prec) (emax:=emax) x) : Id Int)
   ⦃⇓result => ⌜result = Btrunc_correct_check (prec:=prec) (emax:=emax) x⌝⦄ := by
@@ -3510,7 +3625,7 @@ def canonical_canonical_mantissa_check {prec emax : Int}
   (sx : Bool) (mx : Nat) (ex : Int) : Unit :=
   ()
 
-theorem canonical_canonical_mantissa (sx : Bool) (mx : Nat) (ex : Int)
+theorem canonical_canonical_mantissa_compat (sx : Bool) (mx : Nat) (ex : Int)
   (hmx_pos : 0 < mx)  -- IEEE 754: finite floats have positive mantissa; zero is F754_zero
   (h : canonical_mantissa (prec:=prec) (emax:=emax) mx ex = true) :
   ⦃⌜True⌝⦄
@@ -3587,7 +3702,7 @@ theorem canonical_canonical_mantissa (sx : Bool) (mx : Nat) (ex : Int)
 def generic_format_B2R_check {prec emax : Int} (x : Binary754 prec emax) : Unit :=
   ()
 
-theorem generic_format_B2R {prec emax : Int} [Prec_gt_0 prec]
+theorem generic_format_B2R_compat {prec emax : Int} [Prec_gt_0 prec]
   (x : Binary754 prec emax)
   (hformat : Binary754_in_generic_format (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
@@ -3637,7 +3752,7 @@ theorem generic_format_B2R {prec emax : Int} [Prec_gt_0 prec]
 def FLT_format_B2R_check {prec emax : Int} (x : Binary754 prec emax) : Unit :=
   ()
 
-theorem FLT_format_B2R
+theorem FLT_format_B2R_compat
   {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
   (x : Binary754 prec emax)
   (hformat : Binary754_in_generic_format (prec:=prec) (emax:=emax) x) :
@@ -3647,7 +3762,7 @@ theorem FLT_format_B2R
   intro _
   -- FLT_format = generic_format by definition, so we use generic_format_B2R
   simp only [FloatSpec.Core.FLT.FLT_format]
-  have h := generic_format_B2R x hformat
+  have h := generic_format_B2R_compat x hformat
   simpa [wp, PostCond.noThrow, pure] using (h trivial)
 
 -- Coq: emin_lt_emax — the minimal exponent is strictly less than emax (Binary side)
@@ -3747,7 +3862,7 @@ noncomputable def Bcompare_check {prec emax : Int}
   (x y : Binary754 prec emax) : Option Int :=
   Bcompare (prec:=prec) (emax:=emax) x y
 
-theorem Bcompare_correct {prec emax : Int}
+theorem Bcompare_correct_compat {prec emax : Int}
   (x y : Binary754 prec emax)
   (hx : is_finite_B (prec:=prec) (emax:=emax) x = true)
   (hy : is_finite_B (prec:=prec) (emax:=emax) y = true) :
@@ -3765,7 +3880,7 @@ theorem Bcompare_correct {prec emax : Int}
 -- Coq: Bcompare_swap
 -- Swapping the arguments negates ordered comparison codes and preserves
 -- unordered NaN results.
-theorem Bcompare_swap {prec emax : Int}
+theorem Bcompare_swap_compat {prec emax : Int}
   (x y : Binary754 prec emax) :
   ⦃⌜True⌝⦄
   (pure (Bcompare_check (prec:=prec) (emax:=emax) y x) : Id (Option Int))
@@ -4036,7 +4151,7 @@ def abs_B2R_le_emax_minus_prec_check {prec emax : Int}
   (x : Binary754 prec emax) : Unit :=
   ()
 
-theorem abs_B2R_le_emax_minus_prec {prec emax : Int} [Prec_gt_0 prec]
+theorem abs_B2R_le_emax_minus_prec_compat {prec emax : Int} [Prec_gt_0 prec]
   (x : Binary754 prec emax)
   (hbounded : Binary754_bounded (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
@@ -4151,7 +4266,7 @@ def abs_B2R_lt_emax_check {prec emax : Int}
   (x : Binary754 prec emax) : Unit :=
   ()
 
-theorem abs_B2R_lt_emax {prec emax : Int} [Prec_gt_0 prec]
+theorem abs_B2R_lt_emax_compat {prec emax : Int} [Prec_gt_0 prec]
   (x : Binary754 prec emax)
   (hbounded : Binary754_bounded (prec:=prec) (emax:=emax) x) :
   ⦃⌜True⌝⦄
@@ -4163,7 +4278,7 @@ theorem abs_B2R_lt_emax {prec emax : Int} [Prec_gt_0 prec]
   simp only [wp, PostCond.noThrow, pure, abs_B2R_lt_emax_check, Id.run,
              PredTrans.pure, PredTrans.apply]
   -- Use abs_B2R_le_emax_minus_prec to get |B2R x| ≤ 2^emax - 2^(emax-prec)
-  have hle := abs_B2R_le_emax_minus_prec (prec:=prec) (emax:=emax) x hbounded
+  have hle := abs_B2R_le_emax_minus_prec_compat (prec:=prec) (emax:=emax) x hbounded
   simp only [wp, PostCond.noThrow, pure, abs_B2R_le_emax_minus_prec_check, Id.run,
              PredTrans.pure, PredTrans.apply] at hle
   have hle' := hle trivial
@@ -4177,6 +4292,130 @@ theorem abs_B2R_lt_emax {prec emax : Int} [Prec_gt_0 prec]
   have hlt : (2 : ℝ) ^ emax - (2 : ℝ) ^ (emax - prec) < (2 : ℝ) ^ emax := by linarith
   exact lt_of_le_of_lt hle' hlt
 
+namespace binary_float
+
+theorem toBinary754_bounded {prec emax : Int} [Prec_gt_0 prec]
+    (x : binary_float prec emax) :
+    Binary754_bounded (toBinary754 x) := by
+  cases x with
+  | B754_zero s => simp [toBinary754, Binary754_bounded]
+  | B754_infinity s => simp [toBinary754, Binary754_bounded]
+  | B754_nan s payload hPayload => simp [toBinary754, Binary754_bounded]
+  | B754_finite s m e hBounded =>
+      simp only [toBinary754, Binary754_bounded]
+      exact range_bounded_of_specFloat_bounded
+        (FloatSpec.Core.Zaux.positiveToNat m) e
+        (FloatSpec.Core.Zaux.positiveToNat_pos m) hBounded
+
+end binary_float
+
+/-- FLoCq `B2R_inj`, on the proof-carrying `binary_float`. -/
+theorem B2R_inj {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    (x y : binary_float prec emax)
+    (hx : binary_float.is_finite_strict x = true)
+    (hy : binary_float.is_finite_strict y = true)
+    (hR : binary_float.B2R x = binary_float.B2R y) :
+    x = y := by
+  cases x with
+  | B754_zero sx => simp [binary_float.is_finite_strict] at hx
+  | B754_infinity sx => simp [binary_float.is_finite_strict] at hx
+  | B754_nan sx payload hPayload => simp [binary_float.is_finite_strict] at hx
+  | B754_finite sx mx ex hmxBounded =>
+      cases y with
+      | B754_zero sy => simp [binary_float.is_finite_strict] at hy
+      | B754_infinity sy => simp [binary_float.is_finite_strict] at hy
+      | B754_nan sy payload hPayload => simp [binary_float.is_finite_strict] at hy
+      | B754_finite sy my ey hmyBounded =>
+          let nx := FloatSpec.Core.Zaux.positiveToNat mx
+          let ny := FloatSpec.Core.Zaux.positiveToNat my
+          let fx : FloatSpec.Core.Defs.FlocqFloat 2 :=
+            ⟨if sx then -(nx : Int) else (nx : Int), ex⟩
+          let fy : FloatSpec.Core.Defs.FlocqFloat 2 :=
+            ⟨if sy then -(ny : Int) else (ny : Int), ey⟩
+          have hnx : 0 < nx := FloatSpec.Core.Zaux.positiveToNat_pos mx
+          have hny : 0 < ny := FloatSpec.Core.Zaux.positiveToNat_pos my
+          have hcx : FloatSpec.Core.Generic_fmt.canonical 2
+              (FLT_exp (3 - emax - prec) prec) fx := by
+            have hcanon := canonical_mantissa_of_specFloat_bounded hmxBounded
+            have htrip := canonical_canonical_mantissa_compat
+              (prec:=prec) (emax:=emax) sx nx ex hnx hcanon
+            simpa [wp, PostCond.noThrow, pure, fx] using htrip trivial
+          have hcy : FloatSpec.Core.Generic_fmt.canonical 2
+              (FLT_exp (3 - emax - prec) prec) fy := by
+            have hcanon := canonical_mantissa_of_specFloat_bounded hmyBounded
+            have htrip := canonical_canonical_mantissa_compat
+              (prec:=prec) (emax:=emax) sy ny ey hny hcanon
+            simpa [wp, PostCond.noThrow, pure, fy] using htrip trivial
+          have hF2R : F2R fx = F2R fy := by
+            simpa [binary_float.B2R, fx, fy, nx, ny] using hR
+          have hfloat := FloatSpec.Core.Generic_fmt.canonical_unique
+            2 (by norm_num : (1 : Int) < 2)
+            (FLT_exp (3 - emax - prec) prec) fx fy hcx hcy hF2R
+          have hparts :
+              (if sx then -(nx : Int) else (nx : Int)) =
+                  (if sy then -(ny : Int) else (ny : Int)) ∧ ex = ey := by
+            simpa [fx, fy, FloatSpec.Core.Defs.FlocqFloat.mk.injEq] using hfloat
+          rcases hparts with ⟨hm, he⟩
+          cases sx <;> cases sy
+          · simp only [Bool.false_eq_true, ↓reduceIte] at hm
+            have hn : nx = ny := by exact_mod_cast hm
+            have hp : mx = my :=
+              FloatSpec.Core.Zaux.positiveToNat_injective hn
+            subst my
+            subst ey
+            rfl
+          · simp only [Bool.false_eq_true, ↓reduceIte] at hm
+            have hnxR : (0 : Int) < nx := by exact_mod_cast hnx
+            have hnyR : (0 : Int) < ny := by exact_mod_cast hny
+            omega
+          · simp only [Bool.false_eq_true, ↓reduceIte] at hm
+            have hnxR : (0 : Int) < nx := by exact_mod_cast hnx
+            have hnyR : (0 : Int) < ny := by exact_mod_cast hny
+            omega
+          · simp only [↓reduceIte, neg_inj] at hm
+            have hn : nx = ny := by exact_mod_cast hm
+            have hp : mx = my :=
+              FloatSpec.Core.Zaux.positiveToNat_injective hn
+            subst my
+            subst ey
+            rfl
+
+def abs_B2R_le_emax_minus_prec_exact_check {prec emax : Int}
+    (_x : binary_float prec emax) : Unit := ()
+
+/-- FLoCq `abs_B2R_le_emax_minus_prec`; validity is carried by `x`. -/
+theorem abs_B2R_le_emax_minus_prec {prec emax : Int} [Prec_gt_0 prec]
+    (x : binary_float prec emax) :
+    ⦃⌜True⌝⦄
+    (pure (abs_B2R_le_emax_minus_prec_exact_check x) : Id Unit)
+    ⦃⇓_ => ⌜|binary_float.B2R x| ≤
+      FloatSpec.Core.Raux.bpow 2 emax -
+        FloatSpec.Core.Raux.bpow 2 (emax - prec)⌝⦄ := by
+  intro _
+  have h := abs_B2R_le_emax_minus_prec_compat
+    (binary_float.toBinary754 x) (binary_float.toBinary754_bounded x)
+  have h' := h trivial
+  simpa [wp, PostCond.noThrow, pure,
+    abs_B2R_le_emax_minus_prec_exact_check,
+    binary_float.B2R_toBinary754] using h'
+
+def abs_B2R_lt_emax_exact_check {prec emax : Int}
+    (_x : binary_float prec emax) : Unit := ()
+
+/-- FLoCq `abs_B2R_lt_emax`; validity is carried by `x`. -/
+theorem abs_B2R_lt_emax {prec emax : Int} [Prec_gt_0 prec]
+    (x : binary_float prec emax) :
+    ⦃⌜True⌝⦄
+    (pure (abs_B2R_lt_emax_exact_check x) : Id Unit)
+    ⦃⇓_ => ⌜|binary_float.B2R x| <
+      FloatSpec.Core.Raux.bpow 2 emax⌝⦄ := by
+  intro _
+  have h := abs_B2R_lt_emax_compat
+    (binary_float.toBinary754 x) (binary_float.toBinary754_bounded x)
+  have h' := h trivial
+  simpa [wp, PostCond.noThrow, pure, abs_B2R_lt_emax_exact_check,
+    binary_float.B2R_toBinary754] using h'
+
 -- Local strict-finiteness classifier for Binary754 (finite and nonzero semantics).
 -- Coq uses a positive mantissa, so finite implies nonzero. This local
 -- classifier keeps the shape and defers proof obligations elsewhere.
@@ -4187,7 +4426,7 @@ def abs_B2R_ge_emin_check {prec emax : Int}
   (x : Binary754 prec emax) : Unit :=
   ()
 
-theorem abs_B2R_ge_emin {prec emax : Int}
+theorem abs_B2R_ge_emin_compat {prec emax : Int}
   (x : Binary754 prec emax)
   (hx : is_finite_strict_Bin (prec:=prec) (emax:=emax) x = true)
   (hbounded : Binary754_bounded (prec:=prec) (emax:=emax) x)

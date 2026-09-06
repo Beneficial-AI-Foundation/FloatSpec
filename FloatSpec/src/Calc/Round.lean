@@ -36,9 +36,7 @@ structure Mode where
   rnd : ℝ → Int
   rnd_zero : rnd 0 = 0
 
-/-- Legacy compatibility interpretation for older translated files that passed
-`()` as the rounding mode.  The token now means nearest with an even-mantissa
-tie break instead of erasing the mode entirely. -/
+/-- Nearest rounding with an even-mantissa tie break. -/
 noncomputable def nearestEvenMode : Mode where
   rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))
   rnd_zero := by
@@ -46,9 +44,13 @@ noncomputable def nearestEvenMode : Mode where
     simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
       FloatSpec.Core.Raux.Rcompare]
 
-/-- Backward-compatible coercion for legacy translated files. -/
-noncomputable instance : Coe Unit Mode where
-  coe _ := nearestEvenMode
+/-- Preserve a source integer-rounding function at the `Calc.Round` boundary. -/
+noncomputable def Mode.ofRnd (rnd : ℝ → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] : Mode where
+  rnd := rnd
+  rnd_zero := by
+    simpa using
+      (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) 0)
 
 /-- Bridge Calc.round to Core's concrete mode-sensitive rounding operator. -/
 noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
@@ -2611,6 +2613,17 @@ theorem truncate_correct
     (x := x) (m := m) (e := e) (l := l) Hβ Hx H1 Heq
 
 end Audit
+
+-- The proofs above are complete source ports; keep `Audit` as their
+-- implementation namespace but restore the public FLoCq declaration names.
+alias truncate_aux_comp := Audit.truncate_aux_comp
+alias truncate_0 := Audit.truncate_0
+alias generic_format_truncate := Audit.generic_format_truncate
+alias truncate_correct_format := Audit.truncate_correct_format
+alias truncate_correct_partial' := Audit.truncate_correct_partial'
+alias truncate_correct_partial := Audit.truncate_correct_partial
+alias truncate_correct' := Audit.truncate_correct'
+alias truncate_correct := Audit.truncate_correct
 
 theorem round_any_correct
     [FloatSpec.Core.Generic_fmt.Valid_exp fexp]

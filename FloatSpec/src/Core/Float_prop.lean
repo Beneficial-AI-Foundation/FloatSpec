@@ -841,7 +841,7 @@ This is a simple but always-valid bound used in place of the Coq lemma
 that requires a normalization hypothesis on the mantissa. It suffices for
 local ordering arguments and avoids adding extra preconditions.
 -/
-theorem F2R_lt_bpow (f : FlocqFloat beta) (hbeta : 1 < beta) :
+theorem F2R_lt_bpow_of_neg_mantissa (f : FlocqFloat beta) (hbeta : 1 < beta) :
   f.Fnum < 0 → (F2R f) < (beta : ℝ) ^ f.Fexp := by
   intro hneg
   -- Unfold and use that (β : ℝ) ^ e > 0 when β > 1
@@ -854,6 +854,51 @@ theorem F2R_lt_bpow (f : FlocqFloat beta) (hbeta : 1 < beta) :
   have hmul_le_zero : (f.Fnum : ℝ) * (beta : ℝ) ^ f.Fexp ≤ 0 :=
     mul_nonpos_of_nonpos_of_nonneg hmnpos (le_of_lt hp_pos)
   exact lt_of_le_of_lt hmul_le_zero hp_pos
+
+/-- FLoCq `F2R_lt_bpow`: a mantissa bound at exponent `e' - f.Fexp`
+implies the corresponding absolute real-value bound at `e'`. -/
+theorem F2R_lt_bpow (f : FlocqFloat beta) (e' : Int) (hbeta : 1 < beta) :
+    |f.Fnum| < FloatSpec.Core.Zaux.Zpower beta (e' - f.Fexp) →
+    |F2R f| < (beta : ℝ) ^ e' := by
+  intro hm
+  let d := e' - f.Fexp
+  have hd : 0 ≤ d := by
+    by_contra h
+    have hdneg : ¬ 0 ≤ d := h
+    have horder : ¬ f.Fexp ≤ e' := by omega
+    simp [FloatSpec.Core.Zaux.Zpower, horder] at hm
+    have habs : 0 ≤ |f.Fnum| := abs_nonneg f.Fnum
+    omega
+  have hbposZ : 0 < beta := lt_trans Int.zero_lt_one hbeta
+  have hbposR : (0 : ℝ) < beta := by exact_mod_cast hbposZ
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbposR
+  have hZpower :
+      ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) =
+        (beta : ℝ) ^ d := by
+    rw [FloatSpec.Core.Zaux.Zpower, if_pos hd]
+    rw [Int.cast_pow]
+    have htoNat : ((d.toNat : Nat) : Int) = d := Int.toNat_of_nonneg hd
+    rw [← htoNat]
+    exact (zpow_ofNat (beta : ℝ) d.toNat).symm
+  have hmR :
+      ((|f.Fnum| : Int) : ℝ) <
+        ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) := by
+    exact_mod_cast hm
+  have hmR' : ((|f.Fnum| : Int) : ℝ) < (beta : ℝ) ^ d := by
+    rwa [hZpower] at hmR
+  have habsF2R :
+      |F2R f| = ((|f.Fnum| : Int) : ℝ) * (beta : ℝ) ^ f.Fexp := by
+    unfold FloatSpec.Core.Defs.F2R
+    rw [abs_mul, abs_of_pos (zpow_pos hbposR _)]
+    exact congrArg (fun z : ℝ => z * (beta : ℝ) ^ f.Fexp)
+      (Int.cast_abs).symm
+  rw [habsF2R]
+  calc
+    ((|f.Fnum| : Int) : ℝ) * (beta : ℝ) ^ f.Fexp
+        < (beta : ℝ) ^ d * (beta : ℝ) ^ f.Fexp :=
+      mul_lt_mul_of_pos_right hmR' (zpow_pos hbposR _)
+    _ = (beta : ℝ) ^ (d + f.Fexp) := (zpow_add₀ hbne d f.Fexp).symm
+    _ = (beta : ℝ) ^ e' := by congr 1; simp [d]
 
 -- Exponent change properties
 

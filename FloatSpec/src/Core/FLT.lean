@@ -147,12 +147,15 @@ instance FLT_exp_valid [Prec_gt_0 prec] :
       -- Conclude fexp l = fexp k
       simpa [hfk_eq, hfl]
 
-instance FLT_exp_mono :
+instance FLT_exp_monotone :
     Monotone_exp (FLT_exp prec emin) :=
   ⟨by
     intro a b hab
     simp only [FLT_exp]
     exact max_le_max (sub_le_sub_right hab prec) le_rfl⟩
+
+/-- Compatibility name retained for existing FloatSpec clients. -/
+abbrev FLT_exp_mono := FLT_exp_monotone
 
 /-
 Coq (FLT.v):

@@ -56,7 +56,7 @@ def oneBits : UInt64 := 0x3FF0000000000000
 
 /-- The all-zeros `UInt64` decodes to the `+0` float. -/
 theorem ofBits_zero_val : (ofBits 0).val = FullFloat.F754_zero false := by
-  native_decide
+  decide
 
 /-- The all-zeros `UInt64` decodes to `0 : ℝ`. -/
 theorem toReal_zero : toReal 0 = 0 := by
@@ -69,7 +69,7 @@ mantissa `2^52` and exponent `-52`, representing `1.0`. -/
 theorem ofBits_one_val :
     (ofBits oneBits).val =
       FullFloat.F754_finite false (2 ^ 52) (-52) := by
-  native_decide
+  decide
 
 /-- The `0x3FF0000000000000` pattern decodes to `1 : ℝ`. -/
 theorem toReal_one : toReal oneBits = 1 := by
@@ -94,7 +94,7 @@ def negated (w : UInt64) : Binary754 53 1023 :=
 This proves the real-value negation property without asserting the still-missing
 raw bit theorem relating `UInt64.xor` by `signBitMask` to `Bopp`. -/
 theorem negated_toReal (w : UInt64) : B2R (negated w) = -toReal w := by
-  have hopp := B2R_Bopp ((ofBits w).val) True.intro
+  have hopp := B2R_Bopp_compat ((ofBits w).val) True.intro
   change FF2R 2 (Bopp (ofBits w).val) = -FF2R 2 (ofBits w).val
   exact hopp
 

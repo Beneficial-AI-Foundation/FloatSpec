@@ -212,7 +212,8 @@ theorem FIX_format_opp_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     rw [FloatSpec.Core.Generic_fmt.Ztrunc_neg]; ring
   -- Show the beq evaluates to true using h
   have hbeq : ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x) == 0) = true := by
-    rw [h]; native_decide
+    rw [h]
+    decide
   simp only [FIX_format_opp_check, hbeq, pure, PredTrans.pure]
   trivial
 

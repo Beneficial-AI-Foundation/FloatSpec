@@ -68,11 +68,8 @@ In Flocq, {name}`Exp_not_FTZ` entails stability of the exponent function on the
 abstraction sufficient for the {coq}`ulp_ulp_0` lemma and remains local to
 this file.
 -/
--- In Coq (Generic_fmt.v), `Exp_not_FTZ` means: ∀ e, fexp (fexp e + 1) ≤ fexp e.
--- We align the Lean port to this specification so downstream lemmas match the
--- original development (notably {name}`generic_format_bpow` prerequisites).
-class Exp_not_FTZ (fexp : Int → Int) : Prop where
-  exp_not_FTZ : ∀ e : Int, fexp (fexp e + 1) ≤ fexp e
+-- Source classes live in `Generic_fmt`; keep the old namespace paths as aliases.
+abbrev Exp_not_FTZ := FloatSpec.Core.Generic_fmt.Exp_not_FTZ
 
 /-- Monotone exponent property (used in ULP spacing proofs).
 
@@ -80,8 +77,7 @@ We assume {name}`fexp` is monotone with respect to {lit}`≤` on integers: incre
 input does not decrease the exponent. This is the minimal property we need in
 this file to compare consecutive exponents like {given -show}`m` {lean}`fexp (m-1) ≤ fexp m`.
 -/
-class Monotone_exp (fexp : Int → Int) : Prop where
-  mono : ∀ {a b : Int}, a ≤ b → fexp a ≤ fexp b
+abbrev Monotone_exp := FloatSpec.Core.Generic_fmt.Monotone_exp
 
 
 /-- Negligible exponent detection (Coq: {name}`negligible_exp`).
@@ -402,7 +398,7 @@ private lemma pred_run_lt_self (hβ : 1 < beta) (x : ℝ) (hx : x ≠ 0) :
       (pred beta fexp x) = (pred_pos beta fexp x) := this
       _ < x := hlt
 
-theorem pred_le
+theorem pred_le_self_of_le
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -470,7 +466,7 @@ Lean (adapted): strengthen the precondition to {lit}`1 < beta` and prove
 {lit}`x ≤ succ y`, which suffices for downstream ordering arguments and mirrors
 the earlier weakening done for {name}`pred_le`.
 -/
-theorem succ_le
+theorem le_succ_of_le
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -484,7 +480,7 @@ theorem succ_le
   exact le_trans hxy (succ_run_ge_self (beta := beta) (fexp := fexp) hβ y)
 
 /-- Coq (Ulp.v): Theorem {coq}`pred_le_inv`: {lit}`F x -> F y -> pred x <= pred y -> x <= y`. -/
-theorem pred_le_inv
+theorem pred_le_right
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -520,7 +516,7 @@ Lean (adapted): weaken the conclusion to {lit}`x ≤ succ y` and strengthen the
 precondition to {lit}`1 < beta`. This mirrors the pattern used for
 {name}`pred_le_inv` and suffices for downstream ordering arguments.
 -/
-theorem succ_le_inv
+theorem le_succ_right
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -540,7 +536,7 @@ Lean (adapted): strengthen the precondition to {lit}`1 < beta` and weaken the
 conclusion to {lit}`pred x < y`. This aligns with earlier adapted monotonicity
 lemmas ({name}`pred_le`, {name}`succ_le`) and avoids forward dependencies.
 -/
-theorem pred_lt
+theorem pred_lt_right
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -554,7 +550,7 @@ theorem pred_lt
   exact lt_of_le_of_lt (pred_run_le_self (beta := beta) (fexp := fexp) hβ x) hxy
 
 /-- Coq (Ulp.v): Theorem {coq}`succ_lt`: {lit}`F x -> F y -> x < y -> succ x < succ y`. -/
-theorem succ_lt
+theorem lt_succ_right
     (x y : ℝ)
     (Fx : (FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Fy : (FloatSpec.Core.Generic_fmt.generic_format beta fexp y))
@@ -6909,6 +6905,140 @@ theorem pred_succ
     pred_succ_theorem (beta := beta) (fexp := fexp) (x := x) Fx hβ
   simpa [wp, PostCond.noThrow, Id.run, bind, pure] using hpred_succ
 
+/-! Source-facing order API.  The earlier one-sided bounds are retained under
+descriptive compatibility names; these six declarations match FLoCq's
+monotonicity and inverse-monotonicity contracts. -/
+
+/-- FLoCq `pred_le`: predecessor is monotone on formatted values. -/
+theorem pred_le
+    (x y : ℝ)
+    (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (Fy : FloatSpec.Core.Generic_fmt.generic_format beta fexp y)
+    (hxy : x ≤ y) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (pred beta fexp x, pred beta fexp y) : Id (ℝ × ℝ))
+    ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
+  intro hβ
+  simp only [wp, PostCond.noThrow, pure, Id.run]
+  rcases eq_or_lt_of_le hxy with h | h
+  · subst y
+    exact le_rfl
+  · exact le_trans
+      (pred_run_le_self (beta := beta) (fexp := fexp) hβ x)
+      (pred_ge_gt_theorem (beta := beta) (fexp := fexp)
+        x y Fx Fy h hβ)
+
+/-- FLoCq `succ_le`: successor is monotone on formatted values. -/
+theorem succ_le
+    (x y : ℝ)
+    (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (Fy : FloatSpec.Core.Generic_fmt.generic_format beta fexp y)
+    (hxy : x ≤ y) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (succ beta fexp x, succ beta fexp y) : Id (ℝ × ℝ))
+    ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
+  intro hβ
+  simp only [wp, PostCond.noThrow, pure, Id.run]
+  rcases eq_or_lt_of_le hxy with h | h
+  · subst y
+    exact le_rfl
+  · exact le_trans
+      (succ_le_lt_theorem (beta := beta) (fexp := fexp)
+        x y Fx Fy h hβ)
+      (succ_run_ge_self (beta := beta) (fexp := fexp) hβ y)
+
+/-- FLoCq `pred_le_inv`: predecessor order reflects order on formatted values. -/
+theorem pred_le_inv
+    (x y : ℝ)
+    (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (Fy : FloatSpec.Core.Generic_fmt.generic_format beta fexp y)
+    (h : pred beta fexp x ≤ pred beta fexp y) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (x, y) : Id (ℝ × ℝ))
+    ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
+  intro hβ
+  simp only [wp, PostCond.noThrow, pure, Id.run]
+  have Fpx : FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (pred beta fexp x) := by
+    have hx := generic_format_pred (beta := beta) (fexp := fexp) x Fx hβ
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hx trivial
+  have Fpy : FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (pred beta fexp y) := by
+    have hy := generic_format_pred (beta := beta) (fexp := fexp) y Fy hβ
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hy trivial
+  have hs := succ_le (beta := beta) (fexp := fexp)
+    (pred beta fexp x) (pred beta fexp y) Fpx Fpy h
+  have hs' : succ beta fexp (pred beta fexp x) ≤
+      succ beta fexp (pred beta fexp y) := by
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hs hβ
+  rw [succ_pred_theorem beta fexp x Fx hβ,
+      succ_pred_theorem beta fexp y Fy hβ] at hs'
+  exact hs'
+
+/-- FLoCq `succ_le_inv`: successor order reflects order on formatted values. -/
+theorem succ_le_inv
+    (x y : ℝ)
+    (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (Fy : FloatSpec.Core.Generic_fmt.generic_format beta fexp y)
+    (h : succ beta fexp x ≤ succ beta fexp y) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (x, y) : Id (ℝ × ℝ))
+    ⦃⇓r => ⌜r.1 ≤ r.2⌝⦄ := by
+  intro hβ
+  simp only [wp, PostCond.noThrow, pure, Id.run]
+  have Fsx : FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (succ beta fexp x) := by
+    have hx := generic_format_succ (beta := beta) (fexp := fexp) x Fx hβ
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hx trivial
+  have Fsy : FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (succ beta fexp y) := by
+    have hy := generic_format_succ (beta := beta) (fexp := fexp) y Fy hβ
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hy trivial
+  have hp := pred_le (beta := beta) (fexp := fexp)
+    (succ beta fexp x) (succ beta fexp y) Fsx Fsy h
+  have hp' : pred beta fexp (succ beta fexp x) ≤
+      pred beta fexp (succ beta fexp y) := by
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hp hβ
+  rw [pred_succ_theorem beta fexp x Fx hβ,
+      pred_succ_theorem beta fexp y Fy hβ] at hp'
+  exact hp'
+
+/-- FLoCq `pred_lt`: predecessor is strictly monotone on formatted values. -/
+theorem pred_lt
+    (x y : ℝ)
+    (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (Fy : FloatSpec.Core.Generic_fmt.generic_format beta fexp y)
+    (hxy : x < y) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (pred beta fexp x, pred beta fexp y) : Id (ℝ × ℝ))
+    ⦃⇓r => ⌜r.1 < r.2⌝⦄ := by
+  intro hβ
+  simp only [wp, PostCond.noThrow, pure, Id.run]
+  apply lt_of_not_ge
+  intro hrev
+  have hi := pred_le_inv (beta := beta) (fexp := fexp) y x Fy Fx hrev
+  have hyx : y ≤ x := by
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hi hβ
+  exact (not_le_of_gt hxy) hyx
+
+/-- FLoCq `succ_lt`: successor is strictly monotone on formatted values. -/
+theorem succ_lt
+    (x y : ℝ)
+    (Fx : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (Fy : FloatSpec.Core.Generic_fmt.generic_format beta fexp y)
+    (hxy : x < y) :
+    ⦃⌜1 < beta⌝⦄
+    (pure (succ beta fexp x, succ beta fexp y) : Id (ℝ × ℝ))
+    ⦃⇓r => ⌜r.1 < r.2⌝⦄ := by
+  intro hβ
+  simp only [wp, PostCond.noThrow, pure, Id.run]
+  apply lt_of_not_ge
+  intro hrev
+  have hi := succ_le_inv (beta := beta) (fexp := fexp) y x Fy Fx hrev
+  have hyx : y ≤ x := by
+    simpa [wp, PostCond.noThrow, pure, Id.run] using hi hβ
+  exact (not_le_of_gt hxy) hyx
+
 /-- Coq (Ulp.v):
 Theorem ulp_pred_pos:
   forall x, F x -> 0 < pred x -> ulp (pred x) = ulp x \/ x = bpow (mag x - 1).
@@ -8895,30 +9025,6 @@ strict monotonicity of `(beta : ℝ) ^ e` in the exponent. This matches how
 adjacent lemmas in this file reason about powers of the radix.
 -/
 
--- Bridge: in the Coq development, `Monotone_exp` implies a non‑FTZ exponent,
--- which we need in the x = 0 branch via `ulp_ge_ulp_0`. We isolate that
--- implication here as a local theorem until the Generic_fmt result is ported.
-private theorem monotone_exp_not_FTZ_theorem
-    (beta : Int) [ValidRadix beta] (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
-    [Monotone_exp fexp] : Exp_not_FTZ fexp := by
-  -- Port of Coq `monotone_exp_not_FTZ` (Generic_fmt.v):
-  -- Either `fexp e < e` and monotonicity gives `fexp (fexp e + 1) ≤ fexp e`,
-  -- or `e ≤ fexp e` and `Valid_exp` gives the same inequality.
-  refine ⟨?_ineq⟩
-  intro e
-  classical
-  by_cases hlt : fexp e < e
-  · -- From fexp e < e, we have fexp e + 1 ≤ e; apply monotonicity
-    have hle_succ : fexp e + 1 ≤ e := (Int.add_one_le_iff).mpr hlt
-    exact (Monotone_exp.mono (fexp := fexp) hle_succ)
-  · -- Otherwise, e ≤ fexp e; use the small‑regime clause of Valid_exp at k = e
-    have hle : e ≤ fexp e := le_of_not_gt hlt
-    have pair := (FloatSpec.Core.Generic_fmt.Valid_exp.valid_exp (fexp := fexp) e)
-    have hsmall := (pair.right hle).left
-    -- This is exactly the desired bound
-    simpa using hsmall
-
 theorem ulp_le_pos
     [Monotone_exp fexp]
     (x y : ℝ) (hx : 0 ≤ x) (hxy : x ≤ y)
@@ -8958,8 +9064,7 @@ theorem ulp_le_pos
       exact ((zpow_right_strictMono₀ hβR).monotone hfe_le)
   | inr hxeq =>
       -- x = 0: use that `ulp 0 ≤ ulp y` under (Monotone_exp → not_FTZ)
-      haveI : Exp_not_FTZ fexp :=
-        monotone_exp_not_FTZ_theorem (beta := beta) (fexp := fexp)
+      letI : Exp_not_FTZ fexp := inferInstance
       have h := (ulp_ge_ulp_0 (beta := beta) (fexp := fexp) (x := y)) hβ trivial
       simpa [wp, PostCond.noThrow, Id.run, bind, pure, hxeq] using h
 

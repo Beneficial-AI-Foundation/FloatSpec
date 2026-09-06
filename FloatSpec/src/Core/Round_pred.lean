@@ -2017,6 +2017,13 @@ section RoundNearestGeneric
 
 noncomputable section
 
+/-- FLoCq's uniqueness condition for a generic nearest tie predicate. -/
+def Rnd_NG_pt_unique_prop (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Prop :=
+  ∀ x d u,
+    Rnd_DN_pt F x d → Rnd_N_pt F x d →
+    Rnd_UP_pt F x u → Rnd_N_pt F x u →
+    P x d → P x u → d = u
+
 /-- Check uniqueness for generic nearest with tie-breaking predicate
 
     Under a uniqueness property on ties, the NG-point is unique.
@@ -2035,10 +2042,7 @@ def Rnd_NG_pt_unique_check (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
 @[spec]
 theorem Rnd_NG_pt_unique_spec (F : ℝ → Prop) (P : ℝ → ℝ → Prop)
     (x f1 f2 : ℝ) :
-    ⦃⌜(∀ x d u,
-          Rnd_DN_pt F x d → Rnd_N_pt F x d →
-          Rnd_UP_pt F x u → Rnd_N_pt F x u →
-          P x d → P x u → d = u) ∧
+    ⦃⌜Rnd_NG_pt_unique_prop F P ∧
         Rnd_NG_pt F P x f1 ∧ Rnd_NG_pt F P x f2⌝⦄
     Rnd_NG_pt_unique_check F P x f1 f2
     ⦃⇓result => ⌜result = true⌝⦄ := by

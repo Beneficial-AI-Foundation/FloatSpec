@@ -1712,7 +1712,7 @@ Local instance: validity of {name}``FloatSpec.Core.Raux.Zfloor`` as an integer r
 /-- Integer rounding via {name}``FloatSpec.Core.Raux.Zfloor``. -/
 noncomputable def rnd_floor (x : ℝ) : Int := (FloatSpec.Core.Raux.Zfloor x)
 
-instance valid_rnd_floor : Valid_rnd rnd_floor := by
+instance valid_rnd_DN : Valid_rnd FloatSpec.Core.Raux.Zfloor := by
   refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt };
   · -- Monotonicity: ⌊x⌋ ≤ ⌊y⌋ when x ≤ y
     intro x y hxy
@@ -1720,15 +1720,19 @@ instance valid_rnd_floor : Valid_rnd rnd_floor := by
     have hreal : ((Int.floor x) : ℝ) ≤ y := le_trans (by simpa using (Int.floor_le x)) hxy
     -- Use the floor characterization: z ≤ ⌊y⌋ ↔ (z:ℝ) ≤ y
     have : Int.floor x ≤ Int.floor y := (Int.le_floor.mpr hreal)
-    simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using this
+    simpa [FloatSpec.Core.Raux.Zfloor] using this
   · -- Agreement on integers: ⌊n⌋ = n
     intro n
-    simpa [rnd_floor, FloatSpec.Core.Raux.Zfloor] using (Int.floor_intCast (n := n))
+    simpa [FloatSpec.Core.Raux.Zfloor] using (Int.floor_intCast (n := n))
+
+/-- Compatibility name retained for existing FloatSpec clients. -/
+instance valid_rnd_floor : Valid_rnd rnd_floor := by
+  simpa [rnd_floor] using valid_rnd_DN
 
 /-- Coq ({lit}`Generic_fmt.v`): Ceiling rounding function used for up-rounding witnesses. -/
 noncomputable def rnd_ceil (x : ℝ) : Int := (FloatSpec.Core.Raux.Zceil x)
 
-instance valid_rnd_ceil : Valid_rnd rnd_ceil := by
+instance valid_rnd_UP : Valid_rnd FloatSpec.Core.Raux.Zceil := by
   refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt };
   · -- Monotonicity: ⌈x⌉ ≤ ⌈y⌉ when x ≤ y
     intro x y hxy
@@ -1736,13 +1740,17 @@ instance valid_rnd_ceil : Valid_rnd rnd_ceil := by
     have hreal : x ≤ ((Int.ceil y) : ℝ) := le_trans hxy (by simpa using (Int.le_ceil y))
     -- Use the ceiling characterization: ⌈x⌉ ≤ z ↔ x ≤ (z:ℝ)
     have : Int.ceil x ≤ Int.ceil y := (Int.ceil_le.mpr hreal)
-    simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil] using this
+    simpa [FloatSpec.Core.Raux.Zceil] using this
   · -- Agreement on integers: ⌈n⌉ = n
     intro n
-    simpa [rnd_ceil, FloatSpec.Core.Raux.Zceil] using (Int.ceil_intCast (n := n))
+    simpa [FloatSpec.Core.Raux.Zceil] using (Int.ceil_intCast (n := n))
+
+/-- Compatibility name retained for existing FloatSpec clients. -/
+instance valid_rnd_ceil : Valid_rnd rnd_ceil := by
+  simpa [rnd_ceil] using valid_rnd_UP
 
 /-- Coq (`Generic_fmt.v`): truncation is a valid integer rounding mode. -/
-noncomputable instance valid_rnd_Ztrunc : Valid_rnd FloatSpec.Core.Raux.Ztrunc := by
+noncomputable instance valid_rnd_ZR : Valid_rnd FloatSpec.Core.Raux.Ztrunc := by
   refine { Zrnd_le := ?mono, Zrnd_IZR := ?onInt }
   · intro x y hxy
     have h := FloatSpec.Core.Raux.Ztrunc_le x y hxy
@@ -1750,6 +1758,9 @@ noncomputable instance valid_rnd_Ztrunc : Valid_rnd FloatSpec.Core.Raux.Ztrunc :
   · intro n
     have h := FloatSpec.Core.Raux.Ztrunc_IZR n
     simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+
+/-- Compatibility name retained for existing FloatSpec clients. -/
+noncomputable abbrev valid_rnd_Ztrunc := valid_rnd_ZR
 
 /-- Coq (`Generic_fmt.v`): away-from-zero rounding is a valid integer rounding mode. -/
 noncomputable instance valid_rnd_AW : Valid_rnd FloatSpec.Core.Raux.Zaway := by
@@ -3587,6 +3598,19 @@ noncomputable instance valid_rnd_NA : Valid_rnd (Znearest ZnearestA) :=
 class Monotone_exp (fexp : Int → Int) : Prop where
   /-- Monotonicity of the exponent function. -/
   mono : ∀ {a b : Int}, a ≤ b → fexp a ≤ fexp b
+
+/-- Coq `Generic_fmt.Exp_not_FTZ`: the exponent does not flush the next
+representable exponent to a coarser one. -/
+class Exp_not_FTZ (fexp : Int → Int) : Prop where
+  exp_not_FTZ : ∀ e : Int, fexp (fexp e + 1) ≤ fexp e
+
+/-- Coq global instance `monotone_exp_not_FTZ`. -/
+instance monotone_exp_not_FTZ (fexp : Int → Int) [Valid_exp fexp]
+    [Monotone_exp fexp] : Exp_not_FTZ fexp where
+  exp_not_FTZ e := by
+    by_cases hlt : fexp e < e
+    · exact Monotone_exp.mono ((Int.add_one_le_iff).mpr hlt)
+    · exact (Valid_exp.valid_exp (fexp := fexp) e).2 (le_of_not_gt hlt) |>.1
 
 /-- Theorem: Monotonicity of cexp on the positive half-line (w.r.t. absolute value)
     If 0 < y and |x| ≤ y, then cexp x ≤ cexp y. This captures the
@@ -6474,6 +6498,111 @@ theorem generic_format_round
     generic_format beta fexp (round_to_generic beta fexp rnd x) :=
   round_to_generic_generic (beta := beta) (fexp := fexp)
     (rnd := rnd) (x := x)
+
+/-- Coq `generic_round_generic`: rounding a value already representable in
+one valid format with any second valid format preserves representability in
+the first format. -/
+theorem generic_round_generic
+    (beta : Int) [ValidRadix beta]
+    (fexp1 fexp2 : Int → Int) [Valid_exp fexp1] [Valid_exp fexp2]
+    (rnd : ℝ → Int) [Valid_rnd rnd] (x : ℝ)
+    (hx : generic_format beta fexp1 x) :
+    generic_format beta fexp1 (round_to_generic beta fexp2 rnd x) := by
+  let hβ : 1 < beta := ValidRadix.valid
+  have positiveCase : ∀ (rnd' : ℝ → Int), [Valid_rnd rnd'] → ∀ t : ℝ,
+      0 ≤ t → generic_format beta fexp1 t →
+        generic_format beta fexp1 (round_to_generic beta fexp2 rnd' t) := by
+    intro rnd' _ t ht htFmt
+    by_cases ht0 : t = 0
+    · subst t
+      have hrnd0 : rnd' (0 : ℝ) = (0 : Int) :=
+        by simpa using (Valid_rnd.Zrnd_IZR (rnd := rnd') (0 : Int))
+      simpa [round_to_generic, roundR, scaled_mantissa, hrnd0] using
+        generic_format_0_run (beta := beta) (fexp := fexp1)
+    · have htpos : 0 < t := lt_of_le_of_ne ht (Ne.symm ht0)
+      let ex := mag beta t
+      have hlower : (beta : ℝ) ^ (ex - 1) ≤ t := by
+        have h := FloatSpec.Core.Raux.mag_lower_bound
+          (beta := beta) (x := t) hβ ht0
+        simpa [ex, FloatSpec.Core.Raux.abs_val, abs_of_pos htpos, wp,
+          PostCond.noThrow, Id.run, pure] using
+          h True.intro
+      have hupper : t < (beta : ℝ) ^ ex := by
+        have h := FloatSpec.Core.Raux.mag_upper_bound
+          (beta := beta) (x := t) hβ ht0
+        simpa [ex, FloatSpec.Core.Raux.abs_val, abs_of_pos htpos, wp,
+          PostCond.noThrow, Id.run, pure] using
+          h True.intro
+      have hfexp1Large : fexp1 ex < ex := by
+        have h := mag_generic_gt beta fexp1 t
+        have h' := h ⟨hβ, ht0, htFmt⟩
+        simpa [cexp, ex, wp, PostCond.noThrow, Id.run, pure] using h'
+      by_cases hsmall : ex ≤ fexp2 ex
+      · rcases roundR_bounded_small_pos beta fexp2 rnd'
+          ⟨hlower, hupper⟩ hsmall hβ with hr0 | hrpow
+        · simpa [round_to_generic, hr0] using generic_format_0_run
+            (beta := beta) (fexp := fexp1)
+        · have hfmtPow : generic_format beta fexp1
+              ((beta : ℝ) ^ (fexp2 ex)) := by
+            have hvalid : fexp1 (fexp2 ex) < fexp2 ex :=
+              valid_exp_large fexp1 ex (fexp2 ex) hfexp1Large hsmall
+            exact (generic_format_bpow' (beta := beta) (fexp := fexp1)
+              (e := fexp2 ex)) ⟨hβ, le_of_lt hvalid⟩
+          simpa [round_to_generic, hrpow] using hfmtPow
+      · have hfexp2Large : fexp2 ex < ex := lt_of_not_ge hsmall
+        by_cases hfiner : fexp2 ex ≤ fexp1 ex
+        · have htFmt2 : generic_format beta fexp2 t :=
+            generic_inclusion_mag beta fexp1 fexp2 t hβ (by
+              intro _
+              simpa [ex] using hfiner) htFmt
+          have hid := round_generic beta fexp2 rnd' t htFmt2
+          simpa [hid] using htFmt
+        · have hcoarser : fexp1 ex < fexp2 ex := lt_of_not_ge hfiner
+          let r := round_to_generic beta fexp2 rnd' t
+          have hrBounds : (beta : ℝ) ^ (ex - 1) ≤ r ∧
+              r ≤ (beta : ℝ) ^ ex := by
+            simpa [r, round_to_generic] using
+              roundR_bounded_large_pos beta fexp2 rnd'
+                ⟨hlower, hupper⟩ hfexp2Large hβ
+          rcases lt_or_eq_of_le hrBounds.2 with hrUpper | hrTop
+          · have hrpos : 0 < r :=
+              lt_of_lt_of_le (zpow_pos (by positivity) (ex - 1)) hrBounds.1
+            have hmag : mag beta r = ex := by
+              have h := FloatSpec.Core.Raux.mag_unique
+                (beta := beta) (x := r) (e := ex) hβ
+                (by simpa [abs_of_pos hrpos] using hrBounds.1)
+                (by simpa [abs_of_pos hrpos] using hrUpper)
+              simpa [wp, PostCond.noThrow, Id.run, pure] using h True.intro
+            let rf : FlocqFloat beta :=
+              ⟨rnd' (scaled_mantissa beta fexp2 t), fexp2 ex⟩
+            have hrf : F2R rf = r := by
+              simp [rf, r, round_to_generic, roundR, cexp, ex]
+            have hcexp : r ≠ 0 → cexp beta fexp1 r ≤ rf.Fexp := by
+              intro _
+              simpa [rf, cexp, hmag] using le_of_lt hcoarser
+            exact generic_format_F2R' (beta := beta) (fexp := fexp1)
+              (x := r) (f := rf) ⟨hβ, hrf, hcexp⟩
+          · have hfmtPow : generic_format beta fexp1 ((beta : ℝ) ^ ex) :=
+              (generic_format_bpow' (beta := beta) (fexp := fexp1)
+                (e := ex)) ⟨hβ, le_of_lt hfexp1Large⟩
+            simpa [r, hrTop] using hfmtPow
+  by_cases hxNonneg : 0 ≤ x
+  · exact positiveCase rnd x hxNonneg hx
+  · have hxNeg : x < 0 := lt_of_not_ge hxNonneg
+    have hnegFmt : generic_format beta fexp1 (-x) :=
+      generic_format_opp beta fexp1 x hx
+    have hout : generic_format beta fexp1
+        (round_to_generic beta fexp2 (Zrnd_opp rnd) (-x)) :=
+      positiveCase (Zrnd_opp rnd) (-x) (by linarith) hnegFmt
+    have houtNeg : generic_format beta fexp1
+        (-round_to_generic beta fexp2 (Zrnd_opp rnd) (-x)) :=
+      generic_format_opp beta fexp1 _ hout
+    have hopp : round_to_generic beta fexp2 rnd x =
+        -round_to_generic beta fexp2 (Zrnd_opp rnd) (-x) := by
+      have h := roundR_opp (beta := beta) (fexp := fexp2)
+        (rnd := rnd) (x := -x) hβ
+      simpa [round_to_generic] using h
+    simpa [hopp] using houtNeg
 
 /-- Coq Generic_fmt.round_ext. -/
 theorem round_ext

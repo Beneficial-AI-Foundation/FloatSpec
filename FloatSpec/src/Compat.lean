@@ -20,19 +20,6 @@ open FloatSpec.Core.Generic_fmt
 export FloatSpec.Core.Generic_fmt (Valid_rnd Monotone_exp)
 export FloatSpec.Core.Ulp (Exp_not_FTZ)
 
-/-- Bridge the duplicated monotonicity classes in `Generic_fmt` and `Ulp`.
-This keeps downstream files from having to pick one local definition too early. -/
-instance instUlpMonotoneOfGenericMonotone (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Monotone_exp fexp] :
-    FloatSpec.Core.Ulp.Monotone_exp fexp where
-  mono := FloatSpec.Core.Generic_fmt.Monotone_exp.mono
-
-/-- Bridge the duplicated monotonicity classes in `Ulp` and `Generic_fmt`. -/
-instance instGenericMonotoneOfUlpMonotone (fexp : Int → Int)
-    [FloatSpec.Core.Ulp.Monotone_exp fexp] :
-    FloatSpec.Core.Generic_fmt.Monotone_exp fexp where
-  mono := FloatSpec.Core.Ulp.Monotone_exp.mono
-
 /-- Bridge: Float to real as a plain ℝ (unwraps Id) -/
 noncomputable def F2R {beta : Int} [ValidRadix beta] (f : FlocqFloat beta) : ℝ :=
   (FloatSpec.Core.Defs.F2R f)
