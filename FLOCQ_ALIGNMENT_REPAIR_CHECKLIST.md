@@ -28,9 +28,9 @@ Audit date: 2026-09-06
   mismatch, or required repair.
 - After D8-D9/T34-T36 and their caller migrations, `lake build floatspec`
   passed (6686/6686 jobs), `lake build FloatSpecTests` passed (3359/3359
-  jobs), and the pipeline regression suite passed 158/158 tests. G2 remains
-  open only because the same commands must still be reproduced from the clean
-  frozen revision required by G1.
+  jobs), and the pipeline regression suite passed 158/158 tests. Both Lake
+  commands were reproduced after G1 on clean HEAD
+  `00acaf4f073fe489f2f6c49b1dc3c8e0be426403`.
 - The source and elaborated-environment trust scan found no `sorry`, `admit`,
   `sorryAx`, unauthorized `axiom`/`opaque`/`extern`, unsafe declaration, or
   `implemented_by` escape. Nine generated `native_decide` axioms found by the
@@ -1060,7 +1060,7 @@ whole-repository certificate.
 
 - [x] **G1 — Freeze revisions.** Record the exact FLoCq and FloatSpec commits;
   the FloatSpec worktree used for certification must be clean.
-- [ ] **G2 — Build everything.** `lake build floatspec` and
+- [x] **G2 — Build everything.** `lake build floatspec` and
   `lake build FloatSpecTests` pass from a clean checkout.
 - [x] **G3 — No trust holes.** The full source tree contains no `sorry`,
   `admit`, `sorryAx`, unauthorized `axiom`/`opaque`/`extern`, unsafe escape,
