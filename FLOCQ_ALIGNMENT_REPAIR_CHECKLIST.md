@@ -68,6 +68,10 @@ Audit date: 2026-09-06
   `e4315c8d1f65d682333fd67f3c9355532e288f7f3db4a7ba349aa2816a39dd46`
   and plan
   `f578e291e45339c244c9f863e18fb9c4f014a6017efaeef1d9d09c17304dce88`.
+- The post-D10 targeted v24 judge marks `new_location_odd` aligned at 0.99
+  confidence; all three examples and all six native Coq/Lean execution chains
+  verified.  The full 5741-job subscription run is in progress, so this is
+  repair evidence for D10 rather than a repository-wide alignment score.
 - The repository is **not yet audit-aligned** under the close-out rule below:
   the 2548-item ledger has not received complete human review (G4-G6/G9),
   exhaustive cross-language executions and
