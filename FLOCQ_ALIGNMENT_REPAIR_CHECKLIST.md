@@ -1083,7 +1083,7 @@ whole-repository certificate.
 - [x] **G7 — Rounding audit.** A mechanical scan finds no generic declaration
   that binds `rnd`/`choice` while evaluating a fixed mode or `()`. Every fixed
   mode is traced to the same fixed source mode.
-- [ ] **G8 — Carrier audit.** Pff extrema and IEEE source-facing APIs use their
+- [x] **G8 — Carrier audit.** Pff extrema and IEEE source-facing APIs use their
   source-faithful carriers/predicates. Compatibility wrappers cannot inherit a
   source theorem name while adding validity assumptions.
 - [ ] **G9 — Dependency-complete proofs.** Every source theorem in the ledger
