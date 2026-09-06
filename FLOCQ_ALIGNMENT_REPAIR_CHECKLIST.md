@@ -6,11 +6,11 @@ Audit date: 2026-09-06
 
 - FLoCq source: `../sources/flocq`, commit
   `7aab8f55bceec0cfafc3b3bc0e77e0dbb5a70c5f`.
-- FloatSpec target: this repository, branch `integration`, base commit
-  `43065f115fdf4826a3c1408d7b89499d2ba412c7`, plus the current uncommitted
-  repair worktree. The worktree is intentionally not described as a frozen
-  certification revision; G1 remains open until these changes are committed
-  and reproduced from a clean checkout.
+- FloatSpec target: this repository, branch `integration`, source-bearing
+  repair commit `3d6126a893b0e75c607f481e6bde02faa6217a93` (based on
+  `43065f115fdf4826a3c1408d7b89499d2ba412c7`). The repair was committed
+  locally and the worktree was clean at the G1 check; no remote push is part
+  of this audit.
 - Latest repository-wide judge evidence inspected:
   `../pipeline/runs/flocq-integration-20260827/artifacts/judge-report.md`.
   It compiled, but only 7/5145 judge jobs were valid and its decision was
@@ -1058,7 +1058,7 @@ bug and is therefore not presented as one in the repair list above.
 All boxes below are part of this checklist. The named repairs alone are not a
 whole-repository certificate.
 
-- [ ] **G1 — Freeze revisions.** Record the exact FLoCq and FloatSpec commits;
+- [x] **G1 — Freeze revisions.** Record the exact FLoCq and FloatSpec commits;
   the FloatSpec worktree used for certification must be clean.
 - [ ] **G2 — Build everything.** `lake build floatspec` and
   `lake build FloatSpecTests` pass from a clean checkout.
