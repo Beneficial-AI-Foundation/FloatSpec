@@ -7,7 +7,7 @@ Audit date: 2026-09-06
 - FLoCq source: `../sources/flocq`, commit
   `7aab8f55bceec0cfafc3b3bc0e77e0dbb5a70c5f`.
 - FloatSpec target: this repository, branch `integration`, source-bearing
-  repair commit `ccf413dc863ecdf8a104a384a9b67b03e19221fb` (based on
+  repair commit `f8c007d10f3814c3b64048efec08cb26e42a1af7` (based on
   `43065f115fdf4826a3c1408d7b89499d2ba412c7`). The repair was committed
   locally and the worktree was clean at the G1 check; no remote push is part
   of this audit.
@@ -19,17 +19,17 @@ Audit date: 2026-09-06
 
 ## Repair execution status (2026-09-06)
 
-- The implementation work listed in D1-D10, T1-T36, and M1-M5 is committed in the
+- The implementation work listed in D1-D10, T1-T37, and M1-M5 is committed in the
   current worktree. Public source names expose source-shaped contracts;
   compatibility and derived-payload endpoints use distinct names.
-- A structural check found all 51 named sections (D1-D10, T1-T36, M1-M5), with
+- A structural check found all 52 named sections (D1-D10, T1-T37, M1-M5), with
   zero sections missing an explicit FLoCq/source contract, pre-repair Lean
   mismatch, or required repair.
-- After D10 and its caller migration, `lake build floatspec`
+- After T37 and its caller migration, `lake build floatspec`
   passed (6686/6686 jobs), `lake build FloatSpecTests` passed (3360/3360
-  jobs), and the pipeline regression suite passed 158/158 tests. Both Lake
-  commands were reproduced after G1 on clean HEAD
-  `ccf413dc863ecdf8a104a384a9b67b03e19221fb`.
+  jobs before T37 and 3361/3361 afterward), and the pipeline regression suite
+  passed 158/158 tests. Both Lake commands were reproduced after G1 on clean
+  HEAD `f8c007d10f3814c3b64048efec08cb26e42a1af7`.
 - The source and elaborated-environment trust scan found no `sorry`, `admit`,
   `sorryAx`, unauthorized `axiom`/`opaque`/`extern`, unsafe declaration, or
   `implemented_by` escape. Nine generated `native_decide` axioms found by the
@@ -37,7 +37,7 @@ Audit date: 2026-09-06
   rebuilt environment now contains zero axiom declarations. Evidence is in
   `../pipeline/runs/flocq-integration-repair-r2-20260905/artifacts/promotion-report.json`.
   `git diff --check` passed.
-- The current deterministic pairing plan is
+- The last pre-T37 deterministic pairing plan is
   `../pipeline/runs/flocq-integration-repair-r2-20260905/artifacts/judge-plan.json`.
   Its typed target environment and compile preflight passed; it indexes 5695
   target declarations, creates 5741 jobs, and pairs 2472/2548 source
@@ -62,7 +62,7 @@ Audit date: 2026-09-06
   same-basename collision. The audit also rejects generated environment axioms,
   not only lexical `axiom` commands. The pipeline regression suite passes
   158/158 tests.
-- The current post-D10 plan hashes are source index
+- The now-historical post-D10 plan hashes are source index
   `b63167bfb633c45bebee9b0effb7282974ece811d3eafa84e14e16c4bb872b6b`,
   target index
   `e4315c8d1f65d682333fd67f3c9355532e288f7f3db4a7ba349aa2816a39dd46`
@@ -70,8 +70,10 @@ Audit date: 2026-09-06
   `f578e291e45339c244c9f863e18fb9c4f014a6017efaeef1d9d09c17304dce88`.
 - The post-D10 targeted v24 judge marks `new_location_odd` aligned at 0.99
   confidence; all three examples and all six native Coq/Lean execution chains
-  verified.  The full 5741-job subscription run is in progress, so this is
-  repair evidence for D10 rather than a repository-wide alignment score.
+  verified. The subsequent full 5741-job subscription run was stopped after
+  its `Zsame_sign_imp` result exposed the T37 target gap and a judge false
+  positive. A fresh plan and run are required; the stopped run is not a
+  repository-wide alignment score.
 - The repository is **not yet audit-aligned** under the close-out rule below:
   the 2548-item ledger has not received complete human review (G4-G6/G9),
   exhaustive cross-language executions and
@@ -999,6 +1001,33 @@ name or bind them locally using the source precision inequalities,
 scan every caller so the source-shaped public name is never invoked with an
 old payload-shaped argument list.
 
+### T37. `Core.Zaux` same-sign theorems were replaced by reflexive Boolean checks
+
+- **FLoCq:** `src/Core/Zaux.v:450-490` exports four propositions:
+  `Zsame_sign_trans`, `Zsame_sign_trans_weak`, `Zsame_sign_imp`, and
+  `Zsame_sign_odiv`. Their conclusions are the required product
+  nonnegativity facts; `Zsame_sign_odiv` uses truncating `Z.quot`.
+- **Lean before repair:** the first two source names were Hoare specifications
+  of Boolean checks, while `Zsame_sign_imp` and `Zsame_sign_odiv` had only
+  computational definitions plus `_spec` theorems. Every `_spec` merely
+  proved that a pure result equals the same `decide` expression used to define
+  it, so it did not establish the source proposition. The old division check
+  also used Lean integer `/`, not Coq's toward-zero quotient.
+- **Judge failure:** v24 job `00c7d9ad513bf9b3291c` called the Coq theorem on
+  one side and `Zsame_sign_imp_spec` on the other, then marked them aligned at
+  0.98 confidence. All six compiler chains were genuine, but they proved
+  different claims: direct product nonnegativity versus a reflexive Hoare
+  equality. Executing two unrelated true claims cannot supply the missing
+  theorem-contract bridge.
+- **Observable division mismatch:** at `u = -3`, `v = 2`, Coq
+  `Z.quot (-3) 2 = -1`, while Lean Euclidean `(-3) / 2 = -2`; hence the
+  products in the old computational check were `3` and `6` respectively,
+  even though both happen to be nonnegative.
+- **Repair:** retain computation under explicit `_check` names; restore all
+  four source names as direct propositions with the exact hypotheses and
+  conclusions; use `Int.tdiv` for `Z.quot`; and compile source-contract checks
+  plus the negative-quotient regression in `FloatSpec/Test/ZauxSource.lean`.
+
 ## Confirmed missing source-facing declarations
 
 These are absent source contracts, not proof holes in an existing theorem.
@@ -1118,7 +1147,7 @@ whole-repository certificate.
   representations of equal real values. Every claimed counterexample is
   manually reproduced on both sides.
 - [ ] **G12 — Independent sign-off.** A second reviewer checks every repaired
-  entry in D1-D10, T1-T36, and M1-M5 plus all nontrivial ledger
+  entry in D1-D10, T1-T37, and M1-M5 plus all nontrivial ledger
   classifications. The final report links the clean build, trust scan, ledger,
   executed harnesses, and counterexample audit.
 
