@@ -19,17 +19,18 @@ Audit date: 2026-09-06
 
 ## Repair execution status (2026-09-06)
 
-- The implementation work listed in D1-D10, T1-T37, and M1-M5 is committed in the
-  current worktree. Public source names expose source-shaped contracts;
-  compatibility and derived-payload endpoints use distinct names.
-- A structural check found all 52 named sections (D1-D10, T1-T37, M1-M5), with
+- The implementation work listed in D1-D10, T1-T43, and M1-M5 is complete.
+  Public source names expose source-shaped contracts, while compatibility and
+  derived-payload endpoints use distinct names.  On the final named-repair
+  snapshot, `lake build` passed 3351/3351 jobs and `lake build FloatSpec.Test`
+  passed 3359/3359 jobs.
+- A structural check found all 58 named sections (D1-D10, T1-T43, M1-M5), with
   zero sections missing an explicit FLoCq/source contract, pre-repair Lean
   mismatch, or required repair.
-- After T37 and its caller migration, `lake build floatspec`
-  passed (6686/6686 jobs), `lake build FloatSpecTests` passed (3360/3360
-  jobs before T37 and 3361/3361 afterward), and the pipeline regression suite
-  passed 158/158 tests. Both Lake commands were reproduced after G1 on clean
-  HEAD `f8c007d10f3814c3b64048efec08cb26e42a1af7`.
+- After T38 and its caller migration, `lake build floatspec` passed
+  6686/6686 jobs and `lake build FloatSpec.Test` passed 3359/3359 jobs on code
+  commit `38610f96f72bdb2931eea6f91b9f0e74fe85c576`. The pipeline regression suite
+  also passed 158/158 tests after the T38 target-only repair.
 - The source and elaborated-environment trust scan found no `sorry`, `admit`,
   `sorryAx`, unauthorized `axiom`/`opaque`/`extern`, unsafe declaration, or
   `implemented_by` escape. Nine generated `native_decide` axioms found by the
@@ -37,10 +38,10 @@ Audit date: 2026-09-06
   rebuilt environment now contains zero axiom declarations. Evidence is in
   `../pipeline/runs/flocq-integration-repair-r2-20260905/artifacts/promotion-report.json`.
   `git diff --check` passed.
-- The last pre-T37 deterministic pairing plan is
+- The current post-T38 deterministic pairing plan is
   `../pipeline/runs/flocq-integration-repair-r2-20260905/artifacts/judge-plan.json`.
-  Its typed target environment and compile preflight passed; it indexes 5695
-  target declarations, creates 5741 jobs, and pairs 2472/2548 source
+  Its typed target environment and compile preflight passed; it indexes 5745
+  target declarations, creates 5791 jobs, and pairs 2472/2548 source
   declarations. The 76 unmatched records have an exact reviewed ledger at
   `../pipeline/runs/flocq-integration-repair-r2-20260905/manual-audit/source-unmatched-ledger.json`:
   69 non-exported local `FtoRradix` coercions, one exported Pff2 `FtoRradix`
@@ -62,18 +63,73 @@ Audit date: 2026-09-06
   same-basename collision. The audit also rejects generated environment axioms,
   not only lexical `axiom` commands. The pipeline regression suite passes
   158/158 tests.
-- The now-historical post-D10 plan hashes are source index
+- The post-T38 plan hashes are source index
   `b63167bfb633c45bebee9b0effb7282974ece811d3eafa84e14e16c4bb872b6b`,
   target index
-  `e4315c8d1f65d682333fd67f3c9355532e288f7f3db4a7ba349aa2816a39dd46`
+  `cf4d412ca46e82e47e338ab0fd52ad17c7390887307ce296d0ee21d56923cd98`
   and plan
-  `f578e291e45339c244c9f863e18fb9c4f014a6017efaeef1d9d09c17304dce88`.
+  `74471270cf767c884006a8d5da85695ea09e26c3d64abc6ba30edb9a8139235d`.
 - The post-D10 targeted v24 judge marks `new_location_odd` aligned at 0.99
   confidence; all three examples and all six native Coq/Lean execution chains
   verified. The subsequent full 5741-job subscription run was stopped after
   its `Zsame_sign_imp` result exposed the T37 target gap and a judge false
   positive. A fresh plan and run are required; the stopped run is not a
   repository-wide alignment score.
+- The post-T42 stable plan is
+  `../pipeline/runs/flocq-alignment-r3-20260906/artifacts/judge-plan.json`.
+  It indexes 5907 target declarations, creates 5953 jobs, and pairs 2472/2548
+  source declarations.  Its source-index hash is
+  `b63167bfb633c45bebee9b0effb7282974ece811d3eafa84e14e16c4bb872b6b`,
+  target-index hash is
+  `7acb5c7d65bac84f8556cad04967da5aaa6544b9a0ccf769ef7f4ff83b6f37d4`,
+  and plan-file hash is
+  `8e574e828afd3847f17662ff4602fcea5a500c8b7c1f83c78a13df68c0f16c8e`.
+  The v24 subscription smoke rerun marks `Fsqrt_core`, source-facing `boundR`,
+  and `Binary.Bfrexp` aligned (0.99, 0.99, and 0.98 confidence), with every
+  generated Coq/Lean execution chain compiler-verified.  Manual audit added
+  the omitted root-boundary observations: `Fsqrt_core 2 1 0 1` returns exact
+  zero on both sides, `boundR 1 0` returns mantissa/exponent `(1,1)` on both
+  sides, and finite `Bfrexp` maps the value 1 to significand value 1/2 and
+  exponent 1 on the Lean side, matching the evaluated Coq result.  The model's
+  original `Bfrexp` examples covered only zero/infinity/NaN, so those examples
+  alone would have been insufficient evidence for its finite branch.  The
+  complete root-smoke review is
+  `../pipeline/runs/flocq-alignment-r3-20260906/manual-audit/post-t42-root-smoke.md`.
+- A subsequent 25-job subscription batch produced 28 valid verdicts: 27
+  `aligned` and one `not_aligned`, with every generated Coq/Lean execution
+  chain verified. Manual review confirmed the `Zdigits_aux` counterexample as
+  a true positive and found one false-positive `aligned` verdict for
+  `powerRZ_inv`: the judge treated a related total integer-power identity as
+  the exact source theorem despite the missing nonzero premise and different
+  exported conclusion. Both target declarations are repaired in T43. This
+  batch remains incomplete repository evidence, not an alignment score.
+- The post-T43 fresh v24 plan is
+  `../pipeline/runs/flocq-alignment-r4-20260906/artifacts/judge-plan.json`.
+  It indexes 5905 target declarations, creates 5951 jobs, and retains the
+  reviewed 2472/2548 source pairing plus the 76-item unmatched ledger. Its
+  source-index hash is
+  `b63167bfb633c45bebee9b0effb7282974ece811d3eafa84e14e16c4bb872b6b`,
+  target-index hash is
+  `ffc5592ca517e9e9aaa533bbf78bc3701617c41622fb0c3050809bfb3015de46`,
+  and plan-file hash is
+  `33093cb11c68fdaf8285ad8e13c11486bb4f07776b17c31180030a974159b65a`.
+  Focused subscription reruns mark both repaired items aligned at 0.99
+  confidence with three independently verified Coq/Lean observations each.
+  Manual review confirms the signed stop/recursive branches for `Zdigits_aux`
+  and the exact nonzero interface and conclusion for `powerRZ_inv`; see
+  `../pipeline/runs/flocq-alignment-r4-20260906/manual-audit/post-t43-focused.md`.
+  The next 25 dependency-ordered jobs also complete successfully: the fresh
+  workspace now has 27/27 `aligned` verdicts, 82 accepted examples, and all 82
+  source plus 82 target execution chains verified. Manual review finds no
+  false positive in this dependency-first batch; the item-by-item record is
+  `../pipeline/runs/flocq-alignment-r4-20260906/manual-audit/dependency-batch-001-review.md`.
+  This is still only 27/5951 jobs (0.45%), so the judge report remains
+  `INCOMPLETE` and cannot close a whole-repository gate.
+- The final elaborated-environment trust scan indexes 13100 declarations and
+  reports zero explicit axioms, environment axioms, sorries, unsafe
+  declarations, and `implemented_by` declarations.  The source tree contains
+  no `native_decide`, and `git diff --check` passes. The post-T43 full build
+  passes 3351/3351 jobs and `lake build FloatSpec.Test` passes 3359/3359 jobs.
 - The repository is **not yet audit-aligned** under the close-out rule below:
   the 2548-item ledger has not received complete human review (G4-G6/G9),
   exhaustive cross-language executions and
@@ -1028,6 +1084,267 @@ old payload-shaped argument list.
   conclusions; use `Int.tdiv` for `Z.quot`; and compile source-contract checks
   plus the negative-quotient regression in `FloatSpec/Test/ZauxSource.lean`.
 
+### T38. Remaining `Core.Zaux` source names exposed checks, wrong carriers, or Euclidean division
+
+- **FLoCq:** outside the four T37 declarations, `src/Core/Zaux.v` exports
+  direct propositions for integer powers, radix facts, division/remainder,
+  Boolean comparisons, three-way comparison, conditional negation, fast
+  power/division correctness, and iteration. `Zfast_pow_pos` and
+  `iter_pos_nat` quantify over Coq `positive`; the `ZO*` family uses
+  truncating `Z.quot`/`Z.rem`; `Zfast_div_eucl_correct` also covers a zero
+  divisor.
+- **Lean before repair:** many exact source names denoted constants or Boolean
+  computations whose `_spec` theorem only restated the defining result. In
+  particular, `Zeq_bool_true`, `Zle_bool_opp`, `Zcompare_Lt`, and the
+  `cond_Zopp` lemmas did not mention the source operation in their conclusion.
+  `Zmod_mod_mult`, `ZOmod_eq`, `Zdiv_mod_mult`, `ZOmod_mod_mult`,
+  `ZOdiv_mod_mult`, and `ZOdiv_plus` similarly exposed result-producing checks
+  instead of source equations. The `ZO*` checks used Lean Euclidean `/` and
+  `%`; `Zpower_pos_gt_0` and `Zfast_pow_pos_correct` used `Nat`, admitting the
+  source-impossible exponent zero; `Zfast_div_eucl_correct` added `b ≠ 0`;
+  and the three iteration source names were check functions/spec variants.
+- **Observable arithmetic mismatch:** Coq truncation gives
+  `Z.quot (-7) 3 = -2` and `Z.rem (-7) 3 = -1`, whereas Lean Euclidean
+  `(-7) / 3 = -3` and `(-7) % 3 = 2`. Thus the old `ZOmod_eq`/nested
+  quotient checks could execute different values while their reflexive specs
+  still passed. A later executed judge exposed the distinct floor-division
+  mismatch in `Z_div_eucl`/`Zfast_div_eucl`: for `(7,-3)`, FLoCq
+  `Z.div_eucl` returns `(-3,-2)`, while Lean's `/,%` pair returned `(-2,1)`.
+  Both observations were then reproduced directly with Coq and Lean.
+- **Dependent caller mismatch:** `Core.Raux.mag_le_Zpower` and
+  `mag_gt_Zpower` used the theorem name `Zpower_Zpower_nat` as if it were the
+  integer-power function. Their public premises therefore did not state the
+  FLoCq `Zpower` bound.
+- **Repair:** keep executable checks under `_check` names and restore every
+  source theorem name as its direct equation/proposition. Represent Coq
+  `positive` by `Positive`, use `Int.tdiv`/`Int.tmod` for all `ZO*` statements,
+  use `Int.fdiv` plus the defining remainder equation for `Z.div_eucl`, cover
+  negative and zero divisors, and expose direct fast-power, fast-division, and
+  iteration equalities. Preserve the existing `iter_nat` implementation shape
+  required by IEEE definitional reductions, but prove the source recursion and
+  composition equations extensionally. Route both Raux magnitude theorems
+  through the actual `Zpower` definition. Compile the full repository and the
+  `ZauxSource` contract/negative-arithmetic regressions.
+
+### T39. `Rnd_NG_pt_unique_prop` must retain its Type-valued tie payload
+
+- **FLoCq:** `src/Core/Round_pred.v:701` exports
+  `Rnd_NG_pt_unique_prop` with `P : R -> R -> Type`; it is not restricted to
+  proof-irrelevant propositions.
+- **Lean before repair:** `FloatSpec/src/Core/Round_pred.lean` restricted `P`
+  to `Real -> Real -> Prop`.
+- **Observable domain mismatch:** Coq accepts
+  `Rnd_NG_pt_unique_prop (fun _ => True) (fun _ _ => nat)`, while the old Lean
+  binder rejected `fun _ _ => Nat` before any rounding hypotheses were
+  considered.
+- **Repair:** universe-generalize only this definition's `P` binder and retain
+  the Prop-specialized public theorems whose FLoCq contracts are themselves
+  Prop-valued. Add a compilation regression instantiating the definition with
+  `Nat`.
+
+### T40. `Core.Raux` checks and magnitude lemmas must observe the source operations
+
+- **FLoCq:** the 25 affected public items expose direct real/integer
+  propositions over `Rabs`, comparison, floor/truncating division, integer
+  powers, conditional negation, and the dependent `mag_prop` magnitude:
+  `Rabs_gt`; `Rcompare_sym`, `Rcompare_opp`, `Rcompare_plus_r`,
+  `Rcompare_plus_l`, `Rcompare_mult_r`, `Rcompare_mult_l`;
+  `negb_Rlt_bool`, `negb_Rle_bool`; `Zfloor_div`, `Ztrunc_div`;
+  `IZR_Zpower_pos`, `IZR_Zpower_nat`, `IZR_Zpower`;
+  `bpow`, `mag`, `bpow_unique`, `mag_unique_pos`, `mag_le_abs`, `mag_le`,
+  `lt_mag`, `bpow_mag_gt`, `bpow_mag_le`, `mag_sqrt`; and `IZR_cond_Zopp`.
+- **Lean before repair:** `Rabs_gt` was paired with an unrelated spec; the six
+  `Rcompare_*` checks returned the expected right-hand side and their specs
+  proved only that result's self-equality; the two `negb_*` formulas were
+  interchanged. `Zfloor_div` strengthened `y != 0` to `0 < y`, and
+  `Ztrunc_div` added both `0 <= x` and `0 < y`. The three `IZR_Zpower*`
+  bridges and `IZR_cond_Zopp` observed duplicate real expressions rather than
+  the translated integer operation. The magnitude block changed the source
+  carrier, moved or weakened hypotheses between neighboring names, added
+  derived positivity/absolute-value/logarithm payloads, or returned a
+  generalized intermediate theorem instead of the direct source result.
+- **Observable mismatches:** at `x = y = 0`, FLoCq's
+  `negb_Rlt_bool` and `negb_Rle_bool` produce different Booleans, exposing the
+  swap. Negative divisors satisfy both source division theorems but were
+  rejected by Lean; the correct observers are `Int.fdiv` for floor division
+  and `Int.tdiv` for truncation. A vacuous power bridge continued to pass even
+  if the integer-power implementation was changed because it never mentioned
+  that implementation.
+- **Repair:** restore direct source propositions under all 25 public names;
+  retain generalized or proof-stage forms only under descriptive
+  `_from_*_payload` names. Put the source-dependent `bpow`/`mag` carriers in
+  the existing `RauxSourceFacade`, use `Int.fdiv`/`Int.tdiv`, and migrate every
+  old payload-shaped caller explicitly. Compile negative division, Boolean
+  equality-boundary, and source-signature regressions.
+
+### T41. `Prop` theorems must derive format and rounding witnesses internally
+
+An exhaustive check of all 241 exports in `Prop/{Relative,
+Double_rounding,Round_odd,Div_sqrt_error,Plus_error,Mult_error,Sterbenz}.v`
+found 57 additional contract mismatches. The required repairs are:
+
+- **Relative (3):** `relative_error_le_conversion_inv` and
+  `relative_error_le_conversion_round_inv` are source theorems for an arbitrary
+  `rnd`; Lean added `[Valid_rnd rnd]`. `error_N_FLT` duplicated source
+  `0 < prec` with an exposed `[Prec_gt_0 prec]`. Remove those public proof
+  payloads and derive only what the bodies actually need.
+- **Mult_error (3):** `mult_bpow_exact_FLX`, `mult_bpow_exact_FLT`, and
+  `mult_bpow_pos_exact_FLT` exported `[Prec_gt_0 prec]`, absent from FLoCq.
+  Preserve the source domains, including `prec = 0`, using a direct proof or a
+  lower helper that does not demand the stronger instance.
+- **Plus_error (1):** `round_repr_same_exp` added `[Valid_exp fexp]` although
+  FLoCq requires only `Valid_rnd rnd`; remove the exponent instance from the
+  public contract.
+- **Div_sqrt_error (9):** `generic_format_plus_prec` added
+  `[Valid_exp fexp]`, and `sqrt_error_N_FLX_aux1` added `[Prec_gt_0 prec]`.
+  Conversely, `sqrt_error_N_FLX_aux2`, `sqrt_error_N_FLX_aux3`,
+  `sqrt_error_N_FLX`, `sqrt_error_N_FLX_ex`,
+  `sqrt_error_N_FLX_round_ex`, `sqrt_error_N_FLT_ex`, and
+  `sqrt_error_N_FLT_round_ex` dropped the exported source premise
+  `1 < prec`. Restore that premise even where the Lean theorem happens to prove
+  a stronger statement.
+- **Round_odd (18):** `generic_format_fexpe_fexp` added two `Valid_exp`
+  instances. The source names `d_eq`, `u_eq`, `d_ge_0`, `mag_d`, `Fexp_d`,
+  `format_bpow_x`, `format_bpow_d`, `d_le_m`, `m_le_u`, `mag_m`, `u'_eq`,
+  `m_eq`, `m_eq_0`, `fexp_m_eq_0`, `mag_m_0`, `DN_odd_d_aux`, and
+  `UP_odd_d_aux` exposed some combination of the internally derived opposite
+  endpoint, canonicality, positivity, `Exists_NE`, or even-radix witnesses.
+  Restore each exact FLoCq input list and construct those intermediates in the
+  body; do not duplicate the already repaired `mag_round_odd` and
+  `fexp_round_odd` work.
+- **Double_rounding (23):** `round_round_mult_aux`, `round_round_mult`,
+  `round_round_mult_FLX`, `round_round_mult_FLT`, and
+  `round_round_mult_FTZ` added `Valid_exp`/`Prec_gt_0` payloads; the four public
+  operation theorems also replaced FLoCq's supplied `rnd` function by the
+  finite `Mode` carrier. `mag_plus_separated`,
+  `round_round_plus_aux0_aux_aux`, `round_round_plus_aux0_aux`,
+  `round_round_plus_aux0`, `round_round_minus_aux0_aux`,
+  `round_round_minus_aux0`, `round_round_plus_radix_ge_3_aux0`, and
+  `round_round_minus_radix_ge_3_aux0` added `Valid_exp` instances absent from
+  their exported FLoCq types. Finally,
+  `FLX_round_round_plus_hyp`, `FLT_round_round_plus_hyp`,
+  `FLX_round_round_plus_radix_ge_3_hyp`,
+  `FLT_round_round_plus_radix_ge_3_hyp`, `FLT_round_round_sqrt_hyp`,
+  `FTZ_round_round_sqrt_hyp`, `FLT_round_round_sqrt_radix_ge_4_hyp`,
+  `FTZ_round_round_sqrt_radix_ge_4_hyp`, `FLT_round_round_div_hyp`, and
+  `FTZ_round_round_div_hyp` exposed `Prec_gt_0 prec'`, which FLoCq derives
+  from the arithmetic precision relation. Restore raw `rnd` through the
+  existing D1 bridge and derive every secondary instance internally.
+
+Concrete rejected-source witnesses include `prec = 0` for the multiplication
+and square-root auxiliary contracts, invalid but source-permitted exponent
+functions for the helper contracts, and `x = d = u = 0` for the Round_odd
+lemmas whose old Lean contracts incorrectly required `0 < x`. These are
+source-pass/old-Lean-uninvokable counterexamples even when the theorem
+conclusion itself was unchanged.
+
+### T42. Remaining `Calc`/`Core` definitions and contracts must preserve total and boundary semantics
+
+An exhaustive `Check @` audit matched all 603 exports in the 16 audited
+`Calc`/`Core` modules and found 77 affected public items. Fix every name below;
+keeping only a nearby generalized theorem is not sufficient.
+
+- **Calc.Div (3):** `Fdiv_core` and `Fdiv` used Lean Euclidean `/` and `%`
+  instead of Coq `Z.div_eucl` total semantics. For `(m1,m2,e) = (5,-3,0)`,
+  FLoCq returns quotient/remainder `(-2,-1)` while the old Lean code returned
+  `(-1,2)`. `Fdiv_correct` also omitted the source conclusion
+  `e <= cexp (...)`. Implement the signed Euclidean branch and restore the
+  full conjunction.
+- **Calc.Sqrt (2):** `Fsqrt_core` and `Fsqrt` computed a negative-input
+  remainder after `Int.sqrt`, while Coq `Z.sqrtrem` totalizes negative inputs
+  as `(0,0)`. Thus mantissa `-1` was exact in FLoCq but inexact in Lean.
+  Preserve that total branch without changing the positive-domain correctness
+  theorem.
+- **Core.Digits (23):** repair `digits2_Pnat`, `digits2_Pnat_correct`,
+  `Z_of_nat_S_digits2_Pnat`, `Zpos_digits2_pos`, `Zdigits2_Zdigits`,
+  `Zsum_digit_digit`, `Zdigit_ge_Zpower_pos`, `Zdigit_ge_Zpower`,
+  `Zdigit_not_0_pos`, `Zdigit_not_0`, `ZOmod_plus_pow_digit`,
+  `ZOdiv_plus_pow_digit`, `Zdigit_slice`, `Zpower_le_Zdigits`,
+  `Zdigits_gt_Zpower`, `Zdigits_correct`, `Zdigits_unique`, `Zdigits_le`,
+  `Zdigits_slice`, `Zslice_scale`, `Zsame_sign_slice`, `Zslice_slice`, and
+  `lt_Zdigits`. The old translation used Nat bit-length
+  (`digits2_Pnat 1 = 1` rather than source `0`), replaced indexed/all-position
+  digit theorems by single-point or existential claims, reversed
+  `Zpower_le_Zdigits`, changed truncating remainder to `%`, converted negative
+  exponents with `.natAbs`, and added positivity, nonzero, nonnegative-index,
+  positive-length, or divisibility assumptions absent from FLoCq. Restore
+  Coq-positive recursion, signed powers, truncating division/remainder, and
+  each exact quantified contract. Required boundary regressions include zero,
+  negative integers, negative exponents, and negative slice indices.
+- **Core.FLT (5):** `FLT_format` incorrectly collapsed invalid precision to a
+  permissive generic format; `cexp_FLT_FLX` and `generic_format_FLT_FLX` used
+  threshold `beta^(emin+prec)` instead of `beta^(emin+prec-1)`;
+  `ulp_FLT_gt` weakened strict `<` to `<=`; and
+  `succ_FLT_exact_shift_pos` added one to both source bounds. Preserve the
+  source predicate even when precision is invalid and restore all boundaries.
+- **Core.FLX (3):** `FLX_format` had the same invalid-precision collapse, and
+  `FIX_format_FLX` changed the lower endpoint from `<=` to `<`. In addition,
+  Lean defined `FLXN_format` as an alias of `FLX_format`, while FLoCq defines
+  a distinct existential representation whose nonzero mantissa lies in
+  `[beta^(prec-1), beta^prec)`. Restore both source predicates and the closed
+  `FIX_format_FLX` endpoint; prove their generic-format bridges only under the
+  source precision context rather than identifying the definitions.
+- **Core.Float_prop (7):** restore the exact implication direction and
+  assumptions of `F2R_lt`, `F2R_eq`, `F2R_le`, `eq_F2R`, `lt_F2R`, and
+  `le_F2R`; generalized iff endpoints may remain only under descriptive names.
+  `bpow_le_F2R_m1` was translated as an unrelated negative-mantissa bound;
+  replace it with the source power/value inequality. A simple positive
+  mantissa witness already distinguishes that wrong contract.
+- **Core.Generic_fmt (16):** repair `canonical_generic_format`,
+  `abs_lt_bpow_prec`, `subnormal_exponent`, `generic_format_bpow_inv'`,
+  `generic_format_bpow`, `generic_inclusion_mag`,
+  `generic_inclusion_lt_ge`, `generic_inclusion_ge`, `generic_inclusion`,
+  `generic_inclusion_le_ge`, `scaled_mantissa_lt_bpow`,
+  `generic_format_round_pos`, `generic_N_pt_DN_or_UP`, `round_ZR_pt`,
+  `round_N0_pt`, and `round_NA_pt`. The old declarations variously added
+  `Valid_exp`, changed `<`/`<=` boundary conditions, tested `fexp e` instead of
+  source `fexp (e+1)`, replaced a conjunction/existential by a one-way program
+  postcondition, or replaced equality to the concrete rounded result by
+  existence/satisfaction of some endpoint. Keep generalized payload forms
+  separately and restore the concrete source result under the source name.
+- **Core.Round_NE (8):** `DN_UP_parity_pos_prop`, `DN_UP_parity_prop`,
+  `DN_UP_parity_aux`, `DN_UP_parity_generic_pos`,
+  `DN_UP_parity_generic`, `round_NE_opp`, `round_NE_abs`, and
+  `round_NE_pt_pos` must use the source float/canonical premises and the
+  concrete `round ... ZnearestE` result. The old facade substituted real
+  endpoint predicates or existentially selected an arbitrary nearest result;
+  some checks did not observe their bound `x` at all.
+- **Core.Ulp (10):** remove the source-absent `[Exp_not_FTZ]` payload from
+  `round_UP_DN_ulp`, `error_le_half_ulp`, `ulp_DN`, and
+  `pred_UP_eq_DN`, and from `error_le_half_ulp_round` where FLoCq assumes only
+  `Monotone_exp`. Remove the extra `Monotone_exp` from
+  `round_neq_0_negligible_exp` and `eq_0_round_0_negligible_exp`, the added
+  difference-nonzero premise from `generic_format_pred_aux2`, and the added
+  `u != 0` premise from `round_N_ge_ge_midp` and `round_N_le_le_midp`.
+  Derive any needed facts internally. Source-valid witnesses include an FTZ
+  exponent that is monotone but not `Exp_not_FTZ`, a valid nonmonotone
+  exponent with `negligible_exp = None`, and `u = v = 0` for both midpoint
+  theorems.
+
+For T42, repair root definitions first, preserve old generalized endpoints
+only under descriptive names, migrate all callers, and add focused edge-case
+regressions. A full build is required because these declarations sit below
+most of FloatSpec.
+
+### T43. Post-T42 judge findings must preserve signed helper semantics and exact compatibility contracts
+
+- **`Core.Digits.Zdigits_aux`:** FLoCq compares its signed section parameter
+  `p : Z` directly with the current power. The old Lean helper converted `p`
+  with `Int.natAbs`, so `(beta,p,d,pow,fuel) = (2,-1,5,0,1)` returned `6`
+  instead of the source result `5`. Keep the helper signed and make only the
+  public `Zdigits` caller supply the positive magnitude of its integer input.
+- **`Pff.powerRZ_inv`:** the exported source contract requires `x <> 0` and
+  proves `powerRZ (/x) z = / powerRZ x z`. The old Lean source name instead
+  exposed a total Hoare theorem for `(r^z)⁻¹ = r^(-z)`. The latter identity is
+  related but admits the target-only input `r = 0` and is not the same public
+  contract. Expose the nonzero premise and the direct inversion-of-base
+  equality under `powerRZ_inv`; retain any normalized identity only under a
+  descriptive compatibility name.
+
+Both repairs require focused regressions for the signed helper boundary and
+the nonzero theorem interface, followed by a fresh judge plan because the
+target declarations and hashes changed.
+
 ## Confirmed missing source-facing declarations
 
 These are absent source contracts, not proof holes in an existing theorem.
@@ -1082,6 +1399,23 @@ These are absent source contracts, not proof holes in an existing theorem.
 - **Repair:** publish exact aliases in `FloatSpec.Calc.Round` and keep the
   `Audit` namespace only as an implementation detail; compile all eight aliases
   against the existing proof terms.
+
+### T44. r4 raw `not_aligned` boundary findings
+
+- **FLoCq:** `relative_error_FLX_aux` and `relative_error_FLT_aux` export no
+  positive-precision premise; `Zpower_nat_less` assumes `1 < n` and includes
+  `q = 0`; Pff `pos_length` is the zero-based depth of Coq `positive`;
+  `FtoR`, `UniqueP`, `MonotoneP`, and `MinExList` are total over integer radix.
+- **Lean before repair:** the two relative lemmas exposed `Prec_gt_0`;
+  `Zpower_nat_less` required `q > 0`; `pos_length` returned the positive value,
+  changing `digitAux`; and only the indexed implementation exposed the last
+  three predicates/theorem. `Source.FtoR` was already exact but was paired to
+  the wrong target by the judge.
+- **Repair:** remove the proof-only precision binders, restore the exact power
+  premise, use binary depth for `pos_length`, and add unrestricted
+  `Source.UniqueP`, `Source.MonotoneP`, and `Source.MinExList`. Preserve the
+  indexed implementation as the internal library API. Native Coq/Lean edge
+  observations and `FloatSpec.Test.PffSourceContracts` must pass.
 
 ## Known match gaps that are not independent semantic repair items
 
@@ -1147,7 +1481,7 @@ whole-repository certificate.
   representations of equal real values. Every claimed counterexample is
   manually reproduced on both sides.
 - [ ] **G12 — Independent sign-off.** A second reviewer checks every repaired
-  entry in D1-D10, T1-T37, and M1-M5 plus all nontrivial ledger
+  entry in D1-D10, T1-T44, and M1-M5 plus all nontrivial ledger
   classifications. The final report links the clean build, trust scan, ledger,
   executed harnesses, and counterexample audit.
 

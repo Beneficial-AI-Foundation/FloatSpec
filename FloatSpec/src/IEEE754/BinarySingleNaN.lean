@@ -339,7 +339,7 @@ theorem Bnormfr_mantissa_correct {prec emax : Int}
     match x with
     | BinarySingleNaNFloat.B754_finite _ m e _ _ =>
         BinarySingleNaNFloat.Bnormfr_mantissa x = m ∧
-          ((FloatSpec.Core.Digits.digits2_Pnat m : Nat) : Int) = prec ∧
+          FloatSpec.Core.Digits.digits2_pos m = prec ∧
           e = -prec
     | _ => False := by
   cases x with
@@ -450,12 +450,12 @@ theorem Bnormfr_mantissa_correct {prec emax : Int}
           FloatSpec.Core.Digits.Zdigits 2 (m : Int) = prec := by
         omega
       have hdigits2 :
-          ((FloatSpec.Core.Digits.digits2_Pnat m : Nat) : Int) = prec := by
+          FloatSpec.Core.Digits.digits2_pos m = prec := by
         have htrip := FloatSpec.Core.Digits.Zpos_digits2_pos m
         have hzdigits_digits2 :
             FloatSpec.Core.Digits.Zdigits 2 (m : Int) =
-              ((FloatSpec.Core.Digits.digits2_Pnat m : Nat) : Int) := by
-          simpa [wp, PostCond.noThrow, pure] using htrip hm_pos
+              FloatSpec.Core.Digits.digits2_pos m :=
+          (htrip hm_pos).symm
         omega
       refine ⟨?hmant, hdigits2, he_neg⟩
       simp [BinarySingleNaNFloat.Bnormfr_mantissa, SFnormfr_mantissa,
@@ -720,8 +720,9 @@ theorem FLT_format_B2R
     (x : BinarySingleNaNFloat prec emax) :
     FloatSpec.Core.FLT.FLT_format (prec:=prec) (emin:=3 - emax - prec)
       2 (B754_to_R (binarySingleNaNFloatToB754 x)) := by
-  simpa [FloatSpec.Core.FLT.FLT_format] using
-    generic_format_B2R (prec:=prec) (emax:=emax) x
+  exact FloatSpec.Core.FLT.FLT_format_generic
+    (prec := prec) (emin := 3 - emax - prec) 2 _
+    (generic_format_B2R (prec := prec) (emax := emax) x)
 
 -- Coq: B2SF_SF2B — standard view after SF2B is identity
 def B2SF_SF2B_check (x : StandardFloat) : StandardFloat :=
@@ -3144,10 +3145,10 @@ def Ffrexp_core_binary (sx : Bool) (mx : Nat) (ex : Int) :
     StandardFloat × Int :=
   if FloatSpec.Core.Zaux.Zlt_bool (-prec) (3 - emax - prec) then
     (StandardFloat.S754_finite sx mx ex, 0)
-  else if prec.toNat ≤ FloatSpec.Core.Digits.digits2_Pnat mx then
+  else if prec ≤ FloatSpec.Core.Digits.digits2_pos mx then
     (StandardFloat.S754_finite sx mx (-prec), ex + prec)
   else
-    let d := prec - (FloatSpec.Core.Digits.digits2_Pnat mx : Int)
+    let d := prec - FloatSpec.Core.Digits.digits2_pos mx
     (StandardFloat.S754_finite sx (mx * 2 ^ d.toNat) (-prec), ex + prec - d)
 
 -- Decomposition (Coq: Bfrexp on SingleNaN side)
@@ -3297,7 +3298,7 @@ theorem Bmax_float_proof :
                         omega
       exact_mod_cast hpow_pred_le
     have hdigits :=
-      (FloatSpec.Core.Digits.Zdigits_unique (beta := 2) (h_beta := by norm_num)
+      (FloatSpec.Core.Digits.Zdigits_unique_from_nonzero_payload (beta := 2) (h_beta := by norm_num)
         (n := (((2 : Nat) ^ prec.toNat - 1 : Nat) : Int)) (e := prec) (hβ := by norm_num))
         ⟨hm_nonzero, by simpa using hm_lower, by simpa [hprec_natAbs] using hm_upper⟩
     have hdigits_eq :
@@ -4113,8 +4114,8 @@ private theorem SFdiv_core_binary_correct_data {prec emax : Int}
   have hbetween :
       FloatSpec.Calc.Bracket.inbetween_float 2 result.1 result.2.1
         quotient result.2.2 := by
-    simpa [wp, PostCond.noThrow, pure, result, SFdiv_core_binary, quotient, X, Y,
-      fexp] using hdiv ⟨hx_pos, hy_pos⟩
+    simpa only [result, SFdiv_core_binary, quotient, X, Y, fexp] using
+      (hdiv ⟨hx_pos, hy_pos⟩).2
   let d1 := FloatSpec.Core.Digits.Zdigits 2 mx
   let d2 := FloatSpec.Core.Digits.Zdigits 2 my
   let e' := (d1 + ex) - (d2 + ey)
@@ -4163,14 +4164,21 @@ noncomputable def SFsqrt_core_binary (prec emax : Int) (mx ex : Int) :
     (FloatSpec.Core.Defs.FlocqFloat.mk mx ex :
       FloatSpec.Core.Defs.FlocqFloat 2)
 
-private theorem Fsqrt_core_fst_pos (mx ex ez : Int) (hmx_pos : 0 < mx) :
+private theorem Fsqrt_core_fst_pos (mx ex ez : Int) (hmx_pos : 0 < mx)
+    (hez : 2 * ez ≤ ex) :
     0 < (FloatSpec.Calc.Sqrt.Fsqrt_core 2 mx ex ez).1 := by
-  unfold FloatSpec.Calc.Sqrt.Fsqrt_core
-  let scaled := mx * (2 : Int) ^ Int.natAbs (ex - 2 * ez)
+  let scaled := mx * FloatSpec.Core.Zaux.Zpower 2 (ex - 2 * ez)
+  have hdiff : 0 ≤ ex - 2 * ez := by omega
+  have hpow : FloatSpec.Core.Zaux.Zpower 2 (ex - 2 * ez) =
+      (2 : Int) ^ Int.natAbs (ex - 2 * ez) :=
+    FloatSpec.Core.Zaux.Zpower_Zpower_nat 2 (ex - 2 * ez) hdiff
   have hscaled_pos : 0 < scaled := by
+    change 0 < mx * FloatSpec.Core.Zaux.Zpower 2 (ex - 2 * ez)
+    rw [hpow]
     exact mul_pos hmx_pos (pow_pos (by norm_num : (0 : Int) < 2) _)
   have hscaled_toNat_pos : 0 < scaled.toNat := by omega
-  change 0 < Int.sqrt scaled
+  change 0 < (if scaled < 0 then 0 else Int.sqrt scaled)
+  rw [if_neg (by omega)]
   unfold Int.sqrt
   exact_mod_cast (Nat.sqrt_pos.mpr hscaled_toNat_pos)
 
@@ -4218,12 +4226,24 @@ private theorem SFsqrt_core_binary_correct_data {prec emax : Int}
           (FloatSpec.Core.Digits.Zdigits 2 result.1 + result.2.1) := by
     simpa [hcexp] using hsqrt_result.1
   have hmant : 0 < result.1 := by
+    have hez :
+        2 * min
+            (FLT_exp (3 - emax - prec) prec
+              ((FloatSpec.Core.Digits.Zdigits 2 mx + ex + 1) / 2))
+            (ex / 2) ≤ ex := by
+      calc
+        2 * min
+              (FLT_exp (3 - emax - prec) prec
+                ((FloatSpec.Core.Digits.Zdigits 2 mx + ex + 1) / 2))
+              (ex / 2) ≤ 2 * (ex / 2) :=
+          Int.mul_le_mul_of_nonneg_left (min_le_right _ _) (by norm_num)
+        _ ≤ ex := Int.mul_ediv_self_le (by norm_num : (2 : Int) ≠ 0)
     simpa [result, SFsqrt_core_binary, FloatSpec.Calc.Sqrt.Fsqrt, input] using
       Fsqrt_core_fst_pos mx ex
         (min
           (FLT_exp (3 - emax - prec) prec
             ((FloatSpec.Core.Digits.Zdigits 2 mx + ex + 1) / 2))
-          (ex / 2)) hmx_pos
+          (ex / 2)) hmx_pos hez
   exact ⟨hmant, hsqrt_result.2, hexp⟩
 
 -- Coq: `binary_round_aux_correct'`.
@@ -5004,11 +5024,11 @@ private theorem Bfrexp_fexp_eq_of_finite
   have hfirst : FloatSpec.Core.Zaux.Zlt_bool (-prec) (3 - emax - prec) = false := by
     simp [FloatSpec.Core.Zaux.Zlt_bool]
     omega
-  have hdigitTrip := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat mx
+  have hdigitTrip := FloatSpec.Core.Digits.Zpos_digits2_pos mx
   have hdigit :
       FloatSpec.Core.Digits.Zdigits 2 (mx : Int) =
-        (FloatSpec.Core.Digits.digits2_Pnat mx : Int) := by
-    simpa [wp, PostCond.noThrow, pure] using hdigitTrip hmx
+        FloatSpec.Core.Digits.digits2_pos mx :=
+    (hdigitTrip hmx).symm
   have hcanon := canonical_mantissa_of_specFloat_bounded
     (prec:=prec) (emax:=emax) hbounded
   have hcanonEq :
@@ -5021,13 +5041,13 @@ private theorem Bfrexp_fexp_eq_of_finite
       (FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex - prec)
       (3 - emax - prec)
     omega
-  by_cases hprecDigits : prec.toNat ≤ FloatSpec.Core.Digits.digits2_Pnat mx
+  by_cases hprecDigits : prec ≤ FloatSpec.Core.Digits.digits2_pos mx
   · simp [Bfrexp_bsn, Ffrexp_core_binary, hfirst, hprecDigits,
       FLT_exp, FloatSpec.Core.FLT.FLT_exp, hemin]
   · simp only [Bfrexp_bsn, Ffrexp_core_binary, hfirst, Bool.false_eq_true,
       ↓reduceIte, hprecDigits, Prod.snd]
     have harg :
-        ex + prec - (prec - (FloatSpec.Core.Digits.digits2_Pnat mx : Int)) =
+        ex + prec - (prec - FloatSpec.Core.Digits.digits2_pos mx) =
           FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex := by
       rw [hdigit]
       ring
@@ -5046,11 +5066,11 @@ private theorem Bfrexp_exp_eq_mag_of_finite
   have hfirst : FloatSpec.Core.Zaux.Zlt_bool (-prec) (3 - emax - prec) = false := by
     simp [FloatSpec.Core.Zaux.Zlt_bool]
     omega
-  have hdigitTrip := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat mx
+  have hdigitTrip := FloatSpec.Core.Digits.Zpos_digits2_pos mx
   have hdigit :
       FloatSpec.Core.Digits.Zdigits 2 (mx : Int) =
-        (FloatSpec.Core.Digits.digits2_Pnat mx : Int) := by
-    simpa [wp, PostCond.noThrow, pure] using hdigitTrip hmx
+        FloatSpec.Core.Digits.digits2_pos mx :=
+    (hdigitTrip hmx).symm
   have hdigitLe : FloatSpec.Core.Digits.Zdigits 2 (mx : Int) ≤ prec :=
     Zdigits_le_prec_of_specFloat_bounded (prec:=prec) (emax:=emax) mx ex hbounded
   have hmxInt : (mx : Int) ≠ 0 := by
@@ -5071,19 +5091,12 @@ private theorem Bfrexp_exp_eq_mag_of_finite
           (B754_to_R (B754.B754_finite sx mx ex)) =
         FloatSpec.Core.Digits.Zdigits 2 (mx : Int) + ex := by
     simpa [B754_to_R, F2R, FloatSpec.Core.Defs.F2R, hsignDigits] using hmagSigned
-  by_cases hprecDigits : prec.toNat ≤ FloatSpec.Core.Digits.digits2_Pnat mx
-  · have hprecNonneg : 0 ≤ prec := le_of_lt (inferInstance : Prec_gt_0 prec).pos
-    have hdigitNatLe : FloatSpec.Core.Digits.digits2_Pnat mx ≤ prec.toNat := by
-      have hcast : (FloatSpec.Core.Digits.digits2_Pnat mx : Int) ≤ prec := by
-        simpa [hdigit] using hdigitLe
-      have hprecCast : (prec.toNat : Int) = prec := Int.toNat_of_nonneg hprecNonneg
-      have hcast' : (FloatSpec.Core.Digits.digits2_Pnat mx : Int) ≤
-          (prec.toNat : Int) := by simpa [hprecCast] using hcast
-      exact_mod_cast hcast'
-    have hdigitNatEq : FloatSpec.Core.Digits.digits2_Pnat mx = prec.toNat :=
-      Nat.le_antisymm hdigitNatLe hprecDigits
+  by_cases hprecDigits : prec ≤ FloatSpec.Core.Digits.digits2_pos mx
+  · have hdigitEq : FloatSpec.Core.Digits.digits2_pos mx = prec := by
+      rw [hdigit] at hdigitLe
+      exact le_antisymm hdigitLe hprecDigits
     simp [Bfrexp_bsn, Ffrexp_core_binary, hfirst, hprecDigits, hmag, hdigit,
-      hdigitNatEq, Int.toNat_of_nonneg hprecNonneg]
+      hdigitEq]
     ring
   · simp [Bfrexp_bsn, Ffrexp_core_binary, hfirst, hprecDigits, hmag, hdigit]
     ring
@@ -5111,19 +5124,14 @@ theorem Bfrexp_correct_aux
     apply mul_ne_zero
     · cases sx <;> simp [Nat.ne_of_gt hmx]
     · exact zpow_ne_zero ex (by norm_num)
-  have hdigitTrip := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat mx
+  have hdigitTrip := FloatSpec.Core.Digits.Zpos_digits2_pos mx
   have hdigit :
       FloatSpec.Core.Digits.Zdigits 2 (mx : Int) =
-        (FloatSpec.Core.Digits.digits2_Pnat mx : Int) := by
-    simpa [wp, PostCond.noThrow, pure] using hdigitTrip hmx
+        FloatSpec.Core.Digits.digits2_pos mx :=
+    (hdigitTrip hmx).symm
   have hdigitLe : FloatSpec.Core.Digits.Zdigits 2 (mx : Int) ≤ prec :=
     Zdigits_le_prec_of_specFloat_bounded
       (prec:=prec) (emax:=emax) mx ex hbounded
-  have hprecNonneg : 0 ≤ prec := le_of_lt (inferInstance : Prec_gt_0 prec).pos
-  have hprecCast : (prec.toNat : Int) = prec := Int.toNat_of_nonneg hprecNonneg
-  have hdigitNatLe : FloatSpec.Core.Digits.digits2_Pnat mx ≤ prec.toNat := by
-    exact_mod_cast (show (FloatSpec.Core.Digits.digits2_Pnat mx : Int) ≤
-      (prec.toNat : Int) by simpa [hdigit, hprecCast] using hdigitLe)
   have hvalidDecomp :
       validBinarySingleNaNStandardFloat (prec:=prec) (emax:=emax) z = true ∧
         x = SF2R 2 z * FloatSpec.Core.Raux.bpow 2 e := by
@@ -5137,14 +5145,10 @@ theorem Bfrexp_correct_aux
     · have hemin : 3 - emax - prec ≤ -prec := by
         simp [FloatSpec.Core.Zaux.Zlt_bool] at hfirst
         omega
-      by_cases hprecDigits :
-          prec.toNat ≤ FloatSpec.Core.Digits.digits2_Pnat mx
-      · have hdigitNatEq :
-            FloatSpec.Core.Digits.digits2_Pnat mx = prec.toNat :=
-          Nat.le_antisymm hdigitNatLe hprecDigits
-        have hdigitEq :
-            (FloatSpec.Core.Digits.digits2_Pnat mx : Int) = prec := by
-          rw [hdigitNatEq, hprecCast]
+      by_cases hprecDigits : prec ≤ FloatSpec.Core.Digits.digits2_pos mx
+      · have hdigitEq : FloatSpec.Core.Digits.digits2_pos mx = prec := by
+          rw [hdigit] at hdigitLe
+          exact le_antisymm hdigitLe hprecDigits
         have hcanon : canonical_mantissa (prec:=prec) (emax:=emax) mx (-prec) = true := by
           unfold canonical_mantissa
           apply beq_iff_eq.mpr
@@ -5171,15 +5175,9 @@ theorem Bfrexp_correct_aux
             ring
           rw [hpowEq, mul_assoc]
       · have hdigitLt :
-            (FloatSpec.Core.Digits.digits2_Pnat mx : Int) < prec := by
-          have hnot : ¬prec.toNat ≤ FloatSpec.Core.Digits.digits2_Pnat mx :=
-            hprecDigits
-          have hnatLt := Nat.lt_of_not_ge hnot
-          have hcast :
-              (FloatSpec.Core.Digits.digits2_Pnat mx : Int) <
-                (prec.toNat : Int) := by exact_mod_cast hnatLt
-          simpa [hprecCast] using hcast
-        let d := prec - (FloatSpec.Core.Digits.digits2_Pnat mx : Int)
+            FloatSpec.Core.Digits.digits2_pos mx < prec := by
+          omega
+        let d := prec - FloatSpec.Core.Digits.digits2_pos mx
         have hdPos : 0 < d := by simp [d]; omega
         have hdNonneg : 0 ≤ d := le_of_lt hdPos
         have hdCast : (d.toNat : Int) = d := Int.toNat_of_nonneg hdNonneg
@@ -5314,10 +5312,12 @@ theorem Bulp'_correct
         have hcanonDirect :
             canonical_mantissa (prec:=prec) (emax:=emax) 1
               (3 - emax - prec) = true := by
-          have hdigitTrip := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat 1
+          have hdigitTrip := FloatSpec.Core.Digits.Zpos_digits2_pos 1
           have hdigitOne : FloatSpec.Core.Digits.Zdigits 2 (1 : Int) = 1 := by
-            simpa [wp, PostCond.noThrow, pure, FloatSpec.Core.Digits.digits2_Pnat]
-              using hdigitTrip (by norm_num : (0 : Nat) < 1)
+            simpa [FloatSpec.Core.Digits.digits2_pos,
+              FloatSpec.Core.Digits.digits2_Pnat,
+              FloatSpec.Core.Digits.digits2_Pnat_bitlength_payload] using
+              (hdigitTrip (by norm_num : (0 : Nat) < 1)).symm
           unfold canonical_mantissa
           simp only [beq_iff_eq]
           change 3 - emax - prec =
@@ -5689,7 +5689,8 @@ theorem FLT_format_B2R {prec emax : Int}
     (x : binary_float prec emax) :
     FloatSpec.Core.FLT.FLT_format (prec:=prec) (emin:=3 - emax - prec)
       2 (B2R x) := by
-  simpa [FloatSpec.Core.FLT.FLT_format] using generic_format_B2R x
+  exact FloatSpec.Core.FLT.FLT_format_generic
+    (prec := prec) (emin := 3 - emax - prec) 2 _ (generic_format_B2R x)
 
 theorem bounded_le_emax_minus_prec {prec emax : Int}
     [Prec_gt_0 prec] (mx : FloatSpec.Core.Zaux.Positive) (ex : Int)
@@ -6203,7 +6204,7 @@ private theorem bmult_correct_nan_result {prec emax : Int}
 
 private theorem zdigits_one :
     FloatSpec.Core.Digits.Zdigits 2 (1 : Int) = 1 := by
-  have h := FloatSpec.Core.Digits.Zdigits_unique (beta := 2) (h_beta := by norm_num)
+  have h := FloatSpec.Core.Digits.Zdigits_unique_from_nonzero_payload (beta := 2) (h_beta := by norm_num)
     (n := (1 : Int)) (e := (1 : Int)) (hβ := by norm_num)
   simpa [wp, PostCond.noThrow, pure] using
     h ⟨by norm_num, by norm_num, by norm_num⟩
@@ -6867,8 +6868,8 @@ theorem Bnormfr_mantissa_correct {prec emax : Int}
     match x with
     | binary_float.B754_finite _ m e _ =>
         Bnormfr_mantissa x = FloatSpec.Core.Zaux.positiveToNat m ∧
-          ((FloatSpec.Core.Digits.digits2_Pnat
-            (FloatSpec.Core.Zaux.positiveToNat m) : Nat) : Int) = prec ∧
+          FloatSpec.Core.Digits.digits2_pos
+            (FloatSpec.Core.Zaux.positiveToNat m) = prec ∧
           e = -prec
     | _ => False := by
   have hs := _root_.Bnormfr_mantissa_correct
@@ -7013,8 +7014,7 @@ theorem Bldexp_correct {prec emax : Int}
         rfl
 
 noncomputable def BfrexpSingle {prec emax : Int}
-    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    (hmax : 2 < emax) (x : BinarySingleNaNFloat prec emax) :
+    [Prec_gt_0 prec] (x : BinarySingleNaNFloat prec emax) :
     BinarySingleNaNFloat prec emax × Int :=
   match x with
   | BinarySingleNaNFloat.B754_finite s m e hm hbounded =>
@@ -7026,9 +7026,8 @@ noncomputable def BfrexpSingle {prec emax : Int}
   | x => (x, -2 * emax - prec)
 
 theorem is_nan_BfrexpSingle {prec emax : Int}
-    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    (hmax : 2 < emax) (x : BinarySingleNaNFloat prec emax) :
-    is_nan_BSN (BfrexpSingle hmax x).1 = is_nan_BSN x := by
+    [Prec_gt_0 prec] (x : BinarySingleNaNFloat prec emax) :
+    is_nan_BSN (BfrexpSingle x).1 = is_nan_BSN x := by
   cases x with
   | B754_zero s => rfl
   | B754_infinity s => rfl
@@ -7038,7 +7037,7 @@ theorem is_nan_BfrexpSingle {prec emax : Int}
         (prec:=prec) (emax:=emax) s m e
       have hc := ExperimentalSingleNaNArithmetic.Bfrexp_correct_aux
         (prec:=prec) (emax:=emax) s m e hm hbounded
-      rw [show (BfrexpSingle hmax
+      rw [show (BfrexpSingle
           (BinarySingleNaNFloat.B754_finite s m e hm hbounded)).1 =
           standardFloatToBinarySingleNaNFloat core.1 hc.1 by rfl]
       rw [is_nan_standardFloatToBinarySingleNaNFloat]
@@ -7048,21 +7047,22 @@ theorem is_nan_BfrexpSingle {prec emax : Int}
 
 -- Coq `Binary.v:Bfrexp`, using the source three-branch decomposition and
 -- preserving a Binary NaN's sign and payload through `lift`.
+-- Source ID: IEEE754/Binary.v:Bfrexp:34504
 noncomputable def Bfrexp {prec emax : Int}
-    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
-    (hmax : 2 < emax) (x : binary_float prec emax) :
+    [Prec_gt_0 prec] (x : binary_float prec emax) :
     binary_float prec emax × Int :=
-  let y := BfrexpSingle hmax (B2BSN x)
+  let y := BfrexpSingle (B2BSN x)
   (lift x y.1 (by
     rw [is_nan_BfrexpSingle, is_nan_B2BSN]), y.2)
 
+-- Source ID: IEEE754/Binary.v:Bfrexp_correct:34702
 theorem Bfrexp_correct {prec emax : Int}
-    [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    [Prec_gt_0 prec]
     (hmax : 2 < emax) (f : binary_float prec emax)
     (hfinite : is_finite_strict f = true) :
     let x := B2R f
-    let z := (Bfrexp hmax f).1
-    let e := (Bfrexp hmax f).2
+    let z := (Bfrexp f).1
+    let e := (Bfrexp f).2
     (1 / 2 : ℝ) ≤ |B2R z| ∧ |B2R z| < 1 ∧
       x = B2R z * FloatSpec.Core.Raux.bpow 2 e ∧
       e = FloatSpec.Core.Raux.mag 2 x := by
@@ -7114,13 +7114,13 @@ theorem Bfrexp_correct {prec emax : Int}
         rw [hmagZero] at hmagEq
         omega
       have hresultValue : B2R
-          ((Bfrexp hmax
+          ((Bfrexp
             (binary_float.B754_finite s m ex hbounded)).1) = SF2R 2 core.1 := by
         simp only [Bfrexp, BfrexpSingle, B2BSN,
           binaryFloatToBinarySingleNaNFloat, core, Prod.fst]
         rw [B2R_lift, B2R_standardFloatToBinarySingleNaNFloat]
       have hresultExp :
-          (Bfrexp hmax
+          (Bfrexp
             (binary_float.B754_finite s m ex hbounded)).2 = core.2 := by
         rfl
       have hinputValue : B2R

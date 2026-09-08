@@ -55,11 +55,70 @@ FloatSpec's indexed Core observer. -/
 def Fle (radix : Int) (x y : float) : Prop :=
   FtoR radix x ≤ FtoR radix y
 
+def UniqueP (radix : Int) (P : Real → float → Prop) : Prop :=
+  ∀ r p q, P r p → P r q → FtoR radix p = FtoR radix q
+
+def MonotoneP (radix : Int) (P : Real → float → Prop) : Prop :=
+  ∀ p q p' q', p < q → P p p' → P q q' →
+    FtoR radix p' ≤ FtoR radix q'
+
+theorem MinExList (radix : Int) (r : Real) (L : List float) :
+    (∀ f ∈ L, r < FtoR radix f) ∨
+    ∃ min ∈ L, FtoR radix min ≤ r ∧
+      ∀ f ∈ L, FtoR radix f ≤ r → FtoR radix f ≤ FtoR radix min := by
+  induction L with
+  | nil => left; simp
+  | cons a L ih =>
+      by_cases ha : FtoR radix a ≤ r
+      · right
+        rcases ih with hall | ⟨m, hm, hmr, hmin⟩
+        · exact ⟨a, by simp, ha, fun f hf hfr => by
+            rcases List.mem_cons.mp hf with rfl | hf
+            · exact le_rfl
+            · exact absurd hfr (not_le.mpr (hall f hf))⟩
+        · by_cases ham : FtoR radix a ≤ FtoR radix m
+          · exact ⟨m, by simp [hm], hmr, fun f hf hfr => by
+              rcases List.mem_cons.mp hf with rfl | hf
+              · exact ham
+              · exact hmin f hf hfr⟩
+          · exact ⟨a, by simp, ha, fun f hf hfr => by
+              rcases List.mem_cons.mp hf with rfl | hf
+              · exact le_rfl
+              · exact (hmin f hf hfr).trans (le_of_not_ge ham)⟩
+      · push Not at ha
+        rcases ih with hall | ⟨m, hm, hmr, hmin⟩
+        · left
+          intro f hf
+          rcases List.mem_cons.mp hf with rfl | hf
+          · exact ha
+          · exact hall f hf
+        · right
+          exact ⟨m, by simp [hm], hmr, fun f hf hfr => by
+            rcases List.mem_cons.mp hf with rfl | hf
+            · exact absurd hfr (not_le.mpr ha)
+            · exact hmin f hf hfr⟩
+
 def Fopp (x : float) : float :=
   ⟨-x.Fnum, x.Fexp⟩
 
 def Fabs (x : float) : float :=
   ⟨x.Fnum.natAbs, x.Fexp⟩
+
+/-- Coq `Pff.boundNat`, including its total behavior at every integer radix. -/
+-- Source ID: Pff/Pff.v:boundNat:150939
+noncomputable def boundNat (radix : Int) (n : Nat) : float :=
+  ⟨1, _root_.digit radix n⟩
+
+/-- Coq `Pff.boundR`; `up` is the strict ceiling `floor x + 1`. -/
+-- Source ID: Pff/Pff.v:boundR:151409
+noncomputable def boundR (radix : Int) (r : Real) : float :=
+  boundNat radix (Int.natAbs (Int.floor |r| + 1))
+
+/-- Coq `Pff.boundRrOpp`. -/
+-- Source ID: Pff/Pff.v:boundRrOpp:152106
+theorem boundRrOpp (radix : Int) (r : Real) :
+    boundR radix r = boundR radix (-r) := by
+  simp [boundR, abs_neg]
 
 def Fplus (radix : Int) (x y : float) : float :=
   let commonExp := min x.Fexp y.Fexp

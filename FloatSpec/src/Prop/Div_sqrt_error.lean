@@ -24,7 +24,6 @@ This mirrors Flocq `Div_sqrt_error.v` `generic_format_plus_prec`: the
 two magnitude bounds are over signed `bpow` exponents, not `natAbs`
 exponents. -/
 lemma generic_format_plus_prec (fexp : Int → Int)
-  [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
   (h_bound : ∀ e, fexp e ≤ e - prec)
   (hβ : 1 < beta)
   (x y : ℝ) (fx fy : FloatSpec.Core.Defs.FlocqFloat beta)
@@ -78,6 +77,17 @@ lemma generic_format_plus_prec (fexp : Int → Int)
       (FloatSpec.Core.Generic_fmt.generic_format_F2R' (beta := beta) (fexp := fexp)
         (x := x + y) (f := fxy)) ⟨hβ, hfxy_eq, fun _ => hcexp_le⟩
     simpa [generic_format, Std.Do.PostCond.noThrow, wp, pure] using hfmt
+
+lemma generic_format_plus_prec_from_valid_exp_payload (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    (h_bound : ∀ e, fexp e ≤ e - prec) (hβ : 1 < beta)
+    (x y : ℝ) (fx fy : FloatSpec.Core.Defs.FlocqFloat beta)
+    (hx : x = _root_.F2R fx) (hy : y = _root_.F2R fy)
+    (h1 : |x + y| < FloatSpec.Core.Raux.bpow beta (prec + fx.Fexp))
+    (h2 : |x + y| < FloatSpec.Core.Raux.bpow beta (prec + fy.Fexp)) :
+    generic_format beta fexp (x + y) :=
+  generic_format_plus_prec (beta := beta) (prec := prec) fexp h_bound hβ
+    x y fx fy hx hy h1 h2
 
 variable (choice : Int → Bool)
 
@@ -605,9 +615,9 @@ theorem sqrt_error_FLX_N (h_gt1 : 1 < prec) (x : ℝ)
           |r - Real.sqrt x| ≤ (1 / 2 : ℝ) * (beta : ℝ) ^ fr.Fexp := by
         have htrip := FloatSpec.Core.Ulp.error_le_half_ulp_round
           (beta := beta) (fexp := fexp) (choice := choice)
-          (x := Real.sqrt x) hβ
+          (x := Real.sqrt x)
         simpa [r, fexp, hulp_r, wp, Std.Do.PostCond.noThrow, Id.run, pure]
-          using htrip hβ
+          using htrip
       have hsecond_bound :
           |x - r ^ 2| <
             (beta : ℝ) ^ (prec + (FloatSpec.Calc.Operations.Fopp beta
@@ -789,7 +799,7 @@ lemma sqrt_error_N_FLX_aux1 (x : ℝ)
 /-- Auxiliary bound cases for sqrt error in FLX.
     If `x ≥ 1` and is in FLX format, then `x` is either exactly `1`, or exactly `1 + 2·u_ro`,
     or at least `1 + 4·u_ro`. -/
-lemma sqrt_error_N_FLX_aux2 (x : ℝ)
+lemma sqrt_error_N_FLX_aux2_without_prec_gt_one_payload (x : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta (FLX_exp prec) x) (hx_ge1 : 1 ≤ x) :
   x = 1 ∨ x = 1 + 2 * u_ro beta prec ∨ 1 + 4 * u_ro beta prec ≤ x := by
@@ -940,7 +950,7 @@ lemma s1p2u_rom1_pos (hβ : 1 < beta) :
 
 
 /-- Auxiliary inequality for sqrt error. -/
-lemma sqrt_error_N_FLX_aux3 (hβ : 1 < beta) :
+lemma sqrt_error_N_FLX_aux3_without_prec_gt_one_payload (hβ : 1 < beta) :
   u_ro beta prec / Real.sqrt (1 + 4 * u_ro beta prec)
     ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) := by
   let u : ℝ := u_ro beta prec
@@ -1031,7 +1041,7 @@ lemma sqrt_error_N_FLX_aux3 (hβ : 1 < beta) :
 
 
 /-/ Relative-error bound for rounding sqrt in FLX (nearest) -/
-theorem sqrt_error_N_FLX (x : ℝ)
+theorem sqrt_error_N_FLX_without_prec_gt_one_payload (x : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta (FLX_exp prec) x) :
   |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x) - Real.sqrt x|
@@ -1105,7 +1115,8 @@ theorem sqrt_error_N_FLX (x : ℝ)
       simpa [rt, rnd] using
         (roundR_Znearest_N_pt (beta := beta) (fexp := fexp)
           (choice := choice) (x := t) hβ)
-    rcases sqrt_error_N_FLX_aux2 (beta := beta) (prec := prec) mu hβ hFmu hmu_ge1 with
+    rcases sqrt_error_N_FLX_aux2_without_prec_gt_one_payload
+        (beta := beta) (prec := prec) mu hβ hFmu hmu_ge1 with
       hmu_eq1 | hcases
     · have ht_bpow : t = (beta : ℝ) ^ e := by
         rw [ht_eq, hmu_eq1]
@@ -1251,7 +1262,8 @@ theorem sqrt_error_N_FLX (x : ℝ)
           have hprod_nonneg : 0 ≤ Real.sqrt mu * (beta : ℝ) ^ e :=
             mul_nonneg hsqrt_mu_nonneg hbp_nonneg
           rw [abs_of_nonneg hprod_nonneg]
-          have haux3 := sqrt_error_N_FLX_aux3 (beta := beta) (prec := prec) hβ
+          have haux3 := sqrt_error_N_FLX_aux3_without_prec_gt_one_payload
+            (beta := beta) (prec := prec) hβ
           have hs_nonneg : 0 ≤ Real.sqrt mu := Real.sqrt_nonneg mu
           have hs_pos : 0 < Real.sqrt mu := lt_trans zero_lt_one hs_gt1
           have hden_le : Real.sqrt (1 + 4 * u_ro beta prec) ≤ Real.sqrt mu :=
@@ -1287,7 +1299,7 @@ theorem sqrt_error_N_FLX (x : ℝ)
           _ = (1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec)) * |Real.sqrt x| := by rfl
 
 /-/ Existence form of the nearest-rounding sqrt error in FLX -/
-theorem sqrt_error_N_FLX_ex (x : ℝ)
+theorem sqrt_error_N_FLX_ex_without_prec_gt_one_payload (x : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta (FLX_exp prec) x) :
   ∃ eps, |eps| ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) ∧
@@ -1300,7 +1312,8 @@ theorem sqrt_error_N_FLX_ex (x : ℝ)
     simpa [b] using om1ds1p2u_ro_pos (beta := beta) (prec := prec) hβ
   have hbound : |rx - sx| ≤ b * |sx| := by
     simpa [rx, sx, b] using
-      sqrt_error_N_FLX (beta := beta) (choice := choice) (prec := prec) x hβ hx
+      sqrt_error_N_FLX_without_prec_gt_one_payload
+        (beta := beta) (choice := choice) (prec := prec) x hβ hx
   by_cases hsx : sx = 0
   · refine ⟨0, ?_, ?_⟩
     · simpa [b] using hb_nonneg
@@ -1383,7 +1396,7 @@ theorem sqrt_error_N_round_ex_derive (x rx : ℝ)
     ring
 
 /-- Existence of nearest-rounding sqrt remainder decomposition (FLX) -/
-theorem sqrt_error_N_FLX_round_ex (x : ℝ)
+theorem sqrt_error_N_FLX_round_ex_without_prec_gt_one_payload (x : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta (FLX_exp prec) x) :
   ∃ eps, |eps| ≤ Real.sqrt (1 + 2 * u_ro beta prec) - 1 ∧
@@ -1393,7 +1406,8 @@ theorem sqrt_error_N_FLX_round_ex (x : ℝ)
     (x := Real.sqrt x)
     (rx := FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x))
     hβ
-    (sqrt_error_N_FLX_ex (beta := beta) (choice := choice) (prec := prec) x hβ hx)
+    (sqrt_error_N_FLX_ex_without_prec_gt_one_payload
+      (beta := beta) (choice := choice) (prec := prec) x hβ hx)
 
 /-- Local magnitude lower bound in the form needed by Flocq's
     `round_FLT_FLX` threshold: from `β^e ≤ |x|`, `mag x` is at least `e+1`. -/
@@ -1450,7 +1464,8 @@ private lemma round_FLT_FLX_nearest
   simp [FloatSpec.Core.Generic_fmt.scaled_mantissa, hcexp]
 
 /-- Existence of nearest-rounding sqrt factorization under FLT (with emin bound) -/
-theorem sqrt_error_N_FLT_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
+theorem sqrt_error_N_FLT_ex_without_prec_gt_one_payload
+    (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta (FLT_exp emin prec) x) :
   ∃ eps, |eps| ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) ∧
@@ -1478,7 +1493,8 @@ theorem sqrt_error_N_FLT_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) 
       simpa [FLT_exp, FloatSpec.Core.FLT.FLT_exp, FLX_exp, FloatSpec.Core.FLX.FLX_exp,
         wp, Std.Do.PostCond.noThrow, Id.run, pure]
         using htrip ⟨hβ, hx⟩
-    rcases sqrt_error_N_FLX_ex (beta := beta) (choice := choice)
+    rcases sqrt_error_N_FLX_ex_without_prec_gt_one_payload
+        (beta := beta) (choice := choice)
       (prec := prec) x hβ hx_flx with ⟨eps, heps, hround_flx⟩
     refine ⟨eps, heps, ?_⟩
     have hx_lower : (beta : ℝ) ^ emin ≤ x := by
@@ -1519,7 +1535,8 @@ theorem sqrt_error_N_FLT_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) 
     simpa [hround_eq] using hround_flx
 
 /-- Symmetric existence form for FLT nearest-rounding sqrt remainder -/
-theorem sqrt_error_N_FLT_round_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
+theorem sqrt_error_N_FLT_round_ex_without_prec_gt_one_payload
+    (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
   (hβ : 1 < beta)
   (hx : generic_format beta (FLT_exp emin prec) x) :
   ∃ eps, |eps| ≤ Real.sqrt (1 + 2 * u_ro beta prec) - 1 ∧
@@ -1529,7 +1546,8 @@ theorem sqrt_error_N_FLT_round_ex (emin : Int) (emin_bound : emin ≤ 2 * (1 - p
     (x := Real.sqrt x)
     (rx := FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (Real.sqrt x))
     hβ
-    (sqrt_error_N_FLT_ex (beta := beta) (choice := choice) (prec := prec)
+    (sqrt_error_N_FLT_ex_without_prec_gt_one_payload
+      (beta := beta) (choice := choice) (prec := prec)
       emin emin_bound x hβ hx)
 
 private lemma Ztrunc_eq_zero_of_abs_lt_half (z : ℝ)
@@ -1950,3 +1968,64 @@ theorem format_REM_N
     hx hy
 
 end FormatREM
+
+/-! Exact source-shaped wrappers for the square-root error family.  The
+implementation lemmas above prove stronger statements; the public Flocq names
+retain the source's exported `1 < prec` premise. -/
+
+lemma sqrt_error_N_FLX_aux2 (hprec : 1 < prec) (x : ℝ)
+    (hβ : 1 < beta)
+    (hx : generic_format beta (FLX_exp prec) x) (hx_ge1 : 1 ≤ x) :
+    x = 1 ∨ x = 1 + 2 * u_ro beta prec ∨ 1 + 4 * u_ro beta prec ≤ x := by
+  exact sqrt_error_N_FLX_aux2_without_prec_gt_one_payload
+    (beta := beta) (prec := prec) x hβ hx hx_ge1
+
+lemma sqrt_error_N_FLX_aux3 (hprec : 1 < prec) (hβ : 1 < beta) :
+    u_ro beta prec / Real.sqrt (1 + 4 * u_ro beta prec) ≤
+      1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) := by
+  exact sqrt_error_N_FLX_aux3_without_prec_gt_one_payload
+    (beta := beta) (prec := prec) hβ
+
+theorem sqrt_error_N_FLX (hprec : 1 < prec) (x : ℝ)
+    (hβ : 1 < beta) (hx : generic_format beta (FLX_exp prec) x) :
+    |FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x) -
+        Real.sqrt x| ≤
+      (1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec)) * |Real.sqrt x| := by
+  exact sqrt_error_N_FLX_without_prec_gt_one_payload
+    (beta := beta) (choice := choice) (prec := prec) x hβ hx
+
+theorem sqrt_error_N_FLX_ex (hprec : 1 < prec) (x : ℝ)
+    (hβ : 1 < beta) (hx : generic_format beta (FLX_exp prec) x) :
+    ∃ eps, |eps| ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) ∧
+      FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice) (Real.sqrt x) =
+        Real.sqrt x * (1 + eps) := by
+  exact sqrt_error_N_FLX_ex_without_prec_gt_one_payload
+    (beta := beta) (choice := choice) (prec := prec) x hβ hx
+
+theorem sqrt_error_N_FLX_round_ex (hprec : 1 < prec) (x : ℝ)
+    (hβ : 1 < beta) (hx : generic_format beta (FLX_exp prec) x) :
+    ∃ eps, |eps| ≤ Real.sqrt (1 + 2 * u_ro beta prec) - 1 ∧
+      Real.sqrt x =
+        FloatSpec.Calc.Round.round beta (FLX_exp prec) (Znearest choice)
+          (Real.sqrt x) * (1 + eps) := by
+  exact sqrt_error_N_FLX_round_ex_without_prec_gt_one_payload
+    (beta := beta) (choice := choice) (prec := prec) x hβ hx
+
+theorem sqrt_error_N_FLT_ex (hprec : 1 < prec)
+    (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
+    (hβ : 1 < beta) (hx : generic_format beta (FLT_exp emin prec) x) :
+    ∃ eps, |eps| ≤ 1 - 1 / Real.sqrt (1 + 2 * u_ro beta prec) ∧
+      FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
+          (Real.sqrt x) = Real.sqrt x * (1 + eps) := by
+  exact sqrt_error_N_FLT_ex_without_prec_gt_one_payload
+    (beta := beta) (choice := choice) (prec := prec) emin emin_bound x hβ hx
+
+theorem sqrt_error_N_FLT_round_ex (hprec : 1 < prec)
+    (emin : Int) (emin_bound : emin ≤ 2 * (1 - prec)) (x : ℝ)
+    (hβ : 1 < beta) (hx : generic_format beta (FLT_exp emin prec) x) :
+    ∃ eps, |eps| ≤ Real.sqrt (1 + 2 * u_ro beta prec) - 1 ∧
+      Real.sqrt x =
+        FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice)
+          (Real.sqrt x) * (1 + eps) := by
+  exact sqrt_error_N_FLT_round_ex_without_prec_gt_one_payload
+    (beta := beta) (choice := choice) (prec := prec) emin emin_bound x hβ hx

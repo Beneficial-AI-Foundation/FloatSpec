@@ -7,6 +7,14 @@ namespace FloatSpec.Core.Raux.Source
 
 abbrev mag_prop := FloatSpec.Core.Raux.mag_prop
 
+/-- Coq `Raux.bpow`, with the source dependent radix carrier. -/
+noncomputable def bpow (r : FloatSpec.Core.Zaux.Radix) (e : Int) : Real :=
+  FloatSpec.Core.Raux.bpow r.val e
+
+@[simp] theorem bpow_val (r : FloatSpec.Core.Zaux.Radix) (e : Int) :
+    bpow r e = (r.val : Real) ^ e := by
+  rfl
+
 /-- Coq `Raux.mag`: return the dependent magnitude witness. -/
 noncomputable def mag (r : FloatSpec.Core.Zaux.Radix) (x : Real) :
     mag_prop r.val x :=

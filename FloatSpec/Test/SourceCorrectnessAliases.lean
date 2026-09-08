@@ -1,11 +1,18 @@
 import FloatSpec.src.IEEE754.SourceCorrectnessAliases
 import FloatSpec.src.IEEE754.BinarySingleNaNSourceFacade
+import FloatSpec.src.Core.Round_pred
 
 /-! Regression checks: compatibility correctness names must be exact aliases of
 the translated Flocq contracts, never independently inhabitable `Unit` values. -/
 
 example : @binary_add_correct = @Bplus_correct := rfl
 example : @binary_mul_correct = @Bmult_correct := rfl
+
+/-! Coq exports `Rnd_NG_pt_unique_prop` over a Type-valued tie payload. -/
+
+example : Prop :=
+  FloatSpec.Core.Round_pred.Rnd_NG_pt_unique_prop
+    (fun _ : ℝ => True) (fun _ _ : ℝ => Nat)
 
 /-! The remaining source contracts are exported under their exact Flocq names;
 the older local `binary_*_correct` declarations remain compatibility results. -/
@@ -34,7 +41,45 @@ wider `Binary754` compatibility declaration cannot satisfy the regression. -/
 #check @Binary.Btrunc_correct
 #check @Binary.Bone_correct
 #check @Binary.Bldexp_correct
+#check @Binary.Bfrexp
 #check @Binary.Bfrexp_correct
+
+example :
+    @Binary.Bfrexp 1 2 ⟨by omega⟩ (binary_float.B754_zero false) =
+      (binary_float.B754_zero false, -5) := by
+  rfl
+
+example :
+    let x : binary_float 3 10 := binary_float.B754_finite false
+      (FloatSpec.Core.Zaux.Positive.xO
+        (FloatSpec.Core.Zaux.Positive.xO FloatSpec.Core.Zaux.Positive.xH))
+      (-2) (by decide)
+    (Binary.B2R (@Binary.Bfrexp 3 10 ⟨by omega⟩ x).1,
+      (@Binary.Bfrexp 3 10 ⟨by omega⟩ x).2) =
+      ((1 / 2 : Real), 1) := by
+  simp only
+  apply Prod.ext
+  · simp only [Prod.fst]
+    unfold Binary.Bfrexp
+    rw [Binary.B2R_lift]
+    simp only [Binary.B2BSN, binaryFloatToBinarySingleNaNFloat]
+    unfold Binary.BfrexpSingle
+    rw [Binary.B2R_standardFloatToBinarySingleNaNFloat]
+    norm_num [Binary.Bfrexp, Binary.BfrexpSingle,
+      ExperimentalSingleNaNArithmetic.Ffrexp_core_binary,
+      Binary.B2BSN, binaryFloatToBinarySingleNaNFloat,
+      binarySingleNaNFloatToB754, standardFloatToBinarySingleNaNFloat,
+      B754_to_R, SF2R, F2R, FloatSpec.Core.Defs.F2R,
+      FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Zaux.Zlt_bool,
+      FloatSpec.Core.Digits.digits2_pos, FloatSpec.Core.Digits.digits2_Pnat,
+      FloatSpec.Core.Digits.digits2_Pnat_bitlength_payload]
+  · simp only [Prod.snd]
+    norm_num [Binary.Bfrexp, Binary.BfrexpSingle,
+      ExperimentalSingleNaNArithmetic.Ffrexp_core_binary,
+      Binary.B2BSN, binaryFloatToBinarySingleNaNFloat,
+      FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Zaux.Zlt_bool,
+      FloatSpec.Core.Digits.digits2_pos, FloatSpec.Core.Digits.digits2_Pnat,
+      FloatSpec.Core.Digits.digits2_Pnat_bitlength_payload]
 #check @Bulp_correct
 #check @Binary.Bsucc_correct
 #check @Binary.Bpred_correct

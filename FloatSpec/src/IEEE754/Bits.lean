@@ -629,47 +629,38 @@ private theorem split_bits_exponent_range (mw ew : Nat) (x : Int) :
   simp [split_bits, Int.emod_nonneg (x / (2 : Int) ^ mw) (ne_of_gt hpos),
     Int.emod_lt_of_pos (x / (2 : Int) ^ mw) hpos]
 
-private theorem digits2_Pnat_le_of_lt_pow_two {n k : Nat} (hn : n < 2 ^ k) :
-    FloatSpec.Core.Digits.digits2_Pnat n ≤ k := by
-  by_cases hn0 : n = 0
-  · simp [hn0, FloatSpec.Core.Digits.digits2_Pnat]
-  · have hnpos : 0 < n := Nat.pos_of_ne_zero hn0
-    have htrip := FloatSpec.Core.Digits.Zdigits_le_Zpower
-      (beta := 2) (hβ := by decide) (x := (n : Int)) (e := (k : Int))
-    have hpre :
-        0 ≤ (k : Int) ∧ Int.natAbs (n : Int) < (2 : Int) ^ (k : Int).natAbs := by
-      constructor
-      · exact Int.natCast_nonneg k
-      · have hn_abs : Int.natAbs (n : Int) = n := by
-          simp
-        have hk_abs : (k : Int).natAbs = k := by
-          simp
-        rw [hn_abs, hk_abs]
-        exact_mod_cast hn
-    have hzd :
-        FloatSpec.Core.Digits.Zdigits 2 (n : Int) ≤ (k : Int) := by
-      simpa [wp, PostCond.noThrow, pure] using htrip (by decide) hpre
-    have heq_trip := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat n
-    have heq :
-        FloatSpec.Core.Digits.Zdigits 2 (n : Int) =
-          FloatSpec.Core.Digits.digits2_Pnat n := by
-      simpa [wp, PostCond.noThrow, pure] using heq_trip hnpos
-    have hdigits_int :
-        (FloatSpec.Core.Digits.digits2_Pnat n : Int) ≤ (k : Int) := by
-      simpa [heq] using hzd
-    exact_mod_cast hdigits_int
+private theorem digits2_pos_le_of_lt_pow_two {n k : Nat}
+    (hnpos : 0 < n) (hn : n < 2 ^ k) :
+    FloatSpec.Core.Digits.digits2_Pnat n + 1 ≤ k := by
+  have htrip := FloatSpec.Core.Digits.Zdigits_le_Zpower
+    (beta := 2) (hβ := by decide) (x := (n : Int)) (e := (k : Int))
+  have hpre :
+      0 ≤ (k : Int) ∧ Int.natAbs (n : Int) < (2 : Int) ^ (k : Int).natAbs := by
+    constructor
+    · exact Int.natCast_nonneg k
+    · simp
+      exact_mod_cast hn
+  have hzd : FloatSpec.Core.Digits.Zdigits 2 (n : Int) ≤ (k : Int) := by
+    simpa [wp, PostCond.noThrow, pure] using htrip (by decide) hpre
+  have heq := FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat n hnpos
+  have hle : ((FloatSpec.Core.Digits.digits2_Pnat n + 1 : Nat) : Int) ≤
+      (k : Int) := by
+    rw [heq]
+    exact hzd
+  exact_mod_cast hle
 
 private theorem nan_payload_valid_of_lt_pow
     {prec : Int} {mw : Nat} {n : Nat} (hnpos : 0 < n)
     (hnlt : n < 2 ^ mw) (hmw_lt_prec : (mw : Int) < prec) :
     nan_pl prec (positiveOfNat n hnpos) = true := by
   have hdigits_le :
-      FloatSpec.Core.Digits.digits2_Pnat n ≤ mw :=
-    digits2_Pnat_le_of_lt_pow_two hnlt
+      FloatSpec.Core.Digits.digits2_Pnat n + 1 ≤ mw :=
+    digits2_pos_le_of_lt_pow_two hnpos hnlt
   have hdigits_lt :
-      (FloatSpec.Core.Digits.digits2_Pnat n : Int) < prec := by
+      ((FloatSpec.Core.Digits.digits2_Pnat n + 1 : Nat) : Int) < prec := by
     exact lt_of_le_of_lt (by exact_mod_cast hdigits_le) hmw_lt_prec
-  simp [nan_pl, positiveOfNat_spec, FloatSpec.Core.Zaux.Zlt_bool, hdigits_lt]
+  simpa [nan_pl, positiveOfNat_spec, FloatSpec.Core.Digits.digits2_pos,
+    FloatSpec.Core.Zaux.Zlt_bool] using hdigits_lt
 
 private theorem bounded_of_b32_subnormal
     {n : Nat} (hnpos : 0 < n) (hnlt : n < 2 ^ 23) :
@@ -741,7 +732,7 @@ private theorem specFloat_bounded_of_bits_normal
   constructor
   · unfold FLT_exp FloatSpec.Core.FLT.FLT_exp
     have hzdigits : FloatSpec.Core.Digits.Zdigits 2 (n : Int) = prec := by
-      have htrip := FloatSpec.Core.Digits.Zdigits_unique (beta := 2)
+      have htrip := FloatSpec.Core.Digits.Zdigits_unique_from_nonzero_payload (beta := 2)
         (n := (n : Int)) (e := prec) (by decide)
       simp only [PostCond.noThrow, pure] at htrip
       apply htrip
@@ -1012,7 +1003,9 @@ private def default_nan_pl32_payload : FloatSpec.Core.Zaux.Positive :=
 private theorem default_nan_pl32_payload_valid :
     nan_pl 24 default_nan_pl32_payload = true := by
   norm_num [nan_pl, default_nan_pl32_payload, FloatSpec.Core.Zaux.iter_nat,
-    FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Digits.digits2_Pnat,
+    FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Digits.digits2_pos,
+    FloatSpec.Core.Digits.digits2_Pnat,
+    FloatSpec.Core.Digits.digits2_Pnat_bitlength_payload,
     FloatSpec.Core.Zaux.Zlt_bool]
 
 -- Coq: `default_nan_pl32`.
@@ -1029,7 +1022,9 @@ private def default_nan_pl64_payload : FloatSpec.Core.Zaux.Positive :=
 private theorem default_nan_pl64_payload_valid :
     nan_pl 53 default_nan_pl64_payload = true := by
   norm_num [nan_pl, default_nan_pl64_payload, FloatSpec.Core.Zaux.iter_nat,
-    FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Digits.digits2_Pnat,
+    FloatSpec.Core.Zaux.positiveToNat, FloatSpec.Core.Digits.digits2_pos,
+    FloatSpec.Core.Digits.digits2_Pnat,
+    FloatSpec.Core.Digits.digits2_Pnat_bitlength_payload,
     FloatSpec.Core.Zaux.Zlt_bool]
 
 -- Coq: `default_nan_pl64`.

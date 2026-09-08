@@ -89,7 +89,7 @@ def Rnd_NE_pt : ℝ → ℝ → Prop :=
     its round-down and round-up values have mantissas of opposite parity.
     This ensures the nearest-even tie-breaking is well-defined.
 -/
-def DN_UP_parity_pos_prop : Prop :=
+def DN_UP_parity_pos_payload : Prop :=
   ∀ x xd xu,
   0 < x →
   ¬FloatSpec.Core.Generic_fmt.generic_format beta fexp x →
@@ -101,6 +101,30 @@ def DN_UP_parity_pos_prop : Prop :=
     gd.Fnum % 2 ≠ gu.Fnum % 2
 
 end NearestEvenRounding
+
+/-- Coq's Boolean `Z.even`, represented by the canonical remainder test. -/
+def Zeven (z : Int) : Bool := decide (2 ∣ z)
+
+/-- Exact FLoCq `DN_UP_parity_pos_prop`. -/
+def DN_UP_parity_pos_prop
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] : Prop :=
+  ∀ (x : ℝ) (xd xu : FlocqFloat beta),
+    0 < x →
+    ¬ FloatSpec.Core.Generic_fmt.generic_format beta fexp x →
+    canonical beta fexp xd → canonical beta fexp xu →
+    F2R xd = round_to_generic beta fexp rnd_floor x →
+    F2R xu = round_to_generic beta fexp rnd_ceil x →
+    Zeven xu.Fnum = ! Zeven xd.Fnum
+
+/-- Exact FLoCq `DN_UP_parity_prop`. -/
+def DN_UP_parity_prop
+    (beta : Int) [ValidRadix beta] (fexp : Int → Int) [Valid_exp fexp] : Prop :=
+  ∀ (x : ℝ) (xd xu : FlocqFloat beta),
+    ¬ FloatSpec.Core.Generic_fmt.generic_format beta fexp x →
+    canonical beta fexp xd → canonical beta fexp xu →
+    F2R xd = round_to_generic beta fexp rnd_floor x →
+    F2R xu = round_to_generic beta fexp rnd_ceil x →
+    Zeven xu.Fnum = ! Zeven xd.Fnum
 
 /-- Flocq `Round_NE.v`: class `Exists_NE`.
 
@@ -139,7 +163,7 @@ variable [Exists_NE beta fexp]
       Z.even (Fnum xu) = negb (Z.even (Fnum xd)).
     ```
 -/
-def DN_UP_parity_prop : Prop :=
+def DN_UP_parity_payload : Prop :=
   ∀ x xd xu,
   ¬FloatSpec.Core.Generic_fmt.generic_format beta fexp x →
   FloatSpec.Core.Round_pred.Rnd_DN_pt (fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y) x xd →
@@ -151,7 +175,7 @@ def DN_UP_parity_prop : Prop :=
 
 /-- Check DN/UP parity auxiliary lemma -/
 noncomputable def DN_UP_parity_aux_check : Bool :=
-    @decide (DN_UP_parity_prop beta fexp) (Classical.dec _)
+    @decide (DN_UP_parity_payload beta fexp) (Classical.dec _)
 
 /-- Coq:
     Lemma DN_UP_parity_aux :
@@ -160,8 +184,8 @@ noncomputable def DN_UP_parity_aux_check : Bool :=
 
     Auxiliary lemma: parity for positives implies general parity via symmetry.
 -/
-theorem DN_UP_parity_aux :
-    ⦃⌜beta > 1 ∧ DN_UP_parity_pos_prop beta fexp⌝⦄
+theorem DN_UP_parity_aux_payload :
+    ⦃⌜beta > 1 ∧ DN_UP_parity_pos_payload beta fexp⌝⦄
     (pure (DN_UP_parity_aux_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
   intro hpre
@@ -320,7 +344,7 @@ theorem DN_UP_parity_aux :
 
 /-- Check DN/UP parity holds for the generic format (positive case) -/
 noncomputable def DN_UP_parity_generic_pos_check : Bool :=
-    @decide (DN_UP_parity_pos_prop beta fexp) (Classical.dec _)
+    @decide (DN_UP_parity_pos_payload beta fexp) (Classical.dec _)
 
 
 /-- Parity flips on successors. -/
@@ -597,7 +621,7 @@ private theorem DN_UP_gap_of_not_format
       xu = round_UP_to_format beta fexp x hβ := by
     exact FloatSpec.Core.Round_pred.Rnd_UP_pt_unique_pure F x xu
       (round_UP_to_format beta fexp x hβ) (by simpa [F] using hUP) hUP_chosen
-  have hgap := FloatSpec.Core.Ulp.round_UP_DN_ulp
+  have hgap := FloatSpec.Core.Ulp.round_UP_DN_ulp_from_choice_payload
     (beta := beta) (fexp := fexp) (x := x) hnotFmt hβ
   have hgap_run :
       round_UP_to_format beta fexp x hβ =
@@ -739,7 +763,7 @@ private theorem canonical_power_mantissa
     have hfmt_g := generic_format_canonical (beta := beta) (fexp := fexp) (f := g) hcan
     rwa [hg] at hfmt_g
   have hfe : fexp e ≤ e :=
-    generic_format_bpow_inv' (beta := beta) (fexp := fexp) (e := e) hβ hfmt_pow
+    generic_format_bpow_inv (beta := beta) (fexp := fexp) (e := e) hβ hfmt_pow
   have hfe1 : fexp (e + 1) ≤ e := by
     have hpair := Valid_exp.valid_exp (fexp := fexp) e
     by_cases hlt : fexp e < e
@@ -821,7 +845,7 @@ private theorem same_exp_mantissa
 
     Parity of down/up rounded neighbors differs when x > 0 and not representable.
 -/
-theorem DN_UP_parity_generic_pos :
+theorem DN_UP_parity_generic_pos_payload :
     ⦃⌜beta > 1⌝⦄
     (pure (DN_UP_parity_generic_pos_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -1147,7 +1171,7 @@ theorem DN_UP_parity_generic_pos :
 
 /-- Check DN/UP parity holds for the generic format (all reals) -/
 noncomputable def DN_UP_parity_generic_check : Bool :=
-    @decide (DN_UP_parity_prop beta fexp) (Classical.dec _)
+    @decide (DN_UP_parity_payload beta fexp) (Classical.dec _)
 
 /-- Coq:
     Theorem DN_UP_parity_generic :
@@ -1155,7 +1179,7 @@ noncomputable def DN_UP_parity_generic_check : Bool :=
 
     General parity property derived from the positive case.
 -/
-theorem DN_UP_parity_generic :
+theorem DN_UP_parity_generic_payload :
     ⦃⌜beta > 1⌝⦄
     (pure (DN_UP_parity_generic_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -1171,17 +1195,103 @@ theorem DN_UP_parity_generic :
   have hβ : 1 < beta := by
     -- The precondition is ⌜beta > 1⌝
     assumption
-  have hpos : DN_UP_parity_pos_prop beta fexp := by
+  have hpos : DN_UP_parity_pos_payload beta fexp := by
     -- Consume the triple-style theorem to a pure proposition using `simp` on decide
-    have htrip := DN_UP_parity_generic_pos (beta := beta) (fexp := fexp)
+    have htrip := DN_UP_parity_generic_pos_payload (beta := beta) (fexp := fexp)
     -- `htrip hβ` states that `decide (DN_UP_parity_pos_prop) = true`
     simpa [DN_UP_parity_generic_pos_check, pure, decide_eq_true_iff]
       using (htrip hβ)
   -- Now apply the auxiliary lemma to conclude the general property holds.
-  have haux := DN_UP_parity_aux (beta := beta) (fexp := fexp)
+  have haux := DN_UP_parity_aux_payload (beta := beta) (fexp := fexp)
   -- Reduce its triple-form statement to the same `decide` goal and finish by rewriting.
   simpa [DN_UP_parity_aux_check, pure, decide_eq_true_iff]
     using (haux ⟨hβ, hpos⟩)
+
+private theorem Zeven_flip_of_mod_ne (a b : Int)
+    (h : a % 2 ≠ b % 2) : Zeven b = ! Zeven a := by
+  rcases Int.emod_two_eq_zero_or_one a with ha | ha <;>
+    rcases Int.emod_two_eq_zero_or_one b with hb | hb <;>
+    simp [Zeven, Int.dvd_iff_emod_eq_zero, ha, hb] at h ⊢
+
+/-- Exact FLoCq `DN_UP_parity_generic_pos`. -/
+theorem DN_UP_parity_generic_pos : DN_UP_parity_pos_prop beta fexp := by
+  classical
+  have hp : DN_UP_parity_pos_payload beta fexp := by
+    have h := DN_UP_parity_generic_pos_payload (beta := beta) (fexp := fexp)
+    simpa [DN_UP_parity_generic_pos_check, pure, decide_eq_true_iff] using
+      h ValidRadix.valid
+  intro x xd xu hx hnot hcd hcu hxd hxu
+  let F := fun y : ℝ => generic_format beta fexp y
+  have hDN : FloatSpec.Core.Defs.Rnd_DN_pt F x (F2R xd) := by
+    rw [hxd]
+    simpa [F, round_to_generic] using
+      round_DN_pt (beta := beta) (fexp := fexp) x ValidRadix.valid
+  have hUP : FloatSpec.Core.Defs.Rnd_UP_pt F x (F2R xu) := by
+    rw [hxu]
+    simpa [F, round_to_generic] using
+      round_UP_pt (beta := beta) (fexp := fexp) x ValidRadix.valid
+  rcases hp x (F2R xd) (F2R xu) hx hnot hDN hUP with
+    ⟨gd, gu, hd, hu, hgd, hgu, hpar⟩
+  have hdeq : xd = gd := canonical_unique beta ValidRadix.valid fexp xd gd
+    hcd hgd (by simpa using hd)
+  have hueq : xu = gu := canonical_unique beta ValidRadix.valid fexp xu gu
+    hcu hgu (by simpa using hu)
+  subst gd
+  subst gu
+  exact Zeven_flip_of_mod_ne xd.Fnum xu.Fnum hpar
+
+/-- Exact FLoCq `DN_UP_parity_aux`. -/
+theorem DN_UP_parity_aux
+    (hpos : DN_UP_parity_pos_prop beta fexp) :
+    DN_UP_parity_prop beta fexp := by
+  classical
+  intro x xd xu hnot hcd hcu hxd hxu
+  rcases lt_trichotomy (0 : ℝ) x with hx | hx | hx
+  · exact hpos x xd xu hx hnot hcd hcu hxd hxu
+  · exfalso
+    apply hnot
+    simpa [hx] using generic_format_0_run (beta := beta) (fexp := fexp)
+  · let nd : FlocqFloat beta := ⟨-xu.Fnum, xu.Fexp⟩
+    let nu : FlocqFloat beta := ⟨-xd.Fnum, xd.Fexp⟩
+    have hcnd : canonical beta fexp nd := by
+      simpa [nd] using canonical_opp beta fexp xu.Fnum xu.Fexp hcu
+    have hcnu : canonical beta fexp nu := by
+      simpa [nu] using canonical_opp beta fexp xd.Fnum xd.Fexp hcd
+    have hnd : F2R nd = round_to_generic beta fexp rnd_floor (-x) := by
+      calc
+        F2R nd = -F2R xu := by
+          simpa [nd] using (FloatSpec.Core.Float_prop.F2R_Zopp
+            (beta := beta) xu ValidRadix.valid).symm
+        _ = -round_to_generic beta fexp rnd_ceil x := by rw [hxu]
+        _ = round_to_generic beta fexp rnd_floor (-x) := by
+          symm
+          exact round_DN_opp (beta := beta) (fexp := fexp) x
+    have hnu : F2R nu = round_to_generic beta fexp rnd_ceil (-x) := by
+      calc
+        F2R nu = -F2R xd := by
+          simpa [nu] using (FloatSpec.Core.Float_prop.F2R_Zopp
+            (beta := beta) xd ValidRadix.valid).symm
+        _ = -round_to_generic beta fexp rnd_floor x := by rw [hxd]
+        _ = round_to_generic beta fexp rnd_ceil (-x) := by
+          symm
+          exact round_UP_opp (beta := beta) (fexp := fexp) x
+    have hnfmt : ¬ generic_format beta fexp (-x) := by
+      intro hn
+      have hn' := generic_format_opp
+        (beta := beta) (fexp := fexp) (-x) hn
+      exact hnot (by simpa using hn')
+    have hp := hpos (-x) nd nu (neg_pos.mpr hx) hnfmt hcnd hcnu hnd hnu
+    have heven_neg (z : Int) : Zeven (-z) = Zeven z := by
+      simp [Zeven]
+    have hp' : Zeven xd.Fnum = ! Zeven xu.Fnum := by
+      simpa [nd, nu, heven_neg] using hp
+    cases h1 : Zeven xd.Fnum <;> cases h2 : Zeven xu.Fnum <;>
+      simp [h1, h2] at hp' ⊢
+
+/-- Exact FLoCq `DN_UP_parity_generic`. -/
+theorem DN_UP_parity_generic : DN_UP_parity_prop beta fexp :=
+  DN_UP_parity_aux (beta := beta) (fexp := fexp)
+    (DN_UP_parity_generic_pos (beta := beta) (fexp := fexp))
 
 /-- Local bridge from the DN/UP parity theorem to the nearest-even tie payload.
 
@@ -1197,8 +1307,8 @@ theorem DN_UP_NE_prop
       (fun y => FloatSpec.Core.Generic_fmt.generic_format beta fexp y) x xu) :
     NE_prop beta fexp x xd ∨ NE_prop beta fexp x xu := by
   classical
-  have hpar : DN_UP_parity_prop beta fexp := by
-    have htrip := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+  have hpar : DN_UP_parity_payload beta fexp := by
+    have htrip := DN_UP_parity_generic_payload (beta := beta) (fexp := fexp)
     simpa [DN_UP_parity_generic_check, pure, decide_eq_true_iff]
       using htrip hβ
   rcases hpar x xd xu hnotFmt hDN hUP with
@@ -1434,13 +1544,11 @@ theorem NE_prop_of_generic_even_mantissa
     ⟨FloatSpec.Core.Raux.Ztrunc
         (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp r),
       FloatSpec.Core.Generic_fmt.cexp beta fexp r⟩
-  have hcanTrip := FloatSpec.Core.Generic_fmt.canonical_generic_format
-    (beta := beta) (fexp := fexp) (x := r)
   have hcan : FloatSpec.Core.Generic_fmt.canonical beta fexp g := by
-    have hpost :
-        r = F2R g → FloatSpec.Core.Generic_fmt.canonical beta fexp g := by
-      simpa [g, wp, PostCond.noThrow, Id.run, pure] using hcanTrip ⟨hβ, hr⟩
-    exact hpost hr
+    simpa [FloatSpec.Core.Generic_fmt.canonical, g,
+      FloatSpec.Core.Generic_fmt.cexp] using
+      congrArg (fun y : ℝ => fexp (FloatSpec.Core.Raux.mag beta y))
+        (by simpa [g, FloatSpec.Core.Generic_fmt.generic_format] using hr)
   exact ⟨g, by simpa [g] using hr, hcan, by simpa [g] using heven⟩
 
 omit [Exists_NE beta fexp] in
@@ -1705,8 +1813,8 @@ theorem round_NE_pt_pos_exact
           simpa [F, u] using
             FloatSpec.Core.Generic_fmt.round_UP_pt
               (beta := beta) (fexp := fexp) (x := x) hβ
-        have hpar : DN_UP_parity_prop beta fexp := by
-          have htrip := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+        have hpar : DN_UP_parity_payload beta fexp := by
+          have htrip := DN_UP_parity_generic_payload (beta := beta) (fexp := fexp)
           simpa [DN_UP_parity_generic_check, pure, decide_eq_true_iff]
             using htrip hβ
         rcases hpar x d u hxFmt hDN hUP with
@@ -1779,8 +1887,8 @@ private theorem tie_unique_NE_ax
       have hu_abs_zero : |u - x| = 0 := le_antisymm hu_le_zero (abs_nonneg _)
       exact sub_eq_zero.mp (abs_eq_zero.mp hu_abs_zero)
     exact hd_eq_x.trans hu_eq_x.symm
-  · have hpar_prop : DN_UP_parity_prop beta fexp := by
-      have htrip := DN_UP_parity_generic (beta := beta) (fexp := fexp)
+  · have hpar_prop : DN_UP_parity_payload beta fexp := by
+      have htrip := DN_UP_parity_generic_payload (beta := beta) (fexp := fexp)
       simpa [DN_UP_parity_generic_check, pure, decide_eq_true_iff]
         using (htrip hβ)
     rcases hpar_prop x d u hxF hDN hUP with
@@ -2039,8 +2147,8 @@ theorem Rnd_NE_pt_total :
               have : ¬ ((x - xd) ≠ (xu - x)) := hstrict
               exact Classical.not_not.mp (by simpa using this)
             -- Obtain canonical representatives for xd and xu with opposite parity.
-            have hpar_all := DN_UP_parity_generic (beta := beta) (fexp := fexp)
-            have hpar : DN_UP_parity_prop beta fexp := by
+            have hpar_all := DN_UP_parity_generic_payload (beta := beta) (fexp := fexp)
+            have hpar : DN_UP_parity_payload beta fexp := by
               -- Consume the triple-style lemma to a pure proposition.
               have H := hpar_all hβ
               simpa [DN_UP_parity_generic_check, pure,
@@ -2108,8 +2216,8 @@ theorem Rnd_NE_pt_total :
                 simpa [eq_comm] using hstrict
               exact Classical.not_not.mp (by simpa using this)
             -- Parity lemma as above.
-            have hpar_all := DN_UP_parity_generic (beta := beta) (fexp := fexp)
-            have hpar : DN_UP_parity_prop beta fexp := by
+            have hpar_all := DN_UP_parity_generic_payload (beta := beta) (fexp := fexp)
+            have hpar : DN_UP_parity_payload beta fexp := by
               have H := hpar_all hβ
               simpa [DN_UP_parity_generic_check, pure,
                      decide_eq_true_iff]
@@ -2326,7 +2434,7 @@ noncomputable def DN_UP_parity_pos_holds_check : Bool :=
   by
     classical
     -- Decide the positive-case parity property for DN/UP neighbors.
-    exact @decide (DN_UP_parity_pos_prop beta fexp) (Classical.dec _)
+    exact @decide (DN_UP_parity_pos_payload beta fexp) (Classical.dec _)
 
 /-- Specification: Down-up parity for positive numbers
 
@@ -2349,7 +2457,7 @@ theorem DN_UP_parity_pos_holds :
   -- Target: DN_UP_parity_pos_prop beta fexp
   simp [ pure, decide_eq_true_iff]
   -- Obtain the positive-case parity property from the previously proven theorem.
-  have h := DN_UP_parity_generic_pos (beta := beta) (fexp := fexp)
+  have h := DN_UP_parity_generic_pos_payload (beta := beta) (fexp := fexp)
   -- Consume its precondition and convert its boolean result to the proposition.
   simpa [DN_UP_parity_generic_pos_check, pure, decide_eq_true_iff]
     using (h (by assumption))
@@ -2643,7 +2751,7 @@ private theorem Rnd_NE_pt_total_prop
 
     Rounding to nearest-even at positive x satisfies the predicate.
 -/
-theorem round_NE_pt_pos (x : ℝ) :
+theorem round_NE_pt_pos_check_spec (x : ℝ) :
     ⦃⌜beta > 1 ∧ 0 < x⌝⦄
     (pure (round_NE_pt_pos_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -2662,6 +2770,14 @@ theorem round_NE_pt_pos (x : ℝ) :
     Rnd_NE_pt_total_prop (beta := beta) (fexp := fexp) hβ
   -- Specialize totality to the given positive x and conclude.
   exact hTotProp x
+
+/-- Exact source contract at the concrete nearest-even rounded value. -/
+theorem round_NE_pt_pos (x : ℝ) (hx : 0 < x) :
+    Rnd_NE_pt beta fexp x
+      (FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest
+          (fun t : Int => !(decide (2 ∣ t)))) x) :=
+  round_NE_pt_pos_exact (beta := beta) (fexp := fexp) ValidRadix.valid x hx
 
 /-- Check rounding negation -/
 noncomputable def round_NE_opp_check : Bool :=
@@ -2682,7 +2798,7 @@ noncomputable def round_NE_opp_check : Bool :=
 
     Rounding commutes with negation under nearest-even.
 -/
-theorem round_NE_opp (x : ℝ) :
+theorem round_NE_opp_check_spec (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     (pure (round_NE_opp_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -2770,7 +2886,7 @@ noncomputable def round_NE_abs_check : Bool :=
 
     Equality between rounding abs(x) and abs(round(x)).
 -/
-theorem round_NE_abs (x : ℝ) :
+theorem round_NE_abs_check_spec (x : ℝ) :
     ⦃⌜beta > 1⌝⦄
     (pure (round_NE_abs_check beta fexp) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -2964,6 +3080,37 @@ private lemma roundR_ZnearestE_opp
     (rnd := FloatSpec.Core.Generic_fmt.Znearest choice) (x := x) hβ
   simpa [choice, hself] using h
 
+/-- Exact FLoCq observation: concrete nearest-even rounding commutes with
+    negation. -/
+theorem round_NE_opp (x : ℝ) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest
+          (fun t : Int => !(decide (2 ∣ t)))) (-x) =
+      -FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest
+          (fun t : Int => !(decide (2 ∣ t)))) x :=
+  roundR_ZnearestE_opp (beta := beta) (fexp := fexp) ValidRadix.valid x
+
+/-- Exact FLoCq observation for absolute value. -/
+theorem round_NE_abs (x : ℝ) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest
+          (fun t : Int => !(decide (2 ∣ t)))) |x| =
+      |FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest
+          (fun t : Int => !(decide (2 ∣ t)))) x| := by
+  let rnd := FloatSpec.Core.Generic_fmt.Znearest
+    (fun t : Int => !(decide (2 ∣ t)))
+  by_cases hx : 0 ≤ x
+  · have hr := FloatSpec.Core.Generic_fmt.roundR_nonneg_of_nonneg
+      (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) ValidRadix.valid hx
+    simp [abs_of_nonneg hx, abs_of_nonneg hr, rnd]
+  · have hxneg : x < 0 := lt_of_not_ge hx
+    have hr := FloatSpec.Core.Generic_fmt.roundR_nonpos_of_nonpos
+      (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) ValidRadix.valid (le_of_lt hxneg)
+    simpa [abs_of_neg hxneg, abs_of_nonpos hr, rnd] using round_NE_opp
+      (beta := beta) (fexp := fexp) x
+
 /-- Check predicate holds at the concrete nearest-even rounded value. -/
 noncomputable def round_NE_pt_check (x : ℝ) : Bool :=
   by
@@ -3025,7 +3172,7 @@ theorem round_NE_pt (x : ℝ) :
         simpa [choice] using roundR_ZnearestE_opp (beta := beta) (fexp := fexp) hβ x
       have hopp_prop :
           ∀ y f : ℝ, Rnd_NE_pt beta fexp y f ↔ Rnd_NE_pt beta fexp (-y) (-f) := by
-        have h := round_NE_opp (beta := beta) (fexp := fexp) (x := x)
+        have h := round_NE_opp_check_spec (beta := beta) (fexp := fexp) (x := x)
         simpa [round_NE_opp_check, pure, decide_eq_true_iff] using h hβ
       have hright :
           Rnd_NE_pt beta fexp (-x)

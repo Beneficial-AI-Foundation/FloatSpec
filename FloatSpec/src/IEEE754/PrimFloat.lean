@@ -1119,9 +1119,8 @@ private theorem Bfrexp_shifted_exp_range (x : PrimBinaryFloat) :
         have := hrange'.2
         norm_num [primPrec, primEmax] at this ⊢
         exact this
-      have hdigits_pos : 0 < FloatSpec.Core.Digits.digits2_Pnat m := by
-        have h := FloatSpec.Core.Digits.digits2_Pnat_correct m
-        simpa [wp, PostCond.noThrow, pure] using (h hm).1
+      have hdigits_pos : 0 < FloatSpec.Core.Digits.digits2_pos m := by
+        simp [FloatSpec.Core.Digits.digits2_pos]
       have hfirst :
           FloatSpec.Core.Zaux.Zlt_bool (-primPrec)
             (3 - primEmax - primPrec) = false := by
@@ -1132,11 +1131,11 @@ private theorem Bfrexp_shifted_exp_range (x : PrimBinaryFloat) :
       rw [hfirst]
       simp only [Bool.false_eq_true, ↓reduceIte]
       by_cases hdigits :
-          53 ≤ FloatSpec.Core.Digits.digits2_Pnat m
+          53 ≤ FloatSpec.Core.Digits.digits2_pos m
       · simp [hdigits, shift, primPrec, primEmax]
         omega
-      · have hdigits_lt : FloatSpec.Core.Digits.digits2_Pnat m < 53 := by
-          exact Nat.lt_of_not_ge hdigits
+      · have hdigits_lt : FloatSpec.Core.Digits.digits2_pos m < 53 := by
+          omega
         simp [hdigits, shift, primPrec, primEmax]
         omega
 

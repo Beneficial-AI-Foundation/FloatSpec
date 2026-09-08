@@ -1744,8 +1744,7 @@ theorem mag_sqrt_disj (x : ℝ) (hβ : 1 < beta) :
   have hmag_sqrt :
       FloatSpec.Core.Raux.mag beta (Real.sqrt x) =
         Int.floor ((Real.log x / Real.log (beta : ℝ)) / 2) + 1 := by
-    have h := (FloatSpec.Core.Raux.mag_sqrt (beta := beta) (x := x) hβ hx_pos) True.intro
-    simpa [wp, PostCond.noThrow, Id.run, pure] using h
+    exact (FloatSpec.Core.Raux.mag_sqrt_from_log_payload beta x hβ hx_pos) True.intro
   have hmag_x :
       FloatSpec.Core.Raux.mag beta x =
         Int.floor (Real.log x / Real.log (beta : ℝ)) + 1 := by
@@ -1979,8 +1978,6 @@ def round_round_mult_hyp (fexp1 fexp2 : Int → Int) : Prop :=
 Products of two values in the wider format `fexp1` are representable in
 `fexp2` when `round_round_mult_hyp` relates the exponent functions. -/
 theorem round_round_mult_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta) (hfexp : round_round_mult_hyp fexp1 fexp2)
     (x y : ℝ) :
     FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x →
@@ -2066,44 +2063,68 @@ theorem round_round_mult_aux (fexp1 fexp2 : Int → Int)
   rw [hxy_repr]
   simpa [FloatSpec.Core.Defs.F2R] using hfmt_f2r
 
-/-- Coq: `round_round_mult`. -/
-theorem round_round_mult (fexp1 fexp2 : Int → Int)
+theorem round_round_mult_aux_from_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
     [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
-    (mode : FloatSpec.Calc.Round.Mode)
-    [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
+    (hβ : 1 < beta) (hfexp : round_round_mult_hyp fexp1 fexp2)
+    (x y : ℝ)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x * y) :=
+  round_round_mult_aux (beta := beta) fexp1 fexp2 hβ hfexp x y hx hy
+
+/-- Coq: `round_round_mult`. -/
+theorem round_round_mult (rnd : ℝ → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
+    (fexp1 fexp2 : Int → Int)
     (hβ : 1 < beta) (hfexp : round_round_mult_hyp fexp1 fexp2)
     (x y : ℝ) :
     FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x →
     FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y →
-    FloatSpec.Calc.Round.round beta fexp1 mode
-        (FloatSpec.Calc.Round.round beta fexp2 mode (x * y))
-      = FloatSpec.Calc.Round.round beta fexp1 mode (x * y) := by
+    FloatSpec.Core.Generic_fmt.roundR beta fexp1 rnd
+        (FloatSpec.Core.Generic_fmt.roundR beta fexp2 rnd (x * y)) =
+      FloatSpec.Core.Generic_fmt.roundR beta fexp1 rnd (x * y) := by
   intro hx hy
   have hxy_format :
       FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x * y) :=
     round_round_mult_aux (beta := beta) (fexp1 := fexp1) (fexp2 := fexp2)
       hβ hfexp x y hx hy
   have hxy_round :
-      FloatSpec.Calc.Round.round beta fexp2 mode (x * y) = x * y := by
-    unfold FloatSpec.Calc.Round.round
+      FloatSpec.Core.Generic_fmt.roundR beta fexp2 rnd (x * y) = x * y := by
     exact FloatSpec.Core.Generic_fmt.roundR_generic
-      (beta := beta) (fexp := fexp2) (rnd := mode.rnd) (x := x * y) hβ hxy_format
+      (beta := beta) (fexp := fexp2) (rnd := rnd) (x := x * y) hβ hxy_format
   rw [hxy_round]
 
-/-- Coq: `round_round_mult_FLX`. -/
-theorem round_round_mult_FLX (prec prec' : Int)
-    [Prec_gt_0 prec] [Prec_gt_0 prec']
+theorem round_round_mult_from_mode_and_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (mode : FloatSpec.Calc.Round.Mode)
     [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
+    (hβ : 1 < beta) (hfexp : round_round_mult_hyp fexp1 fexp2)
+    (x y : ℝ)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Calc.Round.round beta fexp1 mode
+        (FloatSpec.Calc.Round.round beta fexp2 mode (x * y)) =
+      FloatSpec.Calc.Round.round beta fexp1 mode (x * y) := by
+  simpa [FloatSpec.Calc.Round.round] using
+    round_round_mult (beta := beta) mode.rnd fexp1 fexp2 hβ hfexp x y hx hy
+
+/-- Coq: `round_round_mult_FLX`. -/
+theorem round_round_mult_FLX (rnd : ℝ → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (prec prec' : Int)
     (hβ : 1 < beta) :
     2 * prec ≤ prec' →
     ∀ x y,
       FloatSpec.Core.FLX.FLX_format prec beta x →
       FloatSpec.Core.FLX.FLX_format prec beta y →
-      FloatSpec.Calc.Round.round beta (FloatSpec.Core.FLX.FLX_exp prec) mode
-          (FloatSpec.Calc.Round.round beta (FloatSpec.Core.FLX.FLX_exp prec') mode (x * y))
-        = FloatSpec.Calc.Round.round beta (FloatSpec.Core.FLX.FLX_exp prec) mode (x * y) := by
+      FloatSpec.Core.Generic_fmt.roundR beta (FloatSpec.Core.FLX.FLX_exp prec) rnd
+          (FloatSpec.Core.Generic_fmt.roundR beta
+            (FloatSpec.Core.FLX.FLX_exp prec') rnd (x * y)) =
+        FloatSpec.Core.Generic_fmt.roundR beta
+          (FloatSpec.Core.FLX.FLX_exp prec) rnd (x * y) := by
   intro hprec x y hx hy
   have hfexp :
       round_round_mult_hyp
@@ -2120,24 +2141,26 @@ theorem round_round_mult_FLX (prec prec' : Int)
     round_round_mult (beta := beta)
       (fexp1 := FloatSpec.Core.FLX.FLX_exp prec)
       (fexp2 := FloatSpec.Core.FLX.FLX_exp prec')
-      (mode := mode) hβ hfexp x y
-      (by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
-      (by simpa [FloatSpec.Core.FLX.FLX_format] using hy)
+      (rnd := rnd) hβ hfexp x y
+      (FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
+      (FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta y hy)
 
 /-- Coq: `round_round_mult_FLT`. -/
-theorem round_round_mult_FLT (emin prec emin' prec' : Int)
-    [Prec_gt_0 prec] [Prec_gt_0 prec']
-    (mode : FloatSpec.Calc.Round.Mode)
-    [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
+theorem round_round_mult_FLT (rnd : ℝ → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
+    (emin prec emin' prec' : Int)
     (hβ : 1 < beta) :
     emin' ≤ 2 * emin →
     2 * prec ≤ prec' →
     ∀ x y,
       FloatSpec.Core.FLT.FLT_format prec emin beta x →
       FloatSpec.Core.FLT.FLT_format prec emin beta y →
-      FloatSpec.Calc.Round.round beta (FloatSpec.Core.FLT.FLT_exp prec emin) mode
-          (FloatSpec.Calc.Round.round beta (FloatSpec.Core.FLT.FLT_exp prec' emin') mode (x * y))
-        = FloatSpec.Calc.Round.round beta (FloatSpec.Core.FLT.FLT_exp prec emin) mode (x * y) := by
+      FloatSpec.Core.Generic_fmt.roundR beta
+          (FloatSpec.Core.FLT.FLT_exp prec emin) rnd
+          (FloatSpec.Core.Generic_fmt.roundR beta
+            (FloatSpec.Core.FLT.FLT_exp prec' emin') rnd (x * y)) =
+        FloatSpec.Core.Generic_fmt.roundR beta
+          (FloatSpec.Core.FLT.FLT_exp prec emin) rnd (x * y) := by
   intro hemin hprec x y hx hy
   have hfexp :
       round_round_mult_hyp
@@ -2154,29 +2177,31 @@ theorem round_round_mult_FLT (emin prec emin' prec' : Int)
     round_round_mult (beta := beta)
       (fexp1 := FloatSpec.Core.FLT.FLT_exp prec emin)
       (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
-      (mode := mode) hβ hfexp x y
-      (by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
-      (by simpa [FloatSpec.Core.FLT.FLT_format] using hy)
+      (rnd := rnd) hβ hfexp x y
+      (FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
+      (FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta y hy)
 
 /-- Coq: `round_round_mult_FTZ`. -/
-theorem round_round_mult_FTZ (emin prec emin' prec' : Int)
-    [Prec_gt_0 prec] [Prec_gt_0 prec']
-    (mode : FloatSpec.Calc.Round.Mode)
-    [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
+theorem round_round_mult_FTZ (rnd : ℝ → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
+    (emin prec emin' prec' : Int) [Prec_gt_0 prec]
     (hβ : 1 < beta) :
     emin' + prec' ≤ 2 * emin + prec →
     2 * prec ≤ prec' →
     ∀ x y,
       FloatSpec.Core.FTZ.FTZ_format prec emin beta x →
       FloatSpec.Core.FTZ.FTZ_format prec emin beta y →
-      FloatSpec.Calc.Round.round beta (FloatSpec.Core.FTZ.FTZ_exp prec emin) mode
-          (FloatSpec.Calc.Round.round beta (FloatSpec.Core.FTZ.FTZ_exp prec' emin') mode (x * y))
-        = FloatSpec.Calc.Round.round beta (FloatSpec.Core.FTZ.FTZ_exp prec emin) mode (x * y) := by
+      FloatSpec.Core.Generic_fmt.roundR beta
+          (FloatSpec.Core.FTZ.FTZ_exp prec emin) rnd
+          (FloatSpec.Core.Generic_fmt.roundR beta
+            (FloatSpec.Core.FTZ.FTZ_exp prec' emin') rnd (x * y)) =
+        FloatSpec.Core.Generic_fmt.roundR beta
+          (FloatSpec.Core.FTZ.FTZ_exp prec emin) rnd (x * y) := by
   intro hemin hprec x y hx hy
   have hprec_pos : 0 < prec := (Prec_gt_0.pos : 0 < prec)
-  have hprec'_pos : 0 < prec' := (Prec_gt_0.pos : 0 < prec')
+  have hprec'_pos : 0 < prec' := by omega
   haveI : Fact (0 < prec) := ⟨(Prec_gt_0.pos : 0 < prec)⟩
-  haveI : Fact (0 < prec') := ⟨(Prec_gt_0.pos : 0 < prec')⟩
+  haveI : Fact (0 < prec') := ⟨hprec'_pos⟩
   have hfexp :
       round_round_mult_hyp
         (FloatSpec.Core.FTZ.FTZ_exp prec emin)
@@ -2192,9 +2217,60 @@ theorem round_round_mult_FTZ (emin prec emin' prec' : Int)
     round_round_mult (beta := beta)
       (fexp1 := FloatSpec.Core.FTZ.FTZ_exp prec emin)
       (fexp2 := FloatSpec.Core.FTZ.FTZ_exp prec' emin')
-      (mode := mode) hβ hfexp x y
+      (rnd := rnd) hβ hfexp x y
       (by simpa [FloatSpec.Core.FTZ.FTZ_format] using hx)
       (by simpa [FloatSpec.Core.FTZ.FTZ_format] using hy)
+
+theorem round_round_mult_FLX_from_mode_and_prec_payload
+    (prec prec' : Int) [Prec_gt_0 prec] [Prec_gt_0 prec']
+    (mode : FloatSpec.Calc.Round.Mode)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
+    (hβ : 1 < beta) (hprec : 2 * prec ≤ prec') (x y : ℝ)
+    (hx : FloatSpec.Core.FLX.FLX_format prec beta x)
+    (hy : FloatSpec.Core.FLX.FLX_format prec beta y) :
+    FloatSpec.Calc.Round.round beta (FloatSpec.Core.FLX.FLX_exp prec) mode
+        (FloatSpec.Calc.Round.round beta
+          (FloatSpec.Core.FLX.FLX_exp prec') mode (x * y)) =
+      FloatSpec.Calc.Round.round beta
+        (FloatSpec.Core.FLX.FLX_exp prec) mode (x * y) := by
+  simpa [FloatSpec.Calc.Round.round] using
+    round_round_mult_FLX (beta := beta) mode.rnd prec prec' hβ hprec x y hx hy
+
+theorem round_round_mult_FLT_from_mode_and_prec_payload
+    (emin prec emin' prec' : Int) [Prec_gt_0 prec] [Prec_gt_0 prec']
+    (mode : FloatSpec.Calc.Round.Mode)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
+    (hβ : 1 < beta) (hemin : emin' ≤ 2 * emin)
+    (hprec : 2 * prec ≤ prec') (x y : ℝ)
+    (hx : FloatSpec.Core.FLT.FLT_format prec emin beta x)
+    (hy : FloatSpec.Core.FLT.FLT_format prec emin beta y) :
+    FloatSpec.Calc.Round.round beta
+        (FloatSpec.Core.FLT.FLT_exp prec emin) mode
+        (FloatSpec.Calc.Round.round beta
+          (FloatSpec.Core.FLT.FLT_exp prec' emin') mode (x * y)) =
+      FloatSpec.Calc.Round.round beta
+        (FloatSpec.Core.FLT.FLT_exp prec emin) mode (x * y) := by
+  simpa [FloatSpec.Calc.Round.round] using
+    round_round_mult_FLT (beta := beta) mode.rnd emin prec emin' prec' hβ
+      hemin hprec x y hx hy
+
+theorem round_round_mult_FTZ_from_mode_and_prec_payload
+    (emin prec emin' prec' : Int) [Prec_gt_0 prec] [Prec_gt_0 prec']
+    (mode : FloatSpec.Calc.Round.Mode)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd mode.rnd]
+    (hβ : 1 < beta) (hemin : emin' + prec' ≤ 2 * emin + prec)
+    (hprec : 2 * prec ≤ prec') (x y : ℝ)
+    (hx : FloatSpec.Core.FTZ.FTZ_format prec emin beta x)
+    (hy : FloatSpec.Core.FTZ.FTZ_format prec emin beta y) :
+    FloatSpec.Calc.Round.round beta
+        (FloatSpec.Core.FTZ.FTZ_exp prec emin) mode
+        (FloatSpec.Calc.Round.round beta
+          (FloatSpec.Core.FTZ.FTZ_exp prec' emin') mode (x * y)) =
+      FloatSpec.Calc.Round.round beta
+        (FloatSpec.Core.FTZ.FTZ_exp prec emin) mode (x * y) := by
+  simpa [FloatSpec.Calc.Round.round] using
+    round_round_mult_FTZ (beta := beta) mode.rnd emin prec emin' prec' hβ
+      hemin hprec x y hx hy
 
 /-- Coq: `round_round_sqrt_hyp`. -/
 def round_round_sqrt_hyp (fexp1 fexp2 : Int → Int) : Prop :=
@@ -4474,9 +4550,8 @@ theorem round_round_sqrt_from_aux (fexp1 fexp2 : Int → Int)
         have hmag_le :
             FloatSpec.Core.Raux.mag beta x ≤
               FloatSpec.Core.Raux.mag beta (Real.sqrt x) := by
-          have htrip := FloatSpec.Core.Raux.mag_le (beta := beta)
-            (x := x) (y := Real.sqrt x) hβ hx_ne habs
-          simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+          exact FloatSpec.Core.Raux.mag_le_abs beta x (Real.sqrt x)
+            hβ hx_ne habs
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
           (fexp := fexp1)
           (k := FloatSpec.Core.Raux.mag beta x)
@@ -4593,7 +4668,7 @@ theorem FLX_round_round_sqrt_hyp (prec prec' : Int) [Prec_gt_0 prec]
     omega
 
 /-- Coq: `FLT_round_round_sqrt_hyp`. -/
-theorem FLT_round_round_sqrt_hyp
+theorem FLT_round_round_sqrt_hyp_from_prec_prime_payload
     (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : emin ≤ 0)
@@ -4626,7 +4701,7 @@ theorem FLT_round_round_sqrt_hyp
       grind
 
 /-- Coq: `FTZ_round_round_sqrt_hyp`. -/
-theorem FTZ_round_round_sqrt_hyp
+theorem FTZ_round_round_sqrt_hyp_from_prec_prime_payload
     (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
@@ -4665,7 +4740,7 @@ theorem round_round_sqrt_FLX (prec prec' : Int)
       (fexp2 := FloatSpec.Core.FLX.FLX_exp prec')
       (choice1 := choice1) (choice2 := choice2) hβ
       (FLX_round_round_sqrt_hyp (prec := prec) (prec' := prec') hprec)
-      x (by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
+      x (FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
 
 /-- Coq: `round_round_sqrt_FLT`. -/
 theorem round_round_sqrt_FLT (emin prec emin' prec' : Int)
@@ -4687,10 +4762,10 @@ theorem round_round_sqrt_FLT (emin prec emin' prec' : Int)
       (fexp1 := FloatSpec.Core.FLT.FLT_exp prec emin)
       (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
       (choice1 := choice1) (choice2 := choice2) hβ
-      (FLT_round_round_sqrt_hyp
+      (FLT_round_round_sqrt_hyp_from_prec_prime_payload
         (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
         hemin heminprec hprec)
-      x (by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
+      x (FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
 
 /-- Coq: `round_round_sqrt_FTZ`. -/
 theorem round_round_sqrt_FTZ (emin prec emin' prec' : Int)
@@ -4710,7 +4785,7 @@ theorem round_round_sqrt_FTZ (emin prec emin' prec' : Int)
       (fexp1 := FloatSpec.Core.FTZ.FTZ_exp prec emin)
       (fexp2 := FloatSpec.Core.FTZ.FTZ_exp prec' emin')
       (choice1 := choice1) (choice2 := choice2) hβ
-      (FTZ_round_round_sqrt_hyp
+      (FTZ_round_round_sqrt_hyp_from_prec_prime_payload
         (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
         hemin hprec)
       x (by simpa [FloatSpec.Core.FTZ.FTZ_format] using hx)
@@ -4766,9 +4841,8 @@ theorem round_round_sqrt_radix_ge_4_from_aux (fexp1 fexp2 : Int → Int)
         have hmag_le :
             FloatSpec.Core.Raux.mag beta x ≤
               FloatSpec.Core.Raux.mag beta (Real.sqrt x) := by
-          have htrip := FloatSpec.Core.Raux.mag_le (beta := beta)
-            (x := x) (y := Real.sqrt x) hβ hx_ne habs
-          simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+          exact FloatSpec.Core.Raux.mag_le_abs beta x (Real.sqrt x)
+            hβ hx_ne habs
         exact FloatSpec.Core.Generic_fmt.valid_exp_large
           (fexp := fexp1)
           (k := FloatSpec.Core.Raux.mag beta x)
@@ -4886,7 +4960,7 @@ theorem FLX_round_round_sqrt_radix_ge_4_hyp (prec prec' : Int)
     omega
 
 /-- Coq: `FLT_round_round_sqrt_radix_ge_4_hyp`. -/
-theorem FLT_round_round_sqrt_radix_ge_4_hyp
+theorem FLT_round_round_sqrt_radix_ge_4_hyp_from_prec_prime_payload
     (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : emin ≤ 0)
@@ -4919,7 +4993,7 @@ theorem FLT_round_round_sqrt_radix_ge_4_hyp
       grind
 
 /-- Coq: `FTZ_round_round_sqrt_radix_ge_4_hyp`. -/
-theorem FTZ_round_round_sqrt_radix_ge_4_hyp
+theorem FTZ_round_round_sqrt_radix_ge_4_hyp_from_prec_prime_payload
     (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
@@ -4960,7 +5034,7 @@ theorem round_round_sqrt_radix_ge_4_FLX (prec prec' : Int)
       (choice1 := choice1) (choice2 := choice2) hβ hβ4
       (FLX_round_round_sqrt_radix_ge_4_hyp
         (prec := prec) (prec' := prec') hprec)
-      x (by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
+      x (FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
 
 /-- Coq: `round_round_sqrt_radix_ge_4_FLT`. -/
 theorem round_round_sqrt_radix_ge_4_FLT (emin prec emin' prec' : Int)
@@ -4983,10 +5057,10 @@ theorem round_round_sqrt_radix_ge_4_FLT (emin prec emin' prec' : Int)
       (fexp1 := FloatSpec.Core.FLT.FLT_exp prec emin)
       (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
       (choice1 := choice1) (choice2 := choice2) hβ hβ4
-      (FLT_round_round_sqrt_radix_ge_4_hyp
+      (FLT_round_round_sqrt_radix_ge_4_hyp_from_prec_prime_payload
         (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
         hemin heminprec hprec)
-      x (by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
+      x (FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
 
 /-- Coq: `round_round_sqrt_radix_ge_4_FTZ`. -/
 theorem round_round_sqrt_radix_ge_4_FTZ (emin prec emin' prec' : Int)
@@ -5007,7 +5081,7 @@ theorem round_round_sqrt_radix_ge_4_FTZ (emin prec emin' prec' : Int)
       (fexp1 := FloatSpec.Core.FTZ.FTZ_exp prec emin)
       (fexp2 := FloatSpec.Core.FTZ.FTZ_exp prec' emin')
       (choice1 := choice1) (choice2 := choice2) hβ hβ4
-      (FTZ_round_round_sqrt_radix_ge_4_hyp
+      (FTZ_round_round_sqrt_radix_ge_4_hyp_from_prec_prime_payload
         (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
         hemin hprec)
       x (by simpa [FloatSpec.Core.FTZ.FTZ_format] using hx)
@@ -6524,9 +6598,8 @@ theorem round_round_eq_mid_beta_even (fexp1 fexp2 : Int → Int)
       have hmag_rd_le : FloatSpec.Core.Raux.mag beta rd ≤ m := by
         have habs : |rd| ≤ |x| := by
           simpa [abs_of_nonneg hrd_nonneg, abs_of_pos hx_pos] using hrd_le_x
-        have htrip := FloatSpec.Core.Raux.mag_le
-          (beta := beta) (x := rd) (y := x) hβ hrd_zero habs
-        simpa [wp, PostCond.noThrow, Id.run, pure, m] using htrip True.intro
+        simpa [m] using
+          (FloatSpec.Core.Raux.mag_le_abs beta rd x hβ hrd_zero habs)
       have hmag_x_le_rd : m ≤ FloatSpec.Core.Raux.mag beta rd := by
         have h := FloatSpec.Core.Generic_fmt.mag_roundR_ge
           (beta := beta) (fexp := fexp1)
@@ -9274,7 +9347,7 @@ theorem FLX_round_round_div_hyp (prec prec' : Int)
     omega
 
 /-- Coq: `FLT_round_round_div_hyp`. -/
-theorem FLT_round_round_div_hyp
+theorem FLT_round_round_div_hyp_from_prec_prime_payload
     (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : emin' ≤ emin - prec - 2)
@@ -9301,7 +9374,7 @@ theorem FLT_round_round_div_hyp
     grind
 
 /-- Coq: `FTZ_round_round_div_hyp`. -/
-theorem FTZ_round_round_div_hyp
+theorem FTZ_round_round_div_hyp_from_prec_prime_payload
     (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : emin' + prec' ≤ emin - 1)
@@ -9350,8 +9423,8 @@ theorem round_round_div_FLX (prec prec' : Int)
     (hexp := FLX_round_round_div_hyp
       (prec := prec) (prec' := prec') hprec)
     (x := x) (y := y) hy_ne
-    (by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
-    (by simpa [FloatSpec.Core.FLX.FLX_format] using hy)
+    (FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
+    (FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta y hy)
 
 /-- Coq: `round_round_div_FLT`. -/
 theorem round_round_div_FLT (emin prec emin' prec' : Int)
@@ -9374,12 +9447,12 @@ theorem round_round_div_FLT (emin prec emin' prec' : Int)
     (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ) (heven := heven)
-    (hexp := FLT_round_round_div_hyp
+    (hexp := FLT_round_round_div_hyp_from_prec_prime_payload
       (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
       hemin hprec)
     (x := x) (y := y) hy_ne
-    (by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
-    (by simpa [FloatSpec.Core.FLT.FLT_format] using hy)
+    (FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
+    (FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta y hy)
 
 /-- Coq: `round_round_div_FTZ`. -/
 theorem round_round_div_FTZ (emin prec emin' prec' : Int)
@@ -9402,7 +9475,7 @@ theorem round_round_div_FTZ (emin prec emin' prec' : Int)
     (fexp2 := FloatSpec.Core.FTZ.FTZ_exp prec' emin')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ) (heven := heven)
-    (hexp := FTZ_round_round_div_hyp
+    (hexp := FTZ_round_round_div_hyp_from_prec_prime_payload
       (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
       hemin hprec)
     (x := x) (y := y) hy_ne
@@ -9433,7 +9506,6 @@ theorem mag_plus_disj (x y : ℝ)
 
 /-- Coq: `mag_plus_separated`. -/
 theorem mag_plus_separated (fexp : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hx_pos : 0 < x)
@@ -9481,6 +9553,19 @@ theorem mag_plus_separated (fexp : Int → Int)
     (eps := y) ⟨hy_nonneg, hy_lt_ulp⟩
   simpa [wp, PostCond.noThrow, Id.run, pure] using hmag hβ
 
+/-- Compatibility endpoint retaining the former proof-only `Valid_exp`
+payload.  The public name above exposes the contract exported by Coq. -/
+theorem mag_plus_separated_from_valid_exp_payload (fexp : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    (x y : ℝ)
+    (hβ : 1 < beta)
+    (hx_pos : 0 < x)
+    (hy_nonneg : 0 ≤ y)
+    (hx_fmt : FloatSpec.Core.Generic_fmt.generic_format beta fexp x)
+    (hsep : FloatSpec.Core.Raux.mag beta y ≤ fexp (FloatSpec.Core.Raux.mag beta x)) :
+    FloatSpec.Core.Raux.mag beta (x + y) = FloatSpec.Core.Raux.mag beta x :=
+  mag_plus_separated (beta := beta) fexp x y hβ hx_pos hy_nonneg hx_fmt hsep
+
 /-- Coq: `round_round_plus_aux0_aux_aux`.
 
 If the canonical exponents of two formatted addends are ordered and the target
@@ -9488,8 +9573,6 @@ format is coarse enough at the sum magnitude for both addends, then the sum is
 representable in the target format.
 -/
 theorem round_round_plus_aux0_aux_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hxy :
@@ -9599,8 +9682,6 @@ theorem round_round_plus_aux0_aux_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_plus_aux0_aux`. -/
 theorem round_round_plus_aux0_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hlnx :
@@ -9641,7 +9722,6 @@ theorem round_round_plus_aux0_aux (fexp1 fexp2 : Int → Int)
 /-- Coq: `round_round_plus_aux0`. -/
 theorem round_round_plus_aux0 (fexp1 fexp2 : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -9684,9 +9764,8 @@ theorem round_round_plus_aux0 (fexp1 fexp2 : Int → Int)
       have hxy_abs : |y| ≤ |x| := by
         simpa [abs_of_nonneg hy_nonneg, abs_of_nonneg (le_of_lt hx_pos)]
           using hyx
-      have htrip := FloatSpec.Core.Raux.mag_le (beta := beta)
-        (x := y) (y := x) hβ (ne_of_gt hy_pos) hxy_abs
-      simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+      exact FloatSpec.Core.Raux.mag_le_abs beta y x hβ
+        (ne_of_gt hy_pos) hxy_abs
     apply round_round_plus_aux0_aux (beta := beta)
       (fexp1 := fexp1) (fexp2 := fexp2) (x := x) (y := y) hβ
     · rcases mag_plus_disj (beta := beta) (x := x) (y := y)
@@ -10178,8 +10257,6 @@ theorem round_round_plus_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_aux0_aux`. -/
 theorem round_round_minus_aux0_aux (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (x y : ℝ)
     (hβ : 1 < beta)
     (hlnx :
@@ -10214,8 +10291,6 @@ theorem round_round_minus_aux0_aux (fexp1 fexp2 : Int → Int)
 When two positive `fexp1`-format numbers are close in magnitude, their
 difference is exactly representable in the wider `fexp2` format. -/
 theorem round_round_minus_aux0 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -10244,9 +10319,8 @@ theorem round_round_minus_aux0 (fexp1 fexp2 : Int → Int)
     have hy_abs_le_x : |y| ≤ |x| := by
       simpa [abs_of_nonneg hy_nonneg, abs_of_nonneg hx_nonneg]
         using le_of_lt hyx
-    have htrip := FloatSpec.Core.Raux.mag_le
-      (beta := beta) (x := y) (y := x) hβ (ne_of_gt hy_pos) hy_abs_le_x
-    simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+    exact FloatSpec.Core.Raux.mag_le_abs beta y x hβ
+      (ne_of_gt hy_pos) hy_abs_le_x
   by_cases hclose :
       FloatSpec.Core.Raux.mag beta x - 2 <
         FloatSpec.Core.Raux.mag beta y
@@ -10917,7 +10991,7 @@ theorem round_round_minus (fexp1 fexp2 : Int → Int)
   simpa [sub_eq_add_neg] using hplus
 
 /-- Coq: `FLX_round_round_plus_hyp`. -/
-theorem FLX_round_round_plus_hyp (prec prec' : Int)
+theorem FLX_round_round_plus_hyp_from_prec_prime_payload (prec prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hprec : 2 * prec + 1 ≤ prec') :
     round_round_plus_hyp
@@ -10955,11 +11029,11 @@ theorem round_round_plus_FLX (prec prec' : Int)
     (fexp2 := FloatSpec.Core.FLX.FLX_exp prec')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLX_round_round_plus_hyp
+    (hexp := FLX_round_round_plus_hyp_from_prec_prime_payload
       (prec := prec) (prec' := prec') hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta y hy)
 
 /-- Coq: `round_round_minus_FLX`. -/
 theorem round_round_minus_FLX (prec prec' : Int)
@@ -10979,14 +11053,15 @@ theorem round_round_minus_FLX (prec prec' : Int)
     (fexp2 := FloatSpec.Core.FLX.FLX_exp prec')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLX_round_round_plus_hyp
+    (hexp := FLX_round_round_plus_hyp_from_prec_prime_payload
       (prec := prec) (prec' := prec') hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta y hy)
 
 /-- Coq: `FLT_round_round_plus_hyp`. -/
-theorem FLT_round_round_plus_hyp (emin prec emin' prec' : Int)
+theorem FLT_round_round_plus_hyp_from_prec_prime_payload
+    (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : emin' ≤ emin)
     (hprec : 2 * prec + 1 ≤ prec') :
@@ -11026,12 +11101,12 @@ theorem round_round_plus_FLT (emin prec emin' prec' : Int)
     (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLT_round_round_plus_hyp
+    (hexp := FLT_round_round_plus_hyp_from_prec_prime_payload
       (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
       hemin hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta y hy)
 
 /-- Coq: `round_round_minus_FLT`. -/
 theorem round_round_minus_FLT (emin prec emin' prec' : Int)
@@ -11052,12 +11127,12 @@ theorem round_round_minus_FLT (emin prec emin' prec' : Int)
     (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLT_round_round_plus_hyp
+    (hexp := FLT_round_round_plus_hyp_from_prec_prime_payload
       (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
       hemin hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta y hy)
 
 /-- Coq: `FTZ_round_round_plus_hyp`. -/
 theorem FTZ_round_round_plus_hyp (emin prec emin' prec' : Int)
@@ -11143,7 +11218,6 @@ def round_round_plus_radix_ge_3_hyp (fexp1 fexp2 : Int → Int) : Prop :=
 /-- Coq: `round_round_plus_radix_ge_3_aux0`. -/
 theorem round_round_plus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
     [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -11186,9 +11260,8 @@ theorem round_round_plus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
       have hxy_abs : |y| ≤ |x| := by
         simpa [abs_of_nonneg hy_nonneg, abs_of_nonneg (le_of_lt hx_pos)]
           using hyx
-      have htrip := FloatSpec.Core.Raux.mag_le (beta := beta)
-        (x := y) (y := x) hβ (ne_of_gt hy_pos) hxy_abs
-      simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+      exact FloatSpec.Core.Raux.mag_le_abs beta y x hβ
+        (ne_of_gt hy_pos) hxy_abs
     apply round_round_plus_aux0_aux (beta := beta)
       (fexp1 := fexp1) (fexp2 := fexp2) (x := x) (y := y) hβ
     · rcases mag_plus_disj (beta := beta) (x := x) (y := y)
@@ -11496,8 +11569,6 @@ theorem round_round_plus_radix_ge_3_aux (fexp1 fexp2 : Int → Int)
 
 /-- Coq: `round_round_minus_radix_ge_3_aux0`. -/
 theorem round_round_minus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
-    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
     (hβ : 1 < beta)
     (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
     (x y : ℝ)
@@ -11526,9 +11597,8 @@ theorem round_round_minus_radix_ge_3_aux0 (fexp1 fexp2 : Int → Int)
     have hy_abs_le_x : |y| ≤ |x| := by
       simpa [abs_of_nonneg hy_nonneg, abs_of_nonneg hx_nonneg]
         using le_of_lt hyx
-    have htrip := FloatSpec.Core.Raux.mag_le
-      (beta := beta) (x := y) (y := x) hβ (ne_of_gt hy_pos) hy_abs_le_x
-    simpa [wp, PostCond.noThrow, Id.run, pure] using htrip True.intro
+    exact FloatSpec.Core.Raux.mag_le_abs beta y x hβ
+      (ne_of_gt hy_pos) hy_abs_le_x
   by_cases hclose :
       FloatSpec.Core.Raux.mag beta x - 2 <
         FloatSpec.Core.Raux.mag beta y
@@ -12128,7 +12198,8 @@ theorem round_round_minus_radix_ge_3 (fexp1 fexp2 : Int → Int)
   simpa [sub_eq_add_neg] using hcore
 
 /-- Coq: `FLX_round_round_plus_radix_ge_3_hyp`. -/
-theorem FLX_round_round_plus_radix_ge_3_hyp (prec prec' : Int)
+theorem FLX_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
+    (prec prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hprec : 2 * prec ≤ prec') :
     round_round_plus_radix_ge_3_hyp
@@ -12166,11 +12237,11 @@ theorem round_round_plus_radix_ge_3_FLX (prec prec' : Int)
     (fexp2 := FloatSpec.Core.FLX.FLX_exp prec')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLX_round_round_plus_radix_ge_3_hyp
+    (hexp := FLX_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
       (prec := prec) (prec' := prec') hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta y hy)
 
 /-- Coq: `round_round_minus_radix_ge_3_FLX`. -/
 theorem round_round_minus_radix_ge_3_FLX (prec prec' : Int)
@@ -12190,14 +12261,14 @@ theorem round_round_minus_radix_ge_3_FLX (prec prec' : Int)
     (fexp2 := FloatSpec.Core.FLX.FLX_exp prec')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLX_round_round_plus_radix_ge_3_hyp
+    (hexp := FLX_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
       (prec := prec) (prec' := prec') hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLX.FLX_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLX.generic_format_FLX (prec := prec) beta y hy)
 
 /-- Coq: `FLT_round_round_plus_radix_ge_3_hyp`. -/
-theorem FLT_round_round_plus_radix_ge_3_hyp
+theorem FLT_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
     (emin prec emin' prec' : Int)
     [Prec_gt_0 prec] [Prec_gt_0 prec']
     (hemin : emin' ≤ emin)
@@ -12238,12 +12309,12 @@ theorem round_round_plus_radix_ge_3_FLT (emin prec emin' prec' : Int)
     (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLT_round_round_plus_radix_ge_3_hyp
+    (hexp := FLT_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
       (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
       hemin hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta y hy)
 
 /-- Coq: `round_round_minus_radix_ge_3_FLT`. -/
 theorem round_round_minus_radix_ge_3_FLT (emin prec emin' prec' : Int)
@@ -12264,12 +12335,12 @@ theorem round_round_minus_radix_ge_3_FLT (emin prec emin' prec' : Int)
     (fexp2 := FloatSpec.Core.FLT.FLT_exp prec' emin')
     (choice1 := choice1) (choice2 := choice2)
     (hβ := hβ)
-    (hexp := FLT_round_round_plus_radix_ge_3_hyp
+    (hexp := FLT_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
       (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
       hemin hprec)
     (x := x) (y := y)
-    (hx_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hx)
-    (hy_fmt := by simpa [FloatSpec.Core.FLT.FLT_format] using hy)
+    (hx_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta x hx)
+    (hy_fmt := FloatSpec.Core.FLT.generic_format_FLT (prec := prec) (emin := emin) beta y hy)
 
 /-- Coq: `FTZ_round_round_plus_radix_ge_3_hyp`. -/
 theorem FTZ_round_round_plus_radix_ge_3_hyp
@@ -12346,3 +12417,208 @@ theorem round_round_minus_radix_ge_3_FTZ (emin prec emin' prec' : Int)
     (x := x) (y := y)
     (hx_fmt := by simpa [FloatSpec.Core.FTZ.FTZ_format] using hx)
     (hy_fmt := by simpa [FloatSpec.Core.FTZ.FTZ_format] using hy)
+
+/-! Source-shaped `_hyp` wrappers.  In each case the source arithmetic bound
+already implies positive `prec'`; keep that fact internal to the proof. -/
+
+theorem FLX_round_round_plus_hyp (prec prec' : Int) [Prec_gt_0 prec]
+    (hprec : 2 * prec + 1 ≤ prec') :
+    round_round_plus_hyp (FloatSpec.Core.FLX.FLX_exp prec)
+      (FloatSpec.Core.FLX.FLX_exp prec') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FLX_round_round_plus_hyp_from_prec_prime_payload
+    (prec := prec) (prec' := prec') hprec
+
+theorem FLT_round_round_plus_hyp (emin prec emin' prec' : Int)
+    [Prec_gt_0 prec] (hemin : emin' ≤ emin) (hprec : 2 * prec + 1 ≤ prec') :
+    round_round_plus_hyp (FloatSpec.Core.FLT.FLT_exp prec emin)
+      (FloatSpec.Core.FLT.FLT_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FLT_round_round_plus_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec') hemin hprec
+
+theorem FLX_round_round_plus_radix_ge_3_hyp (prec prec' : Int)
+    [Prec_gt_0 prec] (hprec : 2 * prec ≤ prec') :
+    round_round_plus_radix_ge_3_hyp (FloatSpec.Core.FLX.FLX_exp prec)
+      (FloatSpec.Core.FLX.FLX_exp prec') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FLX_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
+    (prec := prec) (prec' := prec') hprec
+
+theorem FLT_round_round_plus_radix_ge_3_hyp
+    (emin prec emin' prec' : Int) [Prec_gt_0 prec]
+    (hemin : emin' ≤ emin) (hprec : 2 * prec ≤ prec') :
+    round_round_plus_radix_ge_3_hyp (FloatSpec.Core.FLT.FLT_exp prec emin)
+      (FloatSpec.Core.FLT.FLT_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FLT_round_round_plus_radix_ge_3_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec') hemin hprec
+
+theorem FLT_round_round_sqrt_hyp (emin prec emin' prec' : Int)
+    [Prec_gt_0 prec] (hemin : emin ≤ 0)
+    (heminprec : emin' ≤ emin - prec - 2 ∨
+      2 * emin' ≤ emin - 4 * prec - 2)
+    (hprec : 2 * prec + 2 ≤ prec') :
+    round_round_sqrt_hyp (FloatSpec.Core.FLT.FLT_exp prec emin)
+      (FloatSpec.Core.FLT.FLT_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FLT_round_round_sqrt_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
+    hemin heminprec hprec
+
+theorem FTZ_round_round_sqrt_hyp (emin prec emin' prec' : Int)
+    [Prec_gt_0 prec]
+    (hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
+    (hprec : 2 * prec + 2 ≤ prec') :
+    round_round_sqrt_hyp (FloatSpec.Core.FTZ.FTZ_exp prec emin)
+      (FloatSpec.Core.FTZ.FTZ_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FTZ_round_round_sqrt_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec') hemin hprec
+
+theorem FLT_round_round_sqrt_radix_ge_4_hyp
+    (emin prec emin' prec' : Int) [Prec_gt_0 prec] (hemin : emin ≤ 0)
+    (heminprec : emin' ≤ emin - prec - 1 ∨ 2 * emin' ≤ emin - 4 * prec)
+    (hprec : 2 * prec + 1 ≤ prec') :
+    round_round_sqrt_radix_ge_4_hyp (FloatSpec.Core.FLT.FLT_exp prec emin)
+      (FloatSpec.Core.FLT.FLT_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FLT_round_round_sqrt_radix_ge_4_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec')
+    hemin heminprec hprec
+
+theorem FTZ_round_round_sqrt_radix_ge_4_hyp
+    (emin prec emin' prec' : Int) [Prec_gt_0 prec]
+    (hemin : 2 * (emin' + prec') ≤ emin + prec ∧ emin + prec ≤ 1)
+    (hprec : 2 * prec + 1 ≤ prec') :
+    round_round_sqrt_radix_ge_4_hyp (FloatSpec.Core.FTZ.FTZ_exp prec emin)
+      (FloatSpec.Core.FTZ.FTZ_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FTZ_round_round_sqrt_radix_ge_4_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec') hemin hprec
+
+theorem FLT_round_round_div_hyp (emin prec emin' prec' : Int)
+    [Prec_gt_0 prec] (hemin : emin' ≤ emin - prec - 2)
+    (hprec : 2 * prec ≤ prec') :
+    round_round_div_hyp (FloatSpec.Core.FLT.FLT_exp prec emin)
+      (FloatSpec.Core.FLT.FLT_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FLT_round_round_div_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec') hemin hprec
+
+theorem FTZ_round_round_div_hyp (emin prec emin' prec' : Int)
+    [Prec_gt_0 prec] (hemin : emin' + prec' ≤ emin - 1)
+    (hprec : 2 * prec ≤ prec') :
+    round_round_div_hyp (FloatSpec.Core.FTZ.FTZ_exp prec emin)
+      (FloatSpec.Core.FTZ.FTZ_exp prec' emin') := by
+  letI : Prec_gt_0 prec' := ⟨by have := (Prec_gt_0.pos : 0 < prec); omega⟩
+  exact FTZ_round_round_div_hyp_from_prec_prime_payload
+    (emin := emin) (prec := prec) (emin' := emin') (prec' := prec') hemin hprec
+
+/-! Compatibility endpoints retaining the former proof-only `Valid_exp`
+payloads.  The public names above now expose the contracts exported by Coq. -/
+
+theorem round_round_plus_aux0_aux_aux_from_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
+    (x y : ℝ) (hβ : 1 < beta)
+    (hxy : fexp1 (FloatSpec.Core.Raux.mag beta x) ≤
+      fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hlnx : fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+      fexp1 (FloatSpec.Core.Raux.mag beta x))
+    (hlny : fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+      fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) :=
+  round_round_plus_aux0_aux_aux (beta := beta) fexp1 fexp2 x y hβ
+    hxy hlnx hlny hx hy
+
+theorem round_round_plus_aux0_aux_from_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
+    (x y : ℝ) (hβ : 1 < beta)
+    (hlnx : fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+      fexp1 (FloatSpec.Core.Raux.mag beta x))
+    (hlny : fexp2 (FloatSpec.Core.Raux.mag beta (x + y)) ≤
+      fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) :=
+  round_round_plus_aux0_aux (beta := beta) fexp1 fexp2 x y hβ
+    hlnx hlny hx hy
+
+theorem round_round_plus_aux0_from_target_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
+    (hβ : 1 < beta) (hexp : round_round_plus_hyp fexp1 fexp2)
+    (x y : ℝ) (hx_pos : 0 < x) (hy_pos : 0 < y) (hyx : y ≤ x)
+    (hln : fexp1 (FloatSpec.Core.Raux.mag beta x) - 1 ≤
+      FloatSpec.Core.Raux.mag beta y)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) :=
+  round_round_plus_aux0 (beta := beta) fexp1 fexp2 hβ hexp x y
+    hx_pos hy_pos hyx hln hx hy
+
+theorem round_round_minus_aux0_aux_from_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
+    (x y : ℝ) (hβ : 1 < beta)
+    (hlnx : fexp2 (FloatSpec.Core.Raux.mag beta (x - y)) ≤
+      fexp1 (FloatSpec.Core.Raux.mag beta x))
+    (hlny : fexp2 (FloatSpec.Core.Raux.mag beta (x - y)) ≤
+      fexp1 (FloatSpec.Core.Raux.mag beta y))
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x - y) :=
+  round_round_minus_aux0_aux (beta := beta) fexp1 fexp2 x y hβ
+    hlnx hlny hx hy
+
+theorem round_round_minus_aux0_from_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
+    (hβ : 1 < beta) (hexp : round_round_plus_hyp fexp1 fexp2)
+    (x y : ℝ) (hy_pos : 0 < y) (hyx : y < x)
+    (hln : fexp1 (FloatSpec.Core.Raux.mag beta x) - 1 ≤
+      FloatSpec.Core.Raux.mag beta y)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x - y) :=
+  round_round_minus_aux0 (beta := beta) fexp1 fexp2 hβ hexp x y
+    hy_pos hyx hln hx hy
+
+theorem round_round_plus_radix_ge_3_aux0_from_target_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
+    (hβ : 1 < beta)
+    (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+    (x y : ℝ) (hy_pos : 0 < y) (hyx : y ≤ x)
+    (hln : fexp1 (FloatSpec.Core.Raux.mag beta x) ≤
+      FloatSpec.Core.Raux.mag beta y)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x + y) :=
+  round_round_plus_radix_ge_3_aux0 (beta := beta) fexp1 fexp2 hβ
+    hexp x y hy_pos hyx hln hx hy
+
+theorem round_round_minus_radix_ge_3_aux0_from_valid_exp_payload
+    (fexp1 fexp2 : Int → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp1]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp2]
+    (hβ : 1 < beta)
+    (hexp : round_round_plus_radix_ge_3_hyp fexp1 fexp2)
+    (x y : ℝ) (hy_pos : 0 < y) (hyx : y < x)
+    (hln : fexp1 (FloatSpec.Core.Raux.mag beta x) ≤
+      FloatSpec.Core.Raux.mag beta y)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 x)
+    (hy : FloatSpec.Core.Generic_fmt.generic_format beta fexp1 y) :
+    FloatSpec.Core.Generic_fmt.generic_format beta fexp2 (x - y) :=
+  round_round_minus_radix_ge_3_aux0 (beta := beta) fexp1 fexp2 hβ
+    hexp x y hy_pos hyx hln hx hy

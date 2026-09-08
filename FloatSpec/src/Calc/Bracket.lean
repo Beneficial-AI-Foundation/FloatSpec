@@ -2634,16 +2634,16 @@ theorem inbetween_float_unique
     lt_of_le_of_lt Hb.1 Hb'.2
   -- Convert back to integers on mantissas
   have hm_lt : m < m' + 1 :=
-    FloatSpec.Core.Float_prop.F2R_lt (beta := beta) (e := e) (m1 := m) (m2 := m' + 1)
-      hbeta hlt1
+    FloatSpec.Core.Float_prop.lt_F2R (beta := beta) (e := e) (m1 := m) (m2 := m' + 1)
+      hlt1
   -- Symmetric inequality gives m' < m + 1
   have hlt2 :
       ((Defs.F2R (Defs.FlocqFloat.mk m' e : Defs.FlocqFloat beta)))
         < ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) :=
     lt_of_le_of_lt Hb'.1 Hb.2
   have hm'_lt : m' < m + 1 :=
-    FloatSpec.Core.Float_prop.F2R_lt (beta := beta) (e := e) (m1 := m') (m2 := m + 1)
-      hbeta hlt2
+    FloatSpec.Core.Float_prop.lt_F2R (beta := beta) (e := e) (m1 := m') (m2 := m + 1)
+      hlt2
   -- Use Int.lt_add_one_iff to turn strict < into ≤ and deduce equality
   have hm_le : m ≤ m' := (Int.lt_add_one_iff).1 hm_lt
   have hm'_le : m' ≤ m := (Int.lt_add_one_iff).1 hm'_lt

@@ -140,10 +140,7 @@ theorem generic_format_plus_weak (x y : ℝ)
   refine generic_format_plus (beta := beta) (fexp := fexp) x y hx hy hβ ?_
   by_cases hxy_abs : |x| ≤ |y|
   · have hmag_xy : mag beta x ≤ mag beta y := by
-      have h :=
-        FloatSpec.Core.Raux.mag_le (beta := beta) (x := x) (y := y)
-          hβ hx0 hxy_abs
-      simpa [Std.Do.PostCond.noThrow, wp, pure] using h trivial
+      exact FloatSpec.Core.Raux.mag_le_abs beta x y hβ hx0 hxy_abs
     have hmin_mag : min (mag beta x) (mag beta y) = mag beta x :=
       min_eq_left hmag_xy
     have hx_upper : |x| ≤ (beta : ℝ) ^ (min (mag beta x) (mag beta y)) := by
@@ -157,10 +154,7 @@ theorem generic_format_plus_weak (x y : ℝ)
     exact le_trans h_bound (by simpa [hmin_abs] using hx_upper)
   · have hyx_abs : |y| ≤ |x| := le_of_lt (lt_of_not_ge hxy_abs)
     have hmag_yx : mag beta y ≤ mag beta x := by
-      have h :=
-        FloatSpec.Core.Raux.mag_le (beta := beta) (x := y) (y := x)
-          hβ hy0 hyx_abs
-      simpa [Std.Do.PostCond.noThrow, wp, pure] using h trivial
+      exact FloatSpec.Core.Raux.mag_le_abs beta y x hβ hy0 hyx_abs
     have hmin_mag : min (mag beta x) (mag beta y) = mag beta y :=
       min_eq_right hmag_yx
     have hy_upper : |y| ≤ (beta : ℝ) ^ (min (mag beta x) (mag beta y)) := by

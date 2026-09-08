@@ -2015,10 +2015,12 @@ end RoundNearestAuxiliary
 
 section RoundNearestGeneric
 
+universe u
+
 noncomputable section
 
 /-- FLoCq's uniqueness condition for a generic nearest tie predicate. -/
-def Rnd_NG_pt_unique_prop (F : ℝ → Prop) (P : ℝ → ℝ → Prop) : Prop :=
+def Rnd_NG_pt_unique_prop (F : ℝ → Prop) (P : ℝ → ℝ → Sort u) : Prop :=
   ∀ x d u,
     Rnd_DN_pt F x d → Rnd_N_pt F x d →
     Rnd_UP_pt F x u → Rnd_N_pt F x u →

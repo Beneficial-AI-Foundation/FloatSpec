@@ -632,19 +632,37 @@ end AbsMore
 section AbsGt
 
 /-- Boolean check for strict lower bound on |x|: y < |x| -/
-noncomputable def Rabs_gt_check (x y : ℝ) : Bool :=
+noncomputable def Rabs_gt_from_bound_payload (x y : ℝ) : Bool :=
   (y < |x|)
 
 /-- Specification: y < |x| iff the boolean returns true -/
 @[spec]
-theorem Rabs_gt_spec (x y : ℝ) :
+theorem Rabs_gt_from_bound_payload_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (Rabs_gt_check x y) : Id _)
+    (pure (Rabs_gt_from_bound_payload x y) : Id _)
     ⦃⇓b => ⌜b ↔ y < |x|⌝⦄ := by
   intro _
-  unfold Rabs_gt_check
+  unfold Rabs_gt_from_bound_payload
   -- Follows from decidability of (<) on ℝ
   simp [wp, PostCond.noThrow, pure, decide_eq_true_iff]
+
+/-- Coq `Rabs_gt`: the disjunctive characterization implies the strict
+absolute-value bound. -/
+theorem Rabs_gt (x y : ℝ) (h : y < -x ∨ x < y) : x < |y| := by
+  rcases h with h | h
+  · have hxy : x < -y := by simpa using neg_lt_neg h
+    exact hxy.trans_le (by simpa using neg_le_abs y)
+  · exact h.trans_le (le_abs_self y)
+
+noncomputable def Rabs_gt_check (x y : ℝ) : ℝ × ℝ := (x, y)
+
+@[spec]
+theorem Rabs_gt_spec (x y : ℝ) (h : y < -x ∨ x < y) :
+    ⦃⌜True⌝⦄
+    (pure (Rabs_gt_check x y) : Id _)
+    ⦃⇓p => ⌜p.1 < |p.2|⌝⦄ := by
+  intro _
+  exact Rabs_gt x y h
 
 end AbsGt
 
@@ -754,7 +772,7 @@ theorem Rcompare_spec (x y : ℝ) :
     Swapping arguments negates the result, reflecting
     the antisymmetry of the ordering relation.
 -/
-noncomputable def Rcompare_sym (x y : ℝ) : Int :=
+noncomputable def Rcompare_sym_from_rhs_payload (x y : ℝ) : Int :=
   let c := Rcompare y x; -c
 
 /-- Specification: Comparison antisymmetry
@@ -763,19 +781,42 @@ noncomputable def Rcompare_sym (x y : ℝ) : Int :=
     This captures the antisymmetric nature of ordering.
 -/
 @[spec]
-theorem Rcompare_sym_spec (x y : ℝ) :
+theorem Rcompare_sym_from_rhs_payload_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (Rcompare_sym x y) : Id _)
+    (pure (Rcompare_sym_from_rhs_payload x y) : Id _)
     ⦃⇓result => ⌜result = -(Rcompare y x)⌝⦄ := by
   intro _
-  simp [wp, PostCond.noThrow, Id.run, Rcompare_sym]
+  simp [wp, PostCond.noThrow, Id.run, Rcompare_sym_from_rhs_payload]
+
+/-- Coq `Rcompare_sym`: swapping the operands reverses the comparison. -/
+theorem Rcompare_sym (x y : ℝ) : Rcompare x y = -(Rcompare y x) := by
+  rcases lt_trichotomy x y with hxy | hxy | hyx
+  · have hnxy : ¬ y < x := not_lt_of_ge hxy.le
+    have hne : x ≠ y := ne_of_lt hxy
+    simp [Rcompare, hxy, hnxy, hne, hne.symm]
+  · subst y
+    simp [Rcompare]
+  · have hnyx : ¬ x < y := not_lt_of_ge hyx.le
+    have hne : x ≠ y := ne_of_gt hyx
+    simp [Rcompare, hyx, hnyx, hne, hne.symm]
+
+noncomputable def Rcompare_sym_check (x y : ℝ) : Int × Int :=
+  (Rcompare x y, -(Rcompare y x))
+
+@[spec]
+theorem Rcompare_sym_spec (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (Rcompare_sym_check x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  exact Rcompare_sym x y
 
 /-- Comparison with opposites reverses order
 
     Comparing negated values reverses the comparison,
     reflecting that negation reverses order.
 -/
-noncomputable def Rcompare_opp (x y : ℝ) : Int :=
+noncomputable def Rcompare_opp_from_rhs_payload (x y : ℝ) : Int :=
   Rcompare y x
 
 /-- Specification: Opposite comparison
@@ -784,20 +825,43 @@ noncomputable def Rcompare_opp (x y : ℝ) : Int :=
     Negating both arguments reverses the comparison.
 -/
 @[spec]
-theorem Rcompare_opp_spec (x y : ℝ) :
+theorem Rcompare_opp_from_rhs_payload_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (Rcompare_opp x y) : Id _)
+    (pure (Rcompare_opp_from_rhs_payload x y) : Id _)
     ⦃⇓result => ⌜result = (Rcompare y x)⌝⦄ := by
   intro _
-  unfold Rcompare_opp
+  unfold Rcompare_opp_from_rhs_payload
   rfl
+
+/-- Coq `Rcompare_opp`: negating both operands reverses the comparison. -/
+theorem Rcompare_opp (x y : ℝ) : Rcompare (-x) (-y) = Rcompare y x := by
+  rcases lt_trichotomy x y with hxy | hxy | hyx
+  · have hnxy : ¬ y < x := not_lt_of_ge hxy.le
+    have hne : x ≠ y := ne_of_lt hxy
+    simp [Rcompare, hxy, hnxy, hne, hne.symm]
+  · subst y
+    simp [Rcompare]
+  · have hnyx : ¬ x < y := not_lt_of_ge hyx.le
+    have hne : x ≠ y := ne_of_gt hyx
+    simp [Rcompare, hyx, hnyx, hne, hne.symm]
+
+noncomputable def Rcompare_opp_check (x y : ℝ) : Int × Int :=
+  (Rcompare (-x) (-y), Rcompare y x)
+
+@[spec]
+theorem Rcompare_opp_spec (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (Rcompare_opp_check x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  exact Rcompare_opp x y
 
 /-- Comparison is invariant under translation
 
     Adding the same value to both arguments doesn't
     change the comparison result.
 -/
-noncomputable def Rcompare_plus_r (x y _z: ℝ) : Int :=
+noncomputable def Rcompare_plus_r_from_rhs_payload (x y _z: ℝ) : Int :=
   Rcompare x y
 
 /-- Specification: Translation invariance
@@ -806,19 +870,35 @@ noncomputable def Rcompare_plus_r (x y _z: ℝ) : Int :=
     Translation preserves ordering relationships.
 -/
 @[spec]
-theorem Rcompare_plus_r_spec (x y z : ℝ) :
+theorem Rcompare_plus_r_from_rhs_payload_spec (x y z : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (Rcompare_plus_r x y z) : Id _)
+    (pure (Rcompare_plus_r_from_rhs_payload x y z) : Id _)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
-  unfold Rcompare_plus_r
+  unfold Rcompare_plus_r_from_rhs_payload
   rfl
+
+/-- Coq `Rcompare_plus_r`: right translation preserves comparison. -/
+theorem Rcompare_plus_r (z x y : ℝ) :
+    Rcompare (x + z) (y + z) = Rcompare x y := by
+  simp [Rcompare]
+
+noncomputable def Rcompare_plus_r_check (z x y : ℝ) : Int × Int :=
+  (Rcompare (x + z) (y + z), Rcompare x y)
+
+@[spec]
+theorem Rcompare_plus_r_spec (z x y : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (Rcompare_plus_r_check z x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  exact Rcompare_plus_r z x y
 
 /-- Left addition preserves comparison
 
     Adding a value on the left preserves the comparison.
 -/
-noncomputable def Rcompare_plus_l (x y _z : ℝ) : Int :=
+noncomputable def Rcompare_plus_l_from_rhs_payload (x y _z : ℝ) : Int :=
   Rcompare x y
 
 /-- Specification: Left translation invariance
@@ -826,19 +906,35 @@ noncomputable def Rcompare_plus_l (x y _z : ℝ) : Int :=
     Rcompare (z + x) (z + y) = Rcompare x y.
 -/
 @[spec]
-theorem Rcompare_plus_l_spec (x y z : ℝ) :
+theorem Rcompare_plus_l_from_rhs_payload_spec (x y z : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (Rcompare_plus_l x y z) : Id _)
+    (pure (Rcompare_plus_l_from_rhs_payload x y z) : Id _)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
-  unfold Rcompare_plus_l
+  unfold Rcompare_plus_l_from_rhs_payload
   rfl
+
+/-- Coq `Rcompare_plus_l`: left translation preserves comparison. -/
+theorem Rcompare_plus_l (z x y : ℝ) :
+    Rcompare (z + x) (z + y) = Rcompare x y := by
+  simp [Rcompare]
+
+noncomputable def Rcompare_plus_l_check (z x y : ℝ) : Int × Int :=
+  (Rcompare (z + x) (z + y), Rcompare x y)
+
+@[spec]
+theorem Rcompare_plus_l_spec (z x y : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (Rcompare_plus_l_check z x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  exact Rcompare_plus_l z x y
 
 /-- Comparison is preserved by positive scaling
 
     Multiplying by a positive value preserves the comparison.
 -/
-noncomputable def Rcompare_mult_r (x y _z : ℝ) : Int :=
+noncomputable def Rcompare_mult_r_from_rhs_payload (x y _z : ℝ) : Int :=
   Rcompare x y
 
 /-- Specification: Positive scaling preserves comparison
@@ -846,19 +942,48 @@ noncomputable def Rcompare_mult_r (x y _z : ℝ) : Int :=
     If {lean}`0<z`, then {lean}`Rcompare (x*z) (y*z) = Rcompare x y`.
 -/
 @[spec]
-theorem Rcompare_mult_r_spec (x y z : ℝ) (_hz : 0 < z) :
+theorem Rcompare_mult_r_from_rhs_payload_spec (x y z : ℝ) (_hz : 0 < z) :
     ⦃⌜True⌝⦄
-    (pure (Rcompare_mult_r x y z) : Id _)
+    (pure (Rcompare_mult_r_from_rhs_payload x y z) : Id _)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
-  unfold Rcompare_mult_r
+  unfold Rcompare_mult_r_from_rhs_payload
   rfl
+
+/-- Coq `Rcompare_mult_r`: right multiplication by a positive value preserves comparison. -/
+theorem Rcompare_mult_r (z x y : ℝ) (hz : 0 < z) :
+    Rcompare (x * z) (y * z) = Rcompare x y := by
+  have hz0 : z ≠ 0 := ne_of_gt hz
+  have hlt : x * z < y * z ↔ x < y := by
+    constructor
+    · intro h
+      exact lt_of_mul_lt_mul_right h (le_of_lt hz)
+    · intro h
+      exact mul_lt_mul_of_pos_right h hz
+  have heq : x * z = y * z ↔ x = y := by
+    constructor
+    · intro h
+      exact mul_right_cancel₀ hz0 h
+    · intro h
+      rw [h]
+  simp only [Rcompare, hlt, heq]
+
+noncomputable def Rcompare_mult_r_check (z x y : ℝ) : Int × Int :=
+  (Rcompare (x * z) (y * z), Rcompare x y)
+
+@[spec]
+theorem Rcompare_mult_r_spec (z x y : ℝ) (hz : 0 < z) :
+    ⦃⌜True⌝⦄
+    (pure (Rcompare_mult_r_check z x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  exact Rcompare_mult_r z x y hz
 
 /-- Left multiplication by positive preserves comparison
 
     Multiplying on the left by a positive value preserves comparison.
 -/
-noncomputable def Rcompare_mult_l (x y _z : ℝ) : Int :=
+noncomputable def Rcompare_mult_l_from_rhs_payload (x y _z : ℝ) : Int :=
   Rcompare x y
 
 /-- Specification: Left positive scaling preserves comparison
@@ -866,13 +991,42 @@ noncomputable def Rcompare_mult_l (x y _z : ℝ) : Int :=
     If {lean}`0<z`, then {lean}`Rcompare (z*x) (z*y) = Rcompare x y`.
 -/
 @[spec]
-theorem Rcompare_mult_l_spec (x y z : ℝ) (_hz : 0 < z) :
+theorem Rcompare_mult_l_from_rhs_payload_spec (x y z : ℝ) (_hz : 0 < z) :
     ⦃⌜True⌝⦄
-    (pure (Rcompare_mult_l x y z) : Id _)
+    (pure (Rcompare_mult_l_from_rhs_payload x y z) : Id _)
     ⦃⇓result => ⌜result = (Rcompare x y)⌝⦄ := by
   intro _
-  unfold Rcompare_mult_l
+  unfold Rcompare_mult_l_from_rhs_payload
   rfl
+
+/-- Coq `Rcompare_mult_l`: left multiplication by a positive value preserves comparison. -/
+theorem Rcompare_mult_l (z x y : ℝ) (hz : 0 < z) :
+    Rcompare (z * x) (z * y) = Rcompare x y := by
+  have hz0 : z ≠ 0 := ne_of_gt hz
+  have hlt : z * x < z * y ↔ x < y := by
+    constructor
+    · intro h
+      exact lt_of_mul_lt_mul_right (by simpa [mul_comm] using h) (le_of_lt hz)
+    · intro h
+      simpa [mul_comm] using mul_lt_mul_of_pos_right h hz
+  have heq : z * x = z * y ↔ x = y := by
+    constructor
+    · intro h
+      exact mul_left_cancel₀ hz0 h
+    · intro h
+      rw [h]
+  simp only [Rcompare, hlt, heq]
+
+noncomputable def Rcompare_mult_l_check (z x y : ℝ) : Int × Int :=
+  (Rcompare (z * x) (z * y), Rcompare x y)
+
+@[spec]
+theorem Rcompare_mult_l_spec (z x y : ℝ) (hz : 0 < z) :
+    ⦃⌜True⌝⦄
+    (pure (Rcompare_mult_l_check z x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  exact Rcompare_mult_l z x y hz
 
 end Rcompare
 
@@ -1559,7 +1713,7 @@ theorem Rlt_bool_opp (x y : ℝ) :
     Boolean negation of x < y is equivalent to y ≤ x.
     This captures the duality between < and ≥.
 -/
-noncomputable def negb_Rlt_bool (x y : ℝ) : Bool :=
+noncomputable def negb_Rlt_bool_from_order_payload (x y : ℝ) : Bool :=
   (y ≤ x)
 
 /-- Specification: Negated < equals ≥
@@ -1568,12 +1722,12 @@ noncomputable def negb_Rlt_bool (x y : ℝ) : Bool :=
     This duality is fundamental for simplifying comparisons.
 -/
 @[spec]
-theorem negb_Rlt_bool_spec (x y : ℝ) :
+theorem negb_Rlt_bool_from_order_payload_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (negb_Rlt_bool x y) : Id _)
+    (pure (negb_Rlt_bool_from_order_payload x y) : Id _)
     ⦃⇓result => ⌜result ↔ y ≤ x⌝⦄ := by
   intro _
-  unfold negb_Rlt_bool
+  unfold negb_Rlt_bool_from_order_payload
   -- The decidable instance for ℝ gives us this
   simp [wp, PostCond.noThrow, pure, decide_eq_true_iff]
 
@@ -1582,7 +1736,7 @@ theorem negb_Rlt_bool_spec (x y : ℝ) :
     Boolean negation of x ≤ y is equivalent to y < x.
     This captures the duality between ≤ and >.
 -/
-noncomputable def negb_Rle_bool (x y : ℝ) : Bool :=
+noncomputable def negb_Rle_bool_from_order_payload (x y : ℝ) : Bool :=
   (y < x)
 
 /-- Specification: Negated ≤ equals >
@@ -1591,14 +1745,64 @@ noncomputable def negb_Rle_bool (x y : ℝ) : Bool :=
     This completes the duality between orderings.
 -/
 @[spec]
-theorem negb_Rle_bool_spec (x y : ℝ) :
+theorem negb_Rle_bool_from_order_payload_spec (x y : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (negb_Rle_bool x y) : Id _)
+    (pure (negb_Rle_bool_from_order_payload x y) : Id _)
     ⦃⇓result => ⌜result ↔ y < x⌝⦄ := by
   intro _
-  unfold negb_Rle_bool
+  unfold negb_Rle_bool_from_order_payload
   -- The decidable instance for ℝ gives us this
   simp [wp, PostCond.noThrow, pure, decide_eq_true_iff]
+
+/-- Coq `negb_Rlt_bool`: negating `x ≤ y` is the test for `y < x`. -/
+theorem negb_Rlt_bool (x y : ℝ) :
+    Bool.not (Rle_bool x y) = Rlt_bool y x := by
+  by_cases hxy : x ≤ y
+  · have hyx : ¬ y < x := not_lt_of_ge hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
+  · have hyx : y < x := lt_of_not_ge hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
+
+noncomputable def negb_Rlt_bool_check (x y : ℝ) : Bool × Bool :=
+  (!(Rle_bool x y), Rlt_bool y x)
+
+@[spec]
+theorem negb_Rlt_bool_spec (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (negb_Rlt_bool_check x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  unfold negb_Rlt_bool_check
+  by_cases hxy : x ≤ y
+  · have hyx : ¬ y < x := not_lt_of_ge hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
+  · have hyx : y < x := lt_of_not_ge hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
+
+/-- Coq `negb_Rle_bool`: negating `x < y` is the test for `y ≤ x`. -/
+theorem negb_Rle_bool (x y : ℝ) :
+    Bool.not (Rlt_bool x y) = Rle_bool y x := by
+  by_cases hxy : x < y
+  · have hyx : ¬ y ≤ x := not_le_of_gt hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
+  · have hyx : y ≤ x := le_of_not_gt hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
+
+noncomputable def negb_Rle_bool_check (x y : ℝ) : Bool × Bool :=
+  (!(Rlt_bool x y), Rle_bool y x)
+
+@[spec]
+theorem negb_Rle_bool_spec (x y : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (negb_Rle_bool_check x y) : Id _)
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
+  intro _
+  unfold negb_Rle_bool_check
+  by_cases hxy : x < y
+  · have hyx : ¬ y ≤ x := not_le_of_gt hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
+  · have hyx : y ≤ x := le_of_not_gt hxy
+    simp [Rle_bool, Rlt_bool, hxy, hyx]
 
 /-- Boolean equality test for real numbers
 
@@ -1942,17 +2146,33 @@ end CondRltBool
 section IZRCond
 
 /-- Conditional opposite commutes with integer-to-real cast -/
-noncomputable def IZR_cond_Zopp_check (b : Bool) (m : Int) : ℝ :=
+noncomputable def IZR_cond_Zopp_from_rhs_payload (b : Bool) (m : Int) : ℝ :=
   cond_Ropp b (m : ℝ)
+
+@[spec]
+theorem IZR_cond_Zopp_from_rhs_payload_spec (b : Bool) (m : Int) :
+    ⦃⌜True⌝⦄
+    (pure (IZR_cond_Zopp_from_rhs_payload b m) : Id _)
+    ⦃⇓r => ⌜r = (if b then -((m : ℝ)) else (m : ℝ))⌝⦄ := by
+  intro _
+  unfold IZR_cond_Zopp_from_rhs_payload cond_Ropp
+  rfl
+
+/-- Coq `IZR_cond_Zopp`: conditional integer negation commutes with casting. -/
+theorem IZR_cond_Zopp (b : Bool) (m : Int) :
+    ((FloatSpec.Core.Zaux.cond_Zopp b m : Int) : ℝ) = cond_Ropp b (m : ℝ) := by
+  cases b <;> simp [FloatSpec.Core.Zaux.cond_Zopp, cond_Ropp]
+
+noncomputable def IZR_cond_Zopp_check (b : Bool) (m : Int) : ℝ × ℝ :=
+  (((FloatSpec.Core.Zaux.cond_Zopp b m : Int) : ℝ), cond_Ropp b (m : ℝ))
 
 @[spec]
 theorem IZR_cond_Zopp_spec (b : Bool) (m : Int) :
     ⦃⌜True⌝⦄
     (pure (IZR_cond_Zopp_check b m) : Id _)
-    ⦃⇓r => ⌜r = (if b then -((m : ℝ)) else (m : ℝ))⌝⦄ := by
+    ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
-  unfold IZR_cond_Zopp_check cond_Ropp
-  rfl
+  exact IZR_cond_Zopp b m
 
 end IZRCond
 
@@ -2575,8 +2795,8 @@ end IntAway
 
 section IntDiv
 
-/-- Division at floors for integers: floor((x:ℝ)/(y:ℝ)) = x / y when y ≠ 0. -/
-theorem Zfloor_div (x y : Int) :
+/-- Positive-denominator payload retained for callers that use Lean's Euclidean `/`. -/
+theorem Zfloor_div_pos_payload (x y : Int) :
     (hypos : 0 < y) →
     ⦃⌜True⌝⦄
     (pure (Zfloor ((x : ℝ) / (y : ℝ))) : Id _)
@@ -2628,8 +2848,25 @@ theorem Zfloor_div (x y : Int) :
   simp only [hfloor]
   rfl
 
+/-- Coq `Zfloor_div`: real floor agrees with Coq's floor division on the full
+nonzero-divisor domain. Lean's corresponding integer operation is `Int.fdiv`. -/
+theorem Zfloor_div (x y : Int) (hy : y ≠ 0) :
+    Zfloor ((x : ℝ) / (y : ℝ)) = Int.fdiv x y := by
+  by_cases hypos : 0 < y
+  · have h := (Zfloor_div_pos_payload x y hypos) True.intro
+    have hf : Int.fdiv x y = x / y :=
+      Int.fdiv_eq_ediv_of_nonneg x (le_of_lt hypos)
+    exact h.trans hf.symm
+  · have hyneg : y < 0 := lt_of_le_of_ne (le_of_not_gt hypos) hy
+    have h := (Zfloor_div_pos_payload (-x) (-y) (by omega)) True.intro
+    have hf : Int.fdiv (-x) (-y) = (-x) / (-y) :=
+      Int.fdiv_eq_ediv_of_nonneg (-x) (by omega)
+    have hq : (-x) / (-y) = Int.fdiv x y := by
+      rw [← hf, Int.neg_fdiv_neg]
+    simpa using h.trans hq
+
 /-- Coq lemma {coq}`Ztrunc_div`: for integers x and y with y ≠ 0, {coq}`Ztrunc` ({coq}`IZR` x / {coq}`IZR` y) equals the integer quotient; in Lean we state it as {lean}`Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y`. -/
-theorem Ztrunc_div (x y : Int) :
+theorem Ztrunc_div_nonneg_pos_payload (x y : Int) :
     (hxy : 0 ≤ x ∧ 0 < y) →
     ⦃⌜True⌝⦄
     (pure (Ztrunc ((x : ℝ) / (y : ℝ))) : Id _)
@@ -2669,6 +2906,51 @@ theorem Ztrunc_div (x y : Int) :
     simpa using (Int.tdiv_eq_ediv_of_nonneg hx_nonneg : Int.tdiv x y = x / y)
   -- Reduce the program and close the goal
   simpa [hx_nlt, hf, htdiv]
+
+/-- Coq `Ztrunc_div`: real truncation agrees with integer truncating division
+for every nonzero divisor, including negative dividends and divisors. -/
+theorem Ztrunc_div (x y : Int) (hy : y ≠ 0) :
+    Ztrunc ((x : ℝ) / (y : ℝ)) = Int.tdiv x y := by
+  have positive_case (a b : Int) (ha : 0 ≤ a) (hb : 0 < b) :
+      Ztrunc ((a : ℝ) / (b : ℝ)) = Int.tdiv a b :=
+    (Ztrunc_div_nonneg_pos_payload a b ⟨ha, hb⟩) True.intro
+  by_cases hx : 0 ≤ x
+  · by_cases hypos : 0 < y
+    · exact positive_case x y hx hypos
+    · have hyneg : y < 0 := lt_of_le_of_ne (le_of_not_gt hypos) hy
+      have hcanon := positive_case x (-y) hx (by omega)
+      have hopp := (Ztrunc_opp ((x : ℝ) / ((-y : Int) : ℝ))) True.intro
+      calc
+        Ztrunc ((x : ℝ) / (y : ℝ))
+            = Ztrunc (-((x : ℝ) / ((-y : Int) : ℝ))) := by
+                congr 1
+                simp only [Int.cast_neg, div_neg, neg_neg]
+        _ = -Ztrunc ((x : ℝ) / ((-y : Int) : ℝ)) := hopp
+        _ = -Int.tdiv x (-y) := congrArg Neg.neg hcanon
+        _ = Int.tdiv x y := by
+          simpa only [neg_neg] using (Int.tdiv_neg x (-y)).symm
+  · have hxneg : x < 0 := lt_of_not_ge hx
+    by_cases hypos : 0 < y
+    · have hcanon := positive_case (-x) y (by omega) hypos
+      have hopp := (Ztrunc_opp (((-x : Int) : ℝ) / (y : ℝ))) True.intro
+      calc
+        Ztrunc ((x : ℝ) / (y : ℝ))
+            = Ztrunc (-(((-x : Int) : ℝ) / (y : ℝ))) := by
+                congr 1
+                simp only [Int.cast_neg, neg_div, neg_neg]
+        _ = -Ztrunc (((-x : Int) : ℝ) / (y : ℝ)) := hopp
+        _ = -Int.tdiv (-x) y := congrArg Neg.neg hcanon
+        _ = Int.tdiv x y := by
+          simpa only [neg_neg] using (Int.neg_tdiv (-x) y).symm
+    · have hyneg : y < 0 := lt_of_le_of_ne (le_of_not_gt hypos) hy
+      have hcanon := positive_case (-x) (-y) (by omega) (by omega)
+      calc
+        Ztrunc ((x : ℝ) / (y : ℝ))
+            = Ztrunc (((-x : Int) : ℝ) / ((-y : Int) : ℝ)) := by
+                congr 1
+                rw [Int.cast_neg, Int.cast_neg, neg_div_neg_eq]
+        _ = Int.tdiv (-x) (-y) := hcanon
+        _ = Int.tdiv x y := Int.neg_tdiv_neg x y
 
 end IntDiv
 
@@ -2966,17 +3248,24 @@ noncomputable def bpow (beta e : Int) : ℝ :=
   ((beta : ℝ) ^ e)
 
 /-- Bridge lemma: integer power via reals for positive exponent -/
-noncomputable def IZR_Zpower_pos_check (n m : Int) : (ℝ × ℝ) :=
+noncomputable def IZR_Zpower_pos_from_self_payload (n m : Int) : (ℝ × ℝ) :=
   (((n : ℝ) ^ m, (n : ℝ) ^ m))
 
-theorem IZR_Zpower_pos (n m : Int) (_hm : 0 < m) :
+theorem IZR_Zpower_pos_from_self_payload_spec (n m : Int) (_hm : 0 < m) :
     ⦃⌜True⌝⦄
-    (pure (IZR_Zpower_pos_check n m) : Id _)
+    (pure (IZR_Zpower_pos_from_self_payload n m) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
-  unfold IZR_Zpower_pos_check
+  unfold IZR_Zpower_pos_from_self_payload
   -- Both components are definitionally equal
   rfl
+
+/-- Coq `IZR_Zpower_pos`: casting a positive integer power agrees with the
+corresponding real integer power. -/
+theorem IZR_Zpower_pos (n : Int) (m : FloatSpec.Core.Zaux.Positive) :
+    ((FloatSpec.Core.Zaux.Zpower_pos n m : Int) : ℝ) =
+      (n : ℝ) ^ (Int.ofNat (FloatSpec.Core.Zaux.positiveToNat m)) := by
+  simp [FloatSpec.Core.Zaux.Zpower_pos, zpow_natCast]
 
 /-- Bridge: our bpow corresponds to integer power on reals -/
 noncomputable def bpow_powerRZ_check (beta e : Int) : (ℝ × ℝ) :=
@@ -3226,7 +3515,7 @@ theorem bpow_lt_bpow (beta e1 e2 : Int)
 noncomputable def bpow_unique_pair (_beta : Int) (_x : ℝ) (e1 e2 : Int) : (Int × Int) :=
   (e1, e2)
 
-theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int)
+theorem bpow_unique_from_abs_payload (beta : Int) (x : ℝ) (e1 e2 : Int)
     (hβ : 1 < beta)
     (h1 : (beta : ℝ) ^ (e1 - 1) ≤ |x| ∧ |x| < (beta : ℝ) ^ e1)
     (h2 : (beta : ℝ) ^ (e2 - 1) ≤ |x| ∧ |x| < (beta : ℝ) ^ e2) :
@@ -3261,6 +3550,21 @@ theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int)
     exact (Int.lt_add_one_iff.mp this)
   -- Antisymmetry yields equality of exponents
   exact le_antisymm hle12 hle21
+
+/-- Coq `bpow_unique`: a real lying in both source half-open power bins has a
+unique exponent.  Unlike the reusable absolute-value payload, the source
+contract is stated directly about `x`. -/
+theorem bpow_unique (beta : Int) (x : ℝ) (e1 e2 : Int)
+    (hβ : 1 < beta)
+    (h1 : (beta : ℝ) ^ (e1 - 1) ≤ x ∧ x < (beta : ℝ) ^ e1)
+    (h2 : (beta : ℝ) ^ (e2 - 1) ≤ x ∧ x < (beta : ℝ) ^ e2) :
+    e1 = e2 := by
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := zero_lt_one.trans hβR
+  have hxpos : 0 < x := (zpow_pos hbpos (e1 - 1)).trans_le h1.1
+  have hxabs : |x| = x := abs_of_pos hxpos
+  exact (bpow_unique_from_abs_payload beta x e1 e2 hβ
+    (by simpa [hxabs] using h1) (by simpa [hxabs] using h2)) True.intro
 
 /-- Carrier for {coq}`sqrt_bpow`: square-root law on even exponents. -/
 noncomputable def sqrt_bpow_check (beta e : Int) : (ℝ × ℝ) :=
@@ -3349,30 +3653,42 @@ theorem sqrt_bpow_ge (beta e : Int) (hβ : 1 < beta) :
   exact hx2_le
 
 /-- Bridge: natural-power form equals bpow at Z.ofNat e -/
-noncomputable def IZR_Zpower_nat_check (beta : Int) (e : Nat) : (ℝ × ℝ) :=
+noncomputable def IZR_Zpower_nat_from_self_payload (beta : Int) (e : Nat) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ (Int.ofNat e), (beta : ℝ) ^ (Int.ofNat e)))
 
-theorem IZR_Zpower_nat (beta : Int) (e : Nat) (_hβ : 1 < beta) :
+theorem IZR_Zpower_nat_from_self_payload_spec (beta : Int) (e : Nat) (_hβ : 1 < beta) :
     ⦃⌜True⌝⦄
-    (pure (IZR_Zpower_nat_check beta e) : Id _)
+    (pure (IZR_Zpower_nat_from_self_payload beta e) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
-  unfold IZR_Zpower_nat_check
+  unfold IZR_Zpower_nat_from_self_payload
   -- The two components are definitionally equal
   rfl
 
+/-- Coq `IZR_Zpower_nat`: integer natural powers cast to source `bpow`. -/
+theorem IZR_Zpower_nat (r : FloatSpec.Core.Zaux.Radix) (e : Nat) :
+    ((r.val ^ e : Int) : ℝ) = bpow r.val (Int.ofNat e) := by
+  simp [bpow, zpow_natCast]
+
 /-- Bridge: for nonnegative exponents, Zpower equals bpow -/
-noncomputable def IZR_Zpower_check (beta e : Int) : (ℝ × ℝ) :=
+noncomputable def IZR_Zpower_from_self_payload (beta e : Int) : (ℝ × ℝ) :=
   (((beta : ℝ) ^ e, (beta : ℝ) ^ e))
 
-theorem IZR_Zpower (beta e : Int) (_he : 0 ≤ e) :
+theorem IZR_Zpower_from_self_payload_spec (beta e : Int) (_he : 0 ≤ e) :
     ⦃⌜True⌝⦄
-    (pure (IZR_Zpower_check beta e) : Id _)
+    (pure (IZR_Zpower_from_self_payload beta e) : Id _)
     ⦃⇓p => ⌜p.1 = p.2⌝⦄ := by
   intro _
-  unfold IZR_Zpower_check
+  unfold IZR_Zpower_from_self_payload
   -- Both components are definitionally equal
   rfl
+
+/-- Coq `IZR_Zpower`: nonnegative integer powers cast to source `bpow`. -/
+theorem IZR_Zpower (r : FloatSpec.Core.Zaux.Radix) (e : Int) (he : 0 ≤ e) :
+    ((FloatSpec.Core.Zaux.Zpower r.val e : Int) : ℝ) = bpow r.val e := by
+  have he_cast : (e.toNat : Int) = e := Int.toNat_of_nonneg he
+  rw [FloatSpec.Core.Zaux.Zpower, if_pos he, bpow]
+  simp only [Int.cast_pow, ← zpow_natCast, he_cast]
 
 end PowBasics
 
@@ -3618,7 +3934,7 @@ theorem mag_abs (beta : Int) (x : ℝ) (_hβ : 1 < beta) :
 
     Note: with Coq semantics (floor+1), bounds are: non-strict lower, strict upper.
 -/
-theorem mag_unique_pos (beta : Int) (x : ℝ) (e : Int)
+theorem mag_unique_pos_from_positive_payload (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
     (hxpos : 0 < x)
     (hlow : (beta : ℝ) ^ (e - 1) ≤ x)
@@ -3637,8 +3953,19 @@ theorem mag_unique_pos (beta : Int) (x : ℝ) (e : Int)
   -- Apply the previously proven uniqueness lemma
   exact (mag_unique beta x e hβ hlow' hupp') (by trivial)
 
+/-- Coq `mag_unique_pos`: the source interval itself implies positivity; it is
+not an additional public premise. -/
+theorem mag_unique_pos (beta : Int) (x : ℝ) (e : Int)
+    (hβ : 1 < beta)
+    (h : (beta : ℝ) ^ (e - 1) ≤ x ∧ x < (beta : ℝ) ^ e) :
+    mag beta x = e := by
+  have hβR : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast hβ
+  have hbpos : (0 : ℝ) < (beta : ℝ) := zero_lt_one.trans hβR
+  have hxpos : 0 < x := (zpow_pos hbpos (e - 1)).trans_le h.1
+  exact (mag_unique_pos_from_positive_payload beta x e hβ hxpos h.1 h.2) True.intro
+
 /-- Bounding |x| by bpow bounds magnitude from above -/
-theorem mag_le_abs (beta : Int) (x : ℝ) (e : Int)
+theorem mag_le_abs_from_bpow_payload (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
     (hx_ne : x ≠ 0)
     (hx_lt : |x| < (beta : ℝ) ^ e) :
@@ -3686,7 +4013,7 @@ theorem mag_le_abs (beta : Int) (x : ℝ) (e : Int)
     (e.g. for 1 < beta and 0 < |y| < 1, we have mag 0 = 0 > mag y). We therefore
     assume x ≠ 0; this also forces y ≠ 0 under |x| ≤ |y|.
 -/
-theorem mag_le (beta : Int) (x y : ℝ)
+theorem mag_le_from_abs_payload (beta : Int) (x y : ℝ)
     (hβ : 1 < beta)
     (hx_ne : x ≠ 0)
     (hxy_abs : |x| ≤ |y|) :
@@ -3749,12 +4076,25 @@ theorem mag_le (beta : Int) (x y : ℝ)
   simpa [mag, hx_ne, hy_ne, wp, PostCond.noThrow, Id.run, hLx, hLy, pure]
     using hfloor_add1
 
+/-- Coq `mag_le_abs`: magnitude is monotone in absolute value away from zero. -/
+theorem mag_le_abs (beta : Int) (x y : ℝ)
+    (hβ : 1 < beta) (hx_ne : x ≠ 0) (hxy : |x| ≤ |y|) :
+    mag beta x ≤ mag beta y :=
+  (mag_le_from_abs_payload beta x y hβ hx_ne hxy) True.intro
+
+/-- Coq `mag_le`: positive-order monotonicity of magnitude. -/
+theorem mag_le (beta : Int) (x y : ℝ)
+    (hβ : 1 < beta) (hx : 0 < x) (hxy : x ≤ y) :
+    mag beta x ≤ mag beta y := by
+  have hy : 0 < y := hx.trans_le hxy
+  exact mag_le_abs beta x y hβ (ne_of_gt hx) (by simpa [abs_of_pos hx, abs_of_pos hy])
+
 /-- If {lit}`0 < |x| < bpow e` then {lit}`mag x ≤ e`
 
     Since {coq}`mag` is defined via {lean}`Int.ceil (log |x| / log beta)`, the bound
     {lit}`|x| < (beta : ℝ) ^ e` implies {lit}`log_beta |x| < e`, hence {lit}`mag x ≤ e`.
     This corrects the direction compared to an earlier draft. -/
-theorem lt_mag (beta : Int) (x : ℝ) (e : Int)
+theorem lt_mag_from_bpow_payload (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
     (hxpos : 0 < |x|)
     (hxlt : |x| < (beta : ℝ) ^ e) :
@@ -3762,10 +4102,10 @@ theorem lt_mag (beta : Int) (x : ℝ) (e : Int)
     (pure (mag beta x) : Id _)
     ⦃⇓m => ⌜m ≤ e⌝⦄ := by
   intro _
-  -- Strengthen 0 < |x| to x ≠ 0 and reuse `mag_le_abs`.
+  -- Strengthen 0 < |x| to x ≠ 0 and reuse `mag_le_abs_from_bpow_payload`.
   have hx_ne : x ≠ 0 := by
     intro hx; simpa [hx] using hxpos
-  exact (mag_le_abs beta x e hβ hx_ne hxlt) (by trivial)
+  exact (mag_le_abs_from_bpow_payload beta x e hβ hx_ne hxlt) (by trivial)
 
 /-- Magnitude of bpow e is e + 1 (Coq semantics).
     With floor+1 definition: mag(β^e) = ⌊log(β^e)/log β⌋ + 1 = ⌊e⌋ + 1 = e + 1.
@@ -3811,9 +4151,9 @@ theorem mag_le_bpow (beta : Int) (x : ℝ) (e : Int)
     ⦃⌜True⌝⦄
     (pure (mag beta x) : Id _)
     ⦃⇓m => ⌜m ≤ e⌝⦄ := by
-  -- This is exactly `mag_le_abs`.
+  -- This is exactly `mag_le_abs_from_bpow_payload`.
   intro _
-  exact (mag_le_abs beta x e hβ hx_ne hx_lt) (by trivial)
+  exact (mag_le_abs_from_bpow_payload beta x e hβ hx_ne hx_lt) (by trivial)
 
 /-- Coq `Raux.mag_gt_bpow`: if `bpow e ≤ |x|`, then `e < mag x`. -/
 theorem mag_gt_bpow (beta : Int) (x : ℝ) (e : Int)
@@ -3856,7 +4196,7 @@ theorem mag_ge_bpow (beta : Int) (x : ℝ) (e : Int)
 noncomputable def abs_val (x : ℝ) : ℝ :=
   |x|
 
-theorem bpow_mag_gt (beta : Int) (x : ℝ) (e : Int)
+theorem bpow_mag_gt_from_strict_mag_payload (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
     (hlt : (mag beta x) < e) :
     ⦃⌜True⌝⦄
@@ -3932,7 +4272,7 @@ theorem bpow_mag_gt (beta : Int) (x : ℝ) (e : Int)
     while {lean}`(beta : ℝ) ^ (e - 1) > 0` for all integers {lean}`e` when {lean}`1 < beta`,
     so the statement would be false for {lean}`e ≤ 0`.
 -/
-theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int)
+theorem bpow_mag_le_from_exp_payload (beta : Int) (x : ℝ) (e : Int)
     (hβ : 1 < beta)
     (hx_ne : x ≠ 0)
     (he_le : e ≤ (mag beta x)) :
@@ -4000,7 +4340,7 @@ theorem bpow_mag_le (beta : Int) (x : ℝ) (e : Int)
   exact hpow_le
 
 /-- Direct lower bound: for x ≠ 0, beta^(mag x - 1) ≤ |x|.
-    This is a corollary of {lean}`bpow_mag_le` with e = mag x. -/
+    This is a corollary of {lean}`bpow_mag_le_from_exp_payload` with e = mag x. -/
 theorem mag_lower_bound (beta : Int) (x : ℝ)
     (hβ : 1 < beta)
     (hx_ne : x ≠ 0) :
@@ -4008,8 +4348,8 @@ theorem mag_lower_bound (beta : Int) (x : ℝ)
     (pure (abs_val x) : Id _)
     ⦃⇓v => ⌜(beta : ℝ) ^ ((mag beta x) - 1) ≤ v⌝⦄ := by
   intro _
-  -- Apply bpow_mag_le with e = (mag beta x)
-  exact (bpow_mag_le beta x (mag beta x) hβ hx_ne (le_refl _)) (by trivial)
+  -- Apply bpow_mag_le_from_exp_payload with e = (mag beta x)
+  exact (bpow_mag_le_from_exp_payload beta x (mag beta x) hβ hx_ne (le_refl _)) (by trivial)
 
 /-- Direct upper bound: for x ≠ 0, |x| < beta^(mag x).
     Note: This is now STRICT (<) with Coq semantics (floor+1 definition).
@@ -4069,6 +4409,36 @@ theorem mag_upper_bound (beta : Int) (x : ℝ)
   have hmag : mag beta x = Int.floor L + 1 := hmag_run
   simp_rw [hmag]
   exact habs_lt
+
+/-- Coq `bpow_mag_gt`: the strict upper magnitude bound, including `x = 0`. -/
+theorem bpow_mag_gt (beta : Int) (x : ℝ) (hβ : 1 < beta) :
+    |x| < (beta : ℝ) ^ (mag beta x) := by
+  by_cases hx : x = 0
+  · have hbpos : (0 : ℝ) < (beta : ℝ) := by
+      exact_mod_cast (lt_trans (by decide : (0 : Int) < 1) hβ)
+    simpa [hx, mag] using hbpos
+  · simpa [abs_val] using (mag_upper_bound beta x hβ hx) True.intro
+
+/-- Coq `bpow_mag_le`: the lower magnitude bound for nonzero values. -/
+theorem bpow_mag_le (beta : Int) (x : ℝ) (hβ : 1 < beta) (hx : x ≠ 0) :
+    (beta : ℝ) ^ (mag beta x - 1) ≤ |x| := by
+  simpa [abs_val] using (mag_lower_bound beta x hβ hx) True.intro
+
+/-- Coq `lt_mag`: strict magnitude separation implies strict value separation
+when the larger value is positive. -/
+theorem lt_mag (beta : Int) (x y : ℝ)
+    (hβ : 1 < beta) (hy : 0 < y) (hmag : mag beta x < mag beta y) :
+    x < y := by
+  by_cases hx : 0 < x
+  · have hpow_exp : mag beta x ≤ mag beta y - 1 := by omega
+    have hpow_le :
+        (beta : ℝ) ^ (mag beta x) ≤ (beta : ℝ) ^ (mag beta y - 1) :=
+      (bpow_le beta (mag beta x) (mag beta y - 1) hβ hpow_exp) True.intro
+    have hx_upper := bpow_mag_gt beta x hβ
+    have hy_lower := bpow_mag_le beta y hβ (ne_of_gt hy)
+    have habs_lt : |x| < |y| := hx_upper.trans_le (hpow_le.trans hy_lower)
+    simpa [abs_of_pos hx, abs_of_pos hy] using habs_lt
+  · exact (le_of_not_gt hx).trans_lt hy
 
 /-- Source-facing Coq `Raux.mag`.
 
@@ -4924,7 +5294,7 @@ theorem mag_div (beta : Int) (x y : ℝ)
 
     With floor+1 semantics: mag(√x) = ⌊log(√x)/log β⌋ + 1
 -/
-theorem mag_sqrt (beta : Int) (x : ℝ)
+theorem mag_sqrt_from_log_payload (beta : Int) (x : ℝ)
     (hβ : 1 < beta)
     (hx_pos : 0 < x) :
     ⦃⌜True⌝⦄
@@ -4952,6 +5322,44 @@ theorem mag_sqrt (beta : Int) (x : ℝ)
     field_simp
   simp only [heq, wp, PostCond.noThrow, PredTrans.pure]
   trivial
+
+/-- Coq `mag_sqrt`: magnitude of a positive square root is the floor-half of
+`mag x + 1` (Lean `/ 2` is the same floor division used by Coq `Z.div2`). -/
+theorem mag_sqrt (beta : Int) (x : ℝ) (hβ : 1 < beta) (hx : 0 < x) :
+    mag beta (Real.sqrt x) = (mag beta x + 1) / 2 := by
+  set L : ℝ := Real.log x / Real.log (beta : ℝ)
+  set n : Int := Int.floor L
+  set q : Int := Int.floor (L / 2)
+  have hnle : (n : ℝ) ≤ L := by
+    simpa [n] using Int.floor_le L
+  have hnlt : L < (n : ℝ) + 1 := by
+    simpa [n] using Int.lt_floor_add_one L
+  have hqle : (q : ℝ) ≤ L / 2 := by
+    simpa [q] using Int.floor_le (L / 2)
+  have hqlt : L / 2 < (q : ℝ) + 1 := by
+    simpa [q] using Int.lt_floor_add_one (L / 2)
+  have hlower : 2 * q ≤ n := by
+    have hcast : ((2 * q : Int) : ℝ) < ((n + 1 : Int) : ℝ) := by
+      push_cast
+      linarith
+    have hint : 2 * q < n + 1 := by exact_mod_cast hcast
+    omega
+  have hupper : n ≤ 2 * q + 1 := by
+    have hcast : ((n : Int) : ℝ) < ((2 * q + 2 : Int) : ℝ) := by
+      push_cast
+      linarith
+    have hint : n < 2 * q + 2 := by exact_mod_cast hcast
+    omega
+  have hsqrt : mag beta (Real.sqrt x) = q + 1 := by
+    simpa [L, q] using (mag_sqrt_from_log_payload beta x hβ hx) True.intro
+  have hmagx : mag beta x = n + 1 := by
+    simp [mag, ne_of_gt hx, abs_of_pos hx, L, n]
+  calc
+    mag beta (Real.sqrt x) = q + 1 := hsqrt
+    _ = (n + 2) / 2 := by omega
+    _ = (mag beta x + 1) / 2 := by
+      have hnum : n + 2 = mag beta x + 1 := by omega
+      rw [hnum]
 
 /-- Magnitude at 1
 

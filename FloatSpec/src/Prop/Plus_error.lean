@@ -20,7 +20,9 @@ variable [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
 
 Upstream Flocq states this under `beta : radix`; in this Lean port that
 radix invariant is the explicit hypothesis `hβ`. -/
-theorem round_repr_same_exp (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (hβ : 1 < beta) (m e : Int) :
+theorem round_repr_same_exp_from_valid_exp_payload
+    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
+    (hβ : 1 < beta) (m e : Int) :
   ∃ m', FloatSpec.Core.Generic_fmt.roundR beta fexp rnd (_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)) =
         _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e : FloatSpec.Core.Defs.FlocqFloat beta) := by
   classical
@@ -76,6 +78,19 @@ theorem round_repr_same_exp (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Vali
             (FloatSpec.Core.Defs.FlocqFloat.mk (n * beta ^ Int.toNat (c - e)) e :
               FloatSpec.Core.Defs.FlocqFloat beta) := by
               simpa [_root_.F2R] using hchange'
+
+/-- Exact source contract: representing the rounded value at the input
+exponent is purely arithmetic and does not require `Valid_exp fexp`. -/
+theorem round_repr_same_exp
+    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
+    (hβ : 1 < beta) (m e : Int) :
+    ∃ m', FloatSpec.Core.Generic_fmt.roundR beta fexp rnd
+        (_root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+          FloatSpec.Core.Defs.FlocqFloat beta)) =
+      _root_.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e :
+        FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_repr_same_exp_from_valid_exp_payload
+    (beta := beta) (fexp := fexp) rnd hβ m e
 
 variable [FloatSpec.Core.Generic_fmt.Monotone_exp fexp]
 variable (hβ : 1 < beta)
@@ -492,7 +507,7 @@ lemma plus_error_aux (x y : ℝ)
     have herr_upper : |r - s| < (beta : ℝ) ^ (mag beta x) :=
       lt_of_le_of_lt hdist hx_upper
     have hmag_le : mag beta (r - s) ≤ mag beta x := by
-      have htrip := FloatSpec.Core.Raux.mag_le_abs
+      have htrip := FloatSpec.Core.Raux.mag_le_abs_from_bpow_payload
         (beta := beta) (x := r - s) (e := mag beta x) hβ herr_ne herr_upper
       simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure]
         using htrip True.intro
@@ -733,8 +748,12 @@ lemma FLT_plus_error_N_ex (x y : ℝ)
           FloatSpec.Core.Generic_fmt.cexp beta (FLX_exp prec) (x + y) := by
       have htrip := FloatSpec.Core.FLT.cexp_FLT_FLX
         (prec := prec) (emin := emin) (beta := beta) (x := x + y)
-      have hrun := htrip ⟨hbeta, by
-        simpa [FloatSpec.Core.Raux.bpow] using hlarge⟩
+      have hrun := htrip (by
+        have hpow_le :
+            (beta : ℝ) ^ (emin + prec - 1) ≤ (beta : ℝ) ^ (emin + prec) :=
+          zpow_le_zpow_right₀ (by exact_mod_cast (le_of_lt hbeta)) (by omega)
+        exact le_trans hpow_le (by
+          simpa [FloatSpec.Core.Raux.bpow] using hlarge))
       simpa [FLT_exp, FLX_exp] using hrun
     have hround_eq :
         FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) (x + y) =

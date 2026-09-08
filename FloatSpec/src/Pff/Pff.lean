@@ -199,17 +199,10 @@ theorem IZR_neq (m n : Int) :
   intro h hcast
   exact h (Int.cast_injective hcast)
 
--- Coq compat: `powerRZ_inv` — (r^z)⁻¹ = r^(-z)
-noncomputable def powerRZ_inv_check (r : ℝ) (z : Int) : Unit :=
-  ()
-
-theorem powerRZ_inv (r : ℝ) (z : Int) :
-    ⦃⌜True⌝⦄
-    (pure (powerRZ_inv_check r z) : Id Unit)
-    ⦃⇓_ => ⌜(r ^ z)⁻¹ = r ^ (-z)⌝⦄ := by
-  intro _
-  simp only [wp, PostCond.noThrow, pure, powerRZ_inv_check]
-  exact (zpow_neg r z).symm
+-- Coq: `powerRZ_inv` — integer powers commute with inversion.
+theorem powerRZ_inv (r : ℝ) (z : Int) (_hr : r ≠ 0) :
+    r⁻¹ ^ z = (r ^ z)⁻¹ := by
+  exact inv_zpow r z
 
 -- Coq compat: `powerRZ_neg` — r^(-z) = (r^z)⁻¹
 noncomputable def powerRZ_neg_check (r : ℝ) (z : Int) : Unit :=
@@ -15117,7 +15110,7 @@ theorem inj_abs (x : Int) :
 structure Positive where
   val : Nat
 
-noncomputable def nat_of_P (p : Positive) : Nat :=
+def nat_of_P (p : Positive) : Nat :=
   p.val.succ
 
 -- ---------------------------------------------------------------------------
@@ -15416,7 +15409,7 @@ theorem digitPredVNumiSPrecision
           radix ^ ((precision : Int).natAbs)
         rw [hprec_natAbs, hpred_natAbs]
         exact hpow_high
-    have hunique := FloatSpec.Core.Digits.Zdigits_unique
+    have hunique := FloatSpec.Core.Digits.Zdigits_unique_from_nonzero_payload
       (beta := radix) (h_beta := hradix) (n := Int.pred b.vNum) (e := (precision : Int))
       (hβ := hradix) hpre
     simp only [wp, PostCond.noThrow, pure, Id.run] at hunique
@@ -15591,7 +15584,7 @@ theorem FnormalPrecision_internal {beta : Int} [ValidRadix beta]
         exact hpow_pred_le_abs
       have hdigits_gt :
           (precision : Int) - 1 < FloatSpec.Core.Digits.Zdigits radix p.Fnum :=
-        (FloatSpec.Core.Digits.Zdigits_gt_Zpower
+        (FloatSpec.Core.Digits.Zdigits_gt_Zpower_from_natAbs_payload
           (beta := radix) (h_beta := hradix)
           (e := (precision : Int) - 1) (x := p.Fnum) (hβ := hradix))
           hpow_pred_le_natAbs
@@ -16676,7 +16669,7 @@ theorem NotDividesDigit (r v : Int) :
       Int.toNat_of_nonneg hdigits_nonneg]
   have hupper : |v| < Zpower_nat r (digit r v) := by
     have hbounds :=
-      FloatSpec.Core.Digits.Zdigits_correct r v hr hv
+      FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload r v hr hv
     simpa [Zpower_nat, digit, pffDigit_of_one_lt r v hr, hnatAbs] using hbounds.2
   have hpow_pos : 0 < Zpower_nat r (digit r v) := by
     simp [Zpower_nat]
@@ -17144,7 +17137,7 @@ theorem boundNatCorrect {beta : Int} [ValidRadix beta]
       simp [d, digit, pffDigit_of_one_lt radix 0 hradix, Zpower_nat,
         FloatSpec.Core.Digits.Zdigits]
     · have hbounds :=
-        FloatSpec.Core.Digits.Zdigits_correct radix (Int.ofNat n) hradix hnzero
+        FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload radix (Int.ofNat n) hradix hnzero
       have hnonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits radix (Int.ofNat n) :=
         FloatSpec.Core.Digits.Zdigits_ge_0 radix (Int.ofNat n) trivial
       have hnat :
@@ -23020,7 +23013,7 @@ private lemma Fdigit_less_abs {beta : Int} [ValidRadix beta]
     Zpower_nat radix (Nat.pred (Fdigit (beta:=beta) radix p)) ≤ |p.Fnum| := by
   unfold Fdigit
   rw [pffDigit_of_one_lt radix p.Fnum hradix]
-  have hbounds := FloatSpec.Core.Digits.Zdigits_correct radix p.Fnum hradix hp_nonzero
+  have hbounds := FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload radix p.Fnum hradix hp_nonzero
   let d := FloatSpec.Core.Digits.Zdigits radix p.Fnum
   have hgt : 0 < d := by
     simpa [d] using FloatSpec.Core.Digits.Zdigits_gt_0 radix p.Fnum hradix hp_nonzero
@@ -23050,7 +23043,7 @@ private lemma abs_lt_Fdigit_pow {beta : Int} [ValidRadix beta]
   by_cases hp_zero : p.Fnum = 0
   · rw [hp_zero]
     simp [Zpower_nat, FloatSpec.Core.Digits.Zdigits]
-  · have hbounds := FloatSpec.Core.Digits.Zdigits_correct radix p.Fnum hradix hp_zero
+  · have hbounds := FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload radix p.Fnum hradix hp_zero
     have hnonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits radix p.Fnum :=
       FloatSpec.Core.Digits.Zdigits_ge_0 radix p.Fnum trivial
     have hnat :
@@ -67240,18 +67233,19 @@ theorem Zlt_Zabs_intro (z1 z2 : Int) :
   · rw [abs_of_nonneg hz]; omega
   · rw [abs_of_neg hz]; omega
 
--- Coq: `Zpower_nat_less` — for q > 0, Zpower_nat n q > 0
+-- Coq: `Zpower_nat_less` — positive powers at every natural exponent
 noncomputable def Zpower_nat_less_check (n : Int) (q : Nat) : Unit :=
   ()
 
 theorem Zpower_nat_less (n : Int) (q : Nat) :
-    ⦃⌜0 < n ∧ 0 < q⌝⦄
+    ⦃⌜1 < n⌝⦄
     (pure (Zpower_nat_less_check n q) : Id Unit)
     ⦃⇓_ => ⌜0 < n ^ q⌝⦄ := by
-  intro ⟨hn, _hq⟩
+  intro hn
   simp only [wp, PostCond.noThrow, pure, Zpower_nat_less_check,
     Id.run, ULift.up_down]
-  exact pow_pos hn q
+  show 0 < n ^ q
+  exact pow_pos (lt_trans Int.zero_lt_one hn) q
 
 -- Coq: `Zpower_nat_monotone_S` — n^(q+1) ≥ n^q for n ≥ 1
 noncomputable def Zpower_nat_monotone_S_check (n : Int) (q : Nat) : Unit :=
@@ -67340,17 +67334,16 @@ theorem digitAux1 (n : Int) (p : Nat) (r : Int) :
   ring
 
 -- Minimal positive and digit infrastructure used by digit lemmas.
--- The Lean `Positive` compatibility wrapper stores a unary countdown rather
--- than Coq's binary `positive`; this fuel recursion mirrors the Coq
--- stop/continue condition over that available representation.
-noncomputable def pos_length (p : Positive) : Nat := nat_of_P p
+-- `Positive.val` stores the predecessor of its positive integer value, so the
+-- constructor depth of Coq's binary `positive` is `log2 (val + 1)`.
+def pos_length (p : Positive) : Nat := Nat.log2 (nat_of_P p)
 
-noncomputable def digitAuxFuel (n v : Int) : Int → Nat → Nat
+def digitAuxFuel (n v : Int) : Int → Nat → Nat
   | r, 0 => 0
   | r, Nat.succ q =>
       if r > v then 0 else Nat.succ (digitAuxFuel n v (n * r) q)
 
-noncomputable def digitAux (n v r : Int) (q : Positive) : Nat :=
+def digitAux (n v r : Int) (q : Positive) : Nat :=
   digitAuxFuel n v r (pos_length q)
 
 private theorem digitAuxFuel_less (n v r : Int) (q : Nat) :
@@ -67408,7 +67401,7 @@ theorem digitLess (n : Int) (q : Int) :
   intro ⟨hn, hq⟩
   simp only [wp, PostCond.noThrow, pure, digitLess_check, Id.run,
     ULift.up_down]
-  have hbounds := FloatSpec.Core.Digits.Zdigits_correct n q hn hq
+  have hbounds := FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload n q hn hq
   let d := FloatSpec.Core.Digits.Zdigits n q
   have hgt : 0 < d := by
     simpa [d] using FloatSpec.Core.Digits.Zdigits_gt_0 n q hn hq
@@ -67440,31 +67433,19 @@ theorem pos_length_pow (n : Int) (p : Positive) :
   intro hn
   simp only [wp, PostCond.noThrow, pure, pos_length_pow_check,
     Id.run, ULift.up_down]
-  unfold pos_length
+  show Int.ofNat (nat_of_P p) < n ^ Nat.succ (pos_length p)
   set k := nat_of_P p
-  have hn_plain : 1 < n := hn
-  have hn2 : (2 : Int) ≤ n := by omega
-  have h2pow : ∀ k : Nat, (k : Int) < (2 : Int) ^ (k + 1) := by
-    intro k
-    induction k with
-    | zero => norm_num
-    | succ k ih =>
-        calc
-          ((Nat.succ k : Nat) : Int) = (k : Int) + 1 := by simp
-          _ < 2 ^ (k + 1) + 1 := by linarith
-          _ ≤ 2 ^ (k + 1) + 2 ^ (k + 1) := by
-              have hpow_ge_one : (1 : Int) ≤ 2 ^ (k + 1) := by
-                have hpow_pos : (0 : Int) < 2 ^ (k + 1) :=
-                  pow_pos (by norm_num : (0 : Int) < 2) _
-                omega
-              linarith
-          _ = 2 ^ (Nat.succ k + 1) := by
-              simp [pow_succ]
-              ring
-  have hpow_mono : (2 : Int) ^ (k + 1) ≤ n ^ (k + 1) :=
+  have hn2 : (2 : Int) ≤ n := by
+    simpa using (Int.lt_iff_add_one_le.mp hn)
+  have hk_ne : k ≠ 0 := by simp [k, nat_of_P]
+  have hk_lt_nat : k < 2 ^ (Nat.log2 k + 1) :=
+    (Nat.log2_eq_iff hk_ne).mp rfl |>.2
+  have hk_lt : (k : Int) < (2 : Int) ^ (Nat.log2 k + 1) := by
+    exact_mod_cast hk_lt_nat
+  have hpow_mono : (2 : Int) ^ (Nat.log2 k + 1) ≤ n ^ (Nat.log2 k + 1) :=
     pow_le_pow_left₀ (by norm_num : (0 : Int) ≤ 2) hn2 _
-  have hk_lt : (k : Int) < n ^ (k + 1) := lt_of_lt_of_le (h2pow k) hpow_mono
-  simpa [Zpower_nat, k] using hk_lt
+  have : (k : Int) < n ^ (Nat.log2 k + 1) := lt_of_lt_of_le hk_lt hpow_mono
+  simpa [Zpower_nat, pos_length, k] using this
 
 -- Coq: `digitMore` — |q| < Zpower_nat n (digit q)
 noncomputable def digitMore_check (n : Int) (q : Int) : Unit :=
@@ -67481,7 +67462,7 @@ theorem digitMore (n : Int) (q : Int) :
   · subst q
     simp [digit, pffDigit_of_one_lt n 0 hn, Zpower_nat,
       FloatSpec.Core.Digits.Zdigits]
-  · have hbounds := FloatSpec.Core.Digits.Zdigits_correct n q hn hq
+  · have hbounds := FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload n q hn hq
     have hnonneg : 0 ≤ FloatSpec.Core.Digits.Zdigits n q :=
       FloatSpec.Core.Digits.Zdigits_ge_0 n q trivial
     have hnat :
@@ -67583,7 +67564,7 @@ theorem digitInv (n : Int) (q : Int) (r : Nat) :
         rw [← Int.abs_eq_natAbs q]
         simpa [Zpower_nat] using hupp
     have hzd :=
-      (FloatSpec.Core.Digits.Zdigits_unique
+      (FloatSpec.Core.Digits.Zdigits_unique_from_nonzero_payload
         (beta := n) (h_beta := hn) (n := q) (e := (r : Int)) (hβ := hn)) hpre
     simp only [wp, PostCond.noThrow, pure, Id.run] at hzd
     unfold digit
@@ -67611,7 +67592,7 @@ theorem digit_monotone (n : Int) (p q : Int) :
     have hpre : p ≠ 0 ∧ p.natAbs ≤ q.natAbs :=
       ⟨hp0, hpq_nat⟩
     have hle_pack :=
-      (FloatSpec.Core.Digits.Zdigits_le
+      (FloatSpec.Core.Digits.Zdigits_le_from_abs_payload
         (beta := n) (h_beta := hn) (n := p) (m := q) (hβ := hn)) hpre
     simp only [wp, PostCond.noThrow, pure, Id.run] at hle_pack
     rcases hle_pack with ⟨dq, hdq, hle_int⟩

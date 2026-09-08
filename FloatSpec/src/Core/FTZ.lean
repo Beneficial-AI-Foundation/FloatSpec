@@ -396,9 +396,8 @@ theorem FLXN_format_FTZ (beta : Int) [ValidRadix beta] (x : ℝ) :
         (fexp2 := FloatSpec.Core.FLX.FLX_exp prec)
         (x := x))
         hβ hpoint hx_gf
-  -- Repackage to FLXN_format (alias of FLX_format)
-  simpa [FloatSpec.Core.FLX.FLXN_format, FloatSpec.Core.FLX.FLX_format]
-    using hrun
+  letI : Prec_gt_0 prec := ⟨Fact.out⟩
+  exact (FloatSpec.Core.FLX.FLXN_format_generic (prec := prec) beta x) hrun
 
 end FloatSpec.Core.FTZ
 
@@ -426,7 +425,8 @@ theorem FTZ_format_FLXN (beta : Int) [ValidRadix beta] (x : ℝ) :
   -- Provide the FLX generic_format view of the hypothesis
   have hx_gf_flx :
       (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FLX.FLX_exp prec) x) := by
-    simpa [FloatSpec.Core.FLX.FLXN_format, FloatSpec.Core.FLX.FLX_format] using hx_flx
+    letI : Prec_gt_0 prec := ⟨Fact.out⟩
+    exact (FloatSpec.Core.FLX.generic_format_FLXN (prec := prec) beta x) hx_flx
   -- Case split on whether the lower bound is strict
   by_cases hstrict : (beta : ℝ) ^ e1 < |x|
   ·
@@ -438,7 +438,7 @@ theorem FTZ_format_FLXN (beta : Int) [ValidRadix beta] (x : ℝ) :
     have hupper : |x| < (beta : ℝ) ^ (M + 1) := by
       -- Using Raux.bpow_mag_gt with e := M+1
       have hxlt :=
-        (FloatSpec.Core.Raux.bpow_mag_gt (beta := beta) (x := x) (e := M + 1))
+        (FloatSpec.Core.Raux.bpow_mag_gt_from_strict_mag_payload (beta := beta) (x := x) (e := M + 1))
       -- Precondition: 1 < beta ∧ (mag x) < M+1
       have hpre' : 1 < beta ∧ (FloatSpec.Core.Raux.mag beta x) < (M + 1) := by
         have hlt : M < M + 1 := by
@@ -478,7 +478,7 @@ theorem FTZ_format_FLXN (beta : Int) [ValidRadix beta] (x : ℝ) :
           (fexp2 := FTZ_exp prec emin)
           (e1 := e1)
           (e2 := M + 1))
-          hβ hle_band x ⟨hstrict, hupper⟩ hx_gf_flx
+          hβ hle_band x ⟨le_of_lt hstrict, hupper⟩ hx_gf_flx
     -- Repackage to FTZ_format
     simpa [FTZ_format] using hrun
   ·
@@ -581,7 +581,7 @@ theorem round_FTZ_FLX (beta : Int) [ValidRadix beta]
     simp [FTZ_exp, FloatSpec.Core.FLX.FLX_exp, hcase]
   have hmagLower : (beta : ℝ) ^ (M - 1) ≤ |x| := by
     simpa [FloatSpec.Core.Raux.abs_val] using
-      (FloatSpec.Core.Raux.bpow_mag_le beta x M hβ hxne le_rfl True.intro)
+      (FloatSpec.Core.Raux.bpow_mag_le_from_exp_payload beta x M hβ hxne le_rfl True.intro)
   have hprec : 0 < prec := Fact.out
   have hpowOne : (1 : ℝ) ≤ (beta : ℝ) ^ (prec - 1) := by
     exact one_le_zpow₀ (le_of_lt (by exact_mod_cast hβ : (1 : ℝ) < beta)) (by omega)

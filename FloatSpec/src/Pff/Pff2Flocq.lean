@@ -907,7 +907,7 @@ theorem C_format (beta emin prec s : Int) [ValidRadix beta] [Prec_gt_0 prec] :
         rw [pow_succ]
         simp [abs_of_pos (by positivity : (0 : ℝ) < (beta : ℝ) ^ n + 1)]
         nlinarith [hpow_one_lt, hpow_pos, hβtwo]
-      have htrip := FloatSpec.Core.Raux.mag_le_abs (beta := beta)
+      have htrip := FloatSpec.Core.Raux.mag_le_abs_from_bpow_payload (beta := beta)
         (x := (beta : ℝ) ^ n + 1)
         (e := s + 1) hβ hx_ne hx_lt
       simpa [Std.Do.wp, Std.Do.PostCond.noThrow, Id.run, pure] using (htrip (by trivial))
@@ -6554,7 +6554,7 @@ private theorem nearest_round_error_le_two_ulp
   have hbeta : (1 : Int) < 2 := by decide
   have h := FloatSpec.Core.Ulp.error_le_half_ulp_round
     (beta := 2) (fexp := FLT_exp emin prec)
-    (fun t : Int => !(decide (2 ∣ t))) x hbeta
+    (fun t : Int => !(decide (2 ∣ t))) x
   have hhalf :
       |FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
           (FloatSpec.Core.Generic_fmt.Znearest
@@ -6565,7 +6565,7 @@ private theorem nearest_round_error_le_two_ulp
               (FloatSpec.Core.Generic_fmt.Znearest
                 (fun t : Int => !(decide (2 ∣ t)))) x) := by
     simpa only [wp, PostCond.noThrow, pure, Id.run, Prod.fst, Prod.snd]
-      using h hbeta
+      using h
   have huNonneg :
       0 ≤ ulp 2 (FLT_exp emin prec)
         (FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)

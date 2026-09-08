@@ -73,7 +73,8 @@ lemma relative_error_le_conversion (rnd : ℝ → Int) [FloatSpec.Core.Generic_f
       ring
 
 /-- Relative error less than or equal conversion inverse -/
-lemma relative_error_le_conversion_inv (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
+lemma relative_error_le_conversion_inv_from_valid_rnd_payload
+    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ FloatSpec.Calc.Round.round beta fexp (FloatSpec.Calc.Round.Mode.ofRnd rnd) x = x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp (FloatSpec.Calc.Round.Mode.ofRnd rnd) x - x| ≤ b * |x| := by
   rcases h_exists with ⟨eps, heps, hround⟩
@@ -83,8 +84,21 @@ lemma relative_error_le_conversion_inv (rnd : ℝ → Int) [FloatSpec.Core.Gener
   rw [abs_mul]
   exact mul_le_mul_of_nonneg_right heps (abs_nonneg x)
 
+/-- Exact Coq contract: the converse is algebraic and accepts an arbitrary
+integer rounding function. -/
+lemma relative_error_le_conversion_inv (rnd : ℝ → Int) (x b : ℝ)
+  (h_exists : ∃ eps, |eps| ≤ b ∧
+    FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x = x * (1 + eps)) :
+  |FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x - x| ≤ b * |x| := by
+  rcases h_exists with ⟨eps, heps, hround⟩
+  rw [hround]
+  have hcalc : x * (1 + eps) - x = eps * x := by ring
+  rw [hcalc, abs_mul]
+  exact mul_le_mul_of_nonneg_right heps (abs_nonneg x)
+
 /-- Relative error less than or equal conversion round inverse -/
-lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
+lemma relative_error_le_conversion_round_inv_from_valid_rnd_payload
+    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] (x b : ℝ)
   (h_exists : ∃ eps, |eps| ≤ b ∧ x = FloatSpec.Calc.Round.round beta fexp (FloatSpec.Calc.Round.Mode.ofRnd rnd) x * (1 + eps)) :
   |FloatSpec.Calc.Round.round beta fexp (FloatSpec.Calc.Round.Mode.ofRnd rnd) x - x| ≤ b * |FloatSpec.Calc.Round.round beta fexp (FloatSpec.Calc.Round.Mode.ofRnd rnd) x| := by
   rcases h_exists with ⟨eps, heps, hx⟩
@@ -95,6 +109,21 @@ lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int) [FloatSpec.Core
   have hcalc : rx - rx * (1 + eps) = -(eps * rx) := by ring
   rw [hcalc]
   rw [abs_neg, abs_mul]
+  simpa [mul_comm, mul_left_comm, mul_assoc] using
+    mul_le_mul_of_nonneg_right heps (abs_nonneg rx)
+
+/-- Exact Coq contract: no `Valid_rnd` premise is exported. -/
+lemma relative_error_le_conversion_round_inv (rnd : ℝ → Int) (x b : ℝ)
+  (h_exists : ∃ eps, |eps| ≤ b ∧
+    x = FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x * (1 + eps)) :
+  |FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x - x| ≤
+    b * |FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x| := by
+  rcases h_exists with ⟨eps, heps, hx⟩
+  set rx : ℝ := FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x
+  have hx' : x = rx * (1 + eps) := by simpa [rx] using hx
+  rw [hx']
+  have hcalc : rx - rx * (1 + eps) = -(eps * rx) := by ring
+  rw [hcalc, abs_neg, abs_mul]
   simpa [mul_comm, mul_left_comm, mul_assoc] using
     mul_le_mul_of_nonneg_right heps (abs_nonneg rx)
 
@@ -888,6 +917,7 @@ theorem relative_error_round_F2R_emin (rnd : ℝ → Int) [FloatSpec.Core.Generi
 variable (prec : Int)
 variable [Prec_gt_0 prec]
 
+omit [Prec_gt_0 prec] in
 /-- FLX relative error auxiliary -/
 lemma relative_error_FLX_aux (k : Int) : prec ≤ k - FLX_exp prec k := by
   simp [FLX_exp, FloatSpec.Core.FLX.FLX_exp]
@@ -1439,6 +1469,7 @@ theorem relative_error_N_FLX_round (hβ : 1 < beta) (x : ℝ) :
 
 variable (emin : Int)
 
+omit [Prec_gt_0 prec] in
 /-- FLT relative error auxiliary -/
 lemma relative_error_FLT_aux (k : Int) (h_bound : emin + prec - 1 < k) :
   prec ≤ k - FLT_exp emin prec k := by
@@ -2003,7 +2034,8 @@ theorem relative_error_N_FLT'_ex_separate (x : ℝ) (hβ : 1 < beta) :
       ring
 
 /-- General FLT error nearest -/
-theorem error_N_FLT (emin prec : Int) [Prec_gt_0 prec] (hβ : 1 < beta) (h_pos : 0 < prec)
+theorem error_N_FLT_from_prec_instance_payload
+    (emin prec : Int) [Prec_gt_0 prec] (hβ : 1 < beta) (h_pos : 0 < prec)
   (choice : Int → Bool) (x : ℝ) :
   ∃ eps eta, |eps| ≤ (1/2) * (beta : ℝ) ^ (-prec + 1) ∧
     |eta| ≤ (1/2) * (beta : ℝ) ^ emin ∧
@@ -2049,3 +2081,16 @@ theorem error_N_FLT (emin prec : Int) [Prec_gt_0 prec] (hβ : 1 < beta) (h_pos :
         FloatSpec.Compat.Scaffold.ZnearestMode, hZ0]
   · exact error_N_FLT_aux (beta := beta) (choice := choice) (prec := prec)
       (emin := emin) x hβ hx_pos
+
+/-- Exact public contract exported by Coq `error_N_FLT`; the class instance is
+derived from the source precision premise. -/
+theorem error_N_FLT (emin prec : Int) (hβ : 1 < beta) (h_pos : 0 < prec)
+    (choice : Int → Bool) (x : ℝ) :
+  ∃ eps eta, |eps| ≤ (1/2) * (beta : ℝ) ^ (-prec + 1) ∧
+    |eta| ≤ (1/2) * (beta : ℝ) ^ emin ∧
+    eps * eta = 0 ∧
+    FloatSpec.Calc.Round.round beta (FLT_exp emin prec) (Znearest choice) x =
+      x * (1 + eps) + eta := by
+  letI : Prec_gt_0 prec := ⟨h_pos⟩
+  exact error_N_FLT_from_prec_instance_payload
+    (beta := beta) (emin := emin) (prec := prec) hβ h_pos choice x

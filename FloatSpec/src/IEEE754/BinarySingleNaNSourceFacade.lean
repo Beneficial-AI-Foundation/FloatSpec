@@ -1433,7 +1433,7 @@ theorem Bnormfr_mantissa_correct {prec emax : Int}
     match x with
     | BinarySingleNaNFloat.B754_finite _ m e _ _ =>
         Bnormfr_mantissa x = m ∧
-          ((FloatSpec.Core.Digits.digits2_Pnat m : Nat) : Int) = prec ∧
+          FloatSpec.Core.Digits.digits2_pos m = prec ∧
           e = -prec
     | _ => False := by
   cases x with

@@ -88,7 +88,8 @@ section CoreDivision
 
     Performs division by adjusting mantissas to achieve desired exponent
 -/
-noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
+noncomputable def Fdiv_core_from_real_midpoint_payload
+    (m1 e1 m2 e2 e : Int) : (Int × Location) :=
   (
     let (m1', m2') :=
       if e ≤ e1 - e2 then
@@ -106,6 +107,16 @@ noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
     let l := if r = 0 then Location.loc_Exact
              else Location.loc_Inexact (FloatSpec.Calc.Bracket.compare xR ((dR + uR) / 2))
     (q, l))
+
+/-- Exact executable translation of FLoCq `Fdiv_core`. -/
+noncomputable def Fdiv_core (m1 e1 m2 e2 e : Int) : (Int × Location) :=
+  let (m1', m2') :=
+    if e ≤ e1 - e2 then
+      (m1 * beta ^ Int.natAbs (e1 - e2 - e), m2)
+    else
+      (m1, m2 * beta ^ Int.natAbs (e - (e1 - e2)))
+  let (q, r) := FloatSpec.Core.Zaux.Z_div_eucl m1' m2'
+  (q, new_location m2' r Location.loc_Exact)
 
 /-- Specification: Core division correctness
 
@@ -255,85 +266,58 @@ theorem Fdiv_core_correct_left_branch (m1 e1 m2 e2 e : Int)
       xR = ((m1 : ℝ) * b ^ (e1 - e2)) / (m2 : ℝ) := hx0
       _  = (((m1 : ℝ) * b ^ (e1 - e2 - e)) / (m2 : ℝ)) * b ^ e := hx1
       _  = ((q : ℝ) + (r : ℝ) / (m2 : ℝ)) * b ^ e := by simpa [hdivR']
-  -- Conclude the inbetween proof by cases on r
-  by_cases hr0 : r = 0
-  · -- Exact case
-    have hr0R : (r : ℝ) = 0 := by simpa using congrArg (fun t : Int => (t : ℝ)) hr0
-    -- xR = q*b^e
-    have hx_eq : xR = (q : ℝ) * b ^ e := by
-      simpa [hxR_eq, hr0R, hdR, mul_comm] using rfl
-    -- build the predicate
-    have hx_eq' : xR = dR := by simpa [hdR] using hx_eq
-    have hx_exact : FloatSpec.Calc.Bracket.inbetween dR uR xR Location.loc_Exact := by
-      have hx_exact_raw : inbetween ((q : ℝ) * b ^ e) ((q + 1 : ℝ) * b ^ e) xR Location.loc_Exact :=
-        FloatSpec.Calc.Bracket.inbetween.inbetween_Exact hx_eq
-      simpa [hdR, huR] using hx_exact_raw
-    -- Under r = 0, we have m2 ∣ m1' so the goal's conditional location reduces to loc_Exact
-    have hdiv : m2 ∣ m1' := by
-      -- r = m1' % m2 by definition; with r = 0 obtain divisibility
-      have : m1' % m2 = 0 := by simpa [r] using hr0
-      exact Int.dvd_of_emod_eq_zero this
-    simpa [inbetween_float, dR, uR, xR, hdiv] using hx_exact
-  · -- Inexact case: show strict inequalities dR < xR < uR
-    have hr_nonnegZ : (0 : Int) ≤ r := Int.emod_nonneg _ (ne_of_gt hm2_pos)
-    have hr_posZ : 0 < r := lt_of_le_of_ne' hr_nonnegZ hr0
-    have hr_ltZ : r < m2 := Int.emod_lt_of_pos _ hm2_pos
-    have hr_posR : 0 < (r : ℝ) := by exact_mod_cast hr_posZ
-    have hm2_posR : 0 < (m2 : ℝ) := by exact_mod_cast hm2_pos
-    have hr_div_pos : 0 < (r : ℝ) / (m2 : ℝ) := div_pos hr_posR hm2_posR
-    have hr_div_lt_one : (r : ℝ) / (m2 : ℝ) < 1 := by
-      have : (r : ℝ) < (m2 : ℝ) := by exact_mod_cast hr_ltZ
-      have hm2_posR' : 0 < (m2 : ℝ) := hm2_posR
-      have h := (div_lt_div_of_pos_right this hm2_posR')
-      simpa [div_self (ne_of_gt hm2_posR')] using h
-    -- turn into bounds for xR around dR and uR
-    have hdx : dR < xR := by
-      -- xR = dR + (r/m2)*b^e with positive increment
-      have : xR = (q : ℝ) * b ^ e + ((r : ℝ) / (m2 : ℝ)) * b ^ e := by
-        simpa [hxR_eq, mul_add, mul_comm, mul_left_comm, mul_assoc]
-      have hincr_pos : 0 < ((r : ℝ) / (m2 : ℝ)) * b ^ e := mul_pos hr_div_pos hbpow_pos
-      simpa [hdR, this, lt_add_iff_pos_right]
-    have hux : xR < uR := by
-      -- uR = dR + b^e and 0 < (r/m2) * b^e < b^e
-      have hx' : xR = dR + ((r : ℝ) / (m2 : ℝ)) * b ^ e := by
-        simpa [hxR_eq, hdR, mul_add, mul_comm, mul_left_comm, mul_assoc]
-      have hincr_lt : ((r : ℝ) / (m2 : ℝ)) * b ^ e < b ^ e := by
-        have := (mul_lt_mul_of_pos_right hr_div_lt_one hbpow_pos)
-        simpa using this
-      have : xR < dR + b ^ e := by
-        have hbnd : dR + ((r : ℝ) / (m2 : ℝ)) * b ^ e < dR + b ^ e := by
-          exact add_lt_add_right hincr_lt dR
-        simpa [hx'] using hbnd
-      -- rewrite dR + b^e into (q + 1) * b^e using distributivity
-      have hsum : dR + b ^ e = (q + 1 : ℝ) * b ^ e := by
-        have := (add_mul (q : ℝ) (1 : ℝ) (b ^ e))
-        -- (q + 1) * b^e = q*b^e + 1*b^e
-        simpa [hdR, one_mul, add_comm] using this.symm
-      have hxR_lt : xR < (q + 1 : ℝ) * b ^ e := by simpa [hsum] using this
-      simpa [huR] using hxR_lt
-    -- Convert bounds to the raw endpoint form
-    have hdx' : (q : ℝ) * b ^ e < xR := by simpa [hdR] using hdx
-    have hux' : xR < (q + 1 : ℝ) * b ^ e := by simpa [huR] using hux
-    -- Conclude with Inexact location, where the ordering matches by construction
-    have hx_inexact_raw :
-        FloatSpec.Calc.Bracket.inbetween ((q : ℝ) * b ^ e) ((q + 1 : ℝ) * b ^ e) xR
-          (Location.loc_Inexact (FloatSpec.Calc.Bracket.compare xR (((q : ℝ) * b ^ e + (q + 1 : ℝ) * b ^ e) / 2))) := by
-      refine FloatSpec.Calc.Bracket.inbetween.inbetween_Inexact
-        (l := FloatSpec.Calc.Bracket.compare xR (((q : ℝ) * b ^ e + (q + 1 : ℝ) * b ^ e) / 2)) ?hb ?hc
-      · exact ⟨hdx', hux'⟩
-      · rfl
-    have hx_inexact :
-        FloatSpec.Calc.Bracket.inbetween dR uR xR
-          (Location.loc_Inexact (FloatSpec.Calc.Bracket.compare xR ((dR + uR) / 2))) := by
-      simpa [hdR, huR] using hx_inexact_raw
-    -- Under r ≠ 0, we have ¬ m2 ∣ m1' so the goal's conditional location reduces to loc_Inexact ...
-    have hnotdvd : ¬ m2 ∣ m1' := by
-      intro h
-      have : m1' % m2 = 0 := Int.emod_eq_zero_of_dvd h
-      exact hr0 (by simpa [r])
-    simpa [inbetween_float, dR, uR, xR, hnotdvd] using hx_inexact
-    -- The alternative branch is handled by `Fdiv_core_correct` below through
-    -- an equal-value rescaling of the denominator.
+  have hZdiv : FloatSpec.Core.Zaux.Z_div_eucl m1' m2 = (q, r) := by
+    simp [FloatSpec.Core.Zaux.Z_div_eucl, q, r,
+      Int.fdiv_eq_ediv_of_nonneg _ (le_of_lt hm2_pos), Int.emod_def]
+  have hr_nonneg : 0 ≤ r := Int.emod_nonneg _ (ne_of_gt hm2_pos)
+  have hr_lt : r < m2 := Int.emod_lt_of_pos _ hm2_pos
+  by_cases hm2gt : 1 < m2
+  · let start : ℝ := (q : ℝ) * b ^ e
+    let step : ℝ := b ^ e / (m2 : ℝ)
+    have hstep : 0 < step := div_pos hbpow_pos hm2R_pos
+    have hx_local :
+        inbetween (start + (r : ℝ) * step)
+          (start + ((r : ℝ) + 1) * step) xR Location.loc_Exact := by
+      apply inbetween.inbetween_Exact
+      rw [hxR_eq]
+      dsimp [start, step]
+      field_simp [ne_of_gt hm2R_pos]
+      <;> ring
+    have hnew :=
+      (new_location_correct (start := start) (step := step) (nb_steps := m2)
+        (x := xR) (k := r) (l := Location.loc_Exact)
+        hm2gt ⟨hr_nonneg, hr_lt⟩ hx_local hstep)
+        ⟨hr_nonneg, hr_lt, hx_local⟩
+    have hnew_run :
+        inbetween start (start + (m2 : ℝ) * step) xR
+          (new_location m2 r Location.loc_Exact) := by
+      simpa [wp, PostCond.noThrow, pure] using hnew
+    have hstart : start = dR := by simpa [start] using hdR.symm
+    have hend : start + (m2 : ℝ) * step = uR := by
+      dsimp [start, step]
+      rw [huR]
+      field_simp [ne_of_gt hm2R_pos]
+      <;> ring
+    have hend' : dR + (m2 : ℝ) * step = uR := by
+      rw [← hstart]
+      exact hend
+    have hglobal :
+        inbetween dR uR xR (new_location m2 r Location.loc_Exact) := by
+      simpa only [hstart, hend'] using hnew_run
+    simpa [inbetween_float, dR, uR, xR, hZdiv] using hglobal
+  · have hm2one : m2 = 1 := by omega
+    subst m2
+    have hrzero : r = 0 := by simp [r]
+    have hx_eq : xR = dR := by
+      calc
+        xR = ((q : ℝ) + (r : ℝ) / (1 : ℝ)) * b ^ e := by
+          simpa using hxR_eq
+        _ = (q : ℝ) * b ^ e := by simp [hrzero]
+        _ = dR := hdR.symm
+    have hxexact : inbetween dR uR xR Location.loc_Exact :=
+      inbetween.inbetween_Exact hx_eq
+    simpa [inbetween_float, dR, uR, xR, b, hZdiv, hrzero,
+      new_location, new_location_odd] using hxexact
 
 /-- FLoCq `Fdiv_core_correct`: correctness for both exponent-scaling branches. -/
 theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int)
@@ -443,7 +427,8 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
     ⦃⌜0 < (F2R x) ∧ 0 < (F2R y)⌝⦄
     (pure (Fdiv beta fexp x y) : Id _)
     ⦃⇓result => let (m, e, l) := result
-                ⌜inbetween_float beta m e ((F2R x) / (F2R y)) l⌝⦄ := by
+                ⌜e ≤ cexp beta fexp ((F2R x) / (F2R y)) ∧
+                  inbetween_float beta m e ((F2R x) / (F2R y)) l⌝⦄ := by
   intro hpre
   rcases hpre with ⟨hx_pos, hy_pos⟩
   -- Destructure inputs to access components
@@ -478,8 +463,25 @@ theorem Fdiv_correct (x y : FlocqFloat beta)
       have hinSimple : inbetween_float beta (Fdiv_core beta m1 e1 m2 e2 e).fst e qR
             (Fdiv_core beta m1 e1 m2 e2 e).snd := by
         simpa [wp, PostCond.noThrow, pure] using hinst
-      -- The goal matches this after rewriting the `match` structure; conclude by `simpa`.
-      simpa [qR, e, e', d1, d2] using hinSimple
+      have hmag := mag_div_F2R (beta := beta) m1 e1 m2 e2 hm1_pos hm2_pos Hβ
+        ⟨hm1_pos, hm2_pos⟩
+      have hmag1 := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits
+        (beta := beta) m1 e1 Hβ (ne_of_gt hm1_pos)
+      have hmag2 := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits
+        (beta := beta) m2 e2 Hβ (ne_of_gt hm2_pos)
+      simp only [wp, PostCond.noThrow, pure] at hmag
+      rw [hmag1, hmag2] at hmag
+      have hbounds : e' ≤ mag beta qR ∧ mag beta qR ≤ e' + 1 := by
+        simpa [qR, e', d1, d2, wp, PostCond.noThrow, pure] using hmag
+      have hmag_cases : mag beta qR = e' ∨ mag beta qR = e' + 1 := by omega
+      have he_cexp : e ≤ cexp beta fexp qR := by
+        unfold cexp
+        rcases hmag_cases with hm | hm
+        · rw [hm]
+          exact le_trans (min_le_left _ _) (min_le_left _ _)
+        · rw [hm]
+          exact le_trans (min_le_left _ _) (min_le_right _ _)
+      simpa [qR, e, e', d1, d2] using And.intro he_cexp hinSimple
 
 end MainDivision
 

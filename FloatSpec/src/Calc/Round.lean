@@ -53,7 +53,7 @@ noncomputable def Mode.ofRnd (rnd : ℝ → Int)
       (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) 0)
 
 /-- Bridge Calc.round to Core's concrete mode-sensitive rounding operator. -/
-noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int)
     (mode : Mode) (x : ℝ) : ℝ :=
   FloatSpec.Core.Generic_fmt.roundR beta fexp mode.rnd x
 
@@ -194,22 +194,22 @@ theorem cexp_inbetween_float
   · set d : Int := FloatSpec.Core.Digits.Zdigits beta m with hd
     have Hm_ne : m ≠ 0 := ne_of_gt Hm_pos
     have Hdigits := FloatSpec.Core.Digits.Zdigits_correct
-      (beta := beta) m (by simpa using Hβ) Hm_ne
+      (beta := beta) m (by simpa using Hβ)
     have Hd_pos : 0 < d := by
       simpa [d, hd] using
         (FloatSpec.Core.Digits.Zdigits_gt_0
           (beta := beta) m (by simpa using Hβ) Hm_ne)
     have Hd_nonneg : 0 ≤ d := le_of_lt Hd_pos
     have Hdm1_nonneg : 0 ≤ d - 1 := by omega
-    have Hlow_int : beta ^ ((d - 1).natAbs) ≤ |m| := by
+    have Hlow_int : FloatSpec.Core.Zaux.Zpower beta (d - 1) ≤ |m| := by
       simpa [d, hd] using Hdigits.1
-    have Hupp_int : |m| < beta ^ d.natAbs := by
+    have Hupp_int : |m| < FloatSpec.Core.Zaux.Zpower beta d := by
       simpa [d, hd] using Hdigits.2
     have Hm_abs : |m| = m := by
       simpa [abs_of_nonneg (le_of_lt Hm_pos)]
-    have Hlow_m_int : beta ^ ((d - 1).natAbs) ≤ m := by
+    have Hlow_m_int : FloatSpec.Core.Zaux.Zpower beta (d - 1) ≤ m := by
       simpa [Hm_abs] using Hlow_int
-    have Hupp_m_succ_int : m + 1 ≤ beta ^ d.natAbs := by
+    have Hupp_m_succ_int : m + 1 ≤ FloatSpec.Core.Zaux.Zpower beta d := by
       exact Int.add_one_le_iff.mpr (by simpa [Hm_abs] using Hupp_int)
     have Hβ_pos_int : (0 : Int) < beta := lt_trans Int.zero_lt_one Hβ
     have Hβ_pos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Hβ_pos_int
@@ -218,34 +218,28 @@ theorem cexp_inbetween_float
     have Hpow_e_nonneg : 0 ≤ (beta : ℝ) ^ e := le_of_lt Hpow_e_pos
     have Hlow_m_real :
         (beta : ℝ) ^ (d - 1) ≤ (m : ℝ) := by
-      have Hcast : ((beta ^ ((d - 1).natAbs) : Int) : ℝ) ≤ (m : ℝ) := by
+      have Hcast : ((FloatSpec.Core.Zaux.Zpower beta (d - 1) : Int) : ℝ) ≤ (m : ℝ) := by
         exact_mod_cast Hlow_m_int
       have Hpow :
-          ((beta ^ ((d - 1).natAbs) : Int) : ℝ) =
+          ((FloatSpec.Core.Zaux.Zpower beta (d - 1) : Int) : ℝ) =
             (beta : ℝ) ^ (d - 1) := by
-        calc
-          ((beta ^ ((d - 1).natAbs) : Int) : ℝ)
-              = (beta : ℝ) ^ ((d - 1).natAbs) := by norm_num [Int.cast_pow]
-          _ = (beta : ℝ) ^ (((d - 1).natAbs : Int)) := by
-                exact (zpow_natCast (beta : ℝ) ((d - 1).natAbs)).symm
-          _ = (beta : ℝ) ^ (d - 1) := by
-                rw [Int.natAbs_of_nonneg Hdm1_nonneg]
-      simpa [Hpow] using Hcast
+        rw [FloatSpec.Core.Zaux.Zpower, if_pos Hdm1_nonneg, Int.cast_pow]
+        exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+          rw [Int.toNat_of_nonneg Hdm1_nonneg])
+      rw [← Hpow]
+      exact Hcast
     have Hupp_m_succ_real :
         ((m + 1 : Int) : ℝ) ≤ (beta : ℝ) ^ d := by
       have Hcast : (((m + 1 : Int) : Int) : ℝ) ≤
-          ((beta ^ d.natAbs : Int) : ℝ) := by
+          ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) := by
         exact_mod_cast Hupp_m_succ_int
       have Hpow :
-          ((beta ^ d.natAbs : Int) : ℝ) = (beta : ℝ) ^ d := by
-        calc
-          ((beta ^ d.natAbs : Int) : ℝ)
-              = (beta : ℝ) ^ d.natAbs := by norm_num [Int.cast_pow]
-          _ = (beta : ℝ) ^ ((d.natAbs : Int)) := by
-                exact (zpow_natCast (beta : ℝ) d.natAbs).symm
-          _ = (beta : ℝ) ^ d := by
-                rw [Int.natAbs_of_nonneg Hd_nonneg]
-      simpa [Hpow] using Hcast
+          ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) = (beta : ℝ) ^ d := by
+        rw [FloatSpec.Core.Zaux.Zpower, if_pos Hd_nonneg, Int.cast_pow]
+        exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+          rw [Int.toNat_of_nonneg Hd_nonneg])
+      rw [← Hpow]
+      exact Hcast
     have Hlow_scaled :
         (beta : ℝ) ^ (d + e - 1) ≤ x := by
       have Hmul := mul_le_mul_of_nonneg_right Hlow_m_real Hpow_e_nonneg
@@ -280,7 +274,7 @@ theorem cexp_inbetween_float
       exact lt_of_lt_of_le Hb.2 HF2R_upp
     have Hmag :
         FloatSpec.Core.Raux.mag beta x = d + e := by
-      have Htrip := FloatSpec.Core.Raux.mag_unique_pos
+      have Htrip := FloatSpec.Core.Raux.mag_unique_pos_from_positive_payload
         (beta := beta) (x := x) (e := d + e) Hβ Px Hlow_scaled Hupp_scaled
       simpa using Htrip True.intro
     simp [cexp, Hmag, d, hd]
@@ -2370,7 +2364,7 @@ theorem truncate_correct_format
         _ = (m : ℝ) / (p : ℝ) := by rw [div_eq_mul_inv]
     have Hfloor_div :
         FloatSpec.Core.Raux.Zfloor ((m : ℝ) / (p : ℝ)) = q := by
-      have htrip := FloatSpec.Core.Raux.Zfloor_div m p Hp_pos
+      have htrip := FloatSpec.Core.Raux.Zfloor_div_pos_payload m p Hp_pos
       simpa [q, hq, wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip True.intro
     have Hfloor_sm :
         FloatSpec.Core.Raux.Zfloor sm = FloatSpec.Core.Raux.Ztrunc sm := by

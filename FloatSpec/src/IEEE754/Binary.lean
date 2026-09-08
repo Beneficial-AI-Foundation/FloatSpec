@@ -237,8 +237,8 @@ theorem is_finite_build_nan_compat (s : Bool) (payload : Nat) :
 -- Coq: `nan_pl pl := Zlt_bool (Zpos (digits2_pos pl)) prec`.
 def nan_pl (prec : Int) (pl : FloatSpec.Core.Zaux.Positive) : Bool :=
   FloatSpec.Core.Zaux.Zlt_bool
-    ((FloatSpec.Core.Digits.digits2_Pnat
-      (FloatSpec.Core.Zaux.positiveToNat pl) : Nat) : Int)
+    (FloatSpec.Core.Digits.digits2_pos
+      (FloatSpec.Core.Zaux.positiveToNat pl))
     prec
 
 -- Existing range-only validity check used by the current Lean compatibility
@@ -3760,10 +3760,15 @@ theorem FLT_format_B2R_compat
   (pure (FLT_format_B2R_check (prec:=prec) (emax:=emax) x) : Id Unit)
   ⦃⇓_ => ⌜FloatSpec.Core.FLT.FLT_format (prec:=prec) (emin := 3 - emax - prec) 2 (B2R (prec:=prec) (emax:=emax) x)⌝⦄ := by
   intro _
-  -- FLT_format = generic_format by definition, so we use generic_format_B2R
-  simp only [FloatSpec.Core.FLT.FLT_format]
   have h := generic_format_B2R_compat x hformat
-  simpa [wp, PostCond.noThrow, pure] using (h trivial)
+  have hgen : FloatSpec.Core.Generic_fmt.generic_format 2
+      (FloatSpec.Core.FLT.FLT_exp prec (3 - emax - prec))
+      (B2R (prec := prec) (emax := emax) x) := by
+    simpa [wp, PostCond.noThrow, pure] using (h trivial)
+  have hflt := FloatSpec.Core.FLT.FLT_format_generic
+    (prec := prec) (emin := 3 - emax - prec) 2
+    (B2R (prec := prec) (emax := emax) x)
+  simpa [wp, PostCond.noThrow, pure] using hflt hgen
 
 -- Coq: emin_lt_emax — the minimal exponent is strictly less than emax (Binary side)
 def emin_lt_emax_check_B : Unit :=
@@ -4610,7 +4615,7 @@ theorem bounded_canonical_lt_emax {prec emax : Int}
     omega
 
   -- From Zdigits definition: 2^(Zdigits - 1) ≤ |mx| < 2^Zdigits
-  have hzdig_bound := FloatSpec.Core.Digits.Zdigits_correct 2 (mx : Int) h2gt1
+  have hzdig_bound := FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload 2 (mx : Int) h2gt1
   simp only [wp, PostCond.noThrow, pure, Id.run] at hzdig_bound
   have hzdig_spec := hzdig_bound hmx_int_ne
   obtain ⟨hlow, hhi⟩ := hzdig_spec
@@ -4792,7 +4797,7 @@ def shl_align_fexp_check {prec emax : Int} (mx : Nat) (ex : Int) : (Nat × Int) 
 private lemma Zdigits_bounds_2 (n : Int) (hn : n ≠ 0) :
     2 ^ (FloatSpec.Core.Digits.Zdigits 2 n - 1).natAbs ≤ |n| ∧
     |n| < 2 ^ (FloatSpec.Core.Digits.Zdigits 2 n).natAbs := by
-  have h := FloatSpec.Core.Digits.Zdigits_correct 2 n (by norm_num : (2:Int) > 1)
+  have h := FloatSpec.Core.Digits.Zdigits_correct_from_nonzero_payload 2 n (by norm_num : (2:Int) > 1)
   simp only [PredTrans.pure] at h
   exact h hn
 

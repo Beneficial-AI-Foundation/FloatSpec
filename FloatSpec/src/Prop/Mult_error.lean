@@ -422,7 +422,9 @@ theorem mult_error_FLT (x y : ℝ)
       cexp beta (FLT_exp emin prec) z = cexp beta (FLX_exp prec) z := by
     have h := FloatSpec.Core.FLT.cexp_FLT_FLX
       (prec := prec) (emin := emin) (beta := beta) (x := z)
-    have h' := h ⟨hβ, hbound_cexp⟩
+    have h' := h (le_trans
+      (zpow_le_zpow_right₀ (by exact_mod_cast (le_of_lt hβ)) (by omega))
+      hbound_cexp)
     simpa [cexp, FLT_exp, FLX_exp] using h'
   have hround_eq :
       FloatSpec.Core.Generic_fmt.roundR beta (FLT_exp emin prec) rnd z =

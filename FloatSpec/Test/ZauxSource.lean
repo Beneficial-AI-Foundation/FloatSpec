@@ -32,14 +32,20 @@ namespace FloatSpec.Test.ZauxSource
 #check @FloatSpec.Core.Zaux.iter_nat_S
 #check @FloatSpec.Core.Zaux.iter_pos_nat
 
+example : FloatSpec.Core.Zaux.Zfast_div_eucl 7 (-3) = (-3, -2) := by
+  decide
+
+example : FloatSpec.Core.Zaux.Zfast_div_eucl 7 0 = (0, 7) := by
+  decide
+
 example : 0 ≤ (-3 : Int) * Int.tdiv (-3) 2 := by
   exact FloatSpec.Core.Zaux.Zsame_sign_odiv (-3) 2 (by omega)
 
 example : (Int.tmod (-17) (3 * 4)).tdiv 3 =
-    (Int.tdiv (-17) 3).tmod 4 := by native_decide
+    (Int.tdiv (-17) 3).tmod 4 := by decide
 
 example : Int.tdiv ((-7 : Int) + -5) 3 =
     Int.tdiv (-7) 3 + Int.tdiv (-5) 3 +
-      Int.tdiv (Int.tmod (-7) 3 + Int.tmod (-5) 3) 3 := by native_decide
+      Int.tdiv (Int.tmod (-7) 3 + Int.tmod (-5) 3) 3 := by decide
 
 end FloatSpec.Test.ZauxSource

@@ -35,7 +35,7 @@ attribute [-simp] neg_mul
 
 open Real
 open Std.Do
-open FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
+open FloatSpec.Core.Defs FloatSpec.Core.Generic_fmt FloatSpec.Core.Raux
 
 namespace FloatSpec.Core.FLX
 
@@ -80,17 +80,21 @@ theorem FLX_exp_spec (e : Int) :
     using the generic format with the fixed-precision exponent
     function. This gives x = m × β^(e-prec) where m has bounded magnitude.
 -/
+def FLX_format_from_generic_payload (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
+  0 ≤ prec ∧ FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+
+/-- Exact FLoCq `FLX_format`: existence of a bounded-mantissa representation. -/
 def FLX_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
-  FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x
+  ∃ f : FlocqFloat beta,
+    x = F2R f ∧ |f.Fnum| < FloatSpec.Core.Zaux.Zpower beta prec
 
-/-- Unbounded fixed-precision format with normalized mantissas.
-
-    This mirrors Coq's `FLXN_format`. The current port models it using
-    the same underlying generic format predicate as `FLX_format`.
-    Proofs will refine this equivalence later.
--/
+/-- Exact FLoCq `FLXN_format`: a normalized bounded-mantissa representation. -/
 def FLXN_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
-  FLX_format prec beta x
+  ∃ f : FlocqFloat beta,
+    x = F2R f ∧
+      (x ≠ 0 →
+        FloatSpec.Core.Zaux.Zpower beta (prec - 1) ≤ |f.Fnum| ∧
+        |f.Fnum| < FloatSpec.Core.Zaux.Zpower beta prec)
 
 /-- Specification: FLX format using generic format
 
@@ -99,15 +103,13 @@ def FLXN_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
     floating-point numbers with constant precision.
 -/
 @[spec]
-theorem FLX_format_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
+theorem FLX_format_from_generic_payload_spec
+    (beta : Int) [ValidRadix beta] (x : ℝ) (hp : 0 ≤ prec) :
     ⦃⌜True⌝⦄
-    (pure (FLX_format prec beta x) : Id Prop)
+    (pure (FLX_format_from_generic_payload prec beta x) : Id Prop)
     ⦃⇓result => ⌜result = (FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x)⌝⦄ := by
   intro _
-  -- By definition, `FLX_format` is `generic_format beta (FLX_exp prec)`
-  unfold FLX_format
-  -- Reduce the Id-triple and compute both sides to the same run
-  simp [wp, PostCond.noThrow, pure, Id.run]
+  simp [FLX_format_from_generic_payload, wp, PostCond.noThrow, pure, Id.run, hp]
 
 /-- Specification: FLX exponent function correctness
 
@@ -316,7 +318,62 @@ theorem generic_format_FLX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   simp only [wp, PostCond.noThrow, pure]
-  simpa [FLX_format] using hx
+  rcases hx with ⟨f, rfl, hbound⟩
+  by_cases hm : f.Fnum = 0
+  · simp [FloatSpec.Core.Defs.F2R, hm, generic_format, scaled_mantissa,
+      cexp, FloatSpec.Core.Raux.Ztrunc]
+  have hprec : 0 < prec := by
+    by_contra hn
+    have hp : prec ≤ 0 := le_of_not_gt hn
+    rcases lt_or_eq_of_le hp with hp | rfl
+    · exact (not_lt_of_ge (abs_nonneg f.Fnum)) (by
+        simpa [FloatSpec.Core.Zaux.Zpower, not_le.mpr hp] using hbound)
+    · have habs : 1 ≤ |f.Fnum| := Int.add_one_le_iff.mpr (abs_pos.mpr hm)
+      have : |f.Fnum| < 1 := by simpa [FloatSpec.Core.Zaux.Zpower] using hbound
+      omega
+  letI : Fact (0 < prec) := ⟨hprec⟩
+  have hmagm := FloatSpec.Core.Raux.mag_le_Zpower beta f.Fnum prec
+    ValidRadix.valid hm hbound
+  have hmag : mag beta (F2R f) = mag beta (f.Fnum : ℝ) + f.Fexp :=
+    FloatSpec.Core.Float_prop.mag_F2R
+      (beta := beta) f.Fnum f.Fexp ValidRadix.valid hm
+  have hce : cexp beta (FLX_exp prec) (F2R f) ≤ f.Fexp := by
+    simp only [cexp, FLX_exp]
+    rw [hmag]
+    omega
+  have hf := generic_format_F2R (beta := beta) (fexp := FLX_exp prec)
+    f.Fnum f.Fexp
+  exact hf ⟨ValidRadix.valid, fun _ => hce⟩
+
+private theorem FLX_format_generic_run
+    (beta : Int) [ValidRadix beta] [Prec_gt_0 prec] (x : ℝ)
+    (hx : FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x) :
+    FLX_format prec beta x := by
+  let m := Ztrunc (scaled_mantissa beta (FLX_exp prec) x)
+  let e := cexp beta (FLX_exp prec) x
+  refine ⟨(FlocqFloat.mk m e : FlocqFloat beta), ?_, ?_⟩
+  · simpa [generic_format, m, e] using hx
+  · have hsm := scaled_mantissa_generic
+      (beta := beta) (fexp := FLX_exp prec) x hx
+    have hsm_eq : scaled_mantissa beta (FLX_exp prec) x = (m : ℝ) := by
+      simpa [wp, PostCond.noThrow, pure, m] using hsm
+    have hlt := scaled_mantissa_lt_bpow
+      (beta := beta) (fexp := FLX_exp prec) x ValidRadix.valid
+    have hprec : 0 ≤ prec := le_of_lt (Prec_gt_0.pos : 0 < prec)
+    have hpow : ((FloatSpec.Core.Zaux.Zpower beta prec : Int) : ℝ) =
+        (beta : ℝ) ^ prec := by
+      rw [FloatSpec.Core.Zaux.Zpower, if_pos hprec, Int.cast_pow]
+      exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+        rw [Int.toNat_of_nonneg hprec])
+    have hltR : |(m : ℝ)| < (beta : ℝ) ^ prec := by
+      simpa [hsm_eq, cexp, FLX_exp] using hlt
+    rw [← hpow] at hltR
+    change |m| < FloatSpec.Core.Zaux.Zpower beta prec
+    exact (Int.cast_lt).mp (by
+      show ((|m| : Int) : ℝ) <
+        ((FloatSpec.Core.Zaux.Zpower beta prec : Int) : ℝ)
+      rw [Int.cast_abs]
+      exact hltR)
 
 end FloatSpec.Core.FLX
 
@@ -335,20 +392,95 @@ theorem generic_format_FLXN (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   simp only [wp, PostCond.noThrow, pure]
-  simpa [FLXN_format, FLX_format] using hx
+  rcases hx with ⟨f, hxf, hnorm⟩
+  by_cases hx0 : x = 0
+  · rw [hx0]
+    simp [generic_format, scaled_mantissa, FloatSpec.Core.Raux.Ztrunc]
+  · apply generic_format_FLX (prec := prec) beta x
+    exact ⟨f, hxf, (hnorm hx0).2⟩
 
 /-
 Coq (FLX.v):
 Theorem FLXN_format_generic:
   forall x, generic_format beta FLX_exp x -> FLXN_format x.
 -/
-theorem FLXN_format_generic (beta : Int) [ValidRadix beta] (x : ℝ) :
+theorem FLXN_format_generic (beta : Int) [ValidRadix beta] [Prec_gt_0 prec]
+    (x : ℝ) :
     ⦃⌜FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x⌝⦄
     (pure (FLXN_format prec beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   simp only [wp, PostCond.noThrow, pure]
-  simpa [FLXN_format, FLX_format] using hx
+  let m := Ztrunc (scaled_mantissa beta (FLX_exp prec) x)
+  let e := cexp beta (FLX_exp prec) x
+  refine ⟨(FlocqFloat.mk m e : FlocqFloat beta), ?_, ?_⟩
+  · simpa [generic_format, m, e] using hx
+  · intro hx0
+    have hsm := scaled_mantissa_generic
+      (beta := beta) (fexp := FLX_exp prec) x hx
+    have hsm_eq : scaled_mantissa beta (FLX_exp prec) x = (m : ℝ) := by
+      simpa [wp, PostCond.noThrow, pure, m] using hsm
+    have hprec : 0 < prec := Prec_gt_0.pos
+    have hprec0 : 0 ≤ prec := le_of_lt hprec
+    have hprec1 : 0 ≤ prec - 1 := by omega
+    have hbpos : (0 : ℝ) < beta := by
+      exact_mod_cast (show (0 : Int) < beta from Int.zero_lt_one.trans ValidRadix.valid)
+    have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+    constructor
+    · have hmag : (beta : ℝ) ^ (mag beta x - 1) ≤ |x| := by
+        simpa [FloatSpec.Core.Raux.abs_val] using
+          (FloatSpec.Core.Raux.mag_lower_bound beta x ValidRadix.valid hx0) True.intro
+      have hscale : 0 ≤ (beta : ℝ) ^ (-(cexp beta (FLX_exp prec) x)) :=
+        (zpow_pos hbpos _).le
+      have hmul := mul_le_mul_of_nonneg_right hmag hscale
+      have hpow_eq :
+          (beta : ℝ) ^ (prec - 1) =
+            (beta : ℝ) ^ (mag beta x - 1) *
+              (beta : ℝ) ^ (-(cexp beta (FLX_exp prec) x)) := by
+        rw [← zpow_add₀ hbne]
+        simp [cexp, FLX_exp]
+      have habs_sm :
+          |scaled_mantissa beta (FLX_exp prec) x| =
+            |x| * (beta : ℝ) ^ (-(cexp beta (FLX_exp prec) x)) := by
+        simp [scaled_mantissa, abs_mul, abs_of_pos (zpow_pos hbpos _)]
+      have hlR : (beta : ℝ) ^ (prec - 1) ≤ |(m : ℝ)| := by
+        calc
+          (beta : ℝ) ^ (prec - 1) =
+              (beta : ℝ) ^ (mag beta x - 1) *
+                (beta : ℝ) ^ (-(cexp beta (FLX_exp prec) x)) := hpow_eq
+          _ ≤ |x| * (beta : ℝ) ^ (-(cexp beta (FLX_exp prec) x)) := hmul
+          _ = |scaled_mantissa beta (FLX_exp prec) x| := habs_sm.symm
+          _ = |(m : ℝ)| := congrArg abs hsm_eq
+      have hpow_cast :
+          ((FloatSpec.Core.Zaux.Zpower beta (prec - 1) : Int) : ℝ) =
+            (beta : ℝ) ^ (prec - 1) := by
+        rw [FloatSpec.Core.Zaux.Zpower, if_pos hprec1, Int.cast_pow]
+        exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+          rw [Int.toNat_of_nonneg hprec1])
+      rw [← hpow_cast] at hlR
+      change FloatSpec.Core.Zaux.Zpower beta (prec - 1) ≤ |m|
+      exact (Int.cast_le).mp (by
+        show ((FloatSpec.Core.Zaux.Zpower beta (prec - 1) : Int) : ℝ) ≤
+          ((|m| : Int) : ℝ)
+        rw [Int.cast_abs]
+        exact hlR)
+    · have hlt := scaled_mantissa_lt_bpow
+        (beta := beta) (fexp := FLX_exp prec) x ValidRadix.valid
+      have hpow_cast :
+          ((FloatSpec.Core.Zaux.Zpower beta prec : Int) : ℝ) =
+            (beta : ℝ) ^ prec := by
+        rw [FloatSpec.Core.Zaux.Zpower, if_pos hprec0, Int.cast_pow]
+        exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+          rw [Int.toNat_of_nonneg hprec0])
+      have hltR : |(m : ℝ)| < (beta : ℝ) ^ prec := by
+        simpa [hsm_eq, cexp, FLX_exp] using hlt
+      rw [← hpow_cast] at hltR
+      change |m| < FloatSpec.Core.Zaux.Zpower beta prec
+      exact (Int.cast_lt).mp (by
+        show ((|m| : Int) : ℝ) <
+          ((FloatSpec.Core.Zaux.Zpower beta prec : Int) : ℝ)
+        rw [Int.cast_abs]
+        exact hltR)
 
 /-
 Coq (FLX.v):
@@ -362,31 +494,41 @@ Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FLX_format,
 then x is in FIX_format with minimal exponent (e - prec).
 -/
 theorem FIX_format_FLX (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
-    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) < |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ FLX_format prec beta x⌝⦄
+    ⦃⌜(beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧
+      FLX_format prec beta x⌝⦄
     (pure (FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
   simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
-  -- Unpack preconditions
-  rcases hpre with ⟨hprec, hβ, hlt, hupp, hx_fmt⟩
-  -- Provide the `Fact (0 < prec)` instance for `Valid_exp` below
-  have _instPrec : Fact (0 < prec) := ⟨hprec⟩
-  -- Pointwise inequality at e is an equality for FLX_exp vs FIX_exp (both = e - prec)
-  have hle_e : FloatSpec.Core.FIX.FIX_exp (emin := e - prec) e ≤ FLX_exp prec e := by
-    simp [FloatSpec.Core.FIX.FIX_exp, FLX_exp]
-  -- Apply inclusion with tight bounds at e
-  have :=
-    FloatSpec.Core.Generic_fmt.generic_inclusion
-      (beta := beta)
-      (fexp1 := FLX_exp prec)
-      (fexp2 := FloatSpec.Core.FIX.FIX_exp (emin := e - prec))
-      (e := e)
-  -- Prepare the hypotheses for the lemma and conclude
-  have hrun :
-      (FloatSpec.Core.Generic_fmt.generic_format beta (FloatSpec.Core.FIX.FIX_exp (emin := e - prec)) x) := by
-    exact this hβ hle_e x ⟨hlt, hupp⟩ hx_fmt
-  simpa [FloatSpec.Core.FIX.FIX_format, FLX_format]
-    using hrun
+  rcases hpre with ⟨hlow, _hupp, f, hxf, hm⟩
+  have hprec : 0 ≤ prec := by
+    by_contra hp
+    exact (not_lt_of_ge (abs_nonneg f.Fnum)) (by
+      simpa [FloatSpec.Core.Zaux.Zpower, hp] using hm)
+  have hm' : Int.natAbs f.Fnum < Int.natAbs beta ^ prec.toNat := by
+    have hm' : |f.Fnum| < beta ^ prec.toNat := by
+      simpa [FloatSpec.Core.Zaux.Zpower, hprec] using hm
+    rw [Int.abs_eq_natAbs] at hm'
+    have hm'' : (Int.natAbs f.Fnum : Int) <
+        (Int.natAbs beta : Int) ^ prec.toNat := by
+      simpa only [Int.natAbs_of_nonneg
+        (le_of_lt (Int.zero_lt_one.trans ValidRadix.valid))] using hm'
+    exact_mod_cast hm''
+  have hnorm := FloatSpec.Core.Float_prop.F2R_prec_normalize
+    (beta := beta) f.Fnum f.Fexp e prec ValidRadix.valid hm'
+      (by simpa [hxf] using hlow)
+  let m' := f.Fnum * beta ^ (f.Fexp - e + prec).natAbs
+  have hgeneric :
+      FloatSpec.Core.Generic_fmt.generic_format beta
+        (FloatSpec.Core.FIX.FIX_exp (emin := e - prec))
+        (F2R (FlocqFloat.mk m' (e - prec) : FlocqFloat beta)) := by
+    exact (generic_format_F2R
+      (beta := beta) (fexp := FloatSpec.Core.FIX.FIX_exp (emin := e - prec))
+      m' (e - prec)) ⟨ValidRadix.valid, by
+        intro _
+        simp [cexp, FloatSpec.Core.FIX.FIX_exp]⟩
+  rw [hxf, hnorm]
+  simpa [FloatSpec.Core.FIX.FIX_format, m'] using hgeneric
 
 /-
 Coq (FLX.v):
@@ -399,16 +541,16 @@ Theorem FLX_format_FIX :
 Lean (spec): If |x| lies in [β^(e-1), β^e] and x is in FIX_format
 with minimal exponent (e - prec), then x is in FLX_format.
 -/
-theorem FLX_format_FIX (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
-    ⦃⌜0 < prec ∧ 1 < beta ∧ (beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧ FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x⌝⦄
+theorem FLX_format_FIX (beta : Int) [ValidRadix beta] [Prec_gt_0 prec]
+    (x : ℝ) (e : Int) :
+    ⦃⌜(beta : ℝ) ^ (e - 1) ≤ |x| ∧ |x| ≤ (beta : ℝ) ^ e ∧
+      FloatSpec.Core.FIX.FIX_format (emin := e - prec) beta x⌝⦄
     (pure (FLX_format prec beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hpre
   simp only [wp, PostCond.noThrow, Id.run, pure, PredTrans.pure]
   -- Unpack hypotheses
-  rcases hpre with ⟨hprec, hβ, _hlb, hupp, hx_fix⟩
-  -- Provide the `Fact (0 < prec)` instance for `Valid_exp` below
-  have _instPrec : Fact (0 < prec) := ⟨hprec⟩
+  rcases hpre with ⟨_hlb, hupp, hx_fix⟩
   -- Use inclusion lemma with fexp1 := FIX_exp (emin := e - prec), fexp2 := FLX_exp
   -- We only need a pointwise inequality for all e' ≤ e, which holds by arithmetic.
   have hle_all : ∀ e' : Int,
@@ -426,9 +568,8 @@ theorem FLX_format_FIX (beta : Int) [ValidRadix beta] (x : ℝ) (e : Int) :
         (fexp1 := FloatSpec.Core.FIX.FIX_exp (emin := e - prec))
         (fexp2 := FLX_exp prec)
         (e2 := e))
-        hβ hle_all x hupp hx_fix
-  -- Repackage to FLX_format
-  simpa [FLX_format] using hrun
+        ValidRadix.valid hle_all x hupp hx_fix
+  exact FLX_format_generic_run (prec := prec) beta x hrun
 
 end FloatSpec.Core.FLX
 
@@ -442,13 +583,11 @@ Theorem FLXN_format_satisfies_any :
   satisfies_any FLXN_format.
 -/
 theorem FLXN_format_satisfies_any (beta : Int) [ValidRadix beta]
-    [Valid_exp (FLX_exp prec)] :
+    [Prec_gt_0 prec] :
     FloatSpec.Core.Generic_fmt.satisfies_any
       (fun y => FLXN_format prec beta y) := by
-  simpa [FLXN_format, FLX_format]
-    using
-      FloatSpec.Core.Generic_fmt.generic_format_satisfies_any
-        (beta := beta) (fexp := FLX_exp prec)
+  refine ⟨0, ?_⟩
+  exact ⟨(FlocqFloat.mk 0 0 : FlocqFloat beta), by simp [F2R], by simp⟩
 
 end FloatSpec.Core.FLX
 
@@ -484,10 +623,12 @@ Theorem FLX_format_satisfies_any :
   satisfies_any FLX_format.
 -/
 theorem FLX_format_satisfies_any (beta : Int) [ValidRadix beta]
-    [FloatSpec.Core.Generic_fmt.Valid_exp (FLX_exp prec)] :
+    [Prec_gt_0 prec] :
     FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FLX_format prec beta y) := by
-  simpa [FLX_format]
-    using FloatSpec.Core.Generic_fmt.generic_format_satisfies_any (beta := beta) (fexp := FLX_exp prec)
+  refine ⟨0, (FlocqFloat.mk 0 0 : FlocqFloat beta), by simp [F2R], ?_⟩
+  have hp : 0 ≤ prec := le_of_lt (Prec_gt_0.pos : 0 < prec)
+  simpa using FloatSpec.Core.Zaux.Zpower_gt_0
+    (⟨beta, ValidRadix.valid⟩ : FloatSpec.Core.Zaux.Radix) prec hp
 
 end FloatSpec.Core.FLX
 
@@ -630,7 +771,7 @@ theorem ulp_FLX_le (beta : Int) [ValidRadix beta] [Prec_gt_0 prec] (x : ℝ) :
     set m : Int := (FloatSpec.Core.Raux.mag beta x) with hm
     -- Lower bound: β^(m - 1) ≤ |x|
     have hlow : (beta : ℝ) ^ (m - 1) ≤ |x| := by
-      have htr := FloatSpec.Core.Raux.bpow_mag_le (beta := beta) (x := x) (e := m)
+      have htr := FloatSpec.Core.Raux.bpow_mag_le_from_exp_payload (beta := beta) (x := x) (e := m)
       simpa [FloatSpec.Core.Raux.abs_val, wp, PostCond.noThrow, Id.run, hm, sub_eq_add_neg]
         using htr hβ hxne le_rfl True.intro
     -- Multiply both sides by β^(-(prec - 1)) (positive), then rewrite
@@ -961,13 +1102,29 @@ Coq (FLX.v):
 Theorem FLX_format_generic :
   forall x, generic_format beta FLX_exp x -> FLX_format x.
 -/
-theorem FLX_format_generic (beta : Int) [ValidRadix beta] (x : ℝ) :
+theorem FLX_format_generic (beta : Int) [ValidRadix beta] [Prec_gt_0 prec]
+    (x : ℝ) :
     ⦃⌜(FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x)⌝⦄
     (pure (FLX_format prec beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
   intro hx
   simp only [wp, PostCond.noThrow, pure]
-  simpa [FLX_format] using hx
+  exact FLX_format_generic_run (prec := prec) beta x hx
+
+/-- Compatibility specification for the exact source predicate. -/
+@[spec]
+theorem FLX_format_spec (beta : Int) [ValidRadix beta] [Prec_gt_0 prec]
+    (x : ℝ) :
+    ⦃⌜True⌝⦄
+    (pure (FLX_format prec beta x) : Id Prop)
+    ⦃⇓result => ⌜result =
+      FloatSpec.Core.Generic_fmt.generic_format beta (FLX_exp prec) x⌝⦄ := by
+  intro _
+  simp only [wp, PostCond.noThrow, pure]
+  apply propext
+  constructor
+  · exact fun hx => (generic_format_FLX (prec := prec) beta x) hx
+  · exact FLX_format_generic_run (prec := prec) beta x
 
 end FloatSpec.Core.FLX
 
@@ -1079,10 +1236,8 @@ theorem eq_0_round_0_FLX
   -- Use the generic lemma `eq_0_round_0_negligible_exp` specialized to FLX
   have himpl :
       round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x = 0 → x = 0 := by
-    simpa [wp, PostCond.noThrow, Id.run, bind, pure]
-      using
-        (FloatSpec.Core.Ulp.eq_0_round_0_negligible_exp
-          (beta := beta) (fexp := FLX_exp prec) (hne := hnone) (rnd := rnd) (x := x)) hβ
+    exact FloatSpec.Core.Ulp.eq_0_round_0_negligible_exp
+      (beta := beta) (fexp := FLX_exp prec) hnone rnd x
   exact himpl hround0
 
 /-
@@ -1128,11 +1283,8 @@ theorem gt_0_round_gt_0_FLX
       round_to_generic (beta := beta) (fexp := FLX_exp prec) (mode := rnd) x ≠ 0 := by
     -- Use the generic `round_neq_0_negligible_exp` under `Monotone_exp` for FLX
     have hx_ne : x ≠ 0 := ne_of_gt hx_pos
-    have htrip :=
-      FloatSpec.Core.Ulp.round_neq_0_negligible_exp
-        (beta := beta) (fexp := FLX_exp prec)
-        (hne := hne_exp) (rnd := rnd) (x := x) (hx := hx_ne)
-    simpa [wp, PostCond.noThrow, Id.run, pure] using (htrip hβ)
+    exact FloatSpec.Core.Ulp.round_neq_0_negligible_exp
+      (beta := beta) (fexp := FLX_exp prec) hne_exp rnd x hx_ne
   -- Combine ≥ 0 with ≠ 0 to obtain > 0
   exact lt_of_le_of_ne hr_nonneg (by simpa [eq_comm] using hr_ne)
 

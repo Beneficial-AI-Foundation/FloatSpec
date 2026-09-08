@@ -1934,23 +1934,26 @@ end FastPower
 
 section FasterDiv
 
-/-- Euclidean division result uniqueness as explicit pair -/
+/-- Coq `Z.div_eucl`: floor quotient and a remainder with the divisor's sign. -/
 def Z_div_eucl (a b : Int) : (Int × Int) :=
-  (a / b, a % b)
+  let q := Int.fdiv a b
+  (q, a - b * q)
 
-/-- Specification: {lit}`div_eucl` equals (a / b, a % b). -/
+/-- Specification of the Coq-compatible Euclidean-division pair. -/
 @[spec]
 theorem Zdiv_eucl_unique_spec (a b : Int) :
     ⦃⌜True⌝⦄
     (pure (Z_div_eucl a b) : Id _)
-    ⦃⇓result => ⌜result = (a / b, a % b)⌝⦄ := by
+    ⦃⇓result => ⌜result =
+      (Int.fdiv a b, a - b * Int.fdiv a b)⌝⦄ := by
   intro _
   unfold Z_div_eucl
   rfl
 
 /-- FLoCq `Zdiv_eucl_unique`. -/
 theorem Zdiv_eucl_unique (a b : Int) :
-    Z_div_eucl a b = (a / b, a % b) := rfl
+    Z_div_eucl a b =
+      (Int.fdiv a b, a - b * Int.fdiv a b) := rfl
 
 /-- Coq `Zpos`: embed a positive integer into `Int`. -/
 def Zpos (p : Positive) : Int :=
@@ -2089,49 +2092,22 @@ theorem Zpos_div_eucl_aux_correct_spec (a b : Positive) :
 
 /-- Fast Euclidean division for integers. -/
 def Zfast_div_eucl (a b : Int) : (Int × Int) :=
-  if b = 0 then
-    (0, a)
-  else
-    -- Lean's built-in division is already Euclidean division
-    (a / b, a % b)
+  Z_div_eucl a b
 
-/-- Specification: Fast division computes correct quotient and remainder. -/
+/-- Specification: fast division computes the Coq-compatible division pair. -/
 @[spec]
 theorem Zfast_div_eucl_spec (a b : Int) :
-    ⦃⌜b ≠ 0⌝⦄
+    ⦃⌜True⌝⦄
     (pure (Zfast_div_eucl a b) : Id _)
-    ⦃⇓result => ⌜let (q, r) := result
-                a = b * q + r ∧ 0 ≤ r ∧ r < b.natAbs⌝⦄ := by
-  intro hb
-  unfold Zfast_div_eucl
-
-  -- Split on b = 0 case (contradicts precondition)
-  split
-  · -- Case: b = 0
-    rename_i h_bzero
-    exact absurd h_bzero hb
-
-  · -- Case: b ≠ 0
-    -- Use Lean's built-in Euclidean division properties
-    constructor
-    · -- Prove: a = b * (a / b) + (a % b)
-      calc a = a % b + b * (a / b) := (Int.emod_add_mul_ediv a b).symm
-           _ = a % b + (a / b) * b := by rw [Int.mul_comm b]
-           _ = b * (a / b) + a % b := by rw [Int.add_comm, Int.mul_comm]
-
-    constructor
-    · -- Prove: 0 ≤ a % b
-      exact Int.emod_nonneg a hb
-
-    · -- Prove: a % b < b.natAbs
-      exact Int.emod_lt a hb
+    ⦃⇓result => ⌜result = Z_div_eucl a b⌝⦄ := by
+  intro _
+  rfl
 
 end FasterDiv
 
 -- Coq-compat name: correctness of fast Euclidean division
 theorem Zfast_div_eucl_correct (a b : Int) :
-    Zfast_div_eucl a b = Z_div_eucl a b := by
-  by_cases hb : b = 0 <;> simp [Zfast_div_eucl, Z_div_eucl, hb]
+    Zfast_div_eucl a b = Z_div_eucl a b := rfl
 
 section Iteration
 
