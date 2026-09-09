@@ -35,12 +35,42 @@ abbrev standardFloatOfModel64 :=
 abbrev standardFloatOfModel32 :=
   FloatSpec.IEEE754.Native.standardFloatOfModel32
 
+theorem validStandardFloatOfModel64 (x : Float.Model) :
+    validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)
+      (standardFloatOfModel64 x) = true :=
+  FloatSpec.IEEE754.Native.validStandardFloatOfModel64 x
+
+theorem validStandardFloatOfModel32 (x : Float32.Model) :
+    validBinarySingleNaNStandardFloat (prec := 24) (emax := 128)
+      (standardFloatOfModel32 x) = true :=
+  FloatSpec.IEEE754.Native.validStandardFloatOfModel32 x
+
+@[simp] theorem standardFloatOfModel64_model64OfStandardFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    standardFloatOfModel64 (model64OfStandardFloat x) = x :=
+  FloatSpec.IEEE754.Native.standardFloatOfModel64_model64OfStandardFloat x hx
+
+@[simp] theorem standardFloatOfModel32_model32OfStandardFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    standardFloatOfModel32 (model32OfStandardFloat x) = x :=
+  FloatSpec.IEEE754.Native.standardFloatOfModel32_model32OfStandardFloat x hx
+
 namespace PrimitiveFloat
 
 abbrev toModel := FaithfulPrimFloat.PrimitiveFloat.toModel
 abbrev toFloat := FaithfulPrimFloat.PrimitiveFloat.toFloat
 abbrev ofModel := FaithfulPrimFloat.PrimitiveFloat.ofModel
 abbrev ofFloat := FaithfulPrimFloat.PrimitiveFloat.ofFloat
+
+@[simp] theorem toModel_ofModel (x : Float.Model) :
+    toModel (ofModel x) = x :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_ofModel x
+
+@[simp] theorem ofModel_toModel (x : FaithfulPrimFloat.PrimitiveFloat) :
+    ofModel (toModel x) = x :=
+  FaithfulPrimFloat.PrimitiveFloat.ofModel_toModel x
 
 end PrimitiveFloat
 

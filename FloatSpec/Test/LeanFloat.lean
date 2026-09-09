@@ -88,4 +88,4 @@ example (x : Float32.Model) :
 example (x : StandardFloat)
     (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
     standardFloatOfModel32 (model32OfStandardFloat x) = x :=
-  FloatSpec.IEEE754.Native.standardFloatOfModel32_model32OfStandardFloat x hx
+  standardFloatOfModel32_model32OfStandardFloat x hx
