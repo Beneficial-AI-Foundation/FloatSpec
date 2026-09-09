@@ -19,12 +19,12 @@ Audit date: 2026-09-06
 
 ## Repair execution status (2026-09-06)
 
-- The implementation work listed in D1-D10, T1-T43, and M1-M5 is complete.
+- The implementation work listed in D1-D11, T1-T44, and M1-M5 is complete.
   Public source names expose source-shaped contracts, while compatibility and
   derived-payload endpoints use distinct names.  On the final named-repair
   snapshot, `lake build` passed 3351/3351 jobs and `lake build FloatSpec.Test`
   passed 3359/3359 jobs.
-- A structural check found all 58 named sections (D1-D10, T1-T43, M1-M5), with
+- A structural check found all 60 named sections (D1-D11, T1-T44, M1-M5), with
   zero sections missing an explicit FLoCq/source contract, pre-repair Lean
   mismatch, or required repair.
 - After T38 and its caller migration, `lake build floatspec` passed
@@ -340,6 +340,19 @@ These are root causes. Fix them before repairing their dependent theorems.
   `new_location_even_correct`, `new_location_odd_correct`, and
   `new_location_correct`, migrate their callers, and retain the concrete
   definition-level regression in `FloatSpec/Test/BracketSource.lean`.
+
+### D11. Preserve `make_bound` at negative precision
+
+- **FLoCq:** `src/Pff/Pff2FlocqAux.v:222-228` defines the mantissa bound as
+  `Z.to_pos (Zpower beta p)`. The surrounding `1 < p` hypothesis is not used
+  by the definition and is absent from `Check @make_bound`; for `beta = 2`,
+  `p = -1`, and `E = 0`, the bound therefore has `vNum = 1`.
+- **Lean before repair:** `FloatSpec/src/Pff/Pff2FlocqAux.lean:109` used
+  `Zpower_nat beta p.natAbs`, so the same negative input returned `vNum = 2`.
+- **Repair:** use `1` when `p < 0`, retaining the natural-power path when
+  `0 ≤ p`. Keep the source `make_bound_p` theorem under its exported
+  `1 < p` context and retain a concrete negative-precision regression in
+  `FloatSpec/Test/PffSourceContracts.lean`.
 
 ## Confirmed theorem-contract repairs
 
@@ -1481,7 +1494,7 @@ whole-repository certificate.
   representations of equal real values. Every claimed counterexample is
   manually reproduced on both sides.
 - [ ] **G12 — Independent sign-off.** A second reviewer checks every repaired
-  entry in D1-D10, T1-T44, and M1-M5 plus all nontrivial ledger
+  entry in D1-D11, T1-T44, and M1-M5 plus all nontrivial ledger
   classifications. The final report links the clean build, trust scan, ledger,
   executed harnesses, and counterexample audit.
 
