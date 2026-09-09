@@ -197,6 +197,34 @@ theorem model32OfBinarySingleNaNFloat_Bsqrt_RNE
   unfold Float32.Model.sqrt
   rw [unpack_model32OfBinarySingleNaNFloat]
 
+theorem model64OfBinarySingleNaNFloat_Bdiv_RNE
+    (x y : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bdiv 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float.Model.div (model64OfBinarySingleNaNFloat x)
+        (model64OfBinarySingleNaNFloat y) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat
+      (@BinarySingleNaN.Bdiv 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+        RoundingMode.RNE x y) = _
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_Bdiv_RNE]
+  unfold Float.Model.div
+  rw [unpack_model64OfBinarySingleNaNFloat, unpack_model64OfBinarySingleNaNFloat]
+
+theorem model32OfBinarySingleNaNFloat_Bdiv_RNE
+    (x y : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bdiv 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float32.Model.div (model32OfBinarySingleNaNFloat x)
+        (model32OfBinarySingleNaNFloat y) := by
+  change FloatSpec.IEEE754.Native.model32OfBinarySingleNaNFloat
+      (@BinarySingleNaN.Bdiv 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+        RoundingMode.RNE x y) = _
+  rw [FloatSpec.IEEE754.Native.model32OfBinarySingleNaNFloat_Bdiv_RNE]
+  unfold Float32.Model.div
+  rw [unpack_model32OfBinarySingleNaNFloat, unpack_model32OfBinarySingleNaNFloat]
+
 theorem validStandardFloatOfModel64 (x : Float.Model) :
     validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)
       (standardFloatOfModel64 x) = true :=

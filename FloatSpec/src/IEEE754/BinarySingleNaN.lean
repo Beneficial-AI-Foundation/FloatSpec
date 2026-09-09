@@ -8396,6 +8396,9 @@ def boolOfModelSign : UnpackedFloat.Sign → Bool
     modelSignOfBool (Bool.xor a b) = modelSignOfBool a * modelSignOfBool b := by
   cases a <;> cases b <;> rfl
 
+private theorem modelSign_mul_eq_div (a b : UnpackedFloat.Sign) :
+    a * b = a / b := by cases a <;> cases b <;> rfl
+
 @[simp] theorem modelSignOfBool_apply (s : Bool) (m : Int) :
     (modelSignOfBool s).apply m = FloatSpec.Core.Zaux.cond_Zopp s m := by
   cases s <;> rfl
@@ -8614,6 +8617,294 @@ private theorem binary32_SFsqrtCore_eq_native
     omega
   simpa [UnpackedFloat.sqrtCore] using
     FsqrtCore_eq_nativeAt m e _ htarget
+
+private theorem accuracyOfLocation_newLocation (den rem : Nat)
+    (hrem : rem < den) :
+    accuracyOfLocation
+        (FloatSpec.Calc.Bracket.new_location (den : Int) (rem : Int) .loc_Exact) =
+      UnpackedFloat.accuracyOfFraction rem den := by
+  unfold FloatSpec.Calc.Bracket.new_location
+  split
+  · rename_i heven
+    by_cases hzero : rem = 0
+    · subst rem
+      simp [FloatSpec.Calc.Bracket.new_location_even,
+        UnpackedFloat.accuracyOfFraction, accuracyOfLocation]
+    by_cases hlt : 2 * rem < den
+    · have hltI : 2 * (rem : Int) < den := by exact_mod_cast hlt
+      have hcompare : compare (2 * rem) den = Ordering.lt :=
+        Nat.compare_eq_lt.mpr hlt
+      simp [FloatSpec.Calc.Bracket.new_location_even,
+        UnpackedFloat.accuracyOfFraction, accuracyOfLocation,
+        hzero, hltI, hcompare]
+    by_cases heq : 2 * rem = den
+    · have heqI : 2 * (rem : Int) = den := by exact_mod_cast heq
+      have hcompare : compare (2 * rem) den = Ordering.eq :=
+        Nat.compare_eq_eq.mpr heq
+      simp [FloatSpec.Calc.Bracket.new_location_even,
+        UnpackedFloat.accuracyOfFraction, accuracyOfLocation,
+        hzero, hlt, heqI, hcompare]
+    · have hgt : den < 2 * rem := by omega
+      have hgtI : (den : Int) < 2 * rem := by exact_mod_cast hgt
+      have hnltI : ¬ 2 * (rem : Int) < den := by omega
+      have hneI : ¬ 2 * (rem : Int) = den := by omega
+      have hcompare : compare (2 * rem) den = Ordering.gt :=
+        Nat.compare_eq_gt.mpr hgt
+      simp [FloatSpec.Calc.Bracket.new_location_even,
+        UnpackedFloat.accuracyOfFraction, accuracyOfLocation,
+        hzero, hnltI, hneI, hcompare]
+  · rename_i hodd
+    by_cases hzero : rem = 0
+    · subst rem
+      simp [FloatSpec.Calc.Bracket.new_location_odd,
+        UnpackedFloat.accuracyOfFraction, accuracyOfLocation]
+    by_cases hlt : 2 * rem < den
+    · have hcompare : compare (2 * rem) den = Ordering.lt :=
+        Nat.compare_eq_lt.mpr hlt
+      by_cases hnext : 2 * rem + 1 < den
+      · have hnextI : 2 * (rem : Int) + 1 < den := by exact_mod_cast hnext
+        simp [FloatSpec.Calc.Bracket.new_location_odd,
+          UnpackedFloat.accuracyOfFraction, accuracyOfLocation,
+          hzero, hnextI, hcompare]
+      · have heqNext : 2 * rem + 1 = den := by omega
+        have heqNextI : 2 * (rem : Int) + 1 = den := by exact_mod_cast heqNext
+        simp [FloatSpec.Calc.Bracket.new_location_odd,
+          UnpackedFloat.accuracyOfFraction, accuracyOfLocation,
+          hzero, hnext, heqNextI, hcompare]
+    by_cases heq : 2 * rem = den
+    · subst den
+      simp at hodd
+    · have hgt : den < 2 * rem := by omega
+      have hgtI : (den : Int) < 2 * rem := by exact_mod_cast hgt
+      have hnltNextI : ¬ 2 * (rem : Int) + 1 < den := by omega
+      have hneNextI : ¬ 2 * (rem : Int) + 1 = den := by omega
+      have hcompare : compare (2 * rem) den = Ordering.gt :=
+        Nat.compare_eq_gt.mpr hgt
+      simp [FloatSpec.Calc.Bracket.new_location_odd,
+        UnpackedFloat.accuracyOfFraction, accuracyOfLocation,
+        hzero, hnltNextI, hneNextI, hcompare]
+
+private theorem binary64_divExponent_eq_fexp
+    (m₁ m₂ : Nat) (e₁ e₂ : Int) (hm₁ : 0 < m₁) (hm₂ : 0 < m₂) :
+    min (e₁ - e₂)
+        (Format.binary64.targetExponent
+          (Float.Model.totalExponent m₁ e₁ -
+            Float.Model.totalExponent m₂ e₂)) =
+      let d₁ := FloatSpec.Core.Digits.Zdigits 2 (m₁ : Int)
+      let d₂ := FloatSpec.Core.Digits.Zdigits 2 (m₂ : Int)
+      let e' := (d₁ + e₁) - (d₂ + e₂)
+      min
+        (min (FLT_exp (3 - 1024 - 53) 53 e')
+          (FLT_exp (3 - 1024 - 53) 53 (e' + 1)))
+        (e₁ - e₂) := by
+  rw [← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m₁ hm₁,
+    ← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m₂ hm₂]
+  simp [Format.targetExponent, Format.minExponent, Format.mantissaBits,
+    Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
+    digits2_Pnat_eq_log2 m₁ hm₁, digits2_Pnat_eq_log2 m₂ hm₂,
+    min_comm]
+  omega
+
+private theorem binary32_divExponent_eq_fexp
+    (m₁ m₂ : Nat) (e₁ e₂ : Int) (hm₁ : 0 < m₁) (hm₂ : 0 < m₂) :
+    min (e₁ - e₂)
+        (Format.binary32.targetExponent
+          (Float.Model.totalExponent m₁ e₁ -
+            Float.Model.totalExponent m₂ e₂)) =
+      let d₁ := FloatSpec.Core.Digits.Zdigits 2 (m₁ : Int)
+      let d₂ := FloatSpec.Core.Digits.Zdigits 2 (m₂ : Int)
+      let e' := (d₁ + e₁) - (d₂ + e₂)
+      min
+        (min (FLT_exp (3 - 128 - 24) 24 e')
+          (FLT_exp (3 - 128 - 24) 24 (e' + 1)))
+        (e₁ - e₂) := by
+  rw [← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m₁ hm₁,
+    ← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m₂ hm₂]
+  simp [Format.targetExponent, Format.minExponent, Format.mantissaBits,
+    Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
+    digits2_Pnat_eq_log2 m₁ hm₁, digits2_Pnat_eq_log2 m₂ hm₂,
+    min_comm]
+  omega
+
+private theorem divScaled_eq_shift (m : Nat) (delta : Int)
+    (hdelta : 0 ≤ delta) :
+    (m : Int) * (2 : Int) ^ delta.natAbs =
+      (m <<< delta.toNat : Nat) := by
+  have hnatAbs : delta.natAbs = delta.toNat := by
+    exact Int.ofNat.inj ((Int.natAbs_of_nonneg hdelta).trans
+      (Int.toNat_of_nonneg hdelta).symm)
+  simp [Nat.shiftLeft_eq, hnatAbs]
+
+private theorem Z_div_eucl_natCast (a b : Nat) :
+    FloatSpec.Core.Zaux.Z_div_eucl (a : Int) (b : Int) =
+      (((a / b : Nat) : Int), ((a % b : Nat) : Int)) := by
+  unfold FloatSpec.Core.Zaux.Z_div_eucl
+  rw [Int.fdiv_eq_ediv_of_nonneg _ (by simp)]
+  dsimp only
+  apply Prod.ext
+  · exact (Int.natCast_ediv a b).symm
+  · rw [← Int.emod_def]
+    exact (Int.natCast_emod a b).symm
+
+private theorem log2_shiftLeft (m k : Nat) (hm : 0 < m) :
+    (m <<< k).log2 = m.log2 + k := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      rw [Nat.shiftLeft_eq, pow_succ, ← mul_assoc,
+        Nat.log2_eq_log_two, Nat.log_mul_base (by norm_num) (by positivity),
+        ← Nat.log2_eq_log_two, ← Nat.shiftLeft_eq, ih]
+      omega
+
+private theorem binary64_divCore_zero_exponent_le_min
+    (m₁ m₂ : Nat) (e₁ e₂ : Int) (hm₁ : 0 < m₁) (hm₂ : 0 < m₂)
+    (hzero : (UnpackedFloat.divCore Format.binary64 m₁ e₁ m₂ e₂).1 = 0) :
+    (UnpackedFloat.divCore Format.binary64 m₁ e₁ m₂ e₂).2.1 ≤ -1074 := by
+  let d := e₁ - e₂
+  let b := (m₁.log2 : Int) - m₂.log2 + d - 53
+  let target := min d
+    (Format.binary64.targetExponent
+      (Float.Model.totalExponent m₁ e₁ - Float.Model.totalExponent m₂ e₂))
+  have htarget :
+      (UnpackedFloat.divCore Format.binary64 m₁ e₁ m₂ e₂).2.1 = target := by
+    rfl
+  have htargetEq : target = min d (max b (-1074)) := by
+    simp [target, d, b, Float.Model.totalExponent, Format.targetExponent,
+      Format.mantissaBits, Format.minExponent]
+    omega
+  rw [htarget]
+  have hzero' : (m₁ <<< (d - target).toNat) / m₂ = 0 := by
+    simpa [UnpackedFloat.divCore, target, d] using hzero
+  have hshiftLt : m₁ <<< (d - target).toNat < m₂ :=
+    (Nat.div_eq_zero_iff_lt hm₂).mp hzero'
+  by_contra hnot
+  have hminLt : -1074 < target := lt_of_not_ge hnot
+  have hbLt : -1074 < b := by
+    by_contra hb
+    have : max b (-1074) = -1074 := max_eq_right (le_of_not_gt hb)
+    rw [htargetEq, this] at hminLt
+    omega
+  have htargetLeB : target ≤ b := by
+    rw [htargetEq]
+    rw [show max b (-1074) = b from max_eq_left (le_of_lt hbLt)]
+    exact min_le_right _ _
+  have htargetLeD : target ≤ d := by rw [htargetEq]; exact min_le_left _ _
+  have hdeltaCast : ((d - target).toNat : Int) = d - target :=
+    Int.toNat_of_nonneg (sub_nonneg.mpr htargetLeD)
+  have hlogLt : m₂.log2 < m₁.log2 + (d - target).toNat := by
+    have hlogLtInt : (m₂.log2 : Int) < m₁.log2 + (d - target) := by
+      dsimp [b] at htargetLeB
+      omega
+    have hlogLtCast :
+        (m₂.log2 : Int) < ((m₁.log2 + (d - target).toNat : Nat) : Int) := by
+      rw [Nat.cast_add, hdeltaCast]
+      exact hlogLtInt
+    exact_mod_cast hlogLtCast
+  have hlogLe : (m₁ <<< (d - target).toNat).log2 ≤ m₂.log2 := by
+    rw [Nat.log2_eq_log_two, Nat.log2_eq_log_two]
+    exact Nat.log_mono_right (Nat.le_of_lt hshiftLt)
+  rw [log2_shiftLeft m₁ _ hm₁] at hlogLe
+  omega
+
+private theorem binary32_divCore_zero_exponent_le_min
+    (m₁ m₂ : Nat) (e₁ e₂ : Int) (hm₁ : 0 < m₁) (hm₂ : 0 < m₂)
+    (hzero : (UnpackedFloat.divCore Format.binary32 m₁ e₁ m₂ e₂).1 = 0) :
+    (UnpackedFloat.divCore Format.binary32 m₁ e₁ m₂ e₂).2.1 ≤ -149 := by
+  let d := e₁ - e₂
+  let b := (m₁.log2 : Int) - m₂.log2 + d - 24
+  let target := min d
+    (Format.binary32.targetExponent
+      (Float.Model.totalExponent m₁ e₁ - Float.Model.totalExponent m₂ e₂))
+  have htarget :
+      (UnpackedFloat.divCore Format.binary32 m₁ e₁ m₂ e₂).2.1 = target := by
+    rfl
+  have htargetEq : target = min d (max b (-149)) := by
+    simp [target, d, b, Float.Model.totalExponent, Format.targetExponent,
+      Format.mantissaBits, Format.minExponent]
+    omega
+  rw [htarget]
+  have hzero' : (m₁ <<< (d - target).toNat) / m₂ = 0 := by
+    simpa [UnpackedFloat.divCore, target, d] using hzero
+  have hshiftLt : m₁ <<< (d - target).toNat < m₂ :=
+    (Nat.div_eq_zero_iff_lt hm₂).mp hzero'
+  by_contra hnot
+  have hminLt : -149 < target := lt_of_not_ge hnot
+  have hbLt : -149 < b := by
+    by_contra hb
+    have : max b (-149) = -149 := max_eq_right (le_of_not_gt hb)
+    rw [htargetEq, this] at hminLt
+    omega
+  have htargetLeB : target ≤ b := by
+    rw [htargetEq]
+    rw [show max b (-149) = b from max_eq_left (le_of_lt hbLt)]
+    exact min_le_right _ _
+  have htargetLeD : target ≤ d := by rw [htargetEq]; exact min_le_left _ _
+  have hdeltaCast : ((d - target).toNat : Int) = d - target :=
+    Int.toNat_of_nonneg (sub_nonneg.mpr htargetLeD)
+  have hlogLt : m₂.log2 < m₁.log2 + (d - target).toNat := by
+    have hlogLtInt : (m₂.log2 : Int) < m₁.log2 + (d - target) := by
+      dsimp [b] at htargetLeB
+      omega
+    have hlogLtCast :
+        (m₂.log2 : Int) < ((m₁.log2 + (d - target).toNat : Nat) : Int) := by
+      rw [Nat.cast_add, hdeltaCast]
+      exact hlogLtInt
+    exact_mod_cast hlogLtCast
+  have hlogLe : (m₁ <<< (d - target).toNat).log2 ≤ m₂.log2 := by
+    rw [Nat.log2_eq_log_two, Nat.log2_eq_log_two]
+    exact Nat.log_mono_right (Nat.le_of_lt hshiftLt)
+  rw [log2_shiftLeft m₁ _ hm₁] at hlogLe
+  omega
+
+private theorem binary64_SFdivCore_eq_native
+    (m₁ m₂ : Nat) (e₁ e₂ : Int) (hm₁ : 0 < m₁) (hm₂ : 0 < m₂) :
+    let source := SFdiv_core_binary 53 1024 (m₁ : Int) e₁ (m₂ : Int) e₂
+    let native := UnpackedFloat.divCore Format.binary64 m₁ e₁ m₂ e₂
+    source.1 = (native.1 : Int) ∧ source.2.1 = native.2.1 ∧
+      accuracyOfLocation source.2.2 = native.2.2 := by
+  simp only [SFdiv_core_binary, FloatSpec.Calc.Div.Fdiv]
+  rw [← binary64_divExponent_eq_fexp m₁ m₂ e₁ e₂ hm₁ hm₂]
+  let target := min (e₁ - e₂)
+    (Format.binary64.targetExponent
+      (Float.Model.totalExponent m₁ e₁ - Float.Model.totalExponent m₂ e₂))
+  have htarget : target ≤ e₁ - e₂ := min_le_left _ _
+  have hdelta : 0 ≤ e₁ - e₂ - target := by omega
+  dsimp [target] at htarget hdelta ⊢
+  simp only [FloatSpec.Calc.Div.Fdiv_core, htarget, ite_true]
+  rw [divScaled_eq_shift m₁ (e₁ - e₂ - target) hdelta]
+  rw [Z_div_eucl_natCast]
+  simp only [Int.toNat_natCast, UnpackedFloat.divCore]
+  constructor
+  · rfl
+  constructor
+  · trivial
+  · exact accuracyOfLocation_newLocation _ _
+      (Nat.mod_lt _ hm₂)
+
+private theorem binary32_SFdivCore_eq_native
+    (m₁ m₂ : Nat) (e₁ e₂ : Int) (hm₁ : 0 < m₁) (hm₂ : 0 < m₂) :
+    let source := SFdiv_core_binary 24 128 (m₁ : Int) e₁ (m₂ : Int) e₂
+    let native := UnpackedFloat.divCore Format.binary32 m₁ e₁ m₂ e₂
+    source.1 = (native.1 : Int) ∧ source.2.1 = native.2.1 ∧
+      accuracyOfLocation source.2.2 = native.2.2 := by
+  simp only [SFdiv_core_binary, FloatSpec.Calc.Div.Fdiv]
+  rw [← binary32_divExponent_eq_fexp m₁ m₂ e₁ e₂ hm₁ hm₂]
+  let target := min (e₁ - e₂)
+    (Format.binary32.targetExponent
+      (Float.Model.totalExponent m₁ e₁ - Float.Model.totalExponent m₂ e₂))
+  have htarget : target ≤ e₁ - e₂ := min_le_left _ _
+  have hdelta : 0 ≤ e₁ - e₂ - target := by omega
+  dsimp [target] at htarget hdelta ⊢
+  simp only [FloatSpec.Calc.Div.Fdiv_core, htarget, ite_true]
+  rw [divScaled_eq_shift m₁ (e₁ - e₂ - target) hdelta]
+  rw [Z_div_eucl_natCast]
+  simp only [Int.toNat_natCast, UnpackedFloat.divCore]
+  constructor
+  · rfl
+  constructor
+  · trivial
+  · exact accuracyOfLocation_newLocation _ _
+      (Nat.mod_lt _ hm₂)
 
 private theorem decreaseExponent_eq_shlAlign
     (m : Nat) (e target : Int) :
@@ -8886,8 +9177,12 @@ def standardFloatOfModel64 (x : Float.Model) : StandardFloat :=
 def standardFloatOfModel32 (x : Float32.Model) : StandardFloat :=
   standardFloatOfUnpacked x.unpack
 
-theorem model64OfStandardFloat_binaryRoundAux
-    (s : Bool) (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+private theorem model64OfStandardFloat_binaryRoundAux_of_targetExponent
+    (s : Bool) (m : Nat) (e : Int) (l : Loc)
+    (htarget :
+      Format.binary64.targetExponent (Float.Model.totalExponent m e) =
+        FLT_exp (3 - 1024 - 53) 53
+          (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e)) :
     model64OfStandardFloat
         (binary_round_aux (prec := 53) (emax := 1024) RoundingMode.RNE s m e l) =
       Float.Model.pack
@@ -8896,7 +9191,8 @@ theorem model64OfStandardFloat_binaryRoundAux
   let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
   let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
   let first := bsn_shr_fexp (prec := 53) (emax := 1024) m e l
-  have hfirst := binary64_shiftToTargetExponent_eq_bsnShrFexp m e l hm
+  have hfirst := shiftToTargetExponent_eq_bsnShrFexp
+    Format.binary64 53 1024 m e l htarget
   unfold model64OfStandardFloat
   unfold binary_round_aux
   unfold UnpackedFloat.roundWithAccuracy
@@ -8962,8 +9258,22 @@ theorem model64OfStandardFloat_binaryRoundAux
           Float.Model.pack, UnpackedFloat.pack, Format.binary64,
           Format.exponentBias, Format.mantissaBits]
 
-theorem model32OfStandardFloat_binaryRoundAux
+theorem model64OfStandardFloat_binaryRoundAux
     (s : Bool) (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    model64OfStandardFloat
+        (binary_round_aux (prec := 53) (emax := 1024) RoundingMode.RNE s m e l) =
+      Float.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary64
+          (modelSignOfBool s) m e (accuracyOfLocation l)) :=
+  model64OfStandardFloat_binaryRoundAux_of_targetExponent s m e l
+    (binary64_targetExponent_eq_fexp m e hm)
+
+private theorem model32OfStandardFloat_binaryRoundAux_of_targetExponent
+    (s : Bool) (m : Nat) (e : Int) (l : Loc)
+    (htarget :
+      Format.binary32.targetExponent (Float.Model.totalExponent m e) =
+        FLT_exp (3 - 128 - 24) 24
+          (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e)) :
     model32OfStandardFloat
         (binary_round_aux (prec := 24) (emax := 128) RoundingMode.RNE s m e l) =
       Float32.Model.pack
@@ -8972,7 +9282,8 @@ theorem model32OfStandardFloat_binaryRoundAux
   let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
   let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
   let first := bsn_shr_fexp (prec := 24) (emax := 128) m e l
-  have hfirst := binary32_shiftToTargetExponent_eq_bsnShrFexp m e l hm
+  have hfirst := shiftToTargetExponent_eq_bsnShrFexp
+    Format.binary32 24 128 m e l htarget
   unfold model32OfStandardFloat
   unfold binary_round_aux
   unfold UnpackedFloat.roundWithAccuracy
@@ -9029,6 +9340,7 @@ theorem model32OfStandardFloat_binaryRoundAux
           hnotOverflow, extendedMantissaOfShrRecord, unpackedOfStandardFloat,
           binary_fit_aux, Float32.Model.pack, UnpackedFloat.pack, Format.binary32,
           Format.exponentBias, Format.mantissaBits]
+
       · have hoverflow : 255 ≤ (secondExponent + 127 + 23).toNat := by
           rw [Int.le_toNat (by omega)]
           omega
@@ -9037,6 +9349,16 @@ theorem model32OfStandardFloat_binaryRoundAux
           binary_fit_aux, bsn_binary_overflow, overflow_to_inf,
           Float32.Model.pack, UnpackedFloat.pack, Format.binary32,
           Format.exponentBias, Format.mantissaBits]
+
+theorem model32OfStandardFloat_binaryRoundAux
+    (s : Bool) (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    model32OfStandardFloat
+        (binary_round_aux (prec := 24) (emax := 128) RoundingMode.RNE s m e l) =
+      Float32.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary32
+          (modelSignOfBool s) m e (accuracyOfLocation l)) :=
+  model32OfStandardFloat_binaryRoundAux_of_targetExponent s m e l
+    (binary32_targetExponent_eq_fexp m e hm)
 
 theorem model64OfStandardFloat_binaryRound
     (s : Bool) (m : Nat) (e : Int) (hm : 0 < m) :
@@ -9528,6 +9850,120 @@ theorem model32OfBinarySingleNaNFloat_Bsqrt_RNE
         rw [hmantissa, hexponent, haccuracy]
         rfl
       · rfl
+
+private theorem model64OfStandardFloat_binaryRoundAux_zero_belowMinExponent
+    (s : Bool) (e : Int) (l : Loc) (he : e ≤ -1074) :
+    model64OfStandardFloat
+        (binary_round_aux (prec := 53) (emax := 1024) RoundingMode.RNE
+          s 0 e l) =
+      Float.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary64
+          (modelSignOfBool s) 0 e (accuracyOfLocation l)) :=
+  model64OfStandardFloat_binaryRoundAux_of_targetExponent s 0 e l (by
+    simp [Format.targetExponent, Float.Model.totalExponent,
+      Format.minExponent, Format.mantissaBits,
+      FloatSpec.Core.FLT.FLT_exp, FLT_exp, FloatSpec.Core.Digits.Zdigits]
+    omega)
+
+private theorem model32OfStandardFloat_binaryRoundAux_zero_belowMinExponent
+    (s : Bool) (e : Int) (l : Loc) (he : e ≤ -149) :
+    model32OfStandardFloat
+        (binary_round_aux (prec := 24) (emax := 128) RoundingMode.RNE
+          s 0 e l) =
+      Float32.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary32
+          (modelSignOfBool s) 0 e (accuracyOfLocation l)) :=
+  model32OfStandardFloat_binaryRoundAux_of_targetExponent s 0 e l (by
+    simp [Format.targetExponent, Float.Model.totalExponent,
+      Format.minExponent, Format.mantissaBits,
+      FloatSpec.Core.FLT.FLT_exp, FLT_exp, FloatSpec.Core.Digits.Zdigits]
+    omega)
+
+theorem model64OfBinarySingleNaNFloat_Bdiv_RNE
+    (x y : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bdiv 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float.Model.pack
+        (UnpackedFloat.div Format.binary64
+          (unpackedOfBinarySingleNaNFloat x)
+          (unpackedOfBinarySingleNaNFloat y)) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
+  cases x <;> cases y <;>
+    simp [BinarySingleNaN.Bdiv, model64OfBinarySingleNaNFloat,
+      unpackedOfBinarySingleNaNFloat, UnpackedFloat.div, modelSign_mul_eq_div]
+  next sx mx ex hmx _ sy my ey hmy _ =>
+    unfold BinarySingleNaN.Bdiv_finite
+    let source := SFdiv_core_binary 53 1024 (mx : Int) ex (my : Int) ey
+    let native := UnpackedFloat.divCore Format.binary64 mx ex my ey
+    change model64OfBinarySingleNaNFloat
+        (standardFloatToBinarySingleNaNFloat
+          (binary_round_aux (prec := 53) (emax := 1024) RoundingMode.RNE
+            (Bool.xor sx sy) source.1 source.2.1 source.2.2) _) =
+      Float.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary64
+          (modelSignOfBool sx / modelSignOfBool sy)
+          native.1 native.2.1 native.2.2)
+    rw [model64OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat]
+    have hcore := binary64_SFdivCore_eq_native mx my ex ey hmx hmy
+    change source.1 = (native.1 : Int) ∧ source.2.1 = native.2.1 ∧
+      accuracyOfLocation source.2.2 = native.2.2 at hcore
+    rcases hcore with ⟨hmantissa, hexponent, haccuracy⟩
+    rw [hmantissa, hexponent, ← modelSign_mul_eq_div, ← modelSignOfBool_xor]
+    rw [← haccuracy]
+    by_cases hzero : native.1 = 0
+    · rw [hzero]
+      exact model64OfStandardFloat_binaryRoundAux_zero_belowMinExponent
+        (Bool.xor sx sy) native.2.1 source.2.2 (by
+          simpa [native] using
+            binary64_divCore_zero_exponent_le_min mx my ex ey hmx hmy hzero)
+    · exact model64OfStandardFloat_binaryRoundAux
+        (Bool.xor sx sy) native.1 native.2.1 source.2.2
+          (Nat.pos_of_ne_zero hzero)
+
+theorem model32OfBinarySingleNaNFloat_Bdiv_RNE
+    (x y : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bdiv 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float32.Model.pack
+        (UnpackedFloat.div Format.binary32
+          (unpackedOfBinarySingleNaNFloat x)
+          (unpackedOfBinarySingleNaNFloat y)) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
+  cases x <;> cases y <;>
+    simp [BinarySingleNaN.Bdiv, model32OfBinarySingleNaNFloat,
+      unpackedOfBinarySingleNaNFloat, UnpackedFloat.div, modelSign_mul_eq_div]
+  next sx mx ex hmx _ sy my ey hmy _ =>
+    unfold BinarySingleNaN.Bdiv_finite
+    let source := SFdiv_core_binary 24 128 (mx : Int) ex (my : Int) ey
+    let native := UnpackedFloat.divCore Format.binary32 mx ex my ey
+    change model32OfBinarySingleNaNFloat
+        (standardFloatToBinarySingleNaNFloat
+          (binary_round_aux (prec := 24) (emax := 128) RoundingMode.RNE
+            (Bool.xor sx sy) source.1 source.2.1 source.2.2) _) =
+      Float32.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary32
+          (modelSignOfBool sx / modelSignOfBool sy)
+          native.1 native.2.1 native.2.2)
+    rw [model32OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat]
+    have hcore := binary32_SFdivCore_eq_native mx my ex ey hmx hmy
+    change source.1 = (native.1 : Int) ∧ source.2.1 = native.2.1 ∧
+      accuracyOfLocation source.2.2 = native.2.2 at hcore
+    rcases hcore with ⟨hmantissa, hexponent, haccuracy⟩
+    rw [hmantissa, hexponent, ← modelSign_mul_eq_div, ← modelSignOfBool_xor]
+    rw [← haccuracy]
+    by_cases hzero : native.1 = 0
+    · rw [hzero]
+      exact model32OfStandardFloat_binaryRoundAux_zero_belowMinExponent
+        (Bool.xor sx sy) native.2.1 source.2.2 (by
+          simpa [native] using
+            binary32_divCore_zero_exponent_le_min mx my ex ey hmx hmy hzero)
+    · exact model32OfStandardFloat_binaryRoundAux
+        (Bool.xor sx sy) native.1 native.2.1 source.2.2
+          (Nat.pos_of_ne_zero hzero)
 
 end FloatSpec.IEEE754.Native
 
