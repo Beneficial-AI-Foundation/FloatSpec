@@ -57,6 +57,30 @@ theorem validStandardFloatOfModel32 (x : Float32.Model) :
     standardFloatOfModel32 (model32OfStandardFloat x) = x :=
   FloatSpec.IEEE754.Native.standardFloatOfModel32_model32OfStandardFloat x hx
 
+theorem model64OfStandardFloat_SFopp (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    model64OfStandardFloat (FaithfulPrimFloat.SFopp x) =
+      Float.Model.neg (model64OfStandardFloat x) :=
+  FloatSpec.IEEE754.Native.model64OfStandardFloat_SFopp x hx
+
+theorem model32OfStandardFloat_SFopp (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    model32OfStandardFloat (FaithfulPrimFloat.SFopp x) =
+      Float32.Model.neg (model32OfStandardFloat x) :=
+  FloatSpec.IEEE754.Native.model32OfStandardFloat_SFopp x hx
+
+theorem model64OfStandardFloat_SFabs (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    model64OfStandardFloat (FaithfulPrimFloat.SFabs x) =
+      Float.Model.abs (model64OfStandardFloat x) :=
+  FloatSpec.IEEE754.Native.model64OfStandardFloat_SFabs x hx
+
+theorem model32OfStandardFloat_SFabs (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    model32OfStandardFloat (FaithfulPrimFloat.SFabs x) =
+      Float32.Model.abs (model32OfStandardFloat x) :=
+  FloatSpec.IEEE754.Native.model32OfStandardFloat_SFabs x hx
+
 namespace PrimitiveFloat
 
 abbrev toModel := FaithfulPrimFloat.PrimitiveFloat.toModel
@@ -71,6 +95,14 @@ abbrev ofFloat := FaithfulPrimFloat.PrimitiveFloat.ofFloat
 @[simp] theorem ofModel_toModel (x : FaithfulPrimFloat.PrimitiveFloat) :
     ofModel (toModel x) = x :=
   FaithfulPrimFloat.PrimitiveFloat.ofModel_toModel x
+
+@[simp] theorem toModel_neg (x : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (-x) = Float.Model.neg (toModel x) :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_neg x
+
+@[simp] theorem toModel_abs (x : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (FaithfulPrimFloat.abs x) = Float.Model.abs (toModel x) :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_abs x
 
 end PrimitiveFloat
 

@@ -75,6 +75,13 @@ example (x : Float.Model) :
 example (x : FaithfulPrimFloat.PrimitiveFloat) :
     PrimitiveFloat.ofModel (PrimitiveFloat.toModel x) = x := by simp
 
+example (x : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.toModel (-x) = Float.Model.neg (PrimitiveFloat.toModel x) := by simp
+
+example (x : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.toModel (FaithfulPrimFloat.abs x) =
+      Float.Model.abs (PrimitiveFloat.toModel x) := by simp
+
 example (x : Float.Model) :
     validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)
       (standardFloatOfModel64 x) = true :=
@@ -89,3 +96,9 @@ example (x : StandardFloat)
     (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
     standardFloatOfModel32 (model32OfStandardFloat x) = x :=
   standardFloatOfModel32_model32OfStandardFloat x hx
+
+example (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    model32OfStandardFloat (FaithfulPrimFloat.SFopp x) =
+      Float32.Model.neg (model32OfStandardFloat x) :=
+  model32OfStandardFloat_SFopp x hx

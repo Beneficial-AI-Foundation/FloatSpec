@@ -1373,7 +1373,58 @@ theorem sub_equiv (x y : PrimitiveFloat) :
   change Prim2B (x + (-y)) = Bplus RoundingMode.RNE (Prim2B x) (Bopp (Prim2B y))
   rw [add_equiv, opp_equiv]
 
+end FaithfulPrimFloat
+
 /-! Direct compatibility with Lean's binary64 logical and native carriers. -/
+
+namespace FloatSpec.IEEE754.Native
+
+private theorem modelSignOfBool_not (s : Bool) :
+    modelSignOfBool (!s) = -modelSignOfBool s := by cases s <;> rfl
+
+theorem model64OfStandardFloat_SFopp (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    model64OfStandardFloat (FaithfulPrimFloat.SFopp x) =
+      Float.Model.neg (model64OfStandardFloat x) := by
+  unfold Float.Model.neg
+  rw [unpack_model64OfStandardFloat x hx]
+  cases x <;> simp_all [model64OfStandardFloat, FaithfulPrimFloat.SFopp,
+    unpackedOfStandardFloat, Float.Model.UnpackedFloat.neg, modelSignOfBool_not,
+    validBinarySingleNaNStandardFloat]
+
+theorem model32OfStandardFloat_SFopp (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    model32OfStandardFloat (FaithfulPrimFloat.SFopp x) =
+      Float32.Model.neg (model32OfStandardFloat x) := by
+  unfold Float32.Model.neg
+  rw [unpack_model32OfStandardFloat x hx]
+  cases x <;> simp_all [model32OfStandardFloat, FaithfulPrimFloat.SFopp,
+    unpackedOfStandardFloat, Float.Model.UnpackedFloat.neg, modelSignOfBool_not,
+    validBinarySingleNaNStandardFloat]
+
+theorem model64OfStandardFloat_SFabs (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    model64OfStandardFloat (FaithfulPrimFloat.SFabs x) =
+      Float.Model.abs (model64OfStandardFloat x) := by
+  unfold Float.Model.abs
+  rw [unpack_model64OfStandardFloat x hx]
+  cases x <;> simp_all [model64OfStandardFloat, FaithfulPrimFloat.SFabs,
+    unpackedOfStandardFloat, Float.Model.UnpackedFloat.abs, modelSignOfBool,
+    validBinarySingleNaNStandardFloat]
+
+theorem model32OfStandardFloat_SFabs (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    model32OfStandardFloat (FaithfulPrimFloat.SFabs x) =
+      Float32.Model.abs (model32OfStandardFloat x) := by
+  unfold Float32.Model.abs
+  rw [unpack_model32OfStandardFloat x hx]
+  cases x <;> simp_all [model32OfStandardFloat, FaithfulPrimFloat.SFabs,
+    unpackedOfStandardFloat, Float.Model.UnpackedFloat.abs, modelSignOfBool,
+    validBinarySingleNaNStandardFloat]
+
+end FloatSpec.IEEE754.Native
+
+namespace FaithfulPrimFloat
 
 namespace PrimitiveFloat
 
@@ -1419,6 +1470,32 @@ def ofFloat (x : Float) : FaithfulPrimFloat.PrimitiveFloat :=
     (FloatSpec.IEEE754.Native.model64OfStandardFloat (B2SF (Prim2B x))) = Prim2SF x
   rw [FloatSpec.IEEE754.Native.standardFloatOfModel64_model64OfStandardFloat
     (B2SF (Prim2B x)) (B2SF_valid (Prim2B x)), B2SF_Prim2B]
+
+@[simp] theorem toModel_neg (x : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (-x) = Float.Model.neg (toModel x) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B (-x)) =
+    Float.Model.neg (FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B x))
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat,
+    FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  change FloatSpec.IEEE754.Native.model64OfStandardFloat (B2SF (Prim2B (-x))) =
+    Float.Model.neg (FloatSpec.IEEE754.Native.model64OfStandardFloat (B2SF (Prim2B x)))
+  rw [B2SF_Prim2B, B2SF_Prim2B]
+  exact FloatSpec.IEEE754.Native.model64OfStandardFloat_SFopp
+    (Prim2SF x) (Prim2SF_valid x)
+
+@[simp] theorem toModel_abs (x : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (FaithfulPrimFloat.abs x) = Float.Model.abs (toModel x) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat
+      (Prim2B (FaithfulPrimFloat.abs x)) =
+    Float.Model.abs (FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B x))
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat,
+    FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  change FloatSpec.IEEE754.Native.model64OfStandardFloat
+      (B2SF (Prim2B (FaithfulPrimFloat.abs x))) =
+    Float.Model.abs (FloatSpec.IEEE754.Native.model64OfStandardFloat (B2SF (Prim2B x)))
+  rw [B2SF_Prim2B, B2SF_Prim2B]
+  exact FloatSpec.IEEE754.Native.model64OfStandardFloat_SFabs
+    (Prim2SF x) (Prim2SF_valid x)
 
 end PrimitiveFloat
 
