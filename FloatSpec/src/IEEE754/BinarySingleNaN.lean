@@ -8388,6 +8388,256 @@ def boolOfModelSign : UnpackedFloat.Sign → Bool
 @[simp] theorem modelSignOfBool_boolOfModelSign (s : UnpackedFloat.Sign) :
     modelSignOfBool (boolOfModelSign s) = s := by cases s <;> rfl
 
+@[simp] theorem modelSignOfBool_xor (a b : Bool) :
+    modelSignOfBool (Bool.xor a b) = modelSignOfBool a * modelSignOfBool b := by
+  cases a <;> cases b <;> rfl
+
+/-- FLoCq's location information in Lean's native rounding vocabulary. -/
+def accuracyOfLocation : Loc → UnpackedFloat.Accuracy
+  | .loc_Exact => .exact
+  | .loc_Inexact ordering => .inexact ordering
+
+/-- Lean's native rounding accuracy in FLoCq's location vocabulary. -/
+def locationOfAccuracy : UnpackedFloat.Accuracy → Loc
+  | .exact => .loc_Exact
+  | .inexact ordering => .loc_Inexact ordering
+
+@[simp] theorem locationOfAccuracy_accuracyOfLocation (location : Loc) :
+    locationOfAccuracy (accuracyOfLocation location) = location := by
+  cases location <;> rfl
+
+@[simp] theorem accuracyOfLocation_locationOfAccuracy
+    (accuracy : UnpackedFloat.Accuracy) :
+    accuracyOfLocation (locationOfAccuracy accuracy) = accuracy := by
+  cases accuracy <;> rfl
+
+/-- FLoCq's mantissa plus residual bits as Lean's native extended mantissa. -/
+def extendedMantissaOfShrRecord (record : ShrRecord) :
+    UnpackedFloat.ExtendedMantissa where
+  mantissa := record.shr_m.toNat
+  roundBit := record.shr_r
+  stickyBit := record.shr_s
+
+/-- Lean's native extended mantissa as FLoCq's mantissa plus residual bits. -/
+def shrRecordOfExtendedMantissa (mantissa : UnpackedFloat.ExtendedMantissa) :
+    ShrRecord where
+  shr_m := mantissa.mantissa
+  shr_r := mantissa.roundBit
+  shr_s := mantissa.stickyBit
+
+@[simp] theorem extendedMantissaOfShrRecord_shrRecordOfExtendedMantissa
+    (mantissa : UnpackedFloat.ExtendedMantissa) :
+    extendedMantissaOfShrRecord (shrRecordOfExtendedMantissa mantissa) = mantissa := by
+  cases mantissa
+  simp [extendedMantissaOfShrRecord, shrRecordOfExtendedMantissa]
+
+@[simp] theorem shrRecordOfExtendedMantissa_extendedMantissaOfShrRecord
+    (record : ShrRecord) (h : 0 ≤ record.shr_m) :
+    shrRecordOfExtendedMantissa (extendedMantissaOfShrRecord record) = record := by
+  cases record
+  simp [extendedMantissaOfShrRecord, shrRecordOfExtendedMantissa,
+    Int.toNat_of_nonneg h]
+
+@[simp] theorem extendedMantissa_accuracy (record : ShrRecord) :
+    (extendedMantissaOfShrRecord record).accuracy =
+      accuracyOfLocation (loc_of_shr_record record) := by
+  cases record with
+  | mk mantissa roundBit stickyBit =>
+      cases roundBit <;> cases stickyBit <;> rfl
+
+theorem extendedMantissa_roundToNearestEven
+    (sign : Bool) (record : ShrRecord) (h : 0 ≤ record.shr_m) :
+    ((extendedMantissaOfShrRecord record).roundedMantissa : Int) =
+      choice_mode RoundingMode.RNE sign record.shr_m (loc_of_shr_record record) := by
+  rcases record with ⟨mantissa, roundBit, stickyBit⟩
+  cases roundBit <;> cases stickyBit <;>
+    simp [extendedMantissaOfShrRecord,
+      UnpackedFloat.ExtendedMantissa.roundedMantissa,
+      UnpackedFloat.ExtendedMantissa.accuracy,
+      UnpackedFloat.Accuracy.roundToNearestEven, loc_of_shr_record, choice_mode,
+      FloatSpec.Calc.Round.cond_incr, FloatSpec.Calc.Round.round_N,
+      Int.toNat_of_nonneg h]
+  rcases Int.emod_two_eq_zero_or_one mantissa with hm | hm <;> simp [hm]
+
+private theorem digits2_Pnat_eq_log2 (m : Nat) (hm : 0 < m) :
+    FloatSpec.Core.Digits.digits2_Pnat m = m.log2 := by
+  apply Eq.symm
+  exact (Nat.log2_eq_iff (Nat.ne_of_gt hm)).2
+    (FloatSpec.Core.Digits.digits2_Pnat_correct m hm)
+
+private theorem binary64_targetExponent_eq_fexp
+    (m : Nat) (e : Int) (hm : 0 < m) :
+    Format.binary64.targetExponent (Float.Model.totalExponent m e) =
+      FLT_exp (3 - 1024 - 53) 53
+        (FloatSpec.Core.Digits.Zdigits 2 m + e) := by
+  rw [← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m hm]
+  simp [Format.targetExponent, Format.minExponent, Format.mantissaBits,
+    Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
+    digits2_Pnat_eq_log2 m hm]
+
+private theorem binary32_targetExponent_eq_fexp
+    (m : Nat) (e : Int) (hm : 0 < m) :
+    Format.binary32.targetExponent (Float.Model.totalExponent m e) =
+      FLT_exp (3 - 128 - 24) 24
+        (FloatSpec.Core.Digits.Zdigits 2 m + e) := by
+  rw [← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m hm]
+  simp [Format.targetExponent, Format.minExponent, Format.mantissaBits,
+    Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
+    digits2_Pnat_eq_log2 m hm]
+
+private theorem extendedMantissaOfShrRecord_shrOne (record : ShrRecord)
+    (h : 0 ≤ record.shr_m) :
+    extendedMantissaOfShrRecord (shr_1 record) =
+      UnpackedFloat.ExtendedMantissa.shiftRightOne
+        (extendedMantissaOfShrRecord record) := by
+  rcases record with ⟨m, r, s⟩
+  have hm : 0 ≤ m := h
+  have hq : 0 ≤ m / 2 := Int.ediv_nonneg hm (by norm_num)
+  simp only [extendedMantissaOfShrRecord, shr_1, not_lt.mpr hm, ite_false,
+    UnpackedFloat.ExtendedMantissa.shiftRightOne]
+  congr 1
+  · apply Int.ofNat.inj
+    change ((m / 2).toNat : Int) = ((m.toNat / 2 : Nat) : Int)
+    rw [Int.toNat_of_nonneg hq, Int.natCast_ediv, Int.toNat_of_nonneg hm]
+    norm_num
+  · have hmod : ((m.toNat % 2 : Nat) : Int) = m % 2 := by
+      rw [Int.natCast_mod, Int.toNat_of_nonneg hm]
+      norm_num
+    apply Bool.eq_iff_iff.mpr
+    simp only [ne_eq, decide_eq_true_eq]
+    rw [bne_iff_ne]
+    apply not_congr
+    constructor
+    · intro hm0
+      apply Int.ofNat.inj
+      change ((m.toNat % 2 : Nat) : Int) = (0 : Nat)
+      rw [hmod, hm0]
+      norm_num
+    · intro hn0
+      calc
+        m % 2 = ((m.toNat % 2 : Nat) : Int) := hmod.symm
+        _ = 0 := by exact_mod_cast hn0
+
+private theorem extendedMantissaOfShrRecord_iter (record : ShrRecord)
+    (h : 0 ≤ record.shr_m) (n : Nat) :
+    extendedMantissaOfShrRecord
+        (FloatSpec.Core.Zaux.iter_nat shr_1 n record) =
+      (extendedMantissaOfShrRecord record >>> n) := by
+  have hnonneg : ∀ k : Nat,
+      0 ≤ (FloatSpec.Core.Zaux.iter_nat shr_1 k record).shr_m := by
+    intro k
+    induction k with
+    | zero => simpa [FloatSpec.Core.Zaux.iter_nat] using h
+    | succ k ih =>
+        simpa [FloatSpec.Core.Zaux.iter_nat] using
+          (le_shr1_le (FloatSpec.Core.Zaux.iter_nat shr_1 k record) ih).1
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+      rw [FloatSpec.Core.Zaux.iter_nat]
+      rw [extendedMantissaOfShrRecord_shrOne _ (hnonneg n), ih]
+      rfl
+
+private theorem extendedMantissaOfShrRecord_ofLocation
+    (m : Nat) (l : Loc) :
+    extendedMantissaOfShrRecord (shr_record_of_loc m l) =
+      UnpackedFloat.ExtendedMantissa.ofMantissaAndAccuracy m
+        (accuracyOfLocation l) := by
+  cases l with
+  | loc_Exact => rfl
+  | loc_Inexact ordering => cases ordering <;> rfl
+
+private theorem shiftToTargetExponent_eq_bsnShrFexp
+    (spec : Format) (prec emax : Int) [Prec_gt_0 prec]
+    (m : Nat) (e : Int) (l : Loc)
+    (htarget : spec.targetExponent (Float.Model.totalExponent m e) =
+      FLT_exp (3 - emax - prec) prec
+        (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e)) :
+    let first := bsn_shr_fexp (prec := prec) (emax := emax) m e l
+    (extendedMantissaOfShrRecord first.1, first.2) =
+      UnpackedFloat.shiftToTargetExponent spec m e (accuracyOfLocation l) := by
+  let fexp := FLT_exp (3 - emax - prec) prec
+  let k := fexp (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e) - e
+  let _ : FloatSpec.Core.Generic_fmt.Valid_exp fexp := by
+    dsimp [fexp]
+    infer_instance
+  have htr := shr_truncate fexp (m : Int) e l (by exact_mod_cast (Nat.zero_le m))
+  have hfirst :
+      bsn_shr_fexp (prec := prec) (emax := emax) m e l =
+        shr (shr_record_of_loc (m : Int) l) e k := by
+    simpa [bsn_shr_fexp, fexp, k] using htr.symm
+  rw [hfirst]
+  unfold UnpackedFloat.shiftToTargetExponent
+  rw [htarget]
+  change
+    (extendedMantissaOfShrRecord
+        (shr (shr_record_of_loc (m : Int) l) e k).1,
+      (shr (shr_record_of_loc (m : Int) l) e k).2) =
+      UnpackedFloat.shiftToExponent m e (accuracyOfLocation l)
+        (fexp (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e))
+  unfold UnpackedFloat.shiftToExponent
+  by_cases hk : 0 ≤ k
+  · have hkCast : (k.toNat : Int) = k := Int.toNat_of_nonneg hk
+    have hstart : 0 ≤ (shr_record_of_loc (m : Int) l).shr_m := by
+      simp [shr_m_shr_record_of_loc]
+    simp only [shr, hk, ite_eq_left]
+    rw [extendedMantissaOfShrRecord_iter _ hstart]
+    rw [extendedMantissaOfShrRecord_ofLocation]
+    simp only [k, hkCast]
+  · have hkToNat : k.toNat = 0 := Int.toNat_eq_zero.mpr (le_of_not_ge hk)
+    have hnotle : ¬ e ≤ fexp (FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e) := by
+      simpa [k, sub_nonneg] using hk
+    simp [shr, hnotle, k, hkToNat, extendedMantissaOfShrRecord_ofLocation]
+    rfl
+
+theorem binary64_shiftToTargetExponent_eq_bsnShrFexp
+    (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    let first := bsn_shr_fexp (prec := 53) (emax := 1024) m e l
+    (extendedMantissaOfShrRecord first.1, first.2) =
+      UnpackedFloat.shiftToTargetExponent Format.binary64
+        m e (accuracyOfLocation l) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  exact shiftToTargetExponent_eq_bsnShrFexp Format.binary64 53 1024 m e l
+    (binary64_targetExponent_eq_fexp m e hm)
+
+theorem binary32_shiftToTargetExponent_eq_bsnShrFexp
+    (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    let first := bsn_shr_fexp (prec := 24) (emax := 128) m e l
+    (extendedMantissaOfShrRecord first.1, first.2) =
+      UnpackedFloat.shiftToTargetExponent Format.binary32
+        m e (accuracyOfLocation l) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  exact shiftToTargetExponent_eq_bsnShrFexp Format.binary32 24 128 m e l
+    (binary32_targetExponent_eq_fexp m e hm)
+
+private theorem bsn_shr_fexp_zero_mantissa
+    (prec emax e : Int) [Prec_gt_0 prec] :
+    (bsn_shr_fexp (prec := prec) (emax := emax) 0 e .loc_Exact).1.shr_m = 0 := by
+  unfold bsn_shr_fexp
+  set r := FloatSpec.Calc.Round.truncate_triple
+    (beta := 2) (fexp := FLT_exp (3 - emax - prec) prec) (0, e, .loc_Exact)
+  change (shr_record_of_loc r.1 r.2.2).shr_m = 0
+  rw [shr_record_of_loc_shr_m]
+  subst r
+  unfold FloatSpec.Calc.Round.truncate_triple
+  dsimp only
+  split <;> simp [FloatSpec.Calc.Round.truncate_aux]
+
+private theorem shiftToTargetExponent_zero_mantissa (spec : Format) (e : Int) :
+    (UnpackedFloat.shiftToTargetExponent spec 0 e .exact).1.mantissa = 0 := by
+  have hzero : ∀ n : Nat,
+      ((⟨0, false, false⟩ : UnpackedFloat.ExtendedMantissa) >>> n).mantissa = 0 := by
+    intro n
+    induction n with
+    | zero => rfl
+    | succ n ih =>
+        change (UnpackedFloat.ExtendedMantissa.shiftRightOne
+          ((⟨0, false, false⟩ : UnpackedFloat.ExtendedMantissa) >>> n)).mantissa = 0
+        simp [UnpackedFloat.ExtendedMantissa.shiftRightOne, ih]
+  simpa [UnpackedFloat.shiftToTargetExponent, UnpackedFloat.shiftToExponent,
+    UnpackedFloat.ExtendedMantissa.ofMantissaAndAccuracy] using
+    hzero (spec.targetExponent (Float.Model.totalExponent 0 e) - e).toNat
+
 /-- Structural translation from FLoCq's single-NaN surface to Lean's unpacked model. -/
 def unpackedOfStandardFloat : StandardFloat → UnpackedFloat
   | .S754_zero s => .zero (modelSignOfBool s)
@@ -8439,6 +8689,13 @@ def unpackedOfBinarySingleNaNFloat {prec emax : Int} :
   cases x <;> simp [unpackedOfBinarySingleNaNFloat, standardFloatOfUnpacked,
     binarySingleNaNFloatToStandardFloat]
 
+@[simp] theorem unpackedOfStandardFloat_binarySingleNaNFloatToStandardFloat
+    {prec emax : Int} (x : BinarySingleNaNFloat prec emax) :
+    unpackedOfStandardFloat (binarySingleNaNFloatToStandardFloat x) =
+      unpackedOfBinarySingleNaNFloat x := by
+  cases x <;> simp_all [unpackedOfStandardFloat, unpackedOfBinarySingleNaNFloat,
+    binarySingleNaNFloatToStandardFloat]
+
 /-- Encode a FLoCq standard float in Lean's binary64 logical model. -/
 def model64OfStandardFloat (x : StandardFloat) : Float.Model :=
   Float.Model.pack (unpackedOfStandardFloat x)
@@ -8454,6 +8711,158 @@ def standardFloatOfModel64 (x : Float.Model) : StandardFloat :=
 /-- Decode Lean's binary32 logical model to the FLoCq single-NaN surface. -/
 def standardFloatOfModel32 (x : Float32.Model) : StandardFloat :=
   standardFloatOfUnpacked x.unpack
+
+theorem model64OfStandardFloat_binaryRoundAux
+    (s : Bool) (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    model64OfStandardFloat
+        (binary_round_aux (prec := 53) (emax := 1024) RoundingMode.RNE s m e l) =
+      Float.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary64
+          (modelSignOfBool s) m e (accuracyOfLocation l)) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
+  let first := bsn_shr_fexp (prec := 53) (emax := 1024) m e l
+  have hfirst := binary64_shiftToTargetExponent_eq_bsnShrFexp m e l hm
+  unfold model64OfStandardFloat
+  unfold binary_round_aux
+  unfold UnpackedFloat.roundWithAccuracy
+  rw [← hfirst]
+  rw [show bsn_shr_fexp (prec := 53) (emax := 1024) m e l = first from rfl]
+  have hrecord : 0 ≤ first.1.shr_m :=
+    bsn_shr_fexp_nonneg (prec := 53) (emax := 1024) m e l (by exact_mod_cast Nat.zero_le m)
+  rcases first with ⟨record, firstExponent⟩
+  dsimp only at hrecord ⊢
+  have hrounded := extendedMantissa_roundToNearestEven s record hrecord
+  rw [← hrounded]
+  let rounded := (extendedMantissaOfShrRecord record).roundedMantissa
+  rw [show (extendedMantissaOfShrRecord record).roundedMantissa = rounded from rfl]
+  by_cases hroundedZero : rounded = 0
+  · rw [hroundedZero]
+    norm_num only [Nat.cast_zero]
+    rw [bsn_shr_fexp_zero_mantissa]
+    rw [shiftToTargetExponent_zero_mantissa]
+    simp [unpackedOfStandardFloat]
+  · have hroundedPos : 0 < rounded := Nat.pos_of_ne_zero hroundedZero
+    have hsecond := binary64_shiftToTargetExponent_eq_bsnShrFexp
+      rounded firstExponent .loc_Exact hroundedPos
+    have hsecond' :
+        (extendedMantissaOfShrRecord
+            (bsn_shr_fexp (prec := 53) (emax := 1024)
+              rounded firstExponent .loc_Exact).1,
+          (bsn_shr_fexp (prec := 53) (emax := 1024)
+            rounded firstExponent .loc_Exact).2) =
+          UnpackedFloat.shiftToTargetExponent Format.binary64
+            rounded firstExponent .exact := by
+      simpa only [accuracyOfLocation] using hsecond
+    rw [← hsecond']
+    generalize hsecondDef :
+      bsn_shr_fexp (prec := 53) (emax := 1024)
+        rounded firstExponent .loc_Exact = second
+    have hsecondNonneg : 0 ≤ second.1.shr_m := by
+      rw [← hsecondDef]
+      exact bsn_shr_fexp_nonneg (prec := 53) (emax := 1024)
+        rounded firstExponent .loc_Exact (by exact_mod_cast Nat.zero_le rounded)
+    rcases second with ⟨record2, secondExponent⟩
+    rcases record2 with ⟨mantissa2, roundBit2, stickyBit2⟩
+    dsimp only at hsecondNonneg ⊢
+    by_cases hmantissaZero : mantissa2 = 0
+    · simp [hmantissaZero, extendedMantissaOfShrRecord, unpackedOfStandardFloat,
+        Float.Model.pack, UnpackedFloat.pack]
+    · have hmantissaPos : 0 < mantissa2 := lt_of_le_of_ne hsecondNonneg
+        (Ne.symm hmantissaZero)
+      have hmantissaNatPos : 0 < mantissa2.toNat := Int.pos_iff_toNat_pos.mp hmantissaPos
+      have hmantissaNatNe : mantissa2.toNat ≠ 0 := Nat.ne_of_gt hmantissaNatPos
+      by_cases hfiniteExponent : secondExponent ≤ 971
+      · have hnotOverflow : ¬2047 ≤ (secondExponent + 1023 + 52).toNat := by
+          omega
+        simp [hmantissaZero, hmantissaPos, hmantissaNatPos, hmantissaNatNe, hfiniteExponent,
+          hnotOverflow, extendedMantissaOfShrRecord, unpackedOfStandardFloat,
+          binary_fit_aux, Float.Model.pack, UnpackedFloat.pack, Format.binary64,
+          Format.exponentBias, Format.mantissaBits]
+      · have hoverflow : 2047 ≤ (secondExponent + 1023 + 52).toNat := by
+          rw [Int.le_toNat (by omega)]
+          omega
+        simp [hmantissaZero, hmantissaPos, hmantissaNatPos, hmantissaNatNe, hfiniteExponent,
+          hoverflow, extendedMantissaOfShrRecord, unpackedOfStandardFloat,
+          binary_fit_aux, bsn_binary_overflow, overflow_to_inf,
+          Float.Model.pack, UnpackedFloat.pack, Format.binary64,
+          Format.exponentBias, Format.mantissaBits]
+
+theorem model32OfStandardFloat_binaryRoundAux
+    (s : Bool) (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    model32OfStandardFloat
+        (binary_round_aux (prec := 24) (emax := 128) RoundingMode.RNE s m e l) =
+      Float32.Model.pack
+        (UnpackedFloat.roundWithAccuracy Format.binary32
+          (modelSignOfBool s) m e (accuracyOfLocation l)) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
+  let first := bsn_shr_fexp (prec := 24) (emax := 128) m e l
+  have hfirst := binary32_shiftToTargetExponent_eq_bsnShrFexp m e l hm
+  unfold model32OfStandardFloat
+  unfold binary_round_aux
+  unfold UnpackedFloat.roundWithAccuracy
+  rw [← hfirst]
+  rw [show bsn_shr_fexp (prec := 24) (emax := 128) m e l = first from rfl]
+  have hrecord : 0 ≤ first.1.shr_m :=
+    bsn_shr_fexp_nonneg (prec := 24) (emax := 128) m e l (by exact_mod_cast Nat.zero_le m)
+  rcases first with ⟨record, firstExponent⟩
+  dsimp only at hrecord ⊢
+  have hrounded := extendedMantissa_roundToNearestEven s record hrecord
+  rw [← hrounded]
+  let rounded := (extendedMantissaOfShrRecord record).roundedMantissa
+  rw [show (extendedMantissaOfShrRecord record).roundedMantissa = rounded from rfl]
+  by_cases hroundedZero : rounded = 0
+  · rw [hroundedZero]
+    norm_num only [Nat.cast_zero]
+    rw [bsn_shr_fexp_zero_mantissa]
+    rw [shiftToTargetExponent_zero_mantissa]
+    simp [unpackedOfStandardFloat]
+  · have hroundedPos : 0 < rounded := Nat.pos_of_ne_zero hroundedZero
+    have hsecond := binary32_shiftToTargetExponent_eq_bsnShrFexp
+      rounded firstExponent .loc_Exact hroundedPos
+    have hsecond' :
+        (extendedMantissaOfShrRecord
+            (bsn_shr_fexp (prec := 24) (emax := 128)
+              rounded firstExponent .loc_Exact).1,
+          (bsn_shr_fexp (prec := 24) (emax := 128)
+            rounded firstExponent .loc_Exact).2) =
+          UnpackedFloat.shiftToTargetExponent Format.binary32
+            rounded firstExponent .exact := by
+      simpa only [accuracyOfLocation] using hsecond
+    rw [← hsecond']
+    generalize hsecondDef :
+      bsn_shr_fexp (prec := 24) (emax := 128)
+        rounded firstExponent .loc_Exact = second
+    have hsecondNonneg : 0 ≤ second.1.shr_m := by
+      rw [← hsecondDef]
+      exact bsn_shr_fexp_nonneg (prec := 24) (emax := 128)
+        rounded firstExponent .loc_Exact (by exact_mod_cast Nat.zero_le rounded)
+    rcases second with ⟨record2, secondExponent⟩
+    rcases record2 with ⟨mantissa2, roundBit2, stickyBit2⟩
+    dsimp only at hsecondNonneg ⊢
+    by_cases hmantissaZero : mantissa2 = 0
+    · simp [hmantissaZero, extendedMantissaOfShrRecord, unpackedOfStandardFloat,
+        Float32.Model.pack, UnpackedFloat.pack]
+    · have hmantissaPos : 0 < mantissa2 := lt_of_le_of_ne hsecondNonneg
+        (Ne.symm hmantissaZero)
+      have hmantissaNatPos : 0 < mantissa2.toNat := Int.pos_iff_toNat_pos.mp hmantissaPos
+      have hmantissaNatNe : mantissa2.toNat ≠ 0 := Nat.ne_of_gt hmantissaNatPos
+      by_cases hfiniteExponent : secondExponent ≤ 104
+      · have hnotOverflow : ¬255 ≤ (secondExponent + 127 + 23).toNat := by
+          omega
+        simp [hmantissaZero, hmantissaPos, hmantissaNatPos, hmantissaNatNe, hfiniteExponent,
+          hnotOverflow, extendedMantissaOfShrRecord, unpackedOfStandardFloat,
+          binary_fit_aux, Float32.Model.pack, UnpackedFloat.pack, Format.binary32,
+          Format.exponentBias, Format.mantissaBits]
+      · have hoverflow : 255 ≤ (secondExponent + 127 + 23).toNat := by
+          rw [Int.le_toNat (by omega)]
+          omega
+        simp [hmantissaZero, hmantissaPos, hmantissaNatPos, hmantissaNatNe, hfiniteExponent,
+          hoverflow, extendedMantissaOfShrRecord, unpackedOfStandardFloat,
+          binary_fit_aux, bsn_binary_overflow, overflow_to_inf,
+          Float32.Model.pack, UnpackedFloat.pack, Format.binary32,
+          Format.exponentBias, Format.mantissaBits]
 
 @[simp] theorem model64OfStandardFloat_standardFloatOfModel64
     (x : Float.Model) :
@@ -8500,6 +8909,66 @@ def model32OfBinarySingleNaNFloat (x : BinarySingleNaNFloat 24 128) : Float32.Mo
   cases x <;> simp_all [model32OfBinarySingleNaNFloat, model32OfStandardFloat,
     unpackedOfBinarySingleNaNFloat, unpackedOfStandardFloat,
     binarySingleNaNFloatToStandardFloat]
+
+@[simp] theorem model64OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    model64OfBinarySingleNaNFloat
+        (standardFloatToBinarySingleNaNFloat (prec := 53) (emax := 1024) x hx) =
+      model64OfStandardFloat x := by
+  rw [model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat,
+    binarySingleNaNFloatToStandardFloat_standardFloatToBinarySingleNaNFloat]
+
+@[simp] theorem model32OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    model32OfBinarySingleNaNFloat
+        (standardFloatToBinarySingleNaNFloat (prec := 24) (emax := 128) x hx) =
+      model32OfStandardFloat x := by
+  rw [model32OfBinarySingleNaNFloat_eq_model32OfStandardFloat,
+    binarySingleNaNFloatToStandardFloat_standardFloatToBinarySingleNaNFloat]
+
+theorem model64OfBinarySingleNaNFloat_Bmult_RNE
+    (x y : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bmult 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float.Model.pack
+        (UnpackedFloat.mul Format.binary64
+          (unpackedOfBinarySingleNaNFloat x) (unpackedOfBinarySingleNaNFloat y)) := by
+  cases x <;> cases y <;>
+    simp [BinarySingleNaN.Bmult, model64OfBinarySingleNaNFloat,
+      unpackedOfBinarySingleNaNFloat, Float.Model.UnpackedFloat.mul]
+  case B754_finite.B754_finite sx mx ex hmx Hx sy my ey hmy Hy =>
+    change model64OfBinarySingleNaNFloat
+        (standardFloatToBinarySingleNaNFloat
+          (binary_round_aux (prec := 53) (emax := 1024) RoundingMode.RNE
+            (Bool.xor sx sy) (mx * my) (ex + ey) .loc_Exact) _) = _
+    rw [model64OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat]
+    simpa only [accuracyOfLocation, modelSignOfBool_xor, Nat.cast_mul] using
+      model64OfStandardFloat_binaryRoundAux (Bool.xor sx sy) (mx * my)
+      (ex + ey) .loc_Exact (Nat.mul_pos hmx hmy)
+
+theorem model32OfBinarySingleNaNFloat_Bmult_RNE
+    (x y : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bmult 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float32.Model.pack
+        (UnpackedFloat.mul Format.binary32
+          (unpackedOfBinarySingleNaNFloat x) (unpackedOfBinarySingleNaNFloat y)) := by
+  cases x <;> cases y <;>
+    simp [BinarySingleNaN.Bmult, model32OfBinarySingleNaNFloat,
+      unpackedOfBinarySingleNaNFloat, Float.Model.UnpackedFloat.mul]
+  case B754_finite.B754_finite sx mx ex hmx Hx sy my ey hmy Hy =>
+    change model32OfBinarySingleNaNFloat
+        (standardFloatToBinarySingleNaNFloat
+          (binary_round_aux (prec := 24) (emax := 128) RoundingMode.RNE
+            (Bool.xor sx sy) (mx * my) (ex + ey) .loc_Exact) _) = _
+    rw [model32OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat]
+    simpa only [accuracyOfLocation, modelSignOfBool_xor, Nat.cast_mul] using
+      model32OfStandardFloat_binaryRoundAux (Bool.xor sx sy) (mx * my)
+      (ex + ey) .loc_Exact (Nat.mul_pos hmx hmy)
 
 end FloatSpec.IEEE754.Native
 

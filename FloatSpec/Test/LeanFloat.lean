@@ -102,3 +102,37 @@ example (x : StandardFloat)
     model32OfStandardFloat (FaithfulPrimFloat.SFopp x) =
       Float32.Model.neg (model32OfStandardFloat x) :=
   model32OfStandardFloat_SFopp x hx
+
+example (s : Bool) (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    model64OfStandardFloat
+        (binary_round_aux (prec := 53) (emax := 1024) RoundingMode.RNE s m e l) =
+      Float.Model.pack
+        (Float.Model.UnpackedFloat.roundWithAccuracy Float.Model.Format.binary64
+          (FloatSpec.IEEE754.Native.modelSignOfBool s) m e
+          (FloatSpec.IEEE754.Native.accuracyOfLocation l)) :=
+  model64OfStandardFloat_binaryRoundAux s m e l hm
+
+example (s : Bool) (m : Nat) (e : Int) (l : Loc) (hm : 0 < m) :
+    model32OfStandardFloat
+        (binary_round_aux (prec := 24) (emax := 128) RoundingMode.RNE s m e l) =
+      Float32.Model.pack
+        (Float.Model.UnpackedFloat.roundWithAccuracy Float.Model.Format.binary32
+          (FloatSpec.IEEE754.Native.modelSignOfBool s) m e
+          (FloatSpec.IEEE754.Native.accuracyOfLocation l)) :=
+  model32OfStandardFloat_binaryRoundAux s m e l hm
+
+example (x y : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bmult 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float.Model.mul (model64OfBinarySingleNaNFloat x)
+        (model64OfBinarySingleNaNFloat y) :=
+  model64OfBinarySingleNaNFloat_Bmult_RNE x y
+
+example (x y : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bmult 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float32.Model.mul (model32OfBinarySingleNaNFloat x)
+        (model32OfBinarySingleNaNFloat y) :=
+  model32OfBinarySingleNaNFloat_Bmult_RNE x y
