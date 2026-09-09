@@ -208,3 +208,25 @@ example (x y : BinarySingleNaNFloat 24 128) :
       Float32.Model.div (model32OfBinarySingleNaNFloat x)
         (model32OfBinarySingleNaNFloat y) :=
   model32OfBinarySingleNaNFloat_Bdiv_RNE x y
+
+example (x y : BinarySingleNaNFloat 53 1024) :
+    Float.Model.compare (model64OfBinarySingleNaNFloat x)
+        (model64OfBinarySingleNaNFloat y) =
+      FaithfulPrimFloat.SFcompare
+        (binarySingleNaNFloatToStandardFloat x)
+        (binarySingleNaNFloatToStandardFloat y) :=
+  model64OfBinarySingleNaNFloat_compare x y
+
+example (x y : BinarySingleNaNFloat 24 128) :
+    Float32.Model.compare (model32OfBinarySingleNaNFloat x)
+        (model32OfBinarySingleNaNFloat y) =
+      FaithfulPrimFloat.SFcompare
+        (binarySingleNaNFloatToStandardFloat x)
+        (binarySingleNaNFloatToStandardFloat y) :=
+  model32OfBinarySingleNaNFloat_compare x y
+
+example (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.compare (PrimitiveFloat.toModel x) (PrimitiveFloat.toModel y) =
+      FaithfulPrimFloat.SFcompare
+        (FaithfulPrimFloat.Prim2SF x) (FaithfulPrimFloat.Prim2SF y) :=
+  PrimitiveFloat.toModel_compare x y

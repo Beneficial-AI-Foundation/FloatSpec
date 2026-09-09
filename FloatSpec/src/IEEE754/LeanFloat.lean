@@ -87,6 +87,222 @@ private theorem unpack_model32OfBinarySingleNaNFloat
     FloatSpec.IEEE754.Native.unpackedOfStandardFloat_binarySingleNaNFloatToStandardFloat]
     using h
 
+private theorem positiveFiniteValue_lt_of_exp_lt
+    {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    (mx my : Nat) (ex ey : Int)
+    (hmx : 0 < mx) (hmy : 0 < my)
+    (hx : specFloat_bounded (prec := prec) (emax := emax) mx ex = true)
+    (hy : specFloat_bounded (prec := prec) (emax := emax) my ey = true)
+    (he : ex < ey) :
+    SF2R 2 (StandardFloat.S754_finite false mx ex) <
+      SF2R 2 (StandardFloat.S754_finite false my ey) := by
+  let fexp := FLT_exp (3 - emax - prec) prec
+  let hvalid : FloatSpec.Core.Generic_fmt.Valid_exp fexp :=
+    @FloatSpec.Core.FLT.FLT_exp_valid prec (3 - emax - prec) (inferInstance)
+  let hmono : FloatSpec.Core.Generic_fmt.Monotone_exp fexp :=
+    FloatSpec.Core.FLT.FLT_exp_monotone prec (3 - emax - prec)
+  let fx : FloatSpec.Core.Defs.FlocqFloat 2 := ⟨mx, ex⟩
+  let fy : FloatSpec.Core.Defs.FlocqFloat 2 := ⟨my, ey⟩
+  have hcxTrip := canonical_bounded_of_specFloat_bounded
+    (prec := prec) (emax := emax) false mx ex hmx hx
+  have hcyTrip := canonical_bounded_of_specFloat_bounded
+    (prec := prec) (emax := emax) false my ey hmy hy
+  have hcx : FloatSpec.Core.Generic_fmt.canonical 2 fexp fx := by
+    simpa [fexp, fx, Std.Do.wp, Std.Do.PostCond.noThrow, pure] using hcxTrip trivial
+  have hcy : FloatSpec.Core.Generic_fmt.canonical 2 fexp fy := by
+    simpa [fexp, fy, Std.Do.wp, Std.Do.PostCond.noThrow, pure] using hcyTrip trivial
+  have hcex : FloatSpec.Core.Generic_fmt.cexp 2 fexp (F2R fx) = ex := by
+    simpa [FloatSpec.Core.Generic_fmt.cexp, fexp, fx] using hcx.symm
+  have hcey : FloatSpec.Core.Generic_fmt.cexp 2 fexp (F2R fy) = ey := by
+    simpa [FloatSpec.Core.Generic_fmt.cexp, fexp, fy] using hcy.symm
+  have hfy : 0 < F2R fy := by
+    simp [fy, F2R, FloatSpec.Core.Defs.F2R]
+    positivity
+  have hcexpLt :
+      FloatSpec.Core.Generic_fmt.cexp 2 fexp (F2R fx) <
+        FloatSpec.Core.Generic_fmt.cexp 2 fexp (F2R fy) := by
+    rw [hcex, hcey]
+    exact he
+  have hlt := @FloatSpec.Core.Generic_fmt.lt_cexp_pos 2 (inferInstance) fexp
+    hvalid hmono (F2R fx) (F2R fy) (by norm_num) hfy hcexpLt
+  simpa [SF2R, fx, fy] using hlt
+
+private theorem positiveFiniteValue_lt_of_mantissa_lt
+    (mx my : Nat) (e : Int) (hm : mx < my) :
+    SF2R 2 (StandardFloat.S754_finite false mx e) <
+      SF2R 2 (StandardFloat.S754_finite false my e) := by
+  simp [SF2R, F2R, FloatSpec.Core.Defs.F2R]
+  exact mul_lt_mul_of_pos_right (by exact_mod_cast hm) (zpow_pos (by norm_num) e)
+
+private theorem positiveFiniteValue_pos (m : Nat) (e : Int) (hm : 0 < m) :
+    0 < SF2R 2 (StandardFloat.S754_finite false m e) := by
+  simp [SF2R, F2R, FloatSpec.Core.Defs.F2R]
+  positivity
+
+private theorem positiveFiniteCompare_eq_SFcompare
+    {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    (mx my : Nat) (ex ey : Int)
+    (hmx : 0 < mx) (hmy : 0 < my)
+    (hx : specFloat_bounded (prec := prec) (emax := emax) mx ex = true)
+    (hy : specFloat_bounded (prec := prec) (emax := emax) my ey = true) :
+    some ((compare ex ey).then (compare mx my)) =
+      FaithfulPrimFloat.SFcompare
+        (StandardFloat.S754_finite false mx ex)
+        (StandardFloat.S754_finite false my ey) := by
+  rcases lt_trichotomy ex ey with he | he | he
+  · have hxy := positiveFiniteValue_lt_of_exp_lt mx my ex ey hmx hmy hx hy he
+    have hyx : ¬SF2R 2 (StandardFloat.S754_finite false my ey) <
+        SF2R 2 (StandardFloat.S754_finite false mx ex) := not_lt_of_ge hxy.le
+    rw [Int.compare_eq_lt.mpr he]
+    simp [FaithfulPrimFloat.SFcompare, FaithfulPrimFloat.SFltb, hxy]
+  · subst ey
+    rw [Int.compare_eq_eq.mpr rfl]
+    rcases lt_trichotomy mx my with hm | hm | hm
+    · have hxy := positiveFiniteValue_lt_of_mantissa_lt mx my ex hm
+      have hyx : ¬SF2R 2 (StandardFloat.S754_finite false my ex) <
+          SF2R 2 (StandardFloat.S754_finite false mx ex) := not_lt_of_ge hxy.le
+      rw [Nat.compare_eq_lt.mpr hm]
+      simp [FaithfulPrimFloat.SFcompare, FaithfulPrimFloat.SFltb, hxy]
+    · subst my
+      rw [Nat.compare_eq_eq.mpr rfl]
+      simp [FaithfulPrimFloat.SFcompare, FaithfulPrimFloat.SFltb]
+    · have hyx := positiveFiniteValue_lt_of_mantissa_lt my mx ex hm
+      have hxy : ¬SF2R 2 (StandardFloat.S754_finite false mx ex) <
+          SF2R 2 (StandardFloat.S754_finite false my ex) := not_lt_of_ge hyx.le
+      rw [Nat.compare_eq_gt.mpr hm]
+      simp [FaithfulPrimFloat.SFcompare, FaithfulPrimFloat.SFltb, hxy, hyx]
+  · have hyx := positiveFiniteValue_lt_of_exp_lt my mx ey ex hmy hmx hy hx he
+    have hxy : ¬SF2R 2 (StandardFloat.S754_finite false mx ex) <
+        SF2R 2 (StandardFloat.S754_finite false my ey) := not_lt_of_ge hyx.le
+    rw [Int.compare_eq_gt.mpr he]
+    simp [FaithfulPrimFloat.SFcompare, FaithfulPrimFloat.SFltb, hxy, hyx]
+
+private theorem unpackedCompare_eq_SFcompare
+    {prec emax : Int} [Prec_gt_0 prec] [Prec_lt_emax prec emax]
+    (x y : BinarySingleNaNFloat prec emax) :
+    (FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat x).compare
+        (FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat y) =
+      FaithfulPrimFloat.SFcompare
+        (binarySingleNaNFloatToStandardFloat x)
+        (binarySingleNaNFloatToStandardFloat y) := by
+  cases x with
+  | B754_nan => cases y <;> rfl
+  | B754_zero sx =>
+      cases y with
+      | B754_nan => rfl
+      | B754_zero sy =>
+          have hx0 : SF2R 2 (StandardFloat.S754_zero sx) = 0 := rfl
+          have hy0 : SF2R 2 (StandardFloat.S754_zero sy) = 0 := rfl
+          cases sx <;> cases sy <;>
+            simp [FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat,
+              binarySingleNaNFloatToStandardFloat, FaithfulPrimFloat.SFcompare,
+              FaithfulPrimFloat.SFltb,
+              FloatSpec.IEEE754.Native.modelSignOfBool,
+              Float.Model.UnpackedFloat.compare, hx0, hy0]
+      | B754_infinity sy => cases sx <;> cases sy <;> rfl
+      | B754_finite sy m e hm hb =>
+          have hp := positiveFiniteValue_pos m e hm
+          simp [SF2R, F2R, FloatSpec.Core.Defs.F2R] at hp
+          cases sx <;> cases sy <;>
+            simp [FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat,
+              binarySingleNaNFloatToStandardFloat, FaithfulPrimFloat.SFcompare,
+              FaithfulPrimFloat.SFltb, SF2R, F2R, FloatSpec.Core.Defs.F2R,
+              FloatSpec.IEEE754.Native.modelSignOfBool,
+              Float.Model.UnpackedFloat.compare, hp,
+              not_lt_of_ge hp.le]
+  | B754_infinity sx =>
+      cases y with
+      | B754_nan => rfl
+      | B754_zero sy => cases sx <;> cases sy <;> rfl
+      | B754_infinity sy => cases sx <;> cases sy <;> rfl
+      | B754_finite sy m e hm hb => cases sx <;> cases sy <;> rfl
+  | B754_finite sx mx ex hmx hx =>
+      cases y with
+      | B754_nan => rfl
+      | B754_zero sy =>
+          have hp := positiveFiniteValue_pos mx ex hmx
+          simp [SF2R, F2R, FloatSpec.Core.Defs.F2R] at hp
+          cases sx <;> cases sy <;>
+            simp [FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat,
+              binarySingleNaNFloatToStandardFloat, FaithfulPrimFloat.SFcompare,
+              FaithfulPrimFloat.SFltb, SF2R, F2R, FloatSpec.Core.Defs.F2R,
+              FloatSpec.IEEE754.Native.modelSignOfBool,
+              Float.Model.UnpackedFloat.compare, hp,
+              not_lt_of_ge hp.le]
+      | B754_infinity sy => cases sx <;> cases sy <;> rfl
+      | B754_finite sy my ey hmy hy =>
+          cases sx <;> cases sy
+          · simpa [FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat,
+              binarySingleNaNFloatToStandardFloat,
+              FloatSpec.IEEE754.Native.modelSignOfBool,
+              Float.Model.UnpackedFloat.compare] using
+                positiveFiniteCompare_eq_SFcompare mx my ex ey hmx hmy hx hy
+          · have hpx := positiveFiniteValue_pos mx ex hmx
+            have hpy := positiveFiniteValue_pos my ey hmy
+            have hxy : ¬ SF2R 2 (StandardFloat.S754_finite false mx ex) <
+                -SF2R 2 (StandardFloat.S754_finite false my ey) := by
+              linarith
+            have hyx : -SF2R 2 (StandardFloat.S754_finite false my ey) <
+                SF2R 2 (StandardFloat.S754_finite false mx ex) := by
+              linarith
+            simp [SF2R, F2R, FloatSpec.Core.Defs.F2R] at hxy hyx hpx hpy
+            simp [FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat,
+              binarySingleNaNFloatToStandardFloat, FaithfulPrimFloat.SFcompare,
+              FaithfulPrimFloat.SFltb, SF2R, F2R, FloatSpec.Core.Defs.F2R,
+              FloatSpec.IEEE754.Native.modelSignOfBool,
+              Float.Model.UnpackedFloat.compare, hxy, hyx]
+          · have hpx := positiveFiniteValue_pos mx ex hmx
+            have hpy := positiveFiniteValue_pos my ey hmy
+            have hxy : -SF2R 2 (StandardFloat.S754_finite false mx ex) <
+                SF2R 2 (StandardFloat.S754_finite false my ey) := by
+              linarith
+            have hyx : ¬ SF2R 2 (StandardFloat.S754_finite false my ey) <
+                -SF2R 2 (StandardFloat.S754_finite false mx ex) := by
+              linarith
+            simp [SF2R, F2R, FloatSpec.Core.Defs.F2R] at hxy hyx hpx hpy
+            simp [FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat,
+              binarySingleNaNFloatToStandardFloat, FaithfulPrimFloat.SFcompare,
+              FaithfulPrimFloat.SFltb, SF2R, F2R, FloatSpec.Core.Defs.F2R,
+              FloatSpec.IEEE754.Native.modelSignOfBool,
+              Float.Model.UnpackedFloat.compare, hxy]
+          · have h := positiveFiniteCompare_eq_SFcompare
+                my mx ey ex hmy hmx hy hx
+            have hswap :
+                ((compare ex ey).then (compare mx my)).swap =
+                  (compare ey ex).then (compare my mx) := by
+              rw [Ordering.swap_then, Int.compare_swap, Nat.compare_swap]
+            change some (((compare ex ey).then (compare mx my)).swap) = _
+            rw [hswap]
+            simpa [FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat,
+              binarySingleNaNFloatToStandardFloat, FaithfulPrimFloat.SFcompare,
+              FaithfulPrimFloat.SFltb, SF2R, F2R, FloatSpec.Core.Defs.F2R,
+              FloatSpec.IEEE754.Native.modelSignOfBool,
+              Float.Model.UnpackedFloat.compare] using h
+
+theorem model64OfBinarySingleNaNFloat_compare
+    (x y : BinarySingleNaNFloat 53 1024) :
+    Float.Model.compare (model64OfBinarySingleNaNFloat x)
+        (model64OfBinarySingleNaNFloat y) =
+      FaithfulPrimFloat.SFcompare
+        (binarySingleNaNFloatToStandardFloat x)
+        (binarySingleNaNFloatToStandardFloat y) := by
+  unfold Float.Model.compare
+  rw [unpack_model64OfBinarySingleNaNFloat, unpack_model64OfBinarySingleNaNFloat]
+  exact @unpackedCompare_eq_SFcompare 53 1024
+    ⟨by norm_num⟩ ⟨by norm_num⟩ x y
+
+theorem model32OfBinarySingleNaNFloat_compare
+    (x y : BinarySingleNaNFloat 24 128) :
+    Float32.Model.compare (model32OfBinarySingleNaNFloat x)
+        (model32OfBinarySingleNaNFloat y) =
+      FaithfulPrimFloat.SFcompare
+        (binarySingleNaNFloatToStandardFloat x)
+        (binarySingleNaNFloatToStandardFloat y) := by
+  unfold Float32.Model.compare
+  rw [unpack_model32OfBinarySingleNaNFloat, unpack_model32OfBinarySingleNaNFloat]
+  exact @unpackedCompare_eq_SFcompare 24 128
+    ⟨by norm_num⟩ ⟨by norm_num⟩ x y
+
 theorem model64OfBinarySingleNaNFloat_Bmult_RNE
     (x y : BinarySingleNaNFloat 53 1024) :
     model64OfBinarySingleNaNFloat
@@ -321,6 +537,17 @@ abbrev ofFloat := FaithfulPrimFloat.PrimitiveFloat.ofFloat
 @[simp] theorem toModel_isFinite (x : FaithfulPrimFloat.PrimitiveFloat) :
     Float.Model.isFinite (toModel x) = FaithfulPrimFloat.is_finite x :=
   FaithfulPrimFloat.PrimitiveFloat.toModel_isFinite x
+
+theorem toModel_compare (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.compare (toModel x) (toModel y) =
+      FaithfulPrimFloat.SFcompare
+        (FaithfulPrimFloat.Prim2SF x) (FaithfulPrimFloat.Prim2SF y) := by
+  change Float.Model.compare
+      (model64OfBinarySingleNaNFloat (FaithfulPrimFloat.Prim2B x))
+      (model64OfBinarySingleNaNFloat (FaithfulPrimFloat.Prim2B y)) = _
+  rw [model64OfBinarySingleNaNFloat_compare]
+  exact congrArg₂ FaithfulPrimFloat.SFcompare
+    (FaithfulPrimFloat.B2SF_Prim2B x) (FaithfulPrimFloat.B2SF_Prim2B y)
 
 @[simp] theorem toModel_mul (x y : FaithfulPrimFloat.PrimitiveFloat) :
     toModel (x * y) = Float.Model.mul (toModel x) (toModel y) :=
