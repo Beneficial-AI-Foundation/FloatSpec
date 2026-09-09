@@ -20,7 +20,7 @@ open Std.Do
 
 namespace FloatSpec.Calc.Operations
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
 section FloatAlignment
 
@@ -80,7 +80,7 @@ theorem Falign_spec (f1 f2 : FlocqFloat beta) :
       rw [mul_assoc, ← zpow_add₀ hβne, sub_add_cancel]
   · -- Case: e1 > e2, common exponent is e2
     simp only [hle, ite_false]
-    push_neg at hle
+    push Not at hle
     have hbeta_pos : 1 < beta := hbeta
     have hpos : 0 < beta := lt_trans (by decide : (0:Int) < 1) hbeta_pos
     have hle' : f2.Fexp ≤ f1.Fexp := le_of_lt hle
@@ -139,7 +139,7 @@ section FloatNegation
     Negation flips the sign of the mantissa while preserving the exponent
 -/
 def Fopp (f1 : FlocqFloat beta) : (FlocqFloat beta) :=
-  (FlocqFloat.mk (-f1.Fnum) f1.Fexp)
+  FlocqFloat.mk (-f1.Fnum) f1.Fexp
 
 /-- Specification: Negation produces arithmetic negative
 
@@ -161,7 +161,7 @@ section FloatAbsoluteValue
     Takes the absolute value of the mantissa, keeping exponent unchanged
 -/
 def Fabs (f1 : FlocqFloat beta) : (FlocqFloat beta) :=
-  (FlocqFloat.mk (Int.natAbs f1.Fnum) f1.Fexp)
+  FlocqFloat.mk (Int.natAbs f1.Fnum) f1.Fexp
 
 /-- Specification: Absolute value is non-negative
 
@@ -300,7 +300,7 @@ theorem F2R_plus (f1 f2 : FlocqFloat beta) :
 
     Direct mantissa addition when exponents match
 -/
-def Fplus_same_exp (m1 m2 e : Int) : (FlocqFloat beta) :=
+def Fplus_same_exp (m1 m2 e : Int) : FlocqFloat beta :=
   Fplus beta (FlocqFloat.mk m1 e) (FlocqFloat.mk m2 e)
 
 /-- Specification: Same-exponent addition
@@ -465,7 +465,7 @@ theorem F2R_minus (f1 f2 : FlocqFloat beta) :
 
     Direct mantissa subtraction when exponents match
 -/
-def Fminus_same_exp (m1 m2 e : Int) : (FlocqFloat beta) :=
+def Fminus_same_exp (m1 m2 e : Int) : FlocqFloat beta :=
   Fminus beta (FlocqFloat.mk m1 e) (FlocqFloat.mk m2 e)
 
 /-- Specification: Same-exponent subtraction
@@ -492,7 +492,7 @@ section FloatMultiplication
     Multiplication multiplies mantissas and adds exponents
 -/
 def Fmult (f1 f2 : FlocqFloat beta) : (FlocqFloat beta) :=
-  (FlocqFloat.mk (f1.Fnum * f2.Fnum) (f1.Fexp + f2.Fexp))
+  FlocqFloat.mk (f1.Fnum * f2.Fnum) (f1.Fexp + f2.Fexp)
 
 /-- Specification: Multiplication is arithmetically correct
 

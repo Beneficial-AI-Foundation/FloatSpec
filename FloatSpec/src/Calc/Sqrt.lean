@@ -14,7 +14,7 @@ import FloatSpec.src.Core.Generic_fmt
 import FloatSpec.src.Core.Float_prop
 import FloatSpec.src.Calc.Bracket
 import Mathlib.Data.Real.Basic
-import Mathlib.Data.Real.Sqrt
+import Mathlib.Analysis.Real.Sqrt
 import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.SimprocWP
@@ -25,7 +25,7 @@ open Std.Do
 
 namespace FloatSpec.Calc.Sqrt
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 
 section MagnitudeBounds
@@ -176,10 +176,7 @@ private lemma mag_sqrt_eq_div2 (x : ℝ) (hx_pos : 0 < x) (hβ : 1 < beta) :
 lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
     FloatSpec.Core.Raux.mag beta (m : ℝ) = Zdigits beta m := by
   -- Get bounds from Zdigits_correct
-  have hm_ne : m ≠ 0 := ne_of_gt hm_pos
-  have hdig := Zdigits_correct beta m hβ hm_ne
-  -- Extract the bounds from the wp-style spec
-  simp only [wp, PostCond.noThrow, pure, PredTrans.pure] at hdig
+  have hdig := Zdigits_correct beta m hβ
   obtain ⟨hlow_int, hupp_int⟩ := hdig
   -- Set d = Zdigits beta m
   set d := Zdigits beta m with hd_def
@@ -194,7 +191,7 @@ lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
   have hβ_real_pos : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hβ_pos
   -- Get d > 0 from Zdigits_gt_0
   have hd_pos : 0 < d := by
-    have := Zdigits_gt_0 beta m hβ hm_ne
+    have := Zdigits_gt_0 beta m hβ (ne_of_gt hm_pos)
     simp only [wp, PostCond.noThrow, pure, PredTrans.pure] at this
     exact this
   -- For d > 0, d.natAbs = d and (d-1).natAbs = d - 1
@@ -205,25 +202,25 @@ lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
   -- Convert integer power bounds to real zpow bounds
   -- Lower bound: beta ^ (d-1).natAbs ≤ m → (beta : ℝ) ^ (d-1) ≤ (m : ℝ)
   have hlow_real : (beta : ℝ) ^ (d - 1) ≤ (m : ℝ) := by
-    have h1 : (beta : ℝ) ^ (d - 1) = (beta : ℝ) ^ ((d - 1).natAbs : ℤ) := by
-      rw [hd_sub_natAbs]
-    rw [h1, zpow_natCast]
-    have h2 : ((beta ^ (d - 1).natAbs : Int) : ℝ) ≤ (m : ℝ) := by
-      exact Int.cast_le.mpr hlow_int
-    convert h2 using 1
-    simp only [Int.cast_pow]
+    have hpow : ((FloatSpec.Core.Zaux.Zpower beta (d - 1) : Int) : ℝ) =
+        (beta : ℝ) ^ (d - 1) := by
+      rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hd_sub_nonneg, Int.cast_pow]
+      exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+        rw [Int.toNat_of_nonneg hd_sub_nonneg])
+    rw [← hpow]
+    exact_mod_cast hlow_int
   -- Upper bound: m < beta ^ d.natAbs → (m : ℝ) < (beta : ℝ) ^ d
   have hupp_real : (m : ℝ) < (beta : ℝ) ^ d := by
-    have h1 : (beta : ℝ) ^ d = (beta : ℝ) ^ (d.natAbs : ℤ) := by
-      rw [hd_natAbs]
-    rw [h1, zpow_natCast]
-    have h2 : (m : ℝ) < ((beta ^ d.natAbs : Int) : ℝ) := by
-      exact Int.cast_lt.mpr hupp_int
-    convert h2 using 2
-    simp only [Int.cast_pow]
+    have hpow : ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) =
+        (beta : ℝ) ^ d := by
+      rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hd_nonneg, Int.cast_pow]
+      exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+        rw [Int.toNat_of_nonneg hd_nonneg])
+    rw [← hpow]
+    exact_mod_cast hupp_int
   -- Use mag_unique_pos from Raux: if β^(e-1) ≤ x < β^e then mag β x = e
   -- The bounds from Zdigits_correct exactly match!
-  have hmag := FloatSpec.Core.Raux.mag_unique_pos beta (m : ℝ) d
+  have hmag := FloatSpec.Core.Raux.mag_unique_pos_from_positive_payload beta (m : ℝ) d
   simp only [wp, PostCond.noThrow, Id.run, bind, pure] at hmag
   exact hmag hβ hm_real_pos hlow_real hupp_real trivial
 
@@ -305,9 +302,10 @@ section CoreSquareRoot
     This matches the Coq definition {name}`Fsqrt_core`.
 -/
 def Fsqrt_core (m1 e1 e : Int) : (Int × Location) :=
-  let m1' := m1 * beta ^ Int.natAbs (e1 - 2 * e)
-  let q := Int.sqrt m1'
-  let r := m1' - q * q
+  let m1' := m1 * FloatSpec.Core.Zaux.Zpower beta (e1 - 2 * e)
+  -- `Z.sqrtrem` is total: on a negative argument Coq returns `(0, 0)`.
+  let q := if m1' < 0 then 0 else Int.sqrt m1'
+  let r := if m1' < 0 then 0 else m1' - q * q
   let l := if r = 0 then Location.loc_Exact
            else Location.loc_Inexact (if r ≤ q then Ordering.lt else Ordering.gt)
   (q, l)
@@ -323,17 +321,23 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
   -- Unfold Fsqrt_core
   simp only [Fsqrt_core]
   -- Set up key values
-  set m1' := m1 * beta ^ Int.natAbs (e1 - 2 * e) with hm1'_def
+  set m1' := m1 * FloatSpec.Core.Zaux.Zpower beta (e1 - 2 * e) with hm1'_def
   set q := Int.sqrt m1' with hq_def
   set r := m1' - q * q with hr_def
   -- Establish positivity facts
+  have he_diff_nonneg : 0 ≤ e1 - 2 * e := by linarith
+  have hZpower_eq :
+      FloatSpec.Core.Zaux.Zpower beta (e1 - 2 * e) =
+        beta ^ Int.natAbs (e1 - 2 * e) :=
+    FloatSpec.Core.Zaux.Zpower_Zpower_nat beta (e1 - 2 * e) he_diff_nonneg
   have hβ_pos : 0 < beta := lt_trans (by norm_num : (0 : Int) < 1) Hβ
   have hβR_pos : (0 : ℝ) < (beta : ℝ) := Int.cast_pos.mpr hβ_pos
   have hβR_one : (1 : ℝ) < (beta : ℝ) := by exact_mod_cast Hβ
   have hbpow_pos : 0 < beta ^ Int.natAbs (e1 - 2 * e) := by positivity
   have hm1'_pos : 0 < m1' := by
-    rw [hm1'_def]
+    rw [hm1'_def, hZpower_eq]
     exact mul_pos Hm1 hbpow_pos
+  have hm1'_not_neg : ¬ m1' < 0 := not_lt.mpr (le_of_lt hm1'_pos)
   -- Integer square root bounds
   have hm1'_nat : m1'.toNat = m1'.natAbs := by
     have hle : (0 : Int) ≤ m1' := Int.le_of_lt hm1'_pos
@@ -372,7 +376,6 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
     have h : m1' < q * q + 2 * q + 1 := by ring_nf; ring_nf at hm1'_lt_succ; exact hm1'_lt_succ
     linarith
   -- Key relationship: F2R(m1, e1) = m1' * beta^(2*e) when e1 ≥ 2*e
-  have he_diff_nonneg : 0 ≤ e1 - 2 * e := by linarith
   have hnatabs_eq : Int.natAbs (e1 - 2 * e) = (e1 - 2 * e).toNat := by
     have h1 : ((e1 - 2 * e).natAbs : Int) = e1 - 2 * e := Int.natAbs_of_nonneg he_diff_nonneg
     have h2 : ((e1 - 2 * e).toNat : Int) = e1 - 2 * e := Int.toNat_of_nonneg he_diff_nonneg
@@ -380,7 +383,7 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
   have hF2R_eq : F2R (FlocqFloat.mk m1 e1 : FlocqFloat beta) =
                  (m1' : ℝ) * (beta : ℝ) ^ (2 * e) := by
     simp only [F2R, FlocqFloat.mk]
-    rw [hm1'_def]
+    rw [hm1'_def, hZpower_eq]
     have hexp_split : e1 = (e1 - 2 * e) + 2 * e := by ring
     conv_lhs => rw [hexp_split]
     rw [zpow_add₀ (ne_of_gt hβR_pos)]
@@ -442,14 +445,14 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
     exact mul_lt_mul_of_pos_right hsqrt_ub hbpow_e_pos
   -- Now prove the inbetween relation by case split on r = 0
   unfold inbetween_float
+  simp only [ite_eq_right hm1'_not_neg]
   split_ifs with hr_zero
   · -- Case: r = 0, so sqrt is exact
     apply inbetween.inbetween_Exact
-    rw [hsqrt_F2R, hF2R_q]
+    rw [hsqrt_F2R]
     congr 1
     -- r = 0 means m1' = q², so sqrt(m1') = q
     have hm1'_eq_qq : m1' = q * q := by
-      rw [hr_def] at hr_zero
       linarith
     have hm1'R_eq : (m1' : ℝ) = (q : ℝ) * (q : ℝ) := by
       rw [hm1'_eq_qq]
@@ -489,7 +492,8 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
       -- 4*(m1' - q²) vs 4*q + 1, i.e., 4*r vs 4*q + 1
       -- Location is lt if 4*r < 4*q + 1, i.e., r ≤ q
       -- Location is gt if 4*r > 4*q + 1, i.e., r > q (since both integers)
-      rw [hsqrt_F2R, hF2R_q, hF2R_q1]
+      rw [hsqrt_F2R]
+      simp only [Int.cast_add, Int.cast_one]
       -- Midpoint calculation
       have hmid : ((q : ℝ) * (beta : ℝ) ^ e + ((q : ℝ) + 1) * (beta : ℝ) ^ e) / 2 =
                   ((q : ℝ) + 1 / 2) * (beta : ℝ) ^ e := by ring
@@ -532,7 +536,6 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
         · exact_mod_cast le_of_lt hm1'_pos
         · rw [sq]
           have hm1'_le : m1' ≤ q * q + q := by
-            rw [hr_def] at hrq
             linarith
           have hcast : (m1' : ℝ) ≤ ((q * q + q : Int) : ℝ) := Int.cast_le.mpr hm1'_le
           calc (m1' : ℝ) ≤ (q : ℝ) * (q : ℝ) + (q : ℝ) := by
@@ -568,7 +571,8 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
     apply inbetween.inbetween_Inexact
     · exact ⟨hstrict_lb, hsqrt_F2R_ub⟩
     · -- Prove the compare relation: Bracket.compare ... = Ordering.gt
-      rw [hsqrt_F2R, hF2R_q, hF2R_q1]
+      rw [hsqrt_F2R]
+      simp only [Int.cast_add, Int.cast_one]
       have hmid : ((q : ℝ) * (beta : ℝ) ^ e + ((q : ℝ) + 1) * (beta : ℝ) ^ e) / 2 =
                   ((q : ℝ) + 1 / 2) * (beta : ℝ) ^ e := by ring
       rw [hmid]
@@ -638,7 +642,7 @@ def Fsqrt (x : FlocqFloat beta) : (Int × Int × Location) :=
     inbetween relation. This matches the Coq theorem {name}`Fsqrt_correct`.
 -/
 theorem Fsqrt_correct (x : FlocqFloat beta) (Hx : 0 < F2R x) (Hβ : 1 < beta)
-    [Hfexp : Valid_exp beta fexp] :
+    [Hfexp : Valid_exp fexp] :
     let (m, e, l) := Fsqrt beta fexp x
     e ≤ cexp beta fexp (Real.sqrt (F2R x)) ∧
     inbetween_float beta m e (Real.sqrt (F2R x)) l := by

@@ -466,7 +466,7 @@ theorem inbetween_ex (d u : ℝ) (l : Location) (Hdu : d < u) :
                 mul_lt_mul_of_pos_right hcoef hpos
               have : d + (1 / 4 : ℝ) * (u - d) < d + (1 / 2 : ℝ) * (u - d) :=
                 add_lt_add_right this d
-              simpa [hw, hm_as_d_plus, one_div, mul_comm] using this
+              convert this using 1 <;> ring
             have hcmp : compare (d + w * (u - d)) m = Ordering.lt := by
               simp [compare, hxlt']
             -- Rewrite goal's coefficient from the `match` using `w`.
@@ -494,7 +494,7 @@ theorem inbetween_ex (d u : ℝ) (l : Location) (Hdu : d < u) :
                 mul_lt_mul_of_pos_right hcoef hpos
               have : d + (1 / 2 : ℝ) * (u - d) < d + (3 / 4 : ℝ) * (u - d) :=
                 add_lt_add_right this d
-              simpa [hm_as_d_plus, hw, one_div, mul_comm] using this
+              convert this using 1 <;> ring
             have hnlt : ¬ d + w * (u - d) < m := not_lt.mpr (le_of_lt hxgt')
             have hcmp : compare (d + w * (u - d)) m = Ordering.gt := by
               simp [compare, hnlt, hxgt']
@@ -839,9 +839,7 @@ theorem inbetween_step_Hi (x : ℝ) (k : Int) (l : Location)
     -- Divide the strict inequality by 2 > 0
     have two_pos : 0 < (2 : ℝ) := by norm_num
     have hmid_lt_step : (start + (start + nb_steps * step)) / 2 < start + k * step := by
-      -- Multiply by 1/2 instead of dividing, for convenience
-      have := mul_lt_mul_of_pos_left hsum (by norm_num : 0 < (1 / 2 : ℝ))
-      simpa [one_div, mul_comm, mul_left_comm, mul_assoc] using this
+      linarith [hsum]
     -- From local inbetween, x > start + k*step
     -- We only need a non-strict inequality `start + k*step ≤ x` to chain with `hmid_lt_step`.
     have hx_ge_step : start + k * step ≤ x := by
@@ -884,7 +882,8 @@ noncomputable def new_location_even (nb_steps k : Int) (l : Location) : Location
 
     The computed location for even steps preserves interval properties
 -/
-theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l : Location)
+theorem new_location_even_correct (Hnb_steps : 1 < nb_steps)
+    (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l : Location)
     (Hk : 0 ≤ k ∧ k < nb_steps) (Hstep : 0 < step)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
     ⦃⌜nb_steps % 2 = 0 ∧ 0 ≤ k ∧ k < nb_steps ∧
@@ -1021,7 +1020,8 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
         have hmul : 2 * (k + 1) ≤ 2 * (nb_steps / 2) :=
           Int.mul_le_mul_of_nonneg_left hk1_le_half (by decide : 0 ≤ (2 : Int))
         -- convert the RHS using evenness of nb_steps
-        -- `Int.ediv_add_emod` together with `He'` gives `nb_steps = (nb_steps / 2) * 2`.
+        -- Euclidean quotient/remainder decomposition together with `He'` gives
+        -- `nb_steps = (nb_steps / 2) * 2`.
         -- rewrite to put the factor 2 on the left of the product
         have hdecomp' : 2 * (nb_steps / 2) = nb_steps := by simpa using hdecomp.symm
         simpa [hdecomp'] using hmul
@@ -1091,7 +1091,7 @@ theorem new_location_even_correct (He : nb_steps % 2 = 0) (x : ℝ) (k : Int) (l
           classical
           simpa [compare, hx_lt_mid_avg]
         simpa [hmid_eq] using this
-    · have hgt_or_eq : nb_steps ≤ 2 * k := not_lt.mp hlt
+    · have hgt_or_eq : nb_steps ≤ 2 * k := le_of_not_gt hlt
       by_cases heq : 2 * k = nb_steps
       · -- Middle case: result depends on local exactness
         simp [hkz, hlt, heq]
@@ -1217,9 +1217,7 @@ noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Location 
   if hkz : k = 0 then
     match l with
     | Location.loc_Exact => l
-    | Location.loc_Inexact ord =>
-        if nb_steps = 1 then Location.loc_Inexact ord
-        else Location.loc_Inexact Ordering.lt
+    | Location.loc_Inexact _ => Location.loc_Inexact Ordering.lt
   else
     if hlt : 2 * k + 1 < nb_steps then
       Location.loc_Inexact Ordering.lt
@@ -1234,7 +1232,8 @@ noncomputable def new_location_odd (nb_steps k : Int) (l : Location) : Location 
 
     The computed location for odd steps preserves interval properties
 -/
-theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l : Location)
+theorem new_location_odd_correct (Hnb_steps : 1 < nb_steps)
+    (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l : Location)
     (Hk : 0 ≤ k ∧ k < nb_steps) (Hstep : 0 < step)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l) :
     ⦃⌜nb_steps % 2 = 1 ∧ 0 ≤ k ∧ k < nb_steps ∧
@@ -1262,35 +1261,8 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
     | inbetween_Inexact ord hbounds hcmp =>
         -- Two subcases on nb_steps = 1 or nb_steps ≥ 3 (since odd and > 0)
         by_cases hnb1 : nb_steps = 1
-        · -- Preserve local ordering when the whole range is a single step
-          simp [hnb1]
-          -- Bounds: start < x < start + nb_steps * step (here nb_steps = 1)
-          have hx_gt : start < x := by
-            simpa [hkz, add_mul, one_mul] using hbounds.1
-          have hx_lt_step : x < start + step := by
-            -- Upper bound from the local step interval with k = 0
-            simpa [hkz, add_mul, one_mul, Int.cast_add, Int.cast_ofNat] using hbounds.2
-          have hx_lt_global : x < start + nb_steps * step := by
-            simpa [hnb1, one_mul, Int.cast_one] using hx_lt_step
-          -- Midpoint: global midpoint equals the local-step midpoint under k = 0 and nb_steps = 1
-          have hmid_eq_glob :
-              (start + (start + nb_steps * step)) / 2 =
-              (start + (start + (k + 1) * step)) / 2 := by
-            simp [hnb1, hkz, add_mul, one_mul, Int.cast_add, Int.cast_ofNat, Int.cast_one]
-          have hcmp_glob : compare x ((start + (start + nb_steps * step)) / 2) = ord := by
-            -- Rewrite the comparison from the local-step midpoint form to the global midpoint
-            have : compare x ((start + (start + (k + 1) * step)) / 2) = ord := by
-              -- From local inbetween midpoint
-              have hmid_eq_local :
-                  (start + (start + (k + 1) * step)) / 2 =
-                  (start + k * step + (start + (k + 1) * step)) / 2 := by
-                simp [hkz, add_assoc, add_comm, add_left_comm]
-              simpa [hmid_eq_local] using hcmp
-            simpa [hmid_eq_glob] using this
-          -- Goal simplifies with nb_steps = 1, so rewrite the midpoint accordingly
-          exact inbetween.inbetween_Inexact (l := ord)
-            ⟨hx_gt, by simpa [hnb1, one_mul, Int.cast_one] using hx_lt_step⟩
-            (by simpa [hnb1, one_mul, Int.cast_one] using hcmp_glob)
+        · have := Hnb_steps
+          omega
         · -- nb_steps ≠ 1 and positive ⇒ 2 ≤ nb_steps
           have hone_le_nb : (1 : Int) ≤ nb_steps := Int.add_one_le_iff.mpr hnbpos
           have h1lt : (1 : Int) < nb_steps := lt_of_le_of_ne hone_le_nb (Ne.symm hnb1)
@@ -1310,9 +1282,8 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
             -- Now fold back the left-hand side into `2*(start + 1*step)`
             simpa [two_mul, one_mul, add_left_comm, add_assoc] using this
           have hx_lt_mid : x < (start + (start + nb_steps * step)) / 2 := by
-            have := (mul_le_mul_of_nonneg_left hsum_le (by norm_num : 0 ≤ (1 / 2 : ℝ)))
             have hmid_ge_step : start + (1 : ℝ) * step ≤ (start + (start + nb_steps * step)) / 2 := by
-              simpa [one_div, mul_comm, mul_left_comm, mul_assoc] using this
+              linarith [hsum_le]
             exact lt_of_lt_of_le hx_lt_step hmid_ge_step
           -- Comparison and global bounds
           have hcmp : compare x ((start + (start + nb_steps * step)) / 2) = Ordering.lt := by
@@ -1378,9 +1349,7 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
             simpa [two_mul, add_comm, add_left_comm, add_assoc] using hk1'
           -- Cast to reals and divide both sides by 2 using multiplication by 1/2 ≥ 0
           have htwo_leR : (2 : ℝ) * (k + 1 : ℝ) ≤ (nb_steps : ℝ) := by exact_mod_cast hk1
-          have hmul := mul_le_mul_of_nonneg_left htwo_leR (by norm_num : 0 ≤ (1 / 2 : ℝ))
-          -- Simplify `(1/2)*((2)*(k+1))` to `k+1` and `(1/2)*nb_steps` to `nb_steps/2`
-          simpa [one_div, mul_assoc, mul_left_comm, mul_comm] using hmul
+          linarith [htwo_leR]
         have hx_lt_mid : x < (start + (start + nb_steps * step)) / 2 := by
           -- start + (k+1)*step ≤ start + ((nb_steps : ℝ)/2)*step ≤ midpoint in `hmid_eq` form
           have hmul_le : (k + 1 : ℝ) * step ≤ ((nb_steps : ℝ) / 2) * step :=
@@ -1457,9 +1426,8 @@ theorem new_location_odd_correct (Ho : nb_steps % 2 = 1) (x : ℝ) (k : Int) (l 
                 simpa [add_mul, one_mul, Int.cast_add, Int.cast_ofNat] using this
               have : 2 * (start + k * step) < (start + k * step) + (start + (k + 1) * step) := by
                 simpa [two_mul] using add_lt_add_left hlt (start + k * step)
-              have := (mul_lt_mul_of_pos_left this (by norm_num : 0 < (1 / 2 : ℝ)))
               have : start + k * step < (start + k * step + (start + (k + 1) * step)) / 2 := by
-                simpa [one_div, mul_comm, mul_left_comm, mul_assoc] using this
+                linarith
               -- Rewrite with `x` and the global midpoint equality.
               simpa [hxeq, hmid_eq]
             -- Also record the local upper bound to lift to global later
@@ -1669,6 +1637,7 @@ noncomputable def new_location (nb_steps k : Int) (l : Location) : Location :=
     The computed location accurately represents position in full range
 -/
 theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
+    (Hnb_steps : 1 < nb_steps)
     (Hk : 0 ≤ k ∧ k < nb_steps)
     (Hx : inbetween (start + k * step) (start + (k + 1) * step) x l)
     (Hstep : 0 < step) :
@@ -1688,7 +1657,7 @@ theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
     have htrip :=
       (new_location_even_correct (start := start) (step := step)
         (nb_steps := nb_steps) (x := x) (k := k) (l := l)
-        (He := He) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
+        (Hnb_steps := Hnb_steps) (He := He) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
     -- Run it with the strengthened precondition
     have := htrip hpre'
     -- Normalize the program being analyzed
@@ -1707,16 +1676,19 @@ theorem new_location_correct (x : ℝ) (k : Int) (l : Location)
     have htrip :=
       (new_location_odd_correct (start := start) (step := step)
         (nb_steps := nb_steps) (x := x) (k := k) (l := l)
-        (Ho := Ho) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
+        (Hnb_steps := Hnb_steps) (Ho := Ho) (Hk := Hk) (Hstep := Hstep) (Hx := Hx))
     have := htrip hpre'
     simpa [new_location, He]
 
 end SteppingRanges
 
 /-- Helper for float location -/
-def inbetween_float (beta : Int) (m e : Int) (x : ℝ) (l : Location) : Prop :=
-  inbetween ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)))
-            ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) x l
+def inbetween_float (beta : Int) [ValidRadix beta] (m e : Int) (x : ℝ) (l : Location) : Prop :=
+  -- Source `F2R (Float beta m e)` unfolded.  Keeping the interval predicate
+  -- as real arithmetic avoids constructing a source float before a radix
+  -- witness is available.
+  inbetween ((m : ℝ) * (beta : ℝ) ^ e)
+            (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e) x l
 
 /- Additional theorems mirroring Coq counterparts that were missing in Lean. -/
 
@@ -2347,9 +2319,9 @@ theorem inbetween_mult_reg (d u x : ℝ) (l : Location) (s : ℝ)
         simpa using this
 
 -- Specialization to consecutive floats
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 
-  theorem inbetween_float_bounds
+theorem inbetween_float_bounds
     (x : ℝ) (m e : Int) (l : Location)
     (H : inbetween_float beta m e x l) (hbeta : 1 < beta) :
     ((Defs.F2R (Defs.FlocqFloat.mk m e : Defs.FlocqFloat beta)) ≤ x ∧
@@ -2430,6 +2402,9 @@ theorem inbetween_float_new_location
     -- From 1 < beta ⇒ 0 < beta, hence p = beta^(|k|) > 0
     have hβpos : 0 < beta := hbpos_int
     simpa [p] using pow_pos hβpos (Int.natAbs k)
+  have hp_gt : 1 < p := by
+    have hk_ne : k.natAbs ≠ 0 := Int.natAbs_ne_zero.mpr (ne_of_gt Hk)
+    simpa [p] using one_lt_pow₀ hbeta hk_ne
   have hk_bounds : 0 ≤ (m % p) ∧ (m % p) < p := by
     have hnonneg : 0 ≤ (m % p) := Int.emod_nonneg _ (ne_of_gt hp_pos)
     have hlt : (m % p) < p := Int.emod_lt_of_pos _ hp_pos
@@ -2467,7 +2442,7 @@ theorem inbetween_float_new_location
   have htrip :=
     (new_location_correct (start := start) (step := step)
       (nb_steps := p) (x := x) (k := (m % p)) (l := l)
-      (Hk := hk_bounds) (Hx := Hx_local) (Hstep := hstep_pos))
+      (Hnb_steps := hp_gt) (Hk := hk_bounds) (Hx := Hx_local) (Hstep := hstep_pos))
   -- Feed the triple its precondition
   have hpostR : inbetween start (start + (p : ℝ) * step) x
       (Id.run (new_location (nb_steps := p) (k := (m % p)) l)) := by
@@ -2607,7 +2582,7 @@ theorem inbetween_float_ex
   let u : ℝ := ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta)))
   -- Show the interval is non-empty using 1 < beta ⇒ (beta : ℝ)^e > 0
   have hbpos_int : (0 : Int) < beta := lt_trans (by decide) hbeta
-  have hbpos_real : 0 < ((beta : Int) : ℝ) := by exact_mod_cast hbpos_int
+  have hbpos_real : 0 < (beta : ℝ) := by exact_mod_cast hbpos_int
   have hstep_pos : 0 < ((beta : ℝ) ^ e) := zpow_pos hbpos_real _
   have hm_lt_real : (m : ℝ) < (m + 1 : ℝ) := by
     have : (0 : ℝ) < 1 := by norm_num
@@ -2627,7 +2602,7 @@ theorem inbetween_float_ex
   have hx : inbetween d u x l := by
     -- Apply the triple with the precondition proof Hdu
     have htrip := inbetween_ex d u l Hdu
-    simpa using htrip Hdu
+    simpa [x] using htrip Hdu
   -- Conclude in terms of inbetween_float by unfolding d and u
   refine ⟨x, ?_⟩
   simpa [inbetween_float, d, u]
@@ -2653,16 +2628,16 @@ theorem inbetween_float_unique
     lt_of_le_of_lt Hb.1 Hb'.2
   -- Convert back to integers on mantissas
   have hm_lt : m < m' + 1 :=
-    FloatSpec.Core.Float_prop.F2R_lt (beta := beta) (e := e) (m1 := m) (m2 := m' + 1)
-      hbeta hlt1
+    FloatSpec.Core.Float_prop.lt_F2R (beta := beta) (e := e) (m1 := m) (m2 := m' + 1)
+      hlt1
   -- Symmetric inequality gives m' < m + 1
   have hlt2 :
       ((Defs.F2R (Defs.FlocqFloat.mk m' e : Defs.FlocqFloat beta)))
         < ((Defs.F2R (Defs.FlocqFloat.mk (m + 1) e : Defs.FlocqFloat beta))) :=
     lt_of_le_of_lt Hb'.1 Hb.2
   have hm'_lt : m' < m + 1 :=
-    FloatSpec.Core.Float_prop.F2R_lt (beta := beta) (e := e) (m1 := m') (m2 := m + 1)
-      hbeta hlt2
+    FloatSpec.Core.Float_prop.lt_F2R (beta := beta) (e := e) (m1 := m') (m2 := m + 1)
+      hlt2
   -- Use Int.lt_add_one_iff to turn strict < into ≤ and deduce equality
   have hm_le : m ≤ m' := (Int.lt_add_one_iff).1 hm_lt
   have hm'_le : m' ≤ m := (Int.lt_add_one_iff).1 hm'_lt

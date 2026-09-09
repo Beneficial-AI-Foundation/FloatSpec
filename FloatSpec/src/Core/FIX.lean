@@ -18,6 +18,7 @@ COPYING file for more details.
 
 import FloatSpec.src.Core.Defs
 import FloatSpec.src.Core.Generic_fmt
+import FloatSpec.src.Core.Round_NE
 import FloatSpec.src.Core.Ulp
 import Mathlib.Data.Real.Basic
 import Std.Do.Triple
@@ -43,18 +44,18 @@ def FIX_exp (_ : Int) : Int :=
 
 /-- Check FIX format correctness
 
-    Verify the fundamental property that {name}`FIX_exp` always
-    returns emin regardless of input. This validates
+    Verify the fundamental property that {name}`FIX_exp` yields
+    emin regardless of input. This validates
     the fixed-point nature of the format.
 -/
 def FIX_exp_correct_check (e : Int) : Bool :=
-  -- Use boolean equality on integers to avoid Prop placeholders
+  -- Use boolean equality on integers to stay in Bool-valued code.
   (FIX_exp emin e) == emin
 
-/-- Specification: Fixed exponent always returns emin
+/-- Specification: fixed exponent yields emin
 
     The fixed-point exponent function ignores its input and
-    always returns the fixed exponent emin. This ensures
+    yields the fixed exponent emin. This ensures
     uniform scaling across all representable values.
 
     Note: We wrap the pure function in `(pure ... : Id T)` because
@@ -76,12 +77,12 @@ theorem FIX_exp_spec (e : Int) :
     using the generic format with the fixed exponent function.
     This means x = m × β^emin for some integer mantissa m.
 -/
-def FIX_format (beta : Int) (x : ℝ) : Prop :=
+def FIX_format (beta : Int) [ValidRadix beta] (x : ℝ) : Prop :=
   FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x
 
 /-- Exponent-validity instance for the fixed exponent function. -/
-instance FIX_exp_valid (beta : Int) :
-    FloatSpec.Core.Generic_fmt.Valid_exp beta (FIX_exp emin) := by
+instance FIX_exp_valid :
+    FloatSpec.Core.Generic_fmt.Valid_exp (FIX_exp emin) := by
   refine ⟨?_⟩
   intro k
   refine And.intro ?h1 ?h2
@@ -99,6 +100,30 @@ instance FIX_exp_valid (beta : Int) :
       intro l _
       simpa [FIX_exp]
 
+/- Coq (FIX.v):
+Global Instance FIX_exp_monotone : Monotone_exp FIX_exp.
+-/
+instance FIX_exp_monotone :
+    FloatSpec.Core.Generic_fmt.Monotone_exp (FIX_exp emin) :=
+  ⟨by
+    intro a b hab
+    exact le_rfl⟩
+
+/- Coq (FIX.v):
+Global Instance exists_NE_FIX :
+      Exists_NE beta FIX_exp.
+-/
+instance exists_NE_FIX (beta : Int) [ValidRadix beta] :
+    FloatSpec.Core.RoundNE.Exists_NE beta (FIX_exp emin) where
+  exists_ne := by
+    right
+    intro e
+    constructor
+    · intro h
+      simpa [FIX_exp] using h
+    · intro _
+      simp [FIX_exp]
+
 /-- Specification: FIX format using generic format
 
     The FIX format is defined in terms of the generic format
@@ -106,7 +131,7 @@ instance FIX_exp_valid (beta : Int) :
     characterization of fixed-point representable numbers.
 -/
 @[spec]
-theorem FIX_format_spec (beta : Int) (x : ℝ) :
+theorem FIX_format_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result = FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x⌝⦄ := by
@@ -119,7 +144,7 @@ theorem FIX_format_spec (beta : Int) (x : ℝ) :
 /-- Specification: FIX exponent function correctness
 
     The FIX exponent function satisfies its specification:
-    it always returns emin for any input e. This establishes
+    it yields emin for any input e. This establishes
     the correctness of the fixed-point implementation.
 -/
 @[spec]
@@ -134,7 +159,7 @@ theorem FIX_exp_correct_spec (e : Int) :
     Verify that zero is representable in the fixed-point format.
     Zero should always be representable as 0 × β^emin = 0.
 -/
-noncomputable def FIX_format_0_check (beta : Int) : Bool :=
+noncomputable def FIX_format_0_check (beta : Int) [ValidRadix beta] : Bool :=
   -- A concrete, checkable fact used by the spec proof: Ztrunc 0 = 0
   ((FloatSpec.Core.Raux.Ztrunc (0 : ℝ))) == (0 : Int)
 
@@ -145,7 +170,7 @@ noncomputable def FIX_format_0_check (beta : Int) : Bool :=
     fixed-point formats always contain the additive identity.
 -/
 @[spec]
-theorem FIX_format_0_spec (beta : Int) :
+theorem FIX_format_0_spec (beta : Int) [ValidRadix beta] :
     ⦃⌜beta > 1⌝⦄
     (pure (FIX_format_0_check beta) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -165,7 +190,7 @@ theorem FIX_format_0_spec (beta : Int) :
     Verify that if x is in FIX format, then -x is also in FIX format.
     This tests the closure property under additive inverse.
 -/
-noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
+noncomputable def FIX_format_opp_check (beta : Int) [ValidRadix beta] (x : ℝ) : Bool :=
   -- Concrete arithmetic check leveraging Ztrunc_neg: Ztrunc(-x) + Ztrunc(x) = 0
   ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x)) == (0 : Int)
 
@@ -176,7 +201,7 @@ noncomputable def FIX_format_opp_check (beta : Int) (x : ℝ) : Bool :=
     from the fact that if x = m × β^emin, then -x = (-m) × β^emin.
 -/
 @[spec]
-theorem FIX_format_opp_spec (beta : Int) (x : ℝ) :
+theorem FIX_format_opp_spec (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FIX_format emin beta x⌝⦄
     (pure (FIX_format_opp_check beta x) : Id Bool)
     ⦃⇓result => ⌜result = true⌝⦄ := by
@@ -187,7 +212,8 @@ theorem FIX_format_opp_spec (beta : Int) (x : ℝ) :
     rw [FloatSpec.Core.Generic_fmt.Ztrunc_neg]; ring
   -- Show the beq evaluates to true using h
   have hbeq : ((FloatSpec.Core.Raux.Ztrunc (-x)) + (FloatSpec.Core.Raux.Ztrunc x) == 0) = true := by
-    rw [h]; native_decide
+    rw [h]
+    decide
   simp only [FIX_format_opp_check, hbeq, pure, PredTrans.pure]
   trivial
 
@@ -196,7 +222,7 @@ Coq (FIX.v):
 Theorem generic_format_FIX :
   forall x, FIX_format x -> generic_format beta FIX_exp x.
 -/
-theorem generic_format_FIX (beta : Int) (x : ℝ) :
+theorem generic_format_FIX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FIX_format emin beta x⌝⦄
     (pure (FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -208,7 +234,7 @@ Coq (FIX.v):
 Theorem FIX_format_generic :
   forall x, generic_format beta FIX_exp x -> FIX_format x.
 -/
-theorem FIX_format_generic (beta : Int) (x : ℝ) :
+theorem FIX_format_generic (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜FloatSpec.Core.Generic_fmt.generic_format beta (FIX_exp emin) x⌝⦄
     (pure (FIX_format emin beta x) : Id Prop)
     ⦃⇓result => ⌜result⌝⦄ := by
@@ -220,7 +246,7 @@ Coq (FIX.v):
 Theorem FIX_format_satisfies_any :
   satisfies_any FIX_format.
 -/
-theorem FIX_format_satisfies_any (beta : Int) :
+theorem FIX_format_satisfies_any (beta : Int) [ValidRadix beta] :
     FloatSpec.Core.Generic_fmt.satisfies_any (fun y => FIX_format emin beta y) := by
   -- Immediate from the generic format version
   simpa [FIX_format]
@@ -231,7 +257,7 @@ Theorem ulp_FIX : forall x, ulp beta FIX_exp x = bpow emin.
 
 Lean (spec): For any real {name}`x`, the ULP under FIX exponent equals β^emin.
 -/
-private lemma ulp_FIX_run_eq (beta : Int) (emin : Int) (x : ℝ) :
+private lemma ulp_FIX_run_eq (beta : Int) [ValidRadix beta] (emin : Int) (x : ℝ) :
     (FloatSpec.Core.Ulp.ulp beta (FIX_exp (emin := emin)) x) = (beta : ℝ) ^ emin := by
   classical
   by_cases hx : x = 0
@@ -244,7 +270,7 @@ private lemma ulp_FIX_run_eq (beta : Int) (emin : Int) (x : ℝ) :
   · simp [FloatSpec.Core.Ulp.ulp, FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag,
           FIX_exp, hx]
 
-theorem ulp_FIX (beta : Int) (x : ℝ) :
+theorem ulp_FIX (beta : Int) [ValidRadix beta] (x : ℝ) :
     ⦃⌜True⌝⦄
     (pure (FloatSpec.Core.Ulp.ulp beta (FIX_exp emin) x) : Id ℝ)
     ⦃⇓r => ⌜r = (beta : ℝ) ^ emin⌝⦄ := by
@@ -259,19 +285,21 @@ namespace FloatSpec.Core.FIX
 /-- Coq ({lit}`FIX.v`):
 Theorem {lit}`round_FIX_IZR`: {lit}`forall f x, round radix2 (FIX_exp 0) f x = IZR (f x).`
 
-Lean (ported, minimal adaptation): Our {lean}`round_to_generic` model ignores the
-rounding function {lit}`f` and performs truncation of the scaled mantissa with the
-canonical exponent. For {lit}`fexp` = {lean}`FIX_exp` 0 and {lit}`beta` = 2, this reduces to
-{lean}`FloatSpec.Core.Raux.Ztrunc` x since the canonical exponent is constantly 0.
+Lean: for {lit}`fexp = FIX_exp 0`, the canonical exponent is zero, so the
+result is exactly the integer selected by the supplied rounding function.
 -/
-theorem round_FIX_IZR (x : ℝ) :
+theorem round_FIX_IZR
+    (f : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd f] (x : ℝ) :
     ⦃⌜True⌝⦄
-    (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int))) (mode := fun _ _ => True) x) : Id ℝ)
-    ⦃⇓r => ⌜r = ((FloatSpec.Core.Raux.Ztrunc x) : ℝ)⌝⦄ := by
+    (pure (round_to_generic (beta := 2) (fexp := FIX_exp (emin := (0 : Int)))
+      (mode := f) x) : Id ℝ)
+    ⦃⇓r => ⌜r = ((f x : Int) : ℝ)⌝⦄ := by
   intro _
   -- Unfold the rounding model and compute with the constant exponent 0
   simp [
         round_to_generic,
+        FloatSpec.Core.Generic_fmt.roundR,
+        FloatSpec.Core.Generic_fmt.scaled_mantissa,
         FloatSpec.Core.Generic_fmt.cexp,
         FloatSpec.Core.Raux.mag,
         FIX_exp]

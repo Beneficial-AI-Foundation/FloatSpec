@@ -1,0 +1,50 @@
+name: FloatSpec CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-trust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: leanprover/lean-action@v1
+        with:
+          build: false
+
+      - name: Build library
+        run: lake build
+
+      - name: Build regression tests
+        run: |
+          lake build FloatSpecTests
+          lake build FloatSpec.Test
+
+      - name: Build executable
+        run: lake build floatspec
+
+      - name: Reject proof and semantic placeholders
+        run: scripts/audit_placeholders.sh --json --fail-on-findings FloatSpec
+
+      - name: Verify generated status is current
+        run: |
+          scripts/status_report.sh --write
+          git diff --exit-code -- FloatSpec/docs/status.json FloatSpec/docs/status.md
+
+      - name: Verify source hygiene
+        shell: bash
+        run: |
+          if [[ -n "${{ github.base_ref }}" ]]; then
+            git diff --check "origin/${{ github.base_ref }}...HEAD"
+          else
+            git diff --check HEAD^ HEAD
+          fi
+          test -z "$(git ls-files '.log/**' '.change_log/**' '.subagent_log/**')"
+          ! rg -n 'binary_(add|mul|sub|fma|div|sqrt)_correct.*: Unit' FloatSpec

@@ -23,17 +23,39 @@ open Std.Do
 
 namespace FloatSpec.Calc.Round
 
-variable (beta : Int)
+variable (beta : Int) [ValidRadix beta]
 variable (fexp : Int → Int)
 
-/-- Bridge Calc.Round to Core's rounding infrastructure.
-    Takes a rounding function `rnd : ℝ → Int` (e.g. `Ztrunc`, `Zfloor`, `Zceil`,
-    `Znearest choice`) matching Flocq's `round rnd x`. -/
-noncomputable def round (beta : Int) (fexp : Int → Int) [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (rnd : ℝ → Int) (x : ℝ) : ℝ :=
-  let exp := FloatSpec.Core.Generic_fmt.cexp beta fexp x
-  let mantissa := x * (beta : ℝ) ^ (-exp)
-  ((rnd mantissa : Int) : ℝ) * (beta : ℝ) ^ exp
+/-- Rounding mode wrapper used by `Calc.Round.round`.
+
+The old port used `Unit` here and routed every mode through a mode-erased
+`round_to_generic` call.  Keep the surface small, but make the rounding
+operator explicit: callers must provide the integer rounding function applied
+to the scaled mantissa. -/
+structure Mode where
+  rnd : ℝ → Int
+  rnd_zero : rnd 0 = 0
+
+/-- Nearest rounding with an even-mantissa tie break. -/
+noncomputable def nearestEvenMode : Mode where
+  rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))
+  rnd_zero := by
+    unfold FloatSpec.Core.Generic_fmt.Znearest
+    simp [FloatSpec.Core.Raux.Zfloor, FloatSpec.Core.Raux.Zceil,
+      FloatSpec.Core.Raux.Rcompare]
+
+/-- Preserve a source integer-rounding function at the `Calc.Round` boundary. -/
+noncomputable def Mode.ofRnd (rnd : ℝ → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] : Mode where
+  rnd := rnd
+  rnd_zero := by
+    simpa using
+      (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) 0)
+
+/-- Bridge Calc.round to Core's concrete mode-sensitive rounding operator. -/
+noncomputable def round (beta : Int) [ValidRadix beta] (fexp : Int → Int)
+    (mode : Mode) (x : ℝ) : ℝ :=
+  FloatSpec.Core.Generic_fmt.roundR beta fexp mode.rnd x
 
 section Truncation
 
@@ -41,69 +63,68 @@ section Truncation
 
     Helper for truncating float values with location tracking
 -/
-noncomputable def truncate_aux (beta : Int) (f : Int × Int × Location) (k : Int) : (Int × Int × Location) :=
-  -- Simplified placeholder: keep triple unchanged. This choice preserves
-  -- all existing callers and allows composition lemmas to hold trivially.
-  f
+noncomputable def truncate_aux (beta : Int) [ValidRadix beta] (f : Int × Int × Location) (k : Int) : (Int × Int × Location) :=
+  let m := f.1
+  let e := f.2.1
+  let l := f.2.2
+  let p := beta ^ Int.natAbs k
+  (m / p, e + k, FloatSpec.Calc.Bracket.new_location (nb_steps := p) (k := (m % p)) l)
 
 /-- Truncate a float to a higher exponent
 
     Adjusts a float to have a specified higher exponent while tracking precision loss
 -/
-def truncate (beta : Int) (f : FlocqFloat beta) (e : Int) (l : Location) : (Int × Int × Location) :=
-  -- Minimal placeholder consistent with the `truncate_spec` postcondition:
-  -- return the same mantissa together with the target exponent and location.
-  (f.Fnum, e, l)
+noncomputable def truncate (beta : Int) [ValidRadix beta] (f : FlocqFloat beta) (e : Int) (l : Location) : (Int × Int × Location) :=
+  let k := e - f.Fexp
+  if 0 < k then
+    truncate_aux beta (f.Fnum, f.Fexp, l) k
+  else
+    (f.Fnum, f.Fexp, l)
 
-/-- Specification: Truncation preserves value with location
+/-- Scaffold marker for the executable truncation wrapper.
 
-    Truncation maintains the represented value while updating location information
+    This is intentionally only a computational specification.  The semantic
+    preservation theorem needs the full Coq `Round.v` proof chain and must not
+    be claimed from the executable definition alone.
 -/
 @[spec]
 theorem truncate_spec (f : FlocqFloat beta) (e : Int) (l : Location)
     (He : f.Fexp ≤ e) (Hl : inbetween_float beta f.Fnum e ((F2R f)) l) :
     ⦃⌜f.Fexp ≤ e ∧ inbetween_float beta f.Fnum e ((F2R f)) l⌝⦄
     (pure (truncate beta f e l) : Id (Int × Int × Location))
-    ⦃⇓result => let (m', e', l') := result
-                ⌜e' = e ∧ inbetween_float beta m' e' ((F2R f)) l'⌝⦄ := by
+    ⦃⇓result => ⌜result = truncate beta f e l⌝⦄ := by
   intro _
-  -- Evaluate the placeholder implementation and close with the given invariant `Hl`.
-  simp only [wp, PostCond.noThrow, pure, truncate]
-  exact ⟨rfl, Hl⟩
+  simp [wp, PostCond.noThrow, pure]
 
 end Truncation
 
 section MainRounding
 
-/-- Rounding at zero: any valid rounding function sends zero to zero. -/
-theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
-    (rnd : ℝ → Int) [FloatSpec.Core.Generic_fmt.Valid_rnd rnd] :
+/-- Rounding at zero: any `Calc.Round` mode sends zero to zero. -/
+theorem round_0 [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    (mode : Mode) :
     ⦃⌜True⌝⦄
-    (pure (round beta fexp rnd 0) : Id ℝ)
+    (pure (round beta fexp mode 0) : Id ℝ)
     ⦃⇓r => ⌜r = 0⌝⦄ := by
-  apply Std.Do.Triple.pure (m := Id) (a := round beta fexp rnd 0)
+  apply Std.Do.Triple.pure (m := Id) (a := round beta fexp mode 0)
   intro _
-  simp only [round, zero_mul]
-  have : rnd (0 : ℝ) = (0 : Int) := by
-    have := FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) (0 : Int)
-    simpa using this
-  simp [this]
+  simp [round, FloatSpec.Core.Generic_fmt.roundR,
+    FloatSpec.Core.Generic_fmt.scaled_mantissa, mode.rnd_zero]
 
 end MainRounding
 
 /-
-  Placeholders for Coq Round.v theorems that have no Lean counterparts yet.
+  Lean ports for Coq Round.v theorems.
   These mirror the statement intent and reference existing Core/Bracket defs.
-  All are stubbed with `sorry` so they can be proven incrementally.
 -/
 
-section CoqTheoremsPlaceholders
+section CoqTheoremsPorts
 
 open FloatSpec.Core.Defs
 open FloatSpec.Core.Generic_fmt
 open FloatSpec.Calc.Bracket
 
-variable {beta : Int}
+variable {beta : Int} [ValidRadix beta]
 variable (fexp : Int → Int)
 
 -- Minimal local definition to model parity on integers.
@@ -112,6 +133,21 @@ variable (fexp : Int → Int)
 namespace Int
 abbrev Even (t : Int) : Prop := t % 2 = 0
 end Int
+
+-- Coq-style truncate on a triple (m,e,l) using fexp and Zdigits
+noncomputable def truncate_triple (beta : Int) [ValidRadix beta] (fexp : Int → Int)
+    (t : Int × Int × Location) : (Int × Int × Location) :=
+  let m := t.1
+  let e := t.2.1
+  let l := t.2.2
+  let k := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e
+  if 0 < k then truncate_aux beta t k else t
+
+lemma truncate_triple_eq_def (m e : Int) (l : Location) :
+    (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)) =
+      (let k := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e
+       if 0 < k then truncate_aux beta (m, e, l) k else (m, e, l)) := by
+  rfl
 
 -- Integer bracketing specialization
 def inbetween_int (m : Int) (x : ℝ) (l : Location) : Prop :=
@@ -131,72 +167,277 @@ def round_sign_DN (s : Bool) (l : Location) : Bool :=
   | _ => s
 
 -- cexp vs inbetween_float
--- Note: The Coq version (`Round.v`) derives this equality using
--- magnitude bounds and properties of valid exponent functions.
--- In our Lean port, the stronger result is not yet available from
--- the Core development. To keep the pipeline progressing while
--- preserving intent, we assume the equality as a hypothesis and
--- return it directly. No downstream theorem in this repository
--- depends on the stronger disjunctive precondition yet.
 theorem cexp_inbetween_float
-    [Valid_exp beta fexp]
+    [Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
+    (Hβ : 1 < beta)
     (Px : 0 < x)
     (Bx : inbetween_float beta m e x l)
-    (Heq : cexp beta fexp x = fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e)) :
+    (He : e ≤ cexp beta fexp x ∨
+      e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e)) :
     cexp beta fexp x = fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) := by
-  -- Immediate by the provided equality hypothesis.
-  exact Heq
+  classical
+  have Hb := FloatSpec.Calc.Bracket.inbetween_float_bounds
+    (beta := beta) (x := x) (m := m) (e := e) (l := l) Bx Hβ
+  have Hm_nonneg : 0 ≤ m := by
+    have hF_succ_pos :
+        0 < FloatSpec.Core.Defs.F2R
+          (FloatSpec.Core.Defs.FlocqFloat.mk (m + 1) e :
+            FloatSpec.Core.Defs.FlocqFloat beta) :=
+      lt_trans Px Hb.2
+    have hm_succ_pos : 0 < m + 1 :=
+      (FloatSpec.Core.Float_prop.gt_0_F2R
+        (beta := beta)
+        (f := FloatSpec.Core.Defs.FlocqFloat.mk (m + 1) e) Hβ hF_succ_pos)
+    exact Int.lt_add_one_iff.mp hm_succ_pos
+  by_cases Hm_pos : 0 < m
+  · set d : Int := FloatSpec.Core.Digits.Zdigits beta m with hd
+    have Hm_ne : m ≠ 0 := ne_of_gt Hm_pos
+    have Hdigits := FloatSpec.Core.Digits.Zdigits_correct
+      (beta := beta) m (by simpa using Hβ)
+    have Hd_pos : 0 < d := by
+      simpa [d, hd] using
+        (FloatSpec.Core.Digits.Zdigits_gt_0
+          (beta := beta) m (by simpa using Hβ) Hm_ne)
+    have Hd_nonneg : 0 ≤ d := le_of_lt Hd_pos
+    have Hdm1_nonneg : 0 ≤ d - 1 := by omega
+    have Hlow_int : FloatSpec.Core.Zaux.Zpower beta (d - 1) ≤ |m| := by
+      simpa [d, hd] using Hdigits.1
+    have Hupp_int : |m| < FloatSpec.Core.Zaux.Zpower beta d := by
+      simpa [d, hd] using Hdigits.2
+    have Hm_abs : |m| = m := by
+      simpa [abs_of_nonneg (le_of_lt Hm_pos)]
+    have Hlow_m_int : FloatSpec.Core.Zaux.Zpower beta (d - 1) ≤ m := by
+      simpa [Hm_abs] using Hlow_int
+    have Hupp_m_succ_int : m + 1 ≤ FloatSpec.Core.Zaux.Zpower beta d := by
+      exact Int.add_one_le_iff.mpr (by simpa [Hm_abs] using Hupp_int)
+    have Hβ_pos_int : (0 : Int) < beta := lt_trans Int.zero_lt_one Hβ
+    have Hβ_pos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Hβ_pos_int
+    have Hβ_ne : (beta : ℝ) ≠ 0 := ne_of_gt Hβ_pos
+    have Hpow_e_pos : 0 < (beta : ℝ) ^ e := zpow_pos Hβ_pos e
+    have Hpow_e_nonneg : 0 ≤ (beta : ℝ) ^ e := le_of_lt Hpow_e_pos
+    have Hlow_m_real :
+        (beta : ℝ) ^ (d - 1) ≤ (m : ℝ) := by
+      have Hcast : ((FloatSpec.Core.Zaux.Zpower beta (d - 1) : Int) : ℝ) ≤ (m : ℝ) := by
+        exact_mod_cast Hlow_m_int
+      have Hpow :
+          ((FloatSpec.Core.Zaux.Zpower beta (d - 1) : Int) : ℝ) =
+            (beta : ℝ) ^ (d - 1) := by
+        rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left Hdm1_nonneg, Int.cast_pow]
+        exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+          rw [Int.toNat_of_nonneg Hdm1_nonneg])
+      rw [← Hpow]
+      exact Hcast
+    have Hupp_m_succ_real :
+        ((m + 1 : Int) : ℝ) ≤ (beta : ℝ) ^ d := by
+      have Hcast : (((m + 1 : Int) : Int) : ℝ) ≤
+          ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) := by
+        exact_mod_cast Hupp_m_succ_int
+      have Hpow :
+          ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) = (beta : ℝ) ^ d := by
+        rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left Hd_nonneg, Int.cast_pow]
+        exact (zpow_natCast (beta : ℝ) _).symm.trans (by
+          rw [Int.toNat_of_nonneg Hd_nonneg])
+      rw [← Hpow]
+      exact Hcast
+    have Hlow_scaled :
+        (beta : ℝ) ^ (d + e - 1) ≤ x := by
+      have Hmul := mul_le_mul_of_nonneg_right Hlow_m_real Hpow_e_nonneg
+      have Hpow :
+          (beta : ℝ) ^ (d - 1) * (beta : ℝ) ^ e =
+            (beta : ℝ) ^ (d + e - 1) := by
+        calc
+          (beta : ℝ) ^ (d - 1) * (beta : ℝ) ^ e
+              = (beta : ℝ) ^ ((d - 1) + e) := by
+                  exact (_root_.zpow_add₀ Hβ_ne (d - 1) e).symm
+          _ = (beta : ℝ) ^ (d + e - 1) := by ring_nf
+      have HF2R_low :
+          (beta : ℝ) ^ (d + e - 1) ≤
+            FloatSpec.Core.Defs.F2R
+              (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+        simpa [FloatSpec.Core.Defs.F2R, Hpow] using Hmul
+      exact le_trans HF2R_low Hb.1
+    have Hupp_scaled :
+        x < (beta : ℝ) ^ (d + e) := by
+      have Hmul := mul_le_mul_of_nonneg_right Hupp_m_succ_real Hpow_e_nonneg
+      have Hpow :
+          (beta : ℝ) ^ d * (beta : ℝ) ^ e =
+            (beta : ℝ) ^ (d + e) := by
+        exact (_root_.zpow_add₀ Hβ_ne d e).symm
+      have HF2R_upp :
+          FloatSpec.Core.Defs.F2R
+              (FloatSpec.Core.Defs.FlocqFloat.mk (m + 1) e :
+                FloatSpec.Core.Defs.FlocqFloat beta) ≤
+            (beta : ℝ) ^ (d + e) := by
+        simpa [FloatSpec.Core.Defs.F2R, Hpow, Int.cast_add, Int.cast_one]
+          using Hmul
+      exact lt_of_lt_of_le Hb.2 HF2R_upp
+    have Hmag :
+        FloatSpec.Core.Raux.mag beta x = d + e := by
+      have Htrip := FloatSpec.Core.Raux.mag_unique_pos_from_positive_payload
+        (beta := beta) (x := x) (e := d + e) Hβ Px Hlow_scaled Hupp_scaled
+      simpa using Htrip True.intro
+    simp [cexp, Hmag, d, hd]
+  · have Hm_zero : m = 0 := le_antisymm (le_of_not_gt Hm_pos) Hm_nonneg
+    have Hx_ne : x ≠ 0 := ne_of_gt Px
+    have Hx_upp : |x| < (beta : ℝ) ^ e := by
+      have Hupp := Hb.2
+      simpa [Hm_zero, FloatSpec.Core.Defs.F2R, abs_of_pos Px] using Hupp
+    have Hmag_le : FloatSpec.Core.Raux.mag beta x ≤ e := by
+      have Htrip := FloatSpec.Core.Raux.mag_le_bpow
+        (beta := beta) (x := x) (e := e) Hβ Hx_ne Hx_upp
+      simpa using Htrip True.intro
+    have Hdigits0 : FloatSpec.Core.Digits.Zdigits beta m = 0 := by
+      simp [Hm_zero, FloatSpec.Core.Digits.Zdigits]
+    rcases He with He_left | He_right
+    · have Hmag_le_fexp :
+          FloatSpec.Core.Raux.mag beta x ≤
+            fexp (FloatSpec.Core.Raux.mag beta x) := by
+        exact le_trans Hmag_le (by simpa [cexp] using He_left)
+      have Hconst := (Valid_exp.valid_exp
+        (fexp := fexp)
+        (FloatSpec.Core.Raux.mag beta x)).right Hmag_le_fexp |>.right
+      have Hfexp_eq : fexp e = fexp (FloatSpec.Core.Raux.mag beta x) :=
+        Hconst e (by simpa [cexp] using He_left)
+      simpa [cexp, Hdigits0] using Hfexp_eq.symm
+    · have Harg_le : e ≤ fexp e := by
+        simpa [Hdigits0] using He_right
+      have Hconst := (Valid_exp.valid_exp
+        (fexp := fexp) e).right Harg_le |>.right
+      have Hfexp_eq : fexp (FloatSpec.Core.Raux.mag beta x) = fexp e :=
+        Hconst (FloatSpec.Core.Raux.mag beta x) (le_trans Hmag_le Harg_le)
+      simpa [cexp, Hdigits0] using Hfexp_eq
 
 -- Location-or-Exact variant
 theorem cexp_inbetween_float_loc_Exact
-    [Valid_exp beta fexp]
+    [Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
+    (Hβ : 1 < beta)
     (Px : 0 ≤ x)
-    (Bx : inbetween_float beta m e x l)
-    (Heq : cexp beta fexp x = fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e)) :
+    (Bx : inbetween_float beta m e x l) :
     (e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
       ↔ (e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨ l = Location.loc_Exact) := by
-  constructor
-  · intro h
-    cases h with
-    | inl hle => exact Or.inl (by simpa [Heq] using hle)
-    | inr hExact => exact Or.inr hExact
-  · intro h
-    cases h with
-    | inl hle => exact Or.inl (by simpa [Heq] using hle)
-    | inr hExact => exact Or.inr hExact
+  by_cases Px_pos : 0 < x
+  · constructor
+    · intro h
+      cases h with
+      | inl hle =>
+          have Heq := cexp_inbetween_float (beta := beta) (fexp := fexp)
+            (x := x) (m := m) (e := e) (l := l) Hβ Px_pos Bx (Or.inl hle)
+          exact Or.inl (by simpa [Heq] using hle)
+      | inr hExact => exact Or.inr hExact
+    · intro h
+      cases h with
+      | inl hle =>
+          have Heq := cexp_inbetween_float (beta := beta) (fexp := fexp)
+            (x := x) (m := m) (e := e) (l := l) Hβ Px_pos Bx (Or.inr hle)
+          exact Or.inl (by simpa [Heq] using hle)
+      | inr hExact => exact Or.inr hExact
+  · have Px_zero : x = 0 := le_antisymm (le_of_not_gt Px_pos) Px
+    have Hl_exact : l = Location.loc_Exact := by
+      dsimp [inbetween_float] at Bx
+      cases Bx with
+      | inbetween_Exact _ => rfl
+      | inbetween_Inexact _ hbounds _ =>
+          have hleft_neg :
+              FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) < 0 := by
+            simpa [Px_zero] using hbounds.1
+          have hm_neg : m < 0 :=
+            FloatSpec.Core.Float_prop.lt_0_F2R
+              (beta := beta)
+              (f := FloatSpec.Core.Defs.FlocqFloat.mk m e) Hβ hleft_neg
+          have hright_pos :
+              0 < FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk (m + 1) e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := by
+            simpa [Px_zero] using hbounds.2
+          have hm_succ_pos : 0 < m + 1 :=
+            FloatSpec.Core.Float_prop.gt_0_F2R
+              (beta := beta)
+              (f := FloatSpec.Core.Defs.FlocqFloat.mk (m + 1) e) Hβ hright_pos
+          have : False := by omega
+          exact False.elim this
+    constructor
+    · intro _; exact Or.inr Hl_exact
+    · intro _; exact Or.inr Hl_exact
+
+private lemma inbetween_scaled_mantissa
+    (x : ℝ) (m e : Int) (l : Location)
+    (He : e = FloatSpec.Core.Generic_fmt.cexp beta fexp x)
+    (Hx : inbetween_float beta m e x l)
+    (Hβ : 1 < beta) :
+    inbetween_int m (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) l := by
+  classical
+  set e0 : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he0
+  have heq : e = e0 := by simpa [he0] using He
+  subst heq
+  set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
+  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one Hβ
+  have hbpos : 0 < (beta : ℝ) := by exact_mod_cast hbposℤ
+  have hcpos : 0 < (beta : ℝ) ^ (-e0) := by
+    simpa using (zpow_pos hbpos (-e0))
+  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+  have hzpow_ne : (beta : ℝ) ^ e0 ≠ 0 := zpow_ne_zero _ hbne
+  have HxR : FloatSpec.Calc.Bracket.inbetween
+      ((m : ℝ) * (beta : ℝ) ^ e0)
+      (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) x l := by
+    simpa [inbetween_float, FloatSpec.Core.Defs.F2R, Int.cast_add, Int.cast_one] using Hx
+  have HxSm_scaled : FloatSpec.Calc.Bracket.inbetween
+      (((m : ℝ) * (beta : ℝ) ^ e0) * (beta : ℝ) ^ (-e0))
+      ((((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) * (beta : ℝ) ^ (-e0))
+      (x * (beta : ℝ) ^ (-e0)) l := by
+    exact FloatSpec.Calc.Bracket.inbetween_mult_compat
+      (d := (m : ℝ) * (beta : ℝ) ^ e0)
+      (u := ((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0)
+      (x := x) (l := l) (s := (beta : ℝ) ^ (-e0)) (Hs := hcpos) HxR
+  have hneg : (beta : ℝ) ^ (-e0) = ((beta : ℝ) ^ e0)⁻¹ := by
+    simp [zpow_neg, hzpow_ne]
+  have hcancel : (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (1 : ℝ) := by
+    simp [hzpow_ne]
+  have hleft' : (↑m * (beta : ℝ) ^ e0) * ((beta : ℝ) ^ e0)⁻¹ = (↑m : ℝ) := by
+    simpa [mul_left_comm, mul_comm, mul_assoc] using
+      congrArg (fun t => (↑m : ℝ) * t) hcancel
+  have hright' :
+      (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) * ((beta : ℝ) ^ e0)⁻¹ =
+        ((m + 1 : Int) : ℝ) := by
+    simpa [mul_left_comm, mul_comm, mul_assoc] using
+      congrArg (fun t => ((m + 1 : Int) : ℝ) * t) hcancel
+  have Hx0 : FloatSpec.Calc.Bracket.inbetween (m : ℝ) ((m + 1 : Int) : ℝ)
+      (x * (beta : ℝ) ^ (-e0)) l := by
+    have hleft'' : (↑m) * (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (↑m : ℝ) := by
+      simpa [mul_left_comm, mul_comm, mul_assoc] using
+        congrArg (fun t => (↑m : ℝ) * t) hcancel
+    have hright'' : (↑m + 1) * (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (↑m + 1) := by
+      simpa [mul_left_comm, mul_comm, mul_assoc] using
+        congrArg (fun t => ((↑m : ℝ) + 1) * t) hcancel
+    simpa [hneg, hleft', hright', hleft'', hright'', Int.cast_add, Int.cast_one]
+      using HxSm_scaled
+  have hsm_def : sm = x * (beta : ℝ) ^ (-e0) := by
+    simp [hsm, FloatSpec.Core.Generic_fmt.scaled_mantissa, he0, FloatSpec.Core.Generic_fmt.cexp]
+  simpa [inbetween_int, hsm_def] using Hx0
 
 -- Rounding induced by inbetween_float
 theorem inbetween_float_round
     (rnd : ℝ → Int) (choice : Int → Location → Int)
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
-    (x : ℝ) (m e : Int) (l : Location)
-    (He : e = cexp beta fexp x)
-    (Hin : inbetween_int m (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) l)
+    (x : ℝ) (m : Int) (l : Location)
+    (Hin : inbetween_float beta m (cexp beta fexp x) x l)
     (Hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (choice m l) e : FloatSpec.Core.Defs.FlocqFloat beta)) := by
+      = (FloatSpec.Core.Defs.F2R
+          (FloatSpec.Core.Defs.FlocqFloat.mk (choice m l) (cexp beta fexp x) :
+            FloatSpec.Core.Defs.FlocqFloat beta)) := by
   classical
-  -- Unfold and align the internal exponent with the provided `e`
-  unfold FloatSpec.Core.Generic_fmt.roundR
-  set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
-  set e0 : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he0
-  have heq : e0 = e := by
-    -- He is a plain equality `e = cexp …`; rewrite its orientation
-    simpa [he0] using He.symm
-  subst heq
-  -- Use the choice hypothesis at the integer-scaled mantissa
-  have hr : rnd sm = choice m l := Hc sm m l Hin
-  -- Convert to real equality on the integer factor
-  have hrR : ((rnd sm : Int) : ℝ) = ((choice m l : Int) : ℝ) := by
-    simpa [hr]
-  -- Multiply both sides by the common scale (beta^e0)
-  have hmul : ((rnd sm : Int) : ℝ) * (beta : ℝ) ^ e0
-                = ((choice m l : Int) : ℝ) * (beta : ℝ) ^ e0 := by
-    simpa using congrArg (fun t : ℝ => t * (beta : ℝ) ^ e0) hrR
-  -- Conclude by rewriting the concrete definitions
-  simpa [hsm, FloatSpec.Core.Defs.F2R] using hmul
+  have Hsm : inbetween_int m (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) l :=
+    inbetween_scaled_mantissa (beta := beta) (fexp := fexp)
+      (x := x) (m := m) (e := cexp beta fexp x) (l := l)
+      (He := rfl) (Hx := Hin) (Hβ := Hβ)
+  have hr :
+      rnd (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) = choice m l :=
+    Hc (FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x) m l Hsm
+  simp [FloatSpec.Core.Generic_fmt.roundR, FloatSpec.Core.Defs.F2R, hr]
 
 -- Monotonicity of cond_incr
 lemma le_cond_incr_le (b : Bool) (m : Int) : m ≤ cond_incr b m ∧ cond_incr b m ≤ m + 1 := by
@@ -490,7 +731,7 @@ theorem inbetween_int_DN_sign (x : ℝ) (m : Int) (l : Location)
         -- Use hb directly since Rlt_bool returns Bool
         -- Conclude by simplifying the RHS to `-m` and rewriting by `hL`.
         simp only [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr,
-                   ite_true, cond_true]
+                   ite_true, Bool.cond_true]
         exact hL
     | inbetween_Inexact ord hbounds _ =>
         -- m < |x| < m+1 and x < 0 ⇒ -(m+1) < x < -m ⇒ ⌊x⌋ = -(m+1)
@@ -515,7 +756,7 @@ theorem inbetween_int_DN_sign (x : ℝ) (m : Int) (l : Location)
           simpa [FloatSpec.Core.Raux.Zfloor] using hfloor
         -- Conclude by simplifying the RHS to `-(m+1)` and rewriting by `hL`.
         simp only [FloatSpec.Core.Zaux.cond_Zopp, FloatSpec.Core.Raux.Zfloor, hb, round_sign_DN',
-                   cond_incr, ite_true, cond_true, hfloor]
+                   cond_incr, ite_true, Bool.cond_true, hfloor]
   · -- Nonnegative case: |x| = x and ⌊x⌋ = m by DN
     have hx0 : 0 ≤ x := le_of_not_gt hxlt
     have Hl' : inbetween_int m x l := by
@@ -528,11 +769,11 @@ theorem inbetween_int_DN_sign (x : ℝ) (m : Int) (l : Location)
     cases l with
     | loc_Exact =>
         simp only [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr,
-                   ite_false, cond_false]
+                   ite_false, Bool.cond_false]
         exact hL
     | loc_Inexact ord =>
         simp only [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr,
-                   ite_false, cond_false]
+                   ite_false, Bool.cond_false]
         exact hL
 
 theorem inbetween_float_DN_sign (x : ℝ) (m e : Int) (l : Location)
@@ -780,6 +1021,60 @@ theorem inbetween_float_UP (x : ℝ) (m e : Int) (l : Location)
   simpa [FloatSpec.Core.Defs.F2R]
     using hr'
 
+def round_sign_UP (s : Bool) (l : Location) : Bool :=
+  match l with
+  | Location.loc_Exact => false
+  | _ => !s
+
+theorem inbetween_int_UP_sign (x : ℝ) (m : Int) (l : Location)
+    (Hl : inbetween_int m (|x|) l) :
+    (FloatSpec.Core.Raux.Zceil x) =
+      FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+        (cond_incr (round_sign_UP (FloatSpec.Core.Raux.Rlt_bool x 0) l) m) := by
+  classical
+  by_cases hxlt : x < 0
+  · have hb : FloatSpec.Core.Raux.Rlt_bool x 0 = true := by
+      simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+    unfold inbetween_int at Hl
+    cases Hl with
+    | inbetween_Exact hxeq =>
+        have hx_eq' : x = ((-m : Int) : ℝ) := by
+          have : -x = (m : ℝ) := by simpa [abs_of_neg hxlt] using hxeq
+          have hx_eq : x = -((m : Int) : ℝ) := by simpa using congrArg Neg.neg this
+          simpa [Int.cast_neg] using hx_eq
+        have hceil : FloatSpec.Core.Raux.Zceil x = -m := by
+          simpa [FloatSpec.Core.Raux.Zceil, hx_eq'] using (Int.ceil_intCast (z := -m))
+        simp [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_UP, cond_incr, hceil]
+    | inbetween_Inexact _ hbounds _ =>
+        have hlt_hi : x < -((m : Int) : ℝ) := by
+          have : (m : ℝ) < -x := by simpa [abs_of_neg hxlt] using hbounds.1
+          simpa [Int.cast_neg] using (neg_lt_neg this)
+        have hlt_lo : -(((m + 1 : Int) : ℝ)) < x := by
+          have : -x < ((m + 1 : Int) : ℝ) := by
+            simpa [abs_of_neg hxlt] using hbounds.2
+          simpa [Int.cast_add, Int.cast_one, Int.cast_neg] using (neg_lt_neg this)
+        have hceil : Int.ceil x = -m := by
+          apply (Int.ceil_eq_iff).2
+          refine ⟨?_, ?_⟩
+          · have hleft : (((-m : Int) : ℝ) - 1) = -(((m + 1 : Int) : ℝ)) := by
+              norm_num [Int.cast_neg, Int.cast_add, Int.cast_one]
+              ring_nf
+            rw [hleft]
+            exact hlt_lo
+          · simpa [Int.cast_neg] using (le_of_lt hlt_hi)
+        have hceil_run : FloatSpec.Core.Raux.Zceil x = -m := by
+          simpa [FloatSpec.Core.Raux.Zceil] using hceil
+        simp [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_UP, cond_incr, hceil_run]
+  · have hx0 : 0 ≤ x := le_of_not_gt hxlt
+    have hb : FloatSpec.Core.Raux.Rlt_bool x 0 = false := by
+      simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+    have Hl' : inbetween_int m x l := by
+      simpa [inbetween_int, abs_of_nonneg hx0] using Hl
+    have hceil := inbetween_int_UP (x := x) (m := m) (l := l) Hl'
+    cases l <;>
+      simpa [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_UP, round_UP', cond_incr]
+        using hceil
+
 -- Zero Round (ZR)
 def round_ZR (s : Bool) (l : Location) : Bool :=
   match l with
@@ -835,7 +1130,7 @@ theorem inbetween_int_ZR (x : ℝ) (m : Int) (l : Location)
             exact le_of_lt hbounds.2
         -- Right-hand side chooses m+1 since l is inexact and m < 0
         have hrhs : cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool m 0) (Location.loc_Inexact ord)) m = m + 1 := by
-          -- round_ZR returns the input boolean on inexact locations
+          -- round_ZR reuses the supplied direction on inexact locations
           simp only [round_ZR, hb, decide_eq_true hmneg, cond_incr, ite_true]
         -- Compute LHS: Ztrunc x = ceil x = m + 1
         have hLHS : (FloatSpec.Core.Raux.Ztrunc x) = m + 1 := by
@@ -957,7 +1252,31 @@ theorem inbetween_float_ZR (x : ℝ) (m e : Int) (l : Location)
   simp only [FloatSpec.Core.Defs.F2R, Id.run] at hr' ⊢
   exact hr'
 
--- Nearest (N), Nearest Even (NE), Nearest Away (NA) families (placeholders)
+theorem inbetween_int_ZR_sign (x : ℝ) (m : Int) (l : Location)
+    (Hl : inbetween_int m (|x|) l) :
+    (FloatSpec.Core.Raux.Ztrunc x) =
+      FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0) m := by
+  classical
+  by_cases hxlt : x < 0
+  · have hb : FloatSpec.Core.Raux.Rlt_bool x 0 = true := by
+      simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+    have hceil := inbetween_int_UP_sign (x := x) (m := m) (l := l) Hl
+    have hceil' : FloatSpec.Core.Raux.Zceil x = -m := by
+      cases l <;> simpa [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_UP, cond_incr] using hceil
+    have hceil_int : Int.ceil x = -m := by
+      simpa [FloatSpec.Core.Raux.Zceil] using hceil'
+    simp [FloatSpec.Core.Raux.Ztrunc, hxlt, FloatSpec.Core.Zaux.cond_Zopp, hb, hceil_int]
+  · have hx0 : 0 ≤ x := le_of_not_gt hxlt
+    have hb : FloatSpec.Core.Raux.Rlt_bool x 0 = false := by
+      simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+    have Hl' : inbetween_int m x l := by
+      simpa [inbetween_int, abs_of_nonneg hx0] using Hl
+    have hfloor := inbetween_int_DN (x := x) (m := m) (l := l) Hl'
+    have hfloor_int : Int.floor x = m := by
+      simpa [FloatSpec.Core.Raux.Zfloor] using hfloor
+    simp [FloatSpec.Core.Raux.Ztrunc, hxlt, FloatSpec.Core.Zaux.cond_Zopp, hb, hfloor_int]
+
+-- Nearest (N), Nearest Even (NE), Nearest Away (NA) rounding families.
 def round_N (p : Bool) (l : Location) : Bool :=
   match l with
   | Location.loc_Exact => false
@@ -1152,7 +1471,8 @@ theorem inbetween_int_N (choice : Int → Bool) (x : ℝ) (m : Int) (l : Locatio
             simp only [hfl, hce] at hZ
             exact hZ
           -- Reduce RHS cond/round_N in the eq-location case and close
-          simp [round_N, cond_incr, hZ']
+          rw [hZ']
+          rfl
       | gt =>
           -- x > m + 1/2 ⇒ Znearest = m+1
           have hxgt_mid : ((m : ℝ) + ((m + 1 : Int) : ℝ)) / 2 < x := by
@@ -1498,6 +1818,55 @@ private lemma inbetween_abs_scaled_mantissa
     simpa [hsm_abs_base] using Hx0
   simpa [inbetween_int] using this
 
+theorem inbetween_float_ZR_sign (x : ℝ) (m e : Int) (l : Location)
+    (He : e = cexp beta fexp x)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Hβ : 1 < beta) :
+    (FloatSpec.Core.Generic_fmt.roundR beta fexp (fun y => FloatSpec.Core.Raux.Ztrunc y) x)
+      = (FloatSpec.Core.Defs.F2R
+            (FloatSpec.Core.Defs.FlocqFloat.mk
+              (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0) m)
+              e : FloatSpec.Core.Defs.FlocqFloat beta)) := by
+  classical
+  let rnd : ℝ → Int := fun y => FloatSpec.Core.Raux.Ztrunc y
+  let choice : Bool → Int → Location → Int := fun _ m _ => m
+  have Hc : ∀ x m l, inbetween_int m (|x|) l →
+      rnd x = FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+                (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m l) := by
+    intro x m l Hl
+    simpa [rnd, choice] using (inbetween_int_ZR_sign (x := x) (m := m) (l := l) Hl)
+  have Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l :=
+    inbetween_abs_scaled_mantissa (beta := beta) (fexp := fexp)
+      (x := x) (m := m) (e := e) (l := l) (He := He) (Hx := Hx) (Hβ := Hβ)
+  have h := inbetween_float_round_sign (beta := beta) (fexp := fexp)
+    (rnd := rnd) (choice := choice) (Hc := Hc)
+    (x := x) (m := m) (e := e) (l := l) (He := He) (Hsm := Hsm) (Hβ := Hβ)
+  simpa [rnd, choice] using h
+
+theorem inbetween_float_UP_sign (x : ℝ) (m e : Int) (l : Location)
+    (He : e = cexp beta fexp x)
+    (Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l)
+    (Hβ : 1 < beta) :
+    (FloatSpec.Core.Generic_fmt.roundR beta fexp (fun y => FloatSpec.Core.Raux.Zceil y) x)
+      = (FloatSpec.Core.Defs.F2R
+            (FloatSpec.Core.Defs.FlocqFloat.mk
+              (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+                (cond_incr (round_sign_UP (FloatSpec.Core.Raux.Rlt_bool x 0) l) m))
+              e : FloatSpec.Core.Defs.FlocqFloat beta)) := by
+  classical
+  let rnd : ℝ → Int := fun y => FloatSpec.Core.Raux.Zceil y
+  let choice : Bool → Int → Location → Int :=
+    fun s m l => cond_incr (round_sign_UP s l) m
+  have Hc : ∀ x m l, inbetween_int m (|x|) l →
+      rnd x = FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+                (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m l) := by
+    intro x m l Hl
+    simpa [rnd, choice] using (inbetween_int_UP_sign (x := x) (m := m) (l := l) Hl)
+  have h := inbetween_float_round_sign (beta := beta) (fexp := fexp)
+    (rnd := rnd) (choice := choice) (Hc := Hc)
+    (x := x) (m := m) (e := e) (l := l) (He := He) (Hsm := Hsm) (Hβ := Hβ)
+  simpa [rnd, choice] using h
+
 theorem inbetween_float_NE_sign (x : ℝ) (m e : Int) (l : Location)
     (He : e = cexp beta fexp x)
     (Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l)
@@ -1592,14 +1961,16 @@ theorem inbetween_float_NA (x : ℝ) (m e : Int) (l : Location)
       (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x
         = cond_incr (round_N (decide (0 ≤ m)) l) m :=
     fun x m l h => inbetween_int_NA (x := x) (m := m) (l := l) h
+  have Hx_cexp : inbetween_float beta m (cexp beta fexp x) x l := by
+    simpa [he0] using Hx
   -- Apply the rounding lemma at the scaled mantissa witness
   simpa using
     (inbetween_float_round (beta := beta) (fexp := fexp)
       (rnd := fun x => FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA x)
       (choice := fun m l => cond_incr (round_N (decide (0 ≤ m)) l) m)
       (Hc := Hc)
-      (x := x) (m := m) (e := e0) (l := l)
-      (He := rfl) (Hin := Hin) (Hβ := Hβ))
+      (x := x) (m := m) (l := l)
+      (Hin := Hx_cexp) (Hβ := Hβ))
 
 theorem inbetween_int_NA_sign (x : ℝ) (m : Int) (l : Location)
     (Hl : inbetween_int m (|x|) l) :
@@ -1731,321 +2102,1648 @@ theorem inbetween_float_NA_sign (x : ℝ) (m e : Int) (l : Location)
   -- Conclude after unfolding the local abbreviations.
   simpa [rnd, choice] using h
 
--- Truncation/rounding auxiliary theorems (placeholders)
+namespace Audit
+
+-- Truncation/rounding auxiliary checks whose Coq proofs are not yet ported.
+-- These are kept under `Audit` so the public `Round` namespace does not expose
+-- tautological compatibility shells under Coq theorem names.
 theorem truncate_aux_comp (t : Int × Int × Location) (k1 k2 : Int)
-    (Hk1 : 0 < k1) (Hk2 : 0 < k2) :
-    truncate_aux (beta := beta) t (k1 + k2)
-      = truncate_aux (beta := beta) (truncate_aux (beta := beta) t k1) k2 := by
-  -- With the simplified `truncate_aux = pure`, both sides reduce to `t`.
-  simp [truncate_aux]
+    (Hk1 : 0 < k1) (Hk2 : 0 < k2) (Hβ : 1 < beta) :
+    truncate_aux (beta := beta) t (k1 + k2) =
+      truncate_aux (beta := beta) (truncate_aux (beta := beta) t k1) k2 := by
+  rcases t with ⟨m, e, l⟩
+  have Hk12 : 0 < k1 + k2 := by omega
+  rcases FloatSpec.Calc.Bracket.inbetween_float_ex
+      (beta := beta) (m := m) (e := e) (l := l) Hβ with ⟨x, Hx⟩
+  have B1 :
+      inbetween_float beta (m / (beta ^ Int.natAbs k1)) (e + k1)
+        x (Id.run (new_location (nb_steps := beta ^ Int.natAbs k1)
+          (k := m % (beta ^ Int.natAbs k1)) l)) :=
+    FloatSpec.Calc.Bracket.inbetween_float_new_location
+      (beta := beta) (x := x) (m := m) (e := e) (l := l) (k := k1)
+      Hk1 Hβ Hx
+  have B2 :
+      inbetween_float beta
+        ((m / (beta ^ Int.natAbs k1)) / (beta ^ Int.natAbs k2))
+        ((e + k1) + k2) x
+        (Id.run (new_location (nb_steps := beta ^ Int.natAbs k2)
+          (k := (m / (beta ^ Int.natAbs k1)) % (beta ^ Int.natAbs k2))
+          (Id.run (new_location (nb_steps := beta ^ Int.natAbs k1)
+            (k := m % (beta ^ Int.natAbs k1)) l)))) :=
+    FloatSpec.Calc.Bracket.inbetween_float_new_location
+      (beta := beta) (x := x) (m := m / (beta ^ Int.natAbs k1))
+      (e := e + k1)
+      (l := Id.run (new_location (nb_steps := beta ^ Int.natAbs k1)
+        (k := m % (beta ^ Int.natAbs k1)) l))
+      (k := k2) Hk2 Hβ B1
+  have B3 :
+      inbetween_float beta (m / (beta ^ Int.natAbs (k1 + k2)))
+        (e + (k1 + k2)) x
+        (Id.run (new_location (nb_steps := beta ^ Int.natAbs (k1 + k2))
+          (k := m % (beta ^ Int.natAbs (k1 + k2))) l)) :=
+    FloatSpec.Calc.Bracket.inbetween_float_new_location
+      (beta := beta) (x := x) (m := m) (e := e) (l := l) (k := k1 + k2)
+      Hk12 Hβ Hx
+  have B2' :
+      inbetween_float beta
+        ((m / (beta ^ Int.natAbs k1)) / (beta ^ Int.natAbs k2))
+        (e + (k1 + k2)) x
+        (Id.run (new_location (nb_steps := beta ^ Int.natAbs k2)
+          (k := (m / (beta ^ Int.natAbs k1)) % (beta ^ Int.natAbs k2))
+          (Id.run (new_location (nb_steps := beta ^ Int.natAbs k1)
+            (k := m % (beta ^ Int.natAbs k1)) l)))) := by
+    simpa [add_assoc] using B2
+  rcases FloatSpec.Calc.Bracket.inbetween_float_unique
+      (beta := beta) (x := x) (e := e + (k1 + k2))
+      (m := (m / (beta ^ Int.natAbs k1)) / (beta ^ Int.natAbs k2))
+      (l := Id.run (new_location (nb_steps := beta ^ Int.natAbs k2)
+        (k := (m / (beta ^ Int.natAbs k1)) % (beta ^ Int.natAbs k2))
+        (Id.run (new_location (nb_steps := beta ^ Int.natAbs k1)
+          (k := m % (beta ^ Int.natAbs k1)) l))))
+      (m' := m / (beta ^ Int.natAbs (k1 + k2)))
+      (l' := Id.run (new_location (nb_steps := beta ^ Int.natAbs (k1 + k2))
+        (k := m % (beta ^ Int.natAbs (k1 + k2))) l))
+      B2' B3 Hβ with ⟨hm, hl⟩
+  have hl' :
+      new_location (beta ^ Int.natAbs k2)
+        (m / (beta ^ Int.natAbs k1) % (beta ^ Int.natAbs k2))
+        (new_location (beta ^ Int.natAbs k1)
+          (m % (beta ^ Int.natAbs k1)) l) =
+      new_location (beta ^ Int.natAbs (k1 + k2))
+        (m % (beta ^ Int.natAbs (k1 + k2))) l := by
+    simpa using hl
+  simp [truncate_aux, add_assoc, hm, hl'.symm]
 
 theorem truncate_0 (e : Int) (l : Location) :
-    let r := truncate_aux (beta := beta) (0, e, l) 0
+    let r := truncate_triple (beta := beta) (fexp := fexp) (0, e, l)
     let m' := r.1
     m' = 0 := by
-  -- Directly reduces by unfolding the pure placeholder.
-  simp [truncate_aux]
+  dsimp [truncate_triple]
+  by_cases hk : 0 < fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) - e
+  · have hk' : e < fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) := by grind
+    simp [hk', truncate_aux]
+  · have hk' : ¬ e < fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) := by grind
+    simp [hk']
 
 theorem generic_format_truncate
-    [FloatSpec.Core.Generic_fmt.Valid_exp beta fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (m e : Int) (l : Location)
-    (hβ : 1 < beta)
-    (hbound : m ≠ 0 →
-      (FloatSpec.Core.Generic_fmt.cexp beta fexp ((FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta)))) ≤ e) :
+    (hβ : 1 < beta) :
     0 ≤ m →
-    let r := truncate_aux (beta := beta) (m, e, l) 0
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
     let m' := r.1; let e' := r.2.1;
     FloatSpec.Core.Generic_fmt.generic_format beta fexp ((FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  intro _
-  -- With the placeholder truncate_aux (k = 0), the triple is unchanged
-  simp [truncate_aux]
-  -- Discharge generic_format via the core F2R lemma under the explicit preconditions
-  have h := FloatSpec.Core.Generic_fmt.generic_format_F2R (beta := beta) (fexp := fexp) (m := m) (e := e)
-  simp [ pure] at h
-  apply h
-  constructor
-  · exact hβ
-  · intro hm
-    simpa using hbound hm
+  intro hm_nonneg
+  dsimp [truncate_triple]
+  set k : Int := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e with hk
+  by_cases hkpos : 0 < k
+  · set q : Int := m / beta ^ k.natAbs with hq
+    have hfmt :
+        FloatSpec.Core.Generic_fmt.generic_format beta fexp
+          (FloatSpec.Core.Defs.F2R
+            (FloatSpec.Core.Defs.FlocqFloat.mk q (e + k) :
+              FloatSpec.Core.Defs.FlocqFloat beta)) := by
+      have hgf := FloatSpec.Core.Generic_fmt.generic_format_F2R
+        (beta := beta) (fexp := fexp) (m := q) (e := e + k)
+      simp [pure] at hgf
+      apply hgf
+      constructor
+      · exact hβ
+      · intro hq_ne
+        have hk_nonneg : 0 ≤ k := le_of_lt hkpos
+        have hβ_digits : beta > 1 := by simpa using hβ
+        have hk_le_digits : k ≤ FloatSpec.Core.Digits.Zdigits beta m := by
+          by_contra hnot
+          have hdigits_lt : FloatSpec.Core.Digits.Zdigits beta m < k := lt_of_not_ge hnot
+          have hsmall : (Int.natAbs m : Int) < beta ^ k.natAbs := by
+            have hpow := (FloatSpec.Core.Digits.Zpower_gt_Zdigits
+              (beta := beta) (h_beta := hβ_digits) (e := k) (x := m)
+              (hβ := hβ_digits)) True.intro
+            exact hpow (le_of_lt hdigits_lt)
+          have hm_lt : m < beta ^ k.natAbs := by
+            simpa [Int.natAbs_of_nonneg hm_nonneg] using hsmall
+          have hq_zero : q = 0 := by
+            rw [hq]
+            exact Int.ediv_eq_zero_of_lt hm_nonneg hm_lt
+          exact hq_ne hq_zero
+        have hdiv := (FloatSpec.Core.Digits.Zdigits_div_Zpower
+          (beta := beta) (m := m) (e := k) (h_beta := hβ_digits))
+          ⟨hm_nonneg, hk_nonneg,
+            ⟨FloatSpec.Core.Digits.Zdigits beta m, rfl, hk_le_digits⟩⟩
+        rcases hdiv with ⟨dm, hdm, hq_digits⟩
+        have hq_digits' :
+            FloatSpec.Core.Digits.Zdigits beta q =
+              FloatSpec.Core.Digits.Zdigits beta m - k := by
+          simpa [q, hq, hdm] using hq_digits
+        have hmagF := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits
+          (beta := beta) (m := q) (e := e + k) hβ hq_ne
+        have hmag :
+            FloatSpec.Core.Raux.mag beta ((q : ℝ) * (beta : ℝ) ^ (e + k)) =
+              FloatSpec.Core.Digits.Zdigits beta q + (e + k) := by
+          simpa [FloatSpec.Core.Defs.F2R] using hmagF
+        have harg :
+            FloatSpec.Core.Digits.Zdigits beta q + (e + k) =
+              FloatSpec.Core.Digits.Zdigits beta m + e := by
+          rw [hq_digits']
+          ring
+        have hcexp :
+            FloatSpec.Core.Generic_fmt.cexp beta fexp
+              ((q : ℝ) * (beta : ℝ) ^ (e + k)) =
+              fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by
+          simp [FloatSpec.Core.Generic_fmt.cexp, hmag, harg]
+        have hk_eq : fexp (FloatSpec.Core.Digits.Zdigits beta m + e) = e + k := by
+          omega
+        rw [hcexp, hk_eq]
+    simpa [hkpos, truncate_aux, q, hq] using hfmt
+  · have hk_nonpos : fexp (FloatSpec.Core.Digits.Zdigits beta m + e) ≤ e := by
+      omega
+    by_cases hm_zero : m = 0
+    · have hzero :
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp (0 : ℝ) :=
+        FloatSpec.Core.Generic_fmt.generic_format_0_run (beta := beta) (fexp := fexp)
+      simpa [hkpos, hm_zero, FloatSpec.Core.Defs.F2R] using hzero
+    · have hfmt :
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp
+            (FloatSpec.Core.Defs.F2R
+              (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                FloatSpec.Core.Defs.FlocqFloat beta)) := by
+        have hgf := FloatSpec.Core.Generic_fmt.generic_format_F2R
+          (beta := beta) (fexp := fexp) (m := m) (e := e)
+        simp [pure] at hgf
+        apply hgf
+        constructor
+        · exact hβ
+        · intro hm_ne
+          have hmagF := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits
+            (beta := beta) (m := m) (e := e) hβ hm_ne
+          have hmag :
+              FloatSpec.Core.Raux.mag beta ((m : ℝ) * (beta : ℝ) ^ e) =
+                FloatSpec.Core.Digits.Zdigits beta m + e := by
+            simpa [FloatSpec.Core.Defs.F2R] using hmagF
+          have hcexp :
+              FloatSpec.Core.Generic_fmt.cexp beta fexp
+                ((m : ℝ) * (beta : ℝ) ^ e) =
+                fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by
+            simp [FloatSpec.Core.Generic_fmt.cexp, hmag]
+          simpa [hcexp] using hk_nonpos
+      simpa [hkpos] using hfmt
 
--- Coq-style truncate on a triple (m,e,l) using fexp and Zdigits
-noncomputable def truncate_triple (beta : Int) (fexp : Int → Int)
-    (t : Int × Int × Location) : (Int × Int × Location) :=
-  -- With the placeholder semantics used in this file, truncation on a triple
-  -- is observationally the identity.
-  t
+end Audit
 
-@[simp] lemma truncate_triple_eq (m e : Int) (l : Location) :
-    (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)) = (m, e, l) := by
-  rfl
+namespace Audit
 
-theorem truncate_correct_format (m e : Int) (hm : m ≠ 0)
-    (Hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp ((FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta))))
+theorem truncate_correct_format
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    (m e : Int) (hm : m ≠ 0)
+    (Hβ : 1 < beta)
+    (Hx : FloatSpec.Core.Generic_fmt.generic_format beta fexp
+      (FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+          FloatSpec.Core.Defs.FlocqFloat beta)))
     (He : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e)) :
     let x := (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e : FloatSpec.Core.Defs.FlocqFloat beta))
     let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, Location.loc_Exact)
-    let m' := r.1; let e' := r.2.1;
-    x = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk m' e' : FloatSpec.Core.Defs.FlocqFloat beta)) ∧
-    e' = e := by
-  -- All let-bound names reduce by computation since `truncate_triple` is identity here.
-  intro x; intro r; intro m'; intro e'
+    x = FloatSpec.Core.Defs.F2R
+      (FloatSpec.Core.Defs.FlocqFloat.mk r.1 r.2.1 :
+        FloatSpec.Core.Defs.FlocqFloat beta) ∧
+    r.2.1 = cexp beta fexp x := by
   classical
-  -- Compute the result triple and project its components
-  have hr : r = (m, e, Location.loc_Exact) := by
-    simp [r, truncate_triple]
-  -- Definitional equalities for the let-bound projections
-  have hmdef : m' = r.1 := rfl
-  have hedef : e' = r.2.1 := rfl
-  have hm' : m' = m := by simpa [hmdef, hr]
-  have he' : e' = e := by simpa [hedef, hr]
-  constructor
-  · -- Preserve the represented real value
-    simp [x, FloatSpec.Core.Defs.F2R, hm', he', hr]
-  · -- The exponent is unchanged
-    simpa [he']
+  let x := FloatSpec.Core.Defs.F2R
+    (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+      FloatSpec.Core.Defs.FlocqFloat beta)
+  have Hc : cexp beta fexp x = fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by
+    have hmag := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits
+      (beta := beta) (m := m) (e := e) Hβ hm
+    simpa [x, FloatSpec.Core.Generic_fmt.cexp] using congrArg fexp hmag
+  dsimp [truncate_triple]
+  set k : Int := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e with hk
+  by_cases Hk : 0 < k
+  · have Hk_nonneg : 0 ≤ k := le_of_lt Hk
+    have Hexp : e + k = cexp beta fexp x := by
+      rw [Hc]
+      omega
+    set p : Int := beta ^ k.natAbs with hp
+    set q : Int := m / p with hq
+    have Hβ_pos_int : (0 : Int) < beta := lt_trans Int.zero_lt_one Hβ
+    have Hβ_pos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast Hβ_pos_int
+    have Hβ_ne : (beta : ℝ) ≠ 0 := ne_of_gt Hβ_pos
+    have Hp_pos : 0 < p := by
+      simpa [p, hp] using pow_pos Hβ_pos_int k.natAbs
+    have Hp_cast : (p : ℝ) = (beta : ℝ) ^ k := by
+      calc
+        (p : ℝ) = ((beta ^ k.natAbs : Int) : ℝ) := by simp [p, hp]
+        _ = (beta : ℝ) ^ k.natAbs := by norm_num [Int.cast_pow]
+        _ = (beta : ℝ) ^ ((k.natAbs : Int)) := by
+              exact (zpow_natCast (beta : ℝ) k.natAbs).symm
+        _ = (beta : ℝ) ^ k := by
+              rw [Int.natAbs_of_nonneg Hk_nonneg]
+    let sm := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x
+    have Hsm_generic :
+        sm = ((FloatSpec.Core.Raux.Ztrunc sm : Int) : ℝ) := by
+      have htrip := FloatSpec.Core.Generic_fmt.scaled_mantissa_generic
+        (beta := beta) (fexp := fexp) (x := x)
+      simpa [sm, wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip Hx
+    have Hsm_div : sm = (m : ℝ) / (p : ℝ) := by
+      have Hpow :
+          (beta : ℝ) ^ e * (beta : ℝ) ^ (-(e + k)) = (p : ℝ)⁻¹ := by
+        calc
+          (beta : ℝ) ^ e * (beta : ℝ) ^ (-(e + k))
+              = (beta : ℝ) ^ (e + (-(e + k))) := by
+                  exact (_root_.zpow_add₀ Hβ_ne e (-(e + k))).symm
+          _ = (beta : ℝ) ^ (-k) := by ring_nf
+          _ = ((beta : ℝ) ^ k)⁻¹ := by
+                rw [zpow_neg]
+          _ = (p : ℝ)⁻¹ := by rw [Hp_cast]
+      calc
+        sm = x * (beta : ℝ) ^ (-(cexp beta fexp x)) := by
+          simp [sm, FloatSpec.Core.Generic_fmt.scaled_mantissa]
+        _ = x * (beta : ℝ) ^ (-(e + k)) := by rw [Hexp]
+        _ = ((m : ℝ) * (beta : ℝ) ^ e) *
+              (beta : ℝ) ^ (-(e + k)) := by
+                simp [x, FloatSpec.Core.Defs.F2R]
+        _ = (m : ℝ) * ((beta : ℝ) ^ e * (beta : ℝ) ^ (-(e + k))) := by ring
+        _ = (m : ℝ) * (p : ℝ)⁻¹ := by rw [Hpow]
+        _ = (m : ℝ) / (p : ℝ) := by rw [div_eq_mul_inv]
+    have Hfloor_div :
+        FloatSpec.Core.Raux.Zfloor ((m : ℝ) / (p : ℝ)) = q := by
+      have htrip := FloatSpec.Core.Raux.Zfloor_div_pos_payload m p Hp_pos
+      simpa [q, hq, wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip True.intro
+    have Hfloor_sm :
+        FloatSpec.Core.Raux.Zfloor sm = FloatSpec.Core.Raux.Ztrunc sm := by
+      rw [Hsm_generic]
+      simp [FloatSpec.Core.Raux.Zfloor]
+    have Hq_trunc :
+        q = FloatSpec.Core.Raux.Ztrunc sm := by
+      calc
+        q = FloatSpec.Core.Raux.Zfloor ((m : ℝ) / (p : ℝ)) := Hfloor_div.symm
+        _ = FloatSpec.Core.Raux.Zfloor sm := by rw [Hsm_div]
+        _ = FloatSpec.Core.Raux.Ztrunc sm := Hfloor_sm
+    have Hx_repr :
+        x =
+          FloatSpec.Core.Defs.F2R
+            (FloatSpec.Core.Defs.FlocqFloat.mk
+              (FloatSpec.Core.Raux.Ztrunc sm) (cexp beta fexp x) :
+              FloatSpec.Core.Defs.FlocqFloat beta) := by
+      simpa [x, FloatSpec.Core.Generic_fmt.generic_format, sm] using Hx
+    refine ⟨?_, ?_⟩
+    · simpa [x, truncate_aux, Hk, p, hp, q, hq, ← Hq_trunc, Hexp] using Hx_repr
+    · simpa [x, truncate_aux, Hk] using Hexp
+  · have Hk_nonneg : 0 ≤ k := by
+      rw [hk]
+      omega
+    have Hk_zero : k = 0 := le_antisymm (le_of_not_gt Hk) Hk_nonneg
+    have Heq_cexp : e = cexp beta fexp x := by
+      rw [Hc]
+      rw [hk] at Hk_zero
+      omega
+    refine ⟨?_, ?_⟩
+    · simp [Hk, x]
+    · simpa [Hk, x, FloatSpec.Core.Defs.F2R] using Heq_cexp
 
 theorem truncate_correct_partial'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
+    (Hβ : 1 < beta)
     (Hx : 0 < x)
     (H1 : inbetween_float beta m e x l)
-    (H2 : e = (cexp beta fexp x)) :
-    let r := truncate_aux (beta := beta) (m, e, l) ((cexp beta fexp x) - e)
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ e' = (cexp beta fexp x) := by
-  -- With the simplified truncate_aux = identity, the triple is unchanged.
-  -- Under the strengthened hypothesis H2 (e equals cexp), the conclusion follows.
-  -- Compute r and its projections in the goal and reduce to the inputs
-  -- r = (m, e, l), hence m' = m, e' = e, l' = l
-  simpa [truncate_aux]
-    using And.intro H1 H2
+    (H2 : e ≤ cexp beta fexp x) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    inbetween_float beta r.1 r.2.1 x r.2.2 ∧
+      r.2.1 = cexp beta fexp x := by
+  have Hcexp := cexp_inbetween_float (beta := beta) (fexp := fexp)
+    (x := x) (m := m) (e := e) (l := l) Hβ Hx H1 (Or.inl H2)
+  dsimp [truncate_triple]
+  by_cases Hk : 0 < fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e
+  · have Hin :=
+      FloatSpec.Calc.Bracket.inbetween_float_new_location
+        (beta := beta) (x := x) (m := m) (e := e) (l := l)
+        (k := fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e)
+        Hk Hβ H1
+    have Hk' : e < fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by omega
+    have He' :
+        e + (fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e) =
+          cexp beta fexp x := by
+      omega
+    refine ⟨?_, ?_⟩
+    · simpa [truncate_aux, Hk'] using Hin
+    · simpa [truncate_aux, Hk', He']
+  · have Heq : fexp (FloatSpec.Core.Digits.Zdigits beta m + e) = e := by
+      have hle : fexp (FloatSpec.Core.Digits.Zdigits beta m + e) ≤ e := by omega
+      have hge : e ≤ fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by
+        simpa [Hcexp] using H2
+      exact le_antisymm hle hge
+    refine ⟨?_, ?_⟩
+    · simpa [Hk, Heq] using H1
+    · simpa [Hcexp, Heq]
 
 theorem truncate_correct_partial
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
-    (Hx : 0 ≤ x)
+    (Hβ : 1 < beta)
+    (Hx : 0 < x)
     (H1 : inbetween_float beta m e x l)
-    (H2 : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨ l = Location.loc_Exact) :
-    let r := truncate_aux (beta := beta) (m, e, l) (max 0 ((cexp beta fexp x) - e))
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ (e' ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e') ∨ l' = Location.loc_Exact) := by
-  -- With the placeholder truncate_aux = identity, the triple is unchanged.
-  -- Thus r = (m, e, l) and m' = m, e' = e, l' = l; conclude directly from H1 and H2.
-  simpa [truncate_aux]
-    using And.intro H1 H2
+    (H2 : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e)) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    inbetween_float beta r.1 r.2.1 x r.2.2 ∧
+      r.2.1 = cexp beta fexp x := by
+  have Hcexp := cexp_inbetween_float (beta := beta) (fexp := fexp)
+    (x := x) (m := m) (e := e) (l := l) Hβ Hx H1 (Or.inr H2)
+  have H2' : e ≤ cexp beta fexp x := by
+    simpa [Hcexp] using H2
+  exact truncate_correct_partial' (beta := beta) (fexp := fexp)
+    (x := x) (m := m) (e := e) (l := l) Hβ Hx H1 H2'
 
 theorem truncate_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
+    (Hβ : 1 < beta)
     (Hx : 0 ≤ x)
     (H1 : inbetween_float beta m e x l)
     (Heq : e ≤ (cexp beta fexp x) ∨ l = Location.loc_Exact) :
-    let r := truncate_aux (beta := beta) (m, e, l) (max 0 ((cexp beta fexp x) - e))
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ (e' ≤ (cexp beta fexp x) ∨ l' = Location.loc_Exact) := by
-  -- With the placeholder truncate_aux = identity, the triple is unchanged,
-  -- so we can conclude directly from H1 and Heq.
-  simpa [truncate_aux]
-    using And.intro H1 Heq
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    inbetween_float beta r.1 r.2.1 x r.2.2 ∧
+      (r.2.1 = cexp beta fexp x ∨
+        (r.2.2 = Location.loc_Exact ∧
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp x)) := by
+  by_cases Hx_pos : 0 < x
+  · by_cases Hf : e ≤ fexp (FloatSpec.Core.Digits.Zdigits beta m + e)
+    · have hpartial := truncate_correct_partial (beta := beta) (fexp := fexp)
+        (x := x) (m := m) (e := e) (l := l) Hβ Hx_pos H1 Hf
+      exact ⟨hpartial.1, Or.inl hpartial.2⟩
+    · have Hf_lt : fexp (FloatSpec.Core.Digits.Zdigits beta m + e) < e :=
+        lt_of_not_ge Hf
+      rcases Heq with Heq_cexp | Heq_exact
+      · have hpartial := truncate_correct_partial' (beta := beta) (fexp := fexp)
+          (x := x) (m := m) (e := e) (l := l) Hβ Hx_pos H1 Heq_cexp
+        exact ⟨hpartial.1, Or.inl hpartial.2⟩
+      · subst l
+        have Hk : ¬ 0 < fexp (FloatSpec.Core.Digits.Zdigits beta m + e) - e := by
+          omega
+        have Hk' : ¬ e < fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by
+          omega
+        have Hx_eq :
+            x = FloatSpec.Core.Defs.F2R
+              (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                FloatSpec.Core.Defs.FlocqFloat beta) := by
+          dsimp [inbetween_float] at H1
+          cases H1 with
+          | inbetween_Exact h => exact h
+        have Hformat_F2R :
+            FloatSpec.Core.Generic_fmt.generic_format beta fexp
+              (FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta)) := by
+          have hgf := FloatSpec.Core.Generic_fmt.generic_format_F2R
+            (beta := beta) (fexp := fexp) (m := m) (e := e)
+          simp [pure] at hgf
+          apply hgf
+          constructor
+          · exact Hβ
+          · intro hm
+            have hmag := FloatSpec.Core.Float_prop.Raux_mag_F2R_Zdigits
+              (beta := beta) (m := m) (e := e) Hβ hm
+            have hcexp :
+                FloatSpec.Core.Generic_fmt.cexp beta fexp
+                  (FloatSpec.Core.Defs.F2R
+                    (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                      FloatSpec.Core.Defs.FlocqFloat beta)) =
+                  fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by
+              simpa [FloatSpec.Core.Generic_fmt.cexp] using congrArg fexp hmag
+            have hcexp' :
+                FloatSpec.Core.Generic_fmt.cexp beta fexp
+                  ((m : ℝ) * (beta : ℝ) ^ e) =
+                  fexp (FloatSpec.Core.Digits.Zdigits beta m + e) := by
+              simpa [FloatSpec.Core.Defs.F2R] using hcexp
+            simpa [hcexp'] using le_of_lt Hf_lt
+        refine ⟨?_, Or.inr ?_⟩
+        · simpa [truncate_triple, Hk, Hk'] using H1
+        · constructor
+          · simp [truncate_triple, Hk, Hk']
+          · simpa [Hx_eq] using Hformat_F2R
+  · have Hx_zero : x = 0 := le_antisymm (le_of_not_gt Hx_pos) Hx
+    have Hb := FloatSpec.Calc.Bracket.inbetween_float_bounds
+      (beta := beta) (x := x) (m := m) (e := e) (l := l) H1 Hβ
+    have hm_le : m ≤ 0 := by
+      have hleft : FloatSpec.Core.Defs.F2R
+          (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+            FloatSpec.Core.Defs.FlocqFloat beta) ≤ 0 := by
+        simpa [Hx_zero] using Hb.1
+      exact FloatSpec.Core.Float_prop.le_0_F2R
+        (beta := beta)
+        (f := FloatSpec.Core.Defs.FlocqFloat.mk m e) Hβ hleft
+    have hm_succ_pos : 0 < m + 1 := by
+      have hright : 0 < FloatSpec.Core.Defs.F2R
+          (FloatSpec.Core.Defs.FlocqFloat.mk (m + 1) e :
+            FloatSpec.Core.Defs.FlocqFloat beta) := by
+        simpa [Hx_zero] using Hb.2
+      exact FloatSpec.Core.Float_prop.gt_0_F2R
+        (beta := beta)
+        (f := FloatSpec.Core.Defs.FlocqFloat.mk (m + 1) e) Hβ hright
+    have hm_zero : m = 0 := by omega
+    subst m
+    have Hl_exact : l = Location.loc_Exact := by
+      dsimp [inbetween_float] at H1
+      cases H1 with
+      | inbetween_Exact _ => rfl
+      | inbetween_Inexact ord hbounds hcmp =>
+          have hbad : (0 : ℝ) < 0 := by
+            simpa [Hx_zero, FloatSpec.Core.Defs.F2R] using hbounds.1
+          exact False.elim (lt_irrefl (0 : ℝ) hbad)
+    subst l
+    dsimp [truncate_triple]
+    by_cases Hk : 0 < fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) - e
+    · have Hk' : e < fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) := by
+        omega
+      have Hloc :
+          FloatSpec.Calc.Bracket.new_location
+              (beta ^ (fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) - e).natAbs)
+              0 Location.loc_Exact =
+            Location.loc_Exact := by
+        simp [FloatSpec.Calc.Bracket.new_location,
+          FloatSpec.Calc.Bracket.new_location_even,
+          FloatSpec.Calc.Bracket.new_location_odd]
+      have Hin :
+          inbetween_float beta 0
+            (e + (fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) - e))
+            x Location.loc_Exact := by
+        dsimp [inbetween_float]
+        apply inbetween.inbetween_Exact
+        simp [Hx_zero, FloatSpec.Core.Defs.F2R]
+      refine ⟨?_, Or.inr ?_⟩
+      · simpa [truncate_aux, Hk', Hloc] using Hin
+      · constructor
+        · simp [truncate_aux, Hk', Hloc]
+        · simpa [Hx_zero] using
+            (FloatSpec.Core.Generic_fmt.generic_format_0_run
+              (beta := beta) (fexp := fexp))
+    · have Hk' : ¬ e < fexp (FloatSpec.Core.Digits.Zdigits beta 0 + e) := by
+        omega
+      have Hin : inbetween_float beta 0 e x Location.loc_Exact := by
+        dsimp [inbetween_float]
+        apply inbetween.inbetween_Exact
+        simp [Hx_zero, FloatSpec.Core.Defs.F2R]
+      refine ⟨?_, Or.inr ?_⟩
+      · simpa [Hk'] using Hin
+      · constructor
+        · simp [Hk']
+        · simpa [Hx_zero] using
+            (FloatSpec.Core.Generic_fmt.generic_format_0_run
+              (beta := beta) (fexp := fexp))
 
 theorem truncate_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (x : ℝ) (m e : Int) (l : Location)
+    (Hβ : 1 < beta)
     (Hx : 0 ≤ x)
     (H1 : inbetween_float beta m e x l)
     (H2 : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨ l = Location.loc_Exact) :
-    let r := truncate_aux (beta := beta) (m, e, l) (max 0 (fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) - e))
-    let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-    inbetween_float beta m' e' x l' ∧ (e' ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m')) + e') ∨ l' = Location.loc_Exact) := by
-  -- With the placeholder truncate_aux = identity, the triple is unchanged,
-  -- so  and therefore , , .
-  -- The goal then reduces exactly to the input assumptions  and .
-  simpa [truncate_aux]
-    using And.intro H1 H2
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    inbetween_float beta r.1 r.2.1 x r.2.2 ∧
+      (r.2.1 = cexp beta fexp x ∨
+        (r.2.2 = Location.loc_Exact ∧
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp x)) := by
+  have Heq :=
+    (cexp_inbetween_float_loc_Exact (beta := beta) (fexp := fexp)
+      (x := x) (m := m) (e := e) (l := l) Hβ Hx H1).mpr H2
+  exact truncate_correct' (beta := beta) (fexp := fexp)
+    (x := x) (m := m) (e := e) (l := l) Hβ Hx H1 Heq
+
+end Audit
+
+-- The proofs above are complete source ports; keep `Audit` as their
+-- implementation namespace but restore the public FLoCq declaration names.
+alias truncate_aux_comp := Audit.truncate_aux_comp
+alias truncate_0 := Audit.truncate_0
+alias generic_format_truncate := Audit.generic_format_truncate
+alias truncate_correct_format := Audit.truncate_correct_format
+alias truncate_correct_partial' := Audit.truncate_correct_partial'
+alias truncate_correct_partial := Audit.truncate_correct_partial
+alias truncate_correct' := Audit.truncate_correct'
+alias truncate_correct := Audit.truncate_correct
 
 theorem round_any_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) (choice : Int → Location → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
     (x : ℝ) (m e : Int) (l : Location)
     (Hx : inbetween_float beta m e x l)
-    (He : e = cexp beta fexp x)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
       = (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (choice m l) e : FloatSpec.Core.Defs.FlocqFloat beta)) := by
   classical
-  -- Align exponent to the canonical one and introduce the scaled mantissa
-  set e0 : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he0
-  have heq : e = e0 := by simpa [he0] using He
-  subst heq
-  set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
-  -- Derive the integer inbetween witness at the scaled mantissa
-  have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one Hβ
-  have hbpos : 0 < (beta : ℝ) := by exact_mod_cast hbposℤ
-  have hcpos : 0 < (beta : ℝ) ^ (-e0) := by simpa using (zpow_pos hbpos (-e0))
-  have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
-  have hzpow_ne : (beta : ℝ) ^ e0 ≠ 0 := zpow_ne_zero _ hbne
-  -- Transport Hx through positive scaling β^(−e0)
-  have HxR : FloatSpec.Calc.Bracket.inbetween ((m : ℝ) * (beta : ℝ) ^ e0)
-               (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) x l := by
-    simpa [inbetween_float, FloatSpec.Core.Defs.F2R, Int.cast_add, Int.cast_one] using Hx
-  have HxSm_scaled : FloatSpec.Calc.Bracket.inbetween
-                        (((m : ℝ) * (beta : ℝ) ^ e0) * (beta : ℝ) ^ (-e0))
-                        ((((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) * (beta : ℝ) ^ (-e0))
-                        (x * (beta : ℝ) ^ (-e0)) l := by
-    exact FloatSpec.Calc.Bracket.inbetween_mult_compat
-      (d := (m : ℝ) * (beta : ℝ) ^ e0) (u := ((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0)
-      (x := x) (l := l) (s := (beta : ℝ) ^ (-e0)) (Hs := hcpos) HxR
-  have hneg : (beta : ℝ) ^ (-e0) = ((beta : ℝ) ^ e0)⁻¹ := by
-    simp [zpow_neg, hzpow_ne]
-  have hcancel : (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (1 : ℝ) := by simp [hzpow_ne]
-  have hleft' : (↑m * (beta : ℝ) ^ e0) * ((beta : ℝ) ^ e0)⁻¹ = (↑m : ℝ) := by
-    simpa [mul_left_comm, mul_comm, mul_assoc] using congrArg (fun t => (↑m : ℝ) * t) hcancel
-  have hright' : (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) * ((beta : ℝ) ^ e0)⁻¹ = ((m + 1 : Int) : ℝ) := by
-    simpa [mul_left_comm, mul_comm, mul_assoc] using congrArg (fun t => ((m + 1 : Int) : ℝ) * t) hcancel
-  have Hx0 : FloatSpec.Calc.Bracket.inbetween (m : ℝ) ((m + 1 : Int) : ℝ)
-                (x * (beta : ℝ) ^ (-e0)) l := by
-    -- Also prepare endpoint simplifications in the printed `(↑m + 1)` form
-    have hleft'' : (↑m) * (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (↑m : ℝ) := by
+  rcases He with He | ⟨Hl, Hfmt⟩
+  · -- Align exponent to the canonical one and introduce the scaled mantissa.
+    set e0 : Int := FloatSpec.Core.Generic_fmt.cexp beta fexp x with he0
+    have heq : e = e0 := by simpa [he0] using He
+    subst heq
+    set sm : ℝ := FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x with hsm
+    -- Derive the integer inbetween witness at the scaled mantissa.
+    have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one Hβ
+    have hbpos : 0 < (beta : ℝ) := by exact_mod_cast hbposℤ
+    have hcpos : 0 < (beta : ℝ) ^ (-e0) := by simpa using (zpow_pos hbpos (-e0))
+    have hbne : (beta : ℝ) ≠ 0 := ne_of_gt hbpos
+    have hzpow_ne : (beta : ℝ) ^ e0 ≠ 0 := zpow_ne_zero _ hbne
+    -- Transport Hx through positive scaling β^(−e0).
+    have HxR : FloatSpec.Calc.Bracket.inbetween ((m : ℝ) * (beta : ℝ) ^ e0)
+                 (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) x l := by
+      simpa [inbetween_float, FloatSpec.Core.Defs.F2R, Int.cast_add, Int.cast_one] using Hx
+    have HxSm_scaled : FloatSpec.Calc.Bracket.inbetween
+                          (((m : ℝ) * (beta : ℝ) ^ e0) * (beta : ℝ) ^ (-e0))
+                          ((((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) * (beta : ℝ) ^ (-e0))
+                          (x * (beta : ℝ) ^ (-e0)) l := by
+      exact FloatSpec.Calc.Bracket.inbetween_mult_compat
+        (d := (m : ℝ) * (beta : ℝ) ^ e0) (u := ((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0)
+        (x := x) (l := l) (s := (beta : ℝ) ^ (-e0)) (Hs := hcpos) HxR
+    have hneg : (beta : ℝ) ^ (-e0) = ((beta : ℝ) ^ e0)⁻¹ := by
+      simp [zpow_neg, hzpow_ne]
+    have hcancel : (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (1 : ℝ) := by simp [hzpow_ne]
+    have hleft' : (↑m * (beta : ℝ) ^ e0) * ((beta : ℝ) ^ e0)⁻¹ = (↑m : ℝ) := by
       simpa [mul_left_comm, mul_comm, mul_assoc] using congrArg (fun t => (↑m : ℝ) * t) hcancel
-    have hright'' : (↑m + 1) * (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (↑m + 1) := by
-      simpa [mul_left_comm, mul_comm, mul_assoc] using congrArg (fun t => ((↑m : ℝ) + 1) * t) hcancel
-    have Htmp := HxSm_scaled
-    -- Simplify both endpoints using cancellation and express the point with β^(−e0)
-    simpa [hneg, hleft', hright', hleft'', hright'', Int.cast_add, Int.cast_one] using Htmp
-  have hsm_def : sm = x * (beta : ℝ) ^ (-e0) := by
-    simp [hsm, FloatSpec.Core.Generic_fmt.scaled_mantissa, he0, FloatSpec.Core.Generic_fmt.cexp]
-  have Hin : inbetween_int m sm l := by
-    simpa [inbetween_int, hsm_def] using Hx0
-  -- Conclude by the general rounding lemma at the scaled mantissa witness
-  exact inbetween_float_round (beta := beta) (fexp := fexp)
-    (rnd := rnd) (choice := choice) (Hc := Hc)
-    (x := x) (m := m) (e := e0) (l := l)
-    (He := rfl) (Hin := Hin) (Hβ := Hβ)
+    have hright' : (((m + 1 : Int) : ℝ) * (beta : ℝ) ^ e0) * ((beta : ℝ) ^ e0)⁻¹ = ((m + 1 : Int) : ℝ) := by
+      simpa [mul_left_comm, mul_comm, mul_assoc] using congrArg (fun t => ((m + 1 : Int) : ℝ) * t) hcancel
+    have Hx0 : FloatSpec.Calc.Bracket.inbetween (m : ℝ) ((m + 1 : Int) : ℝ)
+                  (x * (beta : ℝ) ^ (-e0)) l := by
+      have hleft'' : (↑m) * (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (↑m : ℝ) := by
+        simpa [mul_left_comm, mul_comm, mul_assoc] using congrArg (fun t => (↑m : ℝ) * t) hcancel
+      have hright'' : (↑m + 1) * (beta : ℝ) ^ e0 * ((beta : ℝ) ^ e0)⁻¹ = (↑m + 1) := by
+        simpa [mul_left_comm, mul_comm, mul_assoc] using congrArg (fun t => ((↑m : ℝ) + 1) * t) hcancel
+      have Htmp := HxSm_scaled
+      simpa [hneg, hleft', hright', hleft'', hright'', Int.cast_add, Int.cast_one] using Htmp
+    have hsm_def : sm = x * (beta : ℝ) ^ (-e0) := by
+      simp [hsm, FloatSpec.Core.Generic_fmt.scaled_mantissa, he0, FloatSpec.Core.Generic_fmt.cexp]
+    have Hin : inbetween_int m sm l := by
+      simpa [inbetween_int, hsm_def] using Hx0
+    have Hx_cexp : inbetween_float beta m (cexp beta fexp x) x l := by
+      simpa [he0] using Hx
+    exact inbetween_float_round (beta := beta) (fexp := fexp)
+      (rnd := rnd) (choice := choice) (Hc := Hc)
+      (x := x) (m := m) (l := l)
+      (Hin := Hx_cexp) (Hβ := Hβ)
+  · subst l
+    dsimp [inbetween_float] at Hx
+    cases Hx with
+    | inbetween_Exact Hx_eq =>
+        have hround :
+            FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x = x :=
+          FloatSpec.Core.Generic_fmt.roundR_generic
+            (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) Hβ Hfmt
+        have Hin_exact : inbetween_int m (m : ℝ) Location.loc_Exact := by
+          dsimp [inbetween_int]
+          exact FloatSpec.Calc.Bracket.inbetween.inbetween_Exact rfl
+        have hchoice : choice m Location.loc_Exact = m := by
+          have hc := Hc (m : ℝ) m Location.loc_Exact Hin_exact
+          exact hc.symm.trans (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR (rnd := rnd) m)
+        calc
+          FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x
+              = x := hround
+          _ = FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := Hx_eq
+          _ = FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk (choice m Location.loc_Exact) e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := by
+              simp [hchoice]
+
+theorem round_DN_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e x l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zfloor y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zfloor y)
+    (choice := fun m _ => m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_DN (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
 
 theorem round_trunc_any_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) (choice : Int → Location → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
     (Hx : inbetween_float beta m e x l)
-    (Heq : e = FloatSpec.Core.Generic_fmt.cexp beta fexp x)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨ l = Location.loc_Exact)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (choice m' l') e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  -- With our placeholder, truncation returns the same triple, so m' = m, e' = e, l' = l.
-  classical
-  have hr : truncate_triple (beta := beta) (fexp := fexp) (m, e, l) = (m, e, l) := by
-    simp [truncate_triple]
-  have hm' : (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l); r.1) = m := by
-    simpa [hr]
-  have he' : (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l); r.2.1) = e := by
-    simpa [hr]
-  have hl' : (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l); r.2.2) = l := by
-    simpa [hr]
-  -- Apply the general rounding lemma at (m, e, l)
-  have h :=
-    round_any_correct (beta := beta) (fexp := fexp)
-      (rnd := rnd) (choice := choice) (Hc := Hc)
-      (x := x) (m := m) (e := e) (l := l)
-      (Hx := Hx) (He := Heq) (Hβ := Hβ)
-  -- Rewrite the RHS to use m', e', l' and conclude
-  simpa [hm', he', hl'] using h
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk (choice r.1 r.2.2) r.2.1 :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+  have htr := Audit.truncate_correct (beta := beta) (fexp := fexp)
+    (x := x) (m := m) (e := e) (l := l) Hβ Hx0 Hx Heq
+  change FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x =
+    FloatSpec.Core.Defs.F2R
+      (FloatSpec.Core.Defs.FlocqFloat.mk (choice r.1 r.2.2) r.2.1 :
+        FloatSpec.Core.Defs.FlocqFloat beta)
+  exact round_any_correct (beta := beta) (fexp := fexp)
+    (rnd := rnd) (choice := choice) (Hc := Hc)
+    (x := x) (m := r.1) (e := r.2.1) (l := r.2.2)
+    (Hx := htr.1) (He := htr.2) (Hβ := Hβ)
 
 theorem round_trunc_any_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int) (choice : Int → Location → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m x l → rnd x = choice m l)
     (x : ℝ) (m e : Int) (l : Location)
     (Hx0 : 0 ≤ x)
     (Hx : inbetween_float beta m e x l)
-    (Heq : e = cexp beta fexp x)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk (choice m' l') e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  -- Reuse the equality-case lemma directly.
-  exact round_trunc_any_correct (beta := beta) (fexp := fexp)
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk (choice r.1 r.2.2) r.2.1 :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+  have htr := Audit.truncate_correct' (beta := beta) (fexp := fexp)
+    (x := x) (m := m) (e := e) (l := l) Hβ Hx0 Hx Heq
+  change FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x =
+    FloatSpec.Core.Defs.F2R
+      (FloatSpec.Core.Defs.FlocqFloat.mk (choice r.1 r.2.2) r.2.1 :
+        FloatSpec.Core.Defs.FlocqFloat beta)
+  exact round_any_correct (beta := beta) (fexp := fexp)
     (rnd := rnd) (choice := choice) (Hc := Hc)
+    (x := x) (m := r.1) (e := r.2.1) (l := r.2.2)
+    (Hx := htr.1) (He := htr.2) (Hβ := Hβ)
+
+theorem round_trunc_DN_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zfloor y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk r.1 r.2.1 :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zfloor y)
+    (choice := fun m _ => m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_DN (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_DN_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zfloor y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk r.1 r.2.1 :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zfloor y)
+    (choice := fun m _ => m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_DN (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_UP_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e x l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zceil y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk (cond_incr (round_UP l) m) e :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zceil y)
+    (choice := fun m l => cond_incr (round_UP l) m)
+    (Hc := by
+      intro x m l Hl
+      simpa [round_UP, round_UP'] using
+        (inbetween_int_UP (x := x) (m := m) (l := l) Hl))
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_UP_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zceil y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk (cond_incr (round_UP r.2.2) r.1) r.2.1 :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zceil y)
+    (choice := fun m l => cond_incr (round_UP l) m)
+    (Hc := by
+      intro x m l Hl
+      simpa [round_UP, round_UP'] using
+        (inbetween_int_UP (x := x) (m := m) (l := l) Hl))
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_UP_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zceil y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk (cond_incr (round_UP r.2.2) r.1) r.2.1 :
+          FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zceil y)
+    (choice := fun m l => cond_incr (round_UP l) m)
+    (Hc := by
+      intro x m l Hl
+      simpa [round_UP, round_UP'] using
+        (inbetween_int_UP (x := x) (m := m) (l := l) Hl))
     (x := x) (m := m) (e := e) (l := l)
     (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 theorem round_sign_any_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int)
     (choice : Bool → Int → Location → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m (|x|) l →
             rnd x = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
                        (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m l)))
     (x : ℝ) (m e : Int) (l : Location)
-    (He : e = cexp beta fexp x)
-    (Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
     (Hβ : 1 < beta) :
     (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
       = (FloatSpec.Core.Defs.F2R
              (FloatSpec.Core.Defs.FlocqFloat.mk
                (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
-                   (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m l))
+               (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m l))
                e : FloatSpec.Core.Defs.FlocqFloat beta)) := by
-  -- Directly reuse the specialized sign-aware rounding lemma above
-  exact inbetween_float_round_sign (beta := beta) (fexp := fexp)
-    (rnd := rnd) (choice := choice) (Hc := Hc)
-    (x := x) (m := m) (e := e) (l := l) (He := He) (Hsm := Hsm) (Hβ := Hβ)
+  classical
+  rcases He with He | ⟨Hl, Hfmt⟩
+  · have Hsm : inbetween_int m
+        (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l :=
+      inbetween_abs_scaled_mantissa (beta := beta) (fexp := fexp)
+        (x := x) (m := m) (e := e) (l := l) (He := He) (Hx := Hx) (Hβ := Hβ)
+    exact inbetween_float_round_sign (beta := beta) (fexp := fexp)
+      (rnd := rnd) (choice := choice) (Hc := Hc)
+      (x := x) (m := m) (e := e) (l := l) (He := He) (Hsm := Hsm) (Hβ := Hβ)
+  · subst l
+    dsimp [inbetween_float] at Hx
+    cases Hx with
+    | inbetween_Exact Hx_abs_eq =>
+        have hround :
+            FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x = x :=
+          FloatSpec.Core.Generic_fmt.roundR_generic
+            (beta := beta) (fexp := fexp) (rnd := rnd) (x := x) Hβ Hfmt
+        by_cases hxlt : x < 0
+        · have hb : FloatSpec.Core.Raux.Rlt_bool x 0 = true := by
+            simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+          have hx_eq_neg :
+              x = -FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := by
+            have htmp :
+                -x = FloatSpec.Core.Defs.F2R
+                  (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                    FloatSpec.Core.Defs.FlocqFloat beta) := by
+              simpa [abs_of_neg hxlt] using Hx_abs_eq
+            linarith
+          have hF_pos :
+              0 < FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := by
+            simpa [← Hx_abs_eq] using abs_pos.mpr (ne_of_lt hxlt)
+          have hm_pos : 0 < m :=
+            FloatSpec.Core.Float_prop.gt_0_F2R
+              (beta := beta)
+              (f := FloatSpec.Core.Defs.FlocqFloat.mk m e) Hβ hF_pos
+          have hm_pos_real : (0 : ℝ) < (m : ℝ) := by exact_mod_cast hm_pos
+          have Hin_exact : inbetween_int m (|(-(m : ℝ))|) Location.loc_Exact := by
+            dsimp [inbetween_int]
+            apply FloatSpec.Calc.Bracket.inbetween.inbetween_Exact
+            simp [abs_of_pos hm_pos_real]
+          have hb_neg_m : FloatSpec.Core.Raux.Rlt_bool (-(m : ℝ)) 0 = true := by
+            simp [FloatSpec.Core.Raux.Rlt_bool, hm_pos_real]
+          have hc := Hc (-(m : ℝ)) m Location.loc_Exact Hin_exact
+          have hc_s :
+              rnd (-(m : ℝ)) =
+                FloatSpec.Core.Zaux.cond_Zopp true (choice true m Location.loc_Exact) := by
+            simpa [hb_neg_m] using hc
+          have hvalid :
+              rnd (-(m : ℝ)) = -m := by
+            simpa using
+              (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR
+                (rnd := rnd) (-m))
+          have hcond :
+              FloatSpec.Core.Zaux.cond_Zopp true
+                (choice true m Location.loc_Exact) = -m := by
+            exact hc_s.symm.trans hvalid
+          have hopp :
+              -FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) =
+              FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk (-m) e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) :=
+            FloatSpec.Core.Float_prop.F2R_Zopp
+              (beta := beta)
+              (f := FloatSpec.Core.Defs.FlocqFloat.mk m e) Hβ
+          calc
+            FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x
+                = x := hround
+            _ = -FloatSpec.Core.Defs.F2R
+                  (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                    FloatSpec.Core.Defs.FlocqFloat beta) := hx_eq_neg
+            _ = FloatSpec.Core.Defs.F2R
+                  (FloatSpec.Core.Defs.FlocqFloat.mk (-m) e :
+                    FloatSpec.Core.Defs.FlocqFloat beta) := hopp
+            _ = FloatSpec.Core.Defs.F2R
+                  (FloatSpec.Core.Defs.FlocqFloat.mk
+                    (FloatSpec.Core.Zaux.cond_Zopp
+                      (FloatSpec.Core.Raux.Rlt_bool x 0)
+                      (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m Location.loc_Exact))
+                    e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+                simp [hb, hcond]
+        · have hx_nonneg : 0 ≤ x := le_of_not_gt hxlt
+          have hb : FloatSpec.Core.Raux.Rlt_bool x 0 = false := by
+            simp [FloatSpec.Core.Raux.Rlt_bool, hxlt]
+          have hx_eq :
+              x = FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := by
+            simpa [abs_of_nonneg hx_nonneg] using Hx_abs_eq
+          have hF_nonneg :
+              0 ≤ FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta) := by
+            simpa [hx_eq] using hx_nonneg
+          have hm_nonneg : 0 ≤ m :=
+            FloatSpec.Core.Float_prop.ge_0_F2R
+              (beta := beta)
+              (f := FloatSpec.Core.Defs.FlocqFloat.mk m e) Hβ hF_nonneg
+          have hm_nonneg_real : (0 : ℝ) ≤ (m : ℝ) := by exact_mod_cast hm_nonneg
+          have Hin_exact : inbetween_int m (|(m : ℝ)|) Location.loc_Exact := by
+            dsimp [inbetween_int]
+            apply FloatSpec.Calc.Bracket.inbetween.inbetween_Exact
+            simp [abs_of_nonneg hm_nonneg_real]
+          have hb_m : FloatSpec.Core.Raux.Rlt_bool (m : ℝ) 0 = false := by
+            simp [FloatSpec.Core.Raux.Rlt_bool, not_lt.mpr hm_nonneg_real]
+          have hc := Hc (m : ℝ) m Location.loc_Exact Hin_exact
+          have hc_s :
+              rnd (m : ℝ) =
+                FloatSpec.Core.Zaux.cond_Zopp false (choice false m Location.loc_Exact) := by
+            simpa [hb_m] using hc
+          have hvalid :
+              rnd (m : ℝ) = m := by
+            simpa using
+              (FloatSpec.Core.Generic_fmt.Valid_rnd.Zrnd_IZR
+                (rnd := rnd) m)
+          have hcond :
+              FloatSpec.Core.Zaux.cond_Zopp false
+                (choice false m Location.loc_Exact) = m := by
+            exact hc_s.symm.trans hvalid
+          calc
+            FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x
+                = x := hround
+            _ = FloatSpec.Core.Defs.F2R
+                  (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                    FloatSpec.Core.Defs.FlocqFloat beta) := hx_eq
+            _ = FloatSpec.Core.Defs.F2R
+                  (FloatSpec.Core.Defs.FlocqFloat.mk
+                    (FloatSpec.Core.Zaux.cond_Zopp
+                      (FloatSpec.Core.Raux.Rlt_bool x 0)
+                      (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m Location.loc_Exact))
+                    e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+                simp [hb, hcond]
 
 theorem round_trunc_sign_any_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int)
     (choice : Bool → Int → Location → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m (|x|) l →
             rnd x = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
                        (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m l)))
     (x : ℝ) (m e : Int) (l : Location)
-    (Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l)
-    (Heq : e = cexp beta fexp x)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l))
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk
-            (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
-               (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m' l'))
-            e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  classical
-  -- Identity truncation: rewrite the RHS projections
-  have hr : (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)) = (m, e, l) := by
-    simp [truncate_triple]
-  have hm' : (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)); r.1) = m := by
-    simpa [hr]
-  have he' : (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)); r.2.1) = e := by
-    simpa [hr]
-  have hl' : (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l)); r.2.2) = l := by
-    simpa [hr]
-  -- Apply the sign-aware rounding lemma with the provided inbetween witness
-  have h :=
-    round_sign_any_correct (beta := beta) (fexp := fexp)
-      (rnd := rnd) (choice := choice) (Hc := Hc)
-      (x := x) (m := m) (e := e) (l := l)
-      (He := Heq) (Hsm := Hsm) (Hβ := Hβ)
-  simpa [hm', he', hl'] using h
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (choice (FloatSpec.Core.Raux.Rlt_bool x 0) r.1 r.2.2))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+  have hcexp_abs :
+      cexp beta fexp |x| = cexp beta fexp x := by
+    have htrip := FloatSpec.Core.Generic_fmt.cexp_abs
+      (beta := beta) (fexp := fexp) (x := x)
+    simpa [wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip Hβ
+  have Heq_abs : e ≤ cexp beta fexp |x| ∨ l = Location.loc_Exact := by
+    rcases Heq with Heq | Heq
+    · exact Or.inl (by simpa [hcexp_abs] using Heq)
+    · exact Or.inr Heq
+  have htr := Audit.truncate_correct' (beta := beta) (fexp := fexp)
+    (x := |x|) (m := m) (e := e) (l := l)
+    Hβ (abs_nonneg x) Hx Heq_abs
+  have Hpost :
+      r.2.1 = cexp beta fexp x ∨
+        (r.2.2 = Location.loc_Exact ∧
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp x) := by
+    rcases htr.2 with Hexp | ⟨Hloc, Hfmt_abs⟩
+    · exact Or.inl (by simpa [hcexp_abs] using Hexp)
+    · have Hfmt_x :
+          FloatSpec.Core.Generic_fmt.generic_format beta fexp x := by
+        have htrip := FloatSpec.Core.Generic_fmt.generic_format_abs_inv
+          (beta := beta) (fexp := fexp) (x := x)
+        simpa [wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip Hfmt_abs
+      exact Or.inr ⟨Hloc, Hfmt_x⟩
+  change FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x =
+    FloatSpec.Core.Defs.F2R
+      (FloatSpec.Core.Defs.FlocqFloat.mk
+        (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+          (choice (FloatSpec.Core.Raux.Rlt_bool x 0) r.1 r.2.2))
+        r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta)
+  exact round_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := rnd) (choice := choice) (Hc := Hc)
+    (x := x) (m := r.1) (e := r.2.1) (l := r.2.2)
+    (Hx := htr.1) (He := Hpost) (Hβ := Hβ)
 
 theorem round_trunc_sign_any_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
     (rnd : ℝ → Int)
     (choice : Bool → Int → Location → Int)
+    [FloatSpec.Core.Generic_fmt.Valid_rnd rnd]
     (Hc : ∀ x m l, inbetween_int m (|x|) l →
             rnd x = (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
                        (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m l)))
     (x : ℝ) (m e : Int) (l : Location)
-    (Hx0 : 0 ≤ x)
-    (Hsm : inbetween_int m (|(FloatSpec.Core.Generic_fmt.scaled_mantissa beta fexp x)|) l)
-    (Heq : e = cexp beta fexp x)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨ l = Location.loc_Exact)
     (Hβ : 1 < beta) :
-    (FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x)
-      = (let r := (truncate_triple (beta := beta) (fexp := fexp) (m, e, l))
-         let m' := r.1; let e' := r.2.1; let l' := r.2.2;
-         (FloatSpec.Core.Defs.F2R (FloatSpec.Core.Defs.FlocqFloat.mk
-            (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
-               (choice (FloatSpec.Core.Raux.Rlt_bool x 0) m' l'))
-            e' : FloatSpec.Core.Defs.FlocqFloat beta))) := by
-  -- Reduce to the auxiliary equality-case lemma with explicit Hsm witness
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp rnd x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (choice (FloatSpec.Core.Raux.Rlt_bool x 0) r.1 r.2.2))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  have hcexp_abs :
+      cexp beta fexp |x| = cexp beta fexp x := by
+    have htrip := FloatSpec.Core.Generic_fmt.cexp_abs
+      (beta := beta) (fexp := fexp) (x := x)
+    simpa [wp, Std.Do.PostCond.noThrow, Id.run, pure] using htrip Hβ
+  have Heq_abs :
+      e ≤ cexp beta fexp |x| ∨ l = Location.loc_Exact :=
+    (cexp_inbetween_float_loc_Exact (beta := beta) (fexp := fexp)
+      (x := |x|) (m := m) (e := e) (l := l)
+      Hβ (abs_nonneg x) Hx).mpr Heq
+  have Heq_x : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact := by
+    rcases Heq_abs with Heq_abs | Heq_abs
+    · exact Or.inl (by simpa [hcexp_abs] using Heq_abs)
+    · exact Or.inr Heq_abs
   exact round_trunc_sign_any_correct' (beta := beta) (fexp := fexp)
     (rnd := rnd) (choice := choice) (Hc := Hc)
     (x := x) (m := m) (e := e) (l := l)
-    (Hsm := Hsm) (Heq := Heq) (Hβ := Hβ)
+    (Hx := Hx) (Heq := Heq_x) (Hβ := Hβ)
+
+theorem round_sign_DN_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zfloor y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_sign_DN (FloatSpec.Core.Raux.Rlt_bool x 0) l) m))
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zfloor y)
+    (choice := fun s m l => cond_incr (round_sign_DN s l) m)
+    (Hc := by
+      intro x m l Hl
+      simpa [round_sign_DN, round_sign_DN'] using
+        (inbetween_int_DN_sign (x := x) (m := m) (l := l) Hl))
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_sign_DN_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zfloor y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_sign_DN (FloatSpec.Core.Raux.Rlt_bool x 0) r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zfloor y)
+    (choice := fun s m l => cond_incr (round_sign_DN s l) m)
+    (Hc := by
+      intro x m l Hl
+      simpa [round_sign_DN, round_sign_DN'] using
+        (inbetween_int_DN_sign (x := x) (m := m) (l := l) Hl))
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_sign_DN_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zfloor y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zfloor y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_sign_DN (FloatSpec.Core.Raux.Rlt_bool x 0) r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zfloor y)
+    (choice := fun s m l => cond_incr (round_sign_DN s l) m)
+    (Hc := by
+      intro x m l Hl
+      simpa [round_sign_DN, round_sign_DN'] using
+        (inbetween_int_DN_sign (x := x) (m := m) (l := l) Hl))
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_sign_UP_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zceil y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_sign_UP (FloatSpec.Core.Raux.Rlt_bool x 0) l) m))
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zceil y)
+    (choice := fun s m l => cond_incr (round_sign_UP s l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_UP_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_sign_UP_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zceil y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_sign_UP (FloatSpec.Core.Raux.Rlt_bool x 0) r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zceil y)
+    (choice := fun s m l => cond_incr (round_sign_UP s l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_UP_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_sign_UP_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Zceil y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Zceil y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_sign_UP (FloatSpec.Core.Raux.Rlt_bool x 0) r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Zceil y)
+    (choice := fun s m l => cond_incr (round_sign_UP s l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_UP_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_ZR_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e x l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Ztrunc y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool m 0) l) m)
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Ztrunc y)
+    (choice := fun m l => cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool m 0) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_ZR (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_ZR_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Ztrunc y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool r.1 0) r.2.2) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Ztrunc y)
+    (choice := fun m l => cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool m 0) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_ZR (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_ZR_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Ztrunc y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool r.1 0) r.2.2) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Ztrunc y)
+    (choice := fun m l => cond_incr (round_ZR (FloatSpec.Core.Zaux.Zlt_bool m 0) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_ZR (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_sign_ZR_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Ztrunc y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0) m)
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Ztrunc y)
+    (choice := fun _ m _ => m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_ZR_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_sign_ZR_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Ztrunc y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Ztrunc y)
+    (choice := fun _ m _ => m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_ZR_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_sign_ZR_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd (fun y => FloatSpec.Core.Raux.Ztrunc y)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (fun y => FloatSpec.Core.Raux.Ztrunc y) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := fun y => FloatSpec.Core.Raux.Ztrunc y)
+    (choice := fun _ m _ => m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_ZR_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_NE_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e x l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_N (!(decide (2 ∣ m))) l) m)
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+    (choice := fun m l => cond_incr (round_N (!(decide (2 ∣ m))) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NE (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_NE_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_N (!(decide (2 ∣ r.1))) r.2.2) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+    (choice := fun m l => cond_incr (round_N (!(decide (2 ∣ m))) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NE (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_NE_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_N (!(decide (2 ∣ r.1))) r.2.2) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+    (choice := fun m l => cond_incr (round_N (!(decide (2 ∣ m))) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NE (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_sign_NE_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_N (!(decide (2 ∣ m))) l) m))
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+    (choice := fun _ m l => cond_incr (round_N (!(decide (2 ∣ m))) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NE_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_sign_NE_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_N (!(decide (2 ∣ r.1))) r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+    (choice := fun _ m l => cond_incr (round_N (!(decide (2 ∣ m))) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NE_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_sign_NE_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t)))) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_N (!(decide (2 ∣ r.1))) r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t => !(decide (2 ∣ t))))
+    (choice := fun _ m l => cond_incr (round_N (!(decide (2 ∣ m))) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NE_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_NA_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e x l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_N (decide (0 ≤ m)) l) m)
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)
+    (choice := fun m l => cond_incr (round_N (decide (0 ≤ m)) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NA (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_NA_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_N (decide (0 ≤ r.1)) r.2.2) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)
+    (choice := fun m l => cond_incr (round_N (decide (0 ≤ m)) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NA (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_NA_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx0 : 0 ≤ x)
+    (Hx : inbetween_float beta m e x l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (cond_incr (round_N (decide (0 ≤ r.1)) r.2.2) r.1)
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)
+    (choice := fun m l => cond_incr (round_N (decide (0 ≤ m)) l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NA (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx0 := Hx0) (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_sign_NA_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (He : e = cexp beta fexp x ∨
+      (l = Location.loc_Exact ∧ FloatSpec.Core.Generic_fmt.generic_format beta fexp x))
+    (Hβ : 1 < beta) :
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_N true l) m))
+          e : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)
+    (choice := fun _ m l => cond_incr (round_N true l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NA_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (He := He) (Hβ := Hβ)
+
+theorem round_trunc_sign_NA_correct
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ fexp (((FloatSpec.Core.Digits.Zdigits beta m)) + e) ∨
+      l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_N true r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)
+    (choice := fun _ m l => cond_incr (round_N true l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NA_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
+
+theorem round_trunc_sign_NA_correct'
+    [FloatSpec.Core.Generic_fmt.Valid_exp fexp]
+    [FloatSpec.Core.Generic_fmt.Valid_rnd
+      (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)]
+    (x : ℝ) (m e : Int) (l : Location)
+    (Hx : inbetween_float beta m e (|x|) l)
+    (Heq : e ≤ cexp beta fexp x ∨ l = Location.loc_Exact)
+    (Hβ : 1 < beta) :
+    let r := truncate_triple (beta := beta) (fexp := fexp) (m, e, l)
+    FloatSpec.Core.Generic_fmt.roundR beta fexp
+        (FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA) x =
+      FloatSpec.Core.Defs.F2R
+        (FloatSpec.Core.Defs.FlocqFloat.mk
+          (FloatSpec.Core.Zaux.cond_Zopp (FloatSpec.Core.Raux.Rlt_bool x 0)
+            (cond_incr (round_N true r.2.2) r.1))
+          r.2.1 : FloatSpec.Core.Defs.FlocqFloat beta) := by
+  exact round_trunc_sign_any_correct' (beta := beta) (fexp := fexp)
+    (rnd := FloatSpec.Core.Generic_fmt.Znearest FloatSpec.Core.Generic_fmt.ZnearestA)
+    (choice := fun _ m l => cond_incr (round_N true l) m)
+    (Hc := by
+      intro x m l Hl
+      exact inbetween_int_NA_sign (x := x) (m := m) (l := l) Hl)
+    (x := x) (m := m) (e := e) (l := l)
+    (Hx := Hx) (Heq := Heq) (Hβ := Hβ)
 
 variable (emin : Int)
 
@@ -2066,8 +3764,11 @@ theorem truncate_FIX_correct
     let r := (truncate_FIX (beta := beta) (emin := emin) (m, e, l))
     let m' := r.1; let e' := r.2.1; let l' := r.2.2;
     inbetween_float beta m' e' x l' ∧
-    (e' ≤ FloatSpec.Core.Generic_fmt.cexp beta (fun k => max emin k) x ∨
-     l' = Location.loc_Exact) := by
+    (e' = FloatSpec.Core.Generic_fmt.cexp beta
+        (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x ∨
+      (l' = Location.loc_Exact ∧
+        FloatSpec.Core.Generic_fmt.generic_format beta
+          (FloatSpec.Core.FIX.FIX_exp (emin := emin)) x)) := by
   classical
   -- Abbreviations
   let k := emin - e
@@ -2095,9 +3796,8 @@ theorem truncate_FIX_correct
     -- Rewrite goal using hr and prove
     simp only [hr, hk_sum]
     refine And.intro Hinb ?_
-    -- Show emin ≤ cexp or l' = Exact
-    have hle : emin ≤ max emin ((FloatSpec.Core.Raux.mag beta x)) := le_max_left _ _
-    exact Or.inl (by simp [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag, hle])
+    exact Or.inl (by
+      simp [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.FIX.FIX_exp])
   · -- Nonpositive shift: identity case
     have hnot : ¬ 0 < k := hkpos
     have hle : ¬ (0 < k) := hnot
@@ -2112,13 +3812,38 @@ theorem truncate_FIX_correct
     refine And.intro H1 ?_
     cases H2 with
     | inl hle_e =>
-        -- Goal is e ≤ cexp x = e ≤ max emin (mag x), and we have hle_e : e ≤ emin
-        have hle_max : e ≤ max emin ((FloatSpec.Core.Raux.mag beta x)) :=
-          le_trans hle_e (le_max_left _ _)
-        exact Or.inl (by simp only [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.Raux.mag]; exact hle_max)
+        have heq : e = emin := le_antisymm hle_e (le_of_not_gt hcond)
+        exact Or.inl (by
+          simpa [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.FIX.FIX_exp] using heq)
     | inr hExact =>
-        exact Or.inr hExact
+        subst l
+        have Hx_eq :
+            x = FloatSpec.Core.Defs.F2R
+              (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                FloatSpec.Core.Defs.FlocqFloat beta) := by
+          dsimp [inbetween_float] at H1
+          cases H1 with
+          | inbetween_Exact h => exact h
+        have hle_emin_e : emin ≤ e := le_of_not_gt hcond
+        have Hformat_F2R :
+            FloatSpec.Core.Generic_fmt.generic_format beta
+              (FloatSpec.Core.FIX.FIX_exp (emin := emin))
+              (FloatSpec.Core.Defs.F2R
+                (FloatSpec.Core.Defs.FlocqFloat.mk m e :
+                  FloatSpec.Core.Defs.FlocqFloat beta)) := by
+          have hgf := FloatSpec.Core.Generic_fmt.generic_format_F2R
+            (beta := beta)
+            (fexp := FloatSpec.Core.FIX.FIX_exp (emin := emin))
+            (m := m) (e := e)
+          simp [pure] at hgf
+          apply hgf
+          constructor
+          · exact Hβ
+          · intro _hm
+            simpa [FloatSpec.Core.Generic_fmt.cexp, FloatSpec.Core.FIX.FIX_exp]
+              using hle_emin_e
+        exact Or.inr ⟨rfl, by simpa [Hx_eq] using Hformat_F2R⟩
 
-end CoqTheoremsPlaceholders
+end CoqTheoremsPorts
 
 end FloatSpec.Calc.Round
