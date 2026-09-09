@@ -1497,6 +1497,135 @@ def ofFloat (x : Float) : FaithfulPrimFloat.PrimitiveFloat :=
   exact FloatSpec.IEEE754.Native.model64OfStandardFloat_SFabs
     (Prim2SF x) (Prim2SF_valid x)
 
+private theorem unpack_toModel (x : FaithfulPrimFloat.PrimitiveFloat) :
+    (toModel x).unpack =
+      FloatSpec.IEEE754.Native.unpackedOfBinarySingleNaNFloat (Prim2B x) := by
+  rw [toModel,
+    FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  rw [FloatSpec.IEEE754.Native.unpack_model64OfStandardFloat
+    (binarySingleNaNFloatToStandardFloat (Prim2B x))
+    (validBinarySingleNaNStandardFloat_binarySingleNaNFloatToStandardFloat (Prim2B x))]
+  exact FloatSpec.IEEE754.Native.unpackedOfStandardFloat_binarySingleNaNFloatToStandardFloat _
+
+private theorem Bmult_eq_binarySingleNaN_Bmult (x y : PrimBinaryFloat) :
+    FaithfulPrimFloat.Bmult RoundingMode.RNE x y =
+      @BinarySingleNaN.Bmult primPrec primEmax primPrecGt0Witness
+        primPrecLtEmaxWitness RoundingMode.RNE x y := by
+  cases x <;> cases y <;>
+    simp [FaithfulPrimFloat.Bmult, BinarySingleNaN.Bmult, SF2B]
+
+@[simp] theorem toModel_mul (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x * y) = Float.Model.mul (toModel x) (toModel y) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B (x * y)) = _
+  rw [FaithfulPrimFloat.mul_equiv, Bmult_eq_binarySingleNaN_Bmult]
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_Bmult_RNE]
+  unfold Float.Model.mul
+  rw [unpack_toModel, unpack_toModel]
+
+private theorem standardFloatToBinarySingleNaNFloat_eq_B2BSN
+    (z : StandardFloat)
+    (hz₁ hz₂ :
+      validBinarySingleNaNStandardFloat (prec := primPrec) (emax := primEmax) z = true)
+    (hn : is_nan_SF z = false) :
+    standardFloatToBinarySingleNaNFloat z hz₁ =
+      binaryFloatToBinarySingleNaNFloat
+        (Binary.standardFloatToBinaryFloatOfNotNaN z hz₂ hn) := by
+  apply primBinaryFloat_ext_sf
+  unfold B2SF
+  rw [← B2SF_BSN_binarySingleNaNFloatToB754,
+    ← B2SF_BSN_binarySingleNaNFloatToB754,
+    binarySingleNaNFloatToB754_standardFloatToBinarySingleNaNFloat,
+    Binary.binarySingleNaNFloatToB754_standardFloatToBinaryFloatOfNotNaN]
+
+private theorem Bplus_eq_binarySingleNaN_Bplus (x y : PrimBinaryFloat) :
+    FaithfulPrimFloat.Bplus RoundingMode.RNE x y =
+      @BinarySingleNaN.Bplus primPrec primEmax primPrecGt0Witness
+        primPrecLtEmaxWitness RoundingMode.RNE x y := by
+  cases x <;> cases y <;>
+    simp [FaithfulPrimFloat.Bplus, BinarySingleNaN.Bplus,
+      binary_normalize_bsn, Binary.normalize, Binary.B2BSN, SF2B] <;>
+    split_ifs
+  all_goals first
+    | rfl
+    | exact standardFloatToBinarySingleNaNFloat_eq_B2BSN _ _ _ _
+
+@[simp] theorem toModel_add (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x + y) = Float.Model.add (toModel x) (toModel y) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B (x + y)) = _
+  rw [FaithfulPrimFloat.add_equiv, Bplus_eq_binarySingleNaN_Bplus]
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_Bplus_RNE]
+  unfold Float.Model.add
+  rw [unpack_toModel, unpack_toModel]
+
+private theorem Bopp_eq_binarySingleNaN_Bopp (x : PrimBinaryFloat) :
+    FaithfulPrimFloat.Bopp x = BinarySingleNaN.Bopp x := by
+  cases x <;> rfl
+
+private theorem Bminus_eq_binarySingleNaN_Bminus (x y : PrimBinaryFloat) :
+    FaithfulPrimFloat.Bminus RoundingMode.RNE x y =
+      @BinarySingleNaN.Bminus primPrec primEmax primPrecGt0Witness
+        primPrecLtEmaxWitness RoundingMode.RNE x y := by
+  rw [show FaithfulPrimFloat.Bminus RoundingMode.RNE x y =
+      FaithfulPrimFloat.Bplus RoundingMode.RNE x (FaithfulPrimFloat.Bopp y) from rfl,
+    show @BinarySingleNaN.Bminus primPrec primEmax primPrecGt0Witness
+        primPrecLtEmaxWitness RoundingMode.RNE x y =
+      @BinarySingleNaN.Bplus primPrec primEmax primPrecGt0Witness
+        primPrecLtEmaxWitness RoundingMode.RNE x (BinarySingleNaN.Bopp y) from rfl,
+    Bopp_eq_binarySingleNaN_Bopp, Bplus_eq_binarySingleNaN_Bplus]
+
+@[simp] theorem toModel_sub (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x - y) = Float.Model.sub (toModel x) (toModel y) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B (x - y)) = _
+  rw [FaithfulPrimFloat.sub_equiv, Bminus_eq_binarySingleNaN_Bminus]
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_Bminus_RNE]
+  unfold Float.Model.sub
+  rw [unpack_toModel, unpack_toModel]
+
+private theorem Bdiv_eq_binarySingleNaN_Bdiv (x y : PrimBinaryFloat) :
+    FaithfulPrimFloat.Bdiv RoundingMode.RNE x y =
+      @BinarySingleNaN.Bdiv primPrec primEmax primPrecGt0Witness
+        primPrecLtEmaxWitness RoundingMode.RNE x y := by
+  cases x <;> cases y <;>
+    simp [FaithfulPrimFloat.Bdiv, BinarySingleNaN.Bdiv,
+      BinarySingleNaN.Bdiv_finite, SF2B, binaryPositiveOfNat_spec]
+
+@[simp] theorem toModel_div (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x / y) = Float.Model.div (toModel x) (toModel y) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B (x / y)) = _
+  rw [FaithfulPrimFloat.div_equiv, Bdiv_eq_binarySingleNaN_Bdiv]
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_Bdiv_RNE]
+  unfold Float.Model.div
+  rw [unpack_toModel, unpack_toModel]
+
+private theorem Bsqrt_eq_binarySingleNaN_Bsqrt (x : PrimBinaryFloat) :
+    FaithfulPrimFloat.Bsqrt RoundingMode.RNE x =
+      @BinarySingleNaN.Bsqrt primPrec primEmax primPrecGt0Witness
+        primPrecLtEmaxWitness RoundingMode.RNE x := by
+  cases x with
+  | B754_zero s => rfl
+  | B754_infinity s => cases s <;> rfl
+  | B754_nan =>
+      simp [FaithfulPrimFloat.Bsqrt, b64_sqrt, BSN2Binary64,
+        Binary.Bsqrt, BinarySingleNaN.Bsqrt, unop_nan_pl64, default_nan_pl64,
+        binaryFloatToBinarySingleNaNFloat]
+  | B754_finite s m e hm hb =>
+      cases s
+      · simp [FaithfulPrimFloat.Bsqrt, b64_sqrt, BSN2Binary64,
+          Binary.Bsqrt, BinarySingleNaN.Bsqrt, binaryPositiveOfNat_spec]
+        exact (standardFloatToBinarySingleNaNFloat_eq_B2BSN _ _ _ _).symm
+      · simp [FaithfulPrimFloat.Bsqrt, b64_sqrt, BSN2Binary64,
+          Binary.Bsqrt, BinarySingleNaN.Bsqrt, unop_nan_pl64, default_nan_pl64,
+          binaryFloatToBinarySingleNaNFloat]
+
+@[simp] theorem toModel_sqrt (x : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (FaithfulPrimFloat.sqrt x) = Float.Model.sqrt (toModel x) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat
+      (Prim2B (FaithfulPrimFloat.sqrt x)) = _
+  rw [FaithfulPrimFloat.sqrt_equiv, Bsqrt_eq_binarySingleNaN_Bsqrt]
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_Bsqrt_RNE]
+  unfold Float.Model.sqrt
+  rw [unpack_toModel]
+
 end PrimitiveFloat
 
 end FaithfulPrimFloat

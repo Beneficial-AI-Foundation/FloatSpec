@@ -294,6 +294,26 @@ abbrev ofFloat := FaithfulPrimFloat.PrimitiveFloat.ofFloat
     toModel (FaithfulPrimFloat.abs x) = Float.Model.abs (toModel x) :=
   FaithfulPrimFloat.PrimitiveFloat.toModel_abs x
 
+@[simp] theorem toModel_mul (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x * y) = Float.Model.mul (toModel x) (toModel y) :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_mul x y
+
+@[simp] theorem toModel_add (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x + y) = Float.Model.add (toModel x) (toModel y) :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_add x y
+
+@[simp] theorem toModel_sub (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x - y) = Float.Model.sub (toModel x) (toModel y) :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_sub x y
+
+@[simp] theorem toModel_div (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (x / y) = Float.Model.div (toModel x) (toModel y) :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_div x y
+
+@[simp] theorem toModel_sqrt (x : FaithfulPrimFloat.PrimitiveFloat) :
+    toModel (FaithfulPrimFloat.sqrt x) = Float.Model.sqrt (toModel x) :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_sqrt x
+
 end PrimitiveFloat
 
 end FloatSpec.IEEE754.LeanFloat

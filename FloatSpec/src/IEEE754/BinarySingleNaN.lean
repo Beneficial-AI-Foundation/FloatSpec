@@ -8276,7 +8276,7 @@ noncomputable def Bfma {prec emax : Int}
           Binary.B2BSN (Binary.normalize (prec:=prec) (emax:=emax) mode
             sum.Fnum sum.Fexp (Bfma_szero mode x y z))
 
-private noncomputable def Bdiv_finite {prec emax : Int}
+noncomputable def Bdiv_finite {prec emax : Int}
     [Prec_gt_0 prec] [Prec_lt_emax prec emax]
     (mode : RoundingMode) (sx : Bool) (mx : Nat) (ex : Int) (hmx : 0 < mx)
     (sy : Bool) (my : Nat) (ey : Int) (hmy : 0 < my) :

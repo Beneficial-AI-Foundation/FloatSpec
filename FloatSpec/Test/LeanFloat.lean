@@ -82,6 +82,26 @@ example (x : FaithfulPrimFloat.PrimitiveFloat) :
     PrimitiveFloat.toModel (FaithfulPrimFloat.abs x) =
       Float.Model.abs (PrimitiveFloat.toModel x) := by simp
 
+example (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.toModel (x * y) =
+      Float.Model.mul (PrimitiveFloat.toModel x) (PrimitiveFloat.toModel y) := by simp
+
+example (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.toModel (x + y) =
+      Float.Model.add (PrimitiveFloat.toModel x) (PrimitiveFloat.toModel y) := by simp
+
+example (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.toModel (x - y) =
+      Float.Model.sub (PrimitiveFloat.toModel x) (PrimitiveFloat.toModel y) := by simp
+
+example (x y : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.toModel (x / y) =
+      Float.Model.div (PrimitiveFloat.toModel x) (PrimitiveFloat.toModel y) := by simp
+
+example (x : FaithfulPrimFloat.PrimitiveFloat) :
+    PrimitiveFloat.toModel (FaithfulPrimFloat.sqrt x) =
+      Float.Model.sqrt (PrimitiveFloat.toModel x) := by simp
+
 example (x : Float.Model) :
     validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)
       (standardFloatOfModel64 x) = true :=

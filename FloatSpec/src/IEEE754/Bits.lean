@@ -2014,9 +2014,9 @@ theorem standardFloatOfModel64_model64OfStandardFloat
     (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
     standardFloatOfModel64 (model64OfStandardFloat x) = x := by
   cases x with
-  | S754_zero s => cases s <;> native_decide
-  | S754_infinity s => cases s <;> native_decide
-  | S754_nan => native_decide
+  | S754_zero s => cases s <;> decide
+  | S754_infinity s => cases s <;> decide
+  | S754_nan => decide
   | S754_finite s m e =>
       have hx' : 0 < m ∧
           specFloat_bounded (prec := 53) (emax := 1024) m e = true := by
@@ -2124,9 +2124,9 @@ theorem standardFloatOfModel32_model32OfStandardFloat
     (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
     standardFloatOfModel32 (model32OfStandardFloat x) = x := by
   cases x with
-  | S754_zero s => cases s <;> native_decide
-  | S754_infinity s => cases s <;> native_decide
-  | S754_nan => native_decide
+  | S754_zero s => cases s <;> decide
+  | S754_infinity s => cases s <;> decide
+  | S754_nan => decide
   | S754_finite s m e =>
       have hx' : 0 < m ∧
           specFloat_bounded (prec := 24) (emax := 128) m e = true := by
