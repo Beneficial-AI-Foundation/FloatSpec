@@ -3025,7 +3025,7 @@ theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
       -- And the target if-form also reduces to -1 since x ≠ ⌊x⌋
       have : (Rcompare ((Int.floor x : ℝ)) x)
               = (if x = (Int.floor x : ℝ) then 0 else -1) := by
-        simpa [this, if_neg (by simpa [eq_comm] using heq)]
+        simpa [this, ite_eq_right (by simpa [eq_comm] using heq)]
       exact this
   have hcodeR : (Rcompare x ((Int.ceil x : ℝ))) = (if x = (Int.ceil x : ℝ) then 0 else -1) := by
     unfold Rcompare
@@ -3039,9 +3039,9 @@ theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
         exact (lt_irrefl _) this
       -- Evaluate the nested-ifs directly using rewrites
       have : (if x < (Int.ceil x : ℝ) then (-1 : Int) else if x = (Int.ceil x : ℝ) then 0 else 1) = 0 := by
-        rw [if_neg hnotlt, if_pos heq]
+        rw [ite_eq_right hnotlt, ite_eq_left heq]
       -- Right-hand side also reduces to 0 under heq
-      simpa [if_pos heq] using this
+      simpa [ite_eq_left heq] using this
     · -- Strict case: code is -1
       have hlt : x < (Int.ceil x : ℝ) := lt_of_le_of_ne hle heq
       have : (if x < (Int.ceil x : ℝ) then (-1 : Int) else if x = (Int.ceil x : ℝ) then 0 else 1) = -1 := by
@@ -3072,9 +3072,9 @@ theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
     · -- Equality case: both codes evaluate to 0
       have hx' : x = (Int.ceil x : ℝ) := (hiff.mp hx)
       have hL0 : (Rcompare ((Int.floor x : ℝ)) x) = 0 := by
-        rw [hcodeL, if_pos hx]
+        rw [hcodeL, ite_eq_left hx]
       have hR0 : (Rcompare x ((Int.ceil x : ℝ))) = 0 := by
-        rw [hcodeR, if_pos hx']
+        rw [hcodeR, ite_eq_left hx']
       rw [hL0, hR0]
     · -- Strict inequalities case: both codes evaluate to -1
       have hx' : x ≠ (Int.ceil x : ℝ) := by
@@ -3082,10 +3082,10 @@ theorem Rcompare_floor_ceil_middle_spec (x : ℝ) :
       have hL1 : (Rcompare ((Int.floor x : ℝ)) x) = -1 := by
         -- Using the simplified code form hcodeL and inequality of x ≠ ⌊x⌋
         have hneq : x ≠ (Int.floor x : ℝ) := by simpa [eq_comm] using hx
-        rw [hcodeL, if_neg hneq]
+        rw [hcodeL, ite_eq_right hneq]
       have hR1 : (Rcompare x ((Int.ceil x : ℝ))) = -1 := by
         -- Using the simplified code form hcodeR and inequality of x ≠ ⌈x⌉
-        rw [hcodeR, if_neg hx']
+        rw [hcodeR, ite_eq_right hx']
       rw [hL1, hR1]
   -- Finish by reducing the wp-goal to this equality.
   change Rcompare ((Int.floor x : Int) : ℝ) x =
@@ -3194,11 +3194,11 @@ theorem Rcompare_ceil_floor_middle_spec (x : ℝ) :
       -- Evaluate each code via hL/hR and the equalities
       have hL0 : (Rcompare ((Int.ceil x : ℝ)) x) = 0 := by
         -- Use hL to rewrite, then evaluate the if using hx
-        have : (if x = (Int.ceil x : ℝ) then (0 : Int) else 1) = 0 := if_pos hx
+        have : (if x = (Int.ceil x : ℝ) then (0 : Int) else 1) = 0 := ite_eq_left hx
         exact hL ▸ this
       have hR0 : (Rcompare x ((Int.floor x : ℝ))) = 0 := by
         -- Use hR to rewrite, then evaluate the if using hx'
-        have : (if x = (Int.floor x : ℝ) then (0 : Int) else 1) = 0 := if_pos hx'
+        have : (if x = (Int.floor x : ℝ) then (0 : Int) else 1) = 0 := ite_eq_left hx'
         exact hR ▸ this
       rw [hL0, hR0]
     · -- Otherwise, x < ⌈x⌉ and ⌊x⌋ < x, so both codes reduce to 1
@@ -3689,7 +3689,7 @@ theorem IZR_Zpower_from_self_payload_spec (beta e : Int) (_he : 0 ≤ e) :
 theorem IZR_Zpower (r : FloatSpec.Core.Zaux.Radix) (e : Int) (he : 0 ≤ e) :
     ((FloatSpec.Core.Zaux.Zpower r.val e : Int) : ℝ) = bpow r.val e := by
   have he_cast : (e.toNat : Int) = e := Int.toNat_of_nonneg he
-  rw [FloatSpec.Core.Zaux.Zpower, if_pos he, bpow]
+  rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left he, bpow]
   simp only [Int.cast_pow, ← zpow_natCast, he_cast]
 
 end PowBasics

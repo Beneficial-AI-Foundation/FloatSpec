@@ -293,7 +293,7 @@ private lemma pred_pos_run_le_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
   by_cases hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)
   · -- Boundary branch: pred_pos subtracts a fixed power of β
     -- Evaluate the `if` and the `Id` runner directly
-    rw [if_pos hxeq]
+    rw [ite_eq_left hxeq]
     -- Now reduce (pure ·).run definitionally
     change (x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1))) ≤ x
     -- x - β^(fexp …) ≤ x by nonnegativity of the subtrahend
@@ -303,7 +303,7 @@ private lemma pred_pos_run_le_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
       le_of_lt (zpow_pos hbpos _)
     exact sub_le_self _ hnonneg
   · -- Generic branch: pred_pos subtracts ulp x
-    rw [if_neg hxeq]
+    rw [ite_eq_right hxeq]
     -- Evaluate the do-block under Id
     change (x - (ulp beta fexp x)) ≤ x
     exact sub_le_self _ (ulp_run_nonneg (beta := beta) (fexp := fexp) hβ x)
@@ -315,7 +315,7 @@ private lemma pred_pos_run_lt_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
   unfold pred_pos
   by_cases hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)
   · -- Boundary branch: subtract a strictly positive power of β
-    rw [if_pos hxeq]
+    rw [ite_eq_left hxeq]
     have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
     have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
     have hpos : 0 < (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) :=
@@ -324,7 +324,7 @@ private lemma pred_pos_run_lt_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
       sub_lt_self _ hpos
     simpa using hlt
   · -- Generic branch: subtract a strictly positive ulp
-    rw [if_neg hxeq]
+    rw [ite_eq_right hxeq]
     have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hβ
     have hbpos : (0 : ℝ) < (beta : ℝ) := by exact_mod_cast hbposℤ
     -- ulp is strictly positive on nonzero inputs; here x > 0 ⇒ x ≠ 0
@@ -335,7 +335,7 @@ private lemma pred_pos_run_lt_self (hβ : 1 < beta) (x : ℝ) (hx : 0 < x) :
       simp [hx_ne]
       exact zpow_pos hbpos _
     have hlt : x - (ulp beta fexp x) < x := sub_lt_self _ hpos
-    simpa [pred_pos, if_neg hxeq] using hlt
+    simpa [pred_pos, ite_eq_right hxeq] using hlt
 
 private lemma pred_run_le_self (hβ : 1 < beta) (x : ℝ) :
     (pred beta fexp x) ≤ x := by
@@ -612,7 +612,7 @@ private theorem succ_le_plus_ulp_theorem
             pred_pos beta fexp (-x)
                 = (-x) - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta (-x)) - 1)) := by
                     unfold pred_pos
-                    rw [if_pos hxeq]
+                    rw [ite_eq_left hxeq]
             _ = (-x) - (beta : ℝ) ^ (fexp (m - 1)) := by
                     simpa using congrArg (fun t : Int => (-x) - (beta : ℝ) ^ (fexp t)) hm1
         calc
@@ -659,7 +659,7 @@ private theorem succ_le_plus_ulp_theorem
       have hpred_run : (pred_pos beta fexp (-x)) = (-x) - (ulp beta fexp (-x)) := by
         -- Evaluate the `else` branch explicitly
         unfold pred_pos
-        rw [if_neg hxeq]
+        rw [ite_eq_right hxeq]
       -- Then succ x = x + ulp (-x) = x + ulp x
       have hsucc_explicit : (succ beta fexp x) = x + (ulp beta fexp x) := by
         calc
@@ -2171,11 +2171,11 @@ private theorem ulp_round_pos_theorem
       -- Compute ulp(r).run
       have hulp_r : (ulp beta fexp r)
           = (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp r) := by
-        simp only [ulp, hr0, if_neg, not_false_eq_true, Id.run, bind, pure]
+        simp only [ulp, hr0, ite_eq_right, not_false_eq_true, Id.run, bind, pure]
       -- Compute ulp(x).run
       have hulp_x : (ulp beta fexp x)
           = (beta : ℝ) ^ (FloatSpec.Core.Generic_fmt.cexp beta fexp x) := by
-        simp only [ulp, hx_ne, if_neg, not_false_eq_true, Id.run, bind, pure]
+        simp only [ulp, hx_ne, ite_eq_right, not_false_eq_true, Id.run, bind, pure]
       -- Chain the equalities
       rw [hulp_r, hulp_x, hcexp_eq]
 
@@ -3096,7 +3096,7 @@ private theorem pred_ulp_0_theorem
       have hpos_run : (pred_pos (beta := beta) (fexp := fexp) y)
             = y - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta y) - 1)) := by
         unfold pred_pos
-        rw [if_pos hboundary_true]
+        rw [ite_eq_left hboundary_true]
       -- From negligible_exp = some n, obtain n ≤ fexp n
       have hnle : n ≤ fexp n := by
         -- From `hopt = some n`, specialize `negligible_exp_spec` to obtain `n ≤ fexp n`.
@@ -3701,7 +3701,7 @@ private theorem pred_pos_plus_ulp_core
           (pred_pos (beta := beta) (fexp := fexp) x) =
             x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
         unfold pred_pos
-        rw [if_pos hxeq]
+        rw [ite_eq_left hxeq]
       have hpred_run :
           (pred_pos (beta := beta) (fexp := fexp) x) = 0 := by
         simpa [hz] using hpred_run'
@@ -3713,7 +3713,7 @@ private theorem pred_pos_plus_ulp_core
       have hpred_run :
           (pred_pos (beta := beta) (fexp := fexp) x) = s := by
         unfold pred_pos
-        rw [if_pos hxeq]
+        rw [ite_eq_left hxeq]
       have htrip := pred_pos_plus_ulp_aux2 (beta := beta) (fexp := fexp)
         (x := x) (hx := hx) (Fx := Fx) (hxe := hxeq) (hne := by simpa [hs] using hz)
       have hsum : s + (ulp beta fexp s) = x := by
@@ -3723,7 +3723,7 @@ private theorem pred_pos_plus_ulp_core
     have hpred_run :
         (pred_pos (beta := beta) (fexp := fexp) x) = x - u := by
       unfold pred_pos
-      rw [if_neg hxeq]
+      rw [ite_eq_right hxeq]
     have htrip := pred_pos_plus_ulp_aux1 (beta := beta) (fexp := fexp)
       (x := x) (hx := hx) (Fx := Fx) (hne := by simpa using hxeq)
     have hsum : (x - u) + (ulp beta fexp (x - u)) = x := by
@@ -4442,12 +4442,12 @@ theorem pred_pos_lt_id (x : ℝ) (hx : x ≠ 0) :
   unfold pred_pos
   by_cases hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)
   · -- Boundary branch: subtract a positive power of β
-    rw [if_pos hxeq]
+    rw [ite_eq_left hxeq]
     have hpos : 0 < (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) :=
       zpow_pos hbpos _
     exact sub_lt_self _ hpos
   · -- Generic branch: subtract a strictly positive ulp (since x ≠ 0)
-    rw [if_neg hxeq]
+    rw [ite_eq_right hxeq]
     have hpos : 0 < (ulp beta fexp x) := by
       unfold ulp
       simp [hx]
@@ -4562,7 +4562,7 @@ theorem pred_pos_ge_0 (x : ℝ) (hx : 0 < x)
     -- Conclude nonnegativity of the difference
     have : 0 ≤ x - (beta : ℝ) ^ (fexp e) := sub_nonneg.mpr (by simpa [hx_bpow] using hpow_le)
     -- Discharge by simplifying the branch
-    rw [if_pos hxeq]
+    rw [ite_eq_left hxeq]
     simpa [Id.run, bind, pure, he]
       using this
   · -- Generic branch: pred_pos = x - ulp x
@@ -4611,7 +4611,7 @@ theorem pred_pos_ge_0 (x : ℝ) (hx : 0 < x)
         _ = x := by simpa [hx_repr']
     -- Conclude with sub_nonneg on the generic branch
     have : 0 ≤ x - (ulp beta fexp x) := sub_nonneg.mpr hle_uxx
-    rw [if_neg hxeq]
+    rw [ite_eq_right hxeq]
     simp [Id.run, bind, pure] at this ⊢
     exact this
 
@@ -4911,7 +4911,7 @@ private theorem generic_format_pred_aux1_theorem_early
       exact le_of_lt (mul_pos hx (zpow_pos hbpos _))
     have hztrunc0 : FloatSpec.Core.Raux.Ztrunc (x * b ^ (-c)) = 0 := by
       unfold FloatSpec.Core.Raux.Ztrunc
-      rw [if_neg (not_lt.mpr hscaled_nonneg)]
+      rw [ite_eq_right (not_lt.mpr hscaled_nonneg)]
       simpa [b, hc] using hfloor0
     have hm_zero : m = 0 := by
       simpa [hm, he, hc] using hztrunc0
@@ -5018,7 +5018,7 @@ theorem generic_format_pred_pos
       intro hxeq_boundary
       -- Unfold and evaluate the if-branch directly.
       unfold pred_pos
-      rw [if_pos hxeq_boundary]
+      rw [ite_eq_left hxeq_boundary]
     have pred_pos_run_generic :
         x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) →
         (pred_pos (beta := beta) (fexp := fexp) x) =
@@ -5026,7 +5026,7 @@ theorem generic_format_pred_pos
       intro hxne_boundary
       -- Unfold and evaluate the else-branch directly.
       unfold pred_pos
-      rw [if_neg hxne_boundary]
+      rw [ite_eq_right hxne_boundary]
     -- Split on the boundary case x = β^(mag x - 1)
     by_cases hxeq : x = (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1)
     · -- Boundary branch: goal is F (x - β^(fexp (mag x - 1)))
@@ -5036,7 +5036,7 @@ theorem generic_format_pred_pos
       · -- Zero subtraction: (pred_pos x).run = 0, so reduce to F 0
         have hpred0 : (pred_pos (beta := beta) (fexp := fexp) x) = 0 := by
           unfold pred_pos
-          rw [if_pos hxeq]
+          rw [ite_eq_left hxeq]
           change x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) = 0
           exact hz
         -- Discharge F 0 using a lightweight computation of the predicate
@@ -6819,7 +6819,7 @@ private theorem pred_succ_pos_theorem
       _ = pred_pos (beta := beta) (fexp := fexp) s := hpred_eq
       _ = s - (ulp (beta := beta) (fexp := fexp) s) := by
             unfold pred_pos
-            rw [if_neg hnot_boundary]
+            rw [ite_eq_right hnot_boundary]
       _ = x := by
             rw [hulp_s_eq, hsucc_eq]
             ring
@@ -6848,7 +6848,7 @@ private theorem pred_succ_pos_theorem
       _ = pred_pos (beta := beta) (fexp := fexp) s := hpred_eq
       _ = s - (beta : ℝ) ^ (fexp (FloatSpec.Core.Raux.mag beta s - 1)) := by
             unfold pred_pos
-            rw [if_pos hboundary]
+            rw [ite_eq_left hboundary]
       _ = x := by
             rw [hpred_step, hsucc_eq]
             ring
@@ -7137,7 +7137,7 @@ private theorem ulp_pred_pos_theorem
           have hneq : x ≠ (beta : ℝ) ^ ((FloatSpec.Core.Raux.mag beta x) - 1) := by
             have hxneq : x ≠ (beta : ℝ) ^ (e - 1) := by simpa [he] using hxeq
             simpa [he] using hxneq
-          rw [if_neg hneq]
+          rw [ite_eq_right hneq]
         simpa [hp, hu, hpred_pos] using hpos_run
       · have hxle : x ≤ 0 := le_of_not_gt hxpos
         have hxnonneg_neg : 0 ≤ -x := by simpa using (neg_nonneg.mpr hxle)
@@ -7219,7 +7219,7 @@ private theorem generic_format_pred_aux1_theorem
       (pred_pos (beta := beta) (fexp := fexp) x)
         = x - (ulp (beta := beta) (fexp := fexp) x) := by
     unfold pred_pos
-    rw [if_neg hne]
+    rw [ite_eq_right hne]
   -- Rewrite the target using the two computations above.
   simpa [hpred_is_pos, hpred_pos_eval]
     using Fpred_run
@@ -7838,7 +7838,7 @@ theorem pred_pos_plus_ulp
             x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
         -- Evaluate `pred_pos` in the boundary branch selected by `hxeq`.
         unfold pred_pos
-        rw [if_pos hxeq]
+        rw [ite_eq_left hxeq]
       have hpred_run :
           (pred_pos (beta := beta) (fexp := fexp) x) = 0 := by
         simpa [hz] using hpred_run'
@@ -7852,7 +7852,7 @@ theorem pred_pos_plus_ulp
           (pred_pos (beta := beta) (fexp := fexp) x) = s := by
         -- Same reduction in the boundary branch with the local `s` alias.
         unfold pred_pos
-        rw [if_pos hxeq]
+        rw [ite_eq_left hxeq]
       have htrip := pred_pos_plus_ulp_aux2 (beta := beta) (fexp := fexp)
         (x := x) (hx := hx) (Fx := Fx) (hxe := hxeq) (hne := by simpa [hs] using hz)
       have hsum : s + (ulp beta fexp s) = x := by
@@ -7864,7 +7864,7 @@ theorem pred_pos_plus_ulp
         (pred_pos (beta := beta) (fexp := fexp) x) = x - u := by
       -- Evaluate `pred_pos` in the generic branch (`hxeq : x ≠ …`).
       unfold pred_pos
-      rw [if_neg hxeq]
+      rw [ite_eq_right hxeq]
     have htrip := pred_pos_plus_ulp_aux1 (beta := beta) (fexp := fexp)
       (x := x) (hx := hx) (Fx := Fx) (hne := by simpa using hxeq)
     have hsum : (x - u) + (ulp beta fexp (x - u)) = x := by
@@ -9630,7 +9630,7 @@ theorem pred_bpow (e : Int) (hβ : 1 < beta) :
   -- Evaluate pred_pos in the boundary branch: x - β^(fexp (mag x - 1))
   have hpos_run : (pred_pos beta fexp x) = x - (beta : ℝ) ^ (fexp ((FloatSpec.Core.Raux.mag beta x) - 1)) := by
     unfold pred_pos
-    rw [if_pos hx_eq_boundary]
+    rw [ite_eq_left hx_eq_boundary]
   -- Since mag x = e + 1, we have fexp (mag x - 1) = fexp e
   have hexp_eq : fexp ((FloatSpec.Core.Raux.mag beta x) - 1) = fexp e := by
     simp [hmag_bpow_run, sub_add_cancel]
@@ -11570,7 +11570,7 @@ private theorem generic_format_plus_ulp_theorem
     · -- Generic: `pred_pos (-x) = (-x) - ulp (-x)` so `succ x = x + ulp x`
       have hpred_run : (pred_pos beta fexp (-x)) = (-x) - (ulp beta fexp (-x)) := by
         unfold pred_pos
-        rw [if_neg hxeq]
+        rw [ite_eq_right hxeq]
       have hsucc_eq : (succ beta fexp x) = x + (ulp beta fexp x) := by
         calc
           (succ beta fexp x)

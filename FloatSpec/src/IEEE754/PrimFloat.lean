@@ -1373,4 +1373,29 @@ theorem sub_equiv (x y : PrimitiveFloat) :
   change Prim2B (x + (-y)) = Bplus RoundingMode.RNE (Prim2B x) (Bopp (Prim2B y))
   rw [add_equiv, opp_equiv]
 
+/-! Direct compatibility with Lean's binary64 logical and native carriers. -/
+
+namespace PrimitiveFloat
+
+/-- The Lean binary64 logical model of a proof-carrying FLoCq primitive float. -/
+def toModel (x : FaithfulPrimFloat.PrimitiveFloat) : Float.Model :=
+  FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat (Prim2B x)
+
+/-- The native Lean float represented by a proof-carrying FLoCq primitive float. -/
+def toFloat (x : FaithfulPrimFloat.PrimitiveFloat) : Float :=
+  Float.ofModel (toModel x)
+
+/-- Decode a Lean binary64 logical model through the FLoCq single-NaN carrier. -/
+def ofModel (x : Float.Model) : FaithfulPrimFloat.PrimitiveFloat :=
+  SF2Prim (FloatSpec.IEEE754.Native.standardFloatOfModel64 x)
+
+/-- Decode a native Lean float through its logical model. -/
+def ofFloat (x : Float) : FaithfulPrimFloat.PrimitiveFloat :=
+  ofModel x.toModel
+
+@[simp] theorem toFloat_toModel (x : FaithfulPrimFloat.PrimitiveFloat) :
+    (toFloat x).toModel = toModel x := rfl
+
+end PrimitiveFloat
+
 end FaithfulPrimFloat

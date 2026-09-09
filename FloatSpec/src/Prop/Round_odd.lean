@@ -70,21 +70,21 @@ private lemma Zodd_of_int_floor (x : ℝ)
     (h : x = ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ)) :
     Zodd x = FloatSpec.Core.Raux.Zfloor x := by
   unfold Zodd
-  rw [if_pos h]
+  rw [ite_eq_left h]
 
 private lemma Zodd_of_floor_even (x : ℝ)
     (h : ¬ x = ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ))
     (he : (FloatSpec.Core.Raux.Zfloor x : Int) % 2 = 0) :
     Zodd x = FloatSpec.Core.Raux.Zceil x := by
   unfold Zodd
-  rw [if_neg h, if_pos he]
+  rw [ite_eq_right h, ite_eq_left he]
 
 private lemma Zodd_of_floor_odd (x : ℝ)
     (h : ¬ x = ((FloatSpec.Core.Raux.Zfloor x : Int) : ℝ))
     (he : ¬ (FloatSpec.Core.Raux.Zfloor x : Int) % 2 = 0) :
     Zodd x = FloatSpec.Core.Raux.Zfloor x := by
   unfold Zodd
-  rw [if_neg h, if_neg he]
+  rw [ite_eq_right h, ite_eq_right he]
 
 private lemma Zfloor_le_Zodd (x : ℝ) :
     FloatSpec.Core.Raux.Zfloor x ≤ Zodd x := by

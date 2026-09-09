@@ -490,7 +490,7 @@ theorem binary_float_of_bits_aux_correct (mw ew : Int)
   rw [hs]
   dsimp only
   by_cases he0 : e = 0
-  · simp only [if_pos he0]
+  · simp only [ite_eq_left he0]
     cases m with
     | ofNat n =>
         cases n with
@@ -508,9 +508,9 @@ theorem binary_float_of_bits_aux_correct (mw ew : Int)
               exact_mod_cast hm'
             · simpa [sourceEmin] using hmaxBound
     | negSucc n => omega
-  · simp only [if_neg he0]
+  · simp only [ite_eq_right he0]
     by_cases heMax : e = Zpower 2 ew - 1
-    · simp only [if_pos heMax]
+    · simp only [ite_eq_left heMax]
       cases m with
       | ofNat n =>
           cases n with
@@ -527,7 +527,7 @@ theorem binary_float_of_bits_aux_correct (mw ew : Int)
               · rw [hprec]
                 omega
       | negSucc n => omega
-    · simp only [if_neg heMax]
+    · simp only [ite_eq_right heMax]
       have hmSumPos : 0 < m + Zpower 2 mw := by omega
       cases hsum : m + Zpower 2 mw with
       | ofNat n =>
@@ -668,7 +668,7 @@ theorem binary_float_of_bits_of_binary_float (mw ew : Int)
         have hewNat : 0 < ew.toNat := by omega
         exact_mod_cast (Nat.one_lt_two_pow (by omega : ew.toNat ≠ 0))
       have hExp : Zpower 2 ew - 1 ≠ 0 := by omega
-      simpa only [split_bits_of_binary_float, hExp, if_false, if_true,
+      simpa only [split_bits_of_binary_float, hExp, ite_false, ite_true,
         binaryFloatToFullFloat]
   | B754_nan s p hp =>
       have hpow : 1 < Zpower 2 ew := by
@@ -676,7 +676,7 @@ theorem binary_float_of_bits_of_binary_float (mw ew : Int)
         have hewNat : 0 < ew.toNat := by omega
         exact_mod_cast (Nat.one_lt_two_pow (by omega : ew.toNat ≠ 0))
       have hExp : Zpower 2 ew - 1 ≠ 0 := by omega
-      simp only [split_bits_of_binary_float, hExp, if_false,
+      simp only [split_bits_of_binary_float, hExp, ite_false,
         binaryFloatToFullFloat]
       exact match_Zpos (full_float.F754_infinity s)
         (full_float.F754_nan false .xH) (full_float.F754_nan s) p
@@ -696,8 +696,8 @@ theorem binary_float_of_bits_of_binary_float (mw ew : Int)
           omega
         have hnormal' : Zpower 2 mw ≤ FloatSpec.Core.Zaux.Zpos p :=
           sub_nonneg.mp hnormal
-        simp only [split_bits_of_binary_float, hnormal, if_true, he0, heMax,
-          if_false, binaryFloatToFullFloat]
+        simp only [split_bits_of_binary_float, hnormal, ite_true, he0, heMax,
+          ite_false, binaryFloatToFullFloat]
         rw [show FloatSpec.Core.Zaux.Zpos p - Zpower 2 mw + Zpower 2 mw =
           FloatSpec.Core.Zaux.Zpos p by ring]
         calc
@@ -717,7 +717,7 @@ theorem binary_float_of_bits_of_binary_float (mw ew : Int)
       · have hsmall : FloatSpec.Core.Zaux.Zpos p < Zpower 2 mw := by omega
         have heq := finite_subnormal_exp_eq Hmw hp hsmall
         have hnormal' : ¬ Zpower 2 mw ≤ FloatSpec.Core.Zaux.Zpos p := by omega
-        simp only [split_bits_of_binary_float, hnormal, if_false, if_true,
+        simp only [split_bits_of_binary_float, hnormal, ite_false, ite_true,
           binaryFloatToFullFloat]
         calc
           (match FloatSpec.Core.Zaux.Zpos p with
@@ -771,7 +771,7 @@ theorem bits_of_binary_float_of_bits (mw ew : Int)
   rw [hs]
   dsimp only
   by_cases he0 : e = 0
-  · simp only [if_pos he0]
+  · simp only [ite_eq_left he0]
     cases m with
     | ofNat n =>
         cases n with
@@ -785,9 +785,9 @@ theorem bits_of_binary_float_of_bits (mw ew : Int)
             simp [bits_of_full_float, positiveOfNat_spec, hfrac, hfrac', he0]
             omega
     | negSucc n => omega
-  · simp only [if_neg he0]
+  · simp only [ite_eq_right he0]
     by_cases heMax : e = Zpower 2 ew - 1
-    · simp only [if_pos heMax]
+    · simp only [ite_eq_left heMax]
       cases m with
       | ofNat n =>
           cases n with
@@ -795,7 +795,7 @@ theorem bits_of_binary_float_of_bits (mw ew : Int)
           | succ n =>
               simp [bits_of_full_float, positiveOfNat_spec, heMax]
       | negSucc n => omega
-    · simp only [if_neg heMax]
+    · simp only [ite_eq_right heMax]
       have hsumPos : 0 < m + Zpower 2 mw := by
         have hp : 0 < Zpower 2 mw := by
           rw [zpower_eq_pow_toNat (le_of_lt Hmw)]

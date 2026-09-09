@@ -6142,14 +6142,14 @@ theorem format_d_discri1 (emin prec : Int) [Prec_gt_0 prec]
         FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) FloatSpec.Calc.Round.nearestEvenMode (a * c) ≤
         3 * |FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) FloatSpec.Calc.Round.nearestEvenMode (b * b) -
           FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) FloatSpec.Calc.Round.nearestEvenMode (a * c)|
-  · rw [if_pos hcond]
+  · rw [ite_eq_left hcond]
     simpa [FloatSpec.Calc.Round.round, FloatSpec.Calc.Round.nearestEvenMode] using
       FloatSpec.Core.Generic_fmt.generic_format_roundR
       (beta := 2) (fexp := FLT_exp emin prec)
       (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t))))
       (x := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) FloatSpec.Calc.Round.nearestEvenMode (b * b) -
         FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) FloatSpec.Calc.Round.nearestEvenMode (a * c)) (by decide)
-  · rw [if_neg hcond]
+  · rw [ite_eq_right hcond]
     simpa [FloatSpec.Calc.Round.round, FloatSpec.Calc.Round.nearestEvenMode] using
       FloatSpec.Core.Generic_fmt.generic_format_roundR
       (beta := 2) (fexp := FLT_exp emin prec)
@@ -6217,14 +6217,14 @@ theorem format_d_discri2 (emin prec : Int) [Prec_gt_0 prec]
                   FloatSpec.Calc.Round.nearestEvenMode (b * b) -
                 FloatSpec.Calc.Round.round 2 (FLT_exp emin prec)
                   FloatSpec.Calc.Round.nearestEvenMode (a * c))|)
-  · rw [if_pos hcond]
+  · rw [ite_eq_left hcond]
     simpa [FloatSpec.Calc.Round.round, FloatSpec.Calc.Round.nearestEvenMode] using
       FloatSpec.Core.Generic_fmt.generic_format_roundR
       (beta := 2) (fexp := FLT_exp emin prec)
       (rnd := FloatSpec.Core.Generic_fmt.Znearest (fun t : Int => !(decide (2 ∣ t))))
       (x := FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) FloatSpec.Calc.Round.nearestEvenMode (b * b) -
         FloatSpec.Calc.Round.round 2 (FLT_exp emin prec) FloatSpec.Calc.Round.nearestEvenMode (a * c)) (by decide)
-  · rw [if_neg hcond]
+  · rw [ite_eq_right hcond]
     simpa [FloatSpec.Calc.Round.round, FloatSpec.Calc.Round.nearestEvenMode] using
       FloatSpec.Core.Generic_fmt.generic_format_roundR
       (beta := 2) (fexp := FLT_exp emin prec)
@@ -6607,11 +6607,11 @@ private theorem nearest_round_error_le_two_ulp
         FloatSpec.Core.Generic_fmt.roundR 2 (FLT_exp emin prec)
           (FloatSpec.Core.Generic_fmt.Znearest
             (fun t : Int => !(decide (2 ∣ t)))) x = 0
-    · simp only [FloatSpec.Core.Ulp.ulp, hz, if_pos]
+    · simp only [FloatSpec.Core.Ulp.ulp, hz, ite_eq_left]
       cases FloatSpec.Core.Ulp.negligible_exp (FLT_exp emin prec) with
       | none => exact le_rfl
       | some n => exact le_of_lt (zpow_pos (by norm_num : (0 : ℝ) < 2) _)
-    · simp only [FloatSpec.Core.Ulp.ulp, hz, if_neg]
+    · simp only [FloatSpec.Core.Ulp.ulp, hz, ite_eq_right]
       exact le_of_lt (zpow_pos (by norm_num : (0 : ℝ) < 2) _)
   nlinarith
 
@@ -7026,7 +7026,7 @@ theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
       nlinarith [le_abs_self q, abs_nonneg q]
     have hdEq : d = -q := by
       dsimp [d]
-      rw [if_pos hcond, hpZero, zero_sub, hRopp]
+      rw [ite_eq_left hcond, hpZero, zero_sub, hRopp]
       exact congrArg Neg.neg (hRid q (hRfmt (a * c)))
     have hqDef : q = R (a * c) := rfl
     rw [hdEq, hbbZero, zero_sub, hulpOpp]
@@ -7044,7 +7044,7 @@ theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
       nlinarith [le_abs_self p, abs_nonneg p]
     have hdEq : d = p := by
       dsimp [d]
-      rw [if_pos hcond, hqZero, sub_zero]
+      rw [ite_eq_left hcond, hqZero, sub_zero]
       exact hRid p (hRfmt (b * b))
     have hpDef : p = R (b * b) := rfl
     rw [hdEq, hacZero, sub_zero]
@@ -7055,13 +7055,13 @@ theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
   · by_cases hcond : p + q ≤ 3 * |p - q|
     · have hdZero : d = 0 := by
         dsimp [d]
-        rw [if_pos hcond, hpqZero, hRzero]
+        rw [ite_eq_left hcond, hpqZero, hRzero]
       exact False.elim (hdNe hdZero)
     · have htZero : t = 0 := by simp [t, hpqZero, hRzero]
       have hsId : R s = s := hRid s (hRfmt (dp - dq))
       have hdEq : d = R (b * b - a * c) := by
         dsimp [d]
-        rw [if_neg hcond, htZero, zero_add, hsId]
+        rw [ite_eq_right hcond, htZero, zero_add, hsId]
         apply congrArg R
         dsimp [s, dp, dq]
         linarith
@@ -7086,7 +7086,7 @@ theorem discri_correct_test (emin prec : Int) [Prec_gt_0 prec]
       have hcond : ¬ p + q ≤ 3 * |p - q| := not_le_of_gt hsecond
       have hdEq : d = R (b * b - a * c) := by
         dsimp [d]
-        rw [if_neg hcond, htExact, hsExact]
+        rw [ite_eq_right hcond, htExact, hsExact]
         apply congrArg R
         dsimp [dp, dq]
         ring

@@ -94,7 +94,7 @@ theorem Fplus_core_correct (m1 e1 m2 e2 e : Int) (He1 : e ≤ e1) :
       Int.cast_add, Int.cast_mul, Int.cast_pow, mul_add, add_mul] using htranslated
   · have he2 : e ≤ e2 := by omega
     have hm2 := F2R_scale_to_lower (beta := beta) m2 e2 e he2
-    simp only [Fplus_core, hk, if_false]
+    simp only [Fplus_core, hk, ite_false]
     apply inbetween.inbetween_Exact
     have hm1' : (((m1 * beta ^ Int.natAbs (e1 - e) : Int) : ℝ) * (beta : ℝ) ^ e) =
         (m1 : ℝ) * (beta : ℝ) ^ e1 := by simpa [F2R] using hm1
@@ -281,7 +281,7 @@ theorem Fplus_correct (x y : FlocqFloat beta) :
         have he2 : e ≤ e2 := min_le_right _ _
         have hs1 := F2R_scale_to_lower (beta := beta) m1 e1 e he1
         have hs2 := F2R_scale_to_lower (beta := beta) m2 e2 e he2
-        simp only [Fplus_correct_obligation, Fplus, hm1, hm2, if_false, p1, p2,
+        simp only [Fplus_correct_obligation, Fplus, hm1, hm2, ite_false, p1, p2,
           hp, e]
         constructor
         · exact Or.inl trivial

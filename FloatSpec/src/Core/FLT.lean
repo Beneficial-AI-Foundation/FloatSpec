@@ -419,7 +419,7 @@ private theorem FLT_format_generic_run
     have hprec : 0 ≤ prec := le_of_lt (Prec_gt_0.pos : 0 < prec)
     have hpow : ((FloatSpec.Core.Zaux.Zpower beta prec : Int) : ℝ) =
         (beta : ℝ) ^ prec := by
-      rw [FloatSpec.Core.Zaux.Zpower, if_pos hprec, Int.cast_pow]
+      rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hprec, Int.cast_pow]
       exact (zpow_natCast (beta : ℝ) prec.toNat).symm.trans
         (by rw [Int.toNat_of_nonneg hprec])
     have hltR : |(m : ℝ)| < (beta : ℝ) ^ prec := by
@@ -1646,14 +1646,14 @@ private theorem pred_FLT_exact_shift_pos_aux (beta : Int) [ValidRadix beta] (x :
         have hxB' : x = (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta x - 1) := by
           simpa [← hM] using hxB
         unfold FloatSpec.Core.Ulp.pred_pos
-        rw [if_pos hxB']
+        rw [ite_eq_left hxB']
       have hpredpos_y :
           FloatSpec.Core.Ulp.pred_pos beta (FLT_exp prec emin) y =
             y - (beta : ℝ) ^ (FLT_exp prec emin (N - 1)) := by
         have hyB' : y = (beta : ℝ) ^ (FloatSpec.Core.Raux.mag beta y - 1) := by
           simpa [← hN] using hyB
         unfold FloatSpec.Core.Ulp.pred_pos
-        rw [if_pos hyB']
+        rw [ite_eq_left hyB']
       have hM_prev_large : emin ≤ M - 1 - prec := by omega
       have hN_prev_large : emin ≤ N - 1 - prec := by omega
       have hExp_x : FLT_exp prec emin (M - 1) = M - 1 - prec := by
@@ -1689,7 +1689,7 @@ private theorem pred_FLT_exact_shift_pos_aux (beta : Int) [ValidRadix beta] (x :
           intro h
           exact hxB (by simpa [← hM] using h)
         unfold FloatSpec.Core.Ulp.pred_pos
-        rw [if_neg hxB']
+        rw [ite_eq_right hxB']
       have hpredpos_y :
           FloatSpec.Core.Ulp.pred_pos beta (FLT_exp prec emin) y =
             y - FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) y := by
@@ -1697,7 +1697,7 @@ private theorem pred_FLT_exact_shift_pos_aux (beta : Int) [ValidRadix beta] (x :
           intro h
           exact hyB_not (by simpa [← hN] using h)
         unfold FloatSpec.Core.Ulp.pred_pos
-        rw [if_neg hyB_not']
+        rw [ite_eq_right hyB_not']
       have hulp_shift :
           FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) y =
             FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x * (beta : ℝ) ^ e := by
@@ -1972,7 +1972,7 @@ theorem ulp_FLT_pred_pos (beta : Int) [ValidRadix beta] (x : ℝ) :
               FloatSpec.Core.Ulp.pred_pos beta (FLT_exp prec emin) x =
                 x - (beta : ℝ) ^ (FLT_exp prec emin (M - 1)) := by
             unfold FloatSpec.Core.Ulp.pred_pos
-            rw [if_pos hxB']
+            rw [ite_eq_left hxB']
           exact hpred_pos.trans hpos
         have hup_step :
             FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin)
@@ -2036,7 +2036,7 @@ theorem ulp_FLT_pred_pos (beta : Int) [ValidRadix beta] (x : ℝ) :
               FloatSpec.Core.Ulp.pred_pos beta (FLT_exp prec emin) x =
                 x - FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin) x := by
             unfold FloatSpec.Core.Ulp.pred_pos
-            rw [if_neg hxB]
+            rw [ite_eq_right hxB]
           exact hpred_pos.trans hpos
         have heq : FloatSpec.Core.Ulp.ulp beta (FLT_exp prec emin)
               (FloatSpec.Core.Ulp.pred beta (FLT_exp prec emin) x)

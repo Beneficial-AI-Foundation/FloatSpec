@@ -2122,7 +2122,7 @@ theorem binary_fma_correct (mode : RoundingMode)
         simpa [FF2R] using hzero_raw
       simp [binary_fma, B2R, B2FF, FF2B, FF2R, is_finite_B,
         is_finite_FF, Bsign, sign_FF, fexp, res, rounded, hover, hzero,
-        hover_raw, hzero_raw, hover_expr, hzero_expr, if_pos hbpow_pos]
+        hover_raw, hzero_raw, hover_expr, hzero_expr, ite_eq_left hbpow_pos]
     · have hval : FF2R 2 (real_to_FullFloat rounded fexp) = rounded :=
         FF2R_real_to_FullFloat (x := rounded) (fexp := fexp) hfmt
       have hfinite : is_finite_FF (real_to_FullFloat rounded fexp) = true := by
@@ -2506,7 +2506,7 @@ theorem binary_div_correct (mode : RoundingMode) (x y : Binary754 prec emax)
                       simp [binary_div, B2R, B2FF, FF2B, FF2R, is_finite_B,
                         is_finite_FF, is_nan_B, is_nan_FF, Bsign, sign_FF,
                         Bdiv_sign, fexp, quot, rounded, num, den, q, r,
-                        hover, hzero, hzero_raw, if_pos hbpow_pos]
+                        hover, hzero, hzero_raw, ite_eq_left hbpow_pos]
                     · have hval : FF2R 2 (real_to_FullFloat r fexp) = r :=
                         FF2R_real_to_FullFloat (x := r) (fexp := fexp) hfmt_r
                       have hfinite : is_finite_FF (real_to_FullFloat r fexp) = true := by

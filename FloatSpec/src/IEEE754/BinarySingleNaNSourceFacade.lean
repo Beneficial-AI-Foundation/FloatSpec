@@ -664,10 +664,10 @@ theorem is_nan_binary_normalize {prec emax : Int}
             (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
               FloatSpec.Core.Defs.FlocqFloat 2))|
           (FloatSpec.Core.Raux.bpow 2 emax) = true
-      · rw [if_pos hlt] at hc
+      · rw [ite_eq_left hlt] at hc
         rw [hr] at hc
         simp [is_finite, binarySingleNaNFloatToB754, BSN_is_finite] at hc
-      · rw [if_neg hlt] at hc
+      · rw [ite_eq_right hlt] at hc
         rw [hr] at hc
         cases hs : FloatSpec.Core.Raux.Rlt_bool
             (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
@@ -891,11 +891,11 @@ theorem Bldexp_correct {prec emax : Int}
             (B2R (BinarySingleNaNFloat.B754_finite s m e hm hb) *
               FloatSpec.Core.Raux.bpow 2 k)|
           (FloatSpec.Core.Raux.bpow 2 emax) = true
-      · rw [if_pos hlt] at hbranch ⊢
+      · rw [ite_eq_left hlt] at hbranch ⊢
         exact ⟨hvalue.trans hbranch.1, hfinite.trans hbranch.2.1,
           hsign.trans (by simpa [Bsign, binarySingleNaNFloatToB754,
             BSN_sign] using hbranch.2.2)⟩
-      · rw [if_neg hlt] at hbranch ⊢
+      · rw [ite_eq_right hlt] at hbranch ⊢
         rw [hout, B2SF_SF2B]
         exact hbranch
 
@@ -920,10 +920,10 @@ private theorem normalize_toB754 {prec emax : Int}
       binaryFloatToBinarySingleNaNFloat, binarySingleNaNFloatToB754]
   · by_cases hmpos : 0 < m
     · simp only [Binary.normalize, _root_.binary_normalize, hm0, hmpos,
-        dite_false, dite_true, if_false, if_true]
+        dite_false, dite_true, ite_false, ite_true]
       apply Binary.binarySingleNaNFloatToB754_standardFloatToBinaryFloatOfNotNaN
     · simp only [Binary.normalize, _root_.binary_normalize, hm0, hmpos,
-        dite_false, if_false]
+        dite_false, ite_false]
       apply Binary.binarySingleNaNFloatToB754_standardFloatToBinaryFloatOfNotNaN
 
 private theorem Bplus_toB754 {prec emax : Int}
@@ -1077,7 +1077,7 @@ private theorem Bldexp_Bone_spec {prec emax : Int}
     simp [FloatSpec.Core.Raux.Rlt_bool, hlt]
   have hc := Bldexp_correct (prec:=prec) (emax:=emax)
     RoundingMode.RNE (Bone (prec:=prec) (emax:=emax)) k
-  rw [if_pos hcond] at hc
+  rw [ite_eq_left hcond] at hc
   exact ⟨hc.1.trans (by rw [hinput, hround]), hc.2.1.trans hbone.2.1,
     hc.2.2.trans hbone.2.2⟩
 
@@ -1619,7 +1619,7 @@ private theorem BpredPosPrime_toB754 {prec emax : Int}
       rw [Bminus_toB754]
       congr 1
       by_cases hboundary : 2 * m == (2 : Nat) ^ prec.toNat
-      · rw [if_pos hboundary, if_pos hboundary]
+      · rw [ite_eq_left hboundary, ite_eq_left hboundary]
         calc
           binarySingleNaNFloatToB754
               (Bldexp RoundingMode.RNE (Bone (prec:=prec) (emax:=emax)) k) =
@@ -1632,7 +1632,7 @@ private theorem BpredPosPrime_toB754 {prec emax : Int}
                   ((ExperimentalSingleNaNArithmetic.Bfrexp_bsn
                     (prec:=prec) (emax:=emax) raw).2 - 1)) := by
               rw [← hexpRaw]
-      · rw [if_neg hboundary, if_neg hboundary]
+      · rw [ite_eq_right hboundary, ite_eq_right hboundary]
         exact BulpPrime_toB754 hmax xf (by rfl)
 
 theorem Bpred_pos'_correct {prec emax : Int}

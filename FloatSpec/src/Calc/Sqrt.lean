@@ -204,7 +204,7 @@ lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
   have hlow_real : (beta : ℝ) ^ (d - 1) ≤ (m : ℝ) := by
     have hpow : ((FloatSpec.Core.Zaux.Zpower beta (d - 1) : Int) : ℝ) =
         (beta : ℝ) ^ (d - 1) := by
-      rw [FloatSpec.Core.Zaux.Zpower, if_pos hd_sub_nonneg, Int.cast_pow]
+      rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hd_sub_nonneg, Int.cast_pow]
       exact (zpow_natCast (beta : ℝ) _).symm.trans (by
         rw [Int.toNat_of_nonneg hd_sub_nonneg])
     rw [← hpow]
@@ -213,7 +213,7 @@ lemma mag_eq_Zdigits (m : Int) (hm_pos : 0 < m) (hβ : 1 < beta) :
   have hupp_real : (m : ℝ) < (beta : ℝ) ^ d := by
     have hpow : ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) =
         (beta : ℝ) ^ d := by
-      rw [FloatSpec.Core.Zaux.Zpower, if_pos hd_nonneg, Int.cast_pow]
+      rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hd_nonneg, Int.cast_pow]
       exact (zpow_natCast (beta : ℝ) _).symm.trans (by
         rw [Int.toNat_of_nonneg hd_nonneg])
     rw [← hpow]
@@ -445,7 +445,7 @@ theorem Fsqrt_core_correct (m1 e1 e : Int) (Hm1 : 0 < m1) (He : 2 * e ≤ e1) (H
     exact mul_lt_mul_of_pos_right hsqrt_ub hbpow_e_pos
   -- Now prove the inbetween relation by case split on r = 0
   unfold inbetween_float
-  simp only [if_neg hm1'_not_neg]
+  simp only [ite_eq_right hm1'_not_neg]
   split_ifs with hr_zero
   · -- Case: r = 0, so sqrt is exact
     apply inbetween.inbetween_Exact

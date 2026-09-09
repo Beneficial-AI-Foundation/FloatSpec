@@ -6,6 +6,7 @@ import FloatSpec.src.Compat
 import FloatSpec.src.Calc.Div
 import FloatSpec.src.Calc.Round
 import FloatSpec.src.Calc.Sqrt
+import Init.Data.Float
 import Std.Do.Triple
 import Std.Tactic.Do
 import Mathlib.Data.Real.Basic
@@ -1675,7 +1676,7 @@ theorem shr_limit (mrs : ShrRecord) (e n : Int)
         _ = (((n - 1).toNat + 1 : Nat) : Int) := by norm_num
     have hlt_pow : mrs.shr_m < (2 : Int) ^ (n - 1).toNat := by
       unfold zpow2 at Hlt
-      rw [if_pos Hn1] at Hlt
+      rw [ite_eq_left Hn1] at Hlt
       exact Hlt
     have hlim := shr_limit_nat mrs (n - 1).toNat Hmrs0 hlt_pow
     rw [shr_nat mrs e n hn_nonneg]
@@ -1688,7 +1689,7 @@ theorem shr_limit (mrs : ShrRecord) (e n : Int)
       · omega
     have hlt_neg : mrs.shr_m < 0 := by
       unfold zpow2 at Hlt
-      rw [if_neg Hn1] at Hlt
+      rw [ite_eq_right Hn1] at Hlt
       exact Hlt
     omega
 
@@ -1932,7 +1933,7 @@ private theorem SFnearbyint_shr_record_eq
       have hmx_lt_int : (mx : Int) < (2 : Int) ^ prec.toNat := by
         exact_mod_cast hmx_lt
       unfold zpow2
-      rw [if_pos hshift_nonneg]
+      rw [ite_eq_left hshift_nonneg]
       exact lt_of_lt_of_le hmx_lt_int hpow_le
   · simp only [hfar, ↓reduceIte]
 
@@ -4201,7 +4202,7 @@ private theorem Fsqrt_core_fst_pos (mx ex ez : Int) (hmx_pos : 0 < mx)
     exact mul_pos hmx_pos (pow_pos (by norm_num : (0 : Int) < 2) _)
   have hscaled_toNat_pos : 0 < scaled.toNat := by omega
   change 0 < (if scaled < 0 then 0 else Int.sqrt scaled)
-  rw [if_neg (by omega)]
+  rw [ite_eq_right (by omega)]
   unfold Int.sqrt
   exact_mod_cast (Nat.sqrt_pos.mpr hscaled_toNat_pos)
 
@@ -6084,7 +6085,7 @@ theorem B2BSN_lift {prec emax : Int} (x : binary_float prec emax)
       rw [hy]
       exact Bool.eq_false_of_not_eq_true hx
     unfold lift
-    rw [dif_neg hx]
+    rw [dite_eq_right hx]
     exact B2BSN_BSN2B' y hyfalse
 
 theorem B2R_lift {prec emax : Int} (x : binary_float prec emax)
@@ -6839,7 +6840,7 @@ theorem BoneSingle_value_finite_sign {prec emax : Int}
     simp [SF2R, F2R, FloatSpec.Core.Defs.F2R, hround,
       FloatSpec.Core.Raux.Rlt_bool, one_lt_bpow_emax (prec:=prec) (emax:=emax)]
   have hb := hc.2
-  rw [if_pos hlt] at hb
+  rw [ite_eq_left hlt] at hb
   have hn : is_nan_SF z = false := by
     have hf : is_finite_SF z = true := by simpa [z] using hb.2.1
     cases hz : z <;> simp [hz, is_finite_SF, is_nan_SF] at hf ⊢
@@ -7044,11 +7045,11 @@ theorem Bldexp_correct {prec emax : Int}
             (B2R (binary_float.B754_finite s m e hbounded) *
               FloatSpec.Core.Raux.bpow 2 k)|
           (FloatSpec.Core.Raux.bpow 2 emax) = true
-      · rw [if_pos hlt] at hb ⊢
+      · rw [ite_eq_left hlt] at hb ⊢
         exact ⟨hvalue.trans hb.1, hfinite.trans hb.2.1,
           hsign.trans (by simpa [Bsign] using hb.2.2)⟩
       · have hfalse := Bool.eq_false_of_not_eq_true hlt
-        rw [if_neg hlt] at hb ⊢
+        rw [ite_eq_right hlt] at hb ⊢
         have hbz : z = bsn_binary_overflow (prec:=prec) (emax:=emax) mode s := by
           simpa [z] using hb
         rw [hfull, hbz]
@@ -7838,7 +7839,7 @@ theorem normalize_correct {prec emax : Int}
           simpa [FloatSpec.Core.Raux.Rlt_bool, F2R,
             FloatSpec.Core.Defs.F2R] using hlt
         simp only [F2R, FloatSpec.Core.Defs.F2R] at hlt
-        rw [if_pos hlt]
+        rw [ite_eq_left hlt]
         have hbranch := hround.2
         have hlt' : FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2
@@ -7860,7 +7861,7 @@ theorem normalize_correct {prec emax : Int}
           simpa [FloatSpec.Core.Raux.Rlt_bool, F2R,
             FloatSpec.Core.Defs.F2R] using hlt
         simp only [F2R, FloatSpec.Core.Defs.F2R] at hlt
-        rw [if_neg hlt]
+        rw [ite_eq_right hlt]
         have hbranch := hround.2
         have hlt' : FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2
@@ -7934,7 +7935,7 @@ theorem normalize_correct {prec emax : Int}
           simpa [FloatSpec.Core.Raux.Rlt_bool, F2R,
             FloatSpec.Core.Defs.F2R] using hlt
         simp only [F2R, FloatSpec.Core.Defs.F2R] at hlt
-        rw [if_pos hlt]
+        rw [ite_eq_left hlt]
         have hbranch := hround.2
         have hlt' : FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2
@@ -7956,7 +7957,7 @@ theorem normalize_correct {prec emax : Int}
           simpa [FloatSpec.Core.Raux.Rlt_bool, F2R,
             FloatSpec.Core.Defs.F2R] using hlt
         simp only [F2R, FloatSpec.Core.Defs.F2R] at hlt
-        rw [if_neg hlt]
+        rw [ite_eq_right hlt]
         have hbranch := hround.2
         have hlt' : FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2
@@ -8362,6 +8363,107 @@ noncomputable def Bsqrt {prec emax : Int}
 
 end BinarySingleNaN
 
+/-!
+Lean 4.34 exposes the logical models of native `Float` and `Float32`.  These
+bridges are deliberately structural: the FLoCq carriers and specifications
+remain authoritative, while native models provide executable IEEE encodings.
+-/
+
+namespace FloatSpec.IEEE754.Native
+
+open Float.Model
+
+def modelSignOfBool : Bool → UnpackedFloat.Sign
+  | false => .positive
+  | true => .negative
+
+def boolOfModelSign : UnpackedFloat.Sign → Bool
+  | .positive => false
+  | .negative => true
+
+@[simp] theorem boolOfModelSign_modelSignOfBool (s : Bool) :
+    boolOfModelSign (modelSignOfBool s) = s := by cases s <;> rfl
+
+@[simp] theorem modelSignOfBool_boolOfModelSign (s : UnpackedFloat.Sign) :
+    modelSignOfBool (boolOfModelSign s) = s := by cases s <;> rfl
+
+/-- Structural translation from FLoCq's single-NaN surface to Lean's unpacked model. -/
+def unpackedOfStandardFloat : StandardFloat → UnpackedFloat
+  | .S754_zero s => .zero (modelSignOfBool s)
+  | .S754_infinity s => .infinity (modelSignOfBool s)
+  | .S754_nan => .notANumber
+  | .S754_finite s m e =>
+      if hm : 0 < m then .finite (modelSignOfBool s) m e hm else .zero (modelSignOfBool s)
+
+/-- Structural translation from Lean's unpacked model to FLoCq's single-NaN surface. -/
+def standardFloatOfUnpacked : UnpackedFloat → StandardFloat
+  | .zero s => .S754_zero (boolOfModelSign s)
+  | .infinity s => .S754_infinity (boolOfModelSign s)
+  | .notANumber => .S754_nan
+  | .finite s m e _ => .S754_finite (boolOfModelSign s) m e
+
+theorem standardFloatOfUnpacked_unpackedOfStandardFloat
+    (x : StandardFloat)
+    (hvalid : match x with | .S754_finite _ m _ => 0 < m | _ => True) :
+    standardFloatOfUnpacked (unpackedOfStandardFloat x) = x := by
+  cases x with
+  | S754_zero s => cases s <;> rfl
+  | S754_infinity s => cases s <;> rfl
+  | S754_nan => rfl
+  | S754_finite s m e =>
+      cases s <;> simp_all [unpackedOfStandardFloat, standardFloatOfUnpacked]
+
+@[simp] theorem unpackedOfStandardFloat_standardFloatOfUnpacked
+    (x : UnpackedFloat) :
+    unpackedOfStandardFloat (standardFloatOfUnpacked x) = x := by
+  cases x with
+  | infinity s => cases s <;> rfl
+  | zero s => cases s <;> rfl
+  | notANumber => rfl
+  | finite s m e hm =>
+      cases s <;> simp [unpackedOfStandardFloat, standardFloatOfUnpacked, hm]
+
+/-- The exact proof-carrying FLoCq carrier as Lean's unpacked single-NaN model. -/
+def unpackedOfBinarySingleNaNFloat {prec emax : Int} :
+    BinarySingleNaNFloat prec emax → UnpackedFloat
+  | .B754_zero s => .zero (modelSignOfBool s)
+  | .B754_infinity s => .infinity (modelSignOfBool s)
+  | .B754_nan => .notANumber
+  | .B754_finite s m e hm _ => .finite (modelSignOfBool s) m e hm
+
+@[simp] theorem standardFloatOfUnpacked_unpackedOfBinarySingleNaNFloat
+  {prec emax : Int} (x : BinarySingleNaNFloat prec emax) :
+    standardFloatOfUnpacked (unpackedOfBinarySingleNaNFloat x) =
+      binarySingleNaNFloatToStandardFloat x := by
+  cases x <;> simp [unpackedOfBinarySingleNaNFloat, standardFloatOfUnpacked,
+    binarySingleNaNFloatToStandardFloat]
+
+/-- Encode a FLoCq standard float in Lean's binary64 logical model. -/
+def model64OfStandardFloat (x : StandardFloat) : Float.Model :=
+  Float.Model.pack (unpackedOfStandardFloat x)
+
+/-- Encode a FLoCq standard float in Lean's binary32 logical model. -/
+def model32OfStandardFloat (x : StandardFloat) : Float32.Model :=
+  Float32.Model.pack (unpackedOfStandardFloat x)
+
+/-- Decode Lean's binary64 logical model to the FLoCq single-NaN surface. -/
+def standardFloatOfModel64 (x : Float.Model) : StandardFloat :=
+  standardFloatOfUnpacked x.unpack
+
+/-- Decode Lean's binary32 logical model to the FLoCq single-NaN surface. -/
+def standardFloatOfModel32 (x : Float32.Model) : StandardFloat :=
+  standardFloatOfUnpacked x.unpack
+
+/-- Encode an exact FLoCq binary64 single-NaN value as Lean's logical model. -/
+def model64OfBinarySingleNaNFloat (x : BinarySingleNaNFloat 53 1024) : Float.Model :=
+  Float.Model.pack (unpackedOfBinarySingleNaNFloat x)
+
+/-- Encode an exact FLoCq binary32 single-NaN value as Lean's logical model. -/
+def model32OfBinarySingleNaNFloat (x : BinarySingleNaNFloat 24 128) : Float32.Model :=
+  Float32.Model.pack (unpackedOfBinarySingleNaNFloat x)
+
+end FloatSpec.IEEE754.Native
+
 /-! Source-qualified facade for declarations whose unqualified Coq names
 collide with `IEEE754/Binary.v`.  Every definition below is a reducible name
 for the already checked proof-carrying SingleNaN implementation. -/
@@ -8750,7 +8852,7 @@ theorem Bmult_correct_from_exp_instances {prec emax : Int}
                      Binary.B2R (prec:=prec) (emax:=emax)
                       (binary_float.B754_finite (prec:=prec) (emax:=emax) sy my ey Hy))|
                 (FloatSpec.Core.Raux.bpow 2 emax) = true
-          · rw [if_pos hlt]
+          · rw [ite_eq_left hlt]
             have hbranch := haux.2
             have hlt_aux :
                 FloatSpec.Core.Raux.Rlt_bool
@@ -8792,7 +8894,7 @@ theorem Bmult_correct_from_exp_instances {prec emax : Int}
                         (binary_float.B754_finite (prec:=prec) (emax:=emax) sy my ey Hy))
                       = sign_SF z := hsign_bridge
                   _ = Bool.xor sx sy := hbranch.2.2
-          · rw [if_neg hlt]
+          · rw [ite_eq_right hlt]
             have hlt_false :
                 FloatSpec.Core.Raux.Rlt_bool
                   |FloatSpec.Core.Generic_fmt.roundR 2
@@ -9220,7 +9322,7 @@ private theorem Bfma_returned_finite_correct {prec emax : Int}
               (binary_float.B754_finite (prec:=prec) (emax:=emax) s m e hbounded))|
       (FloatSpec.Core.Raux.bpow 2 emax) = true := by
     simp [hres, hround, FloatSpec.Core.Raux.Rlt_bool, hlt]
-  rw [if_pos hcond, hout]
+  rw [ite_eq_left hcond, hout]
   refine ⟨?_, rfl, ?_⟩
   · simpa [hres] using hround.symm
   · simp [binaryFmaResultSign, hres,
@@ -9330,7 +9432,7 @@ theorem Bplus_correct_from_exp_instances {prec emax : Int}
                       sy my ey Hy))|
                 (FloatSpec.Core.Raux.bpow 2 emax) = true := by
             simpa [Binary.B2R] using hcond
-          rw [if_pos hcond']
+          rw [ite_eq_left hcond']
           constructor
           · simpa [Binary.Bplus, Binary.B2R] using hround.symm
           · constructor
@@ -9396,7 +9498,7 @@ theorem Bplus_correct_from_exp_instances {prec emax : Int}
                     (binary_float.B754_zero (prec:=prec) (emax:=emax) sy))|
                 (FloatSpec.Core.Raux.bpow 2 emax) = true := by
             simpa [Binary.B2R] using hcond
-          rw [if_pos hcond']
+          rw [ite_eq_left hcond']
           constructor
           · simpa [Binary.Bplus, Binary.B2R] using hround.symm
           · constructor
@@ -9592,7 +9694,7 @@ theorem Bplus_correct_from_exp_instances {prec emax : Int}
                             (binary_float.B754_finite (prec:=prec) (emax:=emax)
                               sy my ey Hy))|
                     (FloatSpec.Core.Raux.bpow 2 emax) = true
-              · rw [if_pos hlt]
+              · rw [ite_eq_left hlt]
                 have hltAux :
                     FloatSpec.Core.Raux.Rlt_bool
                       |FloatSpec.Core.Generic_fmt.roundR 2
@@ -9638,7 +9740,7 @@ theorem Bplus_correct_from_exp_instances {prec emax : Int}
                                 sy my ey Hy)) := by
                             simp [binaryPlusResultSign, ne_of_gt hsumPos,
                               not_lt_of_ge (le_of_lt hsumPos)]
-              · rw [if_neg hlt]
+              · rw [ite_eq_right hlt]
                 have hltFalse :
                     FloatSpec.Core.Raux.Rlt_bool
                       |FloatSpec.Core.Generic_fmt.roundR 2
@@ -9802,7 +9904,7 @@ theorem Bplus_correct_from_exp_instances {prec emax : Int}
                             (binary_float.B754_finite (prec:=prec) (emax:=emax)
                               sy my ey Hy))|
                     (FloatSpec.Core.Raux.bpow 2 emax) = true
-              · rw [if_pos hlt]
+              · rw [ite_eq_left hlt]
                 have hltAux :
                     FloatSpec.Core.Raux.Rlt_bool
                       |FloatSpec.Core.Generic_fmt.roundR 2
@@ -9847,7 +9949,7 @@ theorem Bplus_correct_from_exp_instances {prec emax : Int}
                               (binary_float.B754_finite (prec:=prec) (emax:=emax)
                                 sy my ey Hy)) := by
                             simp [binaryPlusResultSign, ne_of_lt hsumNeg, hsumNeg]
-              · rw [if_neg hlt]
+              · rw [ite_eq_right hlt]
                 have hltFalse :
                     FloatSpec.Core.Raux.Rlt_bool
                       |FloatSpec.Core.Generic_fmt.roundR 2
@@ -10505,7 +10607,7 @@ theorem Bdiv_correct {prec emax : Int}
                      Binary.B2R (prec:=prec) (emax:=emax)
                         (binary_float.B754_finite (prec:=prec) (emax:=emax) sy my ey Hy))|
                 (FloatSpec.Core.Raux.bpow 2 emax) = true
-          · rw [if_pos hlt]
+          · rw [ite_eq_left hlt]
             have hbranch := haux.2
             have hltAux :
                 FloatSpec.Core.Raux.Rlt_bool
@@ -10522,7 +10624,7 @@ theorem Bdiv_correct {prec emax : Int}
               · exact hfinite.trans hbranch.2.1
               · intro _
                 exact hsign.trans hbranch.2.2
-          · rw [if_neg hlt]
+          · rw [ite_eq_right hlt]
             have hltFalse :
                 FloatSpec.Core.Raux.Rlt_bool
                   |FloatSpec.Core.Generic_fmt.roundR 2
@@ -11299,7 +11401,7 @@ private theorem Bpred_pos'_positive_correct {prec emax : Int}
       · rw [hB2R, hzPayload.2.1, hed]
         simp only [FloatSpec.Core.Raux.bpow]
         unfold FloatSpec.Core.Ulp.pred_pos
-        rw [if_pos (by simpa [xr, x] using hvalueBoundary)]
+        rw [ite_eq_left (by simpa [xr, x] using hvalueBoundary)]
         ring
       · rw [hB2R, hzPayload.2.1]
         exact zpow_pos (by norm_num) _
@@ -11330,14 +11432,14 @@ private theorem Bpred_pos'_positive_correct {prec emax : Int}
             (prec:=prec) (emax:=emax) mx ex hmx hbounded hmant
             (by simpa [xr, x] using hreal)
           unfold FloatSpec.Core.Ulp.pred_pos
-          rw [if_pos hreal]
+          rw [ite_eq_left hreal]
           have hstep' : FloatSpec.Core.Ulp.ulp 2 fp xr =
               ((2 : Int) : ℝ) ^ (fp (FloatSpec.Core.Raux.mag 2 xr - 1)) := by
             simpa [fp, xr, x] using hstep
           rw [hstep']
           ring
         · unfold FloatSpec.Core.Ulp.pred_pos
-          rw [if_neg hreal]
+          rw [ite_eq_right hreal]
           ring
       · rw [hdEq]
         rw [← hxpf]
@@ -11546,7 +11648,7 @@ private theorem Bplus_finite_positive_correct {prec emax : Int}
     exact hround.1
   · by_cases hlt : FloatSpec.Core.Raux.Rlt_bool |rounded|
         (FloatSpec.Core.Raux.bpow 2 emax) = true
-    · rw [if_pos hlt]
+    · rw [ite_eq_left hlt]
       have hltInput :
           FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2
@@ -11563,7 +11665,7 @@ private theorem Bplus_finite_positive_correct {prec emax : Int}
         simp [rounded, hinput]
       · rw [hr, hfiniteView, hbranch.2.1]
       · rw [hr, hsignView, hbranch.2.2]
-    · rw [if_neg hlt]
+    · rw [ite_eq_right hlt]
       have hltInput :
           FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2
@@ -11672,7 +11774,7 @@ private theorem Bsucc_positive_correct {prec emax : Int}
     exact hround.1
   · by_cases hlt : FloatSpec.Core.Raux.Rlt_bool |successor|
         (FloatSpec.Core.Raux.bpow 2 emax) = true
-    · rw [if_pos hlt]
+    · rw [ite_eq_left hlt]
       have hltInput :
           FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2 fp (rnd_of_mode RoundingMode.RTP)
@@ -11687,7 +11789,7 @@ private theorem Bsucc_positive_correct {prec emax : Int}
       · rw [hr, hvalueView, hbranch.1, hroundEq]
       · rw [hr, hfiniteView, hbranch.2.1]
       · rw [hr, hsignView, hbranch.2.2]
-    · rw [if_neg hlt]
+    · rw [ite_eq_right hlt]
       have hltInput :
           FloatSpec.Core.Raux.Rlt_bool
             |FloatSpec.Core.Generic_fmt.roundR 2 fp (rnd_of_mode RoundingMode.RTP)
@@ -11855,9 +11957,9 @@ theorem Bsucc'_correct {prec emax : Int}
                   (FloatSpec.Core.Raux.bpow 2 emax) = true := by
               simpa [hroundSum] using hlt
             have hplusBranch := hplus.2
-            rw [if_pos hltPlus] at hplusBranch
+            rw [ite_eq_left hltPlus] at hplusBranch
             have hrefBranch := href.2
-            rw [if_pos hlt] at hrefBranch
+            rw [ite_eq_left hlt] at hrefBranch
             apply B754_eq_of_valid_finite_sign_value (prec:=prec) (emax:=emax)
             · exact hplus.1
             · exact href.1
@@ -11892,9 +11994,9 @@ theorem Bsucc'_correct {prec emax : Int}
                       B754_to_R (B754.B754_finite false my ey))|
                   (FloatSpec.Core.Raux.bpow 2 emax) = true := by
               simp [hltPlus]
-            rw [if_neg hltPlusNot] at hplusBranch
+            rw [ite_eq_right hltPlusNot] at hplusBranch
             have hrefBranch := href.2
-            rw [if_neg hlt] at hrefBranch
+            rw [ite_eq_right hlt] at hrefBranch
             exact hplusBranch.trans hrefBranch.symm
       | true =>
           let xopp : BinarySingleNaNFloat prec emax :=
@@ -12013,7 +12115,7 @@ theorem Bsucc_correct {prec emax : Int}
             StandardFloat.S754_infinity false
           by_cases hlt : FloatSpec.Core.Raux.Rlt_bool successor
               (FloatSpec.Core.Raux.bpow 2 emax) = true
-          · rw [if_pos hlt]
+          · rw [ite_eq_left hlt]
             have habs : |successor| = successor := abs_of_pos hsuccPos
             have hpayload := href.2
             have habsRaw :
@@ -12028,10 +12130,10 @@ theorem Bsucc_correct {prec emax : Int}
                 (FloatSpec.Core.Raux.bpow 2 emax) = true := by
               rw [habsRaw]
               simpa [successor] using hlt
-            rw [if_pos hltAbs] at hpayload
+            rw [ite_eq_left hltAbs] at hpayload
             simpa [raw, successor, binarySingleNaNFloatToB754,
               BSN_sign, BSN_is_finite_strict] using hpayload
-          · rw [if_neg hlt]
+          · rw [ite_eq_right hlt]
             have habs : |successor| = successor := abs_of_pos hsuccPos
             have hpayload := href.2
             have habsRaw :
@@ -12046,7 +12148,7 @@ theorem Bsucc_correct {prec emax : Int}
                 (FloatSpec.Core.Raux.bpow 2 emax) = true := by
               rw [habsRaw]
               simpa [successor] using hlt
-            rw [if_neg hltAbs] at hpayload
+            rw [ite_eq_right hltAbs] at hpayload
             rw [show Bsucc (prec:=prec) (emax:=emax) raw =
                 B754.B754_infinity false by simpa [raw, successor] using hpayload]
             rfl
@@ -12160,7 +12262,7 @@ theorem Bsucc_correct {prec emax : Int}
               BSN_sign (Bsucc (prec:=prec) (emax:=emax) neg) = true
           else B2SF_BSN (Bsucc (prec:=prec) (emax:=emax) neg) =
             StandardFloat.S754_infinity false
-          rw [if_pos hlt]
+          rw [ite_eq_left hlt]
           exact ⟨hsuccessorValue,
             by rw [hr]; exact hfiniteOpp,
             by rw [hr]; exact hsignOpp⟩
@@ -12260,8 +12362,8 @@ theorem Bpred_correct {prec emax : Int}
   rw [hcondEq]
   by_cases hlt : FloatSpec.Core.Raux.Rlt_bool successor
       (FloatSpec.Core.Raux.bpow 2 emax) = true
-  · rw [if_pos hlt]
-    rw [if_pos hlt] at href
+  · rw [ite_eq_left hlt]
+    rw [ite_eq_left hlt] at href
     rcases href with ⟨hvalue, hfiniteResult, hsignResult⟩
     have hsignOppResult : BSN_sign
         (Bopp_bsn (Bsucc (prec:=prec) (emax:=emax) oraw)) =
@@ -12283,8 +12385,8 @@ theorem Bpred_correct {prec emax : Int}
     · rw [hpredRaw, hsignOppResult, hsignResult, hsignInput,
         hstrictInput]
       simpa [raw]
-  · rw [if_neg hlt]
-    rw [if_neg hlt] at href
+  · rw [ite_eq_right hlt]
+    rw [ite_eq_right hlt] at href
     rw [hpredRaw]
     cases hz : Bsucc (prec:=prec) (emax:=emax) oraw with
     | B754_zero s =>
@@ -12767,7 +12869,7 @@ theorem binary_normalize_correct {prec emax : Int}
       |FloatSpec.Core.Generic_fmt.roundR 2
         (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode) input|
       (FloatSpec.Core.Raux.bpow 2 emax) = true
-  · rw [if_pos hlt]
+  · rw [ite_eq_left hlt]
     have hlt' : FloatSpec.Core.Raux.Rlt_bool
         |FloatSpec.Core.Generic_fmt.roundR 2
           (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
@@ -12775,10 +12877,10 @@ theorem binary_normalize_correct {prec emax : Int}
               FloatSpec.Core.Defs.FlocqFloat 2))|
         (FloatSpec.Core.Raux.bpow 2 emax) = true := by
       simpa [input] using hlt
-    rw [if_pos hlt'] at href
+    rw [ite_eq_left hlt'] at href
     rw [heq]
     simpa [input, binary_normalize_sign_eq] using href
-  · rw [if_neg hlt]
+  · rw [ite_eq_right hlt]
     by_cases hm0 : m = 0
     · subst m
       have hb : 0 < FloatSpec.Core.Raux.bpow 2 emax :=
@@ -12811,7 +12913,7 @@ theorem binary_normalize_correct {prec emax : Int}
             (FloatSpec.Core.Raux.bpow 2 emax) = true := by
           simpa [hinput] using hlt
         dsimp only at hraw
-        rw [if_neg hltS] at hraw
+        rw [ite_eq_right hltS] at hraw
         have hnorm : binary_normalize (prec:=prec) (emax:=emax)
             mode m e szero = standardFloatToBinaryFloatOfNotNaN
               zS hraw.1 hnotnan := by
@@ -12850,7 +12952,7 @@ theorem binary_normalize_correct {prec emax : Int}
             (FloatSpec.Core.Raux.bpow 2 emax) = true := by
           simpa [hinput] using hlt
         dsimp only at hraw
-        rw [if_neg hltS] at hraw
+        rw [ite_eq_right hltS] at hraw
         have hnorm : binary_normalize (prec:=prec) (emax:=emax)
             mode m e szero = standardFloatToBinaryFloatOfNotNaN
               zS hraw.1 hnotnan := by
@@ -12906,8 +13008,8 @@ theorem Bsucc_correct {prec emax : Int}
       (FloatSpec.Core.Ulp.succ 2 (FLT_exp (3 - emax - prec) prec)
         (B754_to_R (binarySingleNaNFloatToB754 (B2BSN x))))
       (FloatSpec.Core.Raux.bpow 2 emax) = true
-  · rw [if_pos hlt]
-    rw [if_pos hlt] at href
+  · rw [ite_eq_left hlt]
+    rw [ite_eq_left hlt] at href
     rcases href with ⟨hvalue, hfiniteResult, hsignResult⟩
     have hresultFinite : is_finite (Bsucc x) = true := by
       rw [← is_finite_B2BSN (Bsucc x), hrawResult]
@@ -12923,8 +13025,8 @@ theorem Bsucc_correct {prec emax : Int}
     · rw [← Bsign_B2BSN (Bsucc x) hresultNotNaN, hrawResult,
         hsignResult, Bsign_B2BSN x hxNotNaN,
         is_finite_strict_B2BSN]
-  · rw [if_neg hlt]
-    rw [if_neg hlt] at href
+  · rw [ite_eq_right hlt]
+    rw [ite_eq_right hlt] at href
     apply B2FF_exact_eq_infinity_of_BSN_view (Bsucc x) false
     rw [← B2SF_BSN_binarySingleNaNFloatToB754, hrawResult]
     exact href
@@ -12966,8 +13068,8 @@ theorem Bpred_correct {prec emax : Int}
       (-FloatSpec.Core.Raux.bpow 2 emax)
       (FloatSpec.Core.Ulp.pred 2 (FLT_exp (3 - emax - prec) prec)
         (B754_to_R (binarySingleNaNFloatToB754 (B2BSN x)))) = true
-  · rw [if_pos hlt]
-    rw [if_pos hlt] at href
+  · rw [ite_eq_left hlt]
+    rw [ite_eq_left hlt] at href
     rcases href with ⟨hvalue, hfiniteResult, hsignResult⟩
     have hresultFinite : is_finite (Bpred x) = true := by
       rw [← is_finite_B2BSN (Bpred x), hrawResult]
@@ -12983,8 +13085,8 @@ theorem Bpred_correct {prec emax : Int}
     · rw [← Bsign_B2BSN (Bpred x) hresultNotNaN, hrawResult,
         hsignResult, Bsign_B2BSN x hxNotNaN,
         is_finite_strict_B2BSN]
-  · rw [if_neg hlt]
-    rw [if_neg hlt] at href
+  · rw [ite_eq_right hlt]
+    rw [ite_eq_right hlt] at href
     apply B2FF_exact_eq_infinity_of_BSN_view (Bpred x) true
     rw [← B2SF_BSN_binarySingleNaNFloatToB754, hrawResult]
     exact href
@@ -13090,16 +13192,16 @@ theorem normalize_B2BSN_correct {prec emax : Int}
           (F2R (FloatSpec.Core.Defs.FlocqFloat.mk m e :
             FloatSpec.Core.Defs.FlocqFloat 2))|
       (FloatSpec.Core.Raux.bpow 2 emax) = true
-  · rw [if_pos hlt] at href
-    rw [if_pos hlt]
+  · rw [ite_eq_left hlt] at href
+    rw [ite_eq_left hlt]
     have hnotnan : Binary.is_nan result = false := by
       cases hr : result <;>
         simp [result, hr, Binary.is_finite, Binary.is_nan] at href ⊢
     exact ⟨(Binary.B2R_B2BSN result).trans href.1,
       (Binary.is_finite_B2BSN result).trans href.2.1,
       (Binary.Bsign_B2BSN result hnotnan).trans href.2.2⟩
-  · rw [if_neg hlt] at href
-    rw [if_neg hlt]
+  · rw [ite_eq_right hlt] at href
+    rw [ite_eq_right hlt]
     have hstd := congrArg FF2SF href
     calc
       B2SF (Binary.B2BSN result) = Binary.B2SF result :=
@@ -13248,9 +13350,9 @@ theorem Bmult_correct {prec emax : Int}
                   (SF2R 2 (StandardFloat.S754_finite sx mx ex) *
                    SF2R 2 (StandardFloat.S754_finite sy my ey))|
               (FloatSpec.Core.Raux.bpow 2 emax) = true
-          · rw [if_pos (by simpa [hinputX, hinputY] using hlt)]
+          · rw [ite_eq_left (by simpa [hinputX, hinputY] using hlt)]
             have hbranch := haux.2
-            rw [if_pos hlt] at hbranch
+            rw [ite_eq_left hlt] at hbranch
             rcases hbranch with ⟨hvalue, hfinite, hsign⟩
             refine ⟨?_, ?_, ?_⟩
             · simpa [Bmult, z, hinputX, hinputY] using hvalue
@@ -13269,9 +13371,9 @@ theorem Bmult_correct {prec emax : Int}
                     standardFloatToBinarySingleNaNFloat z haux.1 by rfl,
                 Bsign_SF2B z haux.1]
               simpa [z, Bsign, binarySingleNaNFloatToB754, BSN_sign] using hsign
-          · rw [if_neg (by simpa [hinputX, hinputY] using hlt)]
+          · rw [ite_eq_right (by simpa [hinputX, hinputY] using hlt)]
             have hbranch := haux.2
-            rw [if_neg hlt] at hbranch
+            rw [ite_eq_right hlt] at hbranch
             simpa [Bmult, z, Bsign, binarySingleNaNFloatToB754, BSN_sign,
               is_finite]
               using hbranch
@@ -13328,7 +13430,7 @@ theorem Bplus_correct {prec emax : Int}
               (FloatSpec.Core.Raux.bpow 2 emax) = true := by
             rw [hzR, zero_add, hround]
             simp [FloatSpec.Core.Raux.Rlt_bool, habs]
-          rw [if_pos hcond]
+          rw [ite_eq_left hcond]
           refine ⟨?_, rfl, ?_⟩
           · rw [show Bplus mode (BinarySingleNaNFloat.B754_zero sx)
                 (BinarySingleNaNFloat.B754_finite sy my ey hmy Hy) =
@@ -13364,7 +13466,7 @@ theorem Bplus_correct {prec emax : Int}
               (FloatSpec.Core.Raux.bpow 2 emax) = true := by
             rw [hzR, add_zero, hround]
             simp [FloatSpec.Core.Raux.Rlt_bool, habs]
-          rw [if_pos hcond]
+          rw [ite_eq_left hcond]
           refine ⟨?_, rfl, ?_⟩
           · rw [show Bplus mode
                 (BinarySingleNaNFloat.B754_finite sx mx ex hmx Hx)
@@ -13404,8 +13506,8 @@ theorem Bplus_correct {prec emax : Int}
                   (B2R (BinarySingleNaNFloat.B754_finite sx mx ex hmx Hx) +
                    B2R (BinarySingleNaNFloat.B754_finite sy my ey hmy Hy))|
               (FloatSpec.Core.Raux.bpow 2 emax) = true
-          · rw [if_pos hlt]
-            rw [hsum, if_pos hlt] at href
+          · rw [ite_eq_left hlt]
+            rw [hsum, ite_eq_left hlt] at href
             have hsign :
                 (if B2R (BinarySingleNaNFloat.B754_finite sx mx ex hmx Hx) +
                       B2R (BinarySingleNaNFloat.B754_finite sy my ey hmy Hy) = 0
@@ -13459,8 +13561,8 @@ theorem Bplus_correct {prec emax : Int}
             · simpa [Bplus, ez, m, szero] using href.2.1
             · simpa [Bplus, ez, m, szero, hsign, Bsign,
                 binarySingleNaNFloatToB754, BSN_sign] using href.2.2
-          · rw [if_neg hlt]
-            rw [hsum, if_neg hlt] at href
+          · rw [ite_eq_right hlt]
+            rw [hsum, ite_eq_right hlt] at href
             have hnotlt : ¬
                 |FloatSpec.Core.Generic_fmt.roundR 2
                   (FLT_exp (3 - emax - prec) prec) (rnd_of_mode mode)
@@ -13597,7 +13699,7 @@ private theorem Bfma_returned_finite_correct {prec emax : Int}
       (FloatSpec.Core.Raux.bpow 2 emax) = true := by
     rw [hres, hround]
     simp [FloatSpec.Core.Raux.Rlt_bool, habs]
-  rw [if_pos hcond, hout]
+  rw [ite_eq_left hcond, hout]
   refine ⟨?_, rfl, ?_⟩
   · rw [hres]
     exact hround.symm
@@ -13839,9 +13941,9 @@ private theorem Bdiv_finite_correct {prec emax : Int}
           (SF2R 2 (StandardFloat.S754_finite sx mx ex) /
            SF2R 2 (StandardFloat.S754_finite sy my ey))|
       (FloatSpec.Core.Raux.bpow 2 emax) = true
-  · rw [if_pos (by simpa only [hquot] using hlt)]
+  · rw [ite_eq_left (by simpa only [hquot] using hlt)]
     have hbranch := haux'.2
-    rw [if_pos hlt] at hbranch
+    rw [ite_eq_left hlt] at hbranch
     rcases hbranch with ⟨hvalue, hfinite, hsign⟩
     rw [hout]
     refine ⟨?_, ?_, ?_⟩
@@ -13851,9 +13953,9 @@ private theorem Bdiv_finite_correct {prec emax : Int}
     · intro _
       rw [Bsign_SF2B z hvalid]
       exact hsign
-  · rw [if_neg (by simpa only [hquot] using hlt)]
+  · rw [ite_eq_right (by simpa only [hquot] using hlt)]
     have hbranch := haux'.2
-    rw [if_neg hlt] at hbranch
+    rw [ite_eq_right hlt] at hbranch
     rw [hout, B2SF_SF2B]
     exact hbranch
 

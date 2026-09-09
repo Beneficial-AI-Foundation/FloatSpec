@@ -6,6 +6,7 @@ import Std.Do.Triple
 import Std.Tactic.Do
 import FloatSpec.src.IEEE754.Binary
 import FloatSpec.src.IEEE754.BinarySingleNaN
+import Init.Data.Float
 import Mathlib.Data.Real.Basic
 
 open Real
@@ -1864,3 +1865,44 @@ theorem split_bits_inj (x y : Int)
           simpa [hxy]
     _ = y := by
           simpa using hy_join
+
+/-!
+Native Lean model adapters.  `binary32` and `binary64` preserve the source
+NaN sign and payload; Lean's logical models intentionally canonicalize NaNs.
+Accordingly these conversions preserve IEEE values, but the forward direction
+is not claimed to preserve a noncanonical NaN bit pattern.
+-/
+
+namespace FloatSpec.IEEE754.Native
+
+/-- Interpret the FLoCq binary32 encoding through Lean's canonical logical model. -/
+def model32OfBinary (x : _root_.binary32) : Float32.Model :=
+  Float32.Model.ofBits (UInt32.ofInt (_root_.bits_of_b32 x))
+
+/-- Interpret the FLoCq binary64 encoding through Lean's canonical logical model. -/
+def model64OfBinary (x : _root_.binary64) : Float.Model :=
+  Float.Model.ofBits (UInt64.ofInt (_root_.bits_of_b64 x))
+
+/-- Decode a canonical Lean binary32 model through FLoCq's bit decoder. -/
+noncomputable def binary32OfModel (x : Float32.Model) : _root_.binary32 :=
+  _root_.b32_of_bits (x.toBits.toNat : Int)
+
+/-- Decode a canonical Lean binary64 model through FLoCq's bit decoder. -/
+noncomputable def binary64OfModel (x : Float.Model) : _root_.binary64 :=
+  _root_.b64_of_bits (x.toBits.toNat : Int)
+
+/-- Native `Float32` view of a FLoCq binary32 value. -/
+def float32OfBinary (x : _root_.binary32) : Float32 :=
+  Float32.ofModel (model32OfBinary x)
+
+/-- Native `Float` view of a FLoCq binary64 value. -/
+def floatOfBinary (x : _root_.binary64) : Float :=
+  Float.ofModel (model64OfBinary x)
+
+@[simp] theorem float32OfBinary_toModel (x : _root_.binary32) :
+    (float32OfBinary x).toModel = model32OfBinary x := rfl
+
+@[simp] theorem floatOfBinary_toModel (x : _root_.binary64) :
+    (floatOfBinary x).toModel = model64OfBinary x := rfl
+
+end FloatSpec.IEEE754.Native

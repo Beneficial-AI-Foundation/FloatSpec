@@ -2573,7 +2573,7 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
     have h_lhs_d : -x - (↑(-c) : ℝ) = (0 : ℝ) := by
       simp only [h_int, hc_eq, Int.cast_neg, neg_neg, sub_self]
     have h_lhs_lt : (0 : ℝ) < 1 / 2 := by linarith
-    rw [if_pos hd_lt, h_lhs_d, if_pos h_lhs_lt]
+    rw [ite_eq_left hd_lt, h_lhs_d, ite_eq_left h_lhs_lt]
     simp only [hc_eq, neg_neg]
   · have hx_not_int : x ≠ (f : ℝ) := h_int
     have h_ce : c = f + 1 := ceil_eq_floor_add_one hx_not_int
@@ -2596,14 +2596,14 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
     · have h1' : d' > 1 / 2 := by linarith
       have hd'_not_lt : ¬(d' < 1 / 2) := by linarith
       have hd'_not_eq : ¬(d' = 1 / 2) := by linarith
-      rw [if_pos h1]
+      rw [ite_eq_left h1]
       conv_lhs => rw [h_lhs_eq, h_df]
       simp only [hd'_not_lt, ↓reduceIte, hd'_not_eq, h_ce, neg_neg]
-    · rw [if_neg h1]
+    · rw [ite_eq_right h1]
       by_cases h2 : d = 1 / 2
       · have h2' : d' = 1 / 2 := by linarith
         have hd'_not_lt : ¬d' < 1 / 2 := by linarith
-        rw [if_pos h2]
+        rw [ite_eq_left h2]
         conv_lhs => rw [h_lhs_eq, h_df]
         simp only [hd'_not_lt, ↓reduceIte, h2']
         -- Now we only need to align the choice branches
@@ -2611,17 +2611,17 @@ theorem Znearest_opp (choice : Int → Bool) (x : ℝ) :
         have h_half_irrefl : ¬((1 : ℝ) / 2 < 1 / 2) := lt_irrefl _
         simp only [h_ce, h_neg_eq]
         by_cases hc : choice (-1 + -f) = true
-        · simp only [hc, Bool.not_true, h_half_irrefl, Bool.false_eq_true, if_true, if_false,
+        · simp only [hc, Bool.not_true, h_half_irrefl, Bool.false_eq_true, ite_true, ite_false,
             neg_neg]
         · push Not at hc
-          simp only [hc, Bool.not_false, h_half_irrefl, Bool.false_eq_true, if_false, if_true,
+          simp only [hc, Bool.not_false, h_half_irrefl, Bool.false_eq_true, ite_false, ite_true,
             neg_add_rev]
       · -- Case: d > 1/2 (since ¬(d < 1/2) and d ≠ 1/2)
         have h3' : d' < 1 / 2 := by
           have hd_ge : d ≥ 1 / 2 := le_of_not_gt h1
           have hd_gt : d > 1 / 2 := lt_of_le_of_ne hd_ge (Ne.symm h2)
           linarith
-        rw [if_neg h2]
+        rw [ite_eq_right h2]
         conv_lhs => rw [h_lhs_eq, h_df]
         simp only [h3', ↓reduceIte, h_ce, neg_neg]
 

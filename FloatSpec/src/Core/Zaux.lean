@@ -498,7 +498,7 @@ theorem Zpower_gt_1 (r : Radix) (p : Int) :
   intro hp
   have hr : 1 < r.val := radix_gt_1 r
   have hnat : 0 < p.toNat := by omega
-  simp only [Zpower, le_of_lt hp, if_true]
+  simp only [Zpower, le_of_lt hp, ite_true]
   exact one_lt_pow₀ hr (Nat.ne_of_gt hnat)
 
 /-- Positivity of radix powers for nonnegative exponents -/
@@ -518,7 +518,7 @@ theorem Zpower_gt_0_spec (r : Radix) (p : Int) :
 theorem Zpower_gt_0 (r : Radix) (p : Int) :
     0 ≤ p → 0 < Zpower r.val p := by
   intro hp
-  simp only [Zpower, hp, if_true]
+  simp only [Zpower, hp, ite_true]
   exact pow_pos (radix_gt_0 r) _
 
 /-- Nonnegativity of radix powers for all integer exponents (via natAbs) -/
@@ -560,10 +560,10 @@ theorem Zpower_le (r : Radix) (e1 e2 : Int) (h : e1 ≤ e2) :
     Zpower r.val e1 ≤ Zpower r.val e2 := by
   by_cases h1 : 0 ≤ e1
   · have h2 : 0 ≤ e2 := h1.trans h
-    simp only [Zpower, h1, h2, if_true]
+    simp only [Zpower, h1, h2, ite_true]
     exact pow_le_pow_right₀ (show 1 ≤ r.val by exact (radix_gt_1 r).le)
       (Int.toNat_le_toNat h)
-  · simp only [Zpower, h1, if_false]
+  · simp only [Zpower, h1, ite_false]
     exact Zpower_ge_0 r e2
 
 /-- Strict monotonicity for positive range: if 0 ≤ e2 and e1 < e2 then r^e1 < r^e2 -/
@@ -585,11 +585,11 @@ theorem Zpower_lt (r : Radix) (e1 e2 : Int) :
     0 ≤ e2 → e1 < e2 → Zpower r.val e1 < Zpower r.val e2 := by
   intro h2 hlt
   by_cases h1 : 0 ≤ e1
-  · simp only [Zpower, h1, h2, if_true]
+  · simp only [Zpower, h1, h2, ite_true]
     have h2pos : 0 < e2 := h1.trans_lt hlt
     exact pow_lt_pow_right₀ (radix_gt_1 r) ((Int.toNat_lt_toNat h2pos).2 hlt)
   · rw [Zpower]
-    simp only [h1, if_false]
+    simp only [h1, ite_false]
     exact Zpower_gt_0 r e2 h2
 
 /-- Inversion: if r^(e1-1) < r^e2 then e1 ≤ e2 -/
@@ -914,7 +914,7 @@ private theorem ZOdiv_plus_nonneg (a b c : Int)
   have hcorr : (a % c + b % c) / c =
       if c ≤ a % c + b % c then 1 else 0 := by
     by_cases hs : c ≤ a % c + b % c
-    · rw [if_pos hs]
+    · rw [ite_eq_left hs]
       calc
         (a % c + b % c) / c =
             ((a % c + b % c - c) + c * 1) / c := by congr 1; ring
@@ -923,7 +923,7 @@ private theorem ZOdiv_plus_nonneg (a b c : Int)
         _ = 1 := by
           rw [Int.ediv_eq_zero_of_lt (by omega) (by omega)]
           norm_num
-    · rw [if_neg hs]
+    · rw [ite_eq_right hs]
       exact Int.ediv_eq_zero_of_lt (add_nonneg hra0 hrb0) (by omega)
   rw [Int.tdiv_eq_ediv_of_nonneg (add_nonneg ha hb),
     Int.tdiv_eq_ediv_of_nonneg ha, Int.tdiv_eq_ediv_of_nonneg hb,

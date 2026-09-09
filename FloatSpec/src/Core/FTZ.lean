@@ -619,7 +619,7 @@ theorem round_FTZ_FLX (beta : Int) [ValidRadix beta]
       |x * (beta : ℝ) ^ (-FloatSpec.Core.FLX.FLX_exp prec M)| = true := by
     simpa [FloatSpec.Core.Raux.Rle_bool, FloatSpec.Core.FLX.FLX_exp,
       sub_eq_add_neg, add_comm, add_left_comm, add_assoc] using hscaledLower
-  simp only [Zrnd_FTZ, hscaledBool, Bool.true_eq, if_true]
+  simp only [Zrnd_FTZ, hscaledBool, Bool.true_eq, ite_true]
   simpa [FloatSpec.Core.Generic_fmt.scaled_mantissa,
     FloatSpec.Core.Generic_fmt.cexp, M] using hscaled
 

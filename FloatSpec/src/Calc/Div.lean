@@ -390,7 +390,7 @@ theorem Fdiv_core_correct (m1 e1 m2 e2 e : Int)
         dsimp [e2', k]
         omega
       unfold Fdiv_core
-      simp only [hleft, if_pos, hele, if_neg]
+      simp only [hleft, ite_eq_left, hele, ite_eq_right]
       simp [hzero, m2', p, k, hdenScaled]
     have h := Fdiv_core_correct_left_branch
       (beta := beta) m1 e1 m2' e2' e Hm1 hm2' Hβ

@@ -934,7 +934,7 @@ theorem F2R_lt_bpow (f : FlocqFloat beta) (e' : Int) (hbeta : 1 < beta) :
   have hZpower :
       ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) =
         (beta : ℝ) ^ d := by
-    rw [FloatSpec.Core.Zaux.Zpower, if_pos hd]
+    rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hd]
     rw [Int.cast_pow]
     have htoNat : ((d.toNat : Nat) : Int) = d := Int.toNat_of_nonneg hd
     rw [← htoNat]
@@ -1449,13 +1449,13 @@ theorem Zdigits_mag (n : Int) (hbeta : 1 < beta) :
   have hlow_int : beta ^ ((d - 1).natAbs) ≤ |n| := by
     have h := hbounds.1
     change FloatSpec.Core.Zaux.Zpower beta (d - 1) ≤ |n| at h
-    rw [FloatSpec.Core.Zaux.Zpower, if_pos hdm1_nonneg] at h
+    rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hdm1_nonneg] at h
     have heq : (d - 1).toNat = (d - 1).natAbs := by omega
     simpa [heq] using h
   have hupp_int : |n| < beta ^ d.natAbs := by
     have h := hbounds.2
     change |n| < FloatSpec.Core.Zaux.Zpower beta d at h
-    rw [FloatSpec.Core.Zaux.Zpower, if_pos hd_nonneg] at h
+    rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hd_nonneg] at h
     have heq : d.toNat = d.natAbs := by omega
     simpa [heq] using h
   have hlow_nat : ((beta : ℝ) ^ ((d - 1).natAbs) : ℝ) ≤ |(n : ℝ)| := by
@@ -1539,13 +1539,13 @@ theorem Raux_mag_F2R_Zdigits (m e : Int) (hbeta : 1 < beta) :
   have hlow_int : beta ^ ((d - 1).natAbs) ≤ |m| := by
     have h := hbounds.1
     change FloatSpec.Core.Zaux.Zpower beta (d - 1) ≤ |m| at h
-    rw [FloatSpec.Core.Zaux.Zpower, if_pos hdm1_nonneg] at h
+    rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hdm1_nonneg] at h
     have heq : (d - 1).toNat = (d - 1).natAbs := by omega
     simpa [heq] using h
   have hupp_int : |m| < beta ^ d.natAbs := by
     have h := hbounds.2
     change |m| < FloatSpec.Core.Zaux.Zpower beta d at h
-    rw [FloatSpec.Core.Zaux.Zpower, if_pos hd_nonneg] at h
+    rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left hd_nonneg] at h
     have heq : d.toNat = d.natAbs := by omega
     simpa [heq] using h
   have hbposℤ : (0 : Int) < beta := lt_trans Int.zero_lt_one hbeta

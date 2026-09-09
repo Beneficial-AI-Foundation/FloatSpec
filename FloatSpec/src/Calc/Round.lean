@@ -223,7 +223,7 @@ theorem cexp_inbetween_float
       have Hpow :
           ((FloatSpec.Core.Zaux.Zpower beta (d - 1) : Int) : ℝ) =
             (beta : ℝ) ^ (d - 1) := by
-        rw [FloatSpec.Core.Zaux.Zpower, if_pos Hdm1_nonneg, Int.cast_pow]
+        rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left Hdm1_nonneg, Int.cast_pow]
         exact (zpow_natCast (beta : ℝ) _).symm.trans (by
           rw [Int.toNat_of_nonneg Hdm1_nonneg])
       rw [← Hpow]
@@ -235,7 +235,7 @@ theorem cexp_inbetween_float
         exact_mod_cast Hupp_m_succ_int
       have Hpow :
           ((FloatSpec.Core.Zaux.Zpower beta d : Int) : ℝ) = (beta : ℝ) ^ d := by
-        rw [FloatSpec.Core.Zaux.Zpower, if_pos Hd_nonneg, Int.cast_pow]
+        rw [FloatSpec.Core.Zaux.Zpower, ite_eq_left Hd_nonneg, Int.cast_pow]
         exact (zpow_natCast (beta : ℝ) _).symm.trans (by
           rw [Int.toNat_of_nonneg Hd_nonneg])
       rw [← Hpow]
@@ -731,7 +731,7 @@ theorem inbetween_int_DN_sign (x : ℝ) (m : Int) (l : Location)
         -- Use hb directly since Rlt_bool returns Bool
         -- Conclude by simplifying the RHS to `-m` and rewriting by `hL`.
         simp only [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr,
-                   ite_true, cond_true]
+                   ite_true, Bool.cond_true]
         exact hL
     | inbetween_Inexact ord hbounds _ =>
         -- m < |x| < m+1 and x < 0 ⇒ -(m+1) < x < -m ⇒ ⌊x⌋ = -(m+1)
@@ -756,7 +756,7 @@ theorem inbetween_int_DN_sign (x : ℝ) (m : Int) (l : Location)
           simpa [FloatSpec.Core.Raux.Zfloor] using hfloor
         -- Conclude by simplifying the RHS to `-(m+1)` and rewriting by `hL`.
         simp only [FloatSpec.Core.Zaux.cond_Zopp, FloatSpec.Core.Raux.Zfloor, hb, round_sign_DN',
-                   cond_incr, ite_true, cond_true, hfloor]
+                   cond_incr, ite_true, Bool.cond_true, hfloor]
   · -- Nonnegative case: |x| = x and ⌊x⌋ = m by DN
     have hx0 : 0 ≤ x := le_of_not_gt hxlt
     have Hl' : inbetween_int m x l := by
@@ -769,11 +769,11 @@ theorem inbetween_int_DN_sign (x : ℝ) (m : Int) (l : Location)
     cases l with
     | loc_Exact =>
         simp only [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr,
-                   ite_false, cond_false]
+                   ite_false, Bool.cond_false]
         exact hL
     | loc_Inexact ord =>
         simp only [FloatSpec.Core.Zaux.cond_Zopp, hb, round_sign_DN', cond_incr,
-                   ite_false, cond_false]
+                   ite_false, Bool.cond_false]
         exact hL
 
 theorem inbetween_float_DN_sign (x : ℝ) (m e : Int) (l : Location)

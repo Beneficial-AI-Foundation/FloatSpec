@@ -1470,7 +1470,7 @@ theorem Fnormalize_Fabs {beta : Int} [ValidRadix beta]
         congr 1
         exact Int.natAbs_of_nonneg hpow_nonneg
       simp only [wp, PostCond.noThrow, pure, Id.run, ULift.up_down,
-        PredTrans.pure, PredTrans.apply, ULift.down, hm, habs_ne, if_false]
+        PredTrans.pure, PredTrans.apply, ULift.down, hm, habs_ne, ite_false]
       change
         ({ Fnum :=
               (m.natAbs : Int) *
@@ -1995,7 +1995,7 @@ theorem FSuccDiff3 {beta : Int} [ValidRadix beta]
   have hnot_top' : -nNormMin radix precision ≠ pPred b.vNum := by
     intro htop
     exact hdisjoint htop.symm
-  simp only [hnot_top, hnot_top', ↓reduceIte, hnum, hexp, if_false, FtoR,
+  simp only [hnot_top, hnot_top', ↓reduceIte, hnum, hexp, ite_false, FtoR,
     _root_.F2R, FloatSpec.Core.Defs.F2R,
     FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
   have hpPred_neg : ((-pPred b.vNum : Int) : ℝ) = -((b.vNum : ℝ) - 1) := by
@@ -2319,7 +2319,7 @@ theorem FSuccNormNegNormMin {beta : Int} [ValidRadix beta]
   have hnot_top : -nNormMin radix precision ≠ pPred b.vNum := by
     intro h
     exact hdisjoint h.symm
-  simp only [hnot_top, ↓reduceIte, if_pos rfl]
+  simp only [hnot_top, ↓reduceIte, ite_eq_left rfl]
   have hnext_abs : |(-nNormMin radix precision) + 1| <
       nNormMin radix precision := by
     have hnonpos : (-nNormMin radix precision) + 1 ≤ 0 := by omega
@@ -2785,7 +2785,7 @@ theorem FPredDiff3 {beta : Int} [ValidRadix beta]
   have hnot_top' : nNormMin radix precision ≠ -pPred b.vNum := by
     intro htop
     exact hdisjoint htop.symm
-  simp only [hnot_top, hnot_top', ↓reduceIte, hnum, hexp, if_false, FtoR,
+  simp only [hnot_top, hnot_top', ↓reduceIte, hnum, hexp, ite_false, FtoR,
     _root_.F2R, FloatSpec.Core.Defs.F2R,
     FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
   have hpPred : (pPred b.vNum : ℝ) = (b.vNum : ℝ) - 1 := by
@@ -3496,11 +3496,11 @@ theorem FSuccLt {beta : Int} [ValidRadix beta]
             rw [zpow_succ]
             simp [Int.cast_mul]
             ring
-  · simp only [htop, if_false]
+  · simp only [htop, ite_false]
     by_cases hlow : x.Fnum = -nNormMin radix precision
-    · simp only [hlow, if_true]
+    · simp only [hlow, ite_true]
       by_cases hexp_min : x.Fexp = -b.dExp
-      · simp only [hexp_min, if_true, _root_.F2R, FloatSpec.Core.Defs.F2R,
+      · simp only [hexp_min, ite_true, _root_.F2R, FloatSpec.Core.Defs.F2R,
           FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
         have hpow_pos : 0 < (radix : ℝ) ^ (-b.dExp) :=
           zpow_pos hradix_pos_real (-b.dExp)
@@ -3510,7 +3510,7 @@ theorem FSuccLt {beta : Int} [ValidRadix beta]
           exact_mod_cast
             (show -nNormMin radix precision < -nNormMin radix precision + 1 by omega)
         exact mul_lt_mul_of_pos_right hmant hpow_pos
-      · simp only [hexp_min, if_false, _root_.F2R, FloatSpec.Core.Defs.F2R,
+      · simp only [hexp_min, ite_false, _root_.F2R, FloatSpec.Core.Defs.F2R,
           FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
         have hmant_lt_int : radix * x.Fnum < -pPred b.vNum := by
           rw [hlow, hvnum_mul_norm]
@@ -3545,7 +3545,7 @@ theorem FSuccLt {beta : Int} [ValidRadix beta]
                 exact mul_lt_mul_of_pos_right hmant_lt_real
                   (zpow_pos hradix_pos_real (x.Fexp - 1))
         simpa only [hlow, Int.cast_ofNat] using hlt
-    · simp only [hlow, if_false, _root_.F2R, FloatSpec.Core.Defs.F2R,
+    · simp only [hlow, ite_false, _root_.F2R, FloatSpec.Core.Defs.F2R,
         FloatSpec.Core.Defs.FlocqFloat.Fnum, FloatSpec.Core.Defs.FlocqFloat.Fexp]
       have hmant : (x.Fnum : ℝ) < ((x.Fnum + 1 : Int) : ℝ) := by
         exact_mod_cast (show x.Fnum < x.Fnum + 1 by omega)
@@ -7396,7 +7396,7 @@ theorem RND_Min_Pos_Rle {beta : Int} [ValidRadix beta]
       (firstNormalPos (beta:=radix) radix b p.toNat) ≤ r
   · -- Normal case: F2R ⟨IRNDD(r * radix^(-e)), e⟩ ≤ r
     -- where e = IRNDD (log r / log radix - (p-1))
-    rw [RND_Min_Pos, if_pos hNormal]
+    rw [RND_Min_Pos, ite_eq_left hNormal]
     simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
       FloatSpec.Core.Defs.FlocqFloat.Fnum,
       FloatSpec.Core.Defs.FlocqFloat.Fexp]
@@ -7423,7 +7423,7 @@ theorem RND_Min_Pos_Rle {beta : Int} [ValidRadix beta]
       _ = r * 1 := by simp only [neg_add_cancel, zpow_zero]
       _ = r := mul_one r
   · -- Subnormal case: F2R ⟨IRNDD(r * radix^(dExp b)), -dExp b⟩ ≤ r
-    rw [RND_Min_Pos, if_neg hNormal]
+    rw [RND_Min_Pos, ite_eq_right hNormal]
     simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
       FloatSpec.Core.Defs.FlocqFloat.Fnum,
       FloatSpec.Core.Defs.FlocqFloat.Fexp]
@@ -7573,7 +7573,7 @@ theorem RND_Min_Pos_monotone {beta : Int} [ValidRadix beta]
         (firstNormalPos (beta:=radix) radix b p.toNat) ≤ r₂ := by
       rw [← hFirstNP_as_F2R]
       exact h2
-    rw [RND_Min_Pos, if_pos h1', RND_Min_Pos, if_pos h2']
+    rw [RND_Min_Pos, ite_eq_left h1', RND_Min_Pos, ite_eq_left h2']
     simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
       FloatSpec.Core.Defs.FlocqFloat.Fnum,
       FloatSpec.Core.Defs.FlocqFloat.Fexp]
@@ -7888,7 +7888,7 @@ theorem RND_Min_Pos_monotone {beta : Int} [ValidRadix beta]
           (firstNormalPos (beta:=radix) radix b p.toNat) ≤ r₂ := by
         rw [← hFirstNP_as_F2R]
         exact h2
-      rw [RND_Min_Pos, if_neg h1', RND_Min_Pos, if_pos h2']
+      rw [RND_Min_Pos, ite_eq_right h1', RND_Min_Pos, ite_eq_left h2']
       simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
         FloatSpec.Core.Defs.FlocqFloat.Fnum,
         FloatSpec.Core.Defs.FlocqFloat.Fexp]
@@ -8247,7 +8247,7 @@ theorem RND_Min_Pos_monotone {beta : Int} [ValidRadix beta]
           (firstNormalPos (beta:=radix) radix b p.toNat) ≤ r₂ := by
         rw [← hFirstNP_as_F2R]
         exact h2
-      rw [RND_Min_Pos, if_neg h1', RND_Min_Pos, if_neg h2']
+      rw [RND_Min_Pos, ite_eq_right h1', RND_Min_Pos, ite_eq_right h2']
       simp only [_root_.F2R, FloatSpec.Core.Defs.F2R,
         FloatSpec.Core.Defs.FlocqFloat.Fnum,
         FloatSpec.Core.Defs.FlocqFloat.Fexp]
@@ -8747,9 +8747,9 @@ theorem RND_Max_Pos_canonic {beta : Int} [ValidRadix beta]
   by_cases hrep :
       r = _root_.F2R (beta:=beta)
         (RND_Min_Pos (beta:=beta) b radix p r)
-  · rw [if_pos hrep]
+  · rw [ite_eq_left hrep]
     exact hmin_can
-  · rw [if_neg hrep]
+  · rw [ite_eq_right hrep]
     have hsucc := FSuccCanonic (beta:=beta) b radix p.toNat
       (RND_Min_Pos (beta:=beta) b radix p r)
     simpa only [wp, PostCond.noThrow, pure, FSuccCanonic_check,
@@ -9049,21 +9049,21 @@ theorem RND_Closest_canonic_from_min_max {beta : Int} [ValidRadix beta]
   by_cases hle :
       |_root_.F2R (beta:=beta) (RND_Max (beta:=beta) b radix p r) - r| ≤
         |_root_.F2R (beta:=beta) (RND_Min (beta:=beta) b radix p r) - r|
-  · rw [if_pos hle]
+  · rw [ite_eq_left hle]
     by_cases hlt :
         |_root_.F2R (beta:=beta) (RND_Max (beta:=beta) b radix p r) - r| <
           |_root_.F2R (beta:=beta) (RND_Min (beta:=beta) b radix p r) - r|
-    · rw [if_pos hlt]
+    · rw [ite_eq_left hlt]
       exact hMax
-    · rw [if_neg hlt]
+    · rw [ite_eq_right hlt]
       by_cases hchoice : choice (FloatSpec.Core.Raux.Zfloor
           (FloatSpec.Core.Generic_fmt.scaled_mantissa beta
             (FLT_exp (-b.dExp) p) r))
-      · rw [if_pos hchoice]
+      · rw [ite_eq_left hchoice]
         exact hMax
-      · rw [if_neg hchoice]
+      · rw [ite_eq_right hchoice]
         exact hMin
-  · rw [if_neg hle]
+  · rw [ite_eq_right hle]
     exact hMin
 
 noncomputable def RND_Closest_correct_check {beta : Int} [ValidRadix beta]
@@ -9118,19 +9118,19 @@ theorem RND_EvenClosest_canonic_from_min_max {beta : Int} [ValidRadix beta]
   by_cases hle :
       |_root_.F2R (beta:=beta) (RND_Max (beta:=beta) b radix (precision : Int) r) - r| ≤
         |_root_.F2R (beta:=beta) (RND_Min (beta:=beta) b radix (precision : Int) r) - r|
-  · rw [if_pos hle]
+  · rw [ite_eq_left hle]
     by_cases hlt :
         |_root_.F2R (beta:=beta) (RND_Max (beta:=beta) b radix (precision : Int) r) - r| <
           |_root_.F2R (beta:=beta) (RND_Min (beta:=beta) b radix (precision : Int) r) - r|
-    · rw [if_pos hlt]
+    · rw [ite_eq_left hlt]
       exact hMax
-    · rw [if_neg hlt]
+    · rw [ite_eq_right hlt]
       by_cases hodd : Odd (RND_Min (beta:=beta) b radix (precision : Int) r).Fnum
-      · rw [if_pos hodd]
+      · rw [ite_eq_left hodd]
         exact hMax
-      · rw [if_neg hodd]
+      · rw [ite_eq_right hodd]
         exact hMin
-  · rw [if_neg hle]
+  · rw [ite_eq_right hle]
     exact hMin
 
 -- Even-closest rounding: correctness (Coq: RND_EvenClosest_correct)
@@ -9211,11 +9211,11 @@ theorem RND_EvenClosest_correct_from_payload {beta : Int} [ValidRadix beta]
   by_cases hle :
       |_root_.F2R (beta:=beta) ru - r| ≤
         |_root_.F2R (beta:=beta) rd - r|
-  · rw [if_pos hle]
+  · rw [ite_eq_left hle]
     by_cases hlt :
         |_root_.F2R (beta:=beta) ru - r| <
           |_root_.F2R (beta:=beta) rd - r|
-    · rw [if_pos hlt]
+    · rw [ite_eq_left hlt]
       have hmid : _root_.F2R (beta:=beta) rd + _root_.F2R (beta:=beta) ru ≤
           2 * r := by
         rw [abs_of_nonneg hru_nonneg, abs_of_nonpos hrd_nonpos] at hlt
@@ -9239,7 +9239,7 @@ theorem RND_EvenClosest_correct_from_payload {beta : Int} [ValidRadix beta]
         · exact hMaxUnique q hqMax
       exact hq_ru
     ·
-      rw [if_neg hlt]
+      rw [ite_eq_right hlt]
       have hdist_eq :
           |_root_.F2R (beta:=beta) ru - r| =
             |_root_.F2R (beta:=beta) rd - r| :=
@@ -9253,15 +9253,15 @@ theorem RND_EvenClosest_correct_from_payload {beta : Int} [ValidRadix beta]
         rw [abs_of_nonneg hru_nonneg, abs_of_nonpos hrd_nonpos] at hdist_eq
         linarith
       by_cases hodd : Odd rd.Fnum
-      · rw [if_pos hodd]
+      · rw [ite_eq_left hodd]
         have hEvenRu : FNeven (beta:=beta) b (radix : ℝ) precision ru := by
           simpa [ru] using hTieMaxEven (by simpa [rd] using hodd)
         exact ⟨closest_max hmid_max, Or.inl hEvenRu⟩
-      · rw [if_neg hodd]
+      · rw [ite_eq_right hodd]
         have hEven : FNeven (beta:=beta) b (radix : ℝ) precision rd := by
           simpa [rd] using hTieMinEven (by simpa [rd] using hodd)
         exact ⟨closest_min hmid_min, Or.inl hEven⟩
-  · rw [if_neg hle]
+  · rw [ite_eq_right hle]
     have hlt_abs :
         |_root_.F2R (beta:=beta) rd - r| <
           |_root_.F2R (beta:=beta) ru - r| :=
@@ -9643,17 +9643,17 @@ theorem RND_Closest_correct_from_min_max {beta : Int} [ValidRadix beta]
   by_cases hle :
       |_root_.F2R (beta:=beta) ru - r| ≤
         |_root_.F2R (beta:=beta) rd - r|
-  · rw [if_pos hle]
+  · rw [ite_eq_left hle]
     by_cases hlt :
         |_root_.F2R (beta:=beta) ru - r| <
           |_root_.F2R (beta:=beta) rd - r|
-    · rw [if_pos hlt]
+    · rw [ite_eq_left hlt]
       have hmid : _root_.F2R (beta:=beta) rd + _root_.F2R (beta:=beta) ru ≤
           2 * r := by
         rw [abs_of_nonneg hru_nonneg, abs_of_nonpos hrd_nonpos] at hlt
         linarith
       exact closest_max hmid
-    · rw [if_neg hlt]
+    · rw [ite_eq_right hlt]
       have hdist_eq :
           |_root_.F2R (beta:=beta) ru - r| =
             |_root_.F2R (beta:=beta) rd - r| :=
@@ -9669,11 +9669,11 @@ theorem RND_Closest_correct_from_min_max {beta : Int} [ValidRadix beta]
       by_cases hchoice : choice (FloatSpec.Core.Raux.Zfloor
           (FloatSpec.Core.Generic_fmt.scaled_mantissa beta
             (FLT_exp (-b.dExp) p) r))
-      · rw [if_pos hchoice]
+      · rw [ite_eq_left hchoice]
         exact closest_max hmid_max
-      · rw [if_neg hchoice]
+      · rw [ite_eq_right hchoice]
         exact closest_min hmid_min
-  · rw [if_neg hle]
+  · rw [ite_eq_right hle]
     have hlt_abs :
         |_root_.F2R (beta:=beta) rd - r| <
           |_root_.F2R (beta:=beta) ru - r| :=
@@ -61153,9 +61153,9 @@ theorem RND_Max_Pos_Rle {beta : Int} [ValidRadix beta]
   by_cases hrep :
       r = _root_.F2R (beta:=beta)
         (RND_Min_Pos (beta:=beta) b radix p r)
-  · rw [if_pos hrep]
+  · rw [ite_eq_left hrep]
     exact le_of_eq hrep
-  · rw [if_neg hrep]
+  · rw [ite_eq_right hrep]
     by_cases hle_succ :
         r ≤ _root_.F2R (beta:=beta)
           (FSucc (beta:=beta) b radix p.toNat
@@ -61274,9 +61274,9 @@ theorem RND_Max_Pos_correct {beta : Int} [ValidRadix beta]
     by_cases hrep :
         r = _root_.F2R (beta:=beta)
           (RND_Min_Pos (beta:=beta) b radix p r)
-    · rw [if_pos hrep]
+    · rw [ite_eq_left hrep]
       exact le_trans hmin_le_r hr_le_f
-    · rw [if_neg hrep]
+    · rw [ite_eq_right hrep]
       by_cases hsucc_le_f :
           _root_.F2R (beta:=beta)
             (FSucc (beta:=beta) b radix p.toNat
