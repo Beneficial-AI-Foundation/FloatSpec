@@ -31,7 +31,7 @@ jobs:
         run: lake build floatspec
 
       - name: Reject proof and semantic placeholders
-        run: scripts/audit_placeholders.sh --json FloatSpec
+        run: scripts/audit_placeholders.sh --json --fail-on-findings FloatSpec
 
       - name: Verify generated status is current
         run: |

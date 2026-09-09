@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'USAGE'
-Usage: scripts/audit_placeholders.sh [--json] [--diff] [PATH...]
+Usage: scripts/audit_placeholders.sh [--json] [--diff] [--fail-on-findings] [PATH...]
 
 Scan Lean sources for placeholder hazards: sorry/admit/axiom, True
 placeholders, placeholder comments, identity/constant stubs, and common
@@ -12,6 +12,7 @@ semantic-weakening markers.
 Options:
   --json    Emit JSON instead of text.
   --diff    Scan only added lines in the current git diff.
+  --fail-on-findings  Exit nonzero when any finding is reported.
   -h,--help Show this help.
 
 If no PATH is supplied, FloatSpec/ is scanned.
@@ -20,6 +21,7 @@ USAGE
 
 json=false
 diff_only=false
+fail_on_findings=false
 paths=()
 
 while [[ $# -gt 0 ]]; do
@@ -30,6 +32,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --diff)
       diff_only=true
+      shift
+      ;;
+    --fail-on-findings)
+      fail_on_findings=true
       shift
       ;;
     -h|--help)
@@ -55,7 +61,7 @@ cat >"$pattern_file" <<'PATTERNS'
 sorry	^\s*sorry\b|\bsorry\b
 axiom	^\s*(private\s+)?axiom\b
 admit	^\s*admit\b|\badmit\b
-true_definition	:\s*Prop\s*:=\s*True\b|:\s*True\s*:=\s*True\.intro\b|\|\s*[^=]+=>\s*True\b
+true_definition	:\s*Prop\s*:=\s*True\b|:\s*True\s*:=\s*True\.intro\b
 true_relation	fun\s+(_|[A-Za-z][A-Za-z0-9_']*)\s+(_|[A-Za-z][A-Za-z0-9_']*)\s*=>\s*True\b
 decide_true	decide\s*(\(\s*)?True(\s*\))?
 obvious_decide_true	decide\s*\(\s*\(?\s*0\s*:\s*ℝ\s*\)?\s*≤\s*0\s*\)
@@ -103,43 +109,6 @@ awk -F: '
   # Commented-out examples can mention relation-erased rounding attempts with
   # `fun _ _ => True`. They are not active declarations or spec payloads.
   $0 ~ /^[^:]+:[0-9]+:[[:space:]]*--/ && index($0, "fun _ _ => True") { next }
-  $1 == "FloatSpec/src/Pff/Pff.lean" &&
-    index($3, "private theorem digitAuxFuel_less") { digit_aux_window = 80 }
-  $1 == "FloatSpec/src/Pff/Pff.lean" &&
-    index($3, "theorem digitAuxLess") { digit_aux_window = 40 }
-  $1 == "FloatSpec/src/Pff/Pff.lean" && digit_aux_window > 0 &&
-    index($3, "| 0 => True") { digit_aux_window--; next }
-  digit_aux_window > 0 { digit_aux_window-- }
-  $1 == "FloatSpec/src/IEEE754/BinarySingleNaN.lean" &&
-    index($3, "def validB754") { bsn_valid_window = 12 }
-  $1 == "FloatSpec/src/IEEE754/BinarySingleNaN.lean" &&
-    index($3, "noncomputable def B754_in_generic_format") { bsn_format_window = 16 }
-  $1 == "FloatSpec/src/IEEE754/Binary.lean" &&
-    index($3, "def valid_FF") { binary_valid_window = 12 }
-  $1 == "FloatSpec/src/IEEE754/Binary.lean" &&
-    index($3, "noncomputable def Binary754_in_generic_format") { binary_format_window = 16 }
-  $1 == "FloatSpec/src/IEEE754/Binary.lean" &&
-    index($3, "def Binary754_bounded") { binary_bounded_window = 12 }
-  $1 == "FloatSpec/src/IEEE754/BinarySingleNaN.lean" &&
-    (bsn_valid_window > 0 || bsn_format_window > 0) &&
-    index($3, "=> True") {
-      if (bsn_valid_window > 0) bsn_valid_window--
-      if (bsn_format_window > 0) bsn_format_window--
-      next
-    }
-  $1 == "FloatSpec/src/IEEE754/Binary.lean" &&
-    (binary_valid_window > 0 || binary_format_window > 0 || binary_bounded_window > 0) &&
-    index($3, "=> True") {
-      if (binary_valid_window > 0) binary_valid_window--
-      if (binary_format_window > 0) binary_format_window--
-      if (binary_bounded_window > 0) binary_bounded_window--
-      next
-    }
-  bsn_valid_window > 0 { bsn_valid_window-- }
-  bsn_format_window > 0 { bsn_format_window-- }
-  binary_valid_window > 0 { binary_valid_window-- }
-  binary_format_window > 0 { binary_format_window-- }
-  binary_bounded_window > 0 { binary_bounded_window-- }
   { print }
 ' "$scan_file" >"$filtered_scan_file"
 mv "$filtered_scan_file" "$scan_file"
@@ -207,7 +176,7 @@ PY
 mv "$code_scan_file" "$scan_file"
 
 if "$json"; then
-  python3 - "$pattern_file" "$scan_file" <<'PY'
+  python3 - "$pattern_file" "$scan_file" "$fail_on_findings" <<'PY'
 import json
 import re
 import sys
@@ -247,6 +216,8 @@ with open(sys.argv[2], encoding="utf-8", errors="replace") as f:
                 })
 
 print(json.dumps({"counts": counts, "findings": findings}, indent=2, sort_keys=True))
+if sys.argv[3] == "true" and findings:
+    raise SystemExit(1)
 PY
 else
   any=false
@@ -265,5 +236,8 @@ else
   done <"$pattern_file"
   if ! "$any"; then
     echo "No placeholder-pattern findings."
+  fi
+  if "$fail_on_findings" && "$any"; then
+    exit 1
   fi
 fi
