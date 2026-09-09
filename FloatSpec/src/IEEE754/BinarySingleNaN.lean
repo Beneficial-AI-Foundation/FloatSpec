@@ -8386,11 +8386,19 @@ def boolOfModelSign : UnpackedFloat.Sign → Bool
     boolOfModelSign (modelSignOfBool s) = s := by cases s <;> rfl
 
 @[simp] theorem modelSignOfBool_boolOfModelSign (s : UnpackedFloat.Sign) :
-    modelSignOfBool (boolOfModelSign s) = s := by cases s <;> rfl
+  modelSignOfBool (boolOfModelSign s) = s := by cases s <;> rfl
+
+@[simp] theorem modelSignOfBool_inj (a b : Bool) :
+    modelSignOfBool a = modelSignOfBool b ↔ a = b := by
+  cases a <;> cases b <;> simp [modelSignOfBool]
 
 @[simp] theorem modelSignOfBool_xor (a b : Bool) :
     modelSignOfBool (Bool.xor a b) = modelSignOfBool a * modelSignOfBool b := by
   cases a <;> cases b <;> rfl
+
+@[simp] theorem modelSignOfBool_apply (s : Bool) (m : Int) :
+    (modelSignOfBool s).apply m = FloatSpec.Core.Zaux.cond_Zopp s m := by
+  cases s <;> rfl
 
 /-- FLoCq's location information in Lean's native rounding vocabulary. -/
 def accuracyOfLocation : Loc → UnpackedFloat.Accuracy
@@ -8484,6 +8492,50 @@ private theorem binary32_targetExponent_eq_fexp
   simp [Format.targetExponent, Format.minExponent, Format.mantissaBits,
     Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
     digits2_Pnat_eq_log2 m hm]
+
+private theorem decreaseExponent_eq_shlAlign
+    (m : Nat) (e target : Int) :
+    UnpackedFloat.decreaseExponent m e target = _root_.shl_align m e target := by
+  unfold UnpackedFloat.decreaseExponent _root_.shl_align
+  by_cases htargetLe : target ≤ e
+  · have hshift : ((e - target).toNat : Int) = e - target :=
+      Int.toNat_of_nonneg (sub_nonneg.mpr htargetLe)
+    simp [htargetLe, Nat.shiftLeft_eq, hshift]
+  · have hshift : (e - target).toNat = 0 :=
+      Int.toNat_eq_zero.mpr (sub_nonpos.mpr (le_of_not_ge htargetLe))
+    simp [htargetLe, hshift]
+
+private theorem FplusNaive_eq_nativeMantissa
+    (sx : Bool) (mx : Nat) (ex : Int)
+    (sy : Bool) (my : Nat) (ey target : Int) :
+    Fplus_naive sx mx ex sy my ey target =
+      (modelSignOfBool sx).apply
+          (UnpackedFloat.decreaseExponent mx ex target).1 +
+        (modelSignOfBool sy).apply
+          (UnpackedFloat.decreaseExponent my ey target).1 := by
+  rw [decreaseExponent_eq_shlAlign, decreaseExponent_eq_shlAlign]
+  simp [Fplus_naive]
+
+private theorem decreaseExponent_eq_shlAlignFexp
+    (spec : Format) (prec emax : Int) (m : Nat) (e : Int) (hm : 0 < m)
+    (htarget : spec.targetExponent (Float.Model.totalExponent m e) =
+      FLT_exp (3 - emax - prec) prec
+        (FloatSpec.Core.Digits.Zdigits 2 m + e)) :
+    UnpackedFloat.decreaseExponent m e
+        (spec.targetExponent (Float.Model.totalExponent m e)) =
+      _root_.shl_align_fexp (prec := prec) (emax := emax) m e := by
+  rw [htarget]
+  unfold _root_.shl_align_fexp
+  exact decreaseExponent_eq_shlAlign m e _
+
+private theorem shlAlignFexp_fst_pos
+    (prec emax : Int) (m : Nat) (e : Int) (hm : 0 < m) :
+    0 < (_root_.shl_align_fexp (prec := prec) (emax := emax) m e).1 := by
+  simp only [_root_.shl_align_fexp]
+  unfold _root_.shl_align
+  split
+  · exact Nat.mul_pos hm (by positivity)
+  · exact hm
 
 private theorem extendedMantissaOfShrRecord_shrOne (record : ShrRecord)
     (h : 0 ≤ record.shr_m) :
@@ -8864,6 +8916,77 @@ theorem model32OfStandardFloat_binaryRoundAux
           Float32.Model.pack, UnpackedFloat.pack, Format.binary32,
           Format.exponentBias, Format.mantissaBits]
 
+theorem model64OfStandardFloat_binaryRound
+    (s : Bool) (m : Nat) (e : Int) (hm : 0 < m) :
+    model64OfStandardFloat
+        (binary_round (prec := 53) (emax := 1024) RoundingMode.RNE s m e) =
+      Float.Model.pack
+        (UnpackedFloat.round Format.binary64 (modelSignOfBool s) m e) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
+  have halign := decreaseExponent_eq_shlAlignFexp Format.binary64 53 1024 m e hm
+    (binary64_targetExponent_eq_fexp m e hm)
+  let aligned := _root_.shl_align_fexp (prec := 53) (emax := 1024) m e
+  have haligned : 0 < aligned.1 := shlAlignFexp_fst_pos 53 1024 m e hm
+  have hround :
+      UnpackedFloat.round Format.binary64 (modelSignOfBool s) m e =
+        UnpackedFloat.roundWithAccuracy Format.binary64 (modelSignOfBool s)
+          aligned.1 aligned.2 .exact := by
+    change UnpackedFloat.roundWithAccuracy Format.binary64 (modelSignOfBool s)
+      (UnpackedFloat.decreaseExponent m e
+        (Format.binary64.targetExponent (Float.Model.totalExponent m e))).1
+      (UnpackedFloat.decreaseExponent m e
+        (Format.binary64.targetExponent (Float.Model.totalExponent m e))).2 .exact = _
+    rw [halign]
+  rw [hround]
+  unfold binary_round
+  simpa [aligned, accuracyOfLocation] using
+    model64OfStandardFloat_binaryRoundAux s aligned.1 aligned.2 .loc_Exact haligned
+
+theorem model32OfStandardFloat_binaryRound
+    (s : Bool) (m : Nat) (e : Int) (hm : 0 < m) :
+    model32OfStandardFloat
+        (binary_round (prec := 24) (emax := 128) RoundingMode.RNE s m e) =
+      Float32.Model.pack
+        (UnpackedFloat.round Format.binary32 (modelSignOfBool s) m e) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
+  have halign := decreaseExponent_eq_shlAlignFexp Format.binary32 24 128 m e hm
+    (binary32_targetExponent_eq_fexp m e hm)
+  let aligned := _root_.shl_align_fexp (prec := 24) (emax := 128) m e
+  have haligned : 0 < aligned.1 := shlAlignFexp_fst_pos 24 128 m e hm
+  have hround :
+      UnpackedFloat.round Format.binary32 (modelSignOfBool s) m e =
+        UnpackedFloat.roundWithAccuracy Format.binary32 (modelSignOfBool s)
+          aligned.1 aligned.2 .exact := by
+    change UnpackedFloat.roundWithAccuracy Format.binary32 (modelSignOfBool s)
+      (UnpackedFloat.decreaseExponent m e
+        (Format.binary32.targetExponent (Float.Model.totalExponent m e))).1
+      (UnpackedFloat.decreaseExponent m e
+        (Format.binary32.targetExponent (Float.Model.totalExponent m e))).2 .exact = _
+    rw [halign]
+  rw [hround]
+  unfold binary_round
+  simpa [aligned, accuracyOfLocation] using
+    model32OfStandardFloat_binaryRoundAux s aligned.1 aligned.2 .loc_Exact haligned
+
+private theorem binarySingleNaNFloatToStandardFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN
+    {prec emax : Int} (x : StandardFloat)
+    (hvalid : validBinarySingleNaNStandardFloat (prec := prec) (emax := emax) x = true)
+    (hnotnan : is_nan_SF x = false) :
+    binarySingleNaNFloatToStandardFloat
+        (Binary.B2BSN
+          (Binary.standardFloatToBinaryFloatOfNotNaN
+            (prec := prec) (emax := emax) x hvalid hnotnan)) = x := by
+  cases x with
+  | S754_zero s => rfl
+  | S754_infinity s => rfl
+  | S754_nan => simp [is_nan_SF] at hnotnan
+  | S754_finite s m e =>
+      simp [Binary.B2BSN, Binary.standardFloatToBinaryFloatOfNotNaN,
+        Binary.B2SF, binaryFloatToBinarySingleNaNFloat,
+        binarySingleNaNFloatToStandardFloat, binaryPositiveOfNat_spec]
+
 @[simp] theorem model64OfStandardFloat_standardFloatOfModel64
     (x : Float.Model) :
     model64OfStandardFloat (standardFloatOfModel64 x) = x := by
@@ -8909,6 +9032,166 @@ def model32OfBinarySingleNaNFloat (x : BinarySingleNaNFloat 24 128) : Float32.Mo
   cases x <;> simp_all [model32OfBinarySingleNaNFloat, model32OfStandardFloat,
     unpackedOfBinarySingleNaNFloat, unpackedOfStandardFloat,
     binarySingleNaNFloatToStandardFloat]
+
+@[simp] theorem unpackedOfBinarySingleNaNFloat_Bopp
+    {prec emax : Int} (x : BinarySingleNaNFloat prec emax) :
+    unpackedOfBinarySingleNaNFloat (BinarySingleNaN.Bopp x) =
+      (unpackedOfBinarySingleNaNFloat x).neg := by
+  cases x with
+  | B754_zero s => cases s <;> rfl
+  | B754_infinity s => cases s <;> rfl
+  | B754_nan => rfl
+  | B754_finite s m e hm hb => cases s <;> rfl
+
+private theorem unpackedAdd_neg_eq_sub
+    (spec : Format) (x y : UnpackedFloat) :
+    UnpackedFloat.add spec x y.neg = UnpackedFloat.sub spec x y := by
+  cases x <;> cases y <;>
+    simp [UnpackedFloat.add, UnpackedFloat.sub, UnpackedFloat.neg]
+  case finite.finite sx mx ex hmx sy my ey hmy =>
+    cases sx <;> cases sy <;> simp [UnpackedFloat.Sign.apply, sub_eq_add_neg]
+
+private theorem model64OfBinarySingleNaNFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN
+    (x : StandardFloat)
+    (hvalid : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true)
+    (hnotnan : is_nan_SF x = false) :
+    model64OfBinarySingleNaNFloat
+        (Binary.B2BSN
+          (Binary.standardFloatToBinaryFloatOfNotNaN
+            (prec := 53) (emax := 1024) x hvalid hnotnan)) =
+      model64OfStandardFloat x := by
+  rw [model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  congr 1
+  exact binarySingleNaNFloatToStandardFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN
+    x hvalid hnotnan
+
+private theorem model32OfBinarySingleNaNFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN
+    (x : StandardFloat)
+    (hvalid : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true)
+    (hnotnan : is_nan_SF x = false) :
+    model32OfBinarySingleNaNFloat
+        (Binary.B2BSN
+          (Binary.standardFloatToBinaryFloatOfNotNaN
+            (prec := 24) (emax := 128) x hvalid hnotnan)) =
+      model32OfStandardFloat x := by
+  rw [model32OfBinarySingleNaNFloat_eq_model32OfStandardFloat]
+  congr 1
+  exact binarySingleNaNFloatToStandardFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN
+    x hvalid hnotnan
+
+theorem model64OfBinarySingleNaNFloat_normalize_RNE
+    (m e : Int) (zeroSign : Bool) :
+    model64OfBinarySingleNaNFloat
+        (Binary.B2BSN
+          (@Binary.normalize 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+            RoundingMode.RNE m e zeroSign)) =
+      Float.Model.pack
+        (UnpackedFloat.normalize Format.binary64 m e (modelSignOfBool zeroSign)) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
+  by_cases hm0 : m = 0
+  · subst m
+    simp [Binary.normalize, UnpackedFloat.normalize,
+      Binary.B2BSN, binaryFloatToBinarySingleNaNFloat,
+      model64OfBinarySingleNaNFloat, unpackedOfBinarySingleNaNFloat]
+  · by_cases hmpos : 0 < m
+    · have hmnat : 0 < m.toNat := Int.pos_iff_toNat_pos.mp hmpos
+      let z := binary_round (prec := 53) (emax := 1024)
+        RoundingMode.RNE false m.toNat e
+      have hround := binary_round_correct (prec := 53) (emax := 1024)
+        RoundingMode.RNE false m.toNat e hmnat
+      have hnotnan : is_nan_SF z = false := by
+        simpa [z] using
+          is_nan_binary_round (prec := 53) (emax := 1024)
+            RoundingMode.RNE false m.toNat e
+      rw [show Binary.normalize RoundingMode.RNE m e zeroSign =
+          Binary.standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan by
+        simp [Binary.normalize, hm0, hmpos, z]]
+      rw [model64OfBinarySingleNaNFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN]
+      rw [model64OfStandardFloat_binaryRound false m.toNat e hmnat]
+      unfold UnpackedFloat.normalize
+      rw [show compare m 0 = Ordering.gt from Int.compare_eq_gt.mpr hmpos]
+      rfl
+    · have hmneg : m < 0 := lt_of_le_of_ne (le_of_not_gt hmpos) hm0
+      have hmabs : 0 < m.natAbs := Int.natAbs_pos.mpr hm0
+      let z := binary_round (prec := 53) (emax := 1024)
+        RoundingMode.RNE true m.natAbs e
+      have hround := binary_round_correct (prec := 53) (emax := 1024)
+        RoundingMode.RNE true m.natAbs e hmabs
+      have hnotnan : is_nan_SF z = false := by
+        simpa [z] using
+          is_nan_binary_round (prec := 53) (emax := 1024)
+            RoundingMode.RNE true m.natAbs e
+      rw [show Binary.normalize RoundingMode.RNE m e zeroSign =
+          Binary.standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan by
+        simp [Binary.normalize, hm0, hmpos, z]]
+      rw [model64OfBinarySingleNaNFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN]
+      rw [model64OfStandardFloat_binaryRound true m.natAbs e hmabs]
+      have hmToNat : m.toNat = 0 := Int.toNat_eq_zero.mpr (le_of_lt hmneg)
+      have hnegToNat : (-m).toNat = m.natAbs := by
+        have h := Int.toNat_add_toNat_neg_eq_natAbs m
+        omega
+      unfold UnpackedFloat.normalize
+      rw [show compare m 0 = Ordering.lt from Int.compare_eq_lt.mpr hmneg]
+      rw [hnegToNat]
+      rfl
+
+theorem model32OfBinarySingleNaNFloat_normalize_RNE
+    (m e : Int) (zeroSign : Bool) :
+    model32OfBinarySingleNaNFloat
+        (Binary.B2BSN
+          (@Binary.normalize 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+            RoundingMode.RNE m e zeroSign)) =
+      Float32.Model.pack
+        (UnpackedFloat.normalize Format.binary32 m e (modelSignOfBool zeroSign)) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
+  by_cases hm0 : m = 0
+  · subst m
+    simp [Binary.normalize, UnpackedFloat.normalize,
+      Binary.B2BSN, binaryFloatToBinarySingleNaNFloat,
+      model32OfBinarySingleNaNFloat, unpackedOfBinarySingleNaNFloat]
+  · by_cases hmpos : 0 < m
+    · have hmnat : 0 < m.toNat := Int.pos_iff_toNat_pos.mp hmpos
+      let z := binary_round (prec := 24) (emax := 128)
+        RoundingMode.RNE false m.toNat e
+      have hround := binary_round_correct (prec := 24) (emax := 128)
+        RoundingMode.RNE false m.toNat e hmnat
+      have hnotnan : is_nan_SF z = false := by
+        simpa [z] using
+          is_nan_binary_round (prec := 24) (emax := 128)
+            RoundingMode.RNE false m.toNat e
+      rw [show Binary.normalize RoundingMode.RNE m e zeroSign =
+          Binary.standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan by
+        simp [Binary.normalize, hm0, hmpos, z]]
+      rw [model32OfBinarySingleNaNFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN]
+      rw [model32OfStandardFloat_binaryRound false m.toNat e hmnat]
+      unfold UnpackedFloat.normalize
+      rw [show compare m 0 = Ordering.gt from Int.compare_eq_gt.mpr hmpos]
+      rfl
+    · have hmneg : m < 0 := lt_of_le_of_ne (le_of_not_gt hmpos) hm0
+      have hmabs : 0 < m.natAbs := Int.natAbs_pos.mpr hm0
+      let z := binary_round (prec := 24) (emax := 128)
+        RoundingMode.RNE true m.natAbs e
+      have hround := binary_round_correct (prec := 24) (emax := 128)
+        RoundingMode.RNE true m.natAbs e hmabs
+      have hnotnan : is_nan_SF z = false := by
+        simpa [z] using
+          is_nan_binary_round (prec := 24) (emax := 128)
+            RoundingMode.RNE true m.natAbs e
+      rw [show Binary.normalize RoundingMode.RNE m e zeroSign =
+          Binary.standardFloatToBinaryFloatOfNotNaN z hround.1 hnotnan by
+        simp [Binary.normalize, hm0, hmpos, z]]
+      rw [model32OfBinarySingleNaNFloat_B2BSN_standardFloatToBinaryFloatOfNotNaN]
+      rw [model32OfStandardFloat_binaryRound true m.natAbs e hmabs]
+      have hmToNat : m.toNat = 0 := Int.toNat_eq_zero.mpr (le_of_lt hmneg)
+      have hnegToNat : (-m).toNat = m.natAbs := by
+        have h := Int.toNat_add_toNat_neg_eq_natAbs m
+        omega
+      unfold UnpackedFloat.normalize
+      rw [show compare m 0 = Ordering.lt from Int.compare_eq_lt.mpr hmneg]
+      rw [hnegToNat]
+      rfl
 
 @[simp] theorem model64OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat
     (x : StandardFloat)
@@ -8969,6 +9252,88 @@ theorem model32OfBinarySingleNaNFloat_Bmult_RNE
     simpa only [accuracyOfLocation, modelSignOfBool_xor, Nat.cast_mul] using
       model32OfStandardFloat_binaryRoundAux (Bool.xor sx sy) (mx * my)
       (ex + ey) .loc_Exact (Nat.mul_pos hmx hmy)
+
+theorem model64OfBinarySingleNaNFloat_Bplus_RNE
+    (x y : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bplus 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float.Model.pack
+        (UnpackedFloat.add Format.binary64
+          (unpackedOfBinarySingleNaNFloat x) (unpackedOfBinarySingleNaNFloat y)) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
+  cases x <;> cases y <;>
+    simp [BinarySingleNaN.Bplus, model64OfBinarySingleNaNFloat,
+      unpackedOfBinarySingleNaNFloat, Float.Model.UnpackedFloat.add]
+  case B754_zero.B754_zero sx sy => cases sx <;> cases sy <;> rfl
+  case B754_infinity.B754_infinity sx sy => cases sx <;> cases sy <;> rfl
+  case B754_finite.B754_finite sx mx ex hmx Hx sy my ey hmy Hy =>
+    let target := min ex ey
+    change model64OfBinarySingleNaNFloat
+        (Binary.B2BSN
+          (Binary.normalize RoundingMode.RNE
+            (Fplus_naive sx mx ex sy my ey target) target false)) = _
+    rw [model64OfBinarySingleNaNFloat_normalize_RNE]
+    rw [FplusNaive_eq_nativeMantissa]
+    rw [modelSignOfBool_apply, modelSignOfBool_apply]
+    rfl
+
+theorem model32OfBinarySingleNaNFloat_Bplus_RNE
+    (x y : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bplus 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float32.Model.pack
+        (UnpackedFloat.add Format.binary32
+          (unpackedOfBinarySingleNaNFloat x) (unpackedOfBinarySingleNaNFloat y)) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
+  cases x <;> cases y <;>
+    simp [BinarySingleNaN.Bplus, model32OfBinarySingleNaNFloat,
+      unpackedOfBinarySingleNaNFloat, Float.Model.UnpackedFloat.add]
+  case B754_zero.B754_zero sx sy => cases sx <;> cases sy <;> rfl
+  case B754_infinity.B754_infinity sx sy => cases sx <;> cases sy <;> rfl
+  case B754_finite.B754_finite sx mx ex hmx Hx sy my ey hmy Hy =>
+    let target := min ex ey
+    change model32OfBinarySingleNaNFloat
+        (Binary.B2BSN
+          (Binary.normalize RoundingMode.RNE
+            (Fplus_naive sx mx ex sy my ey target) target false)) = _
+    rw [model32OfBinarySingleNaNFloat_normalize_RNE]
+    rw [FplusNaive_eq_nativeMantissa]
+    rw [modelSignOfBool_apply, modelSignOfBool_apply]
+    rfl
+
+theorem model64OfBinarySingleNaNFloat_Bminus_RNE
+    (x y : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bminus 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float.Model.pack
+        (UnpackedFloat.sub Format.binary64
+          (unpackedOfBinarySingleNaNFloat x) (unpackedOfBinarySingleNaNFloat y)) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
+  rw [show BinarySingleNaN.Bminus RoundingMode.RNE x y =
+      BinarySingleNaN.Bplus RoundingMode.RNE x (BinarySingleNaN.Bopp y) from rfl]
+  rw [model64OfBinarySingleNaNFloat_Bplus_RNE]
+  rw [unpackedOfBinarySingleNaNFloat_Bopp, unpackedAdd_neg_eq_sub]
+
+theorem model32OfBinarySingleNaNFloat_Bminus_RNE
+    (x y : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bminus 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float32.Model.pack
+        (UnpackedFloat.sub Format.binary32
+          (unpackedOfBinarySingleNaNFloat x) (unpackedOfBinarySingleNaNFloat y)) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
+  rw [show BinarySingleNaN.Bminus RoundingMode.RNE x y =
+      BinarySingleNaN.Bplus RoundingMode.RNE x (BinarySingleNaN.Bopp y) from rfl]
+  rw [model32OfBinarySingleNaNFloat_Bplus_RNE]
+  rw [unpackedOfBinarySingleNaNFloat_Bopp, unpackedAdd_neg_eq_sub]
 
 end FloatSpec.IEEE754.Native
 

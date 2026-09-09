@@ -136,3 +136,19 @@ example (x y : BinarySingleNaNFloat 24 128) :
       Float32.Model.mul (model32OfBinarySingleNaNFloat x)
         (model32OfBinarySingleNaNFloat y) :=
   model32OfBinarySingleNaNFloat_Bmult_RNE x y
+
+example (x y : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bplus 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float.Model.add (model64OfBinarySingleNaNFloat x)
+        (model64OfBinarySingleNaNFloat y) :=
+  model64OfBinarySingleNaNFloat_Bplus_RNE x y
+
+example (x y : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bminus 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x y) =
+      Float32.Model.sub (model32OfBinarySingleNaNFloat x)
+        (model32OfBinarySingleNaNFloat y) :=
+  model32OfBinarySingleNaNFloat_Bminus_RNE x y
