@@ -8493,6 +8493,128 @@ private theorem binary32_targetExponent_eq_fexp
     Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
     digits2_Pnat_eq_log2 m hm]
 
+private theorem binary64_sqrtExponent_eq_fexp
+    (m : Nat) (e : Int) (hm : 0 < m) :
+    min (e.ediv 2)
+        (Format.binary64.targetExponent
+          ((Float.Model.totalExponent m e + 1).ediv 2)) =
+      min
+        (FLT_exp (3 - 1024 - 53) 53
+          ((FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e + 1) / 2))
+        (e / 2) := by
+  rw [← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m hm]
+  simp [Format.targetExponent, Format.minExponent, Format.mantissaBits,
+    Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
+    digits2_Pnat_eq_log2 m hm, min_comm, Int.div_def]
+
+private theorem binary32_sqrtExponent_eq_fexp
+    (m : Nat) (e : Int) (hm : 0 < m) :
+    min (e.ediv 2)
+        (Format.binary32.targetExponent
+          ((Float.Model.totalExponent m e + 1).ediv 2)) =
+      min
+        (FLT_exp (3 - 128 - 24) 24
+          ((FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e + 1) / 2))
+        (e / 2) := by
+  rw [← FloatSpec.Core.Digits.Z_of_nat_S_digits2_Pnat m hm]
+  simp [Format.targetExponent, Format.minExponent, Format.mantissaBits,
+    Float.Model.totalExponent, FloatSpec.Core.FLT.FLT_exp, FLT_exp,
+    digits2_Pnat_eq_log2 m hm, min_comm, Int.div_def]
+
+private theorem sqrtScaled_eq_shift (m : Nat) (e target : Int)
+    (htarget : 2 * target ≤ e) :
+    (m : Int) * FloatSpec.Core.Zaux.Zpower 2 (e - 2 * target) =
+      (m <<< (e - 2 * target).toNat : Nat) := by
+  have hdiff : 0 ≤ e - 2 * target := by omega
+  rw [FloatSpec.Core.Zaux.Zpower_Zpower_nat 2 (e - 2 * target) hdiff]
+  have hnatAbs : (e - 2 * target).natAbs = (e - 2 * target).toNat := by
+    exact Int.ofNat.inj ((Int.natAbs_of_nonneg hdiff).trans
+      (Int.toNat_of_nonneg hdiff).symm)
+  simp [Nat.shiftLeft_eq, hnatAbs]
+
+private theorem FsqrtCore_eq_nativeAt (m : Nat) (e target : Int)
+    (htarget : 2 * target ≤ e) :
+    let source := FloatSpec.Calc.Sqrt.Fsqrt_core 2 (m : Int) e target
+    let scaled := m <<< (e - 2 * target).toNat
+    let root := Nat.sqrt scaled
+    let rem := scaled - root * root
+    source.1.toNat = root ∧
+      accuracyOfLocation source.2 =
+        if rem = 0 then .exact
+        else .inexact (if rem ≤ root then .lt else .gt) := by
+  simp only [FloatSpec.Calc.Sqrt.Fsqrt_core]
+  rw [sqrtScaled_eq_shift m e target htarget]
+  let scaled := m <<< (e - 2 * target).toNat
+  let root := Nat.sqrt scaled
+  have hsquare : root * root ≤ scaled := by
+    simpa [root] using Nat.sqrt_le scaled
+  have hrem : ((scaled - root * root : Nat) : Int) =
+      (scaled : Int) - (root : Int) * (root : Int) := by
+    rw [Nat.cast_sub hsquare]
+    norm_num
+  have hnonneg : ¬ (scaled : Int) < 0 := by simp
+  simp only [scaled, root] at hrem hnonneg ⊢
+  simp only [hnonneg, ite_false, Int.sqrt_natCast, Int.toNat_natCast]
+  constructor
+  · trivial
+  · rw [← hrem]
+    by_cases hr :
+        m <<< (e - 2 * target).toNat -
+          (m <<< (e - 2 * target).toNat).sqrt *
+            (m <<< (e - 2 * target).toNat).sqrt = 0
+    · simp [hr, accuracyOfLocation]
+    · simp [hr, accuracyOfLocation]
+
+private theorem binary64_SFsqrtCore_eq_native
+    (m : Nat) (e : Int) (hm : 0 < m) :
+    let source := SFsqrt_core_binary 53 1024 (m : Int) e
+    let native := UnpackedFloat.sqrtCore Format.binary64 m e
+    source.1.toNat = native.1 ∧ source.2.1 = native.2.1 ∧
+      accuracyOfLocation source.2.2 = native.2.2 := by
+  simp only [SFsqrt_core_binary, FloatSpec.Calc.Sqrt.Fsqrt]
+  rw [show min
+      (FLT_exp (3 - 1024 - 53) 53
+        ((FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e + 1) / 2))
+      (e / 2) =
+      min (e.ediv 2)
+        (Format.binary64.targetExponent
+          ((Float.Model.totalExponent m e + 1).ediv 2)) from
+    (binary64_sqrtExponent_eq_fexp m e hm).symm]
+  have htarget : 2 * min (e.ediv 2)
+      (Format.binary64.targetExponent
+        ((Float.Model.totalExponent m e + 1).ediv 2)) ≤ e := by
+    have hhalf : 2 * (e.ediv 2) ≤ e := by
+      change 2 * (e / 2) ≤ e
+      simpa [mul_comm] using Int.ediv_mul_le e (by norm_num : (2 : Int) ≠ 0)
+    omega
+  simpa [UnpackedFloat.sqrtCore] using
+    FsqrtCore_eq_nativeAt m e _ htarget
+
+private theorem binary32_SFsqrtCore_eq_native
+    (m : Nat) (e : Int) (hm : 0 < m) :
+    let source := SFsqrt_core_binary 24 128 (m : Int) e
+    let native := UnpackedFloat.sqrtCore Format.binary32 m e
+    source.1.toNat = native.1 ∧ source.2.1 = native.2.1 ∧
+      accuracyOfLocation source.2.2 = native.2.2 := by
+  simp only [SFsqrt_core_binary, FloatSpec.Calc.Sqrt.Fsqrt]
+  rw [show min
+      (FLT_exp (3 - 128 - 24) 24
+        ((FloatSpec.Core.Digits.Zdigits 2 (m : Int) + e + 1) / 2))
+      (e / 2) =
+      min (e.ediv 2)
+        (Format.binary32.targetExponent
+          ((Float.Model.totalExponent m e + 1).ediv 2)) from
+    (binary32_sqrtExponent_eq_fexp m e hm).symm]
+  have htarget : 2 * min (e.ediv 2)
+      (Format.binary32.targetExponent
+        ((Float.Model.totalExponent m e + 1).ediv 2)) ≤ e := by
+    have hhalf : 2 * (e.ediv 2) ≤ e := by
+      change 2 * (e / 2) ≤ e
+      simpa [mul_comm] using Int.ediv_mul_le e (by norm_num : (2 : Int) ≠ 0)
+    omega
+  simpa [UnpackedFloat.sqrtCore] using
+    FsqrtCore_eq_nativeAt m e _ htarget
+
 private theorem decreaseExponent_eq_shlAlign
     (m : Nat) (e target : Int) :
     UnpackedFloat.decreaseExponent m e target = _root_.shl_align m e target := by
@@ -9334,6 +9456,78 @@ theorem model32OfBinarySingleNaNFloat_Bminus_RNE
       BinarySingleNaN.Bplus RoundingMode.RNE x (BinarySingleNaN.Bopp y) from rfl]
   rw [model32OfBinarySingleNaNFloat_Bplus_RNE]
   rw [unpackedOfBinarySingleNaNFloat_Bopp, unpackedAdd_neg_eq_sub]
+
+theorem model64OfBinarySingleNaNFloat_Bsqrt_RNE
+    (x : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bsqrt 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x) =
+      Float.Model.pack
+        (UnpackedFloat.sqrt Format.binary64
+          (unpackedOfBinarySingleNaNFloat x)) := by
+  let _ : Prec_gt_0 (53 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (53 : Int) (1024 : Int) := ⟨by norm_num⟩
+  cases x with
+  | B754_nan => rfl
+  | B754_zero s => rfl
+  | B754_infinity s => cases s <;> rfl
+  | B754_finite s m e hm hbounded =>
+      cases s
+      · let source := SFsqrt_core_binary 53 1024 (m : Int) e
+        have hsourcePos : 0 < source.1 :=
+          (SFsqrt_core_binary_correct_data (prec := 53) (emax := 1024)
+            (m : Int) e (by exact_mod_cast hm)).1
+        have hsourceNatPos : 0 < source.1.toNat := by omega
+        change model64OfBinarySingleNaNFloat
+            (standardFloatToBinarySingleNaNFloat
+              (binary_round_aux (prec := 53) (emax := 1024)
+                RoundingMode.RNE false source.1.toNat
+                source.2.1 source.2.2) _) = _
+        rw [model64OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat]
+        rw [model64OfStandardFloat_binaryRoundAux false source.1.toNat
+          source.2.1 source.2.2 hsourceNatPos]
+        rcases binary64_SFsqrtCore_eq_native m e hm with
+          ⟨hmantissa, hexponent, haccuracy⟩
+        simp only [modelSignOfBool]
+        rw [hmantissa, hexponent, haccuracy]
+        rfl
+      · rfl
+
+theorem model32OfBinarySingleNaNFloat_Bsqrt_RNE
+    (x : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bsqrt 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x) =
+      Float32.Model.pack
+        (UnpackedFloat.sqrt Format.binary32
+          (unpackedOfBinarySingleNaNFloat x)) := by
+  let _ : Prec_gt_0 (24 : Int) := ⟨by norm_num⟩
+  let _ : Prec_lt_emax (24 : Int) (128 : Int) := ⟨by norm_num⟩
+  cases x with
+  | B754_nan => rfl
+  | B754_zero s => rfl
+  | B754_infinity s => cases s <;> rfl
+  | B754_finite s m e hm hbounded =>
+      cases s
+      · let source := SFsqrt_core_binary 24 128 (m : Int) e
+        have hsourcePos : 0 < source.1 :=
+          (SFsqrt_core_binary_correct_data (prec := 24) (emax := 128)
+            (m : Int) e (by exact_mod_cast hm)).1
+        have hsourceNatPos : 0 < source.1.toNat := by omega
+        change model32OfBinarySingleNaNFloat
+            (standardFloatToBinarySingleNaNFloat
+              (binary_round_aux (prec := 24) (emax := 128)
+                RoundingMode.RNE false source.1.toNat
+                source.2.1 source.2.2) _) = _
+        rw [model32OfBinarySingleNaNFloat_standardFloatToBinarySingleNaNFloat]
+        rw [model32OfStandardFloat_binaryRoundAux false source.1.toNat
+          source.2.1 source.2.2 hsourceNatPos]
+        rcases binary32_SFsqrtCore_eq_native m e hm with
+          ⟨hmantissa, hexponent, haccuracy⟩
+        simp only [modelSignOfBool]
+        rw [hmantissa, hexponent, haccuracy]
+        rfl
+      · rfl
 
 end FloatSpec.IEEE754.Native
 

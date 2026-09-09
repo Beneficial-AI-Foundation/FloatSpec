@@ -152,3 +152,17 @@ example (x y : BinarySingleNaNFloat 24 128) :
       Float32.Model.sub (model32OfBinarySingleNaNFloat x)
         (model32OfBinarySingleNaNFloat y) :=
   model32OfBinarySingleNaNFloat_Bminus_RNE x y
+
+example (x : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bsqrt 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x) =
+      Float.Model.sqrt (model64OfBinarySingleNaNFloat x) :=
+  model64OfBinarySingleNaNFloat_Bsqrt_RNE x
+
+example (x : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bsqrt 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x) =
+      Float32.Model.sqrt (model32OfBinarySingleNaNFloat x) :=
+  model32OfBinarySingleNaNFloat_Bsqrt_RNE x

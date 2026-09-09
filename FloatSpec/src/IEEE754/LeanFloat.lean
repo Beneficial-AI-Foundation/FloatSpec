@@ -171,6 +171,32 @@ theorem model32OfBinarySingleNaNFloat_Bminus_RNE
   unfold Float32.Model.sub
   rw [unpack_model32OfBinarySingleNaNFloat, unpack_model32OfBinarySingleNaNFloat]
 
+theorem model64OfBinarySingleNaNFloat_Bsqrt_RNE
+    (x : BinarySingleNaNFloat 53 1024) :
+    model64OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bsqrt 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x) =
+      Float.Model.sqrt (model64OfBinarySingleNaNFloat x) := by
+  change FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat
+      (@BinarySingleNaN.Bsqrt 53 1024 ⟨by norm_num⟩ ⟨by norm_num⟩
+        RoundingMode.RNE x) = _
+  rw [FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_Bsqrt_RNE]
+  unfold Float.Model.sqrt
+  rw [unpack_model64OfBinarySingleNaNFloat]
+
+theorem model32OfBinarySingleNaNFloat_Bsqrt_RNE
+    (x : BinarySingleNaNFloat 24 128) :
+    model32OfBinarySingleNaNFloat
+        (@BinarySingleNaN.Bsqrt 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+          RoundingMode.RNE x) =
+      Float32.Model.sqrt (model32OfBinarySingleNaNFloat x) := by
+  change FloatSpec.IEEE754.Native.model32OfBinarySingleNaNFloat
+      (@BinarySingleNaN.Bsqrt 24 128 ⟨by norm_num⟩ ⟨by norm_num⟩
+        RoundingMode.RNE x) = _
+  rw [FloatSpec.IEEE754.Native.model32OfBinarySingleNaNFloat_Bsqrt_RNE]
+  unfold Float32.Model.sqrt
+  rw [unpack_model32OfBinarySingleNaNFloat]
+
 theorem validStandardFloatOfModel64 (x : Float.Model) :
     validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024)
       (standardFloatOfModel64 x) = true :=
