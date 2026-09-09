@@ -11,6 +11,18 @@ example (x : Float.Model.UnpackedFloat) :
 
 example : (model64OfStandardFloat (StandardFloat.S754_zero false)).toBits = 0 := by decide
 example : (model32OfStandardFloat (StandardFloat.S754_zero false)).toBits = 0 := by decide
+example :
+    (model64OfStandardFloat (StandardFloat.S754_infinity true)).toBits =
+      18442240474082181120 := by native_decide
+example :
+    (model32OfStandardFloat (StandardFloat.S754_infinity true)).toBits =
+      4286578688 := by native_decide
+example :
+    (model64OfStandardFloat (StandardFloat.S754_finite false 1 (-1074))).toBits = 1 := by
+  native_decide
+example :
+    (model32OfStandardFloat (StandardFloat.S754_finite false 1 (-149))).toBits = 1 := by
+  native_decide
 
 example :
     (FloatSpec.IEEE754.Native.model64OfBinary
