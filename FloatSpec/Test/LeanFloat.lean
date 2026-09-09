@@ -29,6 +29,14 @@ example :
       (BinarySingleNaNFloat.B754_zero true)).toBits = 2147483648 := by decide
 
 example :
+    FloatSpec.IEEE754.Native.model64OfBinary default_nan_pl64.val =
+      Float.Model.nan := by native_decide
+
+example :
+    (FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat
+      BinarySingleNaNFloat.B754_nan).isNaN = true := by native_decide
+
+example :
     (FaithfulPrimFloat.PrimitiveFloat.toModel FaithfulPrimFloat.zero).toBits = 0 := by
   decide
 
