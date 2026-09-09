@@ -1507,6 +1507,28 @@ private theorem unpack_toModel (x : FaithfulPrimFloat.PrimitiveFloat) :
     (validBinarySingleNaNStandardFloat_binarySingleNaNFloatToStandardFloat (Prim2B x))]
   exact FloatSpec.IEEE754.Native.unpackedOfStandardFloat_binarySingleNaNFloatToStandardFloat _
 
+@[simp] theorem toModel_isNaN (x : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.isNaN (toModel x) = FaithfulPrimFloat.is_nan x := by
+  rw [toModel,
+    FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  rw [FloatSpec.IEEE754.Native.model64OfStandardFloat_isNaN
+    (binarySingleNaNFloatToStandardFloat (Prim2B x))
+    (validBinarySingleNaNStandardFloat_binarySingleNaNFloatToStandardFloat (Prim2B x))]
+  change is_nan_SF (B2SF (Prim2B x)) = FaithfulPrimFloat.is_nan x
+  rw [B2SF_Prim2B]
+  rfl
+
+@[simp] theorem toModel_isFinite (x : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.isFinite (toModel x) = FaithfulPrimFloat.is_finite x := by
+  rw [toModel,
+    FloatSpec.IEEE754.Native.model64OfBinarySingleNaNFloat_eq_model64OfStandardFloat]
+  rw [FloatSpec.IEEE754.Native.model64OfStandardFloat_isFinite
+    (binarySingleNaNFloatToStandardFloat (Prim2B x))
+    (validBinarySingleNaNStandardFloat_binarySingleNaNFloatToStandardFloat (Prim2B x))]
+  change is_finite_SF (B2SF (Prim2B x)) = FaithfulPrimFloat.is_finite x
+  rw [B2SF_Prim2B]
+  rfl
+
 private theorem Bmult_eq_binarySingleNaN_Bmult (x y : PrimBinaryFloat) :
     FaithfulPrimFloat.Bmult RoundingMode.RNE x y =
       @BinarySingleNaN.Bmult primPrec primEmax primPrecGt0Witness

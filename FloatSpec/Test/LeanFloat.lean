@@ -82,6 +82,12 @@ example (x : FaithfulPrimFloat.PrimitiveFloat) :
     PrimitiveFloat.toModel (FaithfulPrimFloat.abs x) =
       Float.Model.abs (PrimitiveFloat.toModel x) := by simp
 
+example (x : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.isNaN (PrimitiveFloat.toModel x) = FaithfulPrimFloat.is_nan x := by simp
+
+example (x : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.isFinite (PrimitiveFloat.toModel x) = FaithfulPrimFloat.is_finite x := by simp
+
 example (x y : FaithfulPrimFloat.PrimitiveFloat) :
     PrimitiveFloat.toModel (x * y) =
       Float.Model.mul (PrimitiveFloat.toModel x) (PrimitiveFloat.toModel y) := by simp

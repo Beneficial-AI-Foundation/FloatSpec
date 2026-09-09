@@ -2249,6 +2249,66 @@ theorem unpack_model32OfStandardFloat
     (standardFloatOfModel32 (model32OfStandardFloat x)) = unpackedOfStandardFloat x
   rw [standardFloatOfModel32_model32OfStandardFloat x hx]
 
+@[simp] theorem model64OfStandardFloat_isNaN
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    Float.Model.isNaN (model64OfStandardFloat x) = is_nan_SF x := by
+  unfold Float.Model.isNaN
+  rw [unpack_model64OfStandardFloat x hx]
+  cases x with
+  | S754_zero _ | S754_infinity _ | S754_nan => rfl
+  | S754_finite s m e =>
+      have hm : 0 < m := (by
+        simpa [validBinarySingleNaNStandardFloat] using hx :
+          0 < m ∧ specFloat_bounded (prec := 53) (emax := 1024) m e = true).1
+      simp [unpackedOfStandardFloat, hm, is_nan_SF,
+        Float.Model.UnpackedFloat.isNaN]
+
+@[simp] theorem model32OfStandardFloat_isNaN
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    Float32.Model.isNaN (model32OfStandardFloat x) = is_nan_SF x := by
+  unfold Float32.Model.isNaN
+  rw [unpack_model32OfStandardFloat x hx]
+  cases x with
+  | S754_zero _ | S754_infinity _ | S754_nan => rfl
+  | S754_finite s m e =>
+      have hm : 0 < m := (by
+        simpa [validBinarySingleNaNStandardFloat] using hx :
+          0 < m ∧ specFloat_bounded (prec := 24) (emax := 128) m e = true).1
+      simp [unpackedOfStandardFloat, hm, is_nan_SF,
+        Float.Model.UnpackedFloat.isNaN]
+
+@[simp] theorem model64OfStandardFloat_isFinite
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    Float.Model.isFinite (model64OfStandardFloat x) = is_finite_SF x := by
+  unfold Float.Model.isFinite
+  rw [unpack_model64OfStandardFloat x hx]
+  cases x with
+  | S754_zero _ | S754_infinity _ | S754_nan => rfl
+  | S754_finite s m e =>
+      have hm : 0 < m := (by
+        simpa [validBinarySingleNaNStandardFloat] using hx :
+          0 < m ∧ specFloat_bounded (prec := 53) (emax := 1024) m e = true).1
+      simp [unpackedOfStandardFloat, hm, is_finite_SF,
+        Float.Model.UnpackedFloat.isFinite]
+
+@[simp] theorem model32OfStandardFloat_isFinite
+    (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    Float32.Model.isFinite (model32OfStandardFloat x) = is_finite_SF x := by
+  unfold Float32.Model.isFinite
+  rw [unpack_model32OfStandardFloat x hx]
+  cases x with
+  | S754_zero _ | S754_infinity _ | S754_nan => rfl
+  | S754_finite s m e =>
+      have hm : 0 < m := (by
+        simpa [validBinarySingleNaNStandardFloat] using hx :
+          0 < m ∧ specFloat_bounded (prec := 24) (emax := 128) m e = true).1
+      simp [unpackedOfStandardFloat, hm, is_finite_SF,
+        Float.Model.UnpackedFloat.isFinite]
+
 @[simp] theorem float32OfBinary_toModel (x : _root_.binary32) :
     (float32OfBinary x).toModel = model32OfBinary x := rfl
 

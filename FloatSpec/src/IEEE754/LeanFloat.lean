@@ -247,6 +247,26 @@ theorem validStandardFloatOfModel32 (x : Float32.Model) :
     standardFloatOfModel32 (model32OfStandardFloat x) = x :=
   FloatSpec.IEEE754.Native.standardFloatOfModel32_model32OfStandardFloat x hx
 
+@[simp] theorem model64OfStandardFloat_isNaN (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    Float.Model.isNaN (model64OfStandardFloat x) = is_nan_SF x :=
+  FloatSpec.IEEE754.Native.model64OfStandardFloat_isNaN x hx
+
+@[simp] theorem model32OfStandardFloat_isNaN (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    Float32.Model.isNaN (model32OfStandardFloat x) = is_nan_SF x :=
+  FloatSpec.IEEE754.Native.model32OfStandardFloat_isNaN x hx
+
+@[simp] theorem model64OfStandardFloat_isFinite (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
+    Float.Model.isFinite (model64OfStandardFloat x) = is_finite_SF x :=
+  FloatSpec.IEEE754.Native.model64OfStandardFloat_isFinite x hx
+
+@[simp] theorem model32OfStandardFloat_isFinite (x : StandardFloat)
+    (hx : validBinarySingleNaNStandardFloat (prec := 24) (emax := 128) x = true) :
+    Float32.Model.isFinite (model32OfStandardFloat x) = is_finite_SF x :=
+  FloatSpec.IEEE754.Native.model32OfStandardFloat_isFinite x hx
+
 theorem model64OfStandardFloat_SFopp (x : StandardFloat)
     (hx : validBinarySingleNaNStandardFloat (prec := 53) (emax := 1024) x = true) :
     model64OfStandardFloat (FaithfulPrimFloat.SFopp x) =
@@ -293,6 +313,14 @@ abbrev ofFloat := FaithfulPrimFloat.PrimitiveFloat.ofFloat
 @[simp] theorem toModel_abs (x : FaithfulPrimFloat.PrimitiveFloat) :
     toModel (FaithfulPrimFloat.abs x) = Float.Model.abs (toModel x) :=
   FaithfulPrimFloat.PrimitiveFloat.toModel_abs x
+
+@[simp] theorem toModel_isNaN (x : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.isNaN (toModel x) = FaithfulPrimFloat.is_nan x :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_isNaN x
+
+@[simp] theorem toModel_isFinite (x : FaithfulPrimFloat.PrimitiveFloat) :
+    Float.Model.isFinite (toModel x) = FaithfulPrimFloat.is_finite x :=
+  FaithfulPrimFloat.PrimitiveFloat.toModel_isFinite x
 
 @[simp] theorem toModel_mul (x y : FaithfulPrimFloat.PrimitiveFloat) :
     toModel (x * y) = Float.Model.mul (toModel x) (toModel y) :=
