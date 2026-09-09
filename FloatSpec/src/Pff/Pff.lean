@@ -14645,58 +14645,62 @@ theorem Zlt_powerRZ (e : ℝ) (n m : Int) :
   · exact (zpow_right_strictMono₀ he').lt_iff_lt.mp hlt
 
 -- Coq: `Rlt_monotony_exp` — multiply preserves < with positive factor (power)
-noncomputable def Rlt_monotony_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Unit :=
+noncomputable def Rlt_monotony_exp_check (radix : Int) (x y : ℝ) (z : Int) : Unit :=
   ()
 
-theorem Rlt_monotony_exp (radix : ℝ) (x y : ℝ) (z : Int) :
-    ⦃⌜0 < radix ∧ x < y⌝⦄
+theorem Rlt_monotony_exp (radix : Int) (x y : ℝ) (z : Int) :
+    ⦃⌜1 < radix ∧ x < y⌝⦄
     (pure (Rlt_monotony_exp_check radix x y z) : Id Unit)
-    ⦃⇓_ => ⌜x * radix ^ z < y * radix ^ z⌝⦄ := by
+    ⦃⇓_ => ⌜x * (radix : ℝ) ^ z < y * (radix : ℝ) ^ z⌝⦄ := by
   intro ⟨hradix, hxy⟩
   simp only [wp, PostCond.noThrow, pure, Rlt_monotony_exp_check, Id.run,
     ULift.up_down]
-  show x * radix ^ z < y * radix ^ z
-  exact mul_lt_mul_of_pos_right hxy (zpow_pos hradix z)
+  have hradix' : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (lt_trans (by norm_num : (0 : Int) < 1) hradix)
+  exact mul_lt_mul_of_pos_right hxy (zpow_pos hradix' z)
 
 -- Coq: `Rle_monotone_exp` — multiply preserves ≤ with positive factor (power)
-noncomputable def Rle_monotone_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Unit :=
+noncomputable def Rle_monotone_exp_check (radix : Int) (x y : ℝ) (z : Int) : Unit :=
   ()
 
-theorem Rle_monotone_exp (radix : ℝ) (x y : ℝ) (z : Int) :
-    ⦃⌜0 < radix ∧ x ≤ y⌝⦄
+theorem Rle_monotone_exp (radix : Int) (x y : ℝ) (z : Int) :
+    ⦃⌜1 < radix ∧ x ≤ y⌝⦄
     (pure (Rle_monotone_exp_check radix x y z) : Id Unit)
-    ⦃⇓_ => ⌜x * radix ^ z ≤ y * radix ^ z⌝⦄ := by
+    ⦃⇓_ => ⌜x * (radix : ℝ) ^ z ≤ y * (radix : ℝ) ^ z⌝⦄ := by
   intro ⟨hradix, hxy⟩
   simp only [wp, PostCond.noThrow, pure, Rle_monotone_exp_check, Id.run,
     ULift.up_down]
-  show x * radix ^ z ≤ y * radix ^ z
-  exact mul_le_mul_of_nonneg_right hxy (le_of_lt (zpow_pos hradix z))
+  have hradix' : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (lt_trans (by norm_num : (0 : Int) < 1) hradix)
+  exact mul_le_mul_of_nonneg_right hxy (le_of_lt (zpow_pos hradix' z))
 
 -- Coq: `Rlt_monotony_contra_exp` — cancel positive power factor from <
-noncomputable def Rlt_monotony_contra_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Unit :=
+noncomputable def Rlt_monotony_contra_exp_check (radix : Int) (x y : ℝ) (z : Int) : Unit :=
   ()
 
-theorem Rlt_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
-    ⦃⌜0 < radix ∧ x * radix ^ z < y * radix ^ z⌝⦄
+theorem Rlt_monotony_contra_exp (radix : Int) (x y : ℝ) (z : Int) :
+    ⦃⌜1 < radix ∧ x * (radix : ℝ) ^ z < y * (radix : ℝ) ^ z⌝⦄
     (pure (Rlt_monotony_contra_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x < y⌝⦄ := by
   intro ⟨hradix, hxy⟩
   simp only [wp, PostCond.noThrow, pure, Rlt_monotony_contra_exp_check, Id.run, ULift.up_down]
-  show x < y
-  exact lt_of_mul_lt_mul_right hxy (le_of_lt (zpow_pos hradix z))
+  have hradix' : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (lt_trans (by norm_num : (0 : Int) < 1) hradix)
+  exact lt_of_mul_lt_mul_right hxy (le_of_lt (zpow_pos hradix' z))
 
 -- Coq: `Rle_monotony_contra_exp` — cancel positive power factor from ≤
-noncomputable def Rle_monotony_contra_exp_check (radix : ℝ) (x y : ℝ) (z : Int) : Unit :=
+noncomputable def Rle_monotony_contra_exp_check (radix : Int) (x y : ℝ) (z : Int) : Unit :=
   ()
 
-theorem Rle_monotony_contra_exp (radix : ℝ) (x y : ℝ) (z : Int) :
-    ⦃⌜0 < radix ∧ x * radix ^ z ≤ y * radix ^ z⌝⦄
+theorem Rle_monotony_contra_exp (radix : Int) (x y : ℝ) (z : Int) :
+    ⦃⌜1 < radix ∧ x * (radix : ℝ) ^ z ≤ y * (radix : ℝ) ^ z⌝⦄
     (pure (Rle_monotony_contra_exp_check radix x y z) : Id Unit)
     ⦃⇓_ => ⌜x ≤ y⌝⦄ := by
   intro ⟨hradix, hxy⟩
   simp only [wp, PostCond.noThrow, pure, Rle_monotony_contra_exp_check, Id.run, ULift.up_down]
-  show x ≤ y
-  exact le_of_mul_le_mul_right hxy (zpow_pos hradix z)
+  have hradix' : (0 : ℝ) < (radix : ℝ) := by
+    exact_mod_cast (lt_trans (by norm_num : (0 : Int) < 1) hradix)
+  exact le_of_mul_le_mul_right hxy (zpow_pos hradix' z)
 
 -- Coq: `FtoREqInv2` — equality by equal real value and same exponent
 noncomputable def FtoREqInv2_check {beta : Int} [ValidRadix beta]
