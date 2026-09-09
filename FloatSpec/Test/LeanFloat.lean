@@ -47,3 +47,8 @@ example (x : FaithfulPrimFloat.PrimitiveFloat) :
 example :
     (FaithfulPrimFloat.PrimitiveFloat.toModel FaithfulPrimFloat.one).toBits =
       4607182418800017408 := by native_decide
+
+example :
+    (PrimitiveFloat.toModel
+      (PrimitiveFloat.ofModel (Float.Model.ofBits 4607182418800017408))).toBits =
+      4607182418800017408 := by native_decide
